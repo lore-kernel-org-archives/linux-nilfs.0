@@ -1,11 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: NILFS 2.0.0-testing-6 release
-Date: Mon, 22 Oct 2007 17:12:31 +0900
-Message-ID: <1193040751.12711.14.camel@localhost.localdomain>
+From: John Andersen <jsa-MJZuZBXGww0Jmq/UkTHWNaxOck334EZe@public.gmane.org>
+Subject: Garbage Collection Schemes
+Date: Mon, 26 Nov 2007 15:12:10 -0800
+Message-ID: <200711261512.11121.jsa@gotroot.homeip.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,20 +20,43 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Content-Type: text/plain; charset="us-ascii"
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Dear NILFS users,
+I am new to NILFS, so bear with me.
 
-We have released NILFS 2.0.0-testing-6:
+I would like to ask, (without reading the entire archive of messages) if
+any thought to other garbage collection schemes has been contemplated.
 
-An important bug around the page reclamation was fixed.
-This fix will resolve several problems due to corruption
-of meta data files or regular files, and will improve
-the stability especially for small memory machines
+For instance: This file system looks like it might be very useful for 
+certain types of environments where N sequential revisions of documents
+must be maintained, regardless of the  age or how any given document relates
+to other documents.
 
-The updated package can be found at:
-http://www.nilfs.org/en/download.html
+Checkpoints do not seem to do this.
 
-Thanks,
-Ryusuke Konishi
+I would like to see garbage collection options that allow (for example)
+10 copies retained (of EACH file), each bearing different dates.  
 
-NILFS team NTT
-http://www.nilfs.org/
+Garbage collection would erase the 11th (oldest copy) if, (and only if) the 
+other 10 all had different dates.  This prevents the situation where one user 
+(or rogue process) re-saving a document 15 times a day wipes out all prior 
+copies.
+
+An option might be garbage collection not based on a NUMBER of iterations
+but rather a period of time (3 years, 7 years, etc, while still purging same 
+date (or same hour, minute, etc) copies.
+
+This type of garbage collection is found almost nowhere, and this
+file system seems to be the closest possible candidate to do this.
+
+There are applications, where a consistent representation of all 
+files at a specific point in time (snapshot or checkpoint) is LESS
+important than the ability to roll back individual documents to 
+a number of prior iterations or a number of years.
+
+Legal documents, financial records, code version archiving, etc, all
+have these requirements.
+
+
+-- 
+__________________________
+John Andersen	
+Screenio.com
