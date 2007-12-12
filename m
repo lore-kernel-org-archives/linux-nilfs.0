@@ -1,22 +1,11 @@
-From: amagai-sG5X7nlA6pw@public.gmane.org
-Subject: Re: A question about segment sizes and alignment
-Date: Wed, 12 Dec 2007 17:30:46 +0900 (JST)
-Message-ID: <200712120830.lBC8Uk9s032124@nuesun.nue.org>
-References: <196f72b10712111059m2e813aa4ga02ce5ccef4ae1ba@mail.gmail.com>
+From: Pierre Etchemaite <petchema-5XhUwtNo+r9Wk0Htik3J/w@public.gmane.org>
+Subject: Unknown symbol __umoddi3 / ... __udivdi3
+Date: Wed, 12 Dec 2007 11:45:14 +0100
+Message-ID: <475FBBBA.10602@agematis.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Received: by mhns.core.ntt.co.jp (8.14.1/mhns*core.mx13/TLSv1/SSLv3);
-	Wed, 12 Dec 2007 17:31:04 +0900 (JST)
-	<200712120831.lBC8UkA4042684-L3Bwnc4fnxrSADF8LgYVInf5DAMn2ifp@public.gmane.org> sender
-	amagai-sG5X7nlA6pw@public.gmane.org for <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org> from nuesun.isle.ecl.net
-	163.138.3.77
-Received: by nuesun.isle.ecl.net (8.13.8/eclnet*isle.mxn2/);
-	Wed, 12 Dec 2007 17:30:46 +0900 (JST)
-	<200712120830.lBC8Uk9s032124-vVVTaDpzuSIg7PIzrqgn9Q@public.gmane.org> sender
-	amagai-sG5X7nlA6pw@public.gmane.org for from 
-In-Reply-To: <196f72b10712111059m2e813aa4ga02ce5ccef4ae1ba-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -27,28 +16,34 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: TEXT/PLAIN; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi,
+    Hello all,
 
-> What is the segment size that NILFS uses?
-> Is it possible to tune the segment size, perhaps by changing constants
+First, I believe log based filesystems are the future; Not only for 
+snapshot feature, but also because they can give superior performance 
+(vs. standard filesystems) on modern disks, cf
 
-You can specify the segmnent size by mkfs.nilfs2 -c and -B options.
-mkfs.nilfs2 [-b block-size] [-B blocks-per-segment] ... 
+http://citeseer.ist.psu.edu/694627.html
 
-Default are:  block-size == 4096 (byte), blocks-per-segment == 2048,
-so, default segment size is 8Mbyte.
-(They are coded in util/sbin/mkfs/mkfs.h)
+for a very interesting performance analysis.
 
-> Are the segments aligned in the address space of the block device?
-> That is, if each segment is 1MB, say, do the first one start in
 
-Yes. So, user usable data blocks of the first segment may be some blocks
-shorter for boot block and super blocks.
+Now, back to more down-to-earth considerations :)
+I'd like to give the nilfs 2.0.0-testing7 release a try with linux 
+kernel 2.6.23, but I can't load the kernel module; dmesg says
 
-Amagai Yoshiji
+nilfs2: Unknown symbol __umoddi3
+nilfs2: Unknown symbol __udivdi3
+nilfs2: Unknown symbol __umoddi3
+nilfs2: Unknown symbol __udivdi3
+nilfs2: Unknown symbol __umoddi3
+nilfs2: Unknown symbol __udivdi3
 
-NILFS team, NTT
-http://www.nilfs.org/
+CPU is an AMD64 but used in 32 bit mode, and it seems that 64 bit 
+divisions are a problem for 32 bit kernels :/
+Any idea how to get around that? (using asm/div64.h?)
+
+Best regards,
+Pierre.
