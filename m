@@ -1,16 +1,22 @@
-From: "Sivan Toledo" <sivan.toledo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: A question about segment sizes and alignment
-Date: Tue, 11 Dec 2007 13:59:58 -0500
-Message-ID: <196f72b10712111059m2e813aa4ga02ce5ccef4ae1ba@mail.gmail.com>
+From: amagai-sG5X7nlA6pw@public.gmane.org
+Subject: Re: NILFS - is this "CDP" ?
+Date: Wed, 12 Dec 2007 17:23:12 +0900 (JST)
+Message-ID: <200712120823.lBC8NCm9030708@nuesun.nue.org>
+References: <20813635@web.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
-	h=domainkey-signature:received:received:message-id:date:from:to:subject:mime-version:content-type:content-transfer-encoding:content-disposition;
-	bh=HeLJA20yMcUTzYV1ZGhbIlxEZytcstx606pkLVgANJk=;
-	b=jus0nmljFIVfiJoWq8iXWv0+0XffLfK4LupWySBQi8ErRtq4CQbNviWoV2j7sLORLbwWuKLCo0mF+jpE5SWABlLMZ1NXWx/Eb0Y9hggKssaxro9Ta4eA5nc+71Xj8rgyRLHLErFqvuPL533FyzFknI3t1nEy+MSWPnanPGeIO30=
-Content-Disposition: inline
+Received: by mhns.core.ntt.co.jp (8.14.1/mhns*core.mx13/TLSv1/SSLv3);
+	Wed, 12 Dec 2007 17:23:33 +0900 (JST)
+	<200712120823.lBC8NFsG042646-L3Bwnc4fnxrSADF8LgYVInf5DAMn2ifp@public.gmane.org> sender
+	amagai-sG5X7nlA6pw@public.gmane.org for <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org> from nuesun.isle.ecl.net
+	163.138.3.77
+Received: by nuesun.isle.ecl.net (8.13.8/eclnet*isle.mxn2/);
+	Wed, 12 Dec 2007 17:23:12 +0900 (JST)
+	<200712120823.lBC8NCm9030708-vVVTaDpzuSIg7PIzrqgn9Q@public.gmane.org> sender
+	amagai-sG5X7nlA6pw@public.gmane.org for from 
+In-Reply-To: <20813635-S0/GAf8tV78@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,22 +27,70 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: TEXT/PLAIN; charset="us-ascii"
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 Hi,
 
-I have a few questions that I have not been able to figure out from
-reading the NILFS papers and from a quick look at the code.
+> is the "continuous snapshotting" feature NILFS offers comparable to
+> what storage vendors often call CDP or "Continuous Data Protection",
+> i.e. you can go back to any point in time of your data?
 
-What is the segment size that NILFS uses?
-Is it possible to tune the segment size, perhaps by changing constants
-in .h files?
-Are the segments aligned in the address space of the block device?
-That is, if each segment is 1MB, say, do the first one start in
-address 0 of the block device, the second in address 2^20, the third
-in address 2*2^20, the fourth in 3*2^20, and so on, or are they
-misaligned because of the superblock and the segment usage chunks, so
-they don't always start on a 1MB boundary.
+One of important purpose of NILFS is protection user data from 
+user's mis-operations,  such as unexpected 'rm *' or file over written.
+It's just CDP.
 
-Thanks, Sivan Toledo
+The word 'CDP' is used in many context, so I refer following
+SNIA definition in my reply.  From point of the definition,
+I copmare NILFS with CDP, 
+
+> 1. Data changes are continuously captured or tracked. 
+Yes, NILFS make checkpoint automatically and continuously.
+
+> 2. All data changes are stored in a separate location from the primary
+    storage
+No, NILFS store data on single disk storage in LFS mannger,
+there are no additional data transfer for checkpointing.
+
+
+> 3. Recovery point objectives are arbitrary and need not be defined in
+     advance of the actual recovery.
+Yes. 
+
+I hope this helps you.
+
+Amagai Yoshiji
+
+NILFS team, NTT
+http://www.nilfs.org/
+
+================================================================
+SNIA CDP Definition
+http://www.snia.org/forums/dmf/programs/data_protect_init/cdp/
+
+Continuous data protection (CDP) is a methodology that continuously
+captures or tracks data modifications and stores changes independent
+of the primary data, enabling recovery points from any point in the
+past. CDP systems may be block-, file- or application-based and can
+provide fine granularities of restorable objects to infinitely
+variable recovery points. So, according to this definition, all CDP
+solutions incorporate these three fundamental attributes:
+
+1. Data changes are continuously captured or tracked. 
+
+2. All data changes are stored in a separate location from the primary
+storage
+
+3. Recovery point objectives are arbitrary and need not be defined in
+advance of the actual recovery
+
+A number of recognized technological approaches deliver CDP, including
+block-, file- and application-based. Today, many vendors offer varying
+degrees of support and awareness of specific application and data
+environments. But regardless of the underlying technological approach
+utilized, CDP can offer faster data retrieval, enhanced data
+protection, and increased business continuity with lower overall cost
+and complexity.
+
+...
+================================================================
