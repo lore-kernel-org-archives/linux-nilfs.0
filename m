@@ -1,12 +1,16 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: [PATCH] fix exception on snapshot mount with an
-	invalid option
-Date: Wed, 09 Jan 2008 11:43:52 +0900 (JST)
-Message-ID: <20080109.114352.71934031.ryusuke@osrg.net>
+From: "Jiwon Seo" <jiwon-FGKo4X94FMn2fBVCVOL8/A@public.gmane.org>
+Subject: Question on porting nilfs back to linux 2.4.3
+Date: Wed, 9 Jan 2008 11:13:19 -0800
+Message-ID: <b008462b0801091113w620d9321p21de1d76f8dd3e8c@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
+	h=domainkey-signature:received:received:message-id:date:from:sender:to:subject:mime-version:content-type:content-transfer-encoding:content-disposition:x-google-sender-auth;
+	bh=wct0PnojvQLuqJCi5+IrXWM8vxp+udmbd5n0pdQI1A4=;
+	b=AbbqpBinySpDeNfQKKmgU6PA4su76zp/vUTcOg/UUyWe88MOlPqcOzgi4jFuVljxnHRAo7K7rDGxsTPlOel0u1Dq3BWw0CgVBQ5Tgcy2leSjQBLXxgten9DMO7cSB9wzpujN5IEEPXlRy/MuZB7//fouXBgjIqtx1KdZyfT8WVw=
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,37 +21,19 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: Text/Plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi folks,
+For some reason, I might need to use nilfs on linux kernel version
+2.4.3. Since quite significant work seems necessary to upgrade linux
+version (it's running on a FPGA based system with much code depending
+on linux kernel 2.4.3), I'm thinking of porting nilfs for 2.4.3
 
-One of my colleages found that a NULL pointer dereference BUG occurs
-when trying to mount a snapshot without readonly mount option (i.e. -r).
+to compare the cost, I'd like to see your opinions on how difficult it
+would be to port nilfs for linux 2.4.3. What parts are depending on
+kernel 2.6, and how difficult do you think it is to change the part
+for linux 2.4.3?
 
-Here is a patch to fix the problem below.
-It can be applied by,
+Thanks
 
- $ cd nilfs-2.0.0-testing-8
- $ patch -p0 < patch_file
-
-Though the bug doesn't occur for proper options, it would trouble
-people trying snapshots.
-I'm sorry for the inconvenience if it got you in trouble.
-
-Regards,
-Ryusuke Konishi
-NILFS team.
----
-Index: fs/super.c
-===================================================================
---- fs.orig/super.c	2008-01-08 11:56:53.000000000 +0900
-+++ fs/super.c	2008-01-08 11:57:08.000000000 +0900
-@@ -1146,7 +1146,6 @@
- 	sd.cno = 0;
- 	sd.flags = flags;
- 	if (nilfs_identify((char *)data, &sd)) {
--		close_bdev_excl(sd.bdev);
- 		err = -EINVAL;
- 		goto failed;
- 	}
+Jiwon
