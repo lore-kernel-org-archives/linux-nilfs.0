@@ -1,15 +1,12 @@
-From: Gergely =?UTF-8?B?R8OhYm9y?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: named snapshots
-Date: Fri, 4 Jan 2008 17:21:04 +0100
-Message-ID: <20080104172104.d4d00c96.elentirmo.gilgalad@gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: [PATCH] fix exception on snapshot mount with an
+	invalid option
+Date: Wed, 09 Jan 2008 11:43:52 +0900 (JST)
+Message-ID: <20080109.114352.71934031.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2024847242=="
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
-	h=domainkey-signature:received:received:date:from:to:subject:message-id:x-mailer:mime-version:content-type;
-	bh=Tt1wAHzGp1LlLvwqVUEyOKgyJrtAL27Frs+0+lwhzg0=;
-	b=XYVc7rbvLKnwiT1Tbzk4Qh0juq+zW63OYicSyCsKeLZK0M5ptuuz5FB6Pfw3rOVPp/djsEGY7eilnes4MlCjAuS90N8nF/88rGWbUwj9bVxff31N/iwvymL6ezdna+fpCK00R4K34s8z8TVH74zNdPk3ash5XHvMyVpXeeJ2I+w=
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,53 +15,39 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
---===============2024847242==
-Content-Type: multipart/signed; protocol="application/pgp-signature";
-	micalg="PGP-SHA1";
-	boundary="Signature=_Fri__4_Jan_2008_17_21_04_+0100_zw=U_/L2aVaa07Tx"
+Hi folks,
 
---Signature=_Fri__4_Jan_2008_17_21_04_+0100_zw=U_/L2aVaa07Tx
-Content-Type: text/plain; charset=UTF-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+One of my colleages found that a NULL pointer dereference BUG occurs
+when trying to mount a snapshot without readonly mount option (i.e. -r).
 
-Hello!
+Here is a patch to fix the problem below.
+It can be applied by,
 
-Now that nilfs2 is getting alive on my box, I started to wonder is there wi=
-ll be support for named snaphots?
+ $ cd nilfs-2.0.0-testing-8
+ $ patch -p0 < patch_file
 
-Thanks!
+Though the bug doesn't occur for proper options, it would trouble
+people trying snapshots.
+I'm sorry for the inconvenience if it got you in trouble.
 
---=20
-Gergely G=C3=A1bor <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
---Signature=_Fri__4_Jan_2008_17_21_04_+0100_zw=U_/L2aVaa07Tx
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.7 (GNU/Linux)
-
-iD8DBQFHflzwlZGsj+xzT3kRAviOAJ4mlj+Pf9xRaf9STNgbgKg4uMJ+VwCdFzeW
-hVnHx89pYD0BoNGgyiwb4Yo=
-=Qu+y
------END PGP SIGNATURE-----
-
---Signature=_Fri__4_Jan_2008_17_21_04_+0100_zw=U_/L2aVaa07Tx--
-
---===============2024847242==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============2024847242==--
+Regards,
+Ryusuke Konishi
+NILFS team.
+---
+Index: fs/super.c
+===================================================================
+--- fs.orig/super.c	2008-01-08 11:56:53.000000000 +0900
++++ fs/super.c	2008-01-08 11:57:08.000000000 +0900
+@@ -1146,7 +1146,6 @@
+ 	sd.cno = 0;
+ 	sd.flags = flags;
+ 	if (nilfs_identify((char *)data, &sd)) {
+-		close_bdev_excl(sd.bdev);
+ 		err = -EINVAL;
+ 		goto failed;
+ 	}
