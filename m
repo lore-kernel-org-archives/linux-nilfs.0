@@ -1,15 +1,13 @@
-From: Gergely =?UTF-8?B?R8OhYm9y?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: reserved space
-Date: Tue, 15 Jan 2008 19:18:28 +0100
-Message-ID: <20080115191828.0a47569d@enyergija>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: reserved space
+Date: Wed, 16 Jan 2008 11:45:59 +0900
+Message-ID: <1200451559.2920.79.camel@localhost.localdomain>
+References: <20080115191828.0a47569d@enyergija>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2132152279=="
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
-	h=domainkey-signature:received:received:date:from:to:subject:message-id:x-mailer:mime-version:content-type;
-	bh=Ok/WhUGl9SqJrIS5FBbNtfHjEbQYPdDLvL+XotUJwSs=;
-	b=nqwLwcSYri67Bzf+qcNu12uHHdZaqIy5HvaO60W76jDPfJQIsF3AxsiygmpMs2vRwqZ18XM0GKOY8r+0ahMB9QJ2uKz2uS36v96s1jYS9AhgZ32amp3nuwoDRwte1pp6K0oKwn06qrVK9XhXD3N3I2DDpMa/MYiDU1qOcNGJQyU=
+In-Reply-To: <20080115191828.0a47569d@enyergija>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,60 +16,53 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Content-Type: text/plain; charset="iso-8859-1"
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
---===============2132152279==
-Content-Type: multipart/signed; boundary="Sig_/e3QVVrcDWXoAEb5cdReEaKW";
-	protocol="application/pgp-signature"; micalg=PGP-SHA1
+Hi!
 
---Sig_/e3QVVrcDWXoAEb5cdReEaKW
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Tue, 2008-01-15 at 19:18 +0100, Gergely G=E1bor wrote:
+> Hello!
+>=20
+> i'm migrating to nilfs on one of my machjines right now, and when I was=
+ creating the filesystem,=20
+> i met an option of mkfs.nilfs, "-m" that controls the reserved segment =
+percentage.
+> can this amount be adjusted later? this space is virtually lost, as thi=
+s is kept always free for
+> the GC to be able to work?
 
-Hello!
+Thanks for your interest.
 
-i'm migrating to nilfs on one of my machjines right now, and when I was cre=
-ating the filesystem, i met an option of mkfs.nilfs, "-m" that controls the=
- reserved segment percentage. can this amount be adjusted later? this space=
- is virtually lost, as this is kept always free for the GC to be able to wo=
-rk?
+As you mentioned, the -m option of mkfs.nilfs2 is to set a ratio of
+reserved disk space primary for the GC.
+To be precise, it works as a margin rather than a fixed work space
+for the GC.=20
 
-My 2nd question is: what is /usr/bin/lssu supposewd to do?
+In this meaning, it is similar to those of ordinary Unix filesystems=20
+including ext3 and others;  it makes previledged or removal operations
+possible in near disk full conditions.
 
-Thanks: G=C3=A1bor Gergely
+Unfortunately, it cannot be adjusted later at this point.
+(The tool like "tune.nilfs2" that changes parameters written in a=20
+ superblock, is not yet implemented.)
+
+> My 2nd question is: what is /usr/bin/lssu supposewd to do?
+
+lssu is an administrative tool to display usage state of segments.
+In nilfs, disk space is divided into multiple segments with an
+equal size. (We call them "full segments" for convenience).
+
+Each line in lssu output corresponds to a (full) segment, and shows
+its index number, state, usage, and a last modified time.
+
+Usually you don't have to use the tool, but it is convenient to view
+broadly how the disk space is used as a log.
+
+Enjoy,
 --=20
-Gergely G=C3=A1bor <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
- * random fortune:
-If he should ever change his faith, it'll be because he no longer thinks
-he's God.
-
---Sig_/e3QVVrcDWXoAEb5cdReEaKW
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.7 (GNU/Linux)
-
-iD8DBQFHjPj6lZGsj+xzT3kRAsELAKClAIQIsjvfbXFSmEJaHCsMl2iUPgCfeXdm
-dM2ZW6aAjlIAZyzeua9XBkg=
-=H4PM
------END PGP SIGNATURE-----
-
---Sig_/e3QVVrcDWXoAEb5cdReEaKW--
-
---===============2132152279==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============2132152279==--
+Ryusuke Konishi
+NILFS team NTT
+http://www.nilfs.org/
