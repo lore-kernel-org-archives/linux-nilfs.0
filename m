@@ -1,13 +1,15 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: reserved space
-Date: Wed, 16 Jan 2008 11:45:59 +0900
-Message-ID: <1200451559.2920.79.camel@localhost.localdomain>
-References: <20080115191828.0a47569d@enyergija>
+From: Gergely =?UTF-8?B?R8OhYm9y?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Deadlocks! help, please!
+Date: Wed, 16 Jan 2008 22:25:00 +0100
+Message-ID: <20080116222500.60e78090@vosztok>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0639614246=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20080115191828.0a47569d@enyergija>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
+	h=domainkey-signature:received:received:date:from:to:subject:message-id:x-mailer:importance:x-priority:mime-version:content-type;
+	bh=yGeAc9uOYOVRhRjzueLzmnsjtm13xensWyh6dGz5KtM=;
+	b=DjEhdE/34viRAqEr/Y27SrW6BYjGV82YLijleT+qxmx3e8oczV0wHR/YMiZaW13IB0iVt+Nnk+OS5e0wDszQbiB1gBORHo5RxdZ8JhWS8fYjyZKLBgzbXpfevsKPATqIfPnv69asHYYedzs1urEwmZQOtLqz5KqVAYn13+ObCMk=
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -16,53 +18,111 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="iso-8859-1"
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi!
+--===============0639614246==
+Content-Type: multipart/signed; boundary="Sig_/jcEXSoIDABZ=1orGrEaqIAN";
+	protocol="application/pgp-signature"; micalg=PGP-SHA1
 
-On Tue, 2008-01-15 at 19:18 +0100, Gergely G=E1bor wrote:
-> Hello!
->=20
-> i'm migrating to nilfs on one of my machjines right now, and when I was=
- creating the filesystem,=20
-> i met an option of mkfs.nilfs, "-m" that controls the reserved segment =
-percentage.
-> can this amount be adjusted later? this space is virtually lost, as thi=
-s is kept always free for
-> the GC to be able to work?
+--Sig_/jcEXSoIDABZ=1orGrEaqIAN
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Thanks for your interest.
+Hello!
 
-As you mentioned, the -m option of mkfs.nilfs2 is to set a ratio of
-reserved disk space primary for the GC.
-To be precise, it works as a margin rather than a fixed work space
-for the GC.=20
+Yesterday I have made the transition from xfs to nilfs on the /home partiti=
+on of my notebook, and since then, with the same usage as before,i have exp=
+erienced deadlocks 3 times.
 
-In this meaning, it is similar to those of ordinary Unix filesystems=20
-including ext3 and others;  it makes previledged or removal operations
-possible in near disk full conditions.
+The situations were the following:
 
-Unfortunately, it cannot be adjusted later at this point.
-(The tool like "tune.nilfs2" that changes parameters written in a=20
- superblock, is not yet implemented.)
+using gimp to cut a picture
+browsing web with epiphany browser
+epiphany again
 
-> My 2nd question is: what is /usr/bin/lssu supposewd to do?
+rtorrent was running in the background.
 
-lssu is an administrative tool to display usage state of segments.
-In nilfs, disk space is divided into multiple segments with an
-equal size. (We call them "full segments" for convenience).
+What I experienced:
 
-Each line in lssu output corresponds to a (full) segment, and shows
-its index number, state, usage, and a last modified time.
+suddenly hdd activity starts. possibly because of swapping (i have 512m ram=
+, and only gimp/epiphany are likely to eat much ram, i use wmaker and conso=
+le based programs mostly)
 
-Usually you don't have to use the tool, but it is convenient to view
-broadly how the disk space is used as a log.
+i can't kill gimp/epi, i can log in at other VT-s with root, but not with u=
+ser. thing that touch /home (even ls!), sync simply get stuck, and even kil=
+l -9 can't kill the stuck program. therefore i must assume it got stuck in =
+some syscall, in kernel mode or something similiar, possibly in the nilfs2 =
+module. I must assume this, as the hangs seemed to be in connection with /h=
+ome.
 
-Enjoy,
+i couldn't restart the computer cleanly,had to power-cycle it, and after re=
+start the system got alive as expected (i noticed there is no fsck util. is=
+n't fsck needed? is a roll forward from last cp done at mount? ) The garbag=
+e collector couldn't have donethis,, in theory, as i ordered it to have a 3=
+ day long protection interval.
+
+my GC put the following message to the logs:
+
+Jan 16 01:19:00 vosztok nilfs_cleanerd[29597]: start
+Jan 16 01:19:00 vosztok nilfs_cleanerd[29597]: cannot create cleanerd on /d=
+ev/vosztok_vg/home
+Jan 16 01:19:00 vosztok nilfs_cleanerd[29597]: shutdown
+Jan 16 17:51:54 vosztok nilfs_cleanerd[4254]: close /var/run/nilfs_cleanerd=
+-dm-1.pid
+Jan 16 17:51:54 vosztok nilfs_cleanerd[4254]: unlink /var/run/nilfs_cleaner=
+d-dm-1.pid
+Jan 16 17:51:54 vosztok nilfs_cleanerd[4254]: shutdown
+Jan 16 17:54:34 vosztok nilfs_cleanerd[9661]: start
+Jan 16 17:54:35 vosztok nilfs_cleanerd[9661]: open /var/run/nilfs_cleanerd-=
+dm-1.pid
+
+And the module gave these messages:
+
+Jan 16 17:54:34 vosztok kernel: NILFS warning (device dm-1): nilfs_sync_sup=
+er: barrier-based sync failed. disabling barriers
+Jan 16 17:54:34 vosztok nilfs_cleanerd[9661]: start
+Jan 16 17:54:35 vosztok nilfs_cleanerd[9661]: open /var/run/nilfs_cleanerd-=
+dm-1.pid
+
+
+Please help me, (as tough i love nilfs even after this short interval of us=
+e, this quite reduces the user experience :) ) and tell me how, and what in=
+formation should I provide to help you fix the problem.
+
+Thanks in advance:
 --=20
-Ryusuke Konishi
-NILFS team NTT
-http://www.nilfs.org/
+Gergely G=C3=A1bor <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+
+* random fortune:
+Little girls, like butterflies, need no excuse.
+		-- Lazarus Long
+
+--Sig_/jcEXSoIDABZ=1orGrEaqIAN
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.7 (GNU/Linux)
+
+iD8DBQFHjnY3lZGsj+xzT3kRAslJAJ9/HJMdukmxij78fIkJlUsaaQ+epQCgu2XU
+hKQHCRlV2S8WSLY9GZVSCg8=
+=sHRv
+-----END PGP SIGNATURE-----
+
+--Sig_/jcEXSoIDABZ=1orGrEaqIAN--
+
+--===============0639614246==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0639614246==--
