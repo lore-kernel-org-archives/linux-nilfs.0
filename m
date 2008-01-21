@@ -1,17 +1,15 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: Deadlocks! help, please!
-Date: Fri, 18 Jan 2008 19:11:11 +0900
-Message-ID: <1200651072.2931.112.camel@localhost.localdomain>
-References: <20080116222500.60e78090@vosztok>
-	<1200556717.3085.94.camel@localhost.localdomain>
-	<1200561294.3085.131.camel@localhost.localdomain>
-	<20080117183302.275d051d@vosztok>
+Date: Mon, 21 Jan 2008 14:01:29 +0900 (JST)
+Message-ID: <20080121.140129.01311807.ryusuke@osrg.net>
+References: <20080117183302.275d051d@vosztok>
 	<1200628693.2931.54.camel@localhost.localdomain>
+	<1200651072.2931.112.camel@localhost.localdomain>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1200628693.2931.54.camel-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+In-Reply-To: <1200651072.2931.112.camel-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -22,62 +20,93 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="iso-8859-1"
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Type: Text/Plain; charset="iso-8859-1"
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi G=E1bor,
+Hello, G=E1bor
 
-On Fri, 2008-01-18 at 12:58 +0900, Ryusuke Konishi wrote:
-> > > Could you get information through the following way
-> >=20
-> > I attach the kernel log. Sorry for the long delay, but the machine
-> frooze
-> > during kernel recompilation, as i didn't use sysrq before. It
-> worked.
-> > Hope the information will be useful.
-> Great!
->=20
-> I will look into both logs.
->=20
-> Anyway, thanks a lot for your effort.
+On Fri, 2008-01-18 at 19:11 +0900, Ryusuke Konishi wrote:
+> Your log actually gave me a great hint!
+> =
 
-Your log actually gave me a great hint!
+> The following part of the log indicates that =
 
-The following part of the log indicates that=20
-the device mapper faced starvation of a memory pool,
-and was waiting for someone to make room for it.
+> the device mapper faced starvation of a memory pool,
 
- Call Trace:
-  [mempool_alloc+28/228] mempool_alloc+0x1c/0xe4
-  [<c013dd7f>] mempool_alloc+0x1c/0xe4
-  [wait_for_completion+125/205] wait_for_completion+0x7d/0xcd
-  [<c036c31f>] wait_for_completion+0x7d/0xcd
-  [default_wake_function+0/12] default_wake_function+0x0/0xc
-  [<c0114c20>] default_wake_function+0x0/0xc
-  [<e08c711a>] nilfs_segbuf_wait+0x79/0x1d7 [nilfs2]
-  [<e08c7268>] nilfs_segbuf_wait+0x1c7/0x1d7 [nilfs2]
-  [<e08c75de>] nilfs_segbuf_write+0x48/0x83 [nilfs2]
-  [<e08ca035>] nilfs_segctor_add_dirty+0x1ca3/0x259f [nilfs2]
-  [update_curr+267/309] update_curr+0x10b/0x135
-  [<c0113b07>] update_curr+0x10b/0x135
-  [<e08ca8e0>] nilfs_segctor_add_dirty+0x254e/0x259f [nilfs2]
-  [<e08cbd47>] nilfs_clean_segments+0x3e0/0x9ac [nilfs2]
-  [<e08cab33>] nilfs_segctor_add_segments_to_be_freed+0x202/0x33b
-[nilfs2]
-  [<e08cbbcc>] nilfs_clean_segments+0x265/0x9ac [nilfs2]
-  [kernel_thread_helper+7/16] kernel_thread_helper+0x7/0x10
-  [<c0104917>] kernel_thread_helper+0x7/0x10
+I found another possible cause for the starvation of a memory
+pool.  It is not a DM-related problem but a defection of a write
+routine of NILFS.
+And now I suspect that it's the true cause of your trouble.
+
+Here I attach a test patch to fix the problem.
+Could you try the patch ?
+
+The patch can be applied as follows,
+
+ $ cd nilfs-2.0.0-testing-8
+ $ patch -p0 < patch_file
 
 
-This seems to arise partly from the current NILFS implementation.
-I'll advance analysis, and would like to find a possible
-solution to manage this.
+So, if rtorrent (or something else) hang again, then
+send me a copy of /proc/slabinfo, please.
 
-In the meantime, you may be able to suppress the problem
-by avoiding use of the DM (if possible).
+Thanks in advance,
+-- =
 
-Thanks,
---=20
 Ryusuke Konishi
 NILFS team NTT
 http://www.nilfs.org/
+
+
+Index: fs/segbuf.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- fs.orig/segbuf.c	2008-01-21 11:01:52.000000000 +0900
++++ fs/segbuf.c	2008-01-21 11:02:38.000000000 +0900
+@@ -367,10 +367,10 @@
+ {
+ 	struct bio *bio;
+ =
+
+-	bio =3D bio_alloc(GFP_NOIO, nr_vecs);
++	bio =3D bio_alloc(GFP_NOWAIT, nr_vecs);
+ 	if (bio =3D=3D NULL && (current->flags & PF_MEMALLOC)) {
+ 		while (!bio && (nr_vecs >>=3D 1))
+-			bio =3D bio_alloc(GFP_NOIO, nr_vecs);
++			bio =3D bio_alloc(GFP_NOWAIT, nr_vecs);
+ 	}
+ 	if (likely(bio)) {
+ 		bio->bi_bdev =3D sb->s_bdev;
+Index: fs/kern_feature.h
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- fs.orig/kern_feature.h	2008-01-21 11:02:02.000000000 +0900
++++ fs/kern_feature.h	2008-01-21 11:09:33.000000000 +0900
+@@ -339,6 +339,13 @@
+ 	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))
+ #endif
+ /*
++ * GFP_NOWAIT flag was introduced at linux-2.6.17
++ */
++#ifndef NEED_GFP_NOWAIT
++# define NEED_GFP_NOWAIT	\
++	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))
++#endif
++/*
+  * mutex replaced semaphore since linux-2.6.16
+  */
+ #ifndef NEED_INODE_SEMAPHORE
+@@ -440,6 +447,10 @@
+ #define GFP_T gfp_t
+ #endif
+ =
+
++#if NEED_GFP_NOWAIT
++#define GFP_NOWAIT (GFP_ATOMIC & ~__GFP_HIGH)
++#endif
++
+ #if NEED_KMEM_CACHE_S
+ #define kmem_cache kmem_cache_s
+ #endif
