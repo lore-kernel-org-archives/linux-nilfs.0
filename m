@@ -1,16 +1,14 @@
-From: "Kevin Burton" <burton-G7Y02uMBy1dWk0Htik3J/w@public.gmane.org>
-Subject: Using nilfs to increase performance of NAND/SSD flash
-	devices.
-Date: Fri, 1 Feb 2008 12:31:47 -0800
-Message-ID: <30c6373b0802011231t75a8a00djab3c82b4de3fa928@mail.gmail.com>
+From: Chris Samuel <chris-Ru3vu9m2XlBAfugRpC6u6w@public.gmane.org>
+Subject: Re: Using nilfs to increase performance of NAND/SSD
+	flash devices.
+Date: Mon, 4 Feb 2008 21:00:36 +1100
+Message-ID: <200802042100.36826.chris@csamuel.org>
+References: <30c6373b0802011231t75a8a00djab3c82b4de3fa928@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1810606546=="
+Content-Type: multipart/mixed; boundary="===============1986369227=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
-	h=domainkey-signature:received:received:message-id:date:from:sender:to:subject:mime-version:content-type:x-google-sender-auth;
-	bh=jwzFX6rqBo97XGahXtXUdReINw+03dLb9GUVe/FwcB8=;
-	b=fi6TmaAlP8WQJjm4raljwsGolwMmTiBtofJGtAPBioxIuFly+8lJ7DM5lTKrgLDetAEO9ihTYwaJH+/xgvttORKpPoPbMr1B3KARmr3nVwymL45t6SxYx/OdqAABpYfxVVaWIAeSm42yF8NbpBcDxMtq6vEH5QeyjJLawpvUpR4=
+In-Reply-To: <30c6373b0802011231t75a8a00djab3c82b4de3fa928-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -22,88 +20,55 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
---===============1810606546==
-Content-Type: multipart/alternative; 
-	boundary="----=_Part_2020_8159454.1201897907617"
-
-------=_Part_2020_8159454.1201897907617
-Content-Type: text/plain; charset=ISO-8859-1
+--===============1986369227==
+Content-Type: multipart/signed; boundary="nextPart2675926.fUzZzeyQbi";
+	protocol="application/pgp-signature"; micalg=pgp-sha1
 Content-Transfer-Encoding: 7bit
+
+--nextPart2675926.fUzZzeyQbi
+Content-Type: text/plain;
+  charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 Content-Disposition: inline
 
-Hey guys.
+On Sat, 2 Feb 2008, Kevin Burton wrote:
 
-I'm playing with nilfs2 on an Mtron SSD 32G NAND Flash SATA drive.
+> I tested this theory by comparing nilfs2 to XFS on the mtron with a
+> sysbenchm random write to test.=C2=A0 Sure enough nilfs2 beat out XFS by
+> 8.5x and wrote at about 50MB/s which is amazingly impressive.
 
-NAND is GREAT for random reads but horrible for random writes.
+Out of interest, have you considered comparing it to logfs on the same=20
+device too ?
 
-A log filesystem fixes this problem because when the disk does random writes
-it
-will just read the block from the previous erase block and wrote a new block
-with the data to the end of the drive, thereby simulating sequential writes.
+cheers!
+Chris
+=2D-=20
+ Chris Samuel  :  http://www.csamuel.org/  :  Melbourne, VIC
 
-I tested this theory by comparing nilfs2 to XFS on the mtron with a
-sysbenchm
-random write to test.  Sure enough nilfs2 beat out XFS by 8.5x and wrote at
-about 50MB/s which is amazingly impressive.
+This email may come with a PGP signature as a file. Do not panic.
+=46or more info see: http://en.wikipedia.org/wiki/OpenPGP
 
-The problem is that with I used the sysbench OLTP benchmark it was only
-about
-10% faster than an HDD running XFS.
+--nextPart2675926.fUzZzeyQbi
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
 
-Not too impressive.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
 
-The OLTP benchmark simulates a MySQL box doing lots of random DELETE,
-UPDATE,
-and INSERT commands so you end up seeing lots or random writes to the disk.
+iQEVAwUAR6biRI1yjaOTJg85AQL3Fwf6A34ptitEXS5GuYMiDjxpVUwaVyu+/BmR
+F/mjamvS47YXMjh4ZZlBmmrEcyzXJ5cfagjzvPJ/0FLSyaJfXHGq4IkXk0T02aQP
+lvzSq0AOGAmKOoKtDz4RyKaFAp7oQBPQeHaNuJxaQk0res2Z++/z0RHaKxGZLCgs
+4cFFZrwoC7G2/Eqqzg4JzQQyDkExVdnH5KjwH3MwvodJdvHWAdpUagVtpYsTLqhn
+4byNkrIas4W9voZdQuHYK0Ix9e9DS/DsqdXi6zN0gZNFN2TOq7Bn9+D2DWYu0WV3
+/Zm4ZjjfxlhzjMLWOH8jUcDn3DL9NIry/+Vc/IxfuSuqFX4zqHUL7A==
+=vHM1
+-----END PGP SIGNATURE-----
 
-In theory nilfs2 should be able to boost hte performance here but I didn't
-see
-this in practice.
+--nextPart2675926.fUzZzeyQbi--
 
-I think what might be happening is that the consistent snapshot support
-might be
-slowing down performance by keeping older blogs on disk and doing too many
-sequential writes thereby seeing slower performance.
-
-Is it possible to disable checkpointing to test my theory?  I'm just about
-to
-dive into the source to test this out but I wanted to post here first to get
-your thoughts.
-
-Onward!
-
-Kevin
-
--- 
-Founder/CEO Tailrank.com
-Location: San Francisco, CA
-AIM/YIM: sfburtonator
-Skype: burtonator
-Work: http://spinn3r.com and http://tailrank.com
-Blog: http://feedblog.org
-Cell: 415-637-8078
-Fax: 1-415-358-419 PIN: 0092
-
-------=_Part_2020_8159454.1201897907617
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-<br>Hey guys.<br><br>I&#39;m playing with nilfs2 on an Mtron SSD 32G NAND Flash SATA drive.<br><br>NAND is GREAT for random reads but horrible for random writes.<br><br>A log filesystem fixes this problem because when the disk does random writes it<br>
-will just read the block from the previous erase block and wrote a new block<br>with the data to the end of the drive, thereby simulating sequential writes.<br><br>I tested this theory by comparing nilfs2 to XFS on the mtron with a sysbenchm<br>
-random write to test.&nbsp; Sure enough nilfs2 beat out XFS by 8.5x and wrote at<br>about 50MB/s which is amazingly impressive.<br><br>The problem is that with I used the sysbench OLTP benchmark it was only about<br>10% faster than an HDD running XFS.<br>
-<br>Not too impressive.<br><br>The OLTP benchmark simulates a MySQL box doing lots of random DELETE, UPDATE,<br>and INSERT commands so you end up seeing lots or random writes to the disk.<br><br>In theory nilfs2 should be able to boost hte performance here but I didn&#39;t see<br>
-this in practice.<br><br>I think what might be happening is that the consistent snapshot support might be<br>slowing down performance by keeping older blogs on disk and doing too many<br>sequential writes thereby seeing slower performance.<br>
-<br>Is it possible to disable checkpointing to test my theory?&nbsp; I&#39;m just about to<br>dive into the source to test this out but I wanted to post here first to get<br>your thoughts.<br><br>Onward!<br><br>Kevin<br><br>-- <br>
-Founder/CEO <a href="http://Tailrank.com">Tailrank.com</a><br>Location: San Francisco, CA<br>AIM/YIM: sfburtonator<br>Skype: burtonator<br>Work: <a href="http://spinn3r.com">http://spinn3r.com</a> and <a href="http://tailrank.com">http://tailrank.com</a><br>
-Blog: <a href="http://feedblog.org">http://feedblog.org</a><br>Cell: 415-637-8078<br>Fax: 1-415-358-419 PIN: 0092<br>
-
-------=_Part_2020_8159454.1201897907617--
-
---===============1810606546==
+--===============1986369227==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -114,4 +79,4 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---===============1810606546==--
+--===============1986369227==--
