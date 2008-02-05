@@ -1,15 +1,20 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Gergely =?UTF-8?B?R8OhYm9y?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Deadlocks! help, please!
-Date: Tue, 05 Feb 2008 18:28:29 +0900 (JST)
-Message-ID: <20080205.182829.44149266.ryusuke@osrg.net>
+Date: Tue, 5 Feb 2008 13:18:15 +0100
+Message-ID: <20080205131815.39f7b0e7@enyergija>
 References: <20080121.140129.01311807.ryusuke@osrg.net>
 	<20080122000052.215084db@vosztok>
 	<1200970920.2844.59.camel@localhost.localdomain>
+	<20080205.182829.44149266.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============1416924197=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1200970920.2844.59.camel-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
+	h=domainkey-signature:received:received:date:from:to:subject:message-id:in-reply-to:references:x-mailer:mime-version:content-type;
+	bh=watbCFKyBU/pX71tCHJMjT4WTlnIm9YgSlXviGwtEjU=;
+	b=mLfRUUWgBB3oSTsrRIAyJ7YY/hBrCFb0xVWhrfZIuLEGI8wK266PtrlmN0Ri4PAfsObAnzTUZS9A7BSjeIchOQW1cbM5tMW3cgMO5gzjSTsn/F+UbGfR7gLi9iCpv925XL/OFGhS5I3Ri5iRJkSe7/WLwOWHLtXujhsrhCfAve8=
+In-Reply-To: <20080205.182829.44149266.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,124 +23,71 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: Text/Plain; charset="iso-8859-1"
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi G=E1bor,
+--===============1416924197==
+Content-Type: multipart/signed; boundary="Sig_/kgj0HH44uw4R_B+WiLt6bR=";
+	protocol="application/pgp-signature"; micalg=PGP-SHA1
 
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [NILFS users] Deadlocks! help, please!
-Date: Tue, 22 Jan 2008 12:02:00 +0900
-> On Tue, 2008-01-22 at 00:00 +0100, Gergely G=E1bor wrote:
-> > > Here I attach a test patch to fix the problem.
-> > > Could you try the patch ?
-> > > =
+--Sig_/kgj0HH44uw4R_B+WiLt6bR=
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-> > > So, if rtorrent (or something else) hang again, then
-> > > send me a copy of /proc/slabinfo, please.
-> > It hang again,
-> =
+On Tue, 05 Feb 2008 18:28:29 +0900 (JST)
+Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
 
-> Ugh! OK, I'll continue to work on it.
+Hello Ryusuke
 
-Today I could reproduce the hang problem, and succeeded in capturing
-a stack trace of the suspended cleaner process.
+> Today I could reproduce the hang problem, and succeeded in capturing
+> a stack trace of the suspended cleaner process.
+>=20
+> After short analysis, a suspicious bug was found in a write routine
+> of NILFS.  It seems to be the root cause of this problem.
+>=20
+> I will attach a revised patch below.
+> Could you try the patch?
 
-After short analysis, a suspicious bug was found in a write routine
-of NILFS.  It seems to be the root cause of this problem.
+This is great news, but I cannot try it until tomorrow, as 1 hour before (w=
+hat irony!) my nilfs fs has completely died. (i was sleeping, woke up, trie=
+d to check my mail, and nilfs forze i restarted several times, but i couldn=
+'t do anything, as soon as i wanted to do anything on the disk, (even lscp!=
+) the fs froze. tomorrow i'll restore my backups (to a freshly patched nilf=
+s), and will try the new patch.
 
-I will attach a revised patch below.
-Could you try the patch?
+Thanks for Your work,
+--=20
+Gergely G=C3=A1bor <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-It is applicable to nilfs-2.0.0-testing-8 as usual,
-(Ignore hunks, they are harmless)
+ * random fortune:
+To invent, you need a good imagination and a pile of junk.
+		-- Thomas Edison
 
- $ cd nilfs-2.0.0-testing-8
- $ patch -p0 < patch_file
+--Sig_/kgj0HH44uw4R_B+WiLt6bR=
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.7 (GNU/Linux)
 
-Thanks in advance for your help.
--- =
+iD8DBQFHqFQLlZGsj+xzT3kRAvdwAKDCJvCgHeSkelbT8sCbpyiZtpM8WQCdGx/l
+ktTRerUQPLVf3xGcA4PkCRA=
+=DJXC
+-----END PGP SIGNATURE-----
 
-Ryusuke Konishi
-NILFS team NTT
-http://www.nilfs.org/
+--Sig_/kgj0HH44uw4R_B+WiLt6bR=--
 
+--===============1416924197==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Index: fs/segbuf.c
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-RCS file: /project/lfs/cvsroot/lfsv2/fs/segbuf.c,v
-retrieving revision 1.14
-retrieving revision 1.17
-diff -u -p -I Id -r1.14 -r1.17
---- fs/segbuf.c	12 Dec 2007 04:15:33 -0000	1.14
-+++ fs/segbuf.c	5 Feb 2008 05:26:33 -0000	1.17
-@@ -309,7 +309,7 @@ static int nilfs_submit_seg_bio(struct n
- 	struct bio *bio =3D wi->bio;
- 	int err;
- =
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
 
--	if (bdi_write_congested(wi->bdi)) {
-+	if (wi->nbio > 0 && bdi_write_congested(wi->bdi)) {
- 		seg_debug(3, "waiting for a segment\n");
- 		wait_for_completion(&wi->bio_event);
- 		wi->nbio--;
-@@ -367,10 +367,14 @@ static struct bio *nilfs_alloc_seg_bio(s
- {
- 	struct bio *bio;
- =
-
--	bio =3D bio_alloc(GFP_NOIO, nr_vecs);
--	if (bio =3D=3D NULL && (current->flags & PF_MEMALLOC)) {
-+	bio =3D bio_alloc(GFP_NOWAIT, nr_vecs);
-+	if (bio =3D=3D NULL) {
-+		seg_debug(1, "bio_alloc() failed. retrying (nr_vecs=3D%d)\n",
-+			  nr_vecs);
- 		while (!bio && (nr_vecs >>=3D 1))
--			bio =3D bio_alloc(GFP_NOIO, nr_vecs);
-+			bio =3D bio_alloc(GFP_NOWAIT, nr_vecs);
-+		seg_debug(1, "done retry (nr_vecs=3D%d, bio=3D%p)\n",
-+			  nr_vecs, bio);
- 	}
- 	if (likely(bio)) {
- 		bio->bi_bdev =3D sb->s_bdev;
-Index: fs/kern_feature.h
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-RCS file: /project/lfs/cvsroot/lfsv2/fs/kern_feature.h,v
-retrieving revision 1.45
-retrieving revision 1.46
-diff -u -p -I Id -r1.45 -r1.46
---- fs/kern_feature.h	10 Jan 2008 03:39:52 -0000	1.45
-+++ fs/kern_feature.h	21 Jan 2008 05:07:13 -0000	1.46
-@@ -339,6 +339,13 @@
- 	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))
- #endif
- /*
-+ * GFP_NOWAIT flag was introduced at linux-2.6.17
-+ */
-+#ifndef NEED_GFP_NOWAIT
-+# define NEED_GFP_NOWAIT	\
-+	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))
-+#endif
-+/*
-  * mutex replaced semaphore since linux-2.6.16
-  */
- #ifndef NEED_INODE_SEMAPHORE
-@@ -440,6 +447,10 @@
- #define GFP_T gfp_t
- #endif
- =
-
-+#if NEED_GFP_NOWAIT
-+#define GFP_NOWAIT (GFP_ATOMIC & ~__GFP_HIGH)
-+#endif
-+
- #if NEED_KMEM_CACHE_S
- #define kmem_cache kmem_cache_s
- #endif
+--===============1416924197==--
