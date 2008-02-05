@@ -1,14 +1,15 @@
-From: Chris Samuel <chris-Ru3vu9m2XlBAfugRpC6u6w@public.gmane.org>
-Subject: Re: Using nilfs to increase performance of NAND/SSD
-	flash devices.
-Date: Mon, 4 Feb 2008 21:00:36 +1100
-Message-ID: <200802042100.36826.chris@csamuel.org>
-References: <30c6373b0802011231t75a8a00djab3c82b4de3fa928@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Deadlocks! help, please!
+Date: Tue, 05 Feb 2008 18:28:29 +0900 (JST)
+Message-ID: <20080205.182829.44149266.ryusuke@osrg.net>
+References: <20080121.140129.01311807.ryusuke@osrg.net>
+	<20080122000052.215084db@vosztok>
+	<1200970920.2844.59.camel@localhost.localdomain>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1986369227=="
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <30c6373b0802011231t75a8a00djab3c82b4de3fa928-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1200970920.2844.59.camel-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,66 +18,124 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Type: Text/Plain; charset="iso-8859-1"
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
---===============1986369227==
-Content-Type: multipart/signed; boundary="nextPart2675926.fUzZzeyQbi";
-	protocol="application/pgp-signature"; micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
+Hi G=E1bor,
 
---nextPart2675926.fUzZzeyQbi
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [NILFS users] Deadlocks! help, please!
+Date: Tue, 22 Jan 2008 12:02:00 +0900
+> On Tue, 2008-01-22 at 00:00 +0100, Gergely G=E1bor wrote:
+> > > Here I attach a test patch to fix the problem.
+> > > Could you try the patch ?
+> > > =
 
-On Sat, 2 Feb 2008, Kevin Burton wrote:
+> > > So, if rtorrent (or something else) hang again, then
+> > > send me a copy of /proc/slabinfo, please.
+> > It hang again,
+> =
 
-> I tested this theory by comparing nilfs2 to XFS on the mtron with a
-> sysbenchm random write to test.=C2=A0 Sure enough nilfs2 beat out XFS by
-> 8.5x and wrote at about 50MB/s which is amazingly impressive.
+> Ugh! OK, I'll continue to work on it.
 
-Out of interest, have you considered comparing it to logfs on the same=20
-device too ?
+Today I could reproduce the hang problem, and succeeded in capturing
+a stack trace of the suspended cleaner process.
 
-cheers!
-Chris
-=2D-=20
- Chris Samuel  :  http://www.csamuel.org/  :  Melbourne, VIC
+After short analysis, a suspicious bug was found in a write routine
+of NILFS.  It seems to be the root cause of this problem.
 
-This email may come with a PGP signature as a file. Do not panic.
-=46or more info see: http://en.wikipedia.org/wiki/OpenPGP
+I will attach a revised patch below.
+Could you try the patch?
 
---nextPart2675926.fUzZzeyQbi
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
+It is applicable to nilfs-2.0.0-testing-8 as usual,
+(Ignore hunks, they are harmless)
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
+ $ cd nilfs-2.0.0-testing-8
+ $ patch -p0 < patch_file
 
-iQEVAwUAR6biRI1yjaOTJg85AQL3Fwf6A34ptitEXS5GuYMiDjxpVUwaVyu+/BmR
-F/mjamvS47YXMjh4ZZlBmmrEcyzXJ5cfagjzvPJ/0FLSyaJfXHGq4IkXk0T02aQP
-lvzSq0AOGAmKOoKtDz4RyKaFAp7oQBPQeHaNuJxaQk0res2Z++/z0RHaKxGZLCgs
-4cFFZrwoC7G2/Eqqzg4JzQQyDkExVdnH5KjwH3MwvodJdvHWAdpUagVtpYsTLqhn
-4byNkrIas4W9voZdQuHYK0Ix9e9DS/DsqdXi6zN0gZNFN2TOq7Bn9+D2DWYu0WV3
-/Zm4ZjjfxlhzjMLWOH8jUcDn3DL9NIry/+Vc/IxfuSuqFX4zqHUL7A==
-=vHM1
------END PGP SIGNATURE-----
 
---nextPart2675926.fUzZzeyQbi--
+Thanks in advance for your help.
+-- =
 
---===============1986369227==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Ryusuke Konishi
+NILFS team NTT
+http://www.nilfs.org/
 
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
 
---===============1986369227==--
+Index: fs/segbuf.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+RCS file: /project/lfs/cvsroot/lfsv2/fs/segbuf.c,v
+retrieving revision 1.14
+retrieving revision 1.17
+diff -u -p -I Id -r1.14 -r1.17
+--- fs/segbuf.c	12 Dec 2007 04:15:33 -0000	1.14
++++ fs/segbuf.c	5 Feb 2008 05:26:33 -0000	1.17
+@@ -309,7 +309,7 @@ static int nilfs_submit_seg_bio(struct n
+ 	struct bio *bio =3D wi->bio;
+ 	int err;
+ =
+
+-	if (bdi_write_congested(wi->bdi)) {
++	if (wi->nbio > 0 && bdi_write_congested(wi->bdi)) {
+ 		seg_debug(3, "waiting for a segment\n");
+ 		wait_for_completion(&wi->bio_event);
+ 		wi->nbio--;
+@@ -367,10 +367,14 @@ static struct bio *nilfs_alloc_seg_bio(s
+ {
+ 	struct bio *bio;
+ =
+
+-	bio =3D bio_alloc(GFP_NOIO, nr_vecs);
+-	if (bio =3D=3D NULL && (current->flags & PF_MEMALLOC)) {
++	bio =3D bio_alloc(GFP_NOWAIT, nr_vecs);
++	if (bio =3D=3D NULL) {
++		seg_debug(1, "bio_alloc() failed. retrying (nr_vecs=3D%d)\n",
++			  nr_vecs);
+ 		while (!bio && (nr_vecs >>=3D 1))
+-			bio =3D bio_alloc(GFP_NOIO, nr_vecs);
++			bio =3D bio_alloc(GFP_NOWAIT, nr_vecs);
++		seg_debug(1, "done retry (nr_vecs=3D%d, bio=3D%p)\n",
++			  nr_vecs, bio);
+ 	}
+ 	if (likely(bio)) {
+ 		bio->bi_bdev =3D sb->s_bdev;
+Index: fs/kern_feature.h
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+RCS file: /project/lfs/cvsroot/lfsv2/fs/kern_feature.h,v
+retrieving revision 1.45
+retrieving revision 1.46
+diff -u -p -I Id -r1.45 -r1.46
+--- fs/kern_feature.h	10 Jan 2008 03:39:52 -0000	1.45
++++ fs/kern_feature.h	21 Jan 2008 05:07:13 -0000	1.46
+@@ -339,6 +339,13 @@
+ 	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))
+ #endif
+ /*
++ * GFP_NOWAIT flag was introduced at linux-2.6.17
++ */
++#ifndef NEED_GFP_NOWAIT
++# define NEED_GFP_NOWAIT	\
++	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))
++#endif
++/*
+  * mutex replaced semaphore since linux-2.6.16
+  */
+ #ifndef NEED_INODE_SEMAPHORE
+@@ -440,6 +447,10 @@
+ #define GFP_T gfp_t
+ #endif
+ =
+
++#if NEED_GFP_NOWAIT
++#define GFP_NOWAIT (GFP_ATOMIC & ~__GFP_HIGH)
++#endif
++
+ #if NEED_KMEM_CACHE_S
+ #define kmem_cache kmem_cache_s
+ #endif
