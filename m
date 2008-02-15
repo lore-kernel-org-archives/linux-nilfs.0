@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: some notes on a memory leak
-Date: Fri, 15 Feb 2008 12:18:13 +0900
-Message-ID: <1203045493.3198.111.camel@localhost.localdomain>
+Date: Fri, 15 Feb 2008 15:07:09 +0900 (JST)
+Message-ID: <20080215.150709.13051610.ryusuke@osrg.net>
 References: <20080214010258.76494d68@vosztok>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -18,74 +18,124 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="iso-8859-1"
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Type: Text/Plain; charset="iso-8859-1"
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi G=E1bor,
 
-On Wed, 2008-02-13 at 15:40 +0100, Gergely G=E1bor wrote:
-> This release works flawlessly for me, for over 4 hours now. No memory
-> leak, no deadlock occured, as I tested the previously malfunctioning
-> scenarios.
+From: Gergely G=E1bor <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [NILFS users] some notes on a memory leak
+Date: Thu, 14 Feb 2008 01:02:58 +0100
 
-Good news!
-We might finally see daylight for the stable release.
+> Hello Ryusuke, and other nilfs developers, and users!
+> =
 
-On Thu, 2008-02-14 at 01:02 +0100, Gergely G=E1bor wrote:
-> I have left my computer working, testing nilfs. I have found that=20
-> after a log period of time, most of the memory in the computer vas=20
-> allocated as cache (according to vmstat) and even aftel killing all
->  processes that held files open, the amount (~430 megabytes) did not
->  decrease significantly. I have unmounted the filesystem, and most
->  cache was freed up, ...
->  This leads to the assumption, that some data is left cached, even=20
-> when not in use. To reproduce this behaviour, I simply started=20
-> "vmstat 1", and rtorrent, started a download, and watched the cache
->  consumption climb. after exiting rtorrent, most of the cache is not
-> reclaimed, not even after a long period of time.=20
+> I have left my computer working, testing nilfs. I have found that aft=
+er
+> a log period of time, most of the memory in the computer vas allocate=
+d as
+> cache (according to vmstat) and even aftel killing all processes that=
+ held
+> files open, the amount (~430 megabytes) did not decrease significantl=
+y.
+> I have unmounted the filesystem, and most cache was freed up, and aft=
+er
+> remounting nilfs, the system was fast as lightning again (the module =
+was not
+> needed to be removed to reclaim the memory).
 
-Yeah, this is the peculiar behaviour of Linux memory management.
-Linux try to devote free memory to the page cache wherever possible.
+I'd like to append a note.
 
-> (i understand, that leaving blocks in the cache is preferable for
-> a log structured fs, as that reduces seeks necessary for reading,
-> but possibly some aging mechanism, and/or a maximum cache size
-> option would be a good idea to implement in the future, if not yet done=
-)
+NILFS has two different things about the cache usage than ordinary
+filesystems:
 
-As I commented above, the bahaviour that leaves blocks in the cache,
-is the nature of Linux, and basically its control is supposed to
-be the matter of the Linux mm and applications.
-For example, applications can invalidate the cache through
-posix_fadvice() or madvise() system call, and users can tune
-the cache behaviour through /sbin/sysctl vm.* or /proc/sys/vm/*.
+(1) Since the cleaner clowls over a partition, it adds new pages into a=
+ cache
+    of the block device one after another during it operates on the bac=
+kground.
 
-Of course, we are taking full advantage of the nature for NILFS to
-compensate the drawback that logfs incurs performance penalty=20
-for reads.  And I believe that this cache behaviour is harmless=20
-because most of cached pages are reclaimable any time if not modified.=20
+(2) Some blocks, for example the blocks to store header information of =
+each
+    segment, are allocated incrementally into the cache of the block de=
+vice. =
 
-However, a memory leak must be distinguished because it blows up
-this scheme. I'm nervous about it if suspicious.
-So, now I'm relieved to hear your report.
+    So, bursty writes or frequent sync writes may bloat it.
+    Conversely, the turnover of buffers for files or meta data should n=
+ot be =
 
-> Sorry for flooding the mail list with my self-contradictory status repo=
-rts.
+    higher than usual fs because a same buffer serves for a same file o=
+ffset
+    even when its physical disk address changes.
 
-Don't mind. Your reports are very helpful.
+I made a patch to minimize the bloat of bdev cache due to the second
+difference.
+If you are bothered with that, please test the following patch.
+From=20my local tests, it didn't make no remarkable difference.
 
-> Please tell me, where can i read about the architecture of nilfs2=20
-> in greater detail, other than the code? (i'm willing to understand=20
-> the code as well, but i'd need some guidance, where to start.=20
-> I'd be the most happy if i could provide some more useful help=20
-> rather than constant "complaining") has many things changed since
->  nilfs1? (i have found papers about that on the project homepage)
+Best regards,
+-- =
 
-One of my colleage is writing a paper of nilfs2, and I believe it
-would satisify these requests.
-
-Sincerely,
---=20
 Ryusuke Konishi
 NILFS team NTT
 http://www.nilfs.org/
+
+Index: fs/kern_feature.h
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- fs.orig/kern_feature.h	2008-02-14 15:28:15.000000000 +0900
++++ fs/kern_feature.h	2008-02-14 15:35:53.000000000 +0900
+@@ -187,6 +187,13 @@
+ 	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,21))
+ #endif
+ /*
++ * invalidate_mapping_pages() got exported in linux-2.6.21.
++ */
++#ifndef HAVE_EXPORTED_INVALIDATE_MAPPING_PAGES
++# define HAVE_EXPORTED_INVALIDATE_MAPPING_PAGES \
++	(LINUX_VERSION_CODE > KERNEL_VERSION(2,6,20) || NILFS_BUILT_INTERNAL)=
+
++#endif
++/*
+  * clear_page_dirty() and test_clear_page_dirty() were removed
+  * in linux-2.6.20
+  */
+Index: fs/segment.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- fs.orig/segment.c	2008-02-14 15:36:57.000000000 +0900
++++ fs/segment.c	2008-02-14 16:17:43.000000000 +0900
+@@ -1615,11 +1615,19 @@
+ =
+
+ static int nilfs_segctor_terminate_segment(struct nilfs_sc_info *sci,
+ 					   struct nilfs_segment_buffer *segbuf,
+-					   struct inode *sufile)
++					   struct the_nilfs *nilfs)
+ {
+ 	struct nilfs_segment_entry *ent =3D segbuf->sb_segent;
++	struct inode *sufile =3D nilfs->ns_sufile;
+ 	int err;
++#if HAVE_EXPORTED_INVALIDATE_MAPPING_PAGES
++	struct address_space *mapping =3D nilfs->ns_bdev->bd_inode->i_mapping=
+;
++	int nshiftbits =3D PAGE_SHIFT - nilfs->ns_blocksize_bits;
++	pgoff_t start =3D segbuf->sb_fseg_start >> nshiftbits;
++	pgoff_t end =3D segbuf->sb_fseg_end >> nshiftbits;
+ =
+
++	invalidate_mapping_pages(mapping, start, end);
++#endif
+ 	err =3D nilfs_open_segment_entry(ent, sufile);
+ 	if (unlikely(err))
+ 		return err;
+@@ -1669,7 +1677,7 @@
+ 		return err;
+ =
+
+ 	if (segbuf->sb_rest_blocks < NILFS_PSEG_MIN_BLOCKS) {
+-		err =3D nilfs_segctor_terminate_segment(sci, segbuf, sufile);
++		err =3D nilfs_segctor_terminate_segment(sci, segbuf, nilfs);
+ 		if (unlikely(err))
+ 			return err;
+ =
