@@ -1,12 +1,11 @@
-From: Par_Kallol-mb1K0bWo544@public.gmane.org
-Subject: nilfs and nfs
-Date: Tue, 18 Mar 2008 18:48:08 -0400
-Message-ID: <1E9808465A0D9541ACD1FCF1462A477702E0204F@CORPUSMX40B.corp.emc.com>
+From: Adrian Ulrich <nilfs-4ZM2p5qjiQGewZBzVTKGGg@public.gmane.org>
+Subject: Nilfs 2.0.1 fails to mount a nilfs-2.0.0 filesystem
+Date: Mon, 24 Mar 2008 12:54:04 +0100
+Message-ID: <20080324125404.f299fbe2.nilfs@blinkenlights.ch>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-class: urn:content-classes:message
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,9 +19,18 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Content-Type: text/plain; charset="us-ascii"
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Thanks a lot for your help in fixing the NFS issue with NILFS.
+Hi,
 
-I am able to run my tests as expect.=20
+I've just upgraded from nilfs 2.0.0 to 2.0.1 (kernel + userland) and noticed
+that nilfs 2.0.1 fails to mount my 2.0.0 filesystem:
 
-Best regards
--Kallol
+> NILFS: Invalid checkpoint (checkpoint number=12178)
+> NILFS: error loading a checkpoint (checkpoint number=12178).
+
+Mounting the filesystem with nilfs-2.0.0 works just fine.
+
+Is this a bug or did the disk-format change in 2.0.1 ?
+
+
+Regards, 
+ Adrian
