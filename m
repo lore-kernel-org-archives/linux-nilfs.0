@@ -1,16 +1,11 @@
-From: Alexander Schier <alex-W0ZHf6uU1cg@public.gmane.org>
-Subject: Re: Resolved? Was: Kernel Bug while deleting files
-	(with rsync)
-Date: Sun, 30 Mar 2008 11:29:55 +0200
-Message-ID: <20080330092955.GA11598@laxu.de>
-References: <20080327132327.GA3562@laxu.de> <20080328181211.GA19581@laxu.de>
-	<20080328194039.GA28685@laxu.de>
-	<20080330.140417.27795318.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Distribution packages of NILFS
+Date: Mon, 31 Mar 2008 20:16:19 +0900
+Message-ID: <1206962179.3347.71.camel@localhost.localdomain>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20080330.140417.27795318.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,39 +16,34 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-1"
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi!
-On Sun, Mar 30, 2008 at 02:04:17PM +0900, Ryusuke Konishi wrote:
-> Hi Alex,
-> 
-> > OK, it seems to work for me, after ...
-> > -using a debian 2.6.24 kernel instead of a selfcompiled 2.6.22
-> > -maybe the 2.6.22 had a different compiler than the nilfs2 module
-No BUG since this.
-> > at the moment rsync works perfectly.
-> > 
-> > I'll mail again, if it has the BUG again. Until then, it seems resolved.
-> > ;)
-> I see. I'll wait for your next report breathlessly. :)
-Sorry, seems it was my mistake.
+Dear NILFS users,
 
-> So far, we haven't been able to reproduce the problem by tests
-> in a similar fashion.
-You must know, if this can be caused by wrong compiler only, or if the
-bug may exist hidden in the Source, and was only triggered by this.
-Another option may be, that my self-compiled kernel missed some option,
-which nilfs uses, but does not depend on in Makefile?
+We have started to offer some distro packages on our web site.
 
-You're the Coders, i can only guess and be happy it works fine with current
-configuration.
+The packages are available at:
+http://www.nilfs.org/en/download.html
 
-> This might be caused by a defect of exclusion control.
-> If so, it's hard to track it by phenomena.
-> So, I'll think reviewing the source code of related parts
-> during making kernel patches of NILFS.
-keep improving ;)
+Distribution   Available packages
+-------------------------------------------------------
+Debian         x86, x86_64 and ppc for etch and lenny
+Ubuntu         x86, x86_64 and ppc for gutsy and hardy
+=EF=BB=BFFedora         x86 and x86_64 for Fedora 8
+openSUSE       i586 and x86_64 for openSUSE 10.3
+CentOS         x86 and x86_64 for CentOS 5.1
 
-Alex
+Detail instructions are shown in separate pages linked through
+disro names in the download page.  For Debian and Ubuntu,=20
+apt based package managers are available by adding our apt
+repository to the apt sources file.
+
+These would be served transiently until they are merged into
+official packages.
+
+Thanks,
+Ryusuke Konishi
+--=20
+NILFS Team, NTT Labs.
+nilfs-sG5X7nlA6pw@public.gmane.org
