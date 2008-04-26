@@ -1,14 +1,11 @@
-From: Seiji Kihara <kihara-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Distribution packages of NILFS
-Date: Tue, 01 Apr 2008 16:51:23 +0900
-Message-ID: <47F1E97B.2020504@osrg.net>
-References: <1206962179.3347.71.camel@localhost.localdomain>
-	<20080331203113.614d5fd8@vosztok>
+From: Daniel Baumann <daniel-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
+Subject: FYI: nilfs2 in Debian
+Date: Sat, 26 Apr 2008 15:15:20 +0200
+Message-ID: <48132AE8.7060305@debian.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20080331203113.614d5fd8@vosztok>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,27 +16,26 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="iso-8859-1"
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hello!
+Hi,
 
-Gergely G=C3=A1bor wrote:
-> ebuilds for gentoo are available in my overlay. they are not official, =
-probably will never get into mainline gentoo, butwork for me. if you thin=
-k, you can mention them on the page.
->=20
-> the url is:=20
-> http://freeshells.ch/~ggergely/cgi-bin/hgwebdir.cgi/portage-ggergely-ov=
-erlay/
->=20
-> if somebody might find it useful, or has problems, feel free to contact=
- me.
+I've uploaded nilfs2 and nilfs2-tools to Debian. They are present in
+unstable, and soon migrate to testing, which means that nilfs2 will be
+present in the upcoming new stable release of Debian, called 5.0 "lenny".
 
-Thank you for your effort.  We will introduce your portage overlay
-on our page.
+Later, I'll add it to linux-modules-extra-2.6, so that pre-build module
+packages for all Debian default kernel images are available (see [0] for
+more information about kernel modules packaging in Debian).
 
-Sincerely,
+Regards,
+Daniel
 
-Seiji Kihara
-NILFS Team, NTT Labs.
+[0]
+http://blog.daniel-baumann.ch/2006/12/10#20061210_kernel-modules-packaging
+
+-- 
+Address:        Daniel Baumann, Burgunderstrasse 3, CH-4562 Biberist
+Email:          daniel.baumann-uDfGT2BMUjhJc61us3aD9uTW4wlIGRCZ@public.gmane.org
+Internet:       http://people.panthera-systems.net/~daniel-baumann/
