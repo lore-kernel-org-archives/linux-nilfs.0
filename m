@@ -1,11 +1,16 @@
-From: Daniel Baumann <daniel-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
-Subject: FYI: nilfs2 in Debian
-Date: Sat, 26 Apr 2008 15:15:20 +0200
-Message-ID: <48132AE8.7060305@debian.org>
+From: "Geoffroy Carrier" <geoffroy.carrier-BNy+qNzEEV8@public.gmane.org>
+Subject: FYI: nilfs2 in AUR
+Date: Mon, 28 Apr 2008 12:23:14 +0200
+Message-ID: <c9084260804280323n49b904efg4af75d3b1cb93d39@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
+	h=domainkey-signature:received:received:message-id:date:from:sender:to:subject:mime-version:content-type:content-transfer-encoding:content-disposition:x-google-sender-auth;
+	bh=sXQ48fiLeralVKAEz/l5UIzqsfL1EZCPr+HgppXJEn8=;
+	b=c8lVVe+MWk6bdS3cMc0p5QJH8UCtVmoavvCdW//hRSTVfwg0ow/AtWua7FwTjdVwobFbyz50omSJaiKR+qG5z+OVFQl1Vg1qAunlmrfXFIw1tI+Sng/0Y37vmcQ++EXEY0nl0Oi/K84nkotrCfJjtzD9xuoNfV2p3AEQ6N2edpE=
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,21 +26,10 @@ To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 Hi,
 
-I've uploaded nilfs2 and nilfs2-tools to Debian. They are present in
-unstable, and soon migrate to testing, which means that nilfs2 will be
-present in the upcoming new stable release of Debian, called 5.0 "lenny".
-
-Later, I'll add it to linux-modules-extra-2.6, so that pre-build module
-packages for all Debian default kernel images are available (see [0] for
-more information about kernel modules packaging in Debian).
+AUR is Archlinux Users Repository. It works a lot like *BSD ports.
+I recently integrated nilfs and nilfs-utils.
+I hope I will be able to integrate them in binary form in Archlinux soon.
 
 Regards,
-Daniel
-
-[0]
-http://blog.daniel-baumann.ch/2006/12/10#20061210_kernel-modules-packaging
-
 -- 
-Address:        Daniel Baumann, Burgunderstrasse 3, CH-4562 Biberist
-Email:          daniel.baumann-uDfGT2BMUjhJc61us3aD9uTW4wlIGRCZ@public.gmane.org
-Internet:       http://people.panthera-systems.net/~daniel-baumann/
+Geoffroy Carrier
