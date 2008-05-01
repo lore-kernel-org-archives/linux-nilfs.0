@@ -1,16 +1,13 @@
-From: "Geoffroy Carrier" <geoffroy.carrier-BNy+qNzEEV8@public.gmane.org>
-Subject: FYI: nilfs2 in AUR
-Date: Mon, 28 Apr 2008 12:23:14 +0200
-Message-ID: <c9084260804280323n49b904efg4af75d3b1cb93d39@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: FYI: nilfs2 in Debian
+Date: Thu, 01 May 2008 17:54:02 +0900
+Message-ID: <1209632042.3250.52.camel@localhost.localdomain>
+References: <48132AE8.7060305@debian.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
-	h=domainkey-signature:received:received:message-id:date:from:sender:to:subject:mime-version:content-type:content-transfer-encoding:content-disposition:x-google-sender-auth;
-	bh=sXQ48fiLeralVKAEz/l5UIzqsfL1EZCPr+HgppXJEn8=;
-	b=c8lVVe+MWk6bdS3cMc0p5QJH8UCtVmoavvCdW//hRSTVfwg0ow/AtWua7FwTjdVwobFbyz50omSJaiKR+qG5z+OVFQl1Vg1qAunlmrfXFIw1tI+Sng/0Y37vmcQ++EXEY0nl0Oi/K84nkotrCfJjtzD9xuoNfV2p3AEQ6N2edpE=
-Content-Disposition: inline
+In-Reply-To: <48132AE8.7060305-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,15 +18,44 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="us-ascii"
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+To: Daniel Baumann <daniel-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
+Cc: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi,
+Hi Daniel,
 
-AUR is Archlinux Users Repository. It works a lot like *BSD ports.
-I recently integrated nilfs and nilfs-utils.
-I hope I will be able to integrate them in binary form in Archlinux soon.
+On Sat, 2008-04-26 at 15:15 +0200, Daniel Baumann wrote:
+> Hi,
+>=20
+> I've uploaded nilfs2 and nilfs2-tools to Debian. They are present in
+> unstable, and soon migrate to testing, which means that nilfs2 will be
+> present in the upcoming new stable release of Debian, called 5.0 "lenny=
+".
+>=20
+> Later, I'll add it to linux-modules-extra-2.6, so that pre-build module
+> packages for all Debian default kernel images are available (see [0] fo=
+r
+> more information about kernel modules packaging in Debian).
+>=20
+> Regards,
+> Daniel
+>=20
+> [0]
+> http://blog.daniel-baumann.ch/2006/12/10#20061210_kernel-modules-packag=
+ing
 
-Regards,
--- 
-Geoffroy Carrier
+Thank you for uploading nilfs2 and nilfs2-tools to Debian sid,
+and thank you for letting us know about their nearest packaging plan.
+
+We will revise our web page =EF=BB=BFfor Debian =EF=BB=BFpackage, and wou=
+ld also like
+to stop serving non-official packages for lenny to avoid overlap
+when your packages will migrate to lenny.
+
+If you have any problem in pursuing the plan, please let us know.
+
+Best regards,
+--=20
+Ryusuke Konishi
+NILFS team NTT
+http://www.nilfs.org/
