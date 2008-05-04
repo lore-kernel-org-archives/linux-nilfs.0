@@ -1,11 +1,11 @@
-From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
-Subject: some questions
-Date: Sun, 04 May 2008 18:16:59 +0200
-Message-ID: <481DE17B.3080407@prnet.org>
+From: Alexander Schier <alex-W0ZHf6uU1cg@public.gmane.org>
+Subject: OOM while deleting very large files
+Date: Sun, 4 May 2008 18:54:26 +0200
+Message-ID: <20080504165426.GA2826@laxu.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -16,18 +16,25 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-I am very interested in nilfs2 so I have some questions ?
+Hi!
+I had a large Nilfs2 (about 250 GB), and 2 files with about 100 GB in
+it. When i tried to delete the file, either
+rm bigfile1
 
-1. If I understood well, nilfs is always appending to the end (is this 
-true or is also other data modified, for example to update pointers ?). 
-What is happening if I have deleted files and cleanerd deletes the 
-snapshots ? Will this space be written by further write operations or 
-will it be lost ?
-2. I suppose that some fragmentation will build up, is there any 
-defragmentation tool planned ?
-3. How robust is nilfs to device errors like bad sectors ? For example 
-if you have a disk image where bad sectors are replaced by zeros, will 
-you still be able to recover data from other sectors ?
+or after it failed
+
+echo '' >bigfile1
+
+the pc worked a long time, and then nilfs2 used so much ram, that the
+kernel killed all programs, and finally the pc was unusable. It was not
+possible to delete the files, other than reformatting the partition.
+
+At the moment, i can not do any further tests, because the partition is
+now filled with useful files, and i do not want to fill the rest with
+undeletable files. But maybe you can find the memleak(?) in the Source.
+
+Alex
