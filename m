@@ -1,13 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: OOM while deleting very large files
-Date: Tue, 06 May 2008 01:18:37 +0900 (JST)
-Message-ID: <20080506.011837.81573783.ryusuke@osrg.net>
-References: <20080504165426.GA2826@laxu.de>
+Subject: Re: some questions
+Date: Tue, 06 May 2008 01:38:30 +0900 (JST)
+Message-ID: <20080506.013830.14997213.ryusuke@osrg.net>
+References: <481DE17B.3080407@prnet.org>
+	<20080506.005511.117028003.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20080504165426.GA2826-W0ZHf6uU1cg@public.gmane.org>
+In-Reply-To: <20080506.005511.117028003.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,41 +20,21 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Content-Type: Text/Plain; charset="us-ascii"
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, alex-W0ZHf6uU1cg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
 
-Hi Alex,
-
-Alexander Schier wrote
-Date: Sun, 4 May 2008 18:54:26 +0200
-> Hi!
-> I had a large Nilfs2 (about 250 GB), and 2 files with about 100 GB in
-> it. When i tried to delete the file, either
-> rm bigfile1
+> > 3. How robust is nilfs to device errors like bad sectors ? For example 
+> > if you have a disk image where bad sectors are replaced by zeros, will 
+> > you still be able to recover data from other sectors ?
 > 
-> or after it failed
-> 
-> echo '' >bigfile1
-> 
-> the pc worked a long time, and then nilfs2 used so much ram, that the
-> kernel killed all programs, and finally the pc was unusable. It was not
-> possible to delete the files, other than reformatting the partition.
-> 
-> At the moment, i can not do any further tests, because the partition is
-> now filled with useful files, and i do not want to fill the rest with
-> undeletable files. But maybe you can find the memleak(?) in the Source.
-> 
-> Alex
+> When NILFS detects an I/O error, it tries to mark the segment including
+> the bad block erroneous. The errorneous segment will never be reused.
 
-Thanks for reporting the above problem!
-It seems to be a likely problem.
+For the latter question, the current NILFS does not have this kind of data
+integrity.
 
-Unfortunately we are now in holiday periods in Japan (Golden Week
-holidays).  So, I can't test it.
-I'd like to look into the problem after the holidays, maybe on Wednesday
-or Thursday.
+Of course there are various opinions or ideas in the team.
+I think, I'd like to make use of HW support such as SCSI DIF if Linux bio
+will support it.
 
-Before that, could you tell me some information on your PC ?
-e.g. NILFS version, kernel version, memory amount, and so on.
-
-Cheers,
+Regards,
 Ryusuke Konishi
