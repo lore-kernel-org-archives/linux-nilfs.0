@@ -1,15 +1,11 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: users Digest, Vol 27, Issue 3
-Date: Fri, 27 Jun 2008 17:27:28 +0900 (JST)
-Message-ID: <20080627.172728.108412355.ryusuke@osrg.net>
-References: <mailman.1.1214535602.30509.users@nilfs.org>
-	<60424.87.251.152.38.1214546611.squirrel@mail.teratelecom.ru>
+From: "Peter Smith" <smithpdo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Mount memory allocation error
+Date: Thu, 3 Jul 2008 12:19:53 +0200
+Message-ID: <474dca090807030319w7ff440b0w1315c60fb7d56756@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1008934408=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <60424.87.251.152.38.1214546611.squirrel-2gm8jUAbe7J69i0UsrCe/SjHesifYMBh@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,42 +14,70 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-On Fri, 27 Jun 2008 10:03:31 +0400 (MSD), Oleg Volkov wrote:
-> > Please let me know some details.
-> >
-> > How did you load the NILFS2 module (nilfs2.ko)
-> > before mounting the root partition created by NILFS2 ?
-> > Are you using an initrd image with nilfs2.ko ?
-> 
-> I patch kernel sources
+--===============1008934408==
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_8736_14781085.1215080393458"
 
-I got it, thanks for the useful patch.
+------=_Part_8736_14781085.1215080393458
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> > What kind of message was printed in the problem,
-> > or did it hang up ?
-> 
-> # mount -f /
-> /sbin/mount.nilfs2: invalid option -- f
-> 
-> 
-> mount -o remount,ro /
-> mount -o remount,rw /
-> It's my mistake.
-> I did not correctly /etc/fstab
-> 
-> ---
-> Oleg Volkov
+Hi,
+I recently upgraded my memory from 2G to 4G and this made it necessary to
+change my kernel
+from
+2.6.22.5-31-default
+to
+2.6.22.5-31-bigsmp
 
-I realized that the recent mount program passes this option
-to helper mount programs, but the current mount.nilfs2
-does not support it.
-OK, I will add the option to mount.nilfs2 later.
+Now I cannot mount nilfs2 partitions.
+I get the error message:  mount.nilf2: ... ... Cannot allocate memory
 
-Thanks again for letting me know this.
+My environment is
+OpenSuse 10.3
+nilfs 2.02
+nilfs-utils 2.04
 
-Cheers,
-Ryusuke Konishi
+Yes, I did recompile/install nilfs and nilfs-utils while using the bigsmp
+kernel.
+When I switch back to the default kernel mount.nilfs2 works normally,
+as does everything else.(but of course I don't have access to the full 4G
+memory)
+
+Your help would be greatly appreciated
+Peter
+
+
+-- 
+This is Linux land. On quiet nights you can hear the Windows machines
+rebooting.
+
+------=_Part_8736_14781085.1215080393458
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Hi,<br>I recently upgraded my memory from 2G to 4G and this made it necessary to change my kernel<br>from<br>2.6.22.5-31-default<br>to<br>2.6.22.5-31-bigsmp<br><br>Now I cannot mount nilfs2 partitions.<br>I get the error message:&nbsp; mount.nilf2: ... ... Cannot allocate memory<br>
+<br>My environment is<br>OpenSuse 10.3<br>nilfs 2.02<br>nilfs-utils 2.04<br><br>Yes, I did recompile/install nilfs and nilfs-utils while using the bigsmp kernel.<br>When I switch back to the default kernel mount.nilfs2 works normally,<br>
+as does everything else.(but of course I don&#39;t have access to the full 4G memory)<br><br>Your help would be greatly appreciated<br>Peter<br><br clear="all"><br>-- <br>This is Linux land. On quiet nights you can hear the Windows machines rebooting.
+
+------=_Part_8736_14781085.1215080393458--
+
+--===============1008934408==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============1008934408==--
