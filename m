@@ -1,16 +1,12 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: users Digest, Vol 27, Issue 3
-Date: Fri, 04 Jul 2008 19:04:48 +0900 (JST)
-Message-ID: <20080704.190448.56351691.ryusuke@osrg.net>
-References: <mailman.1.1214535602.30509.users@nilfs.org>
-	<60424.87.251.152.38.1214546611.squirrel@mail.teratelecom.ru>
-	<20080627.172728.108412355.ryusuke@osrg.net>
+Subject: [PATCH] nilfs2: fix hang problem after rw-remount
+Date: Mon, 07 Jul 2008 16:16:51 +0900 (JST)
+Message-ID: <20080707.161651.71912559.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20080627.172728.108412355.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -23,51 +19,33 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Dear Volkov,
+Dear Volkov and other folks,
 
-On Fri, 27 Jun 2008 17:27:28 +0900 (JST), Ryusuke Konishi wrote:
-> On Fri, 27 Jun 2008 10:03:31 +0400 (MSD), Oleg Volkov wrote:
-> > > What kind of message was printed in the problem,
-> > > or did it hang up ?
-> > 
-> > # mount -f /
-> > /sbin/mount.nilfs2: invalid option -- f
-> > 
-> > 
-> > mount -o remount,ro /
-> > mount -o remount,rw /
-> > It's my mistake.
-> > I did not correctly /etc/fstab
-> > 
-> > ---
-> > Oleg Volkov
-> 
-> I realized that the recent mount program passes this option
-> to helper mount programs, but the current mount.nilfs2
-> does not support it.
-> OK, I will add the option to mount.nilfs2 later.
+I found another remount problem of NILFS2 that may be exposed when
+using it for root partition.
 
-I've uploaded mount.nilfs2 with the -f option on the nilfs2-utils
-git tree.
-It seems to work so far, but I haven't tested it for a root
-partition.
+On one of my test machines with a recent kernel, NILFS2 eventually
+hung after remounting a read only filesystem to read/write mode.  Then
+I found that a missing semaphore operation caused the problem.
 
-Could you please try it to confirm everything works out?
+Here I post a patch to fix the bug.  If you are bothered by that kind
+of problem, try this patch please.
 
-The latest nilfs2-utils is obtainable by 
+The patch is also available on the git tree found on
+http://www.nilfs.org/git/, and will be included in the next release.
 
- $ git clone http://git.nilfs.org/nilfs2-utils.git
-
-and can build as follows,
-
- $ cd nilfs2-utils
- $ aclocal && autoheader && libtoolize -c --force
- $ automake -a -c
- $ autoconf
- $ ./configure
- $ make
- ( this may require some packages: git-core, libtool,
-   autoconf, automake, and so forth )
-
-Thanks in advance,
+Regards,
 Ryusuke Konishi
+
+--
+diff --git a/fs/super.c b/fs/super.c
+index 9520efc..432910d 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -1093,6 +1093,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
+ 		if (err)
+ 			goto rw_remount_failed;
+ 
++		down_write(&nilfs->ns_sem);
+ 		nilfs_setup_super(sbi);
+ 		up_write(&nilfs->ns_sem);
