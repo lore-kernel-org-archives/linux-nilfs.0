@@ -1,11 +1,11 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: [PATCH] nilfs2: fix hang problem after rw-remount
-Date: Mon, 07 Jul 2008 16:16:51 +0900 (JST)
-Message-ID: <20080707.161651.71912559.ryusuke@osrg.net>
+Subject: NILFS 2.0.3 & NILFS utils 2.0.5 release
+Date: Tue, 15 Jul 2008 18:44:45 +0900
+Message-ID: <1216115086.9274.40.camel@localhost.localdomain>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
@@ -19,33 +19,20 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Dear Volkov and other folks,
-
-I found another remount problem of NILFS2 that may be exposed when
-using it for root partition.
-
-On one of my test machines with a recent kernel, NILFS2 eventually
-hung after remounting a read only filesystem to read/write mode.  Then
-I found that a missing semaphore operation caused the problem.
-
-Here I post a patch to fix the bug.  If you are bothered by that kind
-of problem, try this patch please.
-
-The patch is also available on the git tree found on
-http://www.nilfs.org/git/, and will be included in the next release.
-
-Regards,
-Ryusuke Konishi
-
---
-diff --git a/fs/super.c b/fs/super.c
-index 9520efc..432910d 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -1093,6 +1093,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
- 		if (err)
- 			goto rw_remount_failed;
- 
-+		down_write(&nilfs->ns_sem);
- 		nilfs_setup_super(sbi);
- 		up_write(&nilfs->ns_sem);
+RGVhciBOSUxGUyB1c2VycywKCu+7v1dlIGhhdmUgcmVsZWFzZWQgbmlsZnMtMi4wLjMgYW5kIG5p
+bGZzLXV0aWxzLTIuMC41LgpUaGVzZSBpbmNsdWRlIHNlcnZlcmFsIG1pbm9yIGNoYW5nZXMgYW5k
+IGJ1Zy1maXhlczoKCi0gVGFrZSBpbiB0aGUgcmVjZW50IHBhdGNoZXMgdG8gZml4IGJ1aWxkIHBy
+b2JsZW1zIGZvciBpYTY0CiAgbWFjaGluZXMgYW5kIG5ld2VyIGtlcm5lbHMuCi0gU3VwcG9ydCBr
+ZXJuZWwgdmVyc2lvbnMgdXAgdG8gMi42LjI2LgotIEZpeCBhIGhhbmcgcHJvYmxlbSB3aGljaCBt
+YXkgb2NjdXIgYWZ0ZXIgcmVhZC93cml0ZQogIHJlbW91bnQuCi0gV3JpdGViYWNrIGltcGxlbWVu
+dGF0aW9uIHdhcyBpbXByb3ZlZCB0byBhdm9pZCBwcm9sb25nZWQgCiAgcGFnZSBsb2NraW5nIGR1
+cmluZyB3cml0ZWJhY2tzLgotIENsZWFuIHVwIGNvZGUgdG8gcmVtb3ZlIHJlZHVuZGFuY2llcyBh
+bmQgcmVzb2x2ZSBzb21lIExpbnV4CiAgY29kaW5nIHN0eWxlIHZpb2xhdGlvbnMgcmVwb3J0ZWQg
+YnkgdGhlIHJlY2VudCB2ZXJzaW9uIG9mCiAgY2hlY2twYXRjaCBwcm9ncmFtLgotIEFkZCBmYWtl
+ICgtZikgb3B0aW9uIHRvIG1vdW50Lm5pbGZzMi4KCu+7v1RoZSB1cGRhdGVkIHBhY2thZ2UgY2Fu
+IGJlIGZvdW5kIGF0OgpodHRwOi8vd3d3Lm5pbGZzLm9yZy9lbi9kb3dubG9hZC5odG1sCgpGb3Ig
+c29tZSBkaXN0cm9zLCBiaW5hcnkgcGFja2FnZXMgYXJlIGFsc28gYXZhaWxhYmxlIHRoZXJlLgoK
+VGhhbmtzLAotLSAKUnl1c3VrZSBLb25pc2hpCk5JTEZTIHRlYW0gTlRUCmh0dHA6Ly93d3cubmls
+ZnMub3JnLwoKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+CnVzZXJzIG1haWxpbmcgbGlzdAp1c2Vyc0BuaWxmcy5vcmcKaHR0cHM6Ly93d3cubmlsZnMub3Jn
+L21haWxtYW4vbGlzdGluZm8vdXNlcnMK
