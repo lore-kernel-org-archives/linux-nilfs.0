@@ -1,12 +1,13 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: NILFS 2.0.3 & NILFS utils 2.0.5 release
-Date: Tue, 15 Jul 2008 18:44:45 +0900
-Message-ID: <1216115086.9274.40.camel@localhost.localdomain>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+Subject: NILFS2 future
+Date: Sat, 2 Aug 2008 13:05:25 +0200
+Message-ID: <20080802110525.GA12210@aardappel.13thmonkey.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,22 +18,15 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-RGVhciBOSUxGUyB1c2VycywKCu+7v1dlIGhhdmUgcmVsZWFzZWQgbmlsZnMtMi4wLjMgYW5kIG5p
-bGZzLXV0aWxzLTIuMC41LgpUaGVzZSBpbmNsdWRlIHNlcnZlcmFsIG1pbm9yIGNoYW5nZXMgYW5k
-IGJ1Zy1maXhlczoKCi0gVGFrZSBpbiB0aGUgcmVjZW50IHBhdGNoZXMgdG8gZml4IGJ1aWxkIHBy
-b2JsZW1zIGZvciBpYTY0CiAgbWFjaGluZXMgYW5kIG5ld2VyIGtlcm5lbHMuCi0gU3VwcG9ydCBr
-ZXJuZWwgdmVyc2lvbnMgdXAgdG8gMi42LjI2LgotIEZpeCBhIGhhbmcgcHJvYmxlbSB3aGljaCBt
-YXkgb2NjdXIgYWZ0ZXIgcmVhZC93cml0ZQogIHJlbW91bnQuCi0gV3JpdGViYWNrIGltcGxlbWVu
-dGF0aW9uIHdhcyBpbXByb3ZlZCB0byBhdm9pZCBwcm9sb25nZWQgCiAgcGFnZSBsb2NraW5nIGR1
-cmluZyB3cml0ZWJhY2tzLgotIENsZWFuIHVwIGNvZGUgdG8gcmVtb3ZlIHJlZHVuZGFuY2llcyBh
-bmQgcmVzb2x2ZSBzb21lIExpbnV4CiAgY29kaW5nIHN0eWxlIHZpb2xhdGlvbnMgcmVwb3J0ZWQg
-YnkgdGhlIHJlY2VudCB2ZXJzaW9uIG9mCiAgY2hlY2twYXRjaCBwcm9ncmFtLgotIEFkZCBmYWtl
-ICgtZikgb3B0aW9uIHRvIG1vdW50Lm5pbGZzMi4KCu+7v1RoZSB1cGRhdGVkIHBhY2thZ2UgY2Fu
-IGJlIGZvdW5kIGF0OgpodHRwOi8vd3d3Lm5pbGZzLm9yZy9lbi9kb3dubG9hZC5odG1sCgpGb3Ig
-c29tZSBkaXN0cm9zLCBiaW5hcnkgcGFja2FnZXMgYXJlIGFsc28gYXZhaWxhYmxlIHRoZXJlLgoK
-VGhhbmtzLAotLSAKUnl1c3VrZSBLb25pc2hpCk5JTEZTIHRlYW0gTlRUCmh0dHA6Ly93d3cubmls
-ZnMub3JnLwoKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-CnVzZXJzIG1haWxpbmcgbGlzdAp1c2Vyc0BuaWxmcy5vcmcKaHR0cHM6Ly93d3cubmlsZnMub3Jn
-L21haWxtYW4vbGlzdGluZm8vdXNlcnMK
+Dear folks,
+
+i've now come so far as that i can dump and read the root directory of a 
+nilfs2 filesystem. One thing i am wondering of though is the file format 
+stability? Are there changes on hand and if so how does the linux nilfs2 
+implementation deal with it? Is the kernel code automatically converting 
+the discs on write? or is there a transformation program to be provided? 
+
+With regards,
+Reinoud
