@@ -1,12 +1,13 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: NILFS 2.0.4 release
-Date: Wed, 06 Aug 2008 14:43:49 +0900 (JST)
-Message-ID: <20080806.144349.21267447.ryusuke@osrg.net>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+Subject: Nilfs 2.0.3 bugreport
+Date: Fri, 8 Aug 2008 13:17:27 +0200
+Message-ID: <20080808111727.GB26963@aardappel.13thmonkey.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,18 +18,15 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Dear NILFS users,
+Dear folks,
 
-We have released nilfs-2.0.4, which fixes a pending hangup
-problem while deleting very large files (originally reported
-by Alexander Schier).
+i've noticed that the DAT file is not always recording its length 
+correctly; at times it jumps to zero blocks recorded and is then increased 
+again when files are touched. Has anyone seen this before? How do i know 
+the size of the DAT file then? just only insert/append unused blocks when 
+needed?
 
-The updated package can be found at:
-http://www.nilfs.org/en/download.html
-
-Thanks,
---
-Ryusuke Konishi
-NILFS team NTT
+With regards,
+Reinoud
