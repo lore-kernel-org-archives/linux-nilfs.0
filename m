@@ -1,11 +1,14 @@
-From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
-Subject: directory entries
-Date: Sat, 23 Aug 2008 22:38:53 +0200
-Message-ID: <20080823203853.GA19421@aardappel.13thmonkey.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: directory entries
+Date: Mon, 25 Aug 2008 12:21:25 +0900 (JST)
+Message-ID: <20080825.122125.65657043.ryusuke@osrg.net>
+References: <20080823203853.GA19421@aardappel.13thmonkey.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1285281161=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <20080823203853.GA19421-5cYspOl2ggRz6xQTk39kMVfVdRo2wo/d@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -14,66 +17,33 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org
 
+Hi, Reinoud!
 
---===============1285281161==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="liOOAslEiF7prFVr"
-Content-Disposition: inline
+On Sat, 23 Aug 2008 22:38:53 +0200, Reinoud Zandijk wrote:
+> Dear folks,
+> i wondered why directory lengths are specified in blocksize units resulting 
+> in the last dirent in the block to fill up the space with its rec_len. 
+> Searching for free space to enter a directory entry i could use 
+> rec_len - NILFS_DIR_REC_LEN(last_dir_enty->namelen) as free space indicator 
+> but i wondered if it might not be a better practice to allow zero-length 
+> dir entries that are used to fill up the rest of the block with its 
+> rec_len.
+> 
+> Thoughts?
 
+The directory format of NILFS comes from that of ext2 file system
+except its inode number field is extended to 64 bytes.  So, for
+code maintenance, I think it's not good idea to make such change.
 
---liOOAslEiF7prFVr
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Redesigning directory format is actually one of todo items.
+If someone send us a better alternative, we may switch to it.
+In the meantime however, we'd like to avoid confusion on this.
 
-Dear folks,
+Thank you for comments.
 
-i wondered why directory lengths are specified in blocksize units resulting 
-in the last dirent in the block to fill up the space with its rec_len. 
-Searching for free space to enter a directory entry i could use 
-rec_len - NILFS_DIR_REC_LEN(last_dir_enty->namelen) as free space indicator 
-but i wondered if it might not be a better practice to allow zero-length 
-dir entries that are used to fill up the rest of the block with its 
-rec_len.
-
-Thoughts?
-
-With regards,
-Reinoud
-
-
-
---liOOAslEiF7prFVr
-Content-Type: application/pgp-signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.7 (NetBSD)
-
-iQEVAwUBSLB1XYKcNwBDyKpoAQLITgf/QpBjDV4FT+IH+ixrClYpvD5xDOA3arXZ
-6jQzR7NuK+YZUGb2BWnNzZxHXPwifyfKewHkvOnQ9EXQCqWepPicetmmkGLTV4/5
-/gfKsd1w6YhL9OhAgt8XoaA6gDkd3HxuvQLc0UCjNPWovpvfRvI6vBylt9uYB5xY
-s2J2Ahb8gIsbVnQVDklBf9kLWQi8NZbCM3axuSoshZXoQiW7T7Weo/wrIpyvvrOU
-1xI5QNzPhOzRHP4+/W2mWZYiskEieYKIkkU8fjx062+Qj2fthMXEDhoU55J5DHYa
-fNFgK/k2gERbHzNslcjXDTUElKPRRq/abanPRV+7d8c78zsH92FJbg==
-=hA6x
------END PGP SIGNATURE-----
-
---liOOAslEiF7prFVr--
-
---===============1285281161==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============1285281161==--
+Regards,
+Ryusuke Konishi
