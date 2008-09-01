@@ -1,16 +1,15 @@
-From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+From: Shaya Potter <spotter-eQaUEPhvms7ENvBUuze7eA@public.gmane.org>
 Subject: Re: directory entries
-Date: Tue, 26 Aug 2008 15:29:44 +0200
-Message-ID: <20080826132944.GA17045@aardappel.13thmonkey.org>
-References: <20080825.122125.65657043.ryusuke@osrg.net>
-	<20080825.123047.128885778.ryusuke@osrg.net>
-	<20080825155243.GA12855@aardappel.13thmonkey.org>
-	<20080826.192942.104752679.ryusuke@osrg.net>
+Date: Mon, 01 Sep 2008 01:51:51 -0400
+Message-ID: <48BB82F7.4070607@cs.columbia.edu>
+References: <20080825155243.GA12855@aardappel.13thmonkey.org>	<20080826.192942.104752679.ryusuke@osrg.net>	<20080826132944.GA17045@aardappel.13thmonkey.org>
+	<20080901.143956.08023399.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1611116596=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20080826.192942.104752679.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20080901.143956.08023399.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,115 +18,69 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
+As I mentioned a while ago, we jury rigged writable snapshots by 
+combining nilfs w/ unionfs.
 
---===============1611116596==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="jI8keyz6grp/JLjh"
-Content-Disposition: inline
+Instead of writing to the root of the file system, you right to a subdir.
 
+so we start w/ /nilfs/t0
 
---jI8keyz6grp/JLjh
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+when we want to rollback and continue to work
 
-Dear Ryusuke,
+we mount the ro snapshot on /s0 and create /nilfs/t1 use unionfs to 
+union together /s0 (ro) and /nilfs/t1 (rw).
 
-On Tue, Aug 26, 2008 at 07:29:42PM +0900, Ryusuke Konishi wrote:
-> On Mon, 25 Aug 2008 17:52:44 +0200, Reinoud Zandijk wrote:
-> > - writable snapshots
-> > 
-> > This sounds like a fun feature. Would you like to have 1) multiple writable 
-> > and snapshotable heads? 2) support updating a snapshot or 3) support 
-> > writing to a snapshot that is lost when unmounted?
+Ryusuke Konishi wrote:
+> Dear Reinoud,
 > 
-> What's the difference between (1) and (2), do you mean ?
-> The number of read/write mounts concurrently mountable ?
+> On Tue, 26 Aug 2008 15:29:44 +0200, Reinoud Zandijk wrote:
+>>>> But how to number checkpoints and snapshots then?
+>>> I don't like CVS revision like extension.
+>>> Just appending derived checkpoints (from a snapshot) to current head,
+>>> seems to be preferable.  What do you think?
+>> For option (2) new data/modifications can we written out only under the old 
+>> checkpoint number like the cleaner does.... but if you create a new 
+>> checkpoint for it ... i dunno; that would break the rule `the last 
+>> checkpoint is the head'.
 > 
-> I'd like to allow read/write mount for snapshots like:
+> Or, we can just think the ``main'' stream was replaced by the
+> continued snapshot every time it is mounted in rw-mode.  In this case,
+> the head is regarded to be moved to the new (latest) checkpoint.  This
+> is actually convenient for the recovery in which a user pushed
+> ``recover button'' for the snapshot.
 > 
->   # mount -t nilfs2 -o rw,cp=xxx /dev/block /dir
+> Note that even the old head becomes a plain checkpoint, it's still
+> mountable and continuable again by being changed to a snapshot.
 > 
-> and maybe (2) is nearest to what I want.
-> The (3) seems to be rather restrictive.
-
-well i already guessed so :) though a forkable FS has its advantages! but 
-would one really use it in practice? It could be handy for switching 
-between configurations and effectively has a COW strategy that keeps the 
-diffs for each head between the fork point and the current point but that 
-could also be done with an LVM.
-
-> > But how to number checkpoints and snapshots then?
+> To realize writable snapshots on this interpretation, However, we have
+> to solve technical problems around the DAT file.  The DAT file, which
+> is a table file to map virtual disk addresses to actual disk addreses,
+> also maintains lifetime information of each disk block, which is used
+> to perform garbage collection.
 > 
-> I don't like CVS revision like extension.
-> Just appending derived checkpoints (from a snapshot) to current head,
-> seems to be preferable.  What do you think?
-
-For option (2) new data/modifications can we written out only under the old 
-checkpoint number like the cleaner does.... but if you create a new 
-checkpoint for it ... i dunno; that would break the rule `the last 
-checkpoint is the head'. We could also give snapshot/head a name; then 
-increasing checkpoints is no issue if you keep the head name; one can then 
-search for the `HEAD' name with the highest checkpoint number. Or are you 
-suggesting a different way?
-
-> > - data integrity support
+> To that end, this file must be extended to handle multiple lifetimes
+> per block, and this would complicate the DAT.  Without the DAT file,
+> things are not so difficult.  This would be achieved in a future, but
+> in the meantime, I'll use rsync to continue snapshots ;)
 > 
-> I'd rather expect that the future data integrity extension of block
-> layer (e.g. T10 DIF) due to simplicity and performance reason.
-
-yeah, maybe the block level would be better yes; easier at least :-D
-
-> > - B tree base directory management
-> > - Extent support
->
-> For extent based management, there seem to be some possibilities to apply
-> it in NILFS.  For example,
+>> We could also give snapshot/head a name; then 
+>> increasing checkpoints is no issue if you keep the head name
 > 
-> - Extent tree (like ext4.  This is a possible displacement of B-tree )
-> - Extent based DAT (would save disk space consumed by DAT and improve
->   performance)
-> - Extent based binfo in segment summary.
-
-Extent based DAT yeah, that could be used yes. An extent tree is quite ... 
-a different thing though i dont know how difficult it would be to implement 
-an extent based DAT; haven't tried it yet.
-
-With regards,
-Reinoud
-
-
---jI8keyz6grp/JLjh
-Content-Type: application/pgp-signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.7 (NetBSD)
-
-iQEVAwUBSLQFSIKcNwBDyKpoAQKn3wf+LkV0MwMoKI+cwHVKfSj4bLWK9Nb3Szkx
-+pnNwFWMQnOLBlaynSdoYhNyiGz2YQPQW2YVwqOuugA6QLCi98U8Dv8tpODhg02v
-hdZgUWc6CT5cyX67slQm2RC8odrvVciQaEe1Hc6IapXyvbIKKSgqpt/7VIY1r+nU
-Zv+9uzdVBoik/ZAhEYnapccajsyBcC7Q2gaJwXgJTXHMAU7+GC7nGEu7BkY0FlM9
-jz6Fc9V0gKdrwSiEyRMe/92G9khOf0lUBF+CLVoMd+iFHb9o1ROP8Diyzsl2tA3S
-PF73CCOKtOM+TV+IpQ6qtJIWVoAxlvxyvQ8WjliN38ZTl+T+HECFXw==
-=iY9e
------END PGP SIGNATURE-----
-
---jI8keyz6grp/JLjh--
-
---===============1611116596==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============1611116596==--
+> Yeah, this would be possible by adding another meta data file
+> (e.g. tag file) which maps the HEAD names to checkpoint numbers of
+> snapshots.  When keeping multiple writeable snapshots, this kind of
+> extension would be demanded than now.  However, I'd rather do this in
+> userland with a regular file (i.e. a DB file) or with TAG files each
+> of which simply records a checkpoint number.
+> 
+> 
+> Regards,
+> Ryusuke Konishi
+> _______________________________________________
+> users mailing list
+> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+> https://www.nilfs.org/mailman/listinfo/users
