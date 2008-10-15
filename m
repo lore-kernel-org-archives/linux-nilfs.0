@@ -1,14 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: System crashed by cleanerd
-Date: Wed, 15 Oct 2008 12:52:49 +0900 (JST)
-Message-ID: <20081015.125249.23118089.ryusuke@osrg.net>
-References: <474dca090810130444j1c3ab2a0rd5257f76153f63b@mail.gmail.com>
+Subject: Re: Snapshot and mount scripts
+Date: Wed, 15 Oct 2008 15:24:27 +0900 (JST)
+Message-ID: <20081015.152427.73215105.ryusuke@osrg.net>
+References: <48F3C04B.7000300@mib-infotech.co.nz>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <474dca090810130444j1c3ab2a0rd5257f76153f63b-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <48F3C04B.7000300-jE24nFfhqzU3hwNNidygWXTaI6DYlTYJ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,40 +19,30 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, smithpdo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, John-jE24nFfhqzU3hwNNidygWXTaI6DYlTYJ@public.gmane.org
 
-Hi, Peter.
+Hi,
 
-On Mon, 13 Oct 2008 13:44:34 +0200, "Peter Smith" wrote:
+On Tue, 14 Oct 2008 10:40:27 +1300, John Huttley wrote:
 > Hi
-> I am a happy and long time user of nilfs2 but have just hit a major snag.
 > 
-> After mounting my existing Nilfs2 partition,  which has been in use for a
-> year,
-> as soon as cleanerd starts my entire system crashes.
-> (display, mouse and keyboard unresponsive, but can restart with Alt SysReq
-> B)
+> I've just discovered nilfs, which is great for its snapshot capability.
+>
+> Since the purpose of having a snapshot is to mount it, I was surprised 
+> that the utilities do not
+> have a snapshot-and-mount  and  unmount-and-delete   ability.
 > 
-> If I mount with -i option, to disable cleanerd, then I can access my Nilfs2
-> partition, with no crashes.
-> If I create/mount a new Nilfs2 partition and populate it with a large number
-> of files then
-> all works normally, including cleanerd.
-> 
-> So, seemingly, cleanerd has found something it does not like in my old
-> partition and this
-> causes it to abort.
+> Has anyone made a script to do this?
 
-Thanks for reporting this problem.
-We've received the same problem from another user,
-and are working on this issue.
+Thank you for your interest in NILFS.
 
-I found a related bug in the cleaner daemon and fixed it,
-but the cleaner still reproduces crash.
-As you guessed, I think it's a cleaner bug and will
-review it again.
+How about making every checkpoint mountable ?
+Does it differ from what you want?
 
-Anyway I'll keep you informed of my progress for this.
+It seems to be possible to enhance mount.nilfs2 and umount.nilfs2 to
+allow changing given checkpoint to snapshot just before mounting, and
+restoring the state on unmount. (This is not a polite way but
+seems enough for most cases)
 
-With regards,
-Ryusuke Konishi
+Regards,
+Ryusuke
