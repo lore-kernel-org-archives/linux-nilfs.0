@@ -1,14 +1,15 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Ready for production ?
-Date: Fri, 17 Oct 2008 15:09:12 +0900 (JST)
-Message-ID: <20081017.150912.86504903.ryusuke@osrg.net>
-References: <48F65636.5050405@prnet.org>
+Subject: Re: System crashed by cleanerd
+Date: Fri, 17 Oct 2008 16:07:44 +0900 (JST)
+Message-ID: <20081017.160744.98074838.ryusuke@osrg.net>
+References: <474dca090810130444j1c3ab2a0rd5257f76153f63b@mail.gmail.com>
+	<20081015.125249.23118089.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <48F65636.5050405-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <20081015.125249.23118089.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,35 +20,21 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, smithpdo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
-Hi,
-
-On Wed, 15 Oct 2008 22:44:38 +0200, David Arendt wrote:
-> Hi,
+On Wed, 15 Oct 2008 12:52:49 +0900 (JST), Ryusuke Konishi wrote:
+> On Mon, 13 Oct 2008 13:44:34 +0200, "Peter Smith" wrote:
+> > After mounting my existing Nilfs2 partition,  which has been in use for a
+> > year,
+> > as soon as cleanerd starts my entire system crashes.
 > 
-> One thread with exactly this subject was started 12 months ago. So it
-> would be interested to make the point once again.
-> 
-> I am actually using nilfs2 on a volume where data integrity isn't
-> important and didn't have any problems until now.
-> 
-> So what would the developers say ? Is it ready for production ?
+> I found a related bug in the cleaner daemon and fixed it,
+> but the cleaner still reproduces crash.
 
-It's up to you. ;)
+I pushed another patch to the nilfs-utils git tree.
+I believe it will fix the crash problem this time.
 
-We aim to apply nilfs to commercial products, and we use it daily for
-laptops, desktop machines and a shared storage server (samba server).
+Later I will bump the version of nilfs-utils to 2.0.6.
 
-However, we think still it needs further testing, debugging efforts,
-performance improvement, enhancement of administrative tools, and so
-forth.  At least for the stability, it was dramatically improved in
-the past year.
-
-> Congratulations for this very good file system, I really like the idea
-> behind it.
-
-I'm grad you liked it.
-
-Cheers,
+Regards,
 Ryusuke Konishi
