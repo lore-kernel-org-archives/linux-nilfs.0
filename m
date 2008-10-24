@@ -1,16 +1,13 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: cleanerd crash
-Date: Thu, 23 Oct 2008 17:25:36 +0900 (JST)
-Message-ID: <20081023.172536.82205303.ryusuke@osrg.net>
-References: <20081018.130841.87825802.ryusuke@osrg.net>
-	<20081023.151630.83293955.ryusuke@osrg.net>
-	<49003031.9060202@mib-infotech.co.nz>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+Subject: NilFS 2.0.6
+Date: Fri, 24 Oct 2008 16:02:09 +0200
+Message-ID: <20081024140209.GA11973@aardappel.13thmonkey.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <49003031.9060202-jE24nFfhqzU3hwNNidygWXTaI6DYlTYJ@public.gmane.org>
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,17 +18,18 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, John-jE24nFfhqzU3hwNNidygWXTaI6DYlTYJ@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi,
+Congrates Ryusuke with the new 2.0.6 release! Quite some code changes and 
+for the better i'd say :) Quite some code scrapped wich is good i think!
 
-On Thu, 23 Oct 2008 21:05:05 +1300, John Huttley wrote:
-> Thanks Ryusuke,
-> 
-> This weekend through to Monday is a holiday here in New Zealand.
-> So I'm not going to be able to test it until about Weds 29th Oct.
+As for NetBSD interoperationability, i haven't seen any problems yet! 
+though i haven't seen the DAT file having a size yet though eventhough i 
+updated the FS but that might be an conditional update on it being zero 
+length or not; i haven't looked that deep into the code yet. The NetBSD 
+newfs_nilfs is now working fine with the linux kernel and the NetBSD kernel 
+still grocks the linux FS fine (still read-only).
 
-All right. Have fun!
+With regards and keep up the good work!
 
-Cheers,
-Ryusuke
+Reinoud
