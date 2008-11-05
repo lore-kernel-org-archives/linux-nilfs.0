@@ -1,14 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: mkcp does not follow symbolic links
-Date: Wed, 05 Nov 2008 12:04:14 +0900 (JST)
-Message-ID: <20081105.120414.128884447.ryusuke@osrg.net>
-References: <474dca090811040116o5f2d1d05ka9bdeabef4f8c672@mail.gmail.com>
+Subject: Re: Nilfs Code Documentation
+Date: Wed, 05 Nov 2008 14:50:21 +0900 (JST)
+Message-ID: <20081105.145021.88493966.ryusuke@osrg.net>
+References: <3a5a8cdc0811031241j633e5931r671710f3fce4f48d@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <474dca090811040116o5f2d1d05ka9bdeabef4f8c672-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <3a5a8cdc0811031241j633e5931r671710f3fce4f48d-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,38 +19,24 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, smithpdo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, s.himadri-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
 Hi,
 
-On Tue, 4 Nov 2008 11:16:01 +0200, "Peter Smith" wrote:
-> Hi
-> 
-> It seems that mkcp does not follow symbolic links
-> 
-> The command
-> mkcp -s /dev/disk/by-id/usb-ST325031_5RY1_888888888888-0:0-part3
-> gives this message:
-> mkcp: /dev/disk/by-id/usb-ST325031_5RY1_888888888888-0:0-part3: cannot open
-> NILFS
-> 
-> I use the 'disk/by-id' path because it is stable, despite
-> removing/installing other drives
-> 
-> I solve the problem in my code by converting the symbolic link to a real
-> path such as /dev/sde3
-> and then mkcp works as expected.
-> 
-> I mention this because it is a potential trap for the unwary.
-> 
-> My environment is Suse Linux 10.3
+On Mon, 3 Nov 2008 15:41:01 -0500, "Himadri Sarkar" wrote:
+> Where can I get nilfs code documentation? When I generate documentation
+> using Doxygen then very less documentation is generated as  the code is not
+> in doxygen format. Please help me in this regard.
 
-Thanks for reporting this issue.
+If you have kernel sources, please try kernel-doc script as follows:
 
-This comes from the nilfs2-utils stab library.
-Hence, other tools including lscp, chcp, or lssu have the same problem.
+ $ /usr/src/linux-2.6.xx/scripts/kernel-doc -html nilfs2-modules/fs/*.[ch]
+   > index.html
 
-I'll put it in our bugtrack list.
+The produced document is still insufficient, though.
+
+I'm not familiar with the Doxygen, but it seems not working well
+against kernel code.
 
 With regards,
 Ryusuke Konishi
