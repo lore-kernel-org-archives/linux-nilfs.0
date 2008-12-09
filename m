@@ -1,13 +1,14 @@
-From: "Paul L" <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: (no subject)
-Date: Mon, 8 Dec 2008 16:03:06 -0500
-Message-ID: <856033f20812081303v12353110jf51704b81d2a760@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: (no subject)
+Date: Tue, 09 Dec 2008 20:20:59 +0900 (JST)
+Message-ID: <20081209.202059.122418779.ryusuke@osrg.net>
+References: <856033f20812081303v12353110jf51704b81d2a760@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-Disposition: inline
+In-Reply-To: <856033f20812081303v12353110jf51704b81d2a760-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,26 +19,42 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
-Hi, I'm a new user of NILFS2, and I'm using it for both my root and
-home partition. Since none of the boot loaders support NILFS2, I had
-to use a small ext2 partition to boot, and use initrd scripts to load
-the nilfs2 kernel module.
+Hi,
 
-So far everything seems to work fine. But I notice that only one
-clearnerd is running, and that's for my home partition. This is
-probably because the initrd I use didn't have the nifs_cleanerd binary
-in it, so mounting the root partition will not start it. I wonder if
-it's safe to start it later manually? Something like "nilfs_cleanerd
-/" in the rc.local script?
+On Mon, 8 Dec 2008 16:03:06 -0500, "Paul L" wrote:
+> Hi, I'm a new user of NILFS2, and I'm using it for both my root and
+> home partition. Since none of the boot loaders support NILFS2, I had
+> to use a small ext2 partition to boot, and use initrd scripts to load
+> the nilfs2 kernel module.
+>
+> So far everything seems to work fine. But I notice that only one
+> clearnerd is running, and that's for my home partition. This is
+> probably because the initrd I use didn't have the nifs_cleanerd binary
+> in it, so mounting the root partition will not start it. I wonder if
+> it's safe to start it later manually? Something like "nilfs_cleanerd
+> /" in the rc.local script?
 
-BTW, thanks for the exellent work, the performance is great on my SSD
-netbook, much better than ext2 and reiserfs.
+Thanks for reporting.
 
--- 
+You can manually start nilfs_cleanerd, or you can do it through mount
+program.
+
+For example, if your boot partition is initially mounted read-only,
+you can change it to writable mount by a re-mount option:
+
+ # mount -t nilfs2 -o rw,remount /dev/xxx /mount-dir
+
+This remount operation involves invocation of nilfs_cleanerd.
+
+> BTW, thanks for the exellent work, the performance is great on my SSD
+> netbook, much better than ext2 and reiserfs.
+
+Interesting.
+
+Could you tell me what brand of SSD is used in the netbook?
+
+
 Regards,
-Paul Liu
-
-Yale Haskell Group
-http://www.haskell.org/yale
+Ryusuke Konishi
