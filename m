@@ -1,16 +1,13 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: (no subject)
-Date: Wed, 10 Dec 2008 11:31:11 +0900 (JST)
-Message-ID: <20081210.113111.30450794.ryusuke@osrg.net>
-References: <856033f20812081303v12353110jf51704b81d2a760@mail.gmail.com>
-	<20081209.202059.122418779.ryusuke@osrg.net>
-	<856033f20812090816l183c974dj9eed760b3deedb8c@mail.gmail.com>
+From: "Paul L" <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: lockups?
+Date: Mon, 15 Dec 2008 22:51:50 -0500
+Message-ID: <856033f20812151951t2411ec88g8075616cf9e3e96f@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <856033f20812090816l183c974dj9eed760b3deedb8c-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,34 +18,26 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi Paul,
-On Tue, 9 Dec 2008 11:16:33 -0500, "Paul L" wrote:
-> Strangely, the init scripts already did a remount of the root
-> partition (with remount option), but cleanerd is not invoked. I had to
-> do it for a second time in rc.local, then it becomes ok.
+After using nilfs for both my root and home partition for about a
+week, I had perhaps 4 or 5 lockups, which never occurred before when I
+was using ext2 or reiserfs. At one instance, it locked up immediately
+after the laptop wakes up from the suspend-to-ram mode. At other
+times, it just happened with no apparent reason. Everytime when it did
+hang, the CapLock light from my laptop would keep flashing, screen got
+frozen with no more update, and keyboard/mouse got locked up. Because
+I'm using ramdisk for /var/log to save SSD life, so I didn't have any
+log. Also, I didn't seem to have lost any file, and the recovery at
+next boot was rather quick.
 
-I heard that the nilfs_cleanerd depends on /usr/lib/libnilfs.so.*.
-Could you confirm whether these dynamic libraries are installed in the
-initrd?
+I wonder if it's due to nilfs2, and what's the best way to help
+debugging this situation. Would it help to turn on some logging?
+Thanks!
 
-> > Interesting.
-> >
-> > Could you tell me what brand of SSD is used in the netbook?
-> 
-> It's Intel SSD (SSDPAM0008G1EA), a very slow SSD with only 5-6 MB/s
-> write speed. My netbook is Acer Aspire One model AOA110.
-
-Informative. Thanks.
-
-I recognize that nilfs2 performance fairly depends on devices, and it
-still has much things to do well at various devices.
-The nature of nilfs2 which sequentially uses the disk partition almost
-entirely (like a ring buffer), well suited to your device.
-
-Anyhow, thanks for letting us know.
-
+-- 
 Regards,
-Ryusuke
+Paul Liu
+
+Yale Haskell Group
+http://www.haskell.org/yale
