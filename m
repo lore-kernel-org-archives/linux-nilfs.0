@@ -1,17 +1,16 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: lockups?
-Date: Mon, 22 Dec 2008 20:56:00 +0900
-Message-ID: <1229946960.12078.44.camel@localhost.localdomain>
-References: <856033f20812151951t2411ec88g8075616cf9e3e96f@mail.gmail.com>
-	<20081216.210034.01578004.ryusuke@osrg.net>
-	<20081216.235002.56335284.ryusuke@osrg.net>
-	<856033f20812190645k262aadd2mc2bd81462aa0518a@mail.gmail.com>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+Subject: Re: Some nilfs comments
+Date: Mon, 22 Dec 2008 14:01:52 +0100
+Message-ID: <20081222130152.GA23725@aardappel.13thmonkey.org>
+References: <1229568775.27170.134.camel@think.oraclecorp.com>
+	<20081222.180719.88488712.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <856033f20812190645k262aadd2mc2bd81462aa0518a-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20081222.180719.88488712.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -22,33 +21,43 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Paul L <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Cc: chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 
-Hi Paul,
+Hi Ryusuke, Chris,
 
-On Fri, 2008-12-19 at 09:45 -0500, Paul L wrote:
-> Ok, I managed to capture the crash, this time it happened when I was
-> in console not X. So the screen grab may tell some useful info, just
-> pardon my bad camera skills :P
+On Mon, Dec 22, 2008 at 06:07:19PM +0900, Ryusuke Konishi wrote:
+> Well, I feel that the following two matters are particularlly
+> questionable and need to be checked:
 > 
-> A photo is attached.
+> - struct the_nilfs:
+>   NILFS allows users to mount snapshots without making additional
+>   devices or volumes.  This is achieved by sharing a block device
+>   among multiple mount instances (i.e. super_block structs).
+>   the_nilfs struct is used for this sharing.
+> 
+>   This approach seems to be peculiar to nilfs, and I feel it needs
+>   attention.
 
-Thanks for the photo.
+I've dug into this too and decided to use the same mechanism for my
+implementation. I think its nice to have all the fs's administration centered
+at one place; i even have all the btree stuff there. One thing indeed is that
+its not possible to do say `unmount /dev/wd0a' if there are multiple mounts on
+it... but maybe thats better even ;) or its even a positive thing to just
+unmount all the mounts in one go.
 
-According to the screen dump, a preemption counter which is used 
-to kernel interrupt handlings, seems to be unexpectedly raised
-by something and kunmap() kernel function called by nilfs
-unfortunately detected it.
+> - ioctl:
+>   Ioctl interface (routines and structures) were implemented in an
+>   own way.  These seems to be checked whether to comply with the rules
+>   of ioctl design.
 
-Though I'm looking at the functions which appear in the stack dump, 
-there is a possibility that this was caused by some problem of the
-2.6.28-rc4 kernel.
+I can't comment on that yet since i haven't dug into that...
 
-To separate suspicious kernel functions,
-could you try turning off CONFIG_PREEMPT option?
+> Thanks, I've also started to read btrfs.
+> I'll see it during the Christmas holidays  ;)
 
-I've tested the same kernel (i.e. linux-2.6.28-rc4) with your config,
-but not yet succeeded to reproduce your problem.
+Whats your first impression? Want to take over things/ideas? Isn't that a
+quite different FS structurally since it doesn't have segments? (AFAIK!)
 
 With regards,
-Ryusuke
+Reinoud Zandijk
