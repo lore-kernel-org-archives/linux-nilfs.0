@@ -1,13 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: "Dennis Peiler" <robinx99-hi6Y0CQ0nG0@public.gmane.org>
 Subject: Re: Kernel Bug after corrupted filesystem
-Date: Wed, 31 Dec 2008 12:12:41 +0900 (JST)
-Message-ID: <20081231.121241.37569428.ryusuke@osrg.net>
+Date: Wed, 31 Dec 2008 12:17:07 +0100
+Message-ID: <20081231111707.25420@gmx.net>
 References: <20081230131953.298540@gmx.net>
 	<20081231.115354.105606600.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="========GMX25421230722227391157"
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 In-Reply-To: <20081231.115354.105606600.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -20,13 +19,104 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, robinx99-hi6Y0CQ0nG0@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-On Wed, 31 Dec 2008 11:53:54 +0900 (JST), Ryusuke Konishi wrote:
-> According to the log, the write barrier is disabled (it may be a
-> restriction of cryptoloop).  If you met an unexpected system down
-> before mounting nilfs, please let me know.
+--========GMX25421230722227391157
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Uh-oh, it's my misconception. forget it.
 
-Ryusuke
+-------- Original-Nachricht --------
+> Datum: Wed, 31 Dec 2008 11:53:54 +0900 (JST)
+> Von: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+> An: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, robinx99-hi6Y0CQ0nG0@public.gmane.org
+> Betreff: Re: [NILFS users] Kernel Bug after corrupted filesystem
+
+> Thank you for reporting the problem.
+> Again, it seems that a btree corruption happened.
+> Sorry, but it's hard to track the cause directly from the stack dump.
+> 
+Is there anything else I could provide? That might help to track down problems
+
+> 
+> I've modified btree lookup routines to avoid system freeze and allow
+> clean termination; I pushed it to our git repository.
+> 
+
+That looks much better the module is now unloadable after failing to mount.
+It now gives an error message when trying to mount
+mount.nilfs2: Error while mounting /dev/loop1 on /mnt/test: Input/output error
+
+and now there are also some other things in dmsg I will atach this to the mail in hope that it helps
+
+--========GMX25421230722227391157
+Content-Type: application/octet-stream; name="dmesg"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="dmesg"
+
+WyAxNjM1LjM0NjM4N10gUGlkOiA4ODYzLCBjb21tOiBtb3VudC5uaWxmczIgVGFpbnRlZDogUCAg
+ICAgICAgICAyLjYuMjctMTEtZ2VuZXJpYyAjMQpbIDE2MzUuMzQ2Mzk4XSAKWyAxNjM1LjM0NjM5
+OV0gQ2FsbCBUcmFjZToKWyAxNjM1LjM0NjQyOV0gIFs8ZmZmZmZmZmZhMGY5MzE2OT5dIG5pbGZz
+X2J0cmVlX2RvX2xvb2t1cCsweDIxOS8weDI0MCBbbmlsZnMyXQpbIDE2MzUuMzQ2NDUwXSAgWzxm
+ZmZmZmZmZmEwZjkzMWZlPl0gbmlsZnNfYnRyZWVfbG9va3VwKzB4NmUvMHhiMCBbbmlsZnMyXQpb
+IDE2MzUuMzQ2NDcxXSAgWzxmZmZmZmZmZmEwZjkyOGY5Pl0gbmlsZnNfYm1hcF9sb29rdXBfYXRf
+bGV2ZWwrMHg0OS8weGEwIFtuaWxmczJdClsgMTYzNS4zNDY0OTJdICBbPGZmZmZmZmZmYTBmOTI5
+NmY+XSBuaWxmc19ibWFwX2xvb2t1cCsweDFmLzB4NDAgW25pbGZzMl0KWyAxNjM1LjM0NjUxMV0g
+IFs8ZmZmZmZmZmZhMGY5MDk4Nj5dIG5pbGZzX21kdF9zdWJtaXRfYmxvY2srMHhlNi8weDFhMCBb
+bmlsZnMyXQpbIDE2MzUuMzQ2NTMxXSAgWzxmZmZmZmZmZmEwZjkwYTZiPl0gbmlsZnNfbWR0X3Jl
+YWRfYmxvY2srMHgyYi8weDE1MCBbbmlsZnMyXQpbIDE2MzUuMzQ2NTUwXSAgWzxmZmZmZmZmZmEw
+ZjkwY2NiPl0gbmlsZnNfbWR0X2dldF9ibG9jaysweDZiLzB4MmMwIFtuaWxmczJdClsgMTYzNS4z
+NDY1NjJdICBbPGZmZmZmZmZmODAzMTNiMWI+XSA/IGFsbG9jX2J1ZmZlcl9oZWFkKzB4NGIvMHg2
+MApbIDE2MzUuMzQ2NTY4XSAgWzxmZmZmZmZmZjgwMzEzODU5Pl0gPyBzZXRfYmhfcGFnZSsweDkv
+MHg1MApbIDE2MzUuMzQ2NTc3XSAgWzxmZmZmZmZmZjgwNTAzNjdlPl0gPyBfc3Bpbl9sb2NrKzB4
+ZS8weDIwClsgMTYzNS4zNDY1OTldICBbPGZmZmZmZmZmYTBmYTMzYTI+XSBuaWxmc19wYWxsb2Nf
+Z2V0X2VudHJ5X2Jsb2NrKzB4NjIvMHg3MCBbbmlsZnMyXQpbIDE2MzUuMzQ2NjIyXSAgWzxmZmZm
+ZmZmZmEwZjk3YTkxPl0gbmlsZnNfZGF0X3RyYW5zbGF0ZSsweDMxLzB4ZDAgW25pbGZzMl0KWyAx
+NjM1LjM0NjY0M10gIFs8ZmZmZmZmZmZhMGY5MTQ1Zj5dIG5pbGZzX2J0bm9kZV9zdWJtaXRfYmxv
+Y2srMHgxNmYvMHgyNjAgW25pbGZzMl0KWyAxNjM1LjM0NjY2M10gIFs8ZmZmZmZmZmZhMGY5MTU2
+ND5dIG5pbGZzX2J0bm9kZV9nZXQrMHgxNC8weDgwIFtuaWxmczJdClsgMTYzNS4zNDY2ODJdICBb
+PGZmZmZmZmZmYTBmOTI1YmQ+XSBuaWxmc19ibWFwX2dldF9ibG9jaysweDFkLzB4MjAgW25pbGZz
+Ml0KWyAxNjM1LjM0NjcwMl0gIFs8ZmZmZmZmZmZhMGY5MzA4Nj5dIG5pbGZzX2J0cmVlX2RvX2xv
+b2t1cCsweDEzNi8weDI0MCBbbmlsZnMyXQpbIDE2MzUuMzQ2NzIyXSAgWzxmZmZmZmZmZmEwZjkz
+MWZlPl0gbmlsZnNfYnRyZWVfbG9va3VwKzB4NmUvMHhiMCBbbmlsZnMyXQpbIDE2MzUuMzQ2NzQy
+XSAgWzxmZmZmZmZmZmEwZjkyOGY5Pl0gbmlsZnNfYm1hcF9sb29rdXBfYXRfbGV2ZWwrMHg0OS8w
+eGEwIFtuaWxmczJdClsgMTYzNS4zNDY3NjFdICBbPGZmZmZmZmZmYTBmOTI5NmY+XSBuaWxmc19i
+bWFwX2xvb2t1cCsweDFmLzB4NDAgW25pbGZzMl0KWyAxNjM1LjM0Njc4MV0gIFs8ZmZmZmZmZmZh
+MGY5MDk4Nj5dIG5pbGZzX21kdF9zdWJtaXRfYmxvY2srMHhlNi8weDFhMCBbbmlsZnMyXQpbIDE2
+MzUuMzQ2ODAwXSAgWzxmZmZmZmZmZmEwZjkwYTZiPl0gbmlsZnNfbWR0X3JlYWRfYmxvY2srMHgy
+Yi8weDE1MCBbbmlsZnMyXQpbIDE2MzUuMzQ2ODE5XSAgWzxmZmZmZmZmZmEwZjkwY2NiPl0gbmls
+ZnNfbWR0X2dldF9ibG9jaysweDZiLzB4MmMwIFtuaWxmczJdClsgMTYzNS4zNDY4MjddICBbPGZm
+ZmZmZmZmODA1MDM1NzY+XSA/IF9zcGluX2xvY2tfaXJxKzB4MTYvMHgyMApbIDE2MzUuMzQ2ODMz
+XSAgWzxmZmZmZmZmZjgwNTAzMzg0Pl0gPyBfX2Rvd25fd3JpdGVfbmVzdGVkKzB4YzQvMHhkMApb
+IDE2MzUuMzQ2ODU2XSAgWzxmZmZmZmZmZmEwZmEwNjc4Pl0gbmlsZnNfY3BmaWxlX2dldF9jaGVj
+a3BvaW50KzB4NjgvMHgyMTAgW25pbGZzMl0KWyAxNjM1LjM0Njg3Nl0gIFs8ZmZmZmZmZmZhMGY5
+MDI3OT5dID8gbmlsZnNfbWR0X3NldF9lbnRyeV9zaXplKzB4OS8weDQwIFtuaWxmczJdClsgMTYz
+NS4zNDY4OTZdICBbPGZmZmZmZmZmYTBmOGQ1Zjg+XSBuaWxmc19hdHRhY2hfY2hlY2twb2ludCsw
+eGM4LzB4MWIwIFtuaWxmczJdClsgMTYzNS4zNDY5MTVdICBbPGZmZmZmZmZmYTBmOGUxZTA+XSBu
+aWxmc19nZXRfc2IrMHg0MzAvMHg3MDAgW25pbGZzMl0KWyAxNjM1LjM0NjkyM10gIFs8ZmZmZmZm
+ZmY4MDJiYmIwYj5dID8ga3N0cmR1cCsweDViLzB4ODAKWyAxNjM1LjM0NjkzMV0gIFs8ZmZmZmZm
+ZmY4MDJkNWMwZD5dID8gYWxsb2NfcGFnZXNfY3VycmVudCsweGFkLzB4MTEwClsgMTYzNS4zNDY5
+NzBdICBbPGZmZmZmZmZmODAyZWM0ZjE+XSB2ZnNfa2Vybl9tb3VudCsweDgxLzB4MTgwClsgMTYz
+NS4zNDY5ODFdICBbPGZmZmZmZmZmODAyZWM2NjM+XSBkb19rZXJuX21vdW50KzB4NTMvMHgxMTAK
+WyAxNjM1LjM0Njk4OF0gIFs8ZmZmZmZmZmY4MDMwODBiYz5dIGRvX25ld19tb3VudCsweDljLzB4
+ZDAKWyAxNjM1LjM0Njk5NF0gIFs8ZmZmZmZmZmY4MDMwODc2NT5dIGRvX21vdW50KzB4MjQ1LzB4
+MjcwClsgMTYzNS4zNDcwMDJdICBbPGZmZmZmZmZmODAyZDVjMGQ+XSA/IGFsbG9jX3BhZ2VzX2N1
+cnJlbnQrMHhhZC8weDExMApbIDE2MzUuMzQ3MDEwXSAgWzxmZmZmZmZmZjgwMmIxMjZkPl0gPyBf
+X2dldF9mcmVlX3BhZ2VzKzB4MWQvMHg1MApbIDE2MzUuMzQ3MDE2XSAgWzxmZmZmZmZmZjgwMzA4
+ODUwPl0gc3lzX21vdW50KzB4YzAvMHhmMApbIDE2MzUuMzQ3MDI1XSAgWzxmZmZmZmZmZjgwMjEy
+ODVhPl0gc3lzdGVtX2NhbGxfZmFzdHBhdGgrMHgxNi8weDFiClsgMTYzNS4zNDcwMzBdIApbIDE2
+MzUuMzQ3MDMzXSBOSUxGUzogYnRyZWUgbGV2ZWwgbWlzbWF0Y2g6IDY0ICE9IDIKWyAxNjM1LjM1
+NTU1MV0gTklMRlM6IGVycm9yIGxvYWRpbmcgYSBjaGVja3BvaW50IChjaGVja3BvaW50IG51bWJl
+cj0xMTI2MTIpLgo=
+--========GMX25421230722227391157
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--========GMX25421230722227391157--
