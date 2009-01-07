@@ -1,15 +1,16 @@
-From: Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: Some nilfs comments
-Date: Tue, 06 Jan 2009 14:55:09 -0500
-Message-ID: <1231271709.4888.27.camel@think.oraclecorp.com>
+Date: Wed, 07 Jan 2009 14:20:09 +0900 (JST)
+Message-ID: <20090107.142009.106620982.ryusuke@osrg.net>
 References: <1229568775.27170.134.camel@think.oraclecorp.com>
 	<20081222.180719.88488712.ryusuke@osrg.net>
+	<1231271709.4888.27.camel@think.oraclecorp.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20081222.180719.88488712.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <1231271709.4888.27.camel-cGoWVVl3WGUrkklhUoBCrlaTQe2KTcn/@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,41 +21,54 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
 
-On Mon, 2008-12-22 at 18:07 +0900, Ryusuke Konishi wrote:
-> > I haven't dug too deeply in yet, but if there are parts you're most
-> > interested in comments on, please let me know.
+On Tue, 06 Jan 2009 14:55:09 -0500, Chris Mason wrote:
+> On Mon, 2008-12-22 at 18:07 +0900, Ryusuke Konishi wrote:
+> > > I haven't dug too deeply in yet, but if there are parts you're most
+> > > interested in comments on, please let me know.
+> > 
+> > Well, I feel that the following two matters are particularlly
+> > questionable and need to be checked:
+> > 
 > 
-> Well, I feel that the following two matters are particularlly
-> questionable and need to be checked:
+> > - ioctl:
+> >   Ioctl interface (routines and structures) were implemented in an
+> >   own way.  These seems to be checked whether to comply with the rules
+> >   of ioctl design.
+> > 
 > 
-
-> - ioctl:
->   Ioctl interface (routines and structures) were implemented in an
->   own way.  These seems to be checked whether to comply with the rules
->   of ioctl design.
+> It took me far too long to look at this, I'm sorry.  But, looking
+> through the ioctl code I think you'll have a few (easy to fix) problems.
 > 
+> struct nilfs_argv {
+>         void *v_base;
+>         size_t v_nmembs;        /* number of members */
+>         size_t v_size;          /* size of members */
+>         int v_index;
+>         int v_flags;
+> };
+> 
+> The structs that get passed from userland to kernel should use fixed
+> sized types.
+> 
+> I get around this by using u64s (and __u64s) everywhere.  It looks like
+> you have compat ioctls to fix this too, I find it easier to use the
+> fixed types.
+> 
+> Otherwise the ioctl code looks pretty reasonable.
+> 
+> -chris
 
-It took me far too long to look at this, I'm sorry.  But, looking
-through the ioctl code I think you'll have a few (easy to fix) problems.
+Thank you for this comment and for taking time from your busy
+schedule.
 
-struct nilfs_argv {
-        void *v_base;
-        size_t v_nmembs;        /* number of members */
-        size_t v_size;          /* size of members */
-        int v_index;
-        int v_flags;
-};
+I think it actually should be fixed to comply with the kernel rules.
+The same problem is found in a few other ioctl structures.
 
-The structs that get passed from userland to kernel should use fixed
-sized types.
+I'd like to modify them and remove compat ioctls some time soon.
 
-I get around this by using u64s (and __u64s) everywhere.  It looks like
-you have compat ioctls to fix this too, I find it easier to use the
-fixed types.
 
-Otherwise the ioctl code looks pretty reasonable.
-
--chris
+Thanks,
+Ryusuke Konishi
