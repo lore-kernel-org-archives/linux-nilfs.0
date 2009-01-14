@@ -1,14 +1,11 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: nilfs crashes on 2.6.18 and 2.6.26 kernel
-Date: Tue, 13 Jan 2009 17:30:36 +0900 (JST)
-Message-ID: <20090113.173036.74135964.ryusuke@osrg.net>
-References: <62ae1fa40901121422u477654bbjf8174dbb8491e0ef@mail.gmail.com>
+From: "Milos Jana" <milosdsax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Can't mount nilfs - error searching super root.
+Date: Wed, 14 Jan 2009 23:04:30 +0100
+Message-ID: <3313c4ab0901141404h97995dgf58282876b0ffd42@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1582568921=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <62ae1fa40901121422u477654bbjf8174dbb8491e0ef-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,62 +14,101 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, amrita.nayal-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+
+--===============1582568921==
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_1520_29700630.1231970670467"
+
+------=_Part_1520_29700630.1231970670467
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 Hi,
-On Mon, 12 Jan 2009 14:22:45 -0800, "amrita nayal" wrote:
-> Hi,
-> 
-> I have been trying to gauge file systems performance on flash device
-> for one of my projects.
-> 
-> I already have numbers for ext2 and ext4 , both of them doing pretty
-> good for sequential IOs, but horrible when it comes to random ones.
-> Now I am trying to look into NILFS to figure out what performance they
-> can give for random IOs.
-> 
-> I downloaded open source software from nilfs.org. Once I start
-> running my fio tests the kernel crashes. And presumably this happens
-> when cleaner demon tries to clean the snapshots, to make space in the
-> device.
-> 
-> Has anybody seen similar problems ?
+After 2 weeks of successful using of NILFS on my pendrive I encountered this
+error:
 
-Actully a few other people have reported crashes which seem to be
-caused by some sort of cleaner problem.
+milos@computer:~$ sudo mount /media/pendrive/
+[sudo] password for user:
+mount.nilfs2: Error while mounting /dev/sdb on /media/pendrive: Invalid
+argument
 
-Is your fio test program available publicly?
+First, I thought there was something wrong with /etc/fstab entry, which
+looks like this:
 
-I'd like to fix the cleaner related problems, but I haven't succeeded
-to reproduce this so far.
+/dev/sdb /media/pendrive nilfs2 noauto,user,rw 0 0
 
-If we can get the way to reproduce this easily, it would be a great
-help.
+But it looked the same when drive was working fine, I also tried different
+parameters but it did not help. The last two lines from dmesg output made me
+even more worry:
 
-> I am able to get some numbers for sequential IOs, keeping device size
-> as small as 12g.
-> (though device spans 240g) .But w/ similar device size of 12g for
-> randowm write, kernel crashes almost when the test is ~20% complete.
+[ 759.733075] usb 7-3: new high speed USB device using ehci_hcd and address
+5
+[ 763.362043] usb 7-3: configuration #1 chosen from 1 choice
+[ 763.713991] usbcore: registered new interface driver libusual
+[ 763.730554] Initializing USB Mass Storage driver...
+[ 763.730704] scsi5 : SCSI emulation for USB Mass Storage devices
+[ 763.732474] usbcore: registered new interface driver usb-storage
+[ 763.732480] USB Mass Storage support registered.
+[ 763.732647] usb-storage: device found at 5
+[ 763.732649] usb-storage: waiting for device to settle before scanning
+[ 768.732513] usb-storage: device scan complete
+[ 768.733715] scsi 5:0:0:0: Direct-Access USB 2.0 Flash Disk 1100 PQ: 0
+ANSI: 0 CCS
+[ 768.747539] sd 5:0:0:0: [sdb] 62652416 512-byte hardware sectors (32078
+MB)
+[ 768.748544] sd 5:0:0:0: [sdb] Write Protect is off
+[ 768.748552] sd 5:0:0:0: [sdb] Mode Sense: 43 00 00 00
+[ 768.748557] sd 5:0:0:0: [sdb] Assuming drive cache: write through
+[ 768.752786] sd 5:0:0:0: [sdb] 62652416 512-byte hardware sectors (32078
+MB)
+[ 768.753780] sd 5:0:0:0: [sdb] Write Protect is off
+[ 768.753787] sd 5:0:0:0: [sdb] Mode Sense: 43 00 00 00
+[ 768.753792] sd 5:0:0:0: [sdb] Assuming drive cache: write through
+[ 768.753803] sdb: sdb1
+[ 768.857613] sd 5:0:0:0: [sdb] Attached SCSI removable disk
+[ 768.857786] sd 5:0:0:0: Attached scsi generic sg2 type 0
+[ 1130.248957] NILFS warning: Segment magic number invalid
+[ 1130.248965] NILFS: error searching super root.
 
-How was the free space on the paratition?
+I'm using nilfs2-tools 2.0.3-1 on kernel 2.6.27-10, the error also occurs
+after upgrade to nilfs2-utils and nilfs kernel module 2.0.6.
 
-> I have also tried to update cleanerd.conf so that snapshots cleaning
-> is held longer, but am not able to avert it for the duration of random
-> write is preety long.
+How can I recover this drive? I didn't create any checkpoints, afair the
+only thing I have done was to create the new filesystem using mkfs.nilfs2
+command.
 
-That's interesting.
+------=_Part_1520_29700630.1231970670467
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-So, you did shorten protection_period or increase the number of
-nsegments_per_clean ?
+Hi,<br>After 2 weeks of successful using of NILFS on my pendrive I encountered this error:<br><br>milos@computer:~$ sudo mount /media/pendrive/<br>[sudo] password for user:&nbsp;<br>mount.nilfs2: Error while mounting /dev/sdb on /media/pendrive: Invalid argument<br>
+<br>First, I thought there was something wrong with /etc/fstab entry, which looks like this:<br><br>/dev/sdb	/media/pendrive	nilfs2	noauto,user,rw	0	0<br><br>But it looked the same when drive was working fine, I also tried different parameters but it did not help. The last two lines from dmesg output made me even more worry:<br>
+<br>[  759.733075] usb 7-3: new high speed USB device using ehci_hcd and address 5<br>[  763.362043] usb 7-3: configuration #1 chosen from 1 choice<br>[  763.713991] usbcore: registered new interface driver libusual<br>[  763.730554] Initializing USB Mass Storage driver...<br>
+[  763.730704] scsi5 : SCSI emulation for USB Mass Storage devices<br>[  763.732474] usbcore: registered new interface driver usb-storage<br>[  763.732480] USB Mass Storage support registered.<br>[  763.732647] usb-storage: device found at 5<br>
+[  763.732649] usb-storage: waiting for device to settle before scanning<br>[  768.732513] usb-storage: device scan complete<br>[  768.733715] scsi 5:0:0:0: Direct-Access     USB 2.0  Flash Disk       1100 PQ: 0 ANSI: 0 CCS<br>
+[  768.747539] sd 5:0:0:0: [sdb] 62652416 512-byte hardware sectors (32078 MB)<br>[  768.748544] sd 5:0:0:0: [sdb] Write Protect is off<br>[  768.748552] sd 5:0:0:0: [sdb] Mode Sense: 43 00 00 00<br>[  768.748557] sd 5:0:0:0: [sdb] Assuming drive cache: write through<br>
+[  768.752786] sd 5:0:0:0: [sdb] 62652416 512-byte hardware sectors (32078 MB)<br>[  768.753780] sd 5:0:0:0: [sdb] Write Protect is off<br>[  768.753787] sd 5:0:0:0: [sdb] Mode Sense: 43 00 00 00<br>[  768.753792] sd 5:0:0:0: [sdb] Assuming drive cache: write through<br>
+[  768.753803]  sdb: sdb1<br>[  768.857613] sd 5:0:0:0: [sdb] Attached SCSI removable disk<br>[  768.857786] sd 5:0:0:0: Attached scsi generic sg2 type 0<br>[ 1130.248957] NILFS warning: Segment magic number invalid<br>[ 1130.248965] NILFS: error searching super root.<br>
+<br>I&#39;m using nilfs2-tools 2.0.3-1 on kernel 2.6.27-10, the error also occurs after upgrade to nilfs2-utils and nilfs kernel module 2.0.6.<br><br>How can I recover this drive? I didn&#39;t create any checkpoints, afair the only thing I have done was to create the new filesystem using  mkfs.nilfs2 command.<br>
+<br><br>
 
-> I would highly appreciate inputs.
-> 
-> Thanks
-> Amrita
+------=_Part_1520_29700630.1231970670467--
 
-Thanks for reporting the problem.
+--===============1582568921==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Regards,
-Ryusuke
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============1582568921==--
