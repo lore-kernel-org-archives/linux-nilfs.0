@@ -1,18 +1,12 @@
-From: "Csaba Kos" <csaba.kos-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Can't mount nilfs - error searching super root.
-Date: Fri, 16 Jan 2009 20:16:55 +0900
-Message-ID: <55b53420901160316h2b1e70e3xc420321973ce99b4@mail.gmail.com>
-References: <20090116.165503.64733535.ryusuke@osrg.net>
-	<3313c4ab0901160138u39baa485u56c5f285fb553449@mail.gmail.com>
-	<55b53420901160222g3716f81cy229069f7af717283@mail.gmail.com>
-	<20090116.200749.101561788.ryusuke@osrg.net>
+From: "John Garrison" <jgarrison-mRW4Vj+HBIk@public.gmane.org>
+Subject: [SPAM]  NILFS2 Cleaner Explanation Request
+Date: Fri, 16 Jan 2009 07:16:06 -0600
+Message-ID: <000401c977dc$97465850$c5d308f0$@edu>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0174882854=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090116.200749.101561788.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Content-Disposition: inline
+Content-Language: en-us
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,130 +15,162 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-On Fri, Jan 16, 2009 at 8:07 PM, Ryusuke Konishi wrote:
-> On Fri, 16 Jan 2009 19:22:46 +0900, "Csaba Kos" wrote:
->> Hi!
->>
->> Sorry to chime in uncalled, but I noticed that you are trying to mount
->> "/dev/sdb".
->> I have to admit that it has been a while since I last mounted a
->> pendrive from the
->> command line, so I might be wrong, but usually one mounts partitions
->> on the device,
->>  like "/dev/sdb1", and not the device itself.
->
-> No, no. That's OK.
-> NILFS does not overwrite the partition table block, so is available
-> for the device itself.
-> Of course, it's unless there's a bug for this usage ;)
-Ah, sorry, I didn't know about that and thank you for the heads up. So
-sdb and sdb1 is basically equivalent for nilfs? Is this a
-nilfs-specific feature?
+This is a multipart message in MIME format.
 
-Regards,
+--===============0174882854==
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_0005_01C977AA.4CABE850"
+Content-Language: en-us
 
-Csaba
+This is a multipart message in MIME format.
 
->
-> Ryusuke
->
->> Regards,
->>
->> Csaba Kos
->>
->> On Fri, Jan 16, 2009 at 6:38 PM, Milos Jana <milosdsax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> > user@laptop:~/prog/sources/nilfs-utils-2.0.6$ sudo fsck0.nilfs2 /dev/sdb
->> > [sudo] password for user:
->> > Super-block:
->> >   revision = 2.0, checksum = OK
->> >   blocksize = 4096
->> >   write time = 2008-12-28 09:48:42
->> >   indicated partial segment: blocknr = 4263936
->> >   segnum = 2082, seq = 11746, cno=6661
->> >
->> > empty or bad segment: segnum = 2082, blocknr = 4263936
->> > The latest segment is lost. Trying rollback recovery..
->> > .
->> > Searching the latest checkpoint.
->> > Selected segment: blocknr = 4261888
->> >   segnum = 2081, seq = 11745, cno=6660
->> >   creation time = 2008-12-28 09:48:34
->> > Do you wish to overwrite super block (y/N)? Y
->> > Recovery will complete on mount.
->> > user@laptop:~/prog/sources/nilfs-utils-2.0.6$ sudo mount /media/pendrive/
->> > mount.nilfs2: Error while mounting /dev/sdb on /media/pendrive: Invalid
->> > argument
->> >
->> > dmesg returns the same errors:
->> > [ 553.003240] NILFS warning: Segment magic number invalid
->> > [ 553.003248] NILFS: error searching super root.
->> >
->> > On Fri, Jan 16, 2009 at 8:55 AM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
->> >>
->> >> On Thu, 15 Jan 2009 19:10:19 +0100, "Milos Jana" wrote:
->> >> > Nilfs-utils compiled properly with patch after following instructions
->> >> > from
->> >> > your previous post. Here is what came out:
->> >> >
->> >> > user@laptop:~$ sudo fsck0.nilfs2 /dev/sdb
->> >> > Super-block:
->> >> >   revision = 2.0, checksum = OK
->> >> >   blocksize = 4096
->> >> >   write time = 2008-12-28 09:48:42
->> >> >   indicated partial segment: blocknr = 4263936
->> >> >   segnum = 2082, seq = 11746, cno=6661
->> >> >
->> >> > Clean FS.
->> >> >
->> >> > user@laptop:~$ sudo mount /media/pendrive/
->> >> > mount.nilfs2: Error while mounting /dev/sdb on /media/pendrive: Invalid
->> >> > argument
->> >>
->> >> Hmm, that's weird.
->> >>
->> >> The partition was cleanly unmounted, but the final segment seems not
->> >> to be written to the disk.
->> >>
->> >> Maybe, we need 'force' option to treat such situation.
->> >>
->> >> In the meatime, could you try the following (additional) patch?
->> >>
->> >> Regards,
->> >> Ryusuke
->> >> --
->> >>
->> >> diff --git a/sbin/mkfs/fsck0.nilfs2.c b/sbin/mkfs/fsck0.nilfs2.c
->> >> index d3d335f..0d51e54 100644
->> >> --- a/sbin/mkfs/fsck0.nilfs2.c
->> >> +++ b/sbin/mkfs/fsck0.nilfs2.c
->> >> @@ -905,10 +905,12 @@ static void nilfs_fsck(const char *device)
->> >>        print_pseg_message(&pseg_ref, "    indicated partial segment");
->> >>        fputc('\n', stderr);
->> >>
->> >> +#if 0
->> >>        if (le16_to_cpu(sb.s_state) & NILFS_VALID_FS) {
->> >>                fprintf(stderr, "Clean FS.\n");
->> >>                goto out_clean;
->> >>        }
->> >> +#endif
->> >>
->> >>        if (nilfs_do_recovery(devfd, &pseg_ref) == 0)
->> >>                goto out;
->> >
->> >
->> > _______________________________________________
->> > users mailing list
->> > users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
->> > https://www.nilfs.org/mailman/listinfo/users
->> >
->> >
->> _______________________________________________
->> users mailing list
->> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
->> https://www.nilfs.org/mailman/listinfo/users
->
+------=_NextPart_000_0005_01C977AA.4CABE850
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Could you provide an explanation of the cleanerd's algorithm and method in
+cleaning the file system.  What all does it do during a pass, what kind of
+complexity is the operation, does it generally follow the cleaner suggested
+in the original SPRITE LFS paper (where the write cost on a cleaning
+operation is 2/(1-u) where u is the utilization of segments), etc.  The
+reason I ask is that in my research, we have done some work on page cache
+algorithms to improve the cleaning in a log structured file system.  NILFS2
+seems to work quite well in our preliminary tests with Flash SSDs (as one
+would expect), but before we move forward to actual implementation of our
+page cache ideas, it would be good to understand how the NILFS2 cleaner
+works and how we might interact with it.  I have done some digging in the
+code, but I think a relatively high level explanation of the strategy and
+motivation behind the design choices would be very helpful in understanding
+exactly what is going on and how our algorithms might interact with it.
+Thanks in advance.
+
+ 
+
+John Garrison
+
+
+------=_NextPart_000_0005_01C977AA.4CABE850
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext=3D"edit">
+  <o:idmap v:ext=3D"edit" data=3D"1" />
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal>Could you provide an explanation of the cleanerd's =
+algorithm
+and method in cleaning the file system. &nbsp;What all does it do during =
+a
+pass, what kind of complexity is the operation, does it generally follow =
+the
+cleaner suggested in the original SPRITE LFS paper (where the write cost =
+on a
+cleaning operation is 2/(1-u) where u is the utilization of segments), =
+etc.
+&nbsp;The reason I ask is that in my research, we have done some work on =
+page
+cache algorithms to improve the cleaning in a log structured file =
+system.
+&nbsp;NILFS2 seems to work quite well in our preliminary tests with =
+Flash SSDs
+(as one would expect), but before we move forward to actual =
+implementation of
+our page cache ideas, it would be good to understand how the NILFS2 =
+cleaner
+works and how we might interact with it. &nbsp;I have done some digging =
+in the
+code, but I think a relatively high level explanation of the strategy =
+and
+motivation behind the design choices would be very helpful in =
+understanding
+exactly what is going on and how our algorithms might interact with =
+it.&nbsp;
+Thanks in advance.<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>John Garrison<o:p></o:p></p>
+
+</div>
+
+</body>
+
+</html>
+
+------=_NextPart_000_0005_01C977AA.4CABE850--
+
+
+--===============0174882854==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0174882854==--
+
