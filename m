@@ -1,16 +1,16 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: nilfs_cleanerd some questions
-Date: Fri, 30 Jan 2009 19:27:14 +0900 (JST)
-Message-ID: <20090130.192714.36238794.ryusuke@osrg.net>
-References: <497B59C2.80709@blueyonder.co.uk>
-	<20090130.184034.91816318.ryusuke@osrg.net>
-	<7e094bfb0901300155i42dd45fbv5cc7719959b1a9d2@mail.gmail.com>
+Subject: Re: Can't mount nilfs - error searching super root.
+Date: Fri, 30 Jan 2009 21:03:23 +0900 (JST)
+Message-ID: <20090130.210323.88475416.ryusuke@osrg.net>
+References: <55b53420901160316h2b1e70e3xc420321973ce99b4@mail.gmail.com>
+	<20090116.222255.131926946.ryusuke@osrg.net>
+	<3313c4ab0901231613g2d82ea3at13e524dfba28df4@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <7e094bfb0901300155i42dd45fbv5cc7719959b1a9d2-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <3313c4ab0901231613g2d82ea3at13e524dfba28df4-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,98 +21,66 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, milosdsax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
 Hi,
-On Fri, 30 Jan 2009 10:55:14 +0100, Gergely G=E1bor wrote:
-> Hello!
-> =
+On Sat, 24 Jan 2009 01:13:41 +0100, Milos Jana wrote:
+> Hi again,
+> 
+> Looks like I'm unable to mount this drive again. It mounted successfully
+> several times after following your previous posts, but yesterday the problem
+> came back. I'm sure that I have been mounting/unmounting my pendrive
+> properly.
 
-> Sorry for my intrusion, but probably a way to pause the GC and resume
-> it, would be nice, maybe with SIGUSR1 and SIGUSR2, or even trough dbus
-> >:-), to let other cases be handled, like running on battery, and
-> similiar. IMHO this is much more elegant way, then killing, and
-> respawning the GC at every such change, and it can finish its work,
-> before getting killed aswell.
+Hmm, it's abnormal that this occurs so often.
+The partition was cleanly unmounted, but the latest segment was not written.
+The usb device seems to lack proper support of cache flushing if it
+occurs just before power-off.
 
-I don't disagree.
-We sometimes do the simliar thing by raising `protection_period'
-temporarily, but it's not elegant either.
+The usb stack of Linux is often problematic, but this looks terrific.
+ 
+> This time fsck0.nilfs2 doesn't help - it hangs with "Searching the
+> latest checkpoint." message (see below).
+
+All right, I'll look into the hang problem.
+
+Please note that the fsck0 is not a complete solution.
+To make it better, we need a few changes on the disk format.
 
 Regards,
 Ryusuke
- =
 
-> On Fri, Jan 30, 2009 at 10:40 AM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrot=
-e:
-> > Hi,
-> > On Sat, 24 Jan 2009 18:11:14 +0000, tom wrote:
-> >> I'm using nilfs2 on a debian (lenny machine) using kernel 2.6.26-1-686
-> >> and nilfs version 2.0.6. Currently I have a 250 Gb single partition
-> >> drive connected via USB2, which I have formatted for nilfs2. I have
-> >> noticed that when extracting a large archive onto the the file system
-> >> that it seems to "burst", that is, it will extract for 5 seconds then
-> >> halt for 1 and then repeat this cycle faithfully for the duration.
-> >>
-> >> If I switch (kill) off the GC then the "bursting" effect disappears. I
-> >> can remove checkpoints more efficiently using rmcp, however am I right
-> >> in thinking that the GC does more than just remove checkpoints ?
-> >
-> > Yes, only GC can reclaim disk space; rmcp does not make free space.
-> >
-> >> Is the behaviour that I am witnessing typical of the nilfs GC or is
-> >> being highlighted because I am using usb instead of directly attached
-> >> ide / sata ?
-> >
-> > I don't know why that happens, but a likely cause is bulky reads of
-> > blocks during GC.
-> >
-> > In that case, the following workarounds may make a difference.
-> >
-> > 1) Decrease value of `nsegments_per_clean' in /etc/nilfs_cleanerd.conf
-> >  e.g.
-> >  #nsegments_per_clean   2
-> >  nsegments_per_clean   1
-> >
-> > 2) Re-create the partition using mkfs.nilfs2 with a smaller segment siz=
-e.
-> >  e.g.
-> >  # mkfs -t nilfs2 -B 1024 /dev/sdxx
-> >  (This halves the number of blocks per segment)
-> >
-> >> I'm hoping to apply nilfs in production environment for our print unit
-> >> at work because they would like self service recovery and because they
-> >> have large amounts of graphical data that is updated daily but could
-> >> only be safely backed up using a snaphot technology.
-> >>
-> >> However I am concerned that any large file / archive extracts onto a
-> >> nilfs file system with the GC switched on would impede efficiency.
-> >>
-> >> It is safe to say that I wont be using USB attached storage in the
-> >> production environment, but I thought it might be worth mentioning my
-> >> findings as the behaviour may still be present in a very muted form on
-> >> IDE / SATA based storage devices.
-> >
-> > Thanks for reporting.
-> >
-> > I feel, the current GC is indeed immature and needs more love
-> > especially for production use.
-> >
-> >> I guess I could run GC at off peak times as a workaround, but would it
-> >> ever catch up ?
-> >
-> > Not guaranteed.  The speed of the GC is static unless you change
-> > nilfs_cleanerd.conf and send a HUP signal to the GC daemon.
-> > At least the speed should be adjusted adaptively, but not done yet.
-> >
-> > Regards,
-> > Ryusuke Konishi
-> > _______________________________________________
-> > users mailing list
-> > users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> > https://www.nilfs.org/mailman/listinfo/users
-> >
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
+> user@laptop:~$ sudo mount /media/pendrive/
+> mount.nilfs2: Error while mounting /dev/sdb on /media/pendrive: Invalid
+> argument
+> 
+> user@laptop:~$ dmesg
+> ...
+> [22429.446924] NILFS warning: Segment magic number invalid
+> [22429.446932] NILFS: error searching super root.
+> 
+> user@laptop:~/prog/sources/nilfs-utils-2.0.6$ sudo fsck0.nilfs2 /dev/sdb #
+> Nilfs-tools with first patch applied
+> Super-block:
+>   revision = 2.0, checksum = OK
+>   blocksize = 4096
+>   write time = 2009-01-22 23:40:19
+>   indicated partial segment: blocknr = 1966080
+>   segnum = 960, seq = 18266, cno=10169
+> 
+> Clean FS.
+> 
+> user@laptop:~/prog/sources/nilfs-utils-2.0.6$ sudo fsck0.nilfs2 /dev/sdb #
+> Nilfs-tools with additional patch applied
+> Super-block:
+>   revision = 2.0, checksum = OK
+>   blocksize = 4096
+>   write time = 2009-01-22 23:40:19
+>   indicated partial segment: blocknr = 1966080
+>   segnum = 960, seq = 18266, cno=10169
+> 
+> empty or bad segment: segnum = 960, blocknr = 1966080
+> The latest segment is lost. Trying rollback recovery..
+> .
+> Searching the latest checkpoint.    # here it hanged for like 10 minutes
+> until I killed it
