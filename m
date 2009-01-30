@@ -1,14 +1,14 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: =?UTF-8?Q?Gergely_G=C3=A1bor?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: nilfs_cleanerd some questions
-Date: Fri, 30 Jan 2009 18:40:34 +0900 (JST)
-Message-ID: <20090130.184034.91816318.ryusuke@osrg.net>
+Date: Fri, 30 Jan 2009 10:55:14 +0100
+Message-ID: <7e094bfb0901300155i42dd45fbv5cc7719959b1a9d2@mail.gmail.com>
 References: <497B59C2.80709@blueyonder.co.uk>
+	<20090130.184034.91816318.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <497B59C2.80709-QgLWrMLu8clzjhtm8Ag3mw@public.gmane.org>
+In-Reply-To: <20090130.184034.91816318.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,66 +19,64 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, tombrough-QgLWrMLu8clzjhtm8Ag3mw@public.gmane.org
+Content-Type: text/plain; charset="iso-8859-1"
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi,
-On Sat, 24 Jan 2009 18:11:14 +0000, tom wrote:
-> I'm using nilfs2 on a debian (lenny machine) using kernel 2.6.26-1-686
-> and nilfs version 2.0.6. Currently I have a 250 Gb single partition
-> drive connected via USB2, which I have formatted for nilfs2. I have
-> noticed that when extracting a large archive onto the the file system
-> that it seems to "burst", that is, it will extract for 5 seconds then
-> halt for 1 and then repeat this cycle faithfully for the duration.
-> 
-> If I switch (kill) off the GC then the "bursting" effect disappears. I
-> can remove checkpoints more efficiently using rmcp, however am I right
-> in thinking that the GC does more than just remove checkpoints ?
-
-Yes, only GC can reclaim disk space; rmcp does not make free space.
- 
-> Is the behaviour that I am witnessing typical of the nilfs GC or is
-> being highlighted because I am using usb instead of directly attached
-> ide / sata ?
-
-I don't know why that happens, but a likely cause is bulky reads of
-blocks during GC.
-
-In that case, the following workarounds may make a difference.
-
-1) Decrease value of `nsegments_per_clean' in /etc/nilfs_cleanerd.conf
-  e.g.
-  #nsegments_per_clean   2
-  nsegments_per_clean   1
-
-2) Re-create the partition using mkfs.nilfs2 with a smaller segment size.
-  e.g.
-  # mkfs -t nilfs2 -B 1024 /dev/sdxx
-  (This halves the number of blocks per segment)
-
-> I'm hoping to apply nilfs in production environment for our print unit
-> at work because they would like self service recovery and because they
-> have large amounts of graphical data that is updated daily but could
-> only be safely backed up using a snaphot technology.
-> 
-> However I am concerned that any large file / archive extracts onto a
-> nilfs file system with the GC switched on would impede efficiency.
->
-> It is safe to say that I wont be using USB attached storage in the
-> production environment, but I thought it might be worth mentioning my
-> findings as the behaviour may still be present in a very muted form on
-> IDE / SATA based storage devices.
-
-Thanks for reporting.
-
-I feel, the current GC is indeed immature and needs more love
-especially for production use.
- 
-> I guess I could run GC at off peak times as a workaround, but would it
-> ever catch up ?
-
-Not guaranteed.  The speed of the GC is static unless you change
-nilfs_cleanerd.conf and send a HUP signal to the GC daemon.
-At least the speed should be adjusted adaptively, but not done yet.
-
-Regards,
-Ryusuke Konishi
+SGVsbG8hCgpTb3JyeSBmb3IgbXkgaW50cnVzaW9uLCBidXQgcHJvYmFibHkgYSB3YXkgdG8gcGF1
+c2UgdGhlIEdDIGFuZCByZXN1bWUKaXQsIHdvdWxkIGJlIG5pY2UsIG1heWJlIHdpdGggU0lHVVNS
+MSBhbmQgU0lHVVNSMiwgb3IgZXZlbiB0cm91Z2ggZGJ1cwo+Oi0pLCB0byBsZXQgb3RoZXIgY2Fz
+ZXMgYmUgaGFuZGxlZCwgbGlrZSBydW5uaW5nIG9uIGJhdHRlcnksIGFuZApzaW1pbGlhci4gSU1I
+TyB0aGlzIGlzIG11Y2ggbW9yZSBlbGVnYW50IHdheSwgdGhlbiBraWxsaW5nLCBhbmQKcmVzcGF3
+bmluZyB0aGUgR0MgYXQgZXZlcnkgc3VjaCBjaGFuZ2UsIGFuZCBpdCBjYW4gZmluaXNoIGl0cyB3
+b3JrLApiZWZvcmUgZ2V0dGluZyBraWxsZWQgYXN3ZWxsLgoKR3JlZWluZ3M6CkdlcmdlbHkgR8Oh
+Ym9yLgoKT24gRnJpLCBKYW4gMzAsIDIwMDkgYXQgMTA6NDAgQU0sIFJ5dXN1a2UgS29uaXNoaSA8
+cnl1c3VrZUBvc3JnLm5ldD4gd3JvdGU6Cj4gSGksCj4gT24gU2F0LCAyNCBKYW4gMjAwOSAxODox
+MToxNCArMDAwMCwgdG9tIHdyb3RlOgo+PiBJJ20gdXNpbmcgbmlsZnMyIG9uIGEgZGViaWFuIChs
+ZW5ueSBtYWNoaW5lKSB1c2luZyBrZXJuZWwgMi42LjI2LTEtNjg2Cj4+IGFuZCBuaWxmcyB2ZXJz
+aW9uIDIuMC42LiBDdXJyZW50bHkgSSBoYXZlIGEgMjUwIEdiIHNpbmdsZSBwYXJ0aXRpb24KPj4g
+ZHJpdmUgY29ubmVjdGVkIHZpYSBVU0IyLCB3aGljaCBJIGhhdmUgZm9ybWF0dGVkIGZvciBuaWxm
+czIuIEkgaGF2ZQo+PiBub3RpY2VkIHRoYXQgd2hlbiBleHRyYWN0aW5nIGEgbGFyZ2UgYXJjaGl2
+ZSBvbnRvIHRoZSB0aGUgZmlsZSBzeXN0ZW0KPj4gdGhhdCBpdCBzZWVtcyB0byAiYnVyc3QiLCB0
+aGF0IGlzLCBpdCB3aWxsIGV4dHJhY3QgZm9yIDUgc2Vjb25kcyB0aGVuCj4+IGhhbHQgZm9yIDEg
+YW5kIHRoZW4gcmVwZWF0IHRoaXMgY3ljbGUgZmFpdGhmdWxseSBmb3IgdGhlIGR1cmF0aW9uLgo+
+Pgo+PiBJZiBJIHN3aXRjaCAoa2lsbCkgb2ZmIHRoZSBHQyB0aGVuIHRoZSAiYnVyc3RpbmciIGVm
+ZmVjdCBkaXNhcHBlYXJzLiBJCj4+IGNhbiByZW1vdmUgY2hlY2twb2ludHMgbW9yZSBlZmZpY2ll
+bnRseSB1c2luZyBybWNwLCBob3dldmVyIGFtIEkgcmlnaHQKPj4gaW4gdGhpbmtpbmcgdGhhdCB0
+aGUgR0MgZG9lcyBtb3JlIHRoYW4ganVzdCByZW1vdmUgY2hlY2twb2ludHMgPwo+Cj4gWWVzLCBv
+bmx5IEdDIGNhbiByZWNsYWltIGRpc2sgc3BhY2U7IHJtY3AgZG9lcyBub3QgbWFrZSBmcmVlIHNw
+YWNlLgo+Cj4+IElzIHRoZSBiZWhhdmlvdXIgdGhhdCBJIGFtIHdpdG5lc3NpbmcgdHlwaWNhbCBv
+ZiB0aGUgbmlsZnMgR0Mgb3IgaXMKPj4gYmVpbmcgaGlnaGxpZ2h0ZWQgYmVjYXVzZSBJIGFtIHVz
+aW5nIHVzYiBpbnN0ZWFkIG9mIGRpcmVjdGx5IGF0dGFjaGVkCj4+IGlkZSAvIHNhdGEgPwo+Cj4g
+SSBkb24ndCBrbm93IHdoeSB0aGF0IGhhcHBlbnMsIGJ1dCBhIGxpa2VseSBjYXVzZSBpcyBidWxr
+eSByZWFkcyBvZgo+IGJsb2NrcyBkdXJpbmcgR0MuCj4KPiBJbiB0aGF0IGNhc2UsIHRoZSBmb2xs
+b3dpbmcgd29ya2Fyb3VuZHMgbWF5IG1ha2UgYSBkaWZmZXJlbmNlLgo+Cj4gMSkgRGVjcmVhc2Ug
+dmFsdWUgb2YgYG5zZWdtZW50c19wZXJfY2xlYW4nIGluIC9ldGMvbmlsZnNfY2xlYW5lcmQuY29u
+Zgo+ICBlLmcuCj4gICNuc2VnbWVudHNfcGVyX2NsZWFuICAgMgo+ICBuc2VnbWVudHNfcGVyX2Ns
+ZWFuICAgMQo+Cj4gMikgUmUtY3JlYXRlIHRoZSBwYXJ0aXRpb24gdXNpbmcgbWtmcy5uaWxmczIg
+d2l0aCBhIHNtYWxsZXIgc2VnbWVudCBzaXplLgo+ICBlLmcuCj4gICMgbWtmcyAtdCBuaWxmczIg
+LUIgMTAyNCAvZGV2L3NkeHgKPiAgKFRoaXMgaGFsdmVzIHRoZSBudW1iZXIgb2YgYmxvY2tzIHBl
+ciBzZWdtZW50KQo+Cj4+IEknbSBob3BpbmcgdG8gYXBwbHkgbmlsZnMgaW4gcHJvZHVjdGlvbiBl
+bnZpcm9ubWVudCBmb3Igb3VyIHByaW50IHVuaXQKPj4gYXQgd29yayBiZWNhdXNlIHRoZXkgd291
+bGQgbGlrZSBzZWxmIHNlcnZpY2UgcmVjb3ZlcnkgYW5kIGJlY2F1c2UgdGhleQo+PiBoYXZlIGxh
+cmdlIGFtb3VudHMgb2YgZ3JhcGhpY2FsIGRhdGEgdGhhdCBpcyB1cGRhdGVkIGRhaWx5IGJ1dCBj
+b3VsZAo+PiBvbmx5IGJlIHNhZmVseSBiYWNrZWQgdXAgdXNpbmcgYSBzbmFwaG90IHRlY2hub2xv
+Z3kuCj4+Cj4+IEhvd2V2ZXIgSSBhbSBjb25jZXJuZWQgdGhhdCBhbnkgbGFyZ2UgZmlsZSAvIGFy
+Y2hpdmUgZXh0cmFjdHMgb250byBhCj4+IG5pbGZzIGZpbGUgc3lzdGVtIHdpdGggdGhlIEdDIHN3
+aXRjaGVkIG9uIHdvdWxkIGltcGVkZSBlZmZpY2llbmN5Lgo+Pgo+PiBJdCBpcyBzYWZlIHRvIHNh
+eSB0aGF0IEkgd29udCBiZSB1c2luZyBVU0IgYXR0YWNoZWQgc3RvcmFnZSBpbiB0aGUKPj4gcHJv
+ZHVjdGlvbiBlbnZpcm9ubWVudCwgYnV0IEkgdGhvdWdodCBpdCBtaWdodCBiZSB3b3J0aCBtZW50
+aW9uaW5nIG15Cj4+IGZpbmRpbmdzIGFzIHRoZSBiZWhhdmlvdXIgbWF5IHN0aWxsIGJlIHByZXNl
+bnQgaW4gYSB2ZXJ5IG11dGVkIGZvcm0gb24KPj4gSURFIC8gU0FUQSBiYXNlZCBzdG9yYWdlIGRl
+dmljZXMuCj4KPiBUaGFua3MgZm9yIHJlcG9ydGluZy4KPgo+IEkgZmVlbCwgdGhlIGN1cnJlbnQg
+R0MgaXMgaW5kZWVkIGltbWF0dXJlIGFuZCBuZWVkcyBtb3JlIGxvdmUKPiBlc3BlY2lhbGx5IGZv
+ciBwcm9kdWN0aW9uIHVzZS4KPgo+PiBJIGd1ZXNzIEkgY291bGQgcnVuIEdDIGF0IG9mZiBwZWFr
+IHRpbWVzIGFzIGEgd29ya2Fyb3VuZCwgYnV0IHdvdWxkIGl0Cj4+IGV2ZXIgY2F0Y2ggdXAgPwo+
+Cj4gTm90IGd1YXJhbnRlZWQuICBUaGUgc3BlZWQgb2YgdGhlIEdDIGlzIHN0YXRpYyB1bmxlc3Mg
+eW91IGNoYW5nZQo+IG5pbGZzX2NsZWFuZXJkLmNvbmYgYW5kIHNlbmQgYSBIVVAgc2lnbmFsIHRv
+IHRoZSBHQyBkYWVtb24uCj4gQXQgbGVhc3QgdGhlIHNwZWVkIHNob3VsZCBiZSBhZGp1c3RlZCBh
+ZGFwdGl2ZWx5LCBidXQgbm90IGRvbmUgeWV0Lgo+Cj4gUmVnYXJkcywKPiBSeXVzdWtlIEtvbmlz
+aGkKPiBfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwo+IHVz
+ZXJzIG1haWxpbmcgbGlzdAo+IHVzZXJzQG5pbGZzLm9yZwo+IGh0dHBzOi8vd3d3Lm5pbGZzLm9y
+Zy9tYWlsbWFuL2xpc3RpbmZvL3VzZXJzCj4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX18KdXNlcnMgbWFpbGluZyBsaXN0CnVzZXJzQG5pbGZzLm9yZwpodHRw
+czovL3d3dy5uaWxmcy5vcmcvbWFpbG1hbi9saXN0aW5mby91c2Vycwo=
