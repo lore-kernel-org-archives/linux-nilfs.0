@@ -1,16 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Can't mount nilfs - error searching super root.
-Date: Fri, 30 Jan 2009 21:03:23 +0900 (JST)
-Message-ID: <20090130.210323.88475416.ryusuke@osrg.net>
-References: <55b53420901160316h2b1e70e3xc420321973ce99b4@mail.gmail.com>
-	<20090116.222255.131926946.ryusuke@osrg.net>
-	<3313c4ab0901231613g2d82ea3at13e524dfba28df4@mail.gmail.com>
+Subject: Re: NilFS cleanerd bugreport
+Date: Fri, 30 Jan 2009 23:18:53 +0900 (JST)
+Message-ID: <20090130.231853.99024523.ryusuke@osrg.net>
+References: <20090128205223.GA416@aardappel.13thmonkey.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <3313c4ab0901231613g2d82ea3at13e524dfba28df4-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20090128205223.GA416-5cYspOl2ggRz6xQTk39kMVfVdRo2wo/d@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,66 +19,79 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, milosdsax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi,
-On Sat, 24 Jan 2009 01:13:41 +0100, Milos Jana wrote:
-> Hi again,
+Hi Reinoud,
+On Wed, 28 Jan 2009 21:52:23 +0100, Reinoud Zandijk wrote:
+> Dear folks, dear Ryusuke,
 > 
-> Looks like I'm unable to mount this drive again. It mounted successfully
-> several times after following your previous posts, but yesterday the problem
-> came back. I'm sure that I have been mounting/unmounting my pendrive
-> properly.
+> I've found a bug in the cleanerd/nilfs interaction that might give rise to the
+> various problems we've seen recently with the cleanerd. It comes down to the
+> wrong counting of the number of dirty segments and the wrong counting of the
+> number of checkpoints.
+> 
+> I created this disc using the NiLFS version 2.05 with 2.06 userland (AFAIK)
+> with mkfs.nilfs and created a sparse file on it with my sparse file generator
+> I created for UDF testing. It dismounted fine giving a nilfs_dump
+> `vnd0e-dump-3'. When i remounted it again, the cleanerd started after a while
+> and after unmounting it gives `vnd03-dump-3-cleanerd'. A diff shows:
+<snip>
+> And the su and cp files give:
+> 
+> @@ -30743,34 +31480,34 @@
+>  Reading file `SU.out` for 1 blocks (4 Kb)
+>  
+>  	SU file dump
+> -		nclean       491
+> -		ndirty       8
+> +		nclean       496
+> +		ndirty       21474836483
+>  		last alloced 7
+>  
+>  		Segment 0
+> -		Last modified Sun Jan 25 17:05:28 2009
+> -		Containing nblks 2047
+> -		Flags            0x2<DIRTY>
+> +		Last modified Thu Jan  1 01:00:00 1970
+> +		Containing nblks 0
+> +		Flags            0x0
+> 
+> ......
+> 
+> @@ -30789,136 +31526,72 @@
+>  
+>  Reading file `CP.out` for 1 blocks (4 Kb)
+>  	CP file dump
+> -		Number of checkpoints 8
+> +		Number of checkpoints 8589934596
+>  		Number of snapshots   0
+>  
+>  		Checkpoint number    1
+> -		Flags                0x0
+> +		Flags                0x2<INVALID>
+>  		Checkpoints in block 0
+>  		Created at Sun Jan 25 17:05:10 2009
+>  		Blocks incremented   11
+>  		Inodes count         3
+>  		Blocks count (red.)  9
+> 
+> ny idea as to if and why this can happen?
 
-Hmm, it's abnormal that this occurs so often.
-The partition was cleanly unmounted, but the latest segment was not written.
-The usb device seems to lack proper support of cache flushing if it
-occurs just before power-off.
+looks underflow or collision of updates.
 
-The usb stack of Linux is often problematic, but this looks terrific.
- 
-> This time fsck0.nilfs2 doesn't help - it hangs with "Searching the
-> latest checkpoint." message (see below).
+> Has it been fixed in the meantime?
 
-All right, I'll look into the hang problem.
+Not yet, I think.
 
-Please note that the fsck0 is not a complete solution.
-To make it better, we need a few changes on the disk format.
+> or could this be a clue as to the wierd behaviour seen by others including the
+> corruption?
+
+I don't know.  As I remember, the cleanerd does not depend on these
+values, but it may be indirectly-induced.
+
+Anyway, thanks for reporting this issue.
+I'll review the cpfile and sufile again.
 
 Regards,
-Ryusuke
-
-> user@laptop:~$ sudo mount /media/pendrive/
-> mount.nilfs2: Error while mounting /dev/sdb on /media/pendrive: Invalid
-> argument
-> 
-> user@laptop:~$ dmesg
-> ...
-> [22429.446924] NILFS warning: Segment magic number invalid
-> [22429.446932] NILFS: error searching super root.
-> 
-> user@laptop:~/prog/sources/nilfs-utils-2.0.6$ sudo fsck0.nilfs2 /dev/sdb #
-> Nilfs-tools with first patch applied
-> Super-block:
->   revision = 2.0, checksum = OK
->   blocksize = 4096
->   write time = 2009-01-22 23:40:19
->   indicated partial segment: blocknr = 1966080
->   segnum = 960, seq = 18266, cno=10169
-> 
-> Clean FS.
-> 
-> user@laptop:~/prog/sources/nilfs-utils-2.0.6$ sudo fsck0.nilfs2 /dev/sdb #
-> Nilfs-tools with additional patch applied
-> Super-block:
->   revision = 2.0, checksum = OK
->   blocksize = 4096
->   write time = 2009-01-22 23:40:19
->   indicated partial segment: blocknr = 1966080
->   segnum = 960, seq = 18266, cno=10169
-> 
-> empty or bad segment: segnum = 960, blocknr = 1966080
-> The latest segment is lost. Trying rollback recovery..
-> .
-> Searching the latest checkpoint.    # here it hanged for like 10 minutes
-> until I killed it
+Ryusuke Konishi
