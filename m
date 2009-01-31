@@ -1,7 +1,7 @@
 From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 Subject: Re: silent random symbolic link corruption
-Date: Sat, 31 Jan 2009 21:48:40 +0100
-Message-ID: <4984B928.30000@prnet.org>
+Date: Sun, 01 Feb 2009 00:21:23 +0100
+Message-ID: <4984DCF3.8030302@prnet.org>
 References: <4984B0DC.6080905@prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,7 +23,43 @@ To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
 Hi,
 
-The bzip2 test returned the same result.
+I narrowed the problem down. I'm not sure if it's a problem of tar or of
+nifls2.
+
+Tar handles symbolic links this way:
+
+during extraction: if symbolic link and absolute path create a 0 byte
+file and record link and stat information
+
+after extraction: for every symbolic link verify that actual
+st_dev,st_ino and st_mtime are the same as on creation of the 0 byte
+file, and only then create the link
+
+for some 0 byte files st_ino is different between the first and the
+second stat of the 0 byte file. As I don't know the nilfs2 internal
+behavior, so could  you please tell me if this is the normal behavior of
+nilfs2 or if there is something strange with this ? If it's the normal
+behavior, maybe I should file a bug for tar ?
+
+This patch for tar 1.21 solves the symlink problem but I don't know if
+the problem is to be solved on the tar end or on the nilfs2 end.
+
+
+diff -Naur tar-1.21/src/extract.c tar-1.21.new/src/extract.c
+--- tar-1.21/src/extract.c	2008-10-30 15:10:28.000000000 +0100
++++ tar-1.21.new/src/extract.c	2009-01-31 23:32:03.000000000 +0100
+@@ -1267,7 +1267,6 @@
+ 	     removed by a later extraction.  */
+ 	  if (lstat (source, &st) == 0
+ 	      && st.st_dev == ds->dev
+-	      && st.st_ino == ds->ino
+ 	      && timespec_cmp (get_stat_mtime (&st), ds->mtime) == 0)
+ 	    {
+ 	      /* Unlink the placeholder, then create a hard link if possible,
+
+
+What do you think ?
+
 
 Thank in advance,
 David Arendt
