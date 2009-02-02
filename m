@@ -1,15 +1,15 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: silent random symbolic link corruption
-Date: Mon, 02 Feb 2009 11:42:09 +0900 (JST)
-Message-ID: <20090202.114209.59790430.ryusuke@osrg.net>
-References: <4984B0DC.6080905@prnet.org>
-	<4984DCF3.8030302@prnet.org>
+Subject: Re: NilFS cleanerd bugreport
+Date: Mon, 02 Feb 2009 16:24:55 +0900 (JST)
+Message-ID: <20090202.162455.88658401.ryusuke@osrg.net>
+References: <20090128205223.GA416@aardappel.13thmonkey.org>
+	<20090130.231853.99024523.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <4984DCF3.8030302-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <20090130.231853.99024523.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,108 +20,111 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+To: reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi David,
-On Sun, 01 Feb 2009 00:21:23 +0100, David Arendt wrote:
-> Hi,
+Hi,
+On Fri, 30 Jan 2009 23:18:53 +0900 (JST), Ryusuke Konishi wrote:
+> Hi Reinoud,
+> On Wed, 28 Jan 2009 21:52:23 +0100, Reinoud Zandijk wrote:
+> > Dear folks, dear Ryusuke,
+> > 
+> > I've found a bug in the cleanerd/nilfs interaction that might give rise to the
+> > various problems we've seen recently with the cleanerd. It comes down to the
+> > wrong counting of the number of dirty segments and the wrong counting of the
+> > number of checkpoints.
+> > 
+> > I created this disc using the NiLFS version 2.05 with 2.06 userland (AFAIK)
+> > with mkfs.nilfs and created a sparse file on it with my sparse file generator
+> > I created for UDF testing. It dismounted fine giving a nilfs_dump
+> > `vnd0e-dump-3'. When i remounted it again, the cleanerd started after a while
+> > and after unmounting it gives `vnd03-dump-3-cleanerd'. A diff shows:
+> <snip>
+> > And the su and cp files give:
+> > 
+> > @@ -30743,34 +31480,34 @@
+> >  Reading file `SU.out` for 1 blocks (4 Kb)
+> >  
+> >  	SU file dump
+> > -		nclean       491
+> > -		ndirty       8
+> > +		nclean       496
+> > +		ndirty       21474836483
+> >  		last alloced 7
+> >  
+> >  		Segment 0
+> > -		Last modified Sun Jan 25 17:05:28 2009
+> > -		Containing nblks 2047
+> > -		Flags            0x2<DIRTY>
+> > +		Last modified Thu Jan  1 01:00:00 1970
+> > +		Containing nblks 0
+> > +		Flags            0x0
+> > 
+> > ......
+> > 
+> > @@ -30789,136 +31526,72 @@
+> >  
+> >  Reading file `CP.out` for 1 blocks (4 Kb)
+> >  	CP file dump
+> > -		Number of checkpoints 8
+> > +		Number of checkpoints 8589934596
+> >  		Number of snapshots   0
+> >  
+> >  		Checkpoint number    1
+> > -		Flags                0x0
+> > +		Flags                0x2<INVALID>
+> >  		Checkpoints in block 0
+> >  		Created at Sun Jan 25 17:05:10 2009
+> >  		Blocks incremented   11
+> >  		Inodes count         3
+> >  		Blocks count (red.)  9
+> > 
+> > ny idea as to if and why this can happen?
 > 
-> I narrowed the problem down. I'm not sure if it's a problem of tar or of
-> nifls2.
-> 
-> Tar handles symbolic links this way:
-> 
-> during extraction: if symbolic link and absolute path create a 0 byte
-> file and record link and stat information
-> 
-> after extraction: for every symbolic link verify that actual
-> st_dev,st_ino and st_mtime are the same as on creation of the 0 byte
-> file, and only then create the link
-> 
-> for some 0 byte files st_ino is different between the first and the
-> second stat of the 0 byte file. As I don't know the nilfs2 internal
-> behavior, so could  you please tell me if this is the normal behavior of
-> nilfs2 or if there is something strange with this ? If it's the normal
-> behavior, maybe I should file a bug for tar ?
+> looks underflow or collision of updates.
 
-This behavior seems unusual.
-Could you send me a small tar file which can reproduce the problem ?
- 
-> This patch for tar 1.21 solves the symlink problem but I don't know if
-> the problem is to be solved on the tar end or on the nilfs2 end.
-> 
-> 
-> diff -Naur tar-1.21/src/extract.c tar-1.21.new/src/extract.c
-> --- tar-1.21/src/extract.c	2008-10-30 15:10:28.000000000 +0100
-> +++ tar-1.21.new/src/extract.c	2009-01-31 23:32:03.000000000 +0100
-> @@ -1267,7 +1267,6 @@
->  	     removed by a later extraction.  */
->  	  if (lstat (source, &st) == 0
->  	      && st.st_dev == ds->dev
-> -	      && st.st_ino == ds->ino
->  	      && timespec_cmp (get_stat_mtime (&st), ds->mtime) == 0)
->  	    {
->  	      /* Unlink the placeholder, then create a hard link if possible,
-> 
-> 
-> What do you think ?
+This turn out to be the bug of counter operations on the cpfile and
+sufile.
 
-I think this comparision is appropriate to confirm identity of the
-placeholder file.
+Here, I attach a test patch to fix the problem.
+After some tests and submission to -mm tree, I'll push it to the git
+repo.
 
-I have no idea why inode number had changed as you reported.
-Symbolic links of nilfs2 are simply implemented.
-
-If it's unique to nilfs2, you may hit some sort of timing issue.
-I think a sample tar file would be helpful to figure out what's
-happening.
+Reinoud, thank you for finding this problem.
 
 Regards,
 Ryusuke Konishi
 
-> David Arendt wrote:
-> > Hi,
-> >
-> > After using nilfs2 for half a year now on data partitions without any
-> > problems, I wanted to try it for the root partition. This way I
-> > discovered a silent random symbolic link corruption problem.
-> >
-> > Versions:
-> >
-> > latest nilfs2 git module
-> > kernel 2.6.28.2
-> > tar 1.20
-> >
-> > Step to reproduce it:
-> >
-> > tar -xpf zz1.tar (where zz1.tar is a tar file containing many symbolic
-> > links (in my case a directory containing 2 root filesystems for remote
-> > booting)
-> >
-> > On  untar some symbolic links are missing and 0 byte files are existing
-> > instead.
-> >
-> > I repeated the test 3 times on a freshly formated nilfs2 partition and
-> > always had other links missing.
-> >
-> > I am currently trying to bzip2 the big tar file and untar this one in
-> > order to verify if there are no timing issues and will report back when
-> > this test is finished.
-> >
-> > Could you please look into this ?
-> >
-> > Thanks in advance
-> > Bye,
-> > David Arendt
-> >
-> > _______________________________________________
-> > users mailing list
-> > users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> > https://www.nilfs.org/mailman/listinfo/users
-> >   
-> 
-> 
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
+---
+ fs/cpfile.c |    2 +-
+ fs/sufile.c |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fs/cpfile.c b/fs/cpfile.c
+index 1e9ce4c..45bfe82 100644
+--- a/fs/cpfile.c
++++ b/fs/cpfile.c
+@@ -357,7 +357,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
+ 		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
+ 						       kaddr);
+-		le64_add_cpu(&header->ch_ncheckpoints, -tnicps);
++		le64_add_cpu(&header->ch_ncheckpoints, -(u64)tnicps);
+ 		nilfs_mdt_mark_buffer_dirty(header_bh);
+ 		nilfs_mdt_mark_dirty(cpfile);
+ 		kunmap_atomic(kaddr, KM_USER0);
+diff --git a/fs/sufile.c b/fs/sufile.c
+index 7b73a5f..9f0a988 100644
+--- a/fs/sufile.c
++++ b/fs/sufile.c
+@@ -331,7 +331,7 @@ int nilfs_sufile_freev(struct inode *sufile, __u64 *segnum, size_t nsegs)
+ 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
+ 	header = nilfs_sufile_block_get_header(sufile, header_bh, kaddr);
+ 	le64_add_cpu(&header->sh_ncleansegs, nsegs);
+-	le64_add_cpu(&header->sh_ndirtysegs, -nsegs);
++	le64_add_cpu(&header->sh_ndirtysegs, -(u64)nsegs);
+ 	kunmap_atomic(kaddr, KM_USER0);
+ 	nilfs_mdt_mark_buffer_dirty(header_bh);
+ 	nilfs_mdt_mark_dirty(sufile);
+-- 
+1.5.6.5
