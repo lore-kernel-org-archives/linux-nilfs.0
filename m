@@ -1,7 +1,7 @@
 From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
-Subject: vmware 6.5 not liking nilfs2
-Date: Tue, 03 Feb 2009 06:45:44 +0100
-Message-ID: <4987DA08.5080008@prnet.org>
+Subject: cleanerd segfault
+Date: Thu, 05 Feb 2009 07:01:25 +0100
+Message-ID: <498A80B5.9080007@prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,10 +21,13 @@ To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
 Hi,
 
-another thing a notified during my migration tests is that vmware 6.5
-doesn't seem to like nilfs2. I have copied a preallocated disk image of
-Windows XP to a nilfs2 partition and tried running it from there but it
-crashed during loading. On ext4 it works flawlessly.
+I am using latest nilfs2 module and nilfs2 utils from today and I am
+getting a segfault when trying to run cleanerd.
+
+nilfs_cleanerd[5784]: segfault at b7f5b000 ip 0804a0db sp bff79720 error
+4 in nilfs_cleanerd[8048000+5000]
+
+Could you please look into this ?
 
 Bye,
 David Arendt
