@@ -1,7 +1,7 @@
 From: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
 Subject: Re: cleanerd segfault
-Date: Thu,  5 Feb 2009 08:17:52 +0100
-Message-ID: <VCNhXQRBhLXj.cwh5ZrWK@mail.prnet.org>
+Date: Thu,  5 Feb 2009 08:52:32 +0100
+Message-ID: <lB4DD31fNVpx.grrKfnNr@mail.prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,11 +20,7 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Yes the git versions from today.I think it must have been some problem introduced the during 2 months as 2 month ago cleanerd run perfectly stable. I have this problem on different nilfs2 filesystems. I am now creating a fresh nilfs2 filesystem to check if I will have the same segfault there and report back. The kernel version is 2.6.28.3 32bit.
-
-Thanks in advance
-Bye,
-David Arendt
+I can confirm that it is also reproducable on a newly created nilfs2 populated with some files.
 
 - original message -
 Subject:	Re: [NILFS users] cleanerd segfault
