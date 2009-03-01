@@ -1,7 +1,7 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: NILFS 2.0.8 released
-Date: Sun, 22 Feb 2009 20:48:23 +0900 (JST)
-Message-ID: <20090222.204823.99033159.ryusuke@osrg.net>
+From: nilfs-MZZvbRqs/9F0RdzJJlgK+g@public.gmane.org
+Subject: Dump tools for checkpoints
+Date: Sun, 01 Mar 2009 01:57:18 +0100
+Message-ID: <2883.84.133.202.72.1235869032.squirrel@ssl.its-beck.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,19 +19,21 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Dear NILFS users,
+Hi,
 
-We released nilfs-2.0.8 and nilfs-utils-2.0.8, which has cleaned up
-compatibility problems of ioctl interface.
+a great feature would be a tool to dump all filesystem changes since a
+given checkpoint up to the newest available cp. The resulting file could
+be fed to another filesystem for replication.
 
-As already announced, users need to upgrade utilities to
-nilfs-utils-2.0.8 to use the new module; both packages should be
-upgraded at a time for this release.  Sorry for inconvenience.
+For a start, two tools: One to create and one to execute a binary dump.
 
-The updated package can be found at:
-http://www.nilfs.org/en/download.html
+Other projects can develop on top of these. A networked client / server to
+keep a remote site in sync in master / slave style, for example. But some
+self-made scripts could pipe the dump files between systems as well.
 
-Thanks,
---
-Ryusuke Konishi
-NILFS team NTT
+This would be much faster, compared to rsync and similar tools which need
+to scan the source system.
+
+Greetings,
+
+Pierre Beck
