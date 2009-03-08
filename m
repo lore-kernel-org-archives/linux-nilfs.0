@@ -1,14 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Gentoo ebuilds
-Date: Sun, 08 Mar 2009 12:59:10 +0900 (JST)
-Message-ID: <20090308.125910.62366600.ryusuke@osrg.net>
-References: <200903071918.52671.arne@part-time-scientists.com>
+Subject: Re: Dump tools for checkpoints
+Date: Sun, 08 Mar 2009 14:39:16 +0900 (JST)
+Message-ID: <20090308.143916.113539820.ryusuke@osrg.net>
+References: <2883.84.133.202.72.1235869032.squirrel@ssl.its-beck.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <200903071918.52671.arne-U2zwHYwBZ8kH7oFCYmSbywbgpZjRXdE0@public.gmane.org>
+In-Reply-To: <2883.84.133.202.72.1235869032.squirrel-lZV7jZi4TBeO2lRZCxuEEg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,28 +19,55 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, arne-U2zwHYwBZ8kH7oFCYmSbywbgpZjRXdE0@public.gmane.org
-Cc: Gergely =?iso-2022-jp-2?B?RxskKEQrIRsoQmJvcg==?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, nilfs-MZZvbRqs/9F0RdzJJlgK+g@public.gmane.org
 
 Hi,
-On Sat, 7 Mar 2009 19:18:51 +0100, Arne Reiners wrote:
+On Sun, 01 Mar 2009 01:57:18 +0100, nilfs-MZZvbRqs/9F0RdzJJlgK+g@public.gmane.org wrote:
 > Hi,
 > 
-> I've modified the old ebuilds for the current versions 2.09 and 2.0.10. 
-> Usage: 
-> Extract the archive to /usr/portage or better a local overlay. 
-> Add two lines to /etc/portage/package.keywords/nilfs.keywords:
-> sys-fs/nilfs2-utils ~amd64
-> sys-fs/nilfs2  ~amd64
-> (for 32bit systems replace ~amd64 by ~x86. For other try **)
+> a great feature would be a tool to dump all filesystem changes since a
+> given checkpoint up to the newest available cp. The resulting file could
+> be fed to another filesystem for replication.
 > 
-> Regards,
+> For a start, two tools: One to create and one to execute a binary dump.
 > 
-> Arne
+> Other projects can develop on top of these. A networked client / server to
+> keep a remote site in sync in master / slave style, for example. But some
+> self-made scripts could pipe the dump files between systems as well.
+> 
+> This would be much faster, compared to rsync and similar tools which need
+> to scan the source system.
+> 
+> Greetings,
+> 
+> Pierre Beck
 
-Thank you for this posting!
+Sorry for my late reply.
 
-Can anyone care his updates?
+I've moved the replication feature to the top of todo list in our web
+site ;)
+
+Actually I want to realize this feature in some form, and had
+considered details several times.  What I want to realize is
+checkpoint based replication including incremental dumping and
+restoration of file system states.
+
+Basically I believe this is possible, but one problem is how to
+realize rollback of the remote nilfs which will become required when
+allowing user's updates or garbage collection on the remote device
+after synchronization.
+
+Some of meta data files of nilfs (e.g. checkpoint file, segment usage
+file, disk address translation file) do not keep past versions even
+though they are written in a copy-on-write manner.  And it would be
+too complex to roll back these files.  At present, I am seeking the
+way not requiring big change of disk format, but some state
+conflictions (concretely speaking, confliction of virtual block numers
+maintained in the DAT file) must be resolved under the condition.  A
+breakthrough is needed for this.
+
+Anyway, I'm expecting we can find out a realistic solution for those
+technical things at some stage.
 
 Regards,
-Ryusuke
+Ryusuke Konishi
