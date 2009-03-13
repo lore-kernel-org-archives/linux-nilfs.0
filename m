@@ -1,15 +1,15 @@
-From: =?UTF-8?Q?Gergely_G=C3=A1bor?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: nilfs-MZZvbRqs/9F0RdzJJlgK+g@public.gmane.org
 Subject: Re: Dump tools for checkpoints
-Date: Fri, 13 Mar 2009 17:53:01 +0100
-Message-ID: <7e094bfb0903130953x4f56d837l3a90fcd452d97aa4@mail.gmail.com>
+Date: Fri, 13 Mar 2009 17:42:20 +0100
+Message-ID: <2893.84.133.153.87.1236962534.squirrel@ssl.its-beck.de>
 References: <2883.84.133.202.72.1235869032.squirrel@ssl.its-beck.de>
 	<20090308.143916.113539820.ryusuke@osrg.net>
-	<20090313162609.GD7494@zaphod.leonweber.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090313162609.GD7494-Tv691C15nu5348sJH/KcYBvVK+yQ3ZXh@public.gmane.org>
+In-Reply-To: <20090308.143916.113539820.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,28 +20,29 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="iso-8859-1"
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-VGhpcyBpcyBhIGZlYXR1cmUgdG8gcHJvdmlkZSBhIENPVyBuYXR1cmVkIG9mZnNpdGUgYmFja3Vw
-LCB3aXRoIHNvbWUKZ3JhbnVsYXJpdHksIGkgdGhpbmssIG9yIGkgY2FuIGltYWdpbmUgdGhpcyBh
-cyBhIHVzZWZ1bCB0aGluZyB0aGlzCndheS4KCkdyZWV0aW5nczogR2VyZ2VseSBHw6Fib3IKCk9u
-IEZyaSwgTWFyIDEzLCAyMDA5IGF0IDU6MjYgUE0sIExlb24gV2ViZXIgPGxlb25AbGVvbndlYmVy
-LmRlPiB3cm90ZToKPiBPbiAwOC4wMy4yMDA5IDE0OjM5OjE2LCBSeXVzdWtlIEtvbmlzaGkgd3Jv
-dGU6Cj4+IEkndmUgbW92ZWQgdGhlIHJlcGxpY2F0aW9uIGZlYXR1cmUgdG8gdGhlIHRvcCBvZiB0
-b2RvIGxpc3QgaW4gb3VyIHdlYgo+PiBzaXRlIDspCj4KPiBJcyByZXBsaWNhdGlvbiByZWFsbHkg
-YSBmZWF0dXJlIHRoYXQgYSBmaWxlIHN5c3RlbSBzaG91bGQgaW1wbGVtZW50PyBJCj4gdGhpbmsg
-aXQgc2hvdWxkIGJlIGltcGxlbWVudGVkIG9uZSBsYXllciBiZWxvdyB0aGUgZnMuIElmIG9uZSBu
-ZWVkcyBhCj4gcmVwbGljYXRlZCBmaWxlIHN5c3RlbSwgdGhlcmUgYXJlIHRoaW5ncyBsaWtlIGRy
-YmQgKGRpc3RyaWJ1dGVkCj4gcmVwbGljYXRlZCBibG9jayBkZXZpY2UpLiBPZiBjb3Vyc2UsIHRo
-ZSBmaWxlIHN5c3RlbSBzaG91bGQgc3VwcG9ydCBiZWluZwo+IG9uIGEgcmVwbGljYXRlZCBkZXZp
-Y2UsIHRob3VnaCBJIGRvbid0IHJlYWxseSBzZWUgYSBuZWVkIHRvIGltcGxlbWVudAo+IHRoaXMg
-b24gdGhlIGZzIGxheWVyLCBvciBhbSBJIG1pc3NpbmcgYW55dGhpbmc/Cj4KPiBMZW9uCj4KPiAt
-LQo+IExlb24gV2ViZXIsIGxlb25AbGVvbndlYmVyLmRlIDB4OEUwNEQ3RkMKPiBqYWJiZXI6IGxl
-b25AamFiYmVyLmNjYy5kZSAoaWNxOiAyNjEwNjcwNDYpCj4gLS0KPiBHZWl6aWdlIE1lbnNjaGVu
-IHNpbmQgdW5hbmdlbmVobWUgWmVpdGdlbm9zc2VuIC0gYWJlciBhbmdlbmVobWUgVm9yZmFocmVu
-Lgo+Cj4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KPiB1
-c2VycyBtYWlsaW5nIGxpc3QKPiB1c2Vyc0BuaWxmcy5vcmcKPiBodHRwczovL3d3dy5uaWxmcy5v
-cmcvbWFpbG1hbi9saXN0aW5mby91c2Vycwo+Cj4KX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX18KdXNlcnMgbWFpbGluZyBsaXN0CnVzZXJzQG5pbGZzLm9yZwpo
-dHRwczovL3d3dy5uaWxmcy5vcmcvbWFpbG1hbi9saXN0aW5mby91c2Vycwo=
+Hi,
+
+> Basically I believe this is possible, but one problem is how to
+> realize rollback of the remote nilfs which will become required when
+> allowing user's updates or garbage collection on the remote device
+> after synchronization.
+
+let's call them master / slave, I'm confused which one is remote :)
+
+I assume only the master is writable and slaves don't do any changes or
+cleaning.
+
+Require that all checkpoints from last sync to present are still existing.
+Upon dump on master, cleanerd has to be suspended and may resume after
+dump. Does that make things easier?
+
+By the way: When I completely disable cleanerd on the master, wouldn't it
+be possible to define a byte-range on the block device which makes up the
+difference between two checkpoints and copy that to the slaves?
+
+Regards,
+
+Pierre Beck
