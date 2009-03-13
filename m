@@ -1,14 +1,15 @@
-From: Leon Weber <leon-UvuJAy62EvlM7kwft8N7nw@public.gmane.org>
+From: =?UTF-8?Q?Gergely_G=C3=A1bor?= <elentirmo.gilgalad-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Dump tools for checkpoints
-Date: Fri, 13 Mar 2009 17:26:09 +0100
-Message-ID: <20090313162609.GD7494@zaphod.leonweber.de>
+Date: Fri, 13 Mar 2009 17:53:01 +0100
+Message-ID: <7e094bfb0903130953x4f56d837l3a90fcd452d97aa4@mail.gmail.com>
 References: <2883.84.133.202.72.1235869032.squirrel@ssl.its-beck.de>
 	<20090308.143916.113539820.ryusuke@osrg.net>
+	<20090313162609.GD7494@zaphod.leonweber.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0265724171=="
+Content-Transfer-Encoding: base64
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090308.143916.113539820.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20090313162609.GD7494-Tv691C15nu5348sJH/KcYBvVK+yQ3ZXh@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,65 +18,30 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Content-Type: text/plain; charset="iso-8859-1"
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-
---===============0265724171==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="W/nzBZO5zC0uMSeA"
-Content-Disposition: inline
-
-
---W/nzBZO5zC0uMSeA
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On 08.03.2009 14:39:16, Ryusuke Konishi wrote:
-> I've moved the replication feature to the top of todo list in our web
-> site ;)
-
-Is replication really a feature that a file system should implement? I
-think it should be implemented one layer below the fs. If one needs a
-replicated file system, there are things like drbd (distributed
-replicated block device). Of course, the file system should support being
-on a replicated device, though I don't really see a need to implement
-this on the fs layer, or am I missing anything?
-
-Leon
-
---=20
-Leon Weber, leon-UvuJAy62EvlM7kwft8N7nw@public.gmane.org 0x8E04D7FC
-jabber: leon-2ASvDZBniIemthueiVhc4g@public.gmane.org (icq: 261067046)
---
-Geizige Menschen sind unangenehme Zeitgenossen - aber angenehme Vorfahren.
-
---W/nzBZO5zC0uMSeA
-Content-Type: application/pgp-signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-
-iEYEARECAAYFAkm6iSEACgkQmxj00I4E1/yhbwCfQ1Xxf70v6NWaOGrQSNfVOPXz
-LloAoJf8URjbw8nzYG4+tWt1scEvdDV1
-=6Z5A
------END PGP SIGNATURE-----
-
---W/nzBZO5zC0uMSeA--
-
---===============0265724171==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============0265724171==--
+VGhpcyBpcyBhIGZlYXR1cmUgdG8gcHJvdmlkZSBhIENPVyBuYXR1cmVkIG9mZnNpdGUgYmFja3Vw
+LCB3aXRoIHNvbWUKZ3JhbnVsYXJpdHksIGkgdGhpbmssIG9yIGkgY2FuIGltYWdpbmUgdGhpcyBh
+cyBhIHVzZWZ1bCB0aGluZyB0aGlzCndheS4KCkdyZWV0aW5nczogR2VyZ2VseSBHw6Fib3IKCk9u
+IEZyaSwgTWFyIDEzLCAyMDA5IGF0IDU6MjYgUE0sIExlb24gV2ViZXIgPGxlb25AbGVvbndlYmVy
+LmRlPiB3cm90ZToKPiBPbiAwOC4wMy4yMDA5IDE0OjM5OjE2LCBSeXVzdWtlIEtvbmlzaGkgd3Jv
+dGU6Cj4+IEkndmUgbW92ZWQgdGhlIHJlcGxpY2F0aW9uIGZlYXR1cmUgdG8gdGhlIHRvcCBvZiB0
+b2RvIGxpc3QgaW4gb3VyIHdlYgo+PiBzaXRlIDspCj4KPiBJcyByZXBsaWNhdGlvbiByZWFsbHkg
+YSBmZWF0dXJlIHRoYXQgYSBmaWxlIHN5c3RlbSBzaG91bGQgaW1wbGVtZW50PyBJCj4gdGhpbmsg
+aXQgc2hvdWxkIGJlIGltcGxlbWVudGVkIG9uZSBsYXllciBiZWxvdyB0aGUgZnMuIElmIG9uZSBu
+ZWVkcyBhCj4gcmVwbGljYXRlZCBmaWxlIHN5c3RlbSwgdGhlcmUgYXJlIHRoaW5ncyBsaWtlIGRy
+YmQgKGRpc3RyaWJ1dGVkCj4gcmVwbGljYXRlZCBibG9jayBkZXZpY2UpLiBPZiBjb3Vyc2UsIHRo
+ZSBmaWxlIHN5c3RlbSBzaG91bGQgc3VwcG9ydCBiZWluZwo+IG9uIGEgcmVwbGljYXRlZCBkZXZp
+Y2UsIHRob3VnaCBJIGRvbid0IHJlYWxseSBzZWUgYSBuZWVkIHRvIGltcGxlbWVudAo+IHRoaXMg
+b24gdGhlIGZzIGxheWVyLCBvciBhbSBJIG1pc3NpbmcgYW55dGhpbmc/Cj4KPiBMZW9uCj4KPiAt
+LQo+IExlb24gV2ViZXIsIGxlb25AbGVvbndlYmVyLmRlIDB4OEUwNEQ3RkMKPiBqYWJiZXI6IGxl
+b25AamFiYmVyLmNjYy5kZSAoaWNxOiAyNjEwNjcwNDYpCj4gLS0KPiBHZWl6aWdlIE1lbnNjaGVu
+IHNpbmQgdW5hbmdlbmVobWUgWmVpdGdlbm9zc2VuIC0gYWJlciBhbmdlbmVobWUgVm9yZmFocmVu
+Lgo+Cj4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KPiB1
+c2VycyBtYWlsaW5nIGxpc3QKPiB1c2Vyc0BuaWxmcy5vcmcKPiBodHRwczovL3d3dy5uaWxmcy5v
+cmcvbWFpbG1hbi9saXN0aW5mby91c2Vycwo+Cj4KX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX18KdXNlcnMgbWFpbGluZyBsaXN0CnVzZXJzQG5pbGZzLm9yZwpo
+dHRwczovL3d3dy5uaWxmcy5vcmcvbWFpbG1hbi9saXN0aW5mby91c2Vycwo=
