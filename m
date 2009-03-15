@@ -1,7 +1,7 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: NILFS 2.0.11 released
-Date: Mon, 16 Mar 2009 01:25:23 +0900 (JST)
-Message-ID: <20090316.012523.85948053.ryusuke@osrg.net>
+From: Roman Shtylman <shtylman-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: root nilfs
+Date: Sun, 15 Mar 2009 14:33:12 -0400
+Message-ID: <367e7ff90903151133s318863ake00311a709ea2f83@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,27 +19,17 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Dear NILFS users,
+I am getting two SSD and would like to run NILFS as the root partition
+on them. I understand grub does not have support to boot into nilfs,
+so I will make an ext# /boot for that. My question is: what is the
+easiest way to compile in support for nilfs2 into the kernel? As I
+understand it, modules arn't enough when making an nilfs root and the
+kernel must support the filesystem without having to load modules (as
+it can't read the / which has the modules without knowing how to read
+the FS)
 
-We have released nilfs-2.0.11, which fixed the symbolic link
-corruption reported on this mailing list.
+Can anyone point me in the right direction on this?
 
-The problem (seen in the tar program) turned out to be a bug in
-timestamp initialization of on-memory inodes.  Instead of just
-correcting the bug, I've introduced nanosecond resolution timestamps
-which can also solve this issue.
+Thanks.
 
-It was introduced using a needless field of on-disk inodes, so
-compatibility was not broken.
-
-However, mount.nilfs2 was even changed this time so as to warn
-possibility of on-disk format change.  Sorry if this confuse you, but
-this is a preparation for mainline inclusion and is an action based on
-recommendation from a linux maintainer.  The message will be removed
-after things get stabilized.
-
-The updated package can be found at:
-http://www.nilfs.org/en/download.html
-
-Thanks,
-Ryusuke Konishi
+~Roman
