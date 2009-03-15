@@ -1,15 +1,16 @@
-From: nilfs-MZZvbRqs/9F0RdzJJlgK+g@public.gmane.org
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: Dump tools for checkpoints
-Date: Fri, 13 Mar 2009 17:42:20 +0100
-Message-ID: <2893.84.133.153.87.1236962534.squirrel@ssl.its-beck.de>
+Date: Sun, 15 Mar 2009 22:58:35 +0900 (JST)
+Message-ID: <20090315.225835.27463578.ryusuke@osrg.net>
 References: <2883.84.133.202.72.1235869032.squirrel@ssl.its-beck.de>
 	<20090308.143916.113539820.ryusuke@osrg.net>
+	<20090313162609.GD7494@zaphod.leonweber.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090308.143916.113539820.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20090313162609.GD7494-Tv691C15nu5348sJH/KcYBvVK+yQ3ZXh@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,29 +21,45 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, leon-UvuJAy62EvlM7kwft8N7nw@public.gmane.org
 
 Hi,
+On Fri, 13 Mar 2009 17:26:09 +0100, Leon Weber wrote:
+> On 08.03.2009 14:39:16, Ryusuke Konishi wrote:
+> > I've moved the replication feature to the top of todo list in our web
+> > site ;)
+> 
+> Is replication really a feature that a file system should implement? I
+> think it should be implemented one layer below the fs. If one needs a
+> replicated file system, there are things like drbd (distributed
+> replicated block device).
 
-> Basically I believe this is possible, but one problem is how to
-> realize rollback of the remote nilfs which will become required when
-> allowing user's updates or garbage collection on the remote device
-> after synchronization.
+Yes, DRBD is another solution. I'm actually thinking it a possible
+measure though we haven't yet evaluate for nilfs.  But as you know the
+granularity differs from that of the checkpoint based solution.
 
-let's call them master / slave, I'm confused which one is remote :)
+Unless the checkpoint based solution doesn't have any merit, I think
+the solution to be chosen depends on customer's (users') demand and
+so-called service level.
 
-I assume only the master is writable and slaves don't do any changes or
-cleaning.
+Anyway you have a good point.  I should care not only rsync but also
+drbd and other block layer solutions, and must find merits definitely.
 
-Require that all checkpoints from last sync to present are still existing.
-Upon dump on master, cleanerd has to be suspended and may resume after
-dump. Does that make things easier?
+> Of course, the file system should support being
+> on a replicated device, though I don't really see a need to implement
+> this on the fs layer, or am I missing anything?
+> 
+> Leon
 
-By the way: When I completely disable cleanerd on the master, wouldn't it
-be possible to define a byte-range on the block device which makes up the
-difference between two checkpoints and copy that to the slaves?
+In general, filesystems are said to have better opportunity to utilize
+the knowledge for their metadata structures and consistency especially
+for copy-on-write filesystems.
 
-Regards,
+Those can efficiently extract delta by nature, and can drop
+intermediate changes depending on required granularity.
 
-Pierre Beck
+Will it true with nilfs? - I don't know yet, but I think it's one of
+the feature being worth of consideration.
+
+Thanks,
+Ryusuke Konishi
