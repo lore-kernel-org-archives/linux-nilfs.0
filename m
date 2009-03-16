@@ -1,15 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: root nilfs
-Date: Mon, 16 Mar 2009 16:39:29 +0900 (JST)
-Message-ID: <20090316.163929.107807018.ryusuke@osrg.net>
-References: <mailman.1.1237172401.5975.users@nilfs.org>
-	<1237185357.7448.14.camel@flot.hovrino.net>
+From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+Subject: nilfs_check_page: bad entry in directory #37945
+Date: Mon, 16 Mar 2009 11:18:13 +0100
+Message-ID: <49BE2765.2050200@prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1237185357.7448.14.camel-qdj+qAmzD3G9kGg+kXA4eA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,17 +17,22 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, volkov-6IceoeoMUCicTuHFI/JV5w@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
 Hi,
-On Mon, 16 Mar 2009 09:35:56 +0300, Oleg Volkov wrote:
-> I used nilfs root.
-> On Gentoo Linux.
-> 
-> Patch attached. And copy nilfs to kernel tree.
-> --
-> Oleg Volkov
 
-Oh, I've forgotten your work. Thanks.
+this morning I discovered this in /var/log/messages
 
-Ryusuke
+Mar 16 10:59:00 server NILFS error (device sda3): nilfs_check_page: bad
+entry in directory #37945: unaligned directory entry - offset=0,
+inode=1919250021, rec_len=14411, name_len=67
+
+I am using nilfs 2.0.10.
+
+What should I do about this error ? Should I ignore it or should special
+care be taken about it ?
+
+As security measure, I have taken a backup of the concerned volume.
+
+Bye,
+David Arendt
