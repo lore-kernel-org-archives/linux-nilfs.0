@@ -1,17 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Constant checkpointing and cleanerd activity -
- doesn't play nice with mount --bind ?
-Date: Mon, 23 Mar 2009 02:53:19 +0900 (JST)
-Message-ID: <20090323.025319.46709946.ryusuke@osrg.net>
-References: <20090317154529.1aeeecdc@natsu.i4>
-	<20090317.224324.58871500.ryusuke@osrg.net>
-	<20090317191924.1924576b@natsu.i4>
+From: nilfs-MZZvbRqs/9F0RdzJJlgK+g@public.gmane.org
+Subject: continuous backup solution with nilfs
+Date: Wed, 25 Mar 2009 02:07:52 +0100
+Message-ID: <4577.84.133.242.204.1237943266.squirrel@ssl.its-beck.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090317191924.1924576b-2Ve/5xEMxL0@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -22,99 +17,91 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: roman-ohbefDXYbNo@public.gmane.org
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-On Tue, 17 Mar 2009 19:19:24 +0500, Roman Mamedov <roman-ohbefDXYbNo@public.gmane.org> wrote:
-> On Tue, 17 Mar 2009 22:43:24 +0900 (JST)
-> Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
-> 
-> > The garbage collection of nilfs is ``copying GC'', and it creates
-> > checkpoints (it's normal for nilfs).  In addition, if segments
-> > selected for cleaning have few reclaimable blocks, most remaining
-> > blocks are copied into new segments.
-> 
-> I thought the NBLKINC count should not increase much when there are
-> no user writes to the filesystem. But it was increasing by several
-> thousands on every step.
+Hi,
 
-Uum, sound logical.  But the interpretation will fairly change the
-semantics and require some clarification about what the increment is
-supposed to be:
+I'd like to post some semi-useful setup I installed a week ago for you to
+enjoy. Maybe someone has some comments on it ...
 
-- blocks duplicated for copy-on-write
-   --> should be treated as increments (maybe)
-- Segment headers and super root block.
-   --> treated as increment at present (should be removed for the
-       above standpoint)
-- Some nilfs meta data files like sufile, cpfile, and the DAT file.
-   --> treated as increment at present.
-       These files even do not have past versions. So, they slightly
-       differ from regular files in that sense.
+The plan is to create an "indestructible" block device which does
+real-time backup to a remote iSCSI LUN. This can be done with Linux
+Software RAID alone already, but using nilfs, one can add point-in-time
+recovery to said block device.
 
-Fortunately, this value does not affect FS-internal operation nor
-cleanerd.  Only lscp uses the field.  So, it could be changed if no
-one disputes it.
- 
-> This filesystem has size of about 300 gigabytes, and all I did, is
-> copied about 150 gigabytes of data to it, with no deletions, no
-> modifications or rewrites. But even about 6-8 hours after that, the
-> cleanerd process still has work to do, so much, that it interferes with
-> normal usage of the filesystem (i.e. playing a FLAC audio file from it
-> was skipping at times, even counting a bit increased load from going
-> through kcryptd, this shouldn't happen).
+The intention is to run virtual machines of any kind on the indestructible
+block device, and have backup of any past state, up to certain limits of
+course.
 
-Sorry.  The current cleanerd is far from intelligent as you pointed
-out, and I feel the same about that.  One of my colleagues is recently
-trying to improve the cleanerd behavior.
+This is the setup:
 
-> > Did you specify an fstype option?
-> 
-> I had the fstype specified as "none" (in fstab).
-> 
-> >   /nilfs2 on /test type none (rw,bind)
-> 
-> Yes, this is what I have.
-> 
-> > and, the second cleanerd has gone:
-> 
-> I have only one cleanderd in process list.
-> 
-> What is really strange, is that it looks like I can unmount the main
-> NILFS, but the bind mount will continue to be accessible and writable.
+ * The remote iSCSI LUN is formatted with nilfs2. It is mounted without
+cleanerd, to avoid performance loss on the host.
 
-This is the same as other Linux file systems.
+ * A loop file is created on the nilfs2. The size of this file will limit
+the size of the indestructible block device.
 
-> And when I remount the main mount point back, cleanerd grabs the bind
-> mount. See below:
-> 
-> # mount -t nilfs2 /dev/mapper/hi320data /mnt/hi320data
-> mount.nilfs2: WARNING! - The NILFS on-disk format may change at any
-> time.
-> mount.nilfs2: WARNING! - Do not place critical data on a NILFS
-> filesystem.
-<snip>
-> # umount /mnt/bind-test 
-> umount: /mnt/bind-test: device is busy
-> umount: /mnt/bind-test: device is busy
-> 
-> # fuser -c /mnt/bind-test/
-> /mnt/bind-test/:     23203
-> 
-> # ps -Af | grep 23203
-> root 23203  1  1 19:06 ? 00:00:00 /sbin/nilfs_cleanerd
->    -n /dev/mapper/hi320data /mnt/hi320data
-> 
-> -----------------------
-> Maybe it misdetects the bind mount as another mount of the same
-> filesystem (e.g. like when mounting a snapshot)?
+ * Another loop file identical in size is created on a local filesystem
+(eventually this may also be a real partition or disk).
 
-Thanks!  I could finally reproduce the problem.
+ * Using mdadm, both loop devices are welded together as a RAID-0
+(mirrored) device. The remote loop device is marked "write-mostly" so
+reads on the iSCSI LUN are kept at minimum. "write-behind" is activated
+to allow the remote device to lag behind. Also, internal bitmapping is
+activated, so in case of a connection loss only changed blocks are
+written to the remote loop file.
 
-Nilfs snapshots are readonly, but bind mounts could make multiple
-r/w-mounts.  And, cleanerd prevents umount in such cases.  I have to
-take bind mounts into account, as was expected, in the mount/umount
-helper programs.  I'd like to fix this by the next release.
+ * The resulting md-device can be formatted with any filesystem or
+connected to a virtual machine.
+
+So how does it perform?
+
+Quite well I'd say. I am running two slave databases on two indestructible
+block devices (formatted with XFS actually), backed by a single iSCSI LUN
+with nilfs2. One 100 GB, another 50 GB. The nilfs partition (1000 GB) is
+filling at a rate of about 30 GB a day. They keep up with their masters.
+Of course nothing is optimized for anything here: Small changes in the
+database are likely to produce rather big block copies in the nilfs.
+
+I plan to swap the nilfs device and resync on a blank loop file once it is
+full. Far more efficient than using cleanerd, sorry :-)
+
+Recovery is "okay".
+
+I can use any checkpoint and load the loop file from that point in time.
+There are some things to note, though:
+
+ * The file is read-only. So is the loop device. mdadm doesn't really like
+assembling with a read-only loop device (I couldn't stop it without a
+kernel "oops" message). The safe workaround is to mount the loop device
+directly, without any RAID. That works for XFS, but not necessarily for
+other filesystems, as the end of the device contains the mdadm
+superblock.
+
+ * The filesystem is in an unclean state. It will try to repair and fail
+to do so because it is read-only. In case of XFS, that can be turned off
+with mount option.
+
+ * Also, the filesystem UUID is the same as the active one. Same again, a
+mount option forces ignoring the UUID.
+
+The backup can be restored, which was the point.
+
+The remote loop device can be removed with mdadm. Write performance should
+increase a lot then, though it will never be native because the bitmap
+file has to be written. Upon re-add, it resynced quickly (the /proc/mdstat
+indicator isn't accurate on this, the sync just skips unwritten portions).
+
+I will now watch the nilfs2 device fill up to see what happens and will
+report back soon. My guess is something will explode: mdadm, loop and / or
+nilfs. This can be avoided, of course, by swapping the loop file before
+that happens. But I'm curious.
+
+All done with an unmodified Debian Lenny, nilfs is version 2.04 (tools
+2.06) and kernel is 2.6.26.
+
+Comments welcome!
 
 Regards,
-Ryusuke Konishi
+
+Pierre Beck
