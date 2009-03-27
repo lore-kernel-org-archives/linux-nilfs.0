@@ -1,18 +1,17 @@
-From: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: error on kernel 2.6.29 while running cleaner on a
  1tb volume
-Date: Fri, 27 Mar 2009 12:20:37 +0100 (CET)
-Message-ID: <44728.212.24.212.169.1238152837.squirrel@www.prnet.org>
-References: <49C9BF81.6090203@prnet.org>
-	<20090326.021932.61004088.ryusuke@osrg.net>
-	<49CC6193.9040900@prnet.org>
+Date: Fri, 27 Mar 2009 20:36:17 +0900 (JST)
+Message-ID: <20090327.203617.34129455.ryusuke@osrg.net>
+References: <49CC6193.9040900@prnet.org>
 	<20090327.145831.16149916.ryusuke@osrg.net>
+	<44728.212.24.212.169.1238152837.squirrel@www.prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090327.145831.16149916.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <44728.212.24.212.169.1238152837.squirrel-YfwCgBv0H3oBXFe83j6qeQ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -23,57 +22,23 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi,
+On Fri, 27 Mar 2009 12:20:37 +0100 (CET), admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org wrote:
+> Hi,
+> 
+> Maybe I'm wrong, but I think the probability of the fault is not kernel
+> dependent as there have been similar problems on 2.6.28.8.
+> 
+> The error is reproducible after a reboot and mount -i.
+> 
+> Bye,
+> David Arendt
 
-Maybe I'm wrong, but I think the probability of the fault is not kernel
-dependent as there have been similar problems on 2.6.28.8.
+Yeah, this problem seems independent of kernel version.
+Thanks for the responses, they're really helpful for narrowing down
+the problem.
 
-The error is reproducible after a reboot and mount -i.
-
-Bye,
-David Arendt
-
-> Hi David,
->
-> On Fri, 27 Mar 2009 05:18:11 +0000, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
->> Hi,
->>
->> There seems to be some bug in the kernel. On another partition
->> reformatted on week ago, I had again the following error:
->>
->> NILFS error (device sda3): nilfs_check_page: bad entry in directory
->> #28261: unaligned directory entry - offset=4096, inode=1647255843,
->> rec_len=29537, name_len=104
->> NILFS error (device sda3): nilfs_check_page: bad entry in directory
->> #28261: unaligned directory entry - offset=4096, inode=1647255843,
->> rec_len=29537, name_len=104
->> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read
->> inode: 42880
-> <snip>
->> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read
->> inode: 42910
->> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read
->> inode: 42911
->> init_special_inode: bogus i_mode (35070)
->> init_special_inode: bogus i_mode (30055)
-> <snip>
->> init_special_inode: bogus i_mode (36504)
->
-> Uum, this time, ifile (i.e. inode index file) seems to be broken.
->
-> Do you think probability of the fault depends on the kernel version?
->
-> And, is it reproducible after umount(or reboot) and mount -i (= mount
-> without GC) ?
->
-> We partially succeeded to reproduce corrpution under a near disk full
-> condition, and are trying to narrow down the occurrence condition.  I
-> now suspect cache coherence violation between GC cache and regular
-> page caches, but it's uncorroborated so far.
->
-> With regards,
-> Ryusuke Konishi
->
+Regards,
+Ryusuke Konishi
