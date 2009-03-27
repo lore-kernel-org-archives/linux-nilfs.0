@@ -1,16 +1,16 @@
 From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 Subject: Re: error on kernel 2.6.29 while running cleaner on a
  1tb volume
-Date: Fri, 27 Mar 2009 05:18:11 +0000
-Message-ID: <49CC6193.9040900@prnet.org>
-References: <49C9BF81.6090203@prnet.org>
-	<20090326.021932.61004088.ryusuke@osrg.net>
+Date: Fri, 27 Mar 2009 06:55:56 +0100
+Message-ID: <49CC6A6C.9060006@prnet.org>
+References: <49C9BF81.6090203@prnet.org>	<20090326.021932.61004088.ryusuke@osrg.net>
+	<49CC6193.9040900@prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090326.021932.61004088.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <49CC6193.9040900-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -25,285 +25,306 @@ To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
 Hi,
 
-There seems to be some bug in the kernel. On another partition 
-reformatted on week ago, I had again the following error:
-
-NILFS error (device sda3): nilfs_check_page: bad entry in directory 
-#28261: unaligned directory entry - offset=4096, inode=1647255843, 
-rec_len=29537, name_len=104
-NILFS error (device sda3): nilfs_check_page: bad entry in directory 
-#28261: unaligned directory entry - offset=4096, inode=1647255843, 
-rec_len=29537, name_len=104
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42880
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42881
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42882
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42883
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42884
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42885
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42886
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42887
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42888
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42889
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42890
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42892
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42893
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42894
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42895
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42896
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42897
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42898
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42899
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42900
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42901
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42902
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42903
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42904
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42905
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42906
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42907
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42908
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42909
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42910
-NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
-inode: 42911
-init_special_inode: bogus i_mode (35070)
-init_special_inode: bogus i_mode (30055)
-init_special_inode: bogus i_mode (30070)
-init_special_inode: bogus i_mode (31070)
-init_special_inode: bogus i_mode (31066)
-init_special_inode: bogus i_mode (31461)
-init_special_inode: bogus i_mode (32146)
-init_special_inode: bogus i_mode (32545)
-init_special_inode: bogus i_mode (72162)
-init_special_inode: bogus i_mode (57556)
-init_special_inode: bogus i_mode (72542)
-init_special_inode: bogus i_mode (5042)
-init_special_inode: bogus i_mode (36504)
-NILFS error (device sda3): nilfs_check_page: bad entry in directory 
-#469193: rec_len is smaller than minimal - offset=0, inode=0, rec_len=0, 
-name_len=0
-NILFS error (device sda3): nilfs_readdir: bad page in #469193
-NILFS error (device sda3): nilfs_check_page: bad entry in directory 
-#469195: rec_len is smaller than minimal - offset=0, inode=0, rec_len=0, 
-name_len=0
-NILFS error (device sda3): nilfs_readdir: bad page in #469195
-NILFS error (device sda3): nilfs_check_page: bad entry in directory 
-#468107: directory entry across blocks - offset=0, inode=1095777639, 
-rec_len=26480, name_len=61
-NILFS error (device sda3): nilfs_readdir: bad page in #468107
-NILFS error (device sda3): nilfs_readdir: bad page in #28261
-------------[ cut here ]------------
-WARNING: at /home/admin/x/nilfs-2.0.11/fs/dat.c:182 
-nilfs_dat_prepare_end+0xb0/0xc0 [nilfs2]()
-Hardware name: P5QL-E
-Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
-capifs kernelcapi nilfs2 scsi_wait_scan
-Pid: 333, comm: kswapd0 Tainted: P           2.6.29server #1
-Call Trace:
- [<c0125b99>] warn_slowpath+0x99/0xc0
- [<c014e390>] find_get_page+0x30/0xc0
- [<f83410b0>] nilfs_palloc_bitmap_blkoff+0x40/0x60 [nilfs2]
- [<f834118b>] nilfs_palloc_get_entry_block+0x5b/0x70 [nilfs2]
- [<c01506aa>] find_or_create_page+0x2a/0xa0
- [<f83366d8>] nilfs_dat_prepare_entry+0x18/0x20 [nilfs2]
- [<f8336be0>] nilfs_dat_prepare_end+0xb0/0xc0 [nilfs2]
- [<f83364c2>] nilfs_direct_delete+0x62/0xa0 [nilfs2]
- [<f8331e46>] nilfs_bmap_do_delete+0xb6/0xc0 [nilfs2]
- [<c0157502>] pagevec_lookup+0x22/0x30
- [<c0157c29>] truncate_inode_pages_range+0x179/0x310
- [<f8331ecb>] nilfs_bmap_truncate+0x7b/0xa0 [nilfs2]
- [<f832b53a>] nilfs_truncate_bmap+0x6a/0x100 [nilfs2]
- [<f832c028>] nilfs_delete_inode+0x38/0xc0 [nilfs2]
- [<c019c4b7>] inotify_inode_is_dead+0x17/0x80
- [<f832bff0>] nilfs_delete_inode+0x0/0xc0 [nilfs2]
- [<c018626e>] generic_delete_inode+0x6e/0x100
- [<c02353cb>] _atomic_dec_and_lock+0x3b/0x70
- [<c0185bf4>] iput+0x44/0x50
- [<c0183695>] d_kill+0x35/0x60
- [<c0183860>] __shrink_dcache_sb+0x1a0/0x280
- [<c0183add>] shrink_dcache_memory+0x18d/0x1b0
- [<c0159dbb>] shrink_slab+0x12b/0x190
- [<c015a53c>] kswapd+0x35c/0x530
- [<c0158070>] isolate_pages_global+0x0/0x210
- [<c0138940>] autoremove_wake_function+0x0/0x50
- [<c011d33d>] complete+0x3d/0x60
- [<c015a1e0>] kswapd+0x0/0x530
- [<c0138622>] kthread+0x42/0x70
- [<c01385e0>] kthread+0x0/0x70
- [<c010391b>] kernel_thread_helper+0x7/0x1c
----[ end trace fcc3f79f56f6e698 ]---
-NILFS warning (device sda3): nilfs_truncate_bmap: failed to truncate 
-bmap (ino=468107, err=-2)
-
-nilfs seems to run absolutely stable as long as the cleaner is running, 
-but the cleaner seems to cause corruption. This time, I paid attention 
-to run the cleaner always when there was more than 5 gigabytes (20%) of 
-freee space on the volume.
+one thing I forgot to mention, in /etc/nilfs_cleanerd.conf I changed 
+n_segments_per clean to 20 in order to clean faster when running the 
+cleaner manually. Could this have any influence ?
 
 Bye,
 David Arendt
 
-Ryusuke Konishi wrote:
+David Arendt wrote:
 > Hi,
-> On Wed, 25 Mar 2009 06:22:09 +0100, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
+>
+> There seems to be some bug in the kernel. On another partition 
+> reformatted on week ago, I had again the following error:
+>
+> NILFS error (device sda3): nilfs_check_page: bad entry in directory 
+> #28261: unaligned directory entry - offset=4096, inode=1647255843, 
+> rec_len=29537, name_len=104
+> NILFS error (device sda3): nilfs_check_page: bad entry in directory 
+> #28261: unaligned directory entry - offset=4096, inode=1647255843, 
+> rec_len=29537, name_len=104
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42880
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42881
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42882
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42883
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42884
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42885
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42886
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42887
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42888
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42889
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42890
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42892
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42893
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42894
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42895
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42896
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42897
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42898
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42899
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42900
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42901
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42902
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42903
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42904
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42905
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42906
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42907
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42908
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42909
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42910
+> NILFS warning (device sda3): nilfs_ifile_get_inode_block: unable to read 
+> inode: 42911
+> init_special_inode: bogus i_mode (35070)
+> init_special_inode: bogus i_mode (30055)
+> init_special_inode: bogus i_mode (30070)
+> init_special_inode: bogus i_mode (31070)
+> init_special_inode: bogus i_mode (31066)
+> init_special_inode: bogus i_mode (31461)
+> init_special_inode: bogus i_mode (32146)
+> init_special_inode: bogus i_mode (32545)
+> init_special_inode: bogus i_mode (72162)
+> init_special_inode: bogus i_mode (57556)
+> init_special_inode: bogus i_mode (72542)
+> init_special_inode: bogus i_mode (5042)
+> init_special_inode: bogus i_mode (36504)
+> NILFS error (device sda3): nilfs_check_page: bad entry in directory 
+> #469193: rec_len is smaller than minimal - offset=0, inode=0, rec_len=0, 
+> name_len=0
+> NILFS error (device sda3): nilfs_readdir: bad page in #469193
+> NILFS error (device sda3): nilfs_check_page: bad entry in directory 
+> #469195: rec_len is smaller than minimal - offset=0, inode=0, rec_len=0, 
+> name_len=0
+> NILFS error (device sda3): nilfs_readdir: bad page in #469195
+> NILFS error (device sda3): nilfs_check_page: bad entry in directory 
+> #468107: directory entry across blocks - offset=0, inode=1095777639, 
+> rec_len=26480, name_len=61
+> NILFS error (device sda3): nilfs_readdir: bad page in #468107
+> NILFS error (device sda3): nilfs_readdir: bad page in #28261
+> ------------[ cut here ]------------
+> WARNING: at /home/admin/x/nilfs-2.0.11/fs/dat.c:182 
+> nilfs_dat_prepare_end+0xb0/0xc0 [nilfs2]()
+> Hardware name: P5QL-E
+> Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
+> capifs kernelcapi nilfs2 scsi_wait_scan
+> Pid: 333, comm: kswapd0 Tainted: P           2.6.29server #1
+> Call Trace:
+>  [<c0125b99>] warn_slowpath+0x99/0xc0
+>  [<c014e390>] find_get_page+0x30/0xc0
+>  [<f83410b0>] nilfs_palloc_bitmap_blkoff+0x40/0x60 [nilfs2]
+>  [<f834118b>] nilfs_palloc_get_entry_block+0x5b/0x70 [nilfs2]
+>  [<c01506aa>] find_or_create_page+0x2a/0xa0
+>  [<f83366d8>] nilfs_dat_prepare_entry+0x18/0x20 [nilfs2]
+>  [<f8336be0>] nilfs_dat_prepare_end+0xb0/0xc0 [nilfs2]
+>  [<f83364c2>] nilfs_direct_delete+0x62/0xa0 [nilfs2]
+>  [<f8331e46>] nilfs_bmap_do_delete+0xb6/0xc0 [nilfs2]
+>  [<c0157502>] pagevec_lookup+0x22/0x30
+>  [<c0157c29>] truncate_inode_pages_range+0x179/0x310
+>  [<f8331ecb>] nilfs_bmap_truncate+0x7b/0xa0 [nilfs2]
+>  [<f832b53a>] nilfs_truncate_bmap+0x6a/0x100 [nilfs2]
+>  [<f832c028>] nilfs_delete_inode+0x38/0xc0 [nilfs2]
+>  [<c019c4b7>] inotify_inode_is_dead+0x17/0x80
+>  [<f832bff0>] nilfs_delete_inode+0x0/0xc0 [nilfs2]
+>  [<c018626e>] generic_delete_inode+0x6e/0x100
+>  [<c02353cb>] _atomic_dec_and_lock+0x3b/0x70
+>  [<c0185bf4>] iput+0x44/0x50
+>  [<c0183695>] d_kill+0x35/0x60
+>  [<c0183860>] __shrink_dcache_sb+0x1a0/0x280
+>  [<c0183add>] shrink_dcache_memory+0x18d/0x1b0
+>  [<c0159dbb>] shrink_slab+0x12b/0x190
+>  [<c015a53c>] kswapd+0x35c/0x530
+>  [<c0158070>] isolate_pages_global+0x0/0x210
+>  [<c0138940>] autoremove_wake_function+0x0/0x50
+>  [<c011d33d>] complete+0x3d/0x60
+>  [<c015a1e0>] kswapd+0x0/0x530
+>  [<c0138622>] kthread+0x42/0x70
+>  [<c01385e0>] kthread+0x0/0x70
+>  [<c010391b>] kernel_thread_helper+0x7/0x1c
+> ---[ end trace fcc3f79f56f6e698 ]---
+> NILFS warning (device sda3): nilfs_truncate_bmap: failed to truncate 
+> bmap (ino=468107, err=-2)
+>
+> nilfs seems to run absolutely stable as long as the cleaner is running, 
+> but the cleaner seems to cause corruption. This time, I paid attention 
+> to run the cleaner always when there was more than 5 gigabytes (20%) of 
+> freee space on the volume.
+>
+> Bye,
+> David Arendt
+>
+> Ryusuke Konishi wrote:
 >   
 >> Hi,
->>
->> First of all, please don't get me wrong for posting all this bug 
->> reports. It is not in the sense of complaining me. I am very satisfied 
->> with nilfs2. As I am a software developer myself, I always like 
->> receiving bug reports. What I hate most is people complaining in the 
->> sense nothing is working without any more information.
+>> On Wed, 25 Mar 2009 06:22:09 +0100, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
+>>   
 >>     
+>>> Hi,
+>>>
+>>> First of all, please don't get me wrong for posting all this bug 
+>>> reports. It is not in the sense of complaining me. I am very satisfied 
+>>> with nilfs2. As I am a software developer myself, I always like 
+>>> receiving bug reports. What I hate most is people complaining in the 
+>>> sense nothing is working without any more information.
+>>>     
+>>>       
+>> David, I really appreciated your feedback, so feel free to report
+>> bugs ;)
+>>
+>> Though we have not caught up with all your reports, we're keeping them
+>> on record.  I believe we will be able to cut down the problems sooner
+>> or later.
+>>
+>>   
+>>     
+>>> So here an error on kernel 2.6.29 while running cleaner on a 1 tb 
+>>> volume. I am not sure if it is nilfs related, but I post it for your 
+>>> information.
+>>>     
+>>>       
+>> Thanks for the below information.
+>> I'll try some tests on 2.6.29.
+>> It's more likely to be affected by a page cache change.
+>>
+>> Regards,
+>> Ryusuke Konishi
+>>
+>>   
+>>     
+>>> BUG: unable to handle kernel paging request at 9c5c67f0
+>>> IP: [<c0239049>] radix_tree_delete+0x19/0x220
+>>> *pdpt = 0000000030490001 *pde = 0000000000000000
+>>> Oops: 0000 [#1] PREEMPT SMP
+>>> last sysfs file: /sys/devices/pci0000:00/0000:00:1e.0/0000:04:03.0/resource
+>>> Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
+>>> capifs kernelcapi nilfs2 scsi_wait_scan
+>>>
+>>> Pid: 333, comm: kswapd0 Tainted: P           (2.6.29server #1) P5QL-E
+>>> EIP: 0060:[<c0239049>] EFLAGS: 00010092 CPU: 3
+>>> EIP is at radix_tree_delete+0x19/0x220
+>>> EAX: 0537456a EBX: 00000000 ECX: f73f10d4 EDX: f701c598
+>>> ESI: f73f10d4 EDI: f73f10e4 EBP: f73f10d8 ESP: f76e9d08
+>>>  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
+>>> Process kswapd0 (pid: 333, ti=f76e8000 task=f76885c0 task.ti=f76e8000)
+>>> Stack:
+>>>  00000000 f6fc0040 0537456a 00000000 00000000 00000000 f76e9d2c c0169827
+>>>  f5f0d3d0 f56e482c 00000080 0000c400 00000000 00000000 0000c5ab 0000c5ab
+>>>  00000000 f56e482c c108dee0 f73f10d4 f73f10e4 f76e9ebc c014fc15 0000c5ab
+>>> Call Trace:
+>>>  [<c0169827>] page_referenced_file+0x77/0x90
+>>>  [<c014fc15>] __remove_from_page_cache+0x15/0x90
+>>>  [<c0158864>] __remove_mapping+0x84/0xc0
+>>>  [<c01590f3>] shrink_page_list+0x393/0x6d0
+>>>  [<c0158cf2>] shrink_active_list+0x332/0x3a0
+>>>  [<c01580f8>] isolate_pages_global+0x88/0x210
+>>>  [<c0156e39>] ____pagevec_lru_add+0x119/0x130
+>>>  [<c0159654>] shrink_list+0x224/0x560
+>>>  [<c0159c07>] shrink_zone+0x277/0x300
+>>>  [<c015a6f8>] kswapd+0x518/0x530
+>>>  [<c0158070>] isolate_pages_global+0x0/0x210
+>>>  [<c0138940>] autoremove_wake_function+0x0/0x50
+>>>  [<c011d33d>] complete+0x3d/0x60
+>>>  [<c015a1e0>] kswapd+0x0/0x530
+>>>  [<c0138622>] kthread+0x42/0x70
+>>>  [<c01385e0>] kthread+0x0/0x70
+>>>  [<c010391b>] kernel_thread_helper+0x7/0x1c
+>>> Code: 89 f8 5b 5e 5f 5d c3 0f 0b eb fe 0f 0b eb fe 8d 76 00 55 89 c5 57 
+>>> 56 53 31 db 83 ec 48 89 54 24 08 8b 10 8b 44 24 08 89 5c 24 0c <39> 04 
+>>> 95 90 51 55 c0 0f 82 1c 01 00 00 8b 4d 08 85 d2 89 4c 24
+>>> EIP: [<c0239049>] radix_tree_delete+0x19/0x220 SS:ESP 0068:f76e9d08
+>>> ---[ end trace 86f39789c1fa8998 ]---
+>>> note: kswapd0[333] exited with preempt_count 1
+>>> BUG: unable to handle kernel NULL pointer dereference at 00000104
+>>> IP: [<c01504f9>] find_get_pages+0x79/0xf0
+>>> *pdpt = 0000000030e61001 *pde = 0000000000000000
+>>> Oops: 0000 [#2] PREEMPT SMP
+>>> last sysfs file: /sys/devices/pci0000:00/0000:00:1e.0/0000:04:03.0/resource
+>>> Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
+>>> capifs kernelcapi nilfs2 scsi_wait_scan
+>>> Pid: 8494, comm: nilfs_cleanerd Tainted: P      D    (2.6.29server #1) 
+>>> P5QL-E
+>>> EIP: 0060:[<c01504f9>] EFLAGS: 00210213 CPU: 2
+>>> EIP is at find_get_pages+0x79/0xf0
+>>> EAX: 00000100 EBX: 00000104 ECX: 00000100 EDX: db6a1cc4
+>>> ESI: 0000000a EDI: db6a1c9c EBP: 0000000a ESP: db6a1c2c
+>>>  DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
+>>> Process nilfs_cleanerd (pid: 8494, ti=db6a0000 task=f75e7800 
+>>> task.ti=db6a0000)
+>>> Stack:
+>>>  0000000e db6a1cc4 00000104 00000002 f70d78a0 0000000e 000f76cf 0000000d
+>>>  000f76cf db6a1c94 000f76ce 0000000e c0157502 db6a1c9c 000f76cf c1cf16e0
+>>>  f8330336 0000000e db6a1c98 0000000e f70d7aec f70d78ac f70d7ae0 f70d789c
+>>> Call Trace:
+>>>  [<c0157502>] pagevec_lookup+0x22/0x30
+>>>  [<f8330336>] nilfs_copy_back_pages+0x56/0x220 [nilfs2]
+>>>  [<f834328b>] nilfs_commit_gcdat_inode+0x8b/0xc0 [nilfs2]
+>>>  [<f833b1bd>] nilfs_segctor_complete_write+0x2fd/0x310 [nilfs2]
+>>>  [<f833b914>] nilfs_segctor_do_construct+0x424/0x18c0 [nilfs2]
+>>>  [<f83319bf>] nilfs_bmap_test_and_clear_dirty+0x2f/0x40 [nilfs2]
+>>>  [<f833d009>] nilfs_segctor_construct+0x99/0xb0 [nilfs2]
+>>>  [<f833df1f>] nilfs_clean_segments+0xef/0x200 [nilfs2]
+>>>  [<f83427e0>] nilfs_ioctl+0x3d0/0x480 [nilfs2]
+>>>  [<c030f774>] ehci_work+0x124/0x9a0
+>>>  [<c011da6b>] update_curr+0x7b/0xe0
+>>>  [<c012eeb7>] lock_timer_base+0x27/0x60
+>>>  [<c013f55e>] getnstimeofday+0x4e/0x120
+>>>  [<c0140808>] clocksource_get_next+0x38/0x40
+>>>  [<f8342410>] nilfs_ioctl+0x0/0x480 [nilfs2]
+>>>  [<c0180c6b>] vfs_ioctl+0x2b/0x90
+>>>  [<c0180fdb>] do_vfs_ioctl+0x1eb/0x530
+>>>  [<c012ebdb>] run_timer_softirq+0x15b/0x190
+>>>  [<c012a484>] __do_softirq+0x94/0x160
+>>>  [<c018135d>] sys_ioctl+0x3d/0x70
+>>>  [<c0103131>] sysenter_do_call+0x12/0x25
+>>>  [<c0400000>] pci_bus_size_bridges+0x1f0/0x410
+>>> Code: 00 00 8b 44 24 34 8d 04 b0 89 44 24 04 8b 54 24 04 8b 02 8b 00 a8 
+>>> 01 75 ba 85 c0 89 c1 74 3e 83 f8 ff 74 af 8d 58 04 89 5c 24 08 <8b> 50 
+>>> 04 85 d2 74 db 8d 7a 01 89 d0 8b 5c 24 08 f0 0f b1 3b 39
+>>> EIP: [<c01504f9>] find_get_pages+0x79/0xf0 SS:ESP 0068:db6a1c2c
+>>> ---[ end trace 86f39789c1fa8999 ]---
+>>> note: nilfs_cleanerd[8494] exited with preempt_count 1
+>>>
+>>> Bye,
+>>> David Arendt
+>>> _______________________________________________
+>>> users mailing list
+>>> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+>>> https://www.nilfs.org/mailman/listinfo/users
+>>>     
+>>>       
 >
-> David, I really appreciated your feedback, so feel free to report
-> bugs ;)
->
-> Though we have not caught up with all your reports, we're keeping them
-> on record.  I believe we will be able to cut down the problems sooner
-> or later.
->
+> _______________________________________________
+> users mailing list
+> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+> https://www.nilfs.org/mailman/listinfo/users
 >   
->> So here an error on kernel 2.6.29 while running cleaner on a 1 tb 
->> volume. I am not sure if it is nilfs related, but I post it for your 
->> information.
->>     
->
-> Thanks for the below information.
-> I'll try some tests on 2.6.29.
-> It's more likely to be affected by a page cache change.
->
-> Regards,
-> Ryusuke Konishi
->
->   
->> BUG: unable to handle kernel paging request at 9c5c67f0
->> IP: [<c0239049>] radix_tree_delete+0x19/0x220
->> *pdpt = 0000000030490001 *pde = 0000000000000000
->> Oops: 0000 [#1] PREEMPT SMP
->> last sysfs file: /sys/devices/pci0000:00/0000:00:1e.0/0000:04:03.0/resource
->> Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
->> capifs kernelcapi nilfs2 scsi_wait_scan
->>
->> Pid: 333, comm: kswapd0 Tainted: P           (2.6.29server #1) P5QL-E
->> EIP: 0060:[<c0239049>] EFLAGS: 00010092 CPU: 3
->> EIP is at radix_tree_delete+0x19/0x220
->> EAX: 0537456a EBX: 00000000 ECX: f73f10d4 EDX: f701c598
->> ESI: f73f10d4 EDI: f73f10e4 EBP: f73f10d8 ESP: f76e9d08
->>  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
->> Process kswapd0 (pid: 333, ti=f76e8000 task=f76885c0 task.ti=f76e8000)
->> Stack:
->>  00000000 f6fc0040 0537456a 00000000 00000000 00000000 f76e9d2c c0169827
->>  f5f0d3d0 f56e482c 00000080 0000c400 00000000 00000000 0000c5ab 0000c5ab
->>  00000000 f56e482c c108dee0 f73f10d4 f73f10e4 f76e9ebc c014fc15 0000c5ab
->> Call Trace:
->>  [<c0169827>] page_referenced_file+0x77/0x90
->>  [<c014fc15>] __remove_from_page_cache+0x15/0x90
->>  [<c0158864>] __remove_mapping+0x84/0xc0
->>  [<c01590f3>] shrink_page_list+0x393/0x6d0
->>  [<c0158cf2>] shrink_active_list+0x332/0x3a0
->>  [<c01580f8>] isolate_pages_global+0x88/0x210
->>  [<c0156e39>] ____pagevec_lru_add+0x119/0x130
->>  [<c0159654>] shrink_list+0x224/0x560
->>  [<c0159c07>] shrink_zone+0x277/0x300
->>  [<c015a6f8>] kswapd+0x518/0x530
->>  [<c0158070>] isolate_pages_global+0x0/0x210
->>  [<c0138940>] autoremove_wake_function+0x0/0x50
->>  [<c011d33d>] complete+0x3d/0x60
->>  [<c015a1e0>] kswapd+0x0/0x530
->>  [<c0138622>] kthread+0x42/0x70
->>  [<c01385e0>] kthread+0x0/0x70
->>  [<c010391b>] kernel_thread_helper+0x7/0x1c
->> Code: 89 f8 5b 5e 5f 5d c3 0f 0b eb fe 0f 0b eb fe 8d 76 00 55 89 c5 57 
->> 56 53 31 db 83 ec 48 89 54 24 08 8b 10 8b 44 24 08 89 5c 24 0c <39> 04 
->> 95 90 51 55 c0 0f 82 1c 01 00 00 8b 4d 08 85 d2 89 4c 24
->> EIP: [<c0239049>] radix_tree_delete+0x19/0x220 SS:ESP 0068:f76e9d08
->> ---[ end trace 86f39789c1fa8998 ]---
->> note: kswapd0[333] exited with preempt_count 1
->> BUG: unable to handle kernel NULL pointer dereference at 00000104
->> IP: [<c01504f9>] find_get_pages+0x79/0xf0
->> *pdpt = 0000000030e61001 *pde = 0000000000000000
->> Oops: 0000 [#2] PREEMPT SMP
->> last sysfs file: /sys/devices/pci0000:00/0000:00:1e.0/0000:04:03.0/resource
->> Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
->> capifs kernelcapi nilfs2 scsi_wait_scan
->> Pid: 8494, comm: nilfs_cleanerd Tainted: P      D    (2.6.29server #1) 
->> P5QL-E
->> EIP: 0060:[<c01504f9>] EFLAGS: 00210213 CPU: 2
->> EIP is at find_get_pages+0x79/0xf0
->> EAX: 00000100 EBX: 00000104 ECX: 00000100 EDX: db6a1cc4
->> ESI: 0000000a EDI: db6a1c9c EBP: 0000000a ESP: db6a1c2c
->>  DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
->> Process nilfs_cleanerd (pid: 8494, ti=db6a0000 task=f75e7800 
->> task.ti=db6a0000)
->> Stack:
->>  0000000e db6a1cc4 00000104 00000002 f70d78a0 0000000e 000f76cf 0000000d
->>  000f76cf db6a1c94 000f76ce 0000000e c0157502 db6a1c9c 000f76cf c1cf16e0
->>  f8330336 0000000e db6a1c98 0000000e f70d7aec f70d78ac f70d7ae0 f70d789c
->> Call Trace:
->>  [<c0157502>] pagevec_lookup+0x22/0x30
->>  [<f8330336>] nilfs_copy_back_pages+0x56/0x220 [nilfs2]
->>  [<f834328b>] nilfs_commit_gcdat_inode+0x8b/0xc0 [nilfs2]
->>  [<f833b1bd>] nilfs_segctor_complete_write+0x2fd/0x310 [nilfs2]
->>  [<f833b914>] nilfs_segctor_do_construct+0x424/0x18c0 [nilfs2]
->>  [<f83319bf>] nilfs_bmap_test_and_clear_dirty+0x2f/0x40 [nilfs2]
->>  [<f833d009>] nilfs_segctor_construct+0x99/0xb0 [nilfs2]
->>  [<f833df1f>] nilfs_clean_segments+0xef/0x200 [nilfs2]
->>  [<f83427e0>] nilfs_ioctl+0x3d0/0x480 [nilfs2]
->>  [<c030f774>] ehci_work+0x124/0x9a0
->>  [<c011da6b>] update_curr+0x7b/0xe0
->>  [<c012eeb7>] lock_timer_base+0x27/0x60
->>  [<c013f55e>] getnstimeofday+0x4e/0x120
->>  [<c0140808>] clocksource_get_next+0x38/0x40
->>  [<f8342410>] nilfs_ioctl+0x0/0x480 [nilfs2]
->>  [<c0180c6b>] vfs_ioctl+0x2b/0x90
->>  [<c0180fdb>] do_vfs_ioctl+0x1eb/0x530
->>  [<c012ebdb>] run_timer_softirq+0x15b/0x190
->>  [<c012a484>] __do_softirq+0x94/0x160
->>  [<c018135d>] sys_ioctl+0x3d/0x70
->>  [<c0103131>] sysenter_do_call+0x12/0x25
->>  [<c0400000>] pci_bus_size_bridges+0x1f0/0x410
->> Code: 00 00 8b 44 24 34 8d 04 b0 89 44 24 04 8b 54 24 04 8b 02 8b 00 a8 
->> 01 75 ba 85 c0 89 c1 74 3e 83 f8 ff 74 af 8d 58 04 89 5c 24 08 <8b> 50 
->> 04 85 d2 74 db 8d 7a 01 89 d0 8b 5c 24 08 f0 0f b1 3b 39
->> EIP: [<c01504f9>] find_get_pages+0x79/0xf0 SS:ESP 0068:db6a1c2c
->> ---[ end trace 86f39789c1fa8999 ]---
->> note: nilfs_cleanerd[8494] exited with preempt_count 1
->>
->> Bye,
->> David Arendt
->> _______________________________________________
->> users mailing list
->> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
->> https://www.nilfs.org/mailman/listinfo/users
->>     
