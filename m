@@ -1,17 +1,16 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: error on kernel 2.6.29 while running cleaner on a
- 1tb volume
-Date: Sat, 28 Mar 2009 21:52:57 +0900 (JST)
-Message-ID: <20090328.215257.15833655.ryusuke@osrg.net>
-References: <20090327.152005.04656990.ryusuke@osrg.net>
-	<20090327.194735.32664212.ryusuke@osrg.net>
-	<49CDDB37.9030603@prnet.org>
+From: nilfs-MZZvbRqs/9F0RdzJJlgK+g@public.gmane.org
+Subject: [SPAM]  Re:  continuous backup solution with nilfs
+Date: Sat, 28 Mar 2009 15:51:11 +0100
+Message-ID: <4844.84.133.179.213.1238251866.squirrel@ssl.its-beck.de>
+References: <4577.84.133.242.204.1237943266.squirrel@ssl.its-beck.de>
+	<4701.84.133.208.102.1238029603.squirrel@ssl.its-beck.de> 
+	<200903271939.10744.Martin@lichtvoll.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <49CDDB37.9030603-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <200903271939.10744.Martin-3kZCPVa5dk2azgQtNeiOUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -22,52 +21,69 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
 Hi,
-On Sat, 28 Mar 2009 09:09:27 +0100, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
-> Hi,
-> 
-> today I have tried the lssu on a dedicated server running nilfs and here 
-> I had the following result:
-> 
-> fr ~ # lssu -a /dev/sda2 | grep -e "2009-" | grep -v -e "-d-"
->                 2558  2009-03-23 16:59:05  ---        2048
->                 4967  2009-03-28 09:07:10  ad-        1928
-> 
-> so I suppose corruption will soon occur here.
 
-Oh, it would come.
+> inconsistent filesystem in snapshooted loop files? You'd need xfs_freeze
+> before syncing the raid to get a consistent one, I believe.
 
-> Is there something I can do to manually mark it as dirty or should I go 
-> the backup/restore route ?
+well yes, it is inconsistent by the definition of the top filesystem. It
+will always be. Running xfs_freeze / sync every 5 seconds is not an
+option, and won't be in sync with the nilfs cps anyway.
 
-No, sorry.  You may as well go the backup/restore route.
+But: You can chose the checkpoint you restore wisely. lscp lists the
+amount of block changes, so you can take the "least corrupted" cp
+(possibly a practically clean one). I even think about disabling the
+journal to get better space usage. After all, the nilfs loop file is one
+big journal.
 
-BTW, I found a bug in sufile that may relate to this problem.  The
-following patch fixes the bug. (I'm now testing this)
+The restore scenarios where this concept works are one of these:
 
-If I can confirm that the patch has effect on the dirty flag
-evaporation, I will release an update ASAP.
+ * Your server went up in flames / flood / coffee accident. The backup is
+a few seconds old and will behave like a crashed / powered off system. It
+is available on a separate storage system not affected by the outage. No
+one will care about inconsistency :-)
 
-Othewise, I'll continue debugging.
-Please try the patch in the meantime.
+ * New server. Some user having root privileges does a funny thing he saw
+on the internets in the shell and you realize he deleted all files,
+including the operating system. This one is particulary hard for guys who
+think RAID is a backup solution. Good thing you had him on an
+indestructible block device.
+
+ * Some collegues are creating and deleting files. They need the
+blue-screen operating system for a server, so you put them on a VM.
+Suddenly one needs a file he created 290 seconds ago and deleted 65
+seconds ago. You'll be the hero of the day, or burned for being a witch.
+Or fired, because the file was meant to be lost in an accident, and you
+were supposed to say "we're doing nightly backups, there's nothing I can
+do about it".
+
+> One thing: Can't you use LVM snapshots in a similar way? Hmmm, I think
+> performance would crawl with more than a few snapshots.
+
+I didn't dare to try several thousand snapshots in LVM ;-) Yes, it would
+be more appropriate to do this directly with a block device driver, but I
+haven't come across one doing this. "NILBD" anyone?
+
+I think the concept needs a bit of improvement, though. If you have the
+option of a "smart" iSCSI / AoE storage (being a server you can install
+linux on) you can do the nilfs / loop / mdadm stuff on that one and offer
+the block device to other servers as a service.
+
+This allows physical servers with any OS doing iSCSI in the concept plus
+hard privilege serparation: The guy managing the indestructible block
+device servers can be totally independant. So if the local admin runs
+amok, he has no ability to take the backup with him. He doesn't even need
+to know the iSCSI block device can be restored.
+
+A major issue is the space requirement. Constantly changing databases fill
+up the volume quickly. Well, my two here are really worst case, with
+several hundred users changing lists all day and a worker process spinning
+on filling and regenerating the same table 12 hours a day (which should be
+a memory table, but isn't). As I said, disabling the journal might be an
+option.
 
 Regards,
-Ryusuke Konishi
 
-diff --git a/fs/sufile.c b/fs/sufile.c
-index e64a5de..0ea8558 100644
---- a/fs/sufile.c
-+++ b/fs/sufile.c
-@@ -553,7 +553,6 @@ int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
- 
- 	nilfs_segment_usage_set_error(su);
- 	kunmap_atomic(kaddr, KM_USER0);
--	brelse(su_bh);
- 
- 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
- 	header = nilfs_sufile_block_get_header(sufile, header_bh, kaddr);
--- 
-1.5.6.5
+Pierre Beck
