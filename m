@@ -1,15 +1,17 @@
-From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
-Subject: Re: NILFS 2.0.12 released
-Date: Mon, 30 Mar 2009 21:29:27 +0200
-Message-ID: <49D11D97.3020702@prnet.org>
-References: <20090330.183317.16041871.ryusuke@osrg.net>
-	<f3642e6b0903301002v2e9fe0afj2b2a4b3d9dd2cecd@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Constant checkpointing and cleanerd activity -
+ doesn't play nice with mount --bind ?
+Date: Tue, 31 Mar 2009 23:44:37 +0900 (JST)
+Message-ID: <20090331.234437.112904649.ryusuke@osrg.net>
+References: <20090317154529.1aeeecdc@natsu.i4>
+	<20090317.224324.58871500.ryusuke@osrg.net>
+	<20090317191924.1924576b@natsu.i4>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <f3642e6b0903301002v2e9fe0afj2b2a4b3d9dd2cecd-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20090317191924.1924576b-2Ve/5xEMxL0@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,56 +22,76 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: roman-ohbefDXYbNo@public.gmane.org
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 Hi,
+On Tue, 17 Mar 2009 19:19:24 +0500, Roman Mamedov <roman-ohbefDXYbNo@public.gmane.org> wrote:
+> What is really strange, is that it looks like I can unmount the main
+> NILFS, but the bind mount will continue to be accessible and writable.
+> And when I remount the main mount point back, cleanerd grabs the bind
+> mount. See below:
+> 
+> # mount -t nilfs2 /dev/mapper/hi320data /mnt/hi320data
+> mount.nilfs2: WARNING! - The NILFS on-disk format may change at any
+> time.
+> mount.nilfs2: WARNING! - Do not place critical data on a NILFS
+> filesystem.
+> 
+> # mount --bind /mnt/hi320data/test/ /mnt/bind-test/
+> 
+> # ls /mnt/bind-test/
+> 
+> # touch /mnt/bind-test/abc
+> 
+> # umount /mnt/hi320data
+> 
+> # umount /mnt/hi320data
+> umount: /mnt/hi320data: not mounted
+> 
+> # touch /mnt/bind-test/def
+> 
+> # ls /mnt/bind-test/
+> abc  def
+> 
+> # mount -t nilfs2 /dev/mapper/hi320data /mnt/hi320data
+> mount.nilfs2: WARNING! - The NILFS on-disk format may change at any
+> time.
+> mount.nilfs2: WARNING! - Do not place critical data on a NILFS
+> filesystem.
+> 
+> # ls /mnt/hi320data/test/
+> abc  def
+> 
+> # umount /mnt/bind-test 
+> umount: /mnt/bind-test: device is busy
+> umount: /mnt/bind-test: device is busy
+> 
+> # fuser -c /mnt/bind-test/
+> /mnt/bind-test/:     23203
+> 
+> # ps -Af | grep 23203
+> root 23203  1  1 19:06 ? 00:00:00 /sbin/nilfs_cleanerd
+>    -n /dev/mapper/hi320data /mnt/hi320data
+> 
+> -----------------------
+> Maybe it misdetects the bind mount as another mount of the same
+> filesystem (e.g. like when mounting a snapshot)?
 
-Many thanks from me too.
-Until now everything works completely fine.
-I will report back if a problem will appear.
+Now, I'm considering not to invoke cleanerd for bind-mounts.  It is
+too complex to switch over the base directory of cleanerd along with
+mount/umount events as above.  (It is possible but I'd rather avoid
+complicating life management of cleanerd any further.)
 
-After using the new version, I had twice the following crash:
+In addition, the bind mount can attach only part of a single
+filesystem, and therefore the .nilfs file, which is required for
+proper cleaner operation, is not assured to exist on the top of mount
+point for bind mounts.
 
-Call Trace:
- [<c01247be>] copy_process+0xa3e/0xf90
- [<c0124e27>] do_fork+0x77/0x2c0
- [<c017b740>] sys_pipe2+0x40/0x70
- [<c0101622>] sys_clone+0x32/0x40
- [<c0103131>] sysenter_do_call+0x12/0x25
+Do you have any inconvenience if I disable GC for bind mounts?
 
-but I will report this to the kernel mailing list as I suspect this has 
-nothing to do with nilfs, but was triggered by pure hazard after running 
-the new version.
+Usually bind mount has an original rw-mount though Linux can
+detach original mount prior to the bind-mount.
 
-Bye,
-David
-
-
-Andreas Hartmetz wrote:
-> On 3/30/09, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
->   
->> Dear NILFS users,
->>
->> We have released nilfs-2.0.12.
->>
->> This release fixes GC-related problems which are suspected to cause
->> filesystem corruption recently reported in this mailing list.
->>
->> Thanks to David Arendt and Andreas Hartmetz for their feedback and
->> cooperation.  I hope this will stabilize cleaner operation.
->>
->> The updated package is available at:
->> http://www.nilfs.org/en/download.html
->>
->> Thanks,
->> Ryusuke Konishi
->>     
->
-> I'm testing it already :)
-> If you don't hear back from me you can assume that the problem is
-> solved for me - so far there have been no errors. Thanks!
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
->   
+Regards,
+Ryusuke Konishi
