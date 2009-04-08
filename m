@@ -1,12 +1,13 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Nilfs merged in mainline
-Date: Wed, 08 Apr 2009 12:03:29 +0900 (JST)
-Message-ID: <20090408.120329.88469835.ryusuke@osrg.net>
+From: Alex Bitney <san-UZOCzndLCy9BDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Nilfs merged in mainline
+Date: Wed, 8 Apr 2009 06:57:41 +0300
+Message-ID: <591bc86b0904072057w2eaf6605ncd49244f86d235a@mail.gmail.com>
+References: <20090408.120329.88469835.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0916083714=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <20090408.120329.88469835.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -15,21 +16,66 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi everyone,
+--===============0916083714==
+Content-Type: multipart/alternative; boundary=001636c5b6da0768c404670323ee
 
-Just a quick note to let you know that Linus merged nilfs2 in his
-mainline kernel (2.6.30-rc1).
+--001636c5b6da0768c404670323ee
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Though still we should stay sharp until 2.6.30 will be released
-formally, I'd like to thank to everyone who contributed to the code,
-tested, commented, sent us bug reports, and so forth.
+On Wed, Apr 8, 2009 at 6:03 AM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
 
-I'm backlogged on several bug-fixes and many todo items, so it's just
-a pass point.  We look forward to everyone's continued cooperation.
+> Hi everyone,
+>
+> Just a quick note to let you know that Linus merged nilfs2 in his
+> mainline kernel (2.6.30-rc1).
 
-Cheers,
-Ryusuke
+Great! Congratulations!
+
+>
+> Cheers,
+> Ryusuke
+> _______________________________________________
+
+
+San
+
+--001636c5b6da0768c404670323ee
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<br><br><div class=3D"gmail_quote">On Wed, Apr 8, 2009 at 6:03 AM, Ryusuke =
+Konishi <span dir=3D"ltr">&lt;<a href=3D"mailto:ryusuke-sG5X7nlA6pw@public.gmane.org">ryusuke@o=
+srg.net</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D=
+"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
+
+Hi everyone,<br>
+<br>
+Just a quick note to let you know that Linus merged nilfs2 in his<br>
+mainline kernel (2.6.30-rc1).</blockquote><div></div><div>Great! Congratula=
+tions!</div><div></div><blockquote class=3D"gmail_quote" style=3D"margin:0 =
+0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;"><br>
+Cheers,<br>
+Ryusuke<br>
+_______________________________________________</blockquote><div></div><div=
+>=A0</div></div>San<br>
+
+--001636c5b6da0768c404670323ee--
+
+--===============0916083714==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0916083714==--
