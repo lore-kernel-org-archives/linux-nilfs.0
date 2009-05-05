@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 1/2] nilfs2: fix possible recovery failure due
-	to block creation without writer
-Date: Tue,  5 May 2009 21:33:02 +0900
-Message-ID: <1241526783-25671-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/2] nilfs2: fix circular locking dependency
+	of writer mutex
+Date: Tue,  5 May 2009 21:33:03 +0900
+Message-ID: <1241526783-25671-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1241526783-25671-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,59 +23,95 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Some function calls in nilfs_prepare_segment_for_recovery() may fail
-because they can create blocks on meta data files without configuring
-a writable FS-instance.  Concretely, nilfs_mdt_create_block() routine
-of meta data files will fail in that case.
+This fixes the following circular locking dependency problem:
 
-This fixes the problem by temporarily attaching a writable FS-instace
-during the function is called.
+ =======================================================
+ [ INFO: possible circular locking dependency detected ]
+ 2.6.30-rc3 #5
+ -------------------------------------------------------
+ segctord/3895 is trying to acquire lock:
+  (&nilfs->ns_writer_mutex){+.+...}, at: [<d0d02172>]
+   nilfs_mdt_get_block+0x89/0x20f [nilfs2]
+
+ but task is already holding lock:
+  (&bmap->b_sem){++++..}, at: [<d0d02d99>]
+   nilfs_bmap_propagate+0x14/0x2e [nilfs2]
+
+ which lock already depends on the new lock.
+
+The bugfix is done by replacing call sites of nilfs_get_writer() which
+are never called from read-only context with direct dereferencing of
+pointer to a writable FS-instance.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/recovery.c |    6 ++++--
- 1 files changed, 4 insertions(+), 2 deletions(-)
+ fs/nilfs2/ioctl.c |    8 +++++---
+ fs/nilfs2/mdt.c   |   13 +++++++------
+ 2 files changed, 12 insertions(+), 9 deletions(-)
 
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index 4fc081e..57afa9d 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -407,6 +407,7 @@ void nilfs_dispose_segment_list(struct list_head *head)
- }
- 
- static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
-+					      struct nilfs_sb_info *sbi,
- 					      struct nilfs_recovery_info *ri)
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 108d281..be387c6 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -516,14 +516,16 @@ static ssize_t
+ nilfs_ioctl_do_free_segments(struct the_nilfs *nilfs, __u64 *posp, int flags,
+ 			     void *buf, size_t size, size_t nmembs)
  {
- 	struct list_head *head = &ri->ri_used_segments;
-@@ -421,6 +422,7 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
- 	segnum[2] = ri->ri_segnum;
- 	segnum[3] = ri->ri_nextnum;
+-	struct nilfs_sb_info *sbi = nilfs_get_writer(nilfs);
++	struct nilfs_sb_info *sbi = nilfs->ns_writer;
+ 	int ret;
  
-+	nilfs_attach_writer(nilfs, sbi);
- 	/*
- 	 * Releasing the next segment of the latest super root.
- 	 * The next segment is invalidated by this recovery.
-@@ -459,10 +461,10 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
- 	nilfs->ns_pseg_offset = 0;
- 	nilfs->ns_seg_seq = ri->ri_seq + 2;
- 	nilfs->ns_nextnum = nilfs->ns_segnum = segnum[0];
--	return 0;
+-	if (unlikely(!sbi))
++	if (unlikely(!sbi)) {
++		/* never happens because called for a writable mount */
++		WARN_ON(1);
+ 		return -EROFS;
++	}
+ 	ret = nilfs_segctor_add_segments_to_be_freed(
+ 		NILFS_SC(sbi), buf, nmembs);
+-	nilfs_put_writer(nilfs);
  
-  failed:
- 	/* No need to recover sufile because it will be destroyed on error */
-+	nilfs_detach_writer(nilfs, sbi);
+ 	return (ret < 0) ? ret : nmembs;
+ }
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index 47dd815..e1c6777 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -77,19 +77,22 @@ static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
+ 						     void *))
+ {
+ 	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
+-	struct nilfs_sb_info *writer = NULL;
+ 	struct super_block *sb = inode->i_sb;
+ 	struct nilfs_transaction_info ti;
+ 	struct buffer_head *bh;
+ 	int err;
+ 
+ 	if (!sb) {
+-		writer = nilfs_get_writer(nilfs);
+-		if (!writer) {
++		/*
++		 * Make sure this function is not called from any
++		 * read-only context.
++		 */
++		if (!nilfs->ns_writer) {
++			WARN_ON(1);
+ 			err = -EROFS;
+ 			goto out;
+ 		}
+-		sb = writer->s_super;
++		sb = nilfs->ns_writer->s_super;
+ 	}
+ 
+ 	nilfs_transaction_begin(sb, &ti, 0);
+@@ -127,8 +130,6 @@ static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
+ 		err = nilfs_transaction_commit(sb);
+ 	else
+ 		nilfs_transaction_abort(sb);
+-	if (writer)
+-		nilfs_put_writer(nilfs);
+  out:
  	return err;
  }
- 
-@@ -728,7 +730,7 @@ int nilfs_recover_logical_segments(struct the_nilfs *nilfs,
- 		goto failed;
- 
- 	if (ri->ri_need_recovery == NILFS_RECOVERY_ROLLFORWARD_DONE) {
--		err = nilfs_prepare_segment_for_recovery(nilfs, ri);
-+		err = nilfs_prepare_segment_for_recovery(nilfs, sbi, ri);
- 		if (unlikely(err)) {
- 			printk(KERN_ERR "NILFS: Error preparing segments for "
- 			       "recovery.\n");
 -- 
 1.6.2
