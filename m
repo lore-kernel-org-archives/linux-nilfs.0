@@ -1,10 +1,10 @@
-From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: nilfs_cpfile_delete_checkpoints: cannot delete
  block
-Date: Tue, 05 May 2009 23:19:19 +0200
-Message-ID: <4A00AD57.805@prnet.org>
-References: <D6LvKjCkn1gF.D60GTY3Z@mail.prnet.org>	<20090506.004648.105122016.ryusuke@osrg.net>	<4A006EAB.6000206@prnet.org>
-	<4A00944B.2020105@prnet.org>
+Date: Wed, 06 May 2009 12:02:04 +0900 (JST)
+Message-ID: <20090506.120204.27533580.ryusuke@osrg.net>
+References: <20090506.004648.105122016.ryusuke@osrg.net>
+	<4A006EAB.6000206@prnet.org> <4A00944B.2020105@prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,110 +21,16 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 Hi,
-
-The following error occurred after running cleaner once again after this 
-error, but some more space could be freed up.
-
-BUG: unable to handle kernel NULL pointer dereference at (null)
-IP: [<c015792e>] shrink_page_list+0x31e/0x6d0
-*pdpt = 000000002bb7f001 *pde = 0000000000000000
-Oops: 0000 [#1] PREEMPT SMP
-last sysfs file: /sys/devices/pci0000:00/0000:00:1f.0/resource
-Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
-capifs kernelcapi nilfs2 scsi_wait_scan
-
-Pid: 333, comm: kswapd0 Tainted: P           (2.6.29.2server #1) P5QL-E
-EIP: 0060:[<c015792e>] EFLAGS: 00010282 CPU: 3
-EIP is at shrink_page_list+0x31e/0x6d0
-EAX: 00000000 EBX: c158f300 ECX: 40000811 EDX: ecc48e54
-ESI: f6c5df70 EDI: 00000001 EBP: f6c5debc ESP: f6c5dd84
- DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
-Process kswapd0 (pid: 333, ti=f6c5c000 task=f7482000 task.ti=f6c5c000)
-Stack:
- c01575a2 00000000 f6c5de0c 00000000 00000000 00000000 00000009 ecc48e54
- 00000009 00000001 c1622320 c1622340 c1622360 c1624d40 c1624d60 c1624d80
- c1624da0 c1624dc0 c1624de0 00000001 c16a5d80 c158f400 00000000 c0538e1c
-Call Trace:
- [<c01575a2>] shrink_active_list+0x332/0x3a0
- [<c01569a8>] isolate_pages_global+0x88/0x210
- [<c01556e9>] ____pagevec_lru_add+0x119/0x130
- [<c0157f04>] shrink_list+0x224/0x560
- [<c01584b7>] shrink_zone+0x277/0x300
- [<c0158fa8>] kswapd+0x518/0x530
- [<c0156920>] isolate_pages_global+0x0/0x210
- [<c01371b0>] autoremove_wake_function+0x0/0x50
- [<c011bb2d>] complete+0x3d/0x60
- [<c0158a90>] kswapd+0x0/0x530
- [<c0136e92>] kthread+0x42/0x70
- [<c0136e50>] kthread+0x0/0x70
- [<c010391b>] kernel_thread_helper+0x7/0x1c
-Code: 00 00 8b 50 04 89 c8 c1 e8 0b 83 e0 01 29 c2 83 fa 02 0f 85 f0 fd 
-ff ff 8b 44 24 1c 85 c0 0f 84 f3 01 00 00 8b 54 24 1c 8b 42 38 <8b> 00 
-85 c0 0f 84 d8 fe ff ff 64 a1 00 60 5a c0 f6 40 0e 80 8b
-EIP: [<c015792e>] shrink_page_list+0x31e/0x6d0 SS:ESP 0068:f6c5dd84
----[ end trace 4d2b343635092946 ]---
-BUG: unable to handle kernel NULL pointer dereference at (null)
-IP: [<c015792e>] shrink_page_list+0x31e/0x6d0
-*pdpt = 000000002bb7f001 *pde = 0000000000000000
-Oops: 0000 [#2] PREEMPT SMP
-last sysfs file: /sys/devices/pci0000:00/0000:00:1f.0/resource
-Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
-capifs kernelcapi nilfs2 scsi_wait_scan
-
-Pid: 7032, comm: nilfs_cleanerd Tainted: P      D    (2.6.29.2server #1) 
-P5QL-E
-EIP: 0060:[<c015792e>] EFLAGS: 00210286 CPU: 0
-EIP is at shrink_page_list+0x31e/0x6d0
-EAX: 00000000 EBX: c158f420 ECX: 40000811 EDX: ecc4b9d4
-ESI: ebd79d70 EDI: 00000001 EBP: ebd79cd8 ESP: ebd79ba0
- DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
-Process nilfs_cleanerd (pid: 7032, ti=ebd78000 task=f755a330 
-task.ti=ebd78000)
-Stack:
- c01575a2 00000000 ebd79c28 00000000 00000000 00000008 00000005 ecc4b9d4
- 00000005 00000001 c1616360 c1612da0 c16126a0 c167b720 c167b4a0 c10a1c00
- c10a28e0 c10a28c0 c10a28a0 c10a2880 c10a2860 c15f1740 00000000 c0538e1c
-Call Trace:
- [<c01575a2>] shrink_active_list+0x332/0x3a0
- [<c01569a8>] isolate_pages_global+0x88/0x210
- [<c01556e9>] ____pagevec_lru_add+0x119/0x130
- [<c0157f04>] shrink_list+0x224/0x560
- [<c022751c>] elv_merged_request+0x4c/0x50
- [<c01584b7>] shrink_zone+0x277/0x300
- [<c0151807>] rmqueue_bulk+0x67/0x80
- [<c01588ef>] try_to_free_pages+0x21f/0x340
- [<c0156920>] isolate_pages_global+0x0/0x210
- [<c015286e>] __alloc_pages_internal+0x19e/0x430
- [<c0154df0>] __do_page_cache_readahead+0x100/0x230
- [<c015531a>] do_page_cache_readahead+0x4a/0x70
- [<c014f328>] filemap_fault+0x2c8/0x480
- [<c015f482>] __do_fault+0x42/0x400
- [<c0119b13>] pte_alloc_one+0x33/0x40
- [<c0161126>] __pte_alloc+0xd6/0xe0
- [<c01612ae>] handle_mm_fault+0x17e/0x800
- [<c0165fff>] mmap_region+0x14f/0x3f0
- [<c0115caa>] do_page_fault+0x28a/0x860
- [<c0115a20>] do_page_fault+0x0/0x860
- [<c040ab12>] error_code+0x72/0x78
- [<c0400000>] pci_read_bridge_bases+0x20/0x350
-Code: 00 00 8b 50 04 89 c8 c1 e8 0b 83 e0 01 29 c2 83 fa 02 0f 85 f0 fd 
-ff ff 8b 44 24 1c 85 c0 0f 84 f3 01 00 00 8b 54 24 1c 8b 42 38 <8b> 00 
-85 c0 0f 84 d8 fe ff ff 64 a1 00 60 5a c0 f6 40 0e 80 8b
-EIP: [<c015792e>] shrink_page_list+0x31e/0x6d0 SS:ESP 0068:ebd79ba0
----[ end trace 4d2b343635092947 ]---
-
-Bye,
-David Arendt
-
-David Arendt wrote:
+On Tue, 05 May 2009 21:32:27 +0200, David Arendt wrote:
 > Hi,
->
+> 
 > after cleaner was running for 2 hours and freeing up 200gbytes of space 
 > I had the following crash:
->
+> 
 > nilfs_cpfile_delete_checkpoints: cannot delete block: cno=76377, range = 
 > [75980, 76972)
 > NILFS: GC failed during preparation: cannot delete checkpoints: err=-2
@@ -133,11 +39,24 @@ David Arendt wrote:
 >  BH[0] d3cbdb30: cnt=2 block#=74049180 state=0x2002b
 > ------------[ cut here ]------------
 > kernel BUG at /home/admin/x/nilfs-2.0.12/fs/btnode.c:233!
+
+The log shows a btree routine, nilfs_btree_propagate() has detected an
+orphan btree node in the page cache.  Looks another inconsistency.
+
+I'd like to know if this is a regression of the previous patch or not
+( I guess it's not ). If you see this for new volumes, please let me
+know.
+
+I'll digging into the btree code to hunt this later.
+
+Thanks,
+Ryusuke Konishi
+
 > invalid opcode: 0000 [#1] PREEMPT SMP
 > last sysfs file: /sys/devices/pci0000:00/0000:00:1f.0/resource
 > Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
 > capifs kernelcapi nilfs2 scsi_wait_scan
->
+> 
 > Pid: 2285, comm: segctord Tainted: P           (2.6.29.2server #1) P5QL-E
 > EIP: 0060:[<f8331680>] EFLAGS: 00010282 CPU: 2
 > EIP is at nilfs_btnode_prepare_change_key+0x170/0x180 [nilfs2]
@@ -184,54 +103,44 @@ David Arendt wrote:
 > SS:ESP 0068:f6c13ce0
 > ---[ end trace 0a4368694028129d ]---
 > note: segctord[2285] exited with preempt_count 1
->
+> 
 > Bye,
 > David Arendt
->
+> 
 > David Arendt wrote:
->   
->> Hi,
->>
->> I have applied your patch now. Also the garbage collector didn't crash 
->> until now. I have chosen to not reformat for further testing as there 
->> are only temporary files on this partition where loosing them would not 
->> be a big problem.
->>
->> Bye,
->> David Arendt
->>
->> Ryusuke Konishi wrote:
->>   
->>     
->>> Hi!
->>> On Tue,  5 May 2009 17:26:48 +0200, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org wrote:
->>>   
->>>     
->>>       
->>>> Thank you.
->>>> I will try this patch in a few hours.  If I see it correctly the
->>>> patch will prevent this error in future and will not correct the
->>>> current error, so I suppose that after applying the patch I will
->>>> need to reformat the volume.
->>>>     
->>>>       
->>>>         
->>> I expect the patch will even fix the current error on the next GC, but
->>> you had better reformat the volume for safety.
->>>
->>> Ryusuke Konishi
->>>   
->>>     
->>>       
->> _______________________________________________
->> users mailing list
->> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
->> https://www.nilfs.org/mailman/listinfo/users
->>   
->>     
->
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
->   
+> > Hi,
+> >
+> > I have applied your patch now. Also the garbage collector didn't crash 
+> > until now. I have chosen to not reformat for further testing as there 
+> > are only temporary files on this partition where loosing them would not 
+> > be a big problem.
+> >
+> > Bye,
+> > David Arendt
+> >
+> > Ryusuke Konishi wrote:
+> >   
+> >> Hi!
+> >> On Tue,  5 May 2009 17:26:48 +0200, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org wrote:
+> >>   
+> >>     
+> >>> Thank you.
+> >>> I will try this patch in a few hours.  If I see it correctly the
+> >>> patch will prevent this error in future and will not correct the
+> >>> current error, so I suppose that after applying the patch I will
+> >>> need to reformat the volume.
+> >>>     
+> >>>       
+> >> I expect the patch will even fix the current error on the next GC, but
+> >> you had better reformat the volume for safety.
+> >>
+> >> Ryusuke Konishi
+> >>   
+> >>     
+> >
+> > _______________________________________________
+> > users mailing list
+> > users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+> > https://www.nilfs.org/mailman/listinfo/users
+> >   
+> 
