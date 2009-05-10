@@ -1,16 +1,16 @@
-From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
-Subject: Re: nilfs_cpfile_delete_checkpoints: cannot delete
- block
-Date: Sun, 10 May 2009 15:04:04 +0200
-Message-ID: <4A06D0C4.5030008@prnet.org>
-References: <4A00944B.2020105@prnet.org>	<20090506.120204.27533580.ryusuke@osrg.net>	<4A01B0D2.6030509@prnet.org>
-	<20090510.144313.10164669.ryusuke@osrg.net>
+From: Milos Jana <milosdsax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Can't mount nilfs - error searching super root.
+Date: Sun, 10 May 2009 16:50:36 +0200
+Message-ID: <3313c4ab0905100750p503664acl3b44d043db3d23ae@mail.gmail.com>
+References: <3313c4ab0902110709v1e9783fcm8f3dad6507f40347@mail.gmail.com>
+	<20090212.143408.130857730.ryusuke@osrg.net>
+	<3313c4ab0904220618r22b62e7qa8b239ccbcf02270@mail.gmail.com>
+	<20090422.234455.05227091.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1579095786=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090510.144313.10164669.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20090422.234455.05227091.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,95 +19,93 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>, NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+
+--===============1579095786==
+Content-Type: multipart/alternative; boundary=0015174c111e02ce2e04698ffceb
+
+--0015174c111e02ce2e04698ffceb
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
 Hi,
+The same problem (error searching super root) occurred after one week of
+using NILFS, this time the drive was formated and mounted with
+nilfs/nilfs-utils version 2.0.12.
 
-I am using gcc 4.1.2.
 
-In the meantime, I upgraded from kernel 2.6.29.2 to 2.6.29.3 and as a 
-result of this, I have also recompiled nilfs, so I suppose an objdump 
-from this one would be useless in combination with the old crash log. I 
-think I should wait until the problem appears again with 2.6.29.3. What 
-do you think ?
+On Wed, Apr 22, 2009 at 4:44 PM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
 
-Bye,
-David Arendt
-
-Ryusuke Konishi wrote:
-> Hi David,
-> On Wed, 06 May 2009 17:46:26 +0200, David Arendt wrote:
->   
->> Hi,
->>
->> today I had run cleanerd on 2 clean partitions.
->>
->> One worked flawlessly. On the other one this error occured:
->>
->> BUG: unable to handle kernel NULL pointer dereference at 00000ccd
->> IP: [<f8341fcc>] nilfs_gc_iget+0x4c/0x130 [nilfs2]
->> *pdpt = 0000000013d32001 *pde = 0000000000000000
->> Oops: 0000 [#1] PREEMPT SMP
->> last sysfs file: /sys/devices/pci0000:00/0000:00:1f.0/resource
->> Modules linked in: nvidia(P) vmnet vmblock vmci vmmon fcpci(P) capi 
->> capifs kernelcapi nilfs2 scsi_wait_scan
->>
->> Pid: 8551, comm: nilfs_cleanerd Tainted: P           (2.6.29.2server #1) 
->> P5QL-E
->> EIP: 0060:[<f8341fcc>] EFLAGS: 00010202 CPU: 3
->> EIP is at nilfs_gc_iget+0x4c/0x130 [nilfs2]
->> EAX: 00000ccd EBX: 00000000 ECX: 00000002 EDX: f6897c00
->> ESI: 0000004e EDI: 00000002 EBP: 00000000 ESP: c3801ca0
->>  DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
->> Process nilfs_cleanerd (pid: 8551, ti=c3800000 task=d4d10330 
->> task.ti=c3800000)
->> Stack:
->>  e11854c0 f6857a00 f6897c3c 00000000 00000000 00000000 e1185500 f8342e06
->>  00000002 00000000 c3801d60 00000044 f7450990 d4d10484 00000001 00000001
->>  00000000 00000000 00020050 00000202 00000000 00000000 00000000 c3801d58
->> Call Trace:
->>  [<f8342e06>] nilfs_ioctl_do_move_blocks+0x76/0x3e0 [nilfs2]
->>  [<f8342379>] nilfs_ioctl_wrap_copy+0x169/0x1f0 [nilfs2]
->>  [<f834292e>] nilfs_ioctl_prepare_clean_segments+0x6e/0x130 [nilfs2]
->>  [<f8342d90>] nilfs_ioctl_do_move_blocks+0x0/0x3e0 [nilfs2]
->>  [<f833deb3>] nilfs_clean_segments+0x83/0x200 [nilfs2]
->>  [<f83423c6>] nilfs_ioctl_wrap_copy+0x1b6/0x1f0 [nilfs2]
->>  [<f8342810>] nilfs_ioctl+0x3d0/0x480 [nilfs2]
->>  [<f8342c90>] nilfs_ioctl_do_get_bdescs+0x0/0xb0 [nilfs2]
->>  [<c0312ddf>] ehci_irq+0x17f/0x340
->>  [<c0168a78>] page_add_new_anon_rmap+0x28/0x60
->>  [<c013ddfe>] getnstimeofday+0x4e/0x120
->>  [<f8342440>] nilfs_ioctl+0x0/0x480 [nilfs2]
->>  [<c017f50b>] vfs_ioctl+0x2b/0x90
->>  [<c017f87b>] do_vfs_ioctl+0x1eb/0x530
->>  [<c012d45b>] run_timer_softirq+0x15b/0x190
->>  [<c0128d74>] __do_softirq+0x94/0x140
->>  [<c017fbfd>] sys_ioctl+0x3d/0x70
->>  [<c0103131>] sysenter_do_call+0x12/0x25
->>  [<c0400000>] pci_read_bridge_bases+0x20/0x350
->> Code: f8 69 c0 01 00 37 9e c1 e8 18 c1 e0 02 89 44 24 08 8b 92 dc 00 00 
->> 00 01 d0 89 44 24 08 8b 00 85 c0 75 08 eb 2b 85 c9 74 27 89 c8 <8b> 08 
->> 0f 18 01 90 3b 70 20 89 c3 75 ed 8b 50 9c 8b 40 98 31 ea
->> EIP: [<f8341fcc>] nilfs_gc_iget+0x4c/0x130 [nilfs2] SS:ESP 0068:c3801ca0
->> ---[ end trace 573da78de6d7c815 ]---
->>
->> Bye,
->> Arendt David
->>     
+> The disk format compatibility is not broken for x86.  You can try the
+> latest nilfs2-utils and nilfs2-module.
 >
-> I finally gave up trailing this problem from your log because my gcc
-> generates different assembler code with yours.
+> Since the "error searching super root" problem is not a bug of mount
+> procedure but a result of incomplete disk write, it will occur for the
+> nilfs2 drive in question.
 >
-> Could you send me a disassembler output of the nilfs_gc_iget function?
-> It is acquirable as follows:
+> Even after you create a new partition with mkfs.nilfs2, it could be
+> reproduced if the device or (or the device driver) still has the
+> problem on sync write.  So please do not put valuable data on the
+> nilfs2 partition.
 >
->   $ cd nilfs2-module/fs
->   $ objdump -D gcinode.o > gcinode.disasm
+> I'd like to know the root cause of the problem and take measures if I
+> can do something on file system layer.
+> I appreciate if you retry using nilfs on the device.
 >
-> And, please let me know the gcc version you are using.
->
-> Thanks in advance,
+> Thanks,
 > Ryusuke Konishi
->   
+>
+>
+>
+
+--0015174c111e02ce2e04698ffceb
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi,<br>The same problem (error searching super root) occurred after one wee=
+k of using NILFS, this time the drive was formated and mounted with nilfs/n=
+ilfs-utils version 2.0.12. <br><br><br><div class=3D"gmail_quote">On Wed, A=
+pr 22, 2009 at 4:44 PM, Ryusuke Konishi <span dir=3D"ltr">&lt;<a href=3D"ma=
+ilto:ryusuke-sG5X7nlA6pw@public.gmane.org">ryusuke-sG5X7nlA6pw@public.gmane.org</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"border-left: 1px solid rgb(204, =
+204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">The disk format c=
+ompatibility is not broken for x86. =A0You can try the<br>
+latest nilfs2-utils and nilfs2-module.<br>
+<br>
+Since the &quot;error searching super root&quot; problem is not a bug of mo=
+unt<br>
+procedure but a result of incomplete disk write, it will occur for the<br>
+nilfs2 drive in question.<br>
+<br>
+Even after you create a new partition with mkfs.nilfs2, it could be<br>
+reproduced if the device or (or the device driver) still has the<br>
+problem on sync write. =A0So please do not put valuable data on the<br>
+nilfs2 partition.<br>
+<br>
+I&#39;d like to know the root cause of the problem and take measures if I<b=
+r>
+can do something on file system layer.<br>
+I appreciate if you retry using nilfs on the device.<br>
+<br>
+Thanks,<br>
+<font color=3D"#888888">Ryusuke Konishi<br>
+</font><div><div></div><div class=3D"h5"><br><br>
+</div></div></blockquote></div><br>
+
+--0015174c111e02ce2e04698ffceb--
+
+--===============1579095786==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============1579095786==--
