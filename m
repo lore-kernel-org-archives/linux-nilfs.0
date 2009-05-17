@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 1/6] nilfs2: use semaphore to protect pointer
-	to a writable FS-instance
-Date: Mon, 18 May 2009 00:29:41 +0900
-Message-ID: <1242574186-21554-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 6/6] nilfs2: remove header file for segment
+	list operations
+Date: Mon, 18 May 2009 00:29:46 +0900
+Message-ID: <1242574186-21554-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1242574186-21554-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,135 +23,222 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This removes nilfs_get_writer() and nilfs_put_writer() pair which is
-used to retain a writable FS-instance for a period.  The pair
-functions were making up some kind of recursive lock, and they
-eventually became obsolete by the bugfix patch ("nilfs2: fix circular
-locking dependency of writer mutex").
+This will eliminate obsolete list operations of nilfs_segment_entry
+structure which has been used to handle mutiple segment numbers.
 
-This uses a reader/writer semaphore instead of the own lock.
+The patch ("nilfs2: remove list of freeing segments") removed use of
+the structure from the segment constructor code, and this patch
+simplifies the remaining code by integrating it into recovery.c.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/mdt.c       |   10 +++++++---
- fs/nilfs2/the_nilfs.c |    3 +--
- fs/nilfs2/the_nilfs.h |   27 ++++++---------------------
- 3 files changed, 14 insertions(+), 26 deletions(-)
+ fs/nilfs2/recovery.c  |   37 +++++++++++++++--------
+ fs/nilfs2/seglist.h   |   79 -------------------------------------------------
+ fs/nilfs2/segment.h   |    1 +
+ fs/nilfs2/the_nilfs.c |    1 -
+ 4 files changed, 25 insertions(+), 93 deletions(-)
+ delete mode 100644 fs/nilfs2/seglist.h
 
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index bb78745..c3eb539 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -402,6 +402,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 	struct inode *inode = container_of(page->mapping,
- 					   struct inode, i_data);
- 	struct super_block *sb = inode->i_sb;
-+	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
- 	struct nilfs_sb_info *writer = NULL;
- 	int err = 0;
+diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
+index 57afa9d..d80cc71 100644
+--- a/fs/nilfs2/recovery.c
++++ b/fs/nilfs2/recovery.c
+@@ -28,7 +28,6 @@
+ #include "segment.h"
+ #include "sufile.h"
+ #include "page.h"
+-#include "seglist.h"
+ #include "segbuf.h"
  
-@@ -411,9 +412,12 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 	if (page->mapping->assoc_mapping)
- 		return 0; /* Do not request flush for shadow page cache */
- 	if (!sb) {
--		writer = nilfs_get_writer(NILFS_MDT(inode)->mi_nilfs);
--		if (!writer)
-+		down_read(&nilfs->ns_writer_sem);
-+		writer = nilfs->ns_writer;
-+		if (!writer) {
-+			up_read(&nilfs->ns_writer_sem);
- 			return -EROFS;
-+		}
- 		sb = writer->s_super;
+ /*
+@@ -395,6 +394,24 @@ static void dispose_recovery_list(struct list_head *head)
+ 	}
+ }
+ 
++struct nilfs_segment_entry {
++	struct list_head	list;
++	__u64			segnum;
++};
++
++static int nilfs_segment_list_add(struct list_head *head, __u64 segnum)
++{
++	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
++
++	if (unlikely(!ent))
++		return -ENOMEM;
++
++	ent->segnum = segnum;
++	INIT_LIST_HEAD(&ent->list);
++	list_add_tail(&ent->list, head);
++	return 0;
++}
++
+ void nilfs_dispose_segment_list(struct list_head *head)
+ {
+ 	while (!list_empty(head)) {
+@@ -402,7 +419,7 @@ void nilfs_dispose_segment_list(struct list_head *head)
+ 			= list_entry(head->next,
+ 				     struct nilfs_segment_entry, list);
+ 		list_del(&ent->list);
+-		nilfs_free_segment_entry(ent);
++		kfree(ent);
+ 	}
+ }
+ 
+@@ -431,12 +448,10 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
+ 	if (unlikely(err))
+ 		goto failed;
+ 
+-	err = -ENOMEM;
+ 	for (i = 1; i < 4; i++) {
+-		ent = nilfs_alloc_segment_entry(segnum[i]);
+-		if (unlikely(!ent))
++		err = nilfs_segment_list_add(head, segnum[i]);
++		if (unlikely(err))
+ 			goto failed;
+-		list_add_tail(&ent->list, head);
  	}
  
-@@ -423,7 +427,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 		nilfs_flush_segment(sb, inode->i_ino);
+ 	/*
+@@ -450,7 +465,7 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
+ 				goto failed;
+ 		}
+ 		list_del(&ent->list);
+-		nilfs_free_segment_entry(ent);
++		kfree(ent);
+ 	}
  
- 	if (writer)
--		nilfs_put_writer(NILFS_MDT(inode)->mi_nilfs);
-+		up_read(&nilfs->ns_writer_sem);
- 	return err;
- }
+ 	/* Allocate new segments for recovery */
+@@ -791,7 +806,6 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
+ 	u64 seg_seq;
+ 	__u64 segnum, nextnum = 0;
+ 	__u64 cno;
+-	struct nilfs_segment_entry *ent;
+ 	LIST_HEAD(segments);
+ 	int empty_seg = 0, scan_newer = 0;
+ 	int ret;
+@@ -892,12 +906,9 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
+ 		if (empty_seg++)
+ 			goto super_root_found; /* found a valid super root */
  
+-		ent = nilfs_alloc_segment_entry(segnum);
+-		if (unlikely(!ent)) {
+-			ret = -ENOMEM;
++		ret = nilfs_segment_list_add(&segments, segnum);
++		if (unlikely(ret))
+ 			goto failed;
+-		}
+-		list_add_tail(&ent->list, &segments);
+ 
+ 		seg_seq++;
+ 		segnum = nextnum;
+diff --git a/fs/nilfs2/seglist.h b/fs/nilfs2/seglist.h
+deleted file mode 100644
+index e448e40..0000000
+--- a/fs/nilfs2/seglist.h
++++ /dev/null
+@@ -1,79 +0,0 @@
+-/*
+- * seglist.h - expediential structure and routines to handle list of segments
+- *             (would be removed in a future release)
+- *
+- * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; either version 2 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+- *
+- * Written by Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+- *
+- */
+-#ifndef _NILFS_SEGLIST_H
+-#define _NILFS_SEGLIST_H
+-
+-#include <linux/fs.h>
+-#include <linux/buffer_head.h>
+-#include <linux/nilfs2_fs.h>
+-#include "sufile.h"
+-
+-struct nilfs_segment_entry {
+-	__u64			segnum;
+-
+-	struct list_head	list;
+-	struct buffer_head     *bh_su;
+-	struct nilfs_segment_usage *raw_su;
+-};
+-
+-
+-void nilfs_dispose_segment_list(struct list_head *);
+-
+-static inline struct nilfs_segment_entry *
+-nilfs_alloc_segment_entry(__u64 segnum)
+-{
+-	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
+-
+-	if (likely(ent)) {
+-		ent->segnum = segnum;
+-		ent->bh_su = NULL;
+-		ent->raw_su = NULL;
+-		INIT_LIST_HEAD(&ent->list);
+-	}
+-	return ent;
+-}
+-
+-static inline int nilfs_open_segment_entry(struct nilfs_segment_entry *ent,
+-					   struct inode *sufile)
+-{
+-	return nilfs_sufile_get_segment_usage(sufile, ent->segnum,
+-					      &ent->raw_su, &ent->bh_su);
+-}
+-
+-static inline void nilfs_close_segment_entry(struct nilfs_segment_entry *ent,
+-					     struct inode *sufile)
+-{
+-	if (!ent->bh_su)
+-		return;
+-	nilfs_sufile_put_segment_usage(sufile, ent->segnum, ent->bh_su);
+-	ent->bh_su = NULL;
+-	ent->raw_su = NULL;
+-}
+-
+-static inline void nilfs_free_segment_entry(struct nilfs_segment_entry *ent)
+-{
+-	kfree(ent);
+-}
+-
+-#endif /* _NILFS_SEGLIST_H */
+diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
+index f36a851..0d2a475 100644
+--- a/fs/nilfs2/segment.h
++++ b/fs/nilfs2/segment.h
+@@ -239,5 +239,6 @@ extern int nilfs_search_super_root(struct the_nilfs *, struct nilfs_sb_info *,
+ extern int nilfs_recover_logical_segments(struct the_nilfs *,
+ 					  struct nilfs_sb_info *,
+ 					  struct nilfs_recovery_info *);
++extern void nilfs_dispose_segment_list(struct list_head *);
+ 
+ #endif /* _NILFS_SEGMENT_H */
 diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 7f65b3b..9befbc8 100644
+index 9befbc8..14b6404 100644
 --- a/fs/nilfs2/the_nilfs.c
 +++ b/fs/nilfs2/the_nilfs.c
-@@ -65,10 +65,9 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+@@ -32,7 +32,6 @@
+ #include "cpfile.h"
+ #include "sufile.h"
+ #include "dat.h"
+-#include "seglist.h"
+ #include "segbuf.h"
  
- 	nilfs->ns_bdev = bdev;
- 	atomic_set(&nilfs->ns_count, 1);
--	atomic_set(&nilfs->ns_writer_refcount, -1);
- 	atomic_set(&nilfs->ns_ndirtyblks, 0);
- 	init_rwsem(&nilfs->ns_sem);
--	mutex_init(&nilfs->ns_writer_mutex);
-+	init_rwsem(&nilfs->ns_writer_sem);
- 	INIT_LIST_HEAD(&nilfs->ns_supers);
- 	spin_lock_init(&nilfs->ns_last_segment_lock);
- 	nilfs->ns_gc_inodes_h = NULL;
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index 30fe587..8732d37 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -47,8 +47,7 @@ enum {
-  * @ns_bdi: backing dev info
-  * @ns_writer: back pointer to writable nilfs_sb_info
-  * @ns_sem: semaphore for shared states
-- * @ns_writer_mutex: mutex protecting ns_writer attach/detach
-- * @ns_writer_refcount: number of referrers on ns_writer
-+ * @ns_writer_sem: semaphore protecting ns_writer attach/detach
-  * @ns_sbh: buffer heads of on-disk super blocks
-  * @ns_sbp: pointers to super block data
-  * @ns_sbwtime: previous write time of super blocks
-@@ -93,8 +92,7 @@ struct the_nilfs {
- 	struct backing_dev_info *ns_bdi;
- 	struct nilfs_sb_info   *ns_writer;
- 	struct rw_semaphore	ns_sem;
--	struct mutex		ns_writer_mutex;
--	atomic_t		ns_writer_refcount;
-+	struct rw_semaphore	ns_writer_sem;
- 
- 	/*
- 	 * used for
-@@ -208,34 +206,21 @@ static inline void get_nilfs(struct the_nilfs *nilfs)
- 	atomic_inc(&nilfs->ns_count);
- }
- 
--static inline struct nilfs_sb_info *nilfs_get_writer(struct the_nilfs *nilfs)
--{
--	if (atomic_inc_and_test(&nilfs->ns_writer_refcount))
--		mutex_lock(&nilfs->ns_writer_mutex);
--	return nilfs->ns_writer;
--}
--
--static inline void nilfs_put_writer(struct the_nilfs *nilfs)
--{
--	if (atomic_add_negative(-1, &nilfs->ns_writer_refcount))
--		mutex_unlock(&nilfs->ns_writer_mutex);
--}
--
- static inline void
- nilfs_attach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
- {
--	mutex_lock(&nilfs->ns_writer_mutex);
-+	down_write(&nilfs->ns_writer_sem);
- 	nilfs->ns_writer = sbi;
--	mutex_unlock(&nilfs->ns_writer_mutex);
-+	up_write(&nilfs->ns_writer_sem);
- }
- 
- static inline void
- nilfs_detach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
- {
--	mutex_lock(&nilfs->ns_writer_mutex);
-+	down_write(&nilfs->ns_writer_sem);
- 	if (sbi == nilfs->ns_writer)
- 		nilfs->ns_writer = NULL;
--	mutex_unlock(&nilfs->ns_writer_mutex);
-+	up_write(&nilfs->ns_writer_sem);
- }
- 
- static inline void
+ void nilfs_set_last_segment(struct the_nilfs *nilfs,
 -- 
 1.6.2
