@@ -1,15 +1,15 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: users Digest, Vol 38, Issue 14
-Date: Sun, 17 May 2009 22:57:59 +0900 (JST)
-Message-ID: <20090517.225759.58884506.ryusuke@osrg.net>
-References: <mailman.1.1242356401.18832.users@nilfs.org>
-	<20090515103724.5dd3285b@simplux>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 1/6] nilfs2: use semaphore to protect pointer
+	to a writable FS-instance
+Date: Mon, 18 May 2009 00:29:41 +0900
+Message-ID: <1242574186-21554-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1242574186-21554-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090515103724.5dd3285b@simplux>
+In-Reply-To: <1242574186-21554-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,71 +20,138 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, mniederle-RbZlAiThDcE@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
-On Fri, 15 May 2009 10:37:24 +0200, "Dipl.-Ing. Michael Niederle" wrote:
-> Hi, Ryusuke!
-> > What is your pendrive product?
-> 
-> I have several pen drives for testing (from Corsair, OCZ, SanDisk). I'm
-> currently testing nilfs on a "SanDisk Curzer Contour (16GB)". Initially I used
-> kernel 2.6.30rc4, but switched to rc5 recently. The new kernel was build under
-> nilfs - quickly and without any problems.
+This removes nilfs_get_writer() and nilfs_put_writer() pair which is
+used to retain a writable FS-instance for a period.  The pair
+functions were making up some kind of recursive lock, and they
+eventually became obsolete by the bugfix patch ("nilfs2: fix circular
+locking dependency of writer mutex").
 
-I got a SanDisk Cruzer for tests today.
-So far, it works pretty well with nilfs.
- 
-> The problem of a pen based Linux system is, that it is more likely to be just
-> disconnected instead of beeing shutdown cleanly than a desktop system.
->
-> Loosing current data will be no problem. Loosing the whole filesystem is a
-> big problem ...
-> 
-> Greetings, Michael
-
-If you have a chance, please apply the following patch.
-
-It issues I/O request with an unplug option at the end of every
-segment.  This may have effect of minimizing write order reversal
-causing the mount failures.
-
-The patch is against 2.6.30-rc6 (ignore hunks since I'm managing more
-patches).
-
-Also, I pushed a variant of the patch to the (standalone)
-nilfs2-module git tree, but this option is not supported for
-kernel-2.6.28 and the prior versions.
-
-
-Cheers,
-Ryusuke Konishi
---
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-
-nilfs2: set bio unplug flag for the last bio in segment
-
-This sets BIO_RW_UNPLUG flag on the last bio of each segment during
-write.  The last bio should be unplugged immediately because the
-caller waits for the completion after the submission.
+This uses a reader/writer semaphore instead of the own lock.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/segbuf.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ fs/nilfs2/mdt.c       |   10 +++++++---
+ fs/nilfs2/the_nilfs.c |    3 +--
+ fs/nilfs2/the_nilfs.h |   27 ++++++---------------------
+ 3 files changed, 14 insertions(+), 26 deletions(-)
 
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index dc0277a..9e3fe17 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -393,7 +393,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
- 		 * Last BIO is always sent through the following
- 		 * submission.
- 		 */
--		rw |= (1 << BIO_RW_SYNCIO);
-+		rw |= (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG);
- 		res = nilfs_submit_seg_bio(wi, rw);
- 		if (unlikely(res))
- 			goto failed_bio;
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index bb78745..c3eb539 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -402,6 +402,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
+ 	struct inode *inode = container_of(page->mapping,
+ 					   struct inode, i_data);
+ 	struct super_block *sb = inode->i_sb;
++	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
+ 	struct nilfs_sb_info *writer = NULL;
+ 	int err = 0;
+ 
+@@ -411,9 +412,12 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
+ 	if (page->mapping->assoc_mapping)
+ 		return 0; /* Do not request flush for shadow page cache */
+ 	if (!sb) {
+-		writer = nilfs_get_writer(NILFS_MDT(inode)->mi_nilfs);
+-		if (!writer)
++		down_read(&nilfs->ns_writer_sem);
++		writer = nilfs->ns_writer;
++		if (!writer) {
++			up_read(&nilfs->ns_writer_sem);
+ 			return -EROFS;
++		}
+ 		sb = writer->s_super;
+ 	}
+ 
+@@ -423,7 +427,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
+ 		nilfs_flush_segment(sb, inode->i_ino);
+ 
+ 	if (writer)
+-		nilfs_put_writer(NILFS_MDT(inode)->mi_nilfs);
++		up_read(&nilfs->ns_writer_sem);
+ 	return err;
+ }
+ 
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 7f65b3b..9befbc8 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -65,10 +65,9 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+ 
+ 	nilfs->ns_bdev = bdev;
+ 	atomic_set(&nilfs->ns_count, 1);
+-	atomic_set(&nilfs->ns_writer_refcount, -1);
+ 	atomic_set(&nilfs->ns_ndirtyblks, 0);
+ 	init_rwsem(&nilfs->ns_sem);
+-	mutex_init(&nilfs->ns_writer_mutex);
++	init_rwsem(&nilfs->ns_writer_sem);
+ 	INIT_LIST_HEAD(&nilfs->ns_supers);
+ 	spin_lock_init(&nilfs->ns_last_segment_lock);
+ 	nilfs->ns_gc_inodes_h = NULL;
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 30fe587..8732d37 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -47,8 +47,7 @@ enum {
+  * @ns_bdi: backing dev info
+  * @ns_writer: back pointer to writable nilfs_sb_info
+  * @ns_sem: semaphore for shared states
+- * @ns_writer_mutex: mutex protecting ns_writer attach/detach
+- * @ns_writer_refcount: number of referrers on ns_writer
++ * @ns_writer_sem: semaphore protecting ns_writer attach/detach
+  * @ns_sbh: buffer heads of on-disk super blocks
+  * @ns_sbp: pointers to super block data
+  * @ns_sbwtime: previous write time of super blocks
+@@ -93,8 +92,7 @@ struct the_nilfs {
+ 	struct backing_dev_info *ns_bdi;
+ 	struct nilfs_sb_info   *ns_writer;
+ 	struct rw_semaphore	ns_sem;
+-	struct mutex		ns_writer_mutex;
+-	atomic_t		ns_writer_refcount;
++	struct rw_semaphore	ns_writer_sem;
+ 
+ 	/*
+ 	 * used for
+@@ -208,34 +206,21 @@ static inline void get_nilfs(struct the_nilfs *nilfs)
+ 	atomic_inc(&nilfs->ns_count);
+ }
+ 
+-static inline struct nilfs_sb_info *nilfs_get_writer(struct the_nilfs *nilfs)
+-{
+-	if (atomic_inc_and_test(&nilfs->ns_writer_refcount))
+-		mutex_lock(&nilfs->ns_writer_mutex);
+-	return nilfs->ns_writer;
+-}
+-
+-static inline void nilfs_put_writer(struct the_nilfs *nilfs)
+-{
+-	if (atomic_add_negative(-1, &nilfs->ns_writer_refcount))
+-		mutex_unlock(&nilfs->ns_writer_mutex);
+-}
+-
+ static inline void
+ nilfs_attach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ {
+-	mutex_lock(&nilfs->ns_writer_mutex);
++	down_write(&nilfs->ns_writer_sem);
+ 	nilfs->ns_writer = sbi;
+-	mutex_unlock(&nilfs->ns_writer_mutex);
++	up_write(&nilfs->ns_writer_sem);
+ }
+ 
+ static inline void
+ nilfs_detach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ {
+-	mutex_lock(&nilfs->ns_writer_mutex);
++	down_write(&nilfs->ns_writer_sem);
+ 	if (sbi == nilfs->ns_writer)
+ 		nilfs->ns_writer = NULL;
+-	mutex_unlock(&nilfs->ns_writer_mutex);
++	up_write(&nilfs->ns_writer_sem);
+ }
+ 
+ static inline void
 -- 
 1.6.2
