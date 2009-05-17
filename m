@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 6/6] nilfs2: remove header file for segment
-	list operations
-Date: Mon, 18 May 2009 00:29:46 +0900
-Message-ID: <1242574186-21554-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 3/6] nilfs2: unify bmap operations starting
+	use of indirect block address
+Date: Mon, 18 May 2009 00:29:43 +0900
+Message-ID: <1242574186-21554-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1242574186-21554-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,222 +23,162 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This will eliminate obsolete list operations of nilfs_segment_entry
-structure which has been used to handle mutiple segment numbers.
+This simplifies some low level functions of bmap.
 
-The patch ("nilfs2: remove list of freeing segments") removed use of
-the structure from the segment constructor code, and this patch
-simplifies the remaining code by integrating it into recovery.c.
+Three bmap pointer operations, nilfs_bmap_start_v(),
+nilfs_bmap_commit_v(), and nilfs_bmap_abort_v(), are unified into one
+nilfs_bmap_start_v() function. And the related indirect function calls
+are replaced with it.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/recovery.c  |   37 +++++++++++++++--------
- fs/nilfs2/seglist.h   |   79 -------------------------------------------------
- fs/nilfs2/segment.h   |    1 +
- fs/nilfs2/the_nilfs.c |    1 -
- 4 files changed, 25 insertions(+), 93 deletions(-)
- delete mode 100644 fs/nilfs2/seglist.h
+ fs/nilfs2/bmap.c   |   36 ++++++++----------------------------
+ fs/nilfs2/bmap.h   |    9 ++-------
+ fs/nilfs2/btree.c  |    7 ++-----
+ fs/nilfs2/direct.c |    7 ++-----
+ 4 files changed, 14 insertions(+), 45 deletions(-)
 
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index 57afa9d..d80cc71 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -28,7 +28,6 @@
- #include "segment.h"
- #include "sufile.h"
- #include "page.h"
--#include "seglist.h"
- #include "segbuf.h"
- 
- /*
-@@ -395,6 +394,24 @@ static void dispose_recovery_list(struct list_head *head)
- 	}
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 064279e..4f2523f 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -511,24 +511,16 @@ static void nilfs_bmap_abort_alloc_v(struct nilfs_bmap *bmap,
+ 	nilfs_dat_abort_alloc(nilfs_bmap_get_dat(bmap), &req->bpr_req);
  }
  
-+struct nilfs_segment_entry {
-+	struct list_head	list;
-+	__u64			segnum;
-+};
-+
-+static int nilfs_segment_list_add(struct list_head *head, __u64 segnum)
-+{
-+	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
-+
-+	if (unlikely(!ent))
-+		return -ENOMEM;
-+
-+	ent->segnum = segnum;
-+	INIT_LIST_HEAD(&ent->list);
-+	list_add_tail(&ent->list, head);
-+	return 0;
-+}
-+
- void nilfs_dispose_segment_list(struct list_head *head)
+-static int nilfs_bmap_prepare_start_v(struct nilfs_bmap *bmap,
+-				      union nilfs_bmap_ptr_req *req)
++int nilfs_bmap_start_v(struct nilfs_bmap *bmap, union nilfs_bmap_ptr_req *req,
++		       sector_t blocknr)
  {
- 	while (!list_empty(head)) {
-@@ -402,7 +419,7 @@ void nilfs_dispose_segment_list(struct list_head *head)
- 			= list_entry(head->next,
- 				     struct nilfs_segment_entry, list);
- 		list_del(&ent->list);
--		nilfs_free_segment_entry(ent);
-+		kfree(ent);
- 	}
+-	return nilfs_dat_prepare_start(nilfs_bmap_get_dat(bmap), &req->bpr_req);
+-}
+-
+-static void nilfs_bmap_commit_start_v(struct nilfs_bmap *bmap,
+-				      union nilfs_bmap_ptr_req *req,
+-				      sector_t blocknr)
+-{
+-	nilfs_dat_commit_start(nilfs_bmap_get_dat(bmap), &req->bpr_req,
+-			       blocknr);
+-}
++	struct inode *dat = nilfs_bmap_get_dat(bmap);
++	int ret;
+ 
+-static void nilfs_bmap_abort_start_v(struct nilfs_bmap *bmap,
+-				     union nilfs_bmap_ptr_req *req)
+-{
+-	nilfs_dat_abort_start(nilfs_bmap_get_dat(bmap), &req->bpr_req);
++	ret = nilfs_dat_prepare_start(dat, &req->bpr_req);
++	if (likely(!ret))
++		nilfs_dat_commit_start(dat, &req->bpr_req, blocknr);
++	return ret;
  }
  
-@@ -431,12 +448,10 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
- 	if (unlikely(err))
- 		goto failed;
+ static int nilfs_bmap_prepare_end_v(struct nilfs_bmap *bmap,
+@@ -636,9 +628,6 @@ static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_v = {
+ 	.bpop_prepare_alloc_ptr	=	nilfs_bmap_prepare_alloc_v,
+ 	.bpop_commit_alloc_ptr	=	nilfs_bmap_commit_alloc_v,
+ 	.bpop_abort_alloc_ptr	=	nilfs_bmap_abort_alloc_v,
+-	.bpop_prepare_start_ptr	=	nilfs_bmap_prepare_start_v,
+-	.bpop_commit_start_ptr	=	nilfs_bmap_commit_start_v,
+-	.bpop_abort_start_ptr	=	nilfs_bmap_abort_start_v,
+ 	.bpop_prepare_end_ptr	=	nilfs_bmap_prepare_end_v,
+ 	.bpop_commit_end_ptr	=	nilfs_bmap_commit_end_v,
+ 	.bpop_abort_end_ptr	=	nilfs_bmap_abort_end_v,
+@@ -650,9 +639,6 @@ static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_vmdt = {
+ 	.bpop_prepare_alloc_ptr	=	nilfs_bmap_prepare_alloc_v,
+ 	.bpop_commit_alloc_ptr	=	nilfs_bmap_commit_alloc_v,
+ 	.bpop_abort_alloc_ptr	=	nilfs_bmap_abort_alloc_v,
+-	.bpop_prepare_start_ptr	=	nilfs_bmap_prepare_start_v,
+-	.bpop_commit_start_ptr	=	nilfs_bmap_commit_start_v,
+-	.bpop_abort_start_ptr	=	nilfs_bmap_abort_start_v,
+ 	.bpop_prepare_end_ptr	=	nilfs_bmap_prepare_end_v,
+ 	.bpop_commit_end_ptr	=	nilfs_bmap_commit_end_vmdt,
+ 	.bpop_abort_end_ptr	=	nilfs_bmap_abort_end_v,
+@@ -664,9 +650,6 @@ static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_p = {
+ 	.bpop_prepare_alloc_ptr	=	nilfs_bmap_prepare_alloc_p,
+ 	.bpop_commit_alloc_ptr	=	nilfs_bmap_commit_alloc_p,
+ 	.bpop_abort_alloc_ptr	=	nilfs_bmap_abort_alloc_p,
+-	.bpop_prepare_start_ptr	=	NULL,
+-	.bpop_commit_start_ptr	=	NULL,
+-	.bpop_abort_start_ptr	=	NULL,
+ 	.bpop_prepare_end_ptr	=	NULL,
+ 	.bpop_commit_end_ptr	=	NULL,
+ 	.bpop_abort_end_ptr	=	NULL,
+@@ -678,9 +661,6 @@ static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_gc = {
+ 	.bpop_prepare_alloc_ptr	=	NULL,
+ 	.bpop_commit_alloc_ptr	=	NULL,
+ 	.bpop_abort_alloc_ptr	=	NULL,
+-	.bpop_prepare_start_ptr	=	NULL,
+-	.bpop_commit_start_ptr	=	NULL,
+-	.bpop_abort_start_ptr	=	NULL,
+ 	.bpop_prepare_end_ptr	=	NULL,
+ 	.bpop_commit_end_ptr	=	NULL,
+ 	.bpop_abort_end_ptr	=	NULL,
+diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
+index 4f2708a..ad251d3 100644
+--- a/fs/nilfs2/bmap.h
++++ b/fs/nilfs2/bmap.h
+@@ -96,13 +96,6 @@ struct nilfs_bmap_ptr_operations {
+ 				      union nilfs_bmap_ptr_req *);
+ 	void (*bpop_abort_alloc_ptr)(struct nilfs_bmap *,
+ 				     union nilfs_bmap_ptr_req *);
+-	int (*bpop_prepare_start_ptr)(struct nilfs_bmap *,
+-				      union nilfs_bmap_ptr_req *);
+-	void (*bpop_commit_start_ptr)(struct nilfs_bmap *,
+-				      union nilfs_bmap_ptr_req *,
+-				      sector_t);
+-	void (*bpop_abort_start_ptr)(struct nilfs_bmap *,
+-				     union nilfs_bmap_ptr_req *);
+ 	int (*bpop_prepare_end_ptr)(struct nilfs_bmap *,
+ 				    union nilfs_bmap_ptr_req *);
+ 	void (*bpop_commit_end_ptr)(struct nilfs_bmap *,
+@@ -183,6 +176,8 @@ void nilfs_bmap_commit_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
+  * Internal use only
+  */
  
--	err = -ENOMEM;
- 	for (i = 1; i < 4; i++) {
--		ent = nilfs_alloc_segment_entry(segnum[i]);
--		if (unlikely(!ent))
-+		err = nilfs_segment_list_add(head, segnum[i]);
-+		if (unlikely(err))
- 			goto failed;
--		list_add_tail(&ent->list, head);
- 	}
++int nilfs_bmap_start_v(struct nilfs_bmap *, union nilfs_bmap_ptr_req *,
++		       sector_t);
+ int nilfs_bmap_move_v(const struct nilfs_bmap *, __u64, sector_t);
+ int nilfs_bmap_mark_dirty(const struct nilfs_bmap *, __u64);
  
- 	/*
-@@ -450,7 +465,7 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
- 				goto failed;
- 		}
- 		list_del(&ent->list);
--		nilfs_free_segment_entry(ent);
-+		kfree(ent);
- 	}
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index 6b37a27..959e5a7 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -2066,12 +2066,9 @@ static int nilfs_btree_assign_v(struct nilfs_btree *btree,
+ 	ptr = nilfs_btree_node_get_ptr(btree, parent,
+ 				       path[level + 1].bp_index);
+ 	req.bpr_ptr = ptr;
+-	ret = btree->bt_bmap.b_pops->bpop_prepare_start_ptr(&btree->bt_bmap,
+-							       &req);
+-	if (ret < 0)
++	ret = nilfs_bmap_start_v(&btree->bt_bmap, &req, blocknr);
++	if (unlikely(ret < 0))
+ 		return ret;
+-	btree->bt_bmap.b_pops->bpop_commit_start_ptr(&btree->bt_bmap,
+-							&req, blocknr);
  
- 	/* Allocate new segments for recovery */
-@@ -791,7 +806,6 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
- 	u64 seg_seq;
- 	__u64 segnum, nextnum = 0;
- 	__u64 cno;
--	struct nilfs_segment_entry *ent;
- 	LIST_HEAD(segments);
- 	int empty_seg = 0, scan_newer = 0;
+ 	key = nilfs_btree_node_get_key(btree, parent,
+ 				       path[level + 1].bp_index);
+diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
+index c6379e4..5cbba82 100644
+--- a/fs/nilfs2/direct.c
++++ b/fs/nilfs2/direct.c
+@@ -327,12 +327,9 @@ static int nilfs_direct_assign_v(struct nilfs_direct *direct,
  	int ret;
-@@ -892,12 +906,9 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
- 		if (empty_seg++)
- 			goto super_root_found; /* found a valid super root */
  
--		ent = nilfs_alloc_segment_entry(segnum);
--		if (unlikely(!ent)) {
--			ret = -ENOMEM;
-+		ret = nilfs_segment_list_add(&segments, segnum);
-+		if (unlikely(ret))
- 			goto failed;
--		}
--		list_add_tail(&ent->list, &segments);
+ 	req.bpr_ptr = ptr;
+-	ret = direct->d_bmap.b_pops->bpop_prepare_start_ptr(
+-		&direct->d_bmap, &req);
+-	if (ret < 0)
++	ret = nilfs_bmap_start_v(&direct->d_bmap, &req, blocknr);
++	if (unlikely(ret < 0))
+ 		return ret;
+-	direct->d_bmap.b_pops->bpop_commit_start_ptr(&direct->d_bmap,
+-						     &req, blocknr);
  
- 		seg_seq++;
- 		segnum = nextnum;
-diff --git a/fs/nilfs2/seglist.h b/fs/nilfs2/seglist.h
-deleted file mode 100644
-index e448e40..0000000
---- a/fs/nilfs2/seglist.h
-+++ /dev/null
-@@ -1,79 +0,0 @@
--/*
-- * seglist.h - expediential structure and routines to handle list of segments
-- *             (would be removed in a future release)
-- *
-- * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
-- *
-- * This program is free software; you can redistribute it and/or modify
-- * it under the terms of the GNU General Public License as published by
-- * the Free Software Foundation; either version 2 of the License, or
-- * (at your option) any later version.
-- *
-- * This program is distributed in the hope that it will be useful,
-- * but WITHOUT ANY WARRANTY; without even the implied warranty of
-- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-- * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-- *
-- * Written by Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-- *
-- */
--#ifndef _NILFS_SEGLIST_H
--#define _NILFS_SEGLIST_H
--
--#include <linux/fs.h>
--#include <linux/buffer_head.h>
--#include <linux/nilfs2_fs.h>
--#include "sufile.h"
--
--struct nilfs_segment_entry {
--	__u64			segnum;
--
--	struct list_head	list;
--	struct buffer_head     *bh_su;
--	struct nilfs_segment_usage *raw_su;
--};
--
--
--void nilfs_dispose_segment_list(struct list_head *);
--
--static inline struct nilfs_segment_entry *
--nilfs_alloc_segment_entry(__u64 segnum)
--{
--	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
--
--	if (likely(ent)) {
--		ent->segnum = segnum;
--		ent->bh_su = NULL;
--		ent->raw_su = NULL;
--		INIT_LIST_HEAD(&ent->list);
--	}
--	return ent;
--}
--
--static inline int nilfs_open_segment_entry(struct nilfs_segment_entry *ent,
--					   struct inode *sufile)
--{
--	return nilfs_sufile_get_segment_usage(sufile, ent->segnum,
--					      &ent->raw_su, &ent->bh_su);
--}
--
--static inline void nilfs_close_segment_entry(struct nilfs_segment_entry *ent,
--					     struct inode *sufile)
--{
--	if (!ent->bh_su)
--		return;
--	nilfs_sufile_put_segment_usage(sufile, ent->segnum, ent->bh_su);
--	ent->bh_su = NULL;
--	ent->raw_su = NULL;
--}
--
--static inline void nilfs_free_segment_entry(struct nilfs_segment_entry *ent)
--{
--	kfree(ent);
--}
--
--#endif /* _NILFS_SEGLIST_H */
-diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
-index f36a851..0d2a475 100644
---- a/fs/nilfs2/segment.h
-+++ b/fs/nilfs2/segment.h
-@@ -239,5 +239,6 @@ extern int nilfs_search_super_root(struct the_nilfs *, struct nilfs_sb_info *,
- extern int nilfs_recover_logical_segments(struct the_nilfs *,
- 					  struct nilfs_sb_info *,
- 					  struct nilfs_recovery_info *);
-+extern void nilfs_dispose_segment_list(struct list_head *);
- 
- #endif /* _NILFS_SEGMENT_H */
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 9befbc8..14b6404 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -32,7 +32,6 @@
- #include "cpfile.h"
- #include "sufile.h"
- #include "dat.h"
--#include "seglist.h"
- #include "segbuf.h"
- 
- void nilfs_set_last_segment(struct the_nilfs *nilfs,
+ 	binfo->bi_v.bi_vblocknr = nilfs_bmap_ptr_to_dptr(ptr);
+ 	binfo->bi_v.bi_blkoff = nilfs_bmap_key_to_dkey(key);
 -- 
 1.6.2
