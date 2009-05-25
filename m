@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 17/17] nilfs2: set bio unplug flag for the
-	last bio in segment
-Date: Mon, 25 May 2009 19:18:21 +0900
-Message-ID: <1243246701-5193-18-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 15/17] NILFS2: Pagecache usage optimization on
+	NILFS2
+Date: Mon, 25 May 2009 19:18:19 +0900
+Message-ID: <1243246701-5193-16-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1243246701-5193-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -21,29 +21,83 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Hisashi Hifumi <hifumi.hisashi-gVGce1chcLdL9jVzuh4AOg@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This sets BIO_RW_UNPLUG flag on the last bio of each segment during
-write.  The last bio should be unplugged immediately because the
-caller waits for the completion after the submission.
+From: Hisashi Hifumi <hifumi.hisashi-gVGce1chcLdL9jVzuh4AOg@public.gmane.org>
 
+Hi,
+
+I introduced "is_partially_uptodate" aops for NILFS2.
+
+A page can have multiple buffers and even if a page is not uptodate, some buffers
+can be uptodate on pagesize != blocksize environment.
+This aops checks that all buffers which correspond to a part of a file
+that we want to read are uptodate. If so, we do not have to issue actual
+read IO to HDD even if a page is not uptodate because the portion we
+want to read are uptodate.
+"block_is_partially_uptodate" function is already used by ext2/3/4.
+With the following patch random read/write mixed workloads or random read after
+random write workloads can be optimized and we can get performance improvement.
+
+I did a performance test using the sysbench.
+
+1 --file-block-size=8K --file-total-size=2G --file-test-mode=rndrw --file-fsync-freq=0 --fil
+e-rw-ratio=1 run
+
+-2.6.30-rc5
+
+Test execution summary:
+    total time:                          151.2907s
+    total number of events:              200000
+    total time taken by event execution: 2409.8387
+    per-request statistics:
+         min:                            0.0000s
+         avg:                            0.0120s
+         max:                            0.9306s
+         approx.  95 percentile:         0.0439s
+
+Threads fairness:
+    events (avg/stddev):           12500.0000/238.52
+    execution time (avg/stddev):   150.6149/0.01
+
+-2.6.30-rc5-patched
+
+Test execution summary:
+    total time:                          140.8828s
+    total number of events:              200000
+    total time taken by event execution: 2240.8577
+    per-request statistics:
+         min:                            0.0000s
+         avg:                            0.0112s
+         max:                            0.8750s
+         approx.  95 percentile:         0.0418s
+
+Threads fairness:
+    events (avg/stddev):           12500.0000/218.43
+    execution time (avg/stddev):   140.0536/0.01
+
+arch: ia64
+pagesize: 16k
+
+Thanks.
+
+Signed-off-by: Hisashi Hifumi <hifumi.hisashi-gVGce1chcLdL9jVzuh4AOg@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/segbuf.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ fs/nilfs2/inode.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index dc0277a..9e3fe17 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -393,7 +393,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
- 		 * Last BIO is always sent through the following
- 		 * submission.
- 		 */
--		rw |= (1 << BIO_RW_SYNCIO);
-+		rw |= (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG);
- 		res = nilfs_submit_seg_bio(wi, rw);
- 		if (unlikely(res))
- 			goto failed_bio;
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 49ab4a4..3f70eed 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -249,6 +249,7 @@ struct address_space_operations nilfs_aops = {
+ 	/* .releasepage		= nilfs_releasepage, */
+ 	.invalidatepage		= block_invalidatepage,
+ 	.direct_IO		= nilfs_direct_IO,
++	.is_partially_uptodate  = block_is_partially_uptodate,
+ };
+ 
+ struct inode *nilfs_new_inode(struct inode *dir, int mode)
 -- 
 1.6.2
