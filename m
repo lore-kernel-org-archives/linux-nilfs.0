@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 09/17] nilfs2: move get block functions in
-	bmap.c into btree codes
-Date: Mon, 25 May 2009 19:18:13 +0900
-Message-ID: <1243246701-5193-10-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 10/17] nilfs2: remove pointless NULL check of
+	bpop_commit_alloc_ptr function
+Date: Mon, 25 May 2009 19:18:14 +0900
+Message-ID: <1243246701-5193-11-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1243246701-5193-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,219 +23,69 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Two get block function for btree nodes, nilfs_bmap_get_block() and
-nilfs_bmap_get_new_block(), are called only from the btree codes.
-This relocation will increase opportunities of compiler optimization.
+This indirect function is set to NULL only for gc cache inodes, but
+the gc cache inodes never call this function.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/bmap.c  |   20 ------------------
- fs/nilfs2/bmap.h  |    6 -----
- fs/nilfs2/btree.c |   57 ++++++++++++++++++++++++++++++++--------------------
- 3 files changed, 35 insertions(+), 48 deletions(-)
+ fs/nilfs2/btree.c  |   15 +++++----------
+ fs/nilfs2/direct.c |    4 +---
+ 2 files changed, 6 insertions(+), 13 deletions(-)
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index d7dbedf..cf5c5d2 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -417,26 +417,6 @@ void nilfs_bmap_sub_blocks(const struct nilfs_bmap *bmap, int n)
- 		mark_inode_dirty(bmap->b_inode);
- }
- 
--int nilfs_bmap_get_block(const struct nilfs_bmap *bmap, __u64 ptr,
--			 struct buffer_head **bhp)
--{
--	return nilfs_btnode_get(&NILFS_BMAP_I(bmap)->i_btnode_cache,
--				ptr, 0, bhp, 0);
--}
--
--int nilfs_bmap_get_new_block(const struct nilfs_bmap *bmap, __u64 ptr,
--			     struct buffer_head **bhp)
--{
--	int ret;
--
--	ret = nilfs_btnode_get(&NILFS_BMAP_I(bmap)->i_btnode_cache,
--			       ptr, 0, bhp, 1);
--	if (ret < 0)
--		return ret;
--	set_buffer_nilfs_volatile(*bhp);
--	return 0;
--}
--
- __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
- 			      const struct buffer_head *bh)
- {
-diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index 0af3190..978073b 100644
---- a/fs/nilfs2/bmap.h
-+++ b/fs/nilfs2/bmap.h
-@@ -202,12 +202,6 @@ void nilfs_bmap_add_blocks(const struct nilfs_bmap *, int);
- void nilfs_bmap_sub_blocks(const struct nilfs_bmap *, int);
- 
- 
--int nilfs_bmap_get_block(const struct nilfs_bmap *, __u64,
--			 struct buffer_head **);
--int nilfs_bmap_get_new_block(const struct nilfs_bmap *, __u64,
--			     struct buffer_head **);
--
--
- /* Assume that bmap semaphore is locked. */
- static inline int nilfs_bmap_dirty(const struct nilfs_bmap *bmap)
- {
 diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 61e70d7..63ee350 100644
+index 63ee350..5b2606a 100644
 --- a/fs/nilfs2/btree.c
 +++ b/fs/nilfs2/btree.c
-@@ -122,10 +122,29 @@ static void nilfs_btree_clear_path(const struct nilfs_btree *btree,
+@@ -1067,10 +1067,8 @@ static void nilfs_btree_commit_insert(struct nilfs_btree *btree,
+ 		btree->bt_ops->btop_set_target(btree, key, ptr);
+ 
+ 	for (level = NILFS_BTREE_LEVEL_NODE_MIN; level <= maxlevel; level++) {
+-		if (btree->bt_bmap.b_pops->bpop_commit_alloc_ptr != NULL) {
+-			btree->bt_bmap.b_pops->bpop_commit_alloc_ptr(
+-				&btree->bt_bmap, &path[level - 1].bp_newreq);
+-		}
++		btree->bt_bmap.b_pops->bpop_commit_alloc_ptr(
++			&btree->bt_bmap, &path[level - 1].bp_newreq);
+ 		path[level].bp_op(btree, path, level, &key, &ptr);
  	}
- }
  
--
- /*
-  * B-tree node operations
-  */
-+static int nilfs_btree_get_block(const struct nilfs_btree *btree, __u64 ptr,
-+				 struct buffer_head **bhp)
-+{
-+	struct address_space *btnc =
-+		&NILFS_BMAP_I((struct nilfs_bmap *)btree)->i_btnode_cache;
-+	return nilfs_btnode_get(btnc, ptr, 0, bhp, 0);
-+}
-+
-+static int nilfs_btree_get_new_block(const struct nilfs_btree *btree,
-+				     __u64 ptr, struct buffer_head **bhp)
-+{
-+	struct address_space *btnc =
-+		&NILFS_BMAP_I((struct nilfs_bmap *)btree)->i_btnode_cache;
-+	int ret;
-+
-+	ret = nilfs_btnode_get(btnc, ptr, 0, bhp, 1);
-+	if (!ret)
-+		set_buffer_nilfs_volatile(*bhp);
-+	return ret;
-+}
+@@ -1656,10 +1654,8 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
+ 	btree = (struct nilfs_btree *)bmap;
+ 	nilfs_btree_init(bmap, low, high);
+ 	if (nreq != NULL) {
+-		if (bmap->b_pops->bpop_commit_alloc_ptr != NULL) {
+-			bmap->b_pops->bpop_commit_alloc_ptr(bmap, dreq);
+-			bmap->b_pops->bpop_commit_alloc_ptr(bmap, nreq);
+-		}
++		bmap->b_pops->bpop_commit_alloc_ptr(bmap, dreq);
++		bmap->b_pops->bpop_commit_alloc_ptr(bmap, nreq);
  
- static inline int
- nilfs_btree_node_get_flags(const struct nilfs_btree *btree,
-@@ -487,8 +506,7 @@ static int nilfs_btree_do_lookup(const struct nilfs_btree *btree,
- 	path[level].bp_index = index;
+ 		/* create child node at level 1 */
+ 		lock_buffer(bh);
+@@ -1681,8 +1677,7 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
+ 		nilfs_btree_node_init(btree, node, NILFS_BTREE_NODE_ROOT,
+ 				      2, 1, &keys[0], &tmpptr);
+ 	} else {
+-		if (bmap->b_pops->bpop_commit_alloc_ptr != NULL)
+-			bmap->b_pops->bpop_commit_alloc_ptr(bmap, dreq);
++		bmap->b_pops->bpop_commit_alloc_ptr(bmap, dreq);
  
- 	for (level--; level >= minlevel; level--) {
--		ret = nilfs_bmap_get_block(&btree->bt_bmap, ptr,
--					   &path[level].bp_bh);
-+		ret = nilfs_btree_get_block(btree, ptr, &path[level].bp_bh);
- 		if (ret < 0)
- 			return ret;
- 		node = nilfs_btree_get_nonroot_node(btree, path, level);
-@@ -534,8 +552,7 @@ static int nilfs_btree_do_lookup_last(const struct nilfs_btree *btree,
- 	path[level].bp_index = index;
+ 		/* create root node at level 1 */
+ 		node = nilfs_btree_get_root(btree);
+diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
+index 5cbba82..eaeccb0 100644
+--- a/fs/nilfs2/direct.c
++++ b/fs/nilfs2/direct.c
+@@ -111,9 +111,7 @@ static void nilfs_direct_commit_insert(struct nilfs_direct *direct,
+ 	bh = (struct buffer_head *)((unsigned long)ptr);
+ 	set_buffer_nilfs_volatile(bh);
  
- 	for (level--; level > 0; level--) {
--		ret = nilfs_bmap_get_block(&btree->bt_bmap, ptr,
--					   &path[level].bp_bh);
-+		ret = nilfs_btree_get_block(btree, ptr, &path[level].bp_bh);
- 		if (ret < 0)
- 			return ret;
- 		node = nilfs_btree_get_nonroot_node(btree, path, level);
-@@ -923,8 +940,7 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 		if (pindex > 0) {
- 			sibptr = nilfs_btree_node_get_ptr(btree, parent,
- 							  pindex - 1);
--			ret = nilfs_bmap_get_block(&btree->bt_bmap, sibptr,
--						   &bh);
-+			ret = nilfs_btree_get_block(btree, sibptr, &bh);
- 			if (ret < 0)
- 				goto err_out_child_node;
- 			sib = (struct nilfs_btree_node *)bh->b_data;
-@@ -943,8 +959,7 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 		    nilfs_btree_node_get_nchildren(btree, parent) - 1) {
- 			sibptr = nilfs_btree_node_get_ptr(btree, parent,
- 							  pindex + 1);
--			ret = nilfs_bmap_get_block(&btree->bt_bmap, sibptr,
--						   &bh);
-+			ret = nilfs_btree_get_block(btree, sibptr, &bh);
- 			if (ret < 0)
- 				goto err_out_child_node;
- 			sib = (struct nilfs_btree_node *)bh->b_data;
-@@ -965,9 +980,9 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 			&btree->bt_bmap, &path[level].bp_newreq);
- 		if (ret < 0)
- 			goto err_out_child_node;
--		ret = nilfs_bmap_get_new_block(&btree->bt_bmap,
--					       path[level].bp_newreq.bpr_ptr,
--					       &bh);
-+		ret = nilfs_btree_get_new_block(btree,
-+						path[level].bp_newreq.bpr_ptr,
-+						&bh);
- 		if (ret < 0)
- 			goto err_out_curr_node;
+-	if (direct->d_bmap.b_pops->bpop_commit_alloc_ptr != NULL)
+-		direct->d_bmap.b_pops->bpop_commit_alloc_ptr(
+-			&direct->d_bmap, req);
++	direct->d_bmap.b_pops->bpop_commit_alloc_ptr(&direct->d_bmap, req);
+ 	nilfs_direct_set_ptr(direct, key, req->bpr_ptr);
  
-@@ -997,8 +1012,8 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 		&btree->bt_bmap, &path[level].bp_newreq);
- 	if (ret < 0)
- 		goto err_out_child_node;
--	ret = nilfs_bmap_get_new_block(&btree->bt_bmap,
--				       path[level].bp_newreq.bpr_ptr, &bh);
-+	ret = nilfs_btree_get_new_block(btree, path[level].bp_newreq.bpr_ptr,
-+					&bh);
- 	if (ret < 0)
- 		goto err_out_curr_node;
- 
-@@ -1320,8 +1335,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
- 			/* left sibling */
- 			sibptr = nilfs_btree_node_get_ptr(btree, parent,
- 							  pindex - 1);
--			ret = nilfs_bmap_get_block(&btree->bt_bmap, sibptr,
--						   &bh);
-+			ret = nilfs_btree_get_block(btree, sibptr, &bh);
- 			if (ret < 0)
- 				goto err_out_curr_node;
- 			sib = (struct nilfs_btree_node *)bh->b_data;
-@@ -1342,8 +1356,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
- 			/* right sibling */
- 			sibptr = nilfs_btree_node_get_ptr(btree, parent,
- 							  pindex + 1);
--			ret = nilfs_bmap_get_block(&btree->bt_bmap, sibptr,
--						   &bh);
-+			ret = nilfs_btree_get_block(btree, sibptr, &bh);
- 			if (ret < 0)
- 				goto err_out_curr_node;
- 			sib = (struct nilfs_btree_node *)bh->b_data;
-@@ -1500,7 +1513,7 @@ static int nilfs_btree_check_delete(struct nilfs_bmap *bmap, __u64 key)
- 		if (nchildren > 1)
- 			return 0;
- 		ptr = nilfs_btree_node_get_ptr(btree, root, nchildren - 1);
--		ret = nilfs_bmap_get_block(bmap, ptr, &bh);
-+		ret = nilfs_btree_get_block(btree, ptr, &bh);
- 		if (ret < 0)
- 			return ret;
- 		node = (struct nilfs_btree_node *)bh->b_data;
-@@ -1541,7 +1554,7 @@ static int nilfs_btree_gather_data(struct nilfs_bmap *bmap,
- 		nchildren = nilfs_btree_node_get_nchildren(btree, root);
- 		WARN_ON(nchildren > 1);
- 		ptr = nilfs_btree_node_get_ptr(btree, root, nchildren - 1);
--		ret = nilfs_bmap_get_block(bmap, ptr, &bh);
-+		ret = nilfs_btree_get_block(btree, ptr, &bh);
- 		if (ret < 0)
- 			return ret;
- 		node = (struct nilfs_btree_node *)bh->b_data;
-@@ -1598,7 +1611,7 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *bmap, __u64 key,
- 		if (ret < 0)
- 			goto err_out_dreq;
- 
--		ret = nilfs_bmap_get_new_block(bmap, nreq->bpr_ptr, &bh);
-+		ret = nilfs_btree_get_new_block(btree, nreq->bpr_ptr, &bh);
- 		if (ret < 0)
- 			goto err_out_nreq;
- 
-@@ -2167,7 +2180,7 @@ static int nilfs_btree_mark(struct nilfs_bmap *bmap, __u64 key, int level)
- 		WARN_ON(ret == -ENOENT);
- 		goto out;
- 	}
--	ret = nilfs_bmap_get_block(&btree->bt_bmap, ptr, &bh);
-+	ret = nilfs_btree_get_block(btree, ptr, &bh);
- 	if (ret < 0) {
- 		WARN_ON(ret == -ENOENT);
- 		goto out;
+ 	if (!nilfs_bmap_dirty(&direct->d_bmap))
 -- 
 1.6.2
