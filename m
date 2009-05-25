@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 15/17] NILFS2: Pagecache usage optimization on
-	NILFS2
-Date: Mon, 25 May 2009 19:18:19 +0900
-Message-ID: <1243246701-5193-16-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 06/17] nilfs2: remove header file for segment
+	list operations
+Date: Mon, 25 May 2009 19:18:10 +0900
+Message-ID: <1243246701-5193-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1243246701-5193-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -21,83 +21,224 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: Hisashi Hifumi <hifumi.hisashi-gVGce1chcLdL9jVzuh4AOg@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-From: Hisashi Hifumi <hifumi.hisashi-gVGce1chcLdL9jVzuh4AOg@public.gmane.org>
+This will eliminate obsolete list operations of nilfs_segment_entry
+structure which has been used to handle mutiple segment numbers.
 
-Hi,
+The patch ("nilfs2: remove list of freeing segments") removed use of
+the structure from the segment constructor code, and this patch
+simplifies the remaining code by integrating it into recovery.c.
 
-I introduced "is_partially_uptodate" aops for NILFS2.
-
-A page can have multiple buffers and even if a page is not uptodate, some buffers
-can be uptodate on pagesize != blocksize environment.
-This aops checks that all buffers which correspond to a part of a file
-that we want to read are uptodate. If so, we do not have to issue actual
-read IO to HDD even if a page is not uptodate because the portion we
-want to read are uptodate.
-"block_is_partially_uptodate" function is already used by ext2/3/4.
-With the following patch random read/write mixed workloads or random read after
-random write workloads can be optimized and we can get performance improvement.
-
-I did a performance test using the sysbench.
-
-1 --file-block-size=8K --file-total-size=2G --file-test-mode=rndrw --file-fsync-freq=0 --fil
-e-rw-ratio=1 run
-
--2.6.30-rc5
-
-Test execution summary:
-    total time:                          151.2907s
-    total number of events:              200000
-    total time taken by event execution: 2409.8387
-    per-request statistics:
-         min:                            0.0000s
-         avg:                            0.0120s
-         max:                            0.9306s
-         approx.  95 percentile:         0.0439s
-
-Threads fairness:
-    events (avg/stddev):           12500.0000/238.52
-    execution time (avg/stddev):   150.6149/0.01
-
--2.6.30-rc5-patched
-
-Test execution summary:
-    total time:                          140.8828s
-    total number of events:              200000
-    total time taken by event execution: 2240.8577
-    per-request statistics:
-         min:                            0.0000s
-         avg:                            0.0112s
-         max:                            0.8750s
-         approx.  95 percentile:         0.0418s
-
-Threads fairness:
-    events (avg/stddev):           12500.0000/218.43
-    execution time (avg/stddev):   140.0536/0.01
-
-arch: ia64
-pagesize: 16k
-
-Thanks.
-
-Signed-off-by: Hisashi Hifumi <hifumi.hisashi-gVGce1chcLdL9jVzuh4AOg@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/inode.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ fs/nilfs2/recovery.c  |   37 +++++++++++++++--------
+ fs/nilfs2/seglist.h   |   79 -------------------------------------------------
+ fs/nilfs2/segment.h   |    1 +
+ fs/nilfs2/the_nilfs.c |    1 -
+ 4 files changed, 25 insertions(+), 93 deletions(-)
+ delete mode 100644 fs/nilfs2/seglist.h
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 49ab4a4..3f70eed 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -249,6 +249,7 @@ struct address_space_operations nilfs_aops = {
- 	/* .releasepage		= nilfs_releasepage, */
- 	.invalidatepage		= block_invalidatepage,
- 	.direct_IO		= nilfs_direct_IO,
-+	.is_partially_uptodate  = block_is_partially_uptodate,
- };
+diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
+index 57afa9d..d80cc71 100644
+--- a/fs/nilfs2/recovery.c
++++ b/fs/nilfs2/recovery.c
+@@ -28,7 +28,6 @@
+ #include "segment.h"
+ #include "sufile.h"
+ #include "page.h"
+-#include "seglist.h"
+ #include "segbuf.h"
  
- struct inode *nilfs_new_inode(struct inode *dir, int mode)
+ /*
+@@ -395,6 +394,24 @@ static void dispose_recovery_list(struct list_head *head)
+ 	}
+ }
+ 
++struct nilfs_segment_entry {
++	struct list_head	list;
++	__u64			segnum;
++};
++
++static int nilfs_segment_list_add(struct list_head *head, __u64 segnum)
++{
++	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
++
++	if (unlikely(!ent))
++		return -ENOMEM;
++
++	ent->segnum = segnum;
++	INIT_LIST_HEAD(&ent->list);
++	list_add_tail(&ent->list, head);
++	return 0;
++}
++
+ void nilfs_dispose_segment_list(struct list_head *head)
+ {
+ 	while (!list_empty(head)) {
+@@ -402,7 +419,7 @@ void nilfs_dispose_segment_list(struct list_head *head)
+ 			= list_entry(head->next,
+ 				     struct nilfs_segment_entry, list);
+ 		list_del(&ent->list);
+-		nilfs_free_segment_entry(ent);
++		kfree(ent);
+ 	}
+ }
+ 
+@@ -431,12 +448,10 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
+ 	if (unlikely(err))
+ 		goto failed;
+ 
+-	err = -ENOMEM;
+ 	for (i = 1; i < 4; i++) {
+-		ent = nilfs_alloc_segment_entry(segnum[i]);
+-		if (unlikely(!ent))
++		err = nilfs_segment_list_add(head, segnum[i]);
++		if (unlikely(err))
+ 			goto failed;
+-		list_add_tail(&ent->list, head);
+ 	}
+ 
+ 	/*
+@@ -450,7 +465,7 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
+ 				goto failed;
+ 		}
+ 		list_del(&ent->list);
+-		nilfs_free_segment_entry(ent);
++		kfree(ent);
+ 	}
+ 
+ 	/* Allocate new segments for recovery */
+@@ -791,7 +806,6 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
+ 	u64 seg_seq;
+ 	__u64 segnum, nextnum = 0;
+ 	__u64 cno;
+-	struct nilfs_segment_entry *ent;
+ 	LIST_HEAD(segments);
+ 	int empty_seg = 0, scan_newer = 0;
+ 	int ret;
+@@ -892,12 +906,9 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
+ 		if (empty_seg++)
+ 			goto super_root_found; /* found a valid super root */
+ 
+-		ent = nilfs_alloc_segment_entry(segnum);
+-		if (unlikely(!ent)) {
+-			ret = -ENOMEM;
++		ret = nilfs_segment_list_add(&segments, segnum);
++		if (unlikely(ret))
+ 			goto failed;
+-		}
+-		list_add_tail(&ent->list, &segments);
+ 
+ 		seg_seq++;
+ 		segnum = nextnum;
+diff --git a/fs/nilfs2/seglist.h b/fs/nilfs2/seglist.h
+deleted file mode 100644
+index e448e40..0000000
+--- a/fs/nilfs2/seglist.h
++++ /dev/null
+@@ -1,79 +0,0 @@
+-/*
+- * seglist.h - expediential structure and routines to handle list of segments
+- *             (would be removed in a future release)
+- *
+- * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; either version 2 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+- *
+- * Written by Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+- *
+- */
+-#ifndef _NILFS_SEGLIST_H
+-#define _NILFS_SEGLIST_H
+-
+-#include <linux/fs.h>
+-#include <linux/buffer_head.h>
+-#include <linux/nilfs2_fs.h>
+-#include "sufile.h"
+-
+-struct nilfs_segment_entry {
+-	__u64			segnum;
+-
+-	struct list_head	list;
+-	struct buffer_head     *bh_su;
+-	struct nilfs_segment_usage *raw_su;
+-};
+-
+-
+-void nilfs_dispose_segment_list(struct list_head *);
+-
+-static inline struct nilfs_segment_entry *
+-nilfs_alloc_segment_entry(__u64 segnum)
+-{
+-	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
+-
+-	if (likely(ent)) {
+-		ent->segnum = segnum;
+-		ent->bh_su = NULL;
+-		ent->raw_su = NULL;
+-		INIT_LIST_HEAD(&ent->list);
+-	}
+-	return ent;
+-}
+-
+-static inline int nilfs_open_segment_entry(struct nilfs_segment_entry *ent,
+-					   struct inode *sufile)
+-{
+-	return nilfs_sufile_get_segment_usage(sufile, ent->segnum,
+-					      &ent->raw_su, &ent->bh_su);
+-}
+-
+-static inline void nilfs_close_segment_entry(struct nilfs_segment_entry *ent,
+-					     struct inode *sufile)
+-{
+-	if (!ent->bh_su)
+-		return;
+-	nilfs_sufile_put_segment_usage(sufile, ent->segnum, ent->bh_su);
+-	ent->bh_su = NULL;
+-	ent->raw_su = NULL;
+-}
+-
+-static inline void nilfs_free_segment_entry(struct nilfs_segment_entry *ent)
+-{
+-	kfree(ent);
+-}
+-
+-#endif /* _NILFS_SEGLIST_H */
+diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
+index f36a851..0d2a475 100644
+--- a/fs/nilfs2/segment.h
++++ b/fs/nilfs2/segment.h
+@@ -239,5 +239,6 @@ extern int nilfs_search_super_root(struct the_nilfs *, struct nilfs_sb_info *,
+ extern int nilfs_recover_logical_segments(struct the_nilfs *,
+ 					  struct nilfs_sb_info *,
+ 					  struct nilfs_recovery_info *);
++extern void nilfs_dispose_segment_list(struct list_head *);
+ 
+ #endif /* _NILFS_SEGMENT_H */
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 5897115..69af8dc 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -32,7 +32,6 @@
+ #include "cpfile.h"
+ #include "sufile.h"
+ #include "dat.h"
+-#include "seglist.h"
+ #include "segbuf.h"
+ 
+ 
 -- 
 1.6.2
