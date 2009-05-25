@@ -1,15 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Some problems
-Date: Sun, 24 May 2009 17:51:01 +0900 (JST)
-Message-ID: <20090524.175101.94865345.ryusuke@osrg.net>
-References: <mailman.1.1243047601.4877.users@nilfs.org>
-	<20090523221120.086a1002@simplux>
+From: Dave <dave-/hCUnnzDXf0AvxtiuMwx3w@public.gmane.org>
+Subject: Nilfs features
+Date: Mon, 25 May 2009 13:46:14 +0400
+Message-ID: <4A1A68E6.50905@0bits.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090523221120.086a1002@simplux>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,74 +17,67 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, mniederle-RbZlAiThDcE@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi!,
-On Sat, 23 May 2009 22:11:20 +0200, "Dipl.-Ing. Michael Niederle" wrote:
-> Hi!
-> 
-> I continue testing nilfs as a root file system. Until now I have no script to
-> cleanly unmount the root file system. (In the layered approach (aufs) I used
-> before this was not necessary.) So I just called sync and then shut down the
-> system.
+Hi,
 
-I made a Debian lenny on my pendrive.  It looks remount my root nilfs
-partition readonly on shutdown, and no trouble so far.
+I converted (backup/restore) my home directory onto nilfs2 to test it in 
+anger  (yes i know the caveats about it corrupting all my data, etc, but 
+i'm willing to restore when required).
 
-> The next boot took some time, because the superblock was "broken". Here an
-> extract from the kernel log:
-> 
-> [    1.407323] NILFS warning: broken superblock. using spare superblock.
-> [    1.408569] NILFS warning: broken superblock. using spare superblock.
-> [  461.587031] segctord starting. Construction interval = 5 seconds, CP
-> frequency < 30 seconds [  461.591873] NILFS warning: mounting unchecked fs
-> [  461.629865] NILFS: recovery complete.
-> 
-> Is nilfs doing a sequential scan over the whole partition to find its spare
-> superblock?
+When restoring the data onto a nilfs2 filesystem there really is no 
+requirement to have the checkpointing running as you have a good copy 
+from your tar, cpio archive that you are restoring from. So is there a 
+way to temporarily suspend checkpointing with a command and then restart 
+it after the restore has completed ? I think this would be useful also 
+for when  you want to have a 'privacy' mode (like firefox/mozilla) where 
+you can suspend checkpointing, start some confidential work, email, 
+browsing etc, and then restart checkpointing and roll back to the 
+previous state.
 
-No, the location of spare superblock is determined by size of the divice.
-It's in tail of the partition.
+In addition to this there doesn't seem to be a way to delete a range of 
+checkpoints. When i did my restore from my archive, i generated 700+ 
+useless checkpoints which i had to delete one by one (in a script). It 
+would be nice to have a 'rmcp 1-100' or 'rmcp -100' or 'rmcp 100-' to 
+delete a checkpoint range, a start to end.
 
-I think the spare superblock pointed to a certain old segment and it
-took some time to scan forward from the old segment to the latest
-segment.
+Also it seems for home directories, a 5 second checkpointing seems 
+exessive. In 14hrs i have 10,000 checkpoints (even when seemingly idle 
+with mozilla page refreshes, dovecot index files updates  for email, etc).
 
-It may take about a minute, but something is wrong if it took several
-minutes.
 
-> Then I wanted to remove some snapshots:
-> 
-> > lscp -s
->                  CNO        DATE     TIME  MODE  FLG   NBLKINC       ICNT
->                  685  2009-05-13 09:38:20   ss    -         35     568722
->                 1330  2009-05-13 10:59:41   ss    i       7629     579584
->                 4466  2009-05-14 19:15:28   ss    -         23     589270
->                 8250  2009-05-16 03:40:42   ss    i       6202     597141
->                 9910  2009-05-17 19:14:54   ss    -         49     626715
->                10380  2009-05-17 20:21:53   ss    -         18     647228
->                10620  2009-05-23 21:45:41   ss    i       6054     646978
-> 
-> >rmcp 685
-> rmcp: 685: operation not permitted
-> 
-> What's the cause of this message? (rmcp also failed for all other snapshots;
-> the failed rmcp did not produce any kernel message)
+home:~$ uptime
+  13:35:09 up 14:29,  7 users,  load average: 0.85, 1.76, 2.07
+home:~$ lscp|tail
+                10342  2009-05-25 13:34:31   cp    i       6698     323163
+                10343  2009-05-25 13:34:36   cp    -       6761     323163
+                10344  2009-05-25 13:34:41   cp    i       6702     323163
+                10345  2009-05-25 13:34:45   cp    -         29     323163
+                10346  2009-05-25 13:34:46   cp    i       6679     323163
+                10347  2009-05-25 13:34:51   cp    i       6669     323163
+                10348  2009-05-25 13:34:56   cp    i       6675     323163
+                10349  2009-05-25 13:35:01   cp    i       6676     323163
+                10350  2009-05-25 13:35:06   cp    i       6649     323163
+                10351  2009-05-25 13:35:11   cp    i       6679     323163
 
-rmcp is allowed only for plain checkpoints.
-So, you have to change it to the plain checkpoint like
 
- # chcp cp 685 1330 ...
- # rmcp 685 ...
+It would also be nice to change the cp/clean interval without editing 
+the conf file, perhaps during the nite we can had different checkpoint 
+intervals and during work a smaller cp interval.
 
-Actually, you don't have to do the rmcp because the garbage collection
-will delete plain checkpoints.
 
-I remember someone asked a simliar question before.
+Finally instead of having 5 commands, it'd be nice to have once command 
+with different options (like zfs). So instead have
 
-I think we should make the error message more user-friendly.  And we
-should allow force option of rmcp to remove snapshots; the current
-force option does not have this meaning.
+. nilfs checkpoint
+. nilfs snapshot
+. nilfs remove
+. nilfs list
+. nilfs suspend
+. nilfs restart
+etc...
 
-Cheers,
-Ryusuke Konishi
+All seems to be working fine so far, so take this as constructive comments.
+
+Cheers
+Dave
