@@ -1,8 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 01/17] nilfs2: use semaphore to protect
-	pointer to a writable FS-instance
-Date: Mon, 25 May 2009 19:18:05 +0900
-Message-ID: <1243246701-5193-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 07/17] nilfs2: remove nilfs_bmap_put_block
+Date: Mon, 25 May 2009 19:18:11 +0900
+Message-ID: <1243246701-5193-8-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1243246701-5193-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,136 +22,190 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This removes nilfs_get_writer() and nilfs_put_writer() pair which is
-used to retain a writable FS-instance for a period.  The pair
-functions were making up some kind of recursive lock, and they
-eventually became obsolete by the bugfix patch ("nilfs2: fix circular
-locking dependency of writer mutex").
-
-This uses a reader/writer semaphore instead of the own lock.
+nilfs_bmap_put_block() is a wrapper function calling brelse().  This
+eliminates the wrapper for simplicity.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/mdt.c       |   10 +++++++---
- fs/nilfs2/the_nilfs.c |    3 +--
- fs/nilfs2/the_nilfs.h |   27 ++++++---------------------
- 3 files changed, 14 insertions(+), 26 deletions(-)
+ fs/nilfs2/bmap.c  |    6 ------
+ fs/nilfs2/bmap.h  |    1 -
+ fs/nilfs2/btree.c |   33 ++++++++++++++++-----------------
+ 3 files changed, 16 insertions(+), 24 deletions(-)
 
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index bb78745..c3eb539 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -402,6 +402,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 	struct inode *inode = container_of(page->mapping,
- 					   struct inode, i_data);
- 	struct super_block *sb = inode->i_sb;
-+	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
- 	struct nilfs_sb_info *writer = NULL;
- 	int err = 0;
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 4f2523f..ee9914a 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -424,12 +424,6 @@ int nilfs_bmap_get_block(const struct nilfs_bmap *bmap, __u64 ptr,
+ 				ptr, 0, bhp, 0);
+ }
  
-@@ -411,9 +412,12 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 	if (page->mapping->assoc_mapping)
- 		return 0; /* Do not request flush for shadow page cache */
- 	if (!sb) {
--		writer = nilfs_get_writer(NILFS_MDT(inode)->mi_nilfs);
--		if (!writer)
-+		down_read(&nilfs->ns_writer_sem);
-+		writer = nilfs->ns_writer;
-+		if (!writer) {
-+			up_read(&nilfs->ns_writer_sem);
- 			return -EROFS;
-+		}
- 		sb = writer->s_super;
+-void nilfs_bmap_put_block(const struct nilfs_bmap *bmap,
+-			  struct buffer_head *bh)
+-{
+-	brelse(bh);
+-}
+-
+ int nilfs_bmap_get_new_block(const struct nilfs_bmap *bmap, __u64 ptr,
+ 			     struct buffer_head **bhp)
+ {
+diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
+index ad251d3..5b580b8 100644
+--- a/fs/nilfs2/bmap.h
++++ b/fs/nilfs2/bmap.h
+@@ -204,7 +204,6 @@ void nilfs_bmap_sub_blocks(const struct nilfs_bmap *, int);
+ 
+ int nilfs_bmap_get_block(const struct nilfs_bmap *, __u64,
+ 			 struct buffer_head **);
+-void nilfs_bmap_put_block(const struct nilfs_bmap *, struct buffer_head *);
+ int nilfs_bmap_get_new_block(const struct nilfs_bmap *, __u64,
+ 			     struct buffer_head **);
+ void nilfs_bmap_delete_block(const struct nilfs_bmap *, struct buffer_head *);
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index 959e5a7..102e218 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -109,8 +109,7 @@ static void nilfs_btree_clear_path(const struct nilfs_btree *btree,
+ 	     level < NILFS_BTREE_LEVEL_MAX;
+ 	     level++) {
+ 		if (path[level].bp_bh != NULL) {
+-			nilfs_bmap_put_block(&btree->bt_bmap,
+-					     path[level].bp_bh);
++			brelse(path[level].bp_bh);
+ 			path[level].bp_bh = NULL;
+ 		}
+ 		/* sib_bh is released or deleted by prepare or commit
+@@ -669,13 +668,13 @@ static void nilfs_btree_carry_left(struct nilfs_btree *btree,
+ 				nilfs_btree_node_get_key(btree, node, 0));
+ 
+ 	if (move) {
+-		nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_bh);
++		brelse(path[level].bp_bh);
+ 		path[level].bp_bh = path[level].bp_sib_bh;
+ 		path[level].bp_sib_bh = NULL;
+ 		path[level].bp_index += lnchildren;
+ 		path[level + 1].bp_index--;
+ 	} else {
+-		nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_sib_bh);
++		brelse(path[level].bp_sib_bh);
+ 		path[level].bp_sib_bh = NULL;
+ 		path[level].bp_index -= n;
+ 	}
+@@ -722,14 +721,14 @@ static void nilfs_btree_carry_right(struct nilfs_btree *btree,
+ 	path[level + 1].bp_index--;
+ 
+ 	if (move) {
+-		nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_bh);
++		brelse(path[level].bp_bh);
+ 		path[level].bp_bh = path[level].bp_sib_bh;
+ 		path[level].bp_sib_bh = NULL;
+ 		path[level].bp_index -=
+ 			nilfs_btree_node_get_nchildren(btree, node);
+ 		path[level + 1].bp_index++;
+ 	} else {
+-		nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_sib_bh);
++		brelse(path[level].bp_sib_bh);
+ 		path[level].bp_sib_bh = NULL;
  	}
  
-@@ -423,7 +427,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 		nilfs_flush_segment(sb, inode->i_ino);
+@@ -781,7 +780,7 @@ static void nilfs_btree_split(struct nilfs_btree *btree,
+ 		*keyp = nilfs_btree_node_get_key(btree, right, 0);
+ 		*ptrp = path[level].bp_newreq.bpr_ptr;
  
- 	if (writer)
--		nilfs_put_writer(NILFS_MDT(inode)->mi_nilfs);
-+		up_read(&nilfs->ns_writer_sem);
- 	return err;
+-		nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_bh);
++		brelse(path[level].bp_bh);
+ 		path[level].bp_bh = path[level].bp_sib_bh;
+ 		path[level].bp_sib_bh = NULL;
+ 	} else {
+@@ -790,7 +789,7 @@ static void nilfs_btree_split(struct nilfs_btree *btree,
+ 		*keyp = nilfs_btree_node_get_key(btree, right, 0);
+ 		*ptrp = path[level].bp_newreq.bpr_ptr;
+ 
+-		nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_sib_bh);
++		brelse(path[level].bp_sib_bh);
+ 		path[level].bp_sib_bh = NULL;
+ 	}
+ 
+@@ -936,7 +935,7 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
+ 				stats->bs_nblocks++;
+ 				goto out;
+ 			} else
+-				nilfs_bmap_put_block(&btree->bt_bmap, bh);
++				brelse(bh);
+ 		}
+ 
+ 		/* right sibling */
+@@ -956,7 +955,7 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
+ 				stats->bs_nblocks++;
+ 				goto out;
+ 			} else
+-				nilfs_bmap_put_block(&btree->bt_bmap, bh);
++				brelse(bh);
+ 		}
+ 
+ 		/* split */
+@@ -1153,7 +1152,7 @@ static void nilfs_btree_borrow_left(struct nilfs_btree *btree,
+ 	nilfs_btree_promote_key(btree, path, level + 1,
+ 				nilfs_btree_node_get_key(btree, node, 0));
+ 
+-	nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_sib_bh);
++	brelse(path[level].bp_sib_bh);
+ 	path[level].bp_sib_bh = NULL;
+ 	path[level].bp_index += n;
+ }
+@@ -1192,7 +1191,7 @@ static void nilfs_btree_borrow_right(struct nilfs_btree *btree,
+ 				nilfs_btree_node_get_key(btree, right, 0));
+ 	path[level + 1].bp_index--;
+ 
+-	nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_sib_bh);
++	brelse(path[level].bp_sib_bh);
+ 	path[level].bp_sib_bh = NULL;
  }
  
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index f2d3ae0..5897115 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -69,11 +69,10 @@ static struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+@@ -1403,7 +1402,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
+ 			&btree->bt_bmap, &path[level].bp_oldreq);
+  err_out_child_node:
+ 	for (level--; level >= NILFS_BTREE_LEVEL_NODE_MIN; level--) {
+-		nilfs_bmap_put_block(&btree->bt_bmap, path[level].bp_sib_bh);
++		brelse(path[level].bp_sib_bh);
+ 		if (btree->bt_bmap.b_pops->bpop_abort_end_ptr != NULL)
+ 			btree->bt_bmap.b_pops->bpop_abort_end_ptr(
+ 				&btree->bt_bmap, &path[level].bp_oldreq);
+@@ -1515,7 +1514,7 @@ static int nilfs_btree_check_delete(struct nilfs_bmap *bmap, __u64 key)
+ 	nextmaxkey = (nchildren > 1) ?
+ 		nilfs_btree_node_get_key(btree, node, nchildren - 2) : 0;
+ 	if (bh != NULL)
+-		nilfs_bmap_put_block(bmap, bh);
++		brelse(bh);
  
- 	nilfs->ns_bdev = bdev;
- 	atomic_set(&nilfs->ns_count, 1);
--	atomic_set(&nilfs->ns_writer_refcount, -1);
- 	atomic_set(&nilfs->ns_ndirtyblks, 0);
- 	init_rwsem(&nilfs->ns_sem);
- 	mutex_init(&nilfs->ns_mount_mutex);
--	mutex_init(&nilfs->ns_writer_mutex);
-+	init_rwsem(&nilfs->ns_writer_sem);
- 	INIT_LIST_HEAD(&nilfs->ns_list);
- 	INIT_LIST_HEAD(&nilfs->ns_supers);
- 	spin_lock_init(&nilfs->ns_last_segment_lock);
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index 76af4c9..bbbdab1 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -49,8 +49,7 @@ enum {
-  * @ns_writer: back pointer to writable nilfs_sb_info
-  * @ns_sem: semaphore for shared states
-  * @ns_mount_mutex: mutex protecting mount/remount process of nilfs
-- * @ns_writer_mutex: mutex protecting ns_writer attach/detach
-- * @ns_writer_refcount: number of referrers on ns_writer
-+ * @ns_writer_sem: semaphore protecting ns_writer attach/detach
-  * @ns_sbh: buffer heads of on-disk super blocks
-  * @ns_sbp: pointers to super block data
-  * @ns_sbwtime: previous write time of super blocks
-@@ -97,8 +96,7 @@ struct the_nilfs {
- 	struct nilfs_sb_info   *ns_writer;
- 	struct rw_semaphore	ns_sem;
- 	struct mutex		ns_mount_mutex;
--	struct mutex		ns_writer_mutex;
--	atomic_t		ns_writer_refcount;
-+	struct rw_semaphore	ns_writer_sem;
- 
- 	/*
- 	 * used for
-@@ -214,34 +212,21 @@ static inline void get_nilfs(struct the_nilfs *nilfs)
- 	atomic_inc(&nilfs->ns_count);
+ 	return (maxkey == key) && (nextmaxkey < bmap->b_low);
  }
+@@ -1563,7 +1562,7 @@ static int nilfs_btree_gather_data(struct nilfs_bmap *bmap,
+ 	}
  
--static inline struct nilfs_sb_info *nilfs_get_writer(struct the_nilfs *nilfs)
--{
--	if (atomic_inc_and_test(&nilfs->ns_writer_refcount))
--		mutex_lock(&nilfs->ns_writer_mutex);
--	return nilfs->ns_writer;
--}
--
--static inline void nilfs_put_writer(struct the_nilfs *nilfs)
--{
--	if (atomic_add_negative(-1, &nilfs->ns_writer_refcount))
--		mutex_unlock(&nilfs->ns_writer_mutex);
--}
--
- static inline void
- nilfs_attach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
- {
--	mutex_lock(&nilfs->ns_writer_mutex);
-+	down_write(&nilfs->ns_writer_sem);
- 	nilfs->ns_writer = sbi;
--	mutex_unlock(&nilfs->ns_writer_mutex);
-+	up_write(&nilfs->ns_writer_sem);
+ 	if (bh != NULL)
+-		nilfs_bmap_put_block(bmap, bh);
++		brelse(bh);
+ 
+ 	return nitems;
  }
+@@ -1661,7 +1660,7 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
+ 			nilfs_bmap_set_dirty(bmap);
  
- static inline void
- nilfs_detach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
- {
--	mutex_lock(&nilfs->ns_writer_mutex);
-+	down_write(&nilfs->ns_writer_sem);
- 	if (sbi == nilfs->ns_writer)
- 		nilfs->ns_writer = NULL;
--	mutex_unlock(&nilfs->ns_writer_mutex);
-+	up_write(&nilfs->ns_writer_sem);
- }
+ 		unlock_buffer(bh);
+-		nilfs_bmap_put_block(bmap, bh);
++		brelse(bh);
  
- static inline void
+ 		/* create root node at level 2 */
+ 		node = nilfs_btree_get_root(btree);
+@@ -2176,7 +2175,7 @@ static int nilfs_btree_mark(struct nilfs_bmap *bmap, __u64 key, int level)
+ 
+ 	if (!buffer_dirty(bh))
+ 		nilfs_btnode_mark_dirty(bh);
+-	nilfs_bmap_put_block(&btree->bt_bmap, bh);
++	brelse(bh);
+ 	if (!nilfs_bmap_dirty(&btree->bt_bmap))
+ 		nilfs_bmap_set_dirty(&btree->bt_bmap);
+ 
 -- 
 1.6.2
