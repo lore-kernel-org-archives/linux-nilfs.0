@@ -1,7 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 12/17] nilfs2: remove bmap pointer operations
-Date: Mon, 25 May 2009 19:18:16 +0900
-Message-ID: <1243246701-5193-13-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 05/17] nilfs2: eliminate removal list of
+	segments
+Date: Mon, 25 May 2009 19:18:09 +0900
+Message-ID: <1243246701-5193-6-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1243246701-5193-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -22,775 +23,462 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Previously, the bmap codes of nilfs used three types of function
-tables.  The abuse of indirect function calls decreased source
-readability and suffered many indirect jumps which would confuse
-branch prediction of processors.
+This will clean up the removal list of segments and the related
+functions from segment.c and ioctl.c, which have hurt code
+readability.
 
-This eliminates one type of the function tables,
-nilfs_bmap_ptr_operations, which was used to dispatch low level
-pointer operations of the nilfs bmap.
-
-This adds a new integer variable "b_ptr_type" to nilfs_bmap struct,
-and uses the value to select the pointer operations.
+This elimination is applied by using nilfs_sufile_updatev() previously
+introduced in the patch ("nilfs2: add sufile function that can modify
+multiple segment usages").
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/bmap.c   |  181 +++++++++++++++-------------------------------------
- fs/nilfs2/bmap.h   |  110 ++++++++++++++++++++++---------
- fs/nilfs2/btree.c  |  100 +++++++++++++----------------
- fs/nilfs2/direct.c |   30 +++------
- 4 files changed, 187 insertions(+), 234 deletions(-)
+ fs/nilfs2/ioctl.c   |   26 ----------
+ fs/nilfs2/segbuf.c  |    1 -
+ fs/nilfs2/seglist.h |    6 --
+ fs/nilfs2/segment.c |  130 ++++++++++++++-------------------------------------
+ fs/nilfs2/segment.h |   11 ++--
+ fs/nilfs2/sufile.h  |   56 +++++++++++++---------
+ 6 files changed, 74 insertions(+), 156 deletions(-)
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index de67d2a..51824c7 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -31,21 +31,26 @@
- #include "dat.h"
- #include "alloc.h"
- 
-+static struct inode *nilfs_bmap_get_dat(const struct nilfs_bmap *bmap)
-+{
-+	return nilfs_dat_inode(NILFS_I_NILFS(bmap->b_inode));
-+}
-+
- int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap, __u64 key, int level,
- 			       __u64 *ptrp)
- {
--	__u64 ptr;
-+	sector_t blocknr;
- 	int ret;
- 
- 	down_read(&bmap->b_sem);
- 	ret = bmap->b_ops->bop_lookup(bmap, key, level, ptrp);
- 	if (ret < 0)
- 		goto out;
--	if (bmap->b_pops->bpop_translate != NULL) {
--		ret = bmap->b_pops->bpop_translate(bmap, *ptrp, &ptr);
--		if (ret < 0)
--			goto out;
--		*ptrp = ptr;
-+	if (NILFS_BMAP_USE_VBN(bmap)) {
-+		ret = nilfs_dat_translate(nilfs_bmap_get_dat(bmap), *ptrp,
-+					  &blocknr);
-+		if (!ret)
-+			*ptrp = blocknr;
- 	}
- 
-  out:
-@@ -442,11 +447,6 @@ __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 key)
- 		return NILFS_BMAP_INVALID_PTR;
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index d6759b9..bdad7e4 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -435,24 +435,6 @@ static int nilfs_ioctl_mark_blocks_dirty(struct the_nilfs *nilfs,
+ 	return nmembs;
  }
  
--static struct inode *nilfs_bmap_get_dat(const struct nilfs_bmap *bmap)
+-static int nilfs_ioctl_free_segments(struct the_nilfs *nilfs,
+-				     struct nilfs_argv *argv, void *buf)
 -{
--	return nilfs_dat_inode(NILFS_I_NILFS(bmap->b_inode));
--}
--
- #define NILFS_BMAP_GROUP_DIV	8
- __u64 nilfs_bmap_find_target_in_group(const struct nilfs_bmap *bmap)
- {
-@@ -459,20 +459,20 @@ __u64 nilfs_bmap_find_target_in_group(const struct nilfs_bmap *bmap)
- 		(entries_per_group / NILFS_BMAP_GROUP_DIV);
- }
- 
--static int nilfs_bmap_prepare_alloc_v(struct nilfs_bmap *bmap,
--				      union nilfs_bmap_ptr_req *req)
-+int nilfs_bmap_prepare_alloc_v(struct nilfs_bmap *bmap,
-+				 union nilfs_bmap_ptr_req *req)
- {
- 	return nilfs_dat_prepare_alloc(nilfs_bmap_get_dat(bmap), &req->bpr_req);
- }
- 
--static void nilfs_bmap_commit_alloc_v(struct nilfs_bmap *bmap,
--				      union nilfs_bmap_ptr_req *req)
-+void nilfs_bmap_commit_alloc_v(struct nilfs_bmap *bmap,
-+				 union nilfs_bmap_ptr_req *req)
- {
- 	nilfs_dat_commit_alloc(nilfs_bmap_get_dat(bmap), &req->bpr_req);
- }
- 
--static void nilfs_bmap_abort_alloc_v(struct nilfs_bmap *bmap,
--				     union nilfs_bmap_ptr_req *req)
-+void nilfs_bmap_abort_alloc_v(struct nilfs_bmap *bmap,
-+			      union nilfs_bmap_ptr_req *req)
- {
- 	nilfs_dat_abort_alloc(nilfs_bmap_get_dat(bmap), &req->bpr_req);
- }
-@@ -489,26 +489,21 @@ int nilfs_bmap_start_v(struct nilfs_bmap *bmap, union nilfs_bmap_ptr_req *req,
- 	return ret;
- }
- 
--static int nilfs_bmap_prepare_end_v(struct nilfs_bmap *bmap,
--				    union nilfs_bmap_ptr_req *req)
-+int nilfs_bmap_prepare_end_v(struct nilfs_bmap *bmap,
-+			     union nilfs_bmap_ptr_req *req)
- {
- 	return nilfs_dat_prepare_end(nilfs_bmap_get_dat(bmap), &req->bpr_req);
- }
- 
--static void nilfs_bmap_commit_end_v(struct nilfs_bmap *bmap,
--				    union nilfs_bmap_ptr_req *req)
--{
--	nilfs_dat_commit_end(nilfs_bmap_get_dat(bmap), &req->bpr_req, 0);
--}
--
--static void nilfs_bmap_commit_end_vmdt(struct nilfs_bmap *bmap,
--				       union nilfs_bmap_ptr_req *req)
-+void nilfs_bmap_commit_end_v(struct nilfs_bmap *bmap,
-+			     union nilfs_bmap_ptr_req *req)
- {
--	nilfs_dat_commit_end(nilfs_bmap_get_dat(bmap), &req->bpr_req, 1);
-+	nilfs_dat_commit_end(nilfs_bmap_get_dat(bmap), &req->bpr_req,
-+			     bmap->b_ptr_type == NILFS_BMAP_PTR_VS);
- }
- 
--static void nilfs_bmap_abort_end_v(struct nilfs_bmap *bmap,
--				   union nilfs_bmap_ptr_req *req)
-+void nilfs_bmap_abort_end_v(struct nilfs_bmap *bmap,
-+			    union nilfs_bmap_ptr_req *req)
- {
- 	nilfs_dat_abort_end(nilfs_bmap_get_dat(bmap), &req->bpr_req);
- }
-@@ -524,116 +519,44 @@ int nilfs_bmap_mark_dirty(const struct nilfs_bmap *bmap, __u64 vblocknr)
- 	return nilfs_dat_mark_dirty(nilfs_bmap_get_dat(bmap), vblocknr);
- }
- 
--int nilfs_bmap_prepare_update(struct nilfs_bmap *bmap,
--			      union nilfs_bmap_ptr_req *oldreq,
--			      union nilfs_bmap_ptr_req *newreq)
-+int nilfs_bmap_prepare_update_v(struct nilfs_bmap *bmap,
-+				union nilfs_bmap_ptr_req *oldreq,
-+				union nilfs_bmap_ptr_req *newreq)
- {
-+	struct inode *dat = nilfs_bmap_get_dat(bmap);
- 	int ret;
- 
--	ret = bmap->b_pops->bpop_prepare_end_ptr(bmap, oldreq);
-+	ret = nilfs_dat_prepare_end(dat, &oldreq->bpr_req);
- 	if (ret < 0)
- 		return ret;
--	ret = bmap->b_pops->bpop_prepare_alloc_ptr(bmap, newreq);
-+	ret = nilfs_dat_prepare_alloc(dat, &newreq->bpr_req);
- 	if (ret < 0)
--		bmap->b_pops->bpop_abort_end_ptr(bmap, oldreq);
-+		nilfs_dat_abort_end(dat, &oldreq->bpr_req);
- 
- 	return ret;
- }
- 
--void nilfs_bmap_commit_update(struct nilfs_bmap *bmap,
--			      union nilfs_bmap_ptr_req *oldreq,
--			      union nilfs_bmap_ptr_req *newreq)
--{
--	bmap->b_pops->bpop_commit_end_ptr(bmap, oldreq);
--	bmap->b_pops->bpop_commit_alloc_ptr(bmap, newreq);
--}
--
--void nilfs_bmap_abort_update(struct nilfs_bmap *bmap,
--			     union nilfs_bmap_ptr_req *oldreq,
--			     union nilfs_bmap_ptr_req *newreq)
--{
--	bmap->b_pops->bpop_abort_end_ptr(bmap, oldreq);
--	bmap->b_pops->bpop_abort_alloc_ptr(bmap, newreq);
--}
--
--static int nilfs_bmap_translate_v(const struct nilfs_bmap *bmap, __u64 ptr,
--				  __u64 *ptrp)
-+void nilfs_bmap_commit_update_v(struct nilfs_bmap *bmap,
-+				union nilfs_bmap_ptr_req *oldreq,
-+				union nilfs_bmap_ptr_req *newreq)
- {
--	sector_t blocknr;
+-	size_t nmembs = argv->v_nmembs;
+-	struct nilfs_sb_info *sbi = nilfs->ns_writer;
 -	int ret;
 -
--	ret = nilfs_dat_translate(nilfs_bmap_get_dat(bmap), ptr, &blocknr);
--	if (ret < 0)
--		return ret;
--	if (ptrp != NULL)
--		*ptrp = blocknr;
--	return 0;
+-	if (unlikely(!sbi)) {
+-		/* never happens because called for a writable mount */
+-		WARN_ON(1);
+-		return -EROFS;
+-	}
+-	ret = nilfs_segctor_add_segments_to_be_freed(
+-		NILFS_SC(sbi), buf, nmembs);
+-
+-	return (ret < 0) ? ret : nmembs;
 -}
-+	struct inode *dat = nilfs_bmap_get_dat(bmap);
- 
--static int nilfs_bmap_prepare_alloc_p(struct nilfs_bmap *bmap,
--				      union nilfs_bmap_ptr_req *req)
--{
--	/* ignore target ptr */
--	req->bpr_ptr = bmap->b_last_allocated_ptr++;
--	return 0;
-+	nilfs_dat_commit_end(dat, &oldreq->bpr_req,
-+			     bmap->b_ptr_type == NILFS_BMAP_PTR_VS);
-+	nilfs_dat_commit_alloc(dat, &newreq->bpr_req);
- }
- 
--static void nilfs_bmap_commit_alloc_p(struct nilfs_bmap *bmap,
--				      union nilfs_bmap_ptr_req *req)
-+void nilfs_bmap_abort_update_v(struct nilfs_bmap *bmap,
-+			       union nilfs_bmap_ptr_req *oldreq,
-+			       union nilfs_bmap_ptr_req *newreq)
+-
+ int nilfs_ioctl_prepare_clean_segments(struct the_nilfs *nilfs,
+ 				       struct nilfs_argv *argv, void **kbufs)
  {
--	/* do nothing */
--}
-+	struct inode *dat = nilfs_bmap_get_dat(bmap);
+@@ -491,14 +473,6 @@ int nilfs_ioctl_prepare_clean_segments(struct the_nilfs *nilfs,
+ 		msg = "cannot mark copying blocks dirty";
+ 		goto failed;
+ 	}
+-	ret = nilfs_ioctl_free_segments(nilfs, &argv[4], kbufs[4]);
+-	if (ret < 0) {
+-		/*
+-		 * can safely abort because this operation is atomic.
+-		 */
+-		msg = "cannot set segments to be freed";
+-		goto failed;
+-	}
+ 	return 0;
  
--static void nilfs_bmap_abort_alloc_p(struct nilfs_bmap *bmap,
--				     union nilfs_bmap_ptr_req *req)
--{
--	bmap->b_last_allocated_ptr--;
-+	nilfs_dat_abort_end(dat, &oldreq->bpr_req);
-+	nilfs_dat_abort_alloc(dat, &newreq->bpr_req);
+  failed:
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index 1e68821..dc0277a 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -26,7 +26,6 @@
+ #include <linux/crc32.h>
+ #include "page.h"
+ #include "segbuf.h"
+-#include "seglist.h"
+ 
+ 
+ static struct kmem_cache *nilfs_segbuf_cachep;
+diff --git a/fs/nilfs2/seglist.h b/fs/nilfs2/seglist.h
+index d39df91..e448e40 100644
+--- a/fs/nilfs2/seglist.h
++++ b/fs/nilfs2/seglist.h
+@@ -32,11 +32,6 @@
+ struct nilfs_segment_entry {
+ 	__u64			segnum;
+ 
+-#define NILFS_SLH_FREED		0x0001	/* The segment was freed provisonally.
+-					   It must be cancelled if
+-					   construction aborted */
+-
+-	unsigned		flags;
+ 	struct list_head	list;
+ 	struct buffer_head     *bh_su;
+ 	struct nilfs_segment_usage *raw_su;
+@@ -52,7 +47,6 @@ nilfs_alloc_segment_entry(__u64 segnum)
+ 
+ 	if (likely(ent)) {
+ 		ent->segnum = segnum;
+-		ent->flags = 0;
+ 		ent->bh_su = NULL;
+ 		ent->raw_su = NULL;
+ 		INIT_LIST_HEAD(&ent->list);
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 22c7f65..aa97754 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -39,7 +39,6 @@
+ #include "sufile.h"
+ #include "cpfile.h"
+ #include "ifile.h"
+-#include "seglist.h"
+ #include "segbuf.h"
+ 
+ 
+@@ -79,7 +78,8 @@ enum {
+ /* State flags of collection */
+ #define NILFS_CF_NODE		0x0001	/* Collecting node blocks */
+ #define NILFS_CF_IFILE_STARTED	0x0002	/* IFILE stage has started */
+-#define NILFS_CF_HISTORY_MASK	(NILFS_CF_IFILE_STARTED)
++#define NILFS_CF_SUFREED	0x0004	/* segment usages has been freed */
++#define NILFS_CF_HISTORY_MASK	(NILFS_CF_IFILE_STARTED | NILFS_CF_SUFREED)
+ 
+ /* Operations depending on the construction mode and file type */
+ struct nilfs_sc_operations {
+@@ -810,7 +810,7 @@ static int nilfs_segctor_clean(struct nilfs_sc_info *sci)
+ {
+ 	return list_empty(&sci->sc_dirty_files) &&
+ 		!test_bit(NILFS_SC_DIRTY, &sci->sc_flags) &&
+-		list_empty(&sci->sc_cleaning_segments) &&
++		sci->sc_nfreesegs == 0 &&
+ 		(!nilfs_doing_gc() || list_empty(&sci->sc_gc_inodes));
  }
  
--static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_v = {
--	.bpop_prepare_alloc_ptr	=	nilfs_bmap_prepare_alloc_v,
--	.bpop_commit_alloc_ptr	=	nilfs_bmap_commit_alloc_v,
--	.bpop_abort_alloc_ptr	=	nilfs_bmap_abort_alloc_v,
--	.bpop_prepare_end_ptr	=	nilfs_bmap_prepare_end_v,
--	.bpop_commit_end_ptr	=	nilfs_bmap_commit_end_v,
--	.bpop_abort_end_ptr	=	nilfs_bmap_abort_end_v,
+@@ -1005,44 +1005,6 @@ static void nilfs_drop_collected_inodes(struct list_head *head)
+ 	}
+ }
+ 
+-static void nilfs_segctor_cancel_free_segments(struct nilfs_sc_info *sci,
+-					       struct inode *sufile)
 -
--	.bpop_translate		=	nilfs_bmap_translate_v,
--};
+-{
+-	struct list_head *head = &sci->sc_cleaning_segments;
+-	struct nilfs_segment_entry *ent;
+-	int err;
 -
--static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_vmdt = {
--	.bpop_prepare_alloc_ptr	=	nilfs_bmap_prepare_alloc_v,
--	.bpop_commit_alloc_ptr	=	nilfs_bmap_commit_alloc_v,
--	.bpop_abort_alloc_ptr	=	nilfs_bmap_abort_alloc_v,
--	.bpop_prepare_end_ptr	=	nilfs_bmap_prepare_end_v,
--	.bpop_commit_end_ptr	=	nilfs_bmap_commit_end_vmdt,
--	.bpop_abort_end_ptr	=	nilfs_bmap_abort_end_v,
+-	list_for_each_entry(ent, head, list) {
+-		if (!(ent->flags & NILFS_SLH_FREED))
+-			break;
+-		err = nilfs_sufile_cancel_free(sufile, ent->segnum);
+-		WARN_ON(err); /* do not happen */
+-		ent->flags &= ~NILFS_SLH_FREED;
+-	}
+-}
 -
--	.bpop_translate		=	nilfs_bmap_translate_v,
--};
+-static int nilfs_segctor_prepare_free_segments(struct nilfs_sc_info *sci,
+-					       struct inode *sufile)
+-{
+-	struct list_head *head = &sci->sc_cleaning_segments;
+-	struct nilfs_segment_entry *ent;
+-	int err;
 -
--static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_p = {
--	.bpop_prepare_alloc_ptr	=	nilfs_bmap_prepare_alloc_p,
--	.bpop_commit_alloc_ptr	=	nilfs_bmap_commit_alloc_p,
--	.bpop_abort_alloc_ptr	=	nilfs_bmap_abort_alloc_p,
--	.bpop_prepare_end_ptr	=	NULL,
--	.bpop_commit_end_ptr	=	NULL,
--	.bpop_abort_end_ptr	=	NULL,
+-	list_for_each_entry(ent, head, list) {
+-		err = nilfs_sufile_free(sufile, ent->segnum);
+-		if (unlikely(err))
+-			return err;
+-		ent->flags |= NILFS_SLH_FREED;
+-	}
+-	return 0;
+-}
 -
--	.bpop_translate		=	NULL,
--};
+-static void nilfs_segctor_commit_free_segments(struct nilfs_sc_info *sci)
+-{
+-	nilfs_dispose_segment_list(&sci->sc_cleaning_segments);
+-}
 -
--static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_gc = {
--	.bpop_prepare_alloc_ptr	=	NULL,
--	.bpop_commit_alloc_ptr	=	NULL,
--	.bpop_abort_alloc_ptr	=	NULL,
--	.bpop_prepare_end_ptr	=	NULL,
--	.bpop_commit_end_ptr	=	NULL,
--	.bpop_abort_end_ptr	=	NULL,
+ static int nilfs_segctor_apply_buffers(struct nilfs_sc_info *sci,
+ 				       struct inode *inode,
+ 				       struct list_head *listp,
+@@ -1161,6 +1123,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 	struct the_nilfs *nilfs = sbi->s_nilfs;
+ 	struct list_head *head;
+ 	struct nilfs_inode_info *ii;
++	size_t ndone;
+ 	int err = 0;
+ 
+ 	switch (sci->sc_stage.scnt) {
+@@ -1250,10 +1213,16 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 			break;
+ 		sci->sc_stage.scnt++;  /* Fall through */
+ 	case NILFS_ST_SUFILE:
+-		err = nilfs_segctor_prepare_free_segments(sci,
+-							  nilfs->ns_sufile);
+-		if (unlikely(err))
++		err = nilfs_sufile_freev(nilfs->ns_sufile, sci->sc_freesegs,
++					 sci->sc_nfreesegs, &ndone);
++		if (unlikely(err)) {
++			nilfs_sufile_cancel_freev(nilfs->ns_sufile,
++						  sci->sc_freesegs, ndone,
++						  NULL);
+ 			break;
++		}
++		sci->sc_stage.flags |= NILFS_CF_SUFREED;
++
+ 		err = nilfs_segctor_scan_file(sci, nilfs->ns_sufile,
+ 					      &nilfs_sc_file_ops);
+ 		if (unlikely(err))
+@@ -1486,7 +1455,15 @@ static void nilfs_segctor_end_construction(struct nilfs_sc_info *sci,
+ {
+ 	if (unlikely(err)) {
+ 		nilfs_segctor_free_incomplete_segments(sci, nilfs);
+-		nilfs_segctor_cancel_free_segments(sci, nilfs->ns_sufile);
++		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
++			int ret;
++
++			ret = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
++							sci->sc_freesegs,
++							sci->sc_nfreesegs,
++							NULL);
++			WARN_ON(ret); /* do not happen */
++		}
+ 	}
+ 	nilfs_segctor_clear_segment_buffers(sci);
+ }
+@@ -1585,7 +1562,13 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
+ 		if (mode != SC_LSEG_SR || sci->sc_stage.scnt < NILFS_ST_CPFILE)
+ 			break;
+ 
+-		nilfs_segctor_cancel_free_segments(sci, nilfs->ns_sufile);
++		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
++			err = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
++							sci->sc_freesegs,
++							sci->sc_nfreesegs,
++							NULL);
++			WARN_ON(err); /* do not happen */
++		}
+ 		nilfs_segctor_clear_segment_buffers(sci);
+ 
+ 		err = nilfs_segctor_extend_segments(sci, nilfs, nadd);
+@@ -2224,10 +2207,8 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 		nilfs_segctor_complete_write(sci);
+ 
+ 		/* Commit segments */
+-		if (has_sr) {
+-			nilfs_segctor_commit_free_segments(sci);
++		if (has_sr)
+ 			nilfs_segctor_clear_metadata_dirty(sci);
+-		}
+ 
+ 		nilfs_segctor_end_construction(sci, nilfs, 0);
+ 
+@@ -2301,48 +2282,6 @@ void nilfs_flush_segment(struct super_block *sb, ino_t ino)
+ 					/* assign bit 0 to data files */
+ }
+ 
+-int nilfs_segctor_add_segments_to_be_freed(struct nilfs_sc_info *sci,
+-					   __u64 *segnum, size_t nsegs)
+-{
+-	struct nilfs_segment_entry *ent;
+-	struct the_nilfs *nilfs = sci->sc_sbi->s_nilfs;
+-	struct inode *sufile = nilfs->ns_sufile;
+-	LIST_HEAD(list);
+-	__u64 *pnum;
+-	size_t i;
+-	int err;
 -
--	.bpop_translate		=	NULL,
--};
+-	for (pnum = segnum, i = 0; i < nsegs; pnum++, i++) {
+-		ent = nilfs_alloc_segment_entry(*pnum);
+-		if (unlikely(!ent)) {
+-			err = -ENOMEM;
+-			goto failed;
+-		}
+-		list_add_tail(&ent->list, &list);
 -
- static struct lock_class_key nilfs_bmap_dat_lock_key;
+-		err = nilfs_open_segment_entry(ent, sufile);
+-		if (unlikely(err))
+-			goto failed;
+-
+-		if (unlikely(!nilfs_segment_usage_dirty(ent->raw_su)))
+-			printk(KERN_WARNING "NILFS: unused segment is "
+-			       "requested to be cleaned (segnum=%llu)\n",
+-			       (unsigned long long)ent->segnum);
+-		nilfs_close_segment_entry(ent, sufile);
+-	}
+-	list_splice(&list, sci->sc_cleaning_segments.prev);
+-	return 0;
+-
+- failed:
+-	nilfs_dispose_segment_list(&list);
+-	return err;
+-}
+-
+-void nilfs_segctor_clear_segments_to_be_freed(struct nilfs_sc_info *sci)
+-{
+-	nilfs_dispose_segment_list(&sci->sc_cleaning_segments);
+-}
+-
+ struct nilfs_segctor_wait_request {
+ 	wait_queue_t	wq;
+ 	__u32		seq;
+@@ -2607,10 +2546,13 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
+ 	err = nilfs_init_gcdat_inode(nilfs);
+ 	if (unlikely(err))
+ 		goto out_unlock;
++
+ 	err = nilfs_ioctl_prepare_clean_segments(nilfs, argv, kbufs);
+ 	if (unlikely(err))
+ 		goto out_unlock;
+ 
++	sci->sc_freesegs = kbufs[4];
++	sci->sc_nfreesegs = argv[4].v_nmembs;
+ 	list_splice_init(&nilfs->ns_gc_inodes, sci->sc_gc_inodes.prev);
+ 
+ 	for (;;) {
+@@ -2629,6 +2571,8 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
+ 	}
+ 
+  out_unlock:
++	sci->sc_freesegs = NULL;
++	sci->sc_nfreesegs = 0;
+ 	nilfs_clear_gcdat_inode(nilfs);
+ 	nilfs_transaction_unlock(sbi);
+ 	return err;
+@@ -2835,7 +2779,6 @@ static struct nilfs_sc_info *nilfs_segctor_new(struct nilfs_sb_info *sbi)
+ 	INIT_LIST_HEAD(&sci->sc_dirty_files);
+ 	INIT_LIST_HEAD(&sci->sc_segbufs);
+ 	INIT_LIST_HEAD(&sci->sc_gc_inodes);
+-	INIT_LIST_HEAD(&sci->sc_cleaning_segments);
+ 	INIT_LIST_HEAD(&sci->sc_copied_buffers);
+ 
+ 	sci->sc_interval = HZ * NILFS_SC_DEFAULT_TIMEOUT;
+@@ -2901,9 +2844,6 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
+ 		nilfs_dispose_list(sbi, &sci->sc_dirty_files, 1);
+ 	}
+ 
+-	if (!list_empty(&sci->sc_cleaning_segments))
+-		nilfs_dispose_segment_list(&sci->sc_cleaning_segments);
+-
+ 	WARN_ON(!list_empty(&sci->sc_segbufs));
+ 
+ 	down_write(&sbi->s_nilfs->ns_segctor_sem);
+diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
+index 476bdd5..f36a851 100644
+--- a/fs/nilfs2/segment.h
++++ b/fs/nilfs2/segment.h
+@@ -90,8 +90,9 @@ struct nilfs_segsum_pointer {
+  * @sc_nblk_inc: Block count of current generation
+  * @sc_dirty_files: List of files to be written
+  * @sc_gc_inodes: List of GC inodes having blocks to be written
+- * @sc_cleaning_segments: List of segments to be freed through construction
+  * @sc_copied_buffers: List of copied buffers (buffer heads) to freeze data
++ * @sc_freesegs: array of segment numbers to be freed
++ * @sc_nfreesegs: number of segments on @sc_freesegs
+  * @sc_dsync_inode: inode whose data pages are written for a sync operation
+  * @sc_dsync_start: start byte offset of data pages
+  * @sc_dsync_end: end byte offset of data pages (inclusive)
+@@ -131,9 +132,11 @@ struct nilfs_sc_info {
+ 
+ 	struct list_head	sc_dirty_files;
+ 	struct list_head	sc_gc_inodes;
+-	struct list_head	sc_cleaning_segments;
+ 	struct list_head	sc_copied_buffers;
+ 
++	__u64		       *sc_freesegs;
++	size_t			sc_nfreesegs;
++
+ 	struct nilfs_inode_info *sc_dsync_inode;
+ 	loff_t			sc_dsync_start;
+ 	loff_t			sc_dsync_end;
+@@ -225,10 +228,6 @@ extern void nilfs_flush_segment(struct super_block *, ino_t);
+ extern int nilfs_clean_segments(struct super_block *, struct nilfs_argv *,
+ 				void **);
+ 
+-extern int nilfs_segctor_add_segments_to_be_freed(struct nilfs_sc_info *,
+-						  __u64 *, size_t);
+-extern void nilfs_segctor_clear_segments_to_be_freed(struct nilfs_sc_info *);
+-
+ extern int nilfs_attach_segment_constructor(struct nilfs_sb_info *);
+ extern void nilfs_detach_segment_constructor(struct nilfs_sb_info *);
+ 
+diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+index e8e2627..fd6232e 100644
+--- a/fs/nilfs2/sufile.h
++++ b/fs/nilfs2/sufile.h
+@@ -54,36 +54,16 @@ int nilfs_sufile_update(struct inode *, __u64, int,
+ 			void (*dofunc)(struct inode *, __u64,
+ 				       struct buffer_head *,
+ 				       struct buffer_head *));
+-void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
+-				 struct buffer_head *);
+ void nilfs_sufile_do_scrap(struct inode *, __u64, struct buffer_head *,
+ 			   struct buffer_head *);
+ void nilfs_sufile_do_free(struct inode *, __u64, struct buffer_head *,
+ 			  struct buffer_head *);
++void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
++				 struct buffer_head *);
+ void nilfs_sufile_do_set_error(struct inode *, __u64, struct buffer_head *,
+ 			       struct buffer_head *);
  
  /**
-@@ -660,20 +583,20 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
- 	bmap->b_inode = &NILFS_BMAP_I(bmap)->vfs_inode;
- 	switch (bmap->b_inode->i_ino) {
- 	case NILFS_DAT_INO:
--		bmap->b_pops = &nilfs_bmap_ptr_ops_p;
--		bmap->b_last_allocated_key = 0;	/* XXX: use macro */
-+		bmap->b_ptr_type = NILFS_BMAP_PTR_P;
-+		bmap->b_last_allocated_key = 0;
- 		bmap->b_last_allocated_ptr = NILFS_BMAP_NEW_PTR_INIT;
- 		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
- 		break;
- 	case NILFS_CPFILE_INO:
- 	case NILFS_SUFILE_INO:
--		bmap->b_pops = &nilfs_bmap_ptr_ops_vmdt;
--		bmap->b_last_allocated_key = 0;	/* XXX: use macro */
-+		bmap->b_ptr_type = NILFS_BMAP_PTR_VS;
-+		bmap->b_last_allocated_key = 0;
- 		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
- 		break;
- 	default:
--		bmap->b_pops = &nilfs_bmap_ptr_ops_v;
--		bmap->b_last_allocated_key = 0;	/* XXX: use macro */
-+		bmap->b_ptr_type = NILFS_BMAP_PTR_VM;
-+		bmap->b_last_allocated_key = 0;
- 		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
- 		break;
- 	}
-@@ -705,7 +628,7 @@ void nilfs_bmap_init_gc(struct nilfs_bmap *bmap)
- 	memset(&bmap->b_u, 0, NILFS_BMAP_SIZE);
- 	init_rwsem(&bmap->b_sem);
- 	bmap->b_inode = &NILFS_BMAP_I(bmap)->vfs_inode;
--	bmap->b_pops = &nilfs_bmap_ptr_ops_gc;
-+	bmap->b_ptr_type = NILFS_BMAP_PTR_U;
- 	bmap->b_last_allocated_key = 0;
- 	bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
- 	bmap->b_state = 0;
-diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index 28c77bb..47f5b74 100644
---- a/fs/nilfs2/bmap.h
-+++ b/fs/nilfs2/bmap.h
-@@ -86,27 +86,6 @@ struct nilfs_bmap_operations {
- };
- 
- 
--/**
-- * struct nilfs_bmap_ptr_operations - bmap ptr operation table
+- * nilfs_sufile_cancel_free -
+- * @sufile: inode of segment usage file
+- * @segnum: segment number
+- *
+- * Description:
+- *
+- * Return Value: On success, 0 is returned. On error, one of the following
+- * negative error codes is returned.
+- *
+- * %-EIO - I/O error.
+- *
+- * %-ENOMEM - Insufficient amount of memory available.
 - */
--struct nilfs_bmap_ptr_operations {
--	int (*bpop_prepare_alloc_ptr)(struct nilfs_bmap *,
--				      union nilfs_bmap_ptr_req *);
--	void (*bpop_commit_alloc_ptr)(struct nilfs_bmap *,
--				      union nilfs_bmap_ptr_req *);
--	void (*bpop_abort_alloc_ptr)(struct nilfs_bmap *,
--				     union nilfs_bmap_ptr_req *);
--	int (*bpop_prepare_end_ptr)(struct nilfs_bmap *,
--				    union nilfs_bmap_ptr_req *);
--	void (*bpop_commit_end_ptr)(struct nilfs_bmap *,
--				    union nilfs_bmap_ptr_req *);
--	void (*bpop_abort_end_ptr)(struct nilfs_bmap *,
--				   union nilfs_bmap_ptr_req *);
+-static inline int nilfs_sufile_cancel_free(struct inode *sufile, __u64 segnum)
+-{
+-	return nilfs_sufile_update(sufile, segnum, 0,
+-				   nilfs_sufile_do_cancel_free);
+-}
 -
--	int (*bpop_translate)(const struct nilfs_bmap *, __u64, __u64 *);
--};
--
--
- #define NILFS_BMAP_SIZE		(NILFS_INODE_BMAP_SIZE * sizeof(__le64))
- #define NILFS_BMAP_KEY_BIT	(sizeof(unsigned long) * 8 /* CHAR_BIT */)
- #define NILFS_BMAP_NEW_PTR_INIT	\
-@@ -124,9 +103,9 @@ static inline int nilfs_bmap_is_new_ptr(unsigned long ptr)
-  * @b_sem: semaphore
-  * @b_inode: owner of bmap
-  * @b_ops: bmap operation table
-- * @b_pops: bmap ptr operation table
-  * @b_last_allocated_key: last allocated key for data block
-  * @b_last_allocated_ptr: last allocated ptr for data block
-+ * @b_ptr_type: pointer type
-  * @b_state: state
-  */
- struct nilfs_bmap {
-@@ -137,12 +116,22 @@ struct nilfs_bmap {
- 	struct rw_semaphore b_sem;
- 	struct inode *b_inode;
- 	const struct nilfs_bmap_operations *b_ops;
--	const struct nilfs_bmap_ptr_operations *b_pops;
- 	__u64 b_last_allocated_key;
- 	__u64 b_last_allocated_ptr;
-+	int b_ptr_type;
- 	int b_state;
- };
- 
-+/* pointer type */
-+#define NILFS_BMAP_PTR_P	0	/* physical block number (i.e. LBN) */
-+#define NILFS_BMAP_PTR_VS	1	/* virtual block number (single
-+					   version) */
-+#define NILFS_BMAP_PTR_VM	2	/* virtual block number (has multiple
-+					   versions) */
-+#define NILFS_BMAP_PTR_U	(-1)	/* never perform pointer operations */
-+
-+#define NILFS_BMAP_USE_VBN(bmap)	((bmap)->b_ptr_type > 0)
-+
- /* state */
- #define NILFS_BMAP_DIRTY	0x00000001
- 
-@@ -171,6 +160,63 @@ void nilfs_bmap_commit_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
- /*
-  * Internal use only
-  */
-+int nilfs_bmap_prepare_alloc_v(struct nilfs_bmap *,
-+			       union nilfs_bmap_ptr_req *);
-+void nilfs_bmap_commit_alloc_v(struct nilfs_bmap *,
-+			       union nilfs_bmap_ptr_req *);
-+void nilfs_bmap_abort_alloc_v(struct nilfs_bmap *,
-+			      union nilfs_bmap_ptr_req *);
-+
-+static inline int nilfs_bmap_prepare_alloc_ptr(struct nilfs_bmap *bmap,
-+					       union nilfs_bmap_ptr_req *req)
-+{
-+	if (NILFS_BMAP_USE_VBN(bmap))
-+		return nilfs_bmap_prepare_alloc_v(bmap, req);
-+	/* ignore target ptr */
-+	req->bpr_ptr = bmap->b_last_allocated_ptr++;
-+	return 0;
-+}
-+
-+static inline void nilfs_bmap_commit_alloc_ptr(struct nilfs_bmap *bmap,
-+					       union nilfs_bmap_ptr_req *req)
-+{
-+	if (NILFS_BMAP_USE_VBN(bmap))
-+		nilfs_bmap_commit_alloc_v(bmap, req);
-+}
-+
-+static inline void nilfs_bmap_abort_alloc_ptr(struct nilfs_bmap *bmap,
-+					      union nilfs_bmap_ptr_req *req)
-+{
-+	if (NILFS_BMAP_USE_VBN(bmap))
-+		nilfs_bmap_abort_alloc_v(bmap, req);
-+	else
-+		bmap->b_last_allocated_ptr--;
-+}
-+
-+int nilfs_bmap_prepare_end_v(struct nilfs_bmap *, union nilfs_bmap_ptr_req *);
-+void nilfs_bmap_commit_end_v(struct nilfs_bmap *, union nilfs_bmap_ptr_req *);
-+void nilfs_bmap_abort_end_v(struct nilfs_bmap *, union nilfs_bmap_ptr_req *);
-+
-+static inline int nilfs_bmap_prepare_end_ptr(struct nilfs_bmap *bmap,
-+					     union nilfs_bmap_ptr_req *req)
-+{
-+	return NILFS_BMAP_USE_VBN(bmap) ?
-+		nilfs_bmap_prepare_end_v(bmap, req) : 0;
-+}
-+
-+static inline void nilfs_bmap_commit_end_ptr(struct nilfs_bmap *bmap,
-+					     union nilfs_bmap_ptr_req *req)
-+{
-+	if (NILFS_BMAP_USE_VBN(bmap))
-+		nilfs_bmap_commit_end_v(bmap, req);
-+}
-+
-+static inline void nilfs_bmap_abort_end_ptr(struct nilfs_bmap *bmap,
-+					    union nilfs_bmap_ptr_req *req)
-+{
-+	if (NILFS_BMAP_USE_VBN(bmap))
-+		nilfs_bmap_abort_end_v(bmap, req);
-+}
- 
- int nilfs_bmap_start_v(struct nilfs_bmap *, union nilfs_bmap_ptr_req *,
- 		       sector_t);
-@@ -184,15 +230,15 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *,
- __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *, __u64);
- __u64 nilfs_bmap_find_target_in_group(const struct nilfs_bmap *);
- 
--int nilfs_bmap_prepare_update(struct nilfs_bmap *,
--			      union nilfs_bmap_ptr_req *,
--			      union nilfs_bmap_ptr_req *);
--void nilfs_bmap_commit_update(struct nilfs_bmap *,
--			      union nilfs_bmap_ptr_req *,
--			      union nilfs_bmap_ptr_req *);
--void nilfs_bmap_abort_update(struct nilfs_bmap *,
--			     union nilfs_bmap_ptr_req *,
--			     union nilfs_bmap_ptr_req *);
-+int nilfs_bmap_prepare_update_v(struct nilfs_bmap *,
-+				union nilfs_bmap_ptr_req *,
-+				union nilfs_bmap_ptr_req *);
-+void nilfs_bmap_commit_update_v(struct nilfs_bmap *,
-+				union nilfs_bmap_ptr_req *,
-+				union nilfs_bmap_ptr_req *);
-+void nilfs_bmap_abort_update_v(struct nilfs_bmap *,
-+			       union nilfs_bmap_ptr_req *,
-+			       union nilfs_bmap_ptr_req *);
- 
- void nilfs_bmap_add_blocks(const struct nilfs_bmap *, int);
- void nilfs_bmap_sub_blocks(const struct nilfs_bmap *, int);
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index f5a0ec6..20e3fd0 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -917,8 +917,8 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 		path[level].bp_newreq.bpr_ptr =
- 			btree->bt_ops->btop_find_target(btree, path, key);
- 
--	ret = btree->bt_bmap.b_pops->bpop_prepare_alloc_ptr(
--		&btree->bt_bmap, &path[level].bp_newreq);
-+	ret = nilfs_bmap_prepare_alloc_ptr(&btree->bt_bmap,
-+					   &path[level].bp_newreq);
- 	if (ret < 0)
- 		goto err_out_data;
- 
-@@ -976,8 +976,8 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 		/* split */
- 		path[level].bp_newreq.bpr_ptr =
- 			path[level - 1].bp_newreq.bpr_ptr + 1;
--		ret = btree->bt_bmap.b_pops->bpop_prepare_alloc_ptr(
--			&btree->bt_bmap, &path[level].bp_newreq);
-+		ret = nilfs_bmap_prepare_alloc_ptr(&btree->bt_bmap,
-+						   &path[level].bp_newreq);
- 		if (ret < 0)
- 			goto err_out_child_node;
- 		ret = nilfs_btree_get_new_block(btree,
-@@ -1008,8 +1008,8 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 
- 	/* grow */
- 	path[level].bp_newreq.bpr_ptr = path[level - 1].bp_newreq.bpr_ptr + 1;
--	ret = btree->bt_bmap.b_pops->bpop_prepare_alloc_ptr(
--		&btree->bt_bmap, &path[level].bp_newreq);
-+	ret = nilfs_bmap_prepare_alloc_ptr(&btree->bt_bmap,
-+					   &path[level].bp_newreq);
- 	if (ret < 0)
- 		goto err_out_child_node;
- 	ret = nilfs_btree_get_new_block(btree, path[level].bp_newreq.bpr_ptr,
-@@ -1037,18 +1037,16 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
- 
- 	/* error */
-  err_out_curr_node:
--	btree->bt_bmap.b_pops->bpop_abort_alloc_ptr(&btree->bt_bmap,
--						    &path[level].bp_newreq);
-+	nilfs_bmap_abort_alloc_ptr(&btree->bt_bmap, &path[level].bp_newreq);
-  err_out_child_node:
- 	for (level--; level > NILFS_BTREE_LEVEL_DATA; level--) {
- 		nilfs_btnode_delete(path[level].bp_sib_bh);
--		btree->bt_bmap.b_pops->bpop_abort_alloc_ptr(
--			&btree->bt_bmap, &path[level].bp_newreq);
-+		nilfs_bmap_abort_alloc_ptr(&btree->bt_bmap,
-+					   &path[level].bp_newreq);
- 
- 	}
- 
--	btree->bt_bmap.b_pops->bpop_abort_alloc_ptr(&btree->bt_bmap,
--						       &path[level].bp_newreq);
-+	nilfs_bmap_abort_alloc_ptr(&btree->bt_bmap, &path[level].bp_newreq);
-  err_out_data:
- 	*levelp = level;
- 	stats->bs_nblocks = 0;
-@@ -1067,8 +1065,8 @@ static void nilfs_btree_commit_insert(struct nilfs_btree *btree,
- 		btree->bt_ops->btop_set_target(btree, key, ptr);
- 
- 	for (level = NILFS_BTREE_LEVEL_NODE_MIN; level <= maxlevel; level++) {
--		btree->bt_bmap.b_pops->bpop_commit_alloc_ptr(
--			&btree->bt_bmap, &path[level - 1].bp_newreq);
-+		nilfs_bmap_commit_alloc_ptr(&btree->bt_bmap,
-+					    &path[level - 1].bp_newreq);
- 		path[level].bp_op(btree, path, level, &key, &ptr);
- 	}
- 
-@@ -1312,12 +1310,10 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
- 		path[level].bp_oldreq.bpr_ptr =
- 			nilfs_btree_node_get_ptr(btree, node,
- 						 path[level].bp_index);
--		if (btree->bt_bmap.b_pops->bpop_prepare_end_ptr != NULL) {
--			ret = btree->bt_bmap.b_pops->bpop_prepare_end_ptr(
--				&btree->bt_bmap, &path[level].bp_oldreq);
--			if (ret < 0)
--				goto err_out_child_node;
--		}
-+		ret = nilfs_bmap_prepare_end_ptr(&btree->bt_bmap,
-+						 &path[level].bp_oldreq);
-+		if (ret < 0)
-+			goto err_out_child_node;
- 
- 		if (nilfs_btree_node_get_nchildren(btree, node) >
- 		    nilfs_btree_node_nchildren_min(btree, node)) {
-@@ -1391,12 +1387,12 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
- 	node = nilfs_btree_get_root(btree);
- 	path[level].bp_oldreq.bpr_ptr =
- 		nilfs_btree_node_get_ptr(btree, node, path[level].bp_index);
--	if (btree->bt_bmap.b_pops->bpop_prepare_end_ptr != NULL) {
--		ret = btree->bt_bmap.b_pops->bpop_prepare_end_ptr(
--			&btree->bt_bmap, &path[level].bp_oldreq);
--		if (ret < 0)
--			goto err_out_child_node;
--	}
-+
-+	ret = nilfs_bmap_prepare_end_ptr(&btree->bt_bmap,
-+					 &path[level].bp_oldreq);
-+	if (ret < 0)
-+		goto err_out_child_node;
-+
- 	/* child of the root node is deleted */
- 	path[level].bp_op = nilfs_btree_do_delete;
- 	stats->bs_nblocks++;
-@@ -1408,15 +1404,12 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
- 
- 	/* error */
-  err_out_curr_node:
--	if (btree->bt_bmap.b_pops->bpop_abort_end_ptr != NULL)
--		btree->bt_bmap.b_pops->bpop_abort_end_ptr(
--			&btree->bt_bmap, &path[level].bp_oldreq);
-+	nilfs_bmap_abort_end_ptr(&btree->bt_bmap, &path[level].bp_oldreq);
-  err_out_child_node:
- 	for (level--; level >= NILFS_BTREE_LEVEL_NODE_MIN; level--) {
- 		brelse(path[level].bp_sib_bh);
--		if (btree->bt_bmap.b_pops->bpop_abort_end_ptr != NULL)
--			btree->bt_bmap.b_pops->bpop_abort_end_ptr(
--				&btree->bt_bmap, &path[level].bp_oldreq);
-+		nilfs_bmap_abort_end_ptr(&btree->bt_bmap,
-+					 &path[level].bp_oldreq);
- 	}
- 	*levelp = level;
- 	stats->bs_nblocks = 0;
-@@ -1430,9 +1423,8 @@ static void nilfs_btree_commit_delete(struct nilfs_btree *btree,
- 	int level;
- 
- 	for (level = NILFS_BTREE_LEVEL_NODE_MIN; level <= maxlevel; level++) {
--		if (btree->bt_bmap.b_pops->bpop_commit_end_ptr != NULL)
--			btree->bt_bmap.b_pops->bpop_commit_end_ptr(
--				&btree->bt_bmap, &path[level].bp_oldreq);
-+		nilfs_bmap_commit_end_ptr(&btree->bt_bmap,
-+					  &path[level].bp_oldreq);
- 		path[level].bp_op(btree, path, level, NULL, NULL);
- 	}
- 
-@@ -1597,7 +1589,7 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *bmap, __u64 key,
- 	if (btree->bt_ops->btop_find_target != NULL)
- 		dreq->bpr_ptr
- 			= btree->bt_ops->btop_find_target(btree, NULL, key);
--	ret = bmap->b_pops->bpop_prepare_alloc_ptr(bmap, dreq);
-+	ret = nilfs_bmap_prepare_alloc_ptr(bmap, dreq);
- 	if (ret < 0)
- 		return ret;
- 
-@@ -1605,7 +1597,7 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *bmap, __u64 key,
- 	stats->bs_nblocks++;
- 	if (nreq != NULL) {
- 		nreq->bpr_ptr = dreq->bpr_ptr + 1;
--		ret = bmap->b_pops->bpop_prepare_alloc_ptr(bmap, nreq);
-+		ret = nilfs_bmap_prepare_alloc_ptr(bmap, nreq);
- 		if (ret < 0)
- 			goto err_out_dreq;
- 
-@@ -1622,9 +1614,9 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *bmap, __u64 key,
- 
- 	/* error */
-  err_out_nreq:
--	bmap->b_pops->bpop_abort_alloc_ptr(bmap, nreq);
-+	nilfs_bmap_abort_alloc_ptr(bmap, nreq);
-  err_out_dreq:
--	bmap->b_pops->bpop_abort_alloc_ptr(bmap, dreq);
-+	nilfs_bmap_abort_alloc_ptr(bmap, dreq);
- 	stats->bs_nblocks = 0;
- 	return ret;
- 
-@@ -1654,8 +1646,8 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
- 	btree = (struct nilfs_btree *)bmap;
- 	nilfs_btree_init(bmap);
- 	if (nreq != NULL) {
--		bmap->b_pops->bpop_commit_alloc_ptr(bmap, dreq);
--		bmap->b_pops->bpop_commit_alloc_ptr(bmap, nreq);
-+		nilfs_bmap_commit_alloc_ptr(bmap, dreq);
-+		nilfs_bmap_commit_alloc_ptr(bmap, nreq);
- 
- 		/* create child node at level 1 */
- 		lock_buffer(bh);
-@@ -1677,7 +1669,7 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
- 		nilfs_btree_node_init(btree, node, NILFS_BTREE_NODE_ROOT,
- 				      2, 1, &keys[0], &tmpptr);
- 	} else {
--		bmap->b_pops->bpop_commit_alloc_ptr(bmap, dreq);
-+		nilfs_bmap_commit_alloc_ptr(bmap, dreq);
- 
- 		/* create root node at level 1 */
- 		node = nilfs_btree_get_root(btree);
-@@ -1758,9 +1750,9 @@ static int nilfs_btree_prepare_update_v(struct nilfs_btree *btree,
- 		nilfs_btree_node_get_ptr(btree, parent,
- 					 path[level + 1].bp_index);
- 	path[level].bp_newreq.bpr_ptr = path[level].bp_oldreq.bpr_ptr + 1;
--	ret = nilfs_bmap_prepare_update(&btree->bt_bmap,
--					&path[level].bp_oldreq,
--					&path[level].bp_newreq);
-+	ret = nilfs_bmap_prepare_update_v(&btree->bt_bmap,
-+					  &path[level].bp_oldreq,
-+					  &path[level].bp_newreq);
- 	if (ret < 0)
- 		return ret;
- 
-@@ -1772,9 +1764,9 @@ static int nilfs_btree_prepare_update_v(struct nilfs_btree *btree,
- 			&NILFS_BMAP_I(&btree->bt_bmap)->i_btnode_cache,
- 			&path[level].bp_ctxt);
- 		if (ret < 0) {
--			nilfs_bmap_abort_update(&btree->bt_bmap,
--						&path[level].bp_oldreq,
--						&path[level].bp_newreq);
-+			nilfs_bmap_abort_update_v(&btree->bt_bmap,
-+						  &path[level].bp_oldreq,
-+						  &path[level].bp_newreq);
- 			return ret;
- 		}
- 	}
-@@ -1788,9 +1780,9 @@ static void nilfs_btree_commit_update_v(struct nilfs_btree *btree,
- {
- 	struct nilfs_btree_node *parent;
- 
--	nilfs_bmap_commit_update(&btree->bt_bmap,
--				 &path[level].bp_oldreq,
--				 &path[level].bp_newreq);
-+	nilfs_bmap_commit_update_v(&btree->bt_bmap,
-+				   &path[level].bp_oldreq,
-+				   &path[level].bp_newreq);
- 
- 	if (buffer_nilfs_node(path[level].bp_bh)) {
- 		nilfs_btnode_commit_change_key(
-@@ -1809,9 +1801,9 @@ static void nilfs_btree_abort_update_v(struct nilfs_btree *btree,
- 				       struct nilfs_btree_path *path,
- 				       int level)
- {
--	nilfs_bmap_abort_update(&btree->bt_bmap,
--				&path[level].bp_oldreq,
--				&path[level].bp_newreq);
-+	nilfs_bmap_abort_update_v(&btree->bt_bmap,
-+				  &path[level].bp_oldreq,
-+				  &path[level].bp_newreq);
- 	if (buffer_nilfs_node(path[level].bp_bh))
- 		nilfs_btnode_abort_change_key(
- 			&NILFS_BMAP_I(&btree->bt_bmap)->i_btnode_cache,
-diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
-index 8e8095c..2a546c8 100644
---- a/fs/nilfs2/direct.c
-+++ b/fs/nilfs2/direct.c
-@@ -92,8 +92,7 @@ static int nilfs_direct_prepare_insert(struct nilfs_direct *direct,
- 
- 	if (direct->d_ops->dop_find_target != NULL)
- 		req->bpr_ptr = direct->d_ops->dop_find_target(direct, key);
--	ret = direct->d_bmap.b_pops->bpop_prepare_alloc_ptr(&direct->d_bmap,
--							       req);
-+	ret = nilfs_bmap_prepare_alloc_ptr(&direct->d_bmap, req);
- 	if (ret < 0)
- 		return ret;
- 
-@@ -111,7 +110,7 @@ static void nilfs_direct_commit_insert(struct nilfs_direct *direct,
- 	bh = (struct buffer_head *)((unsigned long)ptr);
- 	set_buffer_nilfs_volatile(bh);
- 
--	direct->d_bmap.b_pops->bpop_commit_alloc_ptr(&direct->d_bmap, req);
-+	nilfs_bmap_commit_alloc_ptr(&direct->d_bmap, req);
- 	nilfs_direct_set_ptr(direct, key, req->bpr_ptr);
- 
- 	if (!nilfs_bmap_dirty(&direct->d_bmap))
-@@ -150,25 +149,18 @@ static int nilfs_direct_prepare_delete(struct nilfs_direct *direct,
- {
- 	int ret;
- 
--	if (direct->d_bmap.b_pops->bpop_prepare_end_ptr != NULL) {
--		req->bpr_ptr = nilfs_direct_get_ptr(direct, key);
--		ret = direct->d_bmap.b_pops->bpop_prepare_end_ptr(
--			&direct->d_bmap, req);
--		if (ret < 0)
--			return ret;
--	}
--
--	stats->bs_nblocks = 1;
--	return 0;
-+	req->bpr_ptr = nilfs_direct_get_ptr(direct, key);
-+	ret = nilfs_bmap_prepare_end_ptr(&direct->d_bmap, req);
-+	if (!ret)
-+		stats->bs_nblocks = 1;
-+	return ret;
+-/**
+  * nilfs_sufile_scrap - make a segment garbage
+  * @sufile: inode of segment usage file
+  * @segnum: segment number to be freed
+@@ -104,6 +84,38 @@ static inline int nilfs_sufile_free(struct inode *sufile, __u64 segnum)
  }
  
- static void nilfs_direct_commit_delete(struct nilfs_direct *direct,
- 				       union nilfs_bmap_ptr_req *req,
- 				       __u64 key)
- {
--	if (direct->d_bmap.b_pops->bpop_commit_end_ptr != NULL)
--		direct->d_bmap.b_pops->bpop_commit_end_ptr(
--			&direct->d_bmap, req);
-+	nilfs_bmap_commit_end_ptr(&direct->d_bmap, req);
- 	nilfs_direct_set_ptr(direct, key, NILFS_BMAP_INVALID_PTR);
- }
- 
-@@ -289,11 +281,11 @@ static int nilfs_direct_propagate_v(struct nilfs_direct *direct,
- 	if (!buffer_nilfs_volatile(bh)) {
- 		oldreq.bpr_ptr = ptr;
- 		newreq.bpr_ptr = ptr;
--		ret = nilfs_bmap_prepare_update(&direct->d_bmap, &oldreq,
--						&newreq);
-+		ret = nilfs_bmap_prepare_update_v(&direct->d_bmap, &oldreq,
-+						  &newreq);
- 		if (ret < 0)
- 			return ret;
--		nilfs_bmap_commit_update(&direct->d_bmap, &oldreq, &newreq);
-+		nilfs_bmap_commit_update_v(&direct->d_bmap, &oldreq, &newreq);
- 		set_buffer_nilfs_volatile(bh);
- 		nilfs_direct_set_ptr(direct, key, newreq.bpr_ptr);
- 	} else
+ /**
++ * nilfs_sufile_freev - free segments
++ * @sufile: inode of segment usage file
++ * @segnumv: array of segment numbers
++ * @nsegs: size of @segnumv array
++ * @ndone: place to store the number of freed segments
++ */
++static inline int nilfs_sufile_freev(struct inode *sufile, __u64 *segnumv,
++				     size_t nsegs, size_t *ndone)
++{
++	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
++				    nilfs_sufile_do_free);
++}
++
++/**
++ * nilfs_sufile_cancel_freev - reallocate freeing segments
++ * @sufile: inode of segment usage file
++ * @segnumv: array of segment numbers
++ * @nsegs: size of @segnumv array
++ * @ndone: place to store the number of cancelled segments
++ *
++ * Return Value: On success, 0 is returned. On error, a negative error codes
++ * is returned.
++ */
++static inline int nilfs_sufile_cancel_freev(struct inode *sufile,
++					    __u64 *segnumv, size_t nsegs,
++					    size_t *ndone)
++{
++	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
++				    nilfs_sufile_do_cancel_free);
++}
++
++/**
+  * nilfs_sufile_set_error - mark a segment as erroneous
+  * @sufile: inode of segment usage file
+  * @segnum: segment number
 -- 
 1.6.2
