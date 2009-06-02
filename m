@@ -1,14 +1,15 @@
 From: Dave <dave-/hCUnnzDXf0AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Nilfs features
-Date: Tue, 02 Jun 2009 12:31:24 +0400
-Message-ID: <4A24E35C.6040209@0bits.com>
-References: <debc30fc0905292044r311a2842j53832195d0ef88bd@mail.gmail.com>
+Date: Tue, 02 Jun 2009 12:21:20 +0400
+Message-ID: <4A24E100.8040204@0bits.com>
+References: <4A1A68E6.50905@0bits.com>	<20090526.082051.100027806.ryusuke@osrg.net>
+	<20090601.012057.21016829.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <debc30fc0905292044r311a2842j53832195d0ef88bd-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20090601.012057.21016829.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,42 +20,93 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>, jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>, ryusuke-sG5X7nlA6pw@public.gmane.org
 
-On 05/30/09 07:44, J=E9r=F4me Poulin wrote:
->     checkpointing before installing (which may by default create a
->     snapshot), and then i'd restart the constant checkpointing after i'd
->     finished the install/restore. Please note, i am not comparing nilfs to
-> =
+On 05/31/09 20:20, Ryusuke Konishi wrote:
+> Hi,
+> On Tue, 26 May 2009 08:20:51 +0900 (JST), Ryusuke Konishi wrote:
+>> Hi,
+>> On Mon, 25 May 2009 13:46:14 +0400, Dave wrote:
+>>> In addition to this there doesn't seem to be a way to delete a range of 
+>>> checkpoints. When i did my restore from my archive, i generated 700+ 
+>>> useless checkpoints which i had to delete one by one (in a script). It 
+>>> would be nice to have a 'rmcp 1-100' or 'rmcp -100' or 'rmcp 100-' to 
+>>> delete a checkpoint range, a start to end.
+>> Okay, I'll take in this in some form.
+> 
+> For the moment, I've added this feature and pushed it into the git
+> tree.
+> 
+> (Instead of '1-100', '-100', or '10..', I took notation like '1..100',
+>  '..100', or '10..' respectively, according to the git tool)
+> 
+> If you would like to try it soon, please see
+> 
+>  http://www.nilfs.org/git/
+> 
+> for download/build information.
+> 
+> I'll include it in the next release of the utility package.
+> 
 
->     zfs, but zfs doesn't have constant cp (i think) but does have the
-> =
+Hi Ryusuke,
 
->     feature i mention, i.e you take snapshots when needed (perhaps via a
->     cron job daily, monthly, weekly)
-> =
+I've tried this and it seems to work perfectly. Thanks for the quick 
+feature addition.
 
-> I just want to give my though on this one, keeping checkpoints as-is =
+It seems that i still have to wait for cleanerd to kick in to reclaim 
+the space even though i clearly cannot get to a checkpoint i've just 
+deleted. I believe we should reclaim immediately (but perhaps this is 
+harder to implement)...
 
-> seems ideal to me, in this case you have a very granular way to go back =
 
-> in time, however, what you say is right, when installing a new software =
+bash-3.2# df -h .
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sdb2              39G  9.0G   28G  25% /home
+bash-3.2# cp /shared/1gb .
+bash-3.2# df -h .
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sdb2              39G   10G   27G  28% /home
+bash-3.2# lscp | tail
+               155133  2009-06-02 12:12:27   cp    i       6662     253255
+               155134  2009-06-02 12:12:29   cp    -         35     253255
+               155135  2009-06-02 12:12:32   cp    i       6622     253255
+               155136  2009-06-02 12:12:37   cp    i       6587     253255
+               155137  2009-06-02 12:12:42   cp    i       6654     253255
+               155138  2009-06-02 12:12:47   cp    i       6744     253255
+               155139  2009-06-02 12:12:52   cp    i       6524     253255
+               155140  2009-06-02 12:12:57   cp    i       6762     253255
+               155141  2009-06-02 12:13:02   cp    i       6670     253255
+               155142  2009-06-02 12:13:07   cp    -       6748     253255
+bash-3.2# rm 1gb
+bash-3.2# df -h .
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sdb2              39G   10G   27G  28% /home
+bash-3.2# lscp|tail
+               155151  2009-06-02 12:13:29   cp    -         35     253188
+               155152  2009-06-02 12:13:35   cp    -        237     253229
+               155153  2009-06-02 12:13:37   cp    -       6334     253238
+               155154  2009-06-02 12:13:42   cp    -       8380     253255
+               155155  2009-06-02 12:13:47   cp    i       7987     253255
+               155156  2009-06-02 12:13:52   cp    i       3743     253255
+               155157  2009-06-02 12:13:57   cp    i       8092     253255
+               155158  2009-06-02 12:14:02   cp    i       7991     253255
+               155159  2009-06-02 12:14:07   cp    i       7986     253255
+               155160  2009-06-02 12:14:12   cp    -       9129     253254
+bash-3.2# rmcp ..155160
+bash-3.2# lscp|tail
+                  CNO        DATE     TIME  MODE  FLG   NBLKINC       ICNT
+               155161  2009-06-02 12:14:17   cp    i       6839     253254
+               155162  2009-06-02 12:14:22   cp    i       7012     253254
+               155163  2009-06-02 12:14:27   cp    -       6886     253255
+               155164  2009-06-02 12:14:29   cp    -         51     253254
+               155165  2009-06-02 12:14:32   cp    i       6737     253254
+               155166  2009-06-02 12:14:37   cp    i       2618     253254
+bash-3.2# df -h .
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sdb2              39G   10G   27G  28% /home
 
-> for example, it's nice to have a way to get back to it, I guess in this =
 
-> case you would just convert the last checkpoint to snapshot before the =
 
-> installation so you have a time mark of where to rollback (and of course =
-
-> have a steady state which won't go away during the installation), right?
-
-Yes correct. Imagine you're installing a fresh OS on a nilfs formatted =
-
-disk. You'd have 1000+ interemediate checkpoints which would be of no =
-
-use. Temporary suspension until the OS is installed is a real life =
-
-use-case. Your filesystem is in 2 states, either no OS or a full OS state.
-
-Cheers
-D
+much appreciated.
+Dave
