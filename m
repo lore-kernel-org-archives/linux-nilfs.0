@@ -1,12 +1,16 @@
-From: "Spiller, Patrick" <PSpiller-6frRqA8p9hS1Z/+hSey0Gg@public.gmane.org>
-Subject: power-fail tolerance
-Date: Wed, 3 Jun 2009 08:58:14 -0700
-Message-ID: <06B938618F632944B195981226FE50C0555290@exch10.ad.agi>
+From: "Yongkun Wang" <yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org>
+Subject: Re: [SPAM] Set the protection period to zero
+Date: Thu, 4 Jun 2009 01:42:02 +0900
+Message-ID: <00c501c9e46a$38849890$a98dc9b0$@iis.u-tokyo.ac.jp>
+References: <007501c9e34f$fad3b5f0$f07b21d0$@iis.u-tokyo.ac.jp>
+	<20090602.210552.76002031.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2068747907=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-class: urn:content-classes:message
+In-Reply-To: <20090602.210552.76002031.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Content-Language: en-us
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -15,90 +19,45 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: 'Ryusuke Konishi' <ryusuke-sG5X7nlA6pw@public.gmane.org>, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-This is a multi-part message in MIME format.
+Dear Ryusuke:
 
---===============2068747907==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C9E464.1A970065"
+Thank you for the quick support. Nilfs2 is awesome.
 
-This is a multi-part message in MIME format.
+It seems there is still overhead on the checkpoints. But if I set the protection period to 0, each time the cleanerd is invoked, it should clean all the obsolete data blocks. Is what I say right?
+ 
+Thanks again.
 
-------_=_NextPart_001_01C9E464.1A970065
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Best regards,
+Yongkun
 
-What is the current power-fail tolerance of the system?
+-----Original Message-----
+From: Ryusuke Konishi [mailto:ryusuke-sG5X7nlA6pw@public.gmane.org] 
+Sent: Tuesday, June 02, 2009 9:06 PM
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org
+Subject: Re: [NILFS users] [SPAM] Set the protection period to zero
 
-In other words, are current versions of NILFS suited to sudden
-power-fails in a 100% guarenteed recoverable state?
+Hi,
+On Tue, 2 Jun 2009 16:01:40 +0900, "Yongkun Wang" wrote:
+> Hey guys,
+> 
+> I want to set the protection period to zero, to disable the snapshot
+> or checkpoint.  What I want is a simple log-structured file
+> system. The GC can clean the obsolete blocks by interval only.
+> 
+> Is that possible?
 
-If not 100%, then what is the chance of a sudden power-fail resulting in
-a recoverable state?
+I don't think it's achieved just by setting protection period to zero,
+but it's possible by rewriting a few functions in cleanerd.c.
 
-Can the block size be reduced down to 128 bytes?
+Of course, it's not exactly the same because nilfs kernel codes still
+performs additional work needed to create checkpoints.
 
-Patrick Spiller
+But, does it have a point for you?
 
 
-------_=_NextPart_001_01C9E464.1A970065
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<HTML>
-<HEAD>
-<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
-charset=3Dus-ascii">
-<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
-6.5.7654.12">
-<TITLE>power-fail tolerance</TITLE>
-</HEAD>
-<BODY>
-<!-- Converted from text/rtf format -->
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">What is the current power-fail =
-tolerance of the system?</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">In other words, are current versions of =
-NILFS suited to sudden power-fails in a 100% guarenteed recoverable =
-state?</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">If not 100%, then what is the chance of =
-a sudden power-fail resulting in a recoverable state?</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">Can the block size be reduced down to =
-128 bytes?</FONT>
-</P>
-
-<P><B><FONT COLOR=3D"#FF0000" FACE=3D"Times New Roman">Patrick =
-Spiller</FONT></B><BR>
-
-</P>
-
-</BODY>
-</HTML>
-------_=_NextPart_001_01C9E464.1A970065--
-
---===============2068747907==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============2068747907==--
+Regards,
+Ryusuke Konishi
