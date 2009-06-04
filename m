@@ -1,63 +1,112 @@
-From: "Yongkun Wang" <yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org>
-Subject: Re: [SPAM] Set the protection period to zero
-Date: Thu, 4 Jun 2009 01:42:02 +0900
-Message-ID: <00c501c9e46a$38849890$a98dc9b0$@iis.u-tokyo.ac.jp>
-References: <007501c9e34f$fad3b5f0$f07b21d0$@iis.u-tokyo.ac.jp>
-	<20090602.210552.76002031.ryusuke@osrg.net>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Mime-Version: 1.0
+From: Artem Bityutskiy <dedekind@infradead.org>
+Subject: [PATCH v2 11/17] NILFS: do not manipulate s_dirt directly
+Date: Thu,  4 Jun 2009 13:41:48 +0300
+Message-ID: <1244112114-23144-12-git-send-email-dedekind@infradead.org>
+References: <1244112114-23144-1-git-send-email-dedekind@infradead.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1244112114-23144-1-git-send-email-dedekind@infradead.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090602.210552.76002031.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Content-Language: en-us
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: 'Ryusuke Konishi' <ryusuke-sG5X7nlA6pw@public.gmane.org>, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Artem Bityutskiy <Artem.Bityutskiy@nokia.com>, users@nilfs.org, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
 
-Dear Ryusuke:
+From: Artem Bityutskiy <Artem.Bityutskiy@nokia.com>
 
-Thank you for the quick support. Nilfs2 is awesome.
+... use new VFS helpers instead.
 
-It seems there is still overhead on the checkpoints. But if I set the protection period to 0, each time the cleanerd is invoked, it should clean all the obsolete data blocks. Is what I say right?
+Signed-off-by: Artem Bityutskiy <Artem.Bityutskiy@nokia.com>
+Cc: users@nilfs.org
+Cc: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
+---
+ fs/nilfs2/segment.c   |    2 +-
+ fs/nilfs2/super.c     |   18 +++++++++---------
+ fs/nilfs2/the_nilfs.c |    2 +-
+ 3 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index fb70ec3..0dcac79 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2069,7 +2069,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+ 	if (update_sr) {
+ 		nilfs_set_last_segment(nilfs, segbuf->sb_pseg_start,
+ 				       segbuf->sb_sum.seg_seq, nilfs->ns_cno++);
+-		sbi->s_super->s_dirt = 1;
++		mark_sb_dirty(sbi->s_super);
  
-Thanks again.
+ 		clear_bit(NILFS_SC_HAVE_DELTA, &sci->sc_flags);
+ 		clear_bit(NILFS_SC_DIRTY, &sci->sc_flags);
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 7262e84..6f3707b 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -307,7 +307,7 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
+ 		memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
+ 		nilfs->ns_sbwtime[1] = t;
+ 	}
+-	sbi->s_super->s_dirt = 0;
++	mark_sb_clean(sbi->s_super);
+ 	return nilfs_sync_super(sbi, dupsb);
+ }
+ 
+@@ -318,7 +318,7 @@ static void nilfs_put_super(struct super_block *sb)
+ 
+ 	lock_kernel();
+ 
+-	if (sb->s_dirt)
++	if (sb_is_dirty(sb))
+ 		nilfs_write_super(sb);
+ 
+ 	nilfs_detach_segment_constructor(sbi);
+@@ -344,17 +344,17 @@ static void nilfs_put_super(struct super_block *sb)
+  * @sb: super_block
+  *
+  * nilfs_write_super() gets a fs-dependent lock, writes super block(s), and
+- * clears s_dirt.  This function is called in the section protected by
+- * lock_super().
++ * clears the superblock.  This function is called in the section protected
++ * by lock_super().
+  *
+- * The s_dirt flag is managed by each filesystem and we protect it by ns_sem
+- * of the struct the_nilfs.  Lock order must be as follows:
++ * The super block s_dirt flag is managed by each filesystem and we protect
++ * it by ns_sem of the struct the_nilfs.  Lock order must be as follows:
+  *
+  *   1. lock_super()
+  *   2.    down_write(&nilfs->ns_sem)
+  *
+- * Inside NILFS, locking ns_sem is enough to protect s_dirt and the buffer
+- * of the super block (nilfs->ns_sbp[]).
++ * Inside NILFS, locking ns_sem is enough to protect the super block s_dirt
++ * and the buffer of the super block (nilfs->ns_sbp[]).
+  *
+  * In most cases, VFS functions call lock_super() before calling these
+  * methods.  So we must be careful not to bring on deadlocks when using
+@@ -383,7 +383,7 @@ static void nilfs_write_super(struct super_block *sb)
+ 		dupsb = sbp[1] && t > nilfs->ns_sbwtime[1] + NILFS_ALTSB_FREQ;
+ 		nilfs_commit_super(sbi, dupsb);
+ 	}
+-	sb->s_dirt = 0;
++	mark_sb_clean(sb);
+ 	up_write(&nilfs->ns_sem);
+ }
+ 
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 7f65b3b..5b02f50 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -278,7 +278,7 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ 			goto failed;
+ 		}
+ 		if (ri.ri_need_recovery == NILFS_RECOVERY_SR_UPDATED)
+-			sbi->s_super->s_dirt = 1;
++			mark_sb_dirty(sbi->s_super);
+ 	}
+ 
+ 	set_nilfs_loaded(nilfs);
+-- 
+1.6.0.6
 
-Best regards,
-Yongkun
-
------Original Message-----
-From: Ryusuke Konishi [mailto:ryusuke-sG5X7nlA6pw@public.gmane.org] 
-Sent: Tuesday, June 02, 2009 9:06 PM
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org
-Subject: Re: [NILFS users] [SPAM] Set the protection period to zero
-
-Hi,
-On Tue, 2 Jun 2009 16:01:40 +0900, "Yongkun Wang" wrote:
-> Hey guys,
-> 
-> I want to set the protection period to zero, to disable the snapshot
-> or checkpoint.  What I want is a simple log-structured file
-> system. The GC can clean the obsolete blocks by interval only.
-> 
-> Is that possible?
-
-I don't think it's achieved just by setting protection period to zero,
-but it's possible by rewriting a few functions in cleanerd.c.
-
-Of course, it's not exactly the same because nilfs kernel codes still
-performs additional work needed to create checkpoints.
-
-But, does it have a point for you?
-
-
-Regards,
-Ryusuke Konishi
