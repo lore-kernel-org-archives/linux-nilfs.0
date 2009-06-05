@@ -1,10 +1,10 @@
 From: Artem Bityutskiy <dedekind@infradead.org>
-Subject: [PATCH v2 11/17] NILFS: do not manipulate s_dirt directly
-Date: Thu,  4 Jun 2009 13:41:48 +0300
-Message-ID: <1244112114-23144-12-git-send-email-dedekind@infradead.org>
-References: <1244112114-23144-1-git-send-email-dedekind@infradead.org>
+Subject: [PATCH v2.1 11/17] NILFS: do not manipulate s_dirt directly
+Date: Fri,  5 Jun 2009 16:05:49 +0300
+Message-ID: <1244207155-2092-12-git-send-email-dedekind@infradead.org>
+References: <1244207155-2092-1-git-send-email-dedekind@infradead.org>
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1244112114-23144-1-git-send-email-dedekind@infradead.org>
+In-Reply-To: <1244207155-2092-1-git-send-email-dedekind@infradead.org>
 Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -57,7 +57,7 @@ index 7262e84..6f3707b 100644
  	lock_kernel();
  
 -	if (sb->s_dirt)
-+	if (sb_is_dirty(sb))
++	if (is_sb_dirty(sb))
  		nilfs_write_super(sb);
  
  	nilfs_detach_segment_constructor(sbi);
