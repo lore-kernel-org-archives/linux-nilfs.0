@@ -1,16 +1,16 @@
-From: "Spiller, Patrick" <PSpiller-6frRqA8p9hS1Z/+hSey0Gg@public.gmane.org>
-Subject: Re: power-fail tolerance
-Date: Fri, 5 Jun 2009 12:47:46 -0700
-Message-ID: <06B938618F632944B195981226FE50C055554D@exch10.ad.agi>
-References: <06B938618F632944B195981226FE50C0555290@exch10.ad.agi>
-	<20090606.043056.20506700.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Pause intervals when copying/extracting an archive
+Date: Sat, 06 Jun 2009 04:56:53 +0900 (JST)
+Message-ID: <20090606.045653.133237039.ryusuke@osrg.net>
+References: <20090516171555.GA21962@nezmer.homelinux.org>
+	<20090517.122816.105794011.ryusuke@osrg.net>
+	<20090605193256.GA3663@nezmer.homelinux.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-class: urn:content-classes:message
-In-Reply-To: <20090606.043056.20506700.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20090605193256.GA3663-JEps/AmnTFO/RHH9vPZxQGD2FQJk+8+b@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,64 +21,54 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-
-Thank you for your response!
-
-The hardware is essentially battery-backed RAM, as is common in embedded
-devices.  Treating this a file-system gives certain advantages.
-
-We must assume that power-fail can occur at ANY time during operation.
-
-Unfortunately, the value of "128" was correct.  We require a small block
-size for our intended usage.  Worst case, we could support a block size
-of "256", but larger than that we could not do.
-
-
------Original Message-----
-From: Ryusuke Konishi [mailto:ryusuke-sG5X7nlA6pw@public.gmane.org] 
-Sent: Friday, June 05, 2009 12:31 PM
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; Spiller, Patrick
-Subject: Re: [NILFS users] power-fail tolerance
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, nezmer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
 Hi,
-On Wed, 3 Jun 2009 08:58:14 -0700, "Spiller, Patrick" wrote:
-> What is the current power-fail tolerance of the system?
+On Fri, 5 Jun 2009 22:32:56 +0300, nezmer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+> Sorry for the late reply .
 > 
-> In other words, are current versions of NILFS suited to sudden
-> power-fails in a 100% guarenteed recoverable state?
->
-> If not 100%, then what is the chance of a sudden power-fail
-> resulting in a recoverable state?
+> I tried to use deplock but I always get this :
+> SysRq : Show Locks Held
+> INFO: lockdep is turned off.
+> 
+> sysrq t works . I hope the attached file will be helpful .
 
-It depends on the hardware, sublayer driver, and disk-cache setting
-that you are using.
+Thanks for the log!
 
-For example, nilfs uses io-barrier carefully to ensure filesystem
-reliability, but some devices ignore the barriers and such affairs are
-spoiling filesystem layer effort.
+According to you log, the performance problem seems to be caused
+by a wait function in segment constructor of nilfs.
 
-Except the fact, nilfs is designed to be recoverable from unexpected
-power failures like journaling filesystems.  In general, nilfs is well
-suited for such recovery because nilfs never overwrites existing
-blocks except superblocks and reclaimed blocks by GC.  Disk write of
-nilfs is ensured to be atomic with CRC checksums, and the result of
-incomplete write is ignored.
+If you have a chance, please try the following coupled patch which
+comes from two patches queued for 2.6.31.  The upper half of the patch
+greatly improves read performance, and the lower part may have effect
+on the write performance.
 
-You will see a message "NILFS: recovery complete." on mount time after
-you met an unclean shutdown.
-
-To tell you the truth, we have a few mount failure problems reported
-in this mainling list after unclean shutdown.
-
-That's going on for the nilfs root filesystem built in pendrives.  I'm
-investigating the problem cooperating with some here.
- 
-> Can the block size be reduced down to 128 bytes?
-
-You mean 1028 bytes?
-If I remember correctly, the minimum block size of linux filesystems
-is 1028 bytes.  Nilfs is supporting block sizes smaller that 4KB.
-
-Cheers,
+Regards,
 Ryusuke Konishi
+---
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 3f70eed..f25fd4b 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -240,7 +240,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
+ struct address_space_operations nilfs_aops = {
+ 	.writepage		= nilfs_writepage,
+ 	.readpage		= nilfs_readpage,
+-	/* .sync_page		= nilfs_sync_page, */
++	.sync_page		= block_sync_page,
+ 	.writepages		= nilfs_writepages,
+ 	.set_page_dirty		= nilfs_set_page_dirty,
+ 	.readpages		= nilfs_readpages,
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index dc0277a..9e3fe17 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -393,7 +393,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
+ 		 * Last BIO is always sent through the following
+ 		 * submission.
+ 		 */
+-		rw |= (1 << BIO_RW_SYNCIO);
++		rw |= (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG);
+ 		res = nilfs_submit_seg_bio(wi, rw);
+ 		if (unlikely(res))
+ 			goto failed_bio;
