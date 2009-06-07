@@ -1,84 +1,47 @@
-From: nezmer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Subject: Re: Pause intervals when copying/extracting an	archive
-Date: Sun, 7 Jun 2009 05:16:46 +0300
-Message-ID: <20090607021646.GA5238@nezmer.homelinux.org>
-References: <20090606.045653.133237039.ryusuke@osrg.net>
-	<20090606134928.GA22242@nezmer.homelinux.org>
-	<20090607.001113.60281188.ryusuke@osrg.net>
-	<20090607.010336.97022341.ryusuke@osrg.net>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/6] nilfs2: remove meaningless EBUSY case from nilfs_get_sb function
+Date: Mon,  8 Jun 2009 01:39:28 +0900
+Message-ID: <1244392773-14230-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1244392773-14230-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1244392773-14230-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-fsdevel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20090607.010336.97022341.ryusuke-sG5X7nlA6pw@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: linux-fsdevel@vger.kernel.org
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, users@nilfs.org
 
-On Sun, Jun 07, 2009 at 01:03:36AM +0900, Ryusuke Konishi wrote:
-> On Sun, 07 Jun 2009 00:11:13 +0900 (JST), Ryusuke Konishi wrote:
-> > Hi,
-> > On Sat, 6 Jun 2009 16:49:28 +0300, nezmer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
-> > 
-> > I think the pause is related to garbage collection.  What will happen
-> > if you mount the partition with -i option ?
-> > 
-> >    # mount -t nilfs2 -i /dev/xxx /mnt/media
-> > 
-> > This option skips invoking the garbage collector (cleanerd).
-> 
-> Oops, your log shows the cleanerd is sleeping.
-> 
-> So, the 5 seconds interval likely comes from regular writeback by the
-> segment constructor thread.
-> 
-> Could you tell me the product name of your USB flash ?
-> 
-> I will try expansion of a rar file against my pendrive (cruzer)
-> 
-> Thanks,
-> Ryusuke Konishi
-> 
-> > If it raises throughput, you can adjust by slowing down cleanerd by
-> > rewriting /etc/nilfs_cleanerd.conf (a HUP signal must be sent to the
-> > cleanerd to reflect the change):
-> > 
-> >    # The maximum number of segments to be cleaned at a time.
-> >  - nsegments_per_clean     2
-> >  + nsegments_per_clean     1
-> > 
-> >    # Cleaning interval in seconds
-> >  - cleaning interval       5
-> >  + cleaning interval       10
-> > 
-> > 
-> > Thanks,
-> > Ryusuke Konishi
-> > _______________________________________________
-> > users mailing list
-> > users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> > https://www.nilfs.org/mailman/listinfo/users
+The following EBUSY case in nilfs_get_sb() is meaningless.  Indeed,
+this error code is never returned to the caller.
 
-Thank you for your fast replies .
+    if (!s->s_root) {
+          ...
+    } else if (!(s->s_flags & MS_RDONLY)) {
+        err = -EBUSY;
+    }
 
-I already tried playing with nilfs_cleanerd.conf & It didn't help .
-Mounting with "-i" didn't help either 
+This simply removes the else case.
 
-Current tests with "tar -xvvf file.tar.gz" where the archive size is
-73.8MB & the extraction time is 35-41 seconds in nilfs2 compared to 3-8
-seconds in XFS on the same pendrive .
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+---
+ fs/nilfs2/super.c |    2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
 
-I tested with two completely different pendrives & got the exact same
-result so the problem is not model-specific .
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 6989b03..8131615 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -1172,8 +1172,6 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 
+ 		s->s_flags |= MS_ACTIVE;
+ 		need_to_close = 0;
+-	} else if (!(s->s_flags & MS_RDONLY)) {
+-		err = -EBUSY;
+ 	}
+ 
+ 	up(&sd.bdev->bd_mount_sem);
+-- 
+1.6.2
 
-If the bug is not reproducible , we can blame it on my system/setup .
