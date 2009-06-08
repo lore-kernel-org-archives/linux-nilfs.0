@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 4/6] nilfs2: add sync_page method to page
-	caches of meta data
-Date: Mon,  8 Jun 2009 15:07:17 +0900
-Message-ID: <1244441239-20032-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/6] nilfs2: return EBUSY against delete
+	request on snapshot
+Date: Mon,  8 Jun 2009 15:07:15 +0900
+Message-ID: <1244441239-20032-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1244441239-20032-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,63 +23,56 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This applies block_sync_page() function to the sync_page method of
-page caches for meta data files, gc page caches, and btree node
-buffers.  This is a companion patch of ("nilfs2: enable sync_page
-mothod") which applied the function for data pages.
+This helps userland programs like the rmcp command to distinguish
+error codes returned against a checkpoint removal request.
 
-This allows lock_page() for those meta data to unplug pending bio
-requests.
+Previously -EPERM was returned, and not discriminable from real
+permission errors.  This also allows removal of the latest checkpoint
+because the deletion leads to create a new checkpoint, and thus it's
+harmless for the filesystem.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/btnode.c  |    4 +++-
- fs/nilfs2/gcinode.c |    5 +++--
- fs/nilfs2/mdt.c     |    1 +
- 3 files changed, 7 insertions(+), 3 deletions(-)
+ fs/nilfs2/cpfile.c |   14 ++------------
+ 1 files changed, 2 insertions(+), 12 deletions(-)
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 0e01957..7e0b61b 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -46,7 +46,9 @@ void nilfs_btnode_cache_init_once(struct address_space *btnc)
- 	INIT_LIST_HEAD(&btnc->i_mmap_nonlinear);
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index 93d1da0..7d49813 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -295,10 +295,6 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 		return -EINVAL;
+ 	}
+ 
+-	/* cannot delete the latest checkpoint */
+-	if (start == nilfs_mdt_cno(cpfile) - 1)
+-		return -EPERM;
+-
+ 	down_write(&NILFS_MDT(cpfile)->mi_sem);
+ 
+ 	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
+@@ -542,20 +538,14 @@ int nilfs_cpfile_delete_checkpoint(struct inode *cpfile, __u64 cno)
+ 	struct nilfs_cpinfo ci;
+ 	__u64 tcno = cno;
+ 	ssize_t nci;
+-	int ret;
+ 
+ 	nci = nilfs_cpfile_do_get_cpinfo(cpfile, &tcno, &ci, sizeof(ci), 1);
+ 	if (nci < 0)
+ 		return nci;
+ 	else if (nci == 0 || ci.ci_cno != cno)
+ 		return -ENOENT;
+-
+-	/* cannot delete the latest checkpoint nor snapshots */
+-	ret = nilfs_cpinfo_snapshot(&ci);
+-	if (ret < 0)
+-		return ret;
+-	else if (ret > 0 || cno == nilfs_mdt_cno(cpfile) - 1)
+-		return -EPERM;
++	else if (nilfs_cpinfo_snapshot(&ci))
++		return -EBUSY;
+ 
+ 	return nilfs_cpfile_delete_checkpoints(cpfile, cno, cno + 1);
  }
- 
--static struct address_space_operations def_btnode_aops;
-+static struct address_space_operations def_btnode_aops = {
-+	.sync_page		= block_sync_page,
-+};
- 
- void nilfs_btnode_cache_init(struct address_space *btnc,
- 			     struct backing_dev_info *bdi)
-diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
-index 19d2102..1b3c2bb 100644
---- a/fs/nilfs2/gcinode.c
-+++ b/fs/nilfs2/gcinode.c
-@@ -52,8 +52,9 @@
- #include "dat.h"
- #include "ifile.h"
- 
--static struct address_space_operations def_gcinode_aops = {};
--/* XXX need def_gcinode_iops/fops? */
-+static struct address_space_operations def_gcinode_aops = {
-+	.sync_page		= block_sync_page,
-+};
- 
- /*
-  * nilfs_gccache_submit_read_data() - add data buffer and submit read request
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 9b149a1..a5cd801 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -434,6 +434,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 
- static struct address_space_operations def_mdt_aops = {
- 	.writepage		= nilfs_mdt_write_page,
-+	.sync_page		= block_sync_page,
- };
- 
- static struct inode_operations def_mdt_iops;
 -- 
 1.6.2
