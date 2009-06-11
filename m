@@ -1,16 +1,17 @@
-From: Luis Useche <luis-43oy+cWvsXk3uPMLIKxrzw@public.gmane.org>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
 Subject: Re: Stressing GC
-Date: Thu, 11 Jun 2009 11:39:50 -0400
-Message-ID: <20090611153950.GA26921@apu.cs.fiu.edu>
+Date: Thu, 11 Jun 2009 17:20:40 +0200
+Message-ID: <20090611152040.GF21314@aardappel.13thmonkey.org>
 References: <20090610210859.GA17619@apu.cs.fiu.edu>
 	<4A30856F.3000103@0bits.com>
+	<20090611153950.GA26921@apu.cs.fiu.edu>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <4A30856F.3000103-/hCUnnzDXf0AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20090611153950.GA26921-F34IG+UkkWQ4ZZIPogyGsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -23,53 +24,35 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-On Thu, Jun 11, 2009 at 08:17:51AM +0400, Dave wrote:
-> On 06/11/09 01:08, Luis Useche wrote:
-> > Hi Guys,
-> > 
-> > I was doing some experiments on nilfs2 to stress the garbage collection
-> > with different file system usage. Unfortunately, it was unable to pass the
-> > first test since nilfs reports no space available eventhough there are no
-> > files in the file system! I guess the GC is not collecting space fast
-> > enough and the file system ends up with no space available.
-> > 
-> > Do you have any workaround to this problem?
+Dear folks,
+
+On Thu, Jun 11, 2009 at 11:39:50AM -0400, Luis Useche wrote:
+> On Thu, Jun 11, 2009 at 08:17:51AM +0400, Dave wrote:
+> > On 06/11/09 01:08, Luis Useche wrote:
+> > > I was doing some experiments on nilfs2 to stress the garbage collection
+> > > with different file system usage. Unfortunately, it was unable to pass the
+> > > first test since nilfs reports no space available eventhough there are no
+> > > files in the file system! I guess the GC is not collecting space fast
+> > > enough and the file system ends up with no space available.
+> > > 
+> > > Do you have any workaround to this problem?
+>
+> With the current GC implementation, I am unable to do my experiment. I set
+> "protection_period 0" but still have the problem. Besides, this is
+> probably not the right solution either since the GC can do unnecessary work
+> that can underestimate the potential of nilfs. I need the first option (1)
+> from the first paragraph above.
 > 
-> I don't understand. There is no 'problem' to workaround. This is by 
-> design. You're right, the GC has to reclaim your deleted files before it 
-> release the space to the filesystem. If you remove all your checkpoints 
-> and wait for your 'protection_period' interval you should see you space 
-> reappear. The whole idea or nilfs is that you could do a 'rm -rf *' and 
-> be left with no files, but still recover all your files from a 
-> checkpoint that happened for you automatically a few seconds ago.
+> Are there any workaround I can use to make this work.
 
-Thanks for your response.
+idealiter there should be an analog to VMS's purge command, say purge_nilfs or
+`nilfs purge /mnt' that flushes all data not protected by a snapshot or the
+last checkpoint.
 
-I still think is a problem. IMHO, it is not correct to report no available
-space when you don't have any file in the file system. I would think that
-in this situations, instead of reporting to the application "no space
-left", the correct action is to throttle the GC (ignoring the
-configurations) so that enough rooms is made for the incoming requests
-ASAP. I guess this is object of debate and I see points in favor and
-against. At the end, this probably depends on the user: (1) protect old
-data or (2) have the application running as long as some space is
-available.
+Could this be something?
 
-In any case, in my experiment, I want to stress exactly this situation.
-LFS tends to decrease its performance dramatically when it is running out
-of space. I want to see how fast the performance is decreased when the
-usage of the file system is incremented.
+Another more blunt method is say newfs'ing a disc, create a snapshot sometime,
+mess around with it and later revert back to the snapshot.
 
-With the current GC implementation, I am unable to do my experiment. I set
-"protection_period 0" but still have the problem. Besides, this is
-probably not the right solution either since the GC can do unnecessary work
-that can underestimate the potential of nilfs. I need the first option (1)
-from the first paragraph above.
-
-Are there any workaround I can use to make this work.
-
-Thanks in advance,
--- 
-Luis Useche <luis-43oy+cWvsXk3uPMLIKxrzw@public.gmane.org>
-Ph.D. Student
-Florida International University
+With regards,
+Reinoud
