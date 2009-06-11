@@ -1,16 +1,14 @@
-From: =?ISO-8859-1?Q?J=E9r=F4me_Poulin?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Stressing GC
-Date: Thu, 11 Jun 2009 12:51:17 -0400
-Message-ID: <debc30fc0906110951j4d32efb1xd3f73c0cd07a06e1@mail.gmail.com>
-References: <20090610210859.GA17619@apu.cs.fiu.edu>
-	<4A30856F.3000103@0bits.com> 
-	<20090611153950.GA26921@apu.cs.fiu.edu>
-	<20090611152040.GF21314@aardappel.13thmonkey.org>
+From: "Dipl.-Ing. Michael Niederle" <mniederle-RbZlAiThDcE@public.gmane.org>
+Subject: Bug Report
+Date: Thu, 11 Jun 2009 19:51:23 +0200
+Message-ID: <20090611195123.46d7a684@simplux>
+References: <mailman.1.1244602801.14549.users@nilfs.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1747278941=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090611152040.GF21314-5cYspOl2ggRz6xQTk39kMVfVdRo2wo/d@public.gmane.org>
+In-Reply-To: <mailman.1.1244602801.14549.users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,101 +17,50 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
---===============1747278941==
-Content-Type: multipart/alternative; boundary=00163630f2dbb8870c046c1567f2
+Hi!
 
---00163630f2dbb8870c046c1567f2
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Today I installed SIMPLUX on a freshly formatted 30GB partition on a pen drive.
+I updated the whole system, compiled and installed the final version of the
+2.6.30 kernel. I did not apply any further nilfs-patches. Everything worked
+fine. Then (using the new kernel) I deleted several GB of old data. The garbage
+collection worked really slow, so I changed the settings in nilfs_cleanerd.conf
+as follows:
 
->
-> On Thu, Jun 11, 2009 at 11:39:50AM -0400, Luis Useche wrote:
-> With the current GC implementation, I am unable to do my experiment. I set
-> "protection_period 0" but still have the problem. Besides, this is
-> probably not the right solution either since the GC can do unnecessary work
-> that can underestimate the potential of nilfs. I need the first option (1)
-> from the first paragraph above.
->
+protection_period	900
+selection_policy	timestamp
+nsegments_per_clean	10
+cleaning_interval	5
+use_mmap
+log_priority		info
 
-For this situation, would it be possible instead, to have to GC collect all
-the space that can be freed, have the filesystem informed of what blocks can
-be freed anytime (like a memory cache which can be flushed anytime), and
-have the FS give the free space information for what it calculated as
-removable? So with this we could have checkpoint for longuer than the
-protection_period and still have the free space available for thing the
-filesystem can just overwrite. I really don't know how it is coded as I'm
-just a user for now, but that would be even greater.
+Then I restarted the cleaner daemon and was happy to see now much more activity
+on the pen-drive. The garbage collection claimed back MB after MB. I thought it
+would take some time for the garbage collection to complete and left the room.
+When I returned the machine was completely crashed (black screen - maybe due
+to the screen saver). I could only reboot it via "ctrl-alt-sysrqst USB".
 
-On Thu, Jun 11, 2009 at 11:20 AM, Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>wrote:
+There was no background job during the time of the crash - just an idling
+X-desktop (iceWM - so only very few running daemons).
 
->
-> idealiter there should be an analog to VMS's purge command, say purge_nilfs
-> or
-> `nilfs purge /mnt' that flushes all data not protected by a snapshot or the
-> last checkpoint.
+The next reboot took half an hour! Here an excerpt from the kernel
+log:
 
+[    2.407501] usb-storage: device scan complete
+[    2.456443] sd 2:0:0:1: [sdd] Attached SCSI removable disk
+[ 1759.409004] segctord starting. Construction interval = 5 seconds, CP frequenc
+[ 1759.421950] NILFS warning: mounting unchecked fs
+[ 1759.456071] NILFS: recovery complete.
 
-That would be a great alternative thinking of the current state of the
-project, if it's possible to tell the GC to flush all non protected data
-'right now'.
+It seems nilfs read the whole partition - byte for byte. This would take
+approximately the time spent. Wouldn't it suffice to read all segment headers
+to recover? The pen drive can handle more than 2000 reads per second.
 
---00163630f2dbb8870c046c1567f2
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Before it (presumably) crashed the system the cleaner daemon had done a
+nice job - freeing several GB of unused space (but not yet completed the
+garbage collection).
 
-<div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"borde=
-r-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-le=
-ft: 1ex;"><div class=3D"im">
-On Thu, Jun 11, 2009 at 11:39:50AM -0400, Luis Useche wrote:</div><div clas=
-s=3D"im"> With the current GC implementation, I am unable to do my experime=
-nt. I set<br>
- &quot;protection_period 0&quot; but still have the problem. Besides, this =
-is<br>
- probably not the right solution either since the GC can do unnecessary wor=
-k<br>
- that can underestimate the potential of nilfs. I need the first option (1)=
-<br>
- from the first paragraph above.</div></blockquote><div>=A0</div><div>For t=
-his situation, would it be possible instead, to have to GC collect all the =
-space that can be freed, have the filesystem informed of what blocks can be=
- freed anytime (like a memory cache which can be flushed anytime), and have=
- the FS give the free space information for what it calculated as removable=
-? So with this we could have checkpoint for longuer than the protection_per=
-iod and still have the free space available for thing the filesystem can ju=
-st overwrite. I really don&#39;t know how it is coded as I&#39;m just a use=
-r for now, but that would be even greater.</div>
-
-<div><br>On Thu, Jun 11, 2009 at 11:20 AM, Reinoud Zandijk <span dir=3D"ltr=
-">&lt;<a href=3D"mailto:reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org">reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org</a>&gt;</spa=
-n> wrote:=A0</div><blockquote class=3D"gmail_quote" style=3D"border-left: 1=
-px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;"=
->
-
-<div class=3D"im"><br>
-</div>idealiter there should be an analog to VMS&#39;s purge command, say p=
-urge_nilfs or<br>
-`nilfs purge /mnt&#39; that flushes all data not protected by a snapshot or=
- the<br>
-last checkpoint.</blockquote><br><div>That would be a great alternative thi=
-nking of the current state of the project, if it&#39;s possible to tell the=
- GC to flush all=A0non protected data &#39;right now&#39;.</div></div>
-
---00163630f2dbb8870c046c1567f2--
-
---===============1747278941==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============1747278941==--
+Greetings, Michael
