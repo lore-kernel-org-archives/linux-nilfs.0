@@ -1,62 +1,38 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Data Loss
-Date: Fri, 12 Jun 2009 17:58:42 +0900 (JST)
-Message-ID: <20090612.175842.44914422.ryusuke@osrg.net>
-References: <mailman.37.1244739111.2282.users@nilfs.org>
-	<20090612011057.547c70c1@simplux>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: Alberto Bertogli <albertito@blitiri.com.ar>
+Subject: Re: NILFS2 get stuck after bio_alloc() fail
+Date: Sat, 13 Jun 2009 22:52:40 -0300
+Message-ID: <20090614015240.GW30412@blitiri.com.ar>
+References: <20090614013211.GA22552@homero.springfield.home>
 Mime-Version: 1.0
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758372AbZFNByU@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20090614013211.GA22552@homero.springfield.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090612011057.547c70c1@simplux>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, mniederle-RbZlAiThDcE@public.gmane.org
+To: Leandro Lucarella <llucax@gmail.com>
+Cc: linux-kernel@vger.kernel.org, konishi.ryusuke@lab.ntt.co.jp, users@nilfs.org
 
-Hi,
-On Fri, 12 Jun 2009 01:10:57 +0200, "Dipl.-Ing. Michael Niederle" wrote:
+On Sat, Jun 13, 2009 at 10:32:11PM -0300, Leandro Lucarella wrote:
 > Hi!
 > 
-> It's absolutely strange: nilfs seems to crash during idle times!
+> While testing nilfs2 (using 2.6.30) doing some "cp"s and "rm"s, I noticed
+> sometimes they got stucked in D state, and the kernel had said the
+> following message:
 > 
-> This time everything seemed to be fine when I returned to my PC after several
-> hours. Astonishingly my pen drive's LED reported heavy activity despite the
-> fact that there was nothing to do. I have a script that detects recently
-> changed files. This script reported that not a single file had been changed
-> during the last hour!
+>         NILFS: IO error writing segment
+> 
+> A friend gave me a hand and after adding some printk()s we found out that
+> the problem seems to occur when bio_alloc()s inside nilfs_alloc_seg_bio()
+> fail, making it return NULL; but we don't know how that causes the
+> processes to get stucked.
 
-I think the activity is created by the garbage collector.  Note that
-Nilfs GC works background and it wakes up after protection period of
-checkpoints is expired.
+By the way, those bio_alloc()s are using GFP_NOWAIT but it looks like they
+could use at least GFP_NOIO or GFP_NOFS, since the caller can (and sometimes
+do) sleep. The only caller is nilfs_submit_bh(), which calls
+nilfs_submit_seg_bio() which can sleep calling wait_for_completion(). Is there
+something I'm missing?
 
-Probably, the delay time you have experienced is the protection period.
-
-> After a reboot the system got stuck when trying to pivot_root to the
-> nilfs-root-file-system (no problem mounting it). An analysis showed that
-> several files had been destroyed. The stat-utility showed the file type
-> "weird". ^^
-
-Grr, GC problem?
- 
-> I also mounted some elder checkpoints. They now had defect files, too.
->
-> In my opinion the cleaner daemon is causing all these problems but -
-> as always - I might be wrong.
->
-> As to my knowledge there is currently no way to repair a nilfs-file-system?
-
-Uum, yes. Only we can do is finding clean checkpoint.
-
-> Greetings, Michael
-
-Regards,
-Ryusuke Konishi
+Thanks a lot,
+		Alberto
