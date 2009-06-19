@@ -1,15 +1,16 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: System Lockup while testing nilfs
-Date: Fri, 19 Jun 2009 20:18:39 +0900 (JST)
-Message-ID: <20090619.201839.116939551.ryusuke@osrg.net>
-References: <mailman.1.1245380401.15040.users@nilfs.org>
-	<20090619093706.2eb83534@simplux>
+From: "Dunphy, Bill" <WDunphy-/3AnZwnt+WyVkR+q5Y5grQ@public.gmane.org>
+Subject: Re: Write hang on ARM based target
+Date: Fri, 19 Jun 2009 09:01:11 -0600
+Message-ID: <BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FB3@tdpost.td.tandbergdata.com>
+References: <20090612.132344.17157054.ryusuke@osrg.net><20090619.033642.32757627.ryusuke@osrg.net><BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FAC@tdpost.td.tandbergdata.com>
+	<20090619.104731.99018736.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090619093706.2eb83534@simplux>
+Content-class: urn:content-classes:message
+In-Reply-To: <20090619.104731.99018736.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,55 +21,118 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, mniederle-RbZlAiThDcE@public.gmane.org
-Cc: James M Long <james.m.long-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+
+Thanks.  That patch integrated successfully.
+
+Ran it again with the following result:
+
+Jun 19 08:38:26 kernel: ========= NILFS SEGMENT INFORMATION ========
+
+Jun 19 08:38:26 kernel: full segment: segnum=39, start=79872, end=81919
+
+Jun 19 08:38:26 kernel: partial segment: start=81162, rest=758
+
+Jun 19 08:38:26 kernel: ------------------ SUMMARY -----------------
+
+Jun 19 08:38:26 kernel: nfinfo     = 4 (number of files)
+
+Jun 19 08:38:26 kernel: nblocks    = 14 (number of blocks)
+
+Jun 19 08:38:26 kernel: sumbytes   = 312 (size of summary in bytes)
+
+Jun 19 08:38:26 kernel: nsumblk    = 1 (number of summary blocks)
+
+Jun 19 08:38:26 kernel: flags      = LOGBGN|LOGEND|SR
+
+Jun 19 08:38:26 kernel: ============================================
+
+Jun 19 08:38:26 kernel: NILFS(segment)
+nilfs_segctor_update_payload_blocknr: called                           
+Jun 19 08:38:26 kernel: NILFS(segment)
+nilfs_segctor_update_payload_blocknr: done                             
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_file_bmap:
+called                                
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_file_bmap:
+done                                  
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checkpoint:
+called                               
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checkpoint:
+done                                 
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_update_segusage:
+called                                  
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_update_segusage:
+done                                    
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checksums:
+called                                
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checksums:
+done                                  
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitting
+summary blocks                          
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_alloc_seg_bio: allocated
+bio (max_vecs=16)                       
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitting
+normal blocks (index=1)                 
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_submit_seg_bio: submitting
+bio (start_sector=649296, size=57344,)
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitted a
+segment (err=0, pseg_start=81162, #req)
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_wait: called nbio=1
+
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_wait: wait completed
+
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_complete_write:
+completing segment (flags=0x7)           
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_complete_write:
+completed a segment having a super root )
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_do_construct:
+submitted all segments                     
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_construct: end
+(stage=9)                                 
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_notify: complete
+requests from seq=2 to seq=1            
+Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_thread: sequence:
+req=1, done=1, state=0                  
+
+Bill
+
+-----Original Message-----
+From: Ryusuke Konishi [mailto:ryusuke-sG5X7nlA6pw@public.gmane.org] 
+Sent: Thursday, June 18, 2009 7:48 PM
+To: Dunphy, Bill
+Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+Subject: Re: [NILFS users] Write hang on ARM based target
 
 Hi,
-On Fri, 19 Jun 2009 09:37:06 +0200, "Dipl.-Ing. Michael Niederle" wrote:
-> Hi!
+On Thu, 18 Jun 2009 13:48:56 -0600, "Dunphy, Bill" wrote:
+> Tried applying patch to latest git pull as well as 2.0.12 and 2.0.14 
+> and experienced the following patch issue:
 > 
-> > I have turned on debug in the nilfs_cleanerd config file and I
-> > am capturing the log to a separate location. The lockup seems to occur
-> > right after a "2 segments selected to be cleaned" message was sent.
+> $ patch -p1 <your.patch
+> (Stripping trailing CRs from patch.)
+> patching file fs/dat.c
+> (Stripping trailing CRs from patch.)
+> patching file fs/segment.c
+> patch: **** malformed patch at line 50: @@ -2056,12 +2043,11 @@ static
+
+> void nilfs_end_page_io(struct page *page, int err)
 > 
-> > gentoo distribution
-> > 2.6.30 kernel x86
-> > nilfs-utils 2.0.12
+> I could attempt to do by hand but decided to let you chime in first.
 > 
-> This looks very much the same problem I encountered! It seems that under some
-> circumstances the GC daemon issues too many read/write requests.
+> Thoughts? 
 > 
-> @Ryusuke Konishi: The last crash occured with default GC settings.
-> 
-> Greetings, Michael
+> Bill
 
-By default, GC reads and writes 2 segments per 5 seconds.
+Hmm, strange.
 
-  1 segment = 8MB (by default)
+I will attach the compressed one.  It is against the latest git, but
+will be also applicable to v2.0.14.
 
-So, at maximum, it causes roughly 3.2MB read + 3.2MB write per second.
+ $ cd nilfs2-module
+ $ bunzip -c xxx/nilfs2-fix-hang-after-bio_alloc-failed.patch.bz2 |
+patch -p1
 
-If all blocks in the segments were live, GC will copy all of them into
-new logs; that is 6.4MB/s I/O at worst.
+How does this go ?
 
-If dead blocks occupies 50% of segments, the I/O load is estimated to
-be 3.2MB/sec since the number of copy blocks drops by half.
-
-Under the circumstance where many snapshots exist or the protection
-period is set long, the rate of the must-copy-blocks can be very high.
-
-Are you onto something?
-
-Essentially, GC should be designed to minimize load in adapting to
-situation.  Unfortunately, the current GC is not intelligent at all.
-It cannot
-
- - stop intelligently
- - resume operation intelligently
- - balance reclamation speed, nor
- - select target segments so that the I/O load gets minimized.
-
-Much work to do.
-
-Regards,
 Ryusuke Konishi
