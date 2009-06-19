@@ -1,12 +1,17 @@
-From: James M Long <james.m.long-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: System Lockup while testing nilfs
-Date: Thu, 18 Jun 2009 21:09:44 -0400
-Message-ID: <ddfcb4780906181809w4db9aa15u3a28676083ca3405@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Write hang on ARM based target
+Date: Fri, 19 Jun 2009 10:47:31 +0900 (JST)
+Message-ID: <20090619.104731.99018736.ryusuke@osrg.net>
+References: <20090612.132344.17157054.ryusuke@osrg.net>
+	<20090619.033642.32757627.ryusuke@osrg.net>
+	<BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FAC@tdpost.td.tandbergdata.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: Multipart/Mixed;
+	boundary="--Next_Part(Fri_Jun_19_10_47_31_2009_170)--"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FAC-qPLjlnsG5hmCmmEZ8mJCX5vx1ZQ4fP860E9HWUfgJXw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,38 +22,81 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: WDunphy-/3AnZwnt+WyVkR+q5Y5grQ@public.gmane.org
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-I am a system engineer that was attracted to nilfs due to some of the
-features that the file system already has. I talked one of our
-developers into doing a performance test against our in house software
-application that is running in a nilfs partition.
-My issue is that the host server continues to lockup during the
-performance test. I thought it may have something to do with the
-server itself, but the performance test runs successfully on the
-server on the same harddrive in a different partition.
-My question is what can I do to monitor and log what the issue is
-since the only way to get back into the machine is to do a hard power
-cycle. I have turned on debug in the nilfs_cleanerd config file and I
-am capturing the log to a separate location. The lockup seems to occur
-right after a "2 segments selected to be cleaned" message was sent.
+----Next_Part(Fri_Jun_19_10_47_31_2009_170)--
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-gentoo distribution
-2.6.30 kernel x86
-nilfs-utils 2.0.12
-partition 466GB
-application is postgresql, sqlite and lucene and python
-all db's and indexes are being written into the nilfs partition so
-there are tons of file changes happening at all times during the test.
-During the test, the file system is growing at a rate of 3 MB/sec and
-the test runs for greater than 4 hours straight. The total data the
-test writes is about 1.4 gig when it completes, but as I stated in
-before, most of the data is in lucene indexes, postgresql and sqlite
-db's.
+Hi,
+On Thu, 18 Jun 2009 13:48:56 -0600, "Dunphy, Bill" wrote:
+> Tried applying patch to latest git pull as well as 2.0.12 and 2.0.14 and
+> experienced the following patch issue:
+> 
+> $ patch -p1 <your.patch 
+> (Stripping trailing CRs from patch.)
+> patching file fs/dat.c
+> (Stripping trailing CRs from patch.)
+> patching file fs/segment.c
+> patch: **** malformed patch at line 50: @@ -2056,12 +2043,11 @@ static
+> void nilfs_end_page_io(struct page *page, int err)
+> 
+> I could attempt to do by hand but decided to let you chime in first.
+> 
+> Thoughts? 
+> 
+> Bill
 
-I am under the impression that our application is hammering the file
-system with too many read and write requests at the same time.
+Hmm, strange.
 
-Thanks for any suggestions,
+I will attach the compressed one.  It is against the latest git, but
+will be also applicable to v2.0.14.
 
-James...
+ $ cd nilfs2-module
+ $ bunzip -c xxx/nilfs2-fix-hang-after-bio_alloc-failed.patch.bz2 | patch -p1
+
+How does this go ?
+
+Ryusuke Konishi
+
+----Next_Part(Fri_Jun_19_10_47_31_2009_170)--
+Content-Type: Application/Octet-Stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="nilfs2-fix-hang-after-bio_alloc-failed.patch.bz2"
+
+QlpoOTFBWSZTWd3wpkEAAp7fgGgwc3//u+sv3sS/7//uUATY9ljbGtoGgpQJRCEPUaaNR6jRo0aG
+JhPUAaDIBtTEaHDTTIxGE0wEMAmmEYJiZDTI0NAJTJEJpDTU2p+qeQamjR6QGhpoMjQGjIyaHDTT
+IxGE0wEMAmmEYJiZDTI0NAJEggmmEBBoBQaMgAGEAD1PUepWgJCIRALXyMEoQDBDTlykxCGKCGm4
+cNjHKcoTYJJt7vZl2e1OiVuajpWtlXKBK2Wtrm7s0v5Rzx4ws+11bDWO3POvkZVGRaSlssSsVpMY
+HBITANhvYEL+vdl+eR8IYqe4/IhQGVE22OpqlGgvX72B5kD+oN97G7U+qvALDNDBs1tcpATE88lm
++bluOunJIq1tKnPdVZSAsEtxGlVw5rgfbjmgIJ0LO2LTyiwk7DAegeIXmJmTLLmmRGBtzkpqi85D
+qiSdOpD2aDMZcXbNqOHevwcPYg9qXrzSHHnBhVBhwbqmU1GOX2Q4anYrZowiuEZxFJMRkhUyqowa
+OCSZfuUmJR0300NnXa3ZdYqaQ5NZIE3US6CjAgpmOkNtYTVVdajCVlhVlMODxDoxyogmIGbhag7E
+tyoU8hmsyNPnJAek+g2B6rhjHAePpynGdxFp4AkoI4nVpZd91rNEksk2WPhuuxSZdAVRYKFdNE0r
+s+YKCjboTiStxmW0W+by8wrqPXUFm7WbojmEeoYwMxEI4gN4GHRwHV0fqp+9NxuilE76hij+3Lpo
+qPfNRkbJV/LOXvxP4sHp0xV05RUZOZU5qbYCQcxl5ak2jC0LbCozEY2F6Sahgi5EXXunoW4KH1lb
+8ksLbgxPVmgXi0i887siZb/zNYYkrRMsgOQdSIiETq65NYPihRL1pjKmdjTwcDdljLDnCpWTHAYg
+e4X29p1DqZn31JUJ6qonYXIgOwCRgOrd1oNMlI6vayYTDE0/EMLTWLglYfUU4ZnI6ec2HjOFg14H
+Iw2FVI4kHWrEl3XpWyVE0xiZ2hNVtJVCZeMZO4F4Bpg82jMWkcYfk4clejQVlEyh9LhTRQ2DGxbD
+Q5CKHUFh1ySJk0jcU6QN4GGc4bkIzkVA2C4oQUvPgUIYdOcgusNCwnTuVNXW40ElCYNyTfDFEZm+
+godYbw6d5wEGa7DYQjqgMjVaF2g1fhaGlrL+fiEg0ulrD2KimTBGYdnvrFH+hU6EawIDkFsjDYLm
+kbYgrtVxipSoecHaiaVChcEEAW9GqHvZKSC1G2zhMqeAMqFA1CbBbe8t6NtQklu5MUxegJ41LCoF
+v2GRYcTjvzy0LEw6O6DCBJlJJGyEIW1GqNOttRGEGG2lG3BIyJwUDIic+pNQszcY5+GfZlukQLV3
+rzoLWIMA18sQROcllJgzpA7oIEpsRQ0NC85iQZnwBvDRMXF7sjUwzYmoLchaeIWi/GSS1CUOtEig
+k223zxZpWskEBejXVFxd176JUoZFwFgLUK45sGu0GEAYJLfgMqaHewv1cwsiqLX6SZJYmFSCZLEG
+IsDJ+b4Jyg/8XckU4UJDd8KZBA==
+
+----Next_Part(Fri_Jun_19_10_47_31_2009_170)--
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+----Next_Part(Fri_Jun_19_10_47_31_2009_170)----
