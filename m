@@ -1,16 +1,12 @@
-From: "Dunphy, Bill" <WDunphy-/3AnZwnt+WyVkR+q5Y5grQ@public.gmane.org>
-Subject: Re: Write hang on ARM based target
-Date: Fri, 19 Jun 2009 09:01:11 -0600
-Message-ID: <BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FB3@tdpost.td.tandbergdata.com>
-References: <20090612.132344.17157054.ryusuke@osrg.net><20090619.033642.32757627.ryusuke@osrg.net><BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FAC@tdpost.td.tandbergdata.com>
-	<20090619.104731.99018736.ryusuke@osrg.net>
+From: Will Palmer <wmpalmer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Permanently delete ("shred") files?
+Date: Sat, 20 Jun 2009 16:43:19 +0100
+Message-ID: <5b9751660906200843v3da0e733o229009a726ce9040@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-class: urn:content-classes:message
-In-Reply-To: <20090619.104731.99018736.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,118 +17,28 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Thanks.  That patch integrated successfully.
+Hello, and sorry to ask a question which seems to me like something
+which would probably already have been asked, but I didn't see any way
+to search the mailing list archive, and manual skimming of it turned
+up nothing. (in addition, that it wasn't listed in the FAQ or features
+list made me think perhaps it needed to be asked)
 
-Ran it again with the following result:
+Will there be / is there already, a feature to "delete a file
+completely", meaning to remove a single file in such a way that it can
+NOT be restored from checkpoints? Perhaps one which can fill existing
+"versions" of a file with zeros, rather than leaving them as they are?
 
-Jun 19 08:38:26 kernel: ========= NILFS SEGMENT INFORMATION ========
+While for day-to-day use, being able to go back to five minutes ago
+can often be a godsend, I presume there are more than the handful of
+cases I can think of where "I actually want to leave no trace of that
+file" would be true. Many situations crop up where one can normally
+think "it's okay, I'll just remove the password before I hand it
+over.", but a constantly-logging file-system would default to that not
+being a safe bet. If nothing else, think of the occasional news
+article about someone uncovering supposedly "redacted" sections of
+word documents by viewing history on the file.
 
-Jun 19 08:38:26 kernel: full segment: segnum=39, start=79872, end=81919
-
-Jun 19 08:38:26 kernel: partial segment: start=81162, rest=758
-
-Jun 19 08:38:26 kernel: ------------------ SUMMARY -----------------
-
-Jun 19 08:38:26 kernel: nfinfo     = 4 (number of files)
-
-Jun 19 08:38:26 kernel: nblocks    = 14 (number of blocks)
-
-Jun 19 08:38:26 kernel: sumbytes   = 312 (size of summary in bytes)
-
-Jun 19 08:38:26 kernel: nsumblk    = 1 (number of summary blocks)
-
-Jun 19 08:38:26 kernel: flags      = LOGBGN|LOGEND|SR
-
-Jun 19 08:38:26 kernel: ============================================
-
-Jun 19 08:38:26 kernel: NILFS(segment)
-nilfs_segctor_update_payload_blocknr: called                           
-Jun 19 08:38:26 kernel: NILFS(segment)
-nilfs_segctor_update_payload_blocknr: done                             
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_file_bmap:
-called                                
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_file_bmap:
-done                                  
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checkpoint:
-called                               
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checkpoint:
-done                                 
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_update_segusage:
-called                                  
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_update_segusage:
-done                                    
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checksums:
-called                                
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checksums:
-done                                  
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitting
-summary blocks                          
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_alloc_seg_bio: allocated
-bio (max_vecs=16)                       
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitting
-normal blocks (index=1)                 
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_submit_seg_bio: submitting
-bio (start_sector=649296, size=57344,)
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitted a
-segment (err=0, pseg_start=81162, #req)
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_wait: called nbio=1
-
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_wait: wait completed
-
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_complete_write:
-completing segment (flags=0x7)           
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_complete_write:
-completed a segment having a super root )
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_do_construct:
-submitted all segments                     
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_construct: end
-(stage=9)                                 
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_notify: complete
-requests from seq=2 to seq=1            
-Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_thread: sequence:
-req=1, done=1, state=0                  
-
-Bill
-
------Original Message-----
-From: Ryusuke Konishi [mailto:ryusuke-sG5X7nlA6pw@public.gmane.org] 
-Sent: Thursday, June 18, 2009 7:48 PM
-To: Dunphy, Bill
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
-Subject: Re: [NILFS users] Write hang on ARM based target
-
-Hi,
-On Thu, 18 Jun 2009 13:48:56 -0600, "Dunphy, Bill" wrote:
-> Tried applying patch to latest git pull as well as 2.0.12 and 2.0.14 
-> and experienced the following patch issue:
-> 
-> $ patch -p1 <your.patch
-> (Stripping trailing CRs from patch.)
-> patching file fs/dat.c
-> (Stripping trailing CRs from patch.)
-> patching file fs/segment.c
-> patch: **** malformed patch at line 50: @@ -2056,12 +2043,11 @@ static
-
-> void nilfs_end_page_io(struct page *page, int err)
-> 
-> I could attempt to do by hand but decided to let you chime in first.
-> 
-> Thoughts? 
-> 
-> Bill
-
-Hmm, strange.
-
-I will attach the compressed one.  It is against the latest git, but
-will be also applicable to v2.0.14.
-
- $ cd nilfs2-module
- $ bunzip -c xxx/nilfs2-fix-hang-after-bio_alloc-failed.patch.bz2 |
-patch -p1
-
-How does this go ?
-
-Ryusuke Konishi
+So I'd expect that it's clear to see it as a necessary feature for
+"desktop use", but is it supported?
