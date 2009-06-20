@@ -1,11 +1,10 @@
-From: Will Palmer <wmpalmer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Permanently delete ("shred") files?
-Date: Sat, 20 Jun 2009 16:43:19 +0100
-Message-ID: <5b9751660906200843v3da0e733o229009a726ce9040@mail.gmail.com>
+From: Sami Liedes <sliedes-kf+aQKke1yb1KXRcyAk9cg@public.gmane.org>
+Subject: df seems to show wrong disk usage
+Date: Sat, 20 Jun 2009 23:08:33 +0300
+Message-ID: <20090620200832.GD23838@lh.kyla.fi>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1971334928=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
@@ -15,30 +14,72 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hello, and sorry to ask a question which seems to me like something
-which would probably already have been asked, but I didn't see any way
-to search the mailing list archive, and manual skimming of it turned
-up nothing. (in addition, that it wasn't listed in the FAQ or features
-list made me think perhaps it needed to be asked)
 
-Will there be / is there already, a feature to "delete a file
-completely", meaning to remove a single file in such a way that it can
-NOT be restored from checkpoints? Perhaps one which can fill existing
-"versions" of a file with zeros, rather than leaving them as they are?
+--===============1971334928==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="a2FkP9tdjPU2nyhF"
+Content-Disposition: inline
 
-While for day-to-day use, being able to go back to five minutes ago
-can often be a godsend, I presume there are more than the handful of
-cases I can think of where "I actually want to leave no trace of that
-file" would be true. Many situations crop up where one can normally
-think "it's okay, I'll just remove the password before I hand it
-over.", but a constantly-logging file-system would default to that not
-being a safe bet. If nothing else, think of the occasional news
-article about someone uncovering supposedly "redacted" sections of
-word documents by viewing history on the file.
 
-So I'd expect that it's clear to see it as a necessary feature for
-"desktop use", but is it supported?
+--a2FkP9tdjPU2nyhF
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+Hi,
+
+I've been copying data to a 700 GiB nilfs2 volume from a fast disk for
+2.5 hours now. df -h shows there's only 37 GiB of data there:
+
+/dev/mapper/lacie     699G   37G  628G   6% /media/lacie
+
+Yet running du -csh in one big directory in /media/lacie at the same
+time shows disk usage to be 62G in that directory alone.
+
+Are the df figures somehow inaccurate for nilfs2 volumes?
+
+I'm using the version of nilfs2 in stock 2.6.30 kernel.
+
+	Sami
+
+--a2FkP9tdjPU2nyhF
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iQIcBAEBCAAGBQJKPUHAAAoJEKLT589SE0a0bloP+gOw1EJOE+4cB1S4dPog+WMf
+fdIKoICVqkTQxXw7Bt+kOhPbS3XnA4HkBv2syn0Vovxi8OqEpi1hCMtP5EtTmF6x
+AHVXlDUjigQlrNPOkGmAaW/0WVmkWa7qTxiLlpg5t9WXsEz9BDluQlgNi2VZXhKU
+uifTfy6wlgS30N5XwX4D72fmHfsAtmgc6E2F5kvGgdPGOJk7fmKHCGqomfRkx1Ns
+LQRS+dcj3fwPVM6YiIdoUfEvy11ZCqJnXSXo5fccv1S2tltwS8jVPFPLdoameqkm
+2zX+j1FuuyZ884j1S5xgueYVtOqfFE7FYjCUKCd5TikP1GZ+cElION3T1kpft+jg
+sTZtsIdTZ7KN1EdB+lKjOsb0JG87rzzNI5JfPCZPnoF3z7b8LOScxb6yXUkl9Z2y
+5OrrFCa1PJ9BSOr04buSIu4cGdNFUyVXQ6nDCwnzOkndPh1FPqVXwQm5bxXdJy3I
+QF9KqP22z35sg673Hutjb7dMEv0oDOUDciOqJjJyr0IEVVqcJVLUKOkL9vrVzfF8
+teuzLmK/BUjL0CL09UF0rKP1ZzWvP1LqoQjniRqU2aC1tpGB0O1SqRjph5qhu+4n
+pKUW4bF7Cs8Td7C1Wjt3ZS8kMbCrye1GHLnqxyEBOhZ2YCyIq0956cgeoX3xGvRD
+BsRsSc1O4HGcwU2RRZGh
+=bqgA
+-----END PGP SIGNATURE-----
+
+--a2FkP9tdjPU2nyhF--
+
+--===============1971334928==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============1971334928==--
