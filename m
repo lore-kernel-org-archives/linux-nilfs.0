@@ -1,57 +1,105 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: [NILFS users] [PATCH] nilfs2: fix hang problem after
- bio_alloc() failed
-Date: Sun, 21 Jun 2009 21:34:09 +0900 (JST)
-Message-ID: <20090621.213409.32665554.ryusuke@osrg.net>
-References: <20090614181313.GA16597@homero.springfield.home>
-	<20090619.023455.111674749.ryusuke@osrg.net>
-	<87ocshvo78.fsf@basil.nowhere.org>
+From: Sami Liedes <sliedes-kf+aQKke1yb1KXRcyAk9cg@public.gmane.org>
+Subject: Re: nilfs_cleanerd on root partition
+Date: Sun, 21 Jun 2009 16:44:19 +0300
+Message-ID: <20090621134418.GA4836@lh.kyla.fi>
+References: <20090620211939.GA5937@odysseus.gateway.2wire.net>
+	<20090621.183937.71761103.ryusuke@osrg.net>
+Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============1082269936=="
+Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <20090621.183937.71761103.ryusuke-sG5X7nlA6pw@public.gmane.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
+	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
+List-Archive: <https://www.nilfs.org/pipermail/users>
+List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
+List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
+	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
+Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+
+
+--===============1082269936==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="X1bOJ3K7DJ5YkBrT"
+Content-Disposition: inline
+
+
+--X1bOJ3K7DJ5YkBrT
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Sun, Jun 21, 2009 at 06:39:37PM +0900, Ryusuke Konishi wrote:
+> nilfs_cleanerd is invoked when the partition is mounted, but sleeps if
+> no reclaimable data exists.
+>=20
+> Is there nilfs_cleanerd process ?
+>=20
+>  $ ps aux | grep nilfs_cleanerd
+[...]
+> If the cleanerd did not exist, you can invoke it by hand.
+>=20
+>  # nilfs_cleanerd /dev/sdb1 /
+
+Hmm, for me, nilfs_cleanerd does not start with such a command (either
+=66rom mount or by hand).
+
+I *think* I might know what the problem is. The nilfs2-tools in Debian
+unstable is 2.0.12, while the version of nilfs2 in 2.6.30 is .14
+unless I'm mistaken.
+
+In any case I'd be very happy to get some error messages visible
+somewhere; mount failed silently to start nilfs_cleanerd, even
+starting nilfs_cleanerd by hand doesn't output anything to indicate it
+did not succeed, and there's nothing in dmesg about that either. The
+only indication there's something wrong, if you know to look, is the
+message
+
+   "cannot create cleanerd on /dev/mapper/lacie"
+
+in /var/log/daemon.log and the fact that cleanerd is not running.
+
+	Sami
+
+--X1bOJ3K7DJ5YkBrT
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iQIcBAEBCAAGBQJKPjkyAAoJEKLT589SE0a0cnoP/2wHUOzjNDcmJ34Pccgj/KVX
+Na+XDnT0195k4KSRXlcV5ulnkFmCuoRRV6ny6PjP/9ZaQtlv/DG0ngsNOW7GOtan
+er2TdhZzbHOw/d4FOTe+wAsFVIZrRphUkC7RWJnwf9WfXV25jDo2cU9fEAcs3/+F
+ERJkCQDG1xCl5Wi2yUX2ZEvxSmpyBqt9ITWLXe422wwTRhNwFwumGHgsFzGr48Hg
+XxRYpxNr09N/4UCi53FiY8IWVGPtucmF/Qy3IMCaKVn6SEWUpAtC9JWtJ5kTeIv+
+dV5XmZ6+7j/LXJ4L+Rqy99bFElHW8iKad90oMJ9OG2qn445cPjEyIkUXm9oO+afq
+mwpKTBvIuP8fP+KeFjtsaNFztoFMKNQjrHQp436wCgqT+DBH0MZLRL1pXXHgMolR
+Tf3ewkxE5bFeAeGZDRDUQBuIJmfdb9GsikWgzF+dzYtV/2rkDdq7O9nagRhL/tjK
+NrCByqRu3D6UMsNlgh02FroVv9Q9aEklmPgM5MoWUFrN4RyKoUhtF8kPIJGK33fS
+VDkM1ADv9R5uCwuqyRQA16wjR7hYMxld9jhGokazzfFGTIwQnmYmlXMXM9y2C3Su
+rnfYiCVQ+MWqaZY1di3bYrXIGSrqjxlCyv5GY1jhgr6sa7gT7DwbMmJzO1rZy6Pc
+z/1D4Wi8suuFBfirXNMs
+=Dgwy
+-----END PGP SIGNATURE-----
+
+--X1bOJ3K7DJ5YkBrT--
+
+--===============1082269936==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751850AbZFUMe2@vger.kernel.org>
-In-Reply-To: <87ocshvo78.fsf@basil.nowhere.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: users@nilfs.org, andi@firstfloor.org
-Cc: konishi.ryusuke@lab.ntt.co.jp, linux-kernel@vger.kernel.org
+Content-Disposition: inline
 
-Hi Andi,
-On Sun, 21 Jun 2009 13:08:43 +0200, Andi Kleen <andi@firstfloor.org> wrote:
-> Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> writes:
-> >  
-> > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> > index 22c7f65..e8f188b 100644
-> > --- a/fs/nilfs2/segment.c
-> > +++ b/fs/nilfs2/segment.c
-> > @@ -1846,26 +1846,13 @@ static int nilfs_segctor_write(struct nilfs_sc_info *sci,
-> >  		err = nilfs_segbuf_write(segbuf, &wi);
-> >  
-> >  		res = nilfs_segbuf_wait(segbuf, &wi);
-> > -		err = unlikely(err) ? : res;
-> > +		err = unlikely(err) ? err : res;
-> 
-> It's very dubious gcc does anything with unlikely here anyways.
-> They typically only work directly in conditions being tested.
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
 
-I got it. I'll rewrite the first bugfix so that it just removes the
-unlikely directive.
-
--		err = unlikely(err) ? : res;
-+		err = err ? : res;
-
-
-> >  		if (unlikely(err))
-> >  			return err;
-> 
-> Also gcc generally considers conditions to blocks that
-> return unlikely, so it's actually superfluous.
-
-Thanks, I didn't know this.  I'll take in this, too.
- 
-> -Andi
-> -- 
-> ak@linux.intel.com -- Speaking for myself only.
-
-Regards,
-Ryusuke Konishi
+--===============1082269936==--
