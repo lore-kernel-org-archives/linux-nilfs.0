@@ -1,14 +1,15 @@
 From: Sami Liedes <sliedes-kf+aQKke1yb1KXRcyAk9cg@public.gmane.org>
 Subject: Re: nilfs_cleanerd on root partition
-Date: Sun, 21 Jun 2009 16:44:19 +0300
-Message-ID: <20090621134418.GA4836@lh.kyla.fi>
+Date: Sun, 21 Jun 2009 17:02:34 +0300
+Message-ID: <20090621140234.GB4836@lh.kyla.fi>
 References: <20090620211939.GA5937@odysseus.gateway.2wire.net>
 	<20090621.183937.71761103.ryusuke@osrg.net>
+	<20090621134418.GA4836@lh.kyla.fi>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1082269936=="
+Content-Type: multipart/mixed; boundary="===============1423633157=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090621.183937.71761103.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20090621134418.GA4836-7bsdmvTMBDzHOG6cAo2yLw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -23,50 +24,58 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 
---===============1082269936==
+--===============1423633157==
 Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="X1bOJ3K7DJ5YkBrT"
+	protocol="application/pgp-signature"; boundary="s2ZSL+KKDSLx8OML"
 Content-Disposition: inline
 
 
---X1bOJ3K7DJ5YkBrT
+--s2ZSL+KKDSLx8OML
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-On Sun, Jun 21, 2009 at 06:39:37PM +0900, Ryusuke Konishi wrote:
-> nilfs_cleanerd is invoked when the partition is mounted, but sleeps if
-> no reclaimable data exists.
->=20
-> Is there nilfs_cleanerd process ?
->=20
->  $ ps aux | grep nilfs_cleanerd
-[...]
-> If the cleanerd did not exist, you can invoke it by hand.
->=20
->  # nilfs_cleanerd /dev/sdb1 /
+On Sun, Jun 21, 2009 at 04:44:19PM +0300, Sami Liedes wrote:
+> I *think* I might know what the problem is. The nilfs2-tools in Debian
+> unstable is 2.0.12, while the version of nilfs2 in 2.6.30 is .14
+> unless I'm mistaken.
 
-Hmm, for me, nilfs_cleanerd does not start with such a command (either
-=66rom mount or by hand).
+Never mind, I just realized 2.0.12 is the latest -tools.
 
-I *think* I might know what the problem is. The nilfs2-tools in Debian
-unstable is 2.0.12, while the version of nilfs2 in 2.6.30 is .14
-unless I'm mistaken.
+You say I should start the cleanerd by running
 
-In any case I'd be very happy to get some error messages visible
-somewhere; mount failed silently to start nilfs_cleanerd, even
-starting nilfs_cleanerd by hand doesn't output anything to indicate it
-did not succeed, and there's nothing in dmesg about that either. The
-only indication there's something wrong, if you know to look, is the
-message
+ # nilfs_cleanerd /dev/sdb1 /
 
-   "cannot create cleanerd on /dev/mapper/lacie"
+However nothing in the output of `nilfs_cleanerd -h' indicates
+anything of the second parameter (mount point). Looking at the source,
+that's how mount.nilfs2 runs it too, and that's exactly the case where
+it fails.
 
-in /var/log/daemon.log and the fact that cleanerd is not running.
+Running merely `nilfs_cleanerd /dev/mapper/lacie', as per the
+nilfs_cleanerd -h output, succeeds (but I don't know if it does the
+right thing). When I (or mount) gives the mount point as a second
+parameter, it fails fairly silently. I only get this in
+/var/log/daemon.log:
+
+When started by mount.nilfs2:
+
+------------------------------------------------------------
+Jun 20 20:34:28 lh nilfs_cleanerd[27527]: start
+Jun 20 20:34:28 lh nilfs_cleanerd[27527]: cannot create cleanerd on /dev/mapper/lacie
+Jun 20 20:34:28 lh nilfs_cleanerd[27527]: shutdown
+------------------------------------------------------------
+
+When started manually by running `nilfs_cleanerd /dev/mapper/lacie
+/media/lacie' (the mount point):
+
+------------------------------------------------------------
+Jun 21 16:12:04 lh nilfs_cleanerd[2573]: start
+Jun 21 16:12:04 lh nilfs_cleanerd[2573]: cannot create cleanerd on /dev/mapper/lacie
+Jun 21 16:12:04 lh nilfs_cleanerd[2573]: shutdown
+------------------------------------------------------------
 
 	Sami
 
---X1bOJ3K7DJ5YkBrT
+--s2ZSL+KKDSLx8OML
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 Content-Disposition: inline
@@ -74,24 +83,24 @@ Content-Disposition: inline
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (GNU/Linux)
 
-iQIcBAEBCAAGBQJKPjkyAAoJEKLT589SE0a0cnoP/2wHUOzjNDcmJ34Pccgj/KVX
-Na+XDnT0195k4KSRXlcV5ulnkFmCuoRRV6ny6PjP/9ZaQtlv/DG0ngsNOW7GOtan
-er2TdhZzbHOw/d4FOTe+wAsFVIZrRphUkC7RWJnwf9WfXV25jDo2cU9fEAcs3/+F
-ERJkCQDG1xCl5Wi2yUX2ZEvxSmpyBqt9ITWLXe422wwTRhNwFwumGHgsFzGr48Hg
-XxRYpxNr09N/4UCi53FiY8IWVGPtucmF/Qy3IMCaKVn6SEWUpAtC9JWtJ5kTeIv+
-dV5XmZ6+7j/LXJ4L+Rqy99bFElHW8iKad90oMJ9OG2qn445cPjEyIkUXm9oO+afq
-mwpKTBvIuP8fP+KeFjtsaNFztoFMKNQjrHQp436wCgqT+DBH0MZLRL1pXXHgMolR
-Tf3ewkxE5bFeAeGZDRDUQBuIJmfdb9GsikWgzF+dzYtV/2rkDdq7O9nagRhL/tjK
-NrCByqRu3D6UMsNlgh02FroVv9Q9aEklmPgM5MoWUFrN4RyKoUhtF8kPIJGK33fS
-VDkM1ADv9R5uCwuqyRQA16wjR7hYMxld9jhGokazzfFGTIwQnmYmlXMXM9y2C3Su
-rnfYiCVQ+MWqaZY1di3bYrXIGSrqjxlCyv5GY1jhgr6sa7gT7DwbMmJzO1rZy6Pc
-z/1D4Wi8suuFBfirXNMs
-=Dgwy
+iQIcBAEBCAAGBQJKPj16AAoJEKLT589SE0a0D5UQAI5kvgdWzqwV03IuISYt29HX
+Dunlgny9/Uu3PDD6a1ETu+MSgYK16YTjs6w9noYL7RpBcdGTbfPdOj8DVNsfY7Yx
+Xtkxrpp6hydzssw54D9CVDp/VobE6zd+eBVaKsPybpse7H8J+mGhCWFfmi6D4w6t
+511RS2Nhoawsp9mA2Veu2eiz6n7A8IM7q7tDiSZsoKLX/a96HoFGwkDxDyr2aKet
+QnH9WaKOQPS1z1RlS2aiHVVGp2+ZVCP6EoUzHUPN/atRJ1/zdvJF/QOUaZt4S/eI
+0vhvaz3oe2db1sUcJBsVZQ05goz3yhrhD0fY4EIz27wdir+7ao+591iWo0+fO8ZR
+Gg/w1dCGxhCo0nY2wS5hleKBuq6mRAlLN7achxOg12XU8zZcNgSMo9BHm1feb/8P
+hEI7AvCG4Mdl6Csl+lTdDZM6i1pBXp9C2tFInQ7hZRQgXFE7ceVJCi0AORAni4Rl
+0jTzD9dA6TH4XB75llLw7HJTEEB9tlL8BD0GB2lNBYAScal11+af8vMTAfQPXf5j
+bXSj2+bK9XpfGDJmzjA3zqlUAT+7ukogyrETRS9XsAKtICGjFPgkM/dBtRlv3d9J
+zt6m7S9aELhlFB9Wqv0AoEI9aRmh4HpNc13fHxyZBjLyJ+2od0vKJshCiZNfM3T8
+1yEh2WRI6vI5aNKRUau0
+=BAko
 -----END PGP SIGNATURE-----
 
---X1bOJ3K7DJ5YkBrT--
+--s2ZSL+KKDSLx8OML--
 
---===============1082269936==
+--===============1423633157==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -102,4 +111,4 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---===============1082269936==--
+--===============1423633157==--
