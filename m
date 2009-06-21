@@ -1,11 +1,16 @@
-From: Kristjan Eerik Kaseniit <kristjan.eerik.kaseniit-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Root file system has filled up, won't boot anymore
-Date: Sun, 21 Jun 2009 19:22:33 +0300
-Message-ID: <172291b30906210922i2089a389jbc9b664e6b9d7c00@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: nilfs_cleanerd on root partition
+Date: Mon, 22 Jun 2009 03:00:37 +0900 (JST)
+Message-ID: <20090622.030037.34127637.ryusuke@osrg.net>
+References: <20090621140234.GB4836@lh.kyla.fi>
+	<20090621143708.GC4836@lh.kyla.fi>
+	<20090622.010510.133415216.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1183629438=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <20090622.010510.133415216.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -14,67 +19,103 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Cc: James Erickson <psykojime-PkbjNfxxIARBDgjK7y7TUQ@public.gmane.org>, sliedes-kf+aQKke1yb1KXRcyAk9cg@public.gmane.org
 
---===============1183629438==
-Content-Type: multipart/alternative; boundary=001517574498393c4f046cde2a51
+On Mon, 22 Jun 2009 01:05:10 +0900 (JST), Ryusuke Konishi wrote:
+> Hi,
+> On Sun, 21 Jun 2009 17:37:08 +0300, Sami Liedes wrote:
+> > On Sun, Jun 21, 2009 at 05:02:34PM +0300, Sami Liedes wrote:
+> > > You say I should start the cleanerd by running
+> > > 
+> > >  # nilfs_cleanerd /dev/sdb1 /
+> > > 
+> > > However nothing in the output of `nilfs_cleanerd -h' indicates
+> > > anything of the second parameter (mount point). Looking at the source,
+> > > that's how mount.nilfs2 runs it too, and that's exactly the case where
+> > > it fails.
+> > 
+> > OK, I debugged a bit and figured out what the real problem is. It's
+> > the fact that nilfs_find_fs() is too strict about the mount points
+> > being the same. Namely, it considers /media/lacie and /media/lacie/ to
+> > be different mount points (it merely does a strcmp()).
+> >
+> > /proc/mounts always uses the former syntax, so if the mount command is
+> > something like `mount /dev/mapper/lacie /media/lacie/ -t nilfs2', the
+> > cleanerd is not started because mount passes "/media/lacie/" as the
+> > mount point, and nilfs_find_fs() expects it to not have the last
+> > slash.
+> > 
+> > 	Sami
+> 
+> Grr, that's an elementary and influential bug.  Okay, I'll fix it.
+> 
+> Sami, thank you for finding this!
+> 
+> Cheers,
+> Ryusuke Konishi
 
---001517574498393c4f046cde2a51
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+The following patch will fix this.  I've pushed it to the git repo,
+too.
 
-Hello,
+Regards,
+Ryusuke Konishi
+---
+ lib/nilfs.c |   29 +++++++++++++++++++++++++----
+ 1 files changed, 25 insertions(+), 4 deletions(-)
 
-I've installed gentoo on a NILFS2 formatted MMC SDHC card and have been
-using it as my root partition. I used it just fine until after a reboot I
-couldn't boot into the system (produces a kernel "BUG" with the message that
-it's got an unknown opcode) and from another install I cannot chroot into it
-(gives a segmentation fault), lscp doesn't finish but dies half way and both
-commands won't even produce output on a second try.
-The problem that caused this seems to be that the whole file system is full
-- that's what all the commands tell me.
-
-How should I proceed? Can I free up some space or do I have to make a clean
-install?
-
-I'm keeping the partition intact for a while (can boot off my harddrive) so
-I can get some debug info but first I need to know what is necessary to be
-helpful.
-Should I post the kernel message I get when I boot?
-
---001517574498393c4f046cde2a51
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Hello,<br><br>I&#39;ve installed gentoo on a NILFS2 formatted MMC SDHC card=
- and have been using it as my root partition. I used it just fine until aft=
-er a reboot I couldn&#39;t boot into the system (produces a kernel &quot;BU=
-G&quot; with the message that it&#39;s got an unknown opcode) and from anot=
-her install I cannot chroot into it (gives a segmentation fault), lscp does=
-n&#39;t finish but dies half way and both commands won&#39;t even produce o=
-utput on a second try.<br>
-The problem that caused this seems to be that the whole file system is full=
- - that&#39;s what all the commands tell me.<br><br>How should I proceed? C=
-an I free up some space or do I have to make a clean install?<br><br>I&#39;=
-m keeping the partition intact for a while (can boot off my harddrive) so I=
- can get some debug info but first I need to know what is necessary to be h=
-elpful.<br>
-Should I post the kernel message I get when I boot?<br>
-
---001517574498393c4f046cde2a51--
-
---===============1183629438==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============1183629438==--
+diff --git a/lib/nilfs.c b/lib/nilfs.c
+index 15ee98f..9c80538 100644
+--- a/lib/nilfs.c
++++ b/lib/nilfs.c
+@@ -147,14 +147,27 @@ static int nilfs_find_fs(struct nilfs *nilfs, const char *dev, const char *dir,
+ 	size_t len;
+ 	int ret, n;
+ 	char canonical[PATH_MAX + 2];
++	char *cdev = NULL, *cdir = NULL;
+ 
+-	if (dev && myrealpath(dev, canonical, sizeof(canonical)))
+-		dev = canonical;
++	ret = -1;
++	if (dev && myrealpath(dev, canonical, sizeof(canonical))) {
++		cdev = strdup(canonical);
++		if (!cdev)
++			goto failed;
++		dev = cdev;
++	}
++
++	if (dir && myrealpath(dir, canonical, sizeof(canonical))) {
++		cdir = strdup(canonical);
++		if (!cdir)
++			goto failed_dev;
++		dir = cdir;
++	}
+ 
+ 	fp = fopen(PROCMOUNTS, "r");
+ 	if (fp == NULL)
+-		return -1;
+-	ret = -1;
++		goto failed_dir;
++
+ 	while (fgets(line, sizeof(line), fp) != NULL) {
+ 		n = tokenize(line, mntent, NMNTFLDS);
+ 		assert(n == NMNTFLDS);
+@@ -181,6 +194,14 @@ static int nilfs_find_fs(struct nilfs *nilfs, const char *dev, const char *dir,
+ 		}
+ 	}
+ 	fclose(fp);
++
++ failed_dir:
++	free(cdir);
++
++ failed_dev:
++	free(cdev);
++
++ failed:
+ 	return ret;
+ }
+ 
+-- 
+1.6.2
