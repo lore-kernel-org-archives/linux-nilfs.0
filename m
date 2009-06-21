@@ -1,15 +1,16 @@
 From: Sami Liedes <sliedes-kf+aQKke1yb1KXRcyAk9cg@public.gmane.org>
 Subject: Re: nilfs_cleanerd on root partition
-Date: Sun, 21 Jun 2009 17:02:34 +0300
-Message-ID: <20090621140234.GB4836@lh.kyla.fi>
+Date: Sun, 21 Jun 2009 17:37:08 +0300
+Message-ID: <20090621143708.GC4836@lh.kyla.fi>
 References: <20090620211939.GA5937@odysseus.gateway.2wire.net>
 	<20090621.183937.71761103.ryusuke@osrg.net>
 	<20090621134418.GA4836@lh.kyla.fi>
+	<20090621140234.GB4836@lh.kyla.fi>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1423633157=="
+Content-Type: multipart/mixed; boundary="===============0039075571=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090621134418.GA4836-7bsdmvTMBDzHOG6cAo2yLw@public.gmane.org>
+In-Reply-To: <20090621140234.GB4836-7bsdmvTMBDzHOG6cAo2yLw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -24,58 +25,41 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 
---===============1423633157==
+--===============0039075571==
 Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="s2ZSL+KKDSLx8OML"
+	protocol="application/pgp-signature"; boundary="kVXhAStRUZ/+rrGn"
 Content-Disposition: inline
 
 
---s2ZSL+KKDSLx8OML
+--kVXhAStRUZ/+rrGn
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-On Sun, Jun 21, 2009 at 04:44:19PM +0300, Sami Liedes wrote:
-> I *think* I might know what the problem is. The nilfs2-tools in Debian
-> unstable is 2.0.12, while the version of nilfs2 in 2.6.30 is .14
-> unless I'm mistaken.
+On Sun, Jun 21, 2009 at 05:02:34PM +0300, Sami Liedes wrote:
+> You say I should start the cleanerd by running
+>=20
+>  # nilfs_cleanerd /dev/sdb1 /
+>=20
+> However nothing in the output of `nilfs_cleanerd -h' indicates
+> anything of the second parameter (mount point). Looking at the source,
+> that's how mount.nilfs2 runs it too, and that's exactly the case where
+> it fails.
 
-Never mind, I just realized 2.0.12 is the latest -tools.
+OK, I debugged a bit and figured out what the real problem is. It's
+the fact that nilfs_find_fs() is too strict about the mount points
+being the same. Namely, it considers /media/lacie and /media/lacie/ to
+be different mount points (it merely does a strcmp()).
 
-You say I should start the cleanerd by running
-
- # nilfs_cleanerd /dev/sdb1 /
-
-However nothing in the output of `nilfs_cleanerd -h' indicates
-anything of the second parameter (mount point). Looking at the source,
-that's how mount.nilfs2 runs it too, and that's exactly the case where
-it fails.
-
-Running merely `nilfs_cleanerd /dev/mapper/lacie', as per the
-nilfs_cleanerd -h output, succeeds (but I don't know if it does the
-right thing). When I (or mount) gives the mount point as a second
-parameter, it fails fairly silently. I only get this in
-/var/log/daemon.log:
-
-When started by mount.nilfs2:
-
-------------------------------------------------------------
-Jun 20 20:34:28 lh nilfs_cleanerd[27527]: start
-Jun 20 20:34:28 lh nilfs_cleanerd[27527]: cannot create cleanerd on /dev/mapper/lacie
-Jun 20 20:34:28 lh nilfs_cleanerd[27527]: shutdown
-------------------------------------------------------------
-
-When started manually by running `nilfs_cleanerd /dev/mapper/lacie
-/media/lacie' (the mount point):
-
-------------------------------------------------------------
-Jun 21 16:12:04 lh nilfs_cleanerd[2573]: start
-Jun 21 16:12:04 lh nilfs_cleanerd[2573]: cannot create cleanerd on /dev/mapper/lacie
-Jun 21 16:12:04 lh nilfs_cleanerd[2573]: shutdown
-------------------------------------------------------------
+/proc/mounts always uses the former syntax, so if the mount command is
+something like `mount /dev/mapper/lacie /media/lacie/ -t nilfs2', the
+cleanerd is not started because mount passes "/media/lacie/" as the
+mount point, and nilfs_find_fs() expects it to not have the last
+slash.
 
 	Sami
 
---s2ZSL+KKDSLx8OML
+--kVXhAStRUZ/+rrGn
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 Content-Disposition: inline
@@ -83,24 +67,24 @@ Content-Disposition: inline
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (GNU/Linux)
 
-iQIcBAEBCAAGBQJKPj16AAoJEKLT589SE0a0D5UQAI5kvgdWzqwV03IuISYt29HX
-Dunlgny9/Uu3PDD6a1ETu+MSgYK16YTjs6w9noYL7RpBcdGTbfPdOj8DVNsfY7Yx
-Xtkxrpp6hydzssw54D9CVDp/VobE6zd+eBVaKsPybpse7H8J+mGhCWFfmi6D4w6t
-511RS2Nhoawsp9mA2Veu2eiz6n7A8IM7q7tDiSZsoKLX/a96HoFGwkDxDyr2aKet
-QnH9WaKOQPS1z1RlS2aiHVVGp2+ZVCP6EoUzHUPN/atRJ1/zdvJF/QOUaZt4S/eI
-0vhvaz3oe2db1sUcJBsVZQ05goz3yhrhD0fY4EIz27wdir+7ao+591iWo0+fO8ZR
-Gg/w1dCGxhCo0nY2wS5hleKBuq6mRAlLN7achxOg12XU8zZcNgSMo9BHm1feb/8P
-hEI7AvCG4Mdl6Csl+lTdDZM6i1pBXp9C2tFInQ7hZRQgXFE7ceVJCi0AORAni4Rl
-0jTzD9dA6TH4XB75llLw7HJTEEB9tlL8BD0GB2lNBYAScal11+af8vMTAfQPXf5j
-bXSj2+bK9XpfGDJmzjA3zqlUAT+7ukogyrETRS9XsAKtICGjFPgkM/dBtRlv3d9J
-zt6m7S9aELhlFB9Wqv0AoEI9aRmh4HpNc13fHxyZBjLyJ+2od0vKJshCiZNfM3T8
-1yEh2WRI6vI5aNKRUau0
-=BAko
+iQIcBAEBCAAGBQJKPkWUAAoJEKLT589SE0a0QJUP/2scKk7eHzHmYPmjdLXfhTWG
+ew3ChKuCT10aQhic+Mds+c0gJRwQYryAlHZH1BZM2C/JjAWz/SZFW6XIM0ASVrI8
+rrGLuczBNW1D4NqeAKtm76N91yLCZe6aQe/5Oh0UiQ8la1gJ6mkn1o/UyAr4U4bt
+DdDNuZCn6DoFIm8DszPr6GG2qpYMt/32k51bUGC1T4bmNUdmsMu3rHKrnZ4FIeh2
+AWlc5WrDADLGl36I4PHXOBj6pGju/YBrJu7jbgjOll3R72yTM9RzORV255OX8zEX
+UfsMXoEeUO5PUX6Q+5f3v2UTJILXlyoYZVDuW/LlrUlduHBjA1AzN1ZsnbuPaF9V
+2CAh4yuHfEntmWjsZn62AWcVJp4PdiLcyiDzxO+BaAq5mjPcvbF9i4Z0U8nUZd8C
+IKbLlP/yS+BUti2y/Qh1PPc7tg2LTmOUdcwDMvQmImmIX3rJhU6ezHoWMg7ub+fQ
+9c39XcJU04tfup8kOaUv034DlK2OuMtmoVYhHEzxI9Vr5NvvOCPe6z2wTufKrFyl
+kib2CwuP01aI4xtpR/6zkrWAeZvYaZOwj/+/Ntz4l4dfgj5y/napUrUOs00aWBGE
+S3n062jiZTphmKe7zij6U5iPCJDTZtXS3MP84GeqvoNtnlIL5vmV9kx5vzJgyRCr
+sx06VHLCi6bpqeynWdEb
+=NfpT
 -----END PGP SIGNATURE-----
 
---s2ZSL+KKDSLx8OML--
+--kVXhAStRUZ/+rrGn--
 
---===============1423633157==
+--===============0039075571==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -111,4 +95,4 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---===============1423633157==--
+--===============0039075571==--
