@@ -1,15 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: df seems to show wrong disk usage
-Date: Sun, 21 Jun 2009 18:18:03 +0900 (JST)
-Message-ID: <20090621.181803.122351359.ryusuke@osrg.net>
-References: <20090620200832.GD23838@lh.kyla.fi>
-	<20090620223607.GE23838@lh.kyla.fi>
+Subject: Re: nilfs_cleanerd on root partition
+Date: Sun, 21 Jun 2009 18:39:37 +0900 (JST)
+Message-ID: <20090621.183937.71761103.ryusuke@osrg.net>
+References: <20090620211939.GA5937@odysseus.gateway.2wire.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090620223607.GE23838-7bsdmvTMBDzHOG6cAo2yLw@public.gmane.org>
+In-Reply-To: <20090620211939.GA5937-SsamVeerapxB2jdCq39ADS3k8SM3+oTIrE5yTffgRl4@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,46 +19,52 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, sliedes-kf+aQKke1yb1KXRcyAk9cg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, psykojime-PkbjNfxxIARBDgjK7y7TUQ@public.gmane.org
 
-Hi!
-On Sun, 21 Jun 2009 01:36:08 +0300, Sami Liedes wrote:
-> On Sat, Jun 20, 2009 at 11:08:33PM +0300, Sami Liedes wrote:
-> > I've been copying data to a 700 GiB nilfs2 volume from a fast disk for
-> > 2.5 hours now. df -h shows there's only 37 GiB of data there:
-> > 
-> > /dev/mapper/lacie     699G   37G  628G   6% /media/lacie
-> > 
-> > Yet running du -csh in one big directory in /media/lacie at the same
-> > time shows disk usage to be 62G in that directory alone.
-> 
-> Looking at the data, it contains a lot of hard links, so this may be
-> something to do with them.
-> 
-> 	Sami
+Hi,
+On Sat, 20 Jun 2009 16:19:39 -0500, James Erickson wrote:
+> i am new to nilfs2 so i am sorry to ask such a simple question. how
+> do i get nilfs_cleanerd to run on my root partition? my disk is a 64
+> GB intel ssd and it is completely full of checkpoints. my system is
+> originally 4 GB in size. it is gentoo amd64 running
+> linux-2.6.30-gentoo-r1. it has nilfs2 support compiled in the
+> kernel, not as a module. i thought that nilfs_cleanerd would run
+> when the root patition is mounted but i guess i was wrong. i will
+> gladly post any requested data. thank you for any help you can offer
+> in this matter.
 
-For nilfs, `df -h' shows the real disk usage which includes past data
-as well as metadata.  OTOH, `du -h' does not count neither.
+nilfs_cleanerd is invoked when the partition is mounted, but sleeps if
+no reclaimable data exists.
 
-Usually, df -h shows larger values than du -h if hardlinks are taken
-into account (this is default behavior).
+Is there nilfs_cleanerd process ?
 
-So, something looks strange in your case.
+ $ ps aux | grep nilfs_cleanerd
+
+If it exists, please try decreasing the protection period in
+/etc/nilfs_cleanerd.conf.  Nilfs tries to preserve all past data
+within the period.
+
+ $ sudo vi /etc/nilfs_cleanred.conf
+
+  # Protection period in second
+- protection_period   3600
++ protection_period   300
+
+After changed the conf file, you must send a HUP signal to the cleaner
+daemon in order to reflect the change.
+
+ $ mount -t nilfs2
+ /dev/sdb1 on / type nilfs2 (rw,gcpid=14126)
+ $ sudo kill -HUP 14126
+
+Then, it will start working to make free space.
 
 
-Could you try lssu commands?
+If the cleanerd did not exist, you can invoke it by hand.
 
-It displays disk usage state of nilfs.
+ # nilfs_cleanerd /dev/sdb1 /
 
-`lssu -a' shows all segments in the nilfs partition.
+In this case, you also have to shutdown it by hand.
 
-$ expr \( `lssu | wc -l` - 1 \) \* 8
-
-shows disk usage in Mega bytes unit.
-
-If this value differs from the value of 'df -h', the on-disk value of
-in-use segments likely went wrong.
-
-
-Thanks,
+Cheers,
 Ryusuke Konishi
