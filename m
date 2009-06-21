@@ -1,38 +1,43 @@
-From: "Dipl.-Ing. Michael Niederle" <mniederle-RbZlAiThDcE@public.gmane.org>
-Subject: Re: nilfs on root partition
-Date: Sun, 21 Jun 2009 12:23:12 +0200
-Message-ID: <20090621122312.3058255c@simplux>
-References: <mailman.1.1245553201.20508.users@nilfs.org>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: [PATCH] nilfs2: fix hang problem after bio_alloc() failed
+Date: Sun, 21 Jun 2009 13:08:43 +0200
+Message-ID: <87ocshvo78.fsf@basil.nowhere.org>
+References: <20090614153256.GA4020@homero.springfield.home>
+	<20090615.030245.104791670.konishi.ryusuke@gmail.com>
+	<20090614181313.GA16597@homero.springfield.home>
+	<20090619.023455.111674749.ryusuke@osrg.net>
 Mime-Version: 1.0
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754880AbZFULIw@vger.kernel.org>
+In-Reply-To: <20090619.023455.111674749.ryusuke@osrg.net> (Ryusuke Konishi's message of "Fri, 19 Jun 2009 02:34:55 +0900 (JST)")
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <mailman.1.1245553201.20508.users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, psykojime-PkbjNfxxIARBDgjK7y7TUQ@public.gmane.org
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-kernel@vger.kernel.org, users@nilfs.org
 
-@James Erickson:
+Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp> writes:
+>  
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 22c7f65..e8f188b 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -1846,26 +1846,13 @@ static int nilfs_segctor_write(struct nilfs_sc_info *sci,
+>  		err = nilfs_segbuf_write(segbuf, &wi);
+>  
+>  		res = nilfs_segbuf_wait(segbuf, &wi);
+> -		err = unlikely(err) ? : res;
+> +		err = unlikely(err) ? err : res;
 
-If the cleaner daemon was not started automatically while mounting the file
-system, you can start start the cleaner daemon explicity:
+It's very dubious gcc does anything with unlikely here anyways.
+They typically only work directly in conditions being tested.
 
-nilfs_cleanerd
+>  		if (unlikely(err))
+>  			return err;
 
-To check whether it actually runs:
+Also gcc generally considers conditions to blocks that
+return unlikely, so it's actually superfluous.
 
-ps -A | grep cleanerd
-
-I have the problem that it sometimes stops with a "vmap allocation failure"
-kernel message.
-
-Greetings, Michael
+-Andi
+-- 
+ak@linux.intel.com -- Speaking for myself only.
