@@ -1,15 +1,13 @@
-From: Kristjan Eerik Kaseniit <kristjan.eerik.kaseniit-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Root file system has filled up, won't boot anymore
-Date: Mon, 22 Jun 2009 13:39:38 +0300
-Message-ID: <172291b30906220339k628005hc2560a454b89c@mail.gmail.com>
-References: <172291b30906210922i2089a389jbc9b664e6b9d7c00@mail.gmail.com>
-	<20090622.034847.62046349.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: [PATCH] nilfs2-utils: cleanerd add option to override
+ protection period
+Date: Tue, 23 Jun 2009 02:50:59 +0900 (JST)
+Message-ID: <20090623.025059.10600535.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090622.034847.62046349.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -22,84 +20,136 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-2009/6/21 Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
->
-> Is there nilfs_cleanerd process? =A0If it does not exist, please invoke
-> it by hand:
->
-> =A0# nilfs_cleanerd /dev/sdb1
->
-> The cleanerd process may not start working until protection_period
-> elapses. =A0The protection period is set in /etc/nilfs_cleanerd.conf, so
-> you cannot rewrite it under disk full condition. =A0I'm considering to
-> add a new option which specifies the protecion period to help recovery
-> from this kind of stuck.
->
+Hi,
 
-Thanks for replying!
+I forgot who has proposed this feature, but I believe this would be
+helpful to people who uses nilfs for the root filesystem.
 
-This far:
-vstr ~ # ps aux | grep nilfs_cleanerd
-vstr ~ # cat /etc/nilfs_cleanerd.conf | grep protection_period
-protection_period    600
-vstr ~ # lscp
-                 CNO        DATE     TIME  MODE  FLG   NBLKINC       ICNT
-               18159  2009-06-19 18:04:28   cp    -      37700     286576
-               18160  2009-06-19 18:04:29   cp    -         42     286577
-.........................
-               19181  2009-06-19 19:32:04   cp    i       6621     291515
-               19182  2009-06-19 19:32:09   cp    -       6562     291515
-lscp: Input/output error
-vstr ~ # nilfs_cleanerd /dev/mmcblk0p1
-vstr ~ # ps aux | grep nilfs_cleanerd
-vstr ~ # dmesg | tail
-[14774.675905] attempt to access beyond end of device
-[14774.675911] mmcblk0p1: rw=3D0, want=3D10987108611918676376, limit=3D3209=
-7807
-[14774.675915] attempt to access beyond end of device
-[14774.675918] mmcblk0p1: rw=3D2, want=3D6289936748060867064, limit=3D32097=
-807
+This adds a new option to override protection period to the cleaner
+daemon.
 
-As you can see, the protection_period has passed a long time ago and
-that the cleanerd won't start but produces errors.
+Since the current GC tries to preserve every block changed or created
+within the protection period, users often need to adjust the
+protection period to make free space when they meet a disk full
+condition.  However if /etc/nilfs_cleanerd.conf is in the partition,
+this action is infeasible and it gets stuck.
 
->
-> Please post the first BUG message if you can get it. =A0It may be
-> helpful to analyze the unknown problem.
->
+This option helps to avoid this stalemate by overriding the protection
+period with a curtailed value and making cleanerd operable promptly.
 
-kernel BUG at fs/nilfs/btree.c:496!
-invalid opcode: 0000 [#1] SMP
-last sysfs file:
-CPU 0
-Modules linked in:
-Pid: 952, comm: rc Not tainted 2.6.30-gentoo-r1 #1 Vostro 1400
-RIP: 0010:[<ffffffff81194348>] [<ffffffff81194348>]
-nilfs_btree_do_lookup+0xc0/0x192
-.......
-Call trace:
-nilfs_btree_lookup
-nilfs_bmap_lookup_at_level
-nilfs_bmap_lookup
-nilfs_mdt_submit_block
-nilfs_mdt_read_block
-nilfs_mdt_get_block
-selinux_inode_alloc_security
-nilfs_palloc_gent_entry_block
-__down_read
-nilfs_ifile_get_inode_block
-nilfs_iget
-nilfs_lookup
-do_lookup
-__link_path_walk
-path_walk
-do_path_lookup
-user_path_at
-mntput_no_expire
-cp_new_stat
-vfs_fstatat
-vfs_stat
-sys_newstat
-system_call_fastpath
-Code: ....
-RIP [<ffffffff81194348>] nilfs_btree_do_lookup+0xc0/0x192
+I've pushed this into the latest git.
+
+Regards,
+Ryusuke Konishi
+---
+ man/nilfs_cleanerd.8     |    3 +++
+ sbin/cleanerd/cleanerd.c |   34 +++++++++++++++++++++++++++++-----
+ 2 files changed, 32 insertions(+), 5 deletions(-)
+
+diff --git a/man/nilfs_cleanerd.8 b/man/nilfs_cleanerd.8
+index 05857bc..30794a3 100644
+--- a/man/nilfs_cleanerd.8
++++ b/man/nilfs_cleanerd.8
+@@ -32,6 +32,9 @@ Display help message and exit.
+ .B \-n
+ invoke cleanerd without forking process. This option is intended for
+ internal use from \fBmount.nilfs2\fP(8).
++.TP
++.B \-p
++Override protection period with the specified number of seconds.
+ .SH SIGNALS
+ .B nilfs_cleanerd
+ reacts to a set of signals.  You may send a signal to
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index 6725041..b985a71 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -80,21 +80,24 @@ const static struct option long_option[] = {
+ 	{"help", no_argument, NULL, 'h'},
+ 	/* internal option for mount.nilfs2 only */
+ 	{"nofork", no_argument, NULL, 'n'},
++	{"protection-period", required_argument, NULL, 'p'},
+ 	{NULL, 0, NULL, 0}
+ };
+ #define NILFS_CLEANERD_OPTIONS	\
+ 	"  -c, --conffile\tspecify configuration file\n"	\
+-	"  -h, --help    \tdisplay this help and exit\n"
++	"  -h, --help    \tdisplay this help and exit\n"	\
++	"  -p, --protection-period\tspecify protection period\n"
+ #else	/* !_GNU_SOURCE */
+ #define NILFS_CLEANERD_OPTIONS	\
+ 	"  -c            \tspecify configuration file\n"	\
+-	"  -h            \tdisplay this help and exit\n"
++	"  -h            \tdisplay this help and exit\n"	\
++	"  -p,           \tspecify protection period\n"
+ #endif	/* _GNU_SOURCE */
+ 
+ static struct nilfs_cleanerd *nilfs_cleanerd;
+ static sigjmp_buf nilfs_cleanerd_env;
+ static volatile sig_atomic_t nilfs_cleanerd_reload_config;
+-
++static volatile unsigned long protection_period;
+ 
+ static void nilfs_cleanerd_usage(const char *progname)
+ {
+@@ -127,6 +130,11 @@ static int nilfs_cleanerd_config(struct nilfs_cleanerd *cleanerd)
+ #endif	/* HAVE_MMAP */
+ 	nilfs_cleanerd_set_log_priority(cleanerd);
+ 
++	if (protection_period != ULONG_MAX) {
++		syslog(LOG_INFO, "override protection period to %lu",
++		       protection_period);
++		cleanerd->c_config.cf_protection_period = protection_period;
++	}
+ 	return 0;
+ }
+ 
+@@ -1259,6 +1267,7 @@ int main(int argc, char *argv[])
+ {
+ 	char *progname, *conffile;
+ 	const char *dev, *dir;
++	char *endptr;
+ 	int status, nofork, c;
+ #ifdef _GNU_SOURCE
+ 	int option_index;
+@@ -1269,14 +1278,15 @@ int main(int argc, char *argv[])
+ 	conffile = NILFS_CLEANERD_CONFFILE;
+ 	nofork = 0;
+ 	status = 0;
++	protection_period = ULONG_MAX;
+ 	dev = NULL;
+ 	dir = NULL;
+ 
+ #ifdef _GNU_SOURCE
+-	while ((c = getopt_long(argc, argv, "c:hn",
++	while ((c = getopt_long(argc, argv, "c:hnp:",
+ 				long_option, &option_index)) >= 0) {
+ #else	/* !_GNU_SOURCE */
+-	while ((c = getopt(argc, argv, "c:hn")) >= 0) {
++	while ((c = getopt(argc, argv, "c:hnp:")) >= 0) {
+ #endif	/* _GNU_SOURCE */
+ 
+ 		switch (c) {
+@@ -1290,6 +1300,20 @@ int main(int argc, char *argv[])
+ 			/* internal option for mount.nilfs2 only */
+ 			nofork = 1;
+ 			break;
++		case 'p':
++			protection_period = strtoul(optarg, &endptr, 10);
++			if (endptr == optarg || *endptr != '\0') {
++				fprintf(stderr,
++					"%s: invalid protection period: %s\n",
++					progname, optarg);
++				exit(1);
++			} else if (protection_period == ULONG_MAX &&
++				   errno == ERANGE) {
++				fprintf(stderr, "%s: too large period: %s\n",
++					progname, optarg);
++				exit(1);
++			}
++			break;
+ 		default:
+ 			nilfs_cleanerd_usage(progname);
+ 			exit(1);
+-- 
+1.6.2
