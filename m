@@ -1,7 +1,7 @@
 From: shiva onassis <sh1v4_0h-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
 Subject: Re: NILFS utils 2.0.13 released
-Date: Mon, 22 Jun 2009 11:47:03 -0700 (PDT)
-Message-ID: <342452.2250.qm@web43410.mail.sp1.yahoo.com>
+Date: Mon, 22 Jun 2009 11:51:17 -0700 (PDT)
+Message-ID: <379839.71381.qm@web43414.mail.sp1.yahoo.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,4 +20,4 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 
-2.0.15? (-;
+sorry 2.0.13 of course.... I'll just try to shut up (:
