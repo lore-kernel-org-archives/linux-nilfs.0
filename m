@@ -1,16 +1,16 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: NILFS2 get stuck after bio_alloc() fail
-Date: Tue, 23 Jun 2009 13:40:26 +0900 (JST)
-Message-ID: <20090623.134026.08265083.ryusuke@osrg.net>
-References: <20090614153256.GA4020@homero.springfield.home>
-	<20090615.030245.104791670.konishi.ryusuke@gmail.com>
-	<20090614181313.GA16597@homero.springfield.home>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Root file system has filled up, won't boot anymore
+Date: Tue, 23 Jun 2009 14:12:23 +0900 (JST)
+Message-ID: <20090623.141223.80202213.ryusuke@osrg.net>
+References: <172291b30906210922i2089a389jbc9b664e6b9d7c00@mail.gmail.com>
+	<20090622.034847.62046349.ryusuke@osrg.net>
+	<172291b30906220339k628005hc2560a454b89c@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090614181313.GA16597-ukiYB341y+1jWMeXa1+QZ5bDTtF7IOEM@public.gmane.org>
+In-Reply-To: <172291b30906220339k628005hc2560a454b89c-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,45 +21,101 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: llucax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: albertito-vOTlzuNH1/1M3YmQoIpPTg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, kristjan.eerik.kaseniit-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
-Hi Leandro,
-On Sun, 14 Jun 2009 15:13:13 -0300, Leandro Lucarella <llucax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Ryusuke Konishi, el 15 de junio a las 03:02 me escribiste:
-> [snip]
-> > > Here is the complete trace:
-> > > http://pastebin.lugmen.org.ar/4931
-> > 
-> > Thank you for your help.
-> > 
-> > According to your log, there seems to be a leakage in clear processing
-> > of the writeback flag on pages.  I will review the error path of log
-> > writer to narrow down the cause.
-> 
-> Oh! I forgot to tell you that the cleanerd process was not running. When
-> I mounted the NILFS2 filesystem the cleanerd daemon said:
-> 
-> nilfs_cleanerd[29534]: start
-> nilfs_cleanerd[29534]: cannot create cleanerd on /dev/loop0
-> nilfs_cleanerd[29534]: shutdown
-> 
-> I thought I might have an old utilities version and that could be because
-> of that (since the nilfs website was down I couldn't check), but now
-> I checked in the backup nilfs website that latest version is 2.0.12 and
-> I have that (Debian package), so I don't know why the cleanerd failed to
-> start in the first place.
+Hi,
+On Mon, 22 Jun 2009 13:39:38 +0300, Kristjan Eerik Kaseniit wrote:
+> Thanks for replying!
+> =
 
-At the last weekend, several users gave me feedback on the same early
-failure of cleanerd process.
+> This far:
+> vstr ~ # ps aux | grep nilfs_cleanerd
+> vstr ~ # cat /etc/nilfs_cleanerd.conf | grep protection_period
+> protection_period    600
+> vstr ~ # lscp
+>                  CNO        DATE     TIME  MODE  FLG   NBLKINC       ICNT
+>                18159  2009-06-19 18:04:28   cp    -      37700     286576
+>                18160  2009-06-19 18:04:29   cp    -         42     286577
+> .........................
+>                19181  2009-06-19 19:32:04   cp    i       6621     291515
+>                19182  2009-06-19 19:32:09   cp    -       6562     291515
+> lscp: Input/output error
+> vstr ~ # nilfs_cleanerd /dev/mmcblk0p1
+> vstr ~ # ps aux | grep nilfs_cleanerd
+> vstr ~ # dmesg | tail
+> [14774.675905] attempt to access beyond end of device
+> [14774.675911] mmcblk0p1: rw=3D0, want=3D10987108611918676376, limit=3D32=
+097807
+> [14774.675915] attempt to access beyond end of device
+> [14774.675918] mmcblk0p1: rw=3D2, want=3D6289936748060867064, limit=3D320=
+97807
+> =
 
-This problem turned out to be caused by an elementaly bug in the
-userland library of nilfs; there was a lack of canonicalization of
-pathname in the library, and it caused the failure, for example, when
-user adds an extra slash symbol to the mount directory name.
+> As you can see, the protection_period has passed a long time ago and
+> that the cleanerd won't start but produces errors.
+> =
 
-We have released nilfs2-utils-2.0.13 yesterday to resolve this mess.
-If you didn't know it, please try the updated package.
+> >
+> > Please post the first BUG message if you can get it. =A0It may be
+> > helpful to analyze the unknown problem.
+> >
+> =
+
+> kernel BUG at fs/nilfs/btree.c:496!
+> invalid opcode: 0000 [#1] SMP
+> last sysfs file:
+> CPU 0
+> Modules linked in:
+> Pid: 952, comm: rc Not tainted 2.6.30-gentoo-r1 #1 Vostro 1400
+> RIP: 0010:[<ffffffff81194348>] [<ffffffff81194348>]
+> nilfs_btree_do_lookup+0xc0/0x192
+> .......
+> Call trace:
+> nilfs_btree_lookup
+> nilfs_bmap_lookup_at_level
+> nilfs_bmap_lookup
+> nilfs_mdt_submit_block
+> nilfs_mdt_read_block
+> nilfs_mdt_get_block
+> selinux_inode_alloc_security
+> nilfs_palloc_gent_entry_block
+> __down_read
+> nilfs_ifile_get_inode_block
+> nilfs_iget
+> nilfs_lookup
+> do_lookup
+> __link_path_walk
+> path_walk
+> do_path_lookup
+> user_path_at
+> mntput_no_expire
+> cp_new_stat
+> vfs_fstatat
+> vfs_stat
+> sys_newstat
+> system_call_fastpath
+> Code: ....
+> RIP [<ffffffff81194348>] nilfs_btree_do_lookup+0xc0/0x192
+
+According to your log, btree lookup on the inode file was failing
+because a btree node block was in an inconsistent state.
+
+The dmesg output shows there were violative access beyond the end of
+the device.
+
+> [14774.675905] attempt to access beyond end of device
+> [14774.675911] mmcblk0p1: rw=3D0, want=3D10987108611918676376, limit=3D32=
+097807
+> [14774.675915] attempt to access beyond end of device
+> [14774.675918] mmcblk0p1: rw=3D2, want=3D6289936748060867064, limit=3D320=
+97807
+
+Maybe some kind of deficiency is in the error path of btree code, and
+it is preventing the btree node block from recovering from the errors
+such as the disk full case.  I'm thinking to make time to review the
+btree code from this viewpoint.
+
+If something comes out about this, I will report in the list.
 
 Thanks,
 Ryusuke Konishi
