@@ -1,16 +1,16 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Write hang on ARM based target
-Date: Tue, 23 Jun 2009 12:35:05 +0900 (JST)
-Message-ID: <20090623.123505.37056161.ryusuke@osrg.net>
-References: <20090619.104731.99018736.ryusuke@osrg.net>
-	<BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FB3@tdpost.td.tandbergdata.com>
-	<BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FB9@tdpost.td.tandbergdata.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: NILFS2 get stuck after bio_alloc() fail
+Date: Tue, 23 Jun 2009 13:40:26 +0900 (JST)
+Message-ID: <20090623.134026.08265083.ryusuke@osrg.net>
+References: <20090614153256.GA4020@homero.springfield.home>
+	<20090615.030245.104791670.konishi.ryusuke@gmail.com>
+	<20090614181313.GA16597@homero.springfield.home>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <BAEFA5609CC3AB4BAE1625CAD4C27E5C01900FB9-qPLjlnsG5hmCmmEZ8mJCX5vx1ZQ4fP860E9HWUfgJXw@public.gmane.org>
+In-Reply-To: <20090614181313.GA16597-ukiYB341y+1jWMeXa1+QZ5bDTtF7IOEM@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,157 +21,45 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: WDunphy-/3AnZwnt+WyVkR+q5Y5grQ@public.gmane.org
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: llucax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: albertito-vOTlzuNH1/1M3YmQoIpPTg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
 
-Hi Bill,
-On Mon, 22 Jun 2009 12:58:22 -0600, "Dunphy, Bill" wrote:
-> An update.
+Hi Leandro,
+On Sun, 14 Jun 2009 15:13:13 -0300, Leandro Lucarella <llucax-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Ryusuke Konishi, el 15 de junio a las 03:02 me escribiste:
+> [snip]
+> > > Here is the complete trace:
+> > > http://pastebin.lugmen.org.ar/4931
+> > 
+> > Thank you for your help.
+> > 
+> > According to your log, there seems to be a leakage in clear processing
+> > of the writeback flag on pages.  I will review the error path of log
+> > writer to narrow down the cause.
 > 
-> I've just begun some testing on a different reference design board
-> utilizing the 88F6281.  This particular board has native support in the
-> 2.6.30 kernel which allowed me to give the in-tree version of NILFS a
-> go.  This board/kernel version combination ran though the testing
-> mentioned below without a hitch this weekend (1 million loops).  I've
-> since performed a number of massive simultaneous data transfers without
-> any errors.  Performance appeared to be much better from a high level as
-> well.  So at this point, it appears to me that there is a NILFS
-> sensitivity to the 2.6.22.18 kernel and/or a board oddity (even though
-> other file systems worked flawlessly).  My near term plan is to move
-> forward with this new board/kernel combination.  However, I will keep
-> the original board and it's 2.6.22.18 kernel up and available if you
-> would like me to try some other changes - you decide.  In the meanwhile,
-> I'll start banging away on this platform and report in if I see any
-> strange behavior.
+> Oh! I forgot to tell you that the cleanerd process was not running. When
+> I mounted the NILFS2 filesystem the cleanerd daemon said:
 > 
-> Bill
+> nilfs_cleanerd[29534]: start
+> nilfs_cleanerd[29534]: cannot create cleanerd on /dev/loop0
+> nilfs_cleanerd[29534]: shutdown
+> 
+> I thought I might have an old utilities version and that could be because
+> of that (since the nilfs website was down I couldn't check), but now
+> I checked in the backup nilfs website that latest version is 2.0.12 and
+> I have that (Debian package), so I don't know why the cleanerd failed to
+> start in the first place.
 
-Sorry for my late reply.
+At the last weekend, several users gave me feedback on the same early
+failure of cleanerd process.
 
-I found an inconsistent state in the value of sequence counter shown
-in your log.  I think some sort of synchronization problem is present.
-If so, I think we should resolve the problem because it may occur in
-any RISC architectures.
+This problem turned out to be caused by an elementaly bug in the
+userland library of nilfs; there was a lack of canonicalization of
+pathname in the library, and it caused the failure, for example, when
+user adds an extra slash symbol to the mount directory name.
 
-Could you test if the attached patch makes a difference?
-
-The patch adds volatile specifiers to sequence counters which may be
-shared among different tasks.
+We have released nilfs2-utils-2.0.13 yesterday to resolve this mess.
+If you didn't know it, please try the updated package.
 
 Thanks,
 Ryusuke Konishi
- 
-> -----Original Message-----
-> From: Dunphy, Bill 
-> Sent: Friday, June 19, 2009 9:01 AM
-> To: 'Ryusuke Konishi'
-> Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
-> Subject: RE: [NILFS users] Write hang on ARM based target
-> 
-> Thanks.  That patch integrated successfully.
-> 
-> Ran it again with the following result:
-> 
-> Jun 19 08:38:26 kernel: ========= NILFS SEGMENT INFORMATION ========
-> 
-> Jun 19 08:38:26 kernel: full segment: segnum=39, start=79872, end=81919
-> 
-> Jun 19 08:38:26 kernel: partial segment: start=81162, rest=758
-> 
-> Jun 19 08:38:26 kernel: ------------------ SUMMARY -----------------
-> 
-> Jun 19 08:38:26 kernel: nfinfo     = 4 (number of files)
-> 
-> Jun 19 08:38:26 kernel: nblocks    = 14 (number of blocks)
-> 
-> Jun 19 08:38:26 kernel: sumbytes   = 312 (size of summary in bytes)
-> 
-> Jun 19 08:38:26 kernel: nsumblk    = 1 (number of summary blocks)
-> 
-> Jun 19 08:38:26 kernel: flags      = LOGBGN|LOGEND|SR
-> 
-> Jun 19 08:38:26 kernel: ============================================
-> 
-> Jun 19 08:38:26 kernel: NILFS(segment)
-> nilfs_segctor_update_payload_blocknr: called                           
-> Jun 19 08:38:26 kernel: NILFS(segment)
-> nilfs_segctor_update_payload_blocknr: done                             
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_file_bmap:
-> called                                
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_file_bmap:
-> done                                  
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checkpoint:
-> called                               
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checkpoint:
-> done                                 
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_update_segusage:
-> called                                  
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_update_segusage:
-> done                                    
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checksums:
-> called                                
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_fill_in_checksums:
-> done                                  
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitting
-> summary blocks                          
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_alloc_seg_bio: allocated
-> bio (max_vecs=16)                       
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_write: submitting
-> normal blocks (index=1)                 
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_submit_seg_bio: submitting
-> bio (start_sector=649296, size=57344,) Jun 19 08:38:26 kernel:
-> NILFS(segment) nilfs_segbuf_write: submitted a segment (err=0,
-> pseg_start=81162, #req)
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_wait: called nbio=1
-> 
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segbuf_wait: wait completed
-> 
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_complete_write:
-> completing segment (flags=0x7)           
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_complete_write:
-> completed a segment having a super root )
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_do_construct:
-> submitted all segments                     
-> Jun 19 08:38:26 kernel: NILFS(segment) nilfs_segctor_construct: end
-> (stage=9)                                 
-
-
-diff --git a/fs/segment.c b/fs/segment.c
-index 84201ce..c9c28c2 100644
---- a/fs/segment.c
-+++ b/fs/segment.c
-@@ -2530,7 +2530,7 @@ void nilfs_segctor_clear_segments_to_be_freed(struct nilfs_sc_info *sci)
- 
- struct nilfs_segctor_wait_request {
- 	wait_queue_t	wq;
--	__u32		seq;
-+	volatile __u32	seq;
- 	int		err;
- 	atomic_t	done;
- };
-@@ -2699,7 +2699,7 @@ int nilfs_construct_dsync_segment(struct super_block *sb, struct inode *inode,
- 
- struct nilfs_segctor_req {
- 	int mode;
--	__u32 seq_accepted;
-+	volatile __u32 seq_accepted;
- 	int sc_err;  /* construction failure */
- 	int sb_err;  /* super block writeback failure */
- };
-diff --git a/fs/segment.h b/fs/segment.h
-index 44dca64..8533783 100644
---- a/fs/segment.h
-+++ b/fs/segment.h
-@@ -163,8 +163,8 @@ struct nilfs_sc_info {
- 	wait_queue_head_t	sc_wait_daemon;
- 	wait_queue_head_t	sc_wait_task;
- 
--	__u32			sc_seq_request;
--	__u32			sc_seq_done;
-+	volatile __u32		sc_seq_request;
-+	volatile __u32		sc_seq_done;
- 
- 	int			sc_sync;
- 	unsigned long		sc_interval;
--- 
-1.6.2
