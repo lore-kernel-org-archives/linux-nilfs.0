@@ -1,13 +1,11 @@
-From: Chris Samuel <chris-Ru3vu9m2XlBAfugRpC6u6w@public.gmane.org>
-Subject: Re: NILFS usage on NAND and NOR flash memory
-Date: Fri, 26 Jun 2009 18:01:48 +1000
-Message-ID: <200906261801.48514.chris@csamuel.org>
-References: <585a0ef70906231842p31130fd5h54cd124c6751ec7b@mail.gmail.com>
+From: "Stephane Krikorian" <rastaman-QFKgK+z4sOrR7s880joybQ@public.gmane.org>
+Subject: usage : snapshot feature question
+Date: Fri, 26 Jun 2009 23:50:24 +0200
+Message-ID: <WC20090626215024.290059@ibanez.dyndns.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1209748448=="
+Content-Type: multipart/mixed; boundary="===============2116076822=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <585a0ef70906231842p31130fd5h54cd124c6751ec7b-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,64 +19,73 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
---===============1209748448==
-Content-Type: multipart/signed;
-  boundary="nextPart7167775.gfQzCG10ET";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
+--===============2116076822==
+Content-Type: multipart/alternative; boundary="0626_2150_24_PART-BREAK"
 
---nextPart7167775.gfQzCG10ET
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
+--0626_2150_24_PART-BREAK
+Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
+X-MIME-Autoconverted: from 8bit to quoted-printable by sh.osrg.net id n5QM1GT2004622
 
-On Wed, 24 Jun 2009 11:42:32 am Jesse Campbell wrote:
-
-> ext3 was tried, but there were so many writes that the location of the
-> journal on the SD card burned and the card became unusable.
-
-I know that btrfs (another COW filesystem) has an SSD mode (and an SSD mode=
+Hi all
+New to nilfs, I was really impressed having played a couples of hours wit=
+h=20
+it.
+But I still wonder whether a snapshot could be used in the way I thought =
+a=20
+snapshot should behave :
+1/ I take a snapshot
+2/ I apply a patch
+3/ I test my application
+4/ I decide to revert to the state of the snapshot discarding the changes=
 =20
-for non-enterprise SSD's for 2.6.31), I wonder if NILFS could pick its brai=
-ns=20
-for these devices ?
+caused by the patch and subsequent testing.
 
-cheers,
-Chris
-=2D-=20
- Chris Samuel  :  http://www.csamuel.org/  :  Melbourne, VIC
+Is it possible since snaphots can only be mounted R/O ? Do I have to rsyn=
+c=20
+my R/O snapshot with my partition ? Thanks for enlightning me.
+St=E9phane
 
-This email may come with a PGP signature as a file. Do not panic.
-=46or more info see: http://en.wikipedia.org/wiki/OpenPGP
+--0626_2150_24_PART-BREAK
+Content-Type: text/html; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+X-MIME-Autoconverted: from 8bit to quoted-printable by sh.osrg.net id n5QM1GT2004622
 
---nextPart7167775.gfQzCG10ET
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
+<HTML>
+<font style=3D"font-family: tahoma; font-size: 10pt;"> <div>   <br />&nbs=
+p;Hi=20
+all </div> <div>New to nilfs, I was really impressed having played a coup=
+les=20
+of hours with it. </div> <div>But I still wonder whether a snapshot could=
+ be=20
+used in the way I thought a snapshot should behave :&nbsp; </div> <div>1/=
+ I=20
+take a snapshot </div> <div>2/ I apply a patch </div> <div>3/ I test my=20
+application </div> <div>4/ I decide to revert to the state of the snapsho=
+t=20
+discarding the changes caused by the patch and subsequent testing.   <br =
+/>=20
+</div> <div>&nbsp; </div> <div>Is it possible since snaphots can only be=20
+mounted R/O ? Do I have to rsync my R/O snapshot with my partition ? Than=
+ks=20
+for enlightning me. </div> <div>St=E9phane   <br /> </div></font>
+</HTML>
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
+--0626_2150_24_PART-BREAK--
 
-iQEVAwUASkSAbI1yjaOTJg85AQJ0QQf+OvTh83flhYvXT9b67m+IQVB52Nn6UH0P
-eK74eju1WAH2UQNTvToNn54Vu3wcaiPdPkvdZJYYPEY4Hr89sOQcDKKVATyCMVFM
-MN4pvKnI4S0k3LnorOt7L5ET2Tg2+m2vkgsSvPW8nUrt4bSDrdPrOORL8hyNdJcS
-iMwOngvgkNhxy+dG2ij2aY2yFdsRjhLJBtNTMfP6aidXxFgYDuL68rdqAAFTPAUm
-GsK3FgbZ4xfv20febOXgTBmAB8lCxhDiTIz7kEbcFgseqNP1A7z1suzW4aYLjIYf
-0n5BneLK1IfyFyuvbzaoX2bhzIgbFuyS4wA/qEWQ28mT3lJ/nBsHHg==
-=+6uv
------END PGP SIGNATURE-----
 
---nextPart7167775.gfQzCG10ET--
 
---===============1209748448==
+--===============2116076822==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
+Content-Transfer-Encoding: 7bit
 
 _______________________________________________
 users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---===============1209748448==--
+--===============2116076822==--
+
+
