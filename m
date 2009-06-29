@@ -1,12 +1,16 @@
-From: Tako Schotanus <tako-CpqgyGV7e4Zg9hUCZPvPmw@public.gmane.org>
-Subject: Benchmark between EXT3/4, Btrfs,
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+Subject: Re: Benchmark between EXT3/4, Btrfs,
 	Nilfs and XFS (article)
-Date: Mon, 29 Jun 2009 10:35:36 +0200
-Message-ID: <8641fd7c0906290135g4ce4f2c0veb85239ee1363d5c@mail.gmail.com>
+Date: Mon, 29 Jun 2009 11:27:45 +0200
+Message-ID: <20090629092745.GC14991@aardappel.13thmonkey.org>
+References: <8641fd7c0906290135g4ce4f2c0veb85239ee1363d5c@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1754173351=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <8641fd7c0906290135g4ce4f2c0veb85239ee1363d5c-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -15,48 +19,18 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
---===============1754173351==
-Content-Type: multipart/alternative; boundary=0016367ed4e129ae71046d78944e
+On Mon, Jun 29, 2009 at 10:35:36AM +0200, Tako Schotanus wrote:
+> Maybe you've already read it but for those who haven't:
+> 
+> http://www.phoronix.com/scan.php?page=article&item=ext4_btrfs_nilfs2&num=1
 
---0016367ed4e129ae71046d78944e
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+It just shows that NiLFS is better suited for SSD media :) I predict SSD will
+replace the older harddisc technology in the end. Its just waiting for volume
+and flash chips getting bigger and cheaper.
 
-Maybe you've already read it but for those who haven't:
-
-http://www.phoronix.com/scan.php?page=article&item=ext4_btrfs_nilfs2&num=1
-
--- 
-
--Tako
-
---0016367ed4e129ae71046d78944e
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div>Maybe you&#39;ve already read it but for those who haven&#39;t:</div><=
-div><br></div><a href=3D"http://www.phoronix.com/scan.php?page=3Darticle&am=
-p;item=3Dext4_btrfs_nilfs2&amp;num=3D1">http://www.phoronix.com/scan.php?pa=
-ge=3Darticle&amp;item=3Dext4_btrfs_nilfs2&amp;num=3D1</a><br clear=3D"all">
-
-<br>-- <br><br>-Tako<br>
-
---0016367ed4e129ae71046d78944e--
-
---===============1754173351==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============1754173351==--
+With regards,
+Reinoud
