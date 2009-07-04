@@ -1,15 +1,11 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCH] Fixed a bug that cp count get wrong on
- errors when deleting series of cp
-Date: Sat, 04 Jul 2009 03:00:39 +0900 (JST)
-Message-ID: <20090704.030039.31628845.ryusuke@osrg.net>
-References: <87zlbmxq4e.wl%jir@sekiba.com>
+From: Quentin RAMEAU <quinq.ml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Can't start nilfs_cleanerd on root fs.
+Date: Sat, 4 Jul 2009 16:43:31 +0200
+Message-ID: <21e999b60907040743l3940f2a2y1a7b0e56dfe73d73@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0849362186=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <87zlbmxq4e.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,75 +14,83 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi Sekiba-san,
-On Fri, 03 Jul 2009 15:00:33 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
-> Hi, 
-> 
-> This is a patch to fix a bug that checkpoint count get wrong
-> on errors when deleting series of checkpoints.
-> 
-> Thanks,
-> 
-> Regards
-> -- 
-> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-> 
->  Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+--===============0849362186==
+Content-Type: multipart/alternative; boundary=001636c5c242f8cf35046de24b90
 
-Thank you for sending this!
+--001636c5c242f8cf35046de24b90
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-This patch fixes possible mismatch between the number of checkpoints
-and the count stored in the header block of cpfile.
+Hello,
 
-Later, I will apply this to a series for 2.6.31-rc, and send it to
-Linus before 2.6.31-rc3 or so.
+I formated my root fs with nilfs a few days ago, but I can't start cleanerd
+for that fs.
+I have another nilfs on that system that seems to work correctly.
 
-Regards,
-Ryusuke Konishi
- 
-> ---
->  fs/nilfs2/cpfile.c |    5 ++---
->  1 files changed, 2 insertions(+), 3 deletions(-)
-> 
-> diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-> index 7d49813..aec942c 100644
-> --- a/fs/nilfs2/cpfile.c
-> +++ b/fs/nilfs2/cpfile.c
-> @@ -307,7 +307,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
->  		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
->  		if (ret < 0) {
->  			if (ret != -ENOENT)
-> -				goto out_header;
-> +				break;
->  			/* skip hole */
->  			ret = 0;
->  			continue;
-> @@ -340,7 +340,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
->  					continue;
->  				printk(KERN_ERR "%s: cannot delete block\n",
->  				       __func__);
-> -				goto out_header;
-> +				break;
->  			}
->  		}
->  
-> @@ -358,7 +358,6 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
->  		kunmap_atomic(kaddr, KM_USER0);
->  	}
->  
-> - out_header:
->  	brelse(header_bh);
->  
->   out_sem:
-> -- 
-> 1.5.6.5
-> 
-> 
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
+Maybe I am doing something wrong, at least, there something that could be
+done, here is some info about it:
+
+$ uname -r
+2.6.30-zen1
+
+$ mount -t nilfs2
+/dev/hda3 on / type nilfs2 (rw,gcpid=1510)
+/dev/hda4 on /DATA type nilfs2 (rw,gcpid=1675)
+
+$ ps -ef | grep nilfs
+root      1675     1  0 12:56 ?        00:00:02 /sbin/nilfs_cleanerd -n
+/dev/hda4 /DATA
+
+$ nilfs_cleanerd /dev/hda3 && tail /var/log/everything/current | grep nilfs
+Jul 04 15:46:29 [nilfs_cleanerd] start
+Jul 04 15:46:29 [nilfs_cleanerd] cannot open nilfs on /dev/hda3: Invalid
+argument
+Jul 04 15:46:29 [nilfs_cleanerd] cannot create cleanerd on /dev/hda3:
+Invalid argument
+Jul 04 15:46:29 [nilfs_cleanerd] shutdown
+
+I formated both FSs with nilfs-utils 2.0.12, but I am now using 2.0.13
+(problem occured with both versions).
+I can provide an more info that is necessary.
+
+--001636c5c242f8cf35046de24b90
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hello,<br><br>I formated my root fs with nilfs a few days ago, but I can&#3=
+9;t start cleanerd for that fs.<br>I have another nilfs on that system that=
+ seems to work correctly.<br><br>Maybe I am doing something wrong, at least=
+, there something that could be done, here is some info about it:<br>
+<br>$ uname -r<br>2.6.30-zen1<br><br>$ mount -t nilfs2<br>/dev/hda3 on / ty=
+pe nilfs2 (rw,gcpid=3D1510)<br>/dev/hda4 on /DATA type nilfs2 (rw,gcpid=3D1=
+675)<br><br>$ ps -ef | grep nilfs<br>root=A0=A0=A0=A0=A0 1675=A0=A0=A0=A0 1=
+=A0 0 12:56 ?=A0=A0=A0=A0=A0=A0=A0 00:00:02 /sbin/nilfs_cleanerd -n /dev/hd=
+a4 /DATA<br>
+<br>$ nilfs_cleanerd /dev/hda3 &amp;&amp; tail /var/log/everything/current =
+| grep nilfs<br>Jul 04 15:46:29 [nilfs_cleanerd] start<br>Jul 04 15:46:29 [=
+nilfs_cleanerd] cannot open nilfs on /dev/hda3: Invalid argument<br>Jul 04 =
+15:46:29 [nilfs_cleanerd] cannot create cleanerd on /dev/hda3: Invalid argu=
+ment<br>
+Jul 04 15:46:29 [nilfs_cleanerd] shutdown<br><br>I formated both FSs with n=
+ilfs-utils 2.0.12, but I am now using 2.0.13 (problem occured with both ver=
+sions).<br>I can provide an more info that is necessary.<br>
+
+--001636c5c242f8cf35046de24b90--
+
+--===============0849362186==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0849362186==--
