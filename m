@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 3/5] nilfs2: fix incorrect KERN_CRIT messages
-	in case of write failures
-Date: Tue,  7 Jul 2009 12:53:10 +0900
-Message-ID: <1246938792-14681-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 4/5] nilfs2: fix lockdep warning between
+	regular file and inode file
+Date: Tue,  7 Jul 2009 12:53:11 +0900
+Message-ID: <1246938792-14681-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1246938792-14681-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,41 +23,51 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-In case of write-failure retries, the following KERN_CRIT level
-messages are mistakenly output by nilfs_dat_commit_start() function:
+This will fix the following false positive of recursive locking which
+lockdep has detected:
 
-nilfs_dat_commit_start: vbn = 408463, start = 12506, end = 18446744073709551615, pbn = 530210
-nilfs_dat_commit_start: vbn = 408515, start = 12506, end = 18446744073709551615, pbn = 530211
-nilfs_dat_commit_start: vbn = 408464, start = 12506, end = 18446744073709551615, pbn = 530212
-...
+=============================================
+[ INFO: possible recursive locking detected ]
+2.6.30-nilfs #42
+---------------------------------------------
+nilfs_cleanerd/10607 is trying to acquire lock:
+ (&bmap->b_sem){++++-.}, at: [<e0d025b7>] nilfs_bmap_lookup_at_level+0x1a/0x74 [nilfs2]
 
-This suppresses these messages.
+but task is already holding lock:
+ (&bmap->b_sem){++++-.}, at: [<e0d024e0>] nilfs_bmap_truncate+0x19/0x6a [nilfs2]
+other info that might help us debug this:
+2 locks held by nilfs_cleanerd/10607:
+ #0:  (&nilfs->ns_segctor_sem){++++.+}, at: [<e0d0d75a>] nilfs_transaction_begin+0xb6/0x10c [nilfs2]
+ #1:  (&bmap->b_sem){++++-.}, at: [<e0d024e0>] nilfs_bmap_truncate+0x19/0x6a [nilfs2]
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 ---
- fs/nilfs2/dat.c |    9 ---------
- 1 files changed, 0 insertions(+), 9 deletions(-)
+ fs/nilfs2/bmap.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 0b2710e..8927ca2 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -134,15 +134,6 @@ void nilfs_dat_commit_start(struct inode *dat, struct nilfs_palloc_req *req,
- 	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
- 					     req->pr_entry_bh, kaddr);
- 	entry->de_start = cpu_to_le64(nilfs_mdt_cno(dat));
--	if (entry->de_blocknr != cpu_to_le64(0) ||
--	    entry->de_end != cpu_to_le64(NILFS_CNO_MAX)) {
--		printk(KERN_CRIT
--		       "%s: vbn = %llu, start = %llu, end = %llu, pbn = %llu\n",
--		       __func__, (unsigned long long)req->pr_entry_nr,
--		       (unsigned long long)le64_to_cpu(entry->de_start),
--		       (unsigned long long)le64_to_cpu(entry->de_end),
--		       (unsigned long long)le64_to_cpu(entry->de_blocknr));
--	}
- 	entry->de_blocknr = cpu_to_le64(blocknr);
- 	kunmap_atomic(kaddr, KM_USER0);
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 36df60b..99d58a0 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -568,6 +568,7 @@ void nilfs_bmap_abort_update_v(struct nilfs_bmap *bmap,
+ }
  
+ static struct lock_class_key nilfs_bmap_dat_lock_key;
++static struct lock_class_key nilfs_bmap_mdt_lock_key;
+ 
+ /**
+  * nilfs_bmap_read - read a bmap from an inode
+@@ -603,7 +604,11 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
+ 		bmap->b_ptr_type = NILFS_BMAP_PTR_VS;
+ 		bmap->b_last_allocated_key = 0;
+ 		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
++		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
+ 		break;
++	case NILFS_IFILE_INO:
++		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
++		/* Fall through */
+ 	default:
+ 		bmap->b_ptr_type = NILFS_BMAP_PTR_VM;
+ 		bmap->b_last_allocated_key = 0;
 -- 
 1.6.3.3
