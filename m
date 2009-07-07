@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 4/5] nilfs2: fix lockdep warning between
-	regular file and inode file
-Date: Tue,  7 Jul 2009 12:53:11 +0900
-Message-ID: <1246938792-14681-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/5] nilfs2: remove unlikely directive causing
+	mis-conversion of error code
+Date: Tue,  7 Jul 2009 12:53:08 +0900
+Message-ID: <1246938792-14681-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1246938792-14681-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,51 +23,39 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This will fix the following false positive of recursive locking which
-lockdep has detected:
+The following error code handling in nilfs_segctor_write() function
+wrongly converted negative error codes to a truth value (i.e. 1):
 
-=============================================
-[ INFO: possible recursive locking detected ]
-2.6.30-nilfs #42
----------------------------------------------
-nilfs_cleanerd/10607 is trying to acquire lock:
- (&bmap->b_sem){++++-.}, at: [<e0d025b7>] nilfs_bmap_lookup_at_level+0x1a/0x74 [nilfs2]
+   err = unlikely(err) ? : res;
 
-but task is already holding lock:
- (&bmap->b_sem){++++-.}, at: [<e0d024e0>] nilfs_bmap_truncate+0x19/0x6a [nilfs2]
-other info that might help us debug this:
-2 locks held by nilfs_cleanerd/10607:
- #0:  (&nilfs->ns_segctor_sem){++++.+}, at: [<e0d0d75a>] nilfs_transaction_begin+0xb6/0x10c [nilfs2]
- #1:  (&bmap->b_sem){++++-.}, at: [<e0d024e0>] nilfs_bmap_truncate+0x19/0x6a [nilfs2]
+which originaly meant to be
+
+   err = err ? : res;
+
+This mis-conversion caused that write or sync functions receive the
+unexpected error code.  This fixes the bug by removing the unlikely
+directive.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 ---
- fs/nilfs2/bmap.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ fs/nilfs2/segment.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 36df60b..99d58a0 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -568,6 +568,7 @@ void nilfs_bmap_abort_update_v(struct nilfs_bmap *bmap,
- }
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index aa97754..c182491 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1829,8 +1829,8 @@ static int nilfs_segctor_write(struct nilfs_sc_info *sci,
+ 		err = nilfs_segbuf_write(segbuf, &wi);
  
- static struct lock_class_key nilfs_bmap_dat_lock_key;
-+static struct lock_class_key nilfs_bmap_mdt_lock_key;
- 
- /**
-  * nilfs_bmap_read - read a bmap from an inode
-@@ -603,7 +604,11 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
- 		bmap->b_ptr_type = NILFS_BMAP_PTR_VS;
- 		bmap->b_last_allocated_key = 0;
- 		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
-+		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
- 		break;
-+	case NILFS_IFILE_INO:
-+		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
-+		/* Fall through */
- 	default:
- 		bmap->b_ptr_type = NILFS_BMAP_PTR_VM;
- 		bmap->b_last_allocated_key = 0;
+ 		res = nilfs_segbuf_wait(segbuf, &wi);
+-		err = unlikely(err) ? : res;
+-		if (unlikely(err))
++		err = err ? : res;
++		if (err)
+ 			return err;
+ 	}
+ 	return 0;
 -- 
 1.6.3.3
