@@ -1,15 +1,15 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: can't start nilfs_cleanerd on root fs
-Date: Mon, 06 Jul 2009 12:56:49 +0900 (JST)
-Message-ID: <20090706.125649.101609242.ryusuke@osrg.net>
-References: <mailman.1.1246762801.19752.users@nilfs.org>
-	<20090706025104.GA6163@odysseus.gateway.2wire.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 3/5] nilfs2: fix incorrect KERN_CRIT messages
+	in case of write failures
+Date: Tue,  7 Jul 2009 12:53:10 +0900
+Message-ID: <1246938792-14681-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1246938792-14681-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090706025104.GA6163-SsamVeerapxB2jdCq39ADS3k8SM3+oTIrE5yTffgRl4@public.gmane.org>
+In-Reply-To: <1246938792-14681-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,23 +20,44 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, psykojime-PkbjNfxxIARBDgjK7y7TUQ@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
-On Sun, 5 Jul 2009 21:51:04 -0500, James Erickson wrote:
-> i have nilfs2 as my root partition also. the only thing that works for
-> me is to call nilfs_cleanerd explicitly as root with no device. so as
-> root i just call "/sbin/nilfs_cleanerd" and it starts on the root
-> partititon. i don't know why this is but it is the only thing that works
-> on my gentoo amd64 system. i would like for it to start at boot but it
-> does not. maybe this will change in the future. good luck.
+In case of write-failure retries, the following KERN_CRIT level
+messages are mistakenly output by nilfs_dat_commit_start() function:
 
-Could you try the patch I attached yesterday in the following mail ?
+nilfs_dat_commit_start: vbn = 408463, start = 12506, end = 18446744073709551615, pbn = 530210
+nilfs_dat_commit_start: vbn = 408515, start = 12506, end = 18446744073709551615, pbn = 530211
+nilfs_dat_commit_start: vbn = 408464, start = 12506, end = 18446744073709551615, pbn = 530212
+...
 
-https://www.nilfs.org/pipermail/users/2009-July/000782.html
+This suppresses these messages.
 
-nilfs_cleanerd refers to /proc/mounts to find or check existing
-mounts.  How does the root partition look like in /proc/mounts ?
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+---
+ fs/nilfs2/dat.c |    9 ---------
+ 1 files changed, 0 insertions(+), 9 deletions(-)
 
-Regards,
-Ryusuke Konishi
+diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+index 0b2710e..8927ca2 100644
+--- a/fs/nilfs2/dat.c
++++ b/fs/nilfs2/dat.c
+@@ -134,15 +134,6 @@ void nilfs_dat_commit_start(struct inode *dat, struct nilfs_palloc_req *req,
+ 	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
+ 					     req->pr_entry_bh, kaddr);
+ 	entry->de_start = cpu_to_le64(nilfs_mdt_cno(dat));
+-	if (entry->de_blocknr != cpu_to_le64(0) ||
+-	    entry->de_end != cpu_to_le64(NILFS_CNO_MAX)) {
+-		printk(KERN_CRIT
+-		       "%s: vbn = %llu, start = %llu, end = %llu, pbn = %llu\n",
+-		       __func__, (unsigned long long)req->pr_entry_nr,
+-		       (unsigned long long)le64_to_cpu(entry->de_start),
+-		       (unsigned long long)le64_to_cpu(entry->de_end),
+-		       (unsigned long long)le64_to_cpu(entry->de_blocknr));
+-	}
+ 	entry->de_blocknr = cpu_to_le64(blocknr);
+ 	kunmap_atomic(kaddr, KM_USER0);
+ 
+-- 
+1.6.3.3
