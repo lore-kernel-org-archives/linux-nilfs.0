@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 1/5] nilfs2: remove unlikely directive causing
-	mis-conversion of error code
-Date: Tue,  7 Jul 2009 12:53:08 +0900
-Message-ID: <1246938792-14681-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 5/5] nilfs2: fix disorder in cp count on error
+	during deleting checkpoints
+Date: Tue,  7 Jul 2009 12:53:12 +0900
+Message-ID: <1246938792-14681-6-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1246938792-14681-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -21,41 +21,53 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-The following error code handling in nilfs_segctor_write() function
-wrongly converted negative error codes to a truth value (i.e. 1):
+From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-   err = unlikely(err) ? : res;
+This fixes a bug that checkpoint count gets wrong on errors when
+deleting a series of checkpoints.
 
-which originaly meant to be
+The count error is persistent since the checkpoint count is stored on
+disk.  Some userland programs refer to the count via ioctl, and this
+bugfix is needed to prevent malfunction of such programs.
 
-   err = err ? : res;
-
-This mis-conversion caused that write or sync functions receive the
-unexpected error code.  This fixes the bug by removing the unlikely
-directive.
-
+Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 ---
- fs/nilfs2/segment.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ fs/nilfs2/cpfile.c |    5 ++---
+ 1 files changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index aa97754..c182491 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1829,8 +1829,8 @@ static int nilfs_segctor_write(struct nilfs_sc_info *sci,
- 		err = nilfs_segbuf_write(segbuf, &wi);
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index 7d49813..aec942c 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -307,7 +307,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
+ 		if (ret < 0) {
+ 			if (ret != -ENOENT)
+-				goto out_header;
++				break;
+ 			/* skip hole */
+ 			ret = 0;
+ 			continue;
+@@ -340,7 +340,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 					continue;
+ 				printk(KERN_ERR "%s: cannot delete block\n",
+ 				       __func__);
+-				goto out_header;
++				break;
+ 			}
+ 		}
  
- 		res = nilfs_segbuf_wait(segbuf, &wi);
--		err = unlikely(err) ? : res;
--		if (unlikely(err))
-+		err = err ? : res;
-+		if (err)
- 			return err;
+@@ -358,7 +358,6 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 		kunmap_atomic(kaddr, KM_USER0);
  	}
- 	return 0;
+ 
+- out_header:
+ 	brelse(header_bh);
+ 
+  out_sem:
 -- 
 1.6.3.3
