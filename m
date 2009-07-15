@@ -1,11 +1,10 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: NILFS 2.0.15 released
-Date: Sat, 11 Jul 2009 23:53:25 +0900 (JST)
-Message-ID: <20090711.235325.105375961.ryusuke@osrg.net>
+From: James Erickson <psykojime-PkbjNfxxIARBDgjK7y7TUQ@public.gmane.org>
+Subject: [SPAM]  nilfs2 and vesafb
+Date: Wed, 15 Jul 2009 14:13:25 -0500
+Message-ID: <BAY112-W216FF3E2E2D0C91C4996AEBA200@phx.gbl>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0550414434=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
@@ -15,35 +14,68 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi everyone,
+--===============0550414434==
+Content-Type: multipart/alternative;
+	boundary="_fb663a43-a23b-491c-bec1-c620093f4016_"
 
-I have released nilfs-2.0.15 standalone package, which includes
-several bug fixes including hang problem after write failures.  This
-also includes a change to improve read performance on some fast
-drives.
-
-Here is a summary of changes from the previous version:
-
-* enable sync_page method; this adds a missing sync_page method which
-  unplugs bio requests during lock retries on pages. This will improve
-  read performance of nilfs.
-* fix bh leak in nilfs_cpfile_delete_checkpoints function
-* fix disorder in checkpoint count on error during deleting
-  checkpoints
-* fix hang problem of log writer which occurs after write failures
-* remove unlikely directive causing mis-conversion of error code
-* fix lockdep warning between regular file and inode file
-* fix incorrect KERN_CRIT messages in case of write failures
-* correct display of sequence counter printed when request has
-  completed
-* separate debug message related to transaction from ones for segment
+--_fb663a43-a23b-491c-bec1-c620093f4016_
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
 
 
-The updated package is available at http://www.nilfs.org/en/download.html.
+sorry for off-topic.  what is the relationship of nilfs2 to vesafb?=20
+since migrating tonilfs2 i cannot seem to get vesfb to work. thank you
+for your consideration in this matter.
 
-Thanks,
-Ryusuke Konishi
+_________________________________________________________________
+Windows Live=99 SkyDrive=99: Get 25 GB of free online storage.
+http://windowslive.com/online/skydrive?ocid=3DTXT_TAGLM_WL_SD_25GB_062009=
+
+--_fb663a43-a23b-491c-bec1-c620093f4016_
+Content-Type: text/html; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<style>
+.hmmessage P
+{
+margin:0px=3B
+padding:0px
+}
+body.hmmessage
+{
+font-size: 10pt=3B
+font-family:Verdana
+}
+</style>
+</head>
+<body class=3D'hmmessage'>
+sorry for off-topic.&nbsp=3B what is the relationship of nilfs2 to vesafb?&=
+nbsp=3B
+since migrating tonilfs2 i cannot seem to get vesfb to work. thank you
+for your consideration in this matter.<br><br /><hr />Windows Live=99 SkyDr=
+ive=99: Get 25 GB of free online storage.   <a href=3D'http://windowslive.c=
+om/online/skydrive?ocid=3DTXT_TAGLM_WL_SD_25GB_062009' target=3D'_new'>Get =
+it on your BlackBerry or iPhone.</a></body>
+</html>=
+
+--_fb663a43-a23b-491c-bec1-c620093f4016_--
+
+--===============0550414434==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0550414434==--
