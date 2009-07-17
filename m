@@ -1,14 +1,16 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Is www.nilfs.org/git the development tree?
-Date: Sat, 18 Jul 2009 01:47:46 +0900 (JST)
-Message-ID: <20090718.014746.73272641.ryusuke@osrg.net>
-References: <977a2be20907170900u3c5e64e8ne9373ea100e8b16c@mail.gmail.com>
+Subject: Re: [PATCH 3/3] nilfs2: stop using periodic
+ write_super callback
+Date: Sat, 18 Jul 2009 03:04:21 +0900 (JST)
+Message-ID: <20090718.030421.01787640.ryusuke@osrg.net>
+References: <1247821968-31232-1-git-send-email-jir@unicus.jp>
+	<1247821968-31232-4-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <977a2be20907170900u3c5e64e8ne9373ea100e8b16c-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1247821968-31232-4-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,46 +21,97 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
 
-Hi!
-On Sat, 18 Jul 2009 00:00:02 +0800, Zhu Yanhai wrote:
-> Hi,
-> Is www.nilfs.org/git the development tree? It seems really old, and
-> can't compile against v2.6.30 kernel.
+On Fri, 17 Jul 2009 18:12:48 +0900, Jiro SEKIBA wrote:
+> instead of periodic write_super callback,
+> commit super block in internal thread.
 
-The nilfs2-module.git in the site is the tree to maintain standalone
-module for kernels prior to 2.6.30.
+I appreciate if you could clearly describe the problem what this patch
+solves because the changelog becomes the only clue after merged into
+the mainline; I know it by the first mail, but the cover letter will
+be dropped when it's queued in a git tree.
 
-> If it's not, where is the development git repo for nilfs2?
+> Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+> ---
+>  fs/nilfs2/segment.c |   12 +++++++++++-
+>  fs/nilfs2/super.c   |    2 +-
+>  2 files changed, 12 insertions(+), 2 deletions(-)
+> 
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 8b5e477..fe25424 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -2486,8 +2486,9 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci,
+>  			atomic_set(&nilfs->ns_ndirtyblks, 0);
+>  		if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) &&
+>  		    nilfs_discontinued(nilfs)) {
+
+Well, maybe we should change the name of nilfs_discontinued before
+applying this patch.
+
+It originally meant that the latest log got untraceable from
+the log which the super block points to.
+
+After applying this patch, the meaning of the flag will change to a
+state "the superblock needs to be written back".
+
+> +			u64 t = get_seconds();
+>  			down_write(&nilfs->ns_sem);
+> -			req->sb_err = nilfs_commit_super(sbi, 0);
+> +			req->sb_err = nilfs_commit_super(sbi, nilfs_update_alt_super(nilfs,t));
+
+Yes, this looks needed when stopping use of the callback.
+
+>  			up_write(&nilfs->ns_sem);
+>  		}
+>  	}
+> @@ -2675,6 +2676,9 @@ static int nilfs_segctor_thread(void *arg)
+>  	} else {
+>  		DEFINE_WAIT(wait);
+>  		int should_sleep = 1;
+> +		u64 t;
+> +		struct nilfs_sb_info *sbi;
+> +	        struct the_nilfs *nilfs;
+>  
+>  		prepare_to_wait(&sci->sc_wait_daemon, &wait,
+>  				TASK_INTERRUPTIBLE);
+> @@ -2695,6 +2699,12 @@ static int nilfs_segctor_thread(void *arg)
+>  		finish_wait(&sci->sc_wait_daemon, &wait);
+>  		timeout = ((sci->sc_state & NILFS_SEGCTOR_COMMIT) &&
+>  			   time_after_eq(jiffies, sci->sc_timer->expires));
+> +		t = get_seconds();
+> +		sbi = sci->sc_sbi;
+> +	        nilfs = sbi->s_nilfs;
+> +		if(test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) && 
+> +	   	   nilfs_update_super(nilfs,t))
+> +			set_nilfs_discontinued(nilfs);
+
+We need to discuss for this.
+
+At least, the NILFS_SC_SUPER_ROOT bit may be cleared by other tasks
+outside the transaction lock.
+
+
+>  	}
+>  	goto loop;
+>  
+> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+> index 55a4359..00a2173 100644
+> --- a/fs/nilfs2/super.c
+> +++ b/fs/nilfs2/super.c
+> @@ -533,7 +533,7 @@ static struct super_operations nilfs_sops = {
+>  	/* .drop_inode	  = nilfs_drop_inode, */
+>  	.delete_inode   = nilfs_delete_inode,
+>  	.put_super      = nilfs_put_super,
+> -	.write_super    = nilfs_write_super,
+> +	/* .write_super    = nilfs_write_super, */
+>  	.sync_fs        = nilfs_sync_fs,
+>  	/* .write_super_lockfs */
+>  	/* .unlockfs */
+> -- 
+> 1.5.6.5
 > 
 
-please see 
-
-http://git.kernel.org/?p=linux/kernel/git/ryusuke/nilfs2.git;a=summary
-
-for the development tree.
-
-Note that the nilfs2.git is a tree to manage patchsets for the
-mainline.  I mean its branches are frequently rebased; I recommend you
-to use "git remote" if you follow the tree.
-
-Here I address use of branches in the tree:
-
- o master - mainline
-
- o fixes - pending bugfixes
-
- o for-next - branch exported to linux-next
-              (used for bonding test and compilation tests)
-
- o for-linus - this holds patches to be sent to Linus
-
- o experimental - branch to hold every patch including experimental
-                  patches, or patches queued for next merge window.
-
-> Thanks,
-> Zhu Yanhai
-
-Cheers,
+Regards,
 Ryusuke Konishi
