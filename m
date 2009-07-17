@@ -1,12 +1,14 @@
-From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH 0/3] write_super clean up
-Date: Fri, 17 Jul 2009 18:12:45 +0900
-Message-ID: <1247821968-31232-1-git-send-email-jir@unicus.jp>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [PATCH 0/3] write_super clean up
+Date: Fri, 17 Jul 2009 22:23:56 +0900 (JST)
+Message-ID: <20090717.222356.78016746.ryusuke@osrg.net>
+References: <1247821968-31232-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <1247821968-31232-1-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,36 +19,47 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
 
-Hi, this is a candidate patch to cleanup write_super callback.
+Hi,
+On Fri, 17 Jul 2009 18:12:45 +0900, Jiro SEKIBA wrote:
+> Hi, this is a candidate patch to cleanup write_super callback.
+> 
+> VFS layer calls ->write_super callback periodically.  However,
+> it looks like that calling back is ommited when disk I/O is busy.
+> And when cleanerd is runnig, disk I/O tend to be busy thus
+> nilfs superblock is not synchronized as nilfs designed.
+> 
+> To avoid it, syncing superblock by nilfs thread instead of VFS pdflush.
+> 
+> These patches show the basic idea.
+> 
+> First one is a just clean up for nilfs_sync_fs.  writing superblock
+> must be done very end of the function.
+> 
+> Second one will separeate condition for syncing superblock and alternative
+> superblock as a inline function.
+> 
+> Third one is the actual patch to sync the superblock in nilfs internal thread.
+> Because the conditions in nilfs_write_super are using seconds, I used
+> it as well in the patch.  However, it might be good to use jiffies instead
+> of using get_seconds.
+> 
+>  
+>  fs/nilfs2/segment.c   |   13 ++++++++++++-
+>  fs/nilfs2/super.c     |   16 +++++++---------
+>  fs/nilfs2/the_nilfs.h |   10 ++++++++++
+>  3 files changed, 29 insertions(+), 10 deletions(-)
 
-VFS layer calls ->write_super callback periodically.  However,
-it looks like that calling back is ommited when disk I/O is busy.
-And when cleanerd is runnig, disk I/O tend to be busy thus
-nilfs superblock is not synchronized as nilfs designed.
+First, thank you very much for your help!
 
-To avoid it, syncing superblock by nilfs thread instead of VFS pdflush.
+Recently, I'm pushed for time and I feel a desperate need for help
+just even to maintain this project.
 
-These patches show the basic idea.
+I'll look into each of them a few moments later.
 
-First one is a just clean up for nilfs_sync_fs.  writing superblock
-must be done very end of the function.
+Thanks,
+Ryusuke Konishi
 
-Second one will separeate condition for syncing superblock and alternative
-superblock as a inline function.
-
-Third one is the actual patch to sync the superblock in nilfs internal thread.
-Because the conditions in nilfs_write_super are using seconds, I used
-it as well in the patch.  However, it might be good to use jiffies instead
-of using get_seconds.
-
- 
- fs/nilfs2/segment.c   |   13 ++++++++++++-
- fs/nilfs2/super.c     |   16 +++++++---------
- fs/nilfs2/the_nilfs.h |   10 ++++++++++
- 3 files changed, 29 insertions(+), 10 deletions(-)
-
--- 
-Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+> -- 
+> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
