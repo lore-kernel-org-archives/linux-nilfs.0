@@ -1,15 +1,12 @@
 From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH 1/3] nilfs2: fix disorder of nilfs_write_super
-	in nilfs_sync_fs
-Date: Sun, 19 Jul 2009 14:26:20 +0900
-Message-ID: <1247981182-14831-2-git-send-email-jir@unicus.jp>
-References: <1247981182-14831-1-git-send-email-jir@unicus.jp>
+Subject: [PATCH 0/3] v2: write_super clean up
+Date: Sun, 19 Jul 2009 14:26:19 +0900
+Message-ID: <1247981182-14831-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1247981182-14831-1-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -23,33 +20,22 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-fix disorder of nilfs_write_super in nilfs_sync_fs.
-commiting super block must be the end of the function
-so that every chanages are reflected.
+Hi, this is revised version of write_super clean up patch.
 
-Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
----
- fs/nilfs2/super.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
+It reflects most of Konishi-san's comment, except the nilfs_discontined()
+inline functions to be renamed.  That inline funcion is one of inline
+functions defined by single macro.  So as Konishi-san said, I'd rather
+like to rename it as separate patch.
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 8e2ec43..ba69601 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -388,11 +388,12 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
- {
- 	int err = 0;
- 
--	nilfs_write_super(sb);
--
- 	/* This function is called when super block should be written back */
- 	if (wait)
- 		err = nilfs_construct_segment(sb);
-+
-+	nilfs_write_super(sb);
-+
- 	return err;
- }
- 
+Any comments and suggestions are appreciate.
+
+Thanks,
+
+regards,
+
+ fs/nilfs2/segment.c   |   12 +++++++++++-
+ fs/nilfs2/super.c     |   16 +++++++---------
+ fs/nilfs2/the_nilfs.h |   12 ++++++++++++
+ 3 files changed, 30 insertions(+), 10 deletions(-)
 -- 
-1.5.6.5
+Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
