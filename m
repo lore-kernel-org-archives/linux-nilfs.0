@@ -1,14 +1,11 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCH 0/3] v3: write_super clean up
-Date: Thu, 23 Jul 2009 02:06:05 +0900 (JST)
-Message-ID: <20090723.020605.118916792.ryusuke@osrg.net>
-References: <1248252323-22959-1-git-send-email-jir@unicus.jp>
+From: havuz goz <dutdurudut-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Regarding NILFS performance
+Date: Thu, 23 Jul 2009 12:05:18 +0300
+Message-ID: <447f427d0907230205r2913fef4l8d912c0b093a4904@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0760565367=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1248252323-22959-1-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,31 +14,85 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi,
-On Wed, 22 Jul 2009 17:45:20 +0900, Jiro SEKIBA wrote:
-> Hi, this is re-revised version of write_super clean up patch.
-> 
-> This time, 3rd one removed nilfs_write_super out.
-> 
-> Any comments and suggestions are appreciate.
-> 
-> Thanks,
-> 
-> Regards,
-> --
-> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+--===============0760565367==
+Content-Type: multipart/alternative; boundary=001636c5a9bd604ced046f5bc902
 
-I've queued this in the experimental tree.
+--001636c5a9bd604ced046f5bc902
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Thank you for your help!
+Hello there,
+I apologize in advance if this e-mail is redundant. I'm not a developer, but
+log-based filesystems intrigue me. I have seen some benchmarks (I think on a
+linux-mag.com article), which didn't reflect the performance I had been
+expecting.
 
-Ryusuke Konishi
+My basic understanding of how NILFS operates is that it appends a file which
+is to be committed to disk to the head of the log, eliminating,
+theoretically, the need to carry out random writes. From this I extrapolate
+, writes should be incredibly fast, since even budget ssds are capable of
+burst-write speeds of 200 mb/s. What real-life factor exactly holds back
+NILFS's speed?
 
->  fs/nilfs2/segment.c   |    7 +++++-
->  fs/nilfs2/super.c     |   61 +++++++-----------------------------------------
->  fs/nilfs2/the_nilfs.h |   14 +++++++++++
->  3 files changed, 29 insertions(+), 53 deletions(-)
+What happens with huge files? Is it possible to commit the modifications
+applied to a file as separate differential file, leaving the original file
+intact? What about defragging? Does the garbage collection system move
+rarely modified files out of the way?
+
+I presume read performance is not the primary consideration in the
+development of NILFS, since reads are cached and modern ssds are incredibly
+fast at random reads anyway. Since the burst read performance of both hdds
+and ssds is blazing fast, does it make sense to burst-read an entire cluster
+of adjacent small files and pick the desired files in system memory? I
+wouldn't mind if the unnecessary files were left in ram either, since modern
+computers have vast unused ram space.
+
+Thanks in advance.
+
+--001636c5a9bd604ced046f5bc902
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hello there,<div><br></div><div>I apologize in advance if this e-mail is re=
+dundant. I&#39;m not a developer, but log-based filesystems intrigue me. I =
+have seen some benchmarks (I think on a <a href=3D"http://linux-mag.com">li=
+nux-mag.com</a> article), which didn&#39;t reflect the performance I had be=
+en expecting.</div>
+<div><br></div><div>My basic understanding of how NILFS operates is that it=
+ appends a file which is to be committed to disk to the head of the log, el=
+iminating, theoretically, the need to carry out random writes. From this I =
+extrapolate , writes should be incredibly fast, since even budget ssds are =
+capable of burst-write speeds of 200 mb/s. What real-life factor exactly ho=
+lds back NILFS&#39;s speed?</div>
+<div><br></div><div>What happens with huge files? Is it possible to commit =
+the modifications applied to a file as separate differential file, leaving =
+the original file intact? What about defragging? Does the garbage collectio=
+n system move rarely modified files out of the way?</div>
+<div><br></div><div>I presume read performance is not the primary considera=
+tion in the development of NILFS, since reads are cached and modern ssds ar=
+e incredibly fast at random reads anyway. Since the burst read performance =
+of both hdds and ssds is blazing fast, does it make sense to burst-read an =
+entire cluster of adjacent small files and pick the desired files in system=
+ memory? I wouldn&#39;t mind if the unnecessary files were left in ram eith=
+er, since modern computers have vast unused ram space.</div>
+<div><br></div><div>Thanks in advance.</div>
+
+--001636c5a9bd604ced046f5bc902--
+
+--===============0760565367==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0760565367==--
