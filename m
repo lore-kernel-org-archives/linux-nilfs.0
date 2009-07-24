@@ -1,16 +1,18 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
 Subject: Re: Crash...
-Date: Fri, 24 Jul 2009 19:47:59 +0900 (JST)
-Message-ID: <20090724.194759.112623624.ryusuke@osrg.net>
-References: <9cdbb57f0907231402i1a92cb4qfe5a9d81346a4665@mail.gmail.com>
+Date: Fri, 24 Jul 2009 13:13:33 +0200
+Message-ID: <20090724111333.GE23256@aardappel.13thmonkey.org>
+References: <20090724.011249.110726474.ryusuke@osrg.net>
+	<9cdbb57f0907231402i1a92cb4qfe5a9d81346a4665@mail.gmail.com>
 	<20090724085803.GA23256@aardappel.13thmonkey.org>
-	<9cdbb57f0907240247n5ffd6f81yaee39eb386516c25@mail.gmail.com>
+	<20090724.194617.88653682.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <9cdbb57f0907240247n5ffd6f81yaee39eb386516c25-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20090724.194617.88653682.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,22 +23,26 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, andrea.gelmini-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-On Fri, 24 Jul 2009 11:47:21 +0200, Andrea Gelmini wrote:
-> 2009/7/24 Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>:
-> > 1024 is lower than the page size so that might explain a lot! I think its a
-> > missing check in the mkfs.nilfs2 to never allow lower values than the page
-> > size for block size.... but Ryusuke can better answer that :-D
-> 
-> I agree with you, but man page of mkfs.nilfs2 says it can be
-> 1024/2048/4096/8192.
-> Of course it can't be > of page size, but that's a VFS problem.
+Hi Ryusuke,
 
-Exactly.
- 
-> Ciao,
-> Andrea
+On Fri, Jul 24, 2009 at 07:46:17PM +0900, Ryusuke Konishi wrote:
+> We have implemented nilfs to allow smaller block sizes in order to
+> support some devices such like DVD/CD-ROM or flash based ones.
 
-Cheers,
-Ryusuke Konishi
+sounds fine :) i had some ideas about using NiLFS on CD-R/DVD*R and some ideas
+about refining NiLFS on flash based media.
+
+For CD-R/DVD*R the last block written (or written several times) can be the
+superblock so sequential media will work just fine. No use for a garbage
+collector there ;)
+
+For flash media, the entire first segment/erase block can be used to store the
+superblock in; filling it up sequentially and when full, trigger the erase
+block wiping :)
+
+Idea?
+
+With regards,
+Reinoud
