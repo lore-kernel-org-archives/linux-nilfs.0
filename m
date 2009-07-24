@@ -1,7 +1,7 @@
-From: Robertas Dumpis <robertas.dumpis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: lscp: Inappropriate ioctl for device
-Date: Fri, 24 Jul 2009 18:56:34 +0300
-Message-ID: <1248450994.15108.9.camel@robertodu>
+Date: Sat, 25 Jul 2009 01:07:03 +0900 (JST)
+Message-ID: <20090725.010703.69176349.ryusuke@osrg.net>
 References: <4A69D37E.9090000@epoch.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -19,23 +19,10 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, dfuller-ZE272gM1l1AAvxtiuMwx3w@public.gmane.org
 
-Hi David,
-
-I've had the same problem on Ubuntu 9.04.
-It seems that an very old version (2.0.6 ???) of nilfs-tools is
-installed by package manager and no update available through Ubuntu 9.04
-update channel.
-
-Downloading, compiling and installing latest version of nilfs-tools will
-fix this issue.
-
-
-
-Robertas
-
-On Fri, 2009-07-24 at 08:30 -0700, David Fuller wrote:
+Hi,
+On Fri, 24 Jul 2009 08:30:06 -0700, David Fuller wrote:
 > I just recently installed Ubuntu 9.04 and custom built the 2.6.30.2 kernel 
 > with the nilfs options outlined on the site.
 > 
@@ -76,7 +63,21 @@ On Fri, 2009-07-24 at 08:30 -0700, David Fuller wrote:
 > 
 > Thanks,
 > --David F.
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
+
+Nilfs has once changed ioctl interface (ABI) to clean up architecture
+dependency problems found in the review process of mainline merge.
+
+The nilfs2-tools included in Ubuntu Jaunty is older than that.
+
+Please download the latest util package (nilfs-utils-2.0.14) from
+
+  http://www.nilfs.org/en/download.html
+
+and use it instead.
+
+The newer nilfs2-tools is available on karmic, but in either case it
+seems to be less frequently updated than Debian.
+
+
+Cheers,
+Ryusuke Konishi
