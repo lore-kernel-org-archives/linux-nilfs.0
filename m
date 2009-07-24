@@ -1,14 +1,16 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Regarding NILFS performance
-Date: Fri, 24 Jul 2009 19:18:31 +0900 (JST)
-Message-ID: <20090724.191831.99280875.ryusuke@osrg.net>
-References: <447f427d0907230205r2913fef4l8d912c0b093a4904@mail.gmail.com>
+Subject: Re: Crash...
+Date: Fri, 24 Jul 2009 19:46:17 +0900 (JST)
+Message-ID: <20090724.194617.88653682.ryusuke@osrg.net>
+References: <20090724.011249.110726474.ryusuke@osrg.net>
+	<9cdbb57f0907231402i1a92cb4qfe5a9d81346a4665@mail.gmail.com>
+	<20090724085803.GA23256@aardappel.13thmonkey.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <447f427d0907230205r2913fef4l8d912c0b093a4904-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20090724085803.GA23256-5cYspOl2ggRz6xQTk39kMVfVdRo2wo/d@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,81 +21,34 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, dutdurudut-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org
 
-Hi,
-On Thu, 23 Jul 2009 12:05:18 +0300, havuz goz wrote:
-> Hello there,
-> I apologize in advance if this e-mail is redundant. I'm not a
-> developer, but log-based filesystems intrigue me. I have seen some
-> benchmarks (I think on a linux-mag.com article), which didn't
-> reflect the performance I had been expecting.
+On Fri, 24 Jul 2009 10:58:03 +0200, Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org> wrote:
+> On Thu, Jul 23, 2009 at 11:02:47PM +0200, Andrea Gelmini wrote:
+> > 2009/7/23 Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>:
+> > > It also suggests that an inconsistent state in page cache of B-tree
+> > > nodes hit the function; the function found a dirty page, but the page
+> > > didn't have buffer heads which was supposed to be impossible for the
+> > > b-tree of nilfs.
+> >    -> mkfs.nilfs2 -b 1024 /dev/mapper/VG-NilfHome (maybe the problem
+> > is the 1K block size?)
+> 
+> 1024 is lower than the page size so that might explain a lot!
 
-Thank you for your interest in nilfs.
+Yes, I suspect this in fact.  The small size block changes several
+code paths.
+
+> I think its a missing check in the mkfs.nilfs2 to never allow lower
+> values than the page size for block size.... but Ryusuke can better
+> answer that :-D
+>
+> With regards,
+> Reinoud
  
-> My basic understanding of how NILFS operates is that it appends a
-> file which is to be committed to disk to the head of the log,
-> eliminating, theoretically, the need to carry out random
-> writes. From this I extrapolate , writes should be incredibly fast,
-> since even budget ssds are capable of burst-write speeds of 200
-> mb/s. What real-life factor exactly holds back NILFS's speed?
+We have implemented nilfs to allow smaller block sizes in order to
+support some devices such like DVD/CD-ROM or flash based ones.
 
-Theoretically, yes, LFS is said to be suited for random writes.  In
-reality, the performance is highly dependent on the machine
-environment.
+So, I count it a bug which we should fix.
 
-For example, it depends on whether the disk cache mode is set to write
-through/write-back, whether the device is sensitive to continuity of
-access, or the I/O path is latency sensitive or not, etc.
-
-As a matter of a fact, nilfs is not yet tuned well especially for
-writes.  We have placed priority on mainline merge and bug fixes.
-
-I did some peformance tuning for reads in the updates merged in
-2.6.31-rc1, but it was left untouched until very recently.
- 
-> What happens with huge files? Is it possible to commit the
-> modifications applied to a file as separate differential file,
-
-Nilfs writes delta of files per block.  If you overwrites 1KB region
-in a 1GB file, nilfs will append only a 4KB data block along with some
-meta data blocks.
-
-> leaving the original file intact?
-
-Yes sure, that is what nilfs stards for.
-
-> What about defragging? Does the garbage collection system move
-> rarely modified files out of the way?
-
-Not yet touched.  I think nilfs needs defragging to mitigate aging
-effect, but the current GC is not intelligent, far inferior to such
-level. :(
-
-> I presume read performance is not the primary consideration in the
-> development of NILFS, since reads are cached and modern ssds are
-> incredibly fast at random reads anyway.  Since the burst read
-> performance of both hdds and ssds is blazing fast, does it make
-> sense to burst-read an entire cluster of adjacent small files and
-> pick the desired files in system memory? I wouldn't mind if the
-> unnecessary files were left in ram either, since modern computers
-> have vast unused ram space.
-
-Yeah, it's true by some perspective. One of the character of Linux is
-that it applies memory for caches as much as possible.  Theoretically,
-this nature would favor write oriented filesystems like LFS.
-
-But, the capacity of storage devices is several orders of magnitude
-larger than memory and it even grows faster.  Besides, we may want to
-apply it to systems with different requirement, for example, a huge
-scale mail system or the system holding many VM images.
-
-As you say, background on storage was dramatically changed from the
-past.  And, it may provide a tailwind to nilfs.  But, I think we still
-needs more effort to improve raw I/O performance, at least to the
-extent that NILFS does not lose its appeal.
-
-> Thanks in advance.
-
-Cheers,
+Thanks,
 Ryusuke Konishi
