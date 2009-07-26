@@ -1,10 +1,10 @@
-From: havuz goz <dutdurudut-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Regarding NILFS performance
-Date: Sun, 26 Jul 2009 18:07:56 +0300
-Message-ID: <447f427d0907260807h73b8ce28r7e7c017c5911a0b1@mail.gmail.com>
+From: Eric A <eric225125-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
+Subject: df reports used space gradually growing.
+Date: Sun, 26 Jul 2009 08:18:45 -0700 (PDT)
+Message-ID: <675178.67834.qm@web58804.mail.re1.yahoo.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1459857408=="
+Content-Type: multipart/mixed; boundary="===============1872205091=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
@@ -19,59 +19,33 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
---===============1459857408==
-Content-Type: multipart/alternative; boundary=001636c5abdbce750e046f9d3341
+--===============1872205091==
+Content-Type: multipart/alternative; boundary="0-939234788-1248621525=:67834"
 
---001636c5abdbce750e046f9d3341
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+--0-939234788-1248621525=:67834
+Content-Type: text/plain; charset=us-ascii
 
-Thank you for your reply.
+I installed nilfs2 on my 32GB SSD for my rootfs about a week ago and have been very impressed with the improvements in write speed.  However, I just noticed that df reports I am using 25GB when there is only about 13GB of data on the disk.  The 13GB size agrees with du and the size of my daily ext2 backup.  I monitored the situation over night, and the size reported by df appears to be growing by about 1-2GB a day.
 
-"But, the capacity of storage devices is several orders of magnitude
-larger than memory and it even grows faster.  Besides, we may want to
-apply it to systems with different requirement, for example, a huge
-scale mail system or the system holding many VM images."
+Is the size reported by df incorrect?  What will happen when it reports that the entire disk is full?
+
+Eric
 
 
-I predicted this answer. I had caching in mind for personal desktops. I
-realize servers depend heavily on the raw IOPS values of hardware.
-Let me elaborate: If the OS was optimized so that it cached
-frequently-accessed and modified small files in ram, it would provide a much
-more responsive user experience. Maybe a fork of NILFS will support this? Or
-optional modes?
 
-Again, thank you for your answer. I hope NILFS advances quickly and becomes
-a solid, popular file system.
+      
+--0-939234788-1248621525=:67834
+Content-Type: text/html; charset=us-ascii
 
---001636c5abdbce750e046f9d3341
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+<html><head><style type="text/css"><!-- DIV {margin:0px;} --></style></head><body><div style="font-family:times new roman,new york,times,serif;font-size:12pt"><div>I installed nilfs2 on my 32GB SSD for my rootfs about a week ago and have been very impressed with the improvements in write speed.&nbsp; However, I just noticed that df reports I am using 25GB when there is only about 13GB of data on the disk.&nbsp; The 13GB size agrees with du and the size of my daily ext2 backup.&nbsp; I monitored the situation over night, and the size reported by df appears to be growing by about 1-2GB a day.<br><br>Is the size reported by df incorrect?&nbsp; What will happen when it reports that the entire disk is full?<br><br>Eric<br></div></div><br>
 
-<span class=3D"Apple-style-span" style=3D"border-collapse: collapse; ">Than=
-k you for your reply.=A0<div class=3D"im" style=3D"color: rgb(80, 0, 80); "=
-><br><br><blockquote style=3D"margin-top: 0px; margin-right: 0px; margin-bo=
-ttom: 0px; margin-left: 40px; border-top-style: none; border-right-style: n=
-one; border-bottom-style: none; border-left-style: none; border-width: init=
-ial; border-color: initial; padding-top: 0px; padding-right: 0px; padding-b=
-ottom: 0px; padding-left: 0px; ">
-&quot;But, the capacity of storage devices is several orders of magnitude<b=
-r>larger than memory and it even grows faster. =A0Besides, we may want to<b=
-r>apply it to systems with different requirement, for example, a huge<br>
-scale mail system or the system holding many VM images.&quot;</blockquote><=
-div><br></div></div><div>I predicted this answer. I had caching in mind for=
- personal desktops. I realize servers depend heavily on the raw IOPS values=
- of hardware.</div>
-<div>Let me elaborate: If the OS was optimized so that it cached frequently=
--accessed and modified small files in ram, it would provide a much more res=
-ponsive user experience. Maybe a fork of NILFS will support this? Or option=
-al modes?</div>
-<div><br></div><div>Again, thank you for your answer. I hope NILFS advances=
- quickly and becomes a solid, popular file system.</div></span>
 
---001636c5abdbce750e046f9d3341--
 
---===============1459857408==
+      </body></html>
+--0-939234788-1248621525=:67834--
+
+
+--===============1872205091==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -82,4 +56,5 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---===============1459857408==--
+--===============1872205091==--
+
