@@ -1,14 +1,14 @@
-From: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: [PATCH]nilfs2: Don't load/check invalid cno
-Date: Mon, 27 Jul 2009 17:26:58 +0800
-Message-ID: <977a2be20907270226s7c7037b5v38830e1ba68cefcb@mail.gmail.com>
+Date: Tue, 28 Jul 2009 02:40:35 +0900 (JST)
+Message-ID: <20090728.024035.102951444.ryusuke@osrg.net>
 References: <4A6D7273.5010906@gmail.com>
+	<977a2be20907270226s7c7037b5v38830e1ba68cefcb@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <4A6D7273.5010906-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <977a2be20907270226s7c7037b5v38830e1ba68cefcb-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,59 +19,119 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-9"
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
 
-QmVsb3cgaW5jb25zaXN0ZW50IGVycm9yIG1lc3NhZ2VzIHdpbGwgYmUgcmVwb3J0ZWQgd2l0aG91
-dCB0aGlzIHBhdGNoLgoKW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC9kZXYv
-bG9vcDAgLi9tb3VudDEKbW91bnQubmlsZnMyOiBXQVJOSU5HISAtIFRoZSBOSUxGUyBvbi1kaXNr
-IGZvcm1hdCBtYXkgY2hhbmdlIGF0IGFueSB0aW1lLgptb3VudC5uaWxmczI6IFdBUk5JTkchIC0g
-RG8gbm90IHBsYWNlIGNyaXRpY2FsIGRhdGEgb24gYSBOSUxGUyBmaWxlc3lzdGVtLgpbcm9vdEB6
-eWgtZmVkb3JhIH5dIyBsc2NwCiAgICAgICAgICAgICAgICAgQ05PICAgICAgICBEQVRFICAgICBU
-SU1FICBNT0RFICBGTEcgICBOQkxLSU5DICAgICAgIElDTlQKICAgICAgICAgICAgICAgICAgIDEg
-IDIwMDktMDctMjYgMTY6MTQ6MjYgICBjcCAgICAtICAgICAgICAgMTEgICAgICAgICAgMwogICAg
-ICAgICAgICAgICAgICAgMiAgMjAwOS0wNy0yNiAxNjoxNjoxMiAgIGNwICAgIC0gICAgICAgIDYz
-NyAgICAgICAgMTQ0CiAgICAgICAgICAgICAgICAgICAzICAyMDA5LTA3LTI2IDE2OjE2OjQ3ICAg
-Y3AgICAgLSAgICAgICAgIDE3ICAgICAgICAxNDMKICAgICAgICAgICAgICAgICAgIDQgIDIwMDkt
-MDctMjYgMTY6MTY6NTIgICBjcCAgICAtICAgICAgICAgMTYgICAgICAgIDE0MgogICAgICAgICAg
-ICAgICAgICAgNSAgMjAwOS0wNy0yNiAxNjoxNjo1OCAgIGNwICAgIC0gICAgICAgICAxMSAgICAg
-ICAgMTQyCiAgICAgICAgICAgICAgICAgICA2ICAyMDA5LTA3LTI2IDE2OjE3OjA4ICAgY3AgICAg
-LSAgICAgICAgIDE4ICAgICAgICAxNDEKW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmls
-ZnMyIC1yIC1vIGNwPTEwIC9kZXYvbG9vcDAgLi9tb3VudDIKbW91bnQubmlsZnMyOiBFcnJvciB3
-aGlsZSBtb3VudGluZyAvZGV2L2xvb3AwIG9uIC4vbW91bnQyOiBJbnZhbGlkIGFyZ3VtZW50Clty
-b290QHp5aC1mZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAtciAtbyBjcD0yMCAvZGV2L2xvb3Aw
-IC4vbW91bnQyCm1vdW50Lm5pbGZzMjogRXJyb3Igd2hpbGUgbW91bnRpbmcgL2Rldi9sb29wMCBv
-biAuL21vdW50MjogSW52YWxpZCBhcmd1bWVudApbcm9vdEB6eWgtZmVkb3JhIH5dIyBtb3VudCAt
-dCBuaWxmczIgLXIgLW8gY3A9MzAgL2Rldi9sb29wMCAuL21vdW50Mgptb3VudC5uaWxmczI6IEVy
-cm9yIHdoaWxlIG1vdW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IE5vIHN1Y2gKZmlsZSBv
-ciBkaXJlY3RvcnkKW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC1yIC1vIGNw
-PTQwIC9kZXYvbG9vcDAgLi9tb3VudDIKbW91bnQubmlsZnMyOiBFcnJvciB3aGlsZSBtb3VudGlu
-ZyAvZGV2L2xvb3AwIG9uIC4vbW91bnQyOiBObyBzdWNoCmZpbGUgb3IgZGlyZWN0b3J5Cltyb290
-QHp5aC1mZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAtciAtbyBjcD0yNSAvZGV2L2xvb3AwIC4v
-bW91bnQyCm1vdW50Lm5pbGZzMjogRXJyb3Igd2hpbGUgbW91bnRpbmcgL2Rldi9sb29wMCBvbiAu
-L21vdW50MjogTm8gc3VjaApmaWxlIG9yIGRpcmVjdG9yeQpbcm9vdEB6eWgtZmVkb3JhIH5dIyBt
-b3VudCAtdCBuaWxmczIgLXIgLW8gY3A9MjEgL2Rldi9sb29wMCAuL21vdW50Mgptb3VudC5uaWxm
-czI6IEVycm9yIHdoaWxlIG1vdW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IE5vIHN1Y2gK
-ZmlsZSBvciBkaXJlY3RvcnkKCgoKCjIwMDkvNy8yNyBaaHUgWWFuaGFpIDx6aHUueWFuaGFpQGdt
-YWlsLmNvbT46Cj4gbmlsZnMyOiBEb24ndCBsb2FkL2NoZWNrIGNwIGJsb2NrIGlmIHNwZWNpZmll
-ZCBjbm8gaXMgbGFyZ2VyIHRoYW4gdGhlCj4gbGFyZ2VzdCBleGlzdCBvbmUuCj4gbmlsZnMyIHdv
-dWxkIGxvYWQgaW52YWxpZCBjcCBibG9jaywgYW5kIHJlcG9ydCByYW5kb20gaW5jb25zaXN0ZW50
-IGVycm9yCj4gbWVzc2FnZSB1bmRlciB0aGlzIHNpdHVhdGlvbiBiZWZvcmUuCj4KPiBTaWduZWQt
-b2ZmLWJ5OiBaaHUgWWFuaGFpIDx6aHUueWFuaGFpQGdtYWlsLmNvbT4KPgo+IC0tLQo+IMKgZnMv
-bmlsZnMyL2NwZmlsZS5jIHwgwqAgwqA3ICsrKystLS0KPiDCoDEgZmlsZXMgY2hhbmdlZCwgNCBp
-bnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQo+Cj4gZGlmZiAtLWdpdCBhL2ZzL25pbGZzMi9j
-cGZpbGUuYyBiL2ZzL25pbGZzMi9jcGZpbGUuYwo+IGluZGV4IGFlYzk0MmMuLjQzOTc4YTkgMTAw
-NjQ0Cj4gLS0tIGEvZnMvbmlsZnMyL2NwZmlsZS5jCj4gKysrIGIvZnMvbmlsZnMyL2NwZmlsZS5j
-Cj4gQEAgLTgxNCw5ICs4MTQsMTAgQEAgaW50IG5pbGZzX2NwZmlsZV9pc19zbmFwc2hvdChzdHJ1
-Y3QgaW5vZGUgKmNwZmlsZSwgX191NjQgY25vKQo+IMKgIMKgIMKgIMKgc3RydWN0IG5pbGZzX2No
-ZWNrcG9pbnQgKmNwOwo+IMKgIMKgIMKgIMKgdm9pZCAqa2FkZHI7Cj4gwqAgwqAgwqAgwqBpbnQg
-cmV0Owo+IC0KPiAtIMKgIMKgIMKgIGlmIChjbm8gPT0gMCkKPiAtIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIHJldHVybiAtRU5PRU5UOyAvKiBjaGVja3BvaW50IG51bWJlciAwIGlzIGludmFsaWQgKi8K
-PiArCj4gKyDCoCDCoCDCoCAvKiByZXR1cm4gRU5PRU5UIGlmIGNubyBpcyBpbnZhbGlkLiAqLwo+
-ICsgwqAgwqAgwqAgaWYgKGNubyA9PSAwIHx8IGNubyA+PSBuaWxmc19tZHRfY25vKGNwZmlsZSkp
-Cj4gKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm4gLUVOT0VOVDsKPiDCoCDCoCDCoCDCoGRv
-d25fcmVhZCgmTklMRlNfTURUKGNwZmlsZSktPm1pX3NlbSk7Cj4KPiDCoCDCoCDCoCDCoHJldCA9
-IG5pbGZzX2NwZmlsZV9nZXRfY2hlY2twb2ludF9ibG9jayhjcGZpbGUsIGNubywgMCwgJmJoKTsK
-PiAtLQo+IDEuNi4yLjIKPgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fXwp1c2VycyBtYWlsaW5nIGxpc3QKdXNlcnNAbmlsZnMub3JnCmh0dHBzOi8vd3d3Lm5p
-bGZzLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3VzZXJzCg==
+Hi!
+On Mon, 27 Jul 2009 17:26:58 +0800, Zhu Yanhai wrote:
+> Below inconsistent error messages will be reported without this patch.
+> =
+
+> [root@zyh-fedora ~]# mount -t nilfs2 /dev/loop0 ./mount1
+> mount.nilfs2: WARNING! - The NILFS on-disk format may change at any time.
+> mount.nilfs2: WARNING! - Do not place critical data on a NILFS filesystem.
+> [root@zyh-fedora ~]# lscp
+>                  CNO        DATE     TIME  MODE  FLG   NBLKINC       ICNT
+>                    1  2009-07-26 16:14:26   cp    -         11          3
+>                    2  2009-07-26 16:16:12   cp    -        637        144
+>                    3  2009-07-26 16:16:47   cp    -         17        143
+>                    4  2009-07-26 16:16:52   cp    -         16        142
+>                    5  2009-07-26 16:16:58   cp    -         11        142
+>                    6  2009-07-26 16:17:08   cp    -         18        141
+> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D10 /dev/loop0 ./mount2
+> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: Invalid argume=
+nt
+> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D20 /dev/loop0 ./mount2
+> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: Invalid argume=
+nt
+> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D30 /dev/loop0 ./mount2
+> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
+> file or directory
+> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D40 /dev/loop0 ./mount2
+> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
+> file or directory
+> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D25 /dev/loop0 ./mount2
+> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
+> file or directory
+> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D21 /dev/loop0 ./mount2
+> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
+> file or directory
+ =
+
+Thank you for pointing out the inconsistency.
+
+Your patch noticed me that a few problems exist around the
+nilfs_cpfile_is_snapshot() function:
+
+ 1) For invalid checkpoints it should return an ENOENT error, but this
+    check is missing; a test with nilfs_checkpoint_invalid() should
+    come before the nilfs_checkpoint_snapshot() test.
+
+ 2) If nilfs_cpfile_is_snapshot() returned an ENOENT error,
+    nilfs_fill_super() should convert it to -EINVAL, but this is
+    missing too.  (the ENOENT code is for internal use)
+
+ 3) Snapshots can be mounted concurrently with a writable mount.  So,
+    the call site of nilfs_cpfile_is_snapshot() must be protected from
+    segment writer.  I mean it should hold read lock for
+    nilfs->ns_segctor_sem during the call-out like:
+
+     down_read(&nilfs->ns_segctor_sem);
+     err =3D nilfs_cpfile_is_snapshot(nilfs->ns_cpfile, sbi->s_snapshot_cno=
+);
+     up_read(&nilfs->ns_segctor_sem);
+
+    This is needed even to protect the use of nilfs_mdt_cno().
+
+
+Then, (1) and (2) would fix the inconsistency problem.
+
+But I think your patch is still needed to exclude the next checkpoint
+for snapshot mount.
+
+A little bit problematic.. up to four fixes.
+
+I would appreciate it if you could rewrite patches taking the above
+into account.
+
+Thanks in advance,
+Ryusuke Konishi
+
+
+> 2009/7/27 Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+> > nilfs2: Don't load/check cp block if specified cno is larger than the
+> > largest exist one.
+> > nilfs2 would load invalid cp block, and report random inconsistent error
+> > message under this situation before.
+> >
+> > Signed-off-by: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> >
+> > ---
+> > =A0fs/nilfs2/cpfile.c | =A0 =A07 ++++---
+> > =A01 files changed, 4 insertions(+), 3 deletions(-)
+> >
+> > diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+> > index aec942c..43978a9 100644
+> > --- a/fs/nilfs2/cpfile.c
+> > +++ b/fs/nilfs2/cpfile.c
+> > @@ -814,9 +814,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile,=
+ __u64 cno)
+> > =A0 =A0 =A0 =A0struct nilfs_checkpoint *cp;
+> > =A0 =A0 =A0 =A0void *kaddr;
+> > =A0 =A0 =A0 =A0int ret;
+> > -
+> > - =A0 =A0 =A0 if (cno =3D=3D 0)
+> > - =A0 =A0 =A0 =A0 =A0 =A0 =A0 return -ENOENT; /* checkpoint number 0 is=
+ invalid */
+> > +
+> > + =A0 =A0 =A0 /* return ENOENT if cno is invalid. */
+> > + =A0 =A0 =A0 if (cno =3D=3D 0 || cno >=3D nilfs_mdt_cno(cpfile))
+> > + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return -ENOENT;
+> > =A0 =A0 =A0 =A0down_read(&NILFS_MDT(cpfile)->mi_sem);
+> >
+> > =A0 =A0 =A0 =A0ret =3D nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0=
+, &bh);
+> > --
+> > 1.6.2.2
+> >
