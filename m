@@ -1,12 +1,14 @@
 From: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH]nilfs2: Don't load/check invalid cno
-Date: Mon, 27 Jul 2009 17:25:07 +0800
-Message-ID: <4A6D7273.5010906@gmail.com>
+Subject: Re: [PATCH]nilfs2: Don't load/check invalid cno
+Date: Mon, 27 Jul 2009 17:26:58 +0800
+Message-ID: <977a2be20907270226s7c7037b5v38830e1ba68cefcb@mail.gmail.com>
+References: <4A6D7273.5010906@gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <4A6D7273.5010906-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,34 +22,56 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Cc: qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
 
-nilfs2: Don't load/check cp block if specified cno is larger than the
-largest exist one.
-nilfs2 would load invalid cp block, and report random inconsistent error
-message under this situation before.
-
-Signed-off-by: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
----
- fs/nilfs2/cpfile.c |    7 ++++---
- 1 files changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index aec942c..43978a9 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -814,9 +814,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
- 	struct nilfs_checkpoint *cp;
- 	void *kaddr;
- 	int ret;
--
--	if (cno == 0)
--		return -ENOENT; /* checkpoint number 0 is invalid */
-+
-+	/* return ENOENT if cno is invalid. */
-+	if (cno == 0 || cno >= nilfs_mdt_cno(cpfile))
-+		return -ENOENT;
- 	down_read(&NILFS_MDT(cpfile)->mi_sem);
- 
- 	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
--- 
-1.6.2.2
+QmVsb3cgaW5jb25zaXN0ZW50IGVycm9yIG1lc3NhZ2VzIHdpbGwgYmUgcmVwb3J0ZWQgd2l0aG91
+dCB0aGlzIHBhdGNoLgoKW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC9kZXYv
+bG9vcDAgLi9tb3VudDEKbW91bnQubmlsZnMyOiBXQVJOSU5HISAtIFRoZSBOSUxGUyBvbi1kaXNr
+IGZvcm1hdCBtYXkgY2hhbmdlIGF0IGFueSB0aW1lLgptb3VudC5uaWxmczI6IFdBUk5JTkchIC0g
+RG8gbm90IHBsYWNlIGNyaXRpY2FsIGRhdGEgb24gYSBOSUxGUyBmaWxlc3lzdGVtLgpbcm9vdEB6
+eWgtZmVkb3JhIH5dIyBsc2NwCiAgICAgICAgICAgICAgICAgQ05PICAgICAgICBEQVRFICAgICBU
+SU1FICBNT0RFICBGTEcgICBOQkxLSU5DICAgICAgIElDTlQKICAgICAgICAgICAgICAgICAgIDEg
+IDIwMDktMDctMjYgMTY6MTQ6MjYgICBjcCAgICAtICAgICAgICAgMTEgICAgICAgICAgMwogICAg
+ICAgICAgICAgICAgICAgMiAgMjAwOS0wNy0yNiAxNjoxNjoxMiAgIGNwICAgIC0gICAgICAgIDYz
+NyAgICAgICAgMTQ0CiAgICAgICAgICAgICAgICAgICAzICAyMDA5LTA3LTI2IDE2OjE2OjQ3ICAg
+Y3AgICAgLSAgICAgICAgIDE3ICAgICAgICAxNDMKICAgICAgICAgICAgICAgICAgIDQgIDIwMDkt
+MDctMjYgMTY6MTY6NTIgICBjcCAgICAtICAgICAgICAgMTYgICAgICAgIDE0MgogICAgICAgICAg
+ICAgICAgICAgNSAgMjAwOS0wNy0yNiAxNjoxNjo1OCAgIGNwICAgIC0gICAgICAgICAxMSAgICAg
+ICAgMTQyCiAgICAgICAgICAgICAgICAgICA2ICAyMDA5LTA3LTI2IDE2OjE3OjA4ICAgY3AgICAg
+LSAgICAgICAgIDE4ICAgICAgICAxNDEKW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmls
+ZnMyIC1yIC1vIGNwPTEwIC9kZXYvbG9vcDAgLi9tb3VudDIKbW91bnQubmlsZnMyOiBFcnJvciB3
+aGlsZSBtb3VudGluZyAvZGV2L2xvb3AwIG9uIC4vbW91bnQyOiBJbnZhbGlkIGFyZ3VtZW50Clty
+b290QHp5aC1mZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAtciAtbyBjcD0yMCAvZGV2L2xvb3Aw
+IC4vbW91bnQyCm1vdW50Lm5pbGZzMjogRXJyb3Igd2hpbGUgbW91bnRpbmcgL2Rldi9sb29wMCBv
+biAuL21vdW50MjogSW52YWxpZCBhcmd1bWVudApbcm9vdEB6eWgtZmVkb3JhIH5dIyBtb3VudCAt
+dCBuaWxmczIgLXIgLW8gY3A9MzAgL2Rldi9sb29wMCAuL21vdW50Mgptb3VudC5uaWxmczI6IEVy
+cm9yIHdoaWxlIG1vdW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IE5vIHN1Y2gKZmlsZSBv
+ciBkaXJlY3RvcnkKW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC1yIC1vIGNw
+PTQwIC9kZXYvbG9vcDAgLi9tb3VudDIKbW91bnQubmlsZnMyOiBFcnJvciB3aGlsZSBtb3VudGlu
+ZyAvZGV2L2xvb3AwIG9uIC4vbW91bnQyOiBObyBzdWNoCmZpbGUgb3IgZGlyZWN0b3J5Cltyb290
+QHp5aC1mZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAtciAtbyBjcD0yNSAvZGV2L2xvb3AwIC4v
+bW91bnQyCm1vdW50Lm5pbGZzMjogRXJyb3Igd2hpbGUgbW91bnRpbmcgL2Rldi9sb29wMCBvbiAu
+L21vdW50MjogTm8gc3VjaApmaWxlIG9yIGRpcmVjdG9yeQpbcm9vdEB6eWgtZmVkb3JhIH5dIyBt
+b3VudCAtdCBuaWxmczIgLXIgLW8gY3A9MjEgL2Rldi9sb29wMCAuL21vdW50Mgptb3VudC5uaWxm
+czI6IEVycm9yIHdoaWxlIG1vdW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IE5vIHN1Y2gK
+ZmlsZSBvciBkaXJlY3RvcnkKCgoKCjIwMDkvNy8yNyBaaHUgWWFuaGFpIDx6aHUueWFuaGFpQGdt
+YWlsLmNvbT46Cj4gbmlsZnMyOiBEb24ndCBsb2FkL2NoZWNrIGNwIGJsb2NrIGlmIHNwZWNpZmll
+ZCBjbm8gaXMgbGFyZ2VyIHRoYW4gdGhlCj4gbGFyZ2VzdCBleGlzdCBvbmUuCj4gbmlsZnMyIHdv
+dWxkIGxvYWQgaW52YWxpZCBjcCBibG9jaywgYW5kIHJlcG9ydCByYW5kb20gaW5jb25zaXN0ZW50
+IGVycm9yCj4gbWVzc2FnZSB1bmRlciB0aGlzIHNpdHVhdGlvbiBiZWZvcmUuCj4KPiBTaWduZWQt
+b2ZmLWJ5OiBaaHUgWWFuaGFpIDx6aHUueWFuaGFpQGdtYWlsLmNvbT4KPgo+IC0tLQo+IMKgZnMv
+bmlsZnMyL2NwZmlsZS5jIHwgwqAgwqA3ICsrKystLS0KPiDCoDEgZmlsZXMgY2hhbmdlZCwgNCBp
+bnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQo+Cj4gZGlmZiAtLWdpdCBhL2ZzL25pbGZzMi9j
+cGZpbGUuYyBiL2ZzL25pbGZzMi9jcGZpbGUuYwo+IGluZGV4IGFlYzk0MmMuLjQzOTc4YTkgMTAw
+NjQ0Cj4gLS0tIGEvZnMvbmlsZnMyL2NwZmlsZS5jCj4gKysrIGIvZnMvbmlsZnMyL2NwZmlsZS5j
+Cj4gQEAgLTgxNCw5ICs4MTQsMTAgQEAgaW50IG5pbGZzX2NwZmlsZV9pc19zbmFwc2hvdChzdHJ1
+Y3QgaW5vZGUgKmNwZmlsZSwgX191NjQgY25vKQo+IMKgIMKgIMKgIMKgc3RydWN0IG5pbGZzX2No
+ZWNrcG9pbnQgKmNwOwo+IMKgIMKgIMKgIMKgdm9pZCAqa2FkZHI7Cj4gwqAgwqAgwqAgwqBpbnQg
+cmV0Owo+IC0KPiAtIMKgIMKgIMKgIGlmIChjbm8gPT0gMCkKPiAtIMKgIMKgIMKgIMKgIMKgIMKg
+IMKgIHJldHVybiAtRU5PRU5UOyAvKiBjaGVja3BvaW50IG51bWJlciAwIGlzIGludmFsaWQgKi8K
+PiArCj4gKyDCoCDCoCDCoCAvKiByZXR1cm4gRU5PRU5UIGlmIGNubyBpcyBpbnZhbGlkLiAqLwo+
+ICsgwqAgwqAgwqAgaWYgKGNubyA9PSAwIHx8IGNubyA+PSBuaWxmc19tZHRfY25vKGNwZmlsZSkp
+Cj4gKyDCoCDCoCDCoCDCoCDCoCDCoCDCoCByZXR1cm4gLUVOT0VOVDsKPiDCoCDCoCDCoCDCoGRv
+d25fcmVhZCgmTklMRlNfTURUKGNwZmlsZSktPm1pX3NlbSk7Cj4KPiDCoCDCoCDCoCDCoHJldCA9
+IG5pbGZzX2NwZmlsZV9nZXRfY2hlY2twb2ludF9ibG9jayhjcGZpbGUsIGNubywgMCwgJmJoKTsK
+PiAtLQo+IDEuNi4yLjIKPgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fXwp1c2VycyBtYWlsaW5nIGxpc3QKdXNlcnNAbmlsZnMub3JnCmh0dHBzOi8vd3d3Lm5p
+bGZzLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3VzZXJzCg==
