@@ -1,18 +1,12 @@
-From: Andrea Gelmini <andrea.gelmini-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Crash...
-Date: Mon, 27 Jul 2009 09:58:26 +0200
-Message-ID: <9cdbb57f0907270058o47887d37q66aa31c529607406@mail.gmail.com>
-References: <9cdbb57f0907230555k768383c2ld1690d31cc6fff83@mail.gmail.com>
-	<20090724.011249.110726474.ryusuke@osrg.net>
-	<9cdbb57f0907231402i1a92cb4qfe5a9d81346a4665@mail.gmail.com>
-	<9cdbb57f0907231420y4122d649y69fee2273a05b4cc@mail.gmail.com>
-	<873a8jhsbd.wl%jir@sekiba.com>
+From: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH]nilfs2: Don't load/check invalid cno
+Date: Mon, 27 Jul 2009 17:25:07 +0800
+Message-ID: <4A6D7273.5010906@gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <873a8jhsbd.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -24,16 +18,36 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Cc: qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
 
-2009/7/27 Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>:
-> - debian or Ubuntsu
-> - bare disk(/dev/sda?) or lvm.
->
-> Can you reproduce the bug without using lvm volume?
+nilfs2: Don't load/check cp block if specified cno is larger than the
+largest exist one.
+nilfs2 would load invalid cp block, and report random inconsistent error
+message under this situation before.
 
-Today I'll stress it with a normal primary partition.
-Well, I'll do the test with stable kernel release to make it easier
-for others to replicate the test.
+Signed-off-by: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Thanks a lot,
-Andrea
+---
+ fs/nilfs2/cpfile.c |    7 ++++---
+ 1 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index aec942c..43978a9 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -814,9 +814,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
+ 	struct nilfs_checkpoint *cp;
+ 	void *kaddr;
+ 	int ret;
+-
+-	if (cno == 0)
+-		return -ENOENT; /* checkpoint number 0 is invalid */
++
++	/* return ENOENT if cno is invalid. */
++	if (cno == 0 || cno >= nilfs_mdt_cno(cpfile))
++		return -ENOENT;
+ 	down_read(&NILFS_MDT(cpfile)->mi_sem);
+ 
+ 	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
+-- 
+1.6.2.2
