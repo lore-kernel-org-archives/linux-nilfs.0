@@ -1,14 +1,16 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH]nilfs2: Don't load/check invalid cno
-Date: Tue, 28 Jul 2009 02:40:35 +0900 (JST)
-Message-ID: <20090728.024035.102951444.ryusuke@osrg.net>
+Date: Tue, 28 Jul 2009 08:46:06 +0800
+Message-ID: <977a2be20907271746y3280e02fm17177ff6fa23cc19@mail.gmail.com>
 References: <4A6D7273.5010906@gmail.com>
-	<977a2be20907270226s7c7037b5v38830e1ba68cefcb@mail.gmail.com>
+	<977a2be20907270226s7c7037b5v38830e1ba68cefcb@mail.gmail.com> 
+	<20090728.024035.102951444.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <977a2be20907270226s7c7037b5v38830e1ba68cefcb-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20090728.024035.102951444.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,119 +21,93 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="iso-8859-9"
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Cc: qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi!
-On Mon, 27 Jul 2009 17:26:58 +0800, Zhu Yanhai wrote:
-> Below inconsistent error messages will be reported without this patch.
-> =
-
-> [root@zyh-fedora ~]# mount -t nilfs2 /dev/loop0 ./mount1
-> mount.nilfs2: WARNING! - The NILFS on-disk format may change at any time.
-> mount.nilfs2: WARNING! - Do not place critical data on a NILFS filesystem.
-> [root@zyh-fedora ~]# lscp
->                  CNO        DATE     TIME  MODE  FLG   NBLKINC       ICNT
->                    1  2009-07-26 16:14:26   cp    -         11          3
->                    2  2009-07-26 16:16:12   cp    -        637        144
->                    3  2009-07-26 16:16:47   cp    -         17        143
->                    4  2009-07-26 16:16:52   cp    -         16        142
->                    5  2009-07-26 16:16:58   cp    -         11        142
->                    6  2009-07-26 16:17:08   cp    -         18        141
-> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D10 /dev/loop0 ./mount2
-> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: Invalid argume=
-nt
-> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D20 /dev/loop0 ./mount2
-> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: Invalid argume=
-nt
-> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D30 /dev/loop0 ./mount2
-> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
-> file or directory
-> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D40 /dev/loop0 ./mount2
-> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
-> file or directory
-> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D25 /dev/loop0 ./mount2
-> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
-> file or directory
-> [root@zyh-fedora ~]# mount -t nilfs2 -r -o cp=3D21 /dev/loop0 ./mount2
-> mount.nilfs2: Error while mounting /dev/loop0 on ./mount2: No such
-> file or directory
- =
-
-Thank you for pointing out the inconsistency.
-
-Your patch noticed me that a few problems exist around the
-nilfs_cpfile_is_snapshot() function:
-
- 1) For invalid checkpoints it should return an ENOENT error, but this
-    check is missing; a test with nilfs_checkpoint_invalid() should
-    come before the nilfs_checkpoint_snapshot() test.
-
- 2) If nilfs_cpfile_is_snapshot() returned an ENOENT error,
-    nilfs_fill_super() should convert it to -EINVAL, but this is
-    missing too.  (the ENOENT code is for internal use)
-
- 3) Snapshots can be mounted concurrently with a writable mount.  So,
-    the call site of nilfs_cpfile_is_snapshot() must be protected from
-    segment writer.  I mean it should hold read lock for
-    nilfs->ns_segctor_sem during the call-out like:
-
-     down_read(&nilfs->ns_segctor_sem);
-     err =3D nilfs_cpfile_is_snapshot(nilfs->ns_cpfile, sbi->s_snapshot_cno=
-);
-     up_read(&nilfs->ns_segctor_sem);
-
-    This is needed even to protect the use of nilfs_mdt_cno().
-
-
-Then, (1) and (2) would fix the inconsistency problem.
-
-But I think your patch is still needed to exclude the next checkpoint
-for snapshot mount.
-
-A little bit problematic.. up to four fixes.
-
-I would appreciate it if you could rewrite patches taking the above
-into account.
-
-Thanks in advance,
-Ryusuke Konishi
-
-
-> 2009/7/27 Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
-> > nilfs2: Don't load/check cp block if specified cno is larger than the
-> > largest exist one.
-> > nilfs2 would load invalid cp block, and report random inconsistent error
-> > message under this situation before.
-> >
-> > Signed-off-by: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >
-> > ---
-> > =A0fs/nilfs2/cpfile.c | =A0 =A07 ++++---
-> > =A01 files changed, 4 insertions(+), 3 deletions(-)
-> >
-> > diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-> > index aec942c..43978a9 100644
-> > --- a/fs/nilfs2/cpfile.c
-> > +++ b/fs/nilfs2/cpfile.c
-> > @@ -814,9 +814,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile,=
- __u64 cno)
-> > =A0 =A0 =A0 =A0struct nilfs_checkpoint *cp;
-> > =A0 =A0 =A0 =A0void *kaddr;
-> > =A0 =A0 =A0 =A0int ret;
-> > -
-> > - =A0 =A0 =A0 if (cno =3D=3D 0)
-> > - =A0 =A0 =A0 =A0 =A0 =A0 =A0 return -ENOENT; /* checkpoint number 0 is=
- invalid */
-> > +
-> > + =A0 =A0 =A0 /* return ENOENT if cno is invalid. */
-> > + =A0 =A0 =A0 if (cno =3D=3D 0 || cno >=3D nilfs_mdt_cno(cpfile))
-> > + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return -ENOENT;
-> > =A0 =A0 =A0 =A0down_read(&NILFS_MDT(cpfile)->mi_sem);
-> >
-> > =A0 =A0 =A0 =A0ret =3D nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0=
-, &bh);
-> > --
-> > 1.6.2.2
-> >
+VGhhbmsgeW91IGZvciB5b3VyIGNvbW1lbnRzLCBJIHdpbGwgcmV2aXNlIGl0IGFuZCByZXNlbmQg
+bGF0ZXIuCgpSZWdhcmRzLApaaHUgWWFuaGFpCgoyMDA5LzcvMjggUnl1c3VrZSBLb25pc2hpIDxy
+eXVzdWtlQG9zcmcubmV0PjoKPiBIaSEKPiBPbiBNb24sIDI3IEp1bCAyMDA5IDE3OjI2OjU4ICsw
+ODAwLCBaaHUgWWFuaGFpIHdyb3RlOgo+PiBCZWxvdyBpbmNvbnNpc3RlbnQgZXJyb3IgbWVzc2Fn
+ZXMgd2lsbCBiZSByZXBvcnRlZCB3aXRob3V0IHRoaXMgcGF0Y2guCj4+Cj4+IFtyb290QHp5aC1m
+ZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAvZGV2L2xvb3AwIC4vbW91bnQxCj4+IG1vdW50Lm5p
+bGZzMjogV0FSTklORyEgLSBUaGUgTklMRlMgb24tZGlzayBmb3JtYXQgbWF5IGNoYW5nZSBhdCBh
+bnkgdGltZS4KPj4gbW91bnQubmlsZnMyOiBXQVJOSU5HISAtIERvIG5vdCBwbGFjZSBjcml0aWNh
+bCBkYXRhIG9uIGEgTklMRlMgZmlsZXN5c3RlbS4KPj4gW3Jvb3RAenloLWZlZG9yYSB+XSMgbHNj
+cAo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoENOTyDCoCDCoCDCoCDCoERBVEUgwqAgwqAg
+VElNRSDCoE1PREUgwqBGTEcgwqAgTkJMS0lOQyDCoCDCoCDCoCBJQ05UCj4+IMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgMSDCoDIwMDktMDctMjYgMTY6MTQ6MjYgwqAgY3AgwqAgwqAtIMKg
+IMKgIMKgIMKgIDExIMKgIMKgIMKgIMKgIMKgMwo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oCDCoDIgwqAyMDA5LTA3LTI2IDE2OjE2OjEyIMKgIGNwIMKgIMKgLSDCoCDCoCDCoCDCoDYzNyDC
+oCDCoCDCoCDCoDE0NAo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoDMgwqAyMDA5LTA3
+LTI2IDE2OjE2OjQ3IMKgIGNwIMKgIMKgLSDCoCDCoCDCoCDCoCAxNyDCoCDCoCDCoCDCoDE0Mwo+
+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoDQgwqAyMDA5LTA3LTI2IDE2OjE2OjUyIMKg
+IGNwIMKgIMKgLSDCoCDCoCDCoCDCoCAxNiDCoCDCoCDCoCDCoDE0Mgo+PiDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCDCoCDCoCDCoDUgwqAyMDA5LTA3LTI2IDE2OjE2OjU4IMKgIGNwIMKgIMKgLSDCoCDC
+oCDCoCDCoCAxMSDCoCDCoCDCoCDCoDE0Mgo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
+oDYgwqAyMDA5LTA3LTI2IDE2OjE3OjA4IMKgIGNwIMKgIMKgLSDCoCDCoCDCoCDCoCAxOCDCoCDC
+oCDCoCDCoDE0MQo+PiBbcm9vdEB6eWgtZmVkb3JhIH5dIyBtb3VudCAtdCBuaWxmczIgLXIgLW8g
+Y3A9MTAgL2Rldi9sb29wMCAuL21vdW50Mgo+PiBtb3VudC5uaWxmczI6IEVycm9yIHdoaWxlIG1v
+dW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IEludmFsaWQgYXJndW1lbnQKPj4gW3Jvb3RA
+enloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC1yIC1vIGNwPTIwIC9kZXYvbG9vcDAgLi9t
+b3VudDIKPj4gbW91bnQubmlsZnMyOiBFcnJvciB3aGlsZSBtb3VudGluZyAvZGV2L2xvb3AwIG9u
+IC4vbW91bnQyOiBJbnZhbGlkIGFyZ3VtZW50Cj4+IFtyb290QHp5aC1mZWRvcmEgfl0jIG1vdW50
+IC10IG5pbGZzMiAtciAtbyBjcD0zMCAvZGV2L2xvb3AwIC4vbW91bnQyCj4+IG1vdW50Lm5pbGZz
+MjogRXJyb3Igd2hpbGUgbW91bnRpbmcgL2Rldi9sb29wMCBvbiAuL21vdW50MjogTm8gc3VjaAo+
+PiBmaWxlIG9yIGRpcmVjdG9yeQo+PiBbcm9vdEB6eWgtZmVkb3JhIH5dIyBtb3VudCAtdCBuaWxm
+czIgLXIgLW8gY3A9NDAgL2Rldi9sb29wMCAuL21vdW50Mgo+PiBtb3VudC5uaWxmczI6IEVycm9y
+IHdoaWxlIG1vdW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IE5vIHN1Y2gKPj4gZmlsZSBv
+ciBkaXJlY3RvcnkKPj4gW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC1yIC1v
+IGNwPTI1IC9kZXYvbG9vcDAgLi9tb3VudDIKPj4gbW91bnQubmlsZnMyOiBFcnJvciB3aGlsZSBt
+b3VudGluZyAvZGV2L2xvb3AwIG9uIC4vbW91bnQyOiBObyBzdWNoCj4+IGZpbGUgb3IgZGlyZWN0
+b3J5Cj4+IFtyb290QHp5aC1mZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAtciAtbyBjcD0yMSAv
+ZGV2L2xvb3AwIC4vbW91bnQyCj4+IG1vdW50Lm5pbGZzMjogRXJyb3Igd2hpbGUgbW91bnRpbmcg
+L2Rldi9sb29wMCBvbiAuL21vdW50MjogTm8gc3VjaAo+PiBmaWxlIG9yIGRpcmVjdG9yeQo+Cj4g
+VGhhbmsgeW91IGZvciBwb2ludGluZyBvdXQgdGhlIGluY29uc2lzdGVuY3kuCj4KPiBZb3VyIHBh
+dGNoIG5vdGljZWQgbWUgdGhhdCBhIGZldyBwcm9ibGVtcyBleGlzdCBhcm91bmQgdGhlCj4gbmls
+ZnNfY3BmaWxlX2lzX3NuYXBzaG90KCkgZnVuY3Rpb246Cj4KPiDCoDEpIEZvciBpbnZhbGlkIGNo
+ZWNrcG9pbnRzIGl0IHNob3VsZCByZXR1cm4gYW4gRU5PRU5UIGVycm9yLCBidXQgdGhpcwo+IMKg
+IMKgY2hlY2sgaXMgbWlzc2luZzsgYSB0ZXN0IHdpdGggbmlsZnNfY2hlY2twb2ludF9pbnZhbGlk
+KCkgc2hvdWxkCj4gwqAgwqBjb21lIGJlZm9yZSB0aGUgbmlsZnNfY2hlY2twb2ludF9zbmFwc2hv
+dCgpIHRlc3QuCj4KPiDCoDIpIElmIG5pbGZzX2NwZmlsZV9pc19zbmFwc2hvdCgpIHJldHVybmVk
+IGFuIEVOT0VOVCBlcnJvciwKPiDCoCDCoG5pbGZzX2ZpbGxfc3VwZXIoKSBzaG91bGQgY29udmVy
+dCBpdCB0byAtRUlOVkFMLCBidXQgdGhpcyBpcwo+IMKgIMKgbWlzc2luZyB0b28uIMKgKHRoZSBF
+Tk9FTlQgY29kZSBpcyBmb3IgaW50ZXJuYWwgdXNlKQo+Cj4gwqAzKSBTbmFwc2hvdHMgY2FuIGJl
+IG1vdW50ZWQgY29uY3VycmVudGx5IHdpdGggYSB3cml0YWJsZSBtb3VudC4gwqBTbywKPiDCoCDC
+oHRoZSBjYWxsIHNpdGUgb2YgbmlsZnNfY3BmaWxlX2lzX3NuYXBzaG90KCkgbXVzdCBiZSBwcm90
+ZWN0ZWQgZnJvbQo+IMKgIMKgc2VnbWVudCB3cml0ZXIuIMKgSSBtZWFuIGl0IHNob3VsZCBob2xk
+IHJlYWQgbG9jayBmb3IKPiDCoCDCoG5pbGZzLT5uc19zZWdjdG9yX3NlbSBkdXJpbmcgdGhlIGNh
+bGwtb3V0IGxpa2U6Cj4KPiDCoCDCoCBkb3duX3JlYWQoJm5pbGZzLT5uc19zZWdjdG9yX3NlbSk7
+Cj4gwqAgwqAgZXJyID0gbmlsZnNfY3BmaWxlX2lzX3NuYXBzaG90KG5pbGZzLT5uc19jcGZpbGUs
+IHNiaS0+c19zbmFwc2hvdF9jbm8pOwo+IMKgIMKgIHVwX3JlYWQoJm5pbGZzLT5uc19zZWdjdG9y
+X3NlbSk7Cj4KPiDCoCDCoFRoaXMgaXMgbmVlZGVkIGV2ZW4gdG8gcHJvdGVjdCB0aGUgdXNlIG9m
+IG5pbGZzX21kdF9jbm8oKS4KPgo+Cj4gVGhlbiwgKDEpIGFuZCAoMikgd291bGQgZml4IHRoZSBp
+bmNvbnNpc3RlbmN5IHByb2JsZW0uCj4KPiBCdXQgSSB0aGluayB5b3VyIHBhdGNoIGlzIHN0aWxs
+IG5lZWRlZCB0byBleGNsdWRlIHRoZSBuZXh0IGNoZWNrcG9pbnQKPiBmb3Igc25hcHNob3QgbW91
+bnQuCj4KPiBBIGxpdHRsZSBiaXQgcHJvYmxlbWF0aWMuLiB1cCB0byBmb3VyIGZpeGVzLgo+Cj4g
+SSB3b3VsZCBhcHByZWNpYXRlIGl0IGlmIHlvdSBjb3VsZCByZXdyaXRlIHBhdGNoZXMgdGFraW5n
+IHRoZSBhYm92ZQo+IGludG8gYWNjb3VudC4KPgo+IFRoYW5rcyBpbiBhZHZhbmNlLAo+IFJ5dXN1
+a2UgS29uaXNoaQo+Cj4KPj4gMjAwOS83LzI3IFpodSBZYW5oYWkgPHpodS55YW5oYWlAZ21haWwu
+Y29tPjoKPj4gPiBuaWxmczI6IERvbid0IGxvYWQvY2hlY2sgY3AgYmxvY2sgaWYgc3BlY2lmaWVk
+IGNubyBpcyBsYXJnZXIgdGhhbiB0aGUKPj4gPiBsYXJnZXN0IGV4aXN0IG9uZS4KPj4gPiBuaWxm
+czIgd291bGQgbG9hZCBpbnZhbGlkIGNwIGJsb2NrLCBhbmQgcmVwb3J0IHJhbmRvbSBpbmNvbnNp
+c3RlbnQgZXJyb3IKPj4gPiBtZXNzYWdlIHVuZGVyIHRoaXMgc2l0dWF0aW9uIGJlZm9yZS4KPj4g
+Pgo+PiA+IFNpZ25lZC1vZmYtYnk6IFpodSBZYW5oYWkgPHpodS55YW5oYWlAZ21haWwuY29tPgo+
+PiA+Cj4+ID4gLS0tCj4+ID4gwqBmcy9uaWxmczIvY3BmaWxlLmMgfCDCoCDCoDcgKysrKy0tLQo+
+PiA+IMKgMSBmaWxlcyBjaGFuZ2VkLCA0IGluc2VydGlvbnMoKyksIDMgZGVsZXRpb25zKC0pCj4+
+ID4KPj4gPiBkaWZmIC0tZ2l0IGEvZnMvbmlsZnMyL2NwZmlsZS5jIGIvZnMvbmlsZnMyL2NwZmls
+ZS5jCj4+ID4gaW5kZXggYWVjOTQyYy4uNDM5NzhhOSAxMDA2NDQKPj4gPiAtLS0gYS9mcy9uaWxm
+czIvY3BmaWxlLmMKPj4gPiArKysgYi9mcy9uaWxmczIvY3BmaWxlLmMKPj4gPiBAQCAtODE0LDkg
+KzgxNCwxMCBAQCBpbnQgbmlsZnNfY3BmaWxlX2lzX3NuYXBzaG90KHN0cnVjdCBpbm9kZSAqY3Bm
+aWxlLCBfX3U2NCBjbm8pCj4+ID4gwqAgwqAgwqAgwqBzdHJ1Y3QgbmlsZnNfY2hlY2twb2ludCAq
+Y3A7Cj4+ID4gwqAgwqAgwqAgwqB2b2lkICprYWRkcjsKPj4gPiDCoCDCoCDCoCDCoGludCByZXQ7
+Cj4+ID4gLQo+PiA+IC0gwqAgwqAgwqAgaWYgKGNubyA9PSAwKQo+PiA+IC0gwqAgwqAgwqAgwqAg
+wqAgwqAgwqAgcmV0dXJuIC1FTk9FTlQ7IC8qIGNoZWNrcG9pbnQgbnVtYmVyIDAgaXMgaW52YWxp
+ZCAqLwo+PiA+ICsKPj4gPiArIMKgIMKgIMKgIC8qIHJldHVybiBFTk9FTlQgaWYgY25vIGlzIGlu
+dmFsaWQuICovCj4+ID4gKyDCoCDCoCDCoCBpZiAoY25vID09IDAgfHwgY25vID49IG5pbGZzX21k
+dF9jbm8oY3BmaWxlKSkKPj4gPiArIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVybiAtRU5PRU5U
+Owo+PiA+IMKgIMKgIMKgIMKgZG93bl9yZWFkKCZOSUxGU19NRFQoY3BmaWxlKS0+bWlfc2VtKTsK
+Pj4gPgo+PiA+IMKgIMKgIMKgIMKgcmV0ID0gbmlsZnNfY3BmaWxlX2dldF9jaGVja3BvaW50X2Js
+b2NrKGNwZmlsZSwgY25vLCAwLCAmYmgpOwo+PiA+IC0tCj4+ID4gMS42LjIuMgo+PiA+Cj4KX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KdXNlcnMgbWFpbGlu
+ZyBsaXN0CnVzZXJzQG5pbGZzLm9yZwpodHRwczovL3d3dy5uaWxmcy5vcmcvbWFpbG1hbi9saXN0
+aW5mby91c2Vycwo=
