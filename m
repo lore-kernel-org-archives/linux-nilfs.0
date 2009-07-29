@@ -1,16 +1,17 @@
-From: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH]nilfs2: Don't load/check invalid cno
-Date: Tue, 28 Jul 2009 08:46:06 +0800
-Message-ID: <977a2be20907271746y3280e02fm17177ff6fa23cc19@mail.gmail.com>
-References: <4A6D7273.5010906@gmail.com>
-	<977a2be20907270226s7c7037b5v38830e1ba68cefcb@mail.gmail.com> 
-	<20090728.024035.102951444.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Crash...
+Date: Wed, 29 Jul 2009 11:46:04 +0900 (JST)
+Message-ID: <20090729.114604.56042421.ryusuke@osrg.net>
+References: <9cdbb57f0907230555k768383c2ld1690d31cc6fff83@mail.gmail.com>
+	<20090724.011249.110726474.ryusuke@osrg.net>
+	<9cdbb57f0907231402i1a92cb4qfe5a9d81346a4665@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: Multipart/Mixed;
+	boundary="--Next_Part(Wed_Jul_29_11_46_04_2009_279)--"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090728.024035.102951444.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <9cdbb57f0907231402i1a92cb4qfe5a9d81346a4665-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,93 +22,119 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: andrea.gelmini-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-VGhhbmsgeW91IGZvciB5b3VyIGNvbW1lbnRzLCBJIHdpbGwgcmV2aXNlIGl0IGFuZCByZXNlbmQg
-bGF0ZXIuCgpSZWdhcmRzLApaaHUgWWFuaGFpCgoyMDA5LzcvMjggUnl1c3VrZSBLb25pc2hpIDxy
-eXVzdWtlQG9zcmcubmV0PjoKPiBIaSEKPiBPbiBNb24sIDI3IEp1bCAyMDA5IDE3OjI2OjU4ICsw
-ODAwLCBaaHUgWWFuaGFpIHdyb3RlOgo+PiBCZWxvdyBpbmNvbnNpc3RlbnQgZXJyb3IgbWVzc2Fn
-ZXMgd2lsbCBiZSByZXBvcnRlZCB3aXRob3V0IHRoaXMgcGF0Y2guCj4+Cj4+IFtyb290QHp5aC1m
-ZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAvZGV2L2xvb3AwIC4vbW91bnQxCj4+IG1vdW50Lm5p
-bGZzMjogV0FSTklORyEgLSBUaGUgTklMRlMgb24tZGlzayBmb3JtYXQgbWF5IGNoYW5nZSBhdCBh
-bnkgdGltZS4KPj4gbW91bnQubmlsZnMyOiBXQVJOSU5HISAtIERvIG5vdCBwbGFjZSBjcml0aWNh
-bCBkYXRhIG9uIGEgTklMRlMgZmlsZXN5c3RlbS4KPj4gW3Jvb3RAenloLWZlZG9yYSB+XSMgbHNj
-cAo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoENOTyDCoCDCoCDCoCDCoERBVEUgwqAgwqAg
-VElNRSDCoE1PREUgwqBGTEcgwqAgTkJMS0lOQyDCoCDCoCDCoCBJQ05UCj4+IMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIMKgIMKgIMKgMSDCoDIwMDktMDctMjYgMTY6MTQ6MjYgwqAgY3AgwqAgwqAtIMKg
-IMKgIMKgIMKgIDExIMKgIMKgIMKgIMKgIMKgMwo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoDIgwqAyMDA5LTA3LTI2IDE2OjE2OjEyIMKgIGNwIMKgIMKgLSDCoCDCoCDCoCDCoDYzNyDC
-oCDCoCDCoCDCoDE0NAo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoDMgwqAyMDA5LTA3
-LTI2IDE2OjE2OjQ3IMKgIGNwIMKgIMKgLSDCoCDCoCDCoCDCoCAxNyDCoCDCoCDCoCDCoDE0Mwo+
-PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoDQgwqAyMDA5LTA3LTI2IDE2OjE2OjUyIMKg
-IGNwIMKgIMKgLSDCoCDCoCDCoCDCoCAxNiDCoCDCoCDCoCDCoDE0Mgo+PiDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoDUgwqAyMDA5LTA3LTI2IDE2OjE2OjU4IMKgIGNwIMKgIMKgLSDCoCDC
-oCDCoCDCoCAxMSDCoCDCoCDCoCDCoDE0Mgo+PiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oDYgwqAyMDA5LTA3LTI2IDE2OjE3OjA4IMKgIGNwIMKgIMKgLSDCoCDCoCDCoCDCoCAxOCDCoCDC
-oCDCoCDCoDE0MQo+PiBbcm9vdEB6eWgtZmVkb3JhIH5dIyBtb3VudCAtdCBuaWxmczIgLXIgLW8g
-Y3A9MTAgL2Rldi9sb29wMCAuL21vdW50Mgo+PiBtb3VudC5uaWxmczI6IEVycm9yIHdoaWxlIG1v
-dW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IEludmFsaWQgYXJndW1lbnQKPj4gW3Jvb3RA
-enloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC1yIC1vIGNwPTIwIC9kZXYvbG9vcDAgLi9t
-b3VudDIKPj4gbW91bnQubmlsZnMyOiBFcnJvciB3aGlsZSBtb3VudGluZyAvZGV2L2xvb3AwIG9u
-IC4vbW91bnQyOiBJbnZhbGlkIGFyZ3VtZW50Cj4+IFtyb290QHp5aC1mZWRvcmEgfl0jIG1vdW50
-IC10IG5pbGZzMiAtciAtbyBjcD0zMCAvZGV2L2xvb3AwIC4vbW91bnQyCj4+IG1vdW50Lm5pbGZz
-MjogRXJyb3Igd2hpbGUgbW91bnRpbmcgL2Rldi9sb29wMCBvbiAuL21vdW50MjogTm8gc3VjaAo+
-PiBmaWxlIG9yIGRpcmVjdG9yeQo+PiBbcm9vdEB6eWgtZmVkb3JhIH5dIyBtb3VudCAtdCBuaWxm
-czIgLXIgLW8gY3A9NDAgL2Rldi9sb29wMCAuL21vdW50Mgo+PiBtb3VudC5uaWxmczI6IEVycm9y
-IHdoaWxlIG1vdW50aW5nIC9kZXYvbG9vcDAgb24gLi9tb3VudDI6IE5vIHN1Y2gKPj4gZmlsZSBv
-ciBkaXJlY3RvcnkKPj4gW3Jvb3RAenloLWZlZG9yYSB+XSMgbW91bnQgLXQgbmlsZnMyIC1yIC1v
-IGNwPTI1IC9kZXYvbG9vcDAgLi9tb3VudDIKPj4gbW91bnQubmlsZnMyOiBFcnJvciB3aGlsZSBt
-b3VudGluZyAvZGV2L2xvb3AwIG9uIC4vbW91bnQyOiBObyBzdWNoCj4+IGZpbGUgb3IgZGlyZWN0
-b3J5Cj4+IFtyb290QHp5aC1mZWRvcmEgfl0jIG1vdW50IC10IG5pbGZzMiAtciAtbyBjcD0yMSAv
-ZGV2L2xvb3AwIC4vbW91bnQyCj4+IG1vdW50Lm5pbGZzMjogRXJyb3Igd2hpbGUgbW91bnRpbmcg
-L2Rldi9sb29wMCBvbiAuL21vdW50MjogTm8gc3VjaAo+PiBmaWxlIG9yIGRpcmVjdG9yeQo+Cj4g
-VGhhbmsgeW91IGZvciBwb2ludGluZyBvdXQgdGhlIGluY29uc2lzdGVuY3kuCj4KPiBZb3VyIHBh
-dGNoIG5vdGljZWQgbWUgdGhhdCBhIGZldyBwcm9ibGVtcyBleGlzdCBhcm91bmQgdGhlCj4gbmls
-ZnNfY3BmaWxlX2lzX3NuYXBzaG90KCkgZnVuY3Rpb246Cj4KPiDCoDEpIEZvciBpbnZhbGlkIGNo
-ZWNrcG9pbnRzIGl0IHNob3VsZCByZXR1cm4gYW4gRU5PRU5UIGVycm9yLCBidXQgdGhpcwo+IMKg
-IMKgY2hlY2sgaXMgbWlzc2luZzsgYSB0ZXN0IHdpdGggbmlsZnNfY2hlY2twb2ludF9pbnZhbGlk
-KCkgc2hvdWxkCj4gwqAgwqBjb21lIGJlZm9yZSB0aGUgbmlsZnNfY2hlY2twb2ludF9zbmFwc2hv
-dCgpIHRlc3QuCj4KPiDCoDIpIElmIG5pbGZzX2NwZmlsZV9pc19zbmFwc2hvdCgpIHJldHVybmVk
-IGFuIEVOT0VOVCBlcnJvciwKPiDCoCDCoG5pbGZzX2ZpbGxfc3VwZXIoKSBzaG91bGQgY29udmVy
-dCBpdCB0byAtRUlOVkFMLCBidXQgdGhpcyBpcwo+IMKgIMKgbWlzc2luZyB0b28uIMKgKHRoZSBF
-Tk9FTlQgY29kZSBpcyBmb3IgaW50ZXJuYWwgdXNlKQo+Cj4gwqAzKSBTbmFwc2hvdHMgY2FuIGJl
-IG1vdW50ZWQgY29uY3VycmVudGx5IHdpdGggYSB3cml0YWJsZSBtb3VudC4gwqBTbywKPiDCoCDC
-oHRoZSBjYWxsIHNpdGUgb2YgbmlsZnNfY3BmaWxlX2lzX3NuYXBzaG90KCkgbXVzdCBiZSBwcm90
-ZWN0ZWQgZnJvbQo+IMKgIMKgc2VnbWVudCB3cml0ZXIuIMKgSSBtZWFuIGl0IHNob3VsZCBob2xk
-IHJlYWQgbG9jayBmb3IKPiDCoCDCoG5pbGZzLT5uc19zZWdjdG9yX3NlbSBkdXJpbmcgdGhlIGNh
-bGwtb3V0IGxpa2U6Cj4KPiDCoCDCoCBkb3duX3JlYWQoJm5pbGZzLT5uc19zZWdjdG9yX3NlbSk7
-Cj4gwqAgwqAgZXJyID0gbmlsZnNfY3BmaWxlX2lzX3NuYXBzaG90KG5pbGZzLT5uc19jcGZpbGUs
-IHNiaS0+c19zbmFwc2hvdF9jbm8pOwo+IMKgIMKgIHVwX3JlYWQoJm5pbGZzLT5uc19zZWdjdG9y
-X3NlbSk7Cj4KPiDCoCDCoFRoaXMgaXMgbmVlZGVkIGV2ZW4gdG8gcHJvdGVjdCB0aGUgdXNlIG9m
-IG5pbGZzX21kdF9jbm8oKS4KPgo+Cj4gVGhlbiwgKDEpIGFuZCAoMikgd291bGQgZml4IHRoZSBp
-bmNvbnNpc3RlbmN5IHByb2JsZW0uCj4KPiBCdXQgSSB0aGluayB5b3VyIHBhdGNoIGlzIHN0aWxs
-IG5lZWRlZCB0byBleGNsdWRlIHRoZSBuZXh0IGNoZWNrcG9pbnQKPiBmb3Igc25hcHNob3QgbW91
-bnQuCj4KPiBBIGxpdHRsZSBiaXQgcHJvYmxlbWF0aWMuLiB1cCB0byBmb3VyIGZpeGVzLgo+Cj4g
-SSB3b3VsZCBhcHByZWNpYXRlIGl0IGlmIHlvdSBjb3VsZCByZXdyaXRlIHBhdGNoZXMgdGFraW5n
-IHRoZSBhYm92ZQo+IGludG8gYWNjb3VudC4KPgo+IFRoYW5rcyBpbiBhZHZhbmNlLAo+IFJ5dXN1
-a2UgS29uaXNoaQo+Cj4KPj4gMjAwOS83LzI3IFpodSBZYW5oYWkgPHpodS55YW5oYWlAZ21haWwu
-Y29tPjoKPj4gPiBuaWxmczI6IERvbid0IGxvYWQvY2hlY2sgY3AgYmxvY2sgaWYgc3BlY2lmaWVk
-IGNubyBpcyBsYXJnZXIgdGhhbiB0aGUKPj4gPiBsYXJnZXN0IGV4aXN0IG9uZS4KPj4gPiBuaWxm
-czIgd291bGQgbG9hZCBpbnZhbGlkIGNwIGJsb2NrLCBhbmQgcmVwb3J0IHJhbmRvbSBpbmNvbnNp
-c3RlbnQgZXJyb3IKPj4gPiBtZXNzYWdlIHVuZGVyIHRoaXMgc2l0dWF0aW9uIGJlZm9yZS4KPj4g
-Pgo+PiA+IFNpZ25lZC1vZmYtYnk6IFpodSBZYW5oYWkgPHpodS55YW5oYWlAZ21haWwuY29tPgo+
-PiA+Cj4+ID4gLS0tCj4+ID4gwqBmcy9uaWxmczIvY3BmaWxlLmMgfCDCoCDCoDcgKysrKy0tLQo+
-PiA+IMKgMSBmaWxlcyBjaGFuZ2VkLCA0IGluc2VydGlvbnMoKyksIDMgZGVsZXRpb25zKC0pCj4+
-ID4KPj4gPiBkaWZmIC0tZ2l0IGEvZnMvbmlsZnMyL2NwZmlsZS5jIGIvZnMvbmlsZnMyL2NwZmls
-ZS5jCj4+ID4gaW5kZXggYWVjOTQyYy4uNDM5NzhhOSAxMDA2NDQKPj4gPiAtLS0gYS9mcy9uaWxm
-czIvY3BmaWxlLmMKPj4gPiArKysgYi9mcy9uaWxmczIvY3BmaWxlLmMKPj4gPiBAQCAtODE0LDkg
-KzgxNCwxMCBAQCBpbnQgbmlsZnNfY3BmaWxlX2lzX3NuYXBzaG90KHN0cnVjdCBpbm9kZSAqY3Bm
-aWxlLCBfX3U2NCBjbm8pCj4+ID4gwqAgwqAgwqAgwqBzdHJ1Y3QgbmlsZnNfY2hlY2twb2ludCAq
-Y3A7Cj4+ID4gwqAgwqAgwqAgwqB2b2lkICprYWRkcjsKPj4gPiDCoCDCoCDCoCDCoGludCByZXQ7
-Cj4+ID4gLQo+PiA+IC0gwqAgwqAgwqAgaWYgKGNubyA9PSAwKQo+PiA+IC0gwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgcmV0dXJuIC1FTk9FTlQ7IC8qIGNoZWNrcG9pbnQgbnVtYmVyIDAgaXMgaW52YWxp
-ZCAqLwo+PiA+ICsKPj4gPiArIMKgIMKgIMKgIC8qIHJldHVybiBFTk9FTlQgaWYgY25vIGlzIGlu
-dmFsaWQuICovCj4+ID4gKyDCoCDCoCDCoCBpZiAoY25vID09IDAgfHwgY25vID49IG5pbGZzX21k
-dF9jbm8oY3BmaWxlKSkKPj4gPiArIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVybiAtRU5PRU5U
-Owo+PiA+IMKgIMKgIMKgIMKgZG93bl9yZWFkKCZOSUxGU19NRFQoY3BmaWxlKS0+bWlfc2VtKTsK
-Pj4gPgo+PiA+IMKgIMKgIMKgIMKgcmV0ID0gbmlsZnNfY3BmaWxlX2dldF9jaGVja3BvaW50X2Js
-b2NrKGNwZmlsZSwgY25vLCAwLCAmYmgpOwo+PiA+IC0tCj4+ID4gMS42LjIuMgo+PiA+Cj4KX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KdXNlcnMgbWFpbGlu
-ZyBsaXN0CnVzZXJzQG5pbGZzLm9yZwpodHRwczovL3d3dy5uaWxmcy5vcmcvbWFpbG1hbi9saXN0
-aW5mby91c2Vycwo=
+----Next_Part(Wed_Jul_29_11_46_04_2009_279)--
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Hi Andrea,
+On Thu, 23 Jul 2009 23:02:47 +0200, Andrea Gelmini wrote:
+> 2009/7/23 Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>:
+> > It also suggests that an inconsistent state in page cache of B-tree
+> > nodes hit the function; the function found a dirty page, but the page
+> > didn't have buffer heads which was supposed to be impossible for the
+> > b-tree of nilfs.
+> 
+> Well,
+>    thanks for your quick reply.
+>    Anyway, I can reproduce the same problem doing same things with
+> stable kernel (2.6.29.6) and nilfs2-module from git repository.
+>    I do this:
+>    -> mkfs.nilfs2 -b 1024 /dev/mapper/VG-NilfHome (maybe the problem
+> is the 1K block size?)
+>    -> mount /dev/mapper/VG-NilfHome /tmp/test/
+>    -> I run mirrordir (here's exactly as a "cp -a")
+> 
+>    It stucks at the same file as the crash before.
+>    It's a 5G file, if it could help.
+
+I found a bug which may cause the kernel oops you reported.
+The bug can arise only if buffer size is smaller than page size.
+
+Here I attach the patch that will hopefully fix this problem.
+
+Could you test if the patch makes a difference for the same file ?
+
+Regards,
+Ryusuke Konishi
+---
+ fs/nilfs2/segment.c |   16 +++++++++++++++-
+ 1 files changed, 15 insertions(+), 1 deletions(-)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 8b5e477..51ff3d0 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1859,12 +1859,26 @@ static void nilfs_end_page_io(struct page *page, int err)
+ 	if (!page)
+ 		return;
+ 
+-	if (buffer_nilfs_node(page_buffers(page)) && !PageWriteback(page))
++	if (buffer_nilfs_node(page_buffers(page)) && !PageWriteback(page)) {
+ 		/*
+ 		 * For b-tree node pages, this function may be called twice
+ 		 * or more because they might be split in a segment.
+ 		 */
++		if (PageDirty(page)) {
++			/*
++			 * For pages holding split b-tree node buffers, dirty
++			 * flag on the buffers may be cleared discretely.
++			 * In that case, the page is once redirtied for
++			 * remaining buffers, and it must be cancelled if
++			 * all the buffers get cleaned later.
++			 */
++			lock_page(page);
++			if (nilfs_page_buffers_clean(page))
++				__nilfs_clear_page_dirty(page);
++			unlock_page(page);
++		}
+ 		return;
++	}
+ 
+ 	__nilfs_end_page_io(page, err);
+ }
+-- 
+1.6.3.3
+
+
+----Next_Part(Wed_Jul_29_11_46_04_2009_279)--
+Content-Type: Application/Octet-Stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="nilfs2-fix-oops-due-to-inconsistent-page-state.patch.bz2"
+
+QlpoOTFBWSZTWWCZ7tgAAVBfgEA4YX///X36XIq//9/+UAQ9O5umvV265rvZtrcNNIQ0mp+qnsjF
+PUbVPU9qnjRR7VBhDIGh6ag/Ug0QaTaTQmgmJoyAADQAAAADTQgSaj1AGmTR6IAAAAABoAkSTSYR
+qYozQhmgmCMRieiDAATaCU0gphU9qaeqaeTTyGqeppvVBjSGmIaGgBoMLEicA2McMgcNIgd+UCfd
+8NAMF2aX/oz2qvnmBZJH3f7xZLHWSZD3zTfS1jadgNpC2qMx/VUbZ64ggq8prRQK0HQgEt2y527Z
+rhnXm5P+ruMXjjxTzYbQ8HDMPy4ahHvXjcRK6ZpuxEY7EbXFuGcMarDnIGuaH5KQLqq7U6HXtS1s
+bEisUC3ccLphTyriOJh4k2xs7eWtHi02JFlOBj2Sh7ueQR9NGS5coQLEqaWKZwew/pjpXZrruZLQ
+qYH15WOomMHslnsUMOlVN4bZrHbvCpGCBCpgNMpPSQ8sauAUCyyhcZaIuSUy5qJK9ivGBNPcKea+
+rHIkPElbV1oHjOyqiff17uu+NE1W2CAZeNgwETgZ0GCDhQejc2BXnc4ngukj3Fw0HaQNEXoZbwhl
+QNEhgywTaYJo0rCNl4xkqwQv0VPkd9NKuTDbGyLRI0bYjFB1PiHZRfRpfVKI37dYB5k9gycBa3VB
+PwxvhxUOaFBHzVRUU5ervJRZHah6Bd3b6ItyCQj9G4gesT8xTMTMkYvuNWwdrANACCxCgGi8iX0m
+VVT7MeUxcxxmHhMrh3SjChjlEctuUgNhf35ImAmLhCR0nQGK89nJNsqnKxSzXxq2TZYpmVXWSGDb
+HVZAuSgsRWyMOSmaJiA5CKq7Oe4WK2W66MMKsuAYIiYjFiyCBySZJKafKVJiAMEHTYEz5512BCAU
+puIPE/5UwpeI40NeRa0ZAjRlycg94eKaWUmsHOExjxkduE++odIaEGaOimdFV/Azo8VF87dA1ep/
+5Az0ODRljrBpVIDL8wdwZWXm0E0HYZn8jtCvH27w0LDiaeDg1y0gukkabNAjBvhFicRA8WbNbjCk
+CVsaAWFuBKZZaSSgagUEgLgPNJDtUHhLeInN7DM0X3zJsuNDGoMl3ORjXer3mVhVp6av2IrKytoU
+08km1T8vjGrbcqsdWBs0YKVOQlyEKB4AwIrZrVUNMdjs4qkyENzBlMrhDIGKVeNhahI3RrCuTSEQ
+IoVbNwmsgZzfDgZqNsDj2bLSj+0VI6zEgSIkzMazvivLbbgSOD0jjZzr0jHcyQUbDurxLcVpRNih
+4iFrS+ktRUFOFDWitsqM5vUqQjRFlbAJVMWMUStdAG6y2UjlK6sQTiVsIcOSFypZiCGm29Ssu1iq
+QIgEUHHEfTEKaqSZowZ6oAXVlNQmWHoBOZJmJs8SIQS4ERYrJZYkcS2kOqwdJNu8lwPJ9t4FWGfb
+Wlr6GNYyekHzlhh4SlgzIMuBs0FjGkqXmk1wrHCICKlUD/xdyRThQkGCZ7tg
+
+----Next_Part(Wed_Jul_29_11_46_04_2009_279)--
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+----Next_Part(Wed_Jul_29_11_46_04_2009_279)----
