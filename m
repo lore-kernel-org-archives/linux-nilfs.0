@@ -1,15 +1,16 @@
-From: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: nilfs-utils in Fedora now
-Date: Mon, 03 Aug 2009 13:03:51 -0500
-Message-ID: <4A772687.4040704@redhat.com>
-References: <4A722B66.7010006@redhat.com>
-	<20090804.025321.12536090.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: proper name for userspace package?
+Date: Tue, 04 Aug 2009 04:10:06 +0900 (JST)
+Message-ID: <20090804.041006.12536354.ryusuke@osrg.net>
+References: <4A71CA72.8080106@redhat.com>
+	<20090731.023234.56054455.ryusuke@osrg.net>
+	<4A71E82C.1040208@debian.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090804.025321.12536090.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <4A71E82C.1040208-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,36 +21,36 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: daniel-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org
+Cc: sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Ryusuke Konishi wrote:
-> Hi,
-> On Thu, 30 Jul 2009 18:23:18 -0500, Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> I have nilfs-utils in Fedora now, for F11 and rawhide.  It'll take a
->> little while for things to get out to the repos, but if anyone is using
->> nilfs on Fedora, hopefully this'll make things a little easier or
->> convenient.
->>
->> For F11 it's headed to the testing repo, for now.
->>
->> Thanks,
->> -Eric
+On Thu, 30 Jul 2009 20:36:28 +0200, Daniel Baumann wrote:
+> Ryusuke Konishi wrote:
+> >> The tarball is "nilfs-utils" but debian has "nilfs2-tools" - is there a
+> >> preference, or is this a debian convention that caused the rename?
 > 
-> Thank you for letting us know this!  I hope your work really helps
-> nilfs users of fedora to make things easy hereafter.
-> 
-> BTW, is there any plan on adding the kernel code of nilfs to extra
-> packages for fedora 12 or the later?
+> it's my own aim to get some sort of uniformity with package names in
+> debian, so that we have $filesystem-tools for new packages. new means
+> basically almost anything after e2fsutils.
 
-Do you mean like a kmod rpm for updated nilfs kernel code that is not
-yet upstream?  No, Fedora doesn't allow kmods in the official
-repositories.  But nilfs is already configured on in F11 and F12, so
-nilfs.ko is already there in the kernel rpm.
+Thanks.  I felt this implicitly, and now I get it straight from you.
+ 
+> actually, i should rename it from nilfs2-tools to nilfs-tools.
+> unfortunately, in debian we have a quite stupid thing called NEW queue
+> which make such a simple rename have a penalty of 4 to 8 weeks of
+> waiting until ftp-masters unblock it. but i still might do that at some
+> point (unless Ryusuke dislikes it ;).
 
-Or maybe I misunderstand you question?
+Well, I don't mind either.  I'm accountable for part of the confusion
+especially for the version number ;)
 
--Eric
+"nilfs-tools" sounds simpler. Umm, actually it would be better in the
+long term because the nilfs package already has versions related to
+the filesystem version (e.g. -2.x.y).  At least I don't have any
+reason to object to the rename.
 
-> Thanks,
-> Ryusuke Konishi
+I just realized that ocfs2-tools package has versions 1.x.y.
+
+
+Thanks,
+Ryusuke Konishi
