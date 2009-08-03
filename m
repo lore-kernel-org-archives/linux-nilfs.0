@@ -1,13 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: [PATCH] nilfs2: fix missing unlock in error path of
- nilfs_mdt_write_page
-Date: Sun, 02 Aug 2009 22:23:05 +0900 (JST)
-Message-ID: <20090802.222305.71922738.ryusuke@osrg.net>
+Subject: Re: nilfs-utils in Fedora now
+Date: Tue, 04 Aug 2009 02:53:21 +0900 (JST)
+Message-ID: <20090804.025321.12536090.ryusuke@osrg.net>
+References: <4A722B66.7010006@redhat.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <4A722B66.7010006-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,45 +19,25 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 
+Hi,
+On Thu, 30 Jul 2009 18:23:18 -0500, Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> I have nilfs-utils in Fedora now, for F11 and rawhide.  It'll take a
+> little while for things to get out to the repos, but if anyone is using
+> nilfs on Fedora, hopefully this'll make things a little easier or
+> convenient.
+>
+> For F11 it's headed to the testing repo, for now.
+>
+> Thanks,
+> -Eric
 
-I found a mutex leak while looking into a kernel oops detected in
-shrink_page_list().
+Thank you for letting us know this!  I hope your work really helps
+nilfs users of fedora to make things easy hereafter.
 
-Here is a bugfix of the problem. I'll send it to the next -rc along
-with other fixes.
+BTW, is there any plan on adding the kernel code of nilfs to extra
+packages for fedora 12 or the later?
 
-Regards,
+Thanks,
 Ryusuke Konishi
---
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-
-nilfs2: fix missing unlock in error path of nilfs_mdt_write_page
-
-This adds a missing unlock of nilfs->ns_writer_mutex in
-nilfs_mdt_write_page() function.
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/mdt.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
-
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 3d3ddb3..2dfd477 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -412,8 +412,10 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 		return 0; /* Do not request flush for shadow page cache */
- 	if (!sb) {
- 		writer = nilfs_get_writer(NILFS_MDT(inode)->mi_nilfs);
--		if (!writer)
-+		if (!writer) {
-+			nilfs_put_writer(NILFS_MDT(inode)->mi_nilfs);
- 			return -EROFS;
-+		}
- 		sb = writer->s_super;
- 	}
- 
--- 
-1.6.3.4
