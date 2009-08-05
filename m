@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: [PATCH] nilfs2: tune write performance
-Date: Thu, 06 Aug 2009 03:54:05 +0900 (JST)
-Message-ID: <20090806.035405.08300632.ryusuke@osrg.net>
+Date: Thu, 06 Aug 2009 06:19:55 +0900 (JST)
+Message-ID: <20090806.061955.63823059.ryusuke@osrg.net>
 References: <1249483023-21088-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -21,7 +21,6 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
 
-Hi!
 On Wed,  5 Aug 2009 23:37:03 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
 > Hi,
 > 
@@ -32,7 +31,20 @@ On Wed,  5 Aug 2009 23:37:03 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@publ
 > but it is not necessarily to be in the transaction.
 > This patch will get the nilfs_ioctl_move_blocks() out from
 > transaction lock and put it before the transaction.
-> 
+
+Ah, this description may be misleading.
+nilfs_ioctl_move_blocks() does not actually move blocks, it just reads
+live blocks in the target segments into own caches (gc-cache).
+
+The move operation is consisting of the read operation and a write
+operation to new logs, which is carried out in nilfs_clean_segments().
+The patch move the former out from the lock section, but it doesn't
+for the latter.
+
+I think the confusion is due to name of the function.  Maybe, it
+should be named nilfs_ioctl_cache_copy_blocks() or something.  But, I
+would like to separate it off as usual.
+ 
 > Here are the bonnie++ bench mark results against rc5.
 > I used sata disk so performace difference is not big.
 > So I modified nilfs_cleanerd.conf to ensure lock will be long enough.
@@ -50,91 +62,7 @@ On Wed,  5 Aug 2009 23:37:03 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@publ
 >  * Char|17961.000 K/sec -> 102.700%
 >  * Block|30987.666 K/sec -> 100.700%
 >  * Rewrite|18775.666 K/sec -> 101.400%
-
-Thank you for the patch.
-
-I think this patch can mitigate freeze-time of writes due to GC, but
-this benchmark seems not to be suited for measuring the effect.
-Particularly, GC fires only once per five seconds with the following
-config, and this may limit the efficacy in this kind of integrative
-test.
-
-Is it possible to compare single write time hit GC with the time not
-hit GC ?
-
-I will check correctness of the patch.
-
-Thanks,
-Ryusuke Konishi
-
-> Here are the nilfs_cleanerd.conf and raw data.
-> -------8<---------8<---------nilfs_cleanerd.conf---------8<---------8<-------
-> protection_period    150
-> selection_policy    timestamp    # timestamp in ascend order
-> nsegments_per_clean    10
-> cleaning_interval    5
-> retry_interval        60
-> use_mmap
-> log_priority        info
-> -------8<---------8<---------nilfs_cleanerd.conf---------8<---------8<-------
-> ---------8<---------8<---------rc5---------8<---------8<---------
-> Version 1.03d       ------Sequential Output------ --Sequential Input- --Random-
->                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
-> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
-> foras           10G 17404  22 30751   5 18519   3 33855  38 45560   4  47.3   0
->                     ------Sequential Create------ --------Random Create--------
->                     -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
->               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
->                  16   103   1 +++++ +++   255   0   251   4 +++++ +++   223   1
-> foras,10G,17404,22,30751,5,18519,3,33855,38,45560,4,47.3,0,16,103,1,+++++,+++,255,0,251,4,+++++,+++,223,1
-> Version 1.03d       ------Sequential Output------ --Sequential Input- --Random-
->                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
-> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
-> foras           10G 17561  22 30781   5 18412   3 33973  38 46063   3  46.6   0
->                     ------Sequential Create------ --------Random Create--------
->                     -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
->               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
->                  16   102   1 +++++ +++   237   0   244   3 +++++ +++   222   1
-> foras,10G,17561,22,30781,5,18412,3,33973,38,46063,3,46.6,0,16,102,1,+++++,+++,237,0,244,3,+++++,+++,222,1
-> Version 1.03d       ------Sequential Output------ --Sequential Input- --Random-
->                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
-> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
-> foras           10G 17452  22 30712   5 18587   3 34071  38 45479   4  50.6   0
->                     ------Sequential Create------ --------Random Create--------
->                     -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
->               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
->                  16   102   1 +++++ +++   238   0   252   4 +++++ +++   222   1
-> foras,10G,17452,22,30712,5,18587,3,34071,38,45479,4,50.6,0,16,102,1,+++++,+++,238,0,252,4,+++++,+++,222,1
-> ---------8<---------8<---------rc5---------8<---------8<---------
-> ---------8<---------8<---------patch---------8<---------8<---------
-> Version 1.03d       ------Sequential Output------ --Sequential Input- --Random-
->                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
-> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
-> foras           10G 18004  22 31375   5 19110   3 33755  38 45224   4  97.1   0
->                     ------Sequential Create------ --------Random Create--------
->                     -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
->               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
->                  16    99   1 +++++ +++   223   0   231   3 +++++ +++   209   1
-> foras,10G,18004,22,31375,5,19110,3,33755,38,45224,4,97.1,0,16,99,1,+++++,+++,223,0,231,3,+++++,+++,209,1
-> Version 1.03d       ------Sequential Output------ --Sequential Input- --Random-
->                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
-> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
-> foras           10G 17866  22 30673   5 18619   3 33923  38 45878   4  55.3   0
->                     ------Sequential Create------ --------Random Create--------
->                     -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
->               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
->                  16    97   1 +++++ +++   211   0   224   3 +++++ +++   203   1
-> foras,10G,17866,22,30673,5,18619,3,33923,38,45878,4,55.3,0,16,97,1,+++++,+++,211,0,224,3,+++++,+++,203,1
-> Version 1.03d       ------Sequential Output------ --Sequential Input- --Random-
->                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
-> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
-> foras           10G 18013  22 30915   5 18598   3 33879  38 44957   4  47.5   0
->                     ------Sequential Create------ --------Random Create--------
->                     -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
->               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
->                  16    99   1 +++++ +++   255   0   253   4 +++++ +++   226   1
-> foras,10G,18013,22,30915,5,18598,3,33879,38,44957,4,47.5,0,16,99,1,+++++,+++,255,0,253,4,+++++,+++,226,1
-> ---------8<---------8<---------patch---------8<---------8<---------
+<snip>
 > 
 >  fs/nilfs2/ioctl.c |   12 ++++++------
 >  1 files changed, 6 insertions(+), 6 deletions(-)
@@ -168,6 +96,16 @@ Ryusuke Konishi
 > +	ret = nilfs_ioctl_move_blocks(nilfs, &argv[0], kbufs[0]);
 > +	if (ret < 0) {
 > +		printk(KERN_ERR "NILFS: GC failed during preparation: cannot read source blocks: err=%d\n", ret);
+
+You should call nilfs_remove_all_gcinode() here before escaping from
+the normal route.
+
+And, break the line please.  You can do it for C-strings just as
+follows:
+
+    printk(KERN_ERR "NILFS: GC failed during preparation: "
+           "cannot read source blocks: err=%d\n", ret);
+
 > +		goto out_free;
 > +	}
 > +
@@ -176,3 +114,8 @@ Ryusuke Konishi
 >   out_free:
 > -- 
 > 1.5.6.5
+
+For the rest, it looks good to me.
+
+Thanks,
+Ryusuke Konishi
