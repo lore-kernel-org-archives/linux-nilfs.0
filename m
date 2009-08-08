@@ -1,67 +1,68 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: [PATCH] nilfs2: use GFP_NOIO for bio_alloc instead of
-	GFP_NOWAIT
-Date: Sat, 08 Aug 2009 15:52:27 +0900 (JST)
-Message-ID: <20090808.155227.128865710.ryusuke@osrg.net>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] fs/Kconfig: move nilfs2 outside misc filesystems
+Date: Sat,  8 Aug 2009 17:00:14 +0900
+Message-ID: <1249718414-5282-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+To: linux-fsdevel@vger.kernel.org
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, users@nilfs.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-This is a remaining todo item related to the write failure problem
-recently fixed.  This patch would decrease the possibility of memory
-allocation failure during log-writing.  I'll queue this for the next
-merge window.
+Some people asked me questions like the following:
 
-Ryusuke Konishi
---
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+On Wed, 15 Jul 2009 13:11:21 +0200, Leon Woestenberg wrote:
+> just wondering, any reasons why NILFS2 is one of the miscellaneous
+> filesystems and, for example, btrfs, is not in Kconfig?
 
-Alberto Bertogli advised me about bio_alloc() use in nilfs:
-On Sat, 13 Jun 2009 22:52:40 -0300, Alberto Bertogli wrote:
-> By the way, those bio_alloc()s are using GFP_NOWAIT but it looks
-> like they could use at least GFP_NOIO or GFP_NOFS, since the caller
-> can (and sometimes do) sleep. The only caller is nilfs_submit_bh(),
-> which calls nilfs_submit_seg_bio() which can sleep calling
-> wait_for_completion().
+Actually, nilfs is NOT a filesystem came from other operating systems,
+but a filesystem created purely for Linux.  Nor is it a flash
+filesystem but that for generic block devices.
 
-This takes in the comment and replaces the use of GFP_NOWAIT flag with
-GFP_NOIO.
+So, this moves nilfs outside the misc category as I responded in LKML
+"Re: Why does NILFS2 hide under Miscellaneous filesystems?"
+(Message-Id: <20090716.002526.93465395.ryusuke@osrg.net>).
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/segbuf.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ fs/Kconfig        |    2 +-
+ fs/nilfs2/Kconfig |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index 9e3fe17..e6d9e37 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -316,10 +316,10 @@ static struct bio *nilfs_alloc_seg_bio(struct super_block *sb, sector_t start,
- {
- 	struct bio *bio;
+diff --git a/fs/Kconfig b/fs/Kconfig
+index 0e7da7b..455aa20 100644
+--- a/fs/Kconfig
++++ b/fs/Kconfig
+@@ -43,6 +43,7 @@ source "fs/xfs/Kconfig"
+ source "fs/gfs2/Kconfig"
+ source "fs/ocfs2/Kconfig"
+ source "fs/btrfs/Kconfig"
++source "fs/nilfs2/Kconfig"
  
--	bio = bio_alloc(GFP_NOWAIT, nr_vecs);
-+	bio = bio_alloc(GFP_NOIO, nr_vecs);
- 	if (bio == NULL) {
- 		while (!bio && (nr_vecs >>= 1))
--			bio = bio_alloc(GFP_NOWAIT, nr_vecs);
-+			bio = bio_alloc(GFP_NOIO, nr_vecs);
- 	}
- 	if (likely(bio)) {
- 		bio->bi_bdev = sb->s_bdev;
+ endif # BLOCK
+ 
+@@ -186,7 +187,6 @@ source "fs/romfs/Kconfig"
+ source "fs/sysv/Kconfig"
+ source "fs/ufs/Kconfig"
+ source "fs/exofs/Kconfig"
+-source "fs/nilfs2/Kconfig"
+ 
+ endif # MISC_FILESYSTEMS
+ 
+diff --git a/fs/nilfs2/Kconfig b/fs/nilfs2/Kconfig
+index 72da095..251da07 100644
+--- a/fs/nilfs2/Kconfig
++++ b/fs/nilfs2/Kconfig
+@@ -1,6 +1,6 @@
+ config NILFS2_FS
+ 	tristate "NILFS2 file system support (EXPERIMENTAL)"
+-	depends on BLOCK && EXPERIMENTAL
++	depends on EXPERIMENTAL
+ 	select CRC32
+ 	help
+ 	  NILFS2 is a log-structured file system (LFS) supporting continuous
 -- 
 1.6.3.4
+
