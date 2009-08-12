@@ -1,15 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: add more check routines in mount
- process
-Date: Wed, 12 Aug 2009 20:58:28 +0900 (JST)
-Message-ID: <20090812.205828.97015115.ryusuke@osrg.net>
-References: <4A825E97.10605@gmail.com>
+From: "Barham, David" <david.barham-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>
+Subject: [SPAM] installation/getting started issues on SLES 11
+Date: Wed, 12 Aug 2009 17:45:55 +0200
+Message-ID: <80225669DEC80D488C4A0B5150466E1802BB39E7@dekomplm002.net.plm.eds.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0296675581=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <4A825E97.10605-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Class: urn:content-classes:message
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,75 +15,284 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-On Wed, 12 Aug 2009 14:17:59 +0800, Zhu Yanhai wrote:
-> nilfs2: Add more safeguard routines and protections in mount process,
-> which also makes nilsf2 report consistency error messages when checkpoint
-> number is invalid.
-> 
-> Signed-off-by: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  fs/nilfs2/cpfile.c |   11 ++++++++---
->  fs/nilfs2/super.c  |    7 ++++++-
->  2 files changed, 14 insertions(+), 4 deletions(-)
-> 
-> diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-> index aec942c..1c6cfb5 100644
-> --- a/fs/nilfs2/cpfile.c
-> +++ b/fs/nilfs2/cpfile.c
-> @@ -815,8 +815,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
->  	void *kaddr;
->  	int ret;
->  
-> -	if (cno == 0)
-> -		return -ENOENT; /* checkpoint number 0 is invalid */
-> +	/* CP number is invalid if it's zero or larger than the
-> +	largest	exist one.*/
-> +	if (cno == 0 || cno >= nilfs_mdt_cno(cpfile))
-> +		return -ENOENT;
->  	down_read(&NILFS_MDT(cpfile)->mi_sem);
->  
->  	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
-> @@ -824,7 +826,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
->  		goto out;
->  	kaddr = kmap_atomic(bh->b_page, KM_USER0);
->  	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
-> -	ret = nilfs_checkpoint_snapshot(cp);
-> +	if (nilfs_checkpoint_invalid(cp))
-> +		ret = -ENOENT;
-> +	else
-> +		ret = nilfs_checkpoint_snapshot(cp);
->  	kunmap_atomic(kaddr, KM_USER0);
->  	brelse(bh);
->  
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index 8e2ec43..b2ad589 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -814,10 +814,15 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
->  
->  	if (sb->s_flags & MS_RDONLY) {
->  		if (nilfs_test_opt(sbi, SNAPSHOT)) {
-> +			down_read(&nilfs->ns_segctor_sem);
->  			err = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile,
->  						       sbi->s_snapshot_cno);
-> -			if (err < 0)
-> +			up_read(&nilfs->ns_segctor_sem);
-> +			if (err < 0) {
-> +				if (err == -ENOENT)
-> +					err = -EINVAL;
->  				goto failed_sbi;
-> +			}
->  			if (!err) {
->  				printk(KERN_ERR
->  				       "NILFS: The specified checkpoint is "
-> -- 
-> 1.6.2.2
+--===============0296675581==
+Content-Class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01CA1B64.00931EC4"
 
-Applied. Thank you!
+------_=_NextPart_001_01CA1B64.00931EC4
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 
-Ryusuke Konishi
+I've just downloaded and installed the RPMs for SLES 11 from
+opensuse.org.
+
+I've successfully installed
+nilfs-kmp-default-2.0.15_2.6.27.19_5-2.1.x86_64.rpm and
+nilfs-utils-2.0.14-4.2.x86_64.rpm.
+
+=20
+
+These installed with no error.
+
+=20
+
+Mkfs appears to work without error.
+
+=20
+
+# mkfs -t nilfs2 /dev/sdb
+
+mkfs.nilfs2 ver 2.0
+
+Start writing file system initial data to the device
+
+       Blocksize:4096  Device:/dev/sdb  Device Size:1500301910016
+
+File system initialization succeeded !!
+
+=20
+
+But when I tried to mount the filesystem I get
+
+=20
+
+# mount -t nilfs2 /dev/sdb /data1
+
+mount.nilfs2: WARNING! - The NILFS on-disk format may change at any
+time.
+
+mount.nilfs2: WARNING! - Do not place critical data on a NILFS
+filesystem.
+
+mount.nilfs2: cannot find or load nilfs2 filesystem
+
+=20
+
+Any ideas? I can see an /sbin/mount.nilfs2 and all the other files I
+would expect.
+
+=20
+
+Is this a terrible newbie misunderstanding?=20
+
+What am I doing wrong?=20
+
+Am I missing some other vital rpm?
+
+=20
+
+Thanks
+
+David Barham
+
+=20
+
+
+------_=_NextPart_001_01CA1B64.00931EC4
+Content-Type: text/html; charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:x=3D"urn:schemas-microsoft-com:office:excel" =
+xmlns:p=3D"urn:schemas-microsoft-com:office:powerpoint" =
+xmlns:a=3D"urn:schemas-microsoft-com:office:access" =
+xmlns:dt=3D"uuid:C2F41010-65B3-11d1-A29F-00AA00C14882" =
+xmlns:s=3D"uuid:BDC6E3F0-6DA3-11d1-A2A3-00AA00C14882" =
+xmlns:rs=3D"urn:schemas-microsoft-com:rowset" xmlns:z=3D"#RowsetSchema" =
+xmlns:b=3D"urn:schemas-microsoft-com:office:publisher" =
+xmlns:ss=3D"urn:schemas-microsoft-com:office:spreadsheet" =
+xmlns:c=3D"urn:schemas-microsoft-com:office:component:spreadsheet" =
+xmlns:odc=3D"urn:schemas-microsoft-com:office:odc" =
+xmlns:oa=3D"urn:schemas-microsoft-com:office:activation" =
+xmlns:html=3D"http://www.w3.org/TR/REC-html40" =
+xmlns:q=3D"http://schemas.xmlsoap.org/soap/envelope/" =
+xmlns:rtc=3D"http://microsoft.com/officenet/conferencing" =
+xmlns:D=3D"DAV:" xmlns:Repl=3D"http://schemas.microsoft.com/repl/" =
+xmlns:mt=3D"http://schemas.microsoft.com/sharepoint/soap/meetings/" =
+xmlns:x2=3D"http://schemas.microsoft.com/office/excel/2003/xml" =
+xmlns:ppda=3D"http://www.passport.com/NameSpace.xsd" =
+xmlns:ois=3D"http://schemas.microsoft.com/sharepoint/soap/ois/" =
+xmlns:dir=3D"http://schemas.microsoft.com/sharepoint/soap/directory/" =
+xmlns:ds=3D"http://www.w3.org/2000/09/xmldsig#" =
+xmlns:dsp=3D"http://schemas.microsoft.com/sharepoint/dsp" =
+xmlns:udc=3D"http://schemas.microsoft.com/data/udc" =
+xmlns:xsd=3D"http://www.w3.org/2001/XMLSchema" =
+xmlns:sub=3D"http://schemas.microsoft.com/sharepoint/soap/2002/1/alerts/"=
+ xmlns:ec=3D"http://www.w3.org/2001/04/xmlenc#" =
+xmlns:sp=3D"http://schemas.microsoft.com/sharepoint/" =
+xmlns:sps=3D"http://schemas.microsoft.com/sharepoint/soap/" =
+xmlns:xsi=3D"http://www.w3.org/2001/XMLSchema-instance" =
+xmlns:udcs=3D"http://schemas.microsoft.com/data/udc/soap" =
+xmlns:udcxf=3D"http://schemas.microsoft.com/data/udc/xmlfile" =
+xmlns:udcp2p=3D"http://schemas.microsoft.com/data/udc/parttopart" =
+xmlns:wf=3D"http://schemas.microsoft.com/sharepoint/soap/workflow/" =
+xmlns:dsss=3D"http://schemas.microsoft.com/office/2006/digsig-setup" =
+xmlns:dssi=3D"http://schemas.microsoft.com/office/2006/digsig" =
+xmlns:mdssi=3D"http://schemas.openxmlformats.org/package/2006/digital-sig=
+nature" =
+xmlns:mver=3D"http://schemas.openxmlformats.org/markup-compatibility/2006=
+" xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns:mrels=3D"http://schemas.openxmlformats.org/package/2006/relationshi=
+ps" xmlns:spwp=3D"http://microsoft.com/sharepoint/webpartpages" =
+xmlns:ex12t=3D"http://schemas.microsoft.com/exchange/services/2006/types"=
+ =
+xmlns:ex12m=3D"http://schemas.microsoft.com/exchange/services/2006/messag=
+es" =
+xmlns:pptsl=3D"http://schemas.microsoft.com/sharepoint/soap/SlideLibrary/=
+" =
+xmlns:spsl=3D"http://microsoft.com/webservices/SharePointPortalServer/Pub=
+lishedLinksService" xmlns:Z=3D"urn:schemas-microsoft-com:" =
+xmlns:st=3D"&#1;" xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page Section1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 72.0pt 72.0pt 72.0pt;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext=3D"edit">
+  <o:idmap v:ext=3D"edit" data=3D"1" />
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body lang=3DEN-GB link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal>I&#8217;ve just downloaded and installed the RPMs =
+for SLES
+11 from opensuse.org.<o:p></o:p></p>
+
+<p class=3DMsoNormal>I&#8217;ve successfully installed =
+nilfs-kmp-default-2.0.15_2.6.27.19_5-2.1.x86_64.rpm
+and nilfs-utils-2.0.14-4.2.x86_64.rpm.<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>These installed with no error.<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Mkfs appears to work without error.<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal># mkfs -t nilfs2 /dev/sdb<o:p></o:p></p>
+
+<p class=3DMsoNormal>mkfs.nilfs2 ver 2.0<o:p></o:p></p>
+
+<p class=3DMsoNormal>Start writing file system initial data to the =
+device<o:p></o:p></p>
+
+<p class=3DMsoNormal>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+Blocksize:4096&nbsp;
+Device:/dev/sdb&nbsp; Device Size:1500301910016<o:p></o:p></p>
+
+<p class=3DMsoNormal>File system initialization succeeded =
+!!<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>But when I tried to mount the filesystem I =
+get<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal># mount -t nilfs2 /dev/sdb /data1<o:p></o:p></p>
+
+<p class=3DMsoNormal>mount.nilfs2: WARNING! - The NILFS on-disk format =
+may change
+at any time.<o:p></o:p></p>
+
+<p class=3DMsoNormal>mount.nilfs2: WARNING! - Do not place critical data =
+on a
+NILFS filesystem.<o:p></o:p></p>
+
+<p class=3DMsoNormal>mount.nilfs2: cannot find or load nilfs2 =
+filesystem<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Any ideas? I can see an /sbin/mount.nilfs2 and all =
+the other
+files I would expect.<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Is this a terrible newbie misunderstanding? =
+<o:p></o:p></p>
+
+<p class=3DMsoNormal>What am I doing wrong? <o:p></o:p></p>
+
+<p class=3DMsoNormal>Am I missing some other vital rpm?<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Thanks<o:p></o:p></p>
+
+<p class=3DMsoNormal>David Barham<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_001_01CA1B64.00931EC4--
+
+--===============0296675581==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0296675581==--
