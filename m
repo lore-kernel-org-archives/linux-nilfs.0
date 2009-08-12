@@ -1,16 +1,13 @@
-From: Eric A <eric225125-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
-Subject: Re: segctord problem
-Date: Tue, 11 Aug 2009 21:12:01 -0700 (PDT)
-Message-ID: <255429.87566.qm@web58802.mail.re1.yahoo.com>
-References: <949415.6494.qm@web58808.mail.re1.yahoo.com>
-	<877hx9g8p6.wl%jir@sekiba.com>
-	<229792.17907.qm@web58802.mail.re1.yahoo.com>
-	<20090812.122845.28893666.ryusuke@osrg.net>
+From: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: add more check routines in mount
+	process
+Date: Wed, 12 Aug 2009 14:17:59 +0800
+Message-ID: <4A825E97.10605@gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1042219916=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090812.122845.28893666.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,96 +16,70 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Cc: Zhang Qiang <qiang.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Zhu Yanhai <yanhai.zhu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
---===============1042219916==
-Content-Type: multipart/alternative; boundary="0-390670354-1250050321=:87566"
+nilfs2: Add more safeguard routines and protections in mount process,
+which also makes nilsf2 report consistency error messages when checkpoint
+number is invalid.
 
---0-390670354-1250050321=:87566
-Content-Type: text/plain; charset=us-ascii
+Signed-off-by: Zhu Yanhai <zhu.yanhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nilfs2/cpfile.c |   11 ++++++++---
+ fs/nilfs2/super.c  |    7 ++++++-
+ 2 files changed, 14 insertions(+), 4 deletions(-)
 
-
-
-
-
-
-________________________________
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; eric225125-/E1597aS9LQAvxtiuMwx3w@public.gmane.org
-Sent: Tuesday, August 11, 2009 11:28:45 PM
-Subject: Re: [NILFS users] segctord problem
-
-Hi!
-On Tue, 11 Aug 2009 18:28:05 -0700 (PDT), Eric A wrote:
-> I'm using the latest vanilla kernel (2.6.31-rc5-git7).  My distro is Gentoo with nilfs-utils-2.0.14.
-> 
-> Eric
-> 
-> 
-> 
-> ________________________________
-> From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-> To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-> Sent: Tuesday, August 11, 2009 8:46:45 PM
-> Subject: Re: [NILFS users] segctord problem
-> 
-> Hi,
-> 
-> > I have been using nilfs as my rootfs for several weeks now and have been
-> > experiencing random problems.  X programs will be become unresponsive and top
-> > will show that segctord is using ~50%hi (100% of one core).
-> 
-> Which version of kernel and distro are you using?
-
-According to your log, preemption count of the log-writer thread goes
-wrong; it must be equal or greater than 0, but your log shows it
-became -1 (0xffffffff) maybe due to some kind of bug in nilfs.
-
-> Aug 11 17:00:59 gentoo klogd: BUG: scheduling while atomic: segctord/1312/0xffffffff
-
-I'm looking at this problem, but I don't have no clue why this
-happened.
-
-Is it reproducible after reboot?
-
-Thanks,
-Ryusuke Konishi
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
-
-
-      
---0-390670354-1250050321=:87566
-Content-Type: text/html; charset=us-ascii
-
-<html><head><style type="text/css"><!-- DIV {margin:0px;} --></style></head><body><div style="font-family:'times new roman', 'new york', times, serif;font-size:12pt"><div><br></div><div style="font-family:times new roman, new york, times, serif;font-size:12pt"><br><div style="font-family:arial, helvetica, sans-serif;font-size:13px"><font size="2" face="Tahoma"><hr size="1"><b><span style="font-weight: bold;">From:</span></b> Ryusuke Konishi &lt;ryusuke-sG5X7nlA6pw@public.gmane.org&gt;<br><b><span style="font-weight: bold;">To:</span></b> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org; eric225125-/E1597aS9LQAvxtiuMwx3w@public.gmane.org<br><b><span style="font-weight: bold;">Sent:</span></b> Tuesday, August 11, 2009 11:28:45 PM<br><b><span style="font-weight: bold;">Subject:</span></b> Re: [NILFS users] segctord problem<br></font><br> Hi!<br>On Tue, 11 Aug 2009 18:28:05 
- -0700 (PDT), Eric A wrote:<br>&gt; I'm using the latest vanilla kernel (2.6.31-rc5-git7).&nbsp; My distro is Gentoo with nilfs-utils-2.0.14.<br>&gt; <br>&gt;
- Eric<br>&gt; <br>&gt; <br>&gt; <br>&gt; ________________________________<br>&gt; From: Jiro SEKIBA &lt;<a ymailto="mailto:jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org" href="mailto:jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org">jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org</a>&gt;<br>&gt; To: NILFS Users mailing list &lt;<a ymailto="mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org" href="mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org">users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org</a>&gt;<br>&gt; Sent: Tuesday, August 11, 2009 8:46:45 PM<br>&gt; Subject: Re: [NILFS users] segctord problem<br>&gt; <br>&gt; Hi,<br>&gt; <br>&gt; &gt; I have been using nilfs as my rootfs for several weeks now and have been<br>&gt; &gt; experiencing random problems.&nbsp; X programs will be become unresponsive and top<br>&gt; &gt; will show that segctord is using ~50%hi (100% of one core).<br>&gt; <br>&gt; Which version of kernel and distro are you using?<br><br>According to your lo
- g, preemption count of the log-writer thread goes<br>wrong; it must be equal or greater than 0, but your log shows it<br>became -1 (0xffffffff) maybe due to some kind
- of bug in nilfs.<br><br>&gt; Aug 11 17:00:59 gentoo klogd: BUG: scheduling while atomic: segctord/1312/0xffffffff<br><br>I'm looking at this problem, but I don't have no clue why this<br>happened.<br><br>Is it reproducible after reboot?<br><br>Thanks,<br>Ryusuke Konishi<br>_______________________________________________<br>users mailing list<br><a ymailto="mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org" href="mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org">users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org</a><br><a href="https://www.nilfs.org/mailman/listinfo/users" target="_blank">https://www.nilfs.org/mailman/listinfo/users</a><br></div></div><div style="position:fixed"></div></div><br>
-
-
-
-      </body></html>
---0-390670354-1250050321=:87566--
-
-
---===============1042219916==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
-
---===============1042219916==--
-
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index aec942c..1c6cfb5 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -815,8 +815,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
+ 	void *kaddr;
+ 	int ret;
+ 
+-	if (cno == 0)
+-		return -ENOENT; /* checkpoint number 0 is invalid */
++	/* CP number is invalid if it's zero or larger than the
++	largest	exist one.*/
++	if (cno == 0 || cno >= nilfs_mdt_cno(cpfile))
++		return -ENOENT;
+ 	down_read(&NILFS_MDT(cpfile)->mi_sem);
+ 
+ 	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
+@@ -824,7 +826,10 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
+ 		goto out;
+ 	kaddr = kmap_atomic(bh->b_page, KM_USER0);
+ 	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
+-	ret = nilfs_checkpoint_snapshot(cp);
++	if (nilfs_checkpoint_invalid(cp))
++		ret = -ENOENT;
++	else
++		ret = nilfs_checkpoint_snapshot(cp);
+ 	kunmap_atomic(kaddr, KM_USER0);
+ 	brelse(bh);
+ 
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 8e2ec43..b2ad589 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -814,10 +814,15 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+ 
+ 	if (sb->s_flags & MS_RDONLY) {
+ 		if (nilfs_test_opt(sbi, SNAPSHOT)) {
++			down_read(&nilfs->ns_segctor_sem);
+ 			err = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile,
+ 						       sbi->s_snapshot_cno);
+-			if (err < 0)
++			up_read(&nilfs->ns_segctor_sem);
++			if (err < 0) {
++				if (err == -ENOENT)
++					err = -EINVAL;
+ 				goto failed_sbi;
++			}
+ 			if (!err) {
+ 				printk(KERN_ERR
+ 				       "NILFS: The specified checkpoint is "
+-- 
+1.6.2.2
