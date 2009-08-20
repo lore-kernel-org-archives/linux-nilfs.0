@@ -1,13 +1,14 @@
-From: "Yann E. MORIN" <yann.morin.1998-i2lMhxPFobAPxyCoDXghUg@public.gmane.org>
-Subject: Inquiry: disk format change in the future
-Date: Tue, 18 Aug 2009 12:17:22 +0200
-Message-ID: <20090820002457.A0C0520E21@spam-fw.osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Inquiry: disk format change in the future
+Date: Thu, 20 Aug 2009 11:22:37 +0900 (JST)
+Message-ID: <20090820.112237.04623349.ryusuke@osrg.net>
+References: <20090820002457.A0C0520E21@spam-fw.osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-Disposition: inline
+In-Reply-To: <20090820002457.A0C0520E21-lhVA/uj0YcqwblfueUDqnA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,33 +19,46 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, yann.morin.1998-i2lMhxPFobAPxyCoDXghUg@public.gmane.org
 
-Hello All!
+(reply added to "Yann E. MORIN")
 
-I've searched the archives, but could not find the answer to the
-following questions:
+Hi,
+On Wed, 19 Aug 2009 11:31:56 +0200, "Yann E. MORIN" wrote:
+> Hello All!
+> 
+> I've searched the archives, but could not find the answer to the
+> following questions:
+> 
+>  - will there be, or what is the probability of, a disk format change
+>    in the near future (few months)?
 
- - will there be, or what is the probability of, a disk format change
-   in the near future (few months)?
+We still have some possibilities for the format change at this time.
 
- - if so, what would be the plan for migrating existing file systems
-   to the new format?
+Basically I intend to keep the disk format, but some new features like
 
-I'm contemplating using nilfs2 as the file system for my server, as
-it offers all the features I need. OTOH, I would be quite disapointed
-if migrating my existing file systems to the new format would imply
-(too long a) down-time.
+- Extended attributes, ACLs
+- Rollback
+- Checkpoint based remote replication
 
-Anyway, keep up the very good work! nilfs2 is very nice! :-)
+may require it.  So far, we haven't seen any specific requisition.
+ 
+>  - if so, what would be the plan for migrating existing file systems
+>    to the new format?
 
-Regards,
-Yann E. MORIN.
+In that case, I think we should provide a migration tool along with
+the change.
+ 
+> I'm contemplating using nilfs2 as the file system for my server, as
+> it offers all the features I need. OTOH, I would be quite disapointed
+> if migrating my existing file systems to the new format would imply
+> (too long a) down-time.
 
--- 
-.-----------------.--------------------.------------------.--------------------.
-|  Yann E. MORIN  | Real-Time Embedded | /"\ ASCII RIBBON | Erics' conspiracy: |
-| +0/33 662376056 | Software  Designer | \ / CAMPAIGN     |  ___               |
-| --==< ^_^ >==-- `------------.-------:  X  AGAINST      |  \e/  There is no  |
-| http://ymorin.is-a-geek.org/ | _/*\_ | / \ HTML MAIL    |   v   conspiracy.  |
-`------------------------------^-------^------------------^--------------------'
+Quite right.  I think it's good if the garbage collector or something
+can convert the disk format running background.
+
+> Anyway, keep up the very good work! nilfs2 is very nice! :-)
+
+Thank you!
+
+Ryusuke Konishi
