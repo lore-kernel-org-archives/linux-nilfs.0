@@ -1,16 +1,17 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Yuri Chislov <yuri-EJC0RcYdacHR7s880joybQ@public.gmane.org>
 Subject: Re: Fail to mount NILFS.
-Date: Sat, 22 Aug 2009 18:50:13 +0900 (JST)
-Message-ID: <20090822.185013.23110170.ryusuke@osrg.net>
+Date: Sat, 22 Aug 2009 13:36:13 +0300
+Message-ID: <200908221336.13326.yuri@itinteg.net>
 References: <200908211918.34720.yuri@itinteg.net>
-	<20090822.112533.68801227.ryusuke@osrg.net>
 	<200908221146.28241.yuri@itinteg.net>
+	<20090822.185013.23110170.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <200908221146.28241.yuri-EJC0RcYdacHR7s880joybQ@public.gmane.org>
+In-Reply-To: <20090822.185013.23110170.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Content-Disposition: inline
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,67 +22,29 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, yuri-EJC0RcYdacHR7s880joybQ@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
 Hi,
-On Sat, 22 Aug 2009 11:46:28 +0300, Yuri Chislov wrote:
-> On Saturday 22 August 2009 05:25:33 Ryusuke Konishi wrote:
-> > f you made the kernel from source, try the patch as follows:
-> >
-> >  $ cd linux-2.6.30.4
-> >  $ patch -p1 < path-to/0001-nilfs2-remove-snapshot-check-on-mount.patch
-> >  $ make modules
-> >  $ sudo rmmod nilfs2
-> >  $ sudo insmod fs/nilfs2/nilfs2.ko
-> >  $ sudo mount -t nilfs2 -r -o cp=xxx /dev/yyy /mnt
-> >
-> > If you succeed to mount a valid past checkpoint, you will be able to
-> > do backup with rsync or so from the checkpoint.
-> >
-> > Regards,
-> > Ryusuke Konishi
-> 
-> Hi, 
->   
->   Thank you for patch.
->  I have try to mount as you propose, but receive following errors:
-> /sbin/mount.nilfs2 -r -o cp=30778 /dev/cciss/c0d1p1 /mnt/
-> 
-> NILFS: latest checkpoint=30778
-> NILFS: The specified checkpoint is not a snapshot (checkpoint number=30778).
 
-Ignore this message. The patch actually changed nilfs to accept all
-checkpoints, but I left this error message.
+On Saturday 22 August 2009 12:50:13 Ryusuke Konishi wrote:
+> The first message is just information I added in the patch.
+> But, uum, the root inode of checkpoint 27252 seems to be broken, too.
+>  
+> Can you go back to much older checkpoints ?
 
-> NILFS: corrupt root inode.
+I try to use older snapshot, that was successfully used before:
 
-This _is_ the problem. This shows the inode of root directory is
-broken or empty.  I think you cannot mount generations which you see
-this message.
- 
-> If I try to mount older snapshot 
-> /sbin/mount.nilfs2 -r -o cp=27252 /dev/cciss/c0d1p1 /mnt/
-> 
-> then 
-> 
-> NILFS: latest checkpoint=30778
-> NILFS: corrupt root inode.
+Aug 16 07:10:32 filer filer: Running: /sbin/mount.nilfs2 -r -o cp=5063 
+/dev/cciss/c0d1p1 /snaps/2009-08-16_07_10_07
+Aug 16 07:10:32 filer filer: Status: [OK]  Ouput:
 
-The first message is just information I added in the patch.
-But, uum, the root inode of checkpoint 27252 seems to be broken, too.
- 
-Can you go back to much older checkpoints ?
+But currently I get the same error.
 
-> If try to convert 30778 to snapshot I get
-> chcp: /dev/cciss/c0d1p1: cannot open NILFS
+The stored data is not critical for me so, as I have full backups, but I
+prefer to check possibility of the fs recovery, if possible.
 
-Yeah, chcp is not possible if there is no rw-mount.
-You don't have to do chcp because my workaround patch makes
-existent checkpoints mountable.
+I have update utils to 2.0.14 and kernel to 2.6.30.5 + your patch.
+Is it possible to add some printk to get additional information?
 
-BTW, your nilfs-utils seems a bit old.  I believe there was no problem
-causing filesystem corruption in nilfs-utils-2.0.12.  But, I recommend
-you to use nilfs-utils-2.0.14 if available.
-
-Regards,
-Ryusuke Konishi
+Thank you.
+Yuri.
