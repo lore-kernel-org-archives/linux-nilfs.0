@@ -1,17 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Yuri Chislov <yuri-EJC0RcYdacHR7s880joybQ@public.gmane.org>
 Subject: Re: Fail to mount NILFS.
-Date: Sun, 23 Aug 2009 17:20:53 +0900 (JST)
-Message-ID: <20090823.172053.111144710.ryusuke@osrg.net>
-References: <200908221936.12308.yuri@itinteg.net>
-	<20090823.122322.09561031.ryusuke@osrg.net>
-	<200908230755.02831.yuri@itinteg.net>
+Date: Sun, 23 Aug 2009 16:06:17 +0300
+Message-ID: <200908231606.17747.yuri@itinteg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: Multipart/Mixed;
-	boundary="--Next_Part(Sun_Aug_23_17_20_53_2009_459)--"
-Content-Transfer-Encoding: 7bit
+  boundary="Boundary-00=_J7TkKd6kq01B49Y"
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <200908230755.02831.yuri-EJC0RcYdacHR7s880joybQ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -22,96 +17,160 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, yuri-EJC0RcYdacHR7s880joybQ@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-----Next_Part(Sun_Aug_23_17_20_53_2009_459)--
-Content-Type: Text/Plain; charset=us-ascii
+--Boundary-00=_J7TkKd6kq01B49Y
+Content-Type: text/plain;
+  charset="utf-8"
 Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Hi,
-On Sun, 23 Aug 2009 07:55:02 +0300, Yuri Chislov wrote:
-> On Sunday 23 August 2009 06:23:22 Ryusuke Konishi wrote:
-> > If the new script find the blocks storing the root inode, it will also
-> > dump them to files like:
-> >
-> > ifile-2-seg649-1329203
-> > ifile-2-seg649-1329259
-> > ifile-2-seg649-1329315
-> > ifile-2-seg649-1329372
-> > ifile-2-seg649-1329428
-> > ifile-2-seg649-1329455
-> >
-> > Then, we can see if the root inode is actually broken or not.
-> Hi,
-> 
->  There is output from script.
-> sudo ./find_root.sh /dev/cciss/c0d1p1 10938 | tee -a segment-with-root-
-> inode.log
-> find_root.sh: root inode not found
-> 
-> Thanks.
-> Yuri.
+Resend to mailing list.
+On Sunday 23 August 2009 11:20:53 you wrote:
+> And, the attached patch will output some information about how disk
+> block numbers are converted with DAT file.
+>
+> I think this will give another hint on which metadata broke in nilfs.
+>
+> Could you apply it and try mount again?
+Done.
 
-Thank you for following this analysis.
+104       17  209720511 cciss/c0d1p1
+expr 209720511 / 4 / 2048 - 1
+25599
+./find_root.sh /dev/cciss/c0d1p1 25599
+find_root.sh: root inode not found
 
-It reached the beginning of the partition.
+Attached dmesg output.
 
-What will happen if you start the script from the last segment number?
-
-The last segment number is calculated from the block count which
-appears in /proc/partitions:
-
- $ cat /proc/partitions
-major minor  #blocks  name
-
-   8       16   71687325 sdb
-   8       17   35840983 sdb1
-   8       18   35841015 sdb2
-
- $ expr 35840983 / 4 / 2048 - 1
- 4374
- $ sudo ./find-root.sh /dev/sdb1 4374
+Thanks.
+Yuri.
 
 
-And, the attached patch will output some information about how disk
-block numbers are converted with DAT file.
-
-I think this will give another hint on which metadata broke in nilfs.
-
-Could you apply it and try mount again?
-
-Thanks in advance,
-Ryusuke Konishi
-
-----Next_Part(Sun_Aug_23_17_20_53_2009_459)--
-Content-Type: Application/Octet-Stream
-Content-Transfer-Encoding: base64
+--Boundary-00=_J7TkKd6kq01B49Y
+Content-Type: text/plain;
+  charset="utf-8";
+  name="dmesg.output"
+Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment;
- filename="0001-nilfs2-add-debug-messages-on-bmap-lookup-and-dat-tra.patch.bz2"
+	filename="dmesg.output"
 
-QlpoOTFBWSZTWetEMOYAAf/fgEgwc3///3/vXk6//99uUAR57bud2c5s7u7sSqglFGoZNTT0mnkj
-ymh6j1PUY1HqA0BkZD1Bk9JoGkATRpqbSaj1ND1DQ0DRk0B6jQAADIJT1KaAim1PamEjyg0DIaaA
-AZAAANDjJk0YhpoYCaGJo0yYgZGE0aaYQZMJJE0JgIYibUwU8oGmJo00DQ0AGjJoy1hRIGEJiGJS
-YZEQlDb/ZKIwIUmRVHXy5s9yykczLp6lK6BgaedJ3IrC60nLdyg2+oIogfkwbBsss0gSiUEkVuBL
-/BEWgQd12P5kUPHNVEEqQkwOBOGmzy4H1MLJ9iP3Znh1H0av126YZI05NR9sTgP4+BsjfyKq1OXh
-1qq4lsYbxqupUbVH3J82sKszY3gIhbyeBoWEkiuAXXg/zGQmKwQE0wWaD8vISXtyprgpSOYOeLLW
-f0NWwi7Yz9Qzuqilgw4qGNn1l1ZJ9s2fwRMo3OsHGkXOUnKyJtqEyV7IHp4KI5OLtpU23JcW5Fer
-ORQO6VdeRli6UGHHQqtXhIVgUFg0QHQOPANJv57g1ebc7XJyY8Uljl0qowgiqmYzlhyGsnEc0Bhh
-hhhhnCMgI3lF516OOSAM6EcQwa73bmMratPJiCPCzgnrj545H1NZleYOtBEAmB3LOxbr0/USnU1C
-EJnKOA3UjOaZYlQA2K2RPESqe+aFIFQhdxBAFACTT2Pc6dVUh2E2gRSqs0Cug8rTPs/p9dutgNwd
-HLMpaXEo9M0D3I0m6dK41RgXy+joy2SIh1gTAwITQ1SGKgM5Y+A/NAdwwqD7qO0LSV6iOgxQ/LHQ
-HbjQ8k7B1Q1h/OwLKfuRnQHbEEAuL7QGeRGFmTiPjw75K7ljzCTzgGSSG7yUo4ThG2tYMwHteAOj
-Dktp6c4y0Th0TXJTxgMYKogJTG16ZKRIALbiLazG+pYXRxg+8Z61I4mD0KlYa6qn0kolvwJsLi+l
-KDArx9+VETaVCWmTgzcTAyzRRwZEENYhC2jo/YbRGZO0uJcl1yLqMs3xYehEppKQ84VG4XjmevEP
-3M8gBReQoJwA2dglIr/sdm7W2RteLgAQxy6DEdKWgr5MBG9qkKg1gbQoW7AlhQUFkgjYFMYFSwfu
-DEBvPtqEacYcZGxxBezEqtCNLNnqusSFsDGrhR7RwXoYNAayUMAsLu8QC9E/ADgDQJdxfwh8zMYG
-9khUiXcDLHLe9JWgnMSVU3AqjlpQJYtL75v0wOG0urE5gv3WDZmDWBZEFWGQIMhFAtLQC5UVU68R
-FDLSuIvJSrzEiUqsV4yyIQ9yERI2sUBoIeiuVI6iQpKgsN2OpbF+Zz52Zk4CYno9/hpsCvReMHYS
-J0DmKdHDI7FsoDpJ1NMjAdrGiLRCHjnIyE99Y6FOYJgKrzcCTEKpSsNtTFkaIwcRVR55fY3Xq6Ea
-M0WILUrldHMWVYwlVaTxg78RQE4dLPRIlC0KbcKLhOB9PpCNZDRKnBTX1DERxDEyP+LuSKcKEh1o
-hhzA
+NILFS: corrupt root inode.
+NILFS: looking segment (seg_start=22401024, seg_end=22403071, segnum=10938, seg_seq=62136)
+NILFS: found super root: segnum=10938, seq=62136, pseg_start=22401723, pseg_offset=730
+NILFS: latest checkpoint=30778
+nilfs_btnode_submit_block: read ino=3 vblocknr=22401752 blocknr=22401752
+nilfs_btnode_submit_block: read ino=3 vblocknr=22401750 blocknr=22401750
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25589 blknum=22401741
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25590 blknum=20023970
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25591 blknum=20015776
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25592 blknum=20077247
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25593 blknum=21061324
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25594 blknum=21061325
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25595 blknum=20417338
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25596 blknum=20392792
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25597 blknum=20602217
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25598 blknum=21061326
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25599 blknum=21061327
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25600 blknum=20975305
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25601 blknum=20967082
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25602 blknum=21126881
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25603 blknum=20634953
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25604 blknum=20593993
+nilfs_dat_translate: vblocknr=3262527 -> blocknr=22401729
+nilfs_btnode_submit_block: read ino=4 vblocknr=3262527 blocknr=22401729
+nilfs_btnode_submit_block: read ino=3 vblocknr=22401749 blocknr=22401749
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25446 blknum=20606318
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25447 blknum=20593987
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25448 blknum=21028552
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25449 blknum=21335832
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25450 blknum=20921992
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25451 blknum=20921993
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25452 blknum=19983010
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25453 blknum=21869087
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25454 blknum=20323108
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25455 blknum=20495207
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25456 blknum=20581411
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25457 blknum=20745683
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25458 blknum=22397612
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25459 blknum=21003983
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25460 blknum=21176067
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25461 blknum=21352218
+nilfs_dat_translate: vblocknr=3244247 -> blocknr=20603353
+nilfs_mdt_submit_block lookup: ino=4 blkoff=241 blknum=20603353
+nilfs_btnode_submit_block: read ino=3 vblocknr=22401751 blocknr=22401751
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25826 blknum=22401745
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25827 blknum=20634960
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25828 blknum=21155593
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25829 blknum=21680660
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25830 blknum=22205035
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25831 blknum=19942046
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25832 blknum=20470634
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25833 blknum=20999888
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25834 blknum=21524975
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25835 blknum=22049363
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25836 blknum=19786311
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25837 blknum=20314919
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25838 blknum=20840030
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25839 blknum=21368604
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25840 blknum=21893675
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25841 blknum=19634717
+nilfs_dat_translate: vblocknr=3292780 -> blocknr=22401727
+nilfs_mdt_submit_block lookup: ino=4 blkoff=0 blknum=22401727
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25417 blknum=22254189
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25418 blknum=21611014
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25419 blknum=21459426
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25420 blknum=21167869
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25421 blknum=20515697
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25422 blknum=20499307
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25423 blknum=20864598
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25424 blknum=20844113
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25425 blknum=20864599
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25426 blknum=20864600
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25427 blknum=22401739
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25428 blknum=20614524
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25429 blknum=21298959
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25430 blknum=21664292
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25431 blknum=21611016
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25432 blknum=21910050
+nilfs_dat_translate: vblocknr=3240647 -> blocknr=20617314
+nilfs_btnode_submit_block: read ino=6 vblocknr=3240647 blocknr=20617314
+nilfs_mdt_submit_block lookup: ino=3 blkoff=25416 blknum=22241917
+nilfs_dat_translate: vblocknr=3240498 -> blocknr=3280927
+nilfs_mdt_submit_block lookup: ino=6 blkoff=2 blknum=3280927
+nilfs_dat_translate: vblocknr=3240490 -> blocknr=20843792
+nilfs_mdt_submit_block lookup: ino=6 blkoff=3 blknum=20843792
+nilfs_dat_translate: vblocknr=3240646 -> blocknr=20617313
+nilfs_mdt_submit_block lookup: ino=6 blkoff=4 blknum=20617313
+nilfs_dat_translate: vblocknr=3240678 -> blocknr=20621795
+nilfs_mdt_submit_block lookup: ino=6 blkoff=5 blknum=20621795
+nilfs_dat_translate: vblocknr=3240679 -> blocknr=20621796
+nilfs_mdt_submit_block lookup: ino=6 blkoff=6 blknum=20621796
+nilfs_dat_translate: vblocknr=3240697 -> blocknr=20621797
+nilfs_mdt_submit_block lookup: ino=6 blkoff=7 blknum=20621797
+nilfs_dat_translate: vblocknr=3240652 -> blocknr=20621776
+nilfs_mdt_submit_block lookup: ino=6 blkoff=8 blknum=20621776
+nilfs_dat_translate: vblocknr=3240653 -> blocknr=20621777
+nilfs_mdt_submit_block lookup: ino=6 blkoff=9 blknum=20621777
+nilfs_dat_translate: vblocknr=3240654 -> blocknr=20621778
+nilfs_mdt_submit_block lookup: ino=6 blkoff=10 blknum=20621778
+nilfs_dat_translate: vblocknr=3240655 -> blocknr=20621779
+nilfs_mdt_submit_block lookup: ino=6 blkoff=11 blknum=20621779
+nilfs_dat_translate: vblocknr=3240656 -> blocknr=20621780
+nilfs_mdt_submit_block lookup: ino=6 blkoff=12 blknum=20621780
+nilfs_dat_translate: vblocknr=3240657 -> blocknr=20621781
+nilfs_mdt_submit_block lookup: ino=6 blkoff=13 blknum=20621781
+nilfs_dat_translate: vblocknr=3240658 -> blocknr=20621782
+nilfs_mdt_submit_block lookup: ino=6 blkoff=14 blknum=20621782
+nilfs_dat_translate: vblocknr=3240659 -> blocknr=20621783
+nilfs_mdt_submit_block lookup: ino=6 blkoff=15 blknum=20621783
+nilfs_dat_translate: vblocknr=3240660 -> blocknr=20621784
+nilfs_mdt_submit_block lookup: ino=6 blkoff=16 blknum=20621784
+nilfs_dat_translate: vblocknr=3240661 -> blocknr=20621785
+nilfs_mdt_submit_block lookup: ino=6 blkoff=17 blknum=20621785
+NILFS: corrupt root inode.
 
-----Next_Part(Sun_Aug_23_17_20_53_2009_459)--
+--Boundary-00=_J7TkKd6kq01B49Y
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -122,4 +181,4 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
-----Next_Part(Sun_Aug_23_17_20_53_2009_459)----
+--Boundary-00=_J7TkKd6kq01B49Y--
