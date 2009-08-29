@@ -1,11 +1,13 @@
 From: =?ISO-8859-1?Q?J=E9r=F4me_Poulin?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: GTK version of lssu
-Date: Sat, 29 Aug 2009 17:26:17 -0400
-Message-ID: <debc30fc0908291426n371d64e6t281c620c6d64bdc3@mail.gmail.com>
+Subject: Re: GTK version of lssu
+Date: Sat, 29 Aug 2009 17:43:38 -0400
+Message-ID: <debc30fc0908291443l2ef61975rcaa3899e08722eee@mail.gmail.com>
+References: <debc30fc0908291426n371d64e6t281c620c6d64bdc3@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=0016e6460652b0824004724e7462
+Content-Type: multipart/mixed; boundary="===============0657453903=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <debc30fc0908291426n371d64e6t281c620c6d64bdc3-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -14,24 +16,47 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NilFS2 Mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
---0016e6460652b0824004724e7462
-Content-Type: multipart/alternative; boundary=0016e6460652b0823a04724e7460
+--===============0657453903==
+Content-Type: multipart/alternative; boundary=00163616418bb7056604724eb27b
 
---0016e6460652b0823a04724e7460
+--00163616418bb7056604724eb27b
 Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Just wrote that today for fun, my first ever program using a drawing area,
-so it's certainly not the best way to do it, and everything is static
-because I wanted to see if I was at least able to do it.
-Needs python, pygtk-2 and nilfs-utils (as it executes lssu).
+Oops, miscalculated the size, here is the corrected version, with borders
+too, and it will allow to get the latest too.
+http://ticpu.net:8080/~jerome/lssu-gtk.py<http://ticpu.net:8080/%7Ejerome/l=
+ssu-gtk.py>
 
---0016e6460652b0823a04724e7460
+On Sat, Aug 29, 2009 at 5:26 PM, J=E9r=F4me Poulin <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>=
+wrote:
+
+> Just wrote that today for fun, my first ever program using a drawing area=
+,
+> so it's certainly not the best way to do it, and everything is static
+> because I wanted to see if I was at least able to do it.
+> Needs python, pygtk-2 and nilfs-utils (as it executes lssu).
+>
+
+--00163616418bb7056604724eb27b
 Content-Type: text/html; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
+
+Oops, miscalculated the size, here is the corrected version, with borders t=
+oo, and it will allow to get the latest too.<br><a href=3D"http://ticpu.net=
+:8080/%7Ejerome/lssu-gtk.py">http://ticpu.net:8080/~jerome/lssu-gtk.py</a><=
+br>
+
+<br><div class=3D"gmail_quote">On Sat, Aug 29, 2009 at 5:26 PM, J=E9r=F4me =
+Poulin <span dir=3D"ltr">&lt;<a href=3D"mailto:jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org">jero=
+mepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quot=
+e" style=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt =
+0.8ex; padding-left: 1ex;">
 
 Just wrote that today for fun, my first ever program using a drawing area, =
 so it&#39;s certainly not the best way to do it, and everything is static b=
@@ -39,63 +64,11 @@ ecause I wanted to see if I was at least able to do it.<br>Needs python, py=
 gtk-2 and nilfs-utils (as it executes lssu).<br>
 
 
---0016e6460652b0823a04724e7460--
+</blockquote></div><br>
 
---0016e6460652b0824004724e7462
-Content-Type: application/octet-stream; name="lssu-gtk.py"
-Content-Disposition: attachment; filename="lssu-gtk.py"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fyyv3q5q0
+--00163616418bb7056604724eb27b--
 
-IyEvdXNyL2Jpbi9lbnYgcHl0aG9uCiMgdmltOiBzZXQgZmlsZWVuY29kaW5nPXV0Zi04IDoKCmlt
-cG9ydCBzeXMsIG9zOwppbXBvcnQgcHlndGs7CnB5Z3RrLnJlcXVpcmUoIjIuMCIpOwppbXBvcnQg
-Z3RrLCBnb2JqZWN0Owpmcm9tIGd0ayBpbXBvcnQgZ2RrOwoKCgpjbGFzcyBMaXN0U2VnbWVudHMo
-KToKCWRlZiBkZWxldGVfZXZlbnQoc2VsZiwgd2lkZ2V0LCBldmVudCwgZGF0YT1Ob25lKToKCQly
-ZXR1cm4gRmFsc2U7CgoJZGVmIGRlc3Ryb3koc2VsZiwgd2lkZ2V0LCBkYXRhPU5vbmUpOgoJCWd0
-ay5tYWluX3F1aXQoKTsKCglkZWYgX19pbml0X18oc2VsZik6CgkJIyBDcmVhdGluZyBtYWluIHdp
-bmRvdy4KCQlzZWxmLndpbmRvdyA9IGd0ay5XaW5kb3coZ3RrLldJTkRPV19UT1BMRVZFTCk7CgkJ
-c2VsZi53aW5kb3cuY29ubmVjdCgiZGVsZXRlX2V2ZW50Iiwgc2VsZi5kZWxldGVfZXZlbnQpOwoJ
-CXNlbGYud2luZG93LmNvbm5lY3QoImRlc3Ryb3kiLCBzZWxmLmRlc3Ryb3kpOwoKCQkjIEdldCBi
-aXRtYXAgaW5mby4KCQlzU2VncyA9IG9zLnBvcGVuKCJsc3N1IC1hIiwgJ3InKS5yZWFkKCkuc3Bs
-aXRsaW5lcygpWzE6XTsKCQlpWEwgPSBsZW4oc1NlZ3MpOwoJCWlZTCA9ICgoaVhMLzQwMCkgKyAx
-KSAqIDIwOwoJCWlYTCA9IChpWEwvNSkgKyAxOwoKCQkjIENyZWF0aW5nIGJpdG1hcCB0byBwdXQg
-TmlsRlMgbWFwLgoJCXNlbGYubmlsX2JpdG1hcCA9IGd0ay5EcmF3aW5nQXJlYSgpOwoJCXNlbGYu
-bmlsX2JpdG1hcC5zZXRfc2l6ZV9yZXF1ZXN0KGlYTCwgaVlMKTsKCQlzZWxmLm5pbF9iaXRtYXAu
-c2V0X2V2ZW50cygKCQkJCWd0ay5nZGsuUE9JTlRFUl9NT1RJT05fTUFTSyB8CgkJCQlndGsuZ2Rr
-LlBPSU5URVJfTU9USU9OX0hJTlRfTUFTSwoJCSk7CgkJc2VsZi5uaWxfYml0bWFwLmNvbm5lY3Qo
-ImV4cG9zZS1ldmVudCIsIHNlbGYubmlsX2JpdG1hcF9leHBvc2VfY2IpOwoJCXNlbGYubmlsX2Jp
-dG1hcC5jb25uZWN0KCJtb3Rpb25fbm90aWZ5X2V2ZW50Iiwgc2VsZi5uaWxfYml0bWFwX2Ntb3Zl
-X2NiKTsKCgkJIyBXZWxkaW5nIGV2ZXJ5dGhpbmcgdG9naGV0ZXIuCgkJc2VsZi53aW5kb3cuYWRk
-KHNlbGYubmlsX2JpdG1hcCk7CgkJc2VsZi5uaWxfYml0bWFwLnNob3coKTsKCQlzZWxmLndpbmRv
-dy5zaG93KCk7CgoJZGVmIG5pbF9iaXRtYXBfcmVmcmVzaF9jYihzZWxmKToKCQlzZWxmLm5pbF9i
-aXRtYXBfZHJhdyhzZWxmLm5pbF9iaXRtYXAsIE5vbmUpOwoJCXJldHVybiBGYWxzZTsKCglkZWYg
-bmlsX2JpdG1hcF9leHBvc2VfY2Ioc2VsZiwgYXJlYSwgZXZlbnQpOgoJCXN0eWxlID0gc2VsZi5u
-aWxfYml0bWFwLmdldF9zdHlsZSgpOwoJCWdjID0gc3R5bGUuZmdfZ2NbZ3RrLlNUQVRFX05PUk1B
-TF07CgkJZ2Muc2V0X3JnYl9mZ19jb2xvcihnZGsuQ29sb3IoMHhDQ0NDICwgMHhDQ0NDLCAweEND
-Q0MpKTsKCQlzZWxmLm5pbF9iaXRtYXAud2luZG93LmRyYXdfcmVjdGFuZ2xlKGdjLCBUcnVlLCAw
-LCAwLCAtMSwgLTEpOwoJCXJldHVybiBzZWxmLm5pbF9iaXRtYXBfZHJhdyhhcmVhLCBldmVudCk7
-CgoJZGVmIG5pbF9iaXRtYXBfZHJhdyhzZWxmLCBhcmVhLCBldmVudCk6CgkJc3R5bGUgPSBzZWxm
-Lm5pbF9iaXRtYXAuZ2V0X3N0eWxlKCk7CgkJZ2MgPSBzdHlsZS5mZ19nY1tndGsuU1RBVEVfTk9S
-TUFMXTsKCQlzU2VncyA9IG9zLnBvcGVuKCJsc3N1IC1hIiwgJ3InKS5yZWFkKCkuc3BsaXRsaW5l
-cygpWzE6XTsKCQlpWCA9IDA7IGlZID0gMDsKCQlmb3Igc2VnIGluIHNTZWdzOgoJCQlkICA9IHNl
-Zy5zcGxpdCgnICcpOwoJCQkjIFJlbW92ZSBlbXB0eSBzcGFjZXMuCgkJCXdoaWxlIFRydWU6CgkJ
-CQl0cnk6CgkJCQkJZC5yZW1vdmUoJycpOwoJCQkJZXhjZXB0IFZhbHVlRXJyb3I6IGJyZWFrOwoK
-CQkJIyBJZiBpdCBoYXMgZGF0YSwgZHJhdyBhIGxpbmUgaW4gdGhlIG1hcC4KCQkJaWYgZFszXVsx
-XSA9PSAnZCc6CgkJCQlpVXNhZ2UgPSBpbnQoZFs0XSkqMHhGRkZGLzIwNDg7CgkJCQlpZiBkWzNd
-WzBdID09ICdhJzoKCQkJCQloQ29sb3IgPSBnZGsuQ29sb3IoaVVzYWdlLCAweEZGRkYsIDApOwoJ
-CQkJZWxzZToKCQkJCQloQ29sb3IgPSBnZGsuQ29sb3IoMCwgMCwgaVVzYWdlKTsKCQkJCWlmIGRb
-M11bMl0gPT0gJ2UnOgoJCQkJCWhDb2xvciA9IGdkay5Db2xvcigweEZGRkYsIDAsIDApOwoJCQkJ
-Z2Muc2V0X3JnYl9mZ19jb2xvcihoQ29sb3IpOwoJCQllbHNlOgoJCQkJZ2Muc2V0X3JnYl9mZ19j
-b2xvcihnZGsuQ29sb3IoMCwgMCwgMCkpOwoJCQlzZWxmLm5pbF9iaXRtYXAud2luZG93LmRyYXdf
-bGluZShnYywgaVgsIGlZLCBpWCwgaVkrMTgpOwoKCQkJIyBJbmNyZWFzZSBjb3VudGVyLgoJCQlp
-WCArPSAxOwoJCQlpZiBpWCA+IDQwMDoKCQkJCWlYID0gMDsKCQkJCWlZICs9IDIwOwoJCWdvYmpl
-Y3QudGltZW91dF9hZGQoNTAwLCBzZWxmLm5pbF9iaXRtYXBfcmVmcmVzaF9jYik7CgkJcmV0dXJu
-IFRydWU7CgoJZGVmIG5pbF9iaXRtYXBfY21vdmVfY2Ioc2VsZiwgYXJlYSwgZXZlbnQpOgoJCXN0
-eWxlID0gc2VsZi5uaWxfYml0bWFwLmdldF9zdHlsZSgpOwoJCWdjID0gc3R5bGUuZmdfZ2NbZ3Rr
-LlNUQVRFX05PUk1BTF07CgkJcmV0dXJuIFRydWU7CgoJZGVmIG1haW4oc2VsZik6CgkJZ3RrLm1h
-aW4oKTsKCmlmIF9fbmFtZV9fID09ICJfX21haW5fXyI6CgltID0gTGlzdFNlZ21lbnRzKCk7Cglz
-eXMuZXhpdChtLm1haW4oKSk7Cg==
---0016e6460652b0824004724e7462
+--===============0657453903==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -106,4 +79,4 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---0016e6460652b0824004724e7462--
+--===============0657453903==--
