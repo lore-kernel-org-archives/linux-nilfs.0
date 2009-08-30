@@ -1,13 +1,17 @@
-From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH] nilfs2: shorten freeze period due to GC in
-	write operation
-Date: Sat, 29 Aug 2009 17:54:30 +0900
-Message-ID: <1251536070-12052-1-git-send-email-jir@unicus.jp>
+From: =?ISO-8859-1?Q?J=E9r=F4me_Poulin?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: segctord problem
+Date: Sun, 30 Aug 2009 17:30:10 -0400
+Message-ID: <debc30fc0908301430x3b4b6138qab5928389be7ea60@mail.gmail.com>
+References: <debc30fc0908270825v747c1734xa59126623cfd5b05@mail.gmail.com> 
+	<debc30fc0908271439x63d16227mbf5589c8db455b1e@mail.gmail.com> 
+	<debc30fc0908290948g3ee60e81u1f024b3031e36f36@mail.gmail.com> 
+	<20090830.055014.88471834.ryusuke@osrg.net>
+	<debc30fc0908291424l1b403bfcy9940b32fdda49b65@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1012702568=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <debc30fc0908291424l1b403bfcy9940b32fdda49b65-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -16,136 +20,119 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>, NilFS2 Mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi,
+--===============1012702568==
+Content-Type: multipart/alternative; boundary=0016363104876480b4047262a027
 
-This is a patch to shorten freeze period.
+--0016363104876480b4047262a027
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-When GC is runnning, GC moves live block to difference segments.
-Copying live blocks into memory is done in a transaction,
-but it is not necessarily to be in the transaction.
-This patch will get the nilfs_ioctl_move_blocks() out from
-transaction lock and put it before the transaction.
+Good news, no crash since yesterday same time, 24 hours without a crash in
+segctord, which was impossible without the patch, I'll keep you updated if =
+I
+find anything else.
 
-I ran sysbench fileio test against nilfs partition.
-I copied some DVD/CD images and created snapshot to create live blocks
-before starting the benchmark.
+Thank you!
+J=E9r=F4me
 
-Followings are summary of rc8 and rc8 w/ the patch of per-request statistics,
-which is min/max and avg.  I ran each test three times and bellow is
-average of those numers.
+On Sat, Aug 29, 2009 at 5:24 PM, J=E9r=F4me Poulin
+<jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org<https://mail.google.com/mail?view=3Dcm&tf=3D0&to=3D=
+jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> wrote:
 
-According to this benchmark result, average time is slightly degrated.
-However, worstcase (max) result is significantly improved.
-This can address a few seconds write freeze.
+> Thank you, I will apply it right away, reboot and see if it happens again
+> today, I had the problem at least once a day, so if it's okay until monda=
+y I
+> guess it's good :)
+>
+>
+> On Sat, Aug 29, 2009 at 4:50 PM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org<https:=
+//mail.google.com/mail?view=3Dcm&tf=3D0&to=3Dryusuke-sG5X7nlA6pw@public.gmane.org>
+> > wrote:
+>
+>> Hi!
+>> On Sat, 29 Aug 2009 12:48:03 -0400, J=E9r=F4me Poulin wrote:
+>>
+> ...
 
-- random write per-request performance of rc8
- min   0.843ms
- max 680.406ms
- avg   3.050ms
-- random write per-request performance of rc8 w/ this patch
- min   0.833ms ->  98.80%
- max 354.606ms ->  52.10%
- avg   3.226ms -> 105.70%
+>
+>> Thank you for sending me the log.
+>>
+>> I've found a bug which seems like the cause of this problem.  The
+>> following patch is the bugfix.
+>>
+>> Could you test if the patch makes a difference ?
+>>
+>> Thanks,
+>> Ryusuke Konishi
+>>
+>>
 
-- sequential write per-request performance of rc8
- min   0.736ms
- max 774.343ms 
- avg   2.883ms 
-- sequential write per-request performance of rc8 w/ this patch
- min   0.740ms -> 100.50%
- max  563.780ms->  72.80%
- avg   3.113ms -> 107.90%
+--0016363104876480b4047262a027
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
------8<-----8<-----nilfs_cleanerd.conf-----8<-----8<-----
-protection_period       150
-selection_policy        timestamp       # timestamp in ascend order
-nsegments_per_clean     2
-cleaning_interval       2
-retry_interval          60
-use_mmap
-log_priority            info
------8<-----8<-----nilfs_cleanerd.conf-----8<-----8<-----
+Good news, no crash since yesterday same time, 24 hours without a crash in =
+segctord, which was impossible without the patch, I&#39;ll keep you updated=
+ if I find anything else.<br><br>Thank you!<br>J=E9r=F4me<br><br><div class=
+=3D"gmail_quote">
 
 
-Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
----
- fs/nilfs2/ioctl.c     |   18 ++++++++++++------
- fs/nilfs2/the_nilfs.h |    2 ++
- 2 files changed, 14 insertions(+), 6 deletions(-)
+On Sat, Aug 29, 2009 at 5:24 PM, J=E9r=F4me Poulin <span dir=3D"ltr">&lt;<a=
+ href=3D"https://mail.google.com/mail?view=3Dcm&amp;tf=3D0&amp;to=3Djeromep=
+oulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" target=3D"_blank">jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org</a>&gt;</span> wr=
+ote:<br><blockquote class=3D"gmail_quote" style=3D"border-left: 1px solid r=
+gb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 6ea5f87..2394353 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -442,12 +442,6 @@ int nilfs_ioctl_prepare_clean_segments(struct the_nilfs *nilfs,
- 	const char *msg;
- 	int ret;
- 
--	ret = nilfs_ioctl_move_blocks(nilfs, &argv[0], kbufs[0]);
--	if (ret < 0) {
--		msg = "cannot read source blocks";
--		goto failed;
--	}
--
- 	ret = nilfs_ioctl_delete_checkpoints(nilfs, &argv[1], kbufs[1]);
- 	if (ret < 0) {
- 		/*
-@@ -521,6 +515,10 @@ static int nilfs_ioctl_clean_segmentsistruct inode5 einode, struct file *filp,
- 
- 	nilfs = NILFS_SB(inode->i_sb)->s_nilfs;
- 
-+	if (nilfs_gc_running(nilfs))
-+		return -EBUSY;
-+	set_nilfs_gc_running(nilfs);
-+
- 	for (n = 0; n < 4; n++) {
- 		ret = -EINVAL;
- 		if (argv[n].v_size != argsz[n])
-@@ -548,12 +546,20 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
- 		}
- 	}
- 
-+	ret = nilfs_ioctl_move_blocks(nilfs, &argv[0], kbufs[0]);
-+	if (ret < 0) {
-+		printk(KERN_ERR "NILFS: GC failed during preparation: "
-+			"cannot read source blocks: err=%d\n", ret);
-+		goto out_free;
-+	}
-+
- 	ret = nilfs_clean_segments(inode->i_sb, argv, kbufs);
- 
-  out_free:
- 	while (--n >= 0)
- 		vfree(kbufs[n]);
- 	kfree(kbufs[4]);
-+	clear_nilfs_gc_running(nilfs);
- 	return ret;
- }
- 
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index 1b9caaf..97ee569 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -37,6 +37,7 @@ enum {
- 	THE_NILFS_LOADED,       /* Roll-back/roll-forward has done and
- 				   the latest checkpoint was loaded */
- 	THE_NILFS_DISCONTINUED,	/* 'next' pointer chain has broken */
-+	THE_NILFS_GC_RUNNING,	/* gc process is running */
- };
- 
- /**
-@@ -197,6 +198,7 @@ static inline int nilfs_##name(struct the_nilfs *nilfs)			\
- THE_NILFS_FNS(INIT, init)
- THE_NILFS_FNS(LOADED, loaded)
- THE_NILFS_FNS(DISCONTINUED, discontinued)
-+THE_NILFS_FNS(GC_RUNNING, gc_running)
- 
- /* Minimum interval of periodical update of superblocks (in seconds) */
- #define NILFS_SB_FREQ		10
--- 
-1.5.6.5
+
+Thank you, I will apply it right away, reboot and see if it happens again t=
+oday, I had the problem at least once a day, so if it&#39;s okay until mond=
+ay I guess it&#39;s good :)<div><div></div><div><br><br><div class=3D"gmail=
+_quote">
+
+
+On Sat, Aug 29, 2009 at 4:50 PM, Ryusuke Konishi <span dir=3D"ltr">&lt;<a h=
+ref=3D"https://mail.google.com/mail?view=3Dcm&amp;tf=3D0&amp;to=3Dryusuke@o=
+srg.net" target=3D"_blank">ryusuke-sG5X7nlA6pw@public.gmane.org</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"border-left: 1px solid rgb(204, =
+204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">Hi!<br>
+<div>On Sat, 29 Aug 2009 12:48:03 -0400, J=E9r=F4me Poulin wrote:</div></bl=
+ockquote></div></div></div></blockquote><div>...=A0</div><blockquote class=
+=3D"gmail_quote" style=3D"border-left: 1px solid rgb(204, 204, 204); margin=
+: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
+
+
+<div><div><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" styl=
+e=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; =
+padding-left: 1ex;"><div><br>
+</div>Thank you for sending me the log.<br>
+<br>
+I&#39;ve found a bug which seems like the cause of this problem. =A0The<br>
+following patch is the bugfix.<br>
+<br>
+Could you test if the patch makes a difference ?<br>
+<br>
+Thanks,<br>
+Ryusuke Konishi<br>
+<br>
+</blockquote></div></div></div></blockquote></div><br>
+
+--0016363104876480b4047262a027--
+
+--===============1012702568==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============1012702568==--
