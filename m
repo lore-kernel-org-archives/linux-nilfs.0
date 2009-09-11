@@ -1,16 +1,16 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: How does NILFS2 handle directory management
-Date: Fri, 11 Sep 2009 15:44:52 +0900 (JST)
-Message-ID: <20090911.154452.43227079.ryusuke@osrg.net>
-References: <20090910192619.GA1263@heethoofdje.13thmonkey.org>
-	<20090911.102118.69189169.ryusuke@osrg.net>
-	<20090911052213.GA24899@aardappel.13thmonkey.org>
+Subject: Re: GTK version of lssu
+Date: Fri, 11 Sep 2009 19:58:00 +0900 (JST)
+Message-ID: <20090911.195800.36241798.ryusuke@osrg.net>
+References: <debc30fc0908291443l2ef61975rcaa3899e08722eee@mail.gmail.com>
+	<debc30fc0908311949t3146aebep4343a73cdc3a9371@mail.gmail.com>
+	<87iqfrbahx.wl%jir@sekiba.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20090911052213.GA24899-5cYspOl2ggRz6xQTk39kMVfVdRo2wo/d@public.gmane.org>
+In-Reply-To: <87iqfrbahx.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,59 +21,68 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org
-Cc: tangyorangesour-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org, =?iso-8859-1?Q?J=E9r=F4me?= Poulin <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Hi,
-On Fri, 11 Sep 2009 07:22:13 +0200, Reinoud Zandijk wrote:
-> Hi folks,
-> 
-> On Fri, Sep 11, 2009 at 10:21:18AM +0900, Ryusuke Konishi wrote:
-> > > I dont know if b+tree directory management would be preferable though. With
-> > > some smart caching all directory operations can be made O(1) anyway.
-> > 
-> > Yes, directory is a file and it's already managed with b-tree like
-> > other files.  However, the current directory design is not O(log n),
-> > and is actually slow especially for file creation.
-> 
-> Thats what i was refering to. UDF has the same issue and the same design on
-> directory structure, only even more complicated since directory entries are
-> not of a fixed length and may actually span logical sectors/blocks.
-> 
-> I now have code in UDF that i also use in my NiLFS implementation that manages
-> the first file creation/reference in O(n) but all other files
-> creation/lookup/delete in O(1)! speeding up large directory copies
-> modifications/copies enormously, upto thousands of times.
+Hi J=E9r=F4me,
+On Thu, 10 Sep 2009 15:05:14 +0900, Jiro SEKIBA wrote:
+> Hi,
+> =
 
-You mean hashing (on-memory) by file names?
-Well, I agree.  Such optimization would improve directory operations of
-the current code without disk format change.
+> At Mon, 31 Aug 2009 22:49:55 -0400,
+> J=E9r=F4me Poulin wrote:
+> > =
 
-I think it should be considered along with ext3 approach.
+> > [1  <multipart/alternative (7bit)>]
+> > [1.1  <text/plain; ISO-8859-1 (quoted-printable)>]
+> > =
 
-> > So, it leaves room for considering the true "b-tree directory
-> > management".
-> > 
-> > OTOH, the replacement has the following points to notice:
-> > 
-> >  1) It may complicate the log writer.
-> > 
-> >     The current log writer is designed on the basis that every data
-> >     and meta data is a file.  In NILFS, inodes, segment usage state,
-> >     and checkpoints, are managed with correponding meta-data files.
-> > 
-> >     The true "b-tree directory management" may break this uniformity.
-> 
-> This indeed complicates it a lot. It could still be implemented using `perfect
-> hashing' techniques in one file but i have no experience with this and updates
-> may still be expensive.
-> 
-> With regards,
-> Reinoud
-> 
-> P.S. Ryusuke, did you recieve my mail on the length of partial segments?
+> > [1.2  <text/html; ISO-8859-1 (quoted-printable)>]
+> > I just wanted to say that the program is now stable, and has some fine-=
+tunning
+> > available in the header of the file, just edit with a text editor. It c=
+an also
+> > now be resized correctly, has a different method of coloring has filled
+> > segments and such. You can give me feedback if you tried it, and for yo=
+ur own
+> > privacy I will attach the file to this message, but I like to see downl=
+oads in
+> > my Apache access log too :)
+> > http://ticpu.net:8080/~jerome/lssu-gtk.py
+> =
 
-Oh, I just noticed.
+> I've tried your application.  It looks nice :-).
+> Especially, when garbage collector is working! =
 
-Regards,
+> it updates display and keep track the current segment usages, cool!
+> =
+
+> There are two comments for further improvement.
+> =
+
+> - It would be greate to have header to explain which colors shows which s=
+tate.
+> - It's nice to be able to specify the device, =
+
+>   and shows the device and mount point in the header.
+> =
+
+> Anyway it's nice to see the disk usage in graphical like this way.
+> =
+
+> Thanks!
+> =
+
+> regards,
+> -- =
+
+> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+
+I belatedly tried this tool to view the state of my nilfs partion
+under testing.  Well, it's pretty good.
+
+Previously, I used to do "watch lssu" in another terminal.  lssu-gtk
+is helpful to clean up my debug environment neatly ;)
+
+Thank you for posting!
+
 Ryusuke Konishi
