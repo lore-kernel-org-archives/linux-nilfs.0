@@ -1,16 +1,15 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
 Subject: Re: How does NILFS2 handle directory management
-Date: Fri, 11 Sep 2009 13:13:49 +0900 (JST)
-Message-ID: <20090911.131349.105189468.ryusuke@osrg.net>
-References: <20090910192619.GA1263@heethoofdje.13thmonkey.org>
+Date: Fri, 11 Sep 2009 07:22:13 +0200
+Message-ID: <20090911052213.GA24899@aardappel.13thmonkey.org>
+References: <2324ff2b0909101216q31dad1a8y43ea0f229923a0c3@mail.gmail.com>
+	<20090910192619.GA1263@heethoofdje.13thmonkey.org>
 	<20090911.102118.69189169.ryusuke@osrg.net>
-	<873a6u16qy.wl%jir@sekiba.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0665773898=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <873a6u16qy.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20090911.102118.69189169.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,93 +18,92 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Cc: Prasenjit Giri <tangyorangesour-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-On Fri, 11 Sep 2009 12:48:37 +0900, Jiro SEKIBA wrote:
-> Hi
-> 
-> As far as I see, nilfs2 directory management is based on ext2.
-> ext3 has same format as ext2, but file creation is faster than ext2.
-> http://plaza18.mbn.or.jp/~moriban/linux/img/FileSystemBenchmarkResults-01-03.png
-> # There may be more reliable benchmark result, but I cound't find it.
-> 
-> So I think it would be worth to try porting ext3 code to nilfs2
-> to improve file creation.  Isn't it?
 
-Yeah, it sounds nice.  The approach seems to be able to avoid both
-problems I mentioned.
+--===============0665773898==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="SLDf9lqlvOQaIe6s"
+Content-Disposition: inline
 
-Thanks,
-Ryusuke Konishi
 
+--SLDf9lqlvOQaIe6s
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+Hi folks,
+
+On Fri, Sep 11, 2009 at 10:21:18AM +0900, Ryusuke Konishi wrote:
+> > I dont know if b+tree directory management would be preferable though. With
+> > some smart caching all directory operations can be made O(1) anyway.
 > 
-> thanks,
+> Yes, directory is a file and it's already managed with b-tree like
+> other files.  However, the current directory design is not O(log n),
+> and is actually slow especially for file creation.
+
+Thats what i was refering to. UDF has the same issue and the same design on
+directory structure, only even more complicated since directory entries are
+not of a fixed length and may actually span logical sectors/blocks.
+
+I now have code in UDF that i also use in my NiLFS implementation that manages
+the first file creation/reference in O(n) but all other files
+creation/lookup/delete in O(1)! speeding up large directory copies
+modifications/copies enormously, upto thousands of times.
+
+> So, it leaves room for considering the true "b-tree directory
+> management".
 > 
-> regards,
-> -- 
-> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+> OTOH, the replacement has the following points to notice:
 > 
-> At Fri, 11 Sep 2009 10:21:18 +0900 (JST),
-> Ryusuke Konishi wrote:
-> > 
-> > Hi Prasenjit Giri, and Reinoud,
-> > On Thu, 10 Sep 2009 21:26:19 +0200, Reinoud Zandijk <wrote:
-> > > Hi Prasenjit Giri,
-> > > 
-> > > On Fri, Sep 11, 2009 at 12:46:04AM +0530, Prasenjit Giri wrote:
-> > > > Even after looking through various sites, forums, mailing lists I could not
-> > > > uncover the present directoy management of NILFS2.
-> > > > 
-> > > > As I see a B-tree directory management in your long term to do list, it
-> > > > would be really nice if someone would ought to share the information
-> > > > regarding the present directory management of NILFS2
-> > > 
-> > > Currently directories are recorded just as a sequential file but not filled
-> > > with user data but with dirent entries in their blocks like ext2fs does.
-> > > Nothing special about that :)
-> > >
-> > > I dont know if b+tree directory management would be preferable though. With
-> > > some smart caching all directory operations can be made O(1) anyway.
-> > > 
-> > > With regards,
-> > > Reinoud Zandijk
-> > 
-> > Yes, directory is a file and it's already managed with b-tree like
-> > other files.  However, the current directory design is not O(log n),
-> > and is actually slow especially for file creation.
-> > 
-> > So, it leaves room for considering the true "b-tree directory
-> > management".
-> > 
-> > OTOH, the replacement has the following points to notice:
-> > 
-> >  1) It may complicate the log writer.
-> > 
-> >     The current log writer is designed on the basis that every data
-> >     and meta data is a file.  In NILFS, inodes, segment usage state,
-> >     and checkpoints, are managed with correponding meta-data files.
-> > 
-> >     The true "b-tree directory management" may break this uniformity.
-> > 
-> >  2) A disk format change is required.
-> >     (We can deem this a trade-off at this stage)
-> > 
-> > This may be a -v3 material.  But anyway, patch proposals are welcome.
-> > 
-> > Thank you,
-> > Ryusuke Konishi
-> > _______________________________________________
-> > users mailing list
-> > users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> > https://www.nilfs.org/mailman/listinfo/users
-> > 
-> > 
-> > 
+>  1) It may complicate the log writer.
 > 
+>     The current log writer is designed on the basis that every data
+>     and meta data is a file.  In NILFS, inodes, segment usage state,
+>     and checkpoints, are managed with correponding meta-data files.
 > 
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
+>     The true "b-tree directory management" may break this uniformity.
+
+This indeed complicates it a lot. It could still be implemented using `perfect
+hashing' techniques in one file but i have no experience with this and updates
+may still be expensive.
+
+With regards,
+Reinoud
+
+P.S. Ryusuke, did you recieve my mail on the length of partial segments?
+
+
+--SLDf9lqlvOQaIe6s
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (NetBSD)
+
+iQEcBAEBAgAGBQJKqd6FAAoJEIKcNwBDyKpohRMIAJyUKqRniDJz679XUizM0OV2
+MaxMTHGyIs4fErBDORQNy4gep7+B131nHE+8LsgujadZfCBttQG6+8s7MAGbIUxS
+sM/bJ5q2Tj8594pfsKGDdRmQOzEz28pXCg5O3iIciVf66AZyEg04lZ904gt97LrE
+AJx3kMXeTdrR2ZYhdDauYYDnK3SJOG12ovyvRQKxkZcM80l0s2ws/RF1NmpSsWM2
+hDfY5tMJpqNruEbTrqeEz7lcCzGfTxEzyO2+J5CDUSKT67Fm3V+QlXlj7uH4ld5m
+WBU8+RItwJxuQx3yRXR+rf6uQeRPO3IyWZHzWt5VJ7pJyH6NO/dH9vn0ZdQopKs=
+=3ykg
+-----END PGP SIGNATURE-----
+
+--SLDf9lqlvOQaIe6s--
+
+--===============0665773898==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0665773898==--
