@@ -1,12 +1,18 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: NILFS 2.0.16 released
-Date: Sat, 12 Sep 2009 02:50:25 +0900 (JST)
-Message-ID: <20090912.025025.54461074.ryusuke@osrg.net>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+Subject: Re: How does NILFS2 handle directory management
+Date: Mon, 14 Sep 2009 12:27:31 +0200
+Message-ID: <20090914102731.GA154@aardappel.13thmonkey.org>
+References: <20090910192619.GA1263@heethoofdje.13thmonkey.org>
+	<20090911.102118.69189169.ryusuke@osrg.net>
+	<20090911052213.GA24899@aardappel.13thmonkey.org>
+	<20090911.154452.43227079.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20090911.154452.43227079.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -17,37 +23,23 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Cc: reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi everyone,
+On Fri, Sep 11, 2009 at 03:44:52PM +0900, Ryusuke Konishi wrote:
+> You mean hashing (on-memory) by file names?
+> Well, I agree.  Such optimization would improve directory operations of
+> the current code without disk format change.
 
-I have released nilfs-2.0.16 standalone package which backported
-corrections from the kernel 2.6.31 including bug-fixes of reported
-hang or kernel oopses.
+Well, the strength is that you don't remember the directory contents, only the
+hashes, diroffset and name length; this means nearly no memory use. Its also
+authorative: not found in the hash means its not in the dir.
 
-Here is a summary of changes from the previous version:
+> I think it should be considered along with ext3 approach.
 
- * fix preempt count underflow in nilfs_btnode_prepare_change_key
- * fix oops due to inconsistent state in page with discreate b-tree
-   nodes
- * fix missing a read lock for segment writer in
-   nilfs_attach_checkpoint()
- * fix missing unlock in error path of nilfs_mdt_write_page
- * support is_partially_uptodate aops
- * support contiguous b-tree lookup
- * include FAQ patch for RHEL/CentOS in kern feature file
- * add sync_page method to page caches of meta data
- * use device's backing_dev_info for btree node caches
- * return EBUSY against delete request on snapshot
- * allow future expansion of metadata read out via get info ioctl
- * eliminate removal list of segments and header file for segment
-   list operations
- * code cleanups in bmap/btree
- * correct exclusion control in nilfs_remount() function
- * correct misuse of sget() function
- * get rid of bd_mount_sem use from nilfs
+What is is the ext3 approach? What is different compared to ext2? And is it
+really such a big improvement? Will it complicate directory reading/writing
+more?
 
-The updated package is available at http://www.nilfs.org/en/download.html.
-
-Thanks,
-Ryusuke Konishi
+With regards,
+Reinoud Zandijk
