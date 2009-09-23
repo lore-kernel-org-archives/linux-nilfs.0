@@ -1,10 +1,10 @@
-From: Saloustros Georgios <gesalous-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Low nilfs Disk utilization
-Date: Mon, 21 Sep 2009 16:54:50 +0300
-Message-ID: <1ee4eebe0909210654y3abe8bfaw14209035b0ebe625@mail.gmail.com>
+From: Byron Guernsey <bguernsey-BUHhN+a2lJ4@public.gmane.org>
+Subject: Forcing GC?
+Date: Wed, 23 Sep 2009 12:38:00 -0400
+Message-ID: <C2EAE475-6100-48BA-81D2-7B56E3D8DD6C@me.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0784459545=="
+Content-Type: multipart/mixed; boundary="===============0598370752=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
@@ -19,65 +19,114 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
---===============0784459545==
-Content-Type: multipart/alternative; boundary=0015174bf2aa530c95047416d392
 
---0015174bf2aa530c95047416d392
-Content-Type: text/plain; charset=ISO-8859-1
+--===============0598370752==
+Content-type: multipart/signed; boundary=Apple-Mail-2-538773583;
+ protocol="application/pkcs7-signature"; micalg=sha1
 
-Hello all.
-For my application, which is written in Java, I need a file system, on top
-of Linux software raid-0 (md), that guarantees contiguous allocation of
-blocks for a large number of small files, in order to increase write
-throughput.
-For this reason, in the last days I have been experimenting with nilfs2,
-which seems the best solution for my application needs.
-I am running Red Hat Enterprise Linux 5 (rhel5), kernel-version 2.6.18-prep,
-nilfs-2.0.16 and nilfs-utils-2.0.14.
-Software Raid-0 consists of two Maxtor 500 GB with chuck size 64K.
-System's Memory is 2GB.
-For testing reasons I wrote a simple disk benchmark in java, where 8 threads
-append 256KB dummy blocks from memory to a log-file. Total IO is 8 GB.
-With ext3 mounted with data=writeback mode, each drive alone gives 63MB/sec
-and as a raid-0 array a total of 90 MB/sec.
 
-Nilfs has worst performance for the same scenario. 1 Disk alone gives
-34MB/sec and two disks on raid-0 setup 39 MB/sec.
+--Apple-Mail-2-538773583
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset=us-ascii;
+	format=flowed;
+	delsp=yes
 
-Using iostat I can see that disks are 50% utilized with nilfs, whereas with
-ext3 are 100% utilized. Why is this happening? Is my configuration wrong?
+I'm using NILFS2 on an OCZ SSD as a spool for high definition video in  
+a scientific application.  I need around 32GB of FAST storage that can  
+handle sustained writes of 60MB/s, so NILFS on an SSD works quite  
+nicely.
 
--- 
-Thanks,
-G.S.
+In my application I have to run many capture sets- as many as 1000,  
+with each being as large as about 28GB.  After a capture completes, I  
+can move it off the spool storage and onto a slower mechanical hard  
+disc.  This is intended to free up space on the SSD for the next  
+capture set.
 
---0015174bf2aa530c95047416d392
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+But because the NILFS garbage collection is very slow, the space does  
+not become available for some time.  And when I tweak the  
+cleanerd.conf to run more quickly, it negatively impacts the  
+performance during capture.
 
-Hello all.<br>For my application, which is written in Java, I need a file s=
-ystem, on top of Linux software raid-0 (md), that guarantees contiguous all=
-ocation of blocks for a large number of small files, in order to increase w=
-rite throughput.<br clear=3D"all">
-For this reason, in the last days I have been experimenting with nilfs2, wh=
-ich seems the best solution for my application needs.<br>I am running Red H=
-at Enterprise Linux 5 (rhel5), kernel-version 2.6.18-prep, nilfs-2.0.16 and=
- nilfs-utils-2.0.14.<br>
-Software Raid-0 consists of two Maxtor 500 GB with chuck size 64K.<br>Syste=
-m&#39;s Memory is 2GB.<br>For testing reasons I wrote a simple disk benchma=
-rk in java, where 8 threads append 256KB dummy blocks from memory to a log-=
-file. Total IO is 8 GB.<br>
-With ext3 mounted with data=3Dwriteback mode, each drive alone gives 63MB/s=
-ec and as a raid-0 array a total of 90 MB/sec.<br><br>Nilfs has worst perfo=
-rmance for the same scenario. 1 Disk alone gives 34MB/sec and two disks on =
-raid-0 setup 39 MB/sec. <br>
-<br>Using iostat I can see that disks are 50% utilized with nilfs, whereas =
-with ext3 are 100% utilized. Why is this happening? Is my configuration wro=
-ng?=A0 <br><br>-- <br>Thanks,<br>G.S.<br>
+Is there any way to run nilfs_cleanerd in a manual mode where the  
+daemon doesn't execute and you run it to do a full garbage collection  
+and exit?  Or maybe some type of control socket or /proc device to  
+tell it to run a full GC pass?
 
---0015174bf2aa530c95047416d392--
+I know what you're thinking- a RAM drive is really what I need, and I  
+agree.  But a $150 SSD is cheaper than a server-class motherboard and  
+32GB of ram to use for a ram drive.  So I'm working within a budget  
+and an SSD with NILFS works fine, except for when I need to delete the  
+files and reclaim space.
 
---===============0784459545==
+I hate to integrate root privileged operations in this application  
+too.  For instance, I could reformat the SSD on every pass, or kill  
+cleanerd and start it with aggressive conf parameters when I want to  
+run garbage collection and monitor the free space to see when its  
+finished- but those aren't ideal.
+
+I like NILFS a lot.  But if I can't get it to free up the space on- 
+demand I don't see how it can be a workable solution.  I'll likely  
+need to mmap the SSD block device and manage the data myself rather  
+than messing with killing/starting the cleanerd on demand.
+
+Byron
+
+  
+--Apple-Mail-2-538773583
+Content-Disposition: attachment;
+	filename=smime.p7s
+Content-Type: application/pkcs7-signature;
+	name=smime.p7s
+Content-Transfer-Encoding: base64
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIGITCCAtow
+ggJDoAMCAQICED+NowzPDhIChdCz6lvBo3EwDQYJKoZIhvcNAQEFBQAwYjELMAkGA1UEBhMCWkEx
+JTAjBgNVBAoTHFRoYXd0ZSBDb25zdWx0aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMTI1RoYXd0ZSBQ
+ZXJzb25hbCBGcmVlbWFpbCBJc3N1aW5nIENBMB4XDTA5MDYxODAyMjgwOVoXDTEwMDYxODAyMjgw
+OVowQjEfMB0GA1UEAxMWVGhhd3RlIEZyZWVtYWlsIE1lbWJlcjEfMB0GCSqGSIb3DQEJARYQYmd1
+ZXJuc2V5QG1lLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMNCk7PAyZ359i9Y
+OTm2Iki5NFPzCOS3de8CTrRgzQq41wbgRF++vJpwA/bXVesaYdwwySxLf2b2nornYjecqSUsgTrB
+D1Zt1FwkwKU7taSiq5KAW9ADowl0JaCEMMiX6RrocjHP0nWQqk3S2N3bvBQW0odMZkUh4FAvPYu8
+mzGhhCE5uz4pHKykr6asZPLeGF9QnaQJ5B9wR71sZVRPl7e+MlE6s/0rVQ8yA8jxv3iJbD5abOlY
+IKSSQQe15ZI//tskKKmbelPK5wPn8BVG5oSWGTDKvoHWzO9ngh3DkF8AsPRcwakBoVlggi09Hd/U
+BLpNyAijBFrZaySAMUFi9GkCAwEAAaMtMCswGwYDVR0RBBQwEoEQYmd1ZXJuc2V5QG1lLmNvbTAM
+BgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBBQUAA4GBAIs8jZj7TXzKqT5U9O8kwSUWIFCIJRldzxUT
+XPoKtN0tGoigxf7nEeyUlB6qHy369Qq/HP+meZ0wftSTi94+ELm08zfRpKga+zH9QXCUQbNHkWlD
+RbL2uyn3m4WJvQviEqI0rYaOYfVbQMXNSH84CW6hhFHAShbM5PSOf8lfTbhPMIIDPzCCAqigAwIB
+AgIBDTANBgkqhkiG9w0BAQUFADCB0TELMAkGA1UEBhMCWkExFTATBgNVBAgTDFdlc3Rlcm4gQ2Fw
+ZTESMBAGA1UEBxMJQ2FwZSBUb3duMRowGAYDVQQKExFUaGF3dGUgQ29uc3VsdGluZzEoMCYGA1UE
+CxMfQ2VydGlmaWNhdGlvbiBTZXJ2aWNlcyBEaXZpc2lvbjEkMCIGA1UEAxMbVGhhd3RlIFBlcnNv
+bmFsIEZyZWVtYWlsIENBMSswKQYJKoZIhvcNAQkBFhxwZXJzb25hbC1mcmVlbWFpbEB0aGF3dGUu
+Y29tMB4XDTAzMDcxNzAwMDAwMFoXDTEzMDcxNjIzNTk1OVowYjELMAkGA1UEBhMCWkExJTAjBgNV
+BAoTHFRoYXd0ZSBDb25zdWx0aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMTI1RoYXd0ZSBQZXJzb25h
+bCBGcmVlbWFpbCBJc3N1aW5nIENBMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDEpjxVc1X7
+TrnKmVoeaMB1BHCd3+n/ox7svc31W/Iadr1/DDph8r9RzgHU5VAKMNcCY1osiRVwjt3J8CuFWqo/
+cVbLrzwLB+fxH5E2JCoTzyvV84J3PQO+K/67GD4Hv0CAAmTXp6a7n2XRxSpUhQ9IBH+nttE8YQRA
+HmQZcmC3+wIDAQABo4GUMIGRMBIGA1UdEwEB/wQIMAYBAf8CAQAwQwYDVR0fBDwwOjA4oDagNIYy
+aHR0cDovL2NybC50aGF3dGUuY29tL1RoYXd0ZVBlcnNvbmFsRnJlZW1haWxDQS5jcmwwCwYDVR0P
+BAQDAgEGMCkGA1UdEQQiMCCkHjAcMRowGAYDVQQDExFQcml2YXRlTGFiZWwyLTEzODANBgkqhkiG
+9w0BAQUFAAOBgQBIjNFQg+oLLswNo2asZw9/r6y+whehQ5aUnX9MIbj4Nh+qLZ82L8D0HFAgk3A8
+/a3hYWLD2ToZfoSxmRsAxRoLgnSeJVCUYsfbJ3FXJY3dqZw5jowgT2Vfldr394fWxghOrvbqNOUQ
+Gls1TXfjViF4gtwhGTXeJLHTHUb/XV9lTzGCAxAwggMMAgEBMHYwYjELMAkGA1UEBhMCWkExJTAj
+BgNVBAoTHFRoYXd0ZSBDb25zdWx0aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMTI1RoYXd0ZSBQZXJz
+b25hbCBGcmVlbWFpbCBJc3N1aW5nIENBAhA/jaMMzw4SAoXQs+pbwaNxMAkGBSsOAwIaBQCgggFv
+MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTA5MDkyMzE2MzgwMFow
+IwYJKoZIhvcNAQkEMRYEFHimq4xQg+tf/ktLmByKYB5IZEPYMIGFBgkrBgEEAYI3EAQxeDB2MGIx
+CzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSwwKgYD
+VQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNzdWluZyBDQQIQP42jDM8OEgKF0LPqW8Gj
+cTCBhwYLKoZIhvcNAQkQAgsxeKB2MGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29u
+c3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNz
+dWluZyBDQQIQP42jDM8OEgKF0LPqW8GjcTANBgkqhkiG9w0BAQEFAASCAQBJaa8Ugt1qnmeVG47k
+yqU6XG83r4Xg685sJBQwTJD4/iBfUbp45vccxeg8Tevqdz1p5o4Oann1HTQMbmqvFYwkCdi4Kaly
+vW/btfYGMz7zZI6sb9smcsJmzHya08nKPjyydzl+LwUOeDHczjj7wuWcflcajn8i1OPkT+l7XhIt
+Kl9CuohkLYc70arPu3RPV9HRXgaq6SZPNA3kWhvyMnuHFrUqkTVMqc2/BGuahl2A1b/DpYRlj7Qh
+0n1AI3i86xNRy1RQQVgR8TF6q/LlAvQhIW2qryG3J51i3HAeIfJR28odpd8v3F8zWmKGL/t4IjcX
+xhEc8fnko6b/eAXO0PSaAAAAAAAA
+
+--Apple-Mail-2-538773583--
+
+--===============0598370752==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -88,4 +137,4 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---===============0784459545==--
+--===============0598370752==--
