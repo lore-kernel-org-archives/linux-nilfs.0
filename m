@@ -1,15 +1,20 @@
-From: "Yann E. MORIN" <yann.morin.1998-i2lMhxPFobAPxyCoDXghUg@public.gmane.org>
-Subject: [SPAM]  Re:  Forcing GC?
-Date: Thu, 24 Sep 2009 18:34:36 +0200
-Message-ID: <200909241834.36527.yann.morin.1998@anciens.enib.fr>
-References: <C2EAE475-6100-48BA-81D2-7B56E3D8DD6C@me.com>
+From: Reinoud Zandijk <reinoud-S783fYmB3Ccdnm+yROfE0A@public.gmane.org>
+Subject: Re: How does NILFS2 handle directory management
+Date: Fri, 25 Sep 2009 14:21:09 +0200
+Message-ID: <20090925122109.GD6624@aardappel.13thmonkey.org>
+References: <20090910192619.GA1263@heethoofdje.13thmonkey.org>
+	<20090911.102118.69189169.ryusuke@osrg.net>
+	<20090911052213.GA24899@aardappel.13thmonkey.org>
+	<20090911.154452.43227079.ryusuke@osrg.net>
+	<20090914102731.GA154@aardappel.13thmonkey.org>
+	<87hbusbud6.wl%jir@sekiba.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <C2EAE475-6100-48BA-81D2-7B56E3D8DD6C-BUHhN+a2lJ4@public.gmane.org>
 Content-Disposition: inline
+In-Reply-To: <87hbusbud6.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,54 +25,44 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: Byron Guernsey <bguernsey-BUHhN+a2lJ4@public.gmane.org>
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Byron,
-All,
+Hi folks,
 
-On Wednesday 23 September 2009 18:38:00 Byron Guernsey wrote:
-> In my application I have to run many capture sets- as many as 1000,  
-> with each being as large as about 28GB.  After a capture completes, I  
-> can move it off the spool storage and onto a slower mechanical hard  
-> disc.  This is intended to free up space on the SSD for the next  
-> capture set.
-[--SNIP--]
-> I know what you're thinking- a RAM drive is really what I need, and I  
-> agree.  But a $150 SSD is cheaper than a server-class motherboard and  
-> 32GB of ram to use for a ram drive.  So I'm working within a budget  
-> and an SSD with NILFS works fine, except for when I need to delete the  
-> files and reclaim space.
+On Thu, Sep 24, 2009 at 05:49:09PM +0900, Jiro SEKIBA wrote:
+> Reinoud Zandijk wrote:
+> > > I think it should be considered along with ext3 approach.
+> > 
+> > What is is the ext3 approach? What is different compared to ext2? And is it
+> > really such a big improvement? Will it complicate directory reading/writing
+> > more?
+> 
+> ext3 approach is a hashed index for file names, stored on disk.
+> So it always costs constant time to lookup the block filename stored.
 
-I don't think you even need a file system for this...
+So its basicly the same aproach as mine only with the disadvantage that the
+hash is stored on-disc and hacked into the directory entries. That explains
+the deletion penelty to be paid since the has to be updated. One could cheat
+by not updating the hash on disc on deletion since its result will backfire on
+lookup but thats silly.
 
-If your capture set is one big file, then directly use the raw device:
-- add the user running the capture to the group 'disk'
-- have the SSD raw device be group-writeable
-- direct your capture output to the raw device
-- copy the raw device content to long-term storage (eg with dd)
+Hmm...  with these things in mind, i'd still opt for the application of my
+hash scheme in NiLFS2. It does have the penalty that the directory has to be
+sequentially read once but no further penalties and no disc layout change.
+Note that it *only* needs the directory contents to be read, the inodes don't
+have to be visited/created and is thus a cheap alternative.
 
-If you use multiple files for your capture:
-- do you know in advance the number of files?
-- is this number small (eg. <16)?
-- do you know in advance the size of each file?
-- if you answered yes to all three questions, then create appropriate
-  partitions on your device, and direct each capture "stream" to one
-  partition, as presented above.
-- if you answered no to any of the above, then you'll indeed need a
-  file system.
+The only time it will be slower than ext3 is when you randomly delete files
+from large directories visiting each directory once... an event thats not
+remotely realistic.
 
-Maybe unomuting and re-mounting the partition would be a solution,
-but you'd need root access, or make a small suid program that does
-the mount/umount for you.
+Looking into the papers you sent me, they refer to my scheme as a `cached
+index' if i read it correctly. The disadvantages they bring forward are not
+that realistic in common use. Especially not if you keep the cache entries
+small like the 24/28 bytes it takes for mine and if it also keeps track of the
+free entries.
 
-Regards,
-Yann E. MORIN.
+Thoughts?
 
--- 
-.-----------------.--------------------.------------------.--------------------.
-|  Yann E. MORIN  | Real-Time Embedded | /"\ ASCII RIBBON | Erics' conspiracy: |
-| +0/33 662376056 | Software  Designer | \ / CAMPAIGN     |  ___               |
-| --==< ^_^ >==-- `------------.-------:  X  AGAINST      |  \e/  There is no  |
-| http://ymorin.is-a-geek.org/ | _/*\_ | / \ HTML MAIL    |   v   conspiracy.  |
-`------------------------------^-------^------------------^--------------------'
+With regards,
+Reinoud Zandijk
