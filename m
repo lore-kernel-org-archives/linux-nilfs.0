@@ -1,18 +1,22 @@
-From: Jeff Layton <laytonjb-fOdFMYwuEsI@public.gmane.org>
+From: Byron Guernsey <bguernsey-BUHhN+a2lJ4@public.gmane.org>
 Subject: Re: IOzone testing
-Date: Sat, 26 Sep 2009 11:08:54 -0400
-Message-ID: <4ABE2E86.5010708@att.net>
-References: <4ABE0553.3090502@att.net>	<debc30fc0909260554s21969638h280d9e6f89b7596e@mail.gmail.com>
-	<4ABE0AD7.7000904@att.net>	<debc30fc0909260627n12616bddif87b25f0ae64b6f5@mail.gmail.com>
-	<4ABE13D3.2080809@att.net>	<debc30fc0909260715u562bd4b0g747327c3e1a0fe37@mail.gmail.com>
+Date: Sat, 26 Sep 2009 12:29:11 -0400
+Message-ID: <C83C8B9E-C7E0-46B8-913E-6F0C407DE2E9@me.com>
+References: <4ABE0553.3090502@att.net>
+	<debc30fc0909260554s21969638h280d9e6f89b7596e@mail.gmail.com>
+	<4ABE0AD7.7000904@att.net>
+	<debc30fc0909260627n12616bddif87b25f0ae64b6f5@mail.gmail.com>
+	<4ABE13D3.2080809@att.net>
+	<debc30fc0909260715u562bd4b0g747327c3e1a0fe37@mail.gmail.com>
 	<4ABE2704.6030607@att.net>
 	<debc30fc0909260815s412ee145xa90e02d9ce4c942f@mail.gmail.com>
+	<4ABE2E86.5010708@att.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <debc30fc0909260815s412ee145xa90e02d9ce4c942f-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-reply-to: <4ABE2E86.5010708-fOdFMYwuEsI@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -25,45 +29,37 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-J=E9r=F4me Poulin wrote:
-> On Sat, Sep 26, 2009 at 10:36 AM, Jeff Layton <laytonjb-fOdFMYwuEsI@public.gmane.org> wrote:
->   =
-
->> J=E9r=F4me Poulin wrote:
->>
->> Cool program - I will definitely try this.
->>
->> So, let me summarize what I think I should do to test nilfs with
->> IOzone without the impact of the checkpoints and without filling
->> up the space.
->>
->> - Run IOzone without cleanerd running to minimize the
->> impact of checkpoints on IO performance.
->> - Assuming I don't fill up the file system, after a run of
->> IOzone, I need to run cleanerd but put the protection
->> period to something very small (e.g. 1 second) to reclaim the
->> space.
->> - Shut down cleanerd again and run another IOzone test.
->> (rinse and repeat)
->>
->> Does this sound about right?
->>
->> Thanks!
->>
->> Jeff
->>
->>     =
-
-> That sounds right, either run cleanerd or mkfs the partition again for
-> faster results ;)
->   =
-
-
-Good point about using mkfs. :)
-
-I think I'm going to run two test: (1) using the process above, (2) setting
-the protection period to 1 (maybe 0). Let's see what the differences are.
-
-Thanks!
-
-Jeff
+QmUgYXdhcmUgdGhhdCBnYXJiYWdlIGNvbGxlY3Rpb24gd2lsbCB0YWtlIHF1aXRlIGEgd2hpbGUg
+b24gYSBmdWxsICAKZHJpdmUgdG8gZ28gYmFjayB0byAwIHVubGVzcyB5b3UgYWxzbyBpbmNyZWFz
+ZSB0aGUgc2VnbWVudHMgY2xlYW5lZCAgCnBlciBydW4gYW5kIGlmIHlvdSBhY2NpZGVudGFsbHkg
+bGVhdmUgaXQgaGlnaCBpdCB3aWxsIGltcGFjdCAgCnBlcmZvcm1hbmNlLgoKVGhpcyBpcyB3aHkg
+SSBoYWQgYXNrZWQgYWJvdXQgYSB3YXkgdG8gZm9yY2UgYSBmdWxsIEdDIHdpdGggYSAgCnByb3Rl
+Y3Rpb24gcGVyaW9kIG90aGVyIHRoYW4gdGhhdCBpbiB0aGUgY29uZiBmaWxlLiBJdCBzZWVtcyBs
+aWtlICAKcXVpY2sgZm9yY2VkIGNsZWFudXAgd2hlbiBhIHVzZXIgZGVsZXRlcyBhIGxvdCBvZiBm
+aWxlcyBpcyBhIGNvbW1vbiAgCm5lZWQuLi4KCkJ5cm9uCgpPbiBTZXAgMjYsIDIwMDksIGF0IDEx
+OjA4IEFNLCBKZWZmIExheXRvbiA8bGF5dG9uamJAYXR0Lm5ldD4gd3JvdGU6Cgo+IErDqXLDtG1l
+IFBvdWxpbiB3cm90ZToKPj4gT24gU2F0LCBTZXAgMjYsIDIwMDkgYXQgMTA6MzYgQU0sIEplZmYg
+TGF5dG9uIDxsYXl0b25qYkBhdHQubmV0PiAgCj4+IHdyb3RlOgo+Pgo+Pj4gSsOpcsO0bWUgUG91
+bGluIHdyb3RlOgo+Pj4KPj4+IENvb2wgcHJvZ3JhbSAtIEkgd2lsbCBkZWZpbml0ZWx5IHRyeSB0
+aGlzLgo+Pj4KPj4+IFNvLCBsZXQgbWUgc3VtbWFyaXplIHdoYXQgSSB0aGluayBJIHNob3VsZCBk
+byB0byB0ZXN0IG5pbGZzIHdpdGgKPj4+IElPem9uZSB3aXRob3V0IHRoZSBpbXBhY3Qgb2YgdGhl
+IGNoZWNrcG9pbnRzIGFuZCB3aXRob3V0IGZpbGxpbmcKPj4+IHVwIHRoZSBzcGFjZS4KPj4+Cj4+
+PiAtIFJ1biBJT3pvbmUgd2l0aG91dCBjbGVhbmVyZCBydW5uaW5nIHRvIG1pbmltaXplIHRoZQo+
+Pj4gaW1wYWN0IG9mIGNoZWNrcG9pbnRzIG9uIElPIHBlcmZvcm1hbmNlLgo+Pj4gLSBBc3N1bWlu
+ZyBJIGRvbid0IGZpbGwgdXAgdGhlIGZpbGUgc3lzdGVtLCBhZnRlciBhIHJ1biBvZgo+Pj4gSU96
+b25lLCBJIG5lZWQgdG8gcnVuIGNsZWFuZXJkIGJ1dCBwdXQgdGhlIHByb3RlY3Rpb24KPj4+IHBl
+cmlvZCB0byBzb21ldGhpbmcgdmVyeSBzbWFsbCAoZS5nLiAxIHNlY29uZCkgdG8gcmVjbGFpbSB0
+aGUKPj4+IHNwYWNlLgo+Pj4gLSBTaHV0IGRvd24gY2xlYW5lcmQgYWdhaW4gYW5kIHJ1biBhbm90
+aGVyIElPem9uZSB0ZXN0Lgo+Pj4gKHJpbnNlIGFuZCByZXBlYXQpCj4+Pgo+Pj4gRG9lcyB0aGlz
+IHNvdW5kIGFib3V0IHJpZ2h0Pwo+Pj4KPj4+IFRoYW5rcyEKPj4+Cj4+PiBKZWZmCj4+Pgo+Pj4K
+Pj4gVGhhdCBzb3VuZHMgcmlnaHQsIGVpdGhlciBydW4gY2xlYW5lcmQgb3IgbWtmcyB0aGUgcGFy
+dGl0aW9uIGFnYWluICAKPj4gZm9yCj4+IGZhc3RlciByZXN1bHRzIDspCj4+Cj4KPiBHb29kIHBv
+aW50IGFib3V0IHVzaW5nIG1rZnMuIDopCj4KPiBJIHRoaW5rIEknbSBnb2luZyB0byBydW4gdHdv
+IHRlc3Q6ICgxKSB1c2luZyB0aGUgcHJvY2VzcyBhYm92ZSwgKDIpICAKPiBzZXR0aW5nCj4gdGhl
+IHByb3RlY3Rpb24gcGVyaW9kIHRvIDEgKG1heWJlIDApLiBMZXQncyBzZWUgd2hhdCB0aGUgZGlm
+ZmVyZW5jZXMgIAo+IGFyZS4KPgo+IFRoYW5rcyEKPgo+IEplZmYKPgo+IF9fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCj4gdXNlcnMgbWFpbGluZyBsaXN0Cj4g
+dXNlcnNAbmlsZnMub3JnCj4gaHR0cHM6Ly93d3cubmlsZnMub3JnL21haWxtYW4vbGlzdGluZm8v
+dXNlcnMKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KdXNl
+cnMgbWFpbGluZyBsaXN0CnVzZXJzQG5pbGZzLm9yZwpodHRwczovL3d3dy5uaWxmcy5vcmcvbWFp
+bG1hbi9saXN0aW5mby91c2Vycwo=
