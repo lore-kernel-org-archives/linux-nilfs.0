@@ -1,11 +1,16 @@
-From: Assaf Weizman <assaf.weizman-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: NILFS Documentation task
-Date: Sun, 4 Oct 2009 01:45:02 +0200
-Message-ID: <63c84f240910031645i14701c6x343453f96beae1e7@mail.gmail.com>
+From: "Barham, David" <david.barham-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: NILFS hanging SLES 11 - advise on diagnosis needed
+Date: Tue, 6 Oct 2009 16:24:20 +0200
+Message-ID: <80225669DEC80D488C4A0B5150466E1802F184D0@dekomplm002.net.plm.eds.com>
+References: <4ABE2E86.5010708@att.net><C83C8B9E-C7E0-46B8-913E-6F0C407DE2E9@me.com><80225669DEC80D488C4A0B5150466E1802F17EC3@dekomplm002.net.plm.eds.com>
+	<20091002.204207.26501663.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1768525640=="
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Class: urn:content-classes:message
+In-Reply-To: <20091002.204207.26501663.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -14,86 +19,146 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
---===============1768525640==
-Content-Type: multipart/alternative; boundary=001636c924c85034d50475107948
+I checked the hardware today as the machine keeps falling over, but only as=
+ I'm doing data copies into the nilfs2 filesystem via NFS. The last few tim=
+es I've not had any errors in the logs at all except those the clearerd whi=
+ch is in debug mode and the startup after I power cycle the machine.
 
---001636c924c85034d50475107948
-Content-Type: text/plain; charset=ISO-8859-1
+I tried to build a debug version of 2.0.17 but I'm getting =
 
-Hello all,I've been given as academical-task to write a documentation paper
-for the NILFS (2) File System. (for Operation Systems course at my
-university I obligated myself to submit in November)
 
-I have been following the NILFS Project for the passed half year, and
-checked a few versions of it on several Linux distributions and Hardware
-platforms, and must say it is very interesting and practical File System
-that improves from version to version. many thanks to the authors and the
-contributers of this FS (Amagai Yoshiji,Ryusuke Konishi,Koji Sato,Hisashi
-Hifumi,Yoshiaki Tamura,Seiji Kihara,Satoshi Moriai as been written on the
-NILFS Project's website).
+/usr/local/sources/nilfs-2.0.17 # make
+make -C fs
+make[1]: Entering directory `/usr/local/sources/nilfs-2.0.17/fs'
+make -C /lib/modules/2.6.27.19-5-default/build SUBDIRS=3D/usr/local/sources=
+/nilfs-2.0.17/fs BUILD_DIR=3D/usr/local/sources/nilfs-2.0.17/fs modules
+make[2]: Entering directory `/usr/src/linux-2.6.27.19-5-obj/x86_64/default'
+make -C ../../../linux-2.6.27.19-5 O=3D/usr/src/linux-2.6.27.19-5-obj/x86_6=
+4/default/. modules
+  CC [M]  /usr/local/sources/nilfs-2.0.17/fs/debug.o
+/usr/local/sources/nilfs-2.0.17/fs/debug.c: In function =E2snprint_page_fla=
+gs=E2:
+/usr/local/sources/nilfs-2.0.17/fs/debug.c:408: error: implicit declaration=
+ of function =E2PagePinned=E2
+make[5]: *** [/usr/local/sources/nilfs-2.0.17/fs/debug.o] Error 1
+make[4]: *** [_module_/usr/local/sources/nilfs-2.0.17/fs] Error 2
+make[3]: *** [sub-make] Error 2
+make[2]: *** [all] Error 2
+make[2]: Leaving directory `/usr/src/linux-2.6.27.19-5-obj/x86_64/default'
+make[1]: *** [default] Error 2
+make[1]: Leaving directory `/usr/local/sources/nilfs-2.0.17/fs'
+make: *** [fs] Error 2
 
-In order for this work to benefit the NILFS Project, If anyone has
-information that one thinks it should be included in NILFS Documentation - I
-would very appreciate it if you write me back about it.
+I get the same error trying to make 2.0.16.
 
-(especially about :        * The GC mechanism,
-                                   * The difference between
-journal-filesystem such as ext2/3 the NILFS 2,
- a major plus would be: * Graphs describing the layout\fragments of data on
-a physical layer of a theoretical disk.
-                                    and etc... ).
+I've had a look at the C but I'm out of my depth.
 
-Best regards
-Assaf Weizman
+Any help would be great.
 
---001636c924c85034d50475107948
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Thanks
+David Barham
+Siemens PLM Software
 
-<div dir=3D"ltr">Hello all,<div>I&#39;ve been given as academical-task to w=
-rite a documentation paper for the NILFS (2)=A0File System. (for Operation =
-Systems course at my university I obligated myself to submit in November)</=
-div>
 
-<div><br></div><div>I have been following the NILFS Project for the passed =
-half year, and checked a few versions of it on several Linux distributions =
-and Hardware platforms, and must say it is very interesting and practical F=
-ile System that improves from version to version. many thanks to the author=
-s and the contributers of this FS (Amagai Yoshiji,Ryusuke Konishi,Koji Sato=
-,Hisashi Hifumi,Yoshiaki Tamura,Seiji Kihara,Satoshi Moriai as been=A0writt=
-en=A0on the NILFS Project&#39;s website).</div>
+-----Original Message-----
+From: Ryusuke Konishi [mailto:ryusuke-sG5X7nlA6pw@public.gmane.org] =
 
-<div><br></div><div>In order for this work to=A0benefit=A0the NILFS Project=
-, If anyone has information that one thinks it should be included in NILFS =
-Documentation - I would very=A0appreciate=A0it if you write me back about i=
-t.</div>
+Sent: 02 October 2009 12:42
+To:; Barham, David
+Subject: Re: [NILFS users] NILFS hanging SLES 11 - advise on diagnosis need=
+ed
 
-<div><br></div><div>(especially about : =A0 =A0 =A0 =A0* The GC mechanism,<=
-/div><div>=A0=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
-=A0 =A0 * The difference between journal-filesystem such as ext2/3 the NILF=
-S 2,</div><div>=A0a major plus would be: * Graphs=A0describing the=A0layout=
-\fragments of data on a=A0physical layer of a theoretical disk.=A0</div>
+Hi,
+On Fri, 2 Oct 2009 12:11:14 +0200, "Barham, David" wrote:
+> Hi
+> I'm running SLES 11, 2.6.27.19-5-default with NILFS2 nilfs-2.0.16. I have=
+ a 1.5Tb NILFS2 partition which I am setting up with the intention of using=
+ Robocopy from various PCs via samba. The robocopy scripts run nightly and =
+a checkpoint is taken once night. A script stops samba, unmounts the previo=
+us weeks checkpoint, deletes the checkpoint, creates a new one and then mou=
+nts it and restarts samba. This should mean that at any time the user can g=
+o back to 'snapshot_{DAY}' to get their files back.
+> =
 
-<div>=A0=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0and etc... ).</div><div><br></div><div>Best regards</div><div>Assaf Wei=
-zman</div></div>
+> So far so good.
+> =
 
---001636c924c85034d50475107948--
+> However as I copy the previously backed up files from the previous linux =
+machine where I was doing this (only giving a 'current' copy with reiserfs)=
+. I'm finding that the new machine is occasionally hanging. The OS just loc=
+ks up, screen on console frozen but host still responds to ping. =
 
---===============1768525640==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> =
 
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
+> I'm trying to work out what is causing the hang, I'm getting various mess=
+ages in the log from smartd relating to the disk which houses the NILFS alo=
+ng the lines of:
+> =
 
---===============1768525640==--
+>  Oct  2 09:56:59 cpli6008 syslog-ng[1933]: Log statistics; dropped=3D'pip=
+e(/dev/xconsole)=3D0', dropped=3D'pipe(/dev/tty10)=3D0', processed=3D'cente=
+r(queued)=3D947', processed=3D'center(received)=3D478', processed=3D'destin=
+ation(newsnotice)=3D0', processed=3D'destination(acpid)=3D0', processed=3D'=
+destination(firewall)=3D0', processed=3D'destination(mail)=3D12', processed=
+=3D'destination(mailinfo)=3D12', processed=3D'destination(console)=3D151', =
+processed=3D'destination(newserr)=3D0', processed=3D'destination(newscrit)=
+=3D0', processed=3D'destination(messages)=3D466', processed=3D'destination(=
+mailwarn)=3D0', processed=3D'destination(localmessages)=3D0', processed=3D'=
+destination(netmgm)=3D0', processed=3D'destination(mailerr)=3D0', processed=
+=3D'destination(xconsole)=3D151', processed=3D'destination(warn)=3D155', pr=
+ocessed=3D'source(src)=3D478'
+> Oct  2 09:57:25 cpli6008 smartd[3473]: Device: /dev/sda [SAT], SMART Usag=
+e Attribute: 194 Temperature_Celsius changed from 110 to 112
+> Oct  2 09:57:25 cpli6008 smartd[3473]: Device: /dev/sdb [SAT], SMART Pref=
+ailure Attribute: 1 Raw_Read_Error_Rate changed from 115 to 117
+> Oct  2 09:57:25 cpli6008 smartd[3473]: Device: /dev/sdb [SAT], SMART Usag=
+e Attribute: 189 High_Fly_Writes changed from 88 to 87
+> Oct  2 09:57:25 cpli6008 smartd[3473]: Device: /dev/sdb [SAT], SMART Usag=
+e Attribute: 190 Airflow_Temperature_Cel changed from 60 to 61
+> Oct  2 09:57:25 cpli6008 smartd[3473]: Device: /dev/sdb [SAT], SMART Usag=
+e Attribute: 194 Temperature_Celsius changed from 40 to 39
+> Oct  2 09:57:25 cpli6008 smartd[3473]: Device: /dev/sdb [SAT], SMART Usag=
+e Attribute: 195 Hardware_ECC_Recovered changed from 50 to 51
+> =
+
+> {machine stops responding and gets power cycled}
+>
+> Oct  2 10:10:58 cpli6008 syslog-ng[1948]: syslog-ng starting up; version=
+=3D'2.0.9'
+> =
+
+> Do folks think that the hang is NILFS or dodgy hardware/reporting
+> from smartd? Is there any advise on getting some debug or status
+> information from NILFS to help show it isn't the cause of the
+> problem. I would have expected that if it went bang I'd have seen
+> something 'worrying' in the log.
+
+The nilfs2 standalone module has a debug mode.  You can enable it by
+commenting out the following line (i.e. CONFIG_NILFS_DEBUG=3Dy) in
+nilfs2-module/fs/Makefile before compiling:
+
+ifndef CONFIG_NILFS
+  EXTERNAL_BUILD=3Dy
+  CONFIG_NILFS=3Dm
+  # Uncomment below to do debug build.
+  CONFIG_NILFS_DEBUG=3Dy
+  # Uncomment below to enable bmap validity check.
+  #CONFIG_NILFS_BMAP_DEBUG=3Dy
+endif
+
+By the way, I'm planning to release nilfs-2.0.17 tomorrow in order to
+solve file system corruption problems which infrequently happen and
+were reported on this list.
+
+The bugfix was already merged in the mainline and also sent to -stable
+trees for 3.6.30 and 3.6.31, but not yet done.
+
+Your problem looks hardware problem to me, but I think the new version
+is worth a try.
+
+Cheers,
+Ryusuke Konishi
