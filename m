@@ -1,16 +1,16 @@
 From: "Barham, David" <david.barham-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: NILFS hanging SLES 11 - advise on diagnosis needed
-Date: Tue, 6 Oct 2009 16:24:20 +0200
-Message-ID: <80225669DEC80D488C4A0B5150466E1802F184D0@dekomplm002.net.plm.eds.com>
-References: <4ABE2E86.5010708@att.net><C83C8B9E-C7E0-46B8-913E-6F0C407DE2E9@me.com><80225669DEC80D488C4A0B5150466E1802F17EC3@dekomplm002.net.plm.eds.com>
-	<20091002.204207.26501663.ryusuke@osrg.net>
+Date: Tue, 6 Oct 2009 16:59:20 +0200
+Message-ID: <80225669DEC80D488C4A0B5150466E1802F184F4@dekomplm002.net.plm.eds.com>
+References: <4ABE2E86.5010708@att.net><C83C8B9E-C7E0-46B8-913E-6F0C407DE2E9@me.com><80225669DEC80D488C4A0B5150466E1802F17EC3@dekomplm002.net.plm.eds.com><20091002.204207.26501663.ryusuke@osrg.net>
+	<80225669DEC80D488C4A0B5150466E1802F184D0@dekomplm002.net.plm.eds.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Content-Class: urn:content-classes:message
-In-Reply-To: <20091002.204207.26501663.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <80225669DEC80D488C4A0B5150466E1802F184D0-q6sIb7dcTNEDs3eufgyKiYGWD8NUZu9dQQ4Iyu8u01E@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,7 +21,32 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+
+I managed to get the debug option to compile but only after I commented out=
+ the lines in debug.c
+
+/*#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
+        TEST_PAGE_FLAG(page, Pinned, b, size, n, len);
+        TEST_PAGE_FLAG(page, Readahead, b, size, n, len);
+#endif
+/*
+
+Is there perhaps something different about 2.6.27?
+
+Do I know need to update the mount options with a 'v' ?
+
+Thanks
+David
+
+
+-----Original Message-----
+From: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org [mailto:users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org] On Behalf Of=
+ Barham, David
+Sent: 06 October 2009 15:24
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Subject: Re: [NILFS users] NILFS hanging SLES 11 - advise on diagnosis need=
+ed
 
 I checked the hardware today as the machine keeps falling over, but only as=
  I'm doing data copies into the nilfs2 filesystem via NFS. The last few tim=
@@ -162,3 +187,7 @@ is worth a try.
 
 Cheers,
 Ryusuke Konishi
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
