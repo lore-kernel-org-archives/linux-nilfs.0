@@ -1,15 +1,11 @@
-From: Takahiro WATANABE <nemuizo763-/E1597aS9LR3+QwDJ9on6Q@public.gmane.org>
-Subject: Re: Cant use nfs with nilfs
-Date: Wed, 07 Oct 2009 18:43:06 +0900 (JST)
-Message-ID: <20091007.184306.759900912694740657.nemuizo763@yahoo.co.jp>
-References: <20091007.132139.407454645627537773.nemuizo763@yahoo.co.jp>
-	<874oqbsiu8.wl%jir@sekiba.com>
+From: Jan de Kruyf <jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: cleanerd
+Date: Sun, 11 Oct 2009 00:18:10 +0200
+Message-ID: <ee5afd760910101518u4a85fd0fn6e5539a327b2a876@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1294978510=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <874oqbsiu8.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -18,89 +14,132 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi,
+--===============1294978510==
+Content-Type: multipart/alternative; boundary=001485eb04fd6750a504759c1235
 
-: It looks like somewrong with NFS configuration to me.
-: What if export the directory without mounting nilfs partition?
+--001485eb04fd6750a504759c1235
+Content-Type: text/plain; charset=ISO-8859-1
 
-I got messages below when exporting a partition with ext3.
-Oct  7 18:35:25 nfs-host4 mountd[10254]: authenticated mount request from 192.168.1.99:802 for /data-ext3 (/data-ext3)
+Hallo,
+Here is an interesting disaster with nilfs2. Lightening went down the
+chimney on the other side of the wall. Computer was off, but plugged in.
+Motherboard died.
 
-Anyway, I found the tempolary solution.
-Disabling the SElinux on nfs server was fixed for me :-(
+So I now try to fix partitions. at the moment it is /var. /home will come
+later.
 
-I guess a SElinux policy has to be written to access the server.
+Here is the problem:
+/var data is readable but the cleanerd has become confused after the
+disaster and has filled up the partition
 
-Cheers,
+partition size 5.8 Gig, data size 2.56 Gig, but usage is now 100%
+Normal mounting:
+cleanerd cannot be stopped anymore, neither with TERM or KILL signals.
 
-Takahiro.
+lscp shows only cleaner checkpoints now.
+
+When mounting without the cleanerd running there are no dmesg's of interest
+on mounting or on execution of any command
+
+To rescue the partition do I copy the data to another disk and reformat? Or
+is there a simpler solution?
 
 
+Best Regard,
 
-From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: Re: [NILFS users] Cant use nfs with nilfs
-Date: Wed, 07 Oct 2009 17:34:39 +0900
+Jan de Kruyf.
+------------------
 
-: Hi, 
-: 
-: 
-: > I'm new to use nilfs.
-: > I can't use nfs with nilfs.
-: > I want to know the solution.
-: > 
-: > When I mount a dir from client, I get like this:
-: > 
-: > # mount server:/data-dir /mnt
-: > mount: server:/data-dir failed, reason given by server: Permission denied
-: > 
-: > I also got messages from the nfs server:
-: > Oct  7 13:00:02 server mountd[9904]: authenticated mount request from 192.168.1.99:810 for /data-dir (/data-dir)
-: > Oct  7 13:00:02 server mountd[9904]: can't stat exported dir /data-dir: Permission denied
-: 
-: It looks like somewrong with NFS configuration to me.
-: What if export the directory without mounting nilfs partition?
-: 
-: > Below is my settings:
-: > 
-: > * /etc/exports
-: > /data-dir 192.168.1.0/24(rw,no_root_squash)
-: > 
-: > * mount
-: > # mount -t nilfs2
-: > /dev/md2 on /data-dir type nilfs2 (rw,gcpid=4858)
-: > 
-: > * nilfs-utils
-: > nilfs-utils-2.0.14-2 (from fedora11 source)
-: > 
-: > * Distribution
-: > CentOS5.3 (x86_64)
-: > 
-: > *kernel 
-: > 2.6.31.1 (vanilla kernel)
-: > 
-: > 
-: > Cheers,
-: > 
-: > Takairo.
-: > 
-: > 
-: > 
-: > 
-: > _______________________________________________
-: > users mailing list
-: > users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-: > https://www.nilfs.org/mailman/listinfo/users
-: > 
-: > 
-: 
-: regards,
-: -- 
-: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-: _______________________________________________
-: users mailing list
-: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-: https://www.nilfs.org/mailman/listinfo/users
+ps.
+ running debian lenny, kernel 2.6.26-1-686
+
+branch 'master' of http://git.nilfs.org/nilfs2-utils  dd. 11 july 2009
+branch 'master' of http://git.nilfs.org/nilfs2-module  dd. 11 july 2009
+tag 'v2.0.15'
+
+and here is the superblock of the partition:
+
+
+00000000: 0200 0000 0000 3434 0001 0000 8422 95d1  ......44....."..
+00000010: 80b7 90e7 0200 0000 ca02 0000 0000 0000  ................
+00000020: 00b4 6665 0100 0000 0100 0000 0000 0000  ..fe............
+00000030: 0008 0000 0500 0000 e1e6 1400 0000 0000  ................
+00000040: d69f 0d00 0000 0000 c181 0900 0000 0000  ................
+00000050: 0000 0000 0000 0000 4815 5a4a 0000 0000  ........H.ZJ....
+00000060: 3713 d04a 0000 0000 3713 d04a 0000 0000  7..J....7..J....
+00000070: 4000 3200 0000 0100 4815 5a4a 0000 0000  @.2.....H.ZJ....
+00000080: 004e ed00 0000 0000 0000 0000 0b00 0000  .N..............
+00000090: 8000 2000 c000 1000 470b 1351 09a6 4016  .. .....G..Q..@.
+000000a0: 9397 70f2 82f5 d61b 7661 7200 0000 0000  ..p.....var.....
+000000b0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000000c0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000000d0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000000e0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000000f0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+
+--001485eb04fd6750a504759c1235
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hallo,<br>Here is an interesting disaster with nilfs2. Lightening went down=
+ the chimney on the other side of the wall. Computer was off, but plugged i=
+n.<br>Motherboard died.<br><br>So I now try to fix partitions. at the momen=
+t it is /var. /home will come later.<br>
+<br>Here is the problem:<br>/var data is readable but the cleanerd has beco=
+me confused after the disaster and has filled up the partition<br><br>parti=
+tion size 5.8 Gig, data size 2.56 Gig, but usage is now 100%<br>Normal moun=
+ting:<br>
+cleanerd cannot be stopped anymore, neither with TERM or KILL signals.<br><=
+br>lscp shows only cleaner checkpoints now.<br><br>When mounting without th=
+e cleanerd running there are no dmesg&#39;s of interest on mounting or on e=
+xecution of any command<br>
+<br>To rescue the partition do I copy the data to another disk and reformat=
+? Or is there a simpler solution?<br><br><br>Best Regard,<br><br>Jan de Kru=
+yf.<br>------------------<br><br>ps.<br>=A0running debian lenny, kernel 2.6=
+.26-1-686<br>
+<br>branch &#39;master&#39; of <a href=3D"http://git.nilfs.org/nilfs2-utils=
+">http://git.nilfs.org/nilfs2-utils</a>=A0 dd. 11 july 2009<br>branch &#39;=
+master&#39; of <a href=3D"http://git.nilfs.org/nilfs2-module">http://git.ni=
+lfs.org/nilfs2-module</a>=A0 dd. 11 july 2009=A0=A0 tag &#39;v2.0.15&#39;<b=
+r>
+<br>and here is the superblock of the partition:<br>
+<br>
+<br>
+00000000: 0200 0000 0000 3434 0001 0000 8422 95d1=A0 ......44.....&quot;..<=
+br>
+00000010: 80b7 90e7 0200 0000 ca02 0000 0000 0000=A0 ................<br>
+00000020: 00b4 6665 0100 0000 0100 0000 0000 0000=A0 ..fe............<br>
+00000030: 0008 0000 0500 0000 e1e6 1400 0000 0000=A0 ................<br>
+00000040: d69f 0d00 0000 0000 c181 0900 0000 0000=A0 ................<br>
+00000050: 0000 0000 0000 0000 4815 5a4a 0000 0000=A0 ........H.ZJ....<br>
+00000060: 3713 d04a 0000 0000 3713 d04a 0000 0000=A0 7..J....7..J....<br>
+00000070: 4000 3200 0000 0100 4815 5a4a 0000 0000=A0 @.2.....H.ZJ....<br>
+00000080: 004e ed00 0000 0000 0000 0000 0b00 0000=A0 .N..............<br>
+00000090: 8000 2000 c000 1000 470b 1351 09a6 4016=A0 .. .....G..Q..@.<br>
+000000a0: 9397 70f2 82f5 d61b 7661 7200 0000 0000=A0 ..p.....var.....<br>
+000000b0: 0000 0000 0000 0000 0000 0000 0000 0000=A0 ................<br>
+000000c0: 0000 0000 0000 0000 0000 0000 0000 0000=A0 ................<br>
+000000d0: 0000 0000 0000 0000 0000 0000 0000 0000=A0 ................<br>
+000000e0: 0000 0000 0000 0000 0000 0000 0000 0000=A0 ................<br>
+000000f0: 0000 0000 0000 0000 0000 0000 0000 0000=A0 ................<br><b=
+r><br>
+
+--001485eb04fd6750a504759c1235--
+
+--===============1294978510==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============1294978510==--
