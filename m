@@ -1,92 +1,99 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: cleanerd
-Date: Mon, 19 Oct 2009 11:07:27 +0900
-Message-ID: <c4a7c9420910181907y4d8d615fp831e3b518b907205@mail.gmail.com>
-References: <ee5afd760910101518u4a85fd0fn6e5539a327b2a876@mail.gmail.com>
-	<20091011.122911.131278678.ryusuke@osrg.net>
-	<ee5afd760910102232o5f17c50cxb5024f6f76ecbcf5@mail.gmail.com>
-	<20091011.154916.07997858.ryusuke@osrg.net>
-	<ee5afd760910171347x4ad27199ka59d0e76f3271050@mail.gmail.com>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: Bruno =?UTF-8?B?UHLDqW1vbnQ=?= <bonbons@linux-vserver.org>
+Subject: Deadlock with nilfs on 2.6.31.4
+Date: Wed, 21 Oct 2009 20:38:47 +0200
+Message-ID: <20091021203847.26acab0a@neptune.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <ee5afd760910171347x4ad27199ka59d0e76f3271050-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>, Jan de Kruyf <jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: users@nilfs.org
+Cc: linux-fsdevel@vger.kernel.org
 
 Hi,
-2009/10/18 Jan de Kruyf <jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
-> On Sun, Oct 11, 2009 at 8:49 AM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
->>
->> According to the log, the error was repeatedly detected in a retry
->> loop in the nilfs_clean_segments kernel function which cleanerd calls
->> via ioctl. =A0The err=3D-28 means ENOSPC (no space left on the device).
->>
->> Yeah, if cleanerd falls into this state, it cannot handle any signals.
->> And, it doesn't return to userspace until the error is removed.
->>
->> As you are pointing out, I wonder why this error is generated on the
->> device having enough free space.
->>
->> I'll attach a patch to identify which function returns ENOSPC. =A0Could
->> you try the patch ?
->
-> Hallo,
-> I have done the patch. The output, with debug switched on, is in the
-> attached file.
->
-> I have done some more analizing. Everything that looks helpful is included
-> in the file as wel.
->
-> I hope it is useful
->
-> Regards
->
-> Jan de Kruyf.
->
-> This day the Lord creates,
-> so let us celebrate with joy!
 
-Thank you for the detail report and your cooperation!
+nilfs seems to have some dead-locks that put processes in D-state (at
+least on my arm system).
+This time around it seems that syslog-ng has been hit first. The
+previous times it most often was collectd/rrdtool.
 
-The log shows that GC got trapped due to real disk full on the /var directo=
-ry.
+Kernel is vanilla 2.6.31.4 + a patch for USB HID device. System is arm,
+Feroceon 88FR131, SheevaPlug. nilfs is being used on a SD card
+(mmcblk0: mmc0:bc20 SD08G 7.60 GiB, mvsdio driver)
 
-Although the following lssu output shows there is one free segment, it's not
-writable because the log to be written in the segment needs to know another
-segment which comes next.
+Bruno
 
-                 434  2009-09-26 12:31:31  -d-        2048
-                 435  2009-09-28 20:42:54  ad-        2038
-                 436  ---------- --:--:--  ad-           0
-                 437  2009-09-25 16:25:30  -d-        2048
 
-The problem is why this stuck situation happened.
 
-If you have ever run an older version of nilfs (v2.0.13 or prior) for
-the partition,
-it may arise from erroneous metadata written by the old version.
+Extracts from dmesg (less attempting to read a logfile produced by syslog-ng):
+INFO: task less:15839 blocked for more than 120 seconds.
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+less          D c02c8610     0 15839   1742 0x00000001
+[<c02c8610>] (schedule+0x2a8/0x3b0) from [<c02c9318>] (__mutex_lock_slowpath+0x88/0x140)
+[<c02c9318>] (__mutex_lock_slowpath+0x88/0x140) from [<c009833c>] (generic_file_llseek+0x24/0x64)
+[<c009833c>] (generic_file_llseek+0x24/0x64) from [<c0096d74>] (vfs_llseek+0x54/0x64)
+[<c0096d74>] (vfs_llseek+0x54/0x64) from [<c00981c8>] (sys_llseek+0x74/0xcc)
+[<c00981c8>] (sys_llseek+0x74/0xcc) from [<c0022f00>] (ret_fast_syscall+0x0/0x2c)
 
-Otherwise, the logic to predict disk full condition likely has some issue.
 
-If you can reformat the partition, please try "-m" option of mkfs.nilfs2.
-With the option, you can increase the number of segment reserved for
-garbage collection.
+All stuck processes as listed by SysRq + T:
+syslog-ng     D c02c8610     0  1698      1 0x00000000
+[<c02c8610>] (schedule+0x2a8/0x3b0) from [<c02c8e60>] (schedule_timeout+0x14c/0x1e8)
+[<c02c8e60>] (schedule_timeout+0x14c/0x1e8) from [<c02c8344>] (io_schedule_timeout+0x34/0x58)
+[<c02c8344>] (io_schedule_timeout+0x34/0x58) from [<c007caf0>] (congestion_wait+0x5c/0x80)
+[<c007caf0>] (congestion_wait+0x5c/0x80) from [<c0070fb0>] (balance_dirty_pages_ratelimited_nr+0xe8/0x290)
+[<c0070fb0>] (balance_dirty_pages_ratelimited_nr+0xe8/0x290) from [<c0069f04>] (generic_file_buffered_write+0x10c/0x348)
+[<c0069f04>] (generic_file_buffered_write+0x10c/0x348) from [<c006a64c>] (__generic_file_aio_write_nolock+0x264/0x4f4)
+[<c006a64c>] (__generic_file_aio_write_nolock+0x264/0x4f4) from [<c006b3b8>] (generic_file_aio_write+0x74/0xe8)
+[<c006b3b8>] (generic_file_aio_write+0x74/0xe8) from [<c0097228>] (do_sync_write+0xbc/0x100)
+[<c0097228>] (do_sync_write+0xbc/0x100) from [<c0097d3c>] (vfs_write+0xb0/0x164)
+[<c0097d3c>] (vfs_write+0xb0/0x164) from [<c0097ec0>] (sys_write+0x40/0x70)
+[<c0097ec0>] (sys_write+0x40/0x70) from [<c0022f00>] (ret_fast_syscall+0x0/0x2c)
+less          D c02c8610     0 15839   1742 0x00000001
+[<c02c8610>] (schedule+0x2a8/0x3b0) from [<c02c9318>] (__mutex_lock_slowpath+0x88/0x140)
+[<c02c9318>] (__mutex_lock_slowpath+0x88/0x140) from [<c009833c>] (generic_file_llseek+0x24/0x64)
+[<c009833c>] (generic_file_llseek+0x24/0x64) from [<c0096d74>] (vfs_llseek+0x54/0x64)
+[<c0096d74>] (vfs_llseek+0x54/0x64) from [<c00981c8>] (sys_llseek+0x74/0xcc)
+[<c00981c8>] (sys_llseek+0x74/0xcc) from [<c0022f00>] (ret_fast_syscall+0x0/0x2c)
+sshd          D c02c8610     0 15844  15842 0x00000001
+[<c02c8610>] (schedule+0x2a8/0x3b0) from [<c02c8e60>] (schedule_timeout+0x14c/0x1e8)
+[<c02c8e60>] (schedule_timeout+0x14c/0x1e8) from [<c02c8344>] (io_schedule_timeout+0x34/0x58)
+[<c02c8344>] (io_schedule_timeout+0x34/0x58) from [<c007caf0>] (congestion_wait+0x5c/0x80)
+[<c007caf0>] (congestion_wait+0x5c/0x80) from [<c0070fb0>] (balance_dirty_pages_ratelimited_nr+0xe8/0x290)
+[<c0070fb0>] (balance_dirty_pages_ratelimited_nr+0xe8/0x290) from [<c0069f04>] (generic_file_buffered_write+0x10c/0x348)
+[<c0069f04>] (generic_file_buffered_write+0x10c/0x348) from [<c006a64c>] (__generic_file_aio_write_nolock+0x264/0x4f4)
+[<c006a64c>] (__generic_file_aio_write_nolock+0x264/0x4f4) from [<c006b3b8>] (generic_file_aio_write+0x74/0xe8)
+[<c006b3b8>] (generic_file_aio_write+0x74/0xe8) from [<c0097228>] (do_sync_write+0xbc/0x100)
+[<c0097228>] (do_sync_write+0xbc/0x100) from [<c0097d3c>] (vfs_write+0xb0/0x164)
+[<c0097d3c>] (vfs_write+0xb0/0x164) from [<c0097ec0>] (sys_write+0x40/0x70)
+[<c0097ec0>] (sys_write+0x40/0x70) from [<c0022f00>] (ret_fast_syscall+0x0/0x2c)
 
-By default, 5 percent of segments are reserved.
-If the same problem happens for a higher ratio (e.g. 20% or so),
-some kind of leakage seems to be in the disk full determination.
-
-With regards,
-Ryusuke Konishi
+nilfs related processes:
+[40049.761881] segctord      S c02c8610     0   859      2 0x00000000
+[40049.761894] [<c02c8610>] (schedule+0x2a8/0x3b0) from [<bf0154ec>] (nilfs_segctor_thread+0x2d4/0x328 [nilfs2])
+[40049.761999] [<bf0154ec>] (nilfs_segctor_thread+0x2d4/0x328 [nilfs2]) from [<c004aac0>] (kthread+0x7c/0x84)
+[40049.762081] [<c004aac0>] (kthread+0x7c/0x84) from [<c0023940>] (kernel_thread_exit+0x0/0x8)
+[40049.762101] nilfs_cleaner S c02c8610     0   860      1 0x00000000
+[40049.762115] [<c02c8610>] (schedule+0x2a8/0x3b0) from [<c02c99f4>] (do_nanosleep+0xb0/0x110)
+[40049.762137] [<c02c99f4>] (do_nanosleep+0xb0/0x110) from [<c004eed0>] (hrtimer_nanosleep+0xa4/0x12c)
+[40049.762161] [<c004eed0>] (hrtimer_nanosleep+0xa4/0x12c) from [<c004eff4>] (sys_nanosleep+0x9c/0xa4)
+[40049.762181] [<c004eff4>] (sys_nanosleep+0x9c/0xa4) from [<c0022f00>] (ret_fast_syscall+0x0/0x2c)
+[40049.762201] segctord      S c02c8610     0   862      2 0x00000000
+[40049.762214] [<c02c8610>] (schedule+0x2a8/0x3b0) from [<bf0154ec>] (nilfs_segctor_thread+0x2d4/0x328 [nilfs2])
+[40049.762298] [<bf0154ec>] (nilfs_segctor_thread+0x2d4/0x328 [nilfs2]) from [<c004aac0>] (kthread+0x7c/0x84)
+[40049.762377] [<c004aac0>] (kthread+0x7c/0x84) from [<c0023940>] (kernel_thread_exit+0x0/0x8)
+[40049.762397] nilfs_cleaner S c02c8610     0   863      1 0x00000000
+[40049.762411] [<c02c8610>] (schedule+0x2a8/0x3b0) from [<c02c99f4>] (do_nanosleep+0xb0/0x110)
+[40049.762433] [<c02c99f4>] (do_nanosleep+0xb0/0x110) from [<c004eed0>] (hrtimer_nanosleep+0xa4/0x12c)
+[40049.762455] [<c004eed0>] (hrtimer_nanosleep+0xa4/0x12c) from [<c004eff4>] (sys_nanosleep+0x9c/0xa4)
+[40049.762475] [<c004eff4>] (sys_nanosleep+0x9c/0xa4) from [<c0022f00>] (ret_fast_syscall+0x0/0x2c)
+[40049.762495] segctord      S c02c8610     0   865      2 0x00000000
+[40049.762507] [<c02c8610>] (schedule+0x2a8/0x3b0) from [<bf0154ec>] (nilfs_segctor_thread+0x2d4/0x328 [nilfs2])
+[40049.762591] [<bf0154ec>] (nilfs_segctor_thread+0x2d4/0x328 [nilfs2]) from [<c004aac0>] (kthread+0x7c/0x84)
+[40049.762670] [<c004aac0>] (kthread+0x7c/0x84) from [<c0023940>] (kernel_thread_exit+0x0/0x8)
+[40049.762690] nilfs_cleaner S c02c8610     0   866      1 0x00000000
+[40049.762703] [<c02c8610>] (schedule+0x2a8/0x3b0) from [<c02c99f4>] (do_nanosleep+0xb0/0x110)
+[40049.762726] [<c02c99f4>] (do_nanosleep+0xb0/0x110) from [<c004eed0>] (hrtimer_nanosleep+0xa4/0x12c)
+[40049.762748] [<c004eed0>] (hrtimer_nanosleep+0xa4/0x12c) from [<c004eff4>] (sys_nanosleep+0x9c/0xa4)
+[40049.762768] [<c004eff4>] (sys_nanosleep+0x9c/0xa4) from [<c0022f00>] (ret_fast_syscall+0x0/0x2c)
