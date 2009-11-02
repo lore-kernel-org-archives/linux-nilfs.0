@@ -1,161 +1,117 @@
-From: Fredrik Widlund <fredrik.widlund-v85oAmihyfHQT0dZR+AlfA@public.gmane.org>
-Subject: [SPAM]  user_xattr_
-Date: Mon, 2 Nov 2009 17:25:24 +0100
-Message-ID: <A926055927E1404BB6D679FDF8C40CDB9AF276CD1A@exchange0.ad.qbrick.com>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: Deadlock with nilfs on 2.6.31.4
+Date: Tue, 03 Nov 2009 02:05:02 +0900 (JST)
+Message-ID: <20091103.020502.126745214.ryusuke@osrg.net>
+References: <20091021203847.26acab0a@neptune.home>
+	<20091023.025129.71910838.ryusuke@osrg.net>
+	<20091022221939.61c832c2@neptune.home>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1871005371=="
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-Class: urn:content-classes:message
-Content-Language: sv-SE
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Mime-version: 1.0
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: "users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org" <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20091022221939.61c832c2@neptune.home>
+Sender: linux-fsdevel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: Text/Plain; charset="iso-8859-1"
+To: bonbons@linux-vserver.org
+Cc: konishi.ryusuke@lab.ntt.co.jp, users@nilfs.org, linux-fsdevel@vger.kernel.org, ryusuke@osrg.net
 
---===============1871005371==
-Content-Class: urn:content-classes:message
-Content-Language: sv-SE
-Content-Type: multipart/alternative;
-	boundary="_000_A926055927E1404BB6D679FDF8C40CDB9AF276CD1Aexchange0adqb_"
+Hi Bruno,
+On Thu, 22 Oct 2009 22:19:39 +0200, Bruno Pr=E9mont <bonbons@linux-vser=
+ver.org> wrote:
+> On Fri, 23 October 2009 Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.j=
+p> wrote:
+> > Thank you for reporting the issue.
+> >=20
+> > According to the log, the log-writer of nilfs looks to be idle even
+> > though it has some requests waiting.
+> >=20
+> > Could you try the following patch to narrow down the issue ?
+> >=20
+> > I'll dig into this issue next week since I'm now away from my offic=
+e
+> > to attend the Linux symposium in Tokyo.
+> >=20
+> > Thank you,
+> > Ryusuke Konishi
+> >=20
+> >=20
+> > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> > index 51ff3d0..0932571 100644
+> > --- a/fs/nilfs2/segment.c
+> > +++ b/fs/nilfs2/segment.c
+>=20
+> I tried the patch, below is full dmesg output from system start-up to
+> frozen syslog-ng (and collectd thread). (with echo t > /proc/sysrq-tr=
+igger)
+>=20
+> Hard to tell at what time syslog-ng did freeze, but chances are big i=
+t's
+> somewhere between 435.x and 591.x when nilfs stops sending/getting ev=
+ents.
+>=20
+> The collectd instance in D-state is most probably the one that wants =
+to
+> write data to RRD file.
+>=20
+> At least it looks very easy to reproduce! Just restarting collectd a =
+few
+> times and enabling its rrdtool plugin. (syslog-ng writing to one nilf=
+s
+> partition, collectd to another one, both on the same SD card)
+>=20
+> Bruno
+>=20
+<snip>
 
---_000_A926055927E1404BB6D679FDF8C40CDB9AF276CD1Aexchange0adqb_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+I found the cause of the hang issue reported on ARM targets.
+The following patch would fix the issue.
 
+It resolved hang problem on my Feroceon based Linux box.
 
-Hi,
+Could you try if the patch fixes the hang of yours ?
 
-Any plans of adding user_xattr to nilfs?
+Thanks,
+Ryusuke Konishi
 
-Kind regards,
-Fredrik Widlund
+--
+=46rom: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
---_000_A926055927E1404BB6D679FDF8C40CDB9AF276CD1Aexchange0adqb_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+nilfs2: fix dirty page accounting leak causing hang at write
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:x=3D"urn:schemas-microsoft-com:office:excel" xmlns:p=3D"urn:schemas-m=
-icrosoft-com:office:powerpoint" xmlns:a=3D"urn:schemas-microsoft-com:office=
-:access" xmlns:dt=3D"uuid:C2F41010-65B3-11d1-A29F-00AA00C14882" xmlns:s=3D"=
-uuid:BDC6E3F0-6DA3-11d1-A2A3-00AA00C14882" xmlns:rs=3D"urn:schemas-microsof=
-t-com:rowset" xmlns:b=3D"urn:schemas-microsoft-com:office:publisher" xmlns:=
-ss=3D"urn:schemas-microsoft-com:office:spreadsheet" xmlns:c=3D"urn:schemas-=
-microsoft-com:office:component:spreadsheet" xmlns:odc=3D"urn:schemas-micros=
-oft-com:office:odc" xmlns:oa=3D"urn:schemas-microsoft-com:office:activation=
-" xmlns:html=3D"http://www.w3.org/TR/REC-html40" xmlns:q=3D"http://schemas.=
-xmlsoap.org/soap/envelope/" xmlns:rtc=3D"http://microsoft.com/officenet/con=
-ferencing" xmlns:D=3D"DAV:" xmlns:Repl=3D"http://schemas.microsoft.com/repl=
-/" xmlns:mt=3D"http://schemas.microsoft.com/sharepoint/soap/meetings/" xmln=
-s:x2=3D"http://schemas.microsoft.com/office/excel/2003/xml" xmlns:ppda=3D"h=
-ttp://www.passport.com/NameSpace.xsd" xmlns:ois=3D"http://schemas.microsoft=
-.com/sharepoint/soap/ois/" xmlns:dir=3D"http://schemas.microsoft.com/sharep=
-oint/soap/directory/" xmlns:ds=3D"http://www.w3.org/2000/09/xmldsig#" xmlns=
-:dsp=3D"http://schemas.microsoft.com/sharepoint/dsp" xmlns:udc=3D"http://sc=
-hemas.microsoft.com/data/udc" xmlns:xsd=3D"http://www.w3.org/2001/XMLSchema=
-" xmlns:sub=3D"http://schemas.microsoft.com/sharepoint/soap/2002/1/alerts/"=
- xmlns:ec=3D"http://www.w3.org/2001/04/xmlenc#" xmlns:sp=3D"http://schemas.=
-microsoft.com/sharepoint/" xmlns:sps=3D"http://schemas.microsoft.com/sharep=
-oint/soap/" xmlns:xsi=3D"http://www.w3.org/2001/XMLSchema-instance" xmlns:u=
-dcs=3D"http://schemas.microsoft.com/data/udc/soap" xmlns:udcxf=3D"http://sc=
-hemas.microsoft.com/data/udc/xmlfile" xmlns:udcp2p=3D"http://schemas.micros=
-oft.com/data/udc/parttopart" xmlns:wf=3D"http://schemas.microsoft.com/share=
-point/soap/workflow/" xmlns:dsss=3D"http://schemas.microsoft.com/office/200=
-6/digsig-setup" xmlns:dssi=3D"http://schemas.microsoft.com/office/2006/digs=
-ig" xmlns:mdssi=3D"http://schemas.openxmlformats.org/package/2006/digital-s=
-ignature" xmlns:mver=3D"http://schemas.openxmlformats.org/markup-compatibil=
-ity/2006" xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmln=
-s:mrels=3D"http://schemas.openxmlformats.org/package/2006/relationships" xm=
-lns:spwp=3D"http://microsoft.com/sharepoint/webpartpages" xmlns:ex12t=3D"ht=
-tp://schemas.microsoft.com/exchange/services/2006/types" xmlns:ex12m=3D"htt=
-p://schemas.microsoft.com/exchange/services/2006/messages" xmlns:pptsl=3D"h=
-ttp://schemas.microsoft.com/sharepoint/soap/SlideLibrary/" xmlns:spsl=3D"ht=
-tp://microsoft.com/webservices/SharePointPortalServer/PublishedLinksService=
-" xmlns:Z=3D"urn:schemas-microsoft-com:" xmlns:st=3D"&#1;" xmlns=3D"http://=
-www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 12 (filtered medium)">
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0cm;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri","sans-serif";}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:purple;
-	text-decoration:underline;}
-span.E-postmall17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri","sans-serif";
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;}
-@page Section1
-	{size:612.0pt 792.0pt;
-	margin:70.85pt 70.85pt 70.85pt 70.85pt;}
-div.Section1
-	{page:Section1;}
--->
-</style><!--[if gte mso 9]><xml>
- <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
- <o:shapelayout v:ext=3D"edit">
-  <o:idmap v:ext=3D"edit" data=3D"1" />
- </o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"SV" link=3D"blue" vlink=3D"purple">
-<font face=3D"Arial" color=3D"Gray" size=3D"1"></font><br>
-<div>
-<div class=3D"Section1">
-<p class=3D"MsoNormal">Hi,<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US">Any plans of adding user_xattr =
-to nilfs?<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span lang=3D"EN-US"><o:p>&nbsp;</o:p></span></p>
-<p class=3D"MsoNormal">Kind regards,<o:p></o:p></p>
-<p class=3D"MsoNormal">Fredrik Widlund<o:p></o:p></p>
-</div>
-</div>
-</body>
-</html>
+Some users experienced a consistent hang while using NILFS on
+ARM-based targets.
 
---_000_A926055927E1404BB6D679FDF8C40CDB9AF276CD1Aexchange0adqb_--
+I found this was caused by an underflow of dirty pages counter.  A
+b-tree cache routine was marking page dirty without adjusting page
+account information.
 
---===============1871005371==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+This fixes the dirty page accounting leak and resolves the hang on
+arm-based targets.
 
-_______________________________________________
-users mailing list
-users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-https://www.nilfs.org/mailman/listinfo/users
+Reported-by: Bruno Premont <bonbons@linux-vserver.org>
+Reported-by: Dunphy, Bill <WDunphy@tandbergdata.com>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+---
+ fs/nilfs2/btnode.c |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
 
---===============1871005371==--
+diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
+index 5941958..435864c 100644
+--- a/fs/nilfs2/btnode.c
++++ b/fs/nilfs2/btnode.c
+@@ -276,8 +276,7 @@ void nilfs_btnode_commit_change_key(struct address_=
+space *btnc,
+ 				       "invalid oldkey %lld (newkey=3D%lld)",
+ 				       (unsigned long long)oldkey,
+ 				       (unsigned long long)newkey);
+-		if (!test_set_buffer_dirty(obh) && TestSetPageDirty(opage))
+-			BUG();
++		nilfs_btnode_mark_dirty(obh);
+=20
+ 		spin_lock_irq(&btnc->tree_lock);
+ 		radix_tree_delete(&btnc->page_tree, oldkey);
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
