@@ -1,14 +1,12 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [SPAM] user_xattr_
-Date: Tue, 03 Nov 2009 02:25:08 +0900 (JST)
-Message-ID: <20091103.022508.09552690.ryusuke@osrg.net>
-References: <A926055927E1404BB6D679FDF8C40CDB9AF276CD1A@exchange0.ad.qbrick.com>
+From: Paul L <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: urgent help need! disk partition info lost
+Date: Mon, 2 Nov 2009 14:06:56 -0500
+Message-ID: <856033f20911021106u771f823dkb48395958ad83a37@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <A926055927E1404BB6D679FDF8C40CDB9AF276CD1A-Lp/cVzEoVyaaWeVxSpV9iyZ1nHgrq6Gb@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,22 +17,24 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, fredrik.widlund-v85oAmihyfHQT0dZR+AlfA@public.gmane.org
+To: users <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi,
-On Mon, 2 Nov 2009 17:25:24 +0100, Fredrik Widlund wrote:
-> 
-> Hi,
-> 
-> Any plans of adding user_xattr to nilfs?
-> 
-> Kind regards,
-> Fredrik Widlund
+Due to some careless handling of my laptop, the SD card popped out
+when the machine is still running. When I put it back in and reboot
+the machine, it says "partition table error". I then ran fdisk and
+recreated the single partition. Then I can no longer mount the nilfs2
+partition that was on the SD card!
 
-Yes, there is a WIP xattr support for nilfs.
+Can any one help to me recover the file system? I believe all data are
+still there, but just some bits and pieces are missing for the mount
+to work. Any help is greatly appreciated!
 
-The work is now pending due to all kinds of tasks.
-I'll continue the work when I get around to it.
+PS: I've a deadline to meet in 4 hours, not sure if I can get my stuff
+back in time... so help please!
 
+-- 
 Regards,
-Ryusuke Konishi
+Paul Liu
+
+Yale Haskell Group
+http://www.haskell.org/yale
