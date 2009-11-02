@@ -1,122 +1,81 @@
-From: Paul L <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: urgent help need! disk partition info lost
-Date: Mon, 2 Nov 2009 16:20:20 -0500
-Message-ID: <856033f20911021320w68e11498w4d5619ce5d586e80@mail.gmail.com>
-References: <856033f20911021106u771f823dkb48395958ad83a37@mail.gmail.com>
-	<ee5afd760911021138p25f34ca4gcb66547812cb858e@mail.gmail.com>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: Bruno =?UTF-8?B?UHLDqW1vbnQ=?= <bonbons@linux-vserver.org>
+Subject: Re: Deadlock with nilfs on 2.6.31.4
+Date: Mon, 2 Nov 2009 22:32:45 +0100
+Message-ID: <20091102223245.1840d8fd@neptune.home>
+References: <20091021203847.26acab0a@neptune.home>
+	<20091023.025129.71910838.ryusuke@osrg.net>
+	<20091022221939.61c832c2@neptune.home>
+	<20091103.020502.126745214.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <ee5afd760911021138p25f34ca4gcb66547812cb858e-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20091103.020502.126745214.ryusuke@osrg.net>
+Sender: linux-fsdevel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="macroman"
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: users@nilfs.org, linux-fsdevel@vger.kernel.org, ryusuke@osrg.net
 
-Thanks for the tips. When I first used the SD card, I used fdisk to
-create the partition.
+Hi Ryusuke Konishi,
 
-The device is /dev/mmcblk0, and hexedit -d -s /dev/mmcblk0 shows that
-at the line 0x0400, it is indeed 34 34. What should I do then?
+On Tue, 03 November 2009 Ryusuke Konishi wrote:
+> I found the cause of the hang issue reported on ARM targets.
+> The following patch would fix the issue.
+>=20
+> It resolved hang problem on my Feroceon based Linux box.
+>=20
+> Could you try if the patch fixes the hang of yours ?
+>=20
+> Thanks,
+> Ryusuke Konishi
 
-I tried gparted, but apparently it has no support for nilfs2.
+Seems to fix the issue here as well, at least collectd now does write
+its data to the RRD files as well as to the remote system, no frozen
+process yet for 2 and a half hours uptime.
 
-Regards,
-Paul Liu
+Thanks for the fix,
+Bruno
 
-On 11/2/09, Jan de Kruyf <jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Did you first format this card with fdisk?
-> did you give it the exact same info this time around?
->
-> Can you read /dev/'sdcard' ? (sdcard being the device in the dev directory
-> where the card lives)
->
-> If yes can you run hexedit -s /dev/sdcard1  in a terminal as root?
-> and go to address 0400 - 04B0 to see if nilfs still exists?
->
-> be very careful no to save any data in hexedit, it will definitely and
-> finally
-> destoy your data.
->
-> 0400 looks vagely like this:
-> 00000400   02 00 00 00 00 00 34 34  00 01 00 00 D3 56 F0 B9
-> ......44.....V..
-> 00000410   39 BF D9 73 02 00 00 00  CA 02 00 00 00 00 00 00
-> 9..s............
-> 00000420   00 B4 66 65 01 00 00 00  01 00 00 00 00 00 00 00
-> ..fe............
-> 00000430   00 08 00 00 05 00 00 00  01 00 00 00 00 00 00 00
-> ................
-> 00000440   01 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-> ................
-> 00000450   00 48 16 00 00 00 00 00  73 95 DC 4A 00 00 00 00
-> .H......s..J....
-> 00000460   00 00 00 00 00 00 00 00  73 95 DC 4A 00 00 00 00
-> ........s..J....
-> 00000470   00 00 32 00 01 00 01 00  73 95 DC 4A 00 00 00 00
-> ..2.....s..J....
-> 00000480   00 4E ED 00 00 00 00 00  00 00 00 00 0B 00 00 00
-> .N..............
-> 00000490   80 00 20 00 C0 00 10 00  4C 73 DD 3D 01 EC 45 85  ..
-> .....Ls.=..E.
-> 000004A0   94 28 44 42 3D F6 EF EC  56 61 72 36 34 00 00 00
-> .(DB=...Var64...
-> 000004B0   00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-> ................
-> 000004C0   00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-> ................
->
-> the 34 34 in the top line say this is nilfs.
->
->
-> cheers
->
-> jan de kruyf
->
->
->
->
-> On Mon, Nov 2, 2009 at 9:06 PM, Paul L <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->
->> Due to some careless handling of my laptop, the SD card popped out
->> when the machine is still running. When I put it back in and reboot
->> the machine, it says "partition table error". I then ran fdisk and
->> recreated the single partition. Then I can no longer mount the nilfs2
->> partition that was on the SD card!
->>
->> Can any one help to me recover the file system? I believe all data are
->> still there, but just some bits and pieces are missing for the mount
->> to work. Any help is greatly appreciated!
->>
->> PS: I've a deadline to meet in 4 hours, not sure if I can get my stuff
->> back in time... so help please!
->>
->> --
->> Regards,
->> Paul Liu
->>
->> Yale Haskell Group
->> http://www.haskell.org/yale
->> _______________________________________________
->> users mailing list
->> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
->> https://www.nilfs.org/mailman/listinfo/users
->>
->
-
-
--- 
-Regards,
-Paul Liu
-
-Yale Haskell Group
-http://www.haskell.org/yale
+Tested-by: Bruno Pr=C3=A9mont <bonbons@linux-vserver.org>
+> --
+> From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+>=20
+> nilfs2: fix dirty page accounting leak causing hang at write
+>=20
+> Some users experienced a consistent hang while using NILFS on
+> ARM-based targets.
+>=20
+> I found this was caused by an underflow of dirty pages counter.  A
+> b-tree cache routine was marking page dirty without adjusting page
+> account information.
+>=20
+> This fixes the dirty page accounting leak and resolves the hang on
+> arm-based targets.
+>=20
+> Reported-by: Bruno Premont <bonbons@linux-vserver.org>
+> Reported-by: Dunphy, Bill <WDunphy@tandbergdata.com>
+> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+> ---
+>  fs/nilfs2/btnode.c |    3 +--
+>  1 files changed, 1 insertions(+), 2 deletions(-)
+>=20
+> diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
+> index 5941958..435864c 100644
+> --- a/fs/nilfs2/btnode.c
+> +++ b/fs/nilfs2/btnode.c
+> @@ -276,8 +276,7 @@ void nilfs_btnode_commit_change_key(struct
+> address_space *btnc, "invalid oldkey %lld (newkey=3D%lld)",
+>  				       (unsigned long long)oldkey,
+>  				       (unsigned long long)newkey);
+> -		if (!test_set_buffer_dirty(obh) &&
+> TestSetPageDirty(opage))
+> -			BUG();
+> +		nilfs_btnode_mark_dirty(obh);
+> =20
+>  		spin_lock_irq(&btnc->tree_lock);
+>  		radix_tree_delete(&btnc->page_tree, oldkey);
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
