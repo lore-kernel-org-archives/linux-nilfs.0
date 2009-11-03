@@ -1,12 +1,15 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/3] nilfs2 bug fixes
-Date: Tue,  3 Nov 2009 13:53:36 +0900
-Message-ID: <1257224019-29261-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/3] nilfs2: add zero-fill for new btree node
+	buffers
+Date: Tue,  3 Nov 2009 13:53:38 +0900
+Message-ID: <1257224019-29261-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1257224019-29261-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <1257224019-29261-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -20,22 +23,25 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This series includes additional fixes for nilfs in the mainline
-kernel.  I will send the first two upstream along with the previous
-patch that resolves a hang issue on ARM-based targets.  The third one
-will be dealt with a 2.6.33 material.
+Adds missing initialization of newly allocated b-tree node buffers.
+This avoids garbage data to be mixed in b-tree node blocks.
 
-Users do not have to apply these piece by piece.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/btnode.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-Thanks,
-Ryusuke Konishi
---
-Ryusuke Konishi (3):
-      nilfs2: fix irregular checkpoint creation due to data flush
-      nilfs2: add zero-fill for new btree node buffers
-      nilfs2: get rid of BUG_ON use in btree lookup routines
-
- fs/nilfs2/btnode.c  |    1 +
- fs/nilfs2/btree.c   |   18 ++++++++++++++++--
- fs/nilfs2/segment.c |   19 ++++++++++++-------
- 3 files changed, 29 insertions(+), 9 deletions(-)
+diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
+index 435864c..84c2538 100644
+--- a/fs/nilfs2/btnode.c
++++ b/fs/nilfs2/btnode.c
+@@ -87,6 +87,7 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
+ 			brelse(bh);
+ 			BUG();
+ 		}
++		memset(bh->b_data, 0, 1 << inode->i_blkbits);
+ 		bh->b_bdev = NILFS_I_NILFS(inode)->ns_bdev;
+ 		bh->b_blocknr = blocknr;
+ 		set_buffer_mapped(bh);
+-- 
+1.6.3.4
