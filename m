@@ -1,7 +1,7 @@
 From: Jan de Kruyf <jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: urgent help need! disk partition info lost
-Date: Wed, 4 Nov 2009 23:16:22 +0200
-Message-ID: <ee5afd760911041316x3adf0bd3h5b15a82012129a9d@mail.gmail.com>
+Date: Wed, 4 Nov 2009 23:26:45 +0200
+Message-ID: <ee5afd760911041326g77cab1d9r90f55657dc11a789@mail.gmail.com>
 References: <856033f20911021106u771f823dkb48395958ad83a37@mail.gmail.com>
 	<ee5afd760911021138p25f34ca4gcb66547812cb858e@mail.gmail.com>
 	<856033f20911021320w68e11498w4d5619ce5d586e80@mail.gmail.com>
@@ -14,7 +14,7 @@ References: <856033f20911021106u771f823dkb48395958ad83a37@mail.gmail.com>
 	<856033f20911041131n54c420fuf16b10fefb343188@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1388633055=="
+Content-Type: multipart/mixed; boundary="===============2073688211=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 In-Reply-To: <856033f20911041131n54c420fuf16b10fefb343188-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -30,48 +30,20 @@ Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
---===============1388633055==
-Content-Type: multipart/alternative; boundary=001636498a836d09f60477921f58
+--===============2073688211==
+Content-Type: multipart/alternative; boundary=001485f9221487d08504779244e4
 
---001636498a836d09f60477921f58
+--001485f9221487d08504779244e4
 Content-Type: text/plain; charset=ISO-8859-1
 
-David,
-Thanks for your comment. The dd suggestion has been passed, the -i
-suggestion is very valuable thanks. I just a few weeks ago struggled with
-the garbage collector running when it should not have on a broken disk.
-And perhaps you would like to have a look at your superblock and check the
-sequence of the bytes.
-Paul's reading and what I see on my machine are different.
+just thought of something. You searched with standard (little, I think)
+endianess
+i.e. the image from my mail to you.
+ try the image from YOUR main superblock:
+0002 0000 0000 3434
+and see if the backup copy surfaces.
 
-Paul,
-On my machine I see least significant byte at the left of any data type,
-then d*16 etc.
-In your images I see d*16, lsb,  d*4096, d*256, etc.
-i.e. within each group of 4 characters on your screen in an hexdump the left
-2 and the right 2 are interchanged from a normal i386 or i686 image. This
-does not make sense to me.
-Unless David has more light I would think that there is / was a ram
-addressing problem in the hardware at least when the superblock was written
-or now when it is read.
-the other thing I do not like is that we dont find the backup block.
-
->mmcblk0: starts at address 00400400,  and the nilfs segment 0 starts
->at address 00401000.
->mmcblk0p1: starts at address 003FE400, and the nilfs segment 0 starts
->at 003FF000.
-
-is this result from searching in the root only or did you first search in
-the root and then in partition 1??
-
-I will try to calculate the exact address where the backup block should be
-found.
-
-so long,
-Cheers
-
-Jan de Kruyf.
-
+jan.
 
 On Wed, Nov 4, 2009 at 9:31 PM, Paul L <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 
@@ -595,38 +567,19 @@ On Wed, Nov 4, 2009 at 9:31 PM, Paul L <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gm
 > https://www.nilfs.org/mailman/listinfo/users
 >
 
---001636498a836d09f60477921f58
+--001485f9221487d08504779244e4
 Content-Type: text/html; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-David,<br>Thanks for your comment. The dd suggestion has been passed, the -=
-i suggestion is very valuable thanks. I just a few weeks ago struggled with=
- the garbage collector running when it should not have on a broken disk.<br=
->
-And perhaps you would like to have a look at your superblock and check the =
-sequence of the bytes.<br>Paul&#39;s reading and what I see on my machine a=
-re different.<br><br>Paul,<br>On my machine I see least significant byte at=
- the left of any data type, then d*16 etc.<br>
-In your images I see d*16, lsb,=A0 d*4096, d*256, etc.<br>i.e. within each =
-group of 4 characters on your screen in an hexdump the left 2 and the right=
- 2 are interchanged from a normal i386 or i686 image. This does not make se=
-nse to me.<br>
-Unless David has more light I would think that there is / was a ram address=
-ing problem in the hardware at least when the superblock was written or now=
- when it is read.<br>the other thing I do not like is that we dont find the=
- backup block.<br>
-<br>&gt;mmcblk0: starts at address 00400400, =A0and the nilfs segment 0 sta=
-rts<br>
-&gt;at address 00401000.<br>&gt;mmcblk0p1: starts at address 003FE400, and =
-the nilfs segment 0 starts<br>
-&gt;at 003FF000.<br><br>is this result from searching in the root only or d=
-id you first search in the root and then in partition 1??<br><br>I will try=
- to calculate the exact address where the backup block should be found.<br>
-<br>so long,<br>Cheers<br><br>Jan de Kruyf.<br><br><br><div class=3D"gmail_=
-quote">On Wed, Nov 4, 2009 at 9:31 PM, Paul L <span dir=3D"ltr">&lt;<a href=
-=3D"mailto:ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org">ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org</a>&gt;</span> wrote:<br><b=
-lockquote class=3D"gmail_quote" style=3D"border-left: 1px solid rgb(204, 20=
-4, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
+just thought of something. You searched with standard (little, I think) end=
+ianess<br>i.e. the image from my mail to you.<br>=A0try the image from YOUR=
+ main superblock:<br>0002 0000 0000 3434<br>and see if the backup copy surf=
+aces.<br>
+<br>jan.<br><br><div class=3D"gmail_quote">On Wed, Nov 4, 2009 at 9:31 PM, =
+Paul L <span dir=3D"ltr">&lt;<a href=3D"mailto:ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org">ninegua@g=
+mail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
+=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; p=
+adding-left: 1ex;">
 I&#39;m using nilfs 2.0.15, slackware current, kernel 2.6.28, on Acer<br>
 Aspire One model A101, =A0which uses Atom CPU.<br>
 <br>
@@ -1246,9 +1199,9 @@ users mailing list<br>
 https://www.nilfs.org/mailman/listinfo/users</a><br>
 </div></div></blockquote></div><br>
 
---001636498a836d09f60477921f58--
+--001485f9221487d08504779244e4--
 
---===============1388633055==
+--===============2073688211==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -1259,4 +1212,4 @@ users mailing list
 users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 https://www.nilfs.org/mailman/listinfo/users
 
---===============1388633055==--
+--===============2073688211==--
