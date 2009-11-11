@@ -1,7 +1,8 @@
-From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH 2/2] nilfs2: cleanup unused match_bool function
-Date: Wed, 11 Nov 2009 18:04:18 +0900
-Message-ID: <1257930258-3106-3-git-send-email-jir@unicus.jp>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [PATCH 0/2] nilfs2: using nobarrier option
+ instead of barrier=off
+Date: Wed, 11 Nov 2009 21:03:52 +0900 (JST)
+Message-ID: <20091111.210352.22528384.ryusuke@osrg.net>
 References: <1257930258-3106-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -19,39 +20,37 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
 
-deleted unused match_bool() function.
+Hi!
+On Wed, 11 Nov 2009 18:04:16 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
+> Hi,
+> 
+> This is a series of patches to use nobarrier mount option
+> instead of barrier=off, for most of fs using nofoobar style option.
+> 
+> First patch is the actual patch to modify the mount option.
+> 
+> Second patch is cleanup patch to remove unused match_bool() function
+> as a result of modifying mount option.
+> 
+>  fs/nilfs2/super.c |   28 +++++-----------------------
+>  1 files changed, 5 insertions(+), 23 deletions(-)
 
-Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
----
- fs/nilfs2/super.c |   13 -------------
- 1 files changed, 0 insertions(+), 13 deletions(-)
+Well, this change looks quite reasonable, and also helps to resolve
+the discordance between the old barrier option and standard linux
+options; it also matches the "-o norepair" which I posted recently.
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 02dcbb0..b6837f4 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -582,19 +582,6 @@ static match_table_t tokens = {
- 	{Opt_err, NULL}
- };
- 
--static int match_bool(substring_t *s, int *result)
--{
--	int len = s->to - s->from;
--
--	if (strncmp(s->from, "on", len) == 0)
--		*result = 1;
--	else if (strncmp(s->from, "off", len) == 0)
--		*result = 0;
--	else
--		return 1;
--	return 0;
--}
--
- static int parse_options(char *options, struct super_block *sb)
- {
- 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
--- 
-1.5.6.5
+Although the first patch changes user-interface, I believe the impact
+is limited because the barrier feature is enabled by default.
+
+So, I'd like to apply your change unless someone dissents.
+
+Sekiba-san, could you modify Documentation/filesystems/nilfs2.txt and
+include it in the first patch?
+
+The doc file has description on mount options.
+
+Thanks,
+Ryusuke Konishi
