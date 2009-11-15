@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 05/23] nilfs2: add size option of private
-	object to metadata file allocator
-Date: Sun, 15 Nov 2009 21:46:43 +0900
-Message-ID: <1258289221-3827-6-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 07/23] nilfs2: separate read method of meta
+	data files on super root block
+Date: Sun, 15 Nov 2009 21:46:45 +0900
+Message-ID: <1258289221-3827-8-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1258289221-3827-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,143 +23,150 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This adds an optional "object size" argument to nilfs_mdt_new_common()
-function; the argument specifies the size of private object attached
-to a newly allocated metadata file inode.
+Will displace nilfs_mdt_read_inode_direct function with an individual
+read method: nilfs_dat_read, nilfs_sufile_read, nilfs_cpfile_read.
 
-This will afford space to keep local variables for meta data files.
+This provides the opportunity to initialize local variables of each
+metadata file after reading the inode.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/gcinode.c   |    3 ++-
- fs/nilfs2/mdt.c       |   19 ++++++++++++++-----
- fs/nilfs2/mdt.h       |    5 +++--
- fs/nilfs2/super.c     |    2 +-
- fs/nilfs2/the_nilfs.c |    8 ++++----
- 5 files changed, 24 insertions(+), 13 deletions(-)
+ fs/nilfs2/cpfile.c    |   10 ++++++++++
+ fs/nilfs2/cpfile.h    |    1 +
+ fs/nilfs2/dat.c       |   10 ++++++++++
+ fs/nilfs2/dat.h       |    1 +
+ fs/nilfs2/sufile.c    |   10 ++++++++++
+ fs/nilfs2/sufile.h    |    1 +
+ fs/nilfs2/the_nilfs.c |   12 ++++++------
+ 7 files changed, 39 insertions(+), 6 deletions(-)
 
-diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
-index e6de0a2..32b04da 100644
---- a/fs/nilfs2/gcinode.c
-+++ b/fs/nilfs2/gcinode.c
-@@ -212,9 +212,10 @@ void nilfs_destroy_gccache(struct the_nilfs *nilfs)
- static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
- 				   __u64 cno)
- {
--	struct inode *inode = nilfs_mdt_new_common(nilfs, NULL, ino, GFP_NOFS);
-+	struct inode *inode;
- 	struct nilfs_inode_info *ii;
- 
-+	inode = nilfs_mdt_new_common(nilfs, NULL, ino, GFP_NOFS, 0);
- 	if (!inode)
- 		return NULL;
- 
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index f632611..62074e8 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -445,9 +445,17 @@ static const struct file_operations def_mdt_fops;
-  * longer than those of the super block structs; they may continue for
-  * several consecutive mounts/umounts.  This would need discussions.
-  */
-+/**
-+ * nilfs_mdt_new_common - allocate a pseudo inode for metadata file
-+ * @nilfs: nilfs object
-+ * @sb: super block instance the metadata file belongs to
-+ * @ino: inode number
-+ * @gfp_mask: gfp mask for data pages
-+ * @objsz: size of the private object attached to inode->i_private
-+ */
- struct inode *
- nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
--		     ino_t ino, gfp_t gfp_mask)
-+		     ino_t ino, gfp_t gfp_mask, size_t objsz)
- {
- 	struct inode *inode = nilfs_alloc_inode_common(nilfs);
- 
-@@ -455,8 +463,9 @@ nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
- 		return NULL;
- 	else {
- 		struct address_space * const mapping = &inode->i_data;
--		struct nilfs_mdt_info *mi = kzalloc(sizeof(*mi), GFP_NOFS);
-+		struct nilfs_mdt_info *mi;
- 
-+		mi = kzalloc(max(sizeof(*mi), objsz), GFP_NOFS);
- 		if (!mi) {
- 			nilfs_destroy_inode(inode);
- 			return NULL;
-@@ -513,11 +522,11 @@ nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index 2aaefae..d5ad54e 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -928,6 +928,16 @@ int nilfs_cpfile_get_stat(struct inode *cpfile, struct nilfs_cpstat *cpstat)
  }
  
- struct inode *nilfs_mdt_new(struct the_nilfs *nilfs, struct super_block *sb,
--			    ino_t ino)
-+			    ino_t ino, size_t objsz)
- {
--	struct inode *inode = nilfs_mdt_new_common(nilfs, sb, ino,
--						   NILFS_MDT_GFP);
-+	struct inode *inode;
+ /**
++ * nilfs_cpfile_read - read cpfile inode
++ * @cpfile: cpfile inode
++ * @raw_inode: on-disk cpfile inode
++ */
++int nilfs_cpfile_read(struct inode *cpfile, struct nilfs_inode *raw_inode)
++{
++	return nilfs_read_inode_common(cpfile, raw_inode);
++}
++
++/**
+  * nilfs_cpfile_new - create cpfile
+  * @nilfs: nilfs object
+  * @cpsize: size of a checkpoint entry
+diff --git a/fs/nilfs2/cpfile.h b/fs/nilfs2/cpfile.h
+index 8ff2b4f..bc0809e 100644
+--- a/fs/nilfs2/cpfile.h
++++ b/fs/nilfs2/cpfile.h
+@@ -40,6 +40,7 @@ int nilfs_cpfile_get_stat(struct inode *, struct nilfs_cpstat *);
+ ssize_t nilfs_cpfile_get_cpinfo(struct inode *, __u64 *, int, void *, unsigned,
+ 				size_t);
  
-+	inode = nilfs_mdt_new_common(nilfs, sb, ino, NILFS_MDT_GFP, objsz);
- 	if (!inode)
- 		return NULL;
++int nilfs_cpfile_read(struct inode *cpfile, struct nilfs_inode *raw_inode);
+ struct inode *nilfs_cpfile_new(struct the_nilfs *nilfs, size_t cpsize);
  
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index 4315997..3eb40e8 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -74,9 +74,10 @@ int nilfs_mdt_forget_block(struct inode *, unsigned long);
- int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
- int nilfs_mdt_fetch_dirty(struct inode *);
+ #endif	/* _NILFS_CPFILE_H */
+diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+index 239a422..eff3169 100644
+--- a/fs/nilfs2/dat.c
++++ b/fs/nilfs2/dat.c
+@@ -427,6 +427,16 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
+ }
  
--struct inode *nilfs_mdt_new(struct the_nilfs *, struct super_block *, ino_t);
-+struct inode *nilfs_mdt_new(struct the_nilfs *, struct super_block *, ino_t,
-+			    size_t);
- struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
--				   ino_t, gfp_t);
-+				   ino_t, gfp_t, size_t);
- void nilfs_mdt_destroy(struct inode *);
- void nilfs_mdt_clear(struct inode *);
- void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index b6837f4..77f2e47 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -363,7 +363,7 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno)
- 	list_add(&sbi->s_list, &nilfs->ns_supers);
- 	up_write(&nilfs->ns_super_sem);
+ /**
++ * nilfs_dat_read - read dat inode
++ * @dat: dat inode
++ * @raw_inode: on-disk dat inode
++ */
++int nilfs_dat_read(struct inode *dat, struct nilfs_inode *raw_inode)
++{
++	return nilfs_read_inode_common(dat, raw_inode);
++}
++
++/**
+  * nilfs_dat_new - create dat file
+  * @nilfs: nilfs object
+  * @entry_size: size of a dat entry
+diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
+index 98f3306..d31c3aa 100644
+--- a/fs/nilfs2/dat.h
++++ b/fs/nilfs2/dat.h
+@@ -53,6 +53,7 @@ int nilfs_dat_freev(struct inode *, __u64 *, size_t);
+ int nilfs_dat_move(struct inode *, __u64, sector_t);
+ ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned, size_t);
  
--	sbi->s_ifile = nilfs_mdt_new(nilfs, sbi->s_super, NILFS_IFILE_INO);
-+	sbi->s_ifile = nilfs_mdt_new(nilfs, sbi->s_super, NILFS_IFILE_INO, 0);
- 	if (!sbi->s_ifile)
- 		return -ENOMEM;
++int nilfs_dat_read(struct inode *dat, struct nilfs_inode *raw_inode);
+ struct inode *nilfs_dat_new(struct the_nilfs *nilfs, size_t entry_size);
  
+ #endif	/* _NILFS_DAT_H */
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index 6fb707a..b344f27 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -659,6 +659,16 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
+ }
+ 
+ /**
++ * nilfs_sufile_read - read sufile inode
++ * @sufile: sufile inode
++ * @raw_inode: on-disk sufile inode
++ */
++int nilfs_sufile_read(struct inode *sufile, struct nilfs_inode *raw_inode)
++{
++	return nilfs_read_inode_common(sufile, raw_inode);
++}
++
++/**
+  * nilfs_sufile_new - create sufile
+  * @nilfs: nilfs object
+  * @susize: size of a segment usage entry
+diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+index 50d3191..b303a80 100644
+--- a/fs/nilfs2/sufile.h
++++ b/fs/nilfs2/sufile.h
+@@ -62,6 +62,7 @@ void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
+ void nilfs_sufile_do_set_error(struct inode *, __u64, struct buffer_head *,
+ 			       struct buffer_head *);
+ 
++int nilfs_sufile_read(struct inode *sufile, struct nilfs_inode *raw_inode);
+ struct inode *nilfs_sufile_new(struct the_nilfs *nilfs, size_t susize);
+ 
+ /**
 diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index ad391a8..a80bbb7 100644
+index d4a731f..bc7760c 100644
 --- a/fs/nilfs2/the_nilfs.c
 +++ b/fs/nilfs2/the_nilfs.c
-@@ -187,19 +187,19 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
- 	inode_size = nilfs->ns_inode_size;
+@@ -204,18 +204,18 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
  
- 	err = -ENOMEM;
--	nilfs->ns_dat = nilfs_mdt_new(nilfs, NULL, NILFS_DAT_INO);
-+	nilfs->ns_dat = nilfs_mdt_new(nilfs, NULL, NILFS_DAT_INO, 0);
- 	if (unlikely(!nilfs->ns_dat))
- 		goto failed;
+ 	nilfs_mdt_set_shadow(nilfs->ns_dat, nilfs->ns_gc_dat);
  
--	nilfs->ns_gc_dat = nilfs_mdt_new(nilfs, NULL, NILFS_DAT_INO);
-+	nilfs->ns_gc_dat = nilfs_mdt_new(nilfs, NULL, NILFS_DAT_INO, 0);
- 	if (unlikely(!nilfs->ns_gc_dat))
- 		goto failed_dat;
+-	err = nilfs_mdt_read_inode_direct(
+-		nilfs->ns_dat, bh_sr, NILFS_SR_DAT_OFFSET(inode_size));
++	err = nilfs_dat_read(nilfs->ns_dat, (void *)bh_sr->b_data +
++			     NILFS_SR_DAT_OFFSET(inode_size));
+ 	if (unlikely(err))
+ 		goto failed_sufile;
  
--	nilfs->ns_cpfile = nilfs_mdt_new(nilfs, NULL, NILFS_CPFILE_INO);
-+	nilfs->ns_cpfile = nilfs_mdt_new(nilfs, NULL, NILFS_CPFILE_INO, 0);
- 	if (unlikely(!nilfs->ns_cpfile))
- 		goto failed_gc_dat;
+-	err = nilfs_mdt_read_inode_direct(
+-		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(inode_size));
++	err = nilfs_cpfile_read(nilfs->ns_cpfile, (void *)bh_sr->b_data +
++				NILFS_SR_CPFILE_OFFSET(inode_size));
+ 	if (unlikely(err))
+ 		goto failed_sufile;
  
--	nilfs->ns_sufile = nilfs_mdt_new(nilfs, NULL, NILFS_SUFILE_INO);
-+	nilfs->ns_sufile = nilfs_mdt_new(nilfs, NULL, NILFS_SUFILE_INO, 0);
- 	if (unlikely(!nilfs->ns_sufile))
- 		goto failed_cpfile;
+-	err = nilfs_mdt_read_inode_direct(
+-		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(inode_size));
++	err = nilfs_sufile_read(nilfs->ns_sufile, (void *)bh_sr->b_data +
++				NILFS_SR_SUFILE_OFFSET(inode_size));
+ 	if (unlikely(err))
+ 		goto failed_sufile;
  
 -- 
 1.6.3.4
