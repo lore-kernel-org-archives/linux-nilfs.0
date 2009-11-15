@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 19/23] nilfs2: add cache framework for
-	persistent object allocator
-Date: Sun, 15 Nov 2009 21:46:57 +0900
-Message-ID: <1258289221-3827-20-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 15/23] nilfs2: use nilfs_btnode_create_block
+	function
+Date: Sun, 15 Nov 2009 21:46:53 +0900
+Message-ID: <1258289221-3827-16-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1258289221-3827-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,134 +23,63 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This adds setup and cleanup routines of the persistent object
-allocator cache.
-
-According to ftrace analyses, accessing buffers of the DAT file
-suffers indispensable overhead many times.  To mitigate the overhead,
-This introduce cache framework for the persistent object allocator
-(palloc) which the DAT file and ifile are using.
-
-struct nilfs_palloc_cache represents the cache object per metadata
-file using palloc.
-
-The cache is initialized through nilfs_palloc_setup_cache() and
-destroyed by nilfs_palloc_destroy_cache(); callers of the former
-function will be added to individual allocators of DAT and ifile on
-successive patches.
-
-nilfs_palloc_destroy_cache() will be called from nilfs_mdt_destroy()
-if the cache is attached to a metadata file.  A companion function
-nilfs_palloc_clear_cache() is provided to allow releasing buffer head
-references independently with the cleanup task.  This adjunctive
-function will be used before invalidating pages of metadata file with
-the cache.
+This displaces nilfs_btnode_get() use to create new btree node block
+with nilfs_btnode_create_block.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/alloc.c |   27 +++++++++++++++++++++++++++
- fs/nilfs2/alloc.h |   21 +++++++++++++++++++++
- fs/nilfs2/mdt.c   |    2 ++
- fs/nilfs2/mdt.h   |    2 ++
- 4 files changed, 52 insertions(+), 0 deletions(-)
+ fs/nilfs2/btnode.c |   13 +++++++------
+ fs/nilfs2/btree.c  |   13 ++++++++-----
+ 2 files changed, 15 insertions(+), 11 deletions(-)
 
-diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-index 7e2b3ce..c56300d 100644
---- a/fs/nilfs2/alloc.c
-+++ b/fs/nilfs2/alloc.c
-@@ -491,3 +491,30 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
+index fc3e4bd..7086a2a 100644
+--- a/fs/nilfs2/btnode.c
++++ b/fs/nilfs2/btnode.c
+@@ -270,12 +270,13 @@ retry:
+ 		unlock_page(obh->b_page);
  	}
- 	return 0;
- }
-+
-+void nilfs_palloc_setup_cache(struct inode *inode,
-+			      struct nilfs_palloc_cache *cache)
-+{
-+	NILFS_MDT(inode)->mi_palloc_cache = cache;
-+	spin_lock_init(&cache->lock);
-+}
-+
-+void nilfs_palloc_clear_cache(struct inode *inode)
-+{
-+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
-+
-+	spin_lock(&cache->lock);
-+	brelse(cache->prev_desc.bh);
-+	brelse(cache->prev_bitmap.bh);
-+	brelse(cache->prev_entry.bh);
-+	cache->prev_desc.bh = NULL;
-+	cache->prev_bitmap.bh = NULL;
-+	cache->prev_entry.bh = NULL;
-+	spin_unlock(&cache->lock);
-+}
-+
-+void nilfs_palloc_destroy_cache(struct inode *inode)
-+{
-+	nilfs_palloc_clear_cache(inode);
-+	NILFS_MDT(inode)->mi_palloc_cache = NULL;
-+}
-diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
-index 4ace547..f4543ac 100644
---- a/fs/nilfs2/alloc.h
-+++ b/fs/nilfs2/alloc.h
-@@ -69,4 +69,25 @@ int nilfs_palloc_freev(struct inode *, __u64 *, size_t);
- #define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
- #define nilfs_find_next_zero_bit	ext2_find_next_zero_bit
  
-+/*
-+ * persistent object allocator cache
-+ */
+-	err = nilfs_btnode_get(btnc, newkey, 0, &nbh, 1);
+-	if (likely(!err)) {
+-		BUG_ON(nbh == obh);
+-		ctxt->newbh = nbh;
+-	}
+-	return err;
++	nbh = nilfs_btnode_create_block(btnc, newkey);
++	if (!nbh)
++		return -ENOMEM;
 +
-+struct nilfs_bh_assoc {
-+	unsigned long blkoff;
-+	struct buffer_head *bh;
-+};
-+
-+struct nilfs_palloc_cache {
-+	spinlock_t lock;
-+	struct nilfs_bh_assoc prev_desc;
-+	struct nilfs_bh_assoc prev_bitmap;
-+	struct nilfs_bh_assoc prev_entry;
-+};
-+
-+void nilfs_palloc_setup_cache(struct inode *inode,
-+			      struct nilfs_palloc_cache *cache);
-+void nilfs_palloc_clear_cache(struct inode *inode);
-+void nilfs_palloc_destroy_cache(struct inode *inode);
-+
- #endif	/* _NILFS_ALLOC_H */
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 948b1f8..06713ff 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -571,6 +571,8 @@ void nilfs_mdt_destroy(struct inode *inode)
++	BUG_ON(nbh == obh);
++	ctxt->newbh = nbh;
++	return 0;
+ 
+  failed_unlock:
+ 	unlock_page(obh->b_page);
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index c9aab29..7b0cc4f 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -122,12 +122,15 @@ static int nilfs_btree_get_new_block(const struct nilfs_btree *btree,
  {
- 	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
+ 	struct address_space *btnc =
+ 		&NILFS_BMAP_I((struct nilfs_bmap *)btree)->i_btnode_cache;
+-	int ret;
++	struct buffer_head *bh;
  
-+	if (mdi->mi_palloc_cache)
-+		nilfs_palloc_destroy_cache(inode);
- 	nilfs_mdt_clear(inode);
+-	ret = nilfs_btnode_get(btnc, ptr, 0, bhp, 1);
+-	if (!ret)
+-		set_buffer_nilfs_volatile(*bhp);
+-	return ret;
++	bh = nilfs_btnode_create_block(btnc, ptr);
++	if (!bh)
++		return -ENOMEM;
++
++	set_buffer_nilfs_volatile(bh);
++	*bhp = bh;
++	return 0;
+ }
  
- 	kfree(mdi->mi_bgl); /* kfree(NULL) is safe */
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index c396b6c..6c4bbb0 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -36,6 +36,7 @@
-  * @mi_entry_size: size of an entry
-  * @mi_first_entry_offset: offset to the first entry
-  * @mi_entries_per_block: number of entries in a block
-+ * @mi_palloc_cache: persistent object allocator cache
-  * @mi_blocks_per_group: number of blocks in a group
-  * @mi_blocks_per_desc_block: number of blocks per descriptor block
-  */
-@@ -46,6 +47,7 @@ struct nilfs_mdt_info {
- 	unsigned		mi_entry_size;
- 	unsigned		mi_first_entry_offset;
- 	unsigned long		mi_entries_per_block;
-+	struct nilfs_palloc_cache *mi_palloc_cache;
- 	unsigned long		mi_blocks_per_group;
- 	unsigned long		mi_blocks_per_desc_block;
- };
+ static inline int
 -- 
 1.6.3.4
