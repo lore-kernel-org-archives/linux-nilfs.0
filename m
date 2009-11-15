@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 07/23] nilfs2: separate read method of meta
-	data files on super root block
-Date: Sun, 15 Nov 2009 21:46:45 +0900
-Message-ID: <1258289221-3827-8-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 04/23] nilfs2: move out mark_inode_dirty calls
+	from bmap routines
+Date: Sun, 15 Nov 2009 21:46:42 +0900
+Message-ID: <1258289221-3827-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1258289221-3827-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,150 +23,77 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Will displace nilfs_mdt_read_inode_direct function with an individual
-read method: nilfs_dat_read, nilfs_sufile_read, nilfs_cpfile_read.
+Previously, nilfs_bmap_add_blocks() and nilfs_bmap_sub_blocks() called
+mark_inode_dirty() after they changed the number of data blocks.
 
-This provides the opportunity to initialize local variables of each
-metadata file after reading the inode.
+This moves these calls outside bmap outermost functions like
+nilfs_bmap_insert() or nilfs_bmap_truncate().
+
+This will mitigate overhead for truncate or delete operation since
+they repeatedly remove set of blocks.  Nearly 10 percent improvement
+was observed for removal of a large file:
+
+ # dd if=/dev/zero of=/test/aaa bs=1M count=512
+ # time rm /test/aaa
+
+  real  2.968s -> 2.705s
+
+Further optimization may be possible by eliminating these
+mark_inode_dirty() uses though I avoid mixing separate changes here.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/cpfile.c    |   10 ++++++++++
- fs/nilfs2/cpfile.h    |    1 +
- fs/nilfs2/dat.c       |   10 ++++++++++
- fs/nilfs2/dat.h       |    1 +
- fs/nilfs2/sufile.c    |   10 ++++++++++
- fs/nilfs2/sufile.h    |    1 +
- fs/nilfs2/the_nilfs.c |   12 ++++++------
- 7 files changed, 39 insertions(+), 6 deletions(-)
+ fs/nilfs2/bmap.c  |    4 ----
+ fs/nilfs2/inode.c |    3 +++
+ 2 files changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index 2aaefae..d5ad54e 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -928,6 +928,16 @@ int nilfs_cpfile_get_stat(struct inode *cpfile, struct nilfs_cpstat *cpstat)
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index afc060a..f4a14ea 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -402,15 +402,11 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
+ void nilfs_bmap_add_blocks(const struct nilfs_bmap *bmap, int n)
+ {
+ 	inode_add_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
+-	if (!NILFS_MDT(bmap->b_inode))
+-		mark_inode_dirty(bmap->b_inode);
  }
  
- /**
-+ * nilfs_cpfile_read - read cpfile inode
-+ * @cpfile: cpfile inode
-+ * @raw_inode: on-disk cpfile inode
-+ */
-+int nilfs_cpfile_read(struct inode *cpfile, struct nilfs_inode *raw_inode)
-+{
-+	return nilfs_read_inode_common(cpfile, raw_inode);
-+}
-+
-+/**
-  * nilfs_cpfile_new - create cpfile
-  * @nilfs: nilfs object
-  * @cpsize: size of a checkpoint entry
-diff --git a/fs/nilfs2/cpfile.h b/fs/nilfs2/cpfile.h
-index 8ff2b4f..bc0809e 100644
---- a/fs/nilfs2/cpfile.h
-+++ b/fs/nilfs2/cpfile.h
-@@ -40,6 +40,7 @@ int nilfs_cpfile_get_stat(struct inode *, struct nilfs_cpstat *);
- ssize_t nilfs_cpfile_get_cpinfo(struct inode *, __u64 *, int, void *, unsigned,
- 				size_t);
- 
-+int nilfs_cpfile_read(struct inode *cpfile, struct nilfs_inode *raw_inode);
- struct inode *nilfs_cpfile_new(struct the_nilfs *nilfs, size_t cpsize);
- 
- #endif	/* _NILFS_CPFILE_H */
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 239a422..eff3169 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -427,6 +427,16 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
+ void nilfs_bmap_sub_blocks(const struct nilfs_bmap *bmap, int n)
+ {
+ 	inode_sub_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
+-	if (!NILFS_MDT(bmap->b_inode))
+-		mark_inode_dirty(bmap->b_inode);
  }
  
- /**
-+ * nilfs_dat_read - read dat inode
-+ * @dat: dat inode
-+ * @raw_inode: on-disk dat inode
-+ */
-+int nilfs_dat_read(struct inode *dat, struct nilfs_inode *raw_inode)
-+{
-+	return nilfs_read_inode_common(dat, raw_inode);
-+}
-+
-+/**
-  * nilfs_dat_new - create dat file
-  * @nilfs: nilfs object
-  * @entry_size: size of a dat entry
-diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
-index 98f3306..d31c3aa 100644
---- a/fs/nilfs2/dat.h
-+++ b/fs/nilfs2/dat.h
-@@ -53,6 +53,7 @@ int nilfs_dat_freev(struct inode *, __u64 *, size_t);
- int nilfs_dat_move(struct inode *, __u64, sector_t);
- ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned, size_t);
+ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 412b25a..a16c179 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -97,6 +97,7 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
+ 			nilfs_transaction_abort(inode->i_sb);
+ 			goto out;
+ 		}
++		mark_inode_dirty(inode);
+ 		nilfs_transaction_commit(inode->i_sb); /* never fails */
+ 		/* Error handling should be detailed */
+ 		set_buffer_new(bh_result);
+@@ -598,6 +599,7 @@ void nilfs_truncate(struct inode *inode)
+ 	if (IS_SYNC(inode))
+ 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
  
-+int nilfs_dat_read(struct inode *dat, struct nilfs_inode *raw_inode);
- struct inode *nilfs_dat_new(struct the_nilfs *nilfs, size_t entry_size);
++	mark_inode_dirty(inode);
+ 	nilfs_set_file_dirty(NILFS_SB(sb), inode, 0);
+ 	nilfs_transaction_commit(sb);
+ 	/* May construct a logical segment and may fail in sync mode.
+@@ -622,6 +624,7 @@ void nilfs_delete_inode(struct inode *inode)
+ 		truncate_inode_pages(&inode->i_data, 0);
  
- #endif	/* _NILFS_DAT_H */
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 6fb707a..b344f27 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -659,6 +659,16 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
- }
- 
- /**
-+ * nilfs_sufile_read - read sufile inode
-+ * @sufile: sufile inode
-+ * @raw_inode: on-disk sufile inode
-+ */
-+int nilfs_sufile_read(struct inode *sufile, struct nilfs_inode *raw_inode)
-+{
-+	return nilfs_read_inode_common(sufile, raw_inode);
-+}
-+
-+/**
-  * nilfs_sufile_new - create sufile
-  * @nilfs: nilfs object
-  * @susize: size of a segment usage entry
-diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-index 50d3191..b303a80 100644
---- a/fs/nilfs2/sufile.h
-+++ b/fs/nilfs2/sufile.h
-@@ -62,6 +62,7 @@ void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
- void nilfs_sufile_do_set_error(struct inode *, __u64, struct buffer_head *,
- 			       struct buffer_head *);
- 
-+int nilfs_sufile_read(struct inode *sufile, struct nilfs_inode *raw_inode);
- struct inode *nilfs_sufile_new(struct the_nilfs *nilfs, size_t susize);
- 
- /**
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index d4a731f..bc7760c 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -204,18 +204,18 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
- 
- 	nilfs_mdt_set_shadow(nilfs->ns_dat, nilfs->ns_gc_dat);
- 
--	err = nilfs_mdt_read_inode_direct(
--		nilfs->ns_dat, bh_sr, NILFS_SR_DAT_OFFSET(inode_size));
-+	err = nilfs_dat_read(nilfs->ns_dat, (void *)bh_sr->b_data +
-+			     NILFS_SR_DAT_OFFSET(inode_size));
- 	if (unlikely(err))
- 		goto failed_sufile;
- 
--	err = nilfs_mdt_read_inode_direct(
--		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(inode_size));
-+	err = nilfs_cpfile_read(nilfs->ns_cpfile, (void *)bh_sr->b_data +
-+				NILFS_SR_CPFILE_OFFSET(inode_size));
- 	if (unlikely(err))
- 		goto failed_sufile;
- 
--	err = nilfs_mdt_read_inode_direct(
--		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(inode_size));
-+	err = nilfs_sufile_read(nilfs->ns_sufile, (void *)bh_sr->b_data +
-+				NILFS_SR_SUFILE_OFFSET(inode_size));
- 	if (unlikely(err))
- 		goto failed_sufile;
- 
+ 	nilfs_truncate_bmap(ii, 0);
++	mark_inode_dirty(inode);
+ 	nilfs_free_inode(inode);
+ 	/* nilfs_free_inode() marks inode buffer dirty */
+ 	if (IS_SYNC(inode))
 -- 
 1.6.3.4
