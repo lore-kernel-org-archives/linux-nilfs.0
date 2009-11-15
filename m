@@ -1,8 +1,8 @@
 From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH 1/2] nilfs2: deleted struct
-	nilfs_dat_group_desc
-Date: Sun, 15 Nov 2009 13:49:44 +0900
-Message-ID: <1258260585-3479-2-git-send-email-jir@unicus.jp>
+Subject: [PATCH 2/2] nilfs2: deleted inconsistent comment in
+	nilfs_load_inode_block()
+Date: Sun, 15 Nov 2009 13:49:45 +0900
+Message-ID: <1258260585-3479-3-git-send-email-jir@unicus.jp>
 References: <1258260585-3479-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,33 +23,25 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-struct nilfs_dat_group_desc is not used both in kernel and user spaces.
-struct nilfs_palloc_group_desc is used instead.
+The comment says, "Caller of this function MUST lock s_inode_lock",
+however just above the comment, it locks s_inode_lock in the function.
 
 Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 ---
- include/linux/nilfs2_fs.h |    9 ---------
- 1 files changed, 0 insertions(+), 9 deletions(-)
+ fs/nilfs2/inode.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
 
-diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index 3c92223..56e5714 100644
---- a/include/linux/nilfs2_fs.h
-+++ b/include/linux/nilfs2_fs.h
-@@ -425,15 +425,6 @@ struct nilfs_dat_entry {
- };
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 5040220..2a0a5a3 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -664,7 +664,6 @@ int nilfs_load_inode_block(struct nilfs_sb_info *sbi, struct inode *inode,
+ 	int err;
  
- /**
-- * struct nilfs_dat_group_desc - block group descriptor
-- * @dg_nfrees: number of free virtual block numbers in block group
-- */
--struct nilfs_dat_group_desc {
--	__le32 dg_nfrees;
--};
--
--
--/**
-  * struct nilfs_snapshot_list - snapshot list
-  * @ssl_next: next checkpoint number on snapshot list
-  * @ssl_prev: previous checkpoint number on snapshot list
+ 	spin_lock(&sbi->s_inode_lock);
+-	/* Caller of this function MUST lock s_inode_lock */
+ 	if (ii->i_bh == NULL) {
+ 		spin_unlock(&sbi->s_inode_lock);
+ 		err = nilfs_ifile_get_inode_block(sbi->s_ifile, inode->i_ino,
 -- 
 1.5.6.5
