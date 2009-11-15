@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 04/23] nilfs2: move out mark_inode_dirty calls
-	from bmap routines
-Date: Sun, 15 Nov 2009 21:46:42 +0900
-Message-ID: <1258289221-3827-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 08/23] nilfs2: eliminate inlines to directly
+	read/write inode of metadata files
+Date: Sun, 15 Nov 2009 21:46:46 +0900
+Message-ID: <1258289221-3827-9-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1258289221-3827-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,77 +23,63 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Previously, nilfs_bmap_add_blocks() and nilfs_bmap_sub_blocks() called
-mark_inode_dirty() after they changed the number of data blocks.
-
-This moves these calls outside bmap outermost functions like
-nilfs_bmap_insert() or nilfs_bmap_truncate().
-
-This will mitigate overhead for truncate or delete operation since
-they repeatedly remove set of blocks.  Nearly 10 percent improvement
-was observed for removal of a large file:
-
- # dd if=/dev/zero of=/test/aaa bs=1M count=512
- # time rm /test/aaa
-
-  real  2.968s -> 2.705s
-
-Further optimization may be possible by eliminating these
-mark_inode_dirty() uses though I avoid mixing separate changes here.
+Removes two inline functions: nilfs_mdt_read_inode_direct() and
+nilfs_mdt_write_inode_direct().
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/bmap.c  |    4 ----
- fs/nilfs2/inode.c |    3 +++
- 2 files changed, 3 insertions(+), 4 deletions(-)
+ fs/nilfs2/mdt.h     |   17 -----------------
+ fs/nilfs2/segment.c |   12 ++++++------
+ 2 files changed, 6 insertions(+), 23 deletions(-)
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index afc060a..f4a14ea 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -402,15 +402,11 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
- void nilfs_bmap_add_blocks(const struct nilfs_bmap *bmap, int n)
- {
- 	inode_add_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
--	if (!NILFS_MDT(bmap->b_inode))
--		mark_inode_dirty(bmap->b_inode);
+diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
+index 3eb40e8..cd2903a 100644
+--- a/fs/nilfs2/mdt.h
++++ b/fs/nilfs2/mdt.h
+@@ -105,21 +105,4 @@ static inline __u64 nilfs_mdt_cno(struct inode *inode)
+ #define nilfs_mdt_bgl_lock(inode, bg) \
+ 	(&NILFS_MDT(inode)->mi_bgl->locks[(bg) & (NR_BG_LOCKS-1)].lock)
+ 
+-
+-static inline int
+-nilfs_mdt_read_inode_direct(struct inode *inode, struct buffer_head *bh,
+-			    unsigned n)
+-{
+-	return nilfs_read_inode_common(
+-		inode, (struct nilfs_inode *)(bh->b_data + n));
+-}
+-
+-static inline void
+-nilfs_mdt_write_inode_direct(struct inode *inode, struct buffer_head *bh,
+-			     unsigned n)
+-{
+-	nilfs_write_inode_common(
+-		inode, (struct nilfs_inode *)(bh->b_data + n), 1);
+-}
+-
+ #endif /* _NILFS_MDT_H */
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 6eff66a..d21179b 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -974,12 +974,12 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
+ 			      nilfs->ns_nongc_ctime : sci->sc_seg_ctime);
+ 	raw_sr->sr_flags = 0;
+ 
+-	nilfs_mdt_write_inode_direct(
+-		nilfs_dat_inode(nilfs), bh_sr, NILFS_SR_DAT_OFFSET(isz));
+-	nilfs_mdt_write_inode_direct(
+-		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(isz));
+-	nilfs_mdt_write_inode_direct(
+-		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(isz));
++	nilfs_write_inode_common(nilfs_dat_inode(nilfs), (void *)raw_sr +
++				 NILFS_SR_DAT_OFFSET(isz), 1);
++	nilfs_write_inode_common(nilfs->ns_cpfile, (void *)raw_sr +
++				 NILFS_SR_CPFILE_OFFSET(isz), 1);
++	nilfs_write_inode_common(nilfs->ns_sufile, (void *)raw_sr +
++				 NILFS_SR_SUFILE_OFFSET(isz), 1);
  }
  
- void nilfs_bmap_sub_blocks(const struct nilfs_bmap *bmap, int n)
- {
- 	inode_sub_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
--	if (!NILFS_MDT(bmap->b_inode))
--		mark_inode_dirty(bmap->b_inode);
- }
- 
- __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 412b25a..a16c179 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -97,6 +97,7 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
- 			nilfs_transaction_abort(inode->i_sb);
- 			goto out;
- 		}
-+		mark_inode_dirty(inode);
- 		nilfs_transaction_commit(inode->i_sb); /* never fails */
- 		/* Error handling should be detailed */
- 		set_buffer_new(bh_result);
-@@ -598,6 +599,7 @@ void nilfs_truncate(struct inode *inode)
- 	if (IS_SYNC(inode))
- 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
- 
-+	mark_inode_dirty(inode);
- 	nilfs_set_file_dirty(NILFS_SB(sb), inode, 0);
- 	nilfs_transaction_commit(sb);
- 	/* May construct a logical segment and may fail in sync mode.
-@@ -622,6 +624,7 @@ void nilfs_delete_inode(struct inode *inode)
- 		truncate_inode_pages(&inode->i_data, 0);
- 
- 	nilfs_truncate_bmap(ii, 0);
-+	mark_inode_dirty(inode);
- 	nilfs_free_inode(inode);
- 	/* nilfs_free_inode() marks inode buffer dirty */
- 	if (IS_SYNC(inode))
+ static void nilfs_redirty_inodes(struct list_head *head)
 -- 
 1.6.3.4
