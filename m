@@ -1,7 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 20/23] nilfs2: add palloc cache to dat
-Date: Sun, 15 Nov 2009 21:46:58 +0900
-Message-ID: <1258289221-3827-21-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 13/23] nilfs2: avoid readahead on metadata
+	file for create mode
+Date: Sun, 15 Nov 2009 21:46:51 +0900
+Message-ID: <1258289221-3827-14-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1258289221-3827-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -22,58 +23,73 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This adds the palloc cache to DAT file.  The palloc cache is allocated
-on the extended region of nilfs_mdt_info struct.  The struct
-nilfs_dat_info defines the extended on memory structure of DAT.
+This turns off readhead action of metadata file if nilfs_mdt_get_block
+function was called with a create flag.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/dat.c |   18 ++++++++++++++++--
- 1 files changed, 16 insertions(+), 2 deletions(-)
+ fs/nilfs2/mdt.c |   28 +++++++++++++++-------------
+ 1 files changed, 15 insertions(+), 13 deletions(-)
 
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index eff3169..187dd07 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -33,6 +33,16 @@
- #define NILFS_CNO_MIN	((__u64)1)
- #define NILFS_CNO_MAX	(~(__u64)0)
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index 3028e8f..948b1f8 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -186,7 +186,7 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
+ }
  
-+struct nilfs_dat_info {
-+	struct nilfs_mdt_info mi;
-+	struct nilfs_palloc_cache palloc_cache;
-+};
-+
-+static inline struct nilfs_dat_info *NILFS_DAT_I(struct inode *dat)
-+{
-+	return (struct nilfs_dat_info *)NILFS_MDT(dat);
-+}
-+
- static int nilfs_dat_prepare_entry(struct inode *dat,
- 				   struct nilfs_palloc_req *req, int create)
+ static int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
+-				struct buffer_head **out_bh)
++				int readahead, struct buffer_head **out_bh)
  {
-@@ -445,16 +455,20 @@ struct inode *nilfs_dat_new(struct the_nilfs *nilfs, size_t entry_size)
- {
- 	static struct lock_class_key dat_lock_key;
- 	struct inode *dat;
-+	struct nilfs_dat_info *di;
+ 	struct buffer_head *first_bh, *bh;
+ 	unsigned long blkoff;
+@@ -200,16 +200,18 @@ static int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
+ 	if (unlikely(err))
+ 		goto failed;
+ 
+-	blkoff = block + 1;
+-	for (i = 0; i < nr_ra_blocks; i++, blkoff++) {
+-		err = nilfs_mdt_submit_block(inode, blkoff, READA, &bh);
+-		if (likely(!err || err == -EEXIST))
+-			brelse(bh);
+-		else if (err != -EBUSY)
+-			break; /* abort readahead if bmap lookup failed */
+-
+-		if (!buffer_locked(first_bh))
+-			goto out_no_wait;
++	if (readahead) {
++		blkoff = block + 1;
++		for (i = 0; i < nr_ra_blocks; i++, blkoff++) {
++			err = nilfs_mdt_submit_block(inode, blkoff, READA, &bh);
++			if (likely(!err || err == -EEXIST))
++				brelse(bh);
++			else if (err != -EBUSY)
++				break;
++				/* abort readahead if bmap lookup failed */
++			if (!buffer_locked(first_bh))
++				goto out_no_wait;
++		}
+ 	}
+ 
+ 	wait_on_buffer(first_bh);
+@@ -263,7 +265,7 @@ int nilfs_mdt_get_block(struct inode *inode, unsigned long blkoff, int create,
+ 
+ 	/* Should be rewritten with merging nilfs_mdt_read_block() */
+  retry:
+-	ret = nilfs_mdt_read_block(inode, blkoff, out_bh);
++	ret = nilfs_mdt_read_block(inode, blkoff, !create, out_bh);
+ 	if (!create || ret != -ENOENT)
+ 		return ret;
+ 
+@@ -371,7 +373,7 @@ int nilfs_mdt_mark_block_dirty(struct inode *inode, unsigned long block)
+ 	struct buffer_head *bh;
  	int err;
  
--	dat = nilfs_mdt_new(nilfs, NULL, NILFS_DAT_INO, 0);
-+	dat = nilfs_mdt_new(nilfs, NULL, NILFS_DAT_INO, sizeof(*di));
- 	if (dat) {
- 		err = nilfs_palloc_init_blockgroup(dat, entry_size);
- 		if (unlikely(err)) {
- 			nilfs_mdt_destroy(dat);
- 			return NULL;
- 		}
--		lockdep_set_class(&NILFS_MDT(dat)->mi_sem, &dat_lock_key);
-+
-+		di = NILFS_DAT_I(dat);
-+		lockdep_set_class(&di->mi.mi_sem, &dat_lock_key);
-+		nilfs_palloc_setup_cache(dat, &di->palloc_cache);
- 	}
- 	return dat;
- }
+-	err = nilfs_mdt_read_block(inode, block, &bh);
++	err = nilfs_mdt_read_block(inode, block, 0, &bh);
+ 	if (unlikely(err))
+ 		return err;
+ 	nilfs_mark_buffer_dirty(bh);
 -- 
 1.6.3.4
