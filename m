@@ -1,14 +1,15 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCH 0/2] nilfs2: trivial cleanups
-Date: Sun, 15 Nov 2009 17:45:40 +0900 (JST)
-Message-ID: <20091115.174540.133438596.ryusuke@osrg.net>
-References: <1258260585-3479-1-git-send-email-jir@unicus.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 03/23] nilfs2: stop marking metadata inode
+	dirty within btree operations
+Date: Sun, 15 Nov 2009 21:46:41 +0900
+Message-ID: <1258289221-3827-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1258289221-3827-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1258260585-3479-1-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+In-Reply-To: <1258289221-3827-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,23 +20,44 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Sun, 15 Nov 2009 13:49:43 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
-> Hi,
-> 
-> This is trival cleanup patch series.
-> 
-> First patch deleted unused struct nilfs_dat_group_desc.
-> 
-> Second patch deleted inconsistent comment.
-> 
-> 
->  fs/nilfs2/inode.c         |    1 -
->  include/linux/nilfs2_fs.h |    9 ---------
->  2 files changed, 0 insertions(+), 10 deletions(-)
+Since metadata file routines mark the inode dirty after they
+successfully changed bmap objects, nilfs_mdt_mark_dirty() calls in
+nilfs_bmap_add_blocks() and nilfs_bmap_sub_blocks() are redundant.
 
-Applied. Thank you!
+This removes these overlapping calls from the bmap routines.
 
-Ryusuke Konishi
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/bmap.c |    8 ++------
+ 1 files changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 08834df..afc060a 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -402,18 +402,14 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
+ void nilfs_bmap_add_blocks(const struct nilfs_bmap *bmap, int n)
+ {
+ 	inode_add_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
+-	if (NILFS_MDT(bmap->b_inode))
+-		nilfs_mdt_mark_dirty(bmap->b_inode);
+-	else
++	if (!NILFS_MDT(bmap->b_inode))
+ 		mark_inode_dirty(bmap->b_inode);
+ }
+ 
+ void nilfs_bmap_sub_blocks(const struct nilfs_bmap *bmap, int n)
+ {
+ 	inode_sub_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
+-	if (NILFS_MDT(bmap->b_inode))
+-		nilfs_mdt_mark_dirty(bmap->b_inode);
+-	else
++	if (!NILFS_MDT(bmap->b_inode))
+ 		mark_inode_dirty(bmap->b_inode);
+ }
+ 
+-- 
+1.6.3.4
