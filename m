@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 18/23] nilfs2: unfold
-	nilfs_palloc_block_get_bitmap function
-Date: Sun, 15 Nov 2009 21:46:56 +0900
-Message-ID: <1258289221-3827-19-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 01/23] nilfs2: remove buffer locking in
+	nilfs_mark_inode_dirty
+Date: Sun, 15 Nov 2009 21:46:39 +0900
+Message-ID: <1258289221-3827-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1258289221-3827-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,71 +23,36 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This expands a trivial address calculation in the function into its
-every callsite. This expansion improves readability of the callers.
+This lock is eliminable because inodes on the buffer can be updated
+independently.  Although a log writer also fills in bmap data on the
+on-disk inodes, this update is exclusively done by a log writer lock.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/alloc.c |   19 ++++---------------
- 1 files changed, 4 insertions(+), 15 deletions(-)
+ fs/nilfs2/inode.c |    3 ---
+ 1 files changed, 0 insertions(+), 3 deletions(-)
 
-diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-index d69e6ae..7e2b3ce 100644
---- a/fs/nilfs2/alloc.c
-+++ b/fs/nilfs2/alloc.c
-@@ -176,13 +176,6 @@ nilfs_palloc_block_get_group_desc(const struct inode *inode,
- 		group % nilfs_palloc_groups_per_desc_block(inode);
- }
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 2a0a5a3..412b25a 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -525,7 +525,6 @@ void nilfs_update_inode(struct inode *inode, struct buffer_head *ibh)
  
--static unsigned char *
--nilfs_palloc_block_get_bitmap(const struct inode *inode,
--			      const struct buffer_head *bh, void *kaddr)
--{
--	return (unsigned char *)(kaddr + bh_offset(bh));
--}
--
- void *nilfs_palloc_block_get_entry(const struct inode *inode, __u64 nr,
- 				   const struct buffer_head *bh, void *kaddr)
- {
-@@ -289,8 +282,7 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
- 				if (ret < 0)
- 					goto out_desc;
- 				bitmap_kaddr = kmap(bitmap_bh->b_page);
--				bitmap = nilfs_palloc_block_get_bitmap(
--					inode, bitmap_bh, bitmap_kaddr);
-+				bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
- 				pos = nilfs_palloc_find_available_slot(
- 					inode, group, group_offset, bitmap,
- 					entries_per_group);
-@@ -351,8 +343,7 @@ void nilfs_palloc_commit_free_entry(struct inode *inode,
- 	desc = nilfs_palloc_block_get_group_desc(inode, group,
- 						 req->pr_desc_bh, desc_kaddr);
- 	bitmap_kaddr = kmap(req->pr_bitmap_bh->b_page);
--	bitmap = nilfs_palloc_block_get_bitmap(inode, req->pr_bitmap_bh,
--					       bitmap_kaddr);
-+	bitmap = bitmap_kaddr + bh_offset(req->pr_bitmap_bh);
+ 	raw_inode = nilfs_ifile_map_inode(sbi->s_ifile, ino, ibh);
  
- 	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(inode, group),
- 				    group_offset, bitmap))
-@@ -385,8 +376,7 @@ void nilfs_palloc_abort_alloc_entry(struct inode *inode,
- 	desc = nilfs_palloc_block_get_group_desc(inode, group,
- 						 req->pr_desc_bh, desc_kaddr);
- 	bitmap_kaddr = kmap(req->pr_bitmap_bh->b_page);
--	bitmap = nilfs_palloc_block_get_bitmap(inode, req->pr_bitmap_bh,
--					       bitmap_kaddr);
-+	bitmap = bitmap_kaddr + bh_offset(req->pr_bitmap_bh);
- 	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(inode, group),
- 				    group_offset, bitmap))
- 		printk(KERN_WARNING "%s: entry numer %llu already freed\n",
-@@ -472,8 +462,7 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
- 		desc = nilfs_palloc_block_get_group_desc(
- 			inode, group, desc_bh, desc_kaddr);
- 		bitmap_kaddr = kmap(bitmap_bh->b_page);
--		bitmap = nilfs_palloc_block_get_bitmap(
--			inode, bitmap_bh, bitmap_kaddr);
-+		bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
- 		for (j = i, n = 0;
- 		     (j < nitems) && nilfs_palloc_group_is_in(inode, group,
- 							      entry_nrs[j]);
+-	/* The buffer is guarded with lock_buffer() by the caller */
+ 	if (test_and_clear_bit(NILFS_I_NEW, &ii->i_state))
+ 		memset(raw_inode, 0, NILFS_MDT(sbi->s_ifile)->mi_entry_size);
+ 	set_bit(NILFS_I_INODE_DIRTY, &ii->i_state);
+@@ -745,9 +744,7 @@ int nilfs_mark_inode_dirty(struct inode *inode)
+ 			      "failed to reget inode block.\n");
+ 		return err;
+ 	}
+-	lock_buffer(ibh);
+ 	nilfs_update_inode(inode, ibh);
+-	unlock_buffer(ibh);
+ 	nilfs_mdt_mark_buffer_dirty(ibh);
+ 	nilfs_mdt_mark_dirty(sbi->s_ifile);
+ 	brelse(ibh);
 -- 
 1.6.3.4
