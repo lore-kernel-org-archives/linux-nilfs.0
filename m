@@ -1,8 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 3/3] nilfs2: clean up get/put function of a
-	segment usage
-Date: Wed, 18 Nov 2009 19:12:51 +0900
-Message-ID: <1258539171-30188-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/3] nilfs2: move routine marking segment
+	usage dirty into sufile
+Date: Wed, 18 Nov 2009 19:12:49 +0900
+Message-ID: <1258539171-30188-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1258539171-30188-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,113 +23,103 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This eliminates obsolete nilfs_get_sufile_get_segment_usage() and
-nilfs_set_sufile_segment_usage() from sufile.
+This adds nilfs_sufile_mark_dirty() function in sufile to replace
+nilfs_touch_segusage() function in log writer code.  This is a
+preparation for the further cleanup which will move out low level
+sufile operations in the log writer.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/sufile.c |   72 ----------------------------------------------------
- fs/nilfs2/sufile.h |    5 ---
- 2 files changed, 0 insertions(+), 77 deletions(-)
+ fs/nilfs2/segment.c |   19 ++-----------------
+ fs/nilfs2/sufile.c  |   19 +++++++++++++++++++
+ fs/nilfs2/sufile.h  |    1 +
+ 3 files changed, 22 insertions(+), 17 deletions(-)
 
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index d21179b..3ae4a38 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1273,21 +1273,6 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 	return err;
+ }
+ 
+-static int nilfs_touch_segusage(struct inode *sufile, __u64 segnum)
+-{
+-	struct buffer_head *bh_su;
+-	struct nilfs_segment_usage *raw_su;
+-	int err;
+-
+-	err = nilfs_sufile_get_segment_usage(sufile, segnum, &raw_su, &bh_su);
+-	if (unlikely(err))
+-		return err;
+-	nilfs_mdt_mark_buffer_dirty(bh_su);
+-	nilfs_mdt_mark_dirty(sufile);
+-	nilfs_sufile_put_segment_usage(sufile, segnum, bh_su);
+-	return 0;
+-}
+-
+ static int nilfs_segctor_begin_construction(struct nilfs_sc_info *sci,
+ 					    struct the_nilfs *nilfs)
+ {
+@@ -1312,7 +1297,7 @@ static int nilfs_segctor_begin_construction(struct nilfs_sc_info *sci,
+ 	}
+ 	sci->sc_segbuf_nblocks = segbuf->sb_rest_blocks;
+ 
+-	err = nilfs_touch_segusage(nilfs->ns_sufile, segbuf->sb_segnum);
++	err = nilfs_sufile_mark_dirty(nilfs->ns_sufile, segbuf->sb_segnum);
+ 	if (unlikely(err))
+ 		return err;
+ 
+@@ -1352,7 +1337,7 @@ static int nilfs_segctor_extend_segments(struct nilfs_sc_info *sci,
+ 	 * not be dirty.  The following call ensures that the buffer is dirty
+ 	 * and will pin the buffer on memory until the sufile is written.
+ 	 */
+-	err = nilfs_touch_segusage(sufile, prev->sb_nextnum);
++	err = nilfs_sufile_mark_dirty(sufile, prev->sb_nextnum);
+ 	if (unlikely(err))
+ 		return err;
+ 
 diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 3eed998..b6c36d0 100644
+index 5f18aca..d560f88 100644
 --- a/fs/nilfs2/sufile.c
 +++ b/fs/nilfs2/sufile.c
-@@ -430,78 +430,6 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+@@ -502,6 +502,25 @@ void nilfs_sufile_put_segment_usage(struct inode *sufile, __u64 segnum,
  }
  
  /**
-- * nilfs_sufile_get_segment_usage - get a segment usage
-- * @sufile: inode of segment usage file
-- * @segnum: segment number
-- * @sup: pointer to segment usage
-- * @bhp: pointer to buffer head
-- *
-- * Description: nilfs_sufile_get_segment_usage() acquires the segment usage
-- * specified by @segnum.
-- *
-- * Return Value: On success, 0 is returned, and the segment usage and the
-- * buffer head of the buffer on which the segment usage is located are stored
-- * in the place pointed by @sup and @bhp, respectively. On error, one of the
-- * following negative error codes is returned.
-- *
-- * %-EIO - I/O error.
-- *
-- * %-ENOMEM - Insufficient amount of memory available.
-- *
-- * %-EINVAL - Invalid segment usage number.
-- */
--int nilfs_sufile_get_segment_usage(struct inode *sufile, __u64 segnum,
--				   struct nilfs_segment_usage **sup,
--				   struct buffer_head **bhp)
--{
--	struct buffer_head *bh;
--	struct nilfs_segment_usage *su;
--	void *kaddr;
--	int ret;
--
--	/* segnum is 0 origin */
--	if (segnum >= nilfs_sufile_get_nsegments(sufile))
--		return -EINVAL;
--	down_write(&NILFS_MDT(sufile)->mi_sem);
--	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 1, &bh);
--	if (ret < 0)
--		goto out_sem;
--	kaddr = kmap(bh->b_page);
--	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
--	if (nilfs_segment_usage_error(su)) {
--		kunmap(bh->b_page);
--		brelse(bh);
--		ret = -EINVAL;
--		goto out_sem;
--	}
--
--	if (sup != NULL)
--		*sup = su;
--	*bhp = bh;
--
-- out_sem:
--	up_write(&NILFS_MDT(sufile)->mi_sem);
--	return ret;
--}
--
--/**
-- * nilfs_sufile_put_segment_usage - put a segment usage
-- * @sufile: inode of segment usage file
-- * @segnum: segment number
-- * @bh: buffer head
-- *
-- * Description: nilfs_sufile_put_segment_usage() releases the segment usage
-- * specified by @segnum. @bh must be the buffer head which have been returned
-- * by a previous call to nilfs_sufile_get_segment_usage() with @segnum.
-- */
--void nilfs_sufile_put_segment_usage(struct inode *sufile, __u64 segnum,
--				    struct buffer_head *bh)
--{
--	kunmap(bh->b_page);
--	brelse(bh);
--}
--
--/**
-  * nilfs_sufile_mark_dirty - mark the buffer having a segment usage dirty
++ * nilfs_sufile_mark_dirty - mark the buffer having a segment usage dirty
++ * @sufile: inode of segment usage file
++ * @segnum: segment number
++ */
++int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
++{
++	struct buffer_head *bh;
++	int ret;
++
++	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
++	if (!ret) {
++		nilfs_mdt_mark_buffer_dirty(bh);
++		nilfs_mdt_mark_dirty(sufile);
++		brelse(bh);
++	}
++	return ret;
++}
++
++/**
+  * nilfs_sufile_get_stat - get segment usage statistics
   * @sufile: inode of segment usage file
-  * @segnum: segment number
+  * @stat: pointer to a structure of segment usage statistics
 diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-index e1186bf..15163b8 100644
+index c339ad5..4146a65 100644
 --- a/fs/nilfs2/sufile.h
 +++ b/fs/nilfs2/sufile.h
-@@ -37,11 +37,6 @@ static inline unsigned long nilfs_sufile_get_nsegments(struct inode *sufile)
- unsigned long nilfs_sufile_get_ncleansegs(struct inode *sufile);
- 
- int nilfs_sufile_alloc(struct inode *, __u64 *);
--int nilfs_sufile_get_segment_usage(struct inode *, __u64,
--				   struct nilfs_segment_usage **,
--				   struct buffer_head **);
--void nilfs_sufile_put_segment_usage(struct inode *, __u64,
--				    struct buffer_head *);
- int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum);
- int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
- 				   unsigned long nblocks, time_t modtime);
+@@ -42,6 +42,7 @@ int nilfs_sufile_get_segment_usage(struct inode *, __u64,
+ 				   struct buffer_head **);
+ void nilfs_sufile_put_segment_usage(struct inode *, __u64,
+ 				    struct buffer_head *);
++int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum);
+ int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
+ ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
+ 				size_t);
 -- 
 1.6.3.4
