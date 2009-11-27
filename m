@@ -1,8 +1,8 @@
 From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH 6/9] nilfs2: change return type of
-	nilfs_commit_chunk
-Date: Fri, 27 Nov 2009 16:02:01 +0900
-Message-ID: <1259305324-28050-7-git-send-email-jir@unicus.jp>
+Subject: [PATCH 9/9] nilfs2: replace mark_inode_dirty as
+	nilfs_mark_inode_dirty
+Date: Fri, 27 Nov 2009 16:02:04 +0900
+Message-ID: <1259305324-28050-10-git-send-email-jir@unicus.jp>
 References: <1259305324-28050-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,79 +23,193 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Change return type of nilfs_commit_chunk() as void from int,
-for nilfs_set_file_dirty() usually does not return error.
-
-This is an intermediate patch to reduce mark_inode_dirty() in
-nilfs_commit_chunk().
+Replace mark_inode_dirty() as nilfs_mark_inode_dirty()
+to reduce deep function call tree.
 
 Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 ---
- fs/nilfs2/dir.c |   16 ++++++++--------
- 1 files changed, 8 insertions(+), 8 deletions(-)
+ fs/nilfs2/dir.c   |    2 +-
+ fs/nilfs2/inode.c |    6 +++---
+ fs/nilfs2/namei.c |   34 +++++++++++++++++-----------------
+ 3 files changed, 21 insertions(+), 21 deletions(-)
 
 diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index 4f3fa00..173530d 100644
+index 1d9a4e4..76d803e 100644
 --- a/fs/nilfs2/dir.c
 +++ b/fs/nilfs2/dir.c
-@@ -99,9 +99,9 @@ static int nilfs_prepare_chunk(struct page *page,
- 				 NULL, nilfs_get_block);
- }
- 
--static int nilfs_commit_chunk(struct page *page,
--			      struct address_space *mapping,
--			      unsigned from, unsigned to)
-+static void nilfs_commit_chunk(struct page *page,
-+			       struct address_space *mapping,
-+			       unsigned from, unsigned to)
- {
- 	struct inode *dir = mapping->host;
- 	struct nilfs_sb_info *sbi = NILFS_SB(dir->i_sb);
-@@ -119,8 +119,8 @@ static int nilfs_commit_chunk(struct page *page,
- 	if (IS_DIRSYNC(dir))
- 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
- 	err = nilfs_set_file_dirty(sbi, dir, nr_dirty);
-+	WARN_ON(err); /* do not happen */
- 	unlock_page(page);
--	return err;
- }
- 
- static void nilfs_check_page(struct page *page)
-@@ -455,7 +455,7 @@ void nilfs_set_link(struct inode *dir, struct nilfs_dir_entry *de,
- 	BUG_ON(err);
- 	de->inode = cpu_to_le64(inode->i_ino);
- 	nilfs_set_de_type(de, inode);
--	err = nilfs_commit_chunk(page, mapping, from, to);
-+	nilfs_commit_chunk(page, mapping, from, to);
+@@ -548,7 +548,7 @@ got_it:
+ 	nilfs_commit_chunk(page, page->mapping, from, to);
+ 	dir->i_mtime = dir->i_ctime = CURRENT_TIME;
+ /*	NILFS_I(dir)->i_flags &= ~NILFS_BTREE_FL; */
+-	mark_inode_dirty(dir);
++	nilfs_mark_inode_dirty(dir);
+ 	/* OFFSET_CACHE */
+ out_put:
  	nilfs_put_page(page);
- 	dir->i_mtime = dir->i_ctime = CURRENT_TIME;
- /*	NILFS_I(dir)->i_flags &= ~NILFS_BTREE_FL; */
-@@ -547,7 +547,7 @@ got_it:
- 	memcpy(de->name, name, namelen);
- 	de->inode = cpu_to_le64(inode->i_ino);
- 	nilfs_set_de_type(de, inode);
--	err = nilfs_commit_chunk(page, page->mapping, from, to);
-+	nilfs_commit_chunk(page, page->mapping, from, to);
- 	dir->i_mtime = dir->i_ctime = CURRENT_TIME;
- /*	NILFS_I(dir)->i_flags &= ~NILFS_BTREE_FL; */
- 	mark_inode_dirty(dir);
-@@ -594,7 +594,7 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
- 	if (pde)
- 		pde->rec_len = cpu_to_le16(to - from);
- 	dir->inode = 0;
--	err = nilfs_commit_chunk(page, mapping, from, to);
-+	nilfs_commit_chunk(page, mapping, from, to);
- 	inode->i_ctime = inode->i_mtime = CURRENT_TIME;
- /*	NILFS_I(inode)->i_flags &= ~NILFS_BTREE_FL; */
- 	mark_inode_dirty(inode);
-@@ -639,7 +639,7 @@ int nilfs_make_empty(struct inode *inode, struct inode *parent)
- 	memcpy(de->name, "..\0", 4);
- 	nilfs_set_de_type(de, inode);
- 	kunmap_atomic(kaddr, KM_USER0);
--	err = nilfs_commit_chunk(page, mapping, 0, chunk_size);
-+	nilfs_commit_chunk(page, mapping, 0, chunk_size);
- fail:
- 	page_cache_release(page);
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index ede0375..7868cc1 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -97,7 +97,7 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
+ 			nilfs_transaction_abort(inode->i_sb);
+ 			goto out;
+ 		}
+-		mark_inode_dirty(inode);
++		nilfs_mark_inode_dirty(inode);
+ 		nilfs_transaction_commit(inode->i_sb); /* never fails */
+ 		/* Error handling should be detailed */
+ 		set_buffer_new(bh_result);
+@@ -598,7 +598,7 @@ void nilfs_truncate(struct inode *inode)
+ 	if (IS_SYNC(inode))
+ 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
+ 
+-	mark_inode_dirty(inode);
++	nilfs_mark_inode_dirty(inode);
+ 	nilfs_set_file_dirty(NILFS_SB(sb), inode, 0);
+ 	nilfs_transaction_commit(sb);
+ 	/* May construct a logical segment and may fail in sync mode.
+@@ -623,7 +623,7 @@ void nilfs_delete_inode(struct inode *inode)
+ 		truncate_inode_pages(&inode->i_data, 0);
+ 
+ 	nilfs_truncate_bmap(ii, 0);
+-	mark_inode_dirty(inode);
++	nilfs_mark_inode_dirty(inode);
+ 	nilfs_free_inode(inode);
+ 	/* nilfs_free_inode() marks inode buffer dirty */
+ 	if (IS_SYNC(inode))
+diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+index 166a261..ca83a80 100644
+--- a/fs/nilfs2/namei.c
++++ b/fs/nilfs2/namei.c
+@@ -120,7 +120,7 @@ static int nilfs_create(struct inode *dir, struct dentry *dentry, int mode,
+ 		inode->i_op = &nilfs_file_inode_operations;
+ 		inode->i_fop = &nilfs_file_operations;
+ 		inode->i_mapping->a_ops = &nilfs_aops;
+-		mark_inode_dirty(inode);
++		nilfs_mark_inode_dirty(inode);
+ 		err = nilfs_add_nondir(dentry, inode);
+ 	}
+ 	if (!err)
+@@ -148,7 +148,7 @@ nilfs_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t rdev)
+ 	err = PTR_ERR(inode);
+ 	if (!IS_ERR(inode)) {
+ 		init_special_inode(inode, inode->i_mode, rdev);
+-		mark_inode_dirty(inode);
++		nilfs_mark_inode_dirty(inode);
+ 		err = nilfs_add_nondir(dentry, inode);
+ 	}
+ 	if (!err)
+@@ -201,7 +201,7 @@ out:
+ 
+ out_fail:
+ 	drop_nlink(inode);
+-	mark_inode_dirty(inode);
++	nilfs_mark_inode_dirty(inode);
+ 	iput(inode);
+ 	goto out;
+ }
+@@ -247,7 +247,7 @@ static int nilfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
+ 		return err;
+ 
+ 	inc_nlink(dir);
+-	mark_inode_dirty(dir);
++	nilfs_mark_inode_dirty(dir);
+ 
+ 	inode = nilfs_new_inode(dir, S_IFDIR | mode);
+ 	err = PTR_ERR(inode);
+@@ -268,7 +268,7 @@ static int nilfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
+ 	if (err)
+ 		goto out_fail;
+ 
+-	mark_inode_dirty(inode);
++	nilfs_mark_inode_dirty(inode);
+ 	d_instantiate(dentry, inode);
+ out:
+ 	if (!err)
+@@ -281,11 +281,11 @@ out:
+ out_fail:
+ 	drop_nlink(inode);
+ 	drop_nlink(inode);
+-	mark_inode_dirty(inode);
++	nilfs_mark_inode_dirty(inode);
+ 	iput(inode);
+ out_dir:
+ 	drop_nlink(dir);
+-	mark_inode_dirty(dir);
++	nilfs_mark_inode_dirty(dir);
+ 	goto out;
+ }
+ 
+@@ -316,7 +316,7 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
+ 	if (err)
+ 		goto out;
+ 
+-	mark_inode_dirty(dir);
++	nilfs_mark_inode_dirty(dir);
+ 
+ 	inode->i_ctime = dir->i_ctime;
+ 	drop_nlink(inode);
+@@ -337,7 +337,7 @@ static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
+ 	err = nilfs_do_unlink(dir, dentry);
+ 
+ 	if (!err) {
+-		mark_inode_dirty(dentry->d_inode);
++		nilfs_mark_inode_dirty(dentry->d_inode);
+ 		err = nilfs_transaction_commit(dir->i_sb);
+ 	} else
+ 		nilfs_transaction_abort(dir->i_sb);
+@@ -361,9 +361,9 @@ static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
+ 		if (!err) {
+ 			inode->i_size = 0;
+ 			drop_nlink(inode);
+-			mark_inode_dirty(inode);
++			nilfs_mark_inode_dirty(inode);
+ 			drop_nlink(dir);
+-			mark_inode_dirty(dir);
++			nilfs_mark_inode_dirty(dir);
+ 		}
+ 	}
+ 	if (!err)
+@@ -416,12 +416,12 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 			goto out_dir;
+ 		inc_nlink(old_inode);
+ 		nilfs_set_link(new_dir, new_de, new_page, old_inode);
+-		mark_inode_dirty(new_dir);
++		nilfs_mark_inode_dirty(new_dir);
+ 		new_inode->i_ctime = CURRENT_TIME;
+ 		if (dir_de)
+ 			drop_nlink(new_inode);
+ 		drop_nlink(new_inode);
+-		mark_inode_dirty(new_inode);
++		nilfs_mark_inode_dirty(new_inode);
+ 	} else {
+ 		if (dir_de) {
+ 			err = -EMLINK;
+@@ -432,12 +432,12 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 		err = nilfs_add_link(new_dentry, old_inode);
+ 		if (err) {
+ 			drop_nlink(old_inode);
+-			mark_inode_dirty(old_inode);
++			nilfs_mark_inode_dirty(old_inode);
+ 			goto out_dir;
+ 		}
+ 		if (dir_de) {
+ 			inc_nlink(new_dir);
+-			mark_inode_dirty(new_dir);
++			nilfs_mark_inode_dirty(new_dir);
+ 		}
+ 	}
+ 
+@@ -454,8 +454,8 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 		nilfs_set_link(old_inode, dir_de, dir_page, new_dir);
+ 		drop_nlink(old_dir);
+ 	}
+-	mark_inode_dirty(old_dir);
+-	mark_inode_dirty(old_inode);
++	nilfs_mark_inode_dirty(old_dir);
++	nilfs_mark_inode_dirty(old_inode);
+ 
+ 	err = nilfs_transaction_commit(old_dir->i_sb);
  	return err;
 -- 
 1.5.6.5
