@@ -1,8 +1,8 @@
 From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCHv2 8/9] nilfs2: delete mark_inode_dirty in
-	nilfs_delete_entry
-Date: Fri, 27 Nov 2009 19:41:13 +0900
-Message-ID: <1259318474-28342-9-git-send-email-jir@unicus.jp>
+Subject: [PATCHv2 5/9] nilfs2: split nilfs_unlink as
+	nilfs_do_unlink and nilfs_unlink
+Date: Fri, 27 Nov 2009 19:41:10 +0900
+Message-ID: <1259318474-28342-6-git-send-email-jir@unicus.jp>
 References: <1259318474-28342-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,48 +23,82 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Delete mark_inode_dirty() in nilfs_delete_entry() to reduce duplicate
-mark_inode_dirty() calls both in nilfs_rename() and nilfs_delete_entry().
+Split nilfs_unlink() to reduce nested transaction and duplicate
+mark_inode_dirty() calls when calling nilfs_unlink() from nilfs_rmdir().
+
+nilfs_do_unlink() is an actual unlink functionality which is not
+in transaction and does not call mark_inode_dirty() for dentry argument.
+
+nilfs_unlink() is a wrapper function for do_nilfs_unlink() with
+transaction and mark_inode_dirty() for dentry argument.
 
 Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 ---
- fs/nilfs2/dir.c   |    1 -
- fs/nilfs2/namei.c |    3 ++-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ fs/nilfs2/namei.c |   29 +++++++++++++++++++----------
+ 1 files changed, 19 insertions(+), 10 deletions(-)
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index 693539b..1d9a4e4 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -595,7 +595,6 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
- 	nilfs_commit_chunk(page, mapping, from, to);
- 	inode->i_ctime = inode->i_mtime = CURRENT_TIME;
- /*	NILFS_I(inode)->i_flags &= ~NILFS_BTREE_FL; */
--	mark_inode_dirty(inode);
- out:
- 	nilfs_put_page(page);
- 	return err;
 diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index d6aa8f4..4237722 100644
+index 35f59da..d92e839 100644
 --- a/fs/nilfs2/namei.c
 +++ b/fs/nilfs2/namei.c
-@@ -334,6 +334,7 @@ static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
- 	err = nilfs_do_unlink(dir, dentry);
+@@ -288,18 +288,13 @@ out_dir:
+ 	goto out;
+ }
  
- 	if (!err) {
-+		mark_inode_dirty(dir);
- 		mark_inode_dirty(dentry->d_inode);
+-static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
++static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
+ {
+ 	struct inode *inode;
+ 	struct nilfs_dir_entry *de;
+ 	struct page *page;
+-	struct nilfs_transaction_info ti;
+ 	int err;
+ 
+-	err = nilfs_transaction_begin(dir->i_sb, &ti, 0);
+-	if (err)
+-		return err;
+-
+ 	err = -ENOENT;
+ 	de = nilfs_find_entry(dir, dentry, &page);
+ 	if (!de)
+@@ -322,12 +317,26 @@ static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
+ 
+ 	inode->i_ctime = dir->i_ctime;
+ 	drop_nlink(inode);
+-	mark_inode_dirty(inode);
+ 	err = 0;
+ out:
+-	if (!err)
++	return err;
++}
++
++static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
++{
++	struct nilfs_transaction_info ti;
++	int err;
++
++	err = nilfs_transaction_begin(dir->i_sb, &ti, 0);
++	if (err)
++		return err;
++
++	err = nilfs_do_unlink(dir, dentry);
++
++	if (!err) {
++		mark_inode_dirty(dentry->d_inode);
  		err = nilfs_transaction_commit(dir->i_sb);
- 	} else
-@@ -450,8 +451,8 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
- 	if (dir_de) {
- 		nilfs_set_link(old_inode, dir_de, dir_page, new_dir);
- 		drop_nlink(old_dir);
--		mark_inode_dirty(old_dir);
- 	}
-+	mark_inode_dirty(old_dir);
- 	mark_inode_dirty(old_inode);
+-	else
++	} else
+ 		nilfs_transaction_abort(dir->i_sb);
  
- 	err = nilfs_transaction_commit(old_dir->i_sb);
+ 	return err;
+@@ -345,7 +354,7 @@ static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
+ 
+ 	err = -ENOTEMPTY;
+ 	if (nilfs_empty_dir(inode)) {
+-		err = nilfs_unlink(dir, dentry);
++		err = nilfs_do_unlink(dir, dentry);
+ 		if (!err) {
+ 			inode->i_size = 0;
+ 			drop_nlink(inode);
 -- 
 1.5.6.5
