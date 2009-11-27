@@ -1,15 +1,16 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: [PATCH 0/9] nilfs2: reduce redandunt
  mark_inode_dirty calls
-Date: Fri, 27 Nov 2009 17:10:48 +0900 (JST)
-Message-ID: <20091127.171048.94127793.ryusuke@osrg.net>
+Date: Fri, 27 Nov 2009 18:30:15 +0900 (JST)
+Message-ID: <20091127.183015.04646931.ryusuke@osrg.net>
 References: <1259305324-28050-1-git-send-email-jir@unicus.jp>
+	<20091127.171048.94127793.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1259305324-28050-1-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+In-Reply-To: <20091127.171048.94127793.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -23,29 +24,46 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
 Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
 
-Hi,
-On Fri, 27 Nov 2009 16:01:55 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
+On Fri, 27 Nov 2009 17:10:48 +0900 (JST), Ryusuke Konishi wrote:
 > Hi,
+> On Fri, 27 Nov 2009 16:01:55 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
+> > Hi,
+> > 
+> > This is a series of patches to reduce redandunt mark_inode_dirty calls.
+> > 
+> > Many functions call mark_inode_dirty() whenever they change inode object.
+> > However, it is redundant to call mark_inode_dirty() to same inode object
+> > within a transaction.
+> > 
+> > Last patch also replaces all mark_inode_dirty() calls as
+> > nilfs_mark_inode_dirty(), to reduce deep function call tree.
+> > 
+> > 
+> >  fs/nilfs2/dir.c   |    2 +-
+> >  fs/nilfs2/inode.c |    6 +++---
+> >  fs/nilfs2/namei.c |   34 +++++++++++++++++-----------------
+> >  3 files changed, 21 insertions(+), 21 deletions(-)
 > 
-> This is a series of patches to reduce redandunt mark_inode_dirty calls.
+> Thank you for sending this series.
+> I agree with the basic policy of the changes.
 > 
-> Many functions call mark_inode_dirty() whenever they change inode object.
-> However, it is redundant to call mark_inode_dirty() to same inode object
-> within a transaction.
+> All right, I will review the patches as soon as possible.
 > 
-> Last patch also replaces all mark_inode_dirty() calls as
-> nilfs_mark_inode_dirty(), to reduce deep function call tree.
-> 
-> 
->  fs/nilfs2/dir.c   |    2 +-
->  fs/nilfs2/inode.c |    6 +++---
->  fs/nilfs2/namei.c |   34 +++++++++++++++++-----------------
->  3 files changed, 21 insertions(+), 21 deletions(-)
+> Thanks,
+> Ryusuke Konishi
 
-Thank you for sending this series.
-I agree with the basic policy of the changes.
+Well wrought patches!
 
-All right, I will review the patches as soon as possible.
+I have two comments to brush up the series.
+Later, I will comment on the corresponding ones.
+
+BTW, the diff stat looks smaller than the actual changes.
+My git-diff was as follows ;)
+
+ fs/nilfs2/dir.c   |   24 ++++++---------
+ fs/nilfs2/inode.c |    7 ++--
+ fs/nilfs2/namei.c |   85 ++++++++++++++++++++++++++++++++++------------------
+ 3 files changed, 68 insertions(+), 48 deletions(-)
 
 Thanks,
 Ryusuke Konishi
