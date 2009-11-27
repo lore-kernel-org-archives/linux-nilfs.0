@@ -1,8 +1,8 @@
 From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH 2/9] nilfs2: delete mark_inode_dirty in
-	nilfs_set_link
-Date: Fri, 27 Nov 2009 16:01:57 +0900
-Message-ID: <1259305324-28050-3-git-send-email-jir@unicus.jp>
+Subject: [PATCH 1/9] nilfs2: delete mark_inode_dirty in
+	nilfs_new_inode
+Date: Fri, 27 Nov 2009 16:01:56 +0900
+Message-ID: <1259305324-28050-2-git-send-email-jir@unicus.jp>
 References: <1259305324-28050-1-git-send-email-jir@unicus.jp>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
@@ -23,53 +23,40 @@ Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Delete mark_inode_dirty() in nilfs_set_link() to reduce redundant
-mark_inode_dirty() calls in caller of nilfs_set_link().
+It is redundant to call mark_inode_dirty() in nilfs_new_inode() because
+all caller of nilfs_new_inode() will call mark_inode_dirty()
+after calling nilfs_new_inode() directly or indirectly in transaction.
 
 Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 ---
- fs/nilfs2/dir.c   |    1 -
- fs/nilfs2/namei.c |    4 +++-
- 2 files changed, 3 insertions(+), 2 deletions(-)
+ fs/nilfs2/inode.c |    1 -
+ fs/nilfs2/namei.c |    2 +-
+ 2 files changed, 1 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index e097099..4f3fa00 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -459,7 +459,6 @@ void nilfs_set_link(struct inode *dir, struct nilfs_dir_entry *de,
- 	nilfs_put_page(page);
- 	dir->i_mtime = dir->i_ctime = CURRENT_TIME;
- /*	NILFS_I(dir)->i_flags &= ~NILFS_BTREE_FL; */
--	mark_inode_dirty(dir);
- }
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index a16c179..ede0375 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -323,7 +323,6 @@ struct inode *nilfs_new_inode(struct inode *dir, int mode)
+ 				    nilfs_init_acl(), proper cancellation of
+ 				    above jobs should be considered */
  
- /*
+-	mark_inode_dirty(inode);
+ 	return inode;
+ 
+  failed_acl:
 diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index 01adda8..4616f96 100644
+index ed02e88..01adda8 100644
 --- a/fs/nilfs2/namei.c
 +++ b/fs/nilfs2/namei.c
-@@ -397,6 +397,7 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
- 			goto out_dir;
- 		inode_inc_link_count(old_inode);
- 		nilfs_set_link(new_dir, new_de, new_page, old_inode);
-+		mark_inode_dirty(new_dir);
- 		new_inode->i_ctime = CURRENT_TIME;
- 		if (dir_de)
- 			drop_nlink(new_inode);
-@@ -425,12 +426,13 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
- 	old_inode->i_ctime = CURRENT_TIME;
+@@ -188,7 +188,7 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
+ 		goto out_fail;
  
- 	nilfs_delete_entry(old_de, old_page);
--	inode_dec_link_count(old_inode);
-+	drop_nlink(old_inode);
+ 	/* mark_inode_dirty(inode); */
+-	/* nilfs_new_inode() and page_symlink() do this */
++	/* page_symlink() do this */
  
- 	if (dir_de) {
- 		nilfs_set_link(old_inode, dir_de, dir_page, new_dir);
- 		inode_dec_link_count(old_dir);
- 	}
-+	mark_inode_dirty(old_inode);
- 
- 	err = nilfs_transaction_commit(old_dir->i_sb);
- 	return err;
+ 	err = nilfs_add_nondir(dentry, inode);
+ out:
 -- 
 1.5.6.5
