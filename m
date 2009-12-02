@@ -1,11 +1,13 @@
-From: =?UTF-8?Q?=C5=81ukasz_W=C3=B3jcicki?= <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org>
-Subject: nilfs_cleanerd problem
-Date: Wed, 02 Dec 2009 09:52:01 +0100
-Message-ID: <1259743921.7717.3.camel@Stanowisko-25>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: nilfs_cleanerd problem
+Date: Thu, 03 Dec 2009 01:06:53 +0900 (JST)
+Message-ID: <20091203.010653.90356741.ryusuke@osrg.net>
+References: <1259743921.7717.3.camel@Stanowisko-25>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============0452947544=="
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <1259743921.7717.3.camel@Stanowisko-25>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -14,18 +16,51 @@ List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
 List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Mime-version: 1.0
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="macroman"
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org
 
-SSB1c2Uga2VybmVsIHYyLjYuMjAuNCB3aXRoIG5pbGZzIDIuMC4xOCBhbmQgbmlsZnMtdXRpbHMg
-Mi4wLjE0LgpXaGVuIG5pbGZzX2NsZWFuZXJkIGlzIHN0YXJ0aW5nIEkndmUgZ290OgoKRGVjICAy
-IDA5OjQ3OjM1IGVwOTN4eCB1c2VyLmVyciBrZXJuZWw6IE5JTEZTOiBHQyBmYWlsZWQgZHVyaW5n
-CnByZXBhcmF0aW9uOiBjYW5ub3QgcmVhZCBzb3VyY2UgYmxvY2tzOiBlcnI9LTUKRGVjICAyIDA5
-OjQ3OjM1IGVwOTN4eCBkYWVtb24uZXJyIG5pbGZzX2NsZWFuZXJkWzEzMTJdOiBjYW5ub3QgY2xl
-YW4Kc2VnbWVudHM6IElucHV0L291dHB1dCBlcnJvcgpEZWMgIDIgMDk6NDc6MzUgZXA5M3h4IGRh
-ZW1vbi5pbmZvIG5pbGZzX2NsZWFuZXJkWzEzMTJdOiBzaHV0ZG93bgoKCsWBdWthc3ogCgoKICAK
-CgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwp1c2VycyBt
-YWlsaW5nIGxpc3QKdXNlcnNAbmlsZnMub3JnCmh0dHBzOi8vd3d3Lm5pbGZzLm9yZy9tYWlsbWFu
-L2xpc3RpbmZvL3VzZXJzCg==
+--===============0452947544==
+Content-Type: Text/Plain; charset=iso-2022-jp-2
+Content-Transfer-Encoding: 7bit
+
+Hi,
+On Wed, 02 Dec 2009 09:52:01 +0100, $,1 a(Bukasz W.ANsjcicki <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org> wrote:
+> I use kernel v2.6.20.4 with nilfs 2.0.18 and nilfs-utils 2.0.14.
+> When nilfs_cleanerd is starting I've got:
+> 
+> Dec  2 09:47:35 ep93xx user.err kernel: NILFS: GC failed during
+> preparation: cannot read source blocks: err=-5
+> Dec  2 09:47:35 ep93xx daemon.err nilfs_cleanerd[1312]: cannot clean
+> segments: Input/output error
+> Dec  2 09:47:35 ep93xx daemon.info nilfs_cleanerd[1312]: shutdown
+> 
+> 
+> $,1 a(Bukasz 
+
+Looks I/O error hit on your device.
+Can you read the partition as a file as follows ?
+
+ # dd if=/dev/xxx of=/nilfs-disk
+
+or if it's too big, try
+
+ # dd if=/dev/xxx of=/dev/null
+
+
+Regards,
+Ryusuke Konishi
+
+--===============0452947544==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+users mailing list
+users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+https://www.nilfs.org/mailman/listinfo/users
+
+--===============0452947544==--
