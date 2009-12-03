@@ -1,14 +1,16 @@
-From: =?UTF-8?Q?=C5=81ukasz_W=C3=B3jcicki?= <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: nilfs_cleanerd problem
-Date: Thu, 03 Dec 2009 09:48:55 +0100
-Message-ID: <1259830135.10111.8.camel@Stanowisko-25>
+Date: Thu, 03 Dec 2009 18:56:55 +0900 (JST)
+Message-ID: <20091203.185655.55999146.ryusuke@osrg.net>
 References: <1259743921.7717.3.camel@Stanowisko-25>
 	<20091203.010653.90356741.ryusuke@osrg.net>
+	<1259830135.10111.8.camel@Stanowisko-25>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <20091203.010653.90356741.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <1259830135.10111.8.camel@Stanowisko-25>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,35 +21,28 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Content-Type: text/plain; charset="macroman"
-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org
 
-VG9vIGxhdGUuCkkgcmVmb3JtYXQgU1NEIGRpc2sgdG8gRkFUMzIgYW5kIGZvcm1hdCB0byBOSUxG
-UzIgYWdhaW4uIE5vdyBpdCB3b3JrCmNvcnJlY3RseS4KV2hlbiBJJ3ZlIGdvdCBhbm90aGVyIGVy
-cm9yIHllc3RlcmRheSB0b28uIEkndmUgZ290IEVUSU1FIGVycm9yIChmcm9tCmxpbnV4IGtlcm5l
-bCkgd2hpbGUgdHJhbnNmZXJyaW5nIGxhcmdlIGZpbGUgKGxvZykgZnJvbSBTU0QgZGlzay4gVGhp
-cwpzaXR1YXRpb24gd2FzIHBsYWNlLCB3aGVuIG5pbGZzX2NsZWFuZXJkIHdhcyBydW5uaW5nIGFu
-ZCBJIGV4ZWN1dGUKbHNjcCAuIFRoZW4gKGFmdGVyIGxvbmcgdGltZSkgbmlsZnNfY2xlYW5lcmQg
-d2FzIHN0b3BwZWQgLgoKCkRuaWEgMjAwOS0xMi0wMywgY3p3IG8gZ29kemluaWUgMDE6MDYgKzA5
-MDAsIFJ5dXN1a2UgS29uaXNoaSBwaXN6ZToKPiBIaSwKPiBPbiBXZWQsIDAyIERlYyAyMDA5IDA5
-OjUyOjAxICswMTAwLCAbJCwxIGF1a2FzeiBXw7NqY2lja2kgPGx3b2pjaWNraUBib3JuaWNvLmNv
-bS5wbD4gd3JvdGU6Cj4gPiBJIHVzZSBrZXJuZWwgdjIuNi4yMC40IHdpdGggbmlsZnMgMi4wLjE4
-IGFuZCBuaWxmcy11dGlscyAyLjAuMTQuCj4gPiBXaGVuIG5pbGZzX2NsZWFuZXJkIGlzIHN0YXJ0
-aW5nIEkndmUgZ290Ogo+ID4gCj4gPiBEZWMgIDIgMDk6NDc6MzUgZXA5M3h4IHVzZXIuZXJyIGtl
-cm5lbDogTklMRlM6IEdDIGZhaWxlZCBkdXJpbmcKPiA+IHByZXBhcmF0aW9uOiBjYW5ub3QgcmVh
-ZCBzb3VyY2UgYmxvY2tzOiBlcnI9LTUKPiA+IERlYyAgMiAwOTo0NzozNSBlcDkzeHggZGFlbW9u
-LmVyciBuaWxmc19jbGVhbmVyZFsxMzEyXTogY2Fubm90IGNsZWFuCj4gPiBzZWdtZW50czogSW5w
-dXQvb3V0cHV0IGVycm9yCj4gPiBEZWMgIDIgMDk6NDc6MzUgZXA5M3h4IGRhZW1vbi5pbmZvIG5p
-bGZzX2NsZWFuZXJkWzEzMTJdOiBzaHV0ZG93bgo+ID4gCj4gPiAKPiA+IBskLDEgYXVrYXN6IAo+
-IAo+IExvb2tzIEkvTyBlcnJvciBoaXQgb24geW91ciBkZXZpY2UuCj4gQ2FuIHlvdSByZWFkIHRo
-ZSBwYXJ0aXRpb24gYXMgYSBmaWxlIGFzIGZvbGxvd3MgPwo+IAo+ICAjIGRkIGlmPS9kZXYveHh4
-IG9mPS9uaWxmcy1kaXNrCj4gCj4gb3IgaWYgaXQncyB0b28gYmlnLCB0cnkKPiAKPiAgIyBkZCBp
-Zj0vZGV2L3h4eCBvZj0vZGV2L251bGwKPiAKPiAKPiBSZWdhcmRzLAo+IFJ5dXN1a2UgS29uaXNo
-aQo+IF9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCj4gdXNl
-cnMgbWFpbGluZyBsaXN0Cj4gdXNlcnNAbmlsZnMub3JnCj4gaHR0cHM6Ly93d3cubmlsZnMub3Jn
-L21haWxtYW4vbGlzdGluZm8vdXNlcnMKCsWBdWthc3ogV8OzamNpY2tpIApJbsW8eW5pZXIgYXBs
-aWthY3lqbnkKWmFrxYJhZCBFbGVrdHJvbmljem55IEJPUk5JQ08KdWwuIE1hxYLEmWN6ecWEc2th
-IDI1CjI2LTYwNCBSYWRvbQp0ZWwuICg0OCkgMzYgNTUgODIyIHcuIDI2CmZheC4gKDQ4KSAzNiA1
-NSA4MjEKCiAgCgoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X18KdXNlcnMgbWFpbGluZyBsaXN0CnVzZXJzQG5pbGZzLm9yZwpodHRwczovL3d3dy5uaWxmcy5v
-cmcvbWFpbG1hbi9saXN0aW5mby91c2Vycwo=
+Hi,
+On Thu, 03 Dec 2009 09:48:55 +0100, Lukasz Wojcicki <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org> wrote:
+> Too late.
+> I reformat SSD disk to FAT32 and format to NILFS2 again. Now it work
+> correctly.
+
+No, no. I suspect some kind of media error happened.  My intention is
+just reading the block device for narrowing down the cause.  So, it's
+independent with which filesystem is written on the device.
+
+> When I've got another error yesterday too. I've got ETIME error (from
+> linux kernel) while transferring large file (log) from SSD disk. This
+> situation was place, when nilfs_cleanerd was running and I execute
+> lscp . Then (after long time) nilfs_cleanerd was stopped .
+
+Seems that the ETIME error comes from the device layer because nilfs
+doesn't return it.  I suspect cleanerd actually caused the issue.  But
+it seems to me that cleanerd degraded or overloaded your device.
+
+So, I thought we first should test the device itself.
+
+Regards,
+Ryusuke Konishi
