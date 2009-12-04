@@ -1,7 +1,7 @@
 From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: trivial coding style fix
-Date: Fri, 04 Dec 2009 21:02:10 +0900
-Message-ID: <874oo7ymkd.wl%jir@sekiba.com>
+Subject: [PATCH] nilfs2: trivial coding style fix
+Date: Fri, 04 Dec 2009 21:03:30 +0900
+Message-ID: <873a3rymi5.wl%jir@sekiba.com>
 References: <87vdgnxfcd.wl%jir@sekiba.com>
 	<20091204.200102.43716794.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
@@ -24,124 +24,106 @@ To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
 Hi,
 
-Thank you for the reveiew.
-I'll revise the patch!
+This is a revised version of trivial style fix patch
+to mend errors/warnings reported by "checkpatch.pl --file".
 
-thanks
+Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+---
+ fs/nilfs2/bmap.c   |    3 ++-
+ fs/nilfs2/cpfile.c |   31 ++++++++++++++++++-------------
+ fs/nilfs2/direct.c |   17 +++++++++--------
+ 3 files changed, 29 insertions(+), 22 deletions(-)
 
-regards,
-
-At Fri, 04 Dec 2009 20:01:02 +0900 (JST),
-Ryusuke Konishi wrote:
-> 
-> Hi,
-> On Fri, 04 Dec 2009 18:23:30 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
-> > Hi,
-> > 
-> > This is a trivial style fix patch to mend errors/warnings
-> > reported by "checkpatch.pl --file".
-> > 
-> > Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-> > ---
-> >  fs/nilfs2/bmap.c   |    3 ++-
-> >  fs/nilfs2/cpfile.c |    5 +++--
-> >  fs/nilfs2/direct.c |   14 ++++++++------
-> >  3 files changed, 13 insertions(+), 9 deletions(-)
-> 
-> Ok, I'll comment inline below.
->  
-> > diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-> > index 08834df..78ccbba 100644
-> > --- a/fs/nilfs2/bmap.c
-> > +++ b/fs/nilfs2/bmap.c
-> > @@ -426,7 +426,8 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
-> >  	key = page_index(bh->b_page) << (PAGE_CACHE_SHIFT -
-> >  					 bmap->b_inode->i_blkbits);
-> >  	for (pbh = page_buffers(bh->b_page); pbh != bh;
-> > -	     pbh = pbh->b_this_page, key++);
-> > +	     pbh = pbh->b_this_page, key++)
-> > +		;
-> 
-> How about moving the "key++" inside the loop?  The line break in the
-> middle of the for-sentence looks eliminable.
-> 
-> >  	return key;
-> >  }
-> > diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-> > index 3f5d5d0..a86d402 100644
-> > --- a/fs/nilfs2/cpfile.c
-> > +++ b/fs/nilfs2/cpfile.c
-> > @@ -328,9 +328,10 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
-> >  			tnicps += nicps;
-> >  			nilfs_mdt_mark_buffer_dirty(cp_bh);
-> >  			nilfs_mdt_mark_dirty(cpfile);
-> > +			count = nilfs_cpfile_block_sub_valid_checkpoints(
-> > +				  cpfile, cp_bh, kaddr, nicps);
-> >  			if (!nilfs_cpfile_is_in_first(cpfile, cno) &&
-> > -			    (count = nilfs_cpfile_block_sub_valid_checkpoints(
-> > -				    cpfile, cp_bh, kaddr, nicps)) == 0) {
-> > +			    count == 0) {
-> 
-> This conversion is not equivalent because
-> nilfs_cpfile_block_sub_valid_checkpoints() has a side effect.
-> 
-> >  				/* make hole */
-> >  				kunmap_atomic(kaddr, KM_USER0);
-> >  				brelse(cp_bh);
-> > diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
-> > index d369ac7..f817282 100644
-> > --- a/fs/nilfs2/direct.c
-> > +++ b/fs/nilfs2/direct.c
-> > @@ -53,9 +53,10 @@ static int nilfs_direct_lookup(const struct nilfs_bmap *bmap,
-> >  
-> >  	direct = (struct nilfs_direct *)bmap;
-> >  	if ((key > NILFS_DIRECT_KEY_MAX) ||
-> > -	    (level != 1) ||	/* XXX: use macro for level 1 */
-> > -	    ((ptr = nilfs_direct_get_ptr(direct, key)) ==
-> > -	     NILFS_BMAP_INVALID_PTR))
-> > +	    (level != 1))  /* XXX: use macro for level 1 */
-> > +		return -ENOENT;
-> > +	ptr = nilfs_direct_get_ptr(direct, key);
-> > +	if (ptr == NILFS_BMAP_INVALID_PTR)
-> >  		return -ENOENT;
-> 
-> Looks good, but it's still redundant.  How about removing unnecessary
-> parentheses in this occasion?
-> 
-> The first conditional statement can be simplified to:
-> 
-> 	if (key > NILFS_DIRECT_KEY_MAX || level != 1)
-> 
->   
-> >  	if (ptrp != NULL)
-> > @@ -73,9 +74,10 @@ static int nilfs_direct_lookup_contig(const struct nilfs_bmap *bmap,
-> >  	sector_t blocknr;
-> >  	int ret, cnt;
-> >  
-> > -	if (key > NILFS_DIRECT_KEY_MAX ||
-> > -	    (ptr = nilfs_direct_get_ptr(direct, key)) ==
-> > -	    NILFS_BMAP_INVALID_PTR)
-> > +	if (key > NILFS_DIRECT_KEY_MAX)
-> > +		return -ENOENT;
-> > +	ptr = nilfs_direct_get_ptr(direct, key);
-> > +	if (ptr == NILFS_BMAP_INVALID_PTR)
-> >  		return -ENOENT;
-> 
-> Looks good to me.
->   
-> >  	if (NILFS_BMAP_USE_VBN(bmap)) {
-> > -- 
-> > 1.5.6.5
-> 
-> Thanks,
-> Ryusuke Konishi
-> _______________________________________________
-> users mailing list
-> users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-> https://www.nilfs.org/mailman/listinfo/users
-> 
-> 
-> 
-
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index f4a14ea..88db45a 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -418,7 +418,8 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+ 	key = page_index(bh->b_page) << (PAGE_CACHE_SHIFT -
+ 					 bmap->b_inode->i_blkbits);
+ 	for (pbh = page_buffers(bh->b_page); pbh != bh;
+-	     pbh = pbh->b_this_page, key++);
++	     pbh = pbh->b_this_page)
++		key++;
+ 
+ 	return key;
+ }
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index d5ad54e..1873781 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -328,19 +328,24 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 			tnicps += nicps;
+ 			nilfs_mdt_mark_buffer_dirty(cp_bh);
+ 			nilfs_mdt_mark_dirty(cpfile);
+-			if (!nilfs_cpfile_is_in_first(cpfile, cno) &&
+-			    (count = nilfs_cpfile_block_sub_valid_checkpoints(
+-				    cpfile, cp_bh, kaddr, nicps)) == 0) {
+-				/* make hole */
+-				kunmap_atomic(kaddr, KM_USER0);
+-				brelse(cp_bh);
+-				ret = nilfs_cpfile_delete_checkpoint_block(
+-					cpfile, cno);
+-				if (ret == 0)
+-					continue;
+-				printk(KERN_ERR "%s: cannot delete block\n",
+-				       __func__);
+-				break;
++			if (!nilfs_cpfile_is_in_first(cpfile, cno)) {
++				count =
++				  nilfs_cpfile_block_sub_valid_checkpoints(
++						cpfile, cp_bh, kaddr, nicps);
++				if (count == 0) {
++					/* make hole */
++					kunmap_atomic(kaddr, KM_USER0);
++					brelse(cp_bh);
++					ret =
++					  nilfs_cpfile_delete_checkpoint_block(
++								   cpfile, cno);
++					if (ret == 0)
++						continue;
++					printk(KERN_ERR
++					       "%s: cannot delete block\n",
++					       __func__);
++					break;
++				}
+ 			}
+ 		}
+ 
+diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
+index d369ac7..31d51fc 100644
+--- a/fs/nilfs2/direct.c
++++ b/fs/nilfs2/direct.c
+@@ -51,11 +51,11 @@ static int nilfs_direct_lookup(const struct nilfs_bmap *bmap,
+ 	struct nilfs_direct *direct;
+ 	__u64 ptr;
+ 
+-	direct = (struct nilfs_direct *)bmap;
+-	if ((key > NILFS_DIRECT_KEY_MAX) ||
+-	    (level != 1) ||	/* XXX: use macro for level 1 */
+-	    ((ptr = nilfs_direct_get_ptr(direct, key)) ==
+-	     NILFS_BMAP_INVALID_PTR))
++	direct = (struct nilfs_direct *)bmap;  /* XXX: use macro for level 1 */
++	if ((key > NILFS_DIRECT_KEY_MAX) || (level != 1))
++		return -ENOENT;
++	ptr = nilfs_direct_get_ptr(direct, key);
++	if (ptr == NILFS_BMAP_INVALID_PTR)
+ 		return -ENOENT;
+ 
+ 	if (ptrp != NULL)
+@@ -73,9 +73,10 @@ static int nilfs_direct_lookup_contig(const struct nilfs_bmap *bmap,
+ 	sector_t blocknr;
+ 	int ret, cnt;
+ 
+-	if (key > NILFS_DIRECT_KEY_MAX ||
+-	    (ptr = nilfs_direct_get_ptr(direct, key)) ==
+-	    NILFS_BMAP_INVALID_PTR)
++	if (key > NILFS_DIRECT_KEY_MAX)
++		return -ENOENT;
++	ptr = nilfs_direct_get_ptr(direct, key);
++	if (ptr == NILFS_BMAP_INVALID_PTR)
+ 		return -ENOENT;
+ 
+ 	if (NILFS_BMAP_USE_VBN(bmap)) {
 -- 
-Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+1.5.6.5
