@@ -1,7 +1,8 @@
-From: Delian Krustev <krustev-sueGvCUcFGXR7s880joybQ@public.gmane.org>
-Subject: Performance problems over AoE
-Date: Sat, 19 Dec 2009 02:24:44 +0200
-Message-ID: <200912190224.46774.krustev@krustev.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: [ANNOUNCE] linux-nilfs Mailing List open at
+	vger.kernel.org
+Date: Sat, 19 Dec 2009 16:59:56 +0900 (JST)
+Message-ID: <20091219.165956.27805646.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,29 +19,34 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Hi everyone,
+
+We are planning to switch mailing list to a new place due to a
+maintenance reason.
+
+David Miller of vger.kernel.org kindly made a list "linux-nilfs" for
+NILFS discussion.
+
+So, please take a moment to go through the steps explained in:
+
+  http://vger.kernel.org/majordomo-info.html
+
+to subscribe the linux-nilfs mailing list.
+
+Simply put, you can do it by sending a mail containing ONLY
+
+  subscribe linux-nilfs
+
+to <majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org> and replying to a confirmation mail.
 
 
-	Hi All,
-
-Nice to meet you :-)
-
-I'm having performance problems with NILFS2 running on
-AoE (Ata over Ethernet) device.
-
-I'm able to get around 5/10 MB sequential write speed for over a device
-which is capable of 100MB/s.
-
-I've described the problem and my setup in details on a web page:
-
-http://krustev.net/w/articles/Backup_service_and_software_block_devices_over_the_net/
+We will freeze the current list at the beginning of next January; the
+specific date will be announced in a reminder.
 
 
-and will be thankful if you take a look and give some ideas.
+We appreciate your cooperation.
 
-And one other question.
-Is there a way to disable the auto check point creation ?
-
-
-Cheers
---
-Delian
+Thank you,
+Ryusuke Konishi
