@@ -1,14 +1,15 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Delian Krustev <krustev-sueGvCUcFGXR7s880joybQ@public.gmane.org>
 Subject: Re: Performance problems over AoE
-Date: Sat, 19 Dec 2009 18:43:46 +0900 (JST)
-Message-ID: <20091219.184346.239007912.ryusuke@osrg.net>
+Date: Mon, 21 Dec 2009 18:21:39 +0200
+Message-ID: <200912211821.45366.krustev@krustev.net>
 References: <200912190224.46774.krustev@krustev.net>
+	<20091219.184346.239007912.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <200912190224.46774.krustev-sueGvCUcFGXR7s880joybQ@public.gmane.org>
+In-Reply-To: <20091219.184346.239007912.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,51 +20,45 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, krustev-sueGvCUcFGXR7s880joybQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi!
-On Sat, 19 Dec 2009 02:24:44 +0200, Delian Krustev <krustev-sueGvCUcFGXR7s880joybQ@public.gmane.org> wrote:
-> 
-> 	Hi All,
-> 
-> Nice to meet you :-)
-> 
-> I'm having performance problems with NILFS2 running on
-> AoE (Ata over Ethernet) device.
-> 
-> I'm able to get around 5/10 MB sequential write speed for over a device
-> which is capable of 100MB/s.
-> 
-> I've described the problem and my setup in details on a web page:
-> 
-> http://krustev.net/w/articles/Backup_service_and_software_block_devices_over_the_net/
-> 
-> 
-> and will be thankful if you take a look and give some ideas.
 
-Thank you for letting us know the interesting measurement result.
+	Hi,
 
-Actually we recognize similar issue on high performance drives, but
-this looks worse than the cases we know.
+Thanks for the answers.
 
-In the 2.6.33 merge window, I sent some series of patches upstream to
-improve write performance.  And, the effort is still going on.
+On Sat, 19 Dec 2009 18:43:46 +0900 (JST) Ryusuke Konishi wrote:
+> Thank you for letting us know the interesting measurement result.
+> 
+> Actually we recognize similar issue on high performance drives, but
+> this looks worse than the cases we know.
 
-I would appreciate it if you could try nilfs in kernel 2.6.33-rc1 or
-optimization patches that will be appeared ongoingly in this list or
-linux-nilfs.
+This might be due to the increased latency of the AoE device.
 
-> And one other question.
-> Is there a way to disable the auto check point creation ?
+> In the 2.6.33 merge window, I sent some series of patches upstream to
+> improve write performance.  And, the effort is still going on.
+> 
+> I would appreciate it if you could try nilfs in kernel 2.6.33-rc1 or
+> optimization patches that will be appeared ongoingly in this list or
+> linux-nilfs.
 
-Unfortunately no.  The contiguous check point creation is what nilfs
-stands for.  But, I think the performance impact of cp creation is not
-so high unless you are doing osync writes.
- 
-> Cheers
-> --
-> Delian
+OK, I will try it. Just have to figure out on which hardware since the
+setup I've described is on production systems and running early RC kernels
+there is not an option.
+But I will probably find the metal or will create some VM images.
 
-Cheers,
-Ryusuke Konishi
+> Unfortunately no.  The contiguous check point creation is what nilfs
+> stands for.  But, I think the performance impact of cp creation is not
+> so high unless you are doing osync writes.
+
+Did you read the part for the cleanerd causing high load on the network
+interface ?
+And the checkpoints being created with no data modifications ?
+
+Do you have a guess for these ?
+
+
+Cheers
+--
+Delian
