@@ -1,16 +1,13 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Performance problems over AoE
-Date: Tue, 22 Dec 2009 03:46:36 +0900 (JST)
-Message-ID: <20091222.034636.28059259.ryusuke@osrg.net>
-References: <200912190224.46774.krustev@krustev.net>
-	<20091219.184346.239007912.ryusuke@osrg.net>
-	<200912211821.45366.krustev@krustev.net>
+From: Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>
+Subject: [PATCH 02/12] nilfs2: Storage class should be before
+	const qualifier
+Date: Wed, 23 Dec 2009 13:57:47 +0100
+Message-ID: <1261573067-8673-1-git-send-email-tklauser@distanz.ch>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <200912211821.45366.krustev-sueGvCUcFGXR7s880joybQ@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,81 +18,32 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: krustev-sueGvCUcFGXR7s880joybQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi,
-On Mon, 21 Dec 2009 18:21:39 +0200, Delian Krustev wrote:
-> 
-> 	Hi,
-> 
-> Thanks for the answers.
-> 
-> On Sat, 19 Dec 2009 18:43:46 +0900 (JST) Ryusuke Konishi wrote:
-> > Thank you for letting us know the interesting measurement result.
-> > 
-> > Actually we recognize similar issue on high performance drives, but
-> > this looks worse than the cases we know.
-> 
-> This might be due to the increased latency of the AoE device.
+The C99 specification states in section 6.11.5:
 
-I agree.
- 
-> > In the 2.6.33 merge window, I sent some series of patches upstream to
-> > improve write performance.  And, the effort is still going on.
-> > 
-> > I would appreciate it if you could try nilfs in kernel 2.6.33-rc1 or
-> > optimization patches that will be appeared ongoingly in this list or
-> > linux-nilfs.
-> 
-> OK, I will try it. Just have to figure out on which hardware since the
-> setup I've described is on production systems and running early RC kernels
-> there is not an option.
-> But I will probably find the metal or will create some VM images.
+The placement of a storage-class specifier other than at the beginning
+of the declaration specifiers in a declaration is an obsolescent
+feature.
 
-Thank you for your cooperation.
+Signed-off-by: Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>
+---
+ fs/nilfs2/ioctl.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-If you prefer customized kernels prior to 2.6.30, I can upload a new
-git tree of nilfs2 kmod which backported the latest improvement
-patches.
-
-In my debian environment, 2.6.33-rc1 vanilla kernel is, so far,
-working nicely.
-
-> > Unfortunately no.  The contiguous check point creation is what nilfs
-> > stands for.  But, I think the performance impact of cp creation is not
-> > so high unless you are doing osync writes.
-> 
-> Did you read the part for the cleanerd causing high load on the network
-> interface ?
-
-OK, so you mean cp creation by GC.
-
-Yes, it's another issue.  GC of nilfs involves checkpoint creation.
-The problem is, the current GC is so stupid and leading to needless
-I/O overheads.
-
-You can turn off cleanerd with -i option.
-
-e.g.
- # mount -t nilfs2 -i /dev/xxx /test-dir
-
-And, this is useful when you want to separate the cause of performance
-issue.  But anyway, GC should be definitely revised to remedy the
-situation.
-
-> And the checkpoints being created with no data modifications ?
-
-Yes, even if you don't modify the filesystem, nilfs internally
-requires it for GC.
- 
-> Do you have a guess for these ?
-
-Well, it looks suffering either or both.  ``mount -i'' would clear up
-the matter.
-
-I recognize the current nilfs has both the latency issue and the GC
-issue, and I believe both should be improved.
-
-Cheers,
-Ryusuke Konishi 
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index f6af760..d6b2b83 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -480,7 +480,7 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
+ 				      unsigned int cmd, void __user *argp)
+ {
+ 	struct nilfs_argv argv[5];
+-	const static size_t argsz[5] = {
++	static const size_t argsz[5] = {
+ 		sizeof(struct nilfs_vdesc),
+ 		sizeof(struct nilfs_period),
+ 		sizeof(__u64),
+-- 
+1.6.3.3
