@@ -1,114 +1,73 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: benchmark results
-Date: Fri, 25 Dec 2009 00:35:13 +0900 (JST)
-Message-ID: <20091225.003513.06978132.ryusuke@osrg.net>
-References: <20091224.210645.57462112.ryusuke@osrg.net>
-	<alpine.DEB.2.01.0912240415450.3483@bogon.housecafe.de>
-	<4B336289.3010608@nerdbynature.de>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: tytso@mit.edu
+Subject: Re: [Jfs-discussion] benchmark results
+Date: Thu, 24 Dec 2009 16:27:56 -0500
+Message-ID: <20091224212756.GM21594@thunk.org>
+References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
+ <19251.26403.762180.228181@tree.ty.sabi.co.uk>
 Mime-Version: 1.0
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <19251.26403.762180.228181@tree.ty.sabi.co.uk>
+Sender: reiserfs-devel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <4B336289.3010608-AanptEQQ3TL9uQeqpI+JUg@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: lists-AanptEQQ3TL9uQeqpI+JUg@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+To: Peter Grandi <pg_jf2@jf2.for.sabi.co.UK>
+Cc: xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, ext-users <ext3-users@redhat.com>, linux-nilfs@vger.kernel.org
 
-On Thu, 24 Dec 2009 04:46:01 -0800, Christian Kujau wrote:
-> On Thu, 24 Dec 2009 04:21:13 -0800 (PST), Christian Kujau wrote:
-> > On Thu, 24 Dec 2009 at 21:06, Ryusuke Konishi wrote:
-> > > > Bonnie++ couldn't complete on nilfs2, only the generic tests 
-> > > > and tiobench were run.
-> > > 
-> > > I looked at the log but couldn't identify the error.
-> > > Is that a disk full?
-> > 
-> > Well, bonnie++ just exits with:
-> > 
-> >   Create files in sequential order...Can't write data.
-> >   Cleaning up test directory after error.
-> > 
-> > ...which usually means that the disk is full. And I seem to remember that 
-> > nilfs2 filesystems were indeed filling up as data is (re)written. However, 
-> > I was just curious to test nilfs2 - I'm not even sure things like bonnie++ 
-> > are supposed to run at all on a versioning file system :)
-> > 
-> > I'll try to run a few more nilfs2 tests to find out of it's really an 
-> > -ENOSPACE thing.
+On Thu, Dec 24, 2009 at 01:05:39PM +0000, Peter Grandi wrote:
+> > I've had the chance to use a testsystem here and couldn't
+> > resist
 > 
-> I was curious enough to just do that right now:
-> 
-> $ cat t-nilfs2.sh
-> #!/bin/sh
-> umount /mnt/d1
-> mkfs.nilfs2 /dev/xvdb
-> mount -t nilfs2 -o barrier=off /dev/xvdb /mnt/d1
-> for i in `seq 1 1000`; do
-> 	date
-> 	dd if=/dev/zero of=/mnt/d1/file.$i bs=1M count=100 2>/dev/null
-> 	sync && rm -v /mnt/d1/file.$i && sync
-> 	ls -la /mnt/d1
-> 	df -k /mnt/d1 | grep -v Files
-> 	echo
-> done
-> --------------
-> 
-> So, basically I'm just writing 100MB to nilfs, then deleting the file 
-> again, sync and making sure that file.$i has been indeed deleted. Here's 
-> just the output from the df(1) commands:
-> 
-> Filesystem           1K-blocks      Used Available Use% Mounted on
-> /dev/xvdb              2088956    114684   1867776   6% /mnt/d1
-> /dev/xvdb              2088956    221180   1761280  12% /mnt/d1
-> /dev/xvdb              2088956    327676   1654784  17% /mnt/d1
-> /dev/xvdb              2088956    434172   1548288  22% /mnt/d1
-> /dev/xvdb              2088956    524284   1458176  27% /mnt/d1
-> /dev/xvdb              2088956    638972   1343488  33% /mnt/d1
-> /dev/xvdb              2088956    745468   1236992  38% /mnt/d1
-> /dev/xvdb              2088956    835580   1146880  43% /mnt/d1
-> /dev/xvdb              2088956    958460   1024000  49% /mnt/d1
-> /dev/xvdb              2088956   1056764    925696  54% /mnt/d1
-> /dev/xvdb              2088956   1163260    819200  59% /mnt/d1
-> /dev/xvdb              2088956   1261564    720896  64% /mnt/d1
-> /dev/xvdb              2088956   1368060    614400  70% /mnt/d1
-> /dev/xvdb              2088956   1482748    499712  75% /mnt/d1
-> /dev/xvdb              2088956   1572860    409600  80% /mnt/d1
-> /dev/xvdb              2088956   1687548    294912  86% /mnt/d1
-> /dev/xvdb              2088956   1794044    188416  91% /mnt/d1
-> /dev/xvdb              2088956   1892348     90112  96% /mnt/d1
-> /dev/xvdb              2088956   1957884     24576  99% /mnt/d1
-> /dev/xvdb              2088956   1974268      8192 100% /mnt/d1
-> /dev/xvdb              2088956   1974268      8192 100% /mnt/d1
-> /dev/xvdb              2088956   1974268      8192 100% /mnt/d1
-> [...]
-> 
-> With 8K free, dd(1) was unable to write any data to the filesystem. This 
-> is all with Linux 2.6.32 (x86-64) and nilfs2-tools 2.0.14-5, but I think 
-> this happened with earlier kernels too. Again, perhaps nilfs2 is 
-> supposed to work that way, somewhere the "old" versions of the 
-> filesystem have to be stored and this the fs fills up of course - but 
-> you tell me :-)
-> 
-> Christian.
+> Unfortunately there seems to be an overproduction of rather
+> meaningless file system "benchmarks"...
 
-Thank you for the quick responses.
+One of the problems is that very few people are interested in writing
+or maintaining file system benchmarks, except for file system
+developers --- but many of them are more interested in developing (and
+unfortunately, in some cases, promoting) their file systems than they
+are in doing a good job maintaining a good set of benchmarks.  Sad but
+true...
 
-Yes, nilfs -- more precisely garbage collector of nilfs, by its
-nature, preserves old data within a period of time.  So, it usually
-needs some care for this kind of test.  Benchmark programs make fair
-amount of changes for the short run, by its very nature ;)
+> * In the "generic" test the 'tar' test bandwidth is exactly the
+>   same ("276.68 MB/s") for nearly all filesystems.
+> 
+> * There are read transfer rates higher than the one reported by
+>   'hdparm' which is "66.23 MB/sec" (comically enough *all* the
+>   read transfer rates your "benchmarks" report are higher).
 
-Anyway, I'm relieved for now.
+If you don't do a "sync" after the tar, then in most cases you will be
+measuring the memory bandwidth, because data won't have been written
+to disk.  Worse yet, it tends to skew the results of the what happens
+afterwards (*especially* if you aren't running the steps of the
+benchmark in a script).
 
-Thanks,
-Ryusuke Konishi
+> BTW the use of Bonnie++ is also usually a symptom of a poor
+> misunderstanding of file system benchmarking.
+
+Dbench is also a really nasty benchmark.  If it's tuned correctly, you
+are measuring memory bandwidth and the hard drive light will never go
+on.  :-) The main reason why it was interesting was that it and tbench
+was used to model a really bad industry benchmark, netbench, which at
+one point a number of years ago I/T managers used to decide which CIFS
+server they would buy[1].  So it was useful for Samba developers who were
+trying to do competitive benchmkars, but it's not a very accurate
+benchmark for measuring real-life file system workloads.
+
+[1] http://samba.org/ftp/tridge/dbench/README
+
+> On the plus side, test setup context is provided in the "env"
+> directory, which is rare enough to be commendable.
+
+Absolutely.  :-)
+
+Another good example of well done file system benchmarks can be found
+at http://btrfs.boxacle.net; it's done by someone who does performance
+benchmarks for a living.  Note that JFS and XFS come off much better
+on a number of the tests --- and that there is a *large* number amount
+of variation when you look at different simulated workloads and with a
+varying number of threads writing to the file system at the same time.
+
+Regards,
+
+	       	  	  	     	 - Ted
