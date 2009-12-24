@@ -1,81 +1,114 @@
-From: Teran McKinney <sega01@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: benchmark results
-Date: Thu, 24 Dec 2009 12:59:20 +0000
-Message-ID: <b245135e0912240459j3ca92827sc69bb4665f60d8c3@mail.gmail.com>
-References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
+Date: Fri, 25 Dec 2009 00:35:13 +0900 (JST)
+Message-ID: <20091225.003513.06978132.ryusuke@osrg.net>
+References: <20091224.210645.57462112.ryusuke@osrg.net>
+	<alpine.DEB.2.01.0912240415450.3483@bogon.housecafe.de>
+	<4B336289.3010608@nerdbynature.de>
+Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:in-reply-to:references
-         :date:message-id:subject:from:to:cc:content-type
-         :content-transfer-encoding;
-        bh=gNUyndABhz+Ql8bJUA5CJLy1D1BywebjOpm+1IxuE7M=;
-        b=JvcgBRdwhM9dp18DuZ+pIlyDtae3FkQ2pGFVCiflhYaf1fNXMyYlMaUon9DvxvfseH
-         2zUFduWx1FPgcj+1Y1TZT+b61v82Mz/vw28FLixLg1MEHaTA6vn0Syw/QE9uX3zkzWmT
-         f32i+ePrAWcR9GScxT6hRBOhYDE/3DJOkRV3c=
-In-Reply-To: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
-Sender: reiserfs-devel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: Christian Kujau <lists@nerdbynature.de>
-Cc: xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, ext-users <ext3-users@redhat.com>, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <4B336289.3010608-AanptEQQ3TL9uQeqpI+JUg@public.gmane.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
+	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
+List-Archive: <https://www.nilfs.org/pipermail/users>
+List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
+List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
+	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: lists-AanptEQQ3TL9uQeqpI+JUg@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
 
-Which I/O scheduler are you using? Pretty sure that ReiserFS is a
-little less deadlocky with CFQ or another over deadline, but that
-deadline usually gives the best results for me (especially for JFS).
+On Thu, 24 Dec 2009 04:46:01 -0800, Christian Kujau wrote:
+> On Thu, 24 Dec 2009 04:21:13 -0800 (PST), Christian Kujau wrote:
+> > On Thu, 24 Dec 2009 at 21:06, Ryusuke Konishi wrote:
+> > > > Bonnie++ couldn't complete on nilfs2, only the generic tests 
+> > > > and tiobench were run.
+> > > 
+> > > I looked at the log but couldn't identify the error.
+> > > Is that a disk full?
+> > 
+> > Well, bonnie++ just exits with:
+> > 
+> >   Create files in sequential order...Can't write data.
+> >   Cleaning up test directory after error.
+> > 
+> > ...which usually means that the disk is full. And I seem to remember that 
+> > nilfs2 filesystems were indeed filling up as data is (re)written. However, 
+> > I was just curious to test nilfs2 - I'm not even sure things like bonnie++ 
+> > are supposed to run at all on a versioning file system :)
+> > 
+> > I'll try to run a few more nilfs2 tests to find out of it's really an 
+> > -ENOSPACE thing.
+> 
+> I was curious enough to just do that right now:
+> 
+> $ cat t-nilfs2.sh
+> #!/bin/sh
+> umount /mnt/d1
+> mkfs.nilfs2 /dev/xvdb
+> mount -t nilfs2 -o barrier=off /dev/xvdb /mnt/d1
+> for i in `seq 1 1000`; do
+> 	date
+> 	dd if=/dev/zero of=/mnt/d1/file.$i bs=1M count=100 2>/dev/null
+> 	sync && rm -v /mnt/d1/file.$i && sync
+> 	ls -la /mnt/d1
+> 	df -k /mnt/d1 | grep -v Files
+> 	echo
+> done
+> --------------
+> 
+> So, basically I'm just writing 100MB to nilfs, then deleting the file 
+> again, sync and making sure that file.$i has been indeed deleted. Here's 
+> just the output from the df(1) commands:
+> 
+> Filesystem           1K-blocks      Used Available Use% Mounted on
+> /dev/xvdb              2088956    114684   1867776   6% /mnt/d1
+> /dev/xvdb              2088956    221180   1761280  12% /mnt/d1
+> /dev/xvdb              2088956    327676   1654784  17% /mnt/d1
+> /dev/xvdb              2088956    434172   1548288  22% /mnt/d1
+> /dev/xvdb              2088956    524284   1458176  27% /mnt/d1
+> /dev/xvdb              2088956    638972   1343488  33% /mnt/d1
+> /dev/xvdb              2088956    745468   1236992  38% /mnt/d1
+> /dev/xvdb              2088956    835580   1146880  43% /mnt/d1
+> /dev/xvdb              2088956    958460   1024000  49% /mnt/d1
+> /dev/xvdb              2088956   1056764    925696  54% /mnt/d1
+> /dev/xvdb              2088956   1163260    819200  59% /mnt/d1
+> /dev/xvdb              2088956   1261564    720896  64% /mnt/d1
+> /dev/xvdb              2088956   1368060    614400  70% /mnt/d1
+> /dev/xvdb              2088956   1482748    499712  75% /mnt/d1
+> /dev/xvdb              2088956   1572860    409600  80% /mnt/d1
+> /dev/xvdb              2088956   1687548    294912  86% /mnt/d1
+> /dev/xvdb              2088956   1794044    188416  91% /mnt/d1
+> /dev/xvdb              2088956   1892348     90112  96% /mnt/d1
+> /dev/xvdb              2088956   1957884     24576  99% /mnt/d1
+> /dev/xvdb              2088956   1974268      8192 100% /mnt/d1
+> /dev/xvdb              2088956   1974268      8192 100% /mnt/d1
+> /dev/xvdb              2088956   1974268      8192 100% /mnt/d1
+> [...]
+> 
+> With 8K free, dd(1) was unable to write any data to the filesystem. This 
+> is all with Linux 2.6.32 (x86-64) and nilfs2-tools 2.0.14-5, but I think 
+> this happened with earlier kernels too. Again, perhaps nilfs2 is 
+> supposed to work that way, somewhere the "old" versions of the 
+> filesystem have to be stored and this the fs fills up of course - but 
+> you tell me :-)
+> 
+> Christian.
+
+Thank you for the quick responses.
+
+Yes, nilfs -- more precisely garbage collector of nilfs, by its
+nature, preserves old data within a period of time.  So, it usually
+needs some care for this kind of test.  Benchmark programs make fair
+amount of changes for the short run, by its very nature ;)
+
+Anyway, I'm relieved for now.
 
 Thanks,
-Teran
-
-On Thu, Dec 24, 2009 at 10:31, Christian Kujau <lists@nerdbynature.de> =
-wrote:
-> I've had the chance to use a testsystem here and couldn't resist runn=
-ing a
-> few benchmark programs on them: bonnie++, tiobench, dbench and a few
-> generic ones (cp/rm/tar/etc...) on ext{234}, btrfs, jfs, ufs, xfs, zf=
-s.
->
-> All with standard mkfs/mount options and +noatime for all of them.
->
-> Here are the results, no graphs - sorry:
-> =C2=A0 http://nerdbynature.de/benchmarks/v40z/2009-12-22/
->
-> Reiserfs is locking up during dbench, so I removed it from the
-> config, here are some earlier results:
->
-> =C2=A0 http://nerdbynature.de/benchmarks/v40z/2009-12-21/bonnie.html
->
-> Bonnie++ couldn't complete on nilfs2, only the generic tests
-> and tiobench were run. As nilfs2, ufs, zfs aren't supporting xattr, d=
-bench
-> could not be run on these filesystems.
->
-> Short summary, AFAICT:
-> =C2=A0 =C2=A0- btrfs, ext4 are the overall winners
-> =C2=A0 =C2=A0- xfs to, but creating/deleting many files was *very* sl=
-ow
-> =C2=A0 =C2=A0- if you need only fast but no cool features or journali=
-ng, ext2
-> =C2=A0 =C2=A0 =C2=A0is still a good choice :)
->
-> Thanks,
-> Christian.
-> --
-> BOFH excuse #84:
->
-> Someone is standing on the ethernet cable, causing a kink in the cabl=
-e
-> --
-> To unsubscribe from this list: send the line "unsubscribe reiserfs-de=
-vel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
-ml
->
---
-To unsubscribe from this list: send the line "unsubscribe reiserfs-deve=
-l" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Ryusuke Konishi
