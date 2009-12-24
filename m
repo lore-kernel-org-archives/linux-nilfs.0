@@ -1,66 +1,60 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCH 02/12] nilfs2: Storage class should be
- before const qualifier
-Date: Wed, 23 Dec 2009 23:55:59 +0900 (JST)
-Message-ID: <20091223.235559.25155531.ryusuke@osrg.net>
-References: <1261573067-8673-1-git-send-email-tklauser@distanz.ch>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: benchmark results
+Date: Thu, 24 Dec 2009 21:06:45 +0900 (JST)
+Message-ID: <20091224.210645.57462112.ryusuke@osrg.net>
+References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <1261573067-8673-1-git-send-email-tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
+Sender: reiserfs-devel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: lists@nerdbynature.de
+Cc: xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, ext3-users@redhat.com, linux-nilfs@vger.kernel.org
 
-On Wed, 23 Dec 2009 13:57:47 +0100, Tobias Klauser wrote:
-> The C99 specification states in section 6.11.5:
+Hi,
+On Thu, 24 Dec 2009 02:31:10 -0800 (PST), Christian Kujau wrote:
+> I've had the chance to use a testsystem here and couldn't resist running a 
+> few benchmark programs on them: bonnie++, tiobench, dbench and a few 
+> generic ones (cp/rm/tar/etc...) on ext{234}, btrfs, jfs, ufs, xfs, zfs.
 > 
-> The placement of a storage-class specifier other than at the beginning
-> of the declaration specifiers in a declaration is an obsolescent
-> feature.
+> All with standard mkfs/mount options and +noatime for all of them.
 > 
-> Signed-off-by: Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>
+> Here are the results, no graphs - sorry:
+>    http://nerdbynature.de/benchmarks/v40z/2009-12-22/
+> 
+> Reiserfs is locking up during dbench, so I removed it from the 
+> config, here are some earlier results:
+> 
+>    http://nerdbynature.de/benchmarks/v40z/2009-12-21/bonnie.html
+> 
+> Bonnie++ couldn't complete on nilfs2, only the generic tests 
+> and tiobench were run.
 
-Applied. Thank you!
+I looked at the log but couldn't identify the error.
+Is that a disk full?
 
+Thanks,
 Ryusuke Konishi
 
-> ---
->  fs/nilfs2/ioctl.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> 
-> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> index f6af760..d6b2b83 100644
-> --- a/fs/nilfs2/ioctl.c
-> +++ b/fs/nilfs2/ioctl.c
-> @@ -480,7 +480,7 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
->  				      unsigned int cmd, void __user *argp)
->  {
->  	struct nilfs_argv argv[5];
-> -	const static size_t argsz[5] = {
-> +	static const size_t argsz[5] = {
->  		sizeof(struct nilfs_vdesc),
->  		sizeof(struct nilfs_period),
->  		sizeof(__u64),
-> -- 
-> 1.6.3.3
 
-On Wed, 23 Dec 2009 14:01:05 +0100, Tobias Klauser wrote:
-> > Subject: Re: [PATCH 02/12] nilfs2: Storage class should be before const
-> >	qualifier
+> As nilfs2, ufs, zfs aren't supporting xattr, dbench 
+> could not be run on these filesystems.
+>    
+> Short summary, AFAICT:
+>     - btrfs, ext4 are the overall winners
+>     - xfs to, but creating/deleting many files was *very* slow
+>     - if you need only fast but no cool features or journaling, ext2
+>       is still a good choice :)
 > 
-> Sorry, this should jsut have been [PATCH], not [PATCH 02/12]. The
-> remaining patches are not targeted at nilfs.
+> Thanks,
+> Christian.
+> -- 
+> BOFH excuse #84:
 > 
-> Cheers, Tobias
+> Someone is standing on the ethernet cable, causing a kink in the cable
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
