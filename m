@@ -1,65 +1,43 @@
-From: jim owens <jowens@hp.com>
+From: Christian Kujau <lists@nerdbynature.de>
 Subject: Re: [Jfs-discussion] benchmark results
-Date: Sun, 27 Dec 2009 14:50:14 -0500
-Message-ID: <4B37BA76.7050403@hp.com>
-References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de> <19251.26403.762180.228181@tree.ty.sabi.co.uk> <20091224212756.GM21594@thunk.org> <alpine.DEB.2.01.0912241739160.3483@bogon.housecafe.de> <20091225161453.GD32757@thunk.org> <20091225162238.GB19303@bitmover.com> <alpine.DEB.2.01.0912251042540.3483@bogon.housecafe.de> <4B36333B.3030600@hp.com> <4B365EBE.5050804@nerdbynature.de>
+Date: Sun, 27 Dec 2009 13:55:26 -0800 (PST)
+Message-ID: <alpine.DEB.2.01.0912271346240.3483@bogon.housecafe.de>
+References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de> <19251.26403.762180.228181@tree.ty.sabi.co.uk> <20091224212756.GM21594@thunk.org> <alpine.DEB.2.01.0912241739160.3483@bogon.housecafe.de> <20091225161453.GD32757@thunk.org>
+ <20091225162238.GB19303@bitmover.com> <alpine.DEB.2.01.0912251042540.3483@bogon.housecafe.de> <4B36333B.3030600@hp.com> <4B365EBE.5050804@nerdbynature.de> <4B37BA76.7050403@hp.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <4B365EBE.5050804@nerdbynature.de>
-Sender: linux-ext4-owner@vger.kernel.org
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+In-Reply-To: <4B37BA76.7050403@hp.com>
+Sender: reiserfs-devel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Christian Kujau <lists@nerdbynature.de>
+Content-Type: TEXT/PLAIN; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: jim owens <jowens@hp.com>
 Cc: Larry McVoy <lm@bitmover.com>, tytso@mit.edu, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, Peter Grandi <pg_jf2@jf2.for.sabi.co.UK>, ext-users <ext3-users@redhat.com>, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-Christian Kujau wrote:
-> On 26.12.09 08:00, jim owens wrote:
->>> I was using "sync" to make sure that the data "should" be on the disks 
->> Good, but not good enough for many tests... info sync
-> [...]
->>        On Linux, sync is only guaranteed to  schedule  the  dirty  blocks  for
->>        writing;  it  can  actually take a short time before all the blocks are
->>        finally written.
+On Sun, 27 Dec 2009 at 14:50, jim owens wrote:
+> And I don't even care about comparing 2 filesystems, I only care about
+> timing 2 versions of code in the single filesystem I am working on,
+> and forgetting about hardware cache effects has screwed me there.  
 
-OK, that was wrong per Ted's explanation:
-> 
-> But for quite some time, under Linux the sync(2) system call will wait
-> for the blocks to be flushed out to HBA, although we currently don't
-> wait for the blocks to have been committed to the platters (at least
-> not for all file systems).   
+Not me, I'm comparing filesystems - and when the HBA or whatever plays 
+tricks and "sync" doesn't flush all the data, it'll do so for every tested 
+filesystem. Of course, filesystem could handle "sync" differently, and 
+they probably do, hence the different times they take to complete. That's 
+what my tests are about: timing comparision (does that still fall under 
+the "benchmark" category?), not functional comparision. That's left as a 
+task for the reader of these results: "hm, filesystem xy is so much faster 
+when doing foo, why is that? And am I willing to sacrifice e.g. proper 
+syncs to gain more speed?"
 
-But Christian Kujau wrote:
+> So unless you are sure you have no hardware cache effects...
+> "the comparison still stands" is *false*.
 
-> Noted, many times already. That's why I wrote "should be" - but in this
-> special scenario (filesystem speed tests) I don't care for file
-> integrity: if I pull the plug after "sync" and some data didn't make it
-> to the disks, I'll only look if the testscript got all the timestamps
-> and move on to the next test. I'm not testing for "filesystem integrity
-> after someone pulls the plug" here. And remember, I'm doing "sync" for
-> all the filesystems tested, so the comparison still stands.
+Again, I don't argue with "hardware caches will have effects", but that's 
+not the point of these tests. Of course hardware is different, but 
+filesystems are too and I'm testing filesystems (on the same hardware).
 
-You did not understand my point.  It was not about data integrity,
-it was about test timing validity.
+Christian.
+-- 
+BOFH excuse #278:
 
-And even with sync(2) behaving as Ted describes, *timing* may still
-tell you the wrong thing or not tell you something important.
-
-I have a battery-backed HBA cache.  Writes are HBA cached.  Timing only
-shows "to HBA memory". So 1000 pages (4MB total) that are at 1000 places
-on the disk will time (almost) the same completion as 1000 pages that
-are in 200 extents of 50 pages each.  Writing to disk the time difference
-between these would be an obvious slap upside the head.
-
-Hardware caches can trick you into thinking a filesystem performs
-much better than it really does for some operations.  Or trick you
-about relative performance between 2 filesystems.
-
-And I don't even care about comparing 2 filesystems, I only care about
-timing 2 versions of code in the single filesystem I am working on,
-and forgetting about hardware cache effects has screwed me there.  
-
-So unless you are sure you have no hardware cache effects...
-"the comparison still stands" is *false*.
-
-jim
+The Dilithium Crystals need to be rotated.
