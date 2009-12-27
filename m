@@ -1,77 +1,65 @@
-From: tytso@mit.edu
+From: jim owens <jowens@hp.com>
 Subject: Re: [Jfs-discussion] benchmark results
-Date: Sat, 26 Dec 2009 14:19:16 -0500
-Message-ID: <20091226191916.GI32757@thunk.org>
-References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
- <19251.26403.762180.228181@tree.ty.sabi.co.uk>
- <20091224212756.GM21594@thunk.org>
- <alpine.DEB.2.01.0912241739160.3483@bogon.housecafe.de>
- <20091225161453.GD32757@thunk.org>
- <20091225162238.GB19303@bitmover.com>
- <alpine.DEB.2.01.0912251042540.3483@bogon.housecafe.de>
- <4B36333B.3030600@hp.com>
+Date: Sun, 27 Dec 2009 14:50:14 -0500
+Message-ID: <4B37BA76.7050403@hp.com>
+References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de> <19251.26403.762180.228181@tree.ty.sabi.co.uk> <20091224212756.GM21594@thunk.org> <alpine.DEB.2.01.0912241739160.3483@bogon.housecafe.de> <20091225161453.GD32757@thunk.org> <20091225162238.GB19303@bitmover.com> <alpine.DEB.2.01.0912251042540.3483@bogon.housecafe.de> <4B36333B.3030600@hp.com> <4B365EBE.5050804@nerdbynature.de>
 Mime-Version: 1.0
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4B36333B.3030600@hp.com>
-Sender: reiserfs-devel-owner@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <4B365EBE.5050804@nerdbynature.de>
+Sender: linux-ext4-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: jim owens <jowens@hp.com>
-Cc: Christian Kujau <lists@nerdbynature.de>, Larry McVoy <lm@bitmover.com>, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, Peter Grandi <pg_jf2@jf2.for.sabi.co.UK>, ext-users <ext3-users@redhat.com>, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
+To: Christian Kujau <lists@nerdbynature.de>
+Cc: Larry McVoy <lm@bitmover.com>, tytso@mit.edu, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, Peter Grandi <pg_jf2@jf2.for.sabi.co.UK>, ext-users <ext3-users@redhat.com>, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-On Sat, Dec 26, 2009 at 11:00:59AM -0500, jim owens wrote:
-> Christian Kujau wrote:
->  
-> > I was using "sync" to make sure that the data "should" be on the disks 
+Christian Kujau wrote:
+> On 26.12.09 08:00, jim owens wrote:
+>>> I was using "sync" to make sure that the data "should" be on the disks 
+>> Good, but not good enough for many tests... info sync
+> [...]
+>>        On Linux, sync is only guaranteed to  schedule  the  dirty  blocks  for
+>>        writing;  it  can  actually take a short time before all the blocks are
+>>        finally written.
+
+OK, that was wrong per Ted's explanation:
 > 
-> Good, but not good enough for many tests... info sync
-> 
-> CONFORMING TO
->        POSIX.2
-> 
-> NOTES
->        On Linux, sync is only guaranteed to  schedule  the  dirty  blocks  for
->        writing;  it  can  actually take a short time before all the blocks are
->        finally written.
-> 
-> This is consistent with all the feels-like-unix OSes I have used.
+> But for quite some time, under Linux the sync(2) system call will wait
+> for the blocks to be flushed out to HBA, although we currently don't
+> wait for the blocks to have been committed to the platters (at least
+> not for all file systems).   
 
-Actually, Linux's sync does more than just schedule the writes; it has
-for quite some time:
+But Christian Kujau wrote:
 
-static void sync_filesystems(int wait)
-{
-	...
-}
+> Noted, many times already. That's why I wrote "should be" - but in this
+> special scenario (filesystem speed tests) I don't care for file
+> integrity: if I pull the plug after "sync" and some data didn't make it
+> to the disks, I'll only look if the testscript got all the timestamps
+> and move on to the next test. I'm not testing for "filesystem integrity
+> after someone pulls the plug" here. And remember, I'm doing "sync" for
+> all the filesystems tested, so the comparison still stands.
 
-SYSCALL_DEFINE0(sync)
-{
-	wakeup_flusher_threads(0);
-	sync_filesystems(0);
-	sync_filesystems(1);
-	if (unlikely(laptop_mode))
-	   laptop_sync_completion();
-	   return 0;
-}
+You did not understand my point.  It was not about data integrity,
+it was about test timing validity.
 
-At least for ext3 and ext4, we will even do a device barrier operation
-as a restult of a call to sb->s_op->sync_fs() --- which is called by
-__sync_filesystem, which is called in turn by sync_filesystems().
-This isn't done for all file systems, though, as near as I can tell.
-(Ext2 at least doesn't.)
+And even with sync(2) behaving as Ted describes, *timing* may still
+tell you the wrong thing or not tell you something important.
 
-But for quite some time, under Linux the sync(2) system call will wait
-for the blocks to be flushed out to HBA, although we currently don't
-wait for the blocks to have been committed to the platters (at least
-not for all file systems).   
+I have a battery-backed HBA cache.  Writes are HBA cached.  Timing only
+shows "to HBA memory". So 1000 pages (4MB total) that are at 1000 places
+on the disk will time (almost) the same completion as 1000 pages that
+are in 200 extents of 50 pages each.  Writing to disk the time difference
+between these would be an obvious slap upside the head.
 
-Applications shouldn't depend on this, of course, since POSIX and
-other legacy Unix systems don't guarantee this.  But in terms of
-knowing what Linux does, the man page is a bit out of date.
+Hardware caches can trick you into thinking a filesystem performs
+much better than it really does for some operations.  Or trick you
+about relative performance between 2 filesystems.
 
-Best regards,
+And I don't even care about comparing 2 filesystems, I only care about
+timing 2 versions of code in the single filesystem I am working on,
+and forgetting about hardware cache effects has screwed me there.  
 
-					- Ted
+So unless you are sure you have no hardware cache effects...
+"the comparison still stands" is *false*.
 
+jim
