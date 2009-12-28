@@ -1,55 +1,59 @@
-From: Larry McVoy <lm@bitmover.com>
-Subject: Re: [Jfs-discussion] benchmark results
-Date: Mon, 28 Dec 2009 06:08:55 -0800
-Message-ID: <20091228140855.GD10982@bitmover.com>
-References: <20091224212756.GM21594@thunk.org> <alpine.DEB.2.01.0912241739160.3483@bogon.housecafe.de> <20091225161453.GD32757@thunk.org> <20091225162238.GB19303@bitmover.com> <alpine.DEB.2.01.0912251042540.3483@bogon.housecafe.de> <4B36333B.3030600@hp.com> <4B365EBE.5050804@nerdbynature.de> <4B37BA76.7050403@hp.com> <alpine.DEB.2.01.0912271346240.3483@bogon.housecafe.de> <20091227223307.GA4429@thunk.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [ANNOUNCE] linux-nilfs Mailing List open at
+ vger.kernel.org
+Date: Tue, 29 Dec 2009 03:37:11 +0900 (JST)
+Message-ID: <20091229.033711.107760660.ryusuke@osrg.net>
+References: <20091219.165956.27805646.ryusuke@osrg.net>
+	<200912281754.37522.yann.morin.1998@anciens.enib.fr>
+Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20091227223307.GA4429@thunk.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: tytso@mit.edu
-Cc: Christian Kujau <lists@nerdbynature.de>, jim owens <jowens@hp.com>, Larry McVoy <lm@bitmover.com>, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, Peter Grandi <pg_jf2@jf2.for.sabi.co.UK>, ext-users <ext3-users@redhat.com>, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
+Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <200912281754.37522.yann.morin.1998-i2lMhxPFobAPxyCoDXghUg@public.gmane.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
+	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
+List-Archive: <https://www.nilfs.org/pipermail/users>
+List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
+List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
+	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
+Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: yann.morin.1998-i2lMhxPFobAPxyCoDXghUg@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-> The bottom line is that it's very hard to do good comparisons that are
-> useful in the general case.
+Hi,
+On Mon, 28 Dec 2009 17:54:37 +0100, "Yann E. MORIN" wrote:
+> Ryusuke,
+> All,
+> 
+> On Saturday 19 December 2009 08:59:56 Ryusuke Konishi wrote:
+> > We are planning to switch mailing list to a new place due to a
+> > maintenance reason.
+> > David Miller of vger.kernel.org kindly made a list "linux-nilfs" for
+> > NILFS discussion.
+> 
+> Nice! I'd however have a request: do not forget to have it archived,
+> either by asking the usual suspects ( marc.info, gmane.org ... ), or
+> any other mean...
 
-It has always amazed me watching people go about benchmarking.  I should
-have a blog called "you're doing it wrong" or something.
+Good point.
 
-Personally, I use benchmarks to validate what I already believe to be true.
-So before I start I have a predicition as to what the answer should be,
-based on my understanding of the system being measured.  Back when I
-was doing this a lot, I was always within a factor of 10 (not a big
-deal) and usually within a factor of 2 (quite a bit bigger deal).
-When things didn't match up that was a clue that either
+The site administrator of gmane.org helped me; he has switched the
+list address of existing archives to linux-nilfs :)
 
-    - the benchmark was broken
-    - the code was broken
-    - the hardware was broken
-    - my understanding was broken
+The archives are available from the following page:
 
-If you start a benchmark and you don't know what the answer should be,
-at the very least within a factor of 10 and ideally within a factor of 2,
-you shouldn't be running the benchmark.  Well, maybe you should, they 
-are fun.  But you sure as heck shouldn't be publishing results unless
-you know they are correct.
+ http://gmane.org/info.php?group=gmane.comp.file-systems.nilfs.user
 
-This is why lmbench, to toot my own horn, measures what it does.  If go
-run that, memorize the results, you can tell yourself "well, this machine
-has sustained memory copy bandwidth of 3.2GB/sec, the disk I'm using
-can read at 60MB/sec and write at 52MB/sec (on the outer zone where I'm
-going to run my tests), it does small seeks in about 6 milliseconds,
-I'm doing sequential I/O, the bcopy is in the noise, the blocks are big
-enough that the seeks are hidden, so I'd like to see a steady 50MB/sec
-or so on a sustained copy test".
+I'm considering making contact with people of marc.info, too.
 
-If you have a mental model for how the bits of the system works you 
-can decompose the benchmark into the parts, predict the result, run
-it, and compare.  It'll match or Lucy, you have some 'splainin to do.
--- 
----
-Larry McVoy                lm at bitmover.com           http://www.bitkeeper.com
+> Keep up the good work! :-)
+> 
+> Regards,
+> Yann E. MORIN.
+
+Cheers,
+Ryusuke Konishi
