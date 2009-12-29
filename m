@@ -1,49 +1,37 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: New utilities release ?
-Date: Tue, 29 Dec 2009 04:17:53 +0900 (JST)
-Message-ID: <20091229.041753.120336147.ryusuke@osrg.net>
-References: <200912281748.19680.yann.morin.1998@anciens.enib.fr>
-Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
+From: Emmanuel Florac <eflorac@intellique.com>
+Subject: Re: benchmark results
+Date: Tue, 29 Dec 2009 12:27:44 +0100
+Message-ID: <20091229122744.40a4b707@galadriel.home>
+References: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <200912281748.19680.yann.morin.1998-i2lMhxPFobAPxyCoDXghUg@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://www.nilfs.org/pipermail/users>
-List-Post: <mailto:users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-List-Help: <mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=help>
-List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
-	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
-Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: yann.morin.1998-i2lMhxPFobAPxyCoDXghUg@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.01.0912240205510.3483@bogon.housecafe.de>
+Sender: reiserfs-devel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+To: Christian Kujau <lists@nerdbynature.de>
+Cc: xfs@oss.sgi.com, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, ext-users <ext3-users@redhat.com>, linux-nilfs@vger.kernel.org
 
-On Mon, 28 Dec 2009 17:48:19 +0100, "Yann E. MORIN" wrote:
-> Hello All!
-> 
-> I was wondering when the next nilfs2-utils release was scheduled for.
-> Looking at the git tree, there are only three /minor/ changesets since
-> 2.0.14 was released, meaning that probably the utilities are now quite
-> mature.
+Le Thu, 24 Dec 2009 02:31:10 -0800 (PST) vous =E9criviez:
 
-Well, I think we have much work to do for utils especially for
-cleanerd.  Unfortunately, I had my hands full with the kernel code for
-the past several months.
+>     - btrfs, ext4 are the overall winners
+>     - xfs to, but creating/deleting many files was *very* slow
 
-> Maybe it would be time to tag 2.0.15 (or 2.1.0). That would be nicve to
-> have a release which does not need patching (even those three /trivial/
-> patches).
+xfs is slow at file creation/deletion if you mount it with barriers on
+standard disk drives (not so with hardware RAID controllers).
 
-All right, it should be once refreshed.  I also have a pending change
-from David Smid which allows users to specify protection period
-through "pp" mount option.  I'll take a moment for these.
-
-> Regards,
-> Yann E. MORIN.
-
-Cheers,
-Ryusuke Konishi
+--=20
+-----------------------------------------------------------------------=
+-
+Emmanuel Florac     |   Direction technique
+                    |   Intellique
+                    |	<eflorac@intellique.com>
+                    |   +33 1 78 94 84 02
+-----------------------------------------------------------------------=
+-
+--
+To unsubscribe from this list: send the line "unsubscribe reiserfs-deve=
+l" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
