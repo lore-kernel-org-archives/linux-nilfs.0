@@ -1,13 +1,26 @@
-From: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+From: "Carlos R. Mafra" <crmafra2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: NILFS2 on an Intel X25-M SSD
-Date: Sat,  2 Jan 2010 21:00:37 +0100
-Message-ID: <0gcLTLT0fjyx.pVmJp5f0@mail.prnet.org>
+Date: Sat, 2 Jan 2010 21:44:17 +0100
+Message-ID: <20100102204417.GA6877@Pilar.aei.mpg.de>
+References: <4B3A5D1F.9010002@gmail.com>
+	<20091231.034629.85391956.ryusuke@osrg.net>
+	<4B3C7326.4010002@gmail.com>
+	<20100103.022425.52166650.ryusuke@osrg.net>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-Content-Language: i-default
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
+	h=domainkey-signature:received:received:date:from:to:cc:subject
+	:message-id:references:mime-version:content-type:content-disposition
+	:in-reply-to:user-agent;
+	bh=NVRvRbFbzmNm/dT5bkrR6Kgx0V3eGCGxgxRfVIbiIiU=;
+	b=WxylCi4Aciuf5eN3tEWlfXe5UMT/746VWaUO1m3d4Foj3l5fgGRSWK2XNa8JsLsxXP
+	1morn16U523AGtV/OF7AFK3/8N0pofJvJnfab5cCDI7SvSC/H+1z7P0iC2K7tDjRVQDP
+	yiRTzxbaks0WL1nDIe93Ynrk4WeJgimOYRfAc=
+Content-Disposition: inline
+In-Reply-To: <20100103.022425.52166650.ryusuke-sG5X7nlA6pw@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,133 +32,60 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: crmafra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Well, I am actually mounting nilfs partitions without cleaner and starting it manually when I have not enough space, maybe this could be a temporary solution.
-
--original message-
-Subject: Re: NILFS2 on an Intel X25-M SSD
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Date: 02/01/2010 18:24
-
-On Thu, 31 Dec 2009 10:47:18 +0100, "Carlos R. Mafra" wrote:
-> Am 30.12.2009 19:46, schrieb Ryusuke Konishi:
-> > On Tue, 29 Dec 2009 20:48:47 +0100, "Carlos R. Mafra" wrote:
-> >> Is there any specific tweak in NILFS2 to use with an SSD? Would you
-> >> reccomend using NILFS2 on a SSD right now?
-> >>
-> >> Is the issue mentioned here
-> >>
-> >> https://www.nilfs.org/pipermail/users/2009-March/000514.html
-> >>
-> >> about excessive writing in the GC already fixed?
-> >> That is the most pressing fear I have about NILFS2 for the SSD.
-> > 
-> > Not yet, sorry.  I'm working on some performance optimization for high
-> > speed drives espacially for SSD.  Revising GC is another priority, but
-> > it would need some time.
-> > 
-> > The massive I/O by the current garbage collector may shorten the life
-> > of SSD.  So, I don't recommend yet.
+On So  3.Jan'10 at  2:24:25 +0900, Ryusuke Konishi wrote:
+> On Thu, 31 Dec 2009 10:47:18 +0100, "Carlos R. Mafra" wrote:
+>  
+> > Naively I would think that the GC will always create some I/O that
+> > other filesystems don't have, by its very definition. Can you
+> > quantify by how much the current GC is writing in excess and what would
+> > be the acceptable numbers?
 > 
-> Hmm, then I won't use NILFS2 on the SSD for now.
-> 
-> I am testing it in an external HD for the last two days to get a feeling,
-> and so far everything looks good and stable. It is a pity that the 
-> massive I/O problem kind of prevents putting it on the SSD.
+> The overhead is roughly measured as the number of copied (moved)
+> blocks per reclaimed segment.  The following patch will print the
+> ratio (number of copied blocks / cleaned blocks) into syslog.
 
-Definitely yes.
+Thanks for the reply and I will test your patch to see the numbers
+in the following days.
 
-NILFS2 is pretty stable, but this issue is spoiling the goodness
-especially for netbook users.
- 
-> Naively I would think that the GC will always create some I/O that
-> other filesystems don't have, by its very definition. Can you
-> quantify by how much the current GC is writing in excess and what would
-> be the acceptable numbers?
+> I don't know how much is acceptable, but at least, I think the GC
+> frequency should be suppressed to 0 while the partition has enough
+> free space, and the selection algorithm should be improved to give
+> priority to free segments containing less in-use blocks.
 
-The overhead is roughly measured as the number of copied (moved)
-blocks per reclaimed segment.  The following patch will print the
-ratio (number of copied blocks / cleaned blocks) into syslog.
+Good that you mentioned it, because that is something I found a bit
+unusual about NILFS2. 
 
-A NILFS2 root of my laptop constantly marks 70~99%.
+Initially I copied 100 GB into the NILFS2 partition in the external
+hard disk via a backup script using rsync. Then I deleted 10 GB from
+my $HOME and reran the script to update the backup on the NILFS2
+partition. The size reported by 'df' initially increased and I had
+to wait around 10 hours to notice it decrease, but the decrease rate
+was soo slow (around 100 MB/hour or so) that I did not wait anymore
+and disconnected the hard disk. 
 
-This is because the current GC regularly frees segments from older
-ones without any attempt to minimize the above ratio; it doesn't
-select target segments that way, and it doesn't delay reclamation even
-when the partition has enough free space.
+The partition has 150 GB, so perhaps NILFS2 thinks that there 
+is "enough free space" and did not care too much about 
+deleting the old data. But I thought that what would matter
+most is the protection_period from /etc/nilfs_cleanerd.conf (3600)...
 
-I don't know how much is acceptable, but at least, I think the GC
-frequency should be suppressed to 0 while the partition has enough
-free space, and the selection algorithm should be improved to give
-priority to free segments containing less in-use blocks.
+I must have understood it incorrectly, because I thought that after
+3600 secs after deleting those 10 GB the partition would shrink to 90 GB
+"quickly" (like in 1-2 hours). Than after those 1-2 hours my old
+data would be forever gone.
 
+So that was my odd feeling about NILFS2. I would not necessarily
+say that it is a "problem" because if one is not using an external
+hard disk then eventually there will be enough time to clean things
+up, but it feels like it could be better. I have even read some
+emails from the archives where people had problems with a full
+partition even though they knew they had free space.
 
-Regards,
-Ryusuke Konishi
---
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index f36dfce..6a35f15 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -921,6 +921,8 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
- {
- 	struct nilfs_vector *vdescv, *bdescv, *periodv, *vblocknrv;
- 	ssize_t n, ret = -1;
-+	size_t nr_vblocks, nr_pblocks, nr_live_vblocks, nr_live_pblocks;
-+	size_t nr_blocks, nr_live_blocks;
- 	int i;
- 
- 	if (nsegs == 0)
-@@ -953,10 +955,14 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
- 	if (ret < 0)
- 		goto out_lock;
- 
-+	nr_vblocks = nilfs_vector_get_size(vdescv);
-+
- 	ret = nilfs_cleanerd_toss_vdescs(cleanerd, vdescv, periodv, vblocknrv);
- 	if (ret < 0)
- 		goto out_lock;
- 
-+	nr_live_vblocks = nilfs_vector_get_size(vdescv);
-+
- 	nilfs_vector_sort(vdescv, nilfs_comp_vdesc_blocknr);
- 	nilfs_cleanerd_unify_period(cleanerd, periodv);
- 
-@@ -964,10 +970,17 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
- 	if (ret < 0)
- 		goto out_lock;
- 
-+	nr_pblocks = nilfs_vector_get_size(bdescv);
-+
- 	ret = nilfs_cleanerd_toss_bdescs(cleanerd, bdescv);
- 	if (ret < 0)
- 		goto out_lock;
- 
-+	nr_live_pblocks = nilfs_vector_get_size(bdescv);
-+
-+	nr_blocks = nr_vblocks + nr_pblocks;
-+	nr_live_blocks = nr_live_vblocks + nr_live_pblocks;
-+
- 	ret = nilfs_clean_segments(cleanerd->c_nilfs,
- 				   nilfs_vector_get_data(vdescv),
- 				   nilfs_vector_get_size(vdescv),
-@@ -983,8 +996,13 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
- 	} else {
- 		if (n > 0) {
- 			for (i = 0; i < n; i++)
--				syslog(LOG_DEBUG, "segment %llu cleaned",
-+				syslog(LOG_INFO, "segment %llu cleaned",
- 				       (unsigned long long)segnums[i]);
-+			syslog(LOG_INFO,
-+			       "copied blocks / total blocks : %zu / %zu "
-+			       "(%3.1f%%)",
-+			       nr_live_blocks, nr_blocks,
-+			       nr_live_blocks * 100.0 / nr_blocks);
- 		} else {
- 			syslog(LOG_DEBUG, "no segments cleaned");
- 		}
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To test it a bit more, I increased nsegments_per_clean to 12, 
+decreased protection_period to 60 and cleaning_interval to 2,
+but now the cleanerd was using like 15% of CPU and it was not
+cleaning the data much faster (I don't remember the numbers).
+
+So what is more important to NILFS2, the notion of "free space
+left" or the protection_period setting?
