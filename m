@@ -1,16 +1,13 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
 Subject: Re: NILFS2 on an Intel X25-M SSD
-Date: Sun, 03 Jan 2010 02:24:25 +0900 (JST)
-Message-ID: <20100103.022425.52166650.ryusuke@osrg.net>
-References: <4B3A5D1F.9010002@gmail.com>
-	<20091231.034629.85391956.ryusuke@osrg.net>
-	<4B3C7326.4010002@gmail.com>
+Date: Sat,  2 Jan 2010 21:00:37 +0100
+Message-ID: <0gcLTLT0fjyx.pVmJp5f0@mail.prnet.org>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <4B3C7326.4010002-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Language: i-default
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -21,8 +18,15 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: crmafra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Cc: crmafra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+
+Well, I am actually mounting nilfs partitions without cleaner and starting it manually when I have not enough space, maybe this could be a temporary solution.
+
+-original message-
+Subject: Re: NILFS2 on an Intel X25-M SSD
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Date: 02/01/2010 18:24
 
 On Thu, 31 Dec 2009 10:47:18 +0100, "Carlos R. Mafra" wrote:
 > Am 30.12.2009 19:46, schrieb Ryusuke Konishi:
@@ -141,3 +145,7 @@ index f36dfce..6a35f15 100644
  		} else {
  			syslog(LOG_DEBUG, "no segments cleaned");
  		}
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
