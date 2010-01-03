@@ -1,14 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [NILFS] NILFS filesystem stability
-Date: Sun, 03 Jan 2010 16:39:27 +0900 (JST)
-Message-ID: <20100103.163927.12303106.ryusuke@osrg.net>
-References: <71d11f861001011335j459d29e8oddb7f4d49dd41126@mail.gmail.com>
+Subject: Re: Harddisk not going to standby when using NILFS
+Date: Sun, 03 Jan 2010 20:35:32 +0900 (JST)
+Message-ID: <20100103.203532.220048154.ryusuke@osrg.net>
+References: <deafb1571001021054n284bb268x58f2764afd32a65c@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <71d11f861001011335j459d29e8oddb7f4d49dd41126-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <deafb1571001021054n284bb268x58f2764afd32a65c-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,60 +19,66 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: wielkiegie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: markus.r.lindgren-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
 Hi,
-On Fri, 1 Jan 2010 22:35:42 +0100, Gustaw Smolarczyk wrote:
-> Hello all,
+On Sat, 2 Jan 2010 19:54:29 +0100, Markus Lindgren wrote:
+> Hi,
 > 
-> I wanted to know if NILFS filesystem is ready to general purpose. I am
-> going to make a backup partition (containing important files from
-> general purpose FS on second HD) and I don't know what FS to use on
-> it. Log-based filesystem is considered right there for me because of
-> COW semantics and that no previous data would be loss in case of write
-> susped/error. I thought about btrfs as well, but AFAIK it's even less
-> stable than NILFS and is not COW to that extent that NILFS is (using
-> NILFS I can mount exatly what would be mounted few days/writes ago
-> with cp= mount option, in case no physical error occured).
+> I just started using NILFS on two of my "backup" disks just to give
+> NILFS a try. Initially I plan to test having daily backups on these
+> disks (I know this is not a typical use scenario for NILFS, but anyhow
+> it is a way of starting with NILFS).
+> 
+> To my problem... I discovered that when using NILFS the hard disk
+> never seems to enter the 'standby' power-saving state; it remains in
+> the 'active/idle' state, which causes extra noise and power usage.
+> (Which is bad since I like things when they are quiet :-)
+> I then tried mounting one of the disks without the cleanerd, but still
+> both disks remain in the 'active/idle' state. And yes, I waited
+> sufficiently long for the drives to enter the standby state.
+> 
+> Does anyone know of a workaround to get the disks to enter the
+> 'standby' power state when using NILFS? (And not by forcing disks to
+> that state by using hdparm.)
+>
+> In case it is the cleanerd causing the disks not to spin down, is
+> there perhaps a way to trigger running the "cleanerd" only a few times
+> per day? In my usage scenario there is no point in constantly checking
+> for garbage on the disks.
 
-I think NILFS can serve as general purpose filesystem except some
-features like extended attributes/POSIX acls are not yet supported,
-and except for a few known issues, for instance, GC daemon constantly
-makes I/O load more than necessary.
+On my laptop, the standby state worked after doing 'hdparm -B 1'.
+But, as you pointed out, cleanerd prevented the device from entering
+the standby state.  After killing cleanerd by hand, this issue seems
+to get settled.
 
-I'm using NILFS as a root filesystem of my laptop, and it's stably
-working without noticeable trouble for past several months.
+If you won't kill cleanerd manually, another possible solution is to
+set protection_period a large value in /etc/nilfs_cleanerd.conf.  I
+think the essential solution is to improve cleanerd to suppress
+needless operation as repeatedly discussed in this list.
 
-At the end of the last year I mistakenly broke package dependencies of
-Debian system.  Fortunately, I could revert the system state before
-the corruption with NILFS snapshots and rsync.
+> On a secondary note, when I tried to remount the second disk to not
+> use cleanerd I got the following message:
+>   umount.nilfs2: cleanerd (pid=2160) still exists on /dev/sdb1.
+> waiting.....failed
+>   umount.nilfs2: /mnt/sdb1: device is busy
+>   umount.nilfs2: cleanerd (pid=2160) still exists on /dev/sdb1.
+> waiting.....failed
+>   umount.nilfs2: /mnt/sdb1: device is busy
+> Which is a bit strange, since as far as I know, no files where in use
+> from that disk and no bash/shell running from directories on that
+> disk. I did not help to try forcing the umount either.
 
-It still needs backup since NILFS is not of help for hardware
-malfunction.  However, I feel it's actually helpful for human errors
-through experiences like that.
- 
-> There are many adventages for using NILFS for that purpose, but
-> stability is the greatest factor (it's all about my data!). So I want
-> to know what do you think about using this fresh filesystem - is it
-> good idea or have I to use a more stable solution, like ext2/reiserfs
-> or something else? Is log-structured filesystem more secure than
-> regular one (which I think it is), or is more known and maintained one
-> better?
+Ahh, there seems no way to shutdown cleanerd directly by remount.
 
-Without snapshots, I think ext3 is still the best.  NILFS is now
-pretty stable as the result of sustained effort and many feedbacks.
+How about this?
 
-In general, log structured filesystems can achieve quick recovery like
-journaling filesystems, whereas garbage collection often becomes cause
-of trouble since it moves disk blocks.  As for nilfs, looks like it
-overcame the latter barrier.
+  # mount -t nilfs2 -o remount,ro /dev/xxx /dir &&
+    mount -t nilfs2 -i -o remount,rw /dev/xxx /dir
 
-Note that NILFS still lacks fsck.  You may go back before filesystem
-corruption, but this is not always possible since some types of
-metadata are not redundant.
-
-> Thanks for any answers :) I hope I'll get good respone in new year time :)
+> Thanks in advance,
+>   Markus Lindgren
 
 Cheers,
 Ryusuke Konishi
