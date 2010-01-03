@@ -1,14 +1,16 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Harddisk not going to standby when using NILFS
-Date: Sun, 03 Jan 2010 20:35:32 +0900 (JST)
-Message-ID: <20100103.203532.220048154.ryusuke@osrg.net>
-References: <deafb1571001021054n284bb268x58f2764afd32a65c@mail.gmail.com>
+Subject: Re: NILFS2 on an Intel X25-M SSD
+Date: Sun, 03 Jan 2010 21:39:20 +0900 (JST)
+Message-ID: <20100103.213920.62349314.ryusuke@osrg.net>
+References: <4B3C7326.4010002@gmail.com>
+	<20100103.022425.52166650.ryusuke@osrg.net>
+	<20100102204417.GA6877@Pilar.aei.mpg.de>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-In-Reply-To: <deafb1571001021054n284bb268x58f2764afd32a65c-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20100102204417.GA6877-8NNKxJcwqxqHjx4iBuKRcg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -19,66 +21,46 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: markus.r.lindgren-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: crmafra2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-Hi,
-On Sat, 2 Jan 2010 19:54:29 +0100, Markus Lindgren wrote:
-> Hi,
+On Sat, 2 Jan 2010 21:44:17 +0100, "Carlos R. Mafra" wrote:
+> The partition has 150 GB, so perhaps NILFS2 thinks that there 
+> is "enough free space" and did not care too much about 
+> deleting the old data. But I thought that what would matter
+> most is the protection_period from /etc/nilfs_cleanerd.conf (3600)...
+
+No, no, I meant the current GC of NILFS2 does not see how much free
+space is left.  It just monotonically works unless user changes GC
+parameters with a HUP signal.
+ 
+> I must have understood it incorrectly, because I thought that after
+> 3600 secs after deleting those 10 GB the partition would shrink to 90 GB
+> "quickly" (like in 1-2 hours). Than after those 1-2 hours my old
+> data would be forever gone.
 > 
-> I just started using NILFS on two of my "backup" disks just to give
-> NILFS a try. Initially I plan to test having daily backups on these
-> disks (I know this is not a typical use scenario for NILFS, but anyhow
-> it is a way of starting with NILFS).
+> So that was my odd feeling about NILFS2. I would not necessarily
+> say that it is a "problem" because if one is not using an external
+> hard disk then eventually there will be enough time to clean things
+> up, but it feels like it could be better. I have even read some
+> emails from the archives where people had problems with a full
+> partition even though they knew they had free space.
 > 
-> To my problem... I discovered that when using NILFS the hard disk
-> never seems to enter the 'standby' power-saving state; it remains in
-> the 'active/idle' state, which causes extra noise and power usage.
-> (Which is bad since I like things when they are quiet :-)
-> I then tried mounting one of the disks without the cleanerd, but still
-> both disks remain in the 'active/idle' state. And yes, I waited
-> sufficiently long for the drives to enter the standby state.
+> To test it a bit more, I increased nsegments_per_clean to 12, 
+> decreased protection_period to 60 and cleaning_interval to 2,
+> but now the cleanerd was using like 15% of CPU and it was not
+> cleaning the data much faster (I don't remember the numbers).
 > 
-> Does anyone know of a workaround to get the disks to enter the
-> 'standby' power state when using NILFS? (And not by forcing disks to
-> that state by using hdparm.)
->
-> In case it is the cleanerd causing the disks not to spin down, is
-> there perhaps a way to trigger running the "cleanerd" only a few times
-> per day? In my usage scenario there is no point in constantly checking
-> for garbage on the disks.
+> So what is more important to NILFS2, the notion of "free space
+> left" or the protection_period setting?
 
-On my laptop, the standby state worked after doing 'hdparm -B 1'.
-But, as you pointed out, cleanerd prevented the device from entering
-the standby state.  After killing cleanerd by hand, this issue seems
-to get settled.
+"free space left" should be cared, but the current GC does not as I
+mentioned above.
 
-If you won't kill cleanerd manually, another possible solution is to
-set protection_period a large value in /etc/nilfs_cleanerd.conf.  I
-think the essential solution is to improve cleanerd to suppress
-needless operation as repeatedly discussed in this list.
-
-> On a secondary note, when I tried to remount the second disk to not
-> use cleanerd I got the following message:
->   umount.nilfs2: cleanerd (pid=2160) still exists on /dev/sdb1.
-> waiting.....failed
->   umount.nilfs2: /mnt/sdb1: device is busy
->   umount.nilfs2: cleanerd (pid=2160) still exists on /dev/sdb1.
-> waiting.....failed
->   umount.nilfs2: /mnt/sdb1: device is busy
-> Which is a bit strange, since as far as I know, no files where in use
-> from that disk and no bash/shell running from directories on that
-> disk. I did not help to try forcing the umount either.
-
-Ahh, there seems no way to shutdown cleanerd directly by remount.
-
-How about this?
-
-  # mount -t nilfs2 -o remount,ro /dev/xxx /dir &&
-    mount -t nilfs2 -i -o remount,rw /dev/xxx /dir
-
-> Thanks in advance,
->   Markus Lindgren
+So, the protection_period setting is the most important.  The next is
+GC speed given by cleaning_interval and nsegments_per_clean (tweaking
+cleaning_interval seems preferable because increasing
+nsegments_per_clean causes a burst of memory allocation).
 
 Cheers,
 Ryusuke Konishi
