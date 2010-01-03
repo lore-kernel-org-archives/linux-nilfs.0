@@ -1,26 +1,14 @@
-From: "Carlos R. Mafra" <crmafra2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: NILFS2 on an Intel X25-M SSD
-Date: Sat, 2 Jan 2010 21:44:17 +0100
-Message-ID: <20100102204417.GA6877@Pilar.aei.mpg.de>
-References: <4B3A5D1F.9010002@gmail.com>
-	<20091231.034629.85391956.ryusuke@osrg.net>
-	<4B3C7326.4010002@gmail.com>
-	<20100103.022425.52166650.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [NILFS] NILFS filesystem stability
+Date: Sun, 03 Jan 2010 16:39:27 +0900 (JST)
+Message-ID: <20100103.163927.12303106.ryusuke@osrg.net>
+References: <71d11f861001011335j459d29e8oddb7f4d49dd41126@mail.gmail.com>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
-	h=domainkey-signature:received:received:date:from:to:cc:subject
-	:message-id:references:mime-version:content-type:content-disposition
-	:in-reply-to:user-agent;
-	bh=NVRvRbFbzmNm/dT5bkrR6Kgx0V3eGCGxgxRfVIbiIiU=;
-	b=WxylCi4Aciuf5eN3tEWlfXe5UMT/746VWaUO1m3d4Foj3l5fgGRSWK2XNa8JsLsxXP
-	1morn16U523AGtV/OF7AFK3/8N0pofJvJnfab5cCDI7SvSC/H+1z7P0iC2K7tDjRVQDP
-	yiRTzxbaks0WL1nDIe93Ynrk4WeJgimOYRfAc=
-Content-Disposition: inline
-In-Reply-To: <20100103.022425.52166650.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <71d11f861001011335j459d29e8oddb7f4d49dd41126-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -31,61 +19,60 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+To: wielkiegie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 
-On So  3.Jan'10 at  2:24:25 +0900, Ryusuke Konishi wrote:
-> On Thu, 31 Dec 2009 10:47:18 +0100, "Carlos R. Mafra" wrote:
->  
-> > Naively I would think that the GC will always create some I/O that
-> > other filesystems don't have, by its very definition. Can you
-> > quantify by how much the current GC is writing in excess and what would
-> > be the acceptable numbers?
+Hi,
+On Fri, 1 Jan 2010 22:35:42 +0100, Gustaw Smolarczyk wrote:
+> Hello all,
 > 
-> The overhead is roughly measured as the number of copied (moved)
-> blocks per reclaimed segment.  The following patch will print the
-> ratio (number of copied blocks / cleaned blocks) into syslog.
+> I wanted to know if NILFS filesystem is ready to general purpose. I am
+> going to make a backup partition (containing important files from
+> general purpose FS on second HD) and I don't know what FS to use on
+> it. Log-based filesystem is considered right there for me because of
+> COW semantics and that no previous data would be loss in case of write
+> susped/error. I thought about btrfs as well, but AFAIK it's even less
+> stable than NILFS and is not COW to that extent that NILFS is (using
+> NILFS I can mount exatly what would be mounted few days/writes ago
+> with cp= mount option, in case no physical error occured).
 
-Thanks for the reply and I will test your patch to see the numbers
-in the following days.
+I think NILFS can serve as general purpose filesystem except some
+features like extended attributes/POSIX acls are not yet supported,
+and except for a few known issues, for instance, GC daemon constantly
+makes I/O load more than necessary.
 
-> I don't know how much is acceptable, but at least, I think the GC
-> frequency should be suppressed to 0 while the partition has enough
-> free space, and the selection algorithm should be improved to give
-> priority to free segments containing less in-use blocks.
+I'm using NILFS as a root filesystem of my laptop, and it's stably
+working without noticeable trouble for past several months.
 
-Good that you mentioned it, because that is something I found a bit
-unusual about NILFS2. 
+At the end of the last year I mistakenly broke package dependencies of
+Debian system.  Fortunately, I could revert the system state before
+the corruption with NILFS snapshots and rsync.
 
-Initially I copied 100 GB into the NILFS2 partition in the external
-hard disk via a backup script using rsync. Then I deleted 10 GB from
-my $HOME and reran the script to update the backup on the NILFS2
-partition. The size reported by 'df' initially increased and I had
-to wait around 10 hours to notice it decrease, but the decrease rate
-was soo slow (around 100 MB/hour or so) that I did not wait anymore
-and disconnected the hard disk. 
+It still needs backup since NILFS is not of help for hardware
+malfunction.  However, I feel it's actually helpful for human errors
+through experiences like that.
+ 
+> There are many adventages for using NILFS for that purpose, but
+> stability is the greatest factor (it's all about my data!). So I want
+> to know what do you think about using this fresh filesystem - is it
+> good idea or have I to use a more stable solution, like ext2/reiserfs
+> or something else? Is log-structured filesystem more secure than
+> regular one (which I think it is), or is more known and maintained one
+> better?
 
-The partition has 150 GB, so perhaps NILFS2 thinks that there 
-is "enough free space" and did not care too much about 
-deleting the old data. But I thought that what would matter
-most is the protection_period from /etc/nilfs_cleanerd.conf (3600)...
+Without snapshots, I think ext3 is still the best.  NILFS is now
+pretty stable as the result of sustained effort and many feedbacks.
 
-I must have understood it incorrectly, because I thought that after
-3600 secs after deleting those 10 GB the partition would shrink to 90 GB
-"quickly" (like in 1-2 hours). Than after those 1-2 hours my old
-data would be forever gone.
+In general, log structured filesystems can achieve quick recovery like
+journaling filesystems, whereas garbage collection often becomes cause
+of trouble since it moves disk blocks.  As for nilfs, looks like it
+overcame the latter barrier.
 
-So that was my odd feeling about NILFS2. I would not necessarily
-say that it is a "problem" because if one is not using an external
-hard disk then eventually there will be enough time to clean things
-up, but it feels like it could be better. I have even read some
-emails from the archives where people had problems with a full
-partition even though they knew they had free space.
+Note that NILFS still lacks fsck.  You may go back before filesystem
+corruption, but this is not always possible since some types of
+metadata are not redundant.
 
-To test it a bit more, I increased nsegments_per_clean to 12, 
-decreased protection_period to 60 and cleaning_interval to 2,
-but now the cleanerd was using like 15% of CPU and it was not
-cleaning the data much faster (I don't remember the numbers).
+> Thanks for any answers :) I hope I'll get good respone in new year time :)
 
-So what is more important to NILFS2, the notion of "free space
-left" or the protection_period setting?
+Cheers,
+Ryusuke Konishi
