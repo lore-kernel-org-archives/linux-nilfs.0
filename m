@@ -1,24 +1,13 @@
-From: Daniel LeBlanc <daniel.leblanc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Fwd: [NILFS] NILFS filesystem stability
-Date: Mon, 4 Jan 2010 12:08:05 -0500
-Message-ID: <aff377151001040908i2f2ff5ebq4c83fe7393c840d6@mail.gmail.com>
-References: <71d11f861001011335j459d29e8oddb7f4d49dd41126@mail.gmail.com>
-	<20100103.163927.12303106.ryusuke@osrg.net>
-	<aff377151001040903m6a2cf379q99daf8a517ffeabb@mail.gmail.com>
+From: "John Mazza" <johnm-ssvs9p6LcFAqDJ6do+/SaQ@public.gmane.org>
+Subject: Utilities & Usability
+Date: Tue, 5 Jan 2010 08:39:05 -0500
+Message-ID: <20D0961E8385B74FB47A1CBFE221DD99153728@exchg2.iservetech.local>
 Reply-To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
-	h=domainkey-signature:mime-version:received:in-reply-to:references
-	:date:message-id:subject:from:to:cc:content-type
-	:content-transfer-encoding;
-	bh=tLzncP3OVVEWnDne52BaQkqtRQ6v8sWVgv8cTf6rMhw=;
-	b=esawGNmE3p76ooYKUb/hSuwol40hxVkszuimqaLwo2PW87Sr/RbXRC2f20dfbeH+Gj
-	96ADtAztac25PWd5tnCCXQnmBBYVLE3tUewaMD+OcstSotPYky7WnzJZE58uflu8qPwK
-	+MfMl+06EW0ZzfZOEX/h8g/1Two/1wdoKB64c=
-In-Reply-To: <aff377151001040903m6a2cf379q99daf8a517ffeabb-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-class: urn:content-classes:message
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.nilfs.org/mailman/options/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=unsubscribe>
@@ -29,38 +18,31 @@ List-Subscribe: <https://www.nilfs.org/mailman/listinfo/users>,
 	<mailto:users-request-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org?subject=subscribe>
 Sender: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
 Errors-To: users-bounces-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org
+To: NILFS Users mailing list <users-JrjvKiOkagjYtjvyW6yDsg@public.gmane.org>
 
-Hi,
+I've been working with NILFS for a few weeks now, and find that the
+underlying filesystem is a great solution to some problems that we are
+trying to solve.  However, the userspace utilities are far too unwieldy
+to work with as a practical matter.  
 
-On Sun, Jan 3, 2010 at 2:39 AM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
- ...
-> It still needs backup since NILFS is not of help for hardware
-> malfunction. =A0However, I feel it's actually helpful for human errors
-> through experiences like that.
- ...
+The only missing piece is some way to automatically (via cleanerd maybe)
+create snapshots of the nearest checkpoint at an interval of "X"
+minutes, with a lifetime of "Y" minutes.  Currently, there is no good
+way to automate this process, and the system creates such a long list of
+checkpoints that finding a good candidate for creating a "mountable
+snapshot" to restore from is prohibitively time-consuming.  
 
-That- I think - is the answer to a question I wanted to ask for some
-times now. I've been using XFS for a while now but eventually got bad
-sectors on many disks and found XFS to be of limited help when that
-happens. So, looking for alternatives I got interested in NILFS
-development. Do I=A0understand=A0correctly that NILFS is not really better
-than other FS (xfs) when the hardware deteriorates and bad sectors
-appear?
-Is it in the plans to somehow 'support' bad sectors reallocation (or such)?
+Ideally, the behavior of the feature should create a snapshot every X
+minutes from the checkpoint closest in time to the interval, and revert
+to checkpoint status any that are older than "Y" minutes old.
 
- ...
-> Note that NILFS still lacks fsck. =A0You may go back before filesystem
-> corruption, but this is not always possible since some types of
-> metadata are not redundant.
- ...
+Basically the goal is to keep a manageable number of snapshots to
+minimize the impact of a corrupted database file.  Since backups are
+done every 24 hours here, we would set the lifetime to 1440 minutes and
+the interval to 15 minutes, thus limiting the worst-case data loss to 15
+minutes, and with the advantage of only having to look through a list of
+96 snapshots rather than potentially hundreds or thousands of
+checkpoints. 
 
-Curious on any scenario you have in mind for such a case to show up?
-Hardware malfunction and/or hdd access from outside NILFS? A bug?
-Something else?
-
-
-Cheers,
-Daniel LeBlanc
-software engineer
+It looks like all the code exists currently to do this, but it needs to
+be integrated a just a little bit more to enable this behavior. 
