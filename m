@@ -1,65 +1,117 @@
-From: Edward Shishkin <edward.shishkin@gmail.com>
-Subject: Re: [Jfs-discussion] benchmark results
-Date: Fri, 15 Jan 2010 22:42:38 +0100
-Message-ID: <4B50E14E.5050204@gmail.com>
-References: <20091224212756.GM21594@thunk.org> <alpine.DEB.2.01.0912241739160.3483@bogon.housecafe.de> <20091225161453.GD32757@thunk.org> <20091225162238.GB19303@bitmover.com> <alpine.DEB.2.01.0912251042540.3483@bogon.housecafe.de> <4B36333B.3030600@hp.com> <4B365EBE.5050804@nerdbynature.de> <4B37BA76.7050403@hp.com> <alpine.DEB.2.01.0912271346240.3483@bogon.housecafe.de> <20091227223307.GA4429@thunk.org> <20091228140855.GD10982@bitmover.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Utilities & Usability
+Date: Mon, 18 Jan 2010 14:18:00 +0900 (JST)
+Message-ID: <20100118.141800.29272400.ryusuke@osrg.net>
+References: <20D0961E8385B74FB47A1CBFE221DD99153728@exchg2.iservetech.local>
+	<87bph2fid2.wl%jir@sekiba.com>
+	<87aawdnqhd.wl%jir@sekiba.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
-In-Reply-To: <20091228140855.GD10982@bitmover.com>
-Sender: reiserfs-devel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87aawdnqhd.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Larry McVoy <lm@bitmover.com>, tytso@mit.edu, Christian Kujau <lists@nerdbynature.de>, jim owens <jowens@hp.com>, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, x
+Content-Type: Text/Plain; charset="us-ascii"
+To: johnm-ssvs9p6LcFAqDJ6do+/SaQ@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+Hi,
+On Sun, 17 Jan 2010 16:24:30 +0900, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
+> Hi, John
+> 
+> I realized that you might not in the linux-nilfs ML.
+> Since nilfs-users are alread closed, I resent the mail 
+> just in case your are not in the list.p
 
-> When things didn't match up that was a clue that either
->
->     - the benchmark was broken
->     - the code was broken
->   
-[...]
+Thanks.  The old list was closed as Sekiba-san noted.
+ 
+> At Sun, 10 Jan 2010 17:56:41 +0900,
+> Jiro SEKIBA wrote:
+> > 
+> > Hi, John
+> > 
+> > If I understand what you wnat to do correctly,
+> > you may be able to write a script using the lscp, mkcp and rmcp.
+> > 
+> > To create a snapshot, just invoke "mkcp -s" at an interval of "X"
+> > minutes, as you mentioned.
+> > 
 
-I would carry out an object-oriented dualism here.
+Largly agreed.
 
+We think snapshot management is a separate task for now, and are not
+integrating it in cleanerd.
 
-[1] methods (kernel module) ---- [2] objects (formatted partition)
+Although we can consider such integration, I think the current
+functional decomposition is safer because the garbage collection is so
+delicate; if we enbug cleanerd, it directly leads to a filesystem
+corruption.
 
- |                                |
- |                                |
+On the other hand, flexibility of checkpoints/snapshots management is
+a reason of the userland cleaner implementation.  So, I don't deny the
+proposal either.  Maybe, some sort of framework helping the snapshot
+management should be provided after working out priority issues in
+cleanerd which have been reported in this list.
 
-[3] benchmarks ----------------- [4] user-space utilities (fsck)
+> > To remove snapshot over the lifetime of "Y", parse the out put of lscp
+> > and rmcp.  I don't think this is a big problem.
 
+To be precise, rmcp doesn't work for snapshots.  'chcp cp' is used to
+revert snapshots to checkpoints before their removal.
 
-User-space utilities investigate "object corruptions",
-whereas benchmarks investigate "software corruptions"
-(including bugs in source code, broken design, etc, etc..)
+> > here are the simple bash script to display snapshot number
+> > that is older than LIFETIME secs
+> > 
+> > --------------rmss.sh--------------
+> > #!/bin/bash
+> > 
+> > LIFETIME=86400 # 60 * 60 * 24 sec, a day 
+> > NOW=$(date +%s) #epoch time
+> > TMP=/tmp/$$.ss
+> > `lscp | grep ss |cut -b-41 > $TMP`
 
-It is clear that "software" can be "corrupted" by a larger
-number of ways than "objects". Indeed, it is known that
-dual space V* (of all linear functions over V) is a much
-more complex object than V.
+Snapshots can be listed with 'lscp -s'.  So, this can be simplified
+to:
 
-So benchmark is a process which takes a set of methods
-(we consider only "software" benchmarks) and puts numerical
-values populated with a special (the worst) value CRASH.
+  `lscp -s |cut -b-41 > $TMP`
 
-Three main categories of benchmarks using:
+I feel this feature of lscp is much convenient though it's often
+unnoticed.
 
-1) Internal testing
+> 
+> > while read line;do
+> >   ssno=$(echo  -n $line | cut -d' ' -f1)
+> >   sstime=$(echo -n  $line | cut -d' ' -f2-)
+> >   ssepoch=$(date -d"$sstime" +%s)
+> >   t=$((ssepoch+$LIFETIME))
+> > 
+> >   if [ $NOW -gt $t ];then
+> >     echo check point $ssno is older than $LIFETIME secs1
+> >   fi
+> > done <$TMP
+> > 
+> > rm -f $TMP
+> > --------------rmss.sh--------------
+> > 
+> > I agree that higher level utility may help the daily works as you said,
+> > however I'm not sure if it's the right way to integrate those tools low
+> > level utils like nilfs-utils package.
+> > 
+> > Thanks
+> > 
+> > regards,
+> > -- 
+> > Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+> > 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-An engineer makes optimizations in a file system (e.g. for a
-customer) via choosing functions or plugins as winners in
-a set of internal (local) "nominations".
-
-2) Business plans
-
-A system administrator chooses a "winner" in some (global)
-"nomination" of file systems in accordance with internal
-business-plans.
-
-3) Flame and politics
-
-Someone presents a "nomination" (usually with the "winner"
-among restricted number of nominated members) to the public
-while nobody asked him to do it.
+Cheers,
+Ryusuke Konishi
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
