@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 3/3] nilfs2: move iterator to write log into segment buffer
-Date: Wed, 10 Feb 2010 00:46:23 +0900
-Message-ID: <1265730383-31290-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/3] nilfs2: get rid of s_dirt flag use
+Date: Wed, 10 Feb 2010 00:46:22 +0900
+Message-ID: <1265730383-31290-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1265730383-31290-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1265730383-31290-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -11,95 +11,114 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-This moves iterator to submit write requests for a series of logs into
-segbuf.c, and hides nilfs_segbuf_write() and nilfs_segbuf_wait() in
-the file.
+This replaces s_dirt flag use in nilfs with a new flag added on the
+nilfs object.  The s_dirt flag was used to indicate if
+sop->write_super() should be called, however the current version of
+nilfs does not use the callback.  Thus, it can be replaced with the
+own flag.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 ---
- fs/nilfs2/segbuf.c  |   18 ++++++++++++++++++
- fs/nilfs2/segbuf.h  |    5 +----
- fs/nilfs2/segment.c |    9 ++-------
- 3 files changed, 21 insertions(+), 11 deletions(-)
+ fs/nilfs2/segment.c   |   11 +++++------
+ fs/nilfs2/super.c     |    4 ++--
+ fs/nilfs2/the_nilfs.h |    2 ++
+ 3 files changed, 9 insertions(+), 8 deletions(-)
 
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index 645c786..ab56fe4 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -40,6 +40,11 @@ struct nilfs_write_info {
- };
- 
- 
-+static int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
-+			      struct the_nilfs *nilfs);
-+static int nilfs_segbuf_wait(struct nilfs_segment_buffer *segbuf);
-+
-+
- static struct kmem_cache *nilfs_segbuf_cachep;
- 
- static void nilfs_segbuf_init_once(void *obj)
-@@ -302,6 +307,19 @@ void nilfs_truncate_logs(struct list_head *logs,
- 	}
- }
- 
-+int nilfs_write_logs(struct list_head *logs, struct the_nilfs *nilfs)
-+{
-+	struct nilfs_segment_buffer *segbuf;
-+	int ret = 0;
-+
-+	list_for_each_entry(segbuf, logs, sb_list) {
-+		ret = nilfs_segbuf_write(segbuf, nilfs);
-+		if (ret)
-+			break;
-+	}
-+	return ret;
-+}
-+
- int nilfs_wait_on_logs(struct list_head *logs)
- {
- 	struct nilfs_segment_buffer *segbuf;
-diff --git a/fs/nilfs2/segbuf.h b/fs/nilfs2/segbuf.h
-index 6af1630..94dfd35 100644
---- a/fs/nilfs2/segbuf.h
-+++ b/fs/nilfs2/segbuf.h
-@@ -166,13 +166,10 @@ nilfs_segbuf_add_file_buffer(struct nilfs_segment_buffer *segbuf,
- 	segbuf->sb_sum.nfileblk++;
- }
- 
--int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
--		       struct the_nilfs *nilfs);
--int nilfs_segbuf_wait(struct nilfs_segment_buffer *segbuf);
--
- void nilfs_clear_logs(struct list_head *logs);
- void nilfs_truncate_logs(struct list_head *logs,
- 			 struct nilfs_segment_buffer *last);
-+int nilfs_write_logs(struct list_head *logs, struct the_nilfs *nilfs);
- int nilfs_wait_on_logs(struct list_head *logs);
- 
- static inline void nilfs_destroy_logs(struct list_head *logs)
 diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index c4fcdd1..ada2f1b 100644
+index fa4abfc..c4fcdd1 100644
 --- a/fs/nilfs2/segment.c
 +++ b/fs/nilfs2/segment.c
-@@ -1764,14 +1764,9 @@ static int nilfs_segctor_prepare_write(struct nilfs_sc_info *sci,
- static int nilfs_segctor_write(struct nilfs_sc_info *sci,
- 			       struct the_nilfs *nilfs)
+@@ -1937,8 +1937,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
  {
--	struct nilfs_segment_buffer *segbuf;
--	int ret = 0;
-+	int ret;
+ 	struct nilfs_segment_buffer *segbuf;
+ 	struct page *bd_page = NULL, *fs_page = NULL;
+-	struct nilfs_sb_info *sbi = sci->sc_sbi;
+-	struct the_nilfs *nilfs = sbi->s_nilfs;
++	struct the_nilfs *nilfs = sci->sc_sbi->s_nilfs;
+ 	int update_sr = (sci->sc_super_root != NULL);
  
--	list_for_each_entry(segbuf, &sci->sc_segbufs, sb_list) {
--		ret = nilfs_segbuf_write(segbuf, nilfs);
--		if (ret)
--			break;
--	}
-+	ret = nilfs_write_logs(&sci->sc_segbufs, nilfs);
- 	list_splice_tail_init(&sci->sc_segbufs, &sci->sc_write_logs);
- 	return ret;
+ 	list_for_each_entry(segbuf, &sci->sc_write_logs, sb_list) {
+@@ -2020,7 +2019,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+ 	if (update_sr) {
+ 		nilfs_set_last_segment(nilfs, segbuf->sb_pseg_start,
+ 				       segbuf->sb_sum.seg_seq, nilfs->ns_cno++);
+-		sbi->s_super->s_dirt = 1;
++		set_nilfs_sb_dirty(nilfs);
+ 
+ 		clear_bit(NILFS_SC_HAVE_DELTA, &sci->sc_flags);
+ 		clear_bit(NILFS_SC_DIRTY, &sci->sc_flags);
+@@ -2645,6 +2644,7 @@ static int nilfs_segctor_flush_mode(struct nilfs_sc_info *sci)
+ static int nilfs_segctor_thread(void *arg)
+ {
+ 	struct nilfs_sc_info *sci = (struct nilfs_sc_info *)arg;
++	struct the_nilfs *nilfs = sci->sc_sbi->s_nilfs;
+ 	struct timer_list timer;
+ 	int timeout = 0;
+ 
+@@ -2690,7 +2690,6 @@ static int nilfs_segctor_thread(void *arg)
+ 	} else {
+ 		DEFINE_WAIT(wait);
+ 		int should_sleep = 1;
+-		struct the_nilfs *nilfs;
+ 
+ 		prepare_to_wait(&sci->sc_wait_daemon, &wait,
+ 				TASK_INTERRUPTIBLE);
+@@ -2711,8 +2710,8 @@ static int nilfs_segctor_thread(void *arg)
+ 		finish_wait(&sci->sc_wait_daemon, &wait);
+ 		timeout = ((sci->sc_state & NILFS_SEGCTOR_COMMIT) &&
+ 			   time_after_eq(jiffies, sci->sc_timer->expires));
+-		nilfs = sci->sc_sbi->s_nilfs;
+-		if (sci->sc_super->s_dirt && nilfs_sb_need_update(nilfs))
++
++		if (nilfs_sb_dirty(nilfs) && nilfs_sb_need_update(nilfs))
+ 			set_nilfs_discontinued(nilfs);
+ 	}
+ 	goto loop;
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index f068270..92579cc 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -298,7 +298,7 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
+ 		memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
+ 		nilfs->ns_sbwtime[1] = t;
+ 	}
+-	sbi->s_super->s_dirt = 0;
++	clear_nilfs_sb_dirty(nilfs);
+ 	return nilfs_sync_super(sbi, dupsb);
  }
+ 
+@@ -342,7 +342,7 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
+ 		err = nilfs_construct_segment(sb);
+ 
+ 	down_write(&nilfs->ns_sem);
+-	if (sb->s_dirt)
++	if (nilfs_sb_dirty(nilfs))
+ 		nilfs_commit_super(sbi, 1);
+ 	up_write(&nilfs->ns_sem);
+ 
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index fd057f8..e9795f1 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -38,6 +38,7 @@ enum {
+ 				   the latest checkpoint was loaded */
+ 	THE_NILFS_DISCONTINUED,	/* 'next' pointer chain has broken */
+ 	THE_NILFS_GC_RUNNING,	/* gc process is running */
++	THE_NILFS_SB_DIRTY,	/* super block is dirty */
+ };
+ 
+ /**
+@@ -197,6 +198,7 @@ THE_NILFS_FNS(INIT, init)
+ THE_NILFS_FNS(LOADED, loaded)
+ THE_NILFS_FNS(DISCONTINUED, discontinued)
+ THE_NILFS_FNS(GC_RUNNING, gc_running)
++THE_NILFS_FNS(SB_DIRTY, sb_dirty)
+ 
+ /* Minimum interval of periodical update of superblocks (in seconds) */
+ #define NILFS_SB_FREQ		10
 -- 
 1.6.3.4
 
