@@ -1,62 +1,52 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Sebastian Reichelt <SebastianR-Mmb7MZpHnFY@public.gmane.org>
 Subject: Re: Kernel BUG in btree.c:514 when mounting
-Date: Thu, 11 Feb 2010 03:36:00 +0900 (JST)
-Message-ID: <20100211.033600.160118962.ryusuke@osrg.net>
+Date: Thu, 11 Feb 2010 00:46:31 +0100
+Message-ID: <20100211004631.1b0c8141.SebastianR@gmx.de>
 References: <loom.20100210T143343-933@post.gmane.org>
+	<20100211.033600.160118962.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <loom.20100210T143343-933-eS7Uydv5nfjZ+VzJOa5vwg@public.gmane.org>
+In-Reply-To: <20100211.033600.160118962.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: SebastianR-Mmb7MZpHnFY@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
-On Wed, 10 Feb 2010 14:06:18 +0000 (UTC), Sebastian Reichelt wrote:
-> Hello!
+
+thanks for your really quick reply.
+
+> The BUG tells that nilfs met a corrupted block during lookup of a
+> btree. 
 > 
-> After using nilfs2 for about 3 months (the version in Linux 2.6.31,
-> not sure about the exact nilfs2 version number), I can no longer
-> mount my root partition, as I immediately get a kernel BUG in
-> btree.c:514. The process causing it is nilfs_cleanerd, though I
-> suspect that might just be the first process to be executed.
+> Can you confirm which version of 2.6.31 kernel you were using?
 
-The BUG tells that nilfs met a corrupted block during lookup of a
-btree. 
+The problem was, I had compiled the kernel on the same partition that is corrupted now. Anyway, by modifying the line in btree.c, I was able to recover most files, including the kernel tarball. (Though something like 1000 files are inaccessible.) I still cannot figure out the exact release number, though, because I can't find any place in the kernel source where it is written down. It was a kernel from the Debian testing distribution, downloaded on October 24. All files in the tarball are dated September 10. Does that help?
 
-Can you confirm which version of 2.6.31 kernel you were using?
+I had actually seen the post on www.nilfs.org about a file system corruption fix in nilfs 2.0.17, but when I downloaded the Linux source from Debian 3 weeks later, I thought for sure they would include the fix. I didn't know Debian testing was this far behind on critical bugfixes.
 
-I recommend you to use stable versions (I mean 2.6.31.12 or 2.6.32.8)
-or well-maintained distro kernels because some serious bugs are not
-yet fixed in the early 2.6.31 release.
+> > (Unfortunately, it is executed even if I use the "ro" option on the
+> > Linux command line -- why?!) It happens during a sys_open call. If
+> > the entire stack trace helps, I could post that, too.
+> 
+> Sounds weird.. 
 
-> (Unfortunately, it is executed even if I use the "ro" option on the
-> Linux command line -- why?!) It happens during a sys_open call. If
-> the entire stack trace helps, I could post that, too.
+I still don't understand why nilfs_cleanerd was started even if the root fs was mounted read-only, but with the patched nilfs, it became clear that a library required by nilfs_cleanerd was among the files that were inaccessible, and that's why crashed right away. If I mount the file system later instead (as a non-root FS), the mount operation actually completes; the kernel just crashes when I try to access some files (with an unpatched/older nilfs such as the one in the current Ubuntu release).
 
-Sounds weird.. 
+> That's a good point.  The BUG_ON call was replaced in 2.6.33-rc1 to
+> handle it as a filesystem error.
 
-> In any case, it would be nice if, upon encountering a file system
-> corruption of some sort, the nilfs implementation didn't BUG, but
-> had an "errors=remount-ro" option like other file systems.
+Oh, I didn't realize that.
 
-That's a good point.  The BUG_ON call was replaced in 2.6.33-rc1 to
-handle it as a filesystem error.
+> Unfortunately, the disk image is rarely-helpful from my experiences
+> since it's hard to track the cause from a corrupted state.
 
-Although the "errors=remount-ro" option is not default in nilfs, I
-think it should be changed at some time.
+OK, I sort of expected that it wouldn't help. Then again, since there is no practical way of reproducing the bug, I thought the end result might be the only thing one can analyze to find the bug. Well, I'm glad I'm not a file system developer. :-)
 
-> Would it be possible to send the partition image to someone? The
-> partition size is about 10 GB.
-
-Unfortunately, the disk image is rarely-helpful from my experiences
-since it's hard to track the cause from a corrupted state.
-
-
-Regards,
-Ryusuke Konishi
+Best regards,
+Sebastian Reichelt
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
