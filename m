@@ -1,33 +1,37 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: crash
-Date: Sat, 20 Feb 2010 22:38:24 +0900 (JST)
-Message-ID: <20100220.223824.179962130.ryusuke@osrg.net>
-References: <ee5afd761002182235r1fe20b0kc7ef7082a5a907e3@mail.gmail.com>
+From: Edgard Pineda <epineda.contact-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: cannot mount nilfs2 partition after io error in raid5
+Date: Mon, 22 Feb 2010 13:44:46 -0300
+Message-ID: <d5c85db51002220844k1fdd5f03pdd2fd97f61a10fa7@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <ee5afd761002182235r1fe20b0kc7ef7082a5a907e3-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:received:date:message-id:subject
+         :from:to:content-type;
+        bh=FLv4y+TmtdS4ECMcE7qUrwdeoij4LjtdFXWB9CmN5ZQ=;
+        b=k60tNqg8x03fKW7jCBHHhclUPb48x2K+H7JZCeQfPgi3fe0Gu78LNOfzOPf91+lI35
+         +wzJaY8g4i2zEQsO0YrrRMNLSvX1aVmf2iz9Op6qJrX1iajGZGpybeEGi6tvYKJLw/oy
+         2GWkFUkf/DuTQiFM5s5DUC8bA9r+u7T0Nu1KM=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
-On Fri, 19 Feb 2010 08:35:56 +0200, Jan de Kruyf wrote:
-> Hallo
-> Just to check that you did receive my email re nilfs on febr 14 with
-> 'crashedVar1.tgz' (346k) attached.
-> 
-> Enjoy your day,
-> Jan de Kruyf.
 
-The mail I received was broken and it's also missing from archives.
+I just had a 4 harddrives in raid5 with nilfs2 (kernel 2.6.32 and
+nilfs-utils 2.0.15) and I've got a power cut, then I rebuilt the
+array, but when I tried to mount the nilfs2 partition I've got:
+"NILFS: Can't find nilfs on dev md0" (in dmesg) after execute
+"mount.nilfs2: Error while mounting /dev/md0 on disk: Invalid
+argument".
 
-Could you resend the files added to the new tar ball?
+Any idea? can I mount as "read only" to rescue some files? any tools
+to "see" the files and fix the partition?
 
 Regards,
-Ryusuke Konishi
+Edgard.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
