@@ -1,34 +1,53 @@
-From: Assaf Weizman <assaf.weizman-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Super Root Block
-Date: Mon, 8 Mar 2010 10:59:44 +0200
-Message-ID: <63c84f241003080059v5f147ecas5b8df9ebc2d154aa@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Super Root Block
+Date: Mon, 08 Mar 2010 19:08:41 +0900 (JST)
+Message-ID: <20100308.190841.192724574.ryusuke@osrg.net>
+References: <63c84f241003080059v5f147ecas5b8df9ebc2d154aa@mail.gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:from:date:message-id
-         :subject:to:content-type;
-        bh=TFnMhS+hAQShObPTwR8o6R/KK972h6ieiiTOZsvsHfk=;
-        b=kKCmUsLimeBHrijbV7eSG5LMFc5bxbsG1tpMsnwZaOquSK4utW475k48Zsu1C4flJP
-         V71ZzqEuEAFpvKRgw/b6WxvUBI3rAShS76We25uh1dpMK0YC/kAsJieUsw/u/cYU/0eo
-         6kq+BJCjqeC4GxLvxY2DhCrrN86iToZocawXk=
+In-Reply-To: <63c84f241003080059v5f147ecas5b8df9ebc2d154aa-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: assaf.weizman-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello,
-Could you please explain a few theoretical questions:
-a. What's the meaning/usage of the "Super Root Block"?
-b. in the Readme (v2) file it's described as "an optional super root
-block (SR)". So as optional element,  who chooses to whether to
-activate\use it or not?
+Hi,
+On Mon, 8 Mar 2010 10:59:44 +0200, Assaf Weizman wrote:
+> Hello,
+> Could you please explain a few theoretical questions:
+> a. What's the meaning/usage of the "Super Root Block"?
+> b. in the Readme (v2) file it's described as "an optional super root
+> block (SR)". So as optional element,  who chooses to whether to
+> activate\use it or not?
 
-Thanks a lot. this is a very interesting file system.
+The super root block contains inodes of checkpoint file (cpfile),
+segment usage file (sufile), and disk address translation (DAT) file.
 
-Best regards
-Assaf Weizman
+It represents the top of metadata hierarchy of NILFS at a time point.
+For the metadata hierarchy, please see the page 9 of the slides:
+
+ http://www.nilfs.org/papers/jls2009-nilfs.pdf 
+
+
+I think the term "optional" in the readme looks confusing.
+
+In nilfs, if a series of logs makes a new checkpoint, it essentially
+ends with a super root block.  Otherwise, it does not entail the super
+root block (there is a variant of log series used for synchronous data
+write).
+
+> Thanks a lot. this is a very interesting file system.
+> 
+> Best regards
+> Assaf Weizman
+
+Thank you.  I think the above slides would be helpful than the readme
+file.
+
+With regards,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
