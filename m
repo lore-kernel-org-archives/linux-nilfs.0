@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/6] nilfs2 trivial fixes
-Date: Sun, 14 Mar 2010 11:28:33 +0900
-Message-ID: <1268533719-19454-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 6/6] nilfs2: remove whitespaces before quoted newlines
+Date: Sun, 14 Mar 2010 11:28:39 +0900
+Message-ID: <1268533719-19454-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1268533719-19454-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1268533719-19454-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,32 +13,50 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-These are all trivial patches. typo fixes, coding style fixes, and a
-fix of missing static specifiers.  I'll send these upstream.
+This kills the following checkpatch warnings:
 
-Thanks,
-Ryusuke Konishi
---
-Ryusuke Konishi (6):
-      nilfs2: fix discrepancy in use of static specifier
-      nilfs2: fix function name typos in docbook comments
-      nilfs2: fix typo "cout" -> "count" in error message
-      nilfs2: fix various typos in comments
-      nilfs2: remove spaces before tabs
-      nilfs2: remove whitespaces before quoted newlines
+ WARNING: unnecessary whitespace before a quoted newline
+ #869: FILE: super.c:869:
+ +     	           "remount to a different snapshot. \n",
 
- fs/nilfs2/alloc.h     |    2 +-
- fs/nilfs2/dat.c       |    2 +-
- fs/nilfs2/dir.c       |    2 +-
- fs/nilfs2/gcinode.c   |    4 ++--
- fs/nilfs2/page.c      |    4 ++--
- fs/nilfs2/segbuf.c    |   10 +++++-----
- fs/nilfs2/segment.c   |    8 ++++----
- fs/nilfs2/segment.h   |    4 ++--
- fs/nilfs2/sufile.c    |    2 +-
- fs/nilfs2/super.c     |    4 ++--
+ WARNING: unnecessary whitespace before a quoted newline
+ #389: FILE: the_nilfs.c:389:
+ +     	    printk(KERN_ERR "NILFS: too short segment. \n");
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/super.c     |    2 +-
  fs/nilfs2/the_nilfs.c |    2 +-
- 11 files changed, 22 insertions(+), 22 deletions(-)
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 896b463..0cdbc5e 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -866,7 +866,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
+ 	if ((*flags & MS_RDONLY) &&
+ 	    sbi->s_snapshot_cno != old_opts.snapshot_cno) {
+ 		printk(KERN_WARNING "NILFS (device %s): couldn't "
+-		       "remount to a different snapshot. \n",
++		       "remount to a different snapshot.\n",
+ 		       sb->s_id);
+ 		err = -EINVAL;
+ 		goto restore_opts;
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 92733d5..33871f7 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -386,7 +386,7 @@ static int nilfs_store_disk_layout(struct the_nilfs *nilfs,
+ 
+ 	nilfs->ns_blocks_per_segment = le32_to_cpu(sbp->s_blocks_per_segment);
+ 	if (nilfs->ns_blocks_per_segment < NILFS_SEG_MIN_BLOCKS) {
+-		printk(KERN_ERR "NILFS: too short segment. \n");
++		printk(KERN_ERR "NILFS: too short segment.\n");
+ 		return -EINVAL;
+ 	}
+ 
+-- 
+1.6.3.4
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
