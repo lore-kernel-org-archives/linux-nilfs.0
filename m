@@ -1,30 +1,56 @@
-From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
-Subject: cleaner: run one cleaning pass based on minimum free space
-Date: Sat, 13 Mar 2010 21:49:43 +0100
-Message-ID: <4B9BFA67.1010501@prnet.org>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 1/6] nilfs2: fix discrepancy in use of static specifier
+Date: Sun, 14 Mar 2010 11:28:34 +0900
+Message-ID: <1268533719-19454-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1268533719-19454-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1268533719-19454-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
+Two segbuf functions, nilfs_segbuf_write and nilfs_segbuf_wait, are
+declared with the static storage class specifier, but their
+implementations are not.
 
-In order to reduce cleaner io, I am thinking it could be usefull to
-implement a parameter where you can specify the minimum free space. If
-this parameter is set, instead of normal cleaning operation, the cleaner
-would wait until there is less than minimum free space available and
-then run one cleaning pass (from first to last segment). If after that,
-there is again more than minimum free space available, continue waiting,
-otherwise run cleaning passes until there is more than minimum free
-space available.
+This fixes the discrepancy.
 
-What would you think about this idea ?
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/segbuf.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-Bye,
-David Arendt
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index ab56fe4..68b08f2 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -470,8 +470,8 @@ static int nilfs_segbuf_submit_bh(struct nilfs_segment_buffer *segbuf,
+  *
+  * %-ENOMEM - Insufficient memory available.
+  */
+-int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
+-		       struct the_nilfs *nilfs)
++static int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
++			      struct the_nilfs *nilfs)
+ {
+ 	struct nilfs_write_info wi;
+ 	struct buffer_head *bh;
+@@ -514,7 +514,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
+  *
+  * %-EIO - I/O error
+  */
+-int nilfs_segbuf_wait(struct nilfs_segment_buffer *segbuf)
++static int nilfs_segbuf_wait(struct nilfs_segment_buffer *segbuf)
+ {
+ 	int err = 0;
+ 
+-- 
+1.6.3.4
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
