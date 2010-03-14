@@ -1,19 +1,29 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
 Subject: Re: cleaner: run one cleaning pass based on minimum free space
-Date: Sun, 14 Mar 2010 20:59:44 +0900 (JST)
-Message-ID: <20100314.205944.160079978.ryusuke@osrg.net>
-References: <4B9BFA67.1010501@prnet.org>
-	<20100314.142634.172547823.ryusuke@osrg.net>
-	<4B9CA2BB.6000907@prnet.org>
+Date: Sun, 14 Mar 2010 14:00:19 +0100
+Message-ID: <hSSjxhQnnRB5.kxy725KN@mail.prnet.org>
+Reply-To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4B9CA2BB.6000907-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+Content-Language: i-default
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Hi,
+
+I will try to implement this myself then. Concerning the nilfs_cleanerd_select segments function I was unclear in  my post. In fact I did not mean the return value but the first element from the segnums array.
+
+Bye,
+David Arendt
+
+-original message-
+Subject: Re: cleaner: run one cleaning pass based on minimum free space
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Date: 14/03/2010 12:59
 
 Hi,
 On Sun, 14 Mar 2010 09:47:55 +0100, David Arendt wrote:
@@ -236,6 +246,7 @@ Ryusuke Konishi
 > > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 > > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
