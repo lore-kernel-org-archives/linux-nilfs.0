@@ -1,34 +1,36 @@
 From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 Subject: Re: cleaner: run one cleaning pass based on minimum free space
-Date: Mon, 15 Mar 2010 18:09:38 +0100
-Message-ID: <4B9E69D2.4030803@prnet.org>
+Date: Mon, 15 Mar 2010 22:24:28 +0100
+Message-ID: <4B9EA58C.1080402@prnet.org>
 References: <hSSjxhQnnRB5.kxy725KN@mail.prnet.org>	<20100314.232838.05854811.ryusuke@osrg.net>	<4B9D6B51.5010202@prnet.org> <20100316.005815.140047502.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed;
+ boundary="------------040108070302000305080800"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20100316.005815.140047502.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
 To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+This is a multi-part message in MIME format.
+--------------040108070302000305080800
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+
 Hi,
 
-In fact by segment check interval I mean the time to sleep before
-checking again for free space. I used 3600 in the example as this is
-would be suitable for my workload, but 60 might be a safer default value.
+Well I didn't know that a few days can pass as fast :-)
 
-Specifying a percentage would also be an idea. I thought about segments
-as nsegments_per_clean is also referring to segments. I think I will
-start implementing this now using segments, as changing it to percent
-wouldn't be big changes. Another idea that comes me to mind would be
-that specifying for example 10 in any configfile option accepting
-segments would be 10 segments and 10% ten percent of total segments.
+I have attached the patch to this mail.
 
-For the rest, I think everything should be clear and I should have a
-patch ready in a few days.
+Until now the patch has only been shortly tested on a loop device, so it
+might contain bugs and destroy your data.
 
+If you decide to apply it, please change the default values to the ones
+you find the most appropriate.
+
+Thanks in advance,
 Bye,
 David Arendt
 
@@ -148,6 +150,265 @@ On 03/15/10 16:58, Ryusuke Konishi wrote:
 >> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 >>     
 
+
+--------------040108070302000305080800
+Content-Type: text/plain;
+ name="nilfs2-utils-min-free-segments.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="nilfs2-utils-min-free-segments.patch"
+
+diff -ur nilfs2-utils.orig/man/nilfs_cleanerd.conf.5 nilfs2-utils/man/nilfs_cleanerd.conf.5
+--- nilfs2-utils.orig/man/nilfs_cleanerd.conf.5	2010-03-14 15:11:30.916690347 +0100
++++ nilfs2-utils/man/nilfs_cleanerd.conf.5	2010-03-15 22:15:58.320507660 +0100
+@@ -25,6 +25,23 @@
+ and their blocks whose duration time is less than the value.  The
+ default value is 3600, meaning one hour.
+ .TP
++.B min_clean_segments
++Specify the minimum number of clean segments. A value of 0 means
++normal cleaner operation. A value greater than 0 means pause cleaning
++until less than min_clean_segments are available. The default value
++is 100.
++.TP
++.B max_clean_segments
++Specify the maximum number of clean segments. If min_clean_segments is
++0, this value is ignored. If more than max_clean_segments are available
++cleaning is paused until less than min_clean_segments are available.
++The default value is 200.
++.TP
++.B clean_check_interval
++Specify the interval to wait between checks of min_clean_segments.
++If min_clean_segments is 0, this value is ignored.
++The default value is 60.
++.TP
+ .B selection_policy
+ Specify the GC policy. At present, only the `\fBtimestamp\fP' policy,
+ which reclaims segments in order from oldest to newest, is support.
+diff -ur nilfs2-utils.orig/sbin/cleanerd/cldconfig.c nilfs2-utils/sbin/cleanerd/cldconfig.c
+--- nilfs2-utils.orig/sbin/cleanerd/cldconfig.c	2010-03-14 15:11:30.916690347 +0100
++++ nilfs2-utils/sbin/cleanerd/cldconfig.c	2010-03-15 20:20:22.364435601 +0100
+@@ -90,6 +90,87 @@
+ 	return 0;
+ }
+ 
++static int
++nilfs_cldconfig_handle_min_clean_segments(struct nilfs_cldconfig *config,
++					  char **tokens, size_t ntoks)
++{
++	__u64 n;
++	char *endptr;
++
++	if (check_tokens(tokens, ntoks, 2, 2) < 0)
++		return 0;
++
++	errno = 0;
++	n = strtoull(tokens[1], &endptr, 10);
++	if (*endptr != '\0') {
++		syslog(LOG_WARNING, "%s: %s: not a number",
++		       tokens[0], tokens[1]);
++		return 0;
++	}
++	if ((n == ULLONG_MAX) && (errno == ERANGE)) {
++		syslog(LOG_WARNING, "%s: %s: number too large",
++		       tokens[0], tokens[1]);
++		return 0;
++	}
++
++	config->cf_min_clean_segments = n;
++	return 0;
++}
++
++static int
++nilfs_cldconfig_handle_max_clean_segments(struct nilfs_cldconfig *config,
++					  char **tokens, size_t ntoks)
++{
++	__u64 n;
++	char *endptr;
++
++	if (check_tokens(tokens, ntoks, 2, 2) < 0)
++		return 0;
++
++	errno = 0;
++	n = strtoull(tokens[1], &endptr, 10);
++	if (*endptr != '\0') {
++		syslog(LOG_WARNING, "%s: %s: not a number",
++		       tokens[0], tokens[1]);
++		return 0;
++	}
++	if ((n == ULLONG_MAX) && (errno == ERANGE)) {
++		syslog(LOG_WARNING, "%s: %s: number too large",
++		       tokens[0], tokens[1]);
++		return 0;
++	}
++
++	config->cf_max_clean_segments = n;
++	return 0;
++}
++
++static int
++nilfs_cldconfig_handle_clean_check_interval(struct nilfs_cldconfig *config,
++					    char **tokens, size_t ntoks)
++{
++	time_t period;
++	char *endptr;
++
++	if (check_tokens(tokens, ntoks, 2, 2) < 0)
++		return 0;
++
++	errno = 0;
++	period = strtoul(tokens[1], &endptr, 10);
++	if (*endptr != '\0') {
++		syslog(LOG_WARNING, "%s: %s: not a number",
++		       tokens[0], tokens[1]);
++		return 0;
++	}
++	if ((period == ULONG_MAX) && (errno == ERANGE)) {
++		syslog(LOG_WARNING, "%s: %s: number too large",
++		       tokens[0], tokens[1]);
++		return 0;
++	}
++
++	config->cf_clean_check_interval = period;
++	return 0;
++}
++
+ static unsigned long long
+ nilfs_cldconfig_selection_policy_timestamp(const struct nilfs_suinfo *si)
+ {
+@@ -277,6 +358,9 @@
+ static const struct nilfs_cldconfig_keyword
+ nilfs_cldconfig_keyword_table[] = {
+ 	{"protection_period",	nilfs_cldconfig_handle_protection_period},
++	{"min_clean_segments",	nilfs_cldconfig_handle_min_clean_segments},
++	{"max_clean_segments",	nilfs_cldconfig_handle_max_clean_segments},
++	{"clean_check_interval",nilfs_cldconfig_handle_clean_check_interval},
+ 	{"selection_policy",	nilfs_cldconfig_handle_selection_policy},
+ 	{"nsegments_per_clean",	nilfs_cldconfig_handle_nsegments_per_clean},
+ 	{"cleaning_interval",	nilfs_cldconfig_handle_cleaning_interval},
+@@ -313,6 +397,9 @@
+ 	config->cf_selection_policy.p_threshold =
+ 		NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD;
+ 	config->cf_protection_period = NILFS_CLDCONFIG_PROTECTION_PERIOD;
++	config->cf_min_clean_segments = NILFS_CLDCONFIG_MIN_CLEAN_SEGMENTS;
++	config->cf_max_clean_segments = NILFS_CLDCONFIG_MAX_CLEAN_SEGMENTS;
++	config->cf_clean_check_interval = NILFS_CLDCONFIG_CLEAN_CHECK_INTERVAL;
+ 	config->cf_nsegments_per_clean = NILFS_CLDCONFIG_NSEGMENTS_PER_CLEAN;
+ 	config->cf_cleaning_interval = NILFS_CLDCONFIG_CLEANING_INTERVAL;
+ 	config->cf_retry_interval = NILFS_CLDCONFIG_RETRY_INTERVAL;
+diff -ur nilfs2-utils.orig/sbin/cleanerd/cldconfig.h nilfs2-utils/sbin/cleanerd/cldconfig.h
+--- nilfs2-utils.orig/sbin/cleanerd/cldconfig.h	2010-03-14 15:11:30.916690347 +0100
++++ nilfs2-utils/sbin/cleanerd/cldconfig.h	2010-03-15 21:58:16.208614224 +0100
+@@ -42,6 +42,9 @@
+  * struct nilfs_cldconfig -
+  * @cf_selection_policy:
+  * @cf_protection_period:
++ * @cf_min_clean_segments:
++ * @cf_max_clean_segments:
++ * @cf_clean_check_interval:
+  * @cf_nsegments_per_clean
+  * @cf_cleaning_interval:
+  * @cf_use_mmap:
+@@ -50,6 +53,9 @@
+ struct nilfs_cldconfig {
+ 	struct nilfs_selection_policy cf_selection_policy;
+ 	time_t cf_protection_period;
++	__u64 cf_min_clean_segments;
++	__u64 cf_max_clean_segments;
++	time_t cf_clean_check_interval;
+ 	int cf_nsegments_per_clean;
+ 	time_t cf_cleaning_interval;
+ 	time_t cf_retry_interval;
+@@ -61,6 +67,9 @@
+ 			nilfs_cldconfig_selection_policy_timestamp
+ #define NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD	0
+ #define NILFS_CLDCONFIG_PROTECTION_PERIOD		3600
++#define	NILFS_CLDCONFIG_MIN_CLEAN_SEGMENTS		100
++#define	NILFS_CLDCONFIG_MAX_CLEAN_SEGMENTS		200
++#define	NILFS_CLDCONFIG_CLEAN_CHECK_INTERVAL		60
+ #define NILFS_CLDCONFIG_NSEGMENTS_PER_CLEAN		2
+ #define NILFS_CLDCONFIG_CLEANING_INTERVAL		5
+ #define NILFS_CLDCONFIG_RETRY_INTERVAL			60
+diff -ur nilfs2-utils.orig/sbin/cleanerd/cleanerd.c nilfs2-utils/sbin/cleanerd/cleanerd.c
+--- nilfs2-utils.orig/sbin/cleanerd/cleanerd.c	2010-03-14 15:11:30.916690347 +0100
++++ nilfs2-utils/sbin/cleanerd/cleanerd.c	2010-03-15 21:41:32.956273102 +0100
+@@ -1175,6 +1175,7 @@
+ 	struct timespec timeout;
+ 	sigset_t sigset;
+ 	int ns, ret;
++	int sleeping = 1;
+ 
+ 	sigemptyset(&sigset);
+ 	if (sigprocmask(SIG_SETMASK, &sigset, NULL) < 0) {
+@@ -1201,6 +1202,12 @@
+ 	cleanerd->c_running = 1;
+ 	cleanerd->c_ncleansegs = cleanerd->c_config.cf_nsegments_per_clean;
+ 
++	if (cleanerd->c_config.cf_min_clean_segments > 0) {
++		syslog(LOG_INFO, "cleaner paused");
++		timeout.tv_sec = cleanerd->c_config.cf_clean_check_interval;
++		timeout.tv_nsec = 0;
++	}
++
+ 	while (1) {
+ 		if (sigprocmask(SIG_BLOCK, &sigset, NULL) < 0) {
+ 			syslog(LOG_ERR, "cannot set signal mask: %m");
+@@ -1220,10 +1227,32 @@
+ 			syslog(LOG_ERR, "cannot get segment usage stat: %m");
+ 			return -1;
+ 		}
++
++		if (cleanerd->c_config.cf_min_clean_segments > 0) {
++			if (sleeping) {
++				if (sustat.ss_ncleansegs < cleanerd->c_config.cf_min_clean_segments) {
++					syslog(LOG_INFO, "cleaner resumed");
++					sleeping = 0;
++				}
++				else
++					goto sleep;
++			}
++			else {
++				if (sustat.ss_ncleansegs > cleanerd->c_config.cf_max_clean_segments) {
++					syslog(LOG_INFO, "cleaner paused");
++					sleeping = 1;
++					timeout.tv_sec = cleanerd->c_config.cf_clean_check_interval;
++					timeout.tv_nsec = 0;
++					goto sleep;
++				}
++			}
++		}
++
+ 		if (sustat.ss_nongc_ctime != prev_nongc_ctime) {
+ 			cleanerd->c_running = 1;
+ 			prev_nongc_ctime = sustat.ss_nongc_ctime;
+ 		}
++
+ 		if (!cleanerd->c_running)
+ 			goto sleep;
+ 
+diff -ur nilfs2-utils.orig/sbin/cleanerd/nilfs_cleanerd.conf nilfs2-utils/sbin/cleanerd/nilfs_cleanerd.conf
+--- nilfs2-utils.orig/sbin/cleanerd/nilfs_cleanerd.conf	2010-03-14 15:11:30.916690347 +0100
++++ nilfs2-utils/sbin/cleanerd/nilfs_cleanerd.conf	2010-03-15 21:44:02.995587453 +0100
+@@ -7,6 +7,17 @@
+ # Protection period in second.
+ protection_period	3600
+ 
++# Minium number of clean segements 
++# 0  = normal cleaner behaviour
++# >0 = start cleaning if less segments are available
++min_clean_segments	100
++
++# Maximum number of clean segments
++max_clean_segments	200
++
++# Clean segment check interval in seconds
++clean_check_interval	60
++
+ # Segment selection policy.
+ # In NILFS version 2.0.0, only the timestamp policy is supported.
+ selection_policy	timestamp	# timestamp in ascend order
+
+--------------040108070302000305080800--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
