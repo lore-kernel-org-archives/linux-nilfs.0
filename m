@@ -1,12 +1,12 @@
 From: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 Subject: Re: cleaner: run one cleaning pass based on minimum free space
-Date: Wed, 17 Mar 2010 20:04:35 +0100
-Message-ID: <4BA127C3.9060008@prnet.org>
-References: <4B9D6B51.5010202@prnet.org>	<20100316.005815.140047502.ryusuke@osrg.net>	<4B9EA58C.1080402@prnet.org> <20100318.031108.204325310.ryusuke@osrg.net>
+Date: Wed, 17 Mar 2010 20:12:57 +0100
+Message-ID: <4BA129B9.9070609@prnet.org>
+References: <4B9D6B51.5010202@prnet.org>	<20100316.005815.140047502.ryusuke@osrg.net>	<08886d8962faeee94a5ab900a2a78ad2.squirrel@www.prnet.org> <20100318.033237.203922438.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20100318.031108.204325310.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20100318.033237.203922438.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -15,183 +15,48 @@ Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
 
-I have changed cleanerd.c to use cleanerd->c_running instead of sleeping.
+Well I think this parameters never need to be changed as emergency.
 
-Here the changed function for review. I will post a new complete patch
-after receiving your comments.
+However I can imagine that for some situations, it would be useful to
+have different parameters for different drives when file systems are
+mounted from /etc/fstab.
 
-static int nilfs_cleanerd_clean_loop(struct nilfs_cleanerd *cleanerd)
-{
-    struct nilfs_sustat sustat;
-    __u64 prev_nongc_ctime = 0, prottime = 0, oldest = 0;
-    __u64 segnums[NILFS_CLDCONFIG_NSEGMENTS_PER_CLEAN_MAX];
-    struct timespec timeout;
-    sigset_t sigset;
-    int ns, ret;
+There was a proposal of another person to modify the configuration file
+to handle multiple devices which might be a better solution.
 
-    sigemptyset(&sigset);
-    if (sigprocmask(SIG_SETMASK, &sigset, NULL) < 0) {
-        syslog(LOG_ERR, "cannot set signal mask: %m");
-        return -1;
-    }
-    sigaddset(&sigset, SIGHUP);
+Another solution migh be to leave the configuration file as it is and
+add a mount option to specify which configuration file to use.
 
-    if (set_sigterm_handler() < 0) {
-        syslog(LOG_ERR, "cannot set SIGTERM signal handler: %m");
-        return -1;
-    }
-    if (set_sighup_handler() < 0) {
-        syslog(LOG_ERR, "cannot set SIGHUP signal handler: %m");
-        return -1;
-    }
-
-    nilfs_cleanerd_reload_config = 0;
-
-    ret = nilfs_cleanerd_init_interval(cleanerd);
-    if (ret < 0)
-        return -1;
-
-    cleanerd->c_ncleansegs = cleanerd->c_config.cf_nsegments_per_clean;
-
-    if (cleanerd->c_config.cf_min_clean_segments > 0) {
-        syslog(LOG_INFO, "cleaner paused");
-        cleanerd->c_running = 0;
-        timeout.tv_sec = cleanerd->c_config.cf_clean_check_interval;
-        timeout.tv_nsec = 0;
-    }
-    else
-      cleanerd->c_running = 1;
-
-    while (1) {
-        if (sigprocmask(SIG_BLOCK, &sigset, NULL) < 0) {
-            syslog(LOG_ERR, "cannot set signal mask: %m");
-            return -1;
-        }
-
-        if (nilfs_cleanerd_reload_config) {
-            if (nilfs_cleanerd_reconfig(cleanerd)) {
-                syslog(LOG_ERR, "cannot configure: %m");
-                return -1;
-            }
-            nilfs_cleanerd_reload_config = 0;
-            syslog(LOG_INFO, "configuration file reloaded");
-        }
-
-        if (nilfs_get_sustat(cleanerd->c_nilfs, &sustat) < 0) {
-            syslog(LOG_ERR, "cannot get segment usage stat: %m");
-            return -1;
-        }
-
-        if (cleanerd->c_config.cf_min_clean_segments > 0) {
-            if (cleanerd->c_running) {
-                if (sustat.ss_ncleansegs >
-cleanerd->c_config.cf_max_clean_segments) {
-                    syslog(LOG_INFO, "cleaner paused");
-                    cleanerd->c_running = 0;
-                    timeout.tv_sec =
-cleanerd->c_config.cf_clean_check_interval;
-                    timeout.tv_nsec = 0;
-                    goto sleep;
-                }
-            }
-            else {
-                if (sustat.ss_ncleansegs <
-cleanerd->c_config.cf_min_clean_segments) {
-                    syslog(LOG_INFO, "cleaner resumed");
-                    cleanerd->c_running = 1;
-                }
-                else
-                    goto sleep;
-            }
-        }
-
-        if (sustat.ss_nongc_ctime != prev_nongc_ctime) {
-            cleanerd->c_running = 1;
-            prev_nongc_ctime = sustat.ss_nongc_ctime;
-        }
-
-        if (!cleanerd->c_running)
-            goto sleep;
-
-        syslog(LOG_DEBUG, "ncleansegs = %llu",
-               (unsigned long long)sustat.ss_ncleansegs);
-
-        ns = nilfs_cleanerd_select_segments(
-            cleanerd, &sustat, segnums, &prottime, &oldest);
-        if (ns < 0) {
-            syslog(LOG_ERR, "cannot select segments: %m");
-            return -1;
-        }
-        syslog(LOG_DEBUG, "%d segment%s selected to be cleaned",
-               ns, (ns <= 1) ? "" : "s");
-        if (ns > 0) {
-            ret = nilfs_cleanerd_clean_segments(
-                cleanerd, &sustat, segnums, ns, prottime);
-            if (ret < 0)
-                return -1;
-        }
-
-        ret = nilfs_cleanerd_recalc_interval(
-            cleanerd, ns, prottime, oldest, &timeout);
-        if (ret < 0)
-            return -1;
-        else if (ret > 0)
-            continue;
- sleep:
-        if (sigprocmask(SIG_UNBLOCK, &sigset, NULL) < 0) {
-            syslog(LOG_ERR, "cannot set signal mask: %m");
-            return -1;
-        }
-
-        ret = nilfs_cleanerd_sleep(cleanerd, &timeout);
-        if (ret < 0)
-            return -1;
-    }
-}
-
-Thanks in advance
 Bye,
 David Arendt
 
-
-
-On 03/17/10 19:11, Ryusuke Konishi wrote:
-> Hi,
-> On Mon, 15 Mar 2010 22:24:28 +0100, David Arendt wrote:
+On 03/17/10 19:32, Ryusuke Konishi wrote:
+> On Tue, 16 Mar 2010 12:17:53 +0100, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org wrote:
 >   
 >> Hi,
 >>
->> Well I didn't know that a few days can pass as fast :-)
+>> if it is ok for you, I will create a second patch to add the following
+>> mount options: minfree, maxfree (or do you prefer other names ?). So
+>> different values can be specified for different mount points.
 >>
->> I have attached the patch to this mail.
->>
->> Until now the patch has only been shortly tested on a loop device, so it
->> might contain bugs and destroy your data.
+>> What do you think ?
 >>     
-> Thank you for posting the patch!
+> Hmm, I'd like to keep such pseudo mount option to a minimum necessary.
 >
-> The patch looks rougly ok to me.
-> I'll comment on it later.
->
-> At first glance, I felt it would be nice if cleanerd->c_running is
-> nicely used instead of adding a local variable "sleeping".
+> Previous -pp option was adopted since it was helpful for emergency
+> use, for dead-end situations like a disk full.  Do you think the same
+> is true of these parameters ?
 >
 > Thanks,
 > Ryusuke Konishi
->  
+>
 >   
->> If you decide to apply it, please change the default values to the ones
->> you find the most appropriate.
+>> Thanks,
+>> Arendt David
 >>
->> Thanks in advance,
->> Bye,
->> David Arendt
->>
->> On 03/15/10 16:58, Ryusuke Konishi wrote:
 >>     
 >>> Hi,
 >>> On Mon, 15 Mar 2010 00:03:45 +0100, David Arendt wrote:
->>>   
 >>>       
 >>>> Hi,
 >>>>
@@ -200,8 +65,8 @@ On 03/17/10 19:11, Ryusuke Konishi wrote:
 >>>>
 >>>> Maybe I am understanding something wrong, but if I would use the count
 >>>> of reclaimed segments, how could I determine if one cleaning pass has
->>>> finished as I don't know in advance how many segments could be reclaimed ?
->>>>     
+>>>> finished as I don't know in advance how many segments could be reclaimed
+>>>> ?
 >>>>         
 >>> For example, how about this?
 >>>
@@ -209,12 +74,12 @@ On 03/17/10 19:11, Ryusuke Konishi wrote:
 >>>  nblk = (max_clean_segments - (number of clean segments)) *
 >>>             (number of blocks per segment)
 >>>
->>>  * If (number of clean segments) < min_clean_segments, then start reclamation
+>>>  * If (number of clean segments) < min_clean_segments, then start
+>>> reclamation
 >>>  * Try to reclaim nmax segments (at a maximum).
 >>>  * When the cleaner found and freed nblk blocks during the
 >>>    reclamation, then end one cleaning pass.
 >>>
->>>   
 >>>       
 >>>> Another approach would be not basing cleaning on a whole cleaning pass
 >>>> but instead creating these addtional configfile options:
@@ -231,17 +96,15 @@ On 03/17/10 19:11, Ryusuke Konishi wrote:
 >>>> Basically in this example if less than 800mb are free cleaner is run
 >>>> until 1600mb are free. If min_clean_segments is 0, the cleaner would do
 >>>> normal operation.
->>>>     
 >>>>         
 >>> The first two parameters look Ok.
 >>> (I've already referred to these in the above example.)
 >>>
 >>> We may well be able to make segment_check_interval more frequent.
->>> or do you have something in mind? 
+>>> or do you have something in mind?
 >>>
 >>> Do you mean interval of cleaning passes ?
 >>>
->>>   
 >>>       
 >>>> For this solution only changes in configfile loading and
 >>>> nilfs_cleanerd_clean_loop would be necessary which would lower the risk
@@ -250,7 +113,6 @@ On 03/17/10 19:11, Ryusuke Konishi wrote:
 >>>> If this solution is ok for you, I will implement it this way and send
 >>>> you the patch in a few days. Also tell me if the names I have choosen
 >>>> for the options are ok for you or if you would prefer other ones.
->>>>     
 >>>>         
 >>> The option names look fine to me.
 >>> Or should we use percentage for them?
@@ -258,25 +120,20 @@ On 03/17/10 19:11, Ryusuke Konishi wrote:
 >>>
 >>> Is there anything else that isn't clear?
 >>>
->>>   
 >>>       
 >>>> Thanks in advance
 >>>> Bye,
 >>>> David Arendt
->>>>     
 >>>>         
 >>> Thanks,
->>> Ryusuke Konishi 
+>>> Ryusuke Konishi
 >>>
->>>   
 >>>       
 >>>> On 03/14/10 15:28, Ryusuke Konishi wrote:
->>>>     
 >>>>         
 >>>>> Hi,
 >>>>> On Sun, 14 Mar 2010 14:00:19 +0100, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org wrote:
->>>>>   
->>>>>       
+>>>>>
 >>>>>           
 >>>>>> Hi,
 >>>>>>
@@ -284,8 +141,7 @@ On 03/17/10 19:11, Ryusuke Konishi wrote:
 >>>>>> nilfs_cleanerd_select segments function I was unclear in my post. In
 >>>>>> fact I did not mean the return value but the first element from the
 >>>>>> segnums array.
->>>>>>     
->>>>>>         
+>>>>>>
 >>>>>>             
 >>>>> Ok. So you thought of determining termination of one cleaning pass by
 >>>>> the segment number stored preliminarily.
@@ -308,15 +164,20 @@ On 03/17/10 19:11, Ryusuke Konishi wrote:
 >>>>> Cheers,
 >>>>> Ryusuke Konishi
 >>>>>
->>>>>   
->>>>>       
+>>>>>
 >>>>>           
 >>>> --
->>>> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+>>>> To unsubscribe from this list: send the line "unsubscribe linux-nilfs"
+>>>> in
 >>>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 >>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>>>     
 >>>>         
+>>>       
+>>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 >>     
 
 --
