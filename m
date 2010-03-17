@@ -1,14 +1,14 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: cleaner: run one cleaning pass based on minimum free space
-Date: Thu, 18 Mar 2010 02:26:55 +0900 (JST)
-Message-ID: <20100318.022655.156806263.ryusuke@osrg.net>
+Date: Thu, 18 Mar 2010 03:11:08 +0900 (JST)
+Message-ID: <20100318.031108.204325310.ryusuke@osrg.net>
 References: <4B9D6B51.5010202@prnet.org>
 	<20100316.005815.140047502.ryusuke@osrg.net>
-	<4B9E69D2.4030803@prnet.org>
+	<4B9EA58C.1080402@prnet.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4B9E69D2.4030803-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <4B9EA58C.1080402-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
@@ -16,35 +16,31 @@ To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
-On Mon, 15 Mar 2010 18:09:38 +0100, David Arendt wrote:
+On Mon, 15 Mar 2010 22:24:28 +0100, David Arendt wrote:
 > Hi,
 > 
-> In fact by segment check interval I mean the time to sleep before
-> checking again for free space. I used 3600 in the example as this is
-> would be suitable for my workload, but 60 might be a safer default value.
+> Well I didn't know that a few days can pass as fast :-)
 > 
-> Specifying a percentage would also be an idea. I thought about segments
-> as nsegments_per_clean is also referring to segments. I think I will
-> start implementing this now using segments, as changing it to percent
-> wouldn't be big changes. Another idea that comes me to mind would be
-> that specifying for example 10 in any configfile option accepting
-> segments would be 10 segments and 10% ten percent of total segments.
+> I have attached the patch to this mail.
+> 
+> Until now the patch has only been shortly tested on a loop device, so it
+> might contain bugs and destroy your data.
 
-Sounds nice.
+Thank you for posting the patch!
 
-As for nsegments_per_clean, seems like the percentage notation should
-not be applied because it has a bad effect on memory usage of the
-nilfs GC cache in kernel. (So, the parameter is limited by a ceiling.)
+The patch looks rougly ok to me.
+I'll comment on it later.
 
-But, I agree that the notation is suited for such threshold
-parameters.
+At first glance, I felt it would be nice if cleanerd->c_running is
+nicely used instead of adding a local variable "sleeping".
 
-Regards,
+Thanks,
 Ryusuke Konishi
-
-> For the rest, I think everything should be clear and I should have a
-> patch ready in a few days.
+ 
+> If you decide to apply it, please change the default values to the ones
+> you find the most appropriate.
 > 
+> Thanks in advance,
 > Bye,
 > David Arendt
 > 
