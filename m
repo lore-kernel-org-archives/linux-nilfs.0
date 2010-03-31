@@ -1,112 +1,49 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: cleaner: run one cleaning pass based on minimum free space
-Date: Mon, 29 Mar 2010 16:39:02 +0900 (JST)
-Message-ID: <20100329.163902.263795283.ryusuke@osrg.net>
-References: <4BAFCFB4.5050401@prnet.org>
-	<20100329.125908.56566467.ryusuke@osrg.net>
-	<4BB02E0F.90001@prnet.org>
+From: Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: fix a wrong type conversion in nilfs_ioctl()
+Date: Wed, 31 Mar 2010 15:41:00 +0800
+Message-ID: <20100331074100.GA11787@xhl>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4BB02E0F.90001-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:received:received:date:from:to:cc:subject
+         :message-id:mail-followup-to:mime-version:content-type
+         :content-disposition:x-operating-system:user-agent;
+        bh=xmhywPi5k/yDH8lor1dLPBz5lHb2L5/dwyzdkKNOxCU=;
+        b=Cqi/sqFhI79aS1sIPPFDtdtu0vTST27lhnm+oKfEy4oHADXbgM/A8FLcxV8H53RAG1
+         I/II2mJIUcklqUqWt8FU0DaAYRgenG7xXWpxpMQmVEJRd0SLl6MgNexkOZTtM8D5D1gm
+         vf8lrcwOgrB8uRtOX5xmnYYyHFWBXQFuJcrMI=
+Content-Disposition: inline
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 29 Mar 2010 06:35:27 +0200, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
-> Hi,
-> 
-> here the changes
-> 
-> Thank in advance,
-> David Arendt
+(void * __user *) should be (void __user *)
 
-Looks fine to me.  Will apply later.
+Signed-off-by: Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nilfs2/ioctl.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Thanks for your quick work.
-
-Ryusuke Konishi
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 313d0a2..c446017 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -648,7 +648,7 @@ static int nilfs_ioctl_get_info(struct inode *inode, struct file *filp,
+ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ {
+ 	struct inode *inode = filp->f_dentry->d_inode;
+-	void __user *argp = (void * __user *)arg;
++	void __user *argp = (void __user *)arg;
  
-> On 03/29/10 05:59, Ryusuke Konishi wrote:
-> > Hi,
-> > On Sun, 28 Mar 2010 23:52:52 +0200, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
-> >   
-> >> Hi,
-> >>
-> >> thanks for applying the patches. I did all my tests on 2 gbyte loop
-> >> devices and now that it is officially in git, I deployed it to some
-> >> production systems with big disks. Here I have noticed, that I have
-> >> completely forgotten the reserved segments. Technically this is not a
-> >> problem, but I think people changing configuration files will tend to
-> >> forget about it. I'm thinking it might be useful to add them internally
-> >> to min_free_segments and max_free_segments so users don't need to worry
-> >> about them. What do you think ?
-> >>     
-> > Ahh, we should take into account the number of reserved segments.  If
-> > not so, cleaner control with the two threshold values will not work
-> > properly for large drives.
-> >
-> >   
-> >> If you like to change the current behavior to this behavior, I will
-> >> submit a short update patch.
-> >>     
-> > Yes, please do.
-> >
-> >   
-> >> I am thinking about getting the number of reserved segments this way:
-> >>
-> >> (nilfs_cleanerd->c_nilfs->n_sb->s_nsegments *
-> >> nilfs_cleanerd->c_nilfs->n_sb->s_r_segments_percentage) / 100
-> >>
-> >> or do you know any better way ?
-> >>     
-> > The kernel code calulates the number by:
-> >
-> >   = max(NILFS_MIN_NRSVSEGS,
-> >         DIV_ROUND_UP(nsegments * r_segments_percentage, 100))
-> >
-> >   where NILFS_MIN_NRSVSEGS is defined in include/nilfs2_fs.h, and
-> >   DIV_ROUND_UP is defined as follows:
-> >
-> >  #define DIV_ROUND_UP(n,d)    (((n) +  (d) - 1) / (d))
-> >
-> > The same or some equivelent calculation seems preferable.
-> >  
-> > With regards,
-> > Ryusuke Konishi
-> >
-> >   
-> >> On 03/28/10 17:26, Ryusuke Konishi wrote:
-> >>     
-> >>> Hi,
-> >>> On Sun, 28 Mar 2010 14:17:00 +0200, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
-> >>>   
-> >>>       
-> >>>> Hi,
-> >>>>
-> >>>> here the nogc patch
-> >>>>
-> >>>> As changelog description for this one, we could put:
-> >>>>
-> >>>> add mount option to disable garbage collection
-> >>>>
-> >>>> Thanks in advance
-> >>>> Bye,
-> >>>> David Arendt
-> >>>>     
-> >>>>         
-> >>> Hmm, the patch looks perfect.
-> >>>
-> >>> Will queue both in the git tree of utils.
-> >>>
-> >>> Thanks,
-> >>> Ryusuke Konishi
-> >>>   
-> >>>       
-> >>     
-> 
+ 	switch (cmd) {
+ 	case NILFS_IOCTL_CHANGE_CPMODE:
+-- 
+1.6.3.3
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
