@@ -1,28 +1,30 @@
 From: Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: [PATCH 2/2] nilfs2: Combine nilfs_btree_release_path() and
  nilfs_btree_free_path()
-Date: Fri, 2 Apr 2010 18:43:09 +0800
-Message-ID: <20100402104309.GC9652@xhl>
-References: <20100331074100.GA11787@xhl>
+Date: Fri, 2 Apr 2010 18:48:37 +0800
+Message-ID: <20100402104837.GD9652@xhl>
+References: <20100402104206.GB9652@xhl>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
-        h=domainkey-signature:received:received:date:from:to:cc:subject
+        h=domainkey-signature:received:received:date:from:to:subject
          :message-id:mail-followup-to:references:mime-version:content-type
          :content-disposition:in-reply-to:x-operating-system:user-agent;
-        bh=4SChmxIEkklwwnDNuZmvhlhpUQbF6L+/mHaVg2nIoiU=;
-        b=x0Xd6cLS3TvaIj4pJAsq5LTWhpITv4TVB+4SUxhEl+lJ166uXLIEZF3NGvfCfVUQap
-         6r7y5volrCVY/mxYO0Gnbx7ZTi4lospb6iP7Ql7j3N4WA1xl32wM/3dHBCZXyrlEPP2Z
-         tU52gxe8pQGj45Vki9f4cdMFFoLrHBvKNZGbk=
+        bh=PkjyiXP8nm4IOXWVhRHTEEWm+mJ/TIN7osSO+dtAu58=;
+        b=SKxOZdYTuCculBw1eN9OmmdiGSMQ0ZhLjG/oOxLMnwYLbArI2Vza2GSwPCbT9K+YTP
+         82E1jmd86XUUK0UiRbD+Q4ZXd+6Gwpaj8ueElO1m3lEmz5POnOOmld3WJArZ//xzGNrP
+         lxQIiBH1cgC+o6QrzqXzNTfCw9DxJFsnXf+YY=
 Content-Disposition: inline
-In-Reply-To: <20100331074100.GA11787@xhl>
+In-Reply-To: <20100402104206.GB9652@xhl>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Sorry, a same patch sent out a short time ago but replied to a wrong thread.
+-------------------- cut here ----------------------
 
 nilfs_btree_release_path() and nilfs_btree_free_path() are bound into each other
 tightly. Make them into one procedure to clearify the logic and avoid some
