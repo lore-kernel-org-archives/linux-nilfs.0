@@ -1,174 +1,150 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/2] nilfs2: move out checksum routines to segment buffer code
-Date: Sat,  3 Apr 2010 00:48:25 +0900
-Message-ID: <1270223305-30416-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1270223305-30416-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: cleaner: run one cleaning pass based on minimum free space
+Date: Mon, 05 Apr 2010 12:02:26 +0900 (JST)
+Message-ID: <20100405.120226.98047309.ryusuke@osrg.net>
+References: <20100329.125908.56566467.ryusuke@osrg.net>
+	<4BB02E0F.90001@prnet.org>
+	<20100329.163902.263795283.ryusuke@osrg.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1270223305-30416-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <20100329.163902.263795283.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ryusuke-sG5X7nlA6pw@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This moves out checksum routines in log writer to segbuf.c for
-cleanup.
+Hi!
+On Mon, 29 Mar 2010 16:39:02 +0900 (JST), Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wrote:
+> On Mon, 29 Mar 2010 06:35:27 +0200, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
+> > Hi,
+> > 
+> > here the changes
+> > 
+> > Thank in advance,
+> > David Arendt
+> 
+> Looks fine to me.  Will apply later.
+> 
+> Thanks for your quick work.
+> 
+> Ryusuke Konishi
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/segbuf.c  |   39 +++++++++++++++++++++++++++++++++++----
- fs/nilfs2/segbuf.h  |    3 +--
- fs/nilfs2/segment.c |   33 +++------------------------------
- 3 files changed, 39 insertions(+), 36 deletions(-)
+I enhanced your change so that min_clean_segments and
+max_clean_segments can be specified with a ratio (%) or an absolute
+value (MB, GB, and so on) of capacity.
 
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index cb6459d..666fec3 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -201,8 +201,8 @@ void nilfs_segbuf_fill_in_segsum(struct nilfs_segment_buffer *segbuf)
- /*
-  * CRC calculation routines
-  */
--void nilfs_segbuf_fill_in_segsum_crc(struct nilfs_segment_buffer *segbuf,
--				     u32 seed)
-+static void
-+nilfs_segbuf_fill_in_segsum_crc(struct nilfs_segment_buffer *segbuf, u32 seed)
- {
- 	struct buffer_head *bh;
- 	struct nilfs_segment_summary *raw_sum;
-@@ -229,8 +229,8 @@ void nilfs_segbuf_fill_in_segsum_crc(struct nilfs_segment_buffer *segbuf,
- 	raw_sum->ss_sumsum = cpu_to_le32(crc);
- }
- 
--void nilfs_segbuf_fill_in_data_crc(struct nilfs_segment_buffer *segbuf,
--				   u32 seed)
-+static void nilfs_segbuf_fill_in_data_crc(struct nilfs_segment_buffer *segbuf,
-+					  u32 seed)
- {
- 	struct buffer_head *bh;
- 	struct nilfs_segment_summary *raw_sum;
-@@ -256,6 +256,20 @@ void nilfs_segbuf_fill_in_data_crc(struct nilfs_segment_buffer *segbuf,
- 	raw_sum->ss_datasum = cpu_to_le32(crc);
- }
- 
-+static void
-+nilfs_segbuf_fill_in_super_root_crc(struct nilfs_segment_buffer *segbuf,
-+				    u32 seed)
-+{
-+	struct nilfs_super_root *raw_sr;
-+	u32 crc;
-+
-+	raw_sr = (struct nilfs_super_root *)segbuf->sb_super_root->b_data;
-+	crc = crc32_le(seed,
-+		       (unsigned char *)raw_sr + sizeof(raw_sr->sr_sum),
-+		       NILFS_SR_BYTES - sizeof(raw_sr->sr_sum));
-+	raw_sr->sr_sum = cpu_to_le32(crc);
-+}
-+
- static void nilfs_release_buffers(struct list_head *list)
- {
- 	struct buffer_head *bh, *n;
-@@ -335,6 +349,23 @@ int nilfs_wait_on_logs(struct list_head *logs)
- 	return ret;
- }
- 
-+/**
-+ * nilfs_add_checksums_on_logs - add checksums on the logs
-+ * @logs: list of segment buffers storing target logs
-+ * @seed: checksum seed value
-+ */
-+void nilfs_add_checksums_on_logs(struct list_head *logs, u32 seed)
-+{
-+	struct nilfs_segment_buffer *segbuf;
-+
-+	list_for_each_entry(segbuf, logs, sb_list) {
-+		if (segbuf->sb_super_root)
-+			nilfs_segbuf_fill_in_super_root_crc(segbuf, seed);
-+		nilfs_segbuf_fill_in_segsum_crc(segbuf, seed);
-+		nilfs_segbuf_fill_in_data_crc(segbuf, seed);
-+	}
-+}
-+
- /*
-  * BIO operations
-  */
-diff --git a/fs/nilfs2/segbuf.h b/fs/nilfs2/segbuf.h
-index a1a0af6..ae12c2c 100644
---- a/fs/nilfs2/segbuf.h
-+++ b/fs/nilfs2/segbuf.h
-@@ -139,8 +139,6 @@ int nilfs_segbuf_extend_segsum(struct nilfs_segment_buffer *);
- int nilfs_segbuf_extend_payload(struct nilfs_segment_buffer *,
- 				struct buffer_head **);
- void nilfs_segbuf_fill_in_segsum(struct nilfs_segment_buffer *);
--void nilfs_segbuf_fill_in_segsum_crc(struct nilfs_segment_buffer *, u32);
--void nilfs_segbuf_fill_in_data_crc(struct nilfs_segment_buffer *, u32);
- 
- static inline void
- nilfs_segbuf_add_segsum_buffer(struct nilfs_segment_buffer *segbuf,
-@@ -173,6 +171,7 @@ void nilfs_truncate_logs(struct list_head *logs,
- 			 struct nilfs_segment_buffer *last);
- int nilfs_write_logs(struct list_head *logs, struct the_nilfs *nilfs);
- int nilfs_wait_on_logs(struct list_head *logs);
-+void nilfs_add_checksums_on_logs(struct list_head *logs, u32 seed);
- 
- static inline void nilfs_destroy_logs(struct list_head *logs)
- {
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 39c94b7..177e897 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -931,35 +931,6 @@ static void nilfs_segctor_fill_in_file_bmap(struct nilfs_sc_info *sci,
- 	}
- }
- 
--/*
-- * CRC calculation routines
-- */
--static void nilfs_fill_in_super_root_crc(struct buffer_head *bh_sr, u32 seed)
--{
--	struct nilfs_super_root *raw_sr =
--		(struct nilfs_super_root *)bh_sr->b_data;
--	u32 crc;
--
--	crc = crc32_le(seed,
--		       (unsigned char *)raw_sr + sizeof(raw_sr->sr_sum),
--		       NILFS_SR_BYTES - sizeof(raw_sr->sr_sum));
--	raw_sr->sr_sum = cpu_to_le32(crc);
--}
--
--static void nilfs_segctor_fill_in_checksums(struct nilfs_sc_info *sci,
--					    u32 seed)
--{
--	struct nilfs_segment_buffer *segbuf;
--
--	list_for_each_entry(segbuf, &sci->sc_segbufs, sb_list) {
--		if (segbuf->sb_super_root)
--			nilfs_fill_in_super_root_crc(segbuf->sb_super_root,
--						     seed);
--		nilfs_segbuf_fill_in_segsum_crc(segbuf, seed);
--		nilfs_segbuf_fill_in_data_crc(segbuf, seed);
--	}
--}
--
- static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
- 					     struct the_nilfs *nilfs)
- {
-@@ -2173,7 +2144,9 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
- 			nilfs_abort_logs(&sci->sc_segbufs, failed_page, err);
- 			goto failed_to_write;
- 		}
--		nilfs_segctor_fill_in_checksums(sci, nilfs->ns_crc_seed);
-+
-+		nilfs_add_checksums_on_logs(&sci->sc_segbufs,
-+					    nilfs->ns_crc_seed);
- 
- 		err = nilfs_segctor_write(sci, nilfs);
- 		if (unlikely(err))
--- 
-1.6.3.4
+The change is available on the head of util's git repo.
 
+Now, my question is how we should set the default value of these
+parameters.  During test, I got disk full several times, and I feel
+min_free_segments = 100 is a bit tight.
+
+Of course this depends on the usage of each, but I think that the
+default values are desirable to have some generality (when possible).
+
+The following setting is my current idea for this.  How does it look?
+
+ min_clean_segments      10%
+ max_clean_segments      20%
+ clean_check_interval    10
+
+I also feel GC speed should be accelerated than now while the
+filesystem is close to disk full.  One simple method is adding
+optional nsegments_per_clean and cleaning_interval parameters for <
+min_clean_segments.  Or, some sort of adaptive acceleration should be
+applied.
+
+I'm planning to make the next util release after this settles down.
+
+Any idea?
+
+Thanks,
+Ryusuke Konishi
+  
+> > On 03/29/10 05:59, Ryusuke Konishi wrote:
+> > > Hi,
+> > > On Sun, 28 Mar 2010 23:52:52 +0200, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
+> > >   
+> > >> Hi,
+> > >>
+> > >> thanks for applying the patches. I did all my tests on 2 gbyte loop
+> > >> devices and now that it is officially in git, I deployed it to some
+> > >> production systems with big disks. Here I have noticed, that I have
+> > >> completely forgotten the reserved segments. Technically this is not a
+> > >> problem, but I think people changing configuration files will tend to
+> > >> forget about it. I'm thinking it might be useful to add them internally
+> > >> to min_free_segments and max_free_segments so users don't need to worry
+> > >> about them. What do you think ?
+> > >>     
+> > > Ahh, we should take into account the number of reserved segments.  If
+> > > not so, cleaner control with the two threshold values will not work
+> > > properly for large drives.
+> > >
+> > >   
+> > >> If you like to change the current behavior to this behavior, I will
+> > >> submit a short update patch.
+> > >>     
+> > > Yes, please do.
+> > >
+> > >   
+> > >> I am thinking about getting the number of reserved segments this way:
+> > >>
+> > >> (nilfs_cleanerd->c_nilfs->n_sb->s_nsegments *
+> > >> nilfs_cleanerd->c_nilfs->n_sb->s_r_segments_percentage) / 100
+> > >>
+> > >> or do you know any better way ?
+> > >>     
+> > > The kernel code calulates the number by:
+> > >
+> > >   = max(NILFS_MIN_NRSVSEGS,
+> > >         DIV_ROUND_UP(nsegments * r_segments_percentage, 100))
+> > >
+> > >   where NILFS_MIN_NRSVSEGS is defined in include/nilfs2_fs.h, and
+> > >   DIV_ROUND_UP is defined as follows:
+> > >
+> > >  #define DIV_ROUND_UP(n,d)    (((n) +  (d) - 1) / (d))
+> > >
+> > > The same or some equivelent calculation seems preferable.
+> > >  
+> > > With regards,
+> > > Ryusuke Konishi
+> > >
+> > >   
+> > >> On 03/28/10 17:26, Ryusuke Konishi wrote:
+> > >>     
+> > >>> Hi,
+> > >>> On Sun, 28 Mar 2010 14:17:00 +0200, David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org> wrote:
+> > >>>   
+> > >>>       
+> > >>>> Hi,
+> > >>>>
+> > >>>> here the nogc patch
+> > >>>>
+> > >>>> As changelog description for this one, we could put:
+> > >>>>
+> > >>>> add mount option to disable garbage collection
+> > >>>>
+> > >>>> Thanks in advance
+> > >>>> Bye,
+> > >>>> David Arendt
+> > >>>>     
+> > >>>>         
+> > >>> Hmm, the patch looks perfect.
+> > >>>
+> > >>> Will queue both in the git tree of utils.
+> > >>>
+> > >>> Thanks,
+> > >>> Ryusuke Konishi
+> > >>>   
+> > >>>       
+> > >>     
+> > 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
