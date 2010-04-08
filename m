@@ -1,56 +1,127 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCH 2/2] nilfs2: add a print message after loading nilfs2
-Date: Thu, 08 Apr 2010 16:21:41 +0900 (JST)
-Message-ID: <20100408.162141.218082254.ryusuke@osrg.net>
-References: <20100407142058.GA27224@xhl>
-	<20100408.113405.221629738.ryusuke@osrg.net>
-	<u2p3a3680031004072245t5ea476a5xbd6cbe6d3302de00@mail.gmail.com>
+From: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
+Subject: Re: cleaner: run one cleaning pass based on minimum free space
+Date: Thu, 8 Apr 2010 12:54:05 +0200
+Message-ID: <418d5f13acfaea00b3f9750b4af1f515.squirrel@www.prnet.org>
+References: <4BBB724D.6040207@prnet.org>
+    <20100407.030446.52169610.ryusuke@osrg.net>
+    <0f70f9c8a2d58971d6d6af5104c73066.squirrel@www.prnet.org>
+    <20100408.141218.179775797.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed;boundary="----=_20100408125405_78031"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <u2p3a3680031004072245t5ea476a5xbd6cbe6d3302de00-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20100408.141218.179775797.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Thu, 8 Apr 2010 13:45:05 +0800, Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> 2010/4/8 Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>:
-> > On Wed, 7 Apr 2010 22:20:58 +0800, Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> >> Hi KONISHI Ryusuke,
-> >>
-> >> Any feedbacks on these patches?
-> >>
-> >> Thanks,
-> >> Li Hong
-> >
-> > Well, adding a load message is ok, but it should be more moderate like
-> > "nilfs2 file system loaded\n".
-> Yes. I just thought that printing a message after loading a file
-> system is a practice.
-> You may choose any string that you think is suitable :)
+------=_20100408125405_78031
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
 
-How about "NILFS version 2 loaded\n" ?
+Hi,
 
-Seems that most messages have prefix "NILFS: ..." or "NILFS (device
-%s):".
+here the patch
+
+Thanks in advance
+Bye,
+David Arendt
+
+> Hi,
+> On Wed, 7 Apr 2010 12:39:39 +0200, admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org wrote:
+>> Hi,
+>>
+>> At the moment of submitting my cleaner patches, I didn't know if you
+>> would
+>> use the new behavior as default behavior or the old one therefore in
+>> documentation I had described that min_clean_segments = 0 would mean
+>> normal cleaner behavior. However as the new behavior is now used as
+>> default behavior, normal behavior might be confusing.
+>
+> That's right.
+>
+>> I am thinking about doing the following changes in documentation:
+>>
+>> in nilfs_cleanerd.conf change
+>>
+>> # Minium number of clean segments
+>> # 0  = normal cleaner behaviour
+>> # >0 = start cleaning if less segments are available
+>> min_clean_segments      10%
+>>
+>> to
+>>
+>> # Minimum number of clean segments
+>> #   0 = continuous cleaning
+>> # > 0 = pause cleaning until less segments are available
+>> min_clean_segments      10%
+>>
+>> I just saw that I had a typo in the word minimum.
+>>
+>> in nilfs_cleanerd.conf.8 change
+>>
+>> .B min_clean_segments
+>> Specify the minimum number of clean segments. A value of 0 means
+>> normal cleaner operation. A value greater than 0 means pause cleaning
+>> until less than min_clean_segments are available.
+>>
+>> to
+>>
+>> .B min_clean_segments
+>> Specify the minimum number of clean segments. A value of 0 means
+>> continuous cleaning. A value greater than 0 means pause cleaning
+>> until less than min_clean_segments are available.
+>>
+>> What do you think about it ?
+>>
+>> If you want to change, will you do changes or should I send you a patch
+>> ?
+>
+> Well, that change would be better.
+> Send me the patch, please?
+>
+> Thanks,
+> Ryusuke Konishi
+>
+
+------=_20100408125405_78031
+Content-Type: text/x-diff; name="documentation.patch"
+Content-Transfer-Encoding: 8bit
+Content-Disposition: attachment; filename="documentation.patch"
+
+diff -ur nilfs2-utils.orig/man/nilfs_cleanerd.conf.5 nilfs2-utils/man/nilfs_cleanerd.conf.5
+--- nilfs2-utils.orig/man/nilfs_cleanerd.conf.5	2010-04-08 06:27:04.652095525 +0200
++++ nilfs2-utils/man/nilfs_cleanerd.conf.5	2010-04-08 12:33:39.940330908 +0200
+@@ -27,8 +27,8 @@
+ .TP
+ .B min_clean_segments
+ Specify the minimum number of clean segments. A value of 0 means
+-normal cleaner operation. A value greater than 0 means pause cleaning
+-until less than min_clean_segments are available.
++continuous cleaning. A value greater than 0 means pause cleaning until
++less than min_clean_segments are available.
+ .TP
+ .B max_clean_segments
+ Specify the maximum number of clean segments. If min_clean_segments is
+diff -ur nilfs2-utils.orig/sbin/cleanerd/nilfs_cleanerd.conf nilfs2-utils/sbin/cleanerd/nilfs_cleanerd.conf
+--- nilfs2-utils.orig/sbin/cleanerd/nilfs_cleanerd.conf	2010-04-08 06:27:04.653095645 +0200
++++ nilfs2-utils/sbin/cleanerd/nilfs_cleanerd.conf	2010-04-08 12:39:13.178765756 +0200
+@@ -11,9 +11,9 @@
+ # Protection period in second.
+ protection_period	3600
  
-> > I think this sort of change should be discussed in the sub topic
-> > mailing list (i.e. linux-nilfs).  You don't have to cc every patch to
-> > linux-kernel.
-> Ok. No problem.
-> 
-> > And, please include some explanation in the change log to clarify the
-> > aim or motivation.
-> I took it as a very simple patch and thought a header was enough. I can add more
-> explanations if here has a demand.
+-# Minium number of clean segments 
+-# 0  = normal cleaner behaviour
+-# >0 = start cleaning if less segments are available
++# Minimum number of clean segments
++#   0 = continuous cleaning
++# > 0 = pause cleaning until less segments are available
+ min_clean_segments	10%
+ 
+ # Maximum number of clean segments
+------=_20100408125405_78031--
 
-You thought "printing a message after loading a file system is a
-practice.", so it is the reason :)
 
-Thanks,
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
