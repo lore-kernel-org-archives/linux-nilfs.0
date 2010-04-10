@@ -1,19 +1,21 @@
 From: Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/3] nilfs2: remove nilfs_segctor_init() in segment.c
-Date: Sun, 11 Apr 2010 00:15:43 +0800
-Message-ID: <20100410161543.GA9213@xhl>
+Subject: [PATCH 2/3] nilfs2: nilfs_segctor_destroy() should do a full job
+Date: Sun, 11 Apr 2010 00:17:00 +0800
+Message-ID: <20100410161700.GB9213@xhl>
+References: <20100410161543.GA9213@xhl>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=domainkey-signature:received:received:date:from:to:cc:subject
-         :message-id:mail-followup-to:mime-version:content-type
-         :content-disposition:x-operating-system:user-agent;
-        bh=nuRTS9VAtURjcamnziUfpX/GZRA/PVPhh/wdyE/YOGk=;
-        b=cfAkE9opr+wHZbyKRNxMzQd+XDEKp5af5xavdDg9hK21+j0YBX5UfgHfnfSCVbu9gH
-         /+WQdXmV2R0imNUYsEs5pjNptJcES8tTVITO0rKxyM5B3Td8zRMxFZNpc06NZPn02mFt
-         XcVyMz/a7tlfIyiXitHLpmfqp8EDYP9Lym2cE=
+         :message-id:mail-followup-to:references:mime-version:content-type
+         :content-disposition:in-reply-to:x-operating-system:user-agent;
+        bh=+qdKozawDJtzKi5P6PqYyK+eN1KiyWVRoD4y1/hls6Y=;
+        b=c6HcTyWnqWz4kgsUZ1yAJ1XPoU9UTRIcA1Kj8c+Iz41QONhP2Pwzs+fta5nkXETN9U
+         oFvV4CPxyiSPmWCSyr72OT0lvAg3wjioYlICIlQvd20WmjI7WqWvvDb0o6GlP8gBi5RY
+         nxGrLBsmZn1mdnbOYPzqNMT+yp7nqMhkRJUSc=
 Content-Disposition: inline
+In-Reply-To: <20100410161543.GA9213@xhl>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -21,59 +23,43 @@ Content-Transfer-Encoding: 7bit
 To: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi KONISHI Ryusuke,
-
-Three new patches based on nilfs2/for-next branch. New code has been built and
-loaded successfully, and also passed a light-weight reads and writes test.
-
-Thanks,
-Li Hong
-
----------------------------- cut here --------------------------
-
-From 2c622d0f59782321204bf1fde7eea4a593cc6b65 Mon Sep 17 00:00:00 2001
+From 466fbbc10dabc8a14e292ee19636fc534036a8b7 Mon Sep 17 00:00:00 2001
 From: Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Date: Sat, 10 Apr 2010 21:57:11 +0800
-Subject: [PATCH 1/3] nilfs2: remove nilfs_segctor_init() in segment.c
+Date: Sat, 10 Apr 2010 22:26:04 +0800
+Subject: [PATCH 2/3] nilfs2: nilfs_segctor_destroy() should do a full job
 
-There are only two lines of code in nilfs_segctor_init(). From a logic design
-view, the first line 'sci->sc_seq_done = sci->sc_seq_request;' should be put in
-nilfs_segctor_new(). Even in nilfs_segctor_new(), this initialization is
-needless because sci is kzalloc-ed. So nilfs_segctor_init() is only a wrap call
-to nilfs_segctor_start_thread(). This removes an indirect call overhead.
+To set "sbi->s_sc_info = NULL;" is also a part of nilfs_segctor_destroy()'s job.
+Move it into the destroy procedure.
 
 Signed-off-by: Li Hong <lihong.hi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- fs/nilfs2/segment.c |    9 +--------
- 1 files changed, 1 insertions(+), 8 deletions(-)
+ fs/nilfs2/segment.c |    5 ++---
+ 1 files changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index f235fc0..514620d 100644
+index 514620d..dd3c4d5 100644
 --- a/fs/nilfs2/segment.c
 +++ b/fs/nilfs2/segment.c
-@@ -2684,13 +2684,6 @@ static void nilfs_segctor_kill_thread(struct nilfs_sc_info *sci)
- 	}
+@@ -2774,6 +2774,7 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
+ 	down_write(&sbi->s_nilfs->ns_segctor_sem);
+ 
+ 	kfree(sci);
++	sbi->s_sc_info = NULL;
  }
  
--static int nilfs_segctor_init(struct nilfs_sc_info *sci)
--{
--	sci->sc_seq_done = sci->sc_seq_request;
--
--	return nilfs_segctor_start_thread(sci);
--}
--
- /*
-  * Setup & clean-up functions
-  */
-@@ -2814,7 +2807,7 @@ int nilfs_attach_segment_constructor(struct nilfs_sb_info *sbi)
- 		return -ENOMEM;
+ /**
+@@ -2829,10 +2830,8 @@ void nilfs_detach_segment_constructor(struct nilfs_sb_info *sbi)
+ 	LIST_HEAD(garbage_list);
  
- 	nilfs_attach_writer(nilfs, sbi);
--	err = nilfs_segctor_init(NILFS_SC(sbi));
-+	err = nilfs_segctor_start_thread(NILFS_SC(sbi));
- 	if (err) {
- 		nilfs_detach_writer(nilfs, sbi);
- 		kfree(sbi->s_sc_info);
+ 	down_write(&nilfs->ns_segctor_sem);
+-	if (NILFS_SC(sbi)) {
++	if (NILFS_SC(sbi))
+ 		nilfs_segctor_destroy(NILFS_SC(sbi));
+-		sbi->s_sc_info = NULL;
+-	}
+ 
+ 	/* Force to free the list of dirty files */
+ 	spin_lock(&sbi->s_inode_lock);
 -- 
 1.6.3.3
 
