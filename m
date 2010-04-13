@@ -1,173 +1,57 @@
 From: Jan de Kruyf <jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: crashing real time kernel
-Date: Tue, 13 Apr 2010 20:57:38 +0200
-Message-ID: <m2vee5afd761004131157q42db24a7p464d2412cec685d7@mail.gmail.com>
+Date: Tue, 13 Apr 2010 21:16:24 +0200
+Message-ID: <t2kee5afd761004131216ke44d82f2g1f9d9d21d5e757e6@mail.gmail.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=domainkey-signature:mime-version:received:date:received:message-id
          :subject:from:to:content-type;
-        bh=QbRJvkQZ3eViD4rQyIsuyF4j6Di29V+rLPTOjaRNZ44=;
-        b=JDRvGDfAh4bobYqZERVIZ+p5rir2bKNaNMUIe15VF2c4hOENcXwvJQhkIuiJnp54g7
-         oZR+jMSSKih3LjJ0OEbv5Oc4vc+Va0pbT9wVJIxfsEOEWl8FWu00pa+y+GAsHwR/vd2/
-         VumKLojBr/W072EjU448WTYZKqUAiL6r9/x7E=
+        bh=O6P/FA4NoBNa7hY0TzO/tMNGR+L2RKVzVHHWtDwqyV0=;
+        b=FopxeD9YeTp3OehibUIePuBxT+7VBxYrzq18RxXKINfQWDgKh5FpooTYoz/XH31YQI
+         DmFqPAjzSKIGzh4wEBp9frUwYzUnQnMOH1nGkV5xjoH9scBjLwuQXEC9qF/VML+EnyXw
+         D5B8GErgWg/jbIc/yORGa1vHKH6D2Lm8JoiQY=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hallo all of you,
+Sorry here is the NILFS version:
 
-I need some help here interpreting. I do not read "kernel" very well!
-Last week I set up kernel 2.6.30-5 to be a real time kernel with aid
-of RTAI 3.8 package.
-so since last week I had 2 kernel crashes which both seem to involve
-nilfs in more or less the same way.
+jan@debianLenny:~/NilFsMaster/nilfs2-module$ git log
+commit d26b512fa141768902ea8c78bf97a880f0de36ce
+Author: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Date:   Sun Jan 31 12:39:50 2010 +0900
 
-In the first case there was no real time stuff started or running and
-in the second case it was just unloaded.
+    nilfs2: fix potential leak of dirty data on umount
 
-Regards,
+    This fixes incorrect usage of nilfs_segctor_confirm() test function in
+    nilfs_segctor_destroy(); nilfs_segctor_confirm() returns zero if the
+    filesystem is not clean, so its use in nilfs_segctor_destroy() needs
+    inversion.
+
+    Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+
+
+jan@debianLenny:~/NilFsMaster/nilfs2-utils$ git log
+commit 8b376d75f8dcff5fea121cbc66e7e3b01ede9cc6
+Author: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Date:   Sat Feb 13 12:34:30 2010 -0600
+
+    nilfs2-utils: fix build against newer glibc
+
+    Changes in recent glibc were breaking the build on Rawhide;
+    we need to explicitly include sys/stat.h to get S_ISREG etc.
+
+    See also https://bugzilla.redhat.com/show_bug.cgi?id=564788
+
+    Signed-off-by: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+    Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+
 
 Jan de Kruyf.
-
-
-here are the log traces
-
-Apr 10 00:09:16 debianLenny ntpd[2887]: synchronized to 196.25.1.9, stratum 2
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584373] ------------[ cut
-here ]------------
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584384] WARNING: at
-kernel/sched.c:4917 sub_preempt_count+0x8a/0x90()
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584386] Hardware name: OEM
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584387] Modules linked in:
-i915 drm i2c_algo_bit video output nfsd lockd nfs_acl auth_rpcgss
-sunrpc autofs4 dm_crypt irtty_sir sir_dev irda crc_ccitt
-snd_hda_codec_realtek processor i2c_i801 snd_hda_intel snd_hda_codec
-snd_pcm snd_seq snd_timer snd_seq_device snd intel_agp soundcore
-agpgart snd_page_alloc usbhid r8169 mii floppy thermal [last unloaded:
-scsi_wait_scan]
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584423] Pid: 1661, comm:
-segctord Not tainted 2.6.30.5-rtai #1
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584425] Call Trace:
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584429]  [<c0524dba>] ?
-sub_preempt_count+0x8a/0x90
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584432]  [<c0524dba>] ?
-sub_preempt_count+0x8a/0x90
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584436]  [<c01311bc>]
-warn_slowpath_common+0x6c/0xc0
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584439]  [<c0524dba>] ?
-sub_preempt_count+0x8a/0x90
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584442]  [<c0131225>]
-warn_slowpath_null+0x15/0x20
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584444]  [<c0524dba>]
-sub_preempt_count+0x8a/0x90
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584448]  [<c028ac4d>]
-nilfs_btnode_prepare_change_key+0x12d/0x1a0
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584452]  [<c028c66d>] ?
-nilfs_btree_do_lookup+0x5d/0x210
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584455]  [<c028eba1>]
-nilfs_btree_assign_p+0xc1/0x180
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584458]  [<c028c9e7>]
-nilfs_btree_assign+0xb7/0x110
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584461]  [<c028b1dd>]
-nilfs_bmap_assign+0x3d/0x60
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584465]  [<c02959d4>]
-nilfs_segctor_do_construct+0x6a4/0x2180
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584470]  [<c012638d>] ?
-pick_next_task_fair+0xbd/0xd0
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584474]  [<c051fbae>] ?
-__schedule+0x32e/0x910
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584477]  [<c028b122>] ?
-nilfs_bmap_test_and_clear_dirty+0x32/0x50
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584480]  [<c0289fad>] ?
-nilfs_mdt_fetch_dirty+0x1d/0x60
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584483]  [<c02976c9>]
-nilfs_segctor_construct+0x69/0xa0
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584486]  [<c0298158>]
-nilfs_segctor_thread+0xf8/0x2e0
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584489]  [<c0297d50>] ?
-nilfs_construction_timeout+0x0/0x10
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584493]  [<c0298060>] ?
-nilfs_segctor_thread+0x0/0x2e0
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584496]  [<c01464d6>]
-kthread+0x46/0x80
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584499]  [<c0146490>] ?
-kthread+0x0/0x80
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584502]  [<c0103c0b>]
-kernel_thread_helper+0x7/0x1c
-Apr 10 00:11:54 debianLenny kernel: [ 3889.584504] ---[ end trace
-5837807bf5f5cca4 ]---
-
-
-
-Apr 13 19:53:42 debianLenny ntpd[2910]: time reset +0.187399 s
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846719] ------------[ cut
-here ]------------
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846729] WARNING: at
-kernel/sched.c:4917 sub_preempt_count+0x8a/0x90()
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846732] Hardware name: OEM
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846733] Modules linked in:
-i915 drm i2c_algo_bit video output nfsd lockd nfs_acl auth_rpcgss
-sunrpc autofs4 dm_crypt irtty_sir sir_dev irda crc_ccitt processor
-snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_pcm snd_seq
-snd_timer snd_seq_device intel_agp agpgart i2c_i801 snd soundcore
-snd_page_alloc usbhid r8169 mii floppy thermal [last unloaded:
-rtai_hal]
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846769] Pid: 1766, comm:
-segctord Not tainted 2.6.30.5-rtai #1
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846771] Call Trace:
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846774]  [<c0524dba>] ?
-sub_preempt_count+0x8a/0x90
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846777]  [<c0524dba>] ?
-sub_preempt_count+0x8a/0x90
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846782]  [<c01311bc>]
-warn_slowpath_common+0x6c/0xc0
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846784]  [<c0524dba>] ?
-sub_preempt_count+0x8a/0x90
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846787]  [<c0131225>]
-warn_slowpath_null+0x15/0x20
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846790]  [<c0524dba>]
-sub_preempt_count+0x8a/0x90
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846794]  [<c028ac4d>]
-nilfs_btnode_prepare_change_key+0x12d/0x1a0
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846798]  [<c028c7bd>] ?
-nilfs_btree_do_lookup+0x1ad/0x210
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846801]  [<c028eba1>]
-nilfs_btree_assign_p+0xc1/0x180
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846804]  [<c028c9e7>]
-nilfs_btree_assign+0xb7/0x110
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846807]  [<c028b1dd>]
-nilfs_bmap_assign+0x3d/0x60
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846811]  [<c02959d4>]
-nilfs_segctor_do_construct+0x6a4/0x2180
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846816]  [<c012638d>] ?
-pick_next_task_fair+0xbd/0xd0
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846819]  [<c051fbae>] ?
-__schedule+0x32e/0x910
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846822]  [<c028b122>] ?
-nilfs_bmap_test_and_clear_dirty+0x32/0x50
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846825]  [<c0289fad>] ?
-nilfs_mdt_fetch_dirty+0x1d/0x60
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846828]  [<c02976c9>]
-nilfs_segctor_construct+0x69/0xa0
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846832]  [<c0298158>]
-nilfs_segctor_thread+0xf8/0x2e0
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846835]  [<c0297d50>] ?
-nilfs_construction_timeout+0x0/0x10
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846838]  [<c0298060>] ?
-nilfs_segctor_thread+0x0/0x2e0
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846842]  [<c01464d6>]
-kthread+0x46/0x80
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846844]  [<c0146490>] ?
-kthread+0x0/0x80
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846848]  [<c0103c0b>]
-kernel_thread_helper+0x7/0x1c
-Apr 13 19:54:09 debianLenny kernel: [ 3842.846850] ---[ end trace
-5c57d787d4d12946 ]---
-Apr 13 19:54:14 debianLenny ntpd[2910]: synchronized to 67.159.5.90, stratum 2
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
