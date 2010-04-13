@@ -1,382 +1,173 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: add kernel doc comments to persistent object allocator functions
-Date: Mon, 12 Apr 2010 02:39:22 +0900
-Message-ID: <1271007562-22829-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Jan de Kruyf <jan.de.kruyf-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: crashing real time kernel
+Date: Tue, 13 Apr 2010 20:57:38 +0200
+Message-ID: <m2vee5afd761004131157q42db24a7p464d2412cec685d7@mail.gmail.com>
+Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:received:date:received:message-id
+         :subject:from:to:content-type;
+        bh=QbRJvkQZ3eViD4rQyIsuyF4j6Di29V+rLPTOjaRNZ44=;
+        b=JDRvGDfAh4bobYqZERVIZ+p5rir2bKNaNMUIe15VF2c4hOENcXwvJQhkIuiJnp54g7
+         oZR+jMSSKih3LjJ0OEbv5Oc4vc+Va0pbT9wVJIxfsEOEWl8FWu00pa+y+GAsHwR/vd2/
+         VumKLojBr/W072EjU448WTYZKqUAiL6r9/x7E=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-The implementation of persistent object allocator (alloc.c) is poorly
-documented.  This adds kernel doc style comments on that functions.
+Hallo all of you,
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/alloc.c |  154 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
- fs/nilfs2/alloc.h |    7 +++
- 2 files changed, 160 insertions(+), 1 deletions(-)
+I need some help here interpreting. I do not read "kernel" very well!
+Last week I set up kernel 2.6.30-5 to be a real time kernel with aid
+of RTAI 3.8 package.
+so since last week I had 2 kernel crashes which both seem to involve
+nilfs in more or less the same way.
 
-diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-index c2a1387..d1c667c 100644
---- a/fs/nilfs2/alloc.c
-+++ b/fs/nilfs2/alloc.c
-@@ -30,6 +30,11 @@
- #include "alloc.h"
- 
- 
-+/**
-+ * nilfs_palloc_groups_per_desc_block - get the number of groups that a group
-+ *					descriptor block can maintain
-+ * @inode: inode of metadata file using this allocator
-+ */
- static inline unsigned long
- nilfs_palloc_groups_per_desc_block(const struct inode *inode)
- {
-@@ -37,12 +42,21 @@ nilfs_palloc_groups_per_desc_block(const struct inode *inode)
- 		sizeof(struct nilfs_palloc_group_desc);
- }
- 
-+/**
-+ * nilfs_palloc_groups_count - get maximum number of groups
-+ * @inode: inode of metadata file using this allocator
-+ */
- static inline unsigned long
- nilfs_palloc_groups_count(const struct inode *inode)
- {
- 	return 1UL << (BITS_PER_LONG - (inode->i_blkbits + 3 /* log2(8) */));
- }
- 
-+/**
-+ * nilfs_palloc_init_blockgroup - initialize private variables for allocator
-+ * @inode: inode of metadata file using this allocator
-+ * @entry_size: size of the persistent object
-+ */
- int nilfs_palloc_init_blockgroup(struct inode *inode, unsigned entry_size)
- {
- 	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
-@@ -68,6 +82,12 @@ int nilfs_palloc_init_blockgroup(struct inode *inode, unsigned entry_size)
- 	return 0;
- }
- 
-+/**
-+ * nilfs_palloc_group - get group number and offset from an entry number
-+ * @inode: inode of metadata file using this allocator
-+ * @nr: serial number of the entry (e.g. inode number)
-+ * @offset: pointer to store offset number in the group
-+ */
- static unsigned long nilfs_palloc_group(const struct inode *inode, __u64 nr,
- 					unsigned long *offset)
- {
-@@ -77,6 +97,14 @@ static unsigned long nilfs_palloc_group(const struct inode *inode, __u64 nr,
- 	return group;
- }
- 
-+/**
-+ * nilfs_palloc_desc_blkoff - get block offset of a group descriptor block
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ *
-+ * nilfs_palloc_desc_blkoff() returns block offset of the descriptor
-+ * block which contains a descriptor of the specified group.
-+ */
- static unsigned long
- nilfs_palloc_desc_blkoff(const struct inode *inode, unsigned long group)
- {
-@@ -85,6 +113,14 @@ nilfs_palloc_desc_blkoff(const struct inode *inode, unsigned long group)
- 	return desc_block * NILFS_MDT(inode)->mi_blocks_per_desc_block;
- }
- 
-+/**
-+ * nilfs_palloc_bitmap_blkoff - get block offset of a bitmap block
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ *
-+ * nilfs_palloc_bitmap_blkoff() returns block offset of the bitmap
-+ * block used to allocate/deallocate entries in the specified group.
-+ */
- static unsigned long
- nilfs_palloc_bitmap_blkoff(const struct inode *inode, unsigned long group)
- {
-@@ -94,6 +130,12 @@ nilfs_palloc_bitmap_blkoff(const struct inode *inode, unsigned long group)
- 		desc_offset * NILFS_MDT(inode)->mi_blocks_per_group;
- }
- 
-+/**
-+ * nilfs_palloc_group_desc_nfrees - get the number of free entries in a group
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ * @desc: pointer to descriptor structure for the group
-+ */
- static unsigned long
- nilfs_palloc_group_desc_nfrees(struct inode *inode, unsigned long group,
- 			       const struct nilfs_palloc_group_desc *desc)
-@@ -106,6 +148,13 @@ nilfs_palloc_group_desc_nfrees(struct inode *inode, unsigned long group,
- 	return nfree;
- }
- 
-+/**
-+ * nilfs_palloc_group_desc_add_entries - adjust count of free entries
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ * @desc: pointer to descriptor structure for the group
-+ * @n: delta to be added
-+ */
- static void
- nilfs_palloc_group_desc_add_entries(struct inode *inode,
- 				    unsigned long group,
-@@ -117,6 +166,11 @@ nilfs_palloc_group_desc_add_entries(struct inode *inode,
- 	spin_unlock(nilfs_mdt_bgl_lock(inode, group));
- }
- 
-+/**
-+ * nilfs_palloc_entry_blkoff - get block offset of an entry block
-+ * @inode: inode of metadata file using this allocator
-+ * @nr: serial number of the entry (e.g. inode number)
-+ */
- static unsigned long
- nilfs_palloc_entry_blkoff(const struct inode *inode, __u64 nr)
- {
-@@ -128,6 +182,12 @@ nilfs_palloc_entry_blkoff(const struct inode *inode, __u64 nr)
- 		group_offset / NILFS_MDT(inode)->mi_entries_per_block;
- }
- 
-+/**
-+ * nilfs_palloc_desc_block_init - initialize buffer of a group descriptor block
-+ * @inode: inode of metadata file
-+ * @bh: buffer head of the buffer to be initialized
-+ * @kaddr: kernel address mapped for the page including the buffer
-+ */
- static void nilfs_palloc_desc_block_init(struct inode *inode,
- 					 struct buffer_head *bh, void *kaddr)
- {
-@@ -178,6 +238,13 @@ static int nilfs_palloc_get_block(struct inode *inode, unsigned long blkoff,
- 	return ret;
- }
- 
-+/**
-+ * nilfs_palloc_get_desc_block - get buffer head of a group descriptor block
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ * @create: create flag
-+ * @bhp: pointer to store the resultant buffer head
-+ */
- static int nilfs_palloc_get_desc_block(struct inode *inode,
- 				       unsigned long group,
- 				       int create, struct buffer_head **bhp)
-@@ -190,6 +257,13 @@ static int nilfs_palloc_get_desc_block(struct inode *inode,
- 				      bhp, &cache->prev_desc, &cache->lock);
- }
- 
-+/**
-+ * nilfs_palloc_get_bitmap_block - get buffer head of a bitmap block
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ * @create: create flag
-+ * @bhp: pointer to store the resultant buffer head
-+ */
- static int nilfs_palloc_get_bitmap_block(struct inode *inode,
- 					 unsigned long group,
- 					 int create, struct buffer_head **bhp)
-@@ -202,6 +276,13 @@ static int nilfs_palloc_get_bitmap_block(struct inode *inode,
- 				      &cache->prev_bitmap, &cache->lock);
- }
- 
-+/**
-+ * nilfs_palloc_get_entry_block - get buffer head of an entry block
-+ * @inode: inode of metadata file using this allocator
-+ * @nr: serial number of the entry (e.g. inode number)
-+ * @create: create flag
-+ * @bhp: pointer to store the resultant buffer head
-+ */
- int nilfs_palloc_get_entry_block(struct inode *inode, __u64 nr,
- 				 int create, struct buffer_head **bhp)
- {
-@@ -213,6 +294,13 @@ int nilfs_palloc_get_entry_block(struct inode *inode, __u64 nr,
- 				      &cache->prev_entry, &cache->lock);
- }
- 
-+/**
-+ * nilfs_palloc_block_get_group_desc - get kernel address of a group descriptor
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ * @bh: buffer head of the buffer storing the group descriptor block
-+ * @kaddr: kernel address mapped for the page including the buffer
-+ */
- static struct nilfs_palloc_group_desc *
- nilfs_palloc_block_get_group_desc(const struct inode *inode,
- 				  unsigned long group,
-@@ -222,6 +310,13 @@ nilfs_palloc_block_get_group_desc(const struct inode *inode,
- 		group % nilfs_palloc_groups_per_desc_block(inode);
- }
- 
-+/**
-+ * nilfs_palloc_block_get_entry - get kernel address of an entry
-+ * @inode: inode of metadata file using this allocator
-+ * @nr: serial number of the entry (e.g. inode number)
-+ * @bh: buffer head of the buffer storing the entry block
-+ * @kaddr: kernel address mapped for the page including the buffer
-+ */
- void *nilfs_palloc_block_get_entry(const struct inode *inode, __u64 nr,
- 				   const struct buffer_head *bh, void *kaddr)
- {
-@@ -234,11 +329,19 @@ void *nilfs_palloc_block_get_entry(const struct inode *inode, __u64 nr,
- 		entry_offset * NILFS_MDT(inode)->mi_entry_size;
- }
- 
-+/**
-+ * nilfs_palloc_find_available_slot - find available slot in a group
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ * @target: offset number of an entry in the group (start point)
-+ * @bitmap: bitmap of the group
-+ * @bsize: size in bits
-+ */
- static int nilfs_palloc_find_available_slot(struct inode *inode,
- 					    unsigned long group,
- 					    unsigned long target,
- 					    unsigned char *bitmap,
--					    int bsize)  /* size in bits */
-+					    int bsize)
- {
- 	int curr, pos, end, i;
- 
-@@ -276,6 +379,13 @@ static int nilfs_palloc_find_available_slot(struct inode *inode,
- 	return -ENOSPC;
- }
- 
-+/**
-+ * nilfs_palloc_rest_groups_in_desc_block - get the remaining number of groups
-+ *					    in a group descriptor block
-+ * @inode: inode of metadata file using this allocator
-+ * @curr: current group number
-+ * @max: maximum number of groups
-+ */
- static unsigned long
- nilfs_palloc_rest_groups_in_desc_block(const struct inode *inode,
- 				       unsigned long curr, unsigned long max)
-@@ -286,6 +396,11 @@ nilfs_palloc_rest_groups_in_desc_block(const struct inode *inode,
- 		     max - curr + 1);
- }
- 
-+/**
-+ * nilfs_palloc_prepare_alloc_entry - prepare to allocate a persistent object
-+ * @inode: inode of metadata file using this allocator
-+ * @req: nilfs_palloc_req structure exchanged for the allocation
-+ */
- int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
- 				     struct nilfs_palloc_req *req)
- {
-@@ -365,6 +480,11 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
- 	return ret;
- }
- 
-+/**
-+ * nilfs_palloc_commit_alloc_entry - finish allocation of a persistent object
-+ * @inode: inode of metadata file using this allocator
-+ * @req: nilfs_palloc_req structure exchanged for the allocation
-+ */
- void nilfs_palloc_commit_alloc_entry(struct inode *inode,
- 				     struct nilfs_palloc_req *req)
- {
-@@ -376,6 +496,11 @@ void nilfs_palloc_commit_alloc_entry(struct inode *inode,
- 	brelse(req->pr_desc_bh);
- }
- 
-+/**
-+ * nilfs_palloc_commit_free_entry - finish deallocating a persistent object
-+ * @inode: inode of metadata file using this allocator
-+ * @req: nilfs_palloc_req structure exchanged for the removal
-+ */
- void nilfs_palloc_commit_free_entry(struct inode *inode,
- 				    struct nilfs_palloc_req *req)
- {
-@@ -409,6 +534,11 @@ void nilfs_palloc_commit_free_entry(struct inode *inode,
- 	brelse(req->pr_desc_bh);
- }
- 
-+/**
-+ * nilfs_palloc_abort_alloc_entry - cancel allocation of a persistent object
-+ * @inode: inode of metadata file using this allocator
-+ * @req: nilfs_palloc_req structure exchanged for the allocation
-+ */
- void nilfs_palloc_abort_alloc_entry(struct inode *inode,
- 				    struct nilfs_palloc_req *req)
- {
-@@ -441,6 +571,11 @@ void nilfs_palloc_abort_alloc_entry(struct inode *inode,
- 	req->pr_desc_bh = NULL;
- }
- 
-+/**
-+ * nilfs_palloc_prepare_free_entry - prepare to deallocate a persistent object
-+ * @inode: inode of metadata file using this allocator
-+ * @req: nilfs_palloc_req structure exchanged for the removal
-+ */
- int nilfs_palloc_prepare_free_entry(struct inode *inode,
- 				    struct nilfs_palloc_req *req)
- {
-@@ -463,6 +598,11 @@ int nilfs_palloc_prepare_free_entry(struct inode *inode,
- 	return 0;
- }
- 
-+/**
-+ * nilfs_palloc_abort_free_entry - cancel deallocating a persistent object
-+ * @inode: inode of metadata file using this allocator
-+ * @req: nilfs_palloc_req structure exchanged for the removal
-+ */
- void nilfs_palloc_abort_free_entry(struct inode *inode,
- 				   struct nilfs_palloc_req *req)
- {
-@@ -474,6 +614,12 @@ void nilfs_palloc_abort_free_entry(struct inode *inode,
- 	req->pr_desc_bh = NULL;
- }
- 
-+/**
-+ * nilfs_palloc_group_is_in - judge if an entry is in a group
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ * @nr: serial number of the entry (e.g. inode number)
-+ */
- static int
- nilfs_palloc_group_is_in(struct inode *inode, unsigned long group, __u64 nr)
- {
-@@ -484,6 +630,12 @@ nilfs_palloc_group_is_in(struct inode *inode, unsigned long group, __u64 nr)
- 	return (nr >= first) && (nr <= last);
- }
- 
-+/**
-+ * nilfs_palloc_freev - deallocate a set of persistent objects
-+ * @inode: inode of metadata file using this allocator
-+ * @entry_nrs: array of entry numbers to be deallocated
-+ * @nitems: number of entries stored in @entry_nrs
-+ */
- int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
- {
- 	struct buffer_head *desc_bh, *bitmap_bh;
-diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
-index 5cccf87..9af34a7 100644
---- a/fs/nilfs2/alloc.h
-+++ b/fs/nilfs2/alloc.h
-@@ -29,6 +29,13 @@
- #include <linux/buffer_head.h>
- #include <linux/fs.h>
- 
-+/**
-+ * nilfs_palloc_entries_per_group - get the number of entries per group
-+ * @inode: inode of metadata file using this allocator
-+ *
-+ * The number of entries per group is defined by the number of bits
-+ * that a bitmap block can maintain.
-+ */
- static inline unsigned long
- nilfs_palloc_entries_per_group(const struct inode *inode)
- {
--- 
-1.6.3.4
+In the first case there was no real time stuff started or running and
+in the second case it was just unloaded.
 
+Regards,
+
+Jan de Kruyf.
+
+
+here are the log traces
+
+Apr 10 00:09:16 debianLenny ntpd[2887]: synchronized to 196.25.1.9, stratum 2
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584373] ------------[ cut
+here ]------------
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584384] WARNING: at
+kernel/sched.c:4917 sub_preempt_count+0x8a/0x90()
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584386] Hardware name: OEM
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584387] Modules linked in:
+i915 drm i2c_algo_bit video output nfsd lockd nfs_acl auth_rpcgss
+sunrpc autofs4 dm_crypt irtty_sir sir_dev irda crc_ccitt
+snd_hda_codec_realtek processor i2c_i801 snd_hda_intel snd_hda_codec
+snd_pcm snd_seq snd_timer snd_seq_device snd intel_agp soundcore
+agpgart snd_page_alloc usbhid r8169 mii floppy thermal [last unloaded:
+scsi_wait_scan]
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584423] Pid: 1661, comm:
+segctord Not tainted 2.6.30.5-rtai #1
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584425] Call Trace:
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584429]  [<c0524dba>] ?
+sub_preempt_count+0x8a/0x90
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584432]  [<c0524dba>] ?
+sub_preempt_count+0x8a/0x90
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584436]  [<c01311bc>]
+warn_slowpath_common+0x6c/0xc0
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584439]  [<c0524dba>] ?
+sub_preempt_count+0x8a/0x90
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584442]  [<c0131225>]
+warn_slowpath_null+0x15/0x20
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584444]  [<c0524dba>]
+sub_preempt_count+0x8a/0x90
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584448]  [<c028ac4d>]
+nilfs_btnode_prepare_change_key+0x12d/0x1a0
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584452]  [<c028c66d>] ?
+nilfs_btree_do_lookup+0x5d/0x210
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584455]  [<c028eba1>]
+nilfs_btree_assign_p+0xc1/0x180
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584458]  [<c028c9e7>]
+nilfs_btree_assign+0xb7/0x110
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584461]  [<c028b1dd>]
+nilfs_bmap_assign+0x3d/0x60
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584465]  [<c02959d4>]
+nilfs_segctor_do_construct+0x6a4/0x2180
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584470]  [<c012638d>] ?
+pick_next_task_fair+0xbd/0xd0
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584474]  [<c051fbae>] ?
+__schedule+0x32e/0x910
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584477]  [<c028b122>] ?
+nilfs_bmap_test_and_clear_dirty+0x32/0x50
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584480]  [<c0289fad>] ?
+nilfs_mdt_fetch_dirty+0x1d/0x60
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584483]  [<c02976c9>]
+nilfs_segctor_construct+0x69/0xa0
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584486]  [<c0298158>]
+nilfs_segctor_thread+0xf8/0x2e0
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584489]  [<c0297d50>] ?
+nilfs_construction_timeout+0x0/0x10
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584493]  [<c0298060>] ?
+nilfs_segctor_thread+0x0/0x2e0
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584496]  [<c01464d6>]
+kthread+0x46/0x80
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584499]  [<c0146490>] ?
+kthread+0x0/0x80
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584502]  [<c0103c0b>]
+kernel_thread_helper+0x7/0x1c
+Apr 10 00:11:54 debianLenny kernel: [ 3889.584504] ---[ end trace
+5837807bf5f5cca4 ]---
+
+
+
+Apr 13 19:53:42 debianLenny ntpd[2910]: time reset +0.187399 s
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846719] ------------[ cut
+here ]------------
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846729] WARNING: at
+kernel/sched.c:4917 sub_preempt_count+0x8a/0x90()
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846732] Hardware name: OEM
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846733] Modules linked in:
+i915 drm i2c_algo_bit video output nfsd lockd nfs_acl auth_rpcgss
+sunrpc autofs4 dm_crypt irtty_sir sir_dev irda crc_ccitt processor
+snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_pcm snd_seq
+snd_timer snd_seq_device intel_agp agpgart i2c_i801 snd soundcore
+snd_page_alloc usbhid r8169 mii floppy thermal [last unloaded:
+rtai_hal]
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846769] Pid: 1766, comm:
+segctord Not tainted 2.6.30.5-rtai #1
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846771] Call Trace:
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846774]  [<c0524dba>] ?
+sub_preempt_count+0x8a/0x90
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846777]  [<c0524dba>] ?
+sub_preempt_count+0x8a/0x90
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846782]  [<c01311bc>]
+warn_slowpath_common+0x6c/0xc0
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846784]  [<c0524dba>] ?
+sub_preempt_count+0x8a/0x90
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846787]  [<c0131225>]
+warn_slowpath_null+0x15/0x20
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846790]  [<c0524dba>]
+sub_preempt_count+0x8a/0x90
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846794]  [<c028ac4d>]
+nilfs_btnode_prepare_change_key+0x12d/0x1a0
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846798]  [<c028c7bd>] ?
+nilfs_btree_do_lookup+0x1ad/0x210
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846801]  [<c028eba1>]
+nilfs_btree_assign_p+0xc1/0x180
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846804]  [<c028c9e7>]
+nilfs_btree_assign+0xb7/0x110
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846807]  [<c028b1dd>]
+nilfs_bmap_assign+0x3d/0x60
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846811]  [<c02959d4>]
+nilfs_segctor_do_construct+0x6a4/0x2180
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846816]  [<c012638d>] ?
+pick_next_task_fair+0xbd/0xd0
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846819]  [<c051fbae>] ?
+__schedule+0x32e/0x910
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846822]  [<c028b122>] ?
+nilfs_bmap_test_and_clear_dirty+0x32/0x50
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846825]  [<c0289fad>] ?
+nilfs_mdt_fetch_dirty+0x1d/0x60
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846828]  [<c02976c9>]
+nilfs_segctor_construct+0x69/0xa0
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846832]  [<c0298158>]
+nilfs_segctor_thread+0xf8/0x2e0
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846835]  [<c0297d50>] ?
+nilfs_construction_timeout+0x0/0x10
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846838]  [<c0298060>] ?
+nilfs_segctor_thread+0x0/0x2e0
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846842]  [<c01464d6>]
+kthread+0x46/0x80
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846844]  [<c0146490>] ?
+kthread+0x0/0x80
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846848]  [<c0103c0b>]
+kernel_thread_helper+0x7/0x1c
+Apr 13 19:54:09 debianLenny kernel: [ 3842.846850] ---[ end trace
+5c57d787d4d12946 ]---
+Apr 13 19:54:14 debianLenny ntpd[2910]: synchronized to 67.159.5.90, stratum 2
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
