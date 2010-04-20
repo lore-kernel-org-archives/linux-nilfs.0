@@ -1,46 +1,69 @@
-From: "Yongkun Wang" <yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org>
-Subject: Writes doubled by NILFS2
-Date: Tue, 20 Apr 2010 17:39:13 +0900
-Message-ID: <00c901cae064$f42b4bb0$dc81e310$@iis.u-tokyo.ac.jp>
-References: <t2kf2d3ba1f1004131638nb61e68cek1ecb43a86c316d35@mail.gmail.com>	<20100415.015106.58888665.ryusuke@osrg.net>	<j2kf2d3ba1f1004141746n9f914465q3e24d48bec7f990e@mail.gmail.com> <20100416.213151.77349735.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Writes doubled by NILFS2
+Date: Tue, 20 Apr 2010 20:45:23 +0900 (JST)
+Message-ID: <20100420.204523.76757028.ryusuke@osrg.net>
+References: <j2kf2d3ba1f1004141746n9f914465q3e24d48bec7f990e@mail.gmail.com>
+	<20100416.213151.77349735.ryusuke@osrg.net>
+	<00c901cae064$f42b4bb0$dc81e310$@iis.u-tokyo.ac.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20100416.213151.77349735.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Content-Language: en-us
+In-Reply-To: <00c901cae064$f42b4bb0$dc81e310$@iis.u-tokyo.ac.jp>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hey, guys,
+Hi,
+On Tue, 20 Apr 2010 17:39:13 +0900, "Yongkun Wang" <yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org> wrote:
+> Hey, guys,
+> 
+> We have a database system, the data is stored on the disk formatted with
+> NILFS2 (nilfs-2.0.15, kmod-nilfs-2.0.5-1.2.6.18_92.1.22.el5.x86_64).
+> 
+> I have run a trace at the system call level and the block IO level, that is,
+> tracing the requests before processed by NILFS2 and after processed by
+> NILFS2.
+> 
+> We use synchronous IO. So the amount of writes at the two trace points
+> should be equal. 
+> It is true when we use EXT2 file system.
+> 
+> However, for NILFS2, we found that the writes have been doubled, that is,
+> the amount of writes is doubled after processed by NILFS2. The amount of
+> writes at the system call level is equal between EXT2 and NILFS2. 
 
-We have a database system, the data is stored on the disk formatted with
-NILFS2 (nilfs-2.0.15, kmod-nilfs-2.0.5-1.2.6.18_92.1.22.el5.x86_64).
+Interesting results.  What kind of synchronous write did you use in
+the measurement ?  fsync? or O_SYNC writes ?
+ 
+> Since all the address are log-structured, it is hard to know what are the
+> additional writes.
+>
+> Can you provide some hints on the additional writes? Is it caused by some
+> special functions such as snapshot?
 
-I have run a trace at the system call level and the block IO level, that is,
-tracing the requests before processed by NILFS2 and after processed by
-NILFS2.
+You can look into the logs with dumpseg(8) command:
 
-We use synchronous IO. So the amount of writes at the two trace points
-should be equal. 
-It is true when we use EXT2 file system.
+ # dumpseg <segment number>
 
-However, for NILFS2, we found that the writes have been doubled, that is,
-the amount of writes is doubled after processed by NILFS2. The amount of
-writes at the system call level is equal between EXT2 and NILFS2. 
+This shows summary of blocks written in the specified segment. lssu(1)
+command would be of help for finding a log head.
 
-Since all the address are log-structured, it is hard to know what are the
-additional writes.
 
-Can you provide some hints on the additional writes? Is it caused by some
-special functions such as snapshot?
+In the dump log, files with inode number 3,4,5,6 are metadata.  The
+log format is depicted in the page 10 of the following slides:
 
-Thank you very much.
+  http://www.nilfs.org/papers/jls2009-nilfs.pdf
 
-Best Regards,
-Yongkun
 
+In general, copy-on-write filesystems including lfs are said to incur
+overheads by metadata writes especially for synchronous writes.
+
+I guess small-sized fsyncs or O_SYNC writes are causing the overhead.
+
+Thanks,
+Ryusuke
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
