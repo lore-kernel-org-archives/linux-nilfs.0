@@ -1,58 +1,46 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Response to a Write Error
-Date: Fri, 16 Apr 2010 21:31:51 +0900 (JST)
-Message-ID: <20100416.213151.77349735.ryusuke@osrg.net>
-References: <t2kf2d3ba1f1004131638nb61e68cek1ecb43a86c316d35@mail.gmail.com>
-	<20100415.015106.58888665.ryusuke@osrg.net>
-	<j2kf2d3ba1f1004141746n9f914465q3e24d48bec7f990e@mail.gmail.com>
+From: "Yongkun Wang" <yongkun-b/Nwfc8pyCekRP3n4FtbsiGn5s73+xxf@public.gmane.org>
+Subject: Writes doubled by NILFS2
+Date: Tue, 20 Apr 2010 17:39:13 +0900
+Message-ID: <00c901cae064$f42b4bb0$dc81e310$@iis.u-tokyo.ac.jp>
+References: <t2kf2d3ba1f1004131638nb61e68cek1ecb43a86c316d35@mail.gmail.com>	<20100415.015106.58888665.ryusuke@osrg.net>	<j2kf2d3ba1f1004141746n9f914465q3e24d48bec7f990e@mail.gmail.com> <20100416.213151.77349735.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <j2kf2d3ba1f1004141746n9f914465q3e24d48bec7f990e-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20100416.213151.77349735.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Content-Language: en-us
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: third07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi
-On Wed, 14 Apr 2010 20:46:46 -0400, "Ed F." <third07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > The following are the steps to make&install a newer nilfs in the
-> > 2.6.31 kernel.
-> >
-> >  $ sudo apt-get install linux-headers-`uname -r`
-> >  $ cd /usr/src
-> >  $ wget http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.32.11.tar.bz2
-> >  $ tar jxf linux-2.6.32.11.tar.bz2
-> >  $ cd linux-2.6.32.11/fs/nilfs2
-> >  $ make -C /lib/modules/`uname -r`/build SUBDIRS=$PWD BUILD_DIR=$PWD modules
-> >  $ su
-> >  # rmmod nilfs2
-> >  # mv /lib/modules/`uname -r`/kernel/fs/nilfs2/nilfs2.ko{,.bak}
-> >  # install -m 644 -c nilfs2.ko /lib/modules/`uname -r`/kernel/fs/nilfs2/
-> >  # /sbin/depmod -A
-> >  # mount -t nilfs2 <device> <mount-dir>
-> 
-> Thank you for clarifying that process.  It will be very useful in
-> keeping the kernel module up-to-date.
+Hey, guys,
 
-Please note that this procedure is not guaranteed.  This may not work
-for some version since internal implementation or semantics of the
-kernel often changes.
+We have a database system, the data is stored on the disk formatted with
+NILFS2 (nilfs-2.0.15, kmod-nilfs-2.0.5-1.2.6.18_92.1.22.el5.x86_64).
 
-> If my analysis is correct, I have a DVD-RAM disk that has no more
-> sectors with which my DVD drive can correct defects.  Would you like
-> for me to save that disk for future error handling experiments?
+I have run a trace at the system call level and the block IO level, that is,
+tracing the requests before processed by NILFS2 and after processed by
+NILFS2.
 
-Thanks for the offer.
-I have interests in what happens on the latest kernel.
-If you have an opportunity to try it, please report the result.
+We use synchronous IO. So the amount of writes at the two trace points
+should be equal. 
+It is true when we use EXT2 file system.
 
-Ideally, it is expected to skip erroneous segments.
-In reality, something unexpected may happen ;)
+However, for NILFS2, we found that the writes have been doubled, that is,
+the amount of writes is doubled after processed by NILFS2. The amount of
+writes at the system call level is equal between EXT2 and NILFS2. 
 
-Cheers,
-Ryusuke Konishi
+Since all the address are log-structured, it is hard to know what are the
+additional writes.
+
+Can you provide some hints on the additional writes? Is it caused by some
+special functions such as snapshot?
+
+Thank you very much.
+
+Best Regards,
+Yongkun
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
