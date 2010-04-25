@@ -1,60 +1,52 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: make nilfs_sc_*_ops static
-Date: Sat, 24 Apr 2010 01:08:44 +0900
-Message-ID: <1272038924-29579-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Qinghuang Feng <qhfeng.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 1/1] [NILFS2]: update comment for struct nilfs_dat_entry
+Date: Sun, 25 Apr 2010 20:17:25 +0800
+Message-ID: <1272197845-5059-1-git-send-email-qhfeng.kernel@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:received:received:from:to:cc:subject:date
+         :message-id:x-mailer;
+        bh=Bg++ED1nMeMKIxAPME0ZeMOpP3lnUCWuu7Y8tTFMp6I=;
+        b=I9SXL1IK2p08CjWBsElk0qoFw2EhxxHYIXoFP3fzW2WdOuX+POjOaKPlR83iS4VYXT
+         tJJx/n2DRTh7eZ9GeCJP8lR3mP+X5M85cf+dwLyangqi4L1+CXZRIU3OqsecWGEXfU6g
+         VqVj7MNVEVjrOHgwIXADQFMDwfqqYStcdln6c=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, Qinghuang Feng <qhfeng.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-This kills the following sparse warnings:
+The comment of struct nilfs_dat_entry is mismatched, fix it.
 
-fs/nilfs2/segment.c:567:28: warning: symbol 'nilfs_sc_file_ops' was not declared. Should it be static?
-fs/nilfs2/segment.c:617:28: warning: symbol 'nilfs_sc_dat_ops' was not declared. Should it be static?
-fs/nilfs2/segment.c:625:28: warning: symbol 'nilfs_sc_dsync_ops' was not declared. Should it be static?
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Signed-off-by: Qinghuang Feng <qhfeng.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- fs/nilfs2/segment.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ include/linux/nilfs2_fs.h |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 8b4e280..c920164 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -564,7 +564,7 @@ static void nilfs_write_file_node_binfo(struct nilfs_sc_info *sci,
- 	*vblocknr = binfo->bi_v.bi_vblocknr;
- }
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index 640702e..478ee34 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -437,10 +437,10 @@ struct nilfs_palloc_group_desc {
  
--struct nilfs_sc_operations nilfs_sc_file_ops = {
-+static struct nilfs_sc_operations nilfs_sc_file_ops = {
- 	.collect_data = nilfs_collect_file_data,
- 	.collect_node = nilfs_collect_file_node,
- 	.collect_bmap = nilfs_collect_file_bmap,
-@@ -614,7 +614,7 @@ static void nilfs_write_dat_node_binfo(struct nilfs_sc_info *sci,
- 	*binfo_dat = binfo->bi_dat;
- }
- 
--struct nilfs_sc_operations nilfs_sc_dat_ops = {
-+static struct nilfs_sc_operations nilfs_sc_dat_ops = {
- 	.collect_data = nilfs_collect_dat_data,
- 	.collect_node = nilfs_collect_file_node,
- 	.collect_bmap = nilfs_collect_dat_bmap,
-@@ -622,7 +622,7 @@ struct nilfs_sc_operations nilfs_sc_dat_ops = {
- 	.write_node_binfo = nilfs_write_dat_node_binfo,
- };
- 
--struct nilfs_sc_operations nilfs_sc_dsync_ops = {
-+static struct nilfs_sc_operations nilfs_sc_dsync_ops = {
- 	.collect_data = nilfs_collect_file_data,
- 	.collect_node = NULL,
- 	.collect_bmap = NULL,
+ /**
+  * struct nilfs_dat_entry - disk address translation entry
+- * @dt_blocknr: block number
+- * @dt_start: start checkpoint number
+- * @dt_end: end checkpoint number
+- * @dt_rsv: reserved for future use
++ * @de_blocknr: block number
++ * @de_start: start checkpoint number
++ * @de_end: end checkpoint number
++ * @de_rsv: reserved for future use
+  */
+ struct nilfs_dat_entry {
+ 	__le64 de_blocknr;
 -- 
-1.6.3.4
+1.7.0.4
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
