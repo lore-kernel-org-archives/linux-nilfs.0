@@ -1,36 +1,29 @@
-From: Jens Axboe <jens.axboe@oracle.com>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Subject: Re: [PATCH] nilfs2: fix sync silent failure
-Date: Mon, 3 May 2010 14:53:13 +0200
-Message-ID: <20100503125313.GC27497@kernel.dk>
-References: <20100503.210048.267730124.ryusuke@osrg.net>
+Date: Mon, 3 May 2010 07:36:20 -0700 (PDT)
+Message-ID: <alpine.LFD.2.00.1005030736030.5478@i5.linux-foundation.org>
+References: <20100503.210048.267730124.ryusuke@osrg.net> <20100503125313.GC27497@kernel.dk>
 Mime-Version: 1.0
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100503.210048.267730124.ryusuke@osrg.net>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20100503125313.GC27497-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: TEXT/PLAIN; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>
+To: Jens Axboe <jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Mon, May 03 2010, Ryusuke Konishi wrote:
-> This is another fix for the silent sync failure related to sb->s_bdi.
+
+
+On Mon, 3 May 2010, Jens Axboe wrote:
 > 
-> The commit 5129a469, which was merged to -rc6, let me know this
-> problem.  I'm sorry that I was late to realize this.
-> 
-> Nilfs uses an own get_sb callback, and needed to set s_bdi for itself.
-> I confirmed this patch made ->sync_fs() called as intended.
-> 
-> I hope this is sent for 2.6.34.  Please let me know if you have any
-> comments.
+> Linus, will you pick this one up, or do you want me to merge it and send
+> it your way?
 
-Acked-by: Jens Axboe <jens.axboe@oracle.com>
+I took it. Thanks guys,
 
-Linus, will you pick this one up, or do you want me to merge it and send
-it your way?
-
--- 
-Jens Axboe
-
+		Linus
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
