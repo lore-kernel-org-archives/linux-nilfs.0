@@ -1,35 +1,74 @@
-From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: [CFD] disk format fixing
-Date: Tue, 4 May 2010 14:06:23 +0200
-Message-ID: <20100504120623.GB1132@heethoofdje.13thmonkey.org>
+Date: Tue, 04 May 2010 23:01:35 +0900 (JST)
+Message-ID: <20100504.230135.205087691.ryusuke@osrg.net>
 References: <87aash3rrm.wl%jir@sekiba.com>
+	<7E6B7E93-FCB4-4E4C-AF4F-BEA8D8FE1F20@nop.com>
+	<20100504120222.GA1132@heethoofdje.13thmonkey.org>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87aash3rrm.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20100504120222.GA1132-bVHBekiX4bNgoMqBc1r0ESegHCQxtGRMHZ5vskTnxNA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org
+Cc: nop-Nqdcz63CPQY@public.gmane.org, jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+On Tue, 4 May 2010 14:02:22 +0200, Reinoud Zandijk wrote:
+> On Mon, May 03, 2010 at 03:35:03PM -0400, Jay Carlson wrote:
+> > On May 3, 2010, at 11:54 AM, Jiro SEKIBA wrote:
+> > Low-end consumer flash (like USB thumb drives or MMC) often uses a simple
+> > zone-based FTL with bad block replacement.  I am told really cheap ones
+> > allocate zones with 1000 flash blocks with 24 held as replacements for
+> > failing blocks and wear leveling.
+> > 
+> > If I understand nilfs, its superblock is both fixed location and "hot": it
+> > is written fairly frequently (on every fsync?)  On cheap flash, it will wear
+> > out the flash block it lives on in 25 write lifetimes or less.  
+> 
+> I'd opt for NOT writing out the super block but on unmount or when the
+> roll-forward chain is disturbed by the garbage collector.i
+> 
+> Another option is to never update it; it should at most take a few secs to
+> locate the latest segsum by just scanning trough the segement summaries;
+> especially now the segment summaries have the checkpoint number incorporated.
+>
+> If on mount all first segment summaries are read (say 4000 to 8000 sectors)
+> its clear wich is the newest and then follow that chain until you reach the
+> end... and you can mount. I agree its not optimal but i dont see a reason as
+> to why it shouldn't work :)
 
-On Tue, May 04, 2010 at 12:54:21AM +0900, Jiro SEKIBA wrote:
-> It still remains controversial argument, like directory indexing or atime
-> support, xattr support and so on.  However, I'd like to make the target
-> clear that when the above message can be taken away.
+I was just thinking the same thing.
 
-I'd opt for not getting into directory indexing; that can easily be
-implemented at run-time as i showed to with code in the NetBSD implementation.
-The speed increase is really fenominal (can be 500+ times) and doesn't need
-much memory space and doesn't involve a disc layout change.
+The reason nilfs frequently updates super blocks is for maintaining a
+pointer to recent logs.  And, the new checkpoint number field allows
+it to find them by scanning through summary headers of each segments.
+
+This may be expensive for hard drives, but may be acceptable for flash
+devices.  I think it's worth adding a new mount option (or a flag) for
+this.
+
+The super blocks also maintain free blocks count, but it's computable.
+
+> It is also backwards compatible since older
+> implementations can will search for the last super root; they only will need
+> to read more.
+
+You mean forward compatibility?
+
+I think older implementations have potential to select wrong super
+root due to the garbage collector.  This issue seems a key of this
+approach.
+
+Even though we can make super blocks written out on unmount as before,
+an unclean shutdown and subsequent boot with an old implementation may
+lead to a fatal result.
+
+Without this issue, it looks pretty good.
 
 With regards,
-Reinoud
-
-
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
