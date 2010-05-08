@@ -1,134 +1,65 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [CFD] disk format fixing
-Date: Thu, 06 May 2010 03:23:27 +0900 (JST)
-Message-ID: <20100506.032327.203276062.ryusuke@osrg.net>
-References: <20100504120222.GA1132@heethoofdje.13thmonkey.org>
-	<20100504.230135.205087691.ryusuke@osrg.net>
-	<8739y675aa.wl%jir@sekiba.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 1/2] nilfs2: fix misuse of open_bdev_exclusive/close_bdev_exclusive
+Date: Sun,  9 May 2010 03:36:23 +0900
+Message-ID: <1273343784-22709-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8739y675aa.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
-Cc: reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org, nop-Nqdcz63CPQY@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Thu, 06 May 2010 00:10:53 +0900, Jiro SEKIBA wrote:
-> Hi,
-> 
-> OK, it looks like a flag should be introduced for older flash device 
-> not to write super block whenever checkpoint is created, but maintain
-> it less frequently or even not writing at all until unmount.
-> 
-> In any cases, at least super block disk format is not modified.
-> 
-> At Tue, 04 May 2010 23:01:35 +0900 (JST),
-> Ryusuke Konishi wrote:
-> > 
-> > On Tue, 4 May 2010 14:02:22 +0200, Reinoud Zandijk wrote:
-> > > On Mon, May 03, 2010 at 03:35:03PM -0400, Jay Carlson wrote:
-> > > > On May 3, 2010, at 11:54 AM, Jiro SEKIBA wrote:
-> > > > Low-end consumer flash (like USB thumb drives or MMC) often uses a simple
-> > > > zone-based FTL with bad block replacement.  I am told really cheap ones
-> > > > allocate zones with 1000 flash blocks with 24 held as replacements for
-> > > > failing blocks and wear leveling.
-> > > > 
-> > > > If I understand nilfs, its superblock is both fixed location and "hot": it
-> > > > is written fairly frequently (on every fsync?)  On cheap flash, it will wear
-> > > > out the flash block it lives on in 25 write lifetimes or less.  
-> > > 
-> > > I'd opt for NOT writing out the super block but on unmount or when the
-> > > roll-forward chain is disturbed by the garbage collector.i
-> > > 
-> > > Another option is to never update it; it should at most take a few secs to
-> > > locate the latest segsum by just scanning trough the segement summaries;
-> > > especially now the segment summaries have the checkpoint number incorporated.
-> > >
-> > > If on mount all first segment summaries are read (say 4000 to 8000 sectors)
-> > > its clear wich is the newest and then follow that chain until you reach the
-> > > end... and you can mount. I agree its not optimal but i dont see a reason as
-> > > to why it shouldn't work :)
-> > 
-> > I was just thinking the same thing.
-> > 
-> > The reason nilfs frequently updates super blocks is for maintaining a
-> > pointer to recent logs.  And, the new checkpoint number field allows
-> > it to find them by scanning through summary headers of each segments.
-> > 
-> > This may be expensive for hard drives, but may be acceptable for flash
-> > devices.  I think it's worth adding a new mount option (or a flag) for
-> > this.
-> 
-> This leads that boot loader is required to take care of searching
-> valid super root by the scanning all the segments, unlike just 
-> roll forwarding the log.
-> 
-> From boot loader (grub2) point of view, any access to the filesystem
-> requires "mount" operation, which means leading two files (initrd and kernel)
-> requires at least two mount operations.  That means in case of unclean unmount,
-> it requires to scan whole disks twice.
-> 
-> So I opt to write super block less frequently, to maintain super root
-> pointer so that roll forwarding likely finds correct super root.
-> 
-> Or maybe specifying frequency as mount option, say like write back
-> per 100 check points.
-> 
-> thanks,
-> 
-> regards,
+The second argument of open_bdev_exclusive/close_bdev_exclusive takes
+fmode_t flags instead of mount flags.  This fixes the misuse.
 
-As an alternative, I'm thinking to add a new state flag which
-indicates segments are allocated physically continuously from
-the super root to which super blocks point.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/super.c |   10 +++++++---
+ 1 files changed, 7 insertions(+), 3 deletions(-)
 
-The aim of this flag is allowing nilfs to find out the latest segment
-with bisection search.
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index f6cff39..40eb231 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -997,10 +997,14 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ {
+ 	struct nilfs_super_data sd;
+ 	struct super_block *s;
++	fmode_t mode = FMODE_READ;
+ 	struct the_nilfs *nilfs;
+ 	int err, need_to_close = 1;
+ 
+-	sd.bdev = open_bdev_exclusive(dev_name, flags, fs_type);
++	if (!(flags & MS_RDONLY))
++		mode |= FMODE_WRITE;
++
++	sd.bdev = open_bdev_exclusive(dev_name, mode, fs_type);
+ 	if (IS_ERR(sd.bdev))
+ 		return PTR_ERR(sd.bdev);
+ 
+@@ -1081,7 +1085,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 	mutex_unlock(&nilfs->ns_mount_mutex);
+ 	put_nilfs(nilfs);
+ 	if (need_to_close)
+-		close_bdev_exclusive(sd.bdev, flags);
++		close_bdev_exclusive(sd.bdev, mode);
+ 	simple_set_mnt(mnt, s);
+ 	return 0;
+ 
+@@ -1089,7 +1093,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 	mutex_unlock(&nilfs->ns_mount_mutex);
+ 	put_nilfs(nilfs);
+  failed:
+-	close_bdev_exclusive(sd.bdev, flags);
++	close_bdev_exclusive(sd.bdev, mode);
+ 
+ 	return err;
+ 
+-- 
+1.6.3.4
 
-Envisioned changes are as follows:
-
-* add the new flag (for example, NILFS_INORDER_FS) for sbp->s_state.
-
-* set the flag if a new mount options is specified (for example
-  "-o bisect-root").
-
-* Do not update super block when the filesystem is unmounted, and keep
-  the state: s_state.NILFS_INORDER_FS = 1, s_state.NILFS_VALID_FS = 0.
-
-* Stop periodic update of super blocks if the flag is set.
-
-* If s_state.NILFS_VALID_FS = 0 && s_state.NILFS_INORDER_FS = 1 when
-  the filesystem is mounted, then do bisect search to find out the
-  latest segment.
-
-* If a new segment is allocated discontinuously and a new super root
-  is created, then write out super blocks to catch up the position.
-
-* If GC breaks the series of physically continous segments, then
-  update super blocks to catch up the latest super root position.
-
-* Add a new option to cleanerd to pass the "-o bisect-root" mode
-  and let it select the rotational GC algorithm (current default).
-
-* If the "-o bisect-root" option is not specified, then use a
-  conventional algorithm and drop the NILFS_INORDER_FS flag.
-
-This doesn't break forward compatibility, because the "next segment
-chain" is still maintained and older implementations will ignore the
-NILFS_INORDER_FS flag.  Older implementations and the current grub2
-module can find the latest super root though they incur penalty for
-mount time.
-
-Another drawback of this approach is that it depends on garbage
-collection algorithm, but at least at present, this seems not to
-matter.
-
-How does that sound?
-
-Thanks,
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
