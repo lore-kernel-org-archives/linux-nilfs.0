@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 1/2] nilfs2: fix misuse of open_bdev_exclusive/close_bdev_exclusive
-Date: Sun,  9 May 2010 03:36:23 +0900
-Message-ID: <1273343784-22709-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/2] nilfs2: add missing initialization of s_mode
+Date: Sun,  9 May 2010 03:36:24 +0900
+Message-ID: <1273343784-22709-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1273343784-22709-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1273343784-22709-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,51 +13,29 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-The second argument of open_bdev_exclusive/close_bdev_exclusive takes
-fmode_t flags instead of mount flags.  This fixes the misuse.
+A fmode_t argument is passed to kill_block_super() through s_mode
+member of the super_block structure.  This is used to release the
+block device with the same mode, however, nilfs does not set s_mode.
+
+This modifies nilfs_get_sb function to properly initialize the s_mode
+member.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/super.c |   10 +++++++---
- 1 files changed, 7 insertions(+), 3 deletions(-)
+ fs/nilfs2/super.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
 diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index f6cff39..40eb231 100644
+index 40eb231..7772e43 100644
 --- a/fs/nilfs2/super.c
 +++ b/fs/nilfs2/super.c
-@@ -997,10 +997,14 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
- {
- 	struct nilfs_super_data sd;
- 	struct super_block *s;
-+	fmode_t mode = FMODE_READ;
- 	struct the_nilfs *nilfs;
- 	int err, need_to_close = 1;
+@@ -1071,6 +1071,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
  
--	sd.bdev = open_bdev_exclusive(dev_name, flags, fs_type);
-+	if (!(flags & MS_RDONLY))
-+		mode |= FMODE_WRITE;
-+
-+	sd.bdev = open_bdev_exclusive(dev_name, mode, fs_type);
- 	if (IS_ERR(sd.bdev))
- 		return PTR_ERR(sd.bdev);
- 
-@@ -1081,7 +1085,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
- 	mutex_unlock(&nilfs->ns_mount_mutex);
- 	put_nilfs(nilfs);
- 	if (need_to_close)
--		close_bdev_exclusive(sd.bdev, flags);
-+		close_bdev_exclusive(sd.bdev, mode);
- 	simple_set_mnt(mnt, s);
- 	return 0;
- 
-@@ -1089,7 +1093,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
- 	mutex_unlock(&nilfs->ns_mount_mutex);
- 	put_nilfs(nilfs);
-  failed:
--	close_bdev_exclusive(sd.bdev, flags);
-+	close_bdev_exclusive(sd.bdev, mode);
- 
- 	return err;
+ 		/* New superblock instance created */
+ 		s->s_flags = flags;
++		s->s_mode = mode;
+ 		strlcpy(s->s_id, bdevname(sd.bdev, b), sizeof(s->s_id));
+ 		sb_set_blocksize(s, block_size(sd.bdev));
  
 -- 
 1.6.3.4
