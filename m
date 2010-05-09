@@ -1,10 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/2] nilfs2: update comment on deactivate_super at nilfs_get_sb
-Date: Sun,  9 May 2010 11:14:28 +0900
-Message-ID: <1273371268-25256-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1273371268-25256-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] nilfs2: use huge_encode_dev/huge_decode_dev
+Date: Sun,  9 May 2010 16:27:13 +0900
+Message-ID: <1273390033-27298-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1273371268-25256-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -13,27 +11,38 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-deactivate_super was replaced with deactivate_locked_super, but the
-comment of nilfs_get_sb remain unchanged.  This renews the comment.
+This replaces uses of new_encode_dev/new_decode_dev with their 64-bit
+counterparts, huge_encode_dev/huge_decode_dev respectively.
+
+This is just for clarification and has no impact on the disk format.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/super.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ fs/nilfs2/inode.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 22cdd94..53ed08e 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -1105,7 +1105,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
- 	put_nilfs(nilfs);
- 	deactivate_locked_super(s);
- 	/*
--	 * deactivate_super() invokes close_bdev_exclusive().
-+	 * deactivate_locked_super() invokes close_bdev_exclusive().
- 	 * We must finish all post-cleaning before this call;
- 	 * put_nilfs() needs the block device.
- 	 */
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 0957b58..5e226d4 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -451,7 +451,7 @@ static int __nilfs_read_inode(struct super_block *sb, unsigned long ino,
+ 		inode->i_op = &nilfs_special_inode_operations;
+ 		init_special_inode(
+ 			inode, inode->i_mode,
+-			new_decode_dev(le64_to_cpu(raw_inode->i_device_code)));
++			huge_decode_dev(le64_to_cpu(raw_inode->i_device_code)));
+ 	}
+ 	nilfs_ifile_unmap_inode(sbi->s_ifile, ino, bh);
+ 	brelse(bh);
+@@ -511,7 +511,7 @@ void nilfs_write_inode_common(struct inode *inode,
+ 		nilfs_bmap_write(ii->i_bmap, raw_inode);
+ 	else if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
+ 		raw_inode->i_device_code =
+-			cpu_to_le64(new_encode_dev(inode->i_rdev));
++			cpu_to_le64(huge_encode_dev(inode->i_rdev));
+ 	/* When extending inode, nilfs->ns_inode_size should be checked
+ 	   for substitutions of appended fields */
+ }
 -- 
 1.6.3.4
 
