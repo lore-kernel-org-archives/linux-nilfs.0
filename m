@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 1/2] nilfs2: replace MS_VERBOSE with MS_SILENT
-Date: Sun,  9 May 2010 11:14:27 +0900
-Message-ID: <1273371268-25256-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/2] nilfs2: update comment on deactivate_super at nilfs_get_sb
+Date: Sun,  9 May 2010 11:14:28 +0900
+Message-ID: <1273371268-25256-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1273371268-25256-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1273371268-25256-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,28 +13,27 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-MS_VERBOSE is deprecated.  This replaces it with MS_SILENT in
-reference to get_sb_bdev function.
+deactivate_super was replaced with deactivate_locked_super, but the
+comment of nilfs_get_sb remain unchanged.  This renews the comment.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/super.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ fs/nilfs2/super.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
 diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 7772e43..22cdd94 100644
+index 22cdd94..53ed08e 100644
 --- a/fs/nilfs2/super.c
 +++ b/fs/nilfs2/super.c
-@@ -1075,7 +1075,8 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
- 		strlcpy(s->s_id, bdevname(sd.bdev, b), sizeof(s->s_id));
- 		sb_set_blocksize(s, block_size(sd.bdev));
- 
--		err = nilfs_fill_super(s, data, flags & MS_VERBOSE, nilfs);
-+		err = nilfs_fill_super(s, data, flags & MS_SILENT ? 1 : 0,
-+				       nilfs);
- 		if (err)
- 			goto cancel_new;
- 
+@@ -1105,7 +1105,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 	put_nilfs(nilfs);
+ 	deactivate_locked_super(s);
+ 	/*
+-	 * deactivate_super() invokes close_bdev_exclusive().
++	 * deactivate_locked_super() invokes close_bdev_exclusive().
+ 	 * We must finish all post-cleaning before this call;
+ 	 * put_nilfs() needs the block device.
+ 	 */
 -- 
 1.6.3.4
 
