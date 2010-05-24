@@ -1,50 +1,45 @@
-From: Darien Large <dlarge-RrB2l6sP9Nll57MIdRCFDg@public.gmane.org>
-Subject: Re: uuid for nilfs partition?
-Date: Mon, 24 May 2010 11:11:49 -0500
-Message-ID: <4BFAA545.3050309@daliverse.com>
-References: <4BFA8D5B.6000700@daliverse.com> <20100525.003345.115737304.ryusuke@osrg.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 0/6] nilfs2: refactor recovery code
+Date: Tue, 25 May 2010 01:39:03 +0900
+Message-ID: <1274719149-24371-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20100525.003345.115737304.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
+This is a series of cleanups that should come before discussed changes
+to improve robustness of mount, disk usage on osync writes, and to
+minimize update frequency of super blocks, and so forth.
 
-Super, thank you very much for the info!
+We are now in the merge window for the 2.6.35 kernel, so this and the
+planned changes will not be sent upstream until some time later.
 
-On 05/24/2010 10:33 AM, Ryusuke Konishi wrote:
-> Hi,
-> On Mon, 24 May 2010 09:29:47 -0500, Darien Large wrote:
->    
->> I'm using nilfs2 for my /home directory, under Ubuntu 10.04 with kernel
->> 2.6.32-22. I love it, but I'm having trouble mounting it through fstab
->> consistently. How can I set a UUID for an nilfs volume? I've been unable
->> to do so using any of the linux tools I'm aware of.
->>
->> --Darien Large
->>      
-> UUID is set when creating nilfs volume with mkfs.nilfs2 (or mkfs -t
-> nilfs2).  But, the current standard mount program does not identify
-> the UUID of nilfs partitions.
->
-> Unfortunately, no UUID (nor label) tool is yet available for nilfs
-> though it's not time-consuming job.
->
-> The problem is that we were not able to promote nilfs to such standard
-> tools yet.  Recently we had discussion on the procedure to do this,
-> but sorry, it seems still take a while by the time it becomes
-> available commonly.
->
-> Regards,
-> Ryusuke Konishi
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->    
+But, I'd like to do this now, to shift our focus to the subsequent
+work early.
+
+Thanks,
+Ryusuke Konishi
+--
+Ryusuke Konishi (6):
+      nilfs2: add blocksize member to nilfs object
+      nilfs2: refactor recovery logic routines
+      nilfs2: rename nilfs_recover_logical_segments function
+      nilfs2: divide load_segment_summary function
+      nilfs2: do not use nilfs_segsum_info structure in recovery code
+      nilfs2: get rid of macros for segment summary information
+
+ fs/nilfs2/recovery.c  |  350 +++++++++++++++++++++++++++----------------------
+ fs/nilfs2/segbuf.h    |   24 ++--
+ fs/nilfs2/segment.c   |    8 +-
+ fs/nilfs2/segment.h   |   10 +-
+ fs/nilfs2/the_nilfs.c |   12 +-
+ fs/nilfs2/the_nilfs.h |    2 +
+ 6 files changed, 224 insertions(+), 182 deletions(-)
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
