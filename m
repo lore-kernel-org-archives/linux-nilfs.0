@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/6] nilfs2: refactor recovery code
-Date: Tue, 25 May 2010 01:39:03 +0900
-Message-ID: <1274719149-24371-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/6] nilfs2: add blocksize member to nilfs object
+Date: Tue, 25 May 2010 01:39:04 +0900
+Message-ID: <1274719149-24371-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1274719149-24371-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1274719149-24371-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,34 +13,49 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-This is a series of cleanups that should come before discussed changes
-to improve robustness of mount, disk usage on osync writes, and to
-minimize update frequency of super blocks, and so forth.
+This stores blocksize in nilfs objects for the successive refactoring
+of recovery logic.
 
-We are now in the merge window for the 2.6.35 kernel, so this and the
-planned changes will not be sent upstream until some time later.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/the_nilfs.c |    1 +
+ fs/nilfs2/the_nilfs.h |    2 ++
+ 2 files changed, 3 insertions(+), 0 deletions(-)
 
-But, I'd like to do this now, to shift our focus to the subsequent
-work early.
-
-Thanks,
-Ryusuke Konishi
---
-Ryusuke Konishi (6):
-      nilfs2: add blocksize member to nilfs object
-      nilfs2: refactor recovery logic routines
-      nilfs2: rename nilfs_recover_logical_segments function
-      nilfs2: divide load_segment_summary function
-      nilfs2: do not use nilfs_segsum_info structure in recovery code
-      nilfs2: get rid of macros for segment summary information
-
- fs/nilfs2/recovery.c  |  350 +++++++++++++++++++++++++++----------------------
- fs/nilfs2/segbuf.h    |   24 ++--
- fs/nilfs2/segment.c   |    8 +-
- fs/nilfs2/segment.h   |   10 +-
- fs/nilfs2/the_nilfs.c |   12 +-
- fs/nilfs2/the_nilfs.h |    2 +
- 6 files changed, 224 insertions(+), 182 deletions(-)
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 8c10973..870a127 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -604,6 +604,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
+ 			   when reloading fails. */
+ 	}
+ 	nilfs->ns_blocksize_bits = sb->s_blocksize_bits;
++	nilfs->ns_blocksize = blocksize;
+ 
+ 	err = nilfs_store_disk_layout(nilfs, sbp);
+ 	if (err)
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 1ab9745..85df47f 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -82,6 +82,7 @@ enum {
+  * @ns_gc_inodes: dummy inodes to keep live blocks
+  * @ns_gc_inodes_h: hash list to keep dummy inode holding live blocks
+  * @ns_blocksize_bits: bit length of block size
++ * @ns_blocksize: block size
+  * @ns_nsegments: number of segments in filesystem
+  * @ns_blocks_per_segment: number of blocks per segment
+  * @ns_r_segments_percentage: reserved segments percentage
+@@ -168,6 +169,7 @@ struct the_nilfs {
+ 
+ 	/* Disk layout information (static) */
+ 	unsigned int		ns_blocksize_bits;
++	unsigned int		ns_blocksize;
+ 	unsigned long		ns_nsegments;
+ 	unsigned long		ns_blocks_per_segment;
+ 	unsigned long		ns_r_segments_percentage;
+-- 
+1.6.3.4
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
