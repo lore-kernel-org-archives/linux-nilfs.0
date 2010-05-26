@@ -1,48 +1,53 @@
-From: Gordan Bobic <gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org>
-Subject: SSD and non-SSD Suitability
-Date: Wed, 26 May 2010 11:18:02 +0100
-Message-ID: <4BFCF55A.80205@bobich.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: gentoo amd64 based bootable cd with latest kernel and nilfs2
+ utils
+Date: Wed, 26 May 2010 23:38:32 +0900 (JST)
+Message-ID: <20100526.233832.33184441.ryusuke@osrg.net>
+References: <4BFA9737.5090402@prnet.org>
+	<20100525.033032.179933266.ryusuke@osrg.net>
+	<87632blgzf.wl%jir@sekiba.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87632blgzf.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+Cc: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-I've got a somewhat broad question on the suitability of nilfs for 
-various workloads and different backing storage devices. From what I 
-understand from the documentation available, the idea is to always write 
-sequentially, and thus avoid slow random writes on old/naive SSDs. Hence 
-I have a few questions.
+On Wed, 26 May 2010 08:05:40 +0900, Jiro SEKIBA wrote:
+> Hi,
+> 
+> At Tue, 25 May 2010 03:30:32 +0900 (JST),
+> Ryusuke Konishi wrote:
+> > 
+> > Hi,
+> > On Mon, 24 May 2010 17:11:51 +0200, David Arendt wrote:
+> > > Hi,
+> > > 
+> > > In order to facilate problem solving for the case my system using nilfs2
+> > > as root filesystem is not booting correctly, I created a gentoo amd64
+> > > based boot cd using latest kernel and nilfs2 utilities. If you think it
+> > > could be usefull for other people too, I could either create an own
+> > > webpage to host the iso image or you could add it to the main nilfs2
+> > > site. What do you think ?
+> > 
+> > Yes, I think this kind of rescue drives are helpful transiently.
+> > Quite similaly, I have a usb pendrive with nilfs-utils and nilfs kmod
+> > to maintain my nilfs root debian system just in case.
+> > 
+> > We can afford to put the iso image that you kindly collected up for
+> > people on nilfs.org, but it seems better that you have your own site
+> > because organizing information how to use that, looks more important
+> > to me.  Can't say as I do.  Anyone have any ideas ?
+> 
+> It would be convenient to just have a link to David's page from nilfs.org.
+> And maybe a link to Paul's page too :), if it's not cumbersome.
 
-1) Modern SSDs (e.g. Intel) do this logical/physical mapping internally, 
-so that the writes happen sequentially anyway. Does nilfs demonstrably 
-provide additional benefits on such modern SSDs with sensible firmware?
+I did it.  Thanks!
 
-2) Mechanical disks suffer from slow random writes (or any random 
-operation for that matter), too. Do the benefits of nilfs show in random 
-write performance on mechanical disks?
-
-3) How does this affect real-world read performance if nilfs is used on 
-a mechanical disk? How much additional file fragmentation in absolute 
-terms does nilfs cause?
-
-4) As the data gets expired, and snapshots get deleted, this will 
-inevitably lead to fragmentation, which will de-linearize writes as they 
-have to go into whatever holes are available in the data. How does this 
-affect nilfs write performance?
-
-5) How does the specific writing amount measure against other file 
-systems (I'm specifically interested in comparisons vs. ext2). What I 
-mean by specific writing amount is for writing, say, 100,000 random 
-sized files, how many write operations and MBs (or sectors) of writes 
-are required for the exact same operation being performed on nilfs and 
-ext2 (e.g. as measured by vmstat -d).
-
-Many thanks.
-
-Gordan
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
