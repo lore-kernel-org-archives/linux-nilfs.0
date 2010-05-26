@@ -1,40 +1,48 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: TRIM Support?
-Date: Wed, 26 May 2010 10:51:46 +0900 (JST)
-Message-ID: <20100526.105146.144288938.ryusuke@osrg.net>
-References: <4BFC1412.6000908@bobich.net>
-	<87ljb7bftn.wl%jir@sekiba.com>
+From: Gordan Bobic <gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org>
+Subject: SSD and non-SSD Suitability
+Date: Wed, 26 May 2010 11:18:02 +0100
+Message-ID: <4BFCF55A.80205@bobich.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87ljb7bftn.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org
-Cc: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 26 May 2010 10:40:52 +0900, Jiro SEKIBA wrote:
-> hi
-> 
-> At Tue, 25 May 2010 19:16:50 +0100,
-> Gordan Bobic wrote:
-> > 
-> > Hi,
-> > 
-> > I notice that the pitch for NILFS is that it is particularly suitable 
-> > for flash based media. Does it have any sort of support for TRIM 
-> > command? If not, is there at least an equivalent of dumpfs that could be 
-> > used to get the list of free blocks that could be passed to hdparm to 
-> > issue TRIM commands to the SSD?
-> 
-> You may want to specify discard mount option for the purpose.
-> see Documentation/filesystems/nilfs2.txt
+I've got a somewhat broad question on the suitability of nilfs for 
+various workloads and different backing storage devices. From what I 
+understand from the documentation available, the idea is to always write 
+sequentially, and thus avoid slow random writes on old/naive SSDs. Hence 
+I have a few questions.
 
-FYI, the trim support ("-o discard") was merged at linux-2.6.34.
+1) Modern SSDs (e.g. Intel) do this logical/physical mapping internally, 
+so that the writes happen sequentially anyway. Does nilfs demonstrably 
+provide additional benefits on such modern SSDs with sensible firmware?
 
-Cheers,
-Ryusuke Konishi
+2) Mechanical disks suffer from slow random writes (or any random 
+operation for that matter), too. Do the benefits of nilfs show in random 
+write performance on mechanical disks?
+
+3) How does this affect real-world read performance if nilfs is used on 
+a mechanical disk? How much additional file fragmentation in absolute 
+terms does nilfs cause?
+
+4) As the data gets expired, and snapshots get deleted, this will 
+inevitably lead to fragmentation, which will de-linearize writes as they 
+have to go into whatever holes are available in the data. How does this 
+affect nilfs write performance?
+
+5) How does the specific writing amount measure against other file 
+systems (I'm specifically interested in comparisons vs. ext2). What I 
+mean by specific writing amount is for writing, say, 100,000 random 
+sized files, how many write operations and MBs (or sectors) of writes 
+are required for the exact same operation being performed on nilfs and 
+ext2 (e.g. as measured by vmstat -d).
+
+Many thanks.
+
+Gordan
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
