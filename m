@@ -1,71 +1,119 @@
-From: Jay Carlson <nop-Nqdcz63CPQY@public.gmane.org>
-Subject: Re: uuid for nilfs partition?
-Date: Fri, 28 May 2010 16:11:16 -0400
-Message-ID: <AFD9E520-C364-41DF-9772-4765AB63E49B@nop.com>
-References: <4BFA8D5B.6000700@daliverse.com> <20100525.003345.115737304.ryusuke@osrg.net>
-Mime-Version: 1.0 (Apple Message framework v1078)
-Content-Transfer-Encoding: 8BIT
+From: "K. Richard Pixley" <rich-pBcMlXao8V4@public.gmane.org>
+Subject: Re: newbie question
+Date: Fri, 28 May 2010 14:14:20 -0700
+Message-ID: <4C00322C.5020205@noir.com>
+References: <4BF5A6E0.6040703@palm.com>	<20100521.073026.88488718.ryusuke@osrg.net>	<4BFEAE99.3030100@noir.com> <87vda8po3l.wl%jir@sekiba.com> <4C00071A.4010508@noir.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20100525.003345.115737304.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <4C00071A.4010508-pBcMlXao8V4@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: Jay Carlson <nop-Nqdcz63CPQY@public.gmane.org>, dlarge-RrB2l6sP9Nll57MIdRCFDg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On May 24, 2010, at 11:33 AM, Ryusuke Konishi wrote:
+Jiro SEKIBA wrote:
+ > Hi, Richard
+ >
+ > At Thu, 27 May 2010 10:40:41 -0700,
+ > K. Richard Pixley wrote:
+ >
+ >> Ryusuke Konishi wrote:
+ >>
+ >>> The "roll back" feature is one of our todo items, and not yet
+ >>> supported.
+ >>>
+ >> Is this something that could be accelerated by a suitable 
+application of
+ >> money?
+ >>
+ >
+ > I may not understand your question, but technically speaking
+ > it is possible to support roll back feature.
+ > It's just a matter of work force to do as far as I think.
+ >
+ > Still, there are some concerns about what the "roll back" sould be.
+ >
+ > For instance, if you just want to restore from a specific snapshot 
+you took,
+ > you can simply read-only mount the snapshot and copy the contents you
+ > want to restore.  That is done without any filesystem level roll back 
+support.
+ >
 
-> Hi,
-> On Mon, 24 May 2010 09:29:47 -0500, Darien Large wrote:
->> I'm using nilfs2 for my /home directory, under Ubuntu 10.04 with kernel 
->> 2.6.32-22. I love it, but I'm having trouble mounting it through fstab 
->> consistently. How can I set a UUID for an nilfs volume? I've been unable 
->> to do so using any of the linux tools I'm aware of.
->> 
->> --Darien Large
-> 
-> UUID is set when creating nilfs volume with mkfs.nilfs2 (or mkfs -t
-> nilfs2).  But, the current standard mount program does not identify
-> the UUID of nilfs partitions.
+Yes, but the copying requires a significant amount of time that I'm 
+trying to avoid.
 
-(I am writing this for Google to find.)
+I start with a known good file system.  I snapshot it.  I take some 
+speculative action.  And then, based on the result of the speculative 
+action, I either want to create a new snapshot and continue on from 
+there, or I want to "roll back" to the snapshot as though the 
+speculative action had never taken place.
 
-There is an interesting question of whether snapshots (or even checkpoints) should get their own true UUIDs, but it is not necessary to answer that question immediately; it does not fit the current Linux tools well.
+Effectively, I want to start with known good data and then "try 
+something".  If the trial succeeds, then I have a new good state.  But 
+if it fails, then my entire sub tree is polluted and needs to be 
+replaced or rolled back before I can try something else.
 
-One could use /dev/disk/by-id until blkid and other tools like util-linux-ng support nilfs UUIDs.  The UUID will be superior because it is the identity of the filesystem itself.  But for many simple uses, filesystems do not move from one physical medium to another, and the medium's identity then can be used as a way of persistently referring to the filesystem.  udev can probe for serial numbers, and I know the udev rules shipping with Ubuntu have done this for a while.
+This is akin to a parser with 1 item lookahead or to an AI search tree 
+of depth 1.  That is, I'm looking for a cheap backtracking mechanism.
 
-For example, on an Ubuntu 10.04 server the boot disk in one machine shows up in /dev/disk/by-id:
+My first strategy involved rsync'ing a subtree elsewhere in the file 
+system as my snapshotting mechanism and then using rsync to replace my 
+current subtree when I needed to "roll back".  This costs two large 
+copies and the copies take as much or more time than my transforms do. 
+This means that the copies are the most expensive thing my system does.
 
-ata-WDC_WD7500AADS-00L5B1_WD-WCAU4A688888
-ata-WDC_WD7500AADS-00L5B1_WD-WCAU4A688888-part1
-ata-WDC_WD7500AADS-00L5B1_WD-WCAU4A688888-part2
+My second strategy has been to use LVM snapshots.  The cost of rolling 
+back is effectively zero, but I have a small problem in that snapshots 
+can't be snapshotted, (that is, no recursion).  Instead, when the 
+speculative action is successful, I either need to copy the successful 
+data back to the original device or I need to repeat the speculative 
+action on the original device, either of which are slow operations 
+comparable to copying my entire subtree again.
 
-And because this disk is relatively new, it also has a World Wide Name:
+What I really want is the ability to make a snapshot, take my 
+speculative action, and then pick which one I want to keep moving 
+forward, without needing to copy all of the data.
 
-wwn-0x50014ee202e88888
-wwn-0x50014ee202e88888-part1
-wwn-0x50014ee202e88888-part2
+If I'm understanding nilfs2 semantics, then it's trivial to discard the 
+snapshot but discarding the most recent state of the file system 
+requires a long copy in user space.  I would expect that "roll back" 
+would allow me to simply discard everything that has happened in the 
+file system after a particular snapshot, (permanently and with no 
+mechanism for recovery), returning the file system to that snapshot's 
+state with read-write ability, and would do so significantly faster than 
+copying my entire file system.
 
-As it happens, that second partition is actually an LVM2 container, which also provides (not so unique) dm names for its contents:
+ > Or you want to undone what you did in filesystem, you may be able to
+ > delete log and set proper super block.  That is tricky, but possible
+ > without filesystem level support if it's not mounted.
 
-dm-name-fade2sys-root
-dm-name-fade2sys-swap
+It this is true, then I'd like to see it in one of the utility programs.
 
-But LVM2 gives dm a real unique identifier for those as well:
+ > The hard one is live "roll back", I think, which undone the things on
+ > mounted filesystem, or maybe at the boot time by specifying a checkpoint.
 
-dm-uuid-LVM-5y6K2m8AqnUNwE8EZBzQgbgAl4p5wj1s3kb0fwsPc7X4drBv1M2Xog3OlHfiYlYq
-dm-uuid-LVM-5y6K2m8AqnUNwE8EZBzQgbgAl4p5wj1sDEfgiabT2qYUpRwWbtqR11MgIl1JRda0
+For my application, it would be sufficient to "roll back" while the 
+system was unmounted, or to somehow mark the portions to be discarded 
+and then remount at the checkpoint I want to keep.
 
-USB mass storage devices get a serial number:
+ > In any cases, there should be some utility programs to achieve the
+ > functionalities above even it doesn't require any filesystem 
+modifications.
 
-usb-IMC_KanguruDrive2.0_074519340060-0:0
-usb-IMC_KanguruDrive2.0_074519340060-0:0-part1
+It seems to me that there's not really any conflict about what might be 
+provided, but more a question of the degree to which guarantees are kept 
+during the process.
 
-Unfortunately, card readers (like the tiny microSD USB readers) show up under their identity rather than the medium's.  So if you want to keep your home through a card reader device and have it distinguished from other cards, create an LVM2 container on the SD or CF card.  (However, alignment of logical volume blocks with physical flash erase blocks then becomes important, and I have not personally performed this procedure yet.)
+"Rolling back" is a clearly desirable feature.  The declarations should 
+be made using one of the utility programs.  Doing so on an unmounted 
+file system is a win over not doing it at all.  And doing it on a 
+mounted file system is a win over doing it on an unmounted file system.
 
-Jay
-
-P.S.: I'm not lucky enough to actually have a drive with that many 8s in a row in both the serial number and the WWN, but that's the format.--
+--rich
+--
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
