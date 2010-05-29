@@ -1,80 +1,45 @@
 From: Gordan Bobic <gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org>
 Subject: Re: SSD and non-SSD Suitability
-Date: Sat, 29 May 2010 09:43:35 +0100
-Message-ID: <4C00D3B7.8060904@bobich.net>
-References: <4BFCF55A.80205@bobich.net>	<87typspmiq.wl%jir@sekiba.com>	<4BFF91E7.9000102@bobich.net> <87d3wf17vj.wl%jir@sekiba.com>
+Date: Sat, 29 May 2010 09:45:39 +0100
+Message-ID: <4C00D433.2010406@bobich.net>
+References: <4BFCF55A.80205@bobich.net>	<87typspmiq.wl%jir@sekiba.com>	<4BFF91E7.9000102@bobich.net> <87d3wf17vj.wl%jir@sekiba.com> <4C00C745.6050903@prnet.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87d3wf17vj.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <4C00C745.6050903-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Arendt <admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
+Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Jiro SEKIBA wrote:
+David Arendt wrote:
 
->>>> 2) Mechanical disks suffer from slow random writes (or any random 
->>>> operation for that matter), too. Do the benefits of nilfs show in random 
->>>> write performance on mechanical disks?
->>> I think it may have benefits, for nilfs will write sequentially whatever
->>> data is located before writing it.  But still some tweaks might be required
->>> to speed up compared with ordinary filsystem like ext3.
->> Can you quantify what those tweaks may be, and when they might become 
->> available/implemented?
-> 
-> I might choose the wrong word, but what I meant is more hack is required
-> to improve write performance.  Not just configuration matters :(.
+>>>>> 4) As the data gets expired, and snapshots get deleted, this will 
+>>>>> inevitably lead to fragmentation, which will de-linearize writes as they 
+>>>>> have to go into whatever holes are available in the data. How does this 
+>>>>> affect nilfs write performance?
+>>>>>         
+>>>> For now, my understanding, nilfs garbage collector moves the live (in use)
+>>>> blocks to the end of logs, so holes are not created (it is correct?).
+>>>> However, it leads another issue that garbage collector process, which is
+>>>> nilfs_cleanerd, will consume the I/O.  This is major I/O performance
+>>>> bottle neck current implementation.
+>>>>       
+>>> Since this moves files, it sounds like this could be a major issue for 
+>>> flash media since it unnecessarily creates additional writes. Can this 
+>>> be suppressed?
+>>>     
+>> You can simply kill the nilfs_clearnerd after you mount the nilfs partition.
+>>   
+> If you use the latest nilfs_utils, killing nilfs_cleanerd is no longer
+> necessary. You can use mount -o nogc. This will not start
+> nilfs_cleanerd. Another possibility is to let nilfs_cleanerd start and
+> tweak min_free_segments and max_free_segments so that cleanerd will only
+> do cleaning if necessary.
 
-I understand what you meant. I just wanted to know when those hacks may 
-be implemented and be available for those of us interested in using 
-nilfs to optimize write-heavy workloads.
-
->>>> 3) How does this affect real-world read performance if nilfs is used on 
->>>> a mechanical disk? How much additional file fragmentation in absolute 
->>>> terms does nilfs cause?
->>> The data is scattered if you modified the file again and again,
->>> but it'll be almost sequential at the creation time.  So it will
->>> affect much if files are modified frequently.
->> Right. So bad for certain tasks, such as databases.
-> 
-> Indeed. maybe /var type of directories too.
-
-Interesting. So nilfs' suitability for write heavy loads is actually 
-quite limited on mechanical disks, as it isn't suitable for append-heavy 
-situations such as databases and logging, but for use-cases that are 
-write+delete heavy such as mail servers or other spool type loads it 
-should still be advantageous.
-
->>>> 4) As the data gets expired, and snapshots get deleted, this will 
->>>> inevitably lead to fragmentation, which will de-linearize writes as they 
->>>> have to go into whatever holes are available in the data. How does this 
->>>> affect nilfs write performance?
->>> For now, my understanding, nilfs garbage collector moves the live (in use)
->>> blocks to the end of logs, so holes are not created (it is correct?).
->>> However, it leads another issue that garbage collector process, which is
->>> nilfs_cleanerd, will consume the I/O.  This is major I/O performance
->>> bottle neck current implementation.
->> Since this moves files, it sounds like this could be a major issue for 
->> flash media since it unnecessarily creates additional writes. Can this 
->> be suppressed?
-> 
-> You can simply kill the nilfs_clearnerd after you mount the nilfs partition.
-> This case, of course, any garbage is reclaimed and finally end up with
-> disk full, even size of files don't occupy the storage size.
-> 
-> I don't have data for now, but it made about twice better write performance
-> compared with "with garbage collector".
-
-What about enabling garbage collection, but disabling degragmentation? 
-De-allocating space that isn't used any more is a necessary evil, but 
-defragmentation is rather pointless in a lot of cases (e.g. SSDs) and 
-counter-productive in others (mechanical disks under heavy load). Also, 
-what about making the garbage collector "lazy", so that it runs either 
-just-in time to overwrite discarded data (worst case scenario) or runs 
-when the disks are idle (e.g. at ionice -c3, and even that only when 
-there have been no disk transactions for, some selectable number of ms)?
+What about making the gc run only if the disk has been idle for, say, 
+20ms, unless min_free_segments is reached?
 
 Gordan
 --
