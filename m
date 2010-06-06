@@ -1,149 +1,232 @@
-From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-Subject: [PATCH 2/2] nilfs2: sync super blocks in turns
-Date: Sun,  6 Jun 2010 07:19:09 +0900
-Message-ID: <1275776349-22820-3-git-send-email-jir@unicus.jp>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [PATCH 1/2] nilfs2: introduce nilfs_prepare_super
+Date: Sun, 06 Jun 2010 20:12:05 +0900 (JST)
+Message-ID: <20100606.201205.144804443.ryusuke@osrg.net>
 References: <1275776349-22820-1-git-send-email-jir@unicus.jp>
+	<1275776349-22820-2-git-send-email-jir@unicus.jp>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1275776349-22820-1-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+In-Reply-To: <1275776349-22820-2-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
-This will sync super blocks in turns instead of syncing duplicate
-super blocks at the time.  This will help searching valid super root when
-super block is written into disk before log is written, which is happen when
-barrier-less block devices are unmounted uncleanly.
-In the stiation, old super block likely points valid log.
+Hi,
+On Sun,  6 Jun 2010 07:19:08 +0900, Jiro SEKIBA wrote:
+> This function checks validity of super block pointer.
+> If first super block is invalid, it will swap the super blocks.
+> The function should be called before any super block information updates.
+> Caller must obtain nilfs->ns_sem.
+> 
+> Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
----
- fs/nilfs2/nilfs.h   |    1 +
- fs/nilfs2/segment.c |    8 +++++---
- fs/nilfs2/super.c   |   44 +++++++++++++++++++++++++++++++++++++++-----
- 3 files changed, 45 insertions(+), 8 deletions(-)
+Thank you for the post.
 
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index c8edffd..b8fd4d1 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -271,6 +271,7 @@ nilfs_read_super_block(struct super_block *, u64, int, struct buffer_head **);
- extern int nilfs_store_magic_and_option(struct super_block *,
- 					struct nilfs_super_block *, char *);
- extern int nilfs_prepare_super(struct nilfs_sb_info *);
-+extern int nilfs_update_super(struct nilfs_sb_info *);
- extern int nilfs_commit_super(struct nilfs_sb_info *, int);
- extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, __u64);
- extern void nilfs_detach_checkpoint(struct nilfs_sb_info *);
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 72f779f..4801331 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -2491,9 +2491,11 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci, int mode)
- 		    nilfs_discontinued(nilfs)) {
- 			down_write(&nilfs->ns_sem);
- 			err = nilfs_prepare_super(sbi);
--			if (likely(!err))
--				err = nilfs_commit_super(
--					sbi, nilfs_altsb_need_update(nilfs));
-+			if (likely(!err)) {
-+				err = nilfs_update_super(sbi);
-+				if (likely(!err))
-+					err = nilfs_commit_super(sbi, 0);
-+			}
- 			up_write(&nilfs->ns_sem);
- 		}
- 	}
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 312b34a..9d0edfb 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -227,6 +227,8 @@ static int nilfs_sync_super(struct nilfs_sb_info *sbi, int dupsb)
- 		printk(KERN_ERR
- 		       "NILFS: unable to write superblock (err=%d)\n", err);
- 		if (err == -EIO && nilfs->ns_sbh[1]) {
-+			memcpy(nilfs->ns_sbp[1], nilfs->ns_sbp[0],
-+			       nilfs->ns_sbsize);
- 			nilfs_fall_back_super_block(nilfs);
- 			goto retry;
- 		}
-@@ -246,6 +248,13 @@ static int nilfs_sync_super(struct nilfs_sb_info *sbi, int dupsb)
- 				set_buffer_dirty(nilfs->ns_sbh[1]);
- 				if (!sync_dirty_buffer(nilfs->ns_sbh[1]))
- 					sbp = nilfs->ns_sbp[1];
-+			} else {
-+				int flip_bits = (nilfs->ns_cno & 0x0FL);
-+				/* flip super block 9 to 7 ratio */
-+				if (flip_bits == 0x08 || flip_bits == 0x0F) {
-+					nilfs_swap_super_block(nilfs);
-+					sbp = nilfs->ns_sbp[1];
-+				}
- 			}
- 		}
- 		if (sbp) {
-@@ -275,7 +284,7 @@ int nilfs_prepare_super(struct nilfs_sb_info *sbi)
- 	return 0;
- }
- 
--int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
-+int nilfs_update_super(struct nilfs_sb_info *sbi)
- {
- 	struct the_nilfs *nilfs = sbi->s_nilfs;
- 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-@@ -303,9 +312,31 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
- 	sbp[0]->s_sum = cpu_to_le32(crc32_le(nilfs->ns_crc_seed,
- 					     (unsigned char *)sbp[0],
- 					     nilfs->ns_sbsize));
-+	return 0;
-+}
-+
-+int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
-+{
-+	struct the_nilfs *nilfs = sbi->s_nilfs;
-+	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+
-+	/* nilfs->sem must be locked by the caller. */
- 	if (dupsb && sbp[1]) {
--		memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
--		nilfs->ns_sbwtime[1] = t;
-+		nilfs->ns_sbwtime[1] = nilfs->ns_sbwtime[0];
-+		/* copy super block except s_last_cno, s_last_pseg,
-+		   s_last_seq, s_free_blocks_count.
-+		  Those are asymmetric members */
-+		const int ctimeoff =
-+			offsetof(struct nilfs_super_block, s_ctime);
-+		memcpy(sbp[1], sbp[0],
-+		       offsetof(struct nilfs_super_block, s_last_cno));
-+		memcpy((unsigned char *)sbp[1] + ctimeoff,
-+		       (unsigned char *)sbp[0] + ctimeoff,
-+		       nilfs->ns_sbsize - ctimeoff);
-+		sbp[1]->s_sum = 0;
-+		sbp[1]->s_sum = cpu_to_le32(crc32_le(nilfs->ns_crc_seed,
-+					    (unsigned char *)sbp[1],
-+					    nilfs->ns_sbsize));
- 	}
- 	clear_nilfs_sb_dirty(nilfs);
- 	return nilfs_sync_super(sbi, dupsb);
-@@ -352,8 +383,11 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
- 		err = nilfs_construct_segment(sb);
- 
- 	down_write(&nilfs->ns_sem);
--	if (nilfs_sb_dirty(nilfs) && likely(!nilfs_prepare_super(sbi)))
--		nilfs_commit_super(sbi, 1);
-+	if (nilfs_sb_dirty(nilfs) && likely(!nilfs_prepare_super(sbi))) {
-+		err = nilfs_update_super(sbi);
-+		if (likely(!err))
-+			nilfs_commit_super(sbi, 0);
-+	}
- 	up_write(&nilfs->ns_sem);
- 
- 	return err;
--- 
-1.5.6.5
+I'll comment inline.
 
+> ---
+>  fs/nilfs2/nilfs.h     |    1 +
+>  fs/nilfs2/segment.c   |    6 +++-
+>  fs/nilfs2/super.c     |   58 ++++++++++++++++++++++++++++++++++--------------
+>  fs/nilfs2/the_nilfs.c |    9 +++++--
+>  4 files changed, 52 insertions(+), 22 deletions(-)
+> 
+> diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+> index 8723e5b..c8edffd 100644
+> --- a/fs/nilfs2/nilfs.h
+> +++ b/fs/nilfs2/nilfs.h
+> @@ -270,6 +270,7 @@ extern struct nilfs_super_block *
+>  nilfs_read_super_block(struct super_block *, u64, int, struct buffer_head **);
+>  extern int nilfs_store_magic_and_option(struct super_block *,
+>  					struct nilfs_super_block *, char *);
+> +extern int nilfs_prepare_super(struct nilfs_sb_info *);
+>  extern int nilfs_commit_super(struct nilfs_sb_info *, int);
+>  extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, __u64);
+>  extern void nilfs_detach_checkpoint(struct nilfs_sb_info *);
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 6a7dbd8..72f779f 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -2490,8 +2490,10 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci, int mode)
+>  		if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) &&
+>  		    nilfs_discontinued(nilfs)) {
+>  			down_write(&nilfs->ns_sem);
+> -			err = nilfs_commit_super(
+> -				sbi, nilfs_altsb_need_update(nilfs));
+> +			err = nilfs_prepare_super(sbi);
+> +			if (likely(!err))
+> +				err = nilfs_commit_super(
+> +					sbi, nilfs_altsb_need_update(nilfs));
+>  			up_write(&nilfs->ns_sem);
+>  		}
+>  	}
+> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+> index 48145f5..312b34a 100644
+> --- a/fs/nilfs2/super.c
+> +++ b/fs/nilfs2/super.c
+> @@ -97,7 +97,8 @@ void nilfs_error(struct super_block *sb, const char *function,
+>  		struct the_nilfs *nilfs = sbi->s_nilfs;
+>  
+>  		down_write(&nilfs->ns_sem);
+> -		if (!(nilfs->ns_mount_state & NILFS_ERROR_FS)) {
+> +		if (!(nilfs->ns_mount_state & NILFS_ERROR_FS) &&
+> +		    !nilfs_prepare_super(sbi)) {
+>  			nilfs->ns_mount_state |= NILFS_ERROR_FS;
+>  			nilfs->ns_sbp[0]->s_state |=
+>  				cpu_to_le16(NILFS_ERROR_FS);
+> @@ -257,14 +258,10 @@ static int nilfs_sync_super(struct nilfs_sb_info *sbi, int dupsb)
+>  	return err;
+>  }
+>  
+> -int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
+> +int nilfs_prepare_super(struct nilfs_sb_info *sbi)
+>  {
+>  	struct the_nilfs *nilfs = sbi->s_nilfs;
+>  	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+> -	sector_t nfreeblocks;
+> -	time_t t;
+> -	int err;
+> -
+>  	/* nilfs->sem must be locked by the caller. */
+
+This comment is copying a typo.  Please use precise one
+(i.e. "nilfs->ns_sem").  And, do not omit an empty line just below the
+local variable declarations.
+
+>  	if (sbp[0]->s_magic != NILFS_SUPER_MAGIC) {
+>  		if (sbp[1] && sbp[1]->s_magic == NILFS_SUPER_MAGIC)
+> @@ -275,6 +272,18 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
+>  			return -EIO;
+>  		}
+>  	}
+> +	return 0;
+> +}
+> +
+> +int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
+> +{
+> +	struct the_nilfs *nilfs = sbi->s_nilfs;
+> +	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+> +	sector_t nfreeblocks;
+> +	time_t t;
+> +	int err;
+> +
+> +	/* nilfs->sem must be locked by the caller. */
+>  	err = nilfs_count_free_blocks(nilfs, &nfreeblocks);
+>  	if (unlikely(err)) {
+>  		printk(KERN_ERR "NILFS: failed to count free blocks\n");
+> @@ -314,7 +323,8 @@ static void nilfs_put_super(struct super_block *sb)
+>  	if (!(sb->s_flags & MS_RDONLY)) {
+>  		down_write(&nilfs->ns_sem);
+>  		nilfs->ns_sbp[0]->s_state = cpu_to_le16(nilfs->ns_mount_state);
+
+This change is not protected by the nilfs_{prepare,commit}_super pair.
+
+> -		nilfs_commit_super(sbi, 1);
+> +		if (likely(!nilfs_prepare_super(sbi)))
+> +			nilfs_commit_super(sbi, 1);
+>  		up_write(&nilfs->ns_sem);
+>  	}
+>  	down_write(&nilfs->ns_super_sem);
+> @@ -342,7 +352,7 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
+>  		err = nilfs_construct_segment(sb);
+>  
+>  	down_write(&nilfs->ns_sem);
+> -	if (nilfs_sb_dirty(nilfs))
+> +	if (nilfs_sb_dirty(nilfs) && likely(!nilfs_prepare_super(sbi)))
+>  		nilfs_commit_super(sbi, 1);
+>  	up_write(&nilfs->ns_sem);
+>  
+> @@ -637,9 +647,20 @@ nilfs_set_default_options(struct nilfs_sb_info *sbi,
+>  static int nilfs_setup_super(struct nilfs_sb_info *sbi)
+>  {
+>  	struct the_nilfs *nilfs = sbi->s_nilfs;
+> -	struct nilfs_super_block *sbp = nilfs->ns_sbp[0];
+> -	int max_mnt_count = le16_to_cpu(sbp->s_max_mnt_count);
+> -	int mnt_count = le16_to_cpu(sbp->s_mnt_count);
+> +	struct nilfs_super_block *sbp;
+> +	int max_mnt_count;
+> +	int mnt_count;
+> +	int err;
+> +
+> +	err = nilfs_prepare_super(sbi);
+> +
+
+This empty line should be removed.
+
+> +	if (unlikely(err))
+> +		return err;
+
+This usage of unlikely macro is superfluous since gcc generally
+considers conditions to blocks that return unlikely.
+
+It's still seen in places, but I hope they will be rewritten whenever
+possible.
+
+> +
+> +	sbp = nilfs->ns_sbp[0];
+> +	max_mnt_count = le16_to_cpu(sbp->s_max_mnt_count);
+> +	mnt_count = le16_to_cpu(sbp->s_mnt_count);
+> +
+>  
+>  	/* nilfs->sem must be locked by the caller. */
+>  	if (nilfs->ns_mount_state & NILFS_ERROR_FS) {
+> @@ -896,12 +917,15 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
+>  		 * the RDONLY flag and then mark the partition as valid again.
+>  		 */
+>  		down_write(&nilfs->ns_sem);
+> -		sbp = nilfs->ns_sbp[0];
+> -		if (!(sbp->s_state & le16_to_cpu(NILFS_VALID_FS)) &&
+> -		    (nilfs->ns_mount_state & NILFS_VALID_FS))
+> -			sbp->s_state = cpu_to_le16(nilfs->ns_mount_state);
+> -		sbp->s_mtime = cpu_to_le64(get_seconds());
+> -		nilfs_commit_super(sbi, 1);
+> +		if (likely(!nilfs_prepare_super(sbi))) {
+> +			sbp = nilfs->ns_sbp[0];
+> +			if (!(sbp->s_state & le16_to_cpu(NILFS_VALID_FS)) &&
+> +			    (nilfs->ns_mount_state & NILFS_VALID_FS))
+> +				sbp->s_state =
+> +				    cpu_to_le16(nilfs->ns_mount_state);
+> +			sbp->s_mtime = cpu_to_le64(get_seconds());
+> +			nilfs_commit_super(sbi, 1);
+> +		}
+
+How about letting nilfs_prepare_super return sbp instead of a status
+code ?
+
+It seems fine if the reference of nilfs->ns_sbp[0] is hidden from the
+callers.
+
+>  		up_write(&nilfs->ns_sem);
+>  	} else {
+>  		/*
+> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+> index a756168..636cefe 100644
+> --- a/fs/nilfs2/the_nilfs.c
+> +++ b/fs/nilfs2/the_nilfs.c
+> @@ -325,9 +325,12 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+>  		goto failed_unload;
+>  
+>  	down_write(&nilfs->ns_sem);
+> -	nilfs->ns_mount_state |= NILFS_VALID_FS;
+> -	nilfs->ns_sbp[0]->s_state = cpu_to_le16(nilfs->ns_mount_state);
+> -	err = nilfs_commit_super(sbi, 1);
+> +	err = nilfs_prepare_super(sbi);
+> +	if (likely(!err)) {
+> +		nilfs->ns_mount_state |= NILFS_VALID_FS;
+> +		nilfs->ns_sbp[0]->s_state = cpu_to_le16(nilfs->ns_mount_state);
+> +		err = nilfs_commit_super(sbi, 1);
+> +	}
+>  	up_write(&nilfs->ns_sem);
+>  
+>  	if (err) {
+> -- 
+> 1.5.6.5
+
+Thanks,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
