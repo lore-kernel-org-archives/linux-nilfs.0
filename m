@@ -1,95 +1,64 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCHv3 2/2] nilfs2: sync super blocks in turns
-Date: Wed, 23 Jun 2010 17:56:52 +0900 (JST)
-Message-ID: <20100623.175652.212679034.ryusuke@osrg.net>
-References: <20100621.025310.57455600.ryusuke@osrg.net>
-	<20100623.123856.258021353.ryusuke@osrg.net>
-	<87ocf2civ3.wl%jir@sekiba.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+Subject: [PATCHv4 0/2] nilfs2: asynchronous sb update
+Date: Fri, 25 Jun 2010 00:27:38 +0900
+Message-ID: <1277393260-19835-1-git-send-email-jir@unicus.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87ocf2civ3.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, ryusuke-sG5X7nlA6pw@public.gmane.org, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
 Hi,
-On Wed, 23 Jun 2010 16:23:44 +0900, Jiro SEKIBA wrote:
-> Hi,
-> 
-> At Wed, 23 Jun 2010 12:38:56 +0900 (JST),
-> Ryusuke Konishi wrote:
-> > 
-> > On Mon, 21 Jun 2010 02:53:10 +0900 (JST), Ryusuke Konishi wrote:
-> > > On Mon, 21 Jun 2010 01:36:55 +0900, Jiro SEKIBA wrote:
-> > > > This will sync super blocks in turns instead of syncing duplicate
-> > > > super blocks at the time.  This will help searching valid super root when
-> > > > super block is written into disk before log is written, which is happen when
-> > > > barrier-less block devices are unmounted uncleanly.
-> > > > In the situation, old super block likely points to valid log.
-> > > > 
-> > > > This patch introduces ns_sbwcount member, which counts how many times super
-> > > > blocks write back to the disk.  Super blocks are asymmetrically synced
-> > > > based on the counter.
-> > > > 
-> > > > The patch also introduces new function nilfs_set_log_cursor to advance
-> > > > log cursor for specified super block.  To update both of super block
-> > > > information, caller of nilfs_commit_super must set the information on both
-> > > > super blocks.
-> > > > 
-> > > > Signed-off-by: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-> > > 
-> > > Thank you!  Both patches look good to me.
-> > > 
-> > > Will queue them up for the next merge window.
-> > > 
-> > > Thanks,
-> > > Ryusuke Konishi
-> > 
-> > Umm, I noticed that nilfs_commit_super is called twice when the
-> > filesystem is unmounted.  This is because nilfs_sync_fs() is called
-> > just before nilfs_put_super() will do unmount jobs.
-> 
-> Ahhh, I see the problem.  That's right.  It would have be the same
-> checkpoints in case that filesystem is dirty when sync_fs is called.
-> To slove the problem, I think, it may require controlling swap of
-> superblocks explicitly.
-> 
-> How about swaping BEFORE writing the super block instead of AFTER?
-> 
-> nilfs_prepare_super will take another argument that controls swapping
-> of super blocks.  So caller can decide swap or not.  With this feature,
-> you can prepare super block without swapping in a nilfs_put_super.
-> Therefore, old super block written before sync_fs called will be preserved
-> by overwriting the same super block sync_fs wrote back.
 
-Sounds reasonable, and more clear to me.
+This is v4 patch series to update super block asynchronously.
 
-Note that sync_fs itself can be called multiple times.  The current
-nilfs_sync_fs implementation is half-baked; it does not handle the
-syncwait flag argument properly.  nilfs_construct_segment() and
-nilfs_commit_super() should be essentially divided into "commit" and
-"wait" functions.
+First patch separates super block validity check from nilfs_commit_super,
+and moved the function into callers.
 
-I also think nilfs_sync_fs does not have to call nilfs_commit_super
-because the log will be recovered by roll-forwarding even if not
-updating the log cursor.
+Second patch introduces swapping code in nilfs_prepare_super.
+Caller of the function must specify whether swapping super blocks or not
+explicitly.  To advance log pointer, the caller uses nilfs_set_log_cursor
+to advance specified super block after calling nilfs_prepare_super.
 
-Anyway, I agree to move the flip operation into nilfs_prepare_super()
-and to make it selectable with a "flip" flag.  It would make things
-more flexible.
+changes from v3
+- move swapping code to nilfs_prepare_super from nilfs_sync_super
+- check last_cno of super blocks to advance protection period
+- introduce nilfs_sb_need_swap function
 
-> Updating protection period should be took care carefully.
-> Nhh, then, it can compare the actual checkpoint nubmer of each super blocks
-> instead of setting sbp[1]'s checkpoint each time.
+changes from v2
+- restore super block in nilfs_prepare_super
+- introduce nilfs_set_error
+ * used in nilfs_error
+- introduce nilfs_set_log_cursor instead of write_log_cursor
+ * instead of writing error, set log cursor to specified sb pointer
+ * used followed by nilfs_commit_super
+- introduce ns_sbwcount
+ * swap super blocks based on the counter
+ * swap all most all the time, still asymmetric(9:7 ratio)
+- delete ns_sbwtime[2]
+ * introduce ns_sbwtime instead of array of both super blocks
+- synchronize super blocks when mount/remount
+- abandon NILFS_SB_SET_FN
+ * only used in nilfs_set_error, so assign directly in the function
+- misc style fix
+- misc comment fix
 
-Yes, it is replaceable with the comparison of checkpoint numbers.
-So, you can move the flip operation into nilfs_prepare_super().
+changes from v1
+- change macro name NILFS_SUPER_SET_FN -> NILFS_SB_SET_FN
+ * change inline function name as nilfs_sb_set_##name
+- introduce enum for nilfs_commit_super and nilfs_sync_super
+ * NILFS_SB_COMMIT and NILFS_SB_COMMIT_ALL
+ * use flag instead of dupsb in nilfs_commit_super/sync_super
 
-Regards,
-Ryusuke Konishi
+ fs/nilfs2/nilfs.h     |   12 +++
+ fs/nilfs2/segment.c   |   10 ++-
+ fs/nilfs2/super.c     |  182 ++++++++++++++++++++++++++++++++++---------------
+ fs/nilfs2/the_nilfs.c |   17 +++--
+ fs/nilfs2/the_nilfs.h |   17 ++---
+ 5 files changed, 166 insertions(+), 72 deletions(-)
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
