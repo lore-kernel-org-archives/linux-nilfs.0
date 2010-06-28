@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCHv2 3/3] nilfs2: implement fallback for super root search
-Date: Mon, 28 Jun 2010 19:15:26 +0900
-Message-ID: <1277720126-13463-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCHv2 1/3] nilfs2: separate setup of log cursor from init_nilfs
+Date: Mon, 28 Jun 2010 19:15:24 +0900
+Message-ID: <1277720126-13463-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1277720126-13463-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1277720126-13463-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,99 +13,80 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-Although nilfs redundantly uses two super blocks and each may point to
-different position on log, the current version of nilfs does not try
-fallback to the spare super block when it doesn't find any valid log
-at the position that the primary super block points to.
-
-This has been a cause of mount failures due to write order reversals
-on barrier less block devices.
-
-This inserts fallback code in error path of nilfs_search_super_root
-routine to resolve the mount failure problem.
+This separates a setup routine of log cursor from init_nilfs().  The
+routine, nilfs_store_log_cursor, reads the last position of the log
+containing a super root, and initializes relevant state on the nilfs
+object.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/the_nilfs.c |   52 +++++++++++++++++++++++++++++++++++++++++++++++-
- 1 files changed, 50 insertions(+), 2 deletions(-)
+ fs/nilfs2/the_nilfs.c |   45 ++++++++++++++++++++++++++++++++-------------
+ 1 files changed, 32 insertions(+), 13 deletions(-)
 
 diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 0d2a46c..88c8976 100644
+index 530d277..0d2a46c 100644
 --- a/fs/nilfs2/the_nilfs.c
 +++ b/fs/nilfs2/the_nilfs.c
-@@ -38,6 +38,8 @@
- static LIST_HEAD(nilfs_objects);
- static DEFINE_SPINLOCK(nilfs_lock);
+@@ -247,6 +247,36 @@ static void nilfs_clear_recovery_info(struct nilfs_recovery_info *ri)
+ }
  
-+static int nilfs_valid_sb(struct nilfs_super_block *sbp);
+ /**
++ * nilfs_store_log_cursor - load log cursor from a super block
++ * @nilfs: nilfs object
++ * @sbp: buffer storing super block to be read
++ *
++ * nilfs_store_log_cursor() reads the last position of the log
++ * containing a super root from a given super block, and initializes
++ * relevant information on the nilfs object preparatory for log
++ * scanning and recovery.
++ */
++static int nilfs_store_log_cursor(struct the_nilfs *nilfs,
++				  struct nilfs_super_block *sbp)
++{
++	int ret = 0;
 +
- void nilfs_set_last_segment(struct the_nilfs *nilfs,
- 			    sector_t start_blocknr, u64 seq, __u64 cno)
- {
-@@ -316,8 +318,50 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
++	nilfs->ns_last_pseg = le64_to_cpu(sbp->s_last_pseg);
++	nilfs->ns_last_cno = le64_to_cpu(sbp->s_last_cno);
++	nilfs->ns_last_seq = le64_to_cpu(sbp->s_last_seq);
++
++	nilfs->ns_seg_seq = nilfs->ns_last_seq;
++	nilfs->ns_segnum =
++		nilfs_get_segnum_of_block(nilfs, nilfs->ns_last_pseg);
++	nilfs->ns_cno = nilfs->ns_last_cno + 1;
++	if (nilfs->ns_segnum >= nilfs->ns_nsegments) {
++		printk(KERN_ERR "NILFS invalid last segment number.\n");
++		ret = -EINVAL;
++	}
++	return ret;
++}
++
++/**
+  * load_nilfs - load and recover the nilfs
+  * @nilfs: the_nilfs structure to be released
+  * @sbi: nilfs_sb_info used to recover past segment
+@@ -615,20 +645,9 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
+ 	bdi = nilfs->ns_bdev->bd_inode->i_mapping->backing_dev_info;
+ 	nilfs->ns_bdi = bdi ? : &default_backing_dev_info;
  
- 	err = nilfs_search_super_root(nilfs, &ri);
- 	if (unlikely(err)) {
--		printk(KERN_ERR "NILFS: error searching super root.\n");
--		goto failed;
-+		struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+		int blocksize;
-+
-+		if (err != -EINVAL)
-+			goto scan_error;
-+
-+		if (!nilfs_valid_sb(sbp[1])) {
-+			printk(KERN_WARNING
-+			       "NILFS warning: unable to fall back to spare"
-+			       "super block\n");
-+			goto scan_error;
-+		}
-+		printk(KERN_INFO
-+		       "NILFS: try rollback from an earlier position\n");
-+
-+		/*
-+		 * restore super block with its spare and reconfigure
-+		 * relevant states of the nilfs object.
-+		 */
-+		memcpy(sbp[0], sbp[1], nilfs->ns_sbsize);
-+		nilfs->ns_crc_seed = le32_to_cpu(sbp[0]->s_crc_seed);
-+		nilfs->ns_sbwtime = le64_to_cpu(sbp[0]->s_wtime);
-+
-+		/* verify consistency between two super blocks */
-+		blocksize = BLOCK_SIZE << le32_to_cpu(sbp[0]->s_log_block_size);
-+		if (blocksize != nilfs->ns_blocksize) {
-+			printk(KERN_WARNING
-+			       "NILFS warning: blocksize differs between "
-+			       "two super blocks (%d != %d)\n",
-+			       blocksize, nilfs->ns_blocksize);
-+			goto scan_error;
-+		}
-+
-+		err = nilfs_store_log_cursor(nilfs, sbp[0]);
-+		if (err)
-+			goto scan_error;
-+
-+		/* drop clean flag to allow roll-forward and recovery */
-+		nilfs->ns_mount_state &= ~NILFS_VALID_FS;
-+		valid_fs = 0;
-+
-+		err = nilfs_search_super_root(nilfs, &ri);
-+		if (err)
-+			goto scan_error;
- 	}
+-	/* Finding last segment */
+-	nilfs->ns_last_pseg = le64_to_cpu(sbp->s_last_pseg);
+-	nilfs->ns_last_cno = le64_to_cpu(sbp->s_last_cno);
+-	nilfs->ns_last_seq = le64_to_cpu(sbp->s_last_seq);
+-
+-	nilfs->ns_seg_seq = nilfs->ns_last_seq;
+-	nilfs->ns_segnum =
+-		nilfs_get_segnum_of_block(nilfs, nilfs->ns_last_pseg);
+-	nilfs->ns_cno = nilfs->ns_last_cno + 1;
+-	if (nilfs->ns_segnum >= nilfs->ns_nsegments) {
+-		printk(KERN_ERR "NILFS invalid last segment number.\n");
+-		err = -EINVAL;
++	err = nilfs_store_log_cursor(nilfs, sbp);
++	if (err)
+ 		goto failed_sbh;
+-	}
  
- 	err = nilfs_load_super_root(nilfs, ri.ri_super_root);
-@@ -371,6 +415,10 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
- 	sbi->s_super->s_flags = s_flags;
- 	return 0;
- 
-+ scan_error:
-+	printk(KERN_ERR "NILFS: error searching super root.\n");
-+	goto failed;
-+
-  failed_unload:
- 	nilfs_mdt_destroy(nilfs->ns_cpfile);
- 	nilfs_mdt_destroy(nilfs->ns_sufile);
+ 	/* Initialize gcinode cache */
+ 	err = nilfs_init_gccache(nilfs);
 -- 
 1.6.3.4
 
