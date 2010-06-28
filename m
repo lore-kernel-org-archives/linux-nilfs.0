@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCHv2 0/3] nilfs2: support rollback of log scan
-Date: Mon, 28 Jun 2010 19:15:23 +0900
-Message-ID: <1277720126-13463-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCHv2 3/3] nilfs2: implement fallback for super root search
+Date: Mon, 28 Jun 2010 19:15:26 +0900
+Message-ID: <1277720126-13463-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1277720126-13463-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1277720126-13463-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,31 +13,101 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-This series adds fallback feature between two super blocks in terms of
-search of valid super root during mount.
-
 Although nilfs redundantly uses two super blocks and each may point to
 different position on log, the current version of nilfs does not try
 fallback to the spare super block when it doesn't find any valid log
-at the position that newer super block points to.
+at the position that the primary super block points to.
 
-This is because such inconsistent situtation will not happen if
-underlying block device properly implements barrier semantics, but in
-reality, problems have been reported.
+This has been a cause of mount failures due to write order reversals
+on barrier less block devices.
 
-The former series does not apply to the latest "nilfs2: asynchronous
-sb update" patchset.  This series fixes the issue.
+This inserts fallback code in error path of nilfs_search_super_root
+routine to resolve the mount failure problem.
 
-changes from v1:
-- rebased onto the v5 series of "nilfs2: asynchronous sb update"
-- fix compilation error in load_nilfs()
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/the_nilfs.c |   52 +++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 50 insertions(+), 2 deletions(-)
 
-Thanks,
-Ryusuke Konishi
---
- fs/nilfs2/recovery.c  |    2 +
- fs/nilfs2/the_nilfs.c |   97 +++++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 84 insertions(+), 15 deletions(-)
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 0d2a46c..88c8976 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -38,6 +38,8 @@
+ static LIST_HEAD(nilfs_objects);
+ static DEFINE_SPINLOCK(nilfs_lock);
+ 
++static int nilfs_valid_sb(struct nilfs_super_block *sbp);
++
+ void nilfs_set_last_segment(struct the_nilfs *nilfs,
+ 			    sector_t start_blocknr, u64 seq, __u64 cno)
+ {
+@@ -316,8 +318,50 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ 
+ 	err = nilfs_search_super_root(nilfs, &ri);
+ 	if (unlikely(err)) {
+-		printk(KERN_ERR "NILFS: error searching super root.\n");
+-		goto failed;
++		struct nilfs_super_block **sbp = nilfs->ns_sbp;
++		int blocksize;
++
++		if (err != -EINVAL)
++			goto scan_error;
++
++		if (!nilfs_valid_sb(sbp[1])) {
++			printk(KERN_WARNING
++			       "NILFS warning: unable to fall back to spare"
++			       "super block\n");
++			goto scan_error;
++		}
++		printk(KERN_INFO
++		       "NILFS: try rollback from an earlier position\n");
++
++		/*
++		 * restore super block with its spare and reconfigure
++		 * relevant states of the nilfs object.
++		 */
++		memcpy(sbp[0], sbp[1], nilfs->ns_sbsize);
++		nilfs->ns_crc_seed = le32_to_cpu(sbp[0]->s_crc_seed);
++		nilfs->ns_sbwtime = le64_to_cpu(sbp[0]->s_wtime);
++
++		/* verify consistency between two super blocks */
++		blocksize = BLOCK_SIZE << le32_to_cpu(sbp[0]->s_log_block_size);
++		if (blocksize != nilfs->ns_blocksize) {
++			printk(KERN_WARNING
++			       "NILFS warning: blocksize differs between "
++			       "two super blocks (%d != %d)\n",
++			       blocksize, nilfs->ns_blocksize);
++			goto scan_error;
++		}
++
++		err = nilfs_store_log_cursor(nilfs, sbp[0]);
++		if (err)
++			goto scan_error;
++
++		/* drop clean flag to allow roll-forward and recovery */
++		nilfs->ns_mount_state &= ~NILFS_VALID_FS;
++		valid_fs = 0;
++
++		err = nilfs_search_super_root(nilfs, &ri);
++		if (err)
++			goto scan_error;
+ 	}
+ 
+ 	err = nilfs_load_super_root(nilfs, ri.ri_super_root);
+@@ -371,6 +415,10 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ 	sbi->s_super->s_flags = s_flags;
+ 	return 0;
+ 
++ scan_error:
++	printk(KERN_ERR "NILFS: error searching super root.\n");
++	goto failed;
++
+  failed_unload:
+ 	nilfs_mdt_destroy(nilfs->ns_cpfile);
+ 	nilfs_mdt_destroy(nilfs->ns_sufile);
+-- 
+1.6.3.4
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
