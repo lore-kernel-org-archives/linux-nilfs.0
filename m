@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCHv5 1/5] nilfs2: add nilfs_cleanup_super
-Date: Mon, 28 Jun 2010 17:49:29 +0900
-Message-ID: <1277714973-12136-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCHv5 2/5] nilfs2: add nilfs_set_error
+Date: Mon, 28 Jun 2010 17:49:30 +0900
+Message-ID: <1277714973-12136-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1277714973-12136-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1277714973-12136-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,106 +13,56 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-This function write out filesystem state to super blocks in order to
-share the same cleanup work.  This is a preparation for making super
-block writeback alternately.
+This function marks error state and write it on super blocks.  This is
+a preparation for making super block writeback alternately.
 
-Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/nilfs.h     |    1 +
- fs/nilfs2/super.c     |   28 ++++++++++++++++++++--------
- fs/nilfs2/the_nilfs.c |    5 ++---
- 3 files changed, 23 insertions(+), 11 deletions(-)
+ fs/nilfs2/super.c |   24 ++++++++++++++----------
+ 1 files changed, 14 insertions(+), 10 deletions(-)
 
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 47d6d79..4695417 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -271,6 +271,7 @@ nilfs_read_super_block(struct super_block *, u64, int, struct buffer_head **);
- extern int nilfs_store_magic_and_option(struct super_block *,
- 					struct nilfs_super_block *, char *);
- extern int nilfs_commit_super(struct nilfs_sb_info *, int);
-+extern int nilfs_cleanup_super(struct nilfs_sb_info *);
- extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, __u64);
- extern void nilfs_detach_checkpoint(struct nilfs_sb_info *);
- 
 diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 39b28cf..f23a31b 100644
+index f23a31b..4a85dfb 100644
 --- a/fs/nilfs2/super.c
 +++ b/fs/nilfs2/super.c
-@@ -278,6 +278,24 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int dupsb)
- 	return nilfs_sync_super(sbi, dupsb);
- }
+@@ -74,6 +74,19 @@ struct kmem_cache *nilfs_btree_path_cache;
  
-+/**
-+ * nilfs_cleanup_super() - write filesystem state for cleanup
-+ * @sbi: nilfs_sb_info to be unmounted or degraded to read-only
-+ *
-+ * This function restores state flags in the on-disk super block.
-+ * This will set "clean" flag (i.e. NILFS_VALID_FS) unless the
-+ * filesystem was not clean previously.
-+ */
-+int nilfs_cleanup_super(struct nilfs_sb_info *sbi)
+ static int nilfs_remount(struct super_block *sb, int *flags, char *data);
+ 
++static void nilfs_set_error(struct nilfs_sb_info *sbi)
 +{
-+	struct nilfs_super_block **sbp = sbi->s_nilfs->ns_sbp;
-+	int ret;
++	struct the_nilfs *nilfs = sbi->s_nilfs;
 +
-+	sbp[0]->s_state = cpu_to_le16(sbi->s_nilfs->ns_mount_state);
-+	ret = nilfs_commit_super(sbi, 1);
-+	return ret;
++	down_write(&nilfs->ns_sem);
++	if (!(nilfs->ns_mount_state & NILFS_ERROR_FS)) {
++		nilfs->ns_mount_state |= NILFS_ERROR_FS;
++		nilfs->ns_sbp[0]->s_state |= cpu_to_le16(NILFS_ERROR_FS);
++		nilfs_commit_super(sbi, 1);
++	}
++	up_write(&nilfs->ns_sem);
 +}
 +
- static void nilfs_put_super(struct super_block *sb)
- {
- 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
-@@ -289,8 +307,7 @@ static void nilfs_put_super(struct super_block *sb)
+ /**
+  * nilfs_error() - report failure condition on a filesystem
+  *
+@@ -99,16 +112,7 @@ void nilfs_error(struct super_block *sb, const char *function,
+ 	va_end(args);
  
  	if (!(sb->s_flags & MS_RDONLY)) {
- 		down_write(&nilfs->ns_sem);
--		nilfs->ns_sbp[0]->s_state = cpu_to_le16(nilfs->ns_mount_state);
--		nilfs_commit_super(sbi, 1);
-+		nilfs_cleanup_super(sbi);
- 		up_write(&nilfs->ns_sem);
- 	}
- 	down_write(&nilfs->ns_super_sem);
-@@ -819,7 +836,6 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
- static int nilfs_remount(struct super_block *sb, int *flags, char *data)
- {
- 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
--	struct nilfs_super_block *sbp;
- 	struct the_nilfs *nilfs = sbi->s_nilfs;
- 	unsigned long old_sb_flags;
- 	struct nilfs_mount_options old_opts;
-@@ -880,11 +896,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
- 		 * the RDONLY flag and then mark the partition as valid again.
- 		 */
- 		down_write(&nilfs->ns_sem);
--		sbp = nilfs->ns_sbp[0];
--		if (!(sbp->s_state & le16_to_cpu(NILFS_VALID_FS)) &&
--		    (nilfs->ns_mount_state & NILFS_VALID_FS))
--			sbp->s_state = cpu_to_le16(nilfs->ns_mount_state);
--		nilfs_commit_super(sbi, 1);
-+		nilfs_cleanup_super(sbi);
- 		up_write(&nilfs->ns_sem);
- 	} else {
- 		/*
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 4a9e8a0..ed58053 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -324,9 +324,8 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
- 		goto failed_unload;
+-		struct the_nilfs *nilfs = sbi->s_nilfs;
+-
+-		down_write(&nilfs->ns_sem);
+-		if (!(nilfs->ns_mount_state & NILFS_ERROR_FS)) {
+-			nilfs->ns_mount_state |= NILFS_ERROR_FS;
+-			nilfs->ns_sbp[0]->s_state |=
+-				cpu_to_le16(NILFS_ERROR_FS);
+-			nilfs_commit_super(sbi, 1);
+-		}
+-		up_write(&nilfs->ns_sem);
++		nilfs_set_error(sbi);
  
- 	down_write(&nilfs->ns_sem);
--	nilfs->ns_mount_state |= NILFS_VALID_FS;
--	nilfs->ns_sbp[0]->s_state = cpu_to_le16(nilfs->ns_mount_state);
--	err = nilfs_commit_super(sbi, 1);
-+	nilfs->ns_mount_state |= NILFS_VALID_FS; /* set "clean" flag */
-+	err = nilfs_cleanup_super(sbi);
- 	up_write(&nilfs->ns_sem);
- 
- 	if (err) {
+ 		if (nilfs_test_opt(sbi, ERRORS_RO)) {
+ 			printk(KERN_CRIT "Remounting filesystem read-only\n");
 -- 
 1.6.3.4
 
