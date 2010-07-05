@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 1/5] nilfs2: add barrier mount option
-Date: Tue,  6 Jul 2010 00:09:46 +0900
-Message-ID: <1278342590-5912-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 5/5] nilfs2: get rid of nilfs_mount_options struct
+Date: Tue,  6 Jul 2010 00:09:50 +0900
+Message-ID: <1278342590-5912-6-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1278342590-5912-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1278342590-5912-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,65 +13,64 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Nilfs enables write barriers by default and has "nobarrier" mount
-option to disable this feature.  But it lacks the complementary option
-and has no way to re-enable the feature on remount.
-
-This adds "barrier" option to resolve this imbalance.
+This removes nilfs_mount_options structure and simplifies restoration
+of mount options in remount function.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- Documentation/filesystems/nilfs2.txt |    5 ++++-
- fs/nilfs2/super.c                    |    6 +++++-
- 2 files changed, 9 insertions(+), 2 deletions(-)
+ fs/nilfs2/sb.h    |    8 --------
+ fs/nilfs2/super.c |    8 +++-----
+ 2 files changed, 3 insertions(+), 13 deletions(-)
 
-diff --git a/Documentation/filesystems/nilfs2.txt b/Documentation/filesystems/nilfs2.txt
-index d3e7673..54f61c0 100644
---- a/Documentation/filesystems/nilfs2.txt
-+++ b/Documentation/filesystems/nilfs2.txt
-@@ -49,7 +49,10 @@ Mount options
- NILFS2 supports the following mount options:
- (*) == default
+diff --git a/fs/nilfs2/sb.h b/fs/nilfs2/sb.h
+index 0776ccc..5d44f0f 100644
+--- a/fs/nilfs2/sb.h
++++ b/fs/nilfs2/sb.h
+@@ -27,14 +27,6 @@
+ #include <linux/types.h>
+ #include <linux/fs.h>
  
--nobarrier		Disables barriers.
-+barrier(*)		This enables/disables the use of write barriers.  This
-+nobarrier		requires an IO stack which can support barriers, and
-+			if nilfs gets an error on a barrier write, it will
-+			disable again with a warning.
- errors=continue		Keep going on a filesystem error.
- errors=remount-ro(*)	Remount the filesystem read-only on an error.
- errors=panic		Panic and halt the machine if an error occurs.
+-/*
+- * Mount options
+- */
+-struct nilfs_mount_options {
+-	unsigned long mount_opt;
+-	__u64 snapshot_cno;
+-};
+-
+ struct the_nilfs;
+ struct nilfs_sc_info;
+ 
 diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 29be735..7d77913 100644
+index 9bc7485..b26211c 100644
 --- a/fs/nilfs2/super.c
 +++ b/fs/nilfs2/super.c
-@@ -598,7 +598,7 @@ static const struct export_operations nilfs_export_ops = {
+@@ -931,13 +931,12 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
+ 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
+ 	struct the_nilfs *nilfs = sbi->s_nilfs;
+ 	unsigned long old_sb_flags;
+-	struct nilfs_mount_options old_opts;
++	unsigned long old_mount_opt;
+ 	int was_snapshot, err;
  
- enum {
- 	Opt_err_cont, Opt_err_panic, Opt_err_ro,
--	Opt_nobarrier, Opt_snapshot, Opt_order, Opt_norecovery,
-+	Opt_barrier, Opt_nobarrier, Opt_snapshot, Opt_order, Opt_norecovery,
- 	Opt_discard, Opt_err,
- };
+ 	down_write(&nilfs->ns_super_sem);
+ 	old_sb_flags = sb->s_flags;
+-	old_opts.mount_opt = sbi->s_mount_opt;
+-	old_opts.snapshot_cno = sbi->s_snapshot_cno;
++	old_mount_opt = sbi->s_mount_opt;
+ 	was_snapshot = nilfs_test_opt(sbi, SNAPSHOT);
  
-@@ -606,6 +606,7 @@ static match_table_t tokens = {
- 	{Opt_err_cont, "errors=continue"},
- 	{Opt_err_panic, "errors=panic"},
- 	{Opt_err_ro, "errors=remount-ro"},
-+	{Opt_barrier, "barrier"},
- 	{Opt_nobarrier, "nobarrier"},
- 	{Opt_snapshot, "cp=%u"},
- 	{Opt_order, "order=%s"},
-@@ -631,6 +632,9 @@ static int parse_options(char *options, struct super_block *sb)
+ 	if (!parse_options(data, sb, 1)) {
+@@ -996,8 +995,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
  
- 		token = match_token(p, tokens, args);
- 		switch (token) {
-+		case Opt_barrier:
-+			nilfs_set_opt(sbi, BARRIER);
-+			break;
- 		case Opt_nobarrier:
- 			nilfs_clear_opt(sbi, BARRIER);
- 			break;
+  restore_opts:
+ 	sb->s_flags = old_sb_flags;
+-	sbi->s_mount_opt = old_opts.mount_opt;
+-	sbi->s_snapshot_cno = old_opts.snapshot_cno;
++	sbi->s_mount_opt = old_mount_opt;
+ 	up_write(&nilfs->ns_super_sem);
+ 	return err;
+ }
 -- 
 1.6.6.2
 
