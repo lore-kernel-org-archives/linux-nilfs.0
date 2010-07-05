@@ -1,44 +1,59 @@
-From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: remove BKL uses
-Date: Mon, 5 Jul 2010 16:53:29 +0200
-Message-ID: <20100705145324.GA5240@nowhere>
-References: <1278220928-28121-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp> <201007051650.23761.arnd@arndb.de>
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 3/5] nilfs2: use seq_puts to print mount options without argument
+Date: Tue,  6 Jul 2010 00:09:48 +0900
+Message-ID: <1278342590-5912-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1278342590-5912-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:received:received:received:date:from:to:cc
-         :subject:message-id:references:mime-version:content-type
-         :content-disposition:in-reply-to:user-agent;
-        bh=/1kSIRTP7bOoawE5DH0le47P97TCveJe439HfPpFp10=;
-        b=DhN1Hn+cLdmgjQdMY5WkyDasvdBiPMFkuMSbicf4RQarMFVrmYkAvRTZznCXxYuOT6
-         gzLOZXHQEnvDquojJuF11ewsRnLWI2a5pfn8CpV+iQoTc7RYU9IpzHTMHSMc6uscGQNT
-         8EoN/tjJD3hNjpq85vHuMVO161Dbll7kh/dFs=
-Content-Disposition: inline
-In-Reply-To: <201007051650.23761.arnd-r2nGTMty4D4@public.gmane.org>
+In-Reply-To: <1278342590-5912-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Blunck <jblunck-l3A5Bk7waGM@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Mon, Jul 05, 2010 at 04:50:23PM +0200, Arnd Bergmann wrote:
-> On Sunday 04 July 2010, Ryusuke Konishi wrote:
-> > Nilfs has BKL uses in its put_super and remount functions, but none of
-> > them are necessary, just came from earlier push downs.  This
-> > eliminates the BKL uses from nilfs.
-> > 
-> > Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-> 
-> This looks good, but there is a another patch series pushing the BKL
-> into the get_sb and fill_super operations, which should be the final
-> pushdown for file systems. I wonder if there is a way to find a
-> shortcut on this so we don't need to add it first just to have you
-> go through the effort of removing it again.
+This replaces seq_printf() with seq_puts() in nilfs_show_options for
+mount options which have no argument.
 
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/super.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-I could take his patch in the mount pushdown series.
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 26e1046..fb02e4a 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -516,20 +516,20 @@ static int nilfs_show_options(struct seq_file *seq, struct vfsmount *vfs)
+ 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
+ 
+ 	if (!nilfs_test_opt(sbi, BARRIER))
+-		seq_printf(seq, ",nobarrier");
++		seq_puts(seq, ",nobarrier");
+ 	if (nilfs_test_opt(sbi, SNAPSHOT))
+ 		seq_printf(seq, ",cp=%llu",
+ 			   (unsigned long long int)sbi->s_snapshot_cno);
+ 	if (nilfs_test_opt(sbi, ERRORS_PANIC))
+-		seq_printf(seq, ",errors=panic");
++		seq_puts(seq, ",errors=panic");
+ 	if (nilfs_test_opt(sbi, ERRORS_CONT))
+-		seq_printf(seq, ",errors=continue");
++		seq_puts(seq, ",errors=continue");
+ 	if (nilfs_test_opt(sbi, STRICT_ORDER))
+-		seq_printf(seq, ",order=strict");
++		seq_puts(seq, ",order=strict");
+ 	if (nilfs_test_opt(sbi, NORECOVERY))
+-		seq_printf(seq, ",norecovery");
++		seq_puts(seq, ",norecovery");
+ 	if (nilfs_test_opt(sbi, DISCARD))
+-		seq_printf(seq, ",discard");
++		seq_puts(seq, ",discard");
+ 
+ 	return 0;
+ }
+-- 
+1.6.6.2
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
