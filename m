@@ -1,7 +1,7 @@
 From: =?UTF-8?Q?=C5=81ukasz_W=C3=B3jcicki?= <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org>
-Subject: Re: problem with nilfs_cleanerd
-Date: Wed, 07 Jul 2010 12:02:47 +0200
-Message-ID: <1278496967.8049.22.camel@Stanowisko-25>
+Subject: problem with nilfs_cleanerd - part 2
+Date: Wed, 07 Jul 2010 12:32:26 +0200
+Message-ID: <1278498746.8049.26.camel@Stanowisko-25>
 References: <1278406961.8438.6.camel@Stanowisko-25>
 	 <20100707.150225.135808641.ryusuke@osrg.net>
 	 <20100707.165348.25143177.ryusuke@osrg.net>
@@ -15,16 +15,17 @@ Content-Type: text/plain; charset="utf-8"
 To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+I notice another problem with nilfs_cleanerd :
 
-> Let me ask you a question.
->=20
-> Are there any warnings or errors earlier in the log?
->=20
-> Ryusuke Konishi
+<2>nilfs_ioctl_move_inode_block: conflicting data buffer: ino=3D4, cno=3D=
+0,
+offset=3D0, blocknr=3D19063, vblocknr=3D2389
+<3>NILFS: GC failed during preparation: cannot read source blocks:
+err=3D-17
 
-I did not notice any error before, but I did not look in detail.
 
 =C5=81ukasz W=C3=B3jcicki
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
