@@ -1,86 +1,66 @@
-From: =?UTF-8?Q?=C5=81ukasz_W=C3=B3jcicki?= <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: problem with nilfs_cleanerd
-Date: Wed, 07 Jul 2010 08:25:22 +0200
-Message-ID: <1278483922.8049.4.camel@Stanowisko-25>
+Date: Wed, 07 Jul 2010 15:39:32 +0900 (JST)
+Message-ID: <20100707.153932.220052706.ryusuke@osrg.net>
 References: <1278406961.8438.6.camel@Stanowisko-25>
-	 <20100707.150225.135808641.ryusuke@osrg.net>
+	<20100707.150225.135808641.ryusuke@osrg.net>
+	<1278483922.8049.4.camel@Stanowisko-25>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20100707.150225.135808641.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <1278483922.8049.4.camel@Stanowisko-25>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Content-Type: Text/Plain; charset="utf-8"
+To: lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Does this patch eliminate the problem?
-Unfortunately I can not generate this error again because after
-re-formatting the memory (mkfs.nilfs2) the problem disappeared.
-
-=C5=81ukasz W=C3=B3jcicki=20
-=20
-
-
-
-Dnia 2010-07-07, =C5=9Bro o godzinie 15:02 +0900, Ryusuke Konishi pisze=
-:
-> Hi,
->=20
-> On Tue, 06 Jul 2010 11:02:41 +0200, =C5=81ukasz_W=C3=B3jcicki wrote:
-> > I'am using kernel 2.6.20 with nilf_utils-2-0-18 and nilfs kernel mo=
-dule
-> > 2-0-20 .
-> >=20
-> > <1>Unable to handle kernel NULL pointer dereference at virtual addr=
-ess
-> > 00000000
-> > <1>pgd =3D c4eb0000
-> > <1>[00000000] *pgd=3Dc4e2d031, *pte=3D00000000, *ppte=3D00000000
-> > <4>Internal error: Oops: 17 [#1]
-> > <4>Modules linked in:
-> > <4>CPU: 0
-> > <4>PC is at nilfs_btree_lookup_dirty_buffers+0x10c/0x1ec
-> > <4>LR is at 0xc4c99b24
-> <snip>
->=20
-> Could you try the following patch to narrow down the cause?
->=20
-> There is a function lacking range check in the btree code.  This patc=
-h
-> will catch the defect if the oops comes from a range error.
->=20
-> I'm now reviewing the btree code to find out root cause of the range
-> error.
->=20
-> Thanks,
-> Ryusuke Konishi
-> ---
->=20
-> diff --git a/fs/btree.c b/fs/btree.c
-> index beb11fe..9622ff4 100644
-> --- a/fs/btree.c
-> +++ b/fs/btree.c
-> @@ -2007,6 +2007,15 @@ static void nilfs_btree_add_dirty_buffer(struc=
-t nilfs_btree *btree,
->  	node =3D (struct nilfs_btree_node *)bh->b_data;
->  	key =3D nilfs_btree_node_get_key(node, 0);
->  	level =3D nilfs_btree_node_get_level(node);
-> +	if (level < NILFS_BTREE_LEVEL_NODE_MIN ||
-> +	    level >=3D NILFS_BTREE_LEVEL_MAX) {
-> +		dump_stack();
-> +		printk(KERN_CRIT
-> +		       "%s: invalid btree level: %d (ino=3D%lu)\n", __func__,
-> +		       level, NILFS_BMAP_I(&btree->bt_bmap)->vfs_inode.i_ino);
-> +		return;
-> +	}
-> +
->  	list_for_each(head, &lists[level]) {
->  		cbh =3D list_entry(head, struct buffer_head, b_assoc_buffers);
->  		cnode =3D (struct nilfs_btree_node *)cbh->b_data;
-
+T24gV2VkLCAwNyBKdWwgMjAxMCAwODoyNToyMiArMDIwMCwgxYF1a2Fzel9Xw7NqY2lja2kgd3Jv
+dGU6DQo+IERvZXMgdGhpcyBwYXRjaCBlbGltaW5hdGUgdGhlIHByb2JsZW0/DQoNCk5vLCBpdCBq
+dXN0IGRldGVjdHMgYSBsaWtlbHkgY2F1c2UuDQpJIHRoaW5rIHRoZSByb290IGNhdXNlIGV4aXN0
+cyBzb21ld2hlcmUgZWxzZS4NCg0KPiBVbmZvcnR1bmF0ZWx5IEkgY2FuIG5vdCBnZW5lcmF0ZSB0
+aGlzIGVycm9yIGFnYWluIGJlY2F1c2UgYWZ0ZXINCj4gcmUtZm9ybWF0dGluZyB0aGUgbWVtb3J5
+IChta2ZzLm5pbGZzMikgdGhlIHByb2JsZW0gZGlzYXBwZWFyZWQuDQoNCkFsbCByaWdodCwgSSds
+bCB0cnkgdG8gZml4IHRoZSBwcm9ibGVtIGJhc2VkIG9uIHRoZSByZXZpZXcgb2YgYnRyZWUNCmNv
+ZGUsIG9yIGF0IGxlYXN0IHdpbGwgaW5jbHVkZSBhIHBhdGNoIHRvIGhlbHAgZGVidWdnaW5nIHRo
+aXMuDQoNClRoYW5rcywNClJ5dXN1a2UgS29uaXNoaQ0KDQo+IERuaWEgMjAxMC0wNy0wNywgxZty
+byBvIGdvZHppbmllIDE1OjAyICswOTAwLCBSeXVzdWtlIEtvbmlzaGkgcGlzemU6DQo+ID4gSGks
+DQo+ID4gDQo+ID4gT24gVHVlLCAwNiBKdWwgMjAxMCAxMTowMjo0MSArMDIwMCwgxYF1a2Fzel9X
+w7NqY2lja2kgd3JvdGU6DQo+ID4gPiBJJ2FtIHVzaW5nIGtlcm5lbCAyLjYuMjAgd2l0aCBuaWxm
+X3V0aWxzLTItMC0xOCBhbmQgbmlsZnMga2VybmVsIG1vZHVsZQ0KPiA+ID4gMi0wLTIwIC4NCj4g
+PiA+IA0KPiA+ID4gPDE+VW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwgTlVMTCBwb2ludGVyIGRlcmVm
+ZXJlbmNlIGF0IHZpcnR1YWwgYWRkcmVzcw0KPiA+ID4gMDAwMDAwMDANCj4gPiA+IDwxPnBnZCA9
+IGM0ZWIwMDAwDQo+ID4gPiA8MT5bMDAwMDAwMDBdICpwZ2Q9YzRlMmQwMzEsICpwdGU9MDAwMDAw
+MDAsICpwcHRlPTAwMDAwMDAwDQo+ID4gPiA8ND5JbnRlcm5hbCBlcnJvcjogT29wczogMTcgWyMx
+XQ0KPiA+ID4gPDQ+TW9kdWxlcyBsaW5rZWQgaW46DQo+ID4gPiA8ND5DUFU6IDANCj4gPiA+IDw0
+PlBDIGlzIGF0IG5pbGZzX2J0cmVlX2xvb2t1cF9kaXJ0eV9idWZmZXJzKzB4MTBjLzB4MWVjDQo+
+ID4gPiA8ND5MUiBpcyBhdCAweGM0Yzk5YjI0DQo+ID4gPHNuaXA+DQo+ID4gDQo+ID4gQ291bGQg
+eW91IHRyeSB0aGUgZm9sbG93aW5nIHBhdGNoIHRvIG5hcnJvdyBkb3duIHRoZSBjYXVzZT8NCj4g
+PiANCj4gPiBUaGVyZSBpcyBhIGZ1bmN0aW9uIGxhY2tpbmcgcmFuZ2UgY2hlY2sgaW4gdGhlIGJ0
+cmVlIGNvZGUuICBUaGlzIHBhdGNoDQo+ID4gd2lsbCBjYXRjaCB0aGUgZGVmZWN0IGlmIHRoZSBv
+b3BzIGNvbWVzIGZyb20gYSByYW5nZSBlcnJvci4NCj4gPiANCj4gPiBJJ20gbm93IHJldmlld2lu
+ZyB0aGUgYnRyZWUgY29kZSB0byBmaW5kIG91dCByb290IGNhdXNlIG9mIHRoZSByYW5nZQ0KPiA+
+IGVycm9yLg0KPiA+IA0KPiA+IFRoYW5rcywNCj4gPiBSeXVzdWtlIEtvbmlzaGkNCj4gPiAtLS0N
+Cj4gPiANCj4gPiBkaWZmIC0tZ2l0IGEvZnMvYnRyZWUuYyBiL2ZzL2J0cmVlLmMNCj4gPiBpbmRl
+eCBiZWIxMWZlLi45NjIyZmY0IDEwMDY0NA0KPiA+IC0tLSBhL2ZzL2J0cmVlLmMNCj4gPiArKysg
+Yi9mcy9idHJlZS5jDQo+ID4gQEAgLTIwMDcsNiArMjAwNywxNSBAQCBzdGF0aWMgdm9pZCBuaWxm
+c19idHJlZV9hZGRfZGlydHlfYnVmZmVyKHN0cnVjdCBuaWxmc19idHJlZSAqYnRyZWUsDQo+ID4g
+IAlub2RlID0gKHN0cnVjdCBuaWxmc19idHJlZV9ub2RlICopYmgtPmJfZGF0YTsNCj4gPiAgCWtl
+eSA9IG5pbGZzX2J0cmVlX25vZGVfZ2V0X2tleShub2RlLCAwKTsNCj4gPiAgCWxldmVsID0gbmls
+ZnNfYnRyZWVfbm9kZV9nZXRfbGV2ZWwobm9kZSk7DQo+ID4gKwlpZiAobGV2ZWwgPCBOSUxGU19C
+VFJFRV9MRVZFTF9OT0RFX01JTiB8fA0KPiA+ICsJICAgIGxldmVsID49IE5JTEZTX0JUUkVFX0xF
+VkVMX01BWCkgew0KPiA+ICsJCWR1bXBfc3RhY2soKTsNCj4gPiArCQlwcmludGsoS0VSTl9DUklU
+DQo+ID4gKwkJICAgICAgICIlczogaW52YWxpZCBidHJlZSBsZXZlbDogJWQgKGlubz0lbHUpXG4i
+LCBfX2Z1bmNfXywNCj4gPiArCQkgICAgICAgbGV2ZWwsIE5JTEZTX0JNQVBfSSgmYnRyZWUtPmJ0
+X2JtYXApLT52ZnNfaW5vZGUuaV9pbm8pOw0KPiA+ICsJCXJldHVybjsNCj4gPiArCX0NCj4gPiAr
+DQo+ID4gIAlsaXN0X2Zvcl9lYWNoKGhlYWQsICZsaXN0c1tsZXZlbF0pIHsNCj4gPiAgCQljYmgg
+PSBsaXN0X2VudHJ5KGhlYWQsIHN0cnVjdCBidWZmZXJfaGVhZCwgYl9hc3NvY19idWZmZXJzKTsN
+Cj4gPiAgCQljbm9kZSA9IChzdHJ1Y3QgbmlsZnNfYnRyZWVfbm9kZSAqKWNiaC0+Yl9kYXRhOw0K
+PiANCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUg
+InVuc3Vic2NyaWJlIGxpbnV4LW5pbGZzIiBpbg0KPiB0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8g
+bWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZw0KPiBNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRw
+Oi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg==
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
