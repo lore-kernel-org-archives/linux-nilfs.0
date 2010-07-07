@@ -1,39 +1,33 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: =?UTF-8?Q?=C5=81ukasz_W=C3=B3jcicki?= <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org>
 Subject: Re: problem with nilfs_cleanerd
-Date: Wed, 07 Jul 2010 16:53:48 +0900 (JST)
-Message-ID: <20100707.165348.25143177.ryusuke@osrg.net>
+Date: Wed, 07 Jul 2010 12:02:47 +0200
+Message-ID: <1278496967.8049.22.camel@Stanowisko-25>
 References: <1278406961.8438.6.camel@Stanowisko-25>
-	<20100707.150225.135808641.ryusuke@osrg.net>
+	 <20100707.150225.135808641.ryusuke@osrg.net>
+	 <20100707.165348.25143177.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20100707.150225.135808641.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20100707.165348.25143177.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="utf-8"
-To: lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-T24gV2VkLCAwNyBKdWwgMjAxMCAxNTowMjoyNSArMDkwMCAoSlNUKSwgUnl1c3VrZSBLb25pc2hp
-IHdyb3RlOg0KPiBIaSwNCj4gDQo+IE9uIFR1ZSwgMDYgSnVsIDIwMTAgMTE6MDI6NDEgKzAyMDAs
-IMWBdWthc3pfV8OzamNpY2tpIHdyb3RlOg0KPiA+IEknYW0gdXNpbmcga2VybmVsIDIuNi4yMCB3
-aXRoIG5pbGZfdXRpbHMtMi0wLTE4IGFuZCBuaWxmcyBrZXJuZWwgbW9kdWxlDQo+ID4gMi0wLTIw
-IC4NCj4gPiANCj4gPiA8MT5VbmFibGUgdG8gaGFuZGxlIGtlcm5lbCBOVUxMIHBvaW50ZXIgZGVy
-ZWZlcmVuY2UgYXQgdmlydHVhbCBhZGRyZXNzDQo+ID4gMDAwMDAwMDANCj4gPiA8MT5wZ2QgPSBj
-NGViMDAwMA0KPiA+IDwxPlswMDAwMDAwMF0gKnBnZD1jNGUyZDAzMSwgKnB0ZT0wMDAwMDAwMCwg
-KnBwdGU9MDAwMDAwMDANCj4gPiA8ND5JbnRlcm5hbCBlcnJvcjogT29wczogMTcgWyMxXQ0KPiA+
-IDw0Pk1vZHVsZXMgbGlua2VkIGluOg0KPiA+IDw0PkNQVTogMA0KPiA+IDw0PlBDIGlzIGF0IG5p
-bGZzX2J0cmVlX2xvb2t1cF9kaXJ0eV9idWZmZXJzKzB4MTBjLzB4MWVjDQo+ID4gPDQ+TFIgaXMg
-YXQgMHhjNGM5OWIyNA0KPiA8c25pcD4NCj4gDQo+IENvdWxkIHlvdSB0cnkgdGhlIGZvbGxvd2lu
-ZyBwYXRjaCB0byBuYXJyb3cgZG93biB0aGUgY2F1c2U/DQo+IA0KPiBUaGVyZSBpcyBhIGZ1bmN0
-aW9uIGxhY2tpbmcgcmFuZ2UgY2hlY2sgaW4gdGhlIGJ0cmVlIGNvZGUuICBUaGlzIHBhdGNoDQo+
-IHdpbGwgY2F0Y2ggdGhlIGRlZmVjdCBpZiB0aGUgb29wcyBjb21lcyBmcm9tIGEgcmFuZ2UgZXJy
-b3IuDQo+IA0KPiBJJ20gbm93IHJldmlld2luZyB0aGUgYnRyZWUgY29kZSB0byBmaW5kIG91dCBy
-b290IGNhdXNlIG9mIHRoZSByYW5nZQ0KPiBlcnJvci4NCj4gDQo+IFRoYW5rcywNCj4gUnl1c3Vr
-ZSBLb25pc2hpDQoNCkxldCBtZSBhc2sgeW91IGEgcXVlc3Rpb24uDQoNCkFyZSB0aGVyZSBhbnkg
-d2FybmluZ3Mgb3IgZXJyb3JzIGVhcmxpZXIgaW4gdGhlIGxvZz8NCg0KUnl1c3VrZSBLb25pc2hp
-DQo=
+
+> Let me ask you a question.
+>=20
+> Are there any warnings or errors earlier in the log?
+>=20
+> Ryusuke Konishi
+
+I did not notice any error before, but I did not look in detail.
+
+=C5=81ukasz W=C3=B3jcicki
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
