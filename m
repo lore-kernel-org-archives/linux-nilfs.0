@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 1/4] nilfs2: add read ahead mode to nilfs_btnode_submit_block
-Date: Sun, 18 Jul 2010 10:42:23 +0900
-Message-ID: <1279417346-9688-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 3/4] nilfs2: introduce check flag to btree node buffer
+Date: Sun, 18 Jul 2010 10:42:25 +0900
+Message-ID: <1279417346-9688-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1279417346-9688-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1279417346-9688-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,113 +13,87 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This adds mode argument to nilfs_btnode_submit_block() function and
-allows it to issue a read-ahead request.
-
-An optional submit_ptr argument is also added to store the actual
-block address for which bio is sent.  submit_ptr is used for a series
-of read-ahead requests, and helps to decide if each requested block is
-continous to the previous one on disk.
+nilfs_btree_get_block() now may return untested buffer due to
+read-ahead This adds new flag for buffer heads so that the btree code
+can check whether the buffer is already verified or not.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/btnode.c  |   17 ++++++++++++++---
- fs/nilfs2/btnode.h  |    4 ++--
- fs/nilfs2/btree.c   |    3 ++-
- fs/nilfs2/gcinode.c |    6 ++++--
- 4 files changed, 22 insertions(+), 8 deletions(-)
+ fs/nilfs2/btree.c |   10 +++++++++-
+ fs/nilfs2/page.c  |    5 ++++-
+ fs/nilfs2/page.h  |    2 ++
+ 3 files changed, 15 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 0a6834b..f78ab10 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -96,7 +96,8 @@ nilfs_btnode_create_block(struct address_space *btnc, __u64 blocknr)
- }
- 
- int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
--			      sector_t pblocknr, struct buffer_head **pbh)
-+			      sector_t pblocknr, int mode,
-+			      struct buffer_head **pbh, sector_t *submit_ptr)
- {
- 	struct buffer_head *bh;
- 	struct inode *inode = NILFS_BTNC_I(btnc);
-@@ -127,7 +128,16 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
- 			}
- 		}
- 	}
--	lock_buffer(bh);
-+
-+	if (mode == READA) {
-+		if (pblocknr != *submit_ptr + 1 || !trylock_buffer(bh)) {
-+			err = -EBUSY; /* internal code */
-+			brelse(bh);
-+			goto out_locked;
-+		}
-+	} else { /* mode == READ */
-+		lock_buffer(bh);
-+	}
- 	if (buffer_uptodate(bh)) {
- 		unlock_buffer(bh);
- 		err = -EEXIST; /* internal code */
-@@ -138,8 +148,9 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
- 	bh->b_blocknr = pblocknr; /* set block address for read */
- 	bh->b_end_io = end_buffer_read_sync;
- 	get_bh(bh);
--	submit_bh(READ, bh);
-+	submit_bh(mode, bh);
- 	bh->b_blocknr = blocknr; /* set back to the given block address */
-+	*submit_ptr = pblocknr;
- 	err = 0;
- found:
- 	*pbh = bh;
-diff --git a/fs/nilfs2/btnode.h b/fs/nilfs2/btnode.h
-index 07da83f..7903749 100644
---- a/fs/nilfs2/btnode.h
-+++ b/fs/nilfs2/btnode.h
-@@ -42,8 +42,8 @@ void nilfs_btnode_cache_init(struct address_space *, struct backing_dev_info *);
- void nilfs_btnode_cache_clear(struct address_space *);
- struct buffer_head *nilfs_btnode_create_block(struct address_space *btnc,
- 					      __u64 blocknr);
--int nilfs_btnode_submit_block(struct address_space *, __u64, sector_t,
--			      struct buffer_head **);
-+int nilfs_btnode_submit_block(struct address_space *, __u64, sector_t, int,
-+			      struct buffer_head **, sector_t *);
- void nilfs_btnode_delete(struct buffer_head *);
- int nilfs_btnode_prepare_change_key(struct address_space *,
- 				    struct nilfs_btnode_chkey_ctxt *);
 diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 6462c70..4669389 100644
+index 1b5321c..d3faa0b 100644
 --- a/fs/nilfs2/btree.c
 +++ b/fs/nilfs2/btree.c
-@@ -71,9 +71,10 @@ static int nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
- {
- 	struct address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
- 	struct buffer_head *bh;
-+	sector_t pbn = 0;
- 	int err;
+@@ -370,8 +370,16 @@ static int nilfs_btree_node_broken(const struct nilfs_btree_node *node,
  
--	err = nilfs_btnode_submit_block(btnc, ptr, 0, bhp);
-+	err = nilfs_btnode_submit_block(btnc, ptr, pbn, READ, bhp, &pbn);
- 	if (err)
- 		return err == -EEXIST ? 0 : err;
- 
-diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
-index b634382..bed3a78 100644
---- a/fs/nilfs2/gcinode.c
-+++ b/fs/nilfs2/gcinode.c
-@@ -151,8 +151,10 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
- int nilfs_gccache_submit_read_node(struct inode *inode, sector_t pbn,
- 				   __u64 vbn, struct buffer_head **out_bh)
+ int nilfs_btree_broken_node_block(struct buffer_head *bh)
  {
--	int ret = nilfs_btnode_submit_block(&NILFS_I(inode)->i_btnode_cache,
--					    vbn ? : pbn, pbn, out_bh);
+-	return nilfs_btree_node_broken((struct nilfs_btree_node *)bh->b_data,
 +	int ret;
 +
-+	ret = nilfs_btnode_submit_block(&NILFS_I(inode)->i_btnode_cache,
-+					vbn ? : pbn, pbn, READ, out_bh, &pbn);
- 	if (ret == -EEXIST) /* internal code (cache hit) */
- 		ret = 0;
- 	return ret;
++	if (buffer_nilfs_checked(bh))
++		return 0;
++
++	ret = nilfs_btree_node_broken((struct nilfs_btree_node *)bh->b_data,
+ 				       bh->b_size, bh->b_blocknr);
++	if (likely(!ret))
++		set_buffer_nilfs_checked(bh);
++	return ret;
+ }
+ 
+ static struct nilfs_btree_node *
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 8de3e1e..aab11db 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -37,7 +37,8 @@
+ 
+ #define NILFS_BUFFER_INHERENT_BITS  \
+ 	((1UL << BH_Uptodate) | (1UL << BH_Mapped) | (1UL << BH_NILFS_Node) | \
+-	 (1UL << BH_NILFS_Volatile) | (1UL << BH_NILFS_Allocated))
++	 (1UL << BH_NILFS_Volatile) | (1UL << BH_NILFS_Allocated) | \
++	 (1UL << BH_NILFS_Checked))
+ 
+ static struct buffer_head *
+ __nilfs_get_page_block(struct page *page, unsigned long block, pgoff_t index,
+@@ -129,6 +130,7 @@ void nilfs_forget_buffer(struct buffer_head *bh)
+ 
+ 	lock_buffer(bh);
+ 	clear_buffer_nilfs_volatile(bh);
++	clear_buffer_nilfs_checked(bh);
+ 	clear_buffer_dirty(bh);
+ 	if (nilfs_page_buffers_clean(page))
+ 		__nilfs_clear_page_dirty(page);
+@@ -480,6 +482,7 @@ void nilfs_clear_dirty_pages(struct address_space *mapping)
+ 				lock_buffer(bh);
+ 				clear_buffer_dirty(bh);
+ 				clear_buffer_nilfs_volatile(bh);
++				clear_buffer_nilfs_checked(bh);
+ 				clear_buffer_uptodate(bh);
+ 				clear_buffer_mapped(bh);
+ 				unlock_buffer(bh);
+diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
+index 8abca4d..f53d8da 100644
+--- a/fs/nilfs2/page.h
++++ b/fs/nilfs2/page.h
+@@ -34,11 +34,13 @@ enum {
+ 	BH_NILFS_Allocated = BH_PrivateStart,
+ 	BH_NILFS_Node,
+ 	BH_NILFS_Volatile,
++	BH_NILFS_Checked,
+ };
+ 
+ BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
+ BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
+ BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
++BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verified */
+ 
+ 
+ void nilfs_mark_buffer_dirty(struct buffer_head *bh);
 -- 
 1.6.6.2
 
