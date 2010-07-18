@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 4/4] nilfs2: apply read-ahead for nilfs_btree_lookup_contig
-Date: Sun, 18 Jul 2010 10:42:26 +0900
-Message-ID: <1279417346-9688-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/4] nilfs2: add btree get block function with readahead option
+Date: Sun, 18 Jul 2010 10:42:24 +0900
+Message-ID: <1279417346-9688-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1279417346-9688-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1279417346-9688-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,156 +13,133 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This applies read-ahead to nilfs_btree_do_lookup and
-nilfs_btree_lookup_contig functions and extends them to read ahead
-siblings of level 1 btree nodes that hold data blocks.
+This adds __nilfs_btree_get_block() function that can issue a series
+of read-ahead requests for sibling btree nodes.
 
-At present, the read-ahead is not applied to most btree operations;
-only get_block() callback function, which is used during read of
-regular files or directories, receives the benefit.
+This read-ahead needs parent node block, so nilfs_btree_readahead_info
+structure is added to pass the information that
+__nilfs_btree_get_block() needs.
+
+This also replaces the previous nilfs_btree_get_block() implementation
+with a wrapper function of __nilfs_btree_get_block().
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/btree.c |   50 +++++++++++++++++++++++++++++++++-----------------
- 1 files changed, 33 insertions(+), 17 deletions(-)
+ fs/nilfs2/btree.c |   94 ++++++++++++++++++++++++++++++++++++++--------------
+ 1 files changed, 68 insertions(+), 26 deletions(-)
 
 diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index d3faa0b..300c2bc 100644
+index 4669389..1b5321c 100644
 --- a/fs/nilfs2/btree.c
 +++ b/fs/nilfs2/btree.c
-@@ -504,9 +504,11 @@ static int nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
+@@ -66,32 +66,6 @@ static void nilfs_btree_free_path(struct nilfs_btree_path *path)
+ /*
+  * B-tree node operations
+  */
+-static int nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
+-				 struct buffer_head **bhp)
+-{
+-	struct address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
+-	struct buffer_head *bh;
+-	sector_t pbn = 0;
+-	int err;
+-
+-	err = nilfs_btnode_submit_block(btnc, ptr, pbn, READ, bhp, &pbn);
+-	if (err)
+-		return err == -EEXIST ? 0 : err;
+-
+-	bh = *bhp;
+-	wait_on_buffer(bh);
+-	if (!buffer_uptodate(bh)) {
+-		brelse(bh);
+-		return -EIO;
+-	}
+-	if (nilfs_btree_broken_node_block(bh)) {
+-		clear_buffer_uptodate(bh);
+-		brelse(bh);
+-		return -EINVAL;
+-	}
+-	return 0;
+-}
+-
+ static int nilfs_btree_get_new_block(const struct nilfs_bmap *btree,
+ 				     __u64 ptr, struct buffer_head **bhp)
+ {
+@@ -452,6 +426,74 @@ nilfs_btree_bad_node(struct nilfs_btree_node *node, int level)
+ 	return 0;
+ }
  
++struct nilfs_btree_readahead_info {
++	struct nilfs_btree_node *node;	/* parent node */
++	int max_ra_blocks;		/* max nof blocks to read ahead */
++	int index;			/* current index on the parent node */
++	int ncmax;			/* nof children in the parent node */
++};
++
++static int __nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
++				   struct buffer_head **bhp,
++				   const struct nilfs_btree_readahead_info *ra)
++{
++	struct address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
++	struct buffer_head *bh, *ra_bh;
++	sector_t submit_ptr = 0;
++	int ret;
++
++	ret = nilfs_btnode_submit_block(btnc, ptr, 0, READ, &bh, &submit_ptr);
++	if (ret) {
++		if (ret != -EEXIST)
++			return ret;
++		goto out_check;
++	}
++
++	if (ra) {
++		int i, n;
++		__u64 ptr2;
++
++		/* read ahead sibling nodes */
++		for (n = ra->max_ra_blocks, i = ra->index + 1;
++		     n > 0 && i < ra->ncmax; n--, i++) {
++			ptr2 = nilfs_btree_node_get_ptr(ra->node, i, ra->ncmax);
++
++			ret = nilfs_btnode_submit_block(btnc, ptr2, 0, READA,
++							&ra_bh, &submit_ptr);
++			if (likely(!ret || ret == -EEXIST))
++				brelse(ra_bh);
++			else if (ret != -EBUSY)
++				break;
++			if (!buffer_locked(bh))
++				goto out_no_wait;
++		}
++	}
++
++	wait_on_buffer(bh);
++
++ out_no_wait:
++	if (!buffer_uptodate(bh)) {
++		brelse(bh);
++		return -EIO;
++	}
++
++ out_check:
++	if (nilfs_btree_broken_node_block(bh)) {
++		clear_buffer_uptodate(bh);
++		brelse(bh);
++		return -EINVAL;
++	}
++
++	*bhp = bh;
++	return 0;
++}
++
++static int nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
++				   struct buffer_head **bhp)
++{
++	return __nilfs_btree_get_block(btree, ptr, bhp, NULL);
++}
++
  static int nilfs_btree_do_lookup(const struct nilfs_bmap *btree,
  				 struct nilfs_btree_path *path,
--				 __u64 key, __u64 *ptrp, int minlevel)
-+				 __u64 key, __u64 *ptrp, int minlevel,
-+				 int readahead)
- {
- 	struct nilfs_btree_node *node;
-+	struct nilfs_btree_readahead_info p, *ra;
- 	__u64 ptr;
- 	int level, index, found, ncmax, ret;
- 
-@@ -523,10 +525,20 @@ static int nilfs_btree_do_lookup(const struct nilfs_bmap *btree,
- 
- 	ncmax = nilfs_btree_nchildren_per_block(btree);
- 
--	for (level--; level >= minlevel; level--) {
--		ret = nilfs_btree_get_block(btree, ptr, &path[level].bp_bh);
-+	while (--level >= minlevel) {
-+		ra = NULL;
-+		if (level == NILFS_BTREE_LEVEL_NODE_MIN && readahead) {
-+			p.node = nilfs_btree_get_node(btree, path, level + 1,
-+						      &p.ncmax);
-+			p.index = index;
-+			p.max_ra_blocks = 7;
-+			ra = &p;
-+		}
-+		ret = __nilfs_btree_get_block(btree, ptr, &path[level].bp_bh,
-+					      ra);
- 		if (ret < 0)
- 			return ret;
-+
- 		node = nilfs_btree_get_nonroot_node(path, level);
- 		if (nilfs_btree_bad_node(node, level))
- 			return -EINVAL;
-@@ -601,7 +613,7 @@ static int nilfs_btree_lookup(const struct nilfs_bmap *btree,
- 	if (path == NULL)
- 		return -ENOMEM;
- 
--	ret = nilfs_btree_do_lookup(btree, path, key, ptrp, level);
-+	ret = nilfs_btree_do_lookup(btree, path, key, ptrp, level, 0);
- 
- 	nilfs_btree_free_path(path);
- 
-@@ -618,12 +630,13 @@ static int nilfs_btree_lookup_contig(const struct nilfs_bmap *btree,
- 	sector_t blocknr;
- 	int level = NILFS_BTREE_LEVEL_NODE_MIN;
- 	int ret, cnt, index, maxlevel, ncmax;
-+	struct nilfs_btree_readahead_info p;
- 
- 	path = nilfs_btree_alloc_path();
- 	if (path == NULL)
- 		return -ENOMEM;
- 
--	ret = nilfs_btree_do_lookup(btree, path, key, &ptr, level);
-+	ret = nilfs_btree_do_lookup(btree, path, key, &ptr, level, 1);
- 	if (ret < 0)
- 		goto out;
- 
-@@ -662,17 +675,20 @@ static int nilfs_btree_lookup_contig(const struct nilfs_bmap *btree,
- 			break;
- 
- 		/* look-up right sibling node */
--		node = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
--		index = path[level + 1].bp_index + 1;
--		if (index >= nilfs_btree_node_get_nchildren(node) ||
--		    nilfs_btree_node_get_key(node, index) != key + cnt)
-+		p.node = nilfs_btree_get_node(btree, path, level + 1, &p.ncmax);
-+		p.index = path[level + 1].bp_index + 1;
-+		p.max_ra_blocks = 7;
-+		if (p.index >= nilfs_btree_node_get_nchildren(p.node) ||
-+		    nilfs_btree_node_get_key(p.node, p.index) != key + cnt)
- 			break;
--		ptr2 = nilfs_btree_node_get_ptr(node, index, ncmax);
--		path[level + 1].bp_index = index;
-+		ptr2 = nilfs_btree_node_get_ptr(p.node, p.index, p.ncmax);
-+		path[level + 1].bp_index = p.index;
- 
- 		brelse(path[level].bp_bh);
- 		path[level].bp_bh = NULL;
--		ret = nilfs_btree_get_block(btree, ptr2, &path[level].bp_bh);
-+
-+		ret = __nilfs_btree_get_block(btree, ptr2, &path[level].bp_bh,
-+					      &p);
- 		if (ret < 0)
- 			goto out;
- 		node = nilfs_btree_get_nonroot_node(path, level);
-@@ -1147,7 +1163,7 @@ static int nilfs_btree_insert(struct nilfs_bmap *btree, __u64 key, __u64 ptr)
- 		return -ENOMEM;
- 
- 	ret = nilfs_btree_do_lookup(btree, path, key, NULL,
--				    NILFS_BTREE_LEVEL_NODE_MIN);
-+				    NILFS_BTREE_LEVEL_NODE_MIN, 0);
- 	if (ret != -ENOENT) {
- 		if (ret == 0)
- 			ret = -EEXIST;
-@@ -1484,7 +1500,7 @@ static int nilfs_btree_delete(struct nilfs_bmap *btree, __u64 key)
- 		return -ENOMEM;
- 
- 	ret = nilfs_btree_do_lookup(btree, path, key, NULL,
--				    NILFS_BTREE_LEVEL_NODE_MIN);
-+				    NILFS_BTREE_LEVEL_NODE_MIN, 0);
- 	if (ret < 0)
- 		goto out;
- 
-@@ -1955,7 +1971,7 @@ static int nilfs_btree_propagate(struct nilfs_bmap *btree,
- 		level = NILFS_BTREE_LEVEL_DATA;
- 	}
- 
--	ret = nilfs_btree_do_lookup(btree, path, key, NULL, level + 1);
-+	ret = nilfs_btree_do_lookup(btree, path, key, NULL, level + 1, 0);
- 	if (ret < 0) {
- 		if (unlikely(ret == -ENOENT))
- 			printk(KERN_CRIT "%s: key = %llu, level == %d\n",
-@@ -2147,7 +2163,7 @@ static int nilfs_btree_assign(struct nilfs_bmap *btree,
- 		level = NILFS_BTREE_LEVEL_DATA;
- 	}
- 
--	ret = nilfs_btree_do_lookup(btree, path, key, NULL, level + 1);
-+	ret = nilfs_btree_do_lookup(btree, path, key, NULL, level + 1, 0);
- 	if (ret < 0) {
- 		WARN_ON(ret == -ENOENT);
- 		goto out;
-@@ -2201,7 +2217,7 @@ static int nilfs_btree_mark(struct nilfs_bmap *btree, __u64 key, int level)
- 	if (path == NULL)
- 		return -ENOMEM;
- 
--	ret = nilfs_btree_do_lookup(btree, path, key, &ptr, level + 1);
-+	ret = nilfs_btree_do_lookup(btree, path, key, &ptr, level + 1, 0);
- 	if (ret < 0) {
- 		WARN_ON(ret == -ENOENT);
- 		goto out;
+ 				 __u64 key, __u64 *ptrp, int minlevel)
 -- 
 1.6.6.2
 
