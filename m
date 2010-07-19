@@ -1,101 +1,47 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 3/4] nilfs2: introduce check flag to btree node buffer
-Date: Sun, 18 Jul 2010 10:42:25 +0900
-Message-ID: <1279417346-9688-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1279417346-9688-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 0/3] nilfs2 add feature flags
+Date: Tue, 20 Jul 2010 02:44:49 +0900
+Message-ID: <1279561492-6899-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1279417346-9688-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-nilfs_btree_get_block() now may return untested buffer due to
-read-ahead This adds new flag for buffer heads so that the btree code
-can check whether the buffer is already verified or not.
+This series introduces feature flags that allow nilfs to confirm
+feature compatibility of filesystem.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/btree.c |   10 +++++++++-
- fs/nilfs2/page.c  |    5 ++++-
- fs/nilfs2/page.h  |    2 ++
- 3 files changed, 15 insertions(+), 2 deletions(-)
+The first patch is just for improving readability of super block
+format.  The second patch extends super block and adds three flags to
+store feature sets (i.e. "compat features", "read-only compat
+features", and "incompat features").  The semantics of these flags is
+mimic of ext3.  At present, no feature flags are defined.
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 1b5321c..d3faa0b 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -370,8 +370,16 @@ static int nilfs_btree_node_broken(const struct nilfs_btree_node *node,
- 
- int nilfs_btree_broken_node_block(struct buffer_head *bh)
- {
--	return nilfs_btree_node_broken((struct nilfs_btree_node *)bh->b_data,
-+	int ret;
-+
-+	if (buffer_nilfs_checked(bh))
-+		return 0;
-+
-+	ret = nilfs_btree_node_broken((struct nilfs_btree_node *)bh->b_data,
- 				       bh->b_size, bh->b_blocknr);
-+	if (likely(!ret))
-+		set_buffer_nilfs_checked(bh);
-+	return ret;
- }
- 
- static struct nilfs_btree_node *
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 8de3e1e..aab11db 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -37,7 +37,8 @@
- 
- #define NILFS_BUFFER_INHERENT_BITS  \
- 	((1UL << BH_Uptodate) | (1UL << BH_Mapped) | (1UL << BH_NILFS_Node) | \
--	 (1UL << BH_NILFS_Volatile) | (1UL << BH_NILFS_Allocated))
-+	 (1UL << BH_NILFS_Volatile) | (1UL << BH_NILFS_Allocated) | \
-+	 (1UL << BH_NILFS_Checked))
- 
- static struct buffer_head *
- __nilfs_get_page_block(struct page *page, unsigned long block, pgoff_t index,
-@@ -129,6 +130,7 @@ void nilfs_forget_buffer(struct buffer_head *bh)
- 
- 	lock_buffer(bh);
- 	clear_buffer_nilfs_volatile(bh);
-+	clear_buffer_nilfs_checked(bh);
- 	clear_buffer_dirty(bh);
- 	if (nilfs_page_buffers_clean(page))
- 		__nilfs_clear_page_dirty(page);
-@@ -480,6 +482,7 @@ void nilfs_clear_dirty_pages(struct address_space *mapping)
- 				lock_buffer(bh);
- 				clear_buffer_dirty(bh);
- 				clear_buffer_nilfs_volatile(bh);
-+				clear_buffer_nilfs_checked(bh);
- 				clear_buffer_uptodate(bh);
- 				clear_buffer_mapped(bh);
- 				unlock_buffer(bh);
-diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
-index 8abca4d..f53d8da 100644
---- a/fs/nilfs2/page.h
-+++ b/fs/nilfs2/page.h
-@@ -34,11 +34,13 @@ enum {
- 	BH_NILFS_Allocated = BH_PrivateStart,
- 	BH_NILFS_Node,
- 	BH_NILFS_Volatile,
-+	BH_NILFS_Checked,
- };
- 
- BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
- BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
- BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
-+BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verified */
- 
- 
- void nilfs_mark_buffer_dirty(struct buffer_head *bh);
--- 
-1.6.6.2
+The third patch makes nilfs reject to mount (or remount) filesystems
+with unknown features.  This serves as a safety for future disk format
+change which is not forward compatible.
+
+I think this should be added before dropping the experimental flag
+though it again extends super blocks.
+
+Sekiba-san, do you have comment on this?
+
+Thanks,
+Ryusuke Konishi
+--
+Ryusuke Konishi (3):
+      nilfs2: clarify byte offset in super block format
+      nilfs2: add feature set fields to super block
+      nilfs2: reject incompatible filesystem
+
+ fs/nilfs2/nilfs.h         |    2 ++
+ fs/nilfs2/super.c         |   39 +++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/the_nilfs.c     |    8 ++++++++
+ include/linux/nilfs2_fs.h |   41 +++++++++++++++++++++++++++--------------
+ 4 files changed, 76 insertions(+), 14 deletions(-)
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
