@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 3/3] nilfs2: reject incompatible filesystem
-Date: Tue, 20 Jul 2010 02:44:52 +0900
-Message-ID: <1279561492-6899-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/3] nilfs2: clarify byte offset in super block format
+Date: Tue, 20 Jul 2010 02:44:50 +0900
+Message-ID: <1279561492-6899-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1279561492-6899-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1279561492-6899-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,118 +13,88 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-This forces nilfs to check compatibility of feature flags when it
-mounts or remounts the filesystem so that it rejects the filesystem
-with unknown features.
+This inserts comments indicating hexadecimal offset in declaration of
+nilfs_super_block structure so that people can know offset of its
+fields without counting from the head.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/nilfs.h     |    2 ++
- fs/nilfs2/super.c     |   39 +++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/the_nilfs.c |    8 ++++++++
- 3 files changed, 49 insertions(+), 0 deletions(-)
+ include/linux/nilfs2_fs.h |   26 +++++++++++++-------------
+ 1 files changed, 13 insertions(+), 13 deletions(-)
 
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index cfedc48..0842d77 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -275,6 +275,8 @@ extern struct nilfs_super_block *
- nilfs_read_super_block(struct super_block *, u64, int, struct buffer_head **);
- extern int nilfs_store_magic_and_option(struct super_block *,
- 					struct nilfs_super_block *, char *);
-+extern int nilfs_check_feature_compatibility(struct super_block *,
-+					     struct nilfs_super_block *);
- extern void nilfs_set_log_cursor(struct nilfs_super_block *,
- 				 struct the_nilfs *);
- extern struct nilfs_super_block **nilfs_prepare_super(struct nilfs_sb_info *,
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 1644573..26078b3 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -790,6 +790,30 @@ int nilfs_store_magic_and_option(struct super_block *sb,
- 	return !parse_options(data, sb, 0) ? -EINVAL : 0 ;
- }
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index 8c2c611..cc3465e 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -160,7 +160,7 @@ struct nilfs_super_root {
+  * struct nilfs_super_block - structure of super block on disk
+  */
+ struct nilfs_super_block {
+-	__le32	s_rev_level;		/* Revision level */
++/*00*/	__le32	s_rev_level;		/* Revision level */
+ 	__le16	s_minor_rev_level;	/* minor revision level */
+ 	__le16	s_magic;		/* Magic signature */
  
-+int nilfs_check_feature_compatibility(struct super_block *sb,
-+				      struct nilfs_super_block *sbp)
-+{
-+	__u64 features;
-+
-+	features = le64_to_cpu(sbp->s_feature_incompat) &
-+		~NILFS_FEATURE_INCOMPAT_SUPP;
-+	if (features) {
-+		printk(KERN_ERR "NILFS: couldn't mount because of unsupported "
-+		       "optional features (%llx)\n",
-+		       (unsigned long long)features);
-+		return -EINVAL;
-+	}
-+	features = le64_to_cpu(sbp->s_feature_compat_ro) &
-+		~NILFS_FEATURE_COMPAT_RO_SUPP;
-+	if (!(sb->s_flags & MS_RDONLY) && features) {
-+		printk(KERN_ERR "NILFS: couldn't mount RDWR because of "
-+		       "unsupported optional features (%llx)\n",
-+		       (unsigned long long)features);
-+		return -EINVAL;
-+	}
-+	return 0;
-+}
-+
- /**
-  * nilfs_fill_super() - initialize a super block instance
-  * @sb: super_block
-@@ -984,11 +1008,26 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
- 		nilfs_cleanup_super(sbi);
- 		up_write(&nilfs->ns_sem);
- 	} else {
-+		__u64 features;
-+
- 		/*
- 		 * Mounting a RDONLY partition read-write, so reread and
- 		 * store the current valid flag.  (It may have been changed
- 		 * by fsck since we originally mounted the partition.)
- 		 */
-+		down_read(&nilfs->ns_sem);
-+		features = le64_to_cpu(nilfs->ns_sbp[0]->s_feature_compat_ro) &
-+			~NILFS_FEATURE_COMPAT_RO_SUPP;
-+		up_read(&nilfs->ns_sem);
-+		if (features) {
-+			printk(KERN_WARNING "NILFS (device %s): couldn't "
-+			       "remount RDWR because of unsupported optional "
-+			       "features (%llx)\n",
-+			       sb->s_id, (unsigned long long)features);
-+			err = -EROFS;
-+			goto restore_opts;
-+		}
-+
- 		sb->s_flags &= ~MS_RDONLY;
+@@ -169,47 +169,47 @@ struct nilfs_super_block {
+ 					   is excluded. */
+ 	__le16  s_flags;		/* flags */
+ 	__le32  s_crc_seed;		/* Seed value of CRC calculation */
+-	__le32	s_sum;			/* Check sum of super block */
++/*10*/	__le32	s_sum;			/* Check sum of super block */
  
- 		err = nilfs_attach_segment_constructor(sbi);
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index f2efc8c..45d58f0 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -644,6 +644,10 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
- 		if (err)
- 			goto out;
+ 	__le32	s_log_block_size;	/* Block size represented as follows
+ 					   blocksize =
+ 					       1 << (s_log_block_size + 10) */
+ 	__le64  s_nsegments;		/* Number of segments in filesystem */
+-	__le64  s_dev_size;		/* block device size in bytes */
++/*20*/	__le64  s_dev_size;		/* block device size in bytes */
+ 	__le64	s_first_data_block;	/* 1st seg disk block number */
+-	__le32  s_blocks_per_segment;   /* number of blocks per full segment */
++/*30*/	__le32  s_blocks_per_segment;   /* number of blocks per full segment */
+ 	__le32	s_r_segments_percentage; /* Reserved segments percentage */
  
-+		err = nilfs_check_feature_compatibility(sb, sbp);
-+		if (err)
-+			goto out;
-+
- 		blocksize = BLOCK_SIZE << le32_to_cpu(sbp->s_log_block_size);
- 		if (sb->s_blocksize != blocksize &&
- 		    !sb_set_blocksize(sb, blocksize)) {
-@@ -669,6 +673,10 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
- 	if (err)
- 		goto failed_sbh;
+ 	__le64  s_last_cno;		/* Last checkpoint number */
+-	__le64  s_last_pseg;		/* disk block addr pseg written last */
++/*40*/	__le64  s_last_pseg;		/* disk block addr pseg written last */
+ 	__le64  s_last_seq;             /* seq. number of seg written last */
+-	__le64	s_free_blocks_count;	/* Free blocks count */
++/*50*/	__le64	s_free_blocks_count;	/* Free blocks count */
  
-+	err = nilfs_check_feature_compatibility(sb, sbp);
-+	if (err)
-+		goto failed_sbh;
-+
- 	blocksize = BLOCK_SIZE << le32_to_cpu(sbp->s_log_block_size);
- 	if (sb->s_blocksize != blocksize) {
- 		int hw_blocksize = bdev_logical_block_size(sb->s_bdev);
+ 	__le64	s_ctime;		/* Creation time (execution time of
+ 					   newfs) */
+-	__le64	s_mtime;		/* Mount time */
++/*60*/	__le64	s_mtime;		/* Mount time */
+ 	__le64	s_wtime;		/* Write time */
+-	__le16	s_mnt_count;		/* Mount count */
++/*70*/	__le16	s_mnt_count;		/* Mount count */
+ 	__le16	s_max_mnt_count;	/* Maximal mount count */
+ 	__le16	s_state;		/* File system state */
+ 	__le16	s_errors;		/* Behaviour when detecting errors */
+ 	__le64	s_lastcheck;		/* time of last check */
+ 
+-	__le32	s_checkinterval;	/* max. time between checks */
++/*80*/	__le32	s_checkinterval;	/* max. time between checks */
+ 	__le32	s_creator_os;		/* OS */
+ 	__le16	s_def_resuid;		/* Default uid for reserved blocks */
+ 	__le16	s_def_resgid;		/* Default gid for reserved blocks */
+ 	__le32	s_first_ino;		/* First non-reserved inode */
+ 
+-	__le16  s_inode_size;		/* Size of an inode */
++/*90*/	__le16  s_inode_size;		/* Size of an inode */
+ 	__le16  s_dat_entry_size;       /* Size of a dat entry */
+ 	__le16  s_checkpoint_size;      /* Size of a checkpoint */
+ 	__le16	s_segment_usage_size;	/* Size of a segment usage */
+ 
+-	__u8	s_uuid[16];		/* 128-bit uuid for volume */
+-	char	s_volume_name[80];	/* volume name */
++/*98*/	__u8	s_uuid[16];		/* 128-bit uuid for volume */
++/*A8*/	char	s_volume_name[80];	/* volume name */
+ 
+-	__le32  s_c_interval;           /* Commit interval of segment */
++/*F8*/	__le32  s_c_interval;           /* Commit interval of segment */
+ 	__le32  s_c_block_max;          /* Threshold of data amount for
+ 					   the segment construction */
+ 	__u32	s_reserved[192];	/* padding to the end of the block */
 -- 
 1.6.6.2
 
