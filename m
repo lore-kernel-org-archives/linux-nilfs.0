@@ -1,72 +1,118 @@
-From: =?UTF-8?Q?Rodrigo_E=2E_De_Le=C3=B3n_Plicet?= <rdeleonp-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Error while testing (using loop device)
-Date: Thu, 22 Jul 2010 14:26:38 -0500
-Message-ID: <AANLkTin0qMJvDgs705a9Nu0hWNLCdGEXWn7q_2sXQ6yZ@mail.gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Error while testing (using loop device)
+Date: Fri, 23 Jul 2010 11:31:25 +0900 (JST)
+Message-ID: <20100723.113125.163336402.ryusuke@osrg.net>
 References: <AANLkTikwTRGooDQD+Uo08MkywS+KJ8BXxqqytxbNFiqr@mail.gmail.com>
+	<AANLkTin0qMJvDgs705a9Nu0hWNLCdGEXWn7q_2sXQ6yZ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:received:mime-version:received:in-reply-to
-         :references:from:date:message-id:subject:to:content-type
-         :content-transfer-encoding;
-        bh=RyNq7bUmvvi6SueJHniEp9jD/bkxkkFh7VRLbj09Xh4=;
-        b=QCL0dfR20bYHa0QKRhOV3qLjup9KCaGHwGhViTa3rBUe9L/JXt9XF3e6XCsgC8ze46
-         zJwHkDA1KO98wguxrNKMisXHF7Uq/dKGKUjjOSIGVHIEhfeyIWbQSv5gTGW3efrvJLgT
-         Y8OLiosLZKmIL04Sg1VMdEmxDDlHbLQt5OY+4=
-In-Reply-To: <AANLkTikwTRGooDQD+Uo08MkywS+KJ8BXxqqytxbNFiqr-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <AANLkTin0qMJvDgs705a9Nu0hWNLCdGEXWn7q_2sXQ6yZ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: NILFS Mailing List <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: Text/Plain; charset="iso-8859-1"
+To: rdeleonp-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-SGkuCgpVYnVudHUgMTAuMDQKbmlsZnMtdG9vbHMgMi4wLjE1CgotLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLQoKcmRsQGxpbmFnZTovdG1wJCBta2RpciB0CgpyZGxAbGluYWdlOi90bXAkIG1rZGlyIHQy
-CgpyZGxAbGluYWdlOi90bXAkIGNobW9kIDc3NyB0IHQyCgpyZGxAbGluYWdlOi90bXAkIGRkIGlm
-PS9kZXYvemVybyBvZj10ZXN0LmltZyBicz0xTSBzZWVrPTEwMDAgY291bnQ9MQoxKzAgcmVjb3Jk
-cyBpbgoxKzAgcmVjb3JkcyBvdXQKMTA0ODU3NiBieXRlcyAoMS4wIE1CKSBjb3BpZWQsIDAuMDA0
-MjI4NTkgcywgMjQ4IE1CL3MKCnJkbEBsaW5hZ2U6L3RtcCQgbWtmcyAtdCBuaWxmczIgdGVzdC5p
-bWcKbWtmcy5uaWxmczIgdmVyIDIuMApTdGFydCB3cml0aW5nIGZpbGUgc3lzdGVtIGluaXRpYWwg
-ZGF0YSB0byB0aGUgZGV2aWNlCsKgIMKgIMKgIEJsb2Nrc2l6ZTo0MDk2IMKgRGV2aWNlOnRlc3Qu
-aW1nIMKgRGV2aWNlIFNpemU6MTA0OTYyNDU3NgpGaWxlIHN5c3RlbSBpbml0aWFsaXphdGlvbiBz
-dWNjZWVkZWQgISEKCnJkbEBsaW5hZ2U6L3RtcCQgc3VkbyBtb3VudCAtdCBuaWxmczIgLW8gbG9v
-cCAvdG1wL3Rlc3QuaW1nIC90bXAvdAptb3VudC5uaWxmczI6IFdBUk5JTkchIC0gVGhlIE5JTEZT
-IG9uLWRpc2sgZm9ybWF0IG1heSBjaGFuZ2UgYXQgYW55IHRpbWUuCm1vdW50Lm5pbGZzMjogV0FS
-TklORyEgLSBEbyBub3QgcGxhY2UgY3JpdGljYWwgZGF0YSBvbiBhIE5JTEZTIGZpbGVzeXN0ZW0u
-CgooLi4uIHRpbWUgcGFzc2VzIC4uLikKCnJkbEBsaW5hZ2U6L3RtcCQgbHNjcArCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCBDTk8gwqAgwqAgwqAgwqBEQVRFIMKgIMKgIFRJTUUgwqBNT0RFIMKgRkxH
-IMKgIE5CTEtJTkMgwqAgwqAgwqAgSUNOVArCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAxIMKg
-MjAxMC0wNy0yMSAxNToyNTowNyDCoCBjcCDCoCDCoC0gwqAgwqAgwqAgwqAgMTEgwqAgwqAgwqAg
-wqAgwqAzCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIDIgwqAyMDEwLTA3LTIxIDE1OjI2OjQ3
-IMKgIGNwIMKgIMKgLSDCoCDCoCDCoCDCoDExOCDCoCDCoCDCoCDCoCDCoDQKwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgMyDCoDIwMTAtMDctMjEgMTU6MjY6NTYgwqAgY3AgwqAgwqAtIMKgIMKg
-IMKgIMKgMjI0IMKgIMKgIMKgIMKgIMKgNgrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCA0IMKg
-MjAxMC0wNy0yMSAxNToyNzowMyDCoCBjcCDCoCDCoC0gwqAgwqAgwqAgwqAgMjMgwqAgwqAgwqAg
-wqAgMTIKwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgNSDCoDIwMTAtMDctMjEgMTU6Mjc6MTQg
-wqAgY3AgwqAgwqAtIMKgIMKgIMKgIMKgIDQ4IMKgIMKgIMKgIMKgIDEzCgpyZGxAbGluYWdlOi90
-bXAkIHN1ZG8gY2hjcCBzcyAzCgpyZGxAbGluYWdlOi90bXAkIGxzY3AKwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgQ05PIMKgIMKgIMKgIMKgREFURSDCoCDCoCBUSU1FIMKgTU9ERSDCoEZMRyDCoCBO
-QkxLSU5DIMKgIMKgIMKgIElDTlQKwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgMSDCoDIwMTAt
-MDctMjEgMTU6MjU6MDcgwqAgY3AgwqAgwqAtIMKgIMKgIMKgIMKgIDExIMKgIMKgIMKgIMKgIMKg
-MwrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAyIMKgMjAxMC0wNy0yMSAxNToyNjo0NyDCoCBj
-cCDCoCDCoC0gwqAgwqAgwqAgwqAxMTggwqAgwqAgwqAgwqAgwqA0CsKgIMKgIMKgIMKgIMKgIMKg
-IMKgIMKgIMKgIDMgwqAyMDEwLTA3LTIxIDE1OjI2OjU2IMKgIHNzIMKgIMKgLSDCoCDCoCDCoCDC
-oDIyNCDCoCDCoCDCoCDCoCDCoDYKwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgNCDCoDIwMTAt
-MDctMjEgMTU6Mjc6MDMgwqAgY3AgwqAgwqAtIMKgIMKgIMKgIMKgIDIzIMKgIMKgIMKgIMKgIDEy
-CsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIDUgwqAyMDEwLTA3LTIxIDE1OjI3OjE0IMKgIGNw
-IMKgIMKgLSDCoCDCoCDCoCDCoCA0OCDCoCDCoCDCoCDCoCAxMwrCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCA2IMKgMjAxMC0wNy0yMSAxNToyNzozMyDCoCBjcCDCoCDCoC0gwqAgwqAgwqAgwqAg
-MTQgwqAgwqAgwqAgwqAgMTQKCnJkbEBsaW5hZ2U6L3RtcCQgc3VkbyBtb3VudCAtdCBuaWxmczIg
-LW8gcm8sY3A9Mixsb29wIC90bXAvdGVzdC5pbWcgL3RtcC90Mgptb3VudC5uaWxmczI6IEVycm9y
-IHdoaWxlIG1vdW50aW5nIC9kZXYvbG9vcDEgb24gL3RtcC90MjogUmVhZC1vbmx5IGZpbGUgc3lz
-dGVtCgpyZGxAbGluYWdlOi90bXAkIHN1ZG8gbW91bnQgLXQgbmlsZnMyIC1yIC1vIGNwPTIsbG9v
-cCAvdG1wL3Rlc3QuaW1nIC90bXAvdDIKbW91bnQubmlsZnMyOiBFcnJvciB3aGlsZSBtb3VudGlu
-ZyAvZGV2L2xvb3AxIG9uIC90bXAvdDI6IFJlYWQtb25seSBmaWxlIHN5c3RlbQoKLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0KCkFtIEkgbWlzc2luZyBzb21ldGhpbmc/CgpSZWdhcmRzLgo=
+Hi,
+On Thu, 22 Jul 2010 14:26:38 -0500, Rodrigo_E._De_Le=F3n_Plicet wrote:
+> Hi.
+>=20
+> Ubuntu 10.04
+> nilfs-tools 2.0.15
+>=20
+> ---------------------------------------------------------------------=
+-----------
+>=20
+> rdl@linage:/tmp$ mkdir t
+>=20
+> rdl@linage:/tmp$ mkdir t2
+>=20
+> rdl@linage:/tmp$ chmod 777 t t2
+>=20
+> rdl@linage:/tmp$ dd if=3D/dev/zero of=3Dtest.img bs=3D1M seek=3D1000 =
+count=3D1
+> 1+0 records in
+> 1+0 records out
+> 1048576 bytes (1.0 MB) copied, 0.00422859 s, 248 MB/s
+>=20
+> rdl@linage:/tmp$ mkfs -t nilfs2 test.img
+> mkfs.nilfs2 ver 2.0
+> Start writing file system initial data to the device
+> =A0 =A0 =A0 Blocksize:4096 =A0Device:test.img =A0Device Size:10496245=
+76
+> File system initialization succeeded !!
+>=20
+> rdl@linage:/tmp$ sudo mount -t nilfs2 -o loop /tmp/test.img /tmp/t
+> mount.nilfs2: WARNING! - The NILFS on-disk format may change at any t=
+ime.
+> mount.nilfs2: WARNING! - Do not place critical data on a NILFS filesy=
+stem.
+>=20
+> (... time passes ...)
+>=20
+> rdl@linage:/tmp$ lscp
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 CNO =A0 =A0 =A0 =A0DATE =A0 =A0 TIME =
+=A0MODE =A0FLG =A0 NBLKINC =A0 =A0 =A0 ICNT
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 1 =A02010-07-21 15:25:07 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0 11 =A0 =A0 =A0 =A0 =A03
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 2 =A02010-07-21 15:26:47 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0118 =A0 =A0 =A0 =A0 =A04
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 3 =A02010-07-21 15:26:56 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0224 =A0 =A0 =A0 =A0 =A06
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 4 =A02010-07-21 15:27:03 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0 23 =A0 =A0 =A0 =A0 12
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 5 =A02010-07-21 15:27:14 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0 48 =A0 =A0 =A0 =A0 13
+>=20
+> rdl@linage:/tmp$ sudo chcp ss 3
+>=20
+> rdl@linage:/tmp$ lscp
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 CNO =A0 =A0 =A0 =A0DATE =A0 =A0 TIME =
+=A0MODE =A0FLG =A0 NBLKINC =A0 =A0 =A0 ICNT
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 1 =A02010-07-21 15:25:07 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0 11 =A0 =A0 =A0 =A0 =A03
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 2 =A02010-07-21 15:26:47 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0118 =A0 =A0 =A0 =A0 =A04
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 3 =A02010-07-21 15:26:56 =A0 ss =A0=
+ =A0- =A0 =A0 =A0 =A0224 =A0 =A0 =A0 =A0 =A06
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 4 =A02010-07-21 15:27:03 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0 23 =A0 =A0 =A0 =A0 12
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 5 =A02010-07-21 15:27:14 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0 48 =A0 =A0 =A0 =A0 13
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 6 =A02010-07-21 15:27:33 =A0 cp =A0=
+ =A0- =A0 =A0 =A0 =A0 14 =A0 =A0 =A0 =A0 14
+>=20
+> rdl@linage:/tmp$ sudo mount -t nilfs2 -o ro,cp=3D2,loop /tmp/test.img=
+ /tmp/t2
+> mount.nilfs2: Error while mounting /dev/loop1 on /tmp/t2: Read-only f=
+ile system
+>=20
+> rdl@linage:/tmp$ sudo mount -t nilfs2 -r -o cp=3D2,loop /tmp/test.img=
+ /tmp/t2
+> mount.nilfs2: Error while mounting /dev/loop1 on /tmp/t2: Read-only f=
+ile system
+
+How about this?
+
+ $ sudo mount -t nilfs2 -o ro,cp=3D3,loop=3D/dev/loop0 /tmp/test.img /t=
+mp/t2
+
+or
+
+ $ sudo mount -t nilfs2 -r -o cp=3D3,loop=3D/dev/loop0 /tmp/test.img /t=
+mp/t2
+ ...
+ $ sudo umount /tmp/t2
+
+Note that you have to manually detach the device like "losetup -d
+/dev/loop0" if you once failed to mount it.  This is because the loop
+device is handled by the common "mount" program not by "mount.nilfs2".
+
+Regards,
+Ryusuke Konishi
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
