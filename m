@@ -1,81 +1,55 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Error while testing (using loop device)
-Date: Sat, 24 Jul 2010 01:31:41 +0900 (JST)
-Message-ID: <20100724.013141.57633737.ryusuke@osrg.net>
-References: <AANLkTin0qMJvDgs705a9Nu0hWNLCdGEXWn7q_2sXQ6yZ@mail.gmail.com>
-	<20100723.113125.163336402.ryusuke@osrg.net>
-	<AANLkTikY4joAzVe-3BSpX9KNSmFPr8cXqpJ_0pJ+rX0P@mail.gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: simplify nilfs_get_page function
+Date: Sat, 24 Jul 2010 18:04:13 +0900
+Message-ID: <1279962253-10468-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <AANLkTikY4joAzVe-3BSpX9KNSmFPr8cXqpJ_0pJ+rX0P-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-8859-1"
-To: rdeleonp-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
-On Fri, 23 Jul 2010 10:47:38 -0500, Rodrigo_E._De_Le=F3n_Plicet wrote:
-> On Thu, Jul 22, 2010 at 9:31 PM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> w=
-rote:
-> > How about this?
-> >
-> > =A0$ sudo mount -t nilfs2 -o ro,cp=3D3,loop=3D/dev/loop0 /tmp/test.=
-img /tmp/t2
-> >
-> > or
-> >
-> > =A0$ sudo mount -t nilfs2 -r -o cp=3D3,loop=3D/dev/loop0 /tmp/test.=
-img /tmp/t2
-> > =A0...
-> > =A0$ sudo umount /tmp/t2
->=20
-> Hi. Thanks for the reply.
->=20
-> rdl@linage:/tmp$ lscp
->                  CNO        DATE     TIME  MODE  FLG   NBLKINC       =
-ICNT
->                    1  2010-07-23 10:36:35   cp    -         11       =
-   3
->                    2  2010-07-23 10:37:22   cp    -          8       =
-   3
->                    3  2010-07-23 10:38:13   ss    -        615       =
-   4
->                    4  2010-07-23 10:38:58   cp    -         77       =
-   5
->                    5  2010-07-23 10:39:05   cp    -         21       =
-  10
->                    6  2010-07-23 10:39:12   cp    -         26       =
-   7
->                    7  2010-07-23 10:39:43   cp    i          8       =
-   7
->=20
-> rdl@linage:/tmp$ ls -lad t*
-> drwxrwxrwx 3 root root       4096 2010-07-23 10:39 t
-> drwxrwxrwx 2 rdl  rdl           6 2010-07-23 10:36 t2
-> -rw-r--r-- 1 rdl  rdl  1049624576 2010-07-23 10:36 test.img
->=20
-> rdl@linage:/tmp$ mount|grep loop
-> /dev/loop0 on /tmp/t type nilfs2 (rw,gcpid=3D2980)
->=20
-> rdl@linage:/tmp$ sudo mount -t nilfs2 -o ro,cp=3D3,loop=3D/dev/loop1
-> /tmp/test.img /tmp/t2
-> mount.nilfs2: Error while mounting /dev/loop1 on /tmp/t2: Read-only f=
-ile system
->=20
-> :(
+Implementation of nilfs_get_page() is a bit old as below:
 
-This looks limitation of the loop devices.
+ - A common read_mapping_page inline function is now available instead
+   of its read_cache_page use.
+ - wait_on_page_locked() use in the function is eliminable since
+   read_cache_page function does the same thing through wait_on_page_read().
+ - PageUptodate() check is eliminable for the same reason.
 
-Try the next one for snapshot mounts.
+This renews nilfs_get_page() based on these points.
 
- $ sudo mount -t nilfs2 -o ro,cp=3D3 /dev/loop0 /tmp/t2
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/dir.c |    7 ++-----
+ 1 files changed, 2 insertions(+), 5 deletions(-)
 
-Regards,
-Ryusuke Konishi
+diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+index 85c89df..d8d183e 100644
+--- a/fs/nilfs2/dir.c
++++ b/fs/nilfs2/dir.c
+@@ -199,13 +199,10 @@ fail:
+ static struct page *nilfs_get_page(struct inode *dir, unsigned long n)
+ {
+ 	struct address_space *mapping = dir->i_mapping;
+-	struct page *page = read_cache_page(mapping, n,
+-				(filler_t *)mapping->a_ops->readpage, NULL);
++	struct page *page = read_mapping_page(mapping, n, NULL);
++
+ 	if (!IS_ERR(page)) {
+-		wait_on_page_locked(page);
+ 		kmap(page);
+-		if (!PageUptodate(page))
+-			goto fail;
+ 		if (!PageChecked(page))
+ 			nilfs_check_page(page);
+ 		if (PageError(page))
+-- 
+1.6.6.2
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
