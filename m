@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: simplify nilfs_get_page function
-Date: Sat, 24 Jul 2010 18:04:13 +0900
-Message-ID: <1279962253-10468-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 0/2] nilfs2 fix overflow of directory record size with 64KB block size
+Date: Mon, 26 Jul 2010 01:00:06 +0900
+Message-ID: <1280073608-17772-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -9,45 +9,35 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-Implementation of nilfs_get_page() is a bit old as below:
+This series fixes an overflow issue in directory design against 64KB
+block size, which originally comes from the ext2 filesystem.  I took
+the same correction with ext2 (or ext3).
 
- - A common read_mapping_page inline function is now available instead
-   of its read_cache_page use.
- - wait_on_page_locked() use in the function is eliminable since
-   read_cache_page function does the same thing through wait_on_page_read().
- - PageUptodate() check is eliminable for the same reason.
+By the second patch, a filesystem with unsupproted block size will get
+rejected by predefined values in addition to the past sanity checks
+related to hardware limitation.
 
-This renews nilfs_get_page() based on these points.
+The first patch has an impact on disk format compatibility for 64KB
+block size, but this is inevitable to avoid the defect.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/dir.c |    7 ++-----
- 1 files changed, 2 insertions(+), 5 deletions(-)
+For most people, I believe this is NOT a problem because block size is
+limited by page size, and it is mostly 4KB on popular architectures.
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index 85c89df..d8d183e 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -199,13 +199,10 @@ fail:
- static struct page *nilfs_get_page(struct inode *dir, unsigned long n)
- {
- 	struct address_space *mapping = dir->i_mapping;
--	struct page *page = read_cache_page(mapping, n,
--				(filler_t *)mapping->a_ops->readpage, NULL);
-+	struct page *page = read_mapping_page(mapping, n, NULL);
-+
- 	if (!IS_ERR(page)) {
--		wait_on_page_locked(page);
- 		kmap(page);
--		if (!PageUptodate(page))
--			goto fail;
- 		if (!PageChecked(page))
- 			nilfs_check_page(page);
- 		if (PageError(page))
--- 
-1.6.6.2
+However, I think this is one of issues that must be resolved while we
+have a chance.
+
+Ryusuke Konishi
+--
+Ryusuke Konishi (2):
+      nilfs2: avoid rec_len overflow with 64KB block size
+      nilfs2: reject filesystem with unsupported block size
+
+ fs/nilfs2/dir.c           |   26 ++++++++++++++------------
+ fs/nilfs2/the_nilfs.c     |    9 ++++++++-
+ include/linux/nilfs2_fs.h |   26 +++++++++++++++++++++++++-
+ 3 files changed, 47 insertions(+), 14 deletions(-)
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
