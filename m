@@ -1,34 +1,62 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: [ANNOUNCE] NILFS utils 2.0.19 released
-Date: Mon, 09 Aug 2010 15:26:38 +0900 (JST)
-Message-ID: <20100809.152638.37589806.ryusuke@osrg.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs-utils: insert feature compatibility check in nilfs_open
+Date: Mon,  9 Aug 2010 23:39:02 +0900
+Message-ID: <1281364742-4857-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi folks,
+This inserts compatibility check in nilfs_open function so that it
+refuses to open the nilfs partition whose super block has incompatible
+features that nilfs-utils doesn't know about.
 
-nilfs-utils-2.0.19 became available at
+It is verified only when NILFS_OPEN_RAW mode is specified.  Moreover,
+only incompat feature set is tested because the current nilfs_open
+doesn't open the device in read/write mode.
 
- http://www.nilfs.org/en/download.html
+Programs that want to write to the nilfs partition not via io-control
+must confirm read-only compat feature set as well as the incompat
+feature set.
 
-This version adds uhelper support to mount.nilfs2 so that
-udisks/palimpsests can control nilfs2 partitions, and adds enlarged
-label in which maximum size of the volume name was enlarged to 80
-bytes keeping compatibility.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ lib/nilfs.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-Man pages and header files are also updated to follow recent changes
-at kernel (upto 2.6.35).
+diff --git a/lib/nilfs.c b/lib/nilfs.c
+index 982e874..44e368b 100644
+--- a/lib/nilfs.c
++++ b/lib/nilfs.c
+@@ -281,6 +281,7 @@ int nilfs_opt_test_mmap(struct nilfs *nilfs)
+ struct nilfs *nilfs_open(const char *dev, const char *dir, int flags)
+ {
+ 	struct nilfs *nilfs;
++	__u64 features;
+ 	int oflags;
+ 
+ 	if (!(flags & (NILFS_OPEN_RAW | NILFS_OPEN_RDONLY |
+@@ -314,6 +315,13 @@ struct nilfs *nilfs_open(const char *dev, const char *dir, int flags)
+ 			goto out_fd;
+ 		if (nilfs_read_sb(nilfs) < 0)
+ 			goto out_fd;
++
++		features = le64_to_cpu(nilfs->n_sb->s_feature_incompat) &
++			~NILFS_FEATURE_INCOMPAT_SUPP;
++		if (features) {
++			errno = ENOTSUP;
++			goto out_fd;
++		}
+ 	}
+ 
+ 	if (flags &
+-- 
+1.6.6.2
 
-See the changelog ( http://www.nilfs.org/download/ChangeLog-utils-v2 )
-for more details.
-
-Thanks,
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
