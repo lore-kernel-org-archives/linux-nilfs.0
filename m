@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs-utils: insert feature compatibility check in nilfs_open
-Date: Mon,  9 Aug 2010 23:39:02 +0900
-Message-ID: <1281364742-4857-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] nilfs2: accept future revisions
+Date: Tue, 10 Aug 2010 02:35:10 +0900
+Message-ID: <1281375310-6110-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -11,49 +11,48 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This inserts compatibility check in nilfs_open function so that it
-refuses to open the nilfs partition whose super block has incompatible
-features that nilfs-utils doesn't know about.
+Compatibility of nilfs partitions is now managed with three feature
+sets.  This changes old compatibility check with revision number so
+that it can accept future revisions.
 
-It is verified only when NILFS_OPEN_RAW mode is specified.  Moreover,
-only incompat feature set is tested because the current nilfs_open
-doesn't open the device in read/write mode.
-
-Programs that want to write to the nilfs partition not via io-control
-must confirm read-only compat feature set as well as the incompat
-feature set.
+Note that we can stop support of experimental versions of nilfs that
+doesn't know the feature sets by incrementing NILFS_CURRENT_REV.  We
+don't have to do it soon, but it would be a possible option whenever
+the need arises.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- lib/nilfs.c |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ fs/nilfs2/the_nilfs.c     |    4 ++--
+ include/linux/nilfs2_fs.h |    1 +
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/lib/nilfs.c b/lib/nilfs.c
-index 982e874..44e368b 100644
---- a/lib/nilfs.c
-+++ b/lib/nilfs.c
-@@ -281,6 +281,7 @@ int nilfs_opt_test_mmap(struct nilfs *nilfs)
- struct nilfs *nilfs_open(const char *dev, const char *dir, int flags)
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 37de1f0..a92b16f 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -467,8 +467,8 @@ static unsigned long long nilfs_max_size(unsigned int blkbits)
+ static int nilfs_store_disk_layout(struct the_nilfs *nilfs,
+ 				   struct nilfs_super_block *sbp)
  {
- 	struct nilfs *nilfs;
-+	__u64 features;
- 	int oflags;
+-	if (le32_to_cpu(sbp->s_rev_level) != NILFS_CURRENT_REV) {
+-		printk(KERN_ERR "NILFS: revision mismatch "
++	if (le32_to_cpu(sbp->s_rev_level) < NILFS_MIN_SUPP_REV) {
++		printk(KERN_ERR "NILFS: unsupported revision "
+ 		       "(superblock rev.=%d.%d, current rev.=%d.%d). "
+ 		       "Please check the version of mkfs.nilfs.\n",
+ 		       le32_to_cpu(sbp->s_rev_level),
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index f5487b6..b07f5cd 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -229,6 +229,7 @@ struct nilfs_super_block {
+  */
+ #define NILFS_CURRENT_REV	2	/* current major revision */
+ #define NILFS_MINOR_REV		0	/* minor revision */
++#define NILFS_MIN_SUPP_REV	2	/* minimum supported revision */
  
- 	if (!(flags & (NILFS_OPEN_RAW | NILFS_OPEN_RDONLY |
-@@ -314,6 +315,13 @@ struct nilfs *nilfs_open(const char *dev, const char *dir, int flags)
- 			goto out_fd;
- 		if (nilfs_read_sb(nilfs) < 0)
- 			goto out_fd;
-+
-+		features = le64_to_cpu(nilfs->n_sb->s_feature_incompat) &
-+			~NILFS_FEATURE_INCOMPAT_SUPP;
-+		if (features) {
-+			errno = ENOTSUP;
-+			goto out_fd;
-+		}
- 	}
- 
- 	if (flags &
+ /*
+  * Feature set definitions
 -- 
 1.6.6.2
 
