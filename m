@@ -1,84 +1,72 @@
-From: =?ISO-8859-1?Q?J=E9r=F4me_Poulin?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: FYI: User land tools status
-Date: Fri, 20 Aug 2010 09:00:54 -0400
-Message-ID: <AANLkTinxxrNsO-s3H3sQ=h3+GSyJY-hF5RKWqT1mX3ax@mail.gmail.com>
+Date: Sat, 21 Aug 2010 02:51:19 +0900 (JST)
+Message-ID: <20100821.025119.118979096.ryusuke@osrg.net>
 References: <87zkwhx55n.wl%jir@sekiba.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:received:in-reply-to
-         :references:date:message-id:subject:from:to:content-type
-         :content-transfer-encoding;
-        bh=9ewAeOZ3qguyStStC8bOb6s7bSnWBzFAXaURgUjEMDk=;
-        b=cUJuA9WloAASrQCQuwXy5NNG8zF9s3o+A8h7S2xiuRt+uUVpp/t4fa4k43gNEYeMuL
-         t9Sqp+C1/+Up+t85+1ZFeVQFXmJNIRVVVUvUGZelBWuFxOHJmTcgh129q62J71GX+RbG
-         CmDbRiPOoaBUOEtvcMlVNgMHC9oykacDeqdgk=
 In-Reply-To: <87zkwhx55n.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-=46inally, blkid support! Very nice for initramfs scripts. It would be
-nice if the TODO for unified nilfs2 management tool gets completed,
-just like btrfs did with the btrfs command, very useful for someone
-new to the FS, all commands are listed with online help and boot
-scripts will finally be able to settle on specific commands.
-
-On Fri, Aug 20, 2010 at 12:46 AM, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org> wrote:
->
+Hi,
+On Fri, 20 Aug 2010 13:46:28 +0900, Jiro SEKIBA wrote:
 > Hi,
->
-> I'm pleased to share the status of the user land tools I've been work=
-ing on.
+> 
+> I'm pleased to share the status of the user land tools I've been working on.
 > Recently a few patches are incorporated into util-linux-ng and udisks
-> to support NILFS. =A0With those changes, you can play with NILFS more
+> to support NILFS.  With those changes, you can play with NILFS more
 > convenient manner now.
->
-> New blkid in util-linux-ng let you mount NILFS partition with volume =
-label
+> 
+> New blkid in util-linux-ng let you mount NILFS partition with volume label
 > or UUID instead of device file, just like other filesystem does.
->
+> 
 > Furthermore you can use palimpsest to create, mount, umount the NILFS
 > partition by new udisks(aka DeviceKit-disks).
->
+> 
 > palimpsest is a graphical tool to manage drives and media of
 > gnome-disk-utility project used in ubuntu.
->
+> 
 > I don't see any Distro updates to support those yet, but at least
-> you can try those by retrieving source code repository of those proje=
-cts.
->
+> you can try those by retrieving source code repository of those projects.
+> 
 > util-linux-ng:
-> =A0git://git.kernel.org/pub/scm/utils/util-linux-ng/util-linux-ng.git
+>  git://git.kernel.org/pub/scm/utils/util-linux-ng/util-linux-ng.git
 > udisks:
-> =A0git://git.freedesktop.org/git/DeviceKit/DeviceKit-disks.git
->
+>  git://git.freedesktop.org/git/DeviceKit/DeviceKit-disks.git
+> 
 > You need recent util-linux-ng and nilfs2-utils to try the new udisks.
->
-> I also working on GNU parted to support NILFS. =A0The patch is alread=
-y
+> 
+> I also working on GNU parted to support NILFS.  The patch is already
 > in public, but need some more "paper work" for code assignment.
-> http://lists.alioth.debian.org/pipermail/parted-devel/2010-July/00371=
-5.html
->
-> Any feedbacks, comments, requests for those utilities/patches are wel=
-come!
->
+> http://lists.alioth.debian.org/pipermail/parted-devel/2010-July/003715.html
+> 
+> Any feedbacks, comments, requests for those utilities/patches are welcome!
+> 
 > Thanks,
->
+> 
 > Regards,
-> --
+> -- 
 > Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
-" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+
+Thank you very much for your hard work!
+
+I've updated current status page of nilfs.org.
+
+I hope these work will be incorporated in distro packages without
+incident.  These are really useful.
+
+Especially, I appreciate this sort of help on userland because my
+hands are now full with kernel issues.  I hope you continue to work
+with to move things forward.
+
+Thanks,
+Ryusuke Konishi
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
