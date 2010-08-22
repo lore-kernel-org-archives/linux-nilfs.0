@@ -1,72 +1,164 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: FYI: User land tools status
-Date: Sat, 21 Aug 2010 02:51:19 +0900 (JST)
-Message-ID: <20100821.025119.118979096.ryusuke@osrg.net>
-References: <87zkwhx55n.wl%jir@sekiba.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87zkwhx55n.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 5/6] nilfs2: separate initializer of metadata file inode
+Date: Sun, 22 Aug 2010 19:05:05 +0900
+Message-ID: <1282471506-29618-6-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1282471506-29618-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1282471506-29618-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-fsdevel@vger.kernel.org
+Cc: Nick Piggin <npiggin@kernel.dk>, Al Viro <viro@zeniv.linux.org.uk>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-Hi,
-On Fri, 20 Aug 2010 13:46:28 +0900, Jiro SEKIBA wrote:
-> Hi,
-> 
-> I'm pleased to share the status of the user land tools I've been working on.
-> Recently a few patches are incorporated into util-linux-ng and udisks
-> to support NILFS.  With those changes, you can play with NILFS more
-> convenient manner now.
-> 
-> New blkid in util-linux-ng let you mount NILFS partition with volume label
-> or UUID instead of device file, just like other filesystem does.
-> 
-> Furthermore you can use palimpsest to create, mount, umount the NILFS
-> partition by new udisks(aka DeviceKit-disks).
-> 
-> palimpsest is a graphical tool to manage drives and media of
-> gnome-disk-utility project used in ubuntu.
-> 
-> I don't see any Distro updates to support those yet, but at least
-> you can try those by retrieving source code repository of those projects.
-> 
-> util-linux-ng:
->  git://git.kernel.org/pub/scm/utils/util-linux-ng/util-linux-ng.git
-> udisks:
->  git://git.freedesktop.org/git/DeviceKit/DeviceKit-disks.git
-> 
-> You need recent util-linux-ng and nilfs2-utils to try the new udisks.
-> 
-> I also working on GNU parted to support NILFS.  The patch is already
-> in public, but need some more "paper work" for code assignment.
-> http://lists.alioth.debian.org/pipermail/parted-devel/2010-July/003715.html
-> 
-> Any feedbacks, comments, requests for those utilities/patches are welcome!
-> 
-> Thanks,
-> 
-> Regards,
-> -- 
-> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+This separates a part of initialization code of metadata file inode,
+and makes it available from the nilfs iget function that a later patch
+will add to.
 
-Thank you very much for your hard work!
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+---
+ fs/nilfs2/gcinode.c |    6 +++++-
+ fs/nilfs2/mdt.c     |   44 +++++++++++++++++++++++++++-----------------
+ fs/nilfs2/mdt.h     |    4 +++-
+ 3 files changed, 35 insertions(+), 19 deletions(-)
 
-I've updated current status page of nilfs.org.
+diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
+index bed3a78..cd19a37 100644
+--- a/fs/nilfs2/gcinode.c
++++ b/fs/nilfs2/gcinode.c
+@@ -225,10 +225,14 @@ static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
+ 	struct inode *inode;
+ 	struct nilfs_inode_info *ii;
+ 
+-	inode = nilfs_mdt_new_common(nilfs, NULL, ino, GFP_NOFS, 0);
++	inode = nilfs_mdt_new_common(nilfs, NULL, ino);
+ 	if (!inode)
+ 		return NULL;
+ 
++	if (nilfs_mdt_init(inode, nilfs, GFP_NOFS, 0) < 0) {
++		nilfs_destroy_inode(inode);
++		return NULL;
++	}
+ 	inode->i_op = NULL;
+ 	inode->i_fop = NULL;
+ 	inode->i_mapping->a_ops = &def_gcinode_aops;
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index ee943a3..73e5da3 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -439,6 +439,27 @@ static const struct address_space_operations def_mdt_aops = {
+ static const struct inode_operations def_mdt_iops;
+ static const struct file_operations def_mdt_fops;
+ 
++
++int nilfs_mdt_init(struct inode *inode, struct the_nilfs *nilfs,
++		   gfp_t gfp_mask, size_t objsz)
++{
++	struct nilfs_mdt_info *mi;
++
++	mi = kzalloc(max(sizeof(*mi), objsz), GFP_NOFS);
++	if (!mi)
++		return -ENOMEM;
++
++	mi->mi_nilfs = nilfs;
++	init_rwsem(&mi->mi_sem);
++	inode->i_private = mi;
++
++	inode->i_mode = S_IFREG;
++	mapping_set_gfp_mask(inode->i_mapping, gfp_mask);
++	inode->i_mapping->backing_dev_info = nilfs->ns_bdi;
++
++	return 0;
++}
++
+ /*
+  * NILFS2 uses pseudo inodes for meta data files such as DAT, cpfile, sufile,
+  * ifile, or gcinodes.  This allows the B-tree code and segment constructor
+@@ -454,12 +475,10 @@ static const struct file_operations def_mdt_fops;
+  * @nilfs: nilfs object
+  * @sb: super block instance the metadata file belongs to
+  * @ino: inode number
+- * @gfp_mask: gfp mask for data pages
+- * @objsz: size of the private object attached to inode->i_private
+  */
+ struct inode *
+ nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
+-		     ino_t ino, gfp_t gfp_mask, size_t objsz)
++		     ino_t ino)
+ {
+ 	struct inode *inode = nilfs_alloc_inode_common(nilfs);
+ 
+@@ -467,15 +486,6 @@ nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
+ 		return NULL;
+ 	else {
+ 		struct address_space * const mapping = &inode->i_data;
+-		struct nilfs_mdt_info *mi;
+-
+-		mi = kzalloc(max(sizeof(*mi), objsz), GFP_NOFS);
+-		if (!mi) {
+-			nilfs_destroy_inode(inode);
+-			return NULL;
+-		}
+-		mi->mi_nilfs = nilfs;
+-		init_rwsem(&mi->mi_sem);
+ 
+ 		inode->i_sb = sb; /* sb may be NULL for some meta data files */
+ 		inode->i_blkbits = nilfs->ns_blocksize_bits;
+@@ -483,8 +493,6 @@ nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
+ 		atomic_set(&inode->i_count, 1);
+ 		inode->i_nlink = 1;
+ 		inode->i_ino = ino;
+-		inode->i_mode = S_IFREG;
+-		inode->i_private = mi;
+ 
+ #ifdef INIT_UNUSED_INODE_FIELDS
+ 		atomic_set(&inode->i_writecount, 0);
+@@ -515,9 +523,7 @@ nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
+ 
+ 		mapping->host = NULL;  /* instead of inode */
+ 		mapping->flags = 0;
+-		mapping_set_gfp_mask(mapping, gfp_mask);
+ 		mapping->assoc_mapping = NULL;
+-		mapping->backing_dev_info = nilfs->ns_bdi;
+ 
+ 		inode->i_mapping = mapping;
+ 	}
+@@ -530,10 +536,14 @@ struct inode *nilfs_mdt_new(struct the_nilfs *nilfs, struct super_block *sb,
+ {
+ 	struct inode *inode;
+ 
+-	inode = nilfs_mdt_new_common(nilfs, sb, ino, NILFS_MDT_GFP, objsz);
++	inode = nilfs_mdt_new_common(nilfs, sb, ino);
+ 	if (!inode)
+ 		return NULL;
+ 
++	if (nilfs_mdt_init(inode, nilfs, NILFS_MDT_GFP, objsz) < 0) {
++		nilfs_destroy_inode(inode);
++		return NULL;
++	}
+ 	inode->i_op = &def_mdt_iops;
+ 	inode->i_fop = &def_mdt_fops;
+ 	inode->i_mapping->a_ops = &def_mdt_aops;
+diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
+index 6c4bbb0..f445602 100644
+--- a/fs/nilfs2/mdt.h
++++ b/fs/nilfs2/mdt.h
+@@ -76,10 +76,12 @@ int nilfs_mdt_forget_block(struct inode *, unsigned long);
+ int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
+ int nilfs_mdt_fetch_dirty(struct inode *);
+ 
++int nilfs_mdt_init(struct inode *inode, struct the_nilfs *nilfs,
++		   gfp_t gfp_mask, size_t objsz);
+ struct inode *nilfs_mdt_new(struct the_nilfs *, struct super_block *, ino_t,
+ 			    size_t);
+ struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
+-				   ino_t, gfp_t, size_t);
++				   ino_t);
+ void nilfs_mdt_destroy(struct inode *);
+ void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
+ void nilfs_mdt_set_shadow(struct inode *, struct inode *);
+-- 
+1.6.6.2
 
-I hope these work will be incorporated in distro packages without
-incident.  These are really useful.
-
-Especially, I appreciate this sort of help on userland because my
-hands are now full with kernel issues.  I hope you continue to work
-with to move things forward.
-
-Thanks,
-Ryusuke Konishi
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
