@@ -1,35 +1,53 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Subject: Re: [PATCH 0/6] nilfs2: remove own inode hash table
-Date: Tue, 24 Aug 2010 11:32:14 -0400
-Message-ID: <20100824153214.GA25897@infradead.org>
-References: <1282471506-29618-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
- <20100824074844.GH3948@amd>
- <20100824083027.GA27594@infradead.org>
- <20100824.215823.121933465.ryusuke@osrg.net>
+Date: Wed, 25 Aug 2010 00:39:33 +0900 (JST)
+Message-ID: <20100825.003933.141333647.ryusuke@osrg.net>
+References: <20100824074844.GH3948@amd>
+	<20100824.211931.233007881.ryusuke@osrg.net>
+	<20100824132453.GU31363@ZenIV.linux.org.uk>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20100824.215823.121933465.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20100824132453.GU31363-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+Cc: npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, Aug 24, 2010 at 09:58:23PM +0900, Ryusuke Konishi wrote:
-> Actually, I recently wrote a patchset to unify all super block
-> instances on one device into one sb, which makes the inodes outlive
-> superblock eliminable.
+On Tue, 24 Aug 2010 14:24:53 +0100, Al Viro wrote:
+> On Tue, Aug 24, 2010 at 09:19:31PM +0900, Ryusuke Konishi wrote:
+> > > It just needs some helper function to do the non-sb related init
+> > > stuff for you.
+> > 
+> > I'm seeking the way to make that special type of inodes hold a valid
+> > sb.  If it's not feasible, I think nilfs should not borrow inode
+> > object and should define just enough structure instead.
+> 
+> For fsck sake, just grab an active reference to superblock for the
+> duration of GC and use _normal_ inodes...
 
-Yes, that's how we handle things everywhere, including btrfs with
-it's subvolumes and snapshots.
+GC is only allowed while a read/write mount exists, and the "remove
+own inode hash table" patchset already solved the sb-less inode issue
+for GC.
 
-> But the patchset has a problem that it cannot shrink a number of
-> versions of namespace when unmounting all snapshots and a current time
-> instance.
+The remaining problem is that nilfs allocates different sb per
+snapshot instead of increasing reference count of one super block.
+(to be precise, identical snapshots or current mounts share the same
+sb like regular mount)
 
-Can you explain the issue in more detail?
+Since snapshots or a current filesystem are mounted or unmounted
+independently sharing the three metadata files, these metadata files
+can live across the lifetime of a certain sb.
+
+All other inodes are binded to an sb.
+
+
+And, my thought is, in the first place, allocating different sb for a
+device is not sane.
+
+Thanks,
+Ryusuke Konishi
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
