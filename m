@@ -1,61 +1,45 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [GIT PULL] nilfs2 additional fix
-Date: Sun, 22 Aug 2010 22:30:40 +0900 (JST)
-Message-ID: <20100822.223040.116160895.ryusuke@osrg.net>
+From: Nick Piggin <npiggin@kernel.dk>
+Subject: Re: [PATCH 0/6] nilfs2: remove own inode hash table
+Date: Tue, 24 Aug 2010 17:48:44 +1000
+Message-ID: <20100824074844.GH3948@amd>
+References: <1282471506-29618-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1282471506-29618-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-fsdevel@vger.kernel.org, Nick Piggin <npiggin@kernel.dk>, Al Viro <viro@zeniv.linux.org.uk>, linux-nilfs@vger.kernel.org
 
-Hi Linus,
+On Sun, Aug 22, 2010 at 07:05:00PM +0900, Ryusuke Konishi wrote:
+> This is a patchset to remove own inode hash table from nilfs.
+> 
+> The current version of nilfs uses inode not only to manage regular
+> files, directories, symlinks but also for some types of metadata and
+> for caching file blocks relocated by GC.
+> 
+> The last type of inodes is called gc-inodes, and nilfs keeps them with
+> an own hash table.
+> 
+> With this patchset, the gc-inodes will be stored in vfs inode cache
+> like regular inodes, and the own inode hash is deleted.
+> 
+> I hope this would be helpful for the vfs scalability work.
 
-please pull:
+This looks like a reasonable direction to me, and you would get
+more of the benefits of the inode cache scalability work, but this
+wasn't the biggest prolem for my series, because I'm not going digging
+into the filesystems themselves.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
+The reason I broke nilfs2 is because it duplicates a lot of the
+generic inode initialisation code. This really should go in core
+code because nilfs2 does not own the generic inode fields.
 
-to grab the following fix, which corrects sync failure of discard in
-nilfs that Christoph noticed me recently.
+It just needs some helper function to do the non-sb related init
+stuff for you.
 
-Thanks!
-
-Ryusuke Konishi
---
-The following changes since commit 3b89f56783a4ef796190ef1192c25e72e0b986b6:
-  Linus Torvalds (1):
-        Merge branch 'for-linus' of git://git.kernel.org/.../jmorris/security-testing-2.6
-
-Ryusuke Konishi (1):
-      nilfs2: wait for discard to finish
-
- fs/nilfs2/the_nilfs.c |    4 +++-
-
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 6af1c00..4317f17 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -775,6 +775,7 @@ int nilfs_discard_segments(struct the_nilfs *nilfs, __u64 *segnump,
- 						   start * sects_per_block,
- 						   nblocks * sects_per_block,
- 						   GFP_NOFS,
-+						   BLKDEV_IFL_WAIT |
- 						   BLKDEV_IFL_BARRIER);
- 			if (ret < 0)
- 				return ret;
-@@ -785,7 +786,8 @@ int nilfs_discard_segments(struct the_nilfs *nilfs, __u64 *segnump,
- 		ret = blkdev_issue_discard(nilfs->ns_bdev,
- 					   start * sects_per_block,
- 					   nblocks * sects_per_block,
--					   GFP_NOFS, BLKDEV_IFL_BARRIER);
-+					   GFP_NOFS,
-+					  BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
- 	return ret;
- }
- 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks,
+Nick
