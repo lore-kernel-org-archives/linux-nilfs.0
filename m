@@ -1,75 +1,50 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCHv2 0/2] nilfs2-utils: userland tools to tune nilfs
-Date: Sat, 04 Sep 2010 14:05:43 +0900 (JST)
-Message-ID: <20100904.140543.81009448.ryusuke@osrg.net>
-References: <1283523043-7166-1-git-send-email-jir@unicus.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [GIT PULL] nilfs2 fix
+Date: Sun, 05 Sep 2010 11:52:12 +0900 (JST)
+Message-ID: <20100905.115212.58895734.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1283523043-7166-1-git-send-email-jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+Hi Linus,
 
-On Fri,  3 Sep 2010 23:10:41 +0900, Jiro SEKIBA wrote:
-> Hi, this is a second patch series to introduce new user land tool named
-> "nilfs-tune" to nilfs2-utils.
-> 
-> nilfs-tune is a command that modify tunable nilfs parameters, like
-> volume label.  I intented "nilfs-tune" as the step toward to unified
-> "nilfs" command.  I'm hoping finaly it will be used as "nilfs tune".
-> 
-> First patch introduces a new library call nilfs_sb_write to write
-> back super blocks.
-> 
-> Second patch is the actual patch to add new command.
+please pull a nilfs2 fix from:
 
-I got the following error when I first tried nilfs-tune:
+  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
 
- $ nilfs-tune -l /dev/sdb1
- nilfs-tune 2.0.19
- /dev/sdb1: cannot open NILFS
+This fixes a leak issue that occurs when recovery aborted.
 
-It took some time to understand what happened.
-
-The message looks confusing.  I think it should be as below to let
-users know it's a sort of privilege error.
-
- "cannot open device: /dev/sdb1"
-
-Anyway I applied the patches to the git repo.
-
-Please test it and send me fixes.
-
-Thanks!
+Thanks,
 
 Ryusuke Konishi
+--
+The following changes since commit 2bfc96a127bc1cc94d26bfaa40159966064f9c8c:
+  Linus Torvalds (1):
+        Linux 2.6.36-rc3
+
+Ryusuke Konishi (1):
+      nilfs2: fix leak of shadow dat inode in error path of load_nilfs
+
+ fs/nilfs2/the_nilfs.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 4317f17..ba7c10c 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -446,6 +446,7 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ 	nilfs_mdt_destroy(nilfs->ns_cpfile);
+ 	nilfs_mdt_destroy(nilfs->ns_sufile);
+ 	nilfs_mdt_destroy(nilfs->ns_dat);
++	nilfs_mdt_destroy(nilfs->ns_gc_dat);
  
-> differences from first patch are following:
-> - fix styles
-> - fix typos and description of manpages
-> - fix a condition of assert at beginning of the nilfs_sb_write
-> - add condition to check sb pointer in the nilfs_sb_write
-> 
->  configure.ac                 |    7 +-
->  include/nilfs.h              |    7 +
->  lib/nilfs.c                  |   16 ++
->  lib/sb.c                     |  128 ++++++++---
->  man/Makefile.am              |    2 +-
->  man/chcp.8                   |    3 +-
->  man/lscp.1                   |    3 +-
->  man/mkcp.8                   |    3 +-
->  man/nilfs-tune.8             |   56 +++++
->  man/nilfs.8                  |    1 +
->  man/rmcp.8                   |    3 +-
->  sbin/Makefile.am             |    2 +-
->  sbin/nilfs-tune/Makefile.am  |    9 +
->  sbin/nilfs-tune/nilfs-tune.c |  500 ++++++++++++++++++++++++++++++++++++++++++
->  14 files changed, 696 insertions(+), 44 deletions(-)
+  failed:
+ 	nilfs_clear_recovery_info(&ri);
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
