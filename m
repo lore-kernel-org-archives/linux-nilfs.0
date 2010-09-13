@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/23] nilfs2: remove own inode allocator
-Date: Tue, 14 Sep 2010 00:37:01 +0900
-Message-ID: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 01/23] nilfs2: add checkpoint tree to nilfs object
+Date: Tue, 14 Sep 2010 00:37:02 +0900
+Message-ID: <1284392244-27100-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,120 +13,231 @@ Content-Transfer-Encoding: 7bit
 To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Nick Piggin <npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This patchset is intended to unify super block instances allocated for
-one device into one sb and to eliminate own inode allocator from
-nilfs.
+To hold multiple versions of a filesystem in one sb instance, a new
+on-memory structure is necessary to handle one or more checkpoints.
 
-Previously the super block instances were allocated per snapshot, and
-this was preventing removal of the own inode allocator; a part of
-inodes treating metadata as files, didn't have a valid inode->i_sb
-since they outlive the life cycle of an sb.
+This adds a red-black tree of checkpoints to nilfs object, and adds
+lookup and create functions for them.
 
-With this patchset, mounted snapshots and the current tree will be
-managed with an rb-tree.  Each checkpoint/snapshot is represented by a
-"root object" and this object is used to identify the checkpoint to
-which inodes belong.
+Each checkpoint is represented by "nilfs_root" structure, and this
+structure has rb_node to configure the rb-tree.
 
-Snapshots are still mounted on a mountpoint specified with the mount
-system call.
+The nilfs_root object is identified with a checkpoint number.  For
+each snapshot, a nilfs_root object is allocated and the checkpoint
+number of snapshot is assigned to it.  For a regular mount
+(i.e. current mode mount), NILFS_CPTREE_CURRENT_CNO constant is
+assigned to the corresponding nilfs_root object.
 
-To make user interface compatible like this, root dentries of
-snapshots and the current filesystem tree are binded to their
-mnt->mnt_root, whereas sb->s_root always holds the root dentry of the
-current tree.
+Each nilfs_root object has an ifile inode and some counters.  These
+items will displace those of nilfs_sb_info structure in successive
+patches.
 
-After these changes were applied, sb instances are unified per device.
-And, by the latter half of the patches, all inodes used in nilfs will
-be allocated and released through iget5_locked() and iput()
-respectively.  The own inode allocator is removed by the final patch.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/the_nilfs.c |   92 +++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/the_nilfs.h |   42 ++++++++++++++++++++++
+ 2 files changed, 134 insertions(+), 0 deletions(-)
 
-
-Along with the previous removal of the own inode hash table, I hope
-this would help to avoid bothersome inode related changes on nilfs.
-
-Most changes are confined to the code of nilfs, but exceptionally I
-had to add a new type of file handle to "exportfs.h" in order to make
-snapshots exportable.
-
-As for conflict, the patch #7 seems to conflict with a recent patch
-that modifies iop->permission().
-
-The patchset is also available from "remove-own-inode-allocator" branch on:
-
- git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git
-
-
-I carefully tested this patchset since it makes a lot of changes.
-So far, this works stably and seems able to replace the old
-implementation.
-
-So, I'm planning to queue this for the next merge window unless there
-are objections.
-
-Thanks,
-Ryusuke Konishi
---
-Ryusuke Konishi (23):
-      nilfs2: add checkpoint tree to nilfs object
-      nilfs2: set pointer to root object in inodes
-      nilfs2: make snapshots in checkpoint tree exportable
-      nilfs2: use root object to get ifile
-      nilfs2: move inode count and block count into root object
-      nilfs2: use checkpoint tree for mount check of snapshots
-      nilfs2: deny write access to inodes in snapshots
-      nilfs2: split out nilfs_get_root_dentry
-      nilfs2: split out nilfs_attach_snapshot
-      nilfs2: do not allocate multiple super block instances for a device
-      nilfs2: simplify life cycle management of nilfs object
-      nilfs2: get rid of snapshot mount flag
-      nilfs2: allow nilfs_clear_inode to clear metadata file inodes
-      nilfs2: do not allocate nilfs_mdt_info structure to gc-inodes
-      nilfs2: add routines to save and restore bmap state
-      nilfs2: add routines to roll back state of DAT file
-      nilfs2: add routines to redirect access to buffers of DAT file
-      nilfs2: get rid of GCDAT inode
-      nilfs2: use iget for all metadata files
-      nilfs2: see state of root dentry for mount check of snapshots
-      nilfs2: get rid of mi_nilfs back pointer to nilfs object
-      nilfs2: get rid of back pointer to writable sb instance
-      nilfs2: remove own inode allocator and destructor for metadata files
-
- fs/nilfs2/Makefile        |    2 +-
- fs/nilfs2/bmap.c          |   22 +-
- fs/nilfs2/bmap.h          |   10 +-
- fs/nilfs2/btnode.c        |   17 +--
- fs/nilfs2/cpfile.c        |   72 ++++---
- fs/nilfs2/cpfile.h        |    4 +-
- fs/nilfs2/dat.c           |   89 ++++++---
- fs/nilfs2/dat.h           |    4 +-
- fs/nilfs2/export.h        |   17 ++
- fs/nilfs2/gcdat.c         |   87 --------
- fs/nilfs2/gcinode.c       |   32 ++--
- fs/nilfs2/ifile.c         |   51 +++--
- fs/nilfs2/ifile.h         |    4 +-
- fs/nilfs2/inode.c         |  111 +++++++---
- fs/nilfs2/ioctl.c         |    4 +-
- fs/nilfs2/mdt.c           |  293 +++++++++++++------------
- fs/nilfs2/mdt.h           |   34 ++--
- fs/nilfs2/namei.c         |  139 +++++++++++--
- fs/nilfs2/nilfs.h         |   29 +--
- fs/nilfs2/page.c          |   55 +++---
- fs/nilfs2/page.h          |    6 +
- fs/nilfs2/recovery.c      |   19 +-
- fs/nilfs2/sb.h            |   10 -
- fs/nilfs2/segment.c       |   66 +++---
- fs/nilfs2/segment.h       |    7 +-
- fs/nilfs2/sufile.c        |   77 ++++---
- fs/nilfs2/sufile.h        |    6 +-
- fs/nilfs2/super.c         |  528 ++++++++++++++++++++++-----------------------
- fs/nilfs2/the_nilfs.c     |  323 +++++++++-------------------
- fs/nilfs2/the_nilfs.h     |   92 ++++-----
- include/linux/exportfs.h  |   13 ++
- include/linux/nilfs2_fs.h |    1 -
- 32 files changed, 1132 insertions(+), 1092 deletions(-)
- create mode 100644 fs/nilfs2/export.h
- delete mode 100644 fs/nilfs2/gcdat.c
-
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index ea28fa9..da4aa43 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -89,6 +89,8 @@ static struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+ 	INIT_LIST_HEAD(&nilfs->ns_supers);
+ 	INIT_LIST_HEAD(&nilfs->ns_gc_inodes);
+ 	spin_lock_init(&nilfs->ns_last_segment_lock);
++	nilfs->ns_cptree = RB_ROOT;
++	spin_lock_init(&nilfs->ns_cptree_lock);
+ 	init_rwsem(&nilfs->ns_segctor_sem);
+ 
+ 	return nilfs;
+@@ -809,6 +811,96 @@ int nilfs_near_disk_full(struct the_nilfs *nilfs)
+ 	return ncleansegs <= nilfs->ns_nrsvsegs + nincsegs;
+ }
+ 
++struct nilfs_root *nilfs_lookup_root(struct the_nilfs *nilfs, __u64 cno)
++{
++	struct rb_node *n;
++	struct nilfs_root *root;
++
++	spin_lock(&nilfs->ns_cptree_lock);
++	n = nilfs->ns_cptree.rb_node;
++	while (n) {
++		root = rb_entry(n, struct nilfs_root, rb_node);
++
++		if (cno < root->cno) {
++			n = n->rb_left;
++		} else if (cno > root->cno) {
++			n = n->rb_right;
++		} else {
++			atomic_inc(&root->count);
++			spin_unlock(&nilfs->ns_cptree_lock);
++			return root;
++		}
++	}
++	spin_unlock(&nilfs->ns_cptree_lock);
++
++	return NULL;
++}
++
++struct nilfs_root *
++nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
++{
++	struct rb_node **p, *parent;
++	struct nilfs_root *root, *new;
++
++	root = nilfs_lookup_root(nilfs, cno);
++	if (root)
++		return root;
++
++	new = kmalloc(sizeof(*root), GFP_KERNEL);
++	if (!new)
++		return NULL;
++
++	spin_lock(&nilfs->ns_cptree_lock);
++
++	p = &nilfs->ns_cptree.rb_node;
++	parent = NULL;
++
++	while (*p) {
++		parent = *p;
++		root = rb_entry(parent, struct nilfs_root, rb_node);
++
++		if (cno < root->cno) {
++			p = &(*p)->rb_left;
++		} else if (cno > root->cno) {
++			p = &(*p)->rb_right;
++		} else {
++			atomic_inc(&root->count);
++			spin_unlock(&nilfs->ns_cptree_lock);
++			kfree(new);
++			return root;
++		}
++	}
++
++	new->cno = cno;
++	new->ifile = NULL;
++	new->nilfs = nilfs;
++	atomic_set(&new->count, 1);
++	atomic_set(&new->inodes_count, 0);
++	atomic_set(&new->blocks_count, 0);
++
++	rb_link_node(&new->rb_node, parent, p);
++	rb_insert_color(&new->rb_node, &nilfs->ns_cptree);
++
++	spin_unlock(&nilfs->ns_cptree_lock);
++
++	return new;
++}
++
++void nilfs_put_root(struct nilfs_root *root)
++{
++	if (atomic_dec_and_test(&root->count)) {
++		struct the_nilfs *nilfs = root->nilfs;
++
++		spin_lock(&nilfs->ns_cptree_lock);
++		rb_erase(&root->rb_node, &nilfs->ns_cptree);
++		spin_unlock(&nilfs->ns_cptree_lock);
++		if (root->ifile)
++			nilfs_mdt_destroy(root->ifile);
++
++		kfree(root);
++	}
++}
++
+ /**
+  * nilfs_find_sbinfo - find existing nilfs_sb_info structure
+  * @nilfs: nilfs object
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index c7ecd0c..0afede6 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -26,6 +26,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/buffer_head.h>
++#include <linux/rbtree.h>
+ #include <linux/fs.h>
+ #include <linux/blkdev.h>
+ #include <linux/backing-dev.h>
+@@ -80,6 +81,8 @@ enum {
+  * @ns_cpfile: checkpoint file inode
+  * @ns_sufile: segusage file inode
+  * @ns_gc_dat: shadow inode of the DAT file inode for GC
++ * @ns_cptree: rb-tree of all mounted checkpoints (nilfs_root)
++ * @ns_cptree_lock: lock protecting @ns_cptree
+  * @ns_gc_inodes: dummy inodes to keep live blocks
+  * @ns_blocksize_bits: bit length of block size
+  * @ns_blocksize: block size
+@@ -164,6 +167,10 @@ struct the_nilfs {
+ 	struct inode	       *ns_sufile;
+ 	struct inode	       *ns_gc_dat;
+ 
++	/* Checkpoint tree */
++	struct rb_root		ns_cptree;
++	spinlock_t		ns_cptree_lock;
++
+ 	/* GC inode list */
+ 	struct list_head	ns_gc_inodes;
+ 
+@@ -200,6 +207,32 @@ THE_NILFS_FNS(DISCONTINUED, discontinued)
+ THE_NILFS_FNS(GC_RUNNING, gc_running)
+ THE_NILFS_FNS(SB_DIRTY, sb_dirty)
+ 
++/**
++ * struct nilfs_root - nilfs root object
++ * @cno: checkpoint number
++ * @rb_node: red-black tree node
++ * @count: refcount of this structure
++ * @nilfs: nilfs object
++ * @ifile: inode file
++ * @root: root inode
++ * @inodes_count: number of inodes
++ * @blocks_count: number of blocks (Reserved)
++ */
++struct nilfs_root {
++	__u64 cno;
++	struct rb_node rb_node;
++
++	atomic_t count;
++	struct the_nilfs *nilfs;
++	struct inode *ifile;
++
++	atomic_t inodes_count;
++	atomic_t blocks_count;
++};
++
++/* Special checkpoint number */
++#define NILFS_CPTREE_CURRENT_CNO	0
++
+ /* Minimum interval of periodical update of superblocks (in seconds) */
+ #define NILFS_SB_FREQ		10
+ 
+@@ -222,6 +255,10 @@ int init_nilfs(struct the_nilfs *, struct nilfs_sb_info *, char *);
+ int load_nilfs(struct the_nilfs *, struct nilfs_sb_info *);
+ int nilfs_discard_segments(struct the_nilfs *, __u64 *, size_t);
+ int nilfs_count_free_blocks(struct the_nilfs *, sector_t *);
++struct nilfs_root *nilfs_lookup_root(struct the_nilfs *nilfs, __u64 cno);
++struct nilfs_root *nilfs_find_or_create_root(struct the_nilfs *nilfs,
++					     __u64 cno);
++void nilfs_put_root(struct nilfs_root *root);
+ struct nilfs_sb_info *nilfs_find_sbinfo(struct the_nilfs *, int, __u64);
+ int nilfs_checkpoint_is_mounted(struct the_nilfs *, __u64, int);
+ int nilfs_near_disk_full(struct the_nilfs *);
+@@ -235,6 +272,11 @@ static inline void get_nilfs(struct the_nilfs *nilfs)
+ 	atomic_inc(&nilfs->ns_count);
+ }
+ 
++static inline void nilfs_get_root(struct nilfs_root *root)
++{
++	atomic_inc(&root->count);
++}
++
+ static inline void
+ nilfs_attach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ {
+-- 
+1.6.6.2
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
