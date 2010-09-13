@@ -1,110 +1,82 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 08/23] nilfs2: split out nilfs_get_root_dentry
-Date: Tue, 14 Sep 2010 00:37:09 +0900
-Message-ID: <1284392244-27100-9-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 14/23] nilfs2: do not allocate nilfs_mdt_info structure to gc-inodes
+Date: Tue, 14 Sep 2010 00:37:15 +0900
+Message-ID: <1284392244-27100-15-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Nick Piggin <npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel@vger.kernel.org
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Nick Piggin <npiggin@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-This splits the code to allocate root dentry into a separate routine
-for convenience in successive changes.
+GC-inode now doesn't need the nilfs_mdt_info structure and there is no
+reason that it is a sort of metadata files.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+This stops the allocation and makes them not dependent on metadata
+file routines.
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/super.c |   54 ++++++++++++++++++++++++++++++++++------------------
- 1 files changed, 35 insertions(+), 19 deletions(-)
+ fs/nilfs2/gcinode.c |   32 ++++++++++++++++----------------
+ 1 files changed, 16 insertions(+), 16 deletions(-)
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index dab86bb..23ad8d4 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -755,6 +755,39 @@ int nilfs_check_feature_compatibility(struct super_block *sb,
+diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
+index 34f8f84..33ad25d 100644
+--- a/fs/nilfs2/gcinode.c
++++ b/fs/nilfs2/gcinode.c
+@@ -168,7 +168,7 @@ int nilfs_gccache_wait_and_mark_dirty(struct buffer_head *bh)
+ 		}
+ 		nilfs_btnode_mark_dirty(bh);
+ 	} else {
+-		nilfs_mdt_mark_buffer_dirty(bh);
++		nilfs_mark_buffer_dirty(bh);
+ 	}
  	return 0;
  }
- 
-+static int nilfs_get_root_dentry(struct super_block *sb,
-+				 struct nilfs_root *root,
-+				 struct dentry **root_dentry)
-+{
-+	struct inode *inode;
-+	struct dentry *dentry;
-+	int ret = 0;
-+
-+	inode = nilfs_iget(sb, root, NILFS_ROOT_INO);
-+	if (IS_ERR(inode)) {
-+		printk(KERN_ERR "NILFS: get root inode failed\n");
-+		ret = PTR_ERR(inode);
-+		goto out;
-+	}
-+	if (!S_ISDIR(inode->i_mode) || !inode->i_blocks || !inode->i_size) {
-+		iput(inode);
-+		printk(KERN_ERR "NILFS: corrupt root inode.\n");
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	dentry = d_alloc_root(inode);
-+	if (!dentry) {
-+		iput(inode);
-+		printk(KERN_ERR "NILFS: get root dentry failed\n");
-+		ret = -ENOMEM;
-+		goto out;
-+	}
-+	*root_dentry = dentry;
-+ out:
-+	return ret;
-+}
-+
- /**
-  * nilfs_fill_super() - initialize a super block instance
-  * @sb: super_block
-@@ -771,7 +804,6 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+@@ -177,24 +177,24 @@ int nilfs_init_gcinode(struct inode *inode)
  {
- 	struct nilfs_sb_info *sbi;
- 	struct nilfs_root *fsroot;
--	struct inode *root;
- 	__u64 cno;
- 	int err, curr_mnt;
+ 	struct nilfs_inode_info *ii = NILFS_I(inode);
+ 	struct the_nilfs *nilfs = NILFS_SB(inode->i_sb)->s_nilfs;
+-	int ret;
  
-@@ -855,25 +887,9 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
- 			goto failed_checkpoint;
- 	}
+-	ret = nilfs_mdt_init(inode, nilfs, GFP_NOFS, 0);
+-	if (!ret) {
+-		inode->i_mapping->a_ops = &def_gcinode_aops;
++	inode->i_mode = S_IFREG;
++	mapping_set_gfp_mask(inode->i_mapping, GFP_NOFS);
++	inode->i_mapping->a_ops = &def_gcinode_aops;
++	inode->i_mapping->backing_dev_info = inode->i_sb->s_bdi;
  
--	root = nilfs_iget(sb, fsroot, NILFS_ROOT_INO);
--	if (IS_ERR(root)) {
--		printk(KERN_ERR "NILFS: get root inode failed\n");
--		err = PTR_ERR(root);
--		goto failed_segctor;
+-		ii->i_flags = 0;
+-		nilfs_bmap_init_gc(ii->i_bmap);
++	ii->i_flags = 0;
++	nilfs_bmap_init_gc(ii->i_bmap);
+ 
+-		/*
+-		 * Add the inode to GC inode list. Garbage Collection
+-		 * is serialized and no two processes manipulate the
+-		 * list simultaneously.
+-		 */
+-		igrab(inode);
+-		list_add(&NILFS_I(inode)->i_dirty, &nilfs->ns_gc_inodes);
 -	}
--	if (!S_ISDIR(root->i_mode) || !root->i_blocks || !root->i_size) {
--		iput(root);
--		printk(KERN_ERR "NILFS: corrupt root inode.\n");
--		err = -EINVAL;
--		goto failed_segctor;
--	}
--	sb->s_root = d_alloc_root(root);
--	if (!sb->s_root) {
--		iput(root);
--		printk(KERN_ERR "NILFS: get root dentry failed\n");
--		err = -ENOMEM;
-+	err = nilfs_get_root_dentry(sb, fsroot, &sb->s_root);
-+	if (err)
- 		goto failed_segctor;
--	}
+-	return ret;
++	/*
++	 * Add the inode to GC inode list. Garbage Collection
++	 * is serialized and no two processes manipulate the
++	 * list simultaneously.
++	 */
++	igrab(inode);
++	list_add(&NILFS_I(inode)->i_dirty, &nilfs->ns_gc_inodes);
++
++	return 0;
+ }
  
- 	nilfs_put_root(fsroot);
- 
+ /**
 -- 
 1.6.6.2
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
