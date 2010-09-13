@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 18/23] nilfs2: get rid of GCDAT inode
-Date: Tue, 14 Sep 2010 00:37:19 +0900
-Message-ID: <1284392244-27100-19-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 19/23] nilfs2: use iget for all metadata files
+Date: Tue, 14 Sep 2010 00:37:20 +0900
+Message-ID: <1284392244-27100-20-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,473 +13,675 @@ Content-Transfer-Encoding: 7bit
 To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Nick Piggin <npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This applies prepared rollback function and redirect function of
-metadata file to DAT file, and eliminates GCDAT inode.
+This makes use of iget5_locked to allocate or get inode for metadata
+files to stop using own inode allocator.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/Makefile    |    2 +-
- fs/nilfs2/bmap.c      |   16 ---------
- fs/nilfs2/bmap.h      |    2 -
- fs/nilfs2/dat.c       |   30 ++++++++++++++++-
- fs/nilfs2/gcdat.c     |   87 -------------------------------------------------
- fs/nilfs2/mdt.c       |    9 -----
- fs/nilfs2/mdt.h       |    1 -
- fs/nilfs2/nilfs.h     |    8 +----
- fs/nilfs2/page.c      |   28 +--------------
- fs/nilfs2/segment.c   |   14 ++++----
- fs/nilfs2/the_nilfs.c |   13 +-------
- fs/nilfs2/the_nilfs.h |    2 -
- 12 files changed, 41 insertions(+), 171 deletions(-)
- delete mode 100644 fs/nilfs2/gcdat.c
+ fs/nilfs2/cpfile.c    |   49 +++++++++++++++++++++------------
+ fs/nilfs2/cpfile.h    |    4 +-
+ fs/nilfs2/dat.c       |   61 +++++++++++++++++++++++-----------------
+ fs/nilfs2/dat.h       |    4 +-
+ fs/nilfs2/ifile.c     |   51 ++++++++++++++++++++++++----------
+ fs/nilfs2/ifile.h     |    4 ++-
+ fs/nilfs2/inode.c     |   13 +++++++--
+ fs/nilfs2/mdt.c       |   16 +++++-----
+ fs/nilfs2/mdt.h       |    3 +-
+ fs/nilfs2/nilfs.h     |    2 +
+ fs/nilfs2/sufile.c    |   73 +++++++++++++++++++++++++++---------------------
+ fs/nilfs2/sufile.h    |    4 +-
+ fs/nilfs2/super.c     |   21 +++++++++-----
+ fs/nilfs2/the_nilfs.c |   58 +++++++++++++-------------------------
+ 14 files changed, 207 insertions(+), 156 deletions(-)
 
-diff --git a/fs/nilfs2/Makefile b/fs/nilfs2/Makefile
-index df3e62c..85c9873 100644
---- a/fs/nilfs2/Makefile
-+++ b/fs/nilfs2/Makefile
-@@ -2,4 +2,4 @@ obj-$(CONFIG_NILFS2_FS) += nilfs2.o
- nilfs2-y := inode.o file.o dir.o super.o namei.o page.o mdt.o \
- 	btnode.o bmap.o btree.o direct.o dat.o recovery.o \
- 	the_nilfs.o segbuf.o segment.o cpfile.o sufile.o \
--	ifile.o alloc.o gcinode.o ioctl.o gcdat.o
-+	ifile.o alloc.o gcinode.o ioctl.o
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 0024440..8b782b0 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -533,22 +533,6 @@ void nilfs_bmap_init_gc(struct nilfs_bmap *bmap)
- 	nilfs_btree_init_gc(bmap);
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index 1873781..03de1da 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -933,27 +933,40 @@ int nilfs_cpfile_get_stat(struct inode *cpfile, struct nilfs_cpstat *cpstat)
  }
  
--void nilfs_bmap_init_gcdat(struct nilfs_bmap *gcbmap, struct nilfs_bmap *bmap)
+ /**
+- * nilfs_cpfile_read - read cpfile inode
+- * @cpfile: cpfile inode
+- * @raw_inode: on-disk cpfile inode
+- */
+-int nilfs_cpfile_read(struct inode *cpfile, struct nilfs_inode *raw_inode)
 -{
--	memcpy(gcbmap, bmap, sizeof(*bmap));
--	init_rwsem(&gcbmap->b_sem);
--	lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
--	gcbmap->b_inode = &NILFS_BMAP_I(gcbmap)->vfs_inode;
+-	return nilfs_read_inode_common(cpfile, raw_inode);
 -}
 -
--void nilfs_bmap_commit_gcdat(struct nilfs_bmap *gcbmap, struct nilfs_bmap *bmap)
--{
--	memcpy(bmap, gcbmap, sizeof(*bmap));
--	init_rwsem(&bmap->b_sem);
--	lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
--	bmap->b_inode = &NILFS_BMAP_I(bmap)->vfs_inode;
--}
--
- void nilfs_bmap_save(const struct nilfs_bmap *bmap,
- 		     struct nilfs_bmap_store *store)
+-/**
+- * nilfs_cpfile_new - create cpfile
+- * @nilfs: nilfs object
++ * nilfs_cpfile_read - read or get cpfile inode
++ * @sb: super block instance
+  * @cpsize: size of a checkpoint entry
++ * @raw_inode: on-disk cpfile inode
++ * @inodep: buffer to store the inode
+  */
+-struct inode *nilfs_cpfile_new(struct the_nilfs *nilfs, size_t cpsize)
++int nilfs_cpfile_read(struct super_block *sb, size_t cpsize,
++		      struct nilfs_inode *raw_inode, struct inode **inodep)
  {
-diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index 5f3339e..bde1c0a 100644
---- a/fs/nilfs2/bmap.h
-+++ b/fs/nilfs2/bmap.h
-@@ -159,8 +159,6 @@ int nilfs_bmap_lookup_at_level(struct nilfs_bmap *, __u64, int, __u64 *);
- int nilfs_bmap_mark(struct nilfs_bmap *, __u64, int);
+ 	struct inode *cpfile;
++	int err;
  
- void nilfs_bmap_init_gc(struct nilfs_bmap *);
--void nilfs_bmap_init_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
--void nilfs_bmap_commit_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
+-	cpfile = nilfs_mdt_new(nilfs, NULL, NILFS_CPFILE_INO, 0);
+-	if (cpfile)
+-		nilfs_mdt_set_entry_size(cpfile, cpsize,
+-					 sizeof(struct nilfs_cpfile_header));
+-	return cpfile;
++	cpfile = nilfs_iget_locked(sb, NULL, NILFS_CPFILE_INO);
++	if (unlikely(!cpfile))
++		return -ENOMEM;
++	if (!(cpfile->i_state & I_NEW))
++		goto out;
++
++	err = nilfs_mdt_init(cpfile, NILFS_MDT_GFP, 0);
++	if (err)
++		goto failed;
++
++	nilfs_mdt_set_entry_size(cpfile, cpsize,
++				 sizeof(struct nilfs_cpfile_header));
++
++	err = nilfs_read_inode_common(cpfile, raw_inode);
++	if (err)
++		goto failed;
++
++	unlock_new_inode(cpfile);
++ out:
++	*inodep = cpfile;
++	return 0;
++ failed:
++	iget_failed(cpfile);
++	return err;
+ }
+diff --git a/fs/nilfs2/cpfile.h b/fs/nilfs2/cpfile.h
+index bc0809e..a242b9a 100644
+--- a/fs/nilfs2/cpfile.h
++++ b/fs/nilfs2/cpfile.h
+@@ -40,7 +40,7 @@ int nilfs_cpfile_get_stat(struct inode *, struct nilfs_cpstat *);
+ ssize_t nilfs_cpfile_get_cpinfo(struct inode *, __u64 *, int, void *, unsigned,
+ 				size_t);
  
- void nilfs_bmap_save(const struct nilfs_bmap *, struct nilfs_bmap_store *);
- void nilfs_bmap_restore(struct nilfs_bmap *, const struct nilfs_bmap_store *);
+-int nilfs_cpfile_read(struct inode *cpfile, struct nilfs_inode *raw_inode);
+-struct inode *nilfs_cpfile_new(struct the_nilfs *nilfs, size_t cpsize);
++int nilfs_cpfile_read(struct super_block *sb, size_t cpsize,
++		      struct nilfs_inode *raw_inode, struct inode **inodep);
+ 
+ #endif	/* _NILFS_CPFILE_H */
 diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 0131467..7091c4e 100644
+index 7091c4e..ab04a68 100644
 --- a/fs/nilfs2/dat.c
 +++ b/fs/nilfs2/dat.c
-@@ -36,6 +36,7 @@
- struct nilfs_dat_info {
- 	struct nilfs_mdt_info mi;
- 	struct nilfs_palloc_cache palloc_cache;
-+	struct nilfs_shadow_map shadow;
- };
- 
- static inline struct nilfs_dat_info *NILFS_DAT_I(struct inode *dat)
-@@ -327,6 +328,23 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
- 	ret = nilfs_palloc_get_entry_block(dat, vblocknr, 0, &entry_bh);
- 	if (ret < 0)
- 		return ret;
-+
-+	/*
-+	 * The given disk block number (blocknr) is not yet written to
-+	 * the device at this point.
-+	 *
-+	 * To prevent nilfs_dat_translate() from returning the
-+	 * uncommited block number, this makes a copy of the entry
-+	 * buffer and redirects nilfs_dat_translate() to the copy.
-+	 */
-+	if (!buffer_nilfs_redirected(entry_bh)) {
-+		ret = nilfs_mdt_freeze_buffer(dat, entry_bh);
-+		if (ret) {
-+			brelse(entry_bh);
-+			return ret;
-+		}
-+	}
-+
- 	kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
- 	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
- 	if (unlikely(entry->de_blocknr == cpu_to_le64(0))) {
-@@ -371,7 +389,7 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
-  */
- int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
- {
--	struct buffer_head *entry_bh;
-+	struct buffer_head *entry_bh, *bh;
- 	struct nilfs_dat_entry *entry;
- 	sector_t blocknr;
- 	void *kaddr;
-@@ -381,6 +399,15 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
- 	if (ret < 0)
- 		return ret;
- 
-+	if (!nilfs_doing_gc() && buffer_nilfs_redirected(entry_bh)) {
-+		bh = nilfs_mdt_get_frozen_buffer(dat, entry_bh);
-+		if (bh) {
-+			WARN_ON(!buffer_uptodate(bh));
-+			brelse(entry_bh);
-+			entry_bh = bh;
-+		}
-+	}
-+
- 	kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
- 	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
- 	blocknr = le64_to_cpu(entry->de_blocknr);
-@@ -468,6 +495,7 @@ struct inode *nilfs_dat_new(struct the_nilfs *nilfs, size_t entry_size)
- 		di = NILFS_DAT_I(dat);
- 		lockdep_set_class(&di->mi.mi_sem, &dat_lock_key);
- 		nilfs_palloc_setup_cache(dat, &di->palloc_cache);
-+		nilfs_mdt_setup_shadow_map(dat, &di->shadow);
- 	}
- 	return dat;
+@@ -463,39 +463,48 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
  }
-diff --git a/fs/nilfs2/gcdat.c b/fs/nilfs2/gcdat.c
-deleted file mode 100644
-index 84a45d1..0000000
---- a/fs/nilfs2/gcdat.c
-+++ /dev/null
-@@ -1,87 +0,0 @@
--/*
-- * gcdat.c - NILFS shadow DAT inode for GC
-- *
-- * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
-- *
-- * This program is free software; you can redistribute it and/or modify
-- * it under the terms of the GNU General Public License as published by
-- * the Free Software Foundation; either version 2 of the License, or
-- * (at your option) any later version.
-- *
-- * This program is distributed in the hope that it will be useful,
-- * but WITHOUT ANY WARRANTY; without even the implied warranty of
-- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-- * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-- *
-- * Written by Seiji Kihara <kihara-sG5X7nlA6pw@public.gmane.org>, Amagai Yoshiji <amagai-sG5X7nlA6pw@public.gmane.org>,
-- *            and Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>.
-- *
+ 
+ /**
+- * nilfs_dat_read - read dat inode
+- * @dat: dat inode
+- * @raw_inode: on-disk dat inode
 - */
--
--#include <linux/buffer_head.h>
--#include "nilfs.h"
--#include "page.h"
--#include "mdt.h"
--
--int nilfs_init_gcdat_inode(struct the_nilfs *nilfs)
+-int nilfs_dat_read(struct inode *dat, struct nilfs_inode *raw_inode)
 -{
--	struct inode *dat = nilfs->ns_dat, *gcdat = nilfs->ns_gc_dat;
--	struct nilfs_inode_info *dii = NILFS_I(dat), *gii = NILFS_I(gcdat);
--	int err;
--
--	gcdat->i_state = 0;
--	gcdat->i_blocks = dat->i_blocks;
--	gii->i_flags = dii->i_flags;
--	gii->i_state = dii->i_state | (1 << NILFS_I_GCDAT);
--	gii->i_cno = 0;
--	nilfs_bmap_init_gcdat(gii->i_bmap, dii->i_bmap);
--	err = nilfs_copy_dirty_pages(gcdat->i_mapping, dat->i_mapping);
--	if (unlikely(err))
--		return err;
--
--	return nilfs_copy_dirty_pages(&gii->i_btnode_cache,
--				      &dii->i_btnode_cache);
+-	return nilfs_read_inode_common(dat, raw_inode);
 -}
 -
--void nilfs_commit_gcdat_inode(struct the_nilfs *nilfs)
--{
--	struct inode *dat = nilfs->ns_dat, *gcdat = nilfs->ns_gc_dat;
--	struct nilfs_inode_info *dii = NILFS_I(dat), *gii = NILFS_I(gcdat);
--	struct address_space *mapping = dat->i_mapping;
--	struct address_space *gmapping = gcdat->i_mapping;
--
--	down_write(&NILFS_MDT(dat)->mi_sem);
--	dat->i_blocks = gcdat->i_blocks;
--	dii->i_flags = gii->i_flags;
--	dii->i_state = gii->i_state & ~(1 << NILFS_I_GCDAT);
--
--	nilfs_bmap_commit_gcdat(gii->i_bmap, dii->i_bmap);
--
--	nilfs_palloc_clear_cache(dat);
--	nilfs_palloc_clear_cache(gcdat);
--	nilfs_clear_dirty_pages(mapping);
--	nilfs_copy_back_pages(mapping, gmapping);
--	/* note: mdt dirty flags should be cleared by segctor. */
--
--	nilfs_clear_dirty_pages(&dii->i_btnode_cache);
--	nilfs_copy_back_pages(&dii->i_btnode_cache, &gii->i_btnode_cache);
--
--	up_write(&NILFS_MDT(dat)->mi_sem);
--}
--
--void nilfs_clear_gcdat_inode(struct the_nilfs *nilfs)
--{
--	struct inode *gcdat = nilfs->ns_gc_dat;
--	struct nilfs_inode_info *gii = NILFS_I(gcdat);
--
--	gcdat->i_state = I_FREEING | I_CLEAR;
--	gii->i_flags = 0;
--
--	nilfs_palloc_clear_cache(gcdat);
--	truncate_inode_pages(gcdat->i_mapping, 0);
--	truncate_inode_pages(&gii->i_btnode_cache, 0);
--}
+-/**
+- * nilfs_dat_new - create dat file
+- * @nilfs: nilfs object
++ * nilfs_dat_read - read or get dat inode
++ * @sb: super block instance
+  * @entry_size: size of a dat entry
++ * @raw_inode: on-disk dat inode
++ * @inodep: buffer to store the inode
+  */
+-struct inode *nilfs_dat_new(struct the_nilfs *nilfs, size_t entry_size)
++int nilfs_dat_read(struct super_block *sb, size_t entry_size,
++		   struct nilfs_inode *raw_inode, struct inode **inodep)
+ {
+ 	static struct lock_class_key dat_lock_key;
+ 	struct inode *dat;
+ 	struct nilfs_dat_info *di;
+ 	int err;
+ 
+-	dat = nilfs_mdt_new(nilfs, NULL, NILFS_DAT_INO, sizeof(*di));
+-	if (dat) {
+-		err = nilfs_palloc_init_blockgroup(dat, entry_size);
+-		if (unlikely(err)) {
+-			nilfs_mdt_destroy(dat);
+-			return NULL;
+-		}
++	dat = nilfs_iget_locked(sb, NULL, NILFS_DAT_INO);
++	if (unlikely(!dat))
++		return -ENOMEM;
++	if (!(dat->i_state & I_NEW))
++		goto out;
+ 
+-		di = NILFS_DAT_I(dat);
+-		lockdep_set_class(&di->mi.mi_sem, &dat_lock_key);
+-		nilfs_palloc_setup_cache(dat, &di->palloc_cache);
+-		nilfs_mdt_setup_shadow_map(dat, &di->shadow);
+-	}
+-	return dat;
++	err = nilfs_mdt_init(dat, NILFS_MDT_GFP, sizeof(*di));
++	if (err)
++		goto failed;
++
++	err = nilfs_palloc_init_blockgroup(dat, entry_size);
++	if (err)
++		goto failed;
++
++	di = NILFS_DAT_I(dat);
++	lockdep_set_class(&di->mi.mi_sem, &dat_lock_key);
++	nilfs_palloc_setup_cache(dat, &di->palloc_cache);
++	nilfs_mdt_setup_shadow_map(dat, &di->shadow);
++
++	err = nilfs_read_inode_common(dat, raw_inode);
++	if (err)
++		goto failed;
++
++	unlock_new_inode(dat);
++ out:
++	*inodep = dat;
++	return 0;
++ failed:
++	iget_failed(dat);
++	return err;
+ }
+diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
+index d31c3aa..cbd8e97 100644
+--- a/fs/nilfs2/dat.h
++++ b/fs/nilfs2/dat.h
+@@ -53,7 +53,7 @@ int nilfs_dat_freev(struct inode *, __u64 *, size_t);
+ int nilfs_dat_move(struct inode *, __u64, sector_t);
+ ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned, size_t);
+ 
+-int nilfs_dat_read(struct inode *dat, struct nilfs_inode *raw_inode);
+-struct inode *nilfs_dat_new(struct the_nilfs *nilfs, size_t entry_size);
++int nilfs_dat_read(struct super_block *sb, size_t entry_size,
++		   struct nilfs_inode *raw_inode, struct inode **inodep);
+ 
+ #endif	/* _NILFS_DAT_H */
+diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
+index 922d9dd..9f8a2da 100644
+--- a/fs/nilfs2/ifile.c
++++ b/fs/nilfs2/ifile.c
+@@ -161,25 +161,46 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
+ }
+ 
+ /**
+- * nilfs_ifile_new - create inode file
+- * @sbi: nilfs_sb_info struct
++ * nilfs_ifile_read - read or get ifile inode
++ * @sb: super block instance
++ * @root: root object
+  * @inode_size: size of an inode
++ * @raw_inode: on-disk ifile inode
++ * @inodep: buffer to store the inode
+  */
+-struct inode *nilfs_ifile_new(struct nilfs_sb_info *sbi, size_t inode_size)
++int nilfs_ifile_read(struct super_block *sb, struct nilfs_root *root,
++		     size_t inode_size, struct nilfs_inode *raw_inode,
++		     struct inode **inodep)
+ {
+ 	struct inode *ifile;
+ 	int err;
+ 
+-	ifile = nilfs_mdt_new(sbi->s_nilfs, sbi->s_super, NILFS_IFILE_INO,
+-			      sizeof(struct nilfs_ifile_info));
+-	if (ifile) {
+-		err = nilfs_palloc_init_blockgroup(ifile, inode_size);
+-		if (unlikely(err)) {
+-			nilfs_mdt_destroy(ifile);
+-			return NULL;
+-		}
+-		nilfs_palloc_setup_cache(ifile,
+-					 &NILFS_IFILE_I(ifile)->palloc_cache);
+-	}
+-	return ifile;
++	ifile = nilfs_iget_locked(sb, root, NILFS_IFILE_INO);
++	if (unlikely(!ifile))
++		return -ENOMEM;
++	if (!(ifile->i_state & I_NEW))
++		goto out;
++
++	err = nilfs_mdt_init(ifile, NILFS_MDT_GFP,
++			     sizeof(struct nilfs_ifile_info));
++	if (err)
++		goto failed;
++
++	err = nilfs_palloc_init_blockgroup(ifile, inode_size);
++	if (err)
++		goto failed;
++
++	nilfs_palloc_setup_cache(ifile, &NILFS_IFILE_I(ifile)->palloc_cache);
++
++	err = nilfs_read_inode_common(ifile, raw_inode);
++	if (err)
++		goto failed;
++
++	unlock_new_inode(ifile);
++ out:
++	*inodep = ifile;
++	return 0;
++ failed:
++	iget_failed(ifile);
++	return err;
+ }
+diff --git a/fs/nilfs2/ifile.h b/fs/nilfs2/ifile.h
+index cbca32e..59b6f2b 100644
+--- a/fs/nilfs2/ifile.h
++++ b/fs/nilfs2/ifile.h
+@@ -49,6 +49,8 @@ int nilfs_ifile_create_inode(struct inode *, ino_t *, struct buffer_head **);
+ int nilfs_ifile_delete_inode(struct inode *, ino_t);
+ int nilfs_ifile_get_inode_block(struct inode *, ino_t, struct buffer_head **);
+ 
+-struct inode *nilfs_ifile_new(struct nilfs_sb_info *sbi, size_t inode_size);
++int nilfs_ifile_read(struct super_block *sb, struct nilfs_root *root,
++		     size_t inode_size, struct nilfs_inode *raw_inode,
++		     struct inode **inodep);
+ 
+ #endif	/* _NILFS_IFILE_H */
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 5485dd1..5b3d43f 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -506,16 +506,23 @@ static int nilfs_iget_set(struct inode *inode, void *opaque)
+ 	return 0;
+ }
+ 
+-struct inode *nilfs_iget(struct super_block *sb, struct nilfs_root *root,
+-			 unsigned long ino)
++struct inode *nilfs_iget_locked(struct super_block *sb, struct nilfs_root *root,
++				unsigned long ino)
+ {
+ 	struct nilfs_iget_args args = {
+ 		.ino = ino, .root = root, .cno = 0, .for_gc = 0
+ 	};
++
++	return iget5_locked(sb, ino, nilfs_iget_test, nilfs_iget_set, &args);
++}
++
++struct inode *nilfs_iget(struct super_block *sb, struct nilfs_root *root,
++			 unsigned long ino)
++{
+ 	struct inode *inode;
+ 	int err;
+ 
+-	inode = iget5_locked(sb, ino, nilfs_iget_test, nilfs_iget_set, &args);
++	inode = nilfs_iget_locked(sb, root, ino);
+ 	if (unlikely(!inode))
+ 		return ERR_PTR(-ENOMEM);
+ 	if (!(inode->i_state & I_NEW))
 diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 532f85a..3bbd340 100644
+index 3bbd340..44326cf 100644
 --- a/fs/nilfs2/mdt.c
 +++ b/fs/nilfs2/mdt.c
-@@ -414,8 +414,6 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- 	sb = inode->i_sb;
- 	nilfs = NILFS_MDT(inode)->mi_nilfs;
+@@ -444,8 +444,7 @@ static const struct inode_operations def_mdt_iops;
+ static const struct file_operations def_mdt_fops;
  
--	if (page->mapping->assoc_mapping)
--		return 0; /* Do not request flush for shadow page cache */
- 	if (!sb) {
- 		down_read(&nilfs->ns_writer_sem);
- 		writer = nilfs->ns_writer;
-@@ -566,13 +564,6 @@ void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size,
- 	mi->mi_first_entry_offset = DIV_ROUND_UP(header_size, entry_size);
- }
  
--void nilfs_mdt_set_shadow(struct inode *orig, struct inode *shadow)
--{
--	shadow->i_mapping->assoc_mapping = orig->i_mapping;
--	NILFS_I(shadow)->i_btnode_cache.assoc_mapping =
--		&NILFS_I(orig)->i_btnode_cache;
--}
--
- static const struct address_space_operations shadow_map_aops = {
- 	.sync_page		= block_sync_page,
- };
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index e60bbfe..1e0901c 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -93,7 +93,6 @@ struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
- 				   ino_t);
- void nilfs_mdt_destroy(struct inode *);
- void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
--void nilfs_mdt_set_shadow(struct inode *, struct inode *);
- 
- int nilfs_mdt_setup_shadow_map(struct inode *inode,
- 			       struct nilfs_shadow_map *shadow);
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index cf5507a..e9f4579 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -101,7 +101,6 @@ enum {
- 	NILFS_I_INODE_DIRTY,		/* write_inode is requested */
- 	NILFS_I_BMAP,			/* has bmap and btnode_cache */
- 	NILFS_I_GCINODE,		/* inode for GC, on memory only */
--	NILFS_I_GCDAT,			/* shadow DAT, on memory only */
- };
- 
- /*
-@@ -193,7 +192,7 @@ static inline int nilfs_doing_construction(void)
- 
- static inline struct inode *nilfs_dat_inode(const struct the_nilfs *nilfs)
+-int nilfs_mdt_init(struct inode *inode, struct the_nilfs *nilfs,
+-		   gfp_t gfp_mask, size_t objsz)
++int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz)
  {
--	return nilfs_doing_gc() ? nilfs->ns_gc_dat : nilfs->ns_dat;
-+	return nilfs->ns_dat;
+ 	struct nilfs_mdt_info *mi;
+ 
+@@ -453,13 +452,17 @@ int nilfs_mdt_init(struct inode *inode, struct the_nilfs *nilfs,
+ 	if (!mi)
+ 		return -ENOMEM;
+ 
+-	mi->mi_nilfs = nilfs;
++	mi->mi_nilfs = NILFS_I_NILFS(inode);
+ 	init_rwsem(&mi->mi_sem);
+ 	inode->i_private = mi;
+ 
+ 	inode->i_mode = S_IFREG;
+ 	mapping_set_gfp_mask(inode->i_mapping, gfp_mask);
+-	inode->i_mapping->backing_dev_info = nilfs->ns_bdi;
++	inode->i_mapping->backing_dev_info = inode->i_sb->s_bdi;
++
++	inode->i_op = &def_mdt_iops;
++	inode->i_fop = &def_mdt_fops;
++	inode->i_mapping->a_ops = &def_mdt_aops;
+ 
+ 	return 0;
  }
+@@ -544,13 +547,10 @@ struct inode *nilfs_mdt_new(struct the_nilfs *nilfs, struct super_block *sb,
+ 	if (!inode)
+ 		return NULL;
  
- /*
-@@ -294,11 +293,6 @@ int nilfs_gccache_wait_and_mark_dirty(struct buffer_head *);
- int nilfs_init_gcinode(struct inode *inode);
- void nilfs_remove_all_gcinodes(struct the_nilfs *nilfs);
- 
--/* gcdat.c */
--int nilfs_init_gcdat_inode(struct the_nilfs *);
--void nilfs_commit_gcdat_inode(struct the_nilfs *);
--void nilfs_clear_gcdat_inode(struct the_nilfs *);
--
- /*
-  * Inodes and files operations
-  */
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 7083344..a6c3c2e 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -79,8 +79,8 @@ struct buffer_head *nilfs_grab_buffer(struct inode *inode,
- {
- 	int blkbits = inode->i_blkbits;
- 	pgoff_t index = blkoff >> (PAGE_CACHE_SHIFT - blkbits);
--	struct page *page, *opage;
--	struct buffer_head *bh, *obh;
-+	struct page *page;
-+	struct buffer_head *bh;
- 
- 	page = grab_cache_page(mapping, index);
- 	if (unlikely(!page))
-@@ -92,30 +92,6 @@ struct buffer_head *nilfs_grab_buffer(struct inode *inode,
- 		page_cache_release(page);
+-	if (nilfs_mdt_init(inode, nilfs, NILFS_MDT_GFP, objsz) < 0) {
++	if (nilfs_mdt_init(inode, NILFS_MDT_GFP, objsz) < 0) {
+ 		nilfs_destroy_inode(inode);
  		return NULL;
  	}
--	if (!buffer_uptodate(bh) && mapping->assoc_mapping != NULL) {
--		/*
--		 * Shadow page cache uses assoc_mapping to point its original
--		 * page cache.  The following code tries the original cache
--		 * if the given cache is a shadow and it didn't hit.
--		 */
--		opage = find_lock_page(mapping->assoc_mapping, index);
--		if (!opage)
--			return bh;
--
--		obh = __nilfs_get_page_block(opage, blkoff, index, blkbits,
--					     b_state);
--		if (buffer_uptodate(obh)) {
--			nilfs_copy_buffer(bh, obh);
--			if (buffer_dirty(obh)) {
--				nilfs_mark_buffer_dirty(bh);
--				if (!buffer_nilfs_node(bh) && NILFS_MDT(inode))
--					nilfs_mdt_mark_dirty(inode);
--			}
--		}
--		brelse(obh);
--		unlock_page(opage);
--		page_cache_release(opage);
+-	inode->i_op = &def_mdt_iops;
+-	inode->i_fop = &def_mdt_fops;
+-	inode->i_mapping->a_ops = &def_mdt_aops;
+ 	return inode;
+ }
+ 
+diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
+index 1e0901c..73ff7c0 100644
+--- a/fs/nilfs2/mdt.h
++++ b/fs/nilfs2/mdt.h
+@@ -85,8 +85,7 @@ int nilfs_mdt_forget_block(struct inode *, unsigned long);
+ int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
+ int nilfs_mdt_fetch_dirty(struct inode *);
+ 
+-int nilfs_mdt_init(struct inode *inode, struct the_nilfs *nilfs,
+-		   gfp_t gfp_mask, size_t objsz);
++int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz);
+ struct inode *nilfs_mdt_new(struct the_nilfs *, struct super_block *, ino_t,
+ 			    size_t);
+ struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index e9f4579..2ca2ca5 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -244,6 +244,8 @@ extern int nilfs_get_block(struct inode *, sector_t, struct buffer_head *, int);
+ extern void nilfs_set_inode_flags(struct inode *);
+ extern int nilfs_read_inode_common(struct inode *, struct nilfs_inode *);
+ extern void nilfs_write_inode_common(struct inode *, struct nilfs_inode *, int);
++struct inode *nilfs_iget_locked(struct super_block *sb, struct nilfs_root *root,
++				unsigned long ino);
+ struct inode *nilfs_iget(struct super_block *sb, struct nilfs_root *root,
+ 			 unsigned long ino);
+ extern struct inode *nilfs_iget_for_gc(struct super_block *sb,
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index 3c6cc60..599d9c2 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -635,46 +635,55 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
+ }
+ 
+ /**
+- * nilfs_sufile_read - read sufile inode
+- * @sufile: sufile inode
++ * nilfs_sufile_read - read or get sufile inode
++ * @sb: super block instance
++ * @susize: size of a segment usage entry
+  * @raw_inode: on-disk sufile inode
++ * @inodep: buffer to store the inode
+  */
+-int nilfs_sufile_read(struct inode *sufile, struct nilfs_inode *raw_inode)
++int nilfs_sufile_read(struct super_block *sb, size_t susize,
++		      struct nilfs_inode *raw_inode, struct inode **inodep)
+ {
+-	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
++	struct inode *sufile;
++	struct nilfs_sufile_info *sui;
+ 	struct buffer_head *header_bh;
+ 	struct nilfs_sufile_header *header;
+ 	void *kaddr;
+-	int ret;
++	int err;
+ 
+-	ret = nilfs_read_inode_common(sufile, raw_inode);
+-	if (ret < 0)
+-		return ret;
++	sufile = nilfs_iget_locked(sb, NULL, NILFS_SUFILE_INO);
++	if (unlikely(!sufile))
++		return -ENOMEM;
++	if (!(sufile->i_state & I_NEW))
++		goto out;
+ 
+-	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
+-	if (!ret) {
+-		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
+-		header = kaddr + bh_offset(header_bh);
+-		sui->ncleansegs = le64_to_cpu(header->sh_ncleansegs);
+-		kunmap_atomic(kaddr, KM_USER0);
+-		brelse(header_bh);
 -	}
- 	return bh;
+-	return ret;
+-}
++	err = nilfs_mdt_init(sufile, NILFS_MDT_GFP, sizeof(*sui));
++	if (err)
++		goto failed;
+ 
+-/**
+- * nilfs_sufile_new - create sufile
+- * @nilfs: nilfs object
+- * @susize: size of a segment usage entry
+- */
+-struct inode *nilfs_sufile_new(struct the_nilfs *nilfs, size_t susize)
+-{
+-	struct inode *sufile;
++	nilfs_mdt_set_entry_size(sufile, susize,
++				 sizeof(struct nilfs_sufile_header));
++
++	err = nilfs_read_inode_common(sufile, raw_inode);
++	if (err)
++		goto failed;
++
++	err = nilfs_sufile_get_header_block(sufile, &header_bh);
++	if (err)
++		goto failed;
+ 
+-	sufile = nilfs_mdt_new(nilfs, NULL, NILFS_SUFILE_INO,
+-			       sizeof(struct nilfs_sufile_info));
+-	if (sufile)
+-		nilfs_mdt_set_entry_size(sufile, susize,
+-					 sizeof(struct nilfs_sufile_header));
+-	return sufile;
++	sui = NILFS_SUI(sufile);
++	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
++	header = kaddr + bh_offset(header_bh);
++	sui->ncleansegs = le64_to_cpu(header->sh_ncleansegs);
++	kunmap_atomic(kaddr, KM_USER0);
++	brelse(header_bh);
++
++	unlock_new_inode(sufile);
++ out:
++	*inodep = sufile;
++	return 0;
++ failed:
++	iget_failed(sufile);
++	return err;
  }
+diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+index 15163b8..203f610 100644
+--- a/fs/nilfs2/sufile.h
++++ b/fs/nilfs2/sufile.h
+@@ -61,8 +61,8 @@ void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
+ void nilfs_sufile_do_set_error(struct inode *, __u64, struct buffer_head *,
+ 			       struct buffer_head *);
  
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 91dc066..b0c5e08 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1945,11 +1945,9 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+-int nilfs_sufile_read(struct inode *sufile, struct nilfs_inode *raw_inode);
+-struct inode *nilfs_sufile_new(struct the_nilfs *nilfs, size_t susize);
++int nilfs_sufile_read(struct super_block *sb, size_t susize,
++		      struct nilfs_inode *raw_inode, struct inode **inodep);
  
- 	nilfs_drop_collected_inodes(&sci->sc_dirty_files);
+ /**
+  * nilfs_sufile_scrap - make a segment garbage
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 411ee2e..361400b 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -359,6 +359,10 @@ static void nilfs_put_super(struct super_block *sb)
+ 		up_write(&nilfs->ns_sem);
+ 	}
  
--	if (nilfs_doing_gc()) {
-+	if (nilfs_doing_gc())
- 		nilfs_drop_collected_inodes(&sci->sc_gc_inodes);
--		if (update_sr)
--			nilfs_commit_gcdat_inode(nilfs);
--	} else
-+	else
- 		nilfs->ns_nongc_ctime = sci->sc_seg_ctime;
++	iput(nilfs->ns_sufile);
++	iput(nilfs->ns_cpfile);
++	iput(nilfs->ns_dat);
++
+ 	destroy_nilfs(nilfs);
+ 	sbi->s_super = NULL;
+ 	sb->s_fs_info = NULL;
+@@ -408,10 +412,6 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno, int curr_mnt,
+ 	if (root->ifile)
+ 		goto reuse; /* already attached checkpoint */
  
- 	sci->sc_nblk_inc += sci->sc_nblk_this_inc;
-@@ -2472,13 +2470,15 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
- 
- 	nilfs_transaction_lock(sbi, &ti, 1);
- 
--	err = nilfs_init_gcdat_inode(nilfs);
-+	err = nilfs_mdt_save_to_shadow_map(nilfs->ns_dat);
- 	if (unlikely(err))
- 		goto out_unlock;
- 
- 	err = nilfs_ioctl_prepare_clean_segments(nilfs, argv, kbufs);
+-	root->ifile = nilfs_ifile_new(sbi, nilfs->ns_inode_size);
+-	if (!root->ifile)
+-		goto failed;
+-
+ 	down_read(&nilfs->ns_segctor_sem);
+ 	err = nilfs_cpfile_get_checkpoint(nilfs->ns_cpfile, cno, 0, &raw_cp,
+ 					  &bh_cp);
+@@ -426,8 +426,10 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno, int curr_mnt,
+ 		}
+ 		goto failed;
+ 	}
+-	err = nilfs_read_inode_common(root->ifile, &raw_cp->cp_ifile_inode);
 -	if (unlikely(err))
-+	if (unlikely(err)) {
-+		nilfs_mdt_restore_from_shadow_map(nilfs->ns_dat);
- 		goto out_unlock;
-+	}
++
++	err = nilfs_ifile_read(sbi->s_super, root, nilfs->ns_inode_size,
++			       &raw_cp->cp_ifile_inode, &root->ifile);
++	if (err)
+ 		goto failed_bh;
  
- 	sci->sc_freesegs = kbufs[4];
- 	sci->sc_nfreesegs = argv[4].v_nmembs;
-@@ -2510,7 +2510,7 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
-  out_unlock:
- 	sci->sc_freesegs = NULL;
- 	sci->sc_nfreesegs = 0;
--	nilfs_clear_gcdat_inode(nilfs);
-+	nilfs_mdt_clear_shadow_map(nilfs->ns_dat);
- 	nilfs_transaction_unlock(sbi);
- 	return err;
- }
+ 	atomic_set(&root->inodes_count, le64_to_cpu(raw_cp->cp_inodes_count));
+@@ -900,7 +902,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
+ 	if (err) {
+ 		printk(KERN_ERR "NILFS: error loading last checkpoint "
+ 		       "(checkpoint number=%llu).\n", (unsigned long long)cno);
+-		goto failed_nilfs;
++		goto failed_unload;
+ 	}
+ 
+ 	if (!(sb->s_flags & MS_RDONLY)) {
+@@ -929,6 +931,11 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
+  failed_checkpoint:
+ 	nilfs_put_root(fsroot);
+ 
++ failed_unload:
++	iput(nilfs->ns_sufile);
++	iput(nilfs->ns_cpfile);
++	iput(nilfs->ns_dat);
++
+  failed_nilfs:
+ 	destroy_nilfs(nilfs);
+ 
 diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index bc9a3e2..10e3ef0 100644
+index 10e3ef0..768e162 100644
 --- a/fs/nilfs2/the_nilfs.c
 +++ b/fs/nilfs2/the_nilfs.c
-@@ -96,7 +96,6 @@ void destroy_nilfs(struct the_nilfs *nilfs)
- 		nilfs_mdt_destroy(nilfs->ns_sufile);
- 		nilfs_mdt_destroy(nilfs->ns_cpfile);
- 		nilfs_mdt_destroy(nilfs->ns_dat);
--		nilfs_mdt_destroy(nilfs->ns_gc_dat);
- 	}
+@@ -92,11 +92,6 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+ void destroy_nilfs(struct the_nilfs *nilfs)
+ {
+ 	might_sleep();
+-	if (nilfs_loaded(nilfs)) {
+-		nilfs_mdt_destroy(nilfs->ns_sufile);
+-		nilfs_mdt_destroy(nilfs->ns_cpfile);
+-		nilfs_mdt_destroy(nilfs->ns_dat);
+-	}
  	if (nilfs_init(nilfs)) {
  		brelse(nilfs->ns_sbh[0]);
-@@ -131,20 +130,14 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs, sector_t sr_block)
- 	if (unlikely(!nilfs->ns_dat))
+ 		brelse(nilfs->ns_sbh[1]);
+@@ -104,11 +99,13 @@ void destroy_nilfs(struct the_nilfs *nilfs)
+ 	kfree(nilfs);
+ }
+ 
+-static int nilfs_load_super_root(struct the_nilfs *nilfs, sector_t sr_block)
++static int nilfs_load_super_root(struct the_nilfs *nilfs,
++				 struct super_block *sb, sector_t sr_block)
+ {
+ 	struct buffer_head *bh_sr;
+ 	struct nilfs_super_root *raw_sr;
+ 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
++	struct nilfs_inode *rawi;
+ 	unsigned dat_entry_size, segment_usage_size, checkpoint_size;
+ 	unsigned inode_size;
+ 	int err;
+@@ -125,34 +122,22 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs, sector_t sr_block)
+ 
+ 	inode_size = nilfs->ns_inode_size;
+ 
+-	err = -ENOMEM;
+-	nilfs->ns_dat = nilfs_dat_new(nilfs, dat_entry_size);
+-	if (unlikely(!nilfs->ns_dat))
++	rawi = (void *)bh_sr->b_data + NILFS_SR_DAT_OFFSET(inode_size);
++	err = nilfs_dat_read(sb, dat_entry_size, rawi, &nilfs->ns_dat);
++	if (err)
  		goto failed;
  
--	nilfs->ns_gc_dat = nilfs_dat_new(nilfs, dat_entry_size);
--	if (unlikely(!nilfs->ns_gc_dat))
--		goto failed_dat;
--
- 	nilfs->ns_cpfile = nilfs_cpfile_new(nilfs, checkpoint_size);
- 	if (unlikely(!nilfs->ns_cpfile))
--		goto failed_gc_dat;
-+		goto failed_dat;
+-	nilfs->ns_cpfile = nilfs_cpfile_new(nilfs, checkpoint_size);
+-	if (unlikely(!nilfs->ns_cpfile))
++	rawi = (void *)bh_sr->b_data + NILFS_SR_CPFILE_OFFSET(inode_size);
++	err = nilfs_cpfile_read(sb, checkpoint_size, rawi, &nilfs->ns_cpfile);
++	if (err)
+ 		goto failed_dat;
  
- 	nilfs->ns_sufile = nilfs_sufile_new(nilfs, segment_usage_size);
- 	if (unlikely(!nilfs->ns_sufile))
+-	nilfs->ns_sufile = nilfs_sufile_new(nilfs, segment_usage_size);
+-	if (unlikely(!nilfs->ns_sufile))
++	rawi = (void *)bh_sr->b_data + NILFS_SR_SUFILE_OFFSET(inode_size);
++	err = nilfs_sufile_read(sb, segment_usage_size, rawi,
++				&nilfs->ns_sufile);
++	if (err)
  		goto failed_cpfile;
  
--	nilfs_mdt_set_shadow(nilfs->ns_dat, nilfs->ns_gc_dat);
+-	err = nilfs_dat_read(nilfs->ns_dat, (void *)bh_sr->b_data +
+-			     NILFS_SR_DAT_OFFSET(inode_size));
+-	if (unlikely(err))
+-		goto failed_sufile;
 -
- 	err = nilfs_dat_read(nilfs->ns_dat, (void *)bh_sr->b_data +
- 			     NILFS_SR_DAT_OFFSET(inode_size));
- 	if (unlikely(err))
-@@ -173,9 +166,6 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs, sector_t sr_block)
-  failed_cpfile:
- 	nilfs_mdt_destroy(nilfs->ns_cpfile);
+-	err = nilfs_cpfile_read(nilfs->ns_cpfile, (void *)bh_sr->b_data +
+-				NILFS_SR_CPFILE_OFFSET(inode_size));
+-	if (unlikely(err))
+-		goto failed_sufile;
+-
+-	err = nilfs_sufile_read(nilfs->ns_sufile, (void *)bh_sr->b_data +
+-				NILFS_SR_SUFILE_OFFSET(inode_size));
+-	if (unlikely(err))
+-		goto failed_sufile;
+-
+ 	raw_sr = (struct nilfs_super_root *)bh_sr->b_data;
+ 	nilfs->ns_nongc_ctime = le64_to_cpu(raw_sr->sr_nongc_ctime);
  
-- failed_gc_dat:
--	nilfs_mdt_destroy(nilfs->ns_gc_dat);
+@@ -160,14 +145,11 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs, sector_t sr_block)
+ 	brelse(bh_sr);
+ 	return err;
+ 
+- failed_sufile:
+-	nilfs_mdt_destroy(nilfs->ns_sufile);
 -
+  failed_cpfile:
+-	nilfs_mdt_destroy(nilfs->ns_cpfile);
++	iput(nilfs->ns_cpfile);
+ 
   failed_dat:
- 	nilfs_mdt_destroy(nilfs->ns_dat);
+-	nilfs_mdt_destroy(nilfs->ns_dat);
++	iput(nilfs->ns_dat);
  	goto failed;
-@@ -371,7 +361,6 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
- 	nilfs_mdt_destroy(nilfs->ns_cpfile);
- 	nilfs_mdt_destroy(nilfs->ns_sufile);
- 	nilfs_mdt_destroy(nilfs->ns_dat);
--	nilfs_mdt_destroy(nilfs->ns_gc_dat);
+ }
+ 
+@@ -290,7 +272,7 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ 			goto scan_error;
+ 	}
+ 
+-	err = nilfs_load_super_root(nilfs, ri.ri_super_root);
++	err = nilfs_load_super_root(nilfs, sbi->s_super, ri.ri_super_root);
+ 	if (unlikely(err)) {
+ 		printk(KERN_ERR "NILFS: error loading super root.\n");
+ 		goto failed;
+@@ -358,9 +340,9 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
+ 	goto failed;
+ 
+  failed_unload:
+-	nilfs_mdt_destroy(nilfs->ns_cpfile);
+-	nilfs_mdt_destroy(nilfs->ns_sufile);
+-	nilfs_mdt_destroy(nilfs->ns_dat);
++	iput(nilfs->ns_cpfile);
++	iput(nilfs->ns_sufile);
++	iput(nilfs->ns_dat);
  
   failed:
  	nilfs_clear_recovery_info(&ri);
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index 1908dc7..a5178dc 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -74,7 +74,6 @@ enum {
-  * @ns_dat: DAT file inode
-  * @ns_cpfile: checkpoint file inode
-  * @ns_sufile: segusage file inode
-- * @ns_gc_dat: shadow inode of the DAT file inode for GC
-  * @ns_cptree: rb-tree of all mounted checkpoints (nilfs_root)
-  * @ns_cptree_lock: lock protecting @ns_cptree
-  * @ns_gc_inodes: dummy inodes to keep live blocks
-@@ -149,7 +148,6 @@ struct the_nilfs {
- 	struct inode	       *ns_dat;
- 	struct inode	       *ns_cpfile;
- 	struct inode	       *ns_sufile;
--	struct inode	       *ns_gc_dat;
+@@ -782,7 +764,7 @@ void nilfs_put_root(struct nilfs_root *root)
+ 		rb_erase(&root->rb_node, &nilfs->ns_cptree);
+ 		spin_unlock(&nilfs->ns_cptree_lock);
+ 		if (root->ifile)
+-			nilfs_mdt_destroy(root->ifile);
++			iput(root->ifile);
  
- 	/* Checkpoint tree */
- 	struct rb_root		ns_cptree;
+ 		kfree(root);
+ 	}
 -- 
 1.6.6.2
 
