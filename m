@@ -1,82 +1,137 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 15/23] nilfs2: add routines to save and restore bmap state
-Date: Tue, 14 Sep 2010 00:37:16 +0900
-Message-ID: <1284392244-27100-16-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 09/23] nilfs2: split out nilfs_attach_snapshot
+Date: Tue, 14 Sep 2010 00:37:10 +0900
+Message-ID: <1284392244-27100-10-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-fsdevel@vger.kernel.org
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Nick Piggin <npiggin@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Nick Piggin <npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This adds routines to save and restore the state of bmap structure.
-The bmap state is stored in a given nilfs_bmap_store object.
+This splits the code to attach snapshots into a separate routine for
+convenience sake.
 
-These routines will be used to roll back the state of dat inode
-without using gcdat inode.
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/bmap.c |   18 ++++++++++++++++++
- fs/nilfs2/bmap.h |    8 ++++++++
- 2 files changed, 26 insertions(+), 0 deletions(-)
+ fs/nilfs2/super.c |   73 ++++++++++++++++++++++++++++++++--------------------
+ 1 files changed, 45 insertions(+), 28 deletions(-)
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 3dbdc1d..0024440 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -548,3 +548,21 @@ void nilfs_bmap_commit_gcdat(struct nilfs_bmap *gcbmap, struct nilfs_bmap *bmap)
- 	lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
- 	bmap->b_inode = &NILFS_BMAP_I(bmap)->vfs_inode;
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 23ad8d4..0ebe4c6 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -788,6 +788,40 @@ static int nilfs_get_root_dentry(struct super_block *sb,
+ 	return ret;
  }
-+
-+void nilfs_bmap_save(const struct nilfs_bmap *bmap,
-+		     struct nilfs_bmap_store *store)
+ 
++static int nilfs_attach_snapshot(struct super_block *s, __u64 cno,
++				 struct dentry **root_dentry)
 +{
-+	memcpy(store->data, bmap->b_u.u_data, sizeof(store->data));
-+	store->last_allocated_key = bmap->b_last_allocated_key;
-+	store->last_allocated_ptr = bmap->b_last_allocated_ptr;
-+	store->state = bmap->b_state;
++	struct the_nilfs *nilfs = NILFS_SB(s)->s_nilfs;
++	struct nilfs_root *root;
++	int ret;
++
++	down_read(&nilfs->ns_segctor_sem);
++	ret = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile, cno);
++	up_read(&nilfs->ns_segctor_sem);
++	if (ret < 0) {
++		ret = (ret == -ENOENT) ? -EINVAL : ret;
++		goto out;
++	} else if (!ret) {
++		printk(KERN_ERR "NILFS: The specified checkpoint is "
++		       "not a snapshot (checkpoint number=%llu).\n",
++		       (unsigned long long)cno);
++		ret = -EINVAL;
++		goto out;
++	}
++
++	ret = nilfs_attach_checkpoint(NILFS_SB(s), cno, false, &root);
++	if (ret) {
++		printk(KERN_ERR "NILFS: error loading snapshot "
++		       "(checkpoint number=%llu).\n",
++	       (unsigned long long)cno);
++		goto out;
++	}
++	ret = nilfs_get_root_dentry(s, root, root_dentry);
++	nilfs_put_root(root);
++ out:
++	return ret;
 +}
 +
-+void nilfs_bmap_restore(struct nilfs_bmap *bmap,
-+			const struct nilfs_bmap_store *store)
-+{
-+	memcpy(bmap->b_u.u_data, store->data, sizeof(store->data));
-+	bmap->b_last_allocated_key = store->last_allocated_key;
-+	bmap->b_last_allocated_ptr = store->last_allocated_ptr;
-+	bmap->b_state = store->state;
-+}
-diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index a20569b..5f3339e 100644
---- a/fs/nilfs2/bmap.h
-+++ b/fs/nilfs2/bmap.h
-@@ -135,6 +135,12 @@ struct nilfs_bmap {
- /* state */
- #define NILFS_BMAP_DIRTY	0x00000001
+ /**
+  * nilfs_fill_super() - initialize a super block instance
+  * @sb: super_block
+@@ -805,7 +839,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+ 	struct nilfs_sb_info *sbi;
+ 	struct nilfs_root *fsroot;
+ 	__u64 cno;
+-	int err, curr_mnt;
++	int err;
  
-+struct nilfs_bmap_store {
-+	__le64 data[NILFS_BMAP_SIZE / sizeof(__le64)];
-+	__u64 last_allocated_key;
-+	__u64 last_allocated_ptr;
-+	int state;
-+};
+ 	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
+ 	if (!sbi)
+@@ -846,35 +880,17 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+ 	if (err)
+ 		goto failed_sbi;
  
- int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *);
- int nilfs_bmap_read(struct nilfs_bmap *, struct nilfs_inode *);
-@@ -156,6 +162,8 @@ void nilfs_bmap_init_gc(struct nilfs_bmap *);
- void nilfs_bmap_init_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
- void nilfs_bmap_commit_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
+-	cno = nilfs_last_cno(nilfs);
+-	curr_mnt = true;
+-
+-	if (sb->s_flags & MS_RDONLY) {
+-		if (nilfs_test_opt(sbi, SNAPSHOT)) {
+-			down_read(&nilfs->ns_segctor_sem);
+-			err = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile,
+-						       sbi->s_snapshot_cno);
+-			up_read(&nilfs->ns_segctor_sem);
+-			if (err < 0) {
+-				if (err == -ENOENT)
+-					err = -EINVAL;
+-				goto failed_sbi;
+-			}
+-			if (!err) {
+-				printk(KERN_ERR
+-				       "NILFS: The specified checkpoint is "
+-				       "not a snapshot "
+-				       "(checkpoint number=%llu).\n",
+-				       (unsigned long long)sbi->s_snapshot_cno);
+-				err = -EINVAL;
+-				goto failed_sbi;
+-			}
+-			cno = sbi->s_snapshot_cno;
+-			curr_mnt = false;
+-		}
++	if (nilfs_test_opt(sbi, SNAPSHOT)) {
++		err = nilfs_attach_snapshot(sb, sbi->s_snapshot_cno,
++					    &sb->s_root);
++		if (err)
++			goto failed_sbi;
++
++		goto add_to_supers;
+ 	}
  
-+void nilfs_bmap_save(const struct nilfs_bmap *, struct nilfs_bmap_store *);
-+void nilfs_bmap_restore(struct nilfs_bmap *, const struct nilfs_bmap_store *);
+-	err = nilfs_attach_checkpoint(sbi, cno, curr_mnt, &fsroot);
++	cno = nilfs_last_cno(nilfs);
++	err = nilfs_attach_checkpoint(sbi, cno, true, &fsroot);
+ 	if (err) {
+ 		printk(KERN_ERR "NILFS: error loading a checkpoint"
+ 		       " (checkpoint number=%llu).\n", (unsigned long long)cno);
+@@ -899,6 +915,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+ 		up_write(&nilfs->ns_sem);
+ 	}
  
- static inline int nilfs_bmap_lookup(struct nilfs_bmap *bmap, __u64 key,
- 				    __u64 *ptr)
++ add_to_supers:
+ 	down_write(&nilfs->ns_super_sem);
+ 	list_add(&sbi->s_list, &nilfs->ns_supers);
+ 	if (!nilfs_test_opt(sbi, SNAPSHOT))
 -- 
 1.6.6.2
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
