@@ -1,222 +1,132 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 23/23] nilfs2: remove own inode allocator and destructor for metadata files
-Date: Tue, 14 Sep 2010 00:37:24 +0900
-Message-ID: <1284392244-27100-24-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-fsdevel-owner@vger.kernel.org
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 0/23] nilfs2: remove own inode allocator
+Date: Tue, 14 Sep 2010 00:37:01 +0900
+Message-ID: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-fsdevel@vger.kernel.org
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Nick Piggin <npiggin@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Nick Piggin <npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This finally removes own inode allocator and destructor functions for
-metadata files.  Several routines, nilfs_mdt_new(),
-nilfs_mdt_new_common(), nilfs_mdt_clear(), nilfs_mdt_destroy(), and
-nilfs_alloc_inode_common() will be gone.
+This patchset is intended to unify super block instances allocated for
+one device into one sb and to eliminate own inode allocator from
+nilfs.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
----
- fs/nilfs2/mdt.c   |  111 -----------------------------------------------------
- fs/nilfs2/mdt.h   |    5 --
- fs/nilfs2/nilfs.h |    1 -
- fs/nilfs2/super.c |    9 +---
- 4 files changed, 2 insertions(+), 124 deletions(-)
+Previously the super block instances were allocated per snapshot, and
+this was preventing removal of the own inode allocator; a part of
+inodes treating metadata as files, didn't have a valid inode->i_sb
+since they outlive the life cycle of an sb.
 
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 0a2ccfc..d60fdb0 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -36,7 +36,6 @@
- 
- #define NILFS_MDT_MAX_RA_BLOCKS		(16 - 1)
- 
--#define INIT_UNUSED_INODE_FIELDS
- 
- static int
- nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
-@@ -435,93 +434,6 @@ int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz)
- 	return 0;
- }
- 
--/*
-- * NILFS2 uses pseudo inodes for meta data files such as DAT, cpfile, sufile,
-- * ifile, or gcinodes.  This allows the B-tree code and segment constructor
-- * to treat them like regular files, and this helps to simplify the
-- * implementation.
-- *   On the other hand, some of the pseudo inodes have an irregular point:
-- * They don't have valid inode->i_sb pointer because their lifetimes are
-- * longer than those of the super block structs; they may continue for
-- * several consecutive mounts/umounts.  This would need discussions.
-- */
--/**
-- * nilfs_mdt_new_common - allocate a pseudo inode for metadata file
-- * @nilfs: nilfs object
-- * @sb: super block instance the metadata file belongs to
-- * @ino: inode number
-- */
--struct inode *
--nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
--		     ino_t ino)
--{
--	struct inode *inode = nilfs_alloc_inode_common(nilfs);
--
--	if (!inode)
--		return NULL;
--	else {
--		struct address_space * const mapping = &inode->i_data;
--
--		inode->i_sb = sb; /* sb may be NULL for some meta data files */
--		inode->i_blkbits = nilfs->ns_blocksize_bits;
--		inode->i_flags = 0;
--		atomic_set(&inode->i_count, 1);
--		inode->i_nlink = 1;
--		inode->i_ino = ino;
--
--#ifdef INIT_UNUSED_INODE_FIELDS
--		atomic_set(&inode->i_writecount, 0);
--		inode->i_size = 0;
--		inode->i_blocks = 0;
--		inode->i_bytes = 0;
--		inode->i_generation = 0;
--#ifdef CONFIG_QUOTA
--		memset(&inode->i_dquot, 0, sizeof(inode->i_dquot));
--#endif
--		inode->i_pipe = NULL;
--		inode->i_bdev = NULL;
--		inode->i_cdev = NULL;
--		inode->i_rdev = 0;
--#ifdef CONFIG_SECURITY
--		inode->i_security = NULL;
--#endif
--		inode->dirtied_when = 0;
--
--		INIT_LIST_HEAD(&inode->i_list);
--		INIT_LIST_HEAD(&inode->i_sb_list);
--		inode->i_state = 0;
--#endif
--
--		spin_lock_init(&inode->i_lock);
--		mutex_init(&inode->i_mutex);
--		init_rwsem(&inode->i_alloc_sem);
--
--		mapping->host = NULL;  /* instead of inode */
--		mapping->flags = 0;
--		mapping->assoc_mapping = NULL;
--
--		inode->i_mapping = mapping;
--	}
--
--	return inode;
--}
--
--struct inode *nilfs_mdt_new(struct the_nilfs *nilfs, struct super_block *sb,
--			    ino_t ino, size_t objsz)
--{
--	struct inode *inode;
--
--	inode = nilfs_mdt_new_common(nilfs, sb, ino);
--	if (!inode)
--		return NULL;
--
--	if (nilfs_mdt_init(inode, NILFS_MDT_GFP, objsz) < 0) {
--		nilfs_destroy_inode(inode);
--		return NULL;
--	}
--	return inode;
--}
--
- void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size,
- 			      unsigned header_size)
- {
-@@ -688,26 +600,3 @@ void nilfs_mdt_clear_shadow_map(struct inode *inode)
- 	truncate_inode_pages(&shadow->frozen_btnodes, 0);
- 	up_write(&mi->mi_sem);
- }
--
--static void nilfs_mdt_clear(struct inode *inode)
--{
--	struct nilfs_inode_info *ii = NILFS_I(inode);
--
--	invalidate_mapping_pages(inode->i_mapping, 0, -1);
--	truncate_inode_pages(inode->i_mapping, 0);
--
--	if (test_bit(NILFS_I_BMAP, &ii->i_state))
--		nilfs_bmap_clear(ii->i_bmap);
--	nilfs_btnode_cache_clear(&ii->i_btnode_cache);
--}
--
--void nilfs_mdt_destroy(struct inode *inode)
--{
--	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
--
--	if (mdi->mi_palloc_cache)
--		nilfs_palloc_destroy_cache(inode);
--	nilfs_mdt_clear(inode);
--
--	nilfs_destroy_inode(inode);
--}
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index 76356d2..b13734b 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -82,11 +82,6 @@ int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
- int nilfs_mdt_fetch_dirty(struct inode *);
- 
- int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz);
--struct inode *nilfs_mdt_new(struct the_nilfs *, struct super_block *, ino_t,
--			    size_t);
--struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
--				   ino_t);
--void nilfs_mdt_destroy(struct inode *);
- void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
- 
- int nilfs_mdt_setup_shadow_map(struct inode *inode,
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index f6e276e..f7560da 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -266,7 +266,6 @@ extern int nilfs_mark_inode_dirty(struct inode *);
- extern void nilfs_dirty_inode(struct inode *);
- 
- /* super.c */
--extern struct inode *nilfs_alloc_inode_common(struct the_nilfs *);
- extern struct inode *nilfs_alloc_inode(struct super_block *);
- extern void nilfs_destroy_inode(struct inode *);
- extern void nilfs_error(struct super_block *, const char *, const char *, ...)
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index c0ce90b..7bd4b75 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -147,7 +147,7 @@ void nilfs_warning(struct super_block *sb, const char *function,
- }
- 
- 
--struct inode *nilfs_alloc_inode_common(struct the_nilfs *nilfs)
-+struct inode *nilfs_alloc_inode(struct super_block *sb)
- {
- 	struct nilfs_inode_info *ii;
- 
-@@ -158,15 +158,10 @@ struct inode *nilfs_alloc_inode_common(struct the_nilfs *nilfs)
- 	ii->i_state = 0;
- 	ii->i_cno = 0;
- 	ii->vfs_inode.i_version = 1;
--	nilfs_btnode_cache_init(&ii->i_btnode_cache, nilfs->ns_bdi);
-+	nilfs_btnode_cache_init(&ii->i_btnode_cache, sb->s_bdi);
- 	return &ii->vfs_inode;
- }
- 
--struct inode *nilfs_alloc_inode(struct super_block *sb)
--{
--	return nilfs_alloc_inode_common(NILFS_SB(sb)->s_nilfs);
--}
--
- void nilfs_destroy_inode(struct inode *inode)
- {
- 	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
--- 
-1.6.6.2
+With this patchset, mounted snapshots and the current tree will be
+managed with an rb-tree.  Each checkpoint/snapshot is represented by a
+"root object" and this object is used to identify the checkpoint to
+which inodes belong.
 
+Snapshots are still mounted on a mountpoint specified with the mount
+system call.
+
+To make user interface compatible like this, root dentries of
+snapshots and the current filesystem tree are binded to their
+mnt->mnt_root, whereas sb->s_root always holds the root dentry of the
+current tree.
+
+After these changes were applied, sb instances are unified per device.
+And, by the latter half of the patches, all inodes used in nilfs will
+be allocated and released through iget5_locked() and iput()
+respectively.  The own inode allocator is removed by the final patch.
+
+
+Along with the previous removal of the own inode hash table, I hope
+this would help to avoid bothersome inode related changes on nilfs.
+
+Most changes are confined to the code of nilfs, but exceptionally I
+had to add a new type of file handle to "exportfs.h" in order to make
+snapshots exportable.
+
+As for conflict, the patch #7 seems to conflict with a recent patch
+that modifies iop->permission().
+
+The patchset is also available from "remove-own-inode-allocator" branch on:
+
+ git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git
+
+
+I carefully tested this patchset since it makes a lot of changes.
+So far, this works stably and seems able to replace the old
+implementation.
+
+So, I'm planning to queue this for the next merge window unless there
+are objections.
+
+Thanks,
+Ryusuke Konishi
+--
+Ryusuke Konishi (23):
+      nilfs2: add checkpoint tree to nilfs object
+      nilfs2: set pointer to root object in inodes
+      nilfs2: make snapshots in checkpoint tree exportable
+      nilfs2: use root object to get ifile
+      nilfs2: move inode count and block count into root object
+      nilfs2: use checkpoint tree for mount check of snapshots
+      nilfs2: deny write access to inodes in snapshots
+      nilfs2: split out nilfs_get_root_dentry
+      nilfs2: split out nilfs_attach_snapshot
+      nilfs2: do not allocate multiple super block instances for a device
+      nilfs2: simplify life cycle management of nilfs object
+      nilfs2: get rid of snapshot mount flag
+      nilfs2: allow nilfs_clear_inode to clear metadata file inodes
+      nilfs2: do not allocate nilfs_mdt_info structure to gc-inodes
+      nilfs2: add routines to save and restore bmap state
+      nilfs2: add routines to roll back state of DAT file
+      nilfs2: add routines to redirect access to buffers of DAT file
+      nilfs2: get rid of GCDAT inode
+      nilfs2: use iget for all metadata files
+      nilfs2: see state of root dentry for mount check of snapshots
+      nilfs2: get rid of mi_nilfs back pointer to nilfs object
+      nilfs2: get rid of back pointer to writable sb instance
+      nilfs2: remove own inode allocator and destructor for metadata files
+
+ fs/nilfs2/Makefile        |    2 +-
+ fs/nilfs2/bmap.c          |   22 +-
+ fs/nilfs2/bmap.h          |   10 +-
+ fs/nilfs2/btnode.c        |   17 +--
+ fs/nilfs2/cpfile.c        |   72 ++++---
+ fs/nilfs2/cpfile.h        |    4 +-
+ fs/nilfs2/dat.c           |   89 ++++++---
+ fs/nilfs2/dat.h           |    4 +-
+ fs/nilfs2/export.h        |   17 ++
+ fs/nilfs2/gcdat.c         |   87 --------
+ fs/nilfs2/gcinode.c       |   32 ++--
+ fs/nilfs2/ifile.c         |   51 +++--
+ fs/nilfs2/ifile.h         |    4 +-
+ fs/nilfs2/inode.c         |  111 +++++++---
+ fs/nilfs2/ioctl.c         |    4 +-
+ fs/nilfs2/mdt.c           |  293 +++++++++++++------------
+ fs/nilfs2/mdt.h           |   34 ++--
+ fs/nilfs2/namei.c         |  139 +++++++++++--
+ fs/nilfs2/nilfs.h         |   29 +--
+ fs/nilfs2/page.c          |   55 +++---
+ fs/nilfs2/page.h          |    6 +
+ fs/nilfs2/recovery.c      |   19 +-
+ fs/nilfs2/sb.h            |   10 -
+ fs/nilfs2/segment.c       |   66 +++---
+ fs/nilfs2/segment.h       |    7 +-
+ fs/nilfs2/sufile.c        |   77 ++++---
+ fs/nilfs2/sufile.h        |    6 +-
+ fs/nilfs2/super.c         |  528 ++++++++++++++++++++++-----------------------
+ fs/nilfs2/the_nilfs.c     |  323 +++++++++-------------------
+ fs/nilfs2/the_nilfs.h     |   92 ++++-----
+ include/linux/exportfs.h  |   13 ++
+ include/linux/nilfs2_fs.h |    1 -
+ 32 files changed, 1132 insertions(+), 1092 deletions(-)
+ create mode 100644 fs/nilfs2/export.h
+ delete mode 100644 fs/nilfs2/gcdat.c
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
