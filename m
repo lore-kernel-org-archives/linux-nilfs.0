@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 09/23] nilfs2: split out nilfs_attach_snapshot
-Date: Tue, 14 Sep 2010 00:37:10 +0900
-Message-ID: <1284392244-27100-10-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 13/23] nilfs2: allow nilfs_clear_inode to clear metadata file inodes
+Date: Tue, 14 Sep 2010 00:37:14 +0900
+Message-ID: <1284392244-27100-14-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,121 +13,37 @@ Content-Transfer-Encoding: 7bit
 To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Nick Piggin <npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This splits the code to attach snapshots into a separate routine for
-convenience sake.
+Allows clear inode function (nilfs_clear_inode) to handle metadata
+files that uses bitmap-based object alloctor.  DAT and ifile
+correspond to this.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/super.c |   73 ++++++++++++++++++++++++++++++++--------------------
- 1 files changed, 45 insertions(+), 28 deletions(-)
+ fs/nilfs2/inode.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 23ad8d4..0ebe4c6 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -788,6 +788,40 @@ static int nilfs_get_root_dentry(struct super_block *sb,
- 	return ret;
- }
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 3efef0e..5485dd1 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -674,6 +674,7 @@ void nilfs_truncate(struct inode *inode)
+ static void nilfs_clear_inode(struct inode *inode)
+ {
+ 	struct nilfs_inode_info *ii = NILFS_I(inode);
++	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
  
-+static int nilfs_attach_snapshot(struct super_block *s, __u64 cno,
-+				 struct dentry **root_dentry)
-+{
-+	struct the_nilfs *nilfs = NILFS_SB(s)->s_nilfs;
-+	struct nilfs_root *root;
-+	int ret;
+ 	/*
+ 	 * Free resources allocated in nilfs_read_inode(), here.
+@@ -682,6 +683,9 @@ static void nilfs_clear_inode(struct inode *inode)
+ 	brelse(ii->i_bh);
+ 	ii->i_bh = NULL;
+ 
++	if (mdi && mdi->mi_palloc_cache)
++		nilfs_palloc_destroy_cache(inode);
 +
-+	down_read(&nilfs->ns_segctor_sem);
-+	ret = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile, cno);
-+	up_read(&nilfs->ns_segctor_sem);
-+	if (ret < 0) {
-+		ret = (ret == -ENOENT) ? -EINVAL : ret;
-+		goto out;
-+	} else if (!ret) {
-+		printk(KERN_ERR "NILFS: The specified checkpoint is "
-+		       "not a snapshot (checkpoint number=%llu).\n",
-+		       (unsigned long long)cno);
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	ret = nilfs_attach_checkpoint(NILFS_SB(s), cno, false, &root);
-+	if (ret) {
-+		printk(KERN_ERR "NILFS: error loading snapshot "
-+		       "(checkpoint number=%llu).\n",
-+	       (unsigned long long)cno);
-+		goto out;
-+	}
-+	ret = nilfs_get_root_dentry(s, root, root_dentry);
-+	nilfs_put_root(root);
-+ out:
-+	return ret;
-+}
-+
- /**
-  * nilfs_fill_super() - initialize a super block instance
-  * @sb: super_block
-@@ -805,7 +839,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
- 	struct nilfs_sb_info *sbi;
- 	struct nilfs_root *fsroot;
- 	__u64 cno;
--	int err, curr_mnt;
-+	int err;
+ 	if (test_bit(NILFS_I_BMAP, &ii->i_state))
+ 		nilfs_bmap_clear(ii->i_bmap);
  
- 	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
- 	if (!sbi)
-@@ -846,35 +880,17 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
- 	if (err)
- 		goto failed_sbi;
- 
--	cno = nilfs_last_cno(nilfs);
--	curr_mnt = true;
--
--	if (sb->s_flags & MS_RDONLY) {
--		if (nilfs_test_opt(sbi, SNAPSHOT)) {
--			down_read(&nilfs->ns_segctor_sem);
--			err = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile,
--						       sbi->s_snapshot_cno);
--			up_read(&nilfs->ns_segctor_sem);
--			if (err < 0) {
--				if (err == -ENOENT)
--					err = -EINVAL;
--				goto failed_sbi;
--			}
--			if (!err) {
--				printk(KERN_ERR
--				       "NILFS: The specified checkpoint is "
--				       "not a snapshot "
--				       "(checkpoint number=%llu).\n",
--				       (unsigned long long)sbi->s_snapshot_cno);
--				err = -EINVAL;
--				goto failed_sbi;
--			}
--			cno = sbi->s_snapshot_cno;
--			curr_mnt = false;
--		}
-+	if (nilfs_test_opt(sbi, SNAPSHOT)) {
-+		err = nilfs_attach_snapshot(sb, sbi->s_snapshot_cno,
-+					    &sb->s_root);
-+		if (err)
-+			goto failed_sbi;
-+
-+		goto add_to_supers;
- 	}
- 
--	err = nilfs_attach_checkpoint(sbi, cno, curr_mnt, &fsroot);
-+	cno = nilfs_last_cno(nilfs);
-+	err = nilfs_attach_checkpoint(sbi, cno, true, &fsroot);
- 	if (err) {
- 		printk(KERN_ERR "NILFS: error loading a checkpoint"
- 		       " (checkpoint number=%llu).\n", (unsigned long long)cno);
-@@ -899,6 +915,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
- 		up_write(&nilfs->ns_sem);
- 	}
- 
-+ add_to_supers:
- 	down_write(&nilfs->ns_super_sem);
- 	list_add(&sbi->s_list, &nilfs->ns_supers);
- 	if (!nilfs_test_opt(sbi, SNAPSHOT))
 -- 
 1.6.6.2
 
