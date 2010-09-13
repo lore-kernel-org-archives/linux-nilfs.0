@@ -1,306 +1,403 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 16/23] nilfs2: add routines to roll back state of DAT file
-Date: Tue, 14 Sep 2010 00:37:17 +0900
-Message-ID: <1284392244-27100-17-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 11/23] nilfs2: simplify life cycle management of nilfs object
+Date: Tue, 14 Sep 2010 00:37:12 +0900
+Message-ID: <1284392244-27100-12-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1284392244-27100-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-fsdevel@vger.kernel.org
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Nick Piggin <npiggin@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Nick Piggin <npiggin-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This adds optional function to metadata files which makes a copy of
-bmap, page caches, and b-tree node cache, and rolls back to the copy
-as needed.
+This stops pre-allocating nilfs object in nilfs_get_sb routine, and
+stops managing its life cycle by reference counting.
 
-This enhancement is intended to displace gcdat inode that provides a
-similar function in a different way.
+nilfs_find_or_create_nilfs() function, nilfs->ns_mount_mutex,
+nilfs_objects list, and the reference counter will be removed through
+the simplification.
 
-In this patch, nilfs_shadow_map structure is added to store a copy of
-the foregoing states.  nilfs_mdt_setup_shadow_map relates this
-structure to a metadata file.  And, nilfs_mdt_save_to_shadow_map() and
-nilfs_mdt_restore_from_shadow_map() provides save and restore
-functions respectively.  Finally, nilfs_mdt_clear_shadow_map() clears
-states of nilfs_shadow_map.
-
-The copy of b-tree node cache and page cache is made by duplicating
-only dirty pages into corresponding caches in nilfs_shadow_map.  Their
-restoration is done by clearing dirty pages from original caches and
-by copying dirty pages back from nilfs_shadow_map.
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/btnode.c |   17 +-------
- fs/nilfs2/mdt.c    |  104 ++++++++++++++++++++++++++++++++++++++++++++++++++--
- fs/nilfs2/mdt.h    |   14 +++++++
- fs/nilfs2/page.c   |   25 ++++++++++++
- fs/nilfs2/page.h   |    4 ++
- 5 files changed, 145 insertions(+), 19 deletions(-)
+ fs/nilfs2/ioctl.c     |    4 +-
+ fs/nilfs2/super.c     |   67 ++++++++++++++-----------------------------
+ fs/nilfs2/the_nilfs.c |   75 +++---------------------------------------------
+ fs/nilfs2/the_nilfs.h |   16 +---------
+ 4 files changed, 31 insertions(+), 131 deletions(-)
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index f78ab10..5115814 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -37,15 +37,7 @@
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index f0a99bd..85274f0 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -118,7 +118,7 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
+ 	if (copy_from_user(&cpmode, argp, sizeof(cpmode)))
+ 		goto out;
  
- void nilfs_btnode_cache_init_once(struct address_space *btnc)
- {
--	memset(btnc, 0, sizeof(*btnc));
--	INIT_RADIX_TREE(&btnc->page_tree, GFP_ATOMIC);
--	spin_lock_init(&btnc->tree_lock);
--	INIT_LIST_HEAD(&btnc->private_list);
--	spin_lock_init(&btnc->private_lock);
--
--	spin_lock_init(&btnc->i_mmap_lock);
--	INIT_RAW_PRIO_TREE_ROOT(&btnc->i_mmap);
--	INIT_LIST_HEAD(&btnc->i_mmap_nonlinear);
-+	nilfs_mapping_init_once(btnc);
- }
+-	mutex_lock(&nilfs->ns_mount_mutex);
++	down_read(&inode->i_sb->s_umount);
  
- static const struct address_space_operations def_btnode_aops = {
-@@ -55,12 +47,7 @@ static const struct address_space_operations def_btnode_aops = {
- void nilfs_btnode_cache_init(struct address_space *btnc,
- 			     struct backing_dev_info *bdi)
- {
--	btnc->host = NULL;  /* can safely set to host inode ? */
--	btnc->flags = 0;
--	mapping_set_gfp_mask(btnc, GFP_NOFS);
--	btnc->assoc_mapping = NULL;
--	btnc->backing_dev_info = bdi;
--	btnc->a_ops = &def_btnode_aops;
-+	nilfs_mapping_init(btnc, bdi, &def_btnode_aops);
- }
+ 	nilfs_transaction_begin(inode->i_sb, &ti, 0);
+ 	ret = nilfs_cpfile_change_cpmode(
+@@ -128,7 +128,7 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
+ 	else
+ 		nilfs_transaction_commit(inode->i_sb); /* never fails */
  
- void nilfs_btnode_cache_clear(struct address_space *btnc)
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 73e5da3..0066468 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -398,16 +398,22 @@ int nilfs_mdt_fetch_dirty(struct inode *inode)
- static int
- nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
- {
--	struct inode *inode = container_of(page->mapping,
--					   struct inode, i_data);
--	struct super_block *sb = inode->i_sb;
--	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
-+	struct inode *inode;
-+	struct super_block *sb;
-+	struct the_nilfs *nilfs;
- 	struct nilfs_sb_info *writer = NULL;
- 	int err = 0;
- 
- 	redirty_page_for_writepage(wbc, page);
- 	unlock_page(page);
- 
-+	inode = page->mapping->host;
-+	if (!inode)
-+		return 0;
-+
-+	sb = inode->i_sb;
-+	nilfs = NILFS_MDT(inode)->mi_nilfs;
-+
- 	if (page->mapping->assoc_mapping)
- 		return 0; /* Do not request flush for shadow page cache */
- 	if (!sb) {
-@@ -567,6 +573,96 @@ void nilfs_mdt_set_shadow(struct inode *orig, struct inode *shadow)
- 		&NILFS_I(orig)->i_btnode_cache;
- }
- 
-+static const struct address_space_operations shadow_map_aops = {
-+	.sync_page		= block_sync_page,
-+};
-+
-+/**
-+ * nilfs_mdt_setup_shadow_map - setup shadow map and bind it to metadata file
-+ * @inode: inode of the metadata file
-+ * @shadow: shadow mapping
-+ */
-+int nilfs_mdt_setup_shadow_map(struct inode *inode,
-+			       struct nilfs_shadow_map *shadow)
-+{
-+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
-+	struct backing_dev_info *bdi = NILFS_I_NILFS(inode)->ns_bdi;
-+
-+	INIT_LIST_HEAD(&shadow->frozen_buffers);
-+	nilfs_mapping_init_once(&shadow->frozen_data);
-+	nilfs_mapping_init(&shadow->frozen_data, bdi, &shadow_map_aops);
-+	nilfs_mapping_init_once(&shadow->frozen_btnodes);
-+	nilfs_mapping_init(&shadow->frozen_btnodes, bdi, &shadow_map_aops);
-+	mi->mi_shadow = shadow;
-+	return 0;
-+}
-+
-+/**
-+ * nilfs_mdt_save_to_shadow_map - copy bmap and dirty pages to shadow map
-+ * @inode: inode of the metadata file
-+ */
-+int nilfs_mdt_save_to_shadow_map(struct inode *inode)
-+{
-+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
-+	struct nilfs_inode_info *ii = NILFS_I(inode);
-+	struct nilfs_shadow_map *shadow = mi->mi_shadow;
-+	int ret;
-+
-+	ret = nilfs_copy_dirty_pages(&shadow->frozen_data, inode->i_mapping);
-+	if (ret)
-+		goto out;
-+
-+	ret = nilfs_copy_dirty_pages(&shadow->frozen_btnodes,
-+				     &ii->i_btnode_cache);
-+	if (ret)
-+		goto out;
-+
-+	nilfs_bmap_save(ii->i_bmap, &shadow->bmap_store);
-+ out:
-+	return ret;
-+}
-+
-+/**
-+ * nilfs_mdt_restore_from_shadow_map - restore dirty pages and bmap state
-+ * @inode: inode of the metadata file
-+ */
-+void nilfs_mdt_restore_from_shadow_map(struct inode *inode)
-+{
-+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
-+	struct nilfs_inode_info *ii = NILFS_I(inode);
-+	struct nilfs_shadow_map *shadow = mi->mi_shadow;
-+
-+	down_write(&mi->mi_sem);
-+
-+	if (mi->mi_palloc_cache)
-+		nilfs_palloc_clear_cache(inode);
-+
-+	nilfs_clear_dirty_pages(inode->i_mapping);
-+	nilfs_copy_back_pages(inode->i_mapping, &shadow->frozen_data);
-+
-+	nilfs_clear_dirty_pages(&ii->i_btnode_cache);
-+	nilfs_copy_back_pages(&ii->i_btnode_cache, &shadow->frozen_btnodes);
-+
-+	nilfs_bmap_restore(ii->i_bmap, &shadow->bmap_store);
-+
-+	up_write(&mi->mi_sem);
-+}
-+
-+/**
-+ * nilfs_mdt_clear_shadow_map - truncate pages in shadow map caches
-+ * @inode: inode of the metadata file
-+ */
-+void nilfs_mdt_clear_shadow_map(struct inode *inode)
-+{
-+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
-+	struct nilfs_shadow_map *shadow = mi->mi_shadow;
-+
-+	down_write(&mi->mi_sem);
-+	truncate_inode_pages(&shadow->frozen_data, 0);
-+	truncate_inode_pages(&shadow->frozen_btnodes, 0);
-+	up_write(&mi->mi_sem);
-+}
-+
- static void nilfs_mdt_clear(struct inode *inode)
- {
- 	struct nilfs_inode_info *ii = NILFS_I(inode);
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index f445602..e7f0d15 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -28,6 +28,13 @@
- #include "nilfs.h"
- #include "page.h"
- 
-+struct nilfs_shadow_map {
-+	struct nilfs_bmap_store bmap_store;
-+	struct address_space frozen_data;
-+	struct address_space frozen_btnodes;
-+	struct list_head frozen_buffers;
-+};
-+
- /**
-  * struct nilfs_mdt_info - on-memory private data of meta data files
-  * @mi_nilfs: back pointer to the_nilfs struct
-@@ -37,6 +44,7 @@
-  * @mi_first_entry_offset: offset to the first entry
-  * @mi_entries_per_block: number of entries in a block
-  * @mi_palloc_cache: persistent object allocator cache
-+ * @mi_shadow: shadow of bmap and page caches
-  * @mi_blocks_per_group: number of blocks in a group
-  * @mi_blocks_per_desc_block: number of blocks per descriptor block
-  */
-@@ -48,6 +56,7 @@ struct nilfs_mdt_info {
- 	unsigned		mi_first_entry_offset;
- 	unsigned long		mi_entries_per_block;
- 	struct nilfs_palloc_cache *mi_palloc_cache;
-+	struct nilfs_shadow_map *mi_shadow;
- 	unsigned long		mi_blocks_per_group;
- 	unsigned long		mi_blocks_per_desc_block;
- };
-@@ -86,6 +95,11 @@ void nilfs_mdt_destroy(struct inode *);
- void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
- void nilfs_mdt_set_shadow(struct inode *, struct inode *);
- 
-+int nilfs_mdt_setup_shadow_map(struct inode *inode,
-+			       struct nilfs_shadow_map *shadow);
-+int nilfs_mdt_save_to_shadow_map(struct inode *inode);
-+void nilfs_mdt_restore_from_shadow_map(struct inode *inode);
-+void nilfs_mdt_clear_shadow_map(struct inode *inode);
- 
- #define nilfs_mdt_mark_buffer_dirty(bh)	nilfs_mark_buffer_dirty(bh)
- 
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index aab11db..6384ac1 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -513,6 +513,31 @@ unsigned nilfs_page_count_clean_buffers(struct page *page,
+-	mutex_unlock(&nilfs->ns_mount_mutex);
++	up_read(&inode->i_sb->s_umount);
+ out:
+ 	mnt_drop_write(filp->f_path.mnt);
+ 	return ret;
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index bd2eb42..411ee2e 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -359,7 +359,7 @@ static void nilfs_put_super(struct super_block *sb)
+ 		up_write(&nilfs->ns_sem);
  	}
- 	return nc;
+ 
+-	put_nilfs(sbi->s_nilfs);
++	destroy_nilfs(nilfs);
+ 	sbi->s_super = NULL;
+ 	sb->s_fs_info = NULL;
+ 	kfree(sbi);
+@@ -841,15 +841,14 @@ static int nilfs_try_to_shrink_tree(struct dentry *root_dentry)
+  * @sb: super_block
+  * @data: mount options
+  * @silent: silent mode flag
+- * @nilfs: the_nilfs struct
+  *
+  * This function is called exclusively by nilfs->ns_mount_mutex.
+  * So, the recovery process is protected from other simultaneous mounts.
+  */
+ static int
+-nilfs_fill_super(struct super_block *sb, void *data, int silent,
+-		 struct the_nilfs *nilfs)
++nilfs_fill_super(struct super_block *sb, void *data, int silent)
+ {
++	struct the_nilfs *nilfs;
+ 	struct nilfs_sb_info *sbi;
+ 	struct nilfs_root *fsroot;
+ 	__u64 cno;
+@@ -860,14 +859,18 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+ 		return -ENOMEM;
+ 
+ 	sb->s_fs_info = sbi;
++	sbi->s_super = sb;
+ 
+-	get_nilfs(nilfs);
++	nilfs = alloc_nilfs(sb->s_bdev);
++	if (!nilfs) {
++		err = -ENOMEM;
++		goto failed_sbi;
++	}
+ 	sbi->s_nilfs = nilfs;
+-	sbi->s_super = sb;
+ 
+ 	err = init_nilfs(nilfs, sbi, (char *)data);
+ 	if (err)
+-		goto failed_sbi;
++		goto failed_nilfs;
+ 
+ 	spin_lock_init(&sbi->s_inode_lock);
+ 	INIT_LIST_HEAD(&sbi->s_dirty_files);
+@@ -890,14 +893,14 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+ 
+ 	err = load_nilfs(nilfs, sbi);
+ 	if (err)
+-		goto failed_sbi;
++		goto failed_nilfs;
+ 
+ 	cno = nilfs_last_cno(nilfs);
+ 	err = nilfs_attach_checkpoint(sbi, cno, true, &fsroot);
+ 	if (err) {
+ 		printk(KERN_ERR "NILFS: error loading last checkpoint "
+ 		       "(checkpoint number=%llu).\n", (unsigned long long)cno);
+-		goto failed_sbi;
++		goto failed_nilfs;
+ 	}
+ 
+ 	if (!(sb->s_flags & MS_RDONLY)) {
+@@ -926,8 +929,10 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
+  failed_checkpoint:
+ 	nilfs_put_root(fsroot);
+ 
++ failed_nilfs:
++	destroy_nilfs(nilfs);
++
+  failed_sbi:
+-	put_nilfs(nilfs);
+ 	sb->s_fs_info = NULL;
+ 	kfree(sbi);
+ 	return err;
+@@ -1086,7 +1091,6 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 	struct nilfs_super_data sd;
+ 	struct super_block *s;
+ 	fmode_t mode = FMODE_READ;
+-	struct the_nilfs *nilfs;
+ 	struct dentry *root_dentry;
+ 	int err, s_new = false;
+ 
+@@ -1104,18 +1108,10 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 		goto failed;
+ 	}
+ 
+-	nilfs = find_or_create_nilfs(sd.bdev);
+-	if (!nilfs) {
+-		err = -ENOMEM;
+-		goto failed;
+-	}
+-
+-	mutex_lock(&nilfs->ns_mount_mutex);
+-
+ 	s = sget(fs_type, nilfs_test_bdev_super, nilfs_set_bdev_super, sd.bdev);
+ 	if (IS_ERR(s)) {
+ 		err = PTR_ERR(s);
+-		goto failed_unlock;
++		goto failed;
+ 	}
+ 
+ 	if (!s->s_root) {
+@@ -1129,10 +1125,9 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 		strlcpy(s->s_id, bdevname(sd.bdev, b), sizeof(s->s_id));
+ 		sb_set_blocksize(s, block_size(sd.bdev));
+ 
+-		err = nilfs_fill_super(s, data, flags & MS_SILENT ? 1 : 0,
+-				       nilfs);
++		err = nilfs_fill_super(s, data, flags & MS_SILENT ? 1 : 0);
+ 		if (err)
+-			goto cancel_new;
++			goto failed_super;
+ 
+ 		s->s_flags |= MS_ACTIVE;
+ 	} else if (!sd.cno) {
+@@ -1162,17 +1157,12 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 
+ 	if (sd.cno) {
+ 		err = nilfs_attach_snapshot(s, sd.cno, &root_dentry);
+-		if (err) {
+-			if (s_new)
+-				goto cancel_new;
++		if (err)
+ 			goto failed_super;
+-		}
+ 	} else {
+ 		root_dentry = dget(s->s_root);
+ 	}
+ 
+-	mutex_unlock(&nilfs->ns_mount_mutex);
+-	put_nilfs(nilfs);
+ 	if (!s_new)
+ 		close_bdev_exclusive(sd.bdev, mode);
+ 
+@@ -1182,24 +1172,11 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 
+  failed_super:
+ 	deactivate_locked_super(s);
+- failed_unlock:
+-	mutex_unlock(&nilfs->ns_mount_mutex);
+-	put_nilfs(nilfs);
+- failed:
+-	close_bdev_exclusive(sd.bdev, mode);
+ 
+-	return err;
++ failed:
++	if (!s_new)
++		close_bdev_exclusive(sd.bdev, mode);
+ 
+- cancel_new:
+-	/* Abandoning the newly allocated superblock */
+-	mutex_unlock(&nilfs->ns_mount_mutex);
+-	put_nilfs(nilfs);
+-	deactivate_locked_super(s);
+-	/*
+-	 * This deactivate_locked_super() invokes close_bdev_exclusive().
+-	 * We must finish all post-cleaning before this call;
+-	 * put_nilfs() needs the block device.
+-	 */
+ 	return err;
  }
-+ 
-+void nilfs_mapping_init_once(struct address_space *mapping)
-+{
-+	memset(mapping, 0, sizeof(*mapping));
-+	INIT_RADIX_TREE(&mapping->page_tree, GFP_ATOMIC);
-+	spin_lock_init(&mapping->tree_lock);
-+	INIT_LIST_HEAD(&mapping->private_list);
-+	spin_lock_init(&mapping->private_lock);
-+
-+	spin_lock_init(&mapping->i_mmap_lock);
-+	INIT_RAW_PRIO_TREE_ROOT(&mapping->i_mmap);
-+	INIT_LIST_HEAD(&mapping->i_mmap_nonlinear);
-+}
-+
-+void nilfs_mapping_init(struct address_space *mapping,
-+			struct backing_dev_info *bdi,
-+			const struct address_space_operations *aops)
-+{
-+	mapping->host = NULL;
-+	mapping->flags = 0;
-+	mapping_set_gfp_mask(mapping, GFP_NOFS);
-+	mapping->assoc_mapping = NULL;
-+	mapping->backing_dev_info = bdi;
-+	mapping->a_ops = aops;
-+}
  
- /*
-  * NILFS2 needs clear_page_dirty() in the following two cases:
-diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
-index f53d8da..6ec4f49 100644
---- a/fs/nilfs2/page.h
-+++ b/fs/nilfs2/page.h
-@@ -59,6 +59,10 @@ void nilfs_free_private_page(struct page *);
- int nilfs_copy_dirty_pages(struct address_space *, struct address_space *);
- void nilfs_copy_back_pages(struct address_space *, struct address_space *);
- void nilfs_clear_dirty_pages(struct address_space *);
-+void nilfs_mapping_init_once(struct address_space *mapping);
-+void nilfs_mapping_init(struct address_space *mapping,
-+			struct backing_dev_info *bdi,
-+			const struct address_space_operations *aops);
- unsigned nilfs_page_count_clean_buffers(struct page *, unsigned, unsigned);
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index e8d950d..bc9a3e2 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -35,9 +35,6 @@
+ #include "segbuf.h"
  
- #define NILFS_PAGE_BUG(page, m, a...) \
+ 
+-static LIST_HEAD(nilfs_objects);
+-static DEFINE_SPINLOCK(nilfs_lock);
+-
+ static int nilfs_valid_sb(struct nilfs_super_block *sbp);
+ 
+ void nilfs_set_last_segment(struct the_nilfs *nilfs,
+@@ -61,16 +58,13 @@ void nilfs_set_last_segment(struct the_nilfs *nilfs,
+ }
+ 
+ /**
+- * alloc_nilfs - allocate the_nilfs structure
++ * alloc_nilfs - allocate a nilfs object
+  * @bdev: block device to which the_nilfs is related
+  *
+- * alloc_nilfs() allocates memory for the_nilfs and
+- * initializes its reference count and locks.
+- *
+  * Return Value: On success, pointer to the_nilfs is returned.
+  * On error, NULL is returned.
+  */
+-static struct the_nilfs *alloc_nilfs(struct block_device *bdev)
++struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+ {
+ 	struct the_nilfs *nilfs;
+ 
+@@ -79,12 +73,9 @@ static struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+ 		return NULL;
+ 
+ 	nilfs->ns_bdev = bdev;
+-	atomic_set(&nilfs->ns_count, 1);
+ 	atomic_set(&nilfs->ns_ndirtyblks, 0);
+ 	init_rwsem(&nilfs->ns_sem);
+-	mutex_init(&nilfs->ns_mount_mutex);
+ 	init_rwsem(&nilfs->ns_writer_sem);
+-	INIT_LIST_HEAD(&nilfs->ns_list);
+ 	INIT_LIST_HEAD(&nilfs->ns_gc_inodes);
+ 	spin_lock_init(&nilfs->ns_last_segment_lock);
+ 	nilfs->ns_cptree = RB_ROOT;
+@@ -95,67 +86,11 @@ static struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+ }
+ 
+ /**
+- * find_or_create_nilfs - find or create nilfs object
+- * @bdev: block device to which the_nilfs is related
+- *
+- * find_nilfs() looks up an existent nilfs object created on the
+- * device and gets the reference count of the object.  If no nilfs object
+- * is found on the device, a new nilfs object is allocated.
+- *
+- * Return Value: On success, pointer to the nilfs object is returned.
+- * On error, NULL is returned.
+- */
+-struct the_nilfs *find_or_create_nilfs(struct block_device *bdev)
+-{
+-	struct the_nilfs *nilfs, *new = NULL;
+-
+- retry:
+-	spin_lock(&nilfs_lock);
+-	list_for_each_entry(nilfs, &nilfs_objects, ns_list) {
+-		if (nilfs->ns_bdev == bdev) {
+-			get_nilfs(nilfs);
+-			spin_unlock(&nilfs_lock);
+-			if (new)
+-				put_nilfs(new);
+-			return nilfs; /* existing object */
+-		}
+-	}
+-	if (new) {
+-		list_add_tail(&new->ns_list, &nilfs_objects);
+-		spin_unlock(&nilfs_lock);
+-		return new; /* new object */
+-	}
+-	spin_unlock(&nilfs_lock);
+-
+-	new = alloc_nilfs(bdev);
+-	if (new)
+-		goto retry;
+-	return NULL; /* insufficient memory */
+-}
+-
+-/**
+- * put_nilfs - release a reference to the_nilfs
+- * @nilfs: the_nilfs structure to be released
+- *
+- * put_nilfs() decrements a reference counter of the_nilfs.
+- * If the reference count reaches zero, the_nilfs is freed.
++ * destroy_nilfs - destroy nilfs object
++ * @nilfs: nilfs object to be released
+  */
+-void put_nilfs(struct the_nilfs *nilfs)
++void destroy_nilfs(struct the_nilfs *nilfs)
+ {
+-	spin_lock(&nilfs_lock);
+-	if (!atomic_dec_and_test(&nilfs->ns_count)) {
+-		spin_unlock(&nilfs_lock);
+-		return;
+-	}
+-	list_del_init(&nilfs->ns_list);
+-	spin_unlock(&nilfs_lock);
+-
+-	/*
+-	 * Increment of ns_count never occurs below because the caller
+-	 * of get_nilfs() holds at least one reference to the_nilfs.
+-	 * Thus its exclusion control is not required here.
+-	 */
+-
+ 	might_sleep();
+ 	if (nilfs_loaded(nilfs)) {
+ 		nilfs_mdt_destroy(nilfs->ns_sufile);
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 7b43693..1908dc7 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -46,13 +46,10 @@ enum {
+ /**
+  * struct the_nilfs - struct to supervise multiple nilfs mount points
+  * @ns_flags: flags
+- * @ns_count: reference count
+- * @ns_list: list head for nilfs_list
+  * @ns_bdev: block device
+  * @ns_bdi: backing dev info
+  * @ns_writer: back pointer to writable nilfs_sb_info
+  * @ns_sem: semaphore for shared states
+- * @ns_mount_mutex: mutex protecting mount process of nilfs
+  * @ns_writer_sem: semaphore protecting ns_writer attach/detach
+  * @ns_sbh: buffer heads of on-disk super blocks
+  * @ns_sbp: pointers to super block data
+@@ -94,14 +91,11 @@ enum {
+  */
+ struct the_nilfs {
+ 	unsigned long		ns_flags;
+-	atomic_t		ns_count;
+-	struct list_head	ns_list;
+ 
+ 	struct block_device    *ns_bdev;
+ 	struct backing_dev_info *ns_bdi;
+ 	struct nilfs_sb_info   *ns_writer;
+ 	struct rw_semaphore	ns_sem;
+-	struct mutex		ns_mount_mutex;
+ 	struct rw_semaphore	ns_writer_sem;
+ 
+ 	/*
+@@ -239,8 +233,8 @@ static inline int nilfs_sb_will_flip(struct the_nilfs *nilfs)
+ }
+ 
+ void nilfs_set_last_segment(struct the_nilfs *, sector_t, u64, __u64);
+-struct the_nilfs *find_or_create_nilfs(struct block_device *);
+-void put_nilfs(struct the_nilfs *);
++struct the_nilfs *alloc_nilfs(struct block_device *bdev);
++void destroy_nilfs(struct the_nilfs *nilfs);
+ int init_nilfs(struct the_nilfs *, struct nilfs_sb_info *, char *);
+ int load_nilfs(struct the_nilfs *, struct nilfs_sb_info *);
+ int nilfs_discard_segments(struct the_nilfs *, __u64 *, size_t);
+@@ -256,12 +250,6 @@ void nilfs_fall_back_super_block(struct the_nilfs *);
+ void nilfs_swap_super_block(struct the_nilfs *);
+ 
+ 
+-static inline void get_nilfs(struct the_nilfs *nilfs)
+-{
+-	/* Caller must have at least one reference of the_nilfs. */
+-	atomic_inc(&nilfs->ns_count);
+-}
+-
+ static inline void nilfs_get_root(struct nilfs_root *root)
+ {
+ 	atomic_inc(&root->count);
 -- 
 1.6.6.2
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
