@@ -1,101 +1,187 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: nilfs error
-Date: Mon, 20 Sep 2010 16:44:28 +0900 (JST)
-Message-ID: <20100920.164428.176151905.ryusuke@osrg.net>
-References: <4C95A178.3020701@prnet.org>
-	<20100919.213754.31465789.ryusuke@osrg.net>
-	<4C9646E6.4090009@prnet.org>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: add bdev freeze/thaw support
+Date: Tue, 21 Sep 2010 01:21:08 +0900
+Message-ID: <1284999668-21814-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4C9646E6.4090009-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: admin-/LHdS3kC8BfYtjvyW6yDsg@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
-On Sun, 19 Sep 2010 19:22:46 +0200, David Arendt wrote:
->   Hi,
-> 
-> there is one unimportant corrupted file. Is it safe to use the file 
-> system after removing this file or should I go the backup/restore route ?
+Nilfs hasn't supported the freeze/thaw feature because it didn't work
+due to the peculiar design that multiple super block instances could
+be allocated for a device.  This limitation was removed by the patch
+"nilfs2: do not allocate multiple super block instances for a device".
 
-Making backup is of course recommended.
+So now this adds the freeze/thaw support to nilfs.
 
-But if you don't mind, continue using it.  It may give us sort of a
-clue, for instance, whether the corruption is restrictive (or
-temporary, etc).
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/ioctl.c   |    2 +
+ fs/nilfs2/segment.c |    2 +
+ fs/nilfs2/super.c   |   58 +++++++++++++++++++++++++++++++++++++++++++++++---
+ 3 files changed, 58 insertions(+), 4 deletions(-)
 
-> Garbage collection was running when the problem appeared.
-> 
-> The disk is a 1tb disk and 16gb have been free.
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 85274f0..db2b3e7 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -581,6 +581,8 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
+ 		goto out_free;
+ 	}
+ 
++	vfs_check_frozen(inode->i_sb, SB_FREEZE_WRITE);
++
+ 	ret = nilfs_ioctl_move_blocks(inode->i_sb, &argv[0], kbufs[0]);
+ 	if (ret < 0)
+ 		printk(KERN_ERR "NILFS: GC failed during preparation: "
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 56350bf..172ad42 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -191,6 +191,8 @@ int nilfs_transaction_begin(struct super_block *sb,
+ 	if (ret > 0)
+ 		return 0;
+ 
++	vfs_check_frozen(sb, SB_FREEZE_WRITE);
++
+ 	sbi = NILFS_SB(sb);
+ 	nilfs = sbi->s_nilfs;
+ 	down_read(&nilfs->ns_segctor_sem);
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 8418bd0..027c7e8 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -74,6 +74,7 @@ struct kmem_cache *nilfs_transaction_cachep;
+ struct kmem_cache *nilfs_segbuf_cachep;
+ struct kmem_cache *nilfs_btree_path_cache;
+ 
++static int nilfs_setup_super(struct nilfs_sb_info *sbi, int is_mount);
+ static int nilfs_remount(struct super_block *sb, int *flags, char *data);
+ 
+ static void nilfs_set_error(struct nilfs_sb_info *sbi)
+@@ -444,6 +445,36 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno, int curr_mnt,
+ 	return err;
+ }
+ 
++static int nilfs_freeze(struct super_block *sb)
++{
++	struct nilfs_sb_info *sbi = NILFS_SB(sb);
++	struct the_nilfs *nilfs = sbi->s_nilfs;
++	int err;
++
++	if (sb->s_flags & MS_RDONLY)
++		return 0;
++
++	/* Mark super block clean */
++	down_write(&nilfs->ns_sem);
++	err = nilfs_cleanup_super(sbi);
++	up_write(&nilfs->ns_sem);
++	return err;
++}
++
++static int nilfs_unfreeze(struct super_block *sb)
++{
++	struct nilfs_sb_info *sbi = NILFS_SB(sb);
++	struct the_nilfs *nilfs = sbi->s_nilfs;
++
++	if (sb->s_flags & MS_RDONLY)
++		return 0;
++
++	down_write(&nilfs->ns_sem);
++	nilfs_setup_super(sbi, false);
++	up_write(&nilfs->ns_sem);
++	return 0;
++}
++
+ static int nilfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+ {
+ 	struct super_block *sb = dentry->d_sb;
+@@ -528,6 +559,8 @@ static const struct super_operations nilfs_sops = {
+ 	.put_super      = nilfs_put_super,
+ 	/* .write_super    = nilfs_write_super, */
+ 	.sync_fs        = nilfs_sync_fs,
++	.freeze_fs	= nilfs_freeze,
++	.unfreeze_fs	= nilfs_unfreeze,
+ 	/* .write_super_lockfs */
+ 	/* .unlockfs */
+ 	.statfs         = nilfs_statfs,
+@@ -631,7 +664,7 @@ nilfs_set_default_options(struct nilfs_sb_info *sbi,
+ 		NILFS_MOUNT_ERRORS_RO | NILFS_MOUNT_BARRIER;
+ }
+ 
+-static int nilfs_setup_super(struct nilfs_sb_info *sbi)
++static int nilfs_setup_super(struct nilfs_sb_info *sbi, int is_mount)
+ {
+ 	struct the_nilfs *nilfs = sbi->s_nilfs;
+ 	struct nilfs_super_block **sbp;
+@@ -643,6 +676,9 @@ static int nilfs_setup_super(struct nilfs_sb_info *sbi)
+ 	if (!sbp)
+ 		return -EIO;
+ 
++	if (!is_mount)
++		goto skip_mount_setup;
++
+ 	max_mnt_count = le16_to_cpu(sbp[0]->s_max_mnt_count);
+ 	mnt_count = le16_to_cpu(sbp[0]->s_mnt_count);
+ 
+@@ -659,9 +695,11 @@ static int nilfs_setup_super(struct nilfs_sb_info *sbi)
+ 		sbp[0]->s_max_mnt_count = cpu_to_le16(NILFS_DFL_MAX_MNT_COUNT);
+ 
+ 	sbp[0]->s_mnt_count = cpu_to_le16(mnt_count + 1);
++	sbp[0]->s_mtime = cpu_to_le64(get_seconds());
++
++skip_mount_setup:
+ 	sbp[0]->s_state =
+ 		cpu_to_le16(le16_to_cpu(sbp[0]->s_state) & ~NILFS_VALID_FS);
+-	sbp[0]->s_mtime = cpu_to_le64(get_seconds());
+ 	/* synchronize sbp[1] with sbp[0] */
+ 	memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
+ 	return nilfs_commit_super(sbi, NILFS_SB_COMMIT_ALL);
+@@ -943,7 +981,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
+ 
+ 	if (!(sb->s_flags & MS_RDONLY)) {
+ 		down_write(&nilfs->ns_sem);
+-		nilfs_setup_super(sbi);
++		nilfs_setup_super(sbi, true);
+ 		up_write(&nilfs->ns_sem);
+ 	}
+ 
+@@ -1041,7 +1079,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
+ 			goto restore_opts;
+ 
+ 		down_write(&nilfs->ns_sem);
+-		nilfs_setup_super(sbi);
++		nilfs_setup_super(sbi, true);
+ 		up_write(&nilfs->ns_sem);
+ 	}
+  out:
+@@ -1141,7 +1179,19 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
+ 		goto failed;
+ 	}
+ 
++	/*
++	 * once the super is inserted into the list by sget, s_umount
++	 * will protect the lockfs code from trying to start a snapshot
++	 * while we are mounting
++	 */
++	mutex_lock(&sd.bdev->bd_fsfreeze_mutex);
++	if (sd.bdev->bd_fsfreeze_count > 0) {
++		mutex_unlock(&sd.bdev->bd_fsfreeze_mutex);
++		err = -EBUSY;
++		goto failed;
++	}
+ 	s = sget(fs_type, nilfs_test_bdev_super, nilfs_set_bdev_super, sd.bdev);
++	mutex_unlock(&sd.bdev->bd_fsfreeze_mutex);
+ 	if (IS_ERR(s)) {
+ 		err = PTR_ERR(s);
+ 		goto failed;
+-- 
+1.6.6.2
 
-Well, there may be something missed between garbage collection and
-file deletion.  Will recheck.
-
-Thanks,
-Ryusuke Konishi
-
-
-> Thanks in advance,
-> Bye,
-> David Arendt
-> 
-> On 09/19/10 14:37, Ryusuke Konishi wrote:
-> > Hi,
-> > On Sun, 19 Sep 2010 07:36:56 +0200, David Arendt wrote:
-> >>    Hi,
-> >>
-> >> yesterday I had the following error:
-> >>
-> >> Sep 18 18:03:24 server kernel: NILFS: bad btree node
-> >> (blocknr=226497086): level
-> >> = 37, flags = 0x18, nchildren = 22092
-> >> Sep 18 18:03:24 server kernel: NILFS error (device sdb1):
-> >> nilfs_truncate_bmap: b
-> >> map is broken (ino=69)
-> >> Sep 18 18:03:24 server kernel: Remounting filesystem read-only
-> >> Sep 18 18:03:24 server kernel: nilfs_palloc_commit_free_entry: entry
-> >> number 69 already freed
-> >>
-> >> Remounting the filesytem worked correctly. What could be the cause of
-> >> this error ?
-> > Thank you for the report.
-> >
-> > According to the log, nilfs detected btree corruption during file
-> > deletion; the message "bad btree node ..." shows a btree node block
-> > that nilfs read was broken.
-> >
-> > One possible cause is garbage collection, or there may be a problem
-> > with exclusion control on delete operation.  Or, the block might be
-> > actually broken if the underlying device is not reliable.
-> >
-> >
-> > Do you think nilfs_cleanerd worked before this trouble?
-> >
-> > How much free space was left on the device?
-> >
-> >> Should I preventively reformat the disk and recreate the
-> >> filesystem ?
-> > Yes, it's recommended for safety.  If you haven't yet reformatted the
-> > device, try the following command for sanity check.
-> >
-> >   # find /mount-dir -type f -exec cat {} \;>/dev/null
-> >
-> >
-> > Regards,
-> > Ryusuke Konishi
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
