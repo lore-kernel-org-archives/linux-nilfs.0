@@ -1,113 +1,57 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: ifile is broken
-Date: Sat, 25 Sep 2010 23:04:34 +0900 (JST)
-Message-ID: <20100925.230434.166472968.ryusuke@osrg.net>
-References: <AANLkTin1CT82ou1odPRYCDVZSNZGP-wBRG3xKifHqWHt@mail.gmail.com>
+From: Yuehai Xu <yuehaixu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Performance about nilfs2 for SSD
+Date: Sat, 25 Sep 2010 18:54:04 -0400
+Message-ID: <AANLkTinLswg7ko3T-cGsSMMqPfcM0dZB7GN2o6Q2b3gY@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <AANLkTin1CT82ou1odPRYCDVZSNZGP-wBRG3xKifHqWHt-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:received:received:date:message-id
+         :subject:from:to:cc:content-type;
+        bh=A0ni7HjxvvDfj5JOwYcD2zfsY8IZw8LryYm6W8D3vJg=;
+        b=T3l+o8FBwFkyE5qpSA4iGLQuY5bXr7hxfE0qBTu59GojHSBkEiSQxu7aPHSx6BzBY0
+         77Say4vzWmwNFQzyW9Rtdr8SQoOcE7bSMTpwsoVW8NOC9zR4FVmwi8JU/vnlk+XPWSbg
+         QK3t4UGJNSuPDKQcBe1knJx9btZ0Ap8UFWqMk=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: paolo-UnihLHphgvQ1GQ1Ptb7lUw@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: yhxu-jgEIgUtgKzeHXe+LvDLADg@public.gmane.org
 
-On Tue, 21 Sep 2010 11:23:13 +0200, Paolo Giangrandi <paolo-UnihLHphgvQ1GQ1Ptb7lUw@public.gmane.org> wrote:
-> Hi,
-> I'm using NILFS2 as root filesystem (it's on /dev/sda2, only /boot was
-> apart on an EXT2 /dev/sda1, if I recall correctly) on my Archlinux
-> (with Linux 2.6.35.4 and nilfs-utils 2.0.19).
-> I got to manually run nilfs_cleanerd anytime I boot (read somewhere
-> it's because my /usr is on NILFS2 as well).
-> Yesterday, by mistake, I ran nilfs_cleanerd twice. Shut the system as
-> soon as I realized but now it's not booting anymore: a kernel oops
-> gets printed...
-> 
-> Waiting 10 seconds for device /dev/sda2 ...
-> attempt to access beyond end of device
-> sda2: rw=16, want=4283850835945523848, limit=15695505
-> Pid :1, comm: init Not tainted 2.6.35-ARCH #1
-> Call Trace:
-> *snip*
-> NILFS: btree level mismatch: 68 != 1
-> NILFS error (device sda2): nilfs_ifile_get_inode_block: ifile is broken
-> ERROR: Root device mounted successfully, but /sbin/init does not exist.
-> Bailing out, you are on your own. Good luck.
-> 
-> /dev/sda2 gets mounted anyway on ramfs' /new_root, but if I try to
-> access most of its subdirectories more kernel oops appear, and only
-> very few files are shown. My home dir is completely gone.
-> 
-> So, uh, other than pointing out this bug (I guess a second
-> nilfs_cleanerd should just quit, not shred your system...) I'd like to
-> know if there's any way to get my data back... I'll backup (through
-> dd) my whole /dev/sda (it's an 8GB SD) hoping to be able to recover it
-> soon...
-> 
-> Thanks,
-> Paolo.
+Hi,
 
-Sorry for my late reply.
+I have a SSD which is Intel x25-v, I use it to test the performance of
+different file systems. The results seems confusing to me. It is from
+postmark in which I set file number to 50,000 with each size from 9216
+bytes to 15360 bytes
 
-If you haven't yet reformatted the partition, try the following
-manual recovery:
+	EXT3	NILFS2	BTRFS	EXT4	XFS	REISERFS	EXT2					
+PostMark(R)	146.67Kb/s  52.21Kb/s	90.59Kb/s	
+172.12Kb/s	60.39Kb/s	146.67Kb/s	83.25Kb/s
+PostMark(W)	28.09Mb/s	10Mb/s	17.35Mb/s	31.04Mb/s	11.56Mb/s	28.09Mb/s	15.94Mb/s
 
- $ cd your-work-directory
- $ git clone http://git.nilfs.org/nilfs2-utils.git
- $ cd nilfs2-utils
- $ git fetch http://git.nilfs.org/nilfs2-utils-devel.git fsck0:fsck0
+From the results, the throughput both for R/W of NILFS2 is much
+smaller than EXT3. As I noticed that the performance of NILFS2 for SSD
+is much better than other file systems from the web site. What's the
+matter with my own test result? My kernel is 2.6.32, and I use default
+way to format NILFS2, nothing special is done. So, my questions are:
 
-   -- This will download fsck0.nilfs2 from nilfs2-utils-devel git repo.
+1. Are there any special parameters that I need to configure when I
+mount/format my SSD?
+2. Is the performance much different from different kind of SSD?
+3. As I know, NILFS2 is a kind of Log-file system, which means it
+always makes the random writes sequentially and tries to avoid the
+cost of overwrite for SSD. Does it need to overwrite its meta data?
+Since I think NILFS2 should always make a mapping table, how about
+when the mapping table need to be updated?
+4. What's special has done to optimize the performance of SSD? I guess
+Log-file systems might have better performance than fast file systems
+such as EXT2/3, but at least right now the results shows that I was
+wrong.
 
- $ git checkout fsck0
- $ aclocal && autoheader && libtoolize -c --force && automake -a -c && autoconf
- $ ./configure
- $ make
-
-   -- These steps will build fsck0.nilfs2.  You may need to install
-      libtool, autoconf (-2.6 or later), and automake packages.
-
- $ cd sbin/fsck
- $ su
- # ./fsck0.nilfs2 /dev/sda2
- Super-block:
-     revision = 2.0
-     blocksize = 4096
-     write time = 2010-09-25 22:19:18
-     indicated log: blocknr = 116170
-         segnum = 56, seq = 56, cno=1134
-                  ^^
-
- Clean FS.
- A valid log is pointed to by superblock (No change needed): blocknr = 116170
-     segnum = 56, seq = 56, cno=1134
-     creation time = 2010-09-25 21:15:04
-
- # dd if=/dev/zero of=/dev/sda2 bs=8M count=1 seek=56
-                                                   ^^
-   -- Get the number of latest segment and destroy it.
-      This is destructive, so you are strongly recommended to
-      backup the partition with dd or something before trying this.
-
- # ./fsck0.nilfs2 /dev/sda2
-
-   ...
-   Do you wish to overwrite super block (y/N)?
-
-   - Run fsck0.nilfs2 again, and press "y" if the above prompt
-     appears.
-
- # mount -t nilfs2 -o ro,norecovery /dev/sda2 /nilfs
-
-   - Mount the partition with "norecovery" mount option, and
-     salvage data if succeeded to mount it.
-
-You may need to destroy more segments (i.e. 55,54,.. in the above
-example) to find a mountable checkpoint.
-
-Regards,
-Ryusuke Konishi
+Thanks,
+Yuehai
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
