@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs-utils: kill gcc warning on fstab.c
-Date: Sun, 26 Sep 2010 22:58:24 +0900
-Message-ID: <1285509504-6287-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] nilfs-utils: kill gcc warnings for unused return value of strtoul
+Date: Sun, 26 Sep 2010 22:59:35 +0900
+Message-ID: <1285509575-6346-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,40 +11,66 @@ Content-Type: text/plain; charset="iso-8859-1"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Will kill the following gcc warning:
+Recent gcc complains if the return value of strtoul() is not used:
 
-fstab.c: In function =A1=C6update_mtab=A1=C7:
-fstab.c:573: warning: ignoring return value of =A1=C6chown=A1=C7, decla=
-red with attribute warn_unused_result
+chcp.c: In function =A1=C6main=A1=C7:
+chcp.c:122: warning: ignoring return value of =A1=C6strtoul=A1=C7, decl=
+ared with attribute warn_unused_result
+
+dumpseg.c: In function =A1=C6main=A1=C7:
+dumpseg.c:214: warning: ignoring return value of =A1=C6strtoul=A1=C7, d=
+eclared with attribute warn_unused_result
+
+This kills these warnings.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- sbin/mount/fstab.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ bin/chcp.c    |    3 ++-
+ bin/dumpseg.c |    3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/sbin/mount/fstab.c b/sbin/mount/fstab.c
-index 2921915..c69502f 100644
---- a/sbin/mount/fstab.c
-+++ b/sbin/mount/fstab.c
-@@ -480,6 +480,7 @@ update_mtab (const char *dir, struct my_mntent *ins=
-tead) {
- 	const char *fnam =3D MOUNTED;
- 	struct mntentchn mtabhead;	/* dummy */
- 	struct mntentchn *mc, *mc0, *absent =3D NULL;
-+	int ret;
-=20
- 	if (mtab_does_not_exist() || mtab_is_a_symlink())
- 		return;
-@@ -570,7 +571,7 @@ update_mtab (const char *dir, struct my_mntent *ins=
-tead) {
- 	   */
- 	    struct stat sbuf;
- 	    if (stat (MOUNTED, &sbuf) =3D=3D 0)
--		chown (MOUNTED_TEMP, sbuf.st_uid, sbuf.st_gid);
-+		ret =3D chown(MOUNTED_TEMP, sbuf.st_uid, sbuf.st_gid);
- 	}
-=20
- 	/* rename mtemp to mtab */
+diff --git a/bin/chcp.c b/bin/chcp.c
+index deb9a2b..a66e437 100644
+--- a/bin/chcp.c
++++ b/bin/chcp.c
+@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
+ 	nilfs_cno_t cno;
+ 	char *dev, *modestr, *progname, *endptr;
+ 	int c, mode, status;
++	unsigned long val;
+ #ifdef _GNU_SOURCE
+ 	int option_index;
+ #endif	/* _GNU_SOURCE */
+@@ -119,7 +120,7 @@ int main(int argc, char *argv[])
+ 		dev =3D NULL;
+ 	} else {
+ 		modestr =3D argv[optind++];
+-		strtoul(argv[optind], &endptr, CHCP_BASE);
++		val =3D strtoul(argv[optind], &endptr, CHCP_BASE);
+ 		if (*endptr =3D=3D '\0')
+ 			dev =3D NULL;
+ 		else
+diff --git a/bin/dumpseg.c b/bin/dumpseg.c
+index fbc587d..0ee6aee 100644
+--- a/bin/dumpseg.c
++++ b/bin/dumpseg.c
+@@ -174,6 +174,7 @@ int main(int argc, char *argv[])
+ 	void *seg;
+ 	ssize_t segsize;
+ 	int c, i, status;
++	unsigned long val;
+ #ifdef _GNU_SOURCE
+ 	int option_index;
+ #endif	/* _GNU_SOURCE */
+@@ -211,7 +212,7 @@ int main(int argc, char *argv[])
+ 		fprintf(stderr, "%s: too few arguments\n", progname);
+ 		exit(1);
+ 	} else {
+-		strtoul(argv[optind], &endptr, DUMPSEG_BASE);
++		val =3D strtoul(argv[optind], &endptr, DUMPSEG_BASE);
+ 		if (*endptr =3D=3D '\0')
+ 			dev =3D NULL;
+ 		else
 --=20
 1.6.6.2
 
