@@ -1,135 +1,61 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: resizing file system
-Date: Sun, 03 Oct 2010 19:34:46 +0900 (JST)
-Message-ID: <20101003.193446.37565437.ryusuke@osrg.net>
-References: <87fwwvo3it.wl%jir@sekiba.com>
-	<20100928.010138.179946334.ryusuke@osrg.net>
-	<87wrq2tufd.wl%jir@sekiba.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: change license of exported header file
+Date: Sun,  3 Oct 2010 19:43:36 +0900
+Message-ID: <1286102616-26498-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87wrq2tufd.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
-Cc: athena-/JWCw35jmeM@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 
-On Fri, 01 Oct 2010 13:21:10 +0900, Jiro SEKIBA wrote:
-> Hi, 
-> 
-> Based on the situation I've searched for a few days,
-> I conclude that it's better to change license of the nilfs2_fs.h header.
-> I'll comment it inline.
+This allows other projects to carry copies of the header file related
+to ABI and disk format (i.e. "nilfs2_fs.h") without it or distributors
+having to worry about effects on the project's overall license terms.
+It's also desired for switching the license of nilfs library to LGPL.
 
-OK, I'll post the patch to change the license, and will send it for
-the next merge window unless there are objections.
+Jiro SEKIBA pointed out these license issues (Message-ID:
+<87tylo7msw.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>), and he suggested switching license of
+the library and nilfs2_fs.h to GNU Lesser General Public License.  We
+take in his suggestion to avoid the license issues.
 
-Thanks,
-Ryusuke Konishi
- 
-> At Tue, 28 Sep 2010 01:01:38 +0900 (JST),
-> Ryusuke Konishi wrote:
-> > 
-> > Hi,
-> > On Mon, 27 Sep 2010 19:59:54 +0900, Jiro SEKIBA wrote:
-> > > Hi,
-> > > 
-> > > At Sat, 18 Sep 2010 01:20:00 +0900 (JST),
-> > > Ryusuke Konishi wrote:
-> > > > 
-> > > > Hi,
-> > > > On Fri, 17 Sep 2010 18:15:59 +0900, Jiro SEKIBA wrote:
-> > > > > Hi,
-> > > > > 
-> > > > > I think it would be good to have a generic libraries for other user land tools,
-> > > > > like parted, for the purpose to modify/tweek file system off line.
-> > > > > At least, resize/fsck/mkfs are the generic functionalities that parted
-> > > > > can handle.  So it's good if there is a library that can perform
-> > > > > those things to avoid implementing same thing all over the place.
-> > > > > 
-> > > > > One big problem for parted is that parted is GPL3 and libnilfs2 is GPL2 X).
-> > > > > Still, contributers of libnilfs2 are countable, so maybe we can get agreements
-> > > > > from all contributers to change licence to LGPL2, isn't it?
-> > > > 
-> > > > Definitely yes.  I think we should migrate the licence of the library
-> > > > to LGPL2.
-> > > > 
-> > > > One practical problem is that some of the source files derive the
-> > > > kernel code, and they are licensed under GPLv2.
-> > > > 
-> > > > For example, nilfs2_fs.h and crc32.c are just such ones.
-> > > > 
-> > > > Do you think we need replacement for these?
-> > > 
-> > > We could choose to change the licence as LGPL like mqueue.h (*1).
-> > > However, we may be able to think that license of nilfs2_fs.h won't affect
-> > > license of user land tools.
-> > 
-> > > At least, Linus stated that "There's a
-> > > clarification that user-space programs that use the standard system call
-> > > interfaces aren't considered derived works, ..." (*2). 
-> > >
-> > > *1) http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob_plain;f=include/linux/mqueue.h;hb=HEAD
-> > > *2) http://kerneltrap.org/node/1735
-> > 
-> > "unistd.h" is distributed under LGPL.  So, the above Linus' statement
-> > sounds like saying just fundamental charateristics of LGPL.
-> 
-> I interpreted his statement different way, that using standard interface
-> of kernel is using system call or ioctl.  Using those functionality 
-> requires including headers for binary compatibility.
-> 
-> > The point of "nilfs2_fs.h" issue differs from that.  A copy of
-> > nilfs2_fs.h is actually included in nilfs-utils, and the nilfs library
-> > is depending on the copy.
-> > 
-> > The "mqueue.h" solution seems to be an approved manner (sigh).
-> > 
-> > Another solution is extracting requisites from "nilfs2_fs.h" and
-> > rewriting them under LGPL for the library and userland programs.
-> > 
-> > Or, do you know any examples of GPL header file whose library is
-> > licensed under LGPL?
-> 
-> libv4l includes videodev2.h which is GPL, but is released under LGPL.
->  http://freshmeat.net/projects/libv4l
-> 
-> However, that is the only LGPL library I found  which includes GPL header.
-> Other libraries intentionally or unintentionally don't include GPL headers.
-> 
-> Actually, I realized that some of exported headers of linux kernel are
-> not GPL, but like LGPL, BSD, MIT.  Or even no license declaration.
-> 
-> Here is the diff of the kernel that merely changes license of header
-> to avoid the license issues we have been talking.
-> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=19b3eecc21b65a24b0aae2684ca0c8e1b99ef802
-> 
-> So non-GPLed header is common way to export linux headers.
-> 
-> thanks,
-> 
-> regards
-> 
-> > > While, crc32.c must be replaced other implementation :(.
-> > > I'll search lgpled implementation.
-> > 
-> > OK, let's replace it with a compatible one if we change the library
-> > license to LGPL.
-> > 
-> > Thanks,
-> > Ryusuke Konishi
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> > 
-> > 
-> > 
-> 
-> 
-> -- 
-> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+---
+ include/linux/nilfs2_fs.h |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index 4660467..227e49d 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -4,16 +4,16 @@
+  * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
+  *
+  * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; either version 2 of the License, or
++ * it under the terms of the GNU Lesser General Public License as published
++ * by the Free Software Foundation; either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
++ * GNU Lesser General Public License for more details.
+  *
+- * You should have received a copy of the GNU General Public License
++ * You should have received a copy of the GNU Lesser General Public License
+  * along with this program; if not, write to the Free Software
+  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+  *
+-- 
+1.6.6.2
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
