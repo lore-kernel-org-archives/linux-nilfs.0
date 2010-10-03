@@ -1,57 +1,136 @@
-From: Seiji Kihara <kihara-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [ANNOUNCE] NILFS utils 2.0.20 released
-Date: Sat, 2 Oct 2010 13:29:14 +0900
-Message-ID: <AANLkTi=xjxbfDgSqHkfqKbiuR_Qbw_cC5FtwAD=NgBhQ@mail.gmail.com>
-References: <20100926.183145.212708874.ryusuke@osrg.net>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: resizing file system
+Date: Sun, 03 Oct 2010 19:34:46 +0900 (JST)
+Message-ID: <20101003.193446.37565437.ryusuke@osrg.net>
+References: <87fwwvo3it.wl%jir@sekiba.com>
+	<20100928.010138.179946334.ryusuke@osrg.net>
+	<87wrq2tufd.wl%jir@sekiba.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:sender:received
-         :in-reply-to:references:date:x-google-sender-auth:message-id:subject
-         :from:to:content-type:content-transfer-encoding;
-        bh=Bz3xuJ5V7yU+MCA+yq/9/DCPl+NxkcqDsyIoTdkXabc=;
-        b=goXpLabjEUdcpK7b7VHKyuvO9MS4Fd8z9YE3m6APpTMGqsSeyHN20dSywXQLUM9eIc
-         vfihIR4imWwHrnVbFAmI8bSL0TfbppZHg9RIx43qCh8yi8vJ7mDviWI1Si+GnO4mg55y
-         8OFLnc9ICFkkBNnkh/yy0awiC8/XQr3lhTH1o=
-In-Reply-To: <20100926.183145.212708874.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <87wrq2tufd.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
+Cc: athena-/JWCw35jmeM@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello,
+On Fri, 01 Oct 2010 13:21:10 +0900, Jiro SEKIBA wrote:
+> Hi, 
+> 
+> Based on the situation I've searched for a few days,
+> I conclude that it's better to change license of the nilfs2_fs.h header.
+> I'll comment it inline.
 
-RPMs of nilfs-utils-2.0.20 for RHEL/CentOS 5 are now available at nilfs=
-=2Eorg.
-Enjoy!
+OK, I'll post the patch to change the license, and will send it for
+the next merge window unless there are objections.
 
-Seiji Kihara
-
-2010/9/26 Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>:
-> Hi folks,
->
-> I made a release of nilfs-utils (nilfs-utils-2.0.20) today.
-> It's available at
->
-> =A0http://www.nilfs.org/en/download.html
->
-> This release contains "nilfs-tune" which allows modifying filesystem
-> parameters including label, uuid, and so on.
->
-> Recently, We had a discussion about changing the license of library t=
-o
-> LGPLv2 from GPLv2, but it's not included yet.
->
-> See the changelog ( http://www.nilfs.org/download/ChangeLog-utils-v2 =
-)
-> for details.
->
-> Thanks,
-> Ryusuke Konishi
+Thanks,
+Ryusuke Konishi
+ 
+> At Tue, 28 Sep 2010 01:01:38 +0900 (JST),
+> Ryusuke Konishi wrote:
+> > 
+> > Hi,
+> > On Mon, 27 Sep 2010 19:59:54 +0900, Jiro SEKIBA wrote:
+> > > Hi,
+> > > 
+> > > At Sat, 18 Sep 2010 01:20:00 +0900 (JST),
+> > > Ryusuke Konishi wrote:
+> > > > 
+> > > > Hi,
+> > > > On Fri, 17 Sep 2010 18:15:59 +0900, Jiro SEKIBA wrote:
+> > > > > Hi,
+> > > > > 
+> > > > > I think it would be good to have a generic libraries for other user land tools,
+> > > > > like parted, for the purpose to modify/tweek file system off line.
+> > > > > At least, resize/fsck/mkfs are the generic functionalities that parted
+> > > > > can handle.  So it's good if there is a library that can perform
+> > > > > those things to avoid implementing same thing all over the place.
+> > > > > 
+> > > > > One big problem for parted is that parted is GPL3 and libnilfs2 is GPL2 X).
+> > > > > Still, contributers of libnilfs2 are countable, so maybe we can get agreements
+> > > > > from all contributers to change licence to LGPL2, isn't it?
+> > > > 
+> > > > Definitely yes.  I think we should migrate the licence of the library
+> > > > to LGPL2.
+> > > > 
+> > > > One practical problem is that some of the source files derive the
+> > > > kernel code, and they are licensed under GPLv2.
+> > > > 
+> > > > For example, nilfs2_fs.h and crc32.c are just such ones.
+> > > > 
+> > > > Do you think we need replacement for these?
+> > > 
+> > > We could choose to change the licence as LGPL like mqueue.h (*1).
+> > > However, we may be able to think that license of nilfs2_fs.h won't affect
+> > > license of user land tools.
+> > 
+> > > At least, Linus stated that "There's a
+> > > clarification that user-space programs that use the standard system call
+> > > interfaces aren't considered derived works, ..." (*2). 
+> > >
+> > > *1) http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob_plain;f=include/linux/mqueue.h;hb=HEAD
+> > > *2) http://kerneltrap.org/node/1735
+> > 
+> > "unistd.h" is distributed under LGPL.  So, the above Linus' statement
+> > sounds like saying just fundamental charateristics of LGPL.
+> 
+> I interpreted his statement different way, that using standard interface
+> of kernel is using system call or ioctl.  Using those functionality 
+> requires including headers for binary compatibility.
+> 
+> > The point of "nilfs2_fs.h" issue differs from that.  A copy of
+> > nilfs2_fs.h is actually included in nilfs-utils, and the nilfs library
+> > is depending on the copy.
+> > 
+> > The "mqueue.h" solution seems to be an approved manner (sigh).
+> > 
+> > Another solution is extracting requisites from "nilfs2_fs.h" and
+> > rewriting them under LGPL for the library and userland programs.
+> > 
+> > Or, do you know any examples of GPL header file whose library is
+> > licensed under LGPL?
+> 
+> libv4l includes videodev2.h which is GPL, but is released under LGPL.
+>  http://freshmeat.net/projects/libv4l
+> 
+> However, that is the only LGPL library I found  which includes GPL header.
+> Other libraries intentionally or unintentionally don't include GPL headers.
+> 
+> Actually, I realized that some of exported headers of linux kernel are
+> not GPL, but like LGPL, BSD, MIT.  Or even no license declaration.
+> 
+> Here is the diff of the kernel that merely changes license of header
+> to avoid the license issues we have been talking.
+> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=19b3eecc21b65a24b0aae2684ca0c8e1b99ef802
+> 
+> So non-GPLed header is common way to export linux headers.
+> 
+> thanks,
+> 
+> regards
+> 
+> > > While, crc32.c must be replaced other implementation :(.
+> > > I'll search lgpled implementation.
+> > 
+> > OK, let's replace it with a compatible one if we change the library
+> > license to LGPL.
+> > 
+> > Thanks,
+> > Ryusuke Konishi
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > 
+> > 
+> > 
+> 
+> 
+> -- 
+> Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
