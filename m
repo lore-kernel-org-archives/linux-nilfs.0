@@ -1,35 +1,35 @@
-From: =?UTF-8?Q?=C5=81ukasz_W=C3=B3jcicki?= <lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org>
-Subject: Nilfs_cleanerd not clear segments ?
-Date: Wed, 06 Oct 2010 12:05:53 +0200
-Message-ID: <1286359553.2210.78.camel@Stanowisko-25>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: Nilfs_cleanerd not clear segments ?
+Date: Thu, 07 Oct 2010 15:08:58 +0900 (JST)
+Message-ID: <20101007.150858.158457115.ryusuke@osrg.net>
+References: <1286359553.2210.78.camel@Stanowisko-25>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1286359553.2210.78.camel@Stanowisko-25>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="windows-1254"
+To: lwojcicki-V+nj596LuoKHKKo6LODCOg@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Is it possible that the application will not clean nilfs_cleanerd
-segments? I had this situation and the USB disk filled up to 100%. My
-configuration file:
-
-# Protection period in second.
-protection_period	1800
-
-# Minimum number of clean segments
-#   0 =3D continuous cleaning
-# > 0 =3D pause cleaning until less segments are available
-min_clean_segments	40%
-
-# Maximum number of clean segments
-max_clean_segments	60%
-
-=C5=81ukasz W=C3=B3jcicki
-
-
+T24gV2VkLCAwNiBPY3QgMjAxMCAxMjowNTo1MyArMDIwMCwgxYF1a2Fzel9Xw7NqY2lja2kgd3Jv
+dGU6DQo+IElzIGl0IHBvc3NpYmxlIHRoYXQgdGhlIGFwcGxpY2F0aW9uIHdpbGwgbm90IGNsZWFu
+IG5pbGZzX2NsZWFuZXJkDQo+IHNlZ21lbnRzPyBJIGhhZCB0aGlzIHNpdHVhdGlvbiBhbmQgdGhl
+IFVTQiBkaXNrIGZpbGxlZCB1cCB0byAxMDAlLiBNeQ0KPiBjb25maWd1cmF0aW9uIGZpbGU6DQo+
+IA0KPiAjIFByb3RlY3Rpb24gcGVyaW9kIGluIHNlY29uZC4NCj4gcHJvdGVjdGlvbl9wZXJpb2QJ
+MTgwMA0KPiANCj4gIyBNaW5pbXVtIG51bWJlciBvZiBjbGVhbiBzZWdtZW50cw0KPiAjICAgMCA9
+IGNvbnRpbnVvdXMgY2xlYW5pbmcNCj4gIyA+IDAgPSBwYXVzZSBjbGVhbmluZyB1bnRpbCBsZXNz
+IHNlZ21lbnRzIGFyZSBhdmFpbGFibGUNCj4gbWluX2NsZWFuX3NlZ21lbnRzCTQwJQ0KPiANCj4g
+IyBNYXhpbXVtIG51bWJlciBvZiBjbGVhbiBzZWdtZW50cw0KPiBtYXhfY2xlYW5fc2VnbWVudHMJ
+NjAlDQo+IA0KPiDFgXVrYXN6IFfDs2pjaWNraQ0KDQpJZiB0aGUgYXBwbGljYXRpb24gYnVyc3R5
+IHdyaXRlcyBkYXRhIHdpdGhpbiBwcm90ZWN0aW9uX3BlcmlvZCwgbmlsZnMNCndpbGwgZ2V0IGEg
+ZGlzayBmdWxsIGV2ZW4gaWYgeW91IGRlbGV0ZWQgdGhlIGZpbGUgZnJvbSB0aGUgY3VycmVudA0K
+ZmlsZXN5c3RlbSBhbmQgY2xlYW5lcmQgaXMgd29ya2luZy4NCg0KWW91IGNhbiB1c2UgcHAgbW91
+bnQgb3B0aW9uIHRvIHNob3J0ZW4gdGhlIHByb3RlY3Rpb24gcGVyaW9kDQp0ZW1wb3JhcmlseS4g
+IFNlZSBtYW5wYWdlIG9mIG1vdW50Lm5pbGZzMig4KSBmb3IgZGV0YWlscy4NCg0KUmVnYXJkcywN
+ClJ5dXN1a2UgS29uaXNoaQ0K
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
