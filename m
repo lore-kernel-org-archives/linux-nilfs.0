@@ -1,55 +1,42 @@
-From: Dwight Schauer <dschauer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: production ready?
-Date: Thu, 14 Oct 2010 07:55:44 -0500
-Message-ID: <AANLkTik7tjKVBrJ_P83sitOVzeGk70AQCJF_CrwG6hYU@mail.gmail.com>
-References: <AANLkTikL-wSkv4uTUM_g5Cs9=k3Q8TNkWXa0KNtnutXJ@mail.gmail.com>
-	<20101014.145018.209367253.ryusuke@osrg.net>
-	<AANLkTi=hk=xSFLddi5+YOpZNPPDR7rO9Y+zF8N3+Wcdy@mail.gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:received:in-reply-to
-         :references:date:message-id:subject:from:to:content-type
-         :content-transfer-encoding;
-        bh=nTJVtVH5XxUwidvQztQuC+ibYIezB1Qg48T2A/zsDFY=;
-        b=RSHLPUdBdwjVH+LSOWo1wB9bfXJfUUSUxuMbXpK86nrEA4Aj8sd2HYISylVK5qxMDx
-         3AmaUxfsIstc5LMvaCHveBZLSJHv/dl7iwSoW8suDzPZk+T2DN6WMpTu3ClGnSb5K8Iu
-         wKeGlqknsj5zOb6T6bzlYKQm71lho7a7oiUss=
-In-Reply-To: <AANLkTi=hk=xSFLddi5+YOpZNPPDR7rO9Y+zF8N3+Wcdy-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Akinobu Mita <akinobu.mita@gmail.com>
+Subject: [PATCH 14/22] nilfs2: use little endian bitops
+Date: Fri, 15 Oct 2010 18:46:13 +0900
+Message-ID: <1287135981-17604-15-git-send-email-akinobu.mita@gmail.com>
+References: <1287135981-17604-1-git-send-email-akinobu.mita@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1287135981-17604-1-git-send-email-akinobu.mita@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Akinobu Mita <akinobu.mita@gmail.com>, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-On Thu, Oct 14, 2010 at 7:25 AM, J=E9r=F4me Poulin <jeromepoulin@gmail.=
-com> wrote:
-> On my side, it is on my laptop /home partition for a bit more than a =
-year...
+As a preparation for removing ext2 non-atomic bit operations from
+asm/bitops.h. This converts ext2 non-atomic bit operations to
+little endian bit operations.
 
-On Thu, Oct 14, 2010 at 1:50 AM, Ryusuke Konishi
-<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> NILFS2 is almost stable.  We have a record of nine months operation o=
-n
-> in-house samba servers and a webDAV server.
+Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
+Cc: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org
+---
+ fs/nilfs2/alloc.h |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-OK, Thanks.
-
-There is still still warning when mounting verbosely though:
-  mount.nilfs2: WARNING! - The NILFS on-disk format may change at any t=
-ime.
-  mount.nilfs2: WARNING! - Do not place critical data on a NILFS filesy=
-stem.
-
-As per the first message, Is the on disk format expected to change any
-time soon? In other words, what is the likelihood of my using NILFS
-when 2.6.35.x, then having some future kernel upgrade render my NILFS
-formatted filesystems un-mountable because the on-disk format changed?
-
-I understand the disclaimer of the the second message.
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
+index 9af34a7..a2463e2 100644
+--- a/fs/nilfs2/alloc.h
++++ b/fs/nilfs2/alloc.h
+@@ -74,7 +74,8 @@ int nilfs_palloc_freev(struct inode *, __u64 *, size_t);
+ 
+ #define nilfs_set_bit_atomic		ext2_set_bit_atomic
+ #define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
+-#define nilfs_find_next_zero_bit	ext2_find_next_zero_bit
++#define nilfs_find_next_zero_bit(addr, size, off)	\
++	find_next_zero_le_bit((unsigned long *)(addr), (size), (off))
+ 
+ /*
+  * persistent object allocator cache
+-- 
+1.7.1.231.gd0b16
