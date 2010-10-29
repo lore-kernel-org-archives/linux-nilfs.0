@@ -1,134 +1,50 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+From: Andrea Gelmini <andrea.gelmini-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: nilfs_btree_propagate problem
-Date: Fri, 29 Oct 2010 16:27:49 +0900 (JST)
-Message-ID: <20101029.162749.48197647.ryusuke@osrg.net>
+Date: Fri, 29 Oct 2010 14:48:05 +0200
+Message-ID: <AANLkTikhULg7H_BECRc42gfNTLBJ7jJ6q3qp9ydMxswW@mail.gmail.com>
 References: <AANLkTinw3anEyeWf95krAt5SH45RaaE6iCm-LU5Egj=1@mail.gmail.com>
+	<20101029.162749.48197647.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <AANLkTinw3anEyeWf95krAt5SH45RaaE6iCm-LU5Egj=1@mail.gmail.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:received:received:in-reply-to
+         :references:date:message-id:subject:from:to:cc:content-type;
+        bh=4naMl6FZkGebYj9COxtRR2XjOdch0XkeJerJJ/xaWnM=;
+        b=t74z/fjiAKSHh6YQ97nd5AJBzonmC2lBGgcB8ZpkiY9ZzWgkkohq8rpcJ/9plzyB0C
+         8CzpOa1Y64hTXbyutYHMAFL4ivmuZ90DkhvtKBGHKRkWZwumR1LglI30IuwRaUEPC1O3
+         iKWV96maTK+UBL/0qIb5+qLPDc4lwomo66zGc=
+In-Reply-To: <20101029.162749.48197647.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-8859-1"
-To: andrea.gelmini-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
-On Thu, 7 Oct 2010 15:23:45 +0200, Andrea Gelmini wrote:
-> Hi all,
->   and thanks a lot for your work on Nilfs.
->   I'm using it for my /home, with
->   Ubuntu 10.10
->   Vanilla kernel from Linus git repository (at this commit)=B9
->   nilfs_cleanerd v2.0.18 (from ubuntu deb nilfs-tools 2.0.18-2).
->=20
->   Well, everything's working fine, but since the initial clone of my
-> data, I have problem
->   with ~/dev/prg/wine.
->   I mean, if I try to compile it, after a while, I had process stucke=
-d
-> (it seems they are not
->   able to write, but they can read from the disk).
->   Meanwhile my log are flooded with this:
-> Oct  7 11:53:39 vaio kernel: [ 3408.688565] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:53:44 vaio kernel: [ 3413.696833] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:53:49 vaio kernel: [ 3418.704543] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:53:54 vaio kernel: [ 3423.712541] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:53:59 vaio kernel: [ 3428.720545] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:04 vaio kernel: [ 3433.728548] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:09 vaio kernel: [ 3438.736543] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:14 vaio kernel: [ 3443.744543] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:19 vaio kernel: [ 3448.752543] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:24 vaio kernel: [ 3453.760542] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:29 vaio kernel: [ 3458.768554] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:34 vaio kernel: [ 3463.776543] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:39 vaio kernel: [ 3468.784458] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:44 vaio kernel: [ 3473.792545] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:49 vaio kernel: [ 3478.800543] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:54 vaio kernel: [ 3483.808542] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:54:59 vaio kernel: [ 3488.816546] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:55:04 vaio kernel: [ 3493.824543] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:55:09 vaio kernel: [ 3498.832545] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
-> Oct  7 11:55:14 vaio kernel: [ 3503.840554] nilfs_btree_propagate: ke=
-y
-> =3D 2823, level =3D=3D 0
->=20
->    I guess it's important to note the 5 seconds of delay between log
-> entries. Yes, it's my
->    snapshot interval.
->    The only way to solve it is a crude switch off/on.
->    At reboot everything is looking fine.
->=20
->    Reading access gives no problems:
->     find -type f  -exec cat {} > /dev/null \;
->=20
-> Any clues?
->=20
-> Thanks a lot for your time and work,
-> Andrea
+2010/10/29 Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>:
 
-Do you still have this problem?
+Hi Ryusuke,
+    and thanks a lot for your reply.
 
-The messages indicate that nilfs met a wrong btree node block during
-making a log for writing.
+> Do you still have this problem?
 
-The 5 seconds interval is the default writeback time.  So, It seems to
-be generated by the corrupted block left on memory.
-=20
-> n.b.: well, I almost use my notebook with hibernation/resume. Does
-> nilfs_cleanerd suffer long jumps in time? Also, sometimes
->         the resume doesn't go well. I force a sync before hibernation=
-,
-> but does the fs can be screwed in this way?
+Well, I hit the problem a few times.
+Nothing that a reboot couldn't reboot.
+But one day kernel started to complain about
+btree corruption, so I gave up.
+I don't have the old log, anyway if you are interested
+I could try to replicate my usage pattern, to see if
+the problem came back.
 
-nilfs_cleanred may see a long jump after resuming from hibernation,
-but I haven't seen any issues so far.
+> If you meet the issue next time, try dmesg command to print kernel log
+> buffered on memory. It may give us some clue.
 
-If you meet the issue next time, try dmesg command to print kernel log
-buffered on memory. It may give us some clue.
+Well, I usually check dmesg/logs, but I didn't find something useuful.
 
-Thanks,
-Ryusuke Konishi
+Thanks a lot for your work,
+Gelma
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
