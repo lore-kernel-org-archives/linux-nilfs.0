@@ -1,95 +1,134 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Nilfs_cleanerd err=-17
-Date: Fri, 29 Oct 2010 15:51:51 +0900 (JST)
-Message-ID: <20101029.155151.179792055.ryusuke@osrg.net>
-References: <1287440309.2849.5.camel@Nokia-N900-02-8>
+Subject: Re: nilfs_btree_propagate problem
+Date: Fri, 29 Oct 2010 16:27:49 +0900 (JST)
+Message-ID: <20101029.162749.48197647.ryusuke@osrg.net>
+References: <AANLkTinw3anEyeWf95krAt5SH45RaaE6iCm-LU5Egj=1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1287440309.2849.5.camel@Nokia-N900-02-8>
+In-Reply-To: <AANLkTinw3anEyeWf95krAt5SH45RaaE6iCm-LU5Egj=1@mail.gmail.com>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: bryce-Ra7CeWMrBuQyzzc7d281ts/53G5R+iW0@public.gmane.org
+Content-Type: Text/Plain; charset="iso-8859-1"
+To: andrea.gelmini-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 19 Oct 2010 09:18:29 +1100, bryce wrote:
-> Hi,
-> 
-> I've been using nilfs (built as a module for linux kernel version 2.6.28 on an arm device) for the last few days, however I started to run out of disk space, and hence noticed that nilfs_cleanerd wasn't running.
-> 
-> I tried running it manually and everytime I tried I got this error in dmesg:
-> 
->  nilfs_ioctl_move_inode_block: conflicting data buffer: ino=62127, cno=784, offset=1115, blocknr=739299, vblocknr=477050
->  NILFS: GC failed during preparation: cannot read source blocks: err=-17
-> 
-> and nilfs_cleanerd stopped running.
-> 
-> As the partition was rapidly approaching full, it meant the partition was unusable...
-> 
-> Is this a known error that can be dealt with?
-> 
-> For now I've just made a backup of the partition and created a new nilfs partition to copy all its data into to try and sidestep the issue.
+Hi,
+On Thu, 7 Oct 2010 15:23:45 +0200, Andrea Gelmini wrote:
+> Hi all,
+>   and thanks a lot for your work on Nilfs.
+>   I'm using it for my /home, with
+>   Ubuntu 10.10
+>   Vanilla kernel from Linus git repository (at this commit)=B9
+>   nilfs_cleanerd v2.0.18 (from ubuntu deb nilfs-tools 2.0.18-2).
+>=20
+>   Well, everything's working fine, but since the initial clone of my
+> data, I have problem
+>   with ~/dev/prg/wine.
+>   I mean, if I try to compile it, after a while, I had process stucke=
+d
+> (it seems they are not
+>   able to write, but they can read from the disk).
+>   Meanwhile my log are flooded with this:
+> Oct  7 11:53:39 vaio kernel: [ 3408.688565] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:53:44 vaio kernel: [ 3413.696833] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:53:49 vaio kernel: [ 3418.704543] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:53:54 vaio kernel: [ 3423.712541] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:53:59 vaio kernel: [ 3428.720545] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:04 vaio kernel: [ 3433.728548] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:09 vaio kernel: [ 3438.736543] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:14 vaio kernel: [ 3443.744543] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:19 vaio kernel: [ 3448.752543] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:24 vaio kernel: [ 3453.760542] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:29 vaio kernel: [ 3458.768554] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:34 vaio kernel: [ 3463.776543] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:39 vaio kernel: [ 3468.784458] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:44 vaio kernel: [ 3473.792545] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:49 vaio kernel: [ 3478.800543] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:54 vaio kernel: [ 3483.808542] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:54:59 vaio kernel: [ 3488.816546] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:55:04 vaio kernel: [ 3493.824543] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:55:09 vaio kernel: [ 3498.832545] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+> Oct  7 11:55:14 vaio kernel: [ 3503.840554] nilfs_btree_propagate: ke=
+y
+> =3D 2823, level =3D=3D 0
+>=20
+>    I guess it's important to note the 5 seconds of delay between log
+> entries. Yes, it's my
+>    snapshot interval.
+>    The only way to solve it is a crude switch off/on.
+>    At reboot everything is looking fine.
+>=20
+>    Reading access gives no problems:
+>     find -type f  -exec cat {} > /dev/null \;
+>=20
+> Any clues?
+>=20
+> Thanks a lot for your time and work,
+> Andrea
 
-Sorry for my late reply.  I was so busy this month, and couldn't look
-into the problem.
+Do you still have this problem?
 
-According to your log, some sort of inconsistent state seems to happen
-in the log that GC tried to reclaim.
+The messages indicate that nilfs met a wrong btree node block during
+making a log for writing.
 
-Could you try to get the detail information by changing
-/etc/nilfs_cleanerd.conf as follows?
+The 5 seconds interval is the default writeback time.  So, It seems to
+be generated by the corrupted block left on memory.
+=20
+> n.b.: well, I almost use my notebook with hibernation/resume. Does
+> nilfs_cleanerd suffer long jumps in time? Also, sometimes
+>         the resume doesn't go well. I force a sync before hibernation=
+,
+> but does the fs can be screwed in this way?
 
- -log_priority		info
- +log_priority		debug
+nilfs_cleanred may see a long jump after resuming from hibernation,
+but I haven't seen any issues so far.
 
-After reloading the conf file by doing umount/mount or sending a HUP
-signal to the GC process, nilfs_cleanerd would print messages like
-follows into /var/log/messages or /var/log/syslog:
+If you meet the issue next time, try dmesg command to print kernel log
+buffered on memory. It may give us some clue.
 
-Oct 29 15:31:04 host nilfs_cleanerd[7952]: segment 1869 cleaned
-Oct 29 15:31:04 host nilfs_cleanerd[7952]: segment 1870 cleaned
-Oct 29 15:31:04 host nilfs_cleanerd[7952]: adjust interval
-Oct 29 15:31:04 host nilfs_cleanerd[7952]: ncleansegs = 9498
-Oct 29 15:31:04 host nilfs_cleanerd[7952]: 2 segments selected to be cleaned
-Oct 29 15:31:04 host nilfs_cleanerd[7952]: wait 4.998359000
-
-If you succeeded to get the segment numbers causing the error, try
-"dumpseg" command to get log header information.
-
-# for segnum in 1869 1870; do dumpseg /dev/xxx $segnum; done
-
- where "/dev/xxx" should be replaced with your device and
- "1869 1870" are the segment numbers in question.
-
-> This issue was with nilfs(-utils) version 2.0.20 built locally only a few days ago.
-> Its running on a Nokia n900 if that makes a difference.
-> 
-> This issue also occurred if I tried to run nilfs_cleanerd on my x86 laptop on the same partition as well.
-> 
-> Is this a known issue at all? (I tried searching for it but didn't find
-> anything useful)
-
-Seems to be a new issue.  Some more information is needed to narrow
-down the problem.
-
-Thanks in advance,
+Thanks,
 Ryusuke Konishi
-
-> And is there anything I can try and do to avoid it in the future? Or to help deal with it?
-> 
-> Cheers
-> 
-> Bryce
-> 
-> --
-> Sent from my Nokia N900 using Nokia Messaging
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
