@@ -1,34 +1,70 @@
-From: "Jason J. W. Williams" <jasonjwwilliams-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re-capturing space
-Date: Wed, 10 Nov 2010 12:10:25 -0700
-Message-ID: <AANLkTi=+FiC=y2jpV-rJmgxdsMEdVBkk9E2_3SZGed3L@mail.gmail.com>
-References: <AANLkTi=6k2_v4Ga+4V8EQEsGQ5oNTn_wnc=bbdB94k27@mail.gmail.com>
+From: "Luis R. Rodriguez" <mcgrof-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/9] treewide: convert vprintk uses to %pV
+Date: Wed, 10 Nov 2010 14:48:02 -0800
+Message-ID: <AANLkTinhcbdm8YQOrFVdONODo6K6PcxHYtx5vqnap_3T@mail.gmail.com>
+References: <cover.1289348757.git.joe@perches.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:received:in-reply-to
-         :references:date:message-id:subject:from:to:content-type;
-        bh=ceQPqJvBN/XMlSCQGi2H2vzkh0RcvhEUl6F3pN+O9OM=;
-        b=Op9aVh3eXrF+i8Svqt8D185nt0X70TJvsA1Wnh0JFUvOvKYORCVCxT79mqKbkqcDzH
-         NGF+3DyjVgBiPgEDgDhrY0Riturk9Bs+j/Jz11qz6QPripGpRcFOnIlTdYPJfy5Qe+eV
-         O4eFKHjoGQro/QmUeWT92wC6CdVRBRpE2d6LI=
-In-Reply-To: <AANLkTi=6k2_v4Ga+4V8EQEsGQ5oNTn_wnc=bbdB94k27-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+        h=domainkey-signature:received:mime-version:received:in-reply-to
+         :references:from:date:message-id:subject:to:cc:content-type
+         :content-transfer-encoding;
+        bh=FSTGpgf5M7VhYhUJGTUuyvNobaz3KXTCpRHYttoS5iA=;
+        b=Wio/wMCiP1JKZnunZYbnvfBy4xRZWn3M6aCcFfwpfLrG5bpdKJfQzZUtzsJJUJlECS
+         BGyI8PUup/WhPWw18lnpazGXD8JTtYLYw8oDcNGz2aS6SHYrsCMqJnpZcQgd8TwijmqS
+         EOX+j1eKWqvwOCOvTc8QA+1hDPqCQPGN+Y5CM=
+In-Reply-To: <cover.1289348757.git.joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+To: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello,
-I'm looking at NILFS as a possible alternative to BTRFS for our move
-off of ZFS. Looking at the description of how NILFS works, it seems
-like it's one big log. New records go on the front. My question is how
-does space eventually get recaptured when you delete files? Does the
-log get rewritten/compacted regularly?
+On Tue, Nov 9, 2010 at 4:35 PM, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org> wrote:
+> Multiple secessive calls to printk can be interleaved.
+> Avoid this possible interleaving by using %pV
+>
+> Joe Perches (9):
+> =C2=A0drivers/gpu/drm/drm_stub.c: Use printf extension %pV
+> =C2=A0drivers/isdn/mISDN: Use printf extension %pV
+> =C2=A0drivers/net/wireless/ath/debug.c: Use printf extension %pV
+> =C2=A0drivers/net/wireless/b43/main.c: Use printf extension %pV
+> =C2=A0drivers/net/wireless/b43legacy/main.c: Use printf extension %pV
+> =C2=A0fs/gfs2/glock.c: Use printf extension %pV
+> =C2=A0fs/nilfs2/super.c: Use printf extension %pV
+> =C2=A0fs/quota/dquot.c: Use printf extension %pV
+> =C2=A0net/sunrpc/svc.c: Use printf extension %pV
+>
+> =C2=A0drivers/gpu/drm/drm_stub.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0| =C2=A0 14 +++++++--
+> =C2=A0drivers/isdn/mISDN/layer1.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+| =C2=A0 10 +++++--
+> =C2=A0drivers/isdn/mISDN/layer2.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+| =C2=A0 12 ++++++--
+> =C2=A0drivers/isdn/mISDN/tei.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0| =C2=A0 23 +++++++++++----
+> =C2=A0drivers/net/wireless/ath/debug.c =C2=A0 =C2=A0 =C2=A0| =C2=A0 =C2=
+=A09 +++++-
+> =C2=A0drivers/net/wireless/b43/main.c =C2=A0 =C2=A0 =C2=A0 | =C2=A0 4=
+8 ++++++++++++++++++++++++--------
+> =C2=A0drivers/net/wireless/b43legacy/main.c | =C2=A0 47 +++++++++++++=
++++++++++++--------
+> =C2=A0fs/gfs2/glock.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A09 +++++-
+> =C2=A0fs/nilfs2/super.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 | =C2=A0 23 +++++++++++-----
+> =C2=A0fs/quota/dquot.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0 12 +++++---
+> =C2=A0net/sunrpc/svc.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0 12 +++++---
+> =C2=A011 files changed, 161 insertions(+), 58 deletions(-)
 
--J
+When was this added upstream BTW? I ask for backport considerations.
+
+  Luis
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
