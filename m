@@ -1,77 +1,33 @@
-From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 7/9] fs/nilfs2/super.c: Use printf extension %pV
-Date: Tue,  9 Nov 2010 16:35:21 -0800
-Message-ID: <1addeb606bca88e09fb46b93be10c3a58e759348.1289348757.git.joe@perches.com>
-References: <cover.1289348757.git.joe@perches.com>
+From: "Jason J. W. Williams" <jasonjwwilliams-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re-capturing space
+Date: Wed, 10 Nov 2010 12:10:25 -0700
+Message-ID: <AANLkTi=+FiC=y2jpV-rJmgxdsMEdVBkk9E2_3SZGed3L@mail.gmail.com>
+References: <AANLkTi=6k2_v4Ga+4V8EQEsGQ5oNTn_wnc=bbdB94k27@mail.gmail.com>
+Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1289348757.git.joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:received:received:in-reply-to
+         :references:date:message-id:subject:from:to:content-type;
+        bh=ceQPqJvBN/XMlSCQGi2H2vzkh0RcvhEUl6F3pN+O9OM=;
+        b=Op9aVh3eXrF+i8Svqt8D185nt0X70TJvsA1Wnh0JFUvOvKYORCVCxT79mqKbkqcDzH
+         NGF+3DyjVgBiPgEDgDhrY0Riturk9Bs+j/Jz11qz6QPripGpRcFOnIlTdYPJfy5Qe+eV
+         O4eFKHjoGQro/QmUeWT92wC6CdVRBRpE2d6LI=
+In-Reply-To: <AANLkTi=6k2_v4Ga+4V8EQEsGQ5oNTn_wnc=bbdB94k27-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Using %pV reduces the number of printk calls and
-eliminates any possible message interleaving from
-other printk calls.
+Hello,
+I'm looking at NILFS as a possible alternative to BTRFS for our move
+off of ZFS. Looking at the description of how NILFS works, it seems
+like it's one big log. New records go on the front. My question is how
+does space eventually get recaptured when you delete files? Does the
+log get rewritten/compacted regularly?
 
-Signed-off-by: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
----
- fs/nilfs2/super.c |   23 ++++++++++++++++-------
- 1 files changed, 16 insertions(+), 7 deletions(-)
-
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index f804d41..bef8cc6 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -111,12 +111,17 @@ void nilfs_error(struct super_block *sb, const char *function,
- 		 const char *fmt, ...)
- {
- 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
-+	struct va_format vaf;
- 	va_list args;
- 
- 	va_start(args, fmt);
--	printk(KERN_CRIT "NILFS error (device %s): %s: ", sb->s_id, function);
--	vprintk(fmt, args);
--	printk("\n");
-+
-+	vaf.fmt = fmt;
-+	vaf.va = &args;
-+
-+	printk(KERN_CRIT "NILFS error (device %s): %s: %pV\n",
-+	       sb->s_id, function, &vaf);
-+
- 	va_end(args);
- 
- 	if (!(sb->s_flags & MS_RDONLY)) {
-@@ -136,13 +141,17 @@ void nilfs_error(struct super_block *sb, const char *function,
- void nilfs_warning(struct super_block *sb, const char *function,
- 		   const char *fmt, ...)
- {
-+	struct va_format vaf;
- 	va_list args;
- 
- 	va_start(args, fmt);
--	printk(KERN_WARNING "NILFS warning (device %s): %s: ",
--	       sb->s_id, function);
--	vprintk(fmt, args);
--	printk("\n");
-+
-+	vaf.fmt = fmt;
-+	vaf.va = &args;
-+
-+	printk(KERN_WARNING "NILFS warning (device %s): %s: %pV\n",
-+	       sb->s_id, function, &vaf);
-+
- 	va_end(args);
- }
- 
--- 
-1.7.3.1.g432b3.dirty
-
+-J
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
