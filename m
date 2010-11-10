@@ -1,50 +1,47 @@
-From: Andrea Gelmini <andrea.gelmini-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: nilfs_btree_propagate problem
-Date: Fri, 29 Oct 2010 14:48:05 +0200
-Message-ID: <AANLkTikhULg7H_BECRc42gfNTLBJ7jJ6q3qp9ydMxswW@mail.gmail.com>
-References: <AANLkTinw3anEyeWf95krAt5SH45RaaE6iCm-LU5Egj=1@mail.gmail.com>
-	<20101029.162749.48197647.ryusuke@osrg.net>
-Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:received:in-reply-to
-         :references:date:message-id:subject:from:to:cc:content-type;
-        bh=4naMl6FZkGebYj9COxtRR2XjOdch0XkeJerJJ/xaWnM=;
-        b=t74z/fjiAKSHh6YQ97nd5AJBzonmC2lBGgcB8ZpkiY9ZzWgkkohq8rpcJ/9plzyB0C
-         8CzpOa1Y64hTXbyutYHMAFL4ivmuZ90DkhvtKBGHKRkWZwumR1LglI30IuwRaUEPC1O3
-         iKWV96maTK+UBL/0qIb5+qLPDc4lwomo66zGc=
-In-Reply-To: <20101029.162749.48197647.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 0/9] treewide: convert vprintk uses to %pV
+Date: Tue,  9 Nov 2010 16:35:14 -0800
+Message-ID: <cover.1289348757.git.joe@perches.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-2010/10/29 Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>:
+Multiple secessive calls to printk can be interleaved.
+Avoid this possible interleaving by using %pV
 
-Hi Ryusuke,
-    and thanks a lot for your reply.
+Joe Perches (9):
+  drivers/gpu/drm/drm_stub.c: Use printf extension %pV
+  drivers/isdn/mISDN: Use printf extension %pV
+  drivers/net/wireless/ath/debug.c: Use printf extension %pV
+  drivers/net/wireless/b43/main.c: Use printf extension %pV
+  drivers/net/wireless/b43legacy/main.c: Use printf extension %pV
+  fs/gfs2/glock.c: Use printf extension %pV
+  fs/nilfs2/super.c: Use printf extension %pV
+  fs/quota/dquot.c: Use printf extension %pV
+  net/sunrpc/svc.c: Use printf extension %pV
 
-> Do you still have this problem?
+ drivers/gpu/drm/drm_stub.c            |   14 +++++++--
+ drivers/isdn/mISDN/layer1.c           |   10 +++++--
+ drivers/isdn/mISDN/layer2.c           |   12 ++++++--
+ drivers/isdn/mISDN/tei.c              |   23 +++++++++++----
+ drivers/net/wireless/ath/debug.c      |    9 +++++-
+ drivers/net/wireless/b43/main.c       |   48 ++++++++++++++++++++++++--------
+ drivers/net/wireless/b43legacy/main.c |   47 ++++++++++++++++++++++++--------
+ fs/gfs2/glock.c                       |    9 +++++-
+ fs/nilfs2/super.c                     |   23 +++++++++++-----
+ fs/quota/dquot.c                      |   12 +++++---
+ net/sunrpc/svc.c                      |   12 +++++---
+ 11 files changed, 161 insertions(+), 58 deletions(-)
 
-Well, I hit the problem a few times.
-Nothing that a reboot couldn't reboot.
-But one day kernel started to complain about
-btree corruption, so I gave up.
-I don't have the old log, anyway if you are interested
-I could try to replicate my usage pattern, to see if
-the problem came back.
+-- 
+1.7.3.1.g432b3.dirty
 
-> If you meet the issue next time, try dmesg command to print kernel log
-> buffered on memory. It may give us some clue.
-
-Well, I usually check dmesg/logs, but I didn't find something useuful.
-
-Thanks a lot for your work,
-Gelma
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
