@@ -1,70 +1,42 @@
-From: "Luis R. Rodriguez" <mcgrof-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: [PATCH 0/9] treewide: convert vprintk uses to %pV
-Date: Wed, 10 Nov 2010 14:48:02 -0800
-Message-ID: <AANLkTinhcbdm8YQOrFVdONODo6K6PcxHYtx5vqnap_3T@mail.gmail.com>
+Date: Wed, 10 Nov 2010 15:01:23 -0800
+Message-ID: <1289430083.15905.106.camel@Joe-Laptop>
 References: <cover.1289348757.git.joe@perches.com>
+	 <AANLkTinhcbdm8YQOrFVdONODo6K6PcxHYtx5vqnap_3T@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:received:mime-version:received:in-reply-to
-         :references:from:date:message-id:subject:to:cc:content-type
-         :content-transfer-encoding;
-        bh=FSTGpgf5M7VhYhUJGTUuyvNobaz3KXTCpRHYttoS5iA=;
-        b=Wio/wMCiP1JKZnunZYbnvfBy4xRZWn3M6aCcFfwpfLrG5bpdKJfQzZUtzsJJUJlECS
-         BGyI8PUup/WhPWw18lnpazGXD8JTtYLYw8oDcNGz2aS6SHYrsCMqJnpZcQgd8TwijmqS
-         EOX+j1eKWqvwOCOvTc8QA+1hDPqCQPGN+Y5CM=
-In-Reply-To: <cover.1289348757.git.joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <AANLkTinhcbdm8YQOrFVdONODo6K6PcxHYtx5vqnap_3T-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: "Luis R. Rodriguez" <mcgrof-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, Nov 9, 2010 at 4:35 PM, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org> wrote:
-> Multiple secessive calls to printk can be interleaved.
-> Avoid this possible interleaving by using %pV
->
-> Joe Perches (9):
-> =C2=A0drivers/gpu/drm/drm_stub.c: Use printf extension %pV
-> =C2=A0drivers/isdn/mISDN: Use printf extension %pV
-> =C2=A0drivers/net/wireless/ath/debug.c: Use printf extension %pV
-> =C2=A0drivers/net/wireless/b43/main.c: Use printf extension %pV
-> =C2=A0drivers/net/wireless/b43legacy/main.c: Use printf extension %pV
-> =C2=A0fs/gfs2/glock.c: Use printf extension %pV
-> =C2=A0fs/nilfs2/super.c: Use printf extension %pV
-> =C2=A0fs/quota/dquot.c: Use printf extension %pV
-> =C2=A0net/sunrpc/svc.c: Use printf extension %pV
->
-> =C2=A0drivers/gpu/drm/drm_stub.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0| =C2=A0 14 +++++++--
-> =C2=A0drivers/isdn/mISDN/layer1.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-| =C2=A0 10 +++++--
-> =C2=A0drivers/isdn/mISDN/layer2.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-| =C2=A0 12 ++++++--
-> =C2=A0drivers/isdn/mISDN/tei.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0| =C2=A0 23 +++++++++++----
-> =C2=A0drivers/net/wireless/ath/debug.c =C2=A0 =C2=A0 =C2=A0| =C2=A0 =C2=
-=A09 +++++-
-> =C2=A0drivers/net/wireless/b43/main.c =C2=A0 =C2=A0 =C2=A0 | =C2=A0 4=
-8 ++++++++++++++++++++++++--------
-> =C2=A0drivers/net/wireless/b43legacy/main.c | =C2=A0 47 +++++++++++++=
-+++++++++++--------
-> =C2=A0fs/gfs2/glock.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A09 +++++-
-> =C2=A0fs/nilfs2/super.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 | =C2=A0 23 +++++++++++-----
-> =C2=A0fs/quota/dquot.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0 12 +++++---
-> =C2=A0net/sunrpc/svc.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0 12 +++++---
-> =C2=A011 files changed, 161 insertions(+), 58 deletions(-)
+On Wed, 2010-11-10 at 14:48 -0800, Luis R. Rodriguez wrote:
+> When was this added upstream BTW? I ask for backport considerations.
 
-When was this added upstream BTW? I ask for backport considerations.
+commit 7db6f5fb65a82af03229eef104dc9899c5eecf33
+Author: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Date:   Sun Jun 27 01:02:33 2010 +0000
 
-  Luis
+    vsprintf: Recursive vsnprintf: Add "%pV", struct va_format
+    
+    Add the ability to print a format and va_list from a structure pointer
+    
+    Allows __dev_printk to be implemented as a single printk while
+    minimizing string space duplication.
+    
+    %pV should not be used without some mechanism to verify the
+    format and argument use ala __attribute__(format (printf(...))).
+    
+    Signed-off-by: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+    Acked-by: Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>
+    Signed-off-by: David S. Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
