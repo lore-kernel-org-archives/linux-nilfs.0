@@ -1,69 +1,91 @@
-From: "Jason J. W. Williams" <jasonjwwilliams-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Re-capturing space
-Date: Wed, 10 Nov 2010 18:36:15 -0700
-Message-ID: <AANLkTimOf0eTokRpvd2gG=nSTsfmRZnTpX5+tepetpUz@mail.gmail.com>
-References: <AANLkTi=6k2_v4Ga+4V8EQEsGQ5oNTn_wnc=bbdB94k27@mail.gmail.com>
-	<AANLkTi=+FiC=y2jpV-rJmgxdsMEdVBkk9E2_3SZGed3L@mail.gmail.com>
-	<20101111.100359.179929646.ryusuke@osrg.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH 7/9] fs/nilfs2/super.c: Use printf extension %pV
+Date: Thu, 11 Nov 2010 11:38:20 +0900 (JST)
+Message-ID: <20101111.113820.179935215.ryusuke@osrg.net>
+References: <cover.1289348757.git.joe@perches.com>
+	<1addeb606bca88e09fb46b93be10c3a58e759348.1289348757.git.joe@perches.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:mime-version:received:received:in-reply-to
-         :references:date:message-id:subject:from:to:cc:content-type
-         :content-transfer-encoding;
-        bh=yILgfGXdeit5ueo+SjEEyVQm+lERLHXm8yLVEautLhc=;
-        b=S5eU7mKW2KREg7ZRsx+cCF/YbWB1Lit3YgdlfA9YPcFEgGla1LtqrNy5CwfoRcdEqp
-         H7NDaf2dqYLFbGZFPI73FVPz3uKgWXEicTGSwXzDSHwQ6efk6TfuUH3uvl2UbSfha6N7
-         tfmmQWcu41KDLMlH5EVpLNnzCfhkQC7+AoOEQ=
-In-Reply-To: <20101111.100359.179929646.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <1addeb606bca88e09fb46b93be10c3a58e759348.1289348757.git.joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Ryusuke,
+On Tue,  9 Nov 2010 16:35:21 -0800, Joe Perches wrote:
+> Using %pV reduces the number of printk calls and
+> eliminates any possible message interleaving from
+> other printk calls.
+> 
+> Signed-off-by: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+> ---
+>  fs/nilfs2/super.c |   23 ++++++++++++++++-------
+>  1 files changed, 16 insertions(+), 7 deletions(-)
 
-Thank you very much for you answer! Does anyone run MySQL on NILFS or
-is the random nature of database access poorly suited to good
-performance on NILFS?
+Applied to the nilfs tree.
 
--J
+Thank you.
 
-On Wed, Nov 10, 2010 at 6:03 PM, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org> wro=
-te:
-> Hi,
-> On Wed, 10 Nov 2010 12:10:25 -0700, "Jason J. W. Williams" wrote:
->> Hello,
->> I'm looking at NILFS as a possible alternative to BTRFS for our move
->> off of ZFS. Looking at the description of how NILFS works, it seems
->> like it's one big log. New records go on the front. My question is h=
-ow
->> does space eventually get recaptured when you delete files? Does the
->> log get rewritten/compacted regularly?
->>
->> -J
->
-> Yes, a garbage collector daemon does that. =A0It copies "live" blocks=
- to
-> the tail from the head of the log, and then frees some obsolete
-> segments from the log head.
->
-> Try "lssu" command to see how it works.
->
-> By default, the garbage collector (nilfs_clearned) will start when th=
-e
-> amount of free space falls below 10% of the disk space.
->
-> You can change it by modifying /etc/nilfs_cleanered.conf.
->
-> Regards,
-> Ryusuke Konishi
->
+Ryusuke Konishi
+ 
+> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+> index f804d41..bef8cc6 100644
+> --- a/fs/nilfs2/super.c
+> +++ b/fs/nilfs2/super.c
+> @@ -111,12 +111,17 @@ void nilfs_error(struct super_block *sb, const char *function,
+>  		 const char *fmt, ...)
+>  {
+>  	struct nilfs_sb_info *sbi = NILFS_SB(sb);
+> +	struct va_format vaf;
+>  	va_list args;
+>  
+>  	va_start(args, fmt);
+> -	printk(KERN_CRIT "NILFS error (device %s): %s: ", sb->s_id, function);
+> -	vprintk(fmt, args);
+> -	printk("\n");
+> +
+> +	vaf.fmt = fmt;
+> +	vaf.va = &args;
+> +
+> +	printk(KERN_CRIT "NILFS error (device %s): %s: %pV\n",
+> +	       sb->s_id, function, &vaf);
+> +
+>  	va_end(args);
+>  
+>  	if (!(sb->s_flags & MS_RDONLY)) {
+> @@ -136,13 +141,17 @@ void nilfs_error(struct super_block *sb, const char *function,
+>  void nilfs_warning(struct super_block *sb, const char *function,
+>  		   const char *fmt, ...)
+>  {
+> +	struct va_format vaf;
+>  	va_list args;
+>  
+>  	va_start(args, fmt);
+> -	printk(KERN_WARNING "NILFS warning (device %s): %s: ",
+> -	       sb->s_id, function);
+> -	vprintk(fmt, args);
+> -	printk("\n");
+> +
+> +	vaf.fmt = fmt;
+> +	vaf.va = &args;
+> +
+> +	printk(KERN_WARNING "NILFS warning (device %s): %s: %pV\n",
+> +	       sb->s_id, function, &vaf);
+> +
+>  	va_end(args);
+>  }
+>  
+> -- 
+> 1.7.3.1.g432b3.dirty
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
