@@ -1,51 +1,40 @@
-From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: [PATCH v3 14/22] nilfs2: use little-endian bitops
-Date: Tue, 23 Nov 2010 22:38:16 +0900
-Message-ID: <1290519504-3958-15-git-send-email-akinobu.mita@gmail.com>
-References: <1290519504-3958-1-git-send-email-akinobu.mita@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:received:received:from:to:cc:subject:date
-         :message-id:x-mailer:in-reply-to:references;
-        bh=43EY25P855stYgFqWerjwyWui/VvjQLh6PkvCjUaTRY=;
-        b=IuApgmDYjduwl4zyszHlJR7sZEPm333BJPLwQfyC/FzGaPra8qm+ZLnmVInwmrWQmV
-         9saa/rpBZ0ao37VmS6Vd7zoXcxbtsAk7/yuFSJzXDkCUo8iG2t1kGCVs0J2GORR3RgYi
-         F2HDGs10Npo20E4dfSmKgmMpt3ZKpllK/Jv4U=
-In-Reply-To: <1290519504-3958-1-git-send-email-akinobu.mita@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] MAINTAINERS: add nilfs2 git tree entry
+Date: Wed, 24 Nov 2010 00:00:32 +0900
+Message-ID: <1290524432-5607-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
-Cc: Akinobu Mita <akinobu.mita@gmail.com>, linux-nilfs@vger.kernel.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-As a preparation for removing ext2 non-atomic bit operations from
-asm/bitops.h. This converts ext2 non-atomic bit operations to
-little-endian bit operations.
+NILFS2 filesystem section of the MAINTAINERS file lacks an entry of
+scm tree.  This adds it.
 
-Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
-Acked-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Cc: linux-nilfs@vger.kernel.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
-No change from previous submission
- fs/nilfs2/alloc.h |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ MAINTAINERS |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
-index 9af34a7..a2463e2 100644
---- a/fs/nilfs2/alloc.h
-+++ b/fs/nilfs2/alloc.h
-@@ -74,7 +74,8 @@ int nilfs_palloc_freev(struct inode *, __u64 *, size_t);
- 
- #define nilfs_set_bit_atomic		ext2_set_bit_atomic
- #define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
--#define nilfs_find_next_zero_bit	ext2_find_next_zero_bit
-+#define nilfs_find_next_zero_bit(addr, size, off)	\
-+	find_next_zero_le_bit((unsigned long *)(addr), (size), (off))
- 
- /*
-  * persistent object allocator cache
+diff --git a/MAINTAINERS b/MAINTAINERS
+index a92c994..c68e816 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -4230,6 +4230,7 @@ NILFS2 FILESYSTEM
+ M:	KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+ L:	linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+ W:	http://www.nilfs.org/en/
++T:	git git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git
+ S:	Supported
+ F:	Documentation/filesystems/nilfs2.txt
+ F:	fs/nilfs2/
 -- 
 1.7.3.2
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
