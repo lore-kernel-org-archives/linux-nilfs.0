@@ -1,90 +1,51 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [patch] nilfs2: nilfs_iget_for_gc() returns ERR_PTR
-Date: Tue, 23 Nov 2010 16:47:14 +0900 (JST)
-Message-ID: <20101123.164714.27779351.ryusuke@osrg.net>
-References: <20101123062602.GG1522@bicker>
-	<20101123.162221.51131187.ryusuke@osrg.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20101123.162221.51131187.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Akinobu Mita <akinobu.mita@gmail.com>
+Subject: [PATCH v3 14/22] nilfs2: use little-endian bitops
+Date: Tue, 23 Nov 2010 22:38:16 +0900
+Message-ID: <1290519504-3958-15-git-send-email-akinobu.mita@gmail.com>
+References: <1290519504-3958-1-git-send-email-akinobu.mita@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:received:received:from:to:cc:subject:date
+         :message-id:x-mailer:in-reply-to:references;
+        bh=43EY25P855stYgFqWerjwyWui/VvjQLh6PkvCjUaTRY=;
+        b=IuApgmDYjduwl4zyszHlJR7sZEPm333BJPLwQfyC/FzGaPra8qm+ZLnmVInwmrWQmV
+         9saa/rpBZ0ao37VmS6Vd7zoXcxbtsAk7/yuFSJzXDkCUo8iG2t1kGCVs0J2GORR3RgYi
+         F2HDGs10Npo20E4dfSmKgmMpt3ZKpllK/Jv4U=
+In-Reply-To: <1290519504-3958-1-git-send-email-akinobu.mita@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: error27-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-janitors-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
+Cc: Akinobu Mita <akinobu.mita@gmail.com>, linux-nilfs@vger.kernel.org
 
-On Tue, 23 Nov 2010 16:22:21 +0900 (JST), Ryusuke Konishi wrote:
-> On Tue, 23 Nov 2010 09:26:02 +0300, Dan Carpenter wrote:
-> > nilfs_iget_for_gc() returns an ERR_PTR() on failure and doesn't return
-> > NULL.
-> > 
-> > Signed-off-by: Dan Carpenter <error27-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> > 
-> > diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> > index 3e90f86..5bf426f 100644
-> > --- a/fs/nilfs2/ioctl.c
-> > +++ b/fs/nilfs2/ioctl.c
-> > @@ -349,8 +349,8 @@ static int nilfs_ioctl_move_blocks(struct super_block *sb,
-> >  		ino = vdesc->vd_ino;
-> >  		cno = vdesc->vd_cno;
-> >  		inode = nilfs_iget_for_gc(sb, ino, cno);
-> > -		if (unlikely(inode == NULL)) {
-> > -			ret = -ENOMEM;
-> > +		if (unlikely(IS_ERR(inode))) {
-> > +			ret = PTR_ERR(inode);
-> >  			goto failed;
-> >  		}
-> >  		do {
-> 
-> Good catch!
-> 
-> This looks an -rc1 regression brought about by replacement of the gc
-> iget function.
-> 
-> I will send this fix upstream.  Thank you.
-> 
-> Ryusuke Konishi
+As a preparation for removing ext2 non-atomic bit operations from
+asm/bitops.h. This converts ext2 non-atomic bit operations to
+little-endian bit operations.
 
-I'll add a minor amendment to your patch because IS_ERR() implies
-unlikely().
-
-Thanks,
-Ryusuke Konishi
-
+Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
+Acked-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org
 ---
-From: Dan Carpenter <error27-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+No change from previous submission
+ fs/nilfs2/alloc.h |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-nilfs2: nilfs_iget_for_gc() returns ERR_PTR
-
-nilfs_iget_for_gc() returns an ERR_PTR() on failure and doesn't return
-NULL.
-
-Signed-off-by: Dan Carpenter <error27-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/ioctl.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 3e90f86..e00d945 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -349,8 +349,8 @@ static int nilfs_ioctl_move_blocks(struct super_block *sb,
- 		ino = vdesc->vd_ino;
- 		cno = vdesc->vd_cno;
- 		inode = nilfs_iget_for_gc(sb, ino, cno);
--		if (unlikely(inode == NULL)) {
--			ret = -ENOMEM;
-+		if (IS_ERR(inode)) {
-+			ret = PTR_ERR(inode);
- 			goto failed;
- 		}
- 		do {
+diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
+index 9af34a7..a2463e2 100644
+--- a/fs/nilfs2/alloc.h
++++ b/fs/nilfs2/alloc.h
+@@ -74,7 +74,8 @@ int nilfs_palloc_freev(struct inode *, __u64 *, size_t);
+ 
+ #define nilfs_set_bit_atomic		ext2_set_bit_atomic
+ #define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
+-#define nilfs_find_next_zero_bit	ext2_find_next_zero_bit
++#define nilfs_find_next_zero_bit(addr, size, off)	\
++	find_next_zero_le_bit((unsigned long *)(addr), (size), (off))
+ 
+ /*
+  * persistent object allocator cache
 -- 
 1.7.3.2
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
