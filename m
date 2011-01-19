@@ -1,72 +1,47 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [GIT PULL] nilfs2 updates for 2.6.38
-Date: Mon, 10 Jan 2011 21:06:34 +0900 (JST)
-Message-ID: <20110110.210634.69343822.ryusuke@osrg.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 2/4] nilfs2: mark S_NOATIME on inodes only if NOATIME attribute is set
+Date: Thu, 20 Jan 2011 02:41:29 +0900
+Message-ID: <1295458891-22715-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1295458891-22715-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1295458891-22715-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi Linus,
+At present, nilfs marks S_NOATIME flag on all inodes.  This restricts
+nilfs_set_inode_flags function so that it marks S_NOATIME only if a
+given inode has an FS_NOATIME_FL flag.
 
-please pull from
+Although nilfs does not support atime yet, touch_atime() still safely
+returns on IS_NOATIME check since MS_NOATIME is always set on sb.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/inode.c |    2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
 
-to receive the following nilfs2 updates.  The only noticeable change
-is fiemap support, otherwise it's mostly cleanups and minor fixes.
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index b97bcfc..2db4e92 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -365,9 +365,7 @@ void nilfs_set_inode_flags(struct inode *inode)
+ 		inode->i_flags |= S_APPEND;
+ 	if (flags & FS_IMMUTABLE_FL)
+ 		inode->i_flags |= S_IMMUTABLE;
+-#ifndef NILFS_ATIME_DISABLE
+ 	if (flags & FS_NOATIME_FL)
+-#endif
+ 		inode->i_flags |= S_NOATIME;
+ 	if (flags & FS_DIRSYNC_FL)
+ 		inode->i_flags |= S_DIRSYNC;
+-- 
+1.7.3.5
 
-Thanks!
-
-Ryusuke Konishi
---
-The following changes since commit 0c21e3aaf6ae85bee804a325aa29c325209180fd:
-
-  Merge branch 'for-next' of git://git.kernel.org/pub/scm/linux/kernel/git/hch/hfsplus (2011-01-07 17:16:27 -0800)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
-
-Joe Perches (1):
-      fs/nilfs2/super.c: Use printf extension %pV
-
-Ryusuke Konishi (10):
-      MAINTAINERS: add nilfs2 git tree entry
-      nilfs2: call nilfs_error inside bmap routines
-      nilfs2: mark buffer heads as delayed until the data is written to disk
-      nilfs2: fiemap support
-      nilfs2: fix a checkpatch error in page.c
-      nilfs2: get rid of loaded flag from nilfs object
-      nilfs2: simplify nilfs_mdt_freeze_buffer
-      nilfs2: get rid of nilfs_mount_options structure
-      nilfs2: do not pass sbi to functions which can get it from inode
-      nilfs2: unfold nilfs_dat_inode function
-
- MAINTAINERS           |    1 +
- fs/nilfs2/bmap.c      |   47 ++++++++++---
- fs/nilfs2/btnode.c    |    3 +-
- fs/nilfs2/dir.c       |    3 +-
- fs/nilfs2/file.c      |    1 +
- fs/nilfs2/ifile.c     |   11 +--
- fs/nilfs2/inode.c     |  180 ++++++++++++++++++++++++++++++++++++++++--------
- fs/nilfs2/ioctl.c     |   12 ++--
- fs/nilfs2/mdt.c       |   32 +++------
- fs/nilfs2/namei.c     |    1 +
- fs/nilfs2/nilfs.h     |   13 +---
- fs/nilfs2/page.c      |   86 +++++++++++++++++++++++-
- fs/nilfs2/page.h      |    3 +
- fs/nilfs2/recovery.c  |    2 +-
- fs/nilfs2/sb.h        |    8 --
- fs/nilfs2/segment.c   |   43 +++---------
- fs/nilfs2/super.c     |   29 +++++---
- fs/nilfs2/the_nilfs.c |    6 +-
- fs/nilfs2/the_nilfs.h |    3 -
- 19 files changed, 337 insertions(+), 147 deletions(-)
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
