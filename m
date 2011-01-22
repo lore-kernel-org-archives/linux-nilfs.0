@@ -1,63 +1,53 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: nilfs2-utils ver 2.0.21?
-Date: Fri, 21 Jan 2011 20:13:16 +0900 (JST)
-Message-ID: <20110121.201316.98061220.ryusuke@osrg.net>
-References: <87mxmwxgkf.wl%jir@sekiba.com>
-	<20110120.154949.93449454.ryusuke@osrg.net>
-	<87k4i03vhx.wl%jir@sekiba.com>
+From: Wakko Warner <wakko@animx.eu.org>
+Subject: Re: NILFS crash on 2.6.37
+Date: Fri, 21 Jan 2011 20:57:48 -0500
+Message-ID: <20110122015748.GA3174@animx.eu.org>
+References: <20110121024918.GA29598@animx.eu.org> <20110121.163738.135792151.ryusuke@osrg.net> <20110121.181859.144825828.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87k4i03vhx.wl%jir-27yqGEOhnJbQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20110121.181859.144825828.ryusuke@osrg.net>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Thu, 20 Jan 2011 16:05:46 +0900, Jiro SEKIBA wrote:
-> 
-> At Thu, 20 Jan 2011 15:49:49 +0900 (JST),
-> Ryusuke Konishi wrote:
-> > 
-> > Hi,
-> > On Thu, 20 Jan 2011 14:57:52 +0900, Jiro SEKIBA wrote:
-> > > Hi,
-> > > 
-> > > Is there any plan to release nilfs2-utils v2.0.21 ?
-> > > 
-> > > It has been 4 months since v2.0.20 released.
-> > > 
-> > > The license of the library is properly changed to LGPL.
-> > > So wouldn't it be a good reason to release the newer version?
-> > 
-> > Right, and looking back it should have been released last year after
-> > the license migration was done.
-> > 
-> > > By the way, if I remember correctly, disk format won't change without
-> > > breaking compatibility.  If it's the case, the warning when mounting
-> > > nilfs2 partition may not need anymore?  It's scary anyway..
-> > > http://www.spinics.net/lists/linux-nilfs/msg00595.html
-> > > 
-> > > thanks
-> > 
-> > The warning message is already taken away from the latest tree on
-> > nilfs-utils.git, but we haven't yet made a release of it.
-> > 
-> > Okay, I will do a 2.0.21 later this week.
-> 
-> That would be great!
-> 
-> Thanks!
-> 
-> regards,
+Ryusuke Konishi wrote:
+> On Fri, 21 Jan 2011 16:37:38 +0900 (JST), Ryusuke Konishi wrote:
+> > (Cc'ed to linux-nilfs)
+> > > [ 1202.581501] NILFS warning: broken superblock. using spare superblock.
+> > > [ 1202.582093] NILFS warning: broken superblock. using spare superblock.
 
-I've just put out nilfs-utils-2.0.21.  Finally, the warning was gone
-:)
+Why does it say this 2 times?  Just curious.
 
-Thanks,
-Ryusuke Konishi
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > Thanks for the report.
+> > 
+> > This seems to be a regression on 2.6.36 which could happen when one of
+> > two superblocks is broken.
+> > 
+> > I'll fix it.
+> 
+> Does the following patch fix your problem?
+
+> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+> index 0994f6a7..58fd707 100644
+> --- a/fs/nilfs2/super.c
+> +++ b/fs/nilfs2/super.c
+> @@ -704,7 +704,8 @@ skip_mount_setup:
+>  	sbp[0]->s_state =
+>  		cpu_to_le16(le16_to_cpu(sbp[0]->s_state) & ~NILFS_VALID_FS);
+>  	/* synchronize sbp[1] with sbp[0] */
+> -	memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
+> +	if (sbp[1])
+> +		memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
+>  	return nilfs_commit_super(sbi, NILFS_SB_COMMIT_ALL);
+>  }
+
+That patch fix it.  Just a note, the 2.6.37 vanilla source was about 20
+lines up from 704
+
+-- 
+ Microsoft has beaten Volkswagen's world record.  Volkswagen only created 22
+ million bugs.
