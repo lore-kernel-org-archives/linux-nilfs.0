@@ -1,42 +1,73 @@
-From: Wakko Warner <wakko-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
-Subject: Re: NILFS crash on 2.6.37
-Date: Sat, 22 Jan 2011 11:09:38 -0500
-Message-ID: <20110122160938.GA23181@animx.eu.org>
-References: <20110121.163738.135792151.ryusuke@osrg.net> <20110121.181859.144825828.ryusuke@osrg.net> <20110122015748.GA3174@animx.eu.org> <20110122.230956.176521815.ryusuke@osrg.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: fix crash after one superblock became unavailable
+Date: Sun, 23 Jan 2011 12:08:38 +0900 (JST)
+Message-ID: <20110123.120838.212713111.ryusuke@osrg.net>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20110122.230956.176521815.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Wakko Warner <wakko-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
 
-Ryusuke Konishi wrote:
-> On Fri, 21 Jan 2011 20:57:48 -0500, Wakko Warner wrote:
-> > That patch fix it.  Just a note, the 2.6.37 vanilla source was about 20
-> > lines up from 704
-> 
-> Thanks for testing.  Will send upstream and to stable.
 
-No problem.
+This patch fixes a crash issue recently reported by Wakko Warner.
 
-> > > > > [ 1202.581501] NILFS warning: broken superblock. using spare superblock.
-> > > > > [ 1202.582093] NILFS warning: broken superblock. using spare superblock.
-> > 
-> > Why does it say this 2 times?  Just curious.
-> 
-> Because each super block is read twice in different block sizes.
-> 
-> Well, indeed it looks confusing.  I'll try to do something.
+I will send this upstream and to stable after a while.
 
-Ah, I see.
+Ryusuke Konishi
+--
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
+nilfs2: fix crash after one superblock became unavailable
+
+Fixes the following kernel oops in nilfs_setup_super() which could
+arise if one of two super-blocks is unavailable.
+
+> BUG: unable to handle kernel NULL pointer dereference at   (null)
+> Pid: 3529, comm: mount.nilfs2 Not tainted 2.6.37 #1 /
+> EIP: 0060:[<c03196bc>] EFLAGS: 00010202 CPU: 3
+> EIP is at memcpy+0xc/0x1b
+> Call Trace:
+>  [<f953720e>] ? nilfs_setup_super+0x6c/0xa5 [nilfs2]
+>  [<f95369e9>] ? nilfs_get_root_dentry+0x81/0xcb [nilfs2]
+>  [<f9537a08>] ? nilfs_mount+0x4f9/0x62c [nilfs2]
+>  [<c02745cf>] ? kstrdup+0x36/0x3f
+>  [<f953750f>] ? nilfs_mount+0x0/0x62c [nilfs2]
+>  [<c0293940>] ? vfs_kern_mount+0x4d/0x12c
+>  [<c02a5100>] ? get_fs_type+0x76/0x8f
+>  [<c0293a68>] ? do_kern_mount+0x33/0xbf
+>  [<c02a784a>] ? do_mount+0x2ed/0x714
+>  [<c02a6171>] ? copy_mount_options+0x28/0xfc
+>  [<c02a7ce3>] ? sys_mount+0x72/0xaf
+>  [<c0473085>] ? syscall_call+0x7/0xb
+
+Reported-by: Wakko Warner <wakko-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Tested-by: Wakko Warner <wakko-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
+Cc: stable <stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> [2.6.37, 2.6.36]
+LKML-Reference: <20110121024918.GA29598-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
+---
+ fs/nilfs2/super.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 0994f6a7..58fd707 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -704,7 +704,8 @@ skip_mount_setup:
+ 	sbp[0]->s_state =
+ 		cpu_to_le16(le16_to_cpu(sbp[0]->s_state) & ~NILFS_VALID_FS);
+ 	/* synchronize sbp[1] with sbp[0] */
+-	memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
++	if (sbp[1])
++		memcpy(sbp[1], sbp[0], nilfs->ns_sbsize);
+ 	return nilfs_commit_super(sbi, NILFS_SB_COMMIT_ALL);
+ }
+ 
 -- 
- Microsoft has beaten Volkswagen's world record.  Volkswagen only created 22
- million bugs.
+1.7.3.5
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
