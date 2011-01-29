@@ -1,74 +1,91 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [GIT PULL] nilfs2 fix
-Date: Wed, 26 Jan 2011 02:34:09 +0900 (JST)
-Message-ID: <20110126.023409.246150501.ryusuke@osrg.net>
+From: Paul L <ninegua-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: corrupted filesystem (again!)
+Date: Sat, 29 Jan 2011 15:06:03 -0800
+Message-ID: <AANLkTimZ6qXBwF0zYquz5Yep_x0zbCbNgcTCW7sTCs0U@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:date:message-id:subject:from:to
+         :content-type;
+        bh=luXELOtGNF6OTw+b2w74sYkoOT0/UkaN/qtBFYZLsmw=;
+        b=g+qZ1n1Y+QNEEYws3VSqWjlOdkbWxjrz3CwCDX8uxvzrRaWRnXD3qzuJjKCoIzvIGr
+         WeYJEf9fxaqUO7lsxnq/Fqnkd4GO6GNIPRdIK1UrMQy+uFGmQFkYqPC14iJRMdtfDZ0y
+         nd67grWgePZHF+ZqmpINeF5FISsmWt1x501IQ=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Linus,
+Hi all,
 
-please pull from:
+If my memory serves me right, this is the 4th time I've had corrupted
+filesystem after using nilfs2 for almost 2 years. With help from the
+list, I've managed to recover every time! A big thank you to the
+everyone who helped! Let's see if this time I have any luck.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
+When I first noticed something wrong with the file system, command 'ls
+-l' would list some files with outrageously big size, like 20 digits
+or something. I don't remember doing any particular task before I
+noticed this. So I thought I would just reboot and see if things come
+back normal.
 
-to grab the following bugfix for a reported kernel oops.
+After a reboot, the disk failed to mount. That was almost two weeks
+ago, and I was using 2.0.20. I didn't do anything further except
+backing up the entire disk data.
 
-Thanks,
-
-Ryusuke Konishi
---
-The following changes since commit 1bae4ce27c9c90344f23c65ea6966c50ffeae2f5:
-
-  Linux 2.6.38-rc2 (2011-01-21 19:01:34 -0800)
-
-are available in the git repository at:
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
-
-Ryusuke Konishi (1):
-      nilfs2: fix crash after one superblock became unavailable
-
- fs/nilfs2/super.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+Today I had a little more time and decided to upgrade to
+nilfs2-2.0.21, and still the same. Here is what dmesg showed me when I
+mount the file system (after I turned on CONFIG_NILFS_DEBUG and "echo
+'-vvv recovery' > /proc/fs/nilfs2/debug_option"):
 
 
-commit 0ca7a5b9ac5d301845dd6382ff25a699b6263a81
-Author: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Date:   Fri Jan 21 16:40:31 2011 +0900
+NILFS nilfs_fill_super: start(silent=0)
+NILFS warning: broken superblock. using spare superblock.
+NILFS warning: broken superblock. using spare superblock.
+NILFS(recovery) nilfs_search_super_root: looking segment
+(seg_start=1087488, seg_end=1089535, segnum=531, seg_seq=837256)
+NILFS(recovery) load_segment_summary: checking segment
+(pseg_start=1088825, full_check=1)
+NILFS(recovery) load_segment_summary: done (ret=0)
+NILFS(recovery) nilfs_search_super_root: found super root: segnum=531,
+seq=837256, pseg_start=1088825, pseg_offset=1396
+segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
+NILFS(dat) nilfs_dat_translate: failed (ret=-2)
+NILFS warning (device mmcblk0p1): nilfs_ifile_get_inode_block: unable
+to read inode: 2
+NILFS: get root inode failed
+NILFS(segment) nilfs_segctor_thread: segctord exiting.
+NILFS nilfs_fill_super: aborted
+NILFS put_nilfs: the_nilfs on bdev mmcblk0p1 was freed
 
-    nilfs2: fix crash after one superblock became unavailable
-    
-    Fixes the following kernel oops in nilfs_setup_super() which could
-    arise if one of two super-blocks is unavailable.
-    
-    > BUG: unable to handle kernel NULL pointer dereference at   (null)
-    > Pid: 3529, comm: mount.nilfs2 Not tainted 2.6.37 #1 /
-    > EIP: 0060:[<c03196bc>] EFLAGS: 00010202 CPU: 3
-    > EIP is at memcpy+0xc/0x1b
-    > Call Trace:
-    >  [<f953720e>] ? nilfs_setup_super+0x6c/0xa5 [nilfs2]
-    >  [<f95369e9>] ? nilfs_get_root_dentry+0x81/0xcb [nilfs2]
-    >  [<f9537a08>] ? nilfs_mount+0x4f9/0x62c [nilfs2]
-    >  [<c02745cf>] ? kstrdup+0x36/0x3f
-    >  [<f953750f>] ? nilfs_mount+0x0/0x62c [nilfs2]
-    >  [<c0293940>] ? vfs_kern_mount+0x4d/0x12c
-    >  [<c02a5100>] ? get_fs_type+0x76/0x8f
-    >  [<c0293a68>] ? do_kern_mount+0x33/0xbf
-    >  [<c02a784a>] ? do_mount+0x2ed/0x714
-    >  [<c02a6171>] ? copy_mount_options+0x28/0xfc
-    >  [<c02a7ce3>] ? sys_mount+0x72/0xaf
-    >  [<c0473085>] ? syscall_call+0x7/0xb
-    
-    Reported-by: Wakko Warner <wakko-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
-    Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-    Tested-by: Wakko Warner <wakko-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
-    Cc: stable <stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> [2.6.37, 2.6.36]
-    LKML-Reference: <20110121024918.GA29598-WZdgCHJQUilg9hUCZPvPmw@public.gmane.org>
+
+Apparently, it was trying to use the spare superblock, but still
+couldn't find the root inode.
+
+I also tried the fsck0.niilfs2 utility from nilfs-utils-2.0.18. It
+didn't help either. Here is the output:
+
+
+Super-block:
+    revision = 2.0
+    blocksize = 4096
+    write time = 2011-01-18 23:22:07
+    indicated log: blocknr = 1088825
+        segnum = 531, seq = 837256, cno=1787400
+
+Clean FS.
+A valid log is pointed to by superblock (No change needed): blocknr = 1088825
+    segnum = 531, seq = 837256, cno=1787400
+    creation time = 2011-01-18 23:22:07
+
+
+I'm pretty clueless on what to do next. Any help would be greatly appreciated!
+
+-- 
+Regards,
+Paul Liu
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
