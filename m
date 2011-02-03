@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCHv2 4/5] nilfs2: implement FS_IOC_GETFLAGS/SETFLAGS/GETVERSION
-Date: Fri,  4 Feb 2011 00:20:13 +0900
-Message-ID: <1296746414-11444-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCHv2 3/5] nilfs2: tighten restrictions on inode flags
+Date: Fri,  4 Feb 2011 00:20:12 +0900
+Message-ID: <1296746414-11444-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1296746414-11444-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1296746414-11444-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,108 +13,68 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Add support for the standard attributes set via chattr and read via
-lsattr.  These attributes are already in the flags value in the nilfs2
-inode, but currently we don't have any ioctl commands that expose them
-to the userland.
+Nilfs has few rectrictions on which flags may be set on which inodes
+like ext2/3/4 filesystems used to be.  Specifically DIRSYNC may only
+be set on directories and IMMUTABLE and APPEND may not be set on
+links.  Tighten that to disallow TOPDIR being set on non-directories
+and only NODUMP and NOATIME to be set on non-regular file,
+non-directories.
 
-Collaterally, this adds the FS_IOC_GETVERSION ioctl for getting
-i_generation, which allows users to list the file's generation number
-with "lsattr -v".
+This introduces a flags masking function like those of extN and uses
+it during inode creation.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/ioctl.c |   70 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 70 insertions(+), 0 deletions(-)
+ fs/nilfs2/inode.c |    7 ++-----
+ fs/nilfs2/nilfs.h |   17 +++++++++++++++++
+ 2 files changed, 19 insertions(+), 5 deletions(-)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 4967389..3aad641 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -97,6 +97,70 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
- 	return ret;
- }
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 2db4e92..1b1cadc 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -315,11 +315,8 @@ struct inode *nilfs_new_inode(struct inode *dir, int mode)
+ 		/* No lock is needed; iget() ensures it. */
+ 	}
  
-+static int nilfs_ioctl_getflags(struct inode *inode, void __user *argp)
-+{
-+	unsigned int flags = NILFS_I(inode)->i_flags & FS_FL_USER_VISIBLE;
-+
-+	return put_user(flags, (int __user *)argp);
-+}
-+
-+static int nilfs_ioctl_setflags(struct inode *inode, struct file *filp,
-+				void __user *argp)
-+{
-+	struct nilfs_transaction_info ti;
-+	unsigned int flags, oldflags;
-+	int ret;
-+
-+	if (!is_owner_or_cap(inode))
-+		return -EACCES;
-+
-+	if (get_user(flags, (int __user *)argp))
-+		return -EFAULT;
-+
-+	ret = mnt_want_write(filp->f_path.mnt);
-+	if (ret)
-+		return ret;
-+
-+	flags = nilfs_mask_flags(inode->i_mode, flags);
-+
-+	mutex_lock(&inode->i_mutex);
-+
-+	oldflags = NILFS_I(inode)->i_flags;
-+
-+	/*
-+	 * The IMMUTABLE and APPEND_ONLY flags can only be changed by the
-+	 * relevant capability.
-+	 */
-+	ret = -EPERM;
-+	if (((flags ^ oldflags) & (FS_APPEND_FL | FS_IMMUTABLE_FL)) &&
-+	    !capable(CAP_LINUX_IMMUTABLE))
-+		goto out;
-+
-+	ret = nilfs_transaction_begin(inode->i_sb, &ti, 0);
-+	if (ret)
-+		goto out;
-+
-+	NILFS_I(inode)->i_flags = (oldflags & ~FS_FL_USER_MODIFIABLE) |
-+		(flags & FS_FL_USER_MODIFIABLE);
-+
-+	nilfs_set_inode_flags(inode);
-+	inode->i_ctime = CURRENT_TIME;
-+	if (IS_SYNC(inode))
-+		nilfs_set_transaction_flag(NILFS_TI_SYNC);
-+
-+	nilfs_mark_inode_dirty(inode);
-+	ret = nilfs_transaction_commit(inode->i_sb);
-+out:
-+	mutex_unlock(&inode->i_mutex);
-+	mnt_drop_write(filp->f_path.mnt);
-+	return ret;
-+}
-+
-+static int nilfs_ioctl_getversion(struct inode *inode, void __user *argp)
-+{
-+	return put_user(inode->i_generation, (int __user *)argp);
-+}
-+
- static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
- 				     unsigned int cmd, void __user *argp)
- {
-@@ -666,6 +730,12 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	void __user *argp = (void __user *)arg;
+-	ii->i_flags = NILFS_I(dir)->i_flags;
+-	if (S_ISLNK(mode))
+-		ii->i_flags &= ~(FS_IMMUTABLE_FL | FS_APPEND_FL);
+-	if (!S_ISDIR(mode))
+-		ii->i_flags &= ~FS_DIRSYNC_FL;
++	ii->i_flags = nilfs_mask_flags(
++		mode, NILFS_I(dir)->i_flags & NILFS_FL_INHERITED);
  
- 	switch (cmd) {
-+	case FS_IOC_GETFLAGS:
-+		return nilfs_ioctl_getflags(inode, argp);
-+	case FS_IOC_SETFLAGS:
-+		return nilfs_ioctl_setflags(inode, filp, argp);
-+	case FS_IOC_GETVERSION:
-+		return nilfs_ioctl_getversion(inode, argp);
- 	case NILFS_IOCTL_CHANGE_CPMODE:
- 		return nilfs_ioctl_change_cpmode(inode, filp, cmd, argp);
- 	case NILFS_IOCTL_DELETE_CHECKPOINT:
+ 	/* ii->i_file_acl = 0; */
+ 	/* ii->i_dir_acl = 0; */
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 777e8fd..3e3acb1 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -212,6 +212,23 @@ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
+ 
+ #define NILFS_ATIME_DISABLE
+ 
++/* Flags that should be inherited by new inodes from their parent. */
++#define NILFS_FL_INHERITED						\
++	(FS_SECRM_FL | FS_UNRM_FL | FS_COMPR_FL | FS_SYNC_FL |		\
++	 FS_IMMUTABLE_FL | FS_APPEND_FL | FS_NODUMP_FL | FS_NOATIME_FL |\
++	 FS_COMPRBLK_FL | FS_NOCOMP_FL | FS_NOTAIL_FL | FS_DIRSYNC_FL)
++
++/* Mask out flags that are inappropriate for the given type of inode. */
++static inline __u32 nilfs_mask_flags(umode_t mode, __u32 flags)
++{
++	if (S_ISDIR(mode))
++		return flags;
++	else if (S_ISREG(mode))
++		return flags & ~(FS_DIRSYNC_FL | FS_TOPDIR_FL);
++	else
++		return flags & (FS_NODUMP_FL | FS_NOATIME_FL);
++}
++
+ /* dir.c */
+ extern int nilfs_add_link(struct dentry *, struct inode *);
+ extern ino_t nilfs_inode_by_name(struct inode *, const struct qstr *);
 -- 
 1.7.3.5
 
