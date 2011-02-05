@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: [PATCH] nilfs2_ss_manager: rename configuration file in README
-Date: Sat,  5 Feb 2011 17:47:12 +0900
-Message-ID: <1296895632-23393-1-git-send-email-ryusuke@osrg.net>
+Subject: [PATCH] TimeBrowse: add .gitignore file
+Date: Sat,  5 Feb 2011 19:00:09 +0900
+Message-ID: <1296900009-24085-1-git-send-email-ryusuke@osrg.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -11,26 +11,48 @@ Content-Transfer-Encoding: 7bit
 To: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 
-Renames "nilfs2_ss.conf" to "nilfs_ss.conf" in the README file.
-
 Signed-off-by: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 ---
- nilfs2_ss_manager/README |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ .gitignore |   30 ++++++++++++++++++++++++++++++
+ 1 files changed, 30 insertions(+), 0 deletions(-)
+ create mode 100644 .gitignore
 
-diff --git a/nilfs2_ss_manager/README b/nilfs2_ss_manager/README
-index 6bbacbe..8f5b798 100644
---- a/nilfs2_ss_manager/README
-+++ b/nilfs2_ss_manager/README
-@@ -20,7 +20,7 @@ Install:
- 
- Configure:
- 
--After install the scripts, you have to edit the /etc/nilfs2_ss.conf
-+After install the scripts, you have to edit the /etc/nilfs_ss.conf
- to tell the daemon which device is the nilfs volume you want to watch,
- and which directory is the mount point to mount the managed snapshots.
- 
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..44df3a7
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,30 @@
++#
++# NOTE! Don't add files that are generated in specific
++# subdirectories here. Add them in the ".gitignore" file
++# in that subdirectory instead.
++
++#
++# Normal rules
++#
++.*
++*.log
++*~
++*.pyc
++*.orig
++*.rej
++
++!.gitignore
++tags
++TAGS
++GPATH
++GRTAGS
++GSYMS
++GTAGS
++
++#
++# Generated files
++#
++build
++dist
++*.egg-info
++
 -- 
 1.7.2.3
 
