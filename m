@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: [PATCH] TimeBrowse: add .gitignore file
-Date: Sat,  5 Feb 2011 19:00:09 +0900
-Message-ID: <1296900009-24085-1-git-send-email-ryusuke@osrg.net>
+Subject: [PATCH] nilfs2_ss_manager: handle error during loading conffile
+Date: Sun,  6 Feb 2011 01:26:04 +0900
+Message-ID: <1296923164-25641-1-git-send-email-ryusuke@osrg.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -11,48 +11,75 @@ Content-Transfer-Encoding: 7bit
 To: Jiro SEKIBA <jir-hfpbi5WX9J54Eiagz67IpQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 
+The error messages printed when failed to load the config file are
+confusing.  This makes it better.
+
 Signed-off-by: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 ---
- .gitignore |   30 ++++++++++++++++++++++++++++++
- 1 files changed, 30 insertions(+), 0 deletions(-)
- create mode 100644 .gitignore
+ nilfs2_ss_manager/nilfs2_ss_manager |   39 ++++++++++++++++++++++++++--------
+ 1 files changed, 30 insertions(+), 9 deletions(-)
 
-diff --git a/.gitignore b/.gitignore
-new file mode 100644
-index 0000000..44df3a7
---- /dev/null
-+++ b/.gitignore
-@@ -0,0 +1,30 @@
-+#
-+# NOTE! Don't add files that are generated in specific
-+# subdirectories here. Add them in the ".gitignore" file
-+# in that subdirectory instead.
+diff --git a/nilfs2_ss_manager/nilfs2_ss_manager b/nilfs2_ss_manager/nilfs2_ss_manager
+index 6668127..34b887d 100755
+--- a/nilfs2_ss_manager/nilfs2_ss_manager
++++ b/nilfs2_ss_manager/nilfs2_ss_manager
+@@ -123,6 +123,20 @@ def register_sighandlers(managers, mainloop):
+     signal.signal(signal.SIGINT, do_exit)
+     signal.signal(signal.SIGTERM, do_exit)
+ 
++def check_configuration(conf, conffile, logger):
++    errors = []
++    for key in ['devices', 'period', 'pidfile']:
++        if not key in conf:
++            errors.append("No '%s' key defined" % key)
++        elif not conf[key]:
++            errors.append("'%s' key has no value" % key)
 +
-+#
-+# Normal rules
-+#
-+.*
-+*.log
-+*~
-+*.pyc
-+*.orig
-+*.rej
++    if len(errors) > 0:
++        logger.out(syslog.LOG_ERR, "Configuration error in %s" % conffile)
++        for error in errors:
++            logger.out(syslog.LOG_ERR, "  " + error),
++        exit(1)
 +
-+!.gitignore
-+tags
-+TAGS
-+GPATH
-+GRTAGS
-+GSYMS
-+GTAGS
+ logger = Logger()
+ try:
+     parser = argparse.ArgumentParser(description="NILFS2 snapshot manager")
+@@ -139,6 +153,8 @@ try:
+     daemonize = args.daemonize
+    
+     conf = yaml.safe_load(open(conffile))
++    check_configuration(conf, conffile, logger)
 +
-+#
-+# Generated files
-+#
-+build
-+dist
-+*.egg-info
+     devices = conf['devices']
+     period = conf['period']
+ 
+@@ -159,12 +175,17 @@ try:
+         register_sighandlers(managers, mainloop)
+         mainloop.run()
+ 
+-except yaml.scanner.ScannerError:
+-    logger.out(syslog.LOG_INFO, "can not parse config file %s" % conffile)
+-
+-except KeyError:
+-    logger.out(syslog.LOG_INFO, "configuration error: %s" % conffile)
+-    for key in ['devices', 'period', 'pidfile']:
+-        if not key in conf:
+-            logger.out(syslog.LOG_INFO,
+-                       "'%s' is not in the configuration" % key)
++except yaml.YAMLError, e:
++    pos = None
++    if (hasattr(e, 'problem') and hasattr(e, 'context_mark') and
++        hasattr(e, 'problem_mark')):
++        if e.context_mark is not None:
++            pos = (e.context_mark.line, e.context_mark.column)
++        elif e.problem_mark is not None:
++            pos = (e.problem_mark.line, e.problem_mark.column)
 +
++    logger.out(syslog.LOG_ERR, "Error" +
++               (" near line %s, column %s" % pos if pos else "") +
++               " while loading " + conffile)
++    if hasattr(e, 'problem') and (e.problem is not None):
++        logger.out(syslog.LOG_ERR, "  Reason: %s" % e.problem)
 -- 
 1.7.2.3
 
