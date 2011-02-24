@@ -1,79 +1,54 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/2] nilfs2: add free entries count only if clear bit operation succeeded
-Date: Wed, 23 Feb 2011 02:53:57 +0900
-Message-ID: <1298397237-17468-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1298397237-17468-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: FIBMAP ioctl missing
+Date: Thu, 24 Feb 2011 23:34:37 +0100
+Message-ID: <201102242334.38044.dexen.devries@gmail.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1298397237-17468-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:from:to:subject:date:user-agent:mime-version
+         :content-type:content-transfer-encoding:message-id;
+        bh=jBcFP1mzYBq66XWqds1SU0xMcAUo9Z1LRssyyMn0oD4=;
+        b=YuOWuSNVIPfM6vwbonxaFxEmz2nPaMCd8O0rLyzKQIVtwDfH6xNmWKarxLS5i688GA
+         cum2BsadpA64vkqE6WQVHQUz1Ae3tWiII+jTou47/A8iKmYJQaSsx7V2jKBj4bWwCZ2e
+         NuYMDAQ6yuyqZ5/Kn049cx19VNHQCXnNOE1KA=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: Text/Plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Three functions of the current persistent object allocator,
-nilfs_palloc_commit_free_entry, nilfs_palloc_abort_alloc_entry, and
-nilfs_palloc_freev functions unconditionally add a counter after clear
-bit operation on a bitmap block succeeded.
+Hello,
 
-If the clear bit operation overlapped, the counter will not add up.
-This fixes the issue by making the counter operations conditional.
+as NILFS2 doesn't implement the FIBMAP ioctl, LILO cannot be used on it=
+=2E
+I've just learned about it the hard way -- after migrating computer's o=
+nly=20
+filesystem to NILFS2, running LILO returns:
+ioctl FIBMAP: Invalid argument
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/alloc.c |   12 +++++++-----
- 1 files changed, 7 insertions(+), 5 deletions(-)
+I see the FS_IOC_FIEMAP is implemented; perhaps some wrapper around cou=
+ld be=20
+used to provide FIBMAP as well?
 
-diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-index d7fd696..0a0a66d 100644
---- a/fs/nilfs2/alloc.c
-+++ b/fs/nilfs2/alloc.c
-@@ -521,8 +521,8 @@ void nilfs_palloc_commit_free_entry(struct inode *inode,
- 				    group_offset, bitmap))
- 		printk(KERN_WARNING "%s: entry number %llu already freed\n",
- 		       __func__, (unsigned long long)req->pr_entry_nr);
--
--	nilfs_palloc_group_desc_add_entries(inode, group, desc, 1);
-+	else
-+		nilfs_palloc_group_desc_add_entries(inode, group, desc, 1);
- 
- 	kunmap(req->pr_bitmap_bh->b_page);
- 	kunmap(req->pr_desc_bh->b_page);
-@@ -558,8 +558,8 @@ void nilfs_palloc_abort_alloc_entry(struct inode *inode,
- 				    group_offset, bitmap))
- 		printk(KERN_WARNING "%s: entry number %llu already freed\n",
- 		       __func__, (unsigned long long)req->pr_entry_nr);
--
--	nilfs_palloc_group_desc_add_entries(inode, group, desc, 1);
-+	else
-+		nilfs_palloc_group_desc_add_entries(inode, group, desc, 1);
- 
- 	kunmap(req->pr_bitmap_bh->b_page);
- 	kunmap(req->pr_desc_bh->b_page);
-@@ -665,7 +665,7 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
- 		for (j = i, n = 0;
- 		     (j < nitems) && nilfs_palloc_group_is_in(inode, group,
- 							      entry_nrs[j]);
--		     j++, n++) {
-+		     j++) {
- 			nilfs_palloc_group(inode, entry_nrs[j], &group_offset);
- 			if (!nilfs_clear_bit_atomic(
- 				    nilfs_mdt_bgl_lock(inode, group),
-@@ -674,6 +674,8 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
- 				       "%s: entry number %llu already freed\n",
- 				       __func__,
- 				       (unsigned long long)entry_nrs[j]);
-+			} else {
-+				n++;
- 			}
- 		}
- 		nilfs_palloc_group_desc_add_entries(inode, group, desc, n);
--- 
-1.7.3.5
 
+Regards,
+--=20
+dexen deVries
+
+[[[=E2=86=93][=E2=86=92]]]
+
+> how does a C compiler get to be that big? what is all that code doing=
+?
+
+iterators, string objects, and a full set of C macros that ensure
+boundary conditions and improve interfaces.
+
+ron minnich, in response to Charles Forsyth
+
+http://9fans.net/archive/2011/02/90
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
