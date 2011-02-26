@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: record used amount of each checkpoint in checkpoint list
-Date: Sun, 27 Feb 2011 02:13:51 +0900
-Message-ID: <1298740431-13749-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/2] nilfs-utils: do not count used blocks for dat and cpfile and sufile
+Date: Sun, 27 Feb 2011 01:48:17 +0900
+Message-ID: <1298738897-13480-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1298738897-13480-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1298738897-13480-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,167 +13,50 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This records the number of used blocks per checkpoint in each
-checkpoint entry of cpfile.  Even though userland tools can get the
-block count via nilfs_get_cpinfo ioctl, it was not updated by the
-nilfs2 kernel code.  This fixes the issue and makes it available for
-userland tools to calculate used amount per checkpoint.
+The number of used blocks by DAT file, cpfile, and sufile changes
+independently of those of checkpoints.  So, we stop including the
+block count of those meta data files in block count of a checkpoint.
+
+Note that the block count of ifile is still included in the block
+count.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/bmap.c          |   11 -----------
- fs/nilfs2/bmap.h          |    3 ---
- fs/nilfs2/btree.c         |    6 +++---
- fs/nilfs2/direct.c        |    4 ++--
- fs/nilfs2/inode.c         |   18 ++++++++++++++++++
- fs/nilfs2/nilfs.h         |    2 ++
- include/linux/nilfs2_fs.h |    2 +-
- 7 files changed, 26 insertions(+), 20 deletions(-)
+ sbin/mkfs/mkfs.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 3ee67c6..85447a2 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -425,17 +425,6 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
- /*
-  * Internal use only
-  */
--
--void nilfs_bmap_add_blocks(const struct nilfs_bmap *bmap, int n)
--{
--	inode_add_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
--}
--
--void nilfs_bmap_sub_blocks(const struct nilfs_bmap *bmap, int n)
--{
--	inode_sub_bytes(bmap->b_inode, (1 << bmap->b_inode->i_blkbits) * n);
--}
--
- __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
- 			      const struct buffer_head *bh)
- {
-diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index bde1c0a..40d9f45 100644
---- a/fs/nilfs2/bmap.h
-+++ b/fs/nilfs2/bmap.h
-@@ -240,9 +240,6 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *,
- __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *, __u64);
- __u64 nilfs_bmap_find_target_in_group(const struct nilfs_bmap *);
+diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+index 0eeb859..0c3ff4e 100644
+--- a/sbin/mkfs/mkfs.c
++++ b/sbin/mkfs/mkfs.c
+@@ -173,7 +173,6 @@ struct nilfs_segment_info {
+ 	struct nilfs_file_info files[MAX_FILES];
  
--void nilfs_bmap_add_blocks(const struct nilfs_bmap *, int);
--void nilfs_bmap_sub_blocks(const struct nilfs_bmap *, int);
--
- 
- /* Assume that bmap semaphore is locked. */
- static inline int nilfs_bmap_dirty(const struct nilfs_bmap *bmap)
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 300c2bc..d451ae0 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -1174,7 +1174,7 @@ static int nilfs_btree_insert(struct nilfs_bmap *btree, __u64 key, __u64 ptr)
- 	if (ret < 0)
- 		goto out;
- 	nilfs_btree_commit_insert(btree, path, level, key, ptr);
--	nilfs_bmap_add_blocks(btree, stats.bs_nblocks);
-+	nilfs_inode_add_blocks(btree->b_inode, stats.bs_nblocks);
- 
-  out:
- 	nilfs_btree_free_path(path);
-@@ -1511,7 +1511,7 @@ static int nilfs_btree_delete(struct nilfs_bmap *btree, __u64 key)
- 	if (ret < 0)
- 		goto out;
- 	nilfs_btree_commit_delete(btree, path, level, dat);
--	nilfs_bmap_sub_blocks(btree, stats.bs_nblocks);
-+	nilfs_inode_sub_blocks(btree->b_inode, stats.bs_nblocks);
- 
- out:
- 	nilfs_btree_free_path(path);
-@@ -1776,7 +1776,7 @@ int nilfs_btree_convert_and_insert(struct nilfs_bmap *btree,
- 		return ret;
- 	nilfs_btree_commit_convert_and_insert(btree, key, ptr, keys, ptrs, n,
- 					      di, ni, bh);
--	nilfs_bmap_add_blocks(btree, stats.bs_nblocks);
-+	nilfs_inode_add_blocks(btree->b_inode, stats.bs_nblocks);
- 	return 0;
- }
- 
-diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
-index 324d80c..82f4865 100644
---- a/fs/nilfs2/direct.c
-+++ b/fs/nilfs2/direct.c
-@@ -146,7 +146,7 @@ static int nilfs_direct_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
- 		if (NILFS_BMAP_USE_VBN(bmap))
- 			nilfs_bmap_set_target_v(bmap, key, req.bpr_ptr);
- 
--		nilfs_bmap_add_blocks(bmap, 1);
-+		nilfs_inode_add_blocks(bmap->b_inode, 1);
- 	}
- 	return ret;
- }
-@@ -168,7 +168,7 @@ static int nilfs_direct_delete(struct nilfs_bmap *bmap, __u64 key)
- 	if (!ret) {
- 		nilfs_bmap_commit_end_ptr(bmap, &req, dat);
- 		nilfs_direct_set_ptr(bmap, key, NILFS_BMAP_INVALID_PTR);
--		nilfs_bmap_sub_blocks(bmap, 1);
-+		nilfs_inode_sub_blocks(bmap->b_inode, 1);
- 	}
- 	return ret;
- }
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 2534af8..22a816b 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -41,6 +41,24 @@ struct nilfs_iget_args {
- 	int for_gc;
+ 	unsigned        nvblocknrs;
+-	unsigned        nblocks_used;
+ 	/* + super root (1 block)*/
  };
  
-+void nilfs_inode_add_blocks(struct inode *inode, int n)
-+{
-+	struct nilfs_root *root = NILFS_I(inode)->i_root;
-+
-+	inode_add_bytes(inode, (1 << inode->i_blkbits) * n);
-+	if (root)
-+		atomic_add(n, &root->blocks_count);
-+}
-+
-+void nilfs_inode_sub_blocks(struct inode *inode, int n)
-+{
-+	struct nilfs_root *root = NILFS_I(inode)->i_root;
-+
-+	inode_sub_bytes(inode, (1 << inode->i_blkbits) * n);
-+	if (root)
-+		atomic_sub(n, &root->blocks_count);
-+}
-+
- /**
-  * nilfs_get_block() - get a file block on the filesystem (callback function)
-  * @inode - inode struct of the target file
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 45b1fd1..03ba4d8 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -251,6 +251,8 @@ int nilfs_ioctl_prepare_clean_segments(struct the_nilfs *, struct nilfs_argv *,
- 				       void **);
+@@ -533,7 +532,6 @@ static void fix_disk_layout(struct nilfs_disk_info *di)
+ 		struct nilfs_segment_info *si = &di->seginfo[i];
+ 		blocknr_t blocknr = si->start + si->nblk_sum;
  
- /* inode.c */
-+void nilfs_inode_add_blocks(struct inode *inode, int n);
-+void nilfs_inode_sub_blocks(struct inode *inode, int n);
- extern struct inode *nilfs_new_inode(struct inode *, int);
- extern void nilfs_free_inode(struct inode *);
- extern int nilfs_get_block(struct inode *, sector_t, struct buffer_head *, int);
-diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index 3a65e5a..cc5bbe9 100644
---- a/include/linux/nilfs2_fs.h
-+++ b/include/linux/nilfs2_fs.h
-@@ -509,7 +509,7 @@ struct nilfs_checkpoint {
- 	__le64 cp_create;
- 	__le64 cp_nblk_inc;
- 	__le64 cp_inodes_count;
--	__le64 cp_blocks_count;		/* Reserved (might be deleted) */
-+	__le64 cp_blocks_count;
- 
- 	/* Do not change the byte offset of ifile inode.
- 	   To keep the compatibility of the disk format,
+-		si->nblocks_used = (di->nblocks_used += si->nblocks);
+ 		si->nblocks += si->nblk_sum + 1 /* summary and super root */;
+ 		if (si->nblocks > di->blocks_per_segment)
+ 			too_small_segment(di->blocks_per_segment, si->nblocks);
+@@ -545,6 +543,11 @@ static void fix_disk_layout(struct nilfs_disk_info *di)
+ 				continue;
+ 			fi->start = blocknr;
+ 			blocknr += fi->nblocks;
++
++			if (fi->ino != NILFS_DAT_INO &&
++			    fi->ino != NILFS_SUFILE_INO &&
++			    fi->ino != NILFS_CPFILE_INO)
++				di->nblocks_used += fi->nblocks;
+ 		}
+ 		if (di->nblocks_to_write < si->start + si->nblocks)
+ 			di->nblocks_to_write = si->start + si->nblocks;
 -- 
 1.7.3.5
 
