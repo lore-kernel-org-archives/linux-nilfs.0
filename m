@@ -1,8 +1,8 @@
 From: =?ISO-8859-1?Q?J=E9r=F4me_Poulin?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: It is not possible to restore file from a mounted snapshot using
  a hardlink
-Date: Sun, 27 Feb 2011 10:56:25 -0500
-Message-ID: <-5130718212985067227@unknownmsgid>
+Date: Sun, 27 Feb 2011 11:02:17 -0500
+Message-ID: <-5862432177062534167@unknownmsgid>
 References: <201102271420.57110.dexen.devries@gmail.com>
 Mime-Version: 1.0 (iPhone Mail 8B117)
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -11,10 +11,10 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=domainkey-signature:references:from:in-reply-to:mime-version:date
          :message-id:subject:to:cc:content-type:content-transfer-encoding;
-        bh=mw1RaIa0VQE8ySl2l3SpH0l1pjBc72ppy7PYWmFeaZk=;
-        b=R0CDqNe7mlyR4RmTSva3+cRZ5/8LrWJYQ8ZXkvhakny5bcdjQxZXwCHxeJauVs+2w8
-         9i2bDRUTViGB6QiOuBLV+nhUSXBuAE7EP/yOTpqz4ZYZOcH+obup95giE60DY9l5Q9mC
-         2RZgqgt9Gr2EDdpivWY65CYAm6hWHSNqNyNkQ=
+        bh=1omCuwHxbliO9XxvlYuI9pf5umz/J7QZ7nGUOZMiG8Y=;
+        b=BMnrirBZ9J7SgHERhzclKIr2RFXNRGaaY00aGMZtFpYSWeDy2zorIeccymrJgd0/Ka
+         EGMivAa8Yj3LL1ztQe8eJ6Ac8F/S18N5sl9UAcKQJYGVPxb7Tox3LfzYYcaKk6N8FP21
+         nmqQbnaYSJf/r7Ua30ha624t0OL9dGyK1fzNc=
 In-Reply-To: <201102271420.57110.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -22,9 +22,9 @@ Content-Type: text/plain; charset="iso-8859-1"
 To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-In fact, hard links are not supposed to work but cp --reflink
-*should* work but it does not seem to. cp --reflink is what you would
-need to achieve what you want.
+Just after replying I noticed you talked about cp=3D and noticed I sent
+to the nilfs mailing list and not btrfs !  So cp --reflink does not
+work on NILFS but would be a nice feature :)
 
 Envoy=E9 de mon appareil mobile.
 
