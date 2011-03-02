@@ -1,144 +1,80 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] lscp: always display NBLKINC and BLKCNT
-Date: Tue, 1 Mar 2011 13:57:00 +0100
-Message-ID: <201103011357.01138.dexen.devries@gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [PATCH] nilfs2: record used amount of each checkpoint in
+ checkpoint list
+Date: Wed, 02 Mar 2011 10:49:15 +0900 (JST)
+Message-ID: <20110302.104915.53416445.ryusuke@osrg.net>
+References: <1298740431-13749-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+	<201103011305.43120.dexen.devries@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:from:date:subject:to:mime-version:content-type
-         :content-transfer-encoding:message-id;
-        bh=J5p6wPtqOf7WD5VlQft6ZsobRu7dxhd8D7I834eXLd8=;
-        b=UTCye1iY+wuKUvTBerkqf5Wv3MXlYiOwH4RSMFo24rOZRiiooymRX2VCTtW3hG2ISQ
-         w5v1FcC+uEVFg7gznwg77r1wjjltjmYeRghI0t9AZXVaS+agn/AwF3c7UsKGATC7rQiO
-         X8qJ2+R7wNUwe9uQYSr8CdS+HED8RXvffgrmA=
+In-Reply-To: <201103011305.43120.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="iso-2022-jp"
+To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Makes lscp display both NBLKINC and BLKCNT at the same time, in that order; 
-gets rid of options to display either of them.
+Hi,
+On Tue, 1 Mar 2011 13:05:42 +0100, dexen deVries wrote:
+> Hello,
+> 
+> 
+> On Saturday 26 of February 2011 18:13:51 you wrote:
+> > This records the number of used blocks per checkpoint in each
+> > checkpoint entry of cpfile.  Even though userland tools can get the
+> > block count via nilfs_get_cpinfo ioctl, it was not updated by the
+> > nilfs2 kernel code.  This fixes the issue and makes it available for
+> > userland tools to calculate used amount per checkpoint.
+> > 
+> > Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+> > ---
+> >  (...snip...)
+> 
+> 
+> I've applied this this patch and the two recent userpace patches and it works 
+> alright, with one surprise -- two suspiciously large BLKCNT:
+> 
+> $ lscp -b
+> (...snip...)
+>               270584  2011-03-01 12:52:57   cp    -           33     248244
+>               270585  2011-03-01 12:53:01   cp    -           34     248245
+>               270586  2011-03-01 12:53:06   cp    - 18446744073709550523     
+> 248245
+>               270587  2011-03-01 12:53:11   cp    - 18446744073709550550     
+> 248257
+>               270588  2011-03-01 12:53:15   cp    -         1268     248247
+>               270589  2011-03-01 12:53:16   cp    -         1803     248246
+>               270590  2011-03-01 12:53:21   cp    -         4952     248256
+> (...snip...)
+> 
+> 
+> It is possible the two strange checkpoints (270586 & 7) were created with new 
+> userland and old kernel, before reboot.
+> 
+> Do you want me to provide any extra info on it or just let it slip?
 
-I'm sorry it's almost exactly a revert of Ryusuke's recent patch ;-)
+Seems like underflow happened.
 
-- dVdx
+Did you format the partition with the latest (not yet released)
+mkfs.nilfs2 tools?
 
----
- bin/lscp.c |   29 ++++++++---------------------
- man/lscp.1 |    7 -------
- 2 files changed, 8 insertions(+), 28 deletions(-)
-
-diff --git a/bin/lscp.c b/bin/lscp.c
-index df9a0af..bede2f7 100644
---- a/bin/lscp.c
-+++ b/bin/lscp.c
-@@ -54,8 +54,6 @@
- #ifdef _GNU_SOURCE
- #include <getopt.h>
- const static struct option long_option[] = {
--	{"show-block-count", no_argument, NULL, 'b'},
--	{"show-increment", no_argument, NULL, 'g'},
- 	{"reverse", no_argument, NULL, 'r'},
- 	{"snapshot", no_argument, NULL, 's'},
- 	{"index", required_argument, NULL, 'i'},
-@@ -65,8 +63,6 @@ const static struct option long_option[] = {
- 	{NULL, 0, NULL, 0}
- };
- #define LSCP_USAGE	"Usage: %s [OPTION]... [DEVICE]\n"		\
--			"  -b, --show-block-count\t\tshow block count\n"\
--			"  -g, --show-increment\t\tshow increment count\n"\
- 			"  -r, --reverse\t\treverse order\n"		\
- 			"  -s, --snapshot\tlist only snapshots\n"	\
- 			"  -i, --index\t\tcp/ss index\n"		\
-@@ -74,7 +70,7 @@ const static struct option long_option[] = {
- 			"  -h, --help\t\tdisplay this help and exit\n"	\
- 			"  -V, --version\t\tdisplay version and exit\n"
- #else
--#define LSCP_USAGE	"Usage: %s [-bgrshV] [-i cno] [-n lines] [device]\n"
-+#define LSCP_USAGE	"Usage: %s [-rshV] [-i cno] [-n lines] [device]\n"
- #endif	/* _GNU_SOURCE */
+Thanks,
+Ryusuke Konishi
  
- #define LSCP_BUFSIZE	128
-@@ -85,13 +81,11 @@ const static struct option long_option[] = {
- static __u64 param_index;
- static __u64 param_lines;
- static struct nilfs_cpinfo cpinfos[LSCP_NCPINFO];
--static int show_block_count = 0;
- 
- static void lscp_print_header(void)
- {
--	printf("                 CNO        DATE     TIME  MODE  FLG     %s"
--	       "       ICNT\n",
--	       show_block_count ? " BLKCNT" : "NBLKINC");
-+	printf("                 CNO        DATE     TIME  MODE  FLG"
-+	       "     NBLKINC       BLKCNT       ICNT\n");
- }
- 
- static void lscp_print_cpinfo(struct nilfs_cpinfo *cpinfo)
-@@ -104,13 +98,12 @@ static void lscp_print_cpinfo(struct nilfs_cpinfo 
-*cpinfo)
- 	localtime_r(&t, &tm);
- 	strftime(timebuf, LSCP_BUFSIZE, "%F %T", &tm);
- 
--	printf("%20llu  %s   %s    %s %12llu %10llu\n",
-+	printf("%20llu  %s   %s    %s %12llu %12llu %10llu\n",
- 	       (unsigned long long)cpinfo->ci_cno, timebuf,
- 	       nilfs_cpinfo_snapshot(cpinfo) ? "ss" : "cp",
- 	       nilfs_cpinfo_minor(cpinfo) ? "i" : "-",
--	       (unsigned long long)(show_block_count ?
--				    cpinfo->ci_blocks_count :
--				    cpinfo->ci_nblk_inc),
-+	       (unsigned long long)cpinfo->ci_nblk_inc,
-+	       (unsigned long long)cpinfo->ci_blocks_count,
- 	       (unsigned long long)cpinfo->ci_inodes_count);
- }
- 
-@@ -341,19 +334,13 @@ int main(int argc, char *argv[])
- 
- 
- #ifdef _GNU_SOURCE
--	while ((c = getopt_long(argc, argv, "bgrsi:n:hV",
-+	while ((c = getopt_long(argc, argv, "rsi:n:hV",
- 				long_option, &option_index)) >= 0) {
- #else
--	while ((c = getopt(argc, argv, "bgrsi:n:hV")) >= 0) {
-+	while ((c = getopt(argc, argv, "rsi:n:hV")) >= 0) {
- #endif	/* _GNU_SOURCE */
- 
- 		switch (c) {
--		case 'b':
--			show_block_count = 1;
--			break;
--		case 'g':
--			show_block_count = 0;
--			break;
- 		case 'r':
- 			rvs = 1;
- 			break;
-diff --git a/man/lscp.1 b/man/lscp.1
-index b5a553b..e484499 100644
---- a/man/lscp.1
-+++ b/man/lscp.1
-@@ -17,13 +17,6 @@ This command will fail if the \fIdevice\fP has no active 
-mounts of a
- NILFS2 file system.
- .SH OPTIONS
- .TP
--\fB\-b\fR, \fB\-\-show\-block\-count\fR
--Show number of used blocks instead of appended blocks.
--.TP
--\fB\-g\fR, \fB\-\-show\-increment\fR
--Show number of appended blocks instead of used blocks.  This is the
--default mode.
--.TP
- \fB\-r\fR, \fB\-\-reverse\fR
- Reverse order.
- .TP
--- 
-1.7.4.1
-
+> -- 
+> dexen deVries
+> 
+> [[[↓][→]]]
+> 
+> > how does a C compiler get to be that big? what is all that code doing?
+> 
+> iterators, string objects, and a full set of C macros that ensure
+> boundary conditions and improve interfaces.
+> 
+> ron minnich, in response to Charles Forsyth
+> 
+> http://9fans.net/archive/2011/02/90
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
