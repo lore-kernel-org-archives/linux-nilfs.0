@@ -1,76 +1,65 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: [PATCH] lscp: support opening mounted filesystem by directory
- pathname
-Date: Wed, 02 Mar 2011 23:21:10 +0900 (JST)
-Message-ID: <20110302.232110.169818198.ryusuke@osrg.net>
-References: <201103021113.32637.dexen.devries@gmail.com>
-	<20110302.202345.74569955.ryusuke@osrg.net>
-	<201103021343.54036.dexen.devries@gmail.com>
+From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: nilfs_cleanerd not started for mount with relative pathname
+Date: Wed, 2 Mar 2011 18:12:31 +0100
+Message-ID: <201103021812.31515.dexen.devries@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201103021343.54036.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:from:to:subject:date:user-agent:x-face
+         :mime-version:content-type:content-transfer-encoding:message-id;
+        bh=Jqu7MpSTD1Z8zMK1SHcbAutHqvkzTxWTgtoqrrLn6EY=;
+        b=f76JOKLE8l2OMyGO9Gi08fNTzjmgpoU7z020XGse/D3jobNoTWJks3Fs6MRrKVv27K
+         kxzIE0ur2VbLU8xrJCIoErlfAmKaXEG5fl0fwuHISjcJVV0WYoG6iZmfSHwlVzAWJgMf
+         5vlvjzxHsywdq3Q77fq5A+d7hRKsAYstwcprk=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-2022-jp"
-To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="utf-8"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 2 Mar 2011 13:43:53 +0100, dexen deVries wrote:
-> On Wednesday 02 of March 2011 12:23:45 you wrote:
-> > Hi,
-> > 
-> > On Wed, 2 Mar 2011 11:13:32 +0100, dexen deVries wrote:
-> > > The patch I've submited may be a wrong solution; perhaps instead the
-> > > algorithm of nilfs_find_fs() (around lib/nilfs.c:179,211) should be
-> > > improved.
-> > > 
-> > > Regards,
-> > 
-> > Well, allowing directory pathname for nilfs commands seems a good idea
-> > to me.  Why not apply it to other commands except nilfs_cleanerd ?
-> > 
-> 
-> Goot point, I'm on it right now.
-> 
-> Reading through sbin/cleanerd/cleanerd.c, it seems it doesn't make any 
-> distinction between dev and dir, just supplies program's argument as both dev 
-> and dir arguments to nilfs_open(). In my understanding, that'd be the cleanest 
-> way of using it. 
-> 
-> However, the current behavior of nilfs_open() (or more exactly, of 
-> nilfs_find_fs()) doesn't support that semantics -- if dev is passed, it kind of 
-> ignores the dir argument.
+Hi,
 
-No, nilfs_find_fs() compares both dev and dir arguments if both are
-given.  Actually nilfs_cleanerd needs the dir argument because two
-writable mounts can coexist on the same device when bind mounts are
-used, and cleanerd has to be attached on exactly the same mount point.
 
-> Perhaps I should try to fix nilfs_find_fs() rather 
-> than put stat() and S_ISDIR() in every program?
+when testing my other patches, the following came up:
 
-I'd like to avoid changing interface of nilfs_open.  You can add a
-wrapper function to libnilfs if you don't prefer to insert stat() and
-S_ISDIR() in every program.
+with absolute pathname:
+# mount /dev/sdb2 /mnt/x
+# ps ax | grep [n]ilfs_cleanerd
+30408 ?        Ss     0:00 /sbin/nilfs_cleanerd -n /dev/sdb2 /mnt/x
 
-Thanks,
-Ryusuke Konishi
- 
-> --
-> dexen deVries
-> 
-> [[[↓][→]]]
-> 
-> 47. As Will Rogers would have said, "There is no such thing as a free 
-> variable."
-> 
-> (Alan Perlis, `Epigrams on Programming')
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+with relative mountpoint pathname:
+# umount /mnt/x
+# cd /mnt
+# mount /dev/sdb2 x
+# ps ax | grep [n]ilfs_cleanerd
+((no such process))
+
+with relative device pathname:
+# umount /mnt/x
+# cd /dev
+# mount sdb2 /mnt/x
+# ps ax | grep [n]ilfs_cleanerd
+((no such process))
+
+This is due to chdir(ROOTDIR) in daemonize(); currently daemonize is al=
+ways=20
+called with nochdir =3D=3D 0. Should I hardcode it to nochdir =3D=3D 1 =
+or canonicalize=20
+the `dev' and `dir' arguments with myrealpath()?
+
+--=20
+dexen deVries
+
+[[[=E2=86=93][=E2=86=92]]]
+
+47. As Will Rogers would have said, "There is no such thing as a free=20
+variable."
+
+(Alan Perlis, `Epigrams on Programming')
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
