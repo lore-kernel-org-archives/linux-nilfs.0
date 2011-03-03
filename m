@@ -1,65 +1,42 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: nilfs_cleanerd not started for mount with relative pathname
-Date: Wed, 2 Mar 2011 18:12:31 +0100
-Message-ID: <201103021812.31515.dexen.devries@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [GIT PULL] nilfs2 fix for 2.6.38
+Date: Thu, 03 Mar 2011 21:16:22 +0900 (JST)
+Message-ID: <20110303.211622.78542371.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:from:to:subject:date:user-agent:x-face
-         :mime-version:content-type:content-transfer-encoding:message-id;
-        bh=Jqu7MpSTD1Z8zMK1SHcbAutHqvkzTxWTgtoqrrLn6EY=;
-        b=f76JOKLE8l2OMyGO9Gi08fNTzjmgpoU7z020XGse/D3jobNoTWJks3Fs6MRrKVv27K
-         kxzIE0ur2VbLU8xrJCIoErlfAmKaXEG5fl0fwuHISjcJVV0WYoG6iZmfSHwlVzAWJgMf
-         5vlvjzxHsywdq3Q77fq5A+d7hRKsAYstwcprk=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="utf-8"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+Hi Linus,
 
+please pull from:
 
-when testing my other patches, the following came up:
+  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
 
-with absolute pathname:
-# mount /dev/sdb2 /mnt/x
-# ps ax | grep [n]ilfs_cleanerd
-30408 ?        Ss     0:00 /sbin/nilfs_cleanerd -n /dev/sdb2 /mnt/x
+This will fix a reported regression leading a snapshot management
+application to create meaningless snapshots endlessly.
 
+Thanks,
 
-with relative mountpoint pathname:
-# umount /mnt/x
-# cd /mnt
-# mount /dev/sdb2 x
-# ps ax | grep [n]ilfs_cleanerd
-((no such process))
-
-with relative device pathname:
-# umount /mnt/x
-# cd /dev
-# mount sdb2 /mnt/x
-# ps ax | grep [n]ilfs_cleanerd
-((no such process))
-
-This is due to chdir(ROOTDIR) in daemonize(); currently daemonize is al=
-ways=20
-called with nochdir =3D=3D 0. Should I hardcode it to nochdir =3D=3D 1 =
-or canonicalize=20
-the `dev' and `dir' arguments with myrealpath()?
-
---=20
-dexen deVries
-
-[[[=E2=86=93][=E2=86=92]]]
-
-47. As Will Rogers would have said, "There is no such thing as a free=20
-variable."
-
-(Alan Perlis, `Epigrams on Programming')
+Ryusuke Konishi
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+The following changes since commit dd9c1549edef02290edced639f67b54a25abbe0e:
+
+  Linux 2.6.38-rc7 (2011-03-01 13:55:12 -0800)
+
+are available in the git repository at:
+  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
+
+Ryusuke Konishi (1):
+      nilfs2: fix regression that i-flag is not set on changeless checkpoints
+
+ fs/nilfs2/segment.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
