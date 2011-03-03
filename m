@@ -1,183 +1,130 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 8/8] update manpages to indicate open-by-mountpoint
-Date: Thu,  3 Mar 2011 13:47:52 +0100
-Message-ID: <1299156472-4707-8-git-send-email-dexen.devries@gmail.com>
+From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: [PATCH 1/8] lscp: support opening mounted filesystem by
+ directory pathname
+Date: Fri, 04 Mar 2011 01:15:11 +0900 (JST)
+Message-ID: <20110304.011511.83301246.ryusuke@osrg.net>
 References: <20110302.232110.169818198.ryusuke@osrg.net>
- <1299156472-4707-1-git-send-email-dexen.devries@gmail.com>
+	<1299156472-4707-1-git-send-email-dexen.devries@gmail.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:from:to:subject:date:message-id:x-mailer
-         :in-reply-to:references:x-face;
-        bh=jPho7bpgsCirxRPViux/HBe1UJrVFfQssHlNfHRQbMs=;
-        b=R70CKFhXpb5aTgJ5RfEreDF1RwdgmbDXTJeLuxqnQQRljDkBHHsHoPmzydjBQ+vFJp
-         DiytDFxoEdOo/VdDZocXoI7FvfopK2NeRZwyNDyMvz45+N8RdO78NV4LitqkjyesAQPm
-         YPt/4xcXqTQ01sbFxGGEzizapKtRWy9y7kXSk=
 In-Reply-To: <1299156472-4707-1-git-send-email-dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
----
- man/chcp.8    |    8 +++++---
- man/dumpseg.8 |   14 +++++++-------
- man/lscp.1    |    8 ++++----
- man/lssu.1    |   10 +++++-----
- man/mkcp.8    |    8 ++++----
- man/rmcp.8    |   10 +++++-----
- 6 files changed, 30 insertions(+), 28 deletions(-)
+Hi,
 
-diff --git a/man/chcp.8 b/man/chcp.8
-index 7f50784..d0b795a 100644
---- a/man/chcp.8
-+++ b/man/chcp.8
-@@ -6,11 +6,12 @@
- chcp \- change mode of NILFS2 checkpoints
- .SH SYNOPSIS
- .B chcp
--[\fIoptions\fP] \fBcp\fP | \fBss\fP [\fIdevice\fP] \fIcheckpoint-number\fP ...
-+[\fIoptions\fP] \fBcp\fP | \fBss\fP [\fIdevice\fP | \fImountpoint\fP]
-+\fIcheckpoint-number\fP ...
- .SH DESCRIPTION
- .B chcp
- is a utility to change the mode of the given checkpoints for the NILFS2
--file system found in \fIdevice\fP.
-+file system found in \fIdevice\fP or mounted at \fImountpoint\fP.
- .B chcp
- changes checkpoints to snapshots, or vice versa.  The target
- checkpoints are specified with one or more checkpoint numbers.  When
-@@ -18,7 +19,8 @@ checkpoints are specified with one or more checkpoint numbers.  When
- \fI/proc/mounts\fP.
- .PP
- This command is valid only for mounted NILFS2 file systems, and
--will fail if the \fIdevice\fP has no active mounts.
-+will fail if the \fIdevice\fP has no active mounts and \fImountpoint\fP
-+is not a mounted NILFS2 filesystem.
- .SH OPTIONS
- .TP
- \fB\-h\fR, \fB\-\-help\fR
-diff --git a/man/dumpseg.8 b/man/dumpseg.8
-index c0da6b5..8953dd9 100644
---- a/man/dumpseg.8
-+++ b/man/dumpseg.8
-@@ -9,16 +9,16 @@ dumpseg \- print segment information of NILFS2
- [\fB\-hV\fP]
- .sp
- .B dumpseg
--[\fIdevice\fP] \fIsegment-number\fP ...
-+[\fIdevice\fP | \fImountpoint\fP] \fIsegment-number\fP ...
- .SH DESCRIPTION
- The
- .B dumpseg
--program is an analysis tool for on-disk logs of a NILFS2 file system
--found in \fIdevice\fP.  It displays the configuration of every log
--stored in the segments specified by one or more \fIsegment-numbers\fP.
--The term segment here means a contiguous lump of disk blocks giving an
--allocation unit of NILFS2 disk space.  When \fIdevice\fP is omitted,
--it tries to find an active NILFS2 file system from \fI/proc/mounts\fP.
-+program is an analysis tool for on-disk logs of a NILFS2 file system found in
-+\fIdevice\fP or mounted at \fImountpoint\fP. It displays the configuration of
-+every log stored in the segments specified by one or more
-+\fIsegment-numbers\fP. The term segment here means a contiguous lump of disk
-+blocks giving an allocation unit of NILFS2 disk space. When \fIdevice\fP is
-+omitted, it tries to find an active NILFS2 file system from \fI/proc/mounts\fP.
- .PP
- .B dumpseg
- is a tool for debugging rather than administration.  To list a summary
-diff --git a/man/lscp.1 b/man/lscp.1
-index b5a553b..7f302ac 100644
---- a/man/lscp.1
-+++ b/man/lscp.1
-@@ -6,12 +6,12 @@
- lscp \- list NILFS2 checkpoints
- .SH SYNOPSIS
- .B lscp
--[\fIoptions\fP] [\fIdevice\fP]
-+[\fIoptions\fP] [\fIdevice\fP | \fImountpoint\fP]
- .SH DESCRIPTION
- .B lscp
--is a utility for displaying checkpoints or snapshots of the NILFS2
--file system found in \fIdevice\fP.  When \fIdevice\fP is omitted,
--\fI/proc/mounts\fP is examined to find a NILFS2 file system.
-+is a utility for displaying checkpoints or snapshots of the NILFS2 file system
-+found in \fIdevice\fP or mounted at \fImountpoint\fP.  When \fIdevice\fP is
-+omitted, \fI/proc/mounts\fP is examined to find a NILFS2 file system.
- .PP
- This command will fail if the \fIdevice\fP has no active mounts of a
- NILFS2 file system.
-diff --git a/man/lssu.1 b/man/lssu.1
-index ec71158..6d51336 100644
---- a/man/lssu.1
-+++ b/man/lssu.1
-@@ -6,13 +6,13 @@
- lssu \- list usage state of NILFS2 segments
- .SH SYNOPSIS
- .B lssu
--[\fIoptions\fP] [\fIdevice\fP]
-+[\fIoptions\fP] [\fIdevice\fP | \fImountpoint\fP]
- .SH DESCRIPTION
- .B lssu
--is a utility for displaying usage state of NILFS2 segments in
--\fIdevice\fP, where a segment is contiguous lump of disk blocks and
--an allocation unit of NILFS2 disk space.  When \fIdevice\fP is
--omitted, \fI/proc/mounts\fP is examined to find a NILFS2 file system.
-+is a utility for displaying usage state of NILFS2 segments in \fIdevice\fP or
-+mounted at \fImountpoint\fP, where a segment is contiguous lump of disk blocks
-+and an allocation unit of NILFS2 disk space.  When \fIdevice\fP is omitted,
-+\fI/proc/mounts\fP is examined to find a NILFS2 file system.
- .PP
- This command will fail if the \fIdevice\fP has no active mounts of a
- NILFS2 file system.
-diff --git a/man/mkcp.8 b/man/mkcp.8
-index 53b3a9e..fe6739c 100644
---- a/man/mkcp.8
-+++ b/man/mkcp.8
-@@ -6,12 +6,12 @@
- mkcp \- make a NILFS2 checkpoint
- .SH SYNOPSIS
- .B mkcp
--[\fIoptions\fP] [\fIdevice\fP]
-+[\fIoptions\fP] [\fIdevice\fP | \fImountpoint\fP]
- .SH DESCRIPTION
- .B mkcp
--is a utility for making a checkpoint or snapshot for the NILFS2 file
--system found in \fIdevice\fP.  When \fIdevice\fP is omitted, it tries
--to find a NILFS2 file system from \fI/proc/mounts\fP.
-+is a utility for making a checkpoint or snapshot for the NILFS2 file system
-+found in \fIdevice\fP or mounted at \fImountpoint\fP.  When \fIdevice\fP is
-+omitted, it tries to find a NILFS2 file system from \fI/proc/mounts\fP.
- .PP
- This command is valid only for mounted NILFS2 file systems, and
- will fail if the \fIdevice\fP has no active mounts.
-diff --git a/man/rmcp.8 b/man/rmcp.8
-index 11e5c07..05f7e56 100644
---- a/man/rmcp.8
-+++ b/man/rmcp.8
-@@ -6,13 +6,13 @@
- rmcp \- remove NILFS2 checkpoints
- .SH SYNOPSIS
- .B rmcp
--[\fIoptions\fP] [\fIdevice\fP] \fIcheckpoint-range\fP ...
-+[\fIoptions\fP] [\fIdevice\fP | \fImountpoint\fP] \fIcheckpoint-range\fP ...
- .SH DESCRIPTION
- .B rmcp
--is a utility for removing checkpoints from the NILFS2 file system
--found in \fIdevice\fP.  The checkpoints which user wants to remove are
--specified with one or more \fIcheckpoint-ranges\fP.  When \fIdevice\fP
--is omitted, rmcp tries to find a NILFS2 file system from
-+is a utility for removing checkpoints from the NILFS2 file system found in
-+\fIdevice\fP or mounted at \fImountpoint\fP.  The checkpoints which user wants
-+to remove are specified with one or more \fIcheckpoint-ranges\fP.  When
-+\fIdevice\fP is omitted, rmcp tries to find a NILFS2 file system from
- \fI/proc/mounts\fP.
- .PP
- The \fIcheckpoint-range\fP must be provided with one or two integers
--- 
-1.7.4.1
+Thank you for posting this series.  I'll queue it up in
+nilfs-utils-devel tree.
 
+By the way, may I add your "Signed-off-by:" line to these patches?
+
+FYI, you can do it yourself as follows:
+
+ 1) Register E-mail address and user name to ~/.gitconfig:
+
+   $ git config --global --add user.name "dexen deVries"
+   $ git config --global --add user.email "dexen.devries@..."
+
+ 2) Convert the series to separate patches
+
+   $ git format-patch -o <work-directory> <branch-base>..<branch-head>
+
+ 3) Apply the series with sign option
+
+   $ git checkout -b <new-branch-name> <branch-base>
+   $ git am -s <work-directory>/*.patch
+
+
+Usually, we add a sob line with "git commit -s" when committing each
+patch.
+
+Thanks,
+Ryusuke Konishi
+
+
+On Thu,  3 Mar 2011 13:47:45 +0100, dexen deVries wrote:
+> ---
+>  bin/lscp.c |   32 +++++++++++++++++++++++++++-----
+>  1 files changed, 27 insertions(+), 5 deletions(-)
+> 
+> diff --git a/bin/lscp.c b/bin/lscp.c
+> index df9a0af..a9be26e 100644
+> --- a/bin/lscp.c
+> +++ b/bin/lscp.c
+> @@ -28,6 +28,14 @@
+>  #include "config.h"
+>  #endif	/* HAVE_CONFIG_H */
+>  
+> +#if HAVE_SYS_TYPES_H
+> +#include <sys/types.h>
+> +#endif	/* HAVE_SYS_TYPES_H */
+> +
+> +#if HAVE_SYS_STAT_H
+> +#include <sys/stat.h>
+> +#endif	/* HAVE_SYS_STAT_H */
+> +
+>  #include <stdio.h>
+>  
+>  #if HAVE_STDLIB_H
+> @@ -324,12 +332,14 @@ int main(int argc, char *argv[])
+>  {
+>  	struct nilfs *nilfs;
+>  	struct nilfs_cpstat cpstat;
+> -	char *dev, *progname;
+> +	struct stat statbuf;
+> +	char *dev, *dir, *pathname, *progname;
+>  	int c, mode, rvs, status, ret;
+>  #ifdef _GNU_SOURCE
+>  	int option_index;
+>  #endif	/* _GNU_SOURCE */
+>  
+> +	dev = dir = NULL;
+>  	mode = NILFS_CHECKPOINT;
+>  	rvs = 0;
+>  	opterr = 0;	/* prevent error message */
+> @@ -384,15 +394,27 @@ int main(int argc, char *argv[])
+>  		fprintf(stderr, "%s: too many arguments\n", progname);
+>  		exit(1);
+>  	} else if (optind == argc - 1) {
+> -		dev = argv[optind++];
+> +		pathname = argv[optind++];
+>  	} else {
+> -		dev = NULL;
+> +		pathname = NULL;
+>  	}
+>  
+> -	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RDONLY);
+> +	if (pathname) {
+> +		ret = stat(pathname, &statbuf);
+> +		if (ret == -1) {
+> +			fprintf(stderr, "%s: cannot open %s: %s\n",
+> +				progname, pathname, strerror(errno));
+> +			exit(EXIT_FAILURE);
+> +		}
+> +		if (S_ISDIR(statbuf.st_mode))
+> +			dir = pathname;
+> +		else
+> +			dev = pathname;
+> +	}
+> +	nilfs = nilfs_open(dev, dir, NILFS_OPEN_RDONLY);
+>  	if (nilfs == NULL) {
+>  		fprintf(stderr, "%s: %s: cannot open NILFS\n",
+> -			progname, dev);
+> +			progname, pathname);
+>  		exit(EXIT_FAILURE);
+>  	}
+>  
+> -- 
+> 1.7.4.1
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
