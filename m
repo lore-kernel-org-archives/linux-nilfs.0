@@ -1,7 +1,7 @@
 From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 5/8] mkcp: support opening mounted filesystem by directory pathname
-Date: Thu,  3 Mar 2011 13:47:49 +0100
-Message-ID: <1299156472-4707-5-git-send-email-dexen.devries@gmail.com>
+Subject: [PATCH 3/8] dumpseg: support opening mounted filesystem by directory pathname
+Date: Thu,  3 Mar 2011 13:47:47 +0100
+Message-ID: <1299156472-4707-3-git-send-email-dexen.devries@gmail.com>
 References: <20110302.232110.169818198.ryusuke@osrg.net>
  <1299156472-4707-1-git-send-email-dexen.devries@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -9,10 +9,10 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=domainkey-signature:from:to:subject:date:message-id:x-mailer
          :in-reply-to:references:x-face;
-        bh=YjCsarctuPa59UHekU+k2uVnfqVSlxrcDt1QvOmLWp4=;
-        b=NoVgg79vygp6Ncurn6N6uD3OTC75FHi/C2HRi00tnYK0ACPeKabGc50uIElW43Eovm
-         e2kTt0mvGeh79jUFUWXi9KH2IZfa4SDhpArwvgZ60fv4yD9c+F+VUxuILF3ja7uNDm51
-         PZQ1iN5lMdYm4FeUc6fOTEO5Xn6fCxJ+thFNU=
+        bh=cNeZLlEp/2pPOeaapSFtBzaHmPxKV4PCdXBmGwf9YNA=;
+        b=D7LFOULJHAHJDhGFuR3N1fWHezzFNgxlKM5DJkvtuI6W4VYYBAGzflbyQrlHBAhGXg
+         j987P0zoFotfFEA46dTa/rZwJvy+hHDoWDoRPlZui1V67gB6yiQ8V4+ShyQ5bKBHfqNU
+         KT3gnump2EQt6c81uo8iQgwsCyHn9i054Q9A4=
 In-Reply-To: <1299156472-4707-1-git-send-email-dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -22,13 +22,13 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 ---
- bin/mkcp.c |   36 +++++++++++++++++++++++++++++-------
- 1 files changed, 29 insertions(+), 7 deletions(-)
+ bin/dumpseg.c |   35 +++++++++++++++++++++++++++++------
+ 1 files changed, 29 insertions(+), 6 deletions(-)
 
-diff --git a/bin/mkcp.c b/bin/mkcp.c
-index 716b809..d2f45e9 100644
---- a/bin/mkcp.c
-+++ b/bin/mkcp.c
+diff --git a/bin/dumpseg.c b/bin/dumpseg.c
+index 0ee6aee..1910296 100644
+--- a/bin/dumpseg.c
++++ b/bin/dumpseg.c
 @@ -28,6 +28,14 @@
  #include "config.h"
  #endif	/* HAVE_CONFIG_H */
@@ -44,37 +44,40 @@ index 716b809..d2f45e9 100644
  #include <stdio.h>
  
  #if HAVE_STDLIB_H
-@@ -68,15 +76,17 @@ const static struct option long_option[] = {
+@@ -169,17 +177,19 @@ static void dumpseg_print_segment(struct nilfs *nilfs,
  int main(int argc, char *argv[])
  {
  	struct nilfs *nilfs;
 +	struct stat statbuf;
- 	nilfs_cno_t cno;
--	char *dev, *progname;
--	int ss, c, status;
-+	char *dev, *dir, *pathname, *progname;
-+	int ss, c, status, ret;
+ 	__u64 segnum;
+-	char *dev, *endptr, *progname;
++	char *dev, *dir, *pathname, *endptr, *progname;
+ 	void *seg;
+ 	ssize_t segsize;
+-	int c, i, status;
++	int c, i, status, ret;
+ 	unsigned long val;
  #ifdef _GNU_SOURCE
  	int option_index;
  #endif	/* _GNU_SOURCE */
  
- 	ss = 0;
  	opterr = 0;
 +	dev = dir = NULL;
+ 
  	if ((progname = strrchr(argv[0], '/')) == NULL)
  		progname = argv[0];
- 	else
-@@ -111,13 +121,25 @@ int main(int argc, char *argv[])
- 		fprintf(stderr, "%s: too many arguments\n", progname);
- 		exit(1);
- 	} else if (optind > argc - 1)
--		dev = NULL;
-+		pathname = NULL;
- 	else
--		dev = argv[optind];
--
--	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RDWR);
-+		pathname = argv[optind];
+@@ -214,14 +224,27 @@ int main(int argc, char *argv[])
+ 	} else {
+ 		val = strtoul(argv[optind], &endptr, DUMPSEG_BASE);
+ 		if (*endptr == '\0')
+-			dev = NULL;
++			pathname = NULL;
+ 		else
+-			dev = argv[optind++];
++			pathname = argv[optind++];
+ 	}
+ 
+-	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RAW);
 +
 +	if (pathname) {
 +		ret = stat(pathname, &statbuf);
@@ -88,7 +91,7 @@ index 716b809..d2f45e9 100644
 +		else
 +			dev = pathname;
 +	}
-+	nilfs = nilfs_open(dev, dir, NILFS_OPEN_RDWR);
++	nilfs = nilfs_open(dev, dir, NILFS_OPEN_RAW);
  	if (nilfs == NULL) {
 -		fprintf(stderr, "%s: %s: cannot open NILFS\n", progname, dev);
 +		fprintf(stderr, "%s: %s: cannot open NILFS\n", progname, pathname);
