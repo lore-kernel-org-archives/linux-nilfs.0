@@ -1,88 +1,132 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: lscp & friends: indicate filesystem by directory
-Date: Tue, 08 Mar 2011 11:31:22 +0900 (JST)
-Message-ID: <20110308.113122.255573221.ryusuke@osrg.net>
-References: <201103071051.25290.dexen.devries@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 2/8] nilfs2: move parameters on nilfs_sb_info into nilfs object
+Date: Wed,  9 Mar 2011 21:08:07 +0900
+Message-ID: <1299672493-28544-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1299672493-28544-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201103071051.25290.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1299672493-28544-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
-On Mon, 7 Mar 2011 10:51:25 +0100, dexen deVries wrote:
-> Hi,
-> 
-> I've suspended issuing my current patches for lscp & friends till I implement 
-> the functionality Ryusuke mentioned.
-> 
-> Please review the following sketch of algorithm for all interactive utils:
-> 
-> char *dev, *dir, *object;
-> char canonical[PATH_MAX + 2];
-> struct stat statbuffer;
-> 
-> dev = dir = object = NULL;
-> 
-> if (optind < argc)
->                 object = argv[optind++];
-> 
-> if (object) {
-> 	stat(object, &statbuffer);
-> 	if (S_ISDIR(statbuffer))
-> 		dir = myrealpath(object, canonical, sizeof(canonical));
-> 	else
-> 		dev = myrealpath(object, canonical, sizeof(canonical));
-> }
-> else
-> 	dir = getwd(canonical);
-> 
-> /* a new function; traverses directory hierarchy up till it reaches nilfs 
-> mountpoint */
-> if (dir)
-> 	dir = up_to_nilfs_mountpoint(dir);  
-> 
-> nilfs_open(dev, dir, ...);
+This moves four parameter variables on nilfs_sb_info s_resuid,
+s_resgid, s_interval and s_watermark to the nilfs object.
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/sb.h        |    7 -------
+ fs/nilfs2/segment.c   |    9 +++++----
+ fs/nilfs2/super.c     |   10 +++++-----
+ fs/nilfs2/the_nilfs.h |    9 +++++++++
+ 4 files changed, 19 insertions(+), 16 deletions(-)
+
+diff --git a/fs/nilfs2/sb.h b/fs/nilfs2/sb.h
+index d7346c9..0512521 100644
+--- a/fs/nilfs2/sb.h
++++ b/fs/nilfs2/sb.h
+@@ -34,13 +34,6 @@ struct nilfs_sc_info;
+  * NILFS super-block data in memory
+  */
+ struct nilfs_sb_info {
+-	uid_t s_resuid;
+-	gid_t s_resgid;
+-
+-	unsigned long s_interval;	/* construction interval */
+-	unsigned long s_watermark;	/* threshold of data amount
+-					   for the segment construction */
+-
+ 	/* Fundamental members */
+ 	struct super_block *s_super;	/* reverse pointer to super_block */
+ 	struct the_nilfs *s_nilfs;
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 851bcd3..a32d9cb 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2676,6 +2676,7 @@ static void nilfs_segctor_kill_thread(struct nilfs_sc_info *sci)
+ static struct nilfs_sc_info *nilfs_segctor_new(struct nilfs_sb_info *sbi,
+ 					       struct nilfs_root *root)
+ {
++	struct the_nilfs *nilfs = sbi->s_nilfs;
+ 	struct nilfs_sc_info *sci;
  
-Roughly seems OK to me.  (error handling is required at least for the
-stat syscall, you know)
+ 	sci = kzalloc(sizeof(*sci), GFP_KERNEL);
+@@ -2703,10 +2704,10 @@ static struct nilfs_sc_info *nilfs_segctor_new(struct nilfs_sb_info *sbi,
+ 	sci->sc_mjcp_freq = HZ * NILFS_SC_DEFAULT_SR_FREQ;
+ 	sci->sc_watermark = NILFS_SC_DEFAULT_WATERMARK;
  
-> The main difference to the current version is:
-> if no object is explicitly indicated on the command line, the tool uses 
-> current working directory. Thus by default it'd operate on the filesystem 
-> holding the current working directory -- rather than the first NILFS2 in 
-> /proc/mounts as it does currently.
+-	if (sbi->s_interval)
+-		sci->sc_interval = sbi->s_interval;
+-	if (sbi->s_watermark)
+-		sci->sc_watermark = sbi->s_watermark;
++	if (nilfs->ns_interval)
++		sci->sc_interval = nilfs->ns_interval;
++	if (nilfs->ns_watermark)
++		sci->sc_watermark = nilfs->ns_watermark;
+ 	return sci;
+ }
+ 
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 0576cb2..2f17a2f 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -729,7 +729,7 @@ int nilfs_store_magic_and_option(struct super_block *sb,
+ 				 struct nilfs_super_block *sbp,
+ 				 char *data)
+ {
+-	struct nilfs_sb_info *sbi = NILFS_SB(sb);
++	struct the_nilfs *nilfs = NILFS_SB(sb)->s_nilfs;
+ 
+ 	sb->s_magic = le16_to_cpu(sbp->s_magic);
+ 
+@@ -740,10 +740,10 @@ int nilfs_store_magic_and_option(struct super_block *sb,
+ 
+ 	nilfs_set_default_options(sb, sbp);
+ 
+-	sbi->s_resuid = le16_to_cpu(sbp->s_def_resuid);
+-	sbi->s_resgid = le16_to_cpu(sbp->s_def_resgid);
+-	sbi->s_interval = le32_to_cpu(sbp->s_c_interval);
+-	sbi->s_watermark = le32_to_cpu(sbp->s_c_block_max);
++	nilfs->ns_resuid = le16_to_cpu(sbp->s_def_resuid);
++	nilfs->ns_resgid = le16_to_cpu(sbp->s_def_resgid);
++	nilfs->ns_interval = le32_to_cpu(sbp->s_c_interval);
++	nilfs->ns_watermark = le32_to_cpu(sbp->s_c_block_max);
+ 
+ 	return !parse_options(data, sb, 0) ? -EINVAL : 0 ;
+ }
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 4382780..4a9bf39 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -73,6 +73,10 @@ enum {
+  * @ns_cptree_lock: lock protecting @ns_cptree
+  * @ns_gc_inodes: dummy inodes to keep live blocks
+  * @ns_mount_opt: mount options
++ * @ns_resuid: uid for reserved blocks
++ * @ns_resgid: gid for reserved blocks
++ * @ns_interval: checkpoint creation interval
++ * @ns_watermark: watermark for the number of dirty buffers
+  * @ns_blocksize_bits: bit length of block size
+  * @ns_blocksize: block size
+  * @ns_nsegments: number of segments in filesystem
+@@ -152,6 +156,11 @@ struct the_nilfs {
+ 	/* Mount options */
+ 	unsigned long		ns_mount_opt;
+ 
++	uid_t			ns_resuid;
++	gid_t			ns_resgid;
++	unsigned long		ns_interval;
++	unsigned long		ns_watermark;
++
+ 	/* Disk layout information (static) */
+ 	unsigned int		ns_blocksize_bits;
+ 	unsigned int		ns_blocksize;
+-- 
+1.7.3.5
 
-Yeah, I think this is a nice idea.
-
-If the current working directory is outside nilfs, it should work same
-as before.  But this seems to be naturally achieved by the successive
-up_to_nilfs_mountpoint() call if it returns NULL for out-of-nilfs
-directories.  Looks well conceived.
-
-> To indicate which filesystem is to be used, I'd like to print a header line 
-> roughly like:
-> # device: /dev/sdb3
->
-> What's your opinion?
-
-This may break compatibility of applications which parse lscp or lssu
-output.  A separate device line seems a bad idea; it would change the
-result for applications just doing a dummy read to skip the header.
-
-I think users do not care about the device name for lscp or lssu
-unless they actually want to check it.  So, making it an option (and
-turning it off by default) would be better.
-
-Also, looks like the device line does not have to be commented out ;)
-
-
-Thanks,
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
