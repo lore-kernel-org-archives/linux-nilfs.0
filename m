@@ -1,89 +1,61 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [GIT PULL] nilfs2 updates for 2.6.39
-Date: Sat, 19 Mar 2011 11:37:15 +0900 (JST)
-Message-ID: <20110319.113715.163259181.ryusuke@osrg.net>
+From: Nicolas Kaiser <nikai@nikai.net>
+Subject: [PATCH] nilfs2: fix whitespace coding style issues
+Date: Sat, 19 Mar 2011 16:47:54 +0100
+Message-ID: <20110319164754.11e7bb9b@absol.kitzblitz>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
 
-Hi Linus,
+Fixes whitespace coding style issues.
 
-please pull nilfs2 updates from:
+Signed-off-by: Nicolas Kaiser <nikai@nikai.net>
+---
+ fs/nilfs2/nilfs.h |   14 +++++++-------
+ 1 files changed, 7 insertions(+), 7 deletions(-)
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
-
-One noticeable change is support of standard attributes set via chattr
-and read via lsattr.  Another is block count per checkpoint which
-enables users to know used amount of filesystem at each instant of
-time via lscp command.
-
-Also, there are a cleanup series simplifying hierarchy of on-memory
-structures and a few small fixes.
-
-Thanks!
-
-
-Ryusuke Konishi
---
-The following changes since commit a5abba989deceb731047425812d268daf7536575:
-
-  Linux 2.6.38-rc8 (2011-03-07 21:09:37 -0800)
-
-are available in the git repository at:
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
-
-Jiro SEKIBA (1):
-      nilfs2: move NILFS_SUPER_MAGIC to linux/magic.h
-
-Ryusuke Konishi (18):
-      nilfs2: decrement inodes count only if raw inode was successfully deleted
-      nilfs2: add free entries count only if clear bit operation succeeded
-      nilfs2: use common file attribute macros
-      nilfs2: mark S_NOATIME on inodes only if NOATIME attribute is set
-      nilfs2: tighten restrictions on inode flags
-      nilfs2: implement FS_IOC_GETFLAGS/SETFLAGS/GETVERSION
-      nilfs2: add compat ioctl
-      nilfs2: append blocksize info to warnings during loading super blocks
-      nilfs2: optimize rec_len functions
-      nilfs2: record used amount of each checkpoint in checkpoint list
-      nilfs2: move mount options to nilfs object
-      nilfs2: move parameters on nilfs_sb_info into nilfs object
-      nilfs2: move s_inode_lock and s_dirty_files into nilfs object
-      nilfs2: move next generation counter into nilfs object
-      nilfs2: move log writer onto nilfs object
-      nilfs2: get rid of sc_sbi back pointer
-      nilfs2: use sb instance instead of nilfs_sb_info struct
-      nilfs2: get rid of nilfs_sb_info structure
-
- fs/nilfs2/alloc.c         |   12 ++-
- fs/nilfs2/bmap.c          |   12 --
- fs/nilfs2/bmap.h          |    3 -
- fs/nilfs2/btree.c         |    6 +-
- fs/nilfs2/dir.c           |    5 +-
- fs/nilfs2/direct.c        |    4 +-
- fs/nilfs2/file.c          |    4 +-
- fs/nilfs2/inode.c         |   83 +++++++++------
- fs/nilfs2/ioctl.c         |  115 ++++++++++++++++++--
- fs/nilfs2/mdt.h           |    2 +-
- fs/nilfs2/namei.c         |    2 +-
- fs/nilfs2/nilfs.h         |   33 +++++--
- fs/nilfs2/recovery.c      |   32 +++---
- fs/nilfs2/sb.h            |   85 ---------------
- fs/nilfs2/segment.c       |  258 ++++++++++++++++++++++-----------------------
- fs/nilfs2/segment.h       |   14 +--
- fs/nilfs2/super.c         |  214 ++++++++++++++++---------------------
- fs/nilfs2/the_nilfs.c     |   44 +++++---
- fs/nilfs2/the_nilfs.h     |   51 ++++++++-
- include/linux/magic.h     |    1 +
- include/linux/nilfs2_fs.h |   32 ++----
- 21 files changed, 513 insertions(+), 499 deletions(-)
- delete mode 100644 fs/nilfs2/sb.h
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 856e8e4..a8dd344 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -114,19 +114,19 @@ enum {
+  * Macros to check inode numbers
+  */
+ #define NILFS_MDT_INO_BITS   \
+-  ((unsigned int)(1 << NILFS_DAT_INO | 1 << NILFS_CPFILE_INO |		\
+-		  1 << NILFS_SUFILE_INO | 1 << NILFS_IFILE_INO |	\
+-		  1 << NILFS_ATIME_INO | 1 << NILFS_SKETCH_INO))
++	((unsigned int)(1 << NILFS_DAT_INO | 1 << NILFS_CPFILE_INO |	\
++			1 << NILFS_SUFILE_INO | 1 << NILFS_IFILE_INO |	\
++			1 << NILFS_ATIME_INO | 1 << NILFS_SKETCH_INO))
+ 
+ #define NILFS_SYS_INO_BITS   \
+-  ((unsigned int)(1 << NILFS_ROOT_INO) | NILFS_MDT_INO_BITS)
++	((unsigned int)(1 << NILFS_ROOT_INO) | NILFS_MDT_INO_BITS)
+ 
+ #define NILFS_FIRST_INO(sb) (((struct the_nilfs *)sb->s_fs_info)->ns_first_ino)
+ 
+ #define NILFS_MDT_INODE(sb, ino) \
+-  ((ino) < NILFS_FIRST_INO(sb) && (NILFS_MDT_INO_BITS & (1 << (ino))))
++	((ino) < NILFS_FIRST_INO(sb) && (NILFS_MDT_INO_BITS & (1 << (ino))))
+ #define NILFS_VALID_INODE(sb, ino) \
+-  ((ino) >= NILFS_FIRST_INO(sb) || (NILFS_SYS_INO_BITS & (1 << (ino))))
++	((ino) >= NILFS_FIRST_INO(sb) || (NILFS_SYS_INO_BITS & (1 << (ino))))
+ 
+ /**
+  * struct nilfs_transaction_info: context information for synchronization
+@@ -285,7 +285,7 @@ extern void nilfs_destroy_inode(struct inode *);
+ extern void nilfs_error(struct super_block *, const char *, const char *, ...)
+ 	__attribute__ ((format (printf, 3, 4)));
+ extern void nilfs_warning(struct super_block *, const char *, const char *, ...)
+-       __attribute__ ((format (printf, 3, 4)));
++	__attribute__ ((format (printf, 3, 4)));
+ extern struct nilfs_super_block *
+ nilfs_read_super_block(struct super_block *, u64, int, struct buffer_head **);
+ extern int nilfs_store_magic_and_option(struct super_block *,
+-- 
+1.7.3.4
