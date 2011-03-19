@@ -1,62 +1,62 @@
-From: Nicolas Kaiser <nikai@nikai.net>
-Subject: [PATCH] nilfs2: merge list_del()/list_add_tail() to
- list_move_tail()
-Date: Sat, 19 Mar 2011 16:45:30 +0100
-Message-ID: <20110319164530.6cc75cb2@absol.kitzblitz>
+From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Problem report: cannot run nilfs_cleanerd on full filesystem
+Date: Sat, 19 Mar 2011 17:37:59 +0100
+Message-ID: <201103191738.00187.dexen.devries@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:from:to:subject:date:user-agent:x-face
+         :mime-version:content-type:content-transfer-encoding:message-id;
+        bh=sWU8+m/b7ADKnzTTG8drSNz/mr+aN49YKqCn3AIbT0I=;
+        b=E8K7jipvusVQBBUKF/zmmKeE0+zjKNNeCPzonlV7wzhYXdCcSSG3UbW50DzittAFdJ
+         pxqDNkf0bMPLXUeMVzt0u6GJfLgGxc4o5wm/ifb1XB6bC/eGIOk5AJ8MgDdDizmeGwuy
+         f+BAuvzrmmPpfhyX4ClERRjZE/A3bLHNoPFXw=
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Merge list_del() + list_add_tail() to list_move_tail().
+Hi,
 
-Signed-off-by: Nicolas Kaiser <nikai@nikai.net>
----
- fs/nilfs2/inode.c   |    3 +--
- fs/nilfs2/segment.c |    6 ++----
- 2 files changed, 3 insertions(+), 6 deletions(-)
+It seems on a completely filled filesystem nilfs_cleanerd cannot be started
+(nor other utilities that rely on the same libnilfs nilfs_open() function).
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index d5625be..84f1b76 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -873,8 +873,7 @@ int nilfs_set_file_dirty(struct inode *inode, unsigned nr_dirty)
- 			return -EINVAL; /* NILFS_I_DIRTY may remain for
- 					   freeing inode */
- 		}
--		list_del(&ii->i_dirty);
--		list_add_tail(&ii->i_dirty, &nilfs->ns_dirty_files);
-+		list_move_tail(&ii->i_dirty, &nilfs->ns_dirty_files);
- 		set_bit(NILFS_I_QUEUED, &ii->i_state);
- 	}
- 	spin_unlock(&nilfs->ns_inode_lock);
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index afe4f21..5deeadd 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1991,8 +1991,7 @@ static int nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
- 
- 		clear_bit(NILFS_I_QUEUED, &ii->i_state);
- 		set_bit(NILFS_I_BUSY, &ii->i_state);
--		list_del(&ii->i_dirty);
--		list_add_tail(&ii->i_dirty, &sci->sc_dirty_files);
-+		list_move_tail(&ii->i_dirty, &sci->sc_dirty_files);
- 	}
- 	spin_unlock(&nilfs->ns_inode_lock);
- 
-@@ -2014,8 +2013,7 @@ static void nilfs_segctor_drop_written_files(struct nilfs_sc_info *sci,
- 		clear_bit(NILFS_I_BUSY, &ii->i_state);
- 		brelse(ii->i_bh);
- 		ii->i_bh = NULL;
--		list_del(&ii->i_dirty);
--		list_add_tail(&ii->i_dirty, &ti->ti_garbage);
-+		list_move_tail(&ii->i_dirty, &ti->ti_garbage);
- 	}
- 	spin_unlock(&nilfs->ns_inode_lock);
- }
+This is seriously troubling because removing some files does not free up the space
+(per NILFS2 design), so it looks like there is no way to use this filesystem ever again,
+at least without manual intervetion into on-disk metadata.
+
+
+strace shows the following:
+
+blitz!root!/tmp# strace -f /sbin/nilfs_cleanerd /dev/sda1 /mnt/x -p 2
+(...lotsa normal output...)
+open("/mnt/x/.nilfs", O_RDWR|O_CREAT, 0666) = -1 ENOSPC (No space left on device)
+close(4)                                = 0
+sendto(3, "<27>Mar 19 17:27:42 nilfs_cleane"..., 97, MSG_NOSIGNAL, NULL, 0) = 97
+sendto(3, "<27>Mar 19 17:27:42 nilfs_cleane"..., 102, MSG_NOSIGNAL, NULL, 0) = 102
+sendto(3, "<30>Mar 19 17:27:42 nilfs_cleane"..., 50, MSG_NOSIGNAL, NULL, 0) = 50
+close(3)                                = 0
+exit_group(1)                           = ?
+Process 8111 detached
+
+
+The nilfs_cleanerd exits quietly, without any indication of trouble.
+I guess solution ought to be two-prong: open NILFS before daemonize()
+and make it possible for nilfs_cleanerd to open filesystem at all when full.
+
+
+To make it clear: if the nilfs_cleanerd is *running*, it will work *OK*. But
+any attempt to start nilfs_cleanerd on full filesystem will fail -- for example
+on system boot.
+
+
 -- 
-1.7.3.4
+dexen deVries
+
+``One can't proceed from the informal to the formal by formal means.''
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
