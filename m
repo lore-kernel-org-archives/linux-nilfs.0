@@ -1,62 +1,51 @@
 From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Problem report: cannot run nilfs_cleanerd on full filesystem
-Date: Sat, 19 Mar 2011 17:37:59 +0100
-Message-ID: <201103191738.00187.dexen.devries@gmail.com>
+Subject: Regarding ``problem with nilfs_cleanerd - part 2'' and ``Nilfs_cleanerd err=-17''
+Date: Sat, 19 Mar 2011 20:04:14 +0100
+Message-ID: <201103192004.14947.dexen.devries@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=domainkey-signature:from:to:subject:date:user-agent:x-face
          :mime-version:content-type:content-transfer-encoding:message-id;
-        bh=sWU8+m/b7ADKnzTTG8drSNz/mr+aN49YKqCn3AIbT0I=;
-        b=E8K7jipvusVQBBUKF/zmmKeE0+zjKNNeCPzonlV7wzhYXdCcSSG3UbW50DzittAFdJ
-         pxqDNkf0bMPLXUeMVzt0u6GJfLgGxc4o5wm/ifb1XB6bC/eGIOk5AJ8MgDdDizmeGwuy
-         f+BAuvzrmmPpfhyX4ClERRjZE/A3bLHNoPFXw=
+        bh=KCdwTlYoiSJqwtHGqBZ5DkAq4MeMOM9ft5R+mpz7n2k=;
+        b=SkKfIuN49JIH5ZwGRmJV4bVLI1qZFcALCUIWpQbzWwJpT8fVdcZjDyh0efs+zs+Srm
+         8DhxNMu36N0dJt/sqvFALv/B0kRNSxwdVe8bsRyP8OktnKTSHntd92EwjLkKDMEDpkW6
+         nhiPlWno+tI5U695P+3yKQMUrKRNuHrnk1pL0=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+Content-Type: Text/Plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
 
-It seems on a completely filled filesystem nilfs_cleanerd cannot be started
-(nor other utilities that rely on the same libnilfs nilfs_open() function).
 
-This is seriously troubling because removing some files does not free up the space
-(per NILFS2 design), so it looks like there is no way to use this filesystem ever again,
-at least without manual intervetion into on-disk metadata.
+I had same problems as bryce and =C5=81ukasz W=C3=B3jcicki described ea=
+rlier:
 
-
-strace shows the following:
-
-blitz!root!/tmp# strace -f /sbin/nilfs_cleanerd /dev/sda1 /mnt/x -p 2
-(...lotsa normal output...)
-open("/mnt/x/.nilfs", O_RDWR|O_CREAT, 0666) = -1 ENOSPC (No space left on device)
-close(4)                                = 0
-sendto(3, "<27>Mar 19 17:27:42 nilfs_cleane"..., 97, MSG_NOSIGNAL, NULL, 0) = 97
-sendto(3, "<27>Mar 19 17:27:42 nilfs_cleane"..., 102, MSG_NOSIGNAL, NULL, 0) = 102
-sendto(3, "<30>Mar 19 17:27:42 nilfs_cleane"..., 50, MSG_NOSIGNAL, NULL, 0) = 50
-close(3)                                = 0
-exit_group(1)                           = ?
-Process 8111 detached
+[41045.664120] nilfs_ioctl_move_inode_block: conflicting node buffer: i=
+no=3D79, cno=3D6, offset=3D0, blocknr=3D206010, vblocknr=3D94783
+[41045.664129] NILFS: GC failed during preparation: cannot read source =
+blocks: err=3D-17
+and nilfs_cleanerd dies.
 
 
-The nilfs_cleanerd exits quietly, without any indication of trouble.
-I guess solution ought to be two-prong: open NILFS before daemonize()
-and make it possible for nilfs_cleanerd to open filesystem at all when full.
+=46irst round of digging indicates this can be reproduced by running tw=
+o
+nilfs_cleanerd instances at the same time.
+I'm not sure if that was the original cause, but I'm going to investing=
+ate a bit more;
+please hint me at what to pay attention to, if you would.
 
 
-To make it clear: if the nilfs_cleanerd is *running*, it will work *OK*. But
-any attempt to start nilfs_cleanerd on full filesystem will fail -- for example
-on system boot.
-
-
--- 
+Regards,
+--=20
 dexen deVries
 
 ``One can't proceed from the informal to the formal by formal means.''
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
