@@ -1,48 +1,77 @@
-From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
-Subject: Re: Problem report: cannot run nilfs_cleanerd on full filesystem
-Date: Sun, 20 Mar 2011 13:50:40 +0100
-Message-ID: <20110320125040.GA735@heethoofdje.13thmonkey.org>
-References: <201103191738.00187.dexen.devries@gmail.com> <20110319220157.GA681@heethoofdje.13thmonkey.org> <201103192312.38046.dexen.devries@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH] nilfs2: merge list_del()/list_add_tail() to
+ list_move_tail()
+Date: Mon, 21 Mar 2011 00:34:12 +0900 (JST)
+Message-ID: <20110321.003412.212697075.ryusuke@osrg.net>
+References: <20110319164530.6cc75cb2@absol.kitzblitz>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <201103192312.38046.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20110319164530.6cc75cb2-m0oTu1HmxXpuhsjpcywf5g@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: nikai-bVCNqDZ4lKNeoWH0uzbU5w@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sat, Mar 19, 2011 at 11:12:37PM +0100, dexen deVries wrote:
-> Hi,
+On Sat, 19 Mar 2011 16:45:30 +0100, Nicolas Kaiser wrote:
+> Merge list_del() + list_add_tail() to list_move_tail().
 > 
-> On Saturday 19 of March 2011 23:01:57 you wrote:
-> > BSD traditionally save some inodes/blocks for the superuser. Maybe some
-> > blocks could be reserved for the nilfs_cleanerd to work with? even if only
-> > a few? Depending on the uid/guid of the program?
-> 
-> As for reserved blocks, that's an ugly solution IMHO.
+> Signed-off-by: Nicolas Kaiser <nikai-bVCNqDZ4lKNeoWH0uzbU5w@public.gmane.org>
+> ---
+>  fs/nilfs2/inode.c   |    3 +--
+>  fs/nilfs2/segment.c |    6 ++----
+>  2 files changed, 3 insertions(+), 6 deletions(-)
 
-It is, but its also a service to `root'. It gives a rooted user the
-possibility to use > 100% of reported disc space thus enabling him to clean up
-stuff, move stuff around and making more free space. It may not be the best
-solution but at least `root' is able to fix problems on a full disc!
+Thanks, applied both patches.
 
-> And so is delete-proofing the on-disk `.nilfs' file. But perhaps the
-> `.nilfs' could be made a virtual file, maintained by the NILFS2 driver
-> rather than a plain on-disk object?  You are right about the `.nilfs'.
+Ryusuke Konishi
 
-The problem with looking up /mnt/ is that it (might) return the node /mnt on
-the root FS and not the NiLFS root `/mnt/.' . I don't know how linux handles
-such cases but if `/mnt/.' does return the NiLFS root node then why not let
-NiLFS use that node instead of the /mnt/.nilfs node?
-
-So IMHO the .nilfs file is a hack in itself :-D
-
-With regards,
-Reinoud
-
+> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+> index d5625be..84f1b76 100644
+> --- a/fs/nilfs2/inode.c
+> +++ b/fs/nilfs2/inode.c
+> @@ -873,8 +873,7 @@ int nilfs_set_file_dirty(struct inode *inode, unsigned nr_dirty)
+>  			return -EINVAL; /* NILFS_I_DIRTY may remain for
+>  					   freeing inode */
+>  		}
+> -		list_del(&ii->i_dirty);
+> -		list_add_tail(&ii->i_dirty, &nilfs->ns_dirty_files);
+> +		list_move_tail(&ii->i_dirty, &nilfs->ns_dirty_files);
+>  		set_bit(NILFS_I_QUEUED, &ii->i_state);
+>  	}
+>  	spin_unlock(&nilfs->ns_inode_lock);
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index afe4f21..5deeadd 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -1991,8 +1991,7 @@ static int nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
+>  
+>  		clear_bit(NILFS_I_QUEUED, &ii->i_state);
+>  		set_bit(NILFS_I_BUSY, &ii->i_state);
+> -		list_del(&ii->i_dirty);
+> -		list_add_tail(&ii->i_dirty, &sci->sc_dirty_files);
+> +		list_move_tail(&ii->i_dirty, &sci->sc_dirty_files);
+>  	}
+>  	spin_unlock(&nilfs->ns_inode_lock);
+>  
+> @@ -2014,8 +2013,7 @@ static void nilfs_segctor_drop_written_files(struct nilfs_sc_info *sci,
+>  		clear_bit(NILFS_I_BUSY, &ii->i_state);
+>  		brelse(ii->i_bh);
+>  		ii->i_bh = NULL;
+> -		list_del(&ii->i_dirty);
+> -		list_add_tail(&ii->i_dirty, &ti->ti_garbage);
+> +		list_move_tail(&ii->i_dirty, &ti->ti_garbage);
+>  	}
+>  	spin_unlock(&nilfs->ns_inode_lock);
+>  }
+> -- 
+> 1.7.3.4
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
