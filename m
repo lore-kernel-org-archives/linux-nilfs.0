@@ -1,7 +1,7 @@
 From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Problem report: cannot run nilfs_cleanerd on full filesystem
-Date: Mon, 21 Mar 2011 13:00:47 +0100
-Message-ID: <201103211300.50177.dexen.devries@gmail.com>
+Date: Mon, 21 Mar 2011 13:05:48 +0100
+Message-ID: <201103211305.48353.dexen.devries@gmail.com>
 References: <20110319220157.GA681@heethoofdje.13thmonkey.org> <20110320125040.GA735@heethoofdje.13thmonkey.org> <20110321.200706.260176646.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -11,17 +11,17 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         h=domainkey-signature:from:to:subject:date:user-agent:references
          :in-reply-to:x-face:mime-version:content-type
          :content-transfer-encoding:message-id;
-        bh=gJSElsNmnccWLJoaao7gXUOg9PT0gBmqYlgPLFR5Qeo=;
-        b=lS6v7vQlE2Fb9ct8tVv9nMFgNGxqATfQhO7O00u7J3mqj2aOHOV95hFdjUK8p0+FXo
-         0pcKWhaMhSpW+0txObDWPeN9QJutQu7QKvjbnHZaFbU94Z17YMp1eS6HeJW+sQdy7qGa
-         ZCXBotGvq5adDjLK+eckVJh6we0l2Qri1y4XQ=
+        bh=oq02qxWyjxpgxA4Zd3HdhWusSTqcZcJHzJlmCoCPrqM=;
+        b=MvvQAklSp8IXWHOV5ckGEmXh8NzTXCRXCj13DS0lQQEa4h7LUPfyX0jTu4nkc88Zil
+         RZu3b23ZLsZo9FDqjYbiYahRvbNCdQFF6WDCKV42Cy7juf1Bm6vHCG1vhXVSgbFd2wDq
+         ILC9zULIVYjt+w4odAXBiJRv0t97tBVzEc38k=
 In-Reply-To: <20110321.200706.260176646.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+Hi again,
 
 
 On Monday 21 of March 2011 12:07:06 you wrote:
@@ -31,31 +31,18 @@ On Monday 21 of March 2011 12:07:06 you wrote:
 >=20
 >  2) For advisory locks (i.e. fcntl(F_GETLK/F_SETLK/FSETLKW)).  This
 >     works as a mutex between the cleaner and other nilfs-tools.
->=20
-> Note that the nilfs2 kernel code never uses the .nilfs file; it's jus=
-t
-> a regular file for nilfs2.
->=20
-> As for the item (1), we can use the root directory of each filesystem
-> instead.  And for (2), a Posix semaphore or other lock primitives may
-> be available.
 
 
-I tried but failed; it seems Linux doesn't allow opening directory O_RD=
-WR or=20
-O_WRONLY. And a modyfying ioctl() on directory opened O_RDONLY also ret=
-urned=20
-some error, I think it was EBADF. I did not dig any further, so I dunno=
- if=20
-that's done by kernel's general code or NILFS' ioctl() handler.
+Regarding 2), it seems multiple instances of nilfs_cleanerd can be star=
+ted for=20
+one filesystem (which leads to metadata corruption, as per my earlier=20
+``Regarding problem with nilfs_cleanerd - part 2 and Nilfs_cleanerd err=
+=3D-17''=20
+mail).
 
-I believe nilfs_cleanerd could, on principle, use file descriptor of an=
-y file on=20
-the filesystem in case the user runs into a full fylesystem. Kernel cod=
-e=20
-handles that OK, only nilfs_cleanerd would need an extra argument to op=
-en a=20
-different file. What's your oppinion on that?
+Is that intentional? Should we guard on nilfs_cleanerd level, or on ker=
+nel=20
+level?
 
 
 Regards,
