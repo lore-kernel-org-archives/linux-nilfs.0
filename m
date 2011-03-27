@@ -1,31 +1,90 @@
-From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
-Subject: Re: Problem report: cannot run nilfs_cleanerd on full filesystem
-Date: Wed, 23 Mar 2011 08:51:16 +0100
-Message-ID: <20110323075116.GA530@heethoofdje.13thmonkey.org>
-References: <20110319220157.GA681@heethoofdje.13thmonkey.org> <201103192312.38046.dexen.devries@gmail.com> <20110320125040.GA735@heethoofdje.13thmonkey.org> <20110321.200706.260176646.ryusuke@osrg.net> <20110321130151.GA29111@heethoofdje.13thmonkey.org>
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: fix data loss in mmap page write for hole blocks
+Date: Mon, 28 Mar 2011 00:47:53 +0900
+Message-ID: <1301240873-12035-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20110321130151.GA29111-bVHBekiX4bNgoMqBc1r0ESegHCQxtGRMHZ5vskTnxNA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Cc: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Mon, Mar 21, 2011 at 02:01:51PM +0100, Reinoud Zandijk wrote:
-> On Mon, Mar 21, 2011 at 08:07:06PM +0900, Ryusuke Konishi wrote:
-> In NetBSD this is normally resolved by looking up the device the directory is
-> residing and then opening/locking the device file etc. I think this is a
-> better way of operating!
+From the result of a function test of mmap, mmap write to shared pages
+turned out to be broken for hole blocks.  It doesn't write out filled
+blocks and the data will be lost after umount.  This is due to a bug
+that the target file is not queued for log writer when filling hole
+blocks.
 
-I looked it up for certainty and no, i was wrong; the ones i see are using
-system calls or ioctl's on the directory as you have done Ryusuke... so not
-that different :)
+Also, nilfs_page_mkwrite function exits normal code path even after
+successfully filled hole blocks due to a change of block_page_mkwrite
+function; just after nilfs was merged into the mainline,
+block_page_mkwrite() started to return VM_FAULT_LOCKED instead of zero
+by the patch "mm: close page_mkwrite races" (commit:
+b827e496c893de0c).  The current nilfs_page_mkwrite() is not handling
+this value properly.
 
-Cheers,
-Reinoud
+This corrects nilfs_page_mkwrite() and will resolve the data loss
+problem in mmap write.
+
+[This should be applied to every kernel since 2.6.30 but a fix is
+ needed for 2.6.37 and prior kernels]
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: stable <stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>  [2.6.38]
+---
+ fs/nilfs2/file.c |   11 +++++------
+ 1 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 93589fc..397e732 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -72,10 +72,9 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	/*
+ 	 * check to see if the page is mapped already (no holes)
+ 	 */
+-	if (PageMappedToDisk(page)) {
+-		unlock_page(page);
++	if (PageMappedToDisk(page))
+ 		goto mapped;
+-	}
++
+ 	if (page_has_buffers(page)) {
+ 		struct buffer_head *bh, *head;
+ 		int fully_mapped = 1;
+@@ -90,7 +89,6 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 
+ 		if (fully_mapped) {
+ 			SetPageMappedToDisk(page);
+-			unlock_page(page);
+ 			goto mapped;
+ 		}
+ 	}
+@@ -105,16 +103,17 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 		return VM_FAULT_SIGBUS;
+ 
+ 	ret = block_page_mkwrite(vma, vmf, nilfs_get_block);
+-	if (unlikely(ret)) {
++	if (ret != VM_FAULT_LOCKED) {
+ 		nilfs_transaction_abort(inode->i_sb);
+ 		return ret;
+ 	}
++	nilfs_set_file_dirty(inode, 1 << (PAGE_SHIFT - inode->i_blkbits));
+ 	nilfs_transaction_commit(inode->i_sb);
+ 
+  mapped:
+ 	SetPageChecked(page);
+ 	wait_on_page_writeback(page);
+-	return 0;
++	return VM_FAULT_LOCKED;
+ }
+ 
+ static const struct vm_operations_struct nilfs_file_vm_ops = {
+-- 
+1.7.3.5
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
