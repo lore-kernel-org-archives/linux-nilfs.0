@@ -1,92 +1,54 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: fix data loss in mmap page write for hole blocks
-Date: Mon, 28 Mar 2011 00:47:53 +0900
-Message-ID: <1301240873-12035-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] nilfs2: fix data loss in mmap page write for hole blocks
+Date: Mon, 28 Mar 2011 10:15:50 +0200
+Message-ID: <201103281015.50533.dexen.devries@gmail.com>
+References: <1301240873-12035-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:from:to:subject:date:user-agent:references
+         :in-reply-to:x-face:mime-version:content-type
+         :content-transfer-encoding:message-id;
+        bh=EFqCOHVD8V6dilh2hXDZO1RILYQHWhXvAVL2Bn3rJ+w=;
+        b=L8VLQsriYQcR478PvhynArqfGAYrPjI/Uf04MtPxGijGKa8GVmWPiqlRXrM/s4dsPs
+         nbKSOFB+2l+RWwkccG0D/deXrJqTsHNDNU0nKSbea4PzbqQQXSpusqiBz2q1ZxLLJT1s
+         MwStcCygbvKjfF0Joq8d+L32gjk2k+O50Y/6o=
+In-Reply-To: <1301240873-12035-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: Text/Plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-From the result of a function test of mmap, mmap write to shared pages
-turned out to be broken for hole blocks.  It doesn't write out filled
-blocks and the data will be lost after umount.  This is due to a bug
-that the target file is not queued for log writer when filling hole
-blocks.
+Hi,
 
-Also, nilfs_page_mkwrite function exits normal code path even after
-successfully filled hole blocks due to a change of block_page_mkwrite
-function; just after nilfs was merged into the mainline,
-block_page_mkwrite() started to return VM_FAULT_LOCKED instead of zero
-by the patch "mm: close page_mkwrite races" (commit:
-b827e496c893de0c).  The current nilfs_page_mkwrite() is not handling
-this value properly.
+On Sunday 27 of March 2011 17:47:53 Ryusuke wrote:
+> From the result of a function test of mmap, mmap write to shared page=
+s
+> turned out to be broken for hole blocks.  It doesn't write out filled
+> blocks and the data will be lost after umount.  This is due to a bug
+> that the target file is not queued for log writer when filling hole
+> blocks. (...)
 
-This corrects nilfs_page_mkwrite() and will resolve the data loss
-problem in mmap write.
+recently I've experienced a few times data loss & hang of several appli=
+cations=20
+with ktorrent running. It seems the transfered files were mostly empty =
+after=20
+reboot. Related to this regression & fix?
 
-[This should be applied to every kernel since 2.6.30 but a fix is
- needed for 2.6.37 and prior kernels]
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Tested-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: stable <stable-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>  [2.6.38]
----
- fs/nilfs2/file.c |   11 +++++------
- 1 files changed, 5 insertions(+), 6 deletions(-)
+Regards,
+--=20
+dexen deVries
 
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 93589fc..397e732 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -72,10 +72,9 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
- 	/*
- 	 * check to see if the page is mapped already (no holes)
- 	 */
--	if (PageMappedToDisk(page)) {
--		unlock_page(page);
-+	if (PageMappedToDisk(page))
- 		goto mapped;
--	}
-+
- 	if (page_has_buffers(page)) {
- 		struct buffer_head *bh, *head;
- 		int fully_mapped = 1;
-@@ -90,7 +89,6 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
- 
- 		if (fully_mapped) {
- 			SetPageMappedToDisk(page);
--			unlock_page(page);
- 			goto mapped;
- 		}
- 	}
-@@ -105,16 +103,17 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
- 		return VM_FAULT_SIGBUS;
- 
- 	ret = block_page_mkwrite(vma, vmf, nilfs_get_block);
--	if (unlikely(ret)) {
-+	if (ret != VM_FAULT_LOCKED) {
- 		nilfs_transaction_abort(inode->i_sb);
- 		return ret;
- 	}
-+	nilfs_set_file_dirty(inode, 1 << (PAGE_SHIFT - inode->i_blkbits));
- 	nilfs_transaction_commit(inode->i_sb);
- 
-  mapped:
- 	SetPageChecked(page);
- 	wait_on_page_writeback(page);
--	return 0;
-+	return VM_FAULT_LOCKED;
- }
- 
- static const struct vm_operations_struct nilfs_file_vm_ops = {
--- 
-1.7.3.5
+[[[=E2=86=93][=E2=86=92]]]
 
+``In other news, STFU and hack.''
+mahmud, in response to Erann Gat's ``How I lost my faith in Lisp''
+http://news.ycombinator.com/item?id=3D2308816
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
