@@ -1,136 +1,77 @@
-From: Jens Axboe <jaxboe-5c4llco8/ftWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix oops due to a bad aops initialization
-Date: Wed, 30 Mar 2011 13:51:01 +0200
-Message-ID: <4D931925.7020306@fusionio.com>
-References: <20110330.132555.158630340.ryusuke@osrg.net>	<4D930F02.4070409@fusionio.com>	<4D93113E.2070805@fusionio.com> <20110330.204832.186542149.ryusuke@osrg.net>
+From: Mike Keehan <Mike-ZFUJQRXN5dqsTnJN9+BGXg@public.gmane.org>
+Subject: Bug in 2.6.29-rc1 using NILFS
+Date: Wed, 30 Mar 2011 18:09:50 +0100
+Message-ID: <20110330180950.5f4fcfc4@Keehan.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110330.204832.186542149.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2011-03-30 13:48, Ryusuke Konishi wrote:
-> On Wed, 30 Mar 2011 13:17:18 +0200, Jens Axboe wrote:
->> On 2011-03-30 13:07, Jens Axboe wrote:
->>> On 2011-03-30 06:25, Ryusuke Konishi wrote:
->>>> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
->>>> index 4d2a1ee..9d2dc6b 100644
->>>> --- a/fs/nilfs2/page.c
->>>> +++ b/fs/nilfs2/page.c
->>>> @@ -495,12 +495,14 @@ unsigned nilfs_page_count_clean_buffers(struct page *page,
->>>>  void nilfs_mapping_init(struct address_space *mapping,
->>>>  			struct backing_dev_info *bdi)
->>>>  {
->>>> +	static const struct address_space_operations empty_aops;
->>>> +
->>>>  	mapping->host = NULL;
->>>>  	mapping->flags = 0;
->>>>  	mapping_set_gfp_mask(mapping, GFP_NOFS);
->>>>  	mapping->assoc_mapping = NULL;
->>>>  	mapping->backing_dev_info = bdi;
->>>> -	mapping->a_ops = NULL;
->>>> +	mapping->a_ops = &empty_aops;
->>>>  }
->>>
->>> Hmm wait, inode init should set the mapping aops to an empty type
->>> already. Does the OOPS go away if you just remove the mapping->a_ops =
->>> NULL assignment?
->>
->> In any case, I think this is a better fix.
->>
->> diff --git a/fs/inode.c b/fs/inode.c
->> index 5f4e11a..b818730 100644
->> --- a/fs/inode.c
->> +++ b/fs/inode.c
->> @@ -125,6 +125,13 @@ __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_wb_list_lock);
->>  static DECLARE_RWSEM(iprune_sem);
->>  
->>  /*
->> + * Empty aops. Can be used for the cases where the user does not
->> + * define any of the address_space operations.
->> + */
->> +const struct address_space_operations empty_aops = {
->> +};
->> +
->> +/*
->>   * Statistics gathering..
->>   */
->>  struct inodes_stat_t inodes_stat;
->> @@ -176,7 +183,6 @@ int proc_nr_inodes(ctl_table *table, int write,
->>   */
->>  int inode_init_always(struct super_block *sb, struct inode *inode)
->>  {
->> -	static const struct address_space_operations empty_aops;
->>  	static const struct inode_operations empty_iops;
->>  	static const struct file_operations empty_fops;
->>  	struct address_space *const mapping = &inode->i_data;
->> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
->> index 4d2a1ee..1168059 100644
->> --- a/fs/nilfs2/page.c
->> +++ b/fs/nilfs2/page.c
->> @@ -500,7 +500,7 @@ void nilfs_mapping_init(struct address_space *mapping,
->>  	mapping_set_gfp_mask(mapping, GFP_NOFS);
->>  	mapping->assoc_mapping = NULL;
->>  	mapping->backing_dev_info = bdi;
->> -	mapping->a_ops = NULL;
->> +	mapping->a_ops = &empty_aops;
->>  }
->>  
->>  /*
->> diff --git a/fs/ubifs/xattr.c b/fs/ubifs/xattr.c
->> index c74400f..403c192 100644
->> --- a/fs/ubifs/xattr.c
->> +++ b/fs/ubifs/xattr.c
->> @@ -80,7 +80,6 @@ enum {
->>  };
->>  
->>  static const struct inode_operations none_inode_operations;
->> -static const struct address_space_operations none_address_operations;
->>  static const struct file_operations none_file_operations;
->>  
->>  /**
->> @@ -130,7 +129,7 @@ static int create_xattr(struct ubifs_info *c, struct inode *host,
->>  	}
->>  
->>  	/* Re-define all operations to be "nothing" */
->> -	inode->i_mapping->a_ops = &none_address_operations;
->> +	inode->i_mapping->a_ops = &empty_aops;
->>  	inode->i_op = &none_inode_operations;
->>  	inode->i_fop = &none_file_operations;
->>  
->> diff --git a/include/linux/fs.h b/include/linux/fs.h
->> index 52f283c..1b95af3 100644
->> --- a/include/linux/fs.h
->> +++ b/include/linux/fs.h
->> @@ -613,6 +613,8 @@ struct address_space_operations {
->>  	int (*error_remove_page)(struct address_space *, struct page *);
->>  };
->>  
->> +extern const struct address_space_operations empty_aops;
->> +
->>  /*
->>   * pagecache_write_begin/pagecache_write_end must be used by general code
->>   * to write into the pagecache.
->>
->> -- 
->> Jens Axboe
-> 
-> Sorry but I've already sent a pull request to Linus with your
-> Acked-by.  And, this seems to be doing two things.  One is for fixing
-> the current kerenl oops and another is for sharing the empty address
-> space operations.
-> 
-> I have no problem with both patches, but for the purpose of the bug
-> fix, the first one looks simpler.
+Hi,
 
-No worries, I'll just merge later on.
+My laptop threw a bug when I opened claws-mail in 2.6.39-rc1.
+My home partition uses a Nilfs2 filesystem.
 
--- 
-Jens Axboe
+The operating system continued working after a long pause, 
+which could have been 30 seconds I guess.  I didn't try to do
+anything else, just re-booted back into .38.
+
+This is what the log captured:-
+
+Mar 30 17:48:40 localhost kernel: BUG: unable to handle kernel NULL pointer dereference at 00000024
+Mar 30 17:48:40 localhost kernel: IP: [<c1088bd9>] try_to_release_page+0x26/0x3e
+Mar 30 17:48:40 localhost kernel: *pdpt = 000000003389c001 *pde = 0000000000000000 
+Mar 30 17:48:40 localhost kernel: Oops: 0000 [#1] PREEMPT SMP 
+Mar 30 17:48:40 localhost kernel: last sysfs file: /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
+Mar 30 17:48:40 localhost kernel: Modules linked in: nilfs2 video dvb_pll mt2060 dell_wmi dvb_usb_nova_t_usb2 dvb_usb_dibusb_common dib3000mc sparse_keymap radeon dibx000_common dvb_usb dvb_core ttm wmi drm_kms_helper sdhci_pci sdhci iwlagn i2c_i801 dell_laptop dcdbas cfbcopyarea mmc_core iTCO_wdt iTCO_vendor_support cfbimgblt cfbfillrect backlight
+Mar 30 17:48:40 localhost kernel: 
+Mar 30 17:48:40 localhost kernel: Pid: 5365, comm: claws-mail Not tainted 2.6.39-rc1 #129 Dell Inc. Studio XPS 1640/0U785D
+Mar 30 17:48:40 localhost kernel: EIP: 0060:[<c1088bd9>] EFLAGS: 00210282 CPU: 1
+Mar 30 17:48:40 localhost kernel: EIP is at try_to_release_page+0x26/0x3e
+Mar 30 17:48:40 localhost kernel: EAX: f55a5b20 EBX: ccd34c94 ECX: 00000000 EDX: 000000d0
+Mar 30 17:48:40 localhost kernel: ESI: 00000000 EDI: ccd34c94 EBP: cebdfc3c ESP: cebdfc34
+Mar 30 17:48:40 localhost kernel: DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
+Mar 30 17:48:40 localhost kernel: Process claws-mail (pid: 5365, ti=cebde000 task=cd426940 task.ti=cebde000)
+Mar 30 17:48:40 localhost kernel: Stack:
+Mar 30 17:48:40 localhost kernel: f55a5b20 00000000 cebdfcb4 c1091716 ccd34c94 00000000 004dac09 004dac0a
+Mar 30 17:48:40 localhost kernel: 00000000 00000000 ffffffff f461d9fc ccd34c94 00000001 00000000 f55a5b20
+Mar 30 17:48:40 localhost kernel: 00200286 cebdfc90 c108ed9c cebdfc90 cdc277a8 00000002 cebdfc9c c10463a5
+Mar 30 17:48:40 localhost kernel: Call Trace:
+Mar 30 17:48:40 localhost kernel: [<c1091716>] invalidate_inode_pages2_range+0x151/0x233
+Mar 30 17:48:40 localhost kernel: [<c108ed9c>] ? clear_page_dirty_for_io+0x7f/0xab
+Mar 30 17:48:40 localhost kernel: [<c10463a5>] ? wake_up_bit+0x57/0x5b
+Mar 30 17:48:40 localhost kernel: [<f8de1b94>] nilfs_btnode_delete+0x90/0x96 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de3c5b>] nilfs_btree_shrink+0x5e/0x6f [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de469c>] nilfs_btree_delete+0x31f/0x35e [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de532c>] nilfs_direct_delete_and_convert+0x17/0xc4 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de2cc5>] ? nilfs_btree_gather_data+0xeb/0xf5 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de2117>] nilfs_bmap_do_delete+0x5f/0x89 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de2175>] nilfs_bmap_truncate+0x34/0x87 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de2175>] ? nilfs_bmap_truncate+0x34/0x87 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8de2237>] ? nilfs_bmap_last_key+0x2e/0x54 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8ddcac0>] nilfs_truncate_bmap+0x4f/0x9b [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<f8ddce3e>] nilfs_evict_inode+0x84/0xe7 [nilfs2]
+Mar 30 17:48:40 localhost kernel: [<c102a4db>] ? sub_preempt_count+0x27/0x34
+Mar 30 17:48:40 localhost kernel: [<c10c9821>] evict+0x5d/0xf6
+Mar 30 17:48:40 localhost kernel: [<c10c9b95>] iput+0x121/0x126
+Mar 30 17:48:40 localhost kernel: [<c10c7556>] dentry_kill+0xf8/0x110
+Mar 30 17:48:40 localhost kernel: [<c10c7b61>] dput+0xb0/0xba
+Mar 30 17:48:40 localhost kernel: [<c10c2709>] sys_renameat+0x18b/0x1de
+Mar 30 17:48:40 localhost kernel: [<c10a1195>] ? handle_mm_fault+0x144/0x15a
+Mar 30 17:48:40 localhost kernel: [<c101d89f>] ? do_page_fault+0x2b2/0x2df
+Mar 30 17:48:40 localhost kernel: [<c10c81a4>] ? d_move+0x62/0x17f
+Mar 30 17:48:40 localhost kernel: [<c10c276e>] sys_rename+0x12/0x14
+Mar 30 17:48:40 localhost kernel: [<c140c5cc>] sysenter_do_call+0x12/0x27
+Mar 30 17:48:40 localhost kernel: Code: 5b 5e 5f c9 c3 55 89 e5 56 53 8b 08 8b 58 10 80 e1 01 75 04 0f 0b eb fe 8b 30 31 c9 81 e6 00 20 00 00 75 19 85 db 74 0e 8b 4b 38 <8b> 49 24 85 c9 74 04 ff d1 eb 05 e8 95 e5 04 00 89 c1 5b 89 c8 
+Mar 30 17:48:40 localhost kernel: EIP: [<c1088bd9>] try_to_release_page+0x26/0x3e SS:ESP 0068:cebdfc34
+Mar 30 17:48:40 localhost kernel: CR2: 0000000000000024
+Mar 30 17:48:40 localhost kernel: ---[ end trace 5f1f2e30dd9be2ef ]---
+
+Mike.
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
