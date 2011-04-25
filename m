@@ -1,8 +1,8 @@
 From: Ivan Telichko <itelichko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: zero fill unused portion of super root block
-Date: Mon, 25 Apr 2011 05:23:23 +0000 (UTC)
-Message-ID: <loom.20110425T071539-581@post.gmane.org>
-References: <1303234036-11127-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: Regarding =?utf-8?b?YGBwcm9ibGVt?= with =?utf-8?b?bmlsZnNfY2xlYW5lcmQ=?= - part 2'' and =?utf-8?b?YGBOaWxmc19jbGVhbmVyZA==?= err=-17''
+Date: Mon, 25 Apr 2011 05:28:10 +0000 (UTC)
+Message-ID: <loom.20110425T072626-629@post.gmane.org>
+References: <201103192004.14947.dexen.devries@gmail.com> <loom.20110422T201841-92@post.gmane.org> <20110425.103542.66626035.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -14,7 +14,7 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > If you are still keeping the partition, could you test if the
 > following patch makes a difference ?
 
-Patched cleanerd dies with the same error message.
+No observable difference, patched cleanerd still dies the same way.
 
 There are more messages in the log if I start nilfs_cleanerd by hand:
 
