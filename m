@@ -1,48 +1,66 @@
-From: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
-Subject: Re: Regarding ``problem with nilfs_cleanerd - part 2'' and
- ``Nilfs_cleanerd err=-17''
-Date: Thu, 28 Apr 2011 10:36:04 +0900 (JST)
-Message-ID: <20110428.103604.170006726.ryusuke@osrg.net>
-References: <loom.20110427T111017-105@post.gmane.org>
-	<20110427.204042.153209394.ryusuke@osrg.net>
-	<loom.20110427T140022-700@post.gmane.org>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs_cleanerd: make gc safe for duplicate invocation
+Date: Fri, 29 Apr 2011 12:24:28 +0900
+Message-ID: <1304047468-1250-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <loom.20110427T140022-700-eS7Uydv5nfjZ+VzJOa5vwg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: itelichko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Wed, 27 Apr 2011 12:29:20 +0000 (UTC), Ivan Telichko wrote:
-> > How was the output of lssu command ?
-> 
-> Here: http://pastebin.com/DUn8UuvS
-> 
-> No difference between segments with
-> duplicates and normal ones in that output.
-> Only thing I can see here is that GC stopped
-> at segment 1363.
+This enlarges the region that a garbage collection lock protects so
+that read/write phases of GC do not interleave.
 
-Yeah, there are no erroneous segments.
+This makes gc safe even if two or more cleaner daemons are
+accidentally invoked and they run in parallel.
 
-Uum, after all, two nilfs_cleanerd instances seem to have caused this
-duplication.  I will reconsider protection against the situation where
-two or more cleaner daemons are invoked accidentaly.
+Duplicate invocation of cleaner is avoidable by introducing another
+lock primitive, but we don't choose that way now for simplicity.
 
-> Is there any additional information I can
-> provide? Partition is filling up and will be
-> unusable in several days. I can keep image
-> of it if needed.
+Reported-by: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: Ivan Telichko <itelichko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ sbin/cleanerd/cleanerd.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-OK, please reuse the partition for yourself.  We could get enough
-information to narrow down the problem.
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index b0a77fe..303c265 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -945,20 +945,20 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+ 	    vblocknrv == NULL)
+ 		goto out_vec;
+ 
++	ret = nilfs_lock_cleaner(cleanerd->c_nilfs);
++	if (ret < 0)
++		goto out_vec;
++
+ 	n = nilfs_cleanerd_acc_blocks(cleanerd, sustat, segnums, nsegs,
+ 				      vdescv, bdescv);
+ 	if (n <= 0) {
+ 		ret = n;
+-		goto out_vec;
++		goto out_lock;
+ 	}
+ 
+ 	ret = nilfs_cleanerd_get_vdesc(cleanerd, vdescv);
+ 	if (ret < 0)
+-		goto out_vec;
+-
+-	ret = nilfs_lock_cleaner(cleanerd->c_nilfs);
+-	if (ret < 0)
+-		goto out_vec;
++		goto out_lock;
+ 
+ 	ret = nilfs_cleanerd_update_prottime(cleanerd, prottime);
+ 	if (ret < 0)
+-- 
+1.7.3.5
 
-Thank you for your cooperation.
-
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
