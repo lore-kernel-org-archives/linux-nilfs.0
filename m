@@ -1,109 +1,43 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH v2] nilfs_cleanerd: make gc safe for duplicate invocation
-Date: Fri, 29 Apr 2011 17:18:45 +0900
-Message-ID: <1304065125-9532-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2] nilfs_cleanerd: make gc safe for duplicate invocation
+Date: Fri, 29 Apr 2011 10:23:18 +0200
+Message-ID: <201104291023.19215.dexen.devries@gmail.com>
+References: <1304065125-9532-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:from:to:subject:date:user-agent:references
+         :in-reply-to:x-face:mime-version:content-type
+         :content-transfer-encoding:message-id;
+        bh=jKPGfOa+d5dGUfdkEC3SMkulxqpPHiBXCKxlVpuJxzw=;
+        b=tPwWUdqNXZQ4rjk059lriolnEnx6PL3ajdlHl7P37oi3FD1Z/Ype07JZSbtsLjpNj0
+         evFLXFdD3ivrjV+Fo2HsaTsDqN3KYu4Ki9gdJ84jv6fVkgMr7w8PxRIdcOAlVAEF6jjn
+         2/TVDuAxicIsBQStIE00v7BlOE5LPYxPb7uBk=
+In-Reply-To: <1304065125-9532-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: Text/Plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This enlarges the region that a garbage collection lock protects so
-that indivisible steps of garbage collection do not interleave.
-Target segments are selected outside the critical section, so this
-also reexamines the selected segments after having acquired the lock.
+On Friday 29 of April 2011 10:18:45 you wrote:
+> This enlarges the region that a garbage collection lock protects so
+> that indivisible steps of garbage collection do not interleave.
+> (...)
 
-This makes gc safe even if two or more cleaner daemons are
-accidentally invoked and they run in parallel.
+thanks Ryusuke, it's an important improvement :)
 
-Reported-by: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Reported-by: Ivan Telichko <itelichko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- sbin/cleanerd/cleanerd.c |   34 +++++++++++++++++++++++++---------
- 1 files changed, 25 insertions(+), 9 deletions(-)
+--=20
+dexen deVries
 
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index b0a77fe..63c334e 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -243,6 +243,12 @@ static int nilfs_comp_segimp(const void *elem1, const void *elem2)
- 	return (segimp1->si_segnum < segimp2->si_segnum) ? -1 : 1;
- }
- 
-+static int nilfs_suinfo_reclaimable(const struct nilfs_suinfo *si)
-+{
-+	return nilfs_suinfo_dirty(si) &&
-+		!nilfs_suinfo_active(si) && !nilfs_suinfo_error(si);
-+}
-+
- #define NILFS_CLEANERD_NSUINFO	512
- #define NILFS_CLEANERD_NULLTIME (~(__u64)0)
- 
-@@ -302,9 +308,7 @@ nilfs_cleanerd_select_segments(struct nilfs_cleanerd *cleanerd,
- 			goto out;
- 		}
- 		for (i = 0; i < n; i++) {
--			if (nilfs_suinfo_dirty(&si[i]) &&
--			    !nilfs_suinfo_active(&si[i]) &&
--			    !nilfs_suinfo_error(&si[i]) &&
-+			if (nilfs_suinfo_reclaimable(&si[i]) &&
- 			    ((imp = (*config->cf_selection_policy.p_importance)(&si[i])) < thr)) {
- 				if (si[i].sui_lastmod < oldest)
- 					oldest = si[i].sui_lastmod;
-@@ -549,6 +553,18 @@ static ssize_t nilfs_cleanerd_acc_blocks(struct nilfs_cleanerd *cleanerd,
- 	while (i < n) {
- 		if (nilfs_get_suinfo(nilfs, segnums[i], &si, 1) < 0)
- 			return -1;
-+
-+		if (!nilfs_suinfo_reclaimable(&si)) {
-+			/*
-+			 * Recheck status of the segment and drop it
-+			 * if not reclaimable.  This prevents the
-+			 * target segments from being cleaned twice or
-+			 * more by duplicate cleaner daemons.
-+			 */
-+			n = nilfs_deselect_segment(segnums, n, i);
-+			continue;
-+		}
-+
- 		if (nilfs_get_segment(nilfs, segnums[i], &segment) < 0)
- 			return -1;
- 
-@@ -945,20 +961,20 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
- 	    vblocknrv == NULL)
- 		goto out_vec;
- 
-+	ret = nilfs_lock_cleaner(cleanerd->c_nilfs);
-+	if (ret < 0)
-+		goto out_vec;
-+
- 	n = nilfs_cleanerd_acc_blocks(cleanerd, sustat, segnums, nsegs,
- 				      vdescv, bdescv);
- 	if (n <= 0) {
- 		ret = n;
--		goto out_vec;
-+		goto out_lock;
- 	}
- 
- 	ret = nilfs_cleanerd_get_vdesc(cleanerd, vdescv);
- 	if (ret < 0)
--		goto out_vec;
--
--	ret = nilfs_lock_cleaner(cleanerd->c_nilfs);
--	if (ret < 0)
--		goto out_vec;
-+		goto out_lock;
- 
- 	ret = nilfs_cleanerd_update_prottime(cleanerd, prottime);
- 	if (ret < 0)
--- 
-1.7.3.5
+[[[=E2=86=93][=E2=86=92]]]
 
+``In other news, STFU and hack.''
+mahmud, in response to Erann Gat's ``How I lost my faith in Lisp''
+http://news.ycombinator.com/item?id=3D2308816
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
