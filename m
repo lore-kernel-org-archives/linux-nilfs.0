@@ -1,80 +1,161 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: how are files allocated on nilfs?
-Date: Wed, 4 May 2011 18:02:16 +0200
-Message-ID: <201105041802.17155.dexen.devries@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 3/4] nilfs2: add truncation routine of segment usage file
+Date: Thu,  5 May 2011 03:18:54 +0900
+Message-ID: <1304533135-25398-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1304533135-25398-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:from:to:subject:date:user-agent:x-face
-         :mime-version:content-type:content-transfer-encoding:message-id;
-        bh=1Db3LnfCQLNvHczh+IOqUKwMvgA33zzZILkqGdXb7M4=;
-        b=g/XbqzlOyTJ5MntbmOt+KpDe22XMNC+aTN6DOrD3NyxpZrJcSNwoOs1nnTEW6Mwxp5
-         tcysO3JxcpM0iiHRphnqXegLQUgruBzQRSC9uMtVoNBbJyNUBEGlIatcGFPFpfjrORsN
-         JaLpA5Nsn+b2p6zOLH3iw/Hz5jnFx5WmCf5kw=
+In-Reply-To: <1304533135-25398-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
+When shrinking the filesystem, segments to be truncated must be test
+if they are busy or not, and unneeded sufile block should be deleted.
+This adds routines for the truncation.
 
-a possibly naive question: how are files allocated on nilfs?
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/sufile.c |  112 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 112 insertions(+), 0 deletions(-)
 
-Asking, because I've expected a large-ish (128MB) file to be mostly=20
-continuous, modulo segment headers. But it doesn't seem so. A small tes=
-t to=20
-narrow down the question:
- 0) created a new, empty, nilfs, on a separate partition (about 1GB siz=
-e)
- 1) created a file with dd if=3D/dev/zero of=3Da.bin bs=3D$((128*1024*1=
-024)) count=3D1
- 2) ran hdparm --fibmap a.bin
-output:
- byte_offset  begin_LBA    end_LBA    sectors
-         0        231      16446      16216
-     8302592      16503      29094      12592
-    14749696      29239      32830       3592
-    16588800      32895      49214      16320
-    24944640      49255      58158       8904
-    29503488      58327      65598       7272
-    33226752      65663      81982      16320
-    41582592      82007      87230       5224
-    44257280      87415      98366      10952
-    49864704      98431     114750      16320
-    58220544     114759     116302       1544
-    59011072     116503     131134      14632
-    66502656     131191     145374      14184
-    73764864     145519     147518       2000
-    74788864     147583     163902      16320
-    83144704     163951     174446      10496
-    88518656     174607     180286       5680
-    91426816     180351     196670      16320
-    99782656     196703     203518       6816
-   103272448     203695     213054       9360
-   108064768     213119     229438      16320
-   116420608     229455     232590       3136
-   118026240     232783     245822      13040
-   124702720     245887     261662      15776
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index f4374df..22f2e6e 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -98,6 +98,13 @@ nilfs_sufile_get_segment_usage_block(struct inode *sufile, __u64 segnum,
+ 				   create, NULL, bhp);
+ }
+ 
++static int nilfs_sufile_delete_segment_usage_block(struct inode *sufile,
++						   __u64 segnum)
++{
++	return nilfs_mdt_delete_block(sufile,
++				      nilfs_sufile_get_blkoff(sufile, segnum));
++}
++
+ static void nilfs_sufile_mod_counter(struct buffer_head *header_bh,
+ 				     u64 ncleanadd, u64 ndirtyadd)
+ {
+@@ -610,6 +617,111 @@ void nilfs_sufile_do_set_error(struct inode *sufile, __u64 segnum,
+ }
+ 
+ /**
++  * nilfs_sufile_truncate_range - truncate range of segment array
++  * @sufile: inode of segment usage file
++  * @start: start segment number (inclusive)
++  * @end: end segment number (inclusive)
++  *
++  * Return Value: On success, 0 is returned.  On error, one of the
++  * following negative error codes is returned.
++  *
++  * %-EIO - I/O error.
++  *
++  * %-ENOMEM - Insufficient amount of memory available.
++  *
++  * %-EINVAL - Invalid number of segments specified
++  *
++  * %-EBUSY - Dirty or active segments are present in the range
++  */
++static int nilfs_sufile_truncate_range(struct inode *sufile,
++				       __u64 start, __u64 end)
++{
++	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
++	struct buffer_head *header_bh;
++	struct buffer_head *su_bh;
++	struct nilfs_segment_usage *su, *su2;
++	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
++	unsigned long segusages_per_block;
++	unsigned long nsegs, ncleaned;
++	__u64 segnum;
++	void *kaddr;
++	ssize_t n, nc;
++	int ret;
++	int j;
++
++	nsegs = nilfs_sufile_get_nsegments(sufile);
++
++	ret = -EINVAL;
++	if (start > end || start >= nsegs)
++		goto out;
++
++	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
++	if (ret < 0)
++		goto out;
++
++	segusages_per_block = nilfs_sufile_segment_usages_per_block(sufile);
++	ncleaned = 0;
++
++	for (segnum = start; segnum <= end; segnum += n) {
++		n = min_t(unsigned long,
++			  segusages_per_block -
++				  nilfs_sufile_get_offset(sufile, segnum),
++			  end - segnum + 1);
++		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0,
++							   &su_bh);
++		if (ret < 0) {
++			if (ret != -ENOENT)
++				goto out_header;
++			/* hole */
++			continue;
++		}
++		kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
++		su = nilfs_sufile_block_get_segment_usage(
++			sufile, segnum, su_bh, kaddr);
++		su2 = su;
++		for (j = 0; j < n; j++, su = (void *)su + susz) {
++			if ((le32_to_cpu(su->su_flags) &
++			     ~(1UL << NILFS_SEGMENT_USAGE_ERROR)) ||
++			    nilfs_segment_is_active(nilfs, segnum + j)) {
++				ret = -EBUSY;
++				kunmap_atomic(kaddr, KM_USER0);
++				brelse(su_bh);
++				goto out_header;
++			}
++		}
++		nc = 0;
++		for (su = su2, j = 0; j < n; j++, su = (void *)su + susz) {
++			if (nilfs_segment_usage_error(su)) {
++				nilfs_segment_usage_set_clean(su);
++				nc++;
++			}
++		}
++		kunmap_atomic(kaddr, KM_USER0);
++		if (nc > 0) {
++			nilfs_mdt_mark_buffer_dirty(su_bh);
++			ncleaned += nc;
++		}
++		brelse(su_bh);
++
++		if (n == segusages_per_block) {
++			/* make hole */
++			nilfs_sufile_delete_segment_usage_block(sufile, segnum);
++		}
++	}
++	ret = 0;
++
++out_header:
++	if (ncleaned > 0) {
++		NILFS_SUI(sufile)->ncleansegs += ncleaned;
++		nilfs_sufile_mod_counter(header_bh, ncleaned, 0);
++		nilfs_mdt_mark_dirty(sufile);
++	}
++	brelse(header_bh);
++out:
++	return ret;
++}
++
++/**
+  * nilfs_sufile_get_suinfo -
+  * @sufile: inode of segment usage file
+  * @segnum: segment number to start looking
+-- 
+1.7.3.5
 
-
-while the first chunk of file fills almost whole segment, several subse=
-quent=20
-chunks are much smaller than segment. Why is it so?
-
-
-Regards,
---=20
-dexen deVries
-
-[[[=E2=86=93][=E2=86=92]]]
-
-``In other news, STFU and hack.''
-mahmud, in response to Erann Gat's ``How I lost my faith in Lisp''
-http://news.ycombinator.com/item?id=3D2308816
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
