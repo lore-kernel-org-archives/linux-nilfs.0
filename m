@@ -1,32 +1,39 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: fix infinite loop in nilfs_palloc_freev function
-Date: Tue, 10 May 2011 22:30:06 +0900
-Message-ID: <1305034206-15338-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [GIT PULL] nilfs2 fix for 2.6.39
+Date: Wed, 11 May 2011 00:59:38 +0900 (JST)
+Message-ID: <20110511.005938.137710056.ryusuke@osrg.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-After having applied commit 9954e7af14868b8b ("nilfs2: add free
-entries count only if clear bit operation succeeded"), a free routine
-of nilfs came to fall into an infinite loop, outputting the same
-message endlessly:
+Hi Linus,
 
- nilfs_palloc_freev: entry number 29497 already freed
- nilfs_palloc_freev: entry number 29497 already freed
- nilfs_palloc_freev: entry number 29497 already freed
- nilfs_palloc_freev: entry number 29497 already freed
- nilfs_palloc_freev: entry number 29497 already freed ...
+please pull from:
 
-That patch broke the routine so that a loop counter is never updated
-in an abnormal state.  This fixes the regression.
+  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
+to grab one regression fix.  This corrects an infinite loop bug that
+happened in an abnormal condition.
+
+Thanks,
+
+Ryusuke Konishi
+--
+The following changes since commit 693d92a1bbc9e42681c42ed190bd42b636ca876f:
+
+  Linux 2.6.39-rc7 (2011-05-09 19:33:54 -0700)
+
+are available in the git repository at:
+  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git fixes
+
+Ryusuke Konishi (1):
+      nilfs2: fix infinite loop in nilfs_palloc_freev function
+
  fs/nilfs2/alloc.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
@@ -43,9 +50,6 @@ index 0a0a66d..f768448 100644
  		group = nilfs_palloc_group(inode, entry_nrs[i], &group_offset);
  		ret = nilfs_palloc_get_desc_block(inode, group, 0, &desc_bh);
  		if (ret < 0)
--- 
-1.7.3.5
-
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
