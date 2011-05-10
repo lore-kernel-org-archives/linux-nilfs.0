@@ -1,64 +1,48 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs_cleanerd: fix move block errors with cpfile and
- sufile
-Date: Fri, 06 May 2011 14:56:33 +0900 (JST)
-Message-ID: <20110506.145633.179948942.ryusuke@osrg.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH] nilfs2: fix infinite loop in nilfs_palloc_freev function
+Date: Tue, 10 May 2011 22:30:06 +0900
+Message-ID: <1305034206-15338-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This fixes another nilfs_ioctl_move_inode_block error
-which may occur if setting protection period to a large value.
+After having applied commit 9954e7af14868b8b ("nilfs2: add free
+entries count only if clear bit operation succeeded"), a free routine
+of nilfs came to fall into an infinite loop, outputting the same
+message endlessly:
 
-I noticed this error during tests of shrinking the filesystem with
-nilfs-resize tool.
+ nilfs_palloc_freev: entry number 29497 already freed
+ nilfs_palloc_freev: entry number 29497 already freed
+ nilfs_palloc_freev: entry number 29497 already freed
+ nilfs_palloc_freev: entry number 29497 already freed
+ nilfs_palloc_freev: entry number 29497 already freed ...
 
-
-Ryusuke Konishi
----
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-
-nilfs_cleanerd: fix move block errors with cpfile and sufile
-
-This fixes the following gc error related to cpfile and sufile:
-
- nilfs_ioctl_move_inode_block: conflicting data buffer: ino=4, cno=0,
- offset=0, blocknr=78648, vblocknr=62283
-
-Blocks of cpfile and sufile should be judged live only if they are
-latest, and should not depends on the protection period.
+That patch broke the routine so that a loop counter is never updated
+in an abnormal state.  This fixes the regression.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- sbin/cleanerd/cleanerd.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+ fs/nilfs2/alloc.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index 45a0be0..138a444 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -748,6 +748,16 @@ static int nilfs_vdesc_is_live(const struct nilfs_vdesc *vdesc,
- 	long low, high, index;
- 	int s;
+diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+index 0a0a66d..f768448 100644
+--- a/fs/nilfs2/alloc.c
++++ b/fs/nilfs2/alloc.c
+@@ -646,7 +646,7 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+ 	unsigned long group, group_offset;
+ 	int i, j, n, ret;
  
-+	if (vdesc->vd_cno == 0) {
-+		/*
-+		 * live/dead judge for sufile and cpfile should not
-+		 * depend on protection period and snapshots.  Without
-+		 * this check, gc will cause buffer conflict error
-+		 * because their checkpoint number is always zero.
-+		 */
-+		return vdesc->vd_period.p_end == NILFS_CNO_MAX;
-+	}
-+
- 	if (vdesc->vd_period.p_end == NILFS_CNO_MAX ||
- 	    vdesc->vd_period.p_end > protect)
- 		return 1;
+-	for (i = 0; i < nitems; i += n) {
++	for (i = 0; i < nitems; i = j) {
+ 		group = nilfs_palloc_group(inode, entry_nrs[i], &group_offset);
+ 		ret = nilfs_palloc_get_desc_block(inode, group, 0, &desc_bh);
+ 		if (ret < 0)
 -- 
 1.7.3.5
 
