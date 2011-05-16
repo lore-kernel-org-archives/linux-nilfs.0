@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 9/9] nilfs2: add ioctl to lookup pathname of inode
-Date: Mon, 16 May 2011 18:05:22 +0900
-Message-ID: <1305536722-1311-10-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 2/9] nilfs2: add comparison function of two block mappings
+Date: Mon, 16 May 2011 18:05:15 +0900
+Message-ID: <1305536722-1311-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1305536722-1311-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1305536722-1311-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,139 +13,216 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Adds a new ioctl command to look up pathnames of an inode from its
-inode number.
+This adds nilfs_bmap_compare() function and its helper routine
+(nilfs_bmap_do_compare function).  The nilfs_bmap_compare function
+enumerates changes on the data blocks that given two bmap objects
+hold.  These functions are available to efficiently find out changes
+on meta-data or user data between two checkpoints.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/ioctl.c         |   76 +++++++++++++++++++++++++++++++++++++++++++++
- include/linux/nilfs2_fs.h |   13 ++++++++
- 2 files changed, 89 insertions(+), 0 deletions(-)
+ fs/nilfs2/bmap.c |  154 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/bmap.h |   15 +++++
+ 2 files changed, 169 insertions(+), 0 deletions(-)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 79f3719..cc468ff 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -812,6 +812,80 @@ out:
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index aadbd0b..84c4866 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -422,6 +422,160 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
  	return ret;
  }
  
-+/**
-+ * nilfs_ioctl_ino_lookup - lookup pathname of inode
-+ * @inode: inode on which this ioctl was issued
-+ * @argp: pointer to nilfs_ino_lookup_args structure. Where the argv
-+ *        member holds the following information
-+ *
-+ *   argv.v_nmembs: number of pathnames (used for both request and result)
-+ *   argv.v_base: buffer in which pathnames will be stored
-+ *   argv.v_size: size of pathnames buffer
-+ *   argv.v_index: index number of pathnames
-+ */
-+static int nilfs_ioctl_ino_lookup(struct inode *inode, void __user *argp)
++static ssize_t nilfs_bmap_do_compare(struct nilfs_bmap *bmap1,
++				     struct nilfs_bmap *bmap2, __u64 start,
++				     struct nilfs_bmap_diff *diffs,
++				     size_t maxdiffs)
 +{
-+	struct nilfs_ino_lookup_args largs;
-+	struct nilfs_root *root;
-+	size_t namesz, bufsz;
-+	void *kbuf;
-+	void __user *base;
++	__u64 key1, key2;
++	__u64 ptr1, ptr2;
++	void *ctx1, *ctx2;
++	ssize_t n = 0;
++	int next1 = false, next2 = false;
++	int done1 = false, done2 = false;
 +	int ret;
 +
-+	ret = -EPERM;
-+	if (!capable(CAP_SYS_ADMIN))
-+		goto out;
-+
-+	ret = -EFAULT;
-+	if (copy_from_user(&largs, argp, sizeof(largs)))
-+		goto out;
-+
-+	ret = 0;
-+	if (largs.argv.v_nmembs == 0)
-+		goto out;
-+
-+	ret = -ERANGE;
-+	if (largs.argv.v_size > 4096)
-+		goto out;
-+
-+	bufsz = largs.argv.v_size;
-+	base = (void __user *)(unsigned long)largs.argv.v_base;
-+	kbuf = kmalloc(bufsz, GFP_NOFS);
-+	if (!kbuf) {
-+		ret = -ENOMEM;
-+		goto out;
++	key1 = start;
++	ret = bmap1->b_ops->bop_find(bmap1, &key1, &ptr1, &ctx1);
++	if (ret < 0) {
++		if (ret != -ENOENT) {
++			n = ret;
++			goto out;
++		}
++		done1 = true;
++		ctx1 = NULL; /* ensure ->bop_find_close(bmap1, ctx1) safe */
 +	}
 +
-+	down_read(&inode->i_sb->s_umount);
-+
-+	ret = nilfs_attach_checkpoint(inode->i_sb, largs.cno, false, &root);
-+	if (ret < 0)
-+		goto out_unlock;
-+
-+	ret = nilfs_search_path(inode->i_sb, root, largs.ino,
-+				largs.argv.v_index, kbuf, bufsz, &namesz);
-+	if (ret >= 0) {
-+		largs.argv.v_nmembs = ret;
-+		largs.argv.v_size = namesz;
-+		ret = 0;
++	key2 = start;
++	ret = bmap2->b_ops->bop_find(bmap2, &key2, &ptr2, &ctx2);
++	if (ret < 0) {
++		if (ret != -ENOENT) {
++			n = ret;
++			goto out;
++		}
++		done2 = true;
++		ctx2 = NULL; /* ensure ->bop_find_close(bmap2, ctx2) safe */
 +	}
-+	nilfs_put_root(root);
 +
-+out_unlock:
-+	up_read(&inode->i_sb->s_umount);
++	while (1) {
++		if (done1) {
++			if (done2)
++				break;
++			
++			diffs[n].key = key2;
++			diffs[n].ptr1 = NILFS_BMAP_INVALID_PTR;
++			diffs[n].ptr2 = ptr2;
++			next2 = true;
++		} else if (done2) {
++			diffs[n].key = key1;
++			diffs[n].ptr1 = ptr1;
++			diffs[n].ptr2 = NILFS_BMAP_INVALID_PTR;
++			next1 = true;
++		} else if (key1 == key2) {
++			next1 = true;
++			next2 = true;
 +
-+	if (!ret && copy_to_user(base, kbuf + bufsz - namesz, namesz))
-+		ret = -EFAULT;
++			if (ptr1 == ptr2)
++				goto lookup_next;
 +
-+	kfree(kbuf);
++			diffs[n].key = key1;
++			diffs[n].ptr1 = ptr1;
++			diffs[n].ptr2 = ptr2;
++		} else if (key1 < key2) {
++			diffs[n].key = key1;
++			diffs[n].ptr1 = ptr1;
++			diffs[n].ptr2 = NILFS_BMAP_INVALID_PTR;
++			next1 = true;
++		} else /* key1 > key2 */ {
++			diffs[n].key = key2;
++			diffs[n].ptr1 = NILFS_BMAP_INVALID_PTR;
++			diffs[n].ptr2 = ptr2;
++			next2 = true;
++		}
 +
-+	if (!ret && copy_to_user(&((struct nilfs_ino_lookup_args *)argp)->argv,
-+				 &largs.argv, sizeof(largs.argv)))
-+		ret = -EFAULT;
++		n++;
++		if (n == maxdiffs)
++			break;
++
++	lookup_next:
++		if (next1) {
++			ret = bmap1->b_ops->bop_find_next(bmap1, &key1,
++							  &ptr1, ctx1);
++			if (ret < 0) {
++				if (ret != -ENOENT) {
++					n = ret;
++					break;
++				}
++				done1 = true;
++			}
++			next1 = false;
++		}
++		if (next2) {
++			ret = bmap2->b_ops->bop_find_next(bmap2, &key2,
++							  &ptr2, ctx2);
++			if (ret < 0) {
++				if (ret != -ENOENT) {
++					n = ret;
++					break;
++				}
++				done2 = true;
++			}
++			next2 = false;
++		}
++	}
 +out:
-+	return ret;
++	bmap2->b_ops->bop_find_close(bmap2, ctx2);
++	bmap1->b_ops->bop_find_close(bmap1, ctx1);
++	return n;
 +}
 +
- static int nilfs_ioctl_get_info(struct inode *inode, struct file *filp,
- 				unsigned int cmd, void __user *argp,
- 				size_t membsz,
-@@ -883,6 +957,8 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return nilfs_ioctl_set_alloc_range(inode, argp);
- 	case NILFS_IOCTL_COMPARE_CHECKPOINTS:
- 		return nilfs_ioctl_compare_checkpoints(inode, argp);
-+	case NILFS_IOCTL_INO_LOOKUP:
-+		return nilfs_ioctl_ino_lookup(inode, argp);
- 	default:
- 		return -ENOTTY;
- 	}
-diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index 599ccd1..9d2f425 100644
---- a/include/linux/nilfs2_fs.h
-+++ b/include/linux/nilfs2_fs.h
-@@ -863,6 +863,17 @@ struct nilfs_comp_args {
- 	struct nilfs_argv argv;
++/**
++ * nilfs_bmap_compare - compare two bmaps and find their differences
++ * @bmap1: source bmap
++ * @bmap2: target bmap
++ * @start: start key
++ * @diffs: pointer to an array of nilfs_bmap_diff structures
++ * @maxdiffs: number of nilfs_bmap_diff structures
++ *
++ * Description: nilfs_bmap_compare() compares two versions of bmap and
++ * stores their differences in nilfs_bmap_diff structures given by
++ * @diffs and @maxdiffs.
++ *
++ * Return Value: On success, number of items stored to @diffs are
++ * returned.  On error, one of the following negative error codes are
++ * returned.
++ *
++ * %-EIO - I/O error.
++ *
++ * %-ENOMEM - Insufficient amount of memory available.
++ */
++ssize_t nilfs_bmap_compare(struct nilfs_bmap *bmap1, struct nilfs_bmap *bmap2,
++			   __u64 start, struct nilfs_bmap_diff *diffs,
++			   size_t maxdiffs)
++{
++	ssize_t ret;
++
++	if (maxdiffs == 0)
++		return 0;
++
++	/*
++	 * hold semaphore with smaller address first to avoid possible
++	 * deadlock problem.
++	 */
++	if (bmap1 < bmap2) {
++		down_read(&bmap1->b_sem);
++		down_read(&bmap2->b_sem);
++	} else {
++		down_read(&bmap2->b_sem);
++		down_read(&bmap1->b_sem);
++	}
++
++	ret = nilfs_bmap_do_compare(bmap1, bmap2, start, diffs, maxdiffs);
++
++	up_read(&bmap1->b_sem);
++	up_read(&bmap2->b_sem);
++	return ret;
++}
+ 
+ /*
+  * Internal use only
+diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
+index cff22c2..2e57537 100644
+--- a/fs/nilfs2/bmap.h
++++ b/fs/nilfs2/bmap.h
+@@ -56,6 +56,18 @@ struct nilfs_bmap_stats {
  };
  
-+/**
-+ * struct nilfs_ino_lookup_args - ioctl argument to lookup inode pathname
-+ * @ino: inode number
-+ * @cno: checkpoint number
-+ * @argv: argument vector to exchange pathnames
+ /**
++ * struct nilfs_bmap_diff - array item to store bmap comparison result
++ * @key: key index
++ * @ptr: bmap pointer 1
++ * @ptr: bmap pointer 2
 + */
-+struct nilfs_ino_lookup_args {
-+	__u64 ino;
-+	__u64 cno;
-+	struct nilfs_argv argv;
++struct nilfs_bmap_diff {
++	__u64 key;
++	__u64 ptr1;
++	__u64 ptr2;
 +};
++
++/**
+  * struct nilfs_bmap_operations - bmap operation table
+  */
+ struct nilfs_bmap_operations {
+@@ -162,6 +174,9 @@ int nilfs_bmap_assign(struct nilfs_bmap *, struct buffer_head **,
+ 		      unsigned long, union nilfs_binfo *);
+ int nilfs_bmap_lookup_at_level(struct nilfs_bmap *, __u64, int, __u64 *);
+ int nilfs_bmap_mark(struct nilfs_bmap *, __u64, int);
++ssize_t nilfs_bmap_compare(struct nilfs_bmap *bmap1, struct nilfs_bmap *bmap2,
++			   __u64 start, struct nilfs_bmap_diff *diffs,
++			   size_t maxdiffs);
  
- #define NILFS_IOCTL_IDENT		'n'
+ void nilfs_bmap_init_gc(struct nilfs_bmap *);
  
-@@ -892,5 +903,7 @@ struct nilfs_comp_args {
- 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
- #define NILFS_IOCTL_COMPARE_CHECKPOINTS  \
- 	_IOWR(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_comp_args)
-+#define NILFS_IOCTL_INO_LOOKUP  \
-+	_IOWR(NILFS_IOCTL_IDENT, 0x8E, struct nilfs_ino_lookup_args)
- 
- #endif	/* _LINUX_NILFS_FS_H */
 -- 
 1.7.3.5
 
