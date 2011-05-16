@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/9] nilfs2: add comparison function of two block mappings
-Date: Mon, 16 May 2011 18:05:15 +0900
-Message-ID: <1305536722-1311-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 7/9] nilfs2: add routine to find directory entry from inode number
+Date: Mon, 16 May 2011 18:05:20 +0900
+Message-ID: <1305536722-1311-8-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1305536722-1311-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1305536722-1311-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
@@ -13,216 +13,99 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This adds nilfs_bmap_compare() function and its helper routine
-(nilfs_bmap_do_compare function).  The nilfs_bmap_compare function
-enumerates changes on the data blocks that given two bmap objects
-hold.  These functions are available to efficiently find out changes
-on meta-data or user data between two checkpoints.
+This adds a directory lookup function nilfs_find_entry_by_ino(), which
+finds a directory entry by an inode number instead of a file name.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/bmap.c |  154 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/bmap.h |   15 +++++
- 2 files changed, 169 insertions(+), 0 deletions(-)
+ fs/nilfs2/dir.c   |   60 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/nilfs.h |    2 +
+ 2 files changed, 62 insertions(+), 0 deletions(-)
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index aadbd0b..84c4866 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -422,6 +422,160 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
- 	return ret;
+diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+index 3a19239..bc0512b 100644
+--- a/fs/nilfs2/dir.c
++++ b/fs/nilfs2/dir.c
+@@ -395,6 +395,66 @@ found:
+ 	return de;
  }
  
-+static ssize_t nilfs_bmap_do_compare(struct nilfs_bmap *bmap1,
-+				     struct nilfs_bmap *bmap2, __u64 start,
-+				     struct nilfs_bmap_diff *diffs,
-+				     size_t maxdiffs)
++struct nilfs_dir_entry *
++nilfs_find_entry_by_ino(struct inode *dir, ino_t ino, struct page **res_page)
 +{
-+	__u64 key1, key2;
-+	__u64 ptr1, ptr2;
-+	void *ctx1, *ctx2;
-+	ssize_t n = 0;
-+	int next1 = false, next2 = false;
-+	int done1 = false, done2 = false;
-+	int ret;
++	unsigned reclen = NILFS_DIR_REC_LEN(1);
++	unsigned long start, n;
++	unsigned long npages = dir_pages(dir);
++	struct page *page = NULL;
++	struct nilfs_inode_info *ii = NILFS_I(dir);
++	struct nilfs_dir_entry *de;
++	void *kaddr;
 +
-+	key1 = start;
-+	ret = bmap1->b_ops->bop_find(bmap1, &key1, &ptr1, &ctx1);
-+	if (ret < 0) {
-+		if (ret != -ENOENT) {
-+			n = ret;
++	if (npages == 0)
++		goto out;
++
++	/* OFFSET_CACHE */
++	*res_page = NULL;
++
++	start = ii->i_dir_start_lookup;
++	if (start >= npages)
++		start = 0;
++	n = start;
++	do {
++		page = nilfs_get_page(dir, n);
++		if (!IS_ERR(page)) {
++			kaddr = page_address(page);
++			de = kaddr;
++			kaddr += nilfs_last_byte(dir, n) - reclen;
++			while ((void *)de <= kaddr) {
++				if (de->rec_len == 0) {
++					nilfs_error(dir->i_sb, __func__,
++						"zero-length directory entry");
++					nilfs_put_page(page);
++					goto out;
++				}
++				if (le64_to_cpu(de->inode) == ino)
++					goto found;
++				de = nilfs_next_entry(de);
++			}
++			nilfs_put_page(page);
++		}
++		if (++n >= npages)
++			n = 0;
++		/* next page is past the blocks we've got */
++		if (unlikely(n > (dir->i_blocks >> (PAGE_CACHE_SHIFT - 9)))) {
++			nilfs_error(dir->i_sb, __func__,
++			       "dir %lu size %lld exceeds block count %llu",
++			       dir->i_ino, dir->i_size,
++			       (unsigned long long)dir->i_blocks);
 +			goto out;
 +		}
-+		done1 = true;
-+		ctx1 = NULL; /* ensure ->bop_find_close(bmap1, ctx1) safe */
-+	}
-+
-+	key2 = start;
-+	ret = bmap2->b_ops->bop_find(bmap2, &key2, &ptr2, &ctx2);
-+	if (ret < 0) {
-+		if (ret != -ENOENT) {
-+			n = ret;
-+			goto out;
-+		}
-+		done2 = true;
-+		ctx2 = NULL; /* ensure ->bop_find_close(bmap2, ctx2) safe */
-+	}
-+
-+	while (1) {
-+		if (done1) {
-+			if (done2)
-+				break;
-+			
-+			diffs[n].key = key2;
-+			diffs[n].ptr1 = NILFS_BMAP_INVALID_PTR;
-+			diffs[n].ptr2 = ptr2;
-+			next2 = true;
-+		} else if (done2) {
-+			diffs[n].key = key1;
-+			diffs[n].ptr1 = ptr1;
-+			diffs[n].ptr2 = NILFS_BMAP_INVALID_PTR;
-+			next1 = true;
-+		} else if (key1 == key2) {
-+			next1 = true;
-+			next2 = true;
-+
-+			if (ptr1 == ptr2)
-+				goto lookup_next;
-+
-+			diffs[n].key = key1;
-+			diffs[n].ptr1 = ptr1;
-+			diffs[n].ptr2 = ptr2;
-+		} else if (key1 < key2) {
-+			diffs[n].key = key1;
-+			diffs[n].ptr1 = ptr1;
-+			diffs[n].ptr2 = NILFS_BMAP_INVALID_PTR;
-+			next1 = true;
-+		} else /* key1 > key2 */ {
-+			diffs[n].key = key2;
-+			diffs[n].ptr1 = NILFS_BMAP_INVALID_PTR;
-+			diffs[n].ptr2 = ptr2;
-+			next2 = true;
-+		}
-+
-+		n++;
-+		if (n == maxdiffs)
-+			break;
-+
-+	lookup_next:
-+		if (next1) {
-+			ret = bmap1->b_ops->bop_find_next(bmap1, &key1,
-+							  &ptr1, ctx1);
-+			if (ret < 0) {
-+				if (ret != -ENOENT) {
-+					n = ret;
-+					break;
-+				}
-+				done1 = true;
-+			}
-+			next1 = false;
-+		}
-+		if (next2) {
-+			ret = bmap2->b_ops->bop_find_next(bmap2, &key2,
-+							  &ptr2, ctx2);
-+			if (ret < 0) {
-+				if (ret != -ENOENT) {
-+					n = ret;
-+					break;
-+				}
-+				done2 = true;
-+			}
-+			next2 = false;
-+		}
-+	}
++	} while (n != start);
 +out:
-+	bmap2->b_ops->bop_find_close(bmap2, ctx2);
-+	bmap1->b_ops->bop_find_close(bmap1, ctx1);
-+	return n;
++	return NULL;
++
++found:
++	*res_page = page;
++	ii->i_dir_start_lookup = n;
++	return de;
 +}
 +
-+/**
-+ * nilfs_bmap_compare - compare two bmaps and find their differences
-+ * @bmap1: source bmap
-+ * @bmap2: target bmap
-+ * @start: start key
-+ * @diffs: pointer to an array of nilfs_bmap_diff structures
-+ * @maxdiffs: number of nilfs_bmap_diff structures
-+ *
-+ * Description: nilfs_bmap_compare() compares two versions of bmap and
-+ * stores their differences in nilfs_bmap_diff structures given by
-+ * @diffs and @maxdiffs.
-+ *
-+ * Return Value: On success, number of items stored to @diffs are
-+ * returned.  On error, one of the following negative error codes are
-+ * returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ */
-+ssize_t nilfs_bmap_compare(struct nilfs_bmap *bmap1, struct nilfs_bmap *bmap2,
-+			   __u64 start, struct nilfs_bmap_diff *diffs,
-+			   size_t maxdiffs)
-+{
-+	ssize_t ret;
-+
-+	if (maxdiffs == 0)
-+		return 0;
-+
-+	/*
-+	 * hold semaphore with smaller address first to avoid possible
-+	 * deadlock problem.
-+	 */
-+	if (bmap1 < bmap2) {
-+		down_read(&bmap1->b_sem);
-+		down_read(&bmap2->b_sem);
-+	} else {
-+		down_read(&bmap2->b_sem);
-+		down_read(&bmap1->b_sem);
-+	}
-+
-+	ret = nilfs_bmap_do_compare(bmap1, bmap2, start, diffs, maxdiffs);
-+
-+	up_read(&bmap1->b_sem);
-+	up_read(&bmap2->b_sem);
-+	return ret;
-+}
- 
- /*
-  * Internal use only
-diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index cff22c2..2e57537 100644
---- a/fs/nilfs2/bmap.h
-+++ b/fs/nilfs2/bmap.h
-@@ -56,6 +56,18 @@ struct nilfs_bmap_stats {
- };
- 
- /**
-+ * struct nilfs_bmap_diff - array item to store bmap comparison result
-+ * @key: key index
-+ * @ptr: bmap pointer 1
-+ * @ptr: bmap pointer 2
-+ */
-+struct nilfs_bmap_diff {
-+	__u64 key;
-+	__u64 ptr1;
-+	__u64 ptr2;
-+};
-+
-+/**
-  * struct nilfs_bmap_operations - bmap operation table
-  */
- struct nilfs_bmap_operations {
-@@ -162,6 +174,9 @@ int nilfs_bmap_assign(struct nilfs_bmap *, struct buffer_head **,
- 		      unsigned long, union nilfs_binfo *);
- int nilfs_bmap_lookup_at_level(struct nilfs_bmap *, __u64, int, __u64 *);
- int nilfs_bmap_mark(struct nilfs_bmap *, __u64, int);
-+ssize_t nilfs_bmap_compare(struct nilfs_bmap *bmap1, struct nilfs_bmap *bmap2,
-+			   __u64 start, struct nilfs_bmap_diff *diffs,
-+			   size_t maxdiffs);
- 
- void nilfs_bmap_init_gc(struct nilfs_bmap *);
- 
+ struct nilfs_dir_entry *nilfs_dotdot(struct inode *dir, struct page **p)
+ {
+ 	struct page *page = nilfs_get_page(dir, 0);
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 40bada2..1e47669 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -229,6 +229,8 @@ extern ino_t nilfs_inode_by_name(struct inode *, const struct qstr *);
+ extern int nilfs_make_empty(struct inode *, struct inode *);
+ extern struct nilfs_dir_entry *
+ nilfs_find_entry(struct inode *, const struct qstr *, struct page **);
++struct nilfs_dir_entry *
++nilfs_find_entry_by_ino(struct inode *dir, ino_t ino, struct page **res_page);
+ extern int nilfs_delete_entry(struct nilfs_dir_entry *, struct page *);
+ extern int nilfs_empty_dir(struct inode *);
+ extern struct nilfs_dir_entry *nilfs_dotdot(struct inode *, struct page **);
 -- 
 1.7.3.5
 
