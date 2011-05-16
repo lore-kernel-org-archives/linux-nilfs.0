@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/9] exprimental API to extract changes between two checkpoints
-Date: Mon, 16 May 2011 18:05:13 +0900
-Message-ID: <1305536722-1311-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 4/9] nilfs2: add ifile method to find and get modified inodes
+Date: Mon, 16 May 2011 18:05:17 +0900
+Message-ID: <1305536722-1311-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1305536722-1311-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1305536722-1311-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,113 +13,251 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This is an experimental patchset which adds new ioctl commands for
-finding differences between two checkpoints (snapshots) efficiently.
+This adds a few routines to ifile, which are used to find out created,
+deleted, or modifed inodes between two versions of ifile, and
+enumerate the changes.
 
-One of the commands is NILFS_IOCTL_COMPARE_CHECKPOINTS and another is
-NILFS_IOCTL_INO_LOOKUP.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/ifile.c |  184 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/ifile.h |   20 ++++++
+ 2 files changed, 204 insertions(+), 0 deletions(-)
 
-The NILFS_IOCTL_COMPARE_CHECKPOINT command enumerates changed inodes
-between two checkpoints.  It compares two versions of b-trees managing
-blocks of "ifile" instead of traversing namespace and comparing all
-pairs of inodes.
-
-It gathers up inode numbers of changed inodes, but it's not efficient
-to find a pathname of inode at userspace from its inode number.  So,
-the NILFS_IOCTL_INO_LOOKUP command is included to make it faster and
-easier -- it makes up a pathname of an inode in the past filesystem
-tree searching directories bottom up.
-
-
-With this api, users or tools can know which inodes were changed,
-created, or deleted and how they were modified.  This is intended to
-be used for online backup, realtime remote replication, or quickly
-rebuilding search index against numerous versions of a filesystem
-provided by nilfs.  Kernel already has some notification mechanisms
-for these purposes, but they don't suit for extract changes later on.
-
-
-A utility program for examining these ioctl commands is available on
-"diff" branch of the following git tree:
-
-  http://git.nilfs.org/nilfs2-utils-devel.git
-
-It experimentally adds "nilfs-diff" program to nilfs-utils.  The usage
-of this program is as follows:
-
-
-  # nilfs-diff [option] [device] cno1..cno2
-
-"nilfs-diff" displays appended files or directories as below:
-
-   + /aaa/bbb
-   + /aaa/bbb/ccc
-
-Deleted files are displayed like:
-
-   - /aaa/xxx
-
-Modified or moved files are:
-
-   M /aaa/bbb/file-000.txt
-   R /aaa/bbb/file-123.txt -> /aaa/file-123.txt
-
-
-Unfortunately, the NILFS_IOCTL_INO_LOOKUP command needs disk format
-change since it has to keep parent inode numbers for each on-disk
-inode.
-
-This patchset uses an unused pad field in disk inode, so this feature
-is only available for new filesystems created with updated mkfs.nilfs2
-tool.
-
-In addition, this patchset has a few important limitations and does
-not suit for practical use.  First, hard links are not supported (only
-one parent inode number is recorded in an inode).  And, inode number
-of parent inodes are truncated to 32-bit width from the original
-64-bit value when being stored to disk.
-
-So, this is very experimetal, and I have no plan to send them upstream
-at this moment.
-
-To make it practical, parent inode number should be recorded in disk
-more nicely.  I guess a disk format change would be necessary for
-that.
-
-If anyone have comments, please let me know.
-
-
-Thanks,
-Ryusuke Konishi
---
-Ryusuke Konishi (9):
-      nilfs2: add separable lookup routines to direct/btree mappings
-      nilfs2: add comparison function of two block mappings
-      nilfs2: add helper functions to get type of blocks on ifile
-      nilfs2: add ifile method to find and get modified inodes
-      nilfs2: add ioctl to compare two checkpoints and get their changes
-      nilfs2: store parent inode number in disk inode
-      nilfs2: add routine to find directory entry from inode number
-      nilfs2: add pathname lookup routine from inode number
-      nilfs2: add ioctl to lookup pathname of inode
-
- fs/nilfs2/alloc.c         |   35 ++++++++-
- fs/nilfs2/alloc.h         |   10 +++
- fs/nilfs2/bmap.c          |  154 +++++++++++++++++++++++++++++++++++++
- fs/nilfs2/bmap.h          |   20 +++++
- fs/nilfs2/btree.c         |  134 ++++++++++++++++++++++++++++++++
- fs/nilfs2/dir.c           |   60 +++++++++++++++
- fs/nilfs2/direct.c        |   49 ++++++++++++
- fs/nilfs2/ifile.c         |  184 +++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/ifile.h         |   20 +++++
- fs/nilfs2/inode.c         |  131 +++++++++++++++++++++++++++++++-
- fs/nilfs2/ioctl.c         |  135 +++++++++++++++++++++++++++++++++
- fs/nilfs2/namei.c         |   97 ++++++++++++++++++++++++
- fs/nilfs2/nilfs.h         |   14 ++++
- fs/nilfs2/super.c         |   49 ++++++++++++
- include/linux/nilfs2_fs.h |   64 +++++++++++++++-
- 15 files changed, 1148 insertions(+), 8 deletions(-)
-
+diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
+index 684d763..8980149 100644
+--- a/fs/nilfs2/ifile.c
++++ b/fs/nilfs2/ifile.c
+@@ -155,6 +155,190 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
+ 	return err;
+ }
+ 
++static ssize_t
++nilfs_ifile_compare_block(struct inode *ifile1, struct inode *ifile2,
++			  ino_t start, const struct nilfs_bmap_diff *diff,
++			  struct nilfs_ifile_change *changes,
++			  size_t maxchanges)
++{
++	struct buffer_head *ibh1 = NULL, *ibh2 = NULL;
++	struct nilfs_inode *raw_inode1, *raw_inode2;
++	void *kaddr1, *kaddr2;
++	size_t isz = NILFS_MDT(ifile1)->mi_entry_size;
++	__u64 nr;
++	ino_t ino, end;
++	int t;
++	int ret;
++	ssize_t n = 0;
++
++	t = nilfs_palloc_block_type(ifile1, diff->key, &nr);
++	if (t != NILFS_PALLOC_ENTRY_BLOCK)
++		goto out;
++
++	ino = max_t(ino_t, nr, start);
++	end = nr + NILFS_MDT(ifile1)->mi_entries_per_block - 1;
++	if (ino > end)
++		goto out;
++
++	if (diff->ptr1 != NILFS_BMAP_INVALID_PTR) {
++		ret = nilfs_palloc_get_entry_block(ifile1, nr, 0, &ibh1);
++		if (ret < 0) {
++			WARN_ON(ret == -ENOENT); /* ifile is broken */
++			n = ret;
++			goto out;
++		}
++	}
++	if (diff->ptr2 != NILFS_BMAP_INVALID_PTR) {
++		ret = nilfs_palloc_get_entry_block(ifile2, nr, 0, &ibh2);
++		if (ret < 0) {
++			WARN_ON(ret == -ENOENT); /* ifile is broken */
++			n = ret;
++			brelse(ibh1); /* brelse(NULL) is ignored */
++			goto out;
++		}
++	}
++
++	if (!ibh1) {
++		if (!ibh2)
++			goto out_bh;
++
++		kaddr2 = kmap_atomic(ibh2->b_page, KM_USER0);
++		raw_inode2 = nilfs_palloc_block_get_entry(ifile2, ino, ibh2,
++							  kaddr2);
++		for ( ; ino <= end; ino++) {
++			if (le16_to_cpu(raw_inode2->i_links_count)) {
++				changes[n].ino = ino;
++				changes[n].bh1 = NULL;
++				get_bh(ibh2);
++				changes[n].bh2 = ibh2;
++				n++;
++				if (n == maxchanges)
++					break;
++			}
++			raw_inode2 = (void *)raw_inode2 + isz;
++		}
++		kunmap_atomic(kaddr2, KM_USER0);
++
++	} else if (!ibh2) {
++		kaddr1 = kmap_atomic(ibh1->b_page, KM_USER0);
++		raw_inode1 = nilfs_palloc_block_get_entry(ifile1, ino, ibh1,
++							  kaddr1);
++		for ( ; ino <= end; ino++) {
++			if (le16_to_cpu(raw_inode1->i_links_count)) {
++				changes[n].ino = ino;
++				get_bh(ibh1);
++				changes[n].bh1 = ibh1;
++				changes[n].bh2 = NULL;
++				n++;
++				if (n == maxchanges)
++					break;
++			}
++			raw_inode1 = (void *)raw_inode1 + isz;
++		}
++		kunmap_atomic(kaddr1, KM_USER0);
++	} else {
++		kaddr1 = kmap_atomic(ibh1->b_page, KM_USER0);
++		raw_inode1 = nilfs_palloc_block_get_entry(ifile1, ino, ibh1,
++							  kaddr1);
++		kaddr2 = kmap_atomic(ibh2->b_page, KM_USER1);
++		raw_inode2 = nilfs_palloc_block_get_entry(ifile2, ino, ibh2,
++							  kaddr2);
++		for (; ino <= end; ino++) {
++			if (raw_inode1->i_ctime_nsec !=
++			    raw_inode2->i_ctime_nsec ||
++			    raw_inode1->i_ctime != raw_inode2->i_ctime) {
++				changes[n].ino = ino;
++				if (le16_to_cpu(raw_inode1->i_links_count)) {
++					get_bh(ibh1);
++					changes[n].bh1 = ibh1;
++				} else {
++					changes[n].bh1 = NULL;
++				}
++				if (le16_to_cpu(raw_inode2->i_links_count)) {
++					get_bh(ibh2);
++					changes[n].bh2 = ibh2;
++				} else {
++					changes[n].bh2 = NULL;
++				}
++				n++;
++				if (n == maxchanges)
++					break;
++			}
++			raw_inode1 = (void *)raw_inode1 + isz;
++			raw_inode2 = (void *)raw_inode2 + isz;
++		}
++		kunmap_atomic(kaddr1, KM_USER0);
++		kunmap_atomic(kaddr2, KM_USER1);
++	}
++out_bh:
++	brelse(ibh1);
++	brelse(ibh2);
++out:
++	return n;
++}
++
++/**
++ * nilfs_ifile_compare - compare two ifiles and find modified inodes
++ * @ifile1: source ifile inode
++ * @ifile2: target ifile inode
++ * @start: start inode number
++ * @changes: buffer to store nilfs_ifile_change structures
++ * @maxchanges: maximum number of changes that can be stored in @changes
++ */
++ssize_t nilfs_ifile_compare(struct inode *ifile1, struct inode *ifile2,
++			    ino_t start, struct nilfs_ifile_change *changes,
++			    size_t maxchanges)
++{
++	struct nilfs_bmap_diff *diffs;
++	__u64 blkoff;
++	size_t maxdiffs;
++	ssize_t nc = 0, nd, n;
++	int i;
++
++	diffs = (struct nilfs_bmap_diff *)__get_free_pages(GFP_NOFS, 0);
++	if (unlikely(!diffs))
++		return -ENOMEM;
++
++	maxdiffs = PAGE_SIZE / sizeof(*diffs);
++
++	blkoff = nilfs_palloc_entry_blkoff(ifile1, start);
++
++	do {
++		nd = nilfs_bmap_compare(NILFS_I(ifile1)->i_bmap,
++					NILFS_I(ifile2)->i_bmap,
++					blkoff, diffs, maxdiffs);
++		if (nd < 0) {
++			nc = nd;
++			break;
++		}
++		if (nd == 0)
++			break;
++		for (i = 0; i < nd; i++) {
++			n = nilfs_ifile_compare_block(
++				ifile1, ifile2, start, &diffs[i],
++				&changes[nc], maxchanges - nc);
++			if (n < 0) {
++				nc = n;
++				goto failed;
++			}
++			nc += n;
++			if (nc == maxchanges)
++				goto out;
++		}
++		blkoff = diffs[i - 1].key + 1;
++	} while (nd == maxdiffs);
++out:
++	free_pages((unsigned long)diffs, 0);
++	return nc;
++
++failed:
++	for (i = 0; i < nc; i++) {
++		brelse(changes[i].bh1);
++		brelse(changes[i].bh2);
++	}
++	goto out;
++}
++
+ /**
+  * nilfs_ifile_read - read or get ifile inode
+  * @sb: super block instance
+diff --git a/fs/nilfs2/ifile.h b/fs/nilfs2/ifile.h
+index 59b6f2b..fe63ae8 100644
+--- a/fs/nilfs2/ifile.h
++++ b/fs/nilfs2/ifile.h
+@@ -32,6 +32,22 @@
+ #include "alloc.h"
+ 
+ 
++/**
++ * struct nilfs_ifile_change - array item to store ifile comparison result
++ * @ino: inode number
++ * @bh1: pointers to buffer heads having source of changed disk inode
++ * @bh2: pointers to buffer heads having target of changed disk inode
++ *
++ * For new inodes, ptr array becomes @bh1 == NULL and @bh2 != NULL.
++ * For deleted inodes, ptr array becomes @bh1 != NULL and @bh2 == NULL.
++ * For modifed inodes, both @bh1 and @bh2 point to a valid item.
++ */
++struct nilfs_ifile_change {
++	ino_t ino;
++	struct buffer_head *bh1;
++	struct buffer_head *bh2;
++};
++
+ static inline struct nilfs_inode *
+ nilfs_ifile_map_inode(struct inode *ifile, ino_t ino, struct buffer_head *ibh)
+ {
+@@ -49,6 +65,10 @@ int nilfs_ifile_create_inode(struct inode *, ino_t *, struct buffer_head **);
+ int nilfs_ifile_delete_inode(struct inode *, ino_t);
+ int nilfs_ifile_get_inode_block(struct inode *, ino_t, struct buffer_head **);
+ 
++ssize_t nilfs_ifile_compare(struct inode *ifile1, struct inode *ifile2,
++			    ino_t start, struct nilfs_ifile_change *buf,
++			    size_t maxchanges);
++
+ int nilfs_ifile_read(struct super_block *sb, struct nilfs_root *root,
+ 		     size_t inode_size, struct nilfs_inode *raw_inode,
+ 		     struct inode **inodep);
+-- 
+1.7.3.5
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
