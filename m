@@ -1,82 +1,95 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [GIT PULL] nilfs2 updates for 2.6.40
-Date: Mon, 23 May 2011 14:35:53 +0900 (JST)
-Message-ID: <20110523.143553.149410245.ryusuke@osrg.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 1/2] nilfs2: fix incorrect block address termination in node concatenation
+Date: Thu, 26 May 2011 00:22:41 +0900
+Message-ID: <1306336962-14030-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1306336962-14030-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1306336962-14030-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi Linus,
+nilfs_btree_delete function wrongly terminates virtual block address
+of the btree node held by its parent at index 0.  When concatenating
+the index-0 node with its right sibling node, nilfs_btree_delete
+terminates the block address of index-0 node instead of the right
+sibling node which should be deleted.
 
-please pull from:
+This bug not only wears disk space in the long run, but also causes
+file system corruption.  This will fix it.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/btree.c |   18 +++++++++++++-----
+ 1 files changed, 13 insertions(+), 5 deletions(-)
 
-to receive the following nilfs2 updates.  A noticeable change in this
-cycle is support of filesystem resizing, otherwise it's mostly
-cleanups and minor fixes.
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index 7eafe46..fd4f05b 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -1356,20 +1356,19 @@ static int nilfs_btree_prepare_delete(struct nilfs_bmap *btree,
+ 	struct buffer_head *bh;
+ 	struct nilfs_btree_node *node, *parent, *sib;
+ 	__u64 sibptr;
+-	int pindex, level, ncmin, ncmax, ncblk, ret;
++	int pindex, dindex, level, ncmin, ncmax, ncblk, ret;
+ 
+ 	ret = 0;
+ 	stats->bs_nblocks = 0;
+ 	ncmin = NILFS_BTREE_NODE_NCHILDREN_MIN(nilfs_btree_node_size(btree));
+ 	ncblk = nilfs_btree_nchildren_per_block(btree);
+ 
+-	for (level = NILFS_BTREE_LEVEL_NODE_MIN;
++	for (level = NILFS_BTREE_LEVEL_NODE_MIN, dindex = path[level].bp_index;
+ 	     level < nilfs_btree_height(btree) - 1;
+ 	     level++) {
+ 		node = nilfs_btree_get_nonroot_node(path, level);
+ 		path[level].bp_oldreq.bpr_ptr =
+-			nilfs_btree_node_get_ptr(node, path[level].bp_index,
+-						 ncblk);
++			nilfs_btree_node_get_ptr(node, dindex, ncblk);
+ 		ret = nilfs_bmap_prepare_end_ptr(btree,
+ 						 &path[level].bp_oldreq, dat);
+ 		if (ret < 0)
+@@ -1383,6 +1382,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_bmap *btree,
+ 
+ 		parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
+ 		pindex = path[level + 1].bp_index;
++		dindex = pindex;
+ 
+ 		if (pindex > 0) {
+ 			/* left sibling */
+@@ -1421,6 +1421,14 @@ static int nilfs_btree_prepare_delete(struct nilfs_bmap *btree,
+ 				path[level].bp_sib_bh = bh;
+ 				path[level].bp_op = nilfs_btree_concat_right;
+ 				stats->bs_nblocks++;
++				/*
++				 * When merging right sibling node
++				 * into the current node, pointer to
++				 * the right sibling node must be
++				 * terminated instead.  The adjustment
++				 * below is required for that.
++				 */
++				dindex = pindex + 1;
+ 				/* continue; */
+ 			}
+ 		} else {
+@@ -1443,7 +1451,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_bmap *btree,
+ 
+ 	node = nilfs_btree_get_root(btree);
+ 	path[level].bp_oldreq.bpr_ptr =
+-		nilfs_btree_node_get_ptr(node, path[level].bp_index,
++		nilfs_btree_node_get_ptr(node, dindex,
+ 					 NILFS_BTREE_ROOT_NCHILDREN_MAX);
+ 
+ 	ret = nilfs_bmap_prepare_end_ptr(btree, &path[level].bp_oldreq, dat);
+-- 
+1.7.3.5
 
-Thanks!
-
-Ryusuke Konishi
---
-The following changes since commit 349dbc3669d043e656f3ed48c7bfe073ca1c6326:
-
-  nilfs2: fix infinite loop in nilfs_palloc_freev function (2011-05-10 22:19:50 +0900)
-
-are available in the git repository at:
-  git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git for-linus
-
-Nicolas Kaiser (1):
-      nilfs2: merge list_del()/list_add_tail() to list_move_tail()
-
-Ryusuke Konishi (12):
-      nilfs2: get rid of private page allocator
-      nilfs2: super root size should change depending on inode size
-      nilfs2: zero fill unused portion of super root block
-      nilfs2: add ioctl which limits range of segment to be allocated
-      nilfs2: add routine to move secondary super block
-      nilfs2: add truncation routine of segment usage file
-      nilfs2: implement resize ioctl
-      nilfs2: use empty_aops for gc-inodes
-      nilfs2: use list_first_entry
-      nilfs2: get rid of NILFS_I_NILFS
-      nilfs2: always set back pointer to host inode in mapping->host
-      nilfs2: use mark_buffer_dirty to mark btnode or meta data dirty
-
- fs/nilfs2/alloc.c         |   12 +-
- fs/nilfs2/bmap.c          |    4 +-
- fs/nilfs2/btnode.c        |   19 +--
- fs/nilfs2/btnode.h        |    4 -
- fs/nilfs2/btree.c         |   38 +++---
- fs/nilfs2/cpfile.c        |   24 ++--
- fs/nilfs2/dat.c           |    4 +-
- fs/nilfs2/file.c          |    1 -
- fs/nilfs2/gcinode.c       |   25 ++---
- fs/nilfs2/ifile.c         |    4 +-
- fs/nilfs2/inode.c         |   23 +++-
- fs/nilfs2/ioctl.c         |   61 ++++++++++
- fs/nilfs2/mdt.c           |    8 +-
- fs/nilfs2/mdt.h           |    9 +--
- fs/nilfs2/nilfs.h         |    7 +-
- fs/nilfs2/page.c          |   79 +------------
- fs/nilfs2/page.h          |    7 +-
- fs/nilfs2/recovery.c      |   12 +-
- fs/nilfs2/segbuf.c        |   17 +--
- fs/nilfs2/segment.c       |  190 ++++++--------------------------
- fs/nilfs2/segment.h       |    2 -
- fs/nilfs2/sufile.c        |  274 +++++++++++++++++++++++++++++++++++++++++----
- fs/nilfs2/sufile.h        |    4 +-
- fs/nilfs2/super.c         |  131 +++++++++++++++++++++-
- fs/nilfs2/the_nilfs.c     |   24 +++-
- fs/nilfs2/the_nilfs.h     |    2 +
- include/linux/nilfs2_fs.h |    4 +-
- 27 files changed, 603 insertions(+), 386 deletions(-)
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
