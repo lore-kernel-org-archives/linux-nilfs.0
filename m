@@ -1,66 +1,62 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: fun with nilfs_cleanerd
-Date: Thu, 26 May 2011 11:10:07 +0200
-Message-ID: <201105261110.15660.dexen.devries@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: fun with nilfs_cleanerd
+Date: Thu, 26 May 2011 19:03:45 +0900 (JST)
+Message-ID: <20110526.190345.217458031.ryusuke@osrg.net>
+References: <201105261110.15660.dexen.devries@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:from:to:subject:date:user-agent:x-face
-         :mime-version:content-type:content-transfer-encoding:message-id;
-        bh=KgXk6mumeRVOC8AFMlbnhQ5RdavnMN7r3BKkEKZ+tf8=;
-        b=AYbuAY4osKs+ym/lqbfh7P6E0aoZgH7sQIS46YSuX4C6zFXWHGCbZ47iLNXhet4vX0
-         MPDwHji9mjNNufdJjdoIJZoYxY9aKl2hwNe8rglDrB4wzywHqdI4FJDWqpmgQD8WdxXB
-         6hHq6QC7xJTqfGgWi1bbrQt+Qxk+iajlBFa2U=
+In-Reply-To: <201105261110.15660.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="utf-8"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi list,
-
-in /etc/rc.d/rc.local I have a command starting cleanerd for root files=
-ystem:
-# /sbin/nilfs_cleanerd -c /etc/nilfs_cleanerd-root.conf /dev/sda3
-
-At first I wanted a separate config for root filesystem, but now same w=
-as to be=20
-used for both / and /home. So I've removed the metion of the config fil=
-e, and =20
-the command became:
-
-# /sbin/nilfs_cleanerd -c /dev/sda3
-
-(note the -c !)
-=2E..ended up with nilfs_cleanerd spewing countless errors into /var/lo=
-g/syslog,=20
-like:
-
-May 26 11:05:08 coil nilfs_cleanerd[18902]: =D7=B8=EF=BF=BD=EF=BF=BD: u=
-nknown keyword
-May 26 11:05:08 coil nilfs_cleanerd[18902]: c=CB=AE=EF=BF=BD=EF=BF=BD=EF=
-=BF=BD: unknown keyword
-May 26 11:05:08 coil nilfs_cleanerd[18902]: A=EF=BF=BD;^C=EF=BF=BDS-=EF=
-=BF=BDg^W=EF=BF=BD^F=C9=82: unknown keyword
-May 26 11:05:08 coil nilfs_cleanerd[18902]: too long line
-
-
-nilfs_cleanerd using whole partition as the config file =3D=3D fun! ;-)
---=20
-dexen deVries
-
-[[[=E2=86=93][=E2=86=92]]]
-
-=46or example, if the first thing in the file is:
-   <?kzy irefvba=3D"1.0" rapbqvat=3D"ebg13"?>
-an XML parser will recognize that the document is stored in the traditi=
-onal=20
-ROT13 encoding.
-
-(( Joe English, http://www.flightlab.com/~joe/sgml/faq-not.txt ))
+SGksDQpPbiBUaHUsIDI2IE1heSAyMDExIDExOjEwOjA3ICswMjAwLCBkZXhlbiBkZVZyaWVzIHdy
+b3RlOg0KPiBIaSBsaXN0LA0KPiANCj4gaW4gL2V0Yy9yYy5kL3JjLmxvY2FsIEkgaGF2ZSBhIGNv
+bW1hbmQgc3RhcnRpbmcgY2xlYW5lcmQgZm9yIHJvb3QgZmlsZXN5c3RlbToNCj4gIyAvc2Jpbi9u
+aWxmc19jbGVhbmVyZCAtYyAvZXRjL25pbGZzX2NsZWFuZXJkLXJvb3QuY29uZiAvZGV2L3NkYTMN
+Cj4gDQo+IEF0IGZpcnN0IEkgd2FudGVkIGEgc2VwYXJhdGUgY29uZmlnIGZvciByb290IGZpbGVz
+eXN0ZW0sIGJ1dCBub3cgc2FtZSB3YXMgdG8gYmUgDQo+IHVzZWQgZm9yIGJvdGggLyBhbmQgL2hv
+bWUuIFNvIEkndmUgcmVtb3ZlZCB0aGUgbWV0aW9uIG9mIHRoZSBjb25maWcgZmlsZSwgYW5kICAN
+Cj4gdGhlIGNvbW1hbmQgYmVjYW1lOg0KPiANCj4gIyAvc2Jpbi9uaWxmc19jbGVhbmVyZCAtYyAv
+ZGV2L3NkYTMNCj4gDQo+IChub3RlIHRoZSAtYyAhKQ0KPiAuLi5lbmRlZCB1cCB3aXRoIG5pbGZz
+X2NsZWFuZXJkIHNwZXdpbmcgY291bnRsZXNzIGVycm9ycyBpbnRvIC92YXIvbG9nL3N5c2xvZywg
+DQo+IGxpa2U6DQo+IA0KPiBNYXkgMjYgMTE6MDU6MDggY29pbCBuaWxmc19jbGVhbmVyZFsxODkw
+Ml06INe477+977+9OiB1bmtub3duIGtleXdvcmQNCj4gTWF5IDI2IDExOjA1OjA4IGNvaWwgbmls
+ZnNfY2xlYW5lcmRbMTg5MDJdOiBjy67vv73vv73vv706IHVua25vd24ga2V5d29yZA0KPiBNYXkg
+MjYgMTE6MDU6MDggY29pbCBuaWxmc19jbGVhbmVyZFsxODkwMl06IEHvv707XkPvv71TLe+/vWde
+V++/vV5GyYI6IHVua25vd24ga2V5d29yZA0KPiBNYXkgMjYgMTE6MDU6MDggY29pbCBuaWxmc19j
+bGVhbmVyZFsxODkwMl06IHRvbyBsb25nIGxpbmUNCj4gDQo+IA0KPiBuaWxmc19jbGVhbmVyZCB1
+c2luZyB3aG9sZSBwYXJ0aXRpb24gYXMgdGhlIGNvbmZpZyBmaWxlID09IGZ1biEgOy0pDQoNCk9r
+YXksIHNvIG5vbi1yZWd1bGFyIGZpbGVzIHNob3VsZCBiZSByZWplY3RlZCBmb3IgdGhlIGNvbmZp
+ZyBvcHRpb24gOykNCg0KVGhlIGZvbGxvd2luZyBwYXRjaCB3aWxsIHJlc29sdmUgdGhpcy4NCg0K
+VGhhbmtzLA0KUnl1c3VrZSBLb25pc2hpDQotLS0NCkZyb206IFJ5dXN1a2UgS29uaXNoaSA8a29u
+aXNoaS5yeXVzdWtlQGxhYi5udHQuY28uanA+DQoNCm5pbGZzX2NsZWFuZXJkOiByZWplY3QgY29u
+ZmlndXJhdGlvbiBmaWxlIG90aGVyIHRoYW4gcmVndWxhciBmaWxlDQoNClRoZSBjdXJyZW50IGNv
+bmZpZyBmaWxlIG9wdGlvbiBhY2NlcHRzIGFueSB0eXBlcyBvZiBub2RlIG90aGVyIHRoYW4NCnJl
+Z3VsYXIgZmlsZXMuICBUaHVzLA0KDQogIyAvc2Jpbi9uaWxmc19jbGVhbmVyZCAtYyAvZGV2L3Nk
+YTMNCg0Kd2lsbCBsZXQgY2xlYW5lciBkYWVtb24gcmVhZCB0aGUgZGV2aWNlIGFzIGEgY29uZmln
+dXJhdGlvbiBmaWxlLiAgVGhpcw0KcGF0Y2ggcHJldmVudHMgdGhlIHVud2FudGVkIHJlc3VsdC4N
+Cg0KUmVwb3J0ZWQtYnk6IGRleGVuIGRlVnJpZXMgPGRleGVuLmRldnJpZXNAZ21haWwuY29tPg0K
+U2lnbmVkLW9mZi1ieTogUnl1c3VrZSBLb25pc2hpIDxrb25pc2hpLnJ5dXN1a2VAbGFiLm50dC5j
+by5qcD4NCi0tLQ0KIHNiaW4vY2xlYW5lcmQvY2xkY29uZmlnLmMgfCAgICA4ICsrKysrKysrDQog
+MSBmaWxlcyBjaGFuZ2VkLCA4IGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pDQoNCmRpZmYg
+LS1naXQgYS9zYmluL2NsZWFuZXJkL2NsZGNvbmZpZy5jIGIvc2Jpbi9jbGVhbmVyZC9jbGRjb25m
+aWcuYw0KaW5kZXggNDZhMTVhYy4uMWUwZDA2NiAxMDA2NDQNCi0tLSBhL3NiaW4vY2xlYW5lcmQv
+Y2xkY29uZmlnLmMNCisrKyBiL3NiaW4vY2xlYW5lcmQvY2xkY29uZmlnLmMNCkBAIC02ODQsNiAr
+Njg0LDE0IEBAIHN0YXRpYyBpbnQgbmlsZnNfY2xkY29uZmlnX2RvX3JlYWQoc3RydWN0IG5pbGZz
+X2NsZGNvbmZpZyAqY29uZmlnLA0KIGludCBuaWxmc19jbGRjb25maWdfcmVhZChzdHJ1Y3Qgbmls
+ZnNfY2xkY29uZmlnICpjb25maWcsIGNvbnN0IGNoYXIgKnBhdGgsDQogCQkJIHN0cnVjdCBuaWxm
+cyAqbmlsZnMpDQogew0KKwlzdHJ1Y3Qgc3RhdCBzdGJ1ZjsNCisNCisJaWYgKHN0YXQocGF0aCwg
+JnN0YnVmKSA8IDAgfHwgIVNfSVNSRUcoc3RidWYuc3RfbW9kZSkpIHsNCisJCXN5c2xvZyhMT0df
+RVJSLCAiJXM6IGJhZCBjb25maWd1cmF0aW9uIGZpbGUiLCBwYXRoKTsNCisJCWVycm5vID0gRUlO
+VkFMOw0KKwkJcmV0dXJuIC0xOw0KKwl9DQorDQogCW5pbGZzX2NsZGNvbmZpZ19zZXRfZGVmYXVs
+dChjb25maWcsIG5pbGZzKTsNCiAJaWYgKG5pbGZzX2NsZGNvbmZpZ19kb19yZWFkKGNvbmZpZywg
+cGF0aCwgbmlsZnMpIDwgMCkNCiAJCXN5c2xvZyhMT0dfV0FSTklORywgIiVzOiBjYW5ub3QgcmVh
+ZCIsIHBhdGgpOw0KLS0gDQoxLjcuMy41DQoNCg==
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
