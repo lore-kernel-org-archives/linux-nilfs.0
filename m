@@ -1,61 +1,46 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: fun with nilfs_cleanerd
-Date: Thu, 26 May 2011 19:03:45 +0900 (JST)
-Message-ID: <20110526.190345.217458031.ryusuke@osrg.net>
-References: <201105261110.15660.dexen.devries@gmail.com>
+From: Dima Tisnek <dimaqq-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: nilfs2 doesn't garbage collect checkpoints for me
+Date: Thu, 26 May 2011 11:11:55 -0700
+Message-ID: <BANLkTim4BBKwFJUzbnsKw0_Ru2k8ZW3MYw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201105261110.15660.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:date:message-id:subject:from:to
+         :content-type;
+        bh=gggtvi5vLvU9lezoLIMlWd+u1pEIZVCnkP+S7gDFdjk=;
+        b=J736uk+QzePwpCkJ3+Xo37MJvqeqK9zXQ2wk6+AgPGWhl8LQvPrJ+JqGC5ZBerQlyf
+         TY7y1hUK6FS01Kd4GiKSkEooDTSW0C5pwy7hKuyxi3dcZ952qKp6/OSOOuInE6fm8+ut
+         mSYjW/l2GaVGi+xzoGfOxEw5SHfrkSUuzlIzM=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="utf-8"
-To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-SGksDQpPbiBUaHUsIDI2IE1heSAyMDExIDExOjEwOjA3ICswMjAwLCBkZXhlbiBkZVZyaWVzIHdy
-b3RlOg0KPiBIaSBsaXN0LA0KPiANCj4gaW4gL2V0Yy9yYy5kL3JjLmxvY2FsIEkgaGF2ZSBhIGNv
-bW1hbmQgc3RhcnRpbmcgY2xlYW5lcmQgZm9yIHJvb3QgZmlsZXN5c3RlbToNCj4gIyAvc2Jpbi9u
-aWxmc19jbGVhbmVyZCAtYyAvZXRjL25pbGZzX2NsZWFuZXJkLXJvb3QuY29uZiAvZGV2L3NkYTMN
-Cj4gDQo+IEF0IGZpcnN0IEkgd2FudGVkIGEgc2VwYXJhdGUgY29uZmlnIGZvciByb290IGZpbGVz
-eXN0ZW0sIGJ1dCBub3cgc2FtZSB3YXMgdG8gYmUgDQo+IHVzZWQgZm9yIGJvdGggLyBhbmQgL2hv
-bWUuIFNvIEkndmUgcmVtb3ZlZCB0aGUgbWV0aW9uIG9mIHRoZSBjb25maWcgZmlsZSwgYW5kICAN
-Cj4gdGhlIGNvbW1hbmQgYmVjYW1lOg0KPiANCj4gIyAvc2Jpbi9uaWxmc19jbGVhbmVyZCAtYyAv
-ZGV2L3NkYTMNCj4gDQo+IChub3RlIHRoZSAtYyAhKQ0KPiAuLi5lbmRlZCB1cCB3aXRoIG5pbGZz
-X2NsZWFuZXJkIHNwZXdpbmcgY291bnRsZXNzIGVycm9ycyBpbnRvIC92YXIvbG9nL3N5c2xvZywg
-DQo+IGxpa2U6DQo+IA0KPiBNYXkgMjYgMTE6MDU6MDggY29pbCBuaWxmc19jbGVhbmVyZFsxODkw
-Ml06INe477+977+9OiB1bmtub3duIGtleXdvcmQNCj4gTWF5IDI2IDExOjA1OjA4IGNvaWwgbmls
-ZnNfY2xlYW5lcmRbMTg5MDJdOiBjy67vv73vv73vv706IHVua25vd24ga2V5d29yZA0KPiBNYXkg
-MjYgMTE6MDU6MDggY29pbCBuaWxmc19jbGVhbmVyZFsxODkwMl06IEHvv707XkPvv71TLe+/vWde
-V++/vV5GyYI6IHVua25vd24ga2V5d29yZA0KPiBNYXkgMjYgMTE6MDU6MDggY29pbCBuaWxmc19j
-bGVhbmVyZFsxODkwMl06IHRvbyBsb25nIGxpbmUNCj4gDQo+IA0KPiBuaWxmc19jbGVhbmVyZCB1
-c2luZyB3aG9sZSBwYXJ0aXRpb24gYXMgdGhlIGNvbmZpZyBmaWxlID09IGZ1biEgOy0pDQoNCk9r
-YXksIHNvIG5vbi1yZWd1bGFyIGZpbGVzIHNob3VsZCBiZSByZWplY3RlZCBmb3IgdGhlIGNvbmZp
-ZyBvcHRpb24gOykNCg0KVGhlIGZvbGxvd2luZyBwYXRjaCB3aWxsIHJlc29sdmUgdGhpcy4NCg0K
-VGhhbmtzLA0KUnl1c3VrZSBLb25pc2hpDQotLS0NCkZyb206IFJ5dXN1a2UgS29uaXNoaSA8a29u
-aXNoaS5yeXVzdWtlQGxhYi5udHQuY28uanA+DQoNCm5pbGZzX2NsZWFuZXJkOiByZWplY3QgY29u
-ZmlndXJhdGlvbiBmaWxlIG90aGVyIHRoYW4gcmVndWxhciBmaWxlDQoNClRoZSBjdXJyZW50IGNv
-bmZpZyBmaWxlIG9wdGlvbiBhY2NlcHRzIGFueSB0eXBlcyBvZiBub2RlIG90aGVyIHRoYW4NCnJl
-Z3VsYXIgZmlsZXMuICBUaHVzLA0KDQogIyAvc2Jpbi9uaWxmc19jbGVhbmVyZCAtYyAvZGV2L3Nk
-YTMNCg0Kd2lsbCBsZXQgY2xlYW5lciBkYWVtb24gcmVhZCB0aGUgZGV2aWNlIGFzIGEgY29uZmln
-dXJhdGlvbiBmaWxlLiAgVGhpcw0KcGF0Y2ggcHJldmVudHMgdGhlIHVud2FudGVkIHJlc3VsdC4N
-Cg0KUmVwb3J0ZWQtYnk6IGRleGVuIGRlVnJpZXMgPGRleGVuLmRldnJpZXNAZ21haWwuY29tPg0K
-U2lnbmVkLW9mZi1ieTogUnl1c3VrZSBLb25pc2hpIDxrb25pc2hpLnJ5dXN1a2VAbGFiLm50dC5j
-by5qcD4NCi0tLQ0KIHNiaW4vY2xlYW5lcmQvY2xkY29uZmlnLmMgfCAgICA4ICsrKysrKysrDQog
-MSBmaWxlcyBjaGFuZ2VkLCA4IGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pDQoNCmRpZmYg
-LS1naXQgYS9zYmluL2NsZWFuZXJkL2NsZGNvbmZpZy5jIGIvc2Jpbi9jbGVhbmVyZC9jbGRjb25m
-aWcuYw0KaW5kZXggNDZhMTVhYy4uMWUwZDA2NiAxMDA2NDQNCi0tLSBhL3NiaW4vY2xlYW5lcmQv
-Y2xkY29uZmlnLmMNCisrKyBiL3NiaW4vY2xlYW5lcmQvY2xkY29uZmlnLmMNCkBAIC02ODQsNiAr
-Njg0LDE0IEBAIHN0YXRpYyBpbnQgbmlsZnNfY2xkY29uZmlnX2RvX3JlYWQoc3RydWN0IG5pbGZz
-X2NsZGNvbmZpZyAqY29uZmlnLA0KIGludCBuaWxmc19jbGRjb25maWdfcmVhZChzdHJ1Y3Qgbmls
-ZnNfY2xkY29uZmlnICpjb25maWcsIGNvbnN0IGNoYXIgKnBhdGgsDQogCQkJIHN0cnVjdCBuaWxm
-cyAqbmlsZnMpDQogew0KKwlzdHJ1Y3Qgc3RhdCBzdGJ1ZjsNCisNCisJaWYgKHN0YXQocGF0aCwg
-JnN0YnVmKSA8IDAgfHwgIVNfSVNSRUcoc3RidWYuc3RfbW9kZSkpIHsNCisJCXN5c2xvZyhMT0df
-RVJSLCAiJXM6IGJhZCBjb25maWd1cmF0aW9uIGZpbGUiLCBwYXRoKTsNCisJCWVycm5vID0gRUlO
-VkFMOw0KKwkJcmV0dXJuIC0xOw0KKwl9DQorDQogCW5pbGZzX2NsZGNvbmZpZ19zZXRfZGVmYXVs
-dChjb25maWcsIG5pbGZzKTsNCiAJaWYgKG5pbGZzX2NsZGNvbmZpZ19kb19yZWFkKGNvbmZpZywg
-cGF0aCwgbmlsZnMpIDwgMCkNCiAJCXN5c2xvZyhMT0dfV0FSTklORywgIiVzOiBjYW5ub3QgcmVh
-ZCIsIHBhdGgpOw0KLS0gDQoxLjcuMy41DQoNCg==
+Hi,
+
+I'm testing nilfs2 and other fs's for use on cheap flash cards, trying
+to avoid writing same location all the time.
+My test program makes lots of small sqlite transactions which sqlite
+syncs to disk.
+In less than 2000 transaction 1GB nilfs2 volume ran out of disk space.
+tried unmount, mount again, didn't help
+block device is nbd, works with with other fs's
+
+lscp shows there are 7121 checkpoints and somehow old ones are not
+removed automatically.
+df -h shows 944M used 8M free 100% use
+nilfs_cleanerd is running, its logs look ok (start, pause, resume,
+shutdown, start, pause, resume)
+
+kernel 2.6.38-arch
+nilfs-utils 2.0.23
+
+If someone interested I can drop the block device image to dropbox or something.
+
+Thanks,
+Dima Tisnek
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
