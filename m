@@ -1,262 +1,48 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: nilfs2 doesn't garbage collect checkpoints for me
-Date: Fri, 27 May 2011 13:38:03 +0900 (JST)
-Message-ID: <20110527.133803.215389018.ryusuke@osrg.net>
-References: <BANLkTim4BBKwFJUzbnsKw0_Ru2k8ZW3MYw@mail.gmail.com>
-	<201105262032.54257.dexen.devries@gmail.com>
-	<BANLkTimNm6QcNOmc1Gwp2K+SVKoRV8+8Cg@mail.gmail.com>
+From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Ability to discard all changes after a point in time?
+Date: Fri, 27 May 2011 08:28:28 +0200
+Message-ID: <201105270828.32843.dexen.devries@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <BANLkTimNm6QcNOmc1Gwp2K+SVKoRV8+8Cg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:from:to:subject:date:user-agent:x-face
+         :mime-version:content-type:content-transfer-encoding:message-id;
+        bh=T9yLqrNNK/sj0hpd7MWz+9x3sL4MRMsDgsBAGwbRXl4=;
+        b=jBjnoiz3P//UL3bFOYnBZClY1ih1oXVx7ODut5Ktd1j2UO5uOZujdRqGn7v2jMN3Iv
+         NXh4MH2ZXlCtLIfFaQMdGIPZ3pypCVQnznSIR7A5nxAftY132C48GV4M3V3jJpzl6EQH
+         oRZn5Cf9vx8F4x6h7d+tOlNr99B2oW6yht6vk=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-8859-1"
-To: dimaqq-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
-On Thu, 26 May 2011 13:24:22 -0700, Dima Tisnek wrote:
-> Hi Dexen,
->=20
-> you were spot on, protection time was the culprit.
->=20
-> while on the subject, I can see many cases where more is written to
-> the disk in 1h than there is free space (my problem was than entire
-> disk, but it's equivalent), are there any plans to collect earlier
-> rather than enfore protection time when running low on disk?
->=20
-> now I set cleaner like this (for accelerated testing):
->=20
-> protection_period       1
-> min_clean_segments      10%
-> max_clean_segments      90%
-> clean_check_interval    1
-> selection_policy        timestamp       # timestamp in ascend order
-> nsegments_per_clean     10
-> mc_nsegments_per_clean  100
-> cleaning_interval       10
-> mc_cleaning_interval    1
-> retry_interval          10
-> use_mmap
-> log_priority            info
->=20
-> I know some settings are ridiculous, do tell me if I did something
-> completely insane :)
 
-The maximum value of nsegments_per_clean and mc_nsegments_per_clean is
-is 32, and it is cut to the value if greater than that.
 
-Setting a large value for these parameters is actually not sane
-because cleaning one segment consumes 8MB kernel memory at maximum.
-Decreasing cleaning intervals is better way.
+recently I was searching for a way to discard all changes after a certain 
+point in time -- that is, to rollback filesystem state to a particular 
+checkpoint. I couldn't find a way, is there any?
 
-But, unfortunately cleaner daemon does not handle subsecond value for
-these parameters.
+If not, I'd like to request such functionality. Preferrably selectable at 
+mount time, via an argument to mount (or the `rootflags' kernel parameter).
 
-> same test (~150K disk traffic per transaction, 10 transactions a
-> second), eventually system begins to swap and then nilfs2 dies leavin=
-g
-> this in dmesg:
->=20
-> [66598.373596] nilfs_cleanerd: page allocation failure. order:0, mode=
-:0x50
-> [66598.373596] Pid: 30708, comm: nilfs_cleanerd Tainted: G        W
-> 2.6.38-ARCH #1
-> [66598.373596] Call Trace:
-> [66598.373596]  [<c10c563c>] ? __alloc_pages_nodemask+0x54c/0x750
-> [66598.373596]  [<c10ffab8>] ? mem_cgroup_charge_common+0x68/0xb0
-> [66598.373596]  [<c10bf923>] ? find_or_create_page+0x43/0x90
-> [66598.373596]  [<d2344733>] ? nilfs_grab_buffer+0x33/0xc0 [nilfs2]
-> [66598.381684] nbd4: Attempted send on closed socket
-> [66598.381684] end_request: I/O error, dev nbd4, sector 461512
-> [66598.394594] nbd4: Attempted send on closed socket
-> [66598.394594] end_request: I/O error, dev nbd4, sector 461760
-> [66598.394594] nbd4: Attempted send on closed socket
-> [66598.394594] end_request: I/O error, dev nbd4, sector 462008
-> [66598.404089]  [<d2357bcc>] ?
-> nilfs_gccache_submit_read_data+0x2c/0x140 [nilfs2]
-> [66598.404089]  [<d2358573>] ?
-> nilfs_ioctl_clean_segments.isra.8+0x2e3/0x7a0 [nilfs2]
-> [66598.404089]  [<d2348d09>] ? nilfs_btree_do_lookup+0x1f9/0x290 [nil=
-fs2]
-> [66598.404089]  [<d2358e36>] ? nilfs_ioctl+0x1f6/0x40c [nilfs2]
-> [66598.404089]  [<c1033b14>] ? finish_task_switch+0x34/0xb0
-> [66598.404089]  [<c13192cd>] ? schedule+0x28d/0x9e0
-> [66598.404089]  [<d2358c40>] ? nilfs_ioctl+0x0/0x40c [nilfs2]
-> [66598.407101] nbd4: Attempted send on closed socket
-> [66598.407101] end_request: I/O error, dev nbd4, sector 462256
-> [66598.407101] nbd4: Attempted send on closed socket
-> [66598.407101] end_request: I/O error, dev nbd4, sector 462504
-> [66598.407101] nbd4: Attempted send on closed socket
-> [66598.407101] end_request: I/O error, dev nbd4, sector 462752
-> [66598.430221]  [<c1113b99>] ? do_vfs_ioctl+0x79/0x570
-> [66598.430221]  [<c11ac164>] ? copy_to_user+0x34/0x50
-> [66598.430221]  [<c11140f7>] ? sys_ioctl+0x67/0x80
-> [66598.430221]  [<c131c360>] ? syscall_call+0x7/0xb
-> [66598.430221] Mem-Info:
-> [66598.430221] DMA per-cpu:
-> [66598.430221] CPU    0: hi:    0, btch:   1 usd:   0
-> [66598.430221] Normal per-cpu:
-> [66598.430221] CPU    0: hi:   90, btch:  15 usd:  11
-> [66598.430221] active_anon:0 inactive_anon:1 isolated_anon:0
-> [66598.430221]  active_file:28328 inactive_file:28550 isolated_file:1=
-28
-> [66598.430221]  unevictable:0 dirty:0 writeback:0 unstable:0
-> [66598.430221]  free:0 slab_reclaimable:2787 slab_unreclaimable:1104
-> [66598.430221]  mapped:1 shmem:0 pagetables:27 bounce:0
-> [66598.430221] DMA free:0kB min:120kB low:148kB high:180kB
-> active_anon:0kB inactive_anon:4kB active_file:5984kB
-> inactive_file:7032kB unevictable:0kB isolated(anon):0kB
-> isolated(file):0kB present:15804kB mlocked:0kB dirty:0kB writeback:0k=
-B
-> mapped:0kB shmem:0kB slab_reclaimable:2876kB slab_unreclaimable:8kB
-> kernel_stack:8kB pagetables:0kB unstable:0kB bounce:0kB
-> writeback_tmp:0kB pages_scanned:18118 all_unreclaimable? yes
-> [66598.430221] lowmem_reserve[]: 0 238 238 238
+Something along the lines `rollbackto=<checkpoint-number>'. 
 
-This log actually shows that the kernel memory shortage happened.
+The desired effect is to set the indicated checkpoint as the latest one, so all 
+subsequent changes to filesystem are discarded.
 
-You should decrease mc_nsegments_per_clean at least less than 32.
 
-Well, I'll consider changing the parser routine to allow subsecond
-values for the interval parameters.
+What are your thoughts on that?
 
-Thanks,
-Ryusuke Konishi
-=20
-=20
-> if you give me some hints and I will try again tomorrow :)
->=20
-> Dima Tisnek
->=20
-> On 26 May 2011 11:32, dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > Hi,
-> >
-> >
-> > On Thursday 26 of May 2011 20:11:55 you wrote:
-> >> I'm testing nilfs2 and other fs's for use on cheap flash cards, tr=
-ying
-> >> to avoid writing same location all the time.
-> >
-> > I'm using nilfs2 on a small server with a cheap-o 16GB SSD extracte=
-d from
-> > Eeepc for the same reason; works great.
-> >
-> >
-> >
-> >> My test program makes lots of small sqlite transactions which sqli=
-te
-> >> syncs to disk.
-> >> In less than 2000 transaction 1GB nilfs2 volume ran out of disk sp=
-ace.
-> >> tried unmount, mount again, didn't help
-> >> block device is nbd, works with with other fs's
-> >>
-> >> lscp shows there are 7121 checkpoints and somehow old ones are not
-> >> removed automatically.
-> >
-> > First off, the default configuration of nilfs_cleanerd is to keep a=
-ll
-> > checkpoints for at least one hour (3600 seconds). See file
-> > /etc/nilfs_cleanerd.conf, option `protection_period'. For testing y=
-ou may want
-> > to change the protection period to just a few seconds and see if th=
-at helps.
-> > Either via the config file (and issue a SIGHUP so it reloads the co=
-nfig) or via
-> > the `-p SECONDS' argument (see manpage).
-> >
-> > To see what's going on, you may want to change (temporarily) the
-> > `log_priority' in config file to `debug'; in /var/log/debug you sho=
-uld then see
-> > statements describing actions of the nilfs_cleanerd.
-> >
-> >
-> > Example:
-> >
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: wake up
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: ncleansegs =3D 1175
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: 4 segments selected to =
-be cleaned
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: protected checkpoints =3D
-> > [156725,157003] (protection period >=3D 1306430633)
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: segment 1844 cleaned
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: segment 1845 cleaned
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: segment 1846 cleaned
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: segment 1847 cleaned
-> > May 26 20:23:53 blitz nilfs_cleanerd[3198]: wait 0.488223000
-> >
-> >
-> > where the `ncleansegs' is the number of clean (free) segments you a=
-lready
-> > have, and `protected checkpoints' indicates range of checkpoint num=
-bers that
-> > are still under protection (due to the `protection_period' setting)
-> >
-> >
-> > In any case, my understanding is that in typical DB, each transacti=
-on (which
-> > may be each command, if you don't begin/commit transaction explicit=
-ly) causes
-> > an fsync() which creates a new checkpoint. On a small drive that *m=
-ay* cause
-> > creation of so many checkpoints in a short time they don't get GC'd=
- before the
-> > drive fills up. Not sure yet how to work around that.
-> >
-> >
-> >
-> > Two more possible sources of the problem:
-> > 1) GC used to break in certain scenario: the FS could become intern=
-ally
-> > inconsistent (no data loss, but it wouldn't perform GC anymore) if =
-two or more
-> > nilfs_cleanerds were processing it at the same time. It's probably =
-fixed with
-> > the most recent patches. To check if that's the case, see output of=
- `dmesg'
-> > command; it would indicate problems in NILFS.
-> >
-> > 2) new `nilfs_cleanerd' process may become stuck on semaphore if yo=
-u kill the
-> > old one hard =A0(for example, kill -9). That used to leave aux file=
- in /dev/shm/,
-> > like /dev/shm/sem.nilfs-cleaner-2067. To check if that's the case, =
-run
-> > nilfs_cleanred through strace, like:
-> >
-> > # strace -f nilfs_cleanerd /dev/YOUR_FILESYSTEM
-> >
-> > if it hangs at one point on futex() call, that's it. A brute-force,=
- but sure-
-> > fire way is to kill all instances of nilfs_cleanerd and remove file=
-s matching
-> > /dev/shm/sem.nilfs-cleaner-*
-> >
-> >
-> > Hope that helps somehow~
-> >
-> >
-> > --
-> > dexen deVries
-> >
-> > ``One can't proceed from the informal to the formal by formal means=
-=2E''
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-nil=
-fs" in
-> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at =A0http://vger.kernel.org/majordomo-info.htm=
-l
-> >
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
-" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+Regards,
+-- 
+dexen deVries
+
+``One can't proceed from the informal to the formal by formal means.''
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
