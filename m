@@ -1,8 +1,8 @@
 From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: nilfs2 doesn't garbage collect checkpoints for me
-Date: Wed, 1 Jun 2011 21:19:25 +0200
-Message-ID: <201106012119.26289.dexen.devries@gmail.com>
-References: <BANLkTim4BBKwFJUzbnsKw0_Ru2k8ZW3MYw@mail.gmail.com> <201106011934.30725.dexen.devries@gmail.com> <BANLkTinsZZeRDmQR8sAWrqUP1N4UK5ktAA@mail.gmail.com>
+Subject: Re: Split some metadata onto separate device?
+Date: Fri, 3 Jun 2011 19:42:28 +0200
+Message-ID: <201106031942.29133.dexen.devries@gmail.com>
+References: <201106031229.38758.dexen.devries@gmail.com> <20110604.022621.01482278.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,44 +11,47 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         h=domainkey-signature:from:to:subject:date:user-agent:references
          :in-reply-to:x-face:mime-version:content-type
          :content-transfer-encoding:message-id;
-        bh=yPiehQxW5zeLsxGkn+EKi/51ZRsqNE9OJGlco/VrvTs=;
-        b=PBYp7XeBBaPPgN98iJqm4c1iqWGm3naoceq6ycC4BHIJRtKfBPqZhfFvtWnVDmCFgi
-         DjRZETJNfZlATcbeBIH/NAV9jTEyRX8FoDwaORmdwfJfQV0jJXfJ48fmyDb3JwgE7L/Q
-         E7HZ5vjTYNVJDeYGnM9gEHyxNfX7oS/CUqWyk=
-In-Reply-To: <BANLkTinsZZeRDmQR8sAWrqUP1N4UK5ktAA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        bh=e6LxvLhS7i4T3TadpGIpcyaSvl4iwd8JhlUt4sxpx2k=;
+        b=ewYUNgjEs/WJzVjBjK27W/piMnimjPQY7/EIbhHg/JynRPCa1wAZ/YCJFPakdVtb/s
+         bpYefB5epUxnv20HKrIJRv7DvPzHKRgd1yEr0CAdwO1F+wo4IC0VtTzNT8Nv2fZhBSzb
+         UFajhYNGPS9yc0RM1Rt/TlxQKr3l++W7fdf/g=
+In-Reply-To: <20110604.022621.01482278.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi again, Dima,
+Hi Ryusuke,
 
 
-On Wednesday 01 June 2011 20:21:07 you wrote:
-> Thanks for the tip, bkltrace seems to give me what I want and much more!
+On Friday 03 June 2011 19:26:21 you wrote:
+> (...) 
+> NILFS2 is a log-structured filesystem and that means the filesystem
+> itself is a big journal.  My understanding is using separate journal
+> device has no merit of performance.
+> 
+> On the other hand, We may be able to speed up the filesystem by
+> putting DAT (disk address translation) metadata to a separate device.
+> I mean putting a full copy of the DAT metadata on the sperate device
+> instead of journal of it.
 
-yay :)
-
-
-dunno if that'll help you at all, but:
-I've been observing some process writing to NILFS2 to-day. It was issuing one 
-(filesystem) transaction every couple seconds. About 250kb was written to the 
-drive (of both data and metadata) -- and the interesting thing is, it was 
-written as one I/O operation (as reported by iostat).
-
-Depending on configuration and properties of your storage (possibly including 
-multiple-sector i/o configuration, see hdparm's `-m' option), a (filesystem-
-level) transaction on to NILFS2 may issue just one drive-level operation.
-
-As opposed to other filesystems, which keep data and various kinds of metadataa 
-all separate.
-
-Of course later on the GC will kick in, but it also writes large chunks at 
-once, rather than spreading them all over the storage.
+*nods* sounds interesting. Of course changing on-disk format would hurt ;-)
 
 
+> But, I think we have other approaches to think about before that with
+> regard to performance improvement.  For example, applying "extent" to
+> DAT seems much more effective.
 
-Cheers,
+Currently every block of file gets own entry in DAT, right?
+
+
+By the way, it seems to me that the in-kernel GC does not attempt to de-
+fragment files. Is that the case? If so, would probably mean extents would not 
+help very much for fragmented files. Also, on magnetic media, a lot of seeking 
+happens in case of fragmented files.
+
+
+Regards,
 -- 
 dexen deVries
 
