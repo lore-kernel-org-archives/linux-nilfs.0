@@ -1,61 +1,125 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Split some metadata onto separate device?
-Date: Fri, 3 Jun 2011 19:42:28 +0200
-Message-ID: <201106031942.29133.dexen.devries@gmail.com>
-References: <201106031229.38758.dexen.devries@gmail.com> <20110604.022621.01482278.ryusuke@osrg.net>
+From: Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>
+Subject: Can I recover my nilfs disk partition and a few other questions?
+Date: Tue, 7 Jun 2011 12:03:14 -0700
+Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181B05E4D724@COLOSSEXCH01.starsolutions.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:from:to:subject:date:user-agent:references
-         :in-reply-to:x-face:mime-version:content-type
-         :content-transfer-encoding:message-id;
-        bh=e6LxvLhS7i4T3TadpGIpcyaSvl4iwd8JhlUt4sxpx2k=;
-        b=ewYUNgjEs/WJzVjBjK27W/piMnimjPQY7/EIbhHg/JynRPCa1wAZ/YCJFPakdVtb/s
-         bpYefB5epUxnv20HKrIJRv7DvPzHKRgd1yEr0CAdwO1F+wo4IC0VtTzNT8Nv2fZhBSzb
-         UFajhYNGPS9yc0RM1Rt/TlxQKr3l++W7fdf/g=
-In-Reply-To: <20110604.022621.01482278.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Hi Ryusuke,
+Hello,
 
+  I have a setup of a partition on a SSD with nilfs on it all running under
+Centos 5.5 on a x86. With some heavy amount of writes to the nilfs partition
+the power was accidentally cycled. On bootup the nilfs partition reported
+the following errors:
+            NILFS warning: Checksum error in segment payload
+            NILFS: error searching super root
 
-On Friday 03 June 2011 19:26:21 you wrote:
-> (...) 
-> NILFS2 is a log-structured filesystem and that means the filesystem
-> itself is a big journal.  My understanding is using separate journal
-> device has no merit of performance.
-> 
-> On the other hand, We may be able to speed up the filesystem by
-> putting DAT (disk address translation) metadata to a separate device.
-> I mean putting a full copy of the DAT metadata on the sperate device
-> instead of journal of it.
+I worked around this by modifying the nilfs kernel code to remove the full
+check in load_segment_summary (i.e. basically just check the segment summary
+and I made it further towards recovery of my data). Now, I have encountered
+this error:
+  NILFS warning: Checksum error in super root
+  NILFS: error loading super root.
 
-*nods* sounds interesting. Of course changing on-disk format would hurt ;-)
+I am not comfortable changing the code in nilfs_read_super_root_block
+without feedback from this list. I am okay if I lose some of
+the data at the end as long as I can recover most of the data. Some
+questions I have are:
 
+ 1. Why cannot mount allow one to mount from an earlier checkpoint on a
+    previous segment if the super_root for the latest is corrupted, or
+    am I missing something? Does anybody have a mount that does?
 
-> But, I think we have other approaches to think about before that with
-> regard to performance improvement.  For example, applying "extent" to
-> DAT seems much more effective.
+ 2. Is there any work on a fsck for nilfs? Even if it is very pre-release it
+    might help me to recover my data?
 
-Currently every block of file gets own entry in DAT, right?
+ 3. On a accidental power failure I considered nilfs to be the most robust
+    on a SSD - am I wrong in my appraisal.
 
+Any help is much appreciated. Thanks.
 
-By the way, it seems to me that the in-kernel GC does not attempt to de-
-fragment files. Is that the case? If so, would probably mean extents would not 
-help very much for fragmented files. Also, on magnetic media, a lot of seeking 
-happens in case of fragmented files.
+Zahid
 
+P.S.: nilfs-tune works well on the partition:
 
-Regards,
--- 
-dexen deVries
+nilfs-tune 2.0.22
 
-``One can't proceed from the informal to the formal by formal means.''
+Filesystem volume name:   /writable
+
+Filesystem UUID:          0ba44621-5e7c-40ad-8087-b9493765e419
+
+Filesystem magic number:  0x3434
+
+Filesystem revision #:    2.0
+
+Filesystem features:      (none)
+
+Filesystem state:         invalid or mounted
+
+Filesystem OS type:       Linux
+
+Block size:               4096
+
+Filesystem created:       Tue May 24 17:12:08 2011
+
+Last mount time:          Fri Jun  3 19:07:49 2011
+
+Last write time:          Fri Jun  3 19:08:35 2011
+
+Mount count:              715
+
+Maximum mount count:      50
+
+Reserve blocks uid:       0 (user root)
+
+Reserve blocks gid:       0 (group root)
+
+First inode:              11
+
+Inode size:               128
+
+DAT entry size:           32
+
+Checkpoint size:          192
+
+Segment usage size:       16
+
+Number of segments:       1316
+
+Device size:              11046551040
+
+First data block:         1
+
+# of blocks per segment:  2048
+
+Reserved segments %:      5
+
+Last checkpoint #:        1893038
+
+Last block address:       712887
+
+Last sequence #:          200747
+
+Free blocks count:        1939456
+
+Commit interval:          0
+
+# of blks to create seg:  0
+
+CRC seed:                 0x298bad54
+
+CRC check sum:            0x5e92199d
+
+CRC check data size:      0x00000118
+
+ 
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
