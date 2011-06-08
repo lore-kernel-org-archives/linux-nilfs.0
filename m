@@ -1,19 +1,70 @@
 From: Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>
 Subject: RE: Can I recover my nilfs disk partition and a few other questions?
-Date: Wed, 8 Jun 2011 12:15:49 -0700
-Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181B05E4DA08@COLOSSEXCH01.starsolutions.com>
+Date: Wed, 8 Jun 2011 16:06:53 -0700
+Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181B05E4DA73@COLOSSEXCH01.starsolutions.com>
 References: <053D39D3D76C474EB2D2A284AA6BA3181B05E4D724@COLOSSEXCH01.starsolutions.com>
  <20110608.212445.137356715.ryusuke@osrg.net>
+ <053D39D3D76C474EB2D2A284AA6BA3181B05E4DA08@COLOSSEXCH01.starsolutions.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110608.212445.137356715.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <053D39D3D76C474EB2D2A284AA6BA3181B05E4DA08-ZjuI7xOJlFPnaE3xbIMyWkCiaQ3SRT3KFkJ40O1dFu8@public.gmane.org>
 Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 To: Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>
 Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+
+
+Hello Ryusuke,
+  Thank you so much for your help so far. I'm hoping that I am close to recovery of the data on the nilfs partition. I turned on nilfs debug on my kernel & then followed a previous posters debug turn on (echo '-vvv recovery' > /proc/fs/nilfs2/debug_option). This is what dmesg shows afterwards on a mount:
+
+> NILFS nilfs_fill_super: start(silent=0)
+> NILFS warning: mounting unchecked fs
+> NILFS(recovery) nilfs_search_super_root: looking segment (seg_start=706560, seg_end=708607, segnum=345, seg_seq=200745)
+> NILFS(recovery) load_segment_summary: checking segment (pseg_start=707940, full_check=1)
+> NILFS warning: Checksum error in segment payload - workaround, only check segment summary
+> NILFS(recovery) load_segment_summary: done (ret=0)
+> NILFS(recovery) load_segment_summary: checking segment (pseg_start=707980, full_check=1)
+> NILFS warning: Checksum error in segment payload - workaround, only check segment summary
+> NILFS(recovery) load_segment_summary: done (ret=0)
+> NILFS(recovery) nilfs_search_super_root: try_next_pseg: scan_newer=1, ret=0
+> NILFS(recovery) nilfs_search_super_root: looking segment (seg_start=708608, seg_end=710655, segnum=346, seg_seq=200746)
+> NILFS(recovery) load_segment_summary: checking segment (pseg_start=708608, full_check=1)
+> NILFS warning: Checksum error in segment payload - workaround, only check segment summary
+> NILFS(recovery) load_segment_summary: done (ret=0)
+> NILFS(recovery) nilfs_search_super_root: try_next_pseg: scan_newer=1, ret=0
+> NILFS(recovery) nilfs_search_super_root: looking segment (seg_start=712704, seg_end=714751, segnum=348, seg_seq=200747)
+> NILFS(recovery) load_segment_summary: checking segment (pseg_start=712704, full_check=1)
+> NILFS warning: Checksum error in segment payload - workaround, only check segment summary
+> NILFS(recovery) load_segment_summary: done (ret=0)
+> NILFS(recovery) load_segment_summary: checking segment (pseg_start=712887, full_check=1)
+> NILFS warning: Checksum error in segment payload - workaround, only check segment summary
+> NILFS(recovery) load_segment_summary: done (ret=0)
+> NILFS(recovery) load_segment_summary: checking segment (pseg_start=712980, full_check=1)
+> NILFS(recovery) load_segment_summary: done (ret=3)
+> NILFS(recovery) nilfs_search_super_root: strayed: scan_newer=1, ret=3
+> NILFS(recovery) nilfs_search_super_root: looking segment (seg_start=714752, seg_end=716799, segnum=349, seg_seq=200748)
+> NILFS(recovery) load_segment_summary: checking segment (pseg_start=714752, full_check=1)
+> NILFS(recovery) load_segment_summary: done (ret=4)
+> NILFS(recovery) nilfs_search_super_root: strayed: scan_newer=1, ret=4
+> NILFS(recovery) nilfs_search_super_root: found super root: segnum=348, seq=200747, pseg_start=712887, pseg_offset=276
+> NILFS warning: Checksum error in super root
+> NILFS: error loading super root.
+> NILFS nilfs_fill_super: aborted
+> NILFS put_nilfs: the_nilfs on bdev sda2 was freed
+
+Regards.
+
+Zahid
+
+-----Original Message-----
+From: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org [mailto:linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org] On Behalf Of Zahid Chowdhury
+Sent: Wednesday, June 08, 2011 12:16 PM
+To: Ryusuke Konishi
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: RE: Can I recover my nilfs disk partition and a few other questions?
 
 Hello,
   I have tried fsck0 on the nilfs2 partition. Here is my output:
@@ -236,6 +287,10 @@ Ryusuke Konishi
 > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
