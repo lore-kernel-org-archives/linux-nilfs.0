@@ -1,62 +1,55 @@
 From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Split some metadata onto separate device?
-Date: Wed, 8 Jun 2011 15:08:37 +0200
-Message-ID: <201106081508.39345.dexen.devries@gmail.com>
-References: <20110604.022621.01482278.ryusuke@osrg.net> <20110608.214852.237935973.ryusuke@osrg.net> <20110608.215803.224753719.ryusuke@osrg.net>
+Subject: Cleancache
+Date: Wed, 8 Jun 2011 15:14:59 +0200
+Message-ID: <201106081514.59693.dexen.devries@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
-        h=domainkey-signature:from:to:subject:date:user-agent:references
-         :in-reply-to:x-face:mime-version:content-type
-         :content-transfer-encoding:message-id;
-        bh=2gTfSlzpkG4V3L2SokiWJt7YOpl/eFBOjrbpQ4B061o=;
-        b=WoVhh3ZVAdoUXsMdsb295ORgSP8cYToxBkQW8D5QadmSsSGSgOsNiFGR5UU2gxUcxd
-         6nPQYU3c682BmfjEPDaVul6Om+VZPNdFVoFpiuloncD7uBqezAIFid0IoXvoYJQ93Ei5
-         h9ltLgNqEjbwjMUNnKm2tpv/bic8TVZQGgTYM=
-In-Reply-To: <20110608.215803.224753719.ryusuke-sG5X7nlA6pw@public.gmane.org>
+        h=domainkey-signature:from:to:subject:date:user-agent:x-face
+         :mime-version:content-type:content-transfer-encoding:message-id;
+        bh=b9rZ/m1IvUvlIkXJ5Gz7goY5aX2grJZ4YX2GMVpoi9Y=;
+        b=tIneAOUBxCJMo3fLu/IJDqYKc5SqiHaxNdg5ncSCyeStfVyny9GIRYLEyMZ3TxseNM
+         OrZ9ftGVQZ+hjtjq/hhIdYR36UdFmhmNbdH67WpFVHzthPlhQgMTo7K6SHsfuyTtZt7g
+         5qP28XMtxY+J3h1I/TtPOpCTp4V27tBa562Xk=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi again,
+Hi list,
 
 
-On Wednesday 08 of June 2011 14:58:03 you wrote:
-> On Wed, 08 Jun 2011 21:48:52 +0900 (JST), Ryusuke Konishi wrote:
-> > On Fri, 3 Jun 2011 19:42:28 +0200, dexen deVries wrote:
-> > > By the way, it seems to me that the in-kernel GC does not attempt=
- to
-> > > de- fragment files. Is that the case? If so, would probably mean
-> > > extents would not help very much for fragmented files. Also, on
-> > > magnetic media, a lot of seeking happens in case of fragmented
-> > > files.
-> >=20
-> > Yes, but extents will decrease the amount of metadata, and this has
-> > potential for speed up.
-> >=20
-> > NILFS2 uses 32 bytes metadata per disk block at present.  I guess y=
-ou
-> > know that the number of DAT blocks are actually indispensable throu=
-gh
-> > analysis using the dumpseg tool.
->=20
-> Oh, looks confusing.  I meant the amount of DAT blocks is not
-> negligible.
+there's that recent interesting addition to linux: `cleancache' (and=20
+`zcache').
+I've enabled it for NILFS2 yesterday (in 3.0-rc2).
+It seemed to work for a while -- sensible numbers in=20
+/sys/kernel/mm/cleancache/*=20
+But it broke terribly after performing
+echo 3 > /proc/sys/vm/drop_caches
+kernel reported NULL pointer dereference, IIRC. Ext4 works a-OK with th=
+at, so=20
+my first guess waws NILFS2 is doing something funky with page allocatio=
+n or=20
+mapping.
 
-Understood ;-)
+Cleancache has own hooks into VFS, and for `normal' filesystem that's e=
+nough;=20
+at least enough for ext3 and ext4 drivers to work reliably. On the othe=
+r hand,=20
+btrfs does something unusual with pages and they used extra cleancache =
+hooks=20
+for btrfs, IIRC.
 
-Anyway, isn't some fragmentation avoidance necessary to profit from ext=
-ents=20
-(that we hope we'll use at some point)?
-AFAIK, an extent is only good to describe file blocks if they are laid =
-out=20
-continuous on the block device.
+Should I dig further, post backtraces or something?
+
+I believe using cleancache + zcache could be beneficial, especially for=
+ NILFS2=20
+metadata like the DAT file; what are your thoughts on it?
 
 
-Cheers,
+Regards,
 --=20
 dexen deVries
 
