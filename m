@@ -1,45 +1,83 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: mount & fsck of nilfs partition fail.
-Date: Mon, 13 Jun 2011 21:33:16 +0900 (JST)
-Message-ID: <20110613.213316.221578492.ryusuke@osrg.net>
-References: <053D39D3D76C474EB2D2A284AA6BA3181B05E4E02D@COLOSSEXCH01.starsolutions.com>
+Subject: Re: Cleancache
+Date: Mon, 13 Jun 2011 22:15:03 +0900 (JST)
+Message-ID: <20110613.221503.212701772.ryusuke@osrg.net>
+References: <201106081514.59693.dexen.devries@gmail.com>
+	<20110608.230231.65968027.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <053D39D3D76C474EB2D2A284AA6BA3181B05E4E02D-ZjuI7xOJlFPnaE3xbIMyWkCiaQ3SRT3KFkJ40O1dFu8@public.gmane.org>
+In-Reply-To: <20110608.230231.65968027.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org
+Content-Type: Text/Plain; charset="iso-2022-jp"
+To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 13 Jun 2011 00:13:17 -0700, Zahid Chowdhury wrote:
-> Hello,
->   We had another crash with nilfs2 under load and then on reboot mount failed as usual on
->     "Checksum error in segment payload"
-> Leter when we tried an "fsck0.nilfs2 -v -f" on the partition we got:
-> .
-> .
-> .
-> Unclean FS.
-> The latest log is lost. Trying rollback recovery..
-> .
-> Searching the latest checkpoint.
-> fsck0.nilfs2: cannot read block (blocknr = 2696911)
+Hi dexen,
+On Wed, 08 Jun 2011 23:02:31 +0900 (JST), Ryusuke Konishi wrote:
+> On Wed, 8 Jun 2011 15:14:59 +0200, dexen deVries wrote:
+> > Hi list,
+> > 
+> > 
+> > there's that recent interesting addition to linux: `cleancache' (and 
+> > `zcache').
+> > I've enabled it for NILFS2 yesterday (in 3.0-rc2).
+> > It seemed to work for a while -- sensible numbers in 
+> > /sys/kernel/mm/cleancache/* 
+> > But it broke terribly after performing
+> > echo 3 > /proc/sys/vm/drop_caches
+> > kernel reported NULL pointer dereference, IIRC. Ext4 works a-OK with that, so 
+> > my first guess waws NILFS2 is doing something funky with page allocation or 
+> > mapping.
+> > 
+> > Cleancache has own hooks into VFS, and for `normal' filesystem that's enough; 
+> > at least enough for ext3 and ext4 drivers to work reliably. On the other hand, 
+> > btrfs does something unusual with pages and they used extra cleancache hooks 
+> > for btrfs, IIRC.
+> > 
+> > Should I dig further, post backtraces or something?
 > 
-> and fsck0.nilfs2 gave up. Is there any other way of recovering this partition? If so, how?
-
-Seems an I/O error or some sort of critical error happened.
-
-I pushed a commit to append error reason in the above message.
-Could you try it ?  (it's available on the fsck0 branch of the devel tree).
-
-> Is this problem common? Is there any way to stop this scenario from occurring? Thanks.
+> Interesting.
 > 
-> Zahid
+> Can you get a log of the oops ?
+> 
+> I may have time to look into the problem in this weekend.
+
+I couldn't reproduce this problem.
+Could you tell me more about how you did it.
+
+May I reproduce the oops on native machines ? (I mean non-virtual
+machine environment).
 
 Regards,
 Ryusuke Konishi
+
+>  
+> > I believe using cleancache + zcache could be beneficial, especially for NILFS2 
+> > metadata like the DAT file; what are your thoughts on it?
+> > 
+> > 
+> > Regards,
+> > -- 
+> > dexen deVries
+> > 
+> > [[[↓][→]]]
+> > 
+> > For example, if the first thing in the file is:
+> >    <?kzy irefvba="1.0" rapbqvat="ebg13"?>
+> > an XML parser will recognize that the document is stored in the traditional 
+> > ROT13 encoding.
+> > 
+> > (( Joe English, http://www.flightlab.com/~joe/sgml/faq-not.txt ))
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
