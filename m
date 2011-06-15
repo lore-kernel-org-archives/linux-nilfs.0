@@ -1,19 +1,34 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: mount & fsck of nilfs partition fail.
-Date: Thu, 16 Jun 2011 03:32:01 +0900 (JST)
-Message-ID: <20110616.033201.162617955.ryusuke@osrg.net>
+From: Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>
+Subject: RE: mount & fsck of nilfs partition fail.
+Date: Wed, 15 Jun 2011 11:38:16 -0700
+Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181B05E99563@COLOSSEXCH01.starsolutions.com>
 References: <053D39D3D76C474EB2D2A284AA6BA3181B05E4E394@COLOSSEXCH01.starsolutions.com>
 	<20110615.104251.29260790.ryusuke@osrg.net>
 	<20110615.195858.252298449.ryusuke@osrg.net>
+ <20110616.033201.162617955.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110615.195858.252298449.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <20110616.033201.162617955.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+
+Hello Ryusuke,
+  Yes, "the data on the partition is important". Please let me know how to
+"get a backtrace of the error" and I will send it to you. Thanks a lot.
+
+Zahid
+
+-----Original Message-----
+From: Ryusuke Konishi [mailto:konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org] 
+Sent: Wednesday, June 15, 2011 11:32 AM
+To: Zahid Chowdhury
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: Re: mount & fsck of nilfs partition fail.
 
 On Wed, 15 Jun 2011 19:58:58 +0900 (JST), Ryusuke Konishi wrote:
 > On Wed, 15 Jun 2011 10:42:51 +0900 (JST), Ryusuke Konishi wrote:
