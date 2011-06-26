@@ -1,77 +1,48 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: =?ISO-8859-15?Q?Niccol=F2_Belli?= <darkbasic-DEeHIYRtcplPMsqi6aon0Q@public.gmane.org>
 Subject: Re: nilfs2 per directory quota
-Date: Sun, 26 Jun 2011 14:48:29 +0200
-Message-ID: <201106261448.30236.dexen.devries@gmail.com>
-References: <4E070070.1060502@linuxsystems.it> <201106261346.31869.dexen.devries@gmail.com> <4E071EF5.1070301@linuxsystems.it>
+Date: Sun, 26 Jun 2011 15:01:45 +0200
+Message-ID: <4E072DB9.10704@linuxsystems.it>
+References: <4E070070.1060502@linuxsystems.it> <201106261346.31869.dexen.devries@gmail.com> <4E071EF5.1070301@linuxsystems.it> <201106261448.30236.dexen.devries@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=domainkey-signature:resent-from:resent-to:resent-date
-         :resent-message-id:from:to:subject:date:user-agent:references
-         :in-reply-to:x-face:mime-version:content-type
-         :content-transfer-encoding:message-id:x-uid;
-        bh=vzCDqaeTb39zBZ/BKNeagN5gnO52TpIbC47vBJiudXY=;
-        b=uIC/A5XZg9X4Fo6B4j4i++Eu9l/PnlngfcpHIER8bI8E240M4B6nnsC55yP+BmVZKO
-         UFkMC1HxE9jXUy7coi3F8RjAJSGjzQkRmQnlV2Bz7Oaop5TPfRPauYApDHy4qBd73eD4
-         PquVmXt1J+KWzFUyIIbWiRkNguj/TGq5NUxaE=
-In-Reply-To: <4E071EF5.1070301-DEeHIYRtcplPMsqi6aon0Q@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=linuxsystems.it;
+	s=linuxsystems.it; t=1309093467;
+	bh=pXAA6WCyhmHE9eEaMrVQZlRK8pjvDCQzWZPyt7up/Jk=;
+	h=Message-ID:Date:From:MIME-Version:To:CC:Subject:References:
+	 In-Reply-To:Content-Type:Content-Transfer-Encoding;
+	b=QOHouuzS928WMW9mfbKHABuD4PAIaUYMTKJ7KHNOraS5AVGa7opZjbHGmw5RBp4Mh
+	 IjWXQXBQmV0XtryO90gb+/1LuWqMIpe0bWXsThE7KbUa/vICsXbBj3HIb380fH2ufR
+	 pmrA3IW0gCmxJyClkzj3vlvtYNGdZPhc55IKrrUA=
+In-Reply-To: <201106261448.30236.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: =?iso-8859-15?q?Niccol=F2_Belli?= <darkbasic-DEeHIYRtcplPMsqi6aon0Q@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jonathan-kE54VaY6i3AJ3nxcUk3PyQ@public.gmane.org, augsdo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 
-Hi again,
+Il 26/06/2011 14:48, dexen deVries ha scritto:
+> I'm affraid the meaning of the post is ``I wish NILFS provided those:'' (the 
+> ``but how about having some real features'' bit).
 
+You're right, the expectations were so high that I assumed it was an
+implemented featured :(
 
-On Sunday 26 June 2011 13:58:45 you wrote:
-> Il 26/06/2011 13:46, dexen deVries ha scritto:
-> > casually looking through NILFS2 sources, I don't see quota support, but I
-> > may be wrong there.
+> You may also want to check out
+> http://en.wikipedia.org/wiki/Fossil_(file_system)
+> http://en.wikipedia.org/wiki/Venti
+> which are available on any POSIX  environment via 
+> http://en.wikipedia.org/wiki/Plan_9_port
 > 
-> I read about per directory quotas in slashdot:
-> http://linux.slashdot.org/comments.pl?sid=1287319&cid=28536529
+> I don't think Fossil provides any quota support, but when coupled with Venti, 
+> it pretty much removes the need for it :P
 
-I'm affraid the meaning of the post is ``I wish NILFS provided those:'' (the 
-``but how about having some real features'' bit).
+I also read about fusequota (http://code.google.com/p/fusequota/) but it
+seems more like a personal experiment rather then something you can use
+in a production environment (and it seems no longer developed too).
 
-
-> > Why isn't XFS a viable option for you, if I may?
-> 
-> XFS *is* a viable option, but it was a chance to test a new fs ;)
-
-I've been using XFS for several years, also in configuration with external 
-journal for extra performance. NILFS2 comes close, if not beter, in 
-performance in some cases; mostly for writting new data. For example, recently 
-checked out all linux kernel sources on a 5.400 RPM laptopd hdd, and it was 
-pretty darn fast. On the other hand, simply traversing the filesystem when 
-metadata is not cached can be slow.
-
-Current implementation of NILFS2 has certain on-disk inefficiences in regard 
-to metadata, for example it doesn't use extents. The folks at NTT are working 
-on improving stuff.
-
-
-
-
-You may also want to check out
-http://en.wikipedia.org/wiki/Fossil_(file_system)
-http://en.wikipedia.org/wiki/Venti
-which are available on any POSIX  environment via 
-http://en.wikipedia.org/wiki/Plan_9_port
-
-I don't think Fossil provides any quota support, but when coupled with Venti, 
-it pretty much removes the need for it :P
-
-
-Regards,
--- 
-dexen deVries
-
-> (...) I never use more than 800Mb of RAM. I am running Linux,
-> a browser and a terminal.
-rjbond3rd in http://news.ycombinator.com/item?id=2692529
+Cheers,
+Darkbasic
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
