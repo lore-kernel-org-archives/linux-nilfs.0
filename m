@@ -1,41 +1,42 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: How to restore snaspshot in nilfs?
-Date: Thu, 28 Jul 2011 10:25:36 +0900 (JST)
-Message-ID: <20110728.102536.53123850.ryusuke@osrg.net>
-References: <BLU152-W53BCFBB71148893681289CE350@phx.gbl>
-	<BLU152-W1990E7DAA23E5566FC3925CE350@phx.gbl>
-	<BLU152-W567E135957B79607CC415ECE350@phx.gbl>
+From: David Sariel <davidsa.openu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: atime
+Date: Mon, 01 Aug 2011 08:53:33 +0300
+Message-ID: <4E363F5D.7060302@gmail.com>
+References: <BLU152-W53BCFBB71148893681289CE350@phx.gbl>	<BLU152-W1990E7DAA23E5566FC3925CE350@phx.gbl>	<BLU152-W567E135957B79607CC415ECE350@phx.gbl> <20110728.102536.53123850.ryusuke@osrg.net>
+Reply-To: davidsa-BMswWb+h+80+JF/nGntIXQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <BLU152-W567E135957B79607CC415ECE350-MsuGFMq8XAE@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=message-id:date:from:reply-to:user-agent:mime-version:cc:subject
+         :references:in-reply-to:content-type:content-transfer-encoding;
+        bh=0eHjLdBsQeNKR3LePHFPEQ3xsnELQANXyMhPDcrlCsc=;
+        b=Qsr4CEJCI+Qnr77Q+/BYkIGnoleLEyEnYJ2Lx9c8mcSNtEQQPde1CpZ0ZQVk/UxM3V
+         XqBMf2JFgwHG2joYQ6jL81+0TpHHqFTljapAoa+I7NkXq0mIGb0qXjEhY0Eu/Ty6ygKh
+         AqR7eAzNML5y9QWrjXEHpDFKOIg1PQEdOml+k=
+In-Reply-To: <20110728.102536.53123850.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: notstop-EMRzualFZlQ@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: 
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
-On Wed, 27 Jul 2011 23:19:34 +0200, ffffd sssd wrote:
-> Given several checkpoints, from 1 to 14, and those corresponding to
-> 7, 10, 11 and 14 are snapshots, how can I revert the entire
-> filesystem to the stage 10, for example, discarding all the newer?
-> The only way I've found is to mount the snapshot 10 separately, copy
-> to another disk the contents, format the nilfs and copy back again
-> from the temporal disk to the nilfs...
-
-Nilfs does not have a native revert function yet.  So, you need to
-synchronize the current mount point with a snapshot as follows:
-
- # mkdir /nilfs /snap
- # mount -t nilfs2 /dev/xxx /nilfs
- # mount -t nilfs2 -o ro,cp=10 /dev/xxx /snap
-
- # rsync -axv --delete /snap/ /nilfs/
+Hi
+What was the purpose of reserving the inode for atime file (nilfs2_fs.h)
+#define NILFS_ATIME_INO        7    /* Atime file (reserved) */
+Correct me if I'm wrong, but it seems to me that updating atime on the disk
+result in creating more chekpoints. So spesial file in predetermined 
+place can store
+atime of all files in the system and spare the need of checkpointings of 
+many segments.
+Also can you please share your thoughts about the atime implementation 
+on nilfs?
+Thank you
+David
 
 
-Regards,
-Ryusuke Konishi
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
