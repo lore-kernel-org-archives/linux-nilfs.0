@@ -1,56 +1,32 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: atime
-Date: Tue, 02 Aug 2011 12:24:52 +0900 (JST)
-Message-ID: <20110802.122452.27798375.ryusuke@osrg.net>
-References: <BLU152-W567E135957B79607CC415ECE350@phx.gbl>
-	<20110728.102536.53123850.ryusuke@osrg.net>
-	<4E363F5D.7060302@gmail.com>
+From: "LinuxBSDos.com" <finid-aEpbUQpJQqXlKS8GlytQkw@public.gmane.org>
+Subject: RAID and file system encryption
+Date: Tue, 2 Aug 2011 02:22:24 -0600
+Message-ID: <889e085c06295b2f79289eb86be534ef.squirrel@linuxbsdos.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 7BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4E363F5D.7060302-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=linuxbsdos.com; s=default;
+	h=Content-Transfer-Encoding:Content-Type:MIME-Version:To:From:Subject:Date:Message-ID; bh=fkrxJkCQVZgtLZiUs3Oep5RAlBibjhYgo8+DwfxtQIE=;
+	b=UVjf8Kcdi/o0r3epCCecuBAvpBrAMcTCmB+sP3TZFlKRrzK7cjst9JJzidTh5EiqfLJU85pSyJsdvLGHuvCoiluaK4r6yL0H81aTbOApC0HM8qu6ISHL83QE2G+WkPRM;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: davidsa-BMswWb+h+80+JF/nGntIXQ@public.gmane.org, davidsa.openu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
 
 Hi,
-On Mon, 01 Aug 2011 08:53:33 +0300, David Sariel wrote:
-> Hi
-> What was the purpose of reserving the inode for atime file (nilfs2_fs.h)
-> #define NILFS_ATIME_INO        7    /* Atime file (reserved) */
 
-This declaration is reserved for an additional metadata file keeping
-atime information on disk.
+Just want to find out if nilfs2 supports RAID and native file system
+encryption. Any plans to, if it does not?
 
-> Correct me if I'm wrong, but it seems to me that updating atime on the disk
-> result in creating more chekpoints. So spesial file in predetermined 
-> place can store
-> atime of all files in the system and spare the need of checkpointings of 
-> many segments.
+Also, at this stage in its development, are there any serious drawbacks to
+using nilfs2 on a desktop distribution?
 
-Yes, if we implement the atime feature and enable it, nilfs will
-create checkpoints every time after files are read or directories are
-looked up.  It may not be a problem because recent kernels have
-``relatime'' which is a nice workaroud of the atime problem.
+TIA,
 
-Anyway, we would turn off this feature by default even if we add it.
+--
+Fini D.
 
-> Also can you please share your thoughts about the atime implementation 
-> on nilfs?
-
-The atime file would become an array of atime timestamps consisting of
-a 64-bit integer number of seconds plus 32 bits of nano-seconds.  The
-reason why we reserved a separate metadata file is to minimize the
-number of blocks written back by the atime updates.
-
-Or, we may simply add these fields in the extended part of inode; we
-have an idea to extend inode size to make other enhancements possible.
-Not yet decided, after all.
-
-Regards,
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
