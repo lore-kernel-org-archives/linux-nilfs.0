@@ -1,95 +1,71 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: RAID and file system encryption
-Date: Tue, 2 Aug 2011 10:45:45 +0200
-Message-ID: <201108021045.45239.dexen.devries@gmail.com>
-References: <889e085c06295b2f79289eb86be534ef.squirrel@linuxbsdos.com>
+From: Evert Mouw <post-yfx6isLFVcpeoWH0uzbU5w@public.gmane.org>
+Subject: time-shifting
+Date: Sat, 06 Aug 2011 09:38:26 +0200
+Message-ID: <4E3CEF72.1070303@evert.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=from:to:subject:date:user-agent:references:in-reply-to:x-face
-         :mime-version:content-type:content-transfer-encoding:message-id;
-        bh=bZwO/PiXoHr7vY8RyabSsDubv16uBeXnP8n0XU6Qtkk=;
-        b=i1SVe0EocU1k6M+ry0sBcNw+0UPQIRI3Aj5qUHloqqaD1HQ/3i7zlDg0GpvOXfx+TQ
-         k5aWI1wn8RwIwlW2S60P2gEWD8jBlJPIAmk9b6u5AObTn55WQETMAQbaWG2f+W2aR2Tw
-         DMilgDdyBQvReU/28GpvrB9hWfSdgJtzQOSoU=
-In-Reply-To: <889e085c06295b2f79289eb86be534ef.squirrel-aEpbUQpJQqXlKS8GlytQkw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tuesday 02 of August 2011 10:22:24 you wrote:
-> Hi,
->=20
-> Just want to find out if nilfs2 supports RAID and native file system
-> encryption. Any plans to, if it does not?
+Hi,
 
-not by itself, but it stacks nicely over LVM2 and LUKS for, respectivel=
-y, RAID=20
-and encryption. Guess that's more unix-ish than having one program (her=
-e:=20
-nilfs2 driver) have every possible feature built-in.
+Yesterday I played a bit with NILFS2 on ubuntu 11.04. It was quite easy 
+to use, but finding previous versions of a file is still a bit 
+complicated from a user point of view.
 
+I read a bit about ext3cow, which is currently not actively maintained 
+anymore. In one of the papers on ext3cow, I read the following:
 
-> Also, at this stage in its development, are there any serious drawbac=
-ks to
-> using nilfs2 on a desktop distribution?
+Other disk file systems provide coarse-grained access to versions through
+the creation of namespace tunnels [Hitz et al. 1994] or via mounting 
+separate logical volumes
+[Strunk et al. 2000; Soules et al. 2003]. Some disk file systems provide 
+no interface
+to versions, restricting versioning to internal use only [Rosenblum and 
+Ousterhout 1992;
+Seltzer et al. 1993].
 
-there are small ones. There is no KDE GUI for browsing snapshots (as of=
- yet).
+In time-shifting, ext3cow introduces an interface to versioning that 
+presents a continuous
+view of time. Users or applications specify a file name and any point in 
+time, which
+ext3cow scopes to the appropriate snapshot or file version. The 
+time-shifting interface
+allows user-space tools to create snapshots and access versions.
 
-=46ree space does not increase immediately after removing files, which =
-may=20
-surprise users that aren't aware of the snapshotting.
+Ext3cow: A Time-Shifting File System for Regulatory Compliance
+ZACHARY N. J. PETERSON and RANDAL BURNS
+ACM Transactions on Storage, 1(2), May, 2005
+http://www.ext3cow.com/ext3cow/Publications.html
 
-Last but not least, the filesystem plays badly with Bitcoin (and perhap=
-s other=20
-similar programs). Bitcoin causes very many checkpoints to be created, =
-quickly=20
-eating up the free space. AFAIK, it's because bitcoin issues numberous =
-small=20
-transactions to the underlying BDB very often, even 2...4/second in som=
-e=20
-cases. And bitcoin's BDB is configured to use 64kb `page' size, IIRC. I=
-'ve got=20
-sick of it and moved entire bitcoin database to XFS, leaving only walle=
-t.dat=20
-on NILFS2.
+A usage scenario is given in a screenshot:
+http://www.ext3cow.com/ext3cow/Welcome_files/example1.jpg
 
-On the other hand, NILFS2 works well under mild-loaded MySQL, both on t=
-est www=20
-server and for KDE's internal data like Nepomuk and Akonadi storage. I =
-keep 30=20
-days worth of checkpoints on the test server, has already helped us onc=
-e to=20
-recover certain old files. On PCs and workstations I keep about 10...48=
-h worth=20
-of checkpoints.
+I don't think using the "@" symbol for such thinks is a great idea (I 
+sometimes use it in my filenames) but the ability to use regular tools 
+to access old versions of files is great.
 
-NILFS2 performs nicely under mixed workload, both in home and workplace=
- use.=20
-Worth noting is that checkout of large GIT repository (kernel sources) =
-takes=20
-exceptionally short.
+I think it would be really useful to have access to previous versions of 
+files without having to go through checkpoints or snapshots of the whole 
+filesystem / partition. So having something like lshistory or lsversions 
+for specific files would be great. It could output the versions, the 
+checkpoints where those versions are available, etc.  Maybe direct 
+retrieval of old versions (cathistory?) could also be possible using 
+such a path.
 
+Of course the architecture of NILFS is different from ext3cow so I don't 
+know whether this is even possible. Something like a data structure 
+linking the different verions of some inode must exist before this can 
+happen. Just an idea, though.
 
-Regards,
---=20
-dexen deVries
+Thanks for your cool stuff!
 
-[[[=E2=86=93][=E2=86=92]]]
+Evert
 
-=46or example, if the first thing in the file is:
-   <?kzy irefvba=3D"1.0" rapbqvat=3D"ebg13"?>
-an XML parser will recognize that the document is stored in the traditi=
-onal=20
-ROT13 encoding.
-
-(( Joe English, http://www.flightlab.com/~joe/sgml/faq-not.txt ))
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
