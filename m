@@ -1,61 +1,45 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+From: Evert Mouw <post-yfx6isLFVcpeoWH0uzbU5w@public.gmane.org>
 Subject: Re: time-shifting
-Date: Mon, 08 Aug 2011 21:28:59 +0900 (JST)
-Message-ID: <20110808.212859.255403671.ryusuke@osrg.net>
-References: <4E3CEF72.1070303@evert.net>
-	<20110807.231959.212685724.ryusuke@osrg.net>
-	<4E3F0F16.7020200@evert.net>
+Date: Mon, 08 Aug 2011 16:02:50 +0200
+Message-ID: <4E3FEC8A.3000303@evert.net>
+References: <4E3CEF72.1070303@evert.net>	<20110807.231959.212685724.ryusuke@osrg.net>	<4E3F0F16.7020200@evert.net> <20110808.212859.255403671.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4E3F0F16.7020200-yfx6isLFVcpeoWH0uzbU5w@public.gmane.org>
+In-Reply-To: <20110808.212859.255403671.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: post-yfx6isLFVcpeoWH0uzbU5w@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 08 Aug 2011 00:17:58 +0200, Evert Mouw wrote:
-> Hi,
-> 
-> Op 2011-08-07 16:19, Ryusuke Konishi schreef:
-> > At present, nilfs does not have such per-file pointer to past
-> > versions, so actually it's not optimal for file history lookups.
-> >
-> > We may be able to do indirectly by adding a new field to on-disk inode
-> > to keep a checkpoint number in which the inode lastly changed.
-> > However, the new field must be updated every time garbage collector
-> > thins out the previous version, -- this may complicate things
-> > unacceptably because the current nilfs is designed so that it never
-> > overwrites in-use blocks except super blocks.
-> Very interesting, thanks for your explanation. I agree that updating 
-> such a field to a previous checkpoint should not be overwritten. A 
-> solution would be to not update the field when the garbage collector 
-> runs. The result is that a pointer to a previous checkpoint could point 
-> to a non-existing checkpoint. That should not be a problem, because it 
-> is known which checkpoints do exist, so a simple "if ( ( 
-> previous-checkpoint == X ) and ( X not element of available checkpoints 
-> ) ) then previous-checkpoint = NULL" would do. That would enable easier 
-> checks for previous versions,
+Hi,
 
-I agree with this let-it-be approach.
+Op 2011-08-08 14:28, Ryusuke Konishi schreef:
+> [...]
+> I agree with this let-it-be approach. [...] If the
+> previous checkpoint number is lost, we only have to track back to the
+> last valid checkpoint younger than it and confirm that the inode
+> contained in the checkpoint is alive with the same generation number.
+>
+> Regards,
+> Ryusuke Konishi
+Totally cool.
 
-> although if there is some chechpoint series like "1 2 3 4" and some
-> file exists in all four of those, and if you remove checkpoint 2,
-> then this system will never find the oldest version in checkpoint
-> 1. But such a scenario is unlikely because the garbage collector
-> removes the oldest checkpoints first. Also, this solution doesn't
-> need to be perfect to be better than nothing at all.
- 
-Okay, garbage collector may delete newer checkpoints first, and also
-intermediate checkpoints can be deleted manually with rmcp command.
-But, the let-it-be approach seems to go well in most cases.  If the
-previous checkpoint number is lost, we only have to track back to the
-last valid checkpoint younger than it and confirm that the inode
-contained in the checkpoint is alive with the same generation number.
+Nice that it would be possible and workable. Maybe the idea can be put 
+in the todo list? I saw a one points on the todo list that might benefit 
+from this approach:
 
-Regards,
-Ryusuke Konishi
+- Time slider
+
+The time slider for a single file could be implemented by using the 
+proposed extra inode field "previous". (Another approach would be the 
+one currently employed by the TimeBrowse program.)
+
+Keep up the good work!
+
+Regards, Evert
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
