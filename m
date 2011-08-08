@@ -1,81 +1,58 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: Applying nice/ionice to nilfs-cleanerd
-Date: Mon, 08 Aug 2011 20:59:32 +0900 (JST)
-Message-ID: <20110808.205932.260179154.ryusuke@osrg.net>
-References: <201108081009.31334.dexen.devries@gmail.com>
-	<20110808.192014.264198882.ryusuke@osrg.net>
-	<201108081227.54922.dexen.devries@gmail.com>
+Subject: Re: time-shifting
+Date: Mon, 08 Aug 2011 21:28:59 +0900 (JST)
+Message-ID: <20110808.212859.255403671.ryusuke@osrg.net>
+References: <4E3CEF72.1070303@evert.net>
+	<20110807.231959.212685724.ryusuke@osrg.net>
+	<4E3F0F16.7020200@evert.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201108081227.54922.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <4E3F0F16.7020200-yfx6isLFVcpeoWH0uzbU5w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: post-yfx6isLFVcpeoWH0uzbU5w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 8 Aug 2011 12:27:54 +0200, dexen deVries wrote:
-> On Monday 08 of August 2011 12:20:14 you wrote:
-> > And, we already have min_clean_segments threashold.  Why not just add
-> > mc_nice and mc_ionice as below (rather than introduce the new
-> > threthold) ?
-> > 
-> >  # Sheduing priority
-> >  # if clean segments < min_clean_segments.
-> >  mc_nice				-5
-> > 
-> >  # IO sheduing class and priority
-> >  # if clean segments < min_clean_segments.
-> >  mc_ionice			realtime
+On Mon, 08 Aug 2011 00:17:58 +0200, Evert Mouw wrote:
+> Hi,
 > 
-> switching to faster free-space reclaimation already increases load on the 
-> computer. If this also switched cleanerd to higher priority at the same 
-> moment, the load increase could be sharp and unpleaseant. The idea was to have 
-> three levels of cleanerd operation, rather than two.
-> 
-> 1) slow operation
-> 2) fast operation -- when less than min_clean_segments is available
-> 3) fast & aggressive (high nice and ionice priority) -- when there's even less 
-> free space available
-> 
-> ...with the hope that the 3rd level would rarely ever be reached, because the 
->
-> 2nd level would suffice most of the time.
+> Op 2011-08-07 16:19, Ryusuke Konishi schreef:
+> > At present, nilfs does not have such per-file pointer to past
+> > versions, so actually it's not optimal for file history lookups.
+> >
+> > We may be able to do indirectly by adding a new field to on-disk inode
+> > to keep a checkpoint number in which the inode lastly changed.
+> > However, the new field must be updated every time garbage collector
+> > thins out the previous version, -- this may complicate things
+> > unacceptably because the current nilfs is designed so that it never
+> > overwrites in-use blocks except super blocks.
+> Very interesting, thanks for your explanation. I agree that updating 
+> such a field to a previous checkpoint should not be overwritten. A 
+> solution would be to not update the field when the garbage collector 
+> runs. The result is that a pointer to a previous checkpoint could point 
+> to a non-existing checkpoint. That should not be a problem, because it 
+> is known which checkpoints do exist, so a simple "if ( ( 
+> previous-checkpoint == X ) and ( X not element of available checkpoints 
+> ) ) then previous-checkpoint = NULL" would do. That would enable easier 
+> checks for previous versions,
 
-Maybe, we should reorganize config parameters when using three or more
-operation levels.  I feel we are reaching the breaking point from the
-standpoint of both readability of the conffile and complexity of the
-implementation.
+I agree with this let-it-be approach.
 
-I'm thinking about the following structural description (or git config
-format and so on) for v2.2.
-
-But, for the meantime, I'd like to add mc_nice and mc_ionice to avoid
-the starvation issue simply.
-
-
-mode default {
-    device                 *   # target device (implicit)
-    cleaning_interval      5
-    nsegments_per_clean    2
-    nice                   0
-    ionice                 idle
-}
-
-mode low_capacity {
-    start                  free_space < 10%
-    exit                   free_space >= 20%
-    cleaning_interval      1
-    nsegments_per_clean    4
-}
-
-mode emerg {
-    start                  free_space < 8%
-    exit                   free_space >= 12%
-    nice                   -5
-    ionice                 realtime
-}
+> although if there is some chechpoint series like "1 2 3 4" and some
+> file exists in all four of those, and if you remove checkpoint 2,
+> then this system will never find the oldest version in checkpoint
+> 1. But such a scenario is unlikely because the garbage collector
+> removes the oldest checkpoints first. Also, this solution doesn't
+> need to be perfect to be better than nothing at all.
+ 
+Okay, garbage collector may delete newer checkpoints first, and also
+intermediate checkpoints can be deleted manually with rmcp command.
+But, the let-it-be approach seems to go well in most cases.  If the
+previous checkpoint number is lost, we only have to track back to the
+last valid checkpoint younger than it and confirm that the inode
+contained in the checkpoint is alive with the same generation number.
 
 Regards,
 Ryusuke Konishi
