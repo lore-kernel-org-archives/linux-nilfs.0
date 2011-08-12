@@ -1,7 +1,8 @@
 From: Gordan Bobic <gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org>
-Subject: Cache Churn
-Date: Wed, 10 Aug 2011 12:17:45 +0100
-Message-ID: <09449c6acbe526ffa056cf4b7d005032@mail.shatteredsilicon.net>
+Subject: More on =?UTF-8?Q?nilfs=5Fcleanerd=20and=20excessive=20writes=20?=
+ =?UTF-8?Q?=28=31=20month=20flash=20card=20life=20expetancy=29?=
+Date: Fri, 12 Aug 2011 11:38:18 +0100
+Message-ID: <87e2dc262f71d35a8fe5e0983fc1b7e6@mail.shatteredsilicon.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -10,26 +11,56 @@ List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
- Another performance related problem I am seeing due to nilfs_cleanerd 
- is that it causes unhealthy amounts of cache churn. It's reads and 
- writes are buffered, which inevitably means that things it reads will 
- get cached. Since it is going through all the blocks on the fs that have 
- any garbage to collect, it will eat through all the available memory 
- pretty quickly. It also means that it will push out of caches things 
- that really should stay in caches.
+ I just did some basic measuring and it looks like the total writes by 
+ nilfs_cleanerd on my SD card total about 1GB/minute (16MB/second, all my 
+ card can handle). Since the system is used all the time while it is on, 
+ that involves there always being things that need to be garbage 
+ collected, so it runs all the time. Even assuming it performance isn't 
+ an issue (running at nice 19 and ionice -c3, and performance IS an 
+ issue), that still means that the SD card will get 1,440GB of writes/day 
+ (1,4TB!). It's a 32GB MLC flash card, so assuming a 5,000 erase cycle 
+ life of 32nm MLC (ignoring any inevitable write amplification), that 
+ gives life expectancy of 160TB, or at the given rate of nilfs_cleanerd 
+ churn, about 12 days of usage. Call it a month with the assumption the 
+ machine isn't used all day every day.
 
- Since cleanerd's actual disk I/O is going to have no correlation with 
- actual file access pattern, is there a way to make cleanerd always 
- operate with something like the O_DIRECT flag so that is's reads won't 
- fill up the page cache?
+ This is quite thoroughly unacceptable for usage on any flash media. 
+ Ignoring any other optimizations that might be applicable (e.g. smaller 
+ block size to minimize the number of blocks that have to be re-written), 
+ my immediate redneck solution is running this every minute as a cron 
+ job:
 
- This is a pretty serious problem on small machines running of cheap 
- flash (think ARM machines with 512MB of RAM and slow flash media).
 
- The quick and dirty workaround I am pondering at the moment is to set 
- up a cron job that runs once/minute, checks df, and starts/kills 
- nilfs_cleanerd depending on how much free space is available, but that's 
- not really a solution.
+ ==========
+ #!/bin/bash
+
+ # Substitute /dev/mmcblk1p4 for your nilfs partition
+ used=`df | grep /dev/mmcblk1p4 | awk '{ print $5; }' | sed -e 's/%//'`
+
+ # If disk usage is more than 90%...
+ if [ $used -gt 90 ]; then
+     # If nilfs_cleanerd is not running...
+     if (! pgrep nilfs_cleanerd > /dev/null ); then
+         nohup nice -n 19 ionice -c 3 /sbin/nilfs_cleanerd > /dev/null 
+ 2>&1 &
+     fi
+ # If disk usage is less than 90%...
+ elif [ $used -lt 80 ]; then
+     pkill nilfs_cleanerd > /dev/null 2>&1
+ fi
+ ==========
+
+ This could of course be improved and "enterpriseified" further, e.g. 
+ check for all nilfs partitions and do the checks on all of them, make 
+ the free space amount thresholds based on 1/3 and 2/3 of free space (fs 
+ size - du), but this problem shouldn't really be looking for a solution 
+ in a cron job.
+
+ It's not ideal and nilfs_cleanerd should be configurable to moderate 
+ itself in a similar way, but until that happens, I don't see any 
+ alternative to the above cron job. The write performance is fantastic 
+ for tasks that do a lot of writing, but the life expectancy issue is a 
+ very real one.
 
  Gordan
 --
