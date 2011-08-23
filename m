@@ -1,54 +1,45 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [clarification] an irritating problem and possible source of quiet data loss
-Date: Wed, 17 Aug 2011 14:12:10 +0200
-Message-ID: <201108171412.10488.dexen.devries@gmail.com>
-References: <201108171207.22032.dexen.devries@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: mount & fsck of nilfs partition fail.
+Date: Tue, 23 Aug 2011 12:03:47 +0900 (JST)
+Message-ID: <20110823.120347.178748126.ryusuke@osrg.net>
+References: <053D39D3D76C474EB2D2A284AA6BA3181B05F38A67@COLOSSEXCH01.starsolutions.com>
+	<053D39D3D76C474EB2D2A284AA6BA3181B05F390D2@COLOSSEXCH01.starsolutions.com>
+	<053D39D3D76C474EB2D2A284AA6BA3181B06066B94@COLOSSEXCH01.starsolutions.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=from:to:subject:date:user-agent:references:in-reply-to:x-face
-         :mime-version:content-type:content-transfer-encoding:message-id;
-        bh=V95xp/I9lwn5daploM+/QVkNhZjEkiKpWlf0G0P1GDg=;
-        b=cQRmZnDVVLhvXZEUbQyOVpo0jvhClkybelDde4G9N7eg0DFrAZEozdoFZjv/48gRnA
-         H486aZjrerHYqOvwG8PETFO/DNJaL/cRzlueyPrHeN8I13tYyeZ7VGe4+l4jO0zVCMxr
-         2mXxCnCmkKUJf2NOLC9NjRhC8TUbtCxvs3W4Q=
-In-Reply-To: <201108171207.22032.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <053D39D3D76C474EB2D2A284AA6BA3181B06066B94-ZjuI7xOJlFPnaE3xbIMyWkCiaQ3SRT3KFkJ40O1dFu8@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="utf-8"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wednesday 17 of August 2011 14:07:21 i wrote:
-> (...)
-> so far so good. However!
->=20
-> # cp etc/adjtime /etc
-> cp: `etc/adjtime' and `/etc/adjtime' are the same file
->
-> (...)
+On Mon, 8 Aug 2011 14:33:55 -0700, Zahid Chowdhury wrote:
+> Hello Ryusuke/nilfs kernel developers,
+>   Can you please let me know if I should keep the corrupted nilfs
+>   filesystem described below for nilfs bug fixes, or if no solution
+>   exists for this corruption. If it is the latter then, I will
+>   backup, repartition the filesystem, and then finally restore the
+>   filesystem and continue my work. Thanks.
+> 
+> Zahid
 
-a small clarification: at this moment, i was in /mnt/x/, so the source =
-file to=20
-be copied was actually /mnt/x/etc/adjtime -- the older version i wanted=
- to=20
-restore.
+Sorry for my late reply and the repetitive trouble of yours.
 
---=20
-dexen deVries
+The error log says btree of DAT file broke.  I reviewed the btree
+code, but haven't yet found any related issues so far.
 
-[[[=E2=86=93][=E2=86=92]]]
+It's hard to track the root cause from this kind of situation.
+So, please reformat the filesystem and continue your work.
 
-=46or example, if the first thing in the file is:
-   <?kzy irefvba=3D"1.0" rapbqvat=3D"ebg13"?>
-an XML parser will recognize that the document is stored in the traditi=
-onal=20
-ROT13 encoding.
+By the way, what kind of device are you using?  Is it a flash device
+or a pendrive ?   Please tell me the product name If you don't mind.
 
-(( Joe English, http://www.flightlab.com/~joe/sgml/faq-not.txt ))
+
+Regards,
+Ryusuke Konishi
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
