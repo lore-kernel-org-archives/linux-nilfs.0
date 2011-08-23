@@ -1,69 +1,92 @@
-From: Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>
-Subject: RE: mount & fsck of nilfs partition fail.
-Date: Tue, 23 Aug 2011 07:15:27 -0700
-Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181B060B8E1D@COLOSSEXCH01.starsolutions.com>
-References: <053D39D3D76C474EB2D2A284AA6BA3181B05F38A67@COLOSSEXCH01.starsolutions.com>
-	<053D39D3D76C474EB2D2A284AA6BA3181B05F390D2@COLOSSEXCH01.starsolutions.com>
-	<053D39D3D76C474EB2D2A284AA6BA3181B06066B94@COLOSSEXCH01.starsolutions.com>
- <20110823.120347.178748126.ryusuke@osrg.net>
+From: Gordan Bobic <gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org>
+Subject: Re: Cache Churn
+Date: Tue, 23 Aug 2011 17:53:52 +0100
+Message-ID: <81afbe9d2ba252c062b14712fa6b2c44@mail.shatteredsilicon.net>
+References: <09449c6acbe526ffa056cf4b7d005032@mail.shatteredsilicon.net>
+ <20110823.143849.52186207.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20110823.120347.178748126.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <20110823.143849.52186207.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-
-Hello,
-  We are using a Kingspec 16 Gb SSD drive with the SATA i/f from the industrial standard catalog. It is of the MLC variety internally. If you
-want more details, it is this part, except ours is 16 Gb:
-  http://www.kingspec.com/solid-state-disk-products/ssd-25industsata-imlcj.htm
-
-I still have the failed nilfs & can dual mount it to poke around it, if you
-want any further information. I have recently moved on in my development to
-another drive and have specifically kept the failed drive for debug
-information for the nilfs community. I can still hold on to it for a while more until the reaper of drives wants it back from me. Thanks for any help.
-
-Zahid
-
------Original Message-----
-From: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org [mailto:linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org] On Behalf Of Ryusuke Konishi
-Sent: Monday, August 22, 2011 8:04 PM
-To: Zahid Chowdhury
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Subject: Re: mount & fsck of nilfs partition fail.
 
-On Mon, 8 Aug 2011 14:33:55 -0700, Zahid Chowdhury wrote:
-> Hello Ryusuke/nilfs kernel developers,
->   Can you please let me know if I should keep the corrupted nilfs
->   filesystem described below for nilfs bug fixes, or if no solution
->   exists for this corruption. If it is the latter then, I will
->   backup, repartition the filesystem, and then finally restore the
->   filesystem and continue my work. Thanks.
-> 
-> Zahid
+ On Tue, 23 Aug 2011 14:38:49 +0900 (JST), Ryusuke Konishi 
+ <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
+> Hi,
+> On Wed, 10 Aug 2011 12:17:45 +0100, Gordan Bobic wrote:
+>>  Another performance related problem I am seeing due to 
+>> nilfs_cleanerd
+>>  is that it causes unhealthy amounts of cache churn. It's reads and
+>>  writes are buffered, which inevitably means that things it reads 
+>> will
+>>  get cached. Since it is going through all the blocks on the fs that 
+>> have
+>>  any garbage to collect, it will eat through all the available 
+>> memory
+>>  pretty quickly. It also means that it will push out of caches 
+>> things
+>>  that really should stay in caches.
+>
+> Interesting report.  nilfs_cleanerd only reads log header and does 
+> not
+> read payload blocks.  Data blocks are instead read and copied by the
+> nilfs kernel code, and they are freed every time reclamation call of 
+> a
+> few segments has ended.
+>
+> I guess the abnormal cache churn arose from other causes, seems that
+> DAT file access is suspicious.  (The DAT file holds metadata used to
+> convert virtual block addresses to real disk block addresses).
+>
+>>  Since cleanerd's actual disk I/O is going to have no correlation 
+>> with
+>>  actual file access pattern, is there a way to make cleanerd always
+>>  operate with something like the O_DIRECT flag so that is's reads 
+>> won't
+>>  fill up the page cache?
+>
+> If the problem comes from internal metadata accesses like the DAT 
+> file
+> access, O_DIRECT is not applicable.
+>
+>>  This is a pretty serious problem on small machines running of cheap
+>>  flash (think ARM machines with 512MB of RAM and slow flash media).
+>>
+>>  The quick and dirty workaround I am pondering at the moment is to 
+>> set
+>>  up a cron job that runs once/minute, checks df, and starts/kills
+>>  nilfs_cleanerd depending on how much free space is available, but 
+>> that's
+>>  not really a solution.
+>>
+>>  Gordan
+>
+> Does your kernel version equal to or newer than v2.6.37 ?
 
-Sorry for my late reply and the repetitive trouble of yours.
+ I am running 2.6.38.8 + chromos patches (running on Tegra2 ARM).
 
-The error log says btree of DAT file broke.  I reviewed the btree
-code, but haven't yet found any related issues so far.
+> Last year, we changed cache usage for the DAT file on that kernel.
+> This might influence the issue.
 
-It's hard to track the root cause from this kind of situation.
-So, please reformat the filesystem and continue your work.
+ I am running 2.0.23 nilfs-utils.
 
-By the way, what kind of device are you using?  Is it a flash device
-or a pendrive ?   Please tell me the product name If you don't mind.
+ The cache churn issue is trivial to reproduce:
 
+ 1) On an otherwise idle machine, set the thresholds appropriately to 
+ make nilfs_cleanerd reclaim some space
 
-Regards,
-Ryusuke Konishi
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ 2) echo 3 > /proc/sys/vm/drop_caches
+
+ 3) Observe top and iotop to establish that:
+ - nilfs_cleanerd is the only thing running and doing anything
+ - cache memory is growing at the same rate at which iotop is saying 
+ nilfs_cleanerd is doing I/O
+
+ Gordan
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
