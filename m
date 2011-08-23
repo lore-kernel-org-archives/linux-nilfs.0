@@ -1,62 +1,67 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: Cache Churn
-Date: Tue, 23 Aug 2011 14:38:49 +0900 (JST)
-Message-ID: <20110823.143849.52186207.ryusuke@osrg.net>
-References: <09449c6acbe526ffa056cf4b7d005032@mail.shatteredsilicon.net>
+From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+Subject: lscp - what's NBLKINC and ICNT? (and the i FLG)
+Date: Tue, 23 Aug 2011 10:53:30 +0200
+Message-ID: <20110823085330.GA1472@wloczykij>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="0F1p//8PRICkK4MW"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <09449c6acbe526ffa056cf4b7d005032-tp2ajI7sM87MEvS+BUbURm2TqnkC6wfpXqFh9Ls21Oc@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
-On Wed, 10 Aug 2011 12:17:45 +0100, Gordan Bobic wrote:
->  Another performance related problem I am seeing due to nilfs_cleanerd 
->  is that it causes unhealthy amounts of cache churn. It's reads and 
->  writes are buffered, which inevitably means that things it reads will 
->  get cached. Since it is going through all the blocks on the fs that have 
->  any garbage to collect, it will eat through all the available memory 
->  pretty quickly. It also means that it will push out of caches things 
->  that really should stay in caches.
 
-Interesting report.  nilfs_cleanerd only reads log header and does not
-read payload blocks.  Data blocks are instead read and copied by the
-nilfs kernel code, and they are freed every time reclamation call of a
-few segments has ended.
+--0F1p//8PRICkK4MW
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I guess the abnormal cache churn arose from other causes, seems that
-DAT file access is suspicious.  (The DAT file holds metadata used to
-convert virtual block addresses to real disk block addresses).
+Hi.
 
->  Since cleanerd's actual disk I/O is going to have no correlation with 
->  actual file access pattern, is there a way to make cleanerd always 
->  operate with something like the O_DIRECT flag so that is's reads won't 
->  fill up the page cache?
+I just started (~2 weeks ago) to use nilfs2 on my / and i'm missing
+some information about those last two attritubes of lscp. Looking back
+at the list it seems that the first one (NBLKINC) is changed blocks
+between checkpoints, but i'm unable to find what's the last one (ICNT).
 
-If the problem comes from internal metadata accesses like the DAT file
-access, O_DIRECT is not applicable.
+wloczykij ~ # lscp
+            CNO        DATE     TIME  MODE  FLG   NBLKINC       ICNT
+          27193  2011-08-19 15:25:38   cp    -         87      37613
+          27194  2011-08-19 15:27:39   cp    -         20      37612
+          27195  2011-08-19 15:30:09   cp    -         58      37615
+          27196  2011-08-19 15:32:09   cp    -         38      37612
+(...)
 
->  This is a pretty serious problem on small machines running of cheap 
->  flash (think ARM machines with 512MB of RAM and slow flash media).
-> 
->  The quick and dirty workaround I am pondering at the moment is to set 
->  up a cron job that runs once/minute, checks df, and starts/kills 
->  nilfs_cleanerd depending on how much free space is available, but that's 
->  not really a solution.
-> 
->  Gordan
+Some checkpoints also are marked with "i" FLG. I think this also was
+answered on the list before, but i cant dig the answer.
 
-Does your kernel version equal to or newer than v2.6.37 ?
+Is there some doc on nilfs homepage about those attributes that i'm
+missing? (or man?) I would appreciate if someone could point me to
+some answers. Thanks. (-:
 
-Last year, we changed cache usage for the DAT file on that kernel.
-This might influence the issue.
 
-Regards,
-Ryusuke Konishi
+Piotr Szymaniak.
+--=20
+ - =C5=BBona? Id=C5=BA si=C4=99 pan leczy=C4=87!
+ - A =C5=BCona, gnido. Twoja pewnie trzyma ci=C4=99 za pysk, gdera, psuje k=
+rew i=20
+to ty, frajerze, wkr=C3=B3tce b=C4=99dziesz musia=C5=82 si=C4=99 leczy=C4=
+=87. A moja jest z gumy=20
+i nic nie m=C3=B3wi.
+  -- Andrzej St=C4=99pniewski, "Ojciec"
+
+--0F1p//8PRICkK4MW
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.17 (GNU/Linux)
+
+iEYEARECAAYFAk5TaooACgkQ9xNbxaeWTTwAeACeLrNfY+wTFHOzY5/LmmRjer8/
+F94An2cs01sGhjSig92gsM6OB/ERqgco
+=Erhq
+-----END PGP SIGNATURE-----
+
+--0F1p//8PRICkK4MW--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
