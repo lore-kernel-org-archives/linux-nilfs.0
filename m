@@ -1,72 +1,53 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: One checkpoint doesn't get GC'd
-Date: Wed, 16 Nov 2011 01:11:02 +0900 (JST)
-Message-ID: <20111116.011102.126207784.ryusuke@osrg.net>
-References: <201111141351.50798.dexen.devries@gmail.com>
+From: Christian Smith <csmith-r5H9PUQoNxUga4AWyxku7ULnMzgEhdHr@public.gmane.org>
+Subject: Linux Mint Debian Edition with NILFS
+Date: Tue, 15 Nov 2011 16:19:07 +0000
+Message-ID: <20111115161907.GP750@csmith-bm.vm.bytemark.co.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201111141351.50798.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-2022-jp"
-To: dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi dexen,
-On Mon, 14 Nov 2011 13:51:50 +0100, dexen deVries wrote:
-> Hi,
-> 
-> 
-> I have strange problem: one checkpoint doesn't get garbage-collected, in spite 
-> of subsequent checkpoints getting GC'd just alright.
-> 
-> for example:
-> 1170140  2011-10-14 09:34:17   cp    -           50     379222
-> 1171655  2011-10-14 14:43:14   cp    -         1345     379479
-> 1171663  2011-10-14 14:45:06   cp    -           54     379480
-> 1171664  2011-10-14 14:45:17   cp    -           51     379479
-> (...)
-> 
-> A few hours ago there were much more checkpoints between 1170140 and 1171655 
-> and they all got GC'd as expected -- but not the 1170140 itself.
+Hello,
 
-This may happen since garbage collection of nilfs is done for each
-disk segment instead of checkpoint.
+For ages, I've been lurking on nilfs.org looking for some distribution
+support for NILFS, with little being forthcoming. I resorted to 
+manually transferring installations to NILFS root filesystem based
+on Ubuntu and Debian install images in the past, but have recently
+tried LMDE with the hope of modifying it's installer to support
+NILFS.
 
-If GC did not reclaim any blocks for a checkpoint, the checkpoint will
-survive transiently.
+Turns out, I didn't need to modify anything, as it pretty much supports
+installation to NILFS out of the box. Booting from the live CD, I:
 
-Try nilfs-clean command to check if the checkpoint is actually orphan
-or not.  The command triggers one pass GC, and this would actually
-sweep unused checkpoints.  When using this command, you may give the
-following protection period option to shorten it:
+- In a shell window, run:
+   sudo apt-get update && sudo apt-get install util-linux nilfs-tools
+  This will install the nilfs compatible blkid (default is 2.17)
+- Run the installer from the desktop
+- When partitioning in gparted, just create your NILFS partition as ext4.
+- Back in the installer, choose the newly created ext4 partition, configure
+  it as / and use the pull down menu to format it as nilfs.
+- Do the rest of the installation as directed by the installer.
 
-  $ sudo nilfs-clean -p 60
+Once the installer has finished, you should have your root environment
+almost ready to go, but not quite. The default install won't include the
+nilfs2 kernel module in the initramfs, so you'll have to update this by hand
+before rebooting:
 
+- In a shell, mount your new root partition:
+   sudo mount /dev/blah /target
+- Add the nilfs2 kernel module to the list of modules to include in initramfs:
+   echo nilfs2 | sudo tee -a /target/etc/initramfs-tools/modules
+- Update initramfs (proc needed):
+   sudo mount --bind /proc /target/proc
+   sudo chroot /target /usr/sbin/update-initramfs -u
 
-Thanks,
-Ryusuke Konishi
+Reboot, and enjoy your new NILFS root installation.
 
-
-> For reference,
-> kernel: 3.1.0 (stock)
-> nilfs-utils: 2.1.0-rc1
->
-> Cheers,
-> -- 
-> dexen deVries
-> 
-> [[[↓][→]]]
-> 
-> ``As my friend Jacob Gabrielson once put it, advocating Object-Oriented 
-> Programming is like advocating Pants-Oriented Clothing.''
->  -- Steve Yegge, in http://steve-yegge.blogspot.com/2006/03/execution-in-
-> kingdom-of-nouns.html
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Christian
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
