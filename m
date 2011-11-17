@@ -1,54 +1,57 @@
-From: Christian Smith <csmith-r5H9PUQoNxUga4AWyxku7ULnMzgEhdHr@public.gmane.org>
-Subject: Linux Mint Debian Edition with NILFS
-Date: Tue, 15 Nov 2011 16:19:07 +0000
-Message-ID: <20111115161907.GP750@csmith-bm.vm.bytemark.co.uk>
+From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: One checkpoint doesn't get GC'd
+Date: Thu, 17 Nov 2011 13:05:47 +0100
+Message-ID: <201111171305.49635.dexen.devries@gmail.com>
+References: <201111141351.50798.dexen.devries@gmail.com> <20111116.011102.126207784.ryusuke@osrg.net>
 Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=from:to:subject:date:user-agent:references:in-reply-to:x-face
+         :mime-version:content-type:content-transfer-encoding:message-id;
+        bh=hxe5HalyvOjgpv2l1DT7FOCX1tcSP22LXcjb6nxjS9Q=;
+        b=NX8fcUvSMrIVBC50QQ3ctY9yobxYosavnqgg4hKpfQtxhNZSoaco+S1+ROMF4xOFuy
+         ZkroFMTVpUEoLRyd62YFrv4kmRwnLVGLgOIMzP3+rqUycS+5U7ElSKrbHFv+guIYK9jP
+         9MJiOqlyRkL9Lx+gX95DifBBgK5T9FF/VTR2Y=
+In-Reply-To: <20111116.011102.126207784.ryusuke-sG5X7nlA6pw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: Text/Plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello,
+Hi Ryusuke,
 
-For ages, I've been lurking on nilfs.org looking for some distribution
-support for NILFS, with little being forthcoming. I resorted to 
-manually transferring installations to NILFS root filesystem based
-on Ubuntu and Debian install images in the past, but have recently
-tried LMDE with the hope of modifying it's installer to support
-NILFS.
 
-Turns out, I didn't need to modify anything, as it pretty much supports
-installation to NILFS out of the box. Booting from the live CD, I:
+On Tuesday 15 of November 2011 17:11:02 you wrote:
+> This may happen since garbage collection of nilfs is done for each
+> disk segment instead of checkpoint.
+>=20
+> If GC did not reclaim any blocks for a checkpoint, the checkpoint wil=
+l
+> survive transiently.
 
-- In a shell window, run:
-   sudo apt-get update && sudo apt-get install util-linux nilfs-tools
-  This will install the nilfs compatible blkid (default is 2.17)
-- Run the installer from the desktop
-- When partitioning in gparted, just create your NILFS partition as ext4.
-- Back in the installer, choose the newly created ext4 partition, configure
-  it as / and use the pull down menu to format it as nilfs.
-- Do the rest of the installation as directed by the installer.
+Thanks for clarification. I've always assumed that GC just removes chec=
+kpoints=20
+in natural order; good to see it's smarter than that ;-)
 
-Once the installer has finished, you should have your root environment
-almost ready to go, but not quite. The default install won't include the
-nilfs2 kernel module in the initramfs, so you'll have to update this by hand
-before rebooting:
+The CP got GC'd recently alright.
 
-- In a shell, mount your new root partition:
-   sudo mount /dev/blah /target
-- Add the nilfs2 kernel module to the list of modules to include in initramfs:
-   echo nilfs2 | sudo tee -a /target/etc/initramfs-tools/modules
-- Update initramfs (proc needed):
-   sudo mount --bind /proc /target/proc
-   sudo chroot /target /usr/sbin/update-initramfs -u
 
-Reboot, and enjoy your new NILFS root installation.
+Cheers,
+--=20
+dexen deVries
 
-Christian
+[[[=E2=86=93][=E2=86=92]]]
+
+``As my friend Jacob Gabrielson once put it, advocating Object-Oriented=
+=20
+Programming is like advocating Pants-Oriented Clothing.''
+ -- Steve Yegge, in
+http://steve-yegge.blogspot.com/2006/03/execution-in-kingdom-of-nouns.h=
+tml
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
