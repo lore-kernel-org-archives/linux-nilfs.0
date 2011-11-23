@@ -1,32 +1,50 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: Does nilfs2 checksum all data?
-Date: Sun, 20 Nov 2011 00:10:58 +0900 (JST)
-Message-ID: <20111120.001058.94864982.ryusuke@osrg.net>
-References: <ja8d9m$n60$1@dough.gmane.org>
+Subject: [ANNOUNCE] NILFS utils 2.1.0 release
+Date: Thu, 24 Nov 2011 02:46:45 +0900 (JST)
+Message-ID: <20111124.024645.55859510.ryusuke@osrg.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <ja8d9m$n60$1@dough.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: bl4.929b-36pCxkIrkqeZuzBka8ofvg@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
-On Sat, 19 Nov 2011 15:08:54 +0100, bl4 wrote:
-> Hi,
-> Does nilfs2 store checksums of all data and verify them when reading?
 
-nilfs2 store checksums for all data.  However, at least the current
-implementation does not verify it when reading.
+nilfs-utils-2.1.0 was released and became available on:
 
-Actually, the main purpose of the checksums is recovery after
-unexpected reboot; it does not suit for per-file data verification
-because the checksums are given per ``log''.
+ http://www.nilfs.org/en/download.html
+
+This is the first stable release of 2.1 series.  Changes from the rc2
+release are just a few, a build error fix and amendments of README
+file; I decided to pass some unfinished tasks for now not to delay the
+stable version release any further.
+
+Changes from 2.0 series are as follows:
+
+ * add libmount support.
+ * add nilfs-clean program.
+ * add nilfs-resize program.
+ * nilfs_cleanerd: allow subsecond values for time interval parameters.
+ * lscp: hide internal checkpoint by default and add all option to
+   show them.
+ * libnilfs: add APIs for filesystem resizing
+ * separate one shot garbage collection function to libnilfsgc library.
+ * add libnilfscleaner library which gives control function of
+   cleaner daemon.
+ * nilfs_cleanerd: fix overflow of time out value.
+ * nilfs_cleanerd: fix move block errors on cpfile and sufile.
+ * automate selection of libraries for posix semaphore and mqueue.
+ * fix autoreconf error caused by a lack of m4 directory.
+ * update README file.
+
+For details, see the changelog at:
+
+ http://www.nilfs.org/download/ChangeLog-utils-v2
 
 
-Regards,
+Thanks,
 Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
