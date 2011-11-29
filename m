@@ -1,887 +1,254 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: [PATCH 42/62] nilfs2: remove the second argument of
- k[un]map_atomic()
-Date: Tue, 29 Nov 2011 01:14:34 +0900 (JST)
-Message-ID: <20111129.011434.31482354.ryusuke@osrg.net>
-References: <1322371662-26166-1-git-send-email-amwang@redhat.com>
-	<1322371662-26166-43-git-send-email-amwang@redhat.com>
+From: Seiji Kihara <kihara-sG5X7nlA6pw@public.gmane.org>
+Subject: Re: nilfs2 on Scientific Linux 6
+Date: Tue, 29 Nov 2011 12:48:39 +0900
+Message-ID: <CA+G-kwVLmzddBcJKN69z1t+eE9=PxZTzvHLtQs2Wj-cF5BxfJQ@mail.gmail.com>
+References: <4EBE1010.4030607@takezono2.tv>
+	<20111113.035822.33559163.ryusuke@osrg.net>
+	<4EC76694.6070601@takezono2.tv>
+	<20111119.235302.142386436.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1322371662-26166-43-git-send-email-amwang@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=mime-version:sender:in-reply-to:references:date
+         :x-google-sender-auth:message-id:subject:from:to:content-type
+         :content-transfer-encoding;
+        bh=vN687NicvC7fM/W0Cn+oWe4ba6qpm6ij/SUt9sQRs1M=;
+        b=RrmTmJBRzkofs/w+hcjYHXDddDwy9P9+YlkAX2HtDAttQxGqYtESyZcajoB7BW+jpl
+         8Q/Sl1x8dUBmslB400wAI62MOW533N4L4EEE7Azju5b0AKySS+DTp0e1GosuUPUWrBEw
+         j9jKUr7vYHUfemoRZL7pYEN+Inthtv7kol7gQ=
+In-Reply-To: <20111119.235302.142386436.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: amwang@redhat.com
-Cc: linux-kernel@vger.kernel.org, akpm@linux-foundation.org, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="windows-1252"
+To: Shingo TAKADA <takada-tMH8t/rmczD1BV07Z2N/PQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sun, 27 Nov 2011 13:27:22 +0800, Cong Wang wrote:
-> 
-> Signed-off-by: Cong Wang <amwang@redhat.com>
+Hello Takada-san and all,
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+I made RPM packages of nilfs2-kmod and nilfs-utils for RHEL 6 clones.
+They are placed at the NILFS site below:
+
+http://www.nilfs.org/pub/centos/6/SRPMS/
+http://www.nilfs.org/pub/centos/6/RPMS/x86_64/
+http://www.nilfs.org/pub/centos/6/RPMS/i686/
+
+Any feedback is welcome.
 
 Regards,
-Ryusuke Konishi
 
-> ---
->  fs/nilfs2/cpfile.c   |   94 +++++++++++++++++++++++++-------------------------
->  fs/nilfs2/dat.c      |   38 ++++++++++----------
->  fs/nilfs2/dir.c      |    4 +-
->  fs/nilfs2/ifile.c    |    4 +-
->  fs/nilfs2/mdt.c      |    4 +-
->  fs/nilfs2/page.c     |    8 ++--
->  fs/nilfs2/recovery.c |    4 +-
->  fs/nilfs2/segbuf.c   |    4 +-
->  fs/nilfs2/sufile.c   |   68 ++++++++++++++++++------------------
->  9 files changed, 114 insertions(+), 114 deletions(-)
-> 
-> diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-> index c9b342c..dab5c4c 100644
-> --- a/fs/nilfs2/cpfile.c
-> +++ b/fs/nilfs2/cpfile.c
-> @@ -218,11 +218,11 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
->  								 kaddr, 1);
->  		mark_buffer_dirty(cp_bh);
->  
-> -		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(header_bh->b_page);
->  		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
->  						       kaddr);
->  		le64_add_cpu(&header->ch_ncheckpoints, 1);
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		mark_buffer_dirty(header_bh);
->  		nilfs_mdt_mark_dirty(cpfile);
->  	}
-> @@ -313,7 +313,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
->  			continue;
->  		}
->  
-> -		kaddr = kmap_atomic(cp_bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(cp_bh->b_page);
->  		cp = nilfs_cpfile_block_get_checkpoint(
->  			cpfile, cno, cp_bh, kaddr);
->  		nicps = 0;
-> @@ -334,7 +334,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
->  						cpfile, cp_bh, kaddr, nicps);
->  				if (count == 0) {
->  					/* make hole */
-> -					kunmap_atomic(kaddr, KM_USER0);
-> +					kunmap_atomic(kaddr);
->  					brelse(cp_bh);
->  					ret =
->  					  nilfs_cpfile_delete_checkpoint_block(
-> @@ -349,18 +349,18 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
->  			}
->  		}
->  
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		brelse(cp_bh);
->  	}
->  
->  	if (tnicps > 0) {
-> -		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(header_bh->b_page);
->  		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
->  						       kaddr);
->  		le64_add_cpu(&header->ch_ncheckpoints, -(u64)tnicps);
->  		mark_buffer_dirty(header_bh);
->  		nilfs_mdt_mark_dirty(cpfile);
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  	}
->  
->  	brelse(header_bh);
-> @@ -408,7 +408,7 @@ static ssize_t nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 *cnop,
->  			continue; /* skip hole */
->  		}
->  
-> -		kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(bh->b_page);
->  		cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
->  		for (i = 0; i < ncps && n < nci; i++, cp = (void *)cp + cpsz) {
->  			if (!nilfs_checkpoint_invalid(cp)) {
-> @@ -418,7 +418,7 @@ static ssize_t nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 *cnop,
->  				n++;
->  			}
->  		}
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		brelse(bh);
->  	}
->  
-> @@ -451,10 +451,10 @@ static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 *cnop,
->  		ret = nilfs_cpfile_get_header_block(cpfile, &bh);
->  		if (ret < 0)
->  			goto out;
-> -		kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(bh->b_page);
->  		header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
->  		curr = le64_to_cpu(header->ch_snapshot_list.ssl_next);
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		brelse(bh);
->  		if (curr == 0) {
->  			ret = 0;
-> @@ -472,7 +472,7 @@ static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 *cnop,
->  			ret = 0; /* No snapshots (started from a hole block) */
->  		goto out;
->  	}
-> -	kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(bh->b_page);
->  	while (n < nci) {
->  		cp = nilfs_cpfile_block_get_checkpoint(cpfile, curr, bh, kaddr);
->  		curr = ~(__u64)0; /* Terminator */
-> @@ -488,7 +488,7 @@ static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 *cnop,
->  
->  		next_blkoff = nilfs_cpfile_get_blkoff(cpfile, next);
->  		if (curr_blkoff != next_blkoff) {
-> -			kunmap_atomic(kaddr, KM_USER0);
-> +			kunmap_atomic(kaddr);
->  			brelse(bh);
->  			ret = nilfs_cpfile_get_checkpoint_block(cpfile, next,
->  								0, &bh);
-> @@ -496,12 +496,12 @@ static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 *cnop,
->  				WARN_ON(ret == -ENOENT);
->  				goto out;
->  			}
-> -			kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +			kaddr = kmap_atomic(bh->b_page);
->  		}
->  		curr = next;
->  		curr_blkoff = next_blkoff;
->  	}
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	brelse(bh);
->  	*cnop = curr;
->  	ret = n;
-> @@ -592,24 +592,24 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
->  	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
->  	if (ret < 0)
->  		goto out_sem;
-> -	kaddr = kmap_atomic(cp_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(cp_bh->b_page);
->  	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
->  	if (nilfs_checkpoint_invalid(cp)) {
->  		ret = -ENOENT;
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		goto out_cp;
->  	}
->  	if (nilfs_checkpoint_snapshot(cp)) {
->  		ret = 0;
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		goto out_cp;
->  	}
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
->  	if (ret < 0)
->  		goto out_cp;
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
->  	list = &header->ch_snapshot_list;
->  	curr_bh = header_bh;
-> @@ -621,13 +621,13 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
->  		prev_blkoff = nilfs_cpfile_get_blkoff(cpfile, prev);
->  		curr = prev;
->  		if (curr_blkoff != prev_blkoff) {
-> -			kunmap_atomic(kaddr, KM_USER0);
-> +			kunmap_atomic(kaddr);
->  			brelse(curr_bh);
->  			ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr,
->  								0, &curr_bh);
->  			if (ret < 0)
->  				goto out_header;
-> -			kaddr = kmap_atomic(curr_bh->b_page, KM_USER0);
-> +			kaddr = kmap_atomic(curr_bh->b_page);
->  		}
->  		curr_blkoff = prev_blkoff;
->  		cp = nilfs_cpfile_block_get_checkpoint(
-> @@ -635,7 +635,7 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
->  		list = &cp->cp_snapshot_list;
->  		prev = le64_to_cpu(list->ssl_prev);
->  	}
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	if (prev != 0) {
->  		ret = nilfs_cpfile_get_checkpoint_block(cpfile, prev, 0,
-> @@ -647,29 +647,29 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
->  		get_bh(prev_bh);
->  	}
->  
-> -	kaddr = kmap_atomic(curr_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(curr_bh->b_page);
->  	list = nilfs_cpfile_block_get_snapshot_list(
->  		cpfile, curr, curr_bh, kaddr);
->  	list->ssl_prev = cpu_to_le64(cno);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
-> -	kaddr = kmap_atomic(cp_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(cp_bh->b_page);
->  	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
->  	cp->cp_snapshot_list.ssl_next = cpu_to_le64(curr);
->  	cp->cp_snapshot_list.ssl_prev = cpu_to_le64(prev);
->  	nilfs_checkpoint_set_snapshot(cp);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
-> -	kaddr = kmap_atomic(prev_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(prev_bh->b_page);
->  	list = nilfs_cpfile_block_get_snapshot_list(
->  		cpfile, prev, prev_bh, kaddr);
->  	list->ssl_next = cpu_to_le64(cno);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
->  	le64_add_cpu(&header->ch_nsnapshots, 1);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	mark_buffer_dirty(prev_bh);
->  	mark_buffer_dirty(curr_bh);
-> @@ -710,23 +710,23 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
->  	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
->  	if (ret < 0)
->  		goto out_sem;
-> -	kaddr = kmap_atomic(cp_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(cp_bh->b_page);
->  	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
->  	if (nilfs_checkpoint_invalid(cp)) {
->  		ret = -ENOENT;
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		goto out_cp;
->  	}
->  	if (!nilfs_checkpoint_snapshot(cp)) {
->  		ret = 0;
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		goto out_cp;
->  	}
->  
->  	list = &cp->cp_snapshot_list;
->  	next = le64_to_cpu(list->ssl_next);
->  	prev = le64_to_cpu(list->ssl_prev);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
->  	if (ret < 0)
-> @@ -750,29 +750,29 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
->  		get_bh(prev_bh);
->  	}
->  
-> -	kaddr = kmap_atomic(next_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(next_bh->b_page);
->  	list = nilfs_cpfile_block_get_snapshot_list(
->  		cpfile, next, next_bh, kaddr);
->  	list->ssl_prev = cpu_to_le64(prev);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
-> -	kaddr = kmap_atomic(prev_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(prev_bh->b_page);
->  	list = nilfs_cpfile_block_get_snapshot_list(
->  		cpfile, prev, prev_bh, kaddr);
->  	list->ssl_next = cpu_to_le64(next);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
-> -	kaddr = kmap_atomic(cp_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(cp_bh->b_page);
->  	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
->  	cp->cp_snapshot_list.ssl_next = cpu_to_le64(0);
->  	cp->cp_snapshot_list.ssl_prev = cpu_to_le64(0);
->  	nilfs_checkpoint_clear_snapshot(cp);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
->  	le64_add_cpu(&header->ch_nsnapshots, -1);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	mark_buffer_dirty(next_bh);
->  	mark_buffer_dirty(prev_bh);
-> @@ -829,13 +829,13 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
->  	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
->  	if (ret < 0)
->  		goto out;
-> -	kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(bh->b_page);
->  	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
->  	if (nilfs_checkpoint_invalid(cp))
->  		ret = -ENOENT;
->  	else
->  		ret = nilfs_checkpoint_snapshot(cp);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	brelse(bh);
->  
->   out:
-> @@ -912,12 +912,12 @@ int nilfs_cpfile_get_stat(struct inode *cpfile, struct nilfs_cpstat *cpstat)
->  	ret = nilfs_cpfile_get_header_block(cpfile, &bh);
->  	if (ret < 0)
->  		goto out_sem;
-> -	kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(bh->b_page);
->  	header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
->  	cpstat->cs_cno = nilfs_mdt_cno(cpfile);
->  	cpstat->cs_ncps = le64_to_cpu(header->ch_ncheckpoints);
->  	cpstat->cs_nsss = le64_to_cpu(header->ch_nsnapshots);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	brelse(bh);
->  
->   out_sem:
-> diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-> index fcc2f86..b5c13f3 100644
-> --- a/fs/nilfs2/dat.c
-> +++ b/fs/nilfs2/dat.c
-> @@ -85,13 +85,13 @@ void nilfs_dat_commit_alloc(struct inode *dat, struct nilfs_palloc_req *req)
->  	struct nilfs_dat_entry *entry;
->  	void *kaddr;
->  
-> -	kaddr = kmap_atomic(req->pr_entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
->  					     req->pr_entry_bh, kaddr);
->  	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
->  	entry->de_end = cpu_to_le64(NILFS_CNO_MAX);
->  	entry->de_blocknr = cpu_to_le64(0);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	nilfs_palloc_commit_alloc_entry(dat, req);
->  	nilfs_dat_commit_entry(dat, req);
-> @@ -109,13 +109,13 @@ static void nilfs_dat_commit_free(struct inode *dat,
->  	struct nilfs_dat_entry *entry;
->  	void *kaddr;
->  
-> -	kaddr = kmap_atomic(req->pr_entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
->  					     req->pr_entry_bh, kaddr);
->  	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
->  	entry->de_end = cpu_to_le64(NILFS_CNO_MIN);
->  	entry->de_blocknr = cpu_to_le64(0);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	nilfs_dat_commit_entry(dat, req);
->  	nilfs_palloc_commit_free_entry(dat, req);
-> @@ -136,12 +136,12 @@ void nilfs_dat_commit_start(struct inode *dat, struct nilfs_palloc_req *req,
->  	struct nilfs_dat_entry *entry;
->  	void *kaddr;
->  
-> -	kaddr = kmap_atomic(req->pr_entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
->  					     req->pr_entry_bh, kaddr);
->  	entry->de_start = cpu_to_le64(nilfs_mdt_cno(dat));
->  	entry->de_blocknr = cpu_to_le64(blocknr);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	nilfs_dat_commit_entry(dat, req);
->  }
-> @@ -160,12 +160,12 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_palloc_req *req)
->  		return ret;
->  	}
->  
-> -	kaddr = kmap_atomic(req->pr_entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
->  					     req->pr_entry_bh, kaddr);
->  	start = le64_to_cpu(entry->de_start);
->  	blocknr = le64_to_cpu(entry->de_blocknr);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	if (blocknr == 0) {
->  		ret = nilfs_palloc_prepare_free_entry(dat, req);
-> @@ -186,7 +186,7 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
->  	sector_t blocknr;
->  	void *kaddr;
->  
-> -	kaddr = kmap_atomic(req->pr_entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
->  					     req->pr_entry_bh, kaddr);
->  	end = start = le64_to_cpu(entry->de_start);
-> @@ -196,7 +196,7 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
->  	}
->  	entry->de_end = cpu_to_le64(end);
->  	blocknr = le64_to_cpu(entry->de_blocknr);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	if (blocknr == 0)
->  		nilfs_dat_commit_free(dat, req);
-> @@ -211,12 +211,12 @@ void nilfs_dat_abort_end(struct inode *dat, struct nilfs_palloc_req *req)
->  	sector_t blocknr;
->  	void *kaddr;
->  
-> -	kaddr = kmap_atomic(req->pr_entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
->  					     req->pr_entry_bh, kaddr);
->  	start = le64_to_cpu(entry->de_start);
->  	blocknr = le64_to_cpu(entry->de_blocknr);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	if (start == nilfs_mdt_cno(dat) && blocknr == 0)
->  		nilfs_palloc_abort_free_entry(dat, req);
-> @@ -346,20 +346,20 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
->  		}
->  	}
->  
-> -	kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
->  	if (unlikely(entry->de_blocknr == cpu_to_le64(0))) {
->  		printk(KERN_CRIT "%s: vbn = %llu, [%llu, %llu)\n", __func__,
->  		       (unsigned long long)vblocknr,
->  		       (unsigned long long)le64_to_cpu(entry->de_start),
->  		       (unsigned long long)le64_to_cpu(entry->de_end));
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		brelse(entry_bh);
->  		return -EINVAL;
->  	}
->  	WARN_ON(blocknr == 0);
->  	entry->de_blocknr = cpu_to_le64(blocknr);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	mark_buffer_dirty(entry_bh);
->  	nilfs_mdt_mark_dirty(dat);
-> @@ -409,7 +409,7 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
->  		}
->  	}
->  
-> -	kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(entry_bh->b_page);
->  	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
->  	blocknr = le64_to_cpu(entry->de_blocknr);
->  	if (blocknr == 0) {
-> @@ -419,7 +419,7 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
->  	*blocknrp = blocknr;
->  
->   out:
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	brelse(entry_bh);
->  	return ret;
->  }
-> @@ -440,7 +440,7 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
->  						   0, &entry_bh);
->  		if (ret < 0)
->  			return ret;
-> -		kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(entry_bh->b_page);
->  		/* last virtual block number in this block */
->  		first = vinfo->vi_vblocknr;
->  		do_div(first, entries_per_block);
-> @@ -456,7 +456,7 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
->  			vinfo->vi_end = le64_to_cpu(entry->de_end);
->  			vinfo->vi_blocknr = le64_to_cpu(entry->de_blocknr);
->  		}
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		brelse(entry_bh);
->  	}
->  
-> diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-> index 3a19239..53ed93a 100644
-> --- a/fs/nilfs2/dir.c
-> +++ b/fs/nilfs2/dir.c
-> @@ -602,7 +602,7 @@ int nilfs_make_empty(struct inode *inode, struct inode *parent)
->  		unlock_page(page);
->  		goto fail;
->  	}
-> -	kaddr = kmap_atomic(page, KM_USER0);
-> +	kaddr = kmap_atomic(page);
->  	memset(kaddr, 0, chunk_size);
->  	de = (struct nilfs_dir_entry *)kaddr;
->  	de->name_len = 1;
-> @@ -617,7 +617,7 @@ int nilfs_make_empty(struct inode *inode, struct inode *parent)
->  	de->inode = cpu_to_le64(parent->i_ino);
->  	memcpy(de->name, "..\0", 4);
->  	nilfs_set_de_type(de, inode);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	nilfs_commit_chunk(page, mapping, 0, chunk_size);
->  fail:
->  	page_cache_release(page);
-> diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
-> index 684d763..5a48df7 100644
-> --- a/fs/nilfs2/ifile.c
-> +++ b/fs/nilfs2/ifile.c
-> @@ -122,11 +122,11 @@ int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
->  		return ret;
->  	}
->  
-> -	kaddr = kmap_atomic(req.pr_entry_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(req.pr_entry_bh->b_page);
->  	raw_inode = nilfs_palloc_block_get_entry(ifile, req.pr_entry_nr,
->  						 req.pr_entry_bh, kaddr);
->  	raw_inode->i_flags = 0;
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	mark_buffer_dirty(req.pr_entry_bh);
->  	brelse(req.pr_entry_bh);
-> diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-> index 800e8d7..f9897d0 100644
-> --- a/fs/nilfs2/mdt.c
-> +++ b/fs/nilfs2/mdt.c
-> @@ -58,12 +58,12 @@ nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
->  
->  	set_buffer_mapped(bh);
->  
-> -	kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(bh->b_page);
->  	memset(kaddr + bh_offset(bh), 0, 1 << inode->i_blkbits);
->  	if (init_block)
->  		init_block(inode, bh, kaddr);
->  	flush_dcache_page(bh->b_page);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	set_buffer_uptodate(bh);
->  	mark_buffer_dirty(bh);
-> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-> index 65221a0..3e7b2a0 100644
-> --- a/fs/nilfs2/page.c
-> +++ b/fs/nilfs2/page.c
-> @@ -119,11 +119,11 @@ void nilfs_copy_buffer(struct buffer_head *dbh, struct buffer_head *sbh)
->  	struct page *spage = sbh->b_page, *dpage = dbh->b_page;
->  	struct buffer_head *bh;
->  
-> -	kaddr0 = kmap_atomic(spage, KM_USER0);
-> -	kaddr1 = kmap_atomic(dpage, KM_USER1);
-> +	kaddr0 = kmap_atomic(spage);
-> +	kaddr1 = kmap_atomic(dpage);
->  	memcpy(kaddr1 + bh_offset(dbh), kaddr0 + bh_offset(sbh), sbh->b_size);
-> -	kunmap_atomic(kaddr1, KM_USER1);
-> -	kunmap_atomic(kaddr0, KM_USER0);
-> +	kunmap_atomic(kaddr1);
-> +	kunmap_atomic(kaddr0);
->  
->  	dbh->b_state = sbh->b_state & NILFS_BUFFER_INHERENT_BITS;
->  	dbh->b_blocknr = sbh->b_blocknr;
-> diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-> index a604ac0..f1626f5 100644
-> --- a/fs/nilfs2/recovery.c
-> +++ b/fs/nilfs2/recovery.c
-> @@ -493,9 +493,9 @@ static int nilfs_recovery_copy_block(struct the_nilfs *nilfs,
->  	if (unlikely(!bh_org))
->  		return -EIO;
->  
-> -	kaddr = kmap_atomic(page, KM_USER0);
-> +	kaddr = kmap_atomic(page);
->  	memcpy(kaddr + bh_offset(bh_org), bh_org->b_data, bh_org->b_size);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	brelse(bh_org);
->  	return 0;
->  }
-> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-> index 850a7c0..dc9a913 100644
-> --- a/fs/nilfs2/segbuf.c
-> +++ b/fs/nilfs2/segbuf.c
-> @@ -227,9 +227,9 @@ static void nilfs_segbuf_fill_in_data_crc(struct nilfs_segment_buffer *segbuf,
->  		crc = crc32_le(crc, bh->b_data, bh->b_size);
->  	}
->  	list_for_each_entry(bh, &segbuf->sb_payload_buffers, b_assoc_buffers) {
-> -		kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(bh->b_page);
->  		crc = crc32_le(crc, kaddr + bh_offset(bh), bh->b_size);
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  	}
->  	raw_sum->ss_datasum = cpu_to_le32(crc);
->  }
-> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-> index 0a0aba6..c5b7653 100644
-> --- a/fs/nilfs2/sufile.c
-> +++ b/fs/nilfs2/sufile.c
-> @@ -111,11 +111,11 @@ static void nilfs_sufile_mod_counter(struct buffer_head *header_bh,
->  	struct nilfs_sufile_header *header;
->  	void *kaddr;
->  
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = kaddr + bh_offset(header_bh);
->  	le64_add_cpu(&header->sh_ncleansegs, ncleanadd);
->  	le64_add_cpu(&header->sh_ndirtysegs, ndirtyadd);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	mark_buffer_dirty(header_bh);
->  }
-> @@ -319,11 +319,11 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
->  	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
->  	if (ret < 0)
->  		goto out_sem;
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = kaddr + bh_offset(header_bh);
->  	ncleansegs = le64_to_cpu(header->sh_ncleansegs);
->  	last_alloc = le64_to_cpu(header->sh_last_alloc);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	nsegments = nilfs_sufile_get_nsegments(sufile);
->  	maxsegnum = sui->allocmax;
-> @@ -356,7 +356,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
->  							   &su_bh);
->  		if (ret < 0)
->  			goto out_header;
-> -		kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(su_bh->b_page);
->  		su = nilfs_sufile_block_get_segment_usage(
->  			sufile, segnum, su_bh, kaddr);
->  
-> @@ -367,14 +367,14 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
->  				continue;
->  			/* found a clean segment */
->  			nilfs_segment_usage_set_dirty(su);
-> -			kunmap_atomic(kaddr, KM_USER0);
-> +			kunmap_atomic(kaddr);
->  
-> -			kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +			kaddr = kmap_atomic(header_bh->b_page);
->  			header = kaddr + bh_offset(header_bh);
->  			le64_add_cpu(&header->sh_ncleansegs, -1);
->  			le64_add_cpu(&header->sh_ndirtysegs, 1);
->  			header->sh_last_alloc = cpu_to_le64(segnum);
-> -			kunmap_atomic(kaddr, KM_USER0);
-> +			kunmap_atomic(kaddr);
->  
->  			sui->ncleansegs--;
->  			mark_buffer_dirty(header_bh);
-> @@ -385,7 +385,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
->  			goto out_header;
->  		}
->  
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		brelse(su_bh);
->  	}
->  
-> @@ -407,16 +407,16 @@ void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 segnum,
->  	struct nilfs_segment_usage *su;
->  	void *kaddr;
->  
-> -	kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(su_bh->b_page);
->  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->  	if (unlikely(!nilfs_segment_usage_clean(su))) {
->  		printk(KERN_WARNING "%s: segment %llu must be clean\n",
->  		       __func__, (unsigned long long)segnum);
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		return;
->  	}
->  	nilfs_segment_usage_set_dirty(su);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	nilfs_sufile_mod_counter(header_bh, -1, 1);
->  	NILFS_SUI(sufile)->ncleansegs--;
-> @@ -433,11 +433,11 @@ void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
->  	void *kaddr;
->  	int clean, dirty;
->  
-> -	kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(su_bh->b_page);
->  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->  	if (su->su_flags == cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_DIRTY) &&
->  	    su->su_nblocks == cpu_to_le32(0)) {
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		return;
->  	}
->  	clean = nilfs_segment_usage_clean(su);
-> @@ -447,7 +447,7 @@ void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
->  	su->su_lastmod = cpu_to_le64(0);
->  	su->su_nblocks = cpu_to_le32(0);
->  	su->su_flags = cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_DIRTY);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	nilfs_sufile_mod_counter(header_bh, clean ? (u64)-1 : 0, dirty ? 0 : 1);
->  	NILFS_SUI(sufile)->ncleansegs -= clean;
-> @@ -464,12 +464,12 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
->  	void *kaddr;
->  	int sudirty;
->  
-> -	kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(su_bh->b_page);
->  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->  	if (nilfs_segment_usage_clean(su)) {
->  		printk(KERN_WARNING "%s: segment %llu is already clean\n",
->  		       __func__, (unsigned long long)segnum);
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		return;
->  	}
->  	WARN_ON(nilfs_segment_usage_error(su));
-> @@ -477,7 +477,7 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
->  
->  	sudirty = nilfs_segment_usage_dirty(su);
->  	nilfs_segment_usage_set_clean(su);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	mark_buffer_dirty(su_bh);
->  
->  	nilfs_sufile_mod_counter(header_bh, 1, sudirty ? (u64)-1 : 0);
-> @@ -525,13 +525,13 @@ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
->  	if (ret < 0)
->  		goto out_sem;
->  
-> -	kaddr = kmap_atomic(bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(bh->b_page);
->  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
->  	WARN_ON(nilfs_segment_usage_error(su));
->  	if (modtime)
->  		su->su_lastmod = cpu_to_le64(modtime);
->  	su->su_nblocks = cpu_to_le32(nblocks);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	mark_buffer_dirty(bh);
->  	nilfs_mdt_mark_dirty(sufile);
-> @@ -572,7 +572,7 @@ int nilfs_sufile_get_stat(struct inode *sufile, struct nilfs_sustat *sustat)
->  	if (ret < 0)
->  		goto out_sem;
->  
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = kaddr + bh_offset(header_bh);
->  	sustat->ss_nsegs = nilfs_sufile_get_nsegments(sufile);
->  	sustat->ss_ncleansegs = le64_to_cpu(header->sh_ncleansegs);
-> @@ -582,7 +582,7 @@ int nilfs_sufile_get_stat(struct inode *sufile, struct nilfs_sustat *sustat)
->  	spin_lock(&nilfs->ns_last_segment_lock);
->  	sustat->ss_prot_seq = nilfs->ns_prot_seq;
->  	spin_unlock(&nilfs->ns_last_segment_lock);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	brelse(header_bh);
->  
->   out_sem:
-> @@ -598,15 +598,15 @@ void nilfs_sufile_do_set_error(struct inode *sufile, __u64 segnum,
->  	void *kaddr;
->  	int suclean;
->  
-> -	kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(su_bh->b_page);
->  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->  	if (nilfs_segment_usage_error(su)) {
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		return;
->  	}
->  	suclean = nilfs_segment_usage_clean(su);
->  	nilfs_segment_usage_set_error(su);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	if (suclean) {
->  		nilfs_sufile_mod_counter(header_bh, -1, 0);
-> @@ -675,7 +675,7 @@ static int nilfs_sufile_truncate_range(struct inode *sufile,
->  			/* hole */
->  			continue;
->  		}
-> -		kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(su_bh->b_page);
->  		su = nilfs_sufile_block_get_segment_usage(
->  			sufile, segnum, su_bh, kaddr);
->  		su2 = su;
-> @@ -684,7 +684,7 @@ static int nilfs_sufile_truncate_range(struct inode *sufile,
->  			     ~(1UL << NILFS_SEGMENT_USAGE_ERROR)) ||
->  			    nilfs_segment_is_active(nilfs, segnum + j)) {
->  				ret = -EBUSY;
-> -				kunmap_atomic(kaddr, KM_USER0);
-> +				kunmap_atomic(kaddr);
->  				brelse(su_bh);
->  				goto out_header;
->  			}
-> @@ -696,7 +696,7 @@ static int nilfs_sufile_truncate_range(struct inode *sufile,
->  				nc++;
->  			}
->  		}
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		if (nc > 0) {
->  			mark_buffer_dirty(su_bh);
->  			ncleaned += nc;
-> @@ -772,10 +772,10 @@ int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs)
->  		sui->ncleansegs -= nsegs - newnsegs;
->  	}
->  
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = kaddr + bh_offset(header_bh);
->  	header->sh_ncleansegs = cpu_to_le64(sui->ncleansegs);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  
->  	mark_buffer_dirty(header_bh);
->  	nilfs_mdt_mark_dirty(sufile);
-> @@ -840,7 +840,7 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
->  			continue;
->  		}
->  
-> -		kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-> +		kaddr = kmap_atomic(su_bh->b_page);
->  		su = nilfs_sufile_block_get_segment_usage(
->  			sufile, segnum, su_bh, kaddr);
->  		for (j = 0; j < n;
-> @@ -853,7 +853,7 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
->  				si->sui_flags |=
->  					(1UL << NILFS_SEGMENT_USAGE_ACTIVE);
->  		}
-> -		kunmap_atomic(kaddr, KM_USER0);
-> +		kunmap_atomic(kaddr);
->  		brelse(su_bh);
->  	}
->  	ret = nsegs;
-> @@ -902,10 +902,10 @@ int nilfs_sufile_read(struct super_block *sb, size_t susize,
->  		goto failed;
->  
->  	sui = NILFS_SUI(sufile);
-> -	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-> +	kaddr = kmap_atomic(header_bh->b_page);
->  	header = kaddr + bh_offset(header_bh);
->  	sui->ncleansegs = le64_to_cpu(header->sh_ncleansegs);
-> -	kunmap_atomic(kaddr, KM_USER0);
-> +	kunmap_atomic(kaddr);
->  	brelse(header_bh);
->  
->  	sui->allocmax = nilfs_sufile_get_nsegments(sufile) - 1;
-> -- 
-> 1.7.4.4
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Seiji Kihara
+
+At 2011/11/19 23:53, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wr=
+ote:
+> Hi TAKADA-san,
+> On Sat, 19 Nov 2011 17:19:32 +0900, Shingo TAKADA wrote:
+>> Hi
+>>
+>> i cloned the centos6 repo and confirmed nilfs2 works fine!
+>> there's no kernel panics happend on my environment, lscp and unmount
+>> works well. thank you very much.
+>>
+>>
+>> then, i'm trying to build rpm package of the centos6 kmod.
+>> but i'm not familiar with rpm and kernel modules.
+>>
+>> i'm reusing SPEC file from centos5's nilfs srpm.
+>> kmodtool is renewed in RHEL6, replace with it.
+>>
+>> in SPEC file, build and install section, SPEC file calls
+>> make with "modules" and "modules_install" argument.
+>> Makefile in the centos6-kmod repo has no such rules.
+>>
+>> how should i fix Makefile or SPEC file?
+>
+> You may change both files.
+>
+> I'm not familiar with rpm build, too. =A0But, I guess it's possible t=
+o
+> add modules and modules_install targets to makefiles in the
+> nilfs2-kmod package to handle the change.
+>
+> Send us back the patch when well done. =A0I will apply it to my
+> centos6-kmod tree. =A0(At least for changes against makefiles).
+>
+>
+> Thanks,
+> Ryusuke Konishi
+>
+>
+>> thanks.
+>> Shingo TAKADA
+>>
+>> (11/11/13 3:58), Ryusuke Konishi wrote:
+>> > Hi,
+>> > On Sat, 12 Nov 2011 15:20:00 +0900, Shingo TAKADA wrote:
+>> >> Hi
+>> >>
+>> >> thank you for your advice.
+>> >>
+>> >> I replace the line, REQ_UNPLUG, with your patch, BIO_RW_UNPLUG in
+>> >> segbuf.c in SL6's kernel srpm archive.
+>> >>
+>> >> make is done successfully like 2.6.32.27's case (see my last post=
+),
+>> >> and kernel panics like 2.6.32.27's case when unmounting the nilfs=
+2
+>> >> partition...
+>> >>
+>> >> i rebuilt the nilfs2 partition again after replacing the nilfs2.k=
+o
+>> >> module and modprobe it.
+>> >
+>> > I've pushed out a standalone nilfs2 kmod for Centos6 and SL6.
+>> >
+>> > It is available from http://git.nilfs.org/nilfs2-kmod-centos6.git =
+as
+>> > follows:
+>> >
+>> > =A0 $ git clone http://git.nilfs.org/nilfs2-kmod-centos6.git
+>> > =A0 $ cd nilfs2-kmod-centos6
+>> > =A0 $ make
+>> > =A0 $ sudo make install
+>> >
+>> > It includes important changes and bug-fixes which are backported f=
+rom
+>> > newer kernels. =A0The kmod seems to work fine so far for me. =A0Ch=
+eck it
+>> > out.
+>> >
+>> >
+>> > Regards,
+>> > Ryusuke Konishi
+>> >
+>> >> thanks.
+>> >> Shingo TAKADA
+>> >>
+>> >> (11/11/10 13:20), Ryusuke Konishi wrote:
+>> >>> Hi,
+>> >>> On Wed, 09 Nov 2011 16:18:53 +0900, Shingo TAKADA wrote:
+>> >>>> hi.
+>> >>>>
+>> >>>> I'm trying to use nilfs2 on Scientific Linux 6.1 with kernel
+>> >>>> 2.6.32-131.17.1.el6.x86_64.
+>> >>>> currently, there's no official package for SL6.1 (and RHEL6),
+>> >>>> so i tried to build rpm package using CentOS 5's srpm.
+>> >>>>
+>> >>>> i installed nilfs-kmod-2.0.22-4.src.rpm, extract nilfs-2.0.22.t=
+ar.bz2 and
+>> >>>> tried to make, but fails like:
+>> >>>>
+>> >>>> $ pwd
+>> >>>> /tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs
+>> >>>> $ make -C /usr/src/kernels/2.6.32-131.17.1.el6.x86_64 M=3D`pwd`
+>> >>>> make: Entering directory `/usr/src/kernels/2.6.32-131.17.1.el6.=
+x86_64'
+>> >>>> =A0 =A0 LD =A0 =A0 =A0/tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs/bui=
+lt-in.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs/inode.o
+>> >>>> In file included from /tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs/ino=
+de.c:28:
+>> >>>> /tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs/nilfs.h: In function =91n=
+ilfs_init_acl=92:
+>> >>>> /tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs/nilfs.h:234: error: deref=
+erencing
+>> >>>> pointer to incomplete type
+>> >>>> make[1]: *** [/tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs/inode.o] Er=
+ror 1
+>> >>>> make: *** [_module_/tmp/rpmbuild/SOURCES/nilfs-2.0.22/fs] Error=
+ 2
+>> >>>> make: Leaving directory `/usr/src/kernels/2.6.32-131.17.1.el6.x=
+86_64'
+>> >>>>
+>> >>>>
+>> >>>> I installed SL6.1's kernel Source RPM(srpm) , try to make from =
+the
+>> >>>> sources in the srpm. i installed kernel-2.6.32-131.17.1.el6.src=
+=2Erpm
+>> >>>> using yumdownloader.
+>> >>>>
+>> >>>> but fails like:
+>> >>>> $ pwd
+>> >>>> /tmp/sl6-srpm-nilfs2
+>> >>>> $ make -C /usr/src/kernels/2.6.32-131.17.1.el6.x86_64 M=3D`pwd`
+>> >>>> make: Entering directory `/usr/src/kernels/2.6.32-131.17.1.el6.=
+x86_64'
+>> >>>> =A0 =A0 LD =A0 =A0 =A0/tmp/sl6-srpm-nilfs2/built-in.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/inode.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/file.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/dir.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/super.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/namei.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/page.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/mdt.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/btnode.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/bmap.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/btree.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/direct.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/dat.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/recovery.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/the_nilfs.o
+>> >>>> =A0 =A0 CC [M] =A0/tmp/sl6-srpm-nilfs2/segbuf.o
+>> >>>> /tmp/sl6-srpm-nilfs2/segbuf.c: In function =91nilfs_segbuf_writ=
+e=92:
+>> >>>> /tmp/sl6-srpm-nilfs2/segbuf.c:396: error: =91REQ_UNPLUG=92 unde=
+clared (first
+>> >>>> use in this function)
+>> >>>> /tmp/sl6-srpm-nilfs2/segbuf.c:396: error: (Each undeclared iden=
+tifier is
+>> >>>> reported only once
+>> >>>> /tmp/sl6-srpm-nilfs2/segbuf.c:396: error: for each function it =
+appears in.)
+>> >>>> make[1]: *** [/tmp/sl6-srpm-nilfs2/segbuf.o] Error 1
+>> >>>> make: *** [_module_/tmp/sl6-srpm-nilfs2] Error 2
+>> >>>> make: Leaving directory `/usr/src/kernels/2.6.32-131.17.1.el6.x=
+86_64'
+>> >>>
+>> >>> REQ_UNPLUG was introduced by the following patch (and has gone w=
+ith
+>> >>> other patch). =A0This seems to be a difference between the vanil=
+la
+>> >>> kernel and the SL6 kernel. =A0Thanks for reporting.
+>> >>>
+>> >>> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+>> >>> index 2e6a272..4588fb9 100644
+>> >>> --- a/fs/nilfs2/segbuf.c
+>> >>> +++ b/fs/nilfs2/segbuf.c
+>> >>> @@ -508,7 +508,7 @@ static int nilfs_segbuf_write(struct nilfs_s=
+egment_buffer *s
+>> >>> egbuf,
+>> >>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* Last BIO is always sent=
+ through the following
+>> >>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* submission.
+>> >>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0*/
+>> >>> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 rw |=3D (1<< =A0 BIO_RW_SYNCIO) | =
+(1<< =A0 BIO_RW_UNPLUG);
+>> >>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 rw |=3D REQ_SYNC | REQ_UNPLUG;
+>> >>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 res =3D nilfs_segbuf_submit_=
+bio(segbuf,&wi, rw);
+>> >>> =A0 =A0 =A0 =A0 =A0 }
+>> >>>
+>> >>>
+>> >>>> how should i do to use nilfs on SL6 environment?
+>> >>>> or do you have any plan to release CentOS6 package of nilfs?
+>> >>>
+>> >>> We feel the necessity for creating kmod branch for the Centos6 k=
+ernel,
+>> >>> but don't have concrete plan.
+>> >>>
+>> >>> Ok, I will try it when I have time. =A0Or, does anyone want to t=
+ry it?
+>> >>>
+>> >>> Thanks,
+>> >>> Ryusuke Konishi
+>> >>>
+>> >>>> my environment: Scientific Linux 6.1 x64 on XenServer 5.6 SP2.
+>> >>>>
+>> >>>> Shingo TAKADA
+>> >>>> --
+>> >>>> takada-tMH8t/rmczD1BV07Z2N/PQ@public.gmane.org
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
