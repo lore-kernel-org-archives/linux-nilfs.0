@@ -1,142 +1,84 @@
-From: Zavi <zavi05-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Initial mount fails
-Date: Mon, 5 Dec 2011 10:56:17 +0200
-Message-ID: <CAN67vW31R1nVUVwiRwT8UC3kCvy8ySYOyTSpYaKVwqdgWQgBkg@mail.gmail.com>
-References: <CAN67vW2nSDWfESF1o2umuqduJY-MKL1da0oboDy04tyT4FEL5g@mail.gmail.com>
- <20111205.021311.06955058.ryusuke@osrg.net> <CAN67vW2C3d5Byinib97otyCk9rujPhLSOmLXkC01juHo6e=nVA@mail.gmail.com>
- <20111205.132326.69345131.ryusuke@osrg.net>
-Reply-To: zavi05-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>
+Subject: RE: nilfs_cleanerd from nilfs-utils shutdown on version 2.0 and 2.1
+ does not fail but says nothing and does not clean the old checkpoints nor
+ newer (actually older) ones.
+Date: Mon, 5 Dec 2011 11:05:48 -0800
+Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181F26A4F19B@COLOSSEXCH01.starsolutions.com>
+References: <201112031334.30221.dexen.devries@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=gamma;
-        h=mime-version:reply-to:sender:in-reply-to:references:from:date
-         :x-google-sender-auth:message-id:subject:to:cc:content-type
-         :content-transfer-encoding;
-        bh=VICQUOlkeKmRlOe1syAL39OG5wICWlw4XQz9vYngL5Q=;
-        b=e+whCaNblgD4BtuYW+j6rdJ/r1Xvi9SyHH1Q5WqrOXQ4Ly0rtcnPYN8lvbNu1W2m/T
-         axnPX4nV49al1YjrxVdUT+p3L/Xc23RlgcFbERvRUgIv1UtfmcxwpQUtedtzENqxaeIu
-         QON2qDHh8j/O7p5iM+xIbvMWlGTHOLMAI63As=
-In-Reply-To: <20111205.132326.69345131.ryusuke-sG5X7nlA6pw@public.gmane.org>
+In-Reply-To: <201112031334.30221.dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-That did it!
-Although the messages I get now after mkfs are different than before.
-But the bottom line is that the file system can be mounter now
+Hi Dexen,
+  I did have old cleanerd lock files from the crashed 2.0.23 in /dev/shm. The upgrade to 2.1 was hung on the lock files as you surmised on lock file removal 2.1 cleaned all the checkpoints. My box is using kernel 3.0.4, but I do have quite a few boxes still running kernel 2.6.18 from Centos 5.5 with the nilfs2 kernel mod back-ported to it (i.e. a builtin), so I will need to check if those boxes come out of the wedge of rewinded dates. Thanks a lot.
 
-Thanks a lot.
+Zahid
 
-On Mon, Dec 5, 2011 at 6:23 AM, Ryusuke Konishi
-<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> Hi,
-> On Sun, 4 Dec 2011 20:01:25 +0200, Zavi wrote:
->> Here's the result
->>
->> > sudo nilfs-tune -l /dev/sdc
->> nilfs-tune 2.1.0-rc1
->> /dev/sdc: cannot open NILFS
->
-> Hmm, seems like super blocks are not written to disk.
->
-> Does the following option ('-K' option) affect the results ?
->
-> =A0$ sudo mkfs -t nilfs2 -v -K /dev/sdc
-> =A0$ sudo nilfs-tune -l /dev/sdc
->
-> This option stops issuing discard command to disk just before writing
-> new super blocks.
->
-> Regards,
-> Ryusuke Konishi
->
->> On Sun, Dec 4, 2011 at 7:13 PM, Ryusuke Konishi
->> <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
->> > On Sun, 4 Dec 2011 18:38:58 +0200, Zavi wrote:
->> >> Thank you Ryusuke for the quick reply
->> >>
->> >> Of course dmesg is the first thing I looked at.
->> >> All I see is a not very informative message
->> >> > NILFS: Can't find nilfs on dev sdc.
->> >>
->> >
->> > This message is printed when no super blocks are found on the devi=
-ce.
->> > Does nilfs-tune command work for the partition ?
->> >
->> > =A0$ sudo nilfs-tune -l /dev/sdc
->> >
->> > It tries to read super block, and displays file system information=
- if
->> > a valid super block was found.
->> >
->> > Regards,
->> > Ryusuke Konishi
->> >
->> >> On Sun, Dec 4, 2011 at 3:29 PM, Ryusuke Konishi
->> >> <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
->> >> > Hi,
->> >> > On Sun, 4 Dec 2011 11:10:12 +0200, Zavi wrote:
->> >> >> Hi all,
->> >> >>
->> >> >> I'm trying yo mount nilfs on a device without success.
->> >> >> mkfs works just fine, but when I try to mount I keep getting a=
-n error
->> >> >> > sudo mkfs -t nilfs2 /dev/sdc
->> >> >> > sudo mount -t nilfs2 /dev/sdc ~/nilfs
->> >> >> mount.nilfs2: Error while mounting /dev/sdc on ~/nilfs: Invali=
-d argument
->> >> >>
->> >> >
->> >> > Were there any related messages in logs? =A0Please try dmesg co=
-mmand or
->> >> > make sure system logs:
->> >> >
->> >> > =A0$ dmesg
->> >> >
->> >> > =A0or
->> >> >
->> >> > =A0$ sudo cat /var/log/{messages,syslog}
->> >> >
->> >> > Regards,
->> >> > Ryusuke Konishi
->> >> >
->> >> >> I've installed nilfs-utils, and this is what I get from fsck
->> >> >> > sudo fsck0.nilfs2 -f -v /dev/sdc
->> >> >> fsck0.nilfs2: cannot read super block (device=3D/dev/sdc)
->> >> >>
->> >> >> just to be sure the problem is not in the device, I mounted ex=
-t4 on it
->> >> >> successfuly.
->> >> >> I can also do block requests (dd, iometer) without a problem.
->> >> >>
->> >> >> I'd appreciate any suggestion.
->> >> >>
->> >> >> Thanks,
->> >> >> Zavi
->> >> >> --
->> >> >> To unsubscribe from this list: send the line "unsubscribe linu=
-x-nilfs" in
->> >> >> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> >> >> More majordomo info at =A0http://vger.kernel.org/majordomo-inf=
-o.html
->> >> --
->> >> To unsubscribe from this list: send the line "unsubscribe linux-n=
-ilfs" in
->> >> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> >> More majordomo info at =A0http://vger.kernel.org/majordomo-info.h=
-tml
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-nilf=
-s" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+-----Original Message-----
+From: dexen deVries [mailto:dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org] 
+Sent: Saturday, December 03, 2011 4:34 AM
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Zahid Chowdhury
+Subject: Re: nilfs_cleanerd from nilfs-utils shutdown on version 2.0 and 2.1 does not fail but says nothing and does not clean the old checkpoints nor newer (actually older) ones.
+
+Hi Zahid,
+
+
+On Saturday 03 December 2011 01:33:09 you wrote:
+> (...)
+> I cannot ever start up the daemon. If I move to a 2.1 daemon, then it logs
+> no errors, but it cleans no old or newer (really older) checkpoints - it
+> just sits in a do-nothing mode (strace(1) shows he is hung on a
+> mq_timedreceive syscall).
+> (...)
+
+nilfs_cleanerd creates sort of a lock file in /dev/shm, named `sem.nilfs-
+cleanerd-$PID'. nilfs_cleanerd version 2.1 refuses to process a filesystem if 
+it has an associated /dev/shm/sem.nilfs-cleanerd-$PID file -- to protect from 
+corruption occuring when multiple cleanerds accessed same filesystem. This 
+looks in strace as being stuck at mq_timedreceive syscall.
+
+All files in /dev/shm/ disappear after reboot (it's a temporary filesystem) so 
+you don't usually see this behavior. However, when you start a new 
+nilfs_cleanerd (v2.1) process without reboot, you need to clean relevant file 
+by hand. Do ensure the old cleanerd process is dead before deleting the file. 
+Otherwise corruption will happen when multiple cleanerd access same 
+filesystem.
+
+
+On Saturday 03 December 2011 01:33:09 you wrote:
+>   If I move the system date forward, have some checkpoints created and then
+> move the date backward a 2.0 cleanerd daemon fails on this error: Nov 30
+> 14:39:37 nilfs_cleanerd[5789]: start
+>     Nov 30 14:39:38 kernel: nilfs_ioctl_move_inode_block: conflicting data
+>         buffer: ino=4, cno=0, offset=0, blocknr=665655, vblocknr=566462
+>     Nov 30 14:39:38 kernel: NILFS: GC failed during preparation: cannot
+> read source blocks: err=-17
+>     Nov 30 14:39:38 nilfs_cleanerd[5789]: cannot clean segments: File
+> exists Nov 30 14:39:38 nilfs_cleanerd[5789]: shutdown
+> (...)
+
+I got similar (or same) error with older kernel. Removing all checkpoints with 
+rmcp helped -- but that doesn't seem like a 100% reliable solution to me. 
+Right now I'm using kernels v3.1 and 3.2-rc3; seem rock-solid.
+
+
+Regards,
+-- 
+dexen deVries
+
+> Gresham's Law for Computing:
+>   The Fast drives out the Slow even if the Fast is Wrong.
+
+William Kahan in
+http://www.cs.berkeley.edu/~wkahan/Stnfrd50.pdf
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
