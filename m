@@ -1,20 +1,32 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: nilfs_cleanerd from nilfs-utils shutdown on version 2.0 and
- 2.1 does not fail but says nothing and does not clean the old checkpoints
- nor newer (actually older) ones.
-Date: Fri, 09 Dec 2011 13:22:25 +0900 (JST)
-Message-ID: <20111209.132225.33374267.ryusuke@osrg.net>
-References: <053D39D3D76C474EB2D2A284AA6BA3181F26A4F1F5@COLOSSEXCH01.starsolutions.com>
-	<053D39D3D76C474EB2D2A284AA6BA3181F26A4F56B@COLOSSEXCH01.starsolutions.com>
+From: Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>
+Subject: RE: nilfs_cleanerd from nilfs-utils shutdown on version 2.0 and 2.1
+ does not fail but says nothing and does not clean the old checkpoints nor
+ newer (actually older) ones.
+Date: Fri, 9 Dec 2011 14:39:39 -0800
+Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181F26AE83D1@COLOSSEXCH01.starsolutions.com>
+References: <20111209.132225.33374267.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <053D39D3D76C474EB2D2A284AA6BA3181F26A4F56B-ZjuI7xOJlFPnaE3xbIMyWkCiaQ3SRT3KFkJ40O1dFu8@public.gmane.org>
+In-Reply-To: <20111209.132225.33374267.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+
+Hello Ryusuke,
+  Yes, the Dec. 2 dates are the rewound dates - no cleanup happens of any of the checkpoints created on Dec. 2 after this (nor the Dec. 8 ones) - thus the disk will just fill-up unless you end up reaching Dec. 8 before the fill-up. One time on testing with the 2.1 gc daemon we got crashes on each startup (i.e. the stacktrace below), none of the other times did get a 2.1 crash - 3 - 4 times we tried - i.e. the cleaner crash was a different problem, cleared up on a reboot. Thanks, any help is much appreciated.
+
+Zahid
+
+-----Original Message-----
+From: Ryusuke Konishi [mailto:konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org] 
+Sent: Thursday, December 08, 2011 8:22 PM
+To: Zahid Chowdhury
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Subject: Re: nilfs_cleanerd from nilfs-utils shutdown on version 2.0 and 2.1 does not fail but says nothing and does not clean the old checkpoints nor newer (actually older) ones.
 
 On Wed, 7 Dec 2011 17:43:13 -0800, Zahid Chowdhury wrote:
 > Hello,
