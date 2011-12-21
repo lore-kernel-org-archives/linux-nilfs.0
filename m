@@ -1,100 +1,104 @@
-From: Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>
-Subject: RE: nilfs_cleanerd from nilfs-utils shutdown on version 2.0 and 2.1
- does not fail but says nothing and does not clean the old checkpoints nor
- newer (actually older) ones.
-Date: Fri, 9 Dec 2011 14:39:39 -0800
-Message-ID: <053D39D3D76C474EB2D2A284AA6BA3181F26AE83D1@COLOSSEXCH01.starsolutions.com>
-References: <20111209.132225.33374267.ryusuke@osrg.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+From: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+Subject: [PATCH 1/7] Add .gitignore rules for generated binaries
+Date: Wed, 21 Dec 2011 15:34:03 -0600
+Message-ID: <1324503249-17432-2-git-send-email-dan@archlinux.org>
+References: <1324503249-17432-1-git-send-email-dan@archlinux.org>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20111209.132225.33374267.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Content-Language: en-US
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=sender:from:to:subject:date:message-id:x-mailer:in-reply-to
+         :references;
+        bh=5kAnL79yTxgfEwVvxHjikC8HbxwkP/VV9bi+X1ROBPE=;
+        b=qO3FLbUCXD5RXLtq9Y/pzwumwNKdxw+2mBBK4ofSX4D+TpJt79+YpBkqZh3eknt2qX
+         Tppuca0pt72Zk3iXF6fU3qlPT0l7q9H/EfbjkBXBEJYVZB/1jJQEFO/mrIRs42Buls23
+         DdEfH5y21EfiF7NbA4W7gAcfCo0cUfBpvSFBY=
+In-Reply-To: <1324503249-17432-1-git-send-email-dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello Ryusuke,
-  Yes, the Dec. 2 dates are the rewound dates - no cleanup happens of any of the checkpoints created on Dec. 2 after this (nor the Dec. 8 ones) - thus the disk will just fill-up unless you end up reaching Dec. 8 before the fill-up. One time on testing with the 2.1 gc daemon we got crashes on each startup (i.e. the stacktrace below), none of the other times did get a 2.1 crash - 3 - 4 times we tried - i.e. the cleaner crash was a different problem, cleared up on a reboot. Thanks, any help is much appreciated.
+This ignores all of the generated binaries so git status is clean after
+building the project.
 
-Zahid
+Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+---
+ bin/.gitignore               |    6 ++++++
+ sbin/cleanerd/.gitignore     |    1 +
+ sbin/mkfs/.gitignore         |    1 +
+ sbin/mount/.gitignore        |    2 ++
+ sbin/nilfs-clean/.gitignore  |    1 +
+ sbin/nilfs-resize/.gitignore |    1 +
+ sbin/nilfs-tune/.gitignore   |    1 +
+ 7 files changed, 13 insertions(+), 0 deletions(-)
+ create mode 100644 bin/.gitignore
+ create mode 100644 sbin/cleanerd/.gitignore
+ create mode 100644 sbin/mkfs/.gitignore
+ create mode 100644 sbin/mount/.gitignore
+ create mode 100644 sbin/nilfs-clean/.gitignore
+ create mode 100644 sbin/nilfs-resize/.gitignore
+ create mode 100644 sbin/nilfs-tune/.gitignore
 
------Original Message-----
-From: Ryusuke Konishi [mailto:konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org] 
-Sent: Thursday, December 08, 2011 8:22 PM
-To: Zahid Chowdhury
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Subject: Re: nilfs_cleanerd from nilfs-utils shutdown on version 2.0 and 2.1 does not fail but says nothing and does not clean the old checkpoints nor newer (actually older) ones.
+diff --git a/bin/.gitignore b/bin/.gitignore
+new file mode 100644
+index 0000000..3718690
+--- /dev/null
++++ b/bin/.gitignore
+@@ -0,0 +1,6 @@
++/chcp
++/dumpseg
++/lscp
++/lssu
++/mkcp
++/rmcp
+diff --git a/sbin/cleanerd/.gitignore b/sbin/cleanerd/.gitignore
+new file mode 100644
+index 0000000..b39e825
+--- /dev/null
++++ b/sbin/cleanerd/.gitignore
+@@ -0,0 +1 @@
++/nilfs_cleanerd
+diff --git a/sbin/mkfs/.gitignore b/sbin/mkfs/.gitignore
+new file mode 100644
+index 0000000..0d8a9d6
+--- /dev/null
++++ b/sbin/mkfs/.gitignore
+@@ -0,0 +1 @@
++/mkfs.nilfs2
+diff --git a/sbin/mount/.gitignore b/sbin/mount/.gitignore
+new file mode 100644
+index 0000000..766f1bb
+--- /dev/null
++++ b/sbin/mount/.gitignore
+@@ -0,0 +1,2 @@
++/mount.nilfs2
++/umount.nilfs2
+diff --git a/sbin/nilfs-clean/.gitignore b/sbin/nilfs-clean/.gitignore
+new file mode 100644
+index 0000000..96d31d6
+--- /dev/null
++++ b/sbin/nilfs-clean/.gitignore
+@@ -0,0 +1 @@
++/nilfs-clean
+diff --git a/sbin/nilfs-resize/.gitignore b/sbin/nilfs-resize/.gitignore
+new file mode 100644
+index 0000000..2e82991
+--- /dev/null
++++ b/sbin/nilfs-resize/.gitignore
+@@ -0,0 +1 @@
++/nilfs-resize
+diff --git a/sbin/nilfs-tune/.gitignore b/sbin/nilfs-tune/.gitignore
+new file mode 100644
+index 0000000..e8a1d3e
+--- /dev/null
++++ b/sbin/nilfs-tune/.gitignore
+@@ -0,0 +1 @@
++/nilfs-tune
+-- 
+1.7.8
 
-On Wed, 7 Dec 2011 17:43:13 -0800, Zahid Chowdhury wrote:
-> Hello,
->   On further testing with more iterations with nilfs 2.1 with a only
->   a date rewind (across reboots also) the old dates do not get
->   cleaned up and the new checkpoints with the rewound dates are not
->   cleaned up (my previous testing with 2.1 daemon was on a loopback
->   mount and involved 2 iterations - all testing now was on live
->   systems) - though the 2.1 daemon does not crash it is a do nothing
->   process. A few times we had nilfs_cleanerd 2.1 crashes (reboots
->   fixed that - no crashes, but no checkpoint cleanup after the
->   reboot). Here is the stacktrace from the crash for a 3.0.4 kernel:
-> 
-> Dec  2 13:53:22  kernel: Pid: 1717, comm: nilfs_cleanerd Not tainted 3.0.4 #4
-> Dec  2 13:53:22  kernel: Call Trace:
-> Dec  2 13:53:22  kernel:  [<c043e1d0>] ? warn_slowpath_common+0x65/0x7a
-> Dec  2 13:53:22  kernel:  [<c043e1f9>] ? warn_slowpath_null+0x14/0x18
-> Dec  2 13:53:22  kernel:  [<f84c000d>] ? nilfs_ioctl_move_blocks+0x11d/0x199 [nilfs2]
-> Dec  2 13:53:22  kernel:  [<f84c02cd>] ? nilfs_ioctl_clean_segments+0x236/0x2b6 [nilfs2]
-> Dec  2 13:53:22  kernel:  [<f84bfd23>] ? nilfs_ioctl_get_bdescs+0x68/0x7b [nilfs2]
-> Dec  2 13:53:22  kernel:  [<f84c06f2>] ? nilfs_ioctl+0x192/0x1bb [nilfs2]
-> Dec  2 13:53:22  kernel:  [<f84c0560>] ? nilfs_ioctl_set_alloc_range+0x12b/0x12b [nilfs2]
-> Dec  2 13:53:22  kernel:  [<c04fffdc>] ? vfs_ioctl+0x1e/0x38
-> Dec  2 13:53:22  kernel:  [<c050061c>] ? do_vfs_ioctl+0x164/0x16b
-> Dec  2 13:53:22  kernel:  [<c0500668>] ? sys_ioctl+0x45/0x5c
-> Dec  2 13:53:22  kernel:  [<c07311df>] ? sysenter_do_call+0x12/0x28
-> Dec  2 13:53:22  kernel:  [<c0720000>] ? ab8500_regulator_probe+0x147/0x1af
-> Dec  2 13:53:22  kernel: ---[ end trace 34bfcccc859adad2 ]---
-> Dec  2 13:53:22  kernel: NILFS: GC failed during preparation: cannot read source blocks: err=-17
-> Dec  2 13:53:22  nilfs_cleanerd[1717]: cannot clean segments: File exists
-> Dec  2 13:53:22  nilfs_cleanerd[1717]: shutdown
-> Dec  2 14:06:10  nilfs_cleanerd[15310]: start
-> Dec  2 14:06:12  kernel: ------------[ cut here ]------------
-> Dec  2 14:06:12  kernel: WARNING: at fs/nilfs2/ioctl.c:449 nilfs_ioctl_move_blocks+0x11d/0x199 [nilfs2]()
-> Dec  2 14:06:12  kernel: Pid: 15310, comm: nilfs_cleanerd Tainted: G        W   3.0.4 #4
-> Dec  2 14:06:12  kernel: Call Trace:
-> Dec  2 14:06:12  kernel:  [<c043e1d0>] ? warn_slowpath_common+0x65/0x7a
-> Dec  2 14:06:12  kernel:  [<c043e1f9>] ? warn_slowpath_null+0x14/0x18
-> Dec  2 14:06:12  kernel:  [<f84c000d>] ? nilfs_ioctl_move_blocks+0x11d/0x199 [nilfs2]
-> Dec  2 14:06:12  kernel:  [<f84c02cd>] ? nilfs_ioctl_clean_segments+0x236/0x2b6 [nilfs2]
-> Dec  2 14:06:12  kernel:  [<f84bfd23>] ? nilfs_ioctl_get_bdescs+0x68/0x7b [nilfs2]
-> Dec  2 14:06:12  kernel:  [<f84c06f2>] ? nilfs_ioctl+0x192/0x1bb [nilfs2]
-> Dec  2 14:06:12  kernel:  [<f84c0560>] ? nilfs_ioctl_set_alloc_range+0x12b/0x12b [nilfs2]
-> Dec  2 14:06:12  kernel:  [<c04fffdc>] ? vfs_ioctl+0x1e/0x38
-> Dec  2 14:06:12  kernel:  [<c050061c>] ? do_vfs_ioctl+0x164/0x16b
-> Dec  2 14:06:12  kernel:  [<c0500668>] ? sys_ioctl+0x45/0x5c
-> Dec  2 14:06:12  kernel:  [<c07311df>] ? sysenter_do_call+0x12/0x28
-> Dec  2 14:06:12  kernel: ---[ end trace 34bfcccc859adad3 ]---
-> Dec  2 14:06:12  kernel: NILFS: GC failed during preparation: cannot read source blocks: err=-17
-> Dec  2 14:06:12  nilfs_cleanerd[15310]: cannot clean segments: File exists
-> Dec  2 14:06:12  nilfs_cleanerd[15310]: shutdown
-> Dec  2 14:08:11  nilfs_cleanerd[15574]: start
-> Dec  2 14:08:13  kernel: ------------[ cut here ]------------
-> Dec  2 14:08:13  kernel: WARNING: at fs/nilfs2/ioctl.c:449 nilfs_ioctl_move_blocks+0x11d/0x199 [nilfs2]()
-> 
-> Note, that moving the date forward from to the most forward
-> checkpoint in the future cleans all checkpoints in both 2.0 & 2.1
-> daemons.
-> 
-> Zahid
-
-Thank you for the test.
-
-"Dec 2" lines are rewound dates, right ? 
-So you mean the cleaner crash was different problem ?
-
-Regards,
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
