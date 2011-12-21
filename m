@@ -1,17 +1,17 @@
 From: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
-Subject: [PATCH 2/7] umount.nilfs2 (libmount): send proper error code to complain function
-Date: Wed, 21 Dec 2011 15:34:04 -0600
-Message-ID: <1324503249-17432-3-git-send-email-dan@archlinux.org>
+Subject: [PATCH 4/7] Alpha sort AC_CHECK_FUNCS list in configure.ac
+Date: Wed, 21 Dec 2011 15:34:06 -0600
+Message-ID: <1324503249-17432-5-git-send-email-dan@archlinux.org>
 References: <1324503249-17432-1-git-send-email-dan@archlinux.org>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=sender:from:to:subject:date:message-id:x-mailer:in-reply-to
          :references;
-        bh=rXYXFAYLMovE1l83UuHLViRB9OURJhug0OfEwP5ZFt0=;
-        b=H4aPQvp77O3jqBGmHNtNgsM3SYu6I1jJgcIXFL2VtBy9J5DRl8KCRPg6978N9/jgCT
-         5EOoaTOU17FQrSKC7SUiV8ZW9Q/zS3pIcBFV0pGUYg20xJAEgCZOHj5N49Kpp0i4M3N/
-         4fyC5YjBZ2U6gwcHBQzqpaaNaT+ymicEguBXQ=
+        bh=bVqINTJ2jiCxyyIGis9f5C6lTiQ7lfuz6IYR7wgxsWM=;
+        b=TeRg8LIpicfPHssuqcIb2QEiILUhFlxnbNufpv0N7rxCqsBpIJEvOl2UIlnX5QeSA/
+         3JDDLraeke8p2PNa96k3SqJothDDf7zFOOmEtu3QkuPbv5XncocyV41uoLrSqJH4+rdI
+         RmMw5Y0t0PzZt0sksf61Q9+8K1PYzr4dkrMg0=
 In-Reply-To: <1324503249-17432-1-git-send-email-dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -20,52 +20,41 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-We were negating the error code sent to complain, which is wrong. The
-documentation of mnt_context_do_umount() states that errors returned
-from the umount() syscall will be returned >0, so we shouldn't be
-doing a switch on the negated value. This fixes the following
-non-helpful output:
-
-Before:
-    sudo sbin/mount/umount.nilfs2 /mnt/nilfs
-    umount.nilfs2: /dev/loop0: Unknown error -16
-
-After:
-    $ sudo sbin/mount/umount.nilfs2 /mnt/nilfs
-    umount.nilfs2: /dev/loop0: device is busy
+And add strtoull(), which is used in several places. This also changes a
+` to a ' character in the libuuid description to fix syntax highlighting
+in some editors.
 
 Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
 ---
+ configure.ac |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-The complain() function was copied from the original umount code; I removed the
-comment as it doesn't make much sense in the context of using libmount and not
-parsing fstab directly.
-
- sbin/mount/umount_libmount.c |    4 +---
- 1 files changed, 1 insertions(+), 3 deletions(-)
-
-diff --git a/sbin/mount/umount_libmount.c b/sbin/mount/umount_libmount.c
-index 939c6b0..2c983b3 100644
---- a/sbin/mount/umount_libmount.c
-+++ b/sbin/mount/umount_libmount.c
-@@ -183,8 +183,6 @@ static void complain(int err, const char *dev)
- 		error(_("%s: %s: I/O error while unmounting"), progname, dev);
- 		break;
- 	case EBUSY:
--		/* Let us hope fstab has a line "proc /proc ..."
--		   and not "none /proc ..."*/
- 		error(_("%s: %s: device is busy"), progname, dev);
- 		break;
- 	case ENOENT:
-@@ -284,7 +282,7 @@ static int nilfs_umount_one(struct nilfs_umount_info *umi)
- 	if (!mnt_context_is_fake(umi->cxt)) {
- 		res = nilfs_do_umount_one(umi);
- 		if (res) {
--			complain(-res, mnt_context_get_source(umi->cxt));
-+			complain(res, mnt_context_get_source(umi->cxt));
- 			goto failed;
- 		}
- 	}
+diff --git a/configure.ac b/configure.ac
+index ccd8008..da671a7 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -37,7 +37,7 @@ AC_ARG_ENABLE(libmount,
+ # Checks for libraries.
+ AC_CHECK_LIB([uuid], [uuid_generate],
+ 	[AC_DEFINE([HAVE_LIBUUID], 1,
+-	  [Define to 1 if you have the `uuid' library (-luuid).])],
++	  [Define to 1 if you have the 'uuid' library (-luuid).])],
+ 	[AC_MSG_ERROR([UUID library not found])])
+ 
+ LIB_POSIX_MQ=''
+@@ -101,9 +101,9 @@ AC_FUNC_STRFTIME
+ AC_FUNC_VPRINTF
+ AC_CHECK_FUNC(posix_memalign,,
+ 	      [AC_MSG_ERROR([cannot find posix_memalign() function])])
+-AC_CHECK_FUNCS([alarm atexit ftruncate getcwd gettimeofday localtime_r \
+-		memmove memset munmap strchr strdup strerror strrchr strstr \
+-		strtoul getgrgid getpwuid strcasecmp getmntent_r strtok_r])
++AC_CHECK_FUNCS([alarm atexit ftruncate getcwd getgrgid getmntent_r getpwuid \
++		gettimeofday localtime_r memmove memset munmap strcasecmp strchr \
++		strdup strerror strrchr strstr strtok_r strtoul strtoull])
+ 
+ # Checks for system services
+ AC_SYS_LARGEFILE
 -- 
 1.7.8
 
