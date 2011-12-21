@@ -1,17 +1,17 @@
 From: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
-Subject: [PATCH 6/7] rmcp/chcp: sanity check for positive checkpoint number
-Date: Wed, 21 Dec 2011 15:34:08 -0600
-Message-ID: <1324503249-17432-7-git-send-email-dan@archlinux.org>
+Subject: [PATCH 7/7] rmcp: print sensible error message on permission failure
+Date: Wed, 21 Dec 2011 15:34:09 -0600
+Message-ID: <1324503249-17432-8-git-send-email-dan@archlinux.org>
 References: <1324503249-17432-1-git-send-email-dan@archlinux.org>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=sender:from:to:subject:date:message-id:x-mailer:in-reply-to
          :references;
-        bh=GKMq182ddlVRNOSgHhVHnQxSpJhzMwHP6KGZijTV8j4=;
-        b=aT3SfB6paGK2ipVdGAgxwoowiJiXN4khzG2oJXsB2/JkCpYrMQKynnWmYNAk9jtEBn
-         tus7vYkU1lL9Vv6YSzQVzDKndBQsOY5yFz6XsS38wF6ACoPT25R7AGqlJRxSlhb4vifo
-         k8NNFHclSXA+BNRbuTfz/I+59yjmQwU2mFLVU=
+        bh=FkIvzNdA3Os5m6Aal+VuNLiFbAX1CJLl6WWNYaf5a1w=;
+        b=v/ECfTba1pHhv3n42lYU6iqPF2VYORCm6/pfY2LdaiD55JL+/IzmtezrI/49Cyj6sg
+         AYdxj62FCyn2oLZQ2GIaZv5pX+U29cdFg7EoFcHFJJxAMqHzPFVwZ+JzCMx39izko3FR
+         vEFhjJ92C6AFsiQ3xYR/NPXElrhFMjU63aoCA=
 In-Reply-To: <1324503249-17432-1-git-send-email-dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -20,159 +20,82 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-These two utilities parse a command line argument with either a
-checkpoint number or range. Unfortunately, an unchecked strtoull() call
-happily parses a negative number (casting it to a really large unsigned
-number).
+When running as non-root, the error message seems to indicate a
+checkpoint is a snapshot, rather than the actual problem, which is that
+I do not have permission to delete the checkpoints.
 
-For rmcp, ensure the single number or range passed in is not negative.
-Before, this caused a near-infinite loop with a command such as
-`rmcp -- -1`.
+Before:
+    $ rmcp 29..35
+    rmcp: 29: cannot remove snapshot
+    rmcp: 30: cannot remove snapshot
+    rmcp: 31: cannot remove snapshot
+    rmcp: 32: cannot remove snapshot
+    rmcp: 33: cannot remove snapshot
+    rmcp: 34: cannot remove snapshot
+    rmcp: 35: cannot remove snapshot
 
-For chcp, also ensure the passed in number is not negative by using the
-new helper function introduced for the range validation,
-nilfs_parse_cno().
+    To delete snapshot(s), change them into checkpoints with
+    chcp command before removal.
+
+After:
+    $ ./bin/rmcp 29..35
+    lt-rmcp: 29: cannot remove checkpoint: Operation not permitted
+    lt-rmcp: 30: cannot remove checkpoint: Operation not permitted
+    lt-rmcp: 31: cannot remove checkpoint: Operation not permitted
+    lt-rmcp: 32: cannot remove checkpoint: Operation not permitted
+    lt-rmcp: 33: cannot remove checkpoint: Operation not permitted
+    lt-rmcp: 34: cannot remove checkpoint: Operation not permitted
+    lt-rmcp: 35: cannot remove checkpoint: Operation not permitted
+
+Since May 2009 the kernel has returned EBUSY instead of EPERM for
+removal requests against snapshots, commit 30c25be71fcbd87fd. We should
+be able to treat EPERM as expected now, as the commit message there
+indicates.
 
 Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
 ---
 
-Some other commands to try for fuzz testing:
+This does introduce a behavior change as well- we no longer exit the range loop
+immediately on an error code, instead we continue the loop and attempt to
+delete the rest of the checkpoints in the range. Objections to this? I'm not an
+expert by any means.
 
-$ rmcp -- '-234'
-$ rmcp -- ' -234'
-$ rmcp 4135860689012436789324689324061328960812949788907
+ bin/rmcp.c |   10 ++++++----
+ 1 files changed, 6 insertions(+), 4 deletions(-)
 
- bin/Makefile.am |    2 +-
- bin/chcp.c      |    7 ++++---
- include/cno.h   |    1 +
- lib/cno.c       |   29 +++++++++++++++++++++--------
- 4 files changed, 27 insertions(+), 12 deletions(-)
-
-diff --git a/bin/Makefile.am b/bin/Makefile.am
-index 78928d0..32b6ee8 100644
---- a/bin/Makefile.am
-+++ b/bin/Makefile.am
-@@ -7,7 +7,7 @@ LDADD = $(top_builddir)/lib/libnilfs.la
- bin_PROGRAMS = chcp dumpseg lscp lssu mkcp rmcp
- 
- chcp_SOURCES = chcp.c
--chcp_LDADD = $(LDADD) $(LIB_POSIX_SEM)
-+chcp_LDADD = $(LDADD) $(LIB_POSIX_SEM) $(top_builddir)/lib/libcno.la
- 
- dumpseg_SOURCES = dumpseg.c
- 
-diff --git a/bin/chcp.c b/bin/chcp.c
-index 13a73d7..a7072ef 100644
---- a/bin/chcp.c
-+++ b/bin/chcp.c
-@@ -49,6 +49,7 @@
- #include <errno.h>
- #include <signal.h>
- #include "nilfs.h"
-+#include "cno.h"
- 
- 
- #define CHCP_MODE_CP	"cp"
-@@ -121,7 +122,7 @@ int main(int argc, char *argv[])
- 		dev = NULL;
- 	} else {
- 		modestr = argv[optind++];
--		strtoul(argv[optind], &endptr, CHCP_BASE);
-+		nilfs_parse_cno(argv[optind], &endptr, CHCP_BASE);
- 		if (*endptr == '\0')
- 			dev = NULL;
- 		else
-@@ -178,8 +179,8 @@ int main(int argc, char *argv[])
- 			break;
+diff --git a/bin/rmcp.c b/bin/rmcp.c
+index 780a192..3c5c184 100644
+--- a/bin/rmcp.c
++++ b/bin/rmcp.c
+@@ -105,7 +105,7 @@ static int rmcp_remove_range(struct nilfs *nilfs,
+ 			nd++;
+ 			continue;
  		}
- 
--		cno = strtoul(argv[optind], &endptr, CHCP_BASE);
--		if (*endptr != '\0') {
-+		cno = nilfs_parse_cno(argv[optind], &endptr, CHCP_BASE);
-+		if (cno >= NILFS_CNO_MAX || *endptr != '\0') {
- 			fprintf(stderr, "%s: %s: invalid checkpoint number\n",
- 				progname, argv[optind]);
- 			status = 1;
-diff --git a/include/cno.h b/include/cno.h
-index 2d5c4af..79a327f 100644
---- a/include/cno.h
-+++ b/include/cno.h
-@@ -10,6 +10,7 @@
- #ifndef NILFS_CNO_H
- #define NILFS_CNO_H
- 
-+extern nilfs_cno_t nilfs_parse_cno(const char *arg, char **endptr, int base);
- extern int nilfs_parse_cno_range(const char *arg, __u64 *start, __u64 *end,
- 				 int base);
- 
-diff --git a/lib/cno.c b/lib/cno.c
-index 2391f0b..7dcdb71 100644
---- a/lib/cno.c
-+++ b/lib/cno.c
-@@ -35,8 +35,21 @@
- #endif	/* HAVE_STRING_H */
- 
- #include <assert.h>
-+#include <ctype.h>
- #include "nilfs.h"
- 
-+nilfs_cno_t nilfs_parse_cno(const char *arg, char **endptr, int base)
-+{
-+	/* ensure the number we are about to parse is not negative, which
-+	 * strtoull() will happily accept and cast to an unsigned value. */
-+	while (isspace(*arg))
-+		arg++;
-+	if (*arg == '-')
-+		return NILFS_CNO_MAX;
+-		if (errno == EBUSY || errno == EPERM) {
++		if (errno == EBUSY) {
+ 			nss++;
+ 			if (!force) {
+ 				fprintf(stderr,
+@@ -115,14 +115,16 @@ static int rmcp_remove_range(struct nilfs *nilfs,
+ 		} else if (errno == ENOENT) {
+ 			nocp++;
+ 		} else {
+-			fprintf(stderr, "%s: %s\n", progname, strerror(errno));
++			fprintf(stderr,
++				"%s: %llu: cannot remove checkpoint: %s\n",
++				progname, (unsigned long long)cno,
++				strerror(errno));
+ 			ret = -1;
+-			goto out;
+ 		}
+ 	}
+ 	if (!force && (nss > 0 || (nocp > 0 && nd == 0)))
+ 		ret = 1;
+- out:
 +
-+	return strtoull(arg, endptr, base);
-+}
-+
- int nilfs_parse_cno_range(const char *arg, __u64 *start, __u64 *end, int base)
- {
- 	const char *delim;
-@@ -49,8 +62,8 @@ int nilfs_parse_cno_range(const char *arg, __u64 *start, __u64 *end, int base)
- 	if (delim && delim == arg) {
- 		if (arg[2] != '\0') {
- 			/* ..yyy */
--			cno = strtoull(arg + 2, &endptr, base);
--			if (*endptr == '\0') {
-+			cno = nilfs_parse_cno(arg + 2, &endptr, base);
-+			if (cno < NILFS_CNO_MAX && *endptr == '\0') {
- 				/* ..CNO */
- 				*start = NILFS_CNO_MIN;
- 				*end = cno;
-@@ -59,24 +72,24 @@ int nilfs_parse_cno_range(const char *arg, __u64 *start, __u64 *end, int base)
- 		}
- 	} else if (!delim) {
- 		/* xxx */
--		cno = strtoull(arg, &endptr, base);
--		if (*endptr == '\0') {
-+		cno = nilfs_parse_cno(arg, &endptr, base);
-+		if (cno < NILFS_CNO_MAX && *endptr == '\0') {
- 			/* CNO */
- 			*start = *end = cno;
- 			return 0;
- 		}
- 	} else {
- 		/* xxx..yyy */
--		cno = strtoull(arg, &endptr, base);
--		if (endptr == delim) {
-+		cno = nilfs_parse_cno(arg, &endptr, base);
-+		if (cno < NILFS_CNO_MAX && endptr == delim) {
- 			if (delim[2] == '\0') {
- 				/* CNO.. */
- 				*start = cno;
- 				*end = NILFS_CNO_MAX;
- 				return 0;
- 			}
--			cno2 = strtoull(delim + 2, &endptr, base);
--			if (*endptr == '\0') {
-+			cno2 = nilfs_parse_cno(delim + 2, &endptr, base);
-+			if (cno2 < NILFS_CNO_MAX && *endptr == '\0') {
- 				/* CNO..CNO */
- 				*start = cno;
- 				*end = cno2;
+ 	*ndeleted = nd;
+ 	*nsnapshots = nss;
+ 	return ret;
 -- 
 1.7.8
 
