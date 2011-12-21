@@ -1,17 +1,17 @@
 From: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
-Subject: [PATCH 4/7] Alpha sort AC_CHECK_FUNCS list in configure.ac
-Date: Wed, 21 Dec 2011 15:34:06 -0600
-Message-ID: <1324503249-17432-5-git-send-email-dan@archlinux.org>
+Subject: [PATCH 3/7] Remove kern_compat.h
+Date: Wed, 21 Dec 2011 15:34:05 -0600
+Message-ID: <1324503249-17432-4-git-send-email-dan@archlinux.org>
 References: <1324503249-17432-1-git-send-email-dan@archlinux.org>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=gamma;
         h=sender:from:to:subject:date:message-id:x-mailer:in-reply-to
          :references;
-        bh=bVqINTJ2jiCxyyIGis9f5C6lTiQ7lfuz6IYR7wgxsWM=;
-        b=TeRg8LIpicfPHssuqcIb2QEiILUhFlxnbNufpv0N7rxCqsBpIJEvOl2UIlnX5QeSA/
-         3JDDLraeke8p2PNa96k3SqJothDDf7zFOOmEtu3QkuPbv5XncocyV41uoLrSqJH4+rdI
-         RmMw5Y0t0PzZt0sksf61Q9+8K1PYzr4dkrMg0=
+        bh=o0Qn8kVvfA/4lYnVOq1m7cqXL4w8HUJZDST7G+iUerI=;
+        b=XSYCqyb5TagGNiNeYGg1AezxrdE9aZuUDY68yi7WmUKOgoKFT/mswIVzJTHpWhwapc
+         FEj4oBpf/N4xLhbyS83OhJEXHO7aSMyZGEbihoJU5NZWKKUSBg+P/wAPsttMYL6JRPra
+         VxpoubY8YopjJwFqwKsmMMJSR6LBmOm5ZSd3Q=
 In-Reply-To: <1324503249-17432-1-git-send-email-dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -20,41 +20,138 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-And add strtoull(), which is used in several places. This also changes a
-` to a ' character in the libuuid description to fix syntax highlighting
-in some editors.
+All necessary macros are already definied in include/nilfs.h, which we
+can use instead. This also removes the duplicate definitions of
+NILFS_CNO_MIN and NILFS_CNO_MAX.
 
 Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
 ---
- configure.ac |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/configure.ac b/configure.ac
-index ccd8008..da671a7 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -37,7 +37,7 @@ AC_ARG_ENABLE(libmount,
- # Checks for libraries.
- AC_CHECK_LIB([uuid], [uuid_generate],
- 	[AC_DEFINE([HAVE_LIBUUID], 1,
--	  [Define to 1 if you have the `uuid' library (-luuid).])],
-+	  [Define to 1 if you have the 'uuid' library (-luuid).])],
- 	[AC_MSG_ERROR([UUID library not found])])
+I would appreciate other people compile testing this one as some other
+platforms or kernel headers might yield different results.
+
+ include/Makefile.am   |    2 +-
+ include/kern_compat.h |   47 -----------------------------------------------
+ lib/feature.c         |    2 +-
+ sbin/mkfs/mkfs.c      |    3 ++-
+ sbin/mkfs/mkfs.h      |    4 ----
+ 5 files changed, 4 insertions(+), 54 deletions(-)
+ delete mode 100644 include/kern_compat.h
+
+diff --git a/include/Makefile.am b/include/Makefile.am
+index 221c481..c99da99 100644
+--- a/include/Makefile.am
++++ b/include/Makefile.am
+@@ -1,5 +1,5 @@
+ ## Makefile.am
  
- LIB_POSIX_MQ=''
-@@ -101,9 +101,9 @@ AC_FUNC_STRFTIME
- AC_FUNC_VPRINTF
- AC_CHECK_FUNC(posix_memalign,,
- 	      [AC_MSG_ERROR([cannot find posix_memalign() function])])
--AC_CHECK_FUNCS([alarm atexit ftruncate getcwd gettimeofday localtime_r \
--		memmove memset munmap strchr strdup strerror strrchr strstr \
--		strtoul getgrgid getpwuid strcasecmp getmntent_r strtok_r])
-+AC_CHECK_FUNCS([alarm atexit ftruncate getcwd getgrgid getmntent_r getpwuid \
-+		gettimeofday localtime_r memmove memset munmap strcasecmp strchr \
-+		strdup strerror strrchr strstr strtok_r strtoul strtoull])
+ include_HEADERS = nilfs.h nilfs2_fs.h nilfs_cleaner.h
+-noinst_HEADERS = realpath.h nls.h cno.h kern_compat.h nilfs_feature.h \
++noinst_HEADERS = realpath.h nls.h cno.h nilfs_feature.h \
+ 	vector.h nilfs_gc.h cnoconv.h cleaner_msg.h cleaner_exec.h
+diff --git a/include/kern_compat.h b/include/kern_compat.h
+deleted file mode 100644
+index a2cffdc..0000000
+--- a/include/kern_compat.h
++++ /dev/null
+@@ -1,47 +0,0 @@
+-/*
+- * kern_compat.h - kernel compat declarations
+- *
+- * Copyright (C) 2005-2011 Nippon Telegraph and Telephone Corporation.
+- *
+- * This program can be redistributed under the terms of the GNU Lesser
+- * General Public License.
+- */
+-
+-#ifndef NILFS_KERN_COMPAT_H
+-#define NILFS_KERN_COMPAT_H
+-
+-#include <linux/types.h>
+-#include <endian.h>
+-#include <byteswap.h>
+-
+-#ifndef __bitwise  /* Tricky workaround; should be replaced */
+-typedef __u64 __le64;
+-typedef __u32 __le32;
+-typedef __u16 __le16;
+-#endif
+-
+-#ifndef le32_to_cpu
+-#if __BYTE_ORDER == __LITTLE_ENDIAN
+-#define cpu_to_le16(x) (x)
+-#define cpu_to_le32(x) (x)
+-#define cpu_to_le64(x) (x)
+-#define le16_to_cpu(x) (x)
+-#define le32_to_cpu(x) (x)
+-#define le64_to_cpu(x) (x)
+-#elif __BYTE_ORDER == __BIG_ENDIAN
+-#define le16_to_cpu(x) bswap_16(x)
+-#define le32_to_cpu(x) bswap_32(x)
+-#define le64_to_cpu(x) bswap_64(x)
+-#define cpu_to_le16(x) bswap_16(x)
+-#define cpu_to_le32(x) bswap_32(x)
+-#define cpu_to_le64(x) bswap_64(x)
+-#else
+-#error "unsupported endian"
+-#endif /* __BYTE_ORDER */
+-#endif /* le32_to_cpu */
+-
+-#ifndef BUG
+-#define BUG()	abort()
+-#endif
+-
+-#endif	/* NILFS_KERN_COMPAT_H */
+diff --git a/lib/feature.c b/lib/feature.c
+index b346cea..b5752f2 100644
+--- a/lib/feature.c
++++ b/lib/feature.c
+@@ -43,7 +43,7 @@
  
- # Checks for system services
- AC_SYS_LARGEFILE
+ #include <errno.h>
+ #include <assert.h>
+-#include "kern_compat.h"
++#include "nilfs.h"
+ #include "nilfs2_fs.h"
+ #include "nilfs_feature.h"
+ 
+diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+index 43a9657..870c682 100644
+--- a/sbin/mkfs/mkfs.c
++++ b/sbin/mkfs/mkfs.c
+@@ -72,8 +72,9 @@
+ 
+ #include <errno.h>
+ 
+-#include "mkfs.h"
++#include "nilfs.h"
+ #include "nilfs_feature.h"
++#include "mkfs.h"
+ 
+ 
+ typedef __u64  blocknr_t;
+diff --git a/sbin/mkfs/mkfs.h b/sbin/mkfs/mkfs.h
+index 643060c..ce065a0 100644
+--- a/sbin/mkfs/mkfs.h
++++ b/sbin/mkfs/mkfs.h
+@@ -24,7 +24,6 @@
+  * Revised by Ryusuke Konishi <ryusuke-sG5X7nlA6pw@public.gmane.org>.
+  */
+ 
+-#include "kern_compat.h"
+ #include "nilfs2_fs.h"
+ 
+ #define NILFS_DISKHDR_SIZE 		4096 /* HDD header (MBR+superblock) */
+@@ -41,9 +40,6 @@
+ #define NILFS_DEF_RESERVED_SEGMENTS     5    /* default percentage of reserved
+ 						segments: 5% */
+ 
+-#define NILFS_CNO_MIN   1
+-#define NILFS_CNO_MAX   (~(__u64)0)
+-
+ #define NILFS_MAX_BMAP_ROOT_PTRS	(NILFS_INODE_BMAP_SIZE - 1)
+ #define NILFS_MIN_BLOCKSIZE		1024
+ #define NILFS_MIN_NUSERSEGS		8    /* Minimum number of user
 -- 
 1.7.8
 
