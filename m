@@ -1,104 +1,155 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] rmcp: print sensible error message on permission
- failure
-Date: Thu, 05 Jan 2012 14:14:15 +0900 (JST)
-Message-ID: <20120105.141415.16062951.ryusuke@osrg.net>
-References: <20111224.162041.267403683.ryusuke@osrg.net>
-	<1325619960-9715-1-git-send-email-dan@archlinux.org>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+Subject: [PATCH] mkfs.nilfs2: support -h command line option
+Date: Thu,  5 Jan 2012 10:03:39 -0600
+Message-ID: <1325779419-27781-1-git-send-email-dan@archlinux.org>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1325619960-9715-1-git-send-email-dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=sender:from:to:subject:date:message-id:x-mailer;
+        bh=/gSvSoy92QUERlBbVaqhG6irHhDIUkeU27Kz/Tr/l+A=;
+        b=VEUpv0zdnXwBSPEuQq4k+SD1TeTQXEeKBcW3eRzZgeLV8jXIeKjE90Awr5HZF6VcOi
+         M9HvSlxckxZ+1V+E0DEXnNX/dRQkcTalbQCXQ+r3sLB+XAy991265rVv9B2HdLm4FsK9
+         IfsyaNyoVgpKl20AumN3VlpKnYBRVnYp49cjU=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue,  3 Jan 2012 13:46:00 -0600, Dan McGee wrote:
-> When running as non-root, the error message seems to indicate a
-> checkpoint is a snapshot, rather than the actual problem, which is that
-> I do not have permission to delete the checkpoints.
-> 
-> Before:
->     $ rmcp 29..35
->     rmcp: 29: cannot remove snapshot
->     rmcp: 30: cannot remove snapshot
->     rmcp: 31: cannot remove snapshot
->     rmcp: 32: cannot remove snapshot
->     rmcp: 33: cannot remove snapshot
->     rmcp: 34: cannot remove snapshot
->     rmcp: 35: cannot remove snapshot
-> 
->     To delete snapshot(s), change them into checkpoints with
->     chcp command before removal.
-> 
-> After:
->     $ ./bin/rmcp 29..35
->     lt-rmcp: 29: cannot remove checkpoint: Operation not permitted
->     Remaining checkpoints were not removed.
-> 
-> Since May 2009 the kernel has returned EBUSY instead of EPERM for
-> removal requests against snapshots, commit 30c25be71fcbd87fd. We should
-> be able to treat EPERM as expected now, as the commit message there
-> indicates.
-> 
-> Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+---
+ man/mkfs.nilfs2.8 |    9 +++++++++
+ sbin/mkfs/mkfs.c  |   25 ++++++++++++++++---------
+ 2 files changed, 25 insertions(+), 9 deletions(-)
 
-All your patches were applied to nilfs-utils git repository.
+diff --git a/man/mkfs.nilfs2.8 b/man/mkfs.nilfs2.8
+index f513994..b334142 100644
+--- a/man/mkfs.nilfs2.8
++++ b/man/mkfs.nilfs2.8
+@@ -36,6 +36,9 @@ mkfs.nilfs2 \- create a NILFS2 filesystem
+ .IR feature [,...]
+ ]
+ [
++.B \-h
++]
++[
+ .B \-q
+ ]
+ [
+@@ -77,6 +80,9 @@ mkfs.nilfs2 \- create a NILFS2 filesystem
+ .IR feature [,...]
+ ]
+ [
++.B \-h
++]
++[
+ .B \-q
+ ]
+ [
+@@ -114,6 +120,9 @@ number of blocks per segment is 2048 (= 8MB with 4KB blocks).
+ .B \-c
+ Check the device for bad blocks before building the filesystem.
+ .TP
++.B \-h
++Display help message and exit.
++.TP
+ .BI \-K
+ Keep, do not attempt to discard blocks at mkfs time (discarding blocks
+ initially is useful on solid state drives and sparse /
+diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+index 870c682..9f6f9b7 100644
+--- a/sbin/mkfs/mkfs.c
++++ b/sbin/mkfs/mkfs.c
+@@ -647,7 +647,7 @@ int main(int argc, char *argv[])
+ 	write_disk(fd, di); /* Writing to the device */
+ 
+ 	close(fd);
+-	exit(0);
++	exit(EXIT_SUCCESS);
+ }
+ 
+ /*
+@@ -692,7 +692,7 @@ static void disk_scan(const char *device)
+ 		args[i++] = device;
+ 		args[i] = NULL;
+ 		execv(badblocks, (char **)args);
+-		exit(1); /* reach only if failed */
++		exit(EXIT_FAILURE); /* reach only if failed */
+ 	} else if (pid != -1) {
+ 		if (wait(&status) < 0)
+ 			perr("Error: cannot wait child");
+@@ -973,7 +973,7 @@ static void parse_options(int argc, char *argv[])
+ 	int c, show_version_only = 0;
+ 	char *fs_features = NULL;
+ 
+-	while ((c = getopt(argc, argv, "b:B:cKL:m:nqvO:P:V")) != EOF) {
++	while ((c = getopt(argc, argv, "b:B:chKL:m:nqvO:P:V")) != EOF) {
+ 		switch (c) {
+ 		case 'b':
+ 			blocksize = atol(optarg);
+@@ -985,6 +985,9 @@ static void parse_options(int argc, char *argv[])
+ 		case 'c':
+ 			cflag++;
+ 			break;
++		case 'h':
++			usage();
++			exit(EXIT_SUCCESS);
+ 		case 'K':
+ 			discard = 0;
+ 			break;
+@@ -1015,6 +1018,7 @@ static void parse_options(int argc, char *argv[])
+ 			break;
+ 		default:
+ 			usage();
++			exit(EXIT_FAILURE);
+ 		}
+ 	}
+ 
+@@ -1022,11 +1026,15 @@ static void parse_options(int argc, char *argv[])
+ 		verbose = 0;
+ 
+ 	if ((optind == argc) && !show_version_only)
++	{
++		printf("%d %d\n", optind, argc);
+ 		usage();
++		exit(EXIT_FAILURE);
++	}
+ 
+ 	if (show_version_only) {
+ 		show_version();
+-		exit(0);
++		exit(EXIT_SUCCESS);
+ 	}
+ 
+ 	check_blocks_per_segment(blocks_per_segment);
+@@ -1049,11 +1057,10 @@ static void usage(void)
+ {
+ 	fprintf(stderr,
+ 		"Usage: %s [-b block-size] [-B blocks-per-segment] [-c] \n"
+-		"[-L volume-label] [-m reserved-segments-percentage] \n"
+-		"[-O feature[,...]] \n"
+-		"[-nqvKV] device\n",
++		"       [-L volume-label] [-m reserved-segments-percentage] \n"
++		"       [-O feature[,...]] \n"
++		"       [-hnqvKV] device\n",
+ 		progname);
+-	exit(1);
+ }
+ 
+ static void show_version(void)
+@@ -1080,7 +1087,7 @@ static void perr(const char *fmt, ...)
+ 	vfprintf(stderr, fmt, args);
+ 	fprintf(stderr, "\n");
+ 	va_end(args);
+-	exit(1);
++	exit(EXIT_FAILURE);
+ }
+ 
+ static void cannot_rw_device(int fd, const char *device, int rw)
+-- 
+1.7.8.1
 
-Thank you very much.
-
-Ryusuke Konishi
-
-> ---
->  bin/rmcp.c |   11 ++++++++---
->  1 files changed, 8 insertions(+), 3 deletions(-)
-> 
-> diff --git a/bin/rmcp.c b/bin/rmcp.c
-> index 780a192..9f4666a 100644
-> --- a/bin/rmcp.c
-> +++ b/bin/rmcp.c
-> @@ -105,7 +105,7 @@ static int rmcp_remove_range(struct nilfs *nilfs,
->  			nd++;
->  			continue;
->  		}
-> -		if (errno == EBUSY || errno == EPERM) {
-> +		if (errno == EBUSY) {
->  			nss++;
->  			if (!force) {
->  				fprintf(stderr,
-> @@ -115,7 +115,10 @@ static int rmcp_remove_range(struct nilfs *nilfs,
->  		} else if (errno == ENOENT) {
->  			nocp++;
->  		} else {
-> -			fprintf(stderr, "%s: %s\n", progname, strerror(errno));
-> +			fprintf(stderr,
-> +				"%s: %llu: cannot remove checkpoint: %s\n",
-> +				progname, (unsigned long long)cno,
-> +				strerror(errno));
->  			ret = -1;
->  			goto out;
->  		}
-> @@ -237,8 +240,10 @@ int main(int argc, char *argv[])
->  			continue;
->  
->  		status = 1;
-> -		if (ret < 0)
-> +		if (ret < 0) {
-> +			fprintf(stderr, "Remaining checkpoints were not removed.\n");
->  			break;
-> +		}
->  
->  		if (force || ndel != 0 || end - start + 1 - nss == 0)
->  			continue;
-> -- 
-> 1.7.8.1
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
