@@ -1,49 +1,110 @@
-From: Christian Smith <csmith-r5H9PUQoNxUga4AWyxku7ULnMzgEhdHr@public.gmane.org>
-Subject: Re: Odd problem starting nilfs_cleanerd due to an eMMC misbehaviour
-Date: Fri, 27 Jan 2012 16:19:21 +0000
-Message-ID: <20120127161921.GL750@csmith-bm.vm.bytemark.co.uk>
-References: <20120126135203.GM2267@home.lan>
+From: Gordan Bobic <gordan-UpbECiGlrmGsTnJN9+BGXg@public.gmane.org>
+Subject: Re: Garbage Collection Method
+Date: Fri, 27 Jan 2012 16:26:23 +0000
+Message-ID: <4F22D02F.1060208@bobich.net>
+References: <4F215039.4000904@bobich.net> <20120127160004.GK750@csmith-bm.vm.bytemark.co.uk>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20120126135203.GM2267-0MSThuzptbI@public.gmane.org>
+In-Reply-To: <20120127160004.GK750-Ng8wz+J301SNY5Lh21HnMTHS2PGA244I9dF7HbQ/qKg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Paul Fertser <fercerpav-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Thu, Jan 26, 2012 at 05:52:03PM +0400, Paul Fertser wrote:
-> Hi,
+Christian,
+
+Many thanks for your reply.
+
+>> 1) Does it scan blocks from the tail of the file system forward  
+>> sequentially?
 > 
-> I'm using nilfs2 for the root filesystem on an ARM-based netbook
-> (Toshiba ac100) with Debian hardfloat. Custom kernel is based on 3.0.8
-> and nilfs-tools is 2.1.0-1 from the Debian repository.
+> Yes
 > 
-> I wanted to try the threaded i/o test from the Phoronix test suite and
-> somehow it happened that during the test the garbage collecting daemon
-> failed and never came back. So i got the filesystem 100% full and
-> after i noticed it i tried running the daemon manually. It didn't
-> start even after reboot. Suprisingly, the eMMC error went away on its
-> own after fully powering off the whole device, and after that the
-> daemon started to work properly.
+>> 2) Does it reclaim blocks regardless of how dirty they are? Or does it  
+>> execute reclaiming on order of maximum dirtyness first in order to  
+>> reduce churn (and flash wear when used on flash media)?
 > 
-> I'm not sure what conclusion might be made from this but i'd still
-> appreciate any comments, especially the suggestions on what to do if
-> the error didn't "recover".
+> The former.
+> 
+>> 3) What happens when it encounters a block that isn't dirty? Does it  
+>> skip it and reclaim the next dirty block, leaving a "hole"? Or does it  
+>> reclaim everything up to a reclaimable block to make the free space  
+>> contiguous?
+> 
+> It is cleaned regardless. Free space appears to always be contiguous.
 
-Remember, SDCards contain their own embedded controller to do the
-block mapping between LBA and FLASH blocks. There may even be an ARM
-based controller in the SDCard. Under the stress of a benchmark, the
-firmware probably just got itself in a bit of a state and needed a
-hard reset to recover.
+Hmm, so the GC causes completely unnecessary flash wear. That's really 
+bad for the most advantageous use-case of nilfs2. :(
 
-What brand of SD Card is it? Most SD Cards are designed for low
-stress low speed IO in devices such as cameras. Perhaps try a
-different brand.
+>> 4) Assuming this isn't already how it works, how difficult would it be  
+>> to modify the reclaim policy (along with associated book-keeping  
+>> requirements) to reclaim blocks in the order of dirtiest-block-first?
+>>
+>> 5) If a suitable book-keeping bitmap was in place for 4), could this not  
+>> be used for accurate df reporting?
+> 
+> 
+> Not being a NILFS developer, I can't answer either of these in detail.
+> 
+> However, as I understand it, the filesystem driver does not depend on the
+> current cleaning policy, and can skip cleaning specific blocks should those
+> blocks be sufficiently clean. Segments need not be written sequentially,
+> as each segment contains a pointer to the next segment that will be written
+> and hence why lssu always lists two segments as active (the current segment
+> and the next segment to be written).
+ >
+> It's just that the current GC just cleans all segments sequentially. It's
+> easier to just cycle through the segments in a circular fashion.
 
-Christian
+I see, so the sub-optimal reclaim and unnecessary churn are purely down 
+to the userspace GC daemon?
+
+Is there scope for having a bitmap or a counter in each allocation unit 
+to show how many dirty blocks there are in it? Such a bitmap would 
+require 1MB of space for every 32GB of storage (assuming 1 bit per 4KB 
+block). This would allow for being able to tell at a glance which block 
+is dirties and thus should be reclaimed next, while at the same time 
+stopping unnecessary churn.
+
+> What would be useful is to be able to select the write segment into which 
+> the cleaner will write live data. That way, the system could maintain two
+> log "heads", one for active hot data, and one for inactive cold data. Then
+> all cleaning would be done to the cold head, and all new writes to the hot
+> head on the assumption that the new write will either be temporary (and
+> hence discarded sooner rather than later) or not be updated for some time
+> (and hence cleaned to a cold segment by the cleaner) with the hope that
+> we'll have a bimodal distribution of clean and dirty data. Then the 
+> cleaner can concentrate on cleaning hot segments, with the occasional clean
+> of cold segments.
+
+I don't think distinguishing between hot and cold data is all that 
+useful. Ultimately, the optimal solution would be to reclaim the AUs in 
+dirtiest-first order. The other throttling provisions (not reclaiming 
+until free space drops below a threshold) should do enough to stop 
+premature flash wear.
+
+> Accurate df reporting is more tricky, as checkpoints and snapshots make it
+> decidedly not trivial to account for overwritten data. As such, the current
+> df reporting is probably the best we can manage within the current
+> constraints.
+
+With the bitmap solution as described above, would we not be able to 
+simply subtract the dirty blocks from the used space? Since the bitmap 
+always contains the dirtyness information on all the blocks in the FS, 
+this would make for a pretty simple solution, would it not?
+
+Is there anything in place that would prevent such a bitmap from being 
+kept in the file system headers? It could even be kept in RAM and 
+generated by the garbage collector for it's own use at run-time, 
+thinking about it, 1MB per 32GB is not a lot (32MB per TB), and it could 
+even be run-length encoded.
+
+Right now, even just preventing reallocation of allocation units that 
+are completely clean would be a big advantage in terms of performance 
+and flash wear.
+
+Gordan
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
