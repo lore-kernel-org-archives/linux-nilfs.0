@@ -1,147 +1,96 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
- 00000048
-Date: Tue, 06 Mar 2012 00:33:56 +0900 (JST)
-Message-ID: <20120306.003356.57456133.ryusuke@osrg.net>
-References: <CAMRzUtxbOXWOyZ1wMRmxSsRs67FoDq_hf7Pg_UrAi4P=DnhqsA@mail.gmail.com>
-	<20120305.233028.248350005.ryusuke@osrg.net>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH 00/19] Fix filesystem freezing deadlocks
+Date: Mon,  5 Mar 2012 17:00:58 +0100
+Message-ID: <1330963277-26336-1-git-send-email-jack@suse.cz>
 Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120305.233028.248350005.ryusuke-sG5X7nlA6pw@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: slicky.dvl-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
+	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=fuse-devel>
+List-Post: <mailto:fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
+	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Ben Myers <bpm-sJ/iWh9BUns@public.gmane.org>, Joel Becker <jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org>, dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alex Elder <elder-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Kamal Mostafa <kamal-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, D
 
-On Mon, 05 Mar 2012 23:30:28 +0900 (JST), Ryusuke Konishi wrote:
-> Hi,
-> On Wed, 29 Feb 2012 17:31:18 +0300, Slicky Devil wrote:
-> > Hello!
-> > 
-> > I think I found a bug for you, guys.
-> > 
-> > The situation was as following. At first, I set up LVM with a single
-> > lv (with nilfs) for root. Everything worked fine. Then I decided to
-> > create a separate home partition. I shrank the root a bit, created
-> > another nilfs logical volume for home. Then I shrank root/expanded
-> > home a couple of times. In the end I got the bug, when tried to mount
-> > the home.
-> > 
-> > I'm pretty much confident (say 90%) that I didn't mess things up by
-> > shrinking a partition before resizing the appropriate filesystem.
-> >
-> > Now every time I try to mount home I get the following:
-> > 
-> > [ 1367.830334] BUG: unable to handle kernel NULL pointer dereference at 00000048
-> > [ 1367.831581] IP: [<d0d7a08e>] nilfs_load_super_block+0x17e/0x280 [nilfs2]
-> > [ 1367.832098] *pde = 00000000
-> > [ 1367.832596] Oops: 0000 [#1] PREEMPT SMP
-> > [ 1367.833098] Modules linked in: ext2 mbcache snd_intel8x0 e1000
-> > ppdev snd_ac97_codec ac97_bus snd_pcm snd_page_alloc vboxvideo(O)
-> > snd_timer drm snd agpgart parport_pc soundcore parport i2c_piix4
-> > i2c_core serio_raw psmouse pcspkr evdev joydev processor ac button
-> > vboxsf(O) vboxguest(O) nilfs2 dm_mod sr_mod cdrom sd_mod usbhid hid
-> > ahci libahci libata ohci_hcd scsi_mod usbcore usb_common
-> > [ 1367.833562]
-> > [ 1367.833562] Pid: 710, comm: mount.nilfs2 Tainted: G           O
-> > 3.2.6-2-ARCH #1 innotek GmbH VirtualBox
-> > [ 1367.833562] EIP: 0060:[<d0d7a08e>] EFLAGS: 00010202 CPU: 0
-> > [ 1367.833562] EIP is at nilfs_load_super_block+0x17e/0x280 [nilfs2]
-> > [ 1367.833562] EAX: c9cb6400 EBX: ce845e00 ECX: 00000000 EDX: 00000000
-> > [ 1367.833562] ESI: 00000001 EDI: 00000000 EBP: ca9bbe08 ESP: ca9bbdcc
-> > [ 1367.833562]  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068
-> > [ 1367.833562] Process mount.nilfs2 (pid: 710, ti=ca9ba000
-> > task=cf054d20 task.ti=ca9ba000)
-> > [ 1367.833562] Stack:
-> > [ 1367.833562]  00000400 ce845e1c 0013f800 00000000 00000000 00000000
-> > cc7d6c00 00000400
-> > [ 1367.833562]  00000001 00000001 00000001 00000001 ce845e00 ca9bbe30
-> > cc7d6c00 ca9bbe40
-> > [ 1367.833562]  d0d7a87b ca9bbe30 00000114 000080d0 00000200 00034460
-> > cc7d6db0 00000000
-> > [ 1367.833562] Call Trace:
-> > [ 1367.833562]  [<d0d7a87b>] init_nilfs+0x4b/0x2e0 [nilfs2]
-> > [ 1367.833562]  [<d0d6f707>] nilfs_mount+0x447/0x5b0 [nilfs2]
-> > [ 1367.833562]  [<c01f33a4>] ? pcpu_alloc+0x714/0x810
-> > [ 1367.833562]  [<c02d2add>] ? ida_get_new_above+0x1ad/0x230
-> > [ 1367.833562]  [<c02d2add>] ? ida_get_new_above+0x1ad/0x230
-> > [ 1367.833562]  [<c0226636>] mount_fs+0x36/0x180
-> > [ 1367.833562]  [<c01f34af>] ? __alloc_percpu+0xf/0x20
-> > [ 1367.833562]  [<c023d961>] vfs_kern_mount+0x51/0xa0
-> > [ 1367.833562]  [<c023ddae>] do_kern_mount+0x3e/0xe0
-> > [ 1367.833562]  [<c023f189>] do_mount+0x169/0x700
-> > [ 1367.833562]  [<c01eeb29>] ? strndup_user+0x49/0x70
-> > [ 1367.833562]  [<c023fa9b>] sys_mount+0x6b/0xa0
-> > [ 1367.833562]  [<c04abd1f>] sysenter_do_call+0x12/0x28
-> > [ 1367.833562] Code: 53 18 8b 43 20 89 4b 18 8b 4b 24 89 53 1c 89 43
-> > 24 89 4b 20 8b 43 20 c7 43 2c 00 00 00 00 23 75 e8 8b 50 68 89 53 28
-> > 8b 54 b3 20 <8b> 72 48 8b 7a 4c 8b 55 08 89 b3 84 00 00 00 89 bb 88 00
-> > 00 00
-> > [ 1367.833562] EIP: [<d0d7a08e>] nilfs_load_super_block+0x17e/0x280
-> > [nilfs2] SS:ESP 0068:ca9bbdcc
-> > [ 1367.833562] CR2: 0000000000000048
-> > [ 1367.855410] ---[ end trace 0b5fed15fa08cff2 ]---
-> > 
-> > The kernel is the standard archlinux "stocK" kernel run within
-> > virtualbox: Linux arch1 3.2.6-2-ARCH #1 SMP PREEMPT Thu Feb 16
-> > 10:23:00 UTC 2012 i686 Intel(R) Core(TM) i5 CPU 650 @ 3.20GHz
-> > GenuineIntel GNU/Linux
-> > 
-> > I can provide the partition superblock, if necessary.
-> 
-> Thank you for reporting this issue.
-> 
-> I found a bug in the nilfs_load_super_block function which has
-> potential to cause this oops.
+  Hallelujah,
 
-Here is a further note on the oops.
+  after a couple of weeks and several rewrites, here comes the third iteration
+of my patches to improve filesystem freezing.  Filesystem freezing is currently
+racy and thus we can end up with dirty data on frozen filesystem (see changelog
+patch 06 for detailed race description). This patch series aims at fixing this.
 
-According to your log, the oops looks to be caused by an access to a
-structure member located at the offset of 48 hex bytes from the head
-of super block (and the pointer to the super block was NULL).
+To be able to block all places where inodes get dirtied, I've moved filesystem
+freeze handling in mnt_want_write() / mnt_drop_write(). This however required
+some code shuffling and changes to kern_path_create() (see patches 02-05). I
+think the result is OK but opinions may differ ;). The advantage of this change
+also is that all filesystems get freeze protection almost for free - even ext2
+can handle freezing well now.
 
-> BUG: unable to handle kernel NULL pointer dereference at 00000048
+Another potential contention point might be patch 19. In that patch we make
+freeze_super() refuse to freeze the filesystem when there are open but unlinked
+files which may be impractical in some cases. The main reason for this is the
+problem with handling of file deletion from fput() called with mmap_sem held
+(e.g. from munmap(2)), and then there's the fact that we cannot really force
+such filesystem into a consistent state... But if people think that freezing
+with open but unlinked files should happen, then I have some possible
+solutions in mind (maybe as a separate patchset since this is large enough).
 
-The member is 's_last_seq', and its only referrer in
-nilfs_load_super_block function is the following line:
+I'm not able to hit any deadlocks, lockdep warnings, or dirty data on frozen
+filesystem despite beating it with fsstress and bash-shared-mapping while
+freezing and unfreezing for several hours (using ext4 and xfs) so I'm
+reasonably confident this could finally be the right solution.
 
-    nilfs->ns_prot_seq = le64_to_cpu(sbp[valid[1] & !swp]->s_last_seq);
+And for people wanting to test - this patchset is based on patch series
+"Push file_update_time() into .page_mkwrite" so you'll need to pull that one
+in as well.
 
-where sbp[] is the array of pointers to super blocks.
+Changes since v2:
+  * completely rewritten
+  * freezing is now blocked at VFS entry points
+  * two stage freezing to handle both mmapped writes and other IO
 
+The biggest changes since v1:
+  * have two counters to provide safe state transitions for SB_FREEZE_WRITE
+    and SB_FREEZE_TRANS states
+  * use percpu counters instead of own percpu structure
+  * added documentation fixes from the old fs freezing series
+  * converted XFS to use SB_FREEZE_TRANS counter instead of its private
+    m_active_trans counter
 
-Thus, either valid[1] or swp seemed to be wrong, and my assumption is
-valid[1] was not properly set to zero by the following defect.
+								Honza
 
-Ryusuke Konishi
+CC: Alex Elder <elder-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>
+CC: Ben Myers <bpm-sJ/iWh9BUns@public.gmane.org>
+CC: Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+CC: cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+CC: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+CC: fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+CC: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+CC: Joel Becker <jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org>
+CC: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+CC: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+CC: Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>
+CC: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
+CC: ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org
+CC: OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>
+CC: Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: "Theodore Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
+CC: xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org
 
-> Could you try the following patch if you still have the partition ?
-> 
-> 
-> Thanks,
-> Ryusuke Konishi
-> 
-> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-> index d327140..35a8970 100644
-> --- a/fs/nilfs2/the_nilfs.c
-> +++ b/fs/nilfs2/the_nilfs.c
-> @@ -515,6 +515,7 @@ static int nilfs_load_super_block(struct the_nilfs *nilfs,
->  		brelse(sbh[1]);
->  		sbh[1] = NULL;
->  		sbp[1] = NULL;
-> +		valid[1] = 0;
->  		swp = 0;
->  	}
->  	if (!valid[swp]) {
-> -- 
-> 1.7.7.4
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+------------------------------------------------------------------------------
+Try before you buy = See our experts in action!
+The most comprehensive online learning library for Microsoft developers
+is just $99.99! Visual Studio, SharePoint, SQL - plus HTML5, CSS3, MVC3,
+Metro Style Apps, more. Free future releases when you subscribe now!
+http://p.sf.net/sfu/learndevnow-dev2
