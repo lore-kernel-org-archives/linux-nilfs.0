@@ -1,111 +1,83 @@
-From: Jan Kara <jack@suse.cz>
-Subject: [PATCH 16/19] nilfs2: Convert to new freezing mechanism
-Date: Mon,  5 Mar 2012 17:01:14 +0100
-Message-ID: <1330963277-26336-17-git-send-email-jack@suse.cz>
-References: <1330963277-26336-1-git-send-email-jack@suse.cz>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1330963277-26336-1-git-send-email-jack@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Slicky Devil <slicky.dvl-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: BUG: unable to handle kernel NULL pointer dereference at 00000048
+Date: Tue, 6 Mar 2012 16:24:40 +0300
+Message-ID: <CAMRzUtwpZQ_ZmZoGzOA0wkmTVQKVJRwA7OB3X_ktRXPj9MJoXA@mail.gmail.com>
+References: <CAMRzUtxbOXWOyZ1wMRmxSsRs67FoDq_hf7Pg_UrAi4P=DnhqsA@mail.gmail.com>
+	<20120305.233028.248350005.ryusuke@osrg.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :cc:content-type:content-transfer-encoding;
+        bh=VSd5S1hqFOCULpX1It4meoLCFGPruWMWSEfE4DfemU8=;
+        b=JYo4FBc3soHI+s49G/lhjGP2rscmDtAmgNvTfecWF4hzdUdR1pXQuzJ8eQg1ovmWCc
+         ryf9rSKColbr6mTPV792B/Cnwatbyij+iXjHAPcvf9yYcj7pzjdhiMc5ZsnmWmKMYxgx
+         qwInZd1k5ckACWoPGq/3MdZ4YL40RSsTqr1Jmfna2MmMMA18vBMoxegBzkieHHJt7lbx
+         UNqCIGKzeLzx1eVO9ZDuZEtvKq9YqIBmzUXkuqAkp1210jRfO5GtXWQTa1MIIHrMt/ah
+         bl/+C6rVH+Rl6pAQXBP+erJdCEuj7zurgc619TB4ljP/fR0ImRjlFtlq+1Rc8a3NeHtt
+         XbIA==
+In-Reply-To: <20120305.233028.248350005.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: linux-fsdevel@vger.kernel.org, Al Viro <viro@ZenIV.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, dchinner@redhat.com, sandeen@redhat.com, Kamal Mostafa <kamal@canonical.com>, Jan Kara <jack@suse.cz>, linux-nilfs@vger.kernel.org, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
+Content-Type: text/plain; charset="iso-8859-1"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-We change nilfs_page_mkwrite() to provide proper freeze protection for
-writeable page faults (we must wait for frozen filesystem even if the
-page is fully mapped).
+Luckily, I seem to have been able to reproduce the bug (after
+shrinking the partition down to some hundred MB). Your patch seems to
+have fixed it!
 
-We remove all vfs_check_frozen() checks since they are now handled by
-the generic code.
+Now I get the following, which, I think, is pretty much expected,
+since I chopped a large part of the filesystem off:
 
-CC: linux-nilfs@vger.kernel.org
-CC: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
-Signed-off-by: Jan Kara <jack@suse.cz>
----
- fs/nilfs2/file.c    |   18 +++++++++++-------
- fs/nilfs2/ioctl.c   |    2 --
- fs/nilfs2/segment.c |    2 --
- 3 files changed, 11 insertions(+), 11 deletions(-)
+15:52 root ~ # mount /dev/1/buggy-home test
+[  461.137823] NILFS: error searching super root.
+mount.nilfs2: Error while mounting /dev/mapper/1-buggy--home on
+/root/test: Input/output error
 
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 2660152..0cdd702 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -65,16 +65,18 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
- 	struct page *page = vmf->page;
- 	struct inode *inode = vma->vm_file->f_dentry->d_inode;
- 	struct nilfs_transaction_info ti;
--	int ret;
-+	int ret = 0;
- 
- 	if (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
- 		return VM_FAULT_SIGBUS; /* -ENOSPC */
- 
-+	sb_start_pagefault(inode->i_sb);
- 	lock_page(page);
- 	if (page->mapping != inode->i_mapping ||
- 	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
- 		unlock_page(page);
--		return VM_FAULT_NOPAGE; /* make the VM retry the fault */
-+		ret = -EFAULT;	/* make the VM retry the fault */
-+		goto out;
- 	}
- 
- 	/*
-@@ -108,19 +110,21 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
- 	ret = nilfs_transaction_begin(inode->i_sb, &ti, 1);
- 	/* never returns -ENOMEM, but may return -ENOSPC */
- 	if (unlikely(ret))
--		return VM_FAULT_SIGBUS;
-+		goto out;
- 
--	ret = block_page_mkwrite(vma, vmf, nilfs_get_block);
--	if (ret != VM_FAULT_LOCKED) {
-+	ret = __block_page_mkwrite(vma, vmf, nilfs_get_block);
-+	if (ret) {
- 		nilfs_transaction_abort(inode->i_sb);
--		return ret;
-+		goto out;
- 	}
- 	nilfs_set_file_dirty(inode, 1 << (PAGE_SHIFT - inode->i_blkbits));
- 	nilfs_transaction_commit(inode->i_sb);
- 
-  mapped:
- 	wait_on_page_writeback(page);
--	return VM_FAULT_LOCKED;
-+ out:
-+	sb_end_pagefault(inode->i_sb);
-+	return block_page_mkwrite_return(ret);
- }
- 
- static const struct vm_operations_struct nilfs_file_vm_ops = {
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 2a70fce..a2063c7 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -660,8 +660,6 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
- 		goto out_free;
- 	}
- 
--	vfs_check_frozen(inode->i_sb, SB_FREEZE_WRITE);
--
- 	ret = nilfs_ioctl_move_blocks(inode->i_sb, &argv[0], kbufs[0]);
- 	if (ret < 0)
- 		printk(KERN_ERR "NILFS: GC failed during preparation: "
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 0e72ad6..0891cef 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -189,8 +189,6 @@ int nilfs_transaction_begin(struct super_block *sb,
- 	if (ret > 0)
- 		return 0;
- 
--	vfs_check_frozen(sb, SB_FREEZE_WRITE);
--
- 	nilfs = sb->s_fs_info;
- 	down_read(&nilfs->ns_segctor_sem);
- 	if (vacancy_check && nilfs_near_disk_full(nilfs)) {
--- 
-1.7.1
+Please, fix the bug in the official kernel sources, too. Your
+filesystem proved very useful here for storing documents and other
+changeable stuff -- we don't want it get broken unexpectedly. :)
+
+Still, thanks a lot! The things you are doing here are really cool!
+
+Cheers!
+
+
+
+On Mon, Mar 5, 2012 at 5:30 PM, Ryusuke Konishi
+<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
+>
+> Thank you for reporting this issue.
+>
+> I found a bug in the nilfs_load_super_block function which has
+> potential to cause this oops.
+>
+> Could you try the following patch if you still have the partition ?
+>
+>
+> Thanks,
+> Ryusuke Konishi
+>
+> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+> index d327140..35a8970 100644
+> --- a/fs/nilfs2/the_nilfs.c
+> +++ b/fs/nilfs2/the_nilfs.c
+> @@ -515,6 +515,7 @@ static int nilfs_load_super_block(struct the_nilf=
+s *nilfs,
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0brelse(sbh[1]);
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0sbh[1] =3D NULL;
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0sbp[1] =3D NULL;
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 valid[1] =3D 0;
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0swp =3D 0;
+> =A0 =A0 =A0 =A0}
+> =A0 =A0 =A0 =A0if (!valid[swp]) {
+> --
+> 1.7.7.4
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
