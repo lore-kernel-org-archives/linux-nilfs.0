@@ -1,59 +1,33 @@
-From: Slicky Devil <slicky.dvl-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference at 00000048
-Date: Wed, 7 Mar 2012 00:07:24 +0300
-Message-ID: <CAMRzUtyoYPzCYhqaxughGOBWr_iUcFyOx5p1eBYJRa19xq8Xgg@mail.gmail.com>
-References: <CAMRzUtxbOXWOyZ1wMRmxSsRs67FoDq_hf7Pg_UrAi4P=DnhqsA@mail.gmail.com>
-	<20120305.233028.248350005.ryusuke@osrg.net>
-	<CAMRzUtwpZQ_ZmZoGzOA0wkmTVQKVJRwA7OB3X_ktRXPj9MJoXA@mail.gmail.com>
-	<20120306.235404.52180631.ryusuke@osrg.net>
+From: Kenneth Langga <klangga-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Questions on nilfs_cleanerd
+Date: Wed, 7 Mar 2012 14:13:35 +0800
+Message-ID: <CAHmELnXB7LFwDRR53G_kCWb9t5wfWQOXDq=0xRC5bh9Z3TJuuw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=VXW+s/7qpisiAlNfGtJf8PSB2ZAKijs5gMc+hQtHGE4=;
-        b=c/SAiWywZz8sUlzVIo27OW/bYD3uQVBe0PTchuNsjSiGOIGB6ciChAD5roYTKthWNS
-         jwRsgZQY6R0KUPVvRzhkDL3SGzAhvS4ccjCLHa7TGwxWVpudemw/xedw8BkETl8mUIhJ
-         tsk+1KzU5voWt7tHIDcmfU+0sbN93Vdg364HflmLuW0yqwO4VxJn7lo8Bd8L3aqWHIv/
-         BioHrWDX6Mu7dwu+DFKa6QuLjF3CMTB5dyae8WqPz4vA3XeIDowBpFQkPatyxXscYDoz
-         eAT4j6lsinjeGaMIudPtY2Ac0LtPdC8ioLv7wDsGk+r7K/tHyNM/yOQBE9o+FZEiSWZP
-         sw4g==
-In-Reply-To: <20120306.235404.52180631.ryusuke-sG5X7nlA6pw@public.gmane.org>
+        h=mime-version:from:date:message-id:subject:to:content-type;
+        bh=UqkKSaF5VWn45y1RS8zWvrgQIw0T1lJ3/8AZiJjfvhM=;
+        b=VbRvfnlr+883z9sjUq9Kr49Ha3/RQXoZut5Xg0JHoh+MYS62RiwqO50tw4aCGkQFb1
+         B4lFNxDMU+D5yoKMHcsU3qD4/XMy8u4wO1y83CoEeJwnh8v/BecpMtNjM104DI5lhK24
+         72fri76rAZEyuNU0k7jOsvn+ABY7VABJPs/y8RDZ4SOSUgrfvwiUMUCtjARSYxdCFFCP
+         XJP7xGDDTuLeEButaZCPuvUUnKlfFRWX7Ecyj/ksxso7+y4RnL4vNtVE0lnOVdQ+a4ov
+         LCXIiDgYdiaRyY8Tiv1DuErDBvXqjh7E1ikWCNwWwu7Ij679P2YxTXSX03c/SI8S77bQ
+         aSHQ==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, Mar 6, 2012 at 5:54 PM, Ryusuke Konishi
-<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> Hmmm. =A0Did you shrink the filesystem with nilfs-resize tool
-> before shrinking the partition ?
->
-> This error (I/O error) also looks undesirable to me.
+1) Does the daemon read/write the entire drive to look for dead blocks to clean?
 
-I couldn't shrink the filesystem, because I couldn't mount it because
-of the bug. The filesystem was large and I was in desparate need of
-some spare diskspace. At first, I was going to completely get rid of
-it, but then I thought you might want to have a look at the
-superblock, or some othe block, or whatever else to analyze the bug.
-Since the bug was some sort of initialization issue, I finally decided
-to keep the first 500 MB of the filesystem and reclaimed the rest of
-it (by shrinking the partition).
-
-And all that had happened *before* I posted the bug report on this mail=
-ing list.
-
-Luckily, when I tried to mount the "broken" filesystem today, the
-nilfs driver exposed the very same oops again. I applied your
-patch/recompiled the kernel and the oops disappeared.
-
-So, no. I didn't use any nilfs-resize. And those IO error are pretty
-much expected to me.
+2) What if there aren't any dead blocks to clean and the free space in
+the drive is still less than 10% (the default min_clean_segments in
+the conf file), does the daemon still process the drive? If so, how do
+I change the cleaning interval so that it doesn't process the drive as
+often?
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
