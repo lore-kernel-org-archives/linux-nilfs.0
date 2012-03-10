@@ -1,51 +1,35 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
- 00000048
-Date: Sat, 10 Mar 2012 12:08:25 +0900 (JST)
-Message-ID: <20120310.120825.140145245.ryusuke@osrg.net>
-References: <CAMRzUtwpZQ_ZmZoGzOA0wkmTVQKVJRwA7OB3X_ktRXPj9MJoXA@mail.gmail.com>
-	<20120306.235404.52180631.ryusuke@osrg.net>
-	<CAMRzUtyoYPzCYhqaxughGOBWr_iUcFyOx5p1eBYJRa19xq8Xgg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 0/2] nilfs2 fixes
+Date: Sat, 10 Mar 2012 23:35:28 +0900
+Message-ID: <1331390130-7286-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMRzUtyoYPzCYhqaxughGOBWr_iUcFyOx5p1eBYJRa19xq8Xgg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: slicky.dvl-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 7 Mar 2012 00:07:24 +0300, Slicky Devil wrote:
-> On Tue, Mar 6, 2012 at 5:54 PM, Ryusuke Konishi
-> <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> > Hmmm.  Did you shrink the filesystem with nilfs-resize tool
-> > before shrinking the partition ?
-> >
-> > This error (I/O error) also looks undesirable to me.
-> 
-> I couldn't shrink the filesystem, because I couldn't mount it because
-> of the bug. The filesystem was large and I was in desparate need of
-> some spare diskspace. At first, I was going to completely get rid of
-> it, but then I thought you might want to have a look at the
-> superblock, or some othe block, or whatever else to analyze the bug.
-> Since the bug was some sort of initialization issue, I finally decided
-> to keep the first 500 MB of the filesystem and reclaimed the rest of
-> it (by shrinking the partition).
-> 
-> And all that had happened *before* I posted the bug report on this mailing list.
-> 
-> Luckily, when I tried to mount the "broken" filesystem today, the
-> nilfs driver exposed the very same oops again. I applied your
-> patch/recompiled the kernel and the oops disappeared.
-> 
-> So, no. I didn't use any nilfs-resize. And those IO error are pretty
-> much expected to me.
+Hi Andrew,
 
-Understood, thank you for letting me know the situation.
+Please apply the subsequent two fixes and send them upstream (hopefully
+before the next kernel release).  One of them eliminates a reported
+kernel oops and the other one fixes an out-of-range issue.
 
-Regards,
+Thank you,
+
 Ryusuke Konishi
+--
+Haogang Chen (1):
+      nilfs2: clamps ns_r_segments_percentage to [1, 99]
+
+Ryusuke Konishi (1):
+      nilfs2: fix NULL pointer dereference in nilfs_load_super_block()
+
+ fs/nilfs2/the_nilfs.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
