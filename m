@@ -1,29 +1,42 @@
-From: Kenneth Langga <klangga-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Another question on nilfs_cleanerd
-Date: Sat, 10 Mar 2012 00:15:28 +0800
-Message-ID: <CAHmELnVsrSUSkJeJJX8p9h2+47MGWdLLiepXBYrEbJtvTEBpEQ@mail.gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: Another question on nilfs_cleanerd
+Date: Sat, 10 Mar 2012 11:40:47 +0900 (JST)
+Message-ID: <20120310.114047.103728078.ryusuke@osrg.net>
+References: <CAHmELnVsrSUSkJeJJX8p9h2+47MGWdLLiepXBYrEbJtvTEBpEQ@mail.gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:from:date:message-id:subject:to:content-type;
-        bh=iI4XFzNt/9FoY0H8Ut4PvMNK7hFzx5LPIg77Se2PXRI=;
-        b=N6GBwk+B7cN9oLXN67vHc51utndtavKTPbZa1zWMRU0XpxNiXf7KQJStvt5I7q2R2D
-         Ey7JHX/lXx6reLHdstv6c3lZJv7pFKxbmgkIVlD6ctbUrkbUbF3uLwIB54PYJvUBwKDk
-         HNuBr/ryoKCU/dMe6ADZVv0kXHZ5zCz2m2QNqRKounH9pPzaDmsnb6LdKmH0cMBULd1N
-         Gf3ZmfTu+2RxJqpTKBKq58+KbcdraCW0K/PBFJqyeQ7Z0j6CRB/bwWHOyKsODfxWmM5E
-         R4VwdjTrYogE0BlfqPCdN+7iRXGyX9LxZK4eQRwpO4sdz6KSU1yDSDi7cMzURVCSsT93
-         VkHw==
+In-Reply-To: <CAHmELnVsrSUSkJeJJX8p9h2+47MGWdLLiepXBYrEbJtvTEBpEQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: klangga-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-What happens when cleanerd is interrupted while it's cleaning by
-unmounting the drive, for example, and then mounted again? Does it
-resume from the previous block or does it start from the beginning?
-Thanks.
+Hi,
+On Sat, 10 Mar 2012 00:15:28 +0800, Kenneth Langga wrote:
+> What happens when cleanerd is interrupted while it's cleaning by
+> unmounting the drive, for example, and then mounted again? Does it
+> resume from the previous block or does it start from the beginning?
+> Thanks.
+
+Cleanerd is safely interruptible either by unmount or a SIGINT signal.
+
+If you mount the drive after that, GC restarts from the previous block
+because the current GC algorithm selects target segments in
+chronological order.
+
+However, it will forget execution states.
+
+If you were doing one pass cleaning kicked by nilfs-clean command, and
+then unmounted and mounted again, GC doesn't resume.
+
+If the ratio of free segments is smaller than max_clean_segments but
+larger than min_clean_segments, it doesn't resume even if it was
+running previously by watermark control using these threshold values.
+
+Cheers,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
