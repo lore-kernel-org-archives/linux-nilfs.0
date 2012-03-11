@@ -1,76 +1,69 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/2] nilfs2: fix NULL pointer dereference in nilfs_load_super_block()
-Date: Sat, 10 Mar 2012 23:35:30 +0900
-Message-ID: <1331390130-7286-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1331390130-7286-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1331390130-7286-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Kamal Mostafa <kamal@canonical.com>
+Subject: Re: [PATCH 00/19] Fix filesystem freezing deadlocks
+Date: Sun, 11 Mar 2012 13:22:44 -0700
+Message-ID: <1331497364.4641.86.camel@fourier>
+References: <1330963277-26336-1-git-send-email-jack@suse.cz>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg="pgp-sha256";
+	protocol="application/pgp-signature"; boundary="=-ZY9a+JFJ078GfM0ruD69"
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <1330963277-26336-1-git-send-email-jack@suse.cz>
+Sender: linux-ext4-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+To: Jan Kara <jack@suse.cz>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Al Viro <viro@ZenIV.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, dchinner@redhat.com, sandeen@redhat.com, Alex Elder <elder@kernel.org>, Anton Altaparmakov <anton@tuxera.com>, Ben Myers <bpm@sgi.com>, Chris Mason <chris.mason@oracle.com>, cluster-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, fuse-devel@lists.sourceforge.net, "J. Bruce Fields" <bfields@fieldses.org>, Joel Becker <jlbec@evilplan.org>, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, Mark Fasheh <mfasheh@suse.com>, Miklos Szeredi <miklos@szeredi.hu>, ocfs2-devel@oss.oracle.com, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Steven Whitehouse <swhiteho@redhat.com>, Th
+
+
+--=-ZY9a+JFJ078GfM0ruD69
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+On Mon, 2012-03-05 at 17:00 +0100, Jan Kara wrote:
+> Hallelujah,
+>=20
+>   after a couple of weeks and several rewrites, here comes the third iter=
+ation
+> of my patches to improve filesystem freezing.  [...]
+
+We've been testing this patch set at Canonical on the multipath failover
+SAN configuration where we originally encountered the freeze deadlock.
+We are happy to report that it does appear to fix the problem.  Thanks
+Jan!
+
+Please add the following endorsements for these patches (those actually
+exercised by our test case):  01, 02, 03, 06, 07, 08, 09, 10, 14, 18, 19
+
+BugLink: https://bugs.launchpad.net/bugs/897421
+Tested-by: Kamal Mostafa <kamal@canonical.com>
+Tested-by: Peter M. Petrakis <peter.petrakis@canonical.com>
+Tested-by: Dann Frazier <dann.frazier@canonical.com>
+Tested-by: Massimo Morana <massimo.morana@canonical.com>
+
+ -Kamal
+
+
+--=-ZY9a+JFJ078GfM0ruD69
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-According to the report from Slicky Devil, nilfs caused kernel oops at
-nilfs_load_super_block function during mount after he shrank the
-partition without resizing the filesystem:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
 
- BUG: unable to handle kernel NULL pointer dereference at 00000048
- IP: [<d0d7a08e>] nilfs_load_super_block+0x17e/0x280 [nilfs2]
- *pde = 00000000
- Oops: 0000 [#1] PREEMPT SMP
- ...
- Call Trace:
-  [<d0d7a87b>] init_nilfs+0x4b/0x2e0 [nilfs2]
-  [<d0d6f707>] nilfs_mount+0x447/0x5b0 [nilfs2]
-  [<c01f33a4>] ? pcpu_alloc+0x714/0x810
-  [<c02d2add>] ? ida_get_new_above+0x1ad/0x230
-  [<c02d2add>] ? ida_get_new_above+0x1ad/0x230
-  [<c0226636>] mount_fs+0x36/0x180
-  [<c01f34af>] ? __alloc_percpu+0xf/0x20
-  [<c023d961>] vfs_kern_mount+0x51/0xa0
-  [<c023ddae>] do_kern_mount+0x3e/0xe0
-  [<c023f189>] do_mount+0x169/0x700
-  [<c01eeb29>] ? strndup_user+0x49/0x70
-  [<c023fa9b>] sys_mount+0x6b/0xa0
-  [<c04abd1f>] sysenter_do_call+0x12/0x28
- Code: 53 18 8b 43 20 89 4b 18 8b 4b 24 89 53 1c 89 43 24 89 4b 20 8b 43
- 20 c7 43 2c 00 00 00 00 23 75 e8 8b 50 68 89 53 28 8b 54 b3 20 <8b> 72
- 48 8b 7a 4c 8b 55 08 89 b3 84 00 00 00 89 bb 88 00 00 00
- EIP: [<d0d7a08e>] nilfs_load_super_block+0x17e/0x280 [nilfs2] SS:ESP 0068:ca9bbdcc
- CR2: 0000000000000048
+iQIcBAABCAAGBQJPXQmUAAoJEHqwmdxYrXhZHr4P/jsrFBiULwoouLaGlr1gLx1D
+Tk4Die/IiVlO8Vj+ADKTySFKNjk1r2PiNwUKCezri3PeJqFgCHaeURemY5rurPMA
+Qms6XFaKA+8BxtawR2ZdgLodgCnppx1pamzFsoLkd5TnluRdUxlBtvro+B8ID2SO
+6pkeAzYybiI7tOU6VDDSB324DKndcA6YnUQQsATwJUZ3qjf8bdHX5YCc+Il7K9Fe
+BV6EMCdtNVCYwJvYMnhU/kDP2wAEP9hqF5ajBr+0+Q6WPs2/OQvOrr9ctGNyCZBo
+pTBHIFHYRg3g8wlKvsSSisvVZlBAwdDdxXkhk7zfkYEngjwoqzWIqT0qvavBJicM
+h5MoKwC/Zke6xNIPFwAV/AC+vNHkOt5QgV2GhAdphiNQFsgAbv/AY5SswM6JFpdk
+P6WETGa4bMBpLcTHGfxCvO9KevQ9gnQWXHzsbYz0Wl3YYEsU4aBFPICQSf7/amNR
+X9WvhURZwfLSkjOMHee0Lu/qEXrEYNT62Fj+bRKyZkUM0rabU44HBmJHE10lTXlY
+xWKDthAHk+kQPDMI/76jpKDS7M4rE+ohTxM9nQBio4W8v4MS/LHPB84BsHeZFl8v
+4SGJAC9y6UFDamdqnBUDhPL8iLLU77dL+cHcvEdopsLrulRC/6bGkH8xE/5IJjZo
+LXTCfQ+fy3utvK5ooIR4
+=Lndm
+-----END PGP SIGNATURE-----
 
-This turned out due to a defect in an error path which runs if the
-calculated location of the secondary super block was invalid.
+--=-ZY9a+JFJ078GfM0ruD69--
 
-This patch fixes it and eliminates the reported oops.
-
-Reported-by: Slicky Devil <slicky.dvl-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Tested-by: Slicky Devil <slicky.dvl-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org> # 2.6.30+
----
- fs/nilfs2/the_nilfs.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
-
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 8a75901..501b7f8 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -521,6 +521,7 @@ static int nilfs_load_super_block(struct the_nilfs *nilfs,
- 		brelse(sbh[1]);
- 		sbh[1] = NULL;
- 		sbp[1] = NULL;
-+		valid[1] = 0;
- 		swp = 0;
- 	}
- 	if (!valid[swp]) {
--- 
-1.7.7.4
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
