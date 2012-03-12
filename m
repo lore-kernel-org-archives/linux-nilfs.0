@@ -1,69 +1,44 @@
-From: Kamal Mostafa <kamal@canonical.com>
-Subject: Re: [PATCH 00/19] Fix filesystem freezing deadlocks
-Date: Sun, 11 Mar 2012 13:22:44 -0700
-Message-ID: <1331497364.4641.86.camel@fourier>
-References: <1330963277-26336-1-git-send-email-jack@suse.cz>
+From: Tim Bannister <Tim.Bannister-m7QheJJv02N4oUbgFh0ZNQ@public.gmane.org>
+Subject: Re: Another question on nilfs_cleanerd
+Date: Mon, 12 Mar 2012 10:53:58 +0000
+Message-ID: <1331549638.23047.51.camel@c-s-201-122.csist.manchester.ac.uk>
+References: <CAHmELnVsrSUSkJeJJX8p9h2+47MGWdLLiepXBYrEbJtvTEBpEQ@mail.gmail.com>
+	 <20120310.114047.103728078.ryusuke@osrg.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha256";
-	protocol="application/pgp-signature"; boundary="=-ZY9a+JFJ078GfM0ruD69"
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <1330963277-26336-1-git-send-email-jack@suse.cz>
-Sender: linux-ext4-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
-To: Jan Kara <jack@suse.cz>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Al Viro <viro@ZenIV.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, dchinner@redhat.com, sandeen@redhat.com, Alex Elder <elder@kernel.org>, Anton Altaparmakov <anton@tuxera.com>, Ben Myers <bpm@sgi.com>, Chris Mason <chris.mason@oracle.com>, cluster-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, fuse-devel@lists.sourceforge.net, "J. Bruce Fields" <bfields@fieldses.org>, Joel Becker <jlbec@evilplan.org>, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, Mark Fasheh <mfasheh@suse.com>, Miklos Szeredi <miklos@szeredi.hu>, ocfs2-devel@oss.oracle.com, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Steven Whitehouse <swhiteho@redhat.com>, Th
-
-
---=-ZY9a+JFJ078GfM0ruD69
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-On Mon, 2012-03-05 at 17:00 +0100, Jan Kara wrote:
-> Hallelujah,
->=20
->   after a couple of weeks and several rewrites, here comes the third iter=
-ation
-> of my patches to improve filesystem freezing.  [...]
-
-We've been testing this patch set at Canonical on the multipath failover
-SAN configuration where we originally encountered the freeze deadlock.
-We are happy to report that it does appear to fix the problem.  Thanks
-Jan!
-
-Please add the following endorsements for these patches (those actually
-exercised by our test case):  01, 02, 03, 06, 07, 08, 09, 10, 14, 18, 19
-
-BugLink: https://bugs.launchpad.net/bugs/897421
-Tested-by: Kamal Mostafa <kamal@canonical.com>
-Tested-by: Peter M. Petrakis <peter.petrakis@canonical.com>
-Tested-by: Dann Frazier <dann.frazier@canonical.com>
-Tested-by: Massimo Morana <massimo.morana@canonical.com>
-
- -Kamal
-
-
---=-ZY9a+JFJ078GfM0ruD69
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20120310.114047.103728078.ryusuke-sG5X7nlA6pw@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
+On Sat, 2012-03-10, Ryusuke Konishi wrote:
 
-iQIcBAABCAAGBQJPXQmUAAoJEHqwmdxYrXhZHr4P/jsrFBiULwoouLaGlr1gLx1D
-Tk4Die/IiVlO8Vj+ADKTySFKNjk1r2PiNwUKCezri3PeJqFgCHaeURemY5rurPMA
-Qms6XFaKA+8BxtawR2ZdgLodgCnppx1pamzFsoLkd5TnluRdUxlBtvro+B8ID2SO
-6pkeAzYybiI7tOU6VDDSB324DKndcA6YnUQQsATwJUZ3qjf8bdHX5YCc+Il7K9Fe
-BV6EMCdtNVCYwJvYMnhU/kDP2wAEP9hqF5ajBr+0+Q6WPs2/OQvOrr9ctGNyCZBo
-pTBHIFHYRg3g8wlKvsSSisvVZlBAwdDdxXkhk7zfkYEngjwoqzWIqT0qvavBJicM
-h5MoKwC/Zke6xNIPFwAV/AC+vNHkOt5QgV2GhAdphiNQFsgAbv/AY5SswM6JFpdk
-P6WETGa4bMBpLcTHGfxCvO9KevQ9gnQWXHzsbYz0Wl3YYEsU4aBFPICQSf7/amNR
-X9WvhURZwfLSkjOMHee0Lu/qEXrEYNT62Fj+bRKyZkUM0rabU44HBmJHE10lTXlY
-xWKDthAHk+kQPDMI/76jpKDS7M4rE+ohTxM9nQBio4W8v4MS/LHPB84BsHeZFl8v
-4SGJAC9y6UFDamdqnBUDhPL8iLLU77dL+cHcvEdopsLrulRC/6bGkH8xE/5IJjZo
-LXTCfQ+fy3utvK5ooIR4
-=Lndm
------END PGP SIGNATURE-----
+> Cleanerd is safely interruptible either by unmount or a SIGINT signal.
+> 
+> If you mount the drive after that, GC restarts from the previous block
+> because the current GC algorithm selects target segments in
+> chronological order.
+> 
+> However, it will forget execution states.
+> 
+> If you were doing one pass cleaning kicked by nilfs-clean command, and
+> then unmounted and mounted again, GC doesn't resume.
 
---=-ZY9a+JFJ078GfM0ruD69--
+I think this happened to me and I did not completely understand what had
+happened.
+In the situation described, is there any way to make the GC resume
+normally?
 
+-- 
+Tim Bannister
+IT Services, The University of Manchester
+
+e: Tim.Bannister-m7QheJJv02N4oUbgFh0ZNQ@public.gmane.org
+w: http://www.manchester.ac.uk/itservices
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
