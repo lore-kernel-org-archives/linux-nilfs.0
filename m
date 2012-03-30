@@ -1,140 +1,173 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 16/19] nilfs2: Convert to new freezing mechanism
-Date: Thu, 29 Mar 2012 01:43:31 +0200
-Message-ID: <1332978214-15535-17-git-send-email-jack@suse.cz>
-References: <1332978214-15535-1-git-send-email-jack@suse.cz>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1332978214-15535-1-git-send-email-jack-AlSwsSmVLrQ@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
+From: Dave Kleikamp <dave.kleikamp@oracle.com>
+Subject: [RFC PATCH v2 21/21] fs: add read_iter and
+	write_iter to more file systems
+Date: Fri, 30 Mar 2012 10:43:48 -0500
+Message-ID: <1333122228-13633-22-git-send-email-dave.kleikamp@oracle.com>
+References: <1333122228-13633-1-git-send-email-dave.kleikamp@oracle.com>
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Kamal Mostafa <kamal-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Return-path: <jfs-discussion-bounces@lists.sourceforge.net>
+In-Reply-To: <1333122228-13633-1-git-send-email-dave.kleikamp@oracle.com>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/jfs-discussion>, 
+	<mailto:jfs-discussion-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=jfs-discussion>
+List-Post: <mailto:jfs-discussion@lists.sourceforge.net>
+List-Help: <mailto:jfs-discussion-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/jfs-discussion>, 
+	<mailto:jfs-discussion-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: jfs-discussion-bounces@lists.sourceforge.net
+To: linux-fsdevel@vger.kernel.org
+Cc: jfs-discussion@lists.sourceforge.net, linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, v9fs-developer@lists.sourceforge.net, Zach Brown <zab@zabbo.net>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
 
-We change nilfs_page_mkwrite() to provide proper freeze protection for
-writeable page faults (we must wait for frozen filesystem even if the
-page is fully mapped).
+File systems that use generic_file_aio_read() and generic_file_aio_write()
+can trivially support generic_file_read_iter() and generic_file_write_iter().
 
-We remove all vfs_check_frozen() checks since they are now handled by
-the generic code.
+This patch adds those file_operations for 9p, ext2, fat, hfs, hfsplus,
+jfs, nilfs2, and reiserfs.
 
-CC: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Signed-off-by: Dave Kleikamp <dave.kleikamp@oracle.com>
+Cc: Zach Brown <zab@zabbo.net>
+Cc: v9fs-developer@lists.sourceforge.net
+Cc: linux-ext4@vger.kernel.org
+Cc: OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
+Cc: jfs-discussion@lists.sourceforge.net
+Cc: linux-nilfs@vger.kernel.org
+Cc: reiserfs-devel@vger.kernel.org
 ---
- fs/nilfs2/file.c    |   18 +++++++++++-------
- fs/nilfs2/ioctl.c   |    2 --
- fs/nilfs2/segment.c |    5 ++++-
- 3 files changed, 15 insertions(+), 10 deletions(-)
+ fs/9p/vfs_file.c   |    4 ++++
+ fs/ext2/file.c     |    2 ++
+ fs/fat/file.c      |    2 ++
+ fs/hfs/inode.c     |    2 ++
+ fs/hfsplus/inode.c |    2 ++
+ fs/jfs/file.c      |    2 ++
+ fs/nilfs2/file.c   |    2 ++
+ fs/reiserfs/file.c |    2 ++
+ 8 files changed, 18 insertions(+)
 
+diff --git a/fs/9p/vfs_file.c b/fs/9p/vfs_file.c
+index fc06fd2..27a76d5 100644
+--- a/fs/9p/vfs_file.c
++++ b/fs/9p/vfs_file.c
+@@ -744,6 +744,8 @@ const struct file_operations v9fs_cached_file_operations = {
+ 	.write = v9fs_cached_file_write,
+ 	.aio_read = generic_file_aio_read,
+ 	.aio_write = generic_file_aio_write,
++	.read_iter = generic_file_read_iter,
++	.write_iter = generic_file_write_iter,
+ 	.open = v9fs_file_open,
+ 	.release = v9fs_dir_release,
+ 	.lock = v9fs_file_lock,
+@@ -757,6 +759,8 @@ const struct file_operations v9fs_cached_file_operations_dotl = {
+ 	.write = v9fs_cached_file_write,
+ 	.aio_read = generic_file_aio_read,
+ 	.aio_write = generic_file_aio_write,
++	.read_iter = generic_file_read_iter,
++	.write_iter = generic_file_write_iter,
+ 	.open = v9fs_file_open,
+ 	.release = v9fs_dir_release,
+ 	.lock = v9fs_file_lock_dotl,
+diff --git a/fs/ext2/file.c b/fs/ext2/file.c
+index a5b3a5d..eee8f86 100644
+--- a/fs/ext2/file.c
++++ b/fs/ext2/file.c
+@@ -66,6 +66,8 @@ const struct file_operations ext2_file_operations = {
+ 	.write		= do_sync_write,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.unlocked_ioctl = ext2_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= ext2_compat_ioctl,
+diff --git a/fs/fat/file.c b/fs/fat/file.c
+index a71fe37..e602729 100644
+--- a/fs/fat/file.c
++++ b/fs/fat/file.c
+@@ -167,6 +167,8 @@ const struct file_operations fat_file_operations = {
+ 	.write		= do_sync_write,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.release	= fat_file_release,
+ 	.unlocked_ioctl	= fat_generic_ioctl,
+diff --git a/fs/hfs/inode.c b/fs/hfs/inode.c
+index 96650e7..42796b8 100644
+--- a/fs/hfs/inode.c
++++ b/fs/hfs/inode.c
+@@ -662,8 +662,10 @@ static const struct file_operations hfs_file_operations = {
+ 	.llseek		= generic_file_llseek,
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
++	.read_iter	= generic_file_read_iter,
+ 	.write		= do_sync_write,
+ 	.aio_write	= generic_file_aio_write,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.splice_read	= generic_file_splice_read,
+ 	.fsync		= hfs_file_fsync,
+diff --git a/fs/hfsplus/inode.c b/fs/hfsplus/inode.c
+index 76e3f8e..b53d2bb 100644
+--- a/fs/hfsplus/inode.c
++++ b/fs/hfsplus/inode.c
+@@ -368,8 +368,10 @@ static const struct file_operations hfsplus_file_operations = {
+ 	.llseek		= generic_file_llseek,
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
++	.read_iter	= generic_file_read_iter,
+ 	.write		= do_sync_write,
+ 	.aio_write	= generic_file_aio_write,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.splice_read	= generic_file_splice_read,
+ 	.fsync		= hfsplus_file_fsync,
+diff --git a/fs/jfs/file.c b/fs/jfs/file.c
+index 844f946..7a5af5e 100644
+--- a/fs/jfs/file.c
++++ b/fs/jfs/file.c
+@@ -151,6 +151,8 @@ const struct file_operations jfs_file_operations = {
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
 diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 2660152..0cdd702 100644
+index 2660152..c884ba5 100644
 --- a/fs/nilfs2/file.c
 +++ b/fs/nilfs2/file.c
-@@ -65,16 +65,18 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
- 	struct page *page = vmf->page;
- 	struct inode *inode = vma->vm_file->f_dentry->d_inode;
- 	struct nilfs_transaction_info ti;
--	int ret;
-+	int ret = 0;
- 
- 	if (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
- 		return VM_FAULT_SIGBUS; /* -ENOSPC */
- 
-+	sb_start_pagefault(inode->i_sb);
- 	lock_page(page);
- 	if (page->mapping != inode->i_mapping ||
- 	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
- 		unlock_page(page);
--		return VM_FAULT_NOPAGE; /* make the VM retry the fault */
-+		ret = -EFAULT;	/* make the VM retry the fault */
-+		goto out;
- 	}
- 
- 	/*
-@@ -108,19 +110,21 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
- 	ret = nilfs_transaction_begin(inode->i_sb, &ti, 1);
- 	/* never returns -ENOMEM, but may return -ENOSPC */
- 	if (unlikely(ret))
--		return VM_FAULT_SIGBUS;
-+		goto out;
- 
--	ret = block_page_mkwrite(vma, vmf, nilfs_get_block);
--	if (ret != VM_FAULT_LOCKED) {
-+	ret = __block_page_mkwrite(vma, vmf, nilfs_get_block);
-+	if (ret) {
- 		nilfs_transaction_abort(inode->i_sb);
--		return ret;
-+		goto out;
- 	}
- 	nilfs_set_file_dirty(inode, 1 << (PAGE_SHIFT - inode->i_blkbits));
- 	nilfs_transaction_commit(inode->i_sb);
- 
-  mapped:
- 	wait_on_page_writeback(page);
--	return VM_FAULT_LOCKED;
-+ out:
-+	sb_end_pagefault(inode->i_sb);
-+	return block_page_mkwrite_return(ret);
- }
- 
- static const struct vm_operations_struct nilfs_file_vm_ops = {
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 2a70fce..a2063c7 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -660,8 +660,6 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
- 		goto out_free;
- 	}
- 
--	vfs_check_frozen(inode->i_sb, SB_FREEZE_WRITE);
--
- 	ret = nilfs_ioctl_move_blocks(inode->i_sb, &argv[0], kbufs[0]);
- 	if (ret < 0)
- 		printk(KERN_ERR "NILFS: GC failed during preparation: "
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 0e72ad6..627351a 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -189,7 +189,7 @@ int nilfs_transaction_begin(struct super_block *sb,
- 	if (ret > 0)
- 		return 0;
- 
--	vfs_check_frozen(sb, SB_FREEZE_WRITE);
-+	sb_start_intwrite(sb);
- 
- 	nilfs = sb->s_fs_info;
- 	down_read(&nilfs->ns_segctor_sem);
-@@ -205,6 +205,7 @@ int nilfs_transaction_begin(struct super_block *sb,
- 	current->journal_info = ti->ti_save;
- 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
- 		kmem_cache_free(nilfs_transaction_cachep, ti);
-+	sb_end_intwrite(sb);
- 	return ret;
- }
- 
-@@ -246,6 +247,7 @@ int nilfs_transaction_commit(struct super_block *sb)
- 		err = nilfs_construct_segment(sb);
- 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
- 		kmem_cache_free(nilfs_transaction_cachep, ti);
-+	sb_end_intwrite(sb);
- 	return err;
- }
- 
-@@ -264,6 +266,7 @@ void nilfs_transaction_abort(struct super_block *sb)
- 	current->journal_info = ti->ti_save;
- 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
- 		kmem_cache_free(nilfs_transaction_cachep, ti);
-+	sb_end_intwrite(sb);
- }
- 
- void nilfs_relax_pressure_in_lock(struct super_block *sb)
+@@ -146,6 +146,8 @@ const struct file_operations nilfs_file_operations = {
+ 	.write		= do_sync_write,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.unlocked_ioctl	= nilfs_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= nilfs_compat_ioctl,
+diff --git a/fs/reiserfs/file.c b/fs/reiserfs/file.c
+index ace6350..686f0a3 100644
+--- a/fs/reiserfs/file.c
++++ b/fs/reiserfs/file.c
+@@ -306,6 +306,8 @@ const struct file_operations reiserfs_file_operations = {
+ 	.fsync = reiserfs_sync_file,
+ 	.aio_read = generic_file_aio_read,
+ 	.aio_write = generic_file_aio_write,
++	.read_iter = generic_file_read_iter,
++	.write_iter = generic_file_write_iter,
+ 	.splice_read = generic_file_splice_read,
+ 	.splice_write = generic_file_splice_write,
+ 	.llseek = generic_file_llseek,
 -- 
-1.7.1
+1.7.9.5
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+------------------------------------------------------------------------------
+This SF email is sponsosred by:
+Try Windows Azure free for 90 days Click Here 
+http://p.sf.net/sfu/sfd2d-msazure
