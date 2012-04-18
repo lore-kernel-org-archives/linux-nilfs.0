@@ -1,36 +1,41 @@
-From: Chris Samuel <chris@csamuel.org>
-Subject: Re: [PATCH 00/19 v5] Fix filesystem freezing deadlocks
-Date: Wed, 18 Apr 2012 10:46:55 +1000
-Message-ID: <4F8E0EFF.4090007@csamuel.org>
-References: <1334592845-22862-1-git-send-email-jack@suse.cz> <C9A0E2F0-ED57-40D6-9F75-5D72D45D21F0@dilger.ca> <20120417004329.GE6734@dastard> <141752A3-EDF1-4ABC-919D-4170B0455948@whamcloud.com>
+From: santhosh kumars <karuna.linux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: NILFS development contribution
+Date: Wed, 18 Apr 2012 16:35:28 +0530
+Message-ID: <CABECqUEGCxizjgZPWUazTJBZYWTUTCQnbieDSaSUMj8oGeMnEQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <141752A3-EDF1-4ABC-919D-4170B0455948@whamcloud.com>
-Sender: linux-btrfs-owner@vger.kernel.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:date:message-id:subject:from:to:content-type
+         :content-transfer-encoding;
+        bh=ZktkRjDW1E7DTAVLQ07M3V7VkxGSjtXC9qtZivVkYpw=;
+        b=B3Vi4R+zvJSHiyncxIKnjbr2Gqtu5GR8XHhCxW5E7K18LHub7deN5wkQDg8NoubDs9
+         dNs46C4boxWKrBK3AQjH1mw0Wej6H8+wpCYZHkyKdzsHKN5nmlBVdCtGLFCQ4uzYYVJo
+         NndcIie++q4PgOgzbs2VIiAhTloME8QjgbM1PvDhjXeeyFKEWt0LR3a7z/i9A/fIlS2A
+         vs3SunIWJQ438D74e8yoQA3l/qmbnuyoUwAcdIUS+Tv0tTDpVsb6O/RSxexxY+Ylt6vf
+         g++SBt6MpSCEWa4sRvGNWUzS32fe4SIF8hJbGHR3mPeFhlpdiaUONTnSuQ15+k+dlYZr
+         /Xew==
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Andreas Dilger <adilger@whamcloud.com>
-Cc: Dave Chinner <david@fromorbit.com>, Jan Kara <jack@suse.cz>, Al Viro <viro@ZenIV.linux.org.uk>, dchinner@redhat.com, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Alex Elder <elder@kernel.org>, Anton Altaparmakov <anton@tuxera.com>, Ben Myers <bpm@sgi.com>, Chris Mason <chris.mason@oracle.com>, cluster-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, fuse-devel@lists.sourceforge.net, "J. Bruce Fields" <bfields@fieldses.org>, Joel Becker <jlbec@evilplan.org>, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, Mark Fasheh <mfasheh@suse.com>, Miklos Szeredi <miklos@szeredi.hu>, ocfs2-devel@oss.oracle.com, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Steven Whitehouse <swhiteho@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 17/04/12 15:10, Andreas Dilger wrote:
+Hi,
+I have gone through the documents of NILFS mentioned on the home page
+of NILFS. I have interest in file system development and have some
+background knowledge about the linux VFS layer and have also created a
+sample memory based file system which resides only in the memory.=A0In
+one of the slides "Development of a New Logstructured File System for
+Linux", there is a mention to involve outside developers in the
+project as well.=A0I too want to contribute in the development of nilfs
+so I wanted to know where can I start from to get involved in the
+project.can any one help me for  to get start please.
 
-> (which IMHO would prevent nearly every Gnome system from freezing unless these
-> apps have changed their behaviour in more recent releases).
-
-It would also affect current KDE desktops as they tend to use MySQL for
-Akonadi & Nepomuk, plus anyone using Chromium (and presumably Chrome):
-
-samuel@eris:/tmp$ sudo lsof | grep deleted | awk '{print $1}' | sort |
-uniq -c
-[sudo] password for samuel:
-     32 chromium-
-      1 dovecot
-      5 imap-logi
-      5 mysqld
-
-I would be surprised if you could find many systems that didn't have
-files in this situation.
-
--- 
- Chris Samuel  :  http://www.csamuel.org/  :  Melbourne, VIC
+Thanks,
+karuanakar.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
