@@ -1,90 +1,134 @@
-From: santhosh kumars <karuna.linux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: NILFS development contribution
-Date: Wed, 25 Apr 2012 11:18:41 +0530
-Message-ID: <CABECqUFm=7V7keg5PJYetJim+O=f7k5UByJF_nbEpKCauY3kxA@mail.gmail.com>
-References: <CABECqUEGCxizjgZPWUazTJBZYWTUTCQnbieDSaSUMj8oGeMnEQ@mail.gmail.com>
-	<20120422.181504.62372140.konishi.ryusuke@lab.ntt.co.jp>
+From: shubham sharma <shubham20006-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: nilfs compilation errors
+Date: Mon, 30 Apr 2012 16:49:12 +0530
+Message-ID: <CAGS5fSzREKF5QGKMUWwZ9RXhY==STpDkm-aDF9_0L8oNoJ7VPg@mail.gmail.com>
+References: <CAGS5fSyvGmPexvi92oaTjXeATOSaxj9XRA+Liih7uWGUjFKODg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=mmhi5RnAt/AYNjFzIfp5W5QLtxW/wu0/j0s9My8ovK8=;
-        b=f0DWkAxa76aFB6iUNUROsp6Uh0harOMVmyoMPK8iUZw54XIhHDCEI3ozivPXxv3gMo
-         OvraV5iF+jbdUNDbavWXrla4Yr2DgUVp43vw+UufpgC3dyuQp6vREeRpNGdjPi79wwrk
-         yHUIa/HpPBxHqYG/p21UcrKS1pkSnZU8CM8+CEQUczxauha+On9MAiDmDDwGfRXPjy42
-         7O0Bz6SQNXgD3imsdnkOBl+pz6NXrfUAbP76Y5uNNt5NOYhqvXJw1YS733ag+92CeGLU
-         pZs5AKU+GyiHJgAUT6tSF9tccLjzrJDXwdEOlPWxauHmLQVtNdh2cb7iQuHF3sxWiHF3
-         jSCg==
-In-Reply-To: <20120422.181504.62372140.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+         :content-type:content-transfer-encoding;
+        bh=i9Qn58P0tsqEeNucnFh8IJ/80paQmFB0iLEfakcKRFE=;
+        b=S3y0PIdP1KOKuI975Gk9PcH0iuMn3TMV7vcyCvyDPO1oyYxIpqx4ExrJMajhFz7Ena
+         UChBDGLdKEc0+vPN8gbaUxsCeGjsasmx4mZk3Er1pa8MM/vFjN044CbA94gHjBMp9xdV
+         L3BHkwh0MXhrJn4MctZHGuCjEyqaX9lptj/Rcn1N6ICg6sC3WeyxTOYO6SlQNQb0mDB7
+         G+dnQUn4ZWhKe2LwJyRzTEs3aw2SGXEMtdb0EJbGaSI2nrRhxHC7DwWsHB4iBWHCd0SC
+         /ffT2ifpCUsgO900bGqylII1lzdC9PYZyfAXqJr+X3A25+U48w9O6W77468PfVpjLIQ3
+         MUoA==
+In-Reply-To: <CAGS5fSyvGmPexvi92oaTjXeATOSaxj9XRA+Liih7uWGUjFKODg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="windows-1252"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sun, Apr 22, 2012 at 2:45 PM, Ryusuke Konishi
-<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> Hi,
-> On Wed, 18 Apr 2012 16:35:28 +0530, santhosh kumars wrote:
->> Hi,
->> I have gone through the documents of NILFS mentioned on the home pag=
-e
->> of NILFS. I have interest in file system development and have some
->> background knowledge about the linux VFS layer and have also created=
- a
->> sample memory based file system which resides only in the memory. In
->> one of the slides "Development of a New Logstructured File System fo=
+Hi,
+
+I am trying to compile the nilfs sources on Ubuntu but it is giving
+compilation errors.
+
+My kernel version is
+
+----8<----
+shubham@shubham-VirtualBox:~/work/nilfs/git_repo/nilfs2-module$ uname -=
 r
->> Linux", there is a mention to involve outside developers in the
->> project as well. I too want to contribute in the development of nilf=
-s
->> so I wanted to know where can I start from to get involved in the
->> project.can any one help me for =A0to get start please.
->>
->> Thanks,
->> karuanakar.
->
-> Sorry for my late reply. I was quite busy this week.
->
->
-> Contribution to our project is of course welcome.
->
-> NILFS is now a part of the Linux kernel, and is developed using publi=
-c
-> git trees and the linux-nilfs mailing list. =A0I am taking in functio=
-n
-> enhancement as well as bug fixes which outside developers sent to me,
-> simlilarly with usual Linux/OSS development.
->
-> My recommendation for starting to get involved in the project is to
-> utilize github; both userland utilities and nilfs branch of kernel
-> tree are maintained there.
->
-> This project has many todo items, which is listed in lower part of
-> http://www.nilfs.org/en/current_status.html
->
-> My recent concern is improving garbage collection algorithm and I/O
-> performance of in-kernel filesystem module.
->
-> What is necessary is just to do your favorite or possible thing,
-> however, if you can provide help to these priorities, I would
-> appreciate it :)
->
->
-> Thanks,
-> Ryusuke Konishi
+3.0.0-12-generic
+----8<----
 
-hi  Ryusuke Konishi
-Thanks for your mail and information. First of all I would like to
-work on  fixing bugs.
-Just i want to know where can i find the list of bugs, so that i can
-move forward.
-thanks for your reply.
-thanks,
-Karunakar.
+I got the nilfs sources from the git repository:
+
+----8<----
+shubham@shubham-VirtualBox:~/work/nilfs$=A0git clone
+git://github.com/nilfs-dev/nilfs2-module.git
+----8<----
+
+After getting the sources, i tried to compile the sources but i am
+getting the following compilation errors:
+
+----8<----
+shubham@shubham-VirtualBox:~/work/nilfs/git_repo/nilfs2-module$ make
+make -C fs
+make[1]: Entering directory `/home/shubham/work/nilfs/git_repo/nilfs2-m=
+odule/fs'
+make -C /lib/modules/3.0.0-12-generic/build
+SUBDIRS=3D/home/shubham/work/nilfs/git_repo/nilfs2-module/fs
+BUILD_DIR=3D/home/shubham/work/nilfs/git_repo/nilfs2-module/fs modules
+make[2]: Entering directory `/usr/src/linux-headers-3.0.0-12-generic'
+=A0 CC [M] =A0/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.=
+o
+In file included from
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:28:0:
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/nilfs.h: In
+function =91nilfs_init_acl=92:
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/nilfs.h:234:31:
+error: dereferencing pointer to incomplete type
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c: In
+function =91nilfs_write_begin=92:
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:212:5:
+warning: passing argument 1 of =91block_write_begin=92 from incompatibl=
+e
+pointer type [enabled by default]
+include/linux/buffer_head.h:204:5: note: expected =91struct
+address_space *=92 but argument is of type =91struct file *=92
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:212:5:
+warning: passing argument 2 of =91block_write_begin=92 makes integer fr=
+om
+pointer without a cast [enabled by default]
+include/linux/buffer_head.h:204:5: note: expected =91loff_t=92 but
+argument is of type =91struct address_space *=92
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:212:5:
+warning: passing argument 5 of =91block_write_begin=92 makes pointer fr=
+om
+integer without a cast [enabled by default]
+include/linux/buffer_head.h:204:5: note: expected =91struct page **=92 =
+but
+argument is of type =91unsigned int=92
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:212:5:
+warning: passing argument 6 of =91block_write_begin=92 from incompatibl=
+e
+pointer type [enabled by default]
+include/linux/buffer_head.h:204:5: note: expected =91int (*)(struct
+inode *, sector_t, =A0struct buffer_head *, int)=92 but argument is of
+type =91struct page **=92
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:212:5:
+error: too many arguments to function =91block_write_begin=92
+include/linux/buffer_head.h:204:5: note: declared here
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c: At top leve=
+l:
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:302:2:
+error: unknown field =91sync_page=92 specified in initializer
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:302:16:
+error: =91block_sync_page=92 undeclared here (not in a function)
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c: In
+function =91nilfs_delete_inode=92:
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:721:3:
+error: implicit declaration of function =91clear_inode=92
+[-Werror=3Dimplicit-function-declaration]
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c: In
+function =91nilfs_setattr=92:
+/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.c:759:2:
+error: implicit declaration of function =91inode_setattr=92
+[-Werror=3Dimplicit-function-declaration]
+cc1: some warnings being treated as errors
+
+make[3]: *** [/home/shubham/work/nilfs/git_repo/nilfs2-module/fs/inode.=
+o]
+Error 1
+make[2]: *** [_module_/home/shubham/work/nilfs/git_repo/nilfs2-module/f=
+s]
+Error 2
+make[2]: Leaving directory `/usr/src/linux-headers-3.0.0-12-generic'
+make[1]: *** [default] Error 2
+make[1]: Leaving directory `/home/shubham/work/nilfs/git_repo/nilfs2-mo=
+dule/fs'
+make: *** [fs] Error 2
+----8<----
+
+Is there any step that I am missing before compiling the code?
+
+Regards,
+Shubham
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
 in
