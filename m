@@ -1,69 +1,56 @@
-From: =?iso-8859-1?Q?Sven-G=F6ran_Bergh?= <svengbergh-nilfs-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
-Subject: Nilfs2 and Grub2
-Date: Tue, 1 May 2012 03:38:57 -0700 (PDT)
-Message-ID: <1335868737.71789.YahooMailNeo@web161905.mail.bf1.yahoo.com>
-Reply-To: =?iso-8859-1?Q?Sven-G=F6ran_Bergh?= <svengbergh-nilfs-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
+From: Tiago Caxias <tiago.caxias-FFYn/CNdgSA@public.gmane.org>
+Subject: man nilfs-clean
+Date: Wed, 2 May 2012 15:44:33 +0100
+Message-ID: <CAJi=nxo9vTiYeHYRZ+vXSP_weHbW+0XaENAm7QhrAaebGeRYuw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s1024; t=1335868737; bh=detuGjVVmo4UpIX5SzW5U6mTli7F7IO26meUKYymbxs=; h=X-YMail-OSG:Received:X-Mailer:Message-ID:Date:From:Reply-To:Subject:To:MIME-Version:Content-Type:Content-Transfer-Encoding; b=l6H6LlGCisRr3++m2Tg0iWq2FMbna/7VCnsMSrudJmef1Z1YeGnpnN5Zy456hltpjex4GMwLi5bW1u7GeqqsuIiT6YK5FtQE51l4hIX2l9Pf+42M5kYawZZTzz5ouyw9HXvlxO5rHml8FfojWLJPqxtTjj3opCoEwoeyqm9pkkQ=
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:sender:from:date:x-google-sender-auth:message-id
+         :subject:to:content-type:content-transfer-encoding;
+        bh=bHsLKrc2wnHQvzpBSmYGdSY/qgboeWP/LEEKjz7UtKU=;
+        b=s3WYrXkJmTe6iHS00u/jy/cBeYLiIktABp/ta9MAQPF2ABYi9alN7Vz0yqsG1uDzJn
+         4TkOiJ+Ne0HIYOMOoH8XN0P0TYtJi/EREtoPKZ4JwdpbHJ3ND3lAXpTHq2844z9pCKp4
+         0LE+ZifMpmKH4J+ghrgo8/xOQb8xBF66+CfANj2iDmV22u8km+6ZgXkx4u+zHmw6pi9V
+         RX9BGv23hWI9ILw2KjIiXjKesmx14mWBDQATlursZAHIzklstOcOS4bVHnj3FJHUfPGT
+         G59+32moZD2TB/oukLPQbpEQeIYwJfzwBj0BwPXbsnOylcD8FnNankvKbZ4A3aZ6ixIF
+         JjJg==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="iso-8859-1"
-To: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi list,
+Hi all.
 
-I have done some observations with the combination
-grub2 and nilfs2 on the boot partition. It would
-be valuable to know if anyone else has done similar
-observations or if this is a {,/un}known problem.
+=46irst of all let me thank and congratulate everyone on the nilfs2 pro=
+ject.
 
+I believe I found a typo in the nilfs-clean man page. (is an interger
+value -> is an integer value)
+I cloned the git repo, edited the file and then I did a git diff.
+Not sure if this is the proper way to post a "patch" but here's my firs=
+t try.
 
-After some harsh handling the system is rebooted
-and grub2 hangs during stage 1.5-2. Once grub2 has
-encountered this problem it is consistent. It will
-hang on every consecutive boot.
+diff --git a/man/nilfs-clean.8 b/man/nilfs-clean.8
+index 758b9e1..04e11c6 100644
+--- a/man/nilfs-clean.8
++++ b/man/nilfs-clean.8
+@@ -45,7 +45,7 @@ Display help message and exit.
+=A0.TP
+=A0\fB\-p\fR, \fB\-\-protection-period=3D\fIinterval\fR
+=A0Set protection period for a cleaner run.=A0 The \fIinterval\fR param=
+eter
+-is an interger value and specifies the minimum time that deleted or
++is an integer value and specifies the minimum time that deleted or
+=A0overrode data will be preserved in the file system.=A0 Smaller value=
+s will
+=A0increase free space made by garbage collection.=A0 Optionally, the
+=A0\fIinterval\fP parameter may be suffixed by one of the following
 
-However, if the filesystem (on a CF) is mounted by
-another system there are no problems reported.
-=46urthermore, once the filesystem has been mounted
-by another system grub2 has no problems booting it
-again afterwards. There is no need to do anything
-else with the fs than mounting it by another system
-and then umount it again.
-My preliminary analysis is:
-=A0* Nilfs2 is left in a disturbed state, due to some
-=A0=A0 rough handling (still unknown in detail).
-=A0* A normal mount has no problem to recover the fs
-=A0=A0 in such case.
-=A0* Grub2 lacks some of the recovery features
-=A0=A0 performed during a normal mount and will have
-=A0=A0 problem reading files on the fs.
-
-Currently I do not have a more exact description of
-the problem. I still have to figure out exactly what
-handling that triggers this state for the fs.
-
-
-This is an embedded project and a previous version
-
-is running grub legacy and ext2 without any signs of
-similar problems. Grub legacy has never failed, even
-with a (partly) corrupt ext2.
-
-My own knowledge in the nilfs2/grub2 internals is
-limited and it is hard to troubleshoot since I
-have no recipe reproduction. However, I have observed
-it on several occasions on our test systems. I am on
-a tight schedule, but when time permits, I will try
-to find a way to reproduce this.
-
-Have anyone experienced similar behavior?
-
-Brgds
-/Sven
-
+--
+Best regards,
+Tiago Caxias
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
 in
