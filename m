@@ -1,83 +1,99 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: man nilfs-clean
-Date: Thu, 03 May 2012 13:13:29 +0900 (JST)
-Message-ID: <20120503.131329.212713486.konishi.ryusuke@lab.ntt.co.jp>
-References: <CAJi=nxo9vTiYeHYRZ+vXSP_weHbW+0XaENAm7QhrAaebGeRYuw@mail.gmail.com>
+Subject: Re: Nilfs2 and Grub2
+Date: Thu, 03 May 2012 15:49:04 +0900 (JST)
+Message-ID: <20120503.154904.13275655.konishi.ryusuke@lab.ntt.co.jp>
+References: <1335868737.71789.YahooMailNeo@web161905.mail.bf1.yahoo.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAJi=nxo9vTiYeHYRZ+vXSP_weHbW+0XaENAm7QhrAaebGeRYuw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1335868737.71789.YahooMailNeo-/W4/QBBOCLIMe+d1jY/0H5EhsgyP+Z75VpNB7YpNyf8@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="iso-8859-1"
-To: tiago.caxias-FFYn/CNdgSA@public.gmane.org
+To: svengbergh-nilfs-/E1597aS9LQAvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 2 May 2012 15:44:33 +0100, Tiago Caxias wrote:
-> Hi all.
+Hi,
+On Tue, 1 May 2012 03:38:57 -0700 (PDT), Sven-G=F6ran_Bergh wrote:
+> Hi list,
 >=20
-> First of all let me thank and congratulate everyone on the nilfs2 pro=
-ject.
+> I have done some observations with the combination
+> grub2 and nilfs2 on the boot partition. It would
+> be valuable to know if anyone else has done similar
+> observations or if this is a {,/un}known problem.
 >=20
-> I believe I found a typo in the nilfs-clean man page. (is an interger
-> value -> is an integer value)
+>=20
+> After some harsh handling the system is rebooted
+> and grub2 hangs during stage 1.5-2. Once grub2 has
+> encountered this problem it is consistent. It will
+> hang on every consecutive boot.
+>=20
+> However, if the filesystem (on a CF) is mounted by
+> another system there are no problems reported.
+> Furthermore, once the filesystem has been mounted
+> by another system grub2 has no problems booting it
+> again afterwards. There is no need to do anything
+> else with the fs than mounting it by another system
+> and then umount it again.
+> My preliminary analysis is:
+> =A0* Nilfs2 is left in a disturbed state, due to some
+> =A0=A0 rough handling (still unknown in detail).
+> =A0* A normal mount has no problem to recover the fs
+> =A0=A0 in such case.
+> =A0* Grub2 lacks some of the recovery features
+> =A0=A0 performed during a normal mount and will have
+> =A0=A0 problem reading files on the fs.
+>=20
+> Currently I do not have a more exact description of
+> the problem. I still have to figure out exactly what
+> handling that triggers this state for the fs.
+>=20
+> This is an embedded project and a previous version
+>=20
+> is running grub legacy and ext2 without any signs of
+> similar problems. Grub legacy has never failed, even
+> with a (partly) corrupt ext2.
+>=20
+> My own knowledge in the nilfs2/grub2 internals is
+> limited and it is hard to troubleshoot since I
+> have no recipe reproduction. However, I have observed
+> it on several occasions on our test systems. I am on
+> a tight schedule, but when time permits, I will try
+> to find a way to reproduce this.
+>=20
+> Have anyone experienced similar behavior?
+>=20
+> Brgds
+> /Sven
 
-Thanks, I will apply it.
+Thank you for reporting the issue in the nilfs2 boot loader of grub2.
 
-> I cloned the git repo, edited the file and then I did a git diff.
-> Not sure if this is the proper way to post a "patch" but here's my fi=
-rst try.
+Your analysis seems right to me.
 
-That's OK.
+The nilfs2 grub code looks to be lacking roll forwarding and crc
+verification (the latter both for super blocks and log blocks).
 
-One thing I will ask you to do, is to include a "Singed-off-by" line
-(sob line for short) in your patch, which certifies that you wrote it
-or otherwise have the right to pass it on as an open-source patch.
-even if it's a typo fix ;)
+It is incomplete, or rather I should say it took a good trade-off
+between simplicity and reliability as an early practicable
+implementation.
 
-The sob line is inserted before the source code diff in the following
-form:
+Actually it works without trouble in most cases since most checkpoints
+coherently include files needed to boot up system even though that
+omission may lead the boot loader to read not-updated files after
+unclean shutdown.
 
-Signed-off-by: Tiago Caxias <your e-mail address>
+In my opinion, nilfs2 grub code does not have to do recovery, but it
+should scan the latest checkpoint in order to minimize troubles.
+However, I don't know whether it's possible or not in the boot loader.
 
-This is automatically done if you used "git commit" command with an -s
-option; usually you can make a patch from the local change by "git
-commit -a -s".
-
-Then you can confirm or output the patch by "git show" or "git
-format-patch HEAD^.."
-
-I think that it is good to learn the function of git little by little
-starting from hand working since git has various functions.
+Of course, there is a possibility that simply an unknown bug caused
+your trouble.  In that case, inserting debug print functions in the
+nilfs2 grub code and booting up with it, would be helpful to narrow
+down the cause of the problem.
 
 
 Thanks,
 Ryusuke Konishi
-
-> diff --git a/man/nilfs-clean.8 b/man/nilfs-clean.8
-> index 758b9e1..04e11c6 100644
-> --- a/man/nilfs-clean.8
-> +++ b/man/nilfs-clean.8
-> @@ -45,7 +45,7 @@ Display help message and exit.
-> =A0.TP
-> =A0\fB\-p\fR, \fB\-\-protection-period=3D\fIinterval\fR
-> =A0Set protection period for a cleaner run.=A0 The \fIinterval\fR par=
-ameter
-> -is an interger value and specifies the minimum time that deleted or
-> +is an integer value and specifies the minimum time that deleted or
-> =A0overrode data will be preserved in the file system.=A0 Smaller val=
-ues will
-> =A0increase free space made by garbage collection.=A0 Optionally, the
-> =A0\fIinterval\fP parameter may be suffixed by one of the following
->=20
-> --
-> Best regards,
-> Tiago Caxias
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
-" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
 in
