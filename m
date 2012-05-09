@@ -1,50 +1,34 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: fsck.nilfs2: not found
-Date: Wed, 9 May 2012 15:21:37 +0400
-Message-ID: <F4C68CD6-CB84-4F60-88D2-8AB0DB9A17AA@dubeyko.com>
-References: <CABECqUHJFN-6K1eP29BL39G=EgSTf2usRHLAWsNY98zzMTLT7w@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v1084)
+From: Zeke Rondel <zeke-iuD2ETIrjQqsTnJN9+BGXg@public.gmane.org>
+Subject: Small device
+Date: Thu, 10 May 2012 00:33:30 +0100
+Message-ID: <1336606410.14957.140661073496877.75A2D273@webmail.messagingengine.com>
+Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=V1+vpxI951Jfq0FwCwB9uIHi1TLK2YaE5QRV5VyLsKI=;
-	b=LecFyALnbocYGYb+rZz5GeKQygx2goNKlXtxSXfgd/xQDSC1TxUZnHULDOJBpVrKMwiJrJP+QmvAICyD1n7qtVj6YZzFe5GlgFfeJjI3bN+aJsp7K+TlRNdnWvSg6/Ad;
-In-Reply-To: <CABECqUHJFN-6K1eP29BL39G=EgSTf2usRHLAWsNY98zzMTLT7w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=mailup.net; h=
+	message-id:from:to:mime-version:content-transfer-encoding
+	:content-type:subject:date; s=mesmtp; bh=cA+d1EnJa0gqnZ4cD1dqtvs
+	GHfU=; b=qRA3qrqRJ3vAgK5sk3D6P+DbHp1xGhQGrVoOI0t5+6GYUNtF53er9OJ
+	Hm9y6iBdaCSFtpf5cIcKYLE8cHR1N5sDboxHmvhpMqowFGNANOvI4caIJARKC1QI
+	NWC6r+RED4ze23FrbDVkv++e+v4y4VMpROByeS7KCEhi4Jo7cKZY=
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=
+	messagingengine.com; h=message-id:from:to:mime-version
+	:content-transfer-encoding:content-type:subject:date; s=smtpout;
+	 bh=cA+d1EnJa0gqnZ4cD1dqtvsGHfU=; b=BB6JWsTURiLUks+RmfJI8Pq7Frpz
+	R3a8xFlJdX8HxYshMUh2uPkm3pU2GBtdb1OvnZFWiRomsl+azoTl9Rk9GHUIDkAJ
+	rX12lXGq9Epa/MhWkPq47xvgWAp0BoBG6b2lEtghHT9pcSBnKNwQUxypau3kuHla
+	cLc3PgbFopFXnSE=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: karunakar merugu <karuna.linux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
 
-Sorry, but as I know fsck tool for NILFS filesystem doesn't implemented yet.
-
-With the best regards,
-Vyacheslav Dubeyko.
-
-On May 9, 2012, at 1:16 PM, karunakar merugu wrote:
-
-> Hi
-> I am using Linux karunakar-VirtualBox 3.0.0-12-generic #20-Ubuntu SMP.
-> I installed nilfs utilities  by
-> sudo apt-get update
-> sudo apt-get install nilfs2-tools
-> 
-> Even after this I am getting error like:
-> fsck from util-linux 2.19.1
-> fsck: fsck.nilfs2: not found
-> fsck: Error 2 while executing fsck.nilfs2 for /dev/sdb
-> 
-> can anyone help me in finding the correct package for fsck.nilfs2
-> utility please.
-> thanks,
-> Karunakar.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+I've a small memory card (SD) of 64MB used for keys related to crypto.
+stuff so I need a log filesystem that avoids the data can be re-written
+or modified. Is NILFS suitable in case of little devices? If so, which
+size of blocks per segment would be suitable for it? Thanks in advance!
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
