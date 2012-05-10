@@ -1,73 +1,48 @@
-From: karunakar merugu <karuna.linux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: fsck.nilfs2: not found
-Date: Thu, 10 May 2012 11:15:16 +0530
-Message-ID: <CABECqUFcaLJ_yvHQCotvUj1X4yvDSL3hCwt4U0SNhuELYXddVw@mail.gmail.com>
-References: <CABECqUHJFN-6K1eP29BL39G=EgSTf2usRHLAWsNY98zzMTLT7w@mail.gmail.com>
-	<F4C68CD6-CB84-4F60-88D2-8AB0DB9A17AA@dubeyko.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: Small device
+Date: Fri, 11 May 2012 00:42:22 +0900 (JST)
+Message-ID: <20120511.004222.123644820.konishi.ryusuke@lab.ntt.co.jp>
+References: <1336606410.14957.140661073496877.75A2D273@webmail.messagingengine.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type:content-transfer-encoding;
-        bh=3hri52bRHLtfEWQNgfMFZZ7NSq5scvQdRWQKWeYB1hk=;
-        b=mgYsyxrKUp5fAmIx4o80UeccPzd/+b6r0GnlycSd1L+57rD6f5R2lvO3589wlx4UU7
-         Bnnj4wSW5Q1TbCZSNwvofB2ZRhWB14QExTugAbqailCrutTVgIPiINo1z/0Eb4JRw6m0
-         8UTD11AtEeT1RHV4z4KAmEy3JsYsm7PQzsf/n1mKJVuyUhEoWWBY2PyyLpz0JzTx+BFW
-         MCSD2GN1ovmOQi1spw77wZ806y5YVMQnO4zgnvC/zaPYX933zTZ4HMhmk1TALlfdYq/u
-         jxnGmyK1xZLtPp5sa8PH9lxqmKAUFPTqFFuahbaiUHEPwBOFLSO/7YQ3BFKECyd0LCaN
-         dtIQ==
-In-Reply-To: <F4C68CD6-CB84-4F60-88D2-8AB0DB9A17AA-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <1336606410.14957.140661073496877.75A2D273-2RFepEojUI2N1INw9kWLP6GC3tUn3ZHUQQ4Iyu8u01E@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: zeke-iuD2ETIrjQqsTnJN9+BGXg@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-hi
-I am trying to test xfstests on nilfs.During this i got this error
-fsck.nilfs2 not found.
-Is any one tried xfstests for nilfs and facing same problem ?
-thanks,
-karunakar.
-
-On Wed, May 9, 2012 at 4:51 PM, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> =
-wrote:
+Hi,
+On Thu, 10 May 2012 00:33:30 +0100, Zeke Rondel wrote:
 > Hi,
->
-> Sorry, but as I know fsck tool for NILFS filesystem doesn't implement=
-ed yet.
->
-> With the best regards,
-> Vyacheslav Dubeyko.
->
-> On May 9, 2012, at 1:16 PM, karunakar merugu wrote:
->
->> Hi
->> I am using Linux karunakar-VirtualBox 3.0.0-12-generic #20-Ubuntu SM=
-P.
->> I installed nilfs utilities =A0by
->> sudo apt-get update
->> sudo apt-get install nilfs2-tools
->>
->> Even after this I am getting error like:
->> fsck from util-linux 2.19.1
->> fsck: fsck.nilfs2: not found
->> fsck: Error 2 while executing fsck.nilfs2 for /dev/sdb
->>
->> can anyone help me in finding the correct package for fsck.nilfs2
->> utility please.
->> thanks,
->> Karunakar.
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-nilf=
-s" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
->
+> 
+> I've a small memory card (SD) of 64MB used for keys related to crypto.
+> stuff so I need a log filesystem that avoids the data can be re-written
+> or modified. Is NILFS suitable in case of little devices? If so, which
+> size of blocks per segment would be suitable for it? Thanks in advance!
+
+Basically NILFS is not designed for small devices.  Its most on-disk
+data items have 64-bit width.  In addition, it's more likely to suffer
+from disk full on such devices due to the copy-on-write nature.
+
+However, I guess you can use NILFS on 64MB SD card by formatting the
+device with a smaller block size and a smaller number of blocks per
+segment.
+
+My mkfs format parameter for a 64MB sized device is as follows:
+
+$ mkfs -t nilfs2 -b 1024 -B 512 <device>
+
+
+We may get more disk space overhead for much smaller "blocks per
+segment" because every segment of NILFS needs at least one header
+block.
+
+
+Regards,
+Ryusuke Konishi
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
