@@ -1,36 +1,50 @@
-From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
-Subject: Re: [NILFS2 design doc] draft of the on-disk layout description paragraph
-Date: Sun, 20 May 2012 17:50:46 +0200
-Message-ID: <20120520155045.GA9365@diablo.13thmonkey.org>
-References: <71AEAAD0-8CA9-415E-A14D-06154186301F@dubeyko.com>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 1/1] nilfs2: add omitted comment for ns_mount_state field
+ of the_nilfs structure
+Date: Tue, 22 May 2012 18:25:15 +0400
+Message-ID: <1337696715.2530.14.camel@slavad-ubuntu-11>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <71AEAAD0-8CA9-415E-A14D-06154186301F-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:To:From:Subject; bh=mXDWb8o0MR6guZvY1Di/VhbAoss7HWIcxKcF1dBaKpE=;
+	b=XeQBVeJGGr6qyPRXAZRpjZRWMOIi7tcP0/zXFuWVa0vvf6Du/CXm/IsYqLUvoS+zU43r157JySj82hUA2D96Dedt+iAXaKshP+Ztlnya2dcSmIHxXjicLr6I4HPPl0cu;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Vyacheslav,
+Hi,
 
-On Sun, May 20, 2012 at 06:23:29PM +0400, Vyacheslav Dubeyko wrote:
-> I am working on NILFS2 design doc now. Currently, I elaborated draft of the
-> on-disk layout description paragraph. You can download draft of the design
-> document from here:
-> http://dubeyko.com/development/FileSystems/NILFS/nilfs2-design.pdf.
-> 
-> Could you please review the draft of the on-disk layout description
-> paragraph and point out any misunderstandings or misspellings? Thank you in
-> advance.
+I found that ns_mount_state field doesn't commented in the_nilfs
+structure. I simply add comment for ns_mount_state field.
 
-Looks good. The byte code examples i'd leave out; they are confusing. Maybe as
-an edditional part?
+With the best regards,
+Vyacheslav Dubeyko.
+--
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 1/1] nilfs2: add omitted comment for ns_mount_state
+field of the_nilfs structure
 
-Cheers,
-Reinoud
+This patch adds omitted comment for ns_mount_state field of the_nilfs
+structure.
+
+Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+---
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 1a588a3..7885bdb 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -53,6 +53,7 @@ enum {
+  * @ns_sbwtime: previous write time of super block
+  * @ns_sbwcount: write count of super block
+  * @ns_sbsize: size of valid data in super block
++ * @ns_mount_state: file system state
+  * @ns_seg_seq: segment sequence counter
+  * @ns_segnum: index number of the latest full segment.
+  * @ns_nextnum: index number of the full segment index to be used next
+--
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
