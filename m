@@ -1,61 +1,76 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 1/1] nilfs2: add omitted comment for ns_mount_state
- field of the_nilfs structure
-Date: Wed, 23 May 2012 22:22:48 +0900 (JST)
-Message-ID: <20120523.222248.27788175.konishi.ryusuke@lab.ntt.co.jp>
-References: <1337696715.2530.14.camel@slavad-ubuntu-11>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 1/1] nilfs2: add detailed comment about description of  DAT
+ meta-data file's blocks in on-disk segment summary
+Date: Thu, 24 May 2012 16:22:03 +0400
+Message-ID: <1337862123.2628.32.camel@slavad-ubuntu-11>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1337696715.2530.14.camel@slavad-ubuntu-11>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:To:From:Subject; bh=Ba+mmUkgc7CQlvjoquvh8M4G0Je3EkCJuuinQ+AHfek=;
+	b=jdJX07LgMpoHrZT91hrTOS0ZieEmmNaLguUX0ZJomauxJNIP99lArmMoMKi2lqCf4m8XVYziJv0OM/2RwAYRxbizLEL8ZvbmDxzJriJgaU+lXPffkz5nc7pWuU+/+1pI;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 22 May 2012 18:25:15 +0400, Vyacheslav Dubeyko wrote:
-> Hi,
-> 
-> I found that ns_mount_state field doesn't commented in the_nilfs
-> structure. I simply add comment for ns_mount_state field.
-> 
-> With the best regards,
-> Vyacheslav Dubeyko.
+Hi,
 
-Thanks.  I will pick it up.
+I suggest to add comment with more details about description of data and
+b-tree intermediate blocks of the DAT meta-data file in on-disk segment
+summary. I think that absence of such comment can lead to
+misunderstanding of segment summary's on-disk layout.
 
-Ryusuke Konishi
+With the best regards,
+Vyacheslav Dubeyko.
+--
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 1/1] nilfs2: add detailed comment about description of
+DAT meta-data file's blocks in on-disk segment summary
 
-> --
-> From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Subject: [PATCH 1/1] nilfs2: add omitted comment for ns_mount_state
-> field of the_nilfs structure
-> 
-> This patch adds omitted comment for ns_mount_state field of the_nilfs
-> structure.
-> 
-> Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> ---
-> diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-> index 1a588a3..7885bdb 100644
-> --- a/fs/nilfs2/the_nilfs.h
-> +++ b/fs/nilfs2/the_nilfs.h
-> @@ -53,6 +53,7 @@ enum {
->   * @ns_sbwtime: previous write time of super block
->   * @ns_sbwcount: write count of super block
->   * @ns_sbsize: size of valid data in super block
-> + * @ns_mount_state: file system state
->   * @ns_seg_seq: segment sequence counter
->   * @ns_segnum: index number of the latest full segment.
->   * @ns_nextnum: index number of the full segment index to be used next
-> --
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+This patch adds comment with more details about description of data and
+b-tree intermediate blocks of the DAT meta-data file in on-disk segment
+summary.
+
+Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+---
+ include/linux/nilfs2_fs.h |   13 ++++++++++++-
+ 1 files changed, 12 insertions(+), 1 deletions(-)
+
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index 655213e..630f550 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -372,7 +372,18 @@ struct nilfs_binfo_v {
+ };
+ 
+ /**
+- * struct nilfs_binfo_dat - information for the block which belongs to
+the DAT file
++ * Description of DAT meta-data file's blocks is a special case of
+segment summary.
++ * The description can contain as data blocks as b-tree intermediate
+blocks.
++ * The whole number of blocks (including intermediate blocks) is
+described
++ * by fi_nblocks field of nilfs_finfo structure. The fi_ndatablk field
+keeps
++ * count of data blocks. Firstly, it is described data blocks by means
+of
++ * 64-bit block offset number (__le64) which is allocated per block.
++ * Finally, b-tree intermediate blocks are described by nilfs_binfo_dat
++ * structure which is allocated per block.
++ */
++
++/**
++ * struct nilfs_binfo_dat - information for b-tree intermediate block
+of the DAT meta-data file
+  * @bi_blkoff: block offset
+  * @bi_level: level
+  * @bi_pad: padding
+--
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
