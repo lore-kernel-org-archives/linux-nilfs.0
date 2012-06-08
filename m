@@ -1,42 +1,36 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [RFC, PATCH, RESEND] fs: push rcu_barrier() from
  deactivate_locked_super() to filesystems
-Date: Fri, 8 Jun 2012 15:27:28 -0700
-Message-ID: <CA+55aFw1yLOYzVCWMRUERNPEKgnrOfGNGmU335H_4aqGPLwq0Q@mail.gmail.com>
+Date: Fri, 8 Jun 2012 15:31:20 -0700
+Message-ID: <20120608153120.b722d7c3.akpm@linux-foundation.org>
 References: <1339191663-17693-1-git-send-email-kirill.shutemov@linux.intel.com>
- <20120608150253.e42464a6.akpm@linux-foundation.org> <20120608221446.GA18250@otc-wbsnb-06>
- <20120608222337.GR30000@ZenIV.linux.org.uk>
+	<20120608150253.e42464a6.akpm@linux-foundation.org>
+	<20120608221446.GA18250@otc-wbsnb-06>
+	<20120608152550.258d6a30.akpm@linux-foundation.org>
+	<20120608222734.GT30000@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:sender:in-reply-to:references:from:date
-         :x-google-sender-auth:message-id:subject:to:cc:content-type;
-        bh=ewqF7e5i02HERRjh/CsTYKUU0WVTcFL6fZi72XmQq6o=;
-        b=pDOipVpfjd2BOWmq3/pI2X3Mc1OE9GfLZi/Poowcg8EFzifkqfQqoN1IgGcH6GRznQ
-         wYDNdbwhbsTOOTFgf42VnE0rxlZ+YqxAMz+Z5KbPlEGuxULW1Zee/IWFySJsyPBm/IZN
-         +TkrwGapCj0J4GNng7Emq7/6GzO6x4BybKzqhZDqvMrChSRSEm2Dd/3JxvlcIO74ogyl
-         UEs0UFYMcCPotAYUlXAkC8lyv6/yXmpuU9MXmQNbqD1Jm7lXGKiQITNixs0DlZU034Nj
-         wbQujRpWOmYoMdrE02vJqVo8AbA6CAKNxLs9eNhEnBlqQninVr69jdVd92sjVmskRwJh
-         OiJA==
-In-Reply-To: <20120608222337.GR30000@ZenIV.linux.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <ceph-devel-owner@vger.kernel.org>
+In-Reply-To: <20120608222734.GT30000@ZenIV.linux.org.uk>
+Sender: ceph-devel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Boaz Harrosh <bharrosh@panasas.com>, Tao Ma <boyu.mt@taobao.com>, Nick Piggin <npiggin@kernel.dk>, "Dmitry V. Levin" <ldv@altlinux.org>, v9fs-developer@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, codalist@telemann.coda.cs.cmu.edu, ecryptfs@vger.kernel.org, osd-dev@open-osd.org, linux-ext4@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, jfs-discussion@lists.sourceforge.net, logfs@logfs.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ocfs2-devel@oss.oracle.com, reiserfs-devel@vger.kernel.org
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Boaz Harrosh <bharrosh@panasas.com>, Tao Ma <boyu.mt@taobao.com>, Nick Piggin <npiggin@kernel.dk>, "Dmitry V. Levin" <ldv@altlinux.org>, v9fs-developer@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, codalist@TELEMANN.coda.cs.cmu.edu, ecryptfs@vger.kernel.org, osd-dev@open-osd.org, linux-ext4@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, jfs-discussion@lists.sourceforge.net, logfs@logfs.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ocfs2-devel@oss.oracle.com, reiserfs-devel@vger.kernel.org
 
-On Fri, Jun 8, 2012 at 3:23 PM, Al Viro <viro@zeniv.linux.org.uk> wrote:
->
-> Note that module unload is *not* a hot path - not on any even remotely sane
-> use.
+On Fri, 8 Jun 2012 23:27:34 +0100
+Al Viro <viro@ZenIV.linux.org.uk> wrote:
 
-Actually, I think we've had distributions that basically did a "load
-pretty much everything, and let God sort it out" approach to modules.
-I know some people *have* actually worried about module load/unload
-performance.
+> On Fri, Jun 08, 2012 at 03:25:50PM -0700, Andrew Morton wrote:
+> 
+> > A neater implementation might be to add a kmem_cache* argument to
+> > unregister_filesystem().  If that is non-NULL, unregister_filesystem()
+> > does the rcu_barrier() and destroys the cache.  That way we get to
+> > delete (rather than add) a bunch of code from all filesystems and new
+> > and out-of-tree filesystems cannot forget to perform the rcu_barrier().
+> 
+> There's often enough more than one cache, so that one is no-go.
 
-Whether it is "remotely sane" I'm not going to argue for, but ..
+kmem_cache** ;)
 
-                Linus
+Which filesystems have multiple inode caches?
