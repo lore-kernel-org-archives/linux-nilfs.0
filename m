@@ -1,66 +1,96 @@
-From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: Re: [RFC, PATCH, RESEND] fs: push rcu_barrier() from
- deactivate_locked_super() to filesystems
-Date: Mon, 11 Jun 2012 12:16:00 +0300
-Message-ID: <20120611091600.GA1122@otc-wbsnb-06>
-References: <20120608221446.GA18250@otc-wbsnb-06>
- <20120608152550.258d6a30.akpm@linux-foundation.org>
- <20120608222734.GT30000@ZenIV.linux.org.uk>
- <20120608153120.b722d7c3.akpm@linux-foundation.org>
- <20120608233127.GB18981@otc-wbsnb-06>
- <20120608163751.7a8ec2bc.akpm@linux-foundation.org>
- <CA+55aFw5k3daxeoZb9H1HGcOCWjPF+d7inSbf0QHmG-atp4reQ@mail.gmail.com>
- <20120608172842.9826b5cd.akpm@linux-foundation.org>
- <4FD2F5F4.1000106@gmail.com>
- <20120609002557.b8aba759.akpm@linux-foundation.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: ensure proper cache clearing for gc-inodes
+Date: Tue, 12 Jun 2012 01:29:43 +0900 (JST)
+Message-ID: <20120612.012943.73783083.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="LZvS9be/3tNcYl/X"
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20120609002557.b8aba759.akpm@linux-foundation.org>
-Sender: linux-ext4-owner@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Marco Stornelli <marco.stornelli@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Boaz Harrosh <bharrosh@panasas.com>, Tao Ma <boyu.mt@taobao.com>, Nick Piggin <npiggin@kernel.dk>, "Dmitry V. Levin" <ldv@altlinux.org>, v9fs-developer@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, codalist@telemann.coda.cs.cmu.edu, ecryptfs@vger.kernel.org, osd-dev@open-osd.org, linux-ext4@vger.kernel.org, fuse-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, jfs-discussion@lists.sourceforge.net, logfs@logfs.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ocfs2-devel@oss.oracle.com, reiserfs-devel
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+Hi Andrew,
 
---LZvS9be/3tNcYl/X
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Please apply the following bug fix and send them upstream via the -mm
+tree, hopefully in this cycle.
 
-On Sat, Jun 09, 2012 at 12:25:57AM -0700, Andrew Morton wrote:
-> And...  it seems that I misread what's going on.  The individual
-> filesystems are doing the rcu freeing of their inodes, so it is
-> appropriate that they also call rcu_barrier() prior to running
-> kmem_cache_free().  Which is what Kirill's patch does.  oops.
+This eliminates a recently found meta-data corruption issue which
+happens under specific conditions during garbage collection.
 
-Ack? ;)
+The bug is reproducible, and I confirmed that it fixes the issue in
+the latest and prior kernels.
 
---=20
- Kirill A. Shutemov
+Thanks,
+Ryusuke Konishi
+--
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
---LZvS9be/3tNcYl/X
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+A gc-inode is a pseudo inode used to buffer the blocks to be moved by
+garbage collection.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
+Block caches of gc-inodes must be cleared every time a garbage
+collection function (nilfs_clean_segments) completes.  Otherwise,
+stale blocks buffered in the caches may be wrongly reused in
+successive calls of the GC function.
 
-iQIcBAEBAgAGBQJP1bdQAAoJEAd+omnVudOMOWIP/0ggxQY/gopg5nzCYdokfLxR
-gz+eQJznRY+O6tbDMn0QyMJNfwsqKWUKVPxVmBnzrXv2YXiU2s1pdeWcUrkhkGzo
-t+dSzoQYx3IsVY23ViQvCojLacfFODIUvb/fu7h+ZOFN3xkCB9VW7Do7y4JwflUV
-2kEzQc+a6BU660CPnkDsGVLQTj9gw6XSmKazzbHkLg6wAr4IyyKAq7MPvLQfocIo
-ZF9oqOTKx+2K0+YaupJJRzxPPPxOCXUzxPDjbJIAOJHJQ2DtJy2WEME5V4wS9R7K
-+9ldJwDN4uu+IpWGVMJFNXCkRQk6UfmKgBLrVv+32Y2+B2VebXeaEj3QECpmqqcG
-vm3vLoQB0TITfjtGTSqojE7WjTJl61jarsFzXEY3bvwdJ3h1XHeUhK5pbBiRVcu2
-v7RkgZH04E5Y+3/FGJVvxWRy+GJafI7ip+G8Rdl2r7aNmuyjmqtkdmBms/VS53Pp
-Oc1bDv+wmVwJjPJzT6z/7gE/A8LHvizvZfvt8ttS2WbWHhTuObLvtSnNd03ayhWu
-ROYpfE7qQ6CTrcGilpOLg9+N5wZOrT1mxn4s8h9d2+mkUdLHkudMFOoM/aTUyR0r
-A+Jq0iCfFYO6+SdhRo4zbecLVf0aihZ+pdOHQJ428Cguf28QPHusRiPlaYYTrsHD
-8zzLHxfwcftJ4IqVR7K4
-=IpC+
------END PGP SIGNATURE-----
+For user files, this is not a problem because their gc-inodes are
+distinguished by a checkpoint number as well as an inode number.  They
+never buffer different blocks if either an inode number, a checkpoint
+number, or a block offset differs.
 
---LZvS9be/3tNcYl/X--
+However, gc-inodes of sufile, cpfile and DAT file can store different
+data for the same block offset.  Thus, the nilfs_clean_segments
+function can move incorrect block for these meta-data files if an old
+block is cached.  I found this is really causing meta-data corruption
+in nilfs.
+
+This fixes the issue by ensuring cache clear of gc-inodes and resolves
+reported GC problems including checkpoint file corruption, b-tree
+corruption, and the following warning during GC.
+
+  nilfs_palloc_freev: entry number 307234 already freed.
+  ...
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org> [2.6.37+]
+---
+ fs/nilfs2/gcinode.c |    2 ++
+ fs/nilfs2/segment.c |    2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
+index 08a07a2..57ceaf3 100644
+--- a/fs/nilfs2/gcinode.c
++++ b/fs/nilfs2/gcinode.c
+@@ -191,6 +191,8 @@ void nilfs_remove_all_gcinodes(struct the_nilfs *nilfs)
+ 	while (!list_empty(head)) {
+ 		ii = list_first_entry(head, struct nilfs_inode_info, i_dirty);
+ 		list_del_init(&ii->i_dirty);
++		truncate_inode_pages(&ii->vfs_inode.i_data, 0);
++		nilfs_btnode_cache_clear(&ii->i_btnode_cache);
+ 		iput(&ii->vfs_inode);
+ 	}
+ }
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 0e72ad6..88e11fb 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2309,6 +2309,8 @@ nilfs_remove_written_gcinodes(struct the_nilfs *nilfs, struct list_head *head)
+ 		if (!test_bit(NILFS_I_UPDATED, &ii->i_state))
+ 			continue;
+ 		list_del_init(&ii->i_dirty);
++		truncate_inode_pages(&ii->vfs_inode.i_data, 0);
++		nilfs_btnode_cache_clear(&ii->i_btnode_cache);
+ 		iput(&ii->vfs_inode);
+ 	}
+ }
+-- 
+1.7.9.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
