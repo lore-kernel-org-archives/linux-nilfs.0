@@ -1,112 +1,135 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 00/27 v7] Fix filesystem freezing deadlocks
-Date: Tue, 12 Jun 2012 16:20:21 +0200
-Message-ID: <1339510848-16992-1-git-send-email-jack@suse.cz>
-Mime-Version: 1.0
+From: Jan Kara <jack@suse.cz>
+Subject: [PATCH 23/27] nilfs2: Convert to new freezing mechanism
+Date: Tue, 12 Jun 2012 16:20:44 +0200
+Message-ID: <1339510848-16992-24-git-send-email-jack@suse.cz>
+References: <1339510848-16992-1-git-send-email-jack@suse.cz>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1339510848-16992-1-git-send-email-jack@suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=fuse-devel>
-List-Post: <mailto:fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>, linux-fsdevel-AlSwsSmVLrQ@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Ben Myers <bpm-sJ/iWh9BUns@public.gmane.org>, Joel Becker <jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alex Elder <elder-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-fsdevel@suse.cz, Jan Kara <jack@suse.cz>, linux-nilfs@vger.kernel.org, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
 
-  Hello,
+We change nilfs_page_mkwrite() to provide proper freeze protection for
+writeable page faults (we must wait for frozen filesystem even if the
+page is fully mapped).
 
-  here is the seventh iteration of my patches to improve filesystem freezing.
-I've rebased patches on top of 3.5-rc2 as Al requested. Otherwise I've just
-fixed some outdated text in the introduction below and added one ack.
+We remove all vfs_check_frozen() checks since they are now handled by
+the generic code.
 
-Introductory text to first time readers:
+CC: linux-nilfs@vger.kernel.org
+CC: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ fs/nilfs2/file.c    |   18 +++++++++++-------
+ fs/nilfs2/ioctl.c   |    2 --
+ fs/nilfs2/segment.c |    5 ++++-
+ 3 files changed, 15 insertions(+), 10 deletions(-)
 
-Filesystem freezing is currently racy and thus we can end up with dirty data on
-frozen filesystem (see changelog patch 13 for detailed race description). This
-patch series aims at fixing this.
-
-To be able to block all places where inodes get dirtied, I've moved filesystem
-file_update_time() call to ->page_mkwrite callback (patches 01-07) and put
-freeze handling in mnt_want_write() / mnt_drop_write(). That however required
-some code shuffling and changes to kern_path_create() (see patches 09-12). I
-think the result is OK but opinions may differ ;). The advantage of this change
-also is that all filesystems get freeze protection almost for free - even ext2
-can handle freezing well now.
-
-I'm not able to hit any deadlocks, lockdep warnings, or dirty data on frozen
-filesystem despite beating it with fsstress, bash-shared-mapping, and
-aio-stress while freezing and unfreezing for several hours (using ext4 and xfs)
-so I'm reasonably confident this could finally be the right solution.
-
-Changes since v6:
-  * rebased on 3.5-rc2
-  * added ack
-
-Changes since v5:
-  * handle unlinked & open files on frozen filesystem
-  * lockdep keys for freeze protection are now per filesystem type
-  * taught lockdep that freeze protection at lower level does not create
-    dependency when we already hold freeze protection at higher level 
-  * rebased on 3.5-rc1-ish
-
-Changes since v4:
-  * added a couple of Acked-by's
-  * added some comments & doc update
-  * added patches from series "Push file_update_time() into .page_mkwrite"
-    since it doesn't make much sense to keep them separate anymore
-  * rebased on top of 3.4-rc2
-
-Changes since v3:
-  * added third level of freezing for fs internal purposes - hooked some
-    filesystems to use it (XFS, nilfs2)
-  * removed racy i_size check from filemap_mkwrite()
-
-Changes since v2:
-  * completely rewritten
-  * freezing is now blocked at VFS entry points
-  * two stage freezing to handle both mmapped writes and other IO
-
-The biggest changes since v1:
-  * have two counters to provide safe state transitions for SB_FREEZE_WRITE
-    and SB_FREEZE_TRANS states
-  * use percpu counters instead of own percpu structure
-  * added documentation fixes from the old fs freezing series
-  * converted XFS to use SB_FREEZE_TRANS counter instead of its private
-    m_active_trans counter
-
-								Honza
-
-CC: Alex Elder <elder-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-CC: Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>
-CC: Ben Myers <bpm-sJ/iWh9BUns@public.gmane.org>
-CC: Chris Mason <chris.mason-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-CC: cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-CC: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-CC: fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-CC: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-CC: Joel Becker <jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org>
-CC: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-CC: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-CC: Mark Fasheh <mfasheh-IBi9RG/b67k@public.gmane.org>
-CC: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
-CC: ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org
-CC: OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>
-CC: Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: "Theodore Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
-CC: xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org
-
-------------------------------------------------------------------------------
-Live Security Virtual Conference
-Exclusive live event will cover all the ways today's security and 
-threat landscape has changed and how IT managers can respond. Discussions 
-will include endpoint security, mobile security and the latest in malware 
-threats. http://www.accelacomm.com/jaw/sfrnl04242012/114/50122263/
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 62cebc8..a4d56ac 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -69,16 +69,18 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	struct page *page = vmf->page;
+ 	struct inode *inode = vma->vm_file->f_dentry->d_inode;
+ 	struct nilfs_transaction_info ti;
+-	int ret;
++	int ret = 0;
+ 
+ 	if (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
+ 		return VM_FAULT_SIGBUS; /* -ENOSPC */
+ 
++	sb_start_pagefault(inode->i_sb);
+ 	lock_page(page);
+ 	if (page->mapping != inode->i_mapping ||
+ 	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
+ 		unlock_page(page);
+-		return VM_FAULT_NOPAGE; /* make the VM retry the fault */
++		ret = -EFAULT;	/* make the VM retry the fault */
++		goto out;
+ 	}
+ 
+ 	/*
+@@ -112,19 +114,21 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	ret = nilfs_transaction_begin(inode->i_sb, &ti, 1);
+ 	/* never returns -ENOMEM, but may return -ENOSPC */
+ 	if (unlikely(ret))
+-		return VM_FAULT_SIGBUS;
++		goto out;
+ 
+-	ret = block_page_mkwrite(vma, vmf, nilfs_get_block);
+-	if (ret != VM_FAULT_LOCKED) {
++	ret = __block_page_mkwrite(vma, vmf, nilfs_get_block);
++	if (ret) {
+ 		nilfs_transaction_abort(inode->i_sb);
+-		return ret;
++		goto out;
+ 	}
+ 	nilfs_set_file_dirty(inode, 1 << (PAGE_SHIFT - inode->i_blkbits));
+ 	nilfs_transaction_commit(inode->i_sb);
+ 
+  mapped:
+ 	wait_on_page_writeback(page);
+-	return VM_FAULT_LOCKED;
++ out:
++	sb_end_pagefault(inode->i_sb);
++	return block_page_mkwrite_return(ret);
+ }
+ 
+ static const struct vm_operations_struct nilfs_file_vm_ops = {
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 06658ca..08f2796 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -660,8 +660,6 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
+ 		goto out_free;
+ 	}
+ 
+-	vfs_check_frozen(inode->i_sb, SB_FREEZE_WRITE);
+-
+ 	ret = nilfs_ioctl_move_blocks(inode->i_sb, &argv[0], kbufs[0]);
+ 	if (ret < 0)
+ 		printk(KERN_ERR "NILFS: GC failed during preparation: "
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 0e72ad6..627351a 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -189,7 +189,7 @@ int nilfs_transaction_begin(struct super_block *sb,
+ 	if (ret > 0)
+ 		return 0;
+ 
+-	vfs_check_frozen(sb, SB_FREEZE_WRITE);
++	sb_start_intwrite(sb);
+ 
+ 	nilfs = sb->s_fs_info;
+ 	down_read(&nilfs->ns_segctor_sem);
+@@ -205,6 +205,7 @@ int nilfs_transaction_begin(struct super_block *sb,
+ 	current->journal_info = ti->ti_save;
+ 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
+ 		kmem_cache_free(nilfs_transaction_cachep, ti);
++	sb_end_intwrite(sb);
+ 	return ret;
+ }
+ 
+@@ -246,6 +247,7 @@ int nilfs_transaction_commit(struct super_block *sb)
+ 		err = nilfs_construct_segment(sb);
+ 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
+ 		kmem_cache_free(nilfs_transaction_cachep, ti);
++	sb_end_intwrite(sb);
+ 	return err;
+ }
+ 
+@@ -264,6 +266,7 @@ void nilfs_transaction_abort(struct super_block *sb)
+ 	current->journal_info = ti->ti_save;
+ 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
+ 		kmem_cache_free(nilfs_transaction_cachep, ti);
++	sb_end_intwrite(sb);
+ }
+ 
+ void nilfs_relax_pressure_in_lock(struct super_block *sb)
+-- 
+1.7.1
