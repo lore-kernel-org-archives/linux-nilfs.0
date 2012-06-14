@@ -1,54 +1,64 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+From: Ivan Shmakov <oneingray-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: off-line resizing?
-Date: Thu, 14 Jun 2012 11:06:07 +0900 (JST)
-Message-ID: <20120614.110607.87804359.konishi.ryusuke@lab.ntt.co.jp>
+Date: Thu, 14 Jun 2012 11:22:17 +0700
+Message-ID: <86lijqv7ye.fsf@gray.siamics.net>
 References: <86fw9zw601.fsf@gray.siamics.net>
+	<20120614.110607.87804359.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <86fw9zw601.fsf-Sxm0eyAyORm7AG94EA9mQA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="windows-1254"
-To: oneingray-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-SGksDQpPbiBXZWQsIDEzIEp1biAyMDEyIDIzOjA2OjU0ICswNzAwLCBJdmFuIFNobWFrb3Ygd3Jv
-dGU6DQo+IAlUaGUgRkFRIHJlYWRzOg0KPiANCj4gLS1jdXQ6IGh0dHA6Ly93d3cubmlsZnMub3Jn
-L2VuL2ZhcS5odG1sIC0tDQo+ICAgIDUuIENhbiBJIHJlc2l6ZSBOSUxGUyB2b2x1bWVzID8NCj4g
-DQo+ICAgICAgIFllcywgeW91IGNhbiBib3RoIGVubGFyZ2UgYW5kIHNocmluayBOSUxGUyB2b2x1
-bWVzIHdpdGgNCj4gICAgICAgbmlsZnMtcmVzaXplIGNvbW1hbmQuICBUaGlzIGZlYXR1cmUgaXMg
-YXZhaWxhYmxlIG9uIExpbnV4IDMuMCBhbmQNCj4gICAgICAgbGF0ZXIuICBSZXNpemluZyBmb3Ig
-dW5tb3VudGVkIGZpbGUgc3lzdGVtcyBhcmUgbm90IHN1cHBvcnRlZCBhdA0KPiAgICAgICBwcmVz
-ZW50Lg0KPiANCj4gICAgICAgRm9yIGRldGFpbHMsIHBsZWFzZSBzZWUgdGhlIG1hbiBwYWdlIG9m
-IG5pbGZzLXJlc2l6ZSg4KS4NCj4gLS1jdXQ6IGh0dHA6Ly93d3cubmlsZnMub3JnL2VuL2ZhcS5o
-dG1sIC0tDQo+IA0KPiAJVW5mb3J0dW5hdGVseSwgSSBkb24ndCBwbGFuIHRvIHN3aXRjaCBteSDi
-gJxwcm9kdWN0aW9u4oCdIGhvc3RzIHRvDQo+IAlMaW51eCAzIHlldC4gIEhvd2V2ZXIsIGZvciB0
-aGUgcHVycG9zZXMgSSB3YW50IHRvIGdpdmUgTklMRlMgYQ0KPiAJdHJ5IEkgY2FuIGFzc3VtZSB0
-aGF0IEkgY2FuIGVhc2lseSB1bW91bnQgdGhlIHZvbHVtZSB3aGVuZXZlciBJDQo+IAluZWVkIHRv
-IHJlc2l6ZSBpdCwgdG8gcnVuIHdoYXRldmVyIHVzZXItc3BhY2UgY29kZSBuZWNlc3NhcnkuDQo+
-IA0KPiAJVGh1cywgSSdtIGN1cmlvdXMsIGFyZSB0aGVyZSBhbnkgcGxhbnMgdG8gaW1wbGVtZW50
-IOKAnG9mZi1saW5l4oCdDQo+IAlOSUxGUyByZXNpemluZz8NCj4gDQo+IAlUSUEuDQoNCkltcGxl
-bWVudGluZyBPZmYtbGluZSByZXNpemluZyBpcyBhIGJpdCB0b3VnaCB0YXNrIGJlY2F1c2UgaXQg
-cmVxdWlyZXMNCmEgdXNlciBzcGFjZSBsaWJyYXJ5IHRvIHJlYWQgaW50ZXJuYWwgbWV0YSBkYXRh
-IG9mIHRoZSBuaWxmcyBmaWxlDQpzeXN0ZW0gYW5kIGFwcGVuZCB1cGRhdGVkIGJsb2NrcyB0byBp
-dC4gIFRoaXMgaXMgYWxtb3N0IGVxdWl2YWxlbnQgdG8NCmltcGxlbWVudGluZyBrZXJuZWwgZnVu
-Y3Rpb25zIG9mIG5pbGZzIGluIHVzZXIgbGFuZC4NCg0KU28sIHdlIGhhdmUgbm8gY29uY3JldGUg
-c2NoZWR1bGUgbm93Lg0KDQpJZiB5b3UgYXJlIHVzaW5nIFJIRUw2IG9yIGl0cyBjbG9uZXMsIGhv
-d2V2ZXIsIHN0YW5kYWxvbmUga2VybmVsDQptb2R1bGVzIHN1cHBvcnRpbmcgb25saW5lLXJlc2l6
-aW5nIGFyZSBhdmFpbGFibGUgZnJvbToNCg0KICBodHRwOi8vd3d3Lm5pbGZzLm9yZy9lbi9wa2df
-Y2VudG9zLmh0bWwuDQoNCkZvciBvdGhlciBMaW51eCBkaXN0cm9zLCB0aGUgc3RhbmRhbG9uZSBr
-bW9kIG1heSBiZSBhcHBsaWNhYmxlIHdpdGggb3INCndpdGhvdXQgY3VzdG9taXppbmcgdGhlIHNv
-dXJjZSBjb2RlLiAgaXQgaGFzIGEgZ2x1ZSBjb2RlIHRvIHN1cHBvcnQNCm11bHRpcGxlIGtlcm5l
-bCB2ZXJzaW9ucy4gIEZvciByZWZlcmVuY2UsIHRoZSBzb3VyY2UgY29kZSBvZiB0aGUNCnN0YW5k
-YWxvbmUga21vZCBpcyBhdmFpbGFibGUgYXQ6DQoNCiAgZ2l0Oi8vZ2l0aHViLmNvbS9uaWxmcy1k
-ZXYvbmlsZnMyLWttb2QtY2VudG9zNi5naXQNCg0KDQoNCldpdGggcmVnYXJkcywNClJ5dXN1a2Ug
-S29uaXNoaQ0KDQo+IC0tIA0KPiBGU0YgYXNzb2NpYXRlIG1lbWJlciAjNzI1NwlucC4g0JTQvtC2
-0LTRjCDigJQg0JTQlNCiDQo+IA0KPiAtLQ0KPiBUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlz
-dDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtbmlsZnMiIGluDQo+IHRoZSBib2R5
-IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3JnDQo+IE1vcmUgbWFqb3Jk
-b21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA0K
+>>>>> Ryusuke Konishi writes:
+>>>>> On Wed, 13 Jun 2012 23:06:54 +0700, Ivan Shmakov wrote:
+
+[=E2=80=A6]
+
+ >> Unfortunately, I don't plan to switch my =E2=80=9Cproduction=E2=80=9D=
+ hosts to Linux
+ >> 3 yet.  However, for the purposes I want to give NILFS a try I can
+ >> assume that I can easily umount the volume whenever I need to resiz=
+e
+ >> it, to run whatever user-space code necessary.
+
+ >> Thus, I'm curious, are there any plans to implement =E2=80=9Coff-li=
+ne=E2=80=9D NILFS
+ >> resizing?
+
+ > Implementing Off-line resizing is a bit tough task because it
+ > requires a user space library to read internal meta data of the nilf=
+s
+ > file system and append updated blocks to it.  This is almost
+ > equivalent to implementing kernel functions of nilfs in user land.
+
+ > So, we have no concrete schedule now.
+
+	ACK, thanks.
+
+	I wonder, how complicated this task would be?  In particular, do
+	I need to alter all the segments to resize filesystem, or only
+	specific ones?  Also, are these internal metadata records just
+	=E2=80=9Ca bunch of C structs=E2=80=9D, or something more complex?
+
+[=E2=80=A6]
+
+ > For other Linux distros, the standalone kmod may be applicable with
+ > or without customizing the source code.  it has a glue code to
+ > support multiple kernel versions.  For reference, the source code of
+ > the standalone kmod is available at:
+
+ > git://github.com/nilfs-dev/nilfs2-kmod-centos6.git
+
+	ACK, thanks.
+
+--=20
+=46SF associate member #7257
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
