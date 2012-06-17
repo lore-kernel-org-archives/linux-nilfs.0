@@ -1,92 +1,55 @@
-From: Ivan Shmakov <oneingray-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: user-level toolkit for off-line operations
-Date: Sun, 17 Jun 2012 22:44:04 +0700
-Message-ID: <86r4terliz.fsf_-_@gray.siamics.net>
-References: <86fw9zw601.fsf@gray.siamics.net>
-	<20120614.110607.87804359.konishi.ryusuke@lab.ntt.co.jp>
-	<86lijqv7ye.fsf@gray.siamics.net>
-	<20120616.101523.24077441.konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: NILFS2 under stress
+Date: Mon, 18 Jun 2012 01:22:37 +0900 (JST)
+Message-ID: <20120618.012237.179937839.konishi.ryusuke@lab.ntt.co.jp>
+References: <985C1135657081458B80476678A9AF7F3ADDAC29@MBXP05.ds.man.ac.uk>
+	<20120616190906.GJ16953@csmith-bm.vm.bytemark.co.uk>
+	<985C1135657081458B80476678A9AF7F3ADDACF0@MBXP05.ds.man.ac.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <985C1135657081458B80476678A9AF7F3ADDACF0-AwGyfWOFj6xM8+wRG0yK8vXRex20P6io@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="windows-1254"
+To: Tim.Bannister-m7QheJJv02N4oUbgFh0ZNQ@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
->>>>> Ryusuke Konishi writes:
->>>>> On Thu, 14 Jun 2012 11:22:17 +0700, Ivan Shmakov wrote:
->>>>> Ryusuke Konishi writes:
-
-[=E2=80=A6]
-
- >>> Implementing Off-line resizing is a bit tough task because it
- >>> requires a user space library to read internal meta data of the
- >>> nilfs file system and append updated blocks to it.
-
-	=E2=80=A6 I guess that a user-level toolkit akin to e2fsprogs would be
-	handy anyway.  (Shouldn't there be an fsck(8) for NILFS, BTW?)
-
-	Other than resizing, there could be a feature to =E2=80=9Csplit=E2=80=9D=
- a
-	filesystem =E2=80=94 take one or more =E2=80=9Csnapshot=E2=80=9D check=
-points and make a
-	copy of the parts of the filesystem =E2=80=9Creachable=E2=80=9D from t=
-hese
-	checkpoints on a distinct block device (perhaps of a differing
-	size), which seems like one more way to do backups.
-
- >>> This is almost equivalent to implementing kernel functions of nilf=
-s
- >>> in user land.
-
-[=E2=80=A6]
-
- >> I wonder, how complicated this task would be?  In particular, do I
- >> need to alter all the segments to resize filesystem, or only
- >> specific ones?  Also, are these internal metadata records just =E2=80=
-=9Ca
- >> bunch of C structs=E2=80=9D, or something more complex?
-
- > This needs at least the following tasks:
-
- > 1) Update two super blocks to increase/decrease the number of total
- > segments and the device size. (easy)
-
- > 2) Update segment usage information to adjust free segment count of
- > nilfs_sufile_header struct (sh_ncleansegs) which is written in
- > the segment usage file. (Sadly not easy)
-
- > 3) If truncating in-use segments, relocating blocks and updating dis=
-k
- > address translation information are also needed. (very hard)
-
-	ACK.  (Fortunately, I'm not that interested in shrinking
-	filesystems right now.)
-
- > For reference, a discussion on this topic is found in the archives o=
-f
- > the list:
-
- > http://marc.info/?t=3D128419843600003&r=3D1&w=3D2
-
-	ACK, thanks!  I hope to take a closer look at this problem
-	within two weeks or so.
-
-	(JFTR: those reading via Gmane may access the thread via either
-	of [1, 2]; the first message in the thread is [3].)
-
-[1] http://comments.gmane.org/gmane.comp.file-systems.nilfs.user/397
-[2] http://thread.gmane.org/gmane.comp.file-systems.nilfs.user/397/focu=
-s=3D1686
-[3] news:BAEFA5609CC3AB4BAE1625CAD4C27E5C02986E1D-qPLjlnsG5hmCmmEZ8mJCX7uPtZ6Ynr+y@public.gmane.org=
-a.com
-
---=20
-=46SF associate member #7257
-
+T24gU3VuLCAxNyBKdW4gMjAxMiAxNTowNzo0MyArMDAwMCwgVGltIEJhbm5pc3RlciB3cm90ZToN
+Cj4gPiBPbiBTYXQsIEp1biAxNiwgMjAxMiBhdCAxMTo0OTo1NUFNICswMDAwLCBUaW0gQmFubmlz
+dGVyIHdyb3RlOg0KPiA+ID4gPiBJbiBzdW1tYXJ5LCBJIHRoaW5rIE5JTEZTIGlzIGZhbnRhc3Rp
+YyBpbiBzaG9ydCBidXJzdHMgb2YgaGVhdnkgcHJlc3N1cmUNCj4gPiA+ID4gc28gbG9uZyBhcyBz
+cGFjZSBpc24ndCBleGhhdXN0ZWQuDQo+ID4NCj4gPiA+IE9LLCBidXQgaWYgZXhoYXVzdGluZyB0
+aGUgc3BhY2UgbGVhZHMgdG8gdW5yZWNvdmVyYWJsZSAvIGRpZmZpY3VsdC10by1maXggDQo+ID4g
+PiBkYXRhIGxvc3MgdGhlbiBpdCdzIGEgcG9vciBjaG9pY2Ugb2YgZmlsZXN5c3RlbSBmb3IgdXNl
+cyB3aGVyZSBhIGZ1bGwgDQo+ID4gPiBmaWxlc3lzdGVtIGlzIHVubGlrZWx5IGJ1dCByZW1haW5z
+IGEgcG9zc2liaWxpdHkgKGVnIGEgbWFpbCBzcG9vbCkuIElmIA0KPiA+ID4gL3Zhci90bXAgc2hv
+dWxkbid0IGJlIG9uIE5JTEZTIHRoZW4gcHJvYmFibHkgL3ZhciBzaG91bGRuJ3QgYmUgb24gTklM
+RlMgDQo+ID4gPiBlaXRoZXIuDQo+IOKApg0KPiA+IFBlcmhhcHMgb25lIGFyZWEgd2hlcmUgTklM
+RlMgY291bGQgYmUgaW1wcm92ZWQgaXMgaW4gaGFuZGxpbmcgb2YgZGlzayBmdWxsDQo+ID4gZXJy
+b3JzLCBmb3IgZXhhbXBsZSwgbm90IGFsbG93aW5nIGNvbXBsZXRlIGV4aGF1c3Rpb24gb2Ygc3Bh
+Y2UgdW5sZXNzIGENCj4gPiBjbGVhbmVyIGlzIHJ1bm5pbmcuDQo+IA0KPiBMb3RzIG9mIGZpbGVz
+eXN0ZW1zIHJlc2VydmUgYSBjZXJ0YWluIGFtb3VudCBvZiBzcGFjZSBmb3Igcm9vdC4gSSB3b3Vs
+ZCBleHRlbmQgDQo+IHRoaXMgZm9yIE5JTEZTMiB0byByZXNlcnZlIHNvbWUgc3BhY2UgZm9yIHRo
+ZSBjbGVhbmVyIGRhZW1vbiAocGVyaGFwcyB3aXRoIA0KPiBhbiBpb2N0bCB0aGF0IGNhbiBiZSB1
+c2VkIGJ5IHRoZSBkYWVtb24gdG8gYnlwYXNzIHRoZSByZXN0cmljdGlvbikuDQoNCk5JTEZTMiBh
+bHJlYWR5IGhhcyB0aGUgcmVzZXJ2ZWQgc3BhY2UgZm9yIGNsZWFuZXIgZGFlbW9uLCBzbyBpdCB3
+b3Jrcw0KYXQgZGlzayBmdWxsLg0KDQpUaGUgcHJvYmxlbSBzZWVtcyB0aGF0IHRoZSBrZXJuZWwg
+Y29kZSBvZiBOSUxGUzIgcmV0dXJucyBhIGRpc2sgZnVsbA0KZXJyb3IgdG8gdXNlcmxhbmQgcHJv
+Z3JhbXMgZXZlbiBpZiB0aGUgdm9sdW1lIGhhcyByb29tIGZvciBtYWtpbmcgZnJlZQ0Kc3BhY2Ug
+d2l0aCBHQy4gIFdlbGwtYmVoYXZlZCBmaWxlc3lzdGVtIHNob3VsZCBub3QgZG8gc28uDQoNCkkg
+dGhpbmsgdGhpcyBpcyBvbmUgb2YgZHJhd2JhY2tzIG9mIHRoZSBjdXJyZW50IE5JTEZTMiBkZXNp
+Z24uDQpIb3dldmVyLCB3YWl0aW5nIGZvciBkaXNrIGNsZWFudXAgd291bGQgYmUgc28gY29zdGx5
+IHdpdGhvdXQgZWZmaWNpZW50DQpHQyBhbGdvcml0aG0uICBBY3R1YWxseSwgSSBmZWVsIGltcHJv
+dmVtZW50IG9mIHRoZSBHQyBhbGdvcml0aG0gaXMgYQ0KcHJpb3JpdHkgaXNzdWUgZm9yIHByb2R1
+Y3Rpb24gdXNlLg0KDQoNClJlZ2FyZHMsDQpSeXVzdWtlIEtvbmlzaGkNCg0KDQo+IEVhc2llciBz
+YWlkIHRoYW4gY29kZWQgOy0pDQo+IA0KPiAtLSANCj4gVGltIEJhbm5pc3Rlcg0KPiBJVCBTZXJ2
+aWNlcw0KPiBUaGUgVW5pdmVyc2l0eSBvZiBNYW5jaGVzdGVyDQo+IA0KPiBlOiBUaW0uQmFubmlz
+dGVyQG1hbmNoZXN0ZXIuYWMudWstLQ0KPiBUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDog
+c2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtbmlsZnMiIGluDQo+IHRoZSBib2R5IG9m
+IGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3JnDQo+IE1vcmUgbWFqb3Jkb21v
+IGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA0K
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
