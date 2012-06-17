@@ -1,54 +1,91 @@
-From: Tim Bannister <Tim.Bannister-m7QheJJv02N4oUbgFh0ZNQ@public.gmane.org>
-Subject: RE: NILFS2 under stress
-Date: Sun, 17 Jun 2012 15:07:43 +0000
-Message-ID: <985C1135657081458B80476678A9AF7F3ADDACF0@MBXP05.ds.man.ac.uk>
-References: <20120615165024.GI16953@csmith-bm.vm.bytemark.co.uk>
- <985C1135657081458B80476678A9AF7F3ADDAC29@MBXP05.ds.man.ac.uk>,<20120616190906.GJ16953@csmith-bm.vm.bytemark.co.uk>
+From: Ivan Shmakov <oneingray-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: user-level toolkit for off-line operations
+Date: Sun, 17 Jun 2012 22:44:04 +0700
+Message-ID: <86r4terliz.fsf_-_@gray.siamics.net>
+References: <86fw9zw601.fsf@gray.siamics.net>
+	<20120614.110607.87804359.konishi.ryusuke@lab.ntt.co.jp>
+	<86lijqv7ye.fsf@gray.siamics.net>
+	<20120616.101523.24077441.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20120616190906.GJ16953-Ng8wz+J301SNY5Lh21HnMTHS2PGA244I9dF7HbQ/qKg@public.gmane.org>
-Content-Language: en-GB
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-> On Sat, Jun 16, 2012 at 11:49:55AM +0000, Tim Bannister wrote:
-> > > In summary, I think NILFS is fantastic in short bursts of heavy p=
-ressure
-> > > so long as space isn't exhausted.
->
-> > OK, but if exhausting the space leads to unrecoverable / difficult-=
-to-fix=20
-> > data loss then it's a poor choice of filesystem for uses where a fu=
-ll=20
-> > filesystem is unlikely but remains a possibility (eg a mail spool).=
- If=20
-> > /var/tmp shouldn't be on NILFS then probably /var shouldn't be on N=
-ILFS=20
-> > either.
-=85
-> Perhaps one area where NILFS could be improved is in handling of disk=
- full
-> errors, for example, not allowing complete exhaustion of space unless=
+>>>>> Ryusuke Konishi writes:
+>>>>> On Thu, 14 Jun 2012 11:22:17 +0700, Ivan Shmakov wrote:
+>>>>> Ryusuke Konishi writes:
+
+[=E2=80=A6]
+
+ >>> Implementing Off-line resizing is a bit tough task because it
+ >>> requires a user space library to read internal meta data of the
+ >>> nilfs file system and append updated blocks to it.
+
+	=E2=80=A6 I guess that a user-level toolkit akin to e2fsprogs would be
+	handy anyway.  (Shouldn't there be an fsck(8) for NILFS, BTW?)
+
+	Other than resizing, there could be a feature to =E2=80=9Csplit=E2=80=9D=
  a
-> cleaner is running.
+	filesystem =E2=80=94 take one or more =E2=80=9Csnapshot=E2=80=9D check=
+points and make a
+	copy of the parts of the filesystem =E2=80=9Creachable=E2=80=9D from t=
+hese
+	checkpoints on a distinct block device (perhaps of a differing
+	size), which seems like one more way to do backups.
 
-Lots of filesystems reserve a certain amount of space for root. I would=
- extend=20
-this for NILFS2 to reserve some space for the cleaner daemon (perhaps w=
-ith=20
-an ioctl that can be used by the daemon to bypass the restriction).
+ >>> This is almost equivalent to implementing kernel functions of nilf=
+s
+ >>> in user land.
 
-Easier said than coded ;-)
+[=E2=80=A6]
+
+ >> I wonder, how complicated this task would be?  In particular, do I
+ >> need to alter all the segments to resize filesystem, or only
+ >> specific ones?  Also, are these internal metadata records just =E2=80=
+=9Ca
+ >> bunch of C structs=E2=80=9D, or something more complex?
+
+ > This needs at least the following tasks:
+
+ > 1) Update two super blocks to increase/decrease the number of total
+ > segments and the device size. (easy)
+
+ > 2) Update segment usage information to adjust free segment count of
+ > nilfs_sufile_header struct (sh_ncleansegs) which is written in
+ > the segment usage file. (Sadly not easy)
+
+ > 3) If truncating in-use segments, relocating blocks and updating dis=
+k
+ > address translation information are also needed. (very hard)
+
+	ACK.  (Fortunately, I'm not that interested in shrinking
+	filesystems right now.)
+
+ > For reference, a discussion on this topic is found in the archives o=
+f
+ > the list:
+
+ > http://marc.info/?t=3D128419843600003&r=3D1&w=3D2
+
+	ACK, thanks!  I hope to take a closer look at this problem
+	within two weeks or so.
+
+	(JFTR: those reading via Gmane may access the thread via either
+	of [1, 2]; the first message in the thread is [3].)
+
+[1] http://comments.gmane.org/gmane.comp.file-systems.nilfs.user/397
+[2] http://thread.gmane.org/gmane.comp.file-systems.nilfs.user/397/focu=
+s=3D1686
+[3] news:BAEFA5609CC3AB4BAE1625CAD4C27E5C02986E1D-qPLjlnsG5hmCmmEZ8mJCX7uPtZ6Ynr+y@public.gmane.org=
+a.com
 
 --=20
-Tim Bannister
-IT Services
-The University of Manchester
+=46SF associate member #7257
 
-e: Tim.Bannister-m7QheJJv02N4oUbgFh0ZNeyAPIwwu4QO@public.gmane.org
+--
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
 in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
