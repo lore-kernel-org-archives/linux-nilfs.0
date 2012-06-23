@@ -1,54 +1,39 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: NILFS2 under stress
-Date: Mon, 18 Jun 2012 01:22:37 +0900 (JST)
-Message-ID: <20120618.012237.179937839.konishi.ryusuke@lab.ntt.co.jp>
-References: <985C1135657081458B80476678A9AF7F3ADDAC29@MBXP05.ds.man.ac.uk>
-	<20120616190906.GJ16953@csmith-bm.vm.bytemark.co.uk>
-	<985C1135657081458B80476678A9AF7F3ADDACF0@MBXP05.ds.man.ac.uk>
+Subject: [ANNOUNCE] NILFS utils 2.1.3 release
+Date: Sat, 23 Jun 2012 22:37:12 +0900 (JST)
+Message-ID: <20120623.223712.37575656.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <985C1135657081458B80476678A9AF7F3ADDACF0-AwGyfWOFj6xM8+wRG0yK8vXRex20P6io@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="windows-1254"
-To: Tim.Bannister-m7QheJJv02N4oUbgFh0ZNQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-T24gU3VuLCAxNyBKdW4gMjAxMiAxNTowNzo0MyArMDAwMCwgVGltIEJhbm5pc3RlciB3cm90ZToN
-Cj4gPiBPbiBTYXQsIEp1biAxNiwgMjAxMiBhdCAxMTo0OTo1NUFNICswMDAwLCBUaW0gQmFubmlz
-dGVyIHdyb3RlOg0KPiA+ID4gPiBJbiBzdW1tYXJ5LCBJIHRoaW5rIE5JTEZTIGlzIGZhbnRhc3Rp
-YyBpbiBzaG9ydCBidXJzdHMgb2YgaGVhdnkgcHJlc3N1cmUNCj4gPiA+ID4gc28gbG9uZyBhcyBz
-cGFjZSBpc24ndCBleGhhdXN0ZWQuDQo+ID4NCj4gPiA+IE9LLCBidXQgaWYgZXhoYXVzdGluZyB0
-aGUgc3BhY2UgbGVhZHMgdG8gdW5yZWNvdmVyYWJsZSAvIGRpZmZpY3VsdC10by1maXggDQo+ID4g
-PiBkYXRhIGxvc3MgdGhlbiBpdCdzIGEgcG9vciBjaG9pY2Ugb2YgZmlsZXN5c3RlbSBmb3IgdXNl
-cyB3aGVyZSBhIGZ1bGwgDQo+ID4gPiBmaWxlc3lzdGVtIGlzIHVubGlrZWx5IGJ1dCByZW1haW5z
-IGEgcG9zc2liaWxpdHkgKGVnIGEgbWFpbCBzcG9vbCkuIElmIA0KPiA+ID4gL3Zhci90bXAgc2hv
-dWxkbid0IGJlIG9uIE5JTEZTIHRoZW4gcHJvYmFibHkgL3ZhciBzaG91bGRuJ3QgYmUgb24gTklM
-RlMgDQo+ID4gPiBlaXRoZXIuDQo+IOKApg0KPiA+IFBlcmhhcHMgb25lIGFyZWEgd2hlcmUgTklM
-RlMgY291bGQgYmUgaW1wcm92ZWQgaXMgaW4gaGFuZGxpbmcgb2YgZGlzayBmdWxsDQo+ID4gZXJy
-b3JzLCBmb3IgZXhhbXBsZSwgbm90IGFsbG93aW5nIGNvbXBsZXRlIGV4aGF1c3Rpb24gb2Ygc3Bh
-Y2UgdW5sZXNzIGENCj4gPiBjbGVhbmVyIGlzIHJ1bm5pbmcuDQo+IA0KPiBMb3RzIG9mIGZpbGVz
-eXN0ZW1zIHJlc2VydmUgYSBjZXJ0YWluIGFtb3VudCBvZiBzcGFjZSBmb3Igcm9vdC4gSSB3b3Vs
-ZCBleHRlbmQgDQo+IHRoaXMgZm9yIE5JTEZTMiB0byByZXNlcnZlIHNvbWUgc3BhY2UgZm9yIHRo
-ZSBjbGVhbmVyIGRhZW1vbiAocGVyaGFwcyB3aXRoIA0KPiBhbiBpb2N0bCB0aGF0IGNhbiBiZSB1
-c2VkIGJ5IHRoZSBkYWVtb24gdG8gYnlwYXNzIHRoZSByZXN0cmljdGlvbikuDQoNCk5JTEZTMiBh
-bHJlYWR5IGhhcyB0aGUgcmVzZXJ2ZWQgc3BhY2UgZm9yIGNsZWFuZXIgZGFlbW9uLCBzbyBpdCB3
-b3Jrcw0KYXQgZGlzayBmdWxsLg0KDQpUaGUgcHJvYmxlbSBzZWVtcyB0aGF0IHRoZSBrZXJuZWwg
-Y29kZSBvZiBOSUxGUzIgcmV0dXJucyBhIGRpc2sgZnVsbA0KZXJyb3IgdG8gdXNlcmxhbmQgcHJv
-Z3JhbXMgZXZlbiBpZiB0aGUgdm9sdW1lIGhhcyByb29tIGZvciBtYWtpbmcgZnJlZQ0Kc3BhY2Ug
-d2l0aCBHQy4gIFdlbGwtYmVoYXZlZCBmaWxlc3lzdGVtIHNob3VsZCBub3QgZG8gc28uDQoNCkkg
-dGhpbmsgdGhpcyBpcyBvbmUgb2YgZHJhd2JhY2tzIG9mIHRoZSBjdXJyZW50IE5JTEZTMiBkZXNp
-Z24uDQpIb3dldmVyLCB3YWl0aW5nIGZvciBkaXNrIGNsZWFudXAgd291bGQgYmUgc28gY29zdGx5
-IHdpdGhvdXQgZWZmaWNpZW50DQpHQyBhbGdvcml0aG0uICBBY3R1YWxseSwgSSBmZWVsIGltcHJv
-dmVtZW50IG9mIHRoZSBHQyBhbGdvcml0aG0gaXMgYQ0KcHJpb3JpdHkgaXNzdWUgZm9yIHByb2R1
-Y3Rpb24gdXNlLg0KDQoNClJlZ2FyZHMsDQpSeXVzdWtlIEtvbmlzaGkNCg0KDQo+IEVhc2llciBz
-YWlkIHRoYW4gY29kZWQgOy0pDQo+IA0KPiAtLSANCj4gVGltIEJhbm5pc3Rlcg0KPiBJVCBTZXJ2
-aWNlcw0KPiBUaGUgVW5pdmVyc2l0eSBvZiBNYW5jaGVzdGVyDQo+IA0KPiBlOiBUaW0uQmFubmlz
-dGVyQG1hbmNoZXN0ZXIuYWMudWstLQ0KPiBUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDog
-c2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtbmlsZnMiIGluDQo+IHRoZSBib2R5IG9m
-IGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3JnDQo+IE1vcmUgbWFqb3Jkb21v
-IGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA0K
+nilfs-utils-2.1.3 was released on:
+
+ http://www.nilfs.org/en/download.html
+
+This is a maintenance release of nilfs-utils-2.1.  Main
+changes from nilfs-utils-2.1.2 are as follows:
+
+ * mount.nilfs2 (non libmount version): fix problems related
+   to /etc/mtab by importing bug fixes from util-linux.
+
+ * livnilfsgc: try the last hit snapshot number first in
+   live/dead determination of disk blocks in order to reduce
+   its overhead for numerous snapshots.
+
+ * nilfs_cleanerd: fix an early-termination issue of one
+   pass GC kicked by nilfs-clean.
+
+Please see the following changelog for details:
+
+ http://www.nilfs.org/download/ChangeLog-utils-v2
+
+
+Thanks,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
