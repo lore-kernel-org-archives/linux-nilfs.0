@@ -1,88 +1,114 @@
-From: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: nilfs checkpoints tied to synchronous writes
-Date: Wed, 27 Jun 2012 07:04:11 -0700
-Message-ID: <CC105D10.66F1%markt@tachyon.net>
+Date: Thu, 28 Jun 2012 06:14:20 +0900 (JST)
+Message-ID: <20120628.061420.04584589.konishi.ryusuke@lab.ntt.co.jp>
 References: <1340777814.1959.15.camel@slavad-ubuntu-11>
+	<CC105D10.66F1%markt@tachyon.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1340777814.1959.15.camel@slavad-ubuntu-11>
-Content-Language: en-US
+In-Reply-To: <CC105D10.66F1%markt-PJstQz4BMNPR7s880joybQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org
+Cc: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello Vyacheslav,
-
-Thank you for your reply.
-
-I have read the man page for nilfs_cleanerd and it's
-conf file, and have done quite a bit of experimentation.
-It does work as expected.
-
-After reading your email, and more thought I think that
-my problem case may have to be solved from the filesystem
-writer's side.  I think what is happening is that 'qcow2'
-is forcing data to be flushed to disk on every write,
-instead of letting the kernel buffer into larger chunks.
-
-Thanks again for input.
-Best regards,
-Mark T.
-
-On 6/26/12 11:16 PM, "Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote:
-
->Hi Mark,
->
 >On Mon, 2012-06-25 at 18:11 -0700, Mark Trumpold wrote:
->> Hello,
->>
->> I have a configuration where I use qemu/qcow loop filesystems
->> on top a nilfs filesystem to yield writeable snapshots.
->>
->> The symptom I see is the nilfs filesystem "ballooning" in size when
->> writing large chunks of data to the qcow loop filesystem.  I also see
->> _many_ nilfs checkpoints with small "NBLKINC" counts (>20  <50).
->>
->> My working theory is nilfs creates checkpoints for each synchronous
->> write, and qcow insists on writing synchronously, thus the ballooning
->> of checkpoints.
+> Hello,
 >
->I can cite man page for NILFS2:
->"When data is written or any change is made to a NILFS2 file system, it
->automatically creates a checkpoint.  A checkpoint represents a
->consistent state of the NILFS2 file system of a certain instant.".
+> I have a configuration where I use qemu/qcow loop filesystems
+> on top a nilfs filesystem to yield writeable snapshots.
 >
->>
->> One question is would it be possible to have nilfs not checkpoint so
->> often.  I've tried the 'nilfs-tune -i ..' to no avail - apparently
->> synchronous writes overrule this setting.
+> The symptom I see is the nilfs filesystem "ballooning" in size when
+> writing large chunks of data to the qcow loop filesystem.  I also see
+> _many_ nilfs checkpoints with small "NBLKINC" counts (>20  <50).
 >
->As you can see, checkpoint is a base technique of NILFS2 functioning.
->But you can manipulate by checkpoints during NILFS2 functioning by means
->of nilfs-cleanerd daemon.
->
->Do you use nilfs-cleanerd daemon?
->
->Please, read man page for nilfs-cleanerd daemon and its configuration
->file. I can cite man page:
->"nilfs_cleanerd is a system daemon which reclaims disk space of NILFS2
->file system found in device."
->
->With the best regards,
->Vyacheslav Dubeyko.
->
+> My working theory is nilfs creates checkpoints for each synchronous
+> write, and qcow insists on writing synchronously, thus the ballooning
+> of checkpoints.
 
+Hi Mark, thanks for your information.
 
+Did you try cache=writeback option on qemu ?
 
-Confidentiality Notice:  The information contained in this electronic e-mail and any accompanying attachment(s) is intended only for the use of the intended recipient and is confidential and/or privileged. If you and we have a confidentiality agreement or other non-disclosure obligations between us, this Notice shall be deemed to mark and identify the content of this email and any attachments as confidential and proprietary.   If any reader of this communication is not the intended recipient, unauthorized use, disclosure or copying is strictly prohibited, and may be unlawful.  If you have received this communication in error, please immediately notify the sender by return e-mail, and delete the original message and all copies from your system.  Thank you.
+Qemu looks to be using synchronous write operations heavily in its
+default cache mode.  It's too expensive for underlying filesystems
+especially for nilfs.
 
-IRS Circular 230 Disclosure: To ensure compliance with requirements imposed by the IRS, please be advised that any U.S. federal tax advice contained in this communication (including any attachments) is not intended or written to be used or relied upon, and cannot be used or relied upon, for the purpose of (i) avoiding penalties under the Internal Revenue Code, or (ii) promoting, marketing or recommending to another party any transaction or matter addressed herein.
+As you pointed out, synchronous write can be separated from
+checkpointing in theory.  And, nilfs is partially applying such
+optimization by default (i.e. "order=relaxed" option).  But the
+current optimization is not sufficient.
 
-E-mail is susceptible to data corruption, interception, unauthorized amendment, tampering and viruses, and we only send and receive e-mails on the basis that we are not liable for any such corruption, interception, amendment, tampering or viruses or any consequences thereof.
+I am actually thinking nilfs should have enhanced functionalilty which
+stops making checkpoints on data integrity operations like fsync or
+fdatasync.
 
+Unfortunately, it needs disk format extension to make it possible to
+recover data blocks written by fsync/fdatasync after unexpected
+shutdown/reboot.  Garbage collector also has to handle such extension.
+
+So, these are one of todo items at present.
+
+Thanks,
+Ryusuke Konishi
+
+> On 6/26/12 11:16 PM, "Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote:
+> 
+> >Hi Mark,
+> >
+> >On Mon, 2012-06-25 at 18:11 -0700, Mark Trumpold wrote:
+> >> Hello,
+> >>
+> >> I have a configuration where I use qemu/qcow loop filesystems
+> >> on top a nilfs filesystem to yield writeable snapshots.
+> >>
+> >> The symptom I see is the nilfs filesystem "ballooning" in size when
+> >> writing large chunks of data to the qcow loop filesystem.  I also see
+> >> _many_ nilfs checkpoints with small "NBLKINC" counts (>20  <50).
+> >>
+> >> My working theory is nilfs creates checkpoints for each synchronous
+> >> write, and qcow insists on writing synchronously, thus the ballooning
+> >> of checkpoints.
+> >
+> >I can cite man page for NILFS2:
+> >"When data is written or any change is made to a NILFS2 file system, it
+> >automatically creates a checkpoint.  A checkpoint represents a
+> >consistent state of the NILFS2 file system of a certain instant.".
+> >
+> >>
+> >> One question is would it be possible to have nilfs not checkpoint so
+> >> often.  I've tried the 'nilfs-tune -i ..' to no avail - apparently
+> >> synchronous writes overrule this setting.
+> >
+> >As you can see, checkpoint is a base technique of NILFS2 functioning.
+> >But you can manipulate by checkpoints during NILFS2 functioning by means
+> >of nilfs-cleanerd daemon.
+> >
+> >Do you use nilfs-cleanerd daemon?
+> >
+> >Please, read man page for nilfs-cleanerd daemon and its configuration
+> >file. I can cite man page:
+> >"nilfs_cleanerd is a system daemon which reclaims disk space of NILFS2
+> >file system found in device."
+> >
+> >With the best regards,
+> >Vyacheslav Dubeyko.
+> >
+> 
+> 
+> 
+> Confidentiality Notice:  The information contained in this electronic e-mail and any accompanying attachment(s) is intended only for the use of the intended recipient and is confidential and/or privileged. If you and we have a confidentiality agreement or other non-disclosure obligations between us, this Notice shall be deemed to mark and identify the content of this email and any attachments as confidential and proprietary.   If any reader of this communication is not the intended recipient, unauthorized use, disclosure or copying is strictly prohibited, and may be unlawful.  If you have received this communication in error, please immediately notify the sender by return e-mail, and delete the original message and all copies from your system.  Thank you.
+> 
+> IRS Circular 230 Disclosure: To ensure compliance with requirements imposed by the IRS, please be advised that any U.S. federal tax advice contained in this communication (including any attachments) is not intended or written to be used or relied upon, and cannot be used or relied upon, for the purpose of (i) avoiding penalties under the Internal Revenue Code, or (ii) promoting, marketing or recommending to another party any transaction or matter addressed herein.
+> 
+> E-mail is susceptible to data corruption, interception, unauthorized amendment, tampering and viruses, and we only send and receive e-mails on the basis that we are not liable for any such corruption, interception, amendment, tampering or viruses or any consequences thereof.
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
