@@ -1,42 +1,60 @@
-From: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
-Subject: nilfs checkpoints tied to synchronous writes
-Date: Mon, 25 Jun 2012 18:11:26 -0700
-Message-ID: <CDB9B1D21E35BB4C9E8124D05FD86BB184ABA761A0@Etamin.tachyon.net>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: nilfs checkpoints tied to synchronous writes
+Date: Wed, 27 Jun 2012 10:16:54 +0400
+Message-ID: <1340777814.1959.15.camel@slavad-ubuntu-11>
+References: <CDB9B1D21E35BB4C9E8124D05FD86BB184ABA761A0@Etamin.tachyon.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-US
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:References:In-Reply-To:Cc:To:From:Subject; bh=pKT0Ti/ed2Pd28NghcFYguU+GuCG236+520s3cXqVpw=;
+	b=m37fEZR+AUB+ckoIhBT8Yv650og82RYSAwKQ8aPCl5MJytL+chv+30dLD00kiai4L6zD5nFXzy9PEx4Sh4W4vXBXdkdv9dp6/ojTxHiy4PWxYfOAQhCstn9NKcAcgavK;
+In-Reply-To: <CDB9B1D21E35BB4C9E8124D05FD86BB184ABA761A0-Nr8giE/DiON166AYIJghu6xOck334EZe@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
+Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "; Vyacheslav.Dubeyko"@huawei.com
 
-Hello,
+Hi Mark,
 
-I have a configuration where I use qemu/qcow loop filesystems
-on top a nilfs filesystem to yield writeable snapshots.
+On Mon, 2012-06-25 at 18:11 -0700, Mark Trumpold wrote:
+> Hello,
+> 
+> I have a configuration where I use qemu/qcow loop filesystems
+> on top a nilfs filesystem to yield writeable snapshots.
+> 
+> The symptom I see is the nilfs filesystem "ballooning" in size when
+> writing large chunks of data to the qcow loop filesystem.  I also see
+> _many_ nilfs checkpoints with small "NBLKINC" counts (>20  <50).
+> 
+> My working theory is nilfs creates checkpoints for each synchronous
+> write, and qcow insists on writing synchronously, thus the ballooning
+> of checkpoints.
 
-The symptom I see is the nilfs filesystem "ballooning" in size when
-writing large chunks of data to the qcow loop filesystem.  I also see
-_many_ nilfs checkpoints with small "NBLKINC" counts (>20  <50).
+I can cite man page for NILFS2:
+"When data is written or any change is made to a NILFS2 file system, it
+automatically creates a checkpoint.  A checkpoint represents a
+consistent state of the NILFS2 file system of a certain instant.".
 
-My working theory is nilfs creates checkpoints for each synchronous
-write, and qcow insists on writing synchronously, thus the ballooning
-of checkpoints.
+> 
+> One question is would it be possible to have nilfs not checkpoint so
+> often.  I've tried the 'nilfs-tune -i ..' to no avail - apparently
+> synchronous writes overrule this setting.
 
-One question is would it be possible to have nilfs not checkpoint so
-often.  I've tried the 'nilfs-tune -i ..' to no avail - apparently
-synchronous writes overrule this setting.
+As you can see, checkpoint is a base technique of NILFS2 functioning.
+But you can manipulate by checkpoints during NILFS2 functioning by means
+of nilfs-cleanerd daemon.
 
-Thanks in advance,
-Mark T.
+Do you use nilfs-cleanerd daemon?
 
+Please, read man page for nilfs-cleanerd daemon and its configuration
+file. I can cite man page:
+"nilfs_cleanerd is a system daemon which reclaims disk space of NILFS2
+file system found in device."
 
-Confidentiality Notice:  The information contained in this electronic e-mail and any accompanying attachment(s) is intended only for the use of the intended recipient and is confidential and/or privileged. If you and we have a confidentiality agreement or other non-disclosure obligations between us, this Notice shall be deemed to mark and identify the content of this email and any attachments as confidential and proprietary.   If any reader of this communication is not the intended recipient, unauthorized use, disclosure or copying is strictly prohibited, and may be unlawful.  If you have received this communication in error, please immediately notify the sender by return e-mail, and delete the original message and all copies from your system.  Thank you.
-
-IRS Circular 230 Disclosure: To ensure compliance with requirements imposed by the IRS, please be advised that any U.S. federal tax advice contained in this communication (including any attachments) is not intended or written to be used or relied upon, and cannot be used or relied upon, for the purpose of (i) avoiding penalties under the Internal Revenue Code, or (ii) promoting, marketing or recommending to another party any transaction or matter addressed herein.
-
-E-mail is susceptible to data corruption, interception, unauthorized amendment, tampering and viruses, and we only send and receive e-mails on the basis that we are not liable for any such corruption, interception, amendment, tampering or viruses or any consequences thereof.
+With the best regards,
+Vyacheslav Dubeyko.
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
