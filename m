@@ -1,50 +1,36 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [ANNOUNCE] NILFS utils 2.1.4 release
-Date: Fri, 06 Jul 2012 12:59:20 +0900 (JST)
-Message-ID: <20120706.125920.169805378.konishi.ryusuke@lab.ntt.co.jp>
+From: vibi sreenivasan <mail.vibi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Nilfs2 kernel tree location
+Date: Sat, 7 Jul 2012 13:15:32 +0530
+Message-ID: <CAE7QK4NbSf1r+_dL7jjMaGfdymmjKMJhpSApXwxaG-3PND8JEA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:date:message-id:subject:from:to:content-type;
+        bh=GG9es8PQJCjy9+si8d/dw7hDLNNPYN5hfhuCf4KnEPY=;
+        b=HzqfmImagE1v6udVXU5U5xU3hn9JUxbqpiY6PJqION4yxjgdsTUt8LgXT0e90g9byt
+         pJPkb9QKCyhZbT7WyPtoeDDgZR0cqlIlAScEC7AQKCQJhkJYUi501PoIOn9qFgiBRWXA
+         Xecv07C+os+S2SLtCYZMVi4v7UaK4aiDElSE7Y3oYY0PLr/oOTfAMo8WcR7ywxMKAFyK
+         ILw3GeNPy5+9clKZLSAopJoFShAi2KQX35AYA8+dAgdNlgBJrl7UBotPCWS4ezeKfLCP
+         2pvSVdLUIuHpz1i1HrCPcB/ULzI+RkpP/SZQSdEN5UsmHAKN9RWEPfYRSYqXWnRtT3YB
+         eybA==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-nilfs-utils-2.1.4 was released on:
+Hi,
+Can anyone please tell me the location of nilfs2 kernel tree.
+I checked in the Maintainers file in linux kernel. It said the location
+is git git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git
+which is not existing.
 
- http://www.nilfs.org/en/download.html
+Please let me know where the latest development to nilfs2 are checked in.
 
-Main changes from nilfs-utils-2.1.3 are as follows:
+Thanks in advance.
 
- * umount.nilfs2: use binary exponential backoff for waiting for
-   cleanerd's shutdown in order to speed up "umount".  Previously,
-   umount.nilfs2 took one or more seconds.  This shortens the time to
-   milli-seconds order.
-
- * mount.nilfs2: fix wrong error handling in a mount routine; this
-   fixes the bug that "gcpid=" attribute was not updated properly in
-   the mtab file when cleanerd restarted after a rw->ro or a rw->rw
-   remount.  The bug was causing busy errors of successive unmount
-   because of mismatch of the cleanerd's process id.
-
- * nilfs-resize: do not use sync() system call.  This reduces
-   unnecessary disk io resulting from system-wide synchronizations.
-
- * nilfs-resize: fix early give-up of fs-shrinking.
-
- * mount.nilfs2 (non-libmount version): support context, fscontext,
-   defcontext, and rootcontext SELinux mount options.  This feature is
-   optional, which is applied only when "--with-selinux" new
-   configuration option is specified.  Note that these options are
-   already supported in another mount.nilfs2 using libmount.
-
-Please see the following changelog for details:
-
- http://www.nilfs.org/download/ChangeLog-utils-v2
-
-
-Thanks,
-Ryusuke Konishi
+Vibi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
