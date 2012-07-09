@@ -1,33 +1,47 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: nilfs2 weird issue - snapshots are gone, cleanerd not running
-Date: Mon, 09 Jul 2012 13:49:36 +0400
-Message-ID: <1341827376.1965.11.camel@slavad-ubuntu-11>
-References: <20120709073300.GP1478@wloczykij>  <10181027.pPHs7IDARt@coil>
+Date: Mon, 09 Jul 2012 14:31:56 +0400
+Message-ID: <1341829916.1965.16.camel@slavad-ubuntu-11>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:References:In-Reply-To:Cc:To:From:Subject; bh=27d8TKXf0ZLRSZOjfzWEMC16DPZgClFwnlP+eY5bo84=;
-	b=gdvgVKi/+Jd3FteAVYd50ZsFlj4cpYV2Xt7gIxmjKI9G7dtpgeK3xtMQs0jrdV4Sm/0mkNb/Cs9YSaMhlHbL7DXxd4YC3U+cDg4k6y+AQxBLEDv/Ryu/kIUVriSIwhz7;
-In-Reply-To: <10181027.pPHs7IDARt@coil>
+	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:Cc:To:From:Subject; bh=Tnf75qfjE/hd3kc6C+2IiP/ZRcvxYzuxU1VncgSrJbE=;
+	b=bdg3rEYG+noCzxtNNJoFF3FK87kXpzn8r6Ekl3FTgKyWqF8TBpwMc2nfhpn0JDixhZTrSQ4mxL9r5M5jIL6LbUFO2BB9J8jLelqhzbA8tormZg9o03B5Xa1eChaY1k6K;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+To: szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+Hi Piotr,
 
-On Mon, 2012-07-09 at 11:33 +0200, dexen deVries wrote:
-> using strace -f  on the nilfs_cleanerd should give you a clue what causes the 
-> exit. it may exit if can't connect to syslogd.
+Does your nilfs_cleanerd.conf file contains any special values of
+configuration parameters? Could you publish content of your
+nilfs_cleanerd.conf file?
 
-I think that strace can generate many information. :-) Maybe, firstly,
-it makes sense to increase verbosity level of nilfs_cleanerd to debug
-level (please, see log_priority parameters in nilfs_cleanerd.conf).
-
-With the best regards,
+Thanks,
 Vyacheslav Dubeyko.
+
+On Mon, 2012-07-09 at 11:41 +0200, Piotr Szymaniak wrote:
+> On Mon, Jul 09, 2012 at 01:28:32PM +0400, Vyacheslav Dubeyko wrote:
+> > Hi Piotr,
+> > 
+> > Does system journals on your machines contain any interested details
+> > about reported issue? Could you try to extract some error or warning
+> > messages from system journal?
+> 
+> If by journals you mean logs then no. I'm only able to find some like
+> this:
+> Jul  3 10:32:45 wloczykij nilfs_cleanerd[1434]: resume (clean check)
+> Jul  3 10:41:37 wloczykij nilfs_cleanerd[1434]: pause (clean check)
+> 
+> That's all about nilfs in the last week and current log has only
+manual
+> runs related to those operation described before.
+> 
+> Piotr Szymaniak.
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
