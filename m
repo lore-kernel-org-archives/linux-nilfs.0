@@ -1,115 +1,65 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
-Subject: Re: nilfs2 weird issue - snapshots are gone, cleanerd not running
-Date: Tue, 10 Jul 2012 09:51:31 +0200
-Message-ID: <20120710075131.GV1478@wloczykij>
-References: <20120709073300.GP1478@wloczykij>
- <10181027.pPHs7IDARt@coil>
+From: vibi sreenivasan <mail.vibi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Nilfs2 kernel tree location
+Date: Tue, 10 Jul 2012 13:38:32 +0530
+Message-ID: <CAE7QK4O0RQe1yttkt+YL=hjJxxn6Xz7OSRBYDubrRtZ2X9FagA@mail.gmail.com>
+References: <CAE7QK4NbSf1r+_dL7jjMaGfdymmjKMJhpSApXwxaG-3PND8JEA@mail.gmail.com>
+	<CAKFNMokwTUkzQRAjN9t7s96O_LXQmDYPj3+GwNTzRMSTSFPr-A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="dg6Tyglv1qyvGx3q"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <10181027.pPHs7IDARt@coil>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :cc:content-type;
+        bh=OvNU5oBcdG48pCCmcxU/0CjpxoWcTC8Qr6Hc3vlFlaw=;
+        b=f3epqdg6fk1NbVkSvhJoFxfpCrHel/HsxJ41uTa+6DJ7XPDofyBTjd8nKyGiTHWI+e
+         zncncAB81189pBldVs+UkbPoPVfMmiP0hO9TLvkcGttJWszfMkzVvwIdaH2A1cCTDOHq
+         6jIpMr9izOCry1C/c9RLm43tgPVSq6kPwix9wWYyWTV61UfXfaE2KAhLmgZpwFE4K107
+         DpMDaeDb07dWeMv6cpA2osbslRMyOk4ptSWZ9iCeaU4liZF76FtivCbMva8GF7P18ZjP
+         x25wfQhLb2IOlgFRS3tFL5gGPm7OzYEplN5rdBx5p7T8Z1ha/kv0jmmrRu5RKCJAsAPf
+         6Qrw==
+In-Reply-To: <CAKFNMokwTUkzQRAjN9t7s96O_LXQmDYPj3+GwNTzRMSTSFPr-A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+Hi
+On Sat, Jul 7, 2012 at 11:39 PM, Ryusuke Konishi
+<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
+> Hi,
+> 2012/7/7 vibi sreenivasan:
+>> Hi,
+>> Can anyone please tell me the location of nilfs2 kernel tree.
+>> I checked in the Maintainers file in linux kernel. It said the location
+>> is git git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git
+>> which is not existing.
+>>
+>> Please let me know where the latest development to nilfs2 are checked in.
+>
+> Sorry for the inconvenience.
+>
+>   git://github.com/konis/nilfs2.git
+>
+> is the current tree, but the development of  the kernel code is
+> not so active now because I don't have enough time these days.
+>
+> The git tree in the kernel.org should be restored.  It's another
+> to do for me.
 
---dg6Tyglv1qyvGx3q
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Mon, Jul 09, 2012 at 11:33:13AM +0200, dexen deVries wrote:
-> On Monday 09 of July 2012 09:33:00 you wrote:
-> >(...)
-> > Where to go from this point? How to debug nilfs_cleanerd issue?
->=20
-> using strace -f  on the nilfs_cleanerd should give you a clue what causes=
- the=20
-> exit. it may exit if can't connect to syslogd.
-
-Hi list,
-
-I will try to sort information from few messages together here.
-
-Attached strace output from my "nilfs_cleanerd" for rootfs. The script
-is in /etc/local.d (again, Gentoo Linux) and it looks like this (removed
-commented parts and empty lines):
-CONFILE=3D"/etc/nilfs_cleanerd_rootfs.conf"
-TARGETDISK=3D"/dev/disk/by-uuid/1aa9e6fb-cf7d-45bd-bbfb-08110a8840b7"
-/sbin/nilfs_cleanerd -c "${CONFILE}" "${TARGETDISK}"
-
-And here's the mentioned nilfs_cleanerd_rootfs.conf:
-protection_period	3600
-min_clean_segments	13%
-max_clean_segments	25%
-clean_check_interval	10
-selection_policy	timestamp	# timestamp in ascend order
-nsegments_per_clean	2
-mc_nsegments_per_clean	4
-cleaning_interval	5
-mc_cleaning_interval	1
-retry_interval		60
-use_mmap
-log_priority		info
-
-
-> if `lscp' reports no checkpoints, try `lscp -a' -- should show even minor=
-=20
-> checkpoints (which are checkpoints created by GC, AFAIK).
-
-That's right, lscp -a gives some more output:
-maszyn ~ # lscp -a | wc -l
-1428
-
-Running nilfs_cleanerd with more verbose output (log_priority debug)
-gives me this:
-Jul 10 09:45:26 [nilfs_cleanerd] start
-Jul 10 09:45:26 [nilfs_cleanerd] cannot open nilfs on /dev/sda2: No such
-file or directory
-Jul 10 09:45:26 [nilfs_cleanerd] cannot create cleanerd on /dev/sda2: No
-such file or directory
-Jul 10 09:45:26 [nilfs_cleanerd] shutdown
-
-
-maszyn ~ # ll /dev/sda2
-brw-rw---- 1 root disk 8, 2 lip 10  2012 /dev/sda2
-
-maszyn ~ # ll /dev/disk/by-uuid/1aa9e6fb-cf7d-45bd-bbfb-08110a8840b7=20
-lrwxrwxrwx 1 root root 10 lip 10  2012
-/dev/disk/by-uuid/1aa9e6fb-cf7d-45bd-bbfb-08110a8840b7 -> ../../sda2
-
-
-Piotr Szymaniak.
---=20
-Gdy mowisz, co bedzie w przyszlym roku, diabel chichocze.
-  -- Przyslowie japonskie
-
---dg6Tyglv1qyvGx3q
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCAAGBQJP+98DAAoJEEMpAov1cw9ltT8P/2vD79S6Nhr8WLUFTNUGjstb
-07KX7mey3OXUnVoFOTJHzs5ft/foBs5iDZ/uGnki1w+nXqmgrnsp+mx6VJUDMAvk
-y2NJqcjaGSLQyCxD566ZcOvgEk2R40Lgx3dgqpkraHLk2yUWja6fED5C5xQw6uYE
-yG/Epko418qPfi3pgWa8LyG3061Qf+UVNcdJMQH6ukGY2fcEpffSmZI4GLyb+0B5
-fV2jXN5C73iS4j9/43ouR8RuWDECC5gd/84lVqFwLQUTRup0z0fujiIdQZpr1y0J
-BcXRXu4YreQRWlR9xHH7vo4PLeSGM4rgwUjYTZ4sINe/dJgXoRlQFJQtlDTXSx89
-3x/X3oEmAYMOM0FbYgMHM6oQL+xTkPFNWm+Rau3sBK9oSKAqAvMrSU8a/tVLlSL8
-0wKoHYZCFCnK9SnYUQdskan3pwAYdRxwQK+Vd0auySIoEC/49TAypMUbcOkcrP9l
-2o1F2tL8P025x+lIi4Ncetq9198QxEv/fpalhpYQlyUrJe47cwQg86AlA72+tZHD
-/1NKpyIuLhNw0MHLwGLawbL+7di4iYRT+2yvln7dQ+1M/rSnelIm3Vboc68D0ugo
-AyysR/WPeiZJ+sOyzSoZNs86cy4fcNai7o55fy4cs3I9itPOJKpBfSVGjyoyrrAr
-CEe4z+I9o1s7eYuIrKnq
-=+64Y
------END PGP SIGNATURE-----
-
---dg6Tyglv1qyvGx3q--
+Thanks for the info.
+>
+> Thanks,
+> Ryusuke Konishi
+>
+>> Thanks in advance.
+>>
+>> Vibi
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
