@@ -1,65 +1,95 @@
-From: vibi sreenivasan <mail.vibi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Nilfs2 kernel tree location
-Date: Tue, 10 Jul 2012 13:38:32 +0530
-Message-ID: <CAE7QK4O0RQe1yttkt+YL=hjJxxn6Xz7OSRBYDubrRtZ2X9FagA@mail.gmail.com>
-References: <CAE7QK4NbSf1r+_dL7jjMaGfdymmjKMJhpSApXwxaG-3PND8JEA@mail.gmail.com>
-	<CAKFNMokwTUkzQRAjN9t7s96O_LXQmDYPj3+GwNTzRMSTSFPr-A@mail.gmail.com>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: nilfs2 weird issue - snapshots are gone, cleanerd not running
+Date: Tue, 10 Jul 2012 12:34:42 +0400
+Message-ID: <1341909282.1973.3.camel@slavad-ubuntu-11>
+References: <20120709073300.GP1478@wloczykij> <10181027.pPHs7IDARt@coil>
+	 <20120710075131.GV1478@wloczykij>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=OvNU5oBcdG48pCCmcxU/0CjpxoWcTC8Qr6Hc3vlFlaw=;
-        b=f3epqdg6fk1NbVkSvhJoFxfpCrHel/HsxJ41uTa+6DJ7XPDofyBTjd8nKyGiTHWI+e
-         zncncAB81189pBldVs+UkbPoPVfMmiP0hO9TLvkcGttJWszfMkzVvwIdaH2A1cCTDOHq
-         6jIpMr9izOCry1C/c9RLm43tgPVSq6kPwix9wWYyWTV61UfXfaE2KAhLmgZpwFE4K107
-         DpMDaeDb07dWeMv6cpA2osbslRMyOk4ptSWZ9iCeaU4liZF76FtivCbMva8GF7P18ZjP
-         x25wfQhLb2IOlgFRS3tFL5gGPm7OzYEplN5rdBx5p7T8Z1ha/kv0jmmrRu5RKCJAsAPf
-         6Qrw==
-In-Reply-To: <CAKFNMokwTUkzQRAjN9t7s96O_LXQmDYPj3+GwNTzRMSTSFPr-A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:References:In-Reply-To:Cc:To:From:Subject; bh=M4aDwFMiuiGuYr+FjTcBbTeYbbNJrYbyD9ktWq5paYg=;
+	b=WtjL06tl/cmHA39osHzX1tK80ihcnMrrzJ2B9tm2BVhn91MOOVLswIQGRqkOrTiYb/9rkf5ICI4n1cqjBNQkRvZ/Oxki3E9ZzaZ/UZnxS6rHRp6HvXkT+Q9lQ31maWuj;
+In-Reply-To: <20120710075131.GV1478@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+Cc: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi
-On Sat, Jul 7, 2012 at 11:39 PM, Ryusuke Konishi
-<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> Hi,
-> 2012/7/7 vibi sreenivasan:
->> Hi,
->> Can anyone please tell me the location of nilfs2 kernel tree.
->> I checked in the Maintainers file in linux kernel. It said the location
->> is git git://git.kernel.org/pub/scm/linux/kernel/git/ryusuke/nilfs2.git
->> which is not existing.
->>
->> Please let me know where the latest development to nilfs2 are checked in.
->
-> Sorry for the inconvenience.
->
->   git://github.com/konis/nilfs2.git
->
-> is the current tree, but the development of  the kernel code is
-> not so active now because I don't have enough time these days.
->
-> The git tree in the kernel.org should be restored.  It's another
-> to do for me.
+Hi Piotr,
 
-Thanks for the info.
->
-> Thanks,
-> Ryusuke Konishi
->
->> Thanks in advance.
->>
->> Vibi
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Could you send your output of "strace -f"? I guess that it is problem
+with semaphore opening as I can see in my reproduction. But it needs to
+compare our cases.
+
+Thanks,
+Vyacheslav Dubeyko.
+
+
+On Tue, 2012-07-10 at 09:51 +0200, Piotr Szymaniak wrote:
+> On Mon, Jul 09, 2012 at 11:33:13AM +0200, dexen deVries wrote:
+> > On Monday 09 of July 2012 09:33:00 you wrote:
+> > >(...)
+> > > Where to go from this point? How to debug nilfs_cleanerd issue?
+> > 
+> > using strace -f  on the nilfs_cleanerd should give you a clue what causes the 
+> > exit. it may exit if can't connect to syslogd.
+> 
+> Hi list,
+> 
+> I will try to sort information from few messages together here.
+> 
+> Attached strace output from my "nilfs_cleanerd" for rootfs. The script
+> is in /etc/local.d (again, Gentoo Linux) and it looks like this (removed
+> commented parts and empty lines):
+> CONFILE="/etc/nilfs_cleanerd_rootfs.conf"
+> TARGETDISK="/dev/disk/by-uuid/1aa9e6fb-cf7d-45bd-bbfb-08110a8840b7"
+> /sbin/nilfs_cleanerd -c "${CONFILE}" "${TARGETDISK}"
+> 
+> And here's the mentioned nilfs_cleanerd_rootfs.conf:
+> protection_period	3600
+> min_clean_segments	13%
+> max_clean_segments	25%
+> clean_check_interval	10
+> selection_policy	timestamp	# timestamp in ascend order
+> nsegments_per_clean	2
+> mc_nsegments_per_clean	4
+> cleaning_interval	5
+> mc_cleaning_interval	1
+> retry_interval		60
+> use_mmap
+> log_priority		info
+> 
+> 
+> > if `lscp' reports no checkpoints, try `lscp -a' -- should show even minor 
+> > checkpoints (which are checkpoints created by GC, AFAIK).
+> 
+> That's right, lscp -a gives some more output:
+> maszyn ~ # lscp -a | wc -l
+> 1428
+> 
+> Running nilfs_cleanerd with more verbose output (log_priority debug)
+> gives me this:
+> Jul 10 09:45:26 [nilfs_cleanerd] start
+> Jul 10 09:45:26 [nilfs_cleanerd] cannot open nilfs on /dev/sda2: No such
+> file or directory
+> Jul 10 09:45:26 [nilfs_cleanerd] cannot create cleanerd on /dev/sda2: No
+> such file or directory
+> Jul 10 09:45:26 [nilfs_cleanerd] shutdown
+> 
+> 
+> maszyn ~ # ll /dev/sda2
+> brw-rw---- 1 root disk 8, 2 lip 10  2012 /dev/sda2
+> 
+> maszyn ~ # ll /dev/disk/by-uuid/1aa9e6fb-cf7d-45bd-bbfb-08110a8840b7 
+> lrwxrwxrwx 1 root root 10 lip 10  2012
+> /dev/disk/by-uuid/1aa9e6fb-cf7d-45bd-bbfb-08110a8840b7 -> ../../sda2
+> 
+> 
+> Piotr Szymaniak.
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
