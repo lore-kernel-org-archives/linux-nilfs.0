@@ -1,83 +1,58 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 3/4] nilfs2: fix timing issue between rmcp and chcp ioctls
-Date: Mon, 16 Jul 2012 10:05:25 +0900
-Message-ID: <1342400726-30670-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1342400726-30670-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1342400726-30670-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Ivan Shmakov <oneingray-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: NILFS for a "chroot": a kind of a work-around
+Date: Mon, 16 Jul 2012 12:13:24 +0700
+Message-ID: <86mx30waob.fsf@gray.siamics.net>
+References: <86zk72xq2g.fsf@gray.siamics.net>
+	<7292C0D8-99A6-4A9E-A1B6-976138550FFA@dubeyko.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Content-Type: text/plain; charset="windows-1252"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-The checkpoint deletion ioctl (rmcp ioctl) has potential for breaking
-snapshot because it is not fully exclusive with checkpoint mode change
-ioctl (chcp ioctl).
+>>>>> Vyacheslav Dubeyko writes:
 
-The rmcp ioctl first tests if the specified checkpoint is a snapshot
-or not within nilfs_cpfile_delete_checkpoint function, and then calls
-nilfs_cpfile_delete_checkpoints function to actually invalidate the
-checkpoint only if it's not a snapshot.  However, the checkpoint can
-be changed into a snapshot by the chcp ioctl between these two
-operations.  In that case, calling nilfs_cpfile_delete_checkpoints()
-wrongly invalidates the snapshot, which leads to snapshot list
-corruption and snapshot count mismatch.
+ > As I know, checkpointing is a fundamental technique of the NILFS.  I=
+t
+ > is possible to imagine checkpointing as an act of final placing of
+ > file system blocks on disk storage.  Another filesystems also writin=
+g
+ > on disk but, usually, without possibility to keep history of file
+ > system operations and manage by history.  Checkpoint in NILFS is
+ > natural possibility to prevent from file system inconsistency and
+ > failure by means of Copy-On-Write policy.  Of course, checkpoints
+ > keep duplicates of metadata and data information but obsolete
+ > checkpoints can be deleted by nilfs_cleanerd.  So, from my point of
+ > view, your approach is trying to overcome the main goal of the NILFS=
+=2E
 
-This fixes the issue by changing nilfs_cpfile_delete_checkpoints() so
-that it reconfirms the target checkpoints are snapshot or not.
+	Not at all.  The idea is to utilize NILFS snapshots to record
+	consistent states of the chroot environment.  So, e. g., having
+	found that certain software package did break, I can bisect the
+	filesystem history to find the version of the package which have
+	introduced the bug.
 
-This second check is exclusive with the chcp operation since
-it is protected by an existing semaphore.
+	Using rsync(1) makes this easier, as there's both much less work
+	to the GC, and it takes less time to perform the changes, so
+	there are only a few checkpoints to check.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
----
- fs/nilfs2/cpfile.c |   10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+ > What about reliability in your approach?  Everything can occur durin=
+g
+ > operations under tmpfs partition (for example, sudden power off).
 
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index dab5c4c..deaa3d3 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -286,7 +286,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
- 	__u64 cno;
- 	void *kaddr;
- 	unsigned long tnicps;
--	int ret, ncps, nicps, count, i;
-+	int ret, ncps, nicps, nss, count, i;
- 
- 	if (unlikely(start == 0 || start > end)) {
- 		printk(KERN_ERR "%s: invalid range of checkpoint numbers: "
-@@ -301,6 +301,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
- 	if (ret < 0)
- 		goto out_sem;
- 	tnicps = 0;
-+	nss = 0;
- 
- 	for (cno = start; cno < end; cno += ncps) {
- 		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, end);
-@@ -318,8 +319,9 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
- 			cpfile, cno, cp_bh, kaddr);
- 		nicps = 0;
- 		for (i = 0; i < ncps; i++, cp = (void *)cp + cpsz) {
--			WARN_ON(nilfs_checkpoint_snapshot(cp));
--			if (!nilfs_checkpoint_invalid(cp)) {
-+			if (nilfs_checkpoint_snapshot(cp)) {
-+				nss++;
-+			} else if (!nilfs_checkpoint_invalid(cp)) {
- 				nilfs_checkpoint_set_invalid(cp);
- 				nicps++;
- 			}
-@@ -364,6 +366,8 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
- 	}
- 
- 	brelse(header_bh);
-+	if (nss > 0)
-+		ret = -EBUSY;
- 
-  out_sem:
- 	up_write(&NILFS_MDT(cpfile)->mi_sem);
--- 
-1.7.9.3
+	Then, the latest operation (# apt-get install something) won't
+	be effective and will have to be repeated.  But the target
+	chroot environment will still be in a consistent state.
+
+[=E2=80=A6]
+
+--=20
+=46SF associate member #7257	http://sf-day.org/
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
