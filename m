@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 4/4] nilfs2: fix deadlock issue between chcp and thaw ioctls
-Date: Mon, 16 Jul 2012 10:05:26 +0900
-Message-ID: <1342400726-30670-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 3/4] nilfs2: fix timing issue between rmcp and chcp ioctls
+Date: Mon, 16 Jul 2012 10:05:25 +0900
+Message-ID: <1342400726-30670-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1342400726-30670-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1342400726-30670-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
@@ -13,136 +13,71 @@ Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-An fs-thaw ioctl causes deadlock with a chcp or mkcp -s command:
+The checkpoint deletion ioctl (rmcp ioctl) has potential for breaking
+snapshot because it is not fully exclusive with checkpoint mode change
+ioctl (chcp ioctl).
 
- chcp            D ffff88013870f3d0     0  1325   1324 0x00000004
- ...
- Call Trace:
-  [<ffffffffa06cd409>] ? nilfs_transaction_begin+0x11c/0x1a0 [nilfs2]
-  [<ffffffff81056011>] ? wake_up_bit+0x20/0x20
-  [<ffffffffa06d3e04>] ? copy_from_user+0x18/0x30 [nilfs2]
-  [<ffffffffa06d3e99>] ? nilfs_ioctl_change_cpmode+0x7d/0xcf [nilfs2]
-  [<ffffffffa06d4cf8>] ? nilfs_ioctl+0x252/0x61a [nilfs2]
-  [<ffffffff813b8966>] ? do_page_fault+0x311/0x34c
-  [<ffffffff810e1c2f>] ? get_unmapped_area+0x132/0x14e
-  [<ffffffff8110e95c>] ? do_vfs_ioctl+0x44b/0x490
-  [<ffffffff81049b7f>] ? __set_task_blocked+0x5a/0x61
-  [<ffffffff810d63c1>] ? vm_mmap_pgoff+0x76/0x87
-  [<ffffffff81049bb6>] ? __set_current_blocked+0x30/0x4a
-  [<ffffffff8110e9ec>] ? sys_ioctl+0x4b/0x6f
-  [<ffffffff813bbc79>] ? system_call_fastpath+0x16/0x1b
- thaw            D ffff88013870d890     0  1352   1351 0x00000004
- ...
- Call Trace:
-  [<ffffffff813b5551>] ? rwsem_down_failed_common+0xdb/0x10f
-  [<ffffffff812172c3>] ? call_rwsem_down_write_failed+0x13/0x20
-  [<ffffffff813b42f4>] ? down_write+0x25/0x27
-  [<ffffffff811032e7>] ? thaw_super+0x13/0x9e
-  [<ffffffff8110e706>] ? do_vfs_ioctl+0x1f5/0x490
-  [<ffffffff810d63c1>] ? vm_mmap_pgoff+0x76/0x87
-  [<ffffffff8110e9ec>] ? sys_ioctl+0x4b/0x6f
-  [<ffffffff810ff731>] ? filp_close+0x64/0x6c
-  [<ffffffff813bbc79>] ? system_call_fastpath+0x16/0x1b
+The rmcp ioctl first tests if the specified checkpoint is a snapshot
+or not within nilfs_cpfile_delete_checkpoint function, and then calls
+nilfs_cpfile_delete_checkpoints function to actually invalidate the
+checkpoint only if it's not a snapshot.  However, the checkpoint can
+be changed into a snapshot by the chcp ioctl between these two
+operations.  In that case, calling nilfs_cpfile_delete_checkpoints()
+wrongly invalidates the snapshot, which leads to snapshot list
+corruption and snapshot count mismatch.
 
-where the thaw ioctl deadlocked at thaw_super() when called while chcp
-was waiting at nilfs_transaction_begin() called from
-nilfs_ioctl_change_cpmode().  This deadlock is 100% reproducible.
+This fixes the issue by changing nilfs_cpfile_delete_checkpoints() so
+that it reconfirms the target checkpoints are snapshot or not.
 
-This is because nilfs_ioctl_change_cpmode() first locks sb->s_umount
-in read mode and then waits for unfreezing in
-nilfs_transaction_begin(), whereas thaw_super() locks sb->s_umount in
-write mode.  The locking of sb->s_umount here was intended to make
-snapshot mounts and the downgrade of snapshots to checkpoints
-exclusive.
-
-This fixes the deadlock issue by replacing the sb->s_umount usage in
-nilfs_ioctl_change_cpmode() with a dedicated mutex which protects
-snapshot mounts.
+This second check is exclusive with the chcp operation since
+it is protected by an existing semaphore.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Tested-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Cc: <stable@vger.kernel.org>
 ---
- fs/nilfs2/ioctl.c     |    4 ++--
- fs/nilfs2/super.c     |    3 +++
- fs/nilfs2/the_nilfs.c |    1 +
- fs/nilfs2/the_nilfs.h |    2 ++
- 4 files changed, 8 insertions(+), 2 deletions(-)
+ fs/nilfs2/cpfile.c |   10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 06658ca..0b6387c 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -182,7 +182,7 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
- 	if (copy_from_user(&cpmode, argp, sizeof(cpmode)))
- 		goto out;
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index dab5c4c..deaa3d3 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -286,7 +286,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 	__u64 cno;
+ 	void *kaddr;
+ 	unsigned long tnicps;
+-	int ret, ncps, nicps, count, i;
++	int ret, ncps, nicps, nss, count, i;
  
--	down_read(&inode->i_sb->s_umount);
-+	mutex_lock(&nilfs->ns_snapshot_mount_mutex);
+ 	if (unlikely(start == 0 || start > end)) {
+ 		printk(KERN_ERR "%s: invalid range of checkpoint numbers: "
+@@ -301,6 +301,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 	if (ret < 0)
+ 		goto out_sem;
+ 	tnicps = 0;
++	nss = 0;
  
- 	nilfs_transaction_begin(inode->i_sb, &ti, 0);
- 	ret = nilfs_cpfile_change_cpmode(
-@@ -192,7 +192,7 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
- 	else
- 		nilfs_transaction_commit(inode->i_sb); /* never fails */
+ 	for (cno = start; cno < end; cno += ncps) {
+ 		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, end);
+@@ -318,8 +319,9 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 			cpfile, cno, cp_bh, kaddr);
+ 		nicps = 0;
+ 		for (i = 0; i < ncps; i++, cp = (void *)cp + cpsz) {
+-			WARN_ON(nilfs_checkpoint_snapshot(cp));
+-			if (!nilfs_checkpoint_invalid(cp)) {
++			if (nilfs_checkpoint_snapshot(cp)) {
++				nss++;
++			} else if (!nilfs_checkpoint_invalid(cp)) {
+ 				nilfs_checkpoint_set_invalid(cp);
+ 				nicps++;
+ 			}
+@@ -364,6 +366,8 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 	}
  
--	up_read(&inode->i_sb->s_umount);
-+	mutex_unlock(&nilfs->ns_snapshot_mount_mutex);
- out:
- 	mnt_drop_write_file(filp);
- 	return ret;
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 72b62b6..6d5308c 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -945,6 +945,8 @@ static int nilfs_attach_snapshot(struct super_block *s, __u64 cno,
- 	struct nilfs_root *root;
- 	int ret;
+ 	brelse(header_bh);
++	if (nss > 0)
++		ret = -EBUSY;
  
-+	mutex_lock(&nilfs->ns_snapshot_mount_mutex);
-+
- 	down_read(&nilfs->ns_segctor_sem);
- 	ret = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile, cno);
- 	up_read(&nilfs->ns_segctor_sem);
-@@ -969,6 +971,7 @@ static int nilfs_attach_snapshot(struct super_block *s, __u64 cno,
- 	ret = nilfs_get_root_dentry(s, root, root_dentry);
- 	nilfs_put_root(root);
-  out:
-+	mutex_unlock(&nilfs->ns_snapshot_mount_mutex);
- 	return ret;
- }
- 
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 501b7f8..41e6a04 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -76,6 +76,7 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
- 	nilfs->ns_bdev = bdev;
- 	atomic_set(&nilfs->ns_ndirtyblks, 0);
- 	init_rwsem(&nilfs->ns_sem);
-+	mutex_init(&nilfs->ns_snapshot_mount_mutex);
- 	INIT_LIST_HEAD(&nilfs->ns_dirty_files);
- 	INIT_LIST_HEAD(&nilfs->ns_gc_inodes);
- 	spin_lock_init(&nilfs->ns_inode_lock);
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index ef40a51..2558f32 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -47,6 +47,7 @@ enum {
-  * @ns_flags: flags
-  * @ns_bdev: block device
-  * @ns_sem: semaphore for shared states
-+ * @ns_snapshot_mount_mutex: mutex to protect snapshot mounts
-  * @ns_sbh: buffer heads of on-disk super blocks
-  * @ns_sbp: pointers to super block data
-  * @ns_sbwtime: previous write time of super block
-@@ -100,6 +101,7 @@ struct the_nilfs {
- 
- 	struct block_device    *ns_bdev;
- 	struct rw_semaphore	ns_sem;
-+	struct mutex		ns_snapshot_mount_mutex;
- 
- 	/*
- 	 * used for
+  out_sem:
+ 	up_write(&NILFS_MDT(cpfile)->mi_sem);
 -- 
 1.7.9.3
