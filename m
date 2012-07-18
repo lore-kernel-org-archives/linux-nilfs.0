@@ -1,222 +1,157 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 1/2] NILFS2: add omitted comments for structures in
- nilfs2_fs.h
-Date: Thu, 19 Jul 2012 02:27:41 +0900 (JST)
-Message-ID: <20120719.022741.67905869.konishi.ryusuke@lab.ntt.co.jp>
-References: <340999B0-8D2C-4929-A47D-4CBB6CE0AE50@dubeyko.com>
+Subject: Re: [PATCH 2/2] NILFS2: add omitted comments for different
+ structures in driver implementation
+Date: Thu, 19 Jul 2012 02:45:13 +0900 (JST)
+Message-ID: <20120719.024513.121245310.konishi.ryusuke@lab.ntt.co.jp>
+References: <DBB2EDBA-17E4-41B9-9B46-250D0DC12127@dubeyko.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <340999B0-8D2C-4929-A47D-4CBB6CE0AE50-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <DBB2EDBA-17E4-41B9-9B46-250D0DC12127-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+Content-Type: Text/Plain; charset="utf-8"
 To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
-On Mon, 16 Jul 2012 23:51:45 +0400, Vyacheslav Dubeyko wrote:
-> Hi,
-> 
-> This patch adds omitted comments for structures in nilfs2_fs.h.
-> 
-> With the best regards,
-> Vyacheslav Dubeyko.
-
-Very helpful patch, thank you.
-
-The patch seems mostly ok, but I have a few comments.  Please consider
-reflecting the comments in-line below.
-
-Regards,
-Ryusuke Konishi
-
-> --
-> From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Subject: [PATCH 1/2] NILFS2: add omitted comments for structures in nilfs2_fs.h
-> 
-> This patch adds omitted comments for structures in nilfs2_fs.h.
-> 
-> Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> ---
-> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-> index 89bd4a4..d7ef08e 100644
-> --- a/include/linux/nilfs2_fs.h
-> +++ b/include/linux/nilfs2_fs.h
-> @@ -293,7 +293,7 @@ struct nilfs_dir_entry {
->  	__le64	inode;			/* Inode number */
->  	__le16	rec_len;		/* Directory entry length */
->  	__u8	name_len;		/* Name length */
-> -	__u8	file_type;
-> +	__u8	file_type;		/* Dir entry type (file, dir, special) */
->  	char	name[NILFS_NAME_LEN];	/* File name */
->  	char    pad;
->  };
-> @@ -395,7 +395,7 @@ union nilfs_binfo {
->  };
->  
->  /**
-> - * struct nilfs_segment_summary - segment summary
-> + * struct nilfs_segment_summary - segment summary header
->   * @ss_datasum: checksum of data
->   * @ss_sumsum: checksum of segment summary
->   * @ss_magic: magic number
-> @@ -683,9 +683,9 @@ struct nilfs_sufile_header {
->  
->  /**
->   * nilfs_suinfo - segment usage information
-> - * @sui_lastmod:
-> - * @sui_nblocks:
-> - * @sui_flags:
-> + * @sui_lastmod: timestamp of last modification
-> + * @sui_nblocks: number of live blocks in segment
-
-"live blocks" is confusing because it doesn't represent live/dead
-state of blocks.  To be precise, it means "written" or "in-use"
-blocks:
-
- * @sui_nblocks: number of written blocks in segment
-
-
-> + * @sui_flags: segment usage flags
->   */
->  struct nilfs_suinfo {
->  	__u64 sui_lastmod;
-> @@ -716,9 +716,10 @@ enum {
->  };
->  
->  /**
-> - * struct nilfs_cpmode -
-> - * @cc_cno:
-> - * @cc_mode:
-> + * struct nilfs_cpmode - change checkpoint mode structure
-> + * @cm_cno: checkpoint number
-> + * @cm_mode: mode of checkpoint
-> + * @cm_pad: padding
->   */
->  struct nilfs_cpmode {
->  	__u64 cm_cno;
-> @@ -728,11 +729,11 @@ struct nilfs_cpmode {
->  
->  /**
->   * struct nilfs_argv - argument vector
-> - * @v_base:
-> - * @v_nmembs:
-> - * @v_size:
-> - * @v_flags:
-> - * @v_index:
-> + * @v_base: pointer on data array from userspace
-> + * @v_nmembs: number of members in data array
-> + * @v_size: size of data array in bytes
-> + * @v_flags: flags
-> + * @v_index: index (index in array or checkpoint number)
-
-@v_index is used to pass a start number of the target data items (e.g.
-start checkpoint number or start segment number).  It's not like
-@v_index gives an index of the data array.
-
- * @v_index: start number of target data items
-
->   */
->  struct nilfs_argv {
->  	__u64 v_base;
-> @@ -743,9 +744,9 @@ struct nilfs_argv {
->  };
->  
->  /**
-> - * struct nilfs_period -
-> - * @p_start:
-> - * @p_end:
-> + * struct nilfs_period - period of checkpoint numbers
-> + * @p_start: start checkpoint number
-> + * @p_end: end checkpoint number
-
-We often confuse these two numbers.  Start checkpoint numbers are
-inclusive in nilfs, however end checkpoint numbers are not.
-
-The following notes would be helpful.
-
- * @p_start: start checkpoint number (inclusive)
- * @p_end: end checkpoint number (exclusive)
-
-
->   */
->  struct nilfs_period {
->  	__u64 p_start;
-> @@ -753,7 +754,7 @@ struct nilfs_period {
->  };
->  
->  /**
-> - * struct nilfs_cpstat -
-> + * struct nilfs_cpstat - checkpoint statistics
->   * @cs_cno: checkpoint number
->   * @cs_ncps: number of checkpoints
->   * @cs_nsss: number of snapshots
-> @@ -765,7 +766,7 @@ struct nilfs_cpstat {
->  };
->  
->  /**
-> - * struct nilfs_sustat -
-> + * struct nilfs_sustat - segment usage statistics
->   * @ss_nsegs: number of segments
->   * @ss_ncleansegs: number of clean segments
->   * @ss_ndirtysegs: number of dirty segments
-> @@ -784,10 +785,10 @@ struct nilfs_sustat {
->  
->  /**
->   * struct nilfs_vinfo - virtual block number information
-> - * @vi_vblocknr:
-> - * @vi_start:
-> - * @vi_end:
-> - * @vi_blocknr:
-> + * @vi_vblocknr: virtual block number
-> + * @vi_start: start checkpoint number
-> + * @vi_end: end checkpoint number
-
-ditto.
-
-> + * @vi_blocknr: disk block number
->   */
->  struct nilfs_vinfo {
->  	__u64 vi_vblocknr;
-> @@ -797,7 +798,15 @@ struct nilfs_vinfo {
->  };
->  
->  /**
-> - * struct nilfs_vdesc -
-> + * struct nilfs_vdesc - descriptor of virtual block number
-> + * @vd_ino: inode number
-> + * @vd_cno: checkpoint number
-> + * @vd_vblocknr: virtual block number
-> + * @vd_period: period of checkpoint numbers
-> + * @vd_blocknr: disk block number
-> + * @vd_offset: logical block offset inside a file
-> + * @vd_flags: flags (data or node block)
-> + * @vd_pad: padding
->   */
->  struct nilfs_vdesc {
->  	__u64 vd_ino;
-> @@ -811,7 +820,13 @@ struct nilfs_vdesc {
->  };
->  
->  /**
-> - * struct nilfs_bdesc -
-> + * struct nilfs_bdesc - descriptor of disk block number
-> + * @bd_ino: inode number
-> + * @bd_oblocknr: disk block address (for skipping dead blocks)
-> + * @bd_blocknr: disk block address
-> + * @bd_offset: logical block offset inside a file
-> + * @bd_level: level in the b-tree organization
-> + * @bd_pad: padding
->   */
->  struct nilfs_bdesc {
->  	__u64 bd_ino;
-> --
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+T24gTW9uLCAxNiBKdWwgMjAxMiAyMzo1MjowNiArMDQwMCwgVnlhY2hlc2xhdiBEdWJleWtvIHdy
+b3RlOg0KPiBIaSwNCj4gDQo+IFRoaXMgcGF0Y2ggYWRkcyBvbWl0dGVkIGNvbW1lbnRzIGZvciBk
+aWZmZXJlbnQgc3RydWN0dXJlcyBpbiBkcml2ZXIgaW1wbGVtZW50YXRpb24uDQo+IA0KPiBXaXRo
+IHRoZSBiZXN0IHJlZ2FyZHMsDQo+IFZ5YWNoZXNsYXYgRHViZXlrby4NCj4gLS0NCj4gRnJvbTog
+VnlhY2hlc2xhdiBEdWJleWtvIDxzbGF2YUBkdWJleWtvLmNvbT4NCj4gU3ViamVjdDogW1BBVENI
+IDIvMl0gTklMRlMyOiBhZGQgb21pdHRlZCBjb21tZW50cyBmb3IgZGlmZmVyZW50IHN0cnVjdHVy
+ZXMgaW4gZHJpdmVyIGltcGxlbWVudGF0aW9uDQo+IA0KPiBUaGlzIHBhdGNoIGFkZHMgb21pdHRl
+ZCBjb21tZW50cyBmb3IgZGlmZmVyZW50IHN0cnVjdHVyZXMgaW4gZHJpdmVyIGltcGxlbWVudGF0
+aW9uLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogVnlhY2hlc2xhdiBEdWJleWtvIDxzbGF2YUBkdWJl
+eWtvLmNvbT4NCg0KTmljZS4NCg0KSSBhZGRlZCB0d28gY29tbWVudHMgaW4gbGluZS4NCg0KUmVn
+YXJkcywNClJ5dXN1a2UgS29uaXNoaQ0KDQo+IC0tLQ0KPiBkaWZmIC0tZ2l0IGEvZnMvbmlsZnMy
+L2FsbG9jLmggYi9mcy9uaWxmczIvYWxsb2MuaA0KPiBpbmRleCBmNWZkZTM2Li5hYjU5MDQ4IDEw
+MDY0NA0KPiAtLS0gYS9mcy9uaWxmczIvYWxsb2MuaA0KPiArKysgYi9mcy9uaWxmczIvYWxsb2Mu
+aA0KPiBAQCAtNzcsMTQgKzc3LDIyIEBAIGludCBuaWxmc19wYWxsb2NfZnJlZXYoc3RydWN0IGlu
+b2RlICosIF9fdTY0ICosIHNpemVfdCk7DQo+ICAjZGVmaW5lIG5pbGZzX2ZpbmRfbmV4dF96ZXJv
+X2JpdAlmaW5kX25leHRfemVyb19iaXRfbGUNCj4gIA0KPiAgLyoNCj4gLSAqIHBlcnNpc3RlbnQg
+b2JqZWN0IGFsbG9jYXRvciBjYWNoZQ0KPiArICogbmlsZnNfYmhfYXNzb2MgLSBibG9jayBvZmZz
+ZXQgYW5kIGJ1ZmZlciBoZWFkIGFzc29jaWF0aW9uDQo+ICsgKiBAYmxrb2ZmOiBibG9jayBvZmZz
+ZXQNCj4gKyAqIEBiaDogYnVmZmVyIGhlYWQNCj4gICAqLw0KPiAtDQo+ICBzdHJ1Y3QgbmlsZnNf
+YmhfYXNzb2Mgew0KPiAgCXVuc2lnbmVkIGxvbmcgYmxrb2ZmOw0KPiAgCXN0cnVjdCBidWZmZXJf
+aGVhZCAqYmg7DQo+ICB9Ow0KPiAgDQo+ICsvKg0KPiArICogbmlsZnNfcGFsbG9jX2NhY2hlIC0g
+cGVyc2lzdGVudCBvYmplY3QgYWxsb2NhdG9yIGNhY2hlDQo+ICsgKiBAbG9jazogY2FjaGUgcHJv
+dGVjdGluZyBsb2NrDQo+ICsgKiBAcHJldl9kZXNjOiBibG9ja2dyb3VwIGRlc2NyaXB0b3JzIGNh
+Y2hlDQo+ICsgKiBAcHJldl9iaXRtYXA6IGJsb2NrZ3JvdXAgYml0bWFwIGNhY2hlDQo+ICsgKiBA
+cHJldl9lbnRyeTogdHJhbnNsYXRpb24gZW50cmllcyBjYWNoZQ0KPiArICovDQo+ICBzdHJ1Y3Qg
+bmlsZnNfcGFsbG9jX2NhY2hlIHsNCj4gIAlzcGlubG9ja190IGxvY2s7DQo+ICAJc3RydWN0IG5p
+bGZzX2JoX2Fzc29jIHByZXZfZGVzYzsNCj4gZGlmZiAtLWdpdCBhL2ZzL25pbGZzMi9ibWFwLmgg
+Yi9mcy9uaWxmczIvYm1hcC5oDQo+IGluZGV4IDQwZDlmNDUuLmFhN2NiZmUgMTAwNjQ0DQo+IC0t
+LSBhL2ZzL25pbGZzMi9ibWFwLmgNCj4gKysrIGIvZnMvbmlsZnMyL2JtYXAuaA0KPiBAQCAtMTM1
+LDYgKzEzNSwxMyBAQCBzdHJ1Y3QgbmlsZnNfYm1hcCB7DQo+ICAvKiBzdGF0ZSAqLw0KPiAgI2Rl
+ZmluZSBOSUxGU19CTUFQX0RJUlRZCTB4MDAwMDAwMDENCj4gIA0KPiArLyoNCj4gKyAqIG5pbGZz
+X2JtYXBfc3RvcmUgLSBzaGFkb3cgY29weSBvZiBibWFwIHN0YXRlDQo+ICsgKiBAZGF0YTogY2Fj
+aGVkIHJhdyBibG9jayBtYXBwaW5nIG9mIG9uLWRpc2sgaW5vZGUNCj4gKyAqIEBsYXN0X2FsbG9j
+YXRlZF9rZXk6IGNhY2hlZCB2YWx1ZSBvZiBsYXN0IGFsbG9jYXRlZCBrZXkgZm9yIGRhdGEgYmxv
+Y2sNCj4gKyAqIEBsYXN0X2FsbG9jYXRlZF9wdHI6IGNhY2hlZCB2YWx1ZSBvZiBsYXN0IGFsbG9j
+YXRlZCBwdHIgZm9yIGRhdGEgYmxvY2sNCj4gKyAqIEBzdGF0ZTogY2FjaGVkIHZhbHVlIG9mIHN0
+YXRlIGZpZWxkIG9mIGJtYXAgc3RydWN0dXJlDQo+ICsgKi8NCj4gIHN0cnVjdCBuaWxmc19ibWFw
+X3N0b3JlIHsNCj4gIAlfX2xlNjQgZGF0YVtOSUxGU19CTUFQX1NJWkUgLyBzaXplb2YoX19sZTY0
+KV07DQo+ICAJX191NjQgbGFzdF9hbGxvY2F0ZWRfa2V5Ow0KPiBkaWZmIC0tZ2l0IGEvZnMvbmls
+ZnMyL2J0bm9kZS5oIGIvZnMvbmlsZnMyL2J0bm9kZS5oDQo+IGluZGV4IDNhNGRkMmQuLjE0OGYw
+M2IgMTAwNjQ0DQo+IC0tLSBhL2ZzL25pbGZzMi9idG5vZGUuaA0KPiArKysgYi9mcy9uaWxmczIv
+YnRub2RlLmgNCj4gQEAgLTI5LDcgKzI5LDEzIEBADQo+ICAjaW5jbHVkZSA8bGludXgvZnMuaD4N
+Cj4gICNpbmNsdWRlIDxsaW51eC9iYWNraW5nLWRldi5oPg0KPiAgDQo+IC0NCj4gKy8qDQo+ICsg
+KiBuaWxmc19idG5vZGVfY2hrZXlfY3R4dCAtIGNoYW5nZSBrZXkgY29udGV4dA0KPiArICogQG9s
+ZGtleTogb2xkIGtleSBvZiBibG9ja+KAmXMgbW92aW5nIGNvbnRlbnQNCj4gKyAqIEBuZXdrZXk6
+IG5ldyBrZXkgZm9yIGJsb2Nr4oCZcyBjb250ZW50DQoNCk5vbiBhc2NpaSBjaGFyYWN0ZXJzIGFy
+ZSBtaXhlZCBpbi4gIGJsb2NrJ3MgKG1vdmluZykgY29udGVudCA/DQoNCj4gKyAqIEBiaDogYnVm
+ZmVyIGhlYWQgb2Ygb2xkIGJ1ZmZlcg0KPiArICogQG5ld2JoOiBidWZmZXIgaGVhZCBvZiBuZXcg
+YnVmZmVyDQo+ICsgKi8NCj4gIHN0cnVjdCBuaWxmc19idG5vZGVfY2hrZXlfY3R4dCB7DQo+ICAJ
+X191NjQgb2xka2V5Ow0KPiAgCV9fdTY0IG5ld2tleTsNCj4gZGlmZiAtLWdpdCBhL2ZzL25pbGZz
+Mi9kYXQuYyBiL2ZzL25pbGZzMi9kYXQuYw0KPiBpbmRleCBiNWMxM2YzLi5kZGEwODcyIDEwMDY0
+NA0KPiAtLS0gYS9mcy9uaWxmczIvZGF0LmMNCj4gKysrIGIvZnMvbmlsZnMyL2RhdC5jDQo+IEBA
+IC0zMyw2ICszMywxMiBAQA0KPiAgI2RlZmluZSBOSUxGU19DTk9fTUlOCSgoX191NjQpMSkNCj4g
+ICNkZWZpbmUgTklMRlNfQ05PX01BWAkofihfX3U2NCkwKQ0KPiAgDQo+ICsvKg0KPiArICogbmls
+ZnNfZGF0X2luZm8gLSBvbi1tZW1vcnkgcHJpdmF0ZSBkYXRhIG9mIERBVCBmaWxlDQo+ICsgKiBA
+bWk6IG9uLW1lbW9yeSBwcml2YXRlIGRhdGEgb2YgbWV0YWRhdGEgZmlsZQ0KPiArICogQHBhbGxv
+Y19jYWNoZTogcGVyc2lzdGVudCBvYmplY3QgYWxsb2NhdG9yIGNhY2hlIG9mIERBVCBmaWxlDQo+
+ICsgKiBAc2hhZG93OiBzaGFkb3cgbWFwIG9mIERBVCBmaWxlDQo+ICsgKi8NCj4gIHN0cnVjdCBu
+aWxmc19kYXRfaW5mbyB7DQo+ICAJc3RydWN0IG5pbGZzX21kdF9pbmZvIG1pOw0KPiAgCXN0cnVj
+dCBuaWxmc19wYWxsb2NfY2FjaGUgcGFsbG9jX2NhY2hlOw0KPiBkaWZmIC0tZ2l0IGEvZnMvbmls
+ZnMyL2V4cG9ydC5oIGIvZnMvbmlsZnMyL2V4cG9ydC5oDQo+IGluZGV4IGE3MWNjNDEuLjg5ODJh
+ZTMgMTAwNjQ0DQo+IC0tLSBhL2ZzL25pbGZzMi9leHBvcnQuaA0KPiArKysgYi9mcy9uaWxmczIv
+ZXhwb3J0LmgNCj4gQEAgLTUsNiArNSwxNCBAQA0KPiAgDQo+ICBleHRlcm4gY29uc3Qgc3RydWN0
+IGV4cG9ydF9vcGVyYXRpb25zIG5pbGZzX2V4cG9ydF9vcHM7DQo+ICANCj4gKy8qDQo+ICsgKiBu
+aWxmc19maWQgLSBOSUxGUyBmaWxlIGlkIHR5cGUNCj4gKyAqIEBjbm86IGNoZWNrcG9pbnQgbnVt
+YmVyDQo+ICsgKiBAaW5vOiBpbm9kZSBudW1iZXINCj4gKyAqIEBnZW46IGZpbGUgZ2VuZXJhdGlv
+biAodmVyc2lvbikgZm9yIE5GUw0KPiArICogQHBhcmVudF9nZW46IHBhcmVudCBnZW5lcmF0aW9u
+ICh2ZXJzaW9uKSBmb3IgTkZTDQo+ICsgKiBAcGFyZW50X2lubzogcGFyZW50IGlub2RlIG51bWJl
+cg0KPiArICovDQo+ICBzdHJ1Y3QgbmlsZnNfZmlkIHsNCj4gIAl1NjQgY25vOw0KPiAgCXU2NCBp
+bm87DQo+IGRpZmYgLS1naXQgYS9mcy9uaWxmczIvaWZpbGUuYyBiL2ZzL25pbGZzMi9pZmlsZS5j
+DQo+IGluZGV4IDVhNDhkZjcuLmEwNDM5NzEgMTAwNjQ0DQo+IC0tLSBhL2ZzL25pbGZzMi9pZmls
+ZS5jDQo+ICsrKyBiL2ZzL25pbGZzMi9pZmlsZS5jDQo+IEBAIC0yOSw3ICsyOSwxMSBAQA0KPiAg
+I2luY2x1ZGUgImFsbG9jLmgiDQo+ICAjaW5jbHVkZSAiaWZpbGUuaCINCj4gIA0KPiAtDQo+ICsv
+Kg0KPiArICogbmlsZnNfaWZpbGVfaW5mbyAtIG9uLW1lbW9yeSBwcml2YXRlIGRhdGEgb2YgaWZp
+bGUNCj4gKyAqIEBtaTogb24tbWVtb3J5IHByaXZhdGUgZGF0YSBvZiBtZXRhZGF0YSBmaWxlDQo+
+ICsgKiBAcGFsbG9jX2NhY2hlOiBwZXJzaXN0ZW50IG9iamVjdCBhbGxvY2F0b3IgY2FjaGUgb2Yg
+aWZpbGUNCj4gKyAqLw0KPiAgc3RydWN0IG5pbGZzX2lmaWxlX2luZm8gew0KPiAgCXN0cnVjdCBu
+aWxmc19tZHRfaW5mbyBtaTsNCj4gIAlzdHJ1Y3QgbmlsZnNfcGFsbG9jX2NhY2hlIHBhbGxvY19j
+YWNoZTsNCj4gZGlmZiAtLWdpdCBhL2ZzL25pbGZzMi9pbm9kZS5jIGIvZnMvbmlsZnMyL2lub2Rl
+LmMNCj4gaW5kZXggN2NjNjQ0Ni4uNmYwNWJlNSAxMDA2NDQNCj4gLS0tIGEvZnMvbmlsZnMyL2lu
+b2RlLmMNCj4gKysrIGIvZnMvbmlsZnMyL2lub2RlLmMNCj4gQEAgLTM0LDYgKzM0LDEzIEBADQo+
+ICAjaW5jbHVkZSAiY3BmaWxlLmgiDQo+ICAjaW5jbHVkZSAiaWZpbGUuaCINCj4gIA0KPiArLyoN
+Cj4gKyAqIG5pbGZzX2lnZXRfYXJncyAtIGFyZ3VtZW50cyB1c2VkIGR1cmluZyBjb21wYXJpc29u
+IGJldHdlZW4gaW5vZGVzDQo+ICsgKiBAaW5vOiBpbm9kZSBudW1iZXINCj4gKyAqIEBjbm86IGNo
+ZWNrcG9pbnQgbnVtYmVyDQo+ICsgKiBAcm9vdDogcG9pbnRlciBvbiBOSUxGUyByb290IG9iamVj
+dCAobW91bnRlZCBjaGVja3BvaW50KQ0KPiArICogQGZvcl9nYzogaW5vZGUgZm9yIEdDIGZsYWcN
+Cj4gKyAqLw0KPiAgc3RydWN0IG5pbGZzX2lnZXRfYXJncyB7DQo+ICAJdTY0IGlubzsNCj4gIAlf
+X3U2NCBjbm87DQo+IGRpZmYgLS1naXQgYS9mcy9uaWxmczIvbWR0LmggYi9mcy9uaWxmczIvbWR0
+LmgNCj4gaW5kZXggYWIyMGE0Yi4uNjA0MTA0MiAxMDA2NDQNCj4gLS0tIGEvZnMvbmlsZnMyL21k
+dC5oDQo+ICsrKyBiL2ZzL25pbGZzMi9tZHQuaA0KPiBAQCAtMjgsNiArMjgsMTMgQEANCj4gICNp
+bmNsdWRlICJuaWxmcy5oIg0KPiAgI2luY2x1ZGUgInBhZ2UuaCINCj4gIA0KPiArLyoNCj4gKyAq
+IG5pbGZzX3NoYWRvd19tYXAgLSBzaGFkb3cgbWFwcGluZyBvZiBtZXRhIGRhdGEgZmlsZQ0KPiAr
+ICogQGJtYXBfc3RvcmU6IHNoYWRvdyBjb3B5IG9mIGJtYXAgc3RhdGUNCj4gKyAqIEBmcm96ZW5f
+ZGF0YTogc2hhZG93ZWQgZGlydHkgZGF0YSBwYWdlcw0KPiArICogQGZyb3plbl9idG5vZGVzOiBz
+aGFkb3dlZCBkaXJ0eSBiLXRyZWUgbm9kZXMnIHBhZ2VzDQo+ICsgKiBAZnJvemVuX2J1ZmZlcnM6
+IGxpc3Qgb2YgZnJvemVuIGJ1ZmZlcnMNCj4gKyAqLw0KPiAgc3RydWN0IG5pbGZzX3NoYWRvd19t
+YXAgew0KPiAgCXN0cnVjdCBuaWxmc19ibWFwX3N0b3JlIGJtYXBfc3RvcmU7DQo+ICAJc3RydWN0
+IGFkZHJlc3Nfc3BhY2UgZnJvemVuX2RhdGE7DQo+IGRpZmYgLS1naXQgYS9mcy9uaWxmczIvbmls
+ZnMuaCBiL2ZzL25pbGZzMi9uaWxmcy5oDQo+IGluZGV4IDI1MGFkZDguLjMwZmQ4NWMgMTAwNjQ0
+DQo+IC0tLSBhL2ZzL25pbGZzMi9uaWxmcy5oDQo+ICsrKyBiL2ZzL25pbGZzMi9uaWxmcy5oDQo+
+IEBAIC0zMyw3ICszMywyMCBAQA0KPiAgI2luY2x1ZGUgImJtYXAuaCINCj4gIA0KPiAgLyoNCj4g
+LSAqIG5pbGZzIGlub2RlIGRhdGEgaW4gbWVtb3J5DQo+ICsgKiBuaWxmc19pbm9kZV9pbmZvIC0g
+bmlsZnMgaW5vZGUgZGF0YSBpbiBtZW1vcnkNCj4gKyAqIEBpX2ZsYWdzOiBpbm9kZSBmbGFncw0K
+PiArICogQGlfc3RhdGU6IGR5bmFtaWMgc3RhdGUgZmxhZ3MNCj4gKyAqIEBpX2JtYXA6IHBvaW50
+ZXIgb24gaV9ibWFwX2RhdGENCj4gKyAqIEBpX2JtYXBfZGF0YTogcmF3IGJsb2NrIG1hcHBpbmcN
+Cj4gKyAqIEBpX3hhdHRyOiA8VE9ETz4NCj4gKyAqIEBpX2Rpcl9zdGFydF9sb29rdXA6IHBhZ2Ug
+aW5kZXggb2YgbGFzdCBzdWNjZXNzZnVsIHNlYXJjaA0KPiArICogQGlfY25vOiBjaGVja3BvaW50
+IG51bWJlciBmb3IgR0MgaW5vZGUNCj4gKyAqIEBpX2J0bm9kZV9jYWNoZTogY2FjaGVkIHBhZ2Vz
+IG9mIGItdHJlZSBub2Rlcw0KPiArICogQGlfZGlydHk6IGxpc3QgZm9yIGNvbm5lY3RpbmcgZGly
+dHkgZmlsZXMNCj4gKyAqIEB4YXR0cl9zZW06IHNlbWFwaG9yZSBmb3IgZXh0ZW5kZWQgYXR0cmli
+dXRlcyBwcm9jZXNzaW5nDQo+ICsgKiBAaV9iaDogYnVmZmVyIGNvbnRhaW5zIGRpc2sgaW5vZGUN
+Cj4gKyAqIEBpX3Jvb3Q6IHJvb3Qgb2JqZWN0IG9mIHRoZSBjdXJyZW50IGZpbGVzeXN0ZW0gdHJl
+ZQ0KPiArICogQHZmc19pbm9kZTogVkZTIGlub2RlIG9iamVjdA0KPiAgICovDQo+ICBzdHJ1Y3Qg
+bmlsZnNfaW5vZGVfaW5mbyB7DQo+ICAJX191MzIgaV9mbGFnczsNCj4gZGlmZiAtLWdpdCBhL2Zz
+L25pbGZzMi9zdWZpbGUuYyBiL2ZzL25pbGZzMi9zdWZpbGUuYw0KPiBpbmRleCBjNWI3NjUzLi42
+YWJlNGJjIDEwMDY0NA0KPiAtLS0gYS9mcy9uaWxmczIvc3VmaWxlLmMNCj4gKysrIGIvZnMvbmls
+ZnMyL3N1ZmlsZS5jDQo+IEBAIC0zMCw3ICszMCwxMyBAQA0KPiAgI2luY2x1ZGUgIm1kdC5oIg0K
+PiAgI2luY2x1ZGUgInN1ZmlsZS5oIg0KPiAgDQo+IC0NCj4gKy8qDQo+ICsgKiBuaWxmc19zdWZp
+bGVfaW5mbyAtIG9uLW1lbW9yeSBwcml2YXRlIGRhdGEgb2Ygc3VmaWxlDQo+ICsgKiBAbWk6IG9u
+LW1lbW9yeSBwcml2YXRlIGRhdGEgb2YgbWV0YWRhdGEgZmlsZQ0KPiArICogQG5jbGVhbnNlZ3M6
+IG51bWJlciBvZiBjbGVhbiBzZWdtZW50cw0KPiArICogQGFsbG9jbWluOiBsb3dlciBsaW1pdCBv
+ZiBhbGxvY2F0YWJsZSBzZWdtZW50IHJhbmdlDQo+ICsgKiBAYWxsb2NtYXg6IHVwcGVyIGxpbWl0
+IG9mIGFsbG9jYXRhYmxlIHNlZ21lbnQgcmFuZ2UNCj4gKyAqLw0KPiAgc3RydWN0IG5pbGZzX3N1
+ZmlsZV9pbmZvIHsNCj4gIAlzdHJ1Y3QgbmlsZnNfbWR0X2luZm8gbWk7DQo+ICAJdW5zaWduZWQg
+bG9uZyBuY2xlYW5zZWdzOy8qIG51bWJlciBvZiBjbGVhbiBzZWdtZW50cyAqLw0KPiBkaWZmIC0t
+Z2l0IGEvZnMvbmlsZnMyL3RoZV9uaWxmcy5oIGIvZnMvbmlsZnMyL3RoZV9uaWxmcy5oDQo+IGlu
+ZGV4IDk5OTJiMTEuLjZiM2FjODQgMTAwNjQ0DQo+IC0tLSBhL2ZzL25pbGZzMi90aGVfbmlsZnMu
+aA0KPiArKysgYi9mcy9uaWxmczIvdGhlX25pbGZzLmgNCj4gQEAgLTIyOSw3ICsyMjksNiBAQCBU
+SEVfTklMRlNfRk5TKFNCX0RJUlRZLCBzYl9kaXJ0eSkNCj4gICAqIEBjb3VudDogcmVmY291bnQg
+b2YgdGhpcyBzdHJ1Y3R1cmUNCj4gICAqIEBuaWxmczogbmlsZnMgb2JqZWN0DQo+ICAgKiBAaWZp
+bGU6IGlub2RlIGZpbGUNCj4gLSAqIEByb290OiByb290IGlub2RlDQo+ICAgKiBAaW5vZGVzX2Nv
+dW50OiBudW1iZXIgb2YgaW5vZGVzDQo+ICAgKiBAYmxvY2tzX2NvdW50OiBudW1iZXIgb2YgYmxv
+Y2tzIChSZXNlcnZlZCkNCg0KQWhoLCB0aGVyZSB3YXMgYW4gb2Jzb2xldGUgY29tbWVudC4gIFlv
+dSBjYW4gZ2V0IHJpZCBvZiB0aGlzDQoiKFJlc2VydmVkKSIuDQoNCj4gICAqLw0KPiAtLQ0KPiAN
+Cj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVu
+c3Vic2NyaWJlIGxpbnV4LW5pbGZzIiBpbg0KPiB0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFq
+b3Jkb21vQHZnZXIua2VybmVsLm9yZw0KPiBNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8v
+dmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg==
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
