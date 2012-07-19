@@ -1,200 +1,41 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: PATCH 1/1] nilfs-utils: add omitted comments for structures in
- nilfs2_fs.h
-Date: Thu, 19 Jul 2012 21:03:43 +0900 (JST)
-Message-ID: <20120719.210343.212682527.konishi.ryusuke@lab.ntt.co.jp>
-References: <1342693037.1982.17.camel@slavad-ubuntu-11>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1342693037.1982.17.camel@slavad-ubuntu-11>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 0/2] two more nilfs2 patches
+Date: Thu, 19 Jul 2012 21:34:17 +0900
+Message-ID: <1342701259-32314-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Vyacheslav Dubeyko <slava@dubeyko.com>
 
-On Thu, 19 Jul 2012 14:17:17 +0400, Vyacheslav Dubeyko wrote:
-> Hi,
-> 
-> This patch adds omitted comments for structures in nilfs2_fs.h for the
-> NILFS utilities case. I think that these corrections also important.
+Hi Andrew,
 
-Sure.
+Please apply the following two patches and send them upstream at the
+upcoming merge window, along with the previous patchset.
 
-As for nilfs2_fs.h, I will apply the same change of yours also to
-nilfs-utils later on.
+These add missing comments on structures in nilfs2.
 
 Thanks,
 Ryusuke Konishi
-
-> With the best regards,
-> Vyacheslav Dubeyko.
-> --
-> From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Subject: [PATCH 1/1] nilfs-utils: add omitted comments for structures in
-> nilfs2_fs.h
-> 
-> This patch adds omitted comments for structures in nilfs2_fs.h.
-> 
-> Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> ---
->  include/nilfs2_fs.h |   63
-> +++++++++++++++++++++++++++++++-------------------
->  1 files changed, 39 insertions(+), 24 deletions(-)
-> 
-> diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
-> index a722268..20b1ab9 100644
-> --- a/include/nilfs2_fs.h
-> +++ b/include/nilfs2_fs.h
-> @@ -297,7 +297,7 @@ struct nilfs_dir_entry {
->  	__le64	inode;			/* Inode number */
->  	__le16	rec_len;		/* Directory entry length */
->  	__u8	name_len;		/* Name length */
-> -	__u8	file_type;
-> +	__u8	file_type;		/* Dir entry type (file, dir, special) */
->  	char	name[NILFS_NAME_LEN];	/* File name */
->  	char    pad;
->  };
-> @@ -399,7 +399,7 @@ union nilfs_binfo {
->  };
->  
->  /**
-> - * struct nilfs_segment_summary - segment summary
-> + * struct nilfs_segment_summary - segment summary header
->   * @ss_datasum: checksum of data
->   * @ss_sumsum: checksum of segment summary
->   * @ss_magic: magic number
-> @@ -687,9 +687,9 @@ struct nilfs_sufile_header {
->  
->  /**
->   * nilfs_suinfo - segment usage information
-> - * @sui_lastmod:
-> - * @sui_nblocks:
-> - * @sui_flags:
-> + * @sui_lastmod: timestamp of last modification
-> + * @sui_nblocks: number of written blocks in segment
-> + * @sui_flags: segment usage flags
->   */
->  struct nilfs_suinfo {
->  	__u64 sui_lastmod;
-> @@ -720,9 +720,10 @@ enum {
->  };
->  
->  /**
-> - * struct nilfs_cpmode -
-> - * @cc_cno:
-> - * @cc_mode:
-> + * struct nilfs_cpmode - change checkpoint mode structure
-> + * @cm_cno: checkpoint number
-> + * @cm_mode: mode of checkpoint
-> + * @cm_pad: padding
->   */
->  struct nilfs_cpmode {
->  	__u64 cm_cno;
-> @@ -732,11 +733,11 @@ struct nilfs_cpmode {
->  
->  /**
->   * struct nilfs_argv - argument vector
-> - * @v_base:
-> - * @v_nmembs:
-> - * @v_size:
-> - * @v_flags:
-> - * @v_index:
-> + * @v_base: pointer on data array from userspace
-> + * @v_nmembs: number of members in data array
-> + * @v_size: size of data array in bytes
-> + * @v_flags: flags
-> + * @v_index: start number of target data items
->   */
->  struct nilfs_argv {
->  	__u64 v_base;
-> @@ -747,9 +748,9 @@ struct nilfs_argv {
->  };
->  
->  /**
-> - * struct nilfs_period -
-> - * @p_start:
-> - * @p_end:
-> + * struct nilfs_period - period of checkpoint numbers
-> + * @p_start: start checkpoint number (inclusive)
-> + * @p_end: end checkpoint number (exclusive)
->   */
->  struct nilfs_period {
->  	__u64 p_start;
-> @@ -757,7 +758,7 @@ struct nilfs_period {
->  };
->  
->  /**
-> - * struct nilfs_cpstat -
-> + * struct nilfs_cpstat - checkpoint statistics
->   * @cs_cno: checkpoint number
->   * @cs_ncps: number of checkpoints
->   * @cs_nsss: number of snapshots
-> @@ -769,7 +770,7 @@ struct nilfs_cpstat {
->  };
->  
->  /**
-> - * struct nilfs_sustat -
-> + * struct nilfs_sustat - segment usage statistics
->   * @ss_nsegs: number of segments
->   * @ss_ncleansegs: number of clean segments
->   * @ss_ndirtysegs: number of dirty segments
-> @@ -788,10 +789,10 @@ struct nilfs_sustat {
->  
->  /**
->   * struct nilfs_vinfo - virtual block number information
-> - * @vi_vblocknr:
-> - * @vi_start:
-> - * @vi_end:
-> - * @vi_blocknr:
-> + * @vi_vblocknr: virtual block number
-> + * @vi_start: start checkpoint number (inclusive)
-> + * @vi_end: end checkpoint number (exclusive)
-> + * @vi_blocknr: disk block number
->   */
->  struct nilfs_vinfo {
->  	__u64 vi_vblocknr;
-> @@ -801,7 +802,15 @@ struct nilfs_vinfo {
->  };
->  
->  /**
-> - * struct nilfs_vdesc -
-> + * struct nilfs_vdesc - descriptor of virtual block number
-> + * @vd_ino: inode number
-> + * @vd_cno: checkpoint number
-> + * @vd_vblocknr: virtual block number
-> + * @vd_period: period of checkpoint numbers
-> + * @vd_blocknr: disk block number
-> + * @vd_offset: logical block offset inside a file
-> + * @vd_flags: flags (data or node block)
-> + * @vd_pad: padding
->   */
->  struct nilfs_vdesc {
->  	__u64 vd_ino;
-> @@ -815,7 +824,13 @@ struct nilfs_vdesc {
->  };
->  
->  /**
-> - * struct nilfs_bdesc -
-> + * struct nilfs_bdesc - descriptor of disk block number
-> + * @bd_ino: inode number
-> + * @bd_oblocknr: disk block address (for skipping dead blocks)
-> + * @bd_blocknr: disk block address
-> + * @bd_offset: logical block offset inside a file
-> + * @bd_level: level in the b-tree organization
-> + * @bd_pad: padding
->   */
->  struct nilfs_bdesc {
->  	__u64 bd_ino;
-> --
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+Vyacheslav Dubeyko (2):
+      NILFS2: add omitted comments for structures in nilfs2_fs.h
+      NILFS2: add omitted comments for different structures in driver implementation
+
+ fs/nilfs2/alloc.h         |   14 +++++++---
+ fs/nilfs2/bmap.h          |    7 +++++
+ fs/nilfs2/btnode.h        |    8 +++++-
+ fs/nilfs2/dat.c           |    6 +++++
+ fs/nilfs2/export.h        |    8 ++++++
+ fs/nilfs2/ifile.c         |    6 ++++-
+ fs/nilfs2/inode.c         |    7 +++++
+ fs/nilfs2/mdt.h           |    7 +++++
+ fs/nilfs2/nilfs.h         |   17 ++++++++++--
+ fs/nilfs2/sufile.c        |    8 +++++-
+ fs/nilfs2/the_nilfs.h     |    3 +--
+ include/linux/nilfs2_fs.h |   63 ++++++++++++++++++++++++++++-----------------
+ 12 files changed, 120 insertions(+), 34 deletions(-)
