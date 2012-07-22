@@ -1,262 +1,40 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/2] NILFS2: add omitted comments for different structures in driver implementation
-Date: Thu, 19 Jul 2012 21:34:19 +0900
-Message-ID: <1342701259-32314-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1342701259-32314-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 0/2] nilfs-utils: add skeleton of fsck.nilfs2
+Date: Sun, 22 Jul 2012 19:13:01 +0400
+Message-ID: <9DBF030C-DB82-4D29-884C-4C036FEC996D@dubeyko.com>
+Mime-Version: 1.0 (Apple Message framework v1084)
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1342701259-32314-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:To:Message-Id:Date:Subject:Content-Transfer-Encoding:Content-Type:From; bh=X8AApMgrEEe7Bc629D7ByEhkN3OAM7NCHzZWrmdJysQ=;
+	b=rsly6ufeUpUlTyQAhC0s3VRWZuWD1PVlAcvckFwr+cjSENp2825ke73cg5smjLqZq3rVPuomOOKXcCXeXZWArvhQv2A4vxMX5hm17uxlLtRCs1vtBWC3YkDTvam/TnPC;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Hi,
 
-This patch adds omitted comments for different structures in driver
-implementation.
+This patch set adds skeleton of fsck.nilfs2 utility into nilfs-utils package. Currently, fsck.nilfs2 only try to check presence of primary and secondary superblocks. It checks magic signature in superblock.
 
-[modified so as to comply with kernel-doc data structure comment]
+With the best regards,
+Vyacheslav Dubeyko.
+--
+ configure.ac     |    3 ++-
+ sbin/Makefile.am |    2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/alloc.h     |   14 +++++++++++---
- fs/nilfs2/bmap.h      |    7 +++++++
- fs/nilfs2/btnode.h    |    8 +++++++-
- fs/nilfs2/dat.c       |    6 ++++++
- fs/nilfs2/export.h    |    8 ++++++++
- fs/nilfs2/ifile.c     |    6 +++++-
- fs/nilfs2/inode.c     |    7 +++++++
- fs/nilfs2/mdt.h       |    7 +++++++
- fs/nilfs2/nilfs.h     |   17 +++++++++++++++--
- fs/nilfs2/sufile.c    |    8 +++++++-
- fs/nilfs2/the_nilfs.h |    3 +--
- 11 files changed, 81 insertions(+), 10 deletions(-)
-
-diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
-index f5fde36..fb72381 100644
---- a/fs/nilfs2/alloc.h
-+++ b/fs/nilfs2/alloc.h
-@@ -76,15 +76,23 @@ int nilfs_palloc_freev(struct inode *, __u64 *, size_t);
- #define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
- #define nilfs_find_next_zero_bit	find_next_zero_bit_le
- 
--/*
-- * persistent object allocator cache
-+/**
-+ * struct nilfs_bh_assoc - block offset and buffer head association
-+ * @blkoff: block offset
-+ * @bh: buffer head
-  */
--
- struct nilfs_bh_assoc {
- 	unsigned long blkoff;
- 	struct buffer_head *bh;
- };
- 
-+/**
-+ * struct nilfs_palloc_cache - persistent object allocator cache
-+ * @lock: cache protecting lock
-+ * @prev_desc: blockgroup descriptors cache
-+ * @prev_bitmap: blockgroup bitmap cache
-+ * @prev_entry: translation entries cache
-+ */
- struct nilfs_palloc_cache {
- 	spinlock_t lock;
- 	struct nilfs_bh_assoc prev_desc;
-diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index 40d9f45..b89e680 100644
---- a/fs/nilfs2/bmap.h
-+++ b/fs/nilfs2/bmap.h
-@@ -135,6 +135,13 @@ struct nilfs_bmap {
- /* state */
- #define NILFS_BMAP_DIRTY	0x00000001
- 
-+/**
-+ * struct nilfs_bmap_store - shadow copy of bmap state
-+ * @data: cached raw block mapping of on-disk inode
-+ * @last_allocated_key: cached value of last allocated key for data block
-+ * @last_allocated_ptr: cached value of last allocated ptr for data block
-+ * @state: cached value of state field of bmap structure
-+ */
- struct nilfs_bmap_store {
- 	__le64 data[NILFS_BMAP_SIZE / sizeof(__le64)];
- 	__u64 last_allocated_key;
-diff --git a/fs/nilfs2/btnode.h b/fs/nilfs2/btnode.h
-index 3a4dd2d..d876b56 100644
---- a/fs/nilfs2/btnode.h
-+++ b/fs/nilfs2/btnode.h
-@@ -29,7 +29,13 @@
- #include <linux/fs.h>
- #include <linux/backing-dev.h>
- 
--
-+/**
-+ * struct nilfs_btnode_chkey_ctxt - change key context
-+ * @oldkey: old key of block's moving content
-+ * @newkey: new key for block's content
-+ * @bh: buffer head of old buffer
-+ * @newbh: buffer head of new buffer
-+ */
- struct nilfs_btnode_chkey_ctxt {
- 	__u64 oldkey;
- 	__u64 newkey;
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index b5c13f3..fa0f803 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -33,6 +33,12 @@
- #define NILFS_CNO_MIN	((__u64)1)
- #define NILFS_CNO_MAX	(~(__u64)0)
- 
-+/**
-+ * struct nilfs_dat_info - on-memory private data of DAT file
-+ * @mi: on-memory private data of metadata file
-+ * @palloc_cache: persistent object allocator cache of DAT file
-+ * @shadow: shadow map of DAT file
-+ */
- struct nilfs_dat_info {
- 	struct nilfs_mdt_info mi;
- 	struct nilfs_palloc_cache palloc_cache;
-diff --git a/fs/nilfs2/export.h b/fs/nilfs2/export.h
-index a71cc41..19ccbf9 100644
---- a/fs/nilfs2/export.h
-+++ b/fs/nilfs2/export.h
-@@ -5,6 +5,14 @@
- 
- extern const struct export_operations nilfs_export_ops;
- 
-+/**
-+ * struct nilfs_fid - NILFS file id type
-+ * @cno: checkpoint number
-+ * @ino: inode number
-+ * @gen: file generation (version) for NFS
-+ * @parent_gen: parent generation (version) for NFS
-+ * @parent_ino: parent inode number
-+ */
- struct nilfs_fid {
- 	u64 cno;
- 	u64 ino;
-diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
-index 5a48df7..d8e65bd 100644
---- a/fs/nilfs2/ifile.c
-+++ b/fs/nilfs2/ifile.c
-@@ -29,7 +29,11 @@
- #include "alloc.h"
- #include "ifile.h"
- 
--
-+/**
-+ * struct nilfs_ifile_info - on-memory private data of ifile
-+ * @mi: on-memory private data of metadata file
-+ * @palloc_cache: persistent object allocator cache of ifile
-+ */
- struct nilfs_ifile_info {
- 	struct nilfs_mdt_info mi;
- 	struct nilfs_palloc_cache palloc_cache;
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 7cc6446..6e2c3db 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -34,6 +34,13 @@
- #include "cpfile.h"
- #include "ifile.h"
- 
-+/**
-+ * struct nilfs_iget_args - arguments used during comparison between inodes
-+ * @ino: inode number
-+ * @cno: checkpoint number
-+ * @root: pointer on NILFS root object (mounted checkpoint)
-+ * @for_gc: inode for GC flag
-+ */
- struct nilfs_iget_args {
- 	u64 ino;
- 	__u64 cno;
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index ab20a4b..ab172e8 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -28,6 +28,13 @@
- #include "nilfs.h"
- #include "page.h"
- 
-+/**
-+ * struct nilfs_shadow_map - shadow mapping of meta data file
-+ * @bmap_store: shadow copy of bmap state
-+ * @frozen_data: shadowed dirty data pages
-+ * @frozen_btnodes: shadowed dirty b-tree nodes' pages
-+ * @frozen_buffers: list of frozen buffers
-+ */
- struct nilfs_shadow_map {
- 	struct nilfs_bmap_store bmap_store;
- 	struct address_space frozen_data;
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 250add8..74cece8 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -32,8 +32,21 @@
- #include "the_nilfs.h"
- #include "bmap.h"
- 
--/*
-- * nilfs inode data in memory
-+/**
-+ * struct nilfs_inode_info - nilfs inode data in memory
-+ * @i_flags: inode flags
-+ * @i_state: dynamic state flags
-+ * @i_bmap: pointer on i_bmap_data
-+ * @i_bmap_data: raw block mapping
-+ * @i_xattr: <TODO>
-+ * @i_dir_start_lookup: page index of last successful search
-+ * @i_cno: checkpoint number for GC inode
-+ * @i_btnode_cache: cached pages of b-tree nodes
-+ * @i_dirty: list for connecting dirty files
-+ * @xattr_sem: semaphore for extended attributes processing
-+ * @i_bh: buffer contains disk inode
-+ * @i_root: root object of the current filesystem tree
-+ * @vfs_inode: VFS inode object
-  */
- struct nilfs_inode_info {
- 	__u32 i_flags;
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index c5b7653..3127e9f 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -30,7 +30,13 @@
- #include "mdt.h"
- #include "sufile.h"
- 
--
-+/**
-+ * struct nilfs_sufile_info - on-memory private data of sufile
-+ * @mi: on-memory private data of metadata file
-+ * @ncleansegs: number of clean segments
-+ * @allocmin: lower limit of allocatable segment range
-+ * @allocmax: upper limit of allocatable segment range
-+ */
- struct nilfs_sufile_info {
- 	struct nilfs_mdt_info mi;
- 	unsigned long ncleansegs;/* number of clean segments */
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index 2558f32..6eee417 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -232,9 +232,8 @@ THE_NILFS_FNS(SB_DIRTY, sb_dirty)
-  * @count: refcount of this structure
-  * @nilfs: nilfs object
-  * @ifile: inode file
-- * @root: root inode
-  * @inodes_count: number of inodes
-- * @blocks_count: number of blocks (Reserved)
-+ * @blocks_count: number of blocks
-  */
- struct nilfs_root {
- 	__u64 cno;
--- 
-1.7.9.3
+ sbin/fsck/Makefile.am        |   13 ++
+ sbin/fsck/fsck_messages.c    |  254 ++++++++++++++++++++++++
+ sbin/fsck/fsck_messages.def  |   62 ++++++
+ sbin/fsck/fsck_messages.h    |  110 +++++++++++
+ sbin/fsck/fsck_nilfs2.c      |  379 +++++++++++++++++++++++++++++++++++
+ sbin/fsck/fsck_nilfs2.h      |   37 ++++
+ sbin/fsck/fsck_raw_ops.c     |  413 +++++++++++++++++++++++++++++++++++++++
+ sbin/fsck/fsck_raw_ops.h     |   46 +++++
+ sbin/fsck/nilfs_superblock.c |  445 ++++++++++++++++++++++++++++++++++++++++++
+ sbin/fsck/nilfs_superblock.h |   48 +++++
+ 10 files changed, 1807 insertions(+), 0 deletions(-)
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
