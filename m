@@ -1,7 +1,7 @@
 From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: read error on superblock
-Date: Mon, 23 Jul 2012 11:42:37 +0200
-Message-ID: <1662915.ExQE7jMHJu@coil>
+Date: Mon, 23 Jul 2012 13:06:57 +0200
+Message-ID: <2948186.vfdzh15lNi@coil>
 References: <19753282.RhzHOQAfKG@coil> <1343035048.1974.6.camel@slavad-ubuntu-11> <20120723.183907.154986664.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -10,13 +10,13 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=from:to:cc:subject:date:message-id:x-face:user-agent:in-reply-to
          :references:mime-version:content-transfer-encoding:content-type;
-        bh=f2WwHw4SWR0Z8yoqSZEp3SZZqXo8omOSfBrlDT6L/gQ=;
-        b=WBBtgT1Dz9fygECzqb+dvD7sEWr2QFsVFMPMC48C2oyrtHHMEt81r3poTjht6P9XXY
-         omMUwVMcf07GHdhbSB3WV+nzIvsH1ugMhPS7dXOa7MYOzMpaIk1IOy5x15rhNVlQF57u
-         OLWGJeFQWq8KssXOxEXGrn03GnwO9Ij2r78oS9gWkncPl3bAU9ZFT7A0h2AsgE1zfLS6
-         /OeVki3EoZZSfkjbfdOPtWfiSgUyFs/JiyjOROyK/6+5ZpdJLr3Bqh1BoxrVALht6OOk
-         jGumSNljP3geY6ymm333UejI7tB5N51bk9aqny0swE0/+4XKiRanvvqEIpoRC8E6sPiu
-         r0TQ==
+        bh=H6FHpd1r1T1wQrBCrpqjOaGKFsGZAiLVv/uaSrR/7Q8=;
+        b=Ozp52SMpFLwboZeGA4yzsIMJ+PUnHHhpcWuAZbnQM2tqnRdf8AAMKHBygD831f77kE
+         oJl8AtYtXX7jkrY3uQAnhuRrdgK6ZGqe+KkEXYmUvZ9VRY84kvxCDM3SAUIzix2t6ecD
+         Kjr2OWE3asa0utiCDmKv/Sk/8JblVunfRnmXzWdPqiFM+a4pmnS3rg6ymZwiLbXet0al
+         iCgIhxy1gv0S1S0ZCucF8x6h2BQCYweIMJOM0Fb9pQkEIujBkMIgDyu+tIk/7ESMmYrV
+         s98Z3g6KqlQ1JV11sQ5NEztMvICS7ZTIxwwTRjkkkzXZso+fPJE6ZXBWRdyzUb8gjtX4
+         aGGw==
 In-Reply-To: <20120723.183907.154986664.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -24,21 +24,24 @@ Content-Type: text/plain; charset="utf-8"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi Ryusuke,
-
+Hi again,
 
 On Monday 23 of July 2012 18:39:07 you wrote:
->=20
-> # mount -t nilfs2 <device> <mount-point>
-
-that's what I've tried.
-
-I guess the problem is, the harddrive have not re-allocated the sector =
-as of=20
-yet, so it is /unreadable/ rather than merely containing wrong data.
+> Looks weird.  mount.nilfs2 doesn't output this error message.
 
 
-I'll see later on a while if the drive can re-allocate the sector.
+another computer, same drive:
+
+coil!root!/mnt # mount.nilfs2 -v /dev/sdc3 x -o errors=3Dcontinue,norec=
+overy
+mount.nilfs2: Error while mounting /dev/sdc3 on x: Input/output error
+
+
+also, in dmesg:
+> NILFS warning: mounting unchecked fs
+> ((lotsa ATA read error stuff))
+> NILFS: error searching super root.
+
 
 --=20
 dexen deVries
