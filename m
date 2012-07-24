@@ -1,108 +1,65 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: read error on superblock
-Date: Wed, 25 Jul 2012 01:46:53 +0900 (JST)
-Message-ID: <20120725.014653.38326039.konishi.ryusuke@lab.ntt.co.jp>
-References: <20120724.090604.40913934.konishi.ryusuke@lab.ntt.co.jp>
-	<1343111197.1982.32.camel@slavad-ubuntu-11>
-	<31237317.NQxpWWcrpc@coil>
+Subject: Re: [PATCH 0/2] nilfs-utils: add skeleton of fsck.nilfs2
+Date: Wed, 25 Jul 2012 02:36:54 +0900 (JST)
+Message-ID: <20120725.023654.213985185.konishi.ryusuke@lab.ntt.co.jp>
+References: <9DBF030C-DB82-4D29-884C-4C036FEC996D@dubeyko.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <31237317.NQxpWWcrpc@coil>
+In-Reply-To: <9DBF030C-DB82-4D29-884C-4C036FEC996D-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-2022-jp"
-To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 24 Jul 2012 09:52:18 +0200, dexen deVries wrote:
-> Hi Vyacheslav,
+Hi,
+On Sun, 22 Jul 2012 19:13:01 +0400, Vyacheslav Dubeyko wrote:
+> Hi,
 > 
+> This patch set adds skeleton of fsck.nilfs2 utility into nilfs-utils package. Currently, fsck.nilfs2 only try to check presence of primary and secondary superblocks. It checks magic signature in superblock.
 > 
-> On Tuesday 24 of July 2012 10:26:37 you wrote:
-> > I am afraid that it is not so good from the end user point of view.
-> > 
-> > First of all, the message "mount: /dev/sda3: can't read superblock" can
-> > confuse user. The reason is bad sectors inside the volume but user is
-> > informed about impossibility to read superblock.
-> > 
-> > Secondly, it is possible situation when it really needs to use a volume
-> > in the case of presence of bad sectors. And I think that users can
-> > expect such NILFS behavior because of declared reliability.
-> > 
-> > Unfortunately, as I can understand, NILFS hasn't bad blocks table and
-> > can't process situation of bad blocks presence on volume correctly. It
-> > means that NILFS interprets bad blocks as exceptional case. But from my
-> > point of view, it makes sense to interpret bad blocks as usual thing and
-> > try to work in the presence of ones. For example, fsck potentially can
-> > check NILFS volume on bad blocks presence, construct bad blocks table
-> > and save it on the volume.
+> With the best regards,
+> Vyacheslav Dubeyko.
 
-NILFS does't have sector-based bad blocks table, but it has an error
-flag on the segment usage file (sufile).  If a segment is marked
-'erroneous', it will not be allocated.
+I'm planning to look this patchset weekend.
 
-At present, this doesn't work together with badblocks (mkfs.nilfs2),
-nor the recovery logic.  However it is applicable for this purpose if
-needed.
+One question is about your plan for proceeding this task.
 
-> > I suggest to add "virtual" special file for bad blocks description. It
-> > can be described by inode in ifile and all bad blocks can be described
-> > in DAT file as parts of this "virtual" special file. So, as a result,
-> > NILFS file system driver will have bad blocks table which can be a basis
-> > for excluding bad blocks from operation and trying to survive in the not
-> > good device environment.
-> > 
-> > What do you think about such idea?
-> 
-> I believe bad sectors to be thing of the past mostly; any decent harddrive 
-> (probably also any decent SSD) should re-map them after some re-reads. Some 
-> data & meta-data loss is possible, but overall the FS should be accessible 
-> again.
+Implementing fsck looks a tough task since NILFS has history of data
+and meta-data as well as the current file system structures, and correcting
+filesystem looks to need log write in user-land, which is not yet realized.
 
-I agree with this opinion.
+So, taking a step-by-step approach seems essential.
 
-If the sector-based bad blocks table is sorely-needed, it is worth
-considering, but at least it should be optional and not mandatory.
+In this sense, did you design the skelton, thinking of further steps?
+If you have some strategy to accomplish this task, I'd like to hear
+that.
 
-But even it's well implemented optionally, it still looks overkill
-because most recent hard drives internally have alternate sectors and
-most recent flash based drives have own remap mechanism.
+My concern for this is avoiding rework of the future.
 
-Moreover, how the device corrupts is deeply depends on the nature and
-configuration of underlying block device.  In this sense, in-device or
-in-driver solution looks better to me.
-
-Badblocks table is about to become a thing of the past, it's almost
-stuff of the floppy drive's era.
-
-> I have no idea why my particular HDD did not re-map; perhaps it just takes 
-> much longer than I gave it.
-> 
-> As a point of reference, XFS does not do bad block management either; however, 
-> the partition driver of IRIX does bad sector management -- so it is 
-> implemented one layer below the FS.
-
-Yes, If we implment some kind of redundancy mechanism in the FS layer,
-it absolutely should reflect how the the data integrity should be
-enhanced in the FS layer.
-
+I'm very thankful for your challenges.
 
 With regards,
 Ryusuke Konishi
 
-
-> I guess it /may be/ possible to use Linux' `dm' driver in such manner.
+> --
+>  configure.ac     |    3 ++-
+>  sbin/Makefile.am |    2 +-
+>  2 files changed, 3 insertions(+), 2 deletions(-)
 > 
+>  sbin/fsck/Makefile.am        |   13 ++
+>  sbin/fsck/fsck_messages.c    |  254 ++++++++++++++++++++++++
+>  sbin/fsck/fsck_messages.def  |   62 ++++++
+>  sbin/fsck/fsck_messages.h    |  110 +++++++++++
+>  sbin/fsck/fsck_nilfs2.c      |  379 +++++++++++++++++++++++++++++++++++
+>  sbin/fsck/fsck_nilfs2.h      |   37 ++++
+>  sbin/fsck/fsck_raw_ops.c     |  413 +++++++++++++++++++++++++++++++++++++++
+>  sbin/fsck/fsck_raw_ops.h     |   46 +++++
+>  sbin/fsck/nilfs_superblock.c |  445 ++++++++++++++++++++++++++++++++++++++++++
+>  sbin/fsck/nilfs_superblock.h |   48 +++++
+>  10 files changed, 1807 insertions(+), 0 deletions(-)
 > 
-> Cheers,
-> -- 
-> dexen deVries
-> 
-> [[[↓][→]]]
-> 
-> "all dichotomies are either true or false" is a true paradox because it's 
-> paradoxical only if it is a paradox ;)
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
