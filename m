@@ -1,57 +1,75 @@
-From: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Subject: Re: nilfs_cleanerd won't start for root filesystem
-Date: Wed, 01 Aug 2012 11:32:58 +0200
-Message-ID: <1544142.eijMQvyoNB@coil>
-References: <3290425.VTORBmyZ72@coil> <20120801090028.GT1478@wloczykij>
+Date: Wed, 1 Aug 2012 13:19:21 +0200
+Message-ID: <20120801111921.GU1478@wloczykij>
+References: <3290425.VTORBmyZ72@coil>
+ <20120801090028.GT1478@wloczykij>
+ <1544142.eijMQvyoNB@coil>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="ukZ3tWq1IjZw6zEx"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=from:to:cc:subject:date:message-id:x-face:user-agent:in-reply-to
-         :references:mime-version:content-transfer-encoding:content-type;
-        bh=L8rETIbC9gZZcP3Koav1mSDJETyJUSGLbVTPhSW0VZI=;
-        b=S7Z8ZpklY+pce/Tyx5SP23ko0T4UNe6Caib+UEWaiDWDgWuSh3N8MJetzm5losbYfj
-         hS1t0m6/d7k54nkvzTOlvCqXPn5CDq/a0oMeYlIl1+0nKTHRXVbg13wCg1xfd9lLG3QM
-         x3AwS3SmTa0izCTfkOrSRPpzIyk8ADIAPDV+t3slo2K6L46Z4OIiX76DO8HEuId7CqUI
-         EpMa5FBandvEP/N8oZQAsHlROU9z3KbfDA+vS6w4iC6ynd217lnzQkQfiyQpqL+xGBcn
-         5WSPrmOiFq9WTwNP8sQt35PG6zijb/uS3KfSn3y/xb4zNeMxoM77lldmLDRSNQ1TkEz9
-         EzWw==
-In-Reply-To: <20120801090028.GT1478@wloczykij>
+Content-Disposition: inline
+In-Reply-To: <1544142.eijMQvyoNB@coil>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
-
-Hi Piotr,
+To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
 
-On Wednesday 01 of August 2012 11:00:28 you wrote:
-> Got similar issue [1] few days ago.
+--ukZ3tWq1IjZw6zEx
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Wed, Aug 01, 2012 at 11:32:58AM +0200, dexen deVries wrote:
+> Hi Piotr,
 >=20
-> [1] http://www.mail-archive.com/linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg01186.=
-html
+>=20
+> On Wednesday 01 of August 2012 11:00:28 you wrote:
+> > Got similar issue [1] few days ago.
+> >=20
+> > [1] http://www.mail-archive.com/linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg01186.ht=
+ml
+>=20
+> quick recap, have you gotten any solution better than creating /dev/root=
+=20
+> symlink by hand? ;-)
 
-quick recap, have you gotten any solution better than creating /dev/roo=
-t=20
-symlink by hand? ;-)
+udev downgrade... Looks like there are also other things broken by
+missing /dev/root [1] [2] [3] (a least in Gentoo Linux).
+
+[1] https://bugs.gentoo.org/381761
+[2] https://bugs.gentoo.org/427818
+[3] https://bugs.gentoo.org/390519
 
 
-btw., greetings from poland ;-)
+Piotr Szymaniak.
 
+--ukZ3tWq1IjZw6zEx
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-cheers,
---=20
-dexen deVries
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
 
-[[[=E2=86=93][=E2=86=92]]]
+iQIcBAEBCAAGBQJQGRC5AAoJEEMpAov1cw9lBlEP+wZobHNtETVSLCbQX0XqQg5G
+l2LxCP0UGyjuz634TONgDk4gJqUcFv4qUfI0ELVAPuj5UQV7RugPsb9B8fC1y8ye
+zp9DNFuOjGjb/2awFeFjpVbRe74A7oKEq2r65W0JifLp5H4VqRGCAtN4YBPWdh1b
+1xRlqSY7opDexOXxnlUDhDJJrNghxrKdKQAI4+YqDJoKgK0LhE2ZSaq26oWNfCIw
+jm5twWO0IRHORvcP46ePMHkRCqR8yhU6iTvS3qsvPgHnXLv0G8dhca550NYjyDp6
+Zu5IqQLwjhQ9nqVE8bwpJ74RQ/y2FHjm76J1LnHkpTkVG27nLWMuUnkRb9VyEbzq
+inDpjvxjr90FMsLRN9CbvAUa/NThsmLNEIycNn9b0S9XbIylv8ceSTH05JFToYoo
+LHy+0aaSPrSWYy/01VsGfJg/YsT/aSQ1S2Z9lp4JSNjpUAYrniX6NVhB3URYc2Mm
+jWyOv5jLqwRX5niPDfHnd14h0gs0SmIyVfDYHIxUULT9HEvDgvZR8jeDS1ZaZmgH
+GQI5E/wAK2PAEUugZ/CtKv0nrsyvOE5qufjegm3fs44g8hkewNOorX7jcswWvaEK
+V9SGG0XUO638km3mch5MG/hliKS78qcvojVDDoQ6epEfON5koO/mlNOGLZaFNlXR
+AN2gpRku6cC0009sMy2x
+=o3nT
+-----END PGP SIGNATURE-----
 
-"all dichotomies are either true or false" is a true paradox because it=
-'s=20
-paradoxical only if it is a paradox ;)
+--ukZ3tWq1IjZw6zEx--
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
