@@ -1,77 +1,41 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: nilfs-diff
-Date: Sat, 04 Aug 2012 10:47:31 +0900 (JST)
-Message-ID: <20120804.104731.153851435.konishi.ryusuke@lab.ntt.co.jp>
-References: <1344026705.21631.8.camel@acer.fritz.box>
+From: Paolo Giangrandi <paolo-UnihLHphgvQ1GQ1Ptb7lUw@public.gmane.org>
+Subject: nilfs2 not garbage collecting
+Date: Sun, 5 Aug 2012 13:00:02 +0200
+Message-ID: <CANku=ghnDzkFHpPZ8eT9Y3kTM62zBKMk6TjBVraE4Kisa1TRPQ@mail.gmail.com>
+References: <CANku=ggohcWWoxE1x=XmfWpANKyWRTWb5p_aHh8LU6+utU4OPQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1344026705.21631.8.camel-y7UOyazmsHdwFLYp8hBm2A@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:sender:in-reply-to:references:date
+         :x-google-sender-auth:message-id:subject:from:to:content-type;
+        bh=IvJXjDuFx4oV2fACtfqMA+TCIDHSO9g7Hicrhu8+Jcg=;
+        b=yT1EyoE0A/7yQJDUJq/uU4z67jBps33JpGwax8zneigS3eiXpT4H7XRgyl/1bqQ56f
+         G/HDcYfPlqsg420xJzjIfXf7wwMMzgWx4PUdsD0qClzNbZjNJzRPLwaP/MUH8RBjvLDY
+         T31/0QvxHfAlqwL+XB/2UUu6Dzn3QGvbKthHsqZcyCQtv1qOmzFllKNkxaW2+qy2rzQj
+         wPVr5nGZC6dIjyjw/ToenA6MxZh631JwXvw9i67CcOGFxXMi78vtbSuo0Dac63mRVqb9
+         mJy+8hu65+kG6ObIfjTAWAoK+S/ySWegzBKDeVHEn/F7a+q/ii+Gmb7wTyK40paQM2su
+         oRYw==
+In-Reply-To: <CANku=ggohcWWoxE1x=XmfWpANKyWRTWb5p_aHh8LU6+utU4OPQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Mark Reiche <mark.reiche-Mmb7MZpHnFY@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
-On Fri, 03 Aug 2012 22:45:05 +0200, Mark Reiche wrote:
-> Hi list,
-> 
-> I started using nilfs as root file system and I am really impressed and
-> excited.
-> 
-> Now I'd like to find out the differences (i.e. changed files) between
-> certain checkpoints. I found an older mail on the old mailing list
-> ("[PATCH 0/9] exprimental API to extract changes between two
-> checkpoints"), however, the links and git archive referenced there
-> appear to be dead.
+Hello,
 
-Sorry for the inconvenience.
+I'm using NILFS2 as the root filesystem of an ArchLinux on my EeePC
+900A. The filesystem has been created last November.
+At the moment there's no more space left, `lscp` shows that there are
+2648 checkpoints, but nilfs_cleanerd is in idle.
+I tried to tweak nilfs_cleanerd configuration, but couldn't achieve anything.
 
-Git trees of the nilfs project are now served on github.  Related
-patchsets are available on the following places:
+Is it possible to know why nilfs_cleanerd isn't collecting the
+checkpoints, or force it to collect them?
 
-nilfs-diff:
-
-   git://github.com/konis/nilfs-utils.git (diff branch)
-
-diff API:
-
-   git://github.com/konis/nilfs2.git (diffapi branch)
-
-
-> It also appears that this "experimental API" never made it into the
-> mainstream over the course of the last year :-(
-
-This patchset is still immature.  Unfortunately, I became very busy
-after having published this work and couldn't continue the
-development.
-
-As I wrote in the mail, this patchset has important limitations and
-does not suit for practical use.  It doesn't support hard links (only
-one parent inode number is recorded in an inode), and inode number of
-parent inodes are truncated to 32-bit width from the original 64-bit
-value when being stored to disk.  Yet, I don't have good answers for
-these issues.
-
-> So: Is there a way to find out what changed between the checkpoints?
-
-If two checkpoints are mounted as snapshots, you can use the following
-patch against diff command (as a workaround):
-
-http://www.nilfs.org/pub/patch/diff-change-for-nilfs.patch
-
-
-Regards,
-Ryusuke Konishi
- 
-> Thanks,
-> Mark Reiche
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks,
+Paolo
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
