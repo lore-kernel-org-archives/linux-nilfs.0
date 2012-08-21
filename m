@@ -1,30 +1,35 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: free space not reclaimed
-Date: Tue, 21 Aug 2012 17:17:25 +0400
-Message-ID: <1345555045.2457.57.camel@slavad-ubuntu-11>
+Date: Tue, 21 Aug 2012 23:15:28 +0900 (JST)
+Message-ID: <20120821.231528.94857995.konishi.ryusuke@lab.ntt.co.jp>
 References: <0D65752F-DE69-4A4D-98B3-6C1FF5FE4039@netams.com>
-	 <1345552196.2457.52.camel@slavad-ubuntu-11>
-	 <923B1589-662B-4CFF-B00F-6359CD95F52A@netams.com>
+	<1345552196.2457.52.camel@slavad-ubuntu-11>
+	<923B1589-662B-4CFF-B00F-6359CD95F52A@netams.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:References:In-Reply-To:Cc:To:From:Subject; bh=/B7PEiiI18liaxh6KzTtPSzOTfFoVKR4ljh41SrNEEQ=;
-	b=UPF6QPZe+8u+AdPhinCCzOZXCrF3J+iRaJxzomZA9xrlA6vSp+FiE8tJHhP2IcE75JGN1Z+50z5M67qj+fBTVsmn8Gj9eDPUNjYpXZ8rcP1WLhFV4Jc+qp8KLQURB2my;
 In-Reply-To: <923B1589-662B-4CFF-B00F-6359CD95F52A-N6MIjFY6MsTQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: Text/Plain; charset="us-ascii"
 To: Yury Shkandybin <jura-N6MIjFY6MsTQT0dZR+AlfA@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
-
-On Tue, 2012-08-21 at 16:47 +0400, Yury Shkandybin wrote:
+On Tue, 21 Aug 2012 16:47:01 +0400, Yury Shkandybin wrote:
 > I didn't stopped gc.
 > # nilfs-clean -l
 > running
-> 
+
+It may take long until free space increases because the current GC
+algorithm is not smart.
+
+Please wait until the output of "nilfs-clean -l" becomes "idle" to
+confirm if it actually has a problem.
+
+Regards,
+Ryusuke Konishi
+
 > # mount
 > rootfs on / type rootfs (rw)
 > /dev/root on / type reiserfs (rw,noatime)
@@ -50,14 +55,6 @@ On Tue, 2012-08-21 at 16:47 +0400, Yury Shkandybin wrote:
 > # lssu | wc -l
 > 3717895
 > 
-
-The full output of lssu is very important for the issue analysis. Could
-you please share full output of lssu command with -a option (lssu -a)?
-
-With the best regards,
-Vyacheslav Dubeyko.
-
-
 > There is no errors in dmesg.
 > 
 > #strace -f nilfs_cleanerd  /dev/sda2  > LOG 2>&1
@@ -356,8 +353,10 @@ Vyacheslav Dubeyko.
 > > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > > More majordomo info at  http://vger.kernel.org/majordomo-info.html
 > 
-
-
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
