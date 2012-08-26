@@ -1,45 +1,43 @@
-From: csmith-Ng8wz+J301SNY5Lh21HnMTHS2PGA244I9dF7HbQ/qKg@public.gmane.org
-Subject: Re: free space not reclaimed
-Date: Thu, 23 Aug 2012 01:14:21 +0100
-Message-ID: <20120823001421.GI16953@csmith-bm.vm.bytemark.co.uk>
-References: <0D65752F-DE69-4A4D-98B3-6C1FF5FE4039@netams.com>
-Mime-Version: 1.0
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [NILFS2 design doc] v.1.5 persistent object allocator/deallocator subsystem (structures, API) was described
+Date: Sun, 26 Aug 2012 16:50:18 +0400
+Message-ID: <6F799E43-20EF-4965-A0A4-4C87F5EC6FB2@dubeyko.com>
+Mime-Version: 1.0 (Apple Message framework v1084)
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <0D65752F-DE69-4A4D-98B3-6C1FF5FE4039-N6MIjFY6MsTQT0dZR+AlfA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Message-Id:To:Subject:Date:Content-Transfer-Encoding:Content-Type:From; bh=xbHji86IAnP9zUuDcDu0ZtgjyZokwlQgoZGLqUTVTyE=;
+	b=tI072iTbAPaqzbgSZ5qf4WiRrmBGUXj0TbCJOCVBRx0Ojw7UKreW0JmnbeV2CEuKClaNJ+G9jPbge5/nxOh5J3C8t11rSzaDMJ2Fbe9jfE5i6TW1QhZapQsYnRq/3lPr;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Yury Shkandybin <jura-N6MIjFY6MsTQT0dZR+AlfA@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="windows-1252"
+To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Tue, Aug 21, 2012 at 03:57:17PM +0400, Yury Shkandybin wrote:
-> Hello.
-> 
-> Recently i overloaded my nilfs2 partition with data.
-> /dev/sda2        30T   29T  122G 100% /archive
-> I've removed 4T and issued:
-> rmcp -f 1.. 
-> nilfs-clean -p 0
-> , but used space left the same.
-> Actually it keeps increasing.
+Hi all,
 
+NILFS design document v.1.5 is available by link: http://dubeyko.com/de=
+velopment/FileSystems/NILFS/nilfs2-design.pdf.
 
-If you're using the FS as an archive, then you're likely not
-overwriting or deleting data, so the cleaner will simply be shuffling
-live data about and not actually freeing any space. The 4TB you
-removed may well a long way from where the cleaner is currently
-cleaning.
+v.1.5.
+Persistent object allocator/deallocator subsystem (structures, API) was=
+ described.
+v.1.4
+=46ile system driver=92s subsystem APIs paragraph (draft) was elaborate=
+d.
+v.1.3
+=46ile system driver=92s data abstractions paragraph (draft) was elabor=
+ated.
+v.1.2
+Raw volume dumps were excluded from tables. <TODO: Elaborate paragraphs=
+ with raw dump examples>.
+v.1.1
+On-disk layout paragraph (draft) was elaborated.
+v.1.0
+Create initial version.
 
-If you're archiving data, then I'd suggest NIFLS is not in fact the 
-best option to use.
-
-Given the size of your archive, are you using this in production? Or
-just testing?
-
-Christian
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+With the best regards,
+Vyacheslav Dubeyko.--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
