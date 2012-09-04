@@ -1,47 +1,43 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [NILFS2 design doc] v.1.6 NILFS metadata file functionality (structures, API) was described
-Date: Sun, 2 Sep 2012 16:40:51 +0400
-Message-ID: <2B446C02-7787-426E-89E8-CB482595AC27@dubeyko.com>
-Mime-Version: 1.0 (Apple Message framework v1084)
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
+Subject: 'nilfs' TRIM issue?
+Date: Tue, 4 Sep 2012 16:32:11 -0700
+Message-ID: <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835B3@Etamin.tachyon.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Message-Id:To:Subject:Date:Content-Transfer-Encoding:Content-Type:From; bh=ve/coIdnlHQcJgD9rw6qP+ldpV9d89/x2Dgy2lkMIYY=;
-	b=K4v+kCoyZeS6n2pSoZw/1tm8JlZyv3hfkEj1//RAIKcIyQq4x6XQRmDq227KRNyAfDUY00kwxzJ1KdDjmwpH0jEY/Gica/vYtxkCF/mzQrpISmxy6r5XyGcRnBcKdg2D;
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: "'linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org'" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Hi,
+Greetings,
 
-NILFS design document v.1.6 is available by link: http://dubeyko.com/de=
-velopment/FileSystems/NILFS/nilfs2-design.pdf.
+I am seeing the following message a few minutes after booting a system:
 
-v.1.6
-NILFS metadata file functionality (structures, API) was described.
-v.1.5.
-Persistent object allocator/deallocator subsystem (structures, API) was=
- described.
-v.1.4
-=46ile system driver=92s subsystem APIs paragraph (draft) was elaborate=
-d.
-v.1.3
-=46ile system driver=92s data abstractions paragraph (draft) was elabor=
-ated.
-v.1.2
-Raw volume dumps were excluded from tables. <TODO: Elaborate paragraphs=
- with raw dump examples>.
-v.1.1
-On-disk layout paragraph (draft) was elaborated.
-v.1.0
-Create initial version.
+"NILFS warning: error -95 on discard request, turning discards off for the device"
 
-With the best regards,
-Vyacheslav Dubeyko.
+We are using the "Satadom-150" flash part which does support TRIM, as evidenced
+by 'ext4' filesystems having no issue with the mount 'discard' option.
+
+I am running:
+   Debian 6.0.5
+   Linux kernel 3.3.1
+   Nilfs-utils 2.1.1
+
+Any thoughts would be greatly appreciated.
+
+Thanks in advance,
+Mark Trumpold
+
+
+Confidentiality Notice:  The information contained in this electronic e-mail and any accompanying attachment(s) is intended only for the use of the intended recipient and is confidential and/or privileged. If you and we have a confidentiality agreement or other non-disclosure obligations between us, this Notice shall be deemed to mark and identify the content of this email and any attachments as confidential and proprietary.   If any reader of this communication is not the intended recipient, unauthorized use, disclosure or copying is strictly prohibited, and may be unlawful.  If you have received this communication in error, please immediately notify the sender by return e-mail, and delete the original message and all copies from your system.  Thank you.
+
+IRS Circular 230 Disclosure: To ensure compliance with requirements imposed by the IRS, please be advised that any U.S. federal tax advice contained in this communication (including any attachments) is not intended or written to be used or relied upon, and cannot be used or relied upon, for the purpose of (i) avoiding penalties under the Internal Revenue Code, or (ii) promoting, marketing or recommending to another party any transaction or matter addressed herein.
+
+E-mail is susceptible to data corruption, interception, unauthorized amendment, tampering and viruses, and we only send and receive e-mails on the basis that we are not liable for any such corruption, interception, amendment, tampering or viruses or any consequences thereof.
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
