@@ -1,13 +1,13 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: [PATCH v3 11/11] nilfs-utils: fsck: add functionality of superblock checking
-Date: Wed, 5 Sep 2012 23:15:46 +0400
-Message-ID: <5228146F-029A-4E23-AA1A-A84FCD92E105@dubeyko.com>
+Date: Wed, 5 Sep 2012 23:56:01 +0400
+Message-ID: <003D4BAF-FFC6-4C65-8FA6-3B1DB64D7D7A@dubeyko.com>
 Mime-Version: 1.0 (Apple Message framework v1084)
 Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:To:Message-Id:Date:Subject:Content-Transfer-Encoding:Content-Type:From; bh=rY3iuCTfTH6qidTD9dPMTXE1XuXIgDuKdjr39UDR1Po=;
-	b=JTwsX84BHtt77cI7Z/aggbImUGMj23qe7osgfPB3i0eg8jfKZJMSRqYOEPQ5dILdVSYzDpQsoVj3PNtGH5JlviBeY2gWJ3llH+F9EGGV19cOhDIPrGqIlo0Up2pGnSnl;
+	h=Mime-Version:To:Message-Id:Date:Subject:Content-Transfer-Encoding:Content-Type:From; bh=Nwi5OuTK8heMkuOg6p0wIPJd8rU8s20yy/Yjo4Wdg80=;
+	b=MG+kvFUtiSEMDmX/xjnsKVlrey8Q8f2jRh3WnbBiRrpePZxtWPX+X2Vdo9RX1a0y8U31WoQ63q7Nc0nQTo0M49W6t8+IgCYy84eidP1IUNjnZEhg6IgD1ODGXNV5sobC;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -27,11 +27,11 @@ This patch adds functionality of superblock checking.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 ---
- sbin/fsck/nilfs_superblock.c |  546 ++++++++++++++++++++++++++++++++++++++++++
- sbin/fsck/nilfs_superblock.h |   41 ++++
- 2 files changed, 587 insertions(+), 0 deletions(-)
- create mode 100644 sbin/fsck/nilfs_superblock.c
- create mode 100644 sbin/fsck/nilfs_superblock.h
+sbin/fsck/nilfs_superblock.c |  546 ++++++++++++++++++++++++++++++++++++++++++
+sbin/fsck/nilfs_superblock.h |   41 ++++
+2 files changed, 587 insertions(+), 0 deletions(-)
+create mode 100644 sbin/fsck/nilfs_superblock.c
+create mode 100644 sbin/fsck/nilfs_superblock.h
 
 diff --git a/sbin/fsck/nilfs_superblock.c b/sbin/fsck/nilfs_superblock.c
 new file mode 100644
