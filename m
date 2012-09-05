@@ -1,640 +1,126 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3 11/11] nilfs-utils: fsck: add functionality of superblock checking
-Date: Thu, 6 Sep 2012 00:19:16 +0400
-Message-ID: <390DE7BF-8DE5-45E1-B965-2A1ED485A9CB@dubeyko.com>
-Mime-Version: 1.0 (Apple Message framework v1084)
-Content-Transfer-Encoding: 8BIT
+From: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
+Subject: RE: 'nilfs' TRIM issue?
+Date: Wed, 5 Sep 2012 13:52:20 -0700
+Message-ID: <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835DE@Etamin.tachyon.net>
+References: <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835B3@Etamin.tachyon.net>
+ <1346826651.2096.9.camel@slavad-ubuntu-11>
+Mime-Version: 1.0
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Message-Id:To:Subject:Date:Content-Transfer-Encoding:Content-Type:From; bh=Nwi5OuTK8heMkuOg6p0wIPJd8rU8s20yy/Yjo4Wdg80=;
-	b=mP+5pgN0NaFpYzs5XDNI4yG2uJv2WOHxjqVO8nZbm/oXEuOLWwMNpNGGMZFxPMfGHosPDsxE8ESeUeNNehzCmdaJl/aigDNnGtBKcHmLLXbb7qy5x9Qqh7PaHTuzJfjn;
+In-Reply-To: <1346826651.2096.9.camel@slavad-ubuntu-11>
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: "'linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org'" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Rodriguez <Eric.Rodriguez-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
 
-Hi,
-
-This patch adds functionality of superblock checking.
-
-With the best regards,
-Vyacheslav Dubeyko.
---
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3 11/11] nilfs-utils: fsck: add functionality of superblock checking
-
-This patch adds functionality of superblock checking.
-
-Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
----
-sbin/fsck/nilfs_superblock.c |  546 ++++++++++++++++++++++++++++++++++++++++++
-sbin/fsck/nilfs_superblock.h |   41 ++++
-2 files changed, 587 insertions(+), 0 deletions(-)
-create mode 100644 sbin/fsck/nilfs_superblock.c
-create mode 100644 sbin/fsck/nilfs_superblock.h
-
-diff --git a/sbin/fsck/nilfs_superblock.c b/sbin/fsck/nilfs_superblock.c
-new file mode 100644
-index 0000000..a918c33
---- /dev/null
-+++ b/sbin/fsck/nilfs_superblock.c
-@@ -0,0 +1,546 @@
-+/*
-+ * nilfs_superblock.c - NILFS superblocks checking, processing
-+ *                      and recovering operations implementation
-+ *
-+ * Copyright (C) 2012 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ *
-+ * This file is part of NILFS.
-+ *
-+ * NILFS is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * NILFS is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with NILFS; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+ *
-+ * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ */
-+
-+#include "fsck_common.h"
-+#include "fsck_raw_ops.h"
-+
-+#include "nilfs_superblock.h"
-+
-+/*****************************************************************************
-+ * GLOBAL VARIABLES
-+ *****************************************************************************/
-+
-+/* Array of pointers on NILFS volume's superblocks */
-+struct nilfs_super_block *superblocks[SUPERBLOCK_TYPES_NUMBER] = {0};
-+
-+/*****************************************************************************
-+ * FUNCTIONS DECLARATION
-+ *****************************************************************************/
-+
-+/* Allocate memory for superblock */
-+static int allocate_superblock(int sb_type);
-+
-+/* Free memory allocated for superblock */
-+static int free_superblock(int sb_type);
-+
-+/* Read superblocks from disk */
-+static int read_superblocks(void);
-+
-+/* Check that superblock is valid */
-+static int is_nilfs_superblock_valid(struct nilfs_super_block *sb_ptr,
-+					__u64 *check_mask);
-+
-+/*****************************************************************************
-+ * IMPLEMENTATION SECTION
-+ *****************************************************************************/
-+
-+/*****************************************************************************
-+ * NAME:  get_nilfs_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Allocate memory and read primary and secondary
-+ *            superblocks from disk.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - primary and secondary superblocks are read successfully.
-+ * %-CANNOT_ALLOCATE - cannot allocate memory for superblock.
-+ * %-CANNOT_READ_SUPERBLOCK - cannot read superblock from disk.
-+ */
-+int get_nilfs_superblocks(void)
-+{
-+	int err = NILFS_OK;
-+
-+	internal_debug("<%s>: try to read superblocks from disk.", __func__);
-+
-+	err = allocate_superblock(PRIMARY_SUPERBLOCK);
-+	if (err)
-+		goto get_nilfs_superblocks_failed;
-+
-+	err = allocate_superblock(SECONDARY_SUPERBLOCK);
-+	if (err)
-+		goto free_primary_superblock;
-+
-+	err = read_superblocks();
-+	if (err)
-+		goto free_secondary_superblock;
-+
-+	internal_debug("<%s>: nilfs superblocks are read successfully.",
-+			__func__);
-+	return NILFS_OK;
-+
-+free_secondary_superblock:
-+	free_superblock(SECONDARY_SUPERBLOCK);
-+
-+free_primary_superblock:
-+	free_superblock(PRIMARY_SUPERBLOCK);
-+
-+get_nilfs_superblocks_failed:
-+	return err;
-+} /* get_nilfs_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  check_nilfs_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Check primary and secondary NILFS superblocks.
-+ *
-+ * RETURNS:
-+ * %-SB1_OK_SB2_OK - Primary and secondary superblocks are valid.
-+ * %-NILFS_NOT_FOUND - NILFS superblocks are not detected.
-+ * %-ONLY_SB1_OK_FOUND - Primary valid superblock was found but secondary *not*.
-+ * %-ONLY_SB1_CORRUPTED_FOUND - Only corrupted primary superblock was found.
-+ * %-ONLY_SB2_OK_FOUND - Secondary valid superblock was found but primary *not*.
-+ * %-ONLY_SB2_CORRUPTED_FOUND - Only corrupted secondary superblock was found.
-+ * %-SB1_SB2_CORRUPTED - Primary and secondary superblocks are corrupted.
-+ * %-SB1_OK_SB2_CORRUPTED - Primary superblock is valid, secondary is corrupted.
-+ * %-SB1_CORRUPTED_SB2_OK - Secondary superblock is valid, primary is corrupted.
-+ * %-CANNOT_DETECT_SB_STATE - Cannot detect state of superblock. Internal error.
-+ */
-+int check_nilfs_superblocks(void)
-+{
-+	enum sb_detected_states {
-+		SB1_VALID              = 1 << 0,
-+		SB1_CORRUPTED          = 1 << 1,
-+		SB1_NOT_FOUND          = 1 << 2,
-+		SB2_VALID              = 1 << 3,
-+		SB2_CORRUPTED          = 1 << 4,
-+		SB2_NOT_FOUND          = 1 << 5,
-+		ALL_POSSIBLE_SB_STATES = 1 << 6
-+	}; /* enum sb_detected_states */
-+
-+	int err;
-+	int sb_states = 0;
-+	__u64 *sb1_check_mask =
-+			&detected_err_db.sb[PRIMARY_SUPERBLOCK].check_mask;
-+	__u64 *sb2_check_mask =
-+			&detected_err_db.sb[SECONDARY_SUPERBLOCK].check_mask;
-+
-+	int return_states[ALL_POSSIBLE_SB_STATES] = { -1 };
-+	return_states[SB1_VALID | SB2_VALID] = SB1_OK_SB2_OK;
-+	return_states[SB1_CORRUPTED | SB2_VALID] = SB1_CORRUPTED_SB2_OK;
-+	return_states[SB1_NOT_FOUND | SB2_VALID] = ONLY_SB2_OK_FOUND;
-+	return_states[SB1_VALID | SB2_CORRUPTED] = SB1_OK_SB2_CORRUPTED;
-+	return_states[SB1_CORRUPTED | SB2_CORRUPTED] = SB1_SB2_CORRUPTED;
-+	return_states[SB1_NOT_FOUND | SB2_CORRUPTED] = ONLY_SB2_CORRUPTED_FOUND;
-+	return_states[SB1_VALID | SB2_NOT_FOUND] = ONLY_SB1_OK_FOUND;
-+	return_states[SB1_CORRUPTED | SB2_NOT_FOUND] = ONLY_SB1_CORRUPTED_FOUND;
-+	return_states[SB1_NOT_FOUND | SB2_NOT_FOUND] = NILFS_NOT_FOUND;
-+
-+	internal_debug("<%s>: try to check NILFS superblocks.", __func__);
-+
-+	err = is_nilfs_signature_ok(superblocks[PRIMARY_SUPERBLOCK]);
-+	if (NILFS_OK == err) {
-+		internal_debug("<%s>: primary superblock has valid signature.",
-+				__func__);
-+
-+		*sb1_check_mask = SB_FULL_CHECK;
-+		err = is_nilfs_superblock_valid(
-+					superblocks[PRIMARY_SUPERBLOCK],
-+					sb1_check_mask);
-+		if (-UNSUPPORTED_SB_REV == err) {
-+			internal_debug("<%s>: primary superblock unsupported.",
-+					__func__);
-+			sb_states |= SB1_NOT_FOUND;
-+		} else if (NILFS_OK != err) {
-+			internal_debug("<%s>: primary superblock is corrupted.",
-+					__func__);
-+			sb_states |= SB1_CORRUPTED;
-+		} else {
-+			internal_debug("<%s>: primary superblock is valid.",
-+					__func__);
-+			sb_states |= SB1_VALID;
-+		}
-+
-+		internal_debug("<%s>: sb_states has %d value.",
-+				__func__, sb_states);
-+	} else if (-INVALID_NILFS_SIGNATURE == err) {
-+		sb_states |= SB1_NOT_FOUND;
-+		internal_debug("<%s>: primary superblock is not found.",
-+				__func__);
-+		internal_debug("<%s>: sb_states has %d value.",
-+				__func__, sb_states);
-+	} else
-+		goto check_sb_internal_error;
-+
-+	err = is_nilfs_signature_ok(superblocks[SECONDARY_SUPERBLOCK]);
-+	if (NILFS_OK == err) {
-+		internal_debug("<%s>: secondary superblock has valid signature.",
-+				__func__);
-+
-+		*sb2_check_mask = SB_FULL_CHECK;
-+		err = is_nilfs_superblock_valid(
-+					superblocks[SECONDARY_SUPERBLOCK],
-+					sb2_check_mask);
-+		if (-UNSUPPORTED_SB_REV == err) {
-+			internal_debug("<%s>: secondary sb unsupported.",
-+					__func__);
-+			sb_states |= SB2_NOT_FOUND;
-+		} else if (NILFS_OK != err) {
-+			internal_debug("<%s>: secondary superblock is corrupted.",
-+					__func__);
-+			sb_states |= SB2_CORRUPTED;
-+		} else {
-+			internal_debug("<%s>: secondary superblock is valid.",
-+					__func__);
-+			sb_states |= SB2_VALID;
-+		}
-+
-+		internal_debug("<%s>: sb_states has %d value.",
-+				__func__, sb_states);
-+	} else if (-INVALID_NILFS_SIGNATURE == err) {
-+		sb_states |= SB2_NOT_FOUND;
-+		internal_debug("<%s>: secondary superblock is not found.",
-+				__func__);
-+		internal_debug("<%s>: sb_states has %d value.",
-+				__func__, sb_states);
-+	} else
-+		goto check_sb_internal_error;
-+
-+	internal_debug("<%s>: return_states has %d value.",
-+			__func__, return_states[sb_states]);
-+
-+	if (-1 == return_states[sb_states])
-+		goto check_sb_internal_error;
-+	else if (NILFS_NOT_FOUND == return_states[sb_states])
-+		goto check_sb_fs_info;
-+	else if ((sb_states & SB1_NOT_FOUND) ||
-+				(sb_states & SB2_NOT_FOUND))
-+		goto check_sb_fs_fatal_error;
-+	else if (SB1_OK_SB2_OK != return_states[sb_states])
-+		goto check_sb_fs_critical_error;
-+
-+check_sb_fs_info:
-+	fs_info("%s", nilfs_message[return_states[sb_states]]);
-+	return -return_states[sb_states];
-+
-+check_sb_fs_fatal_error:
-+	fs_fatal_error("%s", nilfs_message[return_states[sb_states]]);
-+	return -return_states[sb_states];
-+
-+check_sb_fs_critical_error:
-+	fs_critical_error("%s", nilfs_message[return_states[sb_states]]);
-+	return -return_states[sb_states];
-+
-+check_sb_internal_error:
-+	internal_error("%s", nilfs_message[CANNOT_DETECT_SB_STATE]);
-+	return -CANNOT_DETECT_SB_STATE;
-+} /* check_nilfs_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  free_nilfs_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Free memory allocated for superblocks.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - primary and secondary superblocks are freed successfully.
-+ * %-CANNOT_FREE - cannot free memory for superblocks.
-+ */
-+int free_nilfs_superblocks(void)
-+{
-+	int err_sb1 = NILFS_OK;
-+	int err_sb2 = NILFS_OK;
-+
-+	internal_debug("<%s>: try to free memory of superblocks.", __func__);
-+
-+	err_sb1 = free_superblock(PRIMARY_SUPERBLOCK);
-+	err_sb2 = free_superblock(SECONDARY_SUPERBLOCK);
-+
-+	if (NILFS_OK != err_sb1 || NILFS_OK != err_sb2) {
-+		internal_debug("<%s>: some error occurs during memory freeing.",
-+				__func__);
-+		return -CANNOT_FREE;
-+	}
-+
-+	internal_debug("<%s>: superblocks memory has freed successfully.",
-+			__func__);
-+	return NILFS_OK;
-+
-+} /* free_nilfs_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  allocate_superblock (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Allocate memory for superblock.
-+ *
-+ * PARAMETERS:
-+ * @sb_type: Type of superblock.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - memory for superblock is allocated successfully.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-CANNOT_ALLOCATE - cannot allocate memory for superblock.
-+ */
-+static int allocate_superblock(int sb_type)
-+{
-+	struct nilfs_super_block *sb_ptr = NULL;
-+
-+	internal_debug("<%s>: try to allocate memory for %d superblock type.",
-+			__func__, sb_type);
-+
-+	if (sb_type >= SUPERBLOCK_TYPES_NUMBER) {
-+		internal_error("%s", nilfs_message[INVALID_PARAMETER]);
-+		return -INVALID_PARAMETER;
-+	}
-+
-+	if (superblocks[sb_type]) {
-+		internal_error("%s", nilfs_message[CANNOT_ALLOCATE]);
-+		internal_debug("<%s>: superblock of %d type has allocated yet",
-+				__func__, sb_type);
-+		return -CANNOT_ALLOCATE;
-+	}
-+
-+	sb_ptr = calloc(sizeof(struct nilfs_super_block), 1);
-+	if (NULL == sb_ptr) {
-+		internal_perror("%s", nilfs_message[CANNOT_ALLOCATE]);
-+		return -CANNOT_ALLOCATE;
-+	}
-+
-+	superblocks[sb_type] = sb_ptr;
-+
-+	internal_debug("<%s>: memory for %d superblock type has allocated.",
-+			__func__, sb_type);
-+
-+	return NILFS_OK;
-+} /* allocate_superblock() */
-+
-+/*****************************************************************************
-+ * NAME:  free_superblock (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Free memory allocated for superblock.
-+ *
-+ * PARAMETERS:
-+ * @sb_type: Type of superblock.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - memory for superblock is freed successfully.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-CANNOT_FREE - cannot free memory for superblock.
-+ */
-+static int free_superblock(int sb_type)
-+{
-+	internal_debug("<%s>: try to free memory for %d superblock type.",
-+			__func__, sb_type);
-+
-+	if (sb_type >= SUPERBLOCK_TYPES_NUMBER) {
-+		internal_error("%s", nilfs_message[INVALID_PARAMETER]);
-+		return -INVALID_PARAMETER;
-+	}
-+
-+	if (NULL == superblocks[sb_type]) {
-+		internal_warning("%s", nilfs_message[CANNOT_FREE]);
-+		internal_debug("<%s>: superblock of %d type *not* allocated yet",
-+				__func__, sb_type);
-+		return -CANNOT_FREE;
-+	}
-+
-+	free(superblocks[sb_type]);
-+	superblocks[sb_type] = NULL;
-+
-+	internal_debug("<%s>: superblock of %d type has freed",
-+			__func__, sb_type);
-+
-+	return NILFS_OK;
-+} /* free_superblock() */
-+
-+/*****************************************************************************
-+ * NAME:  read_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Read superblocks from disk.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - superblock has read successfully.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-CANNOT_READ_SUPERBLOCK - cannot read superblock from disk.
-+ */
-+static int read_superblocks(void)
-+{
-+	int err = NILFS_OK;
-+	int devfd = -1;
-+
-+	internal_debug("<%s>: try to read superblocks.", __func__);
-+
-+	if (NULL == superblocks[PRIMARY_SUPERBLOCK] ||
-+		NULL == superblocks[SECONDARY_SUPERBLOCK]) {
-+		internal_debug("<%s>: superblocks are *not* allocated yet",
-+				__func__);
-+		goto cannot_read_superblock;
-+	}
-+
-+	devfd = device_file_descriptor();
-+	if (-1 == devfd) {
-+		internal_debug("<%s>: Device file descriptor: %d.",
-+				__func__, devfd);
-+		goto cannot_read_superblock;
-+	}
-+
-+	err = nilfs_sb_read_unchecked(devfd, superblocks);
-+	if (err)
-+		goto cannot_read_superblock;
-+
-+	internal_debug("<%s>: superblock is read successfully", __func__);
-+	return NILFS_OK;
-+
-+cannot_read_superblock:
-+	internal_error("%s", nilfs_message[CANNOT_READ_SUPERBLOCK]);
-+	return -CANNOT_READ_SUPERBLOCK;
-+} /* read_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  is_nilfs_signature_ok (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Check that superblock contains valid NILFS signature.
-+ *
-+ * PARAMETERS:
-+ * @sb_ptr: Pointer on superblock.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - superblock contains valid NILFS signature.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-INVALID_NILFS_SIGNATURE - superblock signature is invalid.
-+ */
-+int is_nilfs_signature_ok(const struct nilfs_super_block *sb_ptr)
-+{
-+	internal_debug("<%s>: check signature of superblock.", __func__);
-+
-+	if (NULL == sb_ptr) {
-+		internal_error("%s", nilfs_message[INVALID_PARAMETER]);
-+		internal_debug("<%s>: pointer on superblock is NULL.",
-+				__func__);
-+		return -INVALID_PARAMETER;
-+	}
-+
-+	if (le16_to_cpu(sb_ptr->s_magic) != NILFS_SUPER_MAGIC) {
-+		fs_warning("%s", nilfs_message[INVALID_NILFS_SIGNATURE]);
-+		return -INVALID_NILFS_SIGNATURE;
-+	}
-+
-+	internal_debug("<%s>: NILFS signature is ok.", __func__);
-+	return NILFS_OK;
-+} /* is_nilfs_signature_ok() */
-+
-+/*****************************************************************************
-+ * NAME:  is_nilfs_superblock_valid (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Check that superblock is valid.
-+ *
-+ * PARAMETERS:
-+ * @sb_ptr: Pointer on superblock.
-+ * @check_mask: Check mask defines what should be checked.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - superblock is valid.
-+ * %-CANNOT_CHECK_SB - cannot check superblock because of internal error.
-+ * %-INVALID_SB - superblock is in corrupted state.
-+ * %-UNSUPPORTED_SB_REV - unsupported revision of NILFS superblock.
-+ *
-+ * @check_mask contains mask of flags on items which should be checked.
-+ * During checking flags of valid items are unset. At the end of working
-+ * @check_mask contains flags of corrupted items as set. These set flags
-+ * inform about detected errors.
-+ */
-+static int is_nilfs_superblock_valid(struct nilfs_super_block *sb_ptr,
-+					__u64 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	int devfd = -1;
-+
-+	/* Declaration order is crucial!!! */
-+	int sb_err_id[SB_CHECK_FLAGS_MAX_NUM] = {
-+		INVALID_NILFS_SIGNATURE,	/*CHECK_SB_MAGIC*/
-+		UNSUPPORTED_SB_REV,		/*CHECK_SB_REV_LEVEL*/
-+/*CRITICAL*/
-+		INVALID_SB_SIZE,		/*CHECK_SB_BYTES*/
-+		INVALID_CRC,			/*CHECK_SB_CRC*/
-+		INVALID_BLOCK_SIZE,		/*CHECK_SB_BLOCK_SZ*/
-+		INVALID_SB_DEV_SIZE,		/*CHECK_SB_DEV_SZ*/
-+		INVALID_SB_BLOCKS_PER_SEG,	/*CHECK_SB_BLOCKS_PER_SEG*/
-+		INVALID_SB_NSEGMENTS,		/*CHECK_SB_NSEGMENTS*/
-+		INVALID_SB_FIRST_DATA_BLOCK,	/*CHECK_SB_FIRST_DATA_BLOCK*/
-+		INVALID_SB_R_SEGS_PERCENTAGE,	/*CHECK_SB_R_SEGS_PERCENT*/
-+		INVALID_SB_LAST_CNO,		/*CHECK_SB_LAST_CNO*/
-+		INVALID_SB_LAST_PSEG,		/*CHECK_SB_LAST_PSEG*/
-+		INVALID_SB_LAST_SEQ,		/*CHECK_SB_LAST_SEQ*/
-+		INVALID_SB_FREE_BLKS,		/*CHECK_SB_FREE_BLKS*/
-+		INVALID_SB_FS_STATE,		/*CHECK_SB_STATE*/
-+		INVALID_SB_FIRST_INO,		/*CHECK_SB_FIRST_INO*/
-+		INVALID_SB_INO_SZ,		/*CHECK_SB_INODE_SZ*/
-+		INVALID_SB_DAT_ENTRY_SZ,	/*CHECK_SB_DAT_ENTRY_SZ*/
-+		INVALID_SB_CHECKPOINT_SZ,	/*CHECK_SB_CHECKPOINT_SZ*/
-+		INVALID_SB_SEG_USAGE_SZ,	/*CHECK_SB_SEG_USAGE_SZ*/
-+/*MINOR*/
-+		INVALID_SB_FEATURE,		/*CHECK_SB_FEATURE*/
-+		UNSUPPORTED_SB_RO_FEATURE,	/*CHECK_SB_RO_FEATURE*/
-+		INVALID_SB_FLAGS,		/*CHECK_SB_FLAGS*/
-+		INVALID_SB_OS,			/*CHECK_SB_CREATOR_OS*/
-+		INVALID_SB_DEF_ID,		/*CHECK_SB_DEF_RES_UID_GID*/
-+		INVALID_SB_C_INTERVAL,		/*CHECK_SB_C_INTERVAL*/
-+		INVALID_SB_C_BLK_MAX,		/*CHECK_SB_C_BLOCK_MAX*/
-+/*LOOKS_LIKE_ERROR*/
-+		INVALID_SB_TIMES,		/*CHECK_SB_TIMES*/
-+		MAX_POSSIBLE_MNT_COUNT,		/*CHECK_SB_MNT_COUNT*/
-+		INVALID_SB_FS_ERRORS,		/*CHECK_SB_ERRORS*/
-+		INVALID_SB_LAST_CHECK,		/*CHECK_SB_LAST_CHECK*/
-+		NOT_CLEAN_UMOUNT_DETECTED,	/*CHECK_SB_CLEAN_UMOUNT_FLAG*/
-+		FS_ERRORS_DETECTED_BY_DRIVER,	/*CHECK_SB_ERRS_DETECTED_FLAG*/
-+	};
-+
-+	internal_debug("<%s>: check superblock validity.", __func__);
-+	internal_debug("<%s>: sbp %#x, check_mask %#x.",
-+				__func__, sb_ptr, check_mask);
-+
-+	if (NULL == sb_ptr || NULL == check_mask) {
-+		err = CANNOT_CHECK_SB;
-+		goto failed_check_sb;
-+	}
-+
-+	devfd = device_file_descriptor();
-+	if (-1 == devfd) {
-+		internal_debug("<%s>: Device file descriptor: %d.",
-+				__func__, devfd);
-+		err = CANNOT_CHECK_SB;
-+		goto failed_check_sb;
-+	}
-+
-+	if (!nilfs_sb_is_valid(devfd, sb_ptr, check_mask)) {
-+		print_fs_detected_errors(check_mask,
-+					sb_err_id, SB_CHECK_FLAGS_MAX_NUM);
-+
-+		if ((*check_mask) & CHECK_SB_REV_LEVEL)
-+			return -UNSUPPORTED_SB_REV;
-+
-+		if ((*check_mask) & CHECK_SB_RO_FEATURE)
-+			fsck_work_mode &= (~FSCK_RW_POLICY_MASK | FSCK_RO_MODE);
-+		else
-+			fsck_work_mode &= (~FSCK_RW_POLICY_MASK | FSCK_RW_MODE);
-+
-+		return -INVALID_SB;
-+	}
-+
-+	internal_debug("<%s>: superblock is valid.", __func__);
-+
-+	return NILFS_OK;
-+
-+failed_check_sb:
-+	internal_error("%s", nilfs_message[err]);
-+	return -err;
-+} /* is_nilfs_superblock_valid() */
-diff --git a/sbin/fsck/nilfs_superblock.h b/sbin/fsck/nilfs_superblock.h
-new file mode 100644
-index 0000000..0b670a7
---- /dev/null
-+++ b/sbin/fsck/nilfs_superblock.h
-@@ -0,0 +1,41 @@
-+/*
-+ * nilfs_superblock.h - Declarations of operations for NILFS superblocks
-+ *                      checking, processing and recovering
-+ *
-+ * Copyright (C) 2012 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ *
-+ * This file is part of NILFS.
-+ *
-+ * NILFS is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * NILFS is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with NILFS; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+ *
-+ * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ */
-+
-+#ifndef NILFS_SUPERBLOCK_H
-+#define NILFS_SUPERBLOCK_H
-+
-+/* Allocate memory and read superblocks from disk */
-+int get_nilfs_superblocks(void);
-+
-+/* Check that superblock contains valid NILFS signature */
-+int is_nilfs_signature_ok(const struct nilfs_super_block *sb_ptr);
-+
-+/* Check primary and secondary NILFS superblocks */
-+int check_nilfs_superblocks(void);
-+
-+/* Free memory allocated for superblocks */
-+int free_nilfs_superblocks(void);
-+
-+#endif /* NILFS_SUPERBLOCK_H */
--- 
-1.7.1
-
+SGVsbG8gVnlhY2hlc2xhdiwNCg0KPiBEbyB5b3UgdXNlIE5JTEZTIGFzIHJvb3QgZmlsZSBzeXN0
+ZW0/DQo+DQpBY3R1YWxseSwgJ25pbGZzJyBvbiB0aGlzIHN5c3RlbSBpcyBqdXN0IGEgY29udGFp
+bmVyIHRoYXQgY29udGFpbnMgbG9vcA0KaW1hZ2VzLCBvbmUgb2Ygd2hpY2ggaXMgdGhlIHJvb3Qg
+ZmlsZXN5c3RlbS4gIEFzIHlvdSBjYW4gc2VlIHRoaXMgaXMNCmEgbGl0dGxlIG91dCBvZiB0aGUg
+bm9ybSwgc28gSSB0aGluayBJIHNob3VsZCBkbyBtb3JlIGhvbWV3b3JrIGJlZm9yZQ0KaW52b2x2
+aW5nIGEgbG90IG9mIHlvdXIgdGltZS4uICBBdCB0aGlzIHBvaW50IGl0IGluIG5vdCBjbGVhciBp
+ZiBUUklNIGlzDQp3b3JraW5nIGF0IGFsbCBmb3IgJ2V4dDQnIG9yICduaWxmcycgb24gb3VyIHN5
+c3RlbS4gIEl0IG1heSBiZSB0aGF0IHRoZQ0Kd2FybmluZyBmcm9tICduaWxmcycgaXMgbGVnaXRp
+bWF0ZS4NCg0KSSB0aGluayBpdCBtaWdodCBiZSBiZXN0IGZvciBtZSB0byBmaXJzdCBmaW5kIGEg
+d2F5IHRvIHRlc3Qgd2hldGhlciBvcg0Kbm90IFRSSU0gaXMgd29ya2luZyBpbiBnZW5lcmFsIGZv
+ciBhIHBhcnRpY3VsYXIgY29uZmlndXJhdGlvbi4NCkkndmUgZ29uZSB0byBhIHRvdGFsbHkgZ2Vu
+ZXJpYyBzeXN0ZW0gd2l0aCBqdXN0IGEgdGVzdCAnbmlsZnMnIGFuZCAnZXh0NCcNCnBhcnRpdGlv
+biB0byBnZXQgc29tZSBleHBlcmllbmNlLiAgT25lIHRoaW5nIEkndmUgbm90aWNlZCBpcyAnZXh0
+NCcgZG9lcw0Kbm90IGNvbXBsYWluIGlmIHlvdSBtb3VudCB3aXRoICdkaXNjYXJkJyBvbiBhIGRl
+dmljZSB0aGF0IGRvZXMgTk9UDQpzdXBwb3J0IGl0IC0tIHNvIHRoYXQncyBubyBoZWxwLg0KDQpJ
+J3ZlIHRyaWVkIHRoZSBmb2xsb3dpbmcgc2ltcGxlIHNlcXVlbmNlOg0KZGQgaWY9L2Rldi91cmFu
+ZG9tIG9mPXRlbXBmaWxlIGJzPTFNIGNvdW50PTMNCmhkcGFybSAtLWZpYm1hcCB0ZW1wZmlsZSAg
+ICA8LS0gZ2V0IHN0YXJ0IGFkZHJlc3Mgb2YgdGhlIGZpbGUNCmhkcGFybSAtLXJlYWQtc2VjdG9y
+IFtBRERSRVNTXSAvZGV2L3NkYQ0Kcm0gdGVtcGZpbGUgJiYgc3luYyAmJiBzbGVlcCAxMjANCmhk
+cGFybSAtLXJlYWQtc2VjdG9yIFtBRERSRVNTXSAvZGV2L3NkYSAgIDwtLSBzaG91bGQgYmUgYWxs
+IHplcm8ncw0KDQpHb3QgdGhpcyBvZmYgdGhlIEludGVybmV0LiAgVGhlIGxhc3Qgc3RlcCBORVZF
+UiByZXR1cm5zIHplcm8ncyBmb3IgZWl0aGVyDQonbmlsZnMnIG9yICdleHQ0Jy4NCg0KSWYgeW91
+IGhhcHBlbiB0byBrbm93IG9mIGEgYmV0dGVyIHRlc3QsIHRoYXQgd291bGQgYmUgYXBwcmVjaWF0
+ZWQuDQoNClRoYW5rcyBmb3IgeW91ciBhdHRlbnRpb24uDQpCZXN0IHJlZ2FyZHMsDQpNYXJrIFRy
+dW1wb2xkDQoNCg0KLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IFZ5YWNoZXNsYXYg
+RHViZXlrbyBbbWFpbHRvOnNsYXZhQGR1YmV5a28uY29tXQ0KU2VudDogVHVlc2RheSwgU2VwdGVt
+YmVyIDA0LCAyMDEyIDExOjMxIFBNDQpUbzogTWFyayBUcnVtcG9sZA0KQ2M6ICdsaW51eC1uaWxm
+c0B2Z2VyLmtlcm5lbC5vcmcnDQpTdWJqZWN0OiBSZTogJ25pbGZzJyBUUklNIGlzc3VlPw0KDQpI
+aSBNYXJrLA0KDQpPbiBUdWUsIDIwMTItMDktMDQgYXQgMTY6MzIgLTA3MDAsIE1hcmsgVHJ1bXBv
+bGQgd3JvdGU6DQo+IEdyZWV0aW5ncywNCj4NCj4gSSBhbSBzZWVpbmcgdGhlIGZvbGxvd2luZyBt
+ZXNzYWdlIGEgZmV3IG1pbnV0ZXMgYWZ0ZXIgYm9vdGluZyBhIHN5c3RlbToNCj4NCg0KRG8geW91
+IHVzZSBOSUxGUyBhcyByb290IGZpbGUgc3lzdGVtPw0KDQo+ICJOSUxGUyB3YXJuaW5nOiBlcnJv
+ciAtOTUgb24gZGlzY2FyZCByZXF1ZXN0LCB0dXJuaW5nIGRpc2NhcmRzIG9mZiBmb3IgdGhlIGRl
+dmljZSINCj4NCg0KQXMgSSBjYW4gc2VlIGZyb20gbWVzc2FnZSB0aGF0IG9wZXJhdGlvbiBpcyBu
+b3Qgc3VwcG9ydGVkICgtOTUpLiBTbywgaXQgbWVhbnMgdGhhdCB5b3UgdHJ5IHRvIHVzZSBkaXNj
+YXJkIGluIHRoZSBjYXNlIG9mIG5vIHN1cHBvcnQgb2YgaXQgb24gdGhlIGZsYXNoLg0KDQpIb3cg
+ZGlkIHlvdSBtb3VudCBOSUxGUyAoSSBtZWFuIG1vdW50IG9wdGlvbnMpPw0KQ291bGQgeW91IHNo
+YXJlIG1vdW50IHV0aWxpdHkgb3V0cHV0IHdpdGhvdXQgYW55IG9wdGlvbnM/DQpDb3VsZCB5b3Ug
+c2hhcmUgY29udGVudCBvZiB5b3VyIGZzdGFiIGZpbGU/DQoNCj4gV2UgYXJlIHVzaW5nIHRoZSAi
+U2F0YWRvbS0xNTAiIGZsYXNoIHBhcnQgd2hpY2ggZG9lcyBzdXBwb3J0IFRSSU0sIGFzDQo+IGV2
+aWRlbmNlZCBieSAnZXh0NCcgZmlsZXN5c3RlbXMgaGF2aW5nIG5vIGlzc3VlIHdpdGggdGhlIG1v
+dW50ICdkaXNjYXJkJyBvcHRpb24uDQo+DQoNCllvdSB3YW50IHRoYXQgaXQgaGFzbid0IGFueSBl
+cnJvciBtZXNzYWdlIHdoZW4geW91IHVzZSAnZGlzY2FyZCcgbW91bnQgb3B0aW9uIGluIHRoZSBj
+YXNlIG5vIHN1cHBvcnQgb2YgaXQgb24gZmxhc2guIEFtIEkgY29ycmVjdD8NCg0KV2l0aCB0aGUg
+YmVzdCByZWdhcmRzLA0KVnlhY2hlc2xhdiBEdWJleWtvLg0KDQoNCj4gSSBhbSBydW5uaW5nOg0K
+PiAgICBEZWJpYW4gNi4wLjUNCj4gICAgTGludXgga2VybmVsIDMuMy4xDQo+ICAgIE5pbGZzLXV0
+aWxzIDIuMS4xDQo+DQo+IEFueSB0aG91Z2h0cyB3b3VsZCBiZSBncmVhdGx5IGFwcHJlY2lhdGVk
+Lg0KPg0KPiBUaGFua3MgaW4gYWR2YW5jZSwNCj4gTWFyayBUcnVtcG9sZA0KPg0KPg0KPiBDb25m
+aWRlbnRpYWxpdHkgTm90aWNlOiAgVGhlIGluZm9ybWF0aW9uIGNvbnRhaW5lZCBpbiB0aGlzIGVs
+ZWN0cm9uaWMgZS1tYWlsIGFuZCBhbnkgYWNjb21wYW55aW5nIGF0dGFjaG1lbnQocykgaXMgaW50
+ZW5kZWQgb25seSBmb3IgdGhlIHVzZSBvZiB0aGUgaW50ZW5kZWQgcmVjaXBpZW50IGFuZCBpcyBj
+b25maWRlbnRpYWwgYW5kL29yIHByaXZpbGVnZWQuIElmIHlvdSBhbmQgd2UgaGF2ZSBhIGNvbmZp
+ZGVudGlhbGl0eSBhZ3JlZW1lbnQgb3Igb3RoZXIgbm9uLWRpc2Nsb3N1cmUgb2JsaWdhdGlvbnMg
+YmV0d2VlbiB1cywgdGhpcyBOb3RpY2Ugc2hhbGwgYmUgZGVlbWVkIHRvIG1hcmsgYW5kIGlkZW50
+aWZ5IHRoZSBjb250ZW50IG9mIHRoaXMgZW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBhcyBjb25m
+aWRlbnRpYWwgYW5kIHByb3ByaWV0YXJ5LiAgIElmIGFueSByZWFkZXIgb2YgdGhpcyBjb21tdW5p
+Y2F0aW9uIGlzIG5vdCB0aGUgaW50ZW5kZWQgcmVjaXBpZW50LCB1bmF1dGhvcml6ZWQgdXNlLCBk
+aXNjbG9zdXJlIG9yIGNvcHlpbmcgaXMgc3RyaWN0bHkgcHJvaGliaXRlZCwgYW5kIG1heSBiZSB1
+bmxhd2Z1bC4gIElmIHlvdSBoYXZlIHJlY2VpdmVkIHRoaXMgY29tbXVuaWNhdGlvbiBpbiBlcnJv
+ciwgcGxlYXNlIGltbWVkaWF0ZWx5IG5vdGlmeSB0aGUgc2VuZGVyIGJ5IHJldHVybiBlLW1haWws
+IGFuZCBkZWxldGUgdGhlIG9yaWdpbmFsIG1lc3NhZ2UgYW5kIGFsbCBjb3BpZXMgZnJvbSB5b3Vy
+IHN5c3RlbS4gIFRoYW5rIHlvdS4NCg0KPg0KPiBJUlMgQ2lyY3VsYXIgMjMwIERpc2Nsb3N1cmU6
+IFRvIGVuc3VyZSBjb21wbGlhbmNlIHdpdGggcmVxdWlyZW1lbnRzIGltcG9zZWQgYnkgdGhlIElS
+UywgcGxlYXNlIGJlIGFkdmlzZWQgdGhhdCBhbnkgVS5TLiBmZWRlcmFsIHRheCBhZHZpY2UgY29u
+dGFpbmVkIGluIHRoaXMgY29tbXVuaWNhdGlvbiAoaW5jbHVkaW5nIGFueSBhdHRhY2htZW50cykg
+aXMgbm90IGludGVuZGVkIG9yIHdyaXR0ZW4gdG8gYmUgdXNlZCBvciByZWxpZWQgdXBvbiwgYW5k
+IGNhbm5vdCBiZSB1c2VkIG9yIHJlbGllZCB1cG9uLCBmb3IgdGhlIHB1cnBvc2Ugb2YgKGkpIGF2
+b2lkaW5nIHBlbmFsdGllcyB1bmRlciB0aGUgSW50ZXJuYWwgUmV2ZW51ZSBDb2RlLCBvciAoaWkp
+IHByb21vdGluZywgbWFya2V0aW5nIG9yIHJlY29tbWVuZGluZyB0byBhbm90aGVyIHBhcnR5IGFu
+eSB0cmFuc2FjdGlvbiBvciBtYXR0ZXIgYWRkcmVzc2VkIGhlcmVpbi4NCj4NCj4gRS1tYWlsIGlz
+IHN1c2NlcHRpYmxlIHRvIGRhdGEgY29ycnVwdGlvbiwgaW50ZXJjZXB0aW9uLCB1bmF1dGhvcml6
+ZWQgYW1lbmRtZW50LCB0YW1wZXJpbmcgYW5kIHZpcnVzZXMsIGFuZCB3ZSBvbmx5IHNlbmQgYW5k
+IHJlY2VpdmUgZS1tYWlscyBvbiB0aGUgYmFzaXMgdGhhdCB3ZSBhcmUgbm90IGxpYWJsZSBmb3Ig
+YW55IHN1Y2ggY29ycnVwdGlvbiwgaW50ZXJjZXB0aW9uLCBhbWVuZG1lbnQsIHRhbXBlcmluZyBv
+ciB2aXJ1c2VzIG9yIGFueSBjb25zZXF1ZW5jZXMgdGhlcmVvZi4NCj4NCj4gLS0NCj4gVG8gdW5z
+dWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4
+LW5pbGZzIg0KPiBpbiB0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2Vy
+bmVsLm9yZyBNb3JlIG1ham9yZG9tbw0KPiBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3Jn
+L21ham9yZG9tby1pbmZvLmh0bWwNCg0KDQoNCg0KQ29uZmlkZW50aWFsaXR5IE5vdGljZTogIFRo
+ZSBpbmZvcm1hdGlvbiBjb250YWluZWQgaW4gdGhpcyBlbGVjdHJvbmljIGUtbWFpbCBhbmQgYW55
+IGFjY29tcGFueWluZyBhdHRhY2htZW50KHMpIGlzIGludGVuZGVkIG9ubHkgZm9yIHRoZSB1c2Ug
+b2YgdGhlIGludGVuZGVkIHJlY2lwaWVudCBhbmQgaXMgY29uZmlkZW50aWFsIGFuZC9vciBwcml2
+aWxlZ2VkLiBJZiB5b3UgYW5kIHdlIGhhdmUgYSBjb25maWRlbnRpYWxpdHkgYWdyZWVtZW50IG9y
+IG90aGVyIG5vbi1kaXNjbG9zdXJlIG9ibGlnYXRpb25zIGJldHdlZW4gdXMsIHRoaXMgTm90aWNl
+IHNoYWxsIGJlIGRlZW1lZCB0byBtYXJrIGFuZCBpZGVudGlmeSB0aGUgY29udGVudCBvZiB0aGlz
+IGVtYWlsIGFuZCBhbnkgYXR0YWNobWVudHMgYXMgY29uZmlkZW50aWFsIGFuZCBwcm9wcmlldGFy
+eS4gICBJZiBhbnkgcmVhZGVyIG9mIHRoaXMgY29tbXVuaWNhdGlvbiBpcyBub3QgdGhlIGludGVu
+ZGVkIHJlY2lwaWVudCwgdW5hdXRob3JpemVkIHVzZSwgZGlzY2xvc3VyZSBvciBjb3B5aW5nIGlz
+IHN0cmljdGx5IHByb2hpYml0ZWQsIGFuZCBtYXkgYmUgdW5sYXdmdWwuICBJZiB5b3UgaGF2ZSBy
+ZWNlaXZlZCB0aGlzIGNvbW11bmljYXRpb24gaW4gZXJyb3IsIHBsZWFzZSBpbW1lZGlhdGVseSBu
+b3RpZnkgdGhlIHNlbmRlciBieSByZXR1cm4gZS1tYWlsLCBhbmQgZGVsZXRlIHRoZSBvcmlnaW5h
+bCBtZXNzYWdlIGFuZCBhbGwgY29waWVzIGZyb20geW91ciBzeXN0ZW0uICBUaGFuayB5b3UuDQoN
+CklSUyBDaXJjdWxhciAyMzAgRGlzY2xvc3VyZTogVG8gZW5zdXJlIGNvbXBsaWFuY2Ugd2l0aCBy
+ZXF1aXJlbWVudHMgaW1wb3NlZCBieSB0aGUgSVJTLCBwbGVhc2UgYmUgYWR2aXNlZCB0aGF0IGFu
+eSBVLlMuIGZlZGVyYWwgdGF4IGFkdmljZSBjb250YWluZWQgaW4gdGhpcyBjb21tdW5pY2F0aW9u
+IChpbmNsdWRpbmcgYW55IGF0dGFjaG1lbnRzKSBpcyBub3QgaW50ZW5kZWQgb3Igd3JpdHRlbiB0
+byBiZSB1c2VkIG9yIHJlbGllZCB1cG9uLCBhbmQgY2Fubm90IGJlIHVzZWQgb3IgcmVsaWVkIHVw
+b24sIGZvciB0aGUgcHVycG9zZSBvZiAoaSkgYXZvaWRpbmcgcGVuYWx0aWVzIHVuZGVyIHRoZSBJ
+bnRlcm5hbCBSZXZlbnVlIENvZGUsIG9yIChpaSkgcHJvbW90aW5nLCBtYXJrZXRpbmcgb3IgcmVj
+b21tZW5kaW5nIHRvIGFub3RoZXIgcGFydHkgYW55IHRyYW5zYWN0aW9uIG9yIG1hdHRlciBhZGRy
+ZXNzZWQgaGVyZWluLg0KDQpFLW1haWwgaXMgc3VzY2VwdGlibGUgdG8gZGF0YSBjb3JydXB0aW9u
+LCBpbnRlcmNlcHRpb24sIHVuYXV0aG9yaXplZCBhbWVuZG1lbnQsIHRhbXBlcmluZyBhbmQgdmly
+dXNlcywgYW5kIHdlIG9ubHkgc2VuZCBhbmQgcmVjZWl2ZSBlLW1haWxzIG9uIHRoZSBiYXNpcyB0
+aGF0IHdlIGFyZSBub3QgbGlhYmxlIGZvciBhbnkgc3VjaCBjb3JydXB0aW9uLCBpbnRlcmNlcHRp
+b24sIGFtZW5kbWVudCwgdGFtcGVyaW5nIG9yIHZpcnVzZXMgb3IgYW55IGNvbnNlcXVlbmNlcyB0
+aGVyZW9mLg0KDQo=
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
