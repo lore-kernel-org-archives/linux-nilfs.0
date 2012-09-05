@@ -1,126 +1,77 @@
-From: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
-Subject: RE: 'nilfs' TRIM issue?
-Date: Wed, 5 Sep 2012 13:52:20 -0700
-Message-ID: <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835DE@Etamin.tachyon.net>
-References: <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835B3@Etamin.tachyon.net>
- <1346826651.2096.9.camel@slavad-ubuntu-11>
-Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v3 06/11] nilfs-utils: fsck: modify check_mount() function with the purpose of adding opportunity of RO mount checking
+Date: Wed, 5 Sep 2012 23:14:49 +0400
+Message-ID: <2A4C3DC1-F84D-41FB-85C4-246C85C5DFFB@dubeyko.com>
+Mime-Version: 1.0 (Apple Message framework v1084)
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1346826651.2096.9.camel@slavad-ubuntu-11>
-Content-Language: en-US
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:To:Message-Id:Date:Subject:Content-Transfer-Encoding:Content-Type:From; bh=CTB2+J3Eat2TYRignW1vug3hRrXxMsbcYdOpKSa1a2s=;
+	b=X3w/CynJaO4h/I4iJvolZGLSVzm7zJxLDKCzBKDtOOcuKRjnC0UB6fet0kkgk3FPQIgPG6Ce/a8r34bXku0m26CkYfOZyGDGZnhtM+gq5LXzR0PuSVHIjzUNLInG9+da;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: "'linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org'" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Rodriguez <Eric.Rodriguez-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
+To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-SGVsbG8gVnlhY2hlc2xhdiwNCg0KPiBEbyB5b3UgdXNlIE5JTEZTIGFzIHJvb3QgZmlsZSBzeXN0
-ZW0/DQo+DQpBY3R1YWxseSwgJ25pbGZzJyBvbiB0aGlzIHN5c3RlbSBpcyBqdXN0IGEgY29udGFp
-bmVyIHRoYXQgY29udGFpbnMgbG9vcA0KaW1hZ2VzLCBvbmUgb2Ygd2hpY2ggaXMgdGhlIHJvb3Qg
-ZmlsZXN5c3RlbS4gIEFzIHlvdSBjYW4gc2VlIHRoaXMgaXMNCmEgbGl0dGxlIG91dCBvZiB0aGUg
-bm9ybSwgc28gSSB0aGluayBJIHNob3VsZCBkbyBtb3JlIGhvbWV3b3JrIGJlZm9yZQ0KaW52b2x2
-aW5nIGEgbG90IG9mIHlvdXIgdGltZS4uICBBdCB0aGlzIHBvaW50IGl0IGluIG5vdCBjbGVhciBp
-ZiBUUklNIGlzDQp3b3JraW5nIGF0IGFsbCBmb3IgJ2V4dDQnIG9yICduaWxmcycgb24gb3VyIHN5
-c3RlbS4gIEl0IG1heSBiZSB0aGF0IHRoZQ0Kd2FybmluZyBmcm9tICduaWxmcycgaXMgbGVnaXRp
-bWF0ZS4NCg0KSSB0aGluayBpdCBtaWdodCBiZSBiZXN0IGZvciBtZSB0byBmaXJzdCBmaW5kIGEg
-d2F5IHRvIHRlc3Qgd2hldGhlciBvcg0Kbm90IFRSSU0gaXMgd29ya2luZyBpbiBnZW5lcmFsIGZv
-ciBhIHBhcnRpY3VsYXIgY29uZmlndXJhdGlvbi4NCkkndmUgZ29uZSB0byBhIHRvdGFsbHkgZ2Vu
-ZXJpYyBzeXN0ZW0gd2l0aCBqdXN0IGEgdGVzdCAnbmlsZnMnIGFuZCAnZXh0NCcNCnBhcnRpdGlv
-biB0byBnZXQgc29tZSBleHBlcmllbmNlLiAgT25lIHRoaW5nIEkndmUgbm90aWNlZCBpcyAnZXh0
-NCcgZG9lcw0Kbm90IGNvbXBsYWluIGlmIHlvdSBtb3VudCB3aXRoICdkaXNjYXJkJyBvbiBhIGRl
-dmljZSB0aGF0IGRvZXMgTk9UDQpzdXBwb3J0IGl0IC0tIHNvIHRoYXQncyBubyBoZWxwLg0KDQpJ
-J3ZlIHRyaWVkIHRoZSBmb2xsb3dpbmcgc2ltcGxlIHNlcXVlbmNlOg0KZGQgaWY9L2Rldi91cmFu
-ZG9tIG9mPXRlbXBmaWxlIGJzPTFNIGNvdW50PTMNCmhkcGFybSAtLWZpYm1hcCB0ZW1wZmlsZSAg
-ICA8LS0gZ2V0IHN0YXJ0IGFkZHJlc3Mgb2YgdGhlIGZpbGUNCmhkcGFybSAtLXJlYWQtc2VjdG9y
-IFtBRERSRVNTXSAvZGV2L3NkYQ0Kcm0gdGVtcGZpbGUgJiYgc3luYyAmJiBzbGVlcCAxMjANCmhk
-cGFybSAtLXJlYWQtc2VjdG9yIFtBRERSRVNTXSAvZGV2L3NkYSAgIDwtLSBzaG91bGQgYmUgYWxs
-IHplcm8ncw0KDQpHb3QgdGhpcyBvZmYgdGhlIEludGVybmV0LiAgVGhlIGxhc3Qgc3RlcCBORVZF
-UiByZXR1cm5zIHplcm8ncyBmb3IgZWl0aGVyDQonbmlsZnMnIG9yICdleHQ0Jy4NCg0KSWYgeW91
-IGhhcHBlbiB0byBrbm93IG9mIGEgYmV0dGVyIHRlc3QsIHRoYXQgd291bGQgYmUgYXBwcmVjaWF0
-ZWQuDQoNClRoYW5rcyBmb3IgeW91ciBhdHRlbnRpb24uDQpCZXN0IHJlZ2FyZHMsDQpNYXJrIFRy
-dW1wb2xkDQoNCg0KLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IFZ5YWNoZXNsYXYg
-RHViZXlrbyBbbWFpbHRvOnNsYXZhQGR1YmV5a28uY29tXQ0KU2VudDogVHVlc2RheSwgU2VwdGVt
-YmVyIDA0LCAyMDEyIDExOjMxIFBNDQpUbzogTWFyayBUcnVtcG9sZA0KQ2M6ICdsaW51eC1uaWxm
-c0B2Z2VyLmtlcm5lbC5vcmcnDQpTdWJqZWN0OiBSZTogJ25pbGZzJyBUUklNIGlzc3VlPw0KDQpI
-aSBNYXJrLA0KDQpPbiBUdWUsIDIwMTItMDktMDQgYXQgMTY6MzIgLTA3MDAsIE1hcmsgVHJ1bXBv
-bGQgd3JvdGU6DQo+IEdyZWV0aW5ncywNCj4NCj4gSSBhbSBzZWVpbmcgdGhlIGZvbGxvd2luZyBt
-ZXNzYWdlIGEgZmV3IG1pbnV0ZXMgYWZ0ZXIgYm9vdGluZyBhIHN5c3RlbToNCj4NCg0KRG8geW91
-IHVzZSBOSUxGUyBhcyByb290IGZpbGUgc3lzdGVtPw0KDQo+ICJOSUxGUyB3YXJuaW5nOiBlcnJv
-ciAtOTUgb24gZGlzY2FyZCByZXF1ZXN0LCB0dXJuaW5nIGRpc2NhcmRzIG9mZiBmb3IgdGhlIGRl
-dmljZSINCj4NCg0KQXMgSSBjYW4gc2VlIGZyb20gbWVzc2FnZSB0aGF0IG9wZXJhdGlvbiBpcyBu
-b3Qgc3VwcG9ydGVkICgtOTUpLiBTbywgaXQgbWVhbnMgdGhhdCB5b3UgdHJ5IHRvIHVzZSBkaXNj
-YXJkIGluIHRoZSBjYXNlIG9mIG5vIHN1cHBvcnQgb2YgaXQgb24gdGhlIGZsYXNoLg0KDQpIb3cg
-ZGlkIHlvdSBtb3VudCBOSUxGUyAoSSBtZWFuIG1vdW50IG9wdGlvbnMpPw0KQ291bGQgeW91IHNo
-YXJlIG1vdW50IHV0aWxpdHkgb3V0cHV0IHdpdGhvdXQgYW55IG9wdGlvbnM/DQpDb3VsZCB5b3Ug
-c2hhcmUgY29udGVudCBvZiB5b3VyIGZzdGFiIGZpbGU/DQoNCj4gV2UgYXJlIHVzaW5nIHRoZSAi
-U2F0YWRvbS0xNTAiIGZsYXNoIHBhcnQgd2hpY2ggZG9lcyBzdXBwb3J0IFRSSU0sIGFzDQo+IGV2
-aWRlbmNlZCBieSAnZXh0NCcgZmlsZXN5c3RlbXMgaGF2aW5nIG5vIGlzc3VlIHdpdGggdGhlIG1v
-dW50ICdkaXNjYXJkJyBvcHRpb24uDQo+DQoNCllvdSB3YW50IHRoYXQgaXQgaGFzbid0IGFueSBl
-cnJvciBtZXNzYWdlIHdoZW4geW91IHVzZSAnZGlzY2FyZCcgbW91bnQgb3B0aW9uIGluIHRoZSBj
-YXNlIG5vIHN1cHBvcnQgb2YgaXQgb24gZmxhc2guIEFtIEkgY29ycmVjdD8NCg0KV2l0aCB0aGUg
-YmVzdCByZWdhcmRzLA0KVnlhY2hlc2xhdiBEdWJleWtvLg0KDQoNCj4gSSBhbSBydW5uaW5nOg0K
-PiAgICBEZWJpYW4gNi4wLjUNCj4gICAgTGludXgga2VybmVsIDMuMy4xDQo+ICAgIE5pbGZzLXV0
-aWxzIDIuMS4xDQo+DQo+IEFueSB0aG91Z2h0cyB3b3VsZCBiZSBncmVhdGx5IGFwcHJlY2lhdGVk
-Lg0KPg0KPiBUaGFua3MgaW4gYWR2YW5jZSwNCj4gTWFyayBUcnVtcG9sZA0KPg0KPg0KPiBDb25m
-aWRlbnRpYWxpdHkgTm90aWNlOiAgVGhlIGluZm9ybWF0aW9uIGNvbnRhaW5lZCBpbiB0aGlzIGVs
-ZWN0cm9uaWMgZS1tYWlsIGFuZCBhbnkgYWNjb21wYW55aW5nIGF0dGFjaG1lbnQocykgaXMgaW50
-ZW5kZWQgb25seSBmb3IgdGhlIHVzZSBvZiB0aGUgaW50ZW5kZWQgcmVjaXBpZW50IGFuZCBpcyBj
-b25maWRlbnRpYWwgYW5kL29yIHByaXZpbGVnZWQuIElmIHlvdSBhbmQgd2UgaGF2ZSBhIGNvbmZp
-ZGVudGlhbGl0eSBhZ3JlZW1lbnQgb3Igb3RoZXIgbm9uLWRpc2Nsb3N1cmUgb2JsaWdhdGlvbnMg
-YmV0d2VlbiB1cywgdGhpcyBOb3RpY2Ugc2hhbGwgYmUgZGVlbWVkIHRvIG1hcmsgYW5kIGlkZW50
-aWZ5IHRoZSBjb250ZW50IG9mIHRoaXMgZW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBhcyBjb25m
-aWRlbnRpYWwgYW5kIHByb3ByaWV0YXJ5LiAgIElmIGFueSByZWFkZXIgb2YgdGhpcyBjb21tdW5p
-Y2F0aW9uIGlzIG5vdCB0aGUgaW50ZW5kZWQgcmVjaXBpZW50LCB1bmF1dGhvcml6ZWQgdXNlLCBk
-aXNjbG9zdXJlIG9yIGNvcHlpbmcgaXMgc3RyaWN0bHkgcHJvaGliaXRlZCwgYW5kIG1heSBiZSB1
-bmxhd2Z1bC4gIElmIHlvdSBoYXZlIHJlY2VpdmVkIHRoaXMgY29tbXVuaWNhdGlvbiBpbiBlcnJv
-ciwgcGxlYXNlIGltbWVkaWF0ZWx5IG5vdGlmeSB0aGUgc2VuZGVyIGJ5IHJldHVybiBlLW1haWws
-IGFuZCBkZWxldGUgdGhlIG9yaWdpbmFsIG1lc3NhZ2UgYW5kIGFsbCBjb3BpZXMgZnJvbSB5b3Vy
-IHN5c3RlbS4gIFRoYW5rIHlvdS4NCg0KPg0KPiBJUlMgQ2lyY3VsYXIgMjMwIERpc2Nsb3N1cmU6
-IFRvIGVuc3VyZSBjb21wbGlhbmNlIHdpdGggcmVxdWlyZW1lbnRzIGltcG9zZWQgYnkgdGhlIElS
-UywgcGxlYXNlIGJlIGFkdmlzZWQgdGhhdCBhbnkgVS5TLiBmZWRlcmFsIHRheCBhZHZpY2UgY29u
-dGFpbmVkIGluIHRoaXMgY29tbXVuaWNhdGlvbiAoaW5jbHVkaW5nIGFueSBhdHRhY2htZW50cykg
-aXMgbm90IGludGVuZGVkIG9yIHdyaXR0ZW4gdG8gYmUgdXNlZCBvciByZWxpZWQgdXBvbiwgYW5k
-IGNhbm5vdCBiZSB1c2VkIG9yIHJlbGllZCB1cG9uLCBmb3IgdGhlIHB1cnBvc2Ugb2YgKGkpIGF2
-b2lkaW5nIHBlbmFsdGllcyB1bmRlciB0aGUgSW50ZXJuYWwgUmV2ZW51ZSBDb2RlLCBvciAoaWkp
-IHByb21vdGluZywgbWFya2V0aW5nIG9yIHJlY29tbWVuZGluZyB0byBhbm90aGVyIHBhcnR5IGFu
-eSB0cmFuc2FjdGlvbiBvciBtYXR0ZXIgYWRkcmVzc2VkIGhlcmVpbi4NCj4NCj4gRS1tYWlsIGlz
-IHN1c2NlcHRpYmxlIHRvIGRhdGEgY29ycnVwdGlvbiwgaW50ZXJjZXB0aW9uLCB1bmF1dGhvcml6
-ZWQgYW1lbmRtZW50LCB0YW1wZXJpbmcgYW5kIHZpcnVzZXMsIGFuZCB3ZSBvbmx5IHNlbmQgYW5k
-IHJlY2VpdmUgZS1tYWlscyBvbiB0aGUgYmFzaXMgdGhhdCB3ZSBhcmUgbm90IGxpYWJsZSBmb3Ig
-YW55IHN1Y2ggY29ycnVwdGlvbiwgaW50ZXJjZXB0aW9uLCBhbWVuZG1lbnQsIHRhbXBlcmluZyBv
-ciB2aXJ1c2VzIG9yIGFueSBjb25zZXF1ZW5jZXMgdGhlcmVvZi4NCj4NCj4gLS0NCj4gVG8gdW5z
-dWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4
-LW5pbGZzIg0KPiBpbiB0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2Vy
-bmVsLm9yZyBNb3JlIG1ham9yZG9tbw0KPiBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3Jn
-L21ham9yZG9tby1pbmZvLmh0bWwNCg0KDQoNCg0KQ29uZmlkZW50aWFsaXR5IE5vdGljZTogIFRo
-ZSBpbmZvcm1hdGlvbiBjb250YWluZWQgaW4gdGhpcyBlbGVjdHJvbmljIGUtbWFpbCBhbmQgYW55
-IGFjY29tcGFueWluZyBhdHRhY2htZW50KHMpIGlzIGludGVuZGVkIG9ubHkgZm9yIHRoZSB1c2Ug
-b2YgdGhlIGludGVuZGVkIHJlY2lwaWVudCBhbmQgaXMgY29uZmlkZW50aWFsIGFuZC9vciBwcml2
-aWxlZ2VkLiBJZiB5b3UgYW5kIHdlIGhhdmUgYSBjb25maWRlbnRpYWxpdHkgYWdyZWVtZW50IG9y
-IG90aGVyIG5vbi1kaXNjbG9zdXJlIG9ibGlnYXRpb25zIGJldHdlZW4gdXMsIHRoaXMgTm90aWNl
-IHNoYWxsIGJlIGRlZW1lZCB0byBtYXJrIGFuZCBpZGVudGlmeSB0aGUgY29udGVudCBvZiB0aGlz
-IGVtYWlsIGFuZCBhbnkgYXR0YWNobWVudHMgYXMgY29uZmlkZW50aWFsIGFuZCBwcm9wcmlldGFy
-eS4gICBJZiBhbnkgcmVhZGVyIG9mIHRoaXMgY29tbXVuaWNhdGlvbiBpcyBub3QgdGhlIGludGVu
-ZGVkIHJlY2lwaWVudCwgdW5hdXRob3JpemVkIHVzZSwgZGlzY2xvc3VyZSBvciBjb3B5aW5nIGlz
-IHN0cmljdGx5IHByb2hpYml0ZWQsIGFuZCBtYXkgYmUgdW5sYXdmdWwuICBJZiB5b3UgaGF2ZSBy
-ZWNlaXZlZCB0aGlzIGNvbW11bmljYXRpb24gaW4gZXJyb3IsIHBsZWFzZSBpbW1lZGlhdGVseSBu
-b3RpZnkgdGhlIHNlbmRlciBieSByZXR1cm4gZS1tYWlsLCBhbmQgZGVsZXRlIHRoZSBvcmlnaW5h
-bCBtZXNzYWdlIGFuZCBhbGwgY29waWVzIGZyb20geW91ciBzeXN0ZW0uICBUaGFuayB5b3UuDQoN
-CklSUyBDaXJjdWxhciAyMzAgRGlzY2xvc3VyZTogVG8gZW5zdXJlIGNvbXBsaWFuY2Ugd2l0aCBy
-ZXF1aXJlbWVudHMgaW1wb3NlZCBieSB0aGUgSVJTLCBwbGVhc2UgYmUgYWR2aXNlZCB0aGF0IGFu
-eSBVLlMuIGZlZGVyYWwgdGF4IGFkdmljZSBjb250YWluZWQgaW4gdGhpcyBjb21tdW5pY2F0aW9u
-IChpbmNsdWRpbmcgYW55IGF0dGFjaG1lbnRzKSBpcyBub3QgaW50ZW5kZWQgb3Igd3JpdHRlbiB0
-byBiZSB1c2VkIG9yIHJlbGllZCB1cG9uLCBhbmQgY2Fubm90IGJlIHVzZWQgb3IgcmVsaWVkIHVw
-b24sIGZvciB0aGUgcHVycG9zZSBvZiAoaSkgYXZvaWRpbmcgcGVuYWx0aWVzIHVuZGVyIHRoZSBJ
-bnRlcm5hbCBSZXZlbnVlIENvZGUsIG9yIChpaSkgcHJvbW90aW5nLCBtYXJrZXRpbmcgb3IgcmVj
-b21tZW5kaW5nIHRvIGFub3RoZXIgcGFydHkgYW55IHRyYW5zYWN0aW9uIG9yIG1hdHRlciBhZGRy
-ZXNzZWQgaGVyZWluLg0KDQpFLW1haWwgaXMgc3VzY2VwdGlibGUgdG8gZGF0YSBjb3JydXB0aW9u
-LCBpbnRlcmNlcHRpb24sIHVuYXV0aG9yaXplZCBhbWVuZG1lbnQsIHRhbXBlcmluZyBhbmQgdmly
-dXNlcywgYW5kIHdlIG9ubHkgc2VuZCBhbmQgcmVjZWl2ZSBlLW1haWxzIG9uIHRoZSBiYXNpcyB0
-aGF0IHdlIGFyZSBub3QgbGlhYmxlIGZvciBhbnkgc3VjaCBjb3JydXB0aW9uLCBpbnRlcmNlcHRp
-b24sIGFtZW5kbWVudCwgdGFtcGVyaW5nIG9yIHZpcnVzZXMgb3IgYW55IGNvbnNlcXVlbmNlcyB0
-aGVyZW9mLg0KDQo=
+Hi,
+
+This patch modifies check_mount() function with the purpose of adding opportunity of RO mount checking.
+
+With the best regards,
+Vyacheslav Dubeyko.
+--
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v3 06/11] nilfs-utils: fsck: modify check_mount() function with the purpose of adding opportunity of RO mount checking
+
+This patch modifies check_mount() function with the purpose of adding opportunity of RO mount checking.
+
+Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+---
+ lib/ismounted.c |   15 ++++++++++++++-
+ 1 files changed, 14 insertions(+), 1 deletions(-)
+
+diff --git a/lib/ismounted.c b/lib/ismounted.c
+index 7c5f0fc..d16dce9 100644
+--- a/lib/ismounted.c
++++ b/lib/ismounted.c
+@@ -31,6 +31,15 @@
+ 
+ #define LINE_BUFFER_SIZE	256  /* Line buffer size for reading mtab */
+ 
++/*
++ * check_mount - Check that device mounted or not.
++ * @device: pointer on device.
++ *
++ * Return value:
++ * 0 - device is not mounted.
++ * -1 - device is mounted in RW mode.
++ * -2 - device is mounted in RO mode.
++ */
+ int check_mount(const char *device)
+ {
+ 	struct mntent *mnt;
+@@ -38,6 +47,7 @@ int check_mount(const char *device)
+ 	FILE *f;
+ 	dev_t file_dev = 0, file_rdev = 0;
+ 	ino_t file_ino = 0;
++	int mount_type = 0;
+ 
+ 	f = setmntent(_PATH_MOUNTED, "r");
+ 	if (f == NULL) {
+@@ -71,6 +81,9 @@ int check_mount(const char *device)
+ 		}
+ 	}
+ 
++	if (mnt)
++		mount_type = (hasmntopt(mnt, MNTOPT_RO)) ? -2 : -1;
++
+ 	endmntent(f);
+-	return (mnt == NULL) ? 0 : -1;
++	return (mnt == NULL) ? 0 : mount_type;
+ }
+-- 
+1.7.1
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
