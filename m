@@ -1,26 +1,21 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: RE: 'nilfs' TRIM issue?
-Date: Thu, 06 Sep 2012 10:25:06 +0400
-Message-ID: <1346912706.2083.23.camel@slavad-ubuntu-11>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: 'nilfs' TRIM issue?
+Date: Thu, 06 Sep 2012 19:02:13 +0900 (JST)
+Message-ID: <20120906.190213.265079658.konishi.ryusuke@lab.ntt.co.jp>
 References: <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835B3@Etamin.tachyon.net>
-	 <1346826651.2096.9.camel@slavad-ubuntu-11>
-	 <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835DE@Etamin.tachyon.net>
+	<1346826651.2096.9.camel@slavad-ubuntu-11>
+	<CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835DE@Etamin.tachyon.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Content-Transfer-Encoding:Mime-Version:Message-ID:Date:Content-Type:References:In-Reply-To:Cc:To:From:Subject; bh=bW46pn1bM6d5wKxNaRl17WxKD3vX3i7XM1BsJYBnWYY=;
-	b=M8YFhUyeErtARlKYuO+m1R9riUPakSk1NttkCFLElypywcDplk05h9jZfhSFXBwWP3N5wcSGxQgsjQ6X2w83miZ/LU6F1BnS8fa2vXBB1Yy04RqlgCNX0ho0XOJVirHT;
 In-Reply-To: <CDB9B1D21E35BB4C9E8124D05FD86BB189C6F835DE-Nr8giE/DiON166AYIJghu6xOck334EZe@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
-Cc: "'linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org'" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Rodriguez <Eric.Rodriguez-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org
+Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eric.Rodriguez-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org
 
-Hi Mark,
-
-On Wed, 2012-09-05 at 13:52 -0700, Mark Trumpold wrote:
+On Wed, 5 Sep 2012 13:52:20 -0700, Mark Trumpold wrote:
 > Hello Vyacheslav,
 > 
 > > Do you use NILFS as root file system?
@@ -31,7 +26,11 @@ On Wed, 2012-09-05 at 13:52 -0700, Mark Trumpold wrote:
 > involving a lot of your time..  At this point it in not clear if TRIM is
 > working at all for 'ext4' or 'nilfs' on our system.  It may be that the
 > warning from 'nilfs' is legitimate.
-> 
+
+Actually, ext4 does not emit warning even if the TRIM is not supported
+by underlying block devices; it simply ignores the error status of the
+discard request.
+
 > I think it might be best for me to first find a way to test whether or
 > not TRIM is working in general for a particular configuration.
 > I've gone to a totally generic system with just a test 'nilfs' and 'ext4'
@@ -46,48 +45,35 @@ On Wed, 2012-09-05 at 13:52 -0700, Mark Trumpold wrote:
 > rm tempfile && sync && sleep 120
 > hdparm --read-sector [ADDRESS] /dev/sda   <-- should be all zero's
 > 
-
-Maybe I misunderstand something, but why do you expect zero's in sector
-at the end?
-
-Even in the case of discard support by filesystem and TRIM support by
-device it is not so easy to predict the moment of time when operation of
-real erasing will be occurred. As I understand, for example, MMC
-specification declares that real erase occurs in background after TRIM
-command receiving. And erase can be made under erase block instead of
-sector.
-
-Moreover, in the case of NILFS deletion of file means that will be
-created next checkpoint that will keep new metadata state. And deleted
-file continues to be kept in previous checkpoint. During a some time
-this checkpoint can be deleted also but it can be significant time
-duration. So, your trying to read sector by absolute address results in
-reading not zeros.
-
-As I can see from man page of hdparm, it exists --trim-sector-ranges
-option:
-
-"For  Solid State Drives (SSDs).  EXCEPTIONALLY DANGEROUS. DO NOT USE
-THIS FLAG!!  Tells the drive firmware to discard unneeded data sectors,
-destroying any data that may have been present within them.  This makes
-those sectors available for immediate use by the firmware's garbage
-collection mechanism, to improve scheduling for wear-leveling of the
-flash media.  This option expects one or more sector range pairs
-immediately after  the flag: an LBA starting address, a colon, and a
-sector count, with no intervening spaces.  EXCEPTIONALLY DANGEROUS. DO
-NOT USE THIS FLAG!!"
-
-Maybe this option can be useful for you. As I can understand, it can be
-helpful in the case necessity to check TRIM support by device.
-
-With the best regards,
-Vyacheslav Dubeyko.
-
 > Got this off the Internet.  The last step NEVER returns zero's for either
 > 'nilfs' or 'ext4'.
 > 
 > If you happen to know of a better test, that would be appreciated.
-> 
+
+mkfs.nilfs2 issues TRIM/DISCARD by default.
+
+With mkfs.nilfs2, you can test if the TRIM is supported on the device
+if you have an empty partition:
+
+ # dd if=/dev/urandom of=/dev/sdc2
+ # mkfs -t nilfs2 -v /dev/sdc2
+
+ where /dev/sdc1 is the empty partition in this example.
+
+You will see the following message if TRIM is supported.
+
+ Discard succeeded and will return 0s - skip wiping
+
+Then, you can confirm the device is actually cleared, for exapmle,
+with dd command:
+
+ # dd if=/dev/sdc2 iflag=direct 2> /dev/null | hexdump
+
+
+With regards,
+Ryusuke Konishi
+
+
 > Thanks for your attention.
 > Best regards,
 > Mark Trumpold
@@ -161,8 +147,6 @@ Vyacheslav Dubeyko.
 > 
 > E-mail is susceptible to data corruption, interception, unauthorized amendment, tampering and viruses, and we only send and receive e-mails on the basis that we are not liable for any such corruption, interception, amendment, tampering or viruses or any consequences thereof.
 > 
-
-
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
