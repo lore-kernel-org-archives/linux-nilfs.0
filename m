@@ -1,110 +1,49 @@
-From: Marco Stornelli <marco.stornelli@gmail.com>
-Subject: [PATCH 18/22] nilfs2: drop vmtruncate
-Date: Sat, 06 Oct 2012 10:33:45 +0200
-Message-ID: <506FECE9.3020308@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:cc:subject
-         :content-type:content-transfer-encoding;
-        bh=NuUvynEcCKku+DgCP74aICksiAbIw1I/ox4Jji8pxLc=;
-        b=gR8wsVN2q5d047YOnsaxYn+SwfKln+WENC8ispGSpkaM2htTooeti3ZOr3eoWAN5nX
-         buys9U5K0mcFK+shsMwwRrOYBLg9h2/3VEkEoK/oimYQdJpO4TZ7L8Jfgd9rm3ojr7F6
-         BM0JOUp0iK4pEjX8jOnpco5thBfXtzUspmDpgKy4naQJk5DkdT3wr68sef+3uGB11NHf
-         jG6yarFuLDm7D84MKNPSCACFNIy39oAvrHDh62jn2uK3u0hI2oN64TafpdqEMXcCs05I
-         CavyN95f1Za4x3Psmq6QZRi6C56Sj9m7I+jbbwOSC3kIYonHGb/opnPSnzWQQGuT3tLj
-         4Ksg==
-Sender: linux-kernel-owner@vger.kernel.org
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [NILFS2 design doc] v.1.7 NILFS block mapping functionality (structures, API) was described
+Date: Sun, 7 Oct 2012 18:54:55 +0400
+Message-ID: <05928EAC-1937-4512-9F58-CD83F71E7D4B@dubeyko.com>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:To:Message-Id:Date:Subject:Content-Transfer-Encoding:Content-Type:From; bh=KDJW0TwfWBmSfVog/KTqSiT0IZpRalkZtKcuELSkhpU=;
+	b=lRlgTMFpvX9ucFKNdwpcV4i1P/DqDwvnNRFmvr2wTqQd1ARs4sGgINQc016bHf7DCkaz8PJGHGC/kToMnsiEBWboyxScIVWQT7qUoYLwmt6oUljL957bOs0lK2UUl6Mv;
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, Linux FS Devel <linux-fsdevel@vger.kernel.org>
+Content-Type: text/plain; charset="windows-1252"
+To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Removed vmtruncate.
+Hi,
 
-Signed-off-by: Marco Stornelli <marco.stornelli@gmail.com>
----
- fs/nilfs2/file.c     |    1 -
- fs/nilfs2/inode.c    |   18 +++++++++++++-----
- fs/nilfs2/recovery.c |    7 +++++--
- 3 files changed, 18 insertions(+), 8 deletions(-)
+NILFS design document v.1.7 is available by link: http://dubeyko.com/de=
+velopment/FileSystems/NILFS/nilfs2-design.pdf.
 
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index a4d56ac..543554b 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -166,7 +166,6 @@ const struct file_operations nilfs_file_operations = {
- };
- 
- const struct inode_operations nilfs_file_inode_operations = {
--	.truncate	= nilfs_truncate,
- 	.setattr	= nilfs_setattr,
- 	.permission     = nilfs_permission,
- 	.fiemap		= nilfs_fiemap,
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 4d31d2c..aed753a 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -228,8 +228,11 @@ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
- 				nilfs_get_block);
- 	if (unlikely(err)) {
- 		loff_t isize = mapping->host->i_size;
--		if (pos + len > isize)
--			vmtruncate(mapping->host, isize);
-+		if ((pos + len > isize) &&
-+			inode_newsize_ok(mapping->host, isize) == 0) {
-+			truncate_setsize(mapping->host, isize);
-+			nilfs_truncate(mapping->host);
-+		}
- 
- 		nilfs_transaction_abort(inode->i_sb);
- 	}
-@@ -277,8 +280,10 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
- 		loff_t isize = i_size_read(inode);
- 		loff_t end = offset + iov_length(iov, nr_segs);
- 
--		if (end > isize)
--			vmtruncate(inode, isize);
-+		if ((end > isize) && inode_newsize_ok(inode, isize) == 0) {
-+			truncate_setsize(inode, isize);
-+			nilfs_truncate(inode);
-+		}
- 	}
- 
- 	return size;
-@@ -787,9 +792,12 @@ int nilfs_setattr(struct dentry *dentry, struct iattr *iattr)
- 	    iattr->ia_size != i_size_read(inode)) {
- 		inode_dio_wait(inode);
- 
--		err = vmtruncate(inode, iattr->ia_size);
-+		err = inode_newsize_ok(inode, iattr->ia_size);
- 		if (unlikely(err))
- 			goto out_err;
-+
-+		truncate_setsize(inode, iattr->ia_size);
-+		nilfs_truncate(inode);
- 	}
- 
- 	setattr_copy(inode, iattr);
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index f1626f5..cec215e 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -526,8 +526,11 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
- 					0, &page, nilfs_get_block);
- 		if (unlikely(err)) {
- 			loff_t isize = inode->i_size;
--			if (pos + blocksize > isize)
--				vmtruncate(inode, isize);
-+			if ((pos + blocksize > isize) &&
-+				inode_newsize_ok(inode, isize) == 0) {
-+				truncate_setsize(inode, isize);
-+				nilfs_truncate(inode);
-+			}
- 			goto failed_inode;
- 		}
- 
--- 
-1.7.3.4
+v.1.7
+NILFS block mapping functionality (structures, API) was described.
+v.1.6
+NILFS metadata file functionality (structures, API) was described.
+v.1.5.
+Persistent object allocator/deallocator subsystem (structures, API) was=
+ described.
+v.1.4
+=46ile system driver=92s subsystem APIs paragraph (draft) was elaborate=
+d.
+v.1.3
+=46ile system driver=92s data abstractions paragraph (draft) was elabor=
+ated.
+v.1.2
+Raw volume dumps were excluded from tables. <TODO: Elaborate paragraphs=
+ with raw dump examples>.
+v.1.1
+On-disk layout paragraph (draft) was elaborated.
+v.1.0
+Create initial version.
+
+With the best regards,
+Vyacheslav Dubeyko.
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
