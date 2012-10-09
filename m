@@ -1,298 +1,82 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: NILFS: corrupt root inode after Turbo Mode?
-Date: Tue, 9 Oct 2012 15:58:33 +0200
-Message-ID: <20121009135833.GX28032@wloczykij>
-References: <20121008222557.GU28032@wloczykij>
- <1349767793.3427.7.camel@slavad-ubuntu>
- <20121009105239.GV28032@wloczykij>
- <1349784514.1921.9.camel@slavad-ubuntu>
+Date: Wed, 10 Oct 2012 01:24:40 +0900 (JST)
+Message-ID: <20121010.012440.17932600.konishi.ryusuke@lab.ntt.co.jp>
+References: <20121009105239.GV28032@wloczykij>
+	<1349784514.1921.9.camel@slavad-ubuntu>
+	<20121009135833.GX28032@wloczykij>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="Hw0FrjWlp+qkNlJP"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1349784514.1921.9.camel@slavad-ubuntu>
+In-Reply-To: <20121009135833.GX28032@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org
+Cc: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Hi,
+On Tue, 9 Oct 2012 15:58:33 +0200, Piotr Szymaniak wrote:
+> On Tue, Oct 09, 2012 at 04:08:34PM +0400, Vyacheslav Dubeyko wrote:
+> > First of all, I need some details about your NILFS2 partition for issue analysis.
+> > 
+> > I need in:
+> > 1. Full output of "lscp -a".
+> > 2. Full output of "lssu -a".
+> > 3. Output of dumpseg for segment #0.
+> > 
+> > Could you share these outputs?
+> 
+> Sure!
+> maszyn ~ # lscp -a /dev/sdf3
+> lscp: /dev/sdf3: cannot open NILFS
+> maszyn ~ # lssu -a /dev/sdf3
+> lssu: /dev/sdf3: cannot open NILFS
+
+lscp and lssu don't work if the target partition is not mounted, so
+these seem to be its direct result.
+
+> (the card is in a card reader)
+> 
+> > Maybe, you will have some troubles with getting of outputs. So, I need in your segment #0 (first 8 MB) raw output for issue analysis beginning, anyway.
+> 
+> maszyn ~ # dumpseg /dev/sdf3 0 > /tmp/dumpseg-0.out
+> 
+> Attached.
+
+The segment zero may not include any useful information.
+Please try nilfs-tune command to know which segment should be investigated.
+
+# nilfs-tune -l /dev/sdf3
+...
+Last checkpoint #:	  160345
+Last block address:	    131015
+Last sequence #:	      7675
+..
+
+In this example, the active super block points to the segment #63:
+
+  (value of the "Last block address" field) / 2048 = 131015 / 2048 = 63
+
+Note that you can track the latest segment from the pointed segment.
+"next segnum" field and "sequence number" field in the dumpseg outputs
+tell you information about its successive segments.
 
 
---Hw0FrjWlp+qkNlJP
-Content-Type: multipart/mixed; boundary="oDto3OTLsk6uOlQH"
-Content-Disposition: inline
+By the way, Raspberry Pi Linux seems to be the kernel for an ARM-based
+machine.  Is there possibility that this is a platform dependent
+problem?
 
 
---oDto3OTLsk6uOlQH
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Tue, Oct 09, 2012 at 04:08:34PM +0400, Vyacheslav Dubeyko wrote:
-> First of all, I need some details about your NILFS2 partition for issue a=
-nalysis.
->=20
-> I need in:
-> 1. Full output of "lscp -a".
-> 2. Full output of "lssu -a".
-> 3. Output of dumpseg for segment #0.
->=20
-> Could you share these outputs?
-
-Sure!
-maszyn ~ # lscp -a /dev/sdf3
-lscp: /dev/sdf3: cannot open NILFS
-maszyn ~ # lssu -a /dev/sdf3
-lssu: /dev/sdf3: cannot open NILFS
-
-(the card is in a card reader)
-
-> Maybe, you will have some troubles with getting of outputs. So, I need in=
- your segment #0 (first 8 MB) raw output for issue analysis beginning, anyw=
-ay.
-
-maszyn ~ # dumpseg /dev/sdf3 0 > /tmp/dumpseg-0.out
-
-Attached.
+Regards,
+Ryusuke Konishi
 
 
-Piotr Szymaniak.
---=20
-Od  czasu  do  czasu  bij swoja zone,  jezeli ty nie wiesz za co ona na
-pewno bedzie wiedziec.
-  -- Przyslowie arabskie
-
---oDto3OTLsk6uOlQH
-Content-Type: application/x-bzip2
-Content-Disposition: attachment; filename="dumpseg-0.out.bz2"
-Content-Transfer-Encoding: base64
-
-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
-V639293OTN7zMs4pnB/JHOBIoqTapNqk2qTapExCYhMQmITE7+H3eN75993PNXr3X3OZ0Td7
-mc4cUecWpTnAkUVJtUm1SbpNV8VjI3nw3lYD1dU9XGu5yshTt9MwsyqS++g5nLNfB2VjwfJR
-XVxuPNvYuks5SsyqlfiFH0flH44j348uO/H426HnZqqaONdq+nOQi1TnAkSTbbba+u+HenZz
-nNN+mP13nMkuSQAA22pv1b1MfYrne1j3OdAP27ob9H25aHHtsr1buvy++gqlTnErOzcj6PKY
-v2i9O7WYNLfdkffQCABv3vAAAAAANYy1vewa3ncocSqMZ6d3e9y8iaVe2E7vc5JDNUu3kXAs
-pGd6qba+69fZb2omHSV3ZblYk6m6kcmuMqHI52ZhzHQtyCmF93buxQQfc4nACKm3Ygmcki+7
-cNpvtyC9Ti7h3ZBC35WO8IuOfZ92zPW3sjeSpyVhYlHTmb973u9rvfdtW1TuR0tajTZHYESL
-rD1YpJ5QwNa9pzeNpCN1KYre9536KkknJJJJckqSSTo0AszKrdSe97PAWAFge+hTEtQqSSWV
-fgflqzN3fveSSqpVdfN9yZ2/cS9vj25efZnpN2yT33sXbv579OVdUvnVU7m5LuUglJNx1VRx
-q60roNA60rrSutK60roUx98phTH3ynzJ86433tysHvjG8rFS8VsTLs694VS11VMm5LuJBKpt
-RqqjUaqtGhdGhdGhdGkdGhdGkdQp+j5TCn6PvMn1u1sk973bWv2tXwqnHXi9jy8Vr7GqWulT
-k3ku5QReUiHSqNRo6NCOtCC60ILrQgutIijjVVHGqqOOlXr+87+M9az3twzvs+l7Jb0997Y8
-vd439Q6r5qk5N5LuIJVNxqq1oXWhdaF1oXWhdaF1oXONVUcdKu++8/pnue9nDn3s9L2Waz32
-N2e8+Pa290PeEtvfu73POZK0LrQutC60LrQutC60LrQutI6NJr1ffXzH3ve2wfbt+YEqG+XY
-z6+eu9VX16C29vO73HI5GkdGkdOgdGkdGkdaR1pHWhdaR1oH49e97bnj4+Pe3hfPY+q8Lgjd
-TLF3PN0lrpJybku4bmNaR1pHWgdGkXWkBdaKpJRx0qklKo1HSqSUq77y++ZmZ73vsLz2M8ge
-Wmbqd2L31JbsSTk3JdxDRILrSOtI60jrSOtI60jrSqjjpVHGlXu7shz3vfe7l89zYbY8teV/
-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
-mqaWbc5GgZ2qHRDuonKuJivfQ51KAyr773fvvu96eqFPMUFeu1pi1qamq5ypzHM/ZvWu972S
-SABJJJJJGAB5lN73JqSSFmQEwzjG853WfSC/bD3B+yu6Mj30H2EHp636pNv1T4sxRt4Ox59j
-i4nLsMin0kkkkkkkkkkkkk97q988v7R9y/D91X3kxrEc+FtmFQAnZTSSSSSSSSSSSSSSiI94
-856261G88P2dvg8axZ9E85amSywyT6VSklUpMptlNsptlNsptlNspthL17eteXuGe79nh+Ye
-c3HFyzPleMo5YZFOyqUkVSSSSSSSSNtr33dZu5njv2eH5y6z9ny9do3y+avFbu71W1gAAe5P
-tZnc9J7eeH64cfXlvj8jXvBcZlg02wCII9z7S+d56q7zXrd9vO/VzlZq5yOXxq8Xu7tAABck
-qqmJVVMT2ufa7+796Tu86d8TLz00wI9czm8oywaYqW2EthLYTbCbYTbCbYTbCbKPofqzuIw7
-zDCj3quLWcuisqVnLdr5bV2i5iVVTEqqmIqsYUBEd9zvX2e++nuXvr749a5mht39yHE+bjTz
-Aabbaabec5znOcsWvDSduTHtuVrU7WPcuSIAAAOfE3c089nRt1OAEl+1b72Xi7unxm9d3l7x
-Cnq3NvaVZvvRPe97l7ezein5a+73vXcAAAAAA1lvlXvMDB3VUUqmm95PINlXA4TiczXb1nEV
-yqRfEypZVyr6cq0hVLr6cnVaM1Eclfqj24lHkvTMV3qR5A5WvXRrl3c5XVNaOQ6qlqmS8MtY
-uauK5yiKjY6N2M0eaXhPF47i51y4mbv0R0zihTmKu73gG5+8nXyiZEpUxFTU7MFZlGE/bM7u
-7ve94AAJJJJJJgAGE3vck3JIdGgJhn7ec41t2PS+S+3Y1qY+e9Mq9JMeznx3fevdi2E0+5zm
-5yDnOBkqNttttuYmZmZ9HNz3HnHszqfeu73aJVLKnHl9U4rersAARBz73b+53Xuz2tbv7vuZ
-a5vml+u2prVZ5xG9XYAAA+98F9RviPbjo8tydyr1XJcXGT3TE31UlCkAEQd3znuX3fvp7evr
-771XzfF3V8r2pefq3Vcq9au0AARB77f33fr376e534770HeZexEl+5Mz7binLAijabbbczMz
-MT7e4dYece23R7zu+3rtW1E5kxj3K9urrN3VUiAAD2d75yvb7707zP3fdu9/c+fZVqsm/bp2
-t1NZ5dgAATM+VPuce7z8Aewu6S7o56qxZM+yCHN1y7qqAAAe+5Pa39v3te3e++13NHK1yc0+
-us7rfud0iuXdVSIAAPwxr483VRREf1PqfqCA/afh6BAfICp+kKpSqK0qiIfxFUpSlKUpSlKU
-pSlKUJVKUpSlKUpSlKUpSlCUUpSlIRQlUJQlCUJQlCUJQlCUJVCUJQlCUJQlCUJQlCVQlCUJ
-QlCUJQlCUJQlUJQlMBSlKUJVKUpSlKUpSlKUpSlCVSlKUpSlKUpSlKUpQlUpSlKUpSlKUpSl
-KUJVKUpSlIQ0JVCUJQlCUJQlCUJQlCVQlCUJQlCUslKUpSlCVSlKUpSlKUpSlKUpQlUpSlKU
-pSlKUpSlKUJVKUpSlKUpSlKUpSlKRUpSlKUpQECUiDQIVUAAAAAAAAAAAAAJJgkmMQxIAAAA
-AAAAAAAAAAYmMGJiTBMYkAAAAABJDGIYwUpSlKUpSlKUpVCQVQlKUJQlCUJQlCUJQlUJQlCU
-JQlCUJQlCUJVCUJQlCUJQlCUJQlCVQlCUJQlCUJQlCUJQlUJQlCUJQlCUJQlCUJVCUJQlCUJ
-QlCUJQlCVQlCUJQlCUslKUpVKUpSlKUpSlKUpSlKVSlKUpSlKUpSlKUpSlUpSlKUpSlKUpSl
-KUpVKUJAVQlCUJQlCUJQlCUJQlUJSSFKUpSlKUpSlUpSlKUpSlKUpSlKUJ/pUB+9FEQDAgP3
-HAQH2Pr+B+Sfx137ef0VFFfhUUV9AgPAEH6J9A8CgP1BAcfoCA/NUFVZUUVhQH9j4ARBB+b9
-p+78z+woD8pEB+h4FAfSSjKqkgifVUFVfD7Hn6AgP2CtAKhQg/NFEQDyqKK+x4PY8Kgqr7nz
-PIoD4P3n+fL4BAftOmP56/cgKq/H/xdyRThQkJtkdng=
-
---oDto3OTLsk6uOlQH--
-
---Hw0FrjWlp+qkNlJP
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCAAGBQJQdC2JAAoJEEMpAov1cw9l4XcP/2ZJnSufrCWGnJkIeg4+KDxn
-Tle1aJ0AACxOUZnNfgvmO4O2ZHYs/mej8nmxWT9Lj8rwzJwbzF6cTyZS+eIXqTd9
-K9wFfkxTzC/VHQLNII/7X+LyvrREp5SIrE2UFRjyPojtfkSFme7NWb1+o23vKpDr
-VH2ZhKCLnSszlqUDT5DaAbETXhFd5XnNIk6LiwYNx9zEPu/ITkrbMcgxHVn4nZ2N
-G+gN9HSR2jbr+/adpkEhAI1CHMzjyhDqrkoY4ZQTPqLdVTH3Vy3svbyRKrsRWhZz
-kBz05lT2cl4Ku+1Pe3RTC0HfOCyh/S/3uUC6GaQh7GP/JRBv5O570kBYmqGfy30h
-gQb5qngJD9GiIizfw5NzQ7wiSQFsXUoo1ewq/XCj5RPAsHzwBtqY8/X6H2bh8J7m
-WbsZ8X/p6/kVg53aFkbLngY1wAIw9gXPznMaRhaG7lVjBIJbbNDKNyLg3y7IYiCX
-fb3yILJKfoA7/yrNqxUhqln7pjC1M1GOvDH8JBTGqjprrNzU8tLpmVBzRx3LeoBw
-Nfaig8O6e1/p/omHvmK96BNvjG2nD9BKNsslVAVogz7wQRMVZ3k8m2LuPKIZeG8H
-C8uFAYZEm6EgpkO6tC6WA4FIiEkTM3PIlnxfDlbBca5RkEeeonw9+c2pHaLxXHxn
-P7WKMsebzneo3xRIxcsF
-=p5l2
------END PGP SIGNATURE-----
-
---Hw0FrjWlp+qkNlJP--
+> Piotr Szymaniak.
+> -- 
+> Od  czasu  do  czasu  bij swoja zone,  jezeli ty nie wiesz za co ona na
+> pewno bedzie wiedziec.
+>   -- Przyslowie arabskie
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
