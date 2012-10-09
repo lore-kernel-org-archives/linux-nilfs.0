@@ -1,68 +1,125 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: NILFS: corrupt root inode after Turbo Mode?
-Date: Tue, 9 Oct 2012 13:53:41 +0200
-Message-ID: <20121009115341.GW28032@wloczykij>
+Date: Tue, 09 Oct 2012 16:08:34 +0400
+Message-ID: <1349784514.1921.9.camel@slavad-ubuntu>
 References: <20121008222557.GU28032@wloczykij>
- <1349767793.3427.7.camel@slavad-ubuntu>
+	 <1349767793.3427.7.camel@slavad-ubuntu> <20121009105239.GV28032@wloczykij>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="tZCmRiovzb4sxAVa"
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1349767793.3427.7.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=Cun1xintqh9kEE3QiJnL/77P4JZsnDqJkBfitSwp0Lg=;
+	b=Z0USfYaIyqEtEY8srBt43Dbi3+549N+kj/cFqM9d0y8+9c9fuCemjN9m2PTaxE+XxhmV+nwG14oYj96NrI6X9nAk2kM5hF846Eq8SqZDLWErBDZXIj4jIlAYCr59Dkhk;
+In-Reply-To: <20121009105239.GV28032@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+Hi Piotr,
 
---tZCmRiovzb4sxAVa
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On Tue, 2012-10-09 at 12:52 +0200, Piotr Szymaniak wrote:
+> On Tue, Oct 09, 2012 at 11:29:53AM +0400, Vyacheslav Dubeyko wrote:
+> > Hi,
+> >=20
+> > On Tue, 2012-10-09 at 00:25 +0200, Piotr Szymaniak wrote:
+> > > Hi list.
+> > >=20
+> > > I'm using nilfs2 on my Raspberry Pi rootfs. I've played around wi=
+th
+> > > Raspberry Pi Turbo Mode and today it refused to boot. It's a head=
+less
+> > > setup so I moved the SD Card to my other machine and tried to mou=
+nt
+> > > rootfs partition:
+> > >=20
+> >=20
+> > As I can understand Raspberry Pi Turbo Mode is a hardware overclock=
+ing.
+> > So, I worry about proper working of SD-card controller. It is possi=
+ble
+> > that the reason of the issue can be not proper controller functioni=
+ng or
+> > concrete SD-card issue.
+>=20
+> It's an =E2=80=9Callowed=E2=80=9D overcloking. I have another SD Card=
+ with Raspbian (and
+> without nilfs2) that works fine with Turbo Mode. At least it seems to
+> work fine. The second card was in Turbo Mode (@900MHz) for a few days
+> and was working. Yesterday i made it @1000MHz and it didn't boot.
+>=20
+>=20
+> > Could you try to reproduce the issue with using another SD-card in =
+Turbo
+> > and normal mode?
+>=20
+> Not now. Don't have any image of my setup with nilfs2. ):
+>=20
+>=20
+> > I think that first of all it needs to detect that it is NILFS2 issu=
+e but
+> > not hardware or MMC stack issue.
+>=20
+> Will connect some screen via HDMI to check if there's some error msg.
+> The card should be fine, but I will dd it to disk to check for read
+> errors.
+>=20
 
-On Tue, Oct 09, 2012 at 11:29:53AM +0400, Vyacheslav Dubeyko wrote:
-> *snip*
-> I think that first of all it needs to detect that it is NILFS2 issue but
-> not hardware or MMC stack issue.
+=46irst of all, I need some details about your NILFS2 partition for iss=
+ue analysis.
 
-I did a dd from the card to local hard drive without issues.
+I need in:
+1. Full output of "lscp -a".
+2. Full output of "lssu -a".
+3. Output of dumpseg for segment #0.
+
+Could you share these outputs?
+
+Maybe, you will have some troubles with getting of outputs. So, I need =
+in your segment #0 (first 8 MB) raw output for issue analysis beginning=
+, anyway.
+
+With the best regards,
+Vyacheslav Dubeyko.
 
 
-Piotr Szymaniak.
---=20
-Tak szybkie przemieszczanie si=C4=99 o=C5=9Brodka ni=C5=BCowego i towarzysz=
-=C4=85cego
-mu frontu ch=C5=82odnego =C5=9Bwiadczy o odbudowie cyrkulacji zachodniej
-z niewielkim odchyleniem p=C3=B3=C5=82nocnym, transportuj=C4=85cej do kraju
-w najbli=C5=BCszych dniach =C5=9Bwie=C5=BCe powietrze atlantyckie okraszone
-islandzkim dymem wulkanicznym.
-  -- Maciej Ostrowski, synoptyk ICM
+> Piotr Szymaniak.
+>=20
+>=20
+> > With the best regards,
+> > Vyacheslav Dubeyko.
+> >=20
+> >=20
+> > > maszyn ~ # mount.nilfs2 /dev/sdf3 /tmp/rpi
+> > > mount.nilfs2: Error while mounting /dev/sdf3 on /tmp/rpi: Invalid
+> > > argument
+> > >=20
+> > > dmesg shows:
+> > > (...)
+> > > [43893.754525] segctord starting. Construction interval =3D 300 s=
+econds,
+> > > CP frequency < 30 seconds
+> > > [43893.760245] NILFS: corrupt root inode.
+> > >=20
+> > > Where should I go from here? I can hook it up via HDMI to some sc=
+reen to
+> > > see if there's some error msg on rPi.
+> > >=20
+> > > I'm using official Raspberry Pi linux 3.2.27 from github [1] (las=
+t
+> > > updated 2-4 days ago).
+> > >=20
+> > > [1] https://github.com/raspberrypi/linux
+> > >=20
+> > >=20
+> > > Piotr Szymaniak.
+> >=20
+>=20
 
---tZCmRiovzb4sxAVa
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCAAGBQJQdBBFAAoJEEMpAov1cw9lSXoQALji8KA3Yz2b4X3wwZqeoGfl
-h8aQ7ZvX0KqwpYbJ2N8lrkDlsPIyorENI2pSypw45tD8F+ty55Cn3/TEKke8UCow
-BJEO6sNm+n3821VfsJumftDQlybbMJJmrr2h6K4aCy6WB35564YxMkMtrh/Zb4TY
-CDHMAFqDZopCpIDZYOkjNvLOTQ/Gcg/mlr1nysMWGRSzGipEBZSynwlDzNQC0Sis
-08EAjRWwZ2VepJOAcf5msrL4JtJ72uJCGyRcXzDm7HpWyEAP2x/Ij0EqRpbaFK41
-h1tzgWjbROYU22P9kfth23L+iEj0srYUwVL+mMXRP8FupIJXTUJWHjKcphdBx2+I
-vvxUI/ESmMhTvOTZAgwWLO2uQf6lNJdufpAjlXL0PCrfYHBbNE88AZy6K95Tr4W8
-1LPmIgGdshAjpmPe6QDDbWjC5aS5yo2kkg5neV+PQFv9N2yMlC1mLeNyXJ1dbKNU
-nub3XVKeXmuQMl+HAOMIsxv2GLlW8YpKydHXywp35NgkrOINA4HBcUqNFXIZIWhZ
-x0cbSqwRCe9ajslv2U3L/LzK9nHBTeo2AQtqF3CsZ0sZhicUAnwrZdzulMLH5chb
-/1UaXc0Pm/qmZ3K/wAgy3fQ9Wz61hS+qsEpkQ5dPLocF+mjc3piZvcSjICmEword
-+Ou+LPbWNTJ587SmjV2T
-=V+bg
------END PGP SIGNATURE-----
-
---tZCmRiovzb4sxAVa--
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
