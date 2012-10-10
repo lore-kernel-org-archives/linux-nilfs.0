@@ -1,237 +1,65 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: NILFS: corrupt root inode after Turbo Mode?
-Date: Wed, 10 Oct 2012 09:39:12 +0200
-Message-ID: <20121010073912.GA28032@wloczykij>
+Date: Wed, 10 Oct 2012 14:43:54 +0400
+Message-ID: <1349865834.1889.95.camel@slavad-ubuntu>
 References: <20121009105239.GV28032@wloczykij>
- <1349784514.1921.9.camel@slavad-ubuntu>
- <20121009135833.GX28032@wloczykij>
- <20121010.012440.17932600.konishi.ryusuke@lab.ntt.co.jp>
+	 <1349784514.1921.9.camel@slavad-ubuntu> <20121009135833.GX28032@wloczykij>
+	 <20121010.012440.17932600.konishi.ryusuke@lab.ntt.co.jp>
+	 <20121010073912.GA28032@wloczykij>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="D2rVImvqWGvKULsk"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20121010.012440.17932600.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=r9ONe5oRZTHuz4WD8XV80bMEN0Q/Onr/9zeV1PmgkrQ=;
+	b=YqNlTEGCCae/RmX5S9IEQQyrRv4xS4L/Jep0Jqb9qAxgGW4eq94jJwrqvonthmmHUsfvZlbGU23nzgpRB4N01Q1SMKnYYilIPwHSQjzLWIfVLWF4ataN+78hfW/Z0Hd1;
+In-Reply-To: <20121010073912.GA28032@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Hi,
+
+On Wed, 2012-10-10 at 09:39 +0200, Piotr Szymaniak wrote:
+> On Wed, Oct 10, 2012 at 01:24:40AM +0900, Ryusuke Konishi wrote:
+> > > (the card is in a card reader)
+> > > 
+> > > > Maybe, you will have some troubles with getting of outputs. So, I need in your segment #0 (first 8 MB) raw output for issue analysis beginning, anyway.
+> > > 
+> > > maszyn ~ # dumpseg /dev/sdf3 0 > /tmp/dumpseg-0.out
+> > > 
+> > > Attached.
+> > 
+> > The segment zero may not include any useful information.
+> > Please try nilfs-tune command to know which segment should be investigated.
+> > 
+> > # nilfs-tune -l /dev/sdf3
+> > ...
+> > Last checkpoint #:	  160345
+> > Last block address:	    131015
+> > Last sequence #:	      7675
+> > ..
+> 
+
+Could you share full output of "nilfs-tune -l"? I can't start analysis without superblock's content.
+
+Thanks,
+Vyacheslav Dubeyko.
 
 
---D2rVImvqWGvKULsk
-Content-Type: multipart/mixed; boundary="XSEVMyPRvc8xgDhM"
-Content-Disposition: inline
+> Last checkpoint #:	  1873
+> Last block address:	  734128
+> Last sequence #:	  358
+> 
+> So it seems to be segment #358.
+> 
+> dump attached.
+> 
+> 
+> Piotr Szymaniak.
 
 
---XSEVMyPRvc8xgDhM
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Wed, Oct 10, 2012 at 01:24:40AM +0900, Ryusuke Konishi wrote:
-> > (the card is in a card reader)
-> >=20
-> > > Maybe, you will have some troubles with getting of outputs. So, I nee=
-d in your segment #0 (first 8 MB) raw output for issue analysis beginning, =
-anyway.
-> >=20
-> > maszyn ~ # dumpseg /dev/sdf3 0 > /tmp/dumpseg-0.out
-> >=20
-> > Attached.
->=20
-> The segment zero may not include any useful information.
-> Please try nilfs-tune command to know which segment should be investigate=
-d.
->=20
-> # nilfs-tune -l /dev/sdf3
-> ...
-> Last checkpoint #:	  160345
-> Last block address:	    131015
-> Last sequence #:	      7675
-> ..
-
-Last checkpoint #:	  1873
-Last block address:	  734128
-Last sequence #:	  358
-
-So it seems to be segment #358.
-
-dump attached.
-
-
-Piotr Szymaniak.
---=20
- Relastatyka  czasowa utrzymywa=C5=82a j=C4=85 w kuli nico=C5=9Bci,  kt=C3=
-=B3rej nie nale=C5=BCy
-myli=C4=87 z pr=C3=B3=C5=BCni=C4=85.  Kula sk=C5=82ada=C5=82a si=C4=99 z ab=
-solutnej nico=C5=9Bci,  w jakiej nie
-mog=C5=82aby zaistnie=C4=87 pr=C3=B3=C5=BCnia.
-  -- Douglas Adams, "Restaurant at The End of The Universe"
-
---XSEVMyPRvc8xgDhM
-Content-Type: application/x-bzip2
-Content-Disposition: attachment; filename="dumpseg-358.out.bz2"
-Content-Transfer-Encoding: base64
-
-QlpoOTFBWSZTWY7AWekAomdZgHQQQAZ/8j+v/0BgLr9uPpWAAihwAAN3LAAAADfcwB13e7td
-4OMA9Lu2Pd2oUKK967HaqlUBaSwq8AoFjbCl1HtyigKo7R3AOhtrqNp0gNzRB6A7qPbvaqqu
-oV5o9uXuBNAAAYyaZAyaGQZGmBGFU8wP1VSlABPKGIYCDUwyNKVKRgAAAA0ntJDSVSAAGgAB
-FP9QmZKqoAAGgAAhKKE0owpHpMDSaPaUyfn9/oh8IKBQiADz8j631vt9+fw6c/h8+fHrx69a
-e1Hpzl5996LvOyztzqqbe2AC/RltwS8RZLvXrlrRUoRDTG1VAk2a3WWby0rFqCDju6KyMw3o
-TyrxUJwIbGHNy7JlpUJEGtDOuwhBJU6b2hIhUwy3avdbadVVBQi9HmeZh9Lv5wrCE7Cbu1O1
-d2P6+97w97lsRPQFdREO4gXBbGWs89SM51CgQ6K82kZ1oujgQoZWvyaRluUpIVDp1hCXkZOW
-4ebtkyelzO0JJuHCbbDOLSJ3QcUeoPY8xqhrblmo2LzG8bAAAAAAAAAAAAAAAAAAAAAAD9IA
-+gAAAAAAOgGgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUEgAAAAAAAAAAAAAAAAA
-AAAO7HPnebuz8+c+d3YzaDJzPemfnudd585m5kbtY0GHh5A04mpc4m3gboUMzaw+nJFIqMTe
-a9gq7mp3UshpO/FPL8Flq0itjG7bbM3ezS3Vhx37DtJyA817q3YO3e6qhJeYmbOZWr585fZ6
-sjNzPnz53eI+c+ezsEjQeBbxijYBi27xl7j0lNR642Kmzu4C98MJZR3dxZQrXMV6TItTMWUm
-3uLNi5LSRM3FeNbeHwu4vHbZab1nLR1b+Tq7n625fECVnburWoc00kEBTnaOZje2sFCxdevD
-5+PPnxve9/RBFET7oKgv6AAgnUSBFRH+oKr90V/UBQwH+GIhiJgiImIiIgiImJiSIiCIiYiI
-j8CiHDmkO0sRx4cOErUsvOY5Us42JCZDSZpQg5zCRHACIhxCGagkLSGVQoFCgGjah0HAAnpR
-RTMFFFPOoHD9USA8SpwhNClI6EoKADIEj0E4o5cTrTFEoGhD/N+NuSdYJSkSUSQmXwBhwJwM
-DSpoE0oUo5lkhuJgwJwMK0giaClIoKolOScih4cAxgTiGUMMpMI+AEUDrjowcAFBIenXdGVZ
-YWv6IoAH9pVBChEChClEoQoQaEKEClaBKQBoFoFpBpUKAKBSkCkApWkRQfj6Inyid/fn7J85
-/H+P5fl+X7/z/4/Pa3du7qq3PzAACz2buXj1+uvGwsC81jDfe9L/hvz7eFfXV5QtLzAqjJuW
-t2u3VOYrnBg162yTkLM01F2WFq3NnMuE9m0pYQuLWQ0bq1UbkGzWPbWjFaQyHuvVlXlK78kV
-exWbt64RgvTlRNoq+0vIaaexHu5zXN7UXUz5em7oADz2SjYqV0NAAAGzttvPRlZczjMwFLFS
-dANd7lXUX7ua7UXl4cvJ9sYuJ7HvUtoAGHgEgoPgG7uxu7urCKiAtpwAIAsd7nont1zbpELX
-oAAAAAAHLzcREVMTSwvfe1PoHNh4GAXmxHvPTILEAfHo3JQkzmgAqtdKoAAAAJqpE3tPbNRr
-AAAAAAb32JQFbZO9yo2N3d2uPCgAAD3tx5FCNBQSCbvmcPTNBAFjwDDfceA1xPQWHABvHQDD
-wJw8UEAWe7vEquYd9zNrZIzZzGQmDtTdXVgAAAAAAAAAAAAAAAAAAAAAAN3d3QgAAAAAAAAA
-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFcd7Pzk9+c
-52YT8+c+d7M3beNsx5t0KgCIhqVkraratyCScD2MqdnW+63Lx9j70Dnbu7u81Wm1y3IIbZpF
-REhMyQHw2q11gokPAldZcwenBK9LJxX9NzMzWYXERem7SRGV50e2qJNtZl2hKnNg5q3BNmht
-gTNJkA1s2qxa8pNTNibkRELapKgr9Lc5BOip3aBtPTYAEGRMp5mHAPDJV0lr3Qi4nEpqMNki
-cxZm1qTYpicjdOU8mTWQ82jrsE4puBFVFXmVKE0jOEUfTEVGu9ciQZb2wyBMRMzAEXeU3SmR
-LBlttoWpINZhqbyxhnVhJmQBOqVLrUTuxcPKTvSMUm1OGLNGqCsCZWEgG70owtio3dwjFOk3
-oM7dDL9O5qDTWU1Qc+8AfRDA8IAAqmXOpXetYsAB1VPTXb76/Z66+VMzSIufenYzq5EVc5hV
-5WG6UXAiBN3dmck3gSpTgQuI1y5xThvus7km4uldbelow5eyiGcvc4OE+NIohxoARgAAAAAA
-AAAFQJ5FS9DHtY9jHwXsELzey9Bez0e8GPQEIuApIqo2bl1seJ9doXDUt4vCl1lwW3pwO2+b
-6a1zirecEn1pc26JcgCHJVClA8G8Hr449qYpaIilTNtULvG9PTd5qi2KN77Vjbeai0FKk/o+
-hHzis8Wls0Yo2vWnMy19OKFs7EoVXUztXrQfQB9AAAAACfeXWU9ObWXHru7uLrKxcx6rnFp7
-E3CES4vGd32M17kcOth4jobPmC9d1AOrGHt8CDDd20T7a7W7ttAAAAAAA9+/fv379+/zETsJ
-tn4+ML25PJTnrepX3Cp0gvGHQ3rA6VoX4kPjze/m78zQg+1gKpEvNkfM+fYp828evfvzvnz8
-/NPIe3rSS3dx5FyHxAAAAOdu9ovdUvMMftzXqW68i4+kAz6PomQAAAHX5Y9asxJ1WZlv2+1R
-O7mdVkQwAAANiZAHt15GeT9ezu3upNtJK6+wYAAAAADyttbV+TeGzCSSbS3d2qQAAAAACmvX
-u372p4bO6kk0kt26iEAB8QAAbLS8trKT8lO6kljUpbsoAAAuZyZqZDZz17nvanmSqh2km0t3
-dmTYiIXvTPoERGzMQ6rgUm1b4/y8PD50Pm+7uS3cwmIjQAAAAAFNVmXeJ45mN1pJbu5jz3qA
-AAAAAmbvzlLIvcbup0W8GL8K6ECJFjK6RD6ZKyrU2kse823+kAfQAAAAA/HOc4evOV735+Or
-2+YPUHfW8T5g8wdhPV2E8siRObXjGx4KPeJkwAEZ8B0emLquTmWN+7HvZ2fV68rOb9vRztIA
-vDnut68exqETruHeUEDSxlEN3LzXZkXgAAAAAAAMzM9VGd3MGlfGaqjUWqeqrXWleqRpLXGG
-8Z03PXzuh2T1JpaEvGQ0pzvn54Dc+seXT0aPeHgOaElW7rub7JNUMy93e5znN57j/ClS344h
-nRlNtttttptpJtuJrKF/kB5Xnfb+MkT+KG7v3d27u6o8e9ogwIbbdNtUm2m2LVUaNJNt6ec9
-Jk33Pe3edkXb77M5znObb96lSPDbTbTbbbbb8NttiArUd8vr5O+9u8Zxznu95vnObwa8mYUA
-AAAAAA2bkm7u3d3JJ1N+0kXu2+5JPbuzW82TmYu8BA8TIot1vgLkm1JIAACQAlSABsNBrTfv
-kZznvfe+5znPZd3vc+965znNo17uPaYAA2ABoAAA7AgMfrzvMz13d+7fR73vM5ve92rWvKd6
-AFJIAAKAAC6kkAIlLu6qq9DbTfckll9BJ3CSS+8BkeFHTdMAYaBIAQAAAFqAR0lI5GZmczPe
-3ve5FOXfPZ3vec5w1zwwQAgCSSbkkuSSaqqpKXZekqpKSSUlUkJqn3MWN9ySRJBxLNSJPdkl
-W7RNkkm7JJq75ve7vckIpCSSSSBJJJ3mlzMLzNczpsztXsLiLibL+c+kMd3432ZrTbb/I22w
-+gAAAAB+Kr3Kqvs80jCPH1bNHulnhefl6lMIshniOL2fEKDHKDmzNzGaqLU8M3lOgtM5YpYm
-6Tq6LKvCRh6cOeKM8QDegKa3a2u83dnWAAAAAAAAD78z52Pe5vvd7yYiPn2Ijnu/N7VS5G8b
-rWlNGqvrqd8/a4td81oHzUQ3KSFDxqQRUAejw8I9M/jzf33z77MzKUWScfRnN73hHz6QkVUp
-JISEkckgSSEkJJd3d3d3G6lu8+7d3cxpJPkkkmAOjwQW8y5JJISSSSSSZd3dyEkkkkkkkk+g
-T2bu333fZmEnXmY2iSTd3udd1V6SSZHJISSEkhJJJCSTtS5d6j3w3zvs9ze7nbXd77d3d373
-t7khISQkkkkgSSSXc3d3V3d1d3dVceHhO6Vu8+zMxHXmRmNS7u/edS+y5CSSSSSSSSSBJJIR
-ySaqpqrmlu4r3n2Zh4vsGZ3Ikk8KvHdXUkhJIEkhJCSQAAAAPny+62d+z7m/rjl67vt91d3d
-51fLe4AAAAAAAwGAAMBaZvgHPezgw9rnOTNXm97PUo+AAAAAAAADAG22b7fBw57vrb9O9307
-tO7u89uub562AwGAwABgAAAAbvu+a4dzPc2+kx7zmZ1bu7v0mAAAXSSkkYDAAGBySSSSAqW9
-7Ka5gzUkyjwq+HumK51ObeyaNGFiWPfobu7u7ugAAAAAu3drqgSj1u5cLje7ucTRjIzc5G9t
-iuw2cuFuTBUqIyb7oynpZym29iRrFjKbbaCbx12B0M8Q5u7m7u7uLQ7u3vN9l4AAAAAAAbbb
-bZHe10dLuzt3cGp9JqphVIuIuJh6T0aSpTupB94nrjDI49Oa4hRxdqlXnnO+ue77230yZvMz
-a3u7uEzwAAckkAJJIAUwBttn2t334hns++1rmd33u961vd33Pr3BAAAAUwL0pISSQAACkVVD
-wyLVTmPe43VYHq0uEkk6uJ6veFVVVSAFSNA6pAFUgBUjQNUjTGqRqakeFRVSB4bGGIzO3uqZ
-y3LbeAkkyM4ic5ziHyFCd73vRKEoShKEoShKEoShITve9BB5zneiUJQlCUJQlCUJQlCc5zgl
-CUJQlCUJQlCUJQnOd70ShKEoShKEoShKEoTd73olCUJQlCUJQlCUJQne970ShKEoShKEoShK
-EoTve96JSFCUhQlCUJQlIUeD1RG6d7nbu2k20ESTd2urvARA8IgeKEoSkKEpChKE7u93RKQp
-ChKQoShKEoShLve86JQlCUJSFCUJSFCUJd73nUKEoSkKEoShKQoSkO7vd0ShKEoSkKQoShKE
-pC73vOiUhQlMPbvcJy5zCcucwioqpHh970/Yohtv76tnfk20EiT1R4dM+WtnQqkAVSAKpAFU
-gCqQBVIAqkAVSGaRVIZoVLRFrnPc7nprq9nMzq3vd35ejrjdbT6FUgNxUpqR1SAkqnWlppLv
-eeO5EkO3eYTlzgYTlzmE5c4aHhcXcjw+EWxDz7e6q+vQ22wSSTQiL35qkaDYqU1JEripXq7u
-kKlNSOqQBVJt1SbCqWgKpACpfazm8Wu597V7193MzOLl3d/bj9pPVZwkKpACpGg2VSkklUpJ
-xRUpqTwqU1I1SNA1SNBsVKaka8MqWDub3GqWNLdpxmJI0OmVCwqh4XFx0kaCelUru7ipA6pN
-wqloKV6pRUpqDqkB1KlFSkm1FS5SpXj772W32HNKGLiX7111eC3IXcZZhC70k5izO3m2/w2w
-PoAAAAAj8TM/bmZPPcPdeqlSqqrLvb6tUz29M1OJLuxVLnd5m1Htm6icw5c4eKCuhfb13mLt
-JKgm08JFuC3G7zebu5gAAAAAAAAffkX3Ky596Ar4AZ4u52aiPoa2bhH0AyT0R9EIR6BGAU7I
-fdz5qtrSdbeZEJEn3QPEuykjQXSKpSSe0rqld3KipTUjVI0EopKakapGgTpI0EqhUpqRqlpv
-3Pfgvle/d8OTjt3eeDEkZFb9I8KiqkeFVWWPC7uSqUkFSAKpAFUgCqQBVIAVLL6jfe+z29yT
-i7vOZlre7u/VJgVSAKpAFUgCqQAqQBVIAVI0DVIAqkALw+6u7gt7vvia7DB143YSJic6fAVF
-VI8DQAqWtAFJa0DVI0EQqU1JJFS1qSIpKakiKpSSVKSmr7xkvvs82+Lne5mRb3u33zqk3CqW
-gKpAFb1rVa1U1I1SAFSAKpACpGgdUgCkvqTL5mt87n312Gcu+9zNLe93SA54VI0DpI0DVI0F
-J0aAA2lJJSipSSKUiSDfy0enOed9z3xrO8zu8zOLm92ZO+2gAAAYAAAbu7u7u7uru7r4bzvV
-3d8cu5GXu6wkizV79uSSKSRgAAAARSSSSSSSTd3ebdp90RuZGZu4CknVbxq7uxV3d+Au7u/C
-iSRJSSSqkkSAAAAtmce+Z41zvFy+c75b3vcy5eeAABgKhtthoAAAACqFWsmdfPPnd79zvHqL
-a5szc9jj9G9R713N5936H6AdD6NAAANtttt781iXZm2b7te5xvsrE8u+uqo5fftLyp9s1DLv
-VTkE65PtLjq63Su0ABrIhT1C9NKdEC+iTG7W3Ht2qwAAAAAANtttttvlOHy96vFVPHE5MdFB
-05cgWxKl1POi556u4iKqpZrUaW9GjSnEue7r3vd967Ozivu+99W93eWTPMAAYAAAAAAgBAEf
-r/Cvvdnvvrt5713rve7Uu7wO/UNpNsQFADAAAAAAKeXzc5ns9zkkiy+5mcXN7v1BgAMBJgAD
-AAAAAAFSWsm7e++ze/TJMzeZi5zd6SkwvPADAG2222226pNum3SpfTdvud797vbsO9+7mc1r
-nOTJnzbbbbqk223QmZ8JmfATM+A8JmbWGc3deZd3pB3dLhLe/d1M6222222223sAAADuu2+5
-7vvd7dhmZzJ7XOc5pe0mZyAAAAAABoGAAAAcfyO7fM+z33e39JMzN9+fOc5q/aS9Obu9gAAA
-AGkDpNtNum225yexpPkkZ66tJ8ZmZ3ZSyPKZmZmSZJmZmZmZEzMzJ29zO3u3RRJJ3dY6EkhO
-qZkNttpttttttttuK4753vfbfVrdvd6xXikYuXs67qejjyUxEczm9rbb/Dbbbb5gAALEADJi
-DJ96o/HPV95JYzcmuXNUR2OJ1jKonsqX1yNUbV7s1vszvLPODzWHWAp69StfSmE2ItxqfBlZ
-np733szKAAAAAAAAB9XJffVPO9u5HWm615N+7ta1NGlka1pnIt3Vj22tjV3IiGBakhnwEyW8
-xvt2XStNvOjcS6JO8bbbbbbbbbbbbbfJy3vudz3ex4bzMv2uc3u/a8WvRtttt9QCRqtACAEB
-VVVfVVVEaWisfLuTq6b1tvhJbEvJmZbbbbSbbbbbbbe75zZzuZ7nO4Xd5nc77Wc5y9Cwbe0A
-2222220m220m3SNvM1J8kru37MbecJbsTCyY++iZmZmQAAAMnDMS3uWy6eebzjdzO7K4nvvv
-o+0AAAAAJmZnywpbzdvdrfbrXDbZMcVPUAAAAAAZVYZncu3HV2vJJcbu6dE7kQ/vowAAAAAA
-n1abrS7clU35t+43d06akAAAAAAK92dknt7nCdNtt7xmZgd99FAAAAABkRH0e8PTMgAAASEo
-t3zvljMquVo4CoilVTu3sZlr5MMzAD8AD6AAAAAMmZlczJl1+H2vt5OCZ799a70+En3uyq8j
-NS57Y7MhrVjbU60PxuYiyRs7uy4FJBQCXE0MVeZeb33e7u6wAAAAAAAAX7n27dzONiud533u
-9+9PYbc6QZ67vp+yoIonrqwPvn9AERjj57W91HuT4bTbbzjczDuqbAAAAAALfb4LzknJprSS
-7Ut0k6tiIsAAACILl+yKvHyczO60l27uZP3HldTHzkAAAAAAufbE7r5W5bPN7rfLd3J+hT33
-Kqr0oiDtkQANqqvW2fXPn1znwmqULUvc3zW7nBER9FHpkAAAqZAJ9xfb56rzKhK/JPczMfEF
-zUyATMzMgEzIV5l5ncn4up1LG3yW7hD+igAAAAKmQTy8x6r7SoutWJvmlu7Pof0eg9MgEzIA
-EEHnt7j1e9ytZmJdu5mF8L77j7AAqJmYiZAAn6ZDlWrlre771+WYl25mYXx54AAAAAABQ2V2
-4pjlFh30zvYMDnXPO7tnQoBLvM7W22/mAfQAAAABlUqnpk1K37OpblUcrVd3yG+HhvXePXWX
-oc7VJls6ddLUTxws7Y5kENIwFgHJsQ7QG5jed97d3bAAAAAAAAD72quI7vXNSZDWpb7r2qm2
-1b2OprZYqnO0+AlykPDpnTw9pLlcc7uSdDbvdfZmZkd0e8LgAAAAFMh3tud7E9125948232b
-u7ePPaq+A2wm2E2wm2E2wm2E2keDy4g485l3Q1tN9mJK3XvdAajgBMETbCbYTbCbYTbCbYTb
-CbYRMyPClpW9rSVvQSczkkmOdeHkbAvqjCbYTbCbYTbCbYTbCbYTbHhMyPB7SzLyt52p1tqW
-31pJSJAGgxUexNsJthNsJthNsJthNsJtjwmZHhTJwROPm5jXbbZfSklHvXQxjwnYTbCbYTbC
-bYTbCbYTbCbYeD6ytqd5tbLdl02+vElc+rGPCZkeEy1SbapNtUm5VUqFSAFSAqkKkALwqq94
-UPDprir2q3mW622232Ykr719XCkAkiqAFSAoVIBJUhUgEKkBSFSApCpAKkKkAKk4Tezkkznf
-cwwzDM8b3vdpZF7lUsVIAVIBJCpACpAUKkDVJtqk21S02qWm1SH4nbwM5nW7Zbb5JJaveCjw
-kuR4TMjwmZHhMyqTbVJuIVIGqTbVJtqk26pAYZLt1lx2s9UR62+37nJ7F7fXyqVmNA/AA+gA
-AAACUdi4yshOpKSVSXRd3Zza2cyHN6tNtzNG6MRp2Ozm41cJZFElPCeBqxjUeAAPCRs57ud7
-mZhoAAAAAAAB+IuPd3eZU95yPRIIsw4Zph9pznfRX0QytkfffTL8q677e5Oq222y+nEldDGP
-CZkeEzI8JmR4TLVJtqk21SbapNtUm2qXoTZwOZ32+h1TuZme5zm9zR7ypNtUm2qTbVJtqk2x
-4TMjwiB4RMjwiZHhcO0Tl3j47rdtt958+fPn58HTwgXv2JthNsJthNsJthmQAJvqn3kufveW
-w/PMb5bmZfFfWQIAAAD4g9edfXebvNqUkkuzMzO9cgAAAAASOcvMXdjbu2284zMzuiriQAAD
-JkACXPUvYufveSUe88b7d3M6vvo4AAAAAAzOuqvda60rG3jT5bu7674AAAAADKdVV7q7veVL
-ye633x68+fPjgB4k+fW2EQu4EHbnAQbmBB2wIO2BB2yAO2BB2566CHpPdywzvd1UluHVu9uY
-lxv3aB4D0zIHgO2AXaqqqr7Cnk9H5e8nlGICPi+D36+QRBEP2RPwifsqi/oif2+qqL5FH/MU
-DRSlFIUUFAJTSUlKUUpRSFFBIJKIoRDENDMsgQEJRQJBCSwUBQCQgp/oBFAgBQT/pEAP7gqC
-JlUX+KJxVF9In4/wifqA/Aq/68CnP3/UVfj/sABQ/MABQ/JVF4goH2AfsIngEAPwqi5E9Kov
-1AUFCAAUIEAPAq/uifcVfyUQQA+r+iJ/8KfVE8AgB6gBX6ongEAPYKyKEoKQgJ+wCgoeBT0e
-fqqi/YFaAiFomUFCWBKApEpCJFj6AqCJ5AAUPSJ4RPR5AUFD4RPoieQQA8In7z/vyKeFUX+K
-J1EyJ/vr/IBFA+VV//F3JFOFCQjsBZ6Q
-
---XSEVMyPRvc8xgDhM--
-
---D2rVImvqWGvKULsk
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCAAGBQJQdSYfAAoJEEMpAov1cw9lNfUP/jy83kgxJ8KkVGERY3S6yqn1
-Y1o607MAGtdVrfb1essANPhvADrsvz7DCWGHe46Er+2tf9PDHoV3eXPn/qBBmrod
-0VrlWyGqNvbHvf8BQ0+1d8iboXq7isOWx3LULDLQP9L8qjazMFtCJ7MBVUwLynJ5
-jU5Cc1Vc1mNRPveTya1j77/Zmj3uHC3rvTvoCsNnO4oyvN6wapHfKSZojedkCPw8
-xP9xcQWN7VngUyHmjcuUZwrK4XVS/bZ3L32C6Yi0CsuwEK0VtmoOEvkmZ+1zeZ22
-sr3UkrVgiup0a1Dq7qzSOdjvoDGD2ukhis7a/zNp/rT41K0lO72gCIMiwnOgvWw7
-qsQdGdtVTJi3/nqrB8oqH40YG0QEDUaJDtztcW2xw4LJNuPF+RoLlhfWbVjFEAlh
-WwDBiZT5hzMDUd4GDzjhVpJU5/PJa9AWfdr9/sWA97tZSbuqX8ULFwH/YBG3EwQ5
-82jjS0spk6bCdF6jpQ43SrU0F006+LIEho1oO8vVNEnKd1HBdiwvwS4iNlft6EWr
-cyELIGT03zD7wpeC4e7mUyJoUb1oulgAmcGaO1Rb/+7cH0kIjudSTCY6Zw4Xjh0d
-aI1vKyTntE9ISa0efYiu8AqTXPTle2dVkMBTugxUhUlC3WDbBajrS+TFBZn41xtC
-IaBWOKbSzGqXoxc6bEC9
-=8hwo
------END PGP SIGNATURE-----
-
---D2rVImvqWGvKULsk--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
