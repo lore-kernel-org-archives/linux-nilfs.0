@@ -1,117 +1,107 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: NILFS: corrupt root inode after Turbo Mode?
-Date: Thu, 11 Oct 2012 20:03:32 +0200
-Message-ID: <20121011180332.GE27763@wloczykij>
+Date: Fri, 12 Oct 2012 11:10:32 +0400
+Message-ID: <1350025832.2026.43.camel@slavad-ubuntu>
 References: <20121009105239.GV28032@wloczykij>
- <1349784514.1921.9.camel@slavad-ubuntu>
- <20121009135833.GX28032@wloczykij>
- <20121010.012440.17932600.konishi.ryusuke@lab.ntt.co.jp>
- <20121010073912.GA28032@wloczykij>
- <1349870593.1889.107.camel@slavad-ubuntu>
- <20121010220331.GA27763@wloczykij>
- <1349938258.1908.3.camel@slavad-ubuntu>
- <20121011092300.GB27763@wloczykij>
- <1349950320.1908.11.camel@slavad-ubuntu>
+	 <1349784514.1921.9.camel@slavad-ubuntu> <20121009135833.GX28032@wloczykij>
+	 <20121010.012440.17932600.konishi.ryusuke@lab.ntt.co.jp>
+	 <20121010073912.GA28032@wloczykij>
+	 <1349870593.1889.107.camel@slavad-ubuntu>
+	 <20121010220331.GA27763@wloczykij> <1349938258.1908.3.camel@slavad-ubuntu>
+	 <20121011092300.GB27763@wloczykij> <1349950320.1908.11.camel@slavad-ubuntu>
+	 <20121011180332.GE27763@wloczykij>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="5Mfx4RzfBqgnTE/w"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1349950320.1908.11.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=JqAKcHB/urZHSVcwC2ap3NdZM+FdUlpewIgyn02rFWU=;
+	b=gHiCE7fPeAH0mp4/N8/7rOkdHnqXSTq0JfuyM0bxJhBNGWffTOMOXjJNPPZ+E1q4UFSuOCU63/Nnu4fIsxbEi7rm3iZPYFqRjrZZYN00U00sglO9BaOMLwYpJQbQne3X;
+In-Reply-To: <20121011180332.GE27763@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+Hi,
 
---5Mfx4RzfBqgnTE/w
-Content-Type: multipart/mixed; boundary="VUDLurXRWRKrGuMn"
-Content-Disposition: inline
+On Wed, 2012-10-10 at 22:39 +0200, Piotr Szymaniak wrote:
+> maszyn ~ # nilfs-tune -l /dev/sdf3
+...
+> Filesystem state:         invalid or mounted
+...
+> Filesystem created:       Fri Aug  3 08:37:06 2012
+> Last mount time:          Thu Jan  1 01:00:01 1970
+> Last write time:          Thu Jan  1 01:00:01 1970
+> Mount count:              56
+> Maximum mount count:      50
+...
+> Number of segments:       922
+> Device size:              7741636608
+> First data block:         1
+> # of blocks per segment:  2048
+> Reserved segments %:      5
+> Last checkpoint #:        1873
+> Last block address:       734128
+> Last sequence #:          358
+> Free blocks count:        1150976
+...
 
+First of all, it is possible to see that file system was not unmounted. It was 56 mounts but during last mount superblock was not updated properly. It means that it was sudden power-off, kernel crush or superblock wasn't flushed because some reason.
 
---VUDLurXRWRKrGuMn
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Moreover, last mount time and last write time are strange. Usually, these fields have real time of last modifications but you haven't so. File system creation time is defined by means of mkfs utility but last mount time and write time are defined by driver. So, maybe it is a slight superblock corruption.
 
-On Thu, Oct 11, 2012 at 02:12:00PM +0400, Vyacheslav Dubeyko wrote:
-> On Thu, 2012-10-11 at 11:23 +0200, Piotr Szymaniak wrote:
-> > So I should dump block 743205 and 734158? Ok, but I'm not familiar with
-> > blkoff.
-> >=20
-> > ie. blkoff =3D 2, blocknr =3D 734205 it means the dump should be block
-> > 734205 and (blkoff =3D 2) next two blocks? If this is correct then this
-> > should work, right?
-> > dd if=3D/dev/<device> of=3D<dump> bs=3D2048 skip=3D734205 count=3D3 (no=
-t sure if
-> > dd counts skip=3D and count=3D from 0 or 1)
-> > And similar with block 734158 but only one block (blkoff =3D 0)?
-> >=20
->=20
-> Sorry, I confuse you by blkoff mentioning. The blkoff is logical offset f=
-rom file begin (for example, from ifile begin). You need to take into accou=
-nt only blocknr.
->=20
-> It needs to dump block 743205 and 734158. Your superblock's content infor=
-ms that block size is 4096 bytes.
->=20
-> For example, dd if=3D/dev/<device> of=3D<dump> bs=3D4096 skip=3D734205 co=
-unt=3D1
+Thereby, there is some probability of primary superblock inconsistency. Could you share raw dump of second superblock that is located at the volume end? Moreover, could you share dumpseg of next segment after last sequence # (namely, 359) and before of it (namely, 357)?
 
-Block 743205 is empty:
-maszyn tmp (: cat dump.743205
-maszyn tmp (: hexdump dump.743205
-0000000 0000 0000 0000 0000 0000 0000 0000 0000
-*
-0001000
+On Thu, 2012-10-11 at 20:03 +0200, Piotr Szymaniak wrote:
+> On Thu, Oct 11, 2012 at 02:12:00PM +0400, Vyacheslav Dubeyko wrote:
+> > On Thu, 2012-10-11 at 11:23 +0200, Piotr Szymaniak wrote:
+> > > So I should dump block 743205 and 734158? Ok, but I'm not familiar with
+> > > blkoff.
+> > > 
+> > > ie. blkoff = 2, blocknr = 734205 it means the dump should be block
+> > > 734205 and (blkoff = 2) next two blocks? If this is correct then this
+> > > should work, right?
+> > > dd if=/dev/<device> of=<dump> bs=2048 skip=734205 count=3 (not sure if
+> > > dd counts skip= and count= from 0 or 1)
+> > > And similar with block 734158 but only one block (blkoff = 0)?
+> > > 
+> > 
+> > Sorry, I confuse you by blkoff mentioning. The blkoff is logical offset from file begin (for example, from ifile begin). You need to take into account only blocknr.
+> > 
+> > It needs to dump block 743205 and 734158. Your superblock's content informs that block size is 4096 bytes.
+> > 
+> > For example, dd if=/dev/<device> of=<dump> bs=4096 skip=734205 count=1
+> 
+> Block 743205 is empty:
+> maszyn tmp (: cat dump.743205
+> maszyn tmp (: hexdump dump.743205
+> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+> *
+> 0001000
+> 
 
-Block 734158 attached.
+It is bad. This block should contain root inode description. So, it is clear why you have such error message during mount trying.
 
-Piotr Szymaniak.
---=20
-W   tamtych   latach   wiejskie   rodziny   chodzi=C5=82y  do  l=C3=B3=C5=
-=BCka  bardzo
-wcze=C5=9Bnie - "kiedy  robi=C5=82o  si=C4=99  ciemno  pod  sto=C5=82em",  =
-jak mawia=C5=82a moja
-w=C5=82asna matka - i spa=C5=82y kamiennym snem.
-  -- Stephen King, "The Green Mile"
+I think that it needs to understand how deeply destroyed metadata files in last checkpoints. In dumpseg of #358 segment you have description of all blocks for ifile (ino = 6). Could you check what blocks are empty and what are not? Could you share results of checking ifile (ino = 6) blocks for all checkpoints that are described in dumpseg of #358 segment?
 
---VUDLurXRWRKrGuMn
-Content-Type: application/x-bzip2
-Content-Disposition: attachment; filename="dump.734158.bz2"
-Content-Transfer-Encoding: base64
+It needs to find in previous checkpoints valid ifile block (not empty) with blkoff = 2. Could you try to find? It needs to make dumpseg of previous segments and search not empty block of ifile (ino = 6) with blkoff = 2.
 
-QlpoOTFBWSZTWY2XkFIAAF953f+tQEAAASpAP/ffMCAEAgBAAEAAAACrDjAAuMMNDTQA0ABo
-AAZDQRMjSaaGmkANAGQA0eQGJSaZAGjEYhoaaNABmpUz8BhLMBZAMddeXU1oJ1yZgSSkSY0k
-SUCESiJGSn0c68Nl/bmDAl/u0c/h4ACaWeZBKhBgkgHyRsRNNLE/Pt1tznQWdvOS9E50QDwA
-SISqVEo0wnP6u4DLzFsCk4wA1XQoSlK7AOZbRBiYjTN1i0mSgZE36/wYRvJ2Un1SMN65wcSh
-PByO6i2CHwQQigcRdyRThQkI2XkFIA==
+> Block 734158 attached.
+> 
 
---VUDLurXRWRKrGuMn--
+Block 734158 contains root folder (ino = 2) directory entries (bin, boott, dev, etc, home5, lib, media, mnt, opt, proc, root, run, sbin, sys, tmp, usr, var, test.318) as I can see.
 
---5Mfx4RzfBqgnTE/w
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+Thereby, I can distinguish two problem: (1) file system recovering and (2) issue investigation.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
+Could you save raw dump of corrupted file system in untouched state for further investigations?
 
-iQIcBAEBCAAGBQJQdwn0AAoJEEMpAov1cw9l1sYP/0gmJi65VN9w6GZL3bEpY1l9
-IVqawA712cc+U5pTiwe8XnkkDaYtxCjCbcENnhOqzzSoa7Jj67inzQX1AVlqFvdT
-XE/Ca4Pbxo9PMCDE9KP69Gr32sH6oumhMGH4sUL8nzVIMl+XDu4pAxOi7dBloqpL
-k54c9kTBvRtSAIaV5FaLbUuByt3x/CphvNyBplyKbHpPF14NY40+f6+ZfTIjkTqw
-T2ky4OdS2q2u/IQ62Covh1ICAQ+7dMOWS9NsUmTrVTbK/Y5PUaddaLxx6qUXGgCD
-uSjHDloPz62v2sI48jxYIrvyzOqiOIQvyVisntynJLNw2Wmk01ObqHCkT49QVWQJ
-ils9Z2xq7cH/72uoJe75sVCO1tqu6SUUZ/lT8D5WY6MczhQSvIp3SxlaUHpaf8eU
-h5GioNrJUV0WCrLiy2pf83SIQkBKKxE0E/oJpd0m25ELdpXhDr5UEFR7xxxhpYyg
-lVUgx+Sy/esh8eiAb+d6P7ttMxLx5i7SFd4OHBXzHjH67waEBmcEvy4c3VjNh68u
-VhLlIPYcwGwdjEmJNjzSGueMoiwEwA3bOrf1TpG1F1PbCjCAMxRuGlsyjFejBb59
-WlrcNDImPhd4oVc+rxgDJMnnul+gdp4bP3aliYRXcrcucEtuzWQiXv/Eqc87ddlQ
-drHJUwWEihaxGgl7XEt0
-=fI8J
------END PGP SIGNATURE-----
+I think that the reason of such situation is absence or not proper flushing of dirty blocks. The question is what the reason of it. I can see several possible reasons: (1) hardware issue, (2) kernel crush, (3) file system issue. Anyway, it needs to describe the issue reproduction path for understanding the reason. Could you achieve reproduction of the issue and describe reproduction path?
 
---5Mfx4RzfBqgnTE/w--
+With the best regards,
+Vyacheslav Dubeyko.
+ 
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
