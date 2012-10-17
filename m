@@ -1,56 +1,45 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: NILFS: corrupt root inode after Turbo Mode?
-Date: Mon, 15 Oct 2012 10:18:08 +0400
-Message-ID: <1350281888.2488.9.camel@slavad-ubuntu>
-References: <20121010220331.GA27763@wloczykij>
-	 <1349938258.1908.3.camel@slavad-ubuntu> <20121011092300.GB27763@wloczykij>
-	 <1349950320.1908.11.camel@slavad-ubuntu> <20121011180332.GE27763@wloczykij>
-	 <1350025832.2026.43.camel@slavad-ubuntu> <20121012103119.GF27763@wloczykij>
-	 <1350040053.2026.47.camel@slavad-ubuntu> <20121012114043.GG27763@wloczykij>
-	 <26EBDBC2-8938-41BC-8C0C-6F6F3A0FD1EC@dubeyko.com>
-	 <20121014200836.GK27763@wloczykij>
+From: Mark Trumpold <Mark.Trumpold-PJstQz4BMNNBDgjK7y7TUQ@public.gmane.org>
+Subject: nilfs fault tolerance
+Date: Wed, 17 Oct 2012 06:11:31 -0700
+Message-ID: <CCA3FC93.7170%markt@tachyon.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=FanQR4FNEm364SGQpqEL5Pe9RUiTYwyN7VsLIR+OK8E=;
-	b=aMgPxTL2blumV/69m+EDZ/5cUo4UVpJqSEU6jsrToNfCmC4fq0HSzfuuNQNLAPDrgv7rOUnwW7Esld1W6nydGV0Fkzydp5o3PgxDMC6HttczHte/MIQiV+XhN4IDE2cl;
-In-Reply-To: <20121014200836.GK27763@wloczykij>
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Sun, 2012-10-14 at 22:08 +0200, Piotr Szymaniak wrote:
-> On Sun, Oct 14, 2012 at 06:55:59PM +0400, Vyacheslav Dubeyko wrote:
-> >=20
-> > So, it is clear that #359 segment is empty. Moreover, #357 segment =
-doesn't contain ifile block with blkoff =3D 2 as I can see from dumpseg=
- output. Currently, I know that #358 segment contains empty ifile block=
- with blkoff =3D 2. It needs to find segment which contains not empty b=
-lock of ifile for blkoff =3D 2. Could you share dumpseg output of all p=
-revious segments (for #358)?
->=20
-> dumpseg of blocks 340 =E2=86=92 357 attached (I hope, the file is ~20=
-0KB).
->=20
+Hello all,
 
-As I can see, checkpoints #1843 and #1819 contain ifile's block with bl=
-koff =3D 2.
+I have been using nilfs for some time now, and am quite happy with the
+features and performance.
 
-Could you check state of blocks 719300 and 698817? If any of these bloc=
-ks are not empty then, please, send the raw dump of non-empty block(s).
+I have also been promoting it as a filesystem of choice for 'appliances'
+that as normal course do not get gracefully shutdown (power switch off).
+This robustness bears out in my own testing.
 
-Thanks,
-Vyacheslav Dubeyko.=20
+The recent posts regarding "corrupt root inode" have me a little concerned
+about my understanding.
+
+Is my current assumption correct, in that if the hardware does something
+weird and scribbles badly to the filesystem, then obviously all bets are
+off --- otherwise nilfs should be robust against the 'power off' (no
+graceful shutdown)?
+
+Thanks in advance,
+Mark T.
 
 
-> Piotr Szymaniak.
 
+Confidentiality Notice:  The information contained in this electronic e-mail and any accompanying attachment(s) is intended only for the use of the intended recipient and is confidential and/or privileged. If you and we have a confidentiality agreement or other non-disclosure obligations between us, this Notice shall be deemed to mark and identify the content of this email and any attachments as confidential and proprietary.   If any reader of this communication is not the intended recipient, unauthorized use, disclosure or copying is strictly prohibited, and may be unlawful.  If you have received this communication in error, please immediately notify the sender by return e-mail, and delete the original message and all copies from your system.  Thank you.
+
+IRS Circular 230 Disclosure: To ensure compliance with requirements imposed by the IRS, please be advised that any U.S. federal tax advice contained in this communication (including any attachments) is not intended or written to be used or relied upon, and cannot be used or relied upon, for the purpose of (i) avoiding penalties under the Internal Revenue Code, or (ii) promoting, marketing or recommending to another party any transaction or matter addressed herein.
+
+E-mail is susceptible to data corruption, interception, unauthorized amendment, tampering and viruses, and we only send and receive e-mails on the basis that we are not liable for any such corruption, interception, amendment, tampering or viruses or any consequences thereof.
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
