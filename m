@@ -1,141 +1,178 @@
-From: Marco Stornelli <marco.stornelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 17/21] nilfs2: drop vmtruncate
-Date: Sat, 20 Oct 2012 14:27:16 +0200
-Message-ID: <508298A4.7070704@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:cc:subject
-         :content-type:content-transfer-encoding;
-        bh=BLRx22z6WaUH47U1/xFTv2mVmBvf3jDc7OkkFCsAL+c=;
-        b=SVLluOgvHoYcNLhOwuJGzJNzsYaIJQuxDDSzgTKl4S5tDttZHziXBGi++GY7eR355c
-         xPiCzvVhdipJgYHhImikEIGl0XwzeY2lRou/yyf9V5p5/4N/+rhiJJiYvElz1v0kQOSI
-         hnwPj/EVagRioiQlH9YcqHCYhIJvRue4HW8PKUyZqCT16kUvDIeougkKUfXvzkcPoWT3
-         bFg5dREGgV2Kq71vKCmlP5LzG0yA1/OuvtBHg+B0Nw9MhNRs+vuishcTkM/Ndp/sM1wX
-         lC/VkKX8+G8ivXdv/4BbOS7/iolRb2NXkkFyUe9CshJgGHmxVRQ/HMhFJd+A13gWszTc
-         xAKA==
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Dave Kleikamp <dave.kleikamp@oracle.com>
+Subject: [PATCH 17/22] fs: add read_iter and write_iter to several file systems
+Date: Mon, 22 Oct 2012 10:15:17 -0500
+Message-ID: <1350918922-6096-18-git-send-email-dave.kleikamp@oracle.com>
+References: <1350918922-6096-1-git-send-email-dave.kleikamp@oracle.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1350918922-6096-1-git-send-email-dave.kleikamp@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-fsdevel@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, Zach Brown <zab@zabbo.net>, "Maxim V. Patlasov" <mpatlasov@parallels.com>, Dave Kleikamp <dave.kleikamp@oracle.com>, v9fs-developer@lists.sourceforge.net, Jan Kara <jack@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-ext4@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, reiserfs-devel@vger.kernel.org
 
-Removed vmtruncate
+These are the simple ones.
 
-Signed-off-by: Marco Stornelli <marco.stornelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+File systems that use generic_file_aio_read() and generic_file_aio_write()
+can trivially support generic_file_read_iter() and generic_file_write_iter().
+
+This patch adds those file_operations for 9p, ext2, ext3, fat, hfs, hfsplus,
+jfs, nilfs2, and reiserfs.
+
+Signed-off-by: Dave Kleikamp <dave.kleikamp@oracle.com>
+Cc: Zach Brown <zab@zabbo.net>
+Cc: v9fs-developer@lists.sourceforge.net
+Cc: Jan Kara <jack@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andreas Dilger <adilger.kernel@dilger.ca>
+Cc: linux-ext4@vger.kernel.org
+Cc: OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
+Cc: jfs-discussion@lists.sourceforge.net
+Cc: linux-nilfs@vger.kernel.org
+Cc: reiserfs-devel@vger.kernel.org
 ---
- fs/nilfs2/file.c     |    1 -
- fs/nilfs2/inode.c    |   24 +++++++++++++++---------
- fs/nilfs2/nilfs.h    |    1 +
- fs/nilfs2/recovery.c |    3 ++-
- 4 files changed, 18 insertions(+), 11 deletions(-)
+ fs/9p/vfs_file.c   | 4 ++++
+ fs/ext2/file.c     | 2 ++
+ fs/ext3/file.c     | 2 ++
+ fs/fat/file.c      | 2 ++
+ fs/hfs/inode.c     | 2 ++
+ fs/hfsplus/inode.c | 2 ++
+ fs/jfs/file.c      | 2 ++
+ fs/nilfs2/file.c   | 2 ++
+ fs/reiserfs/file.c | 2 ++
+ 9 files changed, 20 insertions(+)
 
+diff --git a/fs/9p/vfs_file.c b/fs/9p/vfs_file.c
+index c2483e9..d19458b 100644
+--- a/fs/9p/vfs_file.c
++++ b/fs/9p/vfs_file.c
+@@ -748,6 +748,8 @@ const struct file_operations v9fs_cached_file_operations = {
+ 	.write = v9fs_cached_file_write,
+ 	.aio_read = generic_file_aio_read,
+ 	.aio_write = generic_file_aio_write,
++	.read_iter = generic_file_read_iter,
++	.write_iter = generic_file_write_iter,
+ 	.open = v9fs_file_open,
+ 	.release = v9fs_dir_release,
+ 	.lock = v9fs_file_lock,
+@@ -761,6 +763,8 @@ const struct file_operations v9fs_cached_file_operations_dotl = {
+ 	.write = v9fs_cached_file_write,
+ 	.aio_read = generic_file_aio_read,
+ 	.aio_write = generic_file_aio_write,
++	.read_iter = generic_file_read_iter,
++	.write_iter = generic_file_write_iter,
+ 	.open = v9fs_file_open,
+ 	.release = v9fs_dir_release,
+ 	.lock = v9fs_file_lock_dotl,
+diff --git a/fs/ext2/file.c b/fs/ext2/file.c
+index a5b3a5d..eee8f86 100644
+--- a/fs/ext2/file.c
++++ b/fs/ext2/file.c
+@@ -66,6 +66,8 @@ const struct file_operations ext2_file_operations = {
+ 	.write		= do_sync_write,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.unlocked_ioctl = ext2_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= ext2_compat_ioctl,
+diff --git a/fs/ext3/file.c b/fs/ext3/file.c
+index 25cb413..86828f7 100644
+--- a/fs/ext3/file.c
++++ b/fs/ext3/file.c
+@@ -54,6 +54,8 @@ const struct file_operations ext3_file_operations = {
+ 	.write		= do_sync_write,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.unlocked_ioctl	= ext3_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= ext3_compat_ioctl,
+diff --git a/fs/fat/file.c b/fs/fat/file.c
+index a62e0ec..250d1b7 100644
+--- a/fs/fat/file.c
++++ b/fs/fat/file.c
+@@ -166,6 +166,8 @@ const struct file_operations fat_file_operations = {
+ 	.write		= do_sync_write,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.release	= fat_file_release,
+ 	.unlocked_ioctl	= fat_generic_ioctl,
+diff --git a/fs/hfs/inode.c b/fs/hfs/inode.c
+index 986cb91..f750dbe 100644
+--- a/fs/hfs/inode.c
++++ b/fs/hfs/inode.c
+@@ -656,8 +656,10 @@ static const struct file_operations hfs_file_operations = {
+ 	.llseek		= generic_file_llseek,
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
++	.read_iter	= generic_file_read_iter,
+ 	.write		= do_sync_write,
+ 	.aio_write	= generic_file_aio_write,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.splice_read	= generic_file_splice_read,
+ 	.fsync		= hfs_file_fsync,
+diff --git a/fs/hfsplus/inode.c b/fs/hfsplus/inode.c
+index 94fc092..0191a0d 100644
+--- a/fs/hfsplus/inode.c
++++ b/fs/hfsplus/inode.c
+@@ -369,8 +369,10 @@ static const struct file_operations hfsplus_file_operations = {
+ 	.llseek		= generic_file_llseek,
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
++	.read_iter	= generic_file_read_iter,
+ 	.write		= do_sync_write,
+ 	.aio_write	= generic_file_aio_write,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.splice_read	= generic_file_splice_read,
+ 	.fsync		= hfsplus_file_fsync,
+diff --git a/fs/jfs/file.c b/fs/jfs/file.c
+index 9d3afd1..a49ede70 100644
+--- a/fs/jfs/file.c
++++ b/fs/jfs/file.c
+@@ -151,6 +151,8 @@ const struct file_operations jfs_file_operations = {
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.mmap		= generic_file_mmap,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
 diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 16f35f7..6194688 100644
+index 16f35f7..f4c58c9 100644
 --- a/fs/nilfs2/file.c
 +++ b/fs/nilfs2/file.c
-@@ -167,7 +167,6 @@ const struct file_operations nilfs_file_operations = {
- };
- 
- const struct inode_operations nilfs_file_inode_operations = {
--	.truncate	= nilfs_truncate,
- 	.setattr	= nilfs_setattr,
- 	.permission     = nilfs_permission,
- 	.fiemap		= nilfs_fiemap,
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 4d31d2c..6b49f14 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -213,6 +213,16 @@ static int nilfs_set_page_dirty(struct page *page)
- 	return ret;
- }
- 
-+void nilfs_write_failed(struct address_space *mapping, loff_t to)
-+{
-+	struct inode *inode = mapping->host;
-+
-+	if (to > inode->i_size) {
-+		truncate_pagecache(inode, to, inode->i_size);
-+		nilfs_truncate(inode);
-+	}
-+}
-+
- static int nilfs_write_begin(struct file *file, struct address_space *mapping,
- 			     loff_t pos, unsigned len, unsigned flags,
- 			     struct page **pagep, void **fsdata)
-@@ -227,10 +237,7 @@ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
- 	err = block_write_begin(mapping, pos, len, flags, pagep,
- 				nilfs_get_block);
- 	if (unlikely(err)) {
--		loff_t isize = mapping->host->i_size;
--		if (pos + len > isize)
--			vmtruncate(mapping->host, isize);
--
-+		nilfs_write_failed(mapping, pos + len);
- 		nilfs_transaction_abort(inode->i_sb);
- 	}
- 	return err;
-@@ -259,6 +266,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
- 		loff_t offset, unsigned long nr_segs)
- {
- 	struct file *file = iocb->ki_filp;
-+	struct address_space *mapping = file->f_mapping;
- 	struct inode *inode = file->f_mapping->host;
- 	ssize_t size;
- 
-@@ -278,7 +286,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
- 		loff_t end = offset + iov_length(iov, nr_segs);
- 
- 		if (end > isize)
--			vmtruncate(inode, isize);
-+			nilfs_write_failed(mapping, end);
- 	}
- 
- 	return size;
-@@ -786,10 +794,8 @@ int nilfs_setattr(struct dentry *dentry, struct iattr *iattr)
- 	if ((iattr->ia_valid & ATTR_SIZE) &&
- 	    iattr->ia_size != i_size_read(inode)) {
- 		inode_dio_wait(inode);
--
--		err = vmtruncate(inode, iattr->ia_size);
--		if (unlikely(err))
--			goto out_err;
-+		truncate_setsize(inode, iattr->ia_size);
-+		nilfs_truncate(inode);
- 	}
- 
- 	setattr_copy(inode, iattr);
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 74cece8..9bc72de 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -277,6 +277,7 @@ extern void nilfs_update_inode(struct inode *, struct buffer_head *);
- extern void nilfs_truncate(struct inode *);
- extern void nilfs_evict_inode(struct inode *);
- extern int nilfs_setattr(struct dentry *, struct iattr *);
-+extern void nilfs_write_failed(struct address_space *mapping, loff_t to);
- int nilfs_permission(struct inode *inode, int mask);
- int nilfs_load_inode_block(struct inode *inode, struct buffer_head **pbh);
- extern int nilfs_inode_dirty(struct inode *);
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index f1626f5..ff00a0b 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -527,7 +527,8 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
- 		if (unlikely(err)) {
- 			loff_t isize = inode->i_size;
- 			if (pos + blocksize > isize)
--				vmtruncate(inode, isize);
-+				nilfs_write_failed(inode->i_mapping,
-+							pos + blocksize);
- 			goto failed_inode;
- 		}
- 
+@@ -155,6 +155,8 @@ const struct file_operations nilfs_file_operations = {
+ 	.write		= do_sync_write,
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
++	.read_iter	= generic_file_read_iter,
++	.write_iter	= generic_file_write_iter,
+ 	.unlocked_ioctl	= nilfs_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= nilfs_compat_ioctl,
+diff --git a/fs/reiserfs/file.c b/fs/reiserfs/file.c
+index 8375c92..8f86c2b 100644
+--- a/fs/reiserfs/file.c
++++ b/fs/reiserfs/file.c
+@@ -306,6 +306,8 @@ const struct file_operations reiserfs_file_operations = {
+ 	.fsync = reiserfs_sync_file,
+ 	.aio_read = generic_file_aio_read,
+ 	.aio_write = generic_file_aio_write,
++	.read_iter = generic_file_read_iter,
++	.write_iter = generic_file_write_iter,
+ 	.splice_read = generic_file_splice_read,
+ 	.splice_write = generic_file_splice_write,
+ 	.llseek = generic_file_llseek,
 -- 
-1.7.3.4
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+1.7.12.3
