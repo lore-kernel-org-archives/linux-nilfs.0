@@ -1,83 +1,89 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: NILFS: corrupt root inode after Turbo Mode?
-Date: Thu, 25 Oct 2012 16:13:46 +0400
-Message-ID: <1351167226.2573.28.camel@slavad-ubuntu>
-References: <20121014200836.GK27763@wloczykij>
-	 <1350281888.2488.9.camel@slavad-ubuntu> <20121018201528.GS27763@wloczykij>
-	 <1350628991.2028.25.camel@slavad-ubuntu> <20121019101421.GT27763@wloczykij>
-	 <1350973913.2041.25.camel@slavad-ubuntu> <20121023084100.GW27763@wloczykij>
-	 <1350984395.2041.32.camel@slavad-ubuntu> <20121023115458.GA27763@wloczykij>
-	 <1350999330.2041.48.camel@slavad-ubuntu> <20121024073641.GB27763@wloczykij>
+From: =?KOI8-R?B?88XSx8XKIOHMxcvTwc7E0s/X?= <splavgm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: very large mount time after unxepected power down
+Date: Tue, 30 Oct 2012 16:20:50 +0300
+Message-ID: <CAFPMYnEZ28qvwkE3kaB59h2rD_8noT+gQtp7Hs6uvmHcL6KzYA@mail.gmail.com>
+References: <CAFPMYnE3ybWO4o=E1UonAZJ7Uwn5y9n4840ksYGAu7qAYJ0zKw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=KhazwrPlhgAHDuQ23lWL6pkMBoLd47LHDtendW/MorA=;
-	b=SnCq/fiWh58a8q3jfDUnw+aNARBcg5xzQMouXUByEExolxYpVHYqhUQHSruPnglf4KLHp9zvsczrWqE90b3GwqhhOStdI+4euMDRrHfEqwSuEx+S2n5Of6wMjCadcieb;
-In-Reply-To: <20121024073641.GB27763@wloczykij>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :content-type;
+        bh=TJhhshVUXqGUsnbmaMtPit0aPLMzGABmWOi2U2d8/z0=;
+        b=l9GWbNJ3lUk7BBQ64vi9dgOKf8h7Ttqb7/TZFd9aNmi3rJiBkhF2Ra0r2yKBIeHzYy
+         D1jeCzU1+0zdMmC0VcJvXoirJVwV8TtmJ62sNwJxPDlmHrfhZZmXj71O5GCsozlE/lP8
+         mZEld/uTN709JO2CEhRrMKtqCOH4ULxXntELq+zh8lm12QbyXcLhiWyJDXnqnuhU/kwI
+         4ORxei1s42tGMC8NZKquPqWD2PempyAoftvcnyYROMzGMbrVYwzivrLALTlWeUFAuGMZ
+         UFFLD01d11uIpswTPO84vuBZzPD2rH5LUOPJfaCG7SNvT9Ss7RYlfHE46QIvfAbcnkpY
+         ryLA==
+In-Reply-To: <CAFPMYnE3ybWO4o=E1UonAZJ7Uwn5y9n4840ksYGAu7qAYJ0zKw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 2012-10-24 at 09:36 +0200, Piotr Szymaniak wrote:
-> On Tue, Oct 23, 2012 at 05:35:30PM +0400, Vyacheslav Dubeyko wrote:
-> > I think that the issue is the concrete SD-card's issue. So, if you
-> > simply dump out the image on another SD-card then, I hope, all will work
-> > fine.
-> 
-> But what could be the issue with SD-card?
-> 
+Good time of the day!
 
-There are several possible reasons of the issue:
-1. Volume corruption.
-2. File system driver issue.
-3. Hardware issue.
+I'v got a nilfs2 partition on a 1TB md RAID1 partition composed of two
+HDD's. Kernel 3.5.3, userspace utils v2.1.1. Gentoo linux
+distribution.
+Just updated utils to 2.1.4 but no failure since.
 
-The volume corruption is steady reproducible in the case of file system
-driver issue on any computer system with achieving necessary
-environment. The reported issue is not so because you can't mount volume
-on SD-card but you can mount it as image on loop device. And you have
-different messages in these two cases.
+After power shutdown, mount takes about several hours.
 
-The reported issue can be a NILFS2 file system driver issue with some
-probability. But, as I understand, first of all, you mounted this NILFS2
-volume many times in normal mode on this SD-card. Secondly, we haven't
-reproduction path of the reported issue for the case of Turbo mode. So,
-it is impossible to talk something about possible file system driver
-issue without understanding of technical environment and file system
-operations that were a reason.
+For the first time I thought that it won't mount at all and tried to
+use fsck tool, found somewhere in the internet(don't really remember).
+It reported that superblock is ok.
+Than I commented the check in the source file and the default number
+of blocks to check appeared to be too small. It failed to find the
+next superblock. I've increased the number, but increasing it to *100
+didn't help.
+So, probably the reserved SB is too far from away and it takes too
+long to find it.
 
-The hardware issue can have more probability, from my point of view. The
-MMC protocol describes negotiation procedure between SD-card and
-SD-controller. It defines voltage, frequency and operation mode between
-controller and card during initialization phase. So, I think that it
-takes place some in-proper negotiation for the case of Turbo mode or,
-maybe, issue of concrete hardware realization of SD-card controller or
-SD-controller on board. Moreover, it is possible also situation of SD
-card's NAND flash wearing. As a result, writing or reading operations
-can be failed partially or completely sometimes.
+Does anybody knows, how can it be speed up? I know, UPS is a solution,
+but I consider it be a bug.
 
-With the best regards,
-Vyacheslav Dubeyko.
+nilfs-tune -l /dev/md0
+nilfs-tune 2.1.1
+Filesystem volume name:   (none)
+Filesystem UUID:          9adc7cf2-4c04-4030-91d9-fae9a19ded03
+Filesystem magic number:  0x3434
+Filesystem revision #:    2.0
+Filesystem features:      (none)
+Filesystem state:         invalid or mounted
+Filesystem OS type:       Linux
+Block size:               4096
+Filesystem created:       Wed Feb 29 20:32:28 2012
+Last mount time:          Fri Oct 26 23:54:26 2012
+Last write time:          Mon Oct 29 20:05:34 2012
+Mount count:              11
+Maximum mount count:      50
+Reserve blocks uid:       0 (user root)
+Reserve blocks gid:       0 (group root)
+First inode:              11
+Inode size:               128
+DAT entry size:           32
+Checkpoint size:          192
+Segment usage size:       16
+Number of segments:       119233
+Device size:              1000202649600
+First data block:         1
+# of blocks per segment:  2048
+Reserved segments %:      5
+Last checkpoint #:        1003256
+Last block address:       160163840
+Last sequence #:          3416007
+Free blocks count:        53164032
+Commit interval:          0
+# of blks to create seg:  0
+CRC seed:                 0xc2316108
+CRC check sum:            0x56f9857c
+CRC check data size:      0x00000118
 
-
-> Anyway, I did a second image, mounted it as before and it works. dmesg
-> shows:
-> [ 2740.544690] NILFS warning: broken superblock. using spare superblock (blocksize = 1024).
-> [ 2740.544754] NILFS warning: broken superblock. using spare superblock (blocksize = 4096).
-> [ 2740.544760] NILFS warning: mounting unchecked fs
-> [ 2740.861477] NILFS: recovery complete.
-> [ 2740.911019] segctord starting. Construction interval = 300 seconds, CP frequency < 30 seconds
-> 
-> I will try to put the image after mount/umount back to the SD-card and
-> check if it works on Raspberry Pi.
-> 
-> 
-> Piotr Szymaniak.
-
-
+--------------------------------------------------
+Aleksandrov Sergey Vasil'evich
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
