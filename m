@@ -1,62 +1,108 @@
-From: =?KOI8-R?B?88XSx8XKIOHMxcvTwc7E0s/X?= <splavgm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: very large mount time after unxepected power down
-Date: Wed, 31 Oct 2012 21:06:43 +0300
-Message-ID: <CAFPMYnHyUSEr5jwBNkh43Xpt=VrzgiSCK8LG3Vkf3HcwV9cnMQ@mail.gmail.com>
-References: <CAFPMYnE3ybWO4o=E1UonAZJ7Uwn5y9n4840ksYGAu7qAYJ0zKw@mail.gmail.com>
-	<CAFPMYnEZ28qvwkE3kaB59h2rD_8noT+gQtp7Hs6uvmHcL6KzYA@mail.gmail.com>
-	<1351604965.2069.13.camel@slavad-ubuntu>
-	<CAFPMYnHhtFxuVZOMu9MZ6Xb74mFPm1a-4axyFKkHiJjDEW_4BA@mail.gmail.com>
-	<1351608774.2026.6.camel@slavad-ubuntu>
-	<CAFPMYnGn4aNf=5B9v93TtTc6x4hG1ULgt0P9i75uO=xGX0U2bg@mail.gmail.com>
-	<AFFE5823-0AD0-488C-B465-55CF45A10785@dubeyko.com>
-	<CAFPMYnEtXMr1UOVYdNNRxxH83=O-_UOR_ZhCdqjh+JuUNrFiDA@mail.gmail.com>
-	<1351664002.2105.3.camel@slavad-ubuntu>
+From: Marco Stornelli <marco.stornelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 00/21 v4] drop vmtruncate
+Date: Sat, 03 Nov 2012 10:21:29 +0100
+Message-ID: <5094E219.5020009@gmail.com>
+References: <508295AF.60606@gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=sEnZEOm+P8R0K58x3Rh6zXleLS84R+oEs/xg9R+iivM=;
-        b=R9vPUvjBOxNHvNaPwjy9nOzYdNls3nt3jUWGD56T9O9AN+0s8ZC8sfoX1eNZ88O+GS
-         vC18chcV9VlW16lDI7vAv5yHTblNoXycsHcaF7MI9QPEJseRGV++8EAy8QwildDlyoJ9
-         TWU6KC6YFBJ4EF/gEKih8Sa8D86FhwMBrjQXhUXLwER1RTxU8wRWp+O0Xr9J9uZHwhk3
-         QLi582UJkD940WrcdGdxAY2Q+koEa7wlluaaBeTRa4i28G51lipZ9wG69evayKOQMwu5
-         r36PsiyOhtJ1EB1APue7y1tWk0pW5GePZGw2MXK7TLVX5bDTm50rghGYpX5B3tAmOQAe
-         xKyQ==
-In-Reply-To: <1351664002.2105.3.camel@slavad-ubuntu>
+        h=message-id:date:from:user-agent:mime-version:to:cc:subject
+         :references:in-reply-to:content-type:content-transfer-encoding;
+        bh=DfXqSMgDEUrK09JzPWL1oEuQEcUK7JyR2Ou6t0TKMSM=;
+        b=rf2vuw10yhgHEhHbPbLpg+fjW+zLpoJPAUwFf9SD6nfpex5BaD0hgUQMq3Gw8zfPgJ
+         rMYTBBoX+pvNRFsc8I4zuo2yg9IyeT2h5tkW209GfAOPhoyaOVWixbmapRv05e1zQecT
+         5EHOJsOHDI+cjZ3ftKqjJdZKwOzLcC5q88v6aUpjRAT0a86q6rYlZ1XV4um3jgTxzmAA
+         ilOOSjl26ipsYaMMWaKapeh5qWAfDGnbuYGBDcLrlaPcXBfGO5+u6C2d2KXmELK4Gl2U
+         XUN3mA+BSIk/izlDgyYu66NBrp+zLeK9k8ioZWkRJlGO7HAn725zpLZjHjIOm43+zSiM
+         ERjg==
+In-Reply-To: <508295AF.60606-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Evgeniy Dushistov <dushistov-JGs/UdohzUI@public.gmane.org>, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bob Copeland <me-aXfl/3sk2vNUbtYUoyoikg@public.gmane.org>, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, "Tigran A. Aivazian" <tigran-ppwZ4lME3+KI6QP4U9MhSdBc4/FLrbF6@public.gmane.org>, Mikulas Patocka <mikulas-TTVWCEgN8Z9G4ohzP4jBZS1Fcj925eT/@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, logfs-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org, Petr Vandrovec <petr-vPk2MGR0e28uaRcfnNAh7A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Thank you very much for your help, sorry for diverting you from
-probably more important and interesting things. May be I'll try to
-reproduce the issue later(As a programmer I'm interested in finding
-the bug), but (as a user) for now I'm just happy with present
-situation.
-Thanks for your help again.
+Hi all,
 
->> I really dont'n know, what happened, but I failed to reproduce...
->> The only thing that have changed is version of nilfs-utils. It seems
->> that somewhere between 2.1.1 and 2.1.4 the bug was fixed.
->> Should I try to reprodce the bug with v 2.1.1, or we will consider the
->> question closed?
->>
->
-> I think that it makes sense to try to reproduce the issue with 2.1.1
-> version. If you can reproduce on 2.1.1 version but on 2.1.4 can't then
-> it means that bug was fixed.
->
-> But if you are happy without it then don't worry. :-)
->
-> With the best regards,
-> Vyacheslav Dubeyko.
->
---------------------------------------------------
-Aleksandrov Sergey Vasil'evich
+I send the fourth patch series to remove vmtruncate. Any 
+comments/feedback are welcome.
+
+Changes:
+v4: fix an error for ocfs2, silently ignore truncate for procfs as 
+suggested by Al
+v3: reworked after Al and Christoph comments
+v2: add documentation cleaning
+v1: first draft
+
+Marco Stornelli (21):
+   ufs: drop vmtruncate
+   sysv: drop vmtruncate
+   reiserfs: drop vmtruncate
+   procfs: drop vmtruncate
+   omfs: drop vmtruncate
+   ocfs2: drop vmtruncate
+   adfs: drop vmtruncate
+   affs: drop vmtruncate
+   bfs: drop vmtruncate
+   hfs: drop vmtruncate
+   hpfs: drop vmtruncate
+   jfs: drop vmtruncate
+   hfsplus: drop vmtruncate
+   logfs: drop vmtruncate
+   minix: drop vmtruncate
+   ncpfs: drop vmtruncate
+   nilfs2: drop vmtruncate
+   ntfs: drop vmtruncate
+   vfs: drop vmtruncate
+   mm: drop vmtruncate
+   documentation: drop vmtruncate
+
+  Documentation/filesystems/Locking |    6 ------
+  Documentation/filesystems/porting |    2 +-
+  Documentation/filesystems/vfs.txt |   11 -----------
+  fs/adfs/inode.c                   |   15 ++++++++++-----
+  fs/affs/file.c                    |   18 ++++++++++++------
+  fs/affs/inode.c                   |    5 ++++-
+  fs/bfs/file.c                     |   15 ++++++++++-----
+  fs/hfs/inode.c                    |   26 ++++++++++++++++++--------
+  fs/hfsplus/inode.c                |   27 ++++++++++++++++-----------
+  fs/hpfs/file.c                    |   18 ++++++++++++------
+  fs/hpfs/inode.c                   |    5 ++++-
+  fs/jfs/file.c                     |    6 ++++--
+  fs/jfs/inode.c                    |   20 ++++++++++++++------
+  fs/libfs.c                        |    2 --
+  fs/logfs/readwrite.c              |   10 ++++++++--
+  fs/minix/file.c                   |    6 ++++--
+  fs/minix/inode.c                  |   17 ++++++++++++-----
+  fs/ncpfs/inode.c                  |    4 +---
+  fs/nilfs2/file.c                  |    1 -
+  fs/nilfs2/inode.c                 |   24 +++++++++++++++---------
+  fs/nilfs2/nilfs.h                 |    1 +
+  fs/nilfs2/recovery.c              |    3 ++-
+  fs/ntfs/file.c                    |   16 +++++++++++++---
+  fs/ntfs/inode.c                   |    8 ++++++--
+  fs/ntfs/inode.h                   |    4 ++++
+  fs/ocfs2/file.c                   |   18 ------------------
+  fs/omfs/file.c                    |   22 +++++++++++++++-------
+  fs/proc/base.c                    |    7 -------
+  fs/proc/generic.c                 |    9 +--------
+  fs/proc/proc_sysctl.c             |    7 -------
+  fs/reiserfs/file.c                |    3 +--
+  fs/reiserfs/inode.c               |   15 +++++++++++----
+  fs/reiserfs/reiserfs.h            |    1 +
+  fs/sysv/file.c                    |    5 +++--
+  fs/sysv/itree.c                   |   17 ++++++++++++-----
+  fs/ufs/inode.c                    |   15 ++++++++++-----
+  include/linux/fs.h                |    1 -
+  include/linux/mm.h                |    1 -
+  mm/truncate.c                     |   23 -----------------------
+  39 files changed, 225 insertions(+), 189 deletions(-)
+
+-- 
+1.7.3.4
+---
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
