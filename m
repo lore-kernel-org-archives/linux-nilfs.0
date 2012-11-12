@@ -1,14 +1,14 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v4 11/15] nilfs-utils: fsck: add skeleton of functionality
- for checkpoints checking
-Date: Mon, 12 Nov 2012 13:37:17 +0400
-Message-ID: <1352713037.2555.46.camel@slavad-ubuntu>
+Subject: [PATCH v4 12/15] nilfs-utils: fsck: add skeleton of functionality
+ for file system hierarchy checking
+Date: Mon, 12 Nov 2012 13:37:28 +0400
+Message-ID: <1352713048.2555.47.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:From:Subject:Message-ID; bh=Xx3SZXW/xpa2Basmkxz9AZPgKqNdqEBGtk8ZzDOXtLg=;
-	b=gnAFdLPZ8uwG8NMxqdON91o7tmUwVk4adYM9KD5k/+I9hx/51XqAm7NzUn8G1+ulgs6G+HN6isoG3+i6bRq7eCe1lC830N58ZMzeUHTXW/qyInHjEmJIRN7K4tWHQhEJ;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:From:Subject:Message-ID; bh=SFefIGEqdAOmEbuLBRX6+QAL5pxz/JxWryETGyf8uMc=;
+	b=a/Qlouyxc7gtLcPq+WA1ZEJZznq0KSuHWbHrArS06IiUxjMml/mFFDrDNQ6pGrkjrHNp8UYJTukChHEfkgLcE0mkDlAefXch11hmBh++u7z+MjoolixyCrA3xNAlnDZM;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -16,33 +16,33 @@ To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
 Hi,
 
-This patch adds skeleton of functionality for checkpoints checking.
+This patch adds skeleton of functionality for file system hierarchy checking.
 
 With the best regards,
 Vyacheslav Dubeyko.
 --
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v4 11/15] nilfs-utils: fsck: add skeleton of functionality for checkpoints checking
+Subject: [PATCH v4 12/15] nilfs-utils: fsck: add skeleton of functionality for file system hierarchy checking
 
-This patch adds skeleton of functionality for checkpoints checking.
+This patch adds skeleton of functionality for file system hierarchy checking.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 ---
- sbin/fsck/nilfs_checkpoint.c |  154 ++++++++++++++++++++++++++++++++++++++++++
- sbin/fsck/nilfs_checkpoint.h |   50 ++++++++++++++
- 2 files changed, 204 insertions(+)
- create mode 100644 sbin/fsck/nilfs_checkpoint.c
- create mode 100644 sbin/fsck/nilfs_checkpoint.h
+ sbin/fsck/nilfs_fs_hierarchy.c |   73 ++++++++++++++++++++++++++++++++++++++++
+ sbin/fsck/nilfs_fs_hierarchy.h |   38 +++++++++++++++++++++
+ 2 files changed, 111 insertions(+)
+ create mode 100644 sbin/fsck/nilfs_fs_hierarchy.c
+ create mode 100644 sbin/fsck/nilfs_fs_hierarchy.h
 
-diff --git a/sbin/fsck/nilfs_checkpoint.c b/sbin/fsck/nilfs_checkpoint.c
+diff --git a/sbin/fsck/nilfs_fs_hierarchy.c b/sbin/fsck/nilfs_fs_hierarchy.c
 new file mode 100644
-index 0000000..5476876
+index 0000000..02570c1
 --- /dev/null
-+++ b/sbin/fsck/nilfs_checkpoint.c
-@@ -0,0 +1,154 @@
++++ b/sbin/fsck/nilfs_fs_hierarchy.c
+@@ -0,0 +1,73 @@
 +/*
-+ * nilfs_checkpoint.c - NILFS checkpoints and snapshots checking,
-+ *                      processing and recovering operations implementation
++ * nilfs_fs_hierarchy.c - NILFS file system hierarchy checking, processing
++ *                        and recovering operations implementation
 + *
 + * Copyright (C) 2012 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + *
@@ -68,7 +68,7 @@ index 0000000..5476876
 +#include "fsck_common.h"
 +#include "fsck_raw_ops.h"
 +
-+#include "nilfs_checkpoint.h"
++#include "nilfs_fs_hierarchy.h"
 +
 +/*****************************************************************************
 + * FUNCTIONS DECLARATION
@@ -79,113 +79,32 @@ index 0000000..5476876
 + *****************************************************************************/
 +
 +/*****************************************************************************
-+ * NAME:  first_snapshot_number (fsck.nilfs2)
++ * NAME:  fs_hierarchy_check_for_snapshot (fsck.nilfs2)
 + *
-+ * FUNCTION:  Get first snapshot number in the list.
-+ *
-+ * RETURNS:
-+ * A. First snapshot number in the case of success.
-+ * B. The UNDEFINED_SNAPSHOT in the case of failure.
-+ */
-+__u64 first_snapshot_number(void)
-+{
-+	/*internal_info("<%s>: %s", __func__, nilfs_message[NOT_IMPLEMENTED]);*/
-+	/* <TODO: implement> */
-+	return UNDEFINED_SNAPSHOT;
-+} /* first_snapshot_number() */
-+
-+/*****************************************************************************
-+ * NAME:  next_snapshot_number (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Get next snapshot number in the list.
-+ *
-+ * PARAMETERS:
-+ * @prev_snapshot: Number of previous snapshot in the list.
-+ *
-+ * RETURNS:
-+ * A. Next snapshot number in the case of success.
-+ * B. UNDEFINED_SNAPSHOT in the case of failure or empty list.
-+ * C. Last snapshot number in the case of equality of @prev_snapshot to
-+ *    last snapshot number.
-+ */
-+__u64 next_snapshot_number(__u64 prev_snapshot)
-+{
-+	if (UNDEFINED_SNAPSHOT == prev_snapshot)
-+		return UNDEFINED_SNAPSHOT;
-+
-+	if (0 == snapshots_count())
-+		return UNDEFINED_SNAPSHOT;
-+
-+	if (prev_snapshot == last_snapshot_number())
-+		return prev_snapshot;
-+
-+	if (prev_snapshot > last_snapshot_number())
-+		return UNDEFINED_SNAPSHOT;
-+
-+	/*internal_info("<%s>: %s", __func__, nilfs_message[NOT_IMPLEMENTED]);*/
-+
-+	/* <TODO: implement > */
-+	return UNDEFINED_SNAPSHOT;
-+} /* next_snapshot_number() */
-+
-+/*****************************************************************************
-+ * NAME:  last_snapshot_number (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Get last snapshot number in the list.
-+ *
-+ * RETURNS:
-+ * A. First snapshot number in the case of success.
-+ * B. The UNDEFINED_SNAPSHOT in the case of failure.
-+ */
-+__u64 last_snapshot_number(void)
-+{
-+	/*internal_info("<%s>: %s", __func__, nilfs_message[NOT_IMPLEMENTED]);*/
-+	/* <TODO: implement > */
-+	return UNDEFINED_SNAPSHOT;
-+} /* last_snapshot_number() */
-+
-+/*****************************************************************************
-+ * NAME:  snapshots_count (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Get snapshots count in the list.
-+ *
-+ * RETURNS:
-+ * A. Snapshots count in the list for the case of success.
-+ */
-+__u64 snapshots_count(void)
-+{
-+	/*internal_info("<%s>: %s", __func__, nilfs_message[NOT_IMPLEMENTED]);*/
-+	/* <TODO: implement > */
-+	return 0;
-+} /* snapshots_count() */
-+
-+/*****************************************************************************
-+ * NAME:  check_snapshot (fsck.nilfs2)
-+ *
-+ * FUNCTION:  It checks validity of metadata structures for snapshot number.
++ * FUNCTION:  It checks validity of file system hierarchy for snapshot number.
 + *            It means that it takes into account all changes were made
 + *            before (and inclusive) requested snapshot. This function builds
-+ *            block bitmap on the basis of DAT file information. Also it builds
-+ *            inode bitmap on the basis of ifile information.
++ *            block bitmap on the basis of inodes info. Also it builds
++ *            inode bitmap on the basis of hierarchy tree traversing.
 + *
 + * PARAMETERS:
 + * @snapshot: Snapshot number for check.
 + *
 + * RETURNS:
-+ * NILFS_OK - Snapshot was checked successfully.
-+ * %-CANNOT_CHECK_SNAPSHOT - Snapshot checking fails because of internal error.
++ * NILFS_OK - File system hierarchy was checked successfully.
++ * %-CANNOT_CHECK_FS_HIERARCHY - FS hierarchy checking fails.
 + * %-INVALID_PARAMETER - Input parameters are invalid.
 + */
-+int check_snapshot(__u64 snapshot)
++int fs_hierarchy_check_for_snapshot(__u64 snapshot)
 +{
 +	int err = NILFS_OK;
 +
-+	internal_debug("begin to check snapshot: %lld.", snapshot);
++	internal_debug("begin to check fs hierarchy: %lld.", snapshot);
 +
 +	/*if (UNDEFINED_SNAPSHOT == snapshot ||
 +			snapshot > last_snapshot_number()) {
-+		internal_debug("<%s>: %s.",
-+			__func__, nilfs_message[INVALID_PARAMETER]);
++		internal_debug("%s",
++			nilfs_message[INVALID_PARAMETER]);
 +		return -INVALID_PARAMETER;
 +	}*/
 +
@@ -193,16 +112,16 @@ index 0000000..5476876
 +
 +	/* <TODO: implement> */
 +	return err;
-+} /* check_snapshot() */
-diff --git a/sbin/fsck/nilfs_checkpoint.h b/sbin/fsck/nilfs_checkpoint.h
++} /* fs_hierarchy_check_for_snapshot() */
+diff --git a/sbin/fsck/nilfs_fs_hierarchy.h b/sbin/fsck/nilfs_fs_hierarchy.h
 new file mode 100644
-index 0000000..3e951ad
+index 0000000..e7f1370
 --- /dev/null
-+++ b/sbin/fsck/nilfs_checkpoint.h
-@@ -0,0 +1,50 @@
++++ b/sbin/fsck/nilfs_fs_hierarchy.h
+@@ -0,0 +1,38 @@
 +/*
-+ * nilfs_checkpoint.h - Declarations of operations for NILFS checkpoints
-+ *                      and snapshots checking, processing and recovering
++ * nilfs_fs_hierarchy.h - Declarations of operations for NILFS file system
++ *                        hierarchy checking, processing and recovering
 + *
 + * Copyright (C) 2012 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + *
@@ -225,31 +144,19 @@ index 0000000..3e951ad
 + * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + */
 +
-+#ifndef NILFS_CHECKPOINT_H
-+#define NILFS_CHECKPOINT_H
-+
-+/* Get first snapshot number in the list */
-+__u64 first_snapshot_number(void);
-+
-+/* Get next snapshot number in the list */
-+__u64 next_snapshot_number(__u64 prev_snapshot);
-+
-+/* Get last snapshot number in the list */
-+__u64 last_snapshot_number(void);
-+
-+/* Get snapshots count in the list */
-+__u64 snapshots_count(void);
++#ifndef NILFS_FS_HIERARCHY_H
++#define NILFS_FS_HIERARCHY_H
 +
 +/*
-+ * It checks validity of metadata structures for snapshot number.
++ * It checks validity of file system hierarchy for snapshot number.
 + * It means that it takes into account all changes were made
 + * before (and inclusive) requested snapshot. This function builds
-+ * block bitmap on the basis of DAT file information. Also it builds
-+ * inode bitmap on the basis of ifile information.
++ * block bitmap on the basis of inodes info. Also it builds
++ * inode bitmap on the basis of hierarchy tree traversing.
 + */
-+int check_snapshot(__u64 snapshot);
++int fs_hierarchy_check_for_snapshot(__u64 snapshot);
 +
-+#endif /* NILFS_CHECKPOINT_H */
++#endif /* NILFS_FS_HIERARCHY_H */
 -- 
 1.7.9.5
 
