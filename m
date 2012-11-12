@@ -1,140 +1,85 @@
-From: Marco Stornelli <marco.stornelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 17/21] nilfs2: drop vmtruncate
-Date: Sat, 03 Nov 2012 10:30:59 +0100
-Message-ID: <5094E453.9030209@gmail.com>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v4 00/15] nilfs-utils: fsck: add fsck.nilfs2 utility into
+ nilfs-utils package
+Date: Mon, 12 Nov 2012 13:34:17 +0400
+Message-ID: <1352712857.2555.35.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:cc:subject
-         :content-type:content-transfer-encoding;
-        bh=BLRx22z6WaUH47U1/xFTv2mVmBvf3jDc7OkkFCsAL+c=;
-        b=vXEhdlpmVQokv14n8XAunkL6puO7+K7KZVS6X6DkzAL8B5sX7oRE8lBeBwpj0+m5nr
-         TseAdjFuJ+hgFfmqtJYakwQdRNUDT8fqjpMA5cWbmhvmlVqtSBxrh9zknpx6YixylDTE
-         3xqoJk9cASQ7p+FRmrK2PF7ucBWNuS5stq6L1jaImRi0i8DVbazF9QBBUlkuF2pDxzk+
-         K023siJ0E327drtUPCuaj18KjZNFt9kitFGuH7MKy6K0Ztqp8fU9SKk3kXqwDdYYANH9
-         7ybpUboZvgwVjFeY7vZ6rJ9YnRvBxenT4B++C1/5mHwzVAW35HV4ndhyzKARg7/r9qmV
-         FVJA==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:From:Subject:Message-ID; bh=mVEDOAosTC4xDluEtIFmnJuWONhTc+f4EY2GdeTmC9o=;
+	b=adsF6Y4SoTbh6SouGQpSC1CbkM7LyE+vjBj4bELpdN38AFjLRnfikJ/XrFz+JqXa82HwFvxFixBrtmCP4MnE/hIr+xHBe+d0C2k2ugkZgdh36tQ1TmwMvWkyvlMxWSo1;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: KONISHI Ryusuke <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Removed vmtruncate
+Hi,
 
-Signed-off-by: Marco Stornelli <marco.stornelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- fs/nilfs2/file.c     |    1 -
- fs/nilfs2/inode.c    |   24 +++++++++++++++---------
- fs/nilfs2/nilfs.h    |    1 +
- fs/nilfs2/recovery.c |    3 ++-
- 4 files changed, 18 insertions(+), 11 deletions(-)
+This patch set adds fsck.nilfs2 utility into nilfs-utils package. Currently, fsck.nilfs2 checks primary and secondary superblocks and segment summary headers of segments' logs.
 
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 16f35f7..6194688 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -167,7 +167,6 @@ const struct file_operations nilfs_file_operations = {
- };
- 
- const struct inode_operations nilfs_file_inode_operations = {
--	.truncate	= nilfs_truncate,
- 	.setattr	= nilfs_setattr,
- 	.permission     = nilfs_permission,
- 	.fiemap		= nilfs_fiemap,
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 4d31d2c..6b49f14 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -213,6 +213,16 @@ static int nilfs_set_page_dirty(struct page *page)
- 	return ret;
- }
- 
-+void nilfs_write_failed(struct address_space *mapping, loff_t to)
-+{
-+	struct inode *inode = mapping->host;
-+
-+	if (to > inode->i_size) {
-+		truncate_pagecache(inode, to, inode->i_size);
-+		nilfs_truncate(inode);
-+	}
-+}
-+
- static int nilfs_write_begin(struct file *file, struct address_space *mapping,
- 			     loff_t pos, unsigned len, unsigned flags,
- 			     struct page **pagep, void **fsdata)
-@@ -227,10 +237,7 @@ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
- 	err = block_write_begin(mapping, pos, len, flags, pagep,
- 				nilfs_get_block);
- 	if (unlikely(err)) {
--		loff_t isize = mapping->host->i_size;
--		if (pos + len > isize)
--			vmtruncate(mapping->host, isize);
--
-+		nilfs_write_failed(mapping, pos + len);
- 		nilfs_transaction_abort(inode->i_sb);
- 	}
- 	return err;
-@@ -259,6 +266,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
- 		loff_t offset, unsigned long nr_segs)
- {
- 	struct file *file = iocb->ki_filp;
-+	struct address_space *mapping = file->f_mapping;
- 	struct inode *inode = file->f_mapping->host;
- 	ssize_t size;
- 
-@@ -278,7 +286,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
- 		loff_t end = offset + iov_length(iov, nr_segs);
- 
- 		if (end > isize)
--			vmtruncate(inode, isize);
-+			nilfs_write_failed(mapping, end);
- 	}
- 
- 	return size;
-@@ -786,10 +794,8 @@ int nilfs_setattr(struct dentry *dentry, struct iattr *iattr)
- 	if ((iattr->ia_valid & ATTR_SIZE) &&
- 	    iattr->ia_size != i_size_read(inode)) {
- 		inode_dio_wait(inode);
--
--		err = vmtruncate(inode, iattr->ia_size);
--		if (unlikely(err))
--			goto out_err;
-+		truncate_setsize(inode, iattr->ia_size);
-+		nilfs_truncate(inode);
- 	}
- 
- 	setattr_copy(inode, iattr);
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 74cece8..9bc72de 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -277,6 +277,7 @@ extern void nilfs_update_inode(struct inode *, struct buffer_head *);
- extern void nilfs_truncate(struct inode *);
- extern void nilfs_evict_inode(struct inode *);
- extern int nilfs_setattr(struct dentry *, struct iattr *);
-+extern void nilfs_write_failed(struct address_space *mapping, loff_t to);
- int nilfs_permission(struct inode *inode, int mask);
- int nilfs_load_inode_block(struct inode *inode, struct buffer_head **pbh);
- extern int nilfs_inode_dirty(struct inode *);
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index f1626f5..ff00a0b 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -527,7 +527,8 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
- 		if (unlikely(err)) {
- 			loff_t isize = inode->i_size;
- 			if (pos + blocksize > isize)
--				vmtruncate(inode, isize);
-+				nilfs_write_failed(inode->i_mapping,
-+							pos + blocksize);
- 			goto failed_inode;
- 		}
- 
--- 
-1.7.3.4
+v3->v4
+* Every message is associated with subsystem.
+* It was introduced complex error and it was implemented output of complex error number with segment and log numbers.
+* Functionality of primary and secondary superblocks comparing was added.
+* Preliminary vision of architecture of checking functionality was implemented.
+* Functionality of segment summary header checking was implemented.
+* Some bugs in superblock checking functionality were fixed.
+
+v2->v3
+* It was implemented functionality of NILFS superblock correctness checking.
+* Message printing primitives are generalized into single library (libnilfsmessages.la).
+* Error definition is associated with definition of error id, error severity and error message.
+* It was introduced conception of detected errors database in the form of set of checking flags bitmaps. The checking flags bitmap defines what should be checked (for example, in superblock) and, then, it keeps information about detected corrupted items after check execution.
+
+v1->v2
+* Coding style was reworked (checkpatch.pl script).
+* libfsck.la library was added (print routines + raw ops with disk).
+* nilfs.h - several constants and function declarations was added.
+* ismounted.c - check_mount() function is reworked for checking on RO mount.
+* sb.c - nilfs_sb_is_valid() function is reworked; nilfs_sb_read_unchecked() was added.
+* fsck_message.h, fsck_message.def, fsck_raw_ops.h are moved into include folder.
+* fsck_message.c, fsck_raw_ops.c are moved into lib folder.
+* Superblocks are read by means of library function nilfs_sb_read_unchecked().
+* Superblocks are checked by means of library function nilfs_sb_is_valid().
+* fsck_debug() identifies reported function by means of __func__ macro.
+
+With the best regards,
+Vyacheslav Dubeyko.
+--
+ configure.ac                   |    3 +-
+ include/Makefile.am            |    3 +-
+ include/fsck_nilfs2.h          |  148 +++++
+ include/fsck_raw_ops.h         |   55 ++
+ include/nilfs.h                |   55 ++
+ include/nilfs2_fs.h            |    5 +
+ include/nilfs_messages.def     |  180 +++++
+ include/nilfs_messages.h       |  248 +++++++
+ lib/Makefile.am                |   18 +-
+ lib/fsck_raw_ops.c             |  467 +++++++++++++
+ lib/ismounted.c                |   15 +-
+ lib/nilfs_messages.c           |  474 +++++++++++++
+ lib/sb.c                       | 1429 +++++++++++++++++++++++++++++++++++++++-
+ lib/segment.c                  |  509 ++++++++++++++
+ sbin/Makefile.am               |    2 +-
+ sbin/fsck/ChangeLog.fsck       |   44 ++
+ sbin/fsck/Makefile.am          |   18 +
+ sbin/fsck/fsck_common.h        |  119 ++++
+ sbin/fsck/fsck_nilfs2.c        |  734 +++++++++++++++++++++
+ sbin/fsck/nilfs_checkpoint.c   |  154 +++++
+ sbin/fsck/nilfs_checkpoint.h   |   50 ++
+ sbin/fsck/nilfs_fs_hierarchy.c |   73 ++
+ sbin/fsck/nilfs_fs_hierarchy.h |   38 ++
+ sbin/fsck/nilfs_segment.c      |  934 ++++++++++++++++++++++++++
+ sbin/fsck/nilfs_segment.h      |   55 ++
+ sbin/fsck/nilfs_superblock.c   |  851 ++++++++++++++++++++++++
+ sbin/fsck/nilfs_superblock.h   |   44 ++
+ sbin/fsck/nilfs_volume_check.c |   71 ++
+ sbin/fsck/nilfs_volume_check.h |   45 ++
+ sbin/mkfs/mkfs.c               |    1 -
+ 30 files changed, 6824 insertions(+), 18 deletions(-)
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
