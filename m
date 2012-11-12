@@ -1,14 +1,13 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v4 07/15] nilfs-utils: fsck: NILFS segment summary header
- check implementation
-Date: Mon, 12 Nov 2012 13:36:21 +0400
-Message-ID: <1352712981.2555.42.camel@slavad-ubuntu>
+Subject: [PATCH v4 08/15] nilfs-utils: fsck: add fsck internal declarations
+Date: Mon, 12 Nov 2012 13:36:35 +0400
+Message-ID: <1352712995.2555.43.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:From:Subject:Message-ID; bh=5mhyplPuqpzeoBBTfB0MI1GaxN7blvbjQeZlMPkGq2o=;
-	b=Ki7Le37sfaPHkl3850b5pnKeyJlYwIKEvUZSENfYg8DIDBT7d4EM7uDikjbLwEeyoo6HwQrzpaJELu04QPIQvk3rMmCW5MmSRxC3XXIOgTBCTpkoMLuOtcTbSMgYmtFk;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:From:Subject:Message-ID; bh=oy7TnJ0Pv0pj12lB2TWaEwKdqm7DtC7xKuTiQfDPSqI=;
+	b=PAPwc0k3j7mzshcGyqHQ6hmN3IP++6F/rP3aIgU70ro7uP6hQ7ZfYdqAiz+UDGdzdivBqfDTo3i+s2YvHcLjquRojRZashlehXzNgHFYQTFg/DvhGl0JKYfs9t8egDK4;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -16,30 +15,30 @@ To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
 Hi,
 
-This patch adds nilfs_ss_header_is_valid() function with the purpose of making segment summary header check.
+This patch adds fsck_common.h file with fsck internal declarations.
 
 With the best regards,
 Vyacheslav Dubeyko.
 --
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v4 07/15] nilfs-utils: fsck: NILFS segment summary header check implementation
+Subject: [PATCH v4 08/15] nilfs-utils: fsck: add fsck internal declarations
 
-This patch adds nilfs_ss_header_is_valid() function with the purpose of making segment summary header check.
+This patch adds fsck_common.h file with fsck internal declarations.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 ---
- lib/segment.c |  509 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 509 insertions(+)
- create mode 100644 lib/segment.c
+ sbin/fsck/fsck_common.h |  119 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 119 insertions(+)
+ create mode 100644 sbin/fsck/fsck_common.h
 
-diff --git a/lib/segment.c b/lib/segment.c
+diff --git a/sbin/fsck/fsck_common.h b/sbin/fsck/fsck_common.h
 new file mode 100644
-index 0000000..9c14fb6
+index 0000000..679bf7a
 --- /dev/null
-+++ b/lib/segment.c
-@@ -0,0 +1,509 @@
++++ b/sbin/fsck/fsck_common.h
+@@ -0,0 +1,119 @@
 +/*
-+ * segment.c - NILFS2 segment checking functionality
++ * fsck_common.h - NILFS fsck application-related declarations
 + *
 + * Copyright (C) 2012 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + *
@@ -62,494 +61,103 @@ index 0000000..9c14fb6
 + * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + */
 +
++#ifndef FSCK_COMMON_H
++#define FSCK_COMMON_H
++
 +#include "nilfs.h"
 +#include "nilfs_messages.h"
 +#include "fsck_nilfs2.h"
 +
-+/*
-+ * ss_check_magic - Check magic signature of segment summary header.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_SIGNATURE - segment summary header has invalid magic.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
-+ */
-+static int ss_check_magic(struct nilfs_segment_summary *ss_ptr,
-+						__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
++#define FSCK_VERSION "v.0.04-under-development"
 +
-+	if (!(*check_mask & CHECK_SS_MAGIC))
-+		return NILFS_OK; /* nothing to be checked */
-+
-+	if (le32_to_cpu(ss_ptr->ss_magic) != NILFS_SEGSUM_MAGIC)
-+		err = INVALID_SS_SIGNATURE;
-+	else
-+		*check_mask &= ~CHECK_SS_MAGIC;
-+
-+	internal_debug("ss_magic %#x.",
-+			le32_to_cpu(ss_ptr->ss_magic));
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_magic() */
++#define UNDEFINED_SNAPSHOT -1
 +
 +/*
-+ * ss_check_header_size - Check segment summary header size in bytes.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
++ * struct nilfs_segment_reference
 + *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_HEADER_SZ - size of segment summary header is invalid.
-+ * %-UNSUPPORTED_SS_REV - unsupported revision of segment summary.
++ * Item of array that defines references of segments
++ * on each other in sequence.
 + *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
++ * @prev_seg: previous segment number.
++ * @next_seg: next segment number.
++ * @seg_seq_id: segment sequence number.
++ * @logs_count: count of logs in segment
++ *
 + */
-+static int ss_check_header_size(struct nilfs_segment_summary *ss_ptr,
-+						__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	__u16 ss_bytes = le16_to_cpu(ss_ptr->ss_bytes);
-+
-+	if (!(*check_mask & CHECK_SS_BYTES))
-+		return NILFS_OK; /* nothing to be checked */
-+
-+	if (ss_bytes < sizeof(struct nilfs_segment_summary)) {
-+		err = INVALID_SS_HEADER_SZ;
-+		*check_mask &= (~CHECK_SS_HDR_REV);
-+	} else if (ss_bytes > sizeof(struct nilfs_segment_summary)) {
-+		err = UNSUPPORTED_SS_REV;
-+		*check_mask &= (~CHECK_SS_BYTES);
-+	} else
-+		*check_mask &= (~(CHECK_SS_BYTES | CHECK_SS_HDR_REV));
-+
-+	internal_debug("ss_bytes %d.",
-+			le16_to_cpu(ss_ptr->ss_bytes));
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_header_size() */
++struct nilfs_segment_reference {
++	__u64 prev_seg;
++	__u64 next_seg;
++	__u64 seg_seq_id;
++	__u32 logs_count;
++}; /* struct nilfs_segment_reference */
 +
 +/*
-+ * ss_check_segment_sequence_number - Check segment sequence number.
-+ * @segment: current segment number.
-+ * @sbp: pointer on superblock.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_SEQ - segment summary header keeps invalid seq number.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
++ * struct log_check
 + */
-+static int ss_check_segment_sequence_number(__u64 segment,
-+				struct nilfs_super_block *sbp,
-+				struct nilfs_segment_summary *ss_ptr,
-+				__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	__u64 sequence_number;
-+	__u64 nsegs;
-+	__u64 iteration;
-+
-+	if (!(*check_mask & CHECK_SS_SEQ))
-+		return NILFS_OK; /* nothing to be checked */
-+
-+	sequence_number = le64_to_cpu(ss_ptr->ss_seq);
-+	nsegs = le64_to_cpu(sbp->s_nsegments);
-+	iteration = sequence_number / nsegs;
-+
-+	if ((segment + (nsegs * iteration)) != sequence_number)
-+		err = INVALID_SS_SEQ;
-+	else
-+		*check_mask &= ~CHECK_SS_SEQ;
-+
-+	internal_debug("ss_seq %lld.",
-+			le64_to_cpu(ss_ptr->ss_seq));
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_segment_sequence_number() */
++struct log_check {
++	union {
++		__u16 check_mask;
++		__u16 errs_bmp;
++	} ss_hdr;
++}; /* struct log_check */
 +
 +/*
-+ * ss_check_seg_used_blocks_number - Check number of really used blocks.
-+ * @sbp: pointer on superblock.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_NBLOCKS - invalid number of really used blocks in segment.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
++ * struct segment_check
 + */
-+static int ss_check_seg_used_blocks_number(struct nilfs_super_block *sbp,
-+					struct nilfs_segment_summary *ss_ptr,
-+					__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	__u32 nblocks;
-+	__u32 blk_size;
-+	__u32 seg_sum_blocks;
-+
-+	if (!(*check_mask & CHECK_SS_NBLOCKS))
-+		return NILFS_OK; /* nothing to be checked */
-+
-+	nblocks = le32_to_cpu(ss_ptr->ss_nblocks);
-+	blk_size = (1UL << (le32_to_cpu(sbp->s_log_block_size) +
-+					NILFS_SB_BLOCK_SIZE_SHIFT));
-+	seg_sum_blocks =
-+		ROUNDUP_DIV(le32_to_cpu(ss_ptr->ss_sumbytes), blk_size);
-+
-+	if (nblocks > le32_to_cpu(sbp->s_blocks_per_segment) ||
-+			nblocks <= seg_sum_blocks)
-+		err = INVALID_SS_NBLOCKS;
-+	else
-+		*check_mask &= ~CHECK_SS_NBLOCKS;
-+
-+	internal_debug("ss_nblocks %d.", nblocks);
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_seg_used_blocks_number() */
++struct segment_check {
++	struct log_check *logs;
++	__u32 logs_count;
++}; /* struct segment_check */
 +
 +/*
-+ * ss_check_flags - Check segment summary header flags.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
++ * struct fsck_check
 + *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_FLAGS - unknown flags were detected.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
++ * Defines what should check and return errors.
++ * For every item check_mask is prepared before
++ * checking. It needs to check only items which
++ * flags were been set. If checking item is
++ * valid then proper bit is unset in errors_bitmap.
 + */
-+static int ss_check_flags(struct nilfs_segment_summary *ss_ptr,
-+						__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	__u16 known_flags = NILFS_SS_LOGBGN | NILFS_SS_LOGEND |
-+				NILFS_SS_SR | NILFS_SS_SYNDT |
-+				NILFS_SS_GC;
++struct fsck_check {
++/* Volume at whole section */
++	union {
++		__u64 check_mask;
++		__u64 errs_bmp;
++	} volume;
++/* Superblock section */
++	union {
++		__u64 check_mask;
++		__u64 errs_bmp;
++	} sb[SUPERBLOCK_TYPES_NUMBER];
++/* Segments section */
++	struct segment_check *segments;
++	__u64 segs_count;
++}; /* struct fsck_check */
 +
-+	if (!(*check_mask & CHECK_SS_FLAGS))
-+		return NILFS_OK; /* nothing to be checked */
++/* libmountchk function */
++extern int check_mount(const char *device);
 +
-+	if (le16_to_cpu(ss_ptr->ss_flags) & ~known_flags)
-+		err = INVALID_SS_FLAGS;
-+	else
-+		*check_mask &= ~CHECK_SS_FLAGS;
++/* Current mode of fsck working */
++extern int fsck_work_mode;
 +
-+	internal_debug("ss_flags %d.",
-+			le16_to_cpu(ss_ptr->ss_flags));
-+	internal_debug("check_mask %x.", *check_mask);
++/* Defines what should check and keeps errors */
++extern struct fsck_check detected_err_db;
 +
-+	return (err > 0) ? -err : err;
-+} /* ss_check_flags() */
++/* Array of pointers on NILFS volume's superblocks */
++extern struct nilfs_super_block *superblocks[SUPERBLOCK_TYPES_NUMBER];
 +
-+/*
-+ * ss_check_creation_timestamp - Check segment summary header creation time.
-+ * @sbp: pointer on superblock.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_CREATE_TIME - creation timestamp has strange value.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
-+ */
-+static int ss_check_creation_timestamp(struct nilfs_super_block *sbp,
-+					struct nilfs_segment_summary *ss_ptr,
-+							__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	__u64 ss_create;
++/* NILFS object for library API accessing */
++extern struct nilfs *nilfs_object_ptr;
 +
-+	if (!(*check_mask & CHECK_SS_CREATE))
-+		return NILFS_OK; /* nothing to be checked */
++/* Pointer on segment references array */
++extern struct nilfs_segment_reference *seg_refs_array_ptr;
 +
-+	ss_create = le64_to_cpu(ss_ptr->ss_create);
++/* Pointer on segments bitmap */
++extern int *segments_bitmap_ptr;
 +
-+	if (ss_create >= time(NULL) || ss_create < le64_to_cpu(sbp->s_ctime))
-+		err = INVALID_SS_CREATE_TIME;
-+	else
-+		*check_mask &= ~CHECK_SS_CREATE;
-+
-+	internal_debug("ss_create %s.",
-+			ctime((const time_t *)&ss_create));
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_creation_timestamp() */
-+
-+/*
-+ * ss_check_next_seg_start_block - Check next segment start block.
-+ * @segment: segment sequence number.
-+ * @sbp: pointer on superblock.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_NEXT_SEG_BLK - next segment start block is invalid.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
-+ */
-+static int ss_check_next_seg_start_block(__u64 segment,
-+					struct nilfs_super_block *sbp,
-+					struct nilfs_segment_summary *ss_ptr,
-+							__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	__u64 cur_seg_start_block;
-+	__u64 next_seg_start_block;
-+	__u64 nsegs;
-+	__u32 blks_per_seg;
-+	__u64 seg_start_diff;
-+	__u64 first_data_block;
-+
-+	if (!(*check_mask & CHECK_SS_NEXT))
-+		return NILFS_OK; /* nothing to be checked */
-+
-+	cur_seg_start_block = seg_num_to_start_block(segment, sbp);
-+	next_seg_start_block = le64_to_cpu(ss_ptr->ss_next);
-+	nsegs = le64_to_cpu(sbp->s_nsegments);
-+	blks_per_seg = le32_to_cpu(sbp->s_blocks_per_segment);
-+	first_data_block = le64_to_cpu(sbp->s_first_data_block);
-+	seg_start_diff = (next_seg_start_block > cur_seg_start_block ?
-+				next_seg_start_block - cur_seg_start_block :
-+				cur_seg_start_block - next_seg_start_block);
-+
-+	if (next_seg_start_block >= (nsegs * blks_per_seg))
-+		err = INVALID_SS_NEXT_SEG_BLK;
-+	else if (0 == seg_start_diff)
-+		err = INVALID_SS_NEXT_SEG_BLK;
-+	else if (0 == segment || next_seg_start_block == first_data_block) {
-+		if ((seg_start_diff + first_data_block) < blks_per_seg ||
-+			    (seg_start_diff + first_data_block) % blks_per_seg)
-+			err = INVALID_SS_NEXT_SEG_BLK;
-+		else
-+			*check_mask &= ~CHECK_SS_NEXT;
-+	} else {
-+		if (seg_start_diff < blks_per_seg ||
-+				seg_start_diff % blks_per_seg)
-+			err = INVALID_SS_NEXT_SEG_BLK;
-+		else
-+			*check_mask &= ~CHECK_SS_NEXT;
-+	}
-+
-+	internal_debug("ss_next %lld.",
-+			le64_to_cpu(ss_ptr->ss_next));
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_next_seg_start_block() */
-+
-+/*
-+ * ss_check_nfifo - Check number of finfo structures.
-+ * @sbp: pointer on superblock.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_NFINFO - invalid number of finfo structures.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
-+ */
-+static int ss_check_nfifo(struct nilfs_super_block *sbp,
-+			struct nilfs_segment_summary *ss_ptr,
-+			__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	__u32 min_finfo_size;
-+	__u32 blk_size;
-+
-+	if (!(*check_mask & CHECK_SS_NFINFO))
-+		return NILFS_OK; /* nothing to be checked */
-+
-+	min_finfo_size = le32_to_cpu(ss_ptr->ss_nfinfo) *
-+		(sizeof(struct nilfs_finfo) + sizeof(union nilfs_binfo));
-+	blk_size = (1UL << (le32_to_cpu(sbp->s_log_block_size) +
-+					NILFS_SB_BLOCK_SIZE_SHIFT));
-+
-+	if (le32_to_cpu(ss_ptr->ss_sumbytes) <=
-+			sizeof(struct nilfs_segment_summary))
-+		err = INVALID_SS_NFINFO;
-+	else if (min_finfo_size >
-+			(le32_to_cpu(ss_ptr->ss_sumbytes) -
-+				sizeof(struct nilfs_segment_summary)))
-+		err = INVALID_SS_NFINFO;
-+	else if (ROUNDUP_DIV(min_finfo_size, blk_size) >
-+				le32_to_cpu(ss_ptr->ss_nblocks))
-+		err = INVALID_SS_NFINFO;
-+	else
-+		*check_mask &= ~CHECK_SS_NFINFO;
-+
-+	internal_debug("ss_nfinfo %d.",
-+			le32_to_cpu(ss_ptr->ss_nfinfo));
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_nfifo() */
-+
-+/*
-+ * ss_check_cno - Check checkpoint number.
-+ * @sbp: pointer on superblock.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_OK - no internal errors were occured.
-+ * %-INVALID_SS_CNO - invalid checkpoint number.
-+ *
-+ * In the case of valid successfull call @check_mask keeps
-+ * flags with detected errors.
-+ */
-+static int ss_check_cno(struct nilfs_super_block *sbp,
-+			struct nilfs_segment_summary *ss_ptr,
-+			__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+
-+	if (!(*check_mask & CHECK_SS_CNO))
-+		return NILFS_OK; /* nothing to be checked */
-+
-+	if (le64_to_cpu(ss_ptr->ss_cno) > le64_to_cpu(sbp->s_last_cno))
-+		err = INVALID_SS_CNO;
-+	else
-+		*check_mask &= ~CHECK_SS_CNO;
-+
-+	internal_debug("ss_cno %lld.",
-+				le64_to_cpu(ss_ptr->ss_cno));
-+	internal_debug("check_mask %x.", *check_mask);
-+
-+	return (err > 0) ? -err : err;
-+} /* ss_check_cno() */
-+
-+/*
-+ * nilfs_ss_header_is_valid - Check that segment summary header is valid.
-+ * @segment: segment sequence number.
-+ * @sbp: pointer on superblock.
-+ * @ss_ptr: pointer on segment summary header.
-+ * @check_mask: mask that defines what should be checked and returns error.
-+ *
-+ * Return value:
-+ * NILFS_TRUE - segment summary header is valid.
-+ * NILFS_FALSE - segment summary header is in corrupted state.
-+ *
-+ * @check_mask contains mask of flags on items which should be checked.
-+ * During checking flags of valid items are unset. At the end of execution
-+ * @check_mask contains flags of corrupted items as set. These set flags
-+ * inform about detected errors.
-+ */
-+int nilfs_ss_header_is_valid(__u64 segment,
-+				struct nilfs_super_block *sbp,
-+				struct nilfs_segment_summary *ss_ptr,
-+				__u16 *check_mask)
-+{
-+	int err = NILFS_OK;
-+	int sub_err = NILFS_OK;
-+
-+	internal_debug("SEG: %lld, sbp %p, ss_ptr %p",
-+				segment, sbp, ss_ptr);
-+	internal_debug("check_mask ptr %p", check_mask);
-+	if (check_mask)
-+		internal_debug("check_mask %x", *check_mask);
-+
-+	if (!sbp || !ss_ptr || !check_mask) {
-+		internal_error("%s",
-+				nilfs_message[INVALID_PARAMETER]);
-+		err = -INVALID_PARAMETER;
-+		goto end_ss_check;
-+	}
-+
-+	if (segment >= le64_to_cpu(sbp->s_nsegments)) {
-+		internal_error("%s",
-+				nilfs_message[INVALID_PARAMETER]);
-+		err = -INVALID_PARAMETER;
-+		goto end_ss_check;
-+	}
-+
-+	sub_err = ss_check_magic(ss_ptr, check_mask);
-+	if (sub_err) {
-+		err = sub_err;
-+		*check_mask = CHECK_SS_MAGIC;
-+		goto end_ss_check;
-+	}
-+
-+	sub_err = ss_check_header_size(ss_ptr, check_mask);
-+	if (sub_err) {
-+		err = sub_err;
-+		if (-UNSUPPORTED_SS_REV == sub_err)
-+			*check_mask = CHECK_SS_HDR_REV;
-+		else
-+			*check_mask = CHECK_SS_BYTES;
-+		goto end_ss_check;
-+	}
-+
-+	sub_err = ss_check_segment_sequence_number(segment, sbp,
-+							ss_ptr, check_mask);
-+	if (sub_err)
-+		err = sub_err;
-+
-+	sub_err = ss_check_seg_used_blocks_number(sbp, ss_ptr, check_mask);
-+	if (sub_err)
-+		err = sub_err;
-+
-+	sub_err = ss_check_flags(ss_ptr, check_mask);
-+	if (sub_err)
-+		err = sub_err;
-+
-+	sub_err = ss_check_creation_timestamp(sbp, ss_ptr, check_mask);
-+	if (sub_err)
-+		err = sub_err;
-+
-+	sub_err = ss_check_next_seg_start_block(segment, sbp,
-+						ss_ptr, check_mask);
-+	if (sub_err)
-+		err = sub_err;
-+
-+	sub_err = ss_check_nfifo(sbp, ss_ptr, check_mask);
-+	if (sub_err)
-+		err = sub_err;
-+
-+	sub_err = ss_check_cno(sbp, ss_ptr, check_mask);
-+	if (sub_err)
-+		err = sub_err;
-+
-+end_ss_check:
-+	if (-UNSUPPORTED_SS_REV == err) {
-+		internal_debug("SEG: %lld unsupported segment summary",
-+				segment);
-+		return NILFS_TRUE;
-+	} else if (err) {
-+		internal_debug("SEG: %lld segment summary is corrupted",
-+				segment);
-+		return NILFS_FALSE;
-+	} else {
-+		internal_debug("SEG: %lld segment summary is correct",
-+				segment);
-+		return NILFS_TRUE;
-+	}
-+} /* nilfs_ss_header_is_valid() */
++#endif /* FSCK_COMMON_H */
 -- 
 1.7.9.5
-
 
 
 --
