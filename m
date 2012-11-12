@@ -1,14 +1,14 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v4 09/15] nilfs-utils: fsck: add functionality of superblock
- checking
-Date: Mon, 12 Nov 2012 13:36:52 +0400
-Message-ID: <1352713012.2555.44.camel@slavad-ubuntu>
+Subject: [PATCH v4 10/15] nilfs-utils: fsck: add skeleton of functionality
+ for segments checking
+Date: Mon, 12 Nov 2012 13:37:05 +0400
+Message-ID: <1352713025.2555.45.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:From:Subject:Message-ID; bh=grvyAXg+e8/1Hs1akav4Bgh3uGwXQZTjY/4MC1GI7AM=;
-	b=NWR7w7noFO4JkHSQWAmNGrmLXPFZFym8JyTlm4iVMZzZ/XrAUaH2zPKOXTPJMfmR9aPRsqGJiYTfw+xYBwAPscaf5LS4fvej4bG/uib/IyQElYg7kPhI8tsjbK5iMRnX;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:From:Subject:Message-ID; bh=nfRNMkD7SXi5mg480vv0oPNVPM5Tc18eKArKbu/VCB8=;
+	b=en4LEWfAhGXgqCIl9P0F+kTiD6TUJRHQPAWFCcsd43+x6q/qw8fAcKpFHY5ZFXDEs1j/Vo/eYqoG42sKXP/WThUlqZy7DIU8lA2AJR2df3J0NHazssaXNCc5GdzahZL8;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -16,33 +16,33 @@ To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
 Hi,
 
-This patch adds functionality of superblock checking.
+This patch adds skeleton of functionality for segments checking.
 
 With the best regards,
 Vyacheslav Dubeyko.
 --
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v4 09/15] nilfs-utils: fsck: add functionality of superblock checking
+Subject: [PATCH v4 10/15] nilfs-utils: fsck: add skeleton of functionality for segments checking
 
-This patch adds functionality of superblock checking.
+This patch adds skeleton of functionality for segments checking.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 ---
- sbin/fsck/nilfs_superblock.c |  851 ++++++++++++++++++++++++++++++++++++++++++
- sbin/fsck/nilfs_superblock.h |   44 +++
- 2 files changed, 895 insertions(+)
- create mode 100644 sbin/fsck/nilfs_superblock.c
- create mode 100644 sbin/fsck/nilfs_superblock.h
+ sbin/fsck/nilfs_segment.c |  934 +++++++++++++++++++++++++++++++++++++++++++++
+ sbin/fsck/nilfs_segment.h |   55 +++
+ 2 files changed, 989 insertions(+)
+ create mode 100644 sbin/fsck/nilfs_segment.c
+ create mode 100644 sbin/fsck/nilfs_segment.h
 
-diff --git a/sbin/fsck/nilfs_superblock.c b/sbin/fsck/nilfs_superblock.c
+diff --git a/sbin/fsck/nilfs_segment.c b/sbin/fsck/nilfs_segment.c
 new file mode 100644
-index 0000000..686ad24
+index 0000000..94e2a30
 --- /dev/null
-+++ b/sbin/fsck/nilfs_superblock.c
-@@ -0,0 +1,851 @@
++++ b/sbin/fsck/nilfs_segment.c
+@@ -0,0 +1,934 @@
 +/*
-+ * nilfs_superblock.c - NILFS superblocks checking, processing
-+ *                      and recovering operations implementation
++ * nilfs_segment.c - NILFS segments checking, processing
++ *                   and recovering operations implementation
 + *
 + * Copyright (C) 2012 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + *
@@ -87,819 +87,902 @@ index 0000000..686ad24
 +#include "fsck_raw_ops.h"
 +
 +#include "nilfs_superblock.h"
++#include "nilfs_segment.h"
++
++/*****************************************************************************
++ * TODO SECTION
++ *****************************************************************************/
++
++/*
++ * 1. Check ss_sumbytes (total size of segment summary in bytes) during
++ *    segment summary checksum checking.
++ *
++ * 2. Check ss_sumsum (segment summary checksum).
++ *
++ * 3. Check ss_datasum (checksum of data).
++ *
++ * 4. Check ss_cno during checkpoint bitmap construction.
++ */
 +
 +/*****************************************************************************
 + * FUNCTIONS DECLARATION
 + *****************************************************************************/
 +
-+/* Allocate memory for superblock */
-+static int allocate_superblock(int sb_type);
++/* Build array of segments' references on each other */
++static int build_segs_reference_array(struct nilfs_super_block *sbp);
 +
-+/* Free memory allocated for superblock */
-+static int free_superblock(int sb_type);
++/* Build bitmap of segments through segments' sequence */
++static int build_bitmap_of_segments(struct nilfs_super_block *sbp,
++						void *seg_buf,
++						__u64 *used_segs_count);
 +
-+/* Read superblocks from disk */
-+static int read_superblocks(void);
++/* Compare array of segments' references and bitmap of segments */
++static int compare_segments_ref_array_and_bitmap(void);
 +
-+/* Check that superblock is valid */
-+static int is_nilfs_superblock_valid(int sb_type, __u64 *check_mask);
++/* Check log validity */
++static int is_nilfs_log_valid(__u64 segment,
++				__u32 log,
++				__u64 start_blk,
++				struct nilfs_super_block *sbp,
++				__u64 *next_start_blk_ptr,
++				void *seg_buf,
++				struct log_check *check_db);
 +
-+/* Compare superblocks with the purpose of checking */
-+static int compare_superblocks(void);
++/* Read segment summary header for log */
++static int read_segment_summary_header(__u64 start_block,
++				struct nilfs_super_block *sbp,
++				struct nilfs_segment_summary *ss_ptr);
++
++/* Read segment summary for log */
++static int read_segment_summary(__u64 start_block,
++				struct nilfs_super_block *sbp,
++				void *seg_buf);
++
++/* Define reference of current segment */
++static int set_segment_reference(__u64 segment,
++				__u32 logs_count,
++				struct nilfs_super_block *sbp,
++				struct nilfs_segment_summary *ss_ptr,
++				struct nilfs_segment_reference *array_ptr);
++
++/* Set bit in bitmap for the segment */
++static int set_segment_bitmap(__u64 segment, void *bmp_ptr);
++
++/* Allocate memory for segment */
++static void *allocate_segment_buffer(__u32 size);
++
++/* Free allocated for segment memory */
++static void free_segment_buffer(void *ptr);
++
++/* Check validity of segment summary header */
++static int is_nilfs_ss_header_valid(__u64 segment, __u32 log,
++				struct nilfs_super_block *sbp,
++				struct nilfs_segment_summary *ss_ptr,
++				__u16 *check_mask,
++				int verbosity);
 +
 +/*****************************************************************************
 + * IMPLEMENTATION SECTION
 + *****************************************************************************/
 +
 +/*****************************************************************************
-+ * NAME:  get_nilfs_superblocks (fsck.nilfs2)
++ * NAME:  check_nilfs_segments (fsck.nilfs2)
 + *
-+ * FUNCTION:  Allocate memory and read primary and secondary
-+ *            superblocks from disk.
++ * FUNCTION:  Go through all segments and check validity.
++ *            It checks validity of metadata organization in segment.
++ *            This function collects data that needs for next checking
++ *            phases.
 + *
 + * RETURNS:
-+ * NILFS_OK - primary and secondary superblocks are read successfully.
-+ * %-CANNOT_ALLOCATE - cannot allocate memory for superblock.
-+ * %-CANNOT_READ_SUPERBLOCK - cannot read superblock from disk.
++ * NILFS_OK - NILFS segments was checked successfully.
++ * %-CANNOT_CHECK_SEGMENTS - Segments checking fails because of internal error.
++ * %-CANNOT_BUILD_SEGS_REF_ARRAY - Cannot build segments' reference array.
++ * %-CANNOT_BUILD_SEGS_BITMAP - Cannot build segments bitmap.
 + */
-+int get_nilfs_superblocks(void)
++int check_nilfs_segments(void)
 +{
 +	int err = NILFS_OK;
-+
-+	internal_debug("%s", "try to read superblocks from disk.");
-+
-+	err = allocate_superblock(PRIMARY_SUPERBLOCK);
-+	if (err)
-+		goto get_nilfs_superblocks_failed;
-+
-+	err = allocate_superblock(SECONDARY_SUPERBLOCK);
-+	if (err)
-+		goto free_primary_superblock;
-+
-+	err = read_superblocks();
-+	if (err)
-+		goto free_secondary_superblock;
-+
-+	internal_debug("%s", "nilfs superblocks are read successfully.");
-+	return NILFS_OK;
-+
-+free_secondary_superblock:
-+	free_superblock(SECONDARY_SUPERBLOCK);
-+
-+free_primary_superblock:
-+	free_superblock(PRIMARY_SUPERBLOCK);
-+
-+get_nilfs_superblocks_failed:
-+	return err;
-+} /* get_nilfs_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  free_nilfs_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Free memory allocated for superblocks.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - primary and secondary superblocks are freed successfully.
-+ * %-CANNOT_FREE - cannot free memory for superblocks.
-+ */
-+int free_nilfs_superblocks(void)
-+{
-+	int err_sb1 = NILFS_OK;
-+	int err_sb2 = NILFS_OK;
-+
-+	internal_debug("%s", "try to free memory of superblocks.");
-+
-+	err_sb1 = free_superblock(PRIMARY_SUPERBLOCK);
-+	err_sb2 = free_superblock(SECONDARY_SUPERBLOCK);
-+
-+	if (NILFS_OK != err_sb1 || NILFS_OK != err_sb2) {
-+		internal_debug("%s",
-+			"some error occurs during memory freeing.");
-+		return -CANNOT_FREE;
-+	}
-+
-+	internal_debug("%s", "superblocks memory has freed successfully.");
-+	return NILFS_OK;
-+
-+} /* free_nilfs_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  check_nilfs_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Check primary and secondary NILFS superblocks.
-+ *
-+ * RETURNS:
-+ * %-SB1_OK_SB2_OK - Primary and secondary superblocks are valid.
-+ * %-NILFS_NOT_FOUND - NILFS superblocks are not detected.
-+ * %-ONLY_SB1_OK_FOUND - Primary valid superblock was found but secondary *not*.
-+ * %-ONLY_SB1_CORRUPTED_FOUND - Only corrupted primary superblock was found.
-+ * %-ONLY_SB2_OK_FOUND - Secondary valid superblock was found but primary *not*.
-+ * %-ONLY_SB2_CORRUPTED_FOUND - Only corrupted secondary superblock was found.
-+ * %-SB1_SB2_CORRUPTED - Primary and secondary superblocks are corrupted.
-+ * %-SB1_OK_SB2_CORRUPTED - Primary superblock is valid, secondary is corrupted.
-+ * %-SB1_CORRUPTED_SB2_OK - Secondary superblock is valid, primary is corrupted.
-+ * %-CANNOT_DETECT_SB_STATE - Cannot detect state of superblock. Internal error.
-+ */
-+int check_nilfs_superblocks(void)
-+{
-+	enum sb_detected_states {
-+		SB1_VALID              = 1 << 0,
-+		SB1_CORRUPTED          = 1 << 1,
-+		SB1_NOT_FOUND          = 1 << 2,
-+		SB2_VALID              = 1 << 3,
-+		SB2_CORRUPTED          = 1 << 4,
-+		SB2_NOT_FOUND          = 1 << 5,
-+		ALL_POSSIBLE_SB_STATES = 1 << 6
-+	}; /* enum sb_detected_states */
-+
-+	int err;
-+	int sb_states = 0;
-+	__u64 *sb1_check_mask =
-+			&detected_err_db.sb[PRIMARY_SUPERBLOCK].check_mask;
-+	__u64 *sb2_check_mask =
-+			&detected_err_db.sb[SECONDARY_SUPERBLOCK].check_mask;
-+
-+	int return_states[ALL_POSSIBLE_SB_STATES];
-+	memset(return_states, -1, sizeof(int) * ALL_POSSIBLE_SB_STATES);
-+	return_states[SB1_VALID | SB2_VALID] = SB1_OK_SB2_OK;
-+	return_states[SB1_CORRUPTED | SB2_VALID] = SB1_CORRUPTED_SB2_OK;
-+	return_states[SB1_NOT_FOUND | SB2_VALID] = ONLY_SB2_OK_FOUND;
-+	return_states[SB1_VALID | SB2_CORRUPTED] = SB1_OK_SB2_CORRUPTED;
-+	return_states[SB1_CORRUPTED | SB2_CORRUPTED] = SB1_SB2_CORRUPTED;
-+	return_states[SB1_NOT_FOUND | SB2_CORRUPTED] = ONLY_SB2_CORRUPTED_FOUND;
-+	return_states[SB1_VALID | SB2_NOT_FOUND] = ONLY_SB1_OK_FOUND;
-+	return_states[SB1_CORRUPTED | SB2_NOT_FOUND] = ONLY_SB1_CORRUPTED_FOUND;
-+	return_states[SB1_NOT_FOUND | SB2_NOT_FOUND] = NILFS_NOT_FOUND;
-+
-+	internal_debug("%s", "try to check NILFS superblocks.");
-+
-+	err = is_nilfs_signature_ok(superblocks[PRIMARY_SUPERBLOCK]);
-+	if (NILFS_OK == err) {
-+		internal_debug("%s", "primary superblock has valid signature.");
-+
-+		*sb1_check_mask = SB_FULL_CHECK;
-+		err = is_nilfs_superblock_valid(
-+					PRIMARY_SUPERBLOCK, sb1_check_mask);
-+
-+		*sb1_check_mask |= SB_HAS_CHECKED;
-+
-+		if (-UNSUPPORTED_SB_REV == err) {
-+			internal_debug("%s",
-+				"primary superblock unsupported.");
-+			sb_states |= SB1_NOT_FOUND;
-+		} else if (NILFS_OK != err) {
-+			if ((*sb1_check_mask) & SB_CORRUPTION_MASK) {
-+				detected_err_db.volume.errs_bmp |=
-+						SB_CORRUPTION_DETECTED;
-+				internal_debug("%s",
-+					"primary superblock is corrupted.");
-+				sb_states |= SB1_CORRUPTED;
-+			} else {
-+				internal_debug("%s",
-+					"primary superblock is inconsistent.");
-+				sb_states |= SB1_VALID;
-+			}
-+		} else {
-+			internal_debug("%s",
-+				"primary superblock is valid.");
-+			sb_states |= SB1_VALID;
-+		}
-+
-+		internal_debug("sb_states has %d value.", sb_states);
-+	} else if (-INVALID_NILFS_SIGNATURE == err) {
-+		sb_states |= SB1_NOT_FOUND;
-+		internal_debug("%s", "primary superblock is not found.");
-+		internal_debug("sb_states has %d value.", sb_states);
-+	} else
-+		goto check_sb_internal_error;
-+
-+	err = is_nilfs_signature_ok(superblocks[SECONDARY_SUPERBLOCK]);
-+	if (NILFS_OK == err) {
-+		internal_debug("%s",
-+			"secondary superblock has valid signature.");
-+
-+		*sb2_check_mask = SB_FULL_CHECK;
-+		err = is_nilfs_superblock_valid(
-+					SECONDARY_SUPERBLOCK, sb2_check_mask);
-+
-+		*sb2_check_mask |= SB_HAS_CHECKED;
-+
-+		if (-UNSUPPORTED_SB_REV == err) {
-+			internal_debug("%s", "secondary sb unsupported.");
-+			sb_states |= SB2_NOT_FOUND;
-+		} else if (NILFS_OK != err) {
-+			if ((*sb2_check_mask) & SB_CORRUPTION_MASK) {
-+				detected_err_db.volume.errs_bmp |=
-+						SB_CORRUPTION_DETECTED;
-+				internal_debug("%s",
-+					"secondary superblock is corrupted.");
-+				sb_states |= SB2_CORRUPTED;
-+			} else {
-+				internal_debug("%s",
-+					"secondary superblock is inconsistent.");
-+				sb_states |= SB2_VALID;
-+			}
-+		} else {
-+			internal_debug("%s", "secondary superblock is valid.");
-+			sb_states |= SB2_VALID;
-+		}
-+
-+		internal_debug("sb_states has %d value.", sb_states);
-+	} else if (-INVALID_NILFS_SIGNATURE == err) {
-+		sb_states |= SB2_NOT_FOUND;
-+		internal_debug("%s", "secondary superblock is not found.");
-+		internal_debug("sb_states has %d value.", sb_states);
-+	} else
-+		goto check_sb_internal_error;
-+
-+	if (((*sb1_check_mask) & CHECK_SB_CLEAN_UMOUNT_FLAG) &&
-+			((*sb2_check_mask) & CHECK_SB_CLEAN_UMOUNT_FLAG)) {
-+		fs_description(NOT_CLEAN_UMOUNT_DETECTED,
-+				UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	internal_debug("return_states has %d value.",
-+			return_states[sb_states]);
-+
-+	if (-1 == return_states[sb_states])
-+		goto check_sb_internal_error;
-+	else if (NILFS_NOT_FOUND == return_states[sb_states])
-+		goto check_sb_fs_description;
-+	else if ((sb_states & SB1_NOT_FOUND) ||
-+				(sb_states & SB2_NOT_FOUND))
-+		goto check_sb_fs_description;
-+	/*else if (SB1_OK_SB2_OK != return_states[sb_states])
-+		goto check_sb_fs_description;*/
-+
-+	err = compare_superblocks();
-+	if (err) {
-+		if (-FATAL_SB_DIFF == err)
-+			return fs_description(FATAL_SB_DIFF,
-+					UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+		else
-+			goto check_sb_internal_error;
-+	}
-+
-+check_sb_fs_description:
-+	return fs_description(return_states[sb_states],
-+				UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+
-+check_sb_internal_error:
-+	internal_error("%s",
-+			nilfs_message[CANNOT_DETECT_SB_STATE]);
-+	return -CANNOT_DETECT_SB_STATE;
-+} /* check_nilfs_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  get_reliable_sb (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Get valid or less corrupted superblock.
-+ *
-+ * PARAMETERS:
-+ * @flags: Set of flags defines requested reliable superblock's field(s).
-+ *
-+ * RETURNS:
-+ * Pointer on superblock or NULL in the case of failure.
-+ */
-+struct nilfs_super_block *get_reliable_sb(__u64 flags)
-+{
-+	__u64 *sb1_errs_bmap =
-+		&detected_err_db.sb[PRIMARY_SUPERBLOCK].errs_bmp;
-+	__u64 *sb2_errs_bmap =
-+		&detected_err_db.sb[SECONDARY_SUPERBLOCK].errs_bmp;
-+	__u64 sb1_local_check, sb2_local_check;
-+	int sb1_errs_count, sb2_errs_count;
-+	struct nilfs_super_block *sbp1 = superblocks[PRIMARY_SUPERBLOCK];
-+	struct nilfs_super_block *sbp2 = superblocks[SECONDARY_SUPERBLOCK];
-+
-+	internal_debug("for %llx flag.", flags);
-+
-+	if (!sbp1 || !sbp2) {
-+		internal_error("%s",
-+				nilfs_message[MEMORY_NOT_ALLOCATED]);
-+		return NULL;
-+	}
-+
-+	if (!(*sb1_errs_bmap & SB_HAS_CHECKED) ||
-+			!(*sb2_errs_bmap & SB_HAS_CHECKED)) {
-+		sb1_local_check = flags;
-+		is_nilfs_superblock_valid(
-+				PRIMARY_SUPERBLOCK, &sb1_local_check);
-+		sb2_local_check = flags;
-+		is_nilfs_superblock_valid(
-+				SECONDARY_SUPERBLOCK, &sb2_local_check);
-+	} else {
-+		sb1_local_check = (*sb1_errs_bmap) & flags;
-+		sb2_local_check = (*sb2_errs_bmap) & flags;
-+	}
-+
-+	sb1_local_check &= SB_CORRUPTION_MASK;
-+	sb2_local_check &= SB_CORRUPTION_MASK;
-+
-+	sb1_errs_count = popcount_4(sb1_local_check);
-+	sb2_errs_count = popcount_4(sb2_local_check);
-+
-+	if (!sb1_errs_count && !sb2_errs_count) {
-+		if (le64_to_cpu(sbp1->s_wtime) > le64_to_cpu(sbp2->s_wtime)) {
-+			internal_debug("%s", "primary SB is reliable.");
-+			return sbp1;
-+		} else {
-+			internal_debug("%s", "secondary SB is reliable.");
-+			return sbp2;
-+		}
-+	}
-+
-+	if (sb1_errs_count < sb2_errs_count) {
-+		internal_warning("%s", nilfs_message[USE_CORRUPTED_SB]);
-+		internal_debug("%s", "primary SB is using.");
-+		return sbp1;
-+	} else if (sb1_errs_count != sb2_errs_count) {
-+		internal_warning("%s", nilfs_message[USE_CORRUPTED_SB]);
-+		internal_debug("%s", "secondary SB is using.");
-+		return sbp2;
-+	}
-+
-+	internal_warning("%s", nilfs_message[USE_CORRUPTED_SB]);
-+	internal_debug("%s", "primary SB is using.");
-+
-+	return sbp1;
-+} /* get_reliable_sb() */
-+
-+/*****************************************************************************
-+ * NAME:  allocate_superblock (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Allocate memory for superblock.
-+ *
-+ * PARAMETERS:
-+ * @sb_type: Type of superblock.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - memory for superblock is allocated successfully.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-CANNOT_ALLOCATE - cannot allocate memory for superblock.
-+ */
-+static int allocate_superblock(int sb_type)
-+{
++	__u64 used_segs_count = 0;
++	__u32 blk_size;
++	__u32 blks_per_seg;
 +	struct nilfs_super_block *sb_ptr = NULL;
++	void *seg_buf = NULL;
 +
-+	internal_debug("try to allocate memory for %d superblock type.",
-+			sb_type);
++	internal_debug("%s", "begin to check volume's segments.");
 +
-+	if (sb_type >= SUPERBLOCK_TYPES_NUMBER) {
++	if (!SEGS_CHECKING_ENV_READY) {
 +		internal_error("%s",
-+				nilfs_message[INVALID_PARAMETER]);
-+		return -INVALID_PARAMETER;
++				nilfs_message[SEGS_CHECK_ENV_NOT_READY]);
++		return -CANNOT_CHECK_SEGMENTS;
 +	}
 +
-+	if (superblocks[sb_type]) {
-+		internal_error("%s",
-+				nilfs_message[CANNOT_ALLOCATE]);
-+		internal_debug("superblock of %d type has allocated yet",
-+				sb_type);
++	sb_ptr = get_reliable_sb(CHECK_SB_BLOCK_SZ | CHECK_SB_BLOCKS_PER_SEG |
++					CHECK_SB_NSEGMENTS |
++					CHECK_SB_FIRST_DATA_BLOCK);
++	if (!sb_ptr) {
++		internal_warning("%s", nilfs_message[UNRELIABLE_SB]);
++		return -CANNOT_CHECK_SEGMENTS;
++	}
++
++	blk_size = (1UL << (le32_to_cpu(sb_ptr->s_log_block_size) +
++					NILFS_SB_BLOCK_SIZE_SHIFT));
++	blks_per_seg = le32_to_cpu(sb_ptr->s_blocks_per_segment);
++	seg_buf = allocate_segment_buffer(blks_per_seg * blk_size);
++	if (!seg_buf) {
++		internal_perror("%s",
++					nilfs_message[CANNOT_ALLOCATE]);
 +		return -CANNOT_ALLOCATE;
 +	}
 +
-+	sb_ptr = calloc(sizeof(struct nilfs_super_block), 1);
-+	if (NULL == sb_ptr) {
-+		internal_perror("%s", nilfs_message[CANNOT_ALLOCATE]);
-+		return -CANNOT_ALLOCATE;
++	err = build_segs_reference_array(sb_ptr);
++	if (err) {
++		internal_error("%s",
++				nilfs_message[CANNOT_CHECK_SEGMENTS]);
++		goto failed_check_nilfs_segments;
 +	}
 +
-+	superblocks[sb_type] = sb_ptr;
++	err = build_bitmap_of_segments(sb_ptr, seg_buf, &used_segs_count);
++	if (-BROKEN_SEGS_CHAIN == err)
++		goto end_check_nilfs_segments;
++	else if (err) {
++		internal_error("%s",
++				nilfs_message[CANNOT_CHECK_SEGMENTS]);
++		goto failed_check_nilfs_segments;
++	}
 +
-+	internal_debug("memory for %d superblock type has allocated.",
-+			sb_type);
++	err = compare_segments_ref_array_and_bitmap();
++	if (err) {
++		internal_error("%s",
++				nilfs_message[CANNOT_CHECK_SEGMENTS]);
++		goto failed_check_nilfs_segments;
++	}
 +
-+	return NILFS_OK;
-+} /* allocate_superblock() */
++end_check_nilfs_segments:
++	internal_debug("%s", "volume's segments have checked.");
++
++failed_check_nilfs_segments:
++	free_segment_buffer(seg_buf);
++	return err;
++} /* check_nilfs_segments() */
 +
 +/*****************************************************************************
-+ * NAME:  free_superblock (fsck.nilfs2)
++ * NAME:  build_segs_reference_array (fsck.nilfs2)
 + *
-+ * FUNCTION:  Free memory allocated for superblock.
++ * FUNCTION:  Build array of segments' references on each other.
 + *
 + * PARAMETERS:
-+ * @sb_type: Type of superblock.
++ * @sbp: Pointer on superblock.
 + *
 + * RETURNS:
-+ * NILFS_OK - memory for superblock is freed successfully.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-CANNOT_FREE - cannot free memory for superblock.
++ * NILFS_OK - Array of segments' references was built successfully.
++ * %-INVALID_PARAMETER - Input parameter is invalid.
++ * %-CANNOT_BUILD_SEGS_REF_ARRAY - Cannot build segments' reference array.
 + */
-+static int free_superblock(int sb_type)
-+{
-+	internal_debug("try to free memory for %d superblock type.",
-+			sb_type);
-+
-+	if (sb_type >= SUPERBLOCK_TYPES_NUMBER) {
-+		internal_error("%s",
-+				nilfs_message[INVALID_PARAMETER]);
-+		return -INVALID_PARAMETER;
-+	}
-+
-+	if (NULL == superblocks[sb_type]) {
-+		internal_warning("%s", nilfs_message[CANNOT_FREE]);
-+		internal_debug("superblock of %d type *not* allocated yet",
-+				sb_type);
-+		return -CANNOT_FREE;
-+	}
-+
-+	free(superblocks[sb_type]);
-+	superblocks[sb_type] = NULL;
-+
-+	internal_debug("superblock of %d type has freed", sb_type);
-+
-+	return NILFS_OK;
-+} /* free_superblock() */
-+
-+/*****************************************************************************
-+ * NAME:  read_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Read superblocks from disk.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - superblock has read successfully.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-CANNOT_READ_SUPERBLOCK - cannot read superblock from disk.
-+ */
-+static int read_superblocks(void)
++static int build_segs_reference_array(struct nilfs_super_block *sbp)
 +{
 +	int err = NILFS_OK;
-+	int devfd = -1;
++	__u64 cur_seg = 0;
++	__u64 nsegs = 0;
++	struct nilfs_segment_summary ss_hdr, last_valid_ss_hdr;
++	__u32 cur_log = 0;
++	__u64 start_seg_blk = 0;
++	__u64 end_seg_blk = 0;
++	__u32 blks_per_seg = 0;
++	__u64 cur_start_log_blk = 0;
++	__u16 check_mask = 0;
 +
-+	internal_debug("%s", "try to read superblocks.");
++	internal_debug("sbp %p.", sbp);
 +
-+	if (NULL == superblocks[PRIMARY_SUPERBLOCK] ||
-+		NULL == superblocks[SECONDARY_SUPERBLOCK]) {
-+		internal_debug("%s", "superblocks are *not* allocated yet");
-+		goto cannot_read_superblock;
-+	}
-+
-+	devfd = device_file_descriptor();
-+	if (-1 == devfd) {
-+		internal_debug("Device file descriptor: %d.", devfd);
-+		goto cannot_read_superblock;
-+	}
-+
-+	err = nilfs_sb_read_unchecked(devfd, superblocks);
-+	if (err)
-+		goto cannot_read_superblock;
-+
-+	internal_debug("%s", "superblock is read successfully");
-+	return NILFS_OK;
-+
-+cannot_read_superblock:
-+	internal_error("%s", nilfs_message[CANNOT_READ_SUPERBLOCK]);
-+	return -CANNOT_READ_SUPERBLOCK;
-+} /* read_superblocks() */
-+
-+/*****************************************************************************
-+ * NAME:  is_nilfs_signature_ok (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Check that superblock contains valid NILFS signature.
-+ *
-+ * PARAMETERS:
-+ * @sb_ptr: Pointer on superblock.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - superblock contains valid NILFS signature.
-+ * %-INVALID_PARAMETER - inavalid input parameter.
-+ * %-INVALID_NILFS_SIGNATURE - superblock signature is invalid.
-+ */
-+int is_nilfs_signature_ok(const struct nilfs_super_block *sb_ptr)
-+{
-+	internal_debug("%s", "check signature of superblock.");
-+
-+	if (NULL == sb_ptr) {
-+		internal_error("%s", nilfs_message[INVALID_PARAMETER]);
-+		internal_debug("%s", "pointer on superblock is NULL.");
++	if (!sbp) {
++		internal_error("%s",
++				nilfs_message[INVALID_PARAMETER]);
 +		return -INVALID_PARAMETER;
 +	}
 +
-+	if (le16_to_cpu(sb_ptr->s_magic) != NILFS_SUPER_MAGIC)
-+		return fs_description(INVALID_NILFS_SIGNATURE,
-+					UNKNOWN_SEGMENT, UNKNOWN_LOG);
++	nsegs = le64_to_cpu(sbp->s_nsegments);
++	blks_per_seg = le32_to_cpu(sbp->s_blocks_per_segment);
 +
-+	internal_debug("%s", "NILFS signature is ok.");
++	for (cur_seg = 0; cur_seg < nsegs; cur_seg++) {
++		cur_log = 0;
++		start_seg_blk = seg_num_to_start_block(cur_seg, sbp);
++		end_seg_blk = start_seg_blk + blks_per_seg - 1;
++		cur_start_log_blk = start_seg_blk;
++		memset(&last_valid_ss_hdr, 0xFF,
++				sizeof(struct nilfs_segment_summary));
++
++		/* go through logs */
++		do {
++			err = read_segment_summary_header(cur_start_log_blk,
++								sbp,
++								&ss_hdr);
++			if (err) {
++				internal_error(
++				    "SEG: %lld LOG: %d. %s",
++				    cur_seg, cur_log,
++				    nilfs_message[CANNOT_BUILD_SEGS_REF_ARRAY]);
++				err = -CANNOT_BUILD_SEGS_REF_ARRAY;
++				goto failed_build_segs_ref_array;
++			}
++
++			check_mask = CHECK_SS_MAGIC | CHECK_SS_BYTES;
++			err = is_nilfs_ss_header_valid(cur_seg, cur_log, sbp,
++							&ss_hdr, &check_mask,
++							KEEP_SILENCE);
++			if (-INVALID_SS_SIGNATURE == err ||
++					-UNSUPPORTED_SS_REV == err)
++				break;
++			else if (err) {
++				internal_error(
++				    "SEG: %lld LOG: %d. %s",
++				    cur_seg, cur_log,
++				    nilfs_message[CANNOT_BUILD_SEGS_REF_ARRAY]);
++				err = -CANNOT_BUILD_SEGS_REF_ARRAY;
++				goto failed_build_segs_ref_array;
++			}
++
++			memcpy(&last_valid_ss_hdr, &ss_hdr,
++					sizeof(struct nilfs_segment_summary));
++			cur_start_log_blk =
++			    cur_start_log_blk + le32_to_cpu(ss_hdr.ss_nblocks);
++			cur_log++;
++		} while (cur_start_log_blk < end_seg_blk);
++
++		if (0 == cur_log)
++			continue;
++
++		err = set_segment_reference(cur_seg, cur_log, sbp,
++						&last_valid_ss_hdr,
++						seg_refs_array_ptr);
++		if (err) {
++			internal_error(
++				"SEG: %lld. %s", cur_seg,
++				nilfs_message[CANNOT_BUILD_SEGS_REF_ARRAY]);
++			err = -CANNOT_BUILD_SEGS_REF_ARRAY;
++			goto failed_build_segs_ref_array;
++		}
++	}
++
 +	return NILFS_OK;
-+} /* is_nilfs_signature_ok() */
++
++failed_build_segs_ref_array:
++	return err;
++} /* build_segs_reference_array() */
 +
 +/*****************************************************************************
-+ * NAME:  is_nilfs_superblock_valid (fsck.nilfs2)
++ * NAME:  build_bitmap_of_segments (fsck.nilfs2)
 + *
-+ * FUNCTION:  Check that superblock is valid.
++ * FUNCTION:  Build bitmap of segments through segments' sequence.
 + *
 + * PARAMETERS:
-+ * @sb_type: Type of superblock.
-+ * @check_mask: Check mask defines what should be checked.
++ * @sbp: Pointer on superblock.
++ * @seg_buf: Pointer on segment buffer (should be allocated before call).
++ * @used_segs_count: Calculated number of used segments [returned].
 + *
 + * RETURNS:
-+ * NILFS_OK - superblock is valid.
-+ * %-CANNOT_CHECK_SB - cannot check superblock because of internal error.
-+ * %-INVALID_SB - superblock is in corrupted state.
-+ * %-UNSUPPORTED_SB_REV - unsupported revision of NILFS superblock.
++ * NILFS_OK - Bitmap of segments was built successfully.
++ * %-INVALID_PARAMETER - Input parameter is invalid.
++ * %-CANNOT_BUILD_SEGS_BMP - Cannot build segments bitmap.
++ */
++static int build_bitmap_of_segments(struct nilfs_super_block *sbp,
++						void *seg_buf,
++						__u64 *used_segs_count)
++{
++	int err = NILFS_OK;
++	__u64 cur_seg = 0;
++	__u64 nsegs = 0;
++	__u64 segs_count = 0;
++	__u64 last_segment = 0;
++	__u32 cur_log = 0;
++	__u64 cur_seg_start_blk = 0;
++	__u64 cur_seg_end_blk = 0;
++	__u32 blks_per_seg = 0;
++	__u64 cur_log_start_blk = 0;
++	__u64 next_log_start_blk = 0;
++	struct segment_check *segments = detected_err_db.segments;
++
++	internal_debug("sbp %p, seg_buf %p, segments %p.",
++					sbp, seg_buf, segments);
++
++	if (!sbp || !seg_buf || !used_segs_count || !segments) {
++		internal_error("%s",
++				nilfs_message[INVALID_PARAMETER]);
++		return -INVALID_PARAMETER;
++	}
++
++	(*used_segs_count) = 0;
++
++	nsegs = le64_to_cpu(sbp->s_nsegments);
++	last_segment = le64_to_cpu(sbp->s_last_seq);
++	blks_per_seg = le32_to_cpu(sbp->s_blocks_per_segment);
++	cur_seg_start_blk = seg_num_to_start_block(cur_seg, sbp);
++	cur_seg_end_blk = cur_seg_start_blk + blks_per_seg - 1;
++
++	/* Build bitmap of segments through segments' sequence */
++	for (; segs_count <= nsegs; segs_count++) {
++
++		cur_log = 0;
++		cur_log_start_blk = cur_seg_start_blk;
++		next_log_start_blk = -1;
++
++		if (segs_count == nsegs) {
++			/*
++			 * Temporary the logic very simple.
++			 * Simply go through all the chains and
++			 * stop when the count of segments become
++			 * equal to number of segments on volume.
++			 *
++			 * TODO: implement properly.
++			 */
++
++			/*detected_err_db.volume.errs_bmp |=
++				SEGS_CHAIN_INCONSISTENT;
++			err = fs_description(BROKEN_SEGS_CHAIN,
++						cur_seg, cur_log);*/
++			break;
++		}
++
++		if (cur_seg >= detected_err_db.segs_count) {
++			internal_error("%s",
++				nilfs_message[CANNOT_BUILD_SEGS_BMP]);
++			internal_debug("cur_seg %lld, cur_log %d.",
++						cur_seg, cur_log);
++			err = -CANNOT_BUILD_SEGS_BMP;
++			goto failed_build_bitmap_of_segments;
++		}
++
++		if (0 == segments[cur_seg].logs_count)
++			goto define_next_segment;
++
++		if (!segments[cur_seg].logs) {
++			internal_error("%s",
++				nilfs_message[CANNOT_BUILD_SEGS_BMP]);
++			internal_debug("cur_seg %lld, cur_log %d.",
++						cur_seg, cur_log);
++			err = -CANNOT_BUILD_SEGS_BMP;
++			goto failed_build_bitmap_of_segments;
++		}
++
++		/* Go through logs */
++		do {
++			if ((cur_log + 1) > segments[cur_seg].logs_count)
++				break;
++
++			err = is_nilfs_log_valid(cur_seg,
++					cur_log,
++					cur_log_start_blk,
++					sbp,
++					&next_log_start_blk,
++					seg_buf,
++					&(segments[cur_seg].logs[cur_log]));
++
++			if (-EMPTY_LOG_DETECTED == err)
++				break;
++			else if (-INVALID_NILFS_LOG == err)
++				break;
++			else if (err) {
++				internal_error("%s",
++					nilfs_message[CANNOT_BUILD_SEGS_BMP]);
++				internal_debug("cur_seg %lld, cur_log %d.",
++							cur_seg, cur_log);
++				err = -CANNOT_BUILD_SEGS_BMP;
++				goto failed_build_bitmap_of_segments;
++			}
++
++			cur_log_start_blk = next_log_start_blk;
++			cur_log++;
++		} while (cur_log_start_blk < cur_seg_end_blk);
++
++
++		err = set_segment_bitmap(cur_seg, segments_bitmap_ptr);
++		if (err) {
++			internal_error("%s",
++					nilfs_message[CANNOT_BUILD_SEGS_BMP]);
++			internal_debug("cur_seg %lld.", cur_seg);
++			goto failed_build_bitmap_of_segments;
++		}
++
++define_next_segment:
++		if (cur_seg == last_segment)
++			break;
++
++		cur_seg = seg_refs_array_ptr[cur_seg].next_seg;
++		cur_seg_start_blk = seg_num_to_start_block(cur_seg, sbp);
++		cur_seg_end_blk = cur_seg_start_blk + blks_per_seg - 1;
++	}
++
++	(*used_segs_count) = segs_count;
++
++	internal_debug("used_segs_count %lld.",
++				(*used_segs_count));
++
++	return NILFS_OK;
++
++failed_build_bitmap_of_segments:
++	return err;
++} /* build_bitmap_of_segments() */
++
++/* Compare array of segments' references and bitmap of segments */
++static int compare_segments_ref_array_and_bitmap(void)
++{
++	/*segs_count = 0;
++
++	for (cur_seg = 0; segs_count < used_segs_count; segs_count++) {
++		err = check_segment_reference(cur_seg,
++						seg_refs_array_ptr,
++						segments_bitmap_ptr);
++		if (err);
++		cur_seg = get_next_seg_by_ref(cur_seg);
++	}*/
++
++	/*internal_info("<%s>: %s", __func__, nilfs_message[NOT_IMPLEMENTED]);*/
++
++	/* <TODO: implement> */
++	return NILFS_OK;
++} /* compare_segments_ref_array_and_bitmap() */
++
++/*****************************************************************************
++ * NAME:  is_nilfs_log_valid (fsck.nilfs2)
++ *
++ * FUNCTION:  Check log validity.
++ *
++ * PARAMETERS:
++ * @segment: Segment number.
++ * @log: Log number.
++ * @start_blk: Start block of log in segment.
++ * @sbp: Pointer on superblock.
++ * @next_start_blk_ptr: Pointer on returned value of next log start block.
++ * @seg_buf: Pointer on segment buffer (should be allocated before call).
++ * @check_db: Pointer on structure that contains checking flags for log.
++ *
++ * RETURNS:
++ * NILFS_OK - Log validity has checked successfully.
++ * %-INVALID_PARAMETER - Input parameter is invalid.
++ * %-EMPTY_LOG_DETECTED - Empty log is detected in the segment.
++ * %-CANNOT_CHECK_LOG - Cannot check log validity.
++ * %-INVALID_NILFS_LOG - NILFS log is in corrupted state.
++ */
++static int is_nilfs_log_valid(__u64 segment,
++				__u32 log,
++				__u64 start_blk,
++				struct nilfs_super_block *sbp,
++				__u64 *next_start_blk_ptr,
++				void *seg_buf,
++				struct log_check *check_db)
++{
++	int err = NILFS_OK;
++	struct nilfs_segment_summary *ss_ptr;
++
++	internal_debug("segment %lld, log %d, start_blk %lld.",
++					segment, log, start_blk);
++	internal_debug("next_start_blk_ptr %p, seg_buf %p.",
++				next_start_blk_ptr, seg_buf);
++
++	if (!next_start_blk_ptr || !seg_buf) {
++		internal_error("%s",
++				nilfs_message[INVALID_PARAMETER]);
++		return -INVALID_PARAMETER;
++	}
++
++	(*next_start_blk_ptr) = -1;
++
++	err = read_segment_summary(start_blk, sbp, seg_buf);
++	ss_ptr = (struct nilfs_segment_summary *)seg_buf;
++
++	if (-SS_FINFO_SECTION_EMPTY == err) {
++		if (0 == ss_ptr->ss_magic &&
++				0 == ss_ptr->ss_bytes &&
++				0 == ss_ptr->ss_nblocks &&
++				0 == ss_ptr->ss_nfinfo &&
++				0 == ss_ptr->ss_sumbytes) {
++			internal_debug("SEG %lld LOG: %d. %s",
++					segment, log,
++					nilfs_message[EMPTY_LOG_DETECTED]);
++			return -EMPTY_LOG_DETECTED;
++		}
++	} else if (-DATA_PROCCESSED_PARTIALLY == err)
++		err = NILFS_OK; /* Do nothing. Simply ignore error. */
++	else if (err) {
++		internal_error("SEG: %lld LOG: %d. %s",
++				segment, log,
++				nilfs_message[CANNOT_CHECK_LOG]);
++		err = -CANNOT_CHECK_LOG;
++		goto failed_check_log;
++	}
++
++	/* Check segment summary header */
++	check_db->ss_hdr.check_mask = SS_HEADER_ONLY_CHECK;
++
++	err = is_nilfs_ss_header_valid(segment, log, sbp, ss_ptr,
++					&(check_db->ss_hdr.check_mask),
++					BE_VERBOSE);
++
++	check_db->ss_hdr.check_mask |= ONLY_SS_HDR_HAS_CHECKED;
++
++	if (-INVALID_SS_SIGNATURE == err || -UNSUPPORTED_SS_REV == err) {
++		err = fs_description(INVALID_NILFS_LOG, segment, log);
++		goto end_check_log;
++	} else if (err) {
++		internal_error("SEG: %lld LOG: %d. %s",
++				segment, log,
++				nilfs_message[CANNOT_CHECK_LOG]);
++		err = -CANNOT_CHECK_LOG;
++		goto failed_check_log;
++	}
++
++	/* Check segment summary checksum */
++	/* Check segment summary */
++	/* Check rest of log */
++
++	(*next_start_blk_ptr) = start_blk + le32_to_cpu(ss_ptr->ss_nblocks);
++
++end_check_log:
++	/*internal_info("<%s>: %s", __func__, nilfs_message[NOT_IMPLEMENTED]);*/
++
++	/* <TODO: implement> */
++
++	return NILFS_OK;
++
++failed_check_log:
++	return err;
++} /* is_nilfs_log_valid() */
++
++/*****************************************************************************
++ * NAME:  allocate_segment_buffer (fsck.nilfs2)
++ *
++ * FUNCTION:  Allocate memory for segment buffer.
++ *
++ * PARAMETERS:
++ * @size: Buffer size in bytes.
++ *
++ * RETURNS:
++ * Valid memory pointer or NULL in the case of failure.
++ */
++static void *allocate_segment_buffer(__u32 size)
++{
++	void *ptr = NULL;
++
++	internal_debug("allocate memory %d for segment.",
++					size);
++
++	ptr = calloc(size, 1);
++	if (!ptr)
++		internal_perror("%s", nilfs_message[CANNOT_ALLOCATE]);
++
++	return ptr;
++} /* allocate_segment_buffer() */
++
++
++/*****************************************************************************
++ * NAME:  free_segment_buffer (fsck.nilfs2)
++ *
++ * FUNCTION:  Free allocated for segment memory.
++ *
++ * PARAMETERS:
++ * @size: Buffer size in bytes.
++ *
++ * RETURNS:
++ * Valid memory pointer or NULL in the case of failure.
++ */
++static void free_segment_buffer(void *ptr)
++{
++	internal_debug("free memory of segment buffer %p.",
++							ptr);
++
++	if (ptr)
++		free(ptr);
++} /* free_segment_buffer() */
++
++/*****************************************************************************
++ * NAME:  read_segment_summary_header (fsck.nilfs2)
++ *
++ * FUNCTION:  Read segment summary header for log.
++ *
++ * PARAMETERS:
++ * @start_block: Start block for read.
++ * @sbp: Pointer on superblock.
++ * @ss_ptr: Pointer on segment summary header buffer (should be allocated yet).
++ *
++ * RETURNS:
++ * NILFS_OK - Segment summary header was read successfully.
++ * %-INVALID_PARAMETER - Input parameter is invalid.
++ * %-DATA_PROCCESSED_PARTIALLY - Segment summary header is read partially.
++ */
++static int read_segment_summary_header(__u64 start_block,
++				struct nilfs_super_block *sbp,
++				struct nilfs_segment_summary *ss_ptr)
++{
++	int err = NILFS_OK;
++	__u32 blk_size;
++	__u32 read_bytes = 0;
++
++	internal_debug("start_block %lld, ss_ptr %p.",
++					start_block, ss_ptr);
++
++	if (!sbp || !ss_ptr) {
++		internal_error("%s",
++				nilfs_message[INVALID_PARAMETER]);
++		return -INVALID_PARAMETER;
++	}
++
++	blk_size = (1UL << (le32_to_cpu(sbp->s_log_block_size) +
++					NILFS_SB_BLOCK_SIZE_SHIFT));
++
++	err = read_raw_bytes(start_block * blk_size,
++				ss_ptr, sizeof(*ss_ptr),
++				&read_bytes);
++	if (err) {
++		internal_debug("start_block %lld %s",
++				start_block,
++				nilfs_message[CANNOT_READ_SEG_SUM_HEADER]);
++		goto failed_read_segment_summary_header;
++	}
++
++	if (read_bytes != sizeof(*ss_ptr)) {
++		internal_error("start_block %lld. %s",
++				start_block,
++				nilfs_message[DATA_PROCCESSED_PARTIALLY]);
++		err = -DATA_PROCCESSED_PARTIALLY;
++		goto failed_read_segment_summary_header;
++	}
++
++	return NILFS_OK;
++
++failed_read_segment_summary_header:
++	return err;
++} /* read_segment_summary() */
++
++/*****************************************************************************
++ * NAME:  read_segment_summary (fsck.nilfs2)
++ *
++ * FUNCTION:  Read segment summary for log.
++ *
++ * PARAMETERS:
++ * @start_block: Start block for read.
++ * @sbp: Pointer on superblock.
++ * @seg_buf: Pointer on segment buffer (should be allocated yet).
++ *
++ * RETURNS:
++ * NILFS_OK - Segment summary was read successfully.
++ * %-INVALID_PARAMETER - Input parameter is invalid.
++ * %-SS_FINFO_SECTION_EMPTY - Segment summary hasn't finfo section.
++ * %-CANNOT_READ_SEG_SUMMARY - Cannot read because of internal error.
++ * %-DATA_PROCCESSED_PARTIALLY - Segment summary is read partially.
++ */
++static int read_segment_summary(__u64 start_block,
++				struct nilfs_super_block *sbp,
++				void *seg_buf)
++{
++	int err = NILFS_OK;
++	__u64 read_offset;
++	__u32 blk_size;
++	__u32 blks_per_seg;
++	struct nilfs_segment_summary *ss_ptr = NULL;
++	__u32 seg_sum_size;
++	__u32 read_bytes = 0;
++
++	internal_debug("start_block %lld, sbp %p, seg_buf %p.",
++				start_block, sbp, seg_buf);
++
++	if (!sbp || !seg_buf) {
++		internal_error("%s",
++				nilfs_message[INVALID_PARAMETER]);
++		return -INVALID_PARAMETER;
++	}
++
++	ss_ptr = (struct nilfs_segment_summary *)seg_buf;
++	err = read_segment_summary_header(start_block, sbp, ss_ptr);
++	if (err)
++		goto failed_read_seg_sum;
++
++	seg_sum_size = le32_to_cpu(ss_ptr->ss_sumbytes);
++	blk_size = (1UL << (le32_to_cpu(sbp->s_log_block_size) +
++					NILFS_SB_BLOCK_SIZE_SHIFT));
++	blks_per_seg = le32_to_cpu(sbp->s_blocks_per_segment);
++
++	if (seg_sum_size < sizeof(struct nilfs_segment_summary))
++		return -SS_FINFO_SECTION_EMPTY;
++	else if (seg_sum_size > (blks_per_seg * blk_size))
++		seg_sum_size = blks_per_seg * blk_size;
++
++	read_offset = (start_block * blk_size) +
++				sizeof(struct nilfs_segment_summary);
++
++	err = read_raw_bytes(read_offset,
++			seg_buf + sizeof(struct nilfs_segment_summary),
++			seg_sum_size - sizeof(struct nilfs_segment_summary),
++			&read_bytes);
++	if (err) {
++		internal_debug("start_block %lld %s",
++				start_block,
++				nilfs_message[CANNOT_READ_SEG_SUMMARY]);
++		goto failed_read_seg_sum;
++	}
++
++	if (read_bytes !=
++			(le32_to_cpu(ss_ptr->ss_sumbytes) -
++				sizeof(struct nilfs_segment_summary))) {
++		internal_error("start_block %lld. %s",
++				start_block,
++				nilfs_message[DATA_PROCCESSED_PARTIALLY]);
++		err = -DATA_PROCCESSED_PARTIALLY;
++		goto failed_read_seg_sum;
++	}
++
++	return NILFS_OK;
++
++failed_read_seg_sum:
++	return err;
++}
++
++/*****************************************************************************
++ * NAME:  set_segment_reference (fsck.nilfs2)
++ *
++ * FUNCTION:  Define reference of current segment.
++ *
++ * PARAMETERS:
++ * @segment: Segment number.
++ * @logs_count: Count of logs in segment.
++ * @sbp: Pointer on superblock.
++ * @ss_ptr: Pointer on segment summary buffer.
++ * @array_ptr: Pointer on segments' references array.
++ *
++ * RETURNS:
++ * NILFS_OK - Segment's reference was defined successfully.
++ * %-INVALID_PARAMETER - Input parameter is invalid.
++ * %-CANNOT_ALLOCATE - Cannot allocate memory for log checking environment.
++ */
++static int set_segment_reference(__u64 segment,
++				__u32 logs_count,
++				struct nilfs_super_block *sbp,
++				struct nilfs_segment_summary *ss_ptr,
++				struct nilfs_segment_reference *array_ptr)
++{
++	__u64 next_seg;
++
++	internal_debug("SEG: %lld, logs_count %d",
++				segment, logs_count);
++	internal_debug("sbp %p, ss_ptr %p, array_ptr %p",
++				sbp, ss_ptr, array_ptr);
++
++	if (!sbp || !ss_ptr || !array_ptr) {
++		internal_error("%s", nilfs_message[INVALID_PARAMETER]);
++		return -INVALID_PARAMETER;
++	}
++
++	if (segment >= le64_to_cpu(sbp->s_nsegments)) {
++		internal_error("%s", nilfs_message[INVALID_PARAMETER]);
++		return -INVALID_PARAMETER;
++	}
++
++	next_seg = block_to_seg_num(le64_to_cpu(ss_ptr->ss_next), sbp);
++
++	array_ptr[segment].seg_seq_id = le64_to_cpu(ss_ptr->ss_seq);
++	array_ptr[segment].next_seg = next_seg;
++
++	if (next_seg < le64_to_cpu(sbp->s_nsegments))
++		array_ptr[next_seg].prev_seg = segment;
++
++	array_ptr[segment].logs_count = logs_count;
++
++	if (detected_err_db.segments) {
++		detected_err_db.segments[segment].logs =
++			calloc(sizeof(struct log_check), logs_count);
++		if (!detected_err_db.segments[segment].logs) {
++			internal_perror("%s",
++					nilfs_message[CANNOT_ALLOCATE]);
++			return -CANNOT_ALLOCATE;
++		}
++		detected_err_db.segments[segment].logs_count = logs_count;
++	}
++
++	return NILFS_OK;
++} /* set_segment_reference() */
++
++/* Set bit in bitmap for the segment */
++static int set_segment_bitmap(__u64 segment, void *bmp_ptr)
++{
++	/*internal_info("<%s>: %s", __func__, nilfs_message[NOT_IMPLEMENTED]);*/
++
++	/* <TODO: implement> */
++	return NILFS_OK;
++} /* set_segment_bitmap() */
++
++/*****************************************************************************
++ * NAME:  is_nilfs_ss_header_valid (fsck.nilfs2)
++ *
++ * FUNCTION:  Check validity of segment summary header.
++ *
++ * PARAMETERS:
++ * @segment: Segment number.
++ * @log: Log number.
++ * @sbp: Pointer on superblock.
++ * @ss_ptr: Pointer on segment summary header.
++ * @check_mask: Check mask defines what should be checked.
++ * @verbosity: Verbosity level [KEEP_SILENCE | BE_VERBOSE].
++ *
++ * RETURNS:
++ * NILFS_OK - Segment summary header was checked successfully.
++ * %-INVALID_PARAMETER - Input parameter is invalid.
++ * %-INVALID_SS_SIGNATURE - Segment summary header magic is invalid.
++ * %-UNSUPPORTED_SS_REV - Unsupported revision of segment summary header.
 + *
 + * @check_mask contains mask of flags on items which should be checked.
 + * During checking flags of valid items are unset. At the end of working
 + * @check_mask contains flags of corrupted items as set. These set flags
 + * inform about detected errors.
 + */
-+static int is_nilfs_superblock_valid(int sb_type, __u64 *check_mask)
++static int is_nilfs_ss_header_valid(__u64 segment, __u32 log,
++				struct nilfs_super_block *sbp,
++				struct nilfs_segment_summary *ss_ptr,
++				__u16 *check_mask,
++				int verbosity)
 +{
 +	int err = NILFS_OK;
-+	int devfd = -1;
-+	struct nilfs_super_block *sb_ptr = 0;
-+	__u64 segment;
 +
 +	/* Declaration order is crucial!!! */
-+	int sb_err_id[SB_CHECK_FLAGS_MAX_NUM] = {
-+		INVALID_NILFS_SIGNATURE,	/*CHECK_SB_MAGIC*/
-+		UNSUPPORTED_SB_REV,		/*CHECK_SB_REV_LEVEL*/
++	int ss_hdr_err_id[SS_HDR_CHECK_FLAGS_MAX] = {
++/*WARNING*/
++		INVALID_SS_SIGNATURE,		/*CHECK_SS_MAGIC*/
++		UNSUPPORTED_SS_REV,		/*CHECK_SS_HDR_REV*/
 +/*CRITICAL*/
-+		INVALID_SB_SIZE,		/*CHECK_SB_BYTES*/
-+		INVALID_CRC,			/*CHECK_SB_CRC*/
-+		INVALID_BLOCK_SIZE,		/*CHECK_SB_BLOCK_SZ*/
-+		INVALID_SB_DEV_SIZE,		/*CHECK_SB_DEV_SZ*/
-+		INVALID_SB_BLOCKS_PER_SEG,	/*CHECK_SB_BLOCKS_PER_SEG*/
-+		INVALID_SB_NSEGMENTS,		/*CHECK_SB_NSEGMENTS*/
-+		INVALID_SB_FIRST_DATA_BLOCK,	/*CHECK_SB_FIRST_DATA_BLOCK*/
-+		INVALID_SB_R_SEGS_PERCENTAGE,	/*CHECK_SB_R_SEGS_PERCENT*/
-+		INVALID_SB_LAST_CNO,		/*CHECK_SB_LAST_CNO*/
-+		INVALID_SB_LAST_PSEG,		/*CHECK_SB_LAST_PSEG*/
-+		INVALID_SB_LAST_SEQ,		/*CHECK_SB_LAST_SEQ*/
-+		INVALID_SB_FREE_BLKS,		/*CHECK_SB_FREE_BLKS*/
-+		INVALID_SB_FS_STATE,		/*CHECK_SB_STATE*/
-+		INVALID_SB_FIRST_INO,		/*CHECK_SB_FIRST_INO*/
-+		INVALID_SB_INO_SZ,		/*CHECK_SB_INODE_SZ*/
-+		INVALID_SB_DAT_ENTRY_SZ,	/*CHECK_SB_DAT_ENTRY_SZ*/
-+		INVALID_SB_CHECKPOINT_SZ,	/*CHECK_SB_CHECKPOINT_SZ*/
-+		INVALID_SB_SEG_USAGE_SZ,	/*CHECK_SB_SEG_USAGE_SZ*/
++		INVALID_SS_DATASUM,		/*CHECK_SS_DATASUM*/
++		INVALID_SS_SUMSUM,		/*CHECK_SS_SUMSUM*/
++		INVALID_SS_HEADER_SZ,		/*CHECK_SS_BYTES*/
++		INVALID_SS_NBLOCKS,		/*CHECK_SS_NBLOCKS*/
++		INVALID_SS_NEXT_SEG_BLK,	/*CHECK_SS_NEXT*/
++		INVALID_SS_NFINFO,		/*CHECK_SS_NFIFO*/
++		INVALID_SS_SUMBYTES,		/*CHECK_SS_SUMBYTES*/
 +/*MINOR*/
-+		INVALID_SB_FEATURE,		/*CHECK_SB_FEATURE*/
-+		UNSUPPORTED_SB_RO_FEATURE,	/*CHECK_SB_RO_FEATURE*/
-+		INVALID_SB_FLAGS,		/*CHECK_SB_FLAGS*/
-+		INVALID_SB_OS,			/*CHECK_SB_CREATOR_OS*/
-+		INVALID_SB_DEF_ID,		/*CHECK_SB_DEF_RES_UID_GID*/
-+		INVALID_SB_C_INTERVAL,		/*CHECK_SB_C_INTERVAL*/
-+		INVALID_SB_C_BLK_MAX,		/*CHECK_SB_C_BLOCK_MAX*/
++		INVALID_SS_SEQ,			/*CHECK_SS_SEQ*/
++		INVALID_SS_FLAGS,		/*CHECK_SS_FLAGS*/
 +/*LOOKS_LIKE_ERROR*/
-+		INVALID_SB_TIMES,		/*CHECK_SB_TIMES*/
-+		MAX_POSSIBLE_MNT_COUNT,		/*CHECK_SB_MNT_COUNT*/
-+		INVALID_SB_FS_ERRORS,		/*CHECK_SB_ERRORS*/
-+		INVALID_SB_LAST_CHECK,		/*CHECK_SB_LAST_CHECK*/
-+		NOT_VALID_FS_STATE_FLAG,	/*CHECK_SB_CLEAN_UMOUNT_FLAG*/
-+		FS_ERRORS_DETECTED_BY_DRIVER,	/*CHECK_SB_ERRS_DETECTED_FLAG*/
++		INVALID_SS_CREATE_TIME,		/*CHECK_SS_CREATE*/
++		INVALID_SS_CNO,			/*CHECK_SS_CNO*/
 +	};
 +
-+	internal_debug("%s", "check superblock validity.");
-+	internal_debug("sbp %p, check_mask %p.",
-+				sb_ptr, check_mask);
++	internal_debug("%s", "check segment summary header validity.");
++	internal_debug("SEG %lld, sbp %p, ss_ptr %p, check_mask %p.",
++				segment, sbp, ss_ptr, check_mask);
 +
-+	if (sb_type >= SUPERBLOCK_TYPES_NUMBER ||
-+				NULL == check_mask ||
-+				NULL == superblocks[sb_type]) {
-+		err = CANNOT_CHECK_SB;
-+		goto failed_check_sb;
++	if (!sbp || !ss_ptr || !check_mask) {
++		err = INVALID_PARAMETER;
++		goto failed_check_seg_sum_hdr;
 +	}
 +
-+	sb_ptr = superblocks[sb_type];
++	if (!nilfs_ss_header_is_valid(segment, sbp, ss_ptr, check_mask)) {
++		if (BE_VERBOSE == verbosity) {
++			print_fs_detected_errors(check_mask,
++					ss_hdr_err_id,
++					SS_HDR_CHECK_FLAGS_MAX,
++					segment,
++					log);
++		} else if (KEEP_SILENCE != verbosity) {
++			err = INVALID_PARAMETER;
++			goto failed_check_seg_sum_hdr;
++		}
 +
-+	devfd = device_file_descriptor();
-+	if (-1 == devfd) {
-+		internal_debug("Device file descriptor: %d.",
-+				devfd);
-+		err = CANNOT_CHECK_SB;
-+		goto failed_check_sb;
++		if ((*check_mask) & CHECK_SS_MAGIC)
++			return -INVALID_SS_SIGNATURE;
++
++		if ((*check_mask) & CHECK_SS_HDR_REV)
++			return -UNSUPPORTED_SS_REV;
 +	}
-+
-+	if (!nilfs_sb_is_valid(devfd, sb_ptr, check_mask)) {
-+		if (PRIMARY_SUPERBLOCK == sb_type)
-+			segment = NILFS_PRIMARY_SB_SEG;
-+		else
-+			segment = le64_to_cpu(NILFS_SECONDARY_SB_SEG(sb_ptr));
-+		print_fs_detected_errors(check_mask,
-+					sb_err_id, SB_CHECK_FLAGS_MAX_NUM,
-+					segment, NILFS_SB_LOG);
-+
-+		if ((*check_mask) & CHECK_SB_REV_LEVEL)
-+			return -UNSUPPORTED_SB_REV;
-+
-+		if ((*check_mask) & CHECK_SB_RO_FEATURE)
-+			fsck_work_mode &= (~FSCK_RW_POLICY_MASK | FSCK_RO_MODE);
-+		else
-+			fsck_work_mode &= (~FSCK_RW_POLICY_MASK | FSCK_RW_MODE);
-+
-+		return -INVALID_SB;
-+	}
-+
-+	internal_debug("%s", "superblock is valid.");
 +
 +	return NILFS_OK;
 +
-+failed_check_sb:
++failed_check_seg_sum_hdr:
 +	internal_error("%s", nilfs_message[err]);
 +	return -err;
-+} /* is_nilfs_superblock_valid() */
-+
-+/*****************************************************************************
-+ * NAME:  compare_superblocks (fsck.nilfs2)
-+ *
-+ * FUNCTION:  Compare superblocks with the purpose of checking.
-+ *
-+ * RETURNS:
-+ * NILFS_OK - superblocks compared successfully.
-+ * %-MEMORY_NOT_ALLOCATED - superblocks is not allocated yet.
-+ * %-FATAL_SB_DIFF - superblocks have fatal difference (fatal corruption).
-+ */
-+static int compare_superblocks(void)
-+{
-+	int err = NILFS_OK;
-+	struct nilfs_super_block *sbp1 = superblocks[PRIMARY_SUPERBLOCK];
-+	struct nilfs_super_block *sbp2 = superblocks[SECONDARY_SUPERBLOCK];
-+
-+	internal_debug("sbp1 %p, sbp2 %p.", sbp1, sbp2);
-+
-+	if (!sbp1 || !sbp2) {
-+		internal_error("%s",
-+				nilfs_message[MEMORY_NOT_ALLOCATED]);
-+		return -MEMORY_NOT_ALLOCATED;
-+	}
-+
-+	if (sbp1->s_log_block_size != sbp2->s_log_block_size) {
-+		internal_debug("s_log_block_size: sbp1 %d, sbp2 %d.",
-+					le32_to_cpu(sbp1->s_log_block_size),
-+					le32_to_cpu(sbp2->s_log_block_size));
-+		fs_description(SB_BLK_SIZE_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+		err = -FATAL_SB_DIFF;
-+	}
-+
-+	if (sbp1->s_nsegments != sbp2->s_nsegments) {
-+		internal_debug("s_nsegments: sbp1 %lld, sbp2 %lld.",
-+					le64_to_cpu(sbp1->s_nsegments),
-+					le64_to_cpu(sbp2->s_nsegments));
-+		fs_description(SB_NSEGS_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+		err = -FATAL_SB_DIFF;
-+	}
-+
-+	if (sbp1->s_dev_size != sbp2->s_dev_size) {
-+		internal_debug("s_dev_size: sbp1 %lld, sbp2 %lld.",
-+					le64_to_cpu(sbp1->s_dev_size),
-+					le64_to_cpu(sbp2->s_dev_size));
-+		fs_description(SB_DEV_SIZE_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+		err = -FATAL_SB_DIFF;
-+	}
-+
-+	if (sbp1->s_blocks_per_segment != sbp2->s_blocks_per_segment) {
-+		internal_debug("s_blocks_per_segment: sbp1 %d, sbp2 %d.",
-+				le32_to_cpu(sbp1->s_blocks_per_segment),
-+				le32_to_cpu(sbp2->s_blocks_per_segment));
-+		fs_description(SB_BLKS_PER_SEG_DIFF,
-+				UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+		err = -FATAL_SB_DIFF;
-+	}
-+
-+	if (sbp1->s_r_segments_percentage != sbp2->s_r_segments_percentage) {
-+		internal_debug("s_r_segs_percentage: sbp1 %d, sbp2 %d.",
-+				le32_to_cpu(sbp1->s_r_segments_percentage),
-+				le32_to_cpu(sbp2->s_r_segments_percentage));
-+		fs_description(SB_R_SEGS_PERCENTAGE_DIFF,
-+				UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_last_cno != sbp2->s_last_cno) {
-+		internal_debug("s_last_cno: sbp1 %lld, sbp2 %lld.",
-+				le64_to_cpu(sbp1->s_last_cno),
-+				le64_to_cpu(sbp2->s_last_cno));
-+		fs_description(SB_LAST_CNO_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_last_pseg != sbp2->s_last_pseg) {
-+		internal_debug("s_last_pseg: sbp1 %lld, sbp2 %lld.",
-+				le64_to_cpu(sbp1->s_last_pseg),
-+				le64_to_cpu(sbp2->s_last_pseg));
-+		fs_description(SB_LAST_PSEG_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_last_seq != sbp2->s_last_seq) {
-+		internal_debug("s_last_seq: sbp1 %lld, sbp2 %lld.",
-+				le64_to_cpu(sbp1->s_last_seq),
-+				le64_to_cpu(sbp1->s_last_seq));
-+		fs_description(SB_LAST_SEQ_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_free_blocks_count != sbp2->s_free_blocks_count) {
-+		internal_debug("s_free_blocks: sbp1 %lld, sbp2 %lld.",
-+				le64_to_cpu(sbp1->s_free_blocks_count),
-+				le64_to_cpu(sbp1->s_free_blocks_count));
-+		fs_description(SB_FREE_BLKS_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_ctime != sbp2->s_ctime) {
-+		__u64 sb1_ctime = le64_to_cpu(sbp1->s_ctime);
-+		__u64 sb2_ctime = le64_to_cpu(sbp2->s_ctime);
-+		internal_debug("s_ctime: sbp1 %s, sbp2 %s.",
-+					ctime((const time_t *)&sb1_ctime),
-+					ctime((const time_t *)&sb2_ctime));
-+		fs_description(SB_CTIME_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+		err = -FATAL_SB_DIFF;
-+	}
-+
-+	if (sbp1->s_mtime != sbp2->s_mtime) {
-+		__u64 sb1_mtime = le64_to_cpu(sbp1->s_mtime);
-+		__u64 sb2_mtime = le64_to_cpu(sbp2->s_mtime);
-+		internal_debug("s_mtime: sbp1 %s, sbp2 %s.",
-+					ctime((const time_t *)&sb1_mtime),
-+					ctime((const time_t *)&sb2_mtime));
-+		fs_description(SB_MTIME_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_wtime != sbp2->s_wtime) {
-+		__u64 sb1_wtime = le64_to_cpu(sbp1->s_wtime);
-+		__u64 sb2_wtime = le64_to_cpu(sbp2->s_wtime);
-+		internal_debug("s_wtime: sbp1 %s, sbp2 %s.",
-+					ctime((const time_t *)&sb1_wtime),
-+					ctime((const time_t *)&sb2_wtime));
-+		fs_description(SB_WTIME_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_mnt_count != sbp2->s_mnt_count) {
-+		internal_debug("s_mnt_count: sbp1 %d, sbp2 %d.",
-+				le16_to_cpu(sbp1->s_mnt_count),
-+				le16_to_cpu(sbp2->s_mnt_count));
-+		fs_description(SB_MNT_COUNT_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_max_mnt_count != sbp2->s_max_mnt_count) {
-+		internal_debug("s_max_mnt_count: sbp1 %d, sbp2 %d.",
-+				le16_to_cpu(sbp1->s_max_mnt_count),
-+				le16_to_cpu(sbp2->s_max_mnt_count));
-+		fs_description(SB_MAX_MNT_COUNT_DIFF,
-+					UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_state != sbp2->s_state) {
-+		internal_debug("s_state: sbp1 %#x, sbp2 %#x.",
-+				le16_to_cpu(sbp1->s_state),
-+				le16_to_cpu(sbp2->s_state));
-+		fs_description(SB_FS_STATE_DIFF,
-+					UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (sbp1->s_lastcheck != sbp2->s_lastcheck) {
-+		__u64 sb1_lastcheck = le64_to_cpu(sbp1->s_lastcheck);
-+		__u64 sb2_lastcheck = le64_to_cpu(sbp2->s_lastcheck);
-+		internal_debug("s_lastcheck: sbp1 %s, sbp2 %s.",
-+					ctime((const time_t *)&sb1_lastcheck),
-+					ctime((const time_t *)&sb2_lastcheck));
-+		fs_description(SB_LASTCHECK_DIFF,
-+					UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	if (0 != memcmp(sbp1->s_uuid, sbp2->s_uuid, 16)) {
-+		internal_debug("UUID: "
-+				"sb1 %02x%02x%02x%02x-%02x%02x-%02x%02x-"
-+				"%02x%02x-%02x%02x%02x%02x%02x%02x, "
-+				"sb2 %02x%02x%02x%02x-%02x%02x-%02x%02x-"
-+				"%02x%02x-%02x%02x%02x%02x%02x%02x.",
-+				sbp1->s_uuid[0], sbp1->s_uuid[1],
-+				sbp1->s_uuid[2], sbp1->s_uuid[3],
-+				sbp1->s_uuid[4], sbp1->s_uuid[5],
-+				sbp1->s_uuid[6], sbp1->s_uuid[7],
-+				sbp1->s_uuid[8], sbp1->s_uuid[9],
-+				sbp1->s_uuid[10], sbp1->s_uuid[11],
-+				sbp1->s_uuid[12], sbp1->s_uuid[13],
-+				sbp1->s_uuid[14], sbp1->s_uuid[15],
-+				sbp2->s_uuid[0], sbp2->s_uuid[1],
-+				sbp2->s_uuid[2], sbp2->s_uuid[3],
-+				sbp2->s_uuid[4], sbp2->s_uuid[5],
-+				sbp2->s_uuid[6], sbp2->s_uuid[7],
-+				sbp2->s_uuid[8], sbp2->s_uuid[9],
-+				sbp2->s_uuid[10], sbp2->s_uuid[11],
-+				sbp2->s_uuid[12], sbp2->s_uuid[13],
-+				sbp2->s_uuid[14], sbp2->s_uuid[15]);
-+		fs_description(SB_UUID_DIFF, UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+		err = -FATAL_SB_DIFF;
-+	}
-+
-+	if (0 != memcmp(sbp1->s_volume_name, sbp2->s_volume_name, 80)) {
-+		internal_debug("s_volume_name: sbp1 %s, sbp2 %s.",
-+					sbp1->s_volume_name,
-+					sbp2->s_volume_name);
-+		fs_description(SB_VOL_NAMES_DIFF,
-+					UNKNOWN_SEGMENT, UNKNOWN_LOG);
-+	}
-+
-+	return err;
-+} /* compare_superblocks() */
-diff --git a/sbin/fsck/nilfs_superblock.h b/sbin/fsck/nilfs_superblock.h
++} /* is_nilfs_ss_header_valid() */
+diff --git a/sbin/fsck/nilfs_segment.h b/sbin/fsck/nilfs_segment.h
 new file mode 100644
-index 0000000..68461cd
+index 0000000..6503a5c
 --- /dev/null
-+++ b/sbin/fsck/nilfs_superblock.h
-@@ -0,0 +1,44 @@
++++ b/sbin/fsck/nilfs_segment.h
+@@ -0,0 +1,55 @@
 +/*
-+ * nilfs_superblock.h - Declarations of operations for NILFS superblocks
-+ *                      checking, processing and recovering
++ * nilfs_segment.h - Declarations of operations for NILFS segments
++ *                   checking, processing and recovering
 + *
 + * Copyright (C) 2012 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + *
@@ -922,25 +1005,36 @@ index 0000000..68461cd
 + * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + */
 +
-+#ifndef NILFS_SUPERBLOCK_H
-+#define NILFS_SUPERBLOCK_H
++#ifndef NILFS_SEGMENT_H
++#define NILFS_SEGMENT_H
 +
-+/* Allocate memory and read superblocks from disk */
-+int get_nilfs_superblocks(void);
++/* Pointer on segment references array */
++extern struct nilfs_segment_reference *seg_refs_array_ptr;
 +
-+/* Free memory allocated for superblocks */
-+int free_nilfs_superblocks(void);
++/* Pointer on segments bitmap */
++extern int *segments_bitmap_ptr;
 +
-+/* Check that superblock contains valid NILFS signature */
-+int is_nilfs_signature_ok(const struct nilfs_super_block *sb_ptr);
++/*
++ * SEGS_CHECKING_ENV_READY
++ *
++ * MACRO:  Check readiness of segments checking environment.
++ *
++ * RETURNS:
++ * NILFS_TRUE - Segments checking environment is ready.
++ * NILFS_FALSE - Segments checking environment is *not* ready.
++ */
++#define SEGS_CHECKING_ENV_READY \
++	((seg_refs_array_ptr && segments_bitmap_ptr) ? NILFS_TRUE : NILFS_FALSE)
 +
-+/* Check primary and secondary NILFS superblocks */
-+int check_nilfs_superblocks(void);
++/*
++ * Go through all segments and check validity.
++ * It checks validity of metadata organization in segment.
++ * This function collects data that needs for next checking
++ * phases.
++ */
++int check_nilfs_segments(void);
 +
-+/* Get valid or less corrupted superblock */
-+struct nilfs_super_block *get_reliable_sb(__u64 flags);
-+
-+#endif /* NILFS_SUPERBLOCK_H */
++#endif /* NILFS_SEGMENT_H */
 -- 
 1.7.9.5
 
