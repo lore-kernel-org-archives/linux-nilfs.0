@@ -1,71 +1,73 @@
-From: ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: A lot of NILFS: bad btree node messages (readonly fs)
-Date: Fri, 30 Nov 2012 16:46:16 +0900 (JST)
-Message-ID: <20121130.164616.1703426007244850753.hermes@ceres.dti.ne.jp>
+Date: Fri, 30 Nov 2012 10:09:04 +0400
+Message-ID: <1354255744.2090.3.camel@slavad-ubuntu>
 References: <20121129210650.GA4028@wloczykij>
-	<1354255744.2090.3.camel@slavad-ubuntu>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1354255744.2090.3.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=jVNlMH++mlXVKtcB9CB08QJDrtyb7UrNckwuvAmwU38=;
+	b=s+6+wUqvxGgM4bqrcjZAWCzXIS56YISEmFIxWEIzchv1ZqQSdIi+xcgTWnxs//ik1erw618IzoPqs0fgubX1ZmrTJILVtWC0yEXI8ydXsA4oM/78dvc3BjnIhJGLZU38;
+In-Reply-To: <20121129210650.GA4028@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-In <1354255744.2090.3.camel@slavad-ubuntu>;
-   Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote
-   as Subject "Re: A lot of NILFS: bad btree node messages (readonly fs)":
+Hi,
 
->> dmesg shows a lot (1812 in the log) of:
->> [ 8288.319012] NILFS: bad btree node (blocknr=26229286): level = 178,
->> flags = 0x0, nchildren = 0
->> [ 8288.319017] NILFS error (device sda2): nilfs_bmap_lookup_contig:
->> broken bmap (inode number=102230)
+On Thu, 2012-11-29 at 22:06 +0100, Piotr Szymaniak wrote:
+> Hello.
+>=20
+> Doing some work today (system update, kernel update, rsync rootfs wit=
+h
+> external drive) I noticed some unwanted behaviour:
+> maszn ~ # touch afile
+> touch: cannot touch =E2=80=98afile=E2=80=99: System plik=C3=B3w wy=C5=
+=82=C4=85cznie do odczytu
+>                         it's Read only filesystem
+>=20
+> dmesg shows a lot (1812 in the log) of:
+> [ 8288.319012] NILFS: bad btree node (blocknr=3D26229286): level =3D =
+178,
+> flags =3D 0x0, nchildren =3D 0
+> [ 8288.319017] NILFS error (device sda2): nilfs_bmap_lookup_contig:
+> broken bmap (inode number=3D102230)
+>=20
+> After mount -o remount,rw /
+> [ 8384.734024] segctord starting. Construction interval =3D 300 secon=
+ds,
+> CP frequency < 30 seconds
+> [ 8384.734028] NILFS warning: mounting fs with errors
+>=20
+> Never happend before and it looks like it works fine now (using vanil=
+la
+> kernel 3.6.4).
+>=20
+> After a reboot (to vanilla kernel 3.6.8) dmesg shows:
+> [    6.046883] segctord starting. Construction interval =3D 300 secon=
+ds,
+> CP frequency < 30 seconds
+> [    6.046884] NILFS warning: mounting fs with errors
+>=20
+> I don't like the "errors" part...
+>=20
 
-> Can you reproduce this issue (I mean that the issue reproducible or
-> not)? Have you any side effects of the issue such as data loss or any
-> other bad things?
+Can you reproduce this issue (I mean that the issue reproducible or
+not)? Have you any side effects of the issue such as data loss or any
+other bad things?
 
-I met similar error.
-Errors reported by my PC is like (/var/log/messages):
+With the best regards,
+Vyacheslav Dubeyko.
 
-Aug 11 20:58:23 celio kernel: [365058.267458] scsi_verify_blk_ioctl: 6 callbacks suppressed
-Aug 11 20:58:23 celio kernel: [365058.267460] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.267489] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.267504] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.267519] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.267534] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.267548] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.267563] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.267578] VBoxSVC: sending ioctl 5393 to a partition!
-Aug 11 20:58:23 celio kernel: [365058.285133] NILFS: bad btree node (blocknr=17620479): level = 146, flags = 0x9a, nchildren = 49895
-Aug 11 20:58:23 celio kernel: [365058.285137] NILFS error (device dm-9): nilfs_bmap_lookup_contig: broken bmap (inode number=571846)
-Aug 11 20:58:23 celio kernel: [365058.285138] 
-Aug 11 20:58:23 celio kernel: [365058.286426] Remounting filesystem read-only
-Aug 11 20:58:23 celio kernel: [365058.286631] NILFS: bad btree node (blocknr=17620479): level = 146, flags = 0x9a, nchildren = 49895
-Aug 11 20:58:23 celio kernel: [365058.286635] NILFS error (device dm-9): nilfs_bmap_lookup_contig: broken bmap (inode number=571846)
-Aug 11 20:58:23 celio kernel: [365058.286636] 
-Aug 11 20:58:23 celio kernel: [365058.286855] NILFS: bad btree node (blocknr=17620479): level = 146, flags = 0x9a, nchildren = 49895
-Aug 11 20:58:23 celio kernel: [365058.286857] NILFS error (device dm-9): nilfs_bmap_lookup_contig: broken bmap (inode number=571846)
-Aug 11 20:58:23 celio kernel: [365058.286858] 
-(snip)
+>=20
+> Piotr Szymaniak.
 
-These errors ware reported at VirtualBox VM (Win7) startup (not
-VirtualBox process startup). VirtualBox configuration directory
-(~/.VirtualBox) was in NILFS.
 
-Currently, my .VirtualBox directory is in other FS and symlinked from
-home directory. After the workaround, my PC reports no error.
-
-But I can say nothing about dependency with VirtualBox...
-
-Kernel version was 3.4.5, VirtualBox was 4.1.18.
-
--- 
-ARAI, Shun-ichi
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
