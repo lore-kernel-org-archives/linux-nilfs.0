@@ -1,88 +1,85 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Contributing to NILFS
-Date: Wed, 12 Dec 2012 22:57:07 +0300
-Message-ID: <706EE260-E8A2-410A-9211-FB4859516478@dubeyko.com>
-References: <1355169902.803.19.camel@terok>  <1355208388.2627.16.camel@slavad-ubuntu> <1355234065.803.61.camel@terok> <1355296112.2042.35.camel@slavad-ubuntu> <1355326242.67765.YahooMailNeo@web121802.mail.ne1.yahoo.com>
+Subject: Re: nilfs_cleanerd cannot open nilfs on device that exists
+Date: Wed, 12 Dec 2012 23:43:40 +0300
+Message-ID: <7A92569A-D56B-45B0-9305-EBC2EDF90913@dubeyko.com>
+References: <20121212145116.GE3064@wloczykij> <20121212145454.GF3064@wloczykij> <20121212161054.GG3064@wloczykij>
 Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=9MbPo3hYbYjF1RgdjpHZyxnLt9aE0Rg03NVhgfRV+ho=;
-	b=cMXQhrDh/OfdyOt91GSaqyLegMfTH4/qzj5Y00mKu8lumujvoPK4pAt1rvXkEoq72eff5O9iuA3jcJwduaCQKFIjjCcN2fj780rWbUsbsXIzgApj9gRvQyXemxrnsjbo;
-In-Reply-To: <1355326242.67765.YahooMailNeo-mKBY30tKGRG2Y7dhQGSVAJOW+3bF1jUfVpNB7YpNyf8@public.gmane.org>
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=L6Hcf/Jf4zJX3HXI0w7IcZnRX2sMQNAW1kJs1KAo1WM=;
+	b=EUybvBuToeeW2EUYB06JVTtNGT/oadagZ8KjO4h4qmIFGg4Ud6PXCSB71LsUsnfpqxJ+3Lq2O+beb97FpU52d0Hyzb3SylNnzkYWebTuXxwO9jydn5X0dMu+iW13v15P;
+In-Reply-To: <20121212161054.GG3064@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: =?iso-8859-1?Q?Sven-G=F6ran_Bergh?= <svengbergh-nilfs-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
-Cc: Andreas Rohner <e0502196-oe7qfRrRQffzPE21tAIdciO7C/xPubJB@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
 
-On Dec 12, 2012, at 6:30 PM, Sven-G=F6ran Bergh wrote:
+On Dec 12, 2012, at 7:10 PM, Piotr Szymaniak wrote:
 
-[snip]
->>=20
->> I think that this task hides many difficult questions. How does it
->> define what files fragmented or not? How does it measure the
->> fragmentation degree? What fragmentation degree should be a basis fo=
-r
->> defragmentation activity? When does it need to detect fragmentation =
-and
->> how to keep this knowledge? How does it make defragmentation without
->> performance degradation?
->=20
-> These questions are of special interest if we through in the type of
-> media in the discussion. Fragmentation is not a big deal on NAND-base=
-d
-> media (SSD:s, memory cards, USB-sticks, etc). Defragmentation activit=
-y
-> might even shorten the lifetime for such media due to the limited amo=
-unt
-> write/erase cycles.
->=20
+> On Wed, Dec 12, 2012 at 03:54:55PM +0100, Piotr Szymaniak wrote:
+>> On Wed, Dec 12, 2012 at 03:51:16PM +0100, Piotr Szymaniak wrote:
+>>> Hello,
+>>> 
+>>> I got a power failure today and after power restore there's a weird
+>>> issue with nilfs_cleanerd:
+>>> 
+>>> wloczykij ~ # ll /dev/sda3
+>>> brw-rw---- 1 root disk 8, 3 Dec 12 08:35 /dev/sda3
+>>> 
+>>> wloczykij ~ # mount | grep nilfs
+>>> /dev/root on / type nilfs2 (rw,relatime)
+>>> /dev/mapper/backup on /mnt/home_backup type nilfs2 (rw,gcpid=2995)
+>>> /dev/sda3 on / type nilfs2 (rw,noatime,nodiratime,gcpid=5333)
+>>> 
+>>> But when I try to run the cleaner:
 
-It is a good remark. Thank you.
+Sorry, I slightly confused. As I understand, mount output shows that you have mounted /dev/sda3 with started nilfs_cleanerd (gcpid=5333). Why do you try to start nilfs_cleanerd by hands? Or I misunderstand something?
 
-Yes, of course, it needs to remember about NAND wearing, especially, in=
- the case of online defragmenting. But, as you know, NILFS2 makes garba=
-ge collection. As I understand, GC can copy some blocks from cleaning s=
-egments into new ones. So, such copying also shorten NAND lifetime. Do =
-you suggest not to make garbage collection because of it?
+As I can see from strace, there is such error message:
 
-We have as minimum two points for online defragmenting: (1) before flus=
-hing; (2) during garbage collection. Thereby, if you make defragmenting=
- before any write then you don't shorten NAND lifetime. We need to make=
- garbage collection anyway. As a result, it is possible to use this act=
-ivity for defragmenting also.
+futex(0xbff37f24, FUTEX_WAIT_BITSET_PRIVATE|FUTEX_CLOCK_REALTIME, 1, NULL, b7547940) = -1 EAGAIN (Resource temporarily unavailable)
 
-Yes, of course, NAND flash has good performance for the case of random =
-reads. But the case of contiguous file's blocks is more better than fra=
-gmented case anyway. First of all, during reading of fragmented file yo=
-u need to generate block address before every not sibling block's data =
-reading. So, you will spend more cycles for read fragmented file than f=
-or the case of  contiguous file's blocks. Secondly, because of read dis=
-turbance the random read can force FTL to copy more erase blocks to a n=
-ew ones and, as a result, to lead to more shorter NAND lifetime. Thirdl=
-y, fragmented volume state leads to more complex and unpredictable work=
-loads with more intensive metadata operations. It can degrade filesyste=
-m performance. And, finally, GC has more harder work in the case of fra=
-gmented volume state, especially, for the case of presence of deleted f=
-iles.
+I think that it is the reason of failing nilfs_cleanerd start.
 
-Thereby, I think that it makes sense to implement online defragmenting =
-for the case of NILFS2. But, of course, it is a difficult and complex t=
-ask because of probability to degrade performance and to shorten NAND l=
-ifetime.
+Maybe, do you have working or failed nilfs_cleanerd for /dev/sda3 in background? Do you have any NILFS2-related messages in system log?
 
 With the best regards,
 Vyacheslav Dubeyko.
 
-> Brgds
-> /S-G
->=20
+
+>>> Dec 12 15:46:17 wloczykij nilfs_cleanerd[5333]: start
+>>> Dec 12 15:46:17 wloczykij nilfs_cleanerd[5333]: cannot open nilfs on
+>>> /dev/sda3: No such file or directory
+>>> Dec 12 15:46:17 wloczykij nilfs_cleanerd[5333]: cannot create cleanerd
+>>> on /dev/sda3: No such file or directory
+>>> Dec 12 15:46:17 wloczykij nilfs_cleanerd[5333]: shutdown
+>>> 
+>>> Never happend before. Shutdown should be nice (got UPS monitored by
+>>> apcupsd, so I hope it worked - was in the middle of the night, so can't
+>>> really tell if was superclean shutdown).
+>> 
+>> I should also notice, that other cleaner of different drive is working
+>> without issues:
+>> wloczykij ~ # ps aux | grep nilfs
+>> root      2995  0.0  0.0   2348   808 ?        Ss   12:19   0:00
+>> /sbin/nilfs_cleanerd -n /dev/mapper/backup /mnt/backup
+> 
+> Sorry for answering my own msg again.
+> 
+> Attached strace output.
+> 
+> 
+> Piotr Szymaniak.
+> -- 
+> Gdzie  w  tym  logika? Po co w ogole sie rodzic,  jesli jedyne,  co cie
+> czeka u kresu tego wszystkiego, to smierc?
+>  -- Graham Masterton, "The Burning"
+> <strace-nilfs_cleanerd.dontexist.out>
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
