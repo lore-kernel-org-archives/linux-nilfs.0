@@ -1,107 +1,137 @@
 From: Marco Stornelli <marco.stornelli@gmail.com>
-Subject: [PATCH 00/21 v5] drop vmtruncate
-Date: Sat, 15 Dec 2012 11:43:25 +0100
-Message-ID: <50CC544D.8050505@gmail.com>
-References: <508295AF.60606@gmail.com> <5094E219.5020009@gmail.com>
+Subject: [PATCH 17/21] nilfs2: drop vmtruncate
+Date: Sat, 15 Dec 2012 11:57:37 +0100
+Message-ID: <50CC57A1.3040906@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=message-id:date:from:user-agent:mime-version:to:cc:subject
-         :references:in-reply-to:content-type:content-transfer-encoding;
-        bh=tteNH7JpcaphDtt1esojQhwt3Zu0+sSeG2ng3q19S2A=;
-        b=PHrOZoK9adDyy1WZb/5uSX+s9nEvlRZ+o7oPCClcCLd5CM+6aDL/Qa4K1Xu0J9p+0n
-         a9ST+uEjwAy3Z+w1pWgN1EyLmCgiqGiKG4xqsyfUmUd7/xiORRsjOXegP5ZCD1nCaAgf
-         /4SbqQe9bu7lACChS1xzKUZWNNRkAgjdmVn5UOjLyvtvf2R5kTYCaugvz7OBAinczQLc
-         RVZzlS/AZIStagytOY6HA0VvUlfdHz/mW7okvS0UPhnVqRJQ55ZsOE5FhVZXt1ZzU0/+
-         kprWoLpvuJ9ohvgSHqBGgoEf15HexGJ0jQW+9RpDBCIrFnHuqDOj+Y2o7g8hg77hyneM
-         w2Aw==
-In-Reply-To: <5094E219.5020009@gmail.com>
-Sender: reiserfs-devel-owner@vger.kernel.org
+         :content-type:content-transfer-encoding;
+        bh=BLRx22z6WaUH47U1/xFTv2mVmBvf3jDc7OkkFCsAL+c=;
+        b=xBMweKK2fdNUHlpXtufaKJfVgwVZe6JNCMYbyd0VlJcnIlrJzLcK8RWYGMh20QVrpu
+         SUU4xV/xyLYVDK+dbfPKv1QWxnnoc4/gIk5bcMl2jnJkaIZg/r23MZsFs6HKP1CLWghh
+         Z7Xly2fdRXFGBsbxEpK7vSTk0JDsMK/XqOaRSrjz1AsCeRup9LNlhqrxPSD5PWq7DKZ7
+         OE5btU21VDnTfDe+GFJ+EkJPUcHDJagqI4JstmhM+KKLjLv+0RP4forRHZAF+UZ83NJS
+         GT0U33/LWErstFihHNt13OdWH1ec7vicRJn0pMYM41zSabklzdNTrahjHN4khkDs+l+0
+         +yaQ==
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Linux FS Devel <linux-fsdevel@vger.kernel.org>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, Linux Kernel <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, Evgeniy Dushistov <dushistov@mail.ru>, reiserfs-devel@vger.kernel.org, Bob Copeland <me@bobcopeland.com>, ocfs2-devel@oss.oracle.com, "Tigran A. Aivazian" <tigran@aivazian.fsnet.co.uk>, Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, jfs-discussion@lists.sourceforge.net, logfs@logfs.org, Petr Vandrovec <petr@vandrovec.name>, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, linux-doc@vger.kernel.org
+Cc: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
 
-Hi all,
+Removed vmtruncate
 
-I send again the vmtruncate patch series. No change from the latest version, only rebased on the latest
-Linus's tree. I hope we can merge it for 3.8.
+Signed-off-by: Marco Stornelli <marco.stornelli@gmail.com>
+---
+ fs/nilfs2/file.c     |    1 -
+ fs/nilfs2/inode.c    |   24 +++++++++++++++---------
+ fs/nilfs2/nilfs.h    |    1 +
+ fs/nilfs2/recovery.c |    3 ++-
+ 4 files changed, 18 insertions(+), 11 deletions(-)
 
-Marco
-
-Changes:
-v5: rebased after 3.7 release
-v4: fix an error for ocfs2, silently ignore truncate for procfs as suggested by Al
-v3: reworked after Al and Christoph comments
-v2: add documentation cleaning
-v1: first draft
-
-Marco Stornelli (21):
-  ufs: drop vmtruncate
-  sysv: drop vmtruncate
-  reiserfs: drop vmtruncate
-  procfs: drop vmtruncate
-  omfs: drop vmtruncate
-  ocfs2: drop vmtruncate
-  adfs: drop vmtruncate
-  affs: drop vmtruncate
-  bfs: drop vmtruncate
-  hfs: drop vmtruncate
-  hpfs: drop vmtruncate
-  jfs: drop vmtruncate
-  hfsplus: drop vmtruncate
-  logfs: drop vmtruncate
-  minix: drop vmtruncate
-  ncpfs: drop vmtruncate
-  nilfs2: drop vmtruncate
-  ntfs: drop vmtruncate
-  vfs: drop vmtruncate
-  mm: drop vmtruncate
-  documentation: drop vmtruncate
-
- Documentation/filesystems/Locking |    6 ------
- Documentation/filesystems/porting |    2 +-
- Documentation/filesystems/vfs.txt |   11 -----------
- fs/adfs/inode.c                   |   15 ++++++++++-----
- fs/affs/file.c                    |   18 ++++++++++++------
- fs/affs/inode.c                   |    5 ++++-
- fs/bfs/file.c                     |   15 ++++++++++-----
- fs/hfs/inode.c                    |   26 ++++++++++++++++++--------
- fs/hfsplus/inode.c                |   27 ++++++++++++++++-----------
- fs/hpfs/file.c                    |   18 ++++++++++++------
- fs/hpfs/inode.c                   |    5 ++++-
- fs/jfs/file.c                     |    6 ++++--
- fs/jfs/inode.c                    |   20 ++++++++++++++------
- fs/libfs.c                        |    2 --
- fs/logfs/readwrite.c              |   10 ++++++++--
- fs/minix/file.c                   |    6 ++++--
- fs/minix/inode.c                  |   17 ++++++++++++-----
- fs/ncpfs/inode.c                  |    4 +---
- fs/nilfs2/file.c                  |    1 -
- fs/nilfs2/inode.c                 |   24 +++++++++++++++---------
- fs/nilfs2/nilfs.h                 |    1 +
- fs/nilfs2/recovery.c              |    3 ++-
- fs/ntfs/file.c                    |   16 +++++++++++++---
- fs/ntfs/inode.c                   |    8 ++++++--
- fs/ntfs/inode.h                   |    4 ++++
- fs/ocfs2/file.c                   |   18 ------------------
- fs/omfs/file.c                    |   22 +++++++++++++++-------
- fs/proc/base.c                    |    7 -------
- fs/proc/generic.c                 |    9 +--------
- fs/proc/proc_sysctl.c             |    7 -------
- fs/reiserfs/file.c                |    3 +--
- fs/reiserfs/inode.c               |   15 +++++++++++----
- fs/reiserfs/reiserfs.h            |    1 +
- fs/sysv/file.c                    |    5 +++--
- fs/sysv/itree.c                   |   17 ++++++++++++-----
- fs/ufs/inode.c                    |   15 ++++++++++-----
- include/linux/fs.h                |    1 -
- include/linux/mm.h                |    1 -
- mm/truncate.c                     |   23 -----------------------
- 39 files changed, 225 insertions(+), 189 deletions(-)
-
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 16f35f7..6194688 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -167,7 +167,6 @@ const struct file_operations nilfs_file_operations = {
+ };
+ 
+ const struct inode_operations nilfs_file_inode_operations = {
+-	.truncate	= nilfs_truncate,
+ 	.setattr	= nilfs_setattr,
+ 	.permission     = nilfs_permission,
+ 	.fiemap		= nilfs_fiemap,
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 4d31d2c..6b49f14 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -213,6 +213,16 @@ static int nilfs_set_page_dirty(struct page *page)
+ 	return ret;
+ }
+ 
++void nilfs_write_failed(struct address_space *mapping, loff_t to)
++{
++	struct inode *inode = mapping->host;
++
++	if (to > inode->i_size) {
++		truncate_pagecache(inode, to, inode->i_size);
++		nilfs_truncate(inode);
++	}
++}
++
+ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
+ 			     loff_t pos, unsigned len, unsigned flags,
+ 			     struct page **pagep, void **fsdata)
+@@ -227,10 +237,7 @@ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
+ 	err = block_write_begin(mapping, pos, len, flags, pagep,
+ 				nilfs_get_block);
+ 	if (unlikely(err)) {
+-		loff_t isize = mapping->host->i_size;
+-		if (pos + len > isize)
+-			vmtruncate(mapping->host, isize);
+-
++		nilfs_write_failed(mapping, pos + len);
+ 		nilfs_transaction_abort(inode->i_sb);
+ 	}
+ 	return err;
+@@ -259,6 +266,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
+ 		loff_t offset, unsigned long nr_segs)
+ {
+ 	struct file *file = iocb->ki_filp;
++	struct address_space *mapping = file->f_mapping;
+ 	struct inode *inode = file->f_mapping->host;
+ 	ssize_t size;
+ 
+@@ -278,7 +286,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
+ 		loff_t end = offset + iov_length(iov, nr_segs);
+ 
+ 		if (end > isize)
+-			vmtruncate(inode, isize);
++			nilfs_write_failed(mapping, end);
+ 	}
+ 
+ 	return size;
+@@ -786,10 +794,8 @@ int nilfs_setattr(struct dentry *dentry, struct iattr *iattr)
+ 	if ((iattr->ia_valid & ATTR_SIZE) &&
+ 	    iattr->ia_size != i_size_read(inode)) {
+ 		inode_dio_wait(inode);
+-
+-		err = vmtruncate(inode, iattr->ia_size);
+-		if (unlikely(err))
+-			goto out_err;
++		truncate_setsize(inode, iattr->ia_size);
++		nilfs_truncate(inode);
+ 	}
+ 
+ 	setattr_copy(inode, iattr);
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 74cece8..9bc72de 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -277,6 +277,7 @@ extern void nilfs_update_inode(struct inode *, struct buffer_head *);
+ extern void nilfs_truncate(struct inode *);
+ extern void nilfs_evict_inode(struct inode *);
+ extern int nilfs_setattr(struct dentry *, struct iattr *);
++extern void nilfs_write_failed(struct address_space *mapping, loff_t to);
+ int nilfs_permission(struct inode *inode, int mask);
+ int nilfs_load_inode_block(struct inode *inode, struct buffer_head **pbh);
+ extern int nilfs_inode_dirty(struct inode *);
+diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
+index f1626f5..ff00a0b 100644
+--- a/fs/nilfs2/recovery.c
++++ b/fs/nilfs2/recovery.c
+@@ -527,7 +527,8 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
+ 		if (unlikely(err)) {
+ 			loff_t isize = inode->i_size;
+ 			if (pos + blocksize > isize)
+-				vmtruncate(inode, isize);
++				nilfs_write_failed(inode->i_mapping,
++							pos + blocksize);
+ 			goto failed_inode;
+ 		}
+ 
 -- 
 1.7.3.4
-
