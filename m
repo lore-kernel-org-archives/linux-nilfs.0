@@ -1,137 +1,107 @@
-From: =?iso-8859-1?Q?Sven-G=F6ran_Bergh?= <svengbergh-nilfs-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
-Subject: RE: Contributing to NILFS
-Date: Thu, 13 Dec 2012 02:59:57 -0800 (PST)
-Message-ID: <1355396397.55086.YahooMailNeo@web121806.mail.ne1.yahoo.com>
-References: <1355169902.803.19.camel@terok>  <1355208388.2627.16.camel@slavad-ubuntu> <1355234065.803.61.camel@terok> <1355296112.2042.35.camel@slavad-ubuntu> <1355326242.67765.YahooMailNeo@web121802.mail.ne1.yahoo.com> <706EE260-E8A2-410A-9211-FB4859516478@dubeyko.com>
-Reply-To: =?iso-8859-1?Q?Sven-G=F6ran_Bergh?= <svengbergh-nilfs-/E1597aS9LQAvxtiuMwx3w@public.gmane.org>
+From: Marco Stornelli <marco.stornelli@gmail.com>
+Subject: [PATCH 00/21 v5] drop vmtruncate
+Date: Sat, 15 Dec 2012 11:43:25 +0100
+Message-ID: <50CC544D.8050505@gmail.com>
+References: <508295AF.60606@gmail.com> <5094E219.5020009@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s1024; t=1355396397; bh=i1ppFhLZl/fcWkw7KEBHZVVIPcSkgQIlKt/YSJsAW2A=; h=X-YMail-OSG:Received:X-Rocket-MIMEInfo:X-Mailer:References:Message-ID:Date:From:Reply-To:Subject:To:Cc:In-Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding; b=JGvJ56TrHAl3YKNUxvvUN7Bmo4PNJkGwVXxJZWGKyGtWqFqr9gqiC6fyds3uK3K+UWdbYuBsXjV/y/VwY6NgKujTu4vvutRnp2CuGqE0Xd7qAXLxyLt+i6/UDGsF8sBlNHudkRjYkyP+Ps2vSFLkjIW6yJyTQHJPQ89/EXr5Uq8=
-In-Reply-To: <706EE260-E8A2-410A-9211-FB4859516478-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=message-id:date:from:user-agent:mime-version:to:cc:subject
+         :references:in-reply-to:content-type:content-transfer-encoding;
+        bh=tteNH7JpcaphDtt1esojQhwt3Zu0+sSeG2ng3q19S2A=;
+        b=PHrOZoK9adDyy1WZb/5uSX+s9nEvlRZ+o7oPCClcCLd5CM+6aDL/Qa4K1Xu0J9p+0n
+         a9ST+uEjwAy3Z+w1pWgN1EyLmCgiqGiKG4xqsyfUmUd7/xiORRsjOXegP5ZCD1nCaAgf
+         /4SbqQe9bu7lACChS1xzKUZWNNRkAgjdmVn5UOjLyvtvf2R5kTYCaugvz7OBAinczQLc
+         RVZzlS/AZIStagytOY6HA0VvUlfdHz/mW7okvS0UPhnVqRJQ55ZsOE5FhVZXt1ZzU0/+
+         kprWoLpvuJ9ohvgSHqBGgoEf15HexGJ0jQW+9RpDBCIrFnHuqDOj+Y2o7g8hg77hyneM
+         w2Aw==
+In-Reply-To: <5094E219.5020009@gmail.com>
+Sender: reiserfs-devel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: Andreas Rohner <e0502196-oe7qfRrRQffzPE21tAIdciO7C/xPubJB@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Linux FS Devel <linux-fsdevel@vger.kernel.org>
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, Linux Kernel <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, Evgeniy Dushistov <dushistov@mail.ru>, reiserfs-devel@vger.kernel.org, Bob Copeland <me@bobcopeland.com>, ocfs2-devel@oss.oracle.com, "Tigran A. Aivazian" <tigran@aivazian.fsnet.co.uk>, Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, jfs-discussion@lists.sourceforge.net, logfs@logfs.org, Petr Vandrovec <petr@vandrovec.name>, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, linux-doc@vger.kernel.org
 
+Hi all,
 
+I send again the vmtruncate patch series. No change from the latest version, only rebased on the latest
+Linus's tree. I hope we can merge it for 3.8.
 
-2012-12-12 20:57, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>:
+Marco
 
-> Hi,
->=20
-> On Dec 12, 2012, at 6:30 PM, Sven-G=F6ran Bergh wrote:
->=20
-> [snip]
->>>=20
->>>  I think that this task hides many difficult questions. How does it
->>>  define what files fragmented or not? How does it measure the
->>>  fragmentation degree? What fragmentation degree should be a basis =
-for
->>>  defragmentation activity? When does it need to detect fragmentatio=
-n and
->>>  how to keep this knowledge? How does it make defragmentation witho=
-ut
->>>  performance degradation?
->>=20
->>  These questions are of special interest if we through in the type o=
-f
->>  media in the discussion. Fragmentation is not a big deal on NAND-ba=
-sed
->>  media (SSD:s, memory cards, USB-sticks, etc). Defragmentation activ=
-ity
->>  might even shorten the lifetime for such media due to the limited a=
-mount
->>  write/erase cycles.
->>=20
->=20
-> It is a good remark. Thank you.
->=20
-> Yes, of course, it needs to remember about NAND wearing, especially, =
-in the case=20
-> of online defragmenting. But, as you know, NILFS2 makes garbage colle=
-ction. As I=20
-> understand, GC can copy some blocks from cleaning segments into new o=
-nes. So,=20
-> such copying also shorten NAND lifetime. Do you suggest not to make g=
-arbage=20
-> collection because of it?
+Changes:
+v5: rebased after 3.7 release
+v4: fix an error for ocfs2, silently ignore truncate for procfs as suggested by Al
+v3: reworked after Al and Christoph comments
+v2: add documentation cleaning
+v1: first draft
 
-No?, obviously not :-)
+Marco Stornelli (21):
+  ufs: drop vmtruncate
+  sysv: drop vmtruncate
+  reiserfs: drop vmtruncate
+  procfs: drop vmtruncate
+  omfs: drop vmtruncate
+  ocfs2: drop vmtruncate
+  adfs: drop vmtruncate
+  affs: drop vmtruncate
+  bfs: drop vmtruncate
+  hfs: drop vmtruncate
+  hpfs: drop vmtruncate
+  jfs: drop vmtruncate
+  hfsplus: drop vmtruncate
+  logfs: drop vmtruncate
+  minix: drop vmtruncate
+  ncpfs: drop vmtruncate
+  nilfs2: drop vmtruncate
+  ntfs: drop vmtruncate
+  vfs: drop vmtruncate
+  mm: drop vmtruncate
+  documentation: drop vmtruncate
 
-> We have as minimum two points for online defragmenting: (1) before fl=
-ushing; (2)=20
-> during garbage collection. Thereby, if you make defragmenting before =
-any write=20
-> then you don't shorten NAND lifetime. We need to make garbage collect=
-ion=20
-> anyway. As a result, it is possible to use this activity for defragme=
-nting also.
->=20
-> Yes, of course, NAND flash has good performance for the case of rando=
-m reads.=20
-> But the case of contiguous file's blocks is more better than fragment=
-ed case=20
-> anyway. First of all, during reading of fragmented file you need to g=
-enerate=20
-> block address before every not sibling block's data reading. So, you =
-will=20
-> spend more cycles for read fragmented file than for the case of=A0 co=
-ntiguous=20
-> file's blocks. Secondly, because of read disturbance the random read =
-can=20
-> force FTL to copy more erase blocks to a new ones and, as a result, t=
-o lead to=20
-> more shorter NAND lifetime. Thirdly, fragmented volume state leads to=
- more=20
-> complex and unpredictable workloads with more intensive metadata oper=
-ations. It=20
-> can degrade filesystem performance. And, finally, GC has more harder =
-work in the=20
-> case of fragmented volume state, especially, for the case of presence=
- of deleted=20
-> files.
+ Documentation/filesystems/Locking |    6 ------
+ Documentation/filesystems/porting |    2 +-
+ Documentation/filesystems/vfs.txt |   11 -----------
+ fs/adfs/inode.c                   |   15 ++++++++++-----
+ fs/affs/file.c                    |   18 ++++++++++++------
+ fs/affs/inode.c                   |    5 ++++-
+ fs/bfs/file.c                     |   15 ++++++++++-----
+ fs/hfs/inode.c                    |   26 ++++++++++++++++++--------
+ fs/hfsplus/inode.c                |   27 ++++++++++++++++-----------
+ fs/hpfs/file.c                    |   18 ++++++++++++------
+ fs/hpfs/inode.c                   |    5 ++++-
+ fs/jfs/file.c                     |    6 ++++--
+ fs/jfs/inode.c                    |   20 ++++++++++++++------
+ fs/libfs.c                        |    2 --
+ fs/logfs/readwrite.c              |   10 ++++++++--
+ fs/minix/file.c                   |    6 ++++--
+ fs/minix/inode.c                  |   17 ++++++++++++-----
+ fs/ncpfs/inode.c                  |    4 +---
+ fs/nilfs2/file.c                  |    1 -
+ fs/nilfs2/inode.c                 |   24 +++++++++++++++---------
+ fs/nilfs2/nilfs.h                 |    1 +
+ fs/nilfs2/recovery.c              |    3 ++-
+ fs/ntfs/file.c                    |   16 +++++++++++++---
+ fs/ntfs/inode.c                   |    8 ++++++--
+ fs/ntfs/inode.h                   |    4 ++++
+ fs/ocfs2/file.c                   |   18 ------------------
+ fs/omfs/file.c                    |   22 +++++++++++++++-------
+ fs/proc/base.c                    |    7 -------
+ fs/proc/generic.c                 |    9 +--------
+ fs/proc/proc_sysctl.c             |    7 -------
+ fs/reiserfs/file.c                |    3 +--
+ fs/reiserfs/inode.c               |   15 +++++++++++----
+ fs/reiserfs/reiserfs.h            |    1 +
+ fs/sysv/file.c                    |    5 +++--
+ fs/sysv/itree.c                   |   17 ++++++++++++-----
+ fs/ufs/inode.c                    |   15 ++++++++++-----
+ include/linux/fs.h                |    1 -
+ include/linux/mm.h                |    1 -
+ mm/truncate.c                     |   23 -----------------------
+ 39 files changed, 225 insertions(+), 189 deletions(-)
 
-Ok, seems like you misunderstood my previous statement. I do not argue =
-against
-defragmenting. However, there are many use cases and I just felt that N=
-AND wearing
-is of great importance as SSD:s are marching in. Thus, it should be par=
-t of the
-discussion, so defrag is implemented in a NAND-friendly way. Trying to =
-minimize
-NAND wear as well. As you pointed out above, there are many parameters =
-in the
-equation and NAND is yet another one that needs to be considered.
+-- 
+1.7.3.4
 
-> Thereby, I think that it makes sense to implement online defragmentin=
-g for the=20
-> case of NILFS2. But, of course, it is a difficult and complex task be=
-cause of=20
-> probability to degrade performance and to shorten NAND lifetime.
-
-Spot on! Totally agree.
-
-Brgdrs
-/S-G
-
-> With the best regards,
-> Vyacheslav Dubeyko.
->=20
->>  Brgds
->>  /S-G
->>=20
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
-"=20
-> in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at=A0 http://vger.kernel.org/majordomo-info.html
->=20
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
