@@ -1,137 +1,89 @@
-From: Marco Stornelli <marco.stornelli@gmail.com>
-Subject: [PATCH 17/21] nilfs2: drop vmtruncate
-Date: Sat, 15 Dec 2012 11:57:37 +0100
-Message-ID: <50CC57A1.3040906@gmail.com>
+From: Andreas Rohner <e0502196-oe7qfRrRQffzPE21tAIdciO7C/xPubJB@public.gmane.org>
+Subject: Re: Contributing to NILFS
+Date: Sun, 16 Dec 2012 18:45:32 +0100
+Message-ID: <1355679932.761.57.camel@terok>
+References: <1355169902.803.19.camel@terok>
+	 <1355208388.2627.16.camel@slavad-ubuntu> <1355234065.803.61.camel@terok>
+	 <1355296112.2042.35.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:cc:subject
-         :content-type:content-transfer-encoding;
-        bh=BLRx22z6WaUH47U1/xFTv2mVmBvf3jDc7OkkFCsAL+c=;
-        b=xBMweKK2fdNUHlpXtufaKJfVgwVZe6JNCMYbyd0VlJcnIlrJzLcK8RWYGMh20QVrpu
-         SUU4xV/xyLYVDK+dbfPKv1QWxnnoc4/gIk5bcMl2jnJkaIZg/r23MZsFs6HKP1CLWghh
-         Z7Xly2fdRXFGBsbxEpK7vSTk0JDsMK/XqOaRSrjz1AsCeRup9LNlhqrxPSD5PWq7DKZ7
-         OE5btU21VDnTfDe+GFJ+EkJPUcHDJagqI4JstmhM+KKLjLv+0RP4forRHZAF+UZ83NJS
-         GT0U33/LWErstFihHNt13OdWH1ec7vicRJn0pMYM41zSabklzdNTrahjHN4khkDs+l+0
-         +yaQ==
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1355296112.2042.35.camel@slavad-ubuntu>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Linux FS Devel <linux-fsdevel@vger.kernel.org>
-Cc: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Removed vmtruncate
+Hi Vyacheslav,
 
-Signed-off-by: Marco Stornelli <marco.stornelli@gmail.com>
----
- fs/nilfs2/file.c     |    1 -
- fs/nilfs2/inode.c    |   24 +++++++++++++++---------
- fs/nilfs2/nilfs.h    |    1 +
- fs/nilfs2/recovery.c |    3 ++-
- 4 files changed, 18 insertions(+), 11 deletions(-)
+> I think that this task hides many difficult questions. How does it
+> define what files fragmented or not? How does it measure the
+> fragmentation degree? What fragmentation degree should be a basis for
+> defragmentation activity? When does it need to detect fragmentation and
+> how to keep this knowledge? How does it make defragmentation without
+> performance degradation?
+>
+> As I understand, when we are talking about defragmentation then we
+> expect a performance enhancement as a result. But defragmenter activity
+> can be a background reason of performance degradation. Not every
+> workload or I/O pattern can be a reason of significant fragmentation.
+> 
+> Also, it is a very important to choose a point of defragmentation. I
+> mean that it is possible to try to prevent fragmentation or to correct
+> fragmentation after flushing on the volume. It is possible to have a
+> some hybrid technique, I think. An I/O pattern or file type can be a
+> basis for such decision, I think.
 
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 16f35f7..6194688 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -167,7 +167,6 @@ const struct file_operations nilfs_file_operations = {
- };
- 
- const struct inode_operations nilfs_file_inode_operations = {
--	.truncate	= nilfs_truncate,
- 	.setattr	= nilfs_setattr,
- 	.permission     = nilfs_permission,
- 	.fiemap		= nilfs_fiemap,
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 4d31d2c..6b49f14 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -213,6 +213,16 @@ static int nilfs_set_page_dirty(struct page *page)
- 	return ret;
- }
- 
-+void nilfs_write_failed(struct address_space *mapping, loff_t to)
-+{
-+	struct inode *inode = mapping->host;
-+
-+	if (to > inode->i_size) {
-+		truncate_pagecache(inode, to, inode->i_size);
-+		nilfs_truncate(inode);
-+	}
-+}
-+
- static int nilfs_write_begin(struct file *file, struct address_space *mapping,
- 			     loff_t pos, unsigned len, unsigned flags,
- 			     struct page **pagep, void **fsdata)
-@@ -227,10 +237,7 @@ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
- 	err = block_write_begin(mapping, pos, len, flags, pagep,
- 				nilfs_get_block);
- 	if (unlikely(err)) {
--		loff_t isize = mapping->host->i_size;
--		if (pos + len > isize)
--			vmtruncate(mapping->host, isize);
--
-+		nilfs_write_failed(mapping, pos + len);
- 		nilfs_transaction_abort(inode->i_sb);
- 	}
- 	return err;
-@@ -259,6 +266,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
- 		loff_t offset, unsigned long nr_segs)
- {
- 	struct file *file = iocb->ki_filp;
-+	struct address_space *mapping = file->f_mapping;
- 	struct inode *inode = file->f_mapping->host;
- 	ssize_t size;
- 
-@@ -278,7 +286,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
- 		loff_t end = offset + iov_length(iov, nr_segs);
- 
- 		if (end > isize)
--			vmtruncate(inode, isize);
-+			nilfs_write_failed(mapping, end);
- 	}
- 
- 	return size;
-@@ -786,10 +794,8 @@ int nilfs_setattr(struct dentry *dentry, struct iattr *iattr)
- 	if ((iattr->ia_valid & ATTR_SIZE) &&
- 	    iattr->ia_size != i_size_read(inode)) {
- 		inode_dio_wait(inode);
--
--		err = vmtruncate(inode, iattr->ia_size);
--		if (unlikely(err))
--			goto out_err;
-+		truncate_setsize(inode, iattr->ia_size);
-+		nilfs_truncate(inode);
- 	}
- 
- 	setattr_copy(inode, iattr);
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 74cece8..9bc72de 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -277,6 +277,7 @@ extern void nilfs_update_inode(struct inode *, struct buffer_head *);
- extern void nilfs_truncate(struct inode *);
- extern void nilfs_evict_inode(struct inode *);
- extern int nilfs_setattr(struct dentry *, struct iattr *);
-+extern void nilfs_write_failed(struct address_space *mapping, loff_t to);
- int nilfs_permission(struct inode *inode, int mask);
- int nilfs_load_inode_block(struct inode *inode, struct buffer_head **pbh);
- extern int nilfs_inode_dirty(struct inode *);
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index f1626f5..ff00a0b 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -527,7 +527,8 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
- 		if (unlikely(err)) {
- 			loff_t isize = inode->i_size;
- 			if (pos + blocksize > isize)
--				vmtruncate(inode, isize);
-+				nilfs_write_failed(inode->i_mapping,
-+							pos + blocksize);
- 			goto failed_inode;
- 		}
- 
--- 
-1.7.3.4
+Yes I agree. It is of course a good idea to reorder the data before
+flushing and probably also to reorder it with the cleaner, but I
+thought, that was already implemented and optimized. Is it?
+
+Instead I imagined a tool like xfs_fsr for XFS. So the user can decide
+when to defragment the file system, by running it manually or with a
+cron job. Maybe this is a bit naive, since I probably don't know enough
+about NILFS. Couldn't we just calculate the number of segments a file
+uses if it is stored optimally and compare that to the actual number of
+segments the file is spread out. For example, file A has 16MB. Lets
+assume segments are of size 8MB. So (ignoring the metadata) file A
+should use 2 segments. Now we count the different segments where the
+blocks of file A really are, lets say 10, and calculate 1-(2/10)=0.8 So
+it is 80% fragmented.
+
+I wouldn't do that in the cleaner or in the background. Just a tool like
+xfs_fsr, that the user can run once a month in the middle of the night
+with a cron job. The tool would go through every file, calculate the
+fragmentation and collect other statistics and decide if it is worth
+defragmenting it or not.
+
+If the user has a SSD he/she can decide not to defragment at all.
+
+> As I understand, F2FS [1] has some defragmenting approaches. I think
+> that it needs to discuss more deeply about technique of detecting
+> fragmented files and fragmentation degree. But maybe hot data tracking
+> patch [2,3] will be a basis for such discussion.
+
+I did a quick search for F2FS defragmentation, but I couldn't find
+anything. Did you mean this section of the article? "...it provides
+large-scale write gathering so that when lots of blocks need to be
+written at the same time they are collected into large sequential
+writes..." Maybe I missed something, but isn't this just the inherent
+property of a log-structured file system and not defragmentation?
+
+Hot data tracking could be extremely useful for the cleaner. This paper
+[1] suggests, that the best cleaner performance can be achieved by
+distinguishing between hot and cold data. Is something like that already
+implemented? Maybe I could do that for my masters thesis instead of the
+defragmentation task... ;)
+
+Thanks for the links. 
+
+best regards,
+Andreas Rohner
+
+[1] http://www.cs.berkeley.edu/~brewer/cs262/LFS.pdf
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
