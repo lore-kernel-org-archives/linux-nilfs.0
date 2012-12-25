@@ -1,51 +1,70 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: NILFS: bad btree node
-Date: Tue, 25 Dec 2012 10:02:06 +0400
-Message-ID: <1356415326.2052.9.camel@slavad-ubuntu>
-References: <86B5C141-ACFA-4541-999F-E17E09F22476@gmail.com>
-	 <1355983713.2056.3.camel@slavad-ubuntu>
-	 <3455B0CD-EF89-4227-90E1-FC6B20F5F8EB@gmail.com>
-	 <1355996310.2056.28.camel@slavad-ubuntu>
-	 <14BA4286-BF21-4BD3-8E41-2F8F9512D801@gmail.com>
-	 <1356000112.2056.33.camel@slavad-ubuntu>
-	 <44056E9A-3487-4E8A-A56A-5B9228FC7895@gmail.com>
+Subject: Re: A lot of NILFS: bad btree node messages (readonly fs)
+Date: Tue, 25 Dec 2012 10:05:52 +0400
+Message-ID: <1356415552.2052.11.camel@slavad-ubuntu>
+References: <20121129210650.GA4028@wloczykij>
+	 <1354255744.2090.3.camel@slavad-ubuntu> <20121130073219.GB4028@wloczykij>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=l/St48DKGSM9ZA0Fx+WXCk/RD+lEdi/9qnuxVz09/dc=;
-	b=QiLNsHmoeX9O7s5w+yJH0oKkU9pNranVWyerPuFtMwMAESPdxlt5CDfaeFiAAU1619EnftZDqLBnnp4UzrUwXyZzXw/aw/SXwXK4xjqECNkDZYNMhtwTGF1YzzymkD25;
-In-Reply-To: <44056E9A-3487-4E8A-A56A-5B9228FC7895-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=hU3xpsRT6tj99A5N47ReReXlZmOpDoQ3WnqlA/DCLiw=;
+	b=IlLZZE2p4SUCGRzjYeTeXXALqv/H58R0zSbLxdR4EVe3rGNkUkY6rmI5vQE7rnjs6KSdj1rs99k9j0iaCKCJFL6OqAI9tP7FD5bg5EijQkiCDuRRvUsKzXspTDeuL6gb;
+In-Reply-To: <20121130073219.GB4028@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="utf-8"
-To: =?UTF-8?Q?=E5=BC=A0_=E7=A3=8A?= <freeboy6716-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+Hi Piotr,
 
-On Thu, 2012-12-20 at 19:02 +0800, =E5=BC=A0 =E7=A3=8A wrote:
-> Yes, I mounted NILFS2 as read-write. It's remounted as read-only by k=
-ernel when filesystem found the bad btree node.
->=20
-> That's the full backtrace. I will keep on testing, and report more in=
-fomation once I found.
->=20
+On Fri, 2012-11-30 at 08:32 +0100, Piotr Szymaniak wrote:
+> On Fri, Nov 30, 2012 at 10:09:04AM +0400, Vyacheslav Dubeyko wrote:
+> > Hi,
+> >=20
+> > On Thu, 2012-11-29 at 22:06 +0100, Piotr Szymaniak wrote:
+> > > Hello.
+> > >=20
+> > > Doing some work today (system update, kernel update, rsync rootfs=
+ with
+> > > external drive) I noticed some unwanted behaviour:
+> > > maszn ~ # touch afile
+> > > touch: cannot touch =E2=80=98afile=E2=80=99: System plik=C3=B3w w=
+y=C5=82=C4=85cznie do odczytu
+> > >                         it's Read only filesystem
+> > >=20
+> > > dmesg shows a lot (1812 in the log) of:
+> > > [ 8288.319012] NILFS: bad btree node (blocknr=3D26229286): level =
+=3D 178,
+> > > flags =3D 0x0, nchildren =3D 0
+> > > [ 8288.319017] NILFS error (device sda2): nilfs_bmap_lookup_conti=
+g:
+> > > broken bmap (inode number=3D102230)
+> > >=20
+> > > After mount -o remount,rw /
+> > > [ 8384.734024] segctord starting. Construction interval =3D 300 s=
+econds,
+> > > CP frequency < 30 seconds
+> > > [ 8384.734028] NILFS warning: mounting fs with errors
+> > >=20
+> > > Never happend before and it looks like it works fine now (using v=
+anilla
+> > > kernel 3.6.4).
+> > >=20
+> > > After a reboot (to vanilla kernel 3.6.8) dmesg shows:
+> > > [    6.046883] segctord starting. Construction interval =3D 300 s=
+econds,
+> > > CP frequency < 30 seconds
+> > > [    6.046884] NILFS warning: mounting fs with errors
+> > >=20
+> > > I don't like the "errors" part...
+> > >=20
 
-I am trying to reproduce the issue but currently without any success. I
-have a presupposition that it can be a synchronization issue between GC
-and main driver logic but I haven't any evidence of it yet. Probably, I
-can't reproduce some environment's peculiarities.
+Did you have any snapshots on this volume or not?
 
-So, I think that I need to understand more deeply a workload in that th=
-e
-issue had occurred. As I remember, you talked about several MySQL
-databases and so on. Could you describe in more details about what
-applications and how to work before issue occurrence?
-
-Thanks,
+With the best regards,
 Vyacheslav Dubeyko.
-
 
 
 --
