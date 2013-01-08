@@ -1,80 +1,93 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: A lot of NILFS: bad btree node messages (readonly fs)
-Date: Tue, 8 Jan 2013 15:52:30 +0300
-Message-ID: <504C0292-D0C6-426C-BDFD-1CD50FB32617@dubeyko.com>
-References: <20121129210650.GA4028@wloczykij> <1354255744.2090.3.camel@slavad-ubuntu> <20121130073219.GB4028@wloczykij> <1356415552.2052.11.camel@slavad-ubuntu> <20130103214913.GE2080@wloczykij> <28ABE57F-66DD-491E-9FDB-A6CE3CF773FB@dubeyko.com> <20130104191633.GF2080@wloczykij> <C2F4A5DE-538B-4468-9A6A-BA619EDDA462@dubeyko.com> <20130105164752.GG2080@wloczykij>
+Subject: Re: Strange "flush" process bahaviour
+Date: Tue, 8 Jan 2013 16:22:46 +0300
+Message-ID: <CC608A22-9D8F-4347-B54F-06C85176B6E5@dubeyko.com>
+References: <50A5737C.2040805@li.ru> <201211160313.AA04185@capsicum.lab.ntt.co.jp> <50A65588.3000205@li.ru> <CAKFNMomO6ebYkXk=A9H2Wieswvogt6dj16Otj0u74M4aHOOPBg@mail.gmail.com> <20121127151924.GW4028@wloczykij> <295B3FE7-A44E-4D57-9A6A-B725EF1BA9EB@dubeyko.com> <20121128142116.GY4028@wloczykij> <1354113560.2017.11.camel@slavad-ubuntu> <20121128205943.GZ4028@wloczykij>
 Mime-Version: 1.0 (Apple Message framework v1085)
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=KmJAuxW0NbXs9mXlFUV+nk97/y0DhGJ8Rooi+Iyj/24=;
-	b=DVq14eGJY/L7kkQbjC7136OcHVe9+x32Gc3eU4eMeHT1CqOTSbireNGk3RsESlcAVN0CpCsdDA5pOLYWhwDDFYO0V5Y88Vy/5QP+YUV63sqeMgfIbxOoh/H5V92zGzXE;
-In-Reply-To: <20130105164752.GG2080@wloczykij>
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=2il47pwDP/hJ5DEVBVU3NgKUnRIvCm5OjdQ/bG0kDos=;
+	b=oxcqwK+XexQ6Lf+n8s/MyVG/41siIOXwZbC3xsd/bcoRREsFHrO/A+lknkjwf37hCXqvgBKKfVykopU5xZylRJmpI1zrktpsvdDTzAINH62NXuZzyH1u3HfOrtcb1oNO;
+In-Reply-To: <20121128205943.GZ4028@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="utf-8"
-To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>, Elmer Zhang <freeboy6716-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?B?0KHQtdGA0LPQtdC5INCQ0LvQtdC60YHQsNC90LTRgNC+0LI=?= <splavgm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi guys,
+Hi,
 
-I am trying to reproduce the issue last three days but without success.=
- I tried different workloads and different environments. As I know all =
-of you have the issue in reproduced state. So I have additional questio=
-ns.
+On Nov 28, 2012, at 11:59 PM, Piotr Szymaniak wrote:
 
-1. All of you have such messages:
+> On Wed, Nov 28, 2012 at 06:39:20PM +0400, Vyacheslav Dubeyko wrote:
+>> On Wed, 2012-11-28 at 15:21 +0100, Piotr Szymaniak wrote:
+>>> On Tue, Nov 27, 2012 at 08:43:01PM +0300, Vyacheslav Dubeyko wrote:
+>>>> Could you describe the path of issue reproducing? What filesystem
+>>>> operations took place near before the issue?
+>>>=20
+>>> Reproduce: Use a computer with nilfs2? No idea... I notice this iss=
+ue
+>>> from time to time. I suppose it's more visible when the system is i=
+dle
+>>> and then I notice a lot of CPU load without any reason (also as I w=
+rote
+>>> before - it stops immediately after runnig sync).
+>>>=20
+>>=20
 
-Jan 03 22:36:38 [kernel] [  953.289973] NILFS: bad btree node (blocknr=3D=
-26229286): level =3D 67, flags =3D 0xee, nchildren =3D 40
-Jan 03 22:36:38 [kernel] [  953.289976] NILFS error (device sda2): nilf=
-s_bmap_lookup_contig: broken bmap (inode number=3D102230)
+I have reproduced the issue by chance. The reproducibility of the issue=
+ is 100%.
 
-As I understand, you still have message for concrete block number (for =
-example, blocknr=3D26229286) during remount. But you haven't the messag=
-e for this block number (for example, blocknr=3D26229286) after umount =
-and mount again. But you can get error messages for another block numbe=
-r after it. Am I correct?
+The reproducing path is:
+1. Generate some file about 100 - 500 GB (for example, by: "dd if=3D/de=
+v/zero of=3D<file_name> bs=3D1048576 count=3D102400"). The size of the =
+file defines the duration of the issue reproducibility.
+2. Try to execute "rm", "truncate" or "dd" command. In the case of "dd"=
+ it needs to use without notrunc option (for example, "dd if=3D/dev/ura=
+ndom of=3D<file_name> bs=3D1024 seek=3D51200 count=3D10").
+3. As a result you can see flush kernel thread that uses 60 - 100 % of =
+CPU time during 5 - 40 minutes:
 
-2. As I understand, you have corrupted file on your volume after such e=
-rror message (for example, for inode number=3D102230).
+top - 23:48:53 up  6:11, 15 users,  load average: 1.71, 1.16, 1.81
+Tasks: 226 total,   3 running, 223 sleeping,   0 stopped,   0 zombie
+Cpu(s):  5.3%us, 94.7%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si, =
+ 0.0%st
+Mem:   7640788k total,  3991784k used,  3649004k free,    28196k buffer=
+s
+Swap:  1952764k total,        0k used,  1952764k free,  3126224k cached
 
-=E5=9C=A8 2013-1-6=EF=BC=8C12:46=EF=BC=8CElmer Zhang <freeboy6716@gmail=
-=2Ecom> =E5=86=99=E9=81=93=EF=BC=9A
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND   =
+                                                                       =
+                                           =20
+12358 root      20   0 99484  668  544 R   97  0.0   0:55.27 dd        =
+                                                                       =
+                                           =20
+ 3027 root      20   0     0    0    0 R   87  0.0  31:46.94 flush-8:32
 
-> I have found the corrupted file using inode number:
-> [root@yf237 data0]# cat mysql6003/app_wyxgrab/weibo_rank.MYI > /dev/n=
-ull=20
-> cat: mysql6003/app_wyxgrab/weibo_rank.MYI: Input/output error
+I suspect the nilfs_mdt_write_page() but I need a more time for the iss=
+ue investigation.
 
-Could you share strace output for "cat" command for such corrupted file=
-? Maybe syslog can contain some interesting details during execution of=
- "cat" command. Could you check syslog for interesting error messages d=
-uring such try?
-
-3. Could you share configuration file of your kernel (.config)? I suspe=
-ct that you can have some special configuration of your environment tha=
-t I haven't.
-
-4. Could you share content of nilfs_cleanerd.conf file for NILFS2 parti=
-tion that has such issue? Sorry, if I ask about it again.
-
-5. Did you have any sudden power-off before you encounter the issue fir=
-stly?
-
-6. I understand that it can be not so easy. But, anyway, could you shar=
-e details of your system log for the case of first case of the issue oc=
-currence? I need only details about how live system before the issue.
-
-7. I analyzed the raw dump of segment that I received from Elmer Zhang.=
- Currently, I have such feeling that it takes place situation when driv=
-er tries to take block that was filled by GC yet. But it needs to inves=
-tigate the issue more deeply. And, currently, I don't understand how th=
-e issue can be achieved. Successful reproducing of the issue is a half =
-of the success.
-
-Thanks,
+With the best regards,
 Vyacheslav Dubeyko.
+
+>> Ok. Could you share output of "top" and "ps ax" for the case of issu=
+e
+>> reproducing? These outputs can be helpful for beginning of analysis.
+>=20
+> Already attached [1] "ps ax" output before. Don't know if top can get
+> something usefull here, but I can try to "catch" it.
+>=20
+> [1] http://www.spinics.net/lists/linux-nilfs/msg01481.html
+>=20
+> Piotr Szymaniak.
+> --=20
+> Moim jedynym bogiem jest w=C3=B3dka.  Moi =C5=9Bwi=C4=99ci to marki, =
+franki i dolary.
+> Jedyna =C5=9Bwi=C4=85tynia,  kt=C3=B3r=C4=85 odwiedzam,  to pochwa ko=
+biety. A m=C3=B3j sakrament
+> to pieprzenie.
+>  -- Nelson DeMille, "The Lion's Game"
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
