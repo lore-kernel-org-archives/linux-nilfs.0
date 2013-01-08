@@ -1,146 +1,80 @@
-From: Elmer Zhang <freeboy6716-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: nilfs causes the server crashed
-Date: Mon, 7 Jan 2013 16:03:55 +0800
-Message-ID: <A804603B-A921-4618-9BA3-8FE3F6A37316@gmail.com>
-References: <0E29E2A8-658D-4911-A1B9-7080BAFDE020@gmail.com> <9EF47262-0248-4F4C-9C60-BEA95BD87BBF@dubeyko.com>
-Mime-Version: 1.0 (Mac OS X Mail 6.2 \(1499\))
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: A lot of NILFS: bad btree node messages (readonly fs)
+Date: Tue, 8 Jan 2013 15:52:30 +0300
+Message-ID: <504C0292-D0C6-426C-BDFD-1CD50FB32617@dubeyko.com>
+References: <20121129210650.GA4028@wloczykij> <1354255744.2090.3.camel@slavad-ubuntu> <20121130073219.GB4028@wloczykij> <1356415552.2052.11.camel@slavad-ubuntu> <20130103214913.GE2080@wloczykij> <28ABE57F-66DD-491E-9FDB-A6CE3CF773FB@dubeyko.com> <20130104191633.GF2080@wloczykij> <C2F4A5DE-538B-4468-9A6A-BA619EDDA462@dubeyko.com> <20130105164752.GG2080@wloczykij>
+Mime-Version: 1.0 (Apple Message framework v1085)
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=x-received:content-type:mime-version:subject:from:in-reply-to:date
-         :cc:content-transfer-encoding:message-id:references:to:x-mailer;
-        bh=GOkpKQYlrTjyk1DoTULKxItzgoX2WOvzKq0TEuVLU/0=;
-        b=AelX3NLNNZ/7/pW+PLOEy5J58r0iIlTvSiTWGH2fgAE08aaQ8IzJ3m6BpwSnaG0kaK
-         ekS60CQRsZuejk28+AQDppaeH2hJtmn3Tz/XTDtSL7DASZ/p5X0QgSXzP0CvyyfOotiM
-         65HDlBM7rBNh3WsBou/fQDz6eLzhsJPA0WvQuxXEdNQTtdCvRvyArjx/ZwCydw1oJ0Jx
-         p4Zg3cFtSvCkSMpdBna5r6qQjH1zNeaplBsSKOdoCeqQU1kx5ORwuJ9ao0AkZuQMOpTH
-         UcJV7X5CKRMiIhz19pXiuBb6piEa9aTH/x2R+Pth+xBfQp+Twgfb/fHmvgoo/IYLUFW3
-         iFTw==
-In-Reply-To: <9EF47262-0248-4F4C-9C60-BEA95BD87BBF-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=KmJAuxW0NbXs9mXlFUV+nk97/y0DhGJ8Rooi+Iyj/24=;
+	b=DVq14eGJY/L7kkQbjC7136OcHVe9+x32Gc3eU4eMeHT1CqOTSbireNGk3RsESlcAVN0CpCsdDA5pOLYWhwDDFYO0V5Y88Vy/5QP+YUV63sqeMgfIbxOoh/H5V92zGzXE;
+In-Reply-To: <20130105164752.GG2080@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>, Elmer Zhang <freeboy6716-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?B?0KHQtdGA0LPQtdC5INCQ0LvQtdC60YHQsNC90LTRgNC+0LI=?= <splavgm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+Hi guys,
 
-=D4=DA 2013-1-7=A3=AC02:59=A3=ACVyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> =
-=D0=B4=B5=C0=A3=BA
+I am trying to reproduce the issue last three days but without success.=
+ I tried different workloads and different environments. As I know all =
+of you have the issue in reproduced state. So I have additional questio=
+ns.
 
->=20
-> On Jan 6, 2013, at 10:44 AM, Elmer Zhang wrote:
->=20
->> Hi,
->> My server always crash and reboot when I start MySQLs which stores t=
-he data on NILFS2 filesystem.
->>=20
->> I found some vmcore, but they are so big and I don't know how to ext=
-ract useful information from them.
->> ~]# ll -h /var/crash/*/*
->> -rw------- 1 root root 141M Dec 20 16:14 /var/crash/127.0.0.1-2012-1=
-2-20-16:14:03/vmcore
->> -rw------- 1 root root 512M Jan  4 16:00 /var/crash/127.0.0.1-2013-0=
-1-04-15:59:20/vmcore
->> -rw------- 1 root root  92M Jan  4 16:25 /var/crash/127.0.0.1-2013-0=
-1-04-16:25:35/vmcore
->> -rw------- 1 root root  62M Jan  4 16:50 /var/crash/127.0.0.1-2013-0=
-1-04-16:50:02/vmcore
->> -rw------- 1 root root  63M Jan  4 18:55 /var/crash/127.0.0.1-2013-0=
-1-04-18:55:43/vmcore
->> -rw------- 1 root root  80M Jan  5 14:55 /var/crash/127.0.0.1-2013-0=
-1-05-14:55:15/vmcore
->> -rw------- 1 root root  65M Jan  5 15:30 /var/crash/127.0.0.1-2013-0=
-1-05-15:30:35/vmcore
->> -rw------- 1 root root 199M Jan  6 15:06 /var/crash/127.0.0.1-2013-0=
-1-06-15:06:19/vmcore
->>=20
->=20
-> Crashdumps can be useful, I think. As I can see, you can use crash ut=
-ility for analyzing it (http://magazine.redhat.com/2007/08/15/a-quick-o=
-verview-of-linux-kernel-crash-dump-analysis/). I think that bt, log and=
- ps internal commands of crash utility can be very interesting. Could y=
-ou share details of its output?
-The output of crash: http://d.pr/n/V9ay
-bt: http://d.pr/n/fyAs
-log: http://d.pr/n/dYI0
-ps: http://d.pr/n/KguM
+1. All of you have such messages:
 
->=20
->> And below is some snapshot of the screen, hope it's useful:
->> http://d.pr/i/4OZR
->> http://d.pr/i/10M3
->> http://d.pr/i/HnJn
->> http://d.pr/i/HW6t
->>=20
->=20
-> I hope that these screenshots are a consequence of the initial issue.=
- But maybe it is a some new issue.
->=20
->> My environment:
->> kernel: 2.6.32-220.13.1.el6.x86_64
->> kmod-nilfs2-0.4.3-1.el6.x86_64
->> nilfs-utils-2.1.4-7.x86_64
->> Raid: raid10 with SEAGATE ST32000444SS(2TB) * 12
->> mount: /dev/sdb2 on /data0 type nilfs2 (rw,noatime,gcpid=3D9047)
->>=20
->> ~]# nilfs-tune -l /dev/sdb2=20
->> nilfs-tune 2.1.4
->> Filesystem volume name:	  (none)
->> Filesystem UUID:	  dcfb7152-a342-48d0-a712-212a3062395e
->> Filesystem magic number:  0x3434
->> Filesystem revision #:	  2.0
->> Filesystem features:      (none)
->> Filesystem state:	  invalid or mounted,error
->> Filesystem OS type:	  Linux
->> Block size:		  4096
->> Filesystem created:	  Mon Dec  3 13:56:51 2012
->> Last mount time:	  Sun Jan  6 15:41:34 2013
->> Last write time:	  Sun Jan  6 15:41:34 2013
->> Mount count:		  25
->> Maximum mount count:	  50
->> Reserve blocks uid:	  0 (user root)
->> Reserve blocks gid:	  0 (group root)
->> First inode:		  11
->> Inode size:		  128
->> DAT entry size:		  32
->> Checkpoint size:	  192
->> Segment usage size:	  16
->> Number of segments:	  1246464
->> Device size:		  10456104173568
->> First data block:	  1
->> # of blocks per segment:  2048
->> Reserved segments %:	  5
->> Last checkpoint #:	  6327388
->> Last block address:	  256856089
->> Last sequence #:	  3862375
->> Free blocks count:	  598300672
->> Commit interval:	  60
->> # of blks to create seg:  0
->> CRC seed:		  0x3adfb6c3
->> CRC check sum:		  0xca2168f3
->> CRC check data size:	  0x00000118
->>=20
->=20
-> Thank you for details.
->=20
-> With the best regards,
-> Vyacheslav Dubeyko.
->=20
->>=20
->> Thanks
->> ---
->> Elmer Zhang
->>=20
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-nilf=
-s" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->=20
+Jan 03 22:36:38 [kernel] [  953.289973] NILFS: bad btree node (blocknr=3D=
+26229286): level =3D 67, flags =3D 0xee, nchildren =3D 40
+Jan 03 22:36:38 [kernel] [  953.289976] NILFS error (device sda2): nilf=
+s_bmap_lookup_contig: broken bmap (inode number=3D102230)
 
----
-Elmer Zhang
+As I understand, you still have message for concrete block number (for =
+example, blocknr=3D26229286) during remount. But you haven't the messag=
+e for this block number (for example, blocknr=3D26229286) after umount =
+and mount again. But you can get error messages for another block numbe=
+r after it. Am I correct?
+
+2. As I understand, you have corrupted file on your volume after such e=
+rror message (for example, for inode number=3D102230).
+
+=E5=9C=A8 2013-1-6=EF=BC=8C12:46=EF=BC=8CElmer Zhang <freeboy6716@gmail=
+=2Ecom> =E5=86=99=E9=81=93=EF=BC=9A
+
+> I have found the corrupted file using inode number:
+> [root@yf237 data0]# cat mysql6003/app_wyxgrab/weibo_rank.MYI > /dev/n=
+ull=20
+> cat: mysql6003/app_wyxgrab/weibo_rank.MYI: Input/output error
+
+Could you share strace output for "cat" command for such corrupted file=
+? Maybe syslog can contain some interesting details during execution of=
+ "cat" command. Could you check syslog for interesting error messages d=
+uring such try?
+
+3. Could you share configuration file of your kernel (.config)? I suspe=
+ct that you can have some special configuration of your environment tha=
+t I haven't.
+
+4. Could you share content of nilfs_cleanerd.conf file for NILFS2 parti=
+tion that has such issue? Sorry, if I ask about it again.
+
+5. Did you have any sudden power-off before you encounter the issue fir=
+stly?
+
+6. I understand that it can be not so easy. But, anyway, could you shar=
+e details of your system log for the case of first case of the issue oc=
+currence? I need only details about how live system before the issue.
+
+7. I analyzed the raw dump of segment that I received from Elmer Zhang.=
+ Currently, I have such feeling that it takes place situation when driv=
+er tries to take block that was filled by GC yet. But it needs to inves=
+tigate the issue more deeply. And, currently, I don't understand how th=
+e issue can be achieved. Successful reproducing of the issue is a half =
+of the success.
+
+Thanks,
+Vyacheslav Dubeyko.
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
