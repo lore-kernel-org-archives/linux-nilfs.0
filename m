@@ -1,534 +1,143 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+From: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
 Subject: Re: [PATCH] nilfs-utils: Work around uncleanable full filesystem
-Date: Mon, 14 Jan 2013 22:49:50 +0300
-Message-ID: <37A149BD-4D8E-4C55-9301-428034C5B9DA@dubeyko.com>
-References: <1358178899-26347-1-git-send-email-sven@narfation.org>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Transfer-Encoding: 8BIT
+Date: Mon, 14 Jan 2013 19:55:27 +0100
+Message-ID: <2856062.J1h4ec8Fju@bentobox>
+References: <1358178899-26347-1-git-send-email-sven@narfation.org> <37A149BD-4D8E-4C55-9301-428034C5B9DA@dubeyko.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; boundary="nextPart4441251.K3O1dz2NRy"; micalg="pgp-sha512"; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=zP3psX9oGMkH2ggz3IKWcY1UgZ4mjKHG4vhs+myCJco=;
-	b=gySARj+GpGiEyZYGzgzYpSrRoVIjLVwmRtsUayg++9VfdBSf1f3sWy0L46v5oKFb69cKxj9wasXo/pMwxAbo6GzIaTwAUIREAntbwE8yBNFpsJkKNdeS/jC0xWOeaRYM;
-In-Reply-To: <1358178899-26347-1-git-send-email-sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=narfation.org;
+	s=20121; t=1358189729;
+	bh=FlyMDXfD/m+5myRwGMWzpiGyRK8wrOSkZnKPYdHJWKs=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=Gjp1HCa9T10l7B5CyIITqQiGVCzajunKJwy5ihTRk2DLj0nMjdChD5caX46QBNMyC
+	 w46A9Kbog2/mZ/jwLNI3P1u/M21JE53VEP6Lx8ejGNp73a+DYfgRPWldlymIzjiln6
+	 BwzAUsS615NOhKD7BOfs+0QOAwLfvcuhL3e1rPE8=
+In-Reply-To: <37A149BD-4D8E-4C55-9301-428034C5B9DA-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Sven,
 
-On Jan 14, 2013, at 6:54 PM, Sven Eckelmann wrote:
+--nextPart4441251.K3O1dz2NRy
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="us-ascii"
 
-> The filesystem can end up in a state were the filesystem is full and the
-> returned ss_nongc_ctime is smaller than sui_lastmod of all reclaimable
-> segments. The garbage collector will not clean anything and therefore no new
-> room for new files will be available and ss_nongc_ctime/sui_lastmod will not be
-> updated without using special tools. This makes the filesystem unusable without
-> manual recovery.
+On Monday 14 January 2013 22:49:50 Vyacheslav Dubeyko wrote:
+> Hi Sven,
 > 
-> Signed-off-by: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
-> --
-> This problem appeared on a current 3.2 stable kernel (Debian Wheezy build). I
-> am not an FS developer and have therefore not much background knowledge about
-> the NILFS codebase. Nevertheless, this problem hit me quite hard after creating
-> some files on a nilfs partition until it was full and deleting them again.
+> On Jan 14, 2013, at 6:54 PM, Sven Eckelmann wrote:
+> > The filesystem can end up in a state were the filesystem is full and the
+> > returned ss_nongc_ctime is smaller than sui_lastmod of all reclaimable
+> > segments. The garbage collector will not clean anything and therefore no
+> > new room for new files will be available and ss_nongc_ctime/sui_lastmod
+> > will not be updated without using special tools. This makes the
+> > filesystem unusable without manual recovery.
+> > 
+> > Signed-off-by: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
+> > --
+> > This problem appeared on a current 3.2 stable kernel (Debian Wheezy
+> > build). I am not an FS developer and have therefore not much background
+> > knowledge about the NILFS codebase. Nevertheless, this problem hit me
+> > quite hard after creating some files on a nilfs partition until it was
+> > full and deleting them again.
+> > 
+> > $ for i in `seq 0 150`; do dd if=/dev/zero of=foo$i count=22528; done
+> > $ rm foo*
+> > 
+> > Looking at the output debugging output using
+> > 
+> > $ watch -n .5 'df -h;tail /var/log/syslog;'
 > 
-> $ for i in `seq 0 150`; do dd if=/dev/zero of=foo$i count=22528; done
-> $ rm foo*
+> As I understand, you did such sequence of actions:
+> 1. Generate such count of files that the whole size of used space was about
+> the partition size. 2. Delete all generated files.
+> 3. Expect that previously used space is become fully free.
 > 
-> Looking at the output debugging output using
-> 
-> $ watch -n .5 'df -h;tail /var/log/syslog;'
-> 
+> Am I correct?
 
-As I understand, you did such sequence of actions:
-1. Generate such count of files that the whole size of used space was about the partition size.
-2. Delete all generated files.
-3. Expect that previously used space is become fully free.
+Nearly. Here is my config file:
 
-Am I correct?
+protection_period       0
+min_clean_segments      10%
+max_clean_segments      20%
+clean_check_interval    5
+selection_policy        timestamp
+nsegments_per_clean     8
+mc_nsegments_per_clean  8
+cleaning_interval       5
+mc_cleaning_interval    1
+retry_interval          40
+use_mmap
+log_priority            debug
 
-I think that you have some misunderstanding of NILFS2 working. The GC of NILFS2 works in background and it needs to wait sometime before segments will be clean. If you have necessity to begin cleaning immediately then you can execute "nilfs-clean -p 0". Did you try to use it?
 
-I think that you try to achieve by this patch the result of  "nilfs-clean -p 0".
+and an alternative version
 
-Sorry, if I misunderstand something. Please, correct me if I am wrong.
+protection_period       20
+min_clean_segments      10%
+max_clean_segments      20%
+clean_check_interval    5
+selection_policy        timestamp
+nsegments_per_clean     8
+mc_nsegments_per_clean  8
+cleaning_interval       5
+mc_cleaning_interval    1
+retry_interval          40
+use_mmap
+log_priority            debug
 
-Thanks,
-Vyacheslav Dubeyko.
+So I would have expected that nilfs would have some free space again after 20 
+seconds (+ time it needs to free stuff). But it did not and I've showed the 
+reason in my explanation (threshold vs. the time stored in each reclaimable  
+segment).
 
-> clearly showed that it was not finding any segments to delete. The only problem
-> I could find was the threshold. After "removing" this threshold, I was able to
-> get some clear segments again. I personally cannot explain why the check is
-> there at all. Maybe there is a good reason but the comment above it didn't help
-> much.
+At least "no free space after a work day" was not the expected result using 
+this setup.
+
+> I think that you have some misunderstanding of NILFS2 working. The GC of
+> NILFS2 works in background and it needs to wait sometime before segments
+> will be clean. If you have necessity to begin cleaning immediately then you
+> can execute "nilfs-clean -p 0". Did you try to use it?
 > 
-> So, here for completeness the threshold: 1358164666 (aka: Mon Jan 14 12:57:46
-> CET 2013)
-> 
-> And here are the output of lssu and lscp:
-> 
-> $ lssu --all
-> SEGNUM        DATE     TIME STAT     NBLOCKS
-> 0  2013-01-14 12:58:23  -d-        2047
-> 1  2013-01-14 12:58:23  -d-        2048
-> 2  2013-01-14 12:58:23  -d-        2048
-> 3  2013-01-14 12:58:26  -d-        2048
-> 4  2013-01-14 12:58:26  -d-        2048
-> 5  2013-01-14 12:58:26  -d-        2048
-> 6  2013-01-14 12:58:26  -d-        2048
-> 7  2013-01-14 12:58:26  -d-        2048
-> 8  2013-01-14 12:58:26  -d-        2048
-> 9  2013-01-14 12:58:26  -d-        2048
-> 10  2013-01-14 12:58:26  -d-        2048
-> 11  2013-01-14 12:58:29  -d-        2048
-> 12  2013-01-14 12:58:29  -d-        2048
-> 13  2013-01-14 12:58:29  -d-        2048
-> 14  2013-01-14 12:58:29  -d-        2048
-> 15  2013-01-14 12:58:29  -d-        2048
-> 16  2013-01-14 12:58:29  -d-        2048
-> 17  2013-01-14 12:58:29  -d-        2048
-> 18  2013-01-14 12:58:29  -d-        2048
-> 19  2013-01-14 12:58:32  -d-        2048
-> 20  2013-01-14 12:58:32  -d-        2048
-> 21  2013-01-14 12:58:32  -d-        2048
-> 22  2013-01-14 12:58:33  -d-        2048
-> 23  2013-01-14 12:58:33  -d-        2048
-> 24  2013-01-14 12:58:33  -d-        2048
-> 25  2013-01-14 12:58:33  -d-        2048
-> 26  2013-01-14 12:58:33  -d-        2048
-> 27  2013-01-14 12:58:36  -d-        2048
-> 28  2013-01-14 12:58:36  -d-        2048
-> 29  2013-01-14 12:58:36  -d-        2048
-> 30  2013-01-14 12:58:36  -d-        2048
-> 31  2013-01-14 12:58:36  -d-        2048
-> 32  2013-01-14 12:58:36  -d-        2048
-> 33  2013-01-14 12:58:36  -d-        2048
-> 34  2013-01-14 12:58:36  -d-        2048
-> 35  2013-01-14 12:58:40  -d-        2048
-> 36  2013-01-14 12:58:40  -d-        2048
-> 37  2013-01-14 12:58:40  -d-        2048
-> 38  2013-01-14 12:58:40  -d-        2048
-> 39  2013-01-14 12:58:40  -d-        2048
-> 40  2013-01-14 12:58:40  -d-        2048
-> 41  2013-01-14 12:58:40  -d-        2048
-> 42  2013-01-14 12:58:40  -d-        2048
-> 43  2013-01-14 12:58:43  -d-        2048
-> 44  2013-01-14 12:58:43  -d-        2048
-> 45  2013-01-14 12:58:43  -d-        2048
-> 46  2013-01-14 12:58:43  -d-        2048
-> 47  2013-01-14 12:58:43  -d-        2048
-> 48  2013-01-14 12:58:43  -d-        2048
-> 49  2013-01-14 12:58:43  -d-        2048
-> 50  2013-01-14 12:58:43  -d-        2048
-> 51  2013-01-14 12:58:47  -d-        2048
-> 52  2013-01-14 12:58:47  -d-        2048
-> 53  2013-01-14 12:58:47  -d-        2048
-> 54  2013-01-14 12:58:47  -d-        2048
-> 55  2013-01-14 12:58:47  -d-        2048
-> 56  2013-01-14 12:58:47  -d-        2048
-> 57  2013-01-14 12:58:47  -d-        2048
-> 58  2013-01-14 12:58:47  -d-        2048
-> 59  2013-01-14 12:58:50  -d-        2048
-> 60  2013-01-14 12:58:51  -d-        2048
-> 61  2013-01-14 12:58:51  -d-        2048
-> 62  2013-01-14 12:58:51  -d-        2048
-> 63  2013-01-14 12:58:51  -d-        2048
-> 64  2013-01-14 12:58:51  -d-        2048
-> 65  2013-01-14 12:58:51  -d-        2048
-> 66  2013-01-14 12:58:51  -d-        2048
-> 67  2013-01-14 12:58:54  -d-        2048
-> 68  2013-01-14 12:58:54  -d-        2048
-> 69  2013-01-14 12:58:54  -d-        2048
-> 70  2013-01-14 12:58:54  -d-        2048
-> 71  2013-01-14 12:58:54  -d-        2048
-> 72  2013-01-14 12:58:54  -d-        2048
-> 73  2013-01-14 12:58:54  -d-        2048
-> 74  2013-01-14 12:58:54  -d-        2048
-> 75  2013-01-14 12:58:57  -d-        2047
-> 76  2013-01-14 12:58:57  -d-        2048
-> 77  2013-01-14 12:58:57  -d-        2048
-> 78  2013-01-14 12:58:57  -d-        2048
-> 79  2013-01-14 12:58:57  -d-        2048
-> 80  2013-01-14 12:58:57  -d-        2048
-> 81  2013-01-14 12:58:57  -d-        2048
-> 82  2013-01-14 12:58:57  -d-        2048
-> 83  2013-01-14 12:59:01  -d-        2048
-> 84  2013-01-14 12:59:01  -d-        2048
-> 85  2013-01-14 12:59:01  -d-        2048
-> 86  2013-01-14 12:59:01  -d-        2048
-> 87  2013-01-14 12:59:01  -d-        2048
-> 88  2013-01-14 12:59:01  -d-        2048
-> 89  2013-01-14 12:59:01  -d-        2048
-> 90  2013-01-14 12:59:01  -d-        2048
-> 91  2013-01-14 12:59:04  -d-        2048
-> 92  2013-01-14 12:59:04  -d-        2048
-> 93  2013-01-14 12:59:04  -d-        2048
-> 94  2013-01-14 12:59:04  -d-        2048
-> 95  2013-01-14 12:59:04  -d-        2048
-> 96  2013-01-14 12:59:04  -d-        2048
-> 97  2013-01-14 12:59:04  -d-        2048
-> 98  2013-01-14 12:59:04  -d-        2048
-> 99  2013-01-14 12:59:08  -d-        2048
-> 100  2013-01-14 12:59:08  -d-        2048
-> 101  2013-01-14 12:59:08  -d-        2048
-> 102  2013-01-14 12:59:08  -d-        2048
-> 103  2013-01-14 12:59:08  -d-        2048
-> 104  2013-01-14 12:59:08  -d-        2048
-> 105  2013-01-14 12:59:08  -d-        2048
-> 106  2013-01-14 12:59:08  -d-        2048
-> 107  2013-01-14 12:59:11  -d-        2048
-> 108  2013-01-14 12:59:11  -d-        2048
-> 109  2013-01-14 12:59:11  -d-        2048
-> 110  2013-01-14 12:59:11  -d-        2048
-> 111  2013-01-14 12:59:11  -d-        2048
-> 112  2013-01-14 12:59:12  -d-        2048
-> 113  2013-01-14 12:59:12  -d-        2048
-> 114  2013-01-14 12:59:12  -d-        2048
-> 115  2013-01-14 12:59:15  -d-        2048
-> 116  2013-01-14 12:59:15  -d-        2048
-> 117  2013-01-14 12:59:15  -d-        2048
-> 118  2013-01-14 12:59:15  -d-        2048
-> 119  2013-01-14 12:59:15  -d-        2048
-> 120  2013-01-14 12:59:15  -d-        2048
-> 121  2013-01-14 12:59:15  -d-        2048
-> 122  2013-01-14 12:59:15  -d-        2048
-> 123  2013-01-14 12:59:18  -d-        2048
-> 124  2013-01-14 12:59:18  -d-        2048
-> 125  2013-01-14 12:59:18  -d-        2048
-> 126  2013-01-14 12:59:18  -d-        2048
-> 127  2013-01-14 12:59:18  -d-        2048
-> 128  2013-01-14 12:59:18  -d-        2048
-> 129  2013-01-14 12:59:18  -d-        2048
-> 130  2013-01-14 12:59:18  -d-        2048
-> 131  2013-01-14 12:59:21  -d-        2048
-> 132  2013-01-14 12:59:21  -d-        2048
-> 133  2013-01-14 12:59:21  -d-        2048
-> 134  2013-01-14 12:59:21  -d-        2048
-> 135  2013-01-14 12:59:21  -d-        2048
-> 136  2013-01-14 12:59:21  -d-        2048
-> 137  2013-01-14 12:59:22  -d-        2048
-> 138  2013-01-14 12:59:22  -d-        2048
-> 139  2013-01-14 12:59:25  -d-        2048
-> 140  2013-01-14 12:59:25  -d-        2048
-> 141  2013-01-14 12:59:25  -d-        2048
-> 142  2013-01-14 12:59:25  -d-        2048
-> 143  2013-01-14 12:59:25  -d-        2048
-> 144  2013-01-14 12:59:25  -d-        2048
-> 145  2013-01-14 12:59:25  -d-        2048
-> 146  2013-01-14 12:59:25  -d-        2048
-> 147  2013-01-14 12:59:28  -d-        2048
-> 148  2013-01-14 12:59:28  -d-        2048
-> 149  2013-01-14 12:59:28  -d-        2048
-> 150  2013-01-14 12:59:28  -d-        2048
-> 151  2013-01-14 12:59:28  -d-        2048
-> 152  2013-01-14 12:59:28  -d-        2048
-> 153  2013-01-14 12:59:28  -d-        2048
-> 154  2013-01-14 12:59:29  -d-        2048
-> 155  2013-01-14 12:59:32  -d-        2048
-> 156  2013-01-14 12:59:32  -d-        2048
-> 157  2013-01-14 12:59:32  -d-        2048
-> 158  2013-01-14 12:59:32  -d-        2048
-> 159  2013-01-14 12:59:32  -d-        2048
-> 160  2013-01-14 12:59:32  -d-        2048
-> 161  2013-01-14 12:59:32  -d-        2048
-> 162  2013-01-14 12:59:32  -d-        2048
-> 163  2013-01-14 12:59:35  -d-        2048
-> 164  2013-01-14 12:59:35  -d-        2048
-> 165  2013-01-14 12:59:35  -d-        2048
-> 166  2013-01-14 12:59:38  -d-        2048
-> 167  2013-01-14 12:59:38  -d-        2048
-> 168  2013-01-14 12:59:38  -d-        2048
-> 169  2013-01-14 12:59:38  -d-        2048
-> 170  2013-01-14 12:59:38  -d-        2048
-> 171  2013-01-14 12:59:38  -d-        2048
-> 172  2013-01-14 12:59:38  -d-        2048
-> 173  2013-01-14 12:59:38  -d-        2048
-> 174  2013-01-14 12:59:42  -d-        2048
-> 175  2013-01-14 12:59:42  -d-        2048
-> 176  2013-01-14 12:59:42  -d-        2048
-> 177  2013-01-14 12:59:42  -d-        2048
-> 178  2013-01-14 12:59:42  -d-        2048
-> 179  2013-01-14 12:59:42  -d-        2048
-> 180  2013-01-14 12:59:42  -d-        2048
-> 181  2013-01-14 12:59:42  -d-        2048
-> 182  2013-01-14 12:59:45  -d-        2048
-> 183  2013-01-14 12:59:45  -d-        2048
-> 184  2013-01-14 12:59:45  -d-        2048
-> 185  2013-01-14 12:59:45  -d-        2048
-> 186  2013-01-14 12:59:45  -d-        2048
-> 187  2013-01-14 12:59:46  -d-        2048
-> 188  2013-01-14 12:59:46  -d-        2048
-> 189  2013-01-14 12:59:46  -d-        2048
-> 190  2013-01-14 12:59:49  -d-        2048
-> 191  2013-01-14 12:59:49  -d-        2047
-> 192  2013-01-14 12:59:49  -d-        2048
-> 193  2013-01-14 12:59:49  -d-        2048
-> 194  2013-01-14 12:59:49  -d-        2048
-> 195  2013-01-14 12:59:49  -d-        2048
-> 196  2013-01-14 12:59:49  -d-        2048
-> 197  2013-01-14 12:59:49  -d-        2048
-> 198  2013-01-14 12:59:52  -d-        2048
-> 199  2013-01-14 12:59:52  -d-        2048
-> 200  2013-01-14 12:59:52  -d-        2048
-> 201  2013-01-14 12:59:52  -d-        2048
-> 202  2013-01-14 12:59:52  -d-        2048
-> 203  2013-01-14 12:59:52  -d-        2048
-> 204  2013-01-14 12:59:52  -d-        2048
-> 205  2013-01-14 12:59:52  -d-        2048
-> 206  2013-01-14 12:59:56  -d-        2048
-> 207  2013-01-14 12:59:56  -d-        2048
-> 208  2013-01-14 12:59:56  -d-        2048
-> 209  2013-01-14 12:59:56  -d-        2048
-> 210  2013-01-14 12:59:56  -d-        2048
-> 211  2013-01-14 12:59:56  -d-        2048
-> 212  2013-01-14 12:59:56  -d-        2048
-> 213  2013-01-14 12:59:56  -d-        2048
-> 214  2013-01-14 12:59:59  -d-        2048
-> 215  2013-01-14 12:59:59  -d-        2048
-> 216  2013-01-14 12:59:59  -d-        2048
-> 217  2013-01-14 12:59:59  -d-        2048
-> 218  2013-01-14 12:59:59  -d-        2048
-> 219  2013-01-14 12:59:59  -d-        2048
-> 220  2013-01-14 12:59:59  -d-        2048
-> 221  2013-01-14 12:59:59  -d-        2048
-> 222  2013-01-14 13:00:03  -d-        2048
-> 223  2013-01-14 13:00:03  -d-        2048
-> 224  2013-01-14 13:00:03  -d-        2048
-> 225  2013-01-14 13:00:03  -d-        2048
-> 226  2013-01-14 13:00:03  -d-        2048
-> 227  2013-01-14 13:00:03  -d-        2048
-> 228  2013-01-14 13:00:03  -d-        2048
-> 229  2013-01-14 13:00:03  -d-        2048
-> 230  2013-01-14 13:00:06  -d-        2048
-> 231  2013-01-14 13:00:06  -d-        2048
-> 232  2013-01-14 13:00:06  -d-        2048
-> 233  2013-01-14 13:00:06  -d-        2048
-> 234  2013-01-14 13:00:06  -d-        2048
-> 235  2013-01-14 13:00:06  -d-        2048
-> 236  2013-01-14 13:00:06  -d-        2048
-> 237  2013-01-14 13:00:06  -d-        2048
-> 238  2013-01-14 13:00:08  -d-        2048
-> 239  2013-01-14 13:00:08  -d-        2048
-> 240  2013-01-14 13:00:10  -d-        2048
-> 241  2013-01-14 13:00:10  -d-        2048
-> 242  ---------- --:--:--  ---           0
-> 243  2013-01-14 13:00:10  -d-        2048
-> 244  2013-01-14 13:00:10  -d-        2048
-> 245  2013-01-14 13:00:10  -d-        2048
-> 246  2013-01-14 13:00:10  -d-        2048
-> 247  2013-01-14 13:00:10  -d-        2048
-> 248  2013-01-14 13:00:10  -d-        2048
-> 249  2013-01-14 13:00:14  -d-        2048
-> 250  2013-01-14 13:00:14  -d-        2048
-> 251  2013-01-14 13:00:14  -d-        2048
-> 252  2013-01-14 13:00:14  -d-        2048
-> 253  2013-01-14 13:00:14  -d-        2048
-> 254  2013-01-14 13:00:14  -d-        2048
-> 255  2013-01-14 13:00:14  -d-        2048
-> 256  2013-01-14 13:00:14  -d-        2048
-> 257  2013-01-14 13:00:17  -d-        2048
-> 258  2013-01-14 13:00:17  -d-        2048
-> 259  2013-01-14 13:00:17  -d-        2048
-> 260  2013-01-14 13:00:17  -d-        2048
-> 261  2013-01-14 13:00:17  -d-        2048
-> 262  2013-01-14 13:00:17  -d-        2048
-> 263  2013-01-14 13:00:17  -d-        2048
-> 264  2013-01-14 13:00:17  -d-        2048
-> 265  2013-01-14 13:00:21  -d-        2048
-> 266  2013-01-14 13:00:21  -d-        2048
-> 267  2013-01-14 13:00:21  -d-        2048
-> 268  2013-01-14 13:00:21  -d-        2048
-> 269  2013-01-14 13:00:21  -d-        2048
-> 270  2013-01-14 13:00:21  -d-        2048
-> 271  2013-01-14 13:00:21  -d-        2048
-> 272  2013-01-14 13:00:21  -d-        2048
-> 273  2013-01-14 13:00:23  -d-        2048
-> 274  2013-01-14 13:00:23  -d-        2048
-> 275  2013-01-14 13:00:24  ad-         402
-> 276  ---------- --:--:--  ad-           0
-> 277  ---------- --:--:--  ---           0
-> 278  ---------- --:--:--  ---           0
-> 279  ---------- --:--:--  ---           0
-> 280  ---------- --:--:--  ---           0
-> 281  ---------- --:--:--  ---           0
-> 282  ---------- --:--:--  ---           0
-> 283  ---------- --:--:--  ---           0
-> 284  ---------- --:--:--  ---           0
-> 285  ---------- --:--:--  ---           0
-> 286  ---------- --:--:--  ---           0
-> 287  ---------- --:--:--  ---           0
-> 288  ---------- --:--:--  ---           0
-> 289  ---------- --:--:--  ---           0
-> 290  ---------- --:--:--  ---           0
-> 291  ---------- --:--:--  ---           0
-> 292  ---------- --:--:--  ---           0
-> 293  ---------- --:--:--  ---           0
-> 294  ---------- --:--:--  ---           0
-> 295  ---------- --:--:--  ---           0
-> 296  2013-01-14 12:57:46  -d-        2048
-> 297  2013-01-14 12:57:49  -d-        2048
-> 298  2013-01-14 12:57:49  -d-        2048
-> 299  2013-01-14 12:57:49  -d-        2048
-> 300  2013-01-14 12:57:49  -d-        2048
-> 301  2013-01-14 12:57:49  -d-        2048
-> 302  2013-01-14 12:57:49  -d-        2048
-> 303  2013-01-14 12:57:49  -d-        2048
-> 304  2013-01-14 12:57:49  -d-        2048
-> 305  2013-01-14 12:57:49  -d-        2048
-> 306  2013-01-14 12:57:51  -d-        2048
-> 307  2013-01-14 12:57:51  -d-        2048
-> 308  2013-01-14 12:57:51  -d-        2048
-> 309  2013-01-14 12:57:51  -d-        2048
-> 310  2013-01-14 12:57:51  -d-        2048
-> 311  2013-01-14 12:57:51  -d-        2048
-> 312  2013-01-14 12:57:51  -d-        2048
-> 313  2013-01-14 12:57:51  -d-        2048
-> 314  2013-01-14 12:57:53  -d-        2048
-> 315  2013-01-14 12:57:54  -d-        2048
-> 316  2013-01-14 12:57:54  -d-        2048
-> 317  2013-01-14 12:57:55  -d-        2048
-> 318  2013-01-14 12:57:55  -d-        2048
-> 319  2013-01-14 12:57:55  -d-        2048
-> 320  2013-01-14 12:57:55  -d-        2048
-> 321  2013-01-14 12:57:55  -d-        2048
-> 322  2013-01-14 12:57:55  -d-        2048
-> 323  2013-01-14 12:57:58  -d-        2048
-> 324  2013-01-14 12:57:58  -d-        2048
-> 325  2013-01-14 12:57:58  -d-        2048
-> 326  2013-01-14 12:57:58  -d-        2048
-> 327  2013-01-14 12:57:58  -d-        2048
-> 328  2013-01-14 12:57:58  -d-        2048
-> 329  2013-01-14 12:57:58  -d-        2048
-> 330  2013-01-14 12:58:01  -d-        2048
-> 331  2013-01-14 12:58:01  -d-        2048
-> 332  2013-01-14 12:58:01  -d-        2048
-> 333  2013-01-14 12:58:01  -d-        2048
-> 334  2013-01-14 12:58:01  -d-        2048
-> 335  2013-01-14 12:58:01  -d-        2048
-> 336  2013-01-14 12:58:01  -d-        2048
-> 337  2013-01-14 12:58:01  -d-        2048
-> 338  2013-01-14 12:58:05  -d-        2048
-> 339  2013-01-14 12:58:05  -d-        2048
-> 340  2013-01-14 12:58:05  -d-        2048
-> 341  2013-01-14 12:58:05  -d-        2048
-> 342  2013-01-14 12:58:05  -d-        2048
-> 343  2013-01-14 12:58:05  -d-        2048
-> 344  2013-01-14 12:58:05  -d-        2048
-> 345  2013-01-14 12:58:05  -d-        2048
-> 346  2013-01-14 12:58:05  -d-        2048
-> 347  2013-01-14 12:58:08  -d-        2048
-> 348  2013-01-14 12:58:08  -d-        2048
-> 349  2013-01-14 12:58:08  -d-        2048
-> 350  2013-01-14 12:58:08  -d-        2048
-> 351  2013-01-14 12:58:08  -d-        2048
-> 352  2013-01-14 12:58:08  -d-        2048
-> 353  2013-01-14 12:58:08  -d-        2048
-> 354  2013-01-14 12:58:12  -d-        2048
-> 355  2013-01-14 12:58:12  -d-        2048
-> 356  2013-01-14 12:58:12  -d-        2048
-> 357  2013-01-14 12:58:12  -d-        2048
-> 358  2013-01-14 12:58:12  -d-        2048
-> 359  2013-01-14 12:58:12  -d-        2048
-> 360  2013-01-14 12:58:12  -d-        2048
-> 361  2013-01-14 12:58:12  -d-        2048
-> 362  2013-01-14 12:58:12  -d-        2048
-> 363  2013-01-14 12:58:15  -d-        2048
-> 364  2013-01-14 12:58:15  -d-        2048
-> 365  2013-01-14 12:58:15  -d-        2048
-> 366  2013-01-14 12:58:16  -d-        2048
-> 367  2013-01-14 12:58:16  -d-        2048
-> 368  2013-01-14 12:58:16  -d-        2048
-> 369  2013-01-14 12:58:16  -d-        2048
-> 370  2013-01-14 12:58:19  -d-        2048
-> 371  2013-01-14 12:58:19  -d-        2048
-> 372  2013-01-14 12:58:19  -d-        2048
-> 373  2013-01-14 12:58:19  -d-        2048
-> 374  2013-01-14 12:58:19  -d-        2048
-> 375  2013-01-14 12:58:19  -d-        2048
-> 376  2013-01-14 12:58:19  -d-        2048
-> 377  2013-01-14 12:58:19  -d-        2048
-> 378  2013-01-14 12:58:22  -d-        2048
-> 379  2013-01-14 12:58:22  -d-        2048
-> 380  2013-01-14 12:58:22  -d-        2048
-> 381  2013-01-14 12:58:22  -d-        2048
-> 382  2013-01-14 12:58:23  -d-        2048
-> 
-> $ /usr/bin/lscp -abg
-> CNO        DATE     TIME  MODE  FLG     NBLKINC       ICNT
-> 2369  2013-01-14 12:57:49   cp    -         4024       6681
-> 2370  2013-01-14 12:57:53   cp    -          292       6682
-> 2371  2013-01-14 12:57:55   cp    i         2097       6682
-> 2372  2013-01-14 12:57:58   cp    i         2037       6682
-> 2373  2013-01-14 12:58:01   cp    i         2029       6682
-> 2374  2013-01-14 12:58:05   cp    i         2175       6682
-> 2375  2013-01-14 12:58:08   cp    i         1985       6682
-> 2376  2013-01-14 12:58:12   cp    i         2110       6682
-> 2377  2013-01-14 12:58:16   cp    i         1867       6682
-> 2378  2013-01-14 12:58:19   cp    i         1742       6682
-> 2379  2013-01-14 12:58:23   cp    i         2030       6682
-> 2380  2013-01-14 12:58:26   cp    i         1796       6682
-> 2381  2013-01-14 12:58:29   cp    i         1627       6682
-> 2382  2013-01-14 12:58:33   cp    i         1579       6682
-> 2383  2013-01-14 12:58:36   cp    i         1591       6682
-> 2384  2013-01-14 12:58:40   cp    i         1713       6682
-> 2385  2013-01-14 12:58:44   cp    i         1894       6682
-> 2386  2013-01-14 12:58:47   cp    i         1678       6682
-> 2387  2013-01-14 12:58:51   cp    i         1814       6682
-> 2388  2013-01-14 12:58:54   cp    i         1635       6682
-> 2389  2013-01-14 12:58:58   cp    i         1595       6682
-> 2390  2013-01-14 12:59:01   cp    i         1437       6682
-> 2391  2013-01-14 12:59:04   cp    i         1328       6682
-> 2392  2013-01-14 12:59:08   cp    i         1045       6682
-> 2393  2013-01-14 12:59:12   cp    i          680       6682
-> 2394  2013-01-14 12:59:15   cp    i          554       6682
-> 2395  2013-01-14 12:59:18   cp    i          676       6682
-> 2396  2013-01-14 12:59:22   cp    i          626       6682
-> 2397  2013-01-14 12:59:27   cp    i          769       6682
-> 2398  2013-01-14 12:59:29   cp    i          598       6682
-> 2399  2013-01-14 12:59:35   cp    i          748       6682
-> 2400  2013-01-14 12:59:35   cp    i          538       6682
-> 2401  2013-01-14 12:59:38   cp    i          662       6682
-> 2402  2013-01-14 12:59:42   cp    i          620       6682
-> 2403  2013-01-14 12:59:46   cp    i          577       6682
-> 2404  2013-01-14 12:59:49   cp    i          548       6682
-> 2405  2013-01-14 12:59:52   cp    i          458       6682
-> 2406  2013-01-14 12:59:58   cp    i          446       6682
-> 2407  2013-01-14 13:00:02   cp    i          634       6682
-> 2408  2013-01-14 13:00:03   cp    i          588       6682
-> 2409  2013-01-14 13:00:08   cp    -         4344       6546
-> 2410  2013-01-14 13:00:10   cp    i         2180       6546
-> 2411  2013-01-14 13:00:14   cp    i         2173       6546
-> 2412  2013-01-14 13:00:20   cp    i          276       6546
-> 2413  2013-01-14 13:00:23   cp    i          374       6546
-> 2414  2013-01-14 13:00:24   cp    i          402       6546
-> 
-> Signed-off-by: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
-> ---
-> sbin/cleanerd/cleanerd.c |    2 +-
-> 1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-> index bfcd893..12ed975 100644
-> --- a/sbin/cleanerd/cleanerd.c
-> +++ b/sbin/cleanerd/cleanerd.c
-> @@ -592,7 +592,7 @@ nilfs_cleanerd_select_segments(struct nilfs_cleanerd *cleanerd,
-> 	 * selected. */
-> 	thr = (config->cf_selection_policy.p_threshold != 0) ?
-> 		config->cf_selection_policy.p_threshold :
-> -		sustat->ss_nongc_ctime;
-> +		~0ULL;
-> 
-> 	for (segnum = 0; segnum < sustat->ss_nsegs; segnum += n) {
-> 		count = (sustat->ss_nsegs - segnum < NILFS_CLEANERD_NSUINFO) ?
-> -- 
-> 1.7.10.4
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> I think that you try to achieve by this patch the result of  "nilfs-clean -p
+> 0".
+
+This was default set in the configuration file and therefore I did not have to 
+set it manually using nilfs-clean -p 0.
+
+> Sorry, if I misunderstand something. Please, correct me if I am wrong.
+
+See above.
+
+Kind regards,
+	Sven
+
+--nextPart4441251.K3O1dz2NRy
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAABCgAGBQJQ9FSfAAoJEF2HCgfBJntG/RQP/RLF6LhLwgWSXSPhignC24o3
+Oiw8xqIocCFoqwc8RF6Ge1491z38r6baZUgzlu/wPzwd/pwVgEEIzPANhiZlMgnc
+msiDF0pewrsL/4JaPzdjoFZC3CkmGbBPp05IChXJtU22RjLH07pxypoYK1sIXEpo
+UtVXDP2+hFPXwmRMQ9PxzJoXxeI2R3o8u7lqZ3R4QG9KTSqTnCpN8gUDvVoU6lGv
+oLlyfQsSZ4/TS3UyL8bdXBwJ3Lgc3yWUV+H6PVKzPVe4GE5RNpegWI9aRAHeI1/9
+mGVxzbdTU1uQDVanJHcl6vEjeYdE9V5Kh6bdfbSfGC4f1u7q/HR+noh24lPGi9S4
+SXuVNd9ldV2qoTR2bhn3VNP2SxphuDI7lInfvRAaIFzVEIgU4RRzdnEulMsUYr00
+jQwiUSbLGQntDv4sIY4F165Md10gZrr5eLsfn+fe+jwob7idi6b+WSN8MuhOCVtb
+N2+ke7hrkoC4EeFxr2C3n92YCXNSNBUqdpELys6UBjIqMWau9VT6ecaZThtt841Z
+UX0tYaV0DdKDz2gi5wrUDZdMzeebsXz/LZbgUi7eOVPqahO+5i9qWmEzA4+p3q79
+UyStxcKC+4LvgAfmkP2U2cGf7zFX1TnOZn8FEJe5ioHqykYPzw3gTf3hydg5IQW7
+BENXGmzHv5OQLU5Rc8Xn
+=KNmX
+-----END PGP SIGNATURE-----
+
+--nextPart4441251.K3O1dz2NRy--
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
