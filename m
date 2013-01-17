@@ -1,81 +1,64 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+From: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
 Subject: Re: [PATCH] nilfs-utils: Work around uncleanable full filesystem
-Date: Thu, 17 Jan 2013 11:57:18 +0400
-Message-ID: <1358409438.2513.14.camel@slavad-ubuntu>
-References: <1358178899-26347-1-git-send-email-sven@narfation.org>
-	 <1358258241.2094.9.camel@slavad-ubuntu> <2312125.8JVqXAGppa@bentobox>
+Date: Thu, 17 Jan 2013 09:32:51 +0100
+Message-ID: <10139628.nRTq3A6E4L@bentobox>
+References: <1358178899-26347-1-git-send-email-sven@narfation.org> <2312125.8JVqXAGppa@bentobox> <1358409438.2513.14.camel@slavad-ubuntu>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; boundary="nextPart1965251.lBDqolOfhs"; micalg="pgp-sha512"; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=gmLTt0peQr6bxe3ogjzZ7ISwBzHlRdlnBDRXCxP1UpA=;
-	b=KNLgA3J1SJ+xZSiVTw2xXQciRHFi7SEvhopPF6sp1XzDNK5LRpeEfckurqUXAGdwsxUzKwM/EkzkWRtFVJWUS0OCN3O5fsKVqVNTY+8s3tx8qjbY8XIGS+Ftse8op1eD;
-In-Reply-To: <2312125.8JVqXAGppa@bentobox>
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=narfation.org;
+	s=20121; t=1358411578;
+	bh=9rcH56/546PTxYHBYqRa/FFxXyaLZF9VP4jEc7wHucM=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=Z1JvRWFU1oo6m2aKkXqzNowbFLC1yrbu9QngN7fmTWNRZysOnrST8AXnbaY7OjlQJ
+	 wbbQ2JZWZZvgiizxFdMPz1ZQf32BT4F3wLaDM3maIW9L1LcTFw+yFVwhY+ijy5Dqzm
+	 3/7tmzEDgDz7WY0SsNSWK92LIx2DOjxuQqwkFW1Y=
+In-Reply-To: <1358409438.2513.14.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 2013-01-15 at 16:17 +0100, Sven Eckelmann wrote:
-> On Tuesday 15 January 2013 17:57:21 Vyacheslav Dubeyko wrote:
-> > Could you share more details about your environment? What version of
-> > nilfs-utils do you use?
-> > 
-> > Maybe do you have some NILFS2-related error messages in your system log?
-> > 
-> > Or, maybe, reproducing path is more complex as you described?
-> 
-> System running Debian Wheezy (amd64) with linux 3.2.35-2 and nilfs-tools 
-> 2.1.4-1. The nilfs partition is a secondary partition on a CFCard and is not 
-> used in normal situations. There are different processes running in the 
-> background... for example ntpd. There are no interesting infos in the system 
-> log (unless you are interested in nilfs_cleanerd output saying nothing else 
-> than "pause"/"sleep"/"0 segments selected to be cleaned"/...).
-> 
-> Following way is a good way to force a similar problem (this is not the way I 
-> produced it the first time, but it is a possible scenario):
-> 
-> $ cd /nilfs/
-> $ ntpdate-debian
-> $ date -s @`date +'%s'|awk '{ print $1+9000}'`
-> $ for i in `seq 0 300`; do dd if=/dev/zero of=foo$i count=22528; done
-> $ sleep 360
-> $ ntpdate-debian
-> $ touch asd
-> $ rm *
-> $ date -s @`date +'%s'|awk '{ print $1+10000}'`
-> $ mount -o remount /nilfs/
-> 
-> It is a little bit harsh, but a similar thing can easily happen in real world 
-> with non-monotonic clocks (but the jumps are usually a little smaller).
-> 
 
-Yes, I can reproduce the issue. But I think that it doesn't make sense
-to change something in timestamp policy of GC. Unfortunately, we have
-currently only timestamp policy. And I think that it needs to use
-another GC policy in the case of such issue. So, the proper fix will be
-adding another GC policy.
+--nextPart1965251.lBDqolOfhs
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="us-ascii"
 
-Anyway, I think that possible time deviation can achieve about minutes
-in real life. And probability to encounter such issue in real life very
-low. I think so because it is hardly to encounter in real life of
-coincidence such factors as (1) to fill a whole volume and then to
-remove all files during several minutes and (2) immediately update
-system time.
+On Thursday 17 January 2013 11:57:18 Vyacheslav Dubeyko wrote:
+[...]
+> If you do so by the hands then, from my point of view, you know what you
+> are doing.
 
-If you do so by the hands then, from my point of view, you know what you
-are doing.
+You asked for a way to easily reproduce it and now say it is my fault? Sry, 
+but it happened in a real world scenario and I only provided a testcase for 
+you.
 
-As a resume, I think that proper fix of such issue can be adding of
-additional GC policies that is not affected by such use-case.
+Kind regards,
+	Sven
+--nextPart1965251.lBDqolOfhs
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part.
 
-Thanks,
-Vyacheslav Dubeyko.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
 
-> Kind regards,
-> 	Sven
+iQIcBAABCgAGBQJQ97czAAoJEF2HCgfBJntGE0IP/2vVpz2rNwxEMoEqjveSH1So
+cZoERSChOHQUGzj29Pv/L4zW2Poau4LBatvLuUI2c3n5MugeWWjFC0lWMKxwIMEA
+AKzEa8SA97zGYeX4Oc6+AR0NC9sCg6CRIHqAq6dJQBF0V4aE5jIYbOaVqAobSHkt
+vr3ZwX0XBIwUcse0Mu+JLb4YZ0IKDrLTJDEQZONRWnFHGzjhzH0aG7rfEjlPkOrb
+L2/C4wRZ8rNpncZwxIVQm68TWScqWLHtLQkf28swy4pRnP/pG1nGcNHiZ1etXia0
+vXflqZUpcqUSC2nAVtxQY+dxwhA2JVRliR5Z6KfcrPe+ebu2wuQ5fDoOglqg6DBD
+gTLdMvdgGVDAaZ1twBFtKNdzVlInQA5TjOY+dnpBBgRqUp6uPmivcarOpeWDFOrX
+EFd6uyS87dsXlRSgFAkDRhq/JIdKVYXmPunzTRsX1gsfCzVqnHqnBFIVW7kz192D
+sP5NPmGaiYHwkXf7yx37lrVFz79OWCcVPQ95rvDga99dUHQ1hHyZuCrLFzhAKfFd
+60MehfqnTrGwNUYjGTUIeVITrFjXxOfOtVHR10YEP+w40mDKMQ30BWjxEOV1jked
+p/GUsOjM4s0/Ixkw2Cvlh9QIwg/poyYPR4Y1iZAEORP4cCT/8Wl1YEjBtCDDJU6G
+3WEFvZxlUh3LR+o0o9YC
+=CbJB
+-----END PGP SIGNATURE-----
 
+--nextPart1965251.lBDqolOfhs--
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
