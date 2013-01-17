@@ -1,64 +1,46 @@
-From: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: [PATCH] nilfs-utils: Work around uncleanable full filesystem
-Date: Thu, 17 Jan 2013 09:32:51 +0100
-Message-ID: <10139628.nRTq3A6E4L@bentobox>
-References: <1358178899-26347-1-git-send-email-sven@narfation.org> <2312125.8JVqXAGppa@bentobox> <1358409438.2513.14.camel@slavad-ubuntu>
+Date: Thu, 17 Jan 2013 13:19:42 +0400
+Message-ID: <1358414382.2513.20.camel@slavad-ubuntu>
+References: <1358178899-26347-1-git-send-email-sven@narfation.org>
+	 <2312125.8JVqXAGppa@bentobox> <1358409438.2513.14.camel@slavad-ubuntu>
+	 <10139628.nRTq3A6E4L@bentobox>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="nextPart1965251.lBDqolOfhs"; micalg="pgp-sha512"; protocol="application/pgp-signature"
-Content-Transfer-Encoding: 7Bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=narfation.org;
-	s=20121; t=1358411578;
-	bh=9rcH56/546PTxYHBYqRa/FFxXyaLZF9VP4jEc7wHucM=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=Z1JvRWFU1oo6m2aKkXqzNowbFLC1yrbu9QngN7fmTWNRZysOnrST8AXnbaY7OjlQJ
-	 wbbQ2JZWZZvgiizxFdMPz1ZQf32BT4F3wLaDM3maIW9L1LcTFw+yFVwhY+ijy5Dqzm
-	 3/7tmzEDgDz7WY0SsNSWK92LIx2DOjxuQqwkFW1Y=
-In-Reply-To: <1358409438.2513.14.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=2uno14J7CW2PilboNCc9+PD/+15yBtwieEFB5iqZtSU=;
+	b=FzX7WBn0MdxeZr32SwioCugIYEHi40XbOOKfEV4tYBMidcDTSYtXnhUobqVDoF0w13LItw7/JRyntxiM/EvQCjFsvD8eDonCDWcPIORf0x/rE6h1qneSIZy2Wp7LdK3z;
+In-Reply-To: <10139628.nRTq3A6E4L@bentobox>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Sven Eckelmann <sven-KaDOiPu9UxWEi8DpZVb4nw@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+On Thu, 2013-01-17 at 09:32 +0100, Sven Eckelmann wrote:
+> On Thursday 17 January 2013 11:57:18 Vyacheslav Dubeyko wrote:
+> [...]
+> > If you do so by the hands then, from my point of view, you know what you
+> > are doing.
+> 
+> You asked for a way to easily reproduce it and now say it is my fault? Sry, 
+> but it happened in a real world scenario and I only provided a testcase for 
+> you.
+> 
 
---nextPart1965251.lBDqolOfhs
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
+No, I don't say that it is your fault. The timestamp policy of GC has
+some limitation and peculiarities because of nature of the time. So, you
+described one of such use-case. But, from my point of view, such
+use-case has very low probability of occurrence. And proper fix can be
+adding of another GC policy. That's all I said.
 
-On Thursday 17 January 2013 11:57:18 Vyacheslav Dubeyko wrote:
-[...]
-> If you do so by the hands then, from my point of view, you know what you
-> are doing.
+With the best regards,
+Vyacheslav Dubeyko.
 
-You asked for a way to easily reproduce it and now say it is my fault? Sry, 
-but it happened in a real world scenario and I only provided a testcase for 
-you.
+> Kind regards,
+> 	Sven
 
-Kind regards,
-	Sven
---nextPart1965251.lBDqolOfhs
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQIcBAABCgAGBQJQ97czAAoJEF2HCgfBJntGE0IP/2vVpz2rNwxEMoEqjveSH1So
-cZoERSChOHQUGzj29Pv/L4zW2Poau4LBatvLuUI2c3n5MugeWWjFC0lWMKxwIMEA
-AKzEa8SA97zGYeX4Oc6+AR0NC9sCg6CRIHqAq6dJQBF0V4aE5jIYbOaVqAobSHkt
-vr3ZwX0XBIwUcse0Mu+JLb4YZ0IKDrLTJDEQZONRWnFHGzjhzH0aG7rfEjlPkOrb
-L2/C4wRZ8rNpncZwxIVQm68TWScqWLHtLQkf28swy4pRnP/pG1nGcNHiZ1etXia0
-vXflqZUpcqUSC2nAVtxQY+dxwhA2JVRliR5Z6KfcrPe+ebu2wuQ5fDoOglqg6DBD
-gTLdMvdgGVDAaZ1twBFtKNdzVlInQA5TjOY+dnpBBgRqUp6uPmivcarOpeWDFOrX
-EFd6uyS87dsXlRSgFAkDRhq/JIdKVYXmPunzTRsX1gsfCzVqnHqnBFIVW7kz192D
-sP5NPmGaiYHwkXf7yx37lrVFz79OWCcVPQ95rvDga99dUHQ1hHyZuCrLFzhAKfFd
-60MehfqnTrGwNUYjGTUIeVITrFjXxOfOtVHR10YEP+w40mDKMQ30BWjxEOV1jked
-p/GUsOjM4s0/Ixkw2Cvlh9QIwg/poyYPR4Y1iZAEORP4cCT/8Wl1YEjBtCDDJU6G
-3WEFvZxlUh3LR+o0o9YC
-=CbJB
------END PGP SIGNATURE-----
-
---nextPart1965251.lBDqolOfhs--
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
