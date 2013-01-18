@@ -1,17 +1,17 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: [PATCH] nilfs-utils: Work around uncleanable full filesystem
-Date: Fri, 18 Jan 2013 11:04:53 +0400
-Message-ID: <1358492693.2101.20.camel@slavad-ubuntu>
+Date: Fri, 18 Jan 2013 10:17:19 +0400
+Message-ID: <1358489839.2101.13.camel@slavad-ubuntu>
 References: <1358178899-26347-1-git-send-email-sven@narfation.org>
-	 <2312125.8JVqXAGppa@bentobox> <1358409438.2513.14.camel@slavad-ubuntu>
-	 <10139628.nRTq3A6E4L@bentobox>
+	 <1358258241.2094.9.camel@slavad-ubuntu> <2312125.8JVqXAGppa@bentobox>
+	 <1358409438.2513.14.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
 	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=Y4fLHs9odf5q0FmYggi775AswnEEzl0CGNRMhUt40sw=;
-	b=R0oDr+Jzo85kujmhdNV39rDbhqa/64xnOPcipvvw0cE+FyRXcNzs0Qf/nQ6pzo7rK0cGundvnuX4nGN2dv7x6k6ai3DdqlYlj9CeKE564VfotL/raeqM1K1Dxf8GEGcY;
-In-Reply-To: <10139628.nRTq3A6E4L@bentobox>
+	b=jcxfPa5qisKUu1mP/xCtsOoqIO1GWGnT1BxKmXxkhffgGSd2PIWzYkAGn5JmWPGm3T+n14DCJPm57HT6t7WO21hn6eK6WTzE/YZN6pEzP5INm2tcjoVP+ZdzUxVZTrgU;
+In-Reply-To: <1358409438.2513.14.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -88,14 +88,13 @@ Vyacheslav Dubeyko.
 > Vyacheslav Dubeyko.
 > 
 > > Kind regards,
-> >     Sven
+> > 	Sven
 > 
 > 
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
 
 
 --
