@@ -1,80 +1,64 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
-Subject: Time issues with checkpoints resolved?
-Date: Tue, 29 Jan 2013 23:10:21 +0100
-Message-ID: <20130129221021.GL10316@wloczykij>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Time issues with checkpoints resolved?
+Date: Wed, 30 Jan 2013 09:50:07 +0400
+Message-ID: <1359525007.2085.10.camel@slavad-ubuntu>
+References: <20130129221021.GL10316@wloczykij>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="v2Uk6McLiE8OV1El"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=bNnMPwx/PBbKZKUI/lV8PAkukOwRKDgMX6Firrlfh/Q=;
+	b=tkkRPfEXEvxl1o0tXl0KlTZhdVi12JHuMJhhGblyV3pOFicsvYjoditWuMrH/9YqDjciIHH/lDzbk8rk8H+8LsxzS1bRdyxU3j02ZaJ6Qe2dSayVG+dfyxxzAjyeq/aG;
+In-Reply-To: <20130129221021.GL10316@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Hi Piotr,
+
+On Tue, 2013-01-29 at 23:10 +0100, Piotr Szymaniak wrote:
+> Hi,
+> 
+> Sorry, but I can't find an answer and noticed some checkpoints in the
+> past in the middle of other checkpoints (there was a thread, I think,
+> about similar issue with timezone change).
+> 
+> Right now I have (Raspberry Pi doesn't have RTC):
+> ~ lscp
+> (...)
+> 7870  2013-01-27 15:12:30   cp    -           22      42174
+> 7871  2013-01-27 15:34:23   cp    -           19      42174
+> 7872  2013-01-27 15:42:29   cp    -           22      42174
+> 7873  1970-01-01 01:05:05   cp    -           93      42176
+> 7874  1970-01-01 01:10:05   cp    -           22      42174
+> 7875  1970-01-01 01:36:36   cp    -           18      42174
+> (...)
+> 8031  1970-01-03 07:08:19   cp    -           57      42183
+> 8032  1970-01-03 07:13:20   cp    -           36      42182
+> 8033  2013-01-29 00:01:57   cp    -           30      42182
+> 8034  2013-01-29 00:19:34   cp    -          599      42313
+> 
+> I just wonder if cleaner is now smart enough to clean this mess.
+> 
+
+Unfortunately, it is not. Such fix doesn't made yet. I think that it
+needs to modify nilfs-clean utility. But, currently, I am deeply inside
+fixing of issues with flush kernel thread and bad btree node. These
+issues are slightly complex. I tried several solutions but I haven't the
+proper yet. Maybe, a final solution will be a combination of several
+fixes that I tried.
+
+But fixing of issue with timezone change in my TODO list.
+
+With the best regards,
+Vyacheslav Dubeyko.
+
+> 
+> Piotr Szymaniak.
 
 
---v2Uk6McLiE8OV1El
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hi,
-
-Sorry, but I can't find an answer and noticed some checkpoints in the
-past in the middle of other checkpoints (there was a thread, I think,
-about similar issue with timezone change).
-
-Right now I have (Raspberry Pi doesn't have RTC):
-~ lscp
-(...)
-7870  2013-01-27 15:12:30   cp    -           22      42174
-7871  2013-01-27 15:34:23   cp    -           19      42174
-7872  2013-01-27 15:42:29   cp    -           22      42174
-7873  1970-01-01 01:05:05   cp    -           93      42176
-7874  1970-01-01 01:10:05   cp    -           22      42174
-7875  1970-01-01 01:36:36   cp    -           18      42174
-(...)
-8031  1970-01-03 07:08:19   cp    -           57      42183
-8032  1970-01-03 07:13:20   cp    -           36      42182
-8033  2013-01-29 00:01:57   cp    -           30      42182
-8034  2013-01-29 00:19:34   cp    -          599      42313
-
-I just wonder if cleaner is now smart enough to clean this mess.
-
-
-Piotr Szymaniak.
---=20
- Szpakowate w=C5=82osy przytrzymywa=C5=82a niebiesk=C4=85 aksamitn=C4=85 op=
-ask=C4=85; oczy mia=C5=82a
-prawie fio=C5=82kowe i szerok=C4=85,  inteligentn=C4=85  twarz  kogo=C5=9B,=
-  kto nie b=C4=99dzie
-cierpliwie  znosi=C5=82  g=C5=82upc=C3=B3w,  ale te=C5=BC potrafi =C5=9Bmia=
-=C4=87 si=C4=99 z samego siebie
-szybciej, ni=C5=BC ktokolwiek inny zdo=C5=82a.
-  -- Graham Masterton, "Zakl=C4=99ci"
-
---v2Uk6McLiE8OV1El
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCAAGBQJRCEjNAAoJEEMpAov1cw9lNFUQAMckskMPzXMmq5iIW9B8Es8Z
-saphE8Upm/2+ASVCR5bfYHYSANiy21IERsGyK7ENYUOzjrfmLLNtVE6DUzlKGz2u
-+dWhXCWBDpP2ec8QxVpBxtTRMVA7CsxD+EQZr9aify4buRG5Gc8w3J5W704NOGd8
-XK4KtUoIP63CbdG3nIREr4yKaRWqF69voVC04C7Kc2CZyJ6hpBWQ0T57eSX7VIt2
-+jKFsUBwBBtc95wozlgD75+oHeRvez+iLVEZI6Z9m6GjAMxNTz2mp83zFn9WrRrd
-00OEmnNj25d4a6Rl5Na9tvHwAsOwRGR2to28fCzhmsiYP+6y1fQv6TF4NA9cQDfw
-VFjd9Asi6SN2jfPYPbBuO8sQbR8J476L5Bx+Di1Iw6OS84KhWhllENyOF0TzSroK
-QjYPHvdyovFR7064Dvl6d/6zTSU/RLr3MZ0GrPxBVHBr5/WmR4zrsHVXi4DfhIT4
-QfLzIbHxhAUGRQRwPV3EmVKEHIBKFGVjPrSYBTNYImvP+Hje79ISYXIUa/49JgE1
-69d0mRwxbFyFhgbmmJwPbQeph9Ivv8D7xcEv7wBeff9E37XF3Ia3weslVv3Boq1Y
-xqMUWBR809OrENIb51nIN639HoFwcIMEb9+qJoS0zBPKq1H8WzWTmFWW+OOTRsCz
-DVShwu1XBBDQBVxgEy/C
-=xfE2
------END PGP SIGNATURE-----
-
---v2Uk6McLiE8OV1El--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
