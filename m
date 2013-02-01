@@ -1,65 +1,93 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Time issues with checkpoints resolved?
-Date: Wed, 30 Jan 2013 09:50:07 +0400
-Message-ID: <1359525007.2085.10.camel@slavad-ubuntu>
-References: <20130129221021.GL10316@wloczykij>
+From: Artem Bityutskiy <dedekind1@gmail.com>
+Subject: Re: [PATCH V6 18/30] fs: add read_iter and write_iter to several
+ file systems
+Date: Fri, 01 Feb 2013 09:51:09 +0200
+Message-ID: <1359705069.32509.67.camel@sauron.fi.intel.com>
+References: <1359476623-10544-1-git-send-email-dave.kleikamp@oracle.com>
+ <1359476623-10544-19-git-send-email-dave.kleikamp@oracle.com>
+Reply-To: dedekind1@gmail.com
 Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0390823542547849066=="
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+In-Reply-To: <1359476623-10544-19-git-send-email-dave.kleikamp@oracle.com>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: linux-mtd-bounces@lists.infradead.org
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Dave Kleikamp <dave.kleikamp@oracle.com>
+Cc: jfs-discussion@lists.sourceforge.net, Jan Kara <jack@suse.cz>, Bob Copeland <me@bobcopeland.com>, linux-mtd@lists.infradead.org, Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, linux-nilfs@vger.kernel.org, Richard Weinberger <richard@nod.at>, Christoph Hellwig <hch@infradead.org>, v9fs-developer@lists.sourceforge.net, linux-ext4@vger.kernel.org, Prasad Joshi <prasadjoshi.linux@gmail.com>, "Maxim V.
+ Patlasov" <mpatlasov@parallels.com>, Evgeniy Dushistov <dushistov@mail.ru>, user-mode-linux-devel@lists.sourceforge.net, Jeff Dike <jdike@addtoit.com>, reiserfs-devel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Joern Engel <joern@logfs.org>, "Tigran A. Aivazian" <tigran@aivazian.fsnet.co.uk>, linux-kernel@vger.kernel.org, logfs@logfs.org, Benny Halevy <bhalevy@tonian.com>, linux-fsdevel@vger.kernel.org, Andreas
+
+
+--===============0390823542547849066==
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
+	boundary="=-5GSqoZs9d0FHihhNTP/P"
+
+
+--=-5GSqoZs9d0FHihhNTP/P
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, 2013-01-29 at 10:23 -0600, Dave Kleikamp wrote:
+> -       .aio_read =3D generic_file_aio_read,
+> -       .aio_write =3D generic_file_aio_write,
+> +       .read_iter =3D generic_file_read_iter,
+> +       .write_iter =3D generic_file_write_iter,=20
+
+The new names a lot less self-documenting than the old ones - I read
+them as "read iteration", because "iter" is often used for "iteration",
+and this gives me no clue that they are related to AIO...
+
+I apologize if this was already discussed, but why did you choose
+"iter"?
+
+--=20
+Best Regards,
+Artem Bityutskiy
+
+--=-5GSqoZs9d0FHihhNTP/P
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=bNnMPwx/PBbKZKUI/lV8PAkukOwRKDgMX6Firrlfh/Q=;
-	b=tkkRPfEXEvxl1o0tXl0KlTZhdVi12JHuMJhhGblyV3pOFicsvYjoditWuMrH/9YqDjciIHH/lDzbk8rk8H+8LsxzS1bRdyxU3j02ZaJ6Qe2dSayVG+dfyxxzAjyeq/aG;
-In-Reply-To: <20130129221021.GL10316@wloczykij>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-ID: <linux-nilfs.vger.kernel.org>
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.13 (GNU/Linux)
+
+iQIcBAABAgAGBQJRC3PtAAoJECmIfjd9wqK0wRMQALvjuIWMlqGKDjYZ+Oc05zpM
+umuYU9hx82FV8OzKkb0EBd2OZyhC5Eujwa2YO+oZUNrhabUexK1D7sTE8PY/mFKs
+jPXtfieaMxyxZr38lM+bFVpbVg/3AHuXd4kUAodYWBR+6UwZt8WQ5MLn1RS1nUYl
+Pki/4MO63nfikAL1va/Ruu3jgw4jZ3Bhr5K9Oa5rpE4YTHAtfwMFMP0DTNyt7r+s
+PlgQtdVPvFTCiGcvdMtXAsKbAb0/3d7cQJdUPtoughEvfpdgkSDRTjaT4iGzx9iC
+cBAYTK/jqSPg2jX0YmHv9NNjNZaPv6yXOq5DW/PpDDzVJyvKRLMfsGxcYgjqej0Q
+0Ph5HjXyhHf+7emKFd9svAzfYapyVoX0AIna5FedSpab4lHTtB4ecydJMG9KgWi5
+zebZ/ZVMmkg+mIs4VNBGIwKpgPebhUUJa1yaK/T2KbGj32y1QnRXdzLjYnMmx83L
+QW+1su+bI4xQQVqsu4WkkfavCsk57nPsiOjSVzHl21RHlz2MkXCtumoHbbQCcrbO
+w3EMCDfXFpjEUX4LpcRiyGHChs5gOZfQuPzP8OwmNUbhHNHX5wginXRnUN4+WFdy
+SlryvuodGFXxHOlGJRb3WDZjE5ucOVc3FsKmdcbyrzcJ/QXtObvk89chzWD5fyrz
+MijqIe/1hjIksBnGPx7F
+=ay3H
+-----END PGP SIGNATURE-----
+
+--=-5GSqoZs9d0FHihhNTP/P--
+
+
+
+--===============0390823542547849066==
 Content-Type: text/plain; charset="us-ascii"
-To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Hi Piotr,
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
 
-On Tue, 2013-01-29 at 23:10 +0100, Piotr Szymaniak wrote:
-> Hi,
-> 
-> Sorry, but I can't find an answer and noticed some checkpoints in the
-> past in the middle of other checkpoints (there was a thread, I think,
-> about similar issue with timezone change).
-> 
-> Right now I have (Raspberry Pi doesn't have RTC):
-> ~ lscp
-> (...)
-> 7870  2013-01-27 15:12:30   cp    -           22      42174
-> 7871  2013-01-27 15:34:23   cp    -           19      42174
-> 7872  2013-01-27 15:42:29   cp    -           22      42174
-> 7873  1970-01-01 01:05:05   cp    -           93      42176
-> 7874  1970-01-01 01:10:05   cp    -           22      42174
-> 7875  1970-01-01 01:36:36   cp    -           18      42174
-> (...)
-> 8031  1970-01-03 07:08:19   cp    -           57      42183
-> 8032  1970-01-03 07:13:20   cp    -           36      42182
-> 8033  2013-01-29 00:01:57   cp    -           30      42182
-> 8034  2013-01-29 00:19:34   cp    -          599      42313
-> 
-> I just wonder if cleaner is now smart enough to clean this mess.
-> 
-
-Unfortunately, it is not. Such fix doesn't made yet. I think that it
-needs to modify nilfs-clean utility. But, currently, I am deeply inside
-fixing of issues with flush kernel thread and bad btree node. These
-issues are slightly complex. I tried several solutions but I haven't the
-proper yet. Maybe, a final solution will be a combination of several
-fixes that I tried.
-
-But fixing of issue with timezone change in my TODO list.
-
-With the best regards,
-Vyacheslav Dubeyko.
-
-> 
-> Piotr Szymaniak.
+--===============0390823542547849066==--
 
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
