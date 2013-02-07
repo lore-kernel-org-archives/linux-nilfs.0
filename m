@@ -1,102 +1,106 @@
-From: =?KOI8-R?B?88XSx8XKIOHMxcvTwc7E0s/X?= <splavgm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: nilfs_cleanerd wont run after 3.7.2 upgrade
-Date: Sun, 3 Feb 2013 11:22:22 +0300
-Message-ID: <CAFPMYnGUCjiGv2An0r+JcWXLtP7Ro-1mXtWGZqx2xGeXG0sJtQ@mail.gmail.com>
-References: <CACc=JvH81x9hUqGmn7b-sYuu0UhQpVBnOCSOjtZfDNhK0s-F8Q@mail.gmail.com>
-	<3859090E-3011-4A3A-A15B-0569EFEED0B9@dubeyko.com>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [NILFS2][BUG FIX][STATUS - February 7, 2013] flush kernel thread
+ issue is under fix
+Date: Thu, 07 Feb 2013 17:22:45 +0400
+Message-ID: <1360243365.2065.81.camel@slavad-ubuntu>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:x-received:in-reply-to:references:date:message-id
-         :subject:from:to:cc:content-type;
-        bh=QaHb4ygzViJkmlbiwmnC0zZhp5NrT1oOpQNsvRL+OZs=;
-        b=MEu4jJh/jKTaR1VnYfh6WABDoYiFm6zWisS7ERdwH14h7iPT5+zx6Awgwcjs2OHuoJ
-         ciapF0Hl898DGfML2OB/jMGjtsvgh/ZLEA7cd/ySrWvWpJ7+2IR8JT4/ZAcjPc8ttoVZ
-         8ZSfp0nocXtIinmd3t9kprpGUx11Dij+d3u5AzfMk5nLKiGXP255d7Rba53hfe4guXyH
-         5PyVCNQBsj2c+iKztCRzLe5ujAlp86uK9OE3xksNWI2Z9UiTmBzRtU/nycRa9Utj2xzX
-         rzsNsJ9I5iww8zyEhDrEF8RqW4flSmG8lfI6jOkS9omg21EWTGsmahV+4qEePc5K8WVM
-         7Rpg==
-In-Reply-To: <3859090E-3011-4A3A-A15B-0569EFEED0B9-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=5eU44T5kPv+UlaZlmfcVLc4S9Owr3pHkDKHLCUN+HEo=;
+	b=OjaUJHYJQPRqPgHAS6beSvbNybL0tqO6JqrrUbJ0xASfMWR8cbrs0BJiJKPP1/lNY1Ei7ixKnpYl6pSZ0XmpHaD6tcv/ToBKsjEn9cLE/nd64aRuy/YiVSzpJ/VqJofq;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: Tim Benham <tim.j.benham-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>, =?UTF-8?Q?=D0=A1=D0=B5=D1=80=D0=B3=D0=B5=D0=B9_?= =?UTF-8?Q?=D0=90=D0=BB=D0=B5=D0=BA=D1=81=D0=B0=D0=BD=D0=B4=D1=80=D0=BE?= =?UTF-8?Q?=D0=B2?= <splavgm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Zahid Chowdhury <zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org>, Elmer Zhang <freeboy6716-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Hi,
+[REPORTED BUGS]
+1. Flush kernel thread issue - [under investigation and fix].
+2. A lot of NILFS: bad btree node messages (readonly fs) - [under investigation].
+3. Odd problem starting nilfs_cleanerd due to an eMMC misbehaviour - [TODO: investigation].
+4. Kernel panic in nilfs - [TODO: investigation].
+5. Uncleanable file system because of time issue - [TODO: fix].
 
-I've the same issue.
-The reason is /dev/root device no longer exists with modern udev (197
-at least for gentoo) and the kernel reports /dev/root to be mounted as
-root device. So nilfs_cleanerd tries to open it and fails.
+[UNDER FIX]
+Flush kernel thread issue
 
-The issue only takes place without initramfs, may be that's why it's
-not fixed yet.
+SYMPTOMS:
+You can see flush kernel thread that uses 60 - 100% of CPU time during 5 - 40 minutes.
 
-Possible fixes are:
-1) patch kernel to report real device
-2) may be there is another way to get proper device name for
-nilfs_cleanerd but I doubt
-3a) downgrade udev (as a temporary solution)
-3b) switch to eudev beta (at least for gentoo)
+REPRODUCING PATH:
+1. Generate some file about 100 - 500 GB (for example, by: "dd if=/dev/zero of=<file_name> bs=1048576 count=102400"). The size of the file defines the duration of the issue reproducibility.
+2. Try to execute "rm", "truncate" or "dd" command. In the case of "dd" it needs to use without notrunc option (for example, "dd if=/dev/urandom of=<file_name> bs=1024 seek=51200 count=10").
 
------------------------------
-Alexandrov Sergey
+INVESTIGATION RESUME:
+We have such visible flush kernel thread behavior because of flow of
+dirty pages are marked as "for_kupdate" or
+"for_background" (writeback_control structure) in nilfs_mdt_write_page()
+and nilfs_writepage() methods. It is only called
+redirty_page_for_writepage() and unlock_page() methods for such case.
+Thereby, as a result, dirty pages return again and again into
+nilfs_mdt_write_page() and nilfs_writepage() in the case of delete or
+truncate operation.
+
+But the reason of such issue is the nature of delete or truncate
+operation in the NILFS2. Execution of metadata operations is protected
+by pair of methods:
+nilfs_transaction_begin()/nilfs_transaction_commit(). These methods use
+semaphore for protecting of indivisible file operation. The file's
+delete operation is a long operation by nature in the case of big files
+because of necessity to use and to modify DAT file content. As a result,
+we have to go through two b-tree - DAT file's b-tree and deleted file's
+b-tree (that is described file's blocks). So, DAT file's b-tree and
+deleted file's b-tree are located in significant count of blocks. Then,
+we have situation when nilfs_bmap_truncate() operation needs to read and
+to write many blocks for operation execution. Another threads (segctor
+and nilfs_cleanerd) are blocked during this long operation (10 - 40
+minutes).
+
+I think that under heavy load I/O this situation can result in very bad
+things.
+
+DISCUSSION:
+Unfortunately, this issue can't be resolved by simple fix. But I think
+that in this case we can use the nature of the issue for adding a new
+file system feature. I mean that, of course, we have opportunities for
+some optimization of delete/truncate operation but, anyway, the nature
+of the operation is to be a long operation. The duration of the
+operation can grow linearly with a file's size growing. And, if we think
+about delete/truncate operation as indivisible transaction then we will
+have issue with segstor and nilfs_cleanerd threads blocking during
+significant time (10 - 60 minutes) in the case of big files.
+
+I can see only one way to make the delete/truncate operation faster and
+safety operation for the case of big/huge files. The fundamental goal of
+NILFS2 is to be reliable file system with opportunity to rollback into
+some old state (snapshot). One of the possible technique can be not to
+do immediately the real delete/truncate because it can be done by
+mistake. It is possible to do by means of "rm" operation only moving of
+deleting file into special folder that will keep deleted file for some
+duration of time. Finally, such deleted files will be really deleted by
+GC (or by special thread) in background. But while deleted file is kept
+in special folder then it can be easily restored from this special
+folder.
+
+In the case of truncate operation we can save information about
+truncation details only in the on-disk inode and to leave b-tree
+temporary untouched. Blocks that were virtually freed during truncation
+can be really freed by GC in background.
+
+PLANNED:
+1. To implement partial prefetch of DAT file's b-tree during mount.
+2. To improve b-tree's nodes read-ahead technique for the case of delete operation.
+3. To implement technique of "virtual" delete and truncate.
+
+With the best regards,
+Vyacheslav Dubeyko.
 
 
 
-2013/1/20 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>:
-> Hi Tim,
->
-> On Jan 20, 2013, at 9:51 AM, Tim Benham wrote:
->
->> After upgrading from the 3.5.0 to the 3.7.2 kernel I cannot get
->> nilfs_cleanerd to start. Trying to start it causes the following lines
->> to be appended to the system log.
->>
->> Jan 20 16:36:07 gigasys nilfs_cleanerd[2584]: start
->> Jan 20 16:36:07 gigasys nilfs_cleanerd[2584]: cannot open nilfs on
->> (null): No such file or directory
->> Jan 20 16:36:07 gigasys nilfs_cleanerd[2584]: cannot create cleanerd
->> on (null): No such file or directory
->> Jan 20 16:36:07 gigasys nilfs_cleanerd[2584]: shutdown
->>
->> My root file system is nilfs2. Cleanerd has never started on mount. I
->> worked around this by creating a local.d script that starts it. Then
->> this stopped working. I was able to get it going again by modifying my
->> script to create a /dev/root symlink. Now I cannot get it to start at
->> all. Giving it the root device explicitly doesn't work either
->>
->>
->> # nilfs_cleanerd /dev/sda2
->> Jan 20 16:41:19 gigasys nilfs_cleanerd[2648]: start
->> Jan 20 16:41:19 gigasys nilfs_cleanerd[2648]: cannot open nilfs on
->> /dev/sda2: No such file or directory
->> Jan 20 16:41:19 gigasys nilfs_cleanerd[2648]: cannot create cleanerd
->> on /dev/sda2: No such file or directory
->> Jan 20 16:41:19 gigasys nilfs_cleanerd[2648]: shutdown
->> # ls -l /dev/sda2
->> brw-rw---- 1 root disk 8, 2 Jan 20 16:18 /dev/sda2
->>
->> mount -t nilfs2 -o remount /dev/sda2 / produces an identical set of messages.
->
-> It looks like you have troubles with udev after upgrade. Could you share strace output of nilfs_cleanerd trying to start? Could you share fstab file content on your system?
->
-> With the best regards,
-> Vyacheslav Dubeyko.
->
->
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
