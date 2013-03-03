@@ -1,49 +1,55 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Could someone share his experience with Samba and NILFS?
-Date: Fri, 01 Mar 2013 09:56:59 +0400
-Message-ID: <1362117419.2088.5.camel@slavad-ubuntu>
-References: <f3924e57f7fc9be324620e2fdc930e3f@piterdias.com>
+Subject: [PATCH] fix warning in fs/nilfs2/btree.c: In function
+ =?UTF-8?Q?=E2=80=98nilfs=5Fbtree=5Fconvert=5Fand=5Finsert=E2=80=99?=
+Date: Sun, 03 Mar 2013 19:26:56 +0400
+Message-ID: <1362324416.29435.33.camel@slavad-ubuntu-12.04>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=mUoz34Ump/RIcCmyEFAuJNga/odW2X7sJmEnrGdZZ0Y=;
-	b=b0IpUyjyFJ1nPwYJzWORh0Wj774+7lcC29k19qZY/sNbX2nlczENt9OblDZFseJaLeXmrHA7lVg8FI7Vcl53qBwglxUxBPJastja6Xv4+iTDk9Eu8fDMSjpSfvZ10H9r;
-In-Reply-To: <f3924e57f7fc9be324620e2fdc930e3f-dmjmWuXPryWakBO8gow8eQ@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=czVGJHiSRVOP1lo95NxfLakeFKxGw/+xX2++PTjPqm8=;
+	b=cyjbQFEangWgjRqH/y6SPcFWanm5NcwrD8y8uQq0/pGiqfrXXdsFmCHLX5I3U6ubAl/l0kUNRu3ZksiHjjfxOZdP8U4BoxnSdvHuBL3+HIh1aVM/ugjR2RdRQ51DM6j5;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Piter Dias <piter.dias-dmjmWuXPryWakBO8gow8eQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Fengguang Wu <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-Hi Piter,
+=46rom: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH] fix warning in fs/nilfs2/btree.c: In function =E2=80=98=
+nilfs_btree_convert_and_insert=E2=80=99
 
-On Fri, 2013-03-01 at 00:26 -0300, Piter Dias wrote:
-> Hi.
-> 
-> I am using NILFS for few days, testing it to replace a /home partition
-> (currently ext3).
-> 
-> Although etx3 folders are easily available to my Windows machines, the
-> NILFS folders don't. It shows on Windows explorer but it says that the
-> network resource is not reachable.
-> 
+This patch fixes the warning in fs/nilfs2/btree.c: In function =E2=80=98=
+nilfs_btree_convert_and_insert=E2=80=99:
+(1) include/asm/bitops.h:321:8: warning: =E2=80=98bh=E2=80=99 may be us=
+ed uninitialized in this function [-Wuninitialized]
 
-I guess that you should have error messages in your system log. Do you
-have it? Could you share NILFS2-related messages in your system log?
+Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+---
+ fs/nilfs2/btree.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-I think that you can encounter an NILFS2 issue. But it needs to have
-more details about the reported issue's environment for the
-understanding of situation on your side.
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index b2e3ff3..734ece9 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -1767,7 +1767,7 @@ int nilfs_btree_convert_and_insert(struct nilfs_b=
+map *btree,
+ 				   __u64 key, __u64 ptr,
+ 				   const __u64 *keys, const __u64 *ptrs, int n)
+ {
+-	struct buffer_head *bh;
++	struct buffer_head *bh =3D NULL;
+ 	union nilfs_bmap_ptr_req dreq, nreq, *di, *ni;
+ 	struct nilfs_bmap_stats stats;
+ 	int ret;
+--=20
+1.7.9.5
 
-Thanks,
-Vyacheslav Dubeyko.
-
-> Could someone share his experience with Samba and NILFS?
-> 
 
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
