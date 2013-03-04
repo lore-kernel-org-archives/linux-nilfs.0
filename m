@@ -1,55 +1,88 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH] fix warning in fs/nilfs2/btree.c: In function
- =?UTF-8?Q?=E2=80=98nilfs=5Fbtree=5Fconvert=5Fand=5Finsert=E2=80=99?=
-Date: Sun, 03 Mar 2013 19:26:56 +0400
-Message-ID: <1362324416.29435.33.camel@slavad-ubuntu-12.04>
+From: Piter Dias <piter.dias-dmjmWuXPryWakBO8gow8eQ@public.gmane.org>
+Subject: Re: Could someone share his experience with Samba and
+ =?UTF-8?Q?NILFS=3F?=
+Date: Sun, 03 Mar 2013 23:07:53 -0300
+Message-ID: <047b0d2a94c9e784ca59f7bdacd1a036@piterdias.com>
+References: <f3924e57f7fc9be324620e2fdc930e3f@piterdias.com>
+ <1362117419.2088.5.camel@slavad-ubuntu>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=czVGJHiSRVOP1lo95NxfLakeFKxGw/+xX2++PTjPqm8=;
-	b=cyjbQFEangWgjRqH/y6SPcFWanm5NcwrD8y8uQq0/pGiqfrXXdsFmCHLX5I3U6ubAl/l0kUNRu3ZksiHjjfxOZdP8U4BoxnSdvHuBL3+HIh1aVM/ugjR2RdRQ51DM6j5;
+In-Reply-To: <1362117419.2088.5.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Fengguang Wu <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-=46rom: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH] fix warning in fs/nilfs2/btree.c: In function =E2=80=98=
-nilfs_btree_convert_and_insert=E2=80=99
+Vyacheslav,
 
-This patch fixes the warning in fs/nilfs2/btree.c: In function =E2=80=98=
-nilfs_btree_convert_and_insert=E2=80=99:
-(1) include/asm/bitops.h:321:8: warning: =E2=80=98bh=E2=80=99 may be us=
-ed uninitialized in this function [-Wuninitialized]
+Hi.
 
-Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
----
- fs/nilfs2/btree.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Well... It seems to be newbie error.
+I started a smb.conf from scratch using webmin and now NILFS2 is 
+accessible and writable for Windows users.
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index b2e3ff3..734ece9 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -1767,7 +1767,7 @@ int nilfs_btree_convert_and_insert(struct nilfs_b=
-map *btree,
- 				   __u64 key, __u64 ptr,
- 				   const __u64 *keys, const __u64 *ptrs, int n)
- {
--	struct buffer_head *bh;
-+	struct buffer_head *bh =3D NULL;
- 	union nilfs_bmap_ptr_req dreq, nreq, *di, *ni;
- 	struct nilfs_bmap_stats stats;
- 	int ret;
---=20
-1.7.9.5
+The "Previous versions", however, is empty. It is based on Samba shadow 
+copy module. Am I doing something wrong below? "nilfs" shares is a whole 
+NILFS2 disk.
+
+[global]
+	read raw = no
+	hosts deny = ALL
+	interfaces = eth0
+	write raw = no
+	hosts allow = 192.168.7.2
+
+[homes]
+	writeable = yes
+
+[backup]
+	path = /backup
+
+[nilfs]
+	valid users = piterdias
+	writeable = yes
+	path = /snapshoot
+	vfs objects = shadow_copy2
 
 
+On 2013-03-01 02:56, Vyacheslav Dubeyko wrote:
+> Hi Piter,
+> On Fri, 2013-03-01 at 00:26 -0300, Piter Dias wrote:
+>> Hi.
+>> I am using NILFS for few days, testing it to replace a /home 
+>> partition
+>> (currently ext3).
+>> Although etx3 folders are easily available to my Windows machines, 
+>> the
+>> NILFS folders don't. It shows on Windows explorer but it says that 
+>> the
+>> network resource is not reachable.
+>> 
+> I guess that you should have error messages in your system log. Do you
+> have it? Could you share NILFS2-related messages in your system log?
+> I think that you can encounter an NILFS2 issue. But it needs to have
+> more details about the reported issue's environment for the
+> understanding of situation on your side.
+> Thanks,
+> Vyacheslav Dubeyko.
+> 
+>> Could someone share his experience with Samba and NILFS?
+>> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" 
+> in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
+-- 
+________________________
+Piter Dias
+piter.dias-dmjmWuXPryWakBO8gow8eQ@public.gmane.org
+www.piterdias.com
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
