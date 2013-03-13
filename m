@@ -1,138 +1,154 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+From: Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>
 Subject: Re: mkfs.nilfs2 -b 1024 -B 8192
-Date: Wed, 13 Mar 2013 12:25:01 +0400
-Message-ID: <1363163101.2540.28.camel@slavad-ubuntu>
+Date: Wed, 13 Mar 2013 14:27:26 +0000
+Message-ID: <20130313142726.GA3328@thirty.lan>
 References: <20130313071453.GA17072@grill.lan>
+ <1363163101.2540.28.camel@slavad-ubuntu>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=7ynxvNeZ3XvZzDVeC+W+LxsAgdGnXxOnZ7RqWCgFHQQ=;
-	b=rcTOD2Hix6mYk4ol3q8dwXv6xlx/P07ZHkY1YmtnLHYqkmFQhGn8LTEGVpEbEAOsW+d7lyTo3/Sdsi3rB/k5otHc03n16BgUR7XGIv7ZpUP0Jz11TgY8JJqZ8tBZPV49;
-In-Reply-To: <20130313071453.GA17072-P/DK4avwC2n/PtFMR13I2A@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1363163101.2540.28.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 
-Hi Anthony,
+Hi Vyacheslav
 
-On Wed, 2013-03-13 at 07:14 +0000, Anthony Doggett wrote:
-> Hi
-> 
-> Thanks for nilfs:)
-> I have been trying it out again recently, this time using 1kB blocks for
-> the partitions containing often-appended files like those in $HOME and
-> /var.  Unfortunately the 1kB partitions keep dying; I detail the one of
-> the common failures that I've managed to cut down below.
-> 
-> I started using nilfs with the default block/segment size, but was
-> surprised how many blocks get appended by operations like "echo
-> something >> something.txt".  Decreasing the block size from 4kB to 1kB
-> reduced the amount of disk space required to house partitions containing
-> $HOME and /var/log by about 60%.
-> 
+On Wed, Mar 13, 2013 at 12:25:01PM +0400, Vyacheslav Dubeyko wrote:
+> ...
+> Sorry, I don't clearly understand. Have you READ-ONLY FS issue only? Or
+> have you kernel panic? Could you confirm what situation you have?
 
-Thank you for report.
+I did indeed forget to say what happens next!  Future mounts would
+always print "NILFS warning: mounting fs with errors", so I'd always
+throw away that partition and restore from (tar-based) backups.  I've
+pasted a little more detail on what the "ntest" filesystem looks like
+below.  Looking at it, it looks as though the recovery might have
+removed all the errors (by rewinding far enough), but would that
+reliably be the case on a filesystem full of data?  Even if the GC were
+running at the time?
 
-Yes, I am afraid that NILFS2 is not very well tested for the case of 1
-KB block size.
+> ...
+> The "flush kernel thread" issue is complex issue. The nature of this
+> issue begins from architectural solution of b-trees and DAT file. After
+> unsuccessful trying to elaborate simple fix I concluded that a clear
+> solution can be extents support implementation or adding special
+> metadata structure for GC operations. So, I think over about starting
+> implementation of it. But currently I hesitate about what can be a
+> better for start of implementation.
 
+Oh dear.  I do hope that you find a simple solution!  Where is the best
+place to find out more about the flush kernel thread issue?  (Is there
+an issue tracker?)
 
-> The machine I've been trialling nilfs on is running Debian Testing,
-> Linux version 3.2.0-4-686-pae (debian-kernel-0aAXYlwwYIJuHlm7Suoebg@public.gmane.org) (gcc
-> version 4.6.3 (Debian 4.6.3-14) ) #1 SMP Debian 3.2.35-2), but I've also
-> reproduced it (identically) with Debian Unstable amd64 and Debian
-> Experimental (using the 3.8-trunk kernel).  The problematic partitions
-> were formatted with "mkfs.nilfs2 -b 1024 -B 8192".  A script to
-> reproduce this issue is below.  Am I hitting the "bad btree node
-> messages" issue mentioned in
-> http://www.mail-archive.com/linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg01535.html ?
-> 
-
-Sorry, I don't clearly understand. Have you READ-ONLY FS issue only? Or
-have you kernel panic? Could you confirm what situation you have?
-
-Yes, I think that you have reproduced the issue with "bad btree nodes".
-Currently, I am thinking that issue with "flush kernel thread" and "bad
-btree nodes" are related. But maybe I am not fully correct. Your e-mail
-gives me some thoughts about it.
-
-The "flush kernel thread" issue is complex issue. The nature of this
-issue begins from architectural solution of b-trees and DAT file. After
-unsuccessful trying to elaborate simple fix I concluded that a clear
-solution can be extents support implementation or adding special
-metadata structure for GC operations. So, I think over about starting
-implementation of it. But currently I hesitate about what can be a
-better for start of implementation.
-
-> Thanks,
-> Anthony
-> 
-> Script:
->     VG=unencrypted
->     #apt-get install nilfs-tools darcs
->     lvcreate --size 2G --name ntest $VG
->     mkfs.nilfs2 -b 1024 -B 8192 /dev/mapper/$VG-ntest
->     mkdir /var/tmp/n
->     mkdir /var/tmp/n/ntest
->     mount /dev/mapper/$VG-ntest /var/tmp/n/ntest
->     mkdir /var/tmp/n/ntest/thedir
->     cd /var/tmp/n/ntest/thedir
->     sleep 2
->     date
->     darcs init
->     sleep 2
->     dmesg|tail -n 5
->     date
->     darcs whatsnew || true
->     date
->     sleep 2
->     dmesg|tail -n 5
-> 
-
-Thank you for the script and description of reproduction patch. You are
-the first who describe it. I'll try to reproduce the issue with using
-your script. Unfortunately, my previous efforts of reproduction the
-issue were unsuccessful. So, maybe the "bad btree nodes" issue is not
-fully related with "flush kernel thread" issue. If I will reproduce the
-issue by means of your script then I can investigate the "bad btree
-nodes" issue more deeply.
-
-> (It's the "darcs whatsnew" that trips the issue.)
-> 
-> The error resulting from the above (the "inode number" varies):
-> 
->     [63097.325138] segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
->     [63102.496756] nilfs_direct_assign: invalid pointer: 0
->     [63102.496786] NILFS error (device dm-17): nilfs_bmap_assign: broken bmap (inode number=28)
->     [63102.496798]
->     [63102.524403] Remounting filesystem read-only
-> 
-> The other error that I keep getting (again, only on the 1kB partitions):
-> 
->     [  923.632623] nilfs_btree_propagate: key = 11, level == 0
->     [  968.416465] nilfs_btree_propagate: key = 11, level == 0
->     [  973.536551] nilfs_btree_propagate: key = 11, level == 0
->     [  981.088554] nilfs_btree_propagate: key = 11, level == 0
->     [  986.112465] nilfs_btree_propagate: key = 11, level == 0
-> 
-> This second error I have managed to suffer on multiple nilfs partitions
-> (complete with the same key and level, and both on old partitions that
-> have been gc'd many times and on fresh never-gc'd partitions) but have
-> yet to reproduce with anything smaller than "run X, firefox, rsync and
-> vim and a handful of other apps for a few minutes".
-
-Thank you. It needs to investigate this issue more deeply.
+Hope that you do manage to reproduce the "broken bmap" issue easily
+enough.  I shall have another go at reproducing the
+nilfs_btree_propagate issue reliably.
 
 Thanks,
-Vyacheslav Dubeyko.
+Anthony
 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+[  811.211974] segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
+[  816.448465] nilfs_direct_assign: invalid pointer: 0
+[  816.448487] NILFS error (device dm-3): nilfs_bmap_assign: broken bmap (inode number=21)
+[  816.448494] 
+[  816.466784] Remounting filesystem read-only
+
+Then unmount (umount doesn't return: have to cancel it with Ctrl-C):
+[  856.917108] nilfs_direct_assign: invalid pointer: 0
+[  856.917123] NILFS error (device dm-3): nilfs_bmap_assign: broken bmap (inode number=21)
+[  856.917128] 
+[  856.917294] nilfs_direct_assign: invalid pointer: 0
+[  856.917305] NILFS error (device dm-3): nilfs_bmap_assign: broken bmap (inode number=21)
+[  856.917309] 
+[  856.917473] nilfs_direct_assign: invalid pointer: 0
+[  856.917483] NILFS error (device dm-3): nilfs_bmap_assign: broken bmap (inode number=21)
+[  856.917488] 
+[  856.917660] nilfs_direct_assign: invalid pointer: 0
+[  856.917670] NILFS error (device dm-3): nilfs_bmap_assign: broken bmap (inode number=21)
+[  856.917674] 
+[  856.917689] NILFS warning (device dm-3): nilfs_segctor_destroy: dirty file(s) after the final construction
+[  856.917694] 
+
+Then mount once again:
+[  974.586969] NILFS warning: mounting unchecked fs
+[  975.088956] NILFS: recovery complete.
+[  975.089763] segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
+[  975.090152] NILFS warning: mounting fs with errors
+
+> lscp /dev/mapper/unencrypted-ntest
+                 CNO        DATE     TIME  MODE  FLG     NBLKINC       ICNT
+                   1  2013-03-13 11:20:59   cp    -           12          2
+> lssu /dev/mapper/unencrypted-ntest
+              SEGNUM        DATE     TIME STAT     NBLOCKS
+                   0  2013-03-13 11:20:59  ad-          12
+                   1  ---------- --:--:--  ad-           0
+> sudo /sbin/nilfs-tune -l /dev/mapper/unencrypted-ntest
+nilfs-tune 2.1.3
+Filesystem volume name:	  (none)
+Filesystem UUID:	  942d2231-5ea5-4430-96e3-4913917efddb
+Filesystem magic number:  0x3434
+Filesystem revision #:	  2.0
+Filesystem features:      (none)
+Filesystem state:	  valid,error
+Filesystem OS type:	  Linux
+Block size:		  1024
+Filesystem created:	  Wed Mar 13 11:20:59 2013
+Last mount time:	  Wed Mar 13 11:23:44 2013
+Last write time:	  Wed Mar 13 11:27:33 2013
+Mount count:		  2
+Maximum mount count:	  50
+Reserve blocks uid:	  0 (user root)
+Reserve blocks gid:	  0 (group root)
+First inode:		  11
+Inode size:		  128
+DAT entry size:		  32
+Checkpoint size:	  192
+Segment usage size:	  16
+Number of segments:	  255
+Device size:		  2147483648
+First data block:	  4
+# of blocks per segment:  8192
+Reserved segments %:	  5
+Last checkpoint #:	  1
+Last block address:	  4
+Last sequence #:	  0
+Free blocks count:	  2072576
+Commit interval:	  0
+# of blks to create seg:  0
+CRC seed:		  0x8a46fd5b
+CRC check sum:		  0xd431caf2
+CRC check data size:	  0x00000118
+
+> sudo dumpseg /dev/mapper/unencrypted-ntest 0
+segment: segnum = 0
+  sequence number = 0, next segnum = 1
+  partial segment: blocknr = 4, nblocks = 12
+    creation time = 2013-03-13 11:20:59
+    nfinfo = 5
+    finfo
+      ino = 2, cno = 1, nblocks = 1, ndatblk = 1
+        vblocknr = 1, blkoff = 0, blocknr = 5
+    finfo
+      ino = 6, cno = 1, nblocks = 4, ndatblk = 4
+        vblocknr = 2, blkoff = 0, blocknr = 6
+        vblocknr = 3, blkoff = 1, blocknr = 7
+        vblocknr = 4, blkoff = 2, blocknr = 8
+        vblocknr = 5, blkoff = 3, blocknr = 9
+    finfo
+      ino = 4, cno = 1, nblocks = 1, ndatblk = 1
+        vblocknr = 6, blkoff = 0, blocknr = 10
+    finfo
+      ino = 5, cno = 1, nblocks = 1, ndatblk = 1
+        vblocknr = 7, blkoff = 0, blocknr = 11
+    finfo
+      ino = 3, cno = 1, nblocks = 3, ndatblk = 3
+        blkoff = 0, blocknr = 12
+        blkoff = 1, blocknr = 13
+        blkoff = 2, blocknr = 14
 
 
 --
