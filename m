@@ -1,280 +1,129 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3] nilfs-utils: mkfs.nilfs2 should check presence of NILFS2
- volume on device
-Date: Mon, 25 Mar 2013 15:47:21 +0400
-Message-ID: <1364212041.2505.7.camel@slavad-ubuntu>
+Subject: [RFC][PATCH] nilfs2: add necessary declarations and methods for
+ debug output infrastructure
+Date: Tue, 26 Mar 2013 14:09:33 +0400
+Message-ID: <1364292573.2109.9.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=EMq+lDpYtGoAIGoSe1qkA+Jaiappf7/bOehsVxJQpWY=;
-	b=EtNLrEtOrAq+VJDecc9L/JSM8HqLBJgZalHiyrOl/PVXU+4ogMZy1EzhaLIkuq036NQTndIYlXAk4cl2BsymosALEFsbgpV5UA1rjgARd0hzET9tvfQfunSWtvAuf+Ft;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:To:Reply-To:From:Subject:Message-ID; bh=oSG6tbUomVXq1d9/FyADJGDblHSrPoPQnWq9V0dDEso=;
+	b=JKQV+Q6Cvz5tmiTHOYiW117gBPcy1YyvMMNmjqryqZDIosIcPe/eRKQf3nK3LBuZPNab5ktBqg4J1Q7AEphtdFfjjSZsRL1GZ8sYhIFCRzk17UJcrYDTgG9g7DyvcHtD;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: Hendrik Levsen <hendrik-j5CO6tLloWodnm+yROfE0A@public.gmane.org>, Martin Steigerwald <Martin-3kZCPVa5dk2azgQtNeiOUg@public.gmane.org>, Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3] nilfs-utils: mkfs.nilfs2 should check presence of NILFS2 volume on device
+Hi,
 
-The mkfs.nilfs2 utility should check presence of existing file system or partition table on device and to warn a user about possibility to destroy data by mkfs activity. This patch uses libblkid library for detection of presence of file system or partition table on opened device. If libblkid detects any known signature then mkfs.nilfs2 informs a user about potential danger to destroy existing file system or partition table. The execution of mkfs.nilfs2 stops with offering to make decision about continuation or abortion of operation.
+I think that NILFS2 very needs in good debug infrastructure and tracepoints adding. So, this first patch is my vision of necessary declarations and methods for debug output.
 
-Moreover, this patch adds "-f" option that gives opportunity to force overwrite when an existing file system is detected on the device. By default, mkfs.nilfs2 will not write to the device if it suspects that there is a file system on the device already. The man page of mkfs.nilfs2 was modified by description of "-f" option.
+This patch is only for discussion because I am working on patch set with debug output for all NILFS2 modules.
 
-Reported-by: Hendrik Levsen <hendrik-j5CO6tLloWodnm+yROfE0A@public.gmane.org>
-Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: Martin Steigerwald <Martin-3kZCPVa5dk2azgQtNeiOUg@public.gmane.org>
-Tested-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Feel free to suggest any ideas and make remarks about debug output infrastructure in NILFS2.
+
+With the best regards,
+Vyacheslav Dubeyko.
 ---
- configure.ac          |    8 +++-
- man/mkfs.nilfs2.8     |   13 +++++++
- sbin/mkfs/Makefile.am |    2 +-
- sbin/mkfs/mkfs.c      |  104 ++++++++++++++++++++++++++++++++++++++++++++++++-
- 4 files changed, 123 insertions(+), 4 deletions(-)
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH] nilfs2: add necessary declarations and methods for debug output infrastructure
 
-diff --git a/configure.ac b/configure.ac
-index c2bcf4c..1c4cd25 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -61,6 +61,11 @@ AC_CHECK_LIB([uuid], [uuid_generate],
- 	  [Define to 1 if you have the 'uuid' library (-luuid).])],
- 	[AC_MSG_ERROR([UUID library not found])])
+This patch adds necessary declarations and methods for debug output infrastructure.
+
+Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+---
+ fs/nilfs2/nilfs.h |   77 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 77 insertions(+)
+
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 9bc72de..4102667 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -32,6 +32,83 @@
+ #include "the_nilfs.h"
+ #include "bmap.h"
  
-+AC_CHECK_LIB([blkid], [blkid_new_probe_from_filename],
-+	[AC_DEFINE([HAVE_LIBBLKID], 1,
-+	  [Define to 1 if you have the 'blkid' library (-lblkid).])],
-+	[AC_MSG_ERROR([BLKID library not found])])
++/*
++ * Define NILFS2_DEBUG to produce debug messages
++ */
++#undef NILFS2_DEBUG
 +
- LIB_POSIX_MQ=''
- AC_CHECK_FUNC(mq_open,,
- 	[AC_CHECK_LIB(rt, mq_open, LIB_POSIX_MQ=-lrt,
-@@ -82,7 +87,8 @@ AC_HEADER_SYS_WAIT
- AC_CHECK_HEADERS([ctype.h fcntl.h grp.h libintl.h limits.h linux/magic.h \
- 		  linux/types.h locale.h mntent.h mqueue.h paths.h pwd.h \
- 		  semaphore.h stdlib.h string.h strings.h sys/ioctl.h \
--		  sys/mount.h sys/time.h syslog.h time.h unistd.h])
-+		  sys/mount.h sys/time.h syslog.h time.h unistd.h \
-+		  blkid/blkid.h])
- 
- # Check for conditional libraries and headers.
- if test "${enable_libmount}" = "yes"; then
-diff --git a/man/mkfs.nilfs2.8 b/man/mkfs.nilfs2.8
-index 6b7dffe..a42d5b4 100644
---- a/man/mkfs.nilfs2.8
-+++ b/man/mkfs.nilfs2.8
-@@ -18,6 +18,9 @@ mkfs.nilfs2 \- create a NILFS2 filesystem
- .B \-c
- ]
- [
-+.B \-f
-+]
-+[
- .B \-K
- ]
- [
-@@ -62,6 +65,9 @@ mkfs.nilfs2 \- create a NILFS2 filesystem
- .B \-c
- ]
- [
-+.B \-f
-+]
-+[
- .B \-K
- ]
- [
-@@ -120,6 +126,13 @@ number of blocks per segment is 2048 (= 8MB with 4KB blocks).
- .B \-c
- Check the device for bad blocks before building the filesystem.
- .TP
-+.B \-f
-+Force overwrite when an existing filesystem is detected on the device.
-+By default,
-+.B mkfs.nilfs2
-+will not write to the device if it suspects  that  there is a filesystem
-+on the device already.
-+.TP
- .B \-h
- Display help message and exit.
- .TP
-diff --git a/sbin/mkfs/Makefile.am b/sbin/mkfs/Makefile.am
-index b3eb78a..85f30db 100644
---- a/sbin/mkfs/Makefile.am
-+++ b/sbin/mkfs/Makefile.am
-@@ -2,7 +2,7 @@
- 
- AM_CFLAGS = -Wall
- AM_CPPFLAGS = -I$(top_srcdir)/include
--LDADD = -luuid $(top_builddir)/lib/libnilfsfeature.la \
-+LDADD = -luuid -lblkid $(top_builddir)/lib/libnilfsfeature.la \
- 	$(top_builddir)/lib/libmountchk.la \
- 	$(top_builddir)/lib/libcrc32.la
- 
-diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
-index fde1c76..b15cc3e 100644
---- a/sbin/mkfs/mkfs.c
-+++ b/sbin/mkfs/mkfs.c
-@@ -72,6 +72,10 @@
- 
- #include <errno.h>
- 
-+#if HAVE_BLKID_BLKID_H
-+#include <blkid/blkid.h>
-+#endif	/* HAVE_BLKID_BLKID_H */
++/*
++ * Debug code
++ *
++ * The debug code includes:
++ * (1) NILFS2_DEBUG macro switch on/off debugging;
++ * (2) Debug flags for every NILFS2 module;
++ * (3) Debug mask that defines set of modules for debug output;
++ * (4) The nilfs2_debug() and nilfs2_hexdump() macros for debug output.
++ *
++ * In the case of necessity to enhance NILFS2 output by debug messages
++ * then it needs to do such action. First of all, to define by means of
++ * DBG_MASK what modules will have debug output. Secondly, switch on
++ * debug output by means of change #undef NILFS2_DEBUG on
++ * #define NILFS2_DEBUG. And, finally, recompile kernel.
++ */
 +
- #include "nilfs.h"
- #include "nilfs_feature.h"
- #include "mkfs.h"
-@@ -112,6 +116,7 @@ static int cflag = 0;
- static int nflag = 0;
- static int verbose = 0;
- static int discard = 1;
-+static int force_overwrite = 0;
- static unsigned long blocksize = NILFS_DEF_BLOCKSIZE;
- static unsigned long blocks_per_segment = NILFS_DEF_BLKS_PER_SEG;
- static unsigned long r_segments_percentage = NILFS_DEF_RESERVED_SEGMENTS;
-@@ -347,6 +352,7 @@ static int nilfs_mkfs_discard_zeroes_data(int fd)
- 
- static void disk_scan(const char *device);
- static void check_mount(int fd, const char *device);
-+static void check_safety_of_device_overwrite(int fd, const char *device);
- 
- 
- /*
-@@ -611,6 +617,7 @@ int main(int argc, char *argv[])
- 	if ((fd = open(device, O_RDWR)) < 0)
- 		perr("Error: cannot open device: %s", device);
- 	check_mount(fd, device);
-+	check_safety_of_device_overwrite(fd, device);
- 
- 	init_disk_layout(di, fd, device);
- 	si = new_segment(di);
-@@ -729,6 +736,96 @@ static void check_mount(int fd, const char *device)
- 	fclose(fp);
- }
- 
-+static void check_safety_of_device_overwrite(int fd, const char *device)
-+{
-+	int c, c_next;
-+	blkid_probe pr = NULL;
-+	blkid_loff_t size;
-+	int ret = 0;
++/* Debug flag for every module */
++#define DBG_HEX_DUMP	0x00000001
++#define DBG_ALLOC	0x00000002
++#define DBG_BMAP	0x00000004
++#define DBG_BTNODE	0x00000008
++#define DBG_BTREE	0x00000010
++#define DBG_CPFILE	0x00000020
++#define DBG_DAT		0x00000040
++#define DBG_DIR		0x00000080
++#define DBG_DIRECT	0x00000100
++#define DBG_FILE	0x00000200
++#define DBG_GCINODE	0x00000400
++#define DBG_IFILE	0x00000800
++#define DBG_INODE	0x00001000
++#define DBG_IOCTL	0x00002000
++#define DBG_MDT		0x00004000
++#define DBG_NAMEI	0x00008000
++#define DBG_PAGE	0x00010000
++#define DBG_RECOVERY	0x00020000
++#define DBG_SEGBUF	0x00040000
++#define DBG_SEGMENT	0x00080000
++#define DBG_SUFILE	0x00100000
++#define DBG_SUPER	0x00200000
++#define DBG_THE_NILFS	0x00400000
 +
-+	if (!device || !*device)
-+		return;
++/* Definition of flags' set for debugging */
++#ifdef NILFS2_DEBUG
++#define DBG_MASK	(DBG_SUPER|DBG_CPFILE|DBG_THE_NILFS|DBG_HEX_DUMP)
++#else
++#define DBG_MASK	(0)
++#endif
 +
-+	if (force_overwrite == 0) {
-+		pr = blkid_new_probe_from_filename(device);
-+		if (!pr) {
-+			ret = -1;
-+			goto end_check;
-+		}
++#ifdef NILFS2_DEBUG
++#define nilfs2_debug(flg, f, a...) \
++	do { \
++		if (flg & DBG_MASK) { \
++			printk(KERN_DEBUG "NILFS DEBUG (%s, %d): %s:", \
++				__FILE__, __LINE__, __func__); \
++			printk(KERN_DEBUG f, ## a); \
++		} \
++	} while (0)
 +
-+		size = blkid_probe_get_size(pr);
-+		if (size <= 0)
-+			goto end_check;
++#define nilfs2_hexdump(flg, prefix, ptr, size) \
++	do { \
++		if (flg & DBG_MASK) { \
++			printk(KERN_DEBUG "NILFS DEBUG (%s, %d): %s:", \
++				__FILE__, __LINE__, __func__); \
++			print_hex_dump_bytes(prefix, \
++				DUMP_PREFIX_NONE, ptr, size); \
++		} \
++	} while (0)
++#else
++#define nilfs2_debug(flg, fmt, ...)	no_printk(fmt, ##__VA_ARGS__)
++#define nilfs2_hexdump(flg, prefix, ptr, size)	no_printk(prefix)
++#endif
 +
-+		ret = blkid_probe_enable_partitions(pr, 1);
-+		if (ret < 0)
-+			goto end_check;
-+
-+		ret = blkid_do_fullprobe(pr);
-+		if (ret < 0) /* error */
-+			goto end_check;
-+		else if (ret == 0) { /* some signature was found */
-+			const char *type;
-+
-+			if (!blkid_probe_lookup_value(pr, "TYPE",
-+							&type, NULL)) {
-+				pinfo("WARNING: Device %s appears to contain "
-+					"an existing %s superblock.",
-+					device, type);
-+			} else if (!blkid_probe_lookup_value(pr, "PTTYPE",
-+								&type, NULL)) {
-+				pinfo("WARNING: Device %s appears to contain "
-+					"an partition table (%s).",
-+					device, type);
-+			} else {
-+				if (quiet == 0) {
-+					pinfo("Device %s appears to contain "
-+						"something weird.", device);
-+				}
-+				goto end_check;
-+			}
-+
-+			pinfo("WARNING: All data will be lost after format!");
-+			pinfo("\nDO YOU REALLY WANT TO FORMAT DEVICE %s?",
-+				device);
-+
-+			do {
-+				fprintf(stderr, "\nContinue? [y/N] ");
-+				c = getchar();
-+
-+				if (c == EOF || c == '\n')
-+					goto abort_format;
-+
-+				c_next = getchar();
-+				if (c_next != EOF && c_next != '\n')
-+					goto clear_input_buffer;
-+
-+				if (c == 'n' || c == 'N')
-+					goto abort_format;
-+
-+clear_input_buffer:
-+				while (c_next != '\n' && c_next != EOF)
-+					c_next = getchar();
-+			} while (c != 'y' && c != 'Y');
-+		}
-+	}
-+
-+end_check:
-+	if (pr)
-+		blkid_free_probe(pr);
-+	if (quiet == 0 && ret < 0)
-+		pinfo("Probe of %s failed, can't detect fs existence.",
-+			device);
-+	return;
-+
-+abort_format:
-+	if (pr)
-+		blkid_free_probe(pr);
-+	close(fd);
-+	perr("Abort format of device %s", device);
-+	return;
-+}
-+
- static void destroy_disk_buffer(void)
- {
- 	if (disk_buffer) {
-@@ -973,7 +1070,7 @@ static void parse_options(int argc, char *argv[])
- 	int c, show_version_only = 0;
- 	char *fs_features = NULL;
- 
--	while ((c = getopt(argc, argv, "b:B:chKL:m:nqvO:P:V")) != EOF) {
-+	while ((c = getopt(argc, argv, "b:B:cfhKL:m:nqvO:P:V")) != EOF) {
- 		switch (c) {
- 		case 'b':
- 			blocksize = atol(optarg);
-@@ -985,6 +1082,9 @@ static void parse_options(int argc, char *argv[])
- 		case 'c':
- 			cflag++;
- 			break;
-+		case 'f':
-+			force_overwrite = 1;
-+			break;
- 		case 'h':
- 			usage();
- 			exit(EXIT_SUCCESS);
-@@ -1056,7 +1156,7 @@ static void parse_options(int argc, char *argv[])
- static void usage(void)
- {
- 	fprintf(stderr,
--		"Usage: %s [-b block-size] [-B blocks-per-segment] [-c] \n"
-+		"Usage: %s [-b block-size] [-B blocks-per-segment] [-c] [-f] \n"
- 		"       [-L volume-label] [-m reserved-segments-percentage] \n"
- 		"       [-O feature[,...]] \n"
- 		"       [-hnqvKV] device\n",
+ /**
+  * struct nilfs_inode_info - nilfs inode data in memory
+  * @i_flags: inode flags
 -- 
 1.7.9.5
 
