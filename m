@@ -1,120 +1,119 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Subject: Re: Strange "flush" process bahaviour
-Date: Fri, 29 Mar 2013 15:29:17 +0400
-Message-ID: <1364556557.11128.28.camel@slavad-ubuntu>
-References: <20121127151924.GW4028@wloczykij>
-	 <295B3FE7-A44E-4D57-9A6A-B725EF1BA9EB@dubeyko.com>
-	 <20121128142116.GY4028@wloczykij> <1354113560.2017.11.camel@slavad-ubuntu>
-	 <20121128205943.GZ4028@wloczykij> <1354172459.2077.11.camel@slavad-ubuntu>
-	 <20130328120700.GK1672@wloczykij>
-	 <E24177B1-2EF0-4274-BD13-4642E3663D08@dubeyko.com>
-	 <20130329074249.GL1672@wloczykij> <1364544910.11128.9.camel@slavad-ubuntu>
-	 <20130329103710.GM1672@wloczykij>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+Date: Fri, 29 Mar 2013 14:57:22 +0100
+Message-ID: <20130329135722.GN1672@wloczykij>
+References: <20121128142116.GY4028@wloczykij>
+ <1354113560.2017.11.camel@slavad-ubuntu>
+ <20121128205943.GZ4028@wloczykij>
+ <1354172459.2077.11.camel@slavad-ubuntu>
+ <20130328120700.GK1672@wloczykij>
+ <E24177B1-2EF0-4274-BD13-4642E3663D08@dubeyko.com>
+ <20130329074249.GL1672@wloczykij>
+ <1364544910.11128.9.camel@slavad-ubuntu>
+ <20130329103710.GM1672@wloczykij>
+ <1364556557.11128.28.camel@slavad-ubuntu>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="yFtM4vvgVM46ytb2"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=bJFk1fe3vK8E3wYBZkMD52sbBwMRjNUWlp//tT27DBk=;
-	b=Q/pO45A0y7oa9KhVEz7n5yrlLa5tx9Yz5pcgqj67Q7Y9+y2KYYyh1uTotktWtBunT8JCiDLG8uJxarIwJE4tFi6tD8W5x0Thx4n4NKEQcOeUHRmj5KysHLsRTlXR/PMf;
-In-Reply-To: <20130329103710.GM1672@wloczykij>
+Content-Disposition: inline
+In-Reply-To: <1364556557.11128.28.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, 2013-03-29 at 11:37 +0100, Piotr Szymaniak wrote:
-> On Fri, Mar 29, 2013 at 12:15:10PM +0400, Vyacheslav Dubeyko wrote:
-> > I meant that sysrq-trigger output ends with resume about runnable tasks
-> > and locks in the system (for example):
-> > *snip*
-> > So, I need in full sysrq-trigger output for understanding situation on
-> > your side. Could you share it?
-> 
-> If this should be in echo t > /proc/sysrq-trigger then I shared full
-> output already. Maybe I'm missing some (debug?) features in kernel for
-> more verbose output.
-> 
 
-I haven't any special additional configuration options for MagicSysRq in
-my kernel configuration. It is simply enabled.
+--yFtM4vvgVM46ytb2
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-As I see (https://www.kernel.org/doc/Documentation/sysrq.txt), it is
-possible to define log level by means of setting value
-in /proc/sys/kernel/sysrq. I have "1" (enable all functions of sysrq) in
-this file. Maybe, have you another log level on your side?
+On Fri, Mar 29, 2013 at 03:29:17PM +0400, Vyacheslav Dubeyko wrote:
+> I haven't any special additional configuration options for MagicSysRq in
+> my kernel configuration. It is simply enabled.
+>=20
+> As I see (https://www.kernel.org/doc/Documentation/sysrq.txt), it is
+> possible to define log level by means of setting value
+> in /proc/sys/kernel/sysrq. I have "1" (enable all functions of sysrq) in
+> this file. Maybe, have you another log level on your side?
 
-> 
-> > > Btw looking at ps aux output it seems, that this flush is hanging there
-> > > almost from first boot:
-> > > root       937 88.2  0.0      0     0 ?        S    Feb17 50160:39 [flush-8:0]
-> > > 
-> > 
-> > Could you share "cat /proc/partitions" and "mount" outputs? I need to
-> > understand what partition is processed by [flush-8:0].
-> 
-> ~ # cat /proc/partitions
-> major minor  #blocks  name
-> 
->    8        0    3915776 sda
->    8        1      32768 sda1
->    8        2      65536 sda2
->    8        3    3816448 sda3
->    8       16  156290904 sdb
->    8       17    4200966 sdb1
->    8       18     273105 sdb2
->    8       19  146810002 sdb3
->    8       20    5004247 sdb4
->  254        0      65536 dm-0
->  254        1  146808974 dm-1
-> 
-> 
-> ~ # mount
-> rootfs on / type rootfs (rw)
-> /dev/sda3 on / type nilfs2 (rw,noatime,nodiratime,gcpid=16150)
-> proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
-> tmpfs on /run type tmpfs (rw,nosuid,nodev,relatime,mode=755)
-> udev on /dev type devtmpfs (rw,nosuid,relatime,size=10240k,nr_inodes=221714,mode=755)
-> devpts on /dev/pts type devpts (rw,nosuid,noexec,relatime,gid=5,mode=620)
-> shm on /dev/shm type tmpfs (rw,nosuid,nodev,noexec,relatime)
-> sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
-> /dev/mapper/chome on /home type btrfs (rw,noatime)
-> 
-
-I see two nilfs_cleanerd deamons from "ps ax" output:
-
-1520 ?        Ss     0:25 /sbin/nilfs_cleanerd -c /etc/nilfs_cleanerd.conf /dev/disk/by-uuid/f18e80b1-f3c1-49ec-baa5-39c0edc4c0b9
-16150 ?        Ss     0:00 /sbin/nilfs_cleanerd -n /dev/sda3 /
-
-But I can't understand what partition is serviced by nilfs_cleanerd with
-pid #1520. Could you share more details about it?
-
-Thanks,
-Vyacheslav Dubeyko.
-
-> 
-> > > > I can easily reproduce the issue by big file (100 - 500 GB) deletion
-> > > > or truncation. Please, find description in:
-> > > > http://www.mail-archive.com/linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg01504.html.
-> > > 
-> > > If this brings something new - I'm not using huge files like that (this
-> > > flush above is a 3.7G device). But if this reproduces the issue, it
-> > > could be related.  (:
-> > > 
-> > 
-> > Yes, it is really important to understand the situation on your side.
-> > Because you can have another reason of the issue with similar symptoms.
-> > So, we need to investigate your case more deeply, I think.
-> 
-> Got this issue on two different machines, but none of them uses nilfs2 at
-> device bigger then 60G (in fact, the partitions are, afair, around 30G and the
-> mentioned 3.7G).
-> 
-> 
-> Piotr Szymaniak.
+Than this must depend on some different option as I also have "1" in
+/proc/sys/kernel/sysrq.
 
 
+> > ~ # mount
+> > rootfs on / type rootfs (rw)
+> > /dev/sda3 on / type nilfs2 (rw,noatime,nodiratime,gcpid=3D16150)
+> > proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+> > tmpfs on /run type tmpfs (rw,nosuid,nodev,relatime,mode=3D755)
+> > udev on /dev type devtmpfs (rw,nosuid,relatime,size=3D10240k,nr_inodes=
+=3D221714,mode=3D755)
+> > devpts on /dev/pts type devpts (rw,nosuid,noexec,relatime,gid=3D5,mode=
+=3D620)
+> > shm on /dev/shm type tmpfs (rw,nosuid,nodev,noexec,relatime)
+> > sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
+> > /dev/mapper/chome on /home type btrfs (rw,noatime)
+> >=20
+>=20
+> I see two nilfs_cleanerd deamons from "ps ax" output:
+>=20
+> 1520 ?        Ss     0:25 /sbin/nilfs_cleanerd -c /etc/nilfs_cleanerd.con=
+f /dev/disk/by-uuid/f18e80b1-f3c1-49ec-baa5-39c0edc4c0b9
+> 16150 ?        Ss     0:00 /sbin/nilfs_cleanerd -n /dev/sda3 /
+>=20
+> But I can't understand what partition is serviced by nilfs_cleanerd with
+> pid #1520. Could you share more details about it?
+
+~ # readlink /dev/disk/by-uuid/f18e80b1-f3c1-49ec-baa5-39c0edc4c0b9
+=2E./../sda3
+
+I suppose that this is caused by manually (well, by script, but it's not
+"remount") running nilfs_cleanerd on system startup on that device.
+After that there was a remount that started second cleaner. And it seems
+that this was yesterday:
+~ # ps aux | grep nilfs
+root      1520  0.0  0.0   2572  1032 ?        Ss   Feb17   0:25
+/sbin/nilfs_cleanerd -c /etc/nilfs_cleanerd.conf
+/dev/disk/by-uuid/f18e80b1-f3c1-49ec-baa5-39c0edc4c0b9
+root     16150  0.0  0.0   2348   796 ?        Ss   Mar28   0:00
+/sbin/nilfs_cleanerd -n /dev/sda3 /
+
+I think that running cleanerd manually is already changed to -o remount
+on my second machine with nilfs and I just forgot about this one. I had
+some issues with that because of missing /dev/root.
+
+
+Piotr Szymaniak.
+--=20
+Na  kazda  strzelanine   zakonczona  czyjas  smiercia  przypadaja  trzy
+strzelaniny  bez ofiar.  To po prostu  niemozliwe  do  zaakceptowania w
+Ameryce. Po prostu nie do zaakceptowania. Musimy cos z tym zrobic.
+  -- George W. Bush
+
+--yFtM4vvgVM46ytb2
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iQIcBAEBCAAGBQJRVZ3CAAoJEEMpAov1cw9lUboQAMPTVBWTLoDSeF8p1IBDP23f
+OqHeHZ53GORWIBMMo+c0AV8tl97hmqtR715Px1XcFTQhlWawED1oaBclq7URF73g
+JBsy3+WFn7+8erDP8nbCtpH3pfhycHB7qZ7IFk9wu+XpgvBXkiQK2NOcVv5L6mgm
+rnPYKWJLNxUfpos++8R40ssJVn2xj3apUqiDOM772T8idHaIeZ5297jxL8+pSTmC
+Pky4Fk2UlwIMTfU/Frwa9R6ja49c1AJJY6FR1nlL0fTbQ2mR8HgIuuaMvNbD1xL1
+y9LbXmucvGbK5ExSsWIZRdbqnbVF2sumYREjBzYRWc6uIo312ksWzlOMwRDkLJYQ
+JUVJl+LF+deNRLe5Is/kbEEvTylU/YWrv3R+C7K8CAzzRsCvxv1jNHg/7BGS8agC
+33vnjYFI6cQfmsGPDqBMnlKC6Zt65cmxCfZ3jVktDXGC1S8p/r64j68lcnVqi8ej
+m/O8H2MYlzIMZA+f6Jo0zsRJCNw6dFFvdC2SilZK6Xfh2IrSdRYnyWiEpvaqlzW7
+VC9jTSWxNiRWAsO/KQAXsumNZ3t5pyhS/7Z3x6wtfVjs/nTyi7N9/NHDPKTjeQZN
+nFUPCMZhcFS7dIP2WwZUSf4JUOn6uzSpzXOAuuCI3bwn1/vpytc5oBrIV2jEehu1
+PpGlyi4KVJk0o8KhI3AR
+=wYOn
+-----END PGP SIGNATURE-----
+
+--yFtM4vvgVM46ytb2--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
