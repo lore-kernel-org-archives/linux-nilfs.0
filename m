@@ -1,94 +1,67 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: Strange "flush" process bahaviour
-Date: Sun, 31 Mar 2013 15:26:09 +0200
-Message-ID: <20130331132609.GA1781@wloczykij>
+Date: Mon, 01 Apr 2013 10:06:11 +0400
+Message-ID: <1364796371.2202.16.camel@slavad-ubuntu>
 References: <20121128205943.GZ4028@wloczykij>
- <1354172459.2077.11.camel@slavad-ubuntu>
- <20130328120700.GK1672@wloczykij>
- <E24177B1-2EF0-4274-BD13-4642E3663D08@dubeyko.com>
- <20130329074249.GL1672@wloczykij>
- <1364544910.11128.9.camel@slavad-ubuntu>
- <20130329103710.GM1672@wloczykij>
- <1364556557.11128.28.camel@slavad-ubuntu>
- <20130329135722.GN1672@wloczykij>
- <1D751B59-8E60-4D32-80CA-734BD25EE12C@dubeyko.com>
+	 <1354172459.2077.11.camel@slavad-ubuntu> <20130328120700.GK1672@wloczykij>
+	 <E24177B1-2EF0-4274-BD13-4642E3663D08@dubeyko.com>
+	 <20130329074249.GL1672@wloczykij> <1364544910.11128.9.camel@slavad-ubuntu>
+	 <20130329103710.GM1672@wloczykij> <1364556557.11128.28.camel@slavad-ubuntu>
+	 <20130329135722.GN1672@wloczykij>
+	 <1D751B59-8E60-4D32-80CA-734BD25EE12C@dubeyko.com>
+	 <20130331132609.GA1781@wloczykij>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="x+6KMIRAuhnl3hBn"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1D751B59-8E60-4D32-80CA-734BD25EE12C-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=uup9lxzn+6w+GgeFOnZ0iFDWFrmilePeD6f8rfpYgzg=;
+	b=at3hup2Vo4BZzLLAt2VaxcyurEGQNbPjrCp27eOtf+s//oCi8AEzwdBATxzBO0foo1CYk95YHqHb52lofYfY5+33ilUtucW6QVsgmwX8fAevXE2dUZVuoXRWUIh2cjfa;
+In-Reply-To: <20130331132609.GA1781@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+On Sun, 2013-03-31 at 15:26 +0200, Piotr Szymaniak wrote:
 
---x+6KMIRAuhnl3hBn
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+[snip]
+> 
+> Hrm, maybe this is btrfs realated then? But I suppose I don't have any
+> btrfs on the second machine with flush issues.
+> 
 
-On Sun, Mar 31, 2013 at 03:14:00PM +0400, Vyacheslav Dubeyko wrote:
-> Your sysrq-triger output is really strange. The sysrq-triger takes
-> momentary system state snapshot. So, this output makes sense only
-> inside issue occurrence. And I feel that this output was taken after
-> issue ending. Or, maybe, it needs to make several trying of getting
-> sysrq-triger output during issue reproducibility.
->=20
-> I think so because flusher doesn't make something NILFS2 related and, mor=
-eover, it simply sleeps:
-> *snip*
-> The nilfs_cleanerd daemons sleep also:
-> *snip*
-> The segctor thread sleeps too:
->=20
-> Maybe I misunderstand something but your sysrq-triger output doesn't
-> contain info about any NILFS2 related activity. So, I can't see any
-> details about the issue with kernel flusher thread in shared
-> sysrq-triger output.
+If you detected issue with flush-8:0 kernel thread then it is a NILFS2
+related issue, as I understand. Because flush-8:0 processes /dev/sda
+drive and you have NILFS2 partition on /dev/sda3 (/dev/sda3 on / type
+nilfs2 (rw,noatime,nodiratime,gcpid=16150)).
 
-Hrm, maybe this is btrfs realated then? But I suppose I don't have any
-btrfs on the second machine with flush issues.
+> I had a system freeze yesterday and right after reboot flush is back.
+> So it looks like I can reproduce it (something makes the flush thing
+> while booting. Maybe I can catch some debug info there?). Right now I'm
+> going back to 3.4.x series kernel.
+> 
 
-I had a system freeze yesterday and right after reboot flush is back.
-So it looks like I can reproduce it (something makes the flush thing
-while booting. Maybe I can catch some debug info there?). Right now I'm
-going back to 3.4.x series kernel.
+The visible symptoms of the issue (flush kernel thread "abnormal"
+activity) is not a reason of the issue. Such "abnormal" activity of
+flush kernel thread takes place because in nilfs_mdt_write_page() and
+nilfs_write_page() can be called with wbc->for_kupdate or
+wbc->for_background flags. It is made simply
+redirty_page_for_writepage() for such case.
+
+The real issue hides in other NILFS2 subsystem. And only clear
+understanding of file system operation that initiates such "abnormal"
+activity of flush kernel thread can be a basis for further debugging and
+investigation of the issue.
+
+With the best regards,
+Vyacheslav Dubeyko.
+
+> 
+> Piotr Szymaniak.
 
 
-Piotr Szymaniak.
---=20
-Siedzia=C5=82em z (...) takim, co w=C5=82ama=C5=82 si=C4=99 do budki z piwe=
-m i ca=C5=82=C4=85 noc
-wiadrami nosi=C5=82 piwo do domu. Mia=C5=82 pe=C5=82n=C4=85 wann=C4=99 i ak=
-warium, kiedy rano
-go z=C5=82apali.
-  -- Jacek Hugo-Bader, "Egzamin na =C5=9Bwira"
-
---x+6KMIRAuhnl3hBn
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCAAGBQJRWDlwAAoJEEMpAov1cw9lHpgP/3XxQBJo7o00mkpRMmqVnxxo
-7odY/P6/0INzRzU9UrUqjMUuxfGeMikI7Bd+9VvGZl85Svejcp6baiBrov9Pk6Rn
-DstFHu01OaR/sD/9T6DUoKIHvoQBPslIKU7molCL9IxGzZlJAItBPaiom6wZxKWA
-aSqPPhu+cYIGyOMaHBYfhzuE/Rd87CpfJ5k2GKzxvzlkt/nPKaFgF4JGmybiV5lt
-u499Op8UruUuP5qLly0Y0ZzEdNZuT3LyRn6D3bQoMhFJ0xnf9IKTs73Sxv4n/Lg2
-XRM08O3qDlbqXATe8lG9cqwV3YpnGnv+eYIpiJlTXJitiBW09MEouP/YxSriR07T
-qmlreo/LaNV1ANA16uC5ld4pzd4oWAKCTnDpGT/nnWB7ybGnxd/L3NsZpgcaIqy1
-p1emLd6oEIuNtEMC7p4N8P/IPsE5/uzpXmlmgoAFF8eYzxbW6XzoCcpPaLrbo78x
-o+Va0EhIahZ3ZrACgjhlTWyUwQjw6nYsxkATd3l6YlLcmxLPuNThqL6ML/k+Fywb
-oGNFQhTPIc9/B/mn0O3HdpArp1Dsr+e8MweKYaYWedoXKzMr7itIyDb/Zk1ppGaU
-UDo0JLIJHhh7wK/fH+8Pd/nDqaq9KdnAP9X/iauuuUeKSWXIcJkGNwrDQh+mq89x
-wLPbRecMnygFIcih2eQj
-=CYa1
------END PGP SIGNATURE-----
-
---x+6KMIRAuhnl3hBn--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
