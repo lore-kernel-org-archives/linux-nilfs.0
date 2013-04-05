@@ -1,67 +1,123 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Strange "flush" process bahaviour
-Date: Mon, 01 Apr 2013 10:06:11 +0400
-Message-ID: <1364796371.2202.16.camel@slavad-ubuntu>
-References: <20121128205943.GZ4028@wloczykij>
-	 <1354172459.2077.11.camel@slavad-ubuntu> <20130328120700.GK1672@wloczykij>
-	 <E24177B1-2EF0-4274-BD13-4642E3663D08@dubeyko.com>
-	 <20130329074249.GL1672@wloczykij> <1364544910.11128.9.camel@slavad-ubuntu>
-	 <20130329103710.GM1672@wloczykij> <1364556557.11128.28.camel@slavad-ubuntu>
-	 <20130329135722.GN1672@wloczykij>
-	 <1D751B59-8E60-4D32-80CA-734BD25EE12C@dubeyko.com>
-	 <20130331132609.GA1781@wloczykij>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
+Subject: NILFS2 and data integrity
+Date: Fri, 5 Apr 2013 15:45:16 +1100
+Message-ID: <201304051545.16927.onlyjob@member.fsf.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=uup9lxzn+6w+GgeFOnZ0iFDWFrmilePeD6f8rfpYgzg=;
-	b=at3hup2Vo4BZzLLAt2VaxcyurEGQNbPjrCp27eOtf+s//oCi8AEzwdBATxzBO0foo1CYk95YHqHb52lofYfY5+33ilUtucW6QVsgmwX8fAevXE2dUZVuoXRWUIh2cjfa;
-In-Reply-To: <20130331132609.GA1781@wloczykij>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=x-received:sender:from:to:subject:date:user-agent:mime-version
+         :content-type:content-transfer-encoding:message-id;
+        bh=G0/5+rElM2n9toy5rSItMRaarlbbO6oPJPsIv0+VTNk=;
+        b=0kyB0XUJ0rFYsIflY73KOp0SpjxhyyBedB+SnVxIEODLYOsaNqjyNH4LOowArWf4Di
+         Jk9AmVh/U7T6YWUgohdC0SY1WQwvNk/FW7GqOg1irou3CJ0puQGDh7yj/uFqEol4ekwE
+         mu7JOVhUrhuVk2JkTsY8A2VvdZ1aoUk71VzeBxyOcemSpn1toO7d4AcZagNizHC5G9Di
+         utYZCfJamr+leCDEnnWIJr5C+SUgT8FuGR9bHcNMUo4nxhYl5ZkHvMLQVE6R5L/iTnsz
+         Fa+6TRuQgZu6D8waJoCs0UY/QdXMukFUqyA7gL/3ssTltrj8430HgcLWGlWFWuN5LdUR
+         dl1w==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sun, 2013-03-31 at 15:26 +0200, Piotr Szymaniak wrote:
+Dear NILFS team,
 
-[snip]
-> 
-> Hrm, maybe this is btrfs realated then? But I suppose I don't have any
-> btrfs on the second machine with flush issues.
-> 
+Let me thank you sincerely for fantastic and very special file system.
 
-If you detected issue with flush-8:0 kernel thread then it is a NILFS2
-related issue, as I understand. Because flush-8:0 processes /dev/sda
-drive and you have NILFS2 partition on /dev/sda3 (/dev/sda3 on / type
-nilfs2 (rw,noatime,nodiratime,gcpid=16150)).
+Until now I've been using it successfully for years without any issues
+except for minor inconvenience from slow `nilfs_cleanerd`.
 
-> I had a system freeze yesterday and right after reboot flush is back.
-> So it looks like I can reproduce it (something makes the flush thing
-> while booting. Maybe I can catch some debug info there?). Right now I'm
-> going back to 3.4.x series kernel.
-> 
+I'd like to share the details of the incident when recently I experienced
+data corruption on NILFS2 partition followed by unfortunate adding of
+unreliable "SAMSUNG HD204UI" HDD to underlying "mdadm" array.
 
-The visible symptoms of the issue (flush kernel thread "abnormal"
-activity) is not a reason of the issue. Such "abnormal" activity of
-flush kernel thread takes place because in nilfs_mdt_write_page() and
-nilfs_write_page() can be called with wbc->for_kupdate or
-wbc->for_background flags. It is made simply
-redirty_page_for_writepage() for such case.
+The notorious HDD [1][2] occasionally corrupts data on write
+so later read returns wrong data. There is no way to avoid such corruption
+in first place. Detection is also difficult because as you may know in Linux
+there is no block-level integrity checking yet.
+However NILFS2 suffers the most from that particular type of corruption because
+`nilfs_cleanerd` moves unmodified data around and therefore amplifies the
+damage.
 
-The real issue hides in other NILFS2 subsystem. And only clear
-understanding of file system operation that initiates such "abnormal"
-activity of flush kernel thread can be a basis for further debugging and
-investigation of the issue.
+First I noticed corruption on some archives that were OK some weeks ago and
+didn't change since (according to last modification date). As time passed
+more damage was found in files that didn't suppose to change.
+Finally the root cause of corruption was identified and bad HDD was promptly
+removed from array. That's when I thought that the issue was resolved but
+few days later NILFS2 re-mounted itself as read-only and logged the following
+to "/var/log/kern.log":
 
-With the best regards,
-Vyacheslav Dubeyko.
+	Mar 24 11:38:14 deblabr kernel: [191771.927806] NILFS: bad btree node (blocknr=1919583732): level = 193, flags = 0x90, nchildren = 35672
+	Mar 24 11:38:14 deblabr kernel: [191771.927812] NILFS error (device dm-0): nilfs_bmap_lookup_contig: broken bmap (inode number=444589)
+	Mar 24 11:38:14 deblabr kernel: [191771.927812] 
+	Mar 24 11:38:14 deblabr kernel: [191772.126584] Remounting filesystem read-only
+	Mar 24 11:38:15 deblabr kernel: [191772.174965] NILFS: bad btree node (blocknr=1919583732): level = 193, flags = 0x90, nchildren = 35672
+	Mar 24 11:38:15 deblabr kernel: [191772.174972] NILFS error (device dm-0): nilfs_bmap_lookup_contig: broken bmap (inode number=444589)
+	Mar 24 11:38:15 deblabr kernel: [191772.174972] 
+	Mar 24 11:38:15 deblabr kernel: [191772.175255] NILFS: bad btree node (blocknr=1919583732): level = 193, flags = 0x90, nchildren = 35672
+	Mar 24 11:38:15 deblabr kernel: [191772.175258] NILFS error (device dm-0): nilfs_bmap_lookup_contig: broken bmap (inode number=444589)
 
-> 
-> Piotr Szymaniak.
+As far as I understand the issue, corruption in data is not detected until
+one or more "btree" nodes got corrupted as well. I reproduced the problem
+on isolated "bad" HDD.
+In this case I first copied some data to NILFS2 partition and verified
+its integrity. As I was adding more data `nilfs_cleanerd` activated
+and as expected corrupted some of the data. Eventually it failed to continue:
 
+	Mar 31 01:17:30 deblabr kernel: [759042.984783] NILFS: bad btree node (blocknr=938583): level = 192, flags = 0x73, nchildren = 49956
+	Mar 31 01:17:30 deblabr kernel: [759042.984850] NILFS: GC failed during preparation: cannot read source blocks: err=-5
 
+Also file system was re-mounted read-only:
+
+	Mar 30 19:56:59 deblabr kernel: [739821.894963] NILFS: bad btree node (blocknr=1086570306): level = 239, flags = 0xe2, nchildren = 10392
+	Mar 30 19:56:59 deblabr kernel: [739821.894969] NILFS error (device dm-0): nilfs_bmap_last_key: broken bmap (inode number=1225452)
+	Mar 30 19:56:59 deblabr kernel: [739821.894969] 
+	Mar 30 19:56:59 deblabr kernel: [739821.894971] Remounting filesystem read-only
+	Mar 30 19:56:59 deblabr kernel: [739821.894973] NILFS warning (device dm-0): nilfs_truncate_bmap: failed to truncate bmap (ino=1225452, err=-5)
+
+(please ignore time stamp as those logs were taken from two different
+ attempts to reproduce).
+
+With read-only NILFS2 and some corrupted btree nodes I know no other way
+to recover than to restore all the data to freshly formatted partition
+as the lack of `fsck` tool do not allow to repair damaged file system.
+
+I think there are some lessons we can learn from this:
+
+ * Data integrity is very important.
+
+ * On unreliable media `nilfs_cleanerd` can amplify the damage from corruption
+   similar to what may happen on other file systems during defragmentation.
+
+ * To avoid the unnecessary damage it would be nice if `nilfs_cleanerd` could
+   check data integrity on read and stop with corresponding message logged in
+   case of corruption.
+
+ * `fsck` could be helpful to repair corrupted btree nodes.
+
+ * Btrfs have a strategic advantage over NILFS2 in regards to data integrity
+   checking.
+
+Having said that I'd like to note that in my experience NILFS2 *perfectly*
+recovers from unclean shut down or unexpected reset. This problem happened
+only because NILFS2 put too much trust to underlying media.
+
+Thank you.
+
+All the best,
+ Dmitry
+
+[1]: http://rctnotes.blogspot.com.au/2011/02/samsung-2-tb-hd204ui-firmware-bug.html
+[2]: http://sourceforge.net/apps/trac/smartmontools/wiki/SamsungF4EGBadBlocks
+
+---
+
+If any remedy is tested under controlled scientific conditions and
+proved to be effective, it will cease to be alternative and will simply
+become medicine. So-called alternative medicine either hasn't been
+tested or it has failed its tests.
+        -- Richard Dawkins, 2007
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
