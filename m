@@ -1,78 +1,199 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: NILFS2 and data integrity
-Date: Fri, 05 Apr 2013 12:01:18 +0400
-Message-ID: <1365148878.2112.4.camel@slavad-ubuntu>
-References: <201304051545.16927.onlyjob@member.fsf.org>
-	 <1365142569.2075.14.camel@slavad-ubuntu>
-	 <201304051748.12466.onlyjob@member.fsf.org>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Marco Stornelli <marco.stornelli@gmail.com>
+Subject: [PATCH 3/4] fsfreeze: manage kill signal when sb_start_pagefault
+ is called
+Date: Sat, 06 Apr 2013 12:05:52 +0200
+Message-ID: <515FF380.5020406@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=FzCDhjJw5ZRzveTfkAvy8PEcwZgrfURo6aJ3MOYszkY=;
-	b=MwNtcWCp7sGOjXrOhGwXeIYtzi+AO+AtG3YxydHaZZASY4PlpsxS5NAZf1wFWisQjG4w5wrPGzHnFpsJiMlRveeli7QJMPRuLUOZEAy+VACL4TbgbTb+U9BWKcH8Lio4;
-In-Reply-To: <201304051748.12466.onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=x-received:message-id:date:from:user-agent:mime-version:to:cc
+         :subject:content-type:content-transfer-encoding;
+        bh=0hdPJ8gc4nW3ADqif1DEQlZ9OEFt/yFE355Zyzv3uXM=;
+        b=WYtgwoY77/hZsfBPSi8knwNTM4ELPdKNWXbEpvh8zyt7BWOyx5ebGO1v0ODhl4l9aR
+         h8mm7l94tm+88Occgn4xxpkFbnJcH958K/iLhL2+EUw968zPD/iRfz5fP5Eg7z57gdPU
+         sakP28MQCNVpjAoxPt0p0bFHUJhZ8MD/WzoG6rjrmlzSHcTGBxxnvS9+RMjmQwHXY3dZ
+         YPNqVcfggCj/gE+diEdDzfm5zf5mBc9bi1kBxioQK6hUcfjMWiXsMUURMUJzRaaqT1ag
+         bttSHuI9R4pvMHJ3z2/hM2tQXjogDZICB3Ku9yFbLGbevwRzPkOuL/8vS4snH/c6zeNc
+         T+cg==
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel@vger.kernel.org
+Cc: Chris Mason <chris.mason@fusionio.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk.kim@samsung.com>, Steven Whitehouse <swhiteho@redhat.com>, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, Mark Fasheh <mfasheh@suse.com>, Joel Becker <jlbec@evilplan.org>, Matthew Wilcox <matthew@wil.cx>, Marco Stornelli <marco.stornelli@gmail.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-mm@kvack.org, Jan Kara <jack@suse.cz>
 
-Hi Dmitry,
+In every place where sb_start_pagefault was called now we must manage
+the error code and return VM_FAULT_RETRY.
 
-On Fri, 2013-04-05 at 17:48 +1100, Dmitry Smirnov wrote:
-> Hi Vyacheslav,
-> 
-> On Fri, 5 Apr 2013 17:16:09 Vyacheslav Dubeyko wrote: 
-> > First of all, I think that it needs to distinguish two issues in your
-> > e-mail. The first one is the issue with Samsung HDD and the second is
-> > the issue with "bad b-tree node".
-> 
-> I was able to reproduce "bad b-tree node" on data-corrupting HDD.
-> I think it is happening when previously corrupted b-tree is read.
-> 
-> It looks like when only data is corrupted there is no "bad b-tree node"
-> problem.
-> 
+Signed-off-by: Marco Stornelli <marco.stornelli@gmail.com>
+---
+ fs/btrfs/inode.c   |    4 +++-
+ fs/buffer.c        |    4 +++-
+ fs/ext4/inode.c    |    4 +++-
+ fs/f2fs/file.c     |    4 +++-
+ fs/gfs2/file.c     |    4 +++-
+ fs/nilfs2/file.c   |    4 +++-
+ fs/ocfs2/mmap.c    |    4 +++-
+ include/linux/fs.h |    6 ++++--
+ mm/filemap.c       |    7 +++++--
+ 9 files changed, 30 insertions(+), 11 deletions(-)
 
-Yes, I think that you are correct. The real reason of visible symptoms
-of the issue ("bad b-tree node" messages) is the issue with Samsung HDD.
-This issue with HDD generates all corruptions on the volume. So, it
-needs to implement data integrity support in NILFS2 driver and
-fsck.nilfs2 utility.
-
-With the best regards,
-Vyacheslav Dubeyko.
-
->  
-> > Yes, I think that you are really right about necessity to check data
-> > integrity during segctor and nilfs_cleanerd activity.
-> 
-> Thank you. :)
-> 
-> 
-> > The issue with "bad b-tree node" is reported by many guys. But it is not
-> > not easy to reproduce the issue for 4 KB block size on my side.
-> > Currently, I can reproduce the issue on NILFS2 volume with 1 KB block
-> > size. And I am deeply inside investigation of the issue in such
-> > environment. But it is possible that such use-case can be a 1 KB block
-> > size related. Currently, I doubt that we have one reason for "bad b-tree
-> > node" issue.
-> 
-> I'm sure there might be other reasons for this. However I only experienced
-> "bad b-tree node" in connection with data corruption caused by
-> malfunctioning HDD with buggy firmware.
-> 
-> Regards,
->  Dmitry.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 09c58a3..a6166f4 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -7559,7 +7559,9 @@ int btrfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	u64 page_start;
+ 	u64 page_end;
+ 
+-	sb_start_pagefault(inode->i_sb);
++	ret = sb_start_pagefault(inode->i_sb);
++	if (ret)
++		return VM_FAULT_RETRY;
+ 	ret  = btrfs_delalloc_reserve_space(inode, PAGE_CACHE_SIZE);
+ 	if (!ret) {
+ 		ret = file_update_time(vma->vm_file);
+diff --git a/fs/buffer.c b/fs/buffer.c
+index b4dcb34..6d3d2cc 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -2383,7 +2383,9 @@ int block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
+ 	int ret;
+ 	struct super_block *sb = file_inode(vma->vm_file)->i_sb;
+ 
+-	sb_start_pagefault(sb);
++	ret = sb_start_pagefault(sb);
++	if (ret)
++		return VM_FAULT_RETRY;
+ 
+ 	/*
+ 	 * Update file times before taking page lock. We may end up failing the
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index b3a5213..efc47f6 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -5023,7 +5023,9 @@ int ext4_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	get_block_t *get_block;
+ 	int retries = 0;
+ 
+-	sb_start_pagefault(inode->i_sb);
++	ret = sb_start_pagefault(inode->i_sb);
++	if (ret)
++		return VM_FAULT_RETRY;
+ 	file_update_time(vma->vm_file);
+ 	/* Delalloc case is easy... */
+ 	if (test_opt(inode->i_sb, DELALLOC) &&
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 958a46d..cce4147 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -37,7 +37,9 @@ static int f2fs_vm_page_mkwrite(struct vm_area_struct *vma,
+ 
+ 	f2fs_balance_fs(sbi);
+ 
+-	sb_start_pagefault(inode->i_sb);
++	err = sb_start_pagefault(inode->i_sb);
++	if (err)
++		return VM_FAULT_RETRY;
+ 
+ 	mutex_lock_op(sbi, DATA_NEW);
+ 
+diff --git a/fs/gfs2/file.c b/fs/gfs2/file.c
+index d79c2da..071e777 100644
+--- a/fs/gfs2/file.c
++++ b/fs/gfs2/file.c
+@@ -396,7 +396,9 @@ static int gfs2_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	loff_t size;
+ 	int ret;
+ 
+-	sb_start_pagefault(inode->i_sb);
++	ret = sb_start_pagefault(inode->i_sb);
++	if (ret)
++		return VM_FAULT_RETRY;
+ 
+ 	/* Update file times before taking page lock */
+ 	file_update_time(vma->vm_file);
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 08fdb77..1c7678a 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -74,7 +74,9 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	if (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
+ 		return VM_FAULT_SIGBUS; /* -ENOSPC */
+ 
+-	sb_start_pagefault(inode->i_sb);
++	ret = sb_start_pagefault(inode->i_sb);
++	if (ret)
++		return VM_FAULT_RETRY;
+ 	lock_page(page);
+ 	if (page->mapping != inode->i_mapping ||
+ 	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
+diff --git a/fs/ocfs2/mmap.c b/fs/ocfs2/mmap.c
+index 10d66c7..f0973ae 100644
+--- a/fs/ocfs2/mmap.c
++++ b/fs/ocfs2/mmap.c
+@@ -136,7 +136,9 @@ static int ocfs2_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	sigset_t oldset;
+ 	int ret;
+ 
+-	sb_start_pagefault(inode->i_sb);
++	ret = sb_start_pagefault(inode->i_sb);
++	if (ret)
++		return VM_FAULT_RETRY;
+ 	ocfs2_block_signals(&oldset);
+ 
+ 	/*
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 03921d6..550574e 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1407,6 +1407,8 @@ static inline int sb_start_write_trylock(struct super_block *sb)
+  * sb_start_pagefault - get write access to a superblock from a page fault
+  * @sb: the super we write to
+  *
++ * It returns zero when no error occured, the error code otherwise.
++ *
+  * When a process starts handling write page fault, it should embed the
+  * operation into sb_start_pagefault() - sb_end_pagefault() pair to get
+  * exclusion against file system freezing. This is needed since the page fault
+@@ -1422,9 +1424,9 @@ static inline int sb_start_write_trylock(struct super_block *sb)
+  * mmap_sem
+  *   -> sb_start_pagefault
+  */
+-static inline void sb_start_pagefault(struct super_block *sb)
++static inline int sb_start_pagefault(struct super_block *sb)
+ {
+-	__sb_start_write_wait(sb, SB_FREEZE_PAGEFAULT, false);
++	__sb_start_write_wait(sb, SB_FREEZE_PAGEFAULT, true);
+ }
+ 
+ /*
+diff --git a/mm/filemap.c b/mm/filemap.c
+index b238671..acf8d97 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1712,9 +1712,11 @@ int filemap_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ {
+ 	struct page *page = vmf->page;
+ 	struct inode *inode = file_inode(vma->vm_file);
+-	int ret = VM_FAULT_LOCKED;
++	int ret = 0;
+ 
+-	sb_start_pagefault(inode->i_sb);
++	ret = sb_start_pagefault(inode->i_sb);
++	if (ret)
++		return VM_FAULT_RETRY;
+ 	file_update_time(vma->vm_file);
+ 	lock_page(page);
+ 	if (page->mapping != inode->i_mapping) {
+@@ -1727,6 +1729,7 @@ int filemap_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	 * progress, we are guaranteed that writeback during freezing will
+ 	 * see the dirty page and writeprotect it again.
+ 	 */
++	ret = VM_FAULT_LOCKED;
+ 	set_page_dirty(page);
+ 	wait_for_stable_page(page);
+ out:
+-- 
+1.7.3.4
