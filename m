@@ -1,59 +1,83 @@
-From: Marco Stornelli <marco.stornelli@gmail.com>
-Subject: Re: [PATCH 3/4] fsfreeze: manage kill signal when sb_start_pagefault
- is called
-Date: Sat, 06 Apr 2013 17:00:07 +0200
-Message-ID: <51603877.7070904@gmail.com>
-References: <515FF380.5020406@gmail.com> <20130406132028.GD28744@parisc-linux.org>
+From: Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>
+Subject: Re: mkfs.nilfs2 -b 1024 -B 8192
+Date: Tue, 9 Apr 2013 22:08:27 +0100
+Message-ID: <20130409210827.GA3809@grill.lan>
+References: <20130313071453.GA17072@grill.lan>
+ <424816AD-A79B-4F3D-A886-8D0CC735812B@dubeyko.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=x-received:message-id:date:from:user-agent:mime-version:to:cc
-         :subject:references:in-reply-to:content-type
-         :content-transfer-encoding;
-        bh=YdfbJG5KsrtmjO1Xg1jZHgSFYS7k9wbVqmG9DhcUvZ8=;
-        b=CWQYN6gwVFfFMakg3juIY0PsSC0r3B0EZWM6SbACeVUeBePW6SFWm0AEcUXkbHQGo4
-         Vb1dL72WEfdP7sDBgSPqVG7CQGLQ7RYz+q30QKoHvuKNVuqJvVW9gmHZSL3JqrAzG873
-         tHj9xbEZw3nbCmLkdNWUa2+MeT9AkOFUa3JXIp7WLmMVQu22KXr9dyel3HbVz1y6tVTD
-         8Wn2l9+vXjfSj8jxmt9CG0xJPExQndW5c7gBKNuqChSiTeSsqu9lwcvQat36g2xb8u/9
-         BgCra7TmSbEQG+TbsAobXgV6iG8H7RJ9e66QChlAabwf6qR3KLkf1xp3nkZ6ooOfCJ8B
-         gXiA==
-In-Reply-To: <20130406132028.GD28744@parisc-linux.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <424816AD-A79B-4F3D-A886-8D0CC735812B-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Matthew Wilcox <matthew@wil.cx>
-Cc: linux-fsdevel@vger.kernel.org, Chris Mason <chris.mason@fusionio.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk.kim@samsung.com>, Steven Whitehouse <swhiteho@redhat.com>, KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, Mark Fasheh <mfasheh@suse.com>, Joel Becker <jlbec@evilplan.org>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-mm@kvack.org, Jan Kara <jack@suse.cz>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Il 06/04/2013 15:20, Matthew Wilcox ha scritto:
-> On Sat, Apr 06, 2013 at 12:05:52PM +0200, Marco Stornelli wrote:
->> In every place where sb_start_pagefault was called now we must manage
->> the error code and return VM_FAULT_RETRY.
->
-> Erm ... in patch 1/4:
->
->   static inline void sb_start_pagefault(struct super_block *sb)
->   {
-> -       __sb_start_write(sb, SB_FREEZE_PAGEFAULT, true);
-> +       __sb_start_write_wait(sb, SB_FREEZE_PAGEFAULT, false);
->   }
->
->>
->> -	sb_start_pagefault(inode->i_sb);
->> +	ret = sb_start_pagefault(inode->i_sb);
->> +	if (ret)
->> +		return VM_FAULT_RETRY;
->>   	ret  = btrfs_delalloc_reserve_space(inode, PAGE_CACHE_SIZE);
->
-> Does the compiler not warn that you're assigning void to 'ret'?  Or was
-> there some other SNAFU sending these patches?
->
+Hi Vyacheslav
 
-I'm sorry, my fault :) As I said in 00 these patches are completely 
-*not* tested, it was only a "quick coding & review" to understand if 
-someone can see any problem to this kind of implementation, since I 
-touched several points in the kernel. So there is still on-going work 
-and I need to do several tests. Maybe I had to add the RFC tag, sorry again.
+I've been curious as to what within the "darcs whatsnew" was causing the
+"nilfs_direct_assign: invalid pointer: 0" / "broken bmap" issue for 1kB
+blocks and I had a quiet half hour today, so I've boiled it down to a
+simpler script and a short bit of C.  I include both below just in case
+you should find them useful.  I was surprised to see that the 'a' makes
+it to the file despite the filesystem errors.
 
-Marco
+Kind regards,
+Anthony
+
+Script:
+    VG=unencrypted
+    gcc -Wall truncate_mmap.c
+    #lvcreate --size 2G --name ntest $VG
+    mkfs.nilfs2 -b 1024 -B 8192 /dev/mapper/$VG-ntest
+    mkdir /var/tmp/n
+    mkdir /var/tmp/n/ntest
+    mount /dev/mapper/$VG-ntest /var/tmp/n/ntest
+    cd /var/tmp/n/ntest
+    sleep 2
+    date
+    dmesg|tail -n 5
+    $OLDPWD/a.out
+    date
+    sleep 8
+    dmesg|tail -n 5
+
+truncate_mmap.c:
+    #include <fcntl.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <sys/mman.h>
+    #include <unistd.h>
+
+    #define handle_error(msg) \
+       do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+    int main()
+    {
+        char *addr;
+        int fd;
+        int t;
+        int c;
+        size_t size = 60;
+
+        fd = open("truncate_mmap.tst", O_RDWR|O_CREAT|O_NOCTTY);
+        if (fd == -1)
+            handle_error("open");
+        t = ftruncate(fd, (off_t) size);
+        if (t != 0)
+            handle_error("ftruncate");
+        addr = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        if (addr == MAP_FAILED)
+            handle_error("mmap");
+        addr[0] = 'a';
+        c = close(fd);
+        if (c != 0)
+            handle_error("close");
+        exit(EXIT_SUCCESS);
+    }
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
