@@ -1,82 +1,49 @@
-From: Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: mkfs.nilfs2 -b 1024 -B 8192
-Date: Tue, 9 Apr 2013 22:08:27 +0100
-Message-ID: <20130409210827.GA3809@grill.lan>
+Date: Wed, 10 Apr 2013 10:19:14 +0400
+Message-ID: <1365574754.2577.5.camel@slavad-ubuntu>
 References: <20130313071453.GA17072@grill.lan>
- <424816AD-A79B-4F3D-A886-8D0CC735812B@dubeyko.com>
+	 <424816AD-A79B-4F3D-A886-8D0CC735812B@dubeyko.com>
+	 <20130409210827.GA3809@grill.lan>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <424816AD-A79B-4F3D-A886-8D0CC735812B-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=7P44j4FnuLDphwVo7pNod9jRaEVLo+W0p1BJc2vvF6U=;
+	b=Qbu7uOPOP5XNjPjyGry1RluDX7J178QeDJoETIQbma+cXjdaxn6by2POxEYlza87ZJDghkIAkWnKBaptH1MtA8xPNm8M2HyYEe9xKIyi0ybNeYFZXlMyHOgNl55tGO11;
+In-Reply-To: <20130409210827.GA3809-P/DK4avwC2n/PtFMR13I2A@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+To: Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Vyacheslav
+Hi Anthony,
 
-I've been curious as to what within the "darcs whatsnew" was causing the
-"nilfs_direct_assign: invalid pointer: 0" / "broken bmap" issue for 1kB
-blocks and I had a quiet half hour today, so I've boiled it down to a
-simpler script and a short bit of C.  I include both below just in case
-you should find them useful.  I was surprised to see that the 'a' makes
-it to the file despite the filesystem errors.
+On Tue, 2013-04-09 at 22:08 +0100, Anthony Doggett wrote:
+> Hi Vyacheslav
+> 
+> I've been curious as to what within the "darcs whatsnew" was causing the
+> "nilfs_direct_assign: invalid pointer: 0" / "broken bmap" issue for 1kB
+> blocks and I had a quiet half hour today, so I've boiled it down to a
+> simpler script and a short bit of C.  I include both below just in case
+> you should find them useful.  I was surprised to see that the 'a' makes
+> it to the file despite the filesystem errors.
+> 
 
-Kind regards,
-Anthony
+Thank you.
 
-Script:
-    VG=unencrypted
-    gcc -Wall truncate_mmap.c
-    #lvcreate --size 2G --name ntest $VG
-    mkfs.nilfs2 -b 1024 -B 8192 /dev/mapper/$VG-ntest
-    mkdir /var/tmp/n
-    mkdir /var/tmp/n/ntest
-    mount /dev/mapper/$VG-ntest /var/tmp/n/ntest
-    cd /var/tmp/n/ntest
-    sleep 2
-    date
-    dmesg|tail -n 5
-    $OLDPWD/a.out
-    date
-    sleep 8
-    dmesg|tail -n 5
+I am using your previous script for the issue investigation. I have a
+picture of the issue but I don't find the reason of it yet. I think that
+I'll use your new script during investigation.
 
-truncate_mmap.c:
-    #include <fcntl.h>
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <sys/mman.h>
-    #include <unistd.h>
+Thanks,
+Vyacheslav Dubeyko.
 
-    #define handle_error(msg) \
-       do { perror(msg); exit(EXIT_FAILURE); } while (0)
+> Kind regards,
+> Anthony
 
-    int main()
-    {
-        char *addr;
-        int fd;
-        int t;
-        int c;
-        size_t size = 60;
-
-        fd = open("truncate_mmap.tst", O_RDWR|O_CREAT|O_NOCTTY);
-        if (fd == -1)
-            handle_error("open");
-        t = ftruncate(fd, (off_t) size);
-        if (t != 0)
-            handle_error("ftruncate");
-        addr = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-        if (addr == MAP_FAILED)
-            handle_error("mmap");
-        addr[0] = 'a';
-        c = close(fd);
-        if (c != 0)
-            handle_error("close");
-        exit(EXIT_SUCCESS);
-    }
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
