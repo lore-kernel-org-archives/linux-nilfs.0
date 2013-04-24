@@ -1,75 +1,58 @@
-From: Vyacheslav Dubeyko <slava@dubeyko.com>
-Subject: [PATCH] nilfs2: add logic for the case of file growing (old size <=
- new size) in nilfs_truncate()
-Date: Wed, 24 Apr 2013 15:44:26 +0400
-Message-ID: <1366803866.2146.2.camel@slavad-ubuntu>
-Reply-To: slava@dubeyko.com
+From: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Very low write-performance and troubles with RPM
+Date: Wed, 24 Apr 2013 15:53:24 +0200
+Message-ID: <CAFvQSYS5E7wFLyc___yvSBDaDsPyjEJ19XUs2M3UEN1nXJcumg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=z0tHcoCVoNDSw/MtEQaa4ykEYta0g5MIIDhzUF4CZp8=;
-	b=hdaykj4RYT7EOmOL83CwzQYIwgbbbxZuLBP5CZzKHrEHdQ39IT7ENmcCITHuFd6CB+o1JvjNV08wyW7I5bKzcn03+Vwb/mnsA4CRug1gFNa2p9LbfaheQnBQZM9bKS25;
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:x-received:date:message-id:subject:from:to
+         :content-type;
+        bh=F5rhme996w/ogzp5TdQKIMxUzDipBvLWTFnkH+/nv/U=;
+        b=hLY+TFDqLtkh788jTTS1J9Is+fxxfWg9yWHcVfA6othqGRqgoL8mf0y6CKEIUEwFIC
+         wrRT5j3WVmmOa64TR53+ROYGqwBzJG4VeXugpOGPnSKIVaJAvSEa7l8qBFokla5hocMl
+         QMsLxBL1hUi0EcEGvzHV0VG2sP2xMcMh4M+wjKYt9xHfe3Vhp7LTX/e7eVUgkONS4p8x
+         eEiDlyzKOn8rHw7xTQomLo0O+XnTklcDB+MlkdMNspwnUt9+Veq9q6GMUbS0Jdg4UWvC
+         3R6XWfraXsl5E2oiidbN3fWoq58yfYdLm7l8wA9OVEXP7sI7cAKZ0Vbud33MzeNlKnzL
+         jhgA==
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs@vger.kernel.org
-Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Vyacheslav Dubeyko <slava@dubeyko.com>
-Subject: [PATCH] nilfs2: add logic for the case of file growing (old size <= new size) in nilfs_truncate()
+Hi.
 
-There are situations when nilfs_truncate() is called with new value of i_size that is greater than old one. This patch adds logic for such case.
+I am in the process of migrating to nilfs2 for my root-filesystem
+running Fedora-19-alpha.
+Basically the system works quite fine, except:
 
-Signed-off-by: Vyacheslav Dubeyko <slava@dubeyko.com>
-CC: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
----
- fs/nilfs2/inode.c |   30 ++++++++++++++++++++++++++++++
- 1 file changed, 30 insertions(+)
+1. RPM checks for free inodes prior installing a package, which
+doesn't make any sence of course.
+I can pass "--ignoresize" to RPM which disables those checks, however,
+I haven't found any way to disable it when using the "yum" package
+manager.
+Is there any way to make nilfs2 report a large number of unused inodes
+instead of "0"?
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 6b49f14..5ccaace 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -698,6 +698,36 @@ void nilfs_truncate(struct inode *inode)
- 
- 	blocksize = sb->s_blocksize;
- 	blkoff = (inode->i_size + blocksize - 1) >> sb->s_blocksize_bits;
-+
-+	if (blkoff > inode->i_blocks) {
-+		int err;
-+		struct address_space *mapping = inode->i_mapping;
-+		struct page *page;
-+		void *fsdata;
-+		loff_t size = inode->i_size;
-+
-+		err = pagecache_write_begin(NULL, mapping, size, 0,
-+						AOP_FLAG_UNINTERRUPTIBLE,
-+						&page, &fsdata);
-+		if (err) {
-+			printk(KERN_ERR
-+			    "NILFS: pagecache_write_begin() failed: err %d",
-+			    err);
-+			return;
-+		}
-+		err = pagecache_write_end(NULL, mapping, size,
-+						0, 0, page, fsdata);
-+		if (err < 0) {
-+			printk(KERN_ERR
-+			    "NILFS: pagecache_write_end() failed: err %d",
-+			    err);
-+			return;
-+		}
-+		mark_inode_dirty(inode);
-+		return;
-+	} else if (blkoff == inode->i_blocks)
-+		return;
-+
- 	nilfs_transaction_begin(sb, &ti, 0); /* never fails */
- 
- 	block_truncate_page(inode->i_mapping, inode->i_size, nilfs_get_block);
--- 
-1.7.9.5
+2. Write-operations are very slow (a few mb/s) and a lot of time is
+spent inside:
+- segctord
+- the application performing the filesystem operations.
 
+I've recorded a system-wide profile of extracting a tar archive as
+well as a larger delete operation (rm):
+https://plus.google.com/photos/118350688762629274389/albums/5870410083987119137?authkey=CPu0iK2TiOWsoQE
 
+Any idea what could be going wrong here?
 
+Thank you in advance, Clemens
+
+PS: I am using nilfs-utils-2.1.4-3.fc19.x86_64 and linux
+3.9.0-0.rc6.git2.3.fc19.x86_64.
+the root-filesystem is an encrypted luks container (worked quite will
+with ext4, so don't think this is causing the issue)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
