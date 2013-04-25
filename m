@@ -1,71 +1,77 @@
-From: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: re: nilfs2: fix issue with flush kernel thread after remount in RO
- mode because of driver's internal error or metadata corruption
-Date: Thu, 25 Apr 2013 10:49:47 +0300
-Message-ID: <20130425074947.GB11880@elgon.mountain>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Very low write-performance and troubles with RPM
+Date: Thu, 25 Apr 2013 12:00:25 +0400
+Message-ID: <1366876825.3181.6.camel@slavad-ubuntu>
+References: <CAFvQSYS5E7wFLyc___yvSBDaDsPyjEJ19XUs2M3UEN1nXJcumg@mail.gmail.com>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=a3R51k7zE+b7KzhqxODxt/wELJtS2u687d8um9fA5w0=;
+	b=HHwkzXsHs6zBnxFn/9WA1sfDIQbgUdj6wlatXFE0fqHQId7wdDjty6mImbNiUpbao7frppjJalQwTFxT5Rzuy4dm5iU+d2uw00FEvRP4PyIJGALpNaG7JhRWzeb+Vb3f;
+In-Reply-To: <CAFvQSYS5E7wFLyc___yvSBDaDsPyjEJ19XUs2M3UEN1nXJcumg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kbuild-JC7UmRfGjtg@public.gmane.org
+To: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-[ It's weird that kbuild didn't catch this ].
+Hi Clemens,
 
-Hello Vyacheslav Dubeyko,
+On Wed, 2013-04-24 at 15:53 +0200, Clemens Eisserer wrote:
+> Hi.
+> 
+> I am in the process of migrating to nilfs2 for my root-filesystem
+> running Fedora-19-alpha.
+> Basically the system works quite fine, except:
+> 
+> 1. RPM checks for free inodes prior installing a package, which
+> doesn't make any sence of course.
+> I can pass "--ignoresize" to RPM which disables those checks, however,
+> I haven't found any way to disable it when using the "yum" package
+> manager.
+> Is there any way to make nilfs2 report a large number of unused inodes
+> instead of "0"?
+> 
 
-The patch bb594c4767b0: "nilfs2: fix issue with flush kernel thread
-after remount in RO mode because of driver's internal error or
-metadata corruption" from Apr 18, 2013, leads to the following 
-warning:
-"fs/nilfs2/inode.c:211 nilfs_writepage()
-	 error: we previously assumed 'inode' could be null (see line 195)"
+Thank you for the issue report. You simply encounter the non-implemented
+part of the NILFS2 driver. It needs to be fixed.
 
-fs/nilfs2/inode.c
-   190  static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
-   191  {
-   192          struct inode *inode = page->mapping->host;
-   193          int err;
-   194  
-   195          if (inode && (inode->i_sb->s_flags & MS_RDONLY)) {
-                    ^^^^^
-New check.
+> 2. Write-operations are very slow (a few mb/s) and a lot of time is
+> spent inside:
+> - segctord
+> - the application performing the filesystem operations.
+> 
 
-   196                  /*
-   197                   * It means that filesystem was remounted in read-only
-   198                   * mode because of error or metadata corruption. But we
-   199                   * have dirty pages that try to be flushed in background.
-   200                   * So, here we simply discard this dirty page.
-   201                   */
-   202                  nilfs_clear_dirty_page(page, false);
-   203                  unlock_page(page);
-   204                  return -EROFS;
-   205          }
-   206  
-   207          redirty_page_for_writepage(wbc, page);
-   208          unlock_page(page);
-   209  
-   210          if (wbc->sync_mode == WB_SYNC_ALL) {
-   211                  err = nilfs_construct_segment(inode->i_sb);
-                                                      ^^^^^^^^^^^
-Old dereference.
+I think that anyway NILFS2 driver needs in optimization efforts.
 
-   212                  if (unlikely(err))
-   213                          return err;
-   214          } else if (wbc->for_reclaim)
-   215                  nilfs_flush_segment(inode->i_sb, inode->i_ino);
-                                            ^^^^^^^^^^^
-Old dereference.
+> I've recorded a system-wide profile of extracting a tar archive as
+> well as a larger delete operation (rm):
+> https://plus.google.com/photos/118350688762629274389/albums/5870410083987119137?authkey=CPu0iK2TiOWsoQE
+> 
+> Any idea what could be going wrong here?
+> 
 
-   216  
-   217          return 0;
-   218  }
+As I understand, you mean long duration of delete operation for big
+files. Unfortunately, this is a side effect of managing checkpoint
+information during deletion operation. As I understand, it needs to
+implement extents support for improving this.
 
-regards,
-dan carpenter
+Thanks,
+Vyacheslav Dubeyko.
+
+> Thank you in advance, Clemens
+> 
+> PS: I am using nilfs-utils-2.1.4-3.fc19.x86_64 and linux
+> 3.9.0-0.rc6.git2.3.fc19.x86_64.
+> the root-filesystem is an encrypted luks container (worked quite will
+> with ext4, so don't think this is causing the issue)
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
