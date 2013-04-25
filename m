@@ -1,76 +1,68 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Very low write-performance and troubles with RPM
-Date: Thu, 25 Apr 2013 12:00:25 +0400
-Message-ID: <1366876825.3181.6.camel@slavad-ubuntu>
-References: <CAFvQSYS5E7wFLyc___yvSBDaDsPyjEJ19XUs2M3UEN1nXJcumg@mail.gmail.com>
+Subject: [PATCH] nilfs2: fix warning in nilfs_writepage()
+Date: Thu, 25 Apr 2013 13:38:35 +0400
+Message-ID: <1366882715.3181.11.camel@slavad-ubuntu>
+References: <20130425074947.GB11880@elgon.mountain>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=a3R51k7zE+b7KzhqxODxt/wELJtS2u687d8um9fA5w0=;
-	b=HHwkzXsHs6zBnxFn/9WA1sfDIQbgUdj6wlatXFE0fqHQId7wdDjty6mImbNiUpbao7frppjJalQwTFxT5Rzuy4dm5iU+d2uw00FEvRP4PyIJGALpNaG7JhRWzeb+Vb3f;
-In-Reply-To: <CAFvQSYS5E7wFLyc___yvSBDaDsPyjEJ19XUs2M3UEN1nXJcumg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=oH/hYdvJzaXppDudBoBsCnNipwuqhXVjsAKwyhgs240=;
+	b=jXm3sw6qg5rCJpEmCTL0sMAEVRoWnfmEVycW6MkzmtzAvIXDB95nfe1FG2t6GI1B63P++PuPCTFDoUWnX9V7nIK7tNWilt82NnWvBR5xoIY2rodaKJXTl709WTtFuk9b;
+In-Reply-To: <20130425074947.GB11880-mgFCXtclrQlZLf2FXnZxJA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kbuild-JC7UmRfGjtg@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 
-Hi Clemens,
-
-On Wed, 2013-04-24 at 15:53 +0200, Clemens Eisserer wrote:
-> Hi.
+On Thu, 2013-04-25 at 10:49 +0300, Dan Carpenter wrote:
+> [ It's weird that kbuild didn't catch this ].
 > 
-> I am in the process of migrating to nilfs2 for my root-filesystem
-> running Fedora-19-alpha.
-> Basically the system works quite fine, except:
+> Hello Vyacheslav Dubeyko,
 > 
-> 1. RPM checks for free inodes prior installing a package, which
-> doesn't make any sence of course.
-> I can pass "--ignoresize" to RPM which disables those checks, however,
-> I haven't found any way to disable it when using the "yum" package
-> manager.
-> Is there any way to make nilfs2 report a large number of unused inodes
-> instead of "0"?
+> The patch bb594c4767b0: "nilfs2: fix issue with flush kernel thread
+> after remount in RO mode because of driver's internal error or
+> metadata corruption" from Apr 18, 2013, leads to the following 
+> warning:
+> "fs/nilfs2/inode.c:211 nilfs_writepage()
+> 	 error: we previously assumed 'inode' could be null (see line 195)"
 > 
 
-Thank you for the issue report. You simply encounter the non-implemented
-part of the NILFS2 driver. It needs to be fixed.
-
-> 2. Write-operations are very slow (a few mb/s) and a lot of time is
-> spent inside:
-> - segctord
-> - the application performing the filesystem operations.
-> 
-
-I think that anyway NILFS2 driver needs in optimization efforts.
-
-> I've recorded a system-wide profile of extracting a tar archive as
-> well as a larger delete operation (rm):
-> https://plus.google.com/photos/118350688762629274389/albums/5870410083987119137?authkey=CPu0iK2TiOWsoQE
-> 
-> Any idea what could be going wrong here?
-> 
-
-As I understand, you mean long duration of delete operation for big
-files. Unfortunately, this is a side effect of managing checkpoint
-information during deletion operation. As I understand, it needs to
-implement extents support for improving this.
+Please, find below the patch with fix.
 
 Thanks,
 Vyacheslav Dubeyko.
+--
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH] nilfs2: fix warning in nilfs_writepage()
 
-> Thank you in advance, Clemens
-> 
-> PS: I am using nilfs-utils-2.1.4-3.fc19.x86_64 and linux
-> 3.9.0-0.rc6.git2.3.fc19.x86_64.
-> the root-filesystem is an encrypted luks container (worked quite will
-> with ext4, so don't think this is causing the issue)
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The patch fixes warning: "fs/nilfs2/inode.c:211 nilfs_writepage() error: we previously assumed 'inode' could be null (see line 195)".
+
+Reported-by: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/inode.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index ba7a1da..cf02f55 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -192,7 +192,7 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
+ 	struct inode *inode = page->mapping->host;
+ 	int err;
+ 
+-	if (inode && (inode->i_sb->s_flags & MS_RDONLY)) {
++	if (inode->i_sb->s_flags & MS_RDONLY) {
+ 		/*
+ 		 * It means that filesystem was remounted in read-only
+ 		 * mode because of error or metadata corruption. But we
+-- 
+1.7.9.5
+
 
 
 --
