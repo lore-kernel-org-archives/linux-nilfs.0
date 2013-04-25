@@ -1,93 +1,72 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: add logic for the case of file growing (old
- size <= new size) in nilfs_truncate()
-Date: Thu, 25 Apr 2013 00:48:15 +0900 (JST)
-Message-ID: <20130425.004815.356918234.konishi.ryusuke@lab.ntt.co.jp>
-References: <1366803866.2146.2.camel@slavad-ubuntu>
+From: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: re: nilfs2: fix issue with flush kernel thread after remount in RO
+ mode because of driver's internal error or metadata corruption
+Date: Thu, 25 Apr 2013 10:49:47 +0300
+Message-ID: <20130425074947.GB11880@elgon.mountain>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1366803866.2146.2.camel@slavad-ubuntu>
+Content-Disposition: inline
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kbuild-JC7UmRfGjtg@public.gmane.org
 
-Hi Vyacheslav,
-On Wed, 24 Apr 2013 15:44:26 +0400, Vyacheslav Dubeyko wrote:
-> From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Subject: [PATCH] nilfs2: add logic for the case of file growing (old size <= new size) in nilfs_truncate()
-> 
-> There are situations when nilfs_truncate() is called with new value of i_size that is greater than old one. This patch adds logic for such case.
-> 
-> Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+[ It's weird that kbuild didn't catch this ].
 
-Did you confirm that nilfs_truncate has real problem in such situtation?
+Hello Vyacheslav Dubeyko,
 
-I think hole blocks should be appended in that case.
+The patch bb594c4767b0: "nilfs2: fix issue with flush kernel thread
+after remount in RO mode because of driver's internal error or
+metadata corruption" from Apr 18, 2013, leads to the following 
+warning:
+"fs/nilfs2/inode.c:211 nilfs_writepage()
+	 error: we previously assumed 'inode' could be null (see line 195)"
 
-Doesn't the current implementation work so?
+fs/nilfs2/inode.c
+   190  static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
+   191  {
+   192          struct inode *inode = page->mapping->host;
+   193          int err;
+   194  
+   195          if (inode && (inode->i_sb->s_flags & MS_RDONLY)) {
+                    ^^^^^
+New check.
 
+   196                  /*
+   197                   * It means that filesystem was remounted in read-only
+   198                   * mode because of error or metadata corruption. But we
+   199                   * have dirty pages that try to be flushed in background.
+   200                   * So, here we simply discard this dirty page.
+   201                   */
+   202                  nilfs_clear_dirty_page(page, false);
+   203                  unlock_page(page);
+   204                  return -EROFS;
+   205          }
+   206  
+   207          redirty_page_for_writepage(wbc, page);
+   208          unlock_page(page);
+   209  
+   210          if (wbc->sync_mode == WB_SYNC_ALL) {
+   211                  err = nilfs_construct_segment(inode->i_sb);
+                                                      ^^^^^^^^^^^
+Old dereference.
 
-With regards,
-Ryusuke Konishi
+   212                  if (unlikely(err))
+   213                          return err;
+   214          } else if (wbc->for_reclaim)
+   215                  nilfs_flush_segment(inode->i_sb, inode->i_ino);
+                                            ^^^^^^^^^^^
+Old dereference.
 
-> ---
->  fs/nilfs2/inode.c |   30 ++++++++++++++++++++++++++++++
->  1 file changed, 30 insertions(+)
-> 
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index 6b49f14..5ccaace 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -698,6 +698,36 @@ void nilfs_truncate(struct inode *inode)
->  
->  	blocksize = sb->s_blocksize;
->  	blkoff = (inode->i_size + blocksize - 1) >> sb->s_blocksize_bits;
-> +
-> +	if (blkoff > inode->i_blocks) {
-> +		int err;
-> +		struct address_space *mapping = inode->i_mapping;
-> +		struct page *page;
-> +		void *fsdata;
-> +		loff_t size = inode->i_size;
-> +
-> +		err = pagecache_write_begin(NULL, mapping, size, 0,
-> +						AOP_FLAG_UNINTERRUPTIBLE,
-> +						&page, &fsdata);
-> +		if (err) {
-> +			printk(KERN_ERR
-> +			    "NILFS: pagecache_write_begin() failed: err %d",
-> +			    err);
-> +			return;
-> +		}
-> +		err = pagecache_write_end(NULL, mapping, size,
-> +						0, 0, page, fsdata);
-> +		if (err < 0) {
-> +			printk(KERN_ERR
-> +			    "NILFS: pagecache_write_end() failed: err %d",
-> +			    err);
-> +			return;
-> +		}
-> +		mark_inode_dirty(inode);
-> +		return;
-> +	} else if (blkoff == inode->i_blocks)
-> +		return;
-> +
->  	nilfs_transaction_begin(sb, &ti, 0); /* never fails */
->  
->  	block_truncate_page(inode->i_mapping, inode->i_size, nilfs_get_block);
-> -- 
-> 1.7.9.5
-> 
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+   216  
+   217          return 0;
+   218  }
+
+regards,
+dan carpenter
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
