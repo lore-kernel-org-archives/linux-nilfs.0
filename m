@@ -1,214 +1,311 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix issue of nilfs_set_page_dirty for page at
- EOF boundary
-Date: Thu, 02 May 2013 11:16:37 +0900 (JST)
-Message-ID: <20130502.111637.513952694.konishi.ryusuke@lab.ntt.co.jp>
-References: <20130501.163930.56348973.konishi.ryusuke@lab.ntt.co.jp>
-	<FB20329D-7028-478C-896E-88E1106A34A5@dubeyko.com>
+From: Vyacheslav Dubeyko <slava@dubeyko.com>
+Subject: [PATCH] nilfs2: implement calculation of free inodes count
+Date: Fri, 03 May 2013 17:12:26 +0400
+Message-ID: <1367586746.5050.4.camel@slavad-ubuntu-12.04>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <FB20329D-7028-478C-896E-88E1106A34A5-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=WWWSXHJp+qXXCJm3YgbY5HjcXDcxnhOPEoroU8TMr/g=;
+	b=WNx7DWwch68TIUyvoOkRhNz4yBpFarPsxVMTLDeGwiwwd/Q9BiXhVNKN+40EeDMw1uAbTRLocy91g3oJhyLuIYDS1IZRQWSEM6+UFJCDIAK8cj5tq8f18oq6VSylReqQ;
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs@vger.kernel.org
+Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Clemens Eisserer <linuxhippy@gmail.com>
 
-Hi Andrew,
+From: Vyacheslav Dubeyko <slava@dubeyko.com>
+Subject: [PATCH] nilfs2: implement calculation of free inodes count
 
-Could you please queue this fix in -mm tree and send upstream ?
+Currently, NILFS2 returns 0 as free inodes count (f_ffree) and current used inodes count as total file nodes in file system (f_files):
 
-Thanks,
-Ryusuke Konishi
+df -i
+Filesystem      Inodes  IUsed   IFree IUse% Mounted on
+/dev/loop0           2      2       0  100% /mnt/nilfs2
 
-On Wed, 1 May 2013 18:14:56 +0400, Vyacheslav Dubeyko wrote:
-> Hi Ryusuke,
-> 
-> On May 1, 2013, at 11:39 AM, Ryusuke Konishi wrote:
-> 
->> Hi Vyacheslav,
->> 
->> Here I post the bug fix of the problem that Anthony Doggett reported
->> and you originally proposed a bug fix with the patch titled "nilfs2:
->> fix issue with broken bmap for the case of block size lesser than 4
->> KB".
->> 
->> I tested this patch against the mainline and stable trees, and so far
->> it works fine (the issue is fixed without any side effect).
->> 
->> If you meet an issue on this patch, or have a question, please let me
->> know.
->> 
-> 
-> Yes, this patch much better than mine. :-)
-> 
-> With the best regards,
-> Vyacheslav Dubeyko.
+This patch implements real calculation of free inodes count. First of all, it is calculated total file nodes in file system as (desc_blocks_count * groups_per_desc_block * entries_per_group). Then, it is calculated free inodes count as difference the total file nodes and used inodes count. As a result, we have such output for NILFS2:
+
+df -i
+Filesystem       Inodes   IUsed    IFree IUse% Mounted on
+/dev/loop0      4194304 2114701  2079603   51% /mnt/nilfs2
+
+Reported-by: Clemens Eisserer <linuxhippy@gmail.com>
+Signed-off-by: Vyacheslav Dubeyko <slava@dubeyko.com>
+CC: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Tested-by: Vyacheslav Dubeyko <slava@dubeyko.com>
+---
+ fs/nilfs2/alloc.c |   36 ++++++++------------------
+ fs/nilfs2/alloc.h |   24 ++++++++++++++++++
+ fs/nilfs2/ifile.c |   73 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/ifile.h |    4 +++
+ fs/nilfs2/mdt.h   |    2 ++
+ fs/nilfs2/super.c |    9 +++++--
+ 6 files changed, 120 insertions(+), 28 deletions(-)
+
+diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+index eed4d7b..6c61ae9 100644
+--- a/fs/nilfs2/alloc.c
++++ b/fs/nilfs2/alloc.c
+@@ -30,29 +30,6 @@
+ #include "mdt.h"
+ #include "alloc.h"
+ 
+-
+-/**
+- * nilfs_palloc_groups_per_desc_block - get the number of groups that a group
+- *					descriptor block can maintain
+- * @inode: inode of metadata file using this allocator
+- */
+-static inline unsigned long
+-nilfs_palloc_groups_per_desc_block(const struct inode *inode)
+-{
+-	return (1UL << inode->i_blkbits) /
+-		sizeof(struct nilfs_palloc_group_desc);
+-}
+-
+-/**
+- * nilfs_palloc_groups_count - get maximum number of groups
+- * @inode: inode of metadata file using this allocator
+- */
+-static inline unsigned long
+-nilfs_palloc_groups_count(const struct inode *inode)
+-{
+-	return 1UL << (BITS_PER_LONG - (inode->i_blkbits + 3 /* log2(8) */));
+-}
+-
+ /**
+  * nilfs_palloc_init_blockgroup - initialize private variables for allocator
+  * @inode: inode of metadata file using this allocator
+@@ -80,6 +57,13 @@ int nilfs_palloc_init_blockgroup(struct inode *inode, unsigned entry_size)
+ 		mi->mi_blocks_per_group + 1;
+ 		/* Number of blocks per descriptor including the
+ 		   descriptor block */
++	atomic_set(&mi->mi_desc_blocks_count, 1);
++		/*
++		 * The field mi_desc_blocks_count is used for
++		 * storing knowledge about current count of
++		 * desciptor blocks. Initially, it is initialized
++		 * by one.
++		 */
+ 	return 0;
+ }
+ 
+@@ -246,9 +230,9 @@ static int nilfs_palloc_get_block(struct inode *inode, unsigned long blkoff,
+  * @create: create flag
+  * @bhp: pointer to store the resultant buffer head
+  */
+-static int nilfs_palloc_get_desc_block(struct inode *inode,
+-				       unsigned long group,
+-				       int create, struct buffer_head **bhp)
++int nilfs_palloc_get_desc_block(struct inode *inode,
++				unsigned long group,
++				int create, struct buffer_head **bhp)
+ {
+ 	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
+ 
+diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
+index fb72381..073b571 100644
+--- a/fs/nilfs2/alloc.h
++++ b/fs/nilfs2/alloc.h
+@@ -30,6 +30,28 @@
+ #include <linux/fs.h>
+ 
+ /**
++ * nilfs_palloc_groups_count - get maximum number of groups
++ * @inode: inode of metadata file using this allocator
++ */
++static inline unsigned long
++nilfs_palloc_groups_count(const struct inode *inode)
++{
++	return 1UL << (BITS_PER_LONG - (inode->i_blkbits + 3 /* log2(8) */));
++}
++
++/**
++ * nilfs_palloc_groups_per_desc_block - get the number of groups that a group
++ *					descriptor block can maintain
++ * @inode: inode of metadata file using this allocator
++ */
++static inline unsigned long
++nilfs_palloc_groups_per_desc_block(const struct inode *inode)
++{
++	return (1UL << inode->i_blkbits) /
++		sizeof(struct nilfs_palloc_group_desc);
++}
++
++/**
+  * nilfs_palloc_entries_per_group - get the number of entries per group
+  * @inode: inode of metadata file using this allocator
+  *
+@@ -45,6 +67,8 @@ nilfs_palloc_entries_per_group(const struct inode *inode)
+ int nilfs_palloc_init_blockgroup(struct inode *, unsigned);
+ int nilfs_palloc_get_entry_block(struct inode *, __u64, int,
+ 				 struct buffer_head **);
++int nilfs_palloc_get_desc_block(struct inode *, unsigned long, int,
++				struct buffer_head **);
+ void *nilfs_palloc_block_get_entry(const struct inode *, __u64,
+ 				   const struct buffer_head *, void *);
+ 
+diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
+index d8e65bd..4f25549 100644
+--- a/fs/nilfs2/ifile.c
++++ b/fs/nilfs2/ifile.c
+@@ -160,6 +160,79 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
+ }
+ 
+ /**
++ * nilfs_count_free_inodes - calculate free inodes count
++ * @root: root object
++ * @nmaxinodes: current maximum of available inodes count [out]
++ * @nfreeinodes: free inodes count [out]
++ */
++int nilfs_count_free_inodes(struct nilfs_root *root,
++				__statfs_word *nmaxinodes,
++				__statfs_word *nfreeinodes)
++{
++	struct inode *ifile;
++	struct buffer_head *desc_bh;
++	unsigned long groups_per_desc_block, entries_per_group;
++	unsigned long entries_per_desc_block;
++	unsigned long ngroups;
++	unsigned int desc_blocks;
++	__statfs_word nused, nmax;
++	unsigned long i;
++	int err = 0;
++
++	BUG_ON(!root || !nfreeinodes || !nmaxinodes);
++
++	ifile = root->ifile;
++	*nmaxinodes = 0;
++	*nfreeinodes = 0;
++
++	ngroups = nilfs_palloc_groups_count(ifile);
++	groups_per_desc_block = nilfs_palloc_groups_per_desc_block(ifile);
++	entries_per_group = nilfs_palloc_entries_per_group(ifile);
++	nused = atomic_read(&root->inodes_count);
++	entries_per_desc_block = groups_per_desc_block * entries_per_group;
++	desc_blocks =
++		atomic_read(&NILFS_IFILE_I(ifile)->mi.mi_desc_blocks_count);
++	nmax = desc_blocks * entries_per_desc_block;
++
++	if (nused >= nmax) {
++		for (i = groups_per_desc_block * (unsigned long)desc_blocks;
++				i < ngroups;
++					i += groups_per_desc_block) {
++
++			err = nilfs_palloc_get_desc_block(ifile, i, 0,
++								&desc_bh);
++			if (err)
++				break;
++			else
++				desc_blocks++;
++
++			brelse(desc_bh);
++		}
++
++		nmax = entries_per_desc_block * desc_blocks;
++
++		if (nused == nmax) {
++			desc_blocks++;
++			if ((desc_blocks * groups_per_desc_block) < ngroups)
++				nmax += entries_per_desc_block;
++			else
++				desc_blocks--;
++		}
++
++		atomic_set(&NILFS_IFILE_I(ifile)->mi.mi_desc_blocks_count,
++				desc_blocks);
++
++		if (nused > nmax)
++			return err ? err : -ERANGE;
++	}
++
++	*nmaxinodes = nmax;
++	*nfreeinodes = nmax - nused;
++
++	return 0;
++}
++
++/**
+  * nilfs_ifile_read - read or get ifile inode
+  * @sb: super block instance
+  * @root: root object
+diff --git a/fs/nilfs2/ifile.h b/fs/nilfs2/ifile.h
+index 59b6f2b..57a8564 100644
+--- a/fs/nilfs2/ifile.h
++++ b/fs/nilfs2/ifile.h
+@@ -27,6 +27,7 @@
+ 
+ #include <linux/fs.h>
+ #include <linux/buffer_head.h>
++#include <linux/statfs.h>
+ #include <linux/nilfs2_fs.h>
+ #include "mdt.h"
+ #include "alloc.h"
+@@ -49,6 +50,9 @@ int nilfs_ifile_create_inode(struct inode *, ino_t *, struct buffer_head **);
+ int nilfs_ifile_delete_inode(struct inode *, ino_t);
+ int nilfs_ifile_get_inode_block(struct inode *, ino_t, struct buffer_head **);
+ 
++int nilfs_count_free_inodes(struct nilfs_root *,
++			    __statfs_word *, __statfs_word *);
++
+ int nilfs_ifile_read(struct super_block *sb, struct nilfs_root *root,
+ 		     size_t inode_size, struct nilfs_inode *raw_inode,
+ 		     struct inode **inodep);
+diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
+index ab172e8..c01b6fb 100644
+--- a/fs/nilfs2/mdt.h
++++ b/fs/nilfs2/mdt.h
+@@ -53,6 +53,7 @@ struct nilfs_shadow_map {
+  * @mi_shadow: shadow of bmap and page caches
+  * @mi_blocks_per_group: number of blocks in a group
+  * @mi_blocks_per_desc_block: number of blocks per descriptor block
++ * @mi_desc_blocks_count: number of descriptor blocks
+  */
+ struct nilfs_mdt_info {
+ 	struct rw_semaphore	mi_sem;
+@@ -64,6 +65,7 @@ struct nilfs_mdt_info {
+ 	struct nilfs_shadow_map *mi_shadow;
+ 	unsigned long		mi_blocks_per_group;
+ 	unsigned long		mi_blocks_per_desc_block;
++	atomic_t		mi_desc_blocks_count;
+ };
+ 
+ static inline struct nilfs_mdt_info *NILFS_MDT(const struct inode *inode)
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index c7d1f9f..548676b 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -609,6 +609,7 @@ static int nilfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+ 	unsigned long overhead;
+ 	unsigned long nrsvblocks;
+ 	sector_t nfreeblocks;
++	__statfs_word nmaxinodes, nfreeinodes;
+ 	int err;
+ 
+ 	/*
+@@ -633,14 +634,18 @@ static int nilfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+ 	if (unlikely(err))
+ 		return err;
+ 
++	err = nilfs_count_free_inodes(root, &nmaxinodes, &nfreeinodes);
++	if (unlikely(err))
++		return err;
++
+ 	buf->f_type = NILFS_SUPER_MAGIC;
+ 	buf->f_bsize = sb->s_blocksize;
+ 	buf->f_blocks = blocks - overhead;
+ 	buf->f_bfree = nfreeblocks;
+ 	buf->f_bavail = (buf->f_bfree >= nrsvblocks) ?
+ 		(buf->f_bfree - nrsvblocks) : 0;
+-	buf->f_files = atomic_read(&root->inodes_count);
+-	buf->f_ffree = 0; /* nilfs_count_free_inodes(sb); */
++	buf->f_files = nmaxinodes;
++	buf->f_ffree = nfreeinodes;
+ 	buf->f_namelen = NILFS_NAME_LEN;
+ 	buf->f_fsid.val[0] = (u32)id;
+ 	buf->f_fsid.val[1] = (u32)(id >> 32);
+-- 
+1.7.9.5
 
 
-On Wed, 01 May 2013 16:39:30 +0900 (JST), Ryusuke Konishi wrote:
-> Hi Vyacheslav,
-> 
-> Here I post the bug fix of the problem that Anthony Doggett reported
-> and you originally proposed a bug fix with the patch titled "nilfs2:
-> fix issue with broken bmap for the case of block size lesser than 4
-> KB".
-> 
-> I tested this patch against the mainline and stable trees, and so far
-> it works fine (the issue is fixed without any side effect).
-> 
-> If you meet an issue on this patch, or have a question, please let me
-> know.
-> 
-> I appreciate very much that you are always making effort to solve
-> problems of NILFS users.
-> 
-> Thanks,
-> Ryusuke Konishi
-> --
-> From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-> Subject: [PATCH] nilfs2: fix issue of nilfs_set_page_dirty for page at EOF
->  boundary
-> 
-> DESCRIPTION:
-> There are use-cases when NILFS2 file system (formatted with block size
-> lesser than 4 KB) can be remounted in RO mode because of encountering
-> of "broken bmap" issue.
-> 
-> The issue was reported by Anthony Doggett
-> <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>: "The machine I've been trialling
-> nilfs on is running Debian Testing, Linux version 3.2.0-4-686-pae
-> (debian-kernel-0aAXYlwwYIJuHlm7Suoebg@public.gmane.org) (gcc version 4.6.3 (Debian 4.6.3-14)
-> ) #1 SMP Debian 3.2.35-2), but I've also reproduced it (identically)
-> with Debian Unstable amd64 and Debian Experimental (using the
-> 3.8-trunk kernel).  The problematic partitions were formatted with
-> "mkfs.nilfs2 -b 1024 -B 8192"."
-> 
-> SYMPTOMS:
-> (1) System log contains error messages likewise:
-> 
->     [63102.496756] nilfs_direct_assign: invalid pointer: 0
->     [63102.496786] NILFS error (device dm-17): nilfs_bmap_assign: broken bmap (inode number=28)
->     [63102.496798]
->     [63102.524403] Remounting filesystem read-only
-> 
-> (2) The NILFS2 file system is remounted in RO mode.
-> 
-> REPRODUSING PATH:
-> (1) Create volume group with name "unencrypted" by means of vgcreate utility.
-> (2) Run script (prepared by Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>):
-> 
-> ----------------[BEGIN SCRIPT]--------------------
-> 
-> VG=unencrypted
-> lvcreate --size 2G --name ntest $VG
-> mkfs.nilfs2 -b 1024 -B 8192 /dev/mapper/$VG-ntest
-> mkdir /var/tmp/n
-> mkdir /var/tmp/n/ntest
-> mount /dev/mapper/$VG-ntest /var/tmp/n/ntest
-> mkdir /var/tmp/n/ntest/thedir
-> cd /var/tmp/n/ntest/thedir
-> sleep 2
-> date
-> darcs init
-> sleep 2
-> dmesg|tail -n 5
-> date
-> darcs whatsnew || true
-> date
-> sleep 2
-> dmesg|tail -n 5
-> ----------------[END SCRIPT]--------------------
-> 
-> REPRODUCIBILITY: 100%
-> 
-> INVESTIGATION:
-> As it was discovered, the issue takes place during segment
-> construction after executing such sequence of user-space operations:
-> 
-> open("_darcs/index", O_RDWR|O_CREAT|O_NOCTTY, 0666) = 7
-> fstat(7, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
-> ftruncate(7, 60)
-> 
-> The error message "NILFS error (device dm-17): nilfs_bmap_assign:
-> broken bmap (inode number=28)" takes place because of trying to get
-> block number for third block of the file with logical offset #3072
-> bytes. As it is possible to see from above output, the file has 60
-> bytes of the whole size. So, it is enough one block (1 KB in size)
-> allocation for the whole file. Trying to operate with several blocks
-> instead of one takes place because of discovering several dirty
-> buffers for this file in nilfs_segctor_scan_file() method.
-> 
-> The root cause of this issue is in nilfs_set_page_dirty function which
-> is called just before writing to a mmapped page.
-> 
-> When nilfs_page_mkwrite function handles a page at EOF boundary, it
-> fills hole blocks only inside EOF through __block_page_mkwrite().
-> 
-> The __block_page_mkwrite() function calls set_page_dirty() after
-> filling hole blocks, thus nilfs_set_page_dirty function (=
-> a_ops->set_page_dirty) is called.  However, the current implementation
-> of nilfs_set_page_dirty() wrongly marks all buffers dirty even for
-> page at EOF boundary.
-> 
-> As a result, buffers outside EOF are inconsistently marked dirty and
-> queued for write even though they are not mapped with nilfs_get_block
-> function.
-> 
-> FIX:
-> This modifies nilfs_set_page_dirty() not to mark hole blocks dirty.
-> 
-> Thanks to Vyacheslav Dubeyko for his effort on analysis and proposals
-> for this issue.
-> 
-> Reported-by: Anthony Doggett <Anthony2486-fDpYTK8McCxDP812hmKXO1pr/1R2p/CL@public.gmane.org>
-> Reported-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-> Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Tested-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-> Cc: <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-> ---
->  fs/nilfs2/inode.c |   20 ++++++++++++++++----
->  1 file changed, 16 insertions(+), 4 deletions(-)
-> 
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index ba7a1da..436b239 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -219,13 +219,25 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
->  
->  static int nilfs_set_page_dirty(struct page *page)
->  {
-> -	int ret = __set_page_dirty_buffers(page);
-> +	int ret = __set_page_dirty_nobuffers(page);
->  
-> -	if (ret) {
-> +	if (page_has_buffers(page)) {
->  		struct inode *inode = page->mapping->host;
-> -		unsigned nr_dirty = 1 << (PAGE_SHIFT - inode->i_blkbits);
-> +		unsigned nr_dirty = 0;
-> +		struct buffer_head *bh, *head;
->  
-> -		nilfs_set_file_dirty(inode, nr_dirty);
-> +		bh = head = page_buffers(page);
-> +		do {
-> +			/* Do not mark hole blocks dirty */
-> +			if (!buffer_dirty(bh) || !buffer_mapped(bh))
-> +				continue;
-> +
-> +			set_buffer_dirty(bh);
-> +			nr_dirty++;
-> +		} while (bh = bh->b_this_page, bh != head);
-> +
-> +		if (nr_dirty)
-> +			nilfs_set_file_dirty(inode, nr_dirty);
->  	}
->  	return ret;
->  }
-> -- 
-> 1.7.9.3
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
