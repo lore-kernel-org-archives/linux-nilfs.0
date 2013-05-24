@@ -1,110 +1,72 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Broken nilfs2 filesystem
-Date: Thu, 23 May 2013 10:44:09 +0400
-Message-ID: <1369291449.2673.15.camel@slavad-ubuntu>
-References: <519D2B96.9000106@antoneliasson.se>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Vyacheslav Dubeyko <slava@dubeyko.com>
+Subject: [PATCH v5 0/2] nilfs2: implement calculation of free inodes count
+Date: Fri, 24 May 2013 17:32:13 +0400
+Message-ID: <1369402333.2235.21.camel@slavad-ubuntu>
+Reply-To: slava@dubeyko.com
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=KUrPnx+3pbplbmwOwAxSP014rULyfW2OmQw3D76WeZ4=;
-	b=cZnrlWgIhjOs8OkMQ0FhugGa+euWJUjwyVkQN8wtlVciMFSND3LNHd8tWsY2bSeKY8IA1sPHU+YoXe69lQ7yvvE+CDVpTtZaIkcj4eciDAShveKOmTPqYLeFLZ7e7e1b;
-In-Reply-To: <519D2B96.9000106-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=sxgf5CessfD6NvuJJR0htSyvKZYfRrDP8t8frReusU4=;
+	b=ijCjhwKLVRhPi92xJJ8+UDqMfCXE46ZmiUjskiMx8itEc83OhctGT2MCrJvaLXY/aoa5VAc/qSApmavNEmqew4+ECNMP58sQuzCCvnPVn4OrTtqklMZ+ZlwJTDwGI4lZ;
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Clemens Eisserer <linuxhippy@gmail.com>
 
-Hi Anton,
+Hi Ryusuke,
 
-On Wed, 2013-05-22 at 22:33 +0200, Anton Eliasson wrote:
-> Greetings!
-> It pains me to report that my /home filesystem broke down today. My 
-> system is running Arch Linux 64-bit. The filesystem resides on a Crucial 
-> M4 256 GB SSD, on top of a LVM2 volume. The drive and filesystem are 
-> both around six months old. Partition table and error log excerpts are 
-> at the bottom of this e-mail. Full logs are available upon request.
-> 
-> I am providing this information as a bug report. I have no reason to 
-> suspect the hardware but I cannot exclude it either. If you (the 
-> developers) are interested in troubleshooting this for prosperity, I can 
-> be your hands and run whatever tools are required. If not, I'll reformat 
-> the filesystem, restore the data from backup and forget that this happened.
-> 
-> In case the formatting gets mangled, this e-mail is also available at 
-> What happened today, in chronological order:
-> 
-> ~18:00
-> ======
-> I am troubleshooting some issues that turn out to be caused by a wrongly 
-> configured system clock. The RTC (hardware clock) is set to local time 
-> (UTC+2) but the OS is configured to treat the RTC as UTC. This is 
-> because it was set to UTC previously, but then I reinstalled Windows 
-> which promptly reset it to local time.
-> 
-> This set the mtime of some files in both / and /home to dates in the 
-> future. When I discovered this, I `touch`ed all affected files (`touch 
-> now; sudo find / /home -xdev -newer now -exec touch {} \;`) to reset 
-> their mtime and rebooted the system. I do not know if this is relevant; 
-> if not, it makes reading the log files more fun.
-> 
-> I then launch my command line backup program "bup", Firefox and some 
-> other apps.
-> 
-> ~18:50-19:00
-> ============
-> Firefox freezes. The system keeps running but I can't launch new 
-> programs. It looked like all I/O broke down. However, bup kept running. 
-> I left the computer alone for perhaps 30-60 min.
-> 
+This is fifth version of the patch set. I hope that it is simply
+enough now. Thank you for review and suggestions. Your comments
+improved the code really.
 
-So, as I understand, a reproducing path is:
-(1) set mtime of some files in the future;
-(2) touch all affected files;
-(3) reboot the system;
-(4) launch backup program "bup", Firefox and some other apps.
+v4->v5
+ * Remove mi_desc_blocks_count field from nilfs_mdt_info struct.
+ * Remove logic of using mi_desc_blocks_count from the code.
+ * Simplify logic of nilfs_palloc_count_max_entries() method.
+ * Add single patch with changing on atomic_long_t type
+   representation of inodes_count and blocks_count fields in
+   nilfs_root struct.
 
-I think that it makes sense to try this reproducing path. But we had
-reports about the issue with likewise symptoms
-(nilfs_bmap_lookup_contig: broken bmap) for the case of 4 KB block size
-from other users. Unfortunately, I can't reproduce such issue for the
-case of 4 KB blocks size earlier. As I feel the clear reproducing path
-is crucial for this issue.
+v3->v4
+ * The desc_blocks value is represented by unsigned long type.
+ * The nilfs_palloc_count_desc_blocks() method is simplified.
+ * The mi_desc_blocks_count field of nilfs_mdt_info structure
+   is represented as atomic64_t for the case of CONFIG_64BIT and
+   as atomic_t for other cases.
 
-I understand that it can be hard to reproduce the issue again. But,
-anyway, have you opportunity to try to reproduce the issue on another
-NILFS2 partition on your side?
+v2->v3
+ * Trivial BUG_ON checks were removed.
+ * Whole calculation algorithm was moved into
+   nilfs_palloc_count_max_entries() method.
+ * Improve error processing in the code.
+ * The nilfs_palloc_mdt_file_can_grow() method was simplified.
+ * The nilfs_ifile_count_free_inodes() method was simplified.
 
-Anyway, I am going to reproduce the issue by this reproducing path on my
-side.
-
-> ~20:00
-> ======
-> When I came back, bup hade frozen (/var/log/messages at 18:53:31).[1] I 
-> restart X by pressing Alt+SysRq+K (/var/log/messages at 20:06:33) and 
-> return to the login screen. The system freezes during login though, 
-> probably because /home had probably been mounted read only). So I reboot 
-> using Alt+SysRq+REISUB (/var/log/messages at 20:07:05). I noticed some 
-> I/O errors during shutdown.
-> 
-> After the reboot there are no immediate signs of disaster. I launch bup 
-> again. Some time later, /home remounts as read only. I notice that bup 
-> has reported I/O errors while reading some files in /home.[2] dmesg and 
-> /var/log/kern.log contains errors mentioning "bad btree node" and 
-> "nilfs_bmap_lookup_contig: broken bmap".[3]
-> 
-
-Now we have patch for overcome the freezing of system after such issue:
-http://www.mail-archive.com/linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg01614.html.
+v1->v2
+ * Change __statfs_word on u64 type.
+ * Rename nilfs_count_free_inodes() into nilfs_ifile_count_free_inodes()
+   method.
+ * Introduce auxiliary functions: nilfs_palloc_count_max_entries(),
+   nilfs_palloc_count_desc_blocks(), nilfs_palloc_mdt_file_can_grow().
+ * Rework processing of returned error from
+   nilfs_ifile_count_free_inodes() in nilfs_statfs().
 
 With the best regards,
 Vyacheslav Dubeyko.
+---
+ fs/nilfs2/alloc.c     |   65 +++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/alloc.h     |    2 ++
+ fs/nilfs2/ifile.c     |   22 +++++++++++++++++
+ fs/nilfs2/ifile.h     |    2 ++
+ fs/nilfs2/inode.c     |    8 +++---
+ fs/nilfs2/segment.c   |    4 +--
+ fs/nilfs2/super.c     |   31 ++++++++++++++++++++---
+ fs/nilfs2/the_nilfs.c |    4 +--
+ fs/nilfs2/the_nilfs.h |    4 +--
+ 9 files changed, 128 insertions(+), 14 deletions(-)
+-- 
+1.7.9.5
 
 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
