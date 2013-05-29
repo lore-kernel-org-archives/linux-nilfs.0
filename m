@@ -1,120 +1,249 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: Broken nilfs2 filesystem
-Date: Wed, 29 May 2013 23:37:57 +0900 (JST)
-Message-ID: <20130529.233757.27789741.konishi.ryusuke@lab.ntt.co.jp>
-References: <51A0A7A0.6010207@antoneliasson.se>
-	<51A0E62D.5060600@antoneliasson.se>
-	<1369809573.2253.31.camel@slavad-ubuntu>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v6 1/2] nilfs2: implement calculation of free inodes
+ count
+Date: Thu, 30 May 2013 00:36:20 +0900 (JST)
+Message-ID: <20130530.003620.184818135.konishi.ryusuke@lab.ntt.co.jp>
+References: <1369819576.2224.21.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1369809573.2253.31.camel@slavad-ubuntu>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1369819576.2224.21.camel@slavad-ubuntu>
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vyacheslav Dubeyko <slava@dubeyko.com>
+Cc: linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Clemens Eisserer <linuxhippy@gmail.com>
 
+On Wed, 29 May 2013 13:26:16 +0400, Vyacheslav Dubeyko wrote:
+> From: Vyacheslav Dubeyko <slava@dubeyko.com>
+> Subject: [PATCH v6 1/2] nilfs2: implement calculation of free inodes count
+> 
+> Currently, NILFS2 returns 0 as free inodes count (f_ffree) and
+> current used inodes count as total file nodes in file system
+> (f_files):
+> 
+> df -i
+> Filesystem      Inodes  IUsed   IFree IUse% Mounted on
+> /dev/loop0           2      2       0  100% /mnt/nilfs2
+> 
+> This patch implements real calculation of free inodes count.
+> First of all, it is calculated total file nodes in file system
+> as (desc_blocks_count * groups_per_desc_block * entries_per_group).
+> Then, it is calculated free inodes count as difference the total
+> file nodes and used inodes count. As a result, we have such output
+> for NILFS2:
+> 
+> df -i
+> Filesystem       Inodes   IUsed    IFree IUse% Mounted on
+> /dev/loop0      4194304 2114701  2079603   51% /mnt/nilfs2
+> 
+> Reported-by: Clemens Eisserer <linuxhippy@gmail.com>
+> Signed-off-by: Vyacheslav Dubeyko <slava@dubeyko.com>
+> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+> Tested-by: Vyacheslav Dubeyko <slava@dubeyko.com>
 
-I don't know whether this may be a hint of this trouble, but according
-to the system log, page_buffers() of nilfs_end_page_io() seems to hit
-an Oops due to an invalid page address "0x36cd":
+This patch looks ok, too.
 
-May 22 18:53:31 riven kernel: [ 3821.605568] BUG: unable to handle kernel paging request at 00000000000036cd
-May 22 18:53:31 riven kernel: [ 3821.605577] IP: [<ffffffffa027f1a2>] nilfs_end_page_io+0x12/0xc0 [nilfs2]
-May 22 18:53:31 riven kernel: [ 3821.605591] PGD 19636d067 PUD 19636e067 PMD 0 
-May 22 18:53:31 riven kernel: [ 3821.605597] Oops: 0000 [#1] PREEMPT SMP 
-<snip>
-May 22 18:53:31 riven kernel: [ 3821.605829] Code: ff ff ff 48 81 c4 88 00 00 00 5b 41 5c 5d c3 66 2e 0f 1f 84 00 00 00 00 00 66 66 66 66 90 55 48 85 ff 48 89 e5 53 48 89 fb 74 4e <48> 8b 07 f6 c4 08 0f 84 8c 00 00 00 48 8b 47 30 48 8b 00 f6 c4 
-May 22 18:53:31 riven kernel: [ 3821.605873] RIP  [<ffffffffa027f1a2>] nilfs_end_page_io+0x12/0xc0 [nilfs2]
-May 22 18:53:31 riven kernel: [ 3821.605881]  RSP <ffff8801960f7b30>
-May 22 18:53:31 riven kernel: [ 3821.605884] CR2: 00000000000036cd
-
-where the instruction sequence of "<48> 8b 07 f6 c4 08" is "mov
-(%rdi),%rax; test $0x8, %ah", and corresponds to the part testing
-PagePrivate(page) in page_buffers() macro called within
-nilfs_end_page_io() routine:
-
-      if (buffer_nilfs_node(page_buffers(page)) && !PageWriteback(page)) {
-
-This cannot happen, but there may be something we missed.
-
-
-Regards,
+Thanks,
 Ryusuke Konishi
 
 
-
-On Wed, 29 May 2013 10:39:33 +0400, Vyacheslav Dubeyko wrote:
-> Hi Anton
+> ---
+>  fs/nilfs2/alloc.c |   63 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/nilfs2/alloc.h |    2 ++
+>  fs/nilfs2/ifile.c |   22 +++++++++++++++++++
+>  fs/nilfs2/ifile.h |    2 ++
+>  fs/nilfs2/super.c |   25 +++++++++++++++++++--
+>  5 files changed, 112 insertions(+), 2 deletions(-)
 > 
-> On Sat, 2013-05-25 at 18:26 +0200, Anton Eliasson wrote:
+> diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+> index eed4d7b..741fd02 100644
+> --- a/fs/nilfs2/alloc.c
+> +++ b/fs/nilfs2/alloc.c
+> @@ -398,6 +398,69 @@ nilfs_palloc_rest_groups_in_desc_block(const struct inode *inode,
+>  }
+>  
+>  /**
+> + * nilfs_palloc_count_desc_blocks - count descriptor blocks number
+> + * @inode: inode of metadata file using this allocator
+> + * @desc_blocks: descriptor blocks number [out]
+> + */
+> +static int nilfs_palloc_count_desc_blocks(struct inode *inode,
+> +					    unsigned long *desc_blocks)
+> +{
+> +	unsigned long blknum;
+> +	int ret;
+> +
+> +	ret = nilfs_bmap_last_key(NILFS_I(inode)->i_bmap, &blknum);
+> +	if (likely(!ret))
+> +		*desc_blocks = DIV_ROUND_UP(
+> +			blknum, NILFS_MDT(inode)->mi_blocks_per_desc_block);
+> +	return ret;
+> +}
+> +
+> +/**
+> + * nilfs_palloc_mdt_file_can_grow - check potential opportunity for
+> + *					MDT file growing
+> + * @inode: inode of metadata file using this allocator
+> + * @desc_blocks: known current descriptor blocks count
+> + */
+> +static inline bool nilfs_palloc_mdt_file_can_grow(struct inode *inode,
+> +						    unsigned long desc_blocks)
+> +{
+> +	return (nilfs_palloc_groups_per_desc_block(inode) * desc_blocks) <
+> +			nilfs_palloc_groups_count(inode);
+> +}
+> +
+> +/**
+> + * nilfs_palloc_count_max_entries - count max number of entries that can be
+> + *					described by descriptor blocks count
+> + * @inode: inode of metadata file using this allocator
+> + * @nused: current number of used entries
+> + * @nmaxp: max number of entries [out]
+> + */
+> +int nilfs_palloc_count_max_entries(struct inode *inode, u64 nused, u64 *nmaxp)
+> +{
+> +	unsigned long desc_blocks = 0;
+> +	u64 entries_per_desc_block, nmax;
+> +	int err;
+> +
+> +	err = nilfs_palloc_count_desc_blocks(inode, &desc_blocks);
+> +	if (unlikely(err))
+> +		return err;
+> +
+> +	entries_per_desc_block = (u64)nilfs_palloc_entries_per_group(inode) *
+> +				nilfs_palloc_groups_per_desc_block(inode);
+> +	nmax = entries_per_desc_block * desc_blocks;
+> +
+> +	if (nused == nmax &&
+> +			nilfs_palloc_mdt_file_can_grow(inode, desc_blocks))
+> +		nmax += entries_per_desc_block;
+> +
+> +	if (nused > nmax)
+> +		return -ERANGE;
+> +
+> +	*nmaxp = nmax;
+> +	return 0;
+> +}
+> +
+> +/**
+>   * nilfs_palloc_prepare_alloc_entry - prepare to allocate a persistent object
+>   * @inode: inode of metadata file using this allocator
+>   * @req: nilfs_palloc_req structure exchanged for the allocation
+> diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
+> index fb72381..4bd6451 100644
+> --- a/fs/nilfs2/alloc.h
+> +++ b/fs/nilfs2/alloc.h
+> @@ -48,6 +48,8 @@ int nilfs_palloc_get_entry_block(struct inode *, __u64, int,
+>  void *nilfs_palloc_block_get_entry(const struct inode *, __u64,
+>  				   const struct buffer_head *, void *);
+>  
+> +int nilfs_palloc_count_max_entries(struct inode *, u64, u64 *);
+> +
+>  /**
+>   * nilfs_palloc_req - persistent allocator request and reply
+>   * @pr_entry_nr: entry number (vblocknr or inode number)
+> diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
+> index d8e65bd..d788a59 100644
+> --- a/fs/nilfs2/ifile.c
+> +++ b/fs/nilfs2/ifile.c
+> @@ -160,6 +160,28 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
+>  }
+>  
+>  /**
+> + * nilfs_ifile_count_free_inodes - calculate free inodes count
+> + * @ifile: ifile inode
+> + * @nmaxinodes: current maximum of available inodes count [out]
+> + * @nfreeinodes: free inodes count [out]
+> + */
+> +int nilfs_ifile_count_free_inodes(struct inode *ifile,
+> +				    u64 *nmaxinodes, u64 *nfreeinodes)
+> +{
+> +	u64 nused;
+> +	int err;
+> +
+> +	*nmaxinodes = 0;
+> +	*nfreeinodes = 0;
+> +
+> +	nused = atomic_read(&NILFS_I(ifile)->i_root->inodes_count);
+> +	err = nilfs_palloc_count_max_entries(ifile, nused, nmaxinodes);
+> +	if (likely(!err))
+> +		*nfreeinodes = *nmaxinodes - nused;
+> +	return err;
+> +}
+> +
+> +/**
+>   * nilfs_ifile_read - read or get ifile inode
+>   * @sb: super block instance
+>   * @root: root object
+> diff --git a/fs/nilfs2/ifile.h b/fs/nilfs2/ifile.h
+> index 59b6f2b..679674d 100644
+> --- a/fs/nilfs2/ifile.h
+> +++ b/fs/nilfs2/ifile.h
+> @@ -49,6 +49,8 @@ int nilfs_ifile_create_inode(struct inode *, ino_t *, struct buffer_head **);
+>  int nilfs_ifile_delete_inode(struct inode *, ino_t);
+>  int nilfs_ifile_get_inode_block(struct inode *, ino_t, struct buffer_head **);
+>  
+> +int nilfs_ifile_count_free_inodes(struct inode *, u64 *, u64 *);
+> +
+>  int nilfs_ifile_read(struct super_block *sb, struct nilfs_root *root,
+>  		     size_t inode_size, struct nilfs_inode *raw_inode,
+>  		     struct inode **inodep);
+> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+> index c7d1f9f..7d257e7 100644
+> --- a/fs/nilfs2/super.c
+> +++ b/fs/nilfs2/super.c
+> @@ -609,6 +609,7 @@ static int nilfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+>  	unsigned long overhead;
+>  	unsigned long nrsvblocks;
+>  	sector_t nfreeblocks;
+> +	u64 nmaxinodes, nfreeinodes;
+>  	int err;
+>  
+>  	/*
+> @@ -633,14 +634,34 @@ static int nilfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+>  	if (unlikely(err))
+>  		return err;
+>  
+> +	err = nilfs_ifile_count_free_inodes(root->ifile,
+> +					    &nmaxinodes, &nfreeinodes);
+> +	if (unlikely(err)) {
+> +		printk(KERN_WARNING
+> +			"NILFS warning: fail to count free inodes: err %d.\n",
+> +			err);
+> +		if (err == -ERANGE) {
+> +			/*
+> +			 * If nilfs_palloc_count_max_entries() returns
+> +			 * -ERANGE error code then we simply treat
+> +			 * curent inodes count as maximum possible and
+> +			 * zero as free inodes value.
+> +			 */
+> +			nmaxinodes = atomic_read(&root->inodes_count);
+> +			nfreeinodes = 0;
+> +			err = 0;
+> +		} else
+> +			return err;
+> +	}
+> +
+>  	buf->f_type = NILFS_SUPER_MAGIC;
+>  	buf->f_bsize = sb->s_blocksize;
+>  	buf->f_blocks = blocks - overhead;
+>  	buf->f_bfree = nfreeblocks;
+>  	buf->f_bavail = (buf->f_bfree >= nrsvblocks) ?
+>  		(buf->f_bfree - nrsvblocks) : 0;
+> -	buf->f_files = atomic_read(&root->inodes_count);
+> -	buf->f_ffree = 0; /* nilfs_count_free_inodes(sb); */
+> +	buf->f_files = nmaxinodes;
+> +	buf->f_ffree = nfreeinodes;
+>  	buf->f_namelen = NILFS_NAME_LEN;
+>  	buf->f_fsid.val[0] = (u32)id;
+>  	buf->f_fsid.val[1] = (u32)(id >> 32);
+> -- 
+> 1.7.9.5
 > 
-> [snip]
->> More specifically, I have a virtual machine running Windows XP in /home, 
->> a nilfs filesystem, and a virtual machine running Windows 7 in 
->> /Supplement. /Supplement is an ext4 volume in the same LVM volume group 
->> as /home on the same slow hard drive. I can crash the host by either:
->> 
->> * Starting both machines at the same time.
->> * Starting the W7 machine first and when it is fully booted to the 
->> desktop, but still doing I/O intensive Windows stuff, starting the WXP 
->> machine.
->> 
->> If I first start the WXP machine and let it boot to the desktop, at the 
->> point where it is actually I/O idle, I can safely start the W7 machine. 
->> After that I found no trouble installing software updates and logging in 
->> and out of both machines at the same time, though the HDD made it very 
->> slow of course.
-> 
-> Currently, I am thinking about reproducing path. It is really important
-> to have clear reproducing path. But I haven't clear picture of your
-> environment yet. As I understand, you have two virtual VmWare machine
-> (Win XP and Win 7). Am I correct?
-> 
-> Moreover, I am thinking about the fact that virtual machine on different
-> volumes influence on each other in the issue environment. Currently, I
-> haven't clear understanding of this.
-> 
->> /etc/fstab
->> ----------
->>      tmpfs		/tmp	tmpfs	nodev,nosuid	0	0
->>      /dev/mapper/riven-arch	/         	nilfs2    	rw,noatime,discard 0 0
->>      /dev/mapper/riven-home	/home     	nilfs2    	rw,noatime,discard 0 0
->>      /dev/mapper/riven-swap  none            swap            defaults 
->>          0 0
->>      /dev/riven-proto/supplement /Supplement ext4 defaults,noatime 0 0
->> # some NFS mounts excluded
->>
-> 
-> As I can see, riven-arch, riven-home and riven-swap are under device
-> mapper but riven-proto is not. Could you share more details about how
-> your Logical Volumes environment was prepared?
-> 
-> Current state of fsck.nilfs2 doesn't give many useful details. But debug
-> output of fsck.nilfs2 contains detailed info about first superblock,
-> second superblock and segment summaries of all segments. I think that
-> this output can give to me more understanding about NILFS2 volume state.
-> Could you share debug output of fsck.nilfs2 for me?
-> 
-> You can found archive with fsck.nilf2 source code in this place:
-> (http://dubeyko.com/development/FileSystems/NILFS/nilfs-utils-fsck-v.0.04-under-development.tar.gz). Please, build fsck.nilfs2 but don't install it. The fsck.nilfs2 on the initial state of development. Currently, fsck.nilfs2 doesn't make any writing operations. So, you can execute command in such way: "fsck.nilfs2 -v debug [device] 2> [output-file]". The output file has a big size, usually.
-> 
-> I am preparing patch for NILFS2 driver with debug output. I think that
-> it makes sense to get more detail about the issue on your side because
-> you can reproduce the issue stably. So, I'll send you this patch as it
-> will be ready. Have you opportunity to patch your kernel and share debug
-> output for the reproduced issue case?
-> 
-> Thanks,
-> Vyacheslav Dubeyko.
 > 
 > 
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> the body of a message to majordomo@vger.kernel.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
