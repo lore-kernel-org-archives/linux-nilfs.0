@@ -1,174 +1,119 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v6 2/2] nilfs2: use atomic64_t type for inodes_count and
- blocks_count fields in nilfs_root struct
-Date: Wed, 29 May 2013 13:26:30 +0400
-Message-ID: <1369819590.2224.22.camel@slavad-ubuntu>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: Broken nilfs2 filesystem
+Date: Wed, 29 May 2013 23:37:57 +0900 (JST)
+Message-ID: <20130529.233757.27789741.konishi.ryusuke@lab.ntt.co.jp>
+References: <51A0A7A0.6010207@antoneliasson.se>
+	<51A0E62D.5060600@antoneliasson.se>
+	<1369809573.2253.31.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=TyPQEATc7MqWZzSoMxeJtEYOnb56ZKLdlTcERvDainc=;
-	b=lJwXCic4FsBGf+uXfi0AWRUYVZpelKjfHx2Wb3/c9IacwL9rk6eCVTOocnz+oAp02XxDdGMnMa4GLf5Bu8iz1uTJ48MkD78NhgPwa/yFDTNFT8mM3JBoh8nAYvXumj0s;
+In-Reply-To: <1369809573.2253.31.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, =?ISO-8859-1?Q?J=F6rn?= Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v6 2/2] nilfs2: use atomic64_t type for inodes_count and blocks_count fields in nilfs_root struct
 
-The cp_inodes_count and cp_blocks_count are represented as
-__le64 type in on-disk structure (struct nilfs_checkpoint).
-But analogous fields in in-core structure (struct nilfs_root)
-are represented by atomic_t type.
+I don't know whether this may be a hint of this trouble, but according
+to the system log, page_buffers() of nilfs_end_page_io() seems to hit
+an Oops due to an invalid page address "0x36cd":
 
-This patch replaces atomic_t on atomic64_t type in representation
-of inodes_count and blocks_count fields in struct nilfs_root.
+May 22 18:53:31 riven kernel: [ 3821.605568] BUG: unable to handle kernel paging request at 00000000000036cd
+May 22 18:53:31 riven kernel: [ 3821.605577] IP: [<ffffffffa027f1a2>] nilfs_end_page_io+0x12/0xc0 [nilfs2]
+May 22 18:53:31 riven kernel: [ 3821.605591] PGD 19636d067 PUD 19636e067 PMD 0 
+May 22 18:53:31 riven kernel: [ 3821.605597] Oops: 0000 [#1] PREEMPT SMP 
+<snip>
+May 22 18:53:31 riven kernel: [ 3821.605829] Code: ff ff ff 48 81 c4 88 00 00 00 5b 41 5c 5d c3 66 2e 0f 1f 84 00 00 00 00 00 66 66 66 66 90 55 48 85 ff 48 89 e5 53 48 89 fb 74 4e <48> 8b 07 f6 c4 08 0f 84 8c 00 00 00 48 8b 47 30 48 8b 00 f6 c4 
+May 22 18:53:31 riven kernel: [ 3821.605873] RIP  [<ffffffffa027f1a2>] nilfs_end_page_io+0x12/0xc0 [nilfs2]
+May 22 18:53:31 riven kernel: [ 3821.605881]  RSP <ffff8801960f7b30>
+May 22 18:53:31 riven kernel: [ 3821.605884] CR2: 00000000000036cd
 
-Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-CC: Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>
----
- fs/nilfs2/ifile.c     |    2 +-
- fs/nilfs2/inode.c     |    8 ++++----
- fs/nilfs2/segment.c   |    4 ++--
- fs/nilfs2/super.c     |    8 +++++---
- fs/nilfs2/the_nilfs.c |    4 ++--
- fs/nilfs2/the_nilfs.h |    4 ++--
- 6 files changed, 16 insertions(+), 14 deletions(-)
+where the instruction sequence of "<48> 8b 07 f6 c4 08" is "mov
+(%rdi),%rax; test $0x8, %ah", and corresponds to the part testing
+PagePrivate(page) in page_buffers() macro called within
+nilfs_end_page_io() routine:
 
-diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
-index d788a59..6548c78 100644
---- a/fs/nilfs2/ifile.c
-+++ b/fs/nilfs2/ifile.c
-@@ -174,7 +174,7 @@ int nilfs_ifile_count_free_inodes(struct inode *ifile,
- 	*nmaxinodes = 0;
- 	*nfreeinodes = 0;
- 
--	nused = atomic_read(&NILFS_I(ifile)->i_root->inodes_count);
-+	nused = atomic64_read(&NILFS_I(ifile)->i_root->inodes_count);
- 	err = nilfs_palloc_count_max_entries(ifile, nused, nmaxinodes);
- 	if (likely(!err))
- 		*nfreeinodes = *nmaxinodes - nused;
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 689fb60..3444dca 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -54,7 +54,7 @@ void nilfs_inode_add_blocks(struct inode *inode, int n)
- 
- 	inode_add_bytes(inode, (1 << inode->i_blkbits) * n);
- 	if (root)
--		atomic_add(n, &root->blocks_count);
-+		atomic64_add(n, &root->blocks_count);
- }
- 
- void nilfs_inode_sub_blocks(struct inode *inode, int n)
-@@ -63,7 +63,7 @@ void nilfs_inode_sub_blocks(struct inode *inode, int n)
- 
- 	inode_sub_bytes(inode, (1 << inode->i_blkbits) * n);
- 	if (root)
--		atomic_sub(n, &root->blocks_count);
-+		atomic64_sub(n, &root->blocks_count);
- }
- 
- /**
-@@ -350,7 +350,7 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
- 		goto failed_ifile_create_inode;
- 	/* reference count of i_bh inherits from nilfs_mdt_read_block() */
- 
--	atomic_inc(&root->inodes_count);
-+	atomic64_inc(&root->inodes_count);
- 	inode_init_owner(inode, dir, mode);
- 	inode->i_ino = ino;
- 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
-@@ -782,7 +782,7 @@ void nilfs_evict_inode(struct inode *inode)
- 
- 	ret = nilfs_ifile_delete_inode(ii->i_root->ifile, inode->i_ino);
- 	if (!ret)
--		atomic_dec(&ii->i_root->inodes_count);
-+		atomic64_dec(&ii->i_root->inodes_count);
- 
- 	nilfs_clear_inode(inode);
- 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index a5752a58..bd88a74 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -835,9 +835,9 @@ static int nilfs_segctor_fill_in_checkpoint(struct nilfs_sc_info *sci)
- 	raw_cp->cp_snapshot_list.ssl_next = 0;
- 	raw_cp->cp_snapshot_list.ssl_prev = 0;
- 	raw_cp->cp_inodes_count =
--		cpu_to_le64(atomic_read(&sci->sc_root->inodes_count));
-+		cpu_to_le64(atomic64_read(&sci->sc_root->inodes_count));
- 	raw_cp->cp_blocks_count =
--		cpu_to_le64(atomic_read(&sci->sc_root->blocks_count));
-+		cpu_to_le64(atomic64_read(&sci->sc_root->blocks_count));
- 	raw_cp->cp_nblk_inc =
- 		cpu_to_le64(sci->sc_nblk_inc + sci->sc_nblk_this_inc);
- 	raw_cp->cp_create = cpu_to_le64(sci->sc_seg_ctime);
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 7d257e7..1427de5 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -554,8 +554,10 @@ int nilfs_attach_checkpoint(struct super_block *sb, __u64 cno, int curr_mnt,
- 	if (err)
- 		goto failed_bh;
- 
--	atomic_set(&root->inodes_count, le64_to_cpu(raw_cp->cp_inodes_count));
--	atomic_set(&root->blocks_count, le64_to_cpu(raw_cp->cp_blocks_count));
-+	atomic64_set(&root->inodes_count,
-+			le64_to_cpu(raw_cp->cp_inodes_count));
-+	atomic64_set(&root->blocks_count,
-+			le64_to_cpu(raw_cp->cp_blocks_count));
- 
- 	nilfs_cpfile_put_checkpoint(nilfs->ns_cpfile, cno, bh_cp);
- 
-@@ -647,7 +649,7 @@ static int nilfs_statfs(struct dentry *dentry, struct kstatfs *buf)
- 			 * curent inodes count as maximum possible and
- 			 * zero as free inodes value.
- 			 */
--			nmaxinodes = atomic_read(&root->inodes_count);
-+			nmaxinodes = atomic64_read(&root->inodes_count);
- 			nfreeinodes = 0;
- 			err = 0;
- 		} else
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 41e6a04..94c451c 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -764,8 +764,8 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
- 	new->ifile = NULL;
- 	new->nilfs = nilfs;
- 	atomic_set(&new->count, 1);
--	atomic_set(&new->inodes_count, 0);
--	atomic_set(&new->blocks_count, 0);
-+	atomic64_set(&new->inodes_count, 0);
-+	atomic64_set(&new->blocks_count, 0);
- 
- 	rb_link_node(&new->rb_node, parent, p);
- 	rb_insert_color(&new->rb_node, &nilfs->ns_cptree);
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index be1267a..de8cc53 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -241,8 +241,8 @@ struct nilfs_root {
- 	struct the_nilfs *nilfs;
- 	struct inode *ifile;
- 
--	atomic_t inodes_count;
--	atomic_t blocks_count;
-+	atomic64_t inodes_count;
-+	atomic64_t blocks_count;
- };
- 
- /* Special checkpoint number */
--- 
-1.7.9.5
+      if (buffer_nilfs_node(page_buffers(page)) && !PageWriteback(page)) {
+
+This cannot happen, but there may be something we missed.
+
+
+Regards,
+Ryusuke Konishi
 
 
 
+On Wed, 29 May 2013 10:39:33 +0400, Vyacheslav Dubeyko wrote:
+> Hi Anton
+> 
+> On Sat, 2013-05-25 at 18:26 +0200, Anton Eliasson wrote:
+> 
+> [snip]
+>> More specifically, I have a virtual machine running Windows XP in /home, 
+>> a nilfs filesystem, and a virtual machine running Windows 7 in 
+>> /Supplement. /Supplement is an ext4 volume in the same LVM volume group 
+>> as /home on the same slow hard drive. I can crash the host by either:
+>> 
+>> * Starting both machines at the same time.
+>> * Starting the W7 machine first and when it is fully booted to the 
+>> desktop, but still doing I/O intensive Windows stuff, starting the WXP 
+>> machine.
+>> 
+>> If I first start the WXP machine and let it boot to the desktop, at the 
+>> point where it is actually I/O idle, I can safely start the W7 machine. 
+>> After that I found no trouble installing software updates and logging in 
+>> and out of both machines at the same time, though the HDD made it very 
+>> slow of course.
+> 
+> Currently, I am thinking about reproducing path. It is really important
+> to have clear reproducing path. But I haven't clear picture of your
+> environment yet. As I understand, you have two virtual VmWare machine
+> (Win XP and Win 7). Am I correct?
+> 
+> Moreover, I am thinking about the fact that virtual machine on different
+> volumes influence on each other in the issue environment. Currently, I
+> haven't clear understanding of this.
+> 
+>> /etc/fstab
+>> ----------
+>>      tmpfs		/tmp	tmpfs	nodev,nosuid	0	0
+>>      /dev/mapper/riven-arch	/         	nilfs2    	rw,noatime,discard 0 0
+>>      /dev/mapper/riven-home	/home     	nilfs2    	rw,noatime,discard 0 0
+>>      /dev/mapper/riven-swap  none            swap            defaults 
+>>          0 0
+>>      /dev/riven-proto/supplement /Supplement ext4 defaults,noatime 0 0
+>> # some NFS mounts excluded
+>>
+> 
+> As I can see, riven-arch, riven-home and riven-swap are under device
+> mapper but riven-proto is not. Could you share more details about how
+> your Logical Volumes environment was prepared?
+> 
+> Current state of fsck.nilfs2 doesn't give many useful details. But debug
+> output of fsck.nilfs2 contains detailed info about first superblock,
+> second superblock and segment summaries of all segments. I think that
+> this output can give to me more understanding about NILFS2 volume state.
+> Could you share debug output of fsck.nilfs2 for me?
+> 
+> You can found archive with fsck.nilf2 source code in this place:
+> (http://dubeyko.com/development/FileSystems/NILFS/nilfs-utils-fsck-v.0.04-under-development.tar.gz). Please, build fsck.nilfs2 but don't install it. The fsck.nilfs2 on the initial state of development. Currently, fsck.nilfs2 doesn't make any writing operations. So, you can execute command in such way: "fsck.nilfs2 -v debug [device] 2> [output-file]". The output file has a big size, usually.
+> 
+> I am preparing patch for NILFS2 driver with debug output. I think that
+> it makes sense to get more detail about the issue on your side because
+> you can reproduce the issue stably. So, I'll send you this patch as it
+> will be ready. Have you opportunity to patch your kernel and share debug
+> output for the reproduced issue case?
+> 
+> Thanks,
+> Vyacheslav Dubeyko.
+> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
