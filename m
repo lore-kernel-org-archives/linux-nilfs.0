@@ -1,65 +1,67 @@
 From: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
 Subject: Re: Broken nilfs2 filesystem
-Date: Thu, 30 May 2013 17:30:48 +0200
-Message-ID: <51A770A8.9070105@antoneliasson.se>
-References: <519D2B96.9000106@antoneliasson.se>  <1369291449.2673.15.camel@slavad-ubuntu>  <51A0A7A0.6010207@antoneliasson.se> <51A0E62D.5060600@antoneliasson.se> <1369809573.2253.31.camel@slavad-ubuntu> <51A70971.40602@antoneliasson.se>
+Date: Thu, 30 May 2013 22:50:12 +0200
+Message-ID: <51A7BB84.3010505@antoneliasson.se>
+References: <519D2B96.9000106@antoneliasson.se>  <1369291449.2673.15.camel@slavad-ubuntu>  <51A0A7A0.6010207@antoneliasson.se> <51A0E62D.5060600@antoneliasson.se> <1369809573.2253.31.camel@slavad-ubuntu> <51A70971.40602@antoneliasson.se> <51A770A8.9070105@antoneliasson.se>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <51A70971.40602-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
+In-Reply-To: <51A770A8.9070105-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Anton Eliasson skrev 2013-05-30 10:10:
-> Vyacheslav Dubeyko skrev 2013-05-29 08:39:
-[snip]
->> Current state of fsck.nilfs2 doesn't give many useful details. But debug
->> output of fsck.nilfs2 contains detailed info about first superblock,
->> second superblock and segment summaries of all segments. I think that
->> this output can give to me more understanding about NILFS2 volume state.
->> Could you share debug output of fsck.nilfs2 for me?
->>
->> You can found archive with fsck.nilf2 source code in this place:
->> (http://dubeyko.com/development/FileSystems/NILFS/nilfs-utils-fsck-v.0.04-under-development.tar.gz).
->> Please, build fsck.nilfs2 but don't install it. The fsck.nilfs2 on the
->> initial state of development. Currently, fsck.nilfs2 doesn't make any
->> writing operations. So, you can execute command in such way:
->> "fsck.nilfs2 -v debug [device] 2> [output-file]". The output file has
->> a big size, usually.
-> I'll see if I can do that tonight.
+Sorry for my frequent posting today. It looks like my system is falling 
+apart. Earlier today /home died again. This is the volume "newhome" on 
+the sketch I sent two e-mails ago. Just like the last time it involved a 
+file related to VMware and just like last time the ro remount was 
+triggered by my backup program bup as it tried to read the corrupted 
+file. VMware itself was not running at the time.
 
-Okay, this is what was printed to stdout by fsck.nilfs2 with debug 
-verbosity:
+I create a new logical volume riven-proto/homesweethome, format it to 
+ext4, change the fstab entry for /home to 
+/dev/riven-proto/homesweethome, reboot and check the logs. kernel.log said:
 
-fsck.nilfs2 v.0.04-under-development (nilfs-utils 2.1.4)
-[UI_INFO]: The NILFS superblocks checking begins.
-[FS_INFO]: [SB] [ID: 0x10200020000005f] [SEG: 0 LOG: 0] Superblock state 
-flag *tells* that filesystem stays in mounted state.
-[FS_INFO]: [SB] [ID: 0x10200020000006a] Primary and secondary 
-superblocks have different info about last checkpoint.
-[FS_INFO]: [SB] [ID: 0x10200020000006b] Primary and secondary 
-superblocks have different info about disk block address of partial segment.
-[FS_INFO]: [SB] [ID: 0x10200020000006c] Primary and secondary 
-superblocks have different info about sequential number of partial segment.
-[FS_INFO]: [SB] [ID: 0x102000200000070] Primary and secondary 
-superblocks have different last write time.
-[FS_INFO]: [SB] [ID: 0x102000200000073] Primary and secondary 
-superblocks have different file system state flags.
-[FS_INFO]: [SB] [ID: 0x10200020000003d] NILFS has valid primary and 
-secondary superblocks.
-[INTERNAL_INFO]: NILFS has valid primary and secondary superblocks. 
-Requested device: /dev/riven/home.
-[UI_INFO]: NILFS volume's segments checking begins.
-[UI_INFO]: FSCK currently has partial and experimental checking 
-functionality. Sorry. Functionality is not implemented yet.
-[UI_INFO]: All is OK. Have a nice day.
+May 30 19:41:24 riven kernel: [88324.864707] NILFS: bad btree node 
+(blocknr=16521285): level = 100, flags = 0x3c, nchildren = 29793
+May 30 19:41:24 riven kernel: [88324.864716] NILFS error (device dm-4): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=117612)
+May 30 19:41:24 riven kernel: [88324.864716]
+May 30 19:41:24 riven kernel: [88324.875626] Remounting filesystem read-only
+May 30 19:41:24 riven kernel: [88324.875803] NILFS: bad btree node 
+(blocknr=16521285): level = 100, flags = 0x3c, nchildren = 29793
+May 30 19:41:24 riven kernel: [88324.875809] NILFS error (device dm-4): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=117612)
+May 30 19:41:24 riven kernel: [88324.875809]
 
-And here's the log that was printed to stderr: 
-http://antoneliasson.se/publicdump/riven-home-fsck-stderr.log.gz
-It's 12 MB gzipped and 457 MB uncompressed.
+This output makes me believe that only one file is corrupted:
+
+$ sudo mount -o ro,norecovery /dev/riven-proto/newhome /mnt
+$ cd /mnt/anton/
+$ LANG=C find . -type f -exec cat {} >/dev/null \;
+cat: ./vmware/WXP/WXP-15dc29db.vmem: Input/output error
+
+
+
+
+Next issue: after said reboot I got these errors:
+
+May 30 20:09:35 riven kernel: [    7.298727] 
+nilfs_ioctl_move_inode_block: conflicting data buffer: ino=8079, 
+cno=726783, offset=911, blocknr=4812804, vblocknr=565882
+May 30 20:09:35 riven kernel: [    7.299406] NILFS: GC failed during 
+preparation: cannot read source blocks: err=-17
+
+nilfs_cleanerd won't start on the root fs. Same errors if I try to start 
+it manually (`nilfs_cleanerd /dev/riven/arch` as root).
+
+I'd really like to have my SSD back now. Can I dd /home ("old" home on 
+volume group "riven" that we've been debugging these last few days) to 
+an image file and then reformat? I could keep riven-proto/newhome around 
+if you want to debug that as well. As far as I know, riven-proto/newhome 
+died very cleanly, with no rw mounts after the corruption was first 
+discovered.
 
 -- 
 Best Regards,
