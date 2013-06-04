@@ -1,53 +1,59 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Broken nilfs2 filesystem
-Date: Fri, 31 May 2013 10:39:45 +0400
-Message-ID: <1369982385.2310.8.camel@slavad-ubuntu>
-References: <519D2B96.9000106@antoneliasson.se>
-	  <1369291449.2673.15.camel@slavad-ubuntu>
-	  <51A0A7A0.6010207@antoneliasson.se> <51A0E62D.5060600@antoneliasson.se>
-	 <1369809573.2253.31.camel@slavad-ubuntu> <51A70971.40602@antoneliasson.se>
-	 <51A770A8.9070105@antoneliasson.se> <51A7BB84.3010505@antoneliasson.se>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
+Subject: My NiLFS2 port to NetBSD: status update
+Date: Tue, 4 Jun 2013 16:02:57 +0200
+Message-ID: <20130604140257.GA713@diablo.13thmonkey.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="tKW2IUtsqtDRztdT"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=7+0fBgIl0rrQmTB1p9OLU8ErTH6sLdGhRBS4nJAcexg=;
-	b=Ivoosdql95tGNC+3F1WDOZ4YgbIVRjPdJFFM3hueys+AvVnwuwk8sdGiuLSOgkTX7hERypDpwLvDgm27xnFATRQjjroLT1iKR13nu/tHUdhtek3TjR7QbTU1gI5JME+D;
-In-Reply-To: <51A7BB84.3010505-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Anton,
 
-On Thu, 2013-05-30 at 22:50 +0200, Anton Eliasson wrote:
+--tKW2IUtsqtDRztdT
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-[snip]
-> 
-> I'd really like to have my SSD back now. Can I dd /home ("old" home on 
-> volume group "riven" that we've been debugging these last few days) to 
-> an image file and then reformat? I could keep riven-proto/newhome around 
-> if you want to debug that as well. As far as I know, riven-proto/newhome 
-> died very cleanly, with no rw mounts after the corruption was first 
-> discovered.
-> 
+Hi Ryusuke, hi folks,
 
-Yes, of course, you can reformat your drive and have working file
-system. Please, simply make image of corrupted partition with
-reproducible issue. It will be a great to have such image for further
-opportunity to investigate the issue on your side in the case of
-necessity. Anyway, first of all, I'll try to investigate and fix issue
-on my side.
+it has been some time now that i worked on my NetBSD port of NiLFS2. A
+read-only version has been included in the NetBSD kernel for some two(?) years
+now. I then started on creating a writing version too but it got side tracked
+by various reasons like moving to a new house/home :)
 
-Thank you for all information and details that you provided to us.
+I've picked up development, re-starting again, learning from earlier mistakes.
+Has anything fundemental changed in the last few months? I've taken in the
+changes for volume name, the 2nd superblock and such, but is there anything
+more?
 
-Thanks,
-Vyacheslav Dubeyko.
+As for the adoption of NiLFS2 in Linux, i've seen mixed responses in reviews.
+Most complain about the read/write speed. Since i dont have a reasonable test
+setup and my implementation is not writing yet, how are your thoughts about
+this? Is it a fundemental issue or is it more due to way its implemented?
+
+With regards,
+Reinoud
 
 
+--tKW2IUtsqtDRztdT
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.13 (NetBSD)
+
+iQEcBAEBAgAGBQJRrfORAAoJEIKcNwBDyKpoIqIIAKycbyFpSClG57TgddnPYqip
+j9Rn5HRFJwONGicO33xNMKPyu51xuRdqHeNetjzEJaKrbcRoOASc1SMUzct5OFiC
+fWSimnFpbQoxdkTCH33a6NBEB8ZRX4deXwktSMPcJFYJ8QFGd3fKMx//JSog0Yqf
+oZbRtr0FbuWATQEMgi7fqeCCyaxxhQKXTsWjK/WHQrwrMRpYx0yIfEBzS0rypU/J
+jPFF7uSYzIjb0mj4uLse1h7zqF8VviCJMixLGN8jLKFvUiZ8pXaYb46Io3imTtuK
+UjLovhyOBAuL0d8AI8eHoTyiO2OTZceo7re5qyZOJd647qTKunIWR2FZsRhTHAI=
+=Tshd
+-----END PGP SIGNATURE-----
+
+--tKW2IUtsqtDRztdT--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
