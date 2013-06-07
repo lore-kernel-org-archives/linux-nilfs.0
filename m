@@ -1,38 +1,52 @@
-From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
-Subject: Re: Broken nilfs2 filesystem
-Date: Thu, 6 Jun 2013 16:19:55 +0200
-Message-ID: <20130606141955.GA23503@heethoofdje.13thmonkey.org>
-References: <1369809573.2253.31.camel@slavad-ubuntu>
- <20130529.233757.27789741.konishi.ryusuke@lab.ntt.co.jp>
- <1369894385.2255.8.camel@slavad-ubuntu>
- <20130530.155543.480320022.konishi.ryusuke@lab.ntt.co.jp>
- <1370501769.2202.36.camel@slavad-ubuntu>
- <20130606092054.GA201@diablo.13thmonkey.org>
- <1370511288.2209.5.camel@slavad-ubuntu>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: NiLFS2 partial segment finfo
+Date: Fri, 07 Jun 2013 10:18:18 +0400
+Message-ID: <1370585898.2257.13.camel@slavad-ubuntu>
+References: <20130604194713.GA3311@diablo.13thmonkey.org>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1370511288.2209.5.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=v301Bs2JXKB1/CnbrsG20bD9PimfpUV0hUhLOB53QXM=;
+	b=hUr5Rlgzk1H4xsZPP3dWaAaBaSxO0PpFUr+nfROhicQpvy0RCJt1/yEXrugCaz/xiFr0+6yJgGRncaX/1eUxRzP/eYQ4jgbhfEl0mYdqHQqc2/vYfJD2Eb1l+IrlIYpg;
+In-Reply-To: <20130604194713.GA3311-HNv6YvNvQKMNqjISwOrxaLFspR4gePGN@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Thu, Jun 06, 2013 at 01:34:48PM +0400, Vyacheslav Dubeyko wrote:
-> On Thu, 2013-06-06 at 11:20 +0200, Reinoud Zandijk wrote:
-> Unfortunately, I haven't reproduced issue on my side. On my side all is
-> OK. I am trying to reproduce the issue that was reported by many times
-> of different users. But, currently, without any success on my side. So,
-> I can't investigate the essence of the issue. I know symptoms but I
-> don't know reproducing path of the issue.
+Hi Reinoud,
 
-Oops i must have CC'd it to you instead of the submitter, well i hope he reads
-it on the list :)
+On Tue, 2013-06-04 at 21:47 +0200, Reinoud Zandijk wrote:
+> Hi folks,
+> 
+> would the Linux implementation grock multiple finfo's about one file even with
+> overlapping blocks ? say a finfo of ino 12345, followed by some finfo's of say
+> ino 123400, followed by some more of ino 12345? Or does it implicitly assume a
+> kind of ordering in the blocks?
+> 
 
-With regards,
-Reinoud
+I suspect that I don't exactly follow your thoughts. But I don't
+understand about what overlapping blocks you are talking.
+
+I have such understanding. Segment summary begins from segment summary
+header (struct nilfs_segment_summary). This structure has many fields.
+One of fields is the number of finfo structures in segment summary
+block. Then, it follows array of file description items after segment
+summary header. Every file description item begins from struct
+nilfs_finfo. It defines number of blocks (including intermediate blocks)
+and number of file data blocks. It follows array of block information
+items (union nilfs_binfo) after each file information item.
+
+So, file describes on block basis. And every file is described by
+continuous array of union nilfs_binfo items. What do you mean by blocks
+overlapping?
+
+With the best regards,
+Vyacheslav Dubeyko.
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
