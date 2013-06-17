@@ -1,15 +1,14 @@
 From: Vyacheslav Dubeyko <slava@dubeyko.com>
-Subject: [PATCH 14/24] nilfs2: introduce buffer management subsystem
- debugging output option
-Date: Mon, 17 Jun 2013 16:24:55 +0400
-Message-ID: <1371471895.2075.145.camel@slavad-ubuntu>
+Subject: [PATCH 24/24] nilfs2: introduce option of using dynamic debugging
+Date: Mon, 17 Jun 2013 16:29:56 +0400
+Message-ID: <1371472196.2075.159.camel@slavad-ubuntu>
 Reply-To: slava@dubeyko.com
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=hc+rGn71l8D4aqej10wAbaLHbLZSY1iouRdV+QyVPHY=;
-	b=LIaRbPLv57tkFbGY8PU9wPH5A6vQZfTj57wTUHjdum0bHckRCPDrmNG7C4qREPpqTFVDFxODvxW+hZGI+PkoTGMtMd2asu1DyObffULLmrbRBblaR0JvjxIWdchVD4mz;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=d8VqugntGBxV0Og/cwB/E/ae4PtuHR9P2uZc/GoiHGs=;
+	b=nR2fTNC3GW+1Pgc1/kWym17S6IDIV+x+6QYeepvhuYbnxVifnAZl1ue2RYM+BvQpBVb0CR2welZCvcku/t/kmHr15nzmQ8FLlS5Q1gGKl4RmsBjab1gIWUN97YTFqOsV;
 Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -17,66 +16,127 @@ To: linux-nilfs@vger.kernel.org
 Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Linux FS Devel <linux-fsdevel@vger.kernel.org>
 
 From: Vyacheslav Dubeyko <slava@dubeyko.com>
-Subject: [PATCH 14/24] nilfs2: introduce buffer management subsystem debugging output option
+Subject: [PATCH 24/24] nilfs2: introduce option of using dynamic debugging
 
-This patch adds subsystem's flags for page.c module.
-Flags for these modules are grouped by
-CONFIG_NILFS2_DEBUG_BUFFER_MANAGEMENT kernel configuration option.
-This kernel configuration option enables (or disables) debugging
-output from of all above-mentioned modules.
+This patch implements opportunity of dynamic debugging in NILFS2 driver.
+It introduces CONFIG_NILFS2_USE_PR_DEBUG kernel configuration
+option. Enabling of this option results in using of pr_debug()
+instead of printk() and print_hex_dump_bytes() instead of
+print_hex_dump(). If CONFIG_NILFS2_USE_PR_DEBUG is not set then
+debugging messages are selected for printing in system log by means of
+comparing of requested flags and DBG_MASK's flags set. Otherwise, the
+behaviour of of pr_debug()/print_hex_dump_bytes()s are controlled via
+writing to a control file in the 'debugfs' filesystem.
+
+If CONFIG_NILFS2_USE_PR_DEBUG option is not set then it is used
+printk()/print_hex_dump() for printing debugging messages in
+system log.
 
 Signed-off-by: Vyacheslav Dubeyko <slava@dubeyko.com>
 CC: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/Kconfig |    6 ++++++
- fs/nilfs2/debug.h |   10 ++++++++++
- 2 files changed, 16 insertions(+)
+ fs/nilfs2/Kconfig |   22 ++++++++++++++++++++++
+ fs/nilfs2/debug.h |   33 +++++++++++++++++++++++++++++++++
+ 2 files changed, 55 insertions(+)
 
 diff --git a/fs/nilfs2/Kconfig b/fs/nilfs2/Kconfig
-index b40fd85..d6299c6 100644
+index 451a3a2..502419a 100644
 --- a/fs/nilfs2/Kconfig
 +++ b/fs/nilfs2/Kconfig
-@@ -86,6 +86,12 @@ config NILFS2_DEBUG_BLOCK_MAPPING
- 	  This option enables debugging output in alloc.c, bmap.c, btnode.c,
- 	  btree.c, direct.c modules.
+@@ -36,6 +36,24 @@ config NILFS2_DEBUG
  
-+config NILFS2_DEBUG_BUFFER_MANAGEMENT
-+	bool "Enable buffer/page management subsystem debugging output"
+ if NILFS2_DEBUG
+ 
++config NILFS2_USE_PR_DEBUG
++	bool "Use pr_debug() instead of printk()"
 +	default n
++	select DYNAMIC_DEBUG
 +	help
-+	  This option enables debugging output in page.c module.
++	  This option enables using of pr_debug() instead of printk()
++	  and print_hex_dump_bytes() instead of print_hex_dump().
 +
++	  If CONFIG_NILFS2_USE_PR_DEBUG is not set then debugging messages are
++	  selected for printing in system log by means of comparing of
++	  requested flags and DBG_MASK's flags set. Otherwise, the behaviour
++	  of of pr_debug()/print_hex_dump_bytes()s are controlled via writing
++	  to a control file in the 'debugfs' filesystem.
++
++	  If CONFIG_NILFS2_USE_PR_DEBUG option is not set then it is used
++	  printk()/print_hex_dump() for printing debugging messages in
++	  system log.
++
+ config NILFS2_DEBUG_SHOW_ERRORS
+ 	bool "Show internal errors"
+ 	default n
+@@ -60,6 +78,8 @@ config NILFS2_DEBUG_DUMP_STACK
+ 	  printed out for all called functions in the case of dynamic
+ 	  debug (CONFIG_NILFS2_USE_PR_DEBUG).
+ 
++if !NILFS2_USE_PR_DEBUG || (NILFS2_USE_PR_DEBUG && !DYNAMIC_DEBUG)
++
+ config NILFS2_DEBUG_SUBSYSTEMS
+ 	bool "Enable output from subsystems"
+ 	depends on NILFS2_DEBUG
+@@ -142,6 +162,8 @@ config NILFS2_DEBUG_HEXDUMP
+ 
  endif # NILFS2_DEBUG_SUBSYSTEMS
  
++endif # !NILFS2_USE_PR_DEBUG || (NILFS2_USE_PR_DEBUG && !DYNAMIC_DEBUG)
++
  endif # NILFS2_DEBUG
+ 
+ endif # NILFS2_FS
 diff --git a/fs/nilfs2/debug.h b/fs/nilfs2/debug.h
-index ee712d4..517c5e8 100644
+index 821fc75..585477e 100644
 --- a/fs/nilfs2/debug.h
 +++ b/fs/nilfs2/debug.h
-@@ -82,6 +82,13 @@
- #define DBG_BTREE	0x00100000
- #define DBG_DIRECT	0x00200000
- 
-+/*
-+ * These flags enable debugging output in modules that
-+ * implement buffer management subsystem functionality
-+ * (page.c).
-+ */
-+#define DBG_PAGE	0x00400000
-+
- #ifdef CONFIG_NILFS2_DEBUG
- 
- /* Definition of flags' set for debugging */
-@@ -107,6 +114,9 @@ static u32 DBG_MASK = (
- 	DBG_ALLOC | DBG_BMAP | DBG_BTNODE |
- 	DBG_BTREE | DBG_DIRECT |
- #endif /* CONFIG_NILFS2_DEBUG_BLOCK_MAPPING */
-+#ifdef CONFIG_NILFS2_DEBUG_BUFFER_MANAGEMENT
-+	DBG_PAGE |
-+#endif /* CONFIG_NILFS2_DEBUG_BUFFER_MANAGEMENT */
- 	0);
- 
+@@ -173,6 +173,37 @@ static u32 DBG_MASK = (
  #define NILFS2_SUBSYS_MASK	0x0FFFFFFF
+ #define NILFS2_DBG_OUT_MASK	0xF0000000
+ 
++#if (defined(CONFIG_NILFS2_USE_PR_DEBUG) && defined(CONFIG_DYNAMIC_DEBUG))
++
++#define nilfs2_printk(f, a...) \
++	do { \
++		pr_debug("NILFS DEBUG (%s, %d): %s:\n", \
++			__FILE__, __LINE__, __func__); \
++		pr_debug(f, ## a); \
++	} while (0)
++
++#define nilfs2_debug(flg, f, a...) \
++	do { \
++		bool can_dump_stack = DBG_MASK & DBG_DUMP_STACK; \
++		bool should_dump_stack = flg & DBG_DUMP_STACK; \
++		nilfs2_printk(f, ## a); \
++		if (can_dump_stack && should_dump_stack) \
++			dump_stack(); \
++	} while (0)
++
++#define nilfs2_print_hexdump(prefix, ptr, size) \
++	do { \
++		pr_debug("NILFS HEXDUMP (%s, %d): %s:\n", \
++				__FILE__, __LINE__, __func__); \
++		print_hex_dump_bytes(prefix, \
++				DUMP_PREFIX_ADDRESS, ptr, size); \
++	} while (0)
++
++#define nilfs2_hexdump(flg, prefix, ptr, size) \
++		nilfs2_print_hexdump(prefix, ptr, size)
++
++#else /* CONFIG_NILFS2_USE_PR_DEBUG && CONFIG_DYNAMIC_DEBUG */
++
+ #define nilfs2_printk(f, a...) \
+ 	do { \
+ 		printk(KERN_DEBUG "NILFS DEBUG (%s, %d): %s:\n", \
+@@ -221,6 +252,8 @@ static u32 DBG_MASK = (
+ 		} \
+ 	} while (0)
+ 
++#endif /* CONFIG_NILFS2_USE_PR_DEBUG && CONFIG_DYNAMIC_DEBUG */
++
+ static inline int nilfs2_error_dbg(unsigned int flg,
+ 				    const unsigned char *file,
+ 				    int line,
 -- 
 1.7.9.5
 
