@@ -1,14 +1,14 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 16/24] nilfs2: introduce dump stack option
-Date: Mon, 17 Jun 2013 16:25:16 +0400
-Message-ID: <1371471916.2075.148.camel@slavad-ubuntu>
+Subject: [PATCH 18/24] nilfs2: introduce superfluous debugging output option
+Date: Mon, 17 Jun 2013 16:25:49 +0400
+Message-ID: <1371471949.2075.150.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=fivofjTNHicQ3wEN+7kH7i/wqf2k85WNtR+PYmkKs7g=;
-	b=qHRs64HaeYWAZY3EVKgsDixMYvl/qHZEGM8HC+TFar+y5OJ8JIQF1fzRUB8HP82+L0cfR3vWMVG2tozJu+IhqJ84mXWjs2LhcrDN/Qnvzc2vRUTwlAUKSG5FJUGnRQeu;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=IgqMiJgr1X4KEGacT8ErVQTkkHRDcA6mb1Sph3s30K0=;
+	b=Rs4X2iVvqXqgTgvNHH9X3OfQOTKsSbNjGFreR7unZ+91fM4DhAxiZiAQIxPYbl9mQ7ukxcdWrFBnBHlyE/aTnRSzBaeGoDt3icuamsIE6FCRisR0CF5DhcOi8LqDtzzc;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -16,93 +16,93 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 16/24] nilfs2: introduce dump stack option
+Subject: [PATCH 18/24] nilfs2: introduce superfluous debugging output option
 
-This patch adds CONFIG_NILFS2_DEBUG_DUMP_STACK kernel
-configuration option. This option enables output of dump stack.
-Usually, every function in NILFS2 driver begins from debugging
-output of function name, file, line and input arguments' value.
-In the case of enabling this option debugging output will include
-dump stack too.
+This patch adds CONFIG_NILFS2_DEBUG_SHOW_SPAM kernel
+configuration option. This option enables output from
+frequently called functions or detailed debugging output
+from function's body.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/Kconfig |   15 +++++++++++++++
- fs/nilfs2/debug.h |   19 ++++++++++++++++++-
+ fs/nilfs2/Kconfig |   12 ++++++++++++
+ fs/nilfs2/debug.h |   22 +++++++++++++++++++++-
  2 files changed, 33 insertions(+), 1 deletion(-)
 
 diff --git a/fs/nilfs2/Kconfig b/fs/nilfs2/Kconfig
-index d6299c6..c1ec3c9 100644
+index c1ec3c9..39dc5c39 100644
 --- a/fs/nilfs2/Kconfig
 +++ b/fs/nilfs2/Kconfig
-@@ -36,6 +36,21 @@ config NILFS2_DEBUG
+@@ -107,6 +107,18 @@ config NILFS2_DEBUG_BUFFER_MANAGEMENT
+ 	help
+ 	  This option enables debugging output in page.c module.
  
- if NILFS2_DEBUG
- 
-+config NILFS2_DEBUG_DUMP_STACK
-+	bool "Enable dump stack output"
++config NILFS2_DEBUG_SHOW_SPAM
++	bool "Enable superfluous debugging output"
 +	default n
 +	help
-+	  This option enables output of dump stack. Usually, every
-+	  function in NILFS2 driver begins from debugging output of
-+	  function name, file, line and input arguments' value.
-+	  In the case of enabling this option debugging output
-+	  will include dump stack too.
++	  This option enables output from frequently called functions or
++	  detailed debugging output from function's body. Please, be
++	  cautious with enabling the option. Because it can be resulted
++	  in huge amount of debugging messages in system log and
++	  performance decreasing. Please, remember that superfluos output
++	  option is depended implicitly from options that enable output of
++	  concrete modules of NILFS2 driver.
 +
-+	  Usually, dump stacks are printed out for called functions from
-+	  files that are requested by flags. But dump stacks are
-+	  printed out for all called functions in the case of dynamic
-+	  debug (CONFIG_NILFS2_USE_PR_DEBUG).
-+
- config NILFS2_DEBUG_SUBSYSTEMS
- 	bool "Enable output from subsystems"
- 	depends on NILFS2_DEBUG
+ endif # NILFS2_DEBUG_SUBSYSTEMS
+ 
+ endif # NILFS2_DEBUG
 diff --git a/fs/nilfs2/debug.h b/fs/nilfs2/debug.h
-index 517c5e8..a85454c 100644
+index a85454c..3f3b42b 100644
 --- a/fs/nilfs2/debug.h
 +++ b/fs/nilfs2/debug.h
-@@ -89,6 +89,15 @@
+@@ -98,6 +98,17 @@
   */
- #define DBG_PAGE	0x00400000
+ #define DBG_DUMP_STACK	0x20000000
  
 +/*
-+ * This flag enables output of dump stack. Usually, every
-+ * function in NILFS2 driver begins from debugging output of
-+ * function name, file, line and input arguments' value.
-+ * In the case of enabling this option debugging output
-+ * will include dump stack too.
++ * This flag enables output from frequently called functions or
++ * detailed debugging output from function's body. Please, be
++ * cautious with enabling the option. Because it can be resulted
++ * in huge amount of debugging messages in system log and
++ * performance decreasing. Please, remember that superfluos output
++ * option is depended implicitly from options that enable output of
++ * concrete modules of NILFS2 driver.
 + */
-+#define DBG_DUMP_STACK	0x20000000
++#define DBG_SPAM	0x40000000
 +
  #ifdef CONFIG_NILFS2_DEBUG
  
  /* Definition of flags' set for debugging */
-@@ -117,6 +126,9 @@ static u32 DBG_MASK = (
- #ifdef CONFIG_NILFS2_DEBUG_BUFFER_MANAGEMENT
- 	DBG_PAGE |
- #endif /* CONFIG_NILFS2_DEBUG_BUFFER_MANAGEMENT */
-+#ifdef CONFIG_NILFS2_DEBUG_DUMP_STACK
-+	DBG_DUMP_STACK |
-+#endif /* CONFIG_NILFS2_DEBUG_DUMP_STACK */
+@@ -129,6 +140,9 @@ static u32 DBG_MASK = (
+ #ifdef CONFIG_NILFS2_DEBUG_DUMP_STACK
+ 	DBG_DUMP_STACK |
+ #endif /* CONFIG_NILFS2_DEBUG_DUMP_STACK */
++#ifdef CONFIG_NILFS2_DEBUG_SHOW_SPAM
++	DBG_SPAM |
++#endif /* CONFIG_NILFS2_DEBUG_SHOW_SPAM */
  	0);
  
  #define NILFS2_SUBSYS_MASK	0x0FFFFFFF
-@@ -131,8 +143,13 @@ static u32 DBG_MASK = (
+@@ -143,10 +157,16 @@ static u32 DBG_MASK = (
  
  #define nilfs2_debug(flg, f, a...) \
  	do { \
--		if ((flg & NILFS2_SUBSYS_MASK) & DBG_MASK) \
-+		bool can_dump_stack = DBG_MASK & DBG_DUMP_STACK; \
-+		bool should_dump_stack = flg & DBG_DUMP_STACK; \
-+		if ((flg & NILFS2_SUBSYS_MASK) & DBG_MASK) { \
- 			nilfs2_printk(f, ## a); \
-+			if (can_dump_stack && should_dump_stack) \
-+				dump_stack(); \
-+		} \
- 	} while (0)
- 
- #else /* CONFIG_NILFS2_DEBUG */
++		bool can_print_spam = DBG_MASK & DBG_SPAM; \
++		bool is_spam = flg & DBG_SPAM; \
+ 		bool can_dump_stack = DBG_MASK & DBG_DUMP_STACK; \
+ 		bool should_dump_stack = flg & DBG_DUMP_STACK; \
+ 		if ((flg & NILFS2_SUBSYS_MASK) & DBG_MASK) { \
+-			nilfs2_printk(f, ## a); \
++			if (is_spam) { \
++				if (can_print_spam) \
++					nilfs2_printk(f, ## a); \
++			} else \
++				nilfs2_printk(f, ## a); \
+ 			if (can_dump_stack && should_dump_stack) \
+ 				dump_stack(); \
+ 		} \
 -- 
 1.7.9.5
 
