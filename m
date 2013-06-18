@@ -1,115 +1,101 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH 00/24] nilfs2: introduce debugging subsystem
- implementation
-Date: Tue, 18 Jun 2013 13:43:30 +0400
-Message-ID: <1371548610.2265.63.camel@slavad-ubuntu>
-References: <1371471701.2075.129.camel@slavad-ubuntu>
-	 <20130618.020235.402928744.konishi.ryusuke@lab.ntt.co.jp>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Andreas Rohner <e0502196-oe7qfRrRQffzPE21tAIdciO7C/xPubJB@public.gmane.org>
+Subject: cleaner optimization and online defragmentation: status update
+Date: Tue, 18 Jun 2013 20:30:09 +0200
+Message-ID: <51C0A731.9060509@student.tuwien.ac.at>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=K1o7Bt1TFFfobLdEQSa40huhXZfJ1Ptx3eCv8MZPox4=;
-	b=hXh3ORUbgKUq4aa4aJDd8zaMiFiDnfozx7KhTh2faVGB3EH8OjR1Y5P7NNLWHdCAMydKIivZlN3QIKhStDYcSfEa0weBbEHZAlIEQ+E5lqagUGGRFhDc55at8uhvoTic;
-In-Reply-To: <20130618.020235.402928744.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Ryusuke,
+Hi,
 
-On Tue, 2013-06-18 at 02:02 +0900, Ryusuke Konishi wrote:
+I have written a simple defragmentation tool and some extensions to the
+cleaner. The implementations are not tested enough yet, but I thought I
+could use some feedback if I am headed into the right direction. I am
+very happy about any suggestions for improvement, because I am quite new
+to kernel development.
 
-[snip]
-> 
-> Looks like you are trying to reinvent the wheel.
-> 
+* Cleaner:
 
-I don't think so. :) But trying to reinvent the wheel is in background
-of the technical progress at whole, from my viewpoint. And old way
-doesn't mean bad way. :)
+Links to Commits: [1] [2]
 
-> Please consider using trace events kernel API (See
-> Documentation/trace/events.txt and include/trace/events/xxxx.h etc),
-> and do not try to add own debug/tracing framework.  With the trace
-> events framekwork, you will be able to add flexible and switchable
-> debug functionalities without abusing NILFS2_DEBUG_XXXX kernel options
-> and printk variants.
-> 
+I have implemented two new policies for the cleaner. Namely "Greedy",
+which selects the segments with the most free blocks, and
+"Cost/Benefit", which is inspired by this paper [3]. f2fs uses
+apparently the same algorithms.
 
-So, I suppose that I need to describe my vision and my intentions in
-more details.
+Unfortunately both of them require, that the file system keeps track of
+the free blocks per segment. This is not trivial, mainly because of
+snapshots. I chose to simply ignore snapshots altogether. That way the
+tracking is simple. The problem is of course, that the
+selection policy goes wrong sometimes, because the actual number of free
+blocks is less than reported. But it should still perform better, than
+the "Timestamp" policy.
 
-Yes, I agree that tracepoints framework should be used. But I think that
-tracepoints framework is more suitable for performance analysis than for
-investigation of an issue by means of debugging. Debugging and
-tracepoints frameworks have different goals, from my understanding. So,
-I think that NILFS2 should have as debugging as tracepoints
-opportunities. The debugging framework can be used for gathering
-information about an issue's environment on reporters' side and for deep
-issue investigation. The tracepoint framework can be used for
-performance analysis. And, moreover, I am thinking about adding
-tracepoints into NILFS2 and I am going to do it.
+If a block is part of a snapshot, gets deleted, is cleaned and then the
+snapshot is deleted, this block is actually free, but is not counted as
+such.
 
-The main goal of this patch set is to provide a simple way to gather
-information about the issue on reporter's side. In my current approach
-it is possible to ask a reporter about collecting additional details by
-means of such simple steps: (1) Enable kernel configuration options for
-necessary subsystems and debugging output opportunities; (2) Rebuild the
-kernel; (3) Restart kernel and reproduce the issue; (4) Send content of
-system log by e-mail. I think that such way is really simple and
-efficient.
+Steps:
+1. Block A is part of a snapshot
+2. A gets deleted
+3. A is cleaned (it is considered live because it is in the snapshot)
+4. the snapshot is deleted
+5. A is counted in su_nblocks, but it will never be decremented
 
-Ok, you dislike the way of using kernel configuration options for
-subsystems and using printk variants. One of the suggested way of
-debugging output in this patch set is using
-pr_debug()/print_hex_dump_bytes() methods. The behaviour of these
-methods are controlled via writing to a control file in the 'debugfs'
-filesystem. So, you can configure in very flexible way what will be
-printed out (please, see Documentation/dynamic-debug-howto.txt). As a
-result, it is possible to use only pr_debug()/print_hex_dump_bytes()
-instead of printk() variants. Moreover, most of the suggested kernel
-configuration options will be not necessary in such case.
+If there is a whole segment full of these uncounted blocks they
+will never be cleaned. To prevent this kind of starvation I just reset
+all the counters to zero after a snapshot gets deleted. This makes the
+deletion of snapshots quite expensive and temporarily degrades the
+performance of "Cost/Benefit" policy to "Timestamp". This solution is
+quite ugly and I would prefer something better, but I found no
+other way to prevent this problem.
 
-This patch set suggests such debugging output opportunities: (1) output
-with information about internal errors; (2) output with current values
-of variables/function arguments; (3) output with hexdumps of on-disk or
-in-core data structures; (4) dump stack output.
+There is one additional potential problem though. To track the used
+blocks per segment I used the su_nblocks attribute of struct
+nilfs_segment_usage. This value is currently never used, except once in
+the cleaner. But since the cleaner only cleans segments that are not
+active or dirty, I assume that it always will be a full segment with
+nilfs_get_blocks_per_segment(nilfs) blocks. I haven't tested that enough
+yet, but it seems to work. Alternatively I could just add another
+attribute su_live_nblocks to struct nilfs_segment_usage.
 
-I think that information about internal errors that takes place in
-NILFS2 driver is very important output. Such information can provide a
-clue for understanding a possible reason of an issue and a way of
-further investigation. But information about internal errors is
-preliminary and rough knowledge that can be used for localization of the
-error. So, from my point of view, it doesn't make sense to restrict such
-output by any subsystem. As a result, I use simple printk() for this
-output.
+* Defragmentation:
 
-Debugging output and hexdump output are very important information also.
-These outputs should be made by pr_debug()/print_hex_dump_bytes(), from
-my point of view. I think that dump stack can be useful information in
-some situations. But if it will be used only dynamic version of printk()
-then flags of for subsystems will be unnecessary. As a result, there
-isn't opportunity for restricting of the dump stack output.
+Links to Commits: [4] [5]
 
-So, as a resume, I think that NILFS2 needs in debugging subsystem and
-tracepoints subsystem. It is a complementary subsystems, from my
-viewpoint.
+It's just a simple proof-of-concept tool called nilfs-defrag [filename].
+It takes the file to defragment as an argument.
 
-With the best regards,
-Vyacheslav Dubeyko.
+It tries to find the mount point and get a pointer to struct nilfs, to
+find out the block size and the number of segments per block. It uses
+the FIEMAP ioctl to get the extent information, and if the number of
+extents per segment exceeds a certain value, it tries to defragment
+those extents.
 
-> As I usually comment to you, start small, with a simple but powerful
-> change, and try to keep your patchset as simple as you can.
+I added a simple new NILFS_IOCTL_MARK_EXTENT_DIRTY, which just reads in
+the corresponding blocks and marks them dirty. The dirty blocks are
+automatically written out to a new segment and will be hopefully less
+fragmented. It seems to work quite nicely, but it needs more testing. I
+am not quite sure if I got the locking right in the kernel code.
 
-> Regards,
-> Ryusuke Konishi
-> 
+Sorry for the long post
 
+Best Regards,
+Andreas Rohner
 
+[1]
+https://github.com/zeitgeist87/linux/commit/bc763ac47c04893d3fece4f2db59f46187415cc4
+[2]
+https://github.com/zeitgeist87/nilfs-utils/commit/ec8281964b3b57b1b79452d9cb03887e04a089b3
+[3] http://dl.acm.org/citation.cfm?id=121137
+[4]
+https://github.com/zeitgeist87/linux/commit/9ce900df854b1cbc968d35fd7ed892d9bf3b52d8
+[5]
+https://github.com/zeitgeist87/nilfs-utils/commit/d32c43e26ad5059b79c0ecc3ff167a78b0f6c814
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
