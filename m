@@ -1,58 +1,94 @@
-From: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: cleaner optimization and online defragmentation: status update
-Date: Sat, 22 Jun 2013 20:37:54 +0200
-Message-ID: <CAFvQSYTZfiNQv4==v+m5W+SMCfrxm6WmV8gwKC_+yaW1MBfdOQ@mail.gmail.com>
-References: <51C0A731.9060509@student.tuwien.ac.at>
-	<1371626223.2221.25.camel@slavad-ubuntu>
-	<51C177A4.3030204@student.tuwien.ac.at>
-	<2F76977A-589B-47EB-8818-382477099600@dubeyko.com>
+From: Bryce Gibson <bryce-Ra7CeWMrBuQyzzc7d281ts/53G5R+iW0@public.gmane.org>
+Subject: Corrupt root inode
+Date: Mon, 24 Jun 2013 13:19:48 +1000
+Message-ID: <1372043988.4304.140661247622873.2030B278@webmail.messagingengine.com>
+Reply-To: bryce-Ra7CeWMrBuQyzzc7d281ts/53G5R+iW0@public.gmane.org
 Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :content-type;
-        bh=qKmxJ1zx8R70ClP6/ztb1gVKEQYKpiSdn2FKWjzP1JU=;
-        b=NTp397E8nZi1nA0od4ZQFKkistP4y7DXaBixLRxj0+Uvq1VVYvjcffeSLa9KdHm9eU
-         TZMR0mo5B3HxXlLTNjGbLyE1zX2KkLYlLxs1axPemp1hzp6T62V9H+vUed7qEfmwUrzG
-         NFF1t1dI6C2SzLuE2xRkYCR1A0Jczkw80F3IMff/nM702ql2JU4V9fQBa2FkmrSQK+dm
-         qQFOcclOKu0aAf0EFuNlL8YT7M2cPip+NQ6V4v0iorpTx4uHW8x1RYBCQeJ/hqgWi7ld
-         ePnKAdeBnAmV3wQ1Oo2zkBbyXEMqJUhP9WkruO050sHiMNvK1des8JESX2/2Dx2EFFd1
-         VG0Q==
-In-Reply-To: <2F76977A-589B-47EB-8818-382477099600-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=
+	messagingengine.com; h=message-id:from:to:mime-version
+	:content-transfer-encoding:content-type:reply-to:subject:date;
+	 s=smtpout; bh=HiVSOEGvlJlRE/iBKzY9aO1v8Is=; b=hP+18bEUCCxYiKLtY
+	JQlm56ZrdpPTKjqJWwWGgFs3Hpmzam4VB4JOn66lOzHiVRlKwyuGLTNBDnnBsY/8
+	0Kzf3wloo+ZKY+40L78fr9N4CUV3+kuXbqjXJg+Qvhfxnf60QZ90VtGT5k3niXxO
+	AXDzGXmgbdHEEOW0P9VvpAVR0w=
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+Hi :-)
 
-> First of all, I am thinking now and I will think that defragmentation should be
-> a part of GC activity. Usually, from my point of view, users choose NILFS2
-> because of using flash storage (SSD and so on). So, GC is a consequence of
-> log-structured nature of NILFS2. But it needs to think about flash aging, anyway.
-> Because activity of GC or other auxiliary subsystems should take into account
-> NAND flash wear-leveling. If activity of auxiliary subsystems will be significant
-> then NAND flash will fail soon without any clear reasons from an user's
-> viewpoint.
+I have a root nilfs partition that appears to have been corrupted.
 
-I have no idea of the actual implementation or the code, so my comment
-just represents the POV of a fs-user.
-I've tried Nilfs2 and Btrfs (both cow) on traditional mechanical
-harddisks to get cheap, efficient snapshoting.
-However, due to cow, files with high random-write activity (like
-firefox's internal sqlite database) fragmented so heavily those
-filesystems were practiacally unuseable on HDDs.
+When I try to mount the partition - either on boot or with a liveusb -
+I'm getting "NILFS: corrupt root inode".
 
-Btrfs actually offers both, manual defragmentation as well as an
-autodefrag mount option - which is useful even for SSDs when the
-average continous segment size becomes as low as 4kb.
-While autodefrag would be great for nilfs2, a manual tool at least
-wouldn't hurt ;)
+I don't believe anything too exciting happened on the last shutdown, bu=
+t
+it's entirely possible that the umount/sync command didn't execute
+correctly.
 
-Regards
+I've tried mounting with with two kernels, being 3.9 and 3.9.4
+
+In the first case nilfs is built in, in the second it's a module.
+
+This is an x86_64 laptop.
+
+I was hoping someone might be able to offer some help with trying to
+recover the partition :-)
+
+I'm happy to provide any useful info from the drive :-)
+
+Cheers :-)
+Bryce
+
+
+
+nilfs-tune -l /dev/loop4
+--------------------------
+nilfs-tune 2.1.5
+=46ilesystem volume name:  =A0(none)
+=46ilesystem UUID:         =A0fb7fe0c7-f6ef-44e9-8fd7-0125801e5f36
+=46ilesystem magic number: =A00x3434
+=46ilesystem revision #:   =A02.0
+=46ilesystem features: =A0 =A0 =A0(none)
+=46ilesystem state:        =A0valid
+=46ilesystem OS type:      =A0Linux
+Block size:              =A04096
+=46ilesystem created:      =A0Fri Aug 17 00:26:09 2012
+Last mount time:         =A0Sat Jun 22 04:18:22 2013
+Last write time:         =A0Sun Jun 23 01:00:59 2013
+Mount count:             =A0691
+Maximum mount count:     =A050
+Reserve blocks uid:      =A00 (user root)
+Reserve blocks gid:      =A00 (group root)
+=46irst inode:             =A011
+Inode size:              =A0128
+DAT entry size:          =A032
+Checkpoint size:         =A0192
+Segment usage size:      =A016
+Number of segments:      =A0269
+Device size:             =A02264924160
+=46irst data block:        =A01
+# of blocks per segment: =A02048
+Reserved segments %:     =A05
+Last checkpoint #:       =A0373808
+Last block address:      =A0405504
+Last sequence #:         =A0568326
+=46ree blocks count:       =A073728
+Commit interval:         =A00
+# of blks to create seg: =A00
+CRC seed:                =A00x44983069
+CRC check sum:           =A00xced8962d
+CRC check data size:     =A00x00000118
+
+--=20
+  Bryce Gibson
+  bryce-Ra7CeWMrBuQyzzc7d281ts/53G5R+iW0@public.gmane.org
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
