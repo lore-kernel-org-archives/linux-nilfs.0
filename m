@@ -1,118 +1,57 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+From: Vyacheslav Dubeyko <slava@dubeyko.com>
 Subject: Re: [PATCH] nilfs2: correct logic of translation virtual blocks
  number into physical ones
-Date: Tue, 02 Jul 2013 01:02:38 +0900 (JST)
-Message-ID: <20130702.010238.65450534.konishi.ryusuke@lab.ntt.co.jp>
+Date: Wed, 03 Jul 2013 13:24:55 +0400
+Message-ID: <1372843495.2230.8.camel@slavad-ubuntu>
 References: <1372674852.2198.23.camel@slavad-ubuntu>
+	 <20130702.010238.65450534.konishi.ryusuke@lab.ntt.co.jp>
+Reply-To: slava@dubeyko.com
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1372674852.2198.23.camel@slavad-ubuntu>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=83awiR8tmDfF03Kh8JrpJ19yEdB8cvItRhGc/KRANyo=;
+	b=DpgRusabynlOPanISNS0gUZNuvK59G10zmRAURiLaVapUy85eCCFXrgiF5TYPEbXv6oinxgfLbTasHwCkTKCuGUDNbvS1rkP4hhYEGF1qccFQjnzBe8AElhwix4WnZqC;
+In-Reply-To: <20130702.010238.65450534.konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bryce-Ra7CeWMrBuQyzzc7d281ts/53G5R+iW0@public.gmane.org, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org, bryce@gibson-consulting.com.au, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>
 
-On Mon, 01 Jul 2013 14:34:12 +0400, Vyacheslav Dubeyko wrote:
-> Hi,
-> 
-> The issue report is contained description of mount failure:
-> 
-> [  822.390075] NILFS version 2 loaded
-> [  822.436888] segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
-> [  822.437107] NILFS: corrupt root inode.
-> 
-> The first phase of investigation discovered that it tries to read
-> really something wrong instead of root inode:
-<snip>
-> ---
-> From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Subject: [PATCH] nilfs2: correct logic of translation virtual blocks number into physical ones
-> 
-> The issue report is contained description of mount failure:
-> 
-> [  822.390075] NILFS version 2 loaded
-> [  822.436888] segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
-> [  822.437107] NILFS: corrupt root inode.
-> 
-> Investigation of the issue discovered that it takes places
-> reading of ifile's block from not proper placement because of
-> successful ending of operation of virtual block number translation
-> into physical one.
-> 
-> This patch adds checking of start checkpoint and end checkpoint by
-> comparing with current checkpoint number during translation of
-> virtual block number into physical block number. Because it makes
-> sense to operate with blocks that are alive for current checkpoint.
-> 
-> As a result, mount fails with such error message:
-> 
-> [17348.793335] NILFS warning (device loop0): nilfs_ifile_get_inode_block: unable to read inode: 2
-> [17348.793869] NILFS: get root inode failed
-> 
-> Reported-by: Bryce Gibson <bryce-Ra7CeWMrBuQyzzc7d281ts/53G5R+iW0@public.gmane.org>
-> Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Hi Ryusuke,
 
-Vyacheslav, this patch breaks snapshot mounts because past blocks
-deleted from the current file system have an end checkpoint number
-smaller than the current checkpoint number.
+On Tue, 2013-07-02 at 01:02 +0900, Ryusuke Konishi wrote:
 
-Also, the title of this patch looks wrong.  You are trying to insert a
-sanity check in the translation logic.  It doesn't correct translation
-logic itself, nor removes the cause of reported problem.
+[snip]
+> Vyacheslav, this patch breaks snapshot mounts because past blocks
+> deleted from the current file system have an end checkpoint number
+> smaller than the current checkpoint number.
+> 
 
-I think the title of this patch should be "nilfs2: insert sanity check
-in translation logic of ..."  or so.
+Yes, you are right. It needs to rework this patch.
 
-Regards,
-Ryusuke Konishi
+I will be on vacation during next two weeks. And then, after vacation, I
+continue to work with patches and fixes for NILFS2. I will keep silence
+during my vacation time.
 
-> ---
->  fs/nilfs2/dat.c |    9 +++++++++
->  1 file changed, 9 insertions(+)
+Thank you for the remark.
+
+> Also, the title of this patch looks wrong.  You are trying to insert a
+> sanity check in the translation logic.  It doesn't correct translation
+> logic itself, nor removes the cause of reported problem.
 > 
-> diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-> index fa0f803..08d9268 100644
-> --- a/fs/nilfs2/dat.c
-> +++ b/fs/nilfs2/dat.c
-> @@ -396,9 +396,11 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
->   */
->  int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
->  {
-> +	struct the_nilfs *nilfs = dat->i_sb->s_fs_info;
->  	struct buffer_head *entry_bh, *bh;
->  	struct nilfs_dat_entry *entry;
->  	sector_t blocknr;
-> +	__u64 cur_cno, start_cno, end_cno;
->  	void *kaddr;
->  	int ret;
->  
-> @@ -422,6 +424,13 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
->  		ret = -ENOENT;
->  		goto out;
->  	}
-> +	cur_cno = nilfs->ns_cno;
-> +	start_cno = le64_to_cpu(entry->de_start);
-> +	end_cno = le64_to_cpu(entry->de_end);
-> +	if (cur_cno < start_cno || cur_cno > end_cno) {
-> +		ret = -ENOENT;
-> +		goto out;
-> +	}
->  	*blocknrp = blocknr;
->  
->   out:
-> -- 
-> 1.7.9.5
+> I think the title of this patch should be "nilfs2: insert sanity check
+> in translation logic of ..."  or so.
+
+Ok. I agree.
+
+With the best regards,
+Vyacheslav Dubeyko.
+
 > 
+> Regards,
+> Ryusuke Konishi
 > 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
