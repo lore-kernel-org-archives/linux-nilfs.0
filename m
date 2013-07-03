@@ -1,57 +1,38 @@
-From: Vyacheslav Dubeyko <slava@dubeyko.com>
-Subject: Re: [PATCH] nilfs2: correct logic of translation virtual blocks
- number into physical ones
-Date: Wed, 03 Jul 2013 13:24:55 +0400
-Message-ID: <1372843495.2230.8.camel@slavad-ubuntu>
-References: <1372674852.2198.23.camel@slavad-ubuntu>
-	 <20130702.010238.65450534.konishi.ryusuke@lab.ntt.co.jp>
-Reply-To: slava@dubeyko.com
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=83awiR8tmDfF03Kh8JrpJ19yEdB8cvItRhGc/KRANyo=;
-	b=DpgRusabynlOPanISNS0gUZNuvK59G10zmRAURiLaVapUy85eCCFXrgiF5TYPEbXv6oinxgfLbTasHwCkTKCuGUDNbvS1rkP4hhYEGF1qccFQjnzBe8AElhwix4WnZqC;
-In-Reply-To: <20130702.010238.65450534.konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-fsdevel-owner@vger.kernel.org
+From: Waiman Long <Waiman.Long@hp.com>
+Subject: [PATCH v3 20/25] nilfs2: Change how dentry's d_count field is accessed
+Date: Wed,  3 Jul 2013 16:21:55 -0400
+Message-ID: <1372882915-23173-1-git-send-email-Waiman.Long@hp.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Cc: linux-nilfs@vger.kernel.org, bryce@gibson-consulting.com.au, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>
+Content-Transfer-Encoding: 7bit
+To: Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@redhat.com>, Miklos Szeredi <mszeredi@suse.cz>, Ingo Molnar <mingo@redhat.com>, Thomas Gleixner <tglx@linutronix.de>
+Cc: KONISHI Ryusuke <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Waiman Long <Waiman.Long@hp.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Andi Kleen <andi@firstfloor.org>, "Chandramouleeswaran, Aswin" <aswin@hp.com>, "Norton, Scott J" <scott.norton@hp.com>
 
-Hi Ryusuke,
+Because of the changes made in dcache.h header file, files that use the
+d_count field of the dentry structure need to be changed accordingly.
+References to d_count are replaced by the d_ret_count() calls.
+There is no change in logic and everything should just work.
 
-On Tue, 2013-07-02 at 01:02 +0900, Ryusuke Konishi wrote:
+Signed-off-by: Waiman Long <Waiman.Long@hp.com>
+---
+ fs/nilfs2/super.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-[snip]
-> Vyacheslav, this patch breaks snapshot mounts because past blocks
-> deleted from the current file system have an end checkpoint number
-> smaller than the current checkpoint number.
-> 
-
-Yes, you are right. It needs to rework this patch.
-
-I will be on vacation during next two weeks. And then, after vacation, I
-continue to work with patches and fixes for NILFS2. I will keep silence
-during my vacation time.
-
-Thank you for the remark.
-
-> Also, the title of this patch looks wrong.  You are trying to insert a
-> sanity check in the translation logic.  It doesn't correct translation
-> logic itself, nor removes the cause of reported problem.
-> 
-> I think the title of this patch should be "nilfs2: insert sanity check
-> in translation logic of ..."  or so.
-
-Ok. I agree.
-
-With the best regards,
-Vyacheslav Dubeyko.
-
-> 
-> Regards,
-> Ryusuke Konishi
-> 
-
-
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index c7d1f9f..b159761 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -973,7 +973,7 @@ static int nilfs_attach_snapshot(struct super_block *s, __u64 cno,
+ 
+ static int nilfs_tree_was_touched(struct dentry *root_dentry)
+ {
+-	return root_dentry->d_count > 1;
++	return d_ret_count(root_dentry) > 1;
+ }
+ 
+ /**
+-- 
+1.7.1
