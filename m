@@ -1,52 +1,44 @@
-From: =?UTF-8?B?SsOpcsO0bWUgUG91bGlu?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: searching checkpoints contaning an inode (or a filename)
-Date: Fri, 5 Jul 2013 17:48:10 -0400
-Message-ID: <CALJXSJrLo_5=e-M41vXyuS9SbRyeZ=zjLYv2Hs3a8Dt+BwS6ig@mail.gmail.com>
-References: <20130705201701.GE23851@taesoo.org>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Subject: [RFC] simplifying the "is it mounted" checks for nilfs2
+Date: Fri, 5 Jul 2013 23:03:09 +0100
+Message-ID: <20130705220309.GU4165@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=1TTkhhT+Sf4b1GYCNDcjOUazhS8lg30/F2jr0OCVhmQ=;
-        b=xvoCzSREDQSrwmtJShBo9cTGnpfRcyL0I7AVDaR9B+EGKb4gxlr2yJNsVzllDnxlFY
-         r0JFdrN2DVRI4PJiiw+qRInqoMdKE2zUEVqiaqeAjFABz9R3JFqIYMkvAwHTrGfpnTJj
-         pCcCnaBANOwqspledL1pSBUKFtnY2wR1Bx8XekW7THyZsFHYLVFyeFjdOQRR4J13Yhih
-         nkET1qDOJkIOxcyMyqSmS0DSCEOAJvOJKrfjFe63rwii6VVEg8BiW9j10tnHIPaMUz2H
-         7DOjEPclMG+VrRQgn7Qb74OJLPn2pSnPlORvWNhGXNirLJPKWWhYZb+WKdwrHqplKhtP
-         EShA==
-In-Reply-To: <20130705201701.GE23851-Q1ymHw66ZoYdnm+yROfE0A@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Taesoo Kim <taesoo-3s7WtUTddSA@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, Jul 5, 2013 at 4:17 PM, Taesoo Kim <taesoo-3s7WtUTddSA@public.gmane.org> wrote:
->
-> q3. using nilfs as rootfs?
->  (I couldn't find any people using nilfs for rootfs. Are there any
->  issue on that? or just matter of performance? on updates for
->  example)
+Do you see any problems with just giving nilfs ->drop_inode() instance
+like this:
+int nilfs2_drop_inode(struct inode *inode)
+{
+	if (unlikely(inode->i_ino == NILFS_ROOT_INO))
+		return true;
+	return generic_drop_inode(inode);
+}
+Then nilfs_root will live exactly until we unmount the damn thing, giving us
+int nilfs_checkpoint_is_mounted(struct super_block *sb, __u64 cno)
+{
+        struct the_nilfs *nilfs = sb->s_fs_info;
 
-I'm using NILFS as root filesystem on my work laptop for a total of 4
-years. I switched to BTRFS for a year in between but looking at how
-fast it kills SSD, it wass not worthwhile.
+        if (cno < 0 || cno > nilfs->ns_cno)
+                return false;
 
-Stability wise, I only had 2 problems with NILFS, the first, which was
-fixed promptly, caused a total data lost because of how the cleaner
-scrub the disk (using the time), it scrubbed data from the future
-after time ran backward. Then the other problem was a kernel OOPS
-about a file from the debian APT cache, I deleted it and it runs just
-fine now, I couldn't take the backtrace.
+        if (cno >= nilfs_last_cno(nilfs))
+                return true;    /* protect recent checkpoints */
 
-Performance wise, on SSD the filesystem is really fast and snappy,
-while on HDD, reads are really slow, booting takes 2 minutes instead
-of less than 10 seconds, however, once booted and everything is in
-cache, it is quite fast. Database loads, especially reads on HDD is
-the worst for NILFS.
+        return nilfs_lookup_root(nilfs, cno) != NULL;
+}
+while the logics in nilfs_mount becoming simply
+	busy = d_count(s->s_root) > 1;
+and we don't need to bother with nilfs_try_to_shrink_tree() at all.
+
+I might be missing something, but it looks like that would work...
+Comments?
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
