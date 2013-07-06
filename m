@@ -1,65 +1,78 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: searching checkpoints contaning an inode (or a filename)
-Date: Sat, 6 Jul 2013 12:03:07 +0400
-Message-ID: <A9A164FA-B0BA-4B34-BD65-C3ED0B16BFD5@dubeyko.com>
-References: <20130705201701.GE23851@taesoo.org> <CALJXSJrLo_5=e-M41vXyuS9SbRyeZ=zjLYv2Hs3a8Dt+BwS6ig@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Date: Sat, 06 Jul 2013 18:50:38 +0900 (JST)
+Message-ID: <20130706.185038.523614087.konishi.ryusuke@lab.ntt.co.jp>
+References: <20130705201701.GE23851@taesoo.org>
+	<B16ADF79-9EF9-46E8-95F8-9D4815E86C64@dubeyko.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=NmX1SmciQoz0xog6Z9f487tmm9vbah0E/iunUiXRZT8=;
-	b=cYUBRXvVgI6e5oqGYxpZj5TQEGGXtISzmY7SN1x3ZEdJE0vIzeLBi96BiYeJRgFhqwxxDuCFKRXyzZJp/XA0KczQR68RbQLSnQitRtsTfVRG0kwe+Jfe4lpMIdM5Gp5q;
-In-Reply-To: <CALJXSJrLo_5=e-M41vXyuS9SbRyeZ=zjLYv2Hs3a8Dt+BwS6ig-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <B16ADF79-9EF9-46E8-95F8-9D4815E86C64-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: =?iso-8859-1?Q?J=E9r=F4me_Poulin?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Taesoo Kim <taesoo-3s7WtUTddSA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, slava-2lV3ebY47BVBDgjK7y7TUQ@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: Taesoo Kim <taesoo-3s7WtUTddSA@public.gmane.org>
+Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi J=E9r=F4me,
+On Sat, 6 Jul 2013 11:34:32 +0400, Vyacheslav Dubeyko wrote:
+> Hi Taesoo,
+> 
+> On Jul 6, 2013, at 12:17 AM, Taesoo Kim wrote:
+> 
+>> Hi nilfs,
+>> 
+>> I am evaluating nilfs for using it in my machine. There are a few
+>> questions regarding usages:
+>> 
+>> q1. how can I enumerate a list of cps, given a filename?
+>> (I know I can mount each cp to check whether there is my file or
+>> not, as time-machine (in mac) does)
+>> 
 
-On Jul 6, 2013, at 1:48 AM, J=E9r=F4me Poulin wrote:
+I think it's hard to implement this feature efficiently because nilfs
+doesn't have an efficient lookup method of past inodes from a file
+name.
 
-> On Fri, Jul 5, 2013 at 4:17 PM, Taesoo Kim <taesoo-3s7WtUTddSA@public.gmane.org> wrote:
->>=20
->> q3. using nilfs as rootfs?
->> (I couldn't find any people using nilfs for rootfs. Are there any
->> issue on that? or just matter of performance? on updates for
->> example)
->=20
-> I'm using NILFS as root filesystem on my work laptop for a total of 4
-> years. I switched to BTRFS for a year in between but looking at how
-> fast it kills SSD, it wass not worthwhile.
->=20
-> Stability wise, I only had 2 problems with NILFS, the first, which wa=
-s
-> fixed promptly, caused a total data lost because of how the cleaner
-> scrub the disk (using the time), it scrubbed data from the future
-> after time ran backward. Then the other problem was a kernel OOPS
-> about a file from the debian APT cache, I deleted it and it runs just
-> fine now, I couldn't take the backtrace.
->=20
+> You can use dumpseg fot this goal. To be honest this way not so
+> simple. You can get inode id from ls output ("ls -i"), for example.
+> And then you need to get dumpseg for all segments and select
+> output for searching inode. Of course, it needs to implement
+> special feature for easy retrieving such data. 
 
-Could you share more details about the issue? I need to understand
-the reproducing path of the issue more clear. Can you reproduce it agai=
-n?=20
+dumpseg is a debug tool and it doesn't provide a solid way since it
+directly scans on-disk blocks from userland.
 
-Thanks,
-Vyacheslav Dubeyko.
+We should adds an ioctl for that if there is a reasonable purpose, but
+I don't know it can be implemented nicely.
 
-> Performance wise, on SSD the filesystem is really fast and snappy,
-> while on HDD, reads are really slow, booting takes 2 minutes instead
-> of less than 10 seconds, however, once booted and everything is in
-> cache, it is quite fast. Database loads, especially reads on HDD is
-> the worst for NILFS.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
-" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>> q2. compute diff or cat against previous files in a specific cp?
+>> (instead of mounting and copying them individually to my /tmp)
+>> 
+> 
+> As I understand, currently, we haven't this as feature of any
+> NILFS2's tool or internal file system technique.
 
+An experimental patchset and a tool exist:
+
+http://www.mail-archive.com/linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org/msg00827.html
+
+nilfs-diff:
+
+   git://github.com/konis/nilfs-utils.git (diff branch)
+
+diff API:
+
+   git://github.com/konis/nilfs2.git (diffapi branch)
+
+
+But I have never sent this to the mainline because the patchset has
+important limitations for practical use in addition to needing a disk
+format change.
+
+
+Regards,
+Ryusuke Konishi
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
