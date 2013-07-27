@@ -1,124 +1,95 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2] nilfs2: remove double bio_put() in
- nilfs_end_bio_write() for BIO_EOPNOTSUPP error
-Date: Sat, 27 Jul 2013 12:02:32 +0900 (JST)
-Message-ID: <20130727.120232.356926182.konishi.ryusuke@lab.ntt.co.jp>
-References: <1374847154.3671.70.camel@slavad-ubuntu>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Broken nilfs2 filesystem
+Date: Sat, 27 Jul 2013 20:23:19 +0400
+Message-ID: <9016EBD5-1E01-476F-B1B9-66AE593F4728@dubeyko.com>
+References: <51F2A8A4.4020400@antoneliasson.se> <51F2A945.6050909@antoneliasson.se>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1374847154.3671.70.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=MqNd7IPA8LgyAcDOHPsImdw01st9/d3+benSboc0KxQ=;
+	b=pHRYJniSJbDQbY0emYZRgRlvCGC6iBJMNPRemX2NWY11U3YR3QZk7r3Hfa54CbcVseOYcufbq8Bnc5SmemCqVT/Ci9pQz8eLI8bScDN0VpoVIMMGNFQEZ9FKofXe9kvd;
+In-Reply-To: <51F2A945.6050909-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: DanCarpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-janitors-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Vyacheslav,
-On Fri, 26 Jul 2013 17:59:14 +0400, Vyacheslav Dubeyko wrote:
-> Hi Ryusuke,
+Hi Anton,
+
+On Jul 26, 2013, at 8:52 PM, Anton Eliasson wrote:
+
+Thank you for your efforts. But, as I understand, currently, you
+don't reproduce the issue and shared system log doesn't contain
+any new details about the issue. Please, see my description below.
+
+[snip]
 > 
-> I changed place of increment operation of segbuf->sb_nbio in
-> nilfs_segbuf_submit_bio() and adding decrement operation for
-> BIO_EOPNOTSUPP case in second version of the patch.
+> I have aborted the experiments for today. kernel.log has 35 million
+> lines and compresses to 220 MB. I've uploaded it here
+> (http://antoneliasson.se/publicdump/kernel.log.20130726.gz). What should
+> I do next?
 > 
-> Could you share your opinion about this version of the patch?
+
+Unfortunately, the shared system log content doesn't contain any NILFS2
+error messages. So, it means that the issue doesn't be reproduced. Do you
+really confident that you can reproduce the issue before beginning of getting
+debug output? Could you check firstly the issue reproducibility?
+
+You made one mistake during configuration of debug output. Please, see
+my description below.
+
+[snip]
+> * Append the following lines to config (just in case) and config.x86_64
+> (which I assume I will use):
 > 
-> With the best regards,
-> Vyacheslav Dubeyko.
-> ---
-> From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> Subject: [PATCH v2] nilfs2: remove double bio_put() in nilfs_end_bio_write() for BIO_EOPNOTSUPP error
+>    CONFIG_NILFS2_DEBUG_SHOW_ERRORS=y
+>    CONFIG_NILFS2_DEBUG_BASE_OPERATIONS=y
+>    CONFIG_NILFS2_DEBUG_MDT_FILES=y
+>    CONFIG_NILFS2_DEBUG_SEGMENTS_SUBSYSTEM=y
+>    CONFIG_NILFS2_DEBUG_BLOCK_MAPPING=y
+>    CONFIG_NILFS2_DEBUG_DUMP_STACK=y
 > 
-> This patch removes double call of bio_put() in nilfs_end_bio_write()
-> for the case of BIO_EOPNOTSUPP error detection. The issue was found
-> by Dan Carpenter and he suggests first version of the fix too.
+
+I think that better to use "make menuconfig" for debug output configuration
+because above-mentioned options have dependencies from other ones.
+Please, use "make menuconfig" way because it is not so easy to describe
+what set of configuration options are valid.
+
+[snip]
+>    * File systems
+>    *
+>    [...]
+>    NILFS2 file system support (NILFS2_FS) [M/n/y/?] m
+>      NILFS2 debugging (NILFS2_DEBUG) [N/y/?] (NEW) y
+>        Use pr_debug() instead of printk() (NILFS2_USE_PR_DEBUG)
+> [N/y/?] (NEW) y
+
+No, no, no... When you select using pr_debug() then you disable
+CONFIG_NILFS2_DEBUG_BASE_OPERATIONS,
+CONFIG_NILFS2_DEBUG_MDT_FILES, CONFIG_NILFS2_DEBUG_SEGMENTS_SUBSYSTEM,
+CONFIG_NILFS2_DEBUG_BLOCK_MAPPING options because you need to use
+dynamic debug opportunity (please, see Documentation/dynamic-debug-howto.txt).
+Moreover, when you select CONFIG_NILFS2_DEBUG_DUMP_STACK in dynamic
+debug output case then every function emits dump_stack() output. Please, read
+comments for configuration options.
+
+Firstly, I want to get debug output without enabling pr_debug(). We will have debug output
+only from requested subsystems in the case of using simple printk(). So, improper
+configuration of debug output is the reason of huge size of system log. I suggest
+not to use  CONFIG_NILFS2_DEBUG_DUMP_STACK option, firstly.
+
+>        Show internal errors (NILFS2_DEBUG_SHOW_ERRORS) [N/y/?] (NEW) y
+>        Enable dump stack output (NILFS2_DEBUG_DUMP_STACK) [N/y/?] (NEW) y
 > 
-> Reported-by: Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-> ---
->  fs/nilfs2/segbuf.c |    6 +++---
->  1 file changed, 3 insertions(+), 3 deletions(-)
-> 
-> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-> index dc9a913..0b09ec9 100644
-> --- a/fs/nilfs2/segbuf.c
-> +++ b/fs/nilfs2/segbuf.c
-> @@ -345,8 +345,7 @@ static void nilfs_end_bio_write(struct bio *bio, int err)
->  
->  	if (err == -EOPNOTSUPP) {
->  		set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
-> -		bio_put(bio);
-> -		/* to be detected by submit_seg_bio() */
-> +		/* to be detected by nilfs_segbuf_submit_bio() */
->  	}
->  
->  	if (!uptodate)
-> @@ -377,12 +376,13 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
->  	bio->bi_private = segbuf;
->  	bio_get(bio);
->  	submit_bio(mode, bio);
-> +	segbuf->sb_nbio++;
->  	if (bio_flagged(bio, BIO_EOPNOTSUPP)) {
 
-> +		segbuf->sb_nbio--;
+So, first of all, we need to reproduce the issue in initial state. Then, it needs to configure
+debug output properly and to get debug output for the case of reproduced issue.
 
-This decrement looks wrong.
+Thanks,
+Vyacheslav Dubeyko.
 
-Otherwise, your change of nilfs_segbuf_submit_bio() is just a
-equivalent transformation and doesn't fix problem, that is, a mismatch
-of the number of calls between complete() and wait_for_completion().
-
-In your patch, nilfs_end_bio_write() function calls the complete()
-routine as before even if it received an EOPNOTSUPP error.
-
-In that case, segbuf->sb_nbio must be incremented to call
-wait_for_completion() the right number of times.
-
-Note that wait_for_completion() is called based on the count of
-segbuf->sb_nbio even if nilfs_segbuf_submit_bio() returns an error.
-This is performed through the following path:
-
-            nilfs_segbuf_submit_bio
-          nilfs_segbuf_submit_bh
-        nilfs_segbuf_write
-      nilfs_write_logs
-    nilfs_segctor_write
-  nilfs_segctor_do_construct
-    nilfs_segctor_abort_construction
-      nilfs_wait_on_logs
-        nilfs_segbuf_wait
-          wait_for_completion
-            (repeated for the number of times of segbuf->sb_nbio)
-
-
-If you think this is a separate problem, then it should be fixed in
-another patch and nilfs_segbuf_submit_bio() should not be touched in
-this patch.
-
-
-Regards,
-Ryusuke Konishi
-
-
->  		bio_put(bio);
->  		err = -EOPNOTSUPP;
->  		goto failed;
->  	}
-> -	segbuf->sb_nbio++;
->  	bio_put(bio);
->  
->  	wi->bio = NULL;
-> -- 
-> 1.7.9.5
-> 
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
