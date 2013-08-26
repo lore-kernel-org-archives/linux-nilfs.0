@@ -1,61 +1,63 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Cleaner won't start
-Date: Mon, 26 Aug 2013 14:09:30 +0400
-Message-ID: <1377511770.2621.11.camel@slavad-ubuntu>
-References: <CALJXSJq9DR6tapLRvq3rZGFsne-CUriruGAyzgO7pAB9ESe-bA@mail.gmail.com>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
+Subject: Re: Nilfs2 crash debugging
+Date: Mon, 26 Aug 2013 20:37:56 +0200
+Message-ID: <521BA084.80901@antoneliasson.se>
+References: <51F2A8A4.4020400@antoneliasson.se>  <51F2A945.6050909@antoneliasson.se>  <9016EBD5-1E01-476F-B1B9-66AE593F4728@dubeyko.com>  <520CB032.2000602@antoneliasson.se>  <FEA41B6A-7D82-4563-AAF5-D5AFA3734D79@dubeyko.com>  <521A1C88.9080100@antoneliasson.se> <1377510966.2621.3.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=gzfW26bV28uLEZOcNLlKE2sIOK8efAQzzUM6qoF+VZw=;
-	b=iW6qX2NL34Wae1SKZ5qsfDNK4WKtj4IS7JjMz4woFbNFUVXIXbhsGhnddKpy2+3Ur13y0zgXJhL7Yz9EviUgsT8VjULn+a1bUGzlio8Kbbczd1GG9WTd5ZAAiXKFjAoN;
-In-Reply-To: <CALJXSJq9DR6tapLRvq3rZGFsne-CUriruGAyzgO7pAB9ESe-bA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1377510966.2621.3.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: =?ISO-8859-1?Q?J=E9r=F4me?= Poulin <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"; format="flowed"
+To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sun, 2013-08-25 at 18:43 -0400, J=C3=A9r=C3=B4me Poulin wrote:
-> I don't know if it is related to my other problem, but now, the
-> cleaner won't start. I noticed low disk space warnings and now at 91%
-> used space.
->=20
-> Here is what syslog has to say:
-> Aug 25 18:37:22 nilfs_cleanerd[3512]: start
-> Aug 25 18:37:22 nilfs_cleanerd[3512]: pause (clean check)
-> Aug 25 18:37:22 nilfs_cleanerd[3512]: resume (clean check)
-> Aug 25 18:37:23 kernel: [  758.822120] nilfs_ioctl_move_inode_block:
-> conflicting data buffer: ino=3D76070, cno=3D3769693, offset=3D0,
-> blocknr=3D46096310, vblocknr=3D4731085
-> Aug 25 18:37:23 kernel: [  758.822158] NILFS: GC failed during
-> preparation: cannot read source blocks: err=3D-17
+Vyacheslav Dubeyko skrev 2013-08-26 11:56:
+> On Sun, 2013-08-25 at 17:02 +0200, Anton Eliasson wrote:
+>
+> [snip]
+>> Yes. Here's another huge kernel.log for you [2]. It's 19 MB compress=
+ed
+>> and 282 MB uncompressed. I blanked the log while running the stock
+>> kernel and then rebooted to the custom debugging kernel. X wouldn't
+>> start so I just logged in to a virtual terminal, changed directory t=
+o
+>> "~/Bilder/20130321-28 Jakobs bilder fr=C3=A5n Nederl=C3=A4nderna" an=
+d then
+>> executed `cat 179.JPG >/dev/null`.
+>>
+>> This caused a read-only remount and a bunch of "broken bmap" message=
+s to
+>> show, followed by an "Input/Output error". I saved a copy of
+>> /var/log/kernel.log as soon as I could after that, before reinstalli=
+ng
+>> the stock kernel and rebooting.
+>>
+>> [1]: http://antoneliasson.se/publicdump/config.x86_64.last.20130825
+>> [2]: http://antoneliasson.se/publicdump/kernel.log.20130825.gz
+>>
+> Yes, it's great. Thank you. Now I can investigate the issue's
+> environment. I suspect that this issue is related to the issue with
+> "unable to handle kernel paging request" in nilfs_end_page_io(). But,
+> maybe, I am wrong. Anyway, it is a good basis for more detailed
+> understanding of the issue.
+>
+> Thanks,
+> Vyacheslav Dubeyko.
+>
+>
+You're welcome. And thank you for your thorough instructions. It's been=
+=20
+very informative and worthwhile for me to patch and build a kernel with=
+=20
+custom options. Let me know if you need more experiments run on the=20
+damaged filesystem. Otherwise I'll delete the stored disk images in a=20
+month or two.
 
-As I remember, one of the report is contained such error message. But I
-can't recollect in what environment such error message was.
-
-I suspect that it is a sequence of the problem that it was more earlier=
-=2E
-Did you have any NILFS2 error messages in your system log earlier? Or,
-maybe, do you try to use NILFS2 volume after getting some NILFS2 issue
-earlier?
-
-Thanks,
-Vyacheslav Dubeyko.
-
-> Aug 25 18:37:23 nilfs_cleanerd[3512]: cannot clean segments: File exi=
-sts
-> Aug 25 18:37:23 nilfs_cleanerd[3512]: shutdown
->=20
-> If it is related, should I start from scratch or should we debug this=
-?
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
-" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+--=20
+Best Regards,
+Anton Eliasson
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
