@@ -1,43 +1,63 @@
-From: =?UTF-8?B?SsOpcsO0bWUgUG91bGlu?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Cleaner won't start
-Date: Sun, 25 Aug 2013 18:43:59 -0400
-Message-ID: <CALJXSJq9DR6tapLRvq3rZGFsne-CUriruGAyzgO7pAB9ESe-bA@mail.gmail.com>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Nilfs2 crash debugging
+Date: Mon, 26 Aug 2013 13:56:06 +0400
+Message-ID: <1377510966.2621.3.camel@slavad-ubuntu>
+References: <51F2A8A4.4020400@antoneliasson.se>
+	 <51F2A945.6050909@antoneliasson.se>
+	 <9016EBD5-1E01-476F-B1B9-66AE593F4728@dubeyko.com>
+	 <520CB032.2000602@antoneliasson.se>
+	 <FEA41B6A-7D82-4563-AAF5-D5AFA3734D79@dubeyko.com>
+	 <521A1C88.9080100@antoneliasson.se>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:date:message-id:subject:from:to:content-type;
-        bh=aPlIqRkLSxLZTUuR/q64nlEjQV3DY/1r2rHOSzxrVpc=;
-        b=bvrCcbhPjQ0yG9fCSE504LKk81JHt/J4TziooWcF58kY0dLhfMBYMDitQpNXXIUwVe
-         qO+371vpKpWa/r8mlr5Ri9O9jD+evlS6q0Mc32H+ULOEETfDGPO8zxqTcxcoXSzn08Fj
-         GB+xxgZXS+d2n6gH1Vaw3pFdyVeZ9BV35YNO3BxK+hFPi+hLFVlTpYpai5Z8fgFU0VF9
-         J2Q0b4fHp8BTgUR3/ccvuwDGakcylTKuK0PHeHxoziyPRQmVY/8AVpHKGC5jITIF+wZT
-         gDjj53ntCQNoTrFCOgDBRfpiTsU8V/9yerGSZYgsbyUcDC9S3rM+gKJ9RYWYQiv5dXSq
-         KUNg==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=zp7GLsgx2aUaCLs2APObri68p2TJxqd3Wd06uRuDnvM=;
+	b=MlA0W/KhsdigcR3OPlhpBR65cv8mtHpW/a8y1hLjCjVMo1pJ6WmCVD8lowizg2euSZOZXhT40b7dRaH3frRseHKPS6QoAhWpOFUokQnCUNR0FNUvkVQVdTT93AizqnP9;
+In-Reply-To: <521A1C88.9080100-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+To: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-I don't know if it is related to my other problem, but now, the
-cleaner won't start. I noticed low disk space warnings and now at 91%
-used space.
+On Sun, 2013-08-25 at 17:02 +0200, Anton Eliasson wrote:
 
-Here is what syslog has to say:
-Aug 25 18:37:22 nilfs_cleanerd[3512]: start
-Aug 25 18:37:22 nilfs_cleanerd[3512]: pause (clean check)
-Aug 25 18:37:22 nilfs_cleanerd[3512]: resume (clean check)
-Aug 25 18:37:23 kernel: [  758.822120] nilfs_ioctl_move_inode_block:
-conflicting data buffer: ino=76070, cno=3769693, offset=0,
-blocknr=46096310, vblocknr=4731085
-Aug 25 18:37:23 kernel: [  758.822158] NILFS: GC failed during
-preparation: cannot read source blocks: err=-17
-Aug 25 18:37:23 nilfs_cleanerd[3512]: cannot clean segments: File exists
-Aug 25 18:37:23 nilfs_cleanerd[3512]: shutdown
+[snip]
+> Yes. Here's another huge kernel.log for you [2]. It's 19 MB compresse=
+d=20
+> and 282 MB uncompressed. I blanked the log while running the stock=20
+> kernel and then rebooted to the custom debugging kernel. X wouldn't=20
+> start so I just logged in to a virtual terminal, changed directory to=
+=20
+> "~/Bilder/20130321-28 Jakobs bilder fr=C3=A5n Nederl=C3=A4nderna" and=
+ then=20
+> executed `cat 179.JPG >/dev/null`.
+>=20
+> This caused a read-only remount and a bunch of "broken bmap" messages=
+ to=20
+> show, followed by an "Input/Output error". I saved a copy of=20
+> /var/log/kernel.log as soon as I could after that, before reinstallin=
+g=20
+> the stock kernel and rebooting.
+>=20
+> [1]: http://antoneliasson.se/publicdump/config.x86_64.last.20130825
+> [2]: http://antoneliasson.se/publicdump/kernel.log.20130825.gz
+>=20
 
-If it is related, should I start from scratch or should we debug this?
+Yes, it's great. Thank you. Now I can investigate the issue's
+environment. I suspect that this issue is related to the issue with
+"unable to handle kernel paging request" in nilfs_end_page_io(). But,
+maybe, I am wrong. Anyway, it is a good basis for more detailed
+understanding of the issue.
+
+Thanks,
+Vyacheslav Dubeyko.
+
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
