@@ -1,63 +1,38 @@
-From: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
-Subject: Re: Nilfs2 crash debugging
-Date: Mon, 26 Aug 2013 20:37:56 +0200
-Message-ID: <521BA084.80901@antoneliasson.se>
-References: <51F2A8A4.4020400@antoneliasson.se>  <51F2A945.6050909@antoneliasson.se>  <9016EBD5-1E01-476F-B1B9-66AE593F4728@dubeyko.com>  <520CB032.2000602@antoneliasson.se>  <FEA41B6A-7D82-4563-AAF5-D5AFA3734D79@dubeyko.com>  <521A1C88.9080100@antoneliasson.se> <1377510966.2621.3.camel@slavad-ubuntu>
-Mime-Version: 1.0
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Kernel Bug: unable to handle kernel paging request
+Date: Thu, 29 Aug 2013 23:10:44 +0400
+Message-ID: <72C60256-983E-43D0-9DA1-D4A446B578BB@dubeyko.com>
+References: <CALJXSJqV5nYb_t6GMS0FpWyf1aRehAgpvebwgbJzMJfctf1b2A@mail.gmail.com> <1376054125.2272.84.camel@slavad-ubuntu> <20130815.073806.260411879.konishi.ryusuke@lab.ntt.co.jp> <20130816.134934.27810145.konishi.ryusuke@lab.ntt.co.jp> <1376636610.2301.28.camel@slavad-ubuntu>
+Mime-Version: 1.0 (Apple Message framework v1085)
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1377510966.2621.3.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=+17t84pjUU9y1Q2BsXuGtNPZcRCADHn+6FIHr+pgzLQ=;
+	b=jRn+ypPCClC5K7T9KXZv0ls9xgFjl5iYNm+LloLEU6Ht66CR3SvmBXm8i1eIR0jXvJZ92E31bg0WAO7MjBm/LqpbAsJVx4CnOsXIlSHpkPBvVI3OK/yYs08HEplSa2pZ;
+In-Reply-To: <1376636610.2301.28.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="iso-8859-1"
+To: =?iso-8859-1?Q?J=E9r=F4me_Poulin?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Vyacheslav Dubeyko skrev 2013-08-26 11:56:
-> On Sun, 2013-08-25 at 17:02 +0200, Anton Eliasson wrote:
->
-> [snip]
->> Yes. Here's another huge kernel.log for you [2]. It's 19 MB compress=
-ed
->> and 282 MB uncompressed. I blanked the log while running the stock
->> kernel and then rebooted to the custom debugging kernel. X wouldn't
->> start so I just logged in to a virtual terminal, changed directory t=
-o
->> "~/Bilder/20130321-28 Jakobs bilder fr=C3=A5n Nederl=C3=A4nderna" an=
-d then
->> executed `cat 179.JPG >/dev/null`.
->>
->> This caused a read-only remount and a bunch of "broken bmap" message=
-s to
->> show, followed by an "Input/Output error". I saved a copy of
->> /var/log/kernel.log as soon as I could after that, before reinstalli=
-ng
->> the stock kernel and rebooting.
->>
->> [1]: http://antoneliasson.se/publicdump/config.x86_64.last.20130825
->> [2]: http://antoneliasson.se/publicdump/kernel.log.20130825.gz
->>
-> Yes, it's great. Thank you. Now I can investigate the issue's
-> environment. I suspect that this issue is related to the issue with
-> "unable to handle kernel paging request" in nilfs_end_page_io(). But,
-> maybe, I am wrong. Anyway, it is a good basis for more detailed
-> understanding of the issue.
->
-> Thanks,
-> Vyacheslav Dubeyko.
->
->
-You're welcome. And thank you for your thorough instructions. It's been=
-=20
-very informative and worthwhile for me to patch and build a kernel with=
-=20
-custom options. Let me know if you need more experiments run on the=20
-damaged filesystem. Otherwise I'll delete the stored disk images in a=20
-month or two.
+Hi J=E9r=F4me,
 
---=20
-Best Regards,
-Anton Eliasson
+I need to check independently some my suspicions about the issue. So, I=
+ need in additional details.
+
+Did you have any mounted ext4/ext3 partitions in the background of the =
+reproduced issue?
+
+Could you check that you can reproduce the issue in the case of absence=
+ any mounted
+ext4/ext3 partitions?
+
+Could you check also that you can reproduce the issue for 3.2 or earlie=
+r kernel version?
+
+Thanks,
+Vyacheslav Dubeyko.=20
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
