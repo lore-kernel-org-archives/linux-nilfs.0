@@ -1,62 +1,60 @@
 From: =?UTF-8?B?SsOpcsO0bWUgUG91bGlu?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Kernel Bug: unable to handle kernel paging request
-Date: Thu, 29 Aug 2013 19:37:32 -0400
-Message-ID: <CALJXSJpbHN2SQWz0e2gC_hrRKG8EcnV2bWf068GWsuoa8AX5Dw@mail.gmail.com>
-References: <CALJXSJqV5nYb_t6GMS0FpWyf1aRehAgpvebwgbJzMJfctf1b2A@mail.gmail.com>
-	<1376054125.2272.84.camel@slavad-ubuntu>
-	<20130815.073806.260411879.konishi.ryusuke@lab.ntt.co.jp>
-	<20130816.134934.27810145.konishi.ryusuke@lab.ntt.co.jp>
-	<1376636610.2301.28.camel@slavad-ubuntu>
-	<72C60256-983E-43D0-9DA1-D4A446B578BB@dubeyko.com>
+Subject: Re: Cleaner won't start
+Date: Thu, 29 Aug 2013 19:47:23 -0400
+Message-ID: <CALJXSJrsGhW4noeXpwnpco_W1mS4DVEfdcc-pvipQJ5fsir=qA@mail.gmail.com>
+References: <CALJXSJq9DR6tapLRvq3rZGFsne-CUriruGAyzgO7pAB9ESe-bA@mail.gmail.com>
+	<1377511770.2621.11.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=mime-version:in-reply-to:references:date:message-id:subject:from:to
          :cc:content-type;
-        bh=KoLdq7ptRvc4mpKUBWk9wnavpcHTAGS5UhVTnodqiHY=;
-        b=PbFSvqegdoflO+ma8QJJCavFyCMcI8wFujJia4+qy+L1g89WZ8Vzf+OXfddqbqUAet
-         VhKSCiSJiEcyaJ6YT7tJdcYehEZQxAyGhbwxu0dP/tK7F2OrKpu4SAO2WnD/WK1kXZ+r
-         +4RHwDim/SkhIapR6MF0MThPxJPlW+h51++8315p5WEyWkOb8XxeTNWBzOGn1DkwgYM4
-         yUbxZfoKwwZJu4ogKp5hDSR/AuiC0Wq8B3n7prsuAcAbQBqGBNwUq+QAVgQjnIUpbl9S
-         eFwjtVqusLMRBWbZ4nHSO02bRydfApIOpW9i7flYP0hx5gXwu7yk8w7VUodj1XsPFt1C
-         Lqqw==
-In-Reply-To: <72C60256-983E-43D0-9DA1-D4A446B578BB-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+        bh=yUlIX3jmzG0Bu6KU2OQxgD00+4ity7ub8DWttD4zOOs=;
+        b=JSXLYIalhYNzPMnmwRkK3STjSlYJyQVrL+BvzNgJc0Y5FAfiJfIRnw0LlRAnxvH5uw
+         EXy0eHDYfb4YXP2YRpLmM6PSaORTuI5C3CFmzA7kfjqPAOlF2ORfYZ0UiaCM4L2xXecT
+         egJ+ikP/t/haIFQhAkgwtAY8LruDSylXVZnVO15utCGHjI3NGFre1QUUBZQziGMfmNOe
+         r6Ap3Drrp7wEufgCOPcWVYstwMA/4EWjPT/jQi4sWROxN2FGdFIFFgKYmM5TD0oloUmZ
+         VcyOPAmY4qW1Yrh0adSA0+fYJTwTuhvHLdEdWk9N2ujWjek5NRhUcz+jCIuBYPj5cvRZ
+         /ryw==
+In-Reply-To: <1377511770.2621.11.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Thu, Aug 29, 2013 at 3:10 PM, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote:
-> I need to check independently some my suspicions about the issue. So, I need in additional details.
+On Mon, Aug 26, 2013 at 6:09 AM, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote:
+> As I remember, one of the report is contained such error message. But I
+> can't recollect in what environment such error message was.
 >
-> Did you have any mounted ext4/ext3 partitions in the background of the reproduced issue?
+> I suspect that it is a sequence of the problem that it was more earlier.
+> Did you have any NILFS2 error messages in your system log earlier? Or,
+> maybe, do you try to use NILFS2 volume after getting some NILFS2 issue
+> earlier?
 
-I had /boot as ext3 mounted all that time but completely unused until
-we started diagnosing the logs.
+I continued using the volume daily as the issue only popped out when
+using apt-get, so I was safe for the rest. Now I migrated to ext4 to
+get my laptop working, I was able to succesfully rsync all the data on
+a new volume and keep the NILFS2 volume archived.
 
->
-> Could you check that you can reproduce the issue in the case of absence any mounted
-> ext4/ext3 partitions?
->
+Earlier logs:
+Aug 23 22:08:50 JeromeCauca nilfs_cleanerd[2369]: start
+Aug 23 22:08:50 JeromeCauca nilfs_cleanerd[2369]: pause (clean check)
+First time it happened was there:
+Aug 24 03:59:10 JeromeCauca nilfs_cleanerd[2369]: resume (clean check)
+Aug 24 03:59:40 JeromeCauca kernel: [21196.506395]
+nilfs_ioctl_move_inode_block: conflicting data buffer: ino=76070,
+cno=3769693, offset=0, blocknr=46096310, vblocknr=4731085
+Aug 24 03:59:40 JeromeCauca kernel: [21196.506425] NILFS: GC failed
+during preparation: cannot read source blocks: err=-17
+Aug 24 03:59:40 JeromeCauca nilfs_cleanerd[2369]: cannot clean
+segments: File exists
+Aug 24 03:59:40 JeromeCauca nilfs_cleanerd[2369]: shutdown
 
-Would you like me to try with /boot umounted?
-
-> Could you check also that you can reproduce the issue for 3.2 or earlier kernel version?
-
-That would be harder to test but possible.
-
-
-I have a bigger issue though. Right now I'm running in the problem
-that the cleaner won't work anymore and partition is full. I migrated
-to ext4 until I decide making a new nilfs2 partition, I'm not sure
-I'll be able to reproduce the problem on a full FS, I could resize it
-a bit though.
-
-Link to this problem:
-http://permalink.gmane.org/gmane.comp.file-systems.nilfs.user/3072
+I don't have anything earlier than August 21st and not any other log
+has "nilfs" in them.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
