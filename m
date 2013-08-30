@@ -1,60 +1,55 @@
-From: =?UTF-8?B?SsOpcsO0bWUgUG91bGlu?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Cleaner won't start
-Date: Thu, 29 Aug 2013 19:47:23 -0400
-Message-ID: <CALJXSJrsGhW4noeXpwnpco_W1mS4DVEfdcc-pvipQJ5fsir=qA@mail.gmail.com>
-References: <CALJXSJq9DR6tapLRvq3rZGFsne-CUriruGAyzgO7pAB9ESe-bA@mail.gmail.com>
-	<1377511770.2621.11.camel@slavad-ubuntu>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Nilfs2 crash debugging
+Date: Fri, 30 Aug 2013 09:58:53 +0400
+Message-ID: <1377842333.2343.25.camel@slavad-ubuntu>
+References: <51F2A8A4.4020400@antoneliasson.se>
+	  <51F2A945.6050909@antoneliasson.se>
+	  <9016EBD5-1E01-476F-B1B9-66AE593F4728@dubeyko.com>
+	  <520CB032.2000602@antoneliasson.se>
+	  <FEA41B6A-7D82-4563-AAF5-D5AFA3734D79@dubeyko.com>
+	  <521A1C88.9080100@antoneliasson.se>
+	 <1377510966.2621.3.camel@slavad-ubuntu> <521BA084.80901@antoneliasson.se>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=yUlIX3jmzG0Bu6KU2OQxgD00+4ity7ub8DWttD4zOOs=;
-        b=JSXLYIalhYNzPMnmwRkK3STjSlYJyQVrL+BvzNgJc0Y5FAfiJfIRnw0LlRAnxvH5uw
-         EXy0eHDYfb4YXP2YRpLmM6PSaORTuI5C3CFmzA7kfjqPAOlF2ORfYZ0UiaCM4L2xXecT
-         egJ+ikP/t/haIFQhAkgwtAY8LruDSylXVZnVO15utCGHjI3NGFre1QUUBZQziGMfmNOe
-         r6Ap3Drrp7wEufgCOPcWVYstwMA/4EWjPT/jQi4sWROxN2FGdFIFFgKYmM5TD0oloUmZ
-         VcyOPAmY4qW1Yrh0adSA0+fYJTwTuhvHLdEdWk9N2ujWjek5NRhUcz+jCIuBYPj5cvRZ
-         /ryw==
-In-Reply-To: <1377511770.2621.11.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=we3CE+9eB6oY3rm15D8e1B8EiZXgQL/b8YOvhhEwfaQ=;
+	b=os049CP1BpDr9fnifB1VRnMbgx6FXi1HDmbFprdkHr+cy6Zxqn65likK1CR2grrOws6nzLqUZmTygmQMaY+l5/uYhww6Oxlp+Bufmw07J1eVeQMuBP6Ma6k7T7uQHnCV;
+In-Reply-To: <521BA084.80901-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Anton Eliasson <devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, Aug 26, 2013 at 6:09 AM, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote:
-> As I remember, one of the report is contained such error message. But I
-> can't recollect in what environment such error message was.
->
-> I suspect that it is a sequence of the problem that it was more earlier.
-> Did you have any NILFS2 error messages in your system log earlier? Or,
-> maybe, do you try to use NILFS2 volume after getting some NILFS2 issue
-> earlier?
+On Mon, 2013-08-26 at 20:37 +0200, Anton Eliasson wrote:
 
-I continued using the volume daily as the issue only popped out when
-using apt-get, so I was safe for the rest. Now I migrated to ext4 to
-get my laptop working, I was able to succesfully rsync all the data on
-a new volume and keep the NILFS2 volume archived.
+> >
+> >
+> You're welcome. And thank you for your thorough instructions. It's been 
+> very informative and worthwhile for me to patch and build a kernel with 
+> custom options. Let me know if you need more experiments run on the 
+> damaged filesystem. Otherwise I'll delete the stored disk images in a 
+> month or two.
+> 
 
-Earlier logs:
-Aug 23 22:08:50 JeromeCauca nilfs_cleanerd[2369]: start
-Aug 23 22:08:50 JeromeCauca nilfs_cleanerd[2369]: pause (clean check)
-First time it happened was there:
-Aug 24 03:59:10 JeromeCauca nilfs_cleanerd[2369]: resume (clean check)
-Aug 24 03:59:40 JeromeCauca kernel: [21196.506395]
-nilfs_ioctl_move_inode_block: conflicting data buffer: ino=76070,
-cno=3769693, offset=0, blocknr=46096310, vblocknr=4731085
-Aug 24 03:59:40 JeromeCauca kernel: [21196.506425] NILFS: GC failed
-during preparation: cannot read source blocks: err=-17
-Aug 24 03:59:40 JeromeCauca nilfs_cleanerd[2369]: cannot clean
-segments: File exists
-Aug 24 03:59:40 JeromeCauca nilfs_cleanerd[2369]: shutdown
+As I remember, you reproduced the issue by means of starting of two
+virtual machines. I think that I will try to reproduce the issue by this
+way. But I am investigating the another issue currently and,
+unfortunately, I haven't opportunities for investigating this issue in
+parallel.
 
-I don't have anything earlier than August 21st and not any other log
-has "nilfs" in them.
+I don't fully confident that it is possible to do it. But, does it
+possible to collect strace output of virtual machines starting for the
+case of reproduced issue? What do you think? You have shared kernel log
+for the reproduced issue case, currently. But strace output can give
+interesting details from the user-space point of view.
+
+Thanks,
+Vyacheslav Dubeyko.
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
