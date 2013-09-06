@@ -1,81 +1,71 @@
-From: Vyacheslav Dubeyko <slava@dubeyko.com>
-Subject: Re: [PATCH] [CRITICAL] nilfs2: fix issue with race condition of
- competition between segments for dirty blocks
-Date: Thu, 05 Sep 2013 19:42:58 +0400
-Message-ID: <1378395778.2299.10.camel@slavad-ubuntu>
-References: <1378128464.2327.20.camel@slavad-ubuntu>
-	 <20130903.031321.52162146.konishi.ryusuke@lab.ntt.co.jp>
-	 <1378221484.4325.51.camel@slavad-ubuntu>
-	 <20130905.053518.235784172.konishi.ryusuke@lab.ntt.co.jp>
-Reply-To: slava@dubeyko.com
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: Obtaining kernel patches
+Date: Fri, 06 Sep 2013 10:36:57 +0400
+Message-ID: <1378449417.2326.18.camel@slavad-ubuntu>
+References: <CE4DE92E.8DF9%markt@netqa.com>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=SZvOWraiyo6V1e+pSCYnzHuHW1KLzbQr01Q5wgyDTLA=;
-	b=IbV4y7/2S8YosBC4j8Mp8WADvx5Gr9jPh37wGiw4AkbFfKCrDMbHRc2SVm2IVccN+dqtxFygqrAJQcvtFzdIGjX7j8kkFEIor39ddo/692fcoRJfRrN5f3JHJEVBlCIG;
-In-Reply-To: <20130905.053518.235784172.konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-fsdevel-owner@vger.kernel.org
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=6JoT8esuoLC1DK3A2IdL8MIZhMlgKenn2O2PBPoTzdI=;
+	b=QriOx218yUmONa833drgyVbpcoLuYo3EgutQJFi62t5khEjkX0EUASDklPyVMv/XgKU1Ihp405FEOfgih3A7Ni6LkRWmnGRx5Hc5dleGnhwGOmYltPrlE69RXIy8A+Ws;
+In-Reply-To: <CE4DE92E.8DF9%markt-qk0wvQ0ghJwAvxtiuMwx3w@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Cc: linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, jeromepoulin@gmail.com, devel@antoneliasson.se, fercerpav@gmail.com, hermes@ceres.dti.ne.jp, szarpaj@grubelek.pl, Linux@riotingpacifist.net, zahid.chowdhury@starsolutions.com, freeboy6716@gmail.com, klangga@gmail.com, akpm@linux-foundation.org
+To: Mark Trumpold <markt-qk0wvQ0ghJwAvxtiuMwx3w@public.gmane.org>
+Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Thu, 2013-09-05 at 05:35 +0900, Ryusuke Konishi wrote:
+Hi Mark,
 
-> Usually pages in nilfs are not marked dirty while the log writer is
-> writing.  ns_segctor_sem is used for this exclusion control.
+On Thu, 2013-09-05 at 07:54 -0700, Mark Trumpold wrote:
+> Hello nilfs'ers:
 > 
-> But, we have an exception -- nilfs_set_page_dirty().
+> I've been actively using nilfs in my project for a couple years now,
+> and follow closely the development via this mailing list.
 > 
-> I now suspect the root cause is that nilfs_set_page_dirty() can
-> asynchronously mark pages dirty on mmapped files.
+> In my environment nilfs has been very stable; however, the way I'm
+> using it does not stress any existing race conditions (fairly quiet
+> activity).
 > 
-> Can you confirm this assumption by comparing addresses of the
-> following two page structures ?
-> 
-> 1. Address of page structures passed to nilfs_set_page_dirty().
-> 2. bh->b_page of the buffer head captured by the above BUG_ON checks.
+> Recently however I have a case where a snapshot disappeared, and a
+> message in the syslog from the nilfs cleaner "..snapshot count mismatch..".
 > 
 
-So, I have such output in my syslog:
+I believe that we understand now the initial reason of your issue. I
+posted the patch [1] that initiates discussion with the goal to
+elaborate proper solution of the issue. Currently, suggested by me
+solution can be treated as workaround yet.
 
-[  257.825054] NILFS [nilfs_set_page_dirty]:225 page ffffea000687d680
-[  257.825072] NILFS [nilfs_set_page_dirty]:225 page ffffea000687d680
-[  257.855659] NILFS [nilfs_set_page_dirty]:225 page ffffea000687d680
-[  258.115918] NILFS [nilfs_set_page_dirty]:225 page ffffea000687d680
-[  258.622433] NILFS [nilfs_set_page_dirty]:225 page ffffea000687d680
-[  258.622433] NILFS [nilfs_set_page_dirty]:225 page ffffea000687d680
-[  258.643247] NILFS [nilfs_lookup_dirty_data_buffers]:673 bh->b_page ffffea000687d680, bh->b_blocknr 0
-[  258.643290] ------------[ cut here ]------------
-[  258.643294] kernel BUG at fs/nilfs2/segment.c:676!
+I hope that solving of the discovered problem can stabilize NILFS2
+driver significantly.
 
-And I can see such call trace for the case of nilfs_set_page_dirty()
-call:
+> I'm using Debian and the 3.3.1 kernel, and am wondering how to best obtain
+> all important patches to date.
+> 
 
-[  441.538563] Call Trace:
-[  441.538568]  [<ffffffff816df345>] dump_stack+0x19/0x1b
-[  441.538574]  [<ffffffff812ae1cc>] nilfs_set_page_dirty+0x1c/0xa0
-[  441.538579]  [<ffffffff8112e75e>] set_page_dirty+0x3e/0x60
-[  441.538584]  [<ffffffff8112e838>] clear_page_dirty_for_io+0xb8/0xc0
-[  441.538589]  [<ffffffff812c01d9>] nilfs_begin_page_io.part.24+0x29/0x50
-[  441.538595]  [<ffffffff812c0e6c>] nilfs_segctor_do_construct+0xc6c/0x1ba0
-[  441.538601]  [<ffffffff812c20b3>] nilfs_segctor_construct+0x183/0x2a0
-[  441.538607]  [<ffffffff812c2316>] nilfs_segctor_thread+0x146/0x370
-[  441.538613]  [<ffffffff812c21d0>] ? nilfs_segctor_construct+0x2a0/0x2a0
-[  441.538617]  [<ffffffff8106bc9d>] kthread+0xed/0x100
-[  441.538623]  [<ffffffff8106bbb0>] ? flush_kthread_worker+0x190/0x190
-[  441.538628]  [<ffffffff816ef35c>] ret_from_fork+0x7c/0xb0
-[  441.538633]  [<ffffffff8106bbb0>] ? flush_kthread_worker+0x190/0x190
+All suggested patches are discussed in this e-mail list publicly. So,
+you are informed about all existing implementation or bug fixing
+activity in NILFS2.
 
-So, as I understand, segctor thread calls nilfs_set_page_dirty() on the
-segment construction phase by itself.
-
-Today I haven't more time for analyzing it in details. I hope that this
-output will be useful for you. I'll analyze it more deeply tomorrow. And
-if you need in additional details, please, feel free to ask me.
+Usually, every reasonable patch is committed in -next branch of Linux
+kernel after discussion in this e-mail list. Then, after some time,
+NILFS2 patches are merged in stable kernel version during current merge
+window. If a patch has significant importance from stability point of
+view then it is merged in long-term supported Linux kernel versions. So,
+you are getting important NILFS2 updates by means of updating of your
+distro. But, of course, you can get the latest stable version of the
+Linux kernel by yourself. Finally, if you are updating your kernel on
+regular basis then you have actual state of the NILFS2 driver.
 
 With the best regards,
 Vyacheslav Dubeyko.
 
+[1] http://www.spinics.net/lists/linux-fsdevel/msg68054.html
 
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
