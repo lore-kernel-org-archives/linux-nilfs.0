@@ -1,84 +1,91 @@
-From: Mark Trumpold <markt-qk0wvQ0ghJwAvxtiuMwx3w@public.gmane.org>
-Subject: Re: Obtaining kernel patches
-Date: Fri, 06 Sep 2013 07:33:21 -0700
-Message-ID: <CE4F33C9.8E07%markt@netqa.com>
-References: <1378449417.2326.18.camel@slavad-ubuntu>
+From: Benixon Dhas <Benixon.Dhas-Sjgp3cTcYWE@public.gmane.org>
+Subject: RE: Problems in GC when using NilFS2 with large segment size
+Date: Tue, 17 Sep 2013 18:39:01 +0000
+Message-ID: <3764420FCC841C4DAE85E3B76FC61A772A5A77E9@wdscexmb03.sc.wdc.com>
+References: <3764420FCC841C4DAE85E3B76FC61A772A5A74F6@wdscexmb03.sc.wdc.com>
+ <201309161617.AA05682@capsicum.lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1378449417.2326.18.camel@slavad-ubuntu>
+In-Reply-To: <201309161617.AA05682-ZdTO5nnmHvkOizVVqyxoihMFgDP4sedm@public.gmane.org>
+Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: "slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Ryusuke Konishi' <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: "'linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org'" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Hi Vyacheslav,
+Thanks for your comments Ryusuke Konishi.
 
-Thank you for this information.  I will try applying the patch you
-suggest.  Upgrading our kernel is not desirable at this time, as
-it could introduce other problems.
+We have tried the second suggestion of reducing the number of segments cleaned in a single pass in the configuration file. Even after this we are seeing the memory issue.
+Due to limitations of ShIngled Disks the smallest segment size that we can go with is 128MB. In our case a larger segment size is desirable.
 
-Also, thank you for all you hard work on nilfs.
+We would like a feature which can limit the amount of kernel memory  that is used for garbage collection. This might make the garbage collector inefficient. But it would make it stable on systems with limited resources.
+ We are just beginning to look through the source to understand NilFS2 better. We can experiment by modifying the NilFS2 source. We would welcome any suggestions or pointers that would help us in modifying the source. 
 
-Best regards,
-Mark Trumpold
+Thanks,
+Benixon
 
+-----Original Message-----
+From: Ryusuke Konishi [mailto:konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org] 
+Sent: Monday, September 16, 2013 9:18 AM
+To: Benixon Dhas
+Subject: Re: Problems in GC when using NilFS2 with large segment size
 
-On 9/5/13 11:36 PM, "Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote:
+Hi Benixon,
 
->Hi Mark,
+>Hello Ryusuke Konishi,
 >
->On Thu, 2013-09-05 at 07:54 -0700, Mark Trumpold wrote:
->> Hello nilfs'ers:
->> 
->> I've been actively using nilfs in my project for a couple years now,
->> and follow closely the development via this mailing list.
->> 
->> In my environment nilfs has been very stable; however, the way I'm
->> using it does not stress any existing race conditions (fairly quiet
->> activity).
->> 
->> Recently however I have a case where a snapshot disappeared, and a
->> message in the syslog from the nilfs cleaner "..snapshot count
->>mismatch..".
->> 
+> I am a senior engineer at Western Digital working on Shingled Disks. 
+> Shingled Magnetic Recording(SMR) is a new technology that increase HDD 
+> capacity. The capacity increase comes at a cost that the drive must 
+> physically write sequentially. We have learned about NilFS and have successfully prototyped our technology with your file system.
 >
->I believe that we understand now the initial reason of your issue. I
->posted the patch [1] that initiates discussion with the goal to
->elaborate proper solution of the issue. Currently, suggested by me
->solution can be treated as workaround yet.
+> We are now looking into some slight modifications with NilFS to fit a 
+> new use case. Specifically we're looking into memory usage and cleaner algorithms.
+> We tried to use NilFS2 on HDD with large segment size (say 128 MB or greater) and 4kB block size.
+> Under light loads everything is working fine. Then we  tried running  
+> a workload that writes four files in parallel generating data at the 
+> rate of 2MB/second per file and a normal CPU load around 60% on a i5 
+> core processor. This is fine as long as the garbage collector (GC) is 
+> idle. But when Garbage collector starts on this 750GB NilFS partition we see some warnings due to memory allocations failing in the kernel and after a while the OOM killer is triggered.
 >
->I hope that solving of the discovered problem can stabilize NILFS2
->driver significantly.
+> We see that the only about 150 MB out of the available 8GB main memory free under loaded conditions.
+> The problem stills occurs even when the main memory is freed by dropping caches every 10 seconds.
+> We are writing  1 to /proc/sys/vm/drop_caches for dropping the data 
+> cache. Also we observe that when GC is running the disk activity is increased about five times the normal.
 >
->> I'm using Debian and the 3.3.1 kernel, and am wondering how to best
->>obtain
->> all important patches to date.
->> 
->
->All suggested patches are discussed in this e-mail list publicly. So,
->you are informed about all existing implementation or bug fixing
->activity in NILFS2.
->
->Usually, every reasonable patch is committed in -next branch of Linux
->kernel after discussion in this e-mail list. Then, after some time,
->NILFS2 patches are merged in stable kernel version during current merge
->window. If a patch has significant importance from stability point of
->view then it is merged in long-term supported Linux kernel versions. So,
->you are getting important NILFS2 updates by means of updating of your
->distro. But, of course, you can get the latest stable version of the
->Linux kernel by yourself. Finally, if you are updating your kernel on
->regular basis then you have actual state of the NILFS2 driver.
->
->With the best regards,
->Vyacheslav Dubeyko.
->
->[1] http://www.spinics.net/lists/linux-fsdevel/msg68054.html
->
->
->
+> Is there anything that we can do to solve this problem in your opinion?
 
+The cleaner of NILFS reclaims disk space by repeating one-shot GC.
+Every one-shot GC is performed per (nsegments_per_clean) segments, or
+(mc_nsegments_per_clean) segments if the ratio of free disk space is less than (min_clean_segments).
+
+The cleaner moves data of in-use blocks to new segments with kernel page cache, so it allocates, for the former case, (segment size) * (nsegments_per_clean) kernel memory bytes at worst, and (segment size) * (mc_nsegments_per_clean) bytes for the latter case.
+
+By default, (nsegments_per_clean) is set to two and (mc_nsegments_per_clean) is set to four.  These parameters are defined in /etc/nilfs_cleanerd.conf.
+
+To minimize memory pressure, I recommend you to tweak GC parameters with taking the above memory allocation model into consideration.
+The following workaround may make a difference:
+
+1. Decrease segment size
+2. Decrease mc_nsegments_per_clean and nsegments_per_clean 3. Decrease cleaning_interval and mc_cleaning_interval instead of increasing
+   segment size or {mc_,}nsegments_per_clean.
+
+In general, using large segment size is not recommended because it consumes large kernel memory at least temporarily.
+
+> Also is linux-nilfs kernel mailing list a better place for such 
+> questions or is there any other person who might be able to help?
+
+linux-nilfs mailing list is the best place to discuss such topic.
+
+> Please provide us your suggestions and do let us know if you need any more details.
+>
+> Thanks,
+> Benixon
+
+With regards,
+Ryusuke Konishi
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
