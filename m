@@ -1,98 +1,48 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Best way to shut down NILFS2? (umount hang issue)...
-Date: Wed, 25 Sep 2013 12:16:44 +0400
-Message-ID: <1380097004.2335.23.camel@slavad-ubuntu>
-References: <5238DAD8.3070804@gmail.com>
-	   <1379485106.2365.11.camel@slavad-ubuntu>
-	   <CAJzLF9nbfM6aY8u57Lgkm4r_mpBtd96J=HaqSnF=+oLvhYpmUw@mail.gmail.com>
-	  <1379571773.2310.5.camel@slavad-ubuntu> <523B866D.9060406@gmail.com>
-	 <1379664873.2280.11.camel@slavad-ubuntu> <523E6203.2090509@gmail.com>
+Subject: Re: [PATCH] [CRITICAL] nilfs2: fix issue with race condition of
+ competition between segments for dirty blocks
+Date: Wed, 25 Sep 2013 16:22:43 +0400
+Message-ID: <1380111763.2335.32.camel@slavad-ubuntu>
+References: <1378221484.4325.51.camel@slavad-ubuntu>
+	 <20130905.053518.235784172.konishi.ryusuke@lab.ntt.co.jp>
+	 <1378395778.2299.10.camel@slavad-ubuntu>
+	 <20130919.030910.27786580.konishi.ryusuke@lab.ntt.co.jp>
+	 <1379572190.2310.9.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=KLsFDWg39sZUN+TC9q6p/GZYW68DoHuLcMMmXlFouS4=;
-	b=eymYJv/8omgoTEOmVdeS+LjxyYERcLurBNrG3atITNjNgadG7HJjeqOGtDaNkcTRMq4AbRCvESDW/tOyzdyUiefQ3NYKi7l28ZEZTb37YxVR8fI7ulBfd65ilUiPiZP7;
-In-Reply-To: <523E6203.2090509-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=4yNZKXjuI4KHZjDoDfuB+zTUf2oh98FsKnOEB167dUY=;
+	b=feyw5WV8xI6VEm8I20O1HkLvuKgG/BoOv/YoRPwe9F6rojYyMHIl2jeP6IOSDVfLOiP+Q9iu6MmjxvAPc+Dnf1267JVOcI8VU3ySBuhVOIr34oB2B1uhGLFqGeHhJdYg;
+In-Reply-To: <1379572190.2310.9.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org, fercerpav-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org, szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org, Linux-pOR+BrglI3BO41XttqYhMtHuzzzSOjJt@public.gmane.org, zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org, freeboy6716-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, klangga-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 
-Hi Michael,
+Hi Ryusuke,
 
-On Sat, 2013-09-21 at 23:20 -0400, Michael L. Semon wrote:
+> On Thu, 2013-09-19 at 03:09 +0900, Ryusuke Konishi wrote:
+> 
+> [snip]
+> > 
+> > Vyacheslav, could you please test your patch for 1KB-block format to
+> > make sure ?
+> > 
 
-[snip]
-> # ===============================================================
-> 
-> My test case started to succeed, and the next 20-30 reboots were successful.  
-> [Again, the problem can fix itself over time.]  So I inserted this into my 
-> /etc/rc.d/rc.local script:
-> 
-> # ======================= SCRIPT FRAGMENT =======================
-> 
-> echo 'Issuing `nilfs-tune -l /dev/sdb12`...'
-> /sbin/nilfs-tune -l /dev/sdb12
-> echo "Querying mounts using the mount command..."
-> /bin/mount
-> echo 'Issuing `nilfs-clean --status /dev/sdb12`'
-> /sbin/nilfs-clean --status /dev/sdb12
-> echo "Running fsstress..."
-> /opt/ltp/testcases/bin/fsstress -p 16 -n 100 -d /tmp/test
-> echo "Invoking shutdown..."
-> /sbin/shutdown -r now
-> 
-> # ===============================================================
-> 
-> Note that it uses the fsstress from the latest LTP (September 2013) 
-> from ltp.sourceforge.net.  The fsstress from xfstests does not cause 
-> any problems.
-> 
+I have prepared NILFS2 rootfs with 1 KB block size and I tried to
+reproduce the issue as for 1 KB block size as for 4 KB block size. So, I
+can see such situation. I reproduce the issue for 4 KB block size,
+easily. But I can't reproduce the issue for the rootfs with 1 KB block
+size.
 
-[snip]
-> # echo "Issuing nilfs-clean -b for / ."
-> # /sbin/nilfs-clean -b /dev/sdb12
-> 
-> echo "Unmounting local file systems, except for NILFS2 file systems."
-> /bin/umount -v -a -t noproc,nosysfs,nonilfs2
-> 
-> echo "Checking mounts before umounting NILFS2 file systems:"
-> /bin/mount
-> 
-> # Comment out the next two lines to test umount hangs instead of sync hangs.
-> echo "Issuing sync"
-> /bin/sync
-> 
-> echo "Unmounting NILFS2 file systems."
-> /bin/umount -v -a -r -t nilfs2,noproc,nosysfs
-> # /sbin/hdparm -F /dev/sda /dev/sdb
-> 
-> echo "Remounting root filesystem read-only."
-> /bin/mount -t nilfs2 -n -o remount,ro /dev/sdb12 /
-> 
-> # This never hurts:
-> # /bin/sync
-> 
+I tried to reproduce the issue several times. And every time I reproduce
+the issue for 4 KB block size and I don't reproduce the issue for 1 KB
+block size.
 
-Unfortunately, I can't reproduce the issue, currently.
-
-Your description of the reproducing patch is slightly complex. So, I can
-make something wrong (especially, for the case of rc script modification
-because I am using Ubuntu 12.04).
-
-But I suspect that you have some additional workload before the issue
-reproducing. Can you reproduce the issue for the case of freshly made
-NILFS2 rootfs? Maybe fsstress is not the reason of the issue? Do you
-have any NILFS2 related messages in your system log before the issue
-reproducing?
-
-So, current description of the issue's reproducing path doesn't work for
-me.
-
-Thanks,
+With the best regards,
 Vyacheslav Dubeyko.
 
 
