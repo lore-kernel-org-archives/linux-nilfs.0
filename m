@@ -1,48 +1,110 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] [CRITICAL] nilfs2: fix issue with race condition of
- competition between segments for dirty blocks
-Date: Sat, 28 Sep 2013 01:43:46 +0900 (JST)
-Message-ID: <20130928.014346.248890599.konishi.ryusuke@lab.ntt.co.jp>
-References: <20130919.030910.27786580.konishi.ryusuke@lab.ntt.co.jp>
-	<1379572190.2310.9.camel@slavad-ubuntu>
-	<1380111763.2335.32.camel@slavad-ubuntu>
+Subject: Re: [RFC] nilfs2: xattrs support implementation idea
+Date: Sun, 29 Sep 2013 00:01:45 +0900 (JST)
+Message-ID: <20130929.000145.46389165.konishi.ryusuke@lab.ntt.co.jp>
+References: <1379587669.2310.48.camel@slavad-ubuntu>
+	<20130924.000730.143627251.konishi.ryusuke@lab.ntt.co.jp>
+	<1380204479.2335.128.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1380111763.2335.32.camel@slavad-ubuntu>
+In-Reply-To: <1380204479.2335.128.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, devel-17Olwe7vw2dLC78zk6coLg@public.gmane.org, fercerpav-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org, szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org, Linux-pOR+BrglI3BO41XttqYhMtHuzzzSOjJt@public.gmane.org, zahid.chowdhury-VJizFkI/10gAspv4Qr0y0gC/G2K4zDHf@public.gmane.org, freeboy6716-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, klangga-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: Benixon.Dhas-Sjgp3cTcYWE@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 25 Sep 2013 16:22:43 +0400, Vyacheslav Dubeyko wrote:
-> Hi Ryusuke,
+On Thu, 26 Sep 2013 18:07:59 +0400, Vyacheslav Dubeyko wrote:
+> On Tue, 2013-09-24 at 00:07 +0900, Ryusuke Konishi wrote:
 > 
->> On Thu, 2013-09-19 at 03:09 +0900, Ryusuke Konishi wrote:
+>> The shared xanode you defined looks to be intended to share a disk
+>> block from several inodes (for efficiency of disk block usage) since
+>> nilfs_xattr_shared_key has a backpointer, an inode number field.
 >> 
->> [snip]
->> > 
->> > Vyacheslav, could you please test your patch for 1KB-block format to
->> > make sure ?
->> > 
+>> I think you would rather consider sharing the same (small) attribute
+>> content among many inodes because the same attribute set is often
+>> associated to many files or directories widely, such as tree wide or
+>> file system wide.  For this type of block sharing, no inode number is
+>> needed in the attribute payload.
+>> 
 > 
-> I have prepared NILFS2 rootfs with 1 KB block size and I tried to
-> reproduce the issue as for 1 KB block size as for 4 KB block size. So, I
-> can see such situation. I reproduce the issue for 4 KB block size,
-> easily. But I can't reproduce the issue for the rootfs with 1 KB block
-> size.
-> 
-> I tried to reproduce the issue several times. And every time I reproduce
-> the issue for 4 KB block size and I don't reproduce the issue for 1 KB
-> block size.
+> So, maybe I miss something but I don't quite follow your thought about
+> attribute content sharing between several inodes. What do you mean?
 
-Ok, thank you for your effort trying to reproduce the issue.
+I meant allowing multiple inodes to share the same set of extended
+attributes which contains same keys and values.  This is what
+ext2/ext3/ext4 file systems trying to do.
 
-Andrew, please send this patch to the upstream.
+> I have such understanding. The xattr is a pair of a name and a binary
+> stream. So, of course, many inodes have xattrs with the same name. But
+> does it mean that such xattrs have identical binary streams? I doubt
+> that identity of xattrs' binary streams is very frequent event.
+
+I measured how much xattrs are duplicating by using getfattr command
+on my fedora 19 system.
 
 
-Thanks,
+ # getfattr -RPh -e hex -dm '.*' / 2>/dev/null | sed -e '/^\#/d' | awk 'BEGIN{RS="";OFS=""}{$1=$1;print}' | wc -l
+ 143103
+
+The system has 143103 extended attibutes sets, where sed command is
+removing comment line, awk command is joining multiple extended
+attributes per file or directory, and wc command is used to count
+them.
+
+Then, the number of extended attribute sets was reduced to 441 after I
+removed duplicated ones with sort and uniq commands:
+
+ # getfattr -RPh -e hex -dm '.*' / 2>/dev/null | sed -e '/^\#/d' |awk 'BEGIN{RS="";OFS=""}{$1=$1;print}' | sort | uniq | wc -l
+ 441
+
+Although POSIX ACLs are not handled in this measurement (we can use
+getfacl command for similiar purpose), sharing the same extended
+attribute content looks to be effective to reduce the on-disk data
+size.
+
+
+I also measured the total size of extended attibutes on the system:
+
+ # getfattr -RPh -dm '.*' / 2>/dev/null | sed -e '/^\#/d' |awk 'BEGIN{RS="";OFS=""}{$1=$1;print}' | wc -c
+ 6857670
+
+It was using about 6857670 bytes (including both key and values), and
+this corresponds to about 1675 4k-blocks.  After I removed duplicating
+attribute sets, it was reduced to 27453 bytes (about 7 4k-blocks).
+
+ # getfattr -RPh -dm '.*' / 2>/dev/null | sed -e '/^\#/d' |awk 'BEGIN{RS="";OFS=""}{$1=$1;print}' | sort | uniq | wc -c
+ 27453
+
+If we can share xanodes effectively, the amount of disk space and
+access performance of xattrs will be greatly-improved.
+
+However, it seems that supporting multiple xanode sizes which are
+smaller than block size and shared among multiple inodes, is
+preferable to achieve that goal.
+
+
+> For example, many inodes can have system.posix_acl_access ACL but
+> content of binary streams will be different (namely,
+> permitted/denied permissions set).
+
+Usually, posix ACLs are inherited from a parent directory to its
+children, so I guess there are much chance of sharing the same content
+of binary streams.
+
+> Moreover, of course, it is
+> possible to use such scheme as sharing identical xattrs' content
+> between several inodes. But if we need in independent xattr's
+> content update for some inode then we will need to use something
+> likewise COW policy. I suppose that it can be complicated technique.
+
+I don't think COW policy is difficult.  That is what ext2/ext3/ext4
+are doing.  You can use mbcache for that purpose and for finding the
+xanode having the same content.
+
+
+Regards,
 Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
