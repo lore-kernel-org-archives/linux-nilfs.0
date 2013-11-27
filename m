@@ -1,340 +1,409 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][PATCH 00/15] nilfs2: introduce xattrs support (first step)
-Date: Wed, 27 Nov 2013 16:40:58 +0400
-Message-ID: <1385556058.2589.65.camel@slavad-ubuntu>
+Subject: [RFC][PATCH 06/15] nilfs2: implement base functionality of search
+ in xanode
+Date: Wed, 27 Nov 2013 16:42:18 +0400
+Message-ID: <1385556138.2589.72.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=nholaCS09WvYpoy+n9OpaEqLbdjseZCXJ2u+Fdw/+5M=;
-	b=Qa2hsqZWdK6+nPPh9wccg9kGCDr/myUCa5IXmujelnU22mTsDOjYZ+Wvcom/MZjjMumrkhlbUQ6KOk+Qnl2WQLYSKeAPYT3gnDIdNNI8Os5wiI5oJt0IMd4qHRCFBQVT;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=PvdBjJneVdAwuHmskcgpQfF9hGRDcdhr7d+/gLiY1uE=;
+	b=mn2oRiGT4vmEQ1zp4cOUMg0v5mUKGtGt584GUnHjAylPXFu9s9tZhCqyvLv6Oj5brpjp2GIOqrvSYB/Vk1iXqFOiv58zs0Ud3TphAW/8NoPZa8JZ7TsKbz4fO9JNSJye;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [RFC][PATCH 06/15] nilfs2: implement base functionality of search in xanode
 
-This patchset is a first step implementation of xattrs support
-in NILFS2 file system driver. Currently, suggested patchset
-is not for inclusion into kernel but only for review and
-discussion.
+This patch adds implementation of base functionality of searching
+in xanode.
 
-The implementation of xattrs support in NILFS2 will be
-divided on several steps:
-(1) inode has only one xanode [DONE];
-(2) inode's dedicated xanodes tree support [TODO];
-(3) inline xanodes support [TODO];
-(4) shared xanodes support [TODO];
-(5) shared xaname and xaval trees support [TODO].
-
-----------------------------------------------------------------
-                     HOW DOES NILFS2 KEEP XATTRs?
-----------------------------------------------------------------
-
-Extended file attributes (xattrs) is a file system feature that
-enables users to associate computer files with metadata not
-interpreted by the filesystem. Any regular file or directory may
-have extended attributes consisting of a name and associated data.
-The name must be a null-terminated string prefixed by a namespace
-identifier and a dot character. Currently, four namespaces exist:
-user, trusted, security and system. The user namespace has no
-restrictions with regard to naming or contents. The system namespace
-is primarily used by the kernel for access control lists.
-The security namespace is used by SELinux
-
-There are two possible places of storing xattrs:
-(1) inline xattr node (xanode) [OPTIONAL];
-(2) xattr file (xafile).
-
-The inline xanode is simply extention of inode space. First 128
-bytes is used by on-disk inode structure. The rest space is used
-for inline xanode. Inline xanodes are optional feature.
-
-The xafile is metadata file. It contains group descriptors block,
-bitmap blocks and xanodes areas. The xafile is simply aggregate of
-xanodes that can provide a xanode of some size (1KB, 2 KB or 4 KB)
-by identification number (ID) or, in other words, by index.
-
-Xanodes area of xafile can includes:
-(1) shared xaname tree [OPTIONAL];
-(2) shared xaval tree [OPTIONAL];
-(3) shared xanodes;
-(4) dedicated trees of xanodes.
-
-The shared xaname tree contains unique strings of xattr's names.
-Goal of such tree is to keep xattr's names in deduplicated manner.
-The shared xaval tree has goal to overcome duplication of identical
-xattr's value between different inodes. The shared xanode concept
-has goal to share space of one block between several inodes for the
-case when inode has small number of xattrs with small size or inode
-keeps name and\or value in shared xatrees. Dedicated tree of xanodes
-needs in the case when one inode has many xattrs with significant
-size.
-
-----------------------------------------------------------------
-               INLINE XANODE (OPTIONAL)
-----------------------------------------------------------------
-
-The inline xanode is extention of inode space. The raw (on-disk)
-inode has 0x80 (128) bytes in size. Thereby, xanodes live in
-extended space of inode. For example, if on-disk inode has 256
-bytes then xanode is 128 bytes.
-
-Inline xanode structure:
-
-------------------------------------------------------------------
-|       ****        | HEADER | INLINE KEYS | FREE AREA | ENTRIES |
-------------------------------------------------------------------
-|<--- 128 bytes --->|<-------------- inline xanode ------------->|
-|<------------------------  inode  ----------------------------->|
-
-The xanode begins with header that describes important details
-about the node at whole. The main area of xanode keeps keys and
-entries. Keys begin near after header and its grow towards
-entries. The chain of keys is ended by termination marker
-("end key") that is simply four bytes zeroed field. Entries
-begin from xanode end and its grow from the end towards
-"end key".
-
-NILFS2 volume contains inline xanodes if s_feature_incompat
-field of superblock contains NILFS_FEATURE_INCOMPAT_INLINE_XANODE
-flag, s_inode_size of superblock keeps value is greater than
-128 bytes (256, 512 and so on) and s_inline_xanode_size keeps size
-of inode's extended area. It is possible to define presence
-of initialized inline xanode in extended area of inode by means of
-checking magic in header of inline xanode.
-
-----------------------------------------------------------------
-                     XAFILE STRUCTURE
-----------------------------------------------------------------
-
-The xafile is metadata file that, basically, has such structure:
-
-+0                 +1       +2
-+------------------+--------+------------------------------+
-+ Group descriptor | Bitmap |       Xanodes area           |
-+ block            | block  |                              |
-+------------------+--------+------------------------------+
-
-Thereby, xafile is simply aggregate of xanodes that can provide
-xanode of some size (1KB, 2 KB or 4 KB) by identification
-number (ID).
-
-NILFS2 volume contains xafile if s_feature_compat_ro field of
-superblock contains NILFS_FEATURE_COMPAT_RO_XAFILE flag.
-The s_xafile_xanode_size field of superblock keeps value of
-xanode's size in bytes which is determined during mkfs phase.
-
-The xafile's xanodes area contains:
-(1) single tree of xattr names are shared between inodes (xaname tree);
-(2) single tree of xattr values are shared between inodes (xaval tree);
-(3) aggregation of shared xanodes;
-(4) aggregation of dedicated xanode trees (xanode tree).
-
-The xanodes area haven't any predetermined order of xanodes.
-Simply speaking, this area is aggregation of xanodes of different trees.
-Every tree begins from a xanode that keeps knowledge about other xanodes
-in a tree. Superblock of NILFS2 volume keeps IDs for head xanodes of
-xaname tree and xaval tree. The i_xattr field of on-disk inode can keep
-ID of shared xanode or head xanode of dedicated tree.
-
-----------------------------------------------------------------
-                        XANAME TREE
-----------------------------------------------------------------
-
-The xaname tree contains unique strings of xattr's names.
-Goal of such tree is to keep xattr's names in deduplicated manner.
-Namely, usually, xattr keeps as name as value. As a result, many
-xattrs on a volume have identical name that is replicated between
-these xattrs. Keeping unique name string in xaname tree gives
-opportunity to decrease used space by means of sharing name string
-between xattrs.
-
-----------------------------------------------------------------
-                           XAVAL TREE
-----------------------------------------------------------------
-
-The xaval tree has goal to overcome duplication of identical xattr's
-value between different inodes. Keeping unique xattr's value in
-xaval tree gives opportunity to decrease used space by means of sharing
-identical xattr's value between different inodes in RO mode. If some
-inode needs in modification of shared xattr's value then it keeps
-xattr in shared xanode or dedicated tree after modification.
-
-----------------------------------------------------------------
-                         SHARED XATREE
-----------------------------------------------------------------
-
-Shared xanodes tree (xaname tree, xaval tree)
-
-The shared xanodes tree begins from header xanode that keeps
-fixed size table of xanode's numbers. These xanode's numbers
-describe all xanodes of the tree.
-
-------------  ------------  ------------  ------------
-|  header  |  |  leaf    |  |   ***    |  |  leaf    |
-|  xanode  |  |  xanode  |  |   ***    |  |  xanode  |
-------------  ------------  ------------  ------------
-              |<------------  xanode's tree  ------->|
-
-The header xanode begins from header that defines base
-parameters of the tree at whole. The rest place of the
-header xanode contains fixed size table of xanode's
-numbers.
-
-Every leaf of shared xanodes tree can keep entries
-with length in some predetermined range (granularity).
-Thereby, an entry in xanode has fixed size.
-As a result, table in header xanode describes all
-tree's xanodes which keep entries that differ by
-granularity value and it have values inside
-granularity range.
-
-----------------------------------------------------------------
-                     SHARED XANODE
-----------------------------------------------------------------
-
-If an inode has small number of xattrs with small size then
-it will be used a shared xanode. The shared xanode has such
-structure:
-
--------------------------
-|         HEADER        |
--------------------------
-|  LEAF KEYS (inode 1)  |
--------------------------
-|  LEAF KEYS (*******)  |
--------------------------
-|  LEAF KEYS (inode N)  |
--------------------------
-|                       |
-|       FREE AREA       |
-|                       |
--------------------------
-|    ENTRIES (inode N)  |
--------------------------
-|    ENTRIES (*******)  |
--------------------------
-|    ENTRIES (inode 1)  |
--------------------------
-
-----------------------------------------------------------------
-                     DEDICATED XANODES TREE
-----------------------------------------------------------------
-
-If an inode has many xattrs or xattrs of significant
-size then it will be used xanodes' tree is dedicated to the inode.
-The tree xanode has such structure:
-
-----------------
-|    HEADER    |
-----------------
-|  INDEX KEYS  |
-----------------
-|  LEAF KEYS   |
-----------------
-|              |
-|  FREE AREA   |
-|              |
-----------------
-|    ENTRIES   |
-----------------
-
-The tree xanode begins with header. Initially, empty xanode
-contains reserved place for 8 index keys. First position keeps
-index key that describes xanode itself. It is located leaf keys
-after space that is reserved for index keys. Leaf keys grow
-towards entries. The chain of keys is ended by termination marker
-("end key"). Entries begin from xanode end and its grow from the
-end towards "end key".
-
-Thereby, xanode can be a mixture of index keys with [leaf key;
-entry] pairs or it can contain only index keys. A xanode can
-contain [4 | 8 | 16 | 32 |...| and so on] index keys. Firstly, when
-inode has only one xanode in a tree then it hasn't any necessity
-in index keys. First xanode in tree will keep index keys for
-4 xanode are added after first one. Then number of index keys in
-first xanode will be increased while first xanode is became
-index xanode completely. Thereby, an inode keeps ID number of
-first xanode in the tree and reading first xanode gives knowledge
-about the next leaf node on the basis of index keys or searching
-xattr (if first xanode keeps entries yet). Finally, after
-exhausting of first inode by index keys, index keys are stored
-in xanode are described in first xanode, and so on.
-
-----------------------------------------------------------------
-                 XANODE ENTRY STRUCTURE
-----------------------------------------------------------------
-
-The entry of xanode has purpose to store name and
-binary value pair. But really the xattr's name
-or/and xattr's value can be shared. As a result,
-an entry can store different combination of data.
-
-Structure of xanode's entry in common case:
-
-----------------------------------------
-| name[variable_length] | binary value |
-----------------------------------------
-|<----------   entry_size  ----------->|
-
-The name hash defines length of the name. The length
-of binary value is defined as difference between
-entry_size and name_len.
-
-Structure of xanode's entry in the case of name sharing:
-
-----------------------------------------
-|             binary value             |
-----------------------------------------
-|<----------   entry_size  ----------->|
-
-Structure of xanode's entry in the case of value sharing:
-
-----------------------------------------
-| name[variable_length] |  value hash  |
-----------------------------------------
-|<----------   entry_size  ----------->|
-
-Structure of xanode's entry in the case of name and
-value sharing:
-
-----------------------------------------
-|             value hash               |
-----------------------------------------
-|<----------   entry_size  ----------->|
-
-With the best regards,
-Vyacheslav Dubeyko.
+Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
+ fs/nilfs2/xafile.c |  358 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 358 insertions(+)
 
- fs/nilfs2/Kconfig          |   38 +
- fs/nilfs2/Makefile         |    6 +-
- fs/nilfs2/acl.c            |  319 +++++++
- fs/nilfs2/acl.h            |   58 ++
- fs/nilfs2/bmap.c           |    1 +
- fs/nilfs2/file.c           |    7 +
- fs/nilfs2/inode.c          |   22 +-
- fs/nilfs2/namei.c          |   42 +
- fs/nilfs2/nilfs.h          |   28 +-
- fs/nilfs2/segment.c        |   22 +
- fs/nilfs2/super.c          |   20 +-
- fs/nilfs2/the_nilfs.c      |   19 +
- fs/nilfs2/the_nilfs.h      |    4 +
- fs/nilfs2/xafile.c         | 2067 ++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/xafile.h         |  453 ++++++++++
- fs/nilfs2/xattr.c          |   90 ++
- fs/nilfs2/xattr.h          |   78 ++
- fs/nilfs2/xattr_security.c |  190 ++++
- fs/nilfs2/xattr_trusted.c  |  126 +++
- fs/nilfs2/xattr_user.c     |  123 +++
- include/linux/nilfs2_fs.h  |   17 +-
- 21 files changed, 3683 insertions(+), 47 deletions(-)
+diff --git a/fs/nilfs2/xafile.c b/fs/nilfs2/xafile.c
+index c84cf90..e3c27d1 100644
+--- a/fs/nilfs2/xafile.c
++++ b/fs/nilfs2/xafile.c
+@@ -131,6 +131,93 @@ struct nilfs_xafile_info {
+ };
+ 
+ /*
++ * struct nilfs_xattr_search_key - search input
++ * @name_hash: complex hash of name
++ * @name: xattr name
++ */
++struct nilfs_xattr_search_key {
++	struct nilfs_xattr_name_hash name_hash;
++	char *name;
++};
++
++/*
++ * struct nilfs_xattr_search_result - result of a search
++ * @hdr: xanode header
++ * @key: found key
++ * @entry: found entry
++ * @found: is found entry identical to request?
++ */
++struct nilfs_xattr_search_result {
++	union nilfs_xanode_header *hdr;
++	union nilfs_xattr_key *key;
++	struct nilfs_xanode_entry *entry;
++	bool found;
++};
++
++/*
++ * struct nilfs_xafile_node - found xanode details
++ * @flags: description of a xanode state
++ * @req: xanode details
++ * @shadow_copy: copy of xanode for preliminary modification
++ */
++struct nilfs_xafile_node {
++#define NILFS_NULL_XANODE		0
++#define NILFS_RO_XANODE			1
++#define NILFS_SHADOW_XANODE		2
++#define NILFS_DIRTY_SHADOW_XANODE	3
++	int flags;
++	struct nilfs_palloc_req req;
++	char *shadow_copy;
++};
++
++#define NILFS_XANODE_DESC(ptr) \
++	((struct nilfs_xafile_node *)(ptr))
++
++#define NODE_BH(desc) \
++	(NILFS_XANODE_DESC(desc)->req.pr_entry_bh)
++#define NODE_ID(desc) \
++	(NILFS_XANODE_DESC(desc)->req.pr_entry_nr)
++
++#define IS_NODE_DESC_INVALID(node) \
++	(node == NILFS_INVALID_XANODE)
++#define IS_NULL_XANODE_DESC(desc) \
++	(NILFS_XANODE_DESC(desc)->flags == NILFS_NULL_XANODE)
++#define IS_RO_XANODE_DESC(desc) \
++	(NILFS_XANODE_DESC(desc)->flags == NILFS_RO_XANODE)
++#define IS_SHADOW_XANODE_DESC(desc) \
++	((NILFS_XANODE_DESC(desc)->flags == NILFS_SHADOW_XANODE || \
++	 NILFS_XANODE_DESC(desc)->flags == NILFS_DIRTY_SHADOW_XANODE) && \
++	 NILFS_XANODE_DESC(desc)->shadow_copy != NULL)
++#define IS_DIRTY_XANODE_DESC(desc) \
++	(NILFS_XANODE_DESC(desc)->flags == NILFS_DIRTY_SHADOW_XANODE)
++
++/*
++ * struct nilfs_xattr_search - search input and result
++ * @search: search input
++ * @result: search result
++ * @node: found node details
++ */
++struct nilfs_xattr_search {
++	struct nilfs_xattr_search_key search;
++	struct nilfs_xattr_search_result result;
++	struct nilfs_xafile_node node;
++};
++
++#define NILFS_XATTR_SEARCH(ptr) \
++	((struct nilfs_xattr_search *)(ptr))
++
++#define IS_SEARCH_KEY_EMPTY(data) \
++	(*(u64 *)(&NILFS_XATTR_SEARCH(data)->search.name_hash) == 0 && \
++	 NILFS_XATTR_SEARCH(data)->search.name == NULL)
++#define IS_SEARCH_RESULT_EMPTY(data) \
++	(NILFS_XATTR_SEARCH(data)->result.hdr == NULL && \
++	 NILFS_XATTR_SEARCH(data)->result.key == NULL && \
++	 NILFS_XATTR_SEARCH(data)->result.entry == NULL)
++#define IS_XATTR_SEARCH_INITIALIZED(data) \
++	(!IS_SEARCH_KEY_EMPTY(data) && \
++	 IS_SEARCH_RESULT_EMPTY(data))
++
++/*
+  * NILFS_XAFILE_I - convert inode info into xafile inode info
+  */
+ static inline
+@@ -363,3 +450,274 @@ int nilfs_xafile_read(struct super_block *sb, struct nilfs_inode *raw_inode,
+ 	iget_failed(xafile);
+ 	return err;
+ }
++
++/*
++ * nilfs_xattr_search_init - initialize xattr search
++ * @inode: inode pointer
++ * @name_index: xattr name index
++ * @name: xattr name
++ * @xs: pointer on xattr search structure [out]
++ *
++ * The function initializes internal data for xattr search
++ * and manipulation by xanode.
++ */
++static
++int nilfs_xattr_search_init(struct inode *inode,
++				int name_index, char *name,
++				struct nilfs_xattr_search *xs)
++{
++	int err;
++
++	memset(xs, 0, sizeof(struct nilfs_xattr_search));
++
++	err = calc_name_hash(name_index, name, &xs->search.name_hash);
++	if (unlikely(err))
++		return err;
++
++	xs->search.name = name;
++	xs->result.found = false;
++	xs->node.flags = NILFS_NULL_XANODE;
++	NODE_ID(&xs->node) = NILFS_I(inode)->i_xattr;
++
++	return 0;
++}
++
++/*
++ * nilfs_xattr_search_release - cleanup operation after xattr search
++ * @xs: pointer on xattr search structure
++ */
++static
++void nilfs_xattr_search_release(struct nilfs_xattr_search *xs)
++{
++	memset(&xs->search, 0, sizeof(xs->search));
++
++	memset(&xs->result, 0, sizeof(xs->result));
++	xs->result.found = false;
++
++	xs->node.flags = NILFS_NULL_XANODE;
++	NODE_ID(&xs->node) = NILFS_INVALID_XANODE;
++	NODE_BH(&xs->node) = NULL;
++	if (xs->node.shadow_copy) {
++		kfree(xs->node.shadow_copy);
++		xs->node.shadow_copy = NULL;
++	}
++}
++
++/*
++ * nilfs_xafile_check_entry - check xattr entry
++ * @key: xattr's key
++ * @entry: xattr's entry
++ * @node_size: xanode size
++ */
++static inline
++int nilfs_xafile_check_entry(union nilfs_xattr_key *key,
++				struct nilfs_xanode_entry *entry,
++				size_t node_size)
++{
++	__u16 entry_offset = NILFS_XANODE_ENTRY_OFFSET(key);
++	__u16 entry_size = NILFS_XANODE_ENTRY_SIZE(key);
++	__u16 name_len = NILFS_XANODE_NAME_HASH(key)->name_len;
++
++	if ((entry_offset + entry_size) > node_size)
++		return -EIO;
++	if (entry_size < name_len)
++		return -EIO;
++	return 0;
++}
++
++/*
++ * nilfs_xafile_node_key_compare - compare xattr's and search keys
++ * @lkey: xattr's key
++ * @search: search key
++ */
++static
++int nilfs_xafile_node_key_compare(union nilfs_xattr_key *lkey,
++					struct nilfs_xattr_search_key *search)
++{
++	struct nilfs_xattr_name_hash *lhash;
++	struct nilfs_xattr_name_hash *rhash;
++
++#ifdef CONFIG_NILFS2_FS_DEBUG
++	BUG_ON(IS_END_KEY(lkey));
++#endif
++
++	lhash = NILFS_XANODE_NAME_HASH(lkey);
++	rhash = &search->name_hash;
++
++	if (lhash->name_len < rhash->name_len)
++		return -1;
++	else if (lhash->name_len > rhash->name_len)
++		return 1;
++
++	/* lhash->name_len == rhash->name_len */
++	if (lhash->name_index < rhash->name_index)
++		return -1;
++	else if (lhash->name_index > rhash->name_index)
++		return 1;
++
++	/* lhash->name_index == rhash->name_index */
++	if (lhash->first_symbol < rhash->first_symbol)
++		return -1;
++	else if (lhash->first_symbol > rhash->first_symbol)
++		return 1;
++
++	/* lhash->first_symbol == rhash->first_symbol */
++	if (lhash->last_symbol < rhash->last_symbol)
++		return -1;
++	else if (lhash->last_symbol > rhash->last_symbol)
++		return 1;
++
++	if (lhash->hash == rhash->hash)
++		return 0;
++	else if (lhash->hash < rhash->hash)
++		return -1;
++	else
++		return 1;
++}
++
++/*
++ * xafile_entry_has_requested_name - check identity of xattr and search names
++ * @name: searching name
++ * @res: found xattr's name
++ */
++static inline
++int xafile_entry_has_requested_name(const char *name,
++					struct nilfs_xattr_search_result *res)
++{
++	size_t name_len = strlen(name);
++
++	if (name_len != NILFS_XANODE_NAME_HASH(res->key)->name_len)
++		return -1;
++	return memcmp(res->entry->name, name, name_len);
++}
++
++/*
++ * is_xafile_entry_found - check that xattr is found
++ * @data: internal xattr search structure
++ */
++static
++int is_xafile_entry_found(struct nilfs_xattr_search *data)
++{
++	int cmp;
++	size_t node_size = NILFS_XANODE_SIZE;
++	int res;
++
++	if (NILFS_XANODE_ENTRIES(data->result.hdr) == 0) {
++		if (IS_END_KEY(data->result.key)) {
++			data->result.found = false;
++			return 0;
++		} else
++			BUG();
++	}
++
++#ifdef CONFIG_NILFS2_FS_DEBUG
++	BUG_ON(IS_END_KEY(data->result.key));
++#endif
++
++	data->result.entry =
++		NILFS_XANODE_ENTRY(data->result.key, data->result.hdr);
++
++	cmp = nilfs_xafile_node_key_compare(data->result.key,
++						&data->search);
++	if (cmp == 0) {
++		cmp = xafile_entry_has_requested_name(data->search.name,
++							&data->result);
++	}
++
++	if (cmp == 0) {
++		data->result.found = true;
++		res = nilfs_xafile_check_entry(data->result.key,
++						data->result.entry,
++						node_size);
++		if (res < 0)
++			printk(KERN_WARNING "NILFS: corrupted xafile entry\n");
++#ifdef CONFIG_NILFS2_FS_DEBUG
++		BUG_ON(res < 0);
++#endif
++	}
++
++	return cmp;
++}
++
++/*
++ * nilfs_xafile_find_entry - search xattr in xanode
++ * @inode: inode pointer
++ * @data: internal xattr search structure
++ */
++static
++int nilfs_xafile_find_entry(struct inode *inode,
++				struct nilfs_xattr_search *data)
++{
++	union nilfs_xattr_key *first_key = NULL;
++	size_t name_len;
++	int cmp;
++	int index, low, high;
++
++#ifdef CONFIG_NILFS2_FS_DEBUG
++	BUG_ON(!IS_XATTR_SEARCH_INITIALIZED(data));
++#endif
++
++	if (data->search.name == NULL)
++		return -EINVAL;
++
++	name_len = strlen(data->search.name);
++	data->result.found = false;
++
++	if (IS_RO_XANODE_DESC(&data->node))
++		data->result.hdr =
++			NILFS_XANODE_HDR(BH_DATA(NODE_BH(&data->node)));
++	else
++		data->result.hdr = NILFS_XANODE_HDR(data->node.shadow_copy);
++
++	data->result.key = NILFS_XANODE_LAST_NOT_INDEX_KEY(data->result.hdr);
++	cmp = is_xafile_entry_found(data);
++
++	if (cmp == 0)
++		return 0;
++	else if (cmp < 0) { /* cur_key < search_key */
++		__u32 *end_key = NILFS_XANODE_END_KEY(data->result.hdr);
++
++		data->result.key = NILFS_XANODE_KEY(end_key);
++		return -ENODATA;
++	}
++
++	data->result.key = NILFS_XANODE_FIRST_NOT_INDEX_KEY(data->result.hdr);
++	cmp = is_xafile_entry_found(data);
++
++	if (cmp == 0)
++		return 0;
++	else if (cmp > 0) /* cur_key > search_key */
++		return -ENODATA;
++
++	cmp = -1;
++	low = 0;
++	high = NILFS_XANODE_ENTRIES(data->result.hdr);
++	if (high > 0)
++		high -= 1;
++	index = 0;
++	first_key = data->result.key;
++
++	while (low <= high) {
++		index = (low + high) / 2;
++		data->result.key = NEXT_KEY(first_key, index);
++
++		cmp = is_xafile_entry_found(data);
++
++		if (cmp < 0) {
++			/* continue search in greater half */
++			low = index + 1;
++			data->result.key = NEXT_KEY(first_key, low);
++			data->result.entry =
++				NILFS_XANODE_ENTRY(data->result.key,
++							data->result.hdr);
++		} else if (cmp > 0) {
++			/* continue search in lower half */
++			high = index - 1;
++		} else {
++			/* cmp == 0 */
++			return 0;
++		}
++	}
++
++	return -ENODATA;
++}
 -- 
 1.7.9.5
+
 
 
 --
