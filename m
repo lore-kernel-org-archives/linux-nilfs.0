@@ -1,14 +1,15 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][PATCH 05/15] nilfs2: introduce xafile API implementation
-Date: Wed, 27 Nov 2013 16:42:08 +0400
-Message-ID: <1385556128.2589.71.camel@slavad-ubuntu>
+Subject: [RFC][PATCH 09/15] nilfs2: implement listxattr and getxattr
+ functionality
+Date: Wed, 27 Nov 2013 16:42:47 +0400
+Message-ID: <1385556167.2589.75.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=TDKIzB81BjlMZzk1V44a0LxuHYtofag9V4CaIjhwqb0=;
-	b=jQH5V95ItHrOHTs9ehekNTxt+tgkegYF7Y/9+M0WylZVRVdX/heFbXAWLd7nBo8/wrG5KXb2Wv5K/VG/xUNlbYHfRUSw7L7CIYi1vWHpSTEh48A9Qeh9coL9DOTR0NmJ;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=2u8obsJGPNS9uwta/FP/Io1twO1wCGRg0TM/yncLXqA=;
+	b=e5uO4K0xn00JYqNVFc8B8b3D/e2j2xc1E8z8CYi59CjwITMennbbenPJXV48f5sXPZrxCQa2arTG3cio3kDPT4cF7Y23Kt11OYL9KUe9GbnTH1Qwvmuk9WJrevnBbrRk;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -16,484 +17,368 @@ To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][PATCH 05/15] nilfs2: introduce xafile API implementation
+Subject: [RFC][PATCH 09/15] nilfs2: implement listxattr and getxattr functionality
 
-This patch adds implementation of xafile base functionality.
+This patch adds functionality listxattr and getxattr operations.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/nilfs.h         |   28 +----
- fs/nilfs2/the_nilfs.h     |    4 +
- fs/nilfs2/xafile.c        |  249 +++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/xafile.h        |   13 +++
- include/linux/nilfs2_fs.h |   17 +++-
- 5 files changed, 282 insertions(+), 29 deletions(-)
+ fs/nilfs2/xafile.c |  167 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/xafile.h |   20 +++++++
+ fs/nilfs2/xattr.c  |   64 ++++++++++++++++++++
+ fs/nilfs2/xattr.h  |   44 ++++++++++++++
+ 4 files changed, 295 insertions(+)
+ create mode 100644 fs/nilfs2/xattr.c
+ create mode 100644 fs/nilfs2/xattr.h
 
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 9bc72de..0671971 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -38,12 +38,12 @@
-  * @i_state: dynamic state flags
-  * @i_bmap: pointer on i_bmap_data
-  * @i_bmap_data: raw block mapping
-- * @i_xattr: <TODO>
-  * @i_dir_start_lookup: page index of last successful search
-  * @i_cno: checkpoint number for GC inode
-  * @i_btnode_cache: cached pages of b-tree nodes
-  * @i_dirty: list for connecting dirty files
-  * @xattr_sem: semaphore for extended attributes processing
-+ * @i_xattr: xanode number
-  * @i_bh: buffer contains disk inode
-  * @i_root: root object of the current filesystem tree
-  * @vfs_inode: VFS inode object
-@@ -53,13 +53,11 @@ struct nilfs_inode_info {
- 	unsigned long  i_state;		/* Dynamic state flags */
- 	struct nilfs_bmap *i_bmap;
- 	struct nilfs_bmap i_bmap_data;
--	__u64 i_xattr;	/* sector_t ??? */
- 	__u32 i_dir_start_lookup;
- 	__u64 i_cno;		/* check point number for GC inode */
- 	struct address_space i_btnode_cache;
- 	struct list_head i_dirty;	/* List for connecting dirty files */
- 
--#ifdef CONFIG_NILFS_XATTR
- 	/*
- 	 * Extended attributes can be read independently of the main file
- 	 * data. Taking i_sem even when reading would cause contention
-@@ -68,7 +66,9 @@ struct nilfs_inode_info {
- 	 * EAs.
- 	 */
- 	struct rw_semaphore xattr_sem;
--#endif
-+#define NILFS_INVALID_XANODE	((__u64)(0))
-+	__u64 i_xattr;
-+
- 	struct buffer_head *i_bh;	/* i_bh contains a new or dirty
- 					   disk inode */
- 	struct nilfs_root *i_root;
-@@ -196,26 +196,6 @@ static inline int nilfs_doing_construction(void)
- 	return nilfs_test_transaction_flag(NILFS_TI_WRITER);
- }
- 
--/*
-- * function prototype
-- */
--#ifdef CONFIG_NILFS_POSIX_ACL
--#error "NILFS: not yet supported POSIX ACL"
--extern int nilfs_acl_chmod(struct inode *);
--extern int nilfs_init_acl(struct inode *, struct inode *);
--#else
--static inline int nilfs_acl_chmod(struct inode *inode)
--{
--	return 0;
--}
--
--static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
--{
--	inode->i_mode &= ~current_umask();
--	return 0;
--}
--#endif
--
- #define NILFS_ATIME_DISABLE
- 
- /* Flags that should be inherited by new inodes from their parent. */
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index de8cc53..0e69495 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -40,6 +40,7 @@ enum {
- 	THE_NILFS_DISCONTINUED,	/* 'next' pointer chain has broken */
- 	THE_NILFS_GC_RUNNING,	/* gc process is running */
- 	THE_NILFS_SB_DIRTY,	/* super block is dirty */
-+	THE_NILFS_HAS_XAFILE,	/* volume contains xafile */
- };
- 
- /**
-@@ -73,6 +74,7 @@ enum {
-  * @ns_dat: DAT file inode
-  * @ns_cpfile: checkpoint file inode
-  * @ns_sufile: segusage file inode
-+ * @ns_xafile: extended attributes file inode
-  * @ns_cptree: rb-tree of all mounted checkpoints (nilfs_root)
-  * @ns_cptree_lock: lock protecting @ns_cptree
-  * @ns_dirty_files: list of dirty files
-@@ -153,6 +155,7 @@ struct the_nilfs {
- 	struct inode	       *ns_dat;
- 	struct inode	       *ns_cpfile;
- 	struct inode	       *ns_sufile;
-+	struct inode	       *ns_xafile;
- 
- 	/* Checkpoint tree */
- 	struct rb_root		ns_cptree;
-@@ -208,6 +211,7 @@ THE_NILFS_FNS(INIT, init)
- THE_NILFS_FNS(DISCONTINUED, discontinued)
- THE_NILFS_FNS(GC_RUNNING, gc_running)
- THE_NILFS_FNS(SB_DIRTY, sb_dirty)
-+THE_NILFS_FNS(HAS_XAFILE, has_xafile)
- 
- /*
-  * Mount option operations
 diff --git a/fs/nilfs2/xafile.c b/fs/nilfs2/xafile.c
-index 469b256..c84cf90 100644
+index 6511da7..e89e95b 100644
 --- a/fs/nilfs2/xafile.c
 +++ b/fs/nilfs2/xafile.c
-@@ -21,6 +21,11 @@
-  * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-  */
+@@ -220,6 +220,19 @@ struct nilfs_xattr_search {
+ 	(!IS_SEARCH_KEY_EMPTY(data) && \
+ 	 IS_SEARCH_RESULT_EMPTY(data))
  
-+#include "nilfs.h"
-+#include "alloc.h"
-+#include "mdt.h"
-+#include "xafile.h"
-+
- /*
-  *   ----------------------------------------------------------------
-  *                     HOW DOES NILFS2 KEEP XATTRs?
-@@ -114,3 +119,247 @@
-  *   of binary value is defined as difference between
-  *   entry_size and name_len.
-  */
-+
-+/*
-+ * struct nilfs_xafile_info - on-memory private data of xafile
-+ * @mi: on-memory private data of metadata file
-+ * @palloc_cache: persistent object allocator cache of xafile
-+ */
-+struct nilfs_xafile_info {
-+	struct nilfs_mdt_info mi;
-+	struct nilfs_palloc_cache palloc_cache;
++/* Map of xattr handlers */
++static const struct xattr_handler *nilfs_xattr_handler_map[] = {
++	[NILFS_USER_XATTR_ID] = &nilfs_xattr_user_handler,
++#ifdef CONFIG_NILFS2_FS_POSIX_ACL
++	[NILFS_POSIX_ACL_ACCESS_XATTR_ID] = &nilfs_xattr_acl_access_handler,
++	[NILFS_POSIX_ACL_DEFAULT_XATTR_ID] = &nilfs_xattr_acl_default_handler,
++#endif
++	[NILFS_TRUSTED_XATTR_ID] = &nilfs_xattr_trusted_handler,
++#ifdef CONFIG_NILFS2_FS_SECURITY
++	[NILFS_SECURITY_XATTR_ID] = &nilfs_xattr_security_handler,
++#endif
 +};
 +
-+/*
-+ * NILFS_XAFILE_I - convert inode info into xafile inode info
+ /*
+  * NILFS_XAFILE_I - convert inode info into xafile inode info
+  */
+@@ -230,6 +243,19 @@ struct nilfs_xafile_info *NILFS_XAFILE_I(struct inode *xafile)
+ }
+ 
+ /*
++ * nilfs_xattr_handler - get xattr handler by name index
 + */
 +static inline
-+struct nilfs_xafile_info *NILFS_XAFILE_I(struct inode *xafile)
++const struct xattr_handler *nilfs_xattr_handler(int name_index)
 +{
-+	return (struct nilfs_xafile_info *)NILFS_MDT(xafile);
++	const struct xattr_handler *handler = NULL;
++
++	if (name_index > 0 && name_index < ARRAY_SIZE(nilfs_xattr_handler_map))
++		handler = nilfs_xattr_handler_map[name_index];
++	return handler;
 +}
 +
 +/*
-+ * nilfs_xafile_get_node - get xafile node
-+ * @xafile: xafile inode
-+ * @node_id: node number
-+ * @node_bh: buffer_head contains xafile node
+  * nilfs_xafile_get_node - get xafile node
+  * @xafile: xafile inode
+  * @node_id: node number
+@@ -1300,3 +1326,144 @@ void nilfs_xafile_abort_new_node(struct inode *inode,
+ 	nilfs_xafile_abort_node_creation(xafile, &data->node.req);
+ 	nilfs_xafile_abort_node_change(data);
+ }
++
++/*
++ * nilfs_xattr_list_entries - list inode's xattrs from one xanode
++ * @dentry: dentry object
++ * @bh: xanode's buffer
++ * @buf: buffer for getting xattrs' list [out]
++ * @size: buffer size
 + */
 +static
-+int nilfs_xafile_get_node(struct inode *xafile, __u64 node_id,
-+				struct buffer_head **node_bh)
++int nilfs_xattr_list_entries(struct dentry *dentry, struct buffer_head *bh,
++				char *buf, size_t buf_size)
 +{
-+	int err;
-+	struct super_block *sb = xafile->i_sb;
++	union nilfs_xanode_header *hdr = NILFS_XANODE_HDR(BH_DATA(bh));
++	union nilfs_xattr_key *key;
++	size_t rest = buf_size;
 +
-+	err = nilfs_palloc_get_entry_block(xafile, node_id, 0, node_bh);
-+	if (unlikely(err)) {
-+		nilfs_warning(sb, __func__,
-+				"unable to get xafile node: %llu",
-+				node_id);
-+	}
++	key = NILFS_XANODE_FIRST_NOT_INDEX_KEY(hdr);
 +
-+	get_bh(*node_bh);
++	for (; !IS_END_KEY(key); key = NEXT_KEY(key, 1)) {
++		u8 name_index = NILFS_XANODE_NAME_HASH(key)->name_index;
++		const struct nilfs_xanode_entry *entry =
++					NILFS_XANODE_ENTRY(key, BH_DATA(bh));
++		const struct xattr_handler *handler =
++				nilfs_xattr_handler(name_index);
++		__u8 name_len = NILFS_XANODE_NAME_HASH(key)->name_len;
 +
-+	return err;
-+}
-+
-+/*
-+ * nilfs_xafile_prepare_node_creation - prepare allocation of xafile's xanode
-+ * @xafile: xafile inode
-+ * @req: request for the xanode allocation
-+ */
-+static
-+int nilfs_xafile_prepare_node_creation(struct inode *xafile,
-+					struct nilfs_palloc_req *req)
-+{
-+	int err;
-+	void *kaddr, *nodep;
-+
-+#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(req->pr_desc_bh || req->pr_bitmap_bh || req->pr_entry_bh);
-+#endif
-+
-+	req->pr_entry_nr = 0;
-+
-+	err = nilfs_palloc_prepare_alloc_entry(xafile, req);
-+	if (unlikely(err < 0))
-+		goto failed_prepare_new_node;
-+
-+	err = nilfs_palloc_get_entry_block(xafile, req->pr_entry_nr, 1,
-+							&req->pr_entry_bh);
-+	if (unlikely(err < 0)) {
-+		nilfs_palloc_abort_alloc_entry(xafile, req);
-+		goto failed_prepare_new_node;
-+	}
-+
-+	get_bh(req->pr_entry_bh);
-+
-+	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
-+	nodep = nilfs_palloc_block_get_entry(xafile, req->pr_entry_nr,
-+						 req->pr_entry_bh, kaddr);
-+	memset(nodep, 0, BH_SIZE(req->pr_entry_bh));
-+	kunmap_atomic(kaddr);
-+
-+	return 0;
-+
-+failed_prepare_new_node:
-+	return err;
-+}
-+
-+/*
-+ * nilfs_xafile_commit_node_creation - commit allocated xanode
-+ * @xafile: xafile inode
-+ * @req: request for the xanode allocation
-+ */
-+static inline
-+void nilfs_xafile_commit_node_creation(struct inode *xafile,
-+					struct nilfs_palloc_req *req)
-+{
-+#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(req->pr_entry_nr == NILFS_INVALID_XANODE);
-+	BUG_ON(!req->pr_desc_bh || !req->pr_bitmap_bh || !req->pr_entry_bh);
-+#endif
-+
-+	nilfs_palloc_commit_alloc_entry(xafile, req);
-+	mark_buffer_dirty(req->pr_entry_bh);
-+	nilfs_mdt_mark_dirty(xafile);
-+	brelse(req->pr_entry_bh);
-+}
-+
-+/*
-+ * nilfs_xafile_abort_node_creation - abort allocation of xanode
-+ * @xafile: xafile inode
-+ * @req: request for the xanode allocation
-+ */
-+static inline
-+void nilfs_xafile_abort_node_creation(struct inode *xafile,
-+					struct nilfs_palloc_req *req)
-+{
-+#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(req->pr_entry_nr == NILFS_INVALID_XANODE);
-+	BUG_ON(!req->pr_desc_bh || !req->pr_bitmap_bh || !req->pr_entry_bh);
-+#endif
-+
-+	nilfs_forget_buffer(req->pr_entry_bh);
-+	nilfs_palloc_abort_alloc_entry(xafile, req);
-+}
-+
-+/*
-+ * nilfs_xafile_prepare_node_deletion - prepare freeing of xafile's xanode
-+ * @xafile: xafile inode
-+ * @req: request for the xanode allocation
-+ */
-+static
-+int nilfs_xafile_prepare_node_deletion(struct inode *xafile,
-+					struct nilfs_palloc_req *req)
-+{
-+	int err;
-+
-+#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(req->pr_entry_nr == NILFS_INVALID_XANODE);
-+	BUG_ON(req->pr_desc_bh || req->pr_bitmap_bh);
-+#endif
-+
-+	err = nilfs_palloc_prepare_free_entry(xafile, req);
-+	if (unlikely(err < 0))
-+		goto failed_prepare_delete_node;
-+
-+	if (!req->pr_entry_bh) {
-+		err = nilfs_palloc_get_entry_block(xafile, req->pr_entry_nr, 0,
-+							&req->pr_entry_bh);
-+		if (unlikely(err < 0)) {
-+			nilfs_palloc_abort_free_entry(xafile, req);
-+			goto failed_prepare_delete_node;
++		if (handler) {
++			size_t size = handler->list(dentry, buf, rest,
++						    entry->name, name_len,
++						    handler->flags);
++			if (buf) {
++				if (size > rest)
++					return -ERANGE;
++				buf += size;
++			}
++			rest -= size;
 +		}
 +	}
 +
-+	get_bh(req->pr_entry_bh);
++	return buf_size - rest;
++}
 +
-+	return 0;
++/*
++ * nilfs_xafile_listxattr - list all inode's xattrs
++ * @dentry: dentry object
++ * @buffer: buffer for getting xattrs' list [out]
++ * @size: buffer size
++ */
++ssize_t nilfs_xafile_listxattr(struct dentry *dentry, char *buffer, size_t size)
++{
++	ssize_t ret = 0, err = 0;
++	struct inode *inode = dentry->d_inode;
++	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
++	struct buffer_head *bh = NULL;
++	__u64 node = NILFS_I(inode)->i_xattr;
 +
-+failed_prepare_delete_node:
++	if (!nilfs_has_xafile(nilfs))
++		return -EOPNOTSUPP;
++
++	if (node == NILFS_INVALID_XANODE)
++		return 0;
++
++	err = nilfs_xafile_get_checked_node(inode, node, &bh);
++	if (unlikely(err))
++		goto failed_xafile_listxattr;
++
++	err = nilfs_xattr_list_entries(dentry, bh, buffer, size);
++	if (unlikely(err < 0))
++		goto cleanup_after_failure;
++	else
++		ret += err;
++
++	brelse(bh);
++	return ret;
++
++cleanup_after_failure:
++	brelse(bh);
++
++failed_xafile_listxattr:
 +	return err;
 +}
 +
 +/*
-+ * nilfs_xafile_commit_node_deletion - commit freeing of xafile's xanode
-+ * @xafile: xafile inode
-+ * @req: request for the xanode allocation
++ * nilfs_xafile_getxattr - get xattr
++ * @inode: inode pointer
++ * @name: xattr's name
++ * @value: buffer for xattr's value [out]
++ * @size: buffer size
 + */
-+static inline
-+void nilfs_xafile_commit_node_deletion(struct inode *xafile,
-+					struct nilfs_palloc_req *req)
++ssize_t nilfs_xafile_getxattr(struct inode *inode,
++				int name_index, const char *name,
++				void *value, size_t size)
 +{
-+#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(req->pr_entry_nr == NILFS_INVALID_XANODE);
-+	BUG_ON(!req->pr_desc_bh || !req->pr_bitmap_bh || !req->pr_entry_bh);
-+#endif
++	ssize_t ret, err;
++	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
++	struct nilfs_xattr_search data;
 +
-+	nilfs_palloc_commit_free_entry(xafile, req);
-+	nilfs_mdt_mark_dirty(xafile);
-+	brelse(req->pr_entry_bh);
-+}
++	if (!nilfs_has_xafile(nilfs))
++		return -EOPNOTSUPP;
 +
-+/*
-+ * nilfs_xafile_abort_node_deletion - abort freeing of xafile's xanode
-+ * @xafile: xafile inode
-+ * @req: request for the xanode allocation
-+ */
-+static inline
-+void nilfs_xafile_abort_node_deletion(struct inode *xafile,
-+					struct nilfs_palloc_req *req)
-+{
-+#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(req->pr_entry_nr == NILFS_INVALID_XANODE);
-+	BUG_ON(!req->pr_desc_bh || !req->pr_bitmap_bh || !req->pr_entry_bh);
-+#endif
++	if (NILFS_I(inode)->i_xattr == NILFS_INVALID_XANODE)
++		return -ENODATA;
 +
-+	nilfs_forget_buffer(req->pr_entry_bh);
-+	nilfs_palloc_abort_free_entry(xafile, req);
-+}
-+
-+/*
-+ * nilfs_xafile_read - read or get xafile inode
-+ * @sb: super block instance
-+ * @raw_inode: on-disk xafile inode
-+ * @inodep: buffer to store the inode [out]
-+ */
-+int nilfs_xafile_read(struct super_block *sb, struct nilfs_inode *raw_inode,
-+			struct inode **inodep)
-+{
-+	struct inode *xafile;
-+	int err;
-+
-+	xafile = nilfs_iget_locked(sb, NULL, NILFS_XATTR_INO);
-+	if (unlikely(!xafile))
-+		return -ENOMEM;
-+	if (!(xafile->i_state & I_NEW))
-+		goto out;
-+
-+	err = nilfs_mdt_init(xafile, NILFS_MDT_GFP,
-+			     sizeof(struct nilfs_xafile_info));
++	err = nilfs_xattr_search_init(inode, name_index, (char *)name, &data);
 +	if (unlikely(err))
-+		goto failed;
++		return err;
 +
-+	/* TODO: [REWORK] it is used 4Kb node size temporary */
-+	err = nilfs_palloc_init_blockgroup(xafile, PAGE_CACHE_SIZE);
-+	if (unlikely(err))
-+		goto failed;
++	err = nilfs_xafile_find_node(inode, &data);
++	if (unlikely(err)) {
++		ret = err;
++		goto failed_xafile_getxattr;
++	}
 +
-+	nilfs_palloc_setup_cache(xafile, &NILFS_XAFILE_I(xafile)->palloc_cache);
++	if (!data.result.found) {
++		ret = -ENODATA;
++		goto cleanup_after_failure;
++	}
 +
-+	err = nilfs_read_inode_common(xafile, raw_inode);
-+	if (unlikely(err))
-+		goto failed;
++	ret = NILFS_XANODE_ENTRY_SIZE(data.result.key) -
++		NILFS_XANODE_NAME_HASH(data.result.key)->name_len;
 +
-+	unlock_new_inode(xafile);
++	if (value) {
++		char *xattr_value;
 +
-+ out:
-+	*inodep = xafile;
-+	return 0;
++		if (ret > size) {
++			ret = -ERANGE;
++			goto cleanup_after_failure;
++		}
 +
-+ failed:
-+	iget_failed(xafile);
-+	return err;
++		xattr_value = NILFS_XATTR_VALUE(data.result.entry,
++						data.result.key);
++		memcpy(value, xattr_value, ret);
++	}
++
++cleanup_after_failure:
++	brelse(NODE_BH(&data.node));
++
++failed_xafile_getxattr:
++	nilfs_xattr_search_release(&data);
++	return ret;
 +}
 diff --git a/fs/nilfs2/xafile.h b/fs/nilfs2/xafile.h
-index cee7b03..846ea3a 100644
+index 846ea3a..50c4735 100644
 --- a/fs/nilfs2/xafile.h
 +++ b/fs/nilfs2/xafile.h
-@@ -417,4 +417,17 @@ NILFS_XANODE_LAST_ENTRY(union nilfs_xanode_header *hdr)
+@@ -29,6 +29,20 @@
+ /* Magic number of xafile node */
+ #define NILFS_XANODE_MAGIC		0x5841 /* XA */
+ 
++/* Name indexes */
++#define NILFS_USER_XATTR_ID			1
++#define NILFS_POSIX_ACL_ACCESS_XATTR_ID		2
++#define NILFS_POSIX_ACL_DEFAULT_XATTR_ID	3
++#define NILFS_TRUSTED_XATTR_ID			4
++#define NILFS_SECURITY_XATTR_ID			5
++#define NILFS_SYSTEM_XATTR_ID			6
++#define NILFS_RICHACL_XATTR_ID			7
++#define NILFS_XATTR_MAX_ID			255
++
++#define IS_NAME_ID_VALID(name_index) \
++	(name_index < NILFS_USER_XATTR_ID || \
++	 name_index > NILFS_RICHACL_XATTR_ID)
++
+ /* Xanode types */
+ #define NILFS_UNKNOWN_XANODE_TYPE		0
+ /* Temporary, numbers from 1 till 6 are simply reserved */
+@@ -417,6 +431,12 @@ NILFS_XANODE_LAST_ENTRY(union nilfs_xanode_header *hdr)
  #define NILFS_XATTR_VALUE(entry, key) \
  	((char *)(entry) + NILFS_XANODE_NAME_HASH(key)->name_len)
  
-+/* Xafile API */
-+ssize_t nilfs_xafile_listxattr(struct dentry *dentry, char *buf, size_t size);
-+ssize_t nilfs_xafile_getxattr(struct inode *inode,
++extern const struct xattr_handler nilfs_xattr_user_handler;
++extern const struct xattr_handler nilfs_xattr_trusted_handler;
++extern const struct xattr_handler nilfs_xattr_acl_access_handler;
++extern const struct xattr_handler nilfs_xattr_acl_default_handler;
++extern const struct xattr_handler nilfs_xattr_security_handler;
++
+ /* Xafile API */
+ ssize_t nilfs_xafile_listxattr(struct dentry *dentry, char *buf, size_t size);
+ ssize_t nilfs_xafile_getxattr(struct inode *inode,
+diff --git a/fs/nilfs2/xattr.c b/fs/nilfs2/xattr.c
+new file mode 100644
+index 0000000..7be523a
+--- /dev/null
++++ b/fs/nilfs2/xattr.c
+@@ -0,0 +1,64 @@
++/*
++ * xattr.c - NILFS extended attributes support implementation.
++ *
++ * Copyright (C) 2005-2013 Nippon Telegraph and Telephone Corporation.
++ * Copyright (C) 2013 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++ *
++ * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
++ */
++
++#include "nilfs.h"
++#include "xafile.h"
++#include "xattr.h"
++
++const struct xattr_handler *nilfs_xattr_handlers[] = {
++	&nilfs_xattr_user_handler,
++	&nilfs_xattr_trusted_handler,
++#ifdef CONFIG_NILFS2_FS_POSIX_ACL
++	&nilfs_xattr_acl_access_handler,
++	&nilfs_xattr_acl_default_handler,
++#endif
++#ifdef CONFIG_NILFS2_FS_SECURITY
++	&nilfs_xattr_security_handler,
++#endif
++	NULL
++};
++
++ssize_t nilfs_listxattr(struct dentry *dentry, char *buffer, size_t size)
++{
++	ssize_t ret;
++	struct inode *inode = dentry->d_inode;
++
++	down_read(&NILFS_I(inode)->xattr_sem);
++	ret = nilfs_xafile_listxattr(dentry, buffer, size);
++	up_read(&NILFS_I(inode)->xattr_sem);
++
++	return ret;
++}
++
++ssize_t __nilfs_getxattr(struct inode *inode,
++				int name_index, const char *name,
++				void *value, size_t size)
++{
++	ssize_t ret;
++
++	down_read(&NILFS_I(inode)->xattr_sem);
++	ret = nilfs_xafile_getxattr(inode, name_index, name, value, size);
++	up_read(&NILFS_I(inode)->xattr_sem);
++
++	return ret;
++}
+diff --git a/fs/nilfs2/xattr.h b/fs/nilfs2/xattr.h
+new file mode 100644
+index 0000000..0736086
+--- /dev/null
++++ b/fs/nilfs2/xattr.h
+@@ -0,0 +1,44 @@
++/*
++ * xattr.h - NILFS extended attributes declarations.
++ *
++ * Copyright (C) 2005-2013 Nippon Telegraph and Telephone Corporation.
++ * Copyright (C) 2013 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++ *
++ * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
++ */
++
++#ifndef _NILFS_XATTR_H
++#define _NILFS_XATTR_H
++
++#include <linux/xattr.h>
++
++extern const struct xattr_handler *nilfs_xattr_handlers[];
++
++ssize_t __nilfs_getxattr(struct inode *inode,
 +				int name_index, const char *name,
 +				void *value, size_t size);
-+int nilfs_xafile_setxattr(struct inode *inode,
-+				int name_index, const char *name,
-+				const void *value, size_t size, int flags);
-+int nilfs_xafile_delete_inode(struct inode *inode);
 +
-+int nilfs_xafile_read(struct super_block *sb, struct nilfs_inode *raw_inode,
-+			struct inode **inodep);
++static inline ssize_t nilfs_getxattr(struct dentry *dentry,
++					int name_index, const char *name,
++					void *value, size_t size)
++{
++	return __nilfs_getxattr(dentry->d_inode, name_index, name, value, size);
++}
 +
- #endif /* _NILFS_XAFILE_H */
-diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index 9875576..531cf35 100644
---- a/include/linux/nilfs2_fs.h
-+++ b/include/linux/nilfs2_fs.h
-@@ -59,7 +59,7 @@
-  * @i_links_count: links count
-  * @i_flags: file flags
-  * @i_bmap: block mapping
-- * @i_xattr: extended attributes
-+ * @i_xattr: xanode number (index of xafile's node)
-  * @i_generation: file generation (for NFS)
-  * @i_pad:	padding
-  */
-@@ -91,6 +91,7 @@ struct nilfs_inode {
-  * @sr_dat: DAT file inode
-  * @sr_cpfile: checkpoint file inode
-  * @sr_sufile: segment usage file inode
-+ * @sr_xafile: extended attributes file inode
-  */
- struct nilfs_super_root {
- 	__le32 sr_sum;
-@@ -100,6 +101,7 @@ struct nilfs_super_root {
- 	struct nilfs_inode sr_dat;
- 	struct nilfs_inode sr_cpfile;
- 	struct nilfs_inode sr_sufile;
-+	struct nilfs_inode sr_xafile;
- };
- 
- #define NILFS_SR_MDT_OFFSET(inode_size, i)  \
-@@ -108,7 +110,8 @@ struct nilfs_super_root {
- #define NILFS_SR_DAT_OFFSET(inode_size)     NILFS_SR_MDT_OFFSET(inode_size, 0)
- #define NILFS_SR_CPFILE_OFFSET(inode_size)  NILFS_SR_MDT_OFFSET(inode_size, 1)
- #define NILFS_SR_SUFILE_OFFSET(inode_size)  NILFS_SR_MDT_OFFSET(inode_size, 2)
--#define NILFS_SR_BYTES(inode_size)	    NILFS_SR_MDT_OFFSET(inode_size, 3)
-+#define NILFS_SR_XAFILE_OFFSET(inode_size)  NILFS_SR_MDT_OFFSET(inode_size, 3)
-+#define NILFS_SR_BYTES(inode_size)	    NILFS_SR_MDT_OFFSET(inode_size, 4)
- 
- /*
-  * Maximal mount counts
-@@ -219,9 +222,12 @@ struct nilfs_super_block {
-  * doesn't know about, it should refuse to mount the filesystem.
-  */
- #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT	0x00000001ULL
-+#define NILFS_FEATURE_COMPAT_RO_XAFILE		0x00000002ULL
- 
- #define NILFS_FEATURE_COMPAT_SUPP	0ULL
--#define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
-+#define NILFS_FEATURE_COMPAT_RO_SUPP	\
-+	(NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT | \
-+	 NILFS_FEATURE_COMPAT_RO_XAFILE)
- #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
- 
- /*
-@@ -239,7 +245,7 @@ struct nilfs_super_block {
- #define NILFS_SUFILE_INO	5	/* segment usage file */
- #define NILFS_IFILE_INO		6	/* ifile */
- #define NILFS_ATIME_INO		7	/* Atime file (reserved) */
--#define NILFS_XATTR_INO		8	/* Xattribute file (reserved) */
-+#define NILFS_XATTR_INO		8	/* Xattribute file */
- #define NILFS_SKETCH_INO	10	/* Sketch file */
- #define NILFS_USER_INO		11	/* Fisrt user's file inode number */
- 
-@@ -258,7 +264,8 @@ struct nilfs_super_block {
-  * garbage collector doesn't keep any past versions of these files.
-  */
- #define NILFS_ROOT_METADATA_FILE(ino) \
--	((ino) >= NILFS_DAT_INO && (ino) <= NILFS_SUFILE_INO)
-+	(((ino) >= NILFS_DAT_INO && (ino) <= NILFS_SUFILE_INO) || \
-+	 (ino) == NILFS_XATTR_INO)
- 
- /*
-  * bytes offset of secondary super block
++ssize_t nilfs_listxattr(struct dentry *dentry, char *buffer, size_t size);
++
++#endif /* _NILFS_XATTR_H */
 -- 
 1.7.9.5
 
