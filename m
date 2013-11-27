@@ -1,15 +1,15 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][PATCH 07/15] nilfs2: implement functionality of xanode's
- checking
-Date: Wed, 27 Nov 2013 16:42:27 +0400
-Message-ID: <1385556147.2589.73.camel@slavad-ubuntu>
+Subject: [RFC][PATCH 08/15] nilfs2: implement prepare-(commit|abort) pair of
+ xanode change functionality
+Date: Wed, 27 Nov 2013 16:42:37 +0400
+Message-ID: <1385556157.2589.74.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=8CQLAcgJmKk902dOOrcD1YLZVUC4SMGhV7b1kl1Y3Co=;
-	b=kOcppuV6goMMGxleLpe7ZwpttNOTes4e7XVTLrl++hG8tiG8a0sAeOc3MUUPpXFZgG31Xyrqz8NYYHm1/7mUjwc6dNqWzpLreQVhBS9+1Hx19Rbl+A1pQQ38e/D2lP0U;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=fBg9jDA5Iz8iy+zpQcuRiFamcDS8r1C6SyvCWiY2cxc=;
+	b=Afp3zLpyzfx8rWuXTMPRwqc+DgNRJRhsBjWWArKa7Er5wY4PjnudtXAsdHnDlqWZdzq9fC0YWXctvgcdkbl/j30rxneLLLiJjIvmXmbeLzsy719WrbeSl4aWQBR3CqEj;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -17,354 +17,293 @@ To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][PATCH 07/15] nilfs2: implement functionality of xanode's checking
+Subject: [RFC][PATCH 08/15] nilfs2: implement prepare-(commit|abort) pair of xanode change functionality
 
-This patch adds functionality of xanode checking.
+This patch adds functionality of new xanode initialization, preparation
+for modification and commit/abort at the end of modification operation.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/xafile.c |  310 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 310 insertions(+)
+ fs/nilfs2/xafile.c |  269 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 269 insertions(+)
 
 diff --git a/fs/nilfs2/xafile.c b/fs/nilfs2/xafile.c
-index e3c27d1..1c95fb2 100644
+index 1c95fb2..6511da7 100644
 --- a/fs/nilfs2/xafile.c
 +++ b/fs/nilfs2/xafile.c
-@@ -21,6 +21,9 @@
-  * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-  */
- 
-+#include <linux/crc32.h>
-+#include <linux/jhash.h>
-+
- #include "nilfs.h"
- #include "alloc.h"
- #include "mdt.h"
-@@ -452,6 +455,81 @@ int nilfs_xafile_read(struct super_block *sb, struct nilfs_inode *raw_inode,
+@@ -1031,3 +1031,272 @@ start_entry_search:
+ failed_find_node:
+ 	return err;
  }
- 
- /*
-+ * calc_name_hash - calculate complex name hash
-+ * @name_index: name index
-+ * @name: xattr name
-+ * @name_hash: calculated complex name hash [out]
++
++/*
++ * __nilfs_xafile_node_init - initialize newly created xanode in memory
++ * @inode: inode pointer
++ * @node_type: xanode type
++ * @buf: xanode's buffer in memory
++ * @buf_size: buffer size
 + */
 +static
-+int calc_name_hash(int name_index, const char *name,
-+			struct nilfs_xattr_name_hash *name_hash)
++void __nilfs_xafile_node_init(struct inode *inode,
++				int node_type,
++				void *buf, size_t buf_size)
 +{
-+	size_t name_len;
++	union nilfs_xanode_header *hdr = NILFS_XANODE_HDR(buf);
 +
 +#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(name_index < NILFS_USER_XATTR_ID ||
-+		name_index > NILFS_XATTR_MAX_ID);
-+	BUG_ON(!name || !name_hash);
++	BUG_ON(node_type > NILFS_XATTR_TREE_XANODE_TYPE);
 +#endif
 +
-+	name_len = strlen(name);
++	switch(node_type) {
++	case NILFS_XATTR_TREE_XANODE_TYPE:
++		hdr->tree_hdr.magic = cpu_to_le16(NILFS_XANODE_MAGIC);
++		hdr->tree_hdr.flags = NILFS_XANODE_SET_TYPE(node_type, hdr);
++		hdr->tree_hdr.flags =
++			NILFS_XANODE_SET_FLAGS(NILFS_XANODE_CRC32_FLAG, hdr);
++		hdr->tree_hdr.height = 0;
++		hdr->tree_hdr.log_index_keys =
++				ilog2(NILFS_XANODE_MIN_INDEX_KEYS);
++		hdr->tree_hdr.entries = 0;
++		hdr->tree_hdr.checksum = 0;
++		hdr->tree_hdr.index_keys = 0;
++		hdr->tree_hdr.parent_node = cpu_to_le64(NILFS_INVALID_XANODE);
++		break;
 +
-+	if (name_len > XATTR_NAME_MAX) {
-+		printk(KERN_ERR "NILFS: xattr name too long\n");
-+		return -EINVAL;
-+	}
-+
-+	if (name_len == 0) {
-+		printk(KERN_WARNING "NILFS warning: empty name hash\n");
-+		memset(name_hash, 0, sizeof(*name_hash));
-+		return 0;
-+	}
-+
-+	name_hash->name_len = (u8)name_len;
-+	name_hash->name_index = (u8)name_index;
-+
-+	name_hash->first_symbol = *(const u8 *)(name);
-+	name_hash->last_symbol = *(const u8 *)(name + name_len - 1);
-+
-+	name_hash->hash = cpu_to_le32(jhash(name, name_len, 0));
-+
-+	return 0;
++	default:
++		BUG();
++	};
 +}
 +
 +/*
-+ * calc_value_hash - calculate complex value hash
-+ * @value: xattr value
-+ * @len: value size
-+ * @val_hash: calculated complex value hash [out]
++ * nilfs_xafile_node_init - initialize new xanode and mark buffer dirty
++ * @inode: inode pointer
++ * @node: xanode number (index in xafile)
++ * @node_type: xanode type
++ * @bh: xanode buffer
 + */
 +/*static
-+int calc_value_hash(const char *value, __u16 len,
-+			struct nilfs_xattr_value_hash *val_hash)
++void nilfs_xafile_node_init(struct inode *inode, __u64 node,
++				int node_type, struct buffer_head *bh)
 +{
-+#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(!value || !val_hash);
-+#endif
++	__nilfs_xafile_node_init(inode, node_type, BH_DATA(bh), BH_SIZE(bh));
 +
-+	if (len > NILFS_XATTR_VALUE_LEN_MAX) {
-+		printk(KERN_ERR "NILFS: xattr value too big\n");
-+		return -EINVAL;
-+	}
++	switch(node_type) {
++	case NILFS_XATTR_TREE_XANODE_TYPE:
++		NILFS_XANODE_HDR(BH_DATA(bh))->tree_hdr.checksum =
++			nilfs_xafile_node_crc32(inode, BH_DATA(bh),
++						BH_SIZE(bh), node);
++		break;
 +
-+	if (len == 0) {
-+		printk(KERN_WARNING "NILFS warning: empty value hash\n");
-+		memset(val_hash, 0, sizeof(*val_hash));
-+		return 0;
-+	}
++	default:
++		BUG();
++	};
 +
-+	val_hash->value_len = cpu_to_le16(len);
-+	val_hash->first_byte = *(const u8 *)(value);
-+	val_hash->last_byte = *(const u8 *)(value + len - 1);
-+	val_hash->hash = cpu_to_le32(jhash(value, len, 0));
-+
-+	return 0;
++	mark_buffer_dirty(bh);
 +}*/
 +
 +/*
-  * nilfs_xattr_search_init - initialize xattr search
-  * @inode: inode pointer
-  * @name_index: xattr name index
-@@ -504,6 +582,192 @@ void nilfs_xattr_search_release(struct nilfs_xattr_search *xs)
- }
- 
- /*
-+ * nilfs_xafile_node_crc32 - calculate xanode checksum
++ * nilfs_xafile_prepare_new_node - prepare new xanode for shadow modifications
 + * @inode: inode pointer
-+ * @node_ptr: pointer on xanode's begin
-+ * @node_size: size of xanode
-+ * @node: xanode number (index in xafile)
++ * @new_node: prepared internal xattr search structure [out]
 + */
 +static
-+__le32 nilfs_xafile_node_crc32(struct inode *inode,
-+				char *node_ptr, size_t node_size,
-+				__u64 node)
-+{
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	union nilfs_xanode_header *hdr = NILFS_XANODE_HDR(node_ptr);
-+	__u32 csum;
-+	__le32 save_csum;
-+	__le64 blk = cpu_to_le64(node);
-+
-+	save_csum = hdr->tree_hdr.checksum;
-+	hdr->tree_hdr.checksum = 0;
-+
-+	csum = crc32_le(nilfs->ns_crc_seed, (__u8 *)&blk, sizeof(blk));
-+	csum = crc32_le(csum, (__u8 *)node_ptr, node_size);
-+
-+	hdr->tree_hdr.checksum = save_csum;
-+
-+	return cpu_to_le32(csum);
-+}
-+
-+/*
-+ * is_xanode_checksum_valid - check xanode checksum
-+ * @inode: inode pointer
-+ * @node_ptr: pointer on xanode's begin
-+ * @node_size: size of xanode
-+ * @node: xanode number (index in xafile)
-+ */
-+static inline
-+bool is_xanode_checksum_valid(struct inode *inode, char *node_ptr,
-+				size_t node_size, __u64 node)
-+{
-+	union nilfs_xanode_header *hdr = NILFS_XANODE_HDR(node_ptr);
-+
-+	if (!(NILFS_XANODE_FLAGS(hdr) & NILFS_XANODE_CRC32_FLAG))
-+		return true;
-+
-+	if (hdr->tree_hdr.checksum !=
-+	    nilfs_xafile_node_crc32(inode, node_ptr, node_size, node))
-+		return false;
-+
-+	return true;
-+}
-+
-+/*
-+ * nilfs_xafile_node_check_entries - check xanode's xattrs
-+ * @node_ptr: pointer on xanode's begin
-+ * @node_size: size of xanode
-+ */
-+static
-+int nilfs_xafile_node_check_entries(char *node_ptr, size_t node_size)
-+{
-+	union nilfs_xanode_header *hdr;
-+	union nilfs_xattr_key *key = NULL;
-+	__u32 *end_key;
-+	char *entry;
-+	__u16 entries;
-+	int entry_index;
-+	__u32 entry_size;
-+
-+	hdr = NILFS_XANODE_HDR(node_ptr);
-+	entries = NILFS_XANODE_ENTRIES(hdr);
-+
-+	if (entries == 0)
-+		return 0;
-+
-+	end_key = NILFS_XANODE_END_KEY(hdr);
-+	key = NILFS_XANODE_LAST_NOT_INDEX_KEY(hdr);
-+	entry = (char *)NILFS_XANODE_LAST_ENTRY(hdr);
-+	entry_index = entries - 1;
-+
-+	for (; entry_index >= 0; entry_index--, key = PREV_KEY(key, 1)) {
-+		if (IS_END_KEY(key))
-+			return -EIO;
-+
-+		if ((char *)NILFS_XANODE_ENTRY(key, node_ptr) != entry)
-+			return -EIO;
-+
-+		entry_size = le16_to_cpu(key->leaf_key.entry_size);
-+		if (((char *)entry + entry_size) > (node_ptr + node_size))
-+			return -EIO;
-+
-+		if ((char *)entry < (char *)(end_key + 1))
-+			return -EIO;
-+
-+		entry = (char *)entry + entry_size;
-+	}
-+
-+	if (!IS_END_KEY(key))
-+		return -EIO;
-+
-+	return 0;
-+}
-+
-+/*
-+ * __nilfs_xafile_check_node - check xanode's xattrs and checksum
-+ * @inode: inode pointer
-+ * @node_ptr: pointer on xanode's begin
-+ * @node_size: size of xanode
-+ * @node: xanode number (index in xafile)
-+ */
-+static
-+int __nilfs_xafile_check_node(struct inode *inode, char *node_ptr,
-+				size_t node_size, __u64 node)
-+{
-+	union nilfs_xanode_header *hdr = NILFS_XANODE_HDR(node_ptr);
-+	bool is_crc32_valid;
-+
-+	if (hdr->base_hdr.magic != cpu_to_le16(NILFS_XANODE_MAGIC))
-+		return -EIO;
-+
-+	if (node_size != NILFS_XANODE_SIZE)
-+		return -EIO;
-+
-+	is_crc32_valid = is_xanode_checksum_valid(inode, node_ptr,
-+						  node_size, node);
-+	if (!is_crc32_valid)
-+		return -EIO;
-+
-+	return nilfs_xafile_node_check_entries(node_ptr, node_size);
-+}
-+
-+/*
-+ * nilfs_xafile_check_node - check xanode and mark buffer as checked
-+ * @inode: inode pointer
-+ * @node: xanode number (index in xafile)
-+ * @bh: xanode's buffer
-+ */
-+static inline
-+int nilfs_xafile_check_node(struct inode *inode, __u64 node,
-+				struct buffer_head *bh)
-+{
-+	int err;
-+
-+	if (buffer_nilfs_checked(bh))
-+		return 0;
-+
-+	err = __nilfs_xafile_check_node(inode, BH_DATA(bh),
-+					BH_SIZE(bh), node);
-+	if (likely(!err))
-+		set_buffer_nilfs_checked(bh);
-+
-+	return err;
-+}
-+
-+/*
-+ * nilfs_xafile_get_checked_node - get xanode and check it
-+ * @inode: inode pointer
-+ * @node: xanode number (index in xafile)
-+ * @bh: xanode's buffer [out]
-+ */
-+static
-+int nilfs_xafile_get_checked_node(struct inode *inode, __u64 node,
-+					struct buffer_head **bh)
++int nilfs_xafile_prepare_new_node(struct inode *inode,
++					struct nilfs_xattr_search *new_node)
 +{
 +	int err;
 +	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
 +	struct inode *xafile = nilfs->ns_xafile;
++	union nilfs_xanode_header *hdr;
++	char *buf;
 +
-+	err = nilfs_xafile_get_node(xafile, node, bh);
++#ifdef CONFIG_NILFS2_FS_DEBUG
++	BUG_ON(!IS_SEARCH_RESULT_EMPTY(new_node));
++#endif
++
++	err = nilfs_xafile_prepare_node_creation(xafile, &new_node->node.req);
 +	if (unlikely(err)) {
-+		printk(KERN_ERR "NILFS: can't get xafile node %llu\n", node);
-+		return -ENODATA;
-+	}
-+
-+	lock_buffer(*bh);
-+	err = nilfs_xafile_check_node(inode, node, *bh);
-+	unlock_buffer(*bh);
-+
-+	if (unlikely(err)) {
-+		printk(KERN_ERR "NILFS: corrupted xafile node %llu\n", node);
-+		brelse(*bh);
++		printk(KERN_ERR "NILFS: can't prepare new xafile node\n");
 +		return err;
 +	}
++
++	buf = kzalloc(BH_SIZE(NODE_BH(&new_node->node)), GFP_NOFS);
++	if (!buf) {
++		nilfs_xafile_abort_node_creation(xafile, &new_node->node.req);
++		return -ENOMEM;
++	}
++
++	/* TODO: [REWORK] it is used tree type temporary */
++	__nilfs_xafile_node_init(inode, NILFS_XATTR_TREE_XANODE_TYPE,
++				 buf, BH_SIZE(NODE_BH(&new_node->node)));
++
++	hdr = NILFS_XANODE_HDR(buf);
++	new_node->result.hdr = hdr;
++	new_node->result.key = NILFS_XANODE_FIRST_NOT_INDEX_KEY(hdr);
++	new_node->result.entry = NULL;
++	new_node->result.found = false;
++
++	new_node->node.flags = NILFS_DIRTY_SHADOW_XANODE;
++	new_node->node.shadow_copy = buf;
++
++	set_buffer_nilfs_volatile(NODE_BH(&new_node->node));
 +
 +	return 0;
 +}
 +
 +/*
-  * nilfs_xafile_check_entry - check xattr entry
-  * @key: xattr's key
-  * @entry: xattr's entry
-@@ -721,3 +985,49 @@ int nilfs_xafile_find_entry(struct inode *inode,
- 
- 	return -ENODATA;
- }
-+
-+/*
-+ * nilfs_xafile_find_node - search xanode that contains xattr
++ * nilfs_xafile_prepare_node_for_change - prepare xanode for shadow changes
 + * @inode: inode pointer
 + * @data: internal xattr search structure
 + */
 +static
-+int nilfs_xafile_find_node(struct inode *inode,
-+				struct nilfs_xattr_search *data)
++int nilfs_xafile_prepare_node_for_change(struct inode *inode,
++					 struct nilfs_xattr_search *data)
 +{
-+	int err = 0;
++	int err;
++	char *buf;
++	size_t node_size;
++	union nilfs_xanode_header *hdr;
++
++#ifdef CONFIG_NILFS2_FS_DEBUG
++	BUG_ON(data->node.shadow_copy);
++#endif
++
++	node_size = BH_SIZE(NODE_BH(&data->node));
++
++	buf = kmalloc(node_size, GFP_NOFS);
++	if (!buf) {
++		err = -ENOMEM;
++		goto cleanup_after_failure;
++	}
++
++	memcpy(buf, BH_DATA(NODE_BH(&data->node)), node_size);
++	data->node.flags = NILFS_SHADOW_XANODE;
++	data->node.shadow_copy = buf;
++
++	hdr = NILFS_XANODE_HDR(buf);
++
++	if (IS_SEARCH_KEY_EMPTY(data)) {
++		data->result.hdr = hdr;
++		data->result.key = NILFS_XANODE_FIRST_NOT_INDEX_KEY(hdr);
++		data->result.entry = NULL;
++		data->result.found = false;
++	} else if (IS_SEARCH_RESULT_EMPTY(data)) {
++		err = nilfs_xafile_find_entry(inode, data);
++		if (unlikely(err && err != -ENODATA))
++			goto cleanup_after_failure;
++	}
++
++	set_buffer_nilfs_volatile(NODE_BH(&data->node));
++
++	return 0;
++
++cleanup_after_failure:
++	nilfs_xattr_search_release(data);
++	return err;
++}
++
++/*
++ * nilfs_xafile_commit_changed_node - commit xanode's shadow changes
++ * @inode: inode pointer
++ * @data: internal xattr search structure
++ */
++static
++void nilfs_xafile_commit_changed_node(struct inode *inode,
++					struct nilfs_xattr_search *data)
++{
++	int err;
++	union nilfs_xanode_header *hdr;
++	struct buffer_head *bh;
++	size_t node_size;
 +	__u64 node;
 +
 +#ifdef CONFIG_NILFS2_FS_DEBUG
-+	BUG_ON(!IS_NULL_XANODE_DESC(&data->node) &&
-+		!IS_RO_XANODE_DESC(&data->node));
++	BUG_ON(IS_SEARCH_RESULT_EMPTY(data));
++	BUG_ON(!data->node.shadow_copy);
++	BUG_ON(!buffer_nilfs_volatile(NODE_BH(&data->node)));
 +#endif
 +
-+	if (IS_SEARCH_KEY_EMPTY(data))
-+		return -EINVAL;
-+
-+	if (IS_NODE_DESC_INVALID(NODE_ID(&data->node)))
-+		return -ENODATA;
-+
-+	if (IS_RO_XANODE_DESC(&data->node)) {
-+		if (IS_SEARCH_RESULT_EMPTY(data))
-+			goto start_entry_search;
-+		else
-+			BUG();
-+	}
-+
++	hdr = data->result.hdr;
++	bh = NODE_BH(&data->node);
++	clear_buffer_nilfs_checked(bh);
++	node_size = BH_SIZE(NODE_BH(&data->node));
 +	node = NODE_ID(&data->node);
 +
-+	err = nilfs_xafile_get_checked_node(inode, node,
-+						&NODE_BH(&data->node));
++	/* TODO: [REWORK] temporary only tree xanode is used */
++	hdr->tree_hdr.checksum = nilfs_xafile_node_crc32(inode, (char *)hdr,
++							 node_size, node);
++
++	lock_buffer(bh);
++	memcpy(BH_DATA(bh), hdr, node_size);
++	unlock_buffer(bh);
++
++	err = nilfs_xafile_check_node(inode, node, bh);
 +	if (unlikely(err))
-+		goto failed_find_node;
++		printk(KERN_WARNING "NILFS: xanode is corrupted\n");
++#ifdef CONFIG_NILFS2_FS_DEBUG
++	BUG_ON(unlikely(err));
++#endif
 +
++	mark_buffer_dirty(bh);
++	clear_buffer_nilfs_volatile(bh);
++	nilfs_mark_inode_dirty(inode);
++
++	kfree(data->node.shadow_copy);
++	data->node.shadow_copy = NULL;
 +	data->node.flags = NILFS_RO_XANODE;
++}
 +
-+start_entry_search:
-+	err = nilfs_xafile_find_entry(inode, data);
++/*
++ * nilfs_xafile_commit_new_node - commit new xanode's shadow changes
++ * @inode: inode pointer
++ * @data: internal xattr search structure
++ */
++static
++void nilfs_xafile_commit_new_node(struct inode *inode,
++				  struct nilfs_xattr_search *data)
++{
++	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
++	struct inode *xafile = nilfs->ns_xafile;
++	struct buffer_head *bh;
 +
-+failed_find_node:
-+	return err;
++#ifdef CONFIG_NILFS2_FS_DEBUG
++	BUG_ON(!data->node.shadow_copy);
++#endif
++
++	bh = NODE_BH(&data->node);
++
++	nilfs_xafile_commit_changed_node(inode, data);
++	nilfs_xafile_commit_node_creation(xafile, &data->node.req);
++}
++
++/*
++ * nilfs_xafile_abort_node_change - abort xanode's shadow changes
++ * @data: internal xattr search structure
++ */
++static inline
++void nilfs_xafile_abort_node_change(struct nilfs_xattr_search *data)
++{
++	if (data && NODE_BH(&data->node))
++		clear_buffer_nilfs_volatile(NODE_BH(&data->node));
++	if (data)
++		nilfs_xattr_search_release(data);
++}
++
++/*
++ * nilfs_xafile_abort_new_node - complete abort xanode creation
++ * @inode: inode pointer
++ * @data: internal xattr search structure
++ */
++static inline
++void nilfs_xafile_abort_new_node(struct inode *inode,
++				 struct nilfs_xattr_search *data)
++{
++	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
++	struct inode *xafile = nilfs->ns_xafile;
++
++	nilfs_xafile_abort_node_creation(xafile, &data->node.req);
++	nilfs_xafile_abort_node_change(data);
 +}
 -- 
 1.7.9.5
