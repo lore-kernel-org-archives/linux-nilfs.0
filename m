@@ -1,52 +1,90 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: rework error message subsystem
-Date: Wed, 04 Dec 2013 10:33:07 +0400
-Message-ID: <1386138787.4014.17.camel@slavad-ubuntu>
-References: <1385993333.3945.3.camel@slavad-ubuntu>
-	 <20131203162944.8f9ef3a08a3292a1959dd025@linux-foundation.org>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Jon Watte <jwatte-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: nilfs error
+Date: Fri, 6 Dec 2013 18:17:25 -0800
+Message-ID: <CAJgyHGOeRhj7D4GeyfHhBjXLE3K40DiakT2Zms2D7TPB-BiRog@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=kWZu1xK3K2ZLajs4Xrouw9T299SvftpqL6ne+aMOfbQ=;
-	b=cGstAq78Qg0EFrvdMej+U/RUY3kPAA8kEFWddW6gdqxzUK3RTG/HPePYrMmyAIhksJAkAythi3cweHJbKbimcdOQTBEzYXTU2TuIp/6+gq6xowZ38dK2+6gKGBZ6GB+a;
-In-Reply-To: <20131203162944.8f9ef3a08a3292a1959dd025-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:date:message-id:subject:from:to:content-type;
+        bh=Yyo710/vJlyZIXbAEuMq/8jAafFgGCjqBoOIHP0nkSM=;
+        b=UhmmryldZMhIwe9quhA6z4uCDqN12vThH3cNW1BYof8+1i4ZQJEXJCZzutQOspRh/T
+         SZZ1Im4DwzZtl4BVALqjScE80NXINyDACt6NYoujV5jGWEbGvIixzRIfU5TbPs1UR4oh
+         sT/drVzc5Vs7koBjwGd7GVSY5lTRT+kBWCKx6GRMXsyuuh7B5dg6hzz/3bhlKhvt5iCp
+         Y/d8AuLFUKudhNAeoeQnPC9sTYUt2n/88MCcqN1IKgKTuW6rwgUR9IwUT3/0GEe6sT9W
+         +qV2x7BytKWakla6mZyDPufsH59NNJIcPIOe4Afc4pvspr5ku47BfJ3Bs6csVGSfXWFM
+         TDjg==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Michael Conrad <mconrad-HsDW+lVSy7tZ66HEZ9PjWw@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 2013-12-03 at 16:29 -0800, Andrew Morton wrote:
+First, let me describe my usage pattern, which is boring -- the
+interesting technical stuff comes later down.
 
-[snip]
-> 
-> It converts every printk in nilfs2 into pr_foo_ratelimited (and bloats
-> nilfs2.ko by 5k in the process).  Isn't this rather overkill?
-> 
+I have a mini-ATX computer with a small (32 GB) SSD, which I have
+partitioned with two small partitions for /boot and swap, and one
+large partition for nilfs2 root-and-everything-else.
+This system has been running fine, using Arch Linux distribution x64
+flavor for over a year.
+I update it to the latest Arch kernel weekly, which means I'm running
+fairly new code. Gotta live dangerously!
+The usage pattern for this system is light; mostly web browsing (using
+chromium) and software development (using vim, gcc, make, and
+LXTerminal.)
 
-I have converted not every printk() in nilfs2 but I agree that printk()
-was changed in many places by ratelimited version. So, yes, it can be
-not very good idea. But such replacement was made for code that can emit
-really many count of practically identical error messages. And there are
-situation of sophisticated issues in nilfs2 when huge amount of error
-messages simply hide an important information about the issue. As a
-result, my goal was to reduce amount of repeatable error messages.
+Two days ago, after the latest kernel update, the drive turned
+read-only in the middle of usage. I could not use "shutdown" because
+"sudo" could not write its logfiles.
+This has happened before when I've filled the disk too full without
+noticing, so I just turned off power without shutdown (I often do this
+anyway -- a "sync" in terminal and a toggle switch power-off a few
+seconds later.) Typically, the checkpoint cleanup on boot would clear
+this up if this was the problem.
 
-So, what could you recommend as possible and proper solution?
+However, yesterday when booting up agian, it refused to mount the root
+disk, and booting was halted, with the messages shown in the below
+photograph. Note that, because I can't boot, I can't get this output
+in a copy-and-paste-able form!
 
-Moreover, I cleaned up error messages subsystem of nilfs2 by change of
-printk on pr_foo version and by joining error strings that it was split.
-I believe that it makes sense. Of course, it is possible to leave nilfs2
-error subsystem untouched. But from my point of view, there is the issue
-of hiding important information about an issue's reason by huge amount
-of repeatable error messages.
+https://pbs.twimg.com/media/BaxOmptCYAABQuW.jpg:large
 
-Thanks,
-Vyacheslav Dubeyko.
+The two repeated messages are (typed in from the photo):
+NILFS: bad bree node (blocknr=1364234) ; level = 100; flags = 0x73;
+nchildren = 12336
+NILFS error (device sda1): nilfs_bmap_lookup_contig: broken bmap
+(inode number=3935)
+
+I cloned the sda1 partition (the main partition) to my file server for
+posterity, and re-formatted the hard drive using btrfs for now until I
+can get clarity on this problem.
+
+Interesting observation: That disk image CAN be mounted if I boot the
+Arch-ISO distribution image from March 2013, but can NOT be mounted if
+I try to boot from it with a later kernel. Maybe someone better with
+"pacman" than I am can compare kernel versions from March 2013 vs Now?
+
+I don't really want to put this image up for FTP because it contains
+my SSH private keys (one of which is not pass-phrased) but if there is
+something I can do with it to help debug this occurrence, I'd be happy
+to try it.
 
 
+This is very sad, because I've had nothing but good performance from
+nilfs since I installed it 18 months ago.
+
+
+Sincerely,
+
+Jon Watte
+
+
+--
+"I pledge allegiance to the flag of the United States of America, and
+to the republic for which it stands, one nation indivisible, with
+liberty and justice for all."
+~ Adopted by U.S. Congress, June 22, 1942
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
