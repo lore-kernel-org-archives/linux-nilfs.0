@@ -1,60 +1,50 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
-Date: Fri, 20 Dec 2013 12:23:28 +0400
-Message-ID: <1387527808.4022.6.camel@slavad-ubuntu>
-References: <1387525568-30025-1-git-send-email-fanwlexca@gmail.com>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
+Date: Sat, 28 Dec 2013 10:28:16 +0800
+Message-ID: <1388197696-4648-1-git-send-email-fanwlexca@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=5a++QDNU0V46Amh7xZ/PImgYcYXZMii72yO4rNLFsDc=;
-	b=gKIr/3QKD+Xt6N2mceKRt1sOGwra2qYyQl6pEGTVxkHUK4lRNTmT67EOoZZphcpWg6JyL2abfNMcXYIqfSO3I3KVFp1gbWK1XtrnJIFeHLVMlkfvB+S36MIUdifmfB+O;
-In-Reply-To: <1387525568-30025-1-git-send-email-fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=from:to:cc:subject:date:message-id;
+        bh=SvIPl4Q4TXDGLgTA2C8PhkXnYASS1/zU9j/JohZHonI=;
+        b=n/FRuPC1zquRh6uZ68ahwg2l4AiuOwkk8RL2uz7ATm+0jTb3fZ04tfarbuH7GzjtG5
+         lWuWQlFkpO1QCmGRgE2QF8X8Z71Qgk9ZfZfzfuTJdV09uRiL7XtlNwSeSkeU4NsMWOJW
+         Z96j7xLRFgh/iKqzdSv1LpVyS98eYSyaj4PsAN4rlMDMFT5D90gt4SCZBGy3JQHRvo6V
+         IS8brGXMmFxiCIsYrhVrjKNMui/GRWybuDKD21XbqCz5gJY/djJv7dSeuTGvq9CmUfAX
+         B4IZXDHcm4MabsiurKmMxAVqxTNgPzfzwYEoZuJwW38Vj6Bxwat5xgFDcIPf+tT9ZTZi
+         zfXA==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On Fri, 2013-12-20 at 15:46 +0800, Wenliang Fan wrote:
-> The local variable 'pos' comes from userspace. If a large number was
-> passed, there would be an integer overflow in the following line:
-> 	pos += n;
-> 
+The local variable 'pos' comes from userspace. If a large number was
+passed, there would be an integer overflow in the following line:
+        pos += n;
 
-What about check before enter into the cycle? If you are talking about
-possible huge number then you can receive huge number from userspace
-before entering in the cycle.
+Signed-off-by: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nilfs2/ioctl.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Thanks,
-Vyacheslav Dubeyko.
-
-> Signed-off-by: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  fs/nilfs2/ioctl.c | 7 ++++++-
->  1 file changed, 6 insertions(+), 1 deletion(-)
-> 
-> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> index b44bdb2..b2bac9a 100644
-> --- a/fs/nilfs2/ioctl.c
-> +++ b/fs/nilfs2/ioctl.c
-> @@ -90,8 +90,13 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
->  		total += nr;
->  		if ((size_t)nr < n)
->  			break;
-> -		if (pos == ppos)
-> +		if (pos == ppos) {
-> +			if (pos > ULONG_MAX - n) {
-> +				ret = -EINVAL;
-> +				break;
-> +			}
->  			pos += n;
-> +		}
->  	}
->  	argv->v_nmembs = total;
->  
-
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index b44bdb2..a260a98 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -65,6 +65,8 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
+ 	ret = 0;
+ 	total = 0;
+ 	pos = argv->v_index;
++	if (pos > ULONG_MAX - argv->v_nmembs)
++		return -EINVAL;
+ 	for (i = 0; i < argv->v_nmembs; i += n) {
+ 		n = (argv->v_nmembs - i < maxmembs) ?
+ 			argv->v_nmembs - i : maxmembs;
+-- 
+1.8.5.rc1.28.g7061504
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
