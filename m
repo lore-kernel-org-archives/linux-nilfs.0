@@ -1,50 +1,59 @@
-From: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
-Date: Sat, 28 Dec 2013 10:28:16 +0800
-Message-ID: <1388197696-4648-1-git-send-email-fanwlexca@gmail.com>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
+Date: Mon, 30 Dec 2013 10:40:07 +0400
+Message-ID: <1388385607.3988.14.camel@slavad-ubuntu>
+References: <1388197696-4648-1-git-send-email-fanwlexca@gmail.com>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=from:to:cc:subject:date:message-id;
-        bh=SvIPl4Q4TXDGLgTA2C8PhkXnYASS1/zU9j/JohZHonI=;
-        b=n/FRuPC1zquRh6uZ68ahwg2l4AiuOwkk8RL2uz7ATm+0jTb3fZ04tfarbuH7GzjtG5
-         lWuWQlFkpO1QCmGRgE2QF8X8Z71Qgk9ZfZfzfuTJdV09uRiL7XtlNwSeSkeU4NsMWOJW
-         Z96j7xLRFgh/iKqzdSv1LpVyS98eYSyaj4PsAN4rlMDMFT5D90gt4SCZBGy3JQHRvo6V
-         IS8brGXMmFxiCIsYrhVrjKNMui/GRWybuDKD21XbqCz5gJY/djJv7dSeuTGvq9CmUfAX
-         B4IZXDHcm4MabsiurKmMxAVqxTNgPzfzwYEoZuJwW38Vj6Bxwat5xgFDcIPf+tT9ZTZi
-         zfXA==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=0QMrxAxYxYwW6I7D3qbdmprTXD46XC9G3ZQYCV9y9sk=;
+	b=UX78mHFLAdvi8BCDwQ4O2hsCPsO7SZHQRfqWN6q0XV6Nd/3eGaeAij7K0C5Br3yCvnPqGwAmJQQh8V3c2ib4iwhS2/RkiZERYODArMlONbCDjeAzvfCKnOsbIsEoXq6U;
+In-Reply-To: <1388197696-4648-1-git-send-email-fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-The local variable 'pos' comes from userspace. If a large number was
-passed, there would be an integer overflow in the following line:
-        pos += n;
+Hi,
 
-Signed-off-by: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- fs/nilfs2/ioctl.c | 2 ++
- 1 file changed, 2 insertions(+)
+On Sat, 2013-12-28 at 10:28 +0800, Wenliang Fan wrote:
+> The local variable 'pos' comes from userspace. If a large number was
+> passed, there would be an integer overflow in the following line:
+>         pos += n;
+> 
+> Signed-off-by: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+>  fs/nilfs2/ioctl.c | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+> index b44bdb2..a260a98 100644
+> --- a/fs/nilfs2/ioctl.c
+> +++ b/fs/nilfs2/ioctl.c
+> @@ -65,6 +65,8 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
+>  	ret = 0;
+>  	total = 0;
+>  	pos = argv->v_index;
+> +	if (pos > ULONG_MAX - argv->v_nmembs)
+> +		return -EINVAL;
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index b44bdb2..a260a98 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -65,6 +65,8 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
- 	ret = 0;
- 	total = 0;
- 	pos = argv->v_index;
-+	if (pos > ULONG_MAX - argv->v_nmembs)
-+		return -EINVAL;
- 	for (i = 0; i < argv->v_nmembs; i += n) {
- 		n = (argv->v_nmembs - i < maxmembs) ?
- 			argv->v_nmembs - i : maxmembs;
--- 
-1.8.5.rc1.28.g7061504
+I am slightly confused. Does this patch means that you refused previous
+one? Or this patch is addition to the previous one?
+
+You need to prepare next version of the patch or to prepare patch set
+from two patches. And it makes sense to provide changelog of your work,
+I think.
+
+Thanks,
+Vyacheslav Dubeyko.
+
+>  	for (i = 0; i < argv->v_nmembs; i += n) {
+>  		n = (argv->v_nmembs - i < maxmembs) ?
+>  			argv->v_nmembs - i : maxmembs;
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
