@@ -1,68 +1,40 @@
-From: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
-Date: Mon, 30 Dec 2013 21:54:41 +0800
-Message-ID: <1388411681-16584-1-git-send-email-fanwlexca@gmail.com>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
+Date: Tue, 31 Dec 2013 10:45:04 +0400
+Message-ID: <1388472304.3946.2.camel@slavad-ubuntu>
+References: <1388411681-16584-1-git-send-email-fanwlexca@gmail.com>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=from:to:cc:subject:date:message-id;
-        bh=No9amvDhVs3d7CB0JWVuvbbq8mhxtxHVXFyBNSux0xk=;
-        b=pEBYO5JNBwnNqDkGApaADoZiOt9Sw4oVaPI8aBgSQ50mW294DAn/+1Fc/slDjBTd9b
-         X6pZtQmsdN85jp4tO0imqyg/Ji+aRALhg48Q8XH1CSjunPNk9PCVXgq+485lXdi2hTFl
-         U9m3eODyBkh7ggqXarAYvOyU5Fg1fdFsrPAyBl66s43cKyuccNHeTujHM9eZ1wqlA/ak
-         Prti49ttTFvcRWcspzucTxXXF+OsTc+gLcDrvRIb7yIlHX+96U/ZaHHvHnI7jW/lA0NG
-         Nu83VZAAuQIU12xaw9j4gme/tbl5FSHiyDdWC/m9wp8NOiuZCRDwBlAto3UlQwwlLATk
-         SXsg==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=kwcHpqkvvZ8VyfrZZbFqClJezRgqEJBiDsKdBioPR4Q=;
+	b=DmyYF/g8XRfy4KfCC8wtx7LshR0db6nizpIO809Y3/+iJX/78+DUpRoXr0DD9ndO+6aOjFI7zbBSzYijCJgix8ti+IuALBtE6/1Jyh9cUIwzLDAlWYqDq28yo7RjV7ro;
+In-Reply-To: <1388411681-16584-1-git-send-email-fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Check before entering into cycle and on every iteration.
+On Mon, 2013-12-30 at 21:54 +0800, Wenliang Fan wrote:
+> Check before entering into cycle and on every iteration.
+> 
+> The local variable 'pos' comes from userspace. If a large number was
+> passed, there would be an integer overflow in the following line:
+>         pos += n;
+> 
 
-The local variable 'pos' comes from userspace. If a large number was
-passed, there would be an integer overflow in the following line:
-        pos += n;
+Do you fix it by chance? Or do you implement something in NILFS2?
 
-Signed-off-by: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- fs/nilfs2/ioctl.c | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+> Signed-off-by: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index b44bdb2..5f4be69 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -57,6 +57,9 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
- 	if (argv->v_size > PAGE_SIZE)
- 		return -EINVAL;
- 
-+	if (argv->v_index > ULONG_MAX - argv->v_nmembs)
-+		return -EINVAL;
-+
- 	buf = (void *)__get_free_pages(GFP_NOFS, 0);
- 	if (unlikely(!buf))
- 		return -ENOMEM;
-@@ -90,8 +93,13 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
- 		total += nr;
- 		if ((size_t)nr < n)
- 			break;
--		if (pos == ppos)
-+		if (pos == ppos) {
-+			if (pos > ULONG_MAX - n) {
-+				ret = -EINVAL;
-+				break;
-+			}
- 			pos += n;
-+		}
- 	}
- 	argv->v_nmembs = total;
- 
--- 
-1.8.5.rc1.28.g7061504
+Reviewed-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+
+Thanks,
+Vyacheslav Dubeyko.
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
