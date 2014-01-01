@@ -1,19 +1,19 @@
 From: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH nilfs-utils 1/2] cleanerd: call _exit(2) twice for ensuring not being a session leader
-Date: Wed,  1 Jan 2014 16:30:48 +0900
-Message-ID: <1388561449-13980-2-git-send-email-mitake.hitoshi@gmail.com>
+Subject: [PATCH nilfs-utils 2/2] cleanerd: adjust the OOM killer
+Date: Wed,  1 Jan 2014 16:30:49 +0900
+Message-ID: <1388561449-13980-3-git-send-email-mitake.hitoshi@gmail.com>
 References: <1388561449-13980-1-git-send-email-mitake.hitoshi@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=WXTafjic2XcX8cU+AA5BJFokN4DD+ld2zh6RAyCtkdc=;
-        b=DRAArqmPO6D305DaG7VaWMKScdWVFGNBgtjgjZXJIyPjMpmhxferHAKUMNsbroE8Zy
-         5VHcF995+FUp5fL3qFudrMDxNpFX4ClGYanuz9RSILQJqfP53nf73UMpvhgH/L7B1SIL
-         Lnha4Wux3KbnQFtJC7AA/5OaXf/f+H6lTYSkNq/8l9gbfOHsq9c8BD7QytMyQSLtObp8
-         +GfvDn5DmzBWe0o4cKOPu2NtBqSbMozh/ere8+wQvTW1kmGhudSpgufnwZ5l0kX/jJpL
-         oV2NT2k559+/7CS3W9PJ9Wa197dvBJWchtO5Szfb878rSt3QMgUYG9hpWl66uLkMiGrv
-         2ktg==
+        bh=pGj7W58nDnrnO41rBYmiTQunK+pCh33Nul/iojqNLNk=;
+        b=Vs/L1524Mspx+m5I6LfTalUHkcPuMe7sev/4R6FRgEzVxT7H0GdvSZ5+8YBaAIPxWY
+         5K+8kby09+CaxgangswncIcQjwvkaO67sKlvy9nenMAI95ofvxByzYj8Q81Wb/gf8kZU
+         FeFWTEFcLbZbpHCHXeam4s4rNPezPxOo50t1IQ7bZCgh7k0PVLyBvOBB0pYdJZgpuDu5
+         W/AFwtTThM7FnUxzfozpZmEM/0udGC2Oejgp9jEDOenYAV5p6lo5gtNLCyv9BFbZSqX3
+         WQ7FEPb3vlXTDV27AfN4dAsM/u3Dpel/OecnyeuZLsP/40v/KUpqZodzWL9hH+5fr5lt
+         bNsQ==
 In-Reply-To: <1388561449-13980-1-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -23,38 +23,71 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Current daemonize() function of cleanerd call _exit(2) only once during its
-process of becoming a daemon process. But in the linux environment, a daemon
-process should call _exit(2) twice for ensuring not being a session leader. If a
-process don't do that, unexpected SIGHUP can be sent to the process (though it
-happens rarely). The signal would be confusing event for cleanerd of nilfs. This
-patch removes this potential problem.
+cleanerd is a very important process in a system which uses nilfs. So it should
+adjust the OOM killer for reducing possibility of the killing as much as
+possible.
 
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- sbin/cleanerd/cleanerd.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ sbin/cleanerd/cleanerd.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
 
 diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index 26067bd..edfa083 100644
+index edfa083..3494a9a 100644
 --- a/sbin/cleanerd/cleanerd.c
 +++ b/sbin/cleanerd/cleanerd.c
-@@ -676,6 +676,16 @@ static int daemonize(int nochdir, int noclose, int nofork)
+@@ -654,6 +654,40 @@ nilfs_cleanerd_select_segments(struct nilfs_cleanerd *cleanerd,
+ 	return nssegs;
+ }
  
- 	/* umask(0); */
- 
-+	/* for ensuring I'm not a session leader */
-+	if (!nofork) {
-+		pid = fork();
-+		if (pid < 0)
-+			return -1;
-+		else if (pid != 0)
-+			/* parent */
-+			_exit(0);
++static int oom_adjust(void)
++{
++	int fd, err;
++	const char *path, *score;
++	struct stat st;
++
++	/* Avoid oom-killer */
++	path = "/proc/self/oom_score_adj";
++	score = "-1000\n";
++
++	if (stat(path, &st)) {
++		/* oom_score_adj cannot be used, try oom_adj */
++		path = "/proc/self/oom_adj";
++		score = "-17\n";
 +	}
 +
- 	if (!nochdir && (chdir(ROOTDIR) < 0))
- 		return -1;
++	fd = open(path, O_WRONLY);
++	if (fd < 0) {
++		fprintf(stderr, "can't adjust oom-killer's pardon %s, %m\n",
++			path);
++		return errno;
++	}
++
++	err = write(fd, score, strlen(score));
++	if (err < 0) {
++		fprintf(stderr, "can't adjust oom-killer's pardon %s, %m\n",
++			path);
++		close(fd);
++		return errno;
++	}
++	close(fd);
++	return 0;
++}
++
+ #define DEVNULL	"/dev/null"
+ #define ROOTDIR	"/"
+ 
+@@ -1549,6 +1583,11 @@ int main(int argc, char *argv[])
+ 		exit(1);
+ 	}
+ 
++	if (oom_adjust() < 0) {
++		fprintf(stderr, "adjusting the OOM killer falied: %m\n");
++		exit(1);
++	}
++
+ 	openlog(progname, LOG_PID, LOG_DAEMON);
+ 	syslog(LOG_INFO, "start");
  
 -- 
 1.8.1.2
