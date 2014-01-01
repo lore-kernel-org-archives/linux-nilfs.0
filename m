@@ -1,93 +1,69 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH nilfs-utils 2/2] cleanerd: adjust the OOM killer
-Date: Wed, 01 Jan 2014 18:16:11 +0900 (JST)
-Message-ID: <20140101.181611.85406319.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH nilfs-utils 1/2] cleanerd: call _exit(2) twice for
+ ensuring not being a session leader
+Date: Wed, 01 Jan 2014 18:30:18 +0900 (JST)
+Message-ID: <20140101.183018.491730600.konishi.ryusuke@lab.ntt.co.jp>
 References: <1388561449-13980-1-git-send-email-mitake.hitoshi@gmail.com>
-	<1388561449-13980-3-git-send-email-mitake.hitoshi@gmail.com>
+	<1388561449-13980-2-git-send-email-mitake.hitoshi@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1388561449-13980-3-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1388561449-13980-2-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
 
-On Wed,  1 Jan 2014 16:30:49 +0900, Hitoshi Mitake wrote:
-> cleanerd is a very important process in a system which uses nilfs. So it should
-> adjust the OOM killer for reducing possibility of the killing as much as
-> possible.
+On Wed,  1 Jan 2014 16:30:48 +0900, Hitoshi Mitake wrote:
+> Current daemonize() function of cleanerd call _exit(2) only once during its
+> process of becoming a daemon process. But in the linux environment, a daemon
+> process should call _exit(2) twice for ensuring not being a session leader. If a
+> process don't do that, unexpected SIGHUP can be sent to the process (though it
+> happens rarely). The signal would be confusing event for cleanerd of nilfs. This
+> patch removes this potential problem.
 > 
 > Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-
-Looks OK to me.
-
-Applied after I corrected a trivial typo: s/falied/failed/.
-
-Thanks,
-Ryusuke Konishi
-
 > ---
->  sbin/cleanerd/cleanerd.c | 39 +++++++++++++++++++++++++++++++++++++++
->  1 file changed, 39 insertions(+)
+>  sbin/cleanerd/cleanerd.c | 10 ++++++++++
+>  1 file changed, 10 insertions(+)
 > 
 > diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-> index edfa083..3494a9a 100644
+> index 26067bd..edfa083 100644
 > --- a/sbin/cleanerd/cleanerd.c
 > +++ b/sbin/cleanerd/cleanerd.c
-> @@ -654,6 +654,40 @@ nilfs_cleanerd_select_segments(struct nilfs_cleanerd *cleanerd,
->  	return nssegs;
->  }
+> @@ -676,6 +676,16 @@ static int daemonize(int nochdir, int noclose, int nofork)
 >  
-> +static int oom_adjust(void)
-> +{
-> +	int fd, err;
-> +	const char *path, *score;
-> +	struct stat st;
-> +
-> +	/* Avoid oom-killer */
-> +	path = "/proc/self/oom_score_adj";
-> +	score = "-1000\n";
-> +
-> +	if (stat(path, &st)) {
-> +		/* oom_score_adj cannot be used, try oom_adj */
-> +		path = "/proc/self/oom_adj";
-> +		score = "-17\n";
-> +	}
-> +
-> +	fd = open(path, O_WRONLY);
-> +	if (fd < 0) {
-> +		fprintf(stderr, "can't adjust oom-killer's pardon %s, %m\n",
-> +			path);
-> +		return errno;
-> +	}
-> +
-> +	err = write(fd, score, strlen(score));
-> +	if (err < 0) {
-> +		fprintf(stderr, "can't adjust oom-killer's pardon %s, %m\n",
-> +			path);
-> +		close(fd);
-> +		return errno;
-> +	}
-> +	close(fd);
-> +	return 0;
-> +}
-> +
->  #define DEVNULL	"/dev/null"
->  #define ROOTDIR	"/"
+>  	/* umask(0); */
 >  
-> @@ -1549,6 +1583,11 @@ int main(int argc, char *argv[])
->  		exit(1);
->  	}
->  
-> +	if (oom_adjust() < 0) {
-> +		fprintf(stderr, "adjusting the OOM killer falied: %m\n");
-> +		exit(1);
+> +	/* for ensuring I'm not a session leader */
+> +	if (!nofork) {
+> +		pid = fork();
+> +		if (pid < 0)
+> +			return -1;
+> +		else if (pid != 0)
+> +			/* parent */
+> +			_exit(0);
 > +	}
 > +
->  	openlog(progname, LOG_PID, LOG_DAEMON);
->  	syslog(LOG_INFO, "start");
+
+I tried your patch, but the cleaner daemon still was a session leader.
+
+This turned out because nilfs_cleanerd is usually executed by
+mount.nilfs2 program with the nofork option (-n).
+
+To fix this problem, it looks like the above !nofork check of the
+second fork() should be removed even though it becomes confusing.  In
+that case, we may need to add some explanation why fork() should be
+called even if nofork is specified.
+
+
+Regards,
+Ryusuke Konishi
+
+
+>  	if (!nochdir && (chdir(ROOTDIR) < 0))
+>  		return -1;
 >  
 > -- 
 > 1.8.1.2
