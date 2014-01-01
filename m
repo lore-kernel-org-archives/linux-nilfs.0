@@ -1,41 +1,61 @@
 From: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH nilfs-utils 0/2] trivial improvements of cleanerd
-Date: Wed,  1 Jan 2014 16:30:47 +0900
-Message-ID: <1388561449-13980-1-git-send-email-mitake.hitoshi@gmail.com>
+Subject: [PATCH nilfs-utils 1/2] cleanerd: call _exit(2) twice for ensuring not being a session leader
+Date: Wed,  1 Jan 2014 16:30:48 +0900
+Message-ID: <1388561449-13980-2-git-send-email-mitake.hitoshi@gmail.com>
+References: <1388561449-13980-1-git-send-email-mitake.hitoshi@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=from:to:cc:subject:date:message-id;
-        bh=yJUgUE+n/FR4ToT3dvXs0dB9bCVuF9A7XQNAk40ZgAE=;
-        b=wnI4zEzzIBHSCcUpxjqqC3Fy87HA6aioBXSYg7H5G5MrhTgfFC1ZYwn8Tp0CldYGV9
-         QT/2RboS+4IjnWZq5taQ6WoHToZTjJV9YuWjtxOkIr1OB3KbK+q3m+8YFf0i52K14lrc
-         Bh06r/ZP4tDj4UjypDco+6MGlMNJylmU/cvhj4kcGc0mMiLQCiXbb0sS+FPsIvD7B8TZ
-         0NyTzsqtDloFw4P+g9yT659ZG72G4jtI1PxskjtlaYI2vNqRm41REvNXviHdo1gqcrJP
-         69O1lOciohlO6/2DP5dRMPwkRyLzpb4mIdTddR1n3jMfB0HMoqqf8q6IjqcrB5Zs1dio
-         tItA==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=WXTafjic2XcX8cU+AA5BJFokN4DD+ld2zh6RAyCtkdc=;
+        b=DRAArqmPO6D305DaG7VaWMKScdWVFGNBgtjgjZXJIyPjMpmhxferHAKUMNsbroE8Zy
+         5VHcF995+FUp5fL3qFudrMDxNpFX4ClGYanuz9RSILQJqfP53nf73UMpvhgH/L7B1SIL
+         Lnha4Wux3KbnQFtJC7AA/5OaXf/f+H6lTYSkNq/8l9gbfOHsq9c8BD7QytMyQSLtObp8
+         +GfvDn5DmzBWe0o4cKOPu2NtBqSbMozh/ere8+wQvTW1kmGhudSpgufnwZ5l0kX/jJpL
+         oV2NT2k559+/7CS3W9PJ9Wa197dvBJWchtO5Szfb878rSt3QMgUYG9hpWl66uLkMiGrv
+         2ktg==
+In-Reply-To: <1388561449-13980-1-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This patchset removes trivial problems in cleanerd. Below is a summary of the
-problems:
-1. current daemonize() of cleanerd doesn't ensure not to being a session leader
-2. cleanerd doesn't adjust the OOM killer
+Current daemonize() function of cleanerd call _exit(2) only once during its
+process of becoming a daemon process. But in the linux environment, a daemon
+process should call _exit(2) twice for ensuring not being a session leader. If a
+process don't do that, unexpected SIGHUP can be sent to the process (though it
+happens rarely). The signal would be confusing event for cleanerd of nilfs. This
+patch removes this potential problem.
 
-Thanks,
-Hitoshi
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ sbin/cleanerd/cleanerd.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-Hitoshi Mitake (2):
-  cleanerd: call _exit(2) twice for ensuring not being a session leader
-  cleanerd: adjust the OOM killer
-
- sbin/cleanerd/cleanerd.c | 49 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 49 insertions(+)
-
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index 26067bd..edfa083 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -676,6 +676,16 @@ static int daemonize(int nochdir, int noclose, int nofork)
+ 
+ 	/* umask(0); */
+ 
++	/* for ensuring I'm not a session leader */
++	if (!nofork) {
++		pid = fork();
++		if (pid < 0)
++			return -1;
++		else if (pid != 0)
++			/* parent */
++			_exit(0);
++	}
++
+ 	if (!nochdir && (chdir(ROOTDIR) < 0))
+ 		return -1;
+ 
 -- 
 1.8.1.2
 
