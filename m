@@ -1,65 +1,69 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix segctor bug that causes file system
- corruption
-Date: Fri, 03 Jan 2014 02:17:03 +0900 (JST)
-Message-ID: <20140103.021703.220046134.konishi.ryusuke@lab.ntt.co.jp>
-References: <1388674131-22579-1-git-send-email-andreas.rohner@gmx.net>
-	<741898E4-B794-47FF-ABF6-2DCACA2AED43@dubeyko.com>
-	<52C5961F.8000608@gmx.net>
-Mime-Version: 1.0
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH] nilfs2: fix segctor bug that causes file system corruption
+Date: Thu, 2 Jan 2014 23:16:22 +0300
+Message-ID: <88B1B6B6-1AC9-4BC4-9776-C07D1360A99F@dubeyko.com>
+References: <1388674131-22579-1-git-send-email-andreas.rohner@gmx.net> <741898E4-B794-47FF-ABF6-2DCACA2AED43@dubeyko.com> <52C5961F.8000608@gmx.net> <20140103.021703.220046134.konishi.ryusuke@lab.ntt.co.jp>
+Mime-Version: 1.0 (Apple Message framework v1085)
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <52C5961F.8000608-hi6Y0CQ0nG0@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=c2e3WfnfVpQ322oMU7n79Xipuy8sMkzQHztkNXEQAnc=;
+	b=E0d8mviJ5gWnASiuVlpeEGOr33tiOetl0S0h979uyJyY8X/iknRr6sfy6GbDdNYlrvoAMA2kDoKZGBwYuZF/D2yVWkzlADD1oc1cfTUQNF1tMeg14y8/0m5rws8uDa3h;
+In-Reply-To: <20140103.021703.220046134.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi, Andreas, and Vyacheslav
+Hi Ryusuke,
 
-On Thu, 02 Jan 2014 17:38:55 +0100, Andreas Rohner wrote:
->> Of course, you can discover some new issue. But, currently, I can't
->> understand relation between the error message from
->> nilfs_sufile_do_cancel_free() and next messages from
->> nilfs_bmap_last_key() from your description. So, I need to think
->> over your description more deeply and I need in confirmation that
->> you reproduce the issue with presence of patch [1] in your kernel.
+On Jan 2, 2014, at 8:17 PM, Ryusuke Konishi wrote:
+
+> Hi, Andreas, and Vyacheslav
 > 
-> I am sorry if my description was not clear enough. The problem is with
-> the retry loop in nilfs_segctor_collect. If the current segment buffer
-> is full a new segment is allocated and the collection is retried. But
-> if the allocation of a new segment happens before
-> nilfs_sufile_cancel_freev, there is a possibility, that a segment is
-> selected, that before was freed during nilfs_segctor_collect_blocks.
-> Now the collection is retried and the segments are freed again. This
-> time though the newly allocated segment is freed as well, without any
-> error messages. It is still used to write active data, while it is
-> marked as free in the SUFILE. At some later time it is overwritten,
-> which can cause all kinds of errors.
-
-Thank you for posting this patch.
-
-I reviewed the patch, and yes, the patch looks correct and needed to
-fix the retry logic of nilfs_segctor_collect().
-
-I am thinking of sending this to upstream.  But, before that, please
-test the patch enough in the same situation to confirm that it
-actually fixes the problem and it doesn't cause other issues.
-
-At this point, I feel this patch has no defects nor side effects, but
-I cannot test it in the same situation until the next week.
-
-
-Thanks,
-Ryusuke Konishi
-
-> If you follow the 10 steps I outlined in my commit message, you should
-> be able to see the problem. If some of the steps are unclear, I am
-> happy to provide a more thorough explanation.
+> Thank you for posting this patch.
 > 
-> best regards,
-> Andreas Rohner
+> I reviewed the patch, and yes, the patch looks correct and needed to
+> fix the retry logic of nilfs_segctor_collect().
+> 
+> I am thinking of sending this to upstream.  But, before that, please
+> test the patch enough in the same situation to confirm that it
+> actually fixes the problem and it doesn't cause other issues.
+> 
+> At this point, I feel this patch has no defects nor side effects, but
+> I cannot test it in the same situation until the next week.
+> 
+
+		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+			err = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+							sci->sc_freesegs,
+							sci->sc_nfreesegs,
+							NULL);
+			WARN_ON(err); /* do not happen */
++			sci->sc_stage.flags &= ~NILFS_CF_SUFREED;
+		}
+
+I see adding the code of clear NILFS_CF_SUFREED flag in the patch.
+But nilfs_segctor_abort_construction() contains likewise code:
+
+1727         if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+1728                 ret = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+1729                                                 sci->sc_freesegs,
+1730                                                 sci->sc_nfreesegs,
+1731                                                 NULL);
+1732                 WARN_ON(ret); /* do not happen */
+1733         }
+
+Maybe, this code needs in flag clearing too?
+
+Anyway, I can see setting this flag and cannot see clearing
+of it. Andreas suggests to clear this flag in the patch.
+Is logic of setting/clearing this flag fully correct?
+
+With the best regards,
+Vyacheslav Dubeyko.
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
