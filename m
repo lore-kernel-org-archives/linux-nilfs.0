@@ -1,79 +1,84 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
-Date: Fri, 03 Jan 2014 04:28:00 +0900 (JST)
-Message-ID: <20140103.042800.403465349.konishi.ryusuke@lab.ntt.co.jp>
-References: <1388411681-16584-1-git-send-email-fanwlexca@gmail.com>
+Subject: Re: [PATCH] nilfs2: fix segctor bug that causes file system
+ corruption
+Date: Fri, 03 Jan 2014 04:54:04 +0900 (JST)
+Message-ID: <20140103.045404.492573516.konishi.ryusuke@lab.ntt.co.jp>
+References: <52C5961F.8000608@gmx.net>
+	<20140103.021703.220046134.konishi.ryusuke@lab.ntt.co.jp>
+	<88B1B6B6-1AC9-4BC4-9776-C07D1360A99F@dubeyko.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1388411681-16584-1-git-send-email-fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <88B1B6B6-1AC9-4BC4-9776-C07D1360A99F-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Wenliang,
-On Mon, 30 Dec 2013 21:54:41 +0800, Wenliang Fan wrote:
-> Check before entering into cycle and on every iteration.
+Hi Vyacheslav,
+On Thu, 2 Jan 2014 23:16:22 +0300, Vyacheslav Dubeyko wrote:
+> Hi Ryusuke,
 > 
-> The local variable 'pos' comes from userspace. If a large number was
-> passed, there would be an integer overflow in the following line:
->         pos += n;
+> On Jan 2, 2014, at 8:17 PM, Ryusuke Konishi wrote:
 > 
-> Signed-off-by: Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  fs/nilfs2/ioctl.c | 10 +++++++++-
->  1 file changed, 9 insertions(+), 1 deletion(-)
+>> Hi, Andreas, and Vyacheslav
+>> 
+>> Thank you for posting this patch.
+>> 
+>> I reviewed the patch, and yes, the patch looks correct and needed to
+>> fix the retry logic of nilfs_segctor_collect().
+>> 
+>> I am thinking of sending this to upstream.  But, before that, please
+>> test the patch enough in the same situation to confirm that it
+>> actually fixes the problem and it doesn't cause other issues.
+>> 
+>> At this point, I feel this patch has no defects nor side effects, but
+>> I cannot test it in the same situation until the next week.
+>> 
 > 
-> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> index b44bdb2..5f4be69 100644
-> --- a/fs/nilfs2/ioctl.c
-> +++ b/fs/nilfs2/ioctl.c
-> @@ -57,6 +57,9 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
->  	if (argv->v_size > PAGE_SIZE)
->  		return -EINVAL;
->  
-> +	if (argv->v_index > ULONG_MAX - argv->v_nmembs)
-> +		return -EINVAL;
-> +
+> 		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+> 			err = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+> 							sci->sc_freesegs,
+> 							sci->sc_nfreesegs,
+> 							NULL);
+> 			WARN_ON(err); /* do not happen */
+> +			sci->sc_stage.flags &= ~NILFS_CF_SUFREED;
+> 		}
+> 
+> I see adding the code of clear NILFS_CF_SUFREED flag in the patch.
+> But nilfs_segctor_abort_construction() contains likewise code:
+> 
+> 1727         if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+> 1728                 ret = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+> 1729                                                 sci->sc_freesegs,
+> 1730                                                 sci->sc_nfreesegs,
+> 1731                                                 NULL);
+> 1732                 WARN_ON(ret); /* do not happen */
+> 1733         }
+> 
+> Maybe, this code needs in flag clearing too?
 
-I think ~(__u64)0 should be used instead of ULONG_MAX because
-argv->v_index and the variable pos are supposed to have 64-bit width
-(that is __u64 for the current definition).  The value of ULONG_MAX is
-architecture dependent.
+It is unnecessary for nilfs_segctor_abort_construction() because
+nilfs_segctor_abort_construction() is called just before escaping from
+nilfs_segctor_do_construct().  The NILFS_CF_SUFREED flag has a meaning
+only inside nilfs_segctor_do_construct().
 
+> Anyway, I can see setting this flag and cannot see clearing
+> of it. Andreas suggests to clear this flag in the patch.
+> Is logic of setting/clearing this flag fully correct?
 
->  	buf = (void *)__get_free_pages(GFP_NOFS, 0);
->  	if (unlikely(!buf))
->  		return -ENOMEM;
-> @@ -90,8 +93,13 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
->  		total += nr;
->  		if ((size_t)nr < n)
->  			break;
-> -		if (pos == ppos)
-> +		if (pos == ppos) {
-> +			if (pos > ULONG_MAX - n) {
-> +				ret = -EINVAL;
-> +				break;
-> +			}
+I think his change is correct, and it is the only call site of
+nilfs_sufile_cancel_freev() that needs clearing NILFS_CF_SUFREED flag.
 
-This check looks unnecessary because pos never becomes larger than
-argv->v_index + argv->v_nmembs in the case that pos wasn't changed
-from ppos, and therefore the first check is enough.
-
+Thank you for your attention to this flag.
 
 Regards,
 Ryusuke Konishi
 
 
->  			pos += n;
-> +		}
->  	}
->  	argv->v_nmembs = total;
->  
-> -- 
-> 1.8.5.rc1.28.g7061504
+> With the best regards,
+> Vyacheslav Dubeyko.
 > 
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
