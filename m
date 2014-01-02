@@ -1,77 +1,93 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH nilfs-utils 1/2] cleanerd: call _exit(2) twice for
- ensuring not being a session leader
-Date: Wed, 01 Jan 2014 18:30:18 +0900 (JST)
-Message-ID: <20140101.183018.491730600.konishi.ryusuke@lab.ntt.co.jp>
-References: <1388561449-13980-1-git-send-email-mitake.hitoshi@gmail.com>
-	<1388561449-13980-2-git-send-email-mitake.hitoshi@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: [PATCH] nilfs2: fix segctor bug that causes file system corruption
+Date: Thu,  2 Jan 2014 15:48:51 +0100
+Message-ID: <1388674131-22579-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1388561449-13980-2-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-On Wed,  1 Jan 2014 16:30:48 +0900, Hitoshi Mitake wrote:
-> Current daemonize() function of cleanerd call _exit(2) only once during its
-> process of becoming a daemon process. But in the linux environment, a daemon
-> process should call _exit(2) twice for ensuring not being a session leader. If a
-> process don't do that, unexpected SIGHUP can be sent to the process (though it
-> happens rarely). The signal would be confusing event for cleanerd of nilfs. This
-> patch removes this potential problem.
-> 
-> Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-> ---
->  sbin/cleanerd/cleanerd.c | 10 ++++++++++
->  1 file changed, 10 insertions(+)
-> 
-> diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-> index 26067bd..edfa083 100644
-> --- a/sbin/cleanerd/cleanerd.c
-> +++ b/sbin/cleanerd/cleanerd.c
-> @@ -676,6 +676,16 @@ static int daemonize(int nochdir, int noclose, int nofork)
->  
->  	/* umask(0); */
->  
-> +	/* for ensuring I'm not a session leader */
-> +	if (!nofork) {
-> +		pid = fork();
-> +		if (pid < 0)
-> +			return -1;
-> +		else if (pid != 0)
-> +			/* parent */
-> +			_exit(0);
-> +	}
-> +
+There is a bug in the function nilfs_segctor_collect, which results in
+active data being written to a segment, that is marked as clean. It is
+possible, that this segment is selected for a later segment
+construction, whereby the old data is overwritten.
 
-I tried your patch, but the cleaner daemon still was a session leader.
+The problem shows itself with the following kernel log message:
 
-This turned out because nilfs_cleanerd is usually executed by
-mount.nilfs2 program with the nofork option (-n).
+nilfs_sufile_do_cancel_free: segment 6533 must be clean
 
-To fix this problem, it looks like the above !nofork check of the
-second fork() should be removed even though it becomes confusing.  In
-that case, we may need to add some explanation why fork() should be
-called even if nofork is specified.
+Usually a few hours later the file system gets corrupted:
 
+NILFS: bad btree node (blocknr=8748107): level = 0, flags = 0x0,
+nchildren = 0
+NILFS error (device sdc1): nilfs_bmap_last_key: broken bmap
+(inode number=114660)
 
-Regards,
-Ryusuke Konishi
+The issue can be reproduced with a file system that is nearly full and
+with the cleaner running, while some IO intensive task is running.
+Although it is quite hard to reproduce.
 
+This is what happens:
 
->  	if (!nochdir && (chdir(ROOTDIR) < 0))
->  		return -1;
->  
-> -- 
-> 1.8.1.2
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+1. The cleaner starts the segment construction
+2. nilfs_segctor_collect is called
+3. sc_stage is on NILFS_ST_SUFILE and segments are freed
+4. sc_stage is on NILFS_ST_DAT current segment is full
+5. nilfs_segctor_extend_segments is called, which
+   allocates a new segment
+6. The new segment is one of the segments freed in step 3
+7. nilfs_sufile_cancel_freev is called and produces an error message
+8. Loop around and the collection starts again
+9. sc_stage is on NILFS_ST_SUFILE and segments are freed
+   including the newly allocated segment, which will contain active data
+   and can be allocated at a later time
+10. A few hours later another segment construction allocates the segment
+    and causes file system corruption
+
+This can be prevented by simply reordering the statements. If
+nilfs_sufile_cancel_freev is called before nilfs_segctor_extend_segments
+the freed segments are marked as dirty and cannot be allocated any more.
+
+Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+---
+ fs/nilfs2/segment.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 9f6b486..a1a1916 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1440,17 +1440,19 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
+ 
+ 		nilfs_clear_logs(&sci->sc_segbufs);
+ 
+-		err = nilfs_segctor_extend_segments(sci, nilfs, nadd);
+-		if (unlikely(err))
+-			return err;
+-
+ 		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+ 			err = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+ 							sci->sc_freesegs,
+ 							sci->sc_nfreesegs,
+ 							NULL);
+ 			WARN_ON(err); /* do not happen */
++			sci->sc_stage.flags &= ~NILFS_CF_SUFREED;
+ 		}
++
++		err = nilfs_segctor_extend_segments(sci, nilfs, nadd);
++		if (unlikely(err))
++			return err;
++
+ 		nadd = min_t(int, nadd << 1, SC_MAX_SEGDELTA);
+ 		sci->sc_stage = prev_stage;
+ 	}
+-- 
+1.8.5.2
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
