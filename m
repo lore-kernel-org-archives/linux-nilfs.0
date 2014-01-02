@@ -1,92 +1,50 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH] nilfs2: fix segctor bug that causes file system corruption
-Date: Thu,  2 Jan 2014 15:48:51 +0100
-Message-ID: <1388674131-22579-1-git-send-email-andreas.rohner@gmx.net>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH] nilfs2: fix segctor bug that causes file system corruption
+Date: Thu, 2 Jan 2014 19:59:28 +0300
+Message-ID: <741898E4-B794-47FF-ABF6-2DCACA2AED43@dubeyko.com>
+References: <1388674131-22579-1-git-send-email-andreas.rohner@gmx.net>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=HXTSdSvUvOuuBFttcrMLJA1F35ABMJ+DpxgX44mSEXk=;
+	b=jbejFR0aljIjhEyf3mIlcblqyLp5A0SxdxRAMo6GNUUh5LKFIruJzyRkG9RPvakqVlzQydW6FPHr4QCSEVFZ8Q5CkB/4DEneAYAaflj7jzbgunXXZozjxtKhmThKCFvd;
+In-Reply-To: <1388674131-22579-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-There is a bug in the function nilfs_segctor_collect, which results in
-active data being written to a segment, that is marked as clean. It is
-possible, that this segment is selected for a later segment
-construction, whereby the old data is overwritten.
+Hi Andreas,
 
-The problem shows itself with the following kernel log message:
+On Jan 2, 2014, at 5:48 PM, Andreas Rohner wrote:
 
-nilfs_sufile_do_cancel_free: segment 6533 must be clean
+> There is a bug in the function nilfs_segctor_collect, which results in
+> active data being written to a segment, that is marked as clean. It is
+> possible, that this segment is selected for a later segment
+> construction, whereby the old data is overwritten.
+> 
 
-Usually a few hours later the file system gets corrupted:
+Thank you for your patch. But, currently, I doubt that your patch is correct.
 
-NILFS: bad btree node (blocknr=8748107): level = 0, flags = 0x0,
-nchildren = 0
-NILFS error (device sdc1): nilfs_bmap_last_key: broken bmap
-(inode number=114660)
+What version of the kernel did you used during the issue reproducing?
+Do you have the patch [1] in your kernel?
 
-The issue can be reproduced with a file system that is nearly full and
-with the cleaner running, while some IO intensive task is running.
-Although it is quite hard to reproduce.
+The description of the issue looks like the problem that it was fixed in my
+patch. So, do you confident that you reproduce the issue with presence of patch [1]
+in your kernel? Could you check and confirm it?
 
-This is what happens:
+Of course, you can discover some new issue. But, currently, I can't understand
+relation between the error message from nilfs_sufile_do_cancel_free() and next
+messages from nilfs_bmap_last_key() from your description. So, I need to think over
+your description more deeply and I need in confirmation that you reproduce the
+issue with presence of patch [1] in your kernel.
 
-1. The cleaner starts the segment construction
-2. nilfs_segctor_collect is called
-3. sc_stage is on NILFS_ST_SUFILE and segments are freed
-4. sc_stage is on NILFS_ST_DAT current segment is full
-5. nilfs_segctor_extend_segments is called, which
-   allocates a new segment
-6. The new segment is one of the segments freed in step 3
-7. nilfs_sufile_cancel_freev is called and produces an error message
-8. Loop around and the collection starts again
-9. sc_stage is on NILFS_ST_SUFILE and segments are freed
-   including the newly allocated segment, which will contain active data
-   and can be allocated at a later time
-10. A few hours later another segment construction allocates the segment
-    and causes file system corruption
+Thanks,
+Vyacheslav Dubeyko.
 
-This can be prevented by simply reordering the statements. If
-nilfs_sufile_cancel_freev is called before nilfs_segctor_extend_segments
-the freed segments are marked as dirty and cannot be allocated any more.
-
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
----
- fs/nilfs2/segment.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
-
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 9f6b486..a1a1916 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1440,17 +1440,19 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
- 
- 		nilfs_clear_logs(&sci->sc_segbufs);
- 
--		err = nilfs_segctor_extend_segments(sci, nilfs, nadd);
--		if (unlikely(err))
--			return err;
--
- 		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
- 			err = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
- 							sci->sc_freesegs,
- 							sci->sc_nfreesegs,
- 							NULL);
- 			WARN_ON(err); /* do not happen */
-+			sci->sc_stage.flags &= ~NILFS_CF_SUFREED;
- 		}
-+
-+		err = nilfs_segctor_extend_segments(sci, nilfs, nadd);
-+		if (unlikely(err))
-+			return err;
-+
- 		nadd = min_t(int, nadd << 1, SC_MAX_SEGDELTA);
- 		sci->sc_stage = prev_stage;
- 	}
--- 
-1.8.5.2
+[1] http://comments.gmane.org/gmane.comp.file-systems.nilfs.user/3082
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
