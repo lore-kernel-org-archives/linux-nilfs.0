@@ -1,45 +1,92 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2] fs/nilfs2: Integer overflow in nilfs_ioctl_wrap_copy()
-Date: Sat, 4 Jan 2014 16:10:07 +0300
-Message-ID: <73948D05-9012-4A6A-8C4C-46C6A11F6454@dubeyko.com>
-References: <1388729454-30256-1-git-send-email-fanwlexca@gmail.com> <20140103161015.b354edd36176e4016840135b@linux-foundation.org> <20140104.180646.52171591.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Transfer-Encoding: 7bit
+From: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH nilfs-utils 1/2] cleanerd: call _exit(2) twice for
+ ensuring not being a session leader
+Date: Sat, 4 Jan 2014 22:18:00 +0900
+Message-ID: <CAE1WaKLvwoTwM0W5Wsv0wcWSzihWLjifNi3HXsPt3XK529tanQ@mail.gmail.com>
+References: <1388561449-13980-1-git-send-email-mitake.hitoshi@gmail.com>
+	<1388561449-13980-2-git-send-email-mitake.hitoshi@gmail.com>
+	<20140101.183018.491730600.konishi.ryusuke@lab.ntt.co.jp>
+Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=2bHU8ID44E0QGicmcZM53Rr1d0tQCm1XucG8hSh0Fis=;
-	b=XL3GmYiUO/gXZJjo5IrqB60yQHKGNaAscebJ/G8CNM4I9TwCQr3yhuUyEUNNPmwcufzVB2A5nRHheJxELzhxO3cHI6kE5ceztDuJfVJyCCdqFdvBS5so8auOJn792Yxy;
-In-Reply-To: <20140104.180646.52171591.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :cc:content-type;
+        bh=TWcKCs7nYK2Mt4Q6Socjm+p2IFsPlQss9S4lXz+FYvo=;
+        b=WtcuWHOMx0Okfv0VLEpLBnU/C2Z5PtFbF8R2F+v71aBxtHmJYKI61ic3Apvw+cHEF4
+         QrL9iDFJOzb9XvOPdE5us06c5LCZbqQK9+/y/kZQ1Afq24v0mPACEJ4g3JKupUuCoYn7
+         IQUrhdkOx0LUIzmMNH4akZaxYoG8mOAI+8PsVdZH9uGSZ7r5ZLhKLSPidiJyGg1BVgYS
+         y3Y5iD42oLirn5pPQ0Wz5qZzKjqQjTyafzcI4Hk9TGjUMksMu6+JxJqakfZYTn4cRRkb
+         f0xQ0taYfvCApLWu/vS25WerboVc7UNuifT9398YnppN/PM0QIfAa0LE6n9KNk8AowIQ
+         z/Lw==
+In-Reply-To: <20140101.183018.491730600.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi Ryusuke,
+On Wed, Jan 1, 2014 at 6:30 PM, Ryusuke Konishi
+<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
+> On Wed,  1 Jan 2014 16:30:48 +0900, Hitoshi Mitake wrote:
+>> Current daemonize() function of cleanerd call _exit(2) only once during its
+>> process of becoming a daemon process. But in the linux environment, a daemon
+>> process should call _exit(2) twice for ensuring not being a session leader. If a
+>> process don't do that, unexpected SIGHUP can be sent to the process (though it
+>> happens rarely). The signal would be confusing event for cleanerd of nilfs. This
+>> patch removes this potential problem.
+>>
+>> Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+>> ---
+>>  sbin/cleanerd/cleanerd.c | 10 ++++++++++
+>>  1 file changed, 10 insertions(+)
+>>
+>> diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+>> index 26067bd..edfa083 100644
+>> --- a/sbin/cleanerd/cleanerd.c
+>> +++ b/sbin/cleanerd/cleanerd.c
+>> @@ -676,6 +676,16 @@ static int daemonize(int nochdir, int noclose, int nofork)
+>>
+>>       /* umask(0); */
+>>
+>> +     /* for ensuring I'm not a session leader */
+>> +     if (!nofork) {
+>> +             pid = fork();
+>> +             if (pid < 0)
+>> +                     return -1;
+>> +             else if (pid != 0)
+>> +                     /* parent */
+>> +                     _exit(0);
+>> +     }
+>> +
+>
+> I tried your patch, but the cleaner daemon still was a session leader.
 
-On Jan 4, 2014, at 12:06 PM, Ryusuke Konishi wrote:
+Thanks for your review and testing.
 
-[snip]
+>
+> This turned out because nilfs_cleanerd is usually executed by
+> mount.nilfs2 program with the nofork option (-n).
+>
+> To fix this problem, it looks like the above !nofork check of the
+> second fork() should be removed even though it becomes confusing.  In
+> that case, we may need to add some explanation why fork() should be
+> called even if nofork is specified.
 
-> Sorry for the poor documentation of nilfs_argv struct and
-> nilfs_ioctl_wrap_copy function.
-> 
+For ensuring not being a session leader, fork() should be called twice. Removing
+the second condition of !nofork is not enough. For this purpose, we need to
+remove both of the conditions of !nofork.
 
-[snip]
+BTW, what is an intention of "-n" option of cleanerd? I read the code of
+nilfs_launch_cleanerd() but couldn't understand the reason of this option.
 
-> I modified the commit log and also added a few comment lines to
-> clarify the address of the patch.  The modified patch is attached
-> below.
-> 
-
-Maybe it makes sense to add comment for the function at whole too?
-I suppose that description of the patch contains many useful details
-about the method at whole.
+If this option is aiming to reduce calling of fork(), I think this can be
+eliminated. Calling 3 fork()s (1 in mount.nilfs2, 2 in cleanerd) would be
+acceptable.
 
 Thanks,
-Vyacheslav Dubeyko.
-
+Hitoshi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
