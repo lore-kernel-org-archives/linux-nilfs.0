@@ -1,92 +1,110 @@
 From: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH nilfs-utils 1/2] cleanerd: call _exit(2) twice for
- ensuring not being a session leader
-Date: Sat, 4 Jan 2014 22:18:00 +0900
-Message-ID: <CAE1WaKLvwoTwM0W5Wsv0wcWSzihWLjifNi3HXsPt3XK529tanQ@mail.gmail.com>
-References: <1388561449-13980-1-git-send-email-mitake.hitoshi@gmail.com>
-	<1388561449-13980-2-git-send-email-mitake.hitoshi@gmail.com>
-	<20140101.183018.491730600.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
+Subject: [PATCH] mkfs: check sizes of important structs at build time
+Date: Sat,  4 Jan 2014 22:29:31 +0900
+Message-ID: <1388842171-16105-1-git-send-email-mitake.hitoshi@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=TWcKCs7nYK2Mt4Q6Socjm+p2IFsPlQss9S4lXz+FYvo=;
-        b=WtcuWHOMx0Okfv0VLEpLBnU/C2Z5PtFbF8R2F+v71aBxtHmJYKI61ic3Apvw+cHEF4
-         QrL9iDFJOzb9XvOPdE5us06c5LCZbqQK9+/y/kZQ1Afq24v0mPACEJ4g3JKupUuCoYn7
-         IQUrhdkOx0LUIzmMNH4akZaxYoG8mOAI+8PsVdZH9uGSZ7r5ZLhKLSPidiJyGg1BVgYS
-         y3Y5iD42oLirn5pPQ0Wz5qZzKjqQjTyafzcI4Hk9TGjUMksMu6+JxJqakfZYTn4cRRkb
-         f0xQ0taYfvCApLWu/vS25WerboVc7UNuifT9398YnppN/PM0QIfAa0LE6n9KNk8AowIQ
-         z/Lw==
-In-Reply-To: <20140101.183018.491730600.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+        h=from:to:cc:subject:date:message-id;
+        bh=fKA4EvSg1MCzkUnivjCNuzFOV2tS2WyKJnDJUbNt5/U=;
+        b=UkkKt3swLfQ9cy4q5tP+0WpO/RwZVc/0rxyZDP9KxAuDKYWpYe4K261AGzbRFocDRr
+         OLmnxv7zssp42SupWVXwHEteMTsHrMeaZMQcogkvQfO5zr3ICFnvi6/SqT8SVJ9HaGHH
+         jyr3qUrsHfkN6heImffSckyfhx4MAqHnDu3Avs64h/yaW2LJVGZ5fqB6xK8FJnJL00m0
+         ejIaseHcvwK81mwZh3mwS3OJWIB1xxk8uqj27XgkKp5g7nWBF1cBF4UyzwV5JWX4WOOo
+         Qg/je9adr/DUA0a3xQDkMFec5NEfNvAF9vFCRHsfnCBF82acqvEsr4UsuXEv+LuPXpNO
+         deqQ==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Wed, Jan 1, 2014 at 6:30 PM, Ryusuke Konishi
-<konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> On Wed,  1 Jan 2014 16:30:48 +0900, Hitoshi Mitake wrote:
->> Current daemonize() function of cleanerd call _exit(2) only once during its
->> process of becoming a daemon process. But in the linux environment, a daemon
->> process should call _exit(2) twice for ensuring not being a session leader. If a
->> process don't do that, unexpected SIGHUP can be sent to the process (though it
->> happens rarely). The signal would be confusing event for cleanerd of nilfs. This
->> patch removes this potential problem.
->>
->> Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
->> ---
->>  sbin/cleanerd/cleanerd.c | 10 ++++++++++
->>  1 file changed, 10 insertions(+)
->>
->> diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
->> index 26067bd..edfa083 100644
->> --- a/sbin/cleanerd/cleanerd.c
->> +++ b/sbin/cleanerd/cleanerd.c
->> @@ -676,6 +676,16 @@ static int daemonize(int nochdir, int noclose, int nofork)
->>
->>       /* umask(0); */
->>
->> +     /* for ensuring I'm not a session leader */
->> +     if (!nofork) {
->> +             pid = fork();
->> +             if (pid < 0)
->> +                     return -1;
->> +             else if (pid != 0)
->> +                     /* parent */
->> +                     _exit(0);
->> +     }
->> +
->
-> I tried your patch, but the cleaner daemon still was a session leader.
+Current nilfs_check_ondisk_sizes() checks sizes of important structs
+at run time. The checking should be done at build time. This patch
+adds a new macro, BUILD_BUG_ON(), for this purpose. It is similar to
+static_assert() of C++11. If an argument is true, the macro causes a
+bulid error.
 
-Thanks for your review and testing.
+Below is an example of BUILD_BUG_ON(). When the checked conditions are
+true like below:
 
->
-> This turned out because nilfs_cleanerd is usually executed by
-> mount.nilfs2 program with the nofork option (-n).
->
-> To fix this problem, it looks like the above !nofork check of the
-> second fork() should be removed even though it becomes confusing.  In
-> that case, we may need to add some explanation why fork() should be
-> called even if nofork is specified.
+/* intentional change for testing BUILD_BUG_ON() */
 
-For ensuring not being a session leader, fork() should be called twice. Removing
-the second condition of !nofork is not enough. For this purpose, we need to
-remove both of the conditions of !nofork.
+static __attribute__((used)) void nilfs_check_ondisk_sizes(void)
+{
+	BUILD_BUG_ON(sizeof(struct nilfs_inode) > NILFS_MIN_BLOCKSIZE);
+...
 
-BTW, what is an intention of "-n" option of cleanerd? I read the code of
-nilfs_launch_cleanerd() but couldn't understand the reason of this option.
+build process of mkfs.o causes errors like this:
 
-If this option is aiming to reduce calling of fork(), I think this can be
-eliminated. Calling 3 fork()s (1 in mount.nilfs2, 2 in cleanerd) would be
-acceptable.
+gcc -std=gnu99 -DHAVE_CONFIG_H -I. -I../..  -I../../include  -Wall -g -O2 -MT mkfs.o -MD -MP -MF .deps/mkfs.Tpo -c -o mkfs.o mkfs.c
+mkfs.c: In function 'nilfs_check_ondisk_sizes':
+mkfs.c:429:2: error: negative width in bit-field '<anonymous>'
+mkfs.c:430:2: error: negative width in bit-field '<anonymous>'
+mkfs.c:431:2: error: negative width in bit-field '<anonymous>'
+mkfs.c:432:2: error: negative width in bit-field '<anonymous>'
+mkfs.c:433:2: error: negative width in bit-field '<anonymous>'
+mkfs.c:434:2: error: negative width in bit-field '<anonymous>'
+mkfs.c:435:2: error: negative width in bit-field '<anonymous>'
 
-Thanks,
-Hitoshi
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ sbin/mkfs/mkfs.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+index 4e153ce..8eb00bf 100644
+--- a/sbin/mkfs/mkfs.c
++++ b/sbin/mkfs/mkfs.c
+@@ -85,6 +85,9 @@
+ typedef __u64  blocknr_t;
+ 
+ #define BUG_ON(x)	   assert(!(x))
++/* Force a compilation error if the condition is true */
++#define BUILD_BUG_ON(condition) ((void)sizeof(struct { int: -!!(condition); }))
++
+ #define ROUNDUP_DIV(n, m)	(((n) - 1) / (m) + 1)
+ #define max_t(type, x, y) \
+ 	({ type __x = (x); type __y = (y); __x > __y ? __x : __y; })
+@@ -417,16 +420,15 @@ static unsigned count_dat_blocks(unsigned nr_dat_entries)
+ 	return nblocks;
+ }
+ 
+-static void nilfs_check_ondisk_sizes(void)
++static __attribute__((used)) void nilfs_check_ondisk_sizes(void)
+ {
+-	if (sizeof(struct nilfs_inode) > NILFS_MIN_BLOCKSIZE ||
+-	    sizeof(struct nilfs_sufile_header) > NILFS_MIN_BLOCKSIZE ||
+-	    sizeof(struct nilfs_segment_usage) > NILFS_MIN_BLOCKSIZE ||
+-	    sizeof(struct nilfs_cpfile_header) > NILFS_MIN_BLOCKSIZE ||
+-	    sizeof(struct nilfs_checkpoint) > NILFS_MIN_BLOCKSIZE ||
+-	    sizeof(struct nilfs_dat_entry) > NILFS_MIN_BLOCKSIZE ||
+-	    sizeof(struct nilfs_super_root) > NILFS_MIN_BLOCKSIZE)
+-		perr("Internal error: too large on-disk structure");
++	BUILD_BUG_ON(sizeof(struct nilfs_inode) > NILFS_MIN_BLOCKSIZE);
++	BUILD_BUG_ON(sizeof(struct nilfs_sufile_header) > NILFS_MIN_BLOCKSIZE);
++	BUILD_BUG_ON(sizeof(struct nilfs_segment_usage) > NILFS_MIN_BLOCKSIZE);
++	BUILD_BUG_ON(sizeof(struct nilfs_cpfile_header) > NILFS_MIN_BLOCKSIZE);
++	BUILD_BUG_ON(sizeof(struct nilfs_checkpoint) > NILFS_MIN_BLOCKSIZE);
++	BUILD_BUG_ON(sizeof(struct nilfs_dat_entry) > NILFS_MIN_BLOCKSIZE);
++	BUILD_BUG_ON(sizeof(struct nilfs_super_root) > NILFS_MIN_BLOCKSIZE);
+ }
+ 
+ static unsigned long
+@@ -523,8 +525,6 @@ static void init_disk_layout(struct nilfs_disk_info *di, int fd,
+ 		     "or shorten segments with -B option.", dev_size,
+ 		     (unsigned long long)segment_size * min_nsegments);
+ 	di->nseginfo = 0;
+-
+-	nilfs_check_ondisk_sizes();
+ }
+ 
+ static struct nilfs_segment_info *new_segment(struct nilfs_disk_info *di)
+-- 
+1.8.1.2
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
