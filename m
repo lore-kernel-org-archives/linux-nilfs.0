@@ -1,48 +1,50 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2] fs/nilfs2: Integer overflow in
- nilfs_ioctl_wrap_copy()
-Date: Sat, 04 Jan 2014 22:43:41 +0900 (JST)
-Message-ID: <20140104.224341.57444288.konishi.ryusuke@lab.ntt.co.jp>
-References: <20140103161015.b354edd36176e4016840135b@linux-foundation.org>
-	<20140104.180646.52171591.konishi.ryusuke@lab.ntt.co.jp>
-	<73948D05-9012-4A6A-8C4C-46C6A11F6454@dubeyko.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH] mkfs: check sizes of important structs at build time
+Date: Sat, 4 Jan 2014 17:52:35 +0300
+Message-ID: <EF28F22A-C43F-41C9-A5B9-8597C5879E3E@dubeyko.com>
+References: <1388842171-16105-1-git-send-email-mitake.hitoshi@gmail.com>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <73948D05-9012-4A6A-8C4C-46C6A11F6454-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=rTx43pRfIHmcLB22uVMZmylt5CK9rOvcgc0AoGojnNY=;
+	b=bWb2AuvKkpSC9OM2zXH6u7LHJLr7sEgQnlM1wvWax5k59VA8z2NgDh/JFXIQ7HqT17LGFA6DIJHzPtvjvsL85r0/6HicHAmoYwdahbU/BMOemVLin3Gdx3KXoU5rRDFX;
+In-Reply-To: <1388842171-16105-1-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Wenliang Fan <fanwlexca-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Sat, 4 Jan 2014 16:10:07 +0300, Vyacheslav Dubeyko wrote:
-> Hi Ryusuke,
-> 
-> On Jan 4, 2014, at 12:06 PM, Ryusuke Konishi wrote:
-> 
-> [snip]
-> 
->> Sorry for the poor documentation of nilfs_argv struct and
->> nilfs_ioctl_wrap_copy function.
->> 
-> 
-> [snip]
-> 
->> I modified the commit log and also added a few comment lines to
->> clarify the address of the patch.  The modified patch is attached
->> below.
->> 
-> 
-> Maybe it makes sense to add comment for the function at whole too?
-> I suppose that description of the patch contains many useful details
-> about the method at whole.
 
-Yes, I would appreciate it if you help to add the missing comment of
-the function (with a separate patch).
+On Jan 4, 2014, at 4:29 PM, Hitoshi Mitake wrote:
+
+> Current nilfs_check_ondisk_sizes() checks sizes of important structs
+> at run time. The checking should be done at build time. This patch
+> adds a new macro, BUILD_BUG_ON(), for this purpose. It is similar to
+> static_assert() of C++11. If an argument is true, the macro causes a
+> bulid error.
+> 
+> Below is an example of BUILD_BUG_ON(). When the checked conditions are
+> true like below:
+> 
+> /* intentional change for testing BUILD_BUG_ON() */
+> 
+> static __attribute__((used)) void nilfs_check_ondisk_sizes(void)
+> {
+> 	BUILD_BUG_ON(sizeof(struct nilfs_inode) > NILFS_MIN_BLOCKSIZE);
+
+So, why do we need to have function for the case of checking on compilation
+phase?
+
+I suppose that we need to have some run-time check anyway. Your approach
+is correct for the current state of the code. But I feel a necessity in run-time check
+anyway. Maybe it looks like a paranoia. :) Maybe it needs to extend checking
+in this place.
 
 Thanks,
-Ryusuke Konishi
+Vyacheslav Dubeyko.
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
