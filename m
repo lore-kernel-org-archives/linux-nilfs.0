@@ -1,70 +1,64 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: [PATCH] mkfs: check sizes of important structs at build time
-Date: Sat, 4 Jan 2014 18:39:58 +0300
-Message-ID: <2276BC9A-0688-4566-8FA8-D280E6F71F5F@dubeyko.com>
-References: <1388842171-16105-1-git-send-email-mitake.hitoshi@gmail.com> <EF28F22A-C43F-41C9-A5B9-8597C5879E3E@dubeyko.com> <CAE1WaKLr1EuovgHgXQa1o9LQVk1fRkUXbDrGiKfsdTB347ieqg@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Transfer-Encoding: 8BIT
+Date: Sun, 05 Jan 2014 01:08:43 +0900 (JST)
+Message-ID: <20140105.010843.356918311.konishi.ryusuke@lab.ntt.co.jp>
+References: <1388842171-16105-1-git-send-email-mitake.hitoshi@gmail.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=SkX58RtczPosoFWCAYwEQriH8sxRZkK2PqG89A1uSAU=;
-	b=sNSXZdkTL9OAktplRjnDl+VzXB7/as6QleGUVRaXvW0A78wLWCnOVSIHlGB682mkhYI0AZ0bnm84vCaqc80qK9xbS7N5zlmVqR7gXrzN/kFzFFYXfGU534Ke9h8Zt2in;
-In-Reply-To: <CAE1WaKLr1EuovgHgXQa1o9LQVk1fRkUXbDrGiKfsdTB347ieqg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1388842171-16105-1-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: Text/Plain; charset="us-ascii"
 To: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 
-
-On Jan 4, 2014, at 4:54 PM, Hitoshi Mitake wrote:
-
-> On Sat, Jan 4, 2014 at 11:52 PM, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> wrote:
->> 
->> On Jan 4, 2014, at 4:29 PM, Hitoshi Mitake wrote:
->> 
->>> Current nilfs_check_ondisk_sizes() checks sizes of important structs
->>> at run time. The checking should be done at build time. This patch
->>> adds a new macro, BUILD_BUG_ON(), for this purpose. It is similar to
->>> static_assert() of C++11. If an argument is true, the macro causes a
->>> bulid error.
->>> 
->>> Below is an example of BUILD_BUG_ON(). When the checked conditions are
->>> true like below:
->>> 
->>> /* intentional change for testing BUILD_BUG_ON() */
->>> 
->>> static __attribute__((used)) void nilfs_check_ondisk_sizes(void)
->>> {
->>>      BUILD_BUG_ON(sizeof(struct nilfs_inode) > NILFS_MIN_BLOCKSIZE);
->> 
->> So, why do we need to have function for the case of checking on compilation
->> phase?
+On Sat,  4 Jan 2014 22:29:31 +0900, Hitoshi Mitake wrote:
+> Current nilfs_check_ondisk_sizes() checks sizes of important structs
+> at run time. The checking should be done at build time. This patch
+> adds a new macro, BUILD_BUG_ON(), for this purpose. It is similar to
+> static_assert() of C++11. If an argument is true, the macro causes a
+> bulid error.
 > 
-> Just for excluding the checking from other part of code and improve readability.
+> Below is an example of BUILD_BUG_ON(). When the checked conditions are
+> true like below:
 > 
-
-I think that we can have only macro instead of the function nilfs_check_ondisk_sizes().
-And this macros can be placed in the begin of main() call. I think that it will be enough
-for the compilation phase check.
-
->> 
->> I suppose that we need to have some run-time check anyway. Your approach
->> is correct for the current state of the code. But I feel a necessity in run-time check
->> anyway. Maybe it looks like a paranoia. :) Maybe it needs to extend checking
->> in this place.
+> /* intentional change for testing BUILD_BUG_ON() */
 > 
-> Do you mean both of the build time check and the run time check? If
-> so, I agree with your opinion. I'll send v2 based on this policy.
+> static __attribute__((used)) void nilfs_check_ondisk_sizes(void)
+> {
+> 	BUILD_BUG_ON(sizeof(struct nilfs_inode) > NILFS_MIN_BLOCKSIZE);
+> ...
 > 
+> build process of mkfs.o causes errors like this:
+> 
+> gcc -std=gnu99 -DHAVE_CONFIG_H -I. -I../..  -I../../include  -Wall -g -O2 -MT mkfs.o -MD -MP -MF .deps/mkfs.Tpo -c -o mkfs.o mkfs.c
+> mkfs.c: In function 'nilfs_check_ondisk_sizes':
+> mkfs.c:429:2: error: negative width in bit-field '<anonymous>'
+> mkfs.c:430:2: error: negative width in bit-field '<anonymous>'
+> mkfs.c:431:2: error: negative width in bit-field '<anonymous>'
+> mkfs.c:432:2: error: negative width in bit-field '<anonymous>'
+> mkfs.c:433:2: error: negative width in bit-field '<anonymous>'
+> mkfs.c:434:2: error: negative width in bit-field '<anonymous>'
+> mkfs.c:435:2: error: negative width in bit-field '<anonymous>'
+> 
+> Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-I mean that block size can be different during volume creation and maybe
-it makes sense to extend a block size related checking for run-time phase.
-That's all. But right now I haven't any concrete suggestions.
+This is an interesting patch.
+
+I am inclined to apply this since the every test in the
+nilfs_check_ondisk_sizes function is static.
+
+If we will add a new check that depends on block size in a future, we
+need to add a separate runtime check function as Vyacheslav wrote, but
+I think you are doing right thing.
+
+One my question is why you used bit operator.  The BUILD_BUG_ON marcro
+of kernel is implemented with negative array index.
+Is there any reason for this ?
 
 Thanks,
-Vyacheslav Dubeyko.
-
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
