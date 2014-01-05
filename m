@@ -1,19 +1,19 @@
 From: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH nilfs-utils v2 2/4] cleanerd: call _exit(2) twice for ensuring not being a session leader
-Date: Mon,  6 Jan 2014 00:52:43 +0900
-Message-ID: <1388937165-32692-3-git-send-email-mitake.hitoshi@gmail.com>
+Subject: [PATCH nilfs-utils v2 3/4] mount: don't pass -n option to cleanerd
+Date: Mon,  6 Jan 2014 00:52:44 +0900
+Message-ID: <1388937165-32692-4-git-send-email-mitake.hitoshi@gmail.com>
 References: <1388937165-32692-1-git-send-email-mitake.hitoshi@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=TSinxzTXrMgLddCFKTFmiNxk94gIMQYk2kC7pyRdGrE=;
-        b=kvPa6348zSy+BhJtsYE9nTidQfHek2rDTrhGnn2rfeXI+C0JbhnP3sm1/ZtSjWQRTM
-         XZk5nXBoDzZnzC8pSQKdSOK3PPrRS7FzlmF8jYv/DowtXJtyDaHxt9PXcx97oMIHVYmR
-         XhDDeCrzA29x0A8ACtwjSXX8sVC4ACJ4+gL8HW7sV1Yjn/9ZaldVp8gjnPTJ5N1hr75t
-         vDiHowaDfhPFHvInvsEOYPVfRgH7G+pW9PnNQb/z2yakbGLwZZG2VmVEhGfvsQCIp+XI
-         BOczKDUQLvcbsqQSbwYAo8ChQb1yA+PVHF0fNc/U22QSdr4WKt6WDRD616JkwMFnNRjr
-         pU/g==
+        bh=cY49NUmiq8YXy//OnMh4mTDXR4qQ0VN+py8fDOcAkPw=;
+        b=d3vIuw5s3BYnLwnbYHRyPzdyck/4bQaPMhxBP0PB1oPrJCg9kgRTScs50c6scOKySI
+         R4FHJ+Q2jC1aP0Qg7S5yYtnGdstsHzpds4Lw0yQtcRGzftAyq1FIBSQfD31FcHdlPpE/
+         0gRis07beD9PR1VpU7P9Pnx1tXDWuU2CeBVYO5OG4BHYKhsnslvJL4/DB6v0r4jIzYOz
+         Wq6AOr/1doR/8Ya9UPAkhKV3KALn+ALqzzpMG3yvQa1AWjfK/Y+lOkDoglMzcPRwoqZJ
+         ZVspeZy/bgt0Tf2Xa3kOj/rzCjwDws6I52RPgjyM4mMeqkO6z6Y7hIjcX8J9m8DHoeMF
+         OtOw==
 In-Reply-To: <1388937165-32692-1-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -23,37 +23,43 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Current daemonize() function of cleanerd call _exit(2) only once during its
-process of becoming a daemon process. But in the linux environment, a daemon
-should call _exit(2) twice for ensuring not being a session leader. If a
-process don't do that, unexpected SIGHUP can be sent to the process (though it
-happens rarely). The signal would be confusing event for cleanerd of nilfs. This
-patch removes this potential problem.
+This patch lets mount.nilfs2 not pass the -n option to cleanerd,
+because it is obsoleted.
 
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- sbin/cleanerd/cleanerd.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ lib/cleaner_exec.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index 0b5bb70..86dfcf7 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -708,6 +708,14 @@ static int daemonize(int nochdir, int noclose)
+diff --git a/lib/cleaner_exec.c b/lib/cleaner_exec.c
+index 299451c..edc55e3 100644
+--- a/lib/cleaner_exec.c
++++ b/lib/cleaner_exec.c
+@@ -75,7 +75,6 @@
+ #define WAIT_CLEANERD_RETRY_TIMEOUT	8	/* in seconds */
  
- 	/* umask(0); */
+ static const char cleanerd[] = "/sbin/" NILFS_CLEANERD_NAME;
+-static const char cleanerd_nofork_opt[] = "-n";
+ static const char cleanerd_protperiod_opt[] = "-p";
  
-+	/* for ensuring I'm not a session leader */
-+	pid = fork();
-+	if (pid < 0)
-+		return -1;
-+	else if (pid != 0)
-+		/* parent */
-+		_exit(0);
-+
- 	if (!nochdir && (chdir(ROOTDIR) < 0))
- 		return -1;
- 
+ static void default_logger(int priority, const char *fmt, ...)
+@@ -118,7 +117,7 @@ static inline int process_is_alive(pid_t pid)
+ int nilfs_launch_cleanerd(const char *device, const char *mntdir,
+ 			  unsigned long protperiod, pid_t *ppid)
+ {
+-	const char *dargs[7];
++	const char *dargs[6];
+ 	struct stat statbuf;
+ 	sigset_t sigs;
+ 	int i = 0;
+@@ -146,7 +145,6 @@ int nilfs_launch_cleanerd(const char *device, const char *mntdir,
+ 			exit(1);
+ 		}
+ 		dargs[i++] = cleanerd;
+-		dargs[i++] = cleanerd_nofork_opt;
+ 		if (protperiod != ULONG_MAX) {
+ 			dargs[i++] = cleanerd_protperiod_opt;
+ 			snprintf(buf, sizeof(buf), "%lu", protperiod);
 -- 
 1.8.1.2
 
