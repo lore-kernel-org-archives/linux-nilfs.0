@@ -1,90 +1,113 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] mkfs: check sizes of important structs at build time
-Date: Mon, 06 Jan 2014 02:17:26 +0900 (JST)
-Message-ID: <20140106.021726.511722589.konishi.ryusuke@lab.ntt.co.jp>
-References: <1388842171-16105-1-git-send-email-mitake.hitoshi@gmail.com>
-	<20140105.010843.356918311.konishi.ryusuke@lab.ntt.co.jp>
-	<87wqiea1xt.wl%mitake.hitoshi@gmail.com>
+Subject: Re: [PATCH nilfs-utils v2 1/4] cleanerd: ignore nofork option
+Date: Mon, 06 Jan 2014 02:19:39 +0900 (JST)
+Message-ID: <20140106.021939.270762228.konishi.ryusuke@lab.ntt.co.jp>
+References: <1388937165-32692-1-git-send-email-mitake.hitoshi@gmail.com>
+	<1388937165-32692-2-git-send-email-mitake.hitoshi@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87wqiea1xt.wl%mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1388937165-32692-2-git-send-email-mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Mon, 06 Jan 2014 00:22:22 +0900, Hitoshi Mitake wrote:
-> At Sun, 05 Jan 2014 01:08:43 +0900 (JST),
-> Ryusuke Konishi wrote:
->> 
->> On Sat,  4 Jan 2014 22:29:31 +0900, Hitoshi Mitake wrote:
->> > Current nilfs_check_ondisk_sizes() checks sizes of important structs
->> > at run time. The checking should be done at build time. This patch
->> > adds a new macro, BUILD_BUG_ON(), for this purpose. It is similar to
->> > static_assert() of C++11. If an argument is true, the macro causes a
->> > bulid error.
->> > 
->> > Below is an example of BUILD_BUG_ON(). When the checked conditions are
->> > true like below:
->> > 
->> > /* intentional change for testing BUILD_BUG_ON() */
->> > 
->> > static __attribute__((used)) void nilfs_check_ondisk_sizes(void)
->> > {
->> > 	BUILD_BUG_ON(sizeof(struct nilfs_inode) > NILFS_MIN_BLOCKSIZE);
->> > ...
->> > 
->> > build process of mkfs.o causes errors like this:
->> > 
->> > gcc -std=gnu99 -DHAVE_CONFIG_H -I. -I../..  -I../../include  -Wall -g -O2 -MT mkfs.o -MD -MP -MF .deps/mkfs.Tpo -c -o mkfs.o mkfs.c
->> > mkfs.c: In function 'nilfs_check_ondisk_sizes':
->> > mkfs.c:429:2: error: negative width in bit-field '<anonymous>'
->> > mkfs.c:430:2: error: negative width in bit-field '<anonymous>'
->> > mkfs.c:431:2: error: negative width in bit-field '<anonymous>'
->> > mkfs.c:432:2: error: negative width in bit-field '<anonymous>'
->> > mkfs.c:433:2: error: negative width in bit-field '<anonymous>'
->> > mkfs.c:434:2: error: negative width in bit-field '<anonymous>'
->> > mkfs.c:435:2: error: negative width in bit-field '<anonymous>'
->> > 
->> > Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
->> 
->> This is an interesting patch.
->> 
->> I am inclined to apply this since the every test in the
->> nilfs_check_ondisk_sizes function is static.
->> 
->> If we will add a new check that depends on block size in a future, we
->> need to add a separate runtime check function as Vyacheslav wrote, but
->> I think you are doing right thing.
->> 
->> One my question is why you used bit operator.  The BUILD_BUG_ON marcro
->> of kernel is implemented with negative array index.
->> Is there any reason for this ?
+On Mon,  6 Jan 2014 00:52:42 +0900, Hitoshi Mitake wrote:
+> The nofork option aims to reduce call of fork(), but it is not
+> effective. This patch lets cleanerd ignore the option simply even if
+> it is passed.
 > 
-> If I remember correctly, I found in the BUILD_BUG_ON() in the code of Xen. I
-> don't have any opinion about how we implement the check. If you like the way of
-> array with negative length, I will employ it in v2.
+> Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+> ---
+>  sbin/cleanerd/cleanerd.c | 28 ++++++++++++----------------
+>  1 file changed, 12 insertions(+), 16 deletions(-)
 > 
-> BTW, there is another approach of the implementation.
-> 
-> #define static_assert(a, b) do { switch (0) case 0: case (a): ; } while (0)
-> # from xv6: http://pdos.csail.mit.edu/6.828/2012/xv6.html
-> 
-> This duplicated case of switch statement can be used to implement
-> BUILD_BUG_ON() (the b can be used as an error message).
-> 
-> Which one do you like?
+> diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+> index e1f6a04..0b5bb70 100644
+> --- a/sbin/cleanerd/cleanerd.c
+> +++ b/sbin/cleanerd/cleanerd.c
+> @@ -113,7 +113,7 @@ do {						\
+>  const static struct option long_option[] = {
+>  	{"conffile", required_argument, NULL, 'c'},
+>  	{"help", no_argument, NULL, 'h'},
+> -	/* internal option for mount.nilfs2 only */
+> +	/* nofork option is obsolete. It does nothing even if passed */
+>  	{"nofork", no_argument, NULL, 'n'},
+>  	{"protection-period", required_argument, NULL, 'p'},
+>  	{"version", no_argument, NULL, 'V'},
+> @@ -691,20 +691,18 @@ static int oom_adjust(void)
+>  #define DEVNULL	"/dev/null"
+>  #define ROOTDIR	"/"
+>  
+> -static int daemonize(int nochdir, int noclose, int nofork)
+> +static int daemonize(int nochdir, int noclose)
+>  {
+>  	pid_t pid;
+>  
+> -	if (!nofork) {
+> -		pid = fork();
+> -		if (pid < 0)
+> -			return -1;
+> -		else if (pid != 0)
+> -			/* parent */
+> -			_exit(0);
+> -	}
+> +	pid = fork();
+> +	if (pid < 0)
+> +		return -1;
+> +	else if (pid != 0)
+> +		/* parent */
+> +		_exit(0);
+>  
+> -	/* child or nofork */
+> +	/* child */
+>  	if (setsid() < 0)
+>  		return -1;
+>  
+> @@ -1491,7 +1489,7 @@ int main(int argc, char *argv[])
+>  	char canonical[PATH_MAX + 2];
+>  	const char *dev, *dir;
+>  	char *endptr;
+> -	int status, nofork, c;
+> +	int status, c;
+>  #ifdef _GNU_SOURCE
+>  	int option_index;
+>  #endif	/* _GNU_SOURCE */
+> @@ -1499,7 +1497,6 @@ int main(int argc, char *argv[])
+>  	progname = (strrchr(argv[0], '/') != NULL) ?
+>  		strrchr(argv[0], '/') + 1 : argv[0];
+>  	conffile = NILFS_CLEANERD_CONFFILE;
+> -	nofork = 0;
+>  	status = 0;
+>  	protection_period = ULONG_MAX;
+>  	dev = NULL;
+> @@ -1520,8 +1517,7 @@ int main(int argc, char *argv[])
+>  			nilfs_cleanerd_usage(progname);
+>  			exit(0);
+>  		case 'n':
+> -			/* internal option for mount.nilfs2 only */
+> -			nofork = 1;
+> +			/* ignore nofork option, do nothing */
+>  			break;
+>  		case 'p':
+>  			protection_period = strtoul(optarg, &endptr, 10);
+> @@ -1568,7 +1564,7 @@ int main(int argc, char *argv[])
+>  		}
+>  	}
+>  
+> -	if (daemonize(0, 0, nofork) < 0) {
+> +	if (daemonize(0, 0) < 0) {
+>  		fprintf(stderr, "%s: %s\n", progname, strerror(errno));
+>  		exit(1);
+>  	}
+> -- 
+> 1.8.1.2
 
-Thanks for letting me know.
+Looks good to me. Applied.
 
-If there is no known differences in those implementations, I don't
-dwell on them, all seems ok.
-
-I applied the first patch this time.
-
-Thank you.
+Thank a lot.
 
 Ryusuke Konishi
 --
