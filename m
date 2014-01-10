@@ -1,112 +1,146 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH 4/4] nilfs-utils: nilfs-tune: implement
- functionality of xafile initialization
-Date: Fri, 10 Jan 2014 16:11:41 +0400
-Message-ID: <1389355901.3938.145.camel@slavad-ubuntu>
+Subject: [RFC][STEP 1][PATCH v2 04/17] nilfs2: introduce xanode's entry
+ related declarations
+Date: Fri, 10 Jan 2014 16:07:54 +0400
+Message-ID: <1389355674.3938.124.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=OM6ZoYUAbf+Fk7pqFkS07wBQn3qRKu4fX2oFucpHb4o=;
-	b=KqDi3tE5Q3sbWOXpNfffpQyEN/saX6pSJUO9X0WJR6uyXxHZUzMNv4jV35HjDmMSFc4dtqR00eId0TewRTSmoO+PE/4JJuJy3ECkuL7dm7jjXnfK0jqW/is7dKgx5FJm;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=+GM0jKtjBU9U6KKResTdHksHnUZWSbe+a60dZ13jsIM=;
+	b=sQhOZh4hth9zAvA5Vlr9o5YLIanvUW9EYFyxQSh8ijSuXOSxvtzM+ZV6XvSM6LSLpI9DrHsEKQA62iTlVPbzPRgqVVysslbYaz1qyN7gu9jFT9g0gWpXOYgtJtMJbiN9;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH 4/4] nilfs-utils: nilfs-tune: implement functionality of xafile initialization
+Subject: [RFC][STEP 1][PATCH v2 04/17] nilfs2: introduce xanode's entry related declarations
 
-This patch implements functionality of request xafile creation
-on existed NILFS2 volume by means of nilfs-tune utility.
-
-The nilfs-tune utility simply modify superblock of such volume by
-means of setting NILFS_FEATURE_COMPAT_INIT_XAFILE in
-s_feature_compat field of superblock. Then, file system driver
-creates xafile in the case of presence above-mentioned flag
-(NILFS_FEATURE_COMPAT_INIT_XAFILE).
+This patch adds declaration of structures, macros and auxiliary
+functions for xanode's entries processing.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- man/nilfs-tune.8             |    9 +++++++++
- sbin/nilfs-tune/nilfs-tune.c |   20 ++++++++++++++++++--
- 2 files changed, 27 insertions(+), 2 deletions(-)
+ fs/nilfs2/xafile.h |   97 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 97 insertions(+)
 
-diff --git a/man/nilfs-tune.8 b/man/nilfs-tune.8
-index 47dc1b3..e0ed198 100644
---- a/man/nilfs-tune.8
-+++ b/man/nilfs-tune.8
-@@ -52,6 +52,15 @@ Enable block count per checkpoint.
- After setting this option, fsck should be run on the filesystem to
- make the counts right, but no fsck tool is available yet, sorry.
- .RE
-+.RS
-+.TP
-+.B xafile_init
-+Enable xafile creation (if it doesn't exist).
-+After setting this option, superblock will keep flag that it requests
-+xafile creation. Creation request will fail if a NILFS2 volume contains
-+xafile yet. The xafile will be created during nearest operation of
-+segment creation.
-+.RE
- .TP
- .B \-U \fIUUID\fP
- Set the universally unique identifier (UUID) of the file system to UUID.
-diff --git a/sbin/nilfs-tune/nilfs-tune.c b/sbin/nilfs-tune/nilfs-tune.c
-index 0698649..bc70681 100644
---- a/sbin/nilfs-tune/nilfs-tune.c
-+++ b/sbin/nilfs-tune/nilfs-tune.c
-@@ -84,7 +84,7 @@ static void nilfs_tune_usage(void)
+diff --git a/fs/nilfs2/xafile.h b/fs/nilfs2/xafile.h
+index 34e4bb9..cee7b03 100644
+--- a/fs/nilfs2/xafile.h
++++ b/fs/nilfs2/xafile.h
+@@ -147,6 +147,20 @@ union nilfs_xattr_key {
+ 	nilfs_xattr_leaf_key leaf_key;
+ };
  
- const static __u64 ok_features[NILFS_MAX_FEATURE_TYPES] = {
- 	/* Compat */
--	0,
-+	NILFS_FEATURE_COMPAT_INIT_XAFILE,
- 	/* Read-only compat */
- 	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
- 	/* Incompat */
-@@ -93,7 +93,7 @@ const static __u64 ok_features[NILFS_MAX_FEATURE_TYPES] = {
- 
- const static __u64 clear_ok_features[NILFS_MAX_FEATURE_TYPES] = {
- 	/* Compat */
--	0,
-+	NILFS_FEATURE_COMPAT_INIT_XAFILE,
- 	/* Read-only compat */
- 	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
- 	/* Incompat */
-@@ -454,6 +454,10 @@ static void show_nilfs_sb(struct nilfs_super_block *sbp)
- 	printf("CRC check data size:\t  0x%08x\n", le32_to_cpu(sbp->s_bytes));
++/*
++ * struct nilfs_xanode_entry - xanode's entry
++ * @name: xattr's name
++ * @value: xattr's value
++ * @value_hash: complex hash of xattr's value
++ */
++struct nilfs_xanode_entry {
++	union {
++		char name[0];
++		char value[0];
++		struct nilfs_xattr_value_hash value_hash;
++	} __packed;
++} __packed;
++
+ /* Xanode related declarations */
+ #define BH_DATA(bh) \
+ 	((char *)(((struct buffer_head *)(bh))->b_data))
+@@ -320,4 +334,87 @@ NILFS_XANODE_LAST_NOT_INDEX_KEY(union nilfs_xanode_header *hdr_ptr)
+ 	BUG();
  }
  
-+#define NILFS_HAS_XAFILE(features) \
-+	(((__u64 *)features)[NILFS_FEATURE_TYPE_COMPAT_RO] & \
-+	 NILFS_FEATURE_COMPAT_RO_XAFILE)
++/* Entry related declarations */
++#define NILFS_XANODE_ENTRY_PTR(ptr) ((struct nilfs_xanode_entry *)(ptr))
 +
- static int update_feature_set(struct nilfs_super_block *sbp,
- 			      struct nilfs_tune_options *opts)
- {
-@@ -487,6 +491,18 @@ static int update_feature_set(struct nilfs_super_block *sbp,
- 				nilfs_feature2string(bad_type, bad_mask));
- 		}
- 	} else {
-+		if ((features[NILFS_FEATURE_TYPE_COMPAT] &
-+		     NILFS_FEATURE_COMPAT_INIT_XAFILE) &&
-+		    (features[NILFS_FEATURE_TYPE_COMPAT_RO] &
-+		     NILFS_FEATURE_COMPAT_RO_XAFILE)) {
-+			fprintf(stderr,
-+				"feature %s is not allowed to be set\n",
-+				nilfs_feature2string(NILFS_FEATURE_TYPE_COMPAT,
-+					NILFS_FEATURE_COMPAT_INIT_XAFILE));
-+			ret = -1;
-+			return ret;
++static inline
++__u16 NILFS_XANODE_ENTRY_OFFSET(union nilfs_xattr_key *key)
++{
++	if (IS_END_KEY(key))
++		return 0;
++
++	switch (NILFS_XANODE_KEY_TYPE(key)) {
++	case NILFS_XATTR_TREE_LEAF_KEY_TYPE:
++		return le16_to_cpu(key->leaf_key.entry_offset);
++	};
++	BUG();
++}
++
++static inline
++void NILFS_XANODE_ADD_ENTRY_OFFSET(__u16 val, union nilfs_xattr_key *key)
++{
++	switch (NILFS_XANODE_KEY_TYPE(key)) {
++	case NILFS_XATTR_TREE_LEAF_KEY_TYPE:
++		le16_add_cpu(&key->leaf_key.entry_offset, val);
++		return;
++	};
++	BUG();
++}
++
++#define NILFS_XATTR_ENTRY_OFFSET(hdr_ptr, entry_ptr) \
++	((char *)hdr_ptr + NILFS_XANODE_SIZE - (char *)entry_ptr)
++
++static inline
++__u16 NILFS_XANODE_ENTRY_SIZE(union nilfs_xattr_key *key)
++{
++	if (IS_END_KEY(key))
++		return 0;
++
++	switch (NILFS_XANODE_KEY_TYPE(key)) {
++	case NILFS_XATTR_TREE_LEAF_KEY_TYPE:
++		return le16_to_cpu(key->leaf_key.entry_size);
++	};
++	BUG();
++}
++
++#define NILFS_XATTR_ENTRY_SIZE(name, value_size) \
++	(strlen((const char *)(name)) + value_size)
++
++static inline
++struct nilfs_xattr_name_hash *NILFS_XANODE_NAME_HASH(union nilfs_xattr_key *key)
++{
++	switch (NILFS_XANODE_KEY_TYPE(key)) {
++	case NILFS_XATTR_TREE_LEAF_KEY_TYPE:
++		return &key->leaf_key.name_hash;
++	};
++	BUG();
++}
++
++#define NILFS_XANODE_ENTRY(key, hdr_ptr) \
++	(NILFS_XANODE_ENTRY_PTR((char *)(hdr_ptr) + \
++	 NILFS_XANODE_SIZE - NILFS_XANODE_ENTRY_OFFSET(key)))
++
++static inline
++struct nilfs_xanode_entry *
++NILFS_XANODE_LAST_ENTRY(union nilfs_xanode_header *hdr)
++{
++	switch (NILFS_XANODE_TYPE(hdr)) {
++	case NILFS_XATTR_TREE_XANODE_TYPE: {
++			nilfs_xattr_leaf_key *key;
++
++			key = NILFS_XANODE_LAST_LEAF_KEY(hdr);
++			if (IS_END_KEY(key))
++				return NILFS_XANODE_ENTRY_PTR((char *)(hdr) +
++							     NILFS_XANODE_SIZE);
++			else
++				return NILFS_XANODE_ENTRY(NILFS_XANODE_KEY(key),
++							  hdr);
 +		}
++	};
++	BUG();
++}
 +
- 		sbp->s_feature_compat =
- 			cpu_to_le64(features[NILFS_FEATURE_TYPE_COMPAT]);
- 		sbp->s_feature_compat_ro =
++#define NILFS_XATTR_VALUE(entry, key) \
++	((char *)(entry) + NILFS_XANODE_NAME_HASH(key)->name_len)
++
+ #endif /* _NILFS_XAFILE_H */
 -- 
 1.7.9.5
 
