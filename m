@@ -1,15 +1,15 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH v2 01/17] nilfs2: provide initial description
- of xattrs support
-Date: Fri, 10 Jan 2014 16:07:12 +0400
-Message-ID: <1389355632.3938.111.camel@slavad-ubuntu>
+Subject: [RFC][STEP 1][PATCH v2 02/17] nilfs2: introduce xanode related
+ declarations
+Date: Fri, 10 Jan 2014 16:07:25 +0400
+Message-ID: <1389355645.3938.119.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=sacMESErbx2FFm4e4jTaBNERDnFwMqPtDZmIS/RanrA=;
-	b=RAQkrS55KgV0XsOvq6JzWorRHZuTU4S/Ko0xioAo+/0QQjd4QHAlv0kFyahcpRtvVCiUPNg45iorBjlZklCkaOAYPzeK5DaBKgw8BBPG9hvhE6rKiH7OFDgw2rNTCuPU;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=qR5P4bFOv6ODqdRTZTI+3kM6wdQ6L35GSN4349p8L+E=;
+	b=YxjlgBqBOpU3SbbT4FIwleBlbEVFFNHVvP70ppJ8uZK3Q4hKn2xO4vkLXeDX4+NfOD/GhU/Vc6uBNrB50eCLdYFB6zzZXgCQyIfZW+XjrsftvJk2QWse16CS8ZcZD6hS;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -17,26 +17,26 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH v2 01/17] nilfs2: provide initial description of xattrs support
+Subject: [RFC][STEP 1][PATCH v2 02/17] nilfs2: introduce xanode related declarations
 
-This patch adds initial description of xattrs support
-architecture.
+This patch adds declaration of structures, macros and auxiliary
+functions for xafile's xanodes.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/xafile.c |  116 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 116 insertions(+)
- create mode 100644 fs/nilfs2/xafile.c
+ fs/nilfs2/xafile.h |  139 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 139 insertions(+)
+ create mode 100644 fs/nilfs2/xafile.h
 
-diff --git a/fs/nilfs2/xafile.c b/fs/nilfs2/xafile.c
+diff --git a/fs/nilfs2/xafile.h b/fs/nilfs2/xafile.h
 new file mode 100644
-index 0000000..469b256
+index 0000000..28faa1f
 --- /dev/null
-+++ b/fs/nilfs2/xafile.c
-@@ -0,0 +1,116 @@
++++ b/fs/nilfs2/xafile.h
+@@ -0,0 +1,139 @@
 +/*
-+ * xafile.c - NILFS extended attributes file (xafile) implementation.
++ * xafile.h - NILFS extended attributes file (xafile) declarations.
 + *
 + * Copyright (C) 2005-2013 Nippon Telegraph and Telephone Corporation.
 + * Copyright (C) 2013 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
@@ -58,99 +58,122 @@ index 0000000..469b256
 + * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 + */
 +
++#ifndef _NILFS_XAFILE_H
++#define _NILFS_XAFILE_H
++
++#include <linux/xattr.h>
++
++/* Magic number of xafile node */
++#define NILFS_XANODE_MAGIC		0x5841 /* XA */
++
++/* Xanode types */
++#define NILFS_UNKNOWN_XANODE_TYPE		0
++/* Temporary, numbers from 1 till 6 are simply reserved */
++#define NILFS_XATTR_TREE_XANODE_TYPE		7
++#define NILFS_XANODE_TYPE_MASK			0x000F
++
++/* Xanode's flags */
++#define NILFS_XANODE_CRC32_FLAG			0x0010
++#define NILFS_INDEX_XANODE_FLAG			0x0020
++#define NILFS_XANODE_FLAG_MASK			0xFFF0
++
 +/*
-+ *   ----------------------------------------------------------------
-+ *                     HOW DOES NILFS2 KEEP XATTRs?
-+ *   ----------------------------------------------------------------
-+ *
-+ *   Extended file attributes (xattrs) is a file system feature that
-+ *   enables users to associate computer files with metadata not
-+ *   interpreted by the filesystem. Any regular file or directory may
-+ *   have extended attributes consisting of a name and associated data.
-+ *   The name must be a null-terminated string prefixed by a namespace
-+ *   identifier and a dot character. Currently, four namespaces exist:
-+ *   user, trusted, security and system. The user namespace has no
-+ *   restrictions with regard to naming or contents. The system namespace
-+ *   is primarily used by the kernel for access control lists.
-+ *   The security namespace is used by SELinux
-+ *
-+ *   There are two possible places of storing xattrs:
-+ *   (1) inline xattr node (xanode) [OPTIONAL];
-+ *   (2) xattr file (xafile).
-+ *
-+ *   The xafile is metadata file. It contains group descriptors block,
-+ *   bitmap blocks and xanodes areas. The xafile is simply aggregate of
-+ *   xanodes that can provide a xanode of some size (1KB, 2 KB or 4 KB)
-+ *   by identification number (ID) or, in other words, by index.
-+ *
-+ *   ----------------------------------------------------------------
-+ *                         XAFILE STRUCTURE
-+ *   ----------------------------------------------------------------
-+ *
-+ *   The xafile is metadata file that, basically, has such structure:
-+ *
-+ *    +0                 +1       +2
-+ *   +------------------+--------+------------------------------+
-+ *   + Group descriptor | Bitmap |       Xanodes area           |
-+ *   + block            | block  |                              |
-+ *   +------------------+--------+------------------------------+
-+ *
-+ *   Thereby, xafile is simply aggregate of xanodes that can provide
-+ *   xanode of some size (1KB, 2 KB or 4 KB) by identification
-+ *   number (ID).
-+ *
-+ *   NILFS2 volume contains xafile if s_feature_compat_ro field of
-+ *   superblock contains NILFS_FEATURE_COMPAT_RO_XAFILE flag.
-+ *   The s_xafile_xanode_size field of superblock keeps value of
-+ *   xanode's size in bytes which is determined during mkfs phase.
-+ *
-+ *   The xanodes area haven't any predetermined order of xanodes.
-+ *   Simply speaking, this area is aggregation of xanodes of different trees.
-+ *   Every tree begins from a xanode that keeps knowledge about other xanodes
-+ *   in a tree. The i_xattr field of on-disk inode can keep
-+ *   ID of xanode.
-+ *
-+ *   The xanode has such structure:
-+ *
-+ *   ----------------
-+ *   |    HEADER    |
-+ *   ----------------
-+ *   |  INDEX KEYS  |
-+ *   ----------------
-+ *   |  LEAF KEYS   |
-+ *   ----------------
-+ *   |              |
-+ *   |  FREE AREA   |
-+ *   |              |
-+ *   ----------------
-+ *   |    ENTRIES   |
-+ *   ----------------
-+ *
-+ *   The xanode begins with header. Initially, empty xanode
-+ *   contains reserved place for 4 index keys. It is located leaf keys
-+ *   after space that is reserved for index keys. Leaf keys grow
-+ *   towards entries. The chain of keys is ended by termination marker
-+ *   ("end key"). Entries begin from xanode end and its grow from the
-+ *   end towards "end key".
-+ *
-+ *   ----------------------------------------------------------------
-+ *                     XANODE ENTRY STRUCTURE
-+ *   ----------------------------------------------------------------
-+ *
-+ *   The entry of xanode has purpose to store name and
-+ *   binary value pair.
-+ *
-+ *   Structure of xanode's entry in common case:
-+ *
-+ *   ----------------------------------------
-+ *   | name[variable_length] | binary value |
-+ *   ----------------------------------------
-+ *   |<----------   entry_size  ----------->|
-+ *
-+ *   The name hash defines length of the name. The length
-+ *   of binary value is defined as difference between
-+ *   entry_size and name_len.
++ * struct nilfs_tree_xanode_header - header of dedicated xanode
++ * @magic: magic number for identification
++ * @flags: xanode's flags
++ * @height: node height in the tree
++ * @log_index_keys: log2(index keys max count)
++ * @entries: count of entries in xanode
++ * @checksum: CRC32 of node
++ * @index_keys: current count of index keys
++ * @parent_node: node ID of a parent node
 + */
++struct nilfs_tree_xanode_header {
++	__le16 magic;
++	__le16 flags;
++	u8 height;
++#define NILFS_XANODE_MIN_INDEX_KEYS	4
++	u8 log_index_keys;
++	__le16 entries;
++	__le32 checksum;
++	__le32 index_keys;
++	__le64 parent_node;
++} __packed;
++
++union nilfs_xanode_header {
++	struct {
++		__le16 magic;
++		__le16 flags;
++	} __packed base_hdr;
++	struct nilfs_tree_xanode_header tree_hdr;
++};
++
++/* Xanode related declarations */
++#define BH_DATA(bh) \
++	((char *)(((struct buffer_head *)(bh))->b_data))
++#define BH_SIZE(bh) \
++	(((struct buffer_head *)(bh))->b_size)
++
++#define NILFS_XANODE_BEGIN(bh) \
++	BH_DATA(bh)
++#define NILFS_XANODE_END(bh) \
++	(BH_DATA(bh) + BH_SIZE(bh))
++#define NILFS_XANODE_HDR(hdr_ptr) \
++	((union nilfs_xanode_header *)(hdr_ptr))
++
++/* TODO: [REWORK] Temporary xanode size is fixed by 4 KB */
++#define NILFS_XANODE_SIZE			PAGE_CACHE_SIZE
++
++#define NILFS_XANODE_HDR_SIZE_MAX		32
++#define NILFS_XANODE_INDEX_KEY_SIZE_MAX		16
++#define NILFS_XANODE_LEAF_KEY_SIZE_MAX		32
++
++#define NILFS_XATTR_VALUE_LEN_MAX \
++	(NILFS_XANODE_SIZE - \
++	 (NILFS_XANODE_HDR_SIZE_MAX + \
++	  (NILFS_XANODE_MIN_INDEX_KEYS * NILFS_XANODE_INDEX_KEY_SIZE_MAX) + \
++	  NILFS_XANODE_LEAF_KEY_SIZE_MAX + \
++	  (XATTR_NAME_MAX + 1)))
++
++#define NILFS_XANODE_TYPE(hdr_ptr) \
++	(le16_to_cpu(NILFS_XANODE_HDR(hdr_ptr)->base_hdr.flags) & \
++	 NILFS_XANODE_TYPE_MASK)
++#define NILFS_XANODE_FLAGS(hdr_ptr) \
++	(le16_to_cpu(NILFS_XANODE_HDR(hdr_ptr)->base_hdr.flags) & \
++	 NILFS_XANODE_FLAG_MASK)
++#define NILFS_XANODE_SET_TYPE(type, hdr_ptr) \
++	(cpu_to_le16(NILFS_XANODE_FLAGS(hdr_ptr) | \
++	 ((u16)type & NILFS_XANODE_TYPE_MASK)))
++#define NILFS_XANODE_SET_FLAGS(flags, hdr_ptr) \
++	(cpu_to_le16((u16)flags | NILFS_XANODE_TYPE(hdr_ptr)))
++
++static inline
++size_t NILFS_XANODE_HDR_SIZE(union nilfs_xanode_header *hdr_ptr)
++{
++	switch (NILFS_XANODE_TYPE(hdr_ptr)) {
++	case NILFS_XATTR_TREE_XANODE_TYPE:
++		return sizeof(struct nilfs_tree_xanode_header);
++	};
++	BUG();
++}
++
++#define NILFS_XANODE_ENTRIES(hdr_ptr) \
++	(NILFS_XANODE_TYPE(hdr_ptr) == NILFS_XATTR_TREE_XANODE_TYPE ? \
++	 le16_to_cpu(NILFS_XANODE_HDR(hdr_ptr)->tree_hdr.entries) : \
++	 0)
++
++static inline
++void NILFS_XANODE_ADD_ENTRIES(__u16 val, union nilfs_xanode_header *hdr_ptr)
++{
++	switch (NILFS_XANODE_TYPE(hdr_ptr)) {
++	case NILFS_XATTR_TREE_XANODE_TYPE:
++		le16_add_cpu(&hdr_ptr->tree_hdr.entries, val);
++		return;
++	};
++	BUG();
++}
++
++#endif /* _NILFS_XAFILE_H */
 -- 
 1.7.9.5
 
