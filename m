@@ -1,14 +1,15 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH v2 14/17] nilfs2: implement POSIX ACLs support
-Date: Fri, 10 Jan 2014 16:09:58 +0400
-Message-ID: <1389355798.3938.136.camel@slavad-ubuntu>
+Subject: [RFC][STEP 1][PATCH v2 15/17] nilfs2: integrate xattrs support
+ functionality into driver
+Date: Fri, 10 Jan 2014 16:10:11 +0400
+Message-ID: <1389355811.3938.137.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=swBZufP9nHZOFFg6+S0HmI8XCQ7OhshOy5KTfbXxYxE=;
-	b=CwWmjasuaoa2BIOTj11lRF2imNHEq0jqR/heVDX/2uEevk+7ESNjp7MqjMlV8taEWic5SnMn75TYVBrQcBSr3rF4s4NbKzigWnFySlVc1k7zFiw4AwkfyTGAiWBweeeU;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=tGjTAAuJvcsjNpe6EuxUoY0+zxYO6QZ1hkIXWrB7448=;
+	b=RyRrnGDNPQ6kVMyL0inA8zN69HcJknRLscmn4zmFq6gRFyyo2KRx1U++qR6LYrR1TCAbeUFickLdalCWQZgibQtFDz+3LTQJ8OYZeCD0aFcBkBoEnUjBCknw3+XCbJtK;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -16,408 +17,536 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH v2 14/17] nilfs2: implement POSIX ACLs support
+Subject: [RFC][STEP 1][PATCH v2 15/17] nilfs2: integrate xattrs support functionality into driver
 
-This patch adds functionality of POSIX ACLs support.
+This patch integrates xattrs support functionality into
+file system driver.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/acl.c |  319 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/acl.h |   58 ++++++++++
- 2 files changed, 377 insertions(+)
- create mode 100644 fs/nilfs2/acl.c
- create mode 100644 fs/nilfs2/acl.h
+ fs/nilfs2/Kconfig     |   38 ++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/Makefile    |    6 +++++-
+ fs/nilfs2/bmap.c      |    1 +
+ fs/nilfs2/file.c      |    7 +++++++
+ fs/nilfs2/inode.c     |   22 ++++++++--------------
+ fs/nilfs2/namei.c     |   42 ++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/nilfs.h     |   24 ++++--------------------
+ fs/nilfs2/segment.c   |   22 ++++++++++++++++++++++
+ fs/nilfs2/super.c     |   20 +++++++++++++++++---
+ fs/nilfs2/the_nilfs.c |   19 +++++++++++++++++++
+ 10 files changed, 163 insertions(+), 38 deletions(-)
 
-diff --git a/fs/nilfs2/acl.c b/fs/nilfs2/acl.c
-new file mode 100644
-index 0000000..95b3601
---- /dev/null
-+++ b/fs/nilfs2/acl.c
-@@ -0,0 +1,319 @@
-+/*
-+ * acl.c - NILFS ACLs support implementation.
-+ *
-+ * Copyright (C) 2005-2013 Nippon Telegraph and Telephone Corporation.
-+ * Copyright (C) 2013 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+ *
-+ * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ */
+diff --git a/fs/nilfs2/Kconfig b/fs/nilfs2/Kconfig
+index 80da8eb..dcd420e 100644
+--- a/fs/nilfs2/Kconfig
++++ b/fs/nilfs2/Kconfig
+@@ -22,3 +22,41 @@ config NILFS2_FS
+ 
+ 	  To compile this file system support as a module, choose M here: the
+ 	  module will be called nilfs2.  If unsure, say N.
 +
-+#include "nilfs.h"
-+#include "xafile.h"
++config NILFS2_FS_DEBUG
++	bool "NILFS2 debugging"
++	depends on NILFS2_FS
++	help
++	  This option enables additional pre-condition and post-condition
++	  checking in functions. It can enable debug output too. The main
++	  goal of this option is providing environment for debugging code
++	  of NILFS2 driver and excluding debug checking and output from
++	  end-users' kernel build.
++
++	  If you are going to debug NILFS2 driver then choose Y here.
++	  If unsure, say N.
++
++config NILFS2_FS_POSIX_ACL
++	bool "NILFS2 POSIX Access Control Lists"
++	depends on NILFS2_FS
++	select FS_POSIX_ACL
++	help
++	  POSIX Access Control Lists (ACLs) support permissions for users and
++	  groups beyond the owner/group/world scheme.
++
++	  To learn more about Access Control Lists, visit the POSIX ACLs for
++	  Linux website <http://acl.bestbits.at/>.
++
++	  If you don't know what Access Control Lists are, say N
++
++config NILFS2_FS_SECURITY
++	bool "NILFS2 Security Labels"
++	depends on NILFS2_FS
++	help
++	  Security labels support alternative access control models
++	  implemented by security modules like SELinux.  This option
++	  enables an extended attribute handler for file security
++	  labels in the NILFS2 filesystem.
++
++	  If you are not using a security module that requires using
++	  extended attributes for file security labels, say N.
+diff --git a/fs/nilfs2/Makefile b/fs/nilfs2/Makefile
+index 85c9873..8e56dbd 100644
+--- a/fs/nilfs2/Makefile
++++ b/fs/nilfs2/Makefile
+@@ -2,4 +2,8 @@ obj-$(CONFIG_NILFS2_FS) += nilfs2.o
+ nilfs2-y := inode.o file.o dir.o super.o namei.o page.o mdt.o \
+ 	btnode.o bmap.o btree.o direct.o dat.o recovery.o \
+ 	the_nilfs.o segbuf.o segment.o cpfile.o sufile.o \
+-	ifile.o alloc.o gcinode.o ioctl.o
++	ifile.o alloc.o gcinode.o ioctl.o \
++	xafile.o xattr.o xattr_user.o xattr_trusted.o
++
++nilfs2-$(CONFIG_NILFS2_FS_POSIX_ACL)	+= acl.o
++nilfs2-$(CONFIG_NILFS2_FS_SECURITY)	+= xattr_security.o
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index aadbd0b..7ab515f 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -499,6 +499,7 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
+ 		break;
+ 	case NILFS_CPFILE_INO:
+ 	case NILFS_SUFILE_INO:
++	case NILFS_XATTR_INO:
+ 		bmap->b_ptr_type = NILFS_BMAP_PTR_VS;
+ 		bmap->b_last_allocated_key = 0;
+ 		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 08fdb77..7592e37 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -26,6 +26,8 @@
+ #include <linux/writeback.h>
+ #include "nilfs.h"
+ #include "segment.h"
 +#include "xattr.h"
 +#include "acl.h"
+ 
+ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+ {
+@@ -169,6 +171,11 @@ const struct file_operations nilfs_file_operations = {
+ const struct inode_operations nilfs_file_inode_operations = {
+ 	.setattr	= nilfs_setattr,
+ 	.permission     = nilfs_permission,
++	.setxattr	= generic_setxattr,
++	.getxattr	= generic_getxattr,
++	.listxattr	= nilfs_listxattr,
++	.removexattr	= generic_removexattr,
++	.get_acl	= nilfs_get_acl,
+ 	.fiemap		= nilfs_fiemap,
+ };
+ 
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 7e350c5..690072b 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -33,6 +33,8 @@
+ #include "mdt.h"
+ #include "cpfile.h"
+ #include "ifile.h"
++#include "xattr.h"
++#include "acl.h"
+ 
+ /**
+  * struct nilfs_iget_args - arguments used during comparison between inodes
+@@ -386,8 +388,6 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
+ 	ii->i_flags = nilfs_mask_flags(
+ 		mode, NILFS_I(dir)->i_flags & NILFS_FL_INHERITED);
+ 
+-	/* ii->i_file_acl = 0; */
+-	/* ii->i_dir_acl = 0; */
+ 	ii->i_dir_start_lookup = 0;
+ 	nilfs_set_inode_flags(inode);
+ 	spin_lock(&nilfs->ns_next_gen_lock);
+@@ -395,15 +395,10 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
+ 	spin_unlock(&nilfs->ns_next_gen_lock);
+ 	insert_inode_hash(inode);
+ 
+-	err = nilfs_init_acl(inode, dir);
+-	if (unlikely(err))
+-		goto failed_acl; /* never occur. When supporting
+-				    nilfs_init_acl(), proper cancellation of
+-				    above jobs should be considered */
++	ii->i_xattr = NILFS_INVALID_XANODE;
+ 
+ 	return inode;
+ 
+- failed_acl:
+  failed_bmap:
+ 	clear_nlink(inode);
+ 	iput(inode);  /* raw_inode will be deleted through
+@@ -460,14 +455,12 @@ int nilfs_read_inode_common(struct inode *inode,
+ 
+ 	inode->i_blocks = le64_to_cpu(raw_inode->i_blocks);
+ 	ii->i_flags = le32_to_cpu(raw_inode->i_flags);
+-#if 0
+-	ii->i_file_acl = le32_to_cpu(raw_inode->i_file_acl);
+-	ii->i_dir_acl = S_ISREG(inode->i_mode) ?
+-		0 : le32_to_cpu(raw_inode->i_dir_acl);
+-#endif
 +
-+struct posix_acl *nilfs_get_acl(struct inode *inode, int type)
-+{
-+	struct posix_acl *acl;
-+	char *xattr_name;
-+	int name_index;
-+	char *value = NULL;
-+	ssize_t size;
+ 	ii->i_dir_start_lookup = 0;
+ 	inode->i_generation = le32_to_cpu(raw_inode->i_generation);
+ 
++	ii->i_xattr = le64_to_cpu(raw_inode->i_xattr);
 +
-+	acl = get_cached_acl(inode, type);
-+	if (acl != ACL_NOT_CACHED)
-+		return acl;
-+
-+	switch (type) {
-+	case ACL_TYPE_ACCESS:
-+		xattr_name = POSIX_ACL_XATTR_ACCESS;
-+		name_index = NILFS_POSIX_ACL_ACCESS_XATTR_ID;
-+		break;
-+	case ACL_TYPE_DEFAULT:
-+		xattr_name = POSIX_ACL_XATTR_DEFAULT;
-+		name_index = NILFS_POSIX_ACL_DEFAULT_XATTR_ID;
-+		break;
-+	default:
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	size = __nilfs_getxattr(inode, name_index, xattr_name, NULL, 0);
-+
-+	if (size > 0) {
-+		value = kmalloc(size, GFP_KERNEL);
-+		if (unlikely(!value))
-+			return ERR_PTR(-ENOMEM);
-+		size = __nilfs_getxattr(inode, name_index, xattr_name,
-+					value, size);
-+	}
-+
-+	if (size > 0)
-+		acl = posix_acl_from_xattr(&init_user_ns, value, size);
-+	else if (size == -ENODATA)
-+		acl = NULL;
-+	else
-+		acl = ERR_PTR(size);
-+
-+	kfree(value);
-+
-+	if (!IS_ERR(acl))
-+		set_cached_acl(inode, type, acl);
-+
-+	return acl;
-+}
-+
-+static int nilfs_set_acl(struct inode *inode, int type, struct posix_acl *acl)
-+{
-+	int err;
-+	int name_index;
-+	char *xattr_name;
-+	size_t size = 0;
-+	char *value = NULL;
-+	struct nilfs_transaction_info ti;
-+
-+	if (S_ISLNK(inode->i_mode))
-+		return -EOPNOTSUPP;
-+
-+	switch (type) {
-+	case ACL_TYPE_ACCESS:
-+		name_index = NILFS_POSIX_ACL_ACCESS_XATTR_ID;
-+		xattr_name = POSIX_ACL_XATTR_ACCESS;
-+		if (acl) {
-+			err = posix_acl_equiv_mode(acl, &inode->i_mode);
-+			if (err < 0)
-+				return err;
-+		}
-+		err = 0;
-+		break;
-+
-+	case ACL_TYPE_DEFAULT:
-+		name_index = NILFS_POSIX_ACL_DEFAULT_XATTR_ID;
-+		xattr_name = POSIX_ACL_XATTR_DEFAULT;
-+		if (!S_ISDIR(inode->i_mode))
-+			return acl ? -EACCES : 0;
-+		break;
-+
-+	default:
-+		return -EINVAL;
-+	}
-+
-+	if (acl) {
-+		size = posix_acl_xattr_size(acl->a_count);
-+		value = kmalloc(size, GFP_KERNEL);
-+		if (!value)
-+			return -ENOMEM;
-+		err = posix_acl_to_xattr(&init_user_ns, acl, value, size);
-+		if (err < 0)
-+			goto end_set_acl;
-+	}
-+
-+	err = nilfs_transaction_begin(inode->i_sb, &ti, 0);
-+	if (unlikely(err))
-+		goto end_set_acl;
-+
-+	err = __nilfs_setxattr(inode, name_index, xattr_name, value, size, 0);
-+
-+	if (!err)
-+		err = nilfs_transaction_commit(inode->i_sb);
-+	else
-+		nilfs_transaction_abort(inode->i_sb);
-+
-+end_set_acl:
-+	kfree(value);
-+
-+	if (!err)
-+		set_cached_acl(inode, type, acl);
-+
-+	return err;
-+}
-+
-+int nilfs_init_acl(struct inode *inode, struct inode *dir)
-+{
-+	int err = 0;
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	struct posix_acl *acl = NULL;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (S_ISLNK(inode->i_mode))
-+		return 0;
-+
-+	acl = nilfs_get_acl(dir, ACL_TYPE_DEFAULT);
-+	if (IS_ERR(acl))
-+		return PTR_ERR(acl);
-+
-+	if (acl) {
-+		if (S_ISDIR(inode->i_mode)) {
-+			err = nilfs_set_acl(inode, ACL_TYPE_DEFAULT, acl);
-+			if (unlikely(err))
-+				goto init_acl_cleanup;
-+		}
-+
-+		err = posix_acl_create(&acl, GFP_NOFS, &inode->i_mode);
-+		if (unlikely(err < 0))
-+			return err;
-+
-+		if (err > 0)
-+			err = nilfs_set_acl(inode, ACL_TYPE_ACCESS, acl);
+ 	if (S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
+ 	    S_ISLNK(inode->i_mode)) {
+ 		err = nilfs_bmap_read(ii->i_bmap, raw_inode);
+@@ -655,7 +648,8 @@ void nilfs_write_inode_common(struct inode *inode,
+ 		raw_inode->i_pad = 0;
+ 		memset((void *)raw_inode + sizeof(*raw_inode), 0,
+ 		       nilfs->ns_inode_size - sizeof(*raw_inode));
+-	}
 +	} else
-+		inode->i_mode &= ~current_umask();
++		raw_inode->i_xattr = cpu_to_le64(ii->i_xattr);
+ 
+ 	if (has_bmap)
+ 		nilfs_bmap_write(ii->i_bmap, raw_inode);
+diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+index 9de78f0..dc40a99 100644
+--- a/fs/nilfs2/namei.c
++++ b/fs/nilfs2/namei.c
+@@ -41,6 +41,8 @@
+ #include <linux/pagemap.h>
+ #include "nilfs.h"
+ #include "export.h"
++#include "xattr.h"
++#include "acl.h"
+ 
+ #define NILFS_FID_SIZE_NON_CONNECTABLE \
+ 	(offsetof(struct nilfs_fid, parent_gen) / 4)
+@@ -97,12 +99,17 @@ static int nilfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
+ 	inode = nilfs_new_inode(dir, mode);
+ 	err = PTR_ERR(inode);
+ 	if (!IS_ERR(inode)) {
++		err = nilfs_init_inode_security(inode, dir, &dentry->d_name);
++		if (unlikely(err))
++			goto out;
+ 		inode->i_op = &nilfs_file_inode_operations;
+ 		inode->i_fop = &nilfs_file_operations;
+ 		inode->i_mapping->a_ops = &nilfs_aops;
+ 		nilfs_mark_inode_dirty(inode);
+ 		err = nilfs_add_nondir(dentry, inode);
+ 	}
 +
-+init_acl_cleanup:
-+	posix_acl_release(acl);
-+	return err;
-+}
++out:
+ 	if (!err)
+ 		err = nilfs_transaction_commit(dir->i_sb);
+ 	else
+@@ -127,10 +134,15 @@ nilfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t rdev)
+ 	inode = nilfs_new_inode(dir, mode);
+ 	err = PTR_ERR(inode);
+ 	if (!IS_ERR(inode)) {
++		err = nilfs_init_inode_security(inode, dir, &dentry->d_name);
++		if (unlikely(err))
++			goto out;
+ 		init_special_inode(inode, inode->i_mode, rdev);
+ 		nilfs_mark_inode_dirty(inode);
+ 		err = nilfs_add_nondir(dentry, inode);
+ 	}
 +
-+int nilfs_acl_chmod(struct inode *inode)
-+{
-+	int err;
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	struct posix_acl *acl;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (S_ISLNK(inode->i_mode))
-+		return -EOPNOTSUPP;
-+	acl = nilfs_get_acl(inode, ACL_TYPE_ACCESS);
-+	if (IS_ERR(acl) || !acl)
-+		return PTR_ERR(acl);
-+	err = posix_acl_chmod(&acl, GFP_KERNEL, inode->i_mode);
++out:
+ 	if (!err)
+ 		err = nilfs_transaction_commit(dir->i_sb);
+ 	else
+@@ -160,6 +172,10 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
+ 	if (IS_ERR(inode))
+ 		goto out;
+ 
++	err = nilfs_init_inode_security(inode, dir, &dentry->d_name);
 +	if (unlikely(err))
-+		return err;
-+	err = nilfs_set_acl(inode, ACL_TYPE_ACCESS, acl);
-+	posix_acl_release(acl);
-+	return err;
-+}
++		goto out;
 +
-+static size_t nilfs_acl_access_listxattr(struct dentry *dentry,
-+						char *list,
-+						size_t list_len,
-+						const char *name,
-+						size_t name_len,
-+						int type)
-+{
-+	struct the_nilfs *nilfs = dentry->d_inode->i_sb->s_fs_info;
-+	const size_t size = sizeof(POSIX_ACL_XATTR_ACCESS);
+ 	/* slow symlink */
+ 	inode->i_op = &nilfs_symlink_inode_operations;
+ 	inode->i_mapping->a_ops = &nilfs_aops;
+@@ -227,6 +243,10 @@ static int nilfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+ 	if (IS_ERR(inode))
+ 		goto out_dir;
+ 
++	err = nilfs_init_inode_security(inode, dir, &dentry->d_name);
++	if (unlikely(err))
++		goto out_dir;
 +
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
+ 	inode->i_op = &nilfs_dir_inode_operations;
+ 	inode->i_fop = &nilfs_dir_operations;
+ 	inode->i_mapping->a_ops = &nilfs_aops;
+@@ -285,6 +305,13 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
+ 			      inode->i_ino, inode->i_nlink);
+ 		set_nlink(inode, 1);
+ 	}
 +
-+	if (list && size <= list_len)
-+		memcpy(list, POSIX_ACL_XATTR_ACCESS, size);
-+	return size;
-+}
-+
-+static size_t nilfs_acl_default_listxattr(struct dentry *dentry,
-+						char *list,
-+						size_t list_len,
-+						const char *name,
-+						size_t name_len,
-+						int type)
-+{
-+	struct the_nilfs *nilfs = dentry->d_inode->i_sb->s_fs_info;
-+	const size_t size = sizeof(POSIX_ACL_XATTR_DEFAULT);
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (list && size <= list_len)
-+		memcpy(list, POSIX_ACL_XATTR_DEFAULT, size);
-+	return size;
-+}
-+
-+static int nilfs_acl_getxattr(struct dentry *dentry,
-+				const char *name,
-+				void *buffer,
-+				size_t size,
-+				int type)
-+{
-+	int err = 0;
-+	struct the_nilfs *nilfs = dentry->d_inode->i_sb->s_fs_info;
-+	struct posix_acl *acl;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (strcmp(name, "") != 0)
-+		return -EINVAL;
-+
-+	acl = nilfs_get_acl(dentry->d_inode, type);
-+	if (IS_ERR(acl))
-+		return PTR_ERR(acl);
-+	if (acl == NULL)
-+		return -ENODATA;
-+
-+	err = posix_acl_to_xattr(&init_user_ns, acl, buffer, size);
-+	posix_acl_release(acl);
-+	return err;
-+}
-+
-+static int nilfs_acl_setxattr(struct dentry *dentry,
-+				const char *name,
-+				const void *value,
-+				size_t size,
-+				int flags,
-+				int type)
-+{
-+	int err = 0;
-+	struct inode *inode = dentry->d_inode;
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	struct posix_acl *acl = NULL;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (strcmp(name, "") != 0)
-+		return -EINVAL;
-+
-+	if (!inode_owner_or_capable(inode))
-+		return -EPERM;
-+
-+	if (value) {
-+		acl = posix_acl_from_xattr(&init_user_ns, value, size);
-+		if (IS_ERR(acl))
-+			return PTR_ERR(acl);
-+		else if (acl) {
-+			err = posix_acl_valid(acl);
-+			if (err)
-+				goto end_acl_setxattr;
-+		}
++	if (inode->i_nlink == 1) {
++		err = nilfs_xattr_delete_inode(inode);
++		if (err)
++			goto out;
 +	}
 +
-+	err = nilfs_set_acl(inode, type, acl);
-+
-+end_acl_setxattr:
-+	posix_acl_release(acl);
-+	return err;
-+}
-+
-+const struct xattr_handler nilfs_xattr_acl_access_handler = {
-+	.prefix	= POSIX_ACL_XATTR_ACCESS,
-+	.flags	= ACL_TYPE_ACCESS,
-+	.list	= nilfs_acl_access_listxattr,
-+	.get	= nilfs_acl_getxattr,
-+	.set	= nilfs_acl_setxattr,
-+};
-+
-+const struct xattr_handler nilfs_xattr_acl_default_handler = {
-+	.prefix	= POSIX_ACL_XATTR_DEFAULT,
-+	.flags	= ACL_TYPE_DEFAULT,
-+	.list	= nilfs_acl_default_listxattr,
-+	.get	= nilfs_acl_getxattr,
-+	.set	= nilfs_acl_setxattr,
-+};
-diff --git a/fs/nilfs2/acl.h b/fs/nilfs2/acl.h
-new file mode 100644
-index 0000000..d537727
---- /dev/null
-+++ b/fs/nilfs2/acl.h
-@@ -0,0 +1,58 @@
+ 	err = nilfs_delete_entry(de, page);
+ 	if (err)
+ 		goto out;
+@@ -553,12 +580,22 @@ const struct inode_operations nilfs_dir_inode_operations = {
+ 	.rename		= nilfs_rename,
+ 	.setattr	= nilfs_setattr,
+ 	.permission	= nilfs_permission,
++	.setxattr	= generic_setxattr,
++	.getxattr	= generic_getxattr,
++	.listxattr	= nilfs_listxattr,
++	.removexattr	= generic_removexattr,
++	.get_acl	= nilfs_get_acl,
+ 	.fiemap		= nilfs_fiemap,
+ };
+ 
+ const struct inode_operations nilfs_special_inode_operations = {
+ 	.setattr	= nilfs_setattr,
+ 	.permission	= nilfs_permission,
++	.setxattr	= generic_setxattr,
++	.getxattr	= generic_getxattr,
++	.listxattr	= nilfs_listxattr,
++	.removexattr	= generic_removexattr,
++	.get_acl	= nilfs_get_acl,
+ };
+ 
+ const struct inode_operations nilfs_symlink_inode_operations = {
+@@ -566,6 +603,11 @@ const struct inode_operations nilfs_symlink_inode_operations = {
+ 	.follow_link	= page_follow_link_light,
+ 	.put_link	= page_put_link,
+ 	.permission     = nilfs_permission,
++	.setxattr	= generic_setxattr,
++	.getxattr	= generic_getxattr,
++	.listxattr	= nilfs_listxattr,
++	.removexattr	= generic_removexattr,
++	.get_acl	= nilfs_get_acl,
+ };
+ 
+ const struct export_operations nilfs_export_ops = {
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 3cdacda..c82ba24 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -196,26 +196,6 @@ static inline int nilfs_doing_construction(void)
+ 	return nilfs_test_transaction_flag(NILFS_TI_WRITER);
+ }
+ 
+-/*
+- * function prototype
+- */
+-#ifdef CONFIG_NILFS_POSIX_ACL
+-#error "NILFS: not yet supported POSIX ACL"
+-extern int nilfs_acl_chmod(struct inode *);
+-extern int nilfs_init_acl(struct inode *, struct inode *);
+-#else
+-static inline int nilfs_acl_chmod(struct inode *inode)
+-{
+-	return 0;
+-}
+-
+-static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
+-{
+-	inode->i_mode &= ~current_umask();
+-	return 0;
+-}
+-#endif
+-
+ #define NILFS_ATIME_DISABLE
+ 
+ /* Flags that should be inherited by new inodes from their parent. */
+@@ -235,6 +215,10 @@ static inline __u32 nilfs_mask_flags(umode_t mode, __u32 flags)
+ 		return flags & (FS_NODUMP_FL | FS_NOATIME_FL);
+ }
+ 
 +/*
-+ * acl.h - NILFS ACLs support declarations.
-+ *
-+ * Copyright (C) 2005-2013 Nippon Telegraph and Telephone Corporation.
-+ * Copyright (C) 2013 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+ *
-+ * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
++ * Function prototypes
 + */
 +
-+#ifndef _NILFS_ACL_H
-+#define _NILFS_ACL_H
+ /* dir.c */
+ extern int nilfs_add_link(struct dentry *, struct inode *);
+ extern ino_t nilfs_inode_by_name(struct inode *, const struct qstr *);
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 9f6b486..f808934 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -70,6 +70,7 @@ enum {
+ 	NILFS_ST_IFILE,
+ 	NILFS_ST_CPFILE,
+ 	NILFS_ST_SUFILE,
++	NILFS_ST_XAFILE,
+ 	NILFS_ST_DAT,
+ 	NILFS_ST_SR,		/* Super root */
+ 	NILFS_ST_DSYNC,		/* Data sync blocks */
+@@ -757,6 +758,10 @@ static int nilfs_test_metadata_dirty(struct the_nilfs *nilfs,
+ 		ret++;
+ 	if (nilfs_mdt_fetch_dirty(nilfs->ns_sufile))
+ 		ret++;
++	if (nilfs_has_xafile(nilfs)) {
++		if (nilfs_mdt_fetch_dirty(nilfs->ns_xafile))
++			ret++;
++	}
+ 	if ((ret || nilfs_doing_gc()) && nilfs_mdt_fetch_dirty(nilfs->ns_dat))
+ 		ret++;
+ 	return ret;
+@@ -793,6 +798,8 @@ static void nilfs_segctor_clear_metadata_dirty(struct nilfs_sc_info *sci)
+ 	nilfs_mdt_clear_dirty(sci->sc_root->ifile);
+ 	nilfs_mdt_clear_dirty(nilfs->ns_cpfile);
+ 	nilfs_mdt_clear_dirty(nilfs->ns_sufile);
++	if (nilfs_has_xafile(nilfs))
++		nilfs_mdt_clear_dirty(nilfs->ns_xafile);
+ 	nilfs_mdt_clear_dirty(nilfs->ns_dat);
+ }
+ 
+@@ -909,6 +916,13 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
+ 				 NILFS_SR_CPFILE_OFFSET(isz), 1);
+ 	nilfs_write_inode_common(nilfs->ns_sufile, (void *)raw_sr +
+ 				 NILFS_SR_SUFILE_OFFSET(isz), 1);
++	if (nilfs_has_xafile(nilfs)) {
++		nilfs_write_inode_common(nilfs->ns_xafile, (void *)raw_sr +
++					 NILFS_SR_XAFILE_OFFSET(isz), 1);
++	} else {
++		memset((void *)raw_sr + NILFS_SR_XAFILE_OFFSET(isz), 0,
++			sizeof(struct nilfs_inode));
++	}
+ 	memset((void *)raw_sr + srsz, 0, nilfs->ns_blocksize - srsz);
+ }
+ 
+@@ -1157,6 +1171,14 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 		if (unlikely(err))
+ 			break;
+ 		sci->sc_stage.scnt++;  /* Fall through */
++	case NILFS_ST_XAFILE:
++		if (nilfs_has_xafile(nilfs)) {
++			err = nilfs_segctor_scan_file(sci, nilfs->ns_xafile,
++							&nilfs_sc_file_ops);
++			if (unlikely(err))
++				break;
++		}
++		sci->sc_stage.scnt++;  /* Fall through */
+ 	case NILFS_ST_DAT:
+  dat_stage:
+ 		err = nilfs_segctor_scan_file(sci, nilfs->ns_dat,
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 7ac2a12..75b1362 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -61,6 +61,8 @@
+ #include "dat.h"
+ #include "segment.h"
+ #include "segbuf.h"
++#include "xattr.h"
++#include "acl.h"
+ 
+ MODULE_AUTHOR("NTT Corp.");
+ MODULE_DESCRIPTION("A New Implementation of the Log-structured Filesystem "
+@@ -486,6 +488,8 @@ static void nilfs_put_super(struct super_block *sb)
+ 		up_write(&nilfs->ns_sem);
+ 	}
+ 
++	if (nilfs_has_xafile(nilfs))
++		iput(nilfs->ns_xafile);
+ 	iput(nilfs->ns_sufile);
+ 	iput(nilfs->ns_cpfile);
+ 	iput(nilfs->ns_dat);
+@@ -1071,6 +1075,12 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
+ 	sb->s_time_gran = 1;
+ 	sb->s_max_links = NILFS_LINK_MAX;
+ 
++	sb->s_xattr = nilfs_xattr_handlers;
++	if (nilfs_has_xafile(nilfs))
++		set_posix_acl_flag(sb);
++	else
++		sb->s_flags &= ~MS_POSIXACL;
 +
-+#include <linux/posix_acl_xattr.h>
+ 	bdi = sb->s_bdev->bd_inode->i_mapping->backing_dev_info;
+ 	sb->s_bdi = bdi ? : &default_backing_dev_info;
+ 
+@@ -1113,6 +1123,8 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
+ 	nilfs_put_root(fsroot);
+ 
+  failed_unload:
++	if (nilfs_has_xafile(nilfs))
++		iput(nilfs->ns_xafile);
+ 	iput(nilfs->ns_sufile);
+ 	iput(nilfs->ns_cpfile);
+ 	iput(nilfs->ns_dat);
+@@ -1136,7 +1148,11 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
+ 		err = -EINVAL;
+ 		goto restore_opts;
+ 	}
+-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL);
 +
-+#ifdef CONFIG_NILFS2_FS_POSIX_ACL
++	if (nilfs_has_xafile(nilfs))
++		set_posix_acl_flag(sb);
++	else
++		sb->s_flags &= ~MS_POSIXACL;
+ 
+ 	err = -EINVAL;
+ 
+@@ -1379,9 +1395,7 @@ static void nilfs_inode_init_once(void *obj)
+ 	struct nilfs_inode_info *ii = obj;
+ 
+ 	INIT_LIST_HEAD(&ii->i_dirty);
+-#ifdef CONFIG_NILFS_XATTR
+ 	init_rwsem(&ii->xattr_sem);
+-#endif
+ 	address_space_init_once(&ii->i_btnode_cache);
+ 	ii->i_bmap = &ii->i_bmap_data;
+ 	inode_init_once(&ii->vfs_inode);
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 94c451c..a5fa271 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -33,6 +33,7 @@
+ #include "cpfile.h"
+ #include "sufile.h"
+ #include "dat.h"
++#include "xafile.h"
+ #include "segbuf.h"
+ 
+ 
+@@ -142,6 +143,14 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
+ 	if (err)
+ 		goto failed_cpfile;
+ 
++	if (nilfs_has_xafile(nilfs)) {
++		rawi = (void *)bh_sr->b_data +
++				NILFS_SR_XAFILE_OFFSET(inode_size);
++		err = nilfs_xafile_read(sb, rawi, &nilfs->ns_xafile);
++		if (err)
++			goto failed_xafile;
++	}
 +
-+#define set_posix_acl_flag(sb) \
-+	((sb)->s_flags |= MS_POSIXACL)
+ 	raw_sr = (struct nilfs_super_root *)bh_sr->b_data;
+ 	nilfs->ns_nongc_ctime = le64_to_cpu(raw_sr->sr_nongc_ctime);
+ 
+@@ -149,6 +158,10 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
+ 	brelse(bh_sr);
+ 	return err;
+ 
++ failed_xafile:
++	if (nilfs_has_xafile(nilfs))
++		iput(nilfs->ns_xafile);
 +
-+/* acl.c */
-+struct posix_acl *nilfs_get_acl(struct inode *inode, int type);
-+extern int nilfs_acl_chmod(struct inode *inode);
-+extern int nilfs_init_acl(struct inode *inode, struct inode *dir);
+  failed_cpfile:
+ 	iput(nilfs->ns_cpfile);
+ 
+@@ -343,6 +356,8 @@ int load_nilfs(struct the_nilfs *nilfs, struct super_block *sb)
+ 	goto failed;
+ 
+  failed_unload:
++	if (nilfs_has_xafile(nilfs))
++		iput(nilfs->ns_xafile);
+ 	iput(nilfs->ns_cpfile);
+ 	iput(nilfs->ns_sufile);
+ 	iput(nilfs->ns_dat);
+@@ -584,6 +599,10 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
+ 	if (err)
+ 		goto failed_sbh;
+ 
++	if (le64_to_cpu(sbp->s_feature_compat_ro) &
++	    NILFS_FEATURE_COMPAT_RO_XAFILE)
++		set_nilfs_has_xafile(nilfs);
 +
-+#else  /* CONFIG_NILFS2_FS_POSIX_ACL */
-+
-+#define set_posix_acl_flag(sb) \
-+	((sb)->s_flags &= ~MS_POSIXACL)
-+
-+#define nilfs_get_acl NULL
-+
-+static inline int nilfs_acl_chmod(struct inode *inode)
-+{
-+	return 0;
-+}
-+
-+static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
-+{
-+	return 0;
-+}
-+
-+#endif  /* CONFIG_NILFS2_FS_POSIX_ACL */
-+
-+#endif /* _NILFS_ACL_H */
+ 	blocksize = BLOCK_SIZE << le32_to_cpu(sbp->s_log_block_size);
+ 	if (blocksize < NILFS_MIN_BLOCK_SIZE ||
+ 	    blocksize > NILFS_MAX_BLOCK_SIZE) {
 -- 
 1.7.9.5
 
