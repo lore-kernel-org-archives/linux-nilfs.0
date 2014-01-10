@@ -1,258 +1,81 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH v2 13/17] nilfs2: implement "security.*"
- namespace support
-Date: Fri, 10 Jan 2014 16:09:45 +0400
-Message-ID: <1389355785.3938.135.camel@slavad-ubuntu>
+Subject: [RFC][STEP 1][PATCH 1/4] nilfs-utils: add xattr related declarations
+Date: Fri, 10 Jan 2014 16:11:08 +0400
+Message-ID: <1389355868.3938.142.camel@slavad-ubuntu>
 Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=vdsb/GyAfBJdsk1Bdni24KtGOZU/BL+KSpeFAo3dBK4=;
-	b=Z36ASdtZ1IWxaLiszQWoiKV9G+/1EgxDUyEAnpTFfbk7d46dQgX/6B2b++5yaMwcsG7a+YYXLx7GZisaXVaSqCO3LkIe/XWTO0d5su1ezy8bIoBoT72C/+q6ekLoWe7I;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=UzNANKMMURV/PTJmYP4hC/oFDqJByB4299VHpKgPGIQ=;
+	b=TywE6vQt5w0fm5hig3DN/sp3auizPQe5zrCl/z2tzVOBdXlYlH1LdOqpD/gjR/wAQYdwu1drHKeuKh6ekUhReZuLHUUe/v8umKrqZs/QdlgyoV4VRObPDFGoJ+uwMa94;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC][STEP 1][PATCH v2 13/17] nilfs2: implement "security.*" namespace support
+Subject: [RFC][STEP 1][PATCH 1/4] nilfs-utils: add xattr related declarations
 
-This patch adds functionality of "security.*" namespace support.
+This patch adds xattr related declarations.
 
 Signed-off-by: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/xattr.h          |   19 +++++
- fs/nilfs2/xattr_security.c |  190 ++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 209 insertions(+)
- create mode 100644 fs/nilfs2/xattr_security.c
+ include/nilfs2_fs.h |   16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
 
-diff --git a/fs/nilfs2/xattr.h b/fs/nilfs2/xattr.h
-index 104a60d..1958d76 100644
---- a/fs/nilfs2/xattr.h
-+++ b/fs/nilfs2/xattr.h
-@@ -56,4 +56,23 @@ static inline int nilfs_setxattr(struct dentry *dentry,
- ssize_t nilfs_listxattr(struct dentry *dentry, char *buffer, size_t size);
- int nilfs_xattr_delete_inode(struct inode *inode);
+diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
+index e674f44..fa05c05 100644
+--- a/include/nilfs2_fs.h
++++ b/include/nilfs2_fs.h
+@@ -92,6 +92,7 @@ struct nilfs_inode {
+  * @sr_dat: DAT file inode
+  * @sr_cpfile: checkpoint file inode
+  * @sr_sufile: segment usage file inode
++ * @sr_xafile: extended attributes file inode
+  */
+ struct nilfs_super_root {
+ 	__le32 sr_sum;
+@@ -101,6 +102,7 @@ struct nilfs_super_root {
+ 	struct nilfs_inode sr_dat;
+ 	struct nilfs_inode sr_cpfile;
+ 	struct nilfs_inode sr_sufile;
++	struct nilfs_inode sr_xafile;
+ };
  
-+#ifdef CONFIG_NILFS2_FS_SECURITY
-+int nilfs_init_security(struct inode *inode, struct inode *dir,
-+			const struct qstr *qstr);
-+int nilfs_init_inode_security(struct inode *inode, struct inode *dir,
-+				const struct qstr *qstr);
-+#else
-+static inline int nilfs_init_security(struct inode *inode, struct inode *dir,
-+					const struct qstr *qstr)
-+{
-+	return 0;
-+}
-+static inline int nilfs_init_inode_security(struct inode *inode,
-+						struct inode *dir,
-+						const struct qstr *qstr)
-+{
-+	return 0;
-+}
-+#endif /* CONFIG_NILFS2_FS_SECURITY */
+ #define NILFS_SR_MDT_OFFSET(inode_size, i)  \
+@@ -219,10 +221,18 @@ struct nilfs_super_block {
+  * If there is a bit set in the incompatible feature set that the kernel
+  * doesn't know about, it should refuse to mount the filesystem.
+  */
++#define NILFS_FEATURE_COMPAT_INIT_XAFILE	0x00000001ULL
 +
- #endif /* _NILFS_XATTR_H */
-diff --git a/fs/nilfs2/xattr_security.c b/fs/nilfs2/xattr_security.c
-new file mode 100644
-index 0000000..892d522
---- /dev/null
-+++ b/fs/nilfs2/xattr_security.c
-@@ -0,0 +1,190 @@
-+/*
-+ * xattr_security.c - Handler for storing security labels as extended attributes
-+ *
-+ * Copyright (C) 2005-2013 Nippon Telegraph and Telephone Corporation.
-+ * Copyright (C) 2013 Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+ *
-+ * Written by Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-+ */
+ #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT	0x00000001ULL
++#define NILFS_FEATURE_COMPAT_RO_XAFILE		0x00000002ULL
 +
-+#include <linux/security.h>
++#define NILFS_FEATURE_COMPAT_SUPP \
++	(NILFS_FEATURE_COMPAT_INIT_XAFILE)
 +
-+#include "nilfs.h"
-+#include "xafile.h"
-+#include "xattr.h"
-+#include "acl.h"
-+
-+static size_t nilfs_security_listxattr(struct dentry *dentry,
-+					char *list,
-+					size_t list_size,
-+					const char *name,
-+					size_t name_len,
-+					int type)
-+{
-+	struct the_nilfs *nilfs = dentry->d_inode->i_sb->s_fs_info;
-+	const size_t prefix_len = XATTR_SECURITY_PREFIX_LEN;
-+	const size_t total_len = prefix_len + name_len + 1;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (list && total_len <= list_size) {
-+		memcpy(list, XATTR_SECURITY_PREFIX, prefix_len);
-+		memcpy(list+prefix_len, name, name_len);
-+		list[prefix_len + name_len] = '\0';
-+	}
-+	return total_len;
-+}
-+
-+static int nilfs_security_getxattr(struct dentry *dentry,
-+					const char *name,
-+					void *buffer,
-+					size_t size,
-+					int type)
-+{
-+	struct the_nilfs *nilfs = dentry->d_inode->i_sb->s_fs_info;
-+	size_t len;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (name == NULL)
-+		return -EINVAL;
-+
-+	if (strcmp(name, "") == 0)
-+		return -EINVAL;
-+
-+	len = strlen(name);
-+
-+	if ((len + XATTR_SECURITY_PREFIX_LEN) > XATTR_NAME_MAX)
-+		return -EOPNOTSUPP;
-+
-+	return nilfs_getxattr(dentry, NILFS_SECURITY_XATTR_ID, name,
-+				buffer, size);
-+}
-+
-+static int nilfs_security_setxattr(struct dentry *dentry,
-+					const char *name,
-+					const void *value,
-+					size_t size,
-+					int flags,
-+					int type)
-+{
-+	struct the_nilfs *nilfs = dentry->d_inode->i_sb->s_fs_info;
-+	size_t len;
-+	struct nilfs_transaction_info ti;
-+	int err;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return -EOPNOTSUPP;
-+
-+	if (name == NULL)
-+		return -EINVAL;
-+
-+	if (strcmp(name, "") == 0)
-+		return -EINVAL;
-+
-+	len = strlen(name);
-+
-+	if ((len + XATTR_SECURITY_PREFIX_LEN) > XATTR_NAME_MAX)
-+		return -EOPNOTSUPP;
-+
-+	err = nilfs_transaction_begin(dentry->d_inode->i_sb, &ti, 0);
-+	if (unlikely(err))
-+		return err;
-+
-+	err = nilfs_setxattr(dentry, NILFS_SECURITY_XATTR_ID, name,
-+				value, size, flags);
-+
-+	if (!err)
-+		err = nilfs_transaction_commit(dentry->d_inode->i_sb);
-+	else
-+		nilfs_transaction_abort(dentry->d_inode->i_sb);
-+
-+	return err;
-+}
-+
-+static int nilfs_initxattrs(struct inode *inode,
-+				const struct xattr *xattr_array,
-+				void *fs_info)
-+{
-+	const struct xattr *xattr;
-+	struct nilfs_transaction_info ti;
-+	int err = 0;
-+
-+	err = nilfs_transaction_begin(inode->i_sb, &ti, 0);
-+	if (unlikely(err))
-+		return err;
-+
-+	for (xattr = xattr_array; xattr->name != NULL; xattr++) {
-+		size_t name_len;
-+
-+		name_len = strlen(xattr->name);
-+
-+		if (name_len == 0)
-+			continue;
-+
-+		if (name_len + XATTR_SECURITY_PREFIX_LEN > XATTR_NAME_MAX) {
-+			err = -EOPNOTSUPP;
-+			goto failed_initxattrs;
-+		}
-+
-+		err = __nilfs_setxattr(inode, NILFS_SECURITY_XATTR_ID,
-+					xattr->name, xattr->value,
-+					xattr->value_len, 0);
-+		if (err)
-+			goto failed_initxattrs;
-+	}
-+
-+	err = nilfs_transaction_commit(inode->i_sb);
-+	return err;
-+
-+failed_initxattrs:
-+	nilfs_transaction_abort(inode->i_sb);
-+	return err;
-+}
-+
-+int nilfs_init_security(struct inode *inode,
-+				struct inode *dir,
-+				const struct qstr *qstr)
-+{
-+	return security_inode_init_security(inode, dir, qstr,
-+						&nilfs_initxattrs, NULL);
-+}
-+
-+int nilfs_init_inode_security(struct inode *inode,
-+				struct inode *dir,
-+				const struct qstr *qstr)
-+{
-+	int err;
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+
-+	if (!nilfs_has_xafile(nilfs))
-+		return 0;
-+
-+	err = nilfs_init_acl(inode, dir);
-+	if (!err)
-+		err = nilfs_init_security(inode, dir, qstr);
-+	return err;
-+}
-+
-+const struct xattr_handler nilfs_xattr_security_handler = {
-+	.prefix	= XATTR_SECURITY_PREFIX,
-+	.list	= nilfs_security_listxattr,
-+	.get	= nilfs_security_getxattr,
-+	.set	= nilfs_security_setxattr,
-+};
++#define NILFS_FEATURE_COMPAT_RO_SUPP	\
++	(NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT | \
++	 NILFS_FEATURE_COMPAT_RO_XAFILE)
+ 
+-#define NILFS_FEATURE_COMPAT_SUPP	0ULL
+-#define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
+ #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
+ 
+ /*
+@@ -240,7 +250,7 @@ struct nilfs_super_block {
+ #define NILFS_SUFILE_INO	5	/* segment usage file */
+ #define NILFS_IFILE_INO		6	/* ifile */
+ #define NILFS_ATIME_INO		7	/* Atime file (reserved) */
+-#define NILFS_XATTR_INO		8	/* Xattribute file (reserved) */
++#define NILFS_XATTR_INO		8	/* Xattribute file */
+ #define NILFS_SKETCH_INO	10	/* Sketch file */
+ #define NILFS_USER_INO		11	/* Fisrt user's file inode number */
+ 
 -- 
 1.7.9.5
 
