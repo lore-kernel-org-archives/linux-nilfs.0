@@ -1,94 +1,57 @@
-From: "Mark Trumpold" <markt-qk0wvQ0ghJwAvxtiuMwx3w@public.gmane.org>
-Subject: Re:  Does nilfs2 do any in-place writes?
-Date: Fri, 17 Jan 2014 19:19:56 +0000
-Message-ID: <W856311016549541389986396@atl4webmail15>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: Does nilfs2 do any in-place writes?
+Date: Sat, 18 Jan 2014 07:55:19 +0900 (JST)
+Message-ID: <20140118.075519.43661574.konishi.ryusuke@lab.ntt.co.jp>
+References: <1389787304.3913.28.camel@slavad-ubuntu>
+	<20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
+	<1389866912.2565.44.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1389866912.2565.44.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org, Mark Trumpold <markt-qk0wvQ0ghJwAvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-
-
->-----Original Message-----
->From: Vyacheslav Dubeyko [mailto:slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org]
->Sent: Thursday, January 16, 2014 10:31 PM
->To: 'Mark Trumpold'
->Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->Subject: Re: Does nilfs2 do any in-place writes?
->
->On Thu, 2014-01-16 at 17:48 +0000, Mark Trumpold wrote:
->> Hello All,
->> 
->> I am wondering what the impact of in-place writes of the
->> superblock has on SSDs in terms of wear?
->> 
->> I've been stress testing our system which uses Nilfs, and
->> recently I had a SSD fail with the classic messages indicating
->> low level media problems -- and also implicating Nilfs as trying
->> to locate a superblock (I think).
->> 
->> Following is a partial dmesg list: 
->> 
->> [    7.630382] Sense Key : Medium Error [current] [descriptor]
->> [    7.630385] Descriptor sense data with sense descriptors (in hex):
->> [    7.630386]         72 03 11 04 00 00 00 0c 00 0a 80 00 00 00 00 00 
->> [    7.630394]         05 ff 0e 58 
->> [    7.630397] sd 0:0:0:0: [sda]  
->> [    7.630399] Add. Sense: Unrecovered read error - auto reallocate failed
->> [    7.630401] sd 0:0:0:0: [sda] CDB: 
->> [    7.630402] Read(10): 28 00 05 ff 0e 54 00 00 08 00
->> [    7.630409] end_request: I/O error, dev sda, sector 100601432
->> [    7.635326] NILFS warning: I/O error on loading last segment
->> [    7.635329] NILFS: error searching super root.
->> 
->> 
->
->I don't think that this issue is related to superblocks. Because I can't
->see in your output the magic signature of NILFS2. For example, I have
->such first 16 bytes in superblock:
->
->00000400  02 00 00 00 00 00 34 34  18 01 00 00 52 85 db 71  |......44....R..q|
->
->Of course, I don't know your partition table details but I doubt that
->sector 100601432 is a superblock sector. Moreover, you have error
->messages that inform about troubles with loading last segment during
->super root searching.
->
->We have on NILFS2 only two blocks that live under in-place update
->policy. An update frequency is not so high. So, I suppose that any FTL
->can easily provide good wear leveling support for superblocks. But, of
->course, in-place update is not good policy for flash-based devices,
->anyway.
->
->Maybe, I misunderstand something in your output. But I suppose that
->during stress-testing you can discover I/O error in any part of volume.
->Because it is really hard to predict when you will exhaust spare pool of
->erase blocks.
->
->With the best regards,
->Vyacheslav Dubeyko.
->
->
->
+Content-Type: Text/Plain; charset="us-ascii"
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi Vyacheslav,
 
-Thank you for taking a look at this.
+On Thu, 16 Jan 2014 14:08:32 +0400, Vyacheslav Dubeyko wrote:
+> Hi Ryusuke,
+> 
+> On Thu, 2014-01-16 at 00:23 +0900, Ryusuke Konishi wrote:
+> 
+>> 
+>> By the way, do you have any nice idea to stop periodical update of
+>> superblocks?
+>> 
+> 
+> Yes, I think too that such suggestion is valuable for NILFS2. But I
+> suppose that the problem is more complex. I mean a situation with
+> write-able snapshots. If we will have write-able snapshots then it means
+> necessity to have independent version of some superblock's  fields
+> (s_last_cno, s_last_pseg, s_last_seq, s_mtime, s_wtime, s_mnt_count,
+> s_state, s_c_interval, s_feature_compat_ro, s_feature_incompat). For
+> example, snapshot can be made before xafile creation on a volume and
+> write-able snapshot should continue to live without possibility to xattr
+> creation, and so on.
 
-Your assessment makes good sense, and I am relieved we have
-a plausible explanation.
+OK, please tell me what do you suppose about the writable snapshot.
 
-BTW: I upgraded to the 3.11.6 linux kernel (per your's and Ryusuke's
-suggestions) to pick up the most recent Nilfs devel, and am finding things
-to be very stable.
+Do you think we should keep multiple branches or concurrently
+mountable namespaces on one device ?
 
-Best regards,
-Mark T.
+I prefer to maintain only one super root block per partition even if
+we support writable snapshots.  Otherwise, I think we should use
+multiple partitions to simplify the design.
 
+I mean keeping multiple branches in one super root block with a DAT
+file and a sufile in such a case.  Maintaining multiple DAT files and
+sufiles on one device seems too complex to me.
 
+Regards,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
