@@ -1,42 +1,110 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: Does nilfs2 do any in-place writes?
-Date: Sat, 18 Jan 2014 21:11:16 +0300
-Message-ID: <2F4C7008-E7E7-45F6-AD68-C4B1A51FB1DA@dubeyko.com>
-References: <CEFFE8EC.9A4A%markt@netqa.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs-utils: add --with-libmount build option
+Date: Sun, 19 Jan 2014 02:20:18 +0900
+Message-ID: <1390065618-29556-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=BgA8qO0qy0RMxOraRRXTeDBuaj/OKs8jqFoIVNSEPc0=;
-	b=GmuLm7ghFhgV7hLOcW46WRjZDJ09JQ3qUDqc1lEGTUGiywnkU3j20KQCKwpe46hZolVDOaWY8sxQd4nYQ1VoDvw0TpYPz0TJP2FER+RxB9aLNHMk47/sUFVeOHFwFBfk;
-In-Reply-To: <CEFFE8EC.9A4A%markt-qk0wvQ0ghJwAvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Mark Trumpold <markt-qk0wvQ0ghJwAvxtiuMwx3w@public.gmane.org>
-Cc: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
+The libmount build option of the current configure script is confusing
+since it is provided as an --enable-<feature> style option.
 
-On Jan 18, 2014, at 7:25 PM, Mark Trumpold wrote:
+This fixes the issue by adding --with-libmount configure option.  The
+--enable-libmount option is still available for compatibility reason.
 
-> Hi Clemens and group,
-> 
-> Good information.  So, is it true that the logging/cow nature of
-> nilfs actually improves wear leveling by having 'writes spread out
-> evenly'?
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ README       |    8 ++++----
+ configure.ac |   23 +++++++++++++++--------
+ 2 files changed, 19 insertions(+), 12 deletions(-)
 
-Of course, COW policy is much better for flash than in-place update.
-But even if NILFS2 (or any other file system) uses COW approach then
-namely FTL does wear-leveling. And namely FTL's algorithms define
-wear-leveling efficiency. So, I don't think that NILFS2 can improve
-wear-leveling. COW policy can leave FTL "cold" and to give opportunity
-not to use sophisticated algorithms of wear-leveling and using spare
-pool of erase blocks. But, moreover, it is very desirable to use TRIM
-command with COW policy also for improving FTL efficiency and
-performance.
-
-With the best regards,
-Vyacheslav Dubeyko.
+diff --git a/README b/README
+index 8d92725..f62bc3f 100644
+--- a/README
++++ b/README
+@@ -2,7 +2,7 @@
+ 
+  - libuuid-devel or uuid-dev
+  - libmount-devel (fedora 14 and later)
+- - libselinux-devel (unless you specify --without-selinux or --enable-libmount)
++ - libselinux-devel (unless you specify --without-selinux or --with-libmount)
+  - libblkid-devel (unless you specify --without-blkid)
+ 
+ * How to compile
+@@ -12,9 +12,9 @@
+ 
+ To link mount.nilfs2 and umount.nilfs2 helper programs with libmount
+ library, install libmount-devel package and run the configure script
+-with --enable-libmount option:
++with --with-libmount option:
+ 
+- $ ./configure --enable-libmount
++ $ ./configure --with-libmount
+ 
+ This option is set by default if /etc/mtab is a symlink to
+ /proc/mounts in your system.
+@@ -42,7 +42,7 @@ of selinux context mount options (-o context=<context>, etc):
+ 
+  $ ./configure --without-selinux
+ 
+-For mount.nilfs2 built with the --enable-libmount option, support of
++For mount.nilfs2 built with the --with-libmount option, support of
+ the context mount depends on the libmount library.
+ 
+ 
+diff --git a/configure.ac b/configure.ac
+index 46821d9..de30ab0 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -44,12 +44,19 @@ AC_DEFUN([UTIL_CHECK_LIB], [
+ ])
+ 
+ # Check for options.
++AC_ARG_WITH([libmount],
++	AS_HELP_STRING([--with-libmount],
++		       [compile mount.nilfs2 with libmount support]),
++	[with_libmount=$withval],
++	[with_libmount=no; \
++	 if test -L /etc/mtab; then with_libmount=yes; fi])
++
++# Leave --enable-libmount[=ARG] and --disable-libmount options for
++# compatibility reason.
+ AC_ARG_ENABLE(libmount,
+-	[AC_HELP_STRING([--enable-libmount=[ARG]],
+-			[Link mount.nilfs2 with libmount [ARG=yes] (EXPERIMENTAL)])],
+-	[enable_libmount=$enableval],
+-	[enable_libmount=no; \
+-	 if test -L /etc/mtab; then enable_libmount=yes; fi])
++	AS_HELP_STRING([--enable-libmount (obsolete)],
++		       [same as --with-libmount]),
++	[with_libmount=$enableval], [])
+ 
+ AC_ARG_WITH([selinux],
+ 	AS_HELP_STRING([--without-selinux], [compile without SELinux support]),
+@@ -89,13 +96,13 @@ AC_CHECK_HEADERS([ctype.h fcntl.h grp.h libintl.h limits.h linux/magic.h \
+ 		  sys/mount.h sys/time.h syslog.h time.h unistd.h])
+ 
+ # Check for conditional libraries and headers.
+-if test "${enable_libmount}" = "yes"; then
++if test "${with_libmount}" = "yes"; then
+    AC_CHECK_LIB(mount, mnt_context_do_mount, [LIB_MOUNT="-lmount"],
+-   	AC_MSG_ERROR([libmount needed]))
++   	AC_MSG_ERROR([Mount library is enabled but libmount not found]))
+    AC_CHECK_HEADERS([libmount/libmount.h])
+    with_selinux=no
+ fi
+-AM_CONDITIONAL(CONFIG_LIBMOUNT, [test "$enable_libmount" = "yes"])
++AM_CONDITIONAL(CONFIG_LIBMOUNT, [test "$with_libmount" = "yes"])
+ AC_SUBST(LIB_MOUNT)
+ 
+ if test "${with_selinux}" = "yes"; then
+-- 
+1.7.9.3
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
