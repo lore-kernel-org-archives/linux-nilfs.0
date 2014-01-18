@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/2] lscp: change default option of lscp command
-Date: Sat, 18 Jan 2014 22:57:11 +0900
-Message-ID: <1390053433-13598-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] nilfs-utils: compile legacy {mount,umount}.nilfs2 with libselinux
+Date: Sun, 19 Jan 2014 00:42:35 +0900
+Message-ID: <1390059755-22459-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -11,32 +11,88 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This series changes default option of lscp command about block count
-to '-b' (print BLKCNT) from '-g' (print NBLKINC), and also updates
-relevant man pages.  The second patch just removes a note
-"experimental" on the description of FLG field in the man pages of
-lscp.
+SELinux context mount options were optional for the legacy version of
+{mount,umount}.nilfs2.  This changes the default build configuration
+so that they are built with selinux library unless --without-selinux
+options is specified.  When we compile them with libmount, libselinux
+is not used regardless of this because context mount options are
+provided by libmount.
 
-For each checkpoint of NILFS2, total block count (BLKCNT) is more
-meaningful information than appended block count (NBLKINC).  This
-changes the default display information of lscp command on block count
-to BLKCNT from NBLKINC, and updates relevant man pages.  NBLKINC can
-be still displayed when we specified '-g' option.
-
-Though BLKCNT information is not supported by NILFS2 in earlier Linux
-kernels, I am thinking to apply this for convenience on the recent and
-future environment.
-
-Ryusuke Konishi
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
-Ryusuke Konishi (2):
-      lscp: show block count by default
-      man/lscp.1: remove "experimental" from the description of FLG field
+ README       |   19 +++++++++----------
+ configure.ac |    5 +++--
+ 2 files changed, 12 insertions(+), 12 deletions(-)
 
- bin/lscp.c  |    2 +-
- man/lscp.1  |   22 ++++++++++++----------
- man/nilfs.8 |   24 ++++++++++++------------
- 3 files changed, 25 insertions(+), 23 deletions(-)
+diff --git a/README b/README
+index 0a0dcc8..8d92725 100644
+--- a/README
++++ b/README
+@@ -2,7 +2,7 @@
+ 
+  - libuuid-devel or uuid-dev
+  - libmount-devel (fedora 14 and later)
+- - libselinux-devel (if you specify --with-selinux)
++ - libselinux-devel (unless you specify --without-selinux or --enable-libmount)
+  - libblkid-devel (unless you specify --without-blkid)
+ 
+ * How to compile
+@@ -25,15 +25,6 @@ into /usr/lib64 instead of /usr/lib, change the library directory with
+ 
+  $ ./configure --libdir=/usr/lib64
+ 
+-You can specify --with-selinux option to compile mount.nilfs2
+-supporting context mount options (-o context=<context>, etc):
+-
+- $ ./configure --with-selinux
+-
+-For mount.nilfs2 built with the --enable-libmount option, support of
+-the context mount depends on the libmount library and this configure
+-option is not necessary.
+-
+ 
+ * Trouble shooting
+ 
+@@ -46,6 +37,14 @@ However, use of this option is normally not recommended because it
+ disables the safety check of mkfs.nilfs2 which prevents users from
+ unexpectedly overwriting an in-use device.
+ 
++You can compile legacy mount.nilfs2 and umount.nilfs2 without support
++of selinux context mount options (-o context=<context>, etc):
++
++ $ ./configure --without-selinux
++
++For mount.nilfs2 built with the --enable-libmount option, support of
++the context mount depends on the libmount library.
++
+ 
+ * How to get development sources
+ 
+diff --git a/configure.ac b/configure.ac
+index 62f05ce..46821d9 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -52,8 +52,8 @@ AC_ARG_ENABLE(libmount,
+ 	 if test -L /etc/mtab; then enable_libmount=yes; fi])
+ 
+ AC_ARG_WITH([selinux],
+-	AS_HELP_STRING([--with-selinux], [compile with SELinux support]),
+-	[], with_selinux=no)
++	AS_HELP_STRING([--without-selinux], [compile without SELinux support]),
++	[], with_selinux=yes)
+ 
+ AC_ARG_WITH([blkid],
+ 	AS_HELP_STRING([--without-blkid], [compile without blkid support]),
+@@ -93,6 +93,7 @@ if test "${enable_libmount}" = "yes"; then
+    AC_CHECK_LIB(mount, mnt_context_do_mount, [LIB_MOUNT="-lmount"],
+    	AC_MSG_ERROR([libmount needed]))
+    AC_CHECK_HEADERS([libmount/libmount.h])
++   with_selinux=no
+ fi
+ AM_CONDITIONAL(CONFIG_LIBMOUNT, [test "$enable_libmount" = "yes"])
+ AC_SUBST(LIB_MOUNT)
+-- 
+1.7.9.3
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
