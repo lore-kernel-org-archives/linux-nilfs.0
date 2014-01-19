@@ -1,57 +1,73 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: depending on flags, update segment usage instead
- of cleaning
-Date: Sun, 19 Jan 2014 18:17:17 +0100
-Message-ID: <52DC089D.4080504@gmx.net>
-References: <cover.1390139797.git.andreas.rohner@gmx.net>	<1390140141-4432-1-git-send-email-andreas.rohner@gmx.net> <20140120.014916.57469358.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] lib/nilfs.c: add missing initializations of ioctl arguments
+Date: Mon, 20 Jan 2014 03:26:21 +0900
+Message-ID: <1390155981-2985-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140120.014916.57469358.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi Ryusuke,
+Some wrapper functions for ioctl APIs in libnilfs do not initialize
+unused arguments passed to kernel space.  This is hurting
+extensibility of these ioctls.  This fixes the issue.
 
-On 2014-01-19 17:49, Ryusuke Konishi wrote:
-> Could you consider adding NILFS_IOCTL_SET_SUINFO instead of extending
-> v_flags of NILFS_IOCTL_CLEAN_SEGMENTS ?
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ lib/nilfs.c |    7 +++++++
+ 1 file changed, 7 insertions(+)
 
-Yes sure. I actually considered that writing the patch, but then shyed
-away from adding a new ioctl.
-
-> It is hacky to extend NILFS_IOCTL_CLEAN_SEGMENTS like this, and,
-> unfortunately, argv[]->v_flags of NILFS_IOCTL_CLEAN_SEGMENTS is not
-> zero-filled in the current library implementation.  This is our
-> mistake (so I will fix it soon), but we cannot use these flags for
-> some time.  Otherwise, existing cleanerds will go wrong when this is
-> merged into kernel.
-
-Ah yes I didn't think of that.
-
-> Presence of ioctls can be tested with ENOTTY error, so libnilfs
-> can know whether nilfs in underlying kernel has NILFS_IOCTL_SET_SUINFO
-> ioctl or not, and we can extend the library keeping compatibility
-> by using this nature.
-> 
-> A good example of code updating metadata file is
-> nilfs_ioctl_change_cpmode() even though NILFS_IOCTL_SET_SUINFO will
-> need nilfs_ioctl_wrap_copy().  It would be helpful for you.
-> 
-> Additional comments are as follows:
-> 
-> - For NILFS_IOCTL_SET_SUINFO, v_flags should be used to define which
->   fields (lastmod, nblocks, flags) are modified.  These flags should
->   be defined with bit masks.
-
-Thank you for your comments. I will try and implement it and come back
-with a new version of my patch.
-
-Best regards,
-Andreas Rohner
+diff --git a/lib/nilfs.c b/lib/nilfs.c
+index ebe50b8..7265830 100644
+--- a/lib/nilfs.c
++++ b/lib/nilfs.c
+@@ -448,6 +448,7 @@ int nilfs_change_cpmode(struct nilfs *nilfs, nilfs_cno_t cno, int mode)
+ 
+ 	cpmode.cm_cno = cno;
+ 	cpmode.cm_mode = mode;
++	cpmode.cm_pad = 0;
+ 	return ioctl(nilfs->n_iocfd, NILFS_IOCTL_CHANGE_CPMODE, &cpmode);
+ }
+ 
+@@ -539,6 +540,7 @@ ssize_t nilfs_get_suinfo(const struct nilfs *nilfs, __u64 segnum,
+ 	argv.v_base = (unsigned long)si;
+ 	argv.v_nmembs = nsi;
+ 	argv.v_size = sizeof(struct nilfs_suinfo);
++	argv.v_flags = 0;
+ 	argv.v_index = segnum;
+ 	if (ioctl(nilfs->n_iocfd, NILFS_IOCTL_GET_SUINFO, &argv) < 0)
+ 		return -1;
+@@ -579,6 +581,8 @@ ssize_t nilfs_get_vinfo(const struct nilfs *nilfs,
+ 	argv.v_base = (unsigned long)vinfo;
+ 	argv.v_nmembs = nvi;
+ 	argv.v_size = sizeof(struct nilfs_vinfo);
++	argv.v_flags = 0;
++	argv.v_index = 0;
+ 	if (ioctl(nilfs->n_iocfd, NILFS_IOCTL_GET_VINFO, &argv) < 0)
+ 		return -1;
+ 	return argv.v_nmembs;
+@@ -603,6 +607,8 @@ ssize_t nilfs_get_bdescs(const struct nilfs *nilfs,
+ 	argv.v_base = (unsigned long)bdescs;
+ 	argv.v_nmembs = nbdescs;
+ 	argv.v_size = sizeof(struct nilfs_bdesc);
++	argv.v_flags = 0;
++	argv.v_index = 0;
+ 	if (ioctl(nilfs->n_iocfd, NILFS_IOCTL_GET_BDESCS, &argv) < 0)
+ 		return -1;
+ 	return argv.v_nmembs;
+@@ -636,6 +642,7 @@ int nilfs_clean_segments(struct nilfs *nilfs,
+ 		return -1;
+ 	}
+ 
++	memset(argv, 0, sizeof(argv));
+ 	argv[0].v_base = (unsigned long)vdescs;
+ 	argv[0].v_nmembs = nvdescs;
+ 	argv[0].v_size = sizeof(struct nilfs_vdesc);
+-- 
+1.7.9.3
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
