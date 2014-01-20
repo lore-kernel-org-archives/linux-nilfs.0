@@ -1,52 +1,89 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH 1/4] nilfs-utils: cldconfig add an option to set minimal
- free blocks
-Date: Mon, 20 Jan 2014 14:14:59 +0400
-Message-ID: <1390212899.3034.66.camel@slavad-ubuntu>
-References: <cover.1390139797.git.andreas.rohner@gmx.net>
-	 <685e5c720189d1e451ed8a0d65581aa8c5a3f7f0.1390139797.git.andreas.rohner@gmx.net>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: Re: [PATCH 0/4] nilfs-utils: new feature to skip inefficient gc
+Date: Mon, 20 Jan 2014 11:37:21 +0100
+Message-ID: <52DCFC61.7050608@gmx.net>
+References: <cover.1390139797.git.andreas.rohner@gmx.net> <1390211015.3034.54.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=kRlNlrU3xAOpw0Px9lrh+VFOW1NsCQNenKFlrk5g8FA=;
-	b=mLMLqg/z8D9uqrmMA55LftsJpyoEkKHq3Qs7ytXoKEp887ckcLSPmUNNi4ggqFqm/8SikwycGnt5eHqB7TOj1AwJJo4dwvxPMRHj1JX96TDqhxn2LE9wvN60op3q1qWs;
-In-Reply-To: <685e5c720189d1e451ed8a0d65581aa8c5a3f7f0.1390139797.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <1390211015.3034.54.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sun, 2014-01-19 at 15:01 +0100, Andreas Rohner wrote:
+Hi Vyacheslav,
 
-It is expected "From: <author name and name>" and "Subject: <subject>"
-in the begin of patch.
+On 2014-01-20 10:43, Vyacheslav Dubeyko wrote:
+> Hi Andreas,
+> 
+> On Sun, 2014-01-19 at 15:01 +0100, Andreas Rohner wrote:
+>> Hi,
+>>
+>> This patch set implements a small new feature and there shouldn't be
+>> any compatibility issues. It enables the GC to check how much free
+>> space can be gained from cleaning a segment and if it is less than a
+>> certain threshold it will abort the operation and try a different
+>> segment. Although no blocks need to be moved, the SUFILE entry of the
+>> corresponding segment needs to be updated to avoid an infinite loop.
+>>
+> 
+> Thank you for this patchset. Your efforts in GC direction is very
+> important for NILFS2 users.
+> 
+> Anyway, I worried about compatibility. I think that it needs to analyze
+> more deeply how NILFS2 file system driver is ready for this change. I
+> think that it needs to describe briefly and in more details your
+> approach in patchset description. Do you try to analyze what potential
+> side effects can add your pathset? Could you describe your vision of
+> this patchset sanity?
 
-> With this option the user can specify the minimal number of free/dead
-> blocks, which is a threshold for the GC. If there are less free blocks
-> to gain from cleaning a segment than the specified number, the GC will
-> abort and try again with a different segment.
+Ok I will try to go into more detail in version 2. It is just a simple
+threshold to avoid the worst case behaviour of the timestamp policy. I
+don't think, that there should be any compatibility issues, aside from
+those pointed out by Ryusuke, which I am going to fix. The only side
+effect I can think of is, if the threshold is set too high, and a lot of
+segments don't get cleaned.
+
+>> Admittedly the benchmark is a bit biased to highlight the problem. On a
+>> real system the static data won't be so completely static and so the
+>> performance improvements are probably not so extreme.
+>>
+> 
+> I think that it really needs to test this patchset by xfstests and
+> fsstress (part of LTP test suite) tools. What do you think?
+> 
+> Moreover, I think that it makes sense to use well-known benchmark suite
+> (or several) for testing and estimation.
+
+Yes you are right. I will try to use another benchmark. But it is hard
+to use well-known benchmarks to test the GC, because they are designed
+to test different things. Either not enough data is written and the GC
+never starts or too much and the benchmark crashes with a "not enough
+space left on the device" error. I don't know if xfstests or fsstress
+can be tuned for my purposes, but I will look into it.
+
+>> This is my first patch set to this mailing list. I hope 
+>> everything is formally correct.
+>>
+>> Best regards,
+>> Andreas Rohner
+>>
+> 
+> Usually, here it is used special delimiter ("--") here. But I don't
+> think that it is critical.
+
+Thanks
+
+> 
+> And it is expected branch version here, usually. :)
 > 
 
-What will be under stress? I mean situation when we processed all
-segments that it is valuable for cleaning on threshold basis. Then we
-need to clean segments for space allocation but all "dirty" segments not
-reasonable choice for cleaning because of threshold.
+Thanks again
 
-What will we have in situation when an user selects not proper value of
-threshold?
-
-I worried about situation of skipping sibling segments from cleaning. Is
-NILFS2 driver really ready for this? Did you think about efficiency of
-free space allocation after such cleaning and about file system
-consistency? Are you sure that all will be good after such approach of
-cleaning? I simply want to be sure that you have analyzed this.
-
-Thanks,
-Vyacheslav Dubeyko.
-
+Best regards,
+Andreas Rohner
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
