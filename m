@@ -1,44 +1,83 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 1/4] nilfs-utils: cldconfig add an option to set
- minimal free blocks
-Date: Mon, 20 Jan 2014 20:13:05 +0900 (JST)
-Message-ID: <20140120.201305.532164429.konishi.ryusuke@lab.ntt.co.jp>
-References: <1390212899.3034.66.camel@slavad-ubuntu>
-	<52DCFFEB.4070809@gmx.net>
-	<1390215908.3034.95.camel@slavad-ubuntu>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [writable snapshots discussion] Does nilfs2 do any in-place
+ writes?
+Date: Mon, 20 Jan 2014 15:54:09 +0400
+Message-ID: <1390218849.3034.121.camel@slavad-ubuntu>
+References: <1389787304.3913.28.camel@slavad-ubuntu>
+	 <20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
+	 <1389866912.2565.44.camel@slavad-ubuntu>
+	 <20140118.075519.43661574.konishi.ryusuke@lab.ntt.co.jp>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1390215908.3034.95.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=hIsAFVp7ChkByVYodkwFNvWPq4IZshKOMW+j9DPWY7k=;
+	b=LpL0yEsnznb0XNyOJsk1/ZIdxm2XROIY3iBNuBJJKY4Q1lliFDe7Y5Kb+1PCbHGOy8zYw3obq21+lxHjXUUeeoGGOdFMQySQ/YAdKgrW3q9vbHwMsG3YY4a7qfVZ9JAT;
+In-Reply-To: <20140118.075519.43661574.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 20 Jan 2014 15:05:08 +0400, Vyacheslav Dubeyko wrote:
-> On Mon, 2014-01-20 at 11:52 +0100, Andreas Rohner wrote:
->> Hi Vyacheslav,
->> 
->> On 2014-01-20 11:14, Vyacheslav Dubeyko wrote:
->> > On Sun, 2014-01-19 at 15:01 +0100, Andreas Rohner wrote:
->> > 
->> > It is expected "From: <author name and name>" and "Subject: <subject>"
->> > in the begin of patch.
->> 
->> Are you sure? I don't see that in other patches and I think this
->> information is already contained in the email headers. I used "git
->> send-email" to submit the patch.
->> 
+Hi Ryusuke,
+
+On Sat, 2014-01-18 at 07:55 +0900, Ryusuke Konishi wrote:
+
+> > Yes, I think too that such suggestion is valuable for NILFS2. But I
+> > suppose that the problem is more complex. I mean a situation with
+> > write-able snapshots. If we will have write-able snapshots then it means
+> > necessity to have independent version of some superblock's  fields
+> > (s_last_cno, s_last_pseg, s_last_seq, s_mtime, s_wtime, s_mnt_count,
+> > s_state, s_c_interval, s_feature_compat_ro, s_feature_incompat). For
+> > example, snapshot can be made before xafile creation on a volume and
+> > write-able snapshot should continue to live without possibility to xattr
+> > creation, and so on.
 > 
-> It is requirement for kernel patches. You can see it in kernel
-> documentations.
+> OK, please tell me what do you suppose about the writable snapshot.
+> 
+> Do you think we should keep multiple branches or concurrently
+> mountable namespaces on one device ?
+> 
 
-I think the additional from line and patch title line are only
-required when they are different from those in the mail headers.
+When I think about notion of snapshot then I have such understanding.
+Read-only snapshot is a "frozen" file system state. Writable snapshot is
+an isolated file system state. So, I started from such understanding in
+my considerations.
 
-Regards,
-Ryusuke Konishi
+And I suppose that when we keep in one super root info about several
+snapshots then we have "multiple branches" approach. But now we use
+"concurrently mountable namespaces" approach for read-only snapshots, as
+far as I can see. So, I think that users like and use "concurrently
+mountable namespaces" and we should keep and evolve this approach. I
+didn't think deeply about writable snapshots yet but maybe it will need
+to modify VFS for multiple writable snapshots support (but I haven't any
+concrete vision of it). Thereby, maybe, "multiple branches" and
+"concurrently mountable namespaces" approaches are not contradictory but
+complimentary.
+
+> I prefer to maintain only one super root block per partition even if
+> we support writable snapshots.  Otherwise, I think we should use
+> multiple partitions to simplify the design.
+> 
+> I mean keeping multiple branches in one super root block with a DAT
+> file and a sufile in such a case.  Maintaining multiple DAT files and
+> sufiles on one device seems too complex to me.
+> 
+
+I suppose that your vision is right. But, anyway, it needs to elaborate
+more concrete suggestions for discussion. I simply mentioned about it
+but I didn't suggest something concrete. And I am not ready right now to
+suggest several ideas. :) Firstly, I want to finish my consideration
+about changing of superblocks' in-place update policy.
+
+Anyway, I am going to return to discussion about writable snapshots.
+
+With the best regards,
+Vyacheslav Dubeyko.
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
