@@ -1,83 +1,84 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [writable snapshots discussion] Does nilfs2 do any in-place
- writes?
-Date: Mon, 20 Jan 2014 15:54:09 +0400
-Message-ID: <1390218849.3034.121.camel@slavad-ubuntu>
-References: <1389787304.3913.28.camel@slavad-ubuntu>
-	 <20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
-	 <1389866912.2565.44.camel@slavad-ubuntu>
-	 <20140118.075519.43661574.konishi.ryusuke@lab.ntt.co.jp>
-Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: Re: [PATCH 1/4] nilfs-utils: cldconfig add an option to set minimal
+ free blocks
+Date: Mon, 20 Jan 2014 12:55:46 +0100
+Message-ID: <52DD0EC2.9060706@gmx.net>
+References: <cover.1390139797.git.andreas.rohner@gmx.net>		 <685e5c720189d1e451ed8a0d65581aa8c5a3f7f0.1390139797.git.andreas.rohner@gmx.net>	 <1390212899.3034.66.camel@slavad-ubuntu> <52DCFFEB.4070809@gmx.net> <1390215908.3034.95.camel@slavad-ubuntu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=hIsAFVp7ChkByVYodkwFNvWPq4IZshKOMW+j9DPWY7k=;
-	b=LpL0yEsnznb0XNyOJsk1/ZIdxm2XROIY3iBNuBJJKY4Q1lliFDe7Y5Kb+1PCbHGOy8zYw3obq21+lxHjXUUeeoGGOdFMQySQ/YAdKgrW3q9vbHwMsG3YY4a7qfVZ9JAT;
-In-Reply-To: <20140118.075519.43661574.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <1390215908.3034.95.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Ryusuke,
+Hi Vyacheslav,
 
-On Sat, 2014-01-18 at 07:55 +0900, Ryusuke Konishi wrote:
-
-> > Yes, I think too that such suggestion is valuable for NILFS2. But I
-> > suppose that the problem is more complex. I mean a situation with
-> > write-able snapshots. If we will have write-able snapshots then it means
-> > necessity to have independent version of some superblock's  fields
-> > (s_last_cno, s_last_pseg, s_last_seq, s_mtime, s_wtime, s_mnt_count,
-> > s_state, s_c_interval, s_feature_compat_ro, s_feature_incompat). For
-> > example, snapshot can be made before xafile creation on a volume and
-> > write-able snapshot should continue to live without possibility to xattr
-> > creation, and so on.
+On 2014-01-20 12:05, Vyacheslav Dubeyko wrote:
+> I suppose that it should be made by nilfs_cleanerd by itself but not an
+> user.
 > 
-> OK, please tell me what do you suppose about the writable snapshot.
+>>> What will we have in situation when an user selects not proper value of
+>>> threshold?
+>>
+>> Well that's the users problem. You could also ask what will happen if
+>> the user selects an improper min_clean_segments value ;)
+>>
 > 
-> Do you think we should keep multiple branches or concurrently
-> mountable namespaces on one device ?
+> I don't think that it is good approach not to defend an user from
+> mistaken decision.
+
+I guess my point was, that NILFS2 isn't the user friendliest file system
+on the planet anyway. Good documentation in the config file and sensible
+default values would probably be the best solution.
+
+We could of course set some default value and remove the option from the
+config file, but I think it is a powerful option and the user might want
+to tweak it to his or her needs.
+
+>>> I worried about situation of skipping sibling segments from cleaning. Is
+>>> NILFS2 driver really ready for this? Did you think about efficiency of
+>>> free space allocation after such cleaning and about file system
+>>> consistency? Are you sure that all will be good after such approach of
+>>> cleaning? I simply want to be sure that you have analyzed this.
+>>
+>> I tested it extensively and I am quite sure, that there are no problems
+>> with that on the driver side.
+>>
 > 
+> I want to listen the approach at whole and arguments how it works for
+> the NILFS2 at whole. Such words as "I tested it and it works" is
+> dangerous. Did you check your file system by fsck? I suppose that you
+> don't. So, we need some reasonable description of concept that it prove
+> your vision.
 
-When I think about notion of snapshot then I have such understanding.
-Read-only snapshot is a "frozen" file system state. Writable snapshot is
-an isolated file system state. So, I started from such understanding in
-my considerations.
+Ok I am sorry about that. Let me address all of your points:
 
-And I suppose that when we keep in one super root info about several
-snapshots then we have "multiple branches" approach. But now we use
-"concurrently mountable namespaces" approach for read-only snapshots, as
-far as I can see. So, I think that users like and use "concurrently
-mountable namespaces" and we should keep and evolve this approach. I
-didn't think deeply about writable snapshots yet but maybe it will need
-to modify VFS for multiple writable snapshots support (but I haven't any
-concrete vision of it). Thereby, maybe, "multiple branches" and
-"concurrently mountable namespaces" approaches are not contradictory but
-complimentary.
+If you look at nilfs_sufile_alloc in sufile.c you will see, that the
+allocation algorithm basically just remembers the last allocated segment
+in sh_last_alloc and then from there sequentially scans the SUFILE for a
+clean segment. Thereby it checks the flags of the nilfs_segment_usage
+structure and skips it if it is not clean:
 
-> I prefer to maintain only one super root block per partition even if
-> we support writable snapshots.  Otherwise, I think we should use
-> multiple partitions to simplify the design.
-> 
-> I mean keeping multiple branches in one super root block with a DAT
-> file and a sufile in such a case.  Maintaining multiple DAT files and
-> sufiles on one device seems too complex to me.
-> 
+if (!nilfs_segment_usage_clean(su))
+	continue;
 
-I suppose that your vision is right. But, anyway, it needs to elaborate
-more concrete suggestions for discussion. I simply mentioned about it
-but I didn't suggest something concrete. And I am not ready right now to
-suggest several ideas. :) Firstly, I want to finish my consideration
-about changing of superblocks' in-place update policy.
+So it is perfectly capable of skipping segments that are left over at
+random places.
 
-Anyway, I am going to return to discussion about writable snapshots.
+Could that reduce the performance of the allocation algorithm? Probably
+yes, but I don't think it would be significant. Most of the SUFILE will
+be in Cache anyway.
 
-With the best regards,
-Vyacheslav Dubeyko.
+I don't see how the file system consistency could be affected by just
+updating a timestamp in the SUFILE. The value of su_lastmod is never
+used in the driver. It is only set at creation time and used by the GC
+to sort the segment list.
 
-
+Best regards,
+Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
