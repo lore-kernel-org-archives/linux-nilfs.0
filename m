@@ -1,66 +1,47 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH 1/4] nilfs-utils: cldconfig add an option to set minimal
- free blocks
-Date: Mon, 20 Jan 2014 11:52:27 +0100
-Message-ID: <52DCFFEB.4070809@gmx.net>
-References: <cover.1390139797.git.andreas.rohner@gmx.net>	 <685e5c720189d1e451ed8a0d65581aa8c5a3f7f0.1390139797.git.andreas.rohner@gmx.net> <1390212899.3034.66.camel@slavad-ubuntu>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH 0/4] nilfs-utils: new feature to skip inefficient gc
+Date: Mon, 20 Jan 2014 14:54:20 +0400
+Message-ID: <1390215260.3034.87.camel@slavad-ubuntu>
+References: <cover.1390139797.git.andreas.rohner@gmx.net>
+	 <1390211015.3034.54.camel@slavad-ubuntu> <52DCFC61.7050608@gmx.net>
+Reply-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1390212899.3034.66.camel@slavad-ubuntu>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:Reply-To:From:Subject:Message-ID; bh=jZY2Ejz5CxyxMNUMx+FcoF5ysvcU9wf+eIlKhxYepoY=;
+	b=WVXoYYjXqhJe3NmWsAEcTbWwJ3Mc9z5u55oF6lNJux4fnZNxlSntRyFvMV4U3Xye/059R88dbpxzG6y6T/7Ev9CBtBSsjb+Psc+m7AAB+zci/NhOqtGYUDfM4OV90wEk;
+In-Reply-To: <52DCFC61.7050608-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Vyacheslav,
+On Mon, 2014-01-20 at 11:37 +0100, Andreas Rohner wrote:
 
-On 2014-01-20 11:14, Vyacheslav Dubeyko wrote:
-> On Sun, 2014-01-19 at 15:01 +0100, Andreas Rohner wrote:
+> > I think that it really needs to test this patchset by xfstests and
+> > fsstress (part of LTP test suite) tools. What do you think?
+> > 
+> > Moreover, I think that it makes sense to use well-known benchmark suite
+> > (or several) for testing and estimation.
 > 
-> It is expected "From: <author name and name>" and "Subject: <subject>"
-> in the begin of patch.
+> Yes you are right. I will try to use another benchmark. But it is hard
+> to use well-known benchmarks to test the GC, because they are designed
+> to test different things. Either not enough data is written and the GC
+> never starts or too much and the benchmark crashes with a "not enough
+> space left on the device" error.
 
-Are you sure? I don't see that in other patches and I think this
-information is already contained in the email headers. I used "git
-send-email" to submit the patch.
+I don't know concrete reasons of such crashes. But namely efficient GC
+policy should resolve such issues, from my point of view. :)
 
->> With this option the user can specify the minimal number of free/dead
->> blocks, which is a threshold for the GC. If there are less free blocks
->> to gain from cleaning a segment than the specified number, the GC will
->> abort and try again with a different segment.
->>
-> 
-> What will be under stress? I mean situation when we processed all
-> segments that it is valuable for cleaning on threshold basis. Then we
-> need to clean segments for space allocation but all "dirty" segments not
-> reasonable choice for cleaning because of threshold.
+Usually, stable and mature file system should pass through xfstests and
+fsstress without any trouble. Namely, such success is our goal, I think.
 
-You have a point here. I could add another option that is used when the
-file system is under stress. Just like with cleaning_interval and
-mc_cleaning_interval. By setting the mc-option to 0 you could disable
-the threshold under stress.
+With the best regards,
+Vyacheslav Dubeyko.
 
-> What will we have in situation when an user selects not proper value of
-> threshold?
 
-Well that's the users problem. You could also ask what will happen if
-the user selects an improper min_clean_segments value ;)
-
-> I worried about situation of skipping sibling segments from cleaning. Is
-> NILFS2 driver really ready for this? Did you think about efficiency of
-> free space allocation after such cleaning and about file system
-> consistency? Are you sure that all will be good after such approach of
-> cleaning? I simply want to be sure that you have analyzed this.
-
-I tested it extensively and I am quite sure, that there are no problems
-with that on the driver side.
-
-Thanks for reviewing my patches,
-
-Best regards,
-Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
