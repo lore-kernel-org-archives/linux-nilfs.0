@@ -1,35 +1,39 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: depending on flags, update segment usage instead
- of cleaning
-Date: Tue, 21 Jan 2014 15:17:08 +0100
-Message-ID: <52DE8164.1020303@gmx.net>
-References: <cover.1390139797.git.andreas.rohner@gmx.net>	<1390140141-4432-1-git-send-email-andreas.rohner@gmx.net> <20140120.014916.57469358.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v2 1/5] nilfs-utils: cldconfig add an option to set minimal
+ free blocks
+Date: Tue, 21 Jan 2014 15:38:45 +0100
+Message-ID: <52DE8675.2010101@gmx.net>
+References: <cover.1390310509.git.andreas.rohner@gmx.net> <22b5b3ac403052d3044dc8c1bebe323191376c03.1390310509.git.andreas.rohner@gmx.net> <2891656.vdWYFxplD3@coil>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140120.014916.57469358.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <2891656.vdWYFxplD3@coil>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dexen deVries <dexen.devries-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Ryusuke,
+Hi Dexen,
 
-On 2014-01-19 17:49, Ryusuke Konishi wrote:
-> Additional comments are as follows:
+On 2014-01-21 15:10, dexen deVries wrote:
+> Will your patches be smart enough to re-claim space if the only available free 
+> blocks are under threshold?
 > 
-> - For NILFS_IOCTL_SET_SUINFO, v_flags should be used to define which
->   fields (lastmod, nblocks, flags) are modified.  These flags should
->   be defined with bit masks.
+> 
+> Scenario: FS is running out of free space, and the free blocks to be reclaimed 
+> are scattered through segments in small numbers. Several segments have a small 
+> number of free blocks, but in each segment the amount is under the threshold. 
 
-I forgot to mention in my cover letter, that I decided not to use the
-v_flags field for the flags, because I needed a new structure to contain
-the segment number anyway. It just seemed to be a better choice to put
-the flags there as well. But if you want I can always change it to use
-the v_flags field.
+No my patches won't do that, but there are two new config options.
+Namely min_free_blocks_threshold and mc_min_free_blocks_threshold,
+whereby the latter is used if the number of clean segments is below
+min_clean_segments, similar to the other mc options.
 
-Best regards,
+To accommodate your scenario you could simple set a very low value or
+even 0 to mc_min_free_blocks_threshold. So if the number of clean
+segments drops below min_clean_segments my patches would be disabled.
+
+Regards,
 Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
