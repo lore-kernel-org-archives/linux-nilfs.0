@@ -1,13 +1,10 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v2 3/3] nilfs2: implementation of NILFS_IOCTL_SET_SUINFO ioctl
-Date: Tue, 21 Jan 2014 15:00:30 +0100
-Message-ID: <6fb5a6d45afca9ae2599c471c0e42805ed1b6c55.1390312777.git.andreas.rohner@gmx.net>
+Subject: [PATCH v2 1/3] nilfs2: add new nilfs_suinfo_update struct
+Date: Tue, 21 Jan 2014 15:00:28 +0100
+Message-ID: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>
 References: <cover.1390310509.git.andreas.rohner@gmx.net>
- <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-In-Reply-To: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-References: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <cover.1390310509.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -16,120 +13,68 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-With this ioctl the segment usage information in the SUFILE can be
-updated from userspace.
+This adds struct nilfs_suinfo_update and some flags. It contains the
+information needed to update one entry of segment usage information in
+the SUFILE. The flags specify, which fields need to be updated.
 
-This is useful, because it allows the userspace GC to modify and update
-segment usage entries for specific segments, which enables it to avoid
-unnecessary write operations.
-
-If a segment needs to be cleaned, but there is no or very little free
-space to be gained, the cleaning operation basically degrades to
-needless expensive copying of data. In the end the only thing that
-changes is the location of the data and a timestamp in the segment usage
-info. With this ioctl the GC can skip the copying and update the segment
-usage entries directly instead.
+This can be used to update segment usage information from userspace with an
+ioctl.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/ioctl.c         | 50 +++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/nilfs2_fs.h |  2 ++
- 2 files changed, 52 insertions(+)
+ include/linux/nilfs2_fs.h | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index b44bdb2..c6a3faf 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -273,6 +273,13 @@ nilfs_ioctl_do_get_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
- 	return ret;
- }
- 
-+static ssize_t
-+nilfs_ioctl_do_set_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
-+			  void *buf, size_t size, size_t nmembs)
-+{
-+	return nilfs_sufile_set_suinfo(nilfs->ns_sufile, buf, size, nmembs);
-+}
-+
- static int nilfs_ioctl_get_sustat(struct inode *inode, struct file *filp,
- 				  unsigned int cmd, void __user *argp)
- {
-@@ -767,6 +774,44 @@ out:
- 	return ret;
- }
- 
-+static int nilfs_ioctl_set_info(struct inode *inode, struct file *filp,
-+				unsigned int cmd, void __user *argp,
-+				size_t membsz,
-+				ssize_t (*dofunc)(struct the_nilfs *,
-+						  __u64 *, int,
-+						  void *, size_t, size_t))
-+{
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	struct nilfs_transaction_info ti;
-+	struct nilfs_argv argv;
-+	int ret;
-+
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	ret = mnt_want_write_file(filp);
-+	if (ret)
-+		return ret;
-+
-+	ret = -EFAULT;
-+	if (copy_from_user(&argv, argp, sizeof(argv)))
-+		goto out;
-+
-+	if (argv.v_size < membsz)
-+		return -EINVAL;
-+
-+	nilfs_transaction_begin(inode->i_sb, &ti, 0);
-+	ret = nilfs_ioctl_wrap_copy(nilfs, &argv, _IOC_DIR(cmd), dofunc);
-+	if (unlikely(ret < 0))
-+		nilfs_transaction_abort(inode->i_sb);
-+	else
-+		nilfs_transaction_commit(inode->i_sb); /* never fails */
-+
-+out:
-+	mnt_drop_write_file(filp);
-+	return ret;
-+}
-+
- static int nilfs_ioctl_get_info(struct inode *inode, struct file *filp,
- 				unsigned int cmd, void __user *argp,
- 				size_t membsz,
-@@ -820,6 +865,10 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return nilfs_ioctl_get_info(inode, filp, cmd, argp,
- 					    sizeof(struct nilfs_suinfo),
- 					    nilfs_ioctl_do_get_suinfo);
-+	case NILFS_IOCTL_SET_SUINFO:
-+		return nilfs_ioctl_set_info(inode, filp, cmd, argp,
-+					    sizeof(struct nilfs_suinfo_update),
-+					    nilfs_ioctl_do_set_suinfo);
- 	case NILFS_IOCTL_GET_SUSTAT:
- 		return nilfs_ioctl_get_sustat(inode, filp, cmd, argp);
- 	case NILFS_IOCTL_GET_VINFO:
-@@ -859,6 +908,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case NILFS_IOCTL_GET_CPINFO:
- 	case NILFS_IOCTL_GET_CPSTAT:
- 	case NILFS_IOCTL_GET_SUINFO:
-+	case NILFS_IOCTL_SET_SUINFO:
- 	case NILFS_IOCTL_GET_SUSTAT:
- 	case NILFS_IOCTL_GET_VINFO:
- 	case NILFS_IOCTL_GET_BDESCS:
 diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index 2ee1594..528e2c5 100644
+index 9875576..2ee1594 100644
 --- a/include/linux/nilfs2_fs.h
 +++ b/include/linux/nilfs2_fs.h
-@@ -902,5 +902,7 @@ struct nilfs_bdesc {
- 	_IOW(NILFS_IOCTL_IDENT, 0x8B, __u64)
- #define NILFS_IOCTL_SET_ALLOC_RANGE  \
- 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
-+#define NILFS_IOCTL_SET_SUINFO  \
-+	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
+@@ -709,6 +709,45 @@ static inline int nilfs_suinfo_clean(const struct nilfs_suinfo *si)
+ 	return !si->sui_flags;
+ }
  
- #endif	/* _LINUX_NILFS_FS_H */
++/**
++ * nilfs_suinfo_update - segment usage information update
++ * @sup_segnum: segment number
++ * @sup_flags: flags for which fields are active in sup_sui
++ * @sup_sui: segment usage information
++ */
++struct nilfs_suinfo_update {
++	__u64 sup_segnum;
++	__u32 sup_flags;
++	struct nilfs_suinfo sup_sui;
++};
++
++enum {
++	NILFS_SUINFO_UPDATE_LASTMOD,
++	NILFS_SUINFO_UPDATE_NBLOCKS,
++	NILFS_SUINFO_UPDATE_FLAGS,
++};
++
++#define NILFS_SUINFO_UPDATE_FNS(flag, name)				\
++static inline void							\
++nilfs_suinfo_update_set_##name(struct nilfs_suinfo_update *sup)		\
++{									\
++	sup->sup_flags |= 1UL << NILFS_SUINFO_UPDATE_##flag;		\
++}									\
++static inline void							\
++nilfs_suinfo_update_clear_##name(struct nilfs_suinfo_update *sup)	\
++{									\
++	sup->sup_flags &= ~(1UL << NILFS_SUINFO_UPDATE_##flag);		\
++}									\
++static inline int							\
++nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
++{									\
++	return !!(sup->sup_flags & (1UL << NILFS_SUINFO_UPDATE_##flag));\
++}
++
++NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
++NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
++NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
++
+ /* ioctl */
+ enum {
+ 	NILFS_CHECKPOINT,
 -- 
 1.8.5.3
 
