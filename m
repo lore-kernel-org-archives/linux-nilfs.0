@@ -1,12 +1,13 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v2 5/5] nilfs-utils: man: add description of min_free_blocks_threshold
-Date: Tue, 21 Jan 2014 14:59:44 +0100
-Message-ID: <648708ab2ccee79a47b5dc6e4c343d7876e6d99d.1390310509.git.andreas.rohner@gmx.net>
+Subject: [PATCH v2 3/3] nilfs2: implementation of NILFS_IOCTL_SET_SUINFO ioctl
+Date: Tue, 21 Jan 2014 15:00:30 +0100
+Message-ID: <6fb5a6d45afca9ae2599c471c0e42805ed1b6c55.1390312777.git.andreas.rohner@gmx.net>
 References: <cover.1390310509.git.andreas.rohner@gmx.net>
+ <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1390310509.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-In-Reply-To: <cover.1390310509.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-References: <cover.1390310509.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+References: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -15,51 +16,120 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Adds a description of the new min_free_blocks_threshold and
-mc_min_free_blocks_threshold options in the config file and the new
-command line parameter -t for nilfs-clean.
+With this ioctl the segment usage information in the SUFILE can be
+updated from userspace.
+
+This is useful, because it allows the userspace GC to modify and update
+segment usage entries for specific segments, which enables it to avoid
+unnecessary write operations.
+
+If a segment needs to be cleaned, but there is no or very little free
+space to be gained, the cleaning operation basically degrades to
+needless expensive copying of data. In the end the only thing that
+changes is the location of the data and a timestamp in the segment usage
+info. With this ioctl the GC can skip the copying and update the segment
+usage entries directly instead.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- man/nilfs-clean.8         | 4 ++++
- man/nilfs_cleanerd.conf.5 | 9 +++++++++
- 2 files changed, 13 insertions(+)
+ fs/nilfs2/ioctl.c         | 50 +++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/nilfs2_fs.h |  2 ++
+ 2 files changed, 52 insertions(+)
 
-diff --git a/man/nilfs-clean.8 b/man/nilfs-clean.8
-index 04e11c6..5af836e 100644
---- a/man/nilfs-clean.8
-+++ b/man/nilfs-clean.8
-@@ -67,6 +67,10 @@ until user resumes the garbage collection.
- \fB\-S\fR, \fB\-\-speed=\fICOUNT[/SECONDS]\fR
- Set garbage collection speed for a cleaner run.
- .TP
-+\fB\-t\fR, \fB\-\-free\-blocks\-threshold=\fICOUNT\fR
-+Specify the minimal number of free blocks before a segment can be
-+cleaned
-+.TP
- \fB\-v\fR, \fB\-\-verbose\fR
- Verbose mode.
- .TP
-diff --git a/man/nilfs_cleanerd.conf.5 b/man/nilfs_cleanerd.conf.5
-index 8f3fcd2..ccb0ade 100644
---- a/man/nilfs_cleanerd.conf.5
-+++ b/man/nilfs_cleanerd.conf.5
-@@ -79,6 +79,15 @@ Specify whether to use \fBmmap\fP(2) for reading segments.  At
- present, this option is enabled if supported regardless of this
- directive.
- .TP
-+.B min_free_blocks_threshold
-+Specify the minimal number of free blocks before a segment can be
-+cleaned. Set to 0 to disable it. The default value is 256.
-+.TP
-+.B mc_min_free_blocks_threshold
-+Specify the minimal number of free blocks before a segment can be
-+cleaned if clean segments < min_clean_segments. Set to 0 to disable it.
-+The default value is 128.
-+.TP
- .B log_priority
- Gives the verbosity level that is used when logging messages from
- \fBnilfs_cleanerd\fP(8).  The possible values are: \fBemerg\fP,
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index b44bdb2..c6a3faf 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -273,6 +273,13 @@ nilfs_ioctl_do_get_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
+ 	return ret;
+ }
+ 
++static ssize_t
++nilfs_ioctl_do_set_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
++			  void *buf, size_t size, size_t nmembs)
++{
++	return nilfs_sufile_set_suinfo(nilfs->ns_sufile, buf, size, nmembs);
++}
++
+ static int nilfs_ioctl_get_sustat(struct inode *inode, struct file *filp,
+ 				  unsigned int cmd, void __user *argp)
+ {
+@@ -767,6 +774,44 @@ out:
+ 	return ret;
+ }
+ 
++static int nilfs_ioctl_set_info(struct inode *inode, struct file *filp,
++				unsigned int cmd, void __user *argp,
++				size_t membsz,
++				ssize_t (*dofunc)(struct the_nilfs *,
++						  __u64 *, int,
++						  void *, size_t, size_t))
++{
++	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
++	struct nilfs_transaction_info ti;
++	struct nilfs_argv argv;
++	int ret;
++
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
++	ret = mnt_want_write_file(filp);
++	if (ret)
++		return ret;
++
++	ret = -EFAULT;
++	if (copy_from_user(&argv, argp, sizeof(argv)))
++		goto out;
++
++	if (argv.v_size < membsz)
++		return -EINVAL;
++
++	nilfs_transaction_begin(inode->i_sb, &ti, 0);
++	ret = nilfs_ioctl_wrap_copy(nilfs, &argv, _IOC_DIR(cmd), dofunc);
++	if (unlikely(ret < 0))
++		nilfs_transaction_abort(inode->i_sb);
++	else
++		nilfs_transaction_commit(inode->i_sb); /* never fails */
++
++out:
++	mnt_drop_write_file(filp);
++	return ret;
++}
++
+ static int nilfs_ioctl_get_info(struct inode *inode, struct file *filp,
+ 				unsigned int cmd, void __user *argp,
+ 				size_t membsz,
+@@ -820,6 +865,10 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 		return nilfs_ioctl_get_info(inode, filp, cmd, argp,
+ 					    sizeof(struct nilfs_suinfo),
+ 					    nilfs_ioctl_do_get_suinfo);
++	case NILFS_IOCTL_SET_SUINFO:
++		return nilfs_ioctl_set_info(inode, filp, cmd, argp,
++					    sizeof(struct nilfs_suinfo_update),
++					    nilfs_ioctl_do_set_suinfo);
+ 	case NILFS_IOCTL_GET_SUSTAT:
+ 		return nilfs_ioctl_get_sustat(inode, filp, cmd, argp);
+ 	case NILFS_IOCTL_GET_VINFO:
+@@ -859,6 +908,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	case NILFS_IOCTL_GET_CPINFO:
+ 	case NILFS_IOCTL_GET_CPSTAT:
+ 	case NILFS_IOCTL_GET_SUINFO:
++	case NILFS_IOCTL_SET_SUINFO:
+ 	case NILFS_IOCTL_GET_SUSTAT:
+ 	case NILFS_IOCTL_GET_VINFO:
+ 	case NILFS_IOCTL_GET_BDESCS:
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index 2ee1594..528e2c5 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -902,5 +902,7 @@ struct nilfs_bdesc {
+ 	_IOW(NILFS_IOCTL_IDENT, 0x8B, __u64)
+ #define NILFS_IOCTL_SET_ALLOC_RANGE  \
+ 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
++#define NILFS_IOCTL_SET_SUINFO  \
++	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
+ 
+ #endif	/* _LINUX_NILFS_FS_H */
 -- 
 1.8.5.3
 
