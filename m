@@ -1,66 +1,112 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH 2/4] nilfs-utils: cleanerd: add custom error value to
- enable fast retry
-Date: Mon, 20 Jan 2014 13:02:50 +0100
-Message-ID: <52DD106A.5030502@gmx.net>
-References: <cover.1390139797.git.andreas.rohner@gmx.net>	 <a203a9d8105dc1b449e469158fb07fbffbf2da18.1390139797.git.andreas.rohner@gmx.net> <1390214764.3034.81.camel@slavad-ubuntu>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH v2 0/5] nilfs-utils: skip inefficient gc operations
+Date: Tue, 21 Jan 2014 14:59:39 +0100
+Message-ID: <cover.1390310509.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1390214764.3034.81.camel@slavad-ubuntu>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Hi Vyacheslav,
+Hi,
 
-Thank you for reviewing my patch set so thoroughly. I already have a few
-new ideas to improve it from our exchange.
+This is the second version of this patch set. It replaces the kind of 
+hacky use of v_flags with a proper implementation of 
+NILFS_IOCTL_SET_SUINFO ioctl.
 
-On 2014-01-20 11:46, Vyacheslav Dubeyko wrote:
-> On Sun, 2014-01-19 at 15:01 +0100, Andreas Rohner wrote:
->> This patch adds the custom error value EGCTRYAGAIN, which signals to
->> cleanerd to retry the gc process as soon as possible with no timeout.
->>
->> If the GC decides not to do any real work and only changes a few
->> metadata bytes, there is no need for a timeout. Furthermore if the GC is
->> running, there is probably not enough free space on the device and it is
->> crucial to retry quickly.
-> 
-> Now GC really decrease performance very frequently. So, you suggest
-> don't use timeout. :) I am afraid that it can decrease performance more.
-> Why do you think in opposite manner?
+v1->v2
+* Implementation of NILFS_IOCTL_SET_SUINFO
+* Added mc_min_free_blocks_threshold config option
+  (if clean segments < min_clean_segments)
+* Added new command line param for nilfs-clean
+* Update man- and config-files
+* Simpler benchmark
 
-I don't suggest to eliminate timeout in general. It just adds the option
-for nilfs_reclaim_segment to skip the timeout once by returning the
-custom error code -EGCTRYAGAIN. This is useful because if the number of
-free blocks is below the threshold the cleaner won't write to the device
-and won't free any segments, so it is important to retry another segment
-quickly. I guess it could be reasonable to use a shorter timeout instead
-of no timeout in this case.
+This patch set implements a small new feature and there shouldn't be
+any compatibility issues. It enables the GC to check how much free
+space can be gained from cleaning a segment and if it is less than a
+certain threshold it will abort the operation and try a different
+segment. Although no blocks need to be moved, the SUFILE entry of the
+corresponding segment needs to be updated to avoid an infinite loop.
 
-> If we doesn't relate with idle system state or I/O load then rigid
-> timeout can really decrease performance, as far as I can judge. The main
-> problem of GC that it works in the background of main file system
-> operations and, as a result, decrease the whole performance. So, how the
-> "no-timeout" does correlate with main file system operation or with the
-> whole system load? 
-> 
-> Could you describe your vision how it will work?
+This is potentially useful for all gc policies, but it is especially
+beneficial for the timestamp policy. Lets assume for example a NILFS2
+volume with 20% static files and lets assume these static files are in 
+the oldest segments. The current timestamp policy will select the oldest 
+segments and, since the data is static, move them mostly unchanged to 
+new segments. After a while they will become the oldest segments again. 
+Then timestamp will move them again. These moving operations are 
+expensive and unnecessary.
 
-Well the GC uses the normal timeout for its normal operation. If the
-number of free blocks is below the threshold it skips the current
-segment or segments and returns -EGCTRYAGAIN to skip the timeout ONCE.
+I used a simple benchmark to test the patch set (only a few lines of C). 
+I used a 100 GB partition and performed the following steps:
 
-I thought it is good practice to separate a big patch into logical
-units. That's why it is probably not clear what the intent is by just
-looking at a single patch in the patch set. I will try to improve my
-commit message to make it clearer.
+1. Write a 20 GB file
+2. Write a 50 GB file
+3. Overwrite chunks of 1 MB within the 50 GB file at random
+4. Repeat step 3 until 60 GB of data is written
+
+Steps 3 and 4 are only perfomed to get the GC started. So the benchmark 
+writes a 130 GB in total to a 100 GB partition.
+
+HHD:
+    Timestamp GB Written: 340.7574
+    Timestamp GB Read:    208.2935
+    Timestamp Runtime:    7787.546s
+
+    Patched GB Written:   313.2566
+    Patched GB Read:      182.6389
+    Patched Runtime:      7410.892s
+
+SSD:
+    Timestamp GB Written: 679.3901
+    Timestamp GB Read:    242.59
+    Timestamp Runtime:    3022.081s
+
+    Patched GB Written:   500.0095
+    Patched GB Read:      157.475   
+    Patched Runtime:      2313.448
+
+The results for the HDD clearly show, that about 20 GB less data has 
+been written and read in the patched version. It is reasonable to 
+assume, that these 20 GB are the static data.
+
+The speed of the GC was tuned to the HDD. It was probably too aggressive 
+for the much faster SSD. That is probably the reason why the difference 
+in GB written and read is much higher than 20 GB.
 
 Best regards,
-Andreas Rohner
+Andreas Rohner 
+---
+Andreas Rohner (5):
+  nilfs-utils: cldconfig add an option to set minimal free blocks
+  nilfs-utils: cleanerd: add custom error value to enable fast retry
+  nilfs-utils: refactoring of nilfs_reclaim_segment to add minblocks
+    param
+  nilfs-utils: add support for NILFS_IOCTL_SET_SUINFO ioctl
+  nilfs-utils: man: add description of min_free_blocks_threshold
+
+ include/nilfs.h                   |  2 ++
+ include/nilfs2_fs.h               | 41 ++++++++++++++++++++++++++++++++
+ include/nilfs_cleaner.h           | 19 ++++++++-------
+ include/nilfs_gc.h                |  6 +++--
+ lib/gc.c                          | 49 ++++++++++++++++++++++++++++++++++++---
+ lib/nilfs.c                       | 26 +++++++++++++++++++++
+ man/nilfs-clean.8                 |  4 ++++
+ man/nilfs_cleanerd.conf.5         |  9 +++++++
+ sbin/cleanerd/cldconfig.c         | 40 ++++++++++++++++++++++++++++++++
+ sbin/cleanerd/cldconfig.h         |  4 ++++
+ sbin/cleanerd/cleanerd.c          | 38 +++++++++++++++++++++++++++---
+ sbin/cleanerd/nilfs_cleanerd.conf |  9 +++++++
+ sbin/nilfs-clean/nilfs-clean.c    | 18 ++++++++++----
+ sbin/nilfs-resize/nilfs-resize.c  |  2 +-
+ 14 files changed, 245 insertions(+), 22 deletions(-)
+
+-- 
+1.8.5.3
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
