@@ -1,124 +1,140 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] mount.nilfs2: ensure gcpid option is dropped if the value is zero
-Date: Thu, 23 Jan 2014 02:18:44 +0900
-Message-ID: <1390411124-19356-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] nilfs-utils: skip inefficient gc operations
+Date: Wed, 22 Jan 2014 18:46:43 -0500
+Message-ID: <52E05863.90604@gmail.com>
+References: <cover.1390310509.git.andreas.rohner@gmx.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=message-id:date:from:user-agent:mime-version:to:subject:references
+         :in-reply-to:content-type:content-transfer-encoding;
+        bh=KF4aapSzfsjAtuwTwe2ySjzfZ1ZmYDop2J2hZKIagRI=;
+        b=qUkg4ilybzFZWMCsjwAEJcA8pDYNV9hGzrnB33H3lhGf65fF/OzTupuJ48qlx+Iw2c
+         xrJnXNBMxTXT9VHl4NgEiZMqVlQkayE/K7l7I//lM7JZ5jRFsivHe3pPEeC6piDrleqP
+         IYVMn7HGYj9LybaRNIKl/8v0HQHoGG7wmfHkf0zydLXE2EjC7ncvurld2UgGxJa/atkw
+         NwHdXqJDQEfuPz8s5wS7DObKKSGrckl9AE6jvXqdKE4d0RhiXA0XlyjCSy6ZmYXqiU5F
+         MLVPlnqDd8yzvcowsj8kps5RljYswK/8M/mAQXhNnrYyxq+pNUTTbX2fjM7vjxTr6z/l
+         7dLw==
+In-Reply-To: <cover.1390310509.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Legacy version of mount.nilfs2 and umount.nilfs2 may leave invalid
-mount option string "gcpid=0" in /etc/mtab.  This adds a new macro
-replace_drop_opt() which replaces or drops mount option based on the
-given condition, and uses the macro to ensure the gcpid option will be
-deleted when its value equals zero.
+On 01/21/2014 08:59 AM, Andreas Rohner wrote:
+> Hi,
+> 
+> This is the second version of this patch set. It replaces the kind of 
+> hacky use of v_flags with a proper implementation of 
+> NILFS_IOCTL_SET_SUINFO ioctl.
+> 
+> v1->v2
+> * Implementation of NILFS_IOCTL_SET_SUINFO
+> * Added mc_min_free_blocks_threshold config option
+>   (if clean segments < min_clean_segments)
+> * Added new command line param for nilfs-clean
+> * Update man- and config-files
+> * Simpler benchmark
+> 
+> This patch set implements a small new feature and there shouldn't be
+> any compatibility issues. It enables the GC to check how much free
+> space can be gained from cleaning a segment and if it is less than a
+> certain threshold it will abort the operation and try a different
+> segment. Although no blocks need to be moved, the SUFILE entry of the
+> corresponding segment needs to be updated to avoid an infinite loop.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- sbin/mount/mount.nilfs2.c  |   22 ++++++----------------
- sbin/mount/mount_opts.h    |   28 ++++++++++++++++++++++++++++
- sbin/mount/umount.nilfs2.c |    4 ++--
- 3 files changed, 36 insertions(+), 18 deletions(-)
+As a user (not a NILFS2 developer), I'll have to live with this one for 
+a while to see how well I like it.  On x86, xfstests went well for my 
+debug DEBUG_PAGEALLOC CONFIG_AIO=n kernel 3.13.0+, no obvious 
+before/after changes in speed, but no crashes, either.  I hit a glitch 
+with Vyacheslav's xattr/ACL pages on 2k blocksize filesystems, so I'll 
+have to test smaller block sizes at a later time.
 
-diff --git a/sbin/mount/mount.nilfs2.c b/sbin/mount/mount.nilfs2.c
-index de49513..e1d32a2 100644
---- a/sbin/mount/mount.nilfs2.c
-+++ b/sbin/mount/mount.nilfs2.c
-@@ -290,20 +290,9 @@ static char *fix_extra_opts_string(const char *exopts, gcpid_opt_t gcpid,
- 	pp_opt_t oldpp;
- 	gcpid_opt_t oldpid;
- 
--	if (gcpid) {
--		s = replace_optval(s, gcpid_opt_fmt, &oldpid, gcpid);
--	} else {
--		/* Remove the gcpid option if gcpid == 0 */
--		s = replace_opt(s, gcpid_opt_fmt, &oldpid, NULL);
--	}
--
--	if (protection_period != ULONG_MAX) {
--		s = replace_optval(s, pp_opt_fmt, &oldpp, protection_period);
--	} else {
--		/* Remove the pp option if pp == ULONG_MAX */
--		s = replace_opt(s, pp_opt_fmt, &oldpp, NULL);
--	}
--
-+	s = replace_drop_opt(s, gcpid_opt_fmt, &oldpid, gcpid, gcpid != 0);
-+	s = replace_drop_opt(s, pp_opt_fmt, &oldpp, protection_period,
-+			     protection_period != ULONG_MAX);
- 	return s;
- }
- 
-@@ -515,8 +504,9 @@ do_mount_one(struct nilfs_mount_info *mi, const struct mount_options *mo)
- 				printf(_("%s: restarted %s\n"),
- 				       progname, NILFS_CLEANERD_NAME);
- 
--			mi->optstr = replace_optval(
--				mi->optstr, gcpid_opt_fmt, &oldpid, mi->gcpid);
-+			mi->optstr = replace_drop_opt(
-+				mi->optstr, gcpid_opt_fmt, &oldpid, mi->gcpid,
-+				mi->gcpid != 0);
- 
- 			update_mtab_entry(mi->device, mi->mntdir, fstype,
- 					  mi->optstr, 0, 0, !mi->mounted);
-diff --git a/sbin/mount/mount_opts.h b/sbin/mount/mount_opts.h
-index b387da2..cce3856 100644
---- a/sbin/mount/mount_opts.h
-+++ b/sbin/mount/mount_opts.h
-@@ -43,5 +43,33 @@ int find_opt(const char *opts, const char *token, void *varp);
- char *replace_opt(char *s, const char *fmt, void *varp, const char *instead);
- char *replace_optval(char *s, const char *fmt, void *varp, ...);
- 
-+/**
-+ * replace_drop_opt() - replace or drop mount option string
-+ * @str: comma-separated string
-+ * @fmt: format string of target option such as "pid=%lu"
-+ * @oldvalp: pointer to old value
-+ * @newval: new value of option
-+ * @cond: condition of mount option manipulation
-+ *
-+ * replace_drop_opt() finds out an option string matching @fmt in
-+ * @str, and replaces value of the option with @newval if @cond is
-+ * true or otherwise deletes the whole option string from @str.  In
-+ * both cases, old value of the option is saved in @oldvalp, where
-+ * @oldvalp must have the type of pointer to a value specified in
-+ * @fmt.  If replacement or removal occurs, old @str is automatically
-+ * freed.
-+ *
-+ * Return Value: new options string is retured.
-+ */
-+#define replace_drop_opt(str, fmt, oldvalp, newval, cond)	\
-+({								\
-+	char *ret;						\
-+	if (cond)						\
-+		ret = replace_optval(				\
-+			str, fmt, oldvalp, newval);		\
-+	else							\
-+		ret = replace_opt(str, fmt, oldvalp, NULL);	\
-+	ret;							\
-+})
- 
- #endif /* _MOUNT_OPTS_H */
-diff --git a/sbin/mount/umount.nilfs2.c b/sbin/mount/umount.nilfs2.c
-index eeffe6e..770c9d1 100644
---- a/sbin/mount/umount.nilfs2.c
-+++ b/sbin/mount/umount.nilfs2.c
-@@ -431,8 +431,8 @@ umount_one(const char *spec, const char *node, const char *type,
- 					printf(_("%s: restarted %s(pid=%d)\n"),
- 					       progname, NILFS_CLEANERD_NAME,
- 					       (int)pid);
--				s = replace_optval(s, gcpid_opt_fmt, &oldpid,
--						   pid);
-+				s = replace_drop_opt(s, gcpid_opt_fmt, &oldpid,
-+						     pid, pid != 0);
- 				change_mtab_opt(spec, node, type, s);
- 				goto out;
- 			} else
--- 
-1.7.9.3
+So that's your warning: small block sizes and POSIX AIO were not tested 
+by me.  If you don't have xfstests, get it.  It's useful for finding 
+bugs and regressions in filesystems.
+
+Not having your super-secret test suite or disk space to run it, I 
+went the other direction, using the commonly available fs_mark utility 
+to make many tiny writes with 16 threads.  My initial opinion is that 
+your new GC code fixes some obvious lag when a filesystem is populated 
+and nilfs_cleanerd starts to do its work.  However, for reasons of code 
+or simple mathematics, the file system hits end-of-space a bit earlier 
+than does the unpatched code.  I'll have to build some kernels, live 
+with the system, and otherwise generate lots of checkpoints to know if 
+this is a problem.  IOW, I need to find out for myself if I need to 
+make a slightly larger filesystem to do the same things using a patched 
+NILFS2.
+
+Thanks!
+
+Michael
+
+[sample collection of data from fs_mark below]
+
+File/sec Output from this fs_mark command (two different runs)...
+
+fs_mark -d /mnt/xfstests-test/test -F -D 16 -t 16 -n 150 -s 28672 -w 4096
+
+...generates the following numbers for comparison:
+
+FILES   OLD     NEW
+2400    219.4   222.3
+4800    210.5   217.9
+7200    216.7   212
+9600    216     213
+12000   216.1   213.1
+14400   215.5   213.4
+16800   213.5   215.4
+19200   212.5   214.9
+21600   214.2   209.6
+24000   212     200
+26400   191.6   194.4
+28800   211.3   208.6
+31200   193.8   190.6
+33600   188.2   174.6
+36000   139.7   192.2
+38400    78.9   204.9
+40800   110.6   188.8
+43200    73.8   205.9
+45600    75.7   205.7
+48000    76     190.4
+50400   115.4   187
+52800   180.8   190.6
+55200   192.4   202
+57600   158.3   206.8
+60000   201.7   189.1
+62400   174.8   200.7
+64800   170     189.2
+67200   203.3   187.7
+69600   174.8   175
+72000   150.9   174.3
+74400   141.7   175.6
+76800   199.5   174.6
+79200   180.2   174.9
+81600    66.8    77.1
+84000    40.8    76.6
+86400    67.3    86.9
+88800    59.3    77.1
+91200   127.1
+93600   113.5
+96000   110.1
+98400   112.6
+100800   75.5
+103200   58
+105600   53.8
+108000   45.2
+110400   45.9
+112800   48.2
+
+The test partition is a 4-GB MD RAID-0 partition, 64k chunk size, 
+on old, damaged spinning rust HDDs and old x86 hardware.  GC issues 
+show up well when using small writes and small file sizes, at least 
+on this hardware.  If this test moves more quickly on your hardware 
+(it should), try to increase the threads before increasing other 
+parameters.
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
