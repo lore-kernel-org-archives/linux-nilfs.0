@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] lib/cleaner_exec.c: get process ID of cleanerd through pipe
-Date: Wed, 22 Jan 2014 22:35:20 +0900
-Message-ID: <1390397720-2259-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] mount.nilfs2: ensure gcpid option is dropped if the value is zero
+Date: Thu, 23 Jan 2014 02:18:44 +0900
+Message-ID: <1390411124-19356-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -9,175 +9,114 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-After applying commit 8ce4b524a1654ece478f54fce772cc0c16e3c559
-"cleanerd: call _exit(2) twice for ensuring not being a session
-leader", the mount helper program of nilfs2 no longer gets proper
-process ID (pid) of cleaner daemon, and umount.nilfs2 fails to kill
-cleanerd.
-
-This fixes the issue by letting cleanerd print out the pid of spawned
-daemon and letting nilfs_launch_cleanerd() function read it through
-pipe.
+Legacy version of mount.nilfs2 and umount.nilfs2 may leave invalid
+mount option string "gcpid=0" in /etc/mtab.  This adds a new macro
+replace_drop_opt() which replaces or drops mount option based on the
+given condition, and uses the macro to ensure the gcpid option will be
+deleted when its value equals zero.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- lib/cleaner_exec.c       |   84 ++++++++++++++++++++++++++++++++++++++++++----
- man/nilfs_cleanerd.8     |    3 ++
- sbin/cleanerd/cleanerd.c |    3 ++
- 3 files changed, 83 insertions(+), 7 deletions(-)
+ sbin/mount/mount.nilfs2.c  |   22 ++++++----------------
+ sbin/mount/mount_opts.h    |   28 ++++++++++++++++++++++++++++
+ sbin/mount/umount.nilfs2.c |    4 ++--
+ 3 files changed, 36 insertions(+), 18 deletions(-)
 
-diff --git a/lib/cleaner_exec.c b/lib/cleaner_exec.c
-index edc55e3..5336c32 100644
---- a/lib/cleaner_exec.c
-+++ b/lib/cleaner_exec.c
-@@ -114,6 +114,43 @@ static inline int process_is_alive(pid_t pid)
- 	return (kill(pid, 0) == 0);
+diff --git a/sbin/mount/mount.nilfs2.c b/sbin/mount/mount.nilfs2.c
+index de49513..e1d32a2 100644
+--- a/sbin/mount/mount.nilfs2.c
++++ b/sbin/mount/mount.nilfs2.c
+@@ -290,20 +290,9 @@ static char *fix_extra_opts_string(const char *exopts, gcpid_opt_t gcpid,
+ 	pp_opt_t oldpp;
+ 	gcpid_opt_t oldpid;
+ 
+-	if (gcpid) {
+-		s = replace_optval(s, gcpid_opt_fmt, &oldpid, gcpid);
+-	} else {
+-		/* Remove the gcpid option if gcpid == 0 */
+-		s = replace_opt(s, gcpid_opt_fmt, &oldpid, NULL);
+-	}
+-
+-	if (protection_period != ULONG_MAX) {
+-		s = replace_optval(s, pp_opt_fmt, &oldpp, protection_period);
+-	} else {
+-		/* Remove the pp option if pp == ULONG_MAX */
+-		s = replace_opt(s, pp_opt_fmt, &oldpp, NULL);
+-	}
+-
++	s = replace_drop_opt(s, gcpid_opt_fmt, &oldpid, gcpid, gcpid != 0);
++	s = replace_drop_opt(s, pp_opt_fmt, &oldpp, protection_period,
++			     protection_period != ULONG_MAX);
+ 	return s;
  }
  
-+static int receive_pid(int fd, pid_t *ppid)
-+{
-+	char buf[100];
-+	unsigned long pid;
-+	FILE *fp;
-+	int ret;
-+
-+	fp = fdopen(fd, "r");
-+	if (!fp) {
-+		nilfs_cleaner_logger(
-+			LOG_ERR, _("Error: fdopen failed: %m"));
-+		close(fd);
-+		goto fail;
-+	}
-+
-+	/* read process ID of cleanerd through the given fd */
-+	while (fgets(buf, sizeof(buf), fp) != NULL) {
-+		/*
-+		 * fgets() is blocked during no child processes
-+		 * respond, but it will escape returning a NULL value
-+		 * and terminate the loop when all child processes
-+		 * close the given pipe (fd) including call of exit().
-+		 */
-+		ret = sscanf(buf, "NILFS_CLEANERD_PID=%lu", &pid);
-+		if (ret == 1) {
-+			*ppid = pid;
-+			fclose(fp); /* this also closes fd */
-+			return 0;
-+		}
-+	}
-+	fclose(fp);
-+fail:
-+	nilfs_cleaner_logger(
-+		LOG_WARNING, _("Warning: cannot get pid of cleanerd"));
-+	return -1;
-+}
-+
- int nilfs_launch_cleanerd(const char *device, const char *mntdir,
- 			  unsigned long protperiod, pid_t *ppid)
- {
-@@ -123,6 +160,7 @@ int nilfs_launch_cleanerd(const char *device, const char *mntdir,
- 	int i = 0;
- 	int ret;
- 	char buf[256];
-+	int pipes[2];
+@@ -515,8 +504,9 @@ do_mount_one(struct nilfs_mount_info *mi, const struct mount_options *mo)
+ 				printf(_("%s: restarted %s\n"),
+ 				       progname, NILFS_CLEANERD_NAME);
  
- 	if (stat(cleanerd, &statbuf) != 0) {
- 		nilfs_cleaner_logger(LOG_ERR,  _("Error: %s not found"),
-@@ -130,8 +168,16 @@ int nilfs_launch_cleanerd(const char *device, const char *mntdir,
- 		return -1;
- 	}
+-			mi->optstr = replace_optval(
+-				mi->optstr, gcpid_opt_fmt, &oldpid, mi->gcpid);
++			mi->optstr = replace_drop_opt(
++				mi->optstr, gcpid_opt_fmt, &oldpid, mi->gcpid,
++				mi->gcpid != 0);
  
-+	ret = pipe(pipes);
-+	if (ret < 0) {
-+		nilfs_cleaner_logger(
-+			LOG_ERR, _("Error: failed to create pipe: %m"));
-+		return -1;
-+	}
-+
- 	ret = fork();
- 	if (ret == 0) {
-+		/* child */
- 		if (setgid(getgid()) < 0) {
- 			nilfs_cleaner_logger(
- 				LOG_ERR,
-@@ -159,16 +205,40 @@ int nilfs_launch_cleanerd(const char *device, const char *mntdir,
- 		sigdelset(&sigs, SIGSEGV);
- 		sigprocmask(SIG_UNBLOCK, &sigs, NULL);
+ 			update_mtab_entry(mi->device, mi->mntdir, fstype,
+ 					  mi->optstr, 0, 0, !mi->mounted);
+diff --git a/sbin/mount/mount_opts.h b/sbin/mount/mount_opts.h
+index b387da2..cce3856 100644
+--- a/sbin/mount/mount_opts.h
++++ b/sbin/mount/mount_opts.h
+@@ -43,5 +43,33 @@ int find_opt(const char *opts, const char *token, void *varp);
+ char *replace_opt(char *s, const char *fmt, void *varp, const char *instead);
+ char *replace_optval(char *s, const char *fmt, void *varp, ...);
  
-+		close(pipes[0]);
-+		ret = dup2(pipes[1], STDOUT_FILENO);
-+		if (ret < 0) {
-+			nilfs_cleaner_logger(
-+				LOG_ERR,
-+				_("Error: failed to duplicate pipe: %m"));
-+			exit(1);
-+		}
-+		close(pipes[1]);
-+		
- 		execv(cleanerd, (char **)dargs);
- 		exit(1);   /* reach only if failed */
--	} else if (ret != -1) {
--		*ppid = ret;
--		return 0; /* cleanerd started */
-+	} else if (ret > 0) {
-+		/* parent */
-+		close(pipes[1]);
-+
-+		/*
-+		 * fork() returns a pid of the child process, but we
-+		 * cannot use it because cleanerd internally fork()s
-+		 * and changes pid.
-+		 */
-+		ret = receive_pid(pipes[0], ppid);
-+		if (ret < 0)
-+			*ppid = 0;
-+		/*
-+		 * always return a success code because cleanerd has
-+		 * already started.
-+		 */
-+		return 0;
- 	} else {
--		int errsv = errno;
--		nilfs_cleaner_logger(LOG_ERR,
--				     _("Error: could not fork: %s"),
--				     strerror(errsv));
-+		nilfs_cleaner_logger(
-+			LOG_ERR, _("Error: could not fork: %m"));
-+		close(pipes[0]);
-+		close(pipes[1]);
- 	}
- 	return -1;
- }
-diff --git a/man/nilfs_cleanerd.8 b/man/nilfs_cleanerd.8
-index 46caef2..fd1c48a 100644
---- a/man/nilfs_cleanerd.8
-+++ b/man/nilfs_cleanerd.8
-@@ -24,6 +24,9 @@ users are recommended to invoke \fBnilfs_cleanerd\fP through
- \fBmount.nilfs2\fP(8) or \fBmount\fP(8) and shutdown it through
- \fBumount.nilfs2\fP(8) or \fBumount\fP(8) in order to avoid state
- inconsistencies among administration tools.
-+.PP
-+\fBnilfs_cleanerd\fP displays its process ID (pid) to standard
-+output when it started.
- .SH OPTIONS
- .TP
- \fB\-V\fR, \fB\-\-version\fR
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index 86dfcf7..742ab98 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -719,6 +719,9 @@ static int daemonize(int nochdir, int noclose)
- 	if (!nochdir && (chdir(ROOTDIR) < 0))
- 		return -1;
++/**
++ * replace_drop_opt() - replace or drop mount option string
++ * @str: comma-separated string
++ * @fmt: format string of target option such as "pid=%lu"
++ * @oldvalp: pointer to old value
++ * @newval: new value of option
++ * @cond: condition of mount option manipulation
++ *
++ * replace_drop_opt() finds out an option string matching @fmt in
++ * @str, and replaces value of the option with @newval if @cond is
++ * true or otherwise deletes the whole option string from @str.  In
++ * both cases, old value of the option is saved in @oldvalp, where
++ * @oldvalp must have the type of pointer to a value specified in
++ * @fmt.  If replacement or removal occurs, old @str is automatically
++ * freed.
++ *
++ * Return Value: new options string is retured.
++ */
++#define replace_drop_opt(str, fmt, oldvalp, newval, cond)	\
++({								\
++	char *ret;						\
++	if (cond)						\
++		ret = replace_optval(				\
++			str, fmt, oldvalp, newval);		\
++	else							\
++		ret = replace_opt(str, fmt, oldvalp, NULL);	\
++	ret;							\
++})
  
-+	printf("NILFS_CLEANERD_PID=%lu\n", (unsigned long)getpid());
-+	fflush(stdout);
-+
- 	if (!noclose) {
- 		close(0);
- 		close(1);
+ #endif /* _MOUNT_OPTS_H */
+diff --git a/sbin/mount/umount.nilfs2.c b/sbin/mount/umount.nilfs2.c
+index eeffe6e..770c9d1 100644
+--- a/sbin/mount/umount.nilfs2.c
++++ b/sbin/mount/umount.nilfs2.c
+@@ -431,8 +431,8 @@ umount_one(const char *spec, const char *node, const char *type,
+ 					printf(_("%s: restarted %s(pid=%d)\n"),
+ 					       progname, NILFS_CLEANERD_NAME,
+ 					       (int)pid);
+-				s = replace_optval(s, gcpid_opt_fmt, &oldpid,
+-						   pid);
++				s = replace_drop_opt(s, gcpid_opt_fmt, &oldpid,
++						     pid, pid != 0);
+ 				change_mtab_opt(spec, node, type, s);
+ 				goto out;
+ 			} else
 -- 
 1.7.9.3
 
