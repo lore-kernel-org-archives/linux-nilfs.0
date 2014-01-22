@@ -1,31 +1,40 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH v2 1/5] nilfs-utils: cldconfig add an option to set minimal
- free blocks
-Date: Tue, 21 Jan 2014 15:53:31 +0100
-Message-ID: <52DE89EB.6010200@gmx.net>
-References: <cover.1390310509.git.andreas.rohner@gmx.net> <22b5b3ac403052d3044dc8c1bebe323191376c03.1390310509.git.andreas.rohner@gmx.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [ANNOUNCE] nilfs2-kmod-0.5.1 release
+Date: Wed, 22 Jan 2014 09:18:28 +0900 (JST)
+Message-ID: <20140122.091828.51424165.konishi.ryusuke@lab.ntt.co.jp>
+References: <20140118.094228.27803640.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <22b5b3ac403052d3044dc8c1bebe323191376c03.1390310509.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <20140118.094228.27803640.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: Text/Plain; charset="us-ascii"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2014-01-21 14:59, Andreas Rohner wrote:
-> With this option the user can specify the minimal number of free/dead
-> blocks before a segment can be cleaned. This is a threshold for the GC
-> to prevent needless moving of data. If there are less free blocks
-> to gain from cleaning a segment than the specified number, the GC will
-> abort and try again with a different segment.
+On Sat, 18 Jan 2014 09:42:28 +0900 (JST), Ryusuke Konishi wrote:
+> Hi folks,
+> 
+> I pushed out the updated version of nilfs2 kernel module for CentOS 6
+> and other RHEL6 clones to github:
+> 
+>  https://github.com/nilfs-dev/nilfs2-kmod-centos6.git
+> 
+> This release includes the recent important bug fixes by Andreas Rohner
+> and Vyacheslav Dubeyko.
+> 
+> The rpm files of this kmod will be available on
+> 
+>   http://www.nilfs.org/en/pkg_centos.html
+>   http://www.nilfs.org/pub/centos/6/RPMS/x86_64/
+>   http://www.nilfs.org/pub/centos/6/RPMS/i686/
+> 
+> at a later date.
 
-Come to think of it, "blocks" is not a good unit. Maybe I should change
-that to "% of a segment" and/or "KB/MB". It shouldn't be hard...
+The rpm files are now available.
 
-Regards,
-Andreas Rohner
-
+Thanks,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
