@@ -1,159 +1,208 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2 3/3] nilfs2: implementation of
- NILFS_IOCTL_SET_SUINFO ioctl
-Date: Sat, 25 Jan 2014 00:23:36 +0900 (JST)
-Message-ID: <20140125.002336.52175723.konishi.ryusuke@lab.ntt.co.jp>
-References: <6fb5a6d45afca9ae2599c471c0e42805ed1b6c55.1390312777.git.andreas.rohner@gmx.net>
-	<20140124.222016.110509397.konishi.ryusuke@lab.ntt.co.jp>
-	<52E26E46.3030702@gmx.net>
+Subject: Re: [PATCH v2 2/3] nilfs2: add nilfs_sufile_set_suinfo to update
+ segment usage info
+Date: Sat, 25 Jan 2014 01:34:01 +0900 (JST)
+Message-ID: <20140125.013401.474522529.konishi.ryusuke@lab.ntt.co.jp>
+References: <2fd48b2d524a59a02bdad13c0c194de3e5b55cc7.1390312777.git.andreas.rohner@gmx.net>
+	<20140124.205623.400541300.konishi.ryusuke@lab.ntt.co.jp>
+	<52E25DDC.2060502@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <52E26E46.3030702-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <52E25DDC.2060502-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, 24 Jan 2014 14:44:38 +0100, Andreas Rohner wrote:
-> On 2014-01-24 14:20, Ryusuke Konishi wrote:
->> On Tue, 21 Jan 2014 15:00:30 +0100, Andreas Rohner wrote:
->>> With this ioctl the segment usage information in the SUFILE can be
->>> updated from userspace.
+On Fri, 24 Jan 2014 13:34:36 +0100, Andreas Rohner wrote:
+> On 2014-01-24 12:56, Ryusuke Konishi wrote:
+>> On Tue, 21 Jan 2014 15:00:29 +0100, Andreas Rohner wrote:
+>>> This patch introduces the nilfs_sufile_set_suinfo function, which
+>>> expects an array of nilfs_suinfo_update structures and updates the
+>>> segment usage information accordingly.
 >>>
->>> This is useful, because it allows the userspace GC to modify and update
->>> segment usage entries for specific segments, which enables it to avoid
->>> unnecessary write operations.
->>>
->>> If a segment needs to be cleaned, but there is no or very little free
->>> space to be gained, the cleaning operation basically degrades to
->>> needless expensive copying of data. In the end the only thing that
->>> changes is the location of the data and a timestamp in the segment usage
->>> info. With this ioctl the GC can skip the copying and update the segment
->>> usage entries directly instead.
+>>> This is basically a helper function for the newly introduced
+>>> NILFS_IOCTL_SET_SUINFO ioctl.
 >>>
 >>> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 >>> ---
->>>  fs/nilfs2/ioctl.c         | 50 +++++++++++++++++++++++++++++++++++++++++++++++
->>>  include/linux/nilfs2_fs.h |  2 ++
->>>  2 files changed, 52 insertions(+)
+>>>  fs/nilfs2/sufile.c | 91 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>>>  fs/nilfs2/sufile.h |  2 +-
+>>>  2 files changed, 92 insertions(+), 1 deletion(-)
 >>>
->>> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
->>> index b44bdb2..c6a3faf 100644
->>> --- a/fs/nilfs2/ioctl.c
->>> +++ b/fs/nilfs2/ioctl.c
->>> @@ -273,6 +273,13 @@ nilfs_ioctl_do_get_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
->>>  	return ret;
+>>> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+>>> index 3127e9f..81c3438 100644
+>>> --- a/fs/nilfs2/sufile.c
+>>> +++ b/fs/nilfs2/sufile.c
+>>> @@ -870,6 +870,97 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
 >>>  }
 >>>  
->>> +static ssize_t
->>> +nilfs_ioctl_do_set_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
->>> +			  void *buf, size_t size, size_t nmembs)
+>>>  /**
+>>> + * nilfs_sufile_set_suinfo -
+>> 
+>> Please fill the summary line of function even though
+>> nilfs_sufile_get_suinfo() function lacks it.
+>> 
+>>  * nilfs_sufile_set_suinfo - update segment usage information
+>> 
+>>> + * @sufile: inode of segment usage file
+>>> + * @buf: array of suinfo
+>>> + * @supsz: byte size of suinfo
+>>> + * @nsup: size of suinfo array
+>>> + *
+>>> + * Description: Takes an array of nilfs_suinfo_update structs and updates
+>>> + * segment usage accordingly.
+>>> + *
+>>> + * Return Value: On success, 0 is returned and .... On error, one of the
+>>> + * following negative error codes is returned.
+>>> + *
+>>> + * %-EIO - I/O error.
+>>> + *
+>>> + * %-ENOMEM - Insufficient amount of memory available.
+>>> + *
+>>> + * %-EINVAL - Invalid segment number in input
+>>> + */
+>>> +ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+>>> +				unsigned supsz, size_t nsup)
 >>> +{
->>> +	return nilfs_sufile_set_suinfo(nilfs->ns_sufile, buf, size, nmembs);
->>> +}
+>>> +	struct buffer_head *bh;
+>>> +	struct nilfs_suinfo_update *sup, *supv = buf;
+>>> +	struct nilfs_segment_usage *su;
+>>> +	void *kaddr;
+>>> +	unsigned long blkoff, prev_blkoff;
+>>> +	size_t nerr = 0;
+>>> +	int ret = 0;
 >>> +
->>>  static int nilfs_ioctl_get_sustat(struct inode *inode, struct file *filp,
->>>  				  unsigned int cmd, void __user *argp)
->>>  {
->>> @@ -767,6 +774,44 @@ out:
->>>  	return ret;
->>>  }
->>>  
->>> +static int nilfs_ioctl_set_info(struct inode *inode, struct file *filp,
->>> +				unsigned int cmd, void __user *argp,
->>> +				size_t membsz,
->>> +				ssize_t (*dofunc)(struct the_nilfs *,
->>> +						  __u64 *, int,
->>> +						  void *, size_t, size_t))
->>> +{
->>> +	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
->>> +	struct nilfs_transaction_info ti;
->>> +	struct nilfs_argv argv;
->>> +	int ret;
->>> +
->>> +	if (!capable(CAP_SYS_ADMIN))
->>> +		return -EPERM;
->>> +
->>> +	ret = mnt_want_write_file(filp);
->>> +	if (ret)
->>> +		return ret;
->>> +
->>> +	ret = -EFAULT;
->>> +	if (copy_from_user(&argv, argp, sizeof(argv)))
+>>> +	if (unlikely(nsup == 0))
 >>> +		goto out;
 >>> +
->>> +	if (argv.v_size < membsz)
->>> +		return -EINVAL;
->>> +
->>> +	nilfs_transaction_begin(inode->i_sb, &ti, 0);
->>> +	ret = nilfs_ioctl_wrap_copy(nilfs, &argv, _IOC_DIR(cmd), dofunc);
+>>> +	down_write(&NILFS_MDT(sufile)->mi_sem);
+>>> +	for (sup = supv; sup < supv + nsup; sup++) {
+>>> +		if (unlikely(sup->sup_segnum >=
+>>> +				nilfs_sufile_get_nsegments(sufile))) {
+>>> +			printk(KERN_WARNING
+>>> +			       "%s: invalid segment number: %llu\n", __func__,
+>>> +			       (unsigned long long)sup->sup_segnum);
+>>> +			nerr++;
+>>> +		}
+>>> +	}
+>>> +	if (nerr > 0) {
+>>> +		ret = -EINVAL;
+>>> +		goto out_sem;
+>>> +	}
 >> 
->> Hmm, we have a problem here.
+>> Seems that you can exit from inside the loop:
 >> 
->> nilfs_ioctl_wrap_copy() cannot be used between
->> nilfs_transcation_begin() and nilfs_transaction_end() since
->> nilfs_ioctl_wrap_copy() calls copy_from_user() and/or copy_to_user().
->> Unfortunately there is a lock order restriction for these functions.
->> 
->> Let's use vmalloc() like nilfs_ioctl_clean_segments().  The following
->> is a sample code for this:
->> 
->> 	size_t len;
->> 	void __user *base;
->> 	void *kbuf;
->> 	int ret;
->> 
->> 	...
->> 	ret = -EINVAL;
->> 	if (argv.v_size < sizeof(struct nilfs_suinfo_update))
->> 		goto out;
->> 
->> 	< range check of argv.v_nmembs >
->> 
->> 	len = argv.v_size * argv.v_nmembs;
->> 	base = (void __user *)(unsigned long)argv.v_base;
->> 	kbuf = vmalloc(len);
->> 	if (!kbuf) {
->> 		ret = -ENOMEM;
->> 		goto out;
->> 	}
->> 
->> 	if (copy_from_user(kbuf, base, len)) {
->> 		ret = -EFAULT;
->> 		goto out_free;
->> 	}
->> 
->> 	nilfs_transaction_begin(inode->i_sb, &ti, 0);
->> 	ret = < call nilfs_sufile_set_suinfo > ;
->> 	if (unlikely(ret < 0))
->> 		nilfs_transcation_abort(inode->i_sb);
->> 	else
->> 		nilfs_transcation_commit(inode->i_sb);
->> 
->> out_free:
->> 	vfree(kbuf);
->> out:
->> 	mnt_drop_write_file(filp);
->> 	...
->> 
-> 
-> Then we don't need the ugly nilfs_suinfo_update structure. I can just
-> send an array of struct nilfs_argv[2]. First element has the segment
-> numbers and second element has the nilfs_suinfo structures and flags are
-> in v_flags. Would that be acceptable?
+>> 	for (sup = supv; sup < supv + nsup; sup++) {
+>> 		if (unlikely(sup->sup_segnum >=
+>> 				nilfs_sufile_get_nsegments(sufile))) {
+>> 			printk(KERN_WARNING
+>> 			       "%s: invalid segment number: %llu\n", __func__,
+>> 			       (unsigned long long)sup->sup_segnum);
+>> 			ret = -EINVAL;
+>> 			goto out_sem;
+>> 		}
 
-Personally, I don't like nilfs_argv[n].  Unfortunately, we couldn't
-find a good way to pass several array arguments together for GC.
+An additional comment:
 
-For NILFS_IOCTL_SET_SUINFO, using nilfs_suinfo_update struct looks
-better to me from the viewpoint of memory access locality and
-readability (and clarity) of source code.
+I think we should reject unknown sup_flags with -EINVAL here.  It may
+be used in a future version, but the current version cannot update the
+corresponding field in sufile.  Rejecting it looks better behavior
+than ignoring it.
 
 Regards,
 Ryusuke Konishi
 
+>> 	}
+> 
+> Yes. I copied that from nilfs_sufile_updatev.
+> 
+>>> +
+>>> +	sup = supv;
+>>> +	blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
+>>> +	ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+>>> +	if (ret < 0)
+>>> +		goto out_sem;
+>>> +
+>>> +	for (;;) {
+>>> +		kaddr = kmap_atomic(bh->b_page);
+>>> +		su = nilfs_sufile_block_get_segment_usage(
+>>> +			sufile, sup->sup_segnum, bh, kaddr);
+>>> +
+>>> +		if (nilfs_suinfo_update_lastmod(sup))
+>>> +			su->su_lastmod = cpu_to_le64(sup->sup_sui.sui_lastmod);
+>>> +
+>>> +		if (nilfs_suinfo_update_nblocks(sup))
+>>> +			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
+>>> +
+>>> +		if (nilfs_suinfo_update_flags(sup))
+>>> +			su->su_flags = cpu_to_le32(sup->sup_sui.sui_flags);
+>> 
+>> You must also update the counter value of sh_ncleansegs, sh_ndirtysegs
+>> in the nilfs_sufile_header struct of sufile header block based on the
+>> change of these flags.
+>> 
+>> In addition, you should ignore NILFS_SEGMENT_USAGE_ACTIVE_FLAG as
+>> below because this flag is a virtual flag set by running nilfs kernel
+>> code.  The flag bit should not be written to sufile on disk.
+>> 
+>>           (sui_flags & ~(1UL << NILFS_SEGMENT_USAGE_ACTIVE))
+> 
+> Yes. I didn't think of that.
+> 
+>>> +
+>>> +		kunmap_atomic(kaddr);
+>>> +
+>>> +		if (++sup >= supv + nsup)
+>> 
+>> You must not use the automatic pointer operation of C language for
+>> nilfs_suinfo_update because it may be extended in a future release.
+>> This "++sup" breaks forward compatibility of the ioctl.
+>> 
+>> You should do this by:
+>> 
+>>                 sup = (void *)sup + supsz;
+>> 
+>> Note that pointer type is automatically converted for "void *" type
+>> variables.
+> 
+> 
+> Makes sense. I guess I blindly copied that from nilfs_sufile_updatev,
+> but with a simple array of __u64 it works of course. With a structure,
+> that is subject to change, not so much any more.
+> 
+>>> +			break;
+>>> +		prev_blkoff = blkoff;
+>>> +		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
+>>> +		if (blkoff == prev_blkoff)
+>>> +			continue;
+>>> +
+>>> +		/* get different block */
+>> 
+>> You must mark bh that this function changed as dirty with
+>> mark_buffer_dirty(bh).  Otherwise, the change will be gone.
+>> 
+>> 
+>>> +		brelse(bh);
+>>> +		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+>>> +		if (unlikely(ret < 0))
+>>> +			goto out_sem;
+>>> +	}
+>>> +	brelse(bh);
+>>> +
+>> 
+>> The sufile should be marked as dirty (if any change happened):
+>> 
+>>     nilfs_mdt_mark_dirty(sufile);
+> 
+> Of course. I am sorry that's a really stupid error. I will fix it right
+> away.
+> 
+> Thanks for your review. I am really embarrassed about all the stupid
+> avoidable errors.
+> 
 > br,
 > Andreas Rohner
 > --
