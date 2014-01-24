@@ -1,149 +1,128 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH v2 3/3] nilfs2: implementation of NILFS_IOCTL_SET_SUINFO
- ioctl
-Date: Fri, 24 Jan 2014 14:44:38 +0100
-Message-ID: <52E26E46.3030702@gmx.net>
-References: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>	<cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>	<6fb5a6d45afca9ae2599c471c0e42805ed1b6c55.1390312777.git.andreas.rohner@gmx.net> <20140124.222016.110509397.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v2 0/5] nilfs-utils: skip inefficient gc operations
+Date: Fri, 24 Jan 2014 15:18:57 +0100
+Message-ID: <52E27651.6070207@gmx.net>
+References: <cover.1390310509.git.andreas.rohner@gmx.net> <85EBEC6B-CA69-472A-8DDD-8E056F809EC4@dubeyko.com> <52E15B9E.6040307@gmx.net> <FC7F25C5-1E72-4DF5-B860-FBCE36E91EAB@dubeyko.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140124.222016.110509397.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <FC7F25C5-1E72-4DF5-B860-FBCE36E91EAB-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On 2014-01-24 14:20, Ryusuke Konishi wrote:
-> On Tue, 21 Jan 2014 15:00:30 +0100, Andreas Rohner wrote:
->> With this ioctl the segment usage information in the SUFILE can be
->> updated from userspace.
+On 2014-01-24 09:02, Vyacheslav Dubeyko wrote:
+>=20
+>> 23 =D1=8F=D0=BD=D0=B2. 2014 =D0=B3., =D0=B2 22:12, Andreas Rohner <a=
+ndreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:
+>>>
+>>>> This patch set implements a small new feature and there shouldn't =
+be
+>>>> any compatibility issues. It enables the GC to check how much free
+>>>> space can be gained from cleaning a segment and if it is less than=
+ a
+>>>> certain threshold it will abort the operation and try a different
+>>>> segment.
+>>>
+>>> When you have cleaned a segment then you can use the whole one.
+>>> So, if segment has 8 MB in size then it will be available 8 MB free=
+ space.
+>>> The phrase "It enables the GC to check how much free space can be g=
+ained
+>>> from cleaning a segment" really confuses me. Because I always know
+>>> how much space I gain after cleaning every segment. I suppose that =
+you
+>>> mean something different. Am I correct?
 >>
->> This is useful, because it allows the userspace GC to modify and update
->> segment usage entries for specific segments, which enables it to avoid
->> unnecessary write operations.
->>
->> If a segment needs to be cleaned, but there is no or very little free
->> space to be gained, the cleaning operation basically degrades to
->> needless expensive copying of data. In the end the only thing that
->> changes is the location of the data and a timestamp in the segment usage
->> info. With this ioctl the GC can skip the copying and update the segment
->> usage entries directly instead.
->>
->> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
->> ---
->>  fs/nilfs2/ioctl.c         | 50 +++++++++++++++++++++++++++++++++++++++++++++++
->>  include/linux/nilfs2_fs.h |  2 ++
->>  2 files changed, 52 insertions(+)
->>
->> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
->> index b44bdb2..c6a3faf 100644
->> --- a/fs/nilfs2/ioctl.c
->> +++ b/fs/nilfs2/ioctl.c
->> @@ -273,6 +273,13 @@ nilfs_ioctl_do_get_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
->>  	return ret;
->>  }
->>  
->> +static ssize_t
->> +nilfs_ioctl_do_set_suinfo(struct the_nilfs *nilfs, __u64 *posp, int flags,
->> +			  void *buf, size_t size, size_t nmembs)
->> +{
->> +	return nilfs_sufile_set_suinfo(nilfs->ns_sufile, buf, size, nmembs);
->> +}
->> +
->>  static int nilfs_ioctl_get_sustat(struct inode *inode, struct file *filp,
->>  				  unsigned int cmd, void __user *argp)
->>  {
->> @@ -767,6 +774,44 @@ out:
->>  	return ret;
->>  }
->>  
->> +static int nilfs_ioctl_set_info(struct inode *inode, struct file *filp,
->> +				unsigned int cmd, void __user *argp,
->> +				size_t membsz,
->> +				ssize_t (*dofunc)(struct the_nilfs *,
->> +						  __u64 *, int,
->> +						  void *, size_t, size_t))
->> +{
->> +	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
->> +	struct nilfs_transaction_info ti;
->> +	struct nilfs_argv argv;
->> +	int ret;
->> +
->> +	if (!capable(CAP_SYS_ADMIN))
->> +		return -EPERM;
->> +
->> +	ret = mnt_want_write_file(filp);
->> +	if (ret)
->> +		return ret;
->> +
->> +	ret = -EFAULT;
->> +	if (copy_from_user(&argv, argp, sizeof(argv)))
->> +		goto out;
->> +
->> +	if (argv.v_size < membsz)
->> +		return -EINVAL;
->> +
->> +	nilfs_transaction_begin(inode->i_sb, &ti, 0);
->> +	ret = nilfs_ioctl_wrap_copy(nilfs, &argv, _IOC_DIR(cmd), dofunc);
-> 
-> Hmm, we have a problem here.
-> 
-> nilfs_ioctl_wrap_copy() cannot be used between
-> nilfs_transcation_begin() and nilfs_transaction_end() since
-> nilfs_ioctl_wrap_copy() calls copy_from_user() and/or copy_to_user().
-> Unfortunately there is a lock order restriction for these functions.
-> 
-> Let's use vmalloc() like nilfs_ioctl_clean_segments().  The following
-> is a sample code for this:
-> 
-> 	size_t len;
-> 	void __user *base;
-> 	void *kbuf;
-> 	int ret;
-> 
-> 	...
-> 	ret = -EINVAL;
-> 	if (argv.v_size < sizeof(struct nilfs_suinfo_update))
-> 		goto out;
-> 
-> 	< range check of argv.v_nmembs >
-> 
-> 	len = argv.v_size * argv.v_nmembs;
-> 	base = (void __user *)(unsigned long)argv.v_base;
-> 	kbuf = vmalloc(len);
-> 	if (!kbuf) {
-> 		ret = -ENOMEM;
-> 		goto out;
-> 	}
-> 
-> 	if (copy_from_user(kbuf, base, len)) {
-> 		ret = -EFAULT;
-> 		goto out_free;
-> 	}
-> 
-> 	nilfs_transaction_begin(inode->i_sb, &ti, 0);
-> 	ret = < call nilfs_sufile_set_suinfo > ;
-> 	if (unlikely(ret < 0))
-> 		nilfs_transcation_abort(inode->i_sb);
-> 	else
-> 		nilfs_transcation_commit(inode->i_sb);
-> 
-> out_free:
-> 	vfree(kbuf);
-> out:
-> 	mnt_drop_write_file(filp);
-> 	...
-> 
+>> You have to move the live blocks to a new segment, so you gain only =
+(8
+>> MB - live_blocks) of free space.
+>=20
+> You always will have 8 MB after cleaning (garbage collection).  So, a=
+ll segments
+> are identical from the free space point of view. What does GC check? =
+And how
+> can GC distinguish segments on the basis of free space? All cleaned s=
+egments
+> return 8 MB free space for further allocation. So, all used segments =
+will be over
+> any threshold.
 
-Then we don't need the ugly nilfs_suinfo_update structure. I can just
-send an array of struct nilfs_argv[2]. First element has the segment
-numbers and second element has the nilfs_suinfo structures and flags are
-in v_flags. Would that be acceptable?
+I am sorry if I wasn't clear enough. The invalidated blocks in a segmen=
+t
+are basically unusable free space, that needs to be garbage collected.
+If you clean a segment you only gain the space of the invalidated
+blocks, from the perspective of the whole file system. Of course the
+whole segment is free after cleaning, but the live blocks were moved
+somewhere else and occupy space there. So from the perspective of the
+whole file system you only really gained the amount of space occupied b=
+y
+the invalidated blocks.
+
+>>>> Although no blocks need to be moved, the SUFILE entry of the
+>>>> corresponding segment needs to be updated to avoid an infinite loo=
+p.
+>>>>
+>>>> This is potentially useful for all gc policies, but it is especial=
+ly
+>>>> beneficial for the timestamp policy.
+>>>
+>>> I completely misunderstand this statement. What do you mean?
+>>
+>> Well the timestamp policy always selects the oldest segment. If the
+>> oldest segment is below the threshold it won't be cleaned. If we don=
+'t
+>> change the timestamp it will be immediately selected again and it
+>> probably will still be below the threshold and so on in an infinite =
+loop.
+>=20
+> I understand your approach. But I misunderstand about what usefulness
+> you are talking. What is it?
+>=20
+
+It helps to avoid unnecessary copy operations of data.
+
+>>>>
+>>>> The speed of the GC was tuned to the HDD. It was probably too aggr=
+essive=20
+>>>> for the much faster SSD. That is probably the reason why the diffe=
+rence=20
+>>>> in GB written and read is much higher than 20 GB.
+>>>
+>>> I misunderstand completely what you mean here.
+>>
+>> You need to be a bit more specific. These are the results of my
+>> benchmark. The GB Written and GB Read values are calculated by simpl=
+y
+>> importing /proc/diskstats into R (You subtract the values before the
+>> benchmark from those after the benchmark).
+>>
+>> The patched version writes less and reads less. Pretty simple.
+>=20
+> Here I asked about aggressiveness related to SSD. What do you mean?
+
+I meant the configuration of the GC. The benchmark writes a lot of data=
+,
+and the GC needs to keep up with that. So I configured
+
+protection_period 30
+mc_nsegments_per_clean =3D 4
+mc_cleaning_interval =3D 0.25
+
+This works for the hard drive, because it is too slow to really reach
+the 0.25 seconds anyway. The SSD on the other hand reaches the 0.25
+seconds easily and that is probably too fast. So there is no time for
+the data to get invalidated and the GC moves too much data around. So m=
+y
+point is, that the results for the SSD are not to be trusted and that I
+need to repeat these measurements with different settings.
 
 br,
 Andreas Rohner
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
