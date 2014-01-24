@@ -1,101 +1,211 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] nilfs-utils: skip inefficient gc operations
-Date: Fri, 24 Jan 2014 12:02:24 +0400
-Message-ID: <FC7F25C5-1E72-4DF5-B860-FBCE36E91EAB@dubeyko.com>
-References: <cover.1390310509.git.andreas.rohner@gmx.net> <85EBEC6B-CA69-472A-8DDD-8E056F809EC4@dubeyko.com> <52E15B9E.6040307@gmx.net>
-Mime-Version: 1.0 (1.0)
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v2 2/3] nilfs2: add nilfs_sufile_set_suinfo to update
+ segment usage info
+Date: Fri, 24 Jan 2014 20:56:23 +0900 (JST)
+Message-ID: <20140124.205623.400541300.konishi.ryusuke@lab.ntt.co.jp>
+References: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>
+	<cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>
+	<2fd48b2d524a59a02bdad13c0c194de3e5b55cc7.1390312777.git.andreas.rohner@gmx.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:Date:Subject:From:Cc:Message-Id:Content-Transfer-Encoding:Content-Type:In-Reply-To:Mime-Version:References; bh=MNub0eGBTQRaXMraRLH5TKamUmlANmKsMP938aT/YRk=;
-	b=WJ3z7S70u/oPnkrCgk6w1jRuu1a6oqHAI3UStpYbPBHMIUE74AIEdPTQIHD+6psnUVLEo91G/2Yj/AAOjtdY9wYXNp25UK74haSa5x9+NGUUb0R7hZm8tYHUeN+GNidV;
-In-Reply-To: <52E15B9E.6040307-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <2fd48b2d524a59a02bdad13c0c194de3e5b55cc7.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+On Tue, 21 Jan 2014 15:00:29 +0100, Andreas Rohner wrote:
+> This patch introduces the nilfs_sufile_set_suinfo function, which
+> expects an array of nilfs_suinfo_update structures and updates the
+> segment usage information accordingly.
+> 
+> This is basically a helper function for the newly introduced
+> NILFS_IOCTL_SET_SUINFO ioctl.
+> 
+> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+> ---
+>  fs/nilfs2/sufile.c | 91 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/nilfs2/sufile.h |  2 +-
+>  2 files changed, 92 insertions(+), 1 deletion(-)
+> 
+> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+> index 3127e9f..81c3438 100644
+> --- a/fs/nilfs2/sufile.c
+> +++ b/fs/nilfs2/sufile.c
+> @@ -870,6 +870,97 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
+>  }
+>  
+>  /**
+> + * nilfs_sufile_set_suinfo -
+
+Please fill the summary line of function even though
+nilfs_sufile_get_suinfo() function lacks it.
+
+ * nilfs_sufile_set_suinfo - update segment usage information
+
+> + * @sufile: inode of segment usage file
+> + * @buf: array of suinfo
+> + * @supsz: byte size of suinfo
+> + * @nsup: size of suinfo array
+> + *
+> + * Description: Takes an array of nilfs_suinfo_update structs and updates
+> + * segment usage accordingly.
+> + *
+> + * Return Value: On success, 0 is returned and .... On error, one of the
+> + * following negative error codes is returned.
+> + *
+> + * %-EIO - I/O error.
+> + *
+> + * %-ENOMEM - Insufficient amount of memory available.
+> + *
+> + * %-EINVAL - Invalid segment number in input
+> + */
+> +ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+> +				unsigned supsz, size_t nsup)
+> +{
+> +	struct buffer_head *bh;
+> +	struct nilfs_suinfo_update *sup, *supv = buf;
+> +	struct nilfs_segment_usage *su;
+> +	void *kaddr;
+> +	unsigned long blkoff, prev_blkoff;
+> +	size_t nerr = 0;
+> +	int ret = 0;
+> +
+> +	if (unlikely(nsup == 0))
+> +		goto out;
+> +
+> +	down_write(&NILFS_MDT(sufile)->mi_sem);
+> +	for (sup = supv; sup < supv + nsup; sup++) {
+> +		if (unlikely(sup->sup_segnum >=
+> +				nilfs_sufile_get_nsegments(sufile))) {
+> +			printk(KERN_WARNING
+> +			       "%s: invalid segment number: %llu\n", __func__,
+> +			       (unsigned long long)sup->sup_segnum);
+> +			nerr++;
+> +		}
+> +	}
+> +	if (nerr > 0) {
+> +		ret = -EINVAL;
+> +		goto out_sem;
+> +	}
+
+Seems that you can exit from inside the loop:
+
+	for (sup = supv; sup < supv + nsup; sup++) {
+		if (unlikely(sup->sup_segnum >=
+				nilfs_sufile_get_nsegments(sufile))) {
+			printk(KERN_WARNING
+			       "%s: invalid segment number: %llu\n", __func__,
+			       (unsigned long long)sup->sup_segnum);
+			ret = -EINVAL;
+			goto out_sem;
+		}
+	}
+
+> +
+> +	sup = supv;
+> +	blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
+> +	ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+> +	if (ret < 0)
+> +		goto out_sem;
+> +
+> +	for (;;) {
+> +		kaddr = kmap_atomic(bh->b_page);
+> +		su = nilfs_sufile_block_get_segment_usage(
+> +			sufile, sup->sup_segnum, bh, kaddr);
+> +
+> +		if (nilfs_suinfo_update_lastmod(sup))
+> +			su->su_lastmod = cpu_to_le64(sup->sup_sui.sui_lastmod);
+> +
+> +		if (nilfs_suinfo_update_nblocks(sup))
+> +			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
+> +
+> +		if (nilfs_suinfo_update_flags(sup))
+> +			su->su_flags = cpu_to_le32(sup->sup_sui.sui_flags);
+
+You must also update the counter value of sh_ncleansegs, sh_ndirtysegs
+in the nilfs_sufile_header struct of sufile header block based on the
+change of these flags.
+
+In addition, you should ignore NILFS_SEGMENT_USAGE_ACTIVE_FLAG as
+below because this flag is a virtual flag set by running nilfs kernel
+code.  The flag bit should not be written to sufile on disk.
+
+          (sui_flags & ~(1UL << NILFS_SEGMENT_USAGE_ACTIVE))
+
+> +
+> +		kunmap_atomic(kaddr);
+> +
+> +		if (++sup >= supv + nsup)
+
+You must not use the automatic pointer operation of C language for
+nilfs_suinfo_update because it may be extended in a future release.
+This "++sup" breaks forward compatibility of the ioctl.
+
+You should do this by:
+
+                sup = (void *)sup + supsz;
+
+Note that pointer type is automatically converted for "void *" type
+variables.
+
+> +			break;
+> +		prev_blkoff = blkoff;
+> +		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
+> +		if (blkoff == prev_blkoff)
+> +			continue;
+> +
+> +		/* get different block */
+
+You must mark bh that this function changed as dirty with
+mark_buffer_dirty(bh).  Otherwise, the change will be gone.
 
 
-> 23 =D1=CE=D7. 2014 =C7., =D7 22:12, Andreas Rohner <andreas.rohner@gm=
-x.net>:
->>=20
->>> This patch set implements a small new feature and there shouldn't b=
-e
->>> any compatibility issues. It enables the GC to check how much free
->>> space can be gained from cleaning a segment and if it is less than =
-a
->>> certain threshold it will abort the operation and try a different
->>> segment.
->>=20
->> When you have cleaned a segment then you can use the whole one.
->> So, if segment has 8 MB in size then it will be available 8 MB free =
-space.
->> The phrase "It enables the GC to check how much free space can be ga=
-ined
->> from cleaning a segment" really confuses me. Because I always know
->> how much space I gain after cleaning every segment. I suppose that y=
-ou
->> mean something different. Am I correct?
->=20
-> You have to move the live blocks to a new segment, so you gain only (=
-8
-> MB - live_blocks) of free space.
+> +		brelse(bh);
+> +		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+> +		if (unlikely(ret < 0))
+> +			goto out_sem;
+> +	}
+> +	brelse(bh);
+> +
 
-You always will have 8 MB after cleaning (garbage collection).  So, all=
- segments
-are identical from the free space point of view. What does GC check? An=
-d how
-can GC distinguish segments on the basis of free space? All cleaned seg=
-ments
-return 8 MB free space for further allocation. So, all used segments wi=
-ll be over
-any threshold.
+The sufile should be marked as dirty (if any change happened):
 
->>> Although no blocks need to be moved, the SUFILE entry of the
->>> corresponding segment needs to be updated to avoid an infinite loop=
-=2E
->>>=20
->>> This is potentially useful for all gc policies, but it is especiall=
-y
->>> beneficial for the timestamp policy.
->>=20
->> I completely misunderstand this statement. What do you mean?
->=20
-> Well the timestamp policy always selects the oldest segment. If the
-> oldest segment is below the threshold it won't be cleaned. If we don'=
-t
-> change the timestamp it will be immediately selected again and it
-> probably will still be below the threshold and so on in an infinite l=
-oop.
+    nilfs_mdt_mark_dirty(sufile);
 
-I understand your approach. But I misunderstand about what usefulness
-you are talking. What is it?
-
-[snip]
->>>=20
->>> The speed of the GC was tuned to the HDD. It was probably too aggre=
-ssive=20
->>> for the much faster SSD. That is probably the reason why the differ=
-ence=20
->>> in GB written and read is much higher than 20 GB.
->>=20
->> I misunderstand completely what you mean here.
->=20
-> You need to be a bit more specific. These are the results of my
-> benchmark. The GB Written and GB Read values are calculated by simply
-> importing /proc/diskstats into R (You subtract the values before the
-> benchmark from those after the benchmark).
->=20
-> The patched version writes less and reads less. Pretty simple.
-
-Here I asked about aggressiveness related to SSD. What do you mean?
-
-Thanks,
-Vyacheslav Dubeyko.
-
+> + out_sem:
+> +	up_write(&NILFS_MDT(sufile)->mi_sem);
+> + out:
+> +	return ret;
+> +}
+> +
+> +/**
+>   * nilfs_sufile_read - read or get sufile inode
+>   * @sb: super block instance
+>   * @susize: size of a segment usage entry
+> diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+> index e84bc5b..7aa9d3e 100644
+> --- a/fs/nilfs2/sufile.h
+> +++ b/fs/nilfs2/sufile.h
+> @@ -44,7 +44,7 @@ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+>  int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
+>  ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
+>  				size_t);
+> -
+> +ssize_t nilfs_sufile_set_suinfo(struct inode *, void *, unsigned , size_t);
+>  int nilfs_sufile_updatev(struct inode *, __u64 *, size_t, int, size_t *,
+>  			 void (*dofunc)(struct inode *, __u64,
+>  					struct buffer_head *,
+> -- 
+> 1.8.5.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
