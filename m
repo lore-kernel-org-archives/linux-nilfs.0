@@ -1,116 +1,101 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2 1/3] nilfs2: add new nilfs_suinfo_update struct
-Date: Fri, 24 Jan 2014 13:56:35 +0900 (JST)
-Message-ID: <20140124.135635.27780504.konishi.ryusuke@lab.ntt.co.jp>
-References: <cover.1390310509.git.andreas.rohner@gmx.net>
-	<cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner@gmx.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] nilfs-utils: skip inefficient gc operations
+Date: Fri, 24 Jan 2014 12:02:24 +0400
+Message-ID: <FC7F25C5-1E72-4DF5-B860-FBCE36E91EAB@dubeyko.com>
+References: <cover.1390310509.git.andreas.rohner@gmx.net> <85EBEC6B-CA69-472A-8DDD-8E056F809EC4@dubeyko.com> <52E15B9E.6040307@gmx.net>
+Mime-Version: 1.0 (1.0)
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cec6a449ddf5ae9da2928cdddfb96ebcb2789eee.1390312777.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:Date:Subject:From:Cc:Message-Id:Content-Transfer-Encoding:Content-Type:In-Reply-To:Mime-Version:References; bh=MNub0eGBTQRaXMraRLH5TKamUmlANmKsMP938aT/YRk=;
+	b=WJ3z7S70u/oPnkrCgk6w1jRuu1a6oqHAI3UStpYbPBHMIUE74AIEdPTQIHD+6psnUVLEo91G/2Yj/AAOjtdY9wYXNp25UK74haSa5x9+NGUUb0R7hZm8tYHUeN+GNidV;
+In-Reply-To: <52E15B9E.6040307-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
+Content-Type: text/plain; charset="iso-8859-1"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-
-On Tue, 21 Jan 2014 15:00:28 +0100, Andreas Rohner wrote:
-> This adds struct nilfs_suinfo_update and some flags. It contains the
-> information needed to update one entry of segment usage information in
-> the SUFILE. The flags specify, which fields need to be updated.
-> 
-> This can be used to update segment usage information from userspace with an
-> ioctl.
-> 
-> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-> ---
->  include/linux/nilfs2_fs.h | 39 +++++++++++++++++++++++++++++++++++++++
->  1 file changed, 39 insertions(+)
-> 
-> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-> index 9875576..2ee1594 100644
-> --- a/include/linux/nilfs2_fs.h
-> +++ b/include/linux/nilfs2_fs.h
-> @@ -709,6 +709,45 @@ static inline int nilfs_suinfo_clean(const struct nilfs_suinfo *si)
->  	return !si->sui_flags;
->  }
->  
-> +/**
-> + * nilfs_suinfo_update - segment usage information update
-> + * @sup_segnum: segment number
-> + * @sup_flags: flags for which fields are active in sup_sui
-> + * @sup_sui: segment usage information
-> + */
-> +struct nilfs_suinfo_update {
-> +	__u64 sup_segnum;
-> +	__u32 sup_flags;
-> +	struct nilfs_suinfo sup_sui;
-> +};
-
-This structure is not aligned on 8 byte boundary.  You need a 4 byte
-pad to make the alignment architecture independent since the structure
-already has some 64-bit variables.
-
-If you do not so, the ioctl will lose compatibility, for instance,
-between 32 bit userland programs and 64 bit kernel.
-
-struct nilfs_suinfo_update {
-	__u64 sup_segnum;
-	__u32 sup_flags;
-	__u32 sup_reserved;
-	struct nilfs_suinfo sup_sui;
-};
-
-Do you really need different suinfo update flags per segment ?
-
-If it's not so, we don't have to add nilfs_suinfo_update structure.
-v_flags of nilfs_argv structure looks to be available for that
-purpose.  It's just a confirmation.  Basically, I think this extension
-is acceptable.
+Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
 
-Regards,
-Ryusuke Konishi
+> 23 =D1=CE=D7. 2014 =C7., =D7 22:12, Andreas Rohner <andreas.rohner@gm=
+x.net>:
+>>=20
+>>> This patch set implements a small new feature and there shouldn't b=
+e
+>>> any compatibility issues. It enables the GC to check how much free
+>>> space can be gained from cleaning a segment and if it is less than =
+a
+>>> certain threshold it will abort the operation and try a different
+>>> segment.
+>>=20
+>> When you have cleaned a segment then you can use the whole one.
+>> So, if segment has 8 MB in size then it will be available 8 MB free =
+space.
+>> The phrase "It enables the GC to check how much free space can be ga=
+ined
+>> from cleaning a segment" really confuses me. Because I always know
+>> how much space I gain after cleaning every segment. I suppose that y=
+ou
+>> mean something different. Am I correct?
+>=20
+> You have to move the live blocks to a new segment, so you gain only (=
+8
+> MB - live_blocks) of free space.
 
-> +
-> +enum {
-> +	NILFS_SUINFO_UPDATE_LASTMOD,
-> +	NILFS_SUINFO_UPDATE_NBLOCKS,
-> +	NILFS_SUINFO_UPDATE_FLAGS,
-> +};
-> +
-> +#define NILFS_SUINFO_UPDATE_FNS(flag, name)				\
-> +static inline void							\
-> +nilfs_suinfo_update_set_##name(struct nilfs_suinfo_update *sup)		\
-> +{									\
-> +	sup->sup_flags |= 1UL << NILFS_SUINFO_UPDATE_##flag;		\
-> +}									\
-> +static inline void							\
-> +nilfs_suinfo_update_clear_##name(struct nilfs_suinfo_update *sup)	\
-> +{									\
-> +	sup->sup_flags &= ~(1UL << NILFS_SUINFO_UPDATE_##flag);		\
-> +}									\
-> +static inline int							\
-> +nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
-> +{									\
-> +	return !!(sup->sup_flags & (1UL << NILFS_SUINFO_UPDATE_##flag));\
-> +}
-> +
-> +NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
-> +NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
-> +NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
-> +
->  /* ioctl */
->  enum {
->  	NILFS_CHECKPOINT,
-> -- 
-> 1.8.5.3
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+You always will have 8 MB after cleaning (garbage collection).  So, all=
+ segments
+are identical from the free space point of view. What does GC check? An=
+d how
+can GC distinguish segments on the basis of free space? All cleaned seg=
+ments
+return 8 MB free space for further allocation. So, all used segments wi=
+ll be over
+any threshold.
+
+>>> Although no blocks need to be moved, the SUFILE entry of the
+>>> corresponding segment needs to be updated to avoid an infinite loop=
+=2E
+>>>=20
+>>> This is potentially useful for all gc policies, but it is especiall=
+y
+>>> beneficial for the timestamp policy.
+>>=20
+>> I completely misunderstand this statement. What do you mean?
+>=20
+> Well the timestamp policy always selects the oldest segment. If the
+> oldest segment is below the threshold it won't be cleaned. If we don'=
+t
+> change the timestamp it will be immediately selected again and it
+> probably will still be below the threshold and so on in an infinite l=
+oop.
+
+I understand your approach. But I misunderstand about what usefulness
+you are talking. What is it?
+
+[snip]
+>>>=20
+>>> The speed of the GC was tuned to the HDD. It was probably too aggre=
+ssive=20
+>>> for the much faster SSD. That is probably the reason why the differ=
+ence=20
+>>> in GB written and read is much higher than 20 GB.
+>>=20
+>> I misunderstand completely what you mean here.
+>=20
+> You need to be a bit more specific. These are the results of my
+> benchmark. The GB Written and GB Read values are calculated by simply
+> importing /proc/diskstats into R (You subtract the values before the
+> benchmark from those after the benchmark).
+>=20
+> The patched version writes less and reads less. Pretty simple.
+
+Here I asked about aggressiveness related to SSD. What do you mean?
+
+Thanks,
+Vyacheslav Dubeyko.
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
