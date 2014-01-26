@@ -1,60 +1,72 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] nilfs-utils: skip inefficient gc operations
-Date: Sun, 26 Jan 2014 11:36:25 +0100
-Message-ID: <52E4E529.3090803@gmx.net>
-References: <FC7F25C5-1E72-4DF5-B860-FBCE36E91EAB@dubeyko.com>	<52E27651.6070207@gmx.net>	<82ACC3FC-BE83-483F-99D8-D13F4D02C58F@dubeyko.com> <20140126.155740.56352351.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v2 4/5] nilfs-utils: add support for NILFS_IOCTL_SET_SUINFO
+ ioctl
+Date: Sun, 26 Jan 2014 12:24:06 +0100
+Message-ID: <52E4F056.3020502@gmx.net>
+References: <72f8c37258d08ba9793b0c1bb0374dd8efcd4756.1390310509.git.andreas.rohner@gmx.net>	<20140125.032633.184837411.konishi.ryusuke@lab.ntt.co.jp>	<52E2C643.3070704@gmx.net> <20140126.190004.443429632.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140126.155740.56352351.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <20140126.190004.443429632.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2014-01-26 07:57, Ryusuke Konishi wrote:
-> On Sat, 25 Jan 2014 19:33:42 +0300, Vyacheslav Dubeyko wrote:
->>
->> On Jan 24, 2014, at 5:18 PM, Andreas Rohner wrote:
->>
->>>>> You have to move the live blocks to a new segment, so you gain only (8
->>>>> MB - live_blocks) of free space.
->>>>
->>>> You always will have 8 MB after cleaning (garbage collection).  So, all segments
->>>> are identical from the free space point of view. What does GC check? And how
->>>> can GC distinguish segments on the basis of free space? All cleaned segments
->>>> return 8 MB free space for further allocation. So, all used segments will be over
->>>> any threshold.
->>>
->>> I am sorry if I wasn't clear enough. The invalidated blocks in a segment
->>> are basically unusable free space, that needs to be garbage collected.
->>> If you clean a segment you only gain the space of the invalidated
->>> blocks, from the perspective of the whole file system. Of course the
->>> whole segment is free after cleaning, but the live blocks were moved
->>> somewhere else and occupy space there. So from the perspective of the
->>> whole file system you only really gained the amount of space occupied by
->>> the invalidated blocks.
->>>
->>
->> I suggest not to use "free blocks" term for the case of invalidated blocks.
->> Because it is really confusing way. I suppose that we can use term
->> "invalid blocks" or "dead blocks". But I think that "dead blocks" is not
->> good way too. Because, from my point of view, invalidated blocks are
->> blocks that keep previous state of actual blocks. Dead block sounds for
->> me likewise unusable or bad block.
+On 2014-01-26 11:00, Ryusuke Konishi wrote:
+> On Fri, 24 Jan 2014 21:00:03 +0100, Andreas Rohner wrote:
+>> On 2014-01-24 19:26, Ryusuke Konishi wrote:
+>>>> +		ret = nilfs_set_suinfo(nilfs, supv, n);
+>>>> +		free(supv);
+>>>> +		if (ret >= 0) {
+>>>> +			/* success, tell caller
+>>>> +			 * to try another segment/s */
+>>>> +			ret = -EGCTRYAGAIN;
+>>>> +			goto out_lock;
+>>>> +		}
 > 
-> "free blocks" term sounds confusing.  We often use terms
-> "live" and "dead" for garbage collection, but "dead blocks" also
-> sounds unfit to me as Vyacheslav pointed out.
+> Returning -EGCTRYAGAIN looks confusing, since posix error code Exxxxx
+> is usually stored in errno variable in userland.  It also looks a bit
+> hacky.
+
+True. Vyacheslav had similar concerns.
+
+> How about handling this as follows ?
 > 
-> How about "min reclaimable blocks" or "min collectable blocks" ?
+>  - Add a new structure to return result of GC, for instance, as
+>    follows:
+> 
+> struct nilfs_reclaim_status {
+> 	unsigned int	ncleanedsegs; /* number of segments cleaned
+> 					 with nilfs_clean_segments() */
+> 	unsigned int	ndeferredsegs;/* number of segments deferred
+> 					 with nilfs_set_suinfo() */
+> 	unsigned long	nliveblocks;  /* sum of live virtual blocks and live
+> 					 DAT blocks */
+> 	unsigned long	ndeadblocks;  /* number of reclaimable blocks */
+> 	unsigned long	nlivevblocks; /* live virtual blocks */
+> 	unsigned long	nfreevblocks; /* freed virtual block addresses */
+> 	...
+> };
+> 
+>  - Use the structure as an argument of the "new" API function
+>    (i.e. variant of nilfs_reclaim_segment() )
+> 
+>  - Rewrite the variant API function so that it returns a success value
+>    (0) also for the EGCTRYAGAIN case.
+> 
+>  - Store other status information in nilfs_reclaim_status structures.
+> 
+> 
+> And, I think adding nilfs_set_suinfo() API should be a separate patch.
 
-Ok I will also change the config options accordingly. I like the term
-"reclaimable blocks".
+Yes EGCTRYAGAIN is not necessary for the nilfs_set_suinfo() API to work.
+It is a good idea to use a separate patch for this.
 
-Regards,
+br,
 Andreas Rohner
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
