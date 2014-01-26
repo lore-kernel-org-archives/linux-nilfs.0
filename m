@@ -1,54 +1,68 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] lib/nilfs.c: remove broken readonly fs check at nilfs_sync()
-Date: Sun, 26 Jan 2014 17:02:37 +0900
-Message-ID: <1390723358-31066-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v2 4/5] nilfs-utils: add support for
+ NILFS_IOCTL_SET_SUINFO ioctl
+Date: Sun, 26 Jan 2014 19:00:04 +0900 (JST)
+Message-ID: <20140126.190004.443429632.konishi.ryusuke@lab.ntt.co.jp>
+References: <72f8c37258d08ba9793b0c1bb0374dd8efcd4756.1390310509.git.andreas.rohner@gmx.net>
+	<20140125.032633.184837411.konishi.ryusuke@lab.ntt.co.jp>
+	<52E2C643.3070704@gmx.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <52E2C643.3070704-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-nilfs_sync() API function is wrongly checking EROFS error.  It sees
-the return value of ioctl instead of errno variable.  This removes the
-broken error check from nilfs_sync() instead of fixing it because
-EROFS should by rights be used or ignored by callers.
+On Fri, 24 Jan 2014 21:00:03 +0100, Andreas Rohner wrote:
+> On 2014-01-24 19:26, Ryusuke Konishi wrote:
+>>> +		ret = nilfs_set_suinfo(nilfs, supv, n);
+>>> +		free(supv);
+>>> +		if (ret >= 0) {
+>>> +			/* success, tell caller
+>>> +			 * to try another segment/s */
+>>> +			ret = -EGCTRYAGAIN;
+>>> +			goto out_lock;
+>>> +		}
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- lib/nilfs.c |    9 +--------
- 1 file changed, 1 insertion(+), 8 deletions(-)
+Returning -EGCTRYAGAIN looks confusing, since posix error code Exxxxx
+is usually stored in errno variable in userland.  It also looks a bit
+hacky.
 
-diff --git a/lib/nilfs.c b/lib/nilfs.c
-index 05b9b03..c1771e8 100644
---- a/lib/nilfs.c
-+++ b/lib/nilfs.c
-@@ -688,19 +688,12 @@ int nilfs_clean_segments(struct nilfs *nilfs,
-  */
- int nilfs_sync(const struct nilfs *nilfs, nilfs_cno_t *cnop)
- {
--	int ret;
--
- 	if (nilfs->n_iocfd < 0) {
- 		errno = EBADF;
- 		return -1;
- 	}
- 
--	ret = ioctl(nilfs->n_iocfd, NILFS_IOCTL_SYNC, cnop);
--	if (ret < 0 && ret == -EROFS)
--		/* syncing read-only filesystem */
--		ret = 0;
--
--	return ret;
-+	return ioctl(nilfs->n_iocfd, NILFS_IOCTL_SYNC, cnop);
- }
- 
- /**
--- 
-1.7.9.3
+How about handling this as follows ?
 
+ - Add a new structure to return result of GC, for instance, as
+   follows:
+
+struct nilfs_reclaim_status {
+	unsigned int	ncleanedsegs; /* number of segments cleaned
+					 with nilfs_clean_segments() */
+	unsigned int	ndeferredsegs;/* number of segments deferred
+					 with nilfs_set_suinfo() */
+	unsigned long	nliveblocks;  /* sum of live virtual blocks and live
+					 DAT blocks */
+	unsigned long	ndeadblocks;  /* number of reclaimable blocks */
+	unsigned long	nlivevblocks; /* live virtual blocks */
+	unsigned long	nfreevblocks; /* freed virtual block addresses */
+	...
+};
+
+ - Use the structure as an argument of the "new" API function
+   (i.e. variant of nilfs_reclaim_segment() )
+
+ - Rewrite the variant API function so that it returns a success value
+   (0) also for the EGCTRYAGAIN case.
+
+ - Store other status information in nilfs_reclaim_status structures.
+
+
+And, I think adding nilfs_set_suinfo() API should be a separate patch.
+
+
+Regards,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
