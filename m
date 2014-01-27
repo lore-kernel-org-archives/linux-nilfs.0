@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v3 1/4] nilfs-utils: cldconfig add an option to set min. reclaimable blocks
-Date: Mon, 27 Jan 2014 10:58:53 +0100
-Message-ID: <7cf17e6c29aa41e08867a8f33d62062572521ab3.1390813175.git.andreas.rohner@gmx.net>
+Subject: [PATCH v3 4/4] nilfs-utils: add optimized version of nilfs_reclaim_segments
+Date: Mon, 27 Jan 2014 10:58:56 +0100
+Message-ID: <3a8c070bf3acf549e79a799b1f5bd01c1ba4d1f5.1390813175.git.andreas.rohner@gmx.net>
 References: <cover.1390813175.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1390813175.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -15,456 +15,214 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-With this option the user can specify the minimum number of
-reclaimable blocks of a segment, before it can be cleaned. This is
-a threshold for the GC to prevent needless moving of data. If
-there are less reclaimable blocks in a segment than the specified
-number, the GC will abort and try again with a different segment.
+This patch adds an optimized version of nilfs_reclaim_segments,
+which has an additional parameter min_reclaimable. This parameter
+specifies the minimum number of reclaimable blocks in a segment,
+before it can be cleaned. If a segment is below this threshold, it
+is considered to be not worth cleaning, because all the live blocks
+would need to be moved to a new segment, which is expensive, and
+the number of reclaimable blocks is too low. But it is still
+necessary to update the segment usage information to turn the old
+segment into a new one.
 
-If there are less clean segments than min_clean_segments,
-mc_min_reclaimable_blocks is used instead of
-min_reclaimable_blocks. This allows for more flexibility in
-configuring the GC.
+This is basically a shortcut to cleaning the segment. It is still
+necessary to read the segment summary information, but the writing
+of the live blocks can be skipped if it's not worth it.
 
-The number of blocks can be specified in percent of a segment or
-in bytes.
-
-If the use_set_suinfo switch is not set, the optimization is
-completely disabled.
+This optimization can be enabled and disabled by the
+use_set_suinfo switch in the configuration file. If the kernel
+doesn't support the set_suinfo ioctl it returns the error
+number ENOTTY, which also permanently disables the optimization.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- include/nilfs.h                   |   7 +-
- lib/nilfs.c                       |  28 +++++++
- man/nilfs_cleanerd.conf.5         |  22 +++++
- sbin/cleanerd/cldconfig.c         | 168 ++++++++++++++++++++++++++++----------
- sbin/cleanerd/cldconfig.h         |   8 ++
- sbin/cleanerd/cleanerd.c          |  15 ++++
- sbin/cleanerd/nilfs_cleanerd.conf |  13 +++
- 7 files changed, 218 insertions(+), 43 deletions(-)
+ include/nilfs_gc.h       |   4 ++
+ lib/gc.c                 | 112 +++++++++++++++++++++++++++++++++++++++--------
+ sbin/cleanerd/cleanerd.c |   5 ++-
+ 3 files changed, 100 insertions(+), 21 deletions(-)
 
-diff --git a/include/nilfs.h b/include/nilfs.h
-index 56286a9..b5f85d3 100644
---- a/include/nilfs.h
-+++ b/include/nilfs.h
-@@ -128,7 +128,8 @@ struct nilfs {
- #define NILFS_OPEN_RDWR		0x0008	/* Open NILFS API in read/write mode */
- #define NILFS_OPEN_GCLK		0x1000	/* Open GC lock primitive */
+diff --git a/include/nilfs_gc.h b/include/nilfs_gc.h
+index 72e9947..0ee797e 100644
+--- a/include/nilfs_gc.h
++++ b/include/nilfs_gc.h
+@@ -18,6 +18,10 @@ ssize_t nilfs_reclaim_segment(struct nilfs *nilfs,
+ 			      __u64 *segnums, size_t nsegs,
+ 			      __u64 protseq, nilfs_cno_t protcno);
  
--#define NILFS_OPT_MMAP	0x01
-+#define NILFS_OPT_MMAP		0x01
-+#define NILFS_OPT_SET_SUINFO	0x02
++ssize_t nilfs_reclaim_segment_with_threshold(struct nilfs *nilfs,
++				__u64 *segnums, size_t nsegs, __u64 protseq,
++				nilfs_cno_t protcno,
++				unsigned long min_reclaimable);
  
+ static inline int nilfs_suinfo_reclaimable(const struct nilfs_suinfo *si)
+ {
+diff --git a/lib/gc.c b/lib/gc.c
+index 1152299..91ce47d 100644
+--- a/lib/gc.c
++++ b/lib/gc.c
+@@ -29,6 +29,10 @@
+ #include <syslog.h>
+ #endif	/* HAVE_SYSLOG_H */
  
- struct nilfs *nilfs_open(const char *, const char *, int);
-@@ -140,6 +141,10 @@ void nilfs_opt_clear_mmap(struct nilfs *);
- int nilfs_opt_set_mmap(struct nilfs *);
- int nilfs_opt_test_mmap(struct nilfs *);
- 
-+void nilfs_opt_clear_set_suinfo(struct nilfs *);
-+int nilfs_opt_set_set_suinfo(struct nilfs *);
-+int nilfs_opt_test_set_suinfo(struct nilfs *);
++#if HAVE_SYS_TIME_H
++#include <sys/time.h>
++#endif	/* HAVE_SYS_TIME */
 +
- nilfs_cno_t nilfs_get_oldest_cno(struct nilfs *);
- 
- struct nilfs_super_block *nilfs_get_sb(struct nilfs *);
-diff --git a/lib/nilfs.c b/lib/nilfs.c
-index c1771e8..93822de 100644
---- a/lib/nilfs.c
-+++ b/lib/nilfs.c
-@@ -288,6 +288,34 @@ int nilfs_opt_test_mmap(struct nilfs *nilfs)
- 	return !!(nilfs->n_opts & NILFS_OPT_MMAP);
+ #include <errno.h>
+ #include <assert.h>
+ #include <stdarg.h>
+@@ -601,20 +605,32 @@ static int nilfs_toss_bdescs(struct nilfs_vector *bdescv)
  }
  
-+/**
-+ * nilfs_opt_set_set_suinfo - set set_suinfo option
-+ * @nilfs: nilfs object
-+ */
-+int nilfs_opt_set_set_suinfo(struct nilfs *nilfs)
-+{
-+	nilfs->n_opts |= NILFS_OPT_SET_SUINFO;
-+	return 0;
-+}
-+
-+/**
-+ * nilfs_opt_clear_set_suinfo - clear set_suinfo option
-+ * @nilfs: nilfs object
-+ */
-+void nilfs_opt_clear_set_suinfo(struct nilfs *nilfs)
-+{
-+	nilfs->n_opts &= ~NILFS_OPT_SET_SUINFO;
-+}
-+
-+/**
-+ * nilfs_opt_test_set_suinfo - test whether set_suinfo option is set or not
-+ * @nilfs: nilfs object
-+ */
-+int nilfs_opt_test_set_suinfo(struct nilfs *nilfs)
-+{
-+	return !!(nilfs->n_opts & NILFS_OPT_SET_SUINFO);
-+}
-+
- static int nilfs_open_sem(struct nilfs *nilfs)
+ /**
+- * nilfs_reclaim_segment - reclaim segments
++ * nilfs_reclaim_segment_with_threshold - reclaim segments with a threshold
+  * @nilfs: nilfs object
+  * @segnums: array of segment numbers storing selected segments
+  * @nsegs: size of the @segnums array
+  * @protseq: start of sequence number of protected segments
+  * @protcno: start checkpoint number of protected period
++ * @min_reclaimable: minimal number of reclaimable blocks in a segment
++ *
++ * Description: Reclaim segments only if the number of reclaimable blocks
++ * is bigger than min_reclaimable. To reclaim all segments set
++ * min_reclaimable to 0.
++ *
++ * Return Value: On success, the number of reclaimed segments is returned.
++ * On error, the return value is < 0
+  */
+-ssize_t nilfs_reclaim_segment(struct nilfs *nilfs,
+-			      __u64 *segnums, size_t nsegs,
+-			      __u64 protseq, nilfs_cno_t protcno)
++ssize_t nilfs_reclaim_segment_with_threshold(struct nilfs *nilfs,
++				__u64 *segnums, size_t nsegs, __u64 protseq,
++				nilfs_cno_t protcno,
++				unsigned long min_reclaimable)
  {
- 	char semnambuf[NAME_MAX - 4];
-diff --git a/man/nilfs_cleanerd.conf.5 b/man/nilfs_cleanerd.conf.5
-index 8f3fcd2..4315ecd 100644
---- a/man/nilfs_cleanerd.conf.5
-+++ b/man/nilfs_cleanerd.conf.5
-@@ -79,6 +79,28 @@ Specify whether to use \fBmmap\fP(2) for reading segments.  At
- present, this option is enabled if supported regardless of this
- directive.
- .TP
-+.B use_set_suinfo
-+Specify whether to use the set_suinfo ioctl if it is supported. This is
-+necessary for the \fBmin_reclaimable_blocks\fP feature. By disabling this
-+switch \fBmin_reclaimable_blocks\fP is also disabled.
-+.TP
-+.B min_reclaimable_blocks
-+Specify the minimum number of reclaimable blocks in a segment before
-+it can be cleaned.
-+.TP
-+.B mc_min_reclaimable_blocks
-+Specify the minimum number of reclaimable blocks in a segment before
-+it can be cleaned. if clean segments < min_clean_segments.
-+.PP
-+\fBmin_reclaimable_blocks\fP and \fBmc_min_reclaimable_blocks\fP may
-+be followed by a percent sign or the following multiplicative suffixes:
-+kB 1000, K 1024, MB 1000*1000, M 1024*1024, GB 1000*1000*1000, G
-+1024*1024*1024, and so on for T, P, E.  If the argument is followed by
-+a percent sign, it represents the ratio of blocks in a segment.
-+.PP
-+The default values of \fBmin_reclaimable_blocks\fP and
-+\fBmc_min_reclaimable_blocks\fP are 5 percent and 1 percent respectively.
-+.TP
- .B log_priority
- Gives the verbosity level that is used when logging messages from
- \fBnilfs_cleanerd\fP(8).  The possible values are: \fBemerg\fP,
-diff --git a/sbin/cleanerd/cldconfig.c b/sbin/cleanerd/cldconfig.c
-index 270d360..b69f060 100644
---- a/sbin/cleanerd/cldconfig.c
-+++ b/sbin/cleanerd/cldconfig.c
-@@ -278,6 +278,54 @@ nilfs_cldconfig_handle_protection_period(struct nilfs_cldconfig *config,
- }
+ 	struct nilfs_vector *vdescv, *bdescv, *periodv, *vblocknrv;
+ 	sigset_t sigset, oldset, waitset;
+-	ssize_t n, ret = -1;
++	ssize_t n, i, ret = -1;
++	__u32 reclaimable_blocks;
++	struct nilfs_suinfo_update *supv;
++	struct timeval tv;
  
- static unsigned long long
-+nilfs_convert_units_to_bytes(struct nilfs_param *param) {
-+	unsigned long long bytes = param->num;
+ 	if (nsegs == 0)
+ 		return 0;
+@@ -677,21 +693,63 @@ ssize_t nilfs_reclaim_segment(struct nilfs *nilfs,
+ 		goto out_lock;
+ 	}
+ 
+-	ret = nilfs_clean_segments(nilfs,
+-				   nilfs_vector_get_data(vdescv),
+-				   nilfs_vector_get_size(vdescv),
+-				   nilfs_vector_get_data(periodv),
+-				   nilfs_vector_get_size(periodv),
+-				   nilfs_vector_get_data(vblocknrv),
+-				   nilfs_vector_get_size(vblocknrv),
+-				   nilfs_vector_get_data(bdescv),
+-				   nilfs_vector_get_size(bdescv),
+-				   segnums, n);
+-	if (ret < 0) {
+-		nilfs_gc_logger(LOG_ERR, "cannot clean segments: %s",
+-				strerror(errno));
++	reclaimable_blocks = (nilfs_get_blocks_per_segment(nilfs) * n)
++				- (nilfs_vector_get_size(vdescv)
++				+ nilfs_vector_get_size(bdescv));
 +
-+	switch (param->unit) {
-+	case NILFS_SIZE_UNIT_KB:
-+		bytes *= 1000ULL;
-+		break;
-+	case NILFS_SIZE_UNIT_KIB:
-+		bytes <<= 10;
-+		break;
-+	case NILFS_SIZE_UNIT_MB:
-+		bytes *= 1000000ULL;
-+		break;
-+	case NILFS_SIZE_UNIT_MIB:
-+		bytes <<= 20;
-+		break;
-+	case NILFS_SIZE_UNIT_GB:
-+		bytes *= 1000000000ULL;
-+		break;
-+	case NILFS_SIZE_UNIT_GIB:
-+		bytes <<= 30;
-+		break;
-+	case NILFS_SIZE_UNIT_TB:
-+		bytes *= 1000000000000ULL;
-+		break;
-+	case NILFS_SIZE_UNIT_TIB:
-+		bytes <<= 40;
-+		break;
-+	case NILFS_SIZE_UNIT_PB:
-+		bytes *= 1000000000000000ULL;
-+		break;
-+	case NILFS_SIZE_UNIT_PIB:
-+		bytes <<= 50;
-+		break;
-+	case NILFS_SIZE_UNIT_EB:
-+		bytes *= 1000000000000000000ULL;
-+		break;
-+	case NILFS_SIZE_UNIT_EIB:
-+		bytes <<= 60;
-+		break;
-+	default:
-+		assert(0);
-+	}
++	/* if there are less reclaimable blocks than the
++	 * minimal threshold try to update suinfo
++	 * instead of cleaning */
++	if (nilfs_opt_test_set_suinfo(nilfs)
++			&& reclaimable_blocks < min_reclaimable * n) {
++		ret = gettimeofday(&tv, NULL);
++		if (ret < 0)
++			goto out_lock;
 +
-+	return bytes;
-+}
++		supv = malloc(sizeof(struct nilfs_suinfo_update) * n);
++		if (supv == NULL) {
++			ret = -1;
++			goto out_lock;
++		}
 +
-+static unsigned long long
- nilfs_convert_size_to_nsegments(struct nilfs *nilfs, struct nilfs_param *param)
- {
- 	unsigned long long ret, segment_size, bytes;
-@@ -287,48 +335,7 @@ nilfs_convert_size_to_nsegments(struct nilfs *nilfs, struct nilfs_param *param)
- 	} else if (param->unit == NILFS_SIZE_UNIT_PERCENT) {
- 		ret = (nilfs_get_nsegments(nilfs) * param->num + 99) / 100;
++		for (i = 0; i < n; ++i) {
++			supv[i].sup_segnum = segnums[i];
++			supv[i].sup_flags = 0;
++			nilfs_suinfo_update_set_lastmod(&supv[i]);
++			supv[i].sup_sui.sui_lastmod = tv.tv_sec;
++		}
++
++		ret = nilfs_set_suinfo(nilfs, supv, n);
++		if (ret == 0) {
++			ret = n;
++		} else if (ret < 0 && errno == ENOTTY) {
++			nilfs_gc_logger(LOG_WARNING,
++					"set_suinfo ioctl is not supported");
++			nilfs_opt_clear_set_suinfo(nilfs);
++			ret = 0;
++		} else {
++			nilfs_gc_logger(LOG_ERR, "cannot set suinfo: %s",
++					strerror(errno));
++		}
++
++		free(supv);
  	} else {
--		bytes = param->num;
--
--		switch (param->unit) {
--		case NILFS_SIZE_UNIT_KB:
--			bytes *= 1000ULL;
--			break;
--		case NILFS_SIZE_UNIT_KIB:
--			bytes <<= 10;
--			break;
--		case NILFS_SIZE_UNIT_MB:
--			bytes *= 1000000ULL;
--			break;
--		case NILFS_SIZE_UNIT_MIB:
--			bytes <<= 20;
--			break;
--		case NILFS_SIZE_UNIT_GB:
--			bytes *= 1000000000ULL;
--			break;
--		case NILFS_SIZE_UNIT_GIB:
--			bytes <<= 30;
--			break;
--		case NILFS_SIZE_UNIT_TB:
--			bytes *= 1000000000000ULL;
--			break;
--		case NILFS_SIZE_UNIT_TIB:
--			bytes <<= 40;
--			break;
--		case NILFS_SIZE_UNIT_PB:
--			bytes *= 1000000000000000ULL;
--			break;
--		case NILFS_SIZE_UNIT_PIB:
--			bytes <<= 50;
--			break;
--		case NILFS_SIZE_UNIT_EB:
--			bytes *= 1000000000000000000ULL;
--			break;
--		case NILFS_SIZE_UNIT_EIB:
--			bytes <<= 60;
--			break;
--		default:
--			assert(0);
--		}
-+		bytes = nilfs_convert_units_to_bytes(param);
- 		segment_size = nilfs_get_block_size(nilfs) *
- 			nilfs_get_blocks_per_segment(nilfs);
- 		ret = (bytes + segment_size - 1) / segment_size;
-@@ -455,6 +462,52 @@ nilfs_cldconfig_handle_mc_nsegments_per_clean(struct nilfs_cldconfig *config,
- 	return 0;
+-		ret = n;
++		ret = nilfs_clean_segments(nilfs,
++					   nilfs_vector_get_data(vdescv),
++					   nilfs_vector_get_size(vdescv),
++					   nilfs_vector_get_data(periodv),
++					   nilfs_vector_get_size(periodv),
++					   nilfs_vector_get_data(vblocknrv),
++					   nilfs_vector_get_size(vblocknrv),
++					   nilfs_vector_get_data(bdescv),
++					   nilfs_vector_get_size(bdescv),
++					   segnums, n);
++		if (ret < 0) {
++			nilfs_gc_logger(LOG_ERR, "cannot clean segments: %s",
++					strerror(errno));
++		} else {
++			ret = n;
++		}
+ 	}
+ 
+ out_lock:
+@@ -713,3 +771,19 @@ out_vec:
+ 
+ 	return ret;
  }
- 
-+static unsigned long long
-+nilfs_convert_size_to_blocks_per_segment(struct nilfs *nilfs,
-+					 struct nilfs_param *param)
++
++/**
++ * nilfs_reclaim_segment - reclaim segments
++ * @nilfs: nilfs object
++ * @segnums: array of segment numbers storing selected segments
++ * @nsegs: size of the @segnums array
++ * @protseq: start of sequence number of protected segments
++ * @protcno: start checkpoint number of protected period
++ */
++ssize_t nilfs_reclaim_segment(struct nilfs *nilfs,
++			      __u64 *segnums, size_t nsegs,
++			      __u64 protseq, nilfs_cno_t protcno)
 +{
-+	unsigned long long ret, segment_size, block_size, bytes;
-+
-+	if (param->unit == NILFS_SIZE_UNIT_NONE) {
-+		ret = param->num;
-+	} else if (param->unit == NILFS_SIZE_UNIT_PERCENT) {
-+		ret = (nilfs_get_blocks_per_segment(nilfs) * param->num) / 100;
-+	} else {
-+		block_size = nilfs_get_block_size(nilfs);
-+		segment_size = block_size *
-+				nilfs_get_blocks_per_segment(nilfs);
-+		bytes = nilfs_convert_units_to_bytes(param) % segment_size;
-+		ret = (bytes + block_size - 1) / block_size;
-+	}
-+	return ret;
++	return nilfs_reclaim_segment_with_threshold(nilfs, segnums, nsegs,
++			protseq, protcno, 0);
 +}
-+
-+static int
-+nilfs_cldconfig_handle_min_reclaimable_blocks(struct nilfs_cldconfig *config,
-+					      char **tokens, size_t ntoks,
-+					      struct nilfs *nilfs)
-+{
-+	struct nilfs_param param;
-+
-+	if (nilfs_cldconfig_get_size_argument(tokens, ntoks, &param) == 0)
-+		config->cf_min_reclaimable_blocks =
-+			nilfs_convert_size_to_blocks_per_segment(nilfs, &param);
-+	return 0;
-+}
-+
-+static int
-+nilfs_cldconfig_handle_mc_min_reclaimable_blocks(struct nilfs_cldconfig *config,
-+						 char **tokens, size_t ntoks,
-+						 struct nilfs *nilfs)
-+{
-+	struct nilfs_param param;
-+
-+	if (nilfs_cldconfig_get_size_argument(tokens, ntoks, &param) == 0)
-+		config->cf_mc_min_reclaimable_blocks =
-+			nilfs_convert_size_to_blocks_per_segment(nilfs, &param);
-+	return 0;
-+}
-+
- static int
- nilfs_cldconfig_handle_cleaning_interval(struct nilfs_cldconfig *config,
- 					 char **tokens, size_t ntoks,
-@@ -490,6 +543,14 @@ static int nilfs_cldconfig_handle_use_mmap(struct nilfs_cldconfig *config,
- 	return 0;
- }
- 
-+static int nilfs_cldconfig_handle_use_set_suinfo(struct nilfs_cldconfig *config,
-+						 char **tokens, size_t ntoks,
-+						 struct nilfs *nilfs)
-+{
-+	config->cf_use_set_suinfo = 1;
-+	return 0;
-+}
-+
- static const struct nilfs_cldconfig_log_priority
- nilfs_cldconfig_log_priority_table[] = {
- 	{"emerg",	LOG_EMERG},
-@@ -576,6 +637,18 @@ nilfs_cldconfig_keyword_table[] = {
- 		"log_priority", 2, 2,
- 		nilfs_cldconfig_handle_log_priority
- 	},
-+	{
-+		"min_reclaimable_blocks", 2, 2,
-+		nilfs_cldconfig_handle_min_reclaimable_blocks
-+	},
-+	{
-+		"mc_min_reclaimable_blocks", 2, 2,
-+		nilfs_cldconfig_handle_mc_min_reclaimable_blocks
-+	},
-+	{
-+		"use_set_suinfo", 1, 1,
-+		nilfs_cldconfig_handle_use_set_suinfo
-+	},
- };
- 
- #define NILFS_CLDCONFIG_NKEYWORDS			\
-@@ -640,7 +713,18 @@ static void nilfs_cldconfig_set_default(struct nilfs_cldconfig *config,
- 	config->cf_retry_interval.tv_sec = NILFS_CLDCONFIG_RETRY_INTERVAL;
- 	config->cf_retry_interval.tv_usec = 0;
- 	config->cf_use_mmap = NILFS_CLDCONFIG_USE_MMAP;
-+	config->cf_use_set_suinfo = NILFS_CLDCONFIG_USE_SET_SUINFO;
- 	config->cf_log_priority = NILFS_CLDCONFIG_LOG_PRIORITY;
-+
-+	param.num = NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS;
-+	param.unit = NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS_UNIT;
-+	config->cf_min_reclaimable_blocks =
-+		nilfs_convert_size_to_blocks_per_segment(nilfs, &param);
-+
-+	param.num = NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS;
-+	param.unit = NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS_UNIT;
-+	config->cf_mc_min_reclaimable_blocks =
-+		nilfs_convert_size_to_blocks_per_segment(nilfs, &param);
- }
- 
- static inline int iseol(int c)
-diff --git a/sbin/cleanerd/cldconfig.h b/sbin/cleanerd/cldconfig.h
-index 188ce9b..e7ac72e 100644
---- a/sbin/cleanerd/cldconfig.h
-+++ b/sbin/cleanerd/cldconfig.h
-@@ -101,7 +101,10 @@ struct nilfs_cldconfig {
- 	struct timeval cf_mc_cleaning_interval;
- 	struct timeval cf_retry_interval;
- 	int cf_use_mmap;
-+	int cf_use_set_suinfo;
- 	int cf_log_priority;
-+	unsigned long cf_min_reclaimable_blocks;
-+	unsigned long cf_mc_min_reclaimable_blocks;
- };
- 
- #define NILFS_CLDCONFIG_SELECTION_POLICY_IMPORTANCE	\
-@@ -119,7 +122,12 @@ struct nilfs_cldconfig {
- #define NILFS_CLDCONFIG_MC_CLEANING_INTERVAL		1
- #define NILFS_CLDCONFIG_RETRY_INTERVAL			60
- #define NILFS_CLDCONFIG_USE_MMAP			1
-+#define NILFS_CLDCONFIG_USE_SET_SUINFO			0
- #define NILFS_CLDCONFIG_LOG_PRIORITY			LOG_INFO
-+#define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS		5
-+#define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS_UNIT	NILFS_SIZE_UNIT_PERCENT
-+#define NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS	1
-+#define NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS_UNIT	NILFS_SIZE_UNIT_PERCENT
- 
- #define NILFS_CLDCONFIG_NSEGMENTS_PER_CLEAN_MAX	32
- 
 diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index 742ab98..bf8b8b0 100644
+index 13018b2..b225283 100644
 --- a/sbin/cleanerd/cleanerd.c
 +++ b/sbin/cleanerd/cleanerd.c
-@@ -172,6 +172,7 @@ struct nilfs_cleanerd {
- 	struct timeval cleaning_interval;
- 	struct timeval target;
- 	struct timeval timeout;
-+	unsigned long min_reclaimable_blocks;
- 	__u64 prev_nongc_ctime;
- 	mqd_t recvq;
- 	char *recvq_name;
-@@ -246,6 +247,12 @@ static int nilfs_cleanerd_config(struct nilfs_cleanerd *cleanerd,
- 	else
- 		nilfs_opt_clear_mmap(cleanerd->nilfs);
- #endif	/* HAVE_MMAP */
-+
-+	if (cleanerd->config.cf_use_set_suinfo)
-+		nilfs_opt_set_set_suinfo(cleanerd->nilfs);
-+	else
-+		nilfs_opt_clear_set_suinfo(cleanerd->nilfs);
-+
- 	nilfs_cleanerd_set_log_priority(cleanerd);
- 
- 	if (protection_period != ULONG_MAX) {
-@@ -273,6 +280,8 @@ static int nilfs_cleanerd_reconfig(struct nilfs_cleanerd *cleanerd,
- 	} else {
- 		cleanerd->ncleansegs = config->cf_nsegments_per_clean;
- 		cleanerd->cleaning_interval = config->cf_cleaning_interval;
-+		cleanerd->min_reclaimable_blocks =
-+				config->cf_min_reclaimable_blocks;
- 		syslog(LOG_INFO, "configuration file reloaded");
- 	}
- 	return ret;
-@@ -1238,10 +1247,14 @@ static int nilfs_cleanerd_handle_clean_check(struct nilfs_cleanerd *cleanerd,
- 		/* disk space is close to limit -- accelerate cleaning */
- 		cleanerd->ncleansegs = config->cf_mc_nsegments_per_clean;
- 		cleanerd->cleaning_interval = config->cf_mc_cleaning_interval;
-+		cleanerd->min_reclaimable_blocks =
-+				config->cf_mc_min_reclaimable_blocks;
- 	} else {
- 		/* continue to run */
- 		cleanerd->ncleansegs = config->cf_nsegments_per_clean;
- 		cleanerd->cleaning_interval = config->cf_cleaning_interval;
-+		cleanerd->min_reclaimable_blocks =
-+				config->cf_min_reclaimable_blocks;
+@@ -1384,8 +1384,9 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+ 		goto out;
  	}
  
- 	return 0; /* do gc */
-@@ -1427,6 +1440,8 @@ static int nilfs_cleanerd_clean_loop(struct nilfs_cleanerd *cleanerd)
- 
- 	cleanerd->ncleansegs = cleanerd->config.cf_nsegments_per_clean;
- 	cleanerd->cleaning_interval = cleanerd->config.cf_cleaning_interval;
-+	cleanerd->min_reclaimable_blocks =
-+			cleanerd->config.cf_min_reclaimable_blocks;
- 
- 
- 	if (nilfs_cleanerd_automatic_suspend(cleanerd))
-diff --git a/sbin/cleanerd/nilfs_cleanerd.conf b/sbin/cleanerd/nilfs_cleanerd.conf
-index 26872aa..f88a57a 100644
---- a/sbin/cleanerd/nilfs_cleanerd.conf
-+++ b/sbin/cleanerd/nilfs_cleanerd.conf
-@@ -51,6 +51,19 @@ mc_cleaning_interval	1
- # Retry interval in seconds.
- retry_interval		60
- 
-+# Specify the minimum number of reclaimable blocks in a segment
-+# before it can be cleaned.
-+min_reclaimable_blocks	5%
-+
-+# Specify the minimum number of reclaimable blocks in a segment
-+# before it can be cleaned.
-+# if clean segments < min_clean_segments
-+mc_min_reclaimable_blocks	1%
-+
-+# enable set_suinfo ioctl if supported
-+# (needed for min_reclaimable_blocks)
-+use_set_suinfo
-+
- # Use mmap when reading segments if supported.
- use_mmap
- 
+-	ret = nilfs_reclaim_segment(cleanerd->nilfs, segnums, nsegs,
+-				    protseq, protcno);
++	ret = nilfs_reclaim_segment_with_threshold(cleanerd->nilfs, segnums,
++			nsegs, protseq, protcno,
++			nilfs_cleanerd_min_reclaimable_blocks(cleanerd));
+ 	if (ret > 0) {
+ 		for (i = 0; i < ret; i++)
+ 			syslog(LOG_DEBUG, "segment %llu cleaned",
 -- 
 1.8.5.3
 
