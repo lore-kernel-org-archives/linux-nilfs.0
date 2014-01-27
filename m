@@ -1,92 +1,174 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH v3 0/4] nilfs-utils: shortcut for certain GC operations
-Date: Mon, 27 Jan 2014 16:47:32 +0100
-Message-ID: <52E67F94.9010208@gmx.net>
-References: <cover.1390813175.git.andreas.rohner@gmx.net> <20140128.000336.27790167.konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v3 3/3] nilfs2: implementation of
+ NILFS_IOCTL_SET_SUINFO ioctl
+Date: Tue, 28 Jan 2014 01:26:50 +0900 (JST)
+Message-ID: <20140128.012650.303740375.konishi.ryusuke@lab.ntt.co.jp>
+References: <bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner@gmx.net>
+	<bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner@gmx.net>
+	<ce24b310783bf1a501408eeb0dfa268155c07444.1390816620.git.andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140128.000336.27790167.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <ce24b310783bf1a501408eeb0dfa268155c07444.1390816620.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2014-01-27 16:03, Ryusuke Konishi wrote:
-> Hi Andreas,
-> On Mon, 27 Jan 2014 10:58:52 +0100, Andreas Rohner wrote:
->> Hi,
->>
->> This is the third version of this patch set. It basically fixes a 
->> lot of bugs.
->>
->> v2->v3
->> * Alignment in nilfs_suinfo_update
->> * Add missing comments
->> * nilfs2: Extra validity checks in nilfs_sufile_set_suinfo
->> * nilfs2: Update sh_ncleansegs, sh_ndirtysegs if flags change
->> * nilfs2: Fix bugs in nilfs_sufile_set_suinfo
->> * nilfs2: Use vmalloc instead of ioctl_wrap_copy
->> * nilfs-utils: Separate nilfs_relaim_segments_with_threshold
->> * nilfs-utils: Allow different units for min_reclaimable_blocks
->> * nilfs-utils: Introduce flag to disable the optimization
->> * nilfs-utils: Disable optimization if kernel retruns ENOTTY
->> * nilfs-utils: Remove EGCTRYAGAIN error return code
->> * nilfs-utils: Rename option to min_reclaimable_blocks
->> v1->v2
->> * Implementation of NILFS_IOCTL_SET_SUINFO
->> * Added mc_min_free_blocks_threshold config option
->>   (if clean segments < min_clean_segments)
->> * Added new command line param for nilfs-clean
->> * Update man- and config-file
->>
->> This patch set adds an optimized version of 
->> nilfs_reclaim_segments, which has an additional parameter 
->> min_reclaimable. This parameter specifies the minimum number of 
->> reclaimable blocks in a segment, before it can be cleaned. If a 
->> segment is below this threshold, it is considered to be not worth 
->> cleaning, because all the live blocks would need to be moved to a 
->> new segment, which is expensive, and the number of reclaimable 
->> blocks is too low. But it is still necessary to update the segment 
->> usage information to turn the old segment into a new one.
->>     
->> This is basically a shortcut to cleaning the segment. It is still 
->> necessary to read the segment summary information, but the writing 
->> of the live blocks can be skipped if it's not worth it.
->>
->> Additionally new options are introduced for the configuration file 
->> and nilfs-clean to allow the user to specify the threshold. 
->>
->> This is potentially useful for all gc policies, but it is especially
->> beneficial for the timestamp policy. Lets assume for example a NILFS2
->> volume with 20% static files and lets assume these static files 
->> are in the oldest segments. The current timestamp policy will 
->> select the oldest segments and, since the data is static, move 
->> them mostly unchanged to new segments. After a while they will 
->> become the oldest segments again. Then timestamp will move them 
->> again. These moving operations are expensive and unnecessary.
->>
->> The benchmarks are currently running. I will give you the results
->> shortly.
+On Mon, 27 Jan 2014 10:59:28 +0100, Andreas Rohner wrote:
+> With this ioctl the segment usage entries in the SUFILE can be
+> updated from userspace.
 > 
-> The kernel patchset didn't apply to the mainline as is because
-> Vyacheslav's ioctl commentary patch just has been merged.  Please
-> rebase your patchset on the current master branch next time.  Also,
-> nilfs_ioctl_set_suinfo() function needs summary comment as for the
-> current master branch.
+> This is useful, because it allows the userspace GC to modify and update
+> segment usage entries for specific segments, which enables it to avoid
+> unnecessary write operations.
+> 
+> If a segment needs to be cleaned, but there is no or very little
+> reclaimable space in it, the cleaning operation basically degrades to
+> a useless moving operation. In the end the only thing that changes is
+> the location of the data and a timestamp in the segment usage
+> information. With this ioctl the GC can skip the cleaning and update
+> the segment usage entries directly instead.
+> 
+> This is basically a shortcut to cleaning the segment. It is still
+> necessary to read the segment summary information, but the writing of
+> the live blocks can be skipped if it's not worth it.
+> 
+> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+> ---
+>  fs/nilfs2/ioctl.c         | 61 +++++++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/nilfs2_fs.h |  2 ++
+>  2 files changed, 63 insertions(+)
+> 
+> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+> index b44bdb2..e97df9c 100644
+> --- a/fs/nilfs2/ioctl.c
+> +++ b/fs/nilfs2/ioctl.c
+> @@ -767,6 +767,64 @@ out:
+>  	return ret;
+>  }
+>  
+> +static int nilfs_ioctl_set_suinfo(struct inode *inode, struct file *filp,
+> +				unsigned int cmd, void __user *argp)
+> +{
+> +	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
+> +	struct nilfs_transaction_info ti;
+> +	struct nilfs_argv argv;
+> +	size_t len;
+> +	void __user *base;
+> +	void *kbuf;
+> +	int ret;
+> +
+> +	if (!capable(CAP_SYS_ADMIN))
+> +		return -EPERM;
+> +
+> +	ret = mnt_want_write_file(filp);
+> +	if (ret)
+> +		return ret;
+> +
+> +	ret = -EFAULT;
+> +	if (copy_from_user(&argv, argp, sizeof(argv)))
+> +		goto out;
+> +
+> +	ret = -EINVAL;
+> +	if (argv.v_size < sizeof(struct nilfs_suinfo_update))
+> +		goto out;
+> +
+> +	if (argv.v_nmembs > nilfs->ns_nsegments)
+> +		goto out;
+> +
+> +	len = argv.v_size * argv.v_nmembs;
 
-Sorry for that, I based it on 3.13. I will rebase it immediateley and
-add the summary comment.
+The following check should be inserted to avoid overflow of variable
+"len".
 
-> Anyway, I will review the kernel patches first, and then look into
-> the userland patches.
+	if (argv.v_nmembs >= UINT_MAX / argv.v_size)
+		goto out;
 
-Thanks. By the way, is it ok to use one cover letter for both the
-userland and kernel patches?
+The size argument of vmalloc() is unsigned long, but sizeof(unsinged
+long) differs depending on architecture, thus undesirable.
 
-br,
-Andreas Rohner
+The following check also should be inserted because vmalloc(0) arises
+a warning returning NULL.
+
+	if (!len) {
+		ret = 0;
+		goto out;
+	}
+
+
+Regards,
+Ryusuke Konishi
+
+> +	base = (void __user *)(unsigned long)argv.v_base;
+
+> +	kbuf = vmalloc(len);
+> +	if (!kbuf) {
+> +		ret = -ENOMEM;
+> +		goto out;
+> +	}
+> +
+> +	if (copy_from_user(kbuf, base, len)) {
+> +		ret = -EFAULT;
+> +		goto out_free;
+> +	}
+> +
+> +	nilfs_transaction_begin(inode->i_sb, &ti, 0);
+> +	ret = nilfs_sufile_set_suinfo(nilfs->ns_sufile, kbuf, argv.v_size,
+> +			argv.v_nmembs);
+> +	if (unlikely(ret < 0))
+> +		nilfs_transaction_abort(inode->i_sb);
+> +	else
+> +		nilfs_transaction_commit(inode->i_sb); /* never fails */
+> +
+> +out_free:
+> +	vfree(kbuf);
+> +out:
+> +	mnt_drop_write_file(filp);
+> +	return ret;
+> +}
+> +
+> +
+>  static int nilfs_ioctl_get_info(struct inode *inode, struct file *filp,
+>  				unsigned int cmd, void __user *argp,
+>  				size_t membsz,
+> @@ -820,6 +878,8 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>  		return nilfs_ioctl_get_info(inode, filp, cmd, argp,
+>  					    sizeof(struct nilfs_suinfo),
+>  					    nilfs_ioctl_do_get_suinfo);
+> +	case NILFS_IOCTL_SET_SUINFO:
+> +		return nilfs_ioctl_set_suinfo(inode, filp, cmd, argp);
+>  	case NILFS_IOCTL_GET_SUSTAT:
+>  		return nilfs_ioctl_get_sustat(inode, filp, cmd, argp);
+>  	case NILFS_IOCTL_GET_VINFO:
+> @@ -859,6 +919,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>  	case NILFS_IOCTL_GET_CPINFO:
+>  	case NILFS_IOCTL_GET_CPSTAT:
+>  	case NILFS_IOCTL_GET_SUINFO:
+> +	case NILFS_IOCTL_SET_SUINFO:
+>  	case NILFS_IOCTL_GET_SUSTAT:
+>  	case NILFS_IOCTL_GET_VINFO:
+>  	case NILFS_IOCTL_GET_BDESCS:
+> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+> index 7b94449..4140f7f 100644
+> --- a/include/linux/nilfs2_fs.h
+> +++ b/include/linux/nilfs2_fs.h
+> @@ -904,5 +904,7 @@ struct nilfs_bdesc {
+>  	_IOW(NILFS_IOCTL_IDENT, 0x8B, __u64)
+>  #define NILFS_IOCTL_SET_ALLOC_RANGE  \
+>  	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
+> +#define NILFS_IOCTL_SET_SUINFO  \
+> +	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
+>  
+>  #endif	/* _LINUX_NILFS_FS_H */
+> -- 
+> 1.8.5.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
