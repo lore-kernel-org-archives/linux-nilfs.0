@@ -1,189 +1,119 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v3 2/3] nilfs2: add nilfs_sufile_set_suinfo to update segment usage
-Date: Mon, 27 Jan 2014 10:59:27 +0100
-Message-ID: <93a209490951530b1b9eb03be4e3b309d36740f4.1390816620.git.andreas.rohner@gmx.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v3 0/4] nilfs-utils: shortcut for certain GC operations
+Date: Tue, 28 Jan 2014 00:03:36 +0900 (JST)
+Message-ID: <20140128.000336.27790167.konishi.ryusuke@lab.ntt.co.jp>
 References: <cover.1390813175.git.andreas.rohner@gmx.net>
- <bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner@gmx.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-In-Reply-To: <bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-References: <bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <cover.1390813175.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This patch introduces the nilfs_sufile_set_suinfo function, which
-expects an array of nilfs_suinfo_update structures and updates the
-segment usage information accordingly.
+Hi Andreas,
+On Mon, 27 Jan 2014 10:58:52 +0100, Andreas Rohner wrote:
+> Hi,
+> 
+> This is the third version of this patch set. It basically fixes a 
+> lot of bugs.
+> 
+> v2->v3
+> * Alignment in nilfs_suinfo_update
+> * Add missing comments
+> * nilfs2: Extra validity checks in nilfs_sufile_set_suinfo
+> * nilfs2: Update sh_ncleansegs, sh_ndirtysegs if flags change
+> * nilfs2: Fix bugs in nilfs_sufile_set_suinfo
+> * nilfs2: Use vmalloc instead of ioctl_wrap_copy
+> * nilfs-utils: Separate nilfs_relaim_segments_with_threshold
+> * nilfs-utils: Allow different units for min_reclaimable_blocks
+> * nilfs-utils: Introduce flag to disable the optimization
+> * nilfs-utils: Disable optimization if kernel retruns ENOTTY
+> * nilfs-utils: Remove EGCTRYAGAIN error return code
+> * nilfs-utils: Rename option to min_reclaimable_blocks
+> v1->v2
+> * Implementation of NILFS_IOCTL_SET_SUINFO
+> * Added mc_min_free_blocks_threshold config option
+>   (if clean segments < min_clean_segments)
+> * Added new command line param for nilfs-clean
+> * Update man- and config-file
+> 
+> This patch set adds an optimized version of 
+> nilfs_reclaim_segments, which has an additional parameter 
+> min_reclaimable. This parameter specifies the minimum number of 
+> reclaimable blocks in a segment, before it can be cleaned. If a 
+> segment is below this threshold, it is considered to be not worth 
+> cleaning, because all the live blocks would need to be moved to a 
+> new segment, which is expensive, and the number of reclaimable 
+> blocks is too low. But it is still necessary to update the segment 
+> usage information to turn the old segment into a new one.
+>     
+> This is basically a shortcut to cleaning the segment. It is still 
+> necessary to read the segment summary information, but the writing 
+> of the live blocks can be skipped if it's not worth it.
+> 
+> Additionally new options are introduced for the configuration file 
+> and nilfs-clean to allow the user to specify the threshold. 
+> 
+> This is potentially useful for all gc policies, but it is especially
+> beneficial for the timestamp policy. Lets assume for example a NILFS2
+> volume with 20% static files and lets assume these static files 
+> are in the oldest segments. The current timestamp policy will 
+> select the oldest segments and, since the data is static, move 
+> them mostly unchanged to new segments. After a while they will 
+> become the oldest segments again. Then timestamp will move them 
+> again. These moving operations are expensive and unnecessary.
+> 
+> The benchmarks are currently running. I will give you the results
+> shortly.
 
-This is basically a helper function for the newly introduced
-NILFS_IOCTL_SET_SUINFO ioctl.
+The kernel patchset didn't apply to the mainline as is because
+Vyacheslav's ioctl commentary patch just has been merged.  Please
+rebase your patchset on the current master branch next time.  Also,
+nilfs_ioctl_set_suinfo() function needs summary comment as for the
+current master branch.
 
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
----
- fs/nilfs2/sufile.c | 129 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/sufile.h |   1 +
- 2 files changed, 130 insertions(+)
+Anyway, I will review the kernel patches first, and then look into
+the userland patches.
 
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 3127e9f..8922523 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -870,6 +870,135 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
- }
- 
- /**
-+ * nilfs_sufile_set_suinfo - sets segment usage info
-+ * @sufile: inode of segment usage file
-+ * @buf: array of suinfo_update
-+ * @supsz: byte size of suinfo_update
-+ * @nsup: size of suinfo_update array
-+ *
-+ * Description: Takes an array of nilfs_suinfo_update structs and updates
-+ * segment usage accordingly. Only the fields indicated by the sup_flags
-+ * are updated.
-+ *
-+ * Return Value: On success, 0 is returned. On error, one of the
-+ * following negative error codes is returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ *
-+ * %-EINVAL - Invalid values in input (segment number, flags or nblocks)
-+ */
-+ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
-+				unsigned supsz, size_t nsup)
-+{
-+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-+	struct buffer_head *header_bh, *bh;
-+	struct nilfs_suinfo_update *sup, *supend = buf + supsz * nsup;
-+	struct nilfs_segment_usage *su;
-+	void *kaddr;
-+	unsigned long blkoff, prev_blkoff;
-+	int ret = 0, ncleansegs, ndirtysegs, cleansi,
-+			cleansu, dirtysi, dirtysu;
-+
-+	if (unlikely(nsup == 0))
-+		return ret;
-+
-+	for (sup = buf; sup < supend; sup = (void *)sup + supsz) {
-+		if (sup->sup_segnum >= nilfs->ns_nsegments
-+			|| (sup->sup_flags &
-+				(~0UL << (NILFS_SUINFO_UPDATE_FLAGS + 1)))
-+			|| (nilfs_suinfo_update_nblocks(sup) &&
-+				sup->sup_sui.sui_nblocks >
-+				nilfs->ns_blocks_per_segment)
-+			|| (nilfs_suinfo_update_flags(sup) &&
-+				(sup->sup_sui.sui_flags &
-+				(~0UL << (NILFS_SEGMENT_USAGE_ERROR + 1)))))
-+			return -EINVAL;
-+	}
-+
-+	down_write(&NILFS_MDT(sufile)->mi_sem);
-+
-+	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-+	if (ret < 0)
-+		goto out_sem;
-+
-+	sup = buf;
-+	blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
-+	ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
-+	if (ret < 0)
-+		goto out_header;
-+
-+	for (;;) {
-+		kaddr = kmap_atomic(bh->b_page);
-+		su = nilfs_sufile_block_get_segment_usage(
-+			sufile, sup->sup_segnum, bh, kaddr);
-+
-+		if (nilfs_suinfo_update_lastmod(sup))
-+			su->su_lastmod = cpu_to_le64(sup->sup_sui.sui_lastmod);
-+
-+		if (nilfs_suinfo_update_nblocks(sup))
-+			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
-+
-+		if (nilfs_suinfo_update_flags(sup)) {
-+			sup->sup_sui.sui_flags &=
-+					~(1UL << NILFS_SEGMENT_USAGE_ACTIVE);
-+
-+			ncleansegs = 0;
-+			ndirtysegs = 0;
-+			cleansi = nilfs_suinfo_clean(&sup->sup_sui);
-+			cleansu = nilfs_segment_usage_clean(su);
-+			dirtysi = nilfs_suinfo_dirty(&sup->sup_sui);
-+			dirtysu = nilfs_segment_usage_dirty(su);
-+
-+			if (cleansi && !cleansu)
-+				++ncleansegs;
-+			else if (!cleansi && cleansu)
-+				--ncleansegs;
-+
-+			if (dirtysi && !dirtysu)
-+				++ndirtysegs;
-+			else if (!dirtysi && dirtysu)
-+				--ndirtysegs;
-+
-+			su->su_flags = cpu_to_le32(sup->sup_sui.sui_flags);
-+
-+			nilfs_sufile_mod_counter(header_bh, ncleansegs,
-+					ndirtysegs);
-+			NILFS_SUI(sufile)->ncleansegs += ncleansegs;
-+		}
-+
-+		kunmap_atomic(kaddr);
-+
-+		sup = (void *)sup + supsz;
-+		if (sup >= supend)
-+			break;
-+
-+		prev_blkoff = blkoff;
-+		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
-+		if (blkoff == prev_blkoff)
-+			continue;
-+
-+		/* get different block */
-+		mark_buffer_dirty(bh);
-+		brelse(bh);
-+		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
-+		if (unlikely(ret < 0))
-+			goto out_mark;
-+	}
-+	mark_buffer_dirty(bh);
-+	brelse(bh);
-+
-+ out_mark:
-+	nilfs_mdt_mark_dirty(sufile);
-+ out_header:
-+	brelse(header_bh);
-+ out_sem:
-+	up_write(&NILFS_MDT(sufile)->mi_sem);
-+	return ret;
-+}
-+
-+/**
-  * nilfs_sufile_read - read or get sufile inode
-  * @sb: super block instance
-  * @susize: size of a segment usage entry
-diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-index e84bc5b..366003c 100644
---- a/fs/nilfs2/sufile.h
-+++ b/fs/nilfs2/sufile.h
-@@ -44,6 +44,7 @@ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
- int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
- ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
- 				size_t);
-+ssize_t nilfs_sufile_set_suinfo(struct inode *, void *, unsigned , size_t);
- 
- int nilfs_sufile_updatev(struct inode *, __u64 *, size_t, int, size_t *,
- 			 void (*dofunc)(struct inode *, __u64,
--- 
-1.8.5.3
+Regards,
+Ryusuke Konishi
 
+
+> Regards,
+> Andreas Rohner
+> 
+> ---
+> Andreas Rohner (4):
+>   nilfs-utils: cldconfig add an option to set min. reclaimable blocks
+>   nilfs-utils: nilfs-clean add cmdline param min-reclaimable-blocks
+>   nilfs-utils: add suport for NILFS_IOCTL_SET_SUINFO ioctl
+>   nilfs-utils: add optimized version of nilfs_reclaim_segments
+> 
+>  include/nilfs.h                   |   9 +-
+>  include/nilfs2_fs.h               |  43 ++++++++++
+>  include/nilfs_cleaner.h           |  19 +++--
+>  include/nilfs_gc.h                |   4 +
+>  lib/gc.c                          | 112 ++++++++++++++++++++-----
+>  lib/nilfs.c                       |  60 ++++++++++++++
+>  man/nilfs-clean.8                 |   4 +
+>  man/nilfs_cleanerd.conf.5         |  22 +++++
+>  sbin/cleanerd/cldconfig.c         | 168 ++++++++++++++++++++++++++++----------
+>  sbin/cleanerd/cldconfig.h         |   8 ++
+>  sbin/cleanerd/cleanerd.c          |  39 ++++++++-
+>  sbin/cleanerd/nilfs_cleanerd.conf |  13 +++
+>  sbin/nilfs-clean/nilfs-clean.c    |  44 ++++++++--
+>  13 files changed, 466 insertions(+), 79 deletions(-)
+> 
+> -- 
+> 1.8.5.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
