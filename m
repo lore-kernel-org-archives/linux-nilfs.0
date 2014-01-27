@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v3 3/4] nilfs-utils: add suport for NILFS_IOCTL_SET_SUINFO ioctl
-Date: Mon, 27 Jan 2014 10:58:55 +0100
-Message-ID: <a69dc4d73e1e247740dd0ffedba7261b58437f77.1390813175.git.andreas.rohner@gmx.net>
+Subject: [PATCH v3 2/4] nilfs-utils: nilfs-clean add cmdline param min-reclaimable-blocks
+Date: Mon, 27 Jan 2014 10:58:54 +0100
+Message-ID: <bf587064f39f9589e3b9756940efc9414ed30366.1390813175.git.andreas.rohner@gmx.net>
 References: <cover.1390813175.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1390813175.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -15,138 +15,216 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch adds library support for the NILFS_IOCTL_SET_SUINFO
-ioctl. A new function nilfs_set_suinfo and the structure
-nilfs_suinfo_update, which contains the update information, are
-added.
-
-With this function the segment usage information can be updated
-from userspace, which can be used as a shortcut for certain GC
-operations.
+This patch adds a command line parameter for nilfs-clean to allow
+the manual override of the min_reclaimable_blocks option.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- include/nilfs.h     |  2 ++
- include/nilfs2_fs.h | 43 +++++++++++++++++++++++++++++++++++++++++++
- lib/nilfs.c         | 32 ++++++++++++++++++++++++++++++++
- 3 files changed, 77 insertions(+)
+ include/nilfs_cleaner.h        | 19 +++++++++---------
+ man/nilfs-clean.8              |  4 ++++
+ sbin/cleanerd/cleanerd.c       | 19 ++++++++++++++++++
+ sbin/nilfs-clean/nilfs-clean.c | 44 ++++++++++++++++++++++++++++++++++++------
+ 4 files changed, 71 insertions(+), 15 deletions(-)
 
-diff --git a/include/nilfs.h b/include/nilfs.h
-index b5f85d3..af4735d 100644
---- a/include/nilfs.h
-+++ b/include/nilfs.h
-@@ -304,6 +304,8 @@ int nilfs_delete_checkpoint(struct nilfs *, nilfs_cno_t);
- int nilfs_get_cpstat(const struct nilfs *, struct nilfs_cpstat *);
- ssize_t nilfs_get_suinfo(const struct nilfs *, __u64, struct nilfs_suinfo *,
- 			 size_t);
-+ssize_t nilfs_set_suinfo(const struct nilfs *, struct nilfs_suinfo_update *,
-+			 size_t);
- int nilfs_get_sustat(const struct nilfs *, struct nilfs_sustat *);
- ssize_t nilfs_get_vinfo(const struct nilfs *, struct nilfs_vinfo *, size_t);
- ssize_t nilfs_get_bdescs(const struct nilfs *, struct nilfs_bdesc *, size_t);
-diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
-index e674f44..45de858 100644
---- a/include/nilfs2_fs.h
-+++ b/include/nilfs2_fs.h
-@@ -713,6 +713,47 @@ static inline int nilfs_suinfo_clean(const struct nilfs_suinfo *si)
- 	return !si->sui_flags;
- }
+diff --git a/include/nilfs_cleaner.h b/include/nilfs_cleaner.h
+index 0bf02aa..874c17a 100644
+--- a/include/nilfs_cleaner.h
++++ b/include/nilfs_cleaner.h
+@@ -46,17 +46,18 @@ struct nilfs_cleaner_args {
+ 	uint64_t start_segnum;	/* start segment number */
+ 	uint64_t nsegs;		/* number of segments */
+ 	uint32_t runtime; /* runtime in seconds */
+-	uint32_t pad2;
++	uint32_t min_reclaimable_blocks;
+ };
+ /* valid flags */
+-#define NILFS_CLEANER_ARG_PROTECTION_PERIOD	(1 << 0)
+-#define NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN	(1 << 1)
+-#define NILFS_CLEANER_ARG_CLEANING_INTERVAL	(1 << 2)
+-#define NILFS_CLEANER_ARG_USAGE_RATE_THRESHOLD	(1 << 3) /* reserved */
+-#define NILFS_CLEANER_ARG_START_SEGNUM		(1 << 4) /* reserved */
+-#define NILFS_CLEANER_ARG_NSEGS			(1 << 5) /* reserved */
+-#define NILFS_CLEANER_ARG_NPASSES		(1 << 6) /* reserved */
+-#define NILFS_CLEANER_ARG_RUNTIME		(1 << 7) /* reserved */
++#define NILFS_CLEANER_ARG_PROTECTION_PERIOD		(1 << 0)
++#define NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN		(1 << 1)
++#define NILFS_CLEANER_ARG_CLEANING_INTERVAL		(1 << 2)
++#define NILFS_CLEANER_ARG_USAGE_RATE_THRESHOLD		(1 << 3) /* reserved */
++#define NILFS_CLEANER_ARG_START_SEGNUM			(1 << 4) /* reserved */
++#define NILFS_CLEANER_ARG_NSEGS				(1 << 5) /* reserved */
++#define NILFS_CLEANER_ARG_NPASSES			(1 << 6) /* reserved */
++#define NILFS_CLEANER_ARG_RUNTIME			(1 << 7) /* reserved */
++#define NILFS_CLEANER_ARG_MIN_RECLAIMABLE_BLOCKS	(1 << 8)
  
-+/**
-+ * nilfs_suinfo_update - segment usage information update
-+ * @sup_segnum: segment number
-+ * @sup_flags: flags for which fields are active in sup_sui
-+ * @sup_reserved: reserved necessary for alignment
-+ * @sup_sui: segment usage information
-+ */
-+struct nilfs_suinfo_update {
-+	__u64 sup_segnum;
-+	__u32 sup_flags;
-+	__u32 sup_reserved;
-+	struct nilfs_suinfo sup_sui;
-+};
-+
-+enum {
-+	NILFS_SUINFO_UPDATE_LASTMOD,
-+	NILFS_SUINFO_UPDATE_NBLOCKS,
-+	NILFS_SUINFO_UPDATE_FLAGS,
-+};
-+
-+#define NILFS_SUINFO_UPDATE_FNS(flag, name)				\
-+static inline void							\
-+nilfs_suinfo_update_set_##name(struct nilfs_suinfo_update *sup)		\
-+{									\
-+	sup->sup_flags |= 1UL << NILFS_SUINFO_UPDATE_##flag;		\
-+}									\
-+static inline void							\
-+nilfs_suinfo_update_clear_##name(struct nilfs_suinfo_update *sup)	\
-+{									\
-+	sup->sup_flags &= ~(1UL << NILFS_SUINFO_UPDATE_##flag);		\
-+}									\
-+static inline int							\
-+nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
-+{									\
-+	return !!(sup->sup_flags & (1UL << NILFS_SUINFO_UPDATE_##flag));\
-+}
-+
-+NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
-+NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
-+NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
-+
- /* ioctl */
  enum {
- 	NILFS_CHECKPOINT,
-@@ -867,5 +908,7 @@ struct nilfs_bdesc {
- 	_IOW(NILFS_IOCTL_IDENT, 0x8B, __u64)
- #define NILFS_IOCTL_SET_ALLOC_RANGE  \
- 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
-+#define NILFS_IOCTL_SET_SUINFO  \
-+	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
- 
- #endif	/* _LINUX_NILFS_FS_H */
-diff --git a/lib/nilfs.c b/lib/nilfs.c
-index 93822de..25664e1 100644
---- a/lib/nilfs.c
-+++ b/lib/nilfs.c
-@@ -596,6 +596,38 @@ ssize_t nilfs_get_suinfo(const struct nilfs *nilfs, __u64 segnum,
- }
+ 	NILFS_CLEANER_STATUS_IDLE,
+diff --git a/man/nilfs-clean.8 b/man/nilfs-clean.8
+index 04e11c6..94267e1 100644
+--- a/man/nilfs-clean.8
++++ b/man/nilfs-clean.8
+@@ -43,6 +43,10 @@ Display cleaner status.
+ \fB\-h\fR, \fB\-\-help\fR
+ Display help message and exit.
+ .TP
++\fB\-m\fR, \fB\-\-min\-reclaimable\-blocks=\fICOUNT\fR
++Specify the minimum number of reclaimable blocks in a segment before
++it can be cleaned.
++.TP
+ \fB\-p\fR, \fB\-\-protection-period=\fIinterval\fR
+ Set protection period for a cleaner run.  The \fIinterval\fR parameter
+ is an integer value and specifies the minimum time that deleted or
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index bf8b8b0..13018b2 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -185,6 +185,7 @@ struct nilfs_cleanerd {
+ 	long mm_ncleansegs;
+ 	struct timeval mm_protection_period;
+ 	struct timeval mm_cleaning_interval;
++	unsigned long mm_min_reclaimable_blocks;
+ };
  
  /**
-+ * nilfs_set_suinfo - sets segment usage info
-+ * @nilfs: nilfs object
-+ * @sup: an array of nilfs_suinfo_update structs
-+ * @nsup: number of elements in sup
-+ *
-+ * Description: Takes an array of nilfs_suinfo_update structs and updates
-+ * segment usage info accordingly. Only the fields indicated by sup_flags
-+ * are updated.
-+ *
-+ * Return Value: On success, 0 is returned. On error, -1 is returned.
-+ */
-+ssize_t nilfs_set_suinfo(const struct nilfs *nilfs,
-+			 struct nilfs_suinfo_update *sup, size_t nsup)
+@@ -468,6 +469,14 @@ nilfs_cleanerd_protection_period(struct nilfs_cleanerd *cleanerd)
+ 		&cleanerd->config.cf_protection_period;
+ }
+ 
++static unsigned long
++nilfs_cleanerd_min_reclaimable_blocks(struct nilfs_cleanerd *cleanerd)
 +{
-+	struct nilfs_argv argv;
++	return cleanerd->running == 2 ?
++		cleanerd->mm_min_reclaimable_blocks :
++		cleanerd->min_reclaimable_blocks;
++}
 +
-+	if (nilfs->n_iocfd < 0) {
-+		errno = EBADF;
+ static void
+ nilfs_cleanerd_reduce_ncleansegs_for_retry(struct nilfs_cleanerd *cleanerd)
+ {
+@@ -1010,6 +1019,16 @@ static int nilfs_cleanerd_cmd_run(struct nilfs_cleanerd *cleanerd,
+ 		cleanerd->mm_cleaning_interval =
+ 			cleanerd->cleaning_interval;
+ 	}
++	/* minimal reclaimable blocks */
++	if ((req2->args.valid & NILFS_CLEANER_ARG_MIN_RECLAIMABLE_BLOCKS)
++		&& req2->args.min_reclaimable_blocks <=
++			nilfs_get_blocks_per_segment(cleanerd->nilfs)) {
++		cleanerd->mm_min_reclaimable_blocks =
++			req2->args.min_reclaimable_blocks;
++	} else {
++		cleanerd->mm_min_reclaimable_blocks =
++			cleanerd->min_reclaimable_blocks;
++	}
+ 	/* number of passes */
+ 	if (req2->args.valid & NILFS_CLEANER_ARG_NPASSES) {
+ 		if (!req2->args.npasses)
+diff --git a/sbin/nilfs-clean/nilfs-clean.c b/sbin/nilfs-clean/nilfs-clean.c
+index 55abd55..f77fdf7 100644
+--- a/sbin/nilfs-clean/nilfs-clean.c
++++ b/sbin/nilfs-clean/nilfs-clean.c
+@@ -77,6 +77,7 @@ const static struct option long_option[] = {
+ 	{"stop", no_argument, NULL, 'b'},
+ 	{"suspend", no_argument, NULL, 's'},
+ 	{"speed", required_argument, NULL, 'S'},
++	{"min-reclaimable-blocks", required_argument, NULL, 'm'},
+ 	{"verbose", no_argument, NULL, 'v'},
+ 	{"version", no_argument, NULL, 'V'},
+ 	{NULL, 0, NULL, 0}
+@@ -90,6 +91,9 @@ const static struct option long_option[] = {
+ 	"  -l, --status\t\tdisplay cleaner status\n"			\
+ 	"  -p, --protection-period=SECONDS\n"				\
+ 	"               \t\tspecify protection period\n"		\
++	"  -m, --min-reclaimable-blocks=COUNT\n"			\
++	"               \t\tset minimum number of reclaimable blocks\n"	\
++	"               \t\tbefore a segment can be cleaned\n"		\
+ 	"  -q, --quit\t\tshutdown cleaner\n"				\
+ 	"  -r, --resume\t\tresume cleaner\n"				\
+ 	"  -s, --suspend\t\tsuspend cleaner\n"				\
+@@ -98,9 +102,10 @@ const static struct option long_option[] = {
+ 	"  -v, --verbose\t\tverbose mode\n"				\
+ 	"  -V, --version\t\tdisplay version and exit\n"
+ #else
+-#define NILFS_CLEAN_USAGE						\
+-	"Usage: %s [-b] [-c [conffile]] [-h] [-l] [-p protection-period]" \
+-	"          [-q] [-r] [-s] [-S gc-speed] [-v] [-V] [device]\n"
++#define NILFS_CLEAN_USAGE						  \
++	"Usage: %s [-b] [-c [conffile]] [-h] [-l] [-m blocks]\n"	  \
++	"          [-p protection-period] [-q] [-r] [-s] [-S gc-speed]\n" \
++	"          [-v] [-V] [device]\n"
+ #endif	/* _GNU_SOURCE */
+ 
+ 
+@@ -124,6 +129,7 @@ static const char *conffile = NULL;
+ static unsigned long protection_period = ULONG_MAX;
+ static int nsegments_per_clean = 2;
+ static struct timespec cleaning_interval = { 0, 100000000 };   /* 100 msec */
++static unsigned long min_reclaimable_blocks = 20;  /* about 1% with 8MB segs */
+ 
+ static sigjmp_buf nilfs_clean_env;
+ static struct nilfs_cleaner *nilfs_cleaner;
+@@ -164,9 +170,11 @@ static int nilfs_clean_do_run(struct nilfs_cleaner *cleaner)
+ 	args.nsegments_per_clean = nsegments_per_clean;
+ 	args.cleaning_interval = cleaning_interval.tv_sec;
+ 	args.cleaning_interval_nsec = cleaning_interval.tv_nsec;
++	args.min_reclaimable_blocks = min_reclaimable_blocks;
+ 	args.valid = (NILFS_CLEANER_ARG_NPASSES |
+ 		      NILFS_CLEANER_ARG_CLEANING_INTERVAL |
+-		      NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN);
++		      NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN |
++		      NILFS_CLEANER_ARG_MIN_RECLAIMABLE_BLOCKS);
+ 
+ 	if (protection_period != ULONG_MAX) {
+ 		args.protection_period = protection_period;
+@@ -426,6 +434,26 @@ failed_too_large:
+ 	return -1;
+ }
+ 
++static int nilfs_clean_parse_min_reclaimable(const char *arg)
++{
++	unsigned long blocks;
++	char *endptr;
++
++	blocks = strtoul(arg, &endptr, 10);
++	if (endptr == arg || endptr[0] != '\0') {
++		myprintf(_("Error: invalid reclaimable blocks: %s\n"), arg);
 +		return -1;
 +	}
 +
-+	argv.v_base = (unsigned long)sup;
-+	argv.v_nmembs = nsup;
-+	argv.v_size = sizeof(struct nilfs_suinfo_update);
-+	argv.v_index = 0;
-+	argv.v_flags = 0;
-+	if (ioctl(nilfs->n_iocfd, NILFS_IOCTL_SET_SUINFO, &argv) < 0)
++	if (blocks == ULONG_MAX) {
++		myprintf(_("Error: value too large: %s\n"), arg);
 +		return -1;
++	}
++
++	min_reclaimable_blocks = blocks;
 +	return 0;
 +}
 +
-+/**
-  * nilfs_get_sustat - get segment usage statistics
-  * @nilfs: nilfs object
-  * @sustat: buffer of a nilfs_sustat struct to store statistics in
+ static void nilfs_clean_parse_options(int argc, char *argv[])
+ {
+ #ifdef _GNU_SOURCE
+@@ -434,10 +462,10 @@ static void nilfs_clean_parse_options(int argc, char *argv[])
+ 	int c;
+ 
+ #ifdef _GNU_SOURCE
+-	while ((c = getopt_long(argc, argv, "bc::hlp:qrsS:vV",
++	while ((c = getopt_long(argc, argv, "bc::hlm:p:qrsS:vV",
+ 				long_option, &option_index)) >= 0) {
+ #else
+-	while ((c = getopt(argc, argv, "bc::hlp:qrsS:vV")) >= 0) {
++	while ((c = getopt(argc, argv, "bc::hlm:p:qrsS:vV")) >= 0) {
+ #endif	/* _GNU_SOURCE */
+ 		switch (c) {
+ 		case 'b':
+@@ -455,6 +483,10 @@ static void nilfs_clean_parse_options(int argc, char *argv[])
+ 		case 'l':
+ 			clean_cmd = NILFS_CLEAN_CMD_INFO;
+ 			break;
++		case 'm':
++			if (nilfs_clean_parse_min_reclaimable(optarg) < 0)
++				exit(EXIT_FAILURE);
++			break;
+ 		case 'p':
+ 			if (nilfs_clean_parse_protection_period(optarg) < 0)
+ 				exit(EXIT_FAILURE);
 -- 
 1.8.5.3
 
