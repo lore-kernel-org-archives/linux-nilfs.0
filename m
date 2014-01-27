@@ -1,119 +1,96 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v3 0/4] nilfs-utils: shortcut for certain GC operations
-Date: Tue, 28 Jan 2014 00:03:36 +0900 (JST)
-Message-ID: <20140128.000336.27790167.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v3 1/3] nilfs2: add struct nilfs_suinfo_update and flags
+Date: Tue, 28 Jan 2014 00:29:45 +0900 (JST)
+Message-ID: <20140128.002945.60055619.konishi.ryusuke@lab.ntt.co.jp>
 References: <cover.1390813175.git.andreas.rohner@gmx.net>
+	<bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1390813175.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Andreas,
-On Mon, 27 Jan 2014 10:58:52 +0100, Andreas Rohner wrote:
-> Hi,
+On Mon, 27 Jan 2014 10:59:26 +0100, Andreas Rohner wrote:
+> This patch adds the nilfs_suinfo_update structure, which contains the
+> information needed to update one segment usage entry. The flags
+> specify, which fields need to be updated.
 > 
-> This is the third version of this patch set. It basically fixes a 
-> lot of bugs.
+> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+> ---
+>  include/linux/nilfs2_fs.h | 41 +++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 41 insertions(+)
 > 
-> v2->v3
-> * Alignment in nilfs_suinfo_update
-> * Add missing comments
-> * nilfs2: Extra validity checks in nilfs_sufile_set_suinfo
-> * nilfs2: Update sh_ncleansegs, sh_ndirtysegs if flags change
-> * nilfs2: Fix bugs in nilfs_sufile_set_suinfo
-> * nilfs2: Use vmalloc instead of ioctl_wrap_copy
-> * nilfs-utils: Separate nilfs_relaim_segments_with_threshold
-> * nilfs-utils: Allow different units for min_reclaimable_blocks
-> * nilfs-utils: Introduce flag to disable the optimization
-> * nilfs-utils: Disable optimization if kernel retruns ENOTTY
-> * nilfs-utils: Remove EGCTRYAGAIN error return code
-> * nilfs-utils: Rename option to min_reclaimable_blocks
-> v1->v2
-> * Implementation of NILFS_IOCTL_SET_SUINFO
-> * Added mc_min_free_blocks_threshold config option
->   (if clean segments < min_clean_segments)
-> * Added new command line param for nilfs-clean
-> * Update man- and config-file
-> 
-> This patch set adds an optimized version of 
-> nilfs_reclaim_segments, which has an additional parameter 
-> min_reclaimable. This parameter specifies the minimum number of 
-> reclaimable blocks in a segment, before it can be cleaned. If a 
-> segment is below this threshold, it is considered to be not worth 
-> cleaning, because all the live blocks would need to be moved to a 
-> new segment, which is expensive, and the number of reclaimable 
-> blocks is too low. But it is still necessary to update the segment 
-> usage information to turn the old segment into a new one.
->     
-> This is basically a shortcut to cleaning the segment. It is still 
-> necessary to read the segment summary information, but the writing 
-> of the live blocks can be skipped if it's not worth it.
-> 
-> Additionally new options are introduced for the configuration file 
-> and nilfs-clean to allow the user to specify the threshold. 
-> 
-> This is potentially useful for all gc policies, but it is especially
-> beneficial for the timestamp policy. Lets assume for example a NILFS2
-> volume with 20% static files and lets assume these static files 
-> are in the oldest segments. The current timestamp policy will 
-> select the oldest segments and, since the data is static, move 
-> them mostly unchanged to new segments. After a while they will 
-> become the oldest segments again. Then timestamp will move them 
-> again. These moving operations are expensive and unnecessary.
-> 
-> The benchmarks are currently running. I will give you the results
-> shortly.
+> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+> index 9875576..7b94449 100644
+> --- a/include/linux/nilfs2_fs.h
+> +++ b/include/linux/nilfs2_fs.h
+> @@ -709,6 +709,47 @@ static inline int nilfs_suinfo_clean(const struct nilfs_suinfo *si)
+>  	return !si->sui_flags;
+>  }
+>  
+> +/**
+> + * nilfs_suinfo_update - segment usage information update
+> + * @sup_segnum: segment number
+> + * @sup_flags: flags for which fields are active in sup_sui
+> + * @sup_reserved: reserved necessary for alignment
+> + * @sup_sui: segment usage information
+> + */
+> +struct nilfs_suinfo_update {
+> +	__u64 sup_segnum;
+> +	__u32 sup_flags;
+> +	__u32 sup_reserved;
+> +	struct nilfs_suinfo sup_sui;
+> +};
+> +
+> +enum {
+> +	NILFS_SUINFO_UPDATE_LASTMOD,
+> +	NILFS_SUINFO_UPDATE_NBLOCKS,
+> +	NILFS_SUINFO_UPDATE_FLAGS,
+> +};
+> +
+> +#define NILFS_SUINFO_UPDATE_FNS(flag, name)				\
+> +static inline void							\
+> +nilfs_suinfo_update_set_##name(struct nilfs_suinfo_update *sup)		\
+> +{									\
+> +	sup->sup_flags |= 1UL << NILFS_SUINFO_UPDATE_##flag;		\
+> +}									\
+> +static inline void							\
+> +nilfs_suinfo_update_clear_##name(struct nilfs_suinfo_update *sup)	\
+> +{									\
+> +	sup->sup_flags &= ~(1UL << NILFS_SUINFO_UPDATE_##flag);		\
+> +}									\
+> +static inline int							\
+> +nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
+> +{									\
+> +	return !!(sup->sup_flags & (1UL << NILFS_SUINFO_UPDATE_##flag));\
+> +}
+> +
+> +NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
+> +NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
+> +NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
+> +
+>  /* ioctl */
+>  enum {
+>  	NILFS_CHECKPOINT,
+> -- 
+> 1.8.5.3
 
-The kernel patchset didn't apply to the mainline as is because
-Vyacheslav's ioctl commentary patch just has been merged.  Please
-rebase your patchset on the current master branch next time.  Also,
-nilfs_ioctl_set_suinfo() function needs summary comment as for the
-current master branch.
+This patch looks good to me.
 
-Anyway, I will review the kernel patches first, and then look into
-the userland patches.
+
+Strictly speaking, these declarations should be inserted in the ioctl
+section of nilfs2_fs.h which starts from the comment line /* ioctl */
+instead of the disk format section.  But, the current constuction of
+nilfs2_fs.h is already broken :(
+
+The insert position you selected seems appropriate for now.
 
 Regards,
 Ryusuke Konishi
-
-
-> Regards,
-> Andreas Rohner
-> 
-> ---
-> Andreas Rohner (4):
->   nilfs-utils: cldconfig add an option to set min. reclaimable blocks
->   nilfs-utils: nilfs-clean add cmdline param min-reclaimable-blocks
->   nilfs-utils: add suport for NILFS_IOCTL_SET_SUINFO ioctl
->   nilfs-utils: add optimized version of nilfs_reclaim_segments
-> 
->  include/nilfs.h                   |   9 +-
->  include/nilfs2_fs.h               |  43 ++++++++++
->  include/nilfs_cleaner.h           |  19 +++--
->  include/nilfs_gc.h                |   4 +
->  lib/gc.c                          | 112 ++++++++++++++++++++-----
->  lib/nilfs.c                       |  60 ++++++++++++++
->  man/nilfs-clean.8                 |   4 +
->  man/nilfs_cleanerd.conf.5         |  22 +++++
->  sbin/cleanerd/cldconfig.c         | 168 ++++++++++++++++++++++++++++----------
->  sbin/cleanerd/cldconfig.h         |   8 ++
->  sbin/cleanerd/cleanerd.c          |  39 ++++++++-
->  sbin/cleanerd/nilfs_cleanerd.conf |  13 +++
->  sbin/nilfs-clean/nilfs-clean.c    |  44 ++++++++--
->  13 files changed, 466 insertions(+), 79 deletions(-)
-> 
-> -- 
-> 1.8.5.3
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
