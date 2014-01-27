@@ -1,174 +1,82 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v3 3/3] nilfs2: implementation of
- NILFS_IOCTL_SET_SUINFO ioctl
-Date: Tue, 28 Jan 2014 01:26:50 +0900 (JST)
-Message-ID: <20140128.012650.303740375.konishi.ryusuke@lab.ntt.co.jp>
-References: <bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner@gmx.net>
-	<bb721a6255f199eb4a3fdfe2b34e0bdaa5f870a7.1390816620.git.andreas.rohner@gmx.net>
-	<ce24b310783bf1a501408eeb0dfa268155c07444.1390816620.git.andreas.rohner@gmx.net>
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: Re: [PATCH v3 0/4] nilfs-utils: shortcut for certain GC operations
+Date: Mon, 27 Jan 2014 17:35:58 +0100
+Message-ID: <52E68AEE.2080900@gmx.net>
+References: <cover.1390813175.git.andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <ce24b310783bf1a501408eeb0dfa268155c07444.1390816620.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <cover.1390813175.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 27 Jan 2014 10:59:28 +0100, Andreas Rohner wrote:
-> With this ioctl the segment usage entries in the SUFILE can be
-> updated from userspace.
-> 
-> This is useful, because it allows the userspace GC to modify and update
-> segment usage entries for specific segments, which enables it to avoid
-> unnecessary write operations.
-> 
-> If a segment needs to be cleaned, but there is no or very little
-> reclaimable space in it, the cleaning operation basically degrades to
-> a useless moving operation. In the end the only thing that changes is
-> the location of the data and a timestamp in the segment usage
-> information. With this ioctl the GC can skip the cleaning and update
-> the segment usage entries directly instead.
-> 
-> This is basically a shortcut to cleaning the segment. It is still
-> necessary to read the segment summary information, but the writing of
-> the live blocks can be skipped if it's not worth it.
-> 
-> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-> ---
->  fs/nilfs2/ioctl.c         | 61 +++++++++++++++++++++++++++++++++++++++++++++++
->  include/linux/nilfs2_fs.h |  2 ++
->  2 files changed, 63 insertions(+)
-> 
-> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> index b44bdb2..e97df9c 100644
-> --- a/fs/nilfs2/ioctl.c
-> +++ b/fs/nilfs2/ioctl.c
-> @@ -767,6 +767,64 @@ out:
->  	return ret;
->  }
->  
-> +static int nilfs_ioctl_set_suinfo(struct inode *inode, struct file *filp,
-> +				unsigned int cmd, void __user *argp)
-> +{
-> +	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-> +	struct nilfs_transaction_info ti;
-> +	struct nilfs_argv argv;
-> +	size_t len;
-> +	void __user *base;
-> +	void *kbuf;
-> +	int ret;
-> +
-> +	if (!capable(CAP_SYS_ADMIN))
-> +		return -EPERM;
-> +
-> +	ret = mnt_want_write_file(filp);
-> +	if (ret)
-> +		return ret;
-> +
-> +	ret = -EFAULT;
-> +	if (copy_from_user(&argv, argp, sizeof(argv)))
-> +		goto out;
-> +
-> +	ret = -EINVAL;
-> +	if (argv.v_size < sizeof(struct nilfs_suinfo_update))
-> +		goto out;
-> +
-> +	if (argv.v_nmembs > nilfs->ns_nsegments)
-> +		goto out;
-> +
-> +	len = argv.v_size * argv.v_nmembs;
+On 2014-01-27 10:58, Andreas Rohner wrote:
+> The benchmarks are currently running. I will give you the results
+> shortly.
 
-The following check should be inserted to avoid overflow of variable
-"len".
+Here are the promised results:
 
-	if (argv.v_nmembs >= UINT_MAX / argv.v_size)
-		goto out;
+I used a 100GB nilfs2 volume on both a HDD and a SDD and the well known
+fs_mark benchmark tool. The benchmark consisted of the following steps:
 
-The size argument of vmalloc() is unsigned long, but sizeof(unsinged
-long) differs depending on architecture, thus undesirable.
+1. Write a 20GB file (static data)
+2. fs_mark -d dir -L 135 -D 16 -t 16 -n 150 -s 131072 -S 1 -w 4096
+3. Wait for the cleaner to reach max_clean_segments
 
-The following check also should be inserted because vmalloc(0) arises
-a warning returning NULL.
+The following key configuration options were used:
 
-	if (!len) {
-		ret = 0;
-		goto out;
-	}
+min_clean_segments        20%
+max_clean_segments        22%
+nsegments_per_clean       4
+mc_nsegments_per_clean    4
+cleaning_interval         0.5
+mc_cleaning_interval      0.5
+min_reclaimable_blocks    5%
+mc_min_reclaimable_blocks 1%
+use_set_suinfo
+
+HDD:
+    Timestamp GB Written: 140.2588
+    Timestamp GB Read:    48.06372
+    Timestamp Runtime:    4145.151s
+    Timestamp Disk Util.: 94%
+
+    Patched GB Written:   120.1527
+    Patched GB Read:      28.28576
+    Patched Runtime:      3692.105s
+    Patched Disk Util.:   93%
+
+SSD:
+    Timestamp GB Written: 210.2145
+    Timestamp GB Read:    48.79246
+    Timestamp Runtime:    3883.966s
+    Timestamp Disk Util.: 87%
+
+    Patched GB Written:   168.6009
+    Patched GB Read:      28.66516
+    Patched Runtime:      3566.425s
+    Patched Disk Util.:   90%
 
 
-Regards,
-Ryusuke Konishi
+The disk utilization is measured after step 2, because after step 3 it
+is always 78%.
 
-> +	base = (void __user *)(unsigned long)argv.v_base;
+The results for the HDD show, that the 20 GB of static data were moved
+in the case of the normal timestamp policy and they were ignored in case
+of the patched timestamp policy.
 
-> +	kbuf = vmalloc(len);
-> +	if (!kbuf) {
-> +		ret = -ENOMEM;
-> +		goto out;
-> +	}
-> +
-> +	if (copy_from_user(kbuf, base, len)) {
-> +		ret = -EFAULT;
-> +		goto out_free;
-> +	}
-> +
-> +	nilfs_transaction_begin(inode->i_sb, &ti, 0);
-> +	ret = nilfs_sufile_set_suinfo(nilfs->ns_sufile, kbuf, argv.v_size,
-> +			argv.v_nmembs);
-> +	if (unlikely(ret < 0))
-> +		nilfs_transaction_abort(inode->i_sb);
-> +	else
-> +		nilfs_transaction_commit(inode->i_sb); /* never fails */
-> +
-> +out_free:
-> +	vfree(kbuf);
-> +out:
-> +	mnt_drop_write_file(filp);
-> +	return ret;
-> +}
-> +
-> +
->  static int nilfs_ioctl_get_info(struct inode *inode, struct file *filp,
->  				unsigned int cmd, void __user *argp,
->  				size_t membsz,
-> @@ -820,6 +878,8 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->  		return nilfs_ioctl_get_info(inode, filp, cmd, argp,
->  					    sizeof(struct nilfs_suinfo),
->  					    nilfs_ioctl_do_get_suinfo);
-> +	case NILFS_IOCTL_SET_SUINFO:
-> +		return nilfs_ioctl_set_suinfo(inode, filp, cmd, argp);
->  	case NILFS_IOCTL_GET_SUSTAT:
->  		return nilfs_ioctl_get_sustat(inode, filp, cmd, argp);
->  	case NILFS_IOCTL_GET_VINFO:
-> @@ -859,6 +919,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->  	case NILFS_IOCTL_GET_CPINFO:
->  	case NILFS_IOCTL_GET_CPSTAT:
->  	case NILFS_IOCTL_GET_SUINFO:
-> +	case NILFS_IOCTL_SET_SUINFO:
->  	case NILFS_IOCTL_GET_SUSTAT:
->  	case NILFS_IOCTL_GET_VINFO:
->  	case NILFS_IOCTL_GET_BDESCS:
-> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-> index 7b94449..4140f7f 100644
-> --- a/include/linux/nilfs2_fs.h
-> +++ b/include/linux/nilfs2_fs.h
-> @@ -904,5 +904,7 @@ struct nilfs_bdesc {
->  	_IOW(NILFS_IOCTL_IDENT, 0x8B, __u64)
->  #define NILFS_IOCTL_SET_ALLOC_RANGE  \
->  	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
-> +#define NILFS_IOCTL_SET_SUINFO  \
-> +	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
->  
->  #endif	/* _LINUX_NILFS_FS_H */
-> -- 
-> 1.8.5.3
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The results for the SSD were similar, but the difference in GBs written
+is 40 GB instead of 20 GB, which is a bit strange.
+
+The value of 1% for mc_min_reclaimable_blocks seems to be ideal, because
+it is just enough, so that completely full segments fall below the
+threshold and can be skipped.
+
+br,
+Andreas Rohner
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
