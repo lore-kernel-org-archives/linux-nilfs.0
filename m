@@ -1,94 +1,177 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [static superblock discussion] Does nilfs2 do any in-place writes?
-Date: Thu, 30 Jan 2014 11:35:05 +0300
-Message-ID: <71B2806D-7CF2-4992-A588-EB73EADFFF9F@dubeyko.com>
-References: <1389787304.3913.28.camel@slavad-ubuntu> <20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp> <1389866912.2565.44.camel@slavad-ubuntu> <20140118.090008.194171715.konishi.ryusuke@lab.ntt.co.jp> <1390901114.2942.11.camel@slavad-ubuntu-12.04> <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v3 2/3] nilfs2: add nilfs_sufile_set_suinfo to update
+ segment usage
+Date: Thu, 30 Jan 2014 16:57:34 +0900 (JST)
+Message-ID: <20140130.165734.221580541.konishi.ryusuke@lab.ntt.co.jp>
+References: <20140128.100304.163656186.konishi.ryusuke@lab.ntt.co.jp>
+	<52E7315D.4040909@gmx.net>
+	<20140128.163924.157483560.konishi.ryusuke@lab.ntt.co.jp>
+Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=ym/qFtfRqRj+DH9eAIh+pm660xxHy2cL1G/TI3lFkns=;
-	b=VpTVaU4YdNoBzzPupH3bNhhIV8ZB/E0hY7hzaFX4zSqZgEKmYMnp32T4D+By9EsYyECulRn1RJxa0wzXgo+mKEynI8C57UOx/nH2Pr/B54Rqd1EUD9g/rYiwfYlscCAq;
-In-Reply-To: <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20140128.163924.157483560.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Clemens,
-
-On Jan 29, 2014, at 9:18 PM, Clemens Eisserer wrote:
-
-> Hi Vyacheslav,
+Hi Andreas,
+On Tue, 28 Jan 2014 16:39:24 +0900 (JST), Ryusuke Konishi wrote:
+> On Tue, 28 Jan 2014 05:26:05 +0100, Andreas Rohner wrote:
+>> On 2014-01-28 02:03, Ryusuke Konishi wrote:
+>>> On Tue, 28 Jan 2014 00:42:35 +0100, Andreas Rohner wrote:
+>>>> On 2014-01-27 20:07, Ryusuke Konishi wrote:
+>>>>> On Mon, 27 Jan 2014 10:59:27 +0100, Andreas Rohner wrote:
+>>>>>> +			|| (nilfs_suinfo_update_flags(sup) &&
+>>>>>> +				(sup->sup_sui.sui_flags &
+>>>>>> +				(~0UL << (NILFS_SEGMENT_USAGE_ERROR + 1)))))
+>>>>>
+>>>>> Ditto. We need to add a definition to nilfs2_fs.h.
+>>>>>
+>>>>> enum {
+>>>>>         NILFS_SEGMENT_USAGE_ACTIVE,
+>>>>>         NILFS_SEGMENT_USAGE_DIRTY,
+>>>>>         NILFS_SEGMENT_USAGE_ERROR,
+>>>>> 	__NR_NILFS_SEGMENT_USAGE_FLAGS
+>>>>> };
+>>>>>
+>>>>> 		    (nilfs_suinfo_update_flags(sup) &&
+>>>>> 		     (sup->sup_sui.sui_flags &
+>>>>> 		      (~0UL << __NR_NILFS_SEGMENT_USAGE_FLAGS))))
+>>>>>
+>>>>> By the way, this will dismiss the capability that userland cleaner
+>>>>> programs uses the rest of su_flags for their own purpose such as GC
+>>>>> optimization.  I think this (rejecting or utilizing it) should be
+>>>>> carefully determined.
+>>>>>
+>>>>> Any comments on this?
+>>>>
+>>>> Hmm, I think it can't hurt to let the userland cleaner use the su_flags.
+>>>> As far as I can tell, it shouldn't affect the kernel side.
+>>>> nilfs_segment_usage_set_clean() would still work and
+>>>> nilfs_sufile_do_scrap() overwrites the whole su_flags as well.
+>>> 
+>>> Well, actually the current definition of
+>>> nilfs_segment_usage_set_clean() and also nilfs_segment_usage_clean()
+>>> are written without compatibility consideration.
+>> 
+>> I actually thought it would be a good idea to wipe the custom flags if a
+>> segment is cleaned, which the current implementation does. So the custom
+>> flags are only valid for dirty segments and a segment is only considered
+>> to be clean with nilfs_segment_usage_clean if there are no custom flags.
+>> I don't think that would be unreasonable, because the GC has no use for
+>> flags on clean segments anyway.
 > 
-> Just to make sure I understand your approach: You reserve two areas (a
-> few mb in size) which are dedicated to hold only super-root data and
-> this data is written at the same frequency as the current superblock?
-
-This statement is not fully correct. First of all, primary and secondary
-reserved areas should have different frequencies. I suggest
-to add information in the secondary reserved area (volume end) during
-volume umount or with some big timeout in the case of significant system
-uptime.
-
-Primary reserved area should be written by super roots more frequently
-than secondary reserved area. Maybe this information should be written
-with the same frequency as superblock's updates, currently. But, anyway,
-it will be not in-place update as currently. Information will be added by
-means of COW policy. Moreover, replication of super roots will increase
-reliability, as I suppose.
-
-> If so, this most likely won't improve the situation for flash media
-> with weak FTL - as those writes will still be concentrated around a
-> few erase blocks. For devices with powerful FTL such as modern SSDs,
-> updating the superblock periodically doesn't pose a real problem.
+> I looked over functions manipulating su_flags again, and came to the
+> same conclusion.  We can keep consistency even if userland gc programs
+> utilize the remaining flags for their own purpose.  There are no
+> compatibility issues at least if we manipulate su_flags of dirty
+> segments.  In this regard, the current implementation, which wipes the
+> custom flags when it cleans segment, is not bad, yes.
 > 
-
-I suppose that my suggestion can improve situation for any FTL.
-Why do I think so? First of all, we will change in-place update of
-superblocks on policy of filling reserved areas by means of COW
-policy. So, as a result, any FTL can use more simple algorithms of
-providing clear erase blocks from a pool.
-
-You are worried that writes will be concentrated around a few erase
-blocks. But you need to take into account that you are talking about
-logical blocks. Because any FTL implements algorithm of mapping
-logical blocks into physical once with the goal of wear leveling. So,
-in-place update really complicates situation for any FTL. But COW
-policy should improve situation for any FTL always because opportunity
-to implement efficient algorithm of wear leveling in more simple manner.
-
-So, as a result, when you are talking about logical block placement
-then it doesn't mean that you are talking about writes in few physical
-erase blocks. Because only mapping table of FTL knows what physical
-erase blocks are changed really.
-
-> I am still somewhat favour an optional simple linear-scan.
-> Would it be possible to check at mount-time whether the volume was
-> cleanly unmounted and otherwise perform a linear scan?
-
-We know about clean (or unclean) umount from the superblock.
-So, you should update superblock for keeping such knowledge.
-Otherwise, you will need to perform linear scan always.
-
-> So when I mount the volume with o=no_superblock_update a flag is set
-> in the superblock, which is reset on a clean volume unmount after the
-> most recent segment has been stored in the superblock.
-> When at mount-time the flag is still set, nilfs knows a scan is
-> required as the segment in the superblock is not up-to-date.
+>>> It looks to be a separate change if we allow to use the upper bits.
+>>> In that case, a bunch of changes and a new feature_compat_ro flag to
+>>> deal it as a disk format change, would be needed.
+>> 
+>> I think we would only have to define, which flags are reserved for
+>> future use and which are available for the userspace GC. Everything else
+>> would just work.
 > 
+> Right.  My above comment is completely wrong.  We don't have to add a
+> new feature-compat flag to use custom flags unless we want to use them
+> for free segments (in this case, we need to change definition of
+> nilfs_segment_usage_clean() and nilfs_segment_usage_set_clean())
+> 
+>>> Ok, let's take the above one which protects the upper bits for now.
+>> 
+>> Ok. It is certainly cleaner that way.
+> 
+> Let me recant my comment.  Let's change the patch to allow custom
+> flags.
 
-I don't quite follow your thought. If we will not update superblock then
-how we can save any changes in superblock? After any mount
-s_last_cno can be changed very frequently because of GC activity.
-As a result, linear scan will pass through hundreds or thousands segments
-without superblock update or any other technique of keeping knowledge
-about latest segment.
+By the way, can you post the revised version of this series 
+(kernel patches) before it gets late ?
+
+I'd like to send these 3 patches to upstream so that they will
+be merged into the mainline in the next merge window.
+
+Userland changes can be merged and released early once we finished
+review-and-fix process, but it take longer time until kernel patches
+are merged and released.
 
 Thanks,
-Vyacheslav Dubeyko.
+Ryusuke Konishi
 
+
+>>>>>> +			nilfs_sufile_mod_counter(header_bh, ncleansegs,
+>>>>>> +					ndirtysegs);
+>>>>>
+>>>>> Does it work for a negative value without cast of (u64) ?
+>>>>> Please confirm that these counters are updated as you expected.
+>>>>>
+>>>>>> +			NILFS_SUI(sufile)->ncleansegs += ncleansegs;
+>>>>>
+>>>>> Ditto.  
+>>>>
+>>>> I have tested it and it works. At least on my 64 bit architecture. It is
+>>>> probably still a good idea to do an explicit cast.
+>>>>
+>>>> How about I use s64 for ncleaned and ndirtied and move
+>>>> nilfs_sufile_mod_counter outside the loop?
+>>> 
+>>> Yes, this one looks better.  In that case, the u64 cast seems
+>>> unnecessary.
+>>> 
+>>>> 	s64 ncleaned = 0, ndirtied = 0;
+>>>>
+>>>> 	...
+>>>>
+>>>> 	for (;;) {
+>>>> 		...
+>>>> 	}
+>>>> 	mark_buffer_dirty(bh);
+>>>> 	brelse(bh);
+>>>>
+>>>>  out_mark:
+>>>> 	if (ncleaned || ndirtied) {
+>>>> 		nilfs_sufile_mod_counter(header_bh, (u64)ncleaned,
+>>>> 				(u64)ndirtied);
+>>> 
+>>>> 		NILFS_SUI(sufile)->ncleansegs += ncleaned;
+>>> 
+>>> This one looks unclear.
+>>> 
+>>> How about defining ncleaned and ndirtied with unsigned long type and
+>>> cast them to (u64) for the arguments of nilfs_sufile_mod_counter() ?
+>> 
+>> Ok I agree ncleansegs could be 32 bit on 32 bit systems. But why
+>> "unsigned long" and not just "long"? It seems a bit strange to use an
+>> unsigned type for possible negative values and I don't see the problem
+>> of adding a negative number to an unsigned type of the same size.
+>> 
+>> Additionally if we use "unsigned long" wouldn't a typecast to (u64)
+>> result in a number like 4294967295 rather than 18446744073709551615,
+>> which is equivalent to -1, on a 32 bit system?
+> 
+> Yes, sorry, I said wrong thing here too.  If we define ncleaned with
+> unsigned long type, it must be arithmetically extended when we convert
+> it to 64 bit size.  So, casting with "signed long" is needed like
+> "(long)ncleaned" before converting it to u64.
+> 
+>>>> 		NILFS_SUI(sufile)->ncleansegs += ncleaned;
+> 
+> would be calculated as "unsigned long" even if the type of ncleaned is
+> "long" according to the usual arithmetic conversion rule of C99
+> (6.3.1.8).  And, in this case, we can omit the above typecast
+> "(long)".
+> 
+> Regards,
+> Ryusuke Konishi
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
