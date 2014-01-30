@@ -1,90 +1,74 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH 1/1] nilfs2: add mount option that reduces super block
- writes
-Date: Thu, 30 Jan 2014 10:48:50 +0100
-Message-ID: <52EA2002.1030809@gmx.net>
-References: <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com> <cover.1391048231.git.andreas.rohner@gmx.net> <75ceb45c464097ab556baacf2d15d6ae4b792bb2.1391048231.git.andreas.rohner@gmx.net> <127C78C3-9D47-439C-9639-263BC453D98D@dubeyko.com> <52E9EB06.1000504@gmx.net> <8DBE8E18-F678-44B0-A6A6-5AFEC227AA86@dubeyko.com>
+From: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [static superblock discussion] Does nilfs2 do any in-place writes?
+Date: Thu, 30 Jan 2014 11:09:51 +0100
+Message-ID: <CAFvQSYQ84_BsqVC_ZM77P92jkP+1dh7NexvZWg4mFE7B3wSK0A@mail.gmail.com>
+References: <1389787304.3913.28.camel@slavad-ubuntu>
+	<20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
+	<1389866912.2565.44.camel@slavad-ubuntu>
+	<20140118.090008.194171715.konishi.ryusuke@lab.ntt.co.jp>
+	<1390901114.2942.11.camel@slavad-ubuntu-12.04>
+	<CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com>
+	<71B2806D-7CF2-4992-A588-EB73EADFFF9F@dubeyko.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8DBE8E18-F678-44B0-A6A6-5AFEC227AA86-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :content-type;
+        bh=YVIUtuo12Ek96TsZXXhURSkWGiVj9LQRIxzh8uaoZ3E=;
+        b=QJzpY4ER7Uz4+WzeNvL97Zb8MREWygOSVMPSvlDroqjbSMWHwLyahgL/D8zbL4QG0p
+         tA+L+AljnbAxqsrFHWOFSGTV/AUXea8T67ZTYT2ou/62qBP8rfdWn/1M4zvl6b1FTxF4
+         SPRpvgjE8yrAA94XJXBovvk9gfj4btE/rjDGpGotJ2snJirjdXxIR48Id8WtVgiM8zHG
+         XLrJxKIuVyAHkBxQJaAt2DyDGSFynO8rKak16hsqW4q7uBbvAHi9YVtlhSp7Z19KaNIz
+         6NSS0xP8OsJvsLy+B85XHr7FI2QCxYS7RV7cW2E8Z7d08GnHLf7+3Ahboc4Z6pC09KUE
+         CUKw==
+In-Reply-To: <71B2806D-7CF2-4992-A588-EB73EADFFF9F-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2014-01-30 08:44, Vyacheslav Dubeyko wrote:
-> 
-> On Jan 30, 2014, at 9:02 AM, Andreas Rohner wrote:
-> 
->> Hi Vyacheslav,
->>
->> On 2014-01-30 07:36, Vyacheslav Dubeyko wrote:
->>> Hi Andreas,
->>>
->>> On Jan 30, 2014, at 5:47 AM, Andreas Rohner wrote:
->>>
->>>> This patch introduces a mount option bad_ftl that disables the
->>>> periodic overwrites of the super block to make the file system better
->>>> suitable for bad flash memory with a bad FTL. The super block is only
->>>> written at umount time. So if there is a power outage the file system
->>>> needs to be recovered by a linear scan of all segment summary blocks.
->>>>
->>>> The linear scan is only necessary if the file system wasn't umounted
->>>> properly. So the normal mount time is not affected.
->>>>
->>>> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
->>>> ---
->>>> fs/nilfs2/segbuf.c        |  3 ++-
->>>> fs/nilfs2/segment.c       |  3 ++-
->>>> fs/nilfs2/super.c         | 10 +++++++--
->>>> fs/nilfs2/the_nilfs.c     | 54 ++++++++++++++++++++++++++++++++++++++++++++---
->>>> include/linux/nilfs2_fs.h |  4 +++-
->>>> 5 files changed, 66 insertions(+), 8 deletions(-)
->>>>
->>>
->>> As far as I can judge, conceptually it is simply rollback of the fix [1].
->>
->> The normal recovery mode checks all partial segments and computes the
->> checksum over all the data. That takes significantly longer than my
->> approach of just checking one block per segment, namely the segment
->> summary block.
->>
-> 
-> I don't think that your suggestion changes situation significantly.
-> Because in the issue [1] you can go through the whole volume in the really
-> bad environment. Maybe you will mount volume 30 minutes instead of 1 hour
-> with technique that you suggest in the patch.
->>> [1] https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a9bae189542e71f91e61a4428adf6e5a7dfe8063
+Hi Vyacheslav,
 
-I have just finished a test with my  100 GB HDD and SSD. I filled it
-with dd until it was 100% full. Then I cut power to the machine and
-timed the following mount operation:
+> So, as a result, when you are talking about logical block placement
+> then it doesn't mean that you are talking about writes in few physical
+> erase blocks. Because only mapping table of FTL knows what physical
+> erase blocks are changed really.
+ntly).
 
-100GB HDD:
-time sudo mount -o bad_ftl /dev/sda1 /mnt/
+For powerful FTL/controllers it almost doesn't make a difference
+whether you write in-place or in the "almost random" style you
+propose.
+Those FTLs usually have a fully associative fine-grained
+physical-to-logical mapping, so they also can distribute the wear
+evenly across the entire NAND.
 
-real	1m21.068s
-user	0m0.020s
-sys	0m0.770s
+However there are also FTLs (SD cards, managed NAND, ...) arround
+which do only mapping on erase-block level, with limited associativity
+- often lacking a random write unit.
+So each logical block is mapped to one of n possible physical erase
+blocks (for SD cards 4MB erase blocks are quite common) and for each
+single write a full erase block has to be erased. And as there are
+only n physcial blocks which can be mapped to this logical block, the
+card pretty soon starts to develop bad sectors (even worse, these days
+often cheap TLC flash is used limited to < 500 erase cycles).
 
-100GB SSD:
-time sudo mount -o bad_ftl /dev/sdc1 /mnt/
+The linaro guys did a survey on this some time ago:
+https://wiki.linaro.org/WorkingGroups/KernelArchived/Projects/FlashCardSurvey
+Very interesting is the paragraph about "Access modes", there are
+still a lot of controllers which don't feature a random write unit.
 
-real	0m2.124s
-user	0m0.010s
-sys	0m0.243s
+> We know about clean (or unclean) umount from the superblock.
+> So, you should update superblock for keeping such knowledge.
+> Otherwise, you will need to perform linear scan always.
+> I don't quite follow your thought. If we will not update superblock then
+> how we can save any changes in superblock?
 
-So it looks quite bad for hard drives. To scan a 1 TB hard drive would
-take 13 minutes.
+Only update the superblock at mount/unmount time, and do a linear scan
+in the case of an unclean shutdown.
 
-But a 1 TB SSD would only take 20 seconds!
-
-I will test one of my SD cards next.
-
-Regards,
-Andreas Rohner
+Thanks, Clemens
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
