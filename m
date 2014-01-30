@@ -1,74 +1,64 @@
-From: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [static superblock discussion] Does nilfs2 do any in-place writes?
-Date: Thu, 30 Jan 2014 11:09:51 +0100
-Message-ID: <CAFvQSYQ84_BsqVC_ZM77P92jkP+1dh7NexvZWg4mFE7B3wSK0A@mail.gmail.com>
-References: <1389787304.3913.28.camel@slavad-ubuntu>
-	<20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
-	<1389866912.2565.44.camel@slavad-ubuntu>
-	<20140118.090008.194171715.konishi.ryusuke@lab.ntt.co.jp>
-	<1390901114.2942.11.camel@slavad-ubuntu-12.04>
-	<CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com>
-	<71B2806D-7CF2-4992-A588-EB73EADFFF9F@dubeyko.com>
-Mime-Version: 1.0
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH 1/1] nilfs2: add mount option that reduces super block writes
+Date: Thu, 30 Jan 2014 14:27:15 +0300
+Message-ID: <A6830DB2-DC73-4ACC-BE73-7A6EC1AC7C18@dubeyko.com>
+References: <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com> <cover.1391048231.git.andreas.rohner@gmx.net> <75ceb45c464097ab556baacf2d15d6ae4b792bb2.1391048231.git.andreas.rohner@gmx.net> <127C78C3-9D47-439C-9639-263BC453D98D@dubeyko.com> <52E9EB06.1000504@gmx.net> <8DBE8E18-F678-44B0-A6A6-5AFEC227AA86@dubeyko.com> <52EA2002.1030809@gmx.net>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :content-type;
-        bh=YVIUtuo12Ek96TsZXXhURSkWGiVj9LQRIxzh8uaoZ3E=;
-        b=QJzpY4ER7Uz4+WzeNvL97Zb8MREWygOSVMPSvlDroqjbSMWHwLyahgL/D8zbL4QG0p
-         tA+L+AljnbAxqsrFHWOFSGTV/AUXea8T67ZTYT2ou/62qBP8rfdWn/1M4zvl6b1FTxF4
-         SPRpvgjE8yrAA94XJXBovvk9gfj4btE/rjDGpGotJ2snJirjdXxIR48Id8WtVgiM8zHG
-         XLrJxKIuVyAHkBxQJaAt2DyDGSFynO8rKak16hsqW4q7uBbvAHi9YVtlhSp7Z19KaNIz
-         6NSS0xP8OsJvsLy+B85XHr7FI2QCxYS7RV7cW2E8Z7d08GnHLf7+3Ahboc4Z6pC09KUE
-         CUKw==
-In-Reply-To: <71B2806D-7CF2-4992-A588-EB73EADFFF9F-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=xkA3GYavmHjdP8V6hXw2hSKBHMUQgTso5uQ1xM3MGt0=;
+	b=rwUoskKNz2A0iOxE/2BC6e18pB4hQ48azMWsAhObxg/F+Zbd36qFcOXtjhBSh1Nyx4LNvMJy+8Awp/tG4FtP98PY64qFCZ/Tttkgis67lJXuHJvjJmMYIL13JtRNFxq3;
+In-Reply-To: <52EA2002.1030809-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Vyacheslav,
 
-> So, as a result, when you are talking about logical block placement
-> then it doesn't mean that you are talking about writes in few physical
-> erase blocks. Because only mapping table of FTL knows what physical
-> erase blocks are changed really.
-ntly).
+On Jan 30, 2014, at 12:48 PM, Andreas Rohner wrote:
 
-For powerful FTL/controllers it almost doesn't make a difference
-whether you write in-place or in the "almost random" style you
-propose.
-Those FTLs usually have a fully associative fine-grained
-physical-to-logical mapping, so they also can distribute the wear
-evenly across the entire NAND.
+> 
+> I have just finished a test with my  100 GB HDD and SSD. I filled it
+> with dd until it was 100% full. Then I cut power to the machine and
+> timed the following mount operation:
+> 
+> 100GB HDD:
+> time sudo mount -o bad_ftl /dev/sda1 /mnt/
+> 
+> real	1m21.068s
+> user	0m0.020s
+> sys	0m0.770s
+> 
+> 100GB SSD:
+> time sudo mount -o bad_ftl /dev/sdc1 /mnt/
+> 
+> real	0m2.124s
+> user	0m0.010s
+> sys	0m0.243s
+> 
+> So it looks quite bad for hard drives. To scan a 1 TB hard drive would
+> take 13 minutes.
+> 
+> But a 1 TB SSD would only take 20 seconds!
+> 
 
-However there are also FTLs (SD cards, managed NAND, ...) arround
-which do only mapping on erase-block level, with limited associativity
-- often lacking a random write unit.
-So each logical block is mapped to one of n possible physical erase
-blocks (for SD cards 4MB erase blocks are quite common) and for each
-single write a full erase block has to be erased. And as there are
-only n physcial blocks which can be mapped to this logical block, the
-card pretty soon starts to develop bad sectors (even worse, these days
-often cheap TLC flash is used limited to < 500 erase cycles).
+I think that it will be good to have comparable results for the same environment.
+I mean, for example, measurement in different situations for SSD (without your
+patch and this your patch). How much time do you need for scanning the whole SSD
+by your approach? I think that comparison of linear scanning results for the whole
+SSD drive and for sudden power-off situation can provide basis for consideration.
+But sudden power-off situation can be different, I suppose.
 
-The linaro guys did a survey on this some time ago:
-https://wiki.linaro.org/WorkingGroups/KernelArchived/Projects/FlashCardSurvey
-Very interesting is the paragraph about "Access modes", there are
-still a lot of controllers which don't feature a random write unit.
+Thanks,
+Vyacheslav Dubeyko.
 
-> We know about clean (or unclean) umount from the superblock.
-> So, you should update superblock for keeping such knowledge.
-> Otherwise, you will need to perform linear scan always.
-> I don't quite follow your thought. If we will not update superblock then
-> how we can save any changes in superblock?
+> I will test one of my SD cards next.
+> 
+> Regards,
+> Andreas Rohner
 
-Only update the superblock at mount/unmount time, and do a linear scan
-in the case of an unclean shutdown.
-
-Thanks, Clemens
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
