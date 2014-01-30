@@ -1,52 +1,59 @@
-From: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [static superblock discussion] Does nilfs2 do any in-place writes?
-Date: Wed, 29 Jan 2014 19:18:15 +0100
-Message-ID: <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com>
-References: <1389787304.3913.28.camel@slavad-ubuntu>
-	<20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
-	<1389866912.2565.44.camel@slavad-ubuntu>
-	<20140118.090008.194171715.konishi.ryusuke@lab.ntt.co.jp>
-	<1390901114.2942.11.camel@slavad-ubuntu-12.04>
-Mime-Version: 1.0
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: [PATCH 0/1] nilfs2: add mount option that reduces super block writes
+Date: Thu, 30 Jan 2014 03:46:59 +0100
+Message-ID: <cover.1391048231.git.andreas.rohner@gmx.net>
+References: <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :content-type;
-        bh=XgRIlg8FWArc+0x+b6Z3Jnk7/BMJIAyEPMJkyIgrpqk=;
-        b=h0msNg+9fGSwvr3UZqF5dXfwQQ8C4B9018kMHE6JPKVOmbcTYIL5K2O2egsHq1gyfg
-         i/khmi8tSmnhjh4wJDo7niMQy4veGaNHhJpa5EntE3e9qRupwX0CiL6pZqNUCtCEHoIe
-         BlgB9KPDj/feveKr/fnTrBDf0s5Ju8CYRN8FoIBv1CXENWJyoMByiSowFEcuLC4/BMOE
-         nH73DbevVQzyct2vb5yNPHhwTEquWhzXYp/uY+F2AZLKc3suVV0+oak1SVcRvPVBN2at
-         Ltpiyx7wrniIq53P7jX71J/EycYjOez30hkQIrpJUHbTttzCSv5fks74S5KmQwQ4Pj8v
-         gKRw==
-In-Reply-To: <1390901114.2942.11.camel-dzAnj6fV1RxGeWtTaGDT1UEK6ufn8VP3@public.gmane.org>
+In-Reply-To: <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Hi Vyacheslav,
+Hi,
 
-Just to make sure I understand your approach: You reserve two areas (a
-few mb in size) which are dedicated to hold only super-root data and
-this data is written at the same frequency as the current superblock?
-If so, this most likely won't improve the situation for flash media
-with weak FTL - as those writes will still be concentrated around a
-few erase blocks. For devices with powerful FTL such as modern SSDs,
-updating the superblock periodically doesn't pose a real problem.
+This is only a hacky proof of concept implementation and probably 
+full of nasty bugs. I also havn't really tested it. I was 
+just interested how hard it would be to implement Clemens' suggestion 
+of writing the super block only at umount time and do a linear scan 
+of all the segments in case of file system failure.
 
-I am still somewhat favour an optional simple linear-scan.
-Would it be possible to check at mount-time whether the volume was
-cleanly unmounted and otherwise perform a linear scan?
-So when I mount the volume with o=no_superblock_update a flag is set
-in the superblock, which is reset on a clean volume unmount after the
-most recent segment has been stored in the superblock.
-When at mount-time the flag is still set, nilfs knows a scan is
-required as the segment in the superblock is not up-to-date.
+The linear scan is only performed if the file system wasn't shut down 
+properly. So for normal operation there shouldn't be any slowdown.
 
-Thanks & regards, Clemens
+I repurposed the ss_pad field of nilfs_segment_summary to contain the 
+crc seed, because I needed a way to distinguish left over segments 
+from previous nilfs2 volumes from real segments that are part of the 
+current file system. 
+
+I don't really expect it to be merged or anything. Maybe it can spark 
+a discussion. Maybe somebody could try it out on an old SD-Card and 
+time the mount command or something.
+
+I tested it on a virtual machine. It seemed to recover fine when I 
+killed the VM and mounted it again. Clearly more testing is 
+necessary...
+
+br,
+Andreas Rohner
+
+---
+Andreas Rohner (1):
+  nilfs2: add mount option that reduces super block writes
+
+ fs/nilfs2/segbuf.c        |  3 ++-
+ fs/nilfs2/segment.c       |  3 ++-
+ fs/nilfs2/super.c         | 10 +++++++--
+ fs/nilfs2/the_nilfs.c     | 54 ++++++++++++++++++++++++++++++++++++++++++++---
+ include/linux/nilfs2_fs.h |  4 +++-
+ 5 files changed, 66 insertions(+), 8 deletions(-)
+
+-- 
+1.8.5.3
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
