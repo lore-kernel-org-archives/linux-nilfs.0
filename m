@@ -1,81 +1,112 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v4 1/3] nilfs2: add struct nilfs_suinfo_update and flags
-Date: Thu, 30 Jan 2014 09:42:48 +0100
-Message-ID: <a3342d446fd05205886f48a95905ddc71c35bf44.1391071318.git.andreas.rohner@gmx.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH 0/1] nilfs2: add mount option that reduces super block
+ writes
+Date: Thu, 30 Jan 2014 17:46:37 +0900 (JST)
+Message-ID: <20140130.174637.212398885.konishi.ryusuke@lab.ntt.co.jp>
+References: <cover.1391048231.git.andreas.rohner@gmx.net>
+	<20140130.142941.55837481.konishi.ryusuke@lab.ntt.co.jp>
+	<52E9F13A.5050805@gmx.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <52E9F13A.5050805-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This patch adds the nilfs_suinfo_update structure, which contains the
-information needed to update one segment usage entry. The flags
-specify, which fields need to be updated.
+On Thu, 30 Jan 2014 07:29:14 +0100, Andreas Rohner wrote:
+> Hi Ryusuke,
+> 
+> On 2014-01-30 06:29, Ryusuke Konishi wrote:
+>> Hi Andreas,
+>> On Thu, 30 Jan 2014 03:46:59 +0100, Andreas Rohner wrote:
+>>> Hi,
+>>>
+>>> This is only a hacky proof of concept implementation and probably 
+>>> full of nasty bugs. I also havn't really tested it. I was 
+>>> just interested how hard it would be to implement Clemens' suggestion 
+>>> of writing the super block only at umount time and do a linear scan 
+>>> of all the segments in case of file system failure.
+>>> The linear scan is only performed if the file system wasn't shut down 
+>>> properly. So for normal operation there shouldn't be any slowdown.
+>> 
+>> This premise is not acceptable.
+>> We have to avoid long mount time even after unexpected power failures.
+>> 
+>> I prefer some sort of way which combines binary search of segment
+>> summary blocks and partial linear scan of logs. 
+>> 
+>> I don't know the latency of recent SSDs, however we should estimate
+>> the latency of disk I/O about 5ms~20ms per a separate block (in the
+>> case of hard drives).  So the maximum number of scans of segment
+>> summary blocks seems to be roughly 10~100 times.
+>> 
+>> Regards,
+>> Ryusuke Konishi
+> 
+> Basically I agree with you. It was just a quick experiment. I just
+> thought Clemens suggestion, to have a mount option to turn on the linear
+> scan for users who want it, was worth a try.
 
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
----
- include/linux/nilfs2_fs.h | 42 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
+I see.  For further discussion on this approach, it looks like we need
+some measurement data of the situation that this patch makes a
+difference (for example, for an SD card or some device).  Anyway, I
+agree that the patch has a value for experiment purpose.
 
-diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index 9875576..2526578 100644
---- a/include/linux/nilfs2_fs.h
-+++ b/include/linux/nilfs2_fs.h
-@@ -710,6 +710,48 @@ static inline int nilfs_suinfo_clean(const struct nilfs_suinfo *si)
- }
- 
- /* ioctl */
-+/**
-+ * nilfs_suinfo_update - segment usage information update
-+ * @sup_segnum: segment number
-+ * @sup_flags: flags for which fields are active in sup_sui
-+ * @sup_reserved: reserved necessary for alignment
-+ * @sup_sui: segment usage information
-+ */
-+struct nilfs_suinfo_update {
-+	__u64 sup_segnum;
-+	__u32 sup_flags;
-+	__u32 sup_reserved;
-+	struct nilfs_suinfo sup_sui;
-+};
-+
-+enum {
-+	NILFS_SUINFO_UPDATE_LASTMOD,
-+	NILFS_SUINFO_UPDATE_NBLOCKS,
-+	NILFS_SUINFO_UPDATE_FLAGS,
-+	__NR_NILFS_SUINFO_UPDATE_FIELDS,
-+};
-+
-+#define NILFS_SUINFO_UPDATE_FNS(flag, name)				\
-+static inline void							\
-+nilfs_suinfo_update_set_##name(struct nilfs_suinfo_update *sup)		\
-+{									\
-+	sup->sup_flags |= 1UL << NILFS_SUINFO_UPDATE_##flag;		\
-+}									\
-+static inline void							\
-+nilfs_suinfo_update_clear_##name(struct nilfs_suinfo_update *sup)	\
-+{									\
-+	sup->sup_flags &= ~(1UL << NILFS_SUINFO_UPDATE_##flag);		\
-+}									\
-+static inline int							\
-+nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
-+{									\
-+	return !!(sup->sup_flags & (1UL << NILFS_SUINFO_UPDATE_##flag));\
-+}
-+
-+NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
-+NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
-+NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
-+
- enum {
- 	NILFS_CHECKPOINT,
- 	NILFS_SNAPSHOT,
--- 
-1.8.5.3
+Thanks,
+Ryusuke Konishi
 
+
+> br,
+> Andreas Rohner
+> 
+>>>
+>>> I repurposed the ss_pad field of nilfs_segment_summary to contain the 
+>>> crc seed, because I needed a way to distinguish left over segments 
+>>> from previous nilfs2 volumes from real segments that are part of the 
+>>> current file system. 
+>>>
+>>> I don't really expect it to be merged or anything. Maybe it can spark 
+>>> a discussion. Maybe somebody could try it out on an old SD-Card and 
+>>> time the mount command or something.
+>>>
+>>> I tested it on a virtual machine. It seemed to recover fine when I 
+>>> killed the VM and mounted it again. Clearly more testing is 
+>>> necessary...
+>>>
+>>> br,
+>>> Andreas Rohner
+>>>
+>>> ---
+>>> Andreas Rohner (1):
+>>>   nilfs2: add mount option that reduces super block writes
+>>>
+>>>  fs/nilfs2/segbuf.c        |  3 ++-
+>>>  fs/nilfs2/segment.c       |  3 ++-
+>>>  fs/nilfs2/super.c         | 10 +++++++--
+>>>  fs/nilfs2/the_nilfs.c     | 54 ++++++++++++++++++++++++++++++++++++++++++++---
+>>>  include/linux/nilfs2_fs.h |  4 +++-
+>>>  5 files changed, 66 insertions(+), 8 deletions(-)
+>>>
+>>> -- 
+>>> 1.8.5.3
+>>>
+>>> --
+>>> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+>>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
