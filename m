@@ -1,112 +1,90 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 0/1] nilfs2: add mount option that reduces super block
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: Re: [PATCH 1/1] nilfs2: add mount option that reduces super block
  writes
-Date: Thu, 30 Jan 2014 17:46:37 +0900 (JST)
-Message-ID: <20140130.174637.212398885.konishi.ryusuke@lab.ntt.co.jp>
-References: <cover.1391048231.git.andreas.rohner@gmx.net>
-	<20140130.142941.55837481.konishi.ryusuke@lab.ntt.co.jp>
-	<52E9F13A.5050805@gmx.net>
+Date: Thu, 30 Jan 2014 10:48:50 +0100
+Message-ID: <52EA2002.1030809@gmx.net>
+References: <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com> <cover.1391048231.git.andreas.rohner@gmx.net> <75ceb45c464097ab556baacf2d15d6ae4b792bb2.1391048231.git.andreas.rohner@gmx.net> <127C78C3-9D47-439C-9639-263BC453D98D@dubeyko.com> <52E9EB06.1000504@gmx.net> <8DBE8E18-F678-44B0-A6A6-5AFEC227AA86@dubeyko.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <52E9F13A.5050805-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <8DBE8E18-F678-44B0-A6A6-5AFEC227AA86-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Thu, 30 Jan 2014 07:29:14 +0100, Andreas Rohner wrote:
-> Hi Ryusuke,
+On 2014-01-30 08:44, Vyacheslav Dubeyko wrote:
 > 
-> On 2014-01-30 06:29, Ryusuke Konishi wrote:
->> Hi Andreas,
->> On Thu, 30 Jan 2014 03:46:59 +0100, Andreas Rohner wrote:
->>> Hi,
->>>
->>> This is only a hacky proof of concept implementation and probably 
->>> full of nasty bugs. I also havn't really tested it. I was 
->>> just interested how hard it would be to implement Clemens' suggestion 
->>> of writing the super block only at umount time and do a linear scan 
->>> of all the segments in case of file system failure.
->>> The linear scan is only performed if the file system wasn't shut down 
->>> properly. So for normal operation there shouldn't be any slowdown.
->> 
->> This premise is not acceptable.
->> We have to avoid long mount time even after unexpected power failures.
->> 
->> I prefer some sort of way which combines binary search of segment
->> summary blocks and partial linear scan of logs. 
->> 
->> I don't know the latency of recent SSDs, however we should estimate
->> the latency of disk I/O about 5ms~20ms per a separate block (in the
->> case of hard drives).  So the maximum number of scans of segment
->> summary blocks seems to be roughly 10~100 times.
->> 
->> Regards,
->> Ryusuke Konishi
+> On Jan 30, 2014, at 9:02 AM, Andreas Rohner wrote:
 > 
-> Basically I agree with you. It was just a quick experiment. I just
-> thought Clemens suggestion, to have a mount option to turn on the linear
-> scan for users who want it, was worth a try.
-
-I see.  For further discussion on this approach, it looks like we need
-some measurement data of the situation that this patch makes a
-difference (for example, for an SD card or some device).  Anyway, I
-agree that the patch has a value for experiment purpose.
-
-Thanks,
-Ryusuke Konishi
-
-
-> br,
-> Andreas Rohner
+>> Hi Vyacheslav,
+>>
+>> On 2014-01-30 07:36, Vyacheslav Dubeyko wrote:
+>>> Hi Andreas,
+>>>
+>>> On Jan 30, 2014, at 5:47 AM, Andreas Rohner wrote:
+>>>
+>>>> This patch introduces a mount option bad_ftl that disables the
+>>>> periodic overwrites of the super block to make the file system better
+>>>> suitable for bad flash memory with a bad FTL. The super block is only
+>>>> written at umount time. So if there is a power outage the file system
+>>>> needs to be recovered by a linear scan of all segment summary blocks.
+>>>>
+>>>> The linear scan is only necessary if the file system wasn't umounted
+>>>> properly. So the normal mount time is not affected.
+>>>>
+>>>> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+>>>> ---
+>>>> fs/nilfs2/segbuf.c        |  3 ++-
+>>>> fs/nilfs2/segment.c       |  3 ++-
+>>>> fs/nilfs2/super.c         | 10 +++++++--
+>>>> fs/nilfs2/the_nilfs.c     | 54 ++++++++++++++++++++++++++++++++++++++++++++---
+>>>> include/linux/nilfs2_fs.h |  4 +++-
+>>>> 5 files changed, 66 insertions(+), 8 deletions(-)
+>>>>
+>>>
+>>> As far as I can judge, conceptually it is simply rollback of the fix [1].
+>>
+>> The normal recovery mode checks all partial segments and computes the
+>> checksum over all the data. That takes significantly longer than my
+>> approach of just checking one block per segment, namely the segment
+>> summary block.
+>>
 > 
->>>
->>> I repurposed the ss_pad field of nilfs_segment_summary to contain the 
->>> crc seed, because I needed a way to distinguish left over segments 
->>> from previous nilfs2 volumes from real segments that are part of the 
->>> current file system. 
->>>
->>> I don't really expect it to be merged or anything. Maybe it can spark 
->>> a discussion. Maybe somebody could try it out on an old SD-Card and 
->>> time the mount command or something.
->>>
->>> I tested it on a virtual machine. It seemed to recover fine when I 
->>> killed the VM and mounted it again. Clearly more testing is 
->>> necessary...
->>>
->>> br,
->>> Andreas Rohner
->>>
->>> ---
->>> Andreas Rohner (1):
->>>   nilfs2: add mount option that reduces super block writes
->>>
->>>  fs/nilfs2/segbuf.c        |  3 ++-
->>>  fs/nilfs2/segment.c       |  3 ++-
->>>  fs/nilfs2/super.c         | 10 +++++++--
->>>  fs/nilfs2/the_nilfs.c     | 54 ++++++++++++++++++++++++++++++++++++++++++++---
->>>  include/linux/nilfs2_fs.h |  4 +++-
->>>  5 files changed, 66 insertions(+), 8 deletions(-)
->>>
->>> -- 
->>> 1.8.5.3
->>>
->>> --
->>> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
->>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> I don't think that your suggestion changes situation significantly.
+> Because in the issue [1] you can go through the whole volume in the really
+> bad environment. Maybe you will mount volume 30 minutes instead of 1 hour
+> with technique that you suggest in the patch.
+>>> [1] https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a9bae189542e71f91e61a4428adf6e5a7dfe8063
+
+I have just finished a test with my  100 GB HDD and SSD. I filled it
+with dd until it was 100% full. Then I cut power to the machine and
+timed the following mount operation:
+
+100GB HDD:
+time sudo mount -o bad_ftl /dev/sda1 /mnt/
+
+real	1m21.068s
+user	0m0.020s
+sys	0m0.770s
+
+100GB SSD:
+time sudo mount -o bad_ftl /dev/sdc1 /mnt/
+
+real	0m2.124s
+user	0m0.010s
+sys	0m0.243s
+
+So it looks quite bad for hard drives. To scan a 1 TB hard drive would
+take 13 minutes.
+
+But a 1 TB SSD would only take 20 seconds!
+
+I will test one of my SD cards next.
+
+Regards,
+Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
