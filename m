@@ -1,67 +1,205 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [static superblock discussion] Does nilfs2 do any in-place writes?
-Date: Thu, 30 Jan 2014 18:27:17 +0300
-Message-ID: <720AFF13-6203-4A28-9850-3C2CAFF3B7BF@dubeyko.com>
-References: <1389787304.3913.28.camel@slavad-ubuntu> <20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp> <1389866912.2565.44.camel@slavad-ubuntu> <20140118.090008.194171715.konishi.ryusuke@lab.ntt.co.jp> <1390901114.2942.11.camel@slavad-ubuntu-12.04> <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com> <71B2806D-7CF2-4992-A588-EB73EADFFF9F@dubeyko.com> <CAFvQSYQ84_BsqVC_ZM77P92jkP+1dh7NexvZWg4mFE7B3wSK0A@mail.gmail.com> <AE0F313D-5934-452B-80AB-5D691AF8A4BE@dubeyko.com> <CAFvQSYQGDXmUit1zFZ9_LAjdLjxM-i_yR2L6pwFDX_BEdjdXxQ@mail.gmail.com> <1391088759.2637.13.camel@ubuntu> <CAFvQSYQ-qkXz677-obgHVN5fLQiF10-A=T2yNNAHKRcOGm_Pqw@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v1085)
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v4 2/3] nilfs2: add nilfs_sufile_set_suinfo to update
+ segment usage
+Date: Fri, 31 Jan 2014 17:58:25 +0900 (JST)
+Message-ID: <20140131.175825.168035651.konishi.ryusuke@lab.ntt.co.jp>
+References: <a3342d446fd05205886f48a95905ddc71c35bf44.1391071318.git.andreas.rohner@gmx.net>
+	<a3342d446fd05205886f48a95905ddc71c35bf44.1391071318.git.andreas.rohner@gmx.net>
+	<f0bf06d2b7d39ebcca3df36567342c7f411eb657.1391071318.git.andreas.rohner@gmx.net>
+Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=br69ZkJ8/cXA9Sl9L5DwPTZVeMlGtT+whfGyiFiHsM4=;
-	b=IF37yq6EAQpCz37t9CU6vOPnJrfjtudO5OWQch1ZMnHYsvzBbng4tCxedBBHaGfRj/dHVnBepEYo5na6i+FTCoODZur7OXTvlJW2nDka5IQ1z0kqte/YyzbzYeYxOXn+;
-In-Reply-To: <CAFvQSYQ-qkXz677-obgHVN5fLQiF10-A=T2yNNAHKRcOGm_Pqw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <f0bf06d2b7d39ebcca3df36567342c7f411eb657.1391071318.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Clemens,
-
-On Jan 30, 2014, at 5:03 PM, Clemens Eisserer wrote:
-
-> Hi Vyacheslav,
+Hi Andreas,
+On Thu, 30 Jan 2014 09:42:49 +0100, Andreas Rohner wrote:
+> This patch introduces the nilfs_sufile_set_suinfo function, which
+> expects an array of nilfs_suinfo_update structures and updates the
+> segment usage information accordingly.
 > 
->> The result of unclean shutdown and big update timeout will be a long
->> mount. And such issue was reported earlier and it was fixed. I don't
->> think that Andreas's patch can resolve long mount principally. Maybe
->> this approach can slightly reduce mount time in such situation.
+> This is basically a helper function for the newly introduced
+> NILFS_IOCTL_SET_SUINFO ioctl.
 > 
-> So even without Andreas' patch there is no risk for data loss with a
-> very outdated superblock - but recovery would be slower?
+> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+> ---
+>  fs/nilfs2/sufile.c | 131 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/nilfs2/sufile.h |   1 +
+>  2 files changed, 132 insertions(+)
 > 
+> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+> index 3127e9f..5ad5d4c 100644
+> --- a/fs/nilfs2/sufile.c
+> +++ b/fs/nilfs2/sufile.c
+> @@ -870,6 +870,137 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
+>  }
+>  
+>  /**
+> + * nilfs_sufile_set_suinfo - sets segment usage info
+> + * @sufile: inode of segment usage file
+> + * @buf: array of suinfo_update
+> + * @supsz: byte size of suinfo_update
+> + * @nsup: size of suinfo_update array
+> + *
+> + * Description: Takes an array of nilfs_suinfo_update structs and updates
+> + * segment usage accordingly. Only the fields indicated by the sup_flags
+> + * are updated.
+> + *
+> + * Return Value: On success, 0 is returned. On error, one of the
+> + * following negative error codes is returned.
+> + *
+> + * %-EIO - I/O error.
+> + *
+> + * %-ENOMEM - Insufficient amount of memory available.
+> + *
+> + * %-EINVAL - Invalid values in input (segment number, flags or nblocks)
+> + */
+> +ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+> +				unsigned supsz, size_t nsup)
+> +{
+> +	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
+> +	struct buffer_head *header_bh, *bh;
+> +	struct nilfs_suinfo_update *sup, *supend = buf + supsz * nsup;
+> +	struct nilfs_segment_usage *su;
+> +	void *kaddr;
+> +	unsigned long blkoff, prev_blkoff;
+> +	int cleansi, cleansu, dirtysi, dirtysu;
+> +	unsigned long ncleaned = 0, ndirtied = 0;
+> +	int ret = 0;
+> +
+> +	if (unlikely(nsup == 0))
+> +		return ret;
+> +
+> +	for (sup = buf; sup < supend; sup = (void *)sup + supsz) {
+> +		if (sup->sup_segnum >= nilfs->ns_nsegments
+> +			|| (sup->sup_flags &
+> +				(~0UL << __NR_NILFS_SUINFO_UPDATE_FIELDS))
+> +			|| (nilfs_suinfo_update_nblocks(sup) &&
+> +				sup->sup_sui.sui_nblocks >
+> +				nilfs->ns_blocks_per_segment))
+> +			return -EINVAL;
+> +	}
+> +
+> +	down_write(&NILFS_MDT(sufile)->mi_sem);
+> +
+> +	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
+> +	if (ret < 0)
+> +		goto out_sem;
+> +
+> +	sup = buf;
+> +	blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
+> +	ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+> +	if (ret < 0)
+> +		goto out_header;
+> +
+> +	for (;;) {
+> +		kaddr = kmap_atomic(bh->b_page);
+> +		su = nilfs_sufile_block_get_segment_usage(
+> +			sufile, sup->sup_segnum, bh, kaddr);
+> +
+> +		if (nilfs_suinfo_update_lastmod(sup))
+> +			su->su_lastmod = cpu_to_le64(sup->sup_sui.sui_lastmod);
+> +
+> +		if (nilfs_suinfo_update_nblocks(sup))
+> +			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
+> +
+> +		if (nilfs_suinfo_update_flags(sup)) {
+> +			/*
+> +			 * Active flag is a virtual flag projected by running
+> +			 * nilfs kernel code - drop it not to write it to
+> +			 * disk.
+> +			 */
+> +			sup->sup_sui.sui_flags &=
+> +					~(1UL << NILFS_SEGMENT_USAGE_ACTIVE);
+> +
+> +			cleansi = nilfs_suinfo_clean(&sup->sup_sui);
+> +			cleansu = nilfs_segment_usage_clean(su);
+> +			dirtysi = nilfs_suinfo_dirty(&sup->sup_sui);
+> +			dirtysu = nilfs_segment_usage_dirty(su);
+> +
+> +			if (cleansi && !cleansu)
+> +				++ncleaned;
+> +			else if (!cleansi && cleansu)
+> +				--ncleaned;
+> +
+> +			if (dirtysi && !dirtysu)
+> +				++ndirtied;
+> +			else if (!dirtysi && dirtysu)
+> +				--ndirtied;
+> +
+> +			su->su_flags = cpu_to_le32(sup->sup_sui.sui_flags);
+> +		}
+> +
+> +		kunmap_atomic(kaddr);
+> +
+> +		sup = (void *)sup + supsz;
+> +		if (sup >= supend)
+> +			break;
+> +
+> +		prev_blkoff = blkoff;
+> +		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
+> +		if (blkoff == prev_blkoff)
+> +			continue;
+> +
+> +		/* get different block */
+> +		mark_buffer_dirty(bh);
+> +		brelse(bh);
+> +		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+> +		if (unlikely(ret < 0))
+> +			goto out_mark;
+> +	}
+> +	mark_buffer_dirty(bh);
+> +	brelse(bh);
+> +
+> + out_mark:
+> +	if (ncleaned || ndirtied) {
+> +		nilfs_sufile_mod_counter(header_bh, (u64)(long)ncleaned,
+> +				(u64)(long)ndirtied);
 
-Yes, recovery will be really slower. And recovery mechanisms defend from
-data loss in reasonable way. I mean that some data can be lost during
-unsuccessful flushes. But I am afraid that current state of Andreas's patch
-breaks some recovery mechanisms (but maybe I am wrong).
+May I change the type of ncleaned and ndirtied to "long" ?
 
->> In such case NILFS2 at whole is in trouble. Because partial segments can
->> have different size. And these sizes doesn't correlate with sizes of
->> physical erase block or physical writing units. And the whole COW
->> approach is useless.
-> 
-> Sure, NILFS won't cure the horrible write-amplification of those
-> devices, but it will spread the wear evenly over the whole device
-> thanks to COW.
-> So it won`t wear out the meadia faster where it`s metadata is stored
-> (with exception of the superblock) like ext4 does.
-> Btw. isn't nilfs's minimal writing size 128kb (I remember I read it in
-> a paper somewhere)?
-
-But, anyway, how 128 KB correlates with physical erase blocks or
-physical writing units size? :) Physical sizes can be much more and 128 KB
-unable to defend from all possible situations. Sure, there isn't good
-approach for all cases of real life. Moreover, if you have FTL then you
-expect that block layer will operate with 4 KB block sizes. Otherwise,
-it means that you sell bad storage devices.
+Other looks OK to me.
 
 Thanks,
-Vyacheslav Dubeyko.
+Ryusuke Konishi
 
+> +		NILFS_SUI(sufile)->ncleansegs += ncleaned;
+> +	}
+> +	nilfs_mdt_mark_dirty(sufile);
+> + out_header:
+> +	brelse(header_bh);
+> + out_sem:
+> +	up_write(&NILFS_MDT(sufile)->mi_sem);
+> +	return ret;
+> +}
+> +
+> +/**
+>   * nilfs_sufile_read - read or get sufile inode
+>   * @sb: super block instance
+>   * @susize: size of a segment usage entry
+> diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+> index e84bc5b..366003c 100644
+> --- a/fs/nilfs2/sufile.h
+> +++ b/fs/nilfs2/sufile.h
+> @@ -44,6 +44,7 @@ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+>  int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
+>  ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
+>  				size_t);
+> +ssize_t nilfs_sufile_set_suinfo(struct inode *, void *, unsigned , size_t);
+>  
+>  int nilfs_sufile_updatev(struct inode *, __u64 *, size_t, int, size_t *,
+>  			 void (*dofunc)(struct inode *, __u64,
+> -- 
+> 1.8.5.3
 > 
-> Regards, Clemens
-
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
