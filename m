@@ -1,99 +1,132 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 3/4] nilfs2: add nilfs_sufile_set_suinfo to update
- segment usage
-Date: Wed, 05 Feb 2014 02:23:09 +0900 (JST)
-Message-ID: <20140205.022309.85397785.konishi.ryusuke@lab.ntt.co.jp>
-References: <1391446244-1435-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-	<20140203133818.5b78761c08846f2d1216b6e2@linux-foundation.org>
-	<20140205.014137.417300930.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 2/2] cleanerd: use nilfs_xreclaim_segment()
+Date: Wed,  5 Feb 2014 03:37:26 +0900
+Message-ID: <1391539046-13046-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1391539046-13046-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140205.014137.417300930.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <1391539046-13046-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Wed, 05 Feb 2014 01:41:37 +0900 (JST), Ryusuke Konishi wrote:
-> On Mon, 3 Feb 2014 13:38:18 -0800, Andrew Morton wrote:
->> On Tue,  4 Feb 2014 01:50:43 +0900 Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
->> 
->>> From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
->>> 
->>> This patch introduces the nilfs_sufile_set_suinfo function, which
->>> expects an array of nilfs_suinfo_update structures and updates the
->>> segment usage information accordingly.
->>> 
->>> This is basically a helper function for the newly introduced
->>> NILFS_IOCTL_SET_SUINFO ioctl.
->>> 
->>> ..
->>> +		sup = (void *)sup + supsz;
->>> +		if (sup >= supend)
->>> +			break;
->>> +
->>> +		prev_blkoff = blkoff;
->>> +		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
->>> +		if (blkoff == prev_blkoff)
->>> +			continue;
->>> +
->>> +		/* get different block */
->>> +		mark_buffer_dirty(bh);
->>> +		brelse(bh);
->> 
->> put_bh() will suffice - we know bh != NULL.
-> 
-> Agreed.  I will fix it later.
-
-Here is the fix.
-
-Ryusuke Konishi
---
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: add nilfs_sufile_set_suinfo to update segment usage
- fix
-
-Use put_bh() instead of brelse() because we know bh != NULL.
+Refactor nilfs_cleanerd_clean_segments() with nilfs_xreclaim_segment()
+function.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/sufile.c |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ sbin/cleanerd/cleanerd.c |   57 +++++++++++++++++++++++++++++-----------------
+ 1 file changed, 36 insertions(+), 21 deletions(-)
 
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index c37b5f0..5628b99 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -978,13 +978,13 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
- 
- 		/* get different block */
- 		mark_buffer_dirty(bh);
--		brelse(bh);
-+		put_bh(bh);
- 		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
- 		if (unlikely(ret < 0))
- 			goto out_mark;
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index 742ab98..1d09b5b 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -1338,31 +1338,49 @@ static void nilfs_cleanerd_progress(struct nilfs_cleanerd *cleanerd, int nsegs)
  	}
- 	mark_buffer_dirty(bh);
--	brelse(bh);
-+	put_bh(bh);
+ }
  
-  out_mark:
- 	if (ncleaned || ndirtied) {
-@@ -994,7 +994,7 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+-static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+-					     __u64 *segnums, size_t nsegs,
+-					     __u64 protseq, __u64 prottime)
++static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
++					 __u64 *segnums, size_t nsegs,
++					 __u64 protseq, __u64 prottime,
++					 size_t *ncleaned)
+ {
+-	nilfs_cno_t protcno;
++	struct nilfs_reclaim_params params;
++	struct nilfs_reclaim_stat stat;
+ 	int ret, i;
+ 
+-	ret = nilfs_cnoconv_time2cno(cleanerd->cnoconv, prottime, &protcno);
++	params.flags =
++		NILFS_RECLAIM_PARAM_PROTSEQ | NILFS_RECLAIM_PARAM_PROTCNO;
++	params.reserved = 0;
++	params.protseq = protseq;
++
++	ret = nilfs_cnoconv_time2cno(cleanerd->cnoconv, prottime,
++				     &params.protcno);
+ 	if (ret < 0) {
+ 		syslog(LOG_ERR, "cannot convert protection time to checkpoint "
+ 		       "number: %m");
+ 		goto out;
  	}
- 	nilfs_mdt_mark_dirty(sufile);
-  out_header:
--	brelse(header_bh);
-+	put_bh(header_bh);
-  out_sem:
- 	up_write(&NILFS_MDT(sufile)->mi_sem);
+ 
+-	ret = nilfs_reclaim_segment(cleanerd->nilfs, segnums, nsegs,
+-				    protseq, protcno);
+-	if (ret > 0) {
+-		for (i = 0; i < ret; i++)
++	memset(&stat, 0, sizeof(stat));
++	ret = nilfs_xreclaim_segment(cleanerd->nilfs, segnums, nsegs, 0,
++				     &params, &stat);
++	if (ret < 0) {
++		if (errno == ENOMEM) {
++			nilfs_cleanerd_reduce_ncleansegs_for_retry(cleanerd);
++			cleanerd->fallback = 1;
++			*ncleaned = 0;
++			ret = 0;
++		}
++		goto out;
++	}
++
++	if (stat.cleaned_segs > 0) {
++		for (i = 0; i < stat.cleaned_segs; i++)
+ 			syslog(LOG_DEBUG, "segment %llu cleaned",
+ 			       (unsigned long long)segnums[i]);
+-		nilfs_cleanerd_progress(cleanerd, ret);
++		nilfs_cleanerd_progress(cleanerd, stat.cleaned_segs);
+ 		cleanerd->fallback = 0;
+ 		cleanerd->retry_cleaning = 0;
+-
+-	} else if (ret == 0) {
++	} else {
+ 		syslog(LOG_DEBUG, "no segments cleaned");
+ 
+ 		if (!cleanerd->retry_cleaning &&
+@@ -1375,12 +1393,8 @@ static ssize_t nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+ 		} else {
+ 			cleanerd->retry_cleaning = 0;
+ 		}
+-
+-	} else if (ret < 0 && errno == ENOMEM) {
+-		nilfs_cleanerd_reduce_ncleansegs_for_retry(cleanerd);
+-		cleanerd->fallback = 1;
+-		ret = 0;
+ 	}
++	*ncleaned = stat.cleaned_segs;
+ out:
  	return ret;
+ }
+@@ -1395,7 +1409,8 @@ static int nilfs_cleanerd_clean_loop(struct nilfs_cleanerd *cleanerd)
+ 	__u64 prottime = 0, oldest = 0;
+ 	__u64 segnums[NILFS_CLDCONFIG_NSEGMENTS_PER_CLEAN_MAX];
+ 	sigset_t sigset;
+-	int ns, ndone, ret;
++	size_t ndone;
++	int ns, ret;
+ 
+ 	sigemptyset(&sigset);
+ 	if (sigprocmask(SIG_SETMASK, &sigset, NULL) < 0) {
+@@ -1466,10 +1481,10 @@ static int nilfs_cleanerd_clean_loop(struct nilfs_cleanerd *cleanerd)
+ 		       ns, (ns <= 1) ? "" : "s");
+ 		ndone = 0;
+ 		if (ns > 0) {
+-			ndone = nilfs_cleanerd_clean_segments(
++			ret = nilfs_cleanerd_clean_segments(
+ 				cleanerd, segnums, ns, sustat.ss_prot_seq,
+-				prottime);
+-			if (ndone < 0)
++				prottime, &ndone);
++			if (ret < 0)
+ 				return -1;
+ 		} else {
+ 			cleanerd->retry_cleaning = 0;
 -- 
 1.7.9.3
-
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
