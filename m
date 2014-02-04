@@ -1,211 +1,100 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: [PATCH 3/4] nilfs2: add nilfs_sufile_set_suinfo to update
  segment usage
-Date: Wed, 05 Feb 2014 01:41:37 +0900 (JST)
-Message-ID: <20140205.014137.417300930.konishi.ryusuke@lab.ntt.co.jp>
-References: <1391446244-1435-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-	<1391446244-1435-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Date: Wed, 05 Feb 2014 02:23:09 +0900 (JST)
+Message-ID: <20140205.022309.85397785.konishi.ryusuke@lab.ntt.co.jp>
+References: <1391446244-1435-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 	<20140203133818.5b78761c08846f2d1216b6e2@linux-foundation.org>
+	<20140205.014137.417300930.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140203133818.5b78761c08846f2d1216b6e2-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <20140205.014137.417300930.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 3 Feb 2014 13:38:18 -0800, Andrew Morton wrote:
-> On Tue,  4 Feb 2014 01:50:43 +0900 Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
-> 
->> From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+On Wed, 05 Feb 2014 01:41:37 +0900 (JST), Ryusuke Konishi wrote:
+> On Mon, 3 Feb 2014 13:38:18 -0800, Andrew Morton wrote:
+>> On Tue,  4 Feb 2014 01:50:43 +0900 Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
 >> 
->> This patch introduces the nilfs_sufile_set_suinfo function, which
->> expects an array of nilfs_suinfo_update structures and updates the
->> segment usage information accordingly.
+>>> From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+>>> 
+>>> This patch introduces the nilfs_sufile_set_suinfo function, which
+>>> expects an array of nilfs_suinfo_update structures and updates the
+>>> segment usage information accordingly.
+>>> 
+>>> This is basically a helper function for the newly introduced
+>>> NILFS_IOCTL_SET_SUINFO ioctl.
+>>> 
+>>> ..
+>>> +		sup = (void *)sup + supsz;
+>>> +		if (sup >= supend)
+>>> +			break;
+>>> +
+>>> +		prev_blkoff = blkoff;
+>>> +		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
+>>> +		if (blkoff == prev_blkoff)
+>>> +			continue;
+>>> +
+>>> +		/* get different block */
+>>> +		mark_buffer_dirty(bh);
+>>> +		brelse(bh);
 >> 
->> This is basically a helper function for the newly introduced
->> NILFS_IOCTL_SET_SUINFO ioctl.
->> 
->> ..
->>
->> --- a/fs/nilfs2/sufile.c
->> +++ b/fs/nilfs2/sufile.c
->> @@ -870,6 +870,137 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
->>  }
->>  
->>  /**
->> + * nilfs_sufile_set_suinfo - sets segment usage info
->> + * @sufile: inode of segment usage file
->> + * @buf: array of suinfo_update
->> + * @supsz: byte size of suinfo_update
->> + * @nsup: size of suinfo_update array
->> + *
->> + * Description: Takes an array of nilfs_suinfo_update structs and updates
->> + * segment usage accordingly. Only the fields indicated by the sup_flags
->> + * are updated.
->> + *
->> + * Return Value: On success, 0 is returned. On error, one of the
->> + * following negative error codes is returned.
->> + *
->> + * %-EIO - I/O error.
->> + *
->> + * %-ENOMEM - Insufficient amount of memory available.
->> + *
->> + * %-EINVAL - Invalid values in input (segment number, flags or nblocks)
->> + */
->> +ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
->> +				unsigned supsz, size_t nsup)
->> +{
->> +	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
->> +	struct buffer_head *header_bh, *bh;
->> +	struct nilfs_suinfo_update *sup, *supend = buf + supsz * nsup;
->> +	struct nilfs_segment_usage *su;
->> +	void *kaddr;
->> +	unsigned long blkoff, prev_blkoff;
->> +	int cleansi, cleansu, dirtysi, dirtysu;
->> +	long ncleaned = 0, ndirtied = 0;
->> +	int ret = 0;
->> +
->> +	if (unlikely(nsup == 0))
->> +		return ret;
->> +
->> +	for (sup = buf; sup < supend; sup = (void *)sup + supsz) {
->> +		if (sup->sup_segnum >= nilfs->ns_nsegments
->> +			|| (sup->sup_flags &
->> +				(~0UL << __NR_NILFS_SUINFO_UPDATE_FIELDS))
->> +			|| (nilfs_suinfo_update_nblocks(sup) &&
->> +				sup->sup_sui.sui_nblocks >
->> +				nilfs->ns_blocks_per_segment))
->> +			return -EINVAL;
->> +	}
->> +
->> +	down_write(&NILFS_MDT(sufile)->mi_sem);
->> +
->> +	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
->> +	if (ret < 0)
->> +		goto out_sem;
->> +
->> +	sup = buf;
->> +	blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
->> +	ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
->> +	if (ret < 0)
->> +		goto out_header;
->> +
->> +	for (;;) {
->> +		kaddr = kmap_atomic(bh->b_page);
+>> put_bh() will suffice - we know bh != NULL.
 > 
-> Can this buffer_head really be in highmem?
+> Agreed.  I will fix it later.
 
-Yes, data blocks of metadata files can be allocated in highmem.  This
-buffer head is one of them.
+Here is the fix.
 
->> +		su = nilfs_sufile_block_get_segment_usage(
->> +			sufile, sup->sup_segnum, bh, kaddr);
-> 
-> Returns an address wthin the kmapped page.  I really hope
-> nilfs_sufile_block_get_segment_usage() cannot return an address outside
-> that page - it appears to do quite a lot of unchecked arithmetic which
-> is dependent on stuff which was read from the disk.  What it that was
-> interfered with or otherwise corrupted?
-
-That's right.  Several range checks looks to be needed, for instance,
-for segment usage size, checkpoint size, dat entry size, and inode
-size.  I will try to add these missing checks.
-
->> +		if (nilfs_suinfo_update_lastmod(sup))
->> +			su->su_lastmod = cpu_to_le64(sup->sup_sui.sui_lastmod);
->> +
->> +		if (nilfs_suinfo_update_nblocks(sup))
->> +			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
->> +
->> +		if (nilfs_suinfo_update_flags(sup)) {
->> +			/*
->> +			 * Active flag is a virtual flag projected by running
->> +			 * nilfs kernel code - drop it not to write it to
->> +			 * disk.
->> +			 */
->> +			sup->sup_sui.sui_flags &=
->> +					~(1UL << NILFS_SEGMENT_USAGE_ACTIVE);
->> +
->> +			cleansi = nilfs_suinfo_clean(&sup->sup_sui);
->> +			cleansu = nilfs_segment_usage_clean(su);
->> +			dirtysi = nilfs_suinfo_dirty(&sup->sup_sui);
->> +			dirtysu = nilfs_segment_usage_dirty(su);
->> +
->> +			if (cleansi && !cleansu)
->> +				++ncleaned;
->> +			else if (!cleansi && cleansu)
->> +				--ncleaned;
->> +
->> +			if (dirtysi && !dirtysu)
->> +				++ndirtied;
->> +			else if (!dirtysi && dirtysu)
->> +				--ndirtied;
->> +
->> +			su->su_flags = cpu_to_le32(sup->sup_sui.sui_flags);
->> +		}
->> +
->> +		kunmap_atomic(kaddr);
-> 
-> flush_dcache_page()?  Can the page be mapped by userspace?
-
-This page is never mapped to userspace, so flush_dcache_page() looks
-unnecessary here.
-
->> +		sup = (void *)sup + supsz;
->> +		if (sup >= supend)
->> +			break;
->> +
->> +		prev_blkoff = blkoff;
->> +		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
->> +		if (blkoff == prev_blkoff)
->> +			continue;
->> +
->> +		/* get different block */
->> +		mark_buffer_dirty(bh);
->> +		brelse(bh);
-> 
-> put_bh() will suffice - we know bh != NULL.
-
-Agreed.  I will fix it later.
-
->> +		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
->> +		if (unlikely(ret < 0))
->> +			goto out_mark;
->> +	}
->> +	mark_buffer_dirty(bh);
->> +	brelse(bh);
-> 
-> ditto
-
-Thank you for your review and comments.
-
-Regards,
 Ryusuke Konishi
+--
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: add nilfs_sufile_set_suinfo to update segment usage
+ fix
+
+Use put_bh() instead of brelse() because we know bh != NULL.
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/sufile.c |    6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index c37b5f0..5628b99 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -978,13 +978,13 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+ 
+ 		/* get different block */
+ 		mark_buffer_dirty(bh);
+-		brelse(bh);
++		put_bh(bh);
+ 		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+ 		if (unlikely(ret < 0))
+ 			goto out_mark;
+ 	}
+ 	mark_buffer_dirty(bh);
+-	brelse(bh);
++	put_bh(bh);
+ 
+  out_mark:
+ 	if (ncleaned || ndirtied) {
+@@ -994,7 +994,7 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+ 	}
+ 	nilfs_mdt_mark_dirty(sufile);
+  out_header:
+-	brelse(header_bh);
++	put_bh(header_bh);
+  out_sem:
+ 	up_write(&NILFS_MDT(sufile)->mi_sem);
+ 	return ret;
+-- 
+1.7.9.3
 
 
->> + out_mark:
->> +	if (ncleaned || ndirtied) {
->> +		nilfs_sufile_mod_counter(header_bh, (u64)ncleaned,
->> +				(u64)ndirtied);
->> +		NILFS_SUI(sufile)->ncleansegs += ncleaned;
->> +	}
->> +	nilfs_mdt_mark_dirty(sufile);
->> + out_header:
->> +	brelse(header_bh);
->> + out_sem:
->> +	up_write(&NILFS_MDT(sufile)->mi_sem);
->> +	return ret;
->> +}
->> +
->> +/**
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
