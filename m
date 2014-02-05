@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v4 3/6] nilfs-utils: nilfs-clean add cmdline param min-reclaimable-blocks
-Date: Wed,  5 Feb 2014 03:16:36 +0100
-Message-ID: <9004dd6e3a276447371eda93413a6f0766821510.1391566347.git.andreas.rohner@gmx.net>
+Subject: [PATCH v4 6/6] nilfs-utils: add a no_timeout flag to enable faster loop
+Date: Wed,  5 Feb 2014 03:16:39 +0100
+Message-ID: <43f9673512b7a2e95d3036f2e829aa80fb2cca03.1391566347.git.andreas.rohner@gmx.net>
 References: <20140205.034242.281476472.konishi.ryusuke@lab.ntt.co.jp>
  <cover.1391566347.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -16,216 +16,89 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch adds a command line parameter for nilfs-clean to allow
-the manual override of the min_reclaimable_blocks option.
+This patch adds a flag, that enables the GC to skip the timeout in
+certain situations. For example if the cleaning of some segments
+was deferred to a later time, then no real progress has been
+made. Apart from reading a few summary blocks, no data was read or
+written to disk. In this situation it makes sense to skip the
+normal timeout once and immediately try to clean the next set of
+segments.
+
+Unfortunately it is not possible, to directly continue the cleaning
+loop, because this would lead to an unresponsive GC process.
+Therefore the timeout is simply set to 0 seconds.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- include/nilfs_cleaner.h        | 19 +++++++++---------
- man/nilfs-clean.8              |  4 ++++
- sbin/cleanerd/cleanerd.c       | 19 ++++++++++++++++++
- sbin/nilfs-clean/nilfs-clean.c | 44 ++++++++++++++++++++++++++++++++++++------
- 4 files changed, 71 insertions(+), 15 deletions(-)
+ sbin/cleanerd/cleanerd.c | 27 ++++++++++++++++-----------
+ 1 file changed, 16 insertions(+), 11 deletions(-)
 
-diff --git a/include/nilfs_cleaner.h b/include/nilfs_cleaner.h
-index 0bf02aa..874c17a 100644
---- a/include/nilfs_cleaner.h
-+++ b/include/nilfs_cleaner.h
-@@ -46,17 +46,18 @@ struct nilfs_cleaner_args {
- 	uint64_t start_segnum;	/* start segment number */
- 	uint64_t nsegs;		/* number of segments */
- 	uint32_t runtime; /* runtime in seconds */
--	uint32_t pad2;
-+	uint32_t min_reclaimable_blocks;
- };
- /* valid flags */
--#define NILFS_CLEANER_ARG_PROTECTION_PERIOD	(1 << 0)
--#define NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN	(1 << 1)
--#define NILFS_CLEANER_ARG_CLEANING_INTERVAL	(1 << 2)
--#define NILFS_CLEANER_ARG_USAGE_RATE_THRESHOLD	(1 << 3) /* reserved */
--#define NILFS_CLEANER_ARG_START_SEGNUM		(1 << 4) /* reserved */
--#define NILFS_CLEANER_ARG_NSEGS			(1 << 5) /* reserved */
--#define NILFS_CLEANER_ARG_NPASSES		(1 << 6) /* reserved */
--#define NILFS_CLEANER_ARG_RUNTIME		(1 << 7) /* reserved */
-+#define NILFS_CLEANER_ARG_PROTECTION_PERIOD		(1 << 0)
-+#define NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN		(1 << 1)
-+#define NILFS_CLEANER_ARG_CLEANING_INTERVAL		(1 << 2)
-+#define NILFS_CLEANER_ARG_USAGE_RATE_THRESHOLD		(1 << 3) /* reserved */
-+#define NILFS_CLEANER_ARG_START_SEGNUM			(1 << 4) /* reserved */
-+#define NILFS_CLEANER_ARG_NSEGS				(1 << 5) /* reserved */
-+#define NILFS_CLEANER_ARG_NPASSES			(1 << 6) /* reserved */
-+#define NILFS_CLEANER_ARG_RUNTIME			(1 << 7) /* reserved */
-+#define NILFS_CLEANER_ARG_MIN_RECLAIMABLE_BLOCKS	(1 << 8)
- 
- enum {
- 	NILFS_CLEANER_STATUS_IDLE,
-diff --git a/man/nilfs-clean.8 b/man/nilfs-clean.8
-index 04e11c6..94267e1 100644
---- a/man/nilfs-clean.8
-+++ b/man/nilfs-clean.8
-@@ -43,6 +43,10 @@ Display cleaner status.
- \fB\-h\fR, \fB\-\-help\fR
- Display help message and exit.
- .TP
-+\fB\-m\fR, \fB\-\-min\-reclaimable\-blocks=\fICOUNT\fR
-+Specify the minimum number of reclaimable blocks in a segment before
-+it can be cleaned.
-+.TP
- \fB\-p\fR, \fB\-\-protection-period=\fIinterval\fR
- Set protection period for a cleaner run.  The \fIinterval\fR parameter
- is an integer value and specifies the minimum time that deleted or
 diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index 970816f..a3f62b0 100644
+index 1374e38..e1bd558 100644
 --- a/sbin/cleanerd/cleanerd.c
 +++ b/sbin/cleanerd/cleanerd.c
-@@ -185,6 +185,7 @@ struct nilfs_cleanerd {
- 	long mm_ncleansegs;
- 	struct timeval mm_protection_period;
- 	struct timeval mm_cleaning_interval;
-+	unsigned long mm_min_reclaimable_blocks;
- };
- 
- /**
-@@ -468,6 +469,14 @@ nilfs_cleanerd_protection_period(struct nilfs_cleanerd *cleanerd)
- 		&cleanerd->config.cf_protection_period;
- }
- 
-+static unsigned long
-+nilfs_cleanerd_min_reclaimable_blocks(struct nilfs_cleanerd *cleanerd)
-+{
-+	return cleanerd->running == 2 ?
-+		cleanerd->mm_min_reclaimable_blocks :
-+		cleanerd->min_reclaimable_blocks;
-+}
-+
- static void
- nilfs_cleanerd_reduce_ncleansegs_for_retry(struct nilfs_cleanerd *cleanerd)
- {
-@@ -1010,6 +1019,16 @@ static int nilfs_cleanerd_cmd_run(struct nilfs_cleanerd *cleanerd,
- 		cleanerd->mm_cleaning_interval =
- 			cleanerd->cleaning_interval;
+@@ -167,6 +167,7 @@ struct nilfs_cleanerd {
+ 	int running;
+ 	int fallback;
+ 	int retry_cleaning;
++	int no_timeout;
+ 	int shutdown;
+ 	long ncleansegs;
+ 	struct timeval cleaning_interval;
+@@ -894,7 +895,7 @@ static int nilfs_cleanerd_recalc_interval(struct nilfs_cleanerd *cleanerd,
+ 	interval = nilfs_cleanerd_cleaning_interval(cleanerd);
+ 	/* timercmp() does not work for '>=' or '<='. */
+ 	/* curr >= target */
+-	if (!timercmp(&curr, &cleanerd->target, <)) {
++	if (!timercmp(&curr, &cleanerd->target, <) || cleanerd->no_timeout) {
+ 		cleanerd->timeout.tv_sec = 0;
+ 		cleanerd->timeout.tv_usec = 0;
+ 		timeradd(&curr, interval, &cleanerd->target);
+@@ -1395,6 +1396,7 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+ 		       "number: %m");
+ 		goto out;
  	}
-+	/* minimal reclaimable blocks */
-+	if ((req2->args.valid & NILFS_CLEANER_ARG_MIN_RECLAIMABLE_BLOCKS)
-+		&& req2->args.min_reclaimable_blocks <=
-+			nilfs_get_blocks_per_segment(cleanerd->nilfs)) {
-+		cleanerd->mm_min_reclaimable_blocks =
-+			req2->args.min_reclaimable_blocks;
-+	} else {
-+		cleanerd->mm_min_reclaimable_blocks =
-+			cleanerd->min_reclaimable_blocks;
-+	}
- 	/* number of passes */
- 	if (req2->args.valid & NILFS_CLEANER_ARG_NPASSES) {
- 		if (!req2->args.npasses)
-diff --git a/sbin/nilfs-clean/nilfs-clean.c b/sbin/nilfs-clean/nilfs-clean.c
-index 55abd55..f77fdf7 100644
---- a/sbin/nilfs-clean/nilfs-clean.c
-+++ b/sbin/nilfs-clean/nilfs-clean.c
-@@ -77,6 +77,7 @@ const static struct option long_option[] = {
- 	{"stop", no_argument, NULL, 'b'},
- 	{"suspend", no_argument, NULL, 's'},
- 	{"speed", required_argument, NULL, 'S'},
-+	{"min-reclaimable-blocks", required_argument, NULL, 'm'},
- 	{"verbose", no_argument, NULL, 'v'},
- 	{"version", no_argument, NULL, 'V'},
- 	{NULL, 0, NULL, 0}
-@@ -90,6 +91,9 @@ const static struct option long_option[] = {
- 	"  -l, --status\t\tdisplay cleaner status\n"			\
- 	"  -p, --protection-period=SECONDS\n"				\
- 	"               \t\tspecify protection period\n"		\
-+	"  -m, --min-reclaimable-blocks=COUNT\n"			\
-+	"               \t\tset minimum number of reclaimable blocks\n"	\
-+	"               \t\tbefore a segment can be cleaned\n"		\
- 	"  -q, --quit\t\tshutdown cleaner\n"				\
- 	"  -r, --resume\t\tresume cleaner\n"				\
- 	"  -s, --suspend\t\tsuspend cleaner\n"				\
-@@ -98,9 +102,10 @@ const static struct option long_option[] = {
- 	"  -v, --verbose\t\tverbose mode\n"				\
- 	"  -V, --version\t\tdisplay version and exit\n"
- #else
--#define NILFS_CLEAN_USAGE						\
--	"Usage: %s [-b] [-c [conffile]] [-h] [-l] [-p protection-period]" \
--	"          [-q] [-r] [-s] [-S gc-speed] [-v] [-V] [device]\n"
-+#define NILFS_CLEAN_USAGE						  \
-+	"Usage: %s [-b] [-c [conffile]] [-h] [-l] [-m blocks]\n"	  \
-+	"          [-p protection-period] [-q] [-r] [-s] [-S gc-speed]\n" \
-+	"          [-v] [-V] [device]\n"
- #endif	/* _GNU_SOURCE */
++	cleanerd->no_timeout = 0;
  
+ 	memset(&stat, 0, sizeof(stat));
+ 	ret = nilfs_xreclaim_segment(cleanerd->nilfs, segnums, nsegs, 0,
+@@ -1409,16 +1411,18 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+ 		goto out;
+ 	}
  
-@@ -124,6 +129,7 @@ static const char *conffile = NULL;
- static unsigned long protection_period = ULONG_MAX;
- static int nsegments_per_clean = 2;
- static struct timespec cleaning_interval = { 0, 100000000 };   /* 100 msec */
-+static unsigned long min_reclaimable_blocks = 20;  /* about 1% with 8MB segs */
+-	if (stat.cleaned_segs > 0) {
+-		if (stat.deferred_segs > 0) {
+-			for (i = 0; i < stat.cleaned_segs; i++)
+-				syslog(LOG_DEBUG, "segment %llu deferred",
+-				       (unsigned long long)segnums[i]);
+-		} else {
+-			for (i = 0; i < stat.cleaned_segs; i++)
+-				syslog(LOG_DEBUG, "segment %llu cleaned",
+-				       (unsigned long long)segnums[i]);
+-		}
++	if (stat.deferred_segs > 0) {
++		for (i = 0; i < stat.cleaned_segs; i++)
++			syslog(LOG_DEBUG, "segment %llu deferred",
++			       (unsigned long long)segnums[i]);
++		nilfs_cleanerd_progress(cleanerd, stat.cleaned_segs);
++		cleanerd->fallback = 0;
++		cleanerd->retry_cleaning = 0;
++		cleanerd->no_timeout = 1;
++	} else if (stat.cleaned_segs > 0) {
++		for (i = 0; i < stat.cleaned_segs; i++)
++			syslog(LOG_DEBUG, "segment %llu cleaned",
++			       (unsigned long long)segnums[i]);
+ 		nilfs_cleanerd_progress(cleanerd, stat.cleaned_segs);
+ 		cleanerd->fallback = 0;
+ 		cleanerd->retry_cleaning = 0;
+@@ -1475,6 +1479,7 @@ static int nilfs_cleanerd_clean_loop(struct nilfs_cleanerd *cleanerd)
+ 	cleanerd->running = 1;
+ 	cleanerd->fallback = 0;
+ 	cleanerd->retry_cleaning = 0;
++	cleanerd->no_timeout = 0;
+ 	nilfs_cnoconv_reset(cleanerd->cnoconv);
+ 	nilfs_gc_logger = syslog;
  
- static sigjmp_buf nilfs_clean_env;
- static struct nilfs_cleaner *nilfs_cleaner;
-@@ -164,9 +170,11 @@ static int nilfs_clean_do_run(struct nilfs_cleaner *cleaner)
- 	args.nsegments_per_clean = nsegments_per_clean;
- 	args.cleaning_interval = cleaning_interval.tv_sec;
- 	args.cleaning_interval_nsec = cleaning_interval.tv_nsec;
-+	args.min_reclaimable_blocks = min_reclaimable_blocks;
- 	args.valid = (NILFS_CLEANER_ARG_NPASSES |
- 		      NILFS_CLEANER_ARG_CLEANING_INTERVAL |
--		      NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN);
-+		      NILFS_CLEANER_ARG_NSEGMENTS_PER_CLEAN |
-+		      NILFS_CLEANER_ARG_MIN_RECLAIMABLE_BLOCKS);
- 
- 	if (protection_period != ULONG_MAX) {
- 		args.protection_period = protection_period;
-@@ -426,6 +434,26 @@ failed_too_large:
- 	return -1;
- }
- 
-+static int nilfs_clean_parse_min_reclaimable(const char *arg)
-+{
-+	unsigned long blocks;
-+	char *endptr;
-+
-+	blocks = strtoul(arg, &endptr, 10);
-+	if (endptr == arg || endptr[0] != '\0') {
-+		myprintf(_("Error: invalid reclaimable blocks: %s\n"), arg);
-+		return -1;
-+	}
-+
-+	if (blocks == ULONG_MAX) {
-+		myprintf(_("Error: value too large: %s\n"), arg);
-+		return -1;
-+	}
-+
-+	min_reclaimable_blocks = blocks;
-+	return 0;
-+}
-+
- static void nilfs_clean_parse_options(int argc, char *argv[])
- {
- #ifdef _GNU_SOURCE
-@@ -434,10 +462,10 @@ static void nilfs_clean_parse_options(int argc, char *argv[])
- 	int c;
- 
- #ifdef _GNU_SOURCE
--	while ((c = getopt_long(argc, argv, "bc::hlp:qrsS:vV",
-+	while ((c = getopt_long(argc, argv, "bc::hlm:p:qrsS:vV",
- 				long_option, &option_index)) >= 0) {
- #else
--	while ((c = getopt(argc, argv, "bc::hlp:qrsS:vV")) >= 0) {
-+	while ((c = getopt(argc, argv, "bc::hlm:p:qrsS:vV")) >= 0) {
- #endif	/* _GNU_SOURCE */
- 		switch (c) {
- 		case 'b':
-@@ -455,6 +483,10 @@ static void nilfs_clean_parse_options(int argc, char *argv[])
- 		case 'l':
- 			clean_cmd = NILFS_CLEAN_CMD_INFO;
- 			break;
-+		case 'm':
-+			if (nilfs_clean_parse_min_reclaimable(optarg) < 0)
-+				exit(EXIT_FAILURE);
-+			break;
- 		case 'p':
- 			if (nilfs_clean_parse_protection_period(optarg) < 0)
- 				exit(EXIT_FAILURE);
 -- 
 1.8.5.3
 
