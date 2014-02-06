@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v5 4/6] nilfs-utils: add suport for NILFS_IOCTL_SET_SUINFO ioctl
-Date: Thu,  6 Feb 2014 15:17:24 +0100
-Message-ID: <1cee85cd185319b9c170c212ca44096ccbcbcef9.1391692941.git.andreas.rohner@gmx.net>
+Subject: [PATCH v5 6/6] nilfs-utils: add a no_timeout flag to enable faster loop
+Date: Thu,  6 Feb 2014 15:17:26 +0100
+Message-ID: <c332aafb27e77cafc51f4bb6b6c7632290a5290d.1391692941.git.andreas.rohner@gmx.net>
 References: <cover.1391692941.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1391692941.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -15,138 +15,69 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch adds library support for the NILFS_IOCTL_SET_SUINFO
-ioctl. A new function nilfs_set_suinfo and the structure
-nilfs_suinfo_update, which contains the update information, are
-added.
+This patch adds a flag, that enables the GC to skip the timeout in
+certain situations. For example if the cleaning of some segments
+was deferred to a later time, then no real progress has been
+made. Apart from reading a few summary blocks, no data was read or
+written to disk. In this situation it makes sense to skip the
+normal timeout once and immediately try to clean the next set of
+segments.
 
-With this function the segment usage information can be updated
-from userspace, which can be used as a shortcut for certain GC
-operations.
+Unfortunately it is not possible, to directly continue the cleaning
+loop, because this would lead to an unresponsive GC process.
+Therefore the timeout is simply set to 0 seconds.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- include/nilfs.h     |  2 ++
- include/nilfs2_fs.h | 44 ++++++++++++++++++++++++++++++++++++++++++++
- lib/nilfs.c         | 31 +++++++++++++++++++++++++++++++
- 3 files changed, 77 insertions(+)
+ sbin/cleanerd/cleanerd.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/include/nilfs.h b/include/nilfs.h
-index b5f85d3..fab8ff2 100644
---- a/include/nilfs.h
-+++ b/include/nilfs.h
-@@ -304,6 +304,8 @@ int nilfs_delete_checkpoint(struct nilfs *, nilfs_cno_t);
- int nilfs_get_cpstat(const struct nilfs *, struct nilfs_cpstat *);
- ssize_t nilfs_get_suinfo(const struct nilfs *, __u64, struct nilfs_suinfo *,
- 			 size_t);
-+int nilfs_set_suinfo(const struct nilfs *, struct nilfs_suinfo_update *,
-+		     size_t);
- int nilfs_get_sustat(const struct nilfs *, struct nilfs_sustat *);
- ssize_t nilfs_get_vinfo(const struct nilfs *, struct nilfs_vinfo *, size_t);
- ssize_t nilfs_get_bdescs(const struct nilfs *, struct nilfs_bdesc *, size_t);
-diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
-index e674f44..a16ad4c 100644
---- a/include/nilfs2_fs.h
-+++ b/include/nilfs2_fs.h
-@@ -714,6 +714,48 @@ static inline int nilfs_suinfo_clean(const struct nilfs_suinfo *si)
- }
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index 4c9f69b..3506c20 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -141,6 +141,7 @@ const static struct option long_option[] = {
+  * @running: running state
+  * @fallback: fallback state
+  * @retry_cleaning: retrying reclamation for protected segments
++ * @no_timeout: the next timeout will be 0 seconds
+  * @ncleansegs: number of semgents cleaned per cycle
+  * @cleaning_interval: cleaning interval
+  * @target: target time for sleeping
+@@ -169,6 +170,7 @@ struct nilfs_cleanerd {
+ 	int running;
+ 	int fallback;
+ 	int retry_cleaning;
++	int no_timeout;
+ 	int shutdown;
+ 	long ncleansegs;
+ 	struct timeval cleaning_interval;
+@@ -896,7 +898,7 @@ static int nilfs_cleanerd_recalc_interval(struct nilfs_cleanerd *cleanerd,
+ 	interval = nilfs_cleanerd_cleaning_interval(cleanerd);
+ 	/* timercmp() does not work for '>=' or '<='. */
+ 	/* curr >= target */
+-	if (!timercmp(&curr, &cleanerd->target, <)) {
++	if (!timercmp(&curr, &cleanerd->target, <) || cleanerd->no_timeout) {
+ 		cleanerd->timeout.tv_sec = 0;
+ 		cleanerd->timeout.tv_usec = 0;
+ 		timeradd(&curr, interval, &cleanerd->target);
+@@ -1428,6 +1430,7 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+ 		nilfs_cleanerd_progress(cleanerd, stat.deferred_segs);
+ 		cleanerd->fallback = 0;
+ 		cleanerd->retry_cleaning = 0;
++		cleanerd->no_timeout = 1;
  
- /* ioctl */
-+/**
-+ * nilfs_suinfo_update - segment usage information update
-+ * @sup_segnum: segment number
-+ * @sup_flags: flags for which fields are active in sup_sui
-+ * @sup_reserved: reserved necessary for alignment
-+ * @sup_sui: segment usage information
-+ */
-+struct nilfs_suinfo_update {
-+	__u64 sup_segnum;
-+	__u32 sup_flags;
-+	__u32 sup_reserved;
-+	struct nilfs_suinfo sup_sui;
-+};
-+
-+enum {
-+	NILFS_SUINFO_UPDATE_LASTMOD,
-+	NILFS_SUINFO_UPDATE_NBLOCKS,
-+	NILFS_SUINFO_UPDATE_FLAGS,
-+	__NR_NILFS_SUINFO_UPDATE_FIELDS,
-+};
-+
-+#define NILFS_SUINFO_UPDATE_FNS(flag, name)				\
-+static inline void							\
-+nilfs_suinfo_update_set_##name(struct nilfs_suinfo_update *sup)		\
-+{									\
-+	sup->sup_flags |= 1UL << NILFS_SUINFO_UPDATE_##flag;		\
-+}									\
-+static inline void							\
-+nilfs_suinfo_update_clear_##name(struct nilfs_suinfo_update *sup)	\
-+{									\
-+	sup->sup_flags &= ~(1UL << NILFS_SUINFO_UPDATE_##flag);		\
-+}									\
-+static inline int							\
-+nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
-+{									\
-+	return !!(sup->sup_flags & (1UL << NILFS_SUINFO_UPDATE_##flag));\
-+}
-+
-+NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
-+NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
-+NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
-+
- enum {
- 	NILFS_CHECKPOINT,
- 	NILFS_SNAPSHOT,
-@@ -867,5 +909,7 @@ struct nilfs_bdesc {
- 	_IOW(NILFS_IOCTL_IDENT, 0x8B, __u64)
- #define NILFS_IOCTL_SET_ALLOC_RANGE  \
- 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
-+#define NILFS_IOCTL_SET_SUINFO  \
-+	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
+ 		*ndone = stat.deferred_segs;
+ 	} else {
+@@ -1501,6 +1504,8 @@ static int nilfs_cleanerd_clean_loop(struct nilfs_cleanerd *cleanerd)
+ 		nilfs_cleanerd_clean_check_pause(cleanerd);
  
- #endif	/* _LINUX_NILFS_FS_H */
-diff --git a/lib/nilfs.c b/lib/nilfs.c
-index 93822de..7317205 100644
---- a/lib/nilfs.c
-+++ b/lib/nilfs.c
-@@ -596,6 +596,37 @@ ssize_t nilfs_get_suinfo(const struct nilfs *nilfs, __u64 segnum,
- }
- 
- /**
-+ * nilfs_set_suinfo - sets segment usage info
-+ * @nilfs: nilfs object
-+ * @sup: an array of nilfs_suinfo_update structs
-+ * @nsup: number of elements in sup
-+ *
-+ * Description: Takes an array of nilfs_suinfo_update structs and updates
-+ * segment usage info accordingly. Only the fields indicated by sup_flags
-+ * are updated.
-+ *
-+ * Return Value: On success, 0 is returned. On error, -1 is returned.
-+ */
-+int nilfs_set_suinfo(const struct nilfs *nilfs,
-+		     struct nilfs_suinfo_update *sup, size_t nsup)
-+{
-+	struct nilfs_argv argv;
+ 	while (!cleanerd->shutdown) {
++		cleanerd->no_timeout = 0;
 +
-+	if (nilfs->n_iocfd < 0) {
-+		errno = EBADF;
-+		return -1;
-+	}
-+
-+	argv.v_base = (unsigned long)sup;
-+	argv.v_nmembs = nsup;
-+	argv.v_size = sizeof(struct nilfs_suinfo_update);
-+	argv.v_index = 0;
-+	argv.v_flags = 0;
-+
-+	return ioctl(nilfs->n_iocfd, NILFS_IOCTL_SET_SUINFO, &argv);
-+}
-+
-+/**
-  * nilfs_get_sustat - get segment usage statistics
-  * @nilfs: nilfs object
-  * @sustat: buffer of a nilfs_sustat struct to store statistics in
+ 		if (sigprocmask(SIG_BLOCK, &sigset, NULL) < 0) {
+ 			syslog(LOG_ERR, "cannot set signal mask: %m");
+ 			return -1;
 -- 
 1.8.5.3
 
