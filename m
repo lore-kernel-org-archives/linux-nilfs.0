@@ -1,8 +1,12 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v5 0/6] nilfs-utils: shortcut for certain GC operations
-Date: Thu,  6 Feb 2014 15:17:20 +0100
-Message-ID: <cover.1391692941.git.andreas.rohner@gmx.net>
+Subject: [PATCH v5 2/6] nilfs-utils: add NILFS_OPT_SET_SUINFO
+Date: Thu,  6 Feb 2014 15:17:22 +0100
+Message-ID: <8f8e0f20685c057505ef3150398de39c8427d1ea.1391692941.git.andreas.rohner@gmx.net>
+References: <cover.1391692941.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1391692941.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <cover.1391692941.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+References: <cover.1391692941.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,99 +15,100 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Hi,
+This option for the nilfs object corresponds to the use_set_suinfo
+flag in the configuration file. This patch adds the flag itself
+plus some convenience functions.
 
-This patch set adds an optimized version of 
-nilfs_xreclaim_segments, which has an additional parameter 
-min_reclaimable_blks. This parameter specifies the minimum number of 
-reclaimable blocks in a segment, before it can be cleaned. If a 
-segment is below this threshold, it is considered to be not worth 
-cleaning, because all the live blocks would need to be moved to a 
-new segment, which is expensive, and the number of reclaimable 
-blocks is too low. But it is still necessary to update the segment 
-usage information to turn the old segment into a new one.
-    
-This is basically a shortcut to cleaning the segment. It is still 
-necessary to read the segment summary information, but the writing 
-of the live blocks can be skipped if it's not worth it.
+The option is set after the configuration file was read in.
 
-Additionally new options are introduced for the configuration file 
-and nilfs-clean to allow the user to specify the threshold. 
-
-This is potentially useful for all gc policies, but it is especially
-beneficial for the timestamp policy. Lets assume for example a NILFS2
-volume with 20% static files and lets assume these static files 
-are in the oldest segments. The current timestamp policy will 
-select the oldest segments and, since the data is static, move 
-them mostly unchanged to new segments. After a while they will 
-become the oldest segments again. Then timestamp will move them 
-again. These moving operations are expensive and unnecessary.
-
-Regards,
-Andreas Rohner
-
+Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
-v4->v5 (based on review by Ryusuke Konishi)
-* Add missing comments and documentation
-* Fix nilfs_set_suinfo return value
-* Fix coding style issues
-* Return error if invalid min_reclaimable_blocks is sent 
-  from nilfs-clean command
-* Use nilfs_vector instead of malloc in nilfs_xreclaim_segment
-* Rename nilfs_reclaim_params flag to
-  NILFS_RECLAIM_PARAM_MIN_RECLAIMABLE_BLKS
-* Changed the interpretation of deferred_segs in 
-  nilfs_reclaim_stat
+ include/nilfs.h          |  7 ++++++-
+ lib/nilfs.c              | 28 ++++++++++++++++++++++++++++
+ sbin/cleanerd/cleanerd.c |  6 ++++++
+ 3 files changed, 40 insertions(+), 1 deletion(-)
 
-v3->v4 (based on review by Ryusuke Konishi)
-* nilfs-utils: Rebase on refactored nilfs_reclaim_segments 
-  (by Ryusuke Konishi)
-* nilfs-utils: Add no_timeout if cleaning was deferred
-
-v2->v3 (based on review by Ryusuke Konishi)
-* Alignment in nilfs_suinfo_update
-* Add missing comments
-* nilfs2: Extra validity checks in nilfs_sufile_set_suinfo
-* nilfs2: Update sh_ncleansegs, sh_ndirtysegs if flags change
-* nilfs2: Fix bugs in nilfs_sufile_set_suinfo
-* nilfs2: Use vmalloc instead of ioctl_wrap_copy
-* nilfs-utils: Separate nilfs_relaim_segments_with_threshold
-* nilfs-utils: Allow different units for min_reclaimable_blocks
-* nilfs-utils: Introduce flag to disable the optimization
-* nilfs-utils: Disable optimization if kernel retruns ENOTTY
-* nilfs-utils: Remove EGCTRYAGAIN error return code
-* nilfs-utils: Rename option to min_reclaimable_blocks
-
-v1->v2 (based on review by Ryusuke Konishi)
-* Implementation of NILFS_IOCTL_SET_SUINFO
-* Added mc_min_free_blocks_threshold config option
-  (if clean segments < min_clean_segments)
-* Added new command line param for nilfs-clean
-* Update man- and config-file
---
-Andreas Rohner (6):
-  nilfs-utils: cldconfig add an option to set min. reclaimable blocks
-  nilfs-utils: add NILFS_OPT_SET_SUINFO
-  nilfs-utils: nilfs-clean add cmdline param min-reclaimable-blocks
-  nilfs-utils: add suport for NILFS_IOCTL_SET_SUINFO ioctl
-  nilfs-utils: add optimized version of nilfs_xreclaim_segments
-  nilfs-utils: add a no_timeout flag to enable faster loop
-
- include/nilfs.h                   |   9 +-
- include/nilfs2_fs.h               |  44 ++++++++++
- include/nilfs_cleaner.h           |  19 +++--
- include/nilfs_gc.h                |  11 +--
- lib/gc.c                          |  73 ++++++++++++++--
- lib/nilfs.c                       |  59 +++++++++++++
- man/nilfs-clean.8                 |   4 +
- man/nilfs_cleanerd.conf.5         |  22 +++++
- sbin/cleanerd/cldconfig.c         | 169 ++++++++++++++++++++++++++++----------
- sbin/cleanerd/cldconfig.h         |  12 +++
- sbin/cleanerd/cleanerd.c          |  68 +++++++++++++--
- sbin/cleanerd/nilfs_cleanerd.conf |  20 +++++
- sbin/nilfs-clean/nilfs-clean.c    |  44 ++++++++--
- 13 files changed, 480 insertions(+), 74 deletions(-)
-
+diff --git a/include/nilfs.h b/include/nilfs.h
+index 56286a9..b5f85d3 100644
+--- a/include/nilfs.h
++++ b/include/nilfs.h
+@@ -128,7 +128,8 @@ struct nilfs {
+ #define NILFS_OPEN_RDWR		0x0008	/* Open NILFS API in read/write mode */
+ #define NILFS_OPEN_GCLK		0x1000	/* Open GC lock primitive */
+ 
+-#define NILFS_OPT_MMAP	0x01
++#define NILFS_OPT_MMAP		0x01
++#define NILFS_OPT_SET_SUINFO	0x02
+ 
+ 
+ struct nilfs *nilfs_open(const char *, const char *, int);
+@@ -140,6 +141,10 @@ void nilfs_opt_clear_mmap(struct nilfs *);
+ int nilfs_opt_set_mmap(struct nilfs *);
+ int nilfs_opt_test_mmap(struct nilfs *);
+ 
++void nilfs_opt_clear_set_suinfo(struct nilfs *);
++int nilfs_opt_set_set_suinfo(struct nilfs *);
++int nilfs_opt_test_set_suinfo(struct nilfs *);
++
+ nilfs_cno_t nilfs_get_oldest_cno(struct nilfs *);
+ 
+ struct nilfs_super_block *nilfs_get_sb(struct nilfs *);
+diff --git a/lib/nilfs.c b/lib/nilfs.c
+index c1771e8..93822de 100644
+--- a/lib/nilfs.c
++++ b/lib/nilfs.c
+@@ -288,6 +288,34 @@ int nilfs_opt_test_mmap(struct nilfs *nilfs)
+ 	return !!(nilfs->n_opts & NILFS_OPT_MMAP);
+ }
+ 
++/**
++ * nilfs_opt_set_set_suinfo - set set_suinfo option
++ * @nilfs: nilfs object
++ */
++int nilfs_opt_set_set_suinfo(struct nilfs *nilfs)
++{
++	nilfs->n_opts |= NILFS_OPT_SET_SUINFO;
++	return 0;
++}
++
++/**
++ * nilfs_opt_clear_set_suinfo - clear set_suinfo option
++ * @nilfs: nilfs object
++ */
++void nilfs_opt_clear_set_suinfo(struct nilfs *nilfs)
++{
++	nilfs->n_opts &= ~NILFS_OPT_SET_SUINFO;
++}
++
++/**
++ * nilfs_opt_test_set_suinfo - test whether set_suinfo option is set or not
++ * @nilfs: nilfs object
++ */
++int nilfs_opt_test_set_suinfo(struct nilfs *nilfs)
++{
++	return !!(nilfs->n_opts & NILFS_OPT_SET_SUINFO);
++}
++
+ static int nilfs_open_sem(struct nilfs *nilfs)
+ {
+ 	char semnambuf[NAME_MAX - 4];
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index c58a542..4624f92 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -248,6 +248,12 @@ static int nilfs_cleanerd_config(struct nilfs_cleanerd *cleanerd,
+ 	else
+ 		nilfs_opt_clear_mmap(cleanerd->nilfs);
+ #endif	/* HAVE_MMAP */
++
++	if (cleanerd->config.cf_use_set_suinfo)
++		nilfs_opt_set_set_suinfo(cleanerd->nilfs);
++	else
++		nilfs_opt_clear_set_suinfo(cleanerd->nilfs);
++
+ 	nilfs_cleanerd_set_log_priority(cleanerd);
+ 
+ 	if (protection_period != ULONG_MAX) {
 -- 
 1.8.5.3
 
