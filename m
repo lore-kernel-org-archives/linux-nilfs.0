@@ -1,93 +1,117 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [static superblock discussion] Does nilfs2 do any in-place
- writes?
-Date: Fri, 07 Feb 2014 10:43:14 +0400
-Message-ID: <1391755394.15555.67.camel@ubuntu>
-References: <1389787304.3913.28.camel@slavad-ubuntu>
-	 <20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
-	 <1389866912.2565.44.camel@slavad-ubuntu>
-	 <20140118.090008.194171715.konishi.ryusuke@lab.ntt.co.jp>
-	 <1390901114.2942.11.camel@slavad-ubuntu-12.04>
-	 <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com>
-	 <71B2806D-7CF2-4992-A588-EB73EADFFF9F@dubeyko.com>
-	 <CAFvQSYQ84_BsqVC_ZM77P92jkP+1dh7NexvZWg4mFE7B3wSK0A@mail.gmail.com>
-	 <AE0F313D-5934-452B-80AB-5D691AF8A4BE@dubeyko.com>
-	 <CAFvQSYQGDXmUit1zFZ9_LAjdLjxM-i_yR2L6pwFDX_BEdjdXxQ@mail.gmail.com>
-	 <1391088759.2637.13.camel@ubuntu>
-	 <CAFvQSYQ-qkXz677-obgHVN5fLQiF10-A=T2yNNAHKRcOGm_Pqw@mail.gmail.com>
-	 <720AFF13-6203-4A28-9850-3C2CAFF3B7BF@dubeyko.com>
-	 <CAFvQSYStT4uwxqtxATLbPOvHYjww=sw=C=f3vBi_qdu6MXAn5A@mail.gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: [PATCH v6 0/6] nilfs-utils: shortcut for certain GC operations
+Date: Fri,  7 Feb 2014 13:16:15 +0100
+Message-ID: <cover.1391774956.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=YevXAQRdsDpJ+iM8gN04xM1mxj2Th2n5GzphGzbqOHQ=;
-	b=p7lzp8KRpenZkCi79UvgP+cIDkqJ8puqjmSpp3zeFJyJXz2U6upxTbfFBp7dE6AGinw32BtSw2ok4k5qabDjECWTnMAS+Ylq7ERoajnF6zV2goP0Z04A9SlXN9qQWpES;
-In-Reply-To: <CAFvQSYStT4uwxqtxATLbPOvHYjww=sw=C=f3vBi_qdu6MXAn5A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Hi Clemens,
+Hi,
 
-On Wed, 2014-02-05 at 21:47 +0100, Clemens Eisserer wrote:
+This patch set adds an optimized version of 
+nilfs_xreclaim_segments, which has an additional parameter 
+min_reclaimable_blks. This parameter specifies the minimum number of 
+reclaimable blocks in a segment, before it can be cleaned. If a 
+segment is below this threshold, it is considered to be not worth 
+cleaning, because all the live blocks would need to be moved to a 
+new segment, which is expensive, and the number of reclaimable 
+blocks is too low. But it is still necessary to update the segment 
+usage information to turn the old segment into a new one.
+    
+This is basically a shortcut to cleaning the segment. It is still 
+necessary to read the segment summary information, but the writing 
+of the live blocks can be skipped if it's not worth it.
 
-> > Moreover, if you have FTL then you
-> > expect that block layer will operate with 4 KB block sizes. Otherwise,
-> > it means that you sell bad storage devices.
-> 
-> Efficient block sizes as small as 4K are only doable with a (DRAM)
-> cache, which isn't a viable solution for small/cheap devices - even
-> the best SD cards can't handle that efficiently. So those "bad storage
-> devices" are unfortunately a common reality (sd/mmc cards, usb pen
-> drives, ...).
-> 
-> When looking through the raspberry pi forums, you'll find a lot
-> reports about dead SD cards, worn out where the ext4 journal or
-> metadata was placed. I admit this is a very specific example, but
-> quite a lot of embedded linux-powered solutions exist - and all of
-> them I know boot from (micro-)SD cards. So an improvement in this
-> situation (such as the mount option proposed by Andreas) could lower
-> the pain for this quite wide-spread use-case, without altering the
-> experience for present use-cases where nilfs2 does fine.
+Additionally new options are introduced for the configuration file 
+and nilfs-clean to allow the user to specify the threshold. 
 
-Ok. I think that one of the possible another approach can be such.
+This is potentially useful for all gc policies, but it is especially
+beneficial for the timestamp policy. Lets assume for example a NILFS2
+volume with 20% static files and lets assume these static files 
+are in the oldest segments. The current timestamp policy will 
+select the oldest segments and, since the data is static, move 
+them mostly unchanged to new segments. After a while they will 
+become the oldest segments again. Then timestamp will move them 
+again. These moving operations are expensive and unnecessary.
 
-[1] We can place static superblock information (it is small size info)
-at the begin of every segment. It will be more FTL-friendly than static
-superblock at the begin and at the end of a volume.
+Regards,
+Andreas Rohner
 
-[2] We can use delayed mount. I mean that it is possible to make
-preliminary mount immediately without long searching or recovering. And
-to start recovering thread in the background for the search of latest
-log. Of course, in such way we haven't enough knowledge about whole
-volume state immediately and we need some time for searching last log in
-background. But, theoretically, we can access to information in RO mode
-on reliable portion of volume before ending of recovering process in
-background. But I understand that delayed mount is really arguable
-suggestion. :) 
+---
+v5->v6 (based on review by Ryusuke Konishi)
+* Add support for percent in nilfs-clean -m argument
+* Change location of nilfs_opt_test_set_suinfo check
+* Change interpretation of stat.cleaned_segs and stat.deferred_segs
+  to be not exclusive
 
-[3] We can divide NILFS2 volume on allocation groups that it will
-contain several segments. And we can make searching of latest log on the
-basis of such allocation group, firstly. Then it will be used usual way
-of searching latest log inside a latest allocation group.
+v4->v5 (based on review by Ryusuke Konishi)
+* Add missing comments and documentation
+* Fix nilfs_set_suinfo return value
+* Fix coding style issues
+* Return error if invalid min_reclaimable_blocks is sent 
+  from nilfs-clean command
+* Use nilfs_vector instead of malloc in nilfs_xreclaim_segment
+* Rename nilfs_reclaim_params flag to
+  NILFS_RECLAIM_PARAM_MIN_RECLAIMABLE_BLKS
+* Changed the interpretation of deferred_segs in 
+  nilfs_reclaim_stat
 
-[4] We can have special area, in likewise way as I suggested previously,
-that it can store special structures for more efficient search. This
-area(s) will store information about allocation groups. It will be
-recorded only on umount. This area information will be modified only in
-memory between mount and umount. And this area can be divided and saved
-by means of portions with size adequate to physical erase block size. I
-think it is possible to have configuration parameter of such portion
-size that can be used by user for tuning on mkfs or tunefs phases.
+v3->v4 (based on review by Ryusuke Konishi)
+* nilfs-utils: Rebase on refactored nilfs_reclaim_segments 
+  (by Ryusuke Konishi)
+* nilfs-utils: Add no_timeout if cleaning was deferred
 
-Of course, it is really raw considerations.
+v2->v3 (based on review by Ryusuke Konishi)
+* Alignment in nilfs_suinfo_update
+* Add missing comments
+* nilfs2: Extra validity checks in nilfs_sufile_set_suinfo
+* nilfs2: Update sh_ncleansegs, sh_ndirtysegs if flags change
+* nilfs2: Fix bugs in nilfs_sufile_set_suinfo
+* nilfs2: Use vmalloc instead of ioctl_wrap_copy
+* nilfs-utils: Separate nilfs_relaim_segments_with_threshold
+* nilfs-utils: Allow different units for min_reclaimable_blocks
+* nilfs-utils: Introduce flag to disable the optimization
+* nilfs-utils: Disable optimization if kernel retruns ENOTTY
+* nilfs-utils: Remove EGCTRYAGAIN error return code
+* nilfs-utils: Rename option to min_reclaimable_blocks
 
-Thanks,
-Vyacheslav Dubeyko.
+v1->v2 (based on review by Ryusuke Konishi)
+* Implementation of NILFS_IOCTL_SET_SUINFO
+* Added mc_min_free_blocks_threshold config option
+  (if clean segments < min_clean_segments)
+* Added new command line param for nilfs-clean
+* Update man- and config-file
+--
+Andreas Rohner (6):
+  nilfs-utils: cldconfig add an option to set min. reclaimable blocks
+  nilfs-utils: add NILFS_OPT_SET_SUINFO
+  nilfs-utils: nilfs-clean add cmdline param min-reclaimable-blocks
+  nilfs-utils: add suport for NILFS_IOCTL_SET_SUINFO ioctl
+  nilfs-utils: add optimized version of nilfs_xreclaim_segments
+  nilfs-utils: add a no_timeout flag to enable faster loop
 
+ include/nilfs.h                   |   9 +-
+ include/nilfs2_fs.h               |  44 ++++++++++
+ include/nilfs_cleaner.h           |  43 +++++++---
+ include/nilfs_gc.h                |  11 +--
+ lib/gc.c                          |  74 +++++++++++++++--
+ lib/nilfs.c                       |  59 +++++++++++++
+ man/nilfs-clean.8                 |   7 ++
+ man/nilfs_cleanerd.conf.5         |  22 +++++
+ sbin/cleanerd/cldconfig.c         | 169 ++++++++++++++++++++++++++++----------
+ sbin/cleanerd/cldconfig.h         |  12 +++
+ sbin/cleanerd/cleanerd.c          | 100 ++++++++++++++++++++--
+ sbin/cleanerd/nilfs_cleanerd.conf |  20 +++++
+ sbin/nilfs-clean/nilfs-clean.c    |  58 +++++++++++--
+ 13 files changed, 549 insertions(+), 79 deletions(-)
+
+-- 
+1.8.5.4
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
