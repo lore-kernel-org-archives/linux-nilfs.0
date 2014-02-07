@@ -1,89 +1,75 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v5 6/6] nilfs-utils: add a no_timeout flag to enable
- faster loop
-Date: Fri, 07 Feb 2014 13:59:14 +0900 (JST)
-Message-ID: <20140207.135914.496329241.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v5 5/6] nilfs-utils: add optimized version of
+ nilfs_xreclaim_segments
+Date: Fri, 07 Feb 2014 14:34:24 +0900 (JST)
+Message-ID: <20140207.143424.27783987.konishi.ryusuke@lab.ntt.co.jp>
 References: <cover.1391692941.git.andreas.rohner@gmx.net>
-	<cover.1391692941.git.andreas.rohner@gmx.net>
-	<c332aafb27e77cafc51f4bb6b6c7632290a5290d.1391692941.git.andreas.rohner@gmx.net>
+	<a2aaefaedbeee6fd8727c2f3bfec5f2a0a048941.1391692941.git.andreas.rohner@gmx.net>
+	<20140207.135656.15669706.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <c332aafb27e77cafc51f4bb6b6c7632290a5290d.1391692941.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <20140207.135656.15669706.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Thu,  6 Feb 2014 15:17:26 +0100, Andreas Rohner wrote:
-> This patch adds a flag, that enables the GC to skip the timeout in
-> certain situations. For example if the cleaning of some segments
-> was deferred to a later time, then no real progress has been
-> made. Apart from reading a few summary blocks, no data was read or
-> written to disk. In this situation it makes sense to skip the
-> normal timeout once and immediately try to clean the next set of
-> segments.
+On Fri, 07 Feb 2014 13:56:56 +0900 (JST), Ryusuke Konishi wrote:
+> On Thu,  6 Feb 2014 15:17:25 +0100, Andreas Rohner wrote:
+>> @@ -1415,6 +1419,17 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+>>  		nilfs_cleanerd_progress(cleanerd, stat.cleaned_segs);
+>>  		cleanerd->fallback = 0;
+>>  		cleanerd->retry_cleaning = 0;
+>> +
+>> +		*ndone = stat.cleaned_segs;
+>> +	} else if (stat.deferred_segs > 0) {
+>> +		for (i = 0; i < stat.deferred_segs; i++)
+>> +			syslog(LOG_DEBUG, "segment %llu deferred",
+>> +			       (unsigned long long)segnums[i]);
+>> +		nilfs_cleanerd_progress(cleanerd, stat.deferred_segs);
+>> +		cleanerd->fallback = 0;
+>> +		cleanerd->retry_cleaning = 0;
+>> +
+>> +		*ndone = stat.deferred_segs;
+>>  	} else {
+>>  		syslog(LOG_DEBUG, "no segments cleaned");
+>>  
+>> @@ -1428,8 +1443,9 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
+>>  		} else {
+>>  			cleanerd->retry_cleaning = 0;
+>>  		}
+>> +		*ndone = 0;
 > 
-> Unfortunately it is not possible, to directly continue the cleaning
-> loop, because this would lead to an unresponsive GC process.
-> Therefore the timeout is simply set to 0 seconds.
+> This condition judgment supposes that stat.deferred_segs and
+> stat.cleaned_segs are exclusive.  It is correct in the current
+> implementation, but I don't want to define the semantics of
+> nilfs_xreclaim_segment() as such.
 > 
-> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-> ---
->  sbin/cleanerd/cleanerd.c | 7 ++++++-
->  1 file changed, 6 insertions(+), 1 deletion(-)
+> Can you rewrite this patch ?
+> Or, I will change this post handling.
 > 
-> diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-> index 4c9f69b..3506c20 100644
-> --- a/sbin/cleanerd/cleanerd.c
-> +++ b/sbin/cleanerd/cleanerd.c
-> @@ -141,6 +141,7 @@ const static struct option long_option[] = {
->   * @running: running state
->   * @fallback: fallback state
->   * @retry_cleaning: retrying reclamation for protected segments
-> + * @no_timeout: the next timeout will be 0 seconds
->   * @ncleansegs: number of semgents cleaned per cycle
->   * @cleaning_interval: cleaning interval
->   * @target: target time for sleeping
-> @@ -169,6 +170,7 @@ struct nilfs_cleanerd {
->  	int running;
->  	int fallback;
->  	int retry_cleaning;
-> +	int no_timeout;
->  	int shutdown;
->  	long ncleansegs;
->  	struct timeval cleaning_interval;
-> @@ -896,7 +898,7 @@ static int nilfs_cleanerd_recalc_interval(struct nilfs_cleanerd *cleanerd,
->  	interval = nilfs_cleanerd_cleaning_interval(cleanerd);
->  	/* timercmp() does not work for '>=' or '<='. */
->  	/* curr >= target */
-> -	if (!timercmp(&curr, &cleanerd->target, <)) {
-> +	if (!timercmp(&curr, &cleanerd->target, <) || cleanerd->no_timeout) {
->  		cleanerd->timeout.tv_sec = 0;
->  		cleanerd->timeout.tv_usec = 0;
->  		timeradd(&curr, interval, &cleanerd->target);
-> @@ -1428,6 +1430,7 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
->  		nilfs_cleanerd_progress(cleanerd, stat.deferred_segs);
->  		cleanerd->fallback = 0;
->  		cleanerd->retry_cleaning = 0;
-> +		cleanerd->no_timeout = 1;
->  
->  		*ndone = stat.deferred_segs;
->  	} else {
-> @@ -1501,6 +1504,8 @@ static int nilfs_cleanerd_clean_loop(struct nilfs_cleanerd *cleanerd)
->  		nilfs_cleanerd_clean_check_pause(cleanerd);
->  
->  	while (!cleanerd->shutdown) {
-> +		cleanerd->no_timeout = 0;
-> +
->  		if (sigprocmask(SIG_BLOCK, &sigset, NULL) < 0) {
->  			syslog(LOG_ERR, "cannot set signal mask: %m");
->  			return -1;
-> -- 
-> 1.8.5.3
 
-This one looks good to me.
+Uum, it needs to introduce another semantics or new arguments
+to realize this since we don't know which segments are 
+deferred.
+
+I am thinking of doing this by sorting segnum[] array as follows:
+
+ - cleand segs:
+    segnum[0] .. segnum[cleaned_segs - 1]
+
+ - deferred segs:
+    segnum[cleaned_segs] .. segnum[cleaned_segs + deferred_segs - 1]
+
+ - prorected segs:
+    segnum[cleaned_segs + deferred_segs] ..
+      segnum[cleaned_segs + deferred_segs + protected_segs - 1]
+
+Actually, protected segments are moved behind segnums of cleaned
+segments in the current implementation.
+
 
 Regards,
 Ryusuke Konishi
