@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v6 2/6] nilfs-utils: add NILFS_OPT_SET_SUINFO
-Date: Fri,  7 Feb 2014 13:16:17 +0100
-Message-ID: <8f8e0f20685c057505ef3150398de39c8427d1ea.1391774956.git.andreas.rohner@gmx.net>
+Subject: [PATCH v6 4/6] nilfs-utils: add suport for NILFS_IOCTL_SET_SUINFO ioctl
+Date: Fri,  7 Feb 2014 13:16:19 +0100
+Message-ID: <33f09e57cf98f8dd1612925c2dc3ef84af912b20.1391774956.git.andreas.rohner@gmx.net>
 References: <cover.1391774956.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1391774956.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -15,100 +15,138 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This option for the nilfs object corresponds to the use_set_suinfo
-flag in the configuration file. This patch adds the flag itself
-plus some convenience functions.
+This patch adds library support for the NILFS_IOCTL_SET_SUINFO
+ioctl. A new function nilfs_set_suinfo and the structure
+nilfs_suinfo_update, which contains the update information, are
+added.
 
-The option is set after the configuration file was read in.
+With this function the segment usage information can be updated
+from userspace, which can be used as a shortcut for certain GC
+operations.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- include/nilfs.h          |  7 ++++++-
- lib/nilfs.c              | 28 ++++++++++++++++++++++++++++
- sbin/cleanerd/cleanerd.c |  6 ++++++
- 3 files changed, 40 insertions(+), 1 deletion(-)
+ include/nilfs.h     |  2 ++
+ include/nilfs2_fs.h | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ lib/nilfs.c         | 31 +++++++++++++++++++++++++++++++
+ 3 files changed, 77 insertions(+)
 
 diff --git a/include/nilfs.h b/include/nilfs.h
-index 56286a9..b5f85d3 100644
+index b5f85d3..fab8ff2 100644
 --- a/include/nilfs.h
 +++ b/include/nilfs.h
-@@ -128,7 +128,8 @@ struct nilfs {
- #define NILFS_OPEN_RDWR		0x0008	/* Open NILFS API in read/write mode */
- #define NILFS_OPEN_GCLK		0x1000	/* Open GC lock primitive */
- 
--#define NILFS_OPT_MMAP	0x01
-+#define NILFS_OPT_MMAP		0x01
-+#define NILFS_OPT_SET_SUINFO	0x02
- 
- 
- struct nilfs *nilfs_open(const char *, const char *, int);
-@@ -140,6 +141,10 @@ void nilfs_opt_clear_mmap(struct nilfs *);
- int nilfs_opt_set_mmap(struct nilfs *);
- int nilfs_opt_test_mmap(struct nilfs *);
- 
-+void nilfs_opt_clear_set_suinfo(struct nilfs *);
-+int nilfs_opt_set_set_suinfo(struct nilfs *);
-+int nilfs_opt_test_set_suinfo(struct nilfs *);
-+
- nilfs_cno_t nilfs_get_oldest_cno(struct nilfs *);
- 
- struct nilfs_super_block *nilfs_get_sb(struct nilfs *);
-diff --git a/lib/nilfs.c b/lib/nilfs.c
-index c1771e8..93822de 100644
---- a/lib/nilfs.c
-+++ b/lib/nilfs.c
-@@ -288,6 +288,34 @@ int nilfs_opt_test_mmap(struct nilfs *nilfs)
- 	return !!(nilfs->n_opts & NILFS_OPT_MMAP);
+@@ -304,6 +304,8 @@ int nilfs_delete_checkpoint(struct nilfs *, nilfs_cno_t);
+ int nilfs_get_cpstat(const struct nilfs *, struct nilfs_cpstat *);
+ ssize_t nilfs_get_suinfo(const struct nilfs *, __u64, struct nilfs_suinfo *,
+ 			 size_t);
++int nilfs_set_suinfo(const struct nilfs *, struct nilfs_suinfo_update *,
++		     size_t);
+ int nilfs_get_sustat(const struct nilfs *, struct nilfs_sustat *);
+ ssize_t nilfs_get_vinfo(const struct nilfs *, struct nilfs_vinfo *, size_t);
+ ssize_t nilfs_get_bdescs(const struct nilfs *, struct nilfs_bdesc *, size_t);
+diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
+index e674f44..a16ad4c 100644
+--- a/include/nilfs2_fs.h
++++ b/include/nilfs2_fs.h
+@@ -714,6 +714,48 @@ static inline int nilfs_suinfo_clean(const struct nilfs_suinfo *si)
  }
  
+ /* ioctl */
 +/**
-+ * nilfs_opt_set_set_suinfo - set set_suinfo option
-+ * @nilfs: nilfs object
++ * nilfs_suinfo_update - segment usage information update
++ * @sup_segnum: segment number
++ * @sup_flags: flags for which fields are active in sup_sui
++ * @sup_reserved: reserved necessary for alignment
++ * @sup_sui: segment usage information
 + */
-+int nilfs_opt_set_set_suinfo(struct nilfs *nilfs)
-+{
-+	nilfs->n_opts |= NILFS_OPT_SET_SUINFO;
-+	return 0;
++struct nilfs_suinfo_update {
++	__u64 sup_segnum;
++	__u32 sup_flags;
++	__u32 sup_reserved;
++	struct nilfs_suinfo sup_sui;
++};
++
++enum {
++	NILFS_SUINFO_UPDATE_LASTMOD,
++	NILFS_SUINFO_UPDATE_NBLOCKS,
++	NILFS_SUINFO_UPDATE_FLAGS,
++	__NR_NILFS_SUINFO_UPDATE_FIELDS,
++};
++
++#define NILFS_SUINFO_UPDATE_FNS(flag, name)				\
++static inline void							\
++nilfs_suinfo_update_set_##name(struct nilfs_suinfo_update *sup)		\
++{									\
++	sup->sup_flags |= 1UL << NILFS_SUINFO_UPDATE_##flag;		\
++}									\
++static inline void							\
++nilfs_suinfo_update_clear_##name(struct nilfs_suinfo_update *sup)	\
++{									\
++	sup->sup_flags &= ~(1UL << NILFS_SUINFO_UPDATE_##flag);		\
++}									\
++static inline int							\
++nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
++{									\
++	return !!(sup->sup_flags & (1UL << NILFS_SUINFO_UPDATE_##flag));\
 +}
 +
-+/**
-+ * nilfs_opt_clear_set_suinfo - clear set_suinfo option
-+ * @nilfs: nilfs object
-+ */
-+void nilfs_opt_clear_set_suinfo(struct nilfs *nilfs)
-+{
-+	nilfs->n_opts &= ~NILFS_OPT_SET_SUINFO;
-+}
++NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
++NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
++NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
 +
-+/**
-+ * nilfs_opt_test_set_suinfo - test whether set_suinfo option is set or not
-+ * @nilfs: nilfs object
-+ */
-+int nilfs_opt_test_set_suinfo(struct nilfs *nilfs)
-+{
-+	return !!(nilfs->n_opts & NILFS_OPT_SET_SUINFO);
-+}
-+
- static int nilfs_open_sem(struct nilfs *nilfs)
- {
- 	char semnambuf[NAME_MAX - 4];
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index c58a542..4624f92 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -248,6 +248,12 @@ static int nilfs_cleanerd_config(struct nilfs_cleanerd *cleanerd,
- 	else
- 		nilfs_opt_clear_mmap(cleanerd->nilfs);
- #endif	/* HAVE_MMAP */
-+
-+	if (cleanerd->config.cf_use_set_suinfo)
-+		nilfs_opt_set_set_suinfo(cleanerd->nilfs);
-+	else
-+		nilfs_opt_clear_set_suinfo(cleanerd->nilfs);
-+
- 	nilfs_cleanerd_set_log_priority(cleanerd);
+ enum {
+ 	NILFS_CHECKPOINT,
+ 	NILFS_SNAPSHOT,
+@@ -867,5 +909,7 @@ struct nilfs_bdesc {
+ 	_IOW(NILFS_IOCTL_IDENT, 0x8B, __u64)
+ #define NILFS_IOCTL_SET_ALLOC_RANGE  \
+ 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
++#define NILFS_IOCTL_SET_SUINFO  \
++	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
  
- 	if (protection_period != ULONG_MAX) {
+ #endif	/* _LINUX_NILFS_FS_H */
+diff --git a/lib/nilfs.c b/lib/nilfs.c
+index 93822de..7317205 100644
+--- a/lib/nilfs.c
++++ b/lib/nilfs.c
+@@ -596,6 +596,37 @@ ssize_t nilfs_get_suinfo(const struct nilfs *nilfs, __u64 segnum,
+ }
+ 
+ /**
++ * nilfs_set_suinfo - sets segment usage info
++ * @nilfs: nilfs object
++ * @sup: an array of nilfs_suinfo_update structs
++ * @nsup: number of elements in sup
++ *
++ * Description: Takes an array of nilfs_suinfo_update structs and updates
++ * segment usage info accordingly. Only the fields indicated by sup_flags
++ * are updated.
++ *
++ * Return Value: On success, 0 is returned. On error, -1 is returned.
++ */
++int nilfs_set_suinfo(const struct nilfs *nilfs,
++		     struct nilfs_suinfo_update *sup, size_t nsup)
++{
++	struct nilfs_argv argv;
++
++	if (nilfs->n_iocfd < 0) {
++		errno = EBADF;
++		return -1;
++	}
++
++	argv.v_base = (unsigned long)sup;
++	argv.v_nmembs = nsup;
++	argv.v_size = sizeof(struct nilfs_suinfo_update);
++	argv.v_index = 0;
++	argv.v_flags = 0;
++
++	return ioctl(nilfs->n_iocfd, NILFS_IOCTL_SET_SUINFO, &argv);
++}
++
++/**
+  * nilfs_get_sustat - get segment usage statistics
+  * @nilfs: nilfs object
+  * @sustat: buffer of a nilfs_sustat struct to store statistics in
 -- 
 1.8.5.4
 
