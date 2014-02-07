@@ -1,78 +1,94 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v5 5/6] nilfs-utils: add optimized version of
- nilfs_xreclaim_segments
-Date: Fri, 07 Feb 2014 14:34:24 +0900 (JST)
-Message-ID: <20140207.143424.27783987.konishi.ryusuke@lab.ntt.co.jp>
-References: <cover.1391692941.git.andreas.rohner@gmx.net>
-	<a2aaefaedbeee6fd8727c2f3bfec5f2a0a048941.1391692941.git.andreas.rohner@gmx.net>
-	<20140207.135656.15669706.konishi.ryusuke@lab.ntt.co.jp>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [static superblock discussion] Does nilfs2 do any in-place
+ writes?
+Date: Fri, 07 Feb 2014 10:43:14 +0400
+Message-ID: <1391755394.15555.67.camel@ubuntu>
+References: <1389787304.3913.28.camel@slavad-ubuntu>
+	 <20140116.002353.94325733.konishi.ryusuke@lab.ntt.co.jp>
+	 <1389866912.2565.44.camel@slavad-ubuntu>
+	 <20140118.090008.194171715.konishi.ryusuke@lab.ntt.co.jp>
+	 <1390901114.2942.11.camel@slavad-ubuntu-12.04>
+	 <CAFvQSYSu5CGxs+K6bZUCtq17PrS_paX3bXBuLBRTba_XWYGgAg@mail.gmail.com>
+	 <71B2806D-7CF2-4992-A588-EB73EADFFF9F@dubeyko.com>
+	 <CAFvQSYQ84_BsqVC_ZM77P92jkP+1dh7NexvZWg4mFE7B3wSK0A@mail.gmail.com>
+	 <AE0F313D-5934-452B-80AB-5D691AF8A4BE@dubeyko.com>
+	 <CAFvQSYQGDXmUit1zFZ9_LAjdLjxM-i_yR2L6pwFDX_BEdjdXxQ@mail.gmail.com>
+	 <1391088759.2637.13.camel@ubuntu>
+	 <CAFvQSYQ-qkXz677-obgHVN5fLQiF10-A=T2yNNAHKRcOGm_Pqw@mail.gmail.com>
+	 <720AFF13-6203-4A28-9850-3C2CAFF3B7BF@dubeyko.com>
+	 <CAFvQSYStT4uwxqtxATLbPOvHYjww=sw=C=f3vBi_qdu6MXAn5A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140207.135656.15669706.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=YevXAQRdsDpJ+iM8gN04xM1mxj2Th2n5GzphGzbqOHQ=;
+	b=p7lzp8KRpenZkCi79UvgP+cIDkqJ8puqjmSpp3zeFJyJXz2U6upxTbfFBp7dE6AGinw32BtSw2ok4k5qabDjECWTnMAS+Ylq7ERoajnF6zV2goP0Z04A9SlXN9qQWpES;
+In-Reply-To: <CAFvQSYStT4uwxqtxATLbPOvHYjww=sw=C=f3vBi_qdu6MXAn5A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, 07 Feb 2014 13:56:56 +0900 (JST), Ryusuke Konishi wrote:
-> On Thu,  6 Feb 2014 15:17:25 +0100, Andreas Rohner wrote:
->> @@ -1415,6 +1419,17 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
->>  		nilfs_cleanerd_progress(cleanerd, stat.cleaned_segs);
->>  		cleanerd->fallback = 0;
->>  		cleanerd->retry_cleaning = 0;
->> +
->> +		*ndone = stat.cleaned_segs;
->> +	} else if (stat.deferred_segs > 0) {
->> +		for (i = 0; i < stat.deferred_segs; i++)
->> +			syslog(LOG_DEBUG, "segment %llu deferred",
->> +			       (unsigned long long)segnums[i]);
->> +		nilfs_cleanerd_progress(cleanerd, stat.deferred_segs);
->> +		cleanerd->fallback = 0;
->> +		cleanerd->retry_cleaning = 0;
->> +
->> +		*ndone = stat.deferred_segs;
->>  	} else {
->>  		syslog(LOG_DEBUG, "no segments cleaned");
->>  
->> @@ -1428,8 +1443,9 @@ static int nilfs_cleanerd_clean_segments(struct nilfs_cleanerd *cleanerd,
->>  		} else {
->>  			cleanerd->retry_cleaning = 0;
->>  		}
->> +		*ndone = 0;
+Hi Clemens,
+
+On Wed, 2014-02-05 at 21:47 +0100, Clemens Eisserer wrote:
+
+> > Moreover, if you have FTL then you
+> > expect that block layer will operate with 4 KB block sizes. Otherwise,
+> > it means that you sell bad storage devices.
 > 
-> This condition judgment supposes that stat.deferred_segs and
-> stat.cleaned_segs are exclusive.  It is correct in the current
-> implementation, but I don't want to define the semantics of
-> nilfs_xreclaim_segment() as such.
+> Efficient block sizes as small as 4K are only doable with a (DRAM)
+> cache, which isn't a viable solution for small/cheap devices - even
+> the best SD cards can't handle that efficiently. So those "bad storage
+> devices" are unfortunately a common reality (sd/mmc cards, usb pen
+> drives, ...).
 > 
-> Can you rewrite this patch ?
-> Or, I will change this post handling.
-> 
+> When looking through the raspberry pi forums, you'll find a lot
+> reports about dead SD cards, worn out where the ext4 journal or
+> metadata was placed. I admit this is a very specific example, but
+> quite a lot of embedded linux-powered solutions exist - and all of
+> them I know boot from (micro-)SD cards. So an improvement in this
+> situation (such as the mount option proposed by Andreas) could lower
+> the pain for this quite wide-spread use-case, without altering the
+> experience for present use-cases where nilfs2 does fine.
 
-Uum, it needs to introduce another semantics or new arguments
-to realize this since we don't know which segments are 
-deferred.
+Ok. I think that one of the possible another approach can be such.
 
-I am thinking of doing this by sorting segnum[] array as follows:
+[1] We can place static superblock information (it is small size info)
+at the begin of every segment. It will be more FTL-friendly than static
+superblock at the begin and at the end of a volume.
 
- - cleand segs:
-    segnum[0] .. segnum[cleaned_segs - 1]
+[2] We can use delayed mount. I mean that it is possible to make
+preliminary mount immediately without long searching or recovering. And
+to start recovering thread in the background for the search of latest
+log. Of course, in such way we haven't enough knowledge about whole
+volume state immediately and we need some time for searching last log in
+background. But, theoretically, we can access to information in RO mode
+on reliable portion of volume before ending of recovering process in
+background. But I understand that delayed mount is really arguable
+suggestion. :) 
 
- - deferred segs:
-    segnum[cleaned_segs] .. segnum[cleaned_segs + deferred_segs - 1]
+[3] We can divide NILFS2 volume on allocation groups that it will
+contain several segments. And we can make searching of latest log on the
+basis of such allocation group, firstly. Then it will be used usual way
+of searching latest log inside a latest allocation group.
 
- - prorected segs:
-    segnum[cleaned_segs + deferred_segs] ..
-      segnum[cleaned_segs + deferred_segs + protected_segs - 1]
+[4] We can have special area, in likewise way as I suggested previously,
+that it can store special structures for more efficient search. This
+area(s) will store information about allocation groups. It will be
+recorded only on umount. This area information will be modified only in
+memory between mount and umount. And this area can be divided and saved
+by means of portions with size adequate to physical erase block size. I
+think it is possible to have configuration parameter of such portion
+size that can be used by user for tuning on mkfs or tunefs phases.
 
-Actually, protected segments are moved behind segnums of cleaned
-segments in the current implementation.
+Of course, it is really raw considerations.
+
+Thanks,
+Vyacheslav Dubeyko.
 
 
-Regards,
-Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
