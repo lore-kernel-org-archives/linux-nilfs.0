@@ -1,79 +1,168 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH v2 1/1] nilfs2: add mount option that reduces super block
- writes
-Date: Tue, 11 Feb 2014 15:07:48 +0100
-Message-ID: <52FA2EB4.6030401@gmx.net>
-References: <cover.1391359219.git.andreas.rohner@gmx.net>	<cover.1391359219.git.andreas.rohner@gmx.net>	<dd489a00bca481cea1cb69e755ed5db5b186a5e5.1391359219.git.andreas.rohner@gmx.net> <20140211.213138.107755196.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 2/2] nilfs-utils: use min_t() and max_t()
+Date: Wed, 12 Feb 2014 01:23:09 +0900
+Message-ID: <1392135789-5287-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1392135789-5287-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140211.213138.107755196.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <1392135789-5287-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi Ryusuke,
+Simplify some calculations in lssu, lscp, lib/gc.c, lib/nilfs.c,
+lib/cnoconv.c, and cleanerd with min_t() and max_t().
 
-On 2014-02-11 13:31, Ryusuke Konishi wrote:
-> Hi Andreas,
-> On Sun,  2 Feb 2014 17:50:09 +0100, Andreas Rohner wrote:
->> This patch introduces a mount option bad_ftl that disables the
->> periodic overwrites of the super block to make the file system better
->> suitable for bad flash memory with a bad FTL. The super block is only
->> written at umount time. So if there is a unclean shutdown the file
->> system needs to be recovered by a linear scan of all segment summary
->> blocks.
->>
->> The linear scan is only necessary if the file system wasn't umounted
->> properly. So the normal mount time is not affected.
->>
->> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-> 
-> 
-> Do we really need to add the third crc in segument summary headers ?
-> After all, we need to do a full check for a log with a super root
-> block to validate it.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ bin/lscp.c               |    8 ++++----
+ bin/lssu.c               |    3 ++-
+ lib/cnoconv.c            |    5 +++--
+ lib/gc.c                 |    3 +--
+ lib/nilfs.c              |    8 +++++---
+ sbin/cleanerd/cleanerd.c |    4 ++--
+ 6 files changed, 17 insertions(+), 14 deletions(-)
 
-I need a way to quickly decide if a segment could be potentially valid
-without reading in more blocks. The third crc is there, to make sure,
-that the segment is not a valid segment of a previous instance of NILFS2
-on the same volume. Such a previous instance would have used a different
-crc seed. I only keep a limited number of history entries. This history
-could be easily filled up with old segments from a previous instance and
-the recovery would fail.
+diff --git a/bin/lscp.c b/bin/lscp.c
+index f16f870..7c51e70 100644
+--- a/bin/lscp.c
++++ b/bin/lscp.c
+@@ -48,6 +48,7 @@
+ 
+ #include <errno.h>
+ #include "nilfs.h"
++#include "util.h"
+ 
+ #undef CONFIG_PRINT_CPSTAT
+ 
+@@ -133,9 +134,8 @@ static void lscp_print_cpstat(const struct nilfs_cpstat *cpstat, int mode)
+ static ssize_t lscp_get_cpinfo(struct nilfs *nilfs, nilfs_cno_t cno, int mode,
+ 			       size_t count)
+ {
+-	size_t req_count;
++	size_t req_count = min_t(size_t, count, LSCP_NCPINFO);
+ 
+-	req_count = (count < LSCP_NCPINFO) ? count : LSCP_NCPINFO;
+ 	return nilfs_get_cpinfo(nilfs, cno, mode, cpinfos, req_count);
+ }
+ 
+@@ -184,8 +184,8 @@ static int lscp_backward_cpinfo(struct nilfs *nilfs,
+ 		cpstat->cs_cno;
+ 
+ 	for ( ; rest > 0 && eidx > NILFS_CNO_MIN; eidx = sidx) {
+-		delta = (rest > LSCP_NCPINFO ? LSCP_NCPINFO :
+-			 (rest < LSCP_MINDELTA ? LSCP_MINDELTA : rest));
++		delta = min_t(__u64, LSCP_NCPINFO,
++			      max_t(__u64, rest, LSCP_MINDELTA));
+ 		sidx = (eidx >= NILFS_CNO_MIN + delta) ? eidx - delta :
+ 			NILFS_CNO_MIN;
+ 
+diff --git a/bin/lssu.c b/bin/lssu.c
+index bef4749..e0cbd8d 100644
+--- a/bin/lssu.c
++++ b/bin/lssu.c
+@@ -51,6 +51,7 @@
+ 
+ #include <errno.h>
+ #include "nilfs.h"
++#include "util.h"
+ #include "nilfs_gc.h"
+ #include "cnoconv.h"
+ #include "parser.h"
+@@ -244,7 +245,7 @@ static int lssu_list_suinfo(struct nilfs *nilfs)
+ 		sustat.ss_nsegs;
+ 
+ 	for ( ; rest > 0 && segnum < sustat.ss_nsegs; rest -= n) {
+-		count = (rest < LSSU_NSEGS) ? rest : LSSU_NSEGS;
++		count = min_t(__u64, rest, LSSU_NSEGS);
+ 		nsi = nilfs_get_suinfo(nilfs, segnum, suinfos, count);
+ 		if (nsi < 0)
+ 			return 1;
+diff --git a/lib/cnoconv.c b/lib/cnoconv.c
+index 5c79e5c..30f6322 100644
+--- a/lib/cnoconv.c
++++ b/lib/cnoconv.c
+@@ -17,6 +17,7 @@
+ #include <stdlib.h>
+ #endif	/* HAVE_STDLIB_H */
+ 
++#include "util.h"
+ #include "cnoconv.h"
+ 
+ /* Context of checkpoint number/time converter */
+@@ -77,8 +78,8 @@ int nilfs_cnoconv_time2cno(struct nilfs_cnoconv *cnoconv, __u64 time,
+ 
+ 	cno = (cnoconv->prevcno == 0) ? NILFS_CNO_MIN : cnoconv->prevcno;
+ 	while (cno < cpstat.cs_cno) {
+-		count = (cpstat.cs_cno - cno < NILFS_CNOCONV_NCPINFO) ?
+-			cpstat.cs_cno - cno : NILFS_CNOCONV_NCPINFO;
++		count = min_t(nilfs_cno_t, cpstat.cs_cno - cno,
++			      NILFS_CNOCONV_NCPINFO);
+ 		n = nilfs_get_cpinfo(cnoconv->nilfs, cno, NILFS_CHECKPOINT,
+ 				     cpinfo, count);
+ 		if (n < 0)
+diff --git a/lib/gc.c b/lib/gc.c
+index ba90376..453acf2 100644
+--- a/lib/gc.c
++++ b/lib/gc.c
+@@ -559,8 +559,7 @@ static int nilfs_get_bdesc(struct nilfs *nilfs, struct nilfs_vector *bdescv)
+ 	bdescs = nilfs_vector_get_data(bdescv);
+ 	nbdescs = nilfs_vector_get_size(bdescv);
+ 	for (i = 0; i < nbdescs; i += n) {
+-		count = (nbdescs - i < NILFS_GC_NBDESCS) ?
+-			(nbdescs - i) : NILFS_GC_NBDESCS;
++		count = min_t(size_t, nbdescs - i, NILFS_GC_NBDESCS);
+ 		n = nilfs_get_bdescs(nilfs, bdescs + i, count);
+ 		if (n < 0)
+ 			return -1;
+diff --git a/lib/nilfs.c b/lib/nilfs.c
+index 7317205..60b51b0 100644
+--- a/lib/nilfs.c
++++ b/lib/nilfs.c
+@@ -73,6 +73,7 @@
+ #include <errno.h>
+ #include <assert.h>
+ #include "nilfs.h"
++#include "util.h"
+ #include "pathnames.h"
+ #include "realpath.h"
+ 
+@@ -126,10 +127,11 @@ static int has_mntopt(const char *opts, const char *opt)
+ 	while (p != NULL) {
+ 		q = strchr(p, MNTOPT_SEP);
+ 		if (q) {
+-			n = (q - p < len) ? len : q - p;
++			n = max_t(size_t, q - p, len);
+ 			q++;
+-		} else
+-			n = (strlen(p) < len) ? len : strlen(p);
++		} else {
++			n = max_t(size_t, strlen(p), len);
++		}
+ 		if (strncmp(p, opt, n) == 0)
+ 			return 1;
+ 		p = q;
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index c20045d..6a0291c 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -607,8 +607,8 @@ nilfs_cleanerd_select_segments(struct nilfs_cleanerd *cleanerd,
+ 		sustat->ss_nongc_ctime;
+ 
+ 	for (segnum = 0; segnum < sustat->ss_nsegs; segnum += n) {
+-		count = (sustat->ss_nsegs - segnum < NILFS_CLEANERD_NSUINFO) ?
+-			sustat->ss_nsegs - segnum : NILFS_CLEANERD_NSUINFO;
++		count = min_t(__u64, sustat->ss_nsegs - segnum,
++			      NILFS_CLEANERD_NSUINFO);
+ 		n = nilfs_get_suinfo(nilfs, segnum, si, count);
+ 		if (n < 0) {
+ 			nssegs = n;
+-- 
+1.7.9.3
 
-I tried to use the ss_sumsum crc for that purpose, but for that I have
-to read in on average 5 to 8 extra blocks per segment. I cannot read
-ahead these blocks, so the whole search is slowed down.
-
-> This patch also seems to be using the nature that headers which have a
-> NILFS_SS_SR flag sometimes appear at the head of segments.  But this
-> is not guranteed.  Is this condition eliminable?
-
-It uses that fact, but it does not rely on it. If there is a recent
-segment with NILFS_SS_SR flag at the top it will use that and leave the
-rest to the normal recovery function. But if none is found, it will scan
-all partial segments for the NILFS_SS_SR flag. This is done in
-nilfs_search_partial_log_cursor.
-
-> The measurement results are very interesting (thanks for the effort),
-> but they look to rely on a few these ellipsis techniques for reducing
-> recovery time.
-
-We could easily increase the security by increasing the
-NILFS_SEG_HISTORY_DEPTH, without reducing the performance. The
-performance is mainly determined by how fast the device can read in the
-segment summary blocks.
-
-It just scans all the segment summary blocks of all segments and keeps a
-history of the most promising candidates for recovery. After that the
-candidates are processed further, including a full crc check and search
-for partial segments with the NILFS_SS_SR flag if necessary.
-
-Best regards,
-Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
