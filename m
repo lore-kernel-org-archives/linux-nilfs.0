@@ -1,79 +1,59 @@
-From: gianluca <gianlucarenzi-RMR/+jklkADqD7ZJT3/+rDUZDU+1vuVT@public.gmane.org>
-Subject: Re: Hello list!
-Date: Wed, 12 Feb 2014 15:16:12 +0100
-Message-ID: <52FB822C.1060208@eurekelettronica.it>
-References: <52FB49EA.30004@eurekelettronica.it> <CAFvQSYTuM7Zjfz47UGU3KnTgH1iSRWiiZ3iSqXUiu7MKFnOmFA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 04/10] nilfs-utils: remove unnecessary whitespace before quoted newlines
+Date: Fri, 14 Feb 2014 03:24:04 +0900
+Message-ID: <1392315850-29149-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1392315850-29149-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAFvQSYTuM7Zjfz47UGU3KnTgH1iSRWiiZ3iSqXUiu7MKFnOmFA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1392315850-29149-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-To: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On 02/12/2014 02:04 PM, Clemens Eisserer wrote:
-> Hi Gianluca,
->
->> What about the wear-leveling of this configuration of the eMMC devic=
-e?
->
-> Actually nilfs2 is by design as friendly to flash devices with a weak
-> controller as possible.
-> It only performs sequential writes, yielding a perfectly equal
-> distribution of writes across the device.
-> Nilfs2 even overwrites static data which won't be written to when
-> using other filesystems - which is great for devices supporting only
-> dynamic wear leveling (usually SD, mmc, emmc, ...).
->
+Fix the following checkpatch warnings:
 
-Ok. good news to me.
+ WARNING: unnecessary whitespace before a quoted newline
+ #1166: FILE: mkfs/mkfs.c:1166:
+ +               "Usage: %s [-b block-size] [-B blocks-per-segment] [-c] [-f] \n"
 
-> However, there is one issue left - the (two) superblocks are written
-> to periodically in short intervals.
-> There is currently an ongoing discussion about this and Andreas has
-> posted an experimental patch which works well on my raspberry pi.
->
+ WARNING: unnecessary whitespace before a quoted newline
+ #1167: FILE: mkfs/mkfs.c:1167:
+ +               "       [-L volume-label] [-m reserved-segments-percentage] \n"
 
-What patch? Can you give some additional info? I am running kernel=20
-3.12.2 vanilla.
+ WARNING: unnecessary whitespace before a quoted newline
+ #1168: FILE: mkfs/mkfs.c:1168:
+ +               "       [-O feature[,...]] \n"
 
->> Can you point me on some tools, utilities to check out this issue?
->
-> What I did to observe the write-patterns of various file-systems was
-> to create a ram-disk using BUSE: https://github.com/acozzette/BUSE
-> It delivers an example-program which can be modified to log each
-> write-access, which I imported as CSV into LibreOffice for
-> visualization.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ sbin/mkfs/mkfs.c |    7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-can you explain better?
+diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+index 4d6c375..f4be411 100644
+--- a/sbin/mkfs/mkfs.c
++++ b/sbin/mkfs/mkfs.c
+@@ -1163,9 +1163,10 @@ static void parse_options(int argc, char *argv[])
+ static void usage(void)
+ {
+ 	fprintf(stderr,
+-		"Usage: %s [-b block-size] [-B blocks-per-segment] [-c] [-f] \n"
+-		"       [-L volume-label] [-m reserved-segments-percentage] \n"
+-		"       [-O feature[,...]] \n"
++		"Usage: %s [-b block-size] [-B blocks-per-segment] [-c] " \
++		"[-f]\n" \
++		"       [-L volume-label] [-m reserved-segments-percentage]\n" \
++		"       [-O feature[,...]]\n" \
+ 		"       [-hnqvKV] device\n",
+ 		progname);
+ }
+-- 
+1.7.9.3
 
-Regards,
---=20
-            ,,,
-           (o o)
-=3D=3D=3D=3D=3D=3DoOO=3D=3D(_)=3D=3DOOo=3D=3D=3D=3D=3D=3D
-
-Gianluca Renzi
-R&D
-phone: +39.0542.609120
-fax:   +39.0542.609212
-
-       .oooO  Oooo.
-=3D=3D=3D=3D=3D=3D(   )=3D=3D(   )=3D=3D=3D=3D=3D=3D=3D
-        \ (    ) /
-         \_)  (_/
-
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-| I would like to |
-| fix the world,  |
-| but they're not |
-| giving me the   |
-  \ source code!  /
-   ---------------
-     =C2=AF\_(".)_/=C2=AF
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
