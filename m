@@ -1,10 +1,8 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 04/10] nilfs-utils: remove unnecessary whitespace before quoted newlines
-Date: Fri, 14 Feb 2014 03:24:04 +0900
-Message-ID: <1392315850-29149-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1392315850-29149-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 0/10] nilfs-utils: correct coding style issues
+Date: Fri, 14 Feb 2014 03:24:00 +0900
+Message-ID: <1392315850-29149-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1392315850-29149-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -13,45 +11,55 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Fix the following checkpatch warnings:
+This series gets rid of a bunch of coding style issues detected by
+script/checkpatch.pl.  These errors and warnings are mainly detected
+by "checkpatch.pl --file" command.  This patchset improves the result
+of an exhaustive test with the tool though it still reports warnings
+including few false positives.
 
- WARNING: unnecessary whitespace before a quoted newline
- #1166: FILE: mkfs/mkfs.c:1166:
- +               "Usage: %s [-b block-size] [-B blocks-per-segment] [-c] [-f] \n"
+Ryusuke Konishi
+--
+Ryusuke Konishi (10):
+      nilfs-utils: fix order of storage class specifiers
+      nilfs-utils: insert backslash between lines splitting quoted string
+      nilfs-utils: do not indent labels
+      nilfs-utils: remove unnecessary whitespace before quoted newlines
+      nilfs-utils: do not initialize static or global variables to 0 or NULL
+      nilfs-utils: remove unnecessary parentheses from return statements
+      nilfs-utils: remove spaces between function name and open parenthesis
+      mount/sundires.c: fix indent
+      nilfs-utils: add missing space chars
+      nilfs-utils: remove unnecessary externs
 
- WARNING: unnecessary whitespace before a quoted newline
- #1167: FILE: mkfs/mkfs.c:1167:
- +               "       [-L volume-label] [-m reserved-segments-percentage] \n"
-
- WARNING: unnecessary whitespace before a quoted newline
- #1168: FILE: mkfs/mkfs.c:1168:
- +               "       [-O feature[,...]] \n"
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- sbin/mkfs/mkfs.c |    7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
-index 4d6c375..f4be411 100644
---- a/sbin/mkfs/mkfs.c
-+++ b/sbin/mkfs/mkfs.c
-@@ -1163,9 +1163,10 @@ static void parse_options(int argc, char *argv[])
- static void usage(void)
- {
- 	fprintf(stderr,
--		"Usage: %s [-b block-size] [-B blocks-per-segment] [-c] [-f] \n"
--		"       [-L volume-label] [-m reserved-segments-percentage] \n"
--		"       [-O feature[,...]] \n"
-+		"Usage: %s [-b block-size] [-B blocks-per-segment] [-c] " \
-+		"[-f]\n" \
-+		"       [-L volume-label] [-m reserved-segments-percentage]\n" \
-+		"       [-O feature[,...]]\n" \
- 		"       [-hnqvKV] device\n",
- 		progname);
- }
--- 
-1.7.9.3
+ bin/chcp.c                       |    2 +-
+ bin/dumpseg.c                    |    2 +-
+ bin/lscp.c                       |    6 +-
+ bin/lssu.c                       |    6 +-
+ bin/mkcp.c                       |    2 +-
+ bin/rmcp.c                       |    6 +-
+ include/nls.h                    |    4 +-
+ lib/cleaner_ctl.c                |   12 +-
+ lib/cleaner_exec.c               |    2 +-
+ lib/nilfs.c                      |    2 +-
+ sbin/cleanerd/cleanerd.c         |   11 +-
+ sbin/mkfs/bitops.c               |    2 +-
+ sbin/mkfs/mkfs.c                 |   54 ++++---
+ sbin/mount/fstab.c               |  147 +++++++++---------
+ sbin/mount/fstab.h               |   28 ++--
+ sbin/mount/mount.nilfs2.c        |   43 +++---
+ sbin/mount/mount_libmount.c      |   14 +-
+ sbin/mount/mount_mntent.c        |   39 ++---
+ sbin/mount/mount_mntent.h        |    8 +-
+ sbin/mount/mount_opts.c          |   14 +-
+ sbin/mount/sundries.c            |  314 +++++++++++++++++++-------------------
+ sbin/mount/sundries.h            |   30 ++--
+ sbin/mount/umount.nilfs2.c       |   27 ++--
+ sbin/mount/umount_libmount.c     |    8 +-
+ sbin/mount/xmalloc.c             |   12 +-
+ sbin/nilfs-clean/nilfs-clean.c   |   12 +-
+ sbin/nilfs-resize/nilfs-resize.c |   72 ++++-----
+ sbin/nilfs-tune/nilfs-tune.c     |   24 +--
+ 28 files changed, 449 insertions(+), 454 deletions(-)
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
