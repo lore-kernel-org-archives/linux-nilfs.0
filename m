@@ -1,7 +1,7 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] lssu: fix format-security warning at lssu_print_header()
-Date: Sat, 15 Feb 2014 14:11:11 +0900
-Message-ID: <1392441071-19824-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: [PATCH 0/2] nilfs2: add support for FITRIM ioctl
+Date: Sat, 15 Feb 2014 14:34:24 +0100
+Message-ID: <cover.1392470644.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -9,51 +9,31 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Fix the following gcc warning on some platforms:
+Hi,
 
- lssu.c: In function 'lssu_print_header':
- lssu.c:127:2: warning: format not a string literal and no format arguments [-Wformat-security]
-   printf(lssu_format[disp_mode].header);
-   ^
+This patch adds support for the FITRIM ioctl, which allows user space 
+tools like fstrim to issue TRIM/DISCARD requests to the underlying 
+device. It takes a fstrim_range structure as a parameter and for every 
+clean segment in the specified range the function blkdev_issue_discard 
+is called.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Best regards,
+Andreas Rohner
+
 ---
- bin/lssu.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+Andreas Rohner (2):
+  nilfs2: add nilfs_sufile_trim_fs to trim clean segs
+  nilfs2: add FITRIM ioctl support for nilfs2
 
-diff --git a/bin/lssu.c b/bin/lssu.c
-index d19f7ba..5f501b1 100644
---- a/bin/lssu.c
-+++ b/bin/lssu.c
-@@ -99,12 +99,12 @@ struct lssu_format {
- 
- static const struct lssu_format lssu_format[] = {
- 	{
--		"              SEGNUM        DATE     TIME STAT     NBLOCKS\n",
-+		"              SEGNUM        DATE     TIME STAT     NBLOCKS",
- 		"%20llu  %s  %c%c%c  %10u\n"
- 	},
- 	{
--		"           SEGNUM        DATE     TIME STAT     NBLOCKS"
--		"       NLIVEBLOCKS\n",
-+		"           SEGNUM        DATE     TIME STAT     NBLOCKS" \
-+		"       NLIVEBLOCKS",
- 		"%17llu  %s %c%c%c%c  %10u %10u (%3u%%)\n"
- 	}
- };
-@@ -124,7 +124,7 @@ static struct nilfs_suinfo suinfos[LSSU_NSEGS];
- 
- static void lssu_print_header(void)
- {
--	printf(lssu_format[disp_mode].header);
-+	puts(lssu_format[disp_mode].header);
- }
- 
- static ssize_t lssu_get_latest_usage(struct nilfs *nilfs,
+ fs/nilfs2/ioctl.c  |  46 +++++++++++++++++++++
+ fs/nilfs2/sufile.c | 114 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/sufile.h |   1 +
+ 3 files changed, 161 insertions(+)
+
 -- 
-1.7.9.3
+1.8.5.4
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
