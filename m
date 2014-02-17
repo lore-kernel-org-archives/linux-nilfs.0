@@ -1,69 +1,112 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Subject: Re: [PATCH 1/2] nilfs2: add nilfs_sufile_trim_fs to trim clean segs
-Date: Mon, 17 Feb 2014 20:39:01 +0900 (JST)
-Message-ID: <20140217.203901.93208942.konishi.ryusuke@lab.ntt.co.jp>
-References: <5301D130.9050000@gmx.net>
-	<20140217.194200.431478798.konishi.ryusuke@lab.ntt.co.jp>
-	<5301ECD4.5070200@gmx.net>
+Date: Mon, 17 Feb 2014 12:53:54 +0100
+Message-ID: <5301F852.8010105@gmx.net>
+References: <5301D3C5.6040704@gmx.net>	<20140217.190610.135800072.konishi.ryusuke@lab.ntt.co.jp>	<5301E5A8.3080701@gmx.net> <20140217.202143.05344630.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5301ECD4.5070200-hi6Y0CQ0nG0@public.gmane.org>
+In-Reply-To: <20140217.202143.05344630.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 17 Feb 2014 12:04:52 +0100, Andreas Rohner wrote:
-> On 2014-02-17 11:42, Ryusuke Konishi wrote:
->> On Mon, 17 Feb 2014 10:06:56 +0100, Andreas Rohner wrote:
->>> Hi Ryusuke,
->>>
->>> On 2014-02-17 04:00, Ryusuke Konishi wrote:
->>>>> +	    segnum >= nilfs->ns_nsegments ||
+On 2014-02-17 12:21, Ryusuke Konishi wrote:
+> On Mon, 17 Feb 2014 11:34:16 +0100, Andreas Rohner wrote:
+>> On 2014-02-17 11:06, Ryusuke Konishi wrote:
+>>> On Mon, 17 Feb 2014 10:17:57 +0100, Andreas Rohner wrote:
+>>>> On 2014-02-17 04:00, Ryusuke Konishi wrote:
+>>>>>> +	if (end > nilfs->ns_nsegments)
+>>>>>> +		end = nilfs->ns_nsegments;
+>>>>>
+>>>>> Yes, this adjustment is what we should do here, but 'end' segnum was
+>>>>> rounded down to segment alighment before.  So, it should be:
+>>>>>
+>>>>>   if (end >= nilfs->ns_nsegments)
+>>>>> 	end = nilfs->ns_nsegments - 1;
+>>>>>
+>>>>>> +	if (end == segnum)
+>>>>>> +		goto out;
+>>>>>
+>>>>> and
+>>>>>
+>>>>>   if (end < segnum)
+>>>>> 	goto out;
+>>>>>
+>>>>>> +
+>>>>>> +	down_read(&NILFS_MDT(sufile)->mi_sem);
+>>>>>> +
+>>>>>> +	while (segnum < end) {
+>>>>>
+>>>>> and
+>>>>>
+>>>>>   while (segnum <= end) {
+>>>>>
+>>>>>> +		n = min_t(unsigned long,
+>>>>>> +			  segusages_per_block -
+>>>>>> +				  nilfs_sufile_get_offset(sufile, segnum),
+>>>>>> +			  end - segnum);
+>>>>>
+>>>>> Then, we can reuse nilfs_sufile_segment_usages_in_block() to calculate
+>>>>> 'n'.
 >>>>
->>>> This is bad too, because userland programs usually don't know the
->>>> segment structure of NILFS.  When we specify the partition size to
->>>> range->len, FITRIM can fail due to this check.
->>>>
->>>> The upper limit of (range->start + range->len) should be
->>>> the block device size.
+>>>> Actually I don't think that is correct. What if range->start = 0 and
+>>>> range->end = 8MB. Then segnum = 0 and end = 1. Your code would discard
+>>>> segment 0 and segment 1, whereas my version would discard only segment
+>>>> 0, which seems to be more reasonable.
 >>>
->>> ext4 also checks the range structure like that. Besides couldn't it be
->>> possible, that the block device is bigger than the file system?
->> 
->> As I mentioned in my second mail, I misunderstood the meaning of this
->> check at first.
->> 
->> As you pointed out, the block device size may be bigger than the file
->> system size after shrinking the file system.  So, sbp->s_dev_size
->> should be used for for this check.  But it is a bit complicated since
->> the current nilfs object doesn't have on-memory copy of it.
->> 
->> It is OK to use nilfs->ns_nsegments as its alternative.
+>>> The problem seems that 'end' is not calculated properly.
+>>> I think it should be
+>>>
+>>> end = nilfs_get_segnum_of_block(
+>>> 		nilfs,
+>>> 		(range->start + range->len + <segment-size-in-bytes> - 1)
+>>> 		  >> nilfs->ns_blocksize_bits) - 1;
+>>>
+>>>  or can be simplified to
+>>>
+>>> end = nilfs_get_segnum_of_block(
+>>> 		nilfs,
+>>> 		(range->start + range->len - 1) >> nilfs->ns_blocksize_bits);
+>>>
+>>>  if range->len > 0 is guaranteed.
+>>>
+>>>
+>>> The calculation of segnum extends the range to be discarded since it
+>>> is rounded down to segment alignment, but that of the current
+>>> implementation for 'end' truncates the range.  Both should be
+>>> extended.
+>>
+>> Then shouldn't both be truncated? The user expects that less bytes than
+>> range->len are discarded but not more. Maybe I am wrong and it is
+>> defined somewhere...
 > 
-> Ok, just to be clear. According to your second mail it should look
-> something like this in nilfs_sufile_trim_fs():
+> Uum, xfs looks to be truncating both.  This seems to be authentic
+> when we think the original meaning of the fitrim range.
 > 
-> 	if (segnum >= nilfs->ns_nsegments)
-> 		goto out;
-> 
-> And in nilfs_ioctl_trim_fs():
-> 
-> 	if (range.len < nilfs->ns_blocksize ||
-> 		range.start >= (nilfs->ns_nsegments *
-> 			nilfs->ns_blocks_per_segment) <<
-> 			nilfs->ns_blocksize_bits)
-> 		return -EINVAL;	
-> 
-> 
-> Is that correct?
+> I first thought truncating the range can generate gaps between
+> consecutive calls of FITRIM (if we use FITRIM like that).
 
-Yes, exactly.
+Hmm good point I didn't think of that. Then by extending both sides the
+overlapping segments would get discarded twice with consecutive calls,
+which shouldn't be a problem.
+
+> But now I'm
+> tempted to take the xfs approach.  Let's take this semantics.
+>
+> So, we now have to round up range->start to calculate (start) segnum.
+
+Ok. I think in the end it doesn't really matter, because most users will
+use the default values:
+
+range->start = 0
+range->minlen = 0
+range->len = ULLONG_MAX
 
 Regards,
-Ryusuke Konishi
+Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
