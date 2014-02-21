@@ -1,12 +1,8 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v3 2/2] nilfs2: add FITRIM ioctl support for nilfs2
-Date: Fri, 21 Feb 2014 15:56:51 +0100
-Message-ID: <076207b0166aca9209a24c16c2a2f67329b69132.1392994051.git.andreas.rohner@gmx.net>
-References: <cover.1392994051.git.andreas.rohner@gmx.net>
+Subject: [PATCH v3 0/2] nilfs2: add support for FITRIM ioctl
+Date: Fri, 21 Feb 2014 15:56:49 +0100
+Message-ID: <cover.1392994051.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1392994051.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-In-Reply-To: <cover.1392994051.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-References: <cover.1392994051.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -15,86 +11,43 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch adds support for the FITRIM ioctl, which enables user space
-tools to issue TRIM/DISCARD requests to the underlying device. Every
-clean segment within the specified range will be discarded.
+Hi,
 
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+This patch adds support for the FITRIM ioctl, which allows user space 
+tools like fstrim to issue TRIM/DISCARD requests to the underlying 
+device. It takes a fstrim_range structure as a parameter and for every 
+clean segment in the specified range the function blkdev_issue_discard 
+is called. The range is truncated to file system block boundaries.
+
+I tested it with a 32 bit and 64 bit kernel. On the 32 bit system 
+CONFIG_LBDAF was disabled so that sector_t was 32 bit.  
+
+Best regards,
+Andreas Rohner
+
 ---
- fs/nilfs2/ioctl.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 46 insertions(+)
+v2->v3 (based on review by Ryusuke Konishi)
+ * Fix integer overflow
+ * Round range to block boundary instead of sector boundary
+ * Move range check to nilfs_sufile_trim_fs()
+v1->v2 (based on review by Ryusuke Konishi)
+ * Remove upper limit of minlen
+ * Add check for minlen
+ * Round range to sector boundary instead of segment boundary
+ * Fix minor bug
+ * Use kmap_atomic instead of kmap
+ * Move input checks to ioctl.c
+ * Use nilfs_sufile_segment_usages_in_block()
+--
+Andreas Rohner (2):
+  nilfs2: add nilfs_sufile_trim_fs to trim clean segs
+  nilfs2: add FITRIM ioctl support for nilfs2
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 2b34021..8051cb3 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -1072,6 +1072,49 @@ out:
- }
- 
- /**
-+ * nilfs_ioctl_trim_fs() - trim ioctl handle function
-+ * @inode: inode object
-+ * @argp: pointer on argument from userspace
-+ *
-+ * Decription: nilfs_ioctl_trim_fs is the FITRIM ioctl handle function. It
-+ * checks the arguments from userspace and calls nilfs_sufile_trim_fs, which
-+ * performs the actual trim operation.
-+ *
-+ * Return Value: On success, 0 is returned or negative error code, otherwise.
-+ */
-+static int nilfs_ioctl_trim_fs(struct inode *inode, void __user *argp)
-+{
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	struct request_queue *q = bdev_get_queue(nilfs->ns_bdev);
-+	struct fstrim_range range;
-+	int ret;
-+
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	if (!blk_queue_discard(q))
-+		return -EOPNOTSUPP;
-+
-+	if (copy_from_user(&range, argp, sizeof(range)))
-+		return -EFAULT;
-+
-+	range.minlen = max_t(unsigned int, (unsigned int)range.minlen,
-+			q->limits.discard_granularity);
-+
-+	down_read(&nilfs->ns_segctor_sem);
-+	ret = nilfs_sufile_trim_fs(nilfs->ns_sufile, &range);
-+	up_read(&nilfs->ns_segctor_sem);
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	if (copy_to_user(argp, &range, sizeof(range)))
-+		return -EFAULT;
-+
-+	return 0;
-+}
-+
-+/**
-  * nilfs_ioctl_set_alloc_range - limit range of segments to be allocated
-  * @inode: inode object
-  * @argp: pointer on argument from userspace
-@@ -1205,6 +1248,8 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return nilfs_ioctl_resize(inode, filp, argp);
- 	case NILFS_IOCTL_SET_ALLOC_RANGE:
- 		return nilfs_ioctl_set_alloc_range(inode, argp);
-+	case FITRIM:
-+		return nilfs_ioctl_trim_fs(inode, argp);
- 	default:
- 		return -ENOTTY;
- 	}
-@@ -1235,6 +1280,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case NILFS_IOCTL_SYNC:
- 	case NILFS_IOCTL_RESIZE:
- 	case NILFS_IOCTL_SET_ALLOC_RANGE:
-+	case FITRIM:
- 		break;
- 	default:
- 		return -ENOIOCTLCMD;
+ fs/nilfs2/ioctl.c  |  46 +++++++++++++++++
+ fs/nilfs2/sufile.c | 147 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/sufile.h |   1 +
+ 3 files changed, 194 insertions(+)
+
 -- 
 1.9.0
 
