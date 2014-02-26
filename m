@@ -1,39 +1,38 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/2] nilfs2: update web site information
-Date: Wed, 26 Feb 2014 22:12:01 +0900
-Message-ID: <1393420323-18255-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/2] nilfs2: update MAINTAINERS file entries fix
+Date: Wed, 26 Feb 2014 22:12:02 +0900
+Message-ID: <1393420323-18255-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1393420323-18255-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1393420323-18255-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-Hi Andrew,
+Also, web-page entry is updated according to relocation of project's
+web site.
 
-Please add this patchset to the queue for the next merge window.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+---
+ MAINTAINERS |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-We recently moved web site of nilfs project.  And, these patches
-update the site information in MAINTAINERS file and document file.
-
-The MAINTAINERS file update is written as a diff to the previous patch
-"nilfs2: update MAINTAINERS file entries" (to make folding it into the
-original patch easy).
-
-Thanks,
-Ryusuke Konishi
---
-Ryusuke Konishi (2):
-      nilfs2: update MAINTAINERS file entries fix
-      nilfs2: update project's web site in nilfs2.txt
-
- Documentation/filesystems/nilfs2.txt |    5 ++---
- MAINTAINERS                          |    2 +-
- 2 files changed, 3 insertions(+), 4 deletions(-)
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 971dcb7..c4ef32c 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -6087,7 +6087,7 @@ F:	include/uapi/linux/sunrpc/
+ NILFS2 FILESYSTEM
+ M:	Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+ L:	linux-nilfs@vger.kernel.org
+-W:	http://www.nilfs.org/en/
++W:	http://nilfs.sourceforge.net/
+ T:	git git://github.com/konis/nilfs2.git
+ S:	Supported
+ F:	Documentation/filesystems/nilfs2.txt
+-- 
+1.7.9.3
