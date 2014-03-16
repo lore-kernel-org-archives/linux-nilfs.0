@@ -1,80 +1,122 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [Cluster-devel] [PATCH] fs: push sync_filesystem()
- down to the file system's remount_fs()
-Date: Fri, 14 Mar 2014 13:13:52 +0100
-Message-ID: <20140314121352.GB18583@quack.suse.cz>
-References: <20140313073936.GA14663@infradead.org>
-	<1394720456-16629-1-git-send-email-tytso@mit.edu>
-	<20140313162319.GA504@quack.suse.cz>
-	<1394728103.2767.32.camel@menhir>
-	<20140313231506.GB16785@thunk.org>
-Mime-Version: 1.0
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: [PATCH 0/6] nilfs2: implement tracking of live blocks
+Date: Sun, 16 Mar 2014 11:47:33 +0100
+Message-ID: <cover.1394966728.git.andreas.rohner@gmx.net>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20140313231506.GB16785-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=fuse-devel>
-List-Post: <mailto:fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/fuse-devel>,
-	<mailto:fuse-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: fuse-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Anders Larsen <al-V9/YLgxv/GvR7s880joybQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Mikulas Patocka <mikulas-TTVWCEgN8Z9G4ohzP4jBZS1Fcj925eT/@public.gmane.org>, Petr Vandrovec <petr-vPk2MGR0e28uaRcfnNAh7A@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Evgeniy Dushistov <dushistov-JGs/UdohzUI@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, codalist-OCorLXSLWn+MVn35/9/JlcWGCVk0P7UB@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Artem Bityutskiy <dedekind1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, Adrian Hunter <adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-b
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-On Thu 13-03-14 19:15:06, Ted Tso wrote:
-> On Thu, Mar 13, 2014 at 04:28:23PM +0000, Steven Whitehouse wrote:
-> > 
-> > I guess the same is true for other file systems which are mounted ro
-> > too. So maybe a check for MS_RDONLY before doing the sync in those
-> > cases?
-> 
-> My original patch moved the sync_filesystem into the check for
-> MS_RDONLY in the core VFS code.  The objection was raised that there
-> might be some file system out there that might depend on this
-> behaviour.  I can't imagine why, but I suppose it's at least
-> theoretically possible.
-  Well, syncfs() in RO->RW transition clearly isn't needed. In RW->RO
-transition basically everybody needs it. What is disputable is the case of
-RW->RW remounts and I could imagine someone relying on syncfs() there
-although 99% of filesystems don't need it. So I agree in principle with
-moving the responsibility for syncfs() to ->remount so that each filesystem
-can decide.
+Hi,
 
-> So the idea is that this particular patch is *guaranteed* not to make
-> any difference.  That way there can be no question about the patch'es
-> correctness.
-> 
-> I'm going to follow up with a patch for ext4 that does exactly that,
-> but the idea is to allow each file system maintainer to do that for
-> their own file system.
-> 
-> I could do that as well for file systems that are "obviously"
-> read-only, but then I'll find out that there's some wierd case where
-> the file system can be used in a read-write fashion.  (Example: UDF is
-> normally used for DVD's, but at least in theory it can be used
-> read/write --- I'm told that Windows supports read-write UDF file
-> systems on USB sticks, and at least in theory it could be used as a
-> inter-OS exchange format in situations where VFAT and exFAT might not
-> be appropriate for various reasons.)
-  Yes, some people do use UDF for USB sticks - Linux supports it in
-read-write mode as well (although with somewhat limited set of features).
-But the filesystem's I've named are those which clearly either bail with
-error if RW mount is attempted or silently change it to RO mount. In these
-cases, I'd just patch away the unnecessary sync_fs().
+This patch set implements the tracking of live blocks in segments. This 
+information is crucial in implementing better GC policies, because 
+now the policies can make informed decisions about which segments have 
+the biggest number of reclaimable blocks.
 
-								Honza
+The difficulty in tracking live blocks is the fact, that any block can 
+belong to any number of snapshots and snapshots can be deleted and 
+created at any time. A block belongs to a snapshot, if the checkpoint 
+number lies between de_start and de_end of the block. So if a new 
+snapshot is created, all the reclaimable blocks belonging to it are no 
+longer reclaimable and therefore the live block counter of the 
+corresponding segment must be incremented. Conversely if a snapshot is 
+removed, all the reclaimable blocks belonging to it should really be 
+counted as reclaimable again and the counter must be decremented. But if 
+one block belongs to two or more snapshots the counter must only be 
+incremented once for the first and decremented once for the last 
+snapshot.
+
+To achieve this I used the de_rsv field of nilfs_dat_entry to store one 
+of the snapshot numbers. Every time a snapshot is created/removed the 
+whole DAT-File is scanned and de_rsv is updated if the snapshot number 
+is between de_start and de_end. But one block can belong to an 
+arbitrary number of snapshots. Here I use the fact, that the 
+snapshot list is organized as a sorted linked list. So by knowing the 
+previous and the next snapshot number it is possible to 
+reliably determine, if a block is reclaimable or belongs to another 
+snapshot. 
+
+It is of course unacceptable to update the whole DAT-File to create one 
+snapshot. So only reclaimable blocks are updated. But this leads to 
+certain situations, where the counters won't be accurate. The userspace 
+GC should be capable of compensating and correcting the inaccurate 
+values.
+
+Another problem is the protection period in the userspace GC. The kernel 
+doesn't know anything about the userspace protection period, and it is 
+therefore not reflected in the number of live blocks in a segment. For 
+example if the GC policy chooses a segment that seems to have a lot of 
+reclaimable blocks, it could turn out, that all of those blocks are 
+still protected by the protection period.
+
+To overcome this problem I added an additional field to su_lastdec to 
+the segment usage information. Whenever the number of live blocks in a 
+segment is adjusted su_lastdec is set to the current timestamp. If the 
+number of live blocks was adjusted within the protection period, then 
+the userspace GC policy can recognize it and choose a different segment.
+
+Compatibility Issues:
+1. su_nblocks is reused to represent the number of live blocks
+   old nilfs-utils would break the file system.
+2. the vd_pad field of nilfs_vdesc was not initialized to 0
+   so old nilfs-utils could send arbitrary flags to the kernel
+
+Benchmark Results:
+
+The benchmark replays NFS-Traces to simulate a real file system load. 
+The file system is filled up to 20% capacity and then the NFS-Traces are 
+replayed. In parallel every 5 minutes random checkpoints are turned into 
+snapshots. After 15 minutes the snapshot is turned back into a 
+checkpoint.
+
+Greedy-Policy-Runtime:       6221.712s
+Cost-Benefit-Policy-Runtime: 6874.840s
+Timestamp-Policy-Runtime:    13179.626s
+
+Best regards,
+Andreas Rohner
+
+---
+Andreas Rohner (6):
+  nilfs2: add helper function to go through all entries of meta data
+    file
+  nilfs2: add new timestamp to seg usage and function to change
+    su_nblocks
+  nilfs2: scan dat entries at snapshot creation/deletion time
+  nilfs2: add ioctl() to clean snapshot flags from dat entries
+  nilfs2: add counting of live blocks for blocks that are overwritten
+  nilfs2: add counting of live blocks for deleted files
+
+ fs/nilfs2/alloc.c         | 121 +++++++++++++++++++++++++
+ fs/nilfs2/alloc.h         |   6 ++
+ fs/nilfs2/bmap.c          |   8 +-
+ fs/nilfs2/bmap.h          |   2 +-
+ fs/nilfs2/btree.c         |   3 +-
+ fs/nilfs2/cpfile.c        |   7 ++
+ fs/nilfs2/dat.c           | 225 +++++++++++++++++++++++++++++++++++++++++++++-
+ fs/nilfs2/dat.h           |  32 ++++++-
+ fs/nilfs2/direct.c        |   3 +-
+ fs/nilfs2/inode.c         |   2 +
+ fs/nilfs2/ioctl.c         | 109 +++++++++++++++++++++-
+ fs/nilfs2/mdt.c           |   5 +-
+ fs/nilfs2/page.h          |   6 +-
+ fs/nilfs2/segbuf.c        |  25 ++++++
+ fs/nilfs2/segbuf.h        |   4 +
+ fs/nilfs2/segment.c       |  69 ++++++++++++--
+ fs/nilfs2/sufile.c        |  86 +++++++++++++++++-
+ fs/nilfs2/sufile.h        |  18 ++++
+ include/linux/nilfs2_fs.h |  65 +++++++++++++-
+ 19 files changed, 772 insertions(+), 24 deletions(-)
+
 -- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+1.9.0
 
-------------------------------------------------------------------------------
-Learn Graph Databases - Download FREE O'Reilly Book
-"Graph Databases" is the definitive new guide to graph databases and their
-applications. Written by three acclaimed leaders in the field,
-this first edition is now available. Download your free book today!
-http://p.sf.net/sfu/13534_NeoTech
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
