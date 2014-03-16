@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 3/6] nilfs2: scan dat entries at snapshot creation/deletion time
-Date: Sun, 16 Mar 2014 11:47:36 +0100
-Message-ID: <29dee92595249b713fff1e4903d5d76556926eec.1394966729.git.andreas.rohner@gmx.net>
+Subject: [PATCH 2/6] nilfs2: add new timestamp to seg usage and function to change su_nblocks
+Date: Sun, 16 Mar 2014 11:47:35 +0100
+Message-ID: <12561ce5e2cf8ae07fdda05e16c357f37d17c62f.1394966729.git.andreas.rohner@gmx.net>
 References: <cover.1394966728.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1394966728.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -15,275 +15,254 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-To accurately count the number of live blocks in a segment, it is
-important to take snapshots into account, because snapshots can protect
-reclaimable blocks from being cleaned.
+This patch adds an additional timestamp to the segment usage
+information that indicates the last time the usage information was
+changed. So su_lastmod indicates the last time the segment itself was
+modified and su_lastdec indicates the last time the usage information
+itself was changed.
 
-This patch uses the previously reserved de_rsv field of the
-nilfs_dat_entry struct to store one of the snapshots the corresponding
-block belongs to. One block can belong to many snapshots, but because
-the snapshots are stored in a sorted linked list, it is easy to check if
-a block belongs to any other snapshot given the previous and the next
-snapshot. For example if the current snapshot (in de_ss) is being
-removed and neither the previous nor the next snapshot is in the range
-of de_start to de_end, then it is guaranteed that the block doesn't
-belong to any other snapshot and is reclaimable. On the other hand if
-lets say the previous snapshot is in the range of de_start to de_end, we
-simply set de_ss to the previous snapshot and the block is not
-reclaimable.
+This is important information for the GC, because it needs to avoid
+selecting segments for cleaning that are created (su_lastmod) outside of
+the protection period, but the blocks got reclaimable (su_nblocks is
+decremented) within the protection period. Without that information the
+GC policy has to assume, that there are reclaimble blocks, only to find
+out, that they are protected by the protection period.
 
-To implement this every DAT entry is scanned at snapshot
-creation/deletion time and updated if needed. To avoid too many update
-operations only potentially reclaimable blocks are ever updated. For
-example if there are some deleted files and the checkpoint to which
-these files belong is turned into a snapshot, then su_nblocks is
-incremented for these blocks, which reverses the decrement that happened
-when the files were deleted. If after some time this snapshot is
-deleted, su_nblocks is decremented again to reverse the increment at
-creation time.
+This patch also introduces nilfs_sufile_add_segment_usage(), which can
+be used to increment or decrement the value of su_nblocks of a specific
+segment.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/cpfile.c        |  7 ++++
- fs/nilfs2/dat.c           | 86 +++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/dat.h           | 26 ++++++++++++++
- include/linux/nilfs2_fs.h |  4 +--
- 4 files changed, 121 insertions(+), 2 deletions(-)
+ fs/nilfs2/sufile.c        | 86 +++++++++++++++++++++++++++++++++++++++++++++--
+ fs/nilfs2/sufile.h        | 18 ++++++++++
+ include/linux/nilfs2_fs.h |  7 ++++
+ 3 files changed, 109 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index 0d58075..29952f5 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -28,6 +28,7 @@
- #include <linux/nilfs2_fs.h>
- #include "mdt.h"
- #include "cpfile.h"
-+#include "sufile.h"
- 
- 
- static inline unsigned long
-@@ -584,6 +585,7 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
- 	struct nilfs_cpfile_header *header;
- 	struct nilfs_checkpoint *cp;
- 	struct nilfs_snapshot_list *list;
-+	struct the_nilfs *nilfs = cpfile->i_sb->s_fs_info;
- 	__u64 curr, prev;
- 	unsigned long curr_blkoff, prev_blkoff;
- 	void *kaddr;
-@@ -681,6 +683,8 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
- 	mark_buffer_dirty(header_bh);
- 	nilfs_mdt_mark_dirty(cpfile);
- 
-+	nilfs_dat_scan_inc_ss(nilfs->ns_dat, cno);
-+
- 	brelse(prev_bh);
- 
-  out_curr:
-@@ -703,6 +707,7 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
- 	struct nilfs_cpfile_header *header;
- 	struct nilfs_checkpoint *cp;
- 	struct nilfs_snapshot_list *list;
-+	struct the_nilfs *nilfs = cpfile->i_sb->s_fs_info;
- 	__u64 next, prev;
- 	void *kaddr;
- 	int ret;
-@@ -784,6 +789,8 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
- 	mark_buffer_dirty(header_bh);
- 	nilfs_mdt_mark_dirty(cpfile);
- 
-+	nilfs_dat_scan_dec_ss(nilfs->ns_dat, cno, prev, next);
-+
- 	brelse(prev_bh);
- 
-  out_next:
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 0d5fada..89a4a5f 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -28,6 +28,7 @@
- #include "mdt.h"
- #include "alloc.h"
- #include "dat.h"
-+#include "sufile.h"
- 
- 
- #define NILFS_CNO_MIN	((__u64)1)
-@@ -97,6 +98,7 @@ void nilfs_dat_commit_alloc(struct inode *dat, struct nilfs_palloc_req *req)
- 	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
- 	entry->de_end = cpu_to_le64(NILFS_CNO_MAX);
- 	entry->de_blocknr = cpu_to_le64(0);
-+	entry->de_ss = cpu_to_le64(0);
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index 2a869c3..0886938 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -453,6 +453,8 @@ void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
+ 	su->su_lastmod = cpu_to_le64(0);
+ 	su->su_nblocks = cpu_to_le32(0);
+ 	su->su_flags = cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_DIRTY);
++	if (nilfs_sufile_lastdec_supported(sufile))
++		su->su_lastdec = cpu_to_le64(0);
  	kunmap_atomic(kaddr);
  
- 	nilfs_palloc_commit_alloc_entry(dat, req);
-@@ -121,6 +123,7 @@ static void nilfs_dat_commit_free(struct inode *dat,
- 	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
- 	entry->de_end = cpu_to_le64(NILFS_CNO_MIN);
- 	entry->de_blocknr = cpu_to_le64(0);
-+	entry->de_ss = cpu_to_le64(0);
- 	kunmap_atomic(kaddr);
+ 	nilfs_sufile_mod_counter(header_bh, clean ? (u64)-1 : 0, dirty ? 0 : 1);
+@@ -482,7 +484,7 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+ 	WARN_ON(!nilfs_segment_usage_dirty(su));
  
- 	nilfs_dat_commit_entry(dat, req);
-@@ -201,6 +204,7 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
- 		WARN_ON(start > end);
- 	}
- 	entry->de_end = cpu_to_le64(end);
-+	entry->de_ss = cpu_to_le64(NILFS_CNO_MAX);
- 	blocknr = le64_to_cpu(entry->de_blocknr);
+ 	sudirty = nilfs_segment_usage_dirty(su);
+-	nilfs_segment_usage_set_clean(su);
++	nilfs_sufile_segment_usage_set_clean(sufile, su);
  	kunmap_atomic(kaddr);
+ 	mark_buffer_dirty(su_bh);
  
-@@ -365,6 +369,8 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
- 	}
- 	WARN_ON(blocknr == 0);
- 	entry->de_blocknr = cpu_to_le64(blocknr);
-+	if (entry->de_ss == cpu_to_le64(NILFS_CNO_MAX))
-+		entry->de_ss = cpu_to_le64(0);
- 	kunmap_atomic(kaddr);
- 
- 	mark_buffer_dirty(entry_bh);
-@@ -430,6 +436,86 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
- 	return ret;
+@@ -549,6 +551,75 @@ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
  }
  
-+void nilfs_dat_do_scan_dec(struct inode *dat, struct nilfs_palloc_req *req,
-+			   void *data)
+ /**
++ * nilfs_sufile_add_segment_usage - decrement usage of a segment
++ * @sufile: inode of segment usage file
++ * @segnum: segment number
++ * @value: value to add to su_nblocks
++ * @dectime: current time
++ *
++ * Description: nilfs_sufile_add_segment_usage() adds a signed value to the
++ * su_nblocks field of the segment usage information of @segnum. It ensures
++ * that the result is bigger than 0 and smaller or equal to the maximum number
++ * of blocks per segment
++ *
++ * Return Value: On success, 0 is returned. On error, one of the following
++ * negative error codes is returned.
++ *
++ * %-ENOMEM - Insufficient memory available.
++ *
++ * %-EIO - I/O error
++ *
++ * %-ENOENT - the specified block does not exist (hole block)
++ */
++int nilfs_sufile_add_segment_usage(struct inode *sufile, __u64 segnum,
++				   __s64 value, time_t dectime)
 +{
-+	struct nilfs_dat_entry *entry;
-+	__u64 start, end, prev_ss;
-+	__u64 *ssp = data, ss = ssp[0], prev = ssp[1], next = ssp[2];
-+	sector_t blocknr;
++	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
++	struct buffer_head *bh;
++	struct nilfs_segment_usage *su;
 +	void *kaddr;
-+	struct the_nilfs *nilfs;
++	int ret;
 +
-+	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
-+	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
-+					     req->pr_entry_bh, kaddr);
-+	start = le64_to_cpu(entry->de_start);
-+	end = le64_to_cpu(entry->de_end);
-+	blocknr = le64_to_cpu(entry->de_blocknr);
-+	prev_ss = le64_to_cpu(entry->de_ss);
++	if (value == 0)
++		return 0;
 +
-+	if (blocknr != 0 && end != NILFS_CNO_MAX && ss >= start && ss < end) {
-+		if (prev_ss == ss || prev_ss == NILFS_CNO_MAX) {
-+			if (prev && prev >= start && prev < end)
-+				entry->de_ss = cpu_to_le64(prev);
-+			else if (next && next >= start && next < end)
-+				entry->de_ss = cpu_to_le64(next);
-+			else
-+				entry->de_ss = cpu_to_le64(0);
++	down_write(&NILFS_MDT(sufile)->mi_sem);
 +
-+			if (prev_ss != NILFS_CNO_MAX)
-+				prev_ss = le64_to_cpu(entry->de_ss);
-+			kunmap_atomic(kaddr);
-+			mark_buffer_dirty(req->pr_entry_bh);
-+			nilfs_mdt_mark_dirty(dat);
-+		} else
-+			kunmap_atomic(kaddr);
++	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
++	if (ret < 0)
++		goto out_sem;
 +
-+		if (prev_ss == 0) {
-+			nilfs = dat->i_sb->s_fs_info;
-+			nilfs_sufile_add_segment_usage(nilfs->ns_sufile,
-+				nilfs_get_segnum_of_block(nilfs, blocknr),
-+				-1, 0);
-+		}
-+	} else
++	kaddr = kmap_atomic(bh->b_page);
++	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
++	WARN_ON(nilfs_segment_usage_error(su));
++
++	value += le32_to_cpu(su->su_nblocks);
++	if (value < 0)
++		value = 0;
++	if (value > nilfs->ns_blocks_per_segment)
++		value = nilfs->ns_blocks_per_segment;
++
++	if (value == le32_to_cpu(su->su_nblocks)) {
 +		kunmap_atomic(kaddr);
++		goto out_brelse;
++	}
++
++	su->su_nblocks = cpu_to_le32(value);
++	if (dectime && nilfs_sufile_lastdec_supported(sufile))
++		su->su_lastdec = cpu_to_le64(dectime);
++	kunmap_atomic(kaddr);
++
++	mark_buffer_dirty(bh);
++	nilfs_mdt_mark_dirty(sufile);
++
++out_brelse:
++	brelse(bh);
++out_sem:
++	up_write(&NILFS_MDT(sufile)->mi_sem);
++	return ret;
 +}
 +
-+void nilfs_dat_do_scan_inc(struct inode *dat, struct nilfs_palloc_req *req,
-+			   void *data)
++/**
+  * nilfs_sufile_get_stat - get segment usage statistics
+  * @sufile: inode of segment usage file
+  * @stat: pointer to a structure of segment usage statistics
+@@ -698,7 +769,8 @@ static int nilfs_sufile_truncate_range(struct inode *sufile,
+ 		nc = 0;
+ 		for (su = su2, j = 0; j < n; j++, su = (void *)su + susz) {
+ 			if (nilfs_segment_usage_error(su)) {
+-				nilfs_segment_usage_set_clean(su);
++				nilfs_sufile_segment_usage_set_clean(sufile,
++						su);
+ 				nc++;
+ 			}
+ 		}
+@@ -858,6 +930,13 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
+ 			if (nilfs_segment_is_active(nilfs, segnum + j))
+ 				si->sui_flags |=
+ 					(1UL << NILFS_SEGMENT_USAGE_ACTIVE);
++			if (sisz >= sizeof(struct nilfs_suinfo)) {
++				if (susz >= sizeof(struct nilfs_segment_usage))
++					si->sui_lastdec =
++						le64_to_cpu(su->su_lastdec);
++				else
++					si->sui_lastdec = 0;
++			}
+ 		}
+ 		kunmap_atomic(kaddr);
+ 		brelse(su_bh);
+@@ -935,6 +1014,9 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+ 		if (nilfs_suinfo_update_lastmod(sup))
+ 			su->su_lastmod = cpu_to_le64(sup->sup_sui.sui_lastmod);
+ 
++		if (nilfs_suinfo_update_lastdec(sup))
++			su->su_lastdec = cpu_to_le64(sup->sup_sui.sui_lastdec);
++
+ 		if (nilfs_suinfo_update_nblocks(sup))
+ 			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
+ 
+diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+index b8afd72..e5455d2 100644
+--- a/fs/nilfs2/sufile.h
++++ b/fs/nilfs2/sufile.h
+@@ -28,6 +28,23 @@
+ #include <linux/nilfs2_fs.h>
+ #include "mdt.h"
+ 
++static inline int
++nilfs_sufile_lastdec_supported(const struct inode *sufile)
 +{
-+	struct nilfs_dat_entry *entry;
-+	__u64 start, end, prev_ss;
-+	__u64 *ssp = data, ss = *ssp;
-+	sector_t blocknr;
-+	void *kaddr;
-+	struct the_nilfs *nilfs;
-+
-+	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
-+	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
-+			req->pr_entry_bh, kaddr);
-+	start = le64_to_cpu(entry->de_start);
-+	end = le64_to_cpu(entry->de_end);
-+	blocknr = le64_to_cpu(entry->de_blocknr);
-+	prev_ss = le64_to_cpu(entry->de_ss);
-+
-+	if (blocknr != 0 && end != NILFS_CNO_MAX && ss >= start && ss < end &&
-+			(prev_ss == 0 || prev_ss == NILFS_CNO_MAX)) {
-+
-+		entry->de_ss = cpu_to_le64(ss);
-+
-+		kunmap_atomic(kaddr);
-+		mark_buffer_dirty(req->pr_entry_bh);
-+		nilfs_mdt_mark_dirty(dat);
-+
-+		nilfs = dat->i_sb->s_fs_info;
-+		nilfs_sufile_add_segment_usage(nilfs->ns_sufile,
-+				nilfs_get_segnum_of_block(nilfs, blocknr),
-+				1, 0);
-+	} else
-+		kunmap_atomic(kaddr);
++	return NILFS_MDT(sufile)->mi_entry_size ==
++			sizeof(struct nilfs_segment_usage);
 +}
 +
- ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
- 			    size_t nvi)
++static inline void
++nilfs_sufile_segment_usage_set_clean(const struct inode *sufile,
++		struct nilfs_segment_usage *su)
++{
++	su->su_lastmod = cpu_to_le64(0);
++	su->su_nblocks = cpu_to_le32(0);
++	su->su_flags = cpu_to_le32(0);
++	if (nilfs_sufile_lastdec_supported(sufile))
++		su->su_lastdec = cpu_to_le64(0);
++}
+ 
+ static inline unsigned long nilfs_sufile_get_nsegments(struct inode *sufile)
  {
-diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
-index cbd8e97..92a187e 100644
---- a/fs/nilfs2/dat.h
-+++ b/fs/nilfs2/dat.h
-@@ -55,5 +55,31 @@ ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned, size_t);
- 
- int nilfs_dat_read(struct super_block *sb, size_t entry_size,
- 		   struct nilfs_inode *raw_inode, struct inode **inodep);
-+void nilfs_dat_do_scan_dec(struct inode *, struct nilfs_palloc_req *, void *);
-+void nilfs_dat_do_scan_inc(struct inode *, struct nilfs_palloc_req *, void *);
-+
-+/**
-+ * nilfs_dat_scan_dec_ss - scan all dat entries for a checkpoint dec suinfo
-+ * @dat: inode of dat file
-+ * @cno: snapshot number
-+ * @prev: previous snapshot number
-+ * @next: next snapshot number
-+ */
-+static inline int nilfs_dat_scan_dec_ss(struct inode *dat, __u64 cno,
-+					__u64 prev, __u64 next)
-+{
-+	__u64 data[3] = { cno, prev, next };
-+	return nilfs_palloc_scan_entries(dat, nilfs_dat_do_scan_dec, data);
-+}
-+
-+/**
-+ * nilfs_dat_scan_dec_ss - scan all dat entries for a checkpoint inc suinfo
-+ * @dat: inode of dat file
-+ * @cno: snapshot number
-+ */
-+static inline int nilfs_dat_scan_inc_ss(struct inode *dat, __u64 cno)
-+{
-+	return nilfs_palloc_scan_entries(dat, nilfs_dat_do_scan_inc, &cno);
-+}
- 
- #endif	/* _NILFS_DAT_H */
+@@ -41,6 +58,7 @@ int nilfs_sufile_alloc(struct inode *, __u64 *);
+ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum);
+ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+ 				   unsigned long nblocks, time_t modtime);
++int nilfs_sufile_add_segment_usage(struct inode *, __u64, __s64, time_t);
+ int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
+ ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
+ 				size_t);
 diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index ca269ad..ba9ebe02 100644
+index ff3fea3..ca269ad 100644
 --- a/include/linux/nilfs2_fs.h
 +++ b/include/linux/nilfs2_fs.h
-@@ -475,13 +475,13 @@ struct nilfs_palloc_group_desc {
-  * @de_blocknr: block number
-  * @de_start: start checkpoint number
-  * @de_end: end checkpoint number
-- * @de_rsv: reserved for future use
-+ * @de_ss: one of the snapshots the block belongs to
+@@ -614,11 +614,13 @@ struct nilfs_cpfile_header {
+  * @su_lastmod: last modified timestamp
+  * @su_nblocks: number of blocks in segment
+  * @su_flags: flags
++ * @su_lastdec: last decrement of su_nblocks timestamp
   */
- struct nilfs_dat_entry {
- 	__le64 de_blocknr;
- 	__le64 de_start;
- 	__le64 de_end;
--	__le64 de_rsv;
-+	__le64 de_ss;
+ struct nilfs_segment_usage {
+ 	__le64 su_lastmod;
+ 	__le32 su_nblocks;
+ 	__le32 su_flags;
++	__le64 su_lastdec;
  };
  
- #define NILFS_MIN_DAT_ENTRY_SIZE	32
+ #define NILFS_MIN_SEGMENT_USAGE_SIZE	16
+@@ -663,6 +665,7 @@ nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
+ 	su->su_lastmod = cpu_to_le64(0);
+ 	su->su_nblocks = cpu_to_le32(0);
+ 	su->su_flags = cpu_to_le32(0);
++	su->su_lastdec = cpu_to_le64(0);
+ }
+ 
+ static inline int
+@@ -694,11 +697,13 @@ struct nilfs_sufile_header {
+  * @sui_lastmod: timestamp of last modification
+  * @sui_nblocks: number of written blocks in segment
+  * @sui_flags: segment usage flags
++ * @sui_lastdec: last decrement of sui_nblocks timestamp
+  */
+ struct nilfs_suinfo {
+ 	__u64 sui_lastmod;
+ 	__u32 sui_nblocks;
+ 	__u32 sui_flags;
++	__u64 sui_lastdec;
+ };
+ 
+ #define NILFS_SUINFO_FNS(flag, name)					\
+@@ -736,6 +741,7 @@ enum {
+ 	NILFS_SUINFO_UPDATE_LASTMOD,
+ 	NILFS_SUINFO_UPDATE_NBLOCKS,
+ 	NILFS_SUINFO_UPDATE_FLAGS,
++	NILFS_SUINFO_UPDATE_LASTDEC,
+ 	__NR_NILFS_SUINFO_UPDATE_FIELDS,
+ };
+ 
+@@ -759,6 +765,7 @@ nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
+ NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
+ NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
+ NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
++NILFS_SUINFO_UPDATE_FNS(LASTDEC, lastdec)
+ 
+ enum {
+ 	NILFS_CHECKPOINT,
 -- 
 1.9.0
 
