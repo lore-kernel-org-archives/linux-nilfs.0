@@ -1,430 +1,122 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 2/4] nilfs-utils: add cost-benefit and greedy policies
-Date: Sun, 16 Mar 2014 11:49:16 +0100
-Message-ID: <cc43be2e6bba5367fd2982dc0df5255b884bdace.1394966935.git.andreas.rohner@gmx.net>
+Subject: [PATCH 3/4] nilfs-utils: add support for nilfs_clean_snapshot_flags()
+Date: Sun, 16 Mar 2014 11:49:17 +0100
+Message-ID: <3a7b518a3a51b86b6f56e8bd0545e0790f93964f.1394966935.git.andreas.rohner@gmx.net>
 References: <cover.1394966728.git.andreas.rohner@gmx.net>
  <36b7f57861b69c7fdb9d9e54a21df6f5c7f21061.1394966935.git.andreas.rohner@gmx.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <36b7f57861b69c7fdb9d9e54a21df6f5c7f21061.1394966935.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 In-Reply-To: <36b7f57861b69c7fdb9d9e54a21df6f5c7f21061.1394966935.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 References: <36b7f57861b69c7fdb9d9e54a21df6f5c7f21061.1394966935.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch implements the cost-benefit and greedy GC policies. These ar=
-e
-well known policies for log-structured file systems [1].
-
-* Greedy:
-  Select the segments with the most free space.
-* Cost-Benefit:
-  Perform a cost-benefit analysis, whereby the free space gained is
-  weighed against the cost of collecting the segment.
-
-Since especially cost-benefit needed more information than was availabl=
-e
-in nilfs_suinfo, a few extra parameters were added to the policy
-callback function prototype. The policy threshold was removed, since it
-served no real purpose. The flag p_comparison was added to indicate how
-the importance values should be interpreted. For example for the
-timestamp policy smaller values mean older timestamps, which is better.
-=46or greedy and cost-benefit on the other hand higher values are bette=
-r.
-nilfs_cleanerd_select_segments() was updated accordingly.
-
-[1] Mendel Rosenblum and John K. Ousterhout. The design and implementa-
-tion of a log-structured file system. ACM Trans. Comput. Syst.,
-10(1):26=E2=80=9352, February 1992.
+This ioctl enables the userspace GC to perform a cleanup operation after
+setting the number of blocks with NILFS_IOCTL_SET_SUINFO. It sets DAT
+entries with de_ss values of NILFS_CNO_MAX to 0. NILFS_CNO_MAX
+indicates, that the corresponding block belongs to some snapshot, but
+was already decremented by a previous deletion operation. If the segment
+usage info is changed with NILFS_IOCTL_SET_SUINFO and the number of
+blocks is updated, then these blocks would never be decremented and
+there are scenarios where the corresponding segments would starve (never
+be cleaned). To prevent that the value of de_ss must be set to 0, so
+that it can be decremented again, should the snapshot be deleted in the
+future.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- include/nilfs2_fs.h       |   9 ++++-
- sbin/cleanerd/cldconfig.c | 100 ++++++++++++++++++++++++++++++++++++++=
-+++++---
- sbin/cleanerd/cldconfig.h |  18 +++++----
- sbin/cleanerd/cleanerd.c  |  56 ++++++++++++++++----------
- 4 files changed, 149 insertions(+), 34 deletions(-)
+ include/nilfs.h     |  2 ++
+ include/nilfs2_fs.h |  2 ++
+ lib/gc.c            |  6 +++++-
+ lib/nilfs.c         | 23 +++++++++++++++++++++++
+ 4 files changed, 32 insertions(+), 1 deletion(-)
 
+diff --git a/include/nilfs.h b/include/nilfs.h
+index 05cfe3b..bd134be 100644
+--- a/include/nilfs.h
++++ b/include/nilfs.h
+@@ -313,6 +313,8 @@ ssize_t nilfs_get_bdescs(const struct nilfs *, struct nilfs_bdesc *, size_t);
+ int nilfs_clean_segments(struct nilfs *, struct nilfs_vdesc *, size_t,
+ 			 struct nilfs_period *, size_t, __u64 *, size_t,
+ 			 struct nilfs_bdesc *, size_t, __u64 *, size_t);
++int nilfs_clean_snapshot_flags(struct nilfs *nilfs,
++			       struct nilfs_vdesc *vdescs, size_t nvdescs);
+ int nilfs_sync(const struct nilfs *, nilfs_cno_t *);
+ int nilfs_resize(struct nilfs *nilfs, off_t size);
+ int nilfs_set_alloc_range(struct nilfs *nilfs, off_t start, off_t end);
 diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
-index a16ad4c..967c2af 100644
+index 967c2af..cb02739 100644
 --- a/include/nilfs2_fs.h
 +++ b/include/nilfs2_fs.h
-@@ -483,7 +483,7 @@ struct nilfs_dat_entry {
- 	__le64 de_blocknr;
- 	__le64 de_start;
- 	__le64 de_end;
--	__le64 de_rsv;
-+	__le64 de_ss;
- };
-=20
+@@ -918,5 +918,7 @@ struct nilfs_bdesc {
+ 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
+ #define NILFS_IOCTL_SET_SUINFO  \
+ 	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
++#define NILFS_IOCTL_CLEAN_SNAPSHOT_FLAGS  \
++	_IOW(NILFS_IOCTL_IDENT, 0x8F, struct nilfs_argv)
+ 
+ #endif	/* _LINUX_NILFS_FS_H */
+diff --git a/lib/gc.c b/lib/gc.c
+index a165a5c..2338174 100644
+--- a/lib/gc.c
++++ b/lib/gc.c
+@@ -762,8 +762,12 @@ int nilfs_xreclaim_segment(struct nilfs *nilfs,
+ 
+ 		ret = nilfs_set_suinfo(nilfs, nilfs_vector_get_data(supv), n);
+ 
+-		if (ret == 0)
++		if (ret == 0) {
++			ret = nilfs_clean_snapshot_flags(nilfs,
++					nilfs_vector_get_data(vdescv),
++					nilfs_vector_get_size(vdescv));
+ 			goto out_lock;
++		}
+ 
+ 		if (ret < 0 && errno != ENOTTY) {
+ 			nilfs_gc_logger(LOG_ERR, "cannot set suinfo: %s",
+diff --git a/lib/nilfs.c b/lib/nilfs.c
+index e8f5c96..b909a23 100644
+--- a/lib/nilfs.c
++++ b/lib/nilfs.c
+@@ -743,6 +743,29 @@ int nilfs_clean_segments(struct nilfs *nilfs,
+ }
+ 
  /**
-@@ -612,11 +612,13 @@ struct nilfs_cpfile_header {
-  * @su_lastmod: last modified timestamp
-  * @su_nblocks: number of blocks in segment
-  * @su_flags: flags
-+ * @su_lastdec: last decrement of su_nblocks timestamp
-  */
- struct nilfs_segment_usage {
- 	__le64 su_lastmod;
- 	__le32 su_nblocks;
- 	__le32 su_flags;
-+	__le64 su_lastdec;
- };
-=20
- /* segment usage flag */
-@@ -659,6 +661,7 @@ nilfs_segment_usage_set_clean(struct nilfs_segment_=
-usage *su)
- 	su->su_lastmod =3D cpu_to_le64(0);
- 	su->su_nblocks =3D cpu_to_le32(0);
- 	su->su_flags =3D cpu_to_le32(0);
-+	su->su_lastdec =3D cpu_to_le64(0);
- }
-=20
- static inline int
-@@ -690,11 +693,13 @@ struct nilfs_sufile_header {
-  * @sui_lastmod: timestamp of last modification
-  * @sui_nblocks: number of written blocks in segment
-  * @sui_flags: segment usage flags
-+ * @sui_lastdec: last decrement of sui_nblocks timestamp
-  */
- struct nilfs_suinfo {
- 	__u64 sui_lastmod;
- 	__u32 sui_nblocks;
- 	__u32 sui_flags;
-+	__u64 sui_lastdec;
- };
-=20
- #define NILFS_SUINFO_FNS(flag, name)					\
-@@ -732,6 +737,7 @@ enum {
- 	NILFS_SUINFO_UPDATE_LASTMOD,
- 	NILFS_SUINFO_UPDATE_NBLOCKS,
- 	NILFS_SUINFO_UPDATE_FLAGS,
-+	NILFS_SUINFO_UPDATE_LASTDEC,
- 	__NR_NILFS_SUINFO_UPDATE_FIELDS,
- };
-=20
-@@ -755,6 +761,7 @@ nilfs_suinfo_update_##name(const struct nilfs_suinf=
-o_update *sup)	\
- NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
- NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
- NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
-+NILFS_SUINFO_UPDATE_FNS(LASTDEC, lastdec)
-=20
- enum {
- 	NILFS_CHECKPOINT,
-diff --git a/sbin/cleanerd/cldconfig.c b/sbin/cleanerd/cldconfig.c
-index c8b197b..ade974a 100644
---- a/sbin/cleanerd/cldconfig.c
-+++ b/sbin/cleanerd/cldconfig.c
-@@ -380,7 +380,10 @@ nilfs_cldconfig_handle_clean_check_interval(struct=
- nilfs_cldconfig *config,
- }
-=20
- static unsigned long long
--nilfs_cldconfig_selection_policy_timestamp(const struct nilfs_suinfo *=
-si)
-+nilfs_cldconfig_selection_policy_timestamp(struct nilfs *nilfs,
-+					   const struct nilfs_sustat *sustat,
-+					   const struct nilfs_suinfo *si,
-+					   __u64 prottime)
- {
- 	return si->sui_lastmod;
- }
-@@ -391,14 +394,101 @@ nilfs_cldconfig_handle_selection_policy_timestam=
-p(struct nilfs_cldconfig *config
- {
- 	config->cf_selection_policy.p_importance =3D
- 		NILFS_CLDCONFIG_SELECTION_POLICY_IMPORTANCE;
--	config->cf_selection_policy.p_threshold =3D
--		NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD;
-+	config->cf_selection_policy.p_comparison =3D
-+			NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER;
-+	return 0;
-+}
-+
-+static unsigned long long
-+nilfs_cldconfig_selection_policy_greedy(struct nilfs *nilfs,
-+				        const struct nilfs_sustat *sustat,
-+				        const struct nilfs_suinfo *si,
-+				        __u64 prottime)
++ * nilfs_clean_snapshot_flags - cleanup snapshot flags after set_suinfo
++ * @nilfs: nilfs object
++ * @vdescs: array of nilfs_vdesc structs to specify live blocks
++ * @nvdescs: size of @vdescs array (number of items)
++ */
++int nilfs_clean_snapshot_flags(struct nilfs *nilfs,
++			       struct nilfs_vdesc *vdescs, size_t nvdescs)
 +{
-+	__u32 value, max_blocks =3D nilfs_get_blocks_per_segment(nilfs);
++	struct nilfs_argv argv;
 +
-+	if (max_blocks < si->sui_nblocks)
-+		return 0;
-+
-+	value =3D max_blocks - si->sui_nblocks;
-+
-+	/*
-+	 * the value of sui_nblocks is probably not accurate
-+	 * because blocks inside the protection period are not
-+	 * considered to be dead
-+	 */
-+	if (si->sui_lastdec >=3D prottime)
-+		value >>=3D 4;
-+
-+	return value;
-+}
-+
-+static int
-+nilfs_cldconfig_handle_selection_policy_greedy(struct nilfs_cldconfig =
-*config,
-+					       char **tokens, size_t ntoks)
-+{
-+	config->cf_selection_policy.p_importance =3D
-+			nilfs_cldconfig_selection_policy_greedy;
-+	config->cf_selection_policy.p_comparison =3D
-+			NILFS_CLDCONFIG_SELECTION_POLICY_BIGGER_IS_BETTER;
-+	return 0;
-+}
-+
-+static unsigned long long
-+nilfs_cldconfig_selection_policy_cost_benefit(struct nilfs *nilfs,
-+					      const struct nilfs_sustat *sustat,
-+					      const struct nilfs_suinfo *si,
-+					      __u64 prottime)
-+{
-+	__u32 free_blocks, cleaning_cost;
-+	unsigned long long value, age;
-+
-+	free_blocks =3D nilfs_get_blocks_per_segment(nilfs) - si->sui_nblocks=
-;
-+	/* read the whole segment + write the live blocks */
-+	cleaning_cost =3D 2 * si->sui_nblocks;
-+	/*
-+	 * multiply by 1000 to convert age to milliseconds
-+	 * (higher precision for division)
-+	 */
-+	age =3D (sustat->ss_nongc_ctime - si->sui_lastmod) * 1000;
-+
-+	if (sustat->ss_nongc_ctime < si->sui_lastmod)
-+		return 0;
-+
-+	if (cleaning_cost =3D=3D 0)
-+		cleaning_cost =3D 1;
-+
-+
-+	value =3D (age * free_blocks) / cleaning_cost;
-+
-+	/*
-+	 * the value of sui_nblocks is probably not accurate
-+	 * because blocks inside the protection period are not
-+	 * considered to be dead
-+	 */
-+	if (si->sui_lastdec >=3D prottime)
-+		value >>=3D 4;
-+
-+	return value;
-+}
-+
-+static int
-+nilfs_cldconfig_handle_selection_policy_cost_benefit(
-+						struct nilfs_cldconfig *config,
-+						char **tokens, size_t ntoks)
-+{
-+	config->cf_selection_policy.p_importance =3D
-+			nilfs_cldconfig_selection_policy_cost_benefit;
-+	config->cf_selection_policy.p_comparison =3D
-+			NILFS_CLDCONFIG_SELECTION_POLICY_BIGGER_IS_BETTER;
- 	return 0;
- }
-=20
- static const struct nilfs_cldconfig_polhandle
- nilfs_cldconfig_polhandle_table[] =3D {
- 	{"timestamp",	nilfs_cldconfig_handle_selection_policy_timestamp},
-+	{"greedy",	nilfs_cldconfig_handle_selection_policy_greedy},
-+	{"cost-benefit", nilfs_cldconfig_handle_selection_policy_cost_benefit=
-},
- };
-=20
- #define NILFS_CLDCONFIG_NPOLHANDLES			\
-@@ -688,8 +778,8 @@ static void nilfs_cldconfig_set_default(struct nilf=
-s_cldconfig *config,
-=20
- 	config->cf_selection_policy.p_importance =3D
- 		NILFS_CLDCONFIG_SELECTION_POLICY_IMPORTANCE;
--	config->cf_selection_policy.p_threshold =3D
--		NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD;
-+	config->cf_selection_policy.p_comparison =3D
-+		NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER;
- 	config->cf_protection_period.tv_sec =3D NILFS_CLDCONFIG_PROTECTION_PE=
-RIOD;
- 	config->cf_protection_period.tv_usec =3D 0;
-=20
-diff --git a/sbin/cleanerd/cldconfig.h b/sbin/cleanerd/cldconfig.h
-index 0a598d5..95d2fde 100644
---- a/sbin/cleanerd/cldconfig.h
-+++ b/sbin/cleanerd/cldconfig.h
-@@ -30,16 +30,21 @@
- #include <sys/time.h>
- #include <syslog.h>
-=20
-+struct nilfs;
-+struct nilfs_sustat;
- struct nilfs_suinfo;
-=20
- /**
-  * struct nilfs_selection_policy -
-- * @p_importance:
-- * @p_threshold:
-+ * @p_importance: function to calculate the importance for the policy
-+ * @p_comparison: flag that indicates how to sort the importance
-  */
- struct nilfs_selection_policy {
--	unsigned long long (*p_importance)(const struct nilfs_suinfo *);
--	unsigned long long p_threshold;
-+	unsigned long long (*p_importance)(struct nilfs *nilfs,
-+					   const struct nilfs_sustat *sustat,
-+					   const struct nilfs_suinfo *,
-+					   __u64 prottime);
-+	int p_comparison;
- };
-=20
- /**
-@@ -113,7 +118,8 @@ struct nilfs_cldconfig {
-=20
- #define NILFS_CLDCONFIG_SELECTION_POLICY_IMPORTANCE	\
- 			nilfs_cldconfig_selection_policy_timestamp
--#define NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD	0
-+#define NILFS_CLDCONFIG_SELECTION_POLICY_BIGGER_IS_BETTER	0
-+#define NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER	1
- #define NILFS_CLDCONFIG_PROTECTION_PERIOD		3600
- #define NILFS_CLDCONFIG_MIN_CLEAN_SEGMENTS		10
- #define NILFS_CLDCONFIG_MIN_CLEAN_SEGMENTS_UNIT		NILFS_SIZE_UNIT_PERCE=
-NT
-@@ -135,8 +141,6 @@ struct nilfs_cldconfig {
-=20
- #define NILFS_CLDCONFIG_NSEGMENTS_PER_CLEAN_MAX	32
-=20
--struct nilfs;
--
- int nilfs_cldconfig_read(struct nilfs_cldconfig *config, const char *p=
-ath,
- 			 struct nilfs *nilfs);
-=20
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index 17de87b..8df3a07 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -417,7 +417,7 @@ static void nilfs_cleanerd_destroy(struct nilfs_cle=
-anerd *cleanerd)
- 	free(cleanerd);
- }
-=20
--static int nilfs_comp_segimp(const void *elem1, const void *elem2)
-+static int nilfs_comp_segimp_asc(const void *elem1, const void *elem2)
- {
- 	const struct nilfs_segimp *segimp1 =3D elem1, *segimp2 =3D elem2;
-=20
-@@ -429,6 +429,18 @@ static int nilfs_comp_segimp(const void *elem1, co=
-nst void *elem2)
- 	return (segimp1->si_segnum < segimp2->si_segnum) ? -1 : 1;
- }
-=20
-+static int nilfs_comp_segimp_desc(const void *elem1, const void *elem2=
-)
-+{
-+	const struct nilfs_segimp *segimp1 =3D elem1, *segimp2 =3D elem2;
-+
-+	if (segimp1->si_importance > segimp2->si_importance)
++	if (nilfs->n_iocfd < 0) {
++		errno = EBADF;
 +		return -1;
-+	else if (segimp1->si_importance < segimp2->si_importance)
-+		return 1;
++	}
 +
-+	return (segimp1->si_segnum < segimp2->si_segnum) ? -1 : 1;
++	memset(&argv, 0, sizeof(struct nilfs_argv));
++	argv.v_base = (unsigned long)vdescs;
++	argv.v_nmembs = nvdescs;
++	argv.v_size = sizeof(struct nilfs_vdesc);
++	return ioctl(nilfs->n_iocfd, NILFS_IOCTL_CLEAN_SNAPSHOT_FLAGS, &argv);
 +}
 +
- static int nilfs_cleanerd_automatic_suspend(struct nilfs_cleanerd *cle=
-anerd)
- {
- 	return cleanerd->config.cf_min_clean_segments > 0;
-@@ -579,7 +591,7 @@ nilfs_cleanerd_select_segments(struct nilfs_cleaner=
-d *cleanerd,
- 	__u64 segnum;
- 	size_t count, nsegs;
- 	ssize_t nssegs, n;
--	unsigned long long imp, thr;
-+	unsigned long long imp;
- 	int i;
-=20
- 	nsegs =3D nilfs_cleanerd_ncleansegs(cleanerd);
-@@ -600,11 +612,8 @@ nilfs_cleanerd_select_segments(struct nilfs_cleane=
-rd *cleanerd,
- 	prottime =3D tv2.tv_sec;
- 	oldest =3D tv.tv_sec;
-=20
--	/* The segments that have larger importance than thr are not
--	 * selected. */
--	thr =3D (config->cf_selection_policy.p_threshold !=3D 0) ?
--		config->cf_selection_policy.p_threshold :
--		sustat->ss_nongc_ctime;
-+	/* sui_lastdec may not be set by nilfs_get_suinfo */
-+	memset(si, 0, sizeof(si));
-=20
- 	for (segnum =3D 0; segnum < sustat->ss_nsegs; segnum +=3D n) {
- 		count =3D min_t(__u64, sustat->ss_nsegs - segnum,
-@@ -615,22 +624,23 @@ nilfs_cleanerd_select_segments(struct nilfs_clean=
-erd *cleanerd,
- 			goto out;
- 		}
- 		for (i =3D 0; i < n; i++) {
--			if (!nilfs_suinfo_reclaimable(&si[i]))
-+			if (!nilfs_suinfo_reclaimable(&si[i]) ||
-+				si[i].sui_lastmod >=3D sustat->ss_nongc_ctime)
- 				continue;
-=20
--			imp =3D config->cf_selection_policy.p_importance(&si[i]);
--			if (imp < thr) {
--				if (si[i].sui_lastmod < oldest)
--					oldest =3D si[i].sui_lastmod;
--				if (si[i].sui_lastmod < prottime) {
--					sm =3D nilfs_vector_get_new_element(smv);
--					if (sm =3D=3D NULL) {
--						nssegs =3D -1;
--						goto out;
--					}
--					sm->si_segnum =3D segnum + i;
--					sm->si_importance =3D imp;
-+			imp =3D config->cf_selection_policy.p_importance(nilfs,
-+					sustat, &si[i], prottime);
-+
-+			if (si[i].sui_lastmod < oldest)
-+				oldest =3D si[i].sui_lastmod;
-+			if (si[i].sui_lastmod < prottime) {
-+				sm =3D nilfs_vector_get_new_element(smv);
-+				if (sm =3D=3D NULL) {
-+					nssegs =3D -1;
-+					goto out;
- 				}
-+				sm->si_segnum =3D segnum + i;
-+				sm->si_importance =3D imp;
- 			}
- 		}
- 		if (n =3D=3D 0) {
-@@ -642,7 +652,11 @@ nilfs_cleanerd_select_segments(struct nilfs_cleane=
-rd *cleanerd,
- 			break;
- 		}
- 	}
--	nilfs_vector_sort(smv, nilfs_comp_segimp);
-+	if (config->cf_selection_policy.p_comparison =3D=3D
-+			NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER)
-+		nilfs_vector_sort(smv, nilfs_comp_segimp_asc);
-+	else
-+		nilfs_vector_sort(smv, nilfs_comp_segimp_desc);
-=20
- 	nssegs =3D (nilfs_vector_get_size(smv) < nsegs) ?
- 		nilfs_vector_get_size(smv) : nsegs;
---=20
++/**
+  * nilfs_sync - sync a NILFS file system
+  * @nilfs: nilfs object
+  * @cnop: buffer to store the latest checkpoint number in
+-- 
 1.9.0
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
