@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 4/6] nilfs2: add ioctl() to clean snapshot flags from dat entries
-Date: Sun, 16 Mar 2014 11:47:37 +0100
-Message-ID: <be7d3bd13015117222aac43194c0fdb9c5d0046f.1394966729.git.andreas.rohner@gmx.net>
+Subject: [PATCH 3/6] nilfs2: scan dat entries at snapshot creation/deletion time
+Date: Sun, 16 Mar 2014 11:47:36 +0100
+Message-ID: <29dee92595249b713fff1e4903d5d76556926eec.1394966729.git.andreas.rohner@gmx.net>
 References: <cover.1394966728.git.andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1394966728.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -15,336 +15,275 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch introduces new flags for nilfs_vdesc to indicate the reason a
-block is alive. So if the block would be reclaimable, but must be
-treated as if it were alive, because it is part of a snapshot, then the
-snapshot flag is set.
+To accurately count the number of live blocks in a segment, it is
+important to take snapshots into account, because snapshots can protect
+reclaimable blocks from being cleaned.
 
-Additionally a new ioctl() is added, which enables the userspace GC to
-perform a cleanup operation after setting the number of blocks with
-NILFS_IOCTL_SET_SUINFO. It sets DAT entries with de_ss values of
-NILFS_CNO_MAX to 0. NILFS_CNO_MAX indicates, that the corresponding
-block belongs to some snapshot, but was already decremented by a
-previous deletion operation. If the segment usage info is changed with
-NILFS_IOCTL_SET_SUINFO and the number of blocks is updated, then these
-blocks would never be decremented and there are scenarios where the
-corresponding segments would starve (never be cleaned). To prevent that
-they must be reset to 0.
+This patch uses the previously reserved de_rsv field of the
+nilfs_dat_entry struct to store one of the snapshots the corresponding
+block belongs to. One block can belong to many snapshots, but because
+the snapshots are stored in a sorted linked list, it is easy to check if
+a block belongs to any other snapshot given the previous and the next
+snapshot. For example if the current snapshot (in de_ss) is being
+removed and neither the previous nor the next snapshot is in the range
+of de_start to de_end, then it is guaranteed that the block doesn't
+belong to any other snapshot and is reclaimable. On the other hand if
+lets say the previous snapshot is in the range of de_start to de_end, we
+simply set de_ss to the previous snapshot and the block is not
+reclaimable.
+
+To implement this every DAT entry is scanned at snapshot
+creation/deletion time and updated if needed. To avoid too many update
+operations only potentially reclaimable blocks are ever updated. For
+example if there are some deleted files and the checkpoint to which
+these files belong is turned into a snapshot, then su_nblocks is
+incremented for these blocks, which reverses the decrement that happened
+when the files were deleted. If after some time this snapshot is
+deleted, su_nblocks is decremented again to reverse the increment at
+creation time.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/dat.c           |  63 ++++++++++++++++++++++++++++
- fs/nilfs2/dat.h           |   1 +
- fs/nilfs2/ioctl.c         | 103 +++++++++++++++++++++++++++++++++++++++++++++-
- include/linux/nilfs2_fs.h |  52 ++++++++++++++++++++++-
- 4 files changed, 216 insertions(+), 3 deletions(-)
+ fs/nilfs2/cpfile.c        |  7 ++++
+ fs/nilfs2/dat.c           | 86 +++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/dat.h           | 26 ++++++++++++++
+ include/linux/nilfs2_fs.h |  4 +--
+ 4 files changed, 121 insertions(+), 2 deletions(-)
 
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index 0d58075..29952f5 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -28,6 +28,7 @@
+ #include <linux/nilfs2_fs.h>
+ #include "mdt.h"
+ #include "cpfile.h"
++#include "sufile.h"
+ 
+ 
+ static inline unsigned long
+@@ -584,6 +585,7 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
+ 	struct nilfs_cpfile_header *header;
+ 	struct nilfs_checkpoint *cp;
+ 	struct nilfs_snapshot_list *list;
++	struct the_nilfs *nilfs = cpfile->i_sb->s_fs_info;
+ 	__u64 curr, prev;
+ 	unsigned long curr_blkoff, prev_blkoff;
+ 	void *kaddr;
+@@ -681,6 +683,8 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
+ 	mark_buffer_dirty(header_bh);
+ 	nilfs_mdt_mark_dirty(cpfile);
+ 
++	nilfs_dat_scan_inc_ss(nilfs->ns_dat, cno);
++
+ 	brelse(prev_bh);
+ 
+  out_curr:
+@@ -703,6 +707,7 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
+ 	struct nilfs_cpfile_header *header;
+ 	struct nilfs_checkpoint *cp;
+ 	struct nilfs_snapshot_list *list;
++	struct the_nilfs *nilfs = cpfile->i_sb->s_fs_info;
+ 	__u64 next, prev;
+ 	void *kaddr;
+ 	int ret;
+@@ -784,6 +789,8 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
+ 	mark_buffer_dirty(header_bh);
+ 	nilfs_mdt_mark_dirty(cpfile);
+ 
++	nilfs_dat_scan_dec_ss(nilfs->ns_dat, cno, prev, next);
++
+ 	brelse(prev_bh);
+ 
+  out_next:
 diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 89a4a5f..7adb15d 100644
+index 0d5fada..89a4a5f 100644
 --- a/fs/nilfs2/dat.c
 +++ b/fs/nilfs2/dat.c
-@@ -382,6 +382,69 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
+@@ -28,6 +28,7 @@
+ #include "mdt.h"
+ #include "alloc.h"
+ #include "dat.h"
++#include "sufile.h"
+ 
+ 
+ #define NILFS_CNO_MIN	((__u64)1)
+@@ -97,6 +98,7 @@ void nilfs_dat_commit_alloc(struct inode *dat, struct nilfs_palloc_req *req)
+ 	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
+ 	entry->de_end = cpu_to_le64(NILFS_CNO_MAX);
+ 	entry->de_blocknr = cpu_to_le64(0);
++	entry->de_ss = cpu_to_le64(0);
+ 	kunmap_atomic(kaddr);
+ 
+ 	nilfs_palloc_commit_alloc_entry(dat, req);
+@@ -121,6 +123,7 @@ static void nilfs_dat_commit_free(struct inode *dat,
+ 	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
+ 	entry->de_end = cpu_to_le64(NILFS_CNO_MIN);
+ 	entry->de_blocknr = cpu_to_le64(0);
++	entry->de_ss = cpu_to_le64(0);
+ 	kunmap_atomic(kaddr);
+ 
+ 	nilfs_dat_commit_entry(dat, req);
+@@ -201,6 +204,7 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
+ 		WARN_ON(start > end);
+ 	}
+ 	entry->de_end = cpu_to_le64(end);
++	entry->de_ss = cpu_to_le64(NILFS_CNO_MAX);
+ 	blocknr = le64_to_cpu(entry->de_blocknr);
+ 	kunmap_atomic(kaddr);
+ 
+@@ -365,6 +369,8 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
+ 	}
+ 	WARN_ON(blocknr == 0);
+ 	entry->de_blocknr = cpu_to_le64(blocknr);
++	if (entry->de_ss == cpu_to_le64(NILFS_CNO_MAX))
++		entry->de_ss = cpu_to_le64(0);
+ 	kunmap_atomic(kaddr);
+ 
+ 	mark_buffer_dirty(entry_bh);
+@@ -430,6 +436,86 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
+ 	return ret;
  }
  
- /**
-+ * nilfs_dat_clean_snapshot_flag - check flags used by snapshots
-+ * @dat: DAT file inode
-+ * @vblocknr: virtual block number
-+ *
-+ * Description: nilfs_dat_clean_snapshot_flag() changes the flags from
-+ * NILFS_CNO_MAX to 0 if necessary, so that segment usage is accurately
-+ * counted. NILFS_CNO_MAX indicates, that the corresponding block belongs
-+ * to some snapshot, but was already decremented. If the segment usage info
-+ * is changed with NILFS_IOCTL_SET_SUINFO and the number of blocks is updated,
-+ * then these blocks would never be decremented and there are scenarios where
-+ * the corresponding segments would starve (never be cleaned).
-+ *
-+ * Return Value: On success, 0 is returned. On error, one of the following
-+ * negative error codes is returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ */
-+int nilfs_dat_clean_snapshot_flag(struct inode *dat, __u64 vblocknr)
++void nilfs_dat_do_scan_dec(struct inode *dat, struct nilfs_palloc_req *req,
++			   void *data)
 +{
-+	struct buffer_head *entry_bh;
 +	struct nilfs_dat_entry *entry;
++	__u64 start, end, prev_ss;
++	__u64 *ssp = data, ss = ssp[0], prev = ssp[1], next = ssp[2];
++	sector_t blocknr;
 +	void *kaddr;
-+	int ret;
++	struct the_nilfs *nilfs;
 +
-+	ret = nilfs_palloc_get_entry_block(dat, vblocknr, 0, &entry_bh);
-+	if (ret < 0)
-+		return ret;
++	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
++	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
++					     req->pr_entry_bh, kaddr);
++	start = le64_to_cpu(entry->de_start);
++	end = le64_to_cpu(entry->de_end);
++	blocknr = le64_to_cpu(entry->de_blocknr);
++	prev_ss = le64_to_cpu(entry->de_ss);
 +
-+	/*
-+	 * The given disk block number (blocknr) is not yet written to
-+	 * the device at this point.
-+	 *
-+	 * To prevent nilfs_dat_translate() from returning the
-+	 * uncommitted block number, this makes a copy of the entry
-+	 * buffer and redirects nilfs_dat_translate() to the copy.
-+	 */
-+	if (!buffer_nilfs_redirected(entry_bh)) {
-+		ret = nilfs_mdt_freeze_buffer(dat, entry_bh);
-+		if (ret) {
-+			brelse(entry_bh);
-+			return ret;
++	if (blocknr != 0 && end != NILFS_CNO_MAX && ss >= start && ss < end) {
++		if (prev_ss == ss || prev_ss == NILFS_CNO_MAX) {
++			if (prev && prev >= start && prev < end)
++				entry->de_ss = cpu_to_le64(prev);
++			else if (next && next >= start && next < end)
++				entry->de_ss = cpu_to_le64(next);
++			else
++				entry->de_ss = cpu_to_le64(0);
++
++			if (prev_ss != NILFS_CNO_MAX)
++				prev_ss = le64_to_cpu(entry->de_ss);
++			kunmap_atomic(kaddr);
++			mark_buffer_dirty(req->pr_entry_bh);
++			nilfs_mdt_mark_dirty(dat);
++		} else
++			kunmap_atomic(kaddr);
++
++		if (prev_ss == 0) {
++			nilfs = dat->i_sb->s_fs_info;
++			nilfs_sufile_add_segment_usage(nilfs->ns_sufile,
++				nilfs_get_segnum_of_block(nilfs, blocknr),
++				-1, 0);
 +		}
-+	}
-+
-+	kaddr = kmap_atomic(entry_bh->b_page);
-+	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
-+	if (entry->de_ss == cpu_to_le64(NILFS_CNO_MAX)) {
-+		entry->de_ss = cpu_to_le64(0);
++	} else
 +		kunmap_atomic(kaddr);
-+		mark_buffer_dirty(entry_bh);
-+		nilfs_mdt_mark_dirty(dat);
-+	} else {
-+		kunmap_atomic(kaddr);
-+	}
-+
-+	brelse(entry_bh);
-+
-+	return 0;
 +}
 +
-+/**
-  * nilfs_dat_translate - translate a virtual block number to a block number
-  * @dat: DAT file inode
-  * @vblocknr: virtual block number
++void nilfs_dat_do_scan_inc(struct inode *dat, struct nilfs_palloc_req *req,
++			   void *data)
++{
++	struct nilfs_dat_entry *entry;
++	__u64 start, end, prev_ss;
++	__u64 *ssp = data, ss = *ssp;
++	sector_t blocknr;
++	void *kaddr;
++	struct the_nilfs *nilfs;
++
++	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
++	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
++			req->pr_entry_bh, kaddr);
++	start = le64_to_cpu(entry->de_start);
++	end = le64_to_cpu(entry->de_end);
++	blocknr = le64_to_cpu(entry->de_blocknr);
++	prev_ss = le64_to_cpu(entry->de_ss);
++
++	if (blocknr != 0 && end != NILFS_CNO_MAX && ss >= start && ss < end &&
++			(prev_ss == 0 || prev_ss == NILFS_CNO_MAX)) {
++
++		entry->de_ss = cpu_to_le64(ss);
++
++		kunmap_atomic(kaddr);
++		mark_buffer_dirty(req->pr_entry_bh);
++		nilfs_mdt_mark_dirty(dat);
++
++		nilfs = dat->i_sb->s_fs_info;
++		nilfs_sufile_add_segment_usage(nilfs->ns_sufile,
++				nilfs_get_segnum_of_block(nilfs, blocknr),
++				1, 0);
++	} else
++		kunmap_atomic(kaddr);
++}
++
+ ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
+ 			    size_t nvi)
+ {
 diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
-index 92a187e..a528024 100644
+index cbd8e97..92a187e 100644
 --- a/fs/nilfs2/dat.h
 +++ b/fs/nilfs2/dat.h
-@@ -51,6 +51,7 @@ void nilfs_dat_abort_update(struct inode *, struct nilfs_palloc_req *,
- int nilfs_dat_mark_dirty(struct inode *, __u64);
- int nilfs_dat_freev(struct inode *, __u64 *, size_t);
- int nilfs_dat_move(struct inode *, __u64, sector_t);
-+int nilfs_dat_clean_snapshot_flag(struct inode *, __u64);
- ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned, size_t);
+@@ -55,5 +55,31 @@ ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned, size_t);
  
  int nilfs_dat_read(struct super_block *sb, size_t entry_size,
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 422fb54..0b62bf4 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -578,7 +578,7 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
- 	struct buffer_head *bh;
- 	int ret;
- 
--	if (vdesc->vd_flags == 0)
-+	if (nilfs_vdesc_data(vdesc))
- 		ret = nilfs_gccache_submit_read_data(
- 			inode, vdesc->vd_offset, vdesc->vd_blocknr,
- 			vdesc->vd_vblocknr, &bh);
-@@ -662,6 +662,14 @@ static int nilfs_ioctl_move_blocks(struct super_block *sb,
- 		}
- 
- 		do {
-+			/*
-+			 * old user space tools to not initialize vd_flags2
-+			 * check if it contains invalid flags
-+			 */
-+			if (vdesc->vd_flags2 &
-+					(~0UL << __NR_NILFS_VDESC_FIELDS))
-+				vdesc->vd_flags2 = 0;
+ 		   struct nilfs_inode *raw_inode, struct inode **inodep);
++void nilfs_dat_do_scan_dec(struct inode *, struct nilfs_palloc_req *, void *);
++void nilfs_dat_do_scan_inc(struct inode *, struct nilfs_palloc_req *, void *);
 +
- 			ret = nilfs_ioctl_move_inode_block(inode, vdesc,
- 							   &buffers);
- 			if (unlikely(ret < 0)) {
-@@ -984,6 +992,96 @@ out:
- }
- 
- /**
-+ * nilfs_ioctl_clean_snapshot_flags - clean dat entries with invalid de_ss
-+ * @inode: inode object
-+ * @filp: file object
-+ * @cmd: ioctl's request code
-+ * @argp: pointer on argument from userspace
-+ *
-+ * Description: nilfs_ioctl_clean_snapshot_flags() sets DAT entries with de_ss
-+ * values of NILFS_CNO_MAX to 0. NILFS_CNO_MAX indicates, that the
-+ * corresponding block belongs to some snapshot, but was already decremented.
-+ * If the segment usage info is changed with NILFS_IOCTL_SET_SUINFO and the
-+ * number of blocks is updated, then these blocks would never be decremented
-+ * and there are scenarios where the corresponding segments would starve (never
-+ * be cleaned).
-+ *
-+ * Return Value: On success, 0 is returned or error code, otherwise.
++/**
++ * nilfs_dat_scan_dec_ss - scan all dat entries for a checkpoint dec suinfo
++ * @dat: inode of dat file
++ * @cno: snapshot number
++ * @prev: previous snapshot number
++ * @next: next snapshot number
 + */
-+static int nilfs_ioctl_clean_snapshot_flags(struct inode *inode,
-+					    struct file *filp,
-+					    unsigned int cmd,
-+					    void __user *argp)
++static inline int nilfs_dat_scan_dec_ss(struct inode *dat, __u64 cno,
++					__u64 prev, __u64 next)
 +{
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	struct nilfs_transaction_info ti;
-+	struct nilfs_argv argv;
-+	struct nilfs_vdesc *vdesc;
-+	size_t len, i;
-+	void __user *base;
-+	void *kbuf;
-+	int ret;
-+
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	ret = mnt_want_write_file(filp);
-+	if (ret)
-+		return ret;
-+
-+	ret = -EFAULT;
-+	if (copy_from_user(&argv, argp, sizeof(struct nilfs_argv)))
-+		goto out;
-+
-+	ret = -EINVAL;
-+	if (argv.v_size != sizeof(struct nilfs_vdesc))
-+		goto out;
-+	if (argv.v_nmembs > UINT_MAX / sizeof(struct nilfs_vdesc))
-+		goto out;
-+
-+	len = argv.v_size * argv.v_nmembs;
-+	if (!len) {
-+		ret = 0;
-+		goto out;
-+	}
-+
-+	base = (void __user *)(unsigned long)argv.v_base;
-+	kbuf = vmalloc(len);
-+	if (!kbuf) {
-+		ret = -ENOMEM;
-+		goto out;
-+	}
-+
-+	if (copy_from_user(kbuf, base, len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	ret = nilfs_transaction_begin(inode->i_sb, &ti, 0);
-+	if (unlikely(ret))
-+		goto out_free;
-+
-+	for (i = 0, vdesc = kbuf; i < argv.v_nmembs; ++i, ++vdesc) {
-+		if (nilfs_vdesc_snapshot(vdesc)) {
-+			ret = nilfs_dat_clean_snapshot_flag(nilfs->ns_dat,
-+					vdesc->vd_vblocknr);
-+			if (ret) {
-+				nilfs_transaction_abort(inode->i_sb);
-+				goto out_free;
-+			}
-+		}
-+	}
-+
-+	nilfs_transaction_commit(inode->i_sb);
-+
-+out_free:
-+	vfree(kbuf);
-+out:
-+	mnt_drop_write_file(filp);
-+	return ret;
++	__u64 data[3] = { cno, prev, next };
++	return nilfs_palloc_scan_entries(dat, nilfs_dat_do_scan_dec, data);
 +}
 +
 +/**
-  * nilfs_ioctl_sync - make a checkpoint
-  * @inode: inode object
-  * @filp: file object
-@@ -1332,6 +1430,8 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return nilfs_ioctl_get_bdescs(inode, filp, cmd, argp);
- 	case NILFS_IOCTL_CLEAN_SEGMENTS:
- 		return nilfs_ioctl_clean_segments(inode, filp, cmd, argp);
-+	case NILFS_IOCTL_CLEAN_SNAPSHOT_FLAGS:
-+		return nilfs_ioctl_clean_snapshot_flags(inode, filp, cmd, argp);
- 	case NILFS_IOCTL_SYNC:
- 		return nilfs_ioctl_sync(inode, filp, cmd, argp);
- 	case NILFS_IOCTL_RESIZE:
-@@ -1368,6 +1468,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case NILFS_IOCTL_GET_VINFO:
- 	case NILFS_IOCTL_GET_BDESCS:
- 	case NILFS_IOCTL_CLEAN_SEGMENTS:
-+	case NILFS_IOCTL_CLEAN_SNAPSHOT_FLAGS:
- 	case NILFS_IOCTL_SYNC:
- 	case NILFS_IOCTL_RESIZE:
- 	case NILFS_IOCTL_SET_ALLOC_RANGE:
++ * nilfs_dat_scan_dec_ss - scan all dat entries for a checkpoint inc suinfo
++ * @dat: inode of dat file
++ * @cno: snapshot number
++ */
++static inline int nilfs_dat_scan_inc_ss(struct inode *dat, __u64 cno)
++{
++	return nilfs_palloc_scan_entries(dat, nilfs_dat_do_scan_inc, &cno);
++}
+ 
+ #endif	/* _NILFS_DAT_H */
 diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index ba9ebe02..30ddc86 100644
+index ca269ad..ba9ebe02 100644
 --- a/include/linux/nilfs2_fs.h
 +++ b/include/linux/nilfs2_fs.h
-@@ -863,7 +863,7 @@ struct nilfs_vinfo {
-  * @vd_blocknr: disk block number
-  * @vd_offset: logical block offset inside a file
-  * @vd_flags: flags (data or node block)
-- * @vd_pad: padding
-+ * @vd_flags2: additional flags
+@@ -475,13 +475,13 @@ struct nilfs_palloc_group_desc {
+  * @de_blocknr: block number
+  * @de_start: start checkpoint number
+  * @de_end: end checkpoint number
+- * @de_rsv: reserved for future use
++ * @de_ss: one of the snapshots the block belongs to
   */
- struct nilfs_vdesc {
- 	__u64 vd_ino;
-@@ -873,9 +873,55 @@ struct nilfs_vdesc {
- 	__u64 vd_blocknr;
- 	__u64 vd_offset;
- 	__u32 vd_flags;
--	__u32 vd_pad;
-+	/* vd_flags2 needed because of backwards compatibility */
-+	__u32 vd_flags2;
+ struct nilfs_dat_entry {
+ 	__le64 de_blocknr;
+ 	__le64 de_start;
+ 	__le64 de_end;
+-	__le64 de_rsv;
++	__le64 de_ss;
  };
  
-+/* vdesc flags */
-+enum {
-+	NILFS_VDESC_DATA,
-+	NILFS_VDESC_NODE,
-+	/* ... */
-+};
-+enum {
-+	NILFS_VDESC_SNAPSHOT,
-+	__NR_NILFS_VDESC_FIELDS,
-+	/* ... */
-+};
-+
-+#define NILFS_VDESC_FNS(flag, name)					\
-+static inline void							\
-+nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_flags = NILFS_VDESC_##flag;				\
-+}									\
-+static inline int							\
-+nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
-+{									\
-+	return vdesc->vd_flags == NILFS_VDESC_##flag;			\
-+}
-+
-+#define NILFS_VDESC_FNS2(flag, name)					\
-+static inline void							\
-+nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_flags2 |= (1UL << NILFS_VDESC_##flag);		\
-+}									\
-+static inline void							\
-+nilfs_vdesc_clear_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_flags2 &= ~(1UL << NILFS_VDESC_##flag);		\
-+}									\
-+static inline int							\
-+nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
-+{									\
-+	return !!(vdesc->vd_flags2 & (1UL << NILFS_VDESC_##flag));	\
-+}
-+
-+NILFS_VDESC_FNS(DATA, data)
-+NILFS_VDESC_FNS(NODE, node)
-+NILFS_VDESC_FNS2(SNAPSHOT, snapshot)
-+
- /**
-  * struct nilfs_bdesc - descriptor of disk block number
-  * @bd_ino: inode number
-@@ -922,5 +968,7 @@ struct nilfs_bdesc {
- 	_IOW(NILFS_IOCTL_IDENT, 0x8C, __u64[2])
- #define NILFS_IOCTL_SET_SUINFO  \
- 	_IOW(NILFS_IOCTL_IDENT, 0x8D, struct nilfs_argv)
-+#define NILFS_IOCTL_CLEAN_SNAPSHOT_FLAGS  \
-+	_IOW(NILFS_IOCTL_IDENT, 0x8F, struct nilfs_argv)
- 
- #endif	/* _LINUX_NILFS_FS_H */
+ #define NILFS_MIN_DAT_ENTRY_SIZE	32
 -- 
 1.9.0
 
