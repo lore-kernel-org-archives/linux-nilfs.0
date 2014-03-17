@@ -1,17 +1,17 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH 1/6] nilfs2: add helper function to go through all
- entries of meta data file
-Date: Mon, 17 Mar 2014 10:51:20 +0400
-Message-ID: <1395039080.2205.11.camel@slavad-CELSIUS-H720>
+Subject: Re: [PATCH 3/6] nilfs2: scan dat entries at snapshot
+ creation/deletion time
+Date: Mon, 17 Mar 2014 11:04:05 +0400
+Message-ID: <1395039845.2205.20.camel@slavad-CELSIUS-H720>
 References: <cover.1394966728.git.andreas.rohner@gmx.net>
-	 <2adbf1034ab4b129223553746577f6ec0e699869.1394966729.git.andreas.rohner@gmx.net>
+	 <29dee92595249b713fff1e4903d5d76556926eec.1394966729.git.andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=NiTUvHwpEI4nXvNnhXTsqK8lpkkzLKPX6pG13LoO7ts=;
-	b=mgWYF9F4tY7f3TLVU3ZilBgcw4NfYj0XIEqDucj6UhC+M5VAIZPkTstRfn4nrHIzuw9mDmm2+C2EaRhKZR4CXi/Kc+4toyi7V3DtGp0JIXee+xhWfGUl0wwcOdIqLNQB;
-In-Reply-To: <2adbf1034ab4b129223553746577f6ec0e699869.1394966729.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=UvDUk3mTA8JTieMQnF0tw2/muRAnE2w8Jf/c7AOKdIw=;
+	b=DcTFUNB2+eR9u7Q4vj+pqtXsF8quEKKaT/gz48bTi14hOA5C8dVZD7CpwZcn0RB/tleRGzxE2sorqn43lJxiI6hmKeKu6v6jcAwggWEdfmUx7YcqalQyAIrBJ3POI3qp;
+In-Reply-To: <29dee92595249b713fff1e4903d5d76556926eec.1394966729.git.andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -19,208 +19,297 @@ To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 On Sun, 2014-03-16 at 11:47 +0100, Andreas Rohner wrote:
-> This patch introduces the nilfs_palloc_scan_entries() function,
-> which takes an inode of one of nilfs' meta data files and iterates
-> through all of its entries. For each entry the callback function
-> pointer that is given as a parameter is called. The data parameter
-> is passed to the callback function, so that it may receive
-> parameters and return results.
+> To accurately count the number of live blocks in a segment, it is
+> important to take snapshots into account, because snapshots can protect
+> reclaimable blocks from being cleaned.
+> 
+> This patch uses the previously reserved de_rsv field of the
+> nilfs_dat_entry struct to store one of the snapshots the corresponding
+> block belongs to. One block can belong to many snapshots, but because
+> the snapshots are stored in a sorted linked list, it is easy to check if
+> a block belongs to any other snapshot given the previous and the next
+> snapshot. For example if the current snapshot (in de_ss) is being
+> removed and neither the previous nor the next snapshot is in the range
+> of de_start to de_end, then it is guaranteed that the block doesn't
+> belong to any other snapshot and is reclaimable. On the other hand if
+> lets say the previous snapshot is in the range of de_start to de_end, we
+> simply set de_ss to the previous snapshot and the block is not
+> reclaimable.
+> 
+> To implement this every DAT entry is scanned at snapshot
+> creation/deletion time and updated if needed. 
+
+It is well known problem of NILFS2 that deletion is very slow operation
+for big files because of necessity to update DAT file (de_end: end
+checkpoint number). So, how your addition does affect this disadvantage?
+
+> To avoid too many update
+> operations only potentially reclaimable blocks are ever updated. For
+> example if there are some deleted files and the checkpoint to which
+> these files belong is turned into a snapshot, then su_nblocks is
+> incremented for these blocks, which reverses the decrement that happened
+> when the files were deleted. If after some time this snapshot is
+> deleted, su_nblocks is decremented again to reverse the increment at
+> creation time.
 > 
 > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 > ---
->  fs/nilfs2/alloc.c | 121 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
->  fs/nilfs2/alloc.h |   6 +++
->  2 files changed, 127 insertions(+)
+>  fs/nilfs2/cpfile.c        |  7 ++++
+>  fs/nilfs2/dat.c           | 86 +++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/nilfs2/dat.h           | 26 ++++++++++++++
+>  include/linux/nilfs2_fs.h |  4 +--
+>  4 files changed, 121 insertions(+), 2 deletions(-)
 > 
-> diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-> index 741fd02..0edd85a 100644
-> --- a/fs/nilfs2/alloc.c
-> +++ b/fs/nilfs2/alloc.c
-> @@ -545,6 +545,127 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+> diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+> index 0d58075..29952f5 100644
+> --- a/fs/nilfs2/cpfile.c
+> +++ b/fs/nilfs2/cpfile.c
+> @@ -28,6 +28,7 @@
+>  #include <linux/nilfs2_fs.h>
+>  #include "mdt.h"
+>  #include "cpfile.h"
+> +#include "sufile.h"
+>  
+> 
+>  static inline unsigned long
+> @@ -584,6 +585,7 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
+>  	struct nilfs_cpfile_header *header;
+>  	struct nilfs_checkpoint *cp;
+>  	struct nilfs_snapshot_list *list;
+> +	struct the_nilfs *nilfs = cpfile->i_sb->s_fs_info;
+>  	__u64 curr, prev;
+>  	unsigned long curr_blkoff, prev_blkoff;
+>  	void *kaddr;
+> @@ -681,6 +683,8 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
+>  	mark_buffer_dirty(header_bh);
+>  	nilfs_mdt_mark_dirty(cpfile);
+>  
+> +	nilfs_dat_scan_inc_ss(nilfs->ns_dat, cno);
+> +
+>  	brelse(prev_bh);
+>  
+>   out_curr:
+> @@ -703,6 +707,7 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
+>  	struct nilfs_cpfile_header *header;
+>  	struct nilfs_checkpoint *cp;
+>  	struct nilfs_snapshot_list *list;
+> +	struct the_nilfs *nilfs = cpfile->i_sb->s_fs_info;
+>  	__u64 next, prev;
+>  	void *kaddr;
+>  	int ret;
+> @@ -784,6 +789,8 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
+>  	mark_buffer_dirty(header_bh);
+>  	nilfs_mdt_mark_dirty(cpfile);
+>  
+> +	nilfs_dat_scan_dec_ss(nilfs->ns_dat, cno, prev, next);
+> +
+>  	brelse(prev_bh);
+>  
+>   out_next:
+> diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+> index 0d5fada..89a4a5f 100644
+> --- a/fs/nilfs2/dat.c
+> +++ b/fs/nilfs2/dat.c
+> @@ -28,6 +28,7 @@
+>  #include "mdt.h"
+>  #include "alloc.h"
+>  #include "dat.h"
+> +#include "sufile.h"
+>  
+> 
+>  #define NILFS_CNO_MIN	((__u64)1)
+> @@ -97,6 +98,7 @@ void nilfs_dat_commit_alloc(struct inode *dat, struct nilfs_palloc_req *req)
+>  	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
+>  	entry->de_end = cpu_to_le64(NILFS_CNO_MAX);
+>  	entry->de_blocknr = cpu_to_le64(0);
+> +	entry->de_ss = cpu_to_le64(0);
+>  	kunmap_atomic(kaddr);
+>  
+>  	nilfs_palloc_commit_alloc_entry(dat, req);
+> @@ -121,6 +123,7 @@ static void nilfs_dat_commit_free(struct inode *dat,
+>  	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
+>  	entry->de_end = cpu_to_le64(NILFS_CNO_MIN);
+>  	entry->de_blocknr = cpu_to_le64(0);
+> +	entry->de_ss = cpu_to_le64(0);
+>  	kunmap_atomic(kaddr);
+>  
+>  	nilfs_dat_commit_entry(dat, req);
+> @@ -201,6 +204,7 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
+>  		WARN_ON(start > end);
+>  	}
+>  	entry->de_end = cpu_to_le64(end);
+> +	entry->de_ss = cpu_to_le64(NILFS_CNO_MAX);
+>  	blocknr = le64_to_cpu(entry->de_blocknr);
+>  	kunmap_atomic(kaddr);
+>  
+> @@ -365,6 +369,8 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
+>  	}
+>  	WARN_ON(blocknr == 0);
+>  	entry->de_blocknr = cpu_to_le64(blocknr);
+> +	if (entry->de_ss == cpu_to_le64(NILFS_CNO_MAX))
+> +		entry->de_ss = cpu_to_le64(0);
+>  	kunmap_atomic(kaddr);
+>  
+>  	mark_buffer_dirty(entry_bh);
+> @@ -430,6 +436,86 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
+>  	return ret;
 >  }
 >  
->  /**
-> + * nilfs_palloc_scan_entries - scan through every entry and execute dofunc
-> + * @inode: inode of metadata file using this allocator
-> + * @dofunc: function executed for every entry
-> + * @data: data pointer passed to dofunc
-> + *
-> + * Description: nilfs_palloc_scan_entries() walks through every allocated entry
-> + * of a metadata file and executes dofunc on it. It passes a data pointer to
-> + * dofunc, which can be used as an input parameter or for returning of results.
-> + *
-> + * Return Value: On success, 0 is returned. On error, a
-> + * negative error code is returned.
-> + */
-> +int nilfs_palloc_scan_entries(struct inode *inode,
-> +			      void (*dofunc)(struct inode *,
-> +					     struct nilfs_palloc_req *,
-> +					     void *),
-> +			      void *data)
+> +void nilfs_dat_do_scan_dec(struct inode *dat, struct nilfs_palloc_req *req,
+> +			   void *data)
 > +{
-> +	struct buffer_head *desc_bh, *bitmap_bh;
-> +	struct nilfs_palloc_group_desc *desc;
-> +	struct nilfs_palloc_req req;
-> +	unsigned char *bitmap;
-> +	void *desc_kaddr, *bitmap_kaddr;
-> +	unsigned long group, maxgroup, ngroups;
-> +	unsigned long n, m, entries_per_group, groups_per_desc_block;
-> +	unsigned long i, j, pos;
-> +	unsigned long blkoff, prev_blkoff;
-> +	int ret;
+> +	struct nilfs_dat_entry *entry;
+> +	__u64 start, end, prev_ss;
+> +	__u64 *ssp = data, ss = ssp[0], prev = ssp[1], next = ssp[2];
+> +	sector_t blocknr;
+> +	void *kaddr;
+> +	struct the_nilfs *nilfs;
 > +
-
-I think that it really makes sense to split this function's code between
-several small functions. It improves code style and readability of
-function. Moreover, it makes function more easy understandable.
-
-> +	ngroups = nilfs_palloc_groups_count(inode);
-> +	maxgroup = ngroups - 1;
-> +	entries_per_group = nilfs_palloc_entries_per_group(inode);
-> +	groups_per_desc_block = nilfs_palloc_groups_per_desc_block(inode);
+> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
+> +	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
+> +					     req->pr_entry_bh, kaddr);
+> +	start = le64_to_cpu(entry->de_start);
+> +	end = le64_to_cpu(entry->de_end);
+> +	blocknr = le64_to_cpu(entry->de_blocknr);
+> +	prev_ss = le64_to_cpu(entry->de_ss);
 > +
-> +	for (group = 0; group < ngroups;) {
-> +		ret = nilfs_palloc_get_desc_block(inode, group, 0, &desc_bh);
-> +		if (ret == -ENOENT)
+> +	if (blocknr != 0 && end != NILFS_CNO_MAX && ss >= start && ss < end) {
 
-I suggest to add comment here.
+I think that it makes sense to use small functions with clear names
+about what we check.
 
-> +			return 0;
-> +		else if (ret < 0)
-> +			return ret;
-> +		req.pr_desc_bh = desc_bh;
-> +		desc_kaddr = kmap(desc_bh->b_page);
-> +		desc = nilfs_palloc_block_get_group_desc(inode, group,
-> +							 desc_bh, desc_kaddr);
-> +		n = nilfs_palloc_rest_groups_in_desc_block(inode, group,
-> +							   maxgroup);
+> +		if (prev_ss == ss || prev_ss == NILFS_CNO_MAX) {
+> +			if (prev && prev >= start && prev < end)
+> +				entry->de_ss = cpu_to_le64(prev);
+> +			else if (next && next >= start && next < end)
+> +				entry->de_ss = cpu_to_le64(next);
+> +			else
+> +				entry->de_ss = cpu_to_le64(0);
+
+Ditto.
+
 > +
-> +		for (i = 0; i < n; i++, desc++, group++) {
-> +			m = entries_per_group -
-> +					nilfs_palloc_group_desc_nfrees(inode,
-> +							group, desc);
-
-Looks weird. It makes sense to split on several functions or to use
-variable.
-
-> +			if (!m)
-> +				continue;
+> +			if (prev_ss != NILFS_CNO_MAX)
+> +				prev_ss = le64_to_cpu(entry->de_ss);
+> +			kunmap_atomic(kaddr);
+> +			mark_buffer_dirty(req->pr_entry_bh);
+> +			nilfs_mdt_mark_dirty(dat);
+> +		} else
+> +			kunmap_atomic(kaddr);
 > +
-> +			ret = nilfs_palloc_get_bitmap_block(
-> +				inode, group, 0, &bitmap_bh);
-
-Ditto. Looks weird.
-
-> +			if (ret == -ENOENT) {
-> +				ret = 0;
-> +				goto out_desc;
-
-It needs to add comment here. Otherwise, it looks weird because anyway
-we go to out_desc. Maybe to combine:
-
-if (unlikely(ret < 0)) {
-	if (ret == -ENOENT)
-		ret = 0;
-	goto out_desc;
-}
-
-Anyway, it needs to comment why we assign zero for the case of -ENOENT.
-
-> +			} else if (ret < 0)
-> +				goto out_desc;
+> +		if (prev_ss == 0) {
+> +			nilfs = dat->i_sb->s_fs_info;
+> +			nilfs_sufile_add_segment_usage(nilfs->ns_sufile,
+> +				nilfs_get_segnum_of_block(nilfs, blocknr),
+> +				-1, 0);
+> +		}
+> +	} else
+> +		kunmap_atomic(kaddr);
+> +}
 > +
-> +			req.pr_bitmap_bh = bitmap_bh;
-> +			bitmap_kaddr = kmap(bitmap_bh->b_page);
-> +			bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
-> +			/* entry blkoff is always bigger than 0 */
-> +			blkoff = 0;
-> +			pos = 0;
+> +void nilfs_dat_do_scan_inc(struct inode *dat, struct nilfs_palloc_req *req,
+> +			   void *data)
+> +{
+> +	struct nilfs_dat_entry *entry;
+> +	__u64 start, end, prev_ss;
+> +	__u64 *ssp = data, ss = *ssp;
+> +	sector_t blocknr;
+> +	void *kaddr;
+> +	struct the_nilfs *nilfs;
 > +
-> +			for (j = 0; j < m; ++j, ++pos) {
-> +				pos = nilfs_find_next_bit(bitmap,
-> +						entries_per_group, pos);
+> +	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
+> +	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
+> +			req->pr_entry_bh, kaddr);
+> +	start = le64_to_cpu(entry->de_start);
+> +	end = le64_to_cpu(entry->de_end);
+> +	blocknr = le64_to_cpu(entry->de_blocknr);
+> +	prev_ss = le64_to_cpu(entry->de_ss);
 > +
-> +				if (pos >= entries_per_group)
-> +					break;
-> +
-> +				/* found an entry */
-> +				req.pr_entry_nr =
-> +					entries_per_group * group + pos;
-> +
-> +				prev_blkoff = blkoff;
-> +				blkoff = nilfs_palloc_entry_blkoff(inode,
-> +							req.pr_entry_nr);
-> +
-> +				if (blkoff != prev_blkoff) {
-> +					if (prev_blkoff)
-> +						brelse(req.pr_entry_bh);
-> +
-> +					ret = nilfs_palloc_get_entry_block(
-> +							inode, req.pr_entry_nr,
-> +							0, &req.pr_entry_bh);
+> +	if (blocknr != 0 && end != NILFS_CNO_MAX && ss >= start && ss < end &&
+> +			(prev_ss == 0 || prev_ss == NILFS_CNO_MAX)) {
 
-Ahhhh. Look weird. :) Split on small functions with clear names, anyway.
-It really improves the code from any point of view.
+Ditto. Moreover, you repeat this check.
+
+> +
+> +		entry->de_ss = cpu_to_le64(ss);
+> +
+> +		kunmap_atomic(kaddr);
+> +		mark_buffer_dirty(req->pr_entry_bh);
+> +		nilfs_mdt_mark_dirty(dat);
+> +
+> +		nilfs = dat->i_sb->s_fs_info;
+> +		nilfs_sufile_add_segment_usage(nilfs->ns_sufile,
+> +				nilfs_get_segnum_of_block(nilfs, blocknr),
+
+Looks weird. Maybe, variable?
 
 Thanks,
 Vyacheslav Dubeyko.
 
-> +					if (ret < 0)
-> +						goto out_entry;
-> +				}
+> +				1, 0);
+> +	} else
+> +		kunmap_atomic(kaddr);
+> +}
 > +
-> +				dofunc(inode, &req, data);
-> +			}
+>  ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned visz,
+>  			    size_t nvi)
+>  {
+> diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
+> index cbd8e97..92a187e 100644
+> --- a/fs/nilfs2/dat.h
+> +++ b/fs/nilfs2/dat.h
+> @@ -55,5 +55,31 @@ ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned, size_t);
+>  
+>  int nilfs_dat_read(struct super_block *sb, size_t entry_size,
+>  		   struct nilfs_inode *raw_inode, struct inode **inodep);
+> +void nilfs_dat_do_scan_dec(struct inode *, struct nilfs_palloc_req *, void *);
+> +void nilfs_dat_do_scan_inc(struct inode *, struct nilfs_palloc_req *, void *);
 > +
-> +			if (blkoff)
-> +				brelse(req.pr_entry_bh);
-> +			kunmap(bitmap_bh->b_page);
-> +			brelse(bitmap_bh);
-> +		}
-> +
-> +		kunmap(desc_bh->b_page);
-> +		brelse(desc_bh);
-> +	}
-> +
-> +	return 0;
-> +
-> +out_entry:
-> +	kunmap(bitmap_bh->b_page);
-> +	brelse(bitmap_bh);
-> +
-> +out_desc:
-> +	kunmap(desc_bh->b_page);
-> +	brelse(desc_bh);
-> +	return ret;
+> +/**
+> + * nilfs_dat_scan_dec_ss - scan all dat entries for a checkpoint dec suinfo
+> + * @dat: inode of dat file
+> + * @cno: snapshot number
+> + * @prev: previous snapshot number
+> + * @next: next snapshot number
+> + */
+> +static inline int nilfs_dat_scan_dec_ss(struct inode *dat, __u64 cno,
+> +					__u64 prev, __u64 next)
+> +{
+> +	__u64 data[3] = { cno, prev, next };
+> +	return nilfs_palloc_scan_entries(dat, nilfs_dat_do_scan_dec, data);
 > +}
 > +
 > +/**
->   * nilfs_palloc_commit_alloc_entry - finish allocation of a persistent object
->   * @inode: inode of metadata file using this allocator
->   * @req: nilfs_palloc_req structure exchanged for the allocation
-> diff --git a/fs/nilfs2/alloc.h b/fs/nilfs2/alloc.h
-> index 4bd6451..0592035 100644
-> --- a/fs/nilfs2/alloc.h
-> +++ b/fs/nilfs2/alloc.h
-> @@ -77,6 +77,7 @@ int nilfs_palloc_freev(struct inode *, __u64 *, size_t);
->  #define nilfs_set_bit_atomic		ext2_set_bit_atomic
->  #define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
->  #define nilfs_find_next_zero_bit	find_next_zero_bit_le
-> +#define nilfs_find_next_bit			find_next_bit_le
+> + * nilfs_dat_scan_dec_ss - scan all dat entries for a checkpoint inc suinfo
+> + * @dat: inode of dat file
+> + * @cno: snapshot number
+> + */
+> +static inline int nilfs_dat_scan_inc_ss(struct inode *dat, __u64 cno)
+> +{
+> +	return nilfs_palloc_scan_entries(dat, nilfs_dat_do_scan_inc, &cno);
+> +}
 >  
->  /**
->   * struct nilfs_bh_assoc - block offset and buffer head association
-> @@ -106,5 +107,10 @@ void nilfs_palloc_setup_cache(struct inode *inode,
->  			      struct nilfs_palloc_cache *cache);
->  void nilfs_palloc_clear_cache(struct inode *inode);
->  void nilfs_palloc_destroy_cache(struct inode *inode);
-> +int nilfs_palloc_scan_entries(struct inode *,
-> +			      void (*dofunc)(struct inode *,
-> +					     struct nilfs_palloc_req *,
-> +					     void *),
-> +			      void *);
+>  #endif	/* _NILFS_DAT_H */
+> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+> index ca269ad..ba9ebe02 100644
+> --- a/include/linux/nilfs2_fs.h
+> +++ b/include/linux/nilfs2_fs.h
+> @@ -475,13 +475,13 @@ struct nilfs_palloc_group_desc {
+>   * @de_blocknr: block number
+>   * @de_start: start checkpoint number
+>   * @de_end: end checkpoint number
+> - * @de_rsv: reserved for future use
+> + * @de_ss: one of the snapshots the block belongs to
+>   */
+>  struct nilfs_dat_entry {
+>  	__le64 de_blocknr;
+>  	__le64 de_start;
+>  	__le64 de_end;
+> -	__le64 de_rsv;
+> +	__le64 de_ss;
+>  };
 >  
->  #endif	/* _NILFS_ALLOC_H */
+>  #define NILFS_MIN_DAT_ENTRY_SIZE	32
 
 
 --
