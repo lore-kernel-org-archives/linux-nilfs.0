@@ -1,108 +1,69 @@
-From: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: attempt to access beyond end of device
-Date: Thu, 27 Mar 2014 13:39:18 +0100
-Message-ID: <20140327123918.GH30294@wloczykij>
+Date: Sat, 29 Mar 2014 18:49:29 +0400
+Message-ID: <1396104569.2092.10.camel@slavad-CELSIUS-H720>
 References: <20140324071357.GY4686@wloczykij>
- <1395646655.2178.20.camel@slavad-CELSIUS-H720>
- <20140324204917.GA4686@wloczykij>
- <1395739090.2197.11.camel@slavad-CELSIUS-H720>
+	 <1395646655.2178.20.camel@slavad-CELSIUS-H720>
+	 <20140324204917.GA4686@wloczykij>
+	 <1395739090.2197.11.camel@slavad-CELSIUS-H720>
+	 <20140327123918.GH30294@wloczykij>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="cYtjc4pxslFTELvY"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1395739090.2197.11.camel@slavad-CELSIUS-H720>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=n+uY4JWQXSZPpL0gdacSBq0H5Nr0MJm6VXpG4hRECIY=;
+	b=SPV988PRuDKkTGBTwgoWjXiQrrdann3kllk/azbJev4ac9btFV/yrISmYh94TowMG5Ne4olCnSdXCqT3ysxqb4ud0hlpKlk3dy9WruhzEbrQns+MW03pJqB7tFs7pqQy;
+In-Reply-To: <20140327123918.GH30294@wloczykij>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Piotr Szymaniak <szarpaj-TbOm9Ca2r9GrDJvtcaxF/A@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
+On Thu, 2014-03-27 at 13:39 +0100, Piotr Szymaniak wrote:
 
---cYtjc4pxslFTELvY
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> [ 1109.889697] mmcblk0: mmc0:b368 SMI   7.51 GiB 
+> [ 1109.891261]  mmcblk0: p1 p2 p3
+> [ 1129.467450] NILFS warning: mounting unchecked fs
+> [ 1129.956859] NILFS: recovery complete.
+> [ 1129.960064] segctord starting. Construction interval = 300 seconds, CP frequency < 30 seconds
+> [ 1129.979344] NILFS warning: mounting fs with errors
+> [ 1283.005874] attempt to access beyond end of device
+> [ 1283.005882] mmcblk0p3: rw=8192, want=145241775180196072, limit=15120384
 
-On Tue, Mar 25, 2014 at 01:18:10PM +0400, Vyacheslav Dubeyko wrote:
-> On Mon, 2014-03-24 at 21:49 +0100, Piotr Szymaniak wrote:
->=20
-> > That was some time ago, so I'm unable to answer this question. But
-> > nilfs-tune shows 4KB blocks:
-> >=20
 > > ~ # nilfs-tune -l /dev/sdf3
-> > nilfs-tune 2.1.6
-> > Filesystem volume name:   (none)
-> > Filesystem UUID:          53760664-f9ed-4c8d-af42-c6ee2f16d956
-> > Filesystem magic number:  0x3434
-> > Filesystem revision #:    2.0
-> > Filesystem features:      (none)
-> > Filesystem state:         invalid or mounted,error
-> > Filesystem OS type:       Linux
-> > Block size:               4096
-> > Filesystem created:       Fri Aug  3 08:37:06 2012
->=20
-> I suspect that you used this NILFS2 volume with kernel version that it
-> was trouble with segments creation. So, you can have volume corruption
-> because of this bug that it was fixed.
->=20
-> (1) What Linux kernel version do use currently?
+> > > nilfs-tune 2.1.6
+> > > Filesystem volume name:   (none)
+> > > Filesystem UUID:          53760664-f9ed-4c8d-af42-c6ee2f16d956
+> > > Filesystem magic number:  0x3434
+> > > Filesystem revision #:    2.0
+> > > Filesystem features:      (none)
+> > > Filesystem state:         invalid or mounted,error
+> > > Filesystem OS type:       Linux
+> > > Block size:               4096
 
-I think it was 3.6.y or 3.10.y
+I suppose that you have corrupted file system. Because it is possible to
+see that file system has 4 KB block size but the read request is 8 KB in
+size (moreover, this request is out of device). You are using this
+NILFS2 volume from 2012 year. So, the reason of the issue can be only
+corrupted block on the volume.
 
+I assume that there is significant probability of occurrence the issue
+with competition of segments for dirty blocks during segment
+construction. I've reproduced this issue very stably when it takes place
+simultaneous checking for updates and some intensive activity with
+volume (for example, compilation). So, such issue results with
+corruption of file system. But you can discover such corruption far away
+from place of origin.
 
-> (2) How long did you use old kernel versions?
+Anyway, I'll happy to investigate your issue if you can describe a
+reproducing path. I need in stable reproducing of the issue for
+investigation and fix. Could you describe it?
 
-I suppose at least since 2012-10.08 [1] as this is the same Raspberry Pi
-and, afair, the same fs. So it was 3.2.27 and then some of (some of them
-was unstable) 3.{6,10,11}.y
-
-
-> (3) What workloads did you use for this volume?
-
-It was almost idle except once a day or two accepting backup from
-another machine (but that was kept on external drive/fs).
-
-
-> (4) Had you situations of simultaneous working of several threads with
-> intensive operations with volume (for example, simultaneous compilation
-> and checking for updates)?
-
-Could be, but compilation was made on external drive. nilfs holds the
-rootfs and almost nothing more.
+Thanks,
+Vyacheslav Dubeyko.
 
 
-[1] http://marc.info/?l=3Dlinux-nilfs&m=3D134973563927736&w=3D2
-
-
-Piotr Szymaniak.
---=20
-Czekajcie,  czekajcie.  Ktos cos do mnie mowil,  ale nie wiem kto i nie
-wiem co.
-  -- Rafal Solecki
-
---cYtjc4pxslFTELvY
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iQIcBAEBCAAGBQJTNBv2AAoJEEMpAov1cw9lT+AP/A9bS8rEuXT9IBQhuVpPuC1a
-QpDKcur8hCf7oczIYt7dNqqdQ5W25ZwvYheK2ZAW/oM4lJ/o0sLJ8hZJ53HRGzwh
-k60C4pj/ojDVDmH92SbRSqHK3aF/LoDUaAoxylTutEECq2iUrGLvL/3f0IDqZL8W
-QQypM7nI2R4BlCLuknaYkaG8XS+aFiu3GjzMflr0Q0AGAW4bihc6DS1GMX25Pexy
-gvSxKGeJuAZ5C/CTTlc9d5eV8R4ogJIHp3xAWJmawvM7O0frNSinwOPridi0GN4s
-7Or51PKFzlpJ/ytfH+lsZ8lMiVSwUg9uctx41gr1SwxO4e0Ihs9HoFfjzNJIo7+2
-lygFWrmPrkbM2FoPOtNpU3AQjQBM3jgnl+CSQzXeTDiWwwahn+9Zs0So/l09DZ4V
-1gE9l5zJlRXYvEDX5NiNP5C5m2ujcHas057WVdTYbQidASGivBeMmhHHoul1IRIi
-Vten1wNWjvtyTGhe2TOtsPGJ0XIN1+FT3dz2pkIJ/cLf79OmK+b+Nu5KRqzZ8zf2
-XI5NzEfMbbX+KUR90j1PYrxjmfmhGCzkOUMYMn2wh7rLjH7eoPr9eO9/4pZUvTPx
-IvNfTYjXXNNFG/H3o1wIJxeoVvIaVEjAQ71VMu0zZM84sl1DKAbR0jFy6SMfOOq5
-zL5fQmzOHl8eX0RflVUP
-=R+nN
------END PGP SIGNATURE-----
-
---cYtjc4pxslFTELvY--
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
