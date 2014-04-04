@@ -1,13 +1,14 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 4/9] nilfs2: add /sys/fs/nilfs/<device>/segctor group
-Date: Fri, 04 Apr 2014 19:13:22 +0400
-Message-ID: <1396624402.2215.37.camel@slavad-CELSIUS-H720>
+Subject: [PATCH 7/9] nilfs2: add /sys/fs/nilfs/<device>/mounted_snapshots
+ group
+Date: Fri, 04 Apr 2014 19:14:15 +0400
+Message-ID: <1396624455.2215.40.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=6xE0E5dU5KWaPXZeoGXr65efylNODFDZ/GL4CoJxa/Q=;
-	b=Kprm6H73BuHvNRTL6FD7CiAWsOuIn7yj3EjXfmghXyGOsjekTh0bpHvKgaDnVTaoVqOj8SM3XgJ3pOrdCGkzk+tJbBuwgnPLI9Nc94S3WGY/Upw8Mgdlx2CKBnJcSrSJ;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=oQMvVWQddWI41bvk/LeLaKFlI5yZgymNOY1/LdPskOo=;
+	b=K4MnttMl1cbntv50oaQpxffRR/Y4JuasiY5X3mczm6jzi7GqNqtl31dEZLsIrtOBAu8kuFtSi2pP4Io7t3Vctf1bC/JBKYaA3jAPkOI5ASEtntNzIcuv33/NPDmrm+xs;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -15,352 +16,144 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org
 
 From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-Subject: [PATCH 4/9] nilfs2: add /sys/fs/nilfs/<device>/segctor group
+Subject: [PATCH 7/9] nilfs2: add /sys/fs/nilfs/<device>/mounted_snapshots group
 
-This patch adds creation of /sys/fs/nilfs/<device>/segctor
+This patch adds creation of /sys/fs/nilfs/<device>/mounted_snapshots
 group.
 
-The segctor group contains attributes that describe
-segctor thread activity details:
-(1) last_pseg_block - show start block number of the latest segment.
-(2) last_seg_sequence - show sequence value of the latest segment.
-(3) last_seg_checkpoint - show checkpoint number of the latest segment.
-(4) current_seg_sequence - show segment sequence counter.
-(5) current_last_full_seg - show index number of the latest full segment.
-(6) next_full_seg - show index number of the full segment index
-to be used next.
-(7) next_pseg_offset - show offset of next partial segment in
-the current full segment.
-(8) next_checkpoint - show next checkpoint number.
-(9) last_seg_write_time - show write time of the last segment.
-(10) last_nongc_write_time - show write time of the last segment
-not for cleaner operation.
-(11) dirty_data_blocks_count - show number of dirty data blocks.
+The mounted_snapshots group contains group for every
+mounted snapshot.
 
 Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
 CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/sysfs.c |  238 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/sysfs.h |   16 ++++
- 2 files changed, 254 insertions(+)
+ fs/nilfs2/sysfs.c |   36 +++++++++++++++++++++++++++++++++++-
+ fs/nilfs2/sysfs.h |   12 ++++++++++++
+ 2 files changed, 47 insertions(+), 1 deletion(-)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index fe8cf62..347ee80 100644
+index 5583683..44fb4be 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -122,6 +122,236 @@ void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
+@@ -122,6 +122,32 @@ void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
  }
  
  /************************************************************************
-+ *                        NILFS segctor attrs                           *
++ *                    NILFS mounted snapshots attrs                     *
 + ************************************************************************/
 +
-+static ssize_t
-+nilfs_segctor_last_pseg_block_show(struct nilfs_segctor_attr *attr,
-+				    struct the_nilfs *nilfs,
-+				    char *buf)
-+{
-+	sector_t last_pseg;
-+
-+	spin_lock(&nilfs->ns_last_segment_lock);
-+	last_pseg = nilfs->ns_last_pseg;
-+	spin_unlock(&nilfs->ns_last_segment_lock);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+			(unsigned long long)last_pseg);
-+}
++static const char mounted_snapshots_readme_str[] =
++	"The mounted_snapshots group contains group for\n"
++	"every mounted snapshot.\n";
 +
 +static ssize_t
-+nilfs_segctor_last_seg_sequence_show(struct nilfs_segctor_attr *attr,
-+					struct the_nilfs *nilfs,
-+					char *buf)
++nilfs_mounted_snapshots_README_show(struct nilfs_mounted_snapshots_attr *attr,
++				    struct the_nilfs *nilfs, char *buf)
 +{
-+	u64 last_seq;
-+
-+	spin_lock(&nilfs->ns_last_segment_lock);
-+	last_seq = nilfs->ns_last_seq;
-+	spin_unlock(&nilfs->ns_last_segment_lock);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", last_seq);
++	return snprintf(buf, PAGE_SIZE, mounted_snapshots_readme_str);
 +}
 +
-+static ssize_t
-+nilfs_segctor_last_seg_checkpoint_show(struct nilfs_segctor_attr *attr,
-+					struct the_nilfs *nilfs,
-+					char *buf)
-+{
-+	__u64 last_cno;
++NILFS_MOUNTED_SNAPSHOTS_RO_ATTR(README);
 +
-+	spin_lock(&nilfs->ns_last_segment_lock);
-+	last_cno = nilfs->ns_last_cno;
-+	spin_unlock(&nilfs->ns_last_segment_lock);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", last_cno);
-+}
-+
-+static ssize_t
-+nilfs_segctor_current_seg_sequence_show(struct nilfs_segctor_attr *attr,
-+					struct the_nilfs *nilfs,
-+					char *buf)
-+{
-+	u64 seg_seq;
-+
-+	down_read(&nilfs->ns_sem);
-+	seg_seq = nilfs->ns_seg_seq;
-+	up_read(&nilfs->ns_sem);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", seg_seq);
-+}
-+
-+static ssize_t
-+nilfs_segctor_current_last_full_seg_show(struct nilfs_segctor_attr *attr,
-+					 struct the_nilfs *nilfs,
-+					 char *buf)
-+{
-+	__u64 segnum;
-+
-+	down_read(&nilfs->ns_sem);
-+	segnum = nilfs->ns_segnum;
-+	up_read(&nilfs->ns_sem);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", segnum);
-+}
-+
-+static ssize_t
-+nilfs_segctor_next_full_seg_show(struct nilfs_segctor_attr *attr,
-+				 struct the_nilfs *nilfs,
-+				 char *buf)
-+{
-+	__u64 nextnum;
-+
-+	down_read(&nilfs->ns_sem);
-+	nextnum = nilfs->ns_nextnum;
-+	up_read(&nilfs->ns_sem);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", nextnum);
-+}
-+
-+static ssize_t
-+nilfs_segctor_next_pseg_offset_show(struct nilfs_segctor_attr *attr,
-+					struct the_nilfs *nilfs,
-+					char *buf)
-+{
-+	unsigned long pseg_offset;
-+
-+	down_read(&nilfs->ns_sem);
-+	pseg_offset = nilfs->ns_pseg_offset;
-+	up_read(&nilfs->ns_sem);
-+
-+	return snprintf(buf, PAGE_SIZE, "%lu\n", pseg_offset);
-+}
-+
-+static ssize_t
-+nilfs_segctor_next_checkpoint_show(struct nilfs_segctor_attr *attr,
-+					struct the_nilfs *nilfs,
-+					char *buf)
-+{
-+	__u64 cno;
-+
-+	down_read(&nilfs->ns_sem);
-+	cno = nilfs->ns_cno;
-+	up_read(&nilfs->ns_sem);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", cno);
-+}
-+
-+static ssize_t
-+nilfs_segctor_last_seg_write_time_show(struct nilfs_segctor_attr *attr,
-+					struct the_nilfs *nilfs,
-+					char *buf)
-+{
-+	time_t ctime;
-+
-+	down_read(&nilfs->ns_sem);
-+	ctime = nilfs->ns_ctime;
-+	up_read(&nilfs->ns_sem);
-+
-+	if (nilfs_show_time_format == NILFS_SHOW_HUMAN_READABLE_TIME)
-+		return NILFS_SHOW_TIME(ctime, buf);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", (unsigned long long)ctime);
-+}
-+
-+static ssize_t
-+nilfs_segctor_last_nongc_write_time_show(struct nilfs_segctor_attr *attr,
-+					 struct the_nilfs *nilfs,
-+					 char *buf)
-+{
-+	time_t nongc_ctime;
-+
-+	down_read(&nilfs->ns_sem);
-+	nongc_ctime = nilfs->ns_nongc_ctime;
-+	up_read(&nilfs->ns_sem);
-+
-+	if (nilfs_show_time_format == NILFS_SHOW_HUMAN_READABLE_TIME)
-+		return NILFS_SHOW_TIME(nongc_ctime, buf);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+			(unsigned long long)nongc_ctime);
-+}
-+
-+static ssize_t
-+nilfs_segctor_dirty_data_blocks_count_show(struct nilfs_segctor_attr *attr,
-+					    struct the_nilfs *nilfs,
-+					    char *buf)
-+{
-+	u32 ndirtyblks;
-+
-+	down_read(&nilfs->ns_sem);
-+	ndirtyblks = atomic_read(&nilfs->ns_ndirtyblks);
-+	up_read(&nilfs->ns_sem);
-+
-+	return snprintf(buf, PAGE_SIZE, "%u\n", ndirtyblks);
-+}
-+
-+static const char segctor_readme_str[] =
-+	"The segctor group contains attributes that describe\n"
-+	"segctor thread activity details.\n\n"
-+	"(1) last_pseg_block\n"
-+	"\tshow start block number of the latest segment.\n\n"
-+	"(2) last_seg_sequence\n"
-+	"\tshow sequence value of the latest segment.\n\n"
-+	"(3) last_seg_checkpoint\n"
-+	"\tshow checkpoint number of the latest segment.\n\n"
-+	"(4) current_seg_sequence\n\tshow segment sequence counter.\n\n"
-+	"(5) current_last_full_seg\n"
-+	"\tshow index number of the latest full segment.\n\n"
-+	"(6) next_full_seg\n"
-+	"\tshow index number of the full segment index to be used next.\n\n"
-+	"(7) next_pseg_offset\n"
-+	"\tshow offset of next partial segment in the current full segment.\n\n"
-+	"(8) next_checkpoint\n\tshow next checkpoint number.\n\n"
-+	"(9) last_seg_write_time\n"
-+	"\tshow write time of the last segment.\n\n"
-+	"(10) last_nongc_write_time\n"
-+	"\tshow write time of the last segment not for cleaner operation.\n\n"
-+	"(11) dirty_data_blocks_count\n"
-+	"\tshow number of dirty data blocks.\n\n";
-+
-+static ssize_t
-+nilfs_segctor_README_show(struct nilfs_segctor_attr *attr,
-+			  struct the_nilfs *nilfs, char *buf)
-+{
-+	return snprintf(buf, PAGE_SIZE, segctor_readme_str);
-+}
-+
-+NILFS_SEGCTOR_RO_ATTR(last_pseg_block);
-+NILFS_SEGCTOR_RO_ATTR(last_seg_sequence);
-+NILFS_SEGCTOR_RO_ATTR(last_seg_checkpoint);
-+NILFS_SEGCTOR_RO_ATTR(current_seg_sequence);
-+NILFS_SEGCTOR_RO_ATTR(current_last_full_seg);
-+NILFS_SEGCTOR_RO_ATTR(next_full_seg);
-+NILFS_SEGCTOR_RO_ATTR(next_pseg_offset);
-+NILFS_SEGCTOR_RO_ATTR(next_checkpoint);
-+NILFS_SEGCTOR_RO_ATTR(last_seg_write_time);
-+NILFS_SEGCTOR_RO_ATTR(last_nongc_write_time);
-+NILFS_SEGCTOR_RO_ATTR(dirty_data_blocks_count);
-+NILFS_SEGCTOR_RO_ATTR(README);
-+
-+static struct attribute *nilfs_segctor_attrs[] = {
-+	NILFS_SEGCTOR_ATTR_LIST(last_pseg_block),
-+	NILFS_SEGCTOR_ATTR_LIST(last_seg_sequence),
-+	NILFS_SEGCTOR_ATTR_LIST(last_seg_checkpoint),
-+	NILFS_SEGCTOR_ATTR_LIST(current_seg_sequence),
-+	NILFS_SEGCTOR_ATTR_LIST(current_last_full_seg),
-+	NILFS_SEGCTOR_ATTR_LIST(next_full_seg),
-+	NILFS_SEGCTOR_ATTR_LIST(next_pseg_offset),
-+	NILFS_SEGCTOR_ATTR_LIST(next_checkpoint),
-+	NILFS_SEGCTOR_ATTR_LIST(last_seg_write_time),
-+	NILFS_SEGCTOR_ATTR_LIST(last_nongc_write_time),
-+	NILFS_SEGCTOR_ATTR_LIST(dirty_data_blocks_count),
-+	NILFS_SEGCTOR_ATTR_LIST(README),
++static struct attribute *nilfs_mounted_snapshots_attrs[] = {
++	NILFS_MOUNTED_SNAPSHOTS_ATTR_LIST(README),
 +	NULL,
 +};
 +
-+NILFS_DEV_INT_GROUP_OPS(segctor, dev);
-+NILFS_DEV_INT_GROUP_TYPE(segctor, dev);
-+NILFS_DEV_INT_GROUP_FNS(segctor, dev);
++NILFS_DEV_INT_GROUP_OPS(mounted_snapshots, dev);
++NILFS_DEV_INT_GROUP_TYPE(mounted_snapshots, dev);
++NILFS_DEV_INT_GROUP_FNS(mounted_snapshots, dev);
 +
 +/************************************************************************
-  *                        NILFS superblock attrs                        *
+  *                      NILFS checkpoints attrs                         *
   ************************************************************************/
  
-@@ -400,8 +630,15 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+@@ -828,10 +854,14 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+ 	if (err)
+ 		goto free_dev_subgroups;
+ 
+-	err = nilfs_sysfs_create_checkpoints_group(nilfs);
++	err = nilfs_sysfs_create_mounted_snapshots_group(nilfs);
  	if (err)
  		goto cleanup_dev_kobject;
  
-+	err = nilfs_sysfs_create_segctor_group(nilfs);
++	err = nilfs_sysfs_create_checkpoints_group(nilfs);
 +	if (err)
-+		goto delete_superblock_group;
++		goto delete_mounted_snapshots_group;
 +
- 	return 0;
+ 	err = nilfs_sysfs_create_segments_group(nilfs);
+ 	if (err)
+ 		goto delete_checkpoints_group;
+@@ -855,6 +885,9 @@ delete_segments_group:
+ delete_checkpoints_group:
+ 	nilfs_sysfs_delete_checkpoints_group(nilfs);
  
-+delete_superblock_group:
-+	nilfs_sysfs_delete_superblock_group(nilfs);
++delete_mounted_snapshots_group:
++	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
 +
  cleanup_dev_kobject:
  	kobject_del(&nilfs->ns_dev_kobj);
  
-@@ -415,6 +652,7 @@ failed_create_device_group:
+@@ -867,6 +900,7 @@ failed_create_device_group:
+ 
  void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
  {
++	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
+ 	nilfs_sysfs_delete_checkpoints_group(nilfs);
+ 	nilfs_sysfs_delete_segments_group(nilfs);
  	nilfs_sysfs_delete_superblock_group(nilfs);
-+	nilfs_sysfs_delete_segctor_group(nilfs);
- 	kobject_del(&nilfs->ns_dev_kobj);
- 	kfree(nilfs->ns_dev_subgroups);
- }
 diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
-index 0d5c934..0ed945c 100644
+index 2ffaa69..f8ba9b6 100644
 --- a/fs/nilfs2/sysfs.h
 +++ b/fs/nilfs2/sysfs.h
-@@ -26,11 +26,17 @@
-  * struct nilfs_sysfs_dev_subgroups - device subgroup kernel objects
-  * @sg_superblock_kobj: /sys/fs/nilfs/<device>/superblock
+@@ -28,6 +28,8 @@
   * @sg_superblock_kobj_unregister: completion state
-+ * @sg_segctor_kobj: /sys/fs/nilfs/<device>/segctor
-+ * @sg_segctor_kobj_unregister: completion state
-  */
- struct nilfs_sysfs_dev_subgroups {
- 	/* /sys/fs/nilfs/<device>/superblock */
- 	struct kobject sg_superblock_kobj;
- 	struct completion sg_superblock_kobj_unregister;
-+
-+	/* /sys/fs/nilfs/<device>/segctor */
-+	struct kobject sg_segctor_kobj;
-+	struct completion sg_segctor_kobj_unregister;
- };
+  * @sg_segctor_kobj: /sys/fs/nilfs/<device>/segctor
+  * @sg_segctor_kobj_unregister: completion state
++ * @sg_mounted_snapshots_kobj: /sys/fs/nilfs/<device>/mounted_snapshots
++ * @sg_mounted_snapshots_kobj_unregister: completion state
+  * @sg_checkpoints_kobj: /sys/fs/nilfs/<device>/checkpoints
+  * @sg_checkpoints_kobj_unregister: completion state
+  * @sg_segments_kobj: /sys/fs/nilfs/<device>/segments
+@@ -42,6 +44,10 @@ struct nilfs_sysfs_dev_subgroups {
+ 	struct kobject sg_segctor_kobj;
+ 	struct completion sg_segctor_kobj_unregister;
  
- #define NILFS_COMMON_ATTR_STRUCT(name) \
-@@ -55,6 +61,7 @@ struct nilfs_##name##_attr { \
++	/* /sys/fs/nilfs/<device>/mounted_snapshots */
++	struct kobject sg_mounted_snapshots_kobj;
++	struct completion sg_mounted_snapshots_kobj_unregister;
++
+ 	/* /sys/fs/nilfs/<device>/checkpoints */
+ 	struct kobject sg_checkpoints_kobj;
+ 	struct completion sg_checkpoints_kobj_unregister;
+@@ -73,6 +79,7 @@ struct nilfs_##name##_attr { \
  
  NILFS_DEV_ATTR_STRUCT(dev);
+ NILFS_DEV_ATTR_STRUCT(segments);
++NILFS_DEV_ATTR_STRUCT(mounted_snapshots);
+ NILFS_DEV_ATTR_STRUCT(checkpoints);
  NILFS_DEV_ATTR_STRUCT(superblock);
-+NILFS_DEV_ATTR_STRUCT(segctor);
+ NILFS_DEV_ATTR_STRUCT(segctor);
+@@ -109,6 +116,9 @@ NILFS_DEV_ATTR_STRUCT(segctor);
+ #define NILFS_SEGMENTS_RW_ATTR(name) \
+ 	NILFS_RW_ATTR(segs_info, name)
  
- #define NILFS_ATTR(type, name, mode, show, store) \
- 	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
-@@ -88,11 +95,20 @@ NILFS_DEV_ATTR_STRUCT(superblock);
- #define NILFS_SUPERBLOCK_RW_ATTR(name) \
- 	NILFS_RW_ATTR(superblock, name)
- 
-+#define NILFS_SEGCTOR_INFO_ATTR(name) \
-+	NILFS_INFO_ATTR(segctor, name)
-+#define NILFS_SEGCTOR_RO_ATTR(name) \
-+	NILFS_RO_ATTR(segctor, name)
-+#define NILFS_SEGCTOR_RW_ATTR(name) \
-+	NILFS_RW_ATTR(segctor, name)
++#define NILFS_MOUNTED_SNAPSHOTS_RO_ATTR(name) \
++	NILFS_RO_ATTR(mounted_snapshots, name)
 +
- #define NILFS_FEATURE_ATTR_LIST(name) \
- 	(&nilfs_feature_attr_##name.attr)
- #define NILFS_DEV_ATTR_LIST(name) \
+ #define NILFS_CHECKPOINTS_RO_ATTR(name) \
+ 	NILFS_RO_ATTR(checkpoints, name)
+ #define NILFS_CHECKPOINTS_RW_ATTR(name) \
+@@ -132,6 +142,8 @@ NILFS_DEV_ATTR_STRUCT(segctor);
  	(&nilfs_dev_attr_##name.attr)
+ #define NILFS_SEGMENTS_ATTR_LIST(name) \
+ 	(&nilfs_segments_attr_##name.attr)
++#define NILFS_MOUNTED_SNAPSHOTS_ATTR_LIST(name) \
++	(&nilfs_mounted_snapshots_attr_##name.attr)
+ #define NILFS_CHECKPOINTS_ATTR_LIST(name) \
+ 	(&nilfs_checkpoints_attr_##name.attr)
  #define NILFS_SUPERBLOCK_ATTR_LIST(name) \
- 	(&nilfs_superblock_attr_##name.attr)
-+#define NILFS_SEGCTOR_ATTR_LIST(name) \
-+	(&nilfs_segctor_attr_##name.attr)
- 
- #endif /* _NILFS_SYSFS_H */
 -- 
 1.7.9.5
 
