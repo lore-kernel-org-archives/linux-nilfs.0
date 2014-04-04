@@ -1,13 +1,13 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 1/9] nilfs2: add /sys/fs/nilfs/features group
-Date: Fri, 04 Apr 2014 19:12:15 +0400
-Message-ID: <1396624335.2215.34.camel@slavad-CELSIUS-H720>
+Subject: [PATCH 2/9] nilfs2: add /sys/fs/nilfs/<device> group
+Date: Fri, 04 Apr 2014 19:12:37 +0400
+Message-ID: <1396624357.2215.35.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=rKNHI1gO4C9hhpLUuQoE2poUvO9i1sBD+Zuhlaep+Lk=;
-	b=gsoYOdH5WDyZH4awtoUyGzkbW2ay5ghz8ZFJxkOmCOhK6PrF3yfjM2n80W7MOXaA0IeOUgHjvnHRbc4MPhb6U+urhh+lIJ1nv/8HXFOw8mNM1buM/+bnFoelDSH877hI;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=bueBWzUGMLWMEvyZdX/0jSrHgLjwzS7zekZEEz5g4gQ=;
+	b=i3QMc/UAcbzXBrPlYL0fFbQDnmTy6IJ6sFDgFwCPrhuxBP9pU4/oTYlWKsi2iq1kMJRs0J1ZD8A/v5PCVpxPAxSc5d48klmnTSEfs5zmzOxqhO7qBLYtJN086tpGR4RW;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -15,261 +15,270 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org
 
 From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-Subject: [PATCH 1/9] nilfs2: add /sys/fs/nilfs/features group
+Subject: [PATCH 2/9] nilfs2: add /sys/fs/nilfs/<device> group
 
-This patch adds code of creation /sys/fs/nilfs group and
-/sys/fs/nilfs/features group.
+This patch adds creation of /sys/fs/nilfs/<device> group.
 
-The features group contains attributes that describe NILFS
-file system driver features:
-(1) revision - show current revision of NILFS file system driver.
-(2) time_format - show/set time format.
-
-There are two formats - seconds and human-readable format.
-You can set preferable time format by command
-(for example, setting human-readable format):
-
-'echo human-readable > /sys/fs/nilfs/features/time_format'
+The <device> group contains attributes that describe file
+system partition's details:
+(1) revision - show NILFS file system revision.
+(2) blocksize - show volume block size in bytes.
+(3) device_size - show volume size in bytes.
+(4) free_blocks - show count of free blocks on volume.
+(5) uuid - show volume's UUID.
+(6) volume_name - show volume's name.
 
 Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
 CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/sysfs.c |  158 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/sysfs.h |   59 ++++++++++++++++++++
- 2 files changed, 217 insertions(+)
- create mode 100644 fs/nilfs2/sysfs.c
- create mode 100644 fs/nilfs2/sysfs.h
+ fs/nilfs2/sysfs.c     |  168 +++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/sysfs.h     |   20 ++++++
+ fs/nilfs2/the_nilfs.h |    6 ++
+ 3 files changed, 194 insertions(+)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-new file mode 100644
-index 0000000..b6ca0df
---- /dev/null
+index b6ca0df..195bfe2 100644
+--- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -0,0 +1,158 @@
-+/*
-+ * sysfs.c - sysfs support implementation.
-+ *
-+ * Copyright (C) 2005-2014 Nippon Telegraph and Telephone Corporation.
-+ * Copyright (C) 2014 HGST, Inc., a Western Digital Company.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * Written by Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-+ */
-+
-+#include <linux/kobject.h>
-+
-+#include "nilfs.h"
-+#include "mdt.h"
-+#include "sufile.h"
-+#include "cpfile.h"
-+#include "sysfs.h"
-+
-+/* /sys/fs/nilfs/ */
-+static struct kset *nilfs_kset;
-+
-+enum {
-+	NILFS_SHOW_TIME_SECONDS = 0,
-+	NILFS_SHOW_HUMAN_READABLE_TIME = 1
-+};
-+
-+#define NILFS_SECONDS_STR "seconds"
-+#define NILFS_HUMAN_READABLE_STR "human-readable"
-+
-+static int nilfs_show_time_format = NILFS_SHOW_HUMAN_READABLE_TIME;
-+
-+#define NILFS_SHOW_TIME(time_t_val, buf) ({ \
-+		struct tm res; \
-+		int count = 0; \
-+		time_to_tm(time_t_val, 0, &res); \
-+		res.tm_year += 1900; \
-+		res.tm_mon += 1; \
-+		count = scnprintf(buf, PAGE_SIZE, \
-+				    "%ld-%d-%d %d:%d:%d\n", \
-+				    res.tm_year, res.tm_mon, res.tm_mday, \
-+				    res.tm_hour, res.tm_min, res.tm_sec);\
-+		count; \
-+})
-+
-+/************************************************************************
-+ *                        NILFS feature attrs                           *
+@@ -52,6 +52,174 @@ static int nilfs_show_time_format = NILFS_SHOW_HUMAN_READABLE_TIME;
+ })
+ 
+ /************************************************************************
++ *                        NILFS device attrs                            *
 + ************************************************************************/
 +
-+static ssize_t nilfs_feature_revision_show(struct kobject *kobj,
-+					    struct attribute *attr, char *buf)
++static
++ssize_t nilfs_dev_revision_show(struct nilfs_dev_attr *attr,
++				struct the_nilfs *nilfs,
++				char *buf)
 +{
-+	return snprintf(buf, PAGE_SIZE, "%d.%d\n",
-+			NILFS_CURRENT_REV, NILFS_MINOR_REV);
++	struct nilfs_super_block **sbp = nilfs->ns_sbp;
++	u32 major = le32_to_cpu(sbp[0]->s_rev_level);
++	u16 minor = le16_to_cpu(sbp[0]->s_minor_rev_level);
++
++	return snprintf(buf, PAGE_SIZE, "%d.%d\n", major, minor);
 +}
 +
-+static ssize_t
-+nilfs_feature_time_format_show(struct kobject *kobj,
-+				struct attribute *attr, char *buf)
++static
++ssize_t nilfs_dev_blocksize_show(struct nilfs_dev_attr *attr,
++				 struct the_nilfs *nilfs,
++				 char *buf)
 +{
-+	return snprintf(buf, PAGE_SIZE, "%s\n",
-+			(nilfs_show_time_format == NILFS_SHOW_TIME_SECONDS ?
-+				NILFS_SECONDS_STR : NILFS_HUMAN_READABLE_STR));
++	return snprintf(buf, PAGE_SIZE, "%u\n", nilfs->ns_blocksize);
 +}
 +
-+static ssize_t
-+nilfs_feature_time_format_store(struct kobject *kobj,
-+				struct attribute *attr,
-+				const char *buf, size_t count)
++static
++ssize_t nilfs_dev_device_size_show(struct nilfs_dev_attr *attr,
++				    struct the_nilfs *nilfs,
++				    char *buf)
 +{
-+	size_t secs_len = strlen(NILFS_SECONDS_STR);
-+	size_t hr_len = strlen(NILFS_HUMAN_READABLE_STR);
++	struct nilfs_super_block **sbp = nilfs->ns_sbp;
++	u64 dev_size = le64_to_cpu(sbp[0]->s_dev_size);
 +
-+	if (strncmp(buf, NILFS_SECONDS_STR, secs_len) == 0)
-+		nilfs_show_time_format = NILFS_SHOW_TIME_SECONDS;
-+	else if (strncmp(buf, NILFS_HUMAN_READABLE_STR, hr_len) == 0)
-+		nilfs_show_time_format = NILFS_SHOW_HUMAN_READABLE_TIME;
-+	else  {
-+		printk(KERN_ERR "NILFS: unrecognized time format! You should use 'seconds' or 'human-readable' strings only\n");
-+		return -EOPNOTSUPP;
-+	}
-+
-+	return count;
++	return snprintf(buf, PAGE_SIZE, "%llu\n", dev_size);
 +}
 +
-+static const char features_readme_str[] =
-+	"The features group contains attributes that describe NILFS file\n"
-+	"system driver features.\n\n"
-+	"(1) revision\n\tshow current revision of NILFS file system driver.\n\n"
-+	"(2) time_format\n\tshow/set time format.\n\n"
-+	"\tThere are two formats - seconds and human-readable format.\n"
-+	"\tYou can set preferable time format by command:\n\n"
-+	"\t'echo human-readable > /sys/fs/nilfs/features/time_format'\n\n";
-+
-+static ssize_t nilfs_feature_README_show(struct kobject *kobj,
-+					 struct attribute *attr,
-+					 char *buf)
++static
++ssize_t nilfs_dev_free_blocks_show(struct nilfs_dev_attr *attr,
++				   struct the_nilfs *nilfs,
++				   char *buf)
 +{
-+	return snprintf(buf, PAGE_SIZE, features_readme_str);
++	sector_t free_blocks = 0;
++
++	nilfs_count_free_blocks(nilfs, &free_blocks);
++	return snprintf(buf, PAGE_SIZE, "%llu\n",
++			(unsigned long long)free_blocks);
 +}
 +
-+NILFS_FEATURE_RO_ATTR(revision);
-+NILFS_FEATURE_RW_ATTR(time_format);
-+NILFS_FEATURE_RO_ATTR(README);
++static
++ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
++			    struct the_nilfs *nilfs,
++			    char *buf)
++{
++	struct nilfs_super_block **sbp = nilfs->ns_sbp;
 +
-+static struct attribute *nilfs_feature_attrs[] = {
-+	NILFS_FEATURE_ATTR_LIST(revision),
-+	NILFS_FEATURE_ATTR_LIST(time_format),
-+	NILFS_FEATURE_ATTR_LIST(README),
++	return snprintf(buf, PAGE_SIZE, "%pUL\n", sbp[0]->s_uuid);
++}
++
++static
++ssize_t nilfs_dev_volume_name_show(struct nilfs_dev_attr *attr,
++				    struct the_nilfs *nilfs,
++				    char *buf)
++{
++	struct nilfs_super_block **sbp = nilfs->ns_sbp;
++
++	return scnprintf(buf, sizeof(sbp[0]->s_volume_name), "%s\n",
++			 sbp[0]->s_volume_name);
++}
++
++static const char dev_readme_str[] =
++	"The <device> group contains attributes that describe file system\n"
++	"partition's details.\n\n"
++	"(1) revision\n\tshow NILFS file system revision.\n\n"
++	"(2) blocksize\n\tshow volume block size in bytes.\n\n"
++	"(3) device_size\n\tshow volume size in bytes.\n\n"
++	"(4) free_blocks\n\tshow count of free blocks on volume.\n\n"
++	"(5) uuid\n\tshow volume's UUID.\n\n"
++	"(6) volume_name\n\tshow volume's name.\n\n";
++
++static ssize_t nilfs_dev_README_show(struct nilfs_dev_attr *attr,
++				     struct the_nilfs *nilfs,
++				     char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, dev_readme_str);
++}
++
++NILFS_DEV_RO_ATTR(revision);
++NILFS_DEV_RO_ATTR(blocksize);
++NILFS_DEV_RO_ATTR(device_size);
++NILFS_DEV_RO_ATTR(free_blocks);
++NILFS_DEV_RO_ATTR(uuid);
++NILFS_DEV_RO_ATTR(volume_name);
++NILFS_DEV_RO_ATTR(README);
++
++static struct attribute *nilfs_dev_attrs[] = {
++	NILFS_DEV_ATTR_LIST(revision),
++	NILFS_DEV_ATTR_LIST(blocksize),
++	NILFS_DEV_ATTR_LIST(device_size),
++	NILFS_DEV_ATTR_LIST(free_blocks),
++	NILFS_DEV_ATTR_LIST(uuid),
++	NILFS_DEV_ATTR_LIST(volume_name),
++	NILFS_DEV_ATTR_LIST(README),
 +	NULL,
 +};
 +
-+static const struct attribute_group nilfs_feature_attr_group = {
-+	.name = "features",
-+	.attrs = nilfs_feature_attrs,
++static ssize_t nilfs_dev_attr_show(struct kobject *kobj,
++				    struct attribute *attr, char *buf)
++{
++	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
++						ns_dev_kobj);
++	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
++						attr);
++
++	return a->show ? a->show(a, nilfs, buf) : 0;
++}
++
++static ssize_t nilfs_dev_attr_store(struct kobject *kobj,
++				    struct attribute *attr,
++				    const char *buf, size_t len)
++{
++	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
++						ns_dev_kobj);
++	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
++						attr);
++
++	return a->store ? a->store(a, nilfs, buf, len) : 0;
++}
++
++static void nilfs_dev_attr_release(struct kobject *kobj)
++{
++	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
++						ns_dev_kobj);
++	complete(&nilfs->ns_dev_kobj_unregister);
++}
++
++static const struct sysfs_ops nilfs_dev_attr_ops = {
++	.show	= nilfs_dev_attr_show,
++	.store	= nilfs_dev_attr_store,
 +};
 +
-+int __init nilfs_sysfs_init(void)
++static struct kobj_type nilfs_dev_ktype = {
++	.default_attrs	= nilfs_dev_attrs,
++	.sysfs_ops	= &nilfs_dev_attr_ops,
++	.release	= nilfs_dev_attr_release,
++};
++
++int nilfs_sysfs_create_device_group(struct super_block *sb)
 +{
++	struct the_nilfs *nilfs = sb->s_fs_info;
 +	int err;
 +
-+	nilfs_kset = kset_create_and_add("nilfs", NULL, fs_kobj);
-+	if (!nilfs_kset) {
-+		err = -ENOMEM;
-+		printk(KERN_ERR "NILFS: unable to create sysfs entry: err %d\n",
-+			err);
-+		goto failed_sysfs_init;
-+	}
-+
-+	err = sysfs_create_group(&nilfs_kset->kobj, &nilfs_feature_attr_group);
-+	if (unlikely(err)) {
-+		printk(KERN_ERR "NILFS: unable to create feature group: err %d\n",
-+			err);
-+		goto cleanup_sysfs_init;
-+	}
++	nilfs->ns_dev_kobj.kset = nilfs_kset;
++	init_completion(&nilfs->ns_dev_kobj_unregister);
++	err = kobject_init_and_add(&nilfs->ns_dev_kobj, &nilfs_dev_ktype, NULL,
++				    "%s", sb->s_id);
++	if (err)
++		goto failed_create_device_group;
 +
 +	return 0;
 +
-+cleanup_sysfs_init:
-+	kset_unregister(nilfs_kset);
-+
-+failed_sysfs_init:
++failed_create_device_group:
 +	return err;
 +}
 +
-+void nilfs_sysfs_exit(void)
++void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
 +{
-+	sysfs_remove_group(&nilfs_kset->kobj, &nilfs_feature_attr_group);
-+	kset_unregister(nilfs_kset);
++	kobject_del(&nilfs->ns_dev_kobj);
 +}
++
++/************************************************************************
+  *                        NILFS feature attrs                           *
+  ************************************************************************/
+ 
 diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
-new file mode 100644
-index 0000000..b3ba2e4
---- /dev/null
+index b3ba2e4..19ff1a1 100644
+--- a/fs/nilfs2/sysfs.h
 +++ b/fs/nilfs2/sysfs.h
-@@ -0,0 +1,59 @@
-+/*
-+ * sysfs.h - sysfs support declarations.
-+ *
-+ * Copyright (C) 2005-2014 Nippon Telegraph and Telephone Corporation.
-+ * Copyright (C) 2014 HGST, Inc., a Western Digital Company.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * Written by Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-+ */
-+
-+#ifndef _NILFS_SYSFS_H
-+#define _NILFS_SYSFS_H
-+
-+#include <linux/sysfs.h>
-+
-+#define NILFS_COMMON_ATTR_STRUCT(name) \
+@@ -33,6 +33,17 @@ struct nilfs_##name##_attr { \
+ 
+ NILFS_COMMON_ATTR_STRUCT(feature);
+ 
++#define NILFS_DEV_ATTR_STRUCT(name) \
 +struct nilfs_##name##_attr { \
 +	struct attribute attr; \
-+	ssize_t (*show)(struct kobject *, struct attribute *, \
++	ssize_t (*show)(struct nilfs_##name##_attr *, struct the_nilfs *, \
 +			char *); \
-+	ssize_t (*store)(struct kobject *, struct attribute *, \
++	ssize_t (*store)(struct nilfs_##name##_attr *, struct the_nilfs *, \
 +			 const char *, size_t); \
 +};
 +
-+NILFS_COMMON_ATTR_STRUCT(feature);
++NILFS_DEV_ATTR_STRUCT(dev);
 +
-+#define NILFS_ATTR(type, name, mode, show, store) \
-+	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
-+		__ATTR(name, mode, show, store)
+ #define NILFS_ATTR(type, name, mode, show, store) \
+ 	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
+ 		__ATTR(name, mode, show, store)
+@@ -53,7 +64,16 @@ NILFS_COMMON_ATTR_STRUCT(feature);
+ #define NILFS_FEATURE_RW_ATTR(name) \
+ 	NILFS_RW_ATTR(feature, name)
+ 
++#define NILFS_DEV_INFO_ATTR(name) \
++	NILFS_INFO_ATTR(dev, name)
++#define NILFS_DEV_RO_ATTR(name) \
++	NILFS_RO_ATTR(dev, name)
++#define NILFS_DEV_RW_ATTR(name) \
++	NILFS_RW_ATTR(dev, name)
 +
-+#define NILFS_INFO_ATTR(type, name) \
-+	NILFS_ATTR(type, name, 0444, NULL, NULL)
-+#define NILFS_RO_ATTR(type, name) \
-+	NILFS_ATTR(type, name, 0444, nilfs_##type##_##name##_show, NULL)
-+#define NILFS_RW_ATTR(type, name) \
-+	NILFS_ATTR(type, name, 0644, \
-+		    nilfs_##type##_##name##_show, \
-+		    nilfs_##type##_##name##_store)
+ #define NILFS_FEATURE_ATTR_LIST(name) \
+ 	(&nilfs_feature_attr_##name.attr)
++#define NILFS_DEV_ATTR_LIST(name) \
++	(&nilfs_dev_attr_##name.attr)
+ 
+ #endif /* _NILFS_SYSFS_H */
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index de8cc53..42557d0 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -95,6 +95,8 @@ enum {
+  * @ns_inode_size: size of on-disk inode
+  * @ns_first_ino: first not-special inode number
+  * @ns_crc_seed: seed value of CRC32 calculation
++ * @ns_dev_kobj: /sys/fs/nilfs/<device>
++ * @ns_dev_kobj_unregister: completion state
+  */
+ struct the_nilfs {
+ 	unsigned long		ns_flags;
+@@ -188,6 +190,10 @@ struct the_nilfs {
+ 	int			ns_inode_size;
+ 	int			ns_first_ino;
+ 	u32			ns_crc_seed;
 +
-+#define NILFS_FEATURE_INFO_ATTR(name) \
-+	NILFS_INFO_ATTR(feature, name)
-+#define NILFS_FEATURE_RO_ATTR(name) \
-+	NILFS_RO_ATTR(feature, name)
-+#define NILFS_FEATURE_RW_ATTR(name) \
-+	NILFS_RW_ATTR(feature, name)
-+
-+#define NILFS_FEATURE_ATTR_LIST(name) \
-+	(&nilfs_feature_attr_##name.attr)
-+
-+#endif /* _NILFS_SYSFS_H */
++	/* /sys/fs/nilfs/<device> */
++	struct kobject ns_dev_kobj;
++	struct completion ns_dev_kobj_unregister;
+ };
+ 
+ #define THE_NILFS_FNS(bit, name)					\
 -- 
 1.7.9.5
 
