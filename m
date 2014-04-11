@@ -1,159 +1,309 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 9/9] nilfs2: integrate sysfs support into driver
-Date: Fri, 04 Apr 2014 19:14:49 +0400
-Message-ID: <1396624489.2215.42.camel@slavad-CELSIUS-H720>
+From: Dmitry Smirnov <onlyjob-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
+Subject: few patches from Debian
+Date: Fri, 11 Apr 2014 17:49:43 +1000
+Message-ID: <2256155.lyPQvkPv8r@debstor>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; boundary="nextPart3359638.p83WGOJCq4"; micalg="pgp-sha256"; protocol="application/pgp-signature"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=7U+CAq6ilCD5WEdAyrt7TvtzunJbC34G/siWEfbzhsg=;
-	b=eRD8r+UeqMNuNU4JimDo+TbTkOwCgsyBqMfW8FBMmcgAX6Bho9R8sePrk4OoihxJRDud7OCCB5xU5vkVBqerR+MfwpXQl/60v34yvzjcBh1F/nWkhFxBT8XuGfPpeSgj;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:from:to:subject:date:message-id:user-agent:mime-version
+         :content-type;
+        bh=ZkjgFrKwfAYKNnzzdRwPdEGNJwpq1iJVm343953zZEo=;
+        b=mUhtNPWAlz37RTP1JHN0eroLmiX0JjS/N6dOJmwWN29VUEfo1l84r3VGbLGwUlYU03
+         P8VbELKwvqClptRy7Z1c2t+n5EFRANTX+vqs4lI++fUbrt6adVZWigFE5H3o6TRchUWi
+         eU1YhcVDkMo6gzdCnqtUPOmpzA0N0XVFmUTDt0lRaU7WlT+zQqDNI0pZjTIvKmRS4VHO
+         gdXnXs6vKEq5rUgAhKTSLHmimq5OD0EaLMmZtrwFCctuD5Gmgd0FQW8Ku4TdEdvEmGJt
+         4CSeW11fFXGgOKXmmgsjvHo/0PggYFN8R2MdL/8HnG84WG0YEwLNJ7y+xQviTAhAYUfj
+         XmLw==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org
 
-From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-Subject: [PATCH 9/9] nilfs2: integrate sysfs support into driver
 
-This patch integrates creation of sysfs groups and
-attributes into NILFS file system driver.
+--nextPart3359638.p83WGOJCq4
+Content-Type: multipart/mixed; boundary="nextPart2933964.7gAWMFQZoV"
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
----
- fs/nilfs2/Makefile    |    2 +-
- fs/nilfs2/nilfs.h     |    8 ++++++++
- fs/nilfs2/super.c     |    9 ++++++++-
- fs/nilfs2/the_nilfs.c |   15 ++++++++++++++-
- 4 files changed, 31 insertions(+), 3 deletions(-)
+This is a multi-part message in MIME format.
 
-diff --git a/fs/nilfs2/Makefile b/fs/nilfs2/Makefile
-index 85c9873..fc603e0 100644
---- a/fs/nilfs2/Makefile
-+++ b/fs/nilfs2/Makefile
-@@ -2,4 +2,4 @@ obj-$(CONFIG_NILFS2_FS) += nilfs2.o
- nilfs2-y := inode.o file.o dir.o super.o namei.o page.o mdt.o \
- 	btnode.o bmap.o btree.o direct.o dat.o recovery.o \
- 	the_nilfs.o segbuf.o segment.o cpfile.o sufile.o \
--	ifile.o alloc.o gcinode.o ioctl.o
-+	ifile.o alloc.o gcinode.o ioctl.o sysfs.o
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 9bc72de..0696161 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -320,6 +320,14 @@ int nilfs_gccache_wait_and_mark_dirty(struct buffer_head *);
- int nilfs_init_gcinode(struct inode *inode);
- void nilfs_remove_all_gcinodes(struct the_nilfs *nilfs);
+=2D-nextPart2933964.7gAWMFQZoV
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="us-ascii"
+
+Dear NILFS team,
+
+Thanks for your hard work and for new release of nilfs-tools.
+
+I'd like to share two patches (attached) to fix some minor problems that I've 
+noticed:
+
+ * man.patch (with minor man pages corrections)
+ * fhs.patch (to install nilfs-* executables to "/usr/sbin" instead of "/sbin"
+   due to library dependencies in "/usr").
+
+Please review and apply (if appropriate).
+Also please CC to me as I'm not subscribed.
+
+Thank you.
+
+=2D- 
+All the best,
+ Dmitry Smirnov
+ GPG key : 4096R/53968D1B
+
+=2D-nextPart2933964.7gAWMFQZoV
+Content-Disposition: attachment; filename="fhs.patch"
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/x-patch; charset="UTF-8"; name="fhs.patch"
+
+Last-Update: 2014-04-11
+Forwarded: yes
+Author: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
+Description: install nilfs-* executables to /usr/sbin:
+ Fixes the following problems (thanks, `adequate`):
+  bin-or-sbin-binary-requires-usr-lib-library
+    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfscleaner.so.0
+    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
+    /sbin/nilfs-tune => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
+
+=2D-- a/configure.ac
++++ b/configure.ac
+@@ -165,9 +165,10 @@
+ AC_SYS_LARGEFILE
  
-+/* sysfs.c */
-+int __init nilfs_sysfs_init(void);
-+void nilfs_sysfs_exit(void);
-+int nilfs_sysfs_create_device_group(struct super_block *);
-+void nilfs_sysfs_delete_device_group(struct the_nilfs *);
-+int nilfs_sysfs_create_snapshot_group(struct nilfs_root *);
-+void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *);
-+
- /*
-  * Inodes and files operations
-  */
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 7ac2a12..4f72848 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -1451,13 +1451,19 @@ static int __init init_nilfs_fs(void)
- 	if (err)
- 		goto fail;
+ # Install directories
+ AC_PREFIX_DEFAULT([/usr])
+=2DAC_SUBST([sbindir], [/sbin])
++AC_SUBST([root_sbindir], [/sbin])
++AC_SUBST([sbindir], [${prefix}/sbin])
+ AC_SUBST([sysconfdir], [/etc])
+ AC_SUBST([localstatedir], [/var])
  
--	err = register_filesystem(&nilfs_fs_type);
-+	err = nilfs_sysfs_init();
- 	if (err)
- 		goto free_cachep;
+ AC_CONFIG_FILES([Makefile
+=2D-- a/sbin/mkfs/Makefile.am
++++ b/sbin/mkfs/Makefile.am
+@@ -5,9 +5,9 @@
+ LDADD = -luuid $(LIB_BLKID) $(top_builddir)/lib/libnilfsfeature.la \
+ 	$(top_builddir)/lib/libmountchk.la \
+ 	$(top_builddir)/lib/libcrc32.la
  
-+	err = register_filesystem(&nilfs_fs_type);
-+	if (err)
-+		goto deinit_sysfs_entry;
-+
- 	printk(KERN_INFO "NILFS version 2 loaded\n");
- 	return 0;
+=2Dsbin_PROGRAMS = mkfs.nilfs2
++root_sbin_PROGRAMS = mkfs.nilfs2
  
-+deinit_sysfs_entry:
-+	nilfs_sysfs_exit();
- free_cachep:
- 	nilfs_destroy_cachep();
- fail:
-@@ -1467,6 +1473,7 @@ fail:
- static void __exit exit_nilfs_fs(void)
- {
- 	nilfs_destroy_cachep();
-+	nilfs_sysfs_exit();
- 	unregister_filesystem(&nilfs_fs_type);
- }
+ mkfs_nilfs2_SOURCES = mkfs.c bitops.c mkfs.h
  
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 475b8b9..cae1822 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -98,6 +98,7 @@ void destroy_nilfs(struct the_nilfs *nilfs)
- {
- 	might_sleep();
- 	if (nilfs_init(nilfs)) {
-+		nilfs_sysfs_delete_device_group(nilfs);
- 		brelse(nilfs->ns_sbh[0]);
- 		brelse(nilfs->ns_sbh[1]);
- 	}
-@@ -631,6 +632,10 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
- 	if (err)
- 		goto failed_sbh;
+ EXTRA_DIST = .gitignore
+=2D-- a/sbin/mount/Makefile.am
++++ b/sbin/mount/Makefile.am
+@@ -10,9 +10,9 @@
+ AM_CPPFLAGS = -I$(top_srcdir)/include
+ LDADD = $(top_builddir)/lib/librealpath.la \
+ 	$(top_builddir)/lib/libcleanerexec.la $(LIB_MOUNT) $(LIB_SELINUX)
  
-+	err = nilfs_sysfs_create_device_group(sb);
-+	if (err)
-+		goto failed_sbh;
-+
- 	set_nilfs_init(nilfs);
- 	err = 0;
-  out:
-@@ -731,12 +736,13 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
- {
- 	struct rb_node **p, *parent;
- 	struct nilfs_root *root, *new;
-+	int err;
+=2Dsbin_PROGRAMS = mount.nilfs2 umount.nilfs2
++root_sbin_PROGRAMS = mount.nilfs2 umount.nilfs2
  
- 	root = nilfs_lookup_root(nilfs, cno);
- 	if (root)
- 		return root;
+ if CONFIG_LIBMOUNT
  
--	new = kmalloc(sizeof(*root), GFP_KERNEL);
-+	new = kzalloc(sizeof(*root), GFP_KERNEL);
- 	if (!new)
- 		return NULL;
- 
-@@ -771,6 +777,12 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
- 	rb_link_node(&new->rb_node, parent, p);
- 	rb_insert_color(&new->rb_node, &nilfs->ns_cptree);
- 
-+	err = nilfs_sysfs_create_snapshot_group(new);
-+	if (err) {
-+		kfree(new);
-+		new = NULL;
-+	}
-+
- 	spin_unlock(&nilfs->ns_cptree_lock);
- 
- 	return new;
-@@ -782,6 +794,7 @@ void nilfs_put_root(struct nilfs_root *root)
- 		struct the_nilfs *nilfs = root->nilfs;
- 
- 		spin_lock(&nilfs->ns_cptree_lock);
-+		nilfs_sysfs_delete_snapshot_group(root);
- 		rb_erase(&root->rb_node, &nilfs->ns_cptree);
- 		spin_unlock(&nilfs->ns_cptree_lock);
- 		if (root->ifile)
+ COMMONSOURCES += mount_attrs.c
+
+=2D-nextPart2933964.7gAWMFQZoV
+Content-Disposition: attachment; filename="man.patch"
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/x-patch; charset="UTF-8"; name="man.patch"
+
+Last-Update: 2014-04-11
+Forwarded: yes
+Author: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
+Description: minor man pages lintianisation
+ spelling-error-in-manpage
+ hyphen-used-as-minus-sign
+
+=2D-- a/man/nilfs-clean.8
++++ b/man/nilfs-clean.8
+@@ -19,9 +19,9 @@
+ sent to and performed on the \fBnilfs_cleanerd\fP(8) program.  If no
+ commands are specified, \fBnilfs-clean\fP just triggers a one-pass
+ cleaning.
+ .PP
+=2DWhen \fIdevice\fP is ommitted, \fBnilfs-clean\fP selects an active
++When \fIdevice\fP is omitted, \fBnilfs-clean\fP selects an active
+ NILFS2 file system in the system.
+ .PP
+ This command is valid only for mounted NILFS2 file systems, and
+ will fail if the \fIdevice\fP has no active mounts.
+=2D-- a/man/umount.nilfs2.8
++++ b/man/umount.nilfs2.8
+@@ -41,9 +41,9 @@
+ Verbose mode.
+ .SH THE LOOP DEVICE
+ .B umount.nilfs2
+ will free the loop device (if any) associated with the mount, in case
+=2Dit finds the option `loop=...' in \fI/etc/mtab\fP.  The -d option,
++it finds the option `loop=...' in \fI/etc/mtab\fP.  The \-d option,
+ which also allows \fBumount\fP(8) to free the loop device without the
+ `loop=...' option, is not supported.
+ .SH AUTHOR
+ .B umount.nilfs2
+
+=2D-nextPart2933964.7gAWMFQZoV--
+This is a multi-part message in MIME format.
+
+--nextPart2933964.7gAWMFQZoV
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="us-ascii"
+
+Dear NILFS team,
+
+Thanks for your hard work and for new release of nilfs-tools.
+
+I'd like to share two patches (attached) to fix some minor problems that I've 
+noticed:
+
+ * man.patch (with minor man pages corrections)
+ * fhs.patch (to install nilfs-* executables to "/usr/sbin" instead of "/sbin"
+   due to library dependencies in "/usr").
+
+Please review and apply (if appropriate).
+Also please CC to me as I'm not subscribed.
+
+Thank you.
+
 -- 
-1.7.9.5
+All the best,
+ Dmitry Smirnov
+ GPG key : 4096R/53968D1B
 
+--nextPart2933964.7gAWMFQZoV
+Content-Disposition: attachment; filename="fhs.patch"
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/x-patch; charset="UTF-8"; name="fhs.patch"
+
+Last-Update: 2014-04-11
+Forwarded: yes
+Author: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
+Description: install nilfs-* executables to /usr/sbin:
+ Fixes the following problems (thanks, `adequate`):
+  bin-or-sbin-binary-requires-usr-lib-library
+    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfscleaner.so.0
+    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
+    /sbin/nilfs-tune => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
+    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -165,9 +165,10 @@
+ AC_SYS_LARGEFILE
+ 
+ # Install directories
+ AC_PREFIX_DEFAULT([/usr])
+-AC_SUBST([sbindir], [/sbin])
++AC_SUBST([root_sbindir], [/sbin])
++AC_SUBST([sbindir], [${prefix}/sbin])
+ AC_SUBST([sysconfdir], [/etc])
+ AC_SUBST([localstatedir], [/var])
+ 
+ AC_CONFIG_FILES([Makefile
+--- a/sbin/mkfs/Makefile.am
++++ b/sbin/mkfs/Makefile.am
+@@ -5,9 +5,9 @@
+ LDADD = -luuid $(LIB_BLKID) $(top_builddir)/lib/libnilfsfeature.la \
+ 	$(top_builddir)/lib/libmountchk.la \
+ 	$(top_builddir)/lib/libcrc32.la
+ 
+-sbin_PROGRAMS = mkfs.nilfs2
++root_sbin_PROGRAMS = mkfs.nilfs2
+ 
+ mkfs_nilfs2_SOURCES = mkfs.c bitops.c mkfs.h
+ 
+ EXTRA_DIST = .gitignore
+--- a/sbin/mount/Makefile.am
++++ b/sbin/mount/Makefile.am
+@@ -10,9 +10,9 @@
+ AM_CPPFLAGS = -I$(top_srcdir)/include
+ LDADD = $(top_builddir)/lib/librealpath.la \
+ 	$(top_builddir)/lib/libcleanerexec.la $(LIB_MOUNT) $(LIB_SELINUX)
+ 
+-sbin_PROGRAMS = mount.nilfs2 umount.nilfs2
++root_sbin_PROGRAMS = mount.nilfs2 umount.nilfs2
+ 
+ if CONFIG_LIBMOUNT
+ 
+ COMMONSOURCES += mount_attrs.c
+
+--nextPart2933964.7gAWMFQZoV
+Content-Disposition: attachment; filename="man.patch"
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/x-patch; charset="UTF-8"; name="man.patch"
+
+Last-Update: 2014-04-11
+Forwarded: yes
+Author: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
+Description: minor man pages lintianisation
+ spelling-error-in-manpage
+ hyphen-used-as-minus-sign
+
+--- a/man/nilfs-clean.8
++++ b/man/nilfs-clean.8
+@@ -19,9 +19,9 @@
+ sent to and performed on the \fBnilfs_cleanerd\fP(8) program.  If no
+ commands are specified, \fBnilfs-clean\fP just triggers a one-pass
+ cleaning.
+ .PP
+-When \fIdevice\fP is ommitted, \fBnilfs-clean\fP selects an active
++When \fIdevice\fP is omitted, \fBnilfs-clean\fP selects an active
+ NILFS2 file system in the system.
+ .PP
+ This command is valid only for mounted NILFS2 file systems, and
+ will fail if the \fIdevice\fP has no active mounts.
+--- a/man/umount.nilfs2.8
++++ b/man/umount.nilfs2.8
+@@ -41,9 +41,9 @@
+ Verbose mode.
+ .SH THE LOOP DEVICE
+ .B umount.nilfs2
+ will free the loop device (if any) associated with the mount, in case
+-it finds the option `loop=...' in \fI/etc/mtab\fP.  The -d option,
++it finds the option `loop=...' in \fI/etc/mtab\fP.  The \-d option,
+ which also allows \fBumount\fP(8) to free the loop device without the
+ `loop=...' option, is not supported.
+ .SH AUTHOR
+ .B umount.nilfs2
+
+--nextPart2933964.7gAWMFQZoV--
+
+--nextPart3359638.p83WGOJCq4
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part.
+Content-Transfer-Encoding: 7Bit
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iQIcBAABCAAGBQJTR56bAAoJEFK2u9lTlo0b0swP/j11veZ0TQWejV113qsWQdEO
+2NYJNx450VuSbBpslrhgEXcZ/b2TsnG0Ss5L7XJICMidJwr3VRFtw2f7KAgdvCZ6
+2efDfqePQGxVE/BtGkafZ5YE5wFDQeDOCD9N7kvJCZDhuG8+zs+wHExC6xZJPC7y
+YzYhVjYv7nsVWOHFdGHFN7r4BlR+4SrWaZSmaTLUR16TNNIw8kabZp3ohVNDe407
+Uwp84W8EsUpzRzUM5c8A/U4i2KcCtPZf4R3+zBbYCJVFQiJQzKd2TyHGFrIP4GR/
+XyFs4f0OSMbTpbpfirGvZUyfrOHsBFjJE8zPbreY8zZ+7jWsCeewSjBUhtm5aSWE
+kpV1vlZ7Z6RxywxetKDWGH+GypYfB2tF2ECwixuSEzRvR2eRudV1mLLCsFP+vmfB
+oqDxq2Ha2yLMoUprSIIkWqdg2yZTAdhu/PD3DqhPpytFusJC+b2hUC3AiX41rNxH
+qnFUbKQos27wcOvVv7E/XpgKsBsQhWx3Vu3Jq+w7Rx7MqoKJOmk0zZngw5IWo25A
+olp86Gp8lniQyjERBegmIRc8KcT+JbkEU9KQ6c7bk9FIHwZCdL4tBqIgqoygbxw+
+meDcHjnSXwsA311Ax8qCysETg1TZwuEnKSWh6FfWx3v4pp4TGAUr7AbTPHgIT19I
+O5bQWrZI5aVw1t//I+3N
+=vY6T
+-----END PGP SIGNATURE-----
+
+--nextPart3359638.p83WGOJCq4--
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
