@@ -1,13 +1,13 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v2 2/9] nilfs2: add /sys/fs/nilfs/<device> group
-Date: Fri, 18 Apr 2014 20:08:19 +0400
-Message-ID: <1397837299.2178.53.camel@slavad-CELSIUS-H720>
+Subject: [PATCH v2 5/9] nilfs2: add /sys/fs/nilfs/<device>/segments group
+Date: Fri, 18 Apr 2014 20:09:35 +0400
+Message-ID: <1397837375.2178.56.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=6B+oU5/2RvlJUtQ5ww3A+QQcsvU5CUpyw0MAOOVM2Ak=;
-	b=BoLm+7+33GO0sA4RXz0oEgJIGNp6yNYVZaIKkBGQtJEbBDRvPFutQhCfyYyY/7I7U3aAksk2oppDrBA0PrfSUcCpXBpW0yCHdN0ICg5mFclUkUS2dWNpv11xqSqKZqLq;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=XylgkDYQrzsT0fAsGoaFSiMH/b407mJmLsVTUvYPEx4=;
+	b=PLZNP2jp+XWV26jyeHCGXt3I+1pUc4yGCPui6K4e1VKS+ZTQZv0agGjCiTZxqhS9BwiYLuE78/BmFyVqbR5s7aTHqXTsDljbKpdNcqFJK4Au3WhhprkfIEjcyjQrVNoz;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -15,271 +15,214 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-Subject: [PATCH v2 2/9] nilfs2: add /sys/fs/nilfs/<device> group
+Subject: [PATCH v2 5/9] nilfs2: add /sys/fs/nilfs/<device>/segments group
 
-This patch adds creation of /sys/fs/nilfs/<device> group.
+This patch adds creation of /sys/fs/nilfs/<device>/segments
+group.
 
-The <device> group contains attributes that describe file
-system partition's details:
-(1) revision - show NILFS file system revision.
-(2) blocksize - show volume block size in bytes.
-(3) device_size - show volume size in bytes.
-(4) free_blocks - show count of free blocks on volume.
-(5) uuid - show volume's UUID.
-(6) volume_name - show volume's name.
+The segments group contains attributes that describe
+details about volume's segments:
+(1) segments_number - show number of segments on volume.
+(2) blocks_per_segment - show number of blocks in segment.
+(3) clean_segments - show count of clean segments.
+(4) dirty_segments - show count of dirty segments.
 
 Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
 CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 CC: Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- fs/nilfs2/sysfs.c     |  168 +++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/sysfs.h     |   20 ++++++
- fs/nilfs2/the_nilfs.h |    6 ++
- 3 files changed, 194 insertions(+)
+ fs/nilfs2/sysfs.c |   99 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ fs/nilfs2/sysfs.h |   14 ++++++++
+ 2 files changed, 112 insertions(+), 1 deletion(-)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 5a36902..8f28934 100644
+index 983231f..1d7ae39 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -52,6 +52,174 @@ static int nilfs_show_time_format = NILFS_SHOW_HUMAN_READABLE_TIME;
- })
+@@ -122,6 +122,95 @@ void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
+ }
  
  /************************************************************************
-+ *                        NILFS device attrs                            *
++ *                        NILFS segments attrs                          *
 + ************************************************************************/
 +
-+static
-+ssize_t nilfs_dev_revision_show(struct nilfs_dev_attr *attr,
-+				struct the_nilfs *nilfs,
-+				char *buf)
-+{
-+	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+	u32 major = le32_to_cpu(sbp[0]->s_rev_level);
-+	u16 minor = le16_to_cpu(sbp[0]->s_minor_rev_level);
-+
-+	return snprintf(buf, PAGE_SIZE, "%d.%d\n", major, minor);
-+}
-+
-+static
-+ssize_t nilfs_dev_blocksize_show(struct nilfs_dev_attr *attr,
-+				 struct the_nilfs *nilfs,
-+				 char *buf)
-+{
-+	return snprintf(buf, PAGE_SIZE, "%u\n", nilfs->ns_blocksize);
-+}
-+
-+static
-+ssize_t nilfs_dev_device_size_show(struct nilfs_dev_attr *attr,
-+				    struct the_nilfs *nilfs,
-+				    char *buf)
-+{
-+	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+	u64 dev_size = le64_to_cpu(sbp[0]->s_dev_size);
-+
-+	return snprintf(buf, PAGE_SIZE, "%llu\n", dev_size);
-+}
-+
-+static
-+ssize_t nilfs_dev_free_blocks_show(struct nilfs_dev_attr *attr,
-+				   struct the_nilfs *nilfs,
-+				   char *buf)
-+{
-+	sector_t free_blocks = 0;
-+
-+	nilfs_count_free_blocks(nilfs, &free_blocks);
-+	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+			(unsigned long long)free_blocks);
-+}
-+
-+static
-+ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
-+			    struct the_nilfs *nilfs,
-+			    char *buf)
-+{
-+	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+
-+	return snprintf(buf, PAGE_SIZE, "%pUL\n", sbp[0]->s_uuid);
-+}
-+
-+static
-+ssize_t nilfs_dev_volume_name_show(struct nilfs_dev_attr *attr,
-+				    struct the_nilfs *nilfs,
-+				    char *buf)
-+{
-+	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+
-+	return scnprintf(buf, sizeof(sbp[0]->s_volume_name), "%s\n",
-+			 sbp[0]->s_volume_name);
-+}
-+
-+static const char dev_readme_str[] =
-+	"The <device> group contains attributes that describe file system\n"
-+	"partition's details.\n\n"
-+	"(1) revision\n\tshow NILFS file system revision.\n\n"
-+	"(2) blocksize\n\tshow volume block size in bytes.\n\n"
-+	"(3) device_size\n\tshow volume size in bytes.\n\n"
-+	"(4) free_blocks\n\tshow count of free blocks on volume.\n\n"
-+	"(5) uuid\n\tshow volume's UUID.\n\n"
-+	"(6) volume_name\n\tshow volume's name.\n\n";
-+
-+static ssize_t nilfs_dev_README_show(struct nilfs_dev_attr *attr,
++static ssize_t
++nilfs_segments_segments_number_show(struct nilfs_segments_attr *attr,
 +				     struct the_nilfs *nilfs,
 +				     char *buf)
 +{
-+	return snprintf(buf, PAGE_SIZE, dev_readme_str);
++	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_nsegments);
 +}
 +
-+NILFS_DEV_RO_ATTR(revision);
-+NILFS_DEV_RO_ATTR(blocksize);
-+NILFS_DEV_RO_ATTR(device_size);
-+NILFS_DEV_RO_ATTR(free_blocks);
-+NILFS_DEV_RO_ATTR(uuid);
-+NILFS_DEV_RO_ATTR(volume_name);
-+NILFS_DEV_RO_ATTR(README);
++static ssize_t
++nilfs_segments_blocks_per_segment_show(struct nilfs_segments_attr *attr,
++					struct the_nilfs *nilfs,
++					char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_blocks_per_segment);
++}
 +
-+static struct attribute *nilfs_dev_attrs[] = {
-+	NILFS_DEV_ATTR_LIST(revision),
-+	NILFS_DEV_ATTR_LIST(blocksize),
-+	NILFS_DEV_ATTR_LIST(device_size),
-+	NILFS_DEV_ATTR_LIST(free_blocks),
-+	NILFS_DEV_ATTR_LIST(uuid),
-+	NILFS_DEV_ATTR_LIST(volume_name),
-+	NILFS_DEV_ATTR_LIST(README),
++static ssize_t
++nilfs_segments_clean_segments_show(struct nilfs_segments_attr *attr,
++				    struct the_nilfs *nilfs,
++				    char *buf)
++{
++	unsigned long ncleansegs;
++
++	down_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
++	ncleansegs = nilfs_sufile_get_ncleansegs(nilfs->ns_sufile);
++	up_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
++
++	return snprintf(buf, PAGE_SIZE, "%lu\n", ncleansegs);
++}
++
++static ssize_t
++nilfs_segments_dirty_segments_show(struct nilfs_segments_attr *attr,
++				    struct the_nilfs *nilfs,
++				    char *buf)
++{
++	struct nilfs_sustat sustat;
++	int err;
++
++	down_read(&nilfs->ns_segctor_sem);
++	err = nilfs_sufile_get_stat(nilfs->ns_sufile, &sustat);
++	up_read(&nilfs->ns_segctor_sem);
++	if (err < 0) {
++		printk(KERN_ERR "NILFS: unable to get segment stat: err=%d\n",
++			err);
++		return err;
++	}
++
++	return snprintf(buf, PAGE_SIZE, "%llu\n", sustat.ss_ndirtysegs);
++}
++
++static const char segments_readme_str[] =
++	"The segments group contains attributes that describe\n"
++	"details about volume's segments.\n\n"
++	"(1) segments_number\n\tshow number of segments on volume.\n\n"
++	"(2) blocks_per_segment\n\tshow number of blocks in segment.\n\n"
++	"(3) clean_segments\n\tshow count of clean segments.\n\n"
++	"(4) dirty_segments\n\tshow count of dirty segments.\n\n";
++
++static ssize_t
++nilfs_segments_README_show(struct nilfs_segments_attr *attr,
++			    struct the_nilfs *nilfs,
++			    char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, segments_readme_str);
++}
++
++NILFS_SEGMENTS_RO_ATTR(segments_number);
++NILFS_SEGMENTS_RO_ATTR(blocks_per_segment);
++NILFS_SEGMENTS_RO_ATTR(clean_segments);
++NILFS_SEGMENTS_RO_ATTR(dirty_segments);
++NILFS_SEGMENTS_RO_ATTR(README);
++
++static struct attribute *nilfs_segments_attrs[] = {
++	NILFS_SEGMENTS_ATTR_LIST(segments_number),
++	NILFS_SEGMENTS_ATTR_LIST(blocks_per_segment),
++	NILFS_SEGMENTS_ATTR_LIST(clean_segments),
++	NILFS_SEGMENTS_ATTR_LIST(dirty_segments),
++	NILFS_SEGMENTS_ATTR_LIST(README),
 +	NULL,
 +};
 +
-+static ssize_t nilfs_dev_attr_show(struct kobject *kobj,
-+				    struct attribute *attr, char *buf)
-+{
-+	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
-+						ns_dev_kobj);
-+	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
-+						attr);
-+
-+	return a->show ? a->show(a, nilfs, buf) : 0;
-+}
-+
-+static ssize_t nilfs_dev_attr_store(struct kobject *kobj,
-+				    struct attribute *attr,
-+				    const char *buf, size_t len)
-+{
-+	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
-+						ns_dev_kobj);
-+	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
-+						attr);
-+
-+	return a->store ? a->store(a, nilfs, buf, len) : 0;
-+}
-+
-+static void nilfs_dev_attr_release(struct kobject *kobj)
-+{
-+	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
-+						ns_dev_kobj);
-+	complete(&nilfs->ns_dev_kobj_unregister);
-+}
-+
-+static const struct sysfs_ops nilfs_dev_attr_ops = {
-+	.show	= nilfs_dev_attr_show,
-+	.store	= nilfs_dev_attr_store,
-+};
-+
-+static struct kobj_type nilfs_dev_ktype = {
-+	.default_attrs	= nilfs_dev_attrs,
-+	.sysfs_ops	= &nilfs_dev_attr_ops,
-+	.release	= nilfs_dev_attr_release,
-+};
-+
-+int nilfs_sysfs_create_device_group(struct super_block *sb)
-+{
-+	struct the_nilfs *nilfs = sb->s_fs_info;
-+	int err;
-+
-+	nilfs->ns_dev_kobj.kset = nilfs_kset;
-+	init_completion(&nilfs->ns_dev_kobj_unregister);
-+	err = kobject_init_and_add(&nilfs->ns_dev_kobj, &nilfs_dev_ktype, NULL,
-+				    "%s", sb->s_id);
-+	if (err)
-+		goto failed_create_device_group;
-+
-+	return 0;
-+
-+failed_create_device_group:
-+	return err;
-+}
-+
-+void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
-+{
-+	kobject_del(&nilfs->ns_dev_kobj);
-+}
++NILFS_DEV_INT_GROUP_OPS(segments, dev);
++NILFS_DEV_INT_GROUP_TYPE(segments, dev);
++NILFS_DEV_INT_GROUP_FNS(segments, dev);
 +
 +/************************************************************************
-  *                        NILFS feature attrs                           *
+  *                        NILFS segctor attrs                           *
   ************************************************************************/
  
+@@ -626,10 +715,14 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+ 	if (err)
+ 		goto free_dev_subgroups;
+ 
+-	err = nilfs_sysfs_create_superblock_group(nilfs);
++	err = nilfs_sysfs_create_segments_group(nilfs);
+ 	if (err)
+ 		goto cleanup_dev_kobject;
+ 
++	err = nilfs_sysfs_create_superblock_group(nilfs);
++	if (err)
++		goto delete_segments_group;
++
+ 	err = nilfs_sysfs_create_segctor_group(nilfs);
+ 	if (err)
+ 		goto delete_superblock_group;
+@@ -639,6 +732,9 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+ delete_superblock_group:
+ 	nilfs_sysfs_delete_superblock_group(nilfs);
+ 
++delete_segments_group:
++	nilfs_sysfs_delete_segments_group(nilfs);
++
+ cleanup_dev_kobject:
+ 	kobject_del(&nilfs->ns_dev_kobj);
+ 
+@@ -651,6 +747,7 @@ failed_create_device_group:
+ 
+ void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
+ {
++	nilfs_sysfs_delete_segments_group(nilfs);
+ 	nilfs_sysfs_delete_superblock_group(nilfs);
+ 	nilfs_sysfs_delete_segctor_group(nilfs);
+ 	kobject_del(&nilfs->ns_dev_kobj);
 diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
-index b3ba2e4..19ff1a1 100644
+index 0ed945c..66dae66 100644
 --- a/fs/nilfs2/sysfs.h
 +++ b/fs/nilfs2/sysfs.h
-@@ -33,6 +33,17 @@ struct nilfs_##name##_attr { \
- 
- NILFS_COMMON_ATTR_STRUCT(feature);
- 
-+#define NILFS_DEV_ATTR_STRUCT(name) \
-+struct nilfs_##name##_attr { \
-+	struct attribute attr; \
-+	ssize_t (*show)(struct nilfs_##name##_attr *, struct the_nilfs *, \
-+			char *); \
-+	ssize_t (*store)(struct nilfs_##name##_attr *, struct the_nilfs *, \
-+			 const char *, size_t); \
-+};
-+
-+NILFS_DEV_ATTR_STRUCT(dev);
-+
- #define NILFS_ATTR(type, name, mode, show, store) \
- 	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
- 		__ATTR(name, mode, show, store)
-@@ -53,7 +64,16 @@ NILFS_COMMON_ATTR_STRUCT(feature);
- #define NILFS_FEATURE_RW_ATTR(name) \
- 	NILFS_RW_ATTR(feature, name)
- 
-+#define NILFS_DEV_INFO_ATTR(name) \
-+	NILFS_INFO_ATTR(dev, name)
-+#define NILFS_DEV_RO_ATTR(name) \
-+	NILFS_RO_ATTR(dev, name)
-+#define NILFS_DEV_RW_ATTR(name) \
-+	NILFS_RW_ATTR(dev, name)
-+
- #define NILFS_FEATURE_ATTR_LIST(name) \
- 	(&nilfs_feature_attr_##name.attr)
-+#define NILFS_DEV_ATTR_LIST(name) \
-+	(&nilfs_dev_attr_##name.attr)
- 
- #endif /* _NILFS_SYSFS_H */
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index de8cc53..42557d0 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -95,6 +95,8 @@ enum {
-  * @ns_inode_size: size of on-disk inode
-  * @ns_first_ino: first not-special inode number
-  * @ns_crc_seed: seed value of CRC32 calculation
-+ * @ns_dev_kobj: /sys/fs/nilfs/<device>
-+ * @ns_dev_kobj_unregister: completion state
+@@ -28,6 +28,8 @@
+  * @sg_superblock_kobj_unregister: completion state
+  * @sg_segctor_kobj: /sys/fs/nilfs/<device>/segctor
+  * @sg_segctor_kobj_unregister: completion state
++ * @sg_segments_kobj: /sys/fs/nilfs/<device>/segments
++ * @sg_segments_kobj_unregister: completion state
   */
- struct the_nilfs {
- 	unsigned long		ns_flags;
-@@ -188,6 +190,10 @@ struct the_nilfs {
- 	int			ns_inode_size;
- 	int			ns_first_ino;
- 	u32			ns_crc_seed;
+ struct nilfs_sysfs_dev_subgroups {
+ 	/* /sys/fs/nilfs/<device>/superblock */
+@@ -37,6 +39,10 @@ struct nilfs_sysfs_dev_subgroups {
+ 	/* /sys/fs/nilfs/<device>/segctor */
+ 	struct kobject sg_segctor_kobj;
+ 	struct completion sg_segctor_kobj_unregister;
 +
-+	/* /sys/fs/nilfs/<device> */
-+	struct kobject ns_dev_kobj;
-+	struct completion ns_dev_kobj_unregister;
++	/* /sys/fs/nilfs/<device>/segments */
++	struct kobject sg_segments_kobj;
++	struct completion sg_segments_kobj_unregister;
  };
  
- #define THE_NILFS_FNS(bit, name)					\
+ #define NILFS_COMMON_ATTR_STRUCT(name) \
+@@ -60,6 +66,7 @@ struct nilfs_##name##_attr { \
+ };
+ 
+ NILFS_DEV_ATTR_STRUCT(dev);
++NILFS_DEV_ATTR_STRUCT(segments);
+ NILFS_DEV_ATTR_STRUCT(superblock);
+ NILFS_DEV_ATTR_STRUCT(segctor);
+ 
+@@ -90,6 +97,11 @@ NILFS_DEV_ATTR_STRUCT(segctor);
+ #define NILFS_DEV_RW_ATTR(name) \
+ 	NILFS_RW_ATTR(dev, name)
+ 
++#define NILFS_SEGMENTS_RO_ATTR(name) \
++	NILFS_RO_ATTR(segments, name)
++#define NILFS_SEGMENTS_RW_ATTR(name) \
++	NILFS_RW_ATTR(segs_info, name)
++
+ #define NILFS_SUPERBLOCK_RO_ATTR(name) \
+ 	NILFS_RO_ATTR(superblock, name)
+ #define NILFS_SUPERBLOCK_RW_ATTR(name) \
+@@ -106,6 +118,8 @@ NILFS_DEV_ATTR_STRUCT(segctor);
+ 	(&nilfs_feature_attr_##name.attr)
+ #define NILFS_DEV_ATTR_LIST(name) \
+ 	(&nilfs_dev_attr_##name.attr)
++#define NILFS_SEGMENTS_ATTR_LIST(name) \
++	(&nilfs_segments_attr_##name.attr)
+ #define NILFS_SUPERBLOCK_ATTR_LIST(name) \
+ 	(&nilfs_superblock_attr_##name.attr)
+ #define NILFS_SEGCTOR_ATTR_LIST(name) \
 -- 
 1.7.9.5
 
