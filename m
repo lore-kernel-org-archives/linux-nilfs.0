@@ -1,292 +1,284 @@
-From: Dmitry Smirnov <onlyjob-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
-Subject: Re: few patches from Debian
-Date: Wed, 16 Apr 2014 11:22:48 +1000
-Message-ID: <6284364.q7fsBQ3iYY@debstor>
-References: <2256155.lyPQvkPv8r@debstor> <20140414.063654.356443912.konishi.ryusuke@lab.ntt.co.jp>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v2 1/9] nilfs2: add /sys/fs/nilfs/features group
+Date: Fri, 18 Apr 2014 20:07:56 +0400
+Message-ID: <1397837276.2178.52.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="nextPart2397988.yARC6T1g7r"; micalg="pgp-sha256"; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:user-agent:in-reply-to
-         :references:mime-version:content-type;
-        bh=i3HceKVmmRFqQtRsTPaufiegZPSP2zTDbJ7PS8Iy9+c=;
-        b=SiGurl+ASqdTjSLmVdNJM+VLn6vMnIoPUJkztKDfB8pyishTjH1on+h8V4zTauZUCs
-         sgvRXKx7aCwOl2Ays6fDUyo4ZTeaMyUnsxGq7ofFYGIg0XjwNhOlcmz7x6fboT4uJf5o
-         gZWTKdGN43/Yi2vMPrWiKjHz5YLvx2N+Tpge9BDXFB69XGt0W7wojv+qBfHV/HBf0BFK
-         zHun/kt+n91JCKDuRnZ8S9oWGA1qdhK6WnpF/b4U9X99PlKJDS7gKZ0gEeU31xRV/bf5
-         rM/ZDfbP1XXBta7VNJMLL5pBujSHuWQAhB+BdXfkQIrquo4lkYbPXrG7pfGP/dPGXcsH
-         sMoA==
-In-Reply-To: <20140414.063654.356443912.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=EKfmfKsPHbt6Yqb595Gb4s4yEmpxBqLPbZo2aTiK7jw=;
+	b=KYks//IebuvYefBS5scS9HlisjJidQPCpFknHY44+oMt3phbWVsgAASeI9zwMBKhRQF1lyxLBMu/xPfh3AMh/33u/gjZvOS6rYHGuSkI9L/RjBO0YFcK76FLMPjQq8fZ;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-
-
---nextPart2397988.yARC6T1g7r
-Content-Type: multipart/mixed; boundary="nextPart8644279.qaQxpZWPAB"
-Content-Transfer-Encoding: quoted-printable
-
-This is a multi-part message in MIME format.
-
-=2D-nextPart8644279.qaQxpZWPAB
-Content-Transfer-Encoding: 7Bit
 Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On Mon, 14 Apr 2014 06:36:54 Ryusuke Konishi wrote:
-> fhs.patch introduced the following error:
-> 
->  $ ./autogen.sh
->  $ ./configure
->  $ make
->  $ sudo make install
->  ...
->  make[2]: Entering directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->  make[3]: Entering directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->   /bin/mkdir -p '/etc'
->   /usr/bin/install -c -m 644 nilfs_cleanerd.conf '/etc'
->   /bin/mkdir -p 'NONE/sbin'
->    /bin/sh ../../libtool   --mode=install /usr/bin/install -c nilfs_cleanerd
-> 'NONE/sbin' libtool: install: `NONE/sbin' must be an absolute directory
-> name
->  libtool: install: Try `libtool --help --mode=install' for more information.
-> make[3]: *** [install-sbinPROGRAMS] Error 1
->  make[3]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->  make[2]: *** [install-am] Error 2
->  make[2]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->  make[1]: *** [install-recursive] Error 1
->  make[1]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin'
->  make: *** [install-recursive] Error 1
-> 
-> Can you fix this error ?
+From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
+Subject: [PATCH v2 1/9] nilfs2: add /sys/fs/nilfs/features group
 
-O, my bad, sorry...
-Strangely enough I did not hit this error because I was explicitly passing
-"--prefix=/usr" to "./configure".
+This patch adds code of creation /sys/fs/nilfs group and
+/sys/fs/nilfs/features group.
 
-Please find updated patch attached. It should be fine but there might be more 
-elegant way to implement this with autotools.
+The features group contains attributes that describe NILFS
+file system driver features:
+(1) revision - show current revision of NILFS file system driver.
+(2) time_format - show/set time format.
 
-By the way it's pretty scary to do 
+There are two formats - seconds and human-readable format.
+You can set preferable time format by command
+(for example, setting human-readable format):
 
-    sudo make install
+'echo human-readable > /sys/fs/nilfs/features/time_format'
 
-I'd rather invoke as (for example) as:
+It was reported by Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> that
+timestamp output in human-readable format should be changed
+from "2014-4-12 14:5:38" to "2014-04-12 14:05:38". Second
+version of the patch fixes this issue.
 
-    make install DESTDIR=/tmp/nilfs-tools.test
+Reported-by: Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
+CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/sysfs.c |  158 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/sysfs.h |   59 ++++++++++++++++++++
+ 2 files changed, 217 insertions(+)
+ create mode 100644 fs/nilfs2/sysfs.c
+ create mode 100644 fs/nilfs2/sysfs.h
 
-Thank you.
-
-=2D- 
-Regards,
- Dmitry Smirnov.
-
-=2D-nextPart8644279.qaQxpZWPAB
-Content-Disposition: attachment; filename="fhs.patch"
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/x-patch; charset="UTF-8"; name="fhs.patch"
-
-Last-Update: 2014-04-16
-Forwarded: yes
-Author: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
-Description: install nilfs-* executables to /usr/sbin:
- Fixes the following problems (thanks, `adequate`):
-  bin-or-sbin-binary-requires-usr-lib-library
-    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfscleaner.so.0
-    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
-    /sbin/nilfs-tune => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
-
-=2D-- a/configure.ac
-+++ b/configure.ac
-@@ -165,9 +165,12 @@
- AC_SYS_LARGEFILE
- 
- # Install directories
- AC_PREFIX_DEFAULT([/usr])
-=2DAC_SUBST([sbindir], [/sbin])
-+test "x$prefix" = "xNONE" && prefix="/usr"
-+test "x$exec_prefix" = "xNONE" && exec_prefix="${prefix}"
-+AC_SUBST([root_sbindir], [/sbin])
-+AC_SUBST([sbindir], [${exec_prefix}/sbin])
- AC_SUBST([sysconfdir], [/etc])
- AC_SUBST([localstatedir], [/var])
- 
- AC_CONFIG_FILES([Makefile
-=2D-- a/sbin/mkfs/Makefile.am
-+++ b/sbin/mkfs/Makefile.am
-@@ -5,9 +5,9 @@
- LDADD = -luuid $(LIB_BLKID) $(top_builddir)/lib/libnilfsfeature.la \
- 	$(top_builddir)/lib/libmountchk.la \
- 	$(top_builddir)/lib/libcrc32.la
- 
-=2Dsbin_PROGRAMS = mkfs.nilfs2
-+root_sbin_PROGRAMS = mkfs.nilfs2
- 
- mkfs_nilfs2_SOURCES = mkfs.c bitops.c mkfs.h
- 
- EXTRA_DIST = .gitignore
-=2D-- a/sbin/mount/Makefile.am
-+++ b/sbin/mount/Makefile.am
-@@ -10,9 +10,9 @@
- AM_CPPFLAGS = -I$(top_srcdir)/include
- LDADD = $(top_builddir)/lib/librealpath.la \
- 	$(top_builddir)/lib/libcleanerexec.la $(LIB_MOUNT) $(LIB_SELINUX)
- 
-=2Dsbin_PROGRAMS = mount.nilfs2 umount.nilfs2
-+root_sbin_PROGRAMS = mount.nilfs2 umount.nilfs2
- 
- if CONFIG_LIBMOUNT
- 
- COMMONSOURCES += mount_attrs.c
-
-=2D-nextPart8644279.qaQxpZWPAB--
-This is a multi-part message in MIME format.
-
---nextPart8644279.qaQxpZWPAB
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
-
-On Mon, 14 Apr 2014 06:36:54 Ryusuke Konishi wrote:
-> fhs.patch introduced the following error:
-> 
->  $ ./autogen.sh
->  $ ./configure
->  $ make
->  $ sudo make install
->  ...
->  make[2]: Entering directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->  make[3]: Entering directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->   /bin/mkdir -p '/etc'
->   /usr/bin/install -c -m 644 nilfs_cleanerd.conf '/etc'
->   /bin/mkdir -p 'NONE/sbin'
->    /bin/sh ../../libtool   --mode=install /usr/bin/install -c nilfs_cleanerd
-> 'NONE/sbin' libtool: install: `NONE/sbin' must be an absolute directory
-> name
->  libtool: install: Try `libtool --help --mode=install' for more information.
-> make[3]: *** [install-sbinPROGRAMS] Error 1
->  make[3]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->  make[2]: *** [install-am] Error 2
->  make[2]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
->  make[1]: *** [install-recursive] Error 1
->  make[1]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin'
->  make: *** [install-recursive] Error 1
-> 
-> Can you fix this error ?
-
-O, my bad, sorry...
-Strangely enough I did not hit this error because I was explicitly passing
-"--prefix=/usr" to "./configure".
-
-Please find updated patch attached. It should be fine but there might be more 
-elegant way to implement this with autotools.
-
-By the way it's pretty scary to do 
-
-    sudo make install
-
-I'd rather invoke as (for example) as:
-
-    make install DESTDIR=/tmp/nilfs-tools.test
-
-Thank you.
-
+diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
+new file mode 100644
+index 0000000..5a36902
+--- /dev/null
++++ b/fs/nilfs2/sysfs.c
+@@ -0,0 +1,158 @@
++/*
++ * sysfs.c - sysfs support implementation.
++ *
++ * Copyright (C) 2005-2014 Nippon Telegraph and Telephone Corporation.
++ * Copyright (C) 2014 HGST, Inc., a Western Digital Company.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * Written by Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
++ */
++
++#include <linux/kobject.h>
++
++#include "nilfs.h"
++#include "mdt.h"
++#include "sufile.h"
++#include "cpfile.h"
++#include "sysfs.h"
++
++/* /sys/fs/nilfs/ */
++static struct kset *nilfs_kset;
++
++enum {
++	NILFS_SHOW_TIME_SECONDS = 0,
++	NILFS_SHOW_HUMAN_READABLE_TIME = 1
++};
++
++#define NILFS_SECONDS_STR "seconds"
++#define NILFS_HUMAN_READABLE_STR "human-readable"
++
++static int nilfs_show_time_format = NILFS_SHOW_HUMAN_READABLE_TIME;
++
++#define NILFS_SHOW_TIME(time_t_val, buf) ({ \
++		struct tm res; \
++		int count = 0; \
++		time_to_tm(time_t_val, 0, &res); \
++		res.tm_year += 1900; \
++		res.tm_mon += 1; \
++		count = scnprintf(buf, PAGE_SIZE, \
++				    "%ld-%.2d-%.2d %.2d:%.2d:%.2d\n", \
++				    res.tm_year, res.tm_mon, res.tm_mday, \
++				    res.tm_hour, res.tm_min, res.tm_sec);\
++		count; \
++})
++
++/************************************************************************
++ *                        NILFS feature attrs                           *
++ ************************************************************************/
++
++static ssize_t nilfs_feature_revision_show(struct kobject *kobj,
++					    struct attribute *attr, char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, "%d.%d\n",
++			NILFS_CURRENT_REV, NILFS_MINOR_REV);
++}
++
++static ssize_t
++nilfs_feature_time_format_show(struct kobject *kobj,
++				struct attribute *attr, char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, "%s\n",
++			(nilfs_show_time_format == NILFS_SHOW_TIME_SECONDS ?
++				NILFS_SECONDS_STR : NILFS_HUMAN_READABLE_STR));
++}
++
++static ssize_t
++nilfs_feature_time_format_store(struct kobject *kobj,
++				struct attribute *attr,
++				const char *buf, size_t count)
++{
++	size_t secs_len = strlen(NILFS_SECONDS_STR);
++	size_t hr_len = strlen(NILFS_HUMAN_READABLE_STR);
++
++	if (strncmp(buf, NILFS_SECONDS_STR, secs_len) == 0)
++		nilfs_show_time_format = NILFS_SHOW_TIME_SECONDS;
++	else if (strncmp(buf, NILFS_HUMAN_READABLE_STR, hr_len) == 0)
++		nilfs_show_time_format = NILFS_SHOW_HUMAN_READABLE_TIME;
++	else  {
++		printk(KERN_ERR "NILFS: unrecognized time format! You should use 'seconds' or 'human-readable' strings only\n");
++		return -EOPNOTSUPP;
++	}
++
++	return count;
++}
++
++static const char features_readme_str[] =
++	"The features group contains attributes that describe NILFS file\n"
++	"system driver features.\n\n"
++	"(1) revision\n\tshow current revision of NILFS file system driver.\n\n"
++	"(2) time_format\n\tshow/set time format.\n\n"
++	"\tThere are two formats - seconds and human-readable format.\n"
++	"\tYou can set preferable time format by command:\n\n"
++	"\t'echo human-readable > /sys/fs/nilfs/features/time_format'\n\n";
++
++static ssize_t nilfs_feature_README_show(struct kobject *kobj,
++					 struct attribute *attr,
++					 char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, features_readme_str);
++}
++
++NILFS_FEATURE_RO_ATTR(revision);
++NILFS_FEATURE_RW_ATTR(time_format);
++NILFS_FEATURE_RO_ATTR(README);
++
++static struct attribute *nilfs_feature_attrs[] = {
++	NILFS_FEATURE_ATTR_LIST(revision),
++	NILFS_FEATURE_ATTR_LIST(time_format),
++	NILFS_FEATURE_ATTR_LIST(README),
++	NULL,
++};
++
++static const struct attribute_group nilfs_feature_attr_group = {
++	.name = "features",
++	.attrs = nilfs_feature_attrs,
++};
++
++int __init nilfs_sysfs_init(void)
++{
++	int err;
++
++	nilfs_kset = kset_create_and_add("nilfs", NULL, fs_kobj);
++	if (!nilfs_kset) {
++		err = -ENOMEM;
++		printk(KERN_ERR "NILFS: unable to create sysfs entry: err %d\n",
++			err);
++		goto failed_sysfs_init;
++	}
++
++	err = sysfs_create_group(&nilfs_kset->kobj, &nilfs_feature_attr_group);
++	if (unlikely(err)) {
++		printk(KERN_ERR "NILFS: unable to create feature group: err %d\n",
++			err);
++		goto cleanup_sysfs_init;
++	}
++
++	return 0;
++
++cleanup_sysfs_init:
++	kset_unregister(nilfs_kset);
++
++failed_sysfs_init:
++	return err;
++}
++
++void nilfs_sysfs_exit(void)
++{
++	sysfs_remove_group(&nilfs_kset->kobj, &nilfs_feature_attr_group);
++	kset_unregister(nilfs_kset);
++}
+diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
+new file mode 100644
+index 0000000..b3ba2e4
+--- /dev/null
++++ b/fs/nilfs2/sysfs.h
+@@ -0,0 +1,59 @@
++/*
++ * sysfs.h - sysfs support declarations.
++ *
++ * Copyright (C) 2005-2014 Nippon Telegraph and Telephone Corporation.
++ * Copyright (C) 2014 HGST, Inc., a Western Digital Company.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * Written by Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
++ */
++
++#ifndef _NILFS_SYSFS_H
++#define _NILFS_SYSFS_H
++
++#include <linux/sysfs.h>
++
++#define NILFS_COMMON_ATTR_STRUCT(name) \
++struct nilfs_##name##_attr { \
++	struct attribute attr; \
++	ssize_t (*show)(struct kobject *, struct attribute *, \
++			char *); \
++	ssize_t (*store)(struct kobject *, struct attribute *, \
++			 const char *, size_t); \
++};
++
++NILFS_COMMON_ATTR_STRUCT(feature);
++
++#define NILFS_ATTR(type, name, mode, show, store) \
++	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
++		__ATTR(name, mode, show, store)
++
++#define NILFS_INFO_ATTR(type, name) \
++	NILFS_ATTR(type, name, 0444, NULL, NULL)
++#define NILFS_RO_ATTR(type, name) \
++	NILFS_ATTR(type, name, 0444, nilfs_##type##_##name##_show, NULL)
++#define NILFS_RW_ATTR(type, name) \
++	NILFS_ATTR(type, name, 0644, \
++		    nilfs_##type##_##name##_show, \
++		    nilfs_##type##_##name##_store)
++
++#define NILFS_FEATURE_INFO_ATTR(name) \
++	NILFS_INFO_ATTR(feature, name)
++#define NILFS_FEATURE_RO_ATTR(name) \
++	NILFS_RO_ATTR(feature, name)
++#define NILFS_FEATURE_RW_ATTR(name) \
++	NILFS_RW_ATTR(feature, name)
++
++#define NILFS_FEATURE_ATTR_LIST(name) \
++	(&nilfs_feature_attr_##name.attr)
++
++#endif /* _NILFS_SYSFS_H */
 -- 
-Regards,
- Dmitry Smirnov.
+1.7.9.5
 
---nextPart8644279.qaQxpZWPAB
-Content-Disposition: attachment; filename="fhs.patch"
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/x-patch; charset="UTF-8"; name="fhs.patch"
-
-Last-Update: 2014-04-16
-Forwarded: yes
-Author: Dmitry Smirnov <onlyjob-IGUgQLVVQiRCV4ILt04nZQ@public.gmane.org>
-Description: install nilfs-* executables to /usr/sbin:
- Fixes the following problems (thanks, `adequate`):
-  bin-or-sbin-binary-requires-usr-lib-library
-    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfscleaner.so.0
-    /sbin/nilfs-clean => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs-resize => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
-    /sbin/nilfs-tune => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfs.so.0
-    /sbin/nilfs_cleanerd => /usr/lib/x86_64-linux-gnu/libnilfsgc.so.0
-
---- a/configure.ac
-+++ b/configure.ac
-@@ -165,9 +165,12 @@
- AC_SYS_LARGEFILE
- 
- # Install directories
- AC_PREFIX_DEFAULT([/usr])
--AC_SUBST([sbindir], [/sbin])
-+test "x$prefix" = "xNONE" && prefix="/usr"
-+test "x$exec_prefix" = "xNONE" && exec_prefix="${prefix}"
-+AC_SUBST([root_sbindir], [/sbin])
-+AC_SUBST([sbindir], [${exec_prefix}/sbin])
- AC_SUBST([sysconfdir], [/etc])
- AC_SUBST([localstatedir], [/var])
- 
- AC_CONFIG_FILES([Makefile
---- a/sbin/mkfs/Makefile.am
-+++ b/sbin/mkfs/Makefile.am
-@@ -5,9 +5,9 @@
- LDADD = -luuid $(LIB_BLKID) $(top_builddir)/lib/libnilfsfeature.la \
- 	$(top_builddir)/lib/libmountchk.la \
- 	$(top_builddir)/lib/libcrc32.la
- 
--sbin_PROGRAMS = mkfs.nilfs2
-+root_sbin_PROGRAMS = mkfs.nilfs2
- 
- mkfs_nilfs2_SOURCES = mkfs.c bitops.c mkfs.h
- 
- EXTRA_DIST = .gitignore
---- a/sbin/mount/Makefile.am
-+++ b/sbin/mount/Makefile.am
-@@ -10,9 +10,9 @@
- AM_CPPFLAGS = -I$(top_srcdir)/include
- LDADD = $(top_builddir)/lib/librealpath.la \
- 	$(top_builddir)/lib/libcleanerexec.la $(LIB_MOUNT) $(LIB_SELINUX)
- 
--sbin_PROGRAMS = mount.nilfs2 umount.nilfs2
-+root_sbin_PROGRAMS = mount.nilfs2 umount.nilfs2
- 
- if CONFIG_LIBMOUNT
- 
- COMMONSOURCES += mount_attrs.c
-
---nextPart8644279.qaQxpZWPAB--
-
---nextPart2397988.yARC6T1g7r
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part.
-Content-Transfer-Encoding: 7Bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAABCAAGBQJTTdttAAoJEFK2u9lTlo0buhEQAJ0/RLGOUWCbsnlC+jhgdkGv
-W5Lr2tCYYcp+LUlvSCX2dO9XmmTjrXRDTCG/pHrnfGaqujB1xE7uBxs+jwFwjdIS
-Q6/aq2bpsju1azFTprkrt9SS38PjM8N1Yy0KCLLEpyz6EgFs1iqCAhFwkdCUcYYK
-LD2NB6RGmufY+XoiG2bMC9aRfGxxVyA2l7CoZZJ7GIqbJm9FBfbwbdN25KkgnJCm
-GpZohtf8WxGR1j+hHk5UvkV7QugaVuSypEaUY+Sep8Of6i87mGvjbOgIDIxBzvkJ
-8jSIKpp+3tLBJqf/ODAHpQ1p0oqW+3zG1r+B7L/Xc1YXADM7Km0zsgOt3PCkN5EQ
-1sSx+6KGVB3pZerbNA0+AY/RMi0GxxoXW0HEUeOTKEfhcl2Yj32QJCfFbKIpiaTL
-EWpWOw1qFirVnnH1BvGGoIXWVMo+0ibLtclWZg5q27Qv/BkijgkDQuWKvPoOlI9u
-GkXNfzWiQ6gAOVC2qmENQz+dXAvOND9e6j3AcM31MQm2BC1Lae4UK4klMrebUlax
-Sg0PefhX7i6s5a3LE8nacYXajteW9ETWUBaYNqRiOWsBgBJbNgrd0xbHfs0tlHAN
-5lVUqih2Y/yCHGZkTzLGZsFB9kbOn3QJmMzEZL1rZZHNRVWurvpfQR3DAN82GSZg
-nHN6CAXPLOCAJcypoCrw
-=TjQe
------END PGP SIGNATURE-----
-
---nextPart2397988.yARC6T1g7r--
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
