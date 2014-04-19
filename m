@@ -1,8 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/4] nilfs-utils: fix typos
-Date: Sun, 20 Apr 2014 00:14:11 +0900
-Message-ID: <1397920455-373-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 3/4] nilfs-utils: fix typos in messages
+Date: Sun, 20 Apr 2014 00:14:14 +0900
+Message-ID: <1397920455-373-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1397920455-373-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1397920455-373-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,30 +13,57 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This series fixes typos in nilfs-utils detected by aspell command.
+Fix typos in messages of nilfs-resize command, lssu command, and
+libnilfsgc.
 
-Thanks,
-Ryusuke Konishi
---
-Ryusuke Konishi (4):
-      nilfs-utils: fix typos in ChangeLog file
-      nilfs-utils: fix typos in manpages
-      nilfs-utils: fix typos in messages
-      nilfs-utils: fix typos in source files
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ bin/lssu.c                       | 2 +-
+ lib/gc.c                         | 2 +-
+ sbin/nilfs-resize/nilfs-resize.c | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
- ChangeLog                        | 10 +++++-----
- bin/lssu.c                       |  2 +-
- include/nilfs.h                  |  4 ++--
- lib/gc.c                         |  4 ++--
- man/mount.nilfs2.8               |  4 ++--
- man/nilfs-resize.8               |  2 +-
- sbin/cleanerd/cleanerd.c         |  8 ++++----
- sbin/mkfs/bitops.c               |  2 +-
- sbin/mkfs/mkfs.c                 |  4 ++--
- sbin/mount/mount_opts.h          |  2 +-
- sbin/nilfs-clean/nilfs-clean.c   |  2 +-
- sbin/nilfs-resize/nilfs-resize.c |  2 +-
- 12 files changed, 23 insertions(+), 23 deletions(-)
+diff --git a/bin/lssu.c b/bin/lssu.c
+index 5f501b1..ebbd926 100644
+--- a/bin/lssu.c
++++ b/bin/lssu.c
+@@ -290,7 +290,7 @@ static int lssu_get_protcno(struct nilfs *nilfs,
+ 	ret = nilfs_cnoconv_time2cno(cnoconv, *prottimep, protcnop);
+ 	if (ret < 0) {
+ 		fprintf(stderr,
+-			"%s: cannot convert protectoin time to checkpoint "
++			"%s: cannot convert protection time to checkpoint "
+ 			"number: %m\n",
+ 			progname);
+ 	}
+diff --git a/lib/gc.c b/lib/gc.c
+index 453acf2..bb644c4 100644
+--- a/lib/gc.c
++++ b/lib/gc.c
+@@ -360,7 +360,7 @@ static ssize_t nilfs_get_snapshot(struct nilfs *nilfs, nilfs_cno_t **ssp)
+ 				nilfs_gc_logger
+ 					(LOG_ERR,
+ 					 "broken snapshot information. "
+-					 "snapshot numbers apeared in a "
++					 "snapshot numbers appeared in a "
+ 					 "non-ascending order: %llu >= %llu",
+ 					 (unsigned long long)prev,
+ 					 (unsigned long long)ss[i + j]);
+diff --git a/sbin/nilfs-resize/nilfs-resize.c b/sbin/nilfs-resize/nilfs-resize.c
+index c7ed910..d605e59 100644
+--- a/sbin/nilfs-resize/nilfs-resize.c
++++ b/sbin/nilfs-resize/nilfs-resize.c
+@@ -1186,7 +1186,7 @@ int main(int argc, char *argv[])
+ 			unsigned long long size2;
+ 
+ 			size2 = size & ~(sector_size - 1);
+-			myprintf("size %llu is not alinged to sector " \
++			myprintf("size %llu is not aligned to sector " \
+ 				 "size. truncated to %llu.\n",
+ 				 size, size2);
+ 			size = size2;
+-- 
+1.9.1
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
