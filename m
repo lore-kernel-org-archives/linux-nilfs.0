@@ -1,69 +1,162 @@
-From: Dmitry Smirnov <onlyjob-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
-Subject: Re: few patches from Debian
-Date: Sat, 19 Apr 2014 22:39:15 +1000
-Message-ID: <1734384.SEaaT4hi4E@debstor>
-References: <4645877.yriC0M9ozk@debstor> <7826590.1PyduIE8uy@debstor> <20140419.210014.85398266.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="nextPart3186915.t1995jUq6W"; micalg="pgp-sha256"; protocol="application/pgp-signature"
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 4/4] nilfs-utils: fix typos in source files
+Date: Sun, 20 Apr 2014 00:14:15 +0900
+Message-ID: <1397920455-373-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1397920455-373-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:user-agent:in-reply-to
-         :references:mime-version:content-type;
-        bh=Q/yRxOh7wP8C30IxXsvzgs5/07gyDTCzylICbYb2yL8=;
-        b=yCLaPevG6JsKNmY5Lw+w1CgyS465TmLw99+SeR1hKxDjz5Wk5veiFUxsPo1I9lk9mR
-         c/7wNj8CgEKrZvb5HZFXMGxKbehmZFim8r0TEF2WtBu0QJLNJidGGbzn+hDIEBXpHkFW
-         AeRKmoI27gKdmZ5dKbGYbIHsWjFOfwky91GsiXVQHnofMmVaXhZR6WSZL8D2v6UHk7wD
-         vN78Viux3Y3X7Fa74ZiKg24Gjbc/4ckRIw8z7FYTbl2pvSDFKtTNtsZdAp33uCtZ7N9w
-         8Cz2COspgL9zk1DPWte+x28C4SrqGNRjtuOEMTi3lXLfrHy1zDQAoEBpK4pmKs1VvzPb
-         ysNw==
-In-Reply-To: <20140419.210014.85398266.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <1397920455-373-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-
-
---nextPart3186915.t1995jUq6W
-Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Sat, 19 Apr 2014 21:00:14 Ryusuke Konishi wrote:
-> I will fix the issue a bit differently (as follows) and
-> then apply your revised patch.
+Fix typos in source files of mkfs.nilfs2, nilfs_cleanerd,
+mount.nilfs2, nilfs-clean, include/nilfs.h, and lib/gc.c.
 
-O, that's even better. I need to work on my autotools skills. :)
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ include/nilfs.h                | 4 ++--
+ lib/gc.c                       | 2 +-
+ sbin/cleanerd/cleanerd.c       | 8 ++++----
+ sbin/mkfs/bitops.c             | 2 +-
+ sbin/mkfs/mkfs.c               | 4 ++--
+ sbin/mount/mount_opts.h        | 2 +-
+ sbin/nilfs-clean/nilfs-clean.c | 2 +-
+ 7 files changed, 12 insertions(+), 12 deletions(-)
 
-Thank you.
-
-=2D-=20
-Best wishes,
- Dmitry Smirnov.
-
---nextPart3186915.t1995jUq6W
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part.
-Content-Transfer-Encoding: 7Bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAABCAAGBQJTUm53AAoJEFK2u9lTlo0bFFAQALcqa5vTCWRyJTnvxoihmwVf
-7F5Ak5woHronpbTt7JCwnzATrkngJDUgXOVrcRnjKvbPOq1AK9+ymZmdI65zMuKi
-TA0hR7s5IEqIX38d8c4EOMgeOr6hah7I61GHP3tTtalR45ichATgyEP8oKyPpCuN
-WAaWqWtQ7Dt51gcAmOwxkLqXnG2OX+TlNsXE+2k7pzi4l1wm6d53DEVaY6kIB1KF
-v3kp97yZytzCNlxRjivan5gcdtn8LasbMbXCR4gC7hhJW7YZ1v0AuRZb4JcuEhLe
-urLDnvsnOzlUirv7wLMzFp/iJoO8cIVzTPd8x1QCbPm4gFb9zpDs37+w603Dra/J
-gaQK2eerD56jpk3WQmGCm2Q9l4GQ7Psh4emfFUBcTivrb9tJ+D0LSrBWcUCxlPPL
-UkT+18C4rtQDygmT48MjPcq9cTDvqKmUaMKvU3cnnAErs3a5qX6UB5/4n7yAL7wa
-5CMb+g0jUQjuBxGXTUjpYromKmrqQp60YrCigMlxDXv/nYCNTXhTUPgnbsqV6j+5
-40gcqIeCPYY/H7sex/EgTTQ+seRpdDfMpMJmgZ1k5F4vWS0Y3hXaF+S2BVzUsmkv
-VfCxpQs5vJ0orZptIA80/LP7WRrVSFQ/a7sIlCG5hW7a2ZEirMWOkC0QX9tOraHw
-djGO1v4u8UzCVu26fWGY
-=dtte
------END PGP SIGNATURE-----
-
---nextPart3186915.t1995jUq6W--
+diff --git a/include/nilfs.h b/include/nilfs.h
+index fab8ff2..f695f48 100644
+--- a/include/nilfs.h
++++ b/include/nilfs.h
+@@ -191,7 +191,7 @@ struct nilfs_psegment {
+  * struct nilfs_file - file iterator
+  * @f_finfo: file information
+  * @f_blocknr: block number
+- * @f_offset: byte offset from the begining of segment
++ * @f_offset: byte offset from the beginning of segment
+  * @f_index: index
+  * @f_psegment: partial segment
+  */
+@@ -208,7 +208,7 @@ struct nilfs_file {
+  * struct nilfs_block - block iterator
+  * @b_binfo: block information
+  * @b_blocknr: block number
+- * @b_offset: byte offset from the begining of segment
++ * @b_offset: byte offset from the beginning of segment
+  * @b_index: index
+  * @b_dsize: size of data block information
+  * @b_nsize: size of node block information
+diff --git a/lib/gc.c b/lib/gc.c
+index bb644c4..54d0b66 100644
+--- a/lib/gc.c
++++ b/lib/gc.c
+@@ -480,7 +480,7 @@ static int nilfs_toss_vdescs(struct nilfs *nilfs,
+ 				break;
+ 
+ 			/*
+-			 * Add the virtual block number to the canditate
++			 * Add the virtual block number to the candidate
+ 			 * for deletion.
+ 			 */
+ 			vblocknrp = nilfs_vector_get_new_element(vblocknrv);
+diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
+index 17de87b..d37bd5c 100644
+--- a/sbin/cleanerd/cleanerd.c
++++ b/sbin/cleanerd/cleanerd.c
+@@ -125,7 +125,7 @@ static const struct option long_option[] = {
+  * @fallback: fallback state
+  * @retry_cleaning: retrying reclamation for protected segments
+  * @no_timeout: the next timeout will be 0 seconds
+- * @ncleansegs: number of semgents cleaned per cycle
++ * @ncleansegs: number of segments cleaned per cycle
+  * @cleaning_interval: cleaning interval
+  * @target: target time for sleeping
+  * @timeout: timeout value for sleeping
+@@ -138,9 +138,9 @@ static const struct option long_option[] = {
+  * @pending_cmd: pending client command
+  * @jobid: current job id
+  * @mm_prev_state: previous status during suspending
+- * @mm_nrestpasses: remaiing number of passes
++ * @mm_nrestpasses: remaining number of passes
+  * @mm_nrestsegs: remaining number of segment (1-pass)
+- * @mm_ncleansegs: number of segmetns cleaned per cycle (manual mode)
++ * @mm_ncleansegs: number of segments cleaned per cycle (manual mode)
+  * @mm_protection_period: protection period (manual mode)
+  * @mm_cleaning_interval: cleaning interval (manual mode)
+  * @mm_min_reclaimable_blocks: min. number of reclaimable blocks (manual mode)
+@@ -190,7 +190,7 @@ static volatile unsigned long protection_period;
+ 
+ /* global variables */
+ static struct nilfs_cleanerd *nilfs_cleanerd;
+-static sigjmp_buf nilfs_cleanerd_env; /* for siglongjume */
++static sigjmp_buf nilfs_cleanerd_env; /* for siglongjmp */
+ static volatile sig_atomic_t nilfs_cleanerd_reload_config; /* reload flag */
+ static char nilfs_cleanerd_msgbuf[NILFS_CLEANER_MSG_MAX_REQSZ];
+ 
+diff --git a/sbin/mkfs/bitops.c b/sbin/mkfs/bitops.c
+index 6262884..a649def 100644
+--- a/sbin/mkfs/bitops.c
++++ b/sbin/mkfs/bitops.c
+@@ -9,7 +9,7 @@
+ /*
+  * For the benefit of those who are trying to port Linux to another
+  * architecture, here are some C-language equivalents.  You should
+- * recode these in the native assmebly language, if at all possible.
++ * recode these in the native assembly language, if at all possible.
+  *
+  * C language equivalents written by Theodore Ts'o, 9/26/92.
+  * Modified by Pete A. Zaitcev 7/14/95 to be portable to big endian
+diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+index c122375..c7e18c6 100644
+--- a/sbin/mkfs/mkfs.c
++++ b/sbin/mkfs/mkfs.c
+@@ -137,7 +137,7 @@ static void parse_options(int argc, char *argv[]);
+  *           ^
+  *           sb->s_first_data_block
+  *
+- * Intial layout of ifile and DAT file:
++ * Initial layout of ifile and DAT file:
+  *
+  * blk +0                  +1       +2
+  *  +------------------+--------+---------+
+@@ -1388,7 +1388,7 @@ static inline void
+ alloc_blockgrouped_file_entry(blocknr_t blocknr, unsigned long nr)
+ {
+ 	struct nilfs_palloc_group_desc *desc = map_disk_buffer(blocknr, 1);
+-					/* allways use the first group */
++					/* always use the first group */
+ 	void *bitmap = map_disk_buffer(blocknr + 1, 1);
+ 
+ 	if (nilfs_test_bit(nr, bitmap))
+diff --git a/sbin/mount/mount_opts.h b/sbin/mount/mount_opts.h
+index cce3856..00e6958 100644
+--- a/sbin/mount/mount_opts.h
++++ b/sbin/mount/mount_opts.h
+@@ -59,7 +59,7 @@ char *replace_optval(char *s, const char *fmt, void *varp, ...);
+  * @fmt.  If replacement or removal occurs, old @str is automatically
+  * freed.
+  *
+- * Return Value: new options string is retured.
++ * Return Value: new options string is returned.
+  */
+ #define replace_drop_opt(str, fmt, oldvalp, newval, cond)	\
+ ({								\
+diff --git a/sbin/nilfs-clean/nilfs-clean.c b/sbin/nilfs-clean/nilfs-clean.c
+index e1446bd..1f4c8f0 100644
+--- a/sbin/nilfs-clean/nilfs-clean.c
++++ b/sbin/nilfs-clean/nilfs-clean.c
+@@ -1,5 +1,5 @@
+ /*
+- * nilfs-clean.c - run garbage colletor for nilfs2 volume
++ * nilfs-clean.c - run garbage collector for nilfs2 volume
+  *
+  * Licensed under GPLv2: the complete text of the GNU General Public License
+  * can be found in COPYING file of the nilfs-utils package.
+-- 
+1.9.1
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
