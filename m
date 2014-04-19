@@ -1,242 +1,78 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v2 8/9] nilfs2: add
- /sys/fs/nilfs/<device>/mounted_snapshots/<snapshot> group
-Date: Fri, 18 Apr 2014 20:10:33 +0400
-Message-ID: <1397837433.2178.59.camel@slavad-CELSIUS-H720>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: few patches from Debian
+Date: Sat, 19 Apr 2014 19:58:16 +0900 (JST)
+Message-ID: <20140419.195816.57462893.konishi.ryusuke@lab.ntt.co.jp>
+References: <2256155.lyPQvkPv8r@debstor>
+	<20140414.063654.356443912.konishi.ryusuke@lab.ntt.co.jp>
+	<6284364.q7fsBQ3iYY@debstor>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=b+ipUfd06Mg4Vi1RvCVPIzNLBhCtbY9hJrB5sojipKY=;
-	b=eLTVmN+vHcVaSyjr9lyN9bqd3ewu3/LFCOB4S8RlVrk/I62fiTHCr866DCdRrFJQADK6Z6gHG+Fped7XYlrglv/9tRBQsSwSH7XcBZUgc6j0KUnyKvWj4D4tUq0KAgjw;
+In-Reply-To: <6284364.q7fsBQ3iYY@debstor>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Dmitry Smirnov <onlyjob-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-Subject: [PATCH v2 8/9] nilfs2: add /sys/fs/nilfs/<device>/mounted_snapshots/<snapshot> group
+Hi,
+On Wed, 16 Apr 2014 11:22:48 +1000, Dmitry Smirnov wrote:
+> On Mon, 14 Apr 2014 06:36:54 Ryusuke Konishi wrote:
+>> fhs.patch introduced the following error:
+>> 
+>>  $ ./autogen.sh
+>>  $ ./configure
+>>  $ make
+>>  $ sudo make install
+>>  ...
+>>  make[2]: Entering directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
+>>  make[3]: Entering directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
+>>   /bin/mkdir -p '/etc'
+>>   /usr/bin/install -c -m 644 nilfs_cleanerd.conf '/etc'
+>>   /bin/mkdir -p 'NONE/sbin'
+>>    /bin/sh ../../libtool   --mode=install /usr/bin/install -c nilfs_cleanerd
+>> 'NONE/sbin' libtool: install: `NONE/sbin' must be an absolute directory
+>> name
+>>  libtool: install: Try `libtool --help --mode=install' for more information.
+>> make[3]: *** [install-sbinPROGRAMS] Error 1
+>>  make[3]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
+>>  make[2]: *** [install-am] Error 2
+>>  make[2]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin/cleanerd'
+>>  make[1]: *** [install-recursive] Error 1
+>>  make[1]: Leaving directory `/home/ryusuke/git/nilfs-utils/sbin'
+>>  make: *** [install-recursive] Error 1
+>> 
+>> Can you fix this error ?
+> 
+> O, my bad, sorry...
+> Strangely enough I did not hit this error because I was explicitly passing
+> "--prefix=/usr" to "./configure".
+> 
+> Please find updated patch attached. It should be fine but there might be more 
+> elegant way to implement this with autotools.
 
-This patch adds creation of <snapshot> group for every mounted
-snapshot in /sys/fs/nilfs/<device>/mounted_snapshots group.
+This patch breaks mount program; mount.nilfs2 fails to find cleanerd
+since it was moved to /usr/sbin:
 
-The group contains details about mounted snapshot:
-(1) inodes_count - show number of inodes for snapshot.
-(2) blocks_count - show number of blocks for snapshot.
+  # mount -t nilfs2 /dev/sdb1 /test
+  mount.nilfs2: Error: nilfs_cleanerd not found
+  nilfs_cleanerd aborted
 
-Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-CC: Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- fs/nilfs2/sysfs.c     |  118 +++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/sysfs.h     |   20 +++++++++
- fs/nilfs2/the_nilfs.h |    6 +++
- 3 files changed, 144 insertions(+)
+I think nilfs_cleanerd should be installed to /sbin.
 
-diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index c899818..622ddcf 100644
---- a/fs/nilfs2/sysfs.c
-+++ b/fs/nilfs2/sysfs.c
-@@ -122,6 +122,124 @@ void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
- }
- 
- /************************************************************************
-+ *                        NILFS snapshot attrs                          *
-+ ************************************************************************/
-+
-+static ssize_t
-+nilfs_snapshot_inodes_count_show(struct nilfs_snapshot_attr *attr,
-+				 struct nilfs_root *root, char *buf)
-+{
-+	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+			(unsigned long long)atomic64_read(&root->inodes_count));
-+}
-+
-+static ssize_t
-+nilfs_snapshot_blocks_count_show(struct nilfs_snapshot_attr *attr,
-+				 struct nilfs_root *root, char *buf)
-+{
-+	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+			(unsigned long long)atomic64_read(&root->blocks_count));
-+}
-+
-+static const char snapshot_readme_str[] =
-+	"The group contains details about mounted snapshot.\n\n"
-+	"(1) inodes_count\n\tshow number of inodes for snapshot.\n\n"
-+	"(2) blocks_count\n\tshow number of blocks for snapshot.\n\n";
-+
-+static ssize_t
-+nilfs_snapshot_README_show(struct nilfs_snapshot_attr *attr,
-+			    struct nilfs_root *root, char *buf)
-+{
-+	return snprintf(buf, PAGE_SIZE, snapshot_readme_str);
-+}
-+
-+NILFS_SNAPSHOT_RO_ATTR(inodes_count);
-+NILFS_SNAPSHOT_RO_ATTR(blocks_count);
-+NILFS_SNAPSHOT_RO_ATTR(README);
-+
-+static struct attribute *nilfs_snapshot_attrs[] = {
-+	NILFS_SNAPSHOT_ATTR_LIST(inodes_count),
-+	NILFS_SNAPSHOT_ATTR_LIST(blocks_count),
-+	NILFS_SNAPSHOT_ATTR_LIST(README),
-+	NULL,
-+};
-+
-+static ssize_t nilfs_snapshot_attr_show(struct kobject *kobj,
-+					struct attribute *attr, char *buf)
-+{
-+	struct nilfs_root *root =
-+			container_of(kobj, struct nilfs_root, snapshot_kobj);
-+	struct nilfs_snapshot_attr *a =
-+			container_of(attr, struct nilfs_snapshot_attr, attr);
-+
-+	return a->show ? a->show(a, root, buf) : 0;
-+}
-+
-+static ssize_t nilfs_snapshot_attr_store(struct kobject *kobj,
-+					 struct attribute *attr,
-+					 const char *buf, size_t len)
-+{
-+	struct nilfs_root *root =
-+			container_of(kobj, struct nilfs_root, snapshot_kobj);
-+	struct nilfs_snapshot_attr *a =
-+			container_of(attr, struct nilfs_snapshot_attr, attr);
-+
-+	return a->store ? a->store(a, root, buf, len) : 0;
-+}
-+
-+static void nilfs_snapshot_attr_release(struct kobject *kobj)
-+{
-+	struct nilfs_root *root = container_of(kobj, struct nilfs_root,
-+						snapshot_kobj);
-+	complete(&root->snapshot_kobj_unregister);
-+}
-+
-+static const struct sysfs_ops nilfs_snapshot_attr_ops = {
-+	.show	= nilfs_snapshot_attr_show,
-+	.store	= nilfs_snapshot_attr_store,
-+};
-+
-+static struct kobj_type nilfs_snapshot_ktype = {
-+	.default_attrs	= nilfs_snapshot_attrs,
-+	.sysfs_ops	= &nilfs_snapshot_attr_ops,
-+	.release	= nilfs_snapshot_attr_release,
-+};
-+
-+int nilfs_sysfs_create_snapshot_group(struct nilfs_root *root)
-+{
-+	struct the_nilfs *nilfs;
-+	struct kobject *parent;
-+	int err;
-+
-+	nilfs = root->nilfs;
-+	parent = &nilfs->ns_dev_subgroups->sg_mounted_snapshots_kobj;
-+	root->snapshot_kobj.kset = nilfs_kset;
-+	init_completion(&root->snapshot_kobj_unregister);
-+
-+	if (root->cno == NILFS_CPTREE_CURRENT_CNO) {
-+		err = kobject_init_and_add(&root->snapshot_kobj,
-+					    &nilfs_snapshot_ktype,
-+					    &nilfs->ns_dev_kobj,
-+					    "current_checkpoint");
-+	} else {
-+		err = kobject_init_and_add(&root->snapshot_kobj,
-+					    &nilfs_snapshot_ktype,
-+					    parent,
-+					    "%llu", root->cno);
-+	}
-+
-+	if (err)
-+		return err;
-+
-+	return 0;
-+}
-+
-+void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
-+{
-+	kobject_del(&root->snapshot_kobj);
-+}
-+
-+/************************************************************************
-  *                    NILFS mounted snapshots attrs                     *
-  ************************************************************************/
- 
-diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
-index f8ba9b6..d2a92f1 100644
---- a/fs/nilfs2/sysfs.h
-+++ b/fs/nilfs2/sysfs.h
-@@ -84,6 +84,17 @@ NILFS_DEV_ATTR_STRUCT(checkpoints);
- NILFS_DEV_ATTR_STRUCT(superblock);
- NILFS_DEV_ATTR_STRUCT(segctor);
- 
-+#define NILFS_CP_ATTR_STRUCT(name) \
-+struct nilfs_##name##_attr { \
-+	struct attribute attr; \
-+	ssize_t (*show)(struct nilfs_##name##_attr *, struct nilfs_root *, \
-+			char *); \
-+	ssize_t (*store)(struct nilfs_##name##_attr *, struct nilfs_root *, \
-+			 const char *, size_t); \
-+};
-+
-+NILFS_CP_ATTR_STRUCT(snapshot);
-+
- #define NILFS_ATTR(type, name, mode, show, store) \
- 	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
- 		__ATTR(name, mode, show, store)
-@@ -124,6 +135,13 @@ NILFS_DEV_ATTR_STRUCT(segctor);
- #define NILFS_CHECKPOINTS_RW_ATTR(name) \
- 	NILFS_RW_ATTR(checkpoints, name)
- 
-+#define NILFS_SNAPSHOT_INFO_ATTR(name) \
-+	NILFS_INFO_ATTR(snapshot, name)
-+#define NILFS_SNAPSHOT_RO_ATTR(name) \
-+	NILFS_RO_ATTR(snapshot, name)
-+#define NILFS_SNAPSHOT_RW_ATTR(name) \
-+	NILFS_RW_ATTR(snapshot, name)
-+
- #define NILFS_SUPERBLOCK_RO_ATTR(name) \
- 	NILFS_RO_ATTR(superblock, name)
- #define NILFS_SUPERBLOCK_RW_ATTR(name) \
-@@ -146,6 +164,8 @@ NILFS_DEV_ATTR_STRUCT(segctor);
- 	(&nilfs_mounted_snapshots_attr_##name.attr)
- #define NILFS_CHECKPOINTS_ATTR_LIST(name) \
- 	(&nilfs_checkpoints_attr_##name.attr)
-+#define NILFS_SNAPSHOT_ATTR_LIST(name) \
-+	(&nilfs_snapshot_attr_##name.attr)
- #define NILFS_SUPERBLOCK_ATTR_LIST(name) \
- 	(&nilfs_superblock_attr_##name.attr)
- #define NILFS_SEGCTOR_ATTR_LIST(name) \
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index 315634a..456e308 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -243,6 +243,8 @@ THE_NILFS_FNS(SB_DIRTY, sb_dirty)
-  * @ifile: inode file
-  * @inodes_count: number of inodes
-  * @blocks_count: number of blocks
-+ * @snapshot_kobj: /sys/fs/nilfs/<device>/mounted_snapshots/<snapshot>
-+ * @snapshot_kobj_unregister: completion state for kernel object
-  */
- struct nilfs_root {
- 	__u64 cno;
-@@ -254,6 +256,10 @@ struct nilfs_root {
- 
- 	atomic64_t inodes_count;
- 	atomic64_t blocks_count;
-+
-+	/* /sys/fs/nilfs/<device>/mounted_snapshots/<snapshot> */
-+	struct kobject snapshot_kobj;
-+	struct completion snapshot_kobj_unregister;
- };
- 
- /* Special checkpoint number */
--- 
-1.7.9.5
-
-
+> By the way it's pretty scary to do 
+> 
+>     sudo make install
+> 
+> I'd rather invoke as (for example) as:
+> 
+>     make install DESTDIR=/tmp/nilfs-tools.test
+> 
+> Thank you.
+> 
+> -- 
+> Regards,
+>  Dmitry Smirnov.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
