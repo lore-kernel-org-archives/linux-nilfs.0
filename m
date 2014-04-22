@@ -1,17 +1,16 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2 0/9] nilfs2: introduce functionality of creation of
- sysfs groups and attributes
-Date: Mon, 21 Apr 2014 16:14:23 +0400
-Message-ID: <1398082463.2212.3.camel@slavad-CELSIUS-H720>
-References: <1397837240.2178.51.camel@slavad-CELSIUS-H720>
-	 <20140421.011825.85418432.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v2 1/9] nilfs2: add /sys/fs/nilfs/features group
+Date: Tue, 22 Apr 2014 11:20:50 +0400
+Message-ID: <1398151250.2181.13.camel@slavad-CELSIUS-H720>
+References: <1397837276.2178.52.camel@slavad-CELSIUS-H720>
+	 <20140421.020501.511716674.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=Q663jhbQeKgM1LlvyNwDeKCqwaPQIslCYm/NeOxCr+E=;
-	b=hNhvKM6S7TxfjQQ18uS2Vbyk5D+CUFd1aOukUe/1Sdt+WfxGGniScZCfXNsbLAdDk/KhsWuuhBlZpcavTpulQj2+nbJFjIBr6hm2oTDbbp4qj2VkkwPj2ugVZdjdwNq5;
-In-Reply-To: <20140421.011825.85418432.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=MnIrmvuYzasZ/kfO3EU6SclmkllASrOP95DNo9zKViA=;
+	b=pMbetUUmUSSduXO2u6sVR593By7GZb7qmavnuB3VySwOVpeYTLF1PDVlOpZ88kGgX4cyD6KN8UdtBzMTMWmOmfjnRGfBhEgeuLkX2TBPyHpYJbCaQBQpRGFHY13rYh0R;
+In-Reply-To: <20140421.020501.511716674.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -20,45 +19,47 @@ Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vyacheslav.Dubeyko-XckB
 
 Hi Ryusuke,
 
-On Mon, 2014-04-21 at 01:18 +0900, Ryusuke Konishi wrote:
+On Mon, 2014-04-21 at 02:05 +0900, Ryusuke Konishi wrote:
 
 [snip]
+> > There are two formats - seconds and human-readable format.
+> > You can set preferable time format by command
+> > (for example, setting human-readable format):
+> > 
+> > 'echo human-readable > /sys/fs/nilfs/features/time_format'
 > 
-> Thank you for posting this series.
+> I don't think you shouldn't globally switch the time format like this.
+> I think two or more sysfs files should be added per format, or
+> either one should be selected if avoiding complexity.
 > 
-> I am thinking of sending this series to upstream.
-> 
-> For that end, please clarify the motivation, the background, or the
-> issue what this series tries to solve within the cover letter ([PATCH
-> 0/n]).  I will refer to it when I will send the series to upstream.
-> 
-
-OK. I'll do it.
-
-> Also, it's preferable to include a brief overview of this sysfs
-> interface in a Documentation file.
-> 
-> Some filesystems describe their sysfs interface in
-> Documentation/ABI/testing/sysfs-fs-xxx.  Even though this sysfs
-> interface has description of ABI in README files, I think
-> documentation should be added in a similar manner to other
-> filesystems.
+> Think the situation where userland programs read time stamp
+> information on the sysfs interface.  They will malfunction if a user
+> incidentally changes the format through the time_format file.  The
+> format of sysfs files should never depend on other changeable status.
 > 
 
-Yes, I agree. It makes sense. I'll add the description.
+OK. I agree. So, I choose to have two sysfs files (for example,
+last_seg_write_time for human-readable format and
+last_seg_write_time_secs for output in seconds). 
 
-> You chose "nilfs" instead of "nilfs2" as the filesystem name.  This
-> may lead to discussion, but I also prefer "nilfs" because we
-> intentionally use the name "nilfs" in userland as the name separated
-> from implementation and this is the name of interface for users and
-> userland tools.
-> 
-> One my question is about the "device" name.  Is it guaranteed that
-> every device has canonical single node name?  What will happen for
-> devices such as /dev/mapper/xxx?
+> The features directory of sysfs interface should have global features
+> which are independent to nilfs instance or version (e.g. nilfs3, etc)
+> since you chose "nilfs" for the fs directory name.  The revision file
+> is self-contradictory in that sense.  I think it should be placed in
+> each device directory.  Otherwise, we should use "nilfs2" as for the
+> fs directory name.
 > 
 
-I need to check it. I am not ready to answer right now.
+In current implementation:
+(1) fs/nilfs/features/revision - show current supported revision by file
+system driver.
+(2) fs/nilfs/<device>/revision - show file system revision that it saved
+in superblock of the volume. As a result, it shows the revision of file
+system is created on a volume.
+
+I suppose that we have identical understanding. And current
+implementation provides information about revision in the proper way. If
+I misunderstand something, please, correct me.
 
 Thanks,
 Vyacheslav Dubeyko.
