@@ -1,18 +1,18 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2 1/9] nilfs2: add /sys/fs/nilfs/features group
-Date: Thu, 24 Apr 2014 10:41:55 +0400
-Message-ID: <1398321715.2207.6.camel@slavad-CELSIUS-H720>
-References: <1397837276.2178.52.camel@slavad-CELSIUS-H720>
-	 <20140421.020501.511716674.konishi.ryusuke@lab.ntt.co.jp>
-	 <1398151250.2181.13.camel@slavad-CELSIUS-H720>
-	 <20140424.000949.330273957.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v2 0/9] nilfs2: introduce functionality of creation of
+ sysfs groups and attributes
+Date: Tue, 29 Apr 2014 18:50:50 +0400
+Message-ID: <1398783050.2185.9.camel@slavad-CELSIUS-H720>
+References: <1397837240.2178.51.camel@slavad-CELSIUS-H720>
+	 <20140421.011825.85418432.konishi.ryusuke@lab.ntt.co.jp>
+	 <1398082463.2212.3.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=3hsdmBa5m8n4EZTLr8yn/8iuncc+Cm5om2ojbTO77w0=;
-	b=N/tfNKvHxfksuMXfBw6JtjSG9bby/GYcmXgkgccNND1F+osvNdxXa9PCIbLPN4q8vBtmlFRpDdRjvpGWOJCPGIWQow2jtOsZynW779nutbnnWoVXAhW3JEiqd1zW/Jjg;
-In-Reply-To: <20140424.000949.330273957.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=7mg2nqPVZPpH6YzpUeFLkYkCKeelK49qr5FfooGlwm0=;
+	b=UIH6G5obalr9gJrA8wA8E4WxjzYECsRw5hGCNP3Heq/uTgmdRHnCvm7YPKAXn3OLGWCV4GUVDUjlPKClSM6tZCjg+jjylCkqUX6nlVi5aGbrxVXctpc6EWh0K0MJ6qx4;
+In-Reply-To: <1398082463.2212.3.camel@slavad-CELSIUS-H720>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -21,29 +21,35 @@ Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vyacheslav.Dubeyko-XckB
 
 Hi Ryusuke,
 
-On Thu, 2014-04-24 at 00:09 +0900, Ryusuke Konishi wrote:
+> On Mon, 2014-04-21 at 01:18 +0900, Ryusuke Konishi wrote:
 
-[snip]
-> If we implement nilfs3 filesystem as a different instance like
-> ext2/3/4 series, the namespace of nilfs/features/revision will
-> conflict between nilfs2 and nilfs3.  In reality of course, creating
-> nilfs3 is unlikely at present, but logically the above namespace
-> design looks incoherent.
-> 
-> I now feel the namespace should be
-> 
->   fs/nilfs2/xxxx
-> 
-> In this case, it doesn't cause the confliction regardless whether
-> we add nilfs3 or not.
-> 
+> > 
+> > One my question is about the "device" name.  Is it guaranteed that
+> > every device has canonical single node name?  What will happen for
+> > devices such as /dev/mapper/xxx?
+> > 
 
-Yes, you are right. Now I see the issue. I agree that we need to use
-fs/nilfs2 namespace.
+I've checked this by means of using kpartx utility. At first I've
+prepared the image with several partitions on it. Then I've created
+device maps from partition table:
 
-Anyway, we need to have group fs/nilfs2/features for showing features
-that are supported by driver (for example, xattrs support and so on).
-Likewise features support can be configured by Kconfig.
+kpartx -va ./<image-file>
+
+As a result, I can see such situation:
+
+ls -lah /dev/mapper/
+total 0
+drwxr-xr-x  2 root root     120 Apr 29 18:38 .
+drwxr-xr-x 16 root root    4.2K Apr 29 18:38 ..
+crw-------  1 root root 10, 236 Apr 29 09:58 control
+lrwxrwxrwx  1 root root       7 Apr 29 18:38 loop0p1 -> ../dm-0
+lrwxrwxrwx  1 root root       7 Apr 29 18:38 loop0p2 -> ../dm-1
+lrwxrwxrwx  1 root root       7 Apr 29 18:38 loop0p3 -> ../dm-2
+
+Finally, namely, dm-0 (and so on) is used as name of device during
+creation of /sys/fs/nilfs2/<device> group. Moreover, other file systems
+are used sb->s_id for device naming too. I think that it is safe way of
+device naming.
 
 With the best regards,
 Vyacheslav Dubeyko.
