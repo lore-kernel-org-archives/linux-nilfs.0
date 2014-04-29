@@ -1,58 +1,95 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2 0/9] nilfs2: introduce functionality of creation of
- sysfs groups and attributes
-Date: Tue, 29 Apr 2014 18:50:50 +0400
-Message-ID: <1398783050.2185.9.camel@slavad-CELSIUS-H720>
-References: <1397837240.2178.51.camel@slavad-CELSIUS-H720>
-	 <20140421.011825.85418432.konishi.ryusuke@lab.ntt.co.jp>
-	 <1398082463.2212.3.camel@slavad-CELSIUS-H720>
+Subject: [PATCH v3 0/9] nilfs2: introduce functionality of creation of sysfs
+ groups and attributes
+Date: Tue, 29 Apr 2014 19:17:06 +0400
+Message-ID: <1398784626.2185.66.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=7mg2nqPVZPpH6YzpUeFLkYkCKeelK49qr5FfooGlwm0=;
-	b=UIH6G5obalr9gJrA8wA8E4WxjzYECsRw5hGCNP3Heq/uTgmdRHnCvm7YPKAXn3OLGWCV4GUVDUjlPKClSM6tZCjg+jjylCkqUX6nlVi5aGbrxVXctpc6EWh0K0MJ6qx4;
-In-Reply-To: <1398082463.2212.3.camel@slavad-CELSIUS-H720>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=rDVN3Y2GrhppF69VvDXTPpezNM0WrokjJR+xed1lavw=;
+	b=casNY7k3h493+fWyER850MzKXH95m/BAcg/1sMAjgLyfGlPtFpnfSaeg0QZImHa1DdyDmjPu3F5wzXpZWULvmt8tUbW79E++WMuAdjPqUPGcgMLQJNEf3u/tmDv5GrWs;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Hi Ryusuke,
+Hi,
 
-> On Mon, 2014-04-21 at 01:18 +0900, Ryusuke Konishi wrote:
+This third version of patchset implements creation of
+sysfs groups and attributes with the purpose to show
+NILFS2 volume details, internal state of the driver and
+to manage internal state of NILFS2 driver.
 
-> > 
-> > One my question is about the "device" name.  Is it guaranteed that
-> > every device has canonical single node name?  What will happen for
-> > devices such as /dev/mapper/xxx?
-> > 
+v2->v3
+ * Add sysfs file for every format of timestamp output (Ryusuke Konishi)
+ * Exclude global switching of the time format (Ryusuke Konishi)
+ * Rename sysfs group from /sys/fs/nilfs into /sys/fs/nilfs2 (Ryusuke Konishi)
+ * Add description of sysfs interface in sysfs-fs-nilfs2 (Ryusuke Konishi)
 
-I've checked this by means of using kpartx utility. At first I've
-prepared the image with several partitions on it. Then I've created
-device maps from partition table:
+v1->v2
+ * Improve human-readable format of timestamp output (Michael L. Semon)
+ * Fix issue with nilfs_sysfs_{create/delete}_snapshot_group (Michael L. Semon)
 
-kpartx -va ./<image-file>
+Sysfs is a virtual file system that exports information about devices
+and drivers from the kernel device model to user space, and is also used
+for configuration. NILFS2 is a complex file system that has segctor thread,
+GC thread, checkpoint/snapshot model and so on. Sysfs namespace provides
+native and easy way for: (1) getting info and statistics about volume state;
+(2) getting info and configuration of internal subsystems (segctor thread);
+(3) snapshots management.
 
-As a result, I can see such situation:
+Suggested patchset provides basis for managing segctor thread behaviour and
+manipulation by snapshots. Currently, it informs only about segctor thread's
+internal parameters and about mounted snapshots. But sysfs interface can
+provide easy and simple way for deep management of segctor thread and
+snapshots.
 
-ls -lah /dev/mapper/
-total 0
-drwxr-xr-x  2 root root     120 Apr 29 18:38 .
-drwxr-xr-x 16 root root    4.2K Apr 29 18:38 ..
-crw-------  1 root root 10, 236 Apr 29 09:58 control
-lrwxrwxrwx  1 root root       7 Apr 29 18:38 loop0p1 -> ../dm-0
-lrwxrwxrwx  1 root root       7 Apr 29 18:38 loop0p2 -> ../dm-1
-lrwxrwxrwx  1 root root       7 Apr 29 18:38 loop0p3 -> ../dm-2
+This patchset provides opportunity to manage interval of periodical update
+of superblock (in seconds). Default value is 10 seconds. Now a user can
+increase this value by means of nilfs2/<device>/superblock/sb_update_frequency
+attribute in the case of necessity.
 
-Finally, namely, dm-0 (and so on) is used as name of device during
-creation of /sys/fs/nilfs2/<device> group. Moreover, other file systems
-are used sb->s_id for device naming too. I think that it is safe way of
-device naming.
+Also the patchset provides opportunity to get information easily about key
+volumes's parameters (free blocks, superblock write count, superblock update
+frequency, latest segment info, dirty data blocks count, count of clean
+segments, count of dirty segments and so on) in real time manner. Such
+information can be used in scripts for subtle management of filesystem.
+
+Implemented functionality creates such groups:
+(1) /sys/fs/nilfs2 - root group
+(2) /sys/fs/nilfs2/features - group contains attributes that describe NILFS
+file system driver features
+(3) /sys/fs/nilfs2/<device> - group contains attributes that describe file
+system partition's details
+(4) /sys/fs/nilfs2/<device>/superblock - group contains attributes that describe
+superblock's details
+(5) /sys/fs/nilfs2/<device>/segctor - group contains attributes that describe
+segctor thread activity details
+(6) /sys/fs/nilfs2/<device>/segments - group contains attributes that describe
+details about volume's segments
+(7) /sys/fs/nilfs2/<device>/checkpoints - group contains attributes that describe
+details about volume's checkpoints
+(8) /sys/fs/nilfs2/<device>/mounted_snapshots - group contains group for every
+mounted snapshot
+(9) /sys/fs/nilfs2/<device>/mounted_snapshots/<snapshot> - group contains
+details about mounted snapshot
 
 With the best regards,
 Vyacheslav Dubeyko.
+---
+ Documentation/ABI/testing/sysfs-fs-nilfs2 |  311 ++++++++
+ fs/nilfs2/Makefile                        |    2 +-
+ fs/nilfs2/nilfs.h                         |    8 +
+ fs/nilfs2/super.c                         |    9 +-
+ fs/nilfs2/sysfs.c                         | 1145 +++++++++++++++++++++++++++++
+ fs/nilfs2/sysfs.h                         |  174 +++++
+ fs/nilfs2/the_nilfs.c                     |   17 +-
+ fs/nilfs2/the_nilfs.h                     |   20 +-
+ 8 files changed, 1682 insertions(+), 4 deletions(-)
+-- 
+1.7.9.5
 
 
 --
