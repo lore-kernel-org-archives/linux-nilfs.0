@@ -1,14 +1,14 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3 7/9] nilfs2: add
- /sys/fs/nilfs2/<device>/mounted_snapshots group
-Date: Tue, 29 Apr 2014 19:20:23 +0400
-Message-ID: <1398784823.2185.73.camel@slavad-CELSIUS-H720>
+Subject: [PATCH v3 8/9] nilfs2: add
+ /sys/fs/nilfs2/<device>/mounted_snapshots/<snapshot> group
+Date: Tue, 29 Apr 2014 19:20:45 +0400
+Message-ID: <1398784845.2185.74.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=Ei8uyHAFqrQHoL4J19hAqmLCuMLc5RijVeeWxabVdJk=;
-	b=CbH9Q4wpPWyqKZgzo9lLw0JTBr6z6/qCdLHQv/7PnwtSR78piN7I4p2BwKgjzafduCXafXD2YaA8C/qK78XxUm6N6tfe6O5PKAqpXXBjdSeCWza3E9/o1C0sKQBd+nkS;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=d4krfZAkF9tXLnXhe1Ueayh8JN2kTDJnkeijV8W/aEc=;
+	b=Lerdv03P9fzcZWAJFbJ3l4yYKtaopfJpsxO2XDivCSLOmGCnJpVUkaTJJ4QvG1W2SR7sYFKMW//rBQ4sLxZMg9l/S46d/vLOIK+mlLSF11GyDxl3CzifCC+ToQWNopqL;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -16,162 +16,254 @@ To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-Subject: [PATCH v3 7/9] nilfs2: add /sys/fs/nilfs2/<device>/mounted_snapshots group
+Subject: [PATCH v3 8/9] nilfs2: add /sys/fs/nilfs2/<device>/mounted_snapshots/<snapshot> group
 
-This patch adds creation of /sys/fs/nilfs2/<device>/mounted_snapshots
-group.
+This patch adds creation of <snapshot> group for every mounted
+snapshot in /sys/fs/nilfs2/<device>/mounted_snapshots group.
 
-The mounted_snapshots group contains group for every
-mounted snapshot.
+The group contains details about mounted snapshot:
+(1) inodes_count - show number of inodes for snapshot.
+(2) blocks_count - show number of blocks for snapshot.
 
 Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
 CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 CC: Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- Documentation/ABI/testing/sysfs-fs-nilfs2 |    8 +++++++
- fs/nilfs2/sysfs.c                         |   36 ++++++++++++++++++++++++++++-
- fs/nilfs2/sysfs.h                         |   12 ++++++++++
- 3 files changed, 55 insertions(+), 1 deletion(-)
+ Documentation/ABI/testing/sysfs-fs-nilfs2 |   22 ++++++
+ fs/nilfs2/sysfs.c                         |  118 +++++++++++++++++++++++++++++
+ fs/nilfs2/sysfs.h                         |   20 +++++
+ fs/nilfs2/the_nilfs.h                     |    6 ++
+ 4 files changed, 166 insertions(+)
 
 diff --git a/Documentation/ABI/testing/sysfs-fs-nilfs2 b/Documentation/ABI/testing/sysfs-fs-nilfs2
-index c3d2c0f..db3cf80 100644
+index db3cf80..aac5a2b 100644
 --- a/Documentation/ABI/testing/sysfs-fs-nilfs2
 +++ b/Documentation/ABI/testing/sysfs-fs-nilfs2
-@@ -279,3 +279,11 @@ Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+@@ -287,3 +287,25 @@ Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
  Description:
- 		Describe attributes of /sys/fs/nilfs2/<device>/checkpoints
+ 		Describe content of /sys/fs/nilfs2/<device>/mounted_snapshots
  		group.
 +
-+What:		/sys/fs/nilfs2/<device>/mounted_snapshots/README
++What:		/sys/fs/nilfs2/<device>/mounted_snapshots/<id>/inodes_count
 +Date:		April 2014
 +KernelVersion:	3.15
 +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 +Description:
-+		Describe content of /sys/fs/nilfs2/<device>/mounted_snapshots
++		Show number of inodes for snapshot.
++
++What:		/sys/fs/nilfs2/<device>/mounted_snapshots/<id>/blocks_count
++Date:		April 2014
++KernelVersion:	3.15
++Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
++Description:
++		Show number of blocks for snapshot.
++
++What:		/sys/fs/nilfs2/<device>/mounted_snapshots/<id>/README
++Date:		April 2014
++KernelVersion:	3.15
++Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
++Description:
++		Describe attributes of /sys/fs/nilfs2/<device>/mounted_snapshots/<id>
 +		group.
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 46e7bd9..3de3b30 100644
+index 3de3b30..c3a7ef1 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -112,6 +112,32 @@ void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
+@@ -112,6 +112,124 @@ void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
  }
  
  /************************************************************************
-+ *                    NILFS mounted snapshots attrs                     *
++ *                        NILFS snapshot attrs                          *
 + ************************************************************************/
 +
-+static const char mounted_snapshots_readme_str[] =
-+	"The mounted_snapshots group contains group for\n"
-+	"every mounted snapshot.\n";
-+
 +static ssize_t
-+nilfs_mounted_snapshots_README_show(struct nilfs_mounted_snapshots_attr *attr,
-+				    struct the_nilfs *nilfs, char *buf)
++nilfs_snapshot_inodes_count_show(struct nilfs_snapshot_attr *attr,
++				 struct nilfs_root *root, char *buf)
 +{
-+	return snprintf(buf, PAGE_SIZE, mounted_snapshots_readme_str);
++	return snprintf(buf, PAGE_SIZE, "%llu\n",
++			(unsigned long long)atomic64_read(&root->inodes_count));
 +}
 +
-+NILFS_MOUNTED_SNAPSHOTS_RO_ATTR(README);
++static ssize_t
++nilfs_snapshot_blocks_count_show(struct nilfs_snapshot_attr *attr,
++				 struct nilfs_root *root, char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, "%llu\n",
++			(unsigned long long)atomic64_read(&root->blocks_count));
++}
 +
-+static struct attribute *nilfs_mounted_snapshots_attrs[] = {
-+	NILFS_MOUNTED_SNAPSHOTS_ATTR_LIST(README),
++static const char snapshot_readme_str[] =
++	"The group contains details about mounted snapshot.\n\n"
++	"(1) inodes_count\n\tshow number of inodes for snapshot.\n\n"
++	"(2) blocks_count\n\tshow number of blocks for snapshot.\n\n";
++
++static ssize_t
++nilfs_snapshot_README_show(struct nilfs_snapshot_attr *attr,
++			    struct nilfs_root *root, char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, snapshot_readme_str);
++}
++
++NILFS_SNAPSHOT_RO_ATTR(inodes_count);
++NILFS_SNAPSHOT_RO_ATTR(blocks_count);
++NILFS_SNAPSHOT_RO_ATTR(README);
++
++static struct attribute *nilfs_snapshot_attrs[] = {
++	NILFS_SNAPSHOT_ATTR_LIST(inodes_count),
++	NILFS_SNAPSHOT_ATTR_LIST(blocks_count),
++	NILFS_SNAPSHOT_ATTR_LIST(README),
 +	NULL,
 +};
 +
-+NILFS_DEV_INT_GROUP_OPS(mounted_snapshots, dev);
-+NILFS_DEV_INT_GROUP_TYPE(mounted_snapshots, dev);
-+NILFS_DEV_INT_GROUP_FNS(mounted_snapshots, dev);
++static ssize_t nilfs_snapshot_attr_show(struct kobject *kobj,
++					struct attribute *attr, char *buf)
++{
++	struct nilfs_root *root =
++			container_of(kobj, struct nilfs_root, snapshot_kobj);
++	struct nilfs_snapshot_attr *a =
++			container_of(attr, struct nilfs_snapshot_attr, attr);
++
++	return a->show ? a->show(a, root, buf) : 0;
++}
++
++static ssize_t nilfs_snapshot_attr_store(struct kobject *kobj,
++					 struct attribute *attr,
++					 const char *buf, size_t len)
++{
++	struct nilfs_root *root =
++			container_of(kobj, struct nilfs_root, snapshot_kobj);
++	struct nilfs_snapshot_attr *a =
++			container_of(attr, struct nilfs_snapshot_attr, attr);
++
++	return a->store ? a->store(a, root, buf, len) : 0;
++}
++
++static void nilfs_snapshot_attr_release(struct kobject *kobj)
++{
++	struct nilfs_root *root = container_of(kobj, struct nilfs_root,
++						snapshot_kobj);
++	complete(&root->snapshot_kobj_unregister);
++}
++
++static const struct sysfs_ops nilfs_snapshot_attr_ops = {
++	.show	= nilfs_snapshot_attr_show,
++	.store	= nilfs_snapshot_attr_store,
++};
++
++static struct kobj_type nilfs_snapshot_ktype = {
++	.default_attrs	= nilfs_snapshot_attrs,
++	.sysfs_ops	= &nilfs_snapshot_attr_ops,
++	.release	= nilfs_snapshot_attr_release,
++};
++
++int nilfs_sysfs_create_snapshot_group(struct nilfs_root *root)
++{
++	struct the_nilfs *nilfs;
++	struct kobject *parent;
++	int err;
++
++	nilfs = root->nilfs;
++	parent = &nilfs->ns_dev_subgroups->sg_mounted_snapshots_kobj;
++	root->snapshot_kobj.kset = nilfs_kset;
++	init_completion(&root->snapshot_kobj_unregister);
++
++	if (root->cno == NILFS_CPTREE_CURRENT_CNO) {
++		err = kobject_init_and_add(&root->snapshot_kobj,
++					    &nilfs_snapshot_ktype,
++					    &nilfs->ns_dev_kobj,
++					    "current_checkpoint");
++	} else {
++		err = kobject_init_and_add(&root->snapshot_kobj,
++					    &nilfs_snapshot_ktype,
++					    parent,
++					    "%llu", root->cno);
++	}
++
++	if (err)
++		return err;
++
++	return 0;
++}
++
++void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
++{
++	kobject_del(&root->snapshot_kobj);
++}
 +
 +/************************************************************************
-  *                      NILFS checkpoints attrs                         *
+  *                    NILFS mounted snapshots attrs                     *
   ************************************************************************/
  
-@@ -866,10 +892,14 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
- 	if (err)
- 		goto free_dev_subgroups;
- 
--	err = nilfs_sysfs_create_checkpoints_group(nilfs);
-+	err = nilfs_sysfs_create_mounted_snapshots_group(nilfs);
- 	if (err)
- 		goto cleanup_dev_kobject;
- 
-+	err = nilfs_sysfs_create_checkpoints_group(nilfs);
-+	if (err)
-+		goto delete_mounted_snapshots_group;
-+
- 	err = nilfs_sysfs_create_segments_group(nilfs);
- 	if (err)
- 		goto delete_checkpoints_group;
-@@ -893,6 +923,9 @@ delete_segments_group:
- delete_checkpoints_group:
- 	nilfs_sysfs_delete_checkpoints_group(nilfs);
- 
-+delete_mounted_snapshots_group:
-+	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
-+
- cleanup_dev_kobject:
- 	kobject_del(&nilfs->ns_dev_kobj);
- 
-@@ -905,6 +938,7 @@ failed_create_device_group:
- 
- void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
- {
-+	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
- 	nilfs_sysfs_delete_checkpoints_group(nilfs);
- 	nilfs_sysfs_delete_segments_group(nilfs);
- 	nilfs_sysfs_delete_superblock_group(nilfs);
 diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
-index b4e2db3..b10830d 100644
+index b10830d..3b3d7c4 100644
 --- a/fs/nilfs2/sysfs.h
 +++ b/fs/nilfs2/sysfs.h
-@@ -28,6 +28,8 @@
-  * @sg_superblock_kobj_unregister: completion state
-  * @sg_segctor_kobj: /sys/fs/<nilfs>/<device>/segctor
-  * @sg_segctor_kobj_unregister: completion state
-+ * @sg_mounted_snapshots_kobj: /sys/fs/<nilfs>/<device>/mounted_snapshots
-+ * @sg_mounted_snapshots_kobj_unregister: completion state
-  * @sg_checkpoints_kobj: /sys/fs/<nilfs>/<device>/checkpoints
-  * @sg_checkpoints_kobj_unregister: completion state
-  * @sg_segments_kobj: /sys/fs/<nilfs>/<device>/segments
-@@ -42,6 +44,10 @@ struct nilfs_sysfs_dev_subgroups {
- 	struct kobject sg_segctor_kobj;
- 	struct completion sg_segctor_kobj_unregister;
- 
-+	/* /sys/fs/<nilfs>/<device>/mounted_snapshots */
-+	struct kobject sg_mounted_snapshots_kobj;
-+	struct completion sg_mounted_snapshots_kobj_unregister;
-+
- 	/* /sys/fs/<nilfs>/<device>/checkpoints */
- 	struct kobject sg_checkpoints_kobj;
- 	struct completion sg_checkpoints_kobj_unregister;
-@@ -73,6 +79,7 @@ struct nilfs_##name##_attr { \
- 
- NILFS_DEV_ATTR_STRUCT(dev);
- NILFS_DEV_ATTR_STRUCT(segments);
-+NILFS_DEV_ATTR_STRUCT(mounted_snapshots);
- NILFS_DEV_ATTR_STRUCT(checkpoints);
+@@ -84,6 +84,17 @@ NILFS_DEV_ATTR_STRUCT(checkpoints);
  NILFS_DEV_ATTR_STRUCT(superblock);
  NILFS_DEV_ATTR_STRUCT(segctor);
-@@ -109,6 +116,9 @@ NILFS_DEV_ATTR_STRUCT(segctor);
- #define NILFS_SEGMENTS_RW_ATTR(name) \
- 	NILFS_RW_ATTR(segs_info, name)
  
-+#define NILFS_MOUNTED_SNAPSHOTS_RO_ATTR(name) \
-+	NILFS_RO_ATTR(mounted_snapshots, name)
++#define NILFS_CP_ATTR_STRUCT(name) \
++struct nilfs_##name##_attr { \
++	struct attribute attr; \
++	ssize_t (*show)(struct nilfs_##name##_attr *, struct nilfs_root *, \
++			char *); \
++	ssize_t (*store)(struct nilfs_##name##_attr *, struct nilfs_root *, \
++			 const char *, size_t); \
++};
 +
- #define NILFS_CHECKPOINTS_RO_ATTR(name) \
- 	NILFS_RO_ATTR(checkpoints, name)
++NILFS_CP_ATTR_STRUCT(snapshot);
++
+ #define NILFS_ATTR(type, name, mode, show, store) \
+ 	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
+ 		__ATTR(name, mode, show, store)
+@@ -124,6 +135,13 @@ NILFS_DEV_ATTR_STRUCT(segctor);
  #define NILFS_CHECKPOINTS_RW_ATTR(name) \
-@@ -132,6 +142,8 @@ NILFS_DEV_ATTR_STRUCT(segctor);
- 	(&nilfs_dev_attr_##name.attr)
- #define NILFS_SEGMENTS_ATTR_LIST(name) \
- 	(&nilfs_segments_attr_##name.attr)
-+#define NILFS_MOUNTED_SNAPSHOTS_ATTR_LIST(name) \
-+	(&nilfs_mounted_snapshots_attr_##name.attr)
+ 	NILFS_RW_ATTR(checkpoints, name)
+ 
++#define NILFS_SNAPSHOT_INFO_ATTR(name) \
++	NILFS_INFO_ATTR(snapshot, name)
++#define NILFS_SNAPSHOT_RO_ATTR(name) \
++	NILFS_RO_ATTR(snapshot, name)
++#define NILFS_SNAPSHOT_RW_ATTR(name) \
++	NILFS_RW_ATTR(snapshot, name)
++
+ #define NILFS_SUPERBLOCK_RO_ATTR(name) \
+ 	NILFS_RO_ATTR(superblock, name)
+ #define NILFS_SUPERBLOCK_RW_ATTR(name) \
+@@ -146,6 +164,8 @@ NILFS_DEV_ATTR_STRUCT(segctor);
+ 	(&nilfs_mounted_snapshots_attr_##name.attr)
  #define NILFS_CHECKPOINTS_ATTR_LIST(name) \
  	(&nilfs_checkpoints_attr_##name.attr)
++#define NILFS_SNAPSHOT_ATTR_LIST(name) \
++	(&nilfs_snapshot_attr_##name.attr)
  #define NILFS_SUPERBLOCK_ATTR_LIST(name) \
+ 	(&nilfs_superblock_attr_##name.attr)
+ #define NILFS_SEGCTOR_ATTR_LIST(name) \
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 7fe8223..d01ead1 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -243,6 +243,8 @@ THE_NILFS_FNS(SB_DIRTY, sb_dirty)
+  * @ifile: inode file
+  * @inodes_count: number of inodes
+  * @blocks_count: number of blocks
++ * @snapshot_kobj: /sys/fs/<nilfs>/<device>/mounted_snapshots/<snapshot>
++ * @snapshot_kobj_unregister: completion state for kernel object
+  */
+ struct nilfs_root {
+ 	__u64 cno;
+@@ -254,6 +256,10 @@ struct nilfs_root {
+ 
+ 	atomic64_t inodes_count;
+ 	atomic64_t blocks_count;
++
++	/* /sys/fs/<nilfs>/<device>/mounted_snapshots/<snapshot> */
++	struct kobject snapshot_kobj;
++	struct completion snapshot_kobj_unregister;
+ };
+ 
+ /* Special checkpoint number */
 -- 
 1.7.9.5
 
