@@ -1,210 +1,391 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3 9/9] nilfs2: integrate sysfs support into driver
-Date: Tue, 29 Apr 2014 19:21:11 +0400
-Message-ID: <1398784871.2185.75.camel@slavad-CELSIUS-H720>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v3 2/9] nilfs2: add /sys/fs/nilfs2/<device> group
+Date: Wed, 28 May 2014 02:35:07 +0900 (JST)
+Message-ID: <20140528.023507.1265249128091142834.konishi.ryusuke@lab.ntt.co.jp>
+References: <1398784683.2185.68.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=5H7qrVi+LDJ0LowVguwChY7qYC80aVHb4U31HcBdt8o=;
-	b=IAskFJEIcv3Wk3oA5az90WWPvhAWTxYavjX8OB7lDFSArdcXPziceBRPgKIbsSgEcVQ68EHhBFLH8ywt/tpEqrhJiQza86Q/5prVthoP20K301oOkJcZ9+Au3tzi0ETB;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-type:content-transfer-encoding;
+        bh=Q0ZUWCeYjhqB2cw3qn8Iare9CO9i2l2qOPFNdYLT+OU=;
+        b=JYVNaPAVNwEPs9f84S4zntX+9PFp9MgU+kNPveO2Q1ySAHrgDUjMWK1d2fcSiWUkPL
+         guRyYCQGLnP1FCZOZquqmMJ8TTOFnxqxcR3UVoo11E4lHWgGqw2vII+OZ9mIg9dMU6D8
+         HTaPM2bMU3V2enQgVhWK3HehM8YaOyfbd1naZ1aVgqrJvqz4rTeb3XQ+NxoRMGwzu56S
+         p9AlWM5SF22h5gmF+tQsPuAjMUAumqqGHnQdtzo2R6ejeVoJJO6yaHP+SWIaqJopr/HS
+         J0nRawibvQiRDd8uLMmGSPhrZL5cQEkNSdG1Ey45Qjcs2+HruyVfR7cybsN4qk5kiZAB
+         mmGw==
+In-Reply-To: <1398784683.2185.68.camel@slavad-CELSIUS-H720>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-Subject: [PATCH v3 9/9] nilfs2: integrate sysfs support into driver
+Hi Vyacheslav,
+On Tue, 29 Apr 2014 19:18:03 +0400, Vyacheslav Dubeyko wrote:
+> From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
+> Subject: [PATCH v3 2/9] nilfs2: add /sys/fs/nilfs2/<device> group
+> 
+> This patch adds creation of /sys/fs/nilfs2/<device> group.
+> 
+> The <device> group contains attributes that describe file
+> system partition's details:
+> (1) revision - show NILFS file system revision.
+> (2) blocksize - show volume block size in bytes.
+> (3) device_size - show volume size in bytes.
+> (4) free_blocks - show count of free blocks on volume.
+> (5) uuid - show volume's UUID.
+> (6) volume_name - show volume's name.
+> 
+> Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
+> CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+> CC: Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+>  Documentation/ABI/testing/sysfs-fs-nilfs2 |   51 +++++++++
+>  fs/nilfs2/sysfs.c                         |  168 +++++++++++++++++++++++++++++
+>  fs/nilfs2/sysfs.h                         |   20 ++++
+>  fs/nilfs2/the_nilfs.h                     |    6 ++
+>  4 files changed, 245 insertions(+)
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-fs-nilfs2 b/Documentation/ABI/testing/sysfs-fs-nilfs2
+> index 2e2a6df..75996a5 100644
+> --- a/Documentation/ABI/testing/sysfs-fs-nilfs2
+> +++ b/Documentation/ABI/testing/sysfs-fs-nilfs2
+> @@ -14,3 +14,54 @@ KernelVersion:	3.15
+>  Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+>  Description:
+>  		Describe attributes of /sys/fs/nilfs2/features group.
+> +
+> +What:		/sys/fs/nilfs2/<device>/revision
+> +Date:		April 2014
+> +KernelVersion:	3.15
 
-This patch integrates creation of sysfs groups and
-attributes into NILFS file system driver.
+We are now in the development cycle of 3.15, so the kernel version
+that this series first appears will be at least later than 3.15.  I
+prefer to omit this field at present (like ext4 or f2fs).
 
-It was found the issue with nilfs_sysfs_{create/delete}_snapshot_group
-functions by Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> in the first
-version of the patch:
+> +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> +Description:
+> +		Show NILFS file system revision on volume.
+> +		This value informs about metadata structures'
+> +		revision on mounted volume.
+> +
+> +What:		/sys/fs/nilfs2/<device>/blocksize
+> +Date:		April 2014
+> +KernelVersion:	3.15
+> +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> +Description:
+> +		Show volume's block size in bytes.
+> +
+> +What:		/sys/fs/nilfs2/<device>/device_size
+> +Date:		April 2014
+> +KernelVersion:	3.15
+> +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> +Description:
+> +		Show volume size in bytes.
+> +
+> +What:		/sys/fs/nilfs2/<device>/free_blocks
+> +Date:		April 2014
+> +KernelVersion:	3.15
+> +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> +Description:
+> +		Show count of free blocks on volume.
+> +
+> +What:		/sys/fs/nilfs2/<device>/uuid
+> +Date:		April 2014
+> +KernelVersion:	3.15
+> +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> +Description:
+> +		Show volume's UUID (Universally Unique Identifier).
+> +
+> +What:		/sys/fs/nilfs2/<device>/volume_name
+> +Date:		April 2014
+> +KernelVersion:	3.15
+> +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> +Description:
+> +		Show volume's label.
+> +
+> +What:		/sys/fs/nilfs2/<device>/README
+> +Date:		April 2014
+> +KernelVersion:	3.15
+> +Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> +Description:
+> +		Describe attributes of /sys/fs/nilfs2/<device> group.
+> diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
+> index 8d025b7..d80684c 100644
+> --- a/fs/nilfs2/sysfs.c
+> +++ b/fs/nilfs2/sysfs.c
+> @@ -42,6 +42,174 @@ static struct kset *nilfs_kset;
+>  })
+>  
+>  /************************************************************************
+> + *                        NILFS device attrs                            *
+> + ************************************************************************/
+> +
+> +static
+> +ssize_t nilfs_dev_revision_show(struct nilfs_dev_attr *attr,
+> +				struct the_nilfs *nilfs,
+> +				char *buf)
+> +{
+> +	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+> +	u32 major = le32_to_cpu(sbp[0]->s_rev_level);
+> +	u16 minor = le16_to_cpu(sbp[0]->s_minor_rev_level);
+> +
+> +	return snprintf(buf, PAGE_SIZE, "%d.%d\n", major, minor);
+> +}
+> +
+> +static
+> +ssize_t nilfs_dev_blocksize_show(struct nilfs_dev_attr *attr,
+> +				 struct the_nilfs *nilfs,
+> +				 char *buf)
+> +{
+> +	return snprintf(buf, PAGE_SIZE, "%u\n", nilfs->ns_blocksize);
+> +}
+> +
+> +static
+> +ssize_t nilfs_dev_device_size_show(struct nilfs_dev_attr *attr,
+> +				    struct the_nilfs *nilfs,
+> +				    char *buf)
+> +{
+> +	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+> +	u64 dev_size = le64_to_cpu(sbp[0]->s_dev_size);
+> +
+> +	return snprintf(buf, PAGE_SIZE, "%llu\n", dev_size);
+> +}
+> +
+> +static
+> +ssize_t nilfs_dev_free_blocks_show(struct nilfs_dev_attr *attr,
+> +				   struct the_nilfs *nilfs,
+> +				   char *buf)
+> +{
+> +	sector_t free_blocks = 0;
+> +
+> +	nilfs_count_free_blocks(nilfs, &free_blocks);
+> +	return snprintf(buf, PAGE_SIZE, "%llu\n",
+> +			(unsigned long long)free_blocks);
+> +}
+> +
+> +static
+> +ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
+> +			    struct the_nilfs *nilfs,
+> +			    char *buf)
+> +{
+> +	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+> +
+> +	return snprintf(buf, PAGE_SIZE, "%pUL\n", sbp[0]->s_uuid);
+> +}
 
-[ 4928.585682] BUG: sleeping function called from invalid context at kernel/locking/mutex.c:579
-[ 4928.585693] in_atomic(): 1, irqs_disabled(): 0, pid: 32676, name: umount.nilfs2
-[ 4928.585698] 2 locks held by umount.nilfs2/32676:
-[ 4928.585703]  #0:  (&type->s_umount_key#21){++++..}, at: [<790c18e2>] deactivate_super+0x37/0x58
-[ 4928.585732]  #1:  (&(&nilfs->ns_cptree_lock)->rlock){+.+...}, at: [<791bf659>] nilfs_put_root+0x23/0x5a
-[ 4928.585749] Preemption disabled at:[<791bf659>] nilfs_put_root+0x23/0x5a
+Looks like there is a byte order problem.  The value of uuid file
+didn't match the output of nilfs-tune tool or blkid command.
 
-[ 4928.585766] CPU: 0 PID: 32676 Comm: umount.nilfs2 Not tainted 3.14.0+ #2
-[ 4928.585771] Hardware name: Dell Computer Corporation Dimension 2350/07W080, BIOS A01 12/17/2002
-[ 4928.585777]  00000000 00000000 93cdddf8 793ff0bd c14dd780 93cdde20 7904bf38 794d5224
-[ 4928.585795]  791bf659 791bf659 00007fa4 c14dda00 00000000 78025360 79552b80 93cdde68
-[ 4928.585811]  7940136e 00000000 00000002 c14dd780 79552d10 c14ddc00 93cdde68 00000246
-[ 4928.585828] Call Trace:
-[ 4928.585842]  [<793ff0bd>] dump_stack+0x4b/0x75
-[ 4928.585854]  [<7904bf38>] __might_sleep+0x111/0x16f
-[ 4928.585862]  [<791bf659>] ? nilfs_put_root+0x23/0x5a
-[ 4928.585870]  [<791bf659>] ? nilfs_put_root+0x23/0x5a
-[ 4928.585880]  [<7940136e>] mutex_lock_nested+0x1e/0x3ad
-[ 4928.585893]  [<7911186e>] ? sysfs_remove_dir+0x25/0x62
-[ 4928.585901]  [<7910fdb8>] kernfs_remove+0x12/0x26
-[ 4928.585908]  [<79111886>] sysfs_remove_dir+0x3d/0x62
-[ 4928.585918]  [<792953bb>] kobject_del+0x13/0x38
-[ 4928.585926]  [<791cabd4>] nilfs_sysfs_delete_snapshot_group+0xb/0xd
-[ 4928.585934]  [<791bf660>] nilfs_put_root+0x2a/0x5a
-[ 4928.585942]  [<791c3827>] nilfs_detach_log_writer+0x1ab/0x2c1
-[ 4928.585953]  [<7906c283>] ? call_rcu+0x17/0x19
-[ 4928.585963]  [<790d5c4b>] ? dispose_list+0x27/0x31
-[ 4928.585973]  [<791b4312>] nilfs_put_super+0x13/0x68
-[ 4928.585980]  [<790c1bc8>] generic_shutdown_super+0x60/0xd1
-[ 4928.585988]  [<790c29dd>] kill_block_super+0x1d/0x60
-[ 4928.585996]  [<790c188e>] deactivate_locked_super+0x22/0x3f
-[ 4928.586096]  [<790c18e9>] deactivate_super+0x3e/0x58
-[ 4928.586107]  [<790d95af>] mntput_no_expire+0xe2/0x141
-[ 4928.586115]  [<790d94db>] ? mntput_no_expire+0xe/0x141
-[ 4928.586123]  [<790dabed>] SyS_oldumount+0x70/0xa5
-[ 4928.586131]  [<794050ff>] syscall_call+0x7/0xb
+nilfs-tune output:
 
-The reason of the issue was placement of
-nilfs_sysfs_{create/delete}_snapshot_group() call under
-nilfs->ns_cptree_lock protection. But this protection is
-unnecessary and wrong solution. The second version of the
-patch fixes this issue.
+ Filesystem UUID:        b9e47fee-2507-4499-9d98-49917ba371e5
 
-Reported-by: Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Tested-by: Michael L. Semon <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- fs/nilfs2/Makefile    |    2 +-
- fs/nilfs2/nilfs.h     |    8 ++++++++
- fs/nilfs2/super.c     |    9 ++++++++-
- fs/nilfs2/the_nilfs.c |   16 +++++++++++++++-
- 4 files changed, 32 insertions(+), 3 deletions(-)
+/sys/fs/nilfs2/sdb1/uuid:
 
-diff --git a/fs/nilfs2/Makefile b/fs/nilfs2/Makefile
-index 85c9873..fc603e0 100644
---- a/fs/nilfs2/Makefile
-+++ b/fs/nilfs2/Makefile
-@@ -2,4 +2,4 @@ obj-$(CONFIG_NILFS2_FS) += nilfs2.o
- nilfs2-y := inode.o file.o dir.o super.o namei.o page.o mdt.o \
- 	btnode.o bmap.o btree.o direct.o dat.o recovery.o \
- 	the_nilfs.o segbuf.o segment.o cpfile.o sufile.o \
--	ifile.o alloc.o gcinode.o ioctl.o
-+	ifile.o alloc.o gcinode.o ioctl.o sysfs.o
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 9bc72de..0696161 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -320,6 +320,14 @@ int nilfs_gccache_wait_and_mark_dirty(struct buffer_head *);
- int nilfs_init_gcinode(struct inode *inode);
- void nilfs_remove_all_gcinodes(struct the_nilfs *nilfs);
- 
-+/* sysfs.c */
-+int __init nilfs_sysfs_init(void);
-+void nilfs_sysfs_exit(void);
-+int nilfs_sysfs_create_device_group(struct super_block *);
-+void nilfs_sysfs_delete_device_group(struct the_nilfs *);
-+int nilfs_sysfs_create_snapshot_group(struct nilfs_root *);
-+void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *);
-+
- /*
-  * Inodes and files operations
-  */
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 8c532b2..c519927 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -1452,13 +1452,19 @@ static int __init init_nilfs_fs(void)
- 	if (err)
- 		goto fail;
- 
--	err = register_filesystem(&nilfs_fs_type);
-+	err = nilfs_sysfs_init();
- 	if (err)
- 		goto free_cachep;
- 
-+	err = register_filesystem(&nilfs_fs_type);
-+	if (err)
-+		goto deinit_sysfs_entry;
-+
- 	printk(KERN_INFO "NILFS version 2 loaded\n");
- 	return 0;
- 
-+deinit_sysfs_entry:
-+	nilfs_sysfs_exit();
- free_cachep:
- 	nilfs_destroy_cachep();
- fail:
-@@ -1468,6 +1474,7 @@ fail:
- static void __exit exit_nilfs_fs(void)
- {
- 	nilfs_destroy_cachep();
-+	nilfs_sysfs_exit();
- 	unregister_filesystem(&nilfs_fs_type);
- }
- 
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 59d5008..9da25fe 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -98,6 +98,7 @@ void destroy_nilfs(struct the_nilfs *nilfs)
- {
- 	might_sleep();
- 	if (nilfs_init(nilfs)) {
-+		nilfs_sysfs_delete_device_group(nilfs);
- 		brelse(nilfs->ns_sbh[0]);
- 		brelse(nilfs->ns_sbh[1]);
- 	}
-@@ -641,6 +642,10 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
- 	if (err)
- 		goto failed_sbh;
- 
-+	err = nilfs_sysfs_create_device_group(sb);
-+	if (err)
-+		goto failed_sbh;
-+
- 	set_nilfs_init(nilfs);
- 	err = 0;
-  out:
-@@ -741,12 +746,13 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
- {
- 	struct rb_node **p, *parent;
- 	struct nilfs_root *root, *new;
-+	int err;
- 
- 	root = nilfs_lookup_root(nilfs, cno);
- 	if (root)
- 		return root;
- 
--	new = kmalloc(sizeof(*root), GFP_KERNEL);
-+	new = kzalloc(sizeof(*root), GFP_KERNEL);
- 	if (!new)
- 		return NULL;
- 
-@@ -783,6 +789,12 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
- 
- 	spin_unlock(&nilfs->ns_cptree_lock);
- 
-+	err = nilfs_sysfs_create_snapshot_group(new);
-+	if (err) {
-+		kfree(new);
-+		new = NULL;
-+	}
-+
- 	return new;
- }
- 
-@@ -791,6 +803,8 @@ void nilfs_put_root(struct nilfs_root *root)
- 	if (atomic_dec_and_test(&root->count)) {
- 		struct the_nilfs *nilfs = root->nilfs;
- 
-+		nilfs_sysfs_delete_snapshot_group(root);
-+
- 		spin_lock(&nilfs->ns_cptree_lock);
- 		rb_erase(&root->rb_node, &nilfs->ns_cptree);
- 		spin_unlock(&nilfs->ns_cptree_lock);
--- 
-1.7.9.5
+ EE7FE4B9-0725-9944-9D98-49917BA371E5
 
+blkid output:
 
+ /dev/sdb1: UUID="b9e47fee-2507-4499-9d98-49917ba371e5" TYPE="nilfs2" LABEL="test"
+
+Can you fix this issue?
+
+Regards,
+Ryusuke Konishi
+
+> +
+> +static
+> +ssize_t nilfs_dev_volume_name_show(struct nilfs_dev_attr *attr,
+> +				    struct the_nilfs *nilfs,
+> +				    char *buf)
+> +{
+> +	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+> +
+> +	return scnprintf(buf, sizeof(sbp[0]->s_volume_name), "%s\n",
+> +			 sbp[0]->s_volume_name);
+> +}
+> +
+> +static const char dev_readme_str[] =
+> +	"The <device> group contains attributes that describe file system\n"
+> +	"partition's details.\n\n"
+> +	"(1) revision\n\tshow NILFS file system revision.\n\n"
+> +	"(2) blocksize\n\tshow volume block size in bytes.\n\n"
+> +	"(3) device_size\n\tshow volume size in bytes.\n\n"
+> +	"(4) free_blocks\n\tshow count of free blocks on volume.\n\n"
+> +	"(5) uuid\n\tshow volume's UUID.\n\n"
+> +	"(6) volume_name\n\tshow volume's name.\n\n";
+> +
+> +static ssize_t nilfs_dev_README_show(struct nilfs_dev_attr *attr,
+> +				     struct the_nilfs *nilfs,
+> +				     char *buf)
+> +{
+> +	return snprintf(buf, PAGE_SIZE, dev_readme_str);
+> +}
+> +
+> +NILFS_DEV_RO_ATTR(revision);
+> +NILFS_DEV_RO_ATTR(blocksize);
+> +NILFS_DEV_RO_ATTR(device_size);
+> +NILFS_DEV_RO_ATTR(free_blocks);
+> +NILFS_DEV_RO_ATTR(uuid);
+> +NILFS_DEV_RO_ATTR(volume_name);
+> +NILFS_DEV_RO_ATTR(README);
+> +
+> +static struct attribute *nilfs_dev_attrs[] = {
+> +	NILFS_DEV_ATTR_LIST(revision),
+> +	NILFS_DEV_ATTR_LIST(blocksize),
+> +	NILFS_DEV_ATTR_LIST(device_size),
+> +	NILFS_DEV_ATTR_LIST(free_blocks),
+> +	NILFS_DEV_ATTR_LIST(uuid),
+> +	NILFS_DEV_ATTR_LIST(volume_name),
+> +	NILFS_DEV_ATTR_LIST(README),
+> +	NULL,
+> +};
+> +
+> +static ssize_t nilfs_dev_attr_show(struct kobject *kobj,
+> +				    struct attribute *attr, char *buf)
+> +{
+> +	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
+> +						ns_dev_kobj);
+> +	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
+> +						attr);
+> +
+> +	return a->show ? a->show(a, nilfs, buf) : 0;
+> +}
+> +
+> +static ssize_t nilfs_dev_attr_store(struct kobject *kobj,
+> +				    struct attribute *attr,
+> +				    const char *buf, size_t len)
+> +{
+> +	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
+> +						ns_dev_kobj);
+> +	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
+> +						attr);
+> +
+> +	return a->store ? a->store(a, nilfs, buf, len) : 0;
+> +}
+> +
+> +static void nilfs_dev_attr_release(struct kobject *kobj)
+> +{
+> +	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
+> +						ns_dev_kobj);
+> +	complete(&nilfs->ns_dev_kobj_unregister);
+> +}
+> +
+> +static const struct sysfs_ops nilfs_dev_attr_ops = {
+> +	.show	= nilfs_dev_attr_show,
+> +	.store	= nilfs_dev_attr_store,
+> +};
+> +
+> +static struct kobj_type nilfs_dev_ktype = {
+> +	.default_attrs	= nilfs_dev_attrs,
+> +	.sysfs_ops	= &nilfs_dev_attr_ops,
+> +	.release	= nilfs_dev_attr_release,
+> +};
+> +
+> +int nilfs_sysfs_create_device_group(struct super_block *sb)
+> +{
+> +	struct the_nilfs *nilfs = sb->s_fs_info;
+> +	int err;
+> +
+> +	nilfs->ns_dev_kobj.kset = nilfs_kset;
+> +	init_completion(&nilfs->ns_dev_kobj_unregister);
+> +	err = kobject_init_and_add(&nilfs->ns_dev_kobj, &nilfs_dev_ktype, NULL,
+> +				    "%s", sb->s_id);
+> +	if (err)
+> +		goto failed_create_device_group;
+> +
+> +	return 0;
+> +
+> +failed_create_device_group:
+> +	return err;
+> +}
+> +
+> +void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
+> +{
+> +	kobject_del(&nilfs->ns_dev_kobj);
+> +}
+> +
+> +/************************************************************************
+>   *                        NILFS feature attrs                           *
+>   ************************************************************************/
+>  
+> diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
+> index b3ba2e4..19ff1a1 100644
+> --- a/fs/nilfs2/sysfs.h
+> +++ b/fs/nilfs2/sysfs.h
+> @@ -33,6 +33,17 @@ struct nilfs_##name##_attr { \
+>  
+>  NILFS_COMMON_ATTR_STRUCT(feature);
+>  
+> +#define NILFS_DEV_ATTR_STRUCT(name) \
+> +struct nilfs_##name##_attr { \
+> +	struct attribute attr; \
+> +	ssize_t (*show)(struct nilfs_##name##_attr *, struct the_nilfs *, \
+> +			char *); \
+> +	ssize_t (*store)(struct nilfs_##name##_attr *, struct the_nilfs *, \
+> +			 const char *, size_t); \
+> +};
+> +
+> +NILFS_DEV_ATTR_STRUCT(dev);
+> +
+>  #define NILFS_ATTR(type, name, mode, show, store) \
+>  	static struct nilfs_##type##_attr nilfs_##type##_attr_##name = \
+>  		__ATTR(name, mode, show, store)
+> @@ -53,7 +64,16 @@ NILFS_COMMON_ATTR_STRUCT(feature);
+>  #define NILFS_FEATURE_RW_ATTR(name) \
+>  	NILFS_RW_ATTR(feature, name)
+>  
+> +#define NILFS_DEV_INFO_ATTR(name) \
+> +	NILFS_INFO_ATTR(dev, name)
+> +#define NILFS_DEV_RO_ATTR(name) \
+> +	NILFS_RO_ATTR(dev, name)
+> +#define NILFS_DEV_RW_ATTR(name) \
+> +	NILFS_RW_ATTR(dev, name)
+> +
+>  #define NILFS_FEATURE_ATTR_LIST(name) \
+>  	(&nilfs_feature_attr_##name.attr)
+> +#define NILFS_DEV_ATTR_LIST(name) \
+> +	(&nilfs_dev_attr_##name.attr)
+>  
+>  #endif /* _NILFS_SYSFS_H */
+> diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+> index de8cc53..34bc7bd 100644
+> --- a/fs/nilfs2/the_nilfs.h
+> +++ b/fs/nilfs2/the_nilfs.h
+> @@ -95,6 +95,8 @@ enum {
+>   * @ns_inode_size: size of on-disk inode
+>   * @ns_first_ino: first not-special inode number
+>   * @ns_crc_seed: seed value of CRC32 calculation
+> + * @ns_dev_kobj: /sys/fs/<nilfs>/<device>
+> + * @ns_dev_kobj_unregister: completion state
+>   */
+>  struct the_nilfs {
+>  	unsigned long		ns_flags;
+> @@ -188,6 +190,10 @@ struct the_nilfs {
+>  	int			ns_inode_size;
+>  	int			ns_first_ino;
+>  	u32			ns_crc_seed;
+> +
+> +	/* /sys/fs/<nilfs>/<device> */
+> +	struct kobject ns_dev_kobj;
+> +	struct completion ns_dev_kobj_unregister;
+>  };
+>  
+>  #define THE_NILFS_FNS(bit, name)					\
+> -- 
+> 1.7.9.5
+> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
