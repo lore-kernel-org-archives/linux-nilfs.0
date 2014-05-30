@@ -1,80 +1,98 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v3 2/9] nilfs2: add /sys/fs/nilfs2/<device> group
-Date: Wed, 28 May 2014 10:24:55 +0400
-Message-ID: <1401258295.2360.2.camel@slavad-CELSIUS-H720>
-References: <1398784683.2185.68.camel@slavad-CELSIUS-H720>
-	 <20140528.023507.1265249128091142834.konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH v4 0/9] nilfs2: introduce functionality of creation of sysfs
+ groups and attributes
+Date: Fri, 30 May 2014 17:16:02 +0400
+Message-ID: <1401455762.2537.42.camel@slavad-ubuntu-14.04>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=YyQytKvhWInApLObqFqfvJH9T4QNenwFgLvSJMdd/Tc=;
-	b=P9oQT65JUg3lwcC12x+qkvrYaFAVaA256IvCzIkB8poSmsdTiiArDkNEYlOsg7evuPZ7utMz1mMlPPH5rBc5SKmSk9TH4boGUavzUzi/MN77XSg/zFhDn8D0APX6rgbl;
-In-Reply-To: <20140528.023507.1265249128091142834.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+	h=Content-Transfer-Encoding:Mime-Version:Content-Type:Date:Cc:To:From:Subject:Message-ID; bh=NBSpZVejUxRpEvTmiKySIzCI9BKgtByDw7OGwpCleUk=;
+	b=kpdkfmkHMLSVdVUC1qrmFPSo4Js/8QtjHvbjUaYsuJmQOe2EOtIqOXSOz7BdhdvK2w+xtTXcUDhrNnmq9EXtC5AcZu4N5clfRTq1d4GTJPste7RDElYGQcVTwPu8Nntw;
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, "Michael L. Semon" <mlsemon35-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 
-Hi Ryusuke,
+Hi,
 
-On Wed, 2014-05-28 at 02:35 +0900, Ryusuke Konishi wrote:
+This fourth version of patchset implements creation of
+sysfs groups and attributes with the purpose to show
+NILFS2 volume details, internal state of the driver and
+to manage internal state of NILFS2 driver.
 
-[snip]
-> > diff --git a/Documentation/ABI/testing/sysfs-fs-nilfs2 b/Documentation/ABI/testing/sysfs-fs-nilfs2
-> > index 2e2a6df..75996a5 100644
-> > --- a/Documentation/ABI/testing/sysfs-fs-nilfs2
-> > +++ b/Documentation/ABI/testing/sysfs-fs-nilfs2
-> > @@ -14,3 +14,54 @@ KernelVersion:	3.15
-> >  Contact:	"Vyacheslav Dubeyko" <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-> >  Description:
-> >  		Describe attributes of /sys/fs/nilfs2/features group.
-> > +
-> > +What:		/sys/fs/nilfs2/<device>/revision
-> > +Date:		April 2014
-> > +KernelVersion:	3.15
-> 
-> We are now in the development cycle of 3.15, so the kernel version
-> that this series first appears will be at least later than 3.15.  I
-> prefer to omit this field at present (like ext4 or f2fs).
-> 
+v3->v4
+ * Fix issue with volume's UUID output (Ryusuke Konishi)
 
-OK. It's not principal point. I'll omit it.
+v2->v3
+ * Add sysfs file for every format of timestamp output (Ryusuke Konishi)
+ * Exclude global switching of the time format (Ryusuke Konishi)
+ * Rename sysfs group from /sys/fs/nilfs into /sys/fs/nilfs2 (Ryusuke Konishi)
+ * Add description of sysfs interface in sysfs-fs-nilfs2 (Ryusuke Konishi)
 
-[snip]
-> > +static
-> > +ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
-> > +			    struct the_nilfs *nilfs,
-> > +			    char *buf)
-> > +{
-> > +	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-> > +
-> > +	return snprintf(buf, PAGE_SIZE, "%pUL\n", sbp[0]->s_uuid);
-> > +}
-> 
-> Looks like there is a byte order problem.  The value of uuid file
-> didn't match the output of nilfs-tune tool or blkid command.
-> 
-> nilfs-tune output:
-> 
->  Filesystem UUID:        b9e47fee-2507-4499-9d98-49917ba371e5
-> 
-> /sys/fs/nilfs2/sdb1/uuid:
-> 
->  EE7FE4B9-0725-9944-9D98-49917BA371E5
-> 
-> blkid output:
-> 
->  /dev/sdb1: UUID="b9e47fee-2507-4499-9d98-49917ba371e5" TYPE="nilfs2" LABEL="test"
-> 
-> Can you fix this issue?
-> 
+v1->v2
+ * Improve human-readable format of timestamp output (Michael L. Semon)
+ * Fix issue with nilfs_sysfs_{create/delete}_snapshot_group (Michael L. Semon)
 
-Yes, sure. I'll check and fix it.
+Sysfs is a virtual file system that exports information about devices
+and drivers from the kernel device model to user space, and is also used
+for configuration. NILFS2 is a complex file system that has segctor thread,
+GC thread, checkpoint/snapshot model and so on. Sysfs namespace provides
+native and easy way for: (1) getting info and statistics about volume state;
+(2) getting info and configuration of internal subsystems (segctor thread);
+(3) snapshots management.
 
-Thanks,
+Suggested patchset provides basis for managing segctor thread behaviour and
+manipulation by snapshots. Currently, it informs only about segctor thread's
+internal parameters and about mounted snapshots. But sysfs interface can
+provide easy and simple way for deep management of segctor thread and
+snapshots.
+
+This patchset provides opportunity to manage interval of periodical update
+of superblock (in seconds). Default value is 10 seconds. Now a user can
+increase this value by means of nilfs2/<device>/superblock/sb_update_frequency
+attribute in the case of necessity.
+
+Also the patchset provides opportunity to get information easily about key
+volumes's parameters (free blocks, superblock write count, superblock update
+frequency, latest segment info, dirty data blocks count, count of clean
+segments, count of dirty segments and so on) in real time manner. Such
+information can be used in scripts for subtle management of filesystem.
+
+Implemented functionality creates such groups:
+(1) /sys/fs/nilfs2 - root group
+(2) /sys/fs/nilfs2/features - group contains attributes that describe NILFS
+file system driver features
+(3) /sys/fs/nilfs2/<device> - group contains attributes that describe file
+system partition's details
+(4) /sys/fs/nilfs2/<device>/superblock - group contains attributes that describe
+superblock's details
+(5) /sys/fs/nilfs2/<device>/segctor - group contains attributes that describe
+segctor thread activity details
+(6) /sys/fs/nilfs2/<device>/segments - group contains attributes that describe
+details about volume's segments
+(7) /sys/fs/nilfs2/<device>/checkpoints - group contains attributes that describe
+details about volume's checkpoints
+(8) /sys/fs/nilfs2/<device>/mounted_snapshots - group contains group for every
+mounted snapshot
+(9) /sys/fs/nilfs2/<device>/mounted_snapshots/<snapshot> - group contains
+details about mounted snapshot
+
+With the best regards,
 Vyacheslav Dubeyko.
+---
+ Documentation/ABI/testing/sysfs-fs-nilfs2 |  269 +++++++
+ fs/nilfs2/Makefile                        |    2 +-
+ fs/nilfs2/nilfs.h                         |    8 +
+ fs/nilfs2/super.c                         |    9 +-
+ fs/nilfs2/sysfs.c                         | 1137 +++++++++++++++++++++++++++++
+ fs/nilfs2/sysfs.h                         |  176 +++++
+ fs/nilfs2/the_nilfs.c                     |   17 +-
+ fs/nilfs2/the_nilfs.h                     |   20 +-
+ 8 files changed, 1634 insertions(+), 4 deletions(-)
+-- 
+1.7.9.5
 
 
 --
