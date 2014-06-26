@@ -1,60 +1,59 @@
-From: dE <de.techno-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: nilfs_clean_segments: segment construction failed. (err=-2)
-Date: Thu, 26 Jun 2014 10:30:35 +0530
-Message-ID: <53ABA8F3.3010606@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: nilfs_clean_segments: segment construction failed. (err=-2)
+Date: Thu, 26 Jun 2014 09:35:00 +0400
+Message-ID: <A863805F-8398-42B1-9BEA-35D4425E2404@dubeyko.com>
+References: <53ABA8F3.3010606@gmail.com>
+Mime-Version: 1.0 (Apple Message framework v1085)
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:subject
-         :content-type:content-transfer-encoding;
-        bh=dzVNbXCWl9jjzHhUpRl3EptErTjIXDikHUiFziVyQlI=;
-        b=UteAas9LzNYOwvIFLgYNtvu0coBAvImU1XKuqXFHekQ2sgc5x8eKUhqdmd+SpZFAIH
-         Ig4ObnRxuI/JoBCUkDrCnxq/BGNB0yhnQXTtGdgBVsFL9cz0nEF2ZT0U2bPyTlIScXng
-         ZNMZUCa707xyLnlv9ot2QSblxQsMGbfFl6QhGjXmFU5wJA7fPM60USEL+6/TtBUucWMC
-         iF2eUsbbv89OHgPUmqn0R5mJzRSJ1buBa8uLlh2esH0EBQ/Si6q9rABC0HUFcWt+go+1
-         dKASGoqIO1VeGD/XBzVB9oT/KHhwTghi5e1odGtWwJtnXu9yaJOH07r9NPosyabPEQU3
-         8RuA==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=To:References:Message-Id:Content-Transfer-Encoding:Cc:Date:In-Reply-To:From:Content-Type:Mime-Version:Subject; bh=Wxc+Joc4XGYQfeMUP4hogJ3ItfEIi9DAwLhkJ8C/CDo=;
+	b=FtohAxk4RcZSMNfg4QLjtCpJUd5AeeNPcVcUq/PtlRGPYVXddHGuXkCRC+7fMJWfy4wqFNqPLFq7vppdhs0d+HR0rDJegvde+Eh49pSXwJapiuNyS8b4r89reATGydH5;
+In-Reply-To: <53ABA8F3.3010606-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: dE <de.techno-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi!
 
-I'm using nilfs on thumb drives to sync Bitcoin wallets and it's forks.
+On Jun 26, 2014, at 9:00 AM, dE wrote:
 
-Sometimes, when I quit the bitcoin-qt application, this is what happens 
-(in dmesg)
+> Hi!
+> 
+> I'm using nilfs on thumb drives to sync Bitcoin wallets and it's forks.
+> 
+> Sometimes, when I quit the bitcoin-qt application, this is what happens (in dmesg)
+> 
+> [159141.505498] nilfs_btree_propagate: key = 10, level == 0
+> [159141.715622] nilfs_btree_propagate: key = 10, level == 0
+> [159141.716134] NILFS warning (device dm-0): nilfs_clean_segments: segment construction failed. (err=-2)
+> [159146.715145] nilfs_btree_propagate: key = 10, level == 0
+> [159146.715152] NILFS warning (device dm-0): nilfs_clean_segments: segment construction failed. (err=-2)
+> [159151.715018] nilfs_btree_propagate: key = 10, level == 0
+> [159151.715026] NILFS warning (device dm-0): nilfs_clean_segments: segment construction failed. (err=-2)
+> [159156.714892] nilfs_btree_propagate: key = 10, level == 0
+> ...
+> ...
+> ...
+> [160276.691089] nilfs_btree_propagate: key = 10, level == 0
+> [160276.691096] NILFS warning (device dm-0): nilfs_clean_segments: segment construction failed. (err=-2)
+> [160281.690959] nilfs_btree_propagate: key = 10, level == 0
+> [160281.690967] NILFS warning (device dm-0): nilfs_clean_segments: segment construction failed. (err=-2)
+> 
 
-[159141.505498] nilfs_btree_propagate: key = 10, level == 0
-[159141.715622] nilfs_btree_propagate: key = 10, level == 0
-[159141.716134] NILFS warning (device dm-0): nilfs_clean_segments: 
-segment construction failed. (err=-2)
-[159146.715145] nilfs_btree_propagate: key = 10, level == 0
-[159146.715152] NILFS warning (device dm-0): nilfs_clean_segments: 
-segment construction failed. (err=-2)
-[159151.715018] nilfs_btree_propagate: key = 10, level == 0
-[159151.715026] NILFS warning (device dm-0): nilfs_clean_segments: 
-segment construction failed. (err=-2)
-[159156.714892] nilfs_btree_propagate: key = 10, level == 0
-...
-...
-...
-[160276.691089] nilfs_btree_propagate: key = 10, level == 0
-[160276.691096] NILFS warning (device dm-0): nilfs_clean_segments: 
-segment construction failed. (err=-2)
-[160281.690959] nilfs_btree_propagate: key = 10, level == 0
-[160281.690967] NILFS warning (device dm-0): nilfs_clean_segments: 
-segment construction failed. (err=-2)
+What kernel version do you use?
+What garbage collection policy do you use?
+Could you share superblock content (nilfs-tune -l)?
 
-I can still access the thumbdrive and it's contents. In the mean time 
-many processes remain at D state and I have to force restart.
+> I can still access the thumbdrive and it's contents. In the mean time many processes remain at D state and I have to force restart.
+> 
 
-The devices used are perfectly fine. I've 3 of them, 2 of them are used 
-as a single LVM volume and another one uses the whole device as a nilfs 
-FS (no partition table).
+So, could you describe clear way of the issue reproducing on my side?
+
+Thanks,
+Vyacheslav Dubeyko.
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
