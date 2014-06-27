@@ -1,104 +1,79 @@
-From: dE <de.techno-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
 Subject: Re: nilfs_clean_segments: segment construction failed. (err=-2)
-Date: Fri, 27 Jun 2014 10:22:31 +0530
-Message-ID: <53ACF88F.3040000@gmail.com>
-References: <53ABA8F3.3010606@gmail.com>	 <A863805F-8398-42B1-9BEA-35D4425E2404@dubeyko.com>	 <53ABB6F4.5050508@gmail.com> <1403789693.2609.14.camel@slavad-CELSIUS-H720>
+Date: Fri, 27 Jun 2014 10:30:46 +0400
+Message-ID: <1403850646.2588.4.camel@slavad-CELSIUS-H720>
+References: <53ABA8F3.3010606@gmail.com>
+	 <A863805F-8398-42B1-9BEA-35D4425E2404@dubeyko.com>
+	 <53ABB6F4.5050508@gmail.com> <1403789693.2609.14.camel@slavad-CELSIUS-H720>
+	 <53ACF691.5090203@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:subject:references
-         :in-reply-to:content-type:content-transfer-encoding;
-        bh=rQZ0fzgHP+6cJfYCZ26+XWENl5aCt8jNHlDOxFRKrM8=;
-        b=uIHvJ1UBI/aqTR/Nz3NNVAg3VZ4T5oXlQ551uWjeGXlPavGMKtxhQl0tiqdzl+1FzU
-         mFwbgwhF4eVI5mVDj26vNe+HbWRXHCItCikp95icdGckKnuKdlBOQnSAuzvRpxTMXJ9V
-         1U+z3HYf4Ty49r/bzZvHvImFtmJLhTotpDNKtXagWWfQ+yt+x//oo7XPx3suUiI6a9HT
-         7avpPKCeak6hwe66b3ZWybjHFRIA418V0rBXM06VDPzmdlnZznbx99O46b/fcuSn4qyY
-         55WhqpqiSXIk+MyTTDYTw49hjaIJDKWXOxlptDv3amGSTcpJ2eojZzsJS2ZC3x4Awgn1
-         Gu9w==
-In-Reply-To: <1403789693.2609.14.camel@slavad-CELSIUS-H720>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=moGulafLFv5dRnLgEMB36rgw4O7JH838UFVj+9KdUvE=;
+	b=ta1Ih6XlTFkqrkr3LmRXWO8lPIGU2vbbSaZcsRHyLMf4C5573gWHxBz5Ai/7PynJ3GRy7I1pKTDZWbzNc5/uxH85//9CvUo+/9Q57McybmBW5CA6JAt7oUxuXCs1nGbk;
+In-Reply-To: <53ACF691.5090203-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: dE <de.techno-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 06/26/14 19:04, Vyacheslav Dubeyko wrote:
-> On Thu, 2014-06-26 at 11:30 +0530, dE wrote:
->
-> [snip]
->> I'm using 3.14.4. I thought there was only 1 selection policy, so it's
->> set to timestamp.
-> It was added 2 additional GC policies. But code for these policies is
-> available in 3.15 kernel version, as I see.
->
->> nilfs-tune -l /dev/bitcoin/bitcoin
->> nilfs-tune 2.1.6
->> Filesystem volume name:   test
->> Filesystem UUID:          9e1064e0-4ce8-4831-93c0-758b46118884
->> Filesystem magic number:  0x3434
->> Filesystem revision #:    2.0
->> Filesystem features:      (none)
->> Filesystem state:         invalid or mounted
->> Filesystem OS type:       Linux
->> Block size:               1024
-> Such block size can be a environment of the issue reproducing. I've
-> fixed one issue for 1KB block size, namely. What do you have for 4 KB
-> block size? Can you reproduce the issue for 4 KB block size?
->
->> Filesystem created:       Sun Jun 22 15:31:18 2014
-> So, it's freshly created file system. Am I correct? I hoped to see the
-> superblock state for the file system with issue. Or, maybe, you've found
-> the issue soon after file system creation?
->
->> Last mount time:          Thu Jun 26 11:26:50 2014
->> Last write time:          Thu Jun 26 11:27:23 2014
->> Mount count:              5
->> Maximum mount count:      50
->> Reserve blocks uid:       0 (user root)
->> Reserve blocks gid:       0 (group root)
->> First inode:              11
->> Inode size:               128
->> DAT entry size:           32
->> Checkpoint size:          192
->> Segment usage size:       16
->> Number of segments:       11375
->> Device size:              23857201152
->> First data block:         4
->> # of blocks per segment:  2048
->> Reserved segments %:      1
->> Last checkpoint #:        208680
->> Last block address:       13015040
->> Last sequence #:          525413
->> Free blocks count:        3723264
->> Commit interval:          0
->> # of blks to create seg:  0
->> CRC seed:                 0x1b525ab2
->> CRC check sum:            0xcede51d1
->> CRC check data size:      0x00000118
->>
->> I suspect this has to do with the segment size. So I've re-formatted a
->> device with the default segment size. Let's see if I can reproduce it now.
-> So, anyway, I need to understand how to reproduce the issue. As far as I
-> can see, you have the issue on segctor side during segment construction.
-> Frankly speaking, it's really bad situation. It means that you don't
-> save your information into segments. Moreover, it takes place during GC
-> operations. Operation of trying to create segment is repeated till
-> success. So, maybe, finally you have success. Otherwise, if you have
-> sequence of likewise messages ("nilfs_clean_segments: segment
-> construction failed") and you need to force shutdown then, potentially,
-> it means that you have dangerous situation.
->
-> But, it needs to understand your issue more deeply for any final
-> statements.
->
-> With the best regards,
-> Vyacheslav Dubeyko.
->
->
+On Fri, 2014-06-27 at 10:14 +0530, dE wrote:
 
-I can confirm this bug triggers cause of smaller block size. Increasing 
-segment size did not help.
+[snip]
+> 
+> I can confirm that at 4K block size, this issue never existed. It 
+> started happening when I reduced the block size to improve write and 
+> read seek performance when very small amounts of data was being 
+> read/written.
+> 
+> Yes, the FS was made at the specified day, but it was running 
+> continuously since then.
+> 
+> This problem triggers after running the programs for long amounts of 
+> time. Like 1 day+ with GC running the background at low priority (idle 
+> i/o). nilfs_cleanerd.conf --
+> 
+> clean_check_interval    300
+> nsegments_per_clean     1
+> mc_nsegments_per_clean  1
+> cleaning_interval      0
+> mc_cleaning_interval   0
+> protection_period       0
+> min_clean_segments      100%
+> max_clean_segments      100%
+> selection_policy        timestamp       # timestamp in ascend order
+> retry_interval          300
+> use_mmap
+> log_priority            warning
+> 
+> As of the nature of the program which's using files on the FS, it reads 
+> and writes very small amounts of data from random places on a set of 
+> files (which are reasonably large). Then programs themselves are running 
+> at either real time class or normal class.
+> 
+> The bug triggers when I exit the program (which are all of similar nature).
+> 
+> I tried to reproduce this issue by doing random write using the 'seeker' 
+> tool, but it didn't trigger. So it triggers specifically on existing the 
+> program.
+> 
+> You may like to install the Bitcoin qt wallet from your repositories 
+> (maybe it's reproducible with bitcoind client also) and after a day or 2 
+> of running with the above nilfs_cleanerd, try exiting the program. You 
+> may trigger the bug.
+
+Great. Thank you. I'll try to reproduce the issue.
+
+One more question. Do you use this file system as rootfs or not? I
+suppose that it's not rootfs file system, as I remember your previous
+description of the issue.
+
+Thanks,
+Vyacheslav Dubeyko.
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
