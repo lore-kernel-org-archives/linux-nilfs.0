@@ -1,7 +1,7 @@
 From: dE <de.techno-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: nilfs_clean_segments: segment construction failed. (err=-2)
-Date: Fri, 27 Jun 2014 10:14:01 +0530
-Message-ID: <53ACF691.5090203@gmail.com>
+Date: Fri, 27 Jun 2014 10:22:31 +0530
+Message-ID: <53ACF88F.3040000@gmail.com>
 References: <53ABA8F3.3010606@gmail.com>	 <A863805F-8398-42B1-9BEA-35D4425E2404@dubeyko.com>	 <53ABB6F4.5050508@gmail.com> <1403789693.2609.14.camel@slavad-CELSIUS-H720>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -10,13 +10,13 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=message-id:date:from:user-agent:mime-version:to:subject:references
          :in-reply-to:content-type:content-transfer-encoding;
-        bh=Yl9SvBoYOP8z2iEgF5yDwQVSsTZhhpAKL9bV8/zjYWc=;
-        b=j6iyfe00XFDpk3H80EPKC4HZ6lRvQUvT/b6DR7TWoIHWJ9L9890PwZdb8oNzdj+j51
-         9NLAtDSFbA/2QhCQENZ2OQqSgV8ifoLfV+EppmzKY4qOoVenLjg1Q5hgbQ6b7PqnNkzn
-         uD4bAkGpe3z5yn/uJR+EiObZv4fAjzAXoC6wO0dRDWpUM7qYOoVtruTdZGVMape+1g8J
-         4fo83lFmNIIKh8M43wYFvzfCsH4yqtNw11iax/Xdo3RcVJghZl6oUyR9D2Zj1PNb+P1p
-         YdiWFjsqlOsefwLegaq42Rs+0q6cB3+4Pcg3stTlnxMVbRs5SWnzXZMuzgeCxbwG5tsd
-         HBsw==
+        bh=rQZ0fzgHP+6cJfYCZ26+XWENl5aCt8jNHlDOxFRKrM8=;
+        b=uIHvJ1UBI/aqTR/Nz3NNVAg3VZ4T5oXlQ551uWjeGXlPavGMKtxhQl0tiqdzl+1FzU
+         mFwbgwhF4eVI5mVDj26vNe+HbWRXHCItCikp95icdGckKnuKdlBOQnSAuzvRpxTMXJ9V
+         1U+z3HYf4Ty49r/bzZvHvImFtmJLhTotpDNKtXagWWfQ+yt+x//oo7XPx3suUiI6a9HT
+         7avpPKCeak6hwe66b3ZWybjHFRIA418V0rBXM06VDPzmdlnZznbx99O46b/fcuSn4qyY
+         55WhqpqiSXIk+MyTTDYTw49hjaIJDKWXOxlptDv3amGSTcpJ2eojZzsJS2ZC3x4Awgn1
+         Gu9w==
 In-Reply-To: <1403789693.2609.14.camel@slavad-CELSIUS-H720>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -97,46 +97,8 @@ On 06/26/14 19:04, Vyacheslav Dubeyko wrote:
 >
 >
 
-I can confirm that at 4K block size, this issue never existed. It 
-started happening when I reduced the block size to improve write and 
-read seek performance when very small amounts of data was being 
-read/written.
-
-Yes, the FS was made at the specified day, but it was running 
-continuously since then.
-
-This problem triggers after running the programs for long amounts of 
-time. Like 1 day+ with GC running the background at low priority (idle 
-i/o). nilfs_cleanerd.conf --
-
-clean_check_interval    300
-nsegments_per_clean     1
-mc_nsegments_per_clean  1
-cleaning_interval      0
-mc_cleaning_interval   0
-protection_period       0
-min_clean_segments      100%
-max_clean_segments      100%
-selection_policy        timestamp       # timestamp in ascend order
-retry_interval          300
-use_mmap
-log_priority            warning
-
-As of the nature of the program which's using files on the FS, it reads 
-and writes very small amounts of data from random places on a set of 
-files (which are reasonably large). Then programs themselves are running 
-at either real time class or normal class.
-
-The bug triggers when I exit the program (which are all of similar nature).
-
-I tried to reproduce this issue by doing random write using the 'seeker' 
-tool, but it didn't trigger. So it triggers specifically on existing the 
-program.
-
-You may like to install the Bitcoin qt wallet from your repositories 
-(maybe it's reproducible with bitcoind client also) and after a day or 2 
-of running with the above nilfs_cleanerd, try exiting the program. You 
-may trigger the bug.
+I can confirm this bug triggers cause of smaller block size. Increasing 
+segment size did not help.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
