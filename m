@@ -1,104 +1,85 @@
 From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix issue with potential infinite loop in
- nilfs_mdt_get_block()
-Date: Mon, 30 Jun 2014 11:14:20 +0400
-Message-ID: <1404112460.2580.16.camel@slavad-CELSIUS-H720>
-References: <1404049010.4139.17.camel@slavad-CELSIUS-H720>
-	 <20140630.033345.651115405791674896.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH] nilfs2: suggest to use dump_stack() in nilfs_error()
+ and nilfs_warning()
+Date: Mon, 30 Jun 2014 12:24:43 +0400
+Message-ID: <1404116683.2580.32.camel@slavad-CELSIUS-H720>
+References: <1404050621.4139.19.camel@slavad-CELSIUS-H720>
+	 <20140630.040159.120185966358440318.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=baxlurzVugd+phmZweD1v40zDVC665s4M8SA5VQDzoM=;
-	b=f8G6c9YGVL803vsi/HgxheB6qzXJ2MIB3DCf9k4lEocmzjvypuT4VVZx/Yc9tRu8hj6QGZbxUbNHmnrBa+LYilieM1Qr3T6/liorDe0vElPGVjs7S0ScELd9OQahL84V;
-In-Reply-To: <20140630.033345.651115405791674896.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=2XJvgiQul0MDj1+samqy6K/onzJk/xH9Gb/hsuoGPYY=;
+	b=fd59o5LhEUUigtdp9uWqF/pPTLCV2m8gEVfOSik6bbmWJ+jNxc05Ld+PlXl9gAtftVyVAdejR+Z7kNOu4gcRGrCgU+luEmWHDGNK1EPRIBgdRL7LKDdCbisQep1RmvfE;
+In-Reply-To: <20140630.040159.120185966358440318.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 
-On Mon, 2014-06-30 at 03:33 +0900, Ryusuke Konishi wrote:
-> On Sun, 29 Jun 2014 17:36:50 +0400, Vyacheslav Dubeyko wrote:
+On Mon, 2014-06-30 at 04:01 +0900, Ryusuke Konishi wrote:
+> On Sun, 29 Jun 2014 18:03:41 +0400, Vyacheslav Dubeyko wrote:
 > > From: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
-> > Subject: [PATCH] nilfs2: fix issue with potential infinite loop in nilfs_mdt_get_block()
+> > Subject: [PATCH] nilfs2: suggest to use dump_stack() in nilfs_error() and nilfs_warning()
 > > 
-> > Potentially, there are situations when nilfs_mdt_read_block() can
-> > return -ENOENT and nilfs_mdt_create_block() can return -EEXIST.
+> > This patch suggests to use dump_stack() call in nilfs_error() and
+> > nilfs_warning() for more clear understanding of different type of
+> > issues. As a result, end-users can report more informative
+> > descriptions of issues.
+> > 
+> > Signed-off-by: Vyacheslav Dubeyko <Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org>
+> > CC: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+> > CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 > 
-> Did you actually see this situation happened ?
+> NAK.
+> 
+> This patch makes error/warning routine of nilfs so verbose.
+> 
+> dump_stack() should be used for some critical situations or internal
+> inconsisent situtations, or for cases in which the identifying call
+> path of trouble is not easy.
+> 
+> I think it's not used for regular errors or warnings because they are
+> mostly identifiable.
+> 
+> In addition, "errors=panic" mount option is available for nilfs_error
+> to force stack dump.
 > 
 
-Yes, I've caught this issue during testing extended attributes support.
-I think that initial reason of the issue is bug in my code. But, anyway,
-it is possible to encounter such issue in the future because of some
-modification of the code.
+I worry about end-user side. Yes, if developer investigates the issue
+then he has many opportunities for the investigation. But we have very
+frequently end-users' reports with not very informative details. And it
+is not so easy to identify the reason of an issue very frequently. We've
+spent about a year on trying to identify the reason of the issue with
+race condition of competition between segments for dirty blocks. And the
+reason of such situation was impossibility to reproduce the issue easily
+and to understand situation on end-users' side. So, from my point of
+view, it makes sense to show dump_stack() for the case of remount in RO
+mode or any warnings.
 
-> nilfs_mdt_read_block() returns -ENOENT only if nilfs_grab_buffer()
-> didn't find a buffer head on page cache and nilfs_bmap_lookup() hit
-> a hole block.
-> 
-> nilfs_mdt_create_block() returns -EEXIST only if nilfs_grab_buffer()
-> got a buffer head in uptodate state or nilfs_bmap_insert() failed due
-> to an existing block.
-> 
-> So, these usually don't happen at the same time.  What situation
-> do you suppose ?
-> 
+I think that NILFS2 driver contains many places without necessary output
+about errors. For example:
 
-In brief, I have such situation:
+[160281.690959] nilfs_btree_propagate: key = 10, level == 0
+[160281.690967] NILFS warning (device dm-0): nilfs_clean_segments: 
+segment construction failed. (err=-2)
 
-First step - trying to create node.
+Yes, it is possible to understand that we have some error situation on
+segctor side. And somewhere inside of segctor thread took place
+situation with -ENOENT error. But it is really hard to understand the
+place and environment of such situation. I suppose that if we will have
+more detailed error messages output then it will be more easily to
+understand an issue's environment and the reason of it.
 
-/* .... */
+How do you feel about enhancement of output for the case of errors? I
+mean to add messages for such places:
 
-err = nilfs_palloc_prepare_alloc_entry(xafile, req);
-
-/* .... */
-
-err = nilfs_palloc_get_entry_block(xafile, req->pr_entry_nr, 1,
-                                           &req->pr_entry_bh);
-
-/* failure in the code */
-
-nilfs_palloc_abort_alloc_entry(xafile, req);
-
-Second step - trying to create node again.
-
-/* .... */
-
-err = nilfs_palloc_prepare_alloc_entry(xafile, req);
-
-/* .... */
-
-err = nilfs_palloc_get_entry_block(xafile, req->pr_entry_nr, 1,
-                                           &req->pr_entry_bh);
-
-I have infinite loop here, in nilfs_palloc_get_entry_block(). Every next
-trying to create node results in infinite loop even if I restart system.
-So, I suppose that, maybe, there is some issue in
-nilfs_palloc_abort_alloc_entry() on the first step. Or, maybe, I am
-using nilfs_palloc_prepare_alloc_entry() and
-nilfs_palloc_get_entry_block() by means of improper way.
-
-> This function is so primitive to easily change even though the retry
-> loop looks an interim implementation of an early date.  I would
-> understand what is going on and whole impact of the change.
-> 
-> > Such situation results in infinite loop inside nilfs_mdt_get_block()
-> > method. This patch fixes issue with potential infinite loop in
-> > nilfs_mdt_get_block() by means of uncomment limitation of read-create
-> > loop retries.
-> 
-> If this patch is applied, nilfs_mdt_get_block() can return -ENOENT
-> even for the case of create == true.  This is unexpected for caller
-> functions.  I think we should return proper error code which fits to
-> the exceptional situation that causes an infinite repetition (if it
-> actually happens).
-
-Yes, maybe, this patch is improper. But, anyway, we need to have some
-limitation for repetition. And, of course, it needs to remove this
-commented line. So, what your final vision of proper fix for the issue?
+err = some_func();
+if (err) {
+	/* add message output here with details */
+	return err;
+}
 
 Thanks,
 Vyacheslav Dubeyko.
