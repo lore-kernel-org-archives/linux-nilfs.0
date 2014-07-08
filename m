@@ -1,95 +1,38 @@
-From: Vyacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: nilfs_clean_segments: segment construction failed. (err=-2)
-Date: Tue, 08 Jul 2014 12:03:40 +0400
-Message-ID: <1404806620.2656.8.camel@slavad-CELSIUS-H720>
-References: <53ABA8F3.3010606@gmail.com>
-	 <A863805F-8398-42B1-9BEA-35D4425E2404@dubeyko.com>
-	 <53ABB6F4.5050508@gmail.com> <1403789693.2609.14.camel@slavad-CELSIUS-H720>
-	 <53ACF691.5090203@gmail.com> <1403850646.2588.4.camel@slavad-CELSIUS-H720>
-	 <53BB4B8B.4060902@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [ANNOUNCE] nilfs2-kmod for CentOS 7
+Date: Wed, 09 Jul 2014 05:44:00 +0900 (JST)
+Message-ID: <20140709.054400.1530368610889981639.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=dubeyko.com; s=default;
-	h=Mime-Version:Content-Transfer-Encoding:Content-Type:References:In-Reply-To:Date:Cc:To:From:Subject:Message-ID; bh=v0ahGeu3iPuDSrmnZKoeUQgp3CHI6L3k4W/iLIKzluQ=;
-	b=oyWwEXSwNQC61RmEVyaQ7ehp8FGx7WcAWmqGNWQsscgQRdeUURjNzN+PR2y1gCOnjNXrVSZp6b/Rh68gScuvOsvNbEDl3GVI5lfpL48swmW9+1FTLhwB6bfABxkhVXsj;
-In-Reply-To: <53BB4B8B.4060902-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:date:message-id:to:subject:from:mime-version:content-type
+         :content-transfer-encoding;
+        bh=ysh4b1HMpY+KiNnhJjeg/bmNRqGx1TFbehpHBH5L9Do=;
+        b=sEsbMssIUigqR7r1wnCAQu8YjYKCL/joEnsGi5+meoZ/ngy41EpdESdVXBWpUbuPL/
+         dsrf2bXaPCCxeGgV8U8jXr6ZhegGF2Tjff2eV/Ni8pR5kLQ6Hcua5Z6HjVSLfhA3lpm0
+         Ovcd57oVKoO8OFpQZY99dpM7xSObMuQO4DbeW2K69su/q0LJBITp0TvFMn/WQ3VnYBp9
+         ia1SNn+3Nf+mbQ5NMUGs4q27ZAntGbH95Ohn8UTjcj3O2UaKr2BeJ15jJNuqQ2zcX1NL
+         OeABimTma2kOg/DVGmtOhLr9EpZn6d6u6dFOKvYp+N2c744WV16c/Z/5C+KJOpvQlJd9
+         wSzg==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: dE <de.techno-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 2014-07-08 at 07:08 +0530, dE wrote:
+Hi lists,
 
-[snip]
-> 
-> Today I got a new set of errors.
-> 
-> [  127.915603] nilfs_direct_assign: invalid pointer: 0
-> [  127.915609] NILFS error (device sdc): nilfs_bmap_assign: broken bmap 
-> (inode number=202)
-> 
-> [  127.915611] Remounting filesystem read-only
-> [  127.915616] NILFS warning (device sdc): nilfs_clear_dirty_page: 
-> discard page: offset 348119040, ino 3
-> [  127.915620] NILFS warning (device sdc): nilfs_clear_dirty_page: 
-> discard block 5493821, size 1024
+nilfs2 standalone kernel module for CentOS 7.0 is now available.
 
-[snip]
-> [  128.045093] ------------[ cut here ]------------
-> [  128.045105] WARNING: CPU: 1 PID: 7184 at fs/buffer.c:1166 
-> mark_buffer_dirty+0x6c/0x80()
-> [  128.045107] Modules linked in: nilfs2 fglrx(PO) kvm_intel sr_mod 
-> usb_storage cdrom kvm
-> [  128.045118] CPU: 1 PID: 7184 Comm: fuckcoind Tainted: P O 
-> 3.14.8-gentoo #2
-> [  128.045120] Hardware name: Gigabyte Technology Co., Ltd. 
-> H61M-D2H/H61M-D2H, BIOS F5 05/18/2012
-> [  128.045122]  0000000000000009 ffffffff8155c03c 0000000000000000 
-> ffffffff8103e11d
-> [  128.045125]  ffff8802267bcf08 ffff8802242e0c60 ffff8801fa483c60 
-> 00000000000081b0
-> [  128.045128]  ffff8802242e9000 ffffffff8111aefc ffff8801fa483c18 
-> ffffffffa0059231
-> [  128.045131] Call Trace:
-> [  128.045138]  [<ffffffff8155c03c>] ? dump_stack+0x49/0x6a
-> [  128.045143]  [<ffffffff8103e11d>] ? warn_slowpath_common+0x6d/0x90
-> [  128.045147]  [<ffffffff8111aefc>] ? mark_buffer_dirty+0x6c/0x80
-> [  128.045154]  [<ffffffffa0059231>] ? 
-> nilfs_palloc_commit_alloc_entry+0x11/0x60 [nilfs2]
-> [  128.045159]  [<ffffffffa00586b0>] ? 
-> nilfs_ifile_create_inode+0x80/0xf0 [nilfs2]
-> [  128.045164]  [<ffffffff81108556>] ? alloc_inode+0x26/0x90
-> [  128.045169]  [<ffffffffa0041474>] ? nilfs_new_inode+0x64/0x200 [nilfs2]
-> [  128.045175]  [<ffffffffa004fef0>] ? nilfs_near_disk_full+0x10/0x40 
-> [nilfs2]
-> [  128.045180]  [<ffffffffa0046223>] ? nilfs_create+0x43/0xf0 [nilfs2]
-> [  128.045184]  [<ffffffff81105419>] ? d_rehash+0x19/0x30
-> [  128.045187]  [<ffffffff810fdfad>] ? vfs_create+0x5d/0xb0
-> [  128.045190]  [<ffffffff810fe876>] ? do_last.isra.65+0x876/0xfd0
-> [  128.045193]  [<ffffffff810ff082>] ? path_openat+0xb2/0x600
-> [  128.045198]  [<ffffffff810ce903>] ? handle_mm_fault+0x213/0xa10
-> [  128.045202]  [<ffffffff810ffbd5>] ? do_filp_open+0x35/0x80
-> [  128.045206]  [<ffffffff8110b5d7>] ? __alloc_fd+0x97/0x120
-> [  128.045210]  [<ffffffff810f01d4>] ? do_sys_open+0x124/0x210
-> [  128.045215]  [<ffffffff81562a21>] ? tracesys+0xd4/0xd9
-> [  128.045217] ---[ end trace d5a322bab678392e ]---
+Source files of the module is obtainable with "git" command:
 
-I suppose that these error messages are sequence of the initially
-reported issue. Namely, your GC doesn't work because of the issue and
-NILFS2 volume has exhausted yet. As a result, the file system is
-remounted in RO mode. Messages about discarding dirty pages take place
-after remounting in RO mode in the case of trying to flush dirty pages.
+ $ git clone git://github.com/nilfs-dev/nilfs2-kmod-centos7.git
 
-Sorry, unfortunately, I have the crazy month and I can't find
-opportunity for investigation of the issue. I hope that I'll have such
-opportunity soon.
+For details on installation, please see README file in the package.
 
-Thanks,
-Vyacheslav Dubeyko.
-
-
+Regards,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
