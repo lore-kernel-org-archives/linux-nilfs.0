@@ -1,44 +1,62 @@
-From: dE <de.techno-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: nilfs_clean_segments: segment construction failed. (err=-2)
-Date: Mon, 21 Jul 2014 22:24:13 +0530
-Message-ID: <53CD45B5.3000703@gmail.com>
-References: <53ABA8F3.3010606@gmail.com>	 <A863805F-8398-42B1-9BEA-35D4425E2404@dubeyko.com>	 <53ABB6F4.5050508@gmail.com> <1403789693.2609.14.camel@slavad-CELSIUS-H720>	 <53ACF691.5090203@gmail.com> <1403850646.2588.4.camel@slavad-CELSIUS-H720>	 <53BB4B8B.4060902@gmail.com> <1404806620.2656.8.camel@slavad-CELSIUS-H720>	 <53BEB4B3.7000002@gmail.com> <53C8CEFB.2010202@gmail.com> <1405670312.2626.2.camel@slavad-CELSIUS-H720>
+From: David Sterba <dsterba-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 2/4 v3] fiemap: add EXTENT_DATA_COMPRESSED flag
+Date: Thu, 24 Jul 2014 21:22:45 +0200
+Message-ID: <20140724192245.GG1553@suse.cz>
+References: <cover.1386778302.git.dsterba@suse.cz>
+ <4f8d5dc5b51a43efaf16c39398c23a6276e40a30.1386778303.git.dsterba@suse.cz>
+ <20131212232443.GL31386@dastard>
+ <9520AB36-B728-423A-8EA1-FDD22B79AE90@dilger.ca>
+ <B58DEEA8-561A-4173-B9F5-528B73E06C6D@dilger.ca>
+Reply-To: dsterba-AlSwsSmVLrQ@public.gmane.org
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=message-id:date:from:user-agent:mime-version:to:subject:references
-         :in-reply-to:content-type:content-transfer-encoding;
-        bh=GazeyW9F7VhJXbuCO3eA3Ys1acPBdN67Ok0V1NnTLzI=;
-        b=QSRxhJCceEfS2FrCUMRdod66odKY/9vRZAuONhiJPxPkW6CggTHBDXLXWx1nOkfWG9
-         VW+9CU8OazX4lEx3d5PW/uEQUa7UvcugJMulGEJ3nrLBidTwwuwEWCBeH1rjuW0nwGqn
-         i2k5wWG8Ca+CM2rUkFzbKCEQWI8Euc+Mwch2y7tZDEuO7gs0xA6U00GRzHvlR/1paZQe
-         T3N2MzhCa6b9Yf44uQYnybIrCwoYunYAL3v1l9lVOQWfrjllftbeCznlgQcyuHgLBFH6
-         e4KXd8Z3RCnRwGQtp72H4Q5gGsNYTCpSjU3tvAs8l+r5rrZih0RjjbwZk0jmiTOvMLft
-         mwaA==
-In-Reply-To: <1405670312.2626.2.camel@slavad-CELSIUS-H720>
+Content-Disposition: inline
+In-Reply-To: <B58DEEA8-561A-4173-B9F5-528B73E06C6D-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Cc: linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Btrfs Developer List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org
 
-On 07/18/14 13:28, Vyacheslav Dubeyko wrote:
-> On Fri, 2014-07-18 at 13:08 +0530, dE wrote:
->
-> [snip]
->> This bug does not persist with 2048 block size.
-> Thank you for testing. This is the really important detail.
->
-> Thanks,
-> Vyacheslav Dubeyko.
->
->
+On Thu, Jul 17, 2014 at 12:07:57AM -0600, Andreas Dilger wrote:
+> any progress on this patch series?
 
-Today I did hit this bug. But as you might have noticed, it took quiet a 
-lot of time to hit it.
+I'm sorry I got distracted at the end of year and did not finish the
+series.
 
-But after I hit this bugs, the FS was unusable. I had to reformat.
+> I never saw an updated version of this patch series after the last round of
+> reviews, but it would be great to move it forward.  I have filefrag patches
+> in my e2fsprogs tree waiting for an updated version of your patch.
+> 
+> I recall the main changes were:
+> - add FIEMAP_EXTENT_PHYS_LENGTH flag to indicate if fe_phys_length was valid
+
+fe_phys_length will be always valid, so other the flags are set only if it's
+not equal to the logical length.
+
+> - rename fe_length to fe_logi_length and #define fe_length fe_logi_length
+> - always fill in fe_phys_length (= fe_logi_length for uncompressed files)
+>   and set FIEMAP_EXTENT_PHYS_LENGTH whether the extent is compressed or not
+
+This is my understanding and contradicts the first point.
+
+> - add WARN_ONCE() in fiemap_fill_next_extent() as described below
+>
+> I don't know if there was any clear statement about whether there should be
+> separate FIEMAP_EXTENT_PHYS_LENGTH and FIEMAP_EXTENT_DATA_COMPRESSED flags,
+> or if the latter should be implicit?  Probably makes sense to have separate
+> flags.  It should be fine to use:
+>
+> #define FIEMAP_EXTENT_PHYS_LENGTH	0x00000010
+> 
+> since this flag was never used.
+
+I've kept only FIEMAP_EXTENT_DATA_COMPRESSED, I don't see a need for
+FIEMAP_EXTENT_PHYS_LENGTH and this would be yet another flag because the
+FIEMAP_EXTENT_DATA_ENCODED is also implied.
+
+I'll send V4, we can discuss the PHYS_LENGTH flag then.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
