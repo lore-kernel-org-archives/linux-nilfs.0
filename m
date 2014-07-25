@@ -1,135 +1,111 @@
-From: Andreas Dilger <adilger@dilger.ca>
+From: Rohan Puri <rohan.puri15-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH 2/4 v3] fiemap: add EXTENT_DATA_COMPRESSED flag
-Date: Thu, 24 Jul 2014 16:34:35 -0600
-Message-ID: <5B4825C3-F47E-48B7-8DA4-6D79F53B73B1@dilger.ca>
-References: <cover.1386778302.git.dsterba@suse.cz> <4f8d5dc5b51a43efaf16c39398c23a6276e40a30.1386778303.git.dsterba@suse.cz> <20131212232443.GL31386@dastard> <9520AB36-B728-423A-8EA1-FDD22B79AE90@dilger.ca> <B58DEEA8-561A-4173-B9F5-528B73E06C6D@dilger.ca> <20140724192245.GG1553@suse.cz>
-Mime-Version: 1.0 (Mac OS X Mail 7.3 \(1878.6\))
-Content-Type: multipart/signed; boundary="Apple-Mail=_EE49BFE3-FECB-40D9-B2D2-AD63AA8C9172"; protocol="application/pgp-signature"; micalg=pgp-sha1
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20140724192245.GG1553@suse.cz>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Date: Fri, 25 Jul 2014 11:50:58 +0530
+Message-ID: <CALJfu6N-iqBwD-oo7Qyu+Cgo5Qig5_5AuhVq+2aNRB0oXMnR+A@mail.gmail.com>
+References: <cover.1386778302.git.dsterba@suse.cz>
+	<4f8d5dc5b51a43efaf16c39398c23a6276e40a30.1386778303.git.dsterba@suse.cz>
+	<20131212232443.GL31386@dastard>
+	<9520AB36-B728-423A-8EA1-FDD22B79AE90@dilger.ca>
+	<B58DEEA8-561A-4173-B9F5-528B73E06C6D@dilger.ca>
+	<20140724192245.GG1553@suse.cz>
+	<5B4825C3-F47E-48B7-8DA4-6D79F53B73B1@dilger.ca>
+Mime-Version: 1.0
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :cc:content-type;
+        bh=Cue1c+bFUaagfhxb5xBdnMeL/PdvCPsyykz+dvqYw98=;
+        b=ZCqogQR1vpu8LM4Db65rIrs3Y2iyRrbsqwV8xKQd/DOZfnxOFNl3cRnVgSUXAmHELY
+         j1RestdYZG5Hy9NuxyFaF1YzWEzAhFnStAkt39PaJPV7RQziyyOUnpbYMNnK4hLvpzOK
+         RZF2tCJxvr3UAIT+cVe/NqJ45CgTaJ0YdkuumvFFKet9GLEZtitckWJ30PzRHT6KivR+
+         Q9DHQoHwFg7uX00VXOXgF0t3BFW1FPHgvf6C3Wij/INlTty10WiER5Q1KKSsxg5W4xpj
+         AFyo6RL9s4s3GSuYIqqruc+69+/OZNzx3zW4nXQsd3iqaYIxxxCrZob/9LAOiPXwbiBA
+         yCGg==
+In-Reply-To: <5B4825C3-F47E-48B7-8DA4-6D79F53B73B1-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: dsterba@suse.cz
-Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nilfs@vger.kernel.org, xfs@oss.sgi.com, Btrfs Developer List <linux-btrfs@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, ocfs2-devel@oss.oracle.com
-
-
---Apple-Mail=_EE49BFE3-FECB-40D9-B2D2-AD63AA8C9172
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
-
-
-On Jul 24, 2014, at 1:22 PM, David Sterba <dsterba@suse.cz> wrote:
-> On Thu, Jul 17, 2014 at 12:07:57AM -0600, Andreas Dilger wrote:
->> any progress on this patch series?
->=20
-> I'm sorry I got distracted at the end of year and did not finish the
-> series.
->=20
->> I never saw an updated version of this patch series after the last =
-round of
->> reviews, but it would be great to move it forward.  I have filefrag =
-patches
->> in my e2fsprogs tree waiting for an updated version of your patch.
->>=20
->> I recall the main changes were:
->> - add FIEMAP_EXTENT_PHYS_LENGTH flag to indicate if fe_phys_length =
-was valid
->=20
-> fe_phys_length will be always valid, so other the flags are set only =
-if it's
-> not equal to the logical length.
->=20
->> - rename fe_length to fe_logi_length and #define fe_length =
-fe_logi_length
->> - always fill in fe_phys_length (=3D fe_logi_length for uncompressed =
-files)
->>  and set FIEMAP_EXTENT_PHYS_LENGTH whether the extent is compressed =
-or not
->=20
-> This is my understanding and contradicts the first point.
-
-I think Dave Chinner's former point was that having fe_phys_length =
-validity
-depend on FIEMAP_EXTENT_DATA_COMPRESSED is a non-intuitive interface.  =
-It is
-not true that fe_phys_length would always be valid, since that is not =
-the
-case for older kernels that currently always set this field to 0, so =
-they
-need some flag to indicate if fe_phys_length is valid.  Alternately,
-userspace could do:
-
-	if (ext->fe_phys_length =3D=3D 0)
-		ext->fe_phys_length =3D ext->fe_logi_length;
-
-but that pre-supposes that fe_phys_length =3D=3D 0 is never a valid =
-value when
-fe_logi_length is non-zero, and this might introduce errors in some =
-cases.
-I could imagine that some compression methods might not allocate any =
-space
-at all if it was all zeroes, and just store a bit in the blockpointer or
-extent, so having a separate FIEMAP_EXTENT_PHYS_LENGTH is probably safer
-in the long run.  That opens up the question of whether a written zero
-filled space that gets compressed away is different from a hole, but I'd
-prefer to just return whatever the file mapping is than interpret it.
-
-Cheers, Andreas
-
->> - add WARN_ONCE() in fiemap_fill_next_extent() as described below
->>=20
->> I don't know if there was any clear statement about whether there =
-should be
->> separate FIEMAP_EXTENT_PHYS_LENGTH and FIEMAP_EXTENT_DATA_COMPRESSED =
-flags,
->> or if the latter should be implicit?  Probably makes sense to have =
-separate
->> flags.  It should be fine to use:
->>=20
->> #define FIEMAP_EXTENT_PHYS_LENGTH	0x00000010
->>=20
->> since this flag was never used.
->=20
-> I've kept only FIEMAP_EXTENT_DATA_COMPRESSED, I don't see a need for
-> FIEMAP_EXTENT_PHYS_LENGTH and this would be yet another flag because =
-the
-> FIEMAP_EXTENT_DATA_ENCODED is also implied.
->=20
-> I'll send V4, we can discuss the PHYS_LENGTH flag then.
-
-
-Cheers, Andreas
-
-
-
-
-
-
---Apple-Mail=_EE49BFE3-FECB-40D9-B2D2-AD63AA8C9172
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP using GPGMail
+To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Cc: dsterba-AlSwsSmVLrQ@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Btrfs Developer List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org
 
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
+On Fri, Jul 25, 2014 at 4:04 AM, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> wrote:
+>
+> On Jul 24, 2014, at 1:22 PM, David Sterba <dsterba-AlSwsSmVLrQ@public.gmane.org> wrote:
+>> On Thu, Jul 17, 2014 at 12:07:57AM -0600, Andreas Dilger wrote:
+>>> any progress on this patch series?
+>>
+>> I'm sorry I got distracted at the end of year and did not finish the
+>> series.
+>>
+>>> I never saw an updated version of this patch series after the last round of
+>>> reviews, but it would be great to move it forward.  I have filefrag patches
+>>> in my e2fsprogs tree waiting for an updated version of your patch.
+>>>
+>>> I recall the main changes were:
+>>> - add FIEMAP_EXTENT_PHYS_LENGTH flag to indicate if fe_phys_length was valid
+>>
+>> fe_phys_length will be always valid, so other the flags are set only if it's
+>> not equal to the logical length.
+>>
+>>> - rename fe_length to fe_logi_length and #define fe_length fe_logi_length
+>>> - always fill in fe_phys_length (= fe_logi_length for uncompressed files)
+>>>  and set FIEMAP_EXTENT_PHYS_LENGTH whether the extent is compressed or not
+>>
+>> This is my understanding and contradicts the first point.
+>
+> I think Dave Chinner's former point was that having fe_phys_length validity
+> depend on FIEMAP_EXTENT_DATA_COMPRESSED is a non-intuitive interface.  It is
+> not true that fe_phys_length would always be valid, since that is not the
+> case for older kernels that currently always set this field to 0, so they
+> need some flag to indicate if fe_phys_length is valid.  Alternately,
+> userspace could do:
+>
+>         if (ext->fe_phys_length == 0)
+>                 ext->fe_phys_length = ext->fe_logi_length;
+>
+> but that pre-supposes that fe_phys_length == 0 is never a valid value when
+> fe_logi_length is non-zero, and this might introduce errors in some cases.
+> I could imagine that some compression methods might not allocate any space
+> at all if it was all zeroes, and just store a bit in the blockpointer or
+> extent, so having a separate FIEMAP_EXTENT_PHYS_LENGTH is probably safer
+> in the long run.
+zfs is an example of this.
+> That opens up the question of whether a written zero
+> filled space that gets compressed away is different from a hole, but I'd
+> prefer to just return whatever the file mapping is than interpret it.
+>
+> Cheers, Andreas
+>
+>>> - add WARN_ONCE() in fiemap_fill_next_extent() as described below
+>>>
+>>> I don't know if there was any clear statement about whether there should be
+>>> separate FIEMAP_EXTENT_PHYS_LENGTH and FIEMAP_EXTENT_DATA_COMPRESSED flags,
+>>> or if the latter should be implicit?  Probably makes sense to have separate
+>>> flags.  It should be fine to use:
+>>>
+>>> #define FIEMAP_EXTENT_PHYS_LENGTH    0x00000010
+>>>
+>>> since this flag was never used.
+>>
+>> I've kept only FIEMAP_EXTENT_DATA_COMPRESSED, I don't see a need for
+>> FIEMAP_EXTENT_PHYS_LENGTH and this would be yet another flag because the
+>> FIEMAP_EXTENT_DATA_ENCODED is also implied.
+>>
+>> I'll send V4, we can discuss the PHYS_LENGTH flag then.
+>
+>
+> Cheers, Andreas
+>
+>
+>
+>
+>
 
-iQIVAwUBU9GJ+3Kl2rkXzB/gAQL14w/9E/WENH/RddgvYvMI0mPiMkdxzFK++PEH
-dsaix22ddMjmnP7cRHt/Ty5ZfcnydZqFG/FNta9ZOcfTDaUOXGw3C7U7X93MAorx
-s+q6ISAO81cYTLKvxFJDXzYzo/QxB219+oByPSdutEOYvANM1x/2vY5QYPVwjg4g
-dxTAmoChCCbGEn96VZOG0M93kugQn7n4EzMjjK/5niUOiQiT4GCsTCFGyXuieXf+
-PifblnRrNgQVRCzOimY+lXbXgL0+huGFw0okgx1/QCz176s60yFweEktWPuHdrZ1
-8cDp97T5EwLXe9NYH+tyR6aw6yURzx8BSLMMscQWXs12lceuV0c5tBQ9l8RKtlEo
-cLJJwPXHt7BS/CWsLpjyEz3zNTkvX88rmV0kPZIdVeseI3yP7GLLTdJ5TWXeR3Jb
-BS9RQlXXU+1dZET3Lab22uEkUted8qH0sKyACbcwGRitJNx6aDpu5ByV4MyCjKPm
-HnJAmTbADVpJRVTaPmgQbs4MrEgZm9PxAG/JWm7Qi+KythnZVFG1DVocvmE9ZWSK
-FCkyBKEwDR/7KiFy3EBm1v0nwVetoHVOykTLBu6jCW8BU70o5BwAp5gVfGYEj2x8
-9lx6QZWKDSRH2YyVjh2q7s0DrNosPpejxwT5ZxdKNOAUTcw+m4HO5LzD6WYbkU5W
-nvpdaVUDRbc=
-=Z7dA
------END PGP SIGNATURE-----
-
---Apple-Mail=_EE49BFE3-FECB-40D9-B2D2-AD63AA8C9172--
+Regards,
+Rohan
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
