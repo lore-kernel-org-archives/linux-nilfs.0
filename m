@@ -1,47 +1,66 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: Windows and Android drivers for nilfs
-Date: Tue, 19 Aug 2014 10:02:48 +0900 (JST)
-Message-ID: <20140819.100248.792475653630204223.konishi.ryusuke@lab.ntt.co.jp>
-References: <B3F04BFA269AEF4E9CDC92FE83856C4C3A1A0DD7@USA-RWC-MBX-1.wipro.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH] mkfs.nilfs2: fix gcc warning "array subscript is above array bounds"
+Date: Fri, 22 Aug 2014 20:06:42 +0900
+Message-ID: <1408705602-19780-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=Lwknpb8H2pSdffkoH9bdtouK1WXRPvuK6/7pEh03y1Y=;
-        b=mInHTqM8uqTU+2F/tLcomasHT2W1TalplzwP/lNuQqcJyAUT4oSI5hou/kJ2ROPY+i
-         l+07PFJqL9OKC2cp8TwE817QdAI6DNUXJktOjEt4G+1pPQVFFeKI3E9ZHb66QOiKPGBB
-         Y8ykGWDBXsWvsyFdR7MXhyJsBOweT11MeCBcdEvrYic/umk8+yJ62JwJ9QzjVjeu0wj7
-         /4U5sXOR51RHwEu8m5V0YuXfyp+F+agiIV/Y5c1UqQIVrSTi1roq+L+zPFB3/vaZRc2V
-         10/CLfWDuyrp+qF8Q+dDnqEy4sjzhIj/KX/0TQWEI8bwClOdQ0V88PXaf0Q6iyz+/GdQ
-         xJgw==
-In-Reply-To: <B3F04BFA269AEF4E9CDC92FE83856C4C3A1A0DD7-xEVdj5hl1ryABzCG+PzqMoJt+NpFC6AG@public.gmane.org>
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=4F5p6BI25R0vBW1TOKnwklO9f1hKr+UULYoA9EaG9as=;
+        b=Mrn6IG7CpboWxj9VqGgUJsHjxCgRfCrsBNOQN8s/H4nL05CkZnZA1YPuDsU89kvQUB
+         cjgsRCaSeUSHJiJFUAOLnUzbNWBlVTuvY2RU2YorM5bKoFVGjdMXVuilhzUum/A0pD3X
+         ZN2KWftekBvBofMy3e5jZacT15ElyWSb/p7ZrfAeX2nal1WTRrgAOvu7EGFmXXT3StJf
+         SGHL+TlVn8gnAGUP7cD9/ffnlVP2xTqkWCp9Ac95a2AJdhEl+UJ/sQoLyys3rb3Vp7k6
+         LDb/IKACcZrTkOcxzoUUmiFwbfNVmqhFleX/uQITMWsXiPS/xJg6Ui/bNoZ1frGqA+oX
+         u0cw==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: dennis.murata-uxC5H9eHYlcAvxtiuMwx3w@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
-On Tue, 19 Aug 2014 00:09:47 +0000, <dennis.murata-uxC5H9eHYlcAvxtiuMwx3w@public.gmane.org> wrote:
-> Were there any plans to write Windows and Android drivers for
-> nilfs2?  I did not see anything in the FAQ.  Android phones having
-> large sdcards have to use fat{32,vfat} file system which is causing
-> some problems.  It would be interesting if they could be formatted
-> as nilfs or ext4 and still be read on Windows pcs.
-> 
-> Wayne
+Recent gcc compiler (e.g. gcc version 4.9.1) gives a false positive
+warning during the build of mkfs.nilfs2:
 
-There is no windows driver of nilfs2 because the besement of driver is
-completely different.  For Android, it may be possible to apply nilfs2
-since Android uses the Linux kernel.  It seems that some trials
-actually exist according to the result of search, however I don't know
-for details.
+ mkfs.c: In function 'main':
+ mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
+    struct nilfs_segment_info *si = &di->seginfo[i];
+                                               ^
+ mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
+ mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
+ mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
 
-Regards,
-Ryusuke Konishi
+This fixes the issue.
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ sbin/mkfs/mkfs.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+index c7e18c6..f5f7dbb 100644
+--- a/sbin/mkfs/mkfs.c
++++ b/sbin/mkfs/mkfs.c
+@@ -532,12 +532,12 @@ static struct nilfs_segment_info *new_segment(struct nilfs_disk_info *di)
+ 
+ static void fix_disk_layout(struct nilfs_disk_info *di)
+ {
++	struct nilfs_segment_info *si;
+ 	int i, j;
+ 
+ 	di->nblocks_used = 0;
+ 	di->nblocks_to_write = di->first_segment_block;
+-	for (i = 0; i < di->nseginfo; i++) {
+-		struct nilfs_segment_info *si = &di->seginfo[i];
++	for (i = 0, si = di->seginfo; i < di->nseginfo; i++, si++) {
+ 		blocknr_t blocknr = si->start + si->nblk_sum;
+ 
+ 		si->nblocks += si->nblk_sum + 1 /* summary and super root */;
+-- 
+1.7.9.4
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
