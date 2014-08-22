@@ -1,63 +1,88 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] mkfs.nilfs2: fix gcc warning "array subscript is above array bounds"
-Date: Fri, 22 Aug 2014 20:06:42 +0900
-Message-ID: <1408705602-19780-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] nilfs_cleanerd.conf: set min_reclaimable_blocks parameter to 10 percent
+Date: Sat, 23 Aug 2014 08:57:58 +0900
+Message-ID: <1408751878-25236-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:lines;
-        bh=4F5p6BI25R0vBW1TOKnwklO9f1hKr+UULYoA9EaG9as=;
-        b=Mrn6IG7CpboWxj9VqGgUJsHjxCgRfCrsBNOQN8s/H4nL05CkZnZA1YPuDsU89kvQUB
-         cjgsRCaSeUSHJiJFUAOLnUzbNWBlVTuvY2RU2YorM5bKoFVGjdMXVuilhzUum/A0pD3X
-         ZN2KWftekBvBofMy3e5jZacT15ElyWSb/p7ZrfAeX2nal1WTRrgAOvu7EGFmXXT3StJf
-         SGHL+TlVn8gnAGUP7cD9/ffnlVP2xTqkWCp9Ac95a2AJdhEl+UJ/sQoLyys3rb3Vp7k6
-         LDb/IKACcZrTkOcxzoUUmiFwbfNVmqhFleX/uQITMWsXiPS/xJg6Ui/bNoZ1frGqA+oX
-         u0cw==
+        bh=6EMF3nuZ3HVgSNXdZ5TvxVfhsAl3fHFx065Jod6p4K8=;
+        b=TQLUZ532MbU+OqWvVx92HFLIxuK07erz2e2E13xsNlcyC63gjZQyu4+hLI/nC+rFnH
+         ZiOLvr/7Ig9fHEWx4c21cTreBh88P0xitc30sVpviGn2bqOtEueA+ER/FiV1vDWIEA00
+         EWX+pYpFex+rO8N48TD/3qZSS6TnEvru+Ea2Wt1+7uVXgsbaFycbpAFzHP0gJRJwkSGf
+         esqdcJbJ2zDmX5+Gm1TavFNWb4S+i1SPoJX3E6WQWl74Aa6iuqHycEiO2zu6kDOzFDnU
+         aM8MgHnq7RImzmr8o5gvos7AbAXkWQLFabrJKDDqpkDi9qgNT/UW+Pt4lFLEyjlvY6JG
+         aH6w==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Recent gcc compiler (e.g. gcc version 4.9.1) gives a false positive
-warning during the build of mkfs.nilfs2:
+Increase the default value of min_reclaimable_blocks parameter to 10
+percent from the original 5 percent for the following reasons:
 
- mkfs.c: In function 'main':
- mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
-    struct nilfs_segment_info *si = &di->seginfo[i];
-                                               ^
- mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
- mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
- mkfs.c:540:47: warning: array subscript is above array bounds [-Warray-bounds]
+ 1) In real environment, the 10 percent threshold looks better than 5
+    percent to reduce relocation of static data.  The ratio of live
+    blocks in a lump of static data region is typically about 90-99
+    percent according to the result of "lssu -l".
 
-This fixes the issue.
+ 2) When we set min_reclaimable_blocks to 10 percent, 10 percent of
+    disk space (excluding 5 percent reserved capacity) will remain
+    unreclaimed at worst.  But, this is acceptable because the default
+    value of min_clean_segments is 10 percent and
+    mc_min_reclaimable_blocks (1%) is applied while the ratio of free
+    space is below 10 percent.
 
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- sbin/mkfs/mkfs.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ man/nilfs_cleanerd.conf.5         |    2 +-
+ sbin/cleanerd/cldconfig.h         |    2 +-
+ sbin/cleanerd/nilfs_cleanerd.conf |    2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
-index c7e18c6..f5f7dbb 100644
---- a/sbin/mkfs/mkfs.c
-+++ b/sbin/mkfs/mkfs.c
-@@ -532,12 +532,12 @@ static struct nilfs_segment_info *new_segment(struct nilfs_disk_info *di)
+diff --git a/man/nilfs_cleanerd.conf.5 b/man/nilfs_cleanerd.conf.5
+index e85fa19..f0366e4 100644
+--- a/man/nilfs_cleanerd.conf.5
++++ b/man/nilfs_cleanerd.conf.5
+@@ -99,7 +99,7 @@ kB 1000, K 1024, MB 1000*1000, M 1024*1024, GB 1000*1000*1000, G
+ a percent sign, it represents the ratio of blocks in a segment.
+ .PP
+ The default values of \fBmin_reclaimable_blocks\fP and
+-\fBmc_min_reclaimable_blocks\fP are 5 percent and 1 percent respectively.
++\fBmc_min_reclaimable_blocks\fP are 10 percent and 1 percent respectively.
+ .TP
+ .B log_priority
+ Gives the verbosity level that is used when logging messages from
+diff --git a/sbin/cleanerd/cldconfig.h b/sbin/cleanerd/cldconfig.h
+index 0a598d5..2a0af5f 100644
+--- a/sbin/cleanerd/cldconfig.h
++++ b/sbin/cleanerd/cldconfig.h
+@@ -128,7 +128,7 @@ struct nilfs_cldconfig {
+ #define NILFS_CLDCONFIG_USE_MMAP			1
+ #define NILFS_CLDCONFIG_USE_SET_SUINFO			0
+ #define NILFS_CLDCONFIG_LOG_PRIORITY			LOG_INFO
+-#define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS		5
++#define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS		10
+ #define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS_UNIT	NILFS_SIZE_UNIT_PERCENT
+ #define NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS	1
+ #define NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS_UNIT	NILFS_SIZE_UNIT_PERCENT
+diff --git a/sbin/cleanerd/nilfs_cleanerd.conf b/sbin/cleanerd/nilfs_cleanerd.conf
+index 05cd9d4..569cb09 100644
+--- a/sbin/cleanerd/nilfs_cleanerd.conf
++++ b/sbin/cleanerd/nilfs_cleanerd.conf
+@@ -53,7 +53,7 @@ retry_interval		60
  
- static void fix_disk_layout(struct nilfs_disk_info *di)
- {
-+	struct nilfs_segment_info *si;
- 	int i, j;
+ # Specify the minimum number of reclaimable blocks in a segment
+ # before it can be cleaned.
+-min_reclaimable_blocks	5%
++min_reclaimable_blocks	10%
  
- 	di->nblocks_used = 0;
- 	di->nblocks_to_write = di->first_segment_block;
--	for (i = 0; i < di->nseginfo; i++) {
--		struct nilfs_segment_info *si = &di->seginfo[i];
-+	for (i = 0, si = di->seginfo; i < di->nseginfo; i++, si++) {
- 		blocknr_t blocknr = si->start + si->nblk_sum;
- 
- 		si->nblocks += si->nblk_sum + 1 /* summary and super root */;
+ # Specify the minimum number of reclaimable blocks in a segment
+ # before it can be cleaned.
 -- 
 1.7.9.4
 
