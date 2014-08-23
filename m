@@ -1,88 +1,135 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs_cleanerd.conf: set min_reclaimable_blocks parameter to 10 percent
-Date: Sat, 23 Aug 2014 08:57:58 +0900
-Message-ID: <1408751878-25236-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH] bin/*: improve error message on failure of nilfs_open()
+Date: Sat, 23 Aug 2014 11:51:22 +0900
+Message-ID: <1408762282-27273-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:lines;
-        bh=6EMF3nuZ3HVgSNXdZ5TvxVfhsAl3fHFx065Jod6p4K8=;
-        b=TQLUZ532MbU+OqWvVx92HFLIxuK07erz2e2E13xsNlcyC63gjZQyu4+hLI/nC+rFnH
-         ZiOLvr/7Ig9fHEWx4c21cTreBh88P0xitc30sVpviGn2bqOtEueA+ER/FiV1vDWIEA00
-         EWX+pYpFex+rO8N48TD/3qZSS6TnEvru+Ea2Wt1+7uVXgsbaFycbpAFzHP0gJRJwkSGf
-         esqdcJbJ2zDmX5+Gm1TavFNWb4S+i1SPoJX3E6WQWl74Aa6iuqHycEiO2zu6kDOzFDnU
-         aM8MgHnq7RImzmr8o5gvos7AbAXkWQLFabrJKDDqpkDi9qgNT/UW+Pt4lFLEyjlvY6JG
-         aH6w==
+        bh=99QVT3uato/0xHsvr8A9d9U4dJAAsF4N/Fh/CzKZKAg=;
+        b=g/gYQcG4aIbXOK/sV3C3GND7Lep09i6AwjVi+rSxMdZ01GVz5jdcLkvXAEoa1t3aNb
+         y3Q0dHp7JD0sUQGyzO9Ge20t6+xkuhLZN1/lJ2Tm0zsM9GyeHRzwRkh1vE58D5yjKwmi
+         ENwMG9bJIJ/ltB2yhk7UlutvMfU88H9H8MJITU0xy48WXJkVzt1UEvu4/x/CKAPpSrJM
+         O6DN/l/FckLHlfBEujL2N+PQ36AOURpnoEIaQl2spXLlid7ikSP2yCcQepXE1Zd0HMp6
+         y+jx6H32ADS7Ksf/TNMRsh6i3NzDEONRMUyOYBfLCN7DL3uqO5M9AZjw5WVHNUtHqdtt
+         gyhQ==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Increase the default value of min_reclaimable_blocks parameter to 10
-percent from the original 5 percent for the following reasons:
+The error message on failure of nilfs_open() function has two issues
+in commands lscp, lssu, mkcp, chcp, rmcp, and dumpseg:
 
- 1) In real environment, the 10 percent threshold looks better than 5
-    percent to reduce relocation of static data.  The ratio of live
-    blocks in a lump of static data region is typically about 90-99
-    percent according to the result of "lssu -l".
+ 1) When device name is omitted, a null pointer is passed to a string
+    type field of the error message and a broken message is printed as
+    below:
 
- 2) When we set min_reclaimable_blocks to 10 percent, 10 percent of
-    disk space (excluding 5 percent reserved capacity) will remain
-    unreclaimed at worst.  But, this is acceptable because the default
-    value of min_clean_segments is 10 percent and
-    mc_min_reclaimable_blocks (1%) is applied while the ratio of free
-    space is below 10 percent.
+      lssu: (null): cannot open NILFS
 
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+ 2) Description of errno is not shown in the error message.
+
+This fixes these issues.
+
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- man/nilfs_cleanerd.conf.5         |    2 +-
- sbin/cleanerd/cldconfig.h         |    2 +-
- sbin/cleanerd/nilfs_cleanerd.conf |    2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ bin/chcp.c    |    3 ++-
+ bin/dumpseg.c |    3 ++-
+ bin/lscp.c    |    4 ++--
+ bin/lssu.c    |    4 ++--
+ bin/mkcp.c    |    3 ++-
+ bin/rmcp.c    |    3 ++-
+ 6 files changed, 12 insertions(+), 8 deletions(-)
 
-diff --git a/man/nilfs_cleanerd.conf.5 b/man/nilfs_cleanerd.conf.5
-index e85fa19..f0366e4 100644
---- a/man/nilfs_cleanerd.conf.5
-+++ b/man/nilfs_cleanerd.conf.5
-@@ -99,7 +99,7 @@ kB 1000, K 1024, MB 1000*1000, M 1024*1024, GB 1000*1000*1000, G
- a percent sign, it represents the ratio of blocks in a segment.
- .PP
- The default values of \fBmin_reclaimable_blocks\fP and
--\fBmc_min_reclaimable_blocks\fP are 5 percent and 1 percent respectively.
-+\fBmc_min_reclaimable_blocks\fP are 10 percent and 1 percent respectively.
- .TP
- .B log_priority
- Gives the verbosity level that is used when logging messages from
-diff --git a/sbin/cleanerd/cldconfig.h b/sbin/cleanerd/cldconfig.h
-index 0a598d5..2a0af5f 100644
---- a/sbin/cleanerd/cldconfig.h
-+++ b/sbin/cleanerd/cldconfig.h
-@@ -128,7 +128,7 @@ struct nilfs_cldconfig {
- #define NILFS_CLDCONFIG_USE_MMAP			1
- #define NILFS_CLDCONFIG_USE_SET_SUINFO			0
- #define NILFS_CLDCONFIG_LOG_PRIORITY			LOG_INFO
--#define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS		5
-+#define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS		10
- #define NILFS_CLDCONFIG_MIN_RECLAIMABLE_BLOCKS_UNIT	NILFS_SIZE_UNIT_PERCENT
- #define NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS	1
- #define NILFS_CLDCONFIG_MC_MIN_RECLAIMABLE_BLOCKS_UNIT	NILFS_SIZE_UNIT_PERCENT
-diff --git a/sbin/cleanerd/nilfs_cleanerd.conf b/sbin/cleanerd/nilfs_cleanerd.conf
-index 05cd9d4..569cb09 100644
---- a/sbin/cleanerd/nilfs_cleanerd.conf
-+++ b/sbin/cleanerd/nilfs_cleanerd.conf
-@@ -53,7 +53,7 @@ retry_interval		60
+diff --git a/bin/chcp.c b/bin/chcp.c
+index 837cf01..8596a14 100644
+--- a/bin/chcp.c
++++ b/bin/chcp.c
+@@ -139,7 +139,8 @@ int main(int argc, char *argv[])
  
- # Specify the minimum number of reclaimable blocks in a segment
- # before it can be cleaned.
--min_reclaimable_blocks	5%
-+min_reclaimable_blocks	10%
+ 	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RDWR | NILFS_OPEN_GCLK);
+ 	if (nilfs == NULL) {
+-		fprintf(stderr, "%s: %s: cannot open NILFS\n", progname, dev);
++		fprintf(stderr, "%s: cannot open NILFS on %s: %m\n",
++			progname, dev ? : "device");
+ 		exit(1);
+ 	}
  
- # Specify the minimum number of reclaimable blocks in a segment
- # before it can be cleaned.
+diff --git a/bin/dumpseg.c b/bin/dumpseg.c
+index 24a3624..0c138b2 100644
+--- a/bin/dumpseg.c
++++ b/bin/dumpseg.c
+@@ -218,7 +218,8 @@ int main(int argc, char *argv[])
+ 
+ 	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RAW);
+ 	if (nilfs == NULL) {
+-		fprintf(stderr, "%s: %s: cannot open NILFS\n", progname, dev);
++		fprintf(stderr, "%s: cannot open NILFS on %s: %m\n",
++			progname, dev ? : "device");
+ 		exit(1);
+ 	}
+ 
+diff --git a/bin/lscp.c b/bin/lscp.c
+index 52447e5..2de81b6 100644
+--- a/bin/lscp.c
++++ b/bin/lscp.c
+@@ -401,8 +401,8 @@ int main(int argc, char *argv[])
+ 
+ 	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RDONLY);
+ 	if (nilfs == NULL) {
+-		fprintf(stderr, "%s: %s: cannot open NILFS\n",
+-			progname, dev);
++		fprintf(stderr, "%s: cannot open NILFS on %s: %m\n",
++			progname, dev ? : "device");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+diff --git a/bin/lssu.c b/bin/lssu.c
+index ebbd926..09ed973 100644
+--- a/bin/lssu.c
++++ b/bin/lssu.c
+@@ -382,8 +382,8 @@ int main(int argc, char *argv[])
+ 
+ 	nilfs = nilfs_open(dev, NULL, open_flags);
+ 	if (nilfs == NULL) {
+-		fprintf(stderr, "%s: %s: cannot open NILFS\n",
+-			progname, dev);
++		fprintf(stderr, "%s: cannot open NILFS on %s: %m\n",
++			progname, dev ? : "device");
+ 		exit(1);
+ 	}
+ 
+diff --git a/bin/mkcp.c b/bin/mkcp.c
+index 57cf0c8..9dd6f0e 100644
+--- a/bin/mkcp.c
++++ b/bin/mkcp.c
+@@ -123,7 +123,8 @@ int main(int argc, char *argv[])
+ 
+ 	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RDWR | NILFS_OPEN_GCLK);
+ 	if (nilfs == NULL) {
+-		fprintf(stderr, "%s: %s: cannot open NILFS\n", progname, dev);
++		fprintf(stderr, "%s: cannot open NILFS on %s: %m\n",
++			progname, dev ? : "device");
+ 		exit(1);
+ 	}
+ 
+diff --git a/bin/rmcp.c b/bin/rmcp.c
+index 92d672f..0943fe0 100644
+--- a/bin/rmcp.c
++++ b/bin/rmcp.c
+@@ -193,7 +193,8 @@ int main(int argc, char *argv[])
+ 
+ 	nilfs = nilfs_open(dev, NULL, NILFS_OPEN_RDWR);
+ 	if (nilfs == NULL) {
+-		fprintf(stderr, "%s: %s: cannot open NILFS\n", progname, dev);
++		fprintf(stderr, "%s: cannot open NILFS on %s: %m\n",
++			progname, dev ? : "device");
+ 		exit(1);
+ 	}
+ 
 -- 
 1.7.9.4
 
