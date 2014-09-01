@@ -1,78 +1,55 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH v2 1/1] nilfs2: add missing blkdev_issue_flush() to nilfs_sync_fs()
-Date: Mon, 01 Sep 2014 21:18:30 +0200
-Message-ID: <5404C686.4070800@gmx.net>
-References: <1409500033-30791-1-git-send-email-andreas.rohner@gmx.net>	<1409500033-30791-2-git-send-email-andreas.rohner@gmx.net> <20140902.025939.1812841141168890644.konishi.ryusuke@lab.ntt.co.jp> <5404BE5C.9080302@gmx.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+Subject: [PATCH] libmount: don't base GC startup on no-mtab context
+Date: Mon,  1 Sep 2014 14:45:14 -0500
+Message-ID: <1409600714-25174-1-git-send-email-dan@archlinux.org>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5404BE5C.9080302-hi6Y0CQ0nG0@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:from:to:subject:date:message-id;
+        bh=z2x2VoajMLiRm8xeOzvhrWmHyH+Z1uEcw2XghHh11tI=;
+        b=p0jZnM3TuooVei/ZPjeKbkMzoXKB5SwiL+Mepz//WzXE7eKlk/y+VgDMwBIKm6VY9v
+         jcasdBtu3g7rE91YuWGHbcznrUYl01/5j5hc1ze3vykRpc1MzQFjIk94mtXpHjuZ979l
+         mMpb8ruNgwg7QDLtt2mzwsA9L5qc4ZSlPD85hzZ5o4p4MynsU2mkaRF8553mtQVfsbAx
+         JW9/JTRM9cy8xm61iuU2oOE8Na1bHMAg5Mn0bdMUI0qSGGRpeJwnv7+Vo5xX/zjbruSg
+         HS6qC83zmqQfOXoZeDF1Dz4fOgTFu7o/HdnQHxO5l/GVlpbmBfGMH4Dy8W3hI0PCc5zd
+         sFuQ==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2014-09-01 20:43, Andreas Rohner wrote:
-> Hi Ryusuke,
-> On 2014-09-01 19:59, Ryusuke Konishi wrote:
->> On Sun, 31 Aug 2014 17:47:13 +0200, Andreas Rohner wrote:
->>> Under normal circumstances nilfs_sync_fs() writes out the super block,
->>> which causes a flush of the underlying block device. But this depends on
->>> the THE_NILFS_SB_DIRTY flag, which is only set if the pointer to the
->>> last segment crosses a segment boundary. So if only a small amount of
->>> data is written before the call to nilfs_sync_fs(), no flush of the
->>> block device occurs.
->>>
->>> In the above case an additional call to blkdev_issue_flush() is needed.
->>> To prevent unnecessary overhead, the new flag THE_NILFS_FLUSHED is
->>> introduced, which is cleared whenever new logs are written and set
->>> whenever the block device is flushed.
->>>
->>> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
->>
->> The patch looks good to me except that I feel the use of atomic
->> test-and-set bitwise operations something unfavorable (though it's
->> logically correct).  I will try to send this to upstream as is unless
->> a comment comes to mind.
-> 
-> I originally thought, that it is necessary to do it atomically to avoid
-> a race condition, but I am not so sure about that any more. I think the
-> only case we have to avoid is, to call set_nilfs_flushed() after
-> blkdev_issue_flush(), because this could race with the
-> clear_nilfs_flushed() from the segment construction. So this should also
-> work:
-> 
->  +	if (wait && !err && nilfs_test_opt(nilfs, BARRIER) &&
->  +	    !nilfs_flushed(nilfs)) {
->  +              set_nilfs_flushed(nilfs);
->  +		err = blkdev_issue_flush(sb->s_bdev, GFP_KERNEL, NULL);
->  +		if (err != -EIO)
->  +			err = 0;
->  +	}
->  +
+When mtab is a symlink to /proc/mounts, libmount uses /run/mount/utab to
+store filesystem-specific mount attributes, making this check
+unnecessary. Worse, it now breaks nilfs_cleanerd under systemd 216+
+since it always passes `-n` to the mount command.
 
-On the other hand, it says in the comments to set_bit(), that it can be
-reordered on architectures other than x86. test_and_set_bit() implies a
-memory barrier on all architectures. But I don't think the processor
-would reorder set_nilfs_flushed() after the external function call to
-blkdev_issue_flush(), would it?
+Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+---
+ sbin/mount/mount_libmount.c | 6 ------
+ 1 file changed, 6 deletions(-)
 
-/**
- * set_bit - Atomically set a bit in memory
- * @nr: the bit to set
- * @addr: the address to start counting from
- *
- * This function is atomic and may not be reordered.  See __set_bit()
- * if you do not require the atomic guarantees.
- *
- * Note: there are no guarantees that this function will not be reordered
- * on non x86 architectures, so if you are writing portable code,
- * make sure not to rely on its reordering guarantees.
- */
+diff --git a/sbin/mount/mount_libmount.c b/sbin/mount/mount_libmount.c
+index c518475..b901654 100644
+--- a/sbin/mount/mount_libmount.c
++++ b/sbin/mount/mount_libmount.c
+@@ -404,12 +404,6 @@ static int nilfs_update_mount_state(struct nilfs_mount_info *mi)
+ 	rungc = gc_ok && !mi->new_attrs.nogc;
+ 	old_attrs = (mi->mflags & MS_REMOUNT) ? &mi->old_attrs : NULL;
+ 
+-	if (mnt_context_is_nomtab(cxt)) {
+-		if (rungc)
+-			printf(_("%s not started\n"), NILFS_CLEANERD_NAME);
+-		return 0;
+-	}
+-
+ 	if (rungc) {
+ 		if (mi->new_attrs.pp == ULONG_MAX)
+ 			mi->new_attrs.pp = mi->old_attrs.pp;
+-- 
+2.1.0
 
-br,
-Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
