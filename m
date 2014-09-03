@@ -1,8 +1,11 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] lscp: always show snapshots, even if marked minor
-Date: Wed, 03 Sep 2014 02:30:57 +0900 (JST)
-Message-ID: <20140903.023057.865227985663964185.konishi.ryusuke@lab.ntt.co.jp>
-References: <1409600926-25385-1-git-send-email-dan@archlinux.org>
+Subject: Re: [PATCH v2 1/1] nilfs2: add missing blkdev_issue_flush() to
+ nilfs_sync_fs()
+Date: Wed, 03 Sep 2014 09:35:25 +0900 (JST)
+Message-ID: <20140903.093525.810247375407684014.konishi.ryusuke@lab.ntt.co.jp>
+References: <20140902.025939.1812841141168890644.konishi.ryusuke@lab.ntt.co.jp>
+	<5404BE5C.9080302@gmx.net>
+	<5404C686.4070800@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -10,68 +13,103 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=2A3MVJQrjrZzGYx7vLDj4KtbcFGooVSNCoo9gTlauO8=;
-        b=kCzXu0mFDbrgbYmf/UkpnXTuDEdfu5tw1g4srmuAuDQcBJRof53wUTRSQxkvIY49AD
-         jr6LZ7SBFH9TDHodaXtJw/lXRubJ9aGhy0rjoIoI7ctPrzcf9UXLP1r4OTPpnpDccZJP
-         4b5zV+VPkWAEPopPPBa/htho1bXIe05vkxG1XWPAeNDV5BCKo7SFnllWz3pZX5PYZn/w
-         TzaspQpuEgR0AFDMHYSuqXRA+5wiARthFPt0YKGI7SWUGqGt1Af34KhwcjWVHX5ULvoQ
-         lYsJUpyZkQTMjTTxxkxzuIgS1Bavahzp3m9PhZG7lO6ggwiJt6VtG5Y+4VSWucpaNT0h
-         FQUQ==
-In-Reply-To: <1409600926-25385-1-git-send-email-dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+        bh=fv0OM5gmC1kQ5+CUzYB6Wfne/nmrBSmatSIL+2EHuaU=;
+        b=ix1GJSnsLkEP71+69YReoTh8lvE0K3xeSfncFC7TEBFCKRzep+xAuqo8SsW7y8LpQI
+         tg0KD5aNEG1eQP8JYzzJHHvA6B1en56ArLHbP0HZ8vtvEe7a8Hlk8nZ5phpGT/Kqb23X
+         BDRT5oZeABSsW/z9QmbWbkoSJfZqsltU9L59JhGqMHLch6EK2SKZ9tbc4Oi6AJD6IQEb
+         8cWw7yGJWdgji/QcXAN6wb7hlIYBFIIZ6Q+MeM7vkDf0uMkRlgBjR99pbhEBxxz3p1/j
+         B4ylJTI1PgZY6pfTcTUBBKjEhTgyYLTSlpUjD+ub72DGpz2b490N5NVq0J+/4yCS3E0P
+         UX3Q==
+In-Reply-To: <5404C686.4070800-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
+To: andreas.rohner-hi6Y0CQ0nG0@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon,  1 Sep 2014 14:48:46 -0500, Dan McGee wrote:
-> When the average user types `lscp` and doesn't see the snapshot they
-> just tried to make, it can be very confusing. Add an additional check
-> to ensure snapshots are never omitted from lscp output.
+On Mon, 01 Sep 2014 21:18:30 +0200, Andreas Rohner wrote:
+> On 2014-09-01 20:43, Andreas Rohner wrote:
+>> Hi Ryusuke,
+>> On 2014-09-01 19:59, Ryusuke Konishi wrote:
+>>> On Sun, 31 Aug 2014 17:47:13 +0200, Andreas Rohner wrote:
+>>>> Under normal circumstances nilfs_sync_fs() writes out the super block,
+>>>> which causes a flush of the underlying block device. But this depends on
+>>>> the THE_NILFS_SB_DIRTY flag, which is only set if the pointer to the
+>>>> last segment crosses a segment boundary. So if only a small amount of
+>>>> data is written before the call to nilfs_sync_fs(), no flush of the
+>>>> block device occurs.
+>>>>
+>>>> In the above case an additional call to blkdev_issue_flush() is needed.
+>>>> To prevent unnecessary overhead, the new flag THE_NILFS_FLUSHED is
+>>>> introduced, which is cleared whenever new logs are written and set
+>>>> whenever the block device is flushed.
+>>>>
+>>>> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+>>>
+>>> The patch looks good to me except that I feel the use of atomic
+>>> test-and-set bitwise operations something unfavorable (though it's
+>>> logically correct).  I will try to send this to upstream as is unless
+>>> a comment comes to mind.
+>> 
+>> I originally thought, that it is necessary to do it atomically to avoid
+>> a race condition, but I am not so sure about that any more. I think the
+>> only case we have to avoid is, to call set_nilfs_flushed() after
+>> blkdev_issue_flush(), because this could race with the
+>> clear_nilfs_flushed() from the segment construction. So this should also
+>> work:
+>> 
+>>  +	if (wait && !err && nilfs_test_opt(nilfs, BARRIER) &&
+>>  +	    !nilfs_flushed(nilfs)) {
+>>  +              set_nilfs_flushed(nilfs);
+>>  +		err = blkdev_issue_flush(sb->s_bdev, GFP_KERNEL, NULL);
+>>  +		if (err != -EIO)
+>>  +			err = 0;
+>>  +	}
+>>  +
 > 
-> Signed-off-by: Dan McGee <dan-fd97jBR+K/6hPH1hqNUYSQ@public.gmane.org>
-> ---
-> 
-> Thoughts? I notice this quite often due to a "snapshot-on-shutdown" job I have
-> running on my machine, and it is very odd to not see this snapshot listed next
-> time I boot up and run `lscp -r | less`.
-> 
->  bin/lscp.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/bin/lscp.c b/bin/lscp.c
-> index 2de81b6..6803657 100644
-> --- a/bin/lscp.c
-> +++ b/bin/lscp.c
-> @@ -159,7 +159,7 @@ static int lscp_forward_cpinfo(struct nilfs *nilfs,
->  			break;
->  
->  		for (cpi = cpinfos; cpi < cpinfos + n; cpi++) {
-> -			if (show_all || !nilfs_cpinfo_minor(cpi)) {
-> +			if (show_all || nilfs_cpinfo_snapshot(cpi) || !nilfs_cpinfo_minor(cpi)) {
->  				lscp_print_cpinfo(cpi);
->  				rest--;
->  			}
+> On the other hand, it says in the comments to set_bit(), that it can be
+> reordered on architectures other than x86. test_and_set_bit() implies a
+> memory barrier on all architectures. But I don't think the processor
+> would reorder set_nilfs_flushed() after the external function call to
+> blkdev_issue_flush(), would it?
 
-"lscp -r" still doesn't show snapshots on minor checkpoints.
-The same change looks to be needed for lscp_backward_cpinfo().
+I believe compiler doesn't reorder set_bit() operation after an
+external function call unless it knows the content of the function and
+the function can be optimized.  But, yes, set_bit() doesn't imply
+memory barrier unlike test_and_set_bit().  As for
+blkdev_issue_flush(), it would imply memory barrier by some lock
+functions or other primitive used inside it.  (I haven't actually
+confirmed that the premise is true)
 
-Also, this patch suffered a checkpatch warning:
+On the other hand, we need explicit barrier operation like
+smp_mb__after_atomic() if a certain operation is performed after
+set_bit() and the changed bit should be visible to other processors
+before the operation.
 
- $ scripts/checkpatch.pl ~/lscp-always-show-snapshots-even-if-marked-minor.patch
- WARNING: line over 80 characters
- #75: FILE: bin/lscp.c:162:
- +		if (show_all || nilfs_cpinfo_snapshot(cpi) || !nilfs_cpinfo_minor(cpi)) {
- 
- total: 0 errors, 1 warnings, 8 lines checked
-
-Please insert line feeds as follows:
-
-		if (show_all || nilfs_cpinfo_snapshot(cpi) ||
-		    !nilfs_cpinfo_minor(cpi)) {
-
-Thanks,
+Regards,
 Ryusuke Konishi
+
+
+> 
+> /**
+>  * set_bit - Atomically set a bit in memory
+>  * @nr: the bit to set
+>  * @addr: the address to start counting from
+>  *
+>  * This function is atomic and may not be reordered.  See __set_bit()
+>  * if you do not require the atomic guarantees.
+>  *
+>  * Note: there are no guarantees that this function will not be reordered
+>  * on non x86 architectures, so if you are writing portable code,
+>  * make sure not to rely on its reordering guarantees.
+>  */
+> 
+> br,
+> Andreas Rohner
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
