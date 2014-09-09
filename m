@@ -1,8 +1,10 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 0/1] nilfs2: add missing blkdev_issue_flush() to nilfs_sync_fs()
-Date: Tue,  9 Sep 2014 18:35:39 +0200
-Message-ID: <1410280540-14916-1-git-send-email-andreas.rohner@gmx.net>
+Subject: [PATCH 1/1] nilfs2: add missing blkdev_issue_flush() to nilfs_sync_fs()
+Date: Tue,  9 Sep 2014 18:35:40 +0200
+Message-ID: <1410280540-14916-2-git-send-email-andreas.rohner@gmx.net>
+References: <1410280540-14916-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1410280540-14916-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,43 +13,20 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Hi,
+Under normal circumstances nilfs_sync_fs() writes out the super block,
+which causes a flush of the underlying block device. But this depends on
+the THE_NILFS_SB_DIRTY flag, which is only set if the pointer to the
+last segment crosses a segment boundary. So if only a small amount of
+data is written before the call to nilfs_sync_fs(), no flush of the
+block device occurs.
 
-I have looked a bit more into the semantics of the various flags
-concerning block device caching behaviour. According to
-"Documentation/block/writeback_cache_control.txt" a call to
-blkdev_issue_flush() is equivalent to an empty bio with the
-REQ_FLUSH flag set. So there is no need to call blkdev_issue_flush()
-after a call to nilfs_commit_super(). But if there is no need to write
-the super block an additional call to blkdev_issue_flush() is necessary.
+In the above case an additional call to blkdev_issue_flush() is needed.
+To prevent unnecessary overhead, the new flag nilfs->ns_flushed_device
+is introduced, which is cleared whenever new logs are written and set
+whenever the block device is flushed.
 
-To avoid an overhead I introduced the nilfs->ns_flushed_device flag, 
-which is set to 0  whenever new logs are written and set to 1 whenever 
-the block device is flushed. If the super block was written during 
-segment construction or in nilfs_sync_fs(), then blkdev_issue_flush() is not 
-called.
-
-On most modern architectures loads and stores of single word integers 
-are atomic. I still used atomic_t for ns_flushed_device for 
-documentation purposes. I only use atomic_read() and atomic_set(). Both 
-are inline functions, which compile down to simple loads and stores on 
-modern architectures, so there is no performance benefit in using a 
-simple int instead.
-
-br,
-Andreas Rohner
-
-v2->v3 (based on review of Ryusuke Konishi)
- * Use separate atomic flag for ns_flushed_device instead of a bit flag 
-   in ns_flags
- * Use smp_mb__after_atomic() after setting ns_flushed_device
-
-v1->v2
- * Add new flag THE_NILFS_FLUSHED
-
-Andreas Rohner (1):
-  nilfs2: add missing blkdev_issue_flush() to nilfs_sync_fs()
-
+Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+---
  fs/nilfs2/file.c      |  6 +++++-
  fs/nilfs2/ioctl.c     |  6 +++++-
  fs/nilfs2/segment.c   |  4 ++++
@@ -56,6 +35,117 @@ Andreas Rohner (1):
  fs/nilfs2/the_nilfs.h |  2 ++
  6 files changed, 29 insertions(+), 2 deletions(-)
 
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 2497815..8a3e702 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -56,7 +56,11 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+ 	mutex_unlock(&inode->i_mutex);
+ 
+ 	nilfs = inode->i_sb->s_fs_info;
+-	if (!err && nilfs_test_opt(nilfs, BARRIER)) {
++	if (!err && nilfs_test_opt(nilfs, BARRIER) &&
++	    !atomic_read(&nilfs->ns_flushed_device)) {
++		atomic_set(&nilfs->ns_flushed_device, 1);
++		smp_mb__after_atomic();
++
+ 		err = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
+ 		if (err != -EIO)
+ 			err = 0;
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 422fb54..47fe7cf 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -1022,7 +1022,11 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
+ 		return ret;
+ 
+ 	nilfs = inode->i_sb->s_fs_info;
+-	if (nilfs_test_opt(nilfs, BARRIER)) {
++	if (nilfs_test_opt(nilfs, BARRIER) &&
++	    !atomic_read(&nilfs->ns_flushed_device)) {
++		atomic_set(&nilfs->ns_flushed_device, 1);
++		smp_mb__after_atomic();
++
+ 		ret = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
+ 		if (ret == -EIO)
+ 			return ret;
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index a1a1916..3119b64 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1997,6 +1997,10 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 			err = nilfs_segctor_wait(sci);
+ 			if (err)
+ 				goto failed_to_write;
++
++			if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) ||
++			    mode == SC_LSEG_DSYNC)
++				atomic_set(&nilfs->ns_flushed_device, 0);
+ 		}
+ 	} while (sci->sc_stage.scnt != NILFS_ST_DONE);
+ 
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 228f5bd..74a9930 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -310,6 +310,8 @@ int nilfs_commit_super(struct super_block *sb, int flag)
+ 					    nilfs->ns_sbsize));
+ 	}
+ 	clear_nilfs_sb_dirty(nilfs);
++	atomic_set(&nilfs->ns_flushed_device, 1);
++	smp_mb__after_atomic();
+ 	return nilfs_sync_super(sb, flag);
+ }
+ 
+@@ -514,6 +516,16 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
+ 	}
+ 	up_write(&nilfs->ns_sem);
+ 
++	if (wait && !err && nilfs_test_opt(nilfs, BARRIER) &&
++	    !atomic_read(&nilfs->ns_flushed_device)) {
++		atomic_set(&nilfs->ns_flushed_device, 1);
++		smp_mb__after_atomic();
++
++		err = blkdev_issue_flush(sb->s_bdev, GFP_KERNEL, NULL);
++		if (err != -EIO)
++			err = 0;
++	}
++
+ 	return err;
+ }
+ 
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 9da25fe..d37c50b 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -74,6 +74,7 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
+ 		return NULL;
+ 
+ 	nilfs->ns_bdev = bdev;
++	atomic_set(&nilfs->ns_flushed_device, 0);
+ 	atomic_set(&nilfs->ns_ndirtyblks, 0);
+ 	init_rwsem(&nilfs->ns_sem);
+ 	mutex_init(&nilfs->ns_snapshot_mount_mutex);
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index d01ead1..ec53958 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -45,6 +45,7 @@ enum {
+ 
+ /**
+  * struct the_nilfs - struct to supervise multiple nilfs mount points
++ * @ns_flushed_device: flag indicating if all volatile data was flushed
+  * @ns_flags: flags
+  * @ns_bdev: block device
+  * @ns_sem: semaphore for shared states
+@@ -103,6 +104,7 @@ enum {
+  */
+ struct the_nilfs {
+ 	unsigned long		ns_flags;
++	atomic_t		ns_flushed_device;
+ 
+ 	struct block_device    *ns_bdev;
+ 	struct rw_semaphore	ns_sem;
 -- 
 2.1.0
 
