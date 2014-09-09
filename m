@@ -1,154 +1,62 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 1/1] nilfs2: add missing blkdev_issue_flush() to nilfs_sync_fs()
-Date: Tue,  9 Sep 2014 18:35:40 +0200
-Message-ID: <1410280540-14916-2-git-send-email-andreas.rohner@gmx.net>
-References: <1410280540-14916-1-git-send-email-andreas.rohner@gmx.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v2 1/1] nilfs2: add missing blkdev_issue_flush() to
+ nilfs_sync_fs()
+Date: Wed, 10 Sep 2014 03:55:40 +0900 (JST)
+Message-ID: <20140910.035540.1996373920678181737.konishi.ryusuke@lab.ntt.co.jp>
+References: <54070A56.9050807@gmx.net>
+	<20140907.141232.2124135104047617747.konishi.ryusuke@lab.ntt.co.jp>
+	<540DFD66.1090904@gmx.net>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1410280540-14916-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-type:content-transfer-encoding;
+        bh=pU97I24haCoFnxsEgdLmcUcpfX0ltZJsYQsl3DcPubc=;
+        b=IEgbZljovOYSQwc2nP1qVpxAdV6ndrH6nj2cDB5gFZ+zjO3IZddkMDVVvdY2zuWwVC
+         +6vH+8qQ6E5fMwrzNh9FTsKnNvTyAVLwV66kxm9LZxiDUfxGzedakUmonFdmnB7UJSkS
+         m/saIVA8dTnuip4y4OgQW5L5VR0wSjZO0N8gGtJix6Iu4EMb6RuRPswms8qaqW1hqxlM
+         9anYOhXlx2enwe8ABlzXUNqkaski1xSYUWaK5vWRpLpVRcd+xssiZZul2tgAVh6EcqqT
+         vd8Z0GolS9lYkfrA3sADPjg9uTfg7fdKikHauqo7eftgobel9oVqCDwQukn4h8ifNv9o
+         LYZQ==
+In-Reply-To: <540DFD66.1090904-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Under normal circumstances nilfs_sync_fs() writes out the super block,
-which causes a flush of the underlying block device. But this depends on
-the THE_NILFS_SB_DIRTY flag, which is only set if the pointer to the
-last segment crosses a segment boundary. So if only a small amount of
-data is written before the call to nilfs_sync_fs(), no flush of the
-block device occurs.
+On Mon, 08 Sep 2014 21:03:02 +0200, Andreas Rohner wrote:
+> 
+> Hi Ryusuke,
+> 
+> Sorry for the late response I was busy over the weekend.
+> 
+> On 2014-09-07 07:12, Ryusuke Konishi wrote:
+>> - clear_nilfs_flushed() seems to be called more than necessary.
+>>   Incomplete logs that the mount time recovery of nilfs doesn't
+>>   salvage do not need to be flushed.  In this sense, it may be enough
+>>   only for logs containing a super root and those for datasync
+>>   nilfs_construct_dsync_segment() creates.
+> 
+> Yes you are right I will change that as well.
+> 
+> On the other hand it seems to me, that almost any file operation causes
+> a super root to be written. Even if you use fdatasync(). If the i_mtime
+> on the inode has to be changed, then NILFS_I_INODE_DIRTY is set and the
+> fdatasync() turns into a normal sync(), which always writes a super
+> root. Every write() to a file causes an update of i_mtime. I could only
+> make fdatasync() work as intended with mmap(), but maybe I am missing
+> something. So we may not save us a lot of updates by only updating the
+> flag in case the log contains a super root...
 
-In the above case an additional call to blkdev_issue_flush() is needed.
-To prevent unnecessary overhead, the new flag nilfs->ns_flushed_device
-is introduced, which is cleared whenever new logs are written and set
-whenever the block device is flushed.
+Uum, this looks another problem. We need efficient fsync/fdatasync/
+msync operation.  The above legacy implementation should be replaced
+with some new ideas in which metadata update is handled more
+efficiently and checkpoint creation is suppressed...
 
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
----
- fs/nilfs2/file.c      |  6 +++++-
- fs/nilfs2/ioctl.c     |  6 +++++-
- fs/nilfs2/segment.c   |  4 ++++
- fs/nilfs2/super.c     | 12 ++++++++++++
- fs/nilfs2/the_nilfs.c |  1 +
- fs/nilfs2/the_nilfs.h |  2 ++
- 6 files changed, 29 insertions(+), 2 deletions(-)
-
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 2497815..8a3e702 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -56,7 +56,11 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
- 	mutex_unlock(&inode->i_mutex);
- 
- 	nilfs = inode->i_sb->s_fs_info;
--	if (!err && nilfs_test_opt(nilfs, BARRIER)) {
-+	if (!err && nilfs_test_opt(nilfs, BARRIER) &&
-+	    !atomic_read(&nilfs->ns_flushed_device)) {
-+		atomic_set(&nilfs->ns_flushed_device, 1);
-+		smp_mb__after_atomic();
-+
- 		err = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
- 		if (err != -EIO)
- 			err = 0;
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 422fb54..47fe7cf 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -1022,7 +1022,11 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
- 		return ret;
- 
- 	nilfs = inode->i_sb->s_fs_info;
--	if (nilfs_test_opt(nilfs, BARRIER)) {
-+	if (nilfs_test_opt(nilfs, BARRIER) &&
-+	    !atomic_read(&nilfs->ns_flushed_device)) {
-+		atomic_set(&nilfs->ns_flushed_device, 1);
-+		smp_mb__after_atomic();
-+
- 		ret = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
- 		if (ret == -EIO)
- 			return ret;
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index a1a1916..3119b64 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1997,6 +1997,10 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
- 			err = nilfs_segctor_wait(sci);
- 			if (err)
- 				goto failed_to_write;
-+
-+			if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) ||
-+			    mode == SC_LSEG_DSYNC)
-+				atomic_set(&nilfs->ns_flushed_device, 0);
- 		}
- 	} while (sci->sc_stage.scnt != NILFS_ST_DONE);
- 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 228f5bd..74a9930 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -310,6 +310,8 @@ int nilfs_commit_super(struct super_block *sb, int flag)
- 					    nilfs->ns_sbsize));
- 	}
- 	clear_nilfs_sb_dirty(nilfs);
-+	atomic_set(&nilfs->ns_flushed_device, 1);
-+	smp_mb__after_atomic();
- 	return nilfs_sync_super(sb, flag);
- }
- 
-@@ -514,6 +516,16 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
- 	}
- 	up_write(&nilfs->ns_sem);
- 
-+	if (wait && !err && nilfs_test_opt(nilfs, BARRIER) &&
-+	    !atomic_read(&nilfs->ns_flushed_device)) {
-+		atomic_set(&nilfs->ns_flushed_device, 1);
-+		smp_mb__after_atomic();
-+
-+		err = blkdev_issue_flush(sb->s_bdev, GFP_KERNEL, NULL);
-+		if (err != -EIO)
-+			err = 0;
-+	}
-+
- 	return err;
- }
- 
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 9da25fe..d37c50b 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -74,6 +74,7 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
- 		return NULL;
- 
- 	nilfs->ns_bdev = bdev;
-+	atomic_set(&nilfs->ns_flushed_device, 0);
- 	atomic_set(&nilfs->ns_ndirtyblks, 0);
- 	init_rwsem(&nilfs->ns_sem);
- 	mutex_init(&nilfs->ns_snapshot_mount_mutex);
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index d01ead1..ec53958 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -45,6 +45,7 @@ enum {
- 
- /**
-  * struct the_nilfs - struct to supervise multiple nilfs mount points
-+ * @ns_flushed_device: flag indicating if all volatile data was flushed
-  * @ns_flags: flags
-  * @ns_bdev: block device
-  * @ns_sem: semaphore for shared states
-@@ -103,6 +104,7 @@ enum {
-  */
- struct the_nilfs {
- 	unsigned long		ns_flags;
-+	atomic_t		ns_flushed_device;
- 
- 	struct block_device    *ns_bdev;
- 	struct rw_semaphore	ns_sem;
--- 
-2.1.0
-
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
