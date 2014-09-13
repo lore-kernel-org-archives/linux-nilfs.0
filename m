@@ -1,18 +1,32 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH v4 1/1] nilfs2: add missing blkdev_issue_flush() to nilfs_sync_fs()
-Date: Wed, 10 Sep 2014 11:22:39 +0200
-Message-ID: <5410185F.2050008@gmx.net>
-References: <1410297429-18260-1-git-send-email-andreas.rohner@gmx.net> <1410297429-18260-2-git-send-email-andreas.rohner@gmx.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH v4 1/1] nilfs2: add missing blkdev_issue_flush() to
+ nilfs_sync_fs()
+Date: Sat, 13 Sep 2014 20:35:45 +0900 (JST)
+Message-ID: <20140913.203545.1841445753777865743.konishi.ryusuke@lab.ntt.co.jp>
+References: <1410297429-18260-1-git-send-email-andreas.rohner@gmx.net>
+	<1410297429-18260-2-git-send-email-andreas.rohner@gmx.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-type:content-transfer-encoding;
+        bh=T4MbLXxFCr2VjodCqeEFd8OpVXOztqVPXjjjuzd+RIk=;
+        b=ufrbqN4n5uyYcSie++1aqwaFq+qelRihxsZzsVax7/JTnpceG8LExmHfgPS5bzAiQO
+         fSyf7Fm6A3m6EFvQCTWiiiIYbXukjtpuutvfyPMgOrIgx5fms+Rih4gygSJegdsEq1z+
+         3FsNkB7hGqMY7hDyxWj5aWvlFixgYJRoxHwXDNMeUUbVpDpmSogr/diWswiUtuq6YIY9
+         mQSLMhZMO9MSDduugHOM0CA+GaYUcj7PaJusPn+bCQnv/SRnF0jPfweYEhawuWdYHQYt
+         TyZJi8DRk9GQ4QBJHWw5DbljbL7HT1E02ljIB5EUOEfosA12P+eObs6ZiOJE67pDC4QD
+         y0yw==
 In-Reply-To: <1410297429-18260-2-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2014-09-09 23:17, Andreas Rohner wrote:
+On Tue,  9 Sep 2014 23:17:09 +0200, Andreas Rohner wrote:
 > Under normal circumstances nilfs_sync_fs() writes out the super block,
 > which causes a flush of the underlying block device. But this depends on
 > the THE_NILFS_SB_DIRTY flag, which is only set if the pointer to the
@@ -55,6 +69,37 @@ On 2014-09-09 23:17, Andreas Rohner wrote:
 >  		err = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
 >  		if (err != -EIO)
 >  			err = 0;
+
+Looks good.  But, these code lines and the comment appear repeatedly.
+To simplify these, I propose to add the following inline function to
+the_nilfs.h.
+
+@@ -371,4 +373,24 @@ static inline int nilfs_segment_is_active(struct the_nilfs *nilfs, __u64 n)
+ 	return n == nilfs->ns_segnum || n == nilfs->ns_nextnum;
+ }
+ 
++static inline int nilfs_flush_device(struct the_nilfs *nilfs)
++{
++	int err;
++
++	if (!nilfs_test_opt(nilfs, BARRIER) || nilfs->ns_flushed_device)
++		return 0;
++
++	nilfs->ns_flushed_device = 1;
++	/*
++	 * the store to ns_flushed_device must not be reordered after
++	 * blkdev_issue_flush().
++	 */
++	smp_wmb();
++
++	err = blkdev_issue_flush(nilfs->ns_bdev, GFP_KERNEL, NULL);
++	if (err != -EIO)
++		err = 0;
++	return err;
++}
++
+ #endif /* _THE_NILFS_H */
+
 > diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
 > index 422fb54..9444d5d 100644
 > --- a/fs/nilfs2/ioctl.c
@@ -90,7 +135,34 @@ On 2014-09-09 23:17, Andreas Rohner wrote:
 > +				nilfs->ns_flushed_device = 0;
 >  		}
 >  	} while (sci->sc_stage.scnt != NILFS_ST_DONE);
->  
+
+We can simplify this by inserting "nilfs->ns_flushed_device = 0" in
+nilfs_segctor_complete_write() and nilfs_construct_dsync_segment()
+separately as follows.  Explicit memory barriers are not required in
+the following changes because both nilfs_set_last_segment() and
+nilfs_transaction_unlock() imply a memory barrier.
+
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1833,6 +1833,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+ 	nilfs_set_next_segment(nilfs, segbuf);
+ 
+ 	if (update_sr) {
++		nilfs->ns_flushed_device = 0;
+ 		nilfs_set_last_segment(nilfs, segbuf->sb_pseg_start,
+ 				       segbuf->sb_sum.seg_seq, nilfs->ns_cno++);
+ 
+@@ -2216,6 +2217,8 @@ int nilfs_construct_dsync_segment(struct super_block *sb, struct inode *inode,
+ 	sci->sc_dsync_end = end;
+ 
+ 	err = nilfs_segctor_do_construct(sci, SC_LSEG_DSYNC);
++	if (!err)
++		nilfs->ns_flushed_device = 0;
+ 
+ 	nilfs_transaction_unlock(sb);
+ 	return err;
+
+
 > diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
 > index 228f5bd..33aafbd 100644
 > --- a/fs/nilfs2/super.c
@@ -117,17 +189,7 @@ On 2014-09-09 23:17, Andreas Rohner wrote:
 > +		 * blkdev_issue_flush
 > +		 */
 > +		smp_wmb();
-
-I am not at all sure if this memory barrier is enough. Memory barriers
-only guarantee the order in which memory operations hit the CPU cache.
-They do not guarantee that all CPUSs see the previous memory operations.
-They cannot be used to provide unconditional ordering. I am not even
-sure if this can be done without proper locks, but I am not an expert in
-lock-free algorithms.
-
-Maybe the safest way would be to use nilfs->ns_sem around the whole if
-statement.
-
+> +
 > +		err = blkdev_issue_flush(sb->s_bdev, GFP_KERNEL, NULL);
 > +		if (err != -EIO)
 > +			err = 0;
@@ -144,8 +206,13 @@ statement.
 >  
 >  /**
 >   * struct the_nilfs - struct to supervise multiple nilfs mount points
+
 > + * @ns_flushed_device: flag indicating if all volatile data was flushed
 >   * @ns_flags: flags
+
+ns_flushed_device is inserted after ns_flags, so these two comment lines
+should be swapped.
+
 >   * @ns_bdev: block device
 >   * @ns_sem: semaphore for shared states
 > @@ -103,6 +104,7 @@ enum {
@@ -156,8 +223,12 @@ statement.
 >  
 >  	struct block_device    *ns_bdev;
 >  	struct rw_semaphore	ns_sem;
-> 
+> -- 
+> 2.1.0
 
+
+Regards,
+Ryusuke Konishi
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
