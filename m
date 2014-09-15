@@ -1,181 +1,118 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH] nilfs2: add missing blkdev_issue_flush() to nilfs_sync_fs()
-Date: Sun, 14 Sep 2014 19:11:44 +0900
-Message-ID: <1410689504-10032-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1410689504-10032-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
-         :lines;
-        bh=OPmqpLrMJ5HmasXdjneQaoJS0PQYYzi5Az4+xSF5UWQ=;
-        b=cBLxXGyLGF/JsNXJ7nDlAbTg176svI2eOechUGZ+Nn31eRffbfQaXU6kHV/btlfr6b
-         PUIUeOr72btwMasCHQ5dWrqOGcBV2tpdm+b5Hrd4q3I78wQgSJTvZkGj0vh5PcxENtDQ
-         NzE2Mze93gl9G3jA642BaOPUVIkVFIn7WwWjIHTmdjDLkU7i2aOiO6WEsIsqAPCCRr/x
-         0XpGXRpE7mO2etjCOFYZx9uPBPXwdzSHEROiVUwinoNER0MllnTBQfLZuacPKcd/bzko
-         W4bstu5UguiMqhVuBhSxlritcoiSfMbaW4dYv9QOi9iTIzNfXAiOYj9+JBvw6Fh8KpkH
-         b5+w==
-In-Reply-To: <1410689504-10032-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: [PATCH] nilfs2: fix data loss with mmap()
+Date: Mon, 15 Sep 2014 21:47:30 +0200
+Message-ID: <1410810450-2637-1-git-send-email-andreas.rohner@gmx.net>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Andreas Rohner <andreas.rohner@gmx.net>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-From: Andreas Rohner <andreas.rohner@gmx.net>
+This bug leads to reproducible silent data loss, despite the use of
+msync(), sync() and a clean unmount of the file system. It is easily
+reproducible with the following script:
 
-Under normal circumstances nilfs_sync_fs() writes out the super block,
-which causes a flush of the underlying block device. But this depends on
-the THE_NILFS_SB_DIRTY flag, which is only set if the pointer to the
-last segment crosses a segment boundary. So if only a small amount of
-data is written before the call to nilfs_sync_fs(), no flush of the
-block device occurs.
+----------------[BEGIN SCRIPT]--------------------
+mkfs.nilfs2 -f /dev/sdb
+mount /dev/sdb /mnt
 
-In the above case an additional call to blkdev_issue_flush() is needed.
-To prevent unnecessary overhead, the new flag nilfs->ns_flushed_device
-is introduced, which is cleared whenever new logs are written and set
-whenever the block device is flushed. For convenience the function
-nilfs_flush_device() is added, which contains the above logic.
+# create 30MB testfile
+dd if=/dev/zero bs=1M count=30 of=/mnt/testfile
 
-Signed-off-by: Andreas Rohner <andreas.rohner@gmx.net>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+umount /mnt
+mount /dev/sdb /mnt
+CHECKSUM_BEFORE="$(md5sum /mnt/testfile)"
+
+# simple tool that opens /mnt/testfile and
+# writes a few blocks using mmap at a 5MB offset
+/root/mmaptest/mmaptest /mnt/testfile 30 10 5
+
+sync
+CHECKSUM_AFTER="$(md5sum /mnt/testfile)"
+umount /mnt
+mount /dev/sdb /mnt
+CHECKSUM_AFTER_REMOUNT="$(md5sum /mnt/testfile)"
+umount /mnt
+
+echo "BEFORE MMAP:\t$CHECKSUM_BEFORE"
+echo "AFTER MMAP:\t$CHECKSUM_AFTER"
+echo "AFTER REMOUNT:\t$CHECKSUM_AFTER_REMOUNT"
+----------------[END SCRIPT]--------------------
+
+The mmaptest tool looks something like this (very simplified, with
+error checking removed):
+
+----------------[BEGIN mmaptest]--------------------
+data = mmap(NULL, file_size - file_offset, PROT_READ | PROT_WRITE,
+		MAP_SHARED, fd, file_offset);
+
+for (i = 0; i < write_count; ++i) {
+	memcpy(data + i * 4096, buf, sizeof(buf));
+	msync(data, file_size - file_offset, MS_SYNC))
+}
+----------------[END mmaptest]--------------------
+
+The output of the script looks something like this:
+
+BEFORE MMAP:    281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
+AFTER MMAP:     6604a1c31f10780331a6850371b3a313  /mnt/testfile
+AFTER REMOUNT:  281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
+
+So it is clear, that the changes done using mmap() do not survive a
+remount. This can be reproduced a 100% of the time. The problem was
+introduced with the following commit:
+
+136e877 nilfs2: fix issue of nilfs_set_page_dirty() for page at EOF
+boundary
+
+If the page was read with mpage_readpage() or mpage_readpages() for
+example, then  it has no buffers attached to it. In that case
+page_has_buffers(page) in nilfs_set_page_dirty() will be false.
+Therefore nilfs_set_file_dirty() is never called and the pages are never
+collected and never written to disk.
+
+This patch fixes the problem by also calling nilfs_set_file_dirty() if
+the page has no buffers attached to it.
+
+Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/file.c      |    8 +++-----
- fs/nilfs2/ioctl.c     |    8 +++-----
- fs/nilfs2/segment.c   |    3 +++
- fs/nilfs2/super.c     |    6 ++++++
- fs/nilfs2/the_nilfs.h |   22 ++++++++++++++++++++++
- 5 files changed, 37 insertions(+), 10 deletions(-)
+ fs/nilfs2/inode.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 2497815..e9e3325 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -56,11 +56,9 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
- 	mutex_unlock(&inode->i_mutex);
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 6252b17..9e3c525 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -219,10 +219,10 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
  
- 	nilfs = inode->i_sb->s_fs_info;
--	if (!err && nilfs_test_opt(nilfs, BARRIER)) {
--		err = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
--		if (err != -EIO)
--			err = 0;
--	}
-+	if (!err)
-+		err = nilfs_flush_device(nilfs);
+ static int nilfs_set_page_dirty(struct page *page)
+ {
++	struct inode *inode = page->mapping->host;
+ 	int ret = __set_page_dirty_nobuffers(page);
+ 
+ 	if (page_has_buffers(page)) {
+-		struct inode *inode = page->mapping->host;
+ 		unsigned nr_dirty = 0;
+ 		struct buffer_head *bh, *head;
+ 
+@@ -245,6 +245,10 @@ static int nilfs_set_page_dirty(struct page *page)
+ 
+ 		if (nr_dirty)
+ 			nilfs_set_file_dirty(inode, nr_dirty);
++	} else if (ret) {
++		unsigned nr_dirty = 1 << (PAGE_SHIFT - inode->i_blkbits);
 +
- 	return err;
- }
- 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 422fb54..9a20e51 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -1022,11 +1022,9 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
- 		return ret;
- 
- 	nilfs = inode->i_sb->s_fs_info;
--	if (nilfs_test_opt(nilfs, BARRIER)) {
--		ret = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
--		if (ret == -EIO)
--			return ret;
--	}
-+	ret = nilfs_flush_device(nilfs);
-+	if (ret < 0)
-+		return ret;
- 
- 	if (argp != NULL) {
- 		down_read(&nilfs->ns_segctor_sem);
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index a1a1916..0b7d2ca 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1833,6 +1833,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
- 	nilfs_set_next_segment(nilfs, segbuf);
- 
- 	if (update_sr) {
-+		nilfs->ns_flushed_device = 0;
- 		nilfs_set_last_segment(nilfs, segbuf->sb_pseg_start,
- 				       segbuf->sb_sum.seg_seq, nilfs->ns_cno++);
- 
-@@ -2216,6 +2217,8 @@ int nilfs_construct_dsync_segment(struct super_block *sb, struct inode *inode,
- 	sci->sc_dsync_end = end;
- 
- 	err = nilfs_segctor_do_construct(sci, SC_LSEG_DSYNC);
-+	if (!err)
-+		nilfs->ns_flushed_device = 0;
- 
- 	nilfs_transaction_unlock(sb);
- 	return err;
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 228f5bd..2e5b3ec 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -310,6 +310,9 @@ int nilfs_commit_super(struct super_block *sb, int flag)
- 					    nilfs->ns_sbsize));
++		nilfs_set_file_dirty(inode, nr_dirty);
  	}
- 	clear_nilfs_sb_dirty(nilfs);
-+	nilfs->ns_flushed_device = 1;
-+	/* make sure store to ns_flushed_device cannot be reordered */
-+	smp_wmb();
- 	return nilfs_sync_super(sb, flag);
+ 	return ret;
  }
- 
-@@ -514,6 +517,9 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
- 	}
- 	up_write(&nilfs->ns_sem);
- 
-+	if (!err)
-+		err = nilfs_flush_device(nilfs);
-+
- 	return err;
- }
- 
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index d01ead1..23778d3 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -46,6 +46,7 @@ enum {
- /**
-  * struct the_nilfs - struct to supervise multiple nilfs mount points
-  * @ns_flags: flags
-+ * @ns_flushed_device: flag indicating if all volatile data was flushed
-  * @ns_bdev: block device
-  * @ns_sem: semaphore for shared states
-  * @ns_snapshot_mount_mutex: mutex to protect snapshot mounts
-@@ -103,6 +104,7 @@ enum {
-  */
- struct the_nilfs {
- 	unsigned long		ns_flags;
-+	int			ns_flushed_device;
- 
- 	struct block_device    *ns_bdev;
- 	struct rw_semaphore	ns_sem;
-@@ -371,4 +373,24 @@ static inline int nilfs_segment_is_active(struct the_nilfs *nilfs, __u64 n)
- 	return n == nilfs->ns_segnum || n == nilfs->ns_nextnum;
- }
- 
-+static inline int nilfs_flush_device(struct the_nilfs *nilfs)
-+{
-+	int err;
-+
-+	if (!nilfs_test_opt(nilfs, BARRIER) || nilfs->ns_flushed_device)
-+		return 0;
-+
-+	nilfs->ns_flushed_device = 1;
-+	/*
-+	 * the store to ns_flushed_device must not be reordered after
-+	 * blkdev_issue_flush().
-+	 */
-+	smp_wmb();
-+
-+	err = blkdev_issue_flush(nilfs->ns_bdev, GFP_KERNEL, NULL);
-+	if (err != -EIO)
-+		err = 0;
-+	return err;
-+}
-+
- #endif /* _THE_NILFS_H */
 -- 
-1.7.9.4
+2.1.0
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
