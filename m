@@ -1,63 +1,86 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix data loss with mmap()
-Date: Wed, 17 Sep 2014 21:34:39 +0900 (JST)
-Message-ID: <20140917.213439.867924114484975245.konishi.ryusuke@lab.ntt.co.jp>
-References: <5417F705.8020306@gmx.net>
-	<20140916.225726.1211879952201061873.konishi.ryusuke@lab.ntt.co.jp>
-	<5419436E.4030501@gmx.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH] mount.nilfs2: invoke cleanerd even if no-mtab option is specified
+Date: Wed, 17 Sep 2014 23:09:05 +0900
+Message-ID: <1410962945-4219-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=Kf0xMMrL8z3FW+4/IOsDnsJQd606PtzAOaXb5iSKOGs=;
-        b=ShS8q/7YHStGTS6KlGlQGG87t2liIzy+WoLAvkMRVUdK0cGSnhOZ8VyW1hCaV1QUd2
-         golvbJKxVjS+8CIHo3i/z3vzEsi4+jRnbxiNKfTJm7/S4bBTIe3CLhsRnbO17I3eSTrh
-         6B72cQZ/ggjQ9Nstz50GihORETlNKQ5/39zFYgQ0Xox+Dhj5zd2Ejb18QV517Ud6auez
-         jsl+Nl2U/o61CCsGr2iArmODPp1KbnLwom1Y/O6t09D/dJrOnEiP9Jj9mpdtKA2O1bA6
-         pXnH14Na1kI1SAHNaVhOzQc1nWDu36MY8t2J/KIiqqHZUMJ5L5cnY4JZeu9EjFyGqG9L
-         t2NA==
-In-Reply-To: <5419436E.4030501-hi6Y0CQ0nG0@public.gmane.org>
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=YowJoj76TQi/O90jtITRFhNbrtsHcacEDJRAqJBGLVw=;
+        b=e6JeAzbnzR4IV85HVGTTGsQXoRSoFwGk3U5AjpRhcuePkEeSHIcl0Gvxi+E2O4Isr5
+         ktv4Zi5dA9vCuuDPh5JDUiaxaio1tk0PrtwHzpTj8x3huFSY8jjQTgwJx3rqmPiwg25G
+         M6zVsk3t5mU/PtkitjhFNKi/qeWkSrtoLHj4l51ZRIZlD1v7kz/V59293qdmjUrOpT8M
+         qcnrTI9C07DsLqI782Jz0upgXVC1MmoC7CmVC934FF6P7y6Bk60H2/CTIKb2D6yqwERE
+         jdsiB1HUIwrxw2+ezhmupIlwLxhTdKjlx7256dKE/+jli+Z9JXsT/soP+NCbtvsazr5e
+         aTEQ==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Wed, 17 Sep 2014 10:16:46 +0200, Andreas Rohner wrote:
-> On 2014-09-16 15:57, Ryusuke Konishi wrote:
->> On Tue, 16 Sep 2014 10:38:29 +0200, Andreas Rohner wrote:
->>>> I'd appreciate your help on testing the patch for some old kernels.
->>>> (And, please declare a "Tested-by" tag in the reply mail, if the test
->>>> is ok).
->>>
->>> Sure I have everything set up. Which kernels do I have to test? Was
->>> commit 136e877 backported? I presume at least stable and some of the
->>> longterm kernels on https://www.kernel.org/...
->> 
->> The commit 136e877 was merged to v3.10 and backported to stable trees
->> of earlier kernels.  But, most of earlier stable trees are no longer
->> maintained.  Well maintained trees are the following longterm kernels:
->> 
->> - 3.4.y  (backported commit 136e877)
->> - 3.10.y
->> - 3.14.y
->> 
->> I think these three kernels are worty to be tested.
-> 
-> I tested it on all stable kernels including 3.4.x, 3.10.x, 3.14.x. The
-> bug is present in all of them and the patch fixes it. The patch also
-> applies cleanly on all kernels. I sent it again yesterday, and added the
-> Tested-by: tag.
+After commit 7f7b227f8a8eda5603b58899597c2fdee2a73ab7 "libmount: don't
+base GC startup on no-mtab context" was applied, behavior of the new
+mount.nilfs2 (libmount based implementation) was slightly changed.  It
+now invokes cleanerd even when no-mtab option "-n" is specified.
 
-Thank you.
+This patch makes a similiar change to the legacy mount.nilfs2, and
+updates the manpage of mount.nilfs2 to reflect the change.
 
-I'll pick up the new patch.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ man/mount.nilfs2.8        |    5 +----
+ sbin/mount/mount.nilfs2.c |    9 +++------
+ 2 files changed, 4 insertions(+), 10 deletions(-)
 
-Regards,
-Ryusuke Konishi
+diff --git a/man/mount.nilfs2.8 b/man/mount.nilfs2.8
+index 8f0115e..5f3c464 100644
+--- a/man/mount.nilfs2.8
++++ b/man/mount.nilfs2.8
+@@ -64,10 +64,7 @@ and handling of pseudo mount options.
+ .TP
+ .B \-n
+ Mount without writing in \fI/etc/mtab\fP.  This is necessary for
+-example when \fI/etc\fP is on a read-only file system.  With this
+-option, invocation of \fBnilfs_cleanerd\fP(8) is skipped.
+-To add entries to mtab and invoke the garbage collector later, the
+-\fB-f\fP option is available.
++example when \fI/etc\fP is on a read-only file system.
+ .TP
+ .B \-r
+ Mount the file system read-only.  A synonym is \fB"\-o ro"\fP.
+diff --git a/sbin/mount/mount.nilfs2.c b/sbin/mount/mount.nilfs2.c
+index 72aa07a..e9cb25e 100644
+--- a/sbin/mount/mount.nilfs2.c
++++ b/sbin/mount/mount.nilfs2.c
+@@ -528,12 +528,6 @@ static void update_mount_state(struct nilfs_mount_info *mi,
+ 
+ 	rungc = (find_opt(mo->extra_opts, nogc_opt_fmt, NULL) < 0) && !(mo->flags & MS_RDONLY) && !(mo->flags & MS_BIND);
+ 
+-	if (!check_mtab()) {
+-		if (rungc)
+-			printf(_("%s not started\n"), NILFS_CLEANERD_NAME);
+-		return;
+-	}
+-
+ 	if (rungc) {
+ 		if (find_opt(mo->extra_opts, pp_opt_fmt, &pp) < 0)
+ 			pp = mi->protperiod;
+@@ -545,6 +539,9 @@ static void update_mount_state(struct nilfs_mount_info *mi,
+ 			       NILFS_CLEANERD_NAME);
+ 	}
+ 
++	if (!check_mtab())
++		return;
++
+ 	my_free(mi->optstr);
+ 	exopts = fix_extra_opts_string(mo->extra_opts, pid, pp);
+ 	mi->optstr = fix_opts_string(((mo->flags & ~MS_NOMTAB) | MS_NETDEV),
+-- 
+1.7.9.4
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
