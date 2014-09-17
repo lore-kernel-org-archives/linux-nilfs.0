@@ -1,120 +1,45 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH] nilfs2: fix data loss with mmap()
-Date: Tue, 16 Sep 2014 17:11:36 +0200
-Message-ID: <1410880296-10123-1-git-send-email-andreas.rohner@gmx.net>
-References: <20140916.134218.1694651966300542167.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH] nilfs2: fix data loss with mmap()
+Date: Wed, 17 Sep 2014 10:16:46 +0200
+Message-ID: <5419436E.4030501@gmx.net>
+References: <54176705.6080107@gmx.net>	<20140916.134218.1694651966300542167.konishi.ryusuke@lab.ntt.co.jp>	<5417F705.8020306@gmx.net> <20140916.225726.1211879952201061873.konishi.ryusuke@lab.ntt.co.jp>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140916.134218.1694651966300542167.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <20140916.225726.1211879952201061873.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This bug leads to reproducible silent data loss, despite the use of
-msync(), sync() and a clean unmount of the file system. It is easily
-reproducible with the following script:
+On 2014-09-16 15:57, Ryusuke Konishi wrote:
+> On Tue, 16 Sep 2014 10:38:29 +0200, Andreas Rohner wrote:
+>>> I'd appreciate your help on testing the patch for some old kernels.
+>>> (And, please declare a "Tested-by" tag in the reply mail, if the test
+>>> is ok).
+>>
+>> Sure I have everything set up. Which kernels do I have to test? Was
+>> commit 136e877 backported? I presume at least stable and some of the
+>> longterm kernels on https://www.kernel.org/...
+> 
+> The commit 136e877 was merged to v3.10 and backported to stable trees
+> of earlier kernels.  But, most of earlier stable trees are no longer
+> maintained.  Well maintained trees are the following longterm kernels:
+> 
+> - 3.4.y  (backported commit 136e877)
+> - 3.10.y
+> - 3.14.y
+> 
+> I think these three kernels are worty to be tested.
 
-----------------[BEGIN SCRIPT]--------------------
-mkfs.nilfs2 -f /dev/sdb
-mount /dev/sdb /mnt
+I tested it on all stable kernels including 3.4.x, 3.10.x, 3.14.x. The
+bug is present in all of them and the patch fixes it. The patch also
+applies cleanly on all kernels. I sent it again yesterday, and added the
+Tested-by: tag.
 
-# create 30MB testfile
-dd if=/dev/zero bs=1M count=30 of=/mnt/testfile
-
-umount /mnt
-mount /dev/sdb /mnt
-CHECKSUM_BEFORE="$(md5sum /mnt/testfile)"
-
-# simple tool that opens /mnt/testfile and
-# writes a few blocks using mmap at a 5MB offset
-/root/mmaptest/mmaptest /mnt/testfile 30 10 5
-
-sync
-CHECKSUM_AFTER="$(md5sum /mnt/testfile)"
-umount /mnt
-mount /dev/sdb /mnt
-CHECKSUM_AFTER_REMOUNT="$(md5sum /mnt/testfile)"
-umount /mnt
-
-echo "BEFORE MMAP:\t$CHECKSUM_BEFORE"
-echo "AFTER MMAP:\t$CHECKSUM_AFTER"
-echo "AFTER REMOUNT:\t$CHECKSUM_AFTER_REMOUNT"
-----------------[END SCRIPT]--------------------
-
-The mmaptest tool looks something like this (very simplified, with
-error checking removed):
-
-----------------[BEGIN mmaptest]--------------------
-data = mmap(NULL, file_size - file_offset, PROT_READ | PROT_WRITE,
-		MAP_SHARED, fd, file_offset);
-
-for (i = 0; i < write_count; ++i) {
-	memcpy(data + i * 4096, buf, sizeof(buf));
-	msync(data, file_size - file_offset, MS_SYNC))
-}
-----------------[END mmaptest]--------------------
-
-The output of the script looks something like this:
-
-BEFORE MMAP:    281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
-AFTER MMAP:     6604a1c31f10780331a6850371b3a313  /mnt/testfile
-AFTER REMOUNT:  281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
-
-So it is clear, that the changes done using mmap() do not survive a
-remount. This can be reproduced a 100% of the time. The problem was
-introduced with the following commit:
-
-136e877 nilfs2: fix issue of nilfs_set_page_dirty() for page at EOF
-boundary
-
-If the page was read with mpage_readpage() or mpage_readpages() for
-example, then  it has no buffers attached to it. In that case
-page_has_buffers(page) in nilfs_set_page_dirty() will be false.
-Therefore nilfs_set_file_dirty() is never called and the pages are never
-collected and never written to disk.
-
-This patch fixes the problem by also calling nilfs_set_file_dirty() if
-the page has no buffers attached to it.
-
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Tested-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
----
- fs/nilfs2/inode.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 6252b17..9e3c525 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -219,10 +219,10 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
- 
- static int nilfs_set_page_dirty(struct page *page)
- {
-+	struct inode *inode = page->mapping->host;
- 	int ret = __set_page_dirty_nobuffers(page);
- 
- 	if (page_has_buffers(page)) {
--		struct inode *inode = page->mapping->host;
- 		unsigned nr_dirty = 0;
- 		struct buffer_head *bh, *head;
- 
-@@ -245,6 +245,10 @@ static int nilfs_set_page_dirty(struct page *page)
- 
- 		if (nr_dirty)
- 			nilfs_set_file_dirty(inode, nr_dirty);
-+	} else if (ret) {
-+		unsigned nr_dirty = 1 << (PAGE_SHIFT - inode->i_blkbits);
-+
-+		nilfs_set_file_dirty(inode, nr_dirty);
- 	}
- 	return ret;
- }
--- 
-2.1.0
-
+br,
+Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
