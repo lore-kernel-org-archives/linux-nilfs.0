@@ -1,63 +1,132 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix data loss with mmap()
-Date: Thu, 18 Sep 2014 12:44:16 +0200
-Message-ID: <541AB780.2010708@gmx.net>
-References: <20140916.225726.1211879952201061873.konishi.ryusuke@lab.ntt.co.jp>	<5419436E.4030501@gmx.net>	<20140917.213439.867924114484975245.konishi.ryusuke@lab.ntt.co.jp> <20140918.162416.1553343892940167544.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: fix data loss with mmap()
+Date: Thu, 18 Sep 2014 23:56:25 +0900
+Message-ID: <1411052185-8118-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1411052185-8118-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140918.162416.1553343892940167544.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
+         :lines;
+        bh=6y5eBbbEVAzyRJ8x+iQzxLKy19YBLts1w+mgqOCppMs=;
+        b=GaUHumPZmgJIMoSh1EmHj7lKi0ez4LdpKOl99vCK0q+bahzTITQSez4GZFNwMlbWWn
+         UPs/t9Gz0cyCsn531bRz+iTGO7ohIayy22tduOoLo2PqiFS4Lk1snpLhsBrrobWE2Amu
+         UegeTdTzC4mArXXk1kXtDRya9zF98xfzWB7PgbKF2/7e9qpEQulys4B2gjwbLOT1T2xe
+         +sGgUFe1WjaJbeiKhYR2qVxSAhYZJIspFTRr8ybc13ZOWUgJxwJizrI1ZZYVW8EFlvW5
+         /Cby2gf1dAIw9NkwIYM/AHnxZ2YDMGIiH+q7i2WI7GLyr/tVuCXVi+8OlSCVzljtDidl
+         e8qA==
+In-Reply-To: <1411052185-8118-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-On 2014-09-18 09:24, Ryusuke Konishi wrote:
-> On Wed, 17 Sep 2014 21:34:39 +0900 (JST), Ryusuke Konishi wrote:
->> On Wed, 17 Sep 2014 10:16:46 +0200, Andreas Rohner wrote:
->>> On 2014-09-16 15:57, Ryusuke Konishi wrote:
->>>> On Tue, 16 Sep 2014 10:38:29 +0200, Andreas Rohner wrote:
->>>>>> I'd appreciate your help on testing the patch for some old kernels.
->>>>>> (And, please declare a "Tested-by" tag in the reply mail, if the test
->>>>>> is ok).
->>>>>
->>>>> Sure I have everything set up. Which kernels do I have to test? Was
->>>>> commit 136e877 backported? I presume at least stable and some of the
->>>>> longterm kernels on https://www.kernel.org/...
->>>>
->>>> The commit 136e877 was merged to v3.10 and backported to stable trees
->>>> of earlier kernels.  But, most of earlier stable trees are no longer
->>>> maintained.  Well maintained trees are the following longterm kernels:
->>>>
->>>> - 3.4.y  (backported commit 136e877)
->>>> - 3.10.y
->>>> - 3.14.y
->>>>
->>>> I think these three kernels are worty to be tested.
->>>
->>> I tested it on all stable kernels including 3.4.x, 3.10.x, 3.14.x. The
->>> bug is present in all of them and the patch fixes it. The patch also
->>> applies cleanly on all kernels. I sent it again yesterday, and added the
->>> Tested-by: tag.
-> 
-> One thing I have a question.
-> 
-> Is the original issue that commit 136e877 fixed still OK ?  If you
-> haven't tested it, I apprecicate if you examine the test for the prior
-> issue.
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Yes the original issue is still fixed. I was able to reproduce it by
-reverting  nilfs_set_page_dirty() to the state prior to commit 136e877.
-Then I used the new version of nilfs_set_page_dirty() including my patch
-and I couldn't reproduce the issue anymore. So it seems to still be fixed.
+This bug leads to reproducible silent data loss, despite the use of
+msync(), sync() and a clean unmount of the file system. It is easily
+reproducible with the following script:
 
-Furthermore the original issue was caused by the use of
-__set_page_dirty_buffers(), which marked unmapped buffers as dirty. My
-patch does not change the fix for that.
+----------------[BEGIN SCRIPT]--------------------
+mkfs.nilfs2 -f /dev/sdb
+mount /dev/sdb /mnt
 
-br,
-Andreas Rohner
+dd if=/dev/zero bs=1M count=30 of=/mnt/testfile
+
+umount /mnt
+mount /dev/sdb /mnt
+CHECKSUM_BEFORE="$(md5sum /mnt/testfile)"
+
+/root/mmaptest/mmaptest /mnt/testfile 30 10 5
+
+sync
+CHECKSUM_AFTER="$(md5sum /mnt/testfile)"
+umount /mnt
+mount /dev/sdb /mnt
+CHECKSUM_AFTER_REMOUNT="$(md5sum /mnt/testfile)"
+umount /mnt
+
+echo "BEFORE MMAP:\t$CHECKSUM_BEFORE"
+echo "AFTER MMAP:\t$CHECKSUM_AFTER"
+echo "AFTER REMOUNT:\t$CHECKSUM_AFTER_REMOUNT"
+----------------[END SCRIPT]--------------------
+
+The mmaptest tool looks something like this (very simplified, with
+error checking removed):
+
+----------------[BEGIN mmaptest]--------------------
+data = mmap(NULL, file_size - file_offset, PROT_READ | PROT_WRITE,
+		MAP_SHARED, fd, file_offset);
+
+for (i = 0; i < write_count; ++i) {
+	memcpy(data + i * 4096, buf, sizeof(buf));
+	msync(data, file_size - file_offset, MS_SYNC))
+}
+----------------[END mmaptest]--------------------
+
+The output of the script looks something like this:
+
+BEFORE MMAP:    281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
+AFTER MMAP:     6604a1c31f10780331a6850371b3a313  /mnt/testfile
+AFTER REMOUNT:  281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
+
+So it is clear, that the changes done using mmap() do not survive a
+remount. This can be reproduced a 100% of the time. The problem was
+introduced with the following commit:
+
+136e877 nilfs2: fix issue of nilfs_set_page_dirty() for page at EOF
+boundary
+
+If the page was read with mpage_readpage() or mpage_readpages() for
+example, then  it has no buffers attached to it. In that case
+page_has_buffers(page) in nilfs_set_page_dirty() will be false.
+Therefore nilfs_set_file_dirty() is never called and the pages are never
+collected and never written to disk.
+
+This patch fixes the problem by also calling nilfs_set_file_dirty() if
+the page has no buffers attached to it.
+
+Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Tested-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+---
+ fs/nilfs2/inode.c |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 6252b17..9e3c525 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -219,10 +219,10 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
+ 
+ static int nilfs_set_page_dirty(struct page *page)
+ {
++	struct inode *inode = page->mapping->host;
+ 	int ret = __set_page_dirty_nobuffers(page);
+ 
+ 	if (page_has_buffers(page)) {
+-		struct inode *inode = page->mapping->host;
+ 		unsigned nr_dirty = 0;
+ 		struct buffer_head *bh, *head;
+ 
+@@ -245,6 +245,10 @@ static int nilfs_set_page_dirty(struct page *page)
+ 
+ 		if (nr_dirty)
+ 			nilfs_set_file_dirty(inode, nr_dirty);
++	} else if (ret) {
++		unsigned nr_dirty = 1 << (PAGE_SHIFT - inode->i_blkbits);
++
++		nilfs_set_file_dirty(inode, nr_dirty);
+ 	}
+ 	return ret;
+ }
+-- 
+1.7.9.4
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
