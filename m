@@ -1,133 +1,41 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH] nilfs2: fix data loss with mmap()
-Date: Thu, 18 Sep 2014 23:56:25 +0900
-Message-ID: <1411052185-8118-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1411052185-8118-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 0/1] nilfs2: fix data loss with mmap()
+Date: Thu, 18 Sep 2014 23:56:24 +0900
+Message-ID: <1411052185-8118-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
-         :lines;
-        bh=6y5eBbbEVAzyRJ8x+iQzxLKy19YBLts1w+mgqOCppMs=;
-        b=GaUHumPZmgJIMoSh1EmHj7lKi0ez4LdpKOl99vCK0q+bahzTITQSez4GZFNwMlbWWn
-         UPs/t9Gz0cyCsn531bRz+iTGO7ohIayy22tduOoLo2PqiFS4Lk1snpLhsBrrobWE2Amu
-         UegeTdTzC4mArXXk1kXtDRya9zF98xfzWB7PgbKF2/7e9qpEQulys4B2gjwbLOT1T2xe
-         +sGgUFe1WjaJbeiKhYR2qVxSAhYZJIspFTRr8ybc13ZOWUgJxwJizrI1ZZYVW8EFlvW5
-         /Cby2gf1dAIw9NkwIYM/AHnxZ2YDMGIiH+q7i2WI7GLyr/tVuCXVi+8OlSCVzljtDidl
-         e8qA==
-In-Reply-To: <1411052185-8118-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=7JnqFWO9AcU7EnZ2Srivs32absYuc7pwA85M589v3jA=;
+        b=Y53j2bhcl65VJHljdMxxTyDk90QNqxyg3LLtMrQUQcZIdE9RZcVKHmWTUuu2Hm8/Bi
+         +WlJF3GplJ0ipMOj6F4L451MQ5RoGbqUsgkEghZ89S03c3cuue8y6TdWylrKdioT6lU1
+         Qh3FnfPtY64YMxslKFuEqcGUTmhuslp0m19iUFIeFI0nT4azcGHJqv02Dc5GKzcX6nHy
+         EqDuah8j1JdPUdoyTvQ+244bfbVyEhp+R3iaPYooPMy0XylUsLg4D8dmCI6ynNOAgFSi
+         HwMQaNnFsgKu2LAn5K25T1Kg06yVOPGFWR8oj1v/eqrsgNrStEtZ2QnxBX++/bsUdmcP
+         kSzg==
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Andreas Rohner <andreas.rohner@gmx.net>
 
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Andrew,
 
-This bug leads to reproducible silent data loss, despite the use of
-msync(), sync() and a clean unmount of the file system. It is easily
-reproducible with the following script:
+Please apply the following bugfix and send it to upstream.
 
-----------------[BEGIN SCRIPT]--------------------
-mkfs.nilfs2 -f /dev/sdb
-mount /dev/sdb /mnt
+It fixes a regression of nilfs2's mmap which was brought by the commit
+136e8770cd5d1fe3 "nilfs2: fix issue of nilfs_set_page_dirty() for page
+at EOF boundary".  Andreas Rohner recently found that the commit was
+not perfect and causing reproducible silent data loss issue.
 
-dd if=/dev/zero bs=1M count=30 of=/mnt/testfile
+Thanks in advance,
 
-umount /mnt
-mount /dev/sdb /mnt
-CHECKSUM_BEFORE="$(md5sum /mnt/testfile)"
+Ryusuke Konishi
+--
+Andreas Rohner (1):
+      nilfs2: fix data loss with mmap()
 
-/root/mmaptest/mmaptest /mnt/testfile 30 10 5
-
-sync
-CHECKSUM_AFTER="$(md5sum /mnt/testfile)"
-umount /mnt
-mount /dev/sdb /mnt
-CHECKSUM_AFTER_REMOUNT="$(md5sum /mnt/testfile)"
-umount /mnt
-
-echo "BEFORE MMAP:\t$CHECKSUM_BEFORE"
-echo "AFTER MMAP:\t$CHECKSUM_AFTER"
-echo "AFTER REMOUNT:\t$CHECKSUM_AFTER_REMOUNT"
-----------------[END SCRIPT]--------------------
-
-The mmaptest tool looks something like this (very simplified, with
-error checking removed):
-
-----------------[BEGIN mmaptest]--------------------
-data = mmap(NULL, file_size - file_offset, PROT_READ | PROT_WRITE,
-		MAP_SHARED, fd, file_offset);
-
-for (i = 0; i < write_count; ++i) {
-	memcpy(data + i * 4096, buf, sizeof(buf));
-	msync(data, file_size - file_offset, MS_SYNC))
-}
-----------------[END mmaptest]--------------------
-
-The output of the script looks something like this:
-
-BEFORE MMAP:    281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
-AFTER MMAP:     6604a1c31f10780331a6850371b3a313  /mnt/testfile
-AFTER REMOUNT:  281ed1d5ae50e8419f9b978aab16de83  /mnt/testfile
-
-So it is clear, that the changes done using mmap() do not survive a
-remount. This can be reproduced a 100% of the time. The problem was
-introduced with the following commit:
-
-136e877 nilfs2: fix issue of nilfs_set_page_dirty() for page at EOF
-boundary
-
-If the page was read with mpage_readpage() or mpage_readpages() for
-example, then  it has no buffers attached to it. In that case
-page_has_buffers(page) in nilfs_set_page_dirty() will be false.
-Therefore nilfs_set_file_dirty() is never called and the pages are never
-collected and never written to disk.
-
-This patch fixes the problem by also calling nilfs_set_file_dirty() if
-the page has no buffers attached to it.
-
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Tested-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
----
  fs/nilfs2/inode.c |    6 +++++-
  1 file changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 6252b17..9e3c525 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -219,10 +219,10 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
- 
- static int nilfs_set_page_dirty(struct page *page)
- {
-+	struct inode *inode = page->mapping->host;
- 	int ret = __set_page_dirty_nobuffers(page);
- 
- 	if (page_has_buffers(page)) {
--		struct inode *inode = page->mapping->host;
- 		unsigned nr_dirty = 0;
- 		struct buffer_head *bh, *head;
- 
-@@ -245,6 +245,10 @@ static int nilfs_set_page_dirty(struct page *page)
- 
- 		if (nr_dirty)
- 			nilfs_set_file_dirty(inode, nr_dirty);
-+	} else if (ret) {
-+		unsigned nr_dirty = 1 << (PAGE_SHIFT - inode->i_blkbits);
-+
-+		nilfs_set_file_dirty(inode, nr_dirty);
- 	}
- 	return ret;
- }
--- 
-1.7.9.4
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
