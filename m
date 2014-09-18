@@ -1,46 +1,51 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [ANNOUNCE] nilfs-utils 2.2.2 release
-Date: Fri, 19 Sep 2014 02:51:46 +0900 (JST)
-Message-ID: <20140919.025146.2174333538539183466.konishi.ryusuke@lab.ntt.co.jp>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH] nilfs2: fix data loss with mmap()
+Date: Thu, 18 Sep 2014 12:17:08 -0700
+Message-ID: <20140918121708.c9e9678c9ea76b057377d843@linux-foundation.org>
+References: <1411052185-8118-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+	<1411052185-8118-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:subject:from:mime-version:content-type
-         :content-transfer-encoding;
-        bh=AytshFKOns83VQqIEM4V0iDs1+ZdtTTegfqvPmD2SXo=;
-        b=dGH91TYPNHjMlsOfJhCoCP8N+DPbCzESWKth2Il6ua9MqeG8cc6UUvdgUM/tyVA3hr
-         JYkeSi0jrXf7eIGjQb47Sv2bx+dBogV4zC/nziHVoT7rMk2dG/kUYDuQi1YfMcD3wWvV
-         vei4pxQ/PIbdHf1Yh67tiRcTJgIM3Bhyj7dc8qvOkQxNKpT5DPbHBmnIFGPRgZwid+WE
-         6spoVNetYE+TUWO5SS8ni7yczuZEH7DzS9+bEKZ469NfAfQ+4NF9OgNarW9d4DKXAn53
-         5/podt1ITa1o0QdPeH7bQDXuacxrmMML00ZxJLE025JTIO7ERL145KqmVkAB3gHiCv/S
-         sx3g==
+In-Reply-To: <1411052185-8118-2-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-nilfs-utils 2.2.2 was released on:
+On Thu, 18 Sep 2014 23:56:25 +0900 Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
 
- http://nilfs.sourceforge.net/en/download.html
+> From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+> 
+> This bug leads to reproducible silent data loss, despite the use of
+> msync(), sync() and a clean unmount of the file system. It is easily
+> reproducible with the following script:
+> 
+> ...
+>
+> --- a/fs/nilfs2/inode.c
+> +++ b/fs/nilfs2/inode.c
+> @@ -219,10 +219,10 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
+>  
+>  static int nilfs_set_page_dirty(struct page *page)
+>  {
+> +	struct inode *inode = page->mapping->host;
+>  	int ret = __set_page_dirty_nobuffers(page);
+>  
+>  	if (page_has_buffers(page)) {
+> -		struct inode *inode = page->mapping->host;
+>  		unsigned nr_dirty = 0;
+>  		struct buffer_head *bh, *head;
+>  
+> @@ -245,6 +245,10 @@ static int nilfs_set_page_dirty(struct page *page)
+>  
+>  		if (nr_dirty)
+>  			nilfs_set_file_dirty(inode, nr_dirty);
+> +	} else if (ret) {
+> +		unsigned nr_dirty = 1 << (PAGE_SHIFT - inode->i_blkbits);
 
-This release fixes an issue of mount.nilfs2 program which is causing
-failure of cleanerd's invocation under systemd 216+.
-
-Changes from nilfs-utils-2.2.1 are as follows:
-
-Dan McGee (2):
-      libmount: don't base GC startup on no-mtab context
-      lscp: always show snapshots, even if marked minor
-
-Ryusuke Konishi (3):
-      lscp: show snapshots, even if marked minor (reverse mode)
-      mount.nilfs2: invoke cleanerd even if no-mtab option is specified
-      nilfs-utils: v2.2.2 release
-
-Thanks,
-Ryusuke Konishi
+It's quite cosmetic, but it is conventional to use PAGE_CACHE_SHIFT here.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
