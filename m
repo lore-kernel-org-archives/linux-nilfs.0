@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Subject: Re: [PATCH v2] nilfs2: improve the performance of fdatasync()
-Date: Tue, 23 Sep 2014 13:11:19 +0200
-Message-ID: <54215557.2010505@gmx.net>
+Date: Tue, 23 Sep 2014 14:17:05 +0200
+Message-ID: <542164C1.7090504@gmx.net>
 References: <1411462018-5780-1-git-send-email-andreas.rohner@gmx.net> <20140923.195012.716508926019147354.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -52,21 +52,57 @@ On 2014-09-23 12:50, Ryusuke Konishi wrote:
 >  # dd if=/dev/zero of=/nilfs/test bs=4k count=1 seek=9999
 >  # dd if=/dev/urandom of=/nilfs/test bs=8k count=1 seek=50 conv=fdatasync,notrunc,nocreat
 >  # reboot -nfh
-
-Very nice script to test this!
-
+> 
 > We can use dumpseg command to confirm that the datasync segment is
 > actually made or how recovery has done after mount.
 
-I already tested this before I sent in my patch. I used a virtual
-machine and just killed the process after the fdatasync(). After the
-rollforward NILFS reports the correct number of blocks salvaged and the
-md5sum of the file is correct.
+I tested it using your script, but I duplicated the second line twice
+with different values for seek and added a md5sum at the end. So in
+total 6 blocks were written with fdatasync().
 
-I will test it again with dumpseg the way you suggested.
+The checksum before the reboot was: 66500bd6c7a1f89ed860cd7203f5c6e8
+
+The last lines of the output of dumpseg after reboot:
+
+  partial segment: blocknr = 26, nblocks = 3
+    creation time = 2014-09-23 12:02:56
+    nfinfo = 1
+    finfo
+      ino = 12, cno = 3, nblocks = 2, ndatblk = 2
+        vblocknr = 16385, blkoff = 100, blocknr = 27
+        vblocknr = 16386, blkoff = 101, blocknr = 28
+  partial segment: blocknr = 29, nblocks = 3
+    creation time = 2014-09-23 12:02:56
+    nfinfo = 1
+    finfo
+      ino = 12, cno = 3, nblocks = 2, ndatblk = 2
+        vblocknr = 16387, blkoff = 120, blocknr = 30
+        vblocknr = 16389, blkoff = 121, blocknr = 31
+  partial segment: blocknr = 32, nblocks = 3
+    creation time = 2014-09-23 12:02:56
+    nfinfo = 1
+    finfo
+      ino = 12, cno = 3, nblocks = 2, ndatblk = 2
+        vblocknr = 16390, blkoff = 140, blocknr = 33
+        vblocknr = 16391, blkoff = 141, blocknr = 34
+
+The output of dmesg for the rollforward:
+
+[  110.701337] NILFS warning: mounting unchecked fs
+[  110.833196] NILFS (device sdb): salvaged 6 blocks
+[  110.837311] segctord starting. Construction interval = 5 seconds, CP
+frequency < 30 seconds
+[  110.878959] NILFS: recovery complete.
+[  110.882674] segctord starting. Construction interval = 5 seconds, CP
+frequency < 30 seconds
+
+The checksum after rollforward: 66500bd6c7a1f89ed860cd7203f5c6e8
+
+Works like a charm :)
 
 br,
 Andreas Rohner
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
