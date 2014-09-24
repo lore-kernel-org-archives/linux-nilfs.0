@@ -1,120 +1,221 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: improve inode allocation (was Re: [PATCH v2] nilfs2: improve
- the performance of fdatasync())
-Date: Wed, 24 Sep 2014 10:01:05 +0200
-Message-ID: <54227A41.2090509@gmx.net>
-References: <542164C1.7090504@gmx.net>	<20140923.214701.237540042662663531.konishi.ryusuke@lab.ntt.co.jp>	<542181ED.606@gmx.net> <20140924.013505.1831094490963391096.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH tracepoints] nilfs2: add a tracepoint for transaction events
+Date: Wed, 24 Sep 2014 23:18:31 +0900
+Message-ID: <1411568311-6711-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20140924.013505.1831094490963391096.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:from:to:cc:subject:date:message-id;
+        bh=BBzHmx5IsBYf/rqfg1JkBFx14l8EuXkELswVmeqlfIs=;
+        b=qUrEYeWH3rdDCd95pfvveGx3p8142EPSK/ae+NTBYFjUl5hep1IVB3I7uDOnanpHll
+         uzYzOpVTfoF5BvM0OoQs5qzZ7jyLt4VzZ14dY3CHZciqrc4VWnYgWeB/OLs7m/rWAnzq
+         CE5ZUk/nPsiCV+VVWzTECqOPOweTWqM0/0/a0SVQImDkAhBBTvmuBbaetEHKN1tYWQTQ
+         3fCsUa4aF/psAMIuvnOAYePl02s3x2Cy7jgbuGqiK1Ufm2iuwFLSGh2dRkeTnmkMneHg
+         +dp/mpCPUFYG6FhlfToI2U37OPQdZ97a2bsl7sNy662nOLfajds1haUH2h3z8rmmsX6K
+         ym6w==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On 2014-09-23 18:35, Ryusuke Konishi wrote:
-> On Tue, 23 Sep 2014 16:21:33 +0200, Andreas Rohner wrote:
->> On 2014-09-23 14:47, Ryusuke Konishi wrote:
->>> By the way, if you are interested in improving this sort of bad
->>> implemetation, please consider improving inode allocator that we can
->>> see at nilfs_ifile_create_inode().
->>>
->>> It always searches free inode from ino=0.  It doesn't use the
->>> knowledge of the last allocated inode number (inumber) nor any
->>> locality of close-knit inodes such as a file and the directory that
->>> contains it.
->>>
->>> A simple strategy is to start finding a free inode from (inumber of
->>> the parent directory) + 1, but this may not work efficiently if the
->>> namespace has multiple active directories, and requires that inumbers
->>> of directories are suitably dispersed.  On the other hands, it
->>> increases the number of disk read and also increases the number of
->>> inode blocks to be written out if inodes are allocated too discretely.
->>>
->>> The optimal strategy may differ from that of other file systems
->>> because inode blocks are not allocated to static places in nilfs.  For
->>> example, it may be better if we gather inodes of frequently accessed
->>> directories into the first valid inode block (on ifile) for nilfs.
->>
->> Sure I'll have a look at it, but this seems to be a hard problem.
->>
->> Since one inode has 128 bytes a typical block of 4096 contains 32
->> inodes. We could just allocate every directory inode into an empty block
->> with 31 free slots. Then any subsequent file inode allocation would
->> first search the 31 slots of the parent directory and if they are full,
->> fallback to a search starting with ino 0.
-> 
-> We can utilize several characteristics of metadata files for this
-> problem:
-> 
-> - It supports read ahead feature.  when ifile reads an inode block, we
->   can expect that several subsequent blocks will be loaded to page
->   cache in the background.
-> 
-> - B-tree of NILFS is efficient to hold sparse blocks.  This means that
->   putting close-knit 32 * n inodes far from offset=0 is not so bad.
-> 
-> - ifile now can have private variables in nilfs_ifile_info (on-memory)
->   struct.  They are available to store context information of
->   allocator without compatibility issue.
-> 
-> - We can also use nilfs_inode_info struct of directories to store
->   directory-based context of allocator without losing compatibility.
-> 
-> - Only caller of nilfs_ifile_create_inode() is nilfs_new_inode(), and
->   this function knows the inode of the parent directory.
+This patch adds a tracepoint for transaction events of nilfs. With the
+tracepoint, these events can be tracked: begin, abort, commit,
+trylock, lock, and unlock. Basically, these events have corresponding
+functions e.g. begin event corresponds nilfs_transaction_begin(). The
+unlock event is an exception. It corresponds to the iteration in
+nilfs_transaction_lock().
 
-Then the only problem is how to efficiently allocate the directories. We
-could do something similar to the Orlov allocator used by the ext2/3/4
-file systems:
+Only one tracepoint is introcued: nilfs2_transaction_transition. The
+above events are distinguished with newly introduced enum. With this
+tracepoint, we can analyse a critical section of segment constructoin.
 
-1. We spread first level directories. Every one gets a full bitmap
-   block (or half a bitmap block)
-2. For the other directories we will try to choose the bitmap block of
-   the parent unless the number of free inodes is below a certain
-   threshold. Within this bitmap block the directories should also
-   spread out.
+Sample output by tpoint of perf-tools:
+              cp-4457  [000] ...1    63.266220: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800bf5ccc58, count = 1, flags = 9 state = BEGIN
+              cp-4457  [000] ...1    63.266221: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800bf5ccc58, count = 0, flags = 9 state = COMMIT
+              cp-4457  [000] ...1    63.266221: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800bf5ccc58, count = 0, flags = 9 state = COMMIT
+        segctord-4371  [001] ...1    68.261196: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800b889bdf8, count = 0, flags = 10 state = TRYLOCK
+        segctord-4371  [001] ...1    68.261280: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800b889bdf8, count = 0, flags = 10 state = LOCK
+        segctord-4371  [001] ...1    68.261877: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800b889bdf8, count = 1, flags = 10 state = BEGIN
+        segctord-4371  [001] ...1    68.262116: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800b889bdf8, count = 0, flags = 18 state = COMMIT
+        segctord-4371  [001] ...1    68.265032: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800b889bdf8, count = 0, flags = 18 state = UNLOCK
+        segctord-4371  [001] ...1   132.376847: nilfs2_transaction_transition: sb = ffff8802112b8800, ti = ffff8800b889bdf8, count = 0, flags = 10 state = TRYLOCK
 
-File inodes will just start a linear search at the parents inode if
-there is enough space left in the bitmap.
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/segment.c           | 33 ++++++++++++++++++++++++++-
+ include/trace/events/nilfs2.h | 53 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 85 insertions(+), 1 deletion(-)
 
->> This way if a directory has less than 32 files, all its inodes can be
->> read in with one single block. If a directory has more than 32 files its
->> inodes will spill over into the slots of other directories.
->>
->> But I am not sure if this strategy would pay off.
-> 
-> Yes, for small namespaces, the current implementation may be enough.
-> We should first decide how we evaluate the effect of the algorithm.
-> It may be the scalability of namespace.
-
-It will be very difficult to measure the time accurately. I would
-suggest to simply count the number of reads and writes on the device.
-This can be easily done:
-
-mkfs.nilfs2 /dev/sdb
-
-cat /proc/diskstats > rw_before.txt
-
-do_tests
-
-extract_kernel_sources
-
-...
-
-find /mnt
-
-cat /proc/diskstats > rw_after.txt
-
-The algorithm with fewer writes and reads wins.
-
-I am still not convinced that all of this will pay off, but I will try a
-few things and see if it works.
-
-br,
-Andreas Rohner
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 0fcf8e7..1dd9330 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -213,11 +213,18 @@ int nilfs_transaction_begin(struct super_block *sb,
+ {
+ 	struct the_nilfs *nilfs;
+ 	int ret = nilfs_prepare_segment_lock(ti);
++	struct nilfs_transaction_info *trace_ti;
+ 
+ 	if (unlikely(ret < 0))
+ 		return ret;
+-	if (ret > 0)
++	if (ret > 0) {
++		trace_ti = current->journal_info;
++
++		trace_nilfs2_transaction_transition(sb, trace_ti,
++				    trace_ti->ti_count, trace_ti->ti_flags,
++				    TRACE_NILFS2_TRANSACTION_BEGIN);
+ 		return 0;
++	}
+ 
+ 	sb_start_intwrite(sb);
+ 
+@@ -228,6 +235,11 @@ int nilfs_transaction_begin(struct super_block *sb,
+ 		ret = -ENOSPC;
+ 		goto failed;
+ 	}
++
++	trace_ti = current->journal_info;
++	trace_nilfs2_transaction_transition(sb, trace_ti, trace_ti->ti_count,
++					    trace_ti->ti_flags,
++					    TRACE_NILFS2_TRANSACTION_BEGIN);
+ 	return 0;
+ 
+  failed:
+@@ -260,6 +272,8 @@ int nilfs_transaction_commit(struct super_block *sb)
+ 	ti->ti_flags |= NILFS_TI_COMMIT;
+ 	if (ti->ti_count > 0) {
+ 		ti->ti_count--;
++		trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
++			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_COMMIT);
+ 		return 0;
+ 	}
+ 	if (nilfs->ns_writer) {
+@@ -271,6 +285,9 @@ int nilfs_transaction_commit(struct super_block *sb)
+ 			nilfs_segctor_do_flush(sci, 0);
+ 	}
+ 	up_read(&nilfs->ns_segctor_sem);
++	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
++			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_COMMIT);
++
+ 	current->journal_info = ti->ti_save;
+ 
+ 	if (ti->ti_flags & NILFS_TI_SYNC)
+@@ -289,10 +306,15 @@ void nilfs_transaction_abort(struct super_block *sb)
+ 	BUG_ON(ti == NULL || ti->ti_magic != NILFS_TI_MAGIC);
+ 	if (ti->ti_count > 0) {
+ 		ti->ti_count--;
++		trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
++			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_ABORT);
+ 		return;
+ 	}
+ 	up_read(&nilfs->ns_segctor_sem);
+ 
++	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
++		    ti->ti_flags, TRACE_NILFS2_TRANSACTION_ABORT);
++
+ 	current->journal_info = ti->ti_save;
+ 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
+ 		kmem_cache_free(nilfs_transaction_cachep, ti);
+@@ -339,6 +361,9 @@ static void nilfs_transaction_lock(struct super_block *sb,
+ 	current->journal_info = ti;
+ 
+ 	for (;;) {
++		trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
++			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_TRYLOCK);
++
+ 		down_write(&nilfs->ns_segctor_sem);
+ 		if (!test_bit(NILFS_SC_PRIOR_FLUSH, &sci->sc_flags))
+ 			break;
+@@ -350,6 +375,9 @@ static void nilfs_transaction_lock(struct super_block *sb,
+ 	}
+ 	if (gcflag)
+ 		ti->ti_flags |= NILFS_TI_GC;
++
++	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
++			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_LOCK);
+ }
+ 
+ static void nilfs_transaction_unlock(struct super_block *sb)
+@@ -364,6 +392,9 @@ static void nilfs_transaction_unlock(struct super_block *sb)
+ 	current->journal_info = ti->ti_save;
+ 	if (!list_empty(&ti->ti_garbage))
+ 		nilfs_dispose_list(nilfs, &ti->ti_garbage, 0);
++
++	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
++			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_UNLOCK);
+ }
+ 
+ static void *nilfs_segctor_map_segsum_entry(struct nilfs_sc_info *sci,
+diff --git a/include/trace/events/nilfs2.h b/include/trace/events/nilfs2.h
+index 285d5f3..2f4ee06 100644
+--- a/include/trace/events/nilfs2.h
++++ b/include/trace/events/nilfs2.h
+@@ -42,6 +42,59 @@ TRACE_EVENT(nilfs2_collection_stage_transition,
+ 		      show_collection_stage(__entry->stage))
+ );
+ 
++#ifndef TRACE_HEADER_MULTI_READ
++enum nilfs2_transaction_transition_state {
++	TRACE_NILFS2_TRANSACTION_BEGIN,
++	TRACE_NILFS2_TRANSACTION_COMMIT,
++	TRACE_NILFS2_TRANSACTION_ABORT,
++	TRACE_NILFS2_TRANSACTION_TRYLOCK,
++	TRACE_NILFS2_TRANSACTION_LOCK,
++	TRACE_NILFS2_TRANSACTION_UNLOCK,
++};
++#endif
++
++#define show_transaction_state(type)			\
++ __print_symbolic(type,					\
++ { TRACE_NILFS2_TRANSACTION_BEGIN, "BEGIN" },		\
++ { TRACE_NILFS2_TRANSACTION_COMMIT, "COMMIT" }, 	\
++ { TRACE_NILFS2_TRANSACTION_ABORT, "ABORT" },		\
++ { TRACE_NILFS2_TRANSACTION_TRYLOCK, "TRYLOCK" },	\
++ { TRACE_NILFS2_TRANSACTION_LOCK, "LOCK" },		\
++ { TRACE_NILFS2_TRANSACTION_UNLOCK, "UNLOCK" })
++
++TRACE_EVENT(nilfs2_transaction_transition,
++	    TP_PROTO(struct super_block *sb,
++		     struct nilfs_transaction_info *ti,
++		     int count,
++		     unsigned int flags,
++		     enum nilfs2_transaction_transition_state state),
++
++	    TP_ARGS(sb, ti, count, flags, state),
++
++	    TP_STRUCT__entry(
++		    __field(void *, sb)
++		    __field(void *, ti)
++		    __field(int, count)
++		    __field(unsigned int, flags)
++		    __field(int, state)
++	    ),
++
++	    TP_fast_assign(
++		    __entry->sb = sb;
++		    __entry->ti = ti;
++		    __entry->count = count;
++		    __entry->flags = flags;
++		    __entry->state = state;
++		    ),
++
++	    TP_printk("sb = %p, ti = %p, count = %d, flags = %x state = %s",
++		      __entry->sb,
++		      __entry->ti,
++		      __entry->count,
++		      __entry->flags,
++		      show_transaction_state(__entry->state))
++);
++
+ #endif /* _TRACE_NILFS2_H */
+ 
+ /* This part must be outside protection */
+-- 
+1.9.1
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
