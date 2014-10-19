@@ -1,111 +1,101 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH 0/2] nilfs2: improve inode allocation algorithm
-Date: Mon, 13 Oct 2014 18:18:34 +0200
-Message-ID: <543BFB5A.9090301@gmx.net>
-References: <1413110303-14246-1-git-send-email-andreas.rohner@gmx.net> <20141013.235259.2281467595116868273.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 0/1] improve inode allocation
+Date: Sun, 19 Oct 2014 19:17:10 +0200
+Message-ID: <1413739031-13347-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141013.235259.2281467595116868273.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-On 2014-10-13 16:52, Ryusuke Konishi wrote:
-> Hi,
-> On Sun, 12 Oct 2014 12:38:21 +0200, Andreas Rohner wrote:
->> Hi,
->>
->> The algorithm simply makes sure, that after a directory inode there are
->> a certain number of free slots available and the search for file inodes
->> is started at their parent directory.
->>
->> I havn't had the time yet to do a full scale performance test of it, but 
->> my simple preliminary tests have shown, that the allocation of inodes 
->> takes a little bit longer and the lookup is a little bit faster. My 
->> simple test just creates 1500 directories and after that creates 10 
->> files in each directory.
->>
->> So more testing is definetly necessary, but I wanted to get some 
->> feedback about the design first. Is my code a step in the right 
->> direction?
->>
->> Best regards,
->> Andreas Rohner
->>
->> Andreas Rohner (2):
->>   nilfs2: support the allocation of whole blocks of meta data entries
->>   nilfs2: improve inode allocation algorithm
->>
->>  fs/nilfs2/alloc.c   | 161 ++++++++++++++++++++++++++++++++++++++++++++++++----
->>  fs/nilfs2/alloc.h   |  18 +++++-
->>  fs/nilfs2/ifile.c   |  63 ++++++++++++++++++--
->>  fs/nilfs2/ifile.h   |   6 +-
->>  fs/nilfs2/inode.c   |   6 +-
->>  fs/nilfs2/segment.c |   5 +-
->>  6 files changed, 235 insertions(+), 24 deletions(-)
-> 
-> I don't know whether this patchset is going in the right direction.
-> .. we should first measure how the original naive allocator is bad in
-> comparison with an elaborately designed allocator like this.  But, I
-> will add some comments anyway:
+Hi,
 
-I think the alignment creates a lot of overhead, because every directory
-uses up a whole block in the ifile. I could also create a simpler patch
-that only stores the last allocated inode number in struct
-nilfs_ifile_info and starts the search from there for the next
-allocation. Then I can test the three versions against each other in a
-large scale test.
+The following patch is a very simplified version of the the one I sent 
+in a week ago. My benchmarks showed, that the aligned allocation of 
+directories create too much overhead.
 
->  1) You must not use sizeof(struct nilfs_inode) to get inode size.
->     The size of on-disk inodes is variable and you have to use
->     NILFS_MDT(ifile)->mi_entry_size to ensure compatibility.
->     To get ipb (= number of inodes per block), you should use
->     NILFS_MDT(ifile)->mi_entries_per_block.
->     Please remove nilfs_ifile_inodes_per_block().  It's redundant.
+I used a very simple C program that creates millions of inodes as a 
+benchmark. I uploaded the source code to github:
 
-Agreed.
+https://github.com/zeitgeist87/inodetest
 
->  2) __nilfs_palloc_prepare_alloc_entry()
->     The argument block_size is so confusing. Usually we use it
->     for the size of disk block.
->     Please use a proper word "alignment_size" or so.
+Here are the results:
 
-Yes that's true "alignment_size" sounds better.
+1.) One process, 20 million inodes:
+    a) Normal Nilfs
+        $ time inodetest 1000 1000 20
+        real    3m50.431s
+        user    0m5.647s
+        sys     2m50.760s
 
->  3) nilfs_palloc_find_available_slot_align32()
->     This function seems to be violating endian compatibility.
->     The order of two 32-bit words in a 64-bit word in little endian
->     architectures differs from that of big endian architectures.
-> 
->     Having three different implementations looks too overkill to me at
->     this time.  It should be removed unless it will make a significant
->     difference.
+        $ time find ./ > /dev/null
+        real    5m49.021s
+        user    0m27.917s
+        sys     1m14.197s
+    b) Improved Nilfs
+        $ time inodetest 1000 1000 20
+        real    2m31.857s
+        user    0m5.950s
+        sys     1m29.707s
 
-32 is the most common case (4096 block size and 128 inode size), so I
-thought it makes sense to optimize for it. But it is not necessary and
-it shouldn't make a big difference.
+        $ time find ./ > /dev/null
+        real    5m49.060s
+        user    0m27.787s
+        sys     1m13.673s
+2.) Three processes in parallel, total of 60 million inodes
+    a) Normal Nilfs
+        $ time inodetest 1000 1000 20 &
+        $ time inodetest 1000 1000 20 &
+        $ time inodetest 1000 1000 20 &
+        real    20m21.914s
+        user    0m5.603s
+        sys     17m43.987s
 
->  4) nilfs_cpu_to_leul()
->     Adding this macro is not preferable.  It depends on endian.
->     Did you look for a generic macro which does the same thing ?
+        $ time find ./ > /dev/null
+        real    28m10.340s
+        user    1m38.477s
+        sys     5m9.133s
+    b) Improved Nilfs
+        $ time inodetest 1000 1000 20 &
+        $ time inodetest 1000 1000 20 &
+        $ time inodetest 1000 1000 20 &
+        real    6m21.609s
+        user    0m5.970s
+        sys     3m8.100s
 
-There are only macros for specific bit lengths, as far as I know. But
-unsigned long varies for 32bit and 64bit systems. You could also
-implement it like this:
+        $ time find ./ > /dev/null
+        real    30m35.320s
+        user    1m40.577s
+        sys     5m14.580s
 
-#if BITS_PER_LONG == 64
-#define nilfs_cpu_to_leul	cpu_to_le64
-#elif BITS_PER_LONG == 32
-#define nilfs_cpu_to_leul	cpu_to_le32
-#else
-#error BITS_PER_LONG not defined
-#endif
+There is a significant improvement in runtime for both the single and 
+multiple process case. It is also notable, that the improved version 
+scales much better for parallel processes.
 
-Best regards,
-Andreas Rohner
+"find ./ > /dev/null" is virtually identical for the benchmark 1.a and 
+1.b, but 2.b is consitently slower by 2 minutes, which I cannot 
+currently explain.
+
+I repeated the benchmarks several times and there were only tiny 
+variations in the results. 
+
+Best regards
+Andreas Rohner  
+
+Andreas Rohner (1):
+  nilfs2: improve inode allocation
+
+ fs/nilfs2/ifile.c   | 31 +++++++++++++++++++++++++++++--
+ fs/nilfs2/ifile.h   |  1 +
+ fs/nilfs2/segment.c |  5 ++++-
+ 3 files changed, 34 insertions(+), 3 deletions(-)
+
+-- 
+2.1.2
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
