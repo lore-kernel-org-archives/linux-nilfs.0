@@ -1,83 +1,59 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH 0/1] improve inode allocation
-Date: Tue, 21 Oct 2014 20:22:04 +0200
-Message-ID: <5446A44C.9040002@gmx.net>
-References: <1413739031-13347-1-git-send-email-andreas.rohner@gmx.net>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 1/1] nilfs2: remove unnecessary call to nilfs_construct_dsync_segment()
+Date: Sat,  1 Nov 2014 18:01:07 +0100
+Message-ID: <1414861267-13103-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1413739031-13347-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-Hi,
+If some of the pages between start and end are dirty, then
+filemap_write_and_wait_range() calls nilfs_writepages() with WB_SYNC_ALL
+set in the writeback_control structure. This initiates the construction
+of a dsync segment via nilfs_construct_dsync_segment(). The problem is,
+that the construction of a dsync segment doesnt't remove the inode from
+die i_dirty list and doesn't clear the NILFS_I_DIRTY flag. So
+nilfs_inode_dirty() still returns true after
+nilfs_construct_dsync_segment() succeded. This leads to an
+unnecessary second call to nilfs_construct_dsync_segment() in
+nilfs_sync_file() if datasync is true.
 
-I extended the inode test to delete a certain number of inodes.
+This patch simply removes the second invokation of
+nilfs_construct_dsync_segment().
 
-https://github.com/zeitgeist87/inodetest
+Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+---
+ fs/nilfs2/file.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-This should make the benchmark a little bit more realistic, but the
-results are essentially the same as before. For the following tests
-about 10% of the inodes were continuously deleted:
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index e9e3325..b12e0ab 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -46,13 +46,9 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+ 		return err;
+ 	mutex_lock(&inode->i_mutex);
+ 
+-	if (nilfs_inode_dirty(inode)) {
+-		if (datasync)
+-			err = nilfs_construct_dsync_segment(inode->i_sb, inode,
+-							    0, LLONG_MAX);
+-		else
+-			err = nilfs_construct_segment(inode->i_sb);
+-	}
++	if (!datasync && nilfs_inode_dirty(inode))
++		err = nilfs_construct_segment(inode->i_sb);
++
+ 	mutex_unlock(&inode->i_mutex);
+ 
+ 	nilfs = inode->i_sb->s_fs_info;
+-- 
+2.1.3
 
-1.) One process, 20 million inodes, 2 million deleted:
-    a) Normal Nilfs
-        $ time inodetest 1000 1000 20 100
-        real    3m49.793s
-        user    0m6.323s
-        sys     2m47.947s
-
-        $ time find ./ > /dev/null
-        real    5m21.020s
-        user    0m25.440s
-        sys     1m6.633s
-    b) Improved Nilfs
-        $ time inodetest 1000 1000 20 100
-        real    2m35.011s
-        user    0m6.847s
-        sys     1m33.093s
-
-        $ time find ./ > /dev/null
-        real    5m18.922s
-        user    0m25.323s
-        sys     1m6.877s
-2.) Three processes in parallel, 60 million inodes, 6 million deleted
-    a) Normal Nilfs
-        $ time inodetest 1000 1000 20 100 &
-        $ time inodetest 1000 1000 20 100 &
-        $ time inodetest 1000 1000 20 100 &
-        real    19m18.135s
-        user    0m7.973s
-        sys     16m16.833s
-
-        $ time find ./ > /dev/null
-        real    29m38.577s
-        user    1m32.763s
-        sys     4m44.140s
-    b) Improved Nilfs
-        $ time inodetest 1000 1000 20 100 &
-        $ time inodetest 1000 1000 20 100 &
-        $ time inodetest 1000 1000 20 100 &
-        real    6m30.458s
-        user    0m6.697s
-        sys     3m10.213s
-
-        $ time find ./ > /dev/null
-        real    28m50.304s
-        user    1m30.133s
-        sys     4m40.770s
-
-
-So the performance improved 32% for a single process and 66% for
-multiple processes.
-
-All benchmarks were run on an AMD Phenom II X6 1090T processor with 6
-cores and 8 GB of RAM.
-
-Best regards
-Andreas Rohner
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
