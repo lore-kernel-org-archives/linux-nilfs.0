@@ -1,9 +1,11 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2] nilfs2: avoid duplicate segment construction for
- fsync()
-Date: Tue, 11 Nov 2014 08:43:30 +0900 (JST)
-Message-ID: <20141111.084330.1647452726894509124.konishi.ryusuke@lab.ntt.co.jp>
-References: <1415548812-1018-1-git-send-email-andreas.rohner@gmx.net>
+Subject: Re: [PATCH 1/1] nilfs2: remove unnecessary call to
+ nilfs_construct_dsync_segment()
+Date: Wed, 12 Nov 2014 01:58:39 +0900 (JST)
+Message-ID: <20141112.015839.1565017343097841658.konishi.ryusuke@lab.ntt.co.jp>
+References: <5458F5BD.2030908@gmx.net>
+	<20141105.090704.583801206386960498.konishi.ryusuke@lab.ntt.co.jp>
+	<545A59A9.8090506@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,118 +13,89 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=DOEOKeJN7SRdzSc8FcfChOK8Pe9Wx/ALDgzdGiXHZqY=;
-        b=fc2DNTPZggJA5eudsZUTmK97AbDm1zD82YrzkXL6sMnjeTk38L9duy6I8rLoAlUb63
-         /uZ7fmBEjDs4asE1xpg9OEuU4MD3iljMTLZu9X6KY33V4taAONZXvn88mTxlg101Xh8G
-         4QTZaJhVQQXizMGaoXlCiiq1evknO2aDUSDjm1t20YG/xemwZw1LNNOUyL+zGdYVUW4W
-         nO/9cDt9HItGzZegcAATZcbZa7dM9m5ggphV3Ko3vD2NHli+dZwF0J9m4n9jks7f0OCc
-         UI04ilItgdGB06I/xsyLZuIz+hUkywuFLRdLgUpZWsIOmItuwddI0ok4ySIhokA11z1W
-         kz3A==
-In-Reply-To: <1415548812-1018-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+        bh=M22Czx5SSffF7XtfHx/U28eLWofbn/exCSn5P8JXGQ4=;
+        b=GXDKRqvtpwf1XGuu0b2Z5grKMzmifmw7CEE3FoN+3c2rT5Dap2vsgGlEi6rJiQSmnd
+         PlwfMmQO4/DR4CHxn/iPufn2E3IfrXeHQl29tBp3dCqEbtL4WQPNkncoBH0uTWnYDill
+         q9haAV74ajszHtjvBKYWiXJHCehhOiHAj0EM9TiyJoU03bQg7FczMLp9AtjHH53aIeUF
+         Bf5pILp7372DXGIj6pYysugrFcSswhBQXyZYaVxdxhrAb+mnSV0WSD3qnROb63fYgsf0
+         wRPRk1pNzHccGwZFSEaNA4xPvwGDEJB9BnvwMwZPxooyDy+BGQuc5iBYBLlQi+xRaI9B
+         9vng==
+In-Reply-To: <545A59A9.8090506-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sun,  9 Nov 2014 17:00:12 +0100, Andreas Rohner wrote:
-> This patch removes filemap_write_and_wait_range() from
-> nilfs_sync_file(), because it triggers a data segment construction by
-> calling nilfs_writepages() with WB_SYNC_ALL. A data segment construction
-> does not remove the inode from the i_dirty list and it does not clear
-> the NILFS_I_DIRTY flag. Therefore nilfs_inode_dirty() still returns
-> true, which leads to an unnecessary duplicate segment construction in
-> nilfs_sync_file().
+On Wed, 05 Nov 2014 18:08:57 +0100, Andreas Rohner wrote:
+> On 2014-11-05 01:07, Ryusuke Konishi wrote:
+>> On Tue, 04 Nov 2014 16:50:21 +0100, Andreas Rohner wrote:
+>> 
+>> I found filemap_write_and_wait_range() returns error status of
+>> already done page I/Os via filemap_check_errors().  We need to
+>> look into what it does.
 > 
-> A call to filemap_write_and_wait_range() is not needed, because NILFS2
-> does not rely on the generic writeback mechanisms. Instead it implements
-> its own mechanism to collect all dirty pages and write them into
-> segments. It is more efficient to initiate the segment construction
-> directly in nilfs_sync_file() without the detour over
-> filemap_write_and_wait_range().
+> I have looked into this a bit. AS_EIO and AS_ENOSPC are asynchronous
+> error flags, set by the function mapping_set_error(). However I don't
+> think this is relevant for NILFS2, because it implements its own
+> writepages() function:
 > 
-> Additionally the lock of i_mutex is not needed, because all code blocks
-> that are protected by i_mutex are also protected by a NILFS transaction:
+> nilfs_sync_file()
+>    filemap_write_and_wait_range()
+>       __filemap_fdatawrite_range()
+>          do_writepages()
+>             writepages()
+>                nilfs_writepages()
 > 
-> Function                i_mutex     nilfs_transaction
-> ------------------------------------------------------
-> nilfs_ioctl_setflags:   yes         yes
-> nilfs_fiemap:           yes         no
-> nilfs_write_begin:      yes         yes
-> nilfs_write_end:        yes         yes
-> nilfs_lookup:           yes         no
-> nilfs_create:           yes         yes
-> nilfs_link:             yes         yes
-> nilfs_mknod:            yes         yes
-> nilfs_symlink:          yes         yes
-> nilfs_mkdir:            yes         yes
-> nilfs_unlink:           yes         yes
-> nilfs_rmdir:            yes         yes
-> nilfs_rename:           yes         yes
-> nilfs_setattr:          yes         yes
+> mapping_set_error() would only be called if NILFS2 would use
+> generic_writepages() like this:
 > 
-> For nilfs_lookup() i_mutex is held for the parent directory, to protect
-> it from modification. The segment construction does not modify directory
-> inodes, so no lock is needed.
+> nilfs_sync_file()
+>    filemap_write_and_wait_range()
+>       __filemap_fdatawrite_range()
+>          do_writepages()
+>             generic_writepages()
 > 
-> nilfs_fiemap() reads the block layout on the disk, by using
-> nilfs_bmap_lookup_contig(). This is already protected by bmap->b_sem.
+> But it doesn't, so we can ignore filemap_check_errors(). Furthermore
+> NILFS2 doesn't use the generic writeback mechanism of the kernel at all.
+> It creates its own bio in nilfs_segbuf_submit_bh(), submits the bio with
+> nilfs_segbuf_submit_bio() and waits for it with nilfs_segbuf_wait() and
+> records IO-errors in segbuf->sb_err, so there is no need to check AS_EIO
+> and AS_ENOSPC.
+> 
+> I think filemap_write_and_wait_range() is mostly useful for in place
+> updates. A copy on write filesystem like NILFS2 doesn't need it. BTRFS
+> doesn't use it either in its fsync function...
 
-Thank you.
+OK.  I confirmed the current NILFS2 doesn't need to check AS_EIO and
+AS_ENOSPC because NILFS2 doesn't evict erroneous pages from the page
+cache; NILFS2 tries to keep such pages until they will be successfully
+written back to disk.  Therefore it can detect error of already
+finished page-IOs without calling filemap_fdatawait_range() or
+filemap_check_errors().
 
-I reached the same conclusion that the i_mutex in nilfs_sync_file()
-can be deleted.  The side effect of removing
-filemap_write_and_wait_range() still looks to need some care.
-Anyway, I queued this patch in my nilfs.git tree.
+On the other hand, regular filesystems need to these functions in
+fsync() because they will clear the dirty flags of pages and buffers
+even if the writeback failed due to an IO error or a disk full error.
+Without AS_EIO and AS_ENOSPC check, fsync() of these filesystems
+can miss the errors.
+
+However this design policy of NILFS2 has a defect that the system
+easily falls into a memory shortage with too many dirty pages when
+I/O errors will block.
+
+If we would introduce a simliar logic to NILFS2, it will need the
+following changes:
+
+ - nilfs_abort_logs() and nilfs_end_page_io() are changed so that they
+   call mapping_set_error() instead of redirtying data pages on error.
+
+ - nilfs_sync_file() will be also changed so that it first calls
+   filemap_fdatawait_range() and catches errors previously happened.
+
 
 Regards,
 Ryusuke Konishi
-
-
-> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-> ---
->  fs/nilfs2/file.c | 21 ++++++++-------------
->  1 file changed, 8 insertions(+), 13 deletions(-)
-> 
-> diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-> index e9e3325..1ad6bdf 100644
-> --- a/fs/nilfs2/file.c
-> +++ b/fs/nilfs2/file.c
-> @@ -41,19 +41,14 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
->  	struct inode *inode = file->f_mapping->host;
->  	int err;
->  
-> -	err = filemap_write_and_wait_range(inode->i_mapping, start, end);
-> -	if (err)
-> -		return err;
-> -	mutex_lock(&inode->i_mutex);
-> -
-> -	if (nilfs_inode_dirty(inode)) {
-> -		if (datasync)
-> -			err = nilfs_construct_dsync_segment(inode->i_sb, inode,
-> -							    0, LLONG_MAX);
-> -		else
-> -			err = nilfs_construct_segment(inode->i_sb);
-> -	}
-> -	mutex_unlock(&inode->i_mutex);
-> +	if (!nilfs_inode_dirty(inode))
-> +		return 0;
-> +
-> +	if (datasync)
-> +		err = nilfs_construct_dsync_segment(inode->i_sb, inode,
-> +						    start, end);
-> +	else
-> +		err = nilfs_construct_segment(inode->i_sb);
->  
->  	nilfs = inode->i_sb->s_fs_info;
->  	if (!err)
-> -- 
-> 2.1.3
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
