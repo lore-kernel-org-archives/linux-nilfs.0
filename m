@@ -1,110 +1,49 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH 1/1] nilfs2: remove unnecessary call to nilfs_construct_dsync_segment()
-Date: Tue, 11 Nov 2014 22:19:56 +0100
-Message-ID: <54627D7C.3010400@gmx.net>
-References: <5458F5BD.2030908@gmx.net>	<20141105.090704.583801206386960498.konishi.ryusuke@lab.ntt.co.jp>	<545A59A9.8090506@gmx.net> <20141112.015839.1565017343097841658.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20141112.015839.1565017343097841658.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Pieter Smith <pieter@boesman.nl>
+Subject: [PATCH 34/56] fs/nilfs2: support compiling out splice
+Date: Thu, 13 Nov 2014 22:23:11 +0100
+Message-ID: <1415913813-362-35-git-send-email-pieter@boesman.nl>
+References: <pieter@boesman.nl>
+ <1415913813-362-1-git-send-email-pieter@boesman.nl>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=0TNRFy/pfylAa9C6ApxUDfOadAO3qvCv2+lRFAYIlbs=;
+        b=UlnQv0B0UGZsqaviz140OnCIqc8s5VL209RxkxJ6R5d5DIF6xx1f24WgSI2rNkTa/Z
+         3yGZLnjldTt5Ej5fma0piJ3WyT+s8Qw5ZkCksAz4qwOfbViS9rng9Xt3Z+iPZhgRNBv3
+         XkRc/lhKfkvnpEbLCo3KxJJJ2Tls+cgSPrc9PVMcEPk7U34bsaAuXoil6nGfkL+dL8td
+         Qitebs3gKpEjKldGsw5LIcrLQuTXlpXdR4qQq72N7gQG9Gw3Ec1oux6pEUCmaQaB/F6D
+         AqtbSrPNeOOHZE8RTUGuHRlqUa+0RokcQYXbZ8TfDvaAsjXqgC1RnCk1P98dwvn+FH+d
+         /9DA==
+In-Reply-To: <1415913813-362-1-git-send-email-pieter@boesman.nl>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: pieter@boesman.nl
+Cc: Josh Triplett <josh@joshtriplett.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, "open list:NILFS2 FILESYSTEM" <linux-nilfs@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
 
-On 2014-11-11 17:58, Ryusuke Konishi wrote:
-> On Wed, 05 Nov 2014 18:08:57 +0100, Andreas Rohner wrote:
->> On 2014-11-05 01:07, Ryusuke Konishi wrote:
->>> On Tue, 04 Nov 2014 16:50:21 +0100, Andreas Rohner wrote:
->>>
->>> I found filemap_write_and_wait_range() returns error status of
->>> already done page I/Os via filemap_check_errors().  We need to
->>> look into what it does.
->>
->> I have looked into this a bit. AS_EIO and AS_ENOSPC are asynchronous
->> error flags, set by the function mapping_set_error(). However I don't
->> think this is relevant for NILFS2, because it implements its own
->> writepages() function:
->>
->> nilfs_sync_file()
->>    filemap_write_and_wait_range()
->>       __filemap_fdatawrite_range()
->>          do_writepages()
->>             writepages()
->>                nilfs_writepages()
->>
->> mapping_set_error() would only be called if NILFS2 would use
->> generic_writepages() like this:
->>
->> nilfs_sync_file()
->>    filemap_write_and_wait_range()
->>       __filemap_fdatawrite_range()
->>          do_writepages()
->>             generic_writepages()
->>
->> But it doesn't, so we can ignore filemap_check_errors(). Furthermore
->> NILFS2 doesn't use the generic writeback mechanism of the kernel at all.
->> It creates its own bio in nilfs_segbuf_submit_bh(), submits the bio with
->> nilfs_segbuf_submit_bio() and waits for it with nilfs_segbuf_wait() and
->> records IO-errors in segbuf->sb_err, so there is no need to check AS_EIO
->> and AS_ENOSPC.
->>
->> I think filemap_write_and_wait_range() is mostly useful for in place
->> updates. A copy on write filesystem like NILFS2 doesn't need it. BTRFS
->> doesn't use it either in its fsync function...
-> 
-> OK.  I confirmed the current NILFS2 doesn't need to check AS_EIO and
-> AS_ENOSPC because NILFS2 doesn't evict erroneous pages from the page
-> cache; NILFS2 tries to keep such pages until they will be successfully
-> written back to disk.  Therefore it can detect error of already
-> finished page-IOs without calling filemap_fdatawait_range() or
-> filemap_check_errors().
-> 
-> On the other hand, regular filesystems need to these functions in
-> fsync() because they will clear the dirty flags of pages and buffers
-> even if the writeback failed due to an IO error or a disk full error.
-> Without AS_EIO and AS_ENOSPC check, fsync() of these filesystems
-> can miss the errors.
+Compile out splice support from nilfs2 when the splice-family of syscalls is not
+supported by the system (i.e. CONFIG_SYSCALL_SPLICE is undefined).
 
-So it is necessary to catch the errors that happened before the call to
-fsync() and if the pages are not redirtied, the errors could be missed.
-I didn't know that.
+Signed-off-by: Pieter Smith <pieter@boesman.nl>
+---
+ fs/nilfs2/file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> However this design policy of NILFS2 has a defect that the system
-> easily falls into a memory shortage with too many dirty pages when
-> I/O errors will block.
->
-> If we would introduce a simliar logic to NILFS2, it will need the
-> following changes:
-> 
->  - nilfs_abort_logs() and nilfs_end_page_io() are changed so that they
->    call mapping_set_error() instead of redirtying data pages on error.
-> 
->  - nilfs_sync_file() will be also changed so that it first calls
->    filemap_fdatawait_range() and catches errors previously happened.
-
-I don't know if I fully understand the problem. So I may be completely
-wrong here.
-
-But if there is only one bad sector somewhere, which causes an I/O
-Error, you could potentially lose the data from a whole segment and
-there would possibly be data loss all over the file system. There could
-also be inconsistent metadata, because the metadata files would also
-lose data.
-
-NILFS has a good chance of recovering from an I/O error, because it will
-mark the segment with nilfs_sufile_set_error() and write the pages to a
-different segment. Isn't that worth the extra memory?
-
-Best regards,
-Andreas Rohner
-
-> Regards,
-> Ryusuke Konishi
-> 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 2497815..dc63aea 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -164,7 +164,7 @@ const struct file_operations nilfs_file_operations = {
+ 	.open		= generic_file_open,
+ 	/* .release	= nilfs_release_file, */
+ 	.fsync		= nilfs_sync_file,
+-	.splice_read	= generic_file_splice_read,
++	SPLICE_READ_INIT(generic_file_splice_read)
+ };
+ 
+ const struct inode_operations nilfs_file_inode_operations = {
+-- 
+1.9.1
