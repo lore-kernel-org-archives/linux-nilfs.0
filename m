@@ -1,15 +1,89 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v3] nilfs2: avoid duplicate segment construction for fsync()
-Date: Mon,  1 Dec 2014 19:03:11 +0100
-Message-ID: <1417456991-32642-1-git-send-email-andreas.rohner@gmx.net>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH 1/3] nilfs2: avoid duplicate segment construction for
+ fsync()
+Date: Tue, 02 Dec 2014 07:08:55 +0900 (JST)
+Message-ID: <20141202.070855.1111026133315369925.konishi.ryusuke@lab.ntt.co.jp>
+References: <1417452107-6411-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+	<1417452107-6411-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-type:content-transfer-encoding;
+        bh=MwUWKFzbmPshqU1ULmOypLT7O1CMg3tp+KJit45ONgA=;
+        b=OQwdVuJy1VXLmu+65l32M9ZvT2LkKgzosaNHHMdllqV3OXlu+fEb+fAGsPd9HmpVQu
+         x7krkxF4+9DAtoqlWlPaKCQKl3c0InIzot4dhQHh3kYTAITh5XFi1RiUEYMDvxpgvLg1
+         OCpwhCJrmmFSm/Bw4rARMuPh1DnDMbg8NySRC/WznmC7NyH7x3PoaXjqhAjmkUx2htcx
+         ey8T7gG5WafMQUJ4Uzu1zU6E9c90Flz6k4DQdSyFAhfz0n1DoMvea4VBC56HopAElsVE
+         zrVGqMjlvfvXVG81pNA/iGHurP4P1CfHWLpjDJ0h+760rhg2hjkH/f8yqxw65W65a4Zd
+         ra4Q==
+In-Reply-To: <1417452107-6411-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Andreas Rohner <andreas.rohner@gmx.net>
+
+On Tue,  2 Dec 2014 01:41:45 +0900, Ryusuke Konishi wrote:
+> From: Andreas Rohner <andreas.rohner@gmx.net>
+> 
+> This patch removes filemap_write_and_wait_range() from
+> nilfs_sync_file(), because it triggers a data segment construction by
+> calling nilfs_writepages() with WB_SYNC_ALL. A data segment construction
+> does not remove the inode from the i_dirty list and it does not clear
+> the NILFS_I_DIRTY flag. Therefore nilfs_inode_dirty() still returns
+> true, which leads to an unnecessary duplicate segment construction in
+> nilfs_sync_file().
+<snip>
+> diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+> index e9e3325..1ad6bdf 100644
+> --- a/fs/nilfs2/file.c
+> +++ b/fs/nilfs2/file.c
+> @@ -41,19 +41,14 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+>  	struct inode *inode = file->f_mapping->host;
+>  	int err;
+>  
+> -	err = filemap_write_and_wait_range(inode->i_mapping, start, end);
+> -	if (err)
+> -		return err;
+> -	mutex_lock(&inode->i_mutex);
+> -
+> -	if (nilfs_inode_dirty(inode)) {
+> -		if (datasync)
+> -			err = nilfs_construct_dsync_segment(inode->i_sb, inode,
+> -							    0, LLONG_MAX);
+> -		else
+> -			err = nilfs_construct_segment(inode->i_sb);
+> -	}
+> -	mutex_unlock(&inode->i_mutex);
+> +	if (!nilfs_inode_dirty(inode))
+> +		return 0;
+> +
+> +	if (datasync)
+> +		err = nilfs_construct_dsync_segment(inode->i_sb, inode,
+> +						    start, end);
+> +	else
+> +		err = nilfs_construct_segment(inode->i_sb);
+>  
+>  	nilfs = inode->i_sb->s_fs_info;
+>  	if (!err)
+
+I found this patch introduces another data integrity issue.  If
+nilfs_inode_dirty() is not true, it returns without calling
+nilfs_flush_device() and skips a disk cache flush.
+
+Andreas made a revised patch to correct it.
+
+Could you apply the following one instead ?
+
+Regards,
+Ryusuke Konishi
+-----
+From: Andreas Rohner <andreas.rohner@gmx.net>
+Date: Mon, 1 Dec 2014 19:03:11 +0100
+Subject: [PATCH] nilfs2: avoid duplicate segment construction for fsync()
 
 This patch removes filemap_write_and_wait_range() from
 nilfs_sync_file(), because it triggers a data segment construction by
@@ -53,7 +127,8 @@ inodes, so no lock is needed.
 nilfs_fiemap() reads the block layout on the disk, by using
 nilfs_bmap_lookup_contig(). This is already protected by bmap->b_sem.
 
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Signed-off-by: Andreas Rohner <andreas.rohner@gmx.net>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
  fs/nilfs2/file.c | 10 ++--------
  1 file changed, 2 insertions(+), 8 deletions(-)
@@ -87,9 +162,5 @@ index e9e3325..3a03e0a 100644
  	nilfs = inode->i_sb->s_fs_info;
  	if (!err)
 -- 
-2.1.3
+1.8.3.1
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
