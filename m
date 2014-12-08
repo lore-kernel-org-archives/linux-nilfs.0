@@ -1,166 +1,50 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/3] nilfs2: avoid duplicate segment construction for
- fsync()
-Date: Tue, 02 Dec 2014 07:08:55 +0900 (JST)
-Message-ID: <20141202.070855.1111026133315369925.konishi.ryusuke@lab.ntt.co.jp>
-References: <1417452107-6411-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-	<1417452107-6411-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=MwUWKFzbmPshqU1ULmOypLT7O1CMg3tp+KJit45ONgA=;
-        b=OQwdVuJy1VXLmu+65l32M9ZvT2LkKgzosaNHHMdllqV3OXlu+fEb+fAGsPd9HmpVQu
-         x7krkxF4+9DAtoqlWlPaKCQKl3c0InIzot4dhQHh3kYTAITh5XFi1RiUEYMDvxpgvLg1
-         OCpwhCJrmmFSm/Bw4rARMuPh1DnDMbg8NySRC/WznmC7NyH7x3PoaXjqhAjmkUx2htcx
-         ey8T7gG5WafMQUJ4Uzu1zU6E9c90Flz6k4DQdSyFAhfz0n1DoMvea4VBC56HopAElsVE
-         zrVGqMjlvfvXVG81pNA/iGHurP4P1CfHWLpjDJ0h+760rhg2hjkH/f8yqxw65W65a4Zd
-         ra4Q==
-In-Reply-To: <1417452107-6411-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Frank Louwers <frank-sbM3GJIWwA3bB1ukUYwELw@public.gmane.org>
+Subject: Binary diff between two snapshots?
+Date: Mon, 8 Dec 2014 20:12:49 +0100
+Message-ID: <4CB39535-0200-459E-8FCD-59F130F0D185@openminds.be>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2063\))
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Filter: OpenDKIM Filter v2.8.4 zimbra-om-001.openminds.be 3F1117453D4
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=openminds.be;
+	s=8410EF12-6E3E-11E3-B1CE-64217EF0CCC6; t=1418065970;
+	bh=G82bbNooknyTaAijYS/Nv/uWQmjRvxQiOzGwAZxWp2M=;
+	h=From:Content-Type:Content-Transfer-Encoding:Subject:Message-Id:
+	 Date:To:Mime-Version;
+	b=pNHf3EaJK76u0UCQ3NXluT/r2UU1UelGuXbHH2U6MHV6NPq17jr7KlKVT1+t6Oudq
+	 HqXLt62wh/KIHctBQvj8g3PKPGaXQ7//fngJKYRzIeLKqqVRl3P/C5BTmw+ffbAnR/
+	 yYBa9JhkhJVSrgg8Q1pQRG7/4QMHU38jT90TLCWU=
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Andreas Rohner <andreas.rohner@gmx.net>
+Content-Type: text/plain; charset="utf-8"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue,  2 Dec 2014 01:41:45 +0900, Ryusuke Konishi wrote:
-> From: Andreas Rohner <andreas.rohner@gmx.net>
-> 
-> This patch removes filemap_write_and_wait_range() from
-> nilfs_sync_file(), because it triggers a data segment construction by
-> calling nilfs_writepages() with WB_SYNC_ALL. A data segment construction
-> does not remove the inode from the i_dirty list and it does not clear
-> the NILFS_I_DIRTY flag. Therefore nilfs_inode_dirty() still returns
-> true, which leads to an unnecessary duplicate segment construction in
-> nilfs_sync_file().
-<snip>
-> diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-> index e9e3325..1ad6bdf 100644
-> --- a/fs/nilfs2/file.c
-> +++ b/fs/nilfs2/file.c
-> @@ -41,19 +41,14 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
->  	struct inode *inode = file->f_mapping->host;
->  	int err;
->  
-> -	err = filemap_write_and_wait_range(inode->i_mapping, start, end);
-> -	if (err)
-> -		return err;
-> -	mutex_lock(&inode->i_mutex);
-> -
-> -	if (nilfs_inode_dirty(inode)) {
-> -		if (datasync)
-> -			err = nilfs_construct_dsync_segment(inode->i_sb, inode,
-> -							    0, LLONG_MAX);
-> -		else
-> -			err = nilfs_construct_segment(inode->i_sb);
-> -	}
-> -	mutex_unlock(&inode->i_mutex);
-> +	if (!nilfs_inode_dirty(inode))
-> +		return 0;
-> +
-> +	if (datasync)
-> +		err = nilfs_construct_dsync_segment(inode->i_sb, inode,
-> +						    start, end);
-> +	else
-> +		err = nilfs_construct_segment(inode->i_sb);
->  
->  	nilfs = inode->i_sb->s_fs_info;
->  	if (!err)
+Hi all,
 
-I found this patch introduces another data integrity issue.  If
-nilfs_inode_dirty() is not true, it returns without calling
-nilfs_flush_device() and skips a disk cache flush.
+I was wondering if there is a way to get a binary =E2=80=9Cdiff=E2=80=9D=
+ between two snapshots? Output would be the contents off the blocks tha=
+t are changed + some metadata to tell which blocks it actually are. Goa=
+l would be:
 
-Andreas made a revised patch to correct it.
+- take FS at snapshot A, sync that snapshot to a different volume/LUN/r=
+emote machine/=E2=80=A6
+- [changes occur to the fs]
+- take FS at point B
 
-Could you apply the following one instead ?
+I=E2=80=99d now like to get the =E2=80=9Cdiff=E2=80=9D between A and B,=
+ and get it in a format we can apply to the secondary (=E2=80=9Cbackup=E2=
+=80=9D) volume that is still at level A. Outcome would be that the seco=
+nd volume is a copy of the first volume, at point B.
 
-Regards,
-Ryusuke Konishi
------
-From: Andreas Rohner <andreas.rohner@gmx.net>
-Date: Mon, 1 Dec 2014 19:03:11 +0100
-Subject: [PATCH] nilfs2: avoid duplicate segment construction for fsync()
+Inspiration: https://github.com/mpalmer/lvmsync
 
-This patch removes filemap_write_and_wait_range() from
-nilfs_sync_file(), because it triggers a data segment construction by
-calling nilfs_writepages() with WB_SYNC_ALL. A data segment construction
-does not remove the inode from the i_dirty list and it does not clear
-the NILFS_I_DIRTY flag. Therefore nilfs_inode_dirty() still returns
-true, which leads to an unnecessary duplicate segment construction in
-nilfs_sync_file().
 
-A call to filemap_write_and_wait_range() is not needed, because NILFS2
-does not rely on the generic writeback mechanisms. Instead it implements
-its own mechanism to collect all dirty pages and write them into
-segments. It is more efficient to initiate the segment construction
-directly in nilfs_sync_file() without the detour over
-filemap_write_and_wait_range().
 
-Additionally the lock of i_mutex is not needed, because all code blocks
-that are protected by i_mutex are also protected by a NILFS transaction:
+=46rank Louwers
+Openminds bvba
 
-Function                i_mutex     nilfs_transaction
-------------------------------------------------------
-nilfs_ioctl_setflags:   yes         yes
-nilfs_fiemap:           yes         no
-nilfs_write_begin:      yes         yes
-nilfs_write_end:        yes         yes
-nilfs_lookup:           yes         no
-nilfs_create:           yes         yes
-nilfs_link:             yes         yes
-nilfs_mknod:            yes         yes
-nilfs_symlink:          yes         yes
-nilfs_mkdir:            yes         yes
-nilfs_unlink:           yes         yes
-nilfs_rmdir:            yes         yes
-nilfs_rename:           yes         yes
-nilfs_setattr:          yes         yes
-
-For nilfs_lookup() i_mutex is held for the parent directory, to protect
-it from modification. The segment construction does not modify directory
-inodes, so no lock is needed.
-
-nilfs_fiemap() reads the block layout on the disk, by using
-nilfs_bmap_lookup_contig(). This is already protected by bmap->b_sem.
-
-Signed-off-by: Andreas Rohner <andreas.rohner@gmx.net>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
----
- fs/nilfs2/file.c | 10 ++--------
- 1 file changed, 2 insertions(+), 8 deletions(-)
-
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index e9e3325..3a03e0a 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -39,21 +39,15 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
- 	 */
- 	struct the_nilfs *nilfs;
- 	struct inode *inode = file->f_mapping->host;
--	int err;
--
--	err = filemap_write_and_wait_range(inode->i_mapping, start, end);
--	if (err)
--		return err;
--	mutex_lock(&inode->i_mutex);
-+	int err = 0;
- 
- 	if (nilfs_inode_dirty(inode)) {
- 		if (datasync)
- 			err = nilfs_construct_dsync_segment(inode->i_sb, inode,
--							    0, LLONG_MAX);
-+							    start, end);
- 		else
- 			err = nilfs_construct_segment(inode->i_sb);
- 	}
--	mutex_unlock(&inode->i_mutex);
- 
- 	nilfs = inode->i_sb->s_fs_info;
- 	if (!err)
--- 
-1.8.3.1
-
+Tel: +32 9 225 82 91--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
