@@ -1,45 +1,45 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH tracepoints 0/2] refine coding style of the tracepoints
- branch
-Date: Sun, 04 Jan 2015 12:39:01 +0900 (JST)
-Message-ID: <20150104.123901.677735674841558505.konishi.ryusuke@lab.ntt.co.jp>
-References: <1420112664-509-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 0/3] nilfs-utils: fix leak at nilfs_open and remove null checks before calling free()
+Date: Mon, 19 Jan 2015 02:34:35 +0900
+Message-ID: <1421602478-1896-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=WTV3mXDJgpqSnA4/sLzq5jE/trcp0nNW4HUjyK/zioc=;
-        b=w3n1l4N0gl8i1CbTo6xkI0g/TzkG+PH6iYQSj0usUegMitTHnLM9RW1kPmnLAMq9ck
-         HPB0SSGsBD1sICevwJiNE8ZH29w93CPOHHvEbye/6oaGJd+QnhogmoH7GPS0Vb86VVdz
-         Dxo80O7EuAsLkzYUTXZi+e5QQKNGFXaNdWzAxW1mzLivXLgw9ZBVQvzRxyCPQaz39RIH
-         po0AE2j5vly8/go592aBq/TZYGyRz8DdGkpp+iy5laxL/w/BKNmxYSAWH3Rx7HY1Jyvx
-         6OQ5sVUSZTjwPtlRnsmbZPEYKjmjnyV/vYpwcatisoGaf88aCbsUrTDXn6CYtG2EBx0t
-         iI3Q==
-In-Reply-To: <1420112664-509-1-git-send-email-mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=hgNTD5BcmTl3vxpP4Zm5zk1xvwhAkMo9QLi4JD+DGvs=;
+        b=fkJNH4ZkKdLbNWq0ZPAv8rX8LFIzaSjDaJeJP5KK+5y14U7GzniyA1nlxj/kUpuDD0
+         OqvPHxAoTduYByC3duXvQw5NAs9nomfp+E/k42s8b5e3ISpDJlJJF8GMjI/EmfmWOufg
+         NuseLwlKgZgMpXpzEvmMuYv7bUdYm71zVqMAzd1FVu3PRqunXix7Wuw3drk9ja4E4Tb3
+         ojz2G0xGsy6/Pit6D7R/X1rZKk9XUI5hsj+PVmu3JDU1KHzl4EcMQLqnefUBJauo+QdQ
+         lrPwatnw0++l6C34Uwz52t/iM0zgjVTIqtGAZSnUwa4JshHDLd1hybQ7ZRvy5n3e2iVJ
+         4a/w==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Mitake Hitoshi <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mitake Hitoshi <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi,
-On Thu,  1 Jan 2015 20:44:22 +0900, Mitake Hitoshi wrote:
-> This patchset refines the tracepoints branch of nilfs tree
-> (https://github.com/konis/nilfs2/tree/tracepoints).
-> 
-> The change unifies TP_printk() style. The new style doesn't put ','
-> between fields.
-> 
-> Ryusuke-san, could you replace the tracepoints branch with this
-> patchset?
+This series fixes potential leak at nilfs_open and removes unnecessary
+null checks before calling free().
 
-I've just updated the branch.
-
-Thanks,
 Ryusuke Konishi
+--
+Ryusuke Konishi (3):
+      lib/nilfs.c: fix potential leak at nilfs_open()
+      nilfs-utils: get rid of my_free()
+      nilfs-utils: get rid of null checks before calling free()
+
+ lib/cleaner_ctl.c          |  6 ++----
+ lib/gc.c                   |  3 +--
+ lib/nilfs.c                | 26 ++++++++++----------------
+ lib/realpath.c             |  9 +++------
+ sbin/mount/fstab.c         | 20 +++++++-------------
+ sbin/mount/mount.nilfs2.c  | 38 +++++++++++++++-----------------------
+ sbin/mount/umount.nilfs2.c | 15 ++++-----------
+ 7 files changed, 42 insertions(+), 75 deletions(-)
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
