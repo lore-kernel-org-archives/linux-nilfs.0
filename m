@@ -1,45 +1,40 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [ANNOUNCE] nilfs-utils 2.2.3 release
-Date: Mon, 16 Feb 2015 08:36:41 +0900 (JST)
-Message-ID: <20150216.083641.1051906482591177089.konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH 0/1] nilfs2: fix potential memory overrun on inode
+Date: Fri, 20 Feb 2015 22:46:34 +0900
+Message-ID: <1424439995-613-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:subject:from:mime-version:content-type
-         :content-transfer-encoding;
-        bh=yERoEx/Y1ArFY9YEVw5cDjV4QtbBE2LykBmoO1lv0RI=;
-        b=eB7fGagUWxSBbOg7TEqVSTR/SH5425WQL2a0imeCAJRGbz3QC7kevN5FJiEzfMtTlm
-         46BNTi5InbEweqQyb2DHqM+bCyfq/nM4Ou63g+48F1rZ7jYdEkvyBOdBxdyTRgfClN+A
-         FkGhvzlKg1GAzxRAYc2v5dbxiiI5o+u9BR/nQ8Tm051th7cmDheEOoRTZaPsK1FS+yRj
-         N6astQoB8rD5/WMOrmJCykCo7ehJ83k1A8kev+n96t2cCewQCh3c4Jtq8qeiHMTPw+kZ
-         1XDL/bCfbantPOJVIkPK9ACIqRgvt9hSHq4VttLwesr7rv2bCP9dEz7dEmitgu0REe6E
-         73Ew==
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=p298NAz0dOHb7H5YRPZKO+NQfk4UG77CLQbVTTpt7co=;
+        b=MQeqKdvftWicHyXsMWJxIGp5ZQ0PmdslHM3OhS6WWPsBehNLtKGaeH0dyqjGJyjtJk
+         lOE6hic5c4QCH/NniC/xHzcWI2/B6jBGCe81rouRc5cPfOgtyoQHNib9o3q9QwmkZ9RK
+         0spyoFvWm4eyIXmn+pSmev//zK5bCbyN86uL2aWvAsorjcaKF4tQZmvRn8aNrzrCjE12
+         qzVI1kPMhrsRHmDorn+Pprz+0RoXCUBB8q60VaMX+u0g0qpWFMwqNJoyad4jg/airC4+
+         js7DzdxbHv/c9pI0fK+Qt8YlDeHLtPI8jXAnXi76lsIDZenBiEj6FligSJeETsWh+M+6
+         5myg==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-nilfs-utils 2.2.3 was released on:
+Hi Andrew,
 
- http://nilfs.sourceforge.net/en/download.html
+please queue the following patch as a bug fix.  It fixes a memory
+overrun issue recently I found in the b-tree implementation of nilfs2.
 
-This release fixes potential leak of nilfs library and an issue that
-lscp command takes too long to output checkpoint list in the reverse
-direction.
-
-Changes from nilfs-utils-2.2.2 are as follows:
-
-Ryusuke Konishi (5):
-      lib/nilfs.c: fix potential leak at nilfs_open()
-      nilfs-utils: get rid of my_free()
-      nilfs-utils: get rid of null checks before calling free()
-      lscp: accelerate backward checkpoint listing
-      nilfs-utils: v2.2.3 release
-
-
+Thanks,
 Ryusuke Konishi
+--
+Ryusuke Konishi (1):
+      nilfs2: fix potential memory overrun on inode
+
+ fs/nilfs2/btree.c | 47 ++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 44 insertions(+), 3 deletions(-)
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
