@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/4] nilfs2: add bmap function to seek a valid key
-Date: Sun, 22 Feb 2015 21:34:08 +0900
-Message-ID: <1424608450-32240-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/4] nilfs2: unify type of key arguments in bmap interface
+Date: Sun, 22 Feb 2015 21:34:07 +0900
+Message-ID: <1424608450-32240-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1424608450-32240-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=nANsr4zBg9T6cYbcM2YPHEVONywad0/JmpHJK0SBSSI=;
-        b=vPFEZRVErTMnFUcyPl8LA3WqUwaIk79smCTst4+yL2ihF+fN+MnZNynaFEFNbJdZH9
-         jNsT8nbgjr4LHA1tVwNi+ANGC+s5+dSEYI7iUYGxq/8mr1a4PuRAO2HZM98ssZSqq4KF
-         j/Lhrl1GjTV0ens0kLqcVP4wkO6Gu7znED3ihsl0ys3fTO9wq4/vZFfwHH9mGc5/3eG8
-         VvQb5lIvUAfwimh/N2q2+fELDu7Eq99zXFqnXVbsx2D16NTRUa1rSG436m51ouvvazFF
-         7c2a65mpNE7yQ9BGUO9+5frHjnj4yTo5hGbdqwQXWTLyERj9rKUAfH+b5Ktgzk78sU1X
-         r6PA==
+        bh=dXQL+RJec3mzmIlWJm5+XjAYj9cphPCphGGhIiUYfyg=;
+        b=SyR5u9Lk3VEY3zZKD9VaazIGZSHcGb2tsr/gBFqaOk6OxZzPZ/8KS1M+BmQULGT4fK
+         r5FoeZINoBL1LrHwAcuMTQaLgovRlx7g1zrS8XPTiE/dWRlJXWz+mhTidqBiOWGZe4i/
+         EfAWWSdb79C/r/F4XvURxj/1KU2v+FWax7WQbsclhzwBc+b5uXu0SUNpU+2fxpQaE1ng
+         9mU+Ihx9x62jle21/ScQsiMs+rBzqY5+NPzOYPupQOytp0L486lapA/R52+NAYm/BzpZ
+         CU5hAlsvqt6EMTKKX8Xd6UdS7mqH1rWZrzOZN3zaGKxJyrWSo9WO7SGwQNBgKel+oBo9
+         Rcsg==
 In-Reply-To: <1424608450-32240-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -24,220 +24,156 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Add a new bmap function, nilfs_bmap_seek_key(), which seeks a valid
-entry and returns its key starting from a given key.  This function
-can be used to skip hole blocks efficiently.
+The type of key arguments in block mapping interface varies depending
+on function.  For instance, nilfs_bmap_lookup_at_level() takes "__u64"
+for its key argument whereas nilfs_bmap_lookup() takes "unsigned
+long".
+
+This fits them to "__u64" to eliminate the variation.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/bmap.c   | 31 +++++++++++++++++++++++++
- fs/nilfs2/bmap.h   |  5 ++++-
- fs/nilfs2/btree.c  | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/direct.c | 17 ++++++++++++++
- 4 files changed, 118 insertions(+), 1 deletion(-)
+ fs/nilfs2/alloc.c |  5 +++--
+ fs/nilfs2/bmap.c  | 17 ++++++-----------
+ fs/nilfs2/bmap.h  |  8 ++++----
+ fs/nilfs2/inode.c |  6 +++---
+ 4 files changed, 16 insertions(+), 20 deletions(-)
 
+diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+index 741fd02..8df0f3b 100644
+--- a/fs/nilfs2/alloc.c
++++ b/fs/nilfs2/alloc.c
+@@ -405,13 +405,14 @@ nilfs_palloc_rest_groups_in_desc_block(const struct inode *inode,
+ static int nilfs_palloc_count_desc_blocks(struct inode *inode,
+ 					    unsigned long *desc_blocks)
+ {
+-	unsigned long blknum;
++	__u64 blknum;
+ 	int ret;
+ 
+ 	ret = nilfs_bmap_last_key(NILFS_I(inode)->i_bmap, &blknum);
+ 	if (likely(!ret))
+ 		*desc_blocks = DIV_ROUND_UP(
+-			blknum, NILFS_MDT(inode)->mi_blocks_per_desc_block);
++			(unsigned long)blknum,
++			NILFS_MDT(inode)->mi_blocks_per_desc_block);
+ 	return ret;
+ }
+ 
 diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index c82f436..27f75bc 100644
+index aadbd0b..c82f436 100644
 --- a/fs/nilfs2/bmap.c
 +++ b/fs/nilfs2/bmap.c
-@@ -189,6 +189,37 @@ static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, __u64 key)
+@@ -152,9 +152,7 @@ static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
+  *
+  * %-EEXIST - A record associated with @key already exist.
+  */
+-int nilfs_bmap_insert(struct nilfs_bmap *bmap,
+-		      unsigned long key,
+-		      unsigned long rec)
++int nilfs_bmap_insert(struct nilfs_bmap *bmap, __u64 key, unsigned long rec)
+ {
+ 	int ret;
+ 
+@@ -191,19 +189,16 @@ static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, __u64 key)
  	return bmap->b_ops->bop_delete(bmap, key);
  }
  
-+/**
-+ * nilfs_bmap_seek_key - seek a valid entry and return its key
-+ * @bmap: bmap struct
-+ * @start: start key number
-+ * @keyp: place to store valid key
-+ *
-+ * Description: nilfs_bmap_seek_key() seeks a valid key on @bmap
-+ * starting from @start, and stores it to @keyp if found.
-+ *
-+ * Return Value: On success, 0 is returned. On error, one of the following
-+ * negative error codes is returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ *
-+ * %-ENOENT - No valid entry was found
-+ */
-+int nilfs_bmap_seek_key(struct nilfs_bmap *bmap, __u64 start, __u64 *keyp)
-+{
-+	int ret;
-+
-+	down_read(&bmap->b_sem);
-+	ret = bmap->b_ops->bop_seek_key(bmap, start, keyp);
-+	up_read(&bmap->b_sem);
-+
-+	if (ret < 0)
-+		ret = nilfs_bmap_convert_error(bmap, __func__, ret);
-+	return ret;
-+}
-+
- int nilfs_bmap_last_key(struct nilfs_bmap *bmap, __u64 *keyp)
+-int nilfs_bmap_last_key(struct nilfs_bmap *bmap, unsigned long *key)
++int nilfs_bmap_last_key(struct nilfs_bmap *bmap, __u64 *keyp)
+ {
+-	__u64 lastkey;
+ 	int ret;
+ 
+ 	down_read(&bmap->b_sem);
+-	ret = bmap->b_ops->bop_last_key(bmap, &lastkey);
++	ret = bmap->b_ops->bop_last_key(bmap, keyp);
+ 	up_read(&bmap->b_sem);
+ 
+ 	if (ret < 0)
+ 		ret = nilfs_bmap_convert_error(bmap, __func__, ret);
+-	else
+-		*key = lastkey;
+ 	return ret;
+ }
+ 
+@@ -224,7 +219,7 @@ int nilfs_bmap_last_key(struct nilfs_bmap *bmap, unsigned long *key)
+  *
+  * %-ENOENT - A record associated with @key does not exist.
+  */
+-int nilfs_bmap_delete(struct nilfs_bmap *bmap, unsigned long key)
++int nilfs_bmap_delete(struct nilfs_bmap *bmap, __u64 key)
  {
  	int ret;
+ 
+@@ -235,7 +230,7 @@ int nilfs_bmap_delete(struct nilfs_bmap *bmap, unsigned long key)
+ 	return nilfs_bmap_convert_error(bmap, __func__, ret);
+ }
+ 
+-static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, unsigned long key)
++static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, __u64 key)
+ {
+ 	__u64 lastkey;
+ 	int ret;
+@@ -276,7 +271,7 @@ static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, unsigned long key)
+  *
+  * %-ENOMEM - Insufficient amount of memory available.
+  */
+-int nilfs_bmap_truncate(struct nilfs_bmap *bmap, unsigned long key)
++int nilfs_bmap_truncate(struct nilfs_bmap *bmap, __u64 key)
+ {
+ 	int ret;
+ 
 diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
-index 9230d33..bfa817c 100644
+index b89e680..9230d33 100644
 --- a/fs/nilfs2/bmap.h
 +++ b/fs/nilfs2/bmap.h
-@@ -76,8 +76,10 @@ struct nilfs_bmap_operations {
- 			  union nilfs_binfo *);
- 	int (*bop_mark)(struct nilfs_bmap *, __u64, int);
- 
--	/* The following functions are internal use only. */
-+	int (*bop_seek_key)(const struct nilfs_bmap *, __u64, __u64 *);
- 	int (*bop_last_key)(const struct nilfs_bmap *, __u64 *);
-+
-+	/* The following functions are internal use only. */
- 	int (*bop_check_insert)(const struct nilfs_bmap *, __u64);
- 	int (*bop_check_delete)(struct nilfs_bmap *, __u64);
- 	int (*bop_gather_data)(struct nilfs_bmap *, __u64 *, __u64 *, int);
-@@ -155,6 +157,7 @@ void nilfs_bmap_write(struct nilfs_bmap *, struct nilfs_inode *);
+@@ -153,10 +153,10 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *);
+ int nilfs_bmap_read(struct nilfs_bmap *, struct nilfs_inode *);
+ void nilfs_bmap_write(struct nilfs_bmap *, struct nilfs_inode *);
  int nilfs_bmap_lookup_contig(struct nilfs_bmap *, __u64, __u64 *, unsigned);
- int nilfs_bmap_insert(struct nilfs_bmap *bmap, __u64 key, unsigned long rec);
- int nilfs_bmap_delete(struct nilfs_bmap *bmap, __u64 key);
-+int nilfs_bmap_seek_key(struct nilfs_bmap *bmap, __u64 start, __u64 *keyp);
- int nilfs_bmap_last_key(struct nilfs_bmap *bmap, __u64 *keyp);
- int nilfs_bmap_truncate(struct nilfs_bmap *bmap, __u64 key);
+-int nilfs_bmap_insert(struct nilfs_bmap *, unsigned long, unsigned long);
+-int nilfs_bmap_delete(struct nilfs_bmap *, unsigned long);
+-int nilfs_bmap_last_key(struct nilfs_bmap *, unsigned long *);
+-int nilfs_bmap_truncate(struct nilfs_bmap *, unsigned long);
++int nilfs_bmap_insert(struct nilfs_bmap *bmap, __u64 key, unsigned long rec);
++int nilfs_bmap_delete(struct nilfs_bmap *bmap, __u64 key);
++int nilfs_bmap_last_key(struct nilfs_bmap *bmap, __u64 *keyp);
++int nilfs_bmap_truncate(struct nilfs_bmap *bmap, __u64 key);
  void nilfs_bmap_clear(struct nilfs_bmap *);
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index ecdbae1..841d177 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -633,6 +633,44 @@ static int nilfs_btree_do_lookup_last(const struct nilfs_bmap *btree,
- 	return 0;
- }
- 
-+/**
-+ * nilfs_btree_get_next_key - get next valid key from btree path array
-+ * @btree: bmap struct of btree
-+ * @path: array of nilfs_btree_path struct
-+ * @minlevel: start level
-+ * @nextkey: place to store the next valid key
-+ *
-+ * Return Value: If a next key was found, 0 is returned. Otherwise,
-+ * -ENOENT is returned.
-+ */
-+static int nilfs_btree_get_next_key(const struct nilfs_bmap *btree,
-+				    const struct nilfs_btree_path *path,
-+				    int minlevel, __u64 *nextkey)
-+{
-+	struct nilfs_btree_node *node;
-+	int maxlevel = nilfs_btree_height(btree) - 1;
-+	int index, next_adj, level;
-+
-+	/* Next index is already set to bp_index for leaf nodes. */
-+	next_adj = 0;
-+	for (level = minlevel; level <= maxlevel; level++) {
-+		if (level == maxlevel)
-+			node = nilfs_btree_get_root(btree);
-+		else
-+			node = nilfs_btree_get_nonroot_node(path, level);
-+
-+		index = path[level].bp_index + next_adj;
-+		if (index < nilfs_btree_node_get_nchildren(node)) {
-+			/* Next key is in this node */
-+			*nextkey = nilfs_btree_node_get_key(node, index);
-+			return 0;
-+		}
-+		/* For non-leaf nodes, next index is stored at bp_index + 1. */
-+		next_adj = 1;
-+	}
-+	return -ENOENT;
-+}
-+
- static int nilfs_btree_lookup(const struct nilfs_bmap *btree,
- 			      __u64 key, int level, __u64 *ptrp)
+ int nilfs_bmap_propagate(struct nilfs_bmap *, struct buffer_head *);
+ void nilfs_bmap_lookup_dirty_buffers(struct nilfs_bmap *, struct list_head *);
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 8b59695..cf9e489 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -106,7 +106,7 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
+ 		err = nilfs_transaction_begin(inode->i_sb, &ti, 1);
+ 		if (unlikely(err))
+ 			goto out;
+-		err = nilfs_bmap_insert(ii->i_bmap, (unsigned long)blkoff,
++		err = nilfs_bmap_insert(ii->i_bmap, blkoff,
+ 					(unsigned long)bh_result);
+ 		if (unlikely(err != 0)) {
+ 			if (err == -EEXIST) {
+@@ -714,7 +714,7 @@ void nilfs_update_inode(struct inode *inode, struct buffer_head *ibh, int flags)
+ static void nilfs_truncate_bmap(struct nilfs_inode_info *ii,
+ 				unsigned long from)
  {
-@@ -1563,6 +1601,30 @@ out:
- 	return ret;
- }
+-	unsigned long b;
++	__u64 b;
+ 	int ret;
  
-+static int nilfs_btree_seek_key(const struct nilfs_bmap *btree, __u64 start,
-+				__u64 *keyp)
-+{
-+	struct nilfs_btree_path *path;
-+	const int minlevel = NILFS_BTREE_LEVEL_NODE_MIN;
-+	int ret;
-+
-+	if (start > NILFS_BTREE_KEY_MAX)
-+		return -ENOENT;
-+
-+	path = nilfs_btree_alloc_path();
-+	if (!path)
-+		return -ENOMEM;
-+
-+	ret = nilfs_btree_do_lookup(btree, path, start, NULL, minlevel, 0);
-+	if (!ret)
-+		*keyp = start;
-+	else if (ret == -ENOENT)
-+		ret = nilfs_btree_get_next_key(btree, path, minlevel, keyp);
-+
-+	nilfs_btree_free_path(path);
-+	return ret;
-+}
-+
- static int nilfs_btree_last_key(const struct nilfs_bmap *btree, __u64 *keyp)
- {
- 	struct nilfs_btree_path *path;
-@@ -2298,7 +2360,9 @@ static const struct nilfs_bmap_operations nilfs_btree_ops = {
- 	.bop_assign		=	nilfs_btree_assign,
- 	.bop_mark		=	nilfs_btree_mark,
+ 	if (!test_bit(NILFS_I_BMAP, &ii->i_state))
+@@ -729,7 +729,7 @@ repeat:
+ 	if (b < from)
+ 		return;
  
-+	.bop_seek_key		=	nilfs_btree_seek_key,
- 	.bop_last_key		=	nilfs_btree_last_key,
-+
- 	.bop_check_insert	=	NULL,
- 	.bop_check_delete	=	nilfs_btree_check_delete,
- 	.bop_gather_data	=	nilfs_btree_gather_data,
-@@ -2318,7 +2382,9 @@ static const struct nilfs_bmap_operations nilfs_btree_ops_gc = {
- 	.bop_assign		=	nilfs_btree_assign_gc,
- 	.bop_mark		=	NULL,
- 
-+	.bop_seek_key		=	NULL,
- 	.bop_last_key		=	NULL,
-+
- 	.bop_check_insert	=	NULL,
- 	.bop_check_delete	=	NULL,
- 	.bop_gather_data	=	NULL,
-diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
-index 82f4865..ebf89fd 100644
---- a/fs/nilfs2/direct.c
-+++ b/fs/nilfs2/direct.c
-@@ -173,6 +173,21 @@ static int nilfs_direct_delete(struct nilfs_bmap *bmap, __u64 key)
- 	return ret;
- }
- 
-+static int nilfs_direct_seek_key(const struct nilfs_bmap *direct, __u64 start,
-+				 __u64 *keyp)
-+{
-+	__u64 key;
-+
-+	for (key = start; key <= NILFS_DIRECT_KEY_MAX; key++) {
-+		if (nilfs_direct_get_ptr(direct, key) !=
-+		    NILFS_BMAP_INVALID_PTR) {
-+			*keyp = key;
-+			return 0;
-+		}
-+	}
-+	return -ENOENT;
-+}
-+
- static int nilfs_direct_last_key(const struct nilfs_bmap *direct, __u64 *keyp)
- {
- 	__u64 key, lastkey;
-@@ -355,7 +370,9 @@ static const struct nilfs_bmap_operations nilfs_direct_ops = {
- 	.bop_assign		=	nilfs_direct_assign,
- 	.bop_mark		=	NULL,
- 
-+	.bop_seek_key		=	nilfs_direct_seek_key,
- 	.bop_last_key		=	nilfs_direct_last_key,
-+
- 	.bop_check_insert	=	nilfs_direct_check_insert,
- 	.bop_check_delete	=	NULL,
- 	.bop_gather_data	=	nilfs_direct_gather_data,
+-	b -= min_t(unsigned long, NILFS_MAX_TRUNCATE_BLOCKS, b - from);
++	b -= min_t(__u64, NILFS_MAX_TRUNCATE_BLOCKS, b - from);
+ 	ret = nilfs_bmap_truncate(ii->i_bmap, b);
+ 	nilfs_relax_pressure_in_lock(ii->vfs_inode.i_sb);
+ 	if (!ret || (ret == -ENOMEM &&
 -- 
 1.8.3.1
 
