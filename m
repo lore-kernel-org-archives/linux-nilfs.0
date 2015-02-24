@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 2/6] nilfs-utils: add additional flags for nilfs_vdesc
-Date: Tue, 24 Feb 2015 20:04:15 +0100
-Message-ID: <1424804659-10986-2-git-send-email-andreas.rohner@gmx.net>
+Subject: [PATCH 4/6] nilfs-utils: implement the tracking of live blocks for set_suinfo
+Date: Tue, 24 Feb 2015 20:04:17 +0100
+Message-ID: <1424804659-10986-4-git-send-email-andreas.rohner@gmx.net>
 References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>
  <1424804659-10986-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -14,246 +14,269 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch adds support for additional bit-flags to the nilfs_vdesc
-structure used by the GC to communicate block information to the
-kernel.
+If the tracking of live blocks is enabled, the information passed to
+the kernel with the set_suinfo ioctl must also be modified. To this
+end the nilfs_count_nlive_blks() fucntion is introduced. It simply
+loops through the vdescv and bdescv vectors and counts the live
+blocks belonging to a certain segment. Here the new vdesc flags
+introduced earlier come in handy. If NILFS_VDESC_SNAPSHOT flag is set,
+the block is always counted as alive. However if it is not set and
+NILFS_VDESC_PROTECTION_PERIOD is set instead it is counted as
+reclaimable.
 
-The field vd_flags cannot be used for this purpose, because it does
-not support bit-flags, and changing that would break backwards
-compatibility. Therefore the padding field is renamed to vd_blk_flags
-to contain more flags.
+Additionally the nilfs_xreclaim_segment() function is refactored, so
+that the set_suinfo part is extracted into its own function
+nilfs_try_set_suinfo(). This is useful, because the code gets more
+complicated with the new additions.
 
-Unfortunately older versions of nilfs-utils do not initialize the
-padding field to zero. So it is necessary to signal to the kernel if
-the new vd_blk_flags field contains usable flags or just random data.
-Since the vd_period field is only used in userspace, and is guaranteed
-to contain a value that is > 0 (NILFS_CNO_MIN == 1), it can be used to
-give the kernel a hint. So if vd_period.p_start is set to 0, the
-vd_blk_flags field will be interpreted by the kernel.
-
-The following new flags are added:
-
-NILFS_VDESC_SNAPSHOT:
-    The block corresponding to the vdesc structure is protected by a
-    snapshot. This information is used in the kernel as well as in
-    nilfs-utils to calcualte the number of live blocks in a given
-    segment. A block with this flag is counted as live regardless of
-    other indicators.
-
-NILFS_VDESC_PROTECTION_PERIOD:
-    The block corresponding to the vdesc structure is protected by the
-    protection period of the userspace GC. The block is actually
-    reclaimable, but for the moment protected. So it has to be
-    treated as if it were alive and moved to a new free segment,
-    but it must not be counted as live by the kernel. This flag
-    indicates to the kernel, that this block should be counted as
-    reclaimable.
-
-The nilfs_vdesc_is_live() function is modified to store the
-corresponding flags in the vdesc structure. However the algorithm it
-uses it not modified, so it should return exactly the same results.
-
-After the nilfs_vdesc_is_live() is called the vd_period field is no
-longer needed and set to 0, to indicate to the kernel, that the
-vd_blk_flags field should be interpreted. This ensures full backward
-compatibility:
-
-Old nilfs2 and new nilfs-utils:
-    vd_blk_flags is ignored
-
-New nilfs2 and old nilfs-utils:
-    vd_period.p_start > 0 so vd_blk_flags is ignored
-
-New nilfs2 and new nilfs-utils:
-    vd_period.p_start == 0 so vd_blk_flags is interpreted
+If the kernel either doesn't support the set_suinfo ioctl or doesn't
+support the set_nlive_blks flag, it returns ENOTTY or EINVAL
+respectively and the corresponding options are disabled and not used
+again.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- include/nilfs2_fs.h | 58 +++++++++++++++++++++++++++++++++++++++++++++++++++--
- lib/gc.c            | 36 ++++++++++++++++++++++++---------
- 2 files changed, 83 insertions(+), 11 deletions(-)
+ include/nilfs.h |   6 ++
+ lib/gc.c        | 168 +++++++++++++++++++++++++++++++++++++++++++-------------
+ 2 files changed, 136 insertions(+), 38 deletions(-)
 
-diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
-index 9137824..d01a924 100644
---- a/include/nilfs2_fs.h
-+++ b/include/nilfs2_fs.h
-@@ -884,7 +884,7 @@ struct nilfs_vinfo {
-  * @vd_blocknr: disk block number
-  * @vd_offset: logical block offset inside a file
-  * @vd_flags: flags (data or node block)
-- * @vd_pad: padding
-+ * @vd_blk_flags: additional flags
-  */
- struct nilfs_vdesc {
- 	__u64 vd_ino;
-@@ -894,9 +894,63 @@ struct nilfs_vdesc {
- 	__u64 vd_blocknr;
- 	__u64 vd_offset;
- 	__u32 vd_flags;
--	__u32 vd_pad;
-+	/*
-+	 * vd_blk_flags needed because vd_flags doesn't support
-+	 * bit-flags because of backwards compatibility
-+	 */
-+	__u32 vd_blk_flags;
- };
+diff --git a/include/nilfs.h b/include/nilfs.h
+index 22a9190..8511163 100644
+--- a/include/nilfs.h
++++ b/include/nilfs.h
+@@ -343,6 +343,12 @@ static inline __u32 nilfs_get_blocks_per_segment(const struct nilfs *nilfs)
+ 	return le32_to_cpu(nilfs->n_sb->s_blocks_per_segment);
+ }
  
-+/* vdesc flags */
-+enum {
-+	NILFS_VDESC_DATA,
-+	NILFS_VDESC_NODE,
-+
-+	/* ... */
-+};
-+enum {
-+	NILFS_VDESC_SNAPSHOT,
-+	NILFS_VDESC_PROTECTION_PERIOD,
-+
-+	/* ... */
-+
-+	__NR_NILFS_VDESC_FIELDS,
-+};
-+
-+#define NILFS_VDESC_FNS(flag, name)					\
-+static inline void							\
-+nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_flags = NILFS_VDESC_##flag;				\
-+}									\
-+static inline int							\
-+nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
-+{									\
-+	return vdesc->vd_flags == NILFS_VDESC_##flag;			\
++static inline __u64
++nilfs_get_segnum_of_block(const struct nilfs *nilfs, sector_t blocknr)
++{
++	return blocknr / nilfs_get_blocks_per_segment(nilfs);
 +}
 +
-+#define NILFS_VDESC_FNS2(flag, name)					\
-+static inline void							\
-+nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_blk_flags |= (1UL << NILFS_VDESC_##flag);		\
-+}									\
-+static inline void							\
-+nilfs_vdesc_clear_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_blk_flags &= ~(1UL << NILFS_VDESC_##flag);		\
-+}									\
-+static inline int							\
-+nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
-+{									\
-+	return !!(vdesc->vd_blk_flags & (1UL << NILFS_VDESC_##flag));	\
-+}
-+
-+NILFS_VDESC_FNS(DATA, data)
-+NILFS_VDESC_FNS(NODE, node)
-+NILFS_VDESC_FNS2(SNAPSHOT, snapshot)
-+NILFS_VDESC_FNS2(PROTECTION_PERIOD, protection_period)
-+
- /**
-  * struct nilfs_bdesc - descriptor of disk block number
-  * @bd_ino: inode number
+ static inline int nilfs_feature_track_live_blks(const struct nilfs *nilfs)
+ {
+ 	__u64 fc = le64_to_cpu(nilfs->n_sb->s_feature_compat);
 diff --git a/lib/gc.c b/lib/gc.c
-index 48c295a..b56744c 100644
+index b56744c..a2461b9 100644
 --- a/lib/gc.c
 +++ b/lib/gc.c
-@@ -128,6 +128,7 @@ static int nilfs_acc_blocks_file(struct nilfs_file *file,
- 				return -1;
- 			bdesc->bd_ino = ino;
- 			bdesc->bd_oblocknr = blk.b_blocknr;
-+			bdesc->bd_pad = 0;
- 			if (nilfs_block_is_data(&blk)) {
- 				bdesc->bd_offset =
- 					le64_to_cpu(*(__le64 *)blk.b_binfo);
-@@ -148,17 +149,19 @@ static int nilfs_acc_blocks_file(struct nilfs_file *file,
- 			vdesc->vd_ino = ino;
- 			vdesc->vd_cno = cno;
- 			vdesc->vd_blocknr = blk.b_blocknr;
-+			vdesc->vd_flags = 0;
-+			vdesc->vd_blk_flags = 0;
- 			if (nilfs_block_is_data(&blk)) {
- 				binfo = blk.b_binfo;
- 				vdesc->vd_vblocknr =
- 					le64_to_cpu(binfo->bi_v.bi_vblocknr);
- 				vdesc->vd_offset =
- 					le64_to_cpu(binfo->bi_v.bi_blkoff);
--				vdesc->vd_flags = 0;	/* data */
-+				nilfs_vdesc_set_data(vdesc);
- 			} else {
- 				vdesc->vd_vblocknr =
- 					le64_to_cpu(*(__le64 *)blk.b_binfo);
--				vdesc->vd_flags = 1;	/* node */
-+				nilfs_vdesc_set_node(vdesc);
- 			}
- 		}
- 	}
-@@ -392,7 +395,7 @@ static ssize_t nilfs_get_snapshot(struct nilfs *nilfs, nilfs_cno_t **ssp)
-  * @n: size of @ss array
-  * @last_hit: the last snapshot number hit
-  */
--static int nilfs_vdesc_is_live(const struct nilfs_vdesc *vdesc,
-+static int nilfs_vdesc_is_live(struct nilfs_vdesc *vdesc,
- 			       nilfs_cno_t protect, const nilfs_cno_t *ss,
- 			       size_t n, nilfs_cno_t *last_hit)
- {
-@@ -408,18 +411,22 @@ static int nilfs_vdesc_is_live(const struct nilfs_vdesc *vdesc,
- 		return vdesc->vd_period.p_end == NILFS_CNO_MAX;
- 	}
- 
--	if (vdesc->vd_period.p_end == NILFS_CNO_MAX ||
--	    vdesc->vd_period.p_end > protect)
-+	if (vdesc->vd_period.p_end == NILFS_CNO_MAX)
- 		return 1;
- 
-+	if (vdesc->vd_period.p_end > protect)
-+		nilfs_vdesc_set_protection_period(vdesc);
-+
- 	if (n == 0 || vdesc->vd_period.p_start > ss[n - 1] ||
- 	    vdesc->vd_period.p_end <= ss[0])
--		return 0;
-+		return nilfs_vdesc_protection_period(vdesc);
- 
- 	/* Try the last hit snapshot number */
- 	if (*last_hit >= vdesc->vd_period.p_start &&
--	    *last_hit < vdesc->vd_period.p_end)
-+	    *last_hit < vdesc->vd_period.p_end) {
-+		nilfs_vdesc_set_snapshot(vdesc);
- 		return 1;
-+	}
- 
- 	low = 0;
- 	high = n - 1;
-@@ -435,10 +442,11 @@ static int nilfs_vdesc_is_live(const struct nilfs_vdesc *vdesc,
- 		} else {
- 			/* ss[index] is in the range [p_start, p_end) */
- 			*last_hit = ss[index];
-+			nilfs_vdesc_set_snapshot(vdesc);
- 			return 1;
- 		}
- 	}
--	return 0;
-+	return nilfs_vdesc_protection_period(vdesc);
+@@ -620,6 +620,121 @@ static int nilfs_toss_bdescs(struct nilfs_vector *bdescv)
  }
  
  /**
-@@ -476,8 +484,18 @@ static int nilfs_toss_vdescs(struct nilfs *nilfs,
- 			vdesc = nilfs_vector_get_element(vdescv, j);
- 			assert(vdesc != NULL);
- 			if (nilfs_vdesc_is_live(vdesc, protcno, ss, n,
--						&last_hit))
-+						&last_hit)) {
-+				/*
-+				 * vd_period is not used any more after this,
-+				 * but by setting it to 0 it can be used
-+				 * as a flag to the kernel that vd_blk_flags
-+				 * is used (old userspace tools didn't
-+				 * initialize vd_pad to 0)
-+				 */
-+				vdesc->vd_period.p_start = 0;
-+				vdesc->vd_period.p_end = 0;
- 				break;
-+			}
++ * nilfs_count_nlive_blks - returns the number of live blocks in segnum
++ * @nilfs: nilfs object
++ * @segnum: segment number
++ * @bdescv: vector object storing (descriptors of) disk block numbers
++ * @vdescv: vector object storing (descriptors of) virtual block numbers
++ */
++static size_t nilfs_count_nlive_blks(const struct nilfs *nilfs,
++				     __u64 segnum,
++				     struct nilfs_vector *vdescv,
++				     struct nilfs_vector *bdescv)
++{
++	struct nilfs_vdesc *vdesc;
++	struct nilfs_bdesc *bdesc;
++	int i;
++	size_t res = 0;
++
++	for (i = 0; i < nilfs_vector_get_size(bdescv); i++) {
++		bdesc = nilfs_vector_get_element(bdescv, i);
++		assert(bdesc != NULL);
++
++		if (nilfs_get_segnum_of_block(nilfs, bdesc->bd_blocknr) ==
++		    segnum && nilfs_bdesc_is_live(bdesc))
++			++res;
++	}
++
++	for (i = 0; i < nilfs_vector_get_size(vdescv); i++) {
++		vdesc = nilfs_vector_get_element(vdescv, i);
++		assert(vdesc != NULL);
++
++		if (nilfs_get_segnum_of_block(nilfs, vdesc->vd_blocknr) ==
++		    segnum && (nilfs_vdesc_snapshot(vdesc) ||
++		    !nilfs_vdesc_protection_period(vdesc)))
++			++res;
++	}
++
++	return res;
++}
++
++/**
++ * nilfs_try_set_suinfo - wrapper for nilfs_set_suinfo
++ * @nilfs: nilfs object
++ * @segnums: array of segment numbers storing selected segments
++ * @nsegs: size of the @segnums array
++ * @vdescv: vector object storing (descriptors of) virtual block numbers
++ * @bdescv: vector object storing (descriptors of) disk block numbers
++ *
++ * Description: nilfs_try_set_suinfo() prepares the input data structure
++ * for nilfs_set_suinfo(). If the kernel doesn't support the
++ * NILFS_IOCTL_SET_SUINFO ioctl, errno is set to ENOTTY and the set_suinfo
++ * option is cleared to prevent future calls to nilfs_try_set_suinfo().
++ * Similarly if the SUFILE extension is not supported by the kernel,
++ * errno is set to EINVAL and the track_live_blks option is disabled.
++ *
++ * Return Value: On success, zero is returned.  On error, a negative value
++ * is returned. If errno is set to ENOTTY or EINVAL, the kernel doesn't support
++ * the current configuration for nilfs_set_suinfo().
++ */
++static int nilfs_try_set_suinfo(struct nilfs *nilfs, __u64 *segnums,
++		size_t nsegs, struct nilfs_vector *vdescv,
++		struct nilfs_vector *bdescv)
++{
++	struct nilfs_vector *supv;
++	struct nilfs_suinfo_update *sup;
++	struct timeval tv;
++	int ret = -1;
++	size_t i, nblocks;
++
++	supv = nilfs_vector_create(sizeof(struct nilfs_suinfo_update));
++	if (!supv)
++		goto out;
++
++	ret = gettimeofday(&tv, NULL);
++	if (ret < 0)
++		goto out;
++
++	for (i = 0; i < nsegs; ++i) {
++		sup = nilfs_vector_get_new_element(supv);
++		if (!sup) {
++			ret = -1;
++			goto out;
++		}
++
++		sup->sup_segnum = segnums[i];
++		sup->sup_flags = 0;
++		nilfs_suinfo_update_set_lastmod(sup);
++		sup->sup_sui.sui_lastmod = tv.tv_sec;
++
++		if (nilfs_opt_test_track_live_blks(nilfs)) {
++			nilfs_suinfo_update_set_nlive_blks(sup);
++
++			nblocks = nilfs_count_nlive_blks(nilfs,
++					segnums[i], vdescv, bdescv);
++			sup->sup_sui.sui_nlive_blks = nblocks;
++		}
++	}
++
++	ret = nilfs_set_suinfo(nilfs, nilfs_vector_get_data(supv), nsegs);
++	if (ret < 0) {
++		if (errno == ENOTTY) {
++			nilfs_gc_logger(LOG_WARNING,
++					"set_suinfo ioctl is not supported");
++			nilfs_opt_clear_set_suinfo(nilfs);
++		} else if (errno == EINVAL) {
++			nilfs_gc_logger(LOG_WARNING,
++					"sufile extension is not supported");
++			nilfs_opt_clear_track_live_blks(nilfs);
++		}
++	}
++
++out:
++	nilfs_vector_destroy(supv);
++	return ret;
++}
++
++/**
+  * nilfs_xreclaim_segment - reclaim segments (enhanced API)
+  * @nilfs: nilfs object
+  * @segnums: array of segment numbers storing selected segments
+@@ -633,14 +748,12 @@ int nilfs_xreclaim_segment(struct nilfs *nilfs,
+ 			   const struct nilfs_reclaim_params *params,
+ 			   struct nilfs_reclaim_stat *stat)
+ {
+-	struct nilfs_vector *vdescv, *bdescv, *periodv, *vblocknrv, *supv;
++	struct nilfs_vector *vdescv, *bdescv, *periodv, *vblocknrv;
+ 	sigset_t sigset, oldset, waitset;
+ 	nilfs_cno_t protcno;
+-	ssize_t n, i, ret = -1;
++	ssize_t n, ret = -1;
+ 	size_t nblocks;
+ 	__u32 reclaimable_blocks;
+-	struct nilfs_suinfo_update *sup;
+-	struct timeval tv;
  
- 			/*
- 			 * Add the virtual block number to the candidate
+ 	if (!(params->flags & NILFS_RECLAIM_PARAM_PROTSEQ) ||
+ 	    (params->flags & (~0UL << __NR_NILFS_RECLAIM_PARAMS))) {
+@@ -659,8 +772,7 @@ int nilfs_xreclaim_segment(struct nilfs *nilfs,
+ 	bdescv = nilfs_vector_create(sizeof(struct nilfs_bdesc));
+ 	periodv = nilfs_vector_create(sizeof(struct nilfs_period));
+ 	vblocknrv = nilfs_vector_create(sizeof(__u64));
+-	supv = nilfs_vector_create(sizeof(struct nilfs_suinfo_update));
+-	if (!vdescv || !bdescv || !periodv || !vblocknrv || !supv)
++	if (!vdescv || !bdescv || !periodv || !vblocknrv)
+ 		goto out_vec;
+ 
+ 	sigemptyset(&sigset);
+@@ -758,46 +870,27 @@ int nilfs_xreclaim_segment(struct nilfs *nilfs,
+ 	if ((params->flags & NILFS_RECLAIM_PARAM_MIN_RECLAIMABLE_BLKS) &&
+ 			nilfs_opt_test_set_suinfo(nilfs) &&
+ 			reclaimable_blocks < params->min_reclaimable_blks * n) {
+-		if (stat) {
+-			stat->deferred_segs = n;
+-			stat->cleaned_segs = 0;
+-		}
+ 
+-		ret = gettimeofday(&tv, NULL);
+-		if (ret < 0)
++		ret = nilfs_try_set_suinfo(nilfs, segnums, n, vdescv, bdescv);
++		if (ret == 0) {
++			if (stat) {
++				stat->deferred_segs = n;
++				stat->cleaned_segs = 0;
++			}
+ 			goto out_lock;
+-
+-		for (i = 0; i < n; ++i) {
+-			sup = nilfs_vector_get_new_element(supv);
+-			if (!sup)
+-				goto out_lock;
+-
+-			sup->sup_segnum = segnums[i];
+-			sup->sup_flags = 0;
+-			nilfs_suinfo_update_set_lastmod(sup);
+-			sup->sup_sui.sui_lastmod = tv.tv_sec;
+ 		}
+ 
+-		ret = nilfs_set_suinfo(nilfs, nilfs_vector_get_data(supv), n);
+-
+-		if (ret == 0)
+-			goto out_lock;
+-
+-		if (ret < 0 && errno != ENOTTY) {
++		if (ret < 0 && errno != ENOTTY && errno != EINVAL) {
+ 			nilfs_gc_logger(LOG_ERR, "cannot set suinfo: %s",
+ 					strerror(errno));
+ 			goto out_lock;
+ 		}
+ 
+-		/* errno == ENOTTY */
+-		nilfs_gc_logger(LOG_WARNING,
+-				"set_suinfo ioctl is not supported");
+-		nilfs_opt_clear_set_suinfo(nilfs);
+-		if (stat) {
+-			stat->deferred_segs = 0;
+-			stat->cleaned_segs = n;
+-		}
+-		/* Try nilfs_clean_segments */
++		/*
++		 * errno == ENOTTY || errno == EINVAL
++		 * nilfs_try_set_suinfo() failed because it is not supported
++		 * so try nilfs_clean_segments() instead
++		 */
+ 	}
+ 
+ 	ret = nilfs_clean_segments(nilfs,
+@@ -830,7 +923,6 @@ out_vec:
+ 	nilfs_vector_destroy(bdescv);
+ 	nilfs_vector_destroy(periodv);
+ 	nilfs_vector_destroy(vblocknrv);
+-	nilfs_vector_destroy(supv);
+ 	/*
+ 	 * Flags of valid fields in stat->exflags must be unset.
+ 	 */
 -- 
 2.3.0
 
