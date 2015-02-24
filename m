@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 2/9] nilfs2: add simple cache for modifications to SUFILE
-Date: Tue, 24 Feb 2015 20:01:37 +0100
-Message-ID: <1424804504-10914-3-git-send-email-andreas.rohner@gmx.net>
+Subject: [PATCH 7/9] nilfs2: add additional flags for nilfs_vdesc
+Date: Tue, 24 Feb 2015 20:01:42 +0100
+Message-ID: <1424804504-10914-8-git-send-email-andreas.rohner@gmx.net>
 References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1424804504-10914-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -13,262 +13,195 @@ Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 
-This patch adds a simple, small cache that can be used to accumulate
-modifications to SUFILE entries. This is for example useful for
-keeping track of reclaimable blocks, because most of the
-modifications consist of small increments or decrements. By adding
-these up and temporarily storing them in a small cache, the
-performance can be improved. Additionally lock contention is
-reduced.
+This patch adds support for additional bit-flags to the
+nilfs_vdesc structure used by the GC to communicate block
+information from userspace. The field vd_flags cannot be used for
+this purpose, because it does not support bit-flags, and changing
+that would break backwards compatibility. Therefore the padding
+field is renamed to vd_blk_flags to contain more flags.
+
+Unfortunately older versions of the userspace tools do not
+initialize the padding field to zero. So it is necessary to signal
+to the kernel if the new vd_blk_flags field contains usable flags
+or just random data. Since the vd_period field is only used in
+userspace, and is guaranteed to contain a value that is > 0
+(NILFS_CNO_MIN == 1), it can be used to give the kernel a hint. So
+if the userspace tools set vd_period.p_start to 0, the
+vd_blk_flags field will be interpreted.
+
+To make the flags available for later stages of the GC process,
+they are mapped to corresponding buffer_head flags.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/sufile.c | 178 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/sufile.h |  44 +++++++++++++
- 2 files changed, 222 insertions(+)
+ fs/nilfs2/ioctl.c         | 23 ++++++++++++++++---
+ fs/nilfs2/page.h          |  6 ++++-
+ include/linux/nilfs2_fs.h | 58 +++++++++++++++++++++++++++++++++++++++++++++--
+ 3 files changed, 81 insertions(+), 6 deletions(-)
 
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 1e8cac6..a369c30 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -1168,6 +1168,184 @@ out_sem:
- }
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index f6ee54e..63b1c77 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -578,7 +578,7 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+ 	struct buffer_head *bh;
+ 	int ret;
  
+-	if (vdesc->vd_flags == 0)
++	if (nilfs_vdesc_data(vdesc))
+ 		ret = nilfs_gccache_submit_read_data(
+ 			inode, vdesc->vd_offset, vdesc->vd_blocknr,
+ 			vdesc->vd_vblocknr, &bh);
+@@ -592,7 +592,8 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+ 			       "%s: invalid virtual block address (%s): "
+ 			       "ino=%llu, cno=%llu, offset=%llu, "
+ 			       "blocknr=%llu, vblocknr=%llu\n",
+-			       __func__, vdesc->vd_flags ? "node" : "data",
++			       __func__,
++			       nilfs_vdesc_node(vdesc) ? "node" : "data",
+ 			       (unsigned long long)vdesc->vd_ino,
+ 			       (unsigned long long)vdesc->vd_cno,
+ 			       (unsigned long long)vdesc->vd_offset,
+@@ -603,7 +604,8 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+ 	if (unlikely(!list_empty(&bh->b_assoc_buffers))) {
+ 		printk(KERN_CRIT "%s: conflicting %s buffer: ino=%llu, "
+ 		       "cno=%llu, offset=%llu, blocknr=%llu, vblocknr=%llu\n",
+-		       __func__, vdesc->vd_flags ? "node" : "data",
++		       __func__,
++		       nilfs_vdesc_node(vdesc) ? "node" : "data",
+ 		       (unsigned long long)vdesc->vd_ino,
+ 		       (unsigned long long)vdesc->vd_cno,
+ 		       (unsigned long long)vdesc->vd_offset,
+@@ -612,6 +614,12 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+ 		brelse(bh);
+ 		return -EEXIST;
+ 	}
++
++	if (nilfs_vdesc_snapshot(vdesc))
++		set_buffer_nilfs_snapshot(bh);
++	if (nilfs_vdesc_protection_period(vdesc))
++		set_buffer_nilfs_protection_period(bh);
++
+ 	list_add_tail(&bh->b_assoc_buffers, buffers);
+ 	return 0;
+ }
+@@ -662,6 +670,15 @@ static int nilfs_ioctl_move_blocks(struct super_block *sb,
+ 		}
+ 
+ 		do {
++			/*
++			 * old user space tools to not initialize vd_blk_flags
++			 * if vd_period.p_start > 0 then vd_blk_flags was
++			 * not initialized properly and may contain invalid
++			 * flags
++			 */
++			if (vdesc->vd_period.p_start > 0)
++				vdesc->vd_blk_flags = 0;
++
+ 			ret = nilfs_ioctl_move_inode_block(inode, vdesc,
+ 							   &buffers);
+ 			if (unlikely(ret < 0)) {
+diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
+index a43b828..b9117e6 100644
+--- a/fs/nilfs2/page.h
++++ b/fs/nilfs2/page.h
+@@ -36,13 +36,17 @@ enum {
+ 	BH_NILFS_Volatile,
+ 	BH_NILFS_Checked,
+ 	BH_NILFS_Redirected,
++	BH_NILFS_Snapshot,
++	BH_NILFS_Protection_Period,
+ };
+ 
+ BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
+ BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
+ BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verified */
+ BUFFER_FNS(NILFS_Redirected, nilfs_redirected)	/* redirected to a copy */
+-
++BUFFER_FNS(NILFS_Snapshot, nilfs_snapshot)	/* belongs to a snapshot */
++BUFFER_FNS(NILFS_Protection_Period, nilfs_protection_period) /* protected by
++							protection period */
+ 
+ int __nilfs_clear_page_dirty(struct page *);
+ 
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index 6ccb2ad..6ffdc09 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -900,7 +900,7 @@ struct nilfs_vinfo {
+  * @vd_blocknr: disk block number
+  * @vd_offset: logical block offset inside a file
+  * @vd_flags: flags (data or node block)
+- * @vd_pad: padding
++ * @vd_blk_flags: additional flags
+  */
+ struct nilfs_vdesc {
+ 	__u64 vd_ino;
+@@ -910,9 +910,63 @@ struct nilfs_vdesc {
+ 	__u64 vd_blocknr;
+ 	__u64 vd_offset;
+ 	__u32 vd_flags;
+-	__u32 vd_pad;
++	/*
++	 * vd_blk_flags needed because vd_flags doesn't support
++	 * bit-flags because of backwards compatibility
++	 */
++	__u32 vd_blk_flags;
+ };
+ 
++/* vdesc flags */
++enum {
++	NILFS_VDESC_DATA,
++	NILFS_VDESC_NODE,
++
++	/* ... */
++};
++enum {
++	NILFS_VDESC_SNAPSHOT,
++	NILFS_VDESC_PROTECTION_PERIOD,
++
++	/* ... */
++
++	__NR_NILFS_VDESC_FIELDS,
++};
++
++#define NILFS_VDESC_FNS(flag, name)					\
++static inline void							\
++nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
++{									\
++	vdesc->vd_flags = NILFS_VDESC_##flag;				\
++}									\
++static inline int							\
++nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
++{									\
++	return vdesc->vd_flags == NILFS_VDESC_##flag;			\
++}
++
++#define NILFS_VDESC_FNS2(flag, name)					\
++static inline void							\
++nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
++{									\
++	vdesc->vd_blk_flags |= (1UL << NILFS_VDESC_##flag);		\
++}									\
++static inline void							\
++nilfs_vdesc_clear_##name(struct nilfs_vdesc *vdesc)			\
++{									\
++	vdesc->vd_blk_flags &= ~(1UL << NILFS_VDESC_##flag);		\
++}									\
++static inline int							\
++nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
++{									\
++	return !!(vdesc->vd_blk_flags & (1UL << NILFS_VDESC_##flag));	\
++}
++
++NILFS_VDESC_FNS(DATA, data)
++NILFS_VDESC_FNS(NODE, node)
++NILFS_VDESC_FNS2(SNAPSHOT, snapshot)
++NILFS_VDESC_FNS2(PROTECTION_PERIOD, protection_period)
++
  /**
-+ * nilfs_sufile_mc_init - inits segusg modification cache
-+ * @mc: modification cache
-+ * @capacity: maximum capacity of the mod cache
-+ *
-+ * Description: Allocates memory for an array of nilfs_sufile_mod structures
-+ * according to @capacity. This memory must be freed with
-+ * nilfs_sufile_mc_destroy().
-+ *
-+ * Return Value: On success, 0 is returned. On error, one of the following
-+ * negative error codes is returned.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ *
-+ * %-EINVAL - Invalid capacity.
-+ */
-+int nilfs_sufile_mc_init(struct nilfs_sufile_mod_cache *mc, size_t capacity)
-+{
-+	mc->mc_capacity = capacity;
-+	if (!capacity)
-+		return -EINVAL;
-+
-+	mc->mc_mods = kmalloc(capacity * sizeof(struct nilfs_sufile_mod),
-+			      GFP_KERNEL);
-+	if (!mc->mc_mods)
-+		return -ENOMEM;
-+
-+	mc->mc_size = 0;
-+
-+	return 0;
-+}
-+
-+/**
-+ * nilfs_sufile_mc_add - add signed value to segusg modification cache
-+ * @mc: modification cache
-+ * @segnum: segment number
-+ * @value: signed value (can be positive and negative)
-+ *
-+ * Description: nilfs_sufile_mc_add() tries to add a pair of @segnum and
-+ * @value to the modification cache. If the cache already contains a
-+ * segment number equal to @segnum, then @value is simply added to the
-+ * existing value. This way thousands of small modifications can be
-+ * accumulated into one value. If @segnum cannot be found and the
-+ * capacity allows it, a new element is added to the cache. If the
-+ * capacity is reached an error value is returned.
-+ *
-+ * Return Value: On success, 0 is returned. On error, one of the following
-+ * negative error codes is returned.
-+ *
-+ * %-ENOSPC - The mod cache has reached its capacity and must be flushed.
-+ */
-+static inline int nilfs_sufile_mc_add(struct nilfs_sufile_mod_cache *mc,
-+				      __u64 segnum, __s64 value)
-+{
-+	struct nilfs_sufile_mod *mods = mc->mc_mods;
-+	int i;
-+
-+	for (i = 0; i < mc->mc_size; ++i, ++mods) {
-+		if (mods->m_segnum == segnum) {
-+			mods->m_value += value;
-+			return 0;
-+		}
-+	}
-+
-+	if (mc->mc_size < mc->mc_capacity) {
-+		mods->m_segnum = segnum;
-+		mods->m_value = value;
-+		mc->mc_size++;
-+		return 0;
-+	}
-+
-+	return -ENOSPC;
-+}
-+
-+/**
-+ * nilfs_sufile_mc_clear - set mc_size to 0
-+ * @mc: modification cache
-+ *
-+ * Description: nilfs_sufile_mc_clear() sets mc_size to 0, which enables
-+ * nilfs_sufile_mc_add() to overwrite the elements in @mc.
-+ */
-+static inline void nilfs_sufile_mc_clear(struct nilfs_sufile_mod_cache *mc)
-+{
-+	mc->mc_size = 0;
-+}
-+
-+/**
-+ * nilfs_sufile_mc_reset - clear cache and add one element
-+ * @mc: modification cache
-+ * @segnum: segment number
-+ * @value: signed value (can be positive and negative)
-+ *
-+ * Description: Clears the modification cache in @mc and adds a new pair of
-+ * @segnum and @value to it at the same time.
-+ */
-+static inline void nilfs_sufile_mc_reset(struct nilfs_sufile_mod_cache *mc,
-+					 __u64 segnum, __s64 value)
-+{
-+	struct nilfs_sufile_mod *mods = mc->mc_mods;
-+
-+	mods->m_segnum = segnum;
-+	mods->m_value = value;
-+	mc->mc_size = 1;
-+}
-+
-+/**
-+ * nilfs_sufile_mc_flush - flush modification cache
-+ * @sufile: inode of segment usage file
-+ * @mc: modification cache
-+ * @dofunc: primitive operation for the update
-+ *
-+ * Description: nilfs_sufile_mc_flush() flushes the cached modifications
-+ * and applies them to the segment usages on disk. It persists the cached
-+ * changes, by calling @dofunc for every element in the cache. @dofunc also
-+ * determines the interpretation of the cached values and how they should
-+ * be applied to the corresponding segment usage entries.
-+ *
-+ * Return Value: On success, zero is returned.  On error, one of the
-+ * following negative error codes is returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ *
-+ * %-ENOENT - Given segment usage is in hole block
-+ *
-+ * %-EINVAL - Invalid segment usage number
-+ */
-+static inline int nilfs_sufile_mc_flush(struct inode *sufile,
-+					struct nilfs_sufile_mod_cache *mc,
-+					void (*dofunc)(struct inode *,
-+						struct nilfs_sufile_mod *,
-+						struct buffer_head *,
-+						struct buffer_head *))
-+{
-+	return nilfs_sufile_updatev(sufile, mc->mc_mods,
-+				    sizeof(struct nilfs_sufile_mod),
-+				    offsetof(struct nilfs_sufile_mod, m_segnum),
-+				    mc->mc_size, 0, NULL, (void *)dofunc);
-+}
-+
-+/**
-+ * nilfs_sufile_mc_update - immediately applies modification
-+ * @sufile: inode of segment usage file
-+ * @segnum: segment number
-+ * @value: signed value (can be positive and negative)
-+ * @dofunc: primitive operation for the update
-+ *
-+ * Description: nilfs_sufile_mc_update() is a helper function, that
-+ * creates a temporary nilfs_sufile_mod structure out of @segnum and @value
-+ * and immediately flushes it using @dofunc, without the use of a
-+ * modification cache.
-+ *
-+ * Return Value: On success, zero is returned.  On error, one of the
-+ * following negative error codes is returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ *
-+ * %-ENOENT - Given segment usage is in hole block
-+ *
-+ * %-EINVAL - Invalid segment usage number
-+ */
-+static inline int nilfs_sufile_mc_update(struct inode *sufile,
-+					 __u64 segnum, __s64 value,
-+					 void (*dofunc)(struct inode *,
-+						struct nilfs_sufile_mod *,
-+						struct buffer_head *,
-+						struct buffer_head *))
-+{
-+	struct nilfs_sufile_mod m = {.m_segnum = segnum, .m_value = value};
-+
-+	return nilfs_sufile_update(sufile, &m,
-+				   offsetof(struct nilfs_sufile_mod, m_segnum),
-+				   0, (void *)dofunc);
-+}
-+
-+/**
-  * nilfs_sufile_read - read or get sufile inode
-  * @sb: super block instance
-  * @susize: size of a segment usage entry
-diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-index 2df6c71..c446325 100644
---- a/fs/nilfs2/sufile.h
-+++ b/fs/nilfs2/sufile.h
-@@ -146,4 +146,48 @@ static inline int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
- 				   (void *)nilfs_sufile_do_set_error);
- }
- 
-+#define NILFS_SUFILE_MC_SIZE_DEFAULT	5
-+#define NILFS_SUFILE_MC_SIZE_EXT	10
-+
-+/**
-+ * struct nilfs_sufile_mod - segment usage modification
-+ * @m_segnum: segment number
-+ * @m_value: signed value that gets added to respective segusg field
-+ */
-+struct nilfs_sufile_mod {
-+	__u64 m_segnum;
-+	__s64 m_value;
-+};
-+
-+/**
-+ * struct nilfs_sufile_mod_cache - segment usage modification cache
-+ * @mc_mods: array of modifications to segments
-+ * @mc_capacity: maximum number of elements that fit in @mc_mods
-+ * @mc_size: number of elements currently filled with valid data
-+ */
-+struct nilfs_sufile_mod_cache {
-+	struct nilfs_sufile_mod *mc_mods;
-+	size_t mc_capacity;
-+	size_t mc_size;
-+};
-+
-+int nilfs_sufile_mc_init(struct nilfs_sufile_mod_cache *, size_t);
-+
-+/**
-+ * nilfs_sufile_mc_destroy - destroy segusg modification cache
-+ * @mc: modification cache
-+ *
-+ * Description: Releases the memory allocated by nilfs_sufile_mc_init and
-+ * sets the size and capacity to 0. @mc should not be used after a call to
-+ * this function.
-+ */
-+static inline void nilfs_sufile_mc_destroy(struct nilfs_sufile_mod_cache *mc)
-+{
-+	if (mc) {
-+		kfree(mc->mc_mods);
-+		mc->mc_capacity = 0;
-+		mc->mc_size = 0;
-+	}
-+}
-+
- #endif	/* _NILFS_SUFILE_H */
+  * struct nilfs_bdesc - descriptor of disk block number
+  * @bd_ino: inode number
 -- 
 2.3.0
 
