@@ -1,338 +1,135 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH 5/6] nilfs-utils: add support for greedy/cost-benefit policies
-Date: Tue, 24 Feb 2015 20:04:18 +0100
-Message-ID: <1424804659-10986-5-git-send-email-andreas.rohner@gmx.net>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH 0/9] nilfs2: implementation of cost-benefit GC policy
+Date: Wed, 25 Feb 2015 09:18:04 +0900 (JST)
+Message-ID: <20150225.091804.1850885506186316087.konishi.ryusuke@lab.ntt.co.jp>
 References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>
- <1424804659-10986-1-git-send-email-andreas.rohner@gmx.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1424804659-10986-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-type:content-transfer-encoding;
+        bh=bNSDV7qZ32aq/WwvlBbSY32UKf2ml4xXYEdPrd9qB7k=;
+        b=j3oDnb5zm9YhZNvyygbducE25sHAwdarp9CWQbZDdvuKpUNk8PNLHvYGznkBzCYYli
+         yliYZ7wiI7V/Cbiw1TgLGRk5rT9nYZCTEm+UpvfSTLq3RIkDdCmQtlzZfT8gP47ntFkG
+         a5ex3hZLdeOsUq3amfzvS98GfXSohsw50feg8r6doXMtaCWCu/SlNwtVdYz2LHEsCoB2
+         +9y3EWkaJ/HbWzlClwUDRLx3zPK2LpVVkICbybVNy+VwcX3O/NF4cHkOcr0Pow2IuzRv
+         kPVLsyVH1QqRsGgBkK5i88ardtt+qf9DxwPPKz+yoFX5pl+o3cXNz5yaKWOE+B+4DBld
+         shCQ==
+In-Reply-To: <1424804504-10914-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: Text/Plain; charset="windows-1252"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This patch implements the cost-benefit and greedy GC policies. These
-are well known policies for log-structured file systems [1].
-
-* Greedy:
-  Select the segments with the most reclaimable space.
-* Cost-Benefit [1]:
-  Perform a cost-benefit analysis, whereby the reclaimable space
-  gained is weighed against the cost of collecting the segment.
-
-Since especially cost-benefit needs more information than is
-available in nilfs_suinfo, a few extra parameters are added to the
-policy callback function prototype. The flag p_comparison is added to
-indicate how the importance values should be interpreted. For example
-for the timestamp policy smaller values mean older timestamps, which
-is better. For greedy and cost-benefit on the other hand, higher
-values are better. nilfs_cleanerd_select_segments() was updated
-accordingly.
-
-The threshold in nilfs_cleanerd_select_segments() can no
-longer be set to sustat->ss_nongc_ctime on default, because the
-greedy/cost-benefit policies do not return a timestamp, so their
-importance values cannot be compared to one on default. Instead
-segments that are younger than sustat->ss_nongc_ctime are always
-excluded.
-
-[1] Mendel Rosenblum and John K. Ousterhout. The design and implementa-
-tion of a log-structured file system. ACM Trans. Comput. Syst.,
-10(1):26=E2=80=9352, February 1992.
-
-Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
----
- sbin/cleanerd/cldconfig.c | 79 +++++++++++++++++++++++++++++++++++++++=
-++++++--
- sbin/cleanerd/cldconfig.h | 22 +++++++++----
- sbin/cleanerd/cleanerd.c  | 43 ++++++++++++++++++++------
- 3 files changed, 126 insertions(+), 18 deletions(-)
-
-diff --git a/sbin/cleanerd/cldconfig.c b/sbin/cleanerd/cldconfig.c
-index c8b197b..68090e9 100644
---- a/sbin/cleanerd/cldconfig.c
-+++ b/sbin/cleanerd/cldconfig.c
-@@ -380,7 +380,9 @@ nilfs_cldconfig_handle_clean_check_interval(struct =
-nilfs_cldconfig *config,
- }
-=20
- static unsigned long long
--nilfs_cldconfig_selection_policy_timestamp(const struct nilfs_suinfo *=
-si)
-+nilfs_cldconfig_selection_policy_timestamp(const struct nilfs_suinfo *=
-si,
-+					   const struct nilfs_sustat *sustat,
-+					   __u64 prottime)
- {
- 	return si->sui_lastmod;
- }
-@@ -392,13 +394,84 @@ nilfs_cldconfig_handle_selection_policy_timestamp=
-(struct nilfs_cldconfig *config
- 	config->cf_selection_policy.p_importance =3D
- 		NILFS_CLDCONFIG_SELECTION_POLICY_IMPORTANCE;
- 	config->cf_selection_policy.p_threshold =3D
--		NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD;
-+		NILFS_CLDCONFIG_SELECTION_POLICY_NO_THRESHOLD;
-+	config->cf_selection_policy.p_comparison =3D
-+		NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER;
-+	return 0;
-+}
-+
-+static unsigned long long
-+nilfs_cldconfig_selection_policy_greedy(const struct nilfs_suinfo *si,
-+					const struct nilfs_sustat *sustat,
-+					__u64 prottime)
-+{
-+	if (si->sui_nblocks < si->sui_nlive_blks ||
-+	    si->sui_nlive_lastmod >=3D prottime)
-+		return 0;
-+
-+	return si->sui_nblocks - si->sui_nlive_blks;
-+}
-+
-+static int
-+nilfs_cldconfig_handle_selection_policy_greedy(struct nilfs_cldconfig =
-*config,
-+					       char **tokens, size_t ntoks)
-+{
-+	config->cf_selection_policy.p_importance =3D
-+		nilfs_cldconfig_selection_policy_greedy;
-+	config->cf_selection_policy.p_threshold =3D
-+		NILFS_CLDCONFIG_SELECTION_POLICY_NO_THRESHOLD;
-+	config->cf_selection_policy.p_comparison =3D
-+		NILFS_CLDCONFIG_SELECTION_POLICY_BIGGER_IS_BETTER;
-+	return 0;
-+}
-+
-+static unsigned long long
-+nilfs_cldconfig_selection_policy_cost_benefit(const struct nilfs_suinf=
-o *si,
-+					      const struct nilfs_sustat *sustat,
-+					      __u64 prottime)
-+{
-+	__u32 free_blocks, cleaning_cost;
-+	unsigned long long age;
-+
-+	if (si->sui_nblocks < si->sui_nlive_blks ||
-+	    sustat->ss_nongc_ctime < si->sui_lastmod ||
-+	    si->sui_nlive_lastmod >=3D prottime)
-+		return 0;
-+
-+	free_blocks =3D si->sui_nblocks - si->sui_nlive_blks;
-+	/* read the whole segment + write the live blocks */
-+	cleaning_cost =3D 2 * si->sui_nlive_blks;
-+	/*
-+	 * multiply by 1000 to convert age to milliseconds
-+	 * (higher precision for division)
-+	 */
-+	age =3D (sustat->ss_nongc_ctime - si->sui_lastmod) * 1000;
-+
-+	if (cleaning_cost =3D=3D 0)
-+		cleaning_cost =3D 1;
-+
-+	return (age * free_blocks) / cleaning_cost;
-+}
-+
-+static int
-+nilfs_cldconfig_handle_selection_policy_cost_benefit(
-+						struct nilfs_cldconfig *config,
-+						char **tokens, size_t ntoks)
-+{
-+	config->cf_selection_policy.p_importance =3D
-+		nilfs_cldconfig_selection_policy_cost_benefit;
-+	config->cf_selection_policy.p_threshold =3D
-+		NILFS_CLDCONFIG_SELECTION_POLICY_NO_THRESHOLD;
-+	config->cf_selection_policy.p_comparison =3D
-+		NILFS_CLDCONFIG_SELECTION_POLICY_BIGGER_IS_BETTER;
- 	return 0;
- }
-=20
- static const struct nilfs_cldconfig_polhandle
- nilfs_cldconfig_polhandle_table[] =3D {
- 	{"timestamp",	nilfs_cldconfig_handle_selection_policy_timestamp},
-+	{"greedy",	nilfs_cldconfig_handle_selection_policy_greedy},
-+	{"cost-benefit", nilfs_cldconfig_handle_selection_policy_cost_benefit=
-},
- };
-=20
- #define NILFS_CLDCONFIG_NPOLHANDLES			\
-@@ -690,6 +763,8 @@ static void nilfs_cldconfig_set_default(struct nilf=
-s_cldconfig *config,
- 		NILFS_CLDCONFIG_SELECTION_POLICY_IMPORTANCE;
- 	config->cf_selection_policy.p_threshold =3D
- 		NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD;
-+	config->cf_selection_policy.p_comparison =3D
-+		NILFS_CLDCONFIG_SELECTION_POLICY_COMPARISON;
- 	config->cf_protection_period.tv_sec =3D NILFS_CLDCONFIG_PROTECTION_PE=
-RIOD;
- 	config->cf_protection_period.tv_usec =3D 0;
-=20
-diff --git a/sbin/cleanerd/cldconfig.h b/sbin/cleanerd/cldconfig.h
-index 2a0af5f..3c9f5e6 100644
---- a/sbin/cleanerd/cldconfig.h
-+++ b/sbin/cleanerd/cldconfig.h
-@@ -30,16 +30,22 @@
- #include <sys/time.h>
- #include <syslog.h>
-=20
-+struct nilfs;
-+struct nilfs_sustat;
- struct nilfs_suinfo;
-=20
- /**
-  * struct nilfs_selection_policy -
-- * @p_importance:
-- * @p_threshold:
-+ * @p_importance: function to calculate the importance for the policy
-+ * @p_threshold: segments with lower/higher importance are ignored
-+ * @p_comparison: flag that indicates how to sort the importance
-  */
- struct nilfs_selection_policy {
--	unsigned long long (*p_importance)(const struct nilfs_suinfo *);
-+	unsigned long long (*p_importance)(const struct nilfs_suinfo *,
-+					   const struct nilfs_sustat *,
-+					   __u64);
- 	unsigned long long p_threshold;
-+	int p_comparison;
- };
-=20
- /**
-@@ -111,9 +117,15 @@ struct nilfs_cldconfig {
- 	unsigned long cf_mc_min_reclaimable_blocks;
- };
-=20
-+#define NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER	0
-+#define NILFS_CLDCONFIG_SELECTION_POLICY_BIGGER_IS_BETTER	1
-+#define NILFS_CLDCONFIG_SELECTION_POLICY_NO_THRESHOLD	0
- #define NILFS_CLDCONFIG_SELECTION_POLICY_IMPORTANCE	\
- 			nilfs_cldconfig_selection_policy_timestamp
--#define NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD	0
-+#define NILFS_CLDCONFIG_SELECTION_POLICY_THRESHOLD	\
-+			NILFS_CLDCONFIG_SELECTION_POLICY_NO_THRESHOLD
-+#define NILFS_CLDCONFIG_SELECTION_POLICY_COMPARISON	\
-+			NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER
- #define NILFS_CLDCONFIG_PROTECTION_PERIOD		3600
- #define NILFS_CLDCONFIG_MIN_CLEAN_SEGMENTS		10
- #define NILFS_CLDCONFIG_MIN_CLEAN_SEGMENTS_UNIT		NILFS_SIZE_UNIT_PERCE=
-NT
-@@ -135,8 +147,6 @@ struct nilfs_cldconfig {
-=20
- #define NILFS_CLDCONFIG_NSEGMENTS_PER_CLEAN_MAX	32
-=20
--struct nilfs;
--
- int nilfs_cldconfig_read(struct nilfs_cldconfig *config, const char *p=
-ath,
- 			 struct nilfs *nilfs);
-=20
-diff --git a/sbin/cleanerd/cleanerd.c b/sbin/cleanerd/cleanerd.c
-index d37bd5c..e0741f1 100644
---- a/sbin/cleanerd/cleanerd.c
-+++ b/sbin/cleanerd/cleanerd.c
-@@ -417,7 +417,7 @@ static void nilfs_cleanerd_destroy(struct nilfs_cle=
-anerd *cleanerd)
- 	free(cleanerd);
- }
-=20
--static int nilfs_comp_segimp(const void *elem1, const void *elem2)
-+static int nilfs_comp_segimp_asc(const void *elem1, const void *elem2)
- {
- 	const struct nilfs_segimp *segimp1 =3D elem1, *segimp2 =3D elem2;
-=20
-@@ -429,6 +429,18 @@ static int nilfs_comp_segimp(const void *elem1, co=
-nst void *elem2)
- 	return (segimp1->si_segnum < segimp2->si_segnum) ? -1 : 1;
- }
-=20
-+static int nilfs_comp_segimp_desc(const void *elem1, const void *elem2=
-)
-+{
-+	const struct nilfs_segimp *segimp1 =3D elem1, *segimp2 =3D elem2;
-+
-+	if (segimp1->si_importance > segimp2->si_importance)
-+		return -1;
-+	else if (segimp1->si_importance < segimp2->si_importance)
-+		return 1;
-+
-+	return (segimp1->si_segnum < segimp2->si_segnum) ? -1 : 1;
-+}
-+
- static int nilfs_cleanerd_automatic_suspend(struct nilfs_cleanerd *cle=
-anerd)
- {
- 	return cleanerd->config.cf_min_clean_segments > 0;
-@@ -580,7 +592,7 @@ nilfs_cleanerd_select_segments(struct nilfs_cleaner=
-d *cleanerd,
- 	size_t count, nsegs;
- 	ssize_t nssegs, n;
- 	unsigned long long imp, thr;
--	int i;
-+	int i, sib;
-=20
- 	nsegs =3D nilfs_cleanerd_ncleansegs(cleanerd);
- 	nilfs =3D cleanerd->nilfs;
-@@ -600,11 +612,17 @@ nilfs_cleanerd_select_segments(struct nilfs_clean=
-erd *cleanerd,
- 	prottime =3D tv2.tv_sec;
- 	oldest =3D tv.tv_sec;
-=20
--	/* The segments that have larger importance than thr are not
-+	/*
-+	 * sufile extension fields may not be initialized by
-+	 * nilfs_get_suinfo()
-+	 */
-+	memset(si, 0, sizeof(si));
-+
-+	/* The segments that have larger/smaller importance than thr are not
- 	 * selected. */
--	thr =3D (config->cf_selection_policy.p_threshold !=3D 0) ?
--		config->cf_selection_policy.p_threshold :
--		sustat->ss_nongc_ctime;
-+	thr =3D config->cf_selection_policy.p_threshold;
-+	sib =3D config->cf_selection_policy.p_comparison =3D=3D
-+			NILFS_CLDCONFIG_SELECTION_POLICY_SMALLER_IS_BETTER;
-=20
- 	for (segnum =3D 0; segnum < sustat->ss_nsegs; segnum +=3D n) {
- 		count =3D min_t(__u64, sustat->ss_nsegs - segnum,
-@@ -615,11 +633,13 @@ nilfs_cleanerd_select_segments(struct nilfs_clean=
-erd *cleanerd,
- 			goto out;
- 		}
- 		for (i =3D 0; i < n; i++) {
--			if (!nilfs_suinfo_reclaimable(&si[i]))
-+			if (!nilfs_suinfo_reclaimable(&si[i]) ||
-+				si[i].sui_lastmod >=3D sustat->ss_nongc_ctime)
- 				continue;
-=20
--			imp =3D config->cf_selection_policy.p_importance(&si[i]);
--			if (imp < thr) {
-+			imp =3D config->cf_selection_policy.p_importance(&si[i],
-+					sustat, prottime);
-+			if (!thr || (sib && imp < thr) || (!sib && imp > thr)) {
- 				if (si[i].sui_lastmod < oldest)
- 					oldest =3D si[i].sui_lastmod;
- 				if (si[i].sui_lastmod < prottime) {
-@@ -642,7 +662,10 @@ nilfs_cleanerd_select_segments(struct nilfs_cleane=
-rd *cleanerd,
- 			break;
- 		}
- 	}
--	nilfs_vector_sort(smv, nilfs_comp_segimp);
-+	if (sib)
-+		nilfs_vector_sort(smv, nilfs_comp_segimp_asc);
-+	else
-+		nilfs_vector_sort(smv, nilfs_comp_segimp_desc);
-=20
- 	nssegs =3D (nilfs_vector_get_size(smv) < nsegs) ?
- 		nilfs_vector_get_size(smv) : nsegs;
---=20
-2.3.0
-
+SGkgQW5kcmVhcywNCg0KVGhhbmsgeW91IGZvciBwb3N0aW5nIHRoaXMgcHJvcG9zYWwhDQoNCkkg
+d291bGQgbGlrZSB0byBoYXZlIHRpbWUgdG8gcmV2aWV3IHRoaXMgc2VyaWVzIHRocm91Z2gsIGJ1
+dCBwbGVhc2UNCndhaXQgZm9yIHNldmVyYWwgZGF5cy4gKFRoaXMgd2VlayBJJ20gcXVpdGUgYnVz
+eSB1bnRpbCB3ZWVrZW5kKQ0KDQpUaGFua3MsDQpSeXVzdWtlIEtvbmlzaGkNCg0KT24gVHVlLCAy
+NCBGZWIgMjAxNSAyMDowMTozNSArMDEwMCwgQW5kcmVhcyBSb2huZXIgd3JvdGU6DQo+IEhpIGV2
+ZXJ5b25lIQ0KPiANCj4gT25lIG9mIHRoZSBiaWdnZXN0IHBlcmZvcm1hbmNlIHByb2JsZW1zIG9m
+IE5JTEZTIGlzIGl0cw0KPiBpbmVmZmljaWVudCBUaW1lc3RhbXAgR0MgcG9saWN5LiBUaGlzIHBh
+dGNoIHNldCBpbnRyb2R1Y2VzIHR3byBuZXcgR0MNCj4gcG9saWNpZXMsIG5hbWVseSBDb3N0LUJl
+bmVmaXQgYW5kIEdyZWVkeS4NCj4gDQo+IFRoZSBDb3N0LUJlbmVmaXQgcG9saWN5IGlzIG5vdGhp
+bmcgbmV3LiBJdCBoYXMgYmVlbiBhcm91bmQgZm9yIGEgbG9uZw0KPiB0aW1lIHdpdGggbG9nLXN0
+cnVjdHVyZWQgZmlsZSBzeXN0ZW1zIFsxXS4gQnV0IGl0IHJlbGllcyBvbiBhY2N1cmF0ZQ0KPiBp
+bmZvcm1hdGlvbiwgYWJvdXQgdGhlIG51bWJlciBvZiBsaXZlIGJsb2NrcyBpbiBhIHNlZ21lbnQu
+IE5JTEZTDQo+IGN1cnJlbnRseSBkb2VzIG5vdCBwcm92aWRlIHRoZSBuZWNlc3NhcnkgaW5mb3Jt
+YXRpb24uIFNvIHRoaXMgcGF0Y2ggc2V0DQo+IGV4dGVuZHMgdGhlIGVudHJpZXMgaW4gdGhlIFNV
+RklMRSB0byBpbmNsdWRlIGEgY291bnRlciBmb3IgdGhlIG51bWJlciBvZg0KPiBsaXZlIGJsb2Nr
+cy4gVGhpcyBjb3VudGVyIGlzIGRlY3JlbWVudGVkIHdoZW5ldmVyIGEgZmlsZSBpcyBkZWxldGVk
+IG9yDQo+IG92ZXJ3cml0dGVuLg0KPiANCj4gRXhjZXB0IGZvciBzb21lIHRyaWNreSBwYXJ0cywg
+dGhlIGNvdW50aW5nIG9mIGxpdmUgYmxvY2tzIGlzIHF1aXRlDQo+IHRyaXZpYWwuIFRoZSBwcm9i
+bGVtIGlzIHNuYXBzaG90cy4gQXQgYW55IHRpbWUsIGEgY2hlY2twb2ludCBjYW4gYmUNCj4gdHVy
+bmVkIGludG8gYSBzbmFwc2hvdCBvciB2aWNlIHZlcnNhLiBTbyBibG9ja3MgdGhhdCBhcmUgcmVj
+bGFpbWFibGUgYXQNCj4gb25lIHBvaW50IGluIHRpbWUsIGFyZSBwcm90ZWN0ZWQgYnkgYSBzbmFw
+c2hvdCBhIG1vbWVudCBsYXRlci4NCj4gDQo+IFRoaXMgcGF0Y2ggc2V0IGRvZXMgbm90IHRyeSB0
+byB0cmFjayBzbmFwc2hvdHMgYXQgYWxsLiBJbnN0ZWFkIGl0IHVzZXMgYQ0KPiBoZXVyaXN0aWMg
+YXBwcm9hY2ggdG8gcHJldmVudCB0aGUgd29yc3QgY2FzZSBzY2VuYXJpby4gVGhlIHBlcmZvcm1h
+bmNlDQo+IGlzIHN0aWxsIHNpZ25pZmljYW50bHkgYmV0dGVyIHRoYW4gdGltZXN0YW1wIGZvciBt
+eSBiZW5jaG1hcmtzLg0KPiANCj4gVGhlIHdvcnN0IGNhc2Ugc2NlbmFyaW8gaXMsIHRoZSBmb2xs
+b3dpbmc6DQo+IA0KPiAxLiBTZWdtZW50IDEgaXMgd3JpdHRlbg0KPiAyLiBTbmFwc2hvdCBpcyBj
+cmVhdGVkDQo+IDMuIEdDIHRyaWVzIHRvIHJlY2xhaW0gU2VnbWVudCAxLCBidXQgYWxsIGJsb2Nr
+cyBhcmUgcHJvdGVjdGVkDQo+ICAgIGJ5IHRoZSBTbmFwc2hvdC4gVGhlIEdDIGhhcyB0byBzZXQg
+dGhlIG51bWJlciBvZiBsaXZlIGJsb2Nrcw0KPiAgICB0byBtYXhpbXVtIHRvIGF2b2lkIHJlY2xh
+aW1pbmcgdGhpcyBTZWdtZW50IGFnYWluIGluIHRoZSBuZWFyIGZ1dHVyZS4NCj4gNC4gU25hcHNo
+b3QgaXMgZGVsZXRlZA0KPiA1LiBTZWdtZW50IDEgaXMgcmVjbGFpbWFibGUsIGJ1dCBpdHMgY291
+bnRlciBpcyBzbyBoaWdoLCB0aGF0IHRoZSBHQw0KPiAgICB3aWxsIG5ldmVyIHRyeSB0byByZWNs
+YWltIGl0IGFnYWluLg0KPiANCj4gVG8gcHJldmVudCB0aGlzIGtpbmQgb2Ygc3RhcnZhdGlvbiBJ
+IHVzZSBhbm90aGVyIGZpZWxkIGluIHRoZSBTVUZJTEUNCj4gZW50cnksIHRvIHN0b3JlIHRoZSBu
+dW1iZXIgb2YgYmxvY2tzIHRoYXQgYXJlIHByb3RlY3RlZCBieSBhIHNuYXBzaG90Lg0KPiBUaGlz
+IHZhbHVlIGlzIGp1c3QgYSBoZXVyaXN0aWMgYW5kIGl0IGlzIHVzdWFsbHkgc2V0IHRvIDAuIE9u
+bHkgaWYgdGhlDQo+IEdDIHJlY2xhaW1zIGEgc2VnbWVudCwgaXQgaXMgd3JpdHRlbiB0byB0aGUg
+U1VGSUxFIGVudHJ5LiBUaGUgR0MgaGFzIHRvDQo+IGNoZWNrIGZvciBzbmFwc2hvdHMgYW55d2F5
+LCBzbyB3ZSBnZXQgdGhpcyBpbmZvcm1hdGlvbiBmb3IgZnJlZS4gQnkNCj4gc3RvcmluZyB0aGlz
+IGluZm9ybWF0aW9uIGluIHRoZSBTVUZJTEUgd2UgY2FuIGF2b2lkIHN0YXJ2YXRpb24gaW4gdGhl
+DQo+IGZvbGxvd2luZyB3YXk6DQo+IA0KPiAxLiBTZWdtZW50IDEgaXMgd3JpdHRlbg0KPiAyLiBT
+bmFwc2hvdCBpcyBjcmVhdGVkDQo+IDMuIEdDIHRyaWVzIHRvIHJlY2xhaW0gU2VnbWVudCAxLCBi
+dXQgYWxsIGJsb2NrcyBhcmUgcHJvdGVjdGVkDQo+ICAgIGJ5IHRoZSBTbmFwc2hvdC4gVGhlIEdD
+IGhhcyB0byBzZXQgdGhlIG51bWJlciBvZiBsaXZlIGJsb2Nrcw0KPiAgICB0byBtYXhpbXVtIHRv
+IGF2b2lkIHJlY2xhaW1pbmcgdGhpcyBTZWdtZW50IGFnYWluIGluIHRoZSBuZWFyIGZ1dHVyZS4N
+Cj4gNC4gR0Mgc2V0cyB0aGUgbnVtYmVyIG9mIHNuYXBzaG90IGJsb2NrcyBpbiBTZWdtZW50IDEg
+aW4gdGhlIFNVRklMRQ0KPiAgICBlbnRyeQ0KPiA1LiBTbmFwc2hvdCBpcyBkZWxldGVkDQo+IDYu
+IE9uIFNuYXBzaG90IGRlbGV0aW9uIHdlIHdhbGsgdGhyb3VnaCBldmVyeSBlbnRyeSBpbiB0aGUg
+U1VGSUxFIGFuZA0KPiAgICByZWR1Y2UgdGhlIG51bWJlciBvZiBsaXZlIGJsb2NrcyB0byBoYWxm
+LCBpZiB0aGUgbnVtYmVyIG9mIHNuYXBzaG90DQo+ICAgIGJsb2NrcyBpcyBiaWdnZXIgdGhhbiBo
+YWxmIG9mIHRoZSBtYXhpbXVtLg0KPiA3LiBTZWdtZW50IDEgaXMgcmVjbGFpbWFibGUgYW5kIHRo
+ZSBudW1iZXIgb2YgbGl2ZSBibG9ja3MgZW50cnkgaXMgYXQNCj4gICAgaGFsZiB0aGUgbWF4aW11
+bS4gVGhlIEdDIHdpbGwgdHJ5IHRvIHJlY2xhaW0gdGhpcyBzZWdtZW50IGFzIHNvb24gYXMNCj4g
+ICAgdGhlcmUgYXJlIG5vIG90aGVyIGJldHRlciBjaG9pY2VzLg0KPiANCj4gQkVOQ0hNQVJLUzoN
+Cj4gLS0tLS0tLS0tLS0NCj4gDQo+IE15IGJlbmNobWFyayBpcyBxdWl0ZSBzaW1wbGUuIEl0IGNv
+bnNpc3RzIG9mIGEgcHJvY2VzcywgdGhhdCByZXBsYXlzDQo+IHJlYWwgTkZTIHRyYWNlcyBhdCBh
+IGZhc3RlciBzcGVlZC4gSXQgdGhlcmVieSBjcmVhdGVzIHJlbGF0aXZlbHkNCj4gcmVhbGlzdGlj
+IHBhdHRlcm5zIG9mIGZpbGUgY3JlYXRpb24gYW5kIGRlbGV0aW9ucy4gQXQgdGhlIHNhbWUgdGlt
+ZQ0KPiBtdWx0aXBsZSBzbmFwc2hvdHMgYXJlIGNyZWF0ZWQgYW5kIGRlbGV0ZWQgaW4gcGFyYWxs
+ZWwuIEkgdXNlIGEgMTAwR0INCj4gcGFydGl0aW9uIG9mIGEgU2Ftc3VuZyBTU0Q6DQo+IA0KPiBX
+SVRIIFNOQVBTSE9UUyBFVkVSWSA1IE1JTlVURVM6DQo+IC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQo+ICAgICAgICAg
+ICAgICAgICBFeGVjdXRpb24gdGltZSAgICAgICBXZWFyIChEYXRhIHdyaXR0ZW4gdG8gZGlzaykN
+Cj4gVGltZXN0YW1wOiAgICAgIDEwMCUgICAgICAgICAgICAgICAgIDEwMCUNCj4gQ29zdC1CZW5l
+Zml0OiAgIDgwJSAgICAgICAgICAgICAgICAgIDQzJQ0KPiANCj4gTk8gU05BUFNIT1RTOg0KPiAt
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0NCj4gICAgICAgICAgICAgICAgIEV4ZWN1dGlvbiB0aW1lICAgICAgIFdlYXIg
+KERhdGEgd3JpdHRlbiB0byBkaXNrKQ0KPiBUaW1lc3RhbXA6ICAgICAgMTAwJSAgICAgICAgICAg
+ICAgICAgMTAwJQ0KPiBDb3N0LUJlbmVmaXQ6ICAgNzAlICAgICAgICAgICAgICAgICAgNDUlDQo+
+IA0KPiBJIHBsYW4gb24gYWRkaW5nIG1vcmUgYmVuY2htYXJrIHJlc3VsdHMgc29vbi4NCj4gDQo+
+IEJlc3QgcmVnYXJkcywNCj4gQW5kcmVhcyBSb2huZXINCj4gDQo+IFsxXSBNZW5kZWwgUm9zZW5i
+bHVtIGFuZCBKb2huIEsuIE91c3RlcmhvdXQuIFRoZSBkZXNpZ24gYW5kIGltcGxlbWVudGEtDQo+
+ICAgICB0aW9uIG9mIGEgbG9nLXN0cnVjdHVyZWQgZmlsZSBzeXN0ZW0uIEFDTSBUcmFucy4gQ29t
+cHV0LiBTeXN0LiwNCj4gICAgIDEwKDEpOjI24oCTNTIsIEZlYnJ1YXJ5IDE5OTIuDQo+IA0KPiBB
+bmRyZWFzIFJvaG5lciAoOSk6DQo+ICAgbmlsZnMyOiByZWZhY3RvciBuaWxmc19zdWZpbGVfdXBk
+YXRldigpDQo+ICAgbmlsZnMyOiBhZGQgc2ltcGxlIGNhY2hlIGZvciBtb2RpZmljYXRpb25zIHRv
+IFNVRklMRQ0KPiAgIG5pbGZzMjogZXh0ZW5kIFNVRklMRSBvbi1kaXNrIGZvcm1hdCB0byBlbmFi
+bGUgY291bnRpbmcgb2YgbGl2ZSBibG9ja3MNCj4gICBuaWxmczI6IGFkZCBmdW5jdGlvbiB0byBt
+b2RpZnkgc3VfbmxpdmVfYmxrcw0KPiAgIG5pbGZzMjogYWRkIHNpbXBsZSB0cmFja2luZyBvZiBi
+bG9jayBkZWxldGlvbnMgYW5kIHVwZGF0ZXMNCj4gICBuaWxmczI6IHVzZSBtb2RpZmljYXRpb24g
+Y2FjaGUgdG8gaW1wcm92ZSBwZXJmb3JtYW5jZQ0KPiAgIG5pbGZzMjogYWRkIGFkZGl0aW9uYWwg
+ZmxhZ3MgZm9yIG5pbGZzX3ZkZXNjDQo+ICAgbmlsZnMyOiBpbXByb3ZlIGFjY3VyYWN5IGFuZCBj
+b3JyZWN0IGZvciBpbnZhbGlkIEdDIHZhbHVlcw0KPiAgIG5pbGZzMjogcHJldmVudCBzdGFydmF0
+aW9uIG9mIHNlZ21lbnRzIHByb3RlY3RlZCBieSBzbmFwc2hvdHMNCj4gDQo+ICBmcy9uaWxmczIv
+Ym1hcC5jICAgICAgICAgIHwgIDg0ICsrKysrKystDQo+ICBmcy9uaWxmczIvYm1hcC5oICAgICAg
+ICAgIHwgIDE0ICstDQo+ICBmcy9uaWxmczIvYnRyZWUuYyAgICAgICAgIHwgICA0ICstDQo+ICBm
+cy9uaWxmczIvY3BmaWxlLmMgICAgICAgIHwgICA1ICsNCj4gIGZzL25pbGZzMi9kYXQuYyAgICAg
+ICAgICAgfCAgOTUgKysrKysrKystDQo+ICBmcy9uaWxmczIvZGF0LmggICAgICAgICAgIHwgICA4
+ICstDQo+ICBmcy9uaWxmczIvZGlyZWN0LmMgICAgICAgIHwgICA0ICstDQo+ICBmcy9uaWxmczIv
+aW5vZGUuYyAgICAgICAgIHwgIDI0ICsrLQ0KPiAgZnMvbmlsZnMyL2lvY3RsLmMgICAgICAgICB8
+ICAyNyArKy0NCj4gIGZzL25pbGZzMi9tZHQuYyAgICAgICAgICAgfCAgIDUgKy0NCj4gIGZzL25p
+bGZzMi9wYWdlLmggICAgICAgICAgfCAgIDYgKy0NCj4gIGZzL25pbGZzMi9zZWdidWYuYyAgICAg
+ICAgfCAgIDYgKw0KPiAgZnMvbmlsZnMyL3NlZ2J1Zi5oICAgICAgICB8ICAgMyArDQo+ICBmcy9u
+aWxmczIvc2VnbWVudC5jICAgICAgIHwgMTU1ICsrKysrKysrKysrKystDQo+ICBmcy9uaWxmczIv
+c2VnbWVudC5oICAgICAgIHwgICAzICsNCj4gIGZzL25pbGZzMi9zdWZpbGUuYyAgICAgICAgfCA1
+MzMgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLQ0KPiAgZnMv
+bmlsZnMyL3N1ZmlsZS5oICAgICAgICB8ICA5NyArKysrKysrLS0NCj4gIGZzL25pbGZzMi90aGVf
+bmlsZnMuYyAgICAgfCAgIDQgKw0KPiAgZnMvbmlsZnMyL3RoZV9uaWxmcy5oICAgICB8ICAyMyAr
+Kw0KPiAgaW5jbHVkZS9saW51eC9uaWxmczJfZnMuaCB8IDEyMiArKysrKysrKysrLQ0KPiAgMjAg
+ZmlsZXMgY2hhbmdlZCwgMTEyNiBpbnNlcnRpb25zKCspLCA5NiBkZWxldGlvbnMoLSkNCj4gDQo+
+IC0tIA0KPiAyLjMuMA0KPiANCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6
+IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LW5pbGZzIiBpbg0KPiB0aGUgYm9keSBv
+ZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZw0KPiBNb3JlIG1ham9yZG9t
+byBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg==
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
