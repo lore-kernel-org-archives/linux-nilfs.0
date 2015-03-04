@@ -1,73 +1,104 @@
-From: <dennis.murata@wipro.com>
-Subject: Re: nilfs-cleanerd startup on boot
-Date: Tue, 3 Mar 2015 15:44:18 +0000
-Message-ID: <HKNPR03MB452F1AE0C164650CE0CCCA4ED110@HKNPR03MB452.apcprd03.prod.outlook.com>
-References: <SIXPR03MB461887A763AD9ADA7B79841ED150@SIXPR03MB461.apcprd03.prod.outlook.com>
- <20150228183348.GA8274@gardel-login>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [systemd-devel] nilfs-cleanerd startup on boot
+Date: Wed, 04 Mar 2015 09:18:16 +0900
+Message-ID: <54F64F48.80403@lab.ntt.co.jp>
+References: <SIXPR03MB461887A763AD9ADA7B79841ED150@SIXPR03MB461.apcprd03.prod.outlook.com> <20150228183348.GA8274@gardel-login> <HKNPR03MB452F1AE0C164650CE0CCCA4ED110@HKNPR03MB452.apcprd03.prod.outlook.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
-Return-path: <systemd-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20150228183348.GA8274@gardel-login>
-Content-Language: en-US
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/systemd-devel>, 
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/systemd-devel>
-List-Post: <mailto:systemd-devel@lists.freedesktop.org>
-List-Help: <mailto:systemd-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/systemd-devel>, 
- <mailto:systemd-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: systemd-devel-bounces@lists.freedesktop.org
-Sender: "systemd-devel" <systemd-devel-bounces@lists.freedesktop.org>
-Content-Type: text/plain; charset="us-ascii"
-To: lennart@poettering.net
-Cc: linux-nilfs@vger.kernel.org, systemd-devel@lists.freedesktop.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <HKNPR03MB452F1AE0C164650CE0CCCA4ED110-prId2LJ51aXRkCEQwRequ+O6mTEJWrR4XA4E9RH9d+qIuWR1G4zioA@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: dennis.murata-uxC5H9eHYlcAvxtiuMwx3w@public.gmane.org, lennart-mdGvqq1h2p+GdvJs77BJ7Q@public.gmane.org
+Cc: systemd-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-SSBoYWQgbWlzLXR5cGVkIHRoZSBhZGRyZXNzIGZvciB0aGUgbmlsZnMgbWFpbCBncm91cAoKPiAt
-LS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206IExlbm5hcnQgUG9ldHRlcmluZyBbbWFp
-bHRvOmxlbm5hcnRAcG9ldHRlcmluZy5uZXRdCj4gU2VudDogU2F0dXJkYXksIEZlYnJ1YXJ5IDI4
-LCAyMDE1IDEyOjM0IFBNCj4gVG86IERlbm5pcyBNdXJhdGEgKFdUMDEgLSBFTlUpCj4gQ2M6IHN5
-c3RlbWQtZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnOyBsaW51cy1uaWxmc0B2Z2VyLmtlcm5l
-bC5vcmcKPiBTdWJqZWN0OiBSZTogW3N5c3RlbWQtZGV2ZWxdIG5pbGZzLWNsZWFuZXJkIHN0YXJ0
-dXAgb24gYm9vdAo+Cj4gT24gRnJpLCAyNy4wMi4xNSAxODozMSwgZGVubmlzLm11cmF0YUB3aXBy
-by5jb20KPiAoZGVubmlzLm11cmF0YUB3aXByby5jb20pIHdyb3RlOgo+Cj4gPiBJIGhhdmUgYSBm
-ZWRvcmEgMjEgc3lzdGVtIHRoYXQgd2hlcmUgSSBtb3VudCBhbiBuaWxmczIgZmlsZSBzeXN0ZW0u
-Cj4gPiBJIHVzZSBhIHNpbXBsZSAvZXRjL21vZHVsZXMtbG9hZC5kL25pbGZzLmNvbmYgZmlsZSB0
-byBsb2FkIHRoZSBrZXJuZWwKPiA+IG1vZHVsZSBhbmQgaGF2ZSBhbiBlbnRyeSBpbiB0aGUgZnN0
-YWIuCj4KPiBDcmVhdGluZyB0aGUgbW9kdWxlcy1sb2FkLmQgc25pcHBldCBzaG91bGQgbm90IGJl
-IG5lY2Vzc2FyeSwgYXMgdGhlIGtlcm5lbAo+IHNob3VsZCBhdXRvbG9hZCB0aGUga2VybmVsIG1v
-ZHVsZSBmb3IgaXQgd2hlbiBpdCBpcyBmaXJzdCByZXF1aXJlZC4KSSBkaWQgbm90IGZpbmQgdGhp
-cyB0byBiZSB0aGUgY2FzZSBmb3IgZmVkb3JhIDIxLiAgV2l0aG91dCBjcmVhdGluZyB0aGUgZmls
-ZSB0byBsb2FkIHRoZSBtb2R1bGUsIGFueSBhdHRlbXB0IEkgbWFkZSB0byBtb3VudCB0aGUgZmls
-ZSBzeXN0ZW0gd291bGQgZ2V0IGEgdW5rbm93biBmaWxldHlwZSBlcnJvci4gIERvZXMgdGhpcyBw
-b2ludCBhdCBhZGRpbmcgdGhpcyBtb2R1bGUgdG8gdGhlIGluaXRyZCBmaWxlPwo+Cj4gPiBUaGUg
-ZmlsZSBzeXN0ZW0gbW91bnRzIG9uIGJvb3QgYXMgaXQgc2hvdWxkLCBidXQgdGhlIG5pbGZzLWNs
-ZWFuZXJkCj4gPiBwcm9ncmFtIGRvZXMgbm90IHN0YXJ0dXAuICBJZiBJIHVtb3VudCAvbmlsZnMg
-dGhlbiBtb3VudCAvbmlsZnMgdGhlCj4gPiBuaWxmcy1jbGVhbmVyZCBwcm9ncmFtIHN0YXJ0cyBh
-cyBpdCBzaG91bGQgdG8gY2xlYW51cCB0aGUgY2hlY2twb2ludHMuCj4KPiBIb3cgaXMgdGhhdCBk
-YWVtb24gc3VwcG9zZWQgdG8gYmUgc3RhcnRlZD8gSXMgaXQgZm9ya2VkIG9mZiAvYmluL21vdW50
-Pwo+Cj4gPiBEb2VzIHN5c3RlbWQgdXNlIGEgZGlmZmVyZW50IG1vdW50IHByb2dyYW0gYXQgYm9v
-dD8KPgo+IEl0IHVzZXMgL2Jpbi9tb3VudCBmb3IgbW91bnRpbmcgbm9ybWFsIGZpbGUgc3lzdGVt
-cy4KPgo+ID4gSXMgdGhlcmUgc29tZXRoaW5nIGVsc2UgdGhhdCBzaG91bGQgYmUgaW5jbHVkZWQg
-b3RoZXIgdGhhbiB0aGUKPiA+IG5pbGZzLmNvbmYgZmlsZT8gIEkgaGF2ZSBqdXN0IHN0YXJ0ZWQg
-dXNpbmcgYSBzeXN0ZW0gd2l0aCBzeXN0ZW1kIGFzCj4gPiB0aGUgaW5pdCBzbyBwbGVhc2UgZm9y
-Z2l2ZSBteSBpZ25vcmFuY2UuCj4KPiBJIGhhdmUgbm8gaWRlYSBhYm91dCBuaWxmcyByZWFsbHks
-IGFuZCB3ZSBoYWQgbm8gcmVwb3J0cyBhYm91dCBhbnkgcHJvYmxlbXMKPiB3aXRoIGl0IGJlZm9y
-ZS4KSSB3YW50ZWQgdG8gbG9vayBhdCB0aGUgcGVyZm9ybWFuY2Ugb2YgbmlsZnMgYW5kIGYyZnMu
-ICBUaGlzIGlzIG15IGZpcnN0IHRyeSBhdCB1c2luZyB0aGVzZSBmaWxlIHN5c3RlbXMKPgo+IExl
-bm5hcnQKPgo+IC0tCj4gTGVubmFydCBQb2V0dGVyaW5nLCBSZWQgSGF0ClRoZSBpbmZvcm1hdGlv
-biBjb250YWluZWQgaW4gdGhpcyBlbGVjdHJvbmljIG1lc3NhZ2UgYW5kIGFueSBhdHRhY2htZW50
-cyB0byB0aGlzIG1lc3NhZ2UgYXJlIGludGVuZGVkIGZvciB0aGUgZXhjbHVzaXZlIHVzZSBvZiB0
-aGUgYWRkcmVzc2VlKHMpIGFuZCBtYXkgY29udGFpbiBwcm9wcmlldGFyeSwgY29uZmlkZW50aWFs
-IG9yIHByaXZpbGVnZWQgaW5mb3JtYXRpb24uIElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZCBy
-ZWNpcGllbnQsIHlvdSBzaG91bGQgbm90IGRpc3NlbWluYXRlLCBkaXN0cmlidXRlIG9yIGNvcHkg
-dGhpcyBlLW1haWwuIFBsZWFzZSBub3RpZnkgdGhlIHNlbmRlciBpbW1lZGlhdGVseSBhbmQgZGVz
-dHJveSBhbGwgY29waWVzIG9mIHRoaXMgbWVzc2FnZSBhbmQgYW55IGF0dGFjaG1lbnRzLiBXQVJO
-SU5HOiBDb21wdXRlciB2aXJ1c2VzIGNhbiBiZSB0cmFuc21pdHRlZCB2aWEgZW1haWwuIFRoZSBy
-ZWNpcGllbnQgc2hvdWxkIGNoZWNrIHRoaXMgZW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBmb3Ig
-dGhlIHByZXNlbmNlIG9mIHZpcnVzZXMuIFRoZSBjb21wYW55IGFjY2VwdHMgbm8gbGlhYmlsaXR5
-IGZvciBhbnkgZGFtYWdlIGNhdXNlZCBieSBhbnkgdmlydXMgdHJhbnNtaXR0ZWQgYnkgdGhpcyBl
-bWFpbC4gd3d3LndpcHJvLmNvbQpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fXwpzeXN0ZW1kLWRldmVsIG1haWxpbmcgbGlzdApzeXN0ZW1kLWRldmVsQGxpc3Rz
-LmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlz
-dGluZm8vc3lzdGVtZC1kZXZlbAo=
+Hi
+
+On 2015/03/04 0:44, dennis.murata-uxC5H9eHYlcAvxtiuMwx3w@public.gmane.org wrote:
+> I had mis-typed the address for the nilfs mail group
+>
+>> -----Original Message-----
+>> From: Lennart Poettering [mailto:lennart-mdGvqq1h2p+GdvJs77BJ7Q@public.gmane.org]
+>> Sent: Saturday, February 28, 2015 12:34 PM
+>> To: Dennis Murata (WT01 - ENU)
+>> Cc: systemd-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org; linus-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> Subject: Re: [systemd-devel] nilfs-cleanerd startup on boot
+>>
+>> On Fri, 27.02.15 18:31, dennis.murata-uxC5H9eHYlcAvxtiuMwx3w@public.gmane.org
+>> (dennis.murata-uxC5H9eHYlcAvxtiuMwx3w@public.gmane.org) wrote:
+>>
+>>> I have a fedora 21 system that where I mount an nilfs2 file system.
+>>> I use a simple /etc/modules-load.d/nilfs.conf file to load the kernel
+>>> module and have an entry in the fstab.
+>>
+>> Creating the modules-load.d snippet should not be necessary, as the kernel
+>> should autoload the kernel module for it when it is first required.
+> I did not find this to be the case for fedora 21.
+ > Without creating the file to load the module, any attempt I made to mount
+ > the file system would get a unknown filetype error.  Does this point at
+ > adding this module to the initrd file?
+
+Is "nilfs2.ko" installed in your environment?
+
+Try "modinfo nilfs2"
+
+Older fedora needed kernel-modules-extra package. [1]
+
+[1] http://nilfs.sourceforge.net/en/pkg_fedora.html
+
+>>> The file system mounts on boot as it should, but the nilfs-cleanerd
+>>> program does not startup.  If I umount /nilfs then mount /nilfs the
+>>> nilfs-cleanerd program starts as it should to cleanup the checkpoints.
+>>
+>> How is that daemon supposed to be started? Is it forked off /bin/mount?
+>>
+>>> Does systemd use a different mount program at boot?
+>>
+>> It uses /bin/mount for mounting normal file systems.
+
+nilfs_cleanerd is invoked through /sbin/mount.nilfs2 helper. [2]
+The helper is called from /sbin/mount if it exists.
+
+/sbin/mount.nilfs2 is included in nilfs-utils package.
+
+nilfs_cleanerd is just a user-land process, so it can be
+manually invoked if you have root privilege. [3]
+
+   # /sbin/nilfs_cleanerd <device> <directory>
+
+But, in this case, you need to kill nilfs_cleanerd
+manually before umount.  So, I recommend running cleanerd
+through mount.nilfs2.
+
+The above explanation may not suit for the recent fedora
+since nilfs-utils is not yet tuned to systemd environment.
+
+[2] http://nilfs.sourceforge.net/en/man8/mount.nilfs2.8.html
+[3] http://nilfs.sourceforge.net/en/man8/nilfs_cleanerd.8.html
+
+Regards,
+Ryusuke Konishi
+
+>>> Is there something else that should be included other than the
+>>> nilfs.conf file?  I have just started using a system with systemd as
+>>> the init so please forgive my ignorance.
+>>
+>> I have no idea about nilfs really, and we had no reports about any problems
+>> with it before.
+> I wanted to look at the performance of nilfs and f2fs.
+ > This is my first try at using these file systems
+>>
+>> Lennart
+>>
+>> --
+>> Lennart Poettering, Red Hat
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
