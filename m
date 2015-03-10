@@ -1,234 +1,453 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 0/9] nilfs2: implementation of cost-benefit GC policy
-Date: Tue, 10 Mar 2015 14:21:19 +0900 (JST)
-Message-ID: <20150310.142119.813265940569588216.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH 1/9] nilfs2: refactor nilfs_sufile_updatev()
+Date: Wed, 11 Mar 2015 00:52:20 +0900 (JST)
+Message-ID: <20150311.005220.1374468405510151934.konishi.ryusuke@lab.ntt.co.jp>
 References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>
-	<20150225.091804.1850885506186316087.konishi.ryusuke@lab.ntt.co.jp>
+	<1424804504-10914-2-git-send-email-andreas.rohner@gmx.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=J0eT63ZxT1hkij+W0K+M5fFc4ftW/ut9G6/KTdb9wVA=;
-        b=De9ZLLRtROOnv4JN7ZRx5fqNseyJzahpvUpnX0AtkpuN+vs6NAzHLrdbZaTIP0nVDL
-         Ul/RpM6xwHR6Q+5gEbHDFLAnuZ0eCHRovDGtzf0JkjprQZ/y5Vmwbzsla0fvmza8Q+1T
-         NV5MwclCXk2HJyiigBWXthV/FOpLgxeENWlGnVtPkYpq1u9KwRIKX0hiSx7IzDOG8Rtf
-         AURj5CXpoNP6LeuYqIyLCI2FTzTCorTd+M0p84YXAH69745/fEq/O3o7Ti6r+9xlZQa1
-         kflNbHvAEp7TdNt5mILDM/62C59Yf1Zyuwc0fZPg1mH3oJSmLI3Q9GbIIryyLKepGPQa
-         wgPg==
-In-Reply-To: <20150225.091804.1850885506186316087.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+        bh=ALNK2DgOCfkp6kDPtoshWcXiQfP4nCzMVXMyqepqObA=;
+        b=imPUd4RngTFQNAIL9Rv9O+VlpG4JQGVYUa7QxNjHAMiEvqZ1XjCH4v7nKnTJpefioY
+         J/y0mZnJZC79Rv64uw3FHc0UW/E0QD0l4n2gMFrlB85CcUNbm98wlCS8TSecMBstozYU
+         ztfU8Zoh+1VhDVBgv5vHoE+NAwrl6eAr2NkZ1rbd5DXWZsjvVazPDmJUpqXxJIWuDnbr
+         TjcfgBlCOApdBclhuTRd2mbKVEZi3N0YF2Djx6pohkOdvQDNVGVUnh6SjT3SEMLKKkY9
+         AmQHjKoewrUzbicwKZnX6bTQpdIZcA6qmWPAqaW1BWLpDgJ5zwyechM3SkvFlJqiN/gM
+         +nUg==
+In-Reply-To: <1424804504-10914-2-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="windows-1254"
+Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-SGkgQW5kcmVhcywNCg0KSSBsb29rZWQgdGhyb3VnaCB3aG9sZSBrZXJuZWwgcGF0Y2hlcyBhbmQg
-YSBwYXJ0IG9mIHV0aWwgcGF0Y2hlcy4NCk92ZXJhbGwgY29tbWVudHMgYXJlIGFzIGZvbGxvd3M6
-DQoNCltBbGdvcml0aG1dDQpBcyBmb3IgYWxnb3JpdGhtLCBpdCBsb29rcyBhYm91dCBPSyBleGNl
-cHQgZm9yIHRoZSBzdGFydmF0aW9uDQpjb3VudGVybWVhc3VyZS4gIFRoZSBzdGF2YXRpb24gY291
-bnRlcm1lYXN1cmUgbG9va3MgYWRob2MvaGFja3ksIGJ1dA0KaXQncyBnb29kIHRoYXQgaXQgZG9l
-c24ndCBjaGFuZ2Uga2VybmVsL3VzZXJsYW5kIGludGVyZmFjZTsgd2UgbWF5IGJlDQphYmxlIHRv
-IHJlcGxhY2UgaXQgd2l0aCBiZXR0ZXIgd2F5cyBpbiBhIGZ1dHVyZSBvciBpbiBhIHJldmlzZWQN
-CnZlcnNpb24gb2YgdGhpcyBwYXRjaHNldC4NCg0KKDEpIERyYXdiYWNrIG9mIHRoZSBzdGFydmF0
-aW9uIGNvdW50ZXJtZWFzdXJlDQogICAgVGhlIHBhdGNoIDkvOSBsb29rcyB0byBtYWtlIHRoZSBl
-eGVjdXRpb24gdGltZSBvZiBjaGNwIG9wZXJhdGlvbg0KICAgIHdvcnNlIHNpbmNlIGl0IHdpbGwg
-c2NhbiB0aHJvdWdoIHN1ZmlsZSB0byBtb2RpZnkgbGl2ZSBibG9jaw0KICAgIGNvdW50ZXJzLiAg
-SG93IG11Y2ggZG9lcyBpdCBwcm9sb25nIHRoZSBleGVjdXRpb24gdGltZSA/DQoNCiAgICBJbiBh
-IHVzZSBjYXNlIG9mIG5pbGZzLCBtYW55IHNuYXBzaG90cyBhcmUgY3JlYXRlZCBhbmQgdGhleSBh
-cmUNCiAgICBhdXRvbWF0aWNhbGx5IGNoYW5nZWQgYmFjayB0byBwbGFpbiBjaGVja3BvaW50cyBi
-ZWNhdXNlIG9sZA0KICAgIHNuYXBzaG90cyBhcmUgdGhpbm5lZCBvdXQgb3ZlciB0aW1lLiAgVGhl
-IHBhdGNoIDkvOSBtYXkgaW1wYWN0IG9uDQogICAgc3VjaCB1c2FnZS4NCg0KKDIpIENvbXBhdGli
-aWxpdHkNCiAgICBXaGF0IHdpbGwgaGFwcGVuIGluIHRoZSBmb2xsb3dpbmcgY2FzZToNCiAgICAx
-LiBDcmVhdGUgYSBmaWxlIHN5c3RlbSwgdXNlIGl0IHdpdGggdGhlIG5ldyBtb2R1bGUsIGFuZA0K
-ICAgICAgIGNyZWF0ZSBzbmFwc2hvdHMuDQogICAgMi4gTW91bnQgaXQgd2l0aCBhbiBvbGQgbW9k
-dWxlLCBhbmQgcmVsZWFzZSBzbmFwc2hvdCB3aXRoICJjaGNwIGNwIg0KICAgIDMuIE1vdW50IGl0
-IHdpdGggdGhlIG5ldyBtb2R1bGUsIGFuZCBjbGVhbmVyZCBydW5zIGdjIHdpdGgNCiAgICAgICBj
-b3N0IGJlbmVmaXQgb3IgZ3JlZWR5IHBvbGljeS4NCiAgICANCigzKSBEdXJhYmlsaXR5IGFnYWlu
-c3QgdW5leHBlY3RlZCBwb3dlciBmYWlsdXJlcyAoanVzdCBhIG5vdGUpDQogICAgVGhlIGN1cnJl
-bnQgcGF0Y2hzZXQgbG9va3Mgbm90IHRvIGNhdXNlIHN0YXJ2YXRpb24gaXNzdWUgZXZlbiB3aGVu
-DQogICAgdW5leHBlY3RlZCBwb3dlciBmYWlsdXJlIG9jY3VycyBkdXJpbmcgb3IgYWZ0ZXIgZXhl
-Y3V0aW5nICJjaGNwDQogICAgY3AiIGJlY2F1c2UgbmlsZnNfaW9jdGxfY2hhbmdlX2NwbW9kZSgp
-IGRvIGNoYW5nZXMgaW4gYQ0KICAgIHRyYW5zYWN0aW9uYWwgd2F5IHdpdGggbmlsZnNfdHJhbnNh
-Y3Rpb25fYmVnaW4vY29tbWl0Lg0KICAgIFdlIHNob3VsZCBhbHdheXMgdGhpbmsgdGhpcyBraW5k
-IG9mIHNpdHV0YXRpb24gdG8ga2VlcCBjb25zaXN0ZW5jeS4NCg0KW0NvZGluZyBTdHlsZV0NCig0
-KSBUaGlzIHBhdGNoc2V0IGhhcyBzZXZlcmFsIGNvZGluZyBzdHlsZSBpc3N1ZXMuIFBsZWFzZSBm
-aXggdGhlbSBhbmQNCiAgICByZS1jaGVjayB3aXRoIHRoZSBsYXRlc3QgY2hlY2twYXRjaCBzY3Jp
-cHQgKHNjcmlwdC9jaGVja3BhdGNoLnBsKS4NCg0KcGF0Y2ggMjoNCldBUk5JTkc6IFByZWZlciBr
-bWFsbG9jX2FycmF5IG92ZXIga21hbGxvYyB3aXRoIG11bHRpcGx5DQojODU6IEZJTEU6IGZzL25p
-bGZzMi9zdWZpbGUuYzoxMTkyOg0KKyAgICBtYy0+bWNfbW9kcyA9IGttYWxsb2MoY2FwYWNpdHkg
-KiBzaXplb2Yoc3RydWN0IG5pbGZzX3N1ZmlsZV9tb2QpLA0KDQpwYXRjaCA1LDY6DQpXQVJOSU5H
-OiAnYXF1aXJlZCcgbWF5IGJlIG1pc3NwZWxsZWQgLSBwZXJoYXBzICdhY3F1aXJlZCc/DQojNjA6
-IA0KdGhlIHNhbWUgc2VtYXBob3JlIGhhcyB0byBiZSBhcXVpcmVkLiBTbyBpZiB0aGUgREFULUVu
-dHJ5IGJlbG9uZ3MgdG8NCg0KV0FSTklORzogJ2FxdWlyZWQnIG1heSBiZSBtaXNzcGVsbGVkIC0g
-cGVyaGFwcyAnYWNxdWlyZWQnPw0KIzQ2OiANCmJlIGFxdWlyZWQsIHdoaWNoIGJsb2NrcyB0aGUg
-ZW50aXJlIFNVRklMRSBhbmQgZWZmZWN0aXZlbHkgdHVybnMNCg0KV0FSTklORzogJ2FxdWlyZWQn
-IG1heSBiZSBtaXNzcGVsbGVkIC0gcGVyaGFwcyAnYWNxdWlyZWQnPw0KIzUzOiANCmFmb3JlIG1l
-bnRpb25lZCBsb2NrIG9ubHkgbmVlZHMgdG8gYmUgYXF1aXJlZCwgaWYgdGhlIGNhY2hlIGlzIGZ1
-bGwNCg0KKDUpIHN1Yl9zaXplb2YgbWFjcm86DQogICAgVGhlIHNhbWUgZGVmaW5pdGlvbiBleGlz
-dHMgYXMgb2Zmc2V0b2ZlbmQoKSBpbiB2ZmlvLmgsDQogICAgYW5kIGEgcGF0Y2ggdG8gbW92ZSBp
-dCB0byBzdGRkZWYuaCBpcyBub3cgcHJvcG9zZWQuDQoNCiAgICBQbGVhc2UgdXNlIHRoZSBzYW1l
-IG5hbWUsIGFuZCByZWRlZmluZSBpdCBvbmx5IGlmIGl0J3Mgbm90DQogICAgZGVmaW5lZDoNCg0K
-I2lmbmRlZiBvZmZzZXRvZmVuZA0KI2RlZmluZSBvZmZzZXRvZmVuZChUWVBFLCBNRU1CRVIpIFwN
-CiAgICAgICAgKG9mZnNldG9mKFRZUEUsIE1FTUJFUikgKyBzaXplb2YoKChUWVBFICopMCktPk1F
-TUJFUikpDQojZW5kaWYNCg0KW0ltcGxlbWVudGF0aW9uXQ0KKDYpIGJfYmxvY2tucg0KICAgIFBs
-ZWFzZSBkbyBub3QgdXNlIGJoLT5iX2Jsb2NrbnIgdG8gc3RvcmUgZGlzayBibG9jayBudW1iZXIu
-ICBUaGlzDQogICAgZmllbGQgaXMgdXNlZCB0byBrZWVwIHZpcnR1YWwgYmxvY2sgbnVtYmVyIGV4
-Y2VwdCBmb3IgREFUIGZpbGVzLg0KICAgIEl0IGlzIG9ubHkgcmVwbGFjZWQgdG8gYW4gYWN0dWFs
-IGJsb2NrIG51bWJlciBkdXJpbmcgY2FsbGluZw0KICAgIHN1Ym1pdF9iaCgpLiAgS2VlcCB0aGlz
-IHBvbGljeS4NCg0KICAgIEluIHNlZ21lbnQgY29uc3RydWN0b3IgY29udGV4dCwgeW91IGNhbiBj
-YWxjdWxhdGUgdGhlIGRpc2sgYmxvY2sNCiAgICBudW1iZXIgZnJvbSB0aGUgc3RhcnQgZGlzayBh
-ZGRyZXNzIG9mIHRoZSBzZWdtZW50IGFuZCB0aGUgYmxvY2sNCiAgICBpbmRleCAob2Zmc2V0KSBp
-biB0aGUgc2VnbWVudC4NCg0KKDcpIHN1ZmlsZSBtb2QgY2FjaGUNCiAgICBDb25zaWRlciBnYXRo
-ZXJpbmcgdGhlIGNhY2hlIGludG8gbmlsZnNfc3VmaWxlX2luZm8gc3RydWN0IGFuZA0KICAgIHN0
-b3BwaW5nIHRvIHBhc3MgaXQgdmlhIGFyZ3VtZW50IG9mIGJtYXAvc3VmaWxlL2RhdCBpbnRlcmZh
-Y2UNCiAgICBmdW5jdGlvbnMuICBJdCdzIGhhY2t5LCBhbmQgZGVjcmVhc2VzIHJlYWRhYmlsaXR5
-IG9mIHByb2dyYW1zLCBhbmQNCiAgICBpcyBibG9hdGluZyBjaGFuZ2VzIG9mIHRoaXMgcGF0Y2hz
-ZXQgb3ZlciBtdWx0aXBsZSBmdW5jdGlvbg0KICAgIGJsb2Nrcy4NCg0KICAgIFRoZSBjYWNoZSBz
-aG91bGQgYmUgd2VsbCBkZXNpZ25lZC4gSXQncyBpbXBvcnRhbnQgdG8gYmFsYW5jZSB0aGUNCiAg
-ICBwZXJmb3JtYW5jZSBhbmQgbG9jYWxpdHkvdHJhbnNwYXJlbmN5IG9mIHRoZSBmZWF0dXJlLiAg
-Rm9yDQogICAgaW5zdGFuY2UsIGl0IGNhbiBiZSBpbXBsZW1lbnRlZCB3aXRoIHJhZGl4LXRyZWUg
-b2Ygb2JqZWN0cyBpbg0KICAgIHdoaWNoIGVhY2ggb2JqZWN0IGhhcyBhIHZlY3RvciBvZiAyXmsg
-Y2FjaGUgZW50cmllcy4NCg0KICAgIEkgdGhpbmsgdGhlIGNhY2hlIHNob3VsZCBiZSB3cml0dGVu
-IGJhY2sgdG8gdGhlIHN1ZmlsZSBidWZmZXJzDQogICAgb25seSB3aXRoaW4gc2VnbWVudCBjb25z
-dHJ1Y3Rpb24gY29udGV4dC4gQXQgbGVhc3QsIGl0IHNob3VsZCBiZQ0KICAgIHdyaXR0ZW4gYmFj
-ayBpbiB0aGUgY29udGV4dCBpbiB3aGljaCBhIHRyYW5zYWN0aW9uIGxvY2sgaXMgaGVsZC4NCg0K
-ICAgIEluIGFkZGl0aW9uLCBpbnRyb2R1Y2luZyBhIG5ldyBibWFwIGxvY2sgZGVwZW5kZW5jeSwN
-CiAgICBuaWxmc19zdWZpbGVfbG9ja19rZXksIGlzIHVuZGVzaXJlYmxlLiBZb3Ugc2hvdWxkIGF2
-b2lkIGl0DQogICAgYnkgZGVsYXlpbmcgdGhlIHdyaXRlYmFjayBvZiBjYWNoZSBlbnRyaWVzIHRv
-IHN1ZmlsZS4NCg0KKDgpIENoYW5nZXMgdG8gdGhlIHN1ZmlsZSBtdXN0IGJlIGZpbmlzaGVkIGJl
-Zm9yZSBkaXJ0eSBidWZmZXINCiAgICBjb2xsZWN0aW9uIG9mIHN1ZmlsZS4NCiAgICBBbGwgbWFy
-a19idWZmZXJfZGlydHkoKSBjYWxscyB0byBzdWZpbGUgbXVzdCBiZSBmaW5pc2hlZA0KICAgIGJl
-Zm9yZSBvciBpbiBOSUxGU19TVF9TVUZJTEUgc3RhZ2Ugb2YgbmlsZnNfc2VnY3Rvcl9jb2xsZWN0
-X2Jsb2NrcygpLg0KDQogICAgKFlvdSBjYW4gd3JpdGUgZml4ZWQgZmlndXJlcyB0byBzdWZpbGUg
-YWZ0ZXIgdGhlIGNvbGxlY3Rpb24gcGhhc2UNCiAgICAgb2Ygc3VmaWxlIGJ5IHByZXBhcmF0b3J5
-IG1hcmtpbmcgYnVmZmVyIGRpcnR5IGJlZm9yZSB0aGUNCiAgICAgY29sZWN0aW9uIHBoYXNlLikN
-Cg0KICAgIEluIHRoZSBjdXJyZW50IHBhdGNoc2V0LCBzdWZpbGUgbW9kIGNhY2hlIGNhbiBiZSBm
-bHVzaGVkIGluDQogICAgbmlsZnNfc2VnY3Rvcl91cGRhdGVfcGFseWxvYWRfYmxvY2tucigpLCB3
-aGljaCBjb21lcyBhZnRlciB0aGUNCiAgICBkaXJ0eSBidWZmZXIgY29sbGVjdGlvbiBwaGFzZS4N
-Cg0KKDkpIGNwZmlsZSBpcyBhbHNvIGV4Y2x1ZGVkIGluIHRoZSBkZWFkIGJsb2NrIGNvdW50aW5n
-IGxpa2Ugc3VmaWxlDQogICAgY3BmaWxlIGlzIGFsd2F5cyBjaGFuZ2VkIGFuZCB3cml0dGVuIGJh
-Y2sgYWxvbmcgd2l0aCBzdWZpbGUgYW5kIGRhdC4NCiAgICBTbywgY3BmaWxlIG11c3QgYmUgZXhj
-bHVkZWQgZnJvbSB0aGUgZGVhZCBibG9jayBjb3VudGluZy4NCiAgICBPdGhlcndpc2UsIHN1Zmls
-ZSBjaGFuZ2UgY2FuIHRyaWdnZXIgY3BmaWxlIGNoYW5nZXMsIGFuZCBpdCBpbiB0dXJuDQogICAg
-dHJpZ2dlcnMgc3VmaWxlLg0KDQogICAgVGhpcyBhbHNvIGhlbHBzIHRvIHNpbXBsaWZ5IG5pbGZz
-X2RhdF9jb21taXRfZW5kKCkgdGhhdCB0aGUgcGF0Y2hzZXQNCiAgICBhZGRlZCB0d28gYXJndW1l
-bnRzIGZvciB0aGUgZGVhZCBibG9jayBjb3VudGluZyBpbiB0aGUgcGF0Y2hzZXQuDQogICAgSSBt
-ZWFuLCAiZGVhZCIgYXJndW1lbnQgYW5kICJjb3VudF9ibG9ja3MiIGFyZ3VtZW50IGNhbiBiZSB1
-bmlmaWVkIGJ5DQogICAgY2hhbmdpbmcgbWVhbmluZyBvZiB0aGUgImRlYWQiIGFyZ3VtZW50Lg0K
-DQoNCkkgd2lsbCBhZGQgZGV0YWlsIGNvbW1lbnRzIGZvciBwYXRjaGVzIHRvbmlnaHQgb3IgYW5v
-dGhlciBkYXkuDQoNClJlZ2FyZHMsDQpSeXVzdWtlIEtvbmlzaGkNCg0KT24gV2VkLCAyNSBGZWIg
-MjAxNSAwOToxODowNCArMDkwMCAoSlNUKSwgUnl1c3VrZSBLb25pc2hpIHdyb3RlOg0KPiBIaSBB
-bmRyZWFzLA0KPiANCj4gVGhhbmsgeW91IGZvciBwb3N0aW5nIHRoaXMgcHJvcG9zYWwhDQo+IA0K
-PiBJIHdvdWxkIGxpa2UgdG8gaGF2ZSB0aW1lIHRvIHJldmlldyB0aGlzIHNlcmllcyB0aHJvdWdo
-LCBidXQgcGxlYXNlDQo+IHdhaXQgZm9yIHNldmVyYWwgZGF5cy4gKFRoaXMgd2VlayBJJ20gcXVp
-dGUgYnVzeSB1bnRpbCB3ZWVrZW5kKQ0KPiANCj4gVGhhbmtzLA0KPiBSeXVzdWtlIEtvbmlzaGkN
-Cj4gDQo+IE9uIFR1ZSwgMjQgRmViIDIwMTUgMjA6MDE6MzUgKzAxMDAsIEFuZHJlYXMgUm9obmVy
-IHdyb3RlOg0KPj4gSGkgZXZlcnlvbmUhDQo+PiANCj4+IE9uZSBvZiB0aGUgYmlnZ2VzdCBwZXJm
-b3JtYW5jZSBwcm9ibGVtcyBvZiBOSUxGUyBpcyBpdHMNCj4+IGluZWZmaWNpZW50IFRpbWVzdGFt
-cCBHQyBwb2xpY3kuIFRoaXMgcGF0Y2ggc2V0IGludHJvZHVjZXMgdHdvIG5ldyBHQw0KPj4gcG9s
-aWNpZXMsIG5hbWVseSBDb3N0LUJlbmVmaXQgYW5kIEdyZWVkeS4NCj4+IA0KPj4gVGhlIENvc3Qt
-QmVuZWZpdCBwb2xpY3kgaXMgbm90aGluZyBuZXcuIEl0IGhhcyBiZWVuIGFyb3VuZCBmb3IgYSBs
-b25nDQo+PiB0aW1lIHdpdGggbG9nLXN0cnVjdHVyZWQgZmlsZSBzeXN0ZW1zIFsxXS4gQnV0IGl0
-IHJlbGllcyBvbiBhY2N1cmF0ZQ0KPj4gaW5mb3JtYXRpb24sIGFib3V0IHRoZSBudW1iZXIgb2Yg
-bGl2ZSBibG9ja3MgaW4gYSBzZWdtZW50LiBOSUxGUw0KPj4gY3VycmVudGx5IGRvZXMgbm90IHBy
-b3ZpZGUgdGhlIG5lY2Vzc2FyeSBpbmZvcm1hdGlvbi4gU28gdGhpcyBwYXRjaCBzZXQNCj4+IGV4
-dGVuZHMgdGhlIGVudHJpZXMgaW4gdGhlIFNVRklMRSB0byBpbmNsdWRlIGEgY291bnRlciBmb3Ig
-dGhlIG51bWJlciBvZg0KPj4gbGl2ZSBibG9ja3MuIFRoaXMgY291bnRlciBpcyBkZWNyZW1lbnRl
-ZCB3aGVuZXZlciBhIGZpbGUgaXMgZGVsZXRlZCBvcg0KPj4gb3ZlcndyaXR0ZW4uDQo+PiANCj4+
-IEV4Y2VwdCBmb3Igc29tZSB0cmlja3kgcGFydHMsIHRoZSBjb3VudGluZyBvZiBsaXZlIGJsb2Nr
-cyBpcyBxdWl0ZQ0KPj4gdHJpdmlhbC4gVGhlIHByb2JsZW0gaXMgc25hcHNob3RzLiBBdCBhbnkg
-dGltZSwgYSBjaGVja3BvaW50IGNhbiBiZQ0KPj4gdHVybmVkIGludG8gYSBzbmFwc2hvdCBvciB2
-aWNlIHZlcnNhLiBTbyBibG9ja3MgdGhhdCBhcmUgcmVjbGFpbWFibGUgYXQNCj4+IG9uZSBwb2lu
-dCBpbiB0aW1lLCBhcmUgcHJvdGVjdGVkIGJ5IGEgc25hcHNob3QgYSBtb21lbnQgbGF0ZXIuDQo+
-PiANCj4+IFRoaXMgcGF0Y2ggc2V0IGRvZXMgbm90IHRyeSB0byB0cmFjayBzbmFwc2hvdHMgYXQg
-YWxsLiBJbnN0ZWFkIGl0IHVzZXMgYQ0KPj4gaGV1cmlzdGljIGFwcHJvYWNoIHRvIHByZXZlbnQg
-dGhlIHdvcnN0IGNhc2Ugc2NlbmFyaW8uIFRoZSBwZXJmb3JtYW5jZQ0KPj4gaXMgc3RpbGwgc2ln
-bmlmaWNhbnRseSBiZXR0ZXIgdGhhbiB0aW1lc3RhbXAgZm9yIG15IGJlbmNobWFya3MuDQo+PiAN
-Cj4+IFRoZSB3b3JzdCBjYXNlIHNjZW5hcmlvIGlzLCB0aGUgZm9sbG93aW5nOg0KPj4gDQo+PiAx
-LiBTZWdtZW50IDEgaXMgd3JpdHRlbg0KPj4gMi4gU25hcHNob3QgaXMgY3JlYXRlZA0KPj4gMy4g
-R0MgdHJpZXMgdG8gcmVjbGFpbSBTZWdtZW50IDEsIGJ1dCBhbGwgYmxvY2tzIGFyZSBwcm90ZWN0
-ZWQNCj4+ICAgIGJ5IHRoZSBTbmFwc2hvdC4gVGhlIEdDIGhhcyB0byBzZXQgdGhlIG51bWJlciBv
-ZiBsaXZlIGJsb2Nrcw0KPj4gICAgdG8gbWF4aW11bSB0byBhdm9pZCByZWNsYWltaW5nIHRoaXMg
-U2VnbWVudCBhZ2FpbiBpbiB0aGUgbmVhciBmdXR1cmUuDQo+PiA0LiBTbmFwc2hvdCBpcyBkZWxl
-dGVkDQo+PiA1LiBTZWdtZW50IDEgaXMgcmVjbGFpbWFibGUsIGJ1dCBpdHMgY291bnRlciBpcyBz
-byBoaWdoLCB0aGF0IHRoZSBHQw0KPj4gICAgd2lsbCBuZXZlciB0cnkgdG8gcmVjbGFpbSBpdCBh
-Z2Fpbi4NCj4+IA0KPj4gVG8gcHJldmVudCB0aGlzIGtpbmQgb2Ygc3RhcnZhdGlvbiBJIHVzZSBh
-bm90aGVyIGZpZWxkIGluIHRoZSBTVUZJTEUNCj4+IGVudHJ5LCB0byBzdG9yZSB0aGUgbnVtYmVy
-IG9mIGJsb2NrcyB0aGF0IGFyZSBwcm90ZWN0ZWQgYnkgYSBzbmFwc2hvdC4NCj4+IFRoaXMgdmFs
-dWUgaXMganVzdCBhIGhldXJpc3RpYyBhbmQgaXQgaXMgdXN1YWxseSBzZXQgdG8gMC4gT25seSBp
-ZiB0aGUNCj4+IEdDIHJlY2xhaW1zIGEgc2VnbWVudCwgaXQgaXMgd3JpdHRlbiB0byB0aGUgU1VG
-SUxFIGVudHJ5LiBUaGUgR0MgaGFzIHRvDQo+PiBjaGVjayBmb3Igc25hcHNob3RzIGFueXdheSwg
-c28gd2UgZ2V0IHRoaXMgaW5mb3JtYXRpb24gZm9yIGZyZWUuIEJ5DQo+PiBzdG9yaW5nIHRoaXMg
-aW5mb3JtYXRpb24gaW4gdGhlIFNVRklMRSB3ZSBjYW4gYXZvaWQgc3RhcnZhdGlvbiBpbiB0aGUN
-Cj4+IGZvbGxvd2luZyB3YXk6DQo+PiANCj4+IDEuIFNlZ21lbnQgMSBpcyB3cml0dGVuDQo+PiAy
-LiBTbmFwc2hvdCBpcyBjcmVhdGVkDQo+PiAzLiBHQyB0cmllcyB0byByZWNsYWltIFNlZ21lbnQg
-MSwgYnV0IGFsbCBibG9ja3MgYXJlIHByb3RlY3RlZA0KPj4gICAgYnkgdGhlIFNuYXBzaG90LiBU
-aGUgR0MgaGFzIHRvIHNldCB0aGUgbnVtYmVyIG9mIGxpdmUgYmxvY2tzDQo+PiAgICB0byBtYXhp
-bXVtIHRvIGF2b2lkIHJlY2xhaW1pbmcgdGhpcyBTZWdtZW50IGFnYWluIGluIHRoZSBuZWFyIGZ1
-dHVyZS4NCj4+IDQuIEdDIHNldHMgdGhlIG51bWJlciBvZiBzbmFwc2hvdCBibG9ja3MgaW4gU2Vn
-bWVudCAxIGluIHRoZSBTVUZJTEUNCj4+ICAgIGVudHJ5DQo+PiA1LiBTbmFwc2hvdCBpcyBkZWxl
-dGVkDQo+PiA2LiBPbiBTbmFwc2hvdCBkZWxldGlvbiB3ZSB3YWxrIHRocm91Z2ggZXZlcnkgZW50
-cnkgaW4gdGhlIFNVRklMRSBhbmQNCj4+ICAgIHJlZHVjZSB0aGUgbnVtYmVyIG9mIGxpdmUgYmxv
-Y2tzIHRvIGhhbGYsIGlmIHRoZSBudW1iZXIgb2Ygc25hcHNob3QNCj4+ICAgIGJsb2NrcyBpcyBi
-aWdnZXIgdGhhbiBoYWxmIG9mIHRoZSBtYXhpbXVtLg0KPj4gNy4gU2VnbWVudCAxIGlzIHJlY2xh
-aW1hYmxlIGFuZCB0aGUgbnVtYmVyIG9mIGxpdmUgYmxvY2tzIGVudHJ5IGlzIGF0DQo+PiAgICBo
-YWxmIHRoZSBtYXhpbXVtLiBUaGUgR0Mgd2lsbCB0cnkgdG8gcmVjbGFpbSB0aGlzIHNlZ21lbnQg
-YXMgc29vbiBhcw0KPj4gICAgdGhlcmUgYXJlIG5vIG90aGVyIGJldHRlciBjaG9pY2VzLg0KPj4g
-DQo+PiBCRU5DSE1BUktTOg0KPj4gLS0tLS0tLS0tLS0NCj4+IA0KPj4gTXkgYmVuY2htYXJrIGlz
-IHF1aXRlIHNpbXBsZS4gSXQgY29uc2lzdHMgb2YgYSBwcm9jZXNzLCB0aGF0IHJlcGxheXMNCj4+
-IHJlYWwgTkZTIHRyYWNlcyBhdCBhIGZhc3RlciBzcGVlZC4gSXQgdGhlcmVieSBjcmVhdGVzIHJl
-bGF0aXZlbHkNCj4+IHJlYWxpc3RpYyBwYXR0ZXJucyBvZiBmaWxlIGNyZWF0aW9uIGFuZCBkZWxl
-dGlvbnMuIEF0IHRoZSBzYW1lIHRpbWUNCj4+IG11bHRpcGxlIHNuYXBzaG90cyBhcmUgY3JlYXRl
-ZCBhbmQgZGVsZXRlZCBpbiBwYXJhbGxlbC4gSSB1c2UgYSAxMDBHQg0KPj4gcGFydGl0aW9uIG9m
-IGEgU2Ftc3VuZyBTU0Q6DQo+PiANCj4+IFdJVEggU05BUFNIT1RTIEVWRVJZIDUgTUlOVVRFUzoN
-Cj4+IC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tDQo+PiAgICAgICAgICAgICAgICAgRXhlY3V0aW9uIHRpbWUgICAgICAg
-V2VhciAoRGF0YSB3cml0dGVuIHRvIGRpc2spDQo+PiBUaW1lc3RhbXA6ICAgICAgMTAwJSAgICAg
-ICAgICAgICAgICAgMTAwJQ0KPj4gQ29zdC1CZW5lZml0OiAgIDgwJSAgICAgICAgICAgICAgICAg
-IDQzJQ0KPj4gDQo+PiBOTyBTTkFQU0hPVFM6DQo+PiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0NCj4+ICAgICAgICAg
-ICAgICAgICBFeGVjdXRpb24gdGltZSAgICAgICBXZWFyIChEYXRhIHdyaXR0ZW4gdG8gZGlzaykN
-Cj4+IFRpbWVzdGFtcDogICAgICAxMDAlICAgICAgICAgICAgICAgICAxMDAlDQo+PiBDb3N0LUJl
-bmVmaXQ6ICAgNzAlICAgICAgICAgICAgICAgICAgNDUlDQo+PiANCj4+IEkgcGxhbiBvbiBhZGRp
-bmcgbW9yZSBiZW5jaG1hcmsgcmVzdWx0cyBzb29uLg0KPj4gDQo+PiBCZXN0IHJlZ2FyZHMsDQo+
-PiBBbmRyZWFzIFJvaG5lcg0KPj4gDQo+PiBbMV0gTWVuZGVsIFJvc2VuYmx1bSBhbmQgSm9obiBL
-LiBPdXN0ZXJob3V0LiBUaGUgZGVzaWduIGFuZCBpbXBsZW1lbnRhLQ0KPj4gICAgIHRpb24gb2Yg
-YSBsb2ctc3RydWN0dXJlZCBmaWxlIHN5c3RlbS4gQUNNIFRyYW5zLiBDb21wdXQuIFN5c3QuLA0K
-Pj4gICAgIDEwKDEpOjI24oCTNTIsIEZlYnJ1YXJ5IDE5OTIuDQo+PiANCj4+IEFuZHJlYXMgUm9o
-bmVyICg5KToNCj4+ICAgbmlsZnMyOiByZWZhY3RvciBuaWxmc19zdWZpbGVfdXBkYXRldigpDQo+
-PiAgIG5pbGZzMjogYWRkIHNpbXBsZSBjYWNoZSBmb3IgbW9kaWZpY2F0aW9ucyB0byBTVUZJTEUN
-Cj4+ICAgbmlsZnMyOiBleHRlbmQgU1VGSUxFIG9uLWRpc2sgZm9ybWF0IHRvIGVuYWJsZSBjb3Vu
-dGluZyBvZiBsaXZlIGJsb2Nrcw0KPj4gICBuaWxmczI6IGFkZCBmdW5jdGlvbiB0byBtb2RpZnkg
-c3VfbmxpdmVfYmxrcw0KPj4gICBuaWxmczI6IGFkZCBzaW1wbGUgdHJhY2tpbmcgb2YgYmxvY2sg
-ZGVsZXRpb25zIGFuZCB1cGRhdGVzDQo+PiAgIG5pbGZzMjogdXNlIG1vZGlmaWNhdGlvbiBjYWNo
-ZSB0byBpbXByb3ZlIHBlcmZvcm1hbmNlDQo+PiAgIG5pbGZzMjogYWRkIGFkZGl0aW9uYWwgZmxh
-Z3MgZm9yIG5pbGZzX3ZkZXNjDQo+PiAgIG5pbGZzMjogaW1wcm92ZSBhY2N1cmFjeSBhbmQgY29y
-cmVjdCBmb3IgaW52YWxpZCBHQyB2YWx1ZXMNCj4+ICAgbmlsZnMyOiBwcmV2ZW50IHN0YXJ2YXRp
-b24gb2Ygc2VnbWVudHMgcHJvdGVjdGVkIGJ5IHNuYXBzaG90cw0KPj4gDQo+PiAgZnMvbmlsZnMy
-L2JtYXAuYyAgICAgICAgICB8ICA4NCArKysrKysrLQ0KPj4gIGZzL25pbGZzMi9ibWFwLmggICAg
-ICAgICAgfCAgMTQgKy0NCj4+ICBmcy9uaWxmczIvYnRyZWUuYyAgICAgICAgIHwgICA0ICstDQo+
-PiAgZnMvbmlsZnMyL2NwZmlsZS5jICAgICAgICB8ICAgNSArDQo+PiAgZnMvbmlsZnMyL2RhdC5j
-ICAgICAgICAgICB8ICA5NSArKysrKysrKy0NCj4+ICBmcy9uaWxmczIvZGF0LmggICAgICAgICAg
-IHwgICA4ICstDQo+PiAgZnMvbmlsZnMyL2RpcmVjdC5jICAgICAgICB8ICAgNCArLQ0KPj4gIGZz
-L25pbGZzMi9pbm9kZS5jICAgICAgICAgfCAgMjQgKystDQo+PiAgZnMvbmlsZnMyL2lvY3RsLmMg
-ICAgICAgICB8ICAyNyArKy0NCj4+ICBmcy9uaWxmczIvbWR0LmMgICAgICAgICAgIHwgICA1ICst
-DQo+PiAgZnMvbmlsZnMyL3BhZ2UuaCAgICAgICAgICB8ICAgNiArLQ0KPj4gIGZzL25pbGZzMi9z
-ZWdidWYuYyAgICAgICAgfCAgIDYgKw0KPj4gIGZzL25pbGZzMi9zZWdidWYuaCAgICAgICAgfCAg
-IDMgKw0KPj4gIGZzL25pbGZzMi9zZWdtZW50LmMgICAgICAgfCAxNTUgKysrKysrKysrKysrKy0N
-Cj4+ICBmcy9uaWxmczIvc2VnbWVudC5oICAgICAgIHwgICAzICsNCj4+ICBmcy9uaWxmczIvc3Vm
-aWxlLmMgICAgICAgIHwgNTMzICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKystLS0NCj4+ICBmcy9uaWxmczIvc3VmaWxlLmggICAgICAgIHwgIDk3ICsrKysrKystLQ0K
-Pj4gIGZzL25pbGZzMi90aGVfbmlsZnMuYyAgICAgfCAgIDQgKw0KPj4gIGZzL25pbGZzMi90aGVf
-bmlsZnMuaCAgICAgfCAgMjMgKysNCj4+ICBpbmNsdWRlL2xpbnV4L25pbGZzMl9mcy5oIHwgMTIy
-ICsrKysrKysrKystDQo+PiAgMjAgZmlsZXMgY2hhbmdlZCwgMTEyNiBpbnNlcnRpb25zKCspLCA5
-NiBkZWxldGlvbnMoLSkNCj4+IA0KPj4gLS0gDQo+PiAyLjMuMA0KPj4gDQo+PiAtLQ0KPj4gVG8g
-dW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxp
-bnV4LW5pbGZzIiBpbg0KPj4gdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2Vy
-Lmtlcm5lbC5vcmcNCj4+IE1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5l
-bC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA0K
+On Tue, 24 Feb 2015 20:01:36 +0100, Andreas Rohner wrote:
+> This patch refactors nilfs_sufile_updatev() to take an array of
+> arbitrary data structures instead of an array of segment numbers as
+> input parameter. With this  change it is reusable for cases, where
+> it is necessary to pass extra data to the update function. The only
+> requirement for the data structures passed as input is, that they
+> contain the segment number within the structure. By passing the
+> offset to the segment number as another input parameter,
+> nilfs_sufile_updatev() can be oblivious to the actual type of the
+> input structures in the array.
+> 
+> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+> ---
+>  fs/nilfs2/sufile.c | 79 ++++++++++++++++++++++++++++++++----------------------
+>  fs/nilfs2/sufile.h | 39 ++++++++++++++-------------
+>  2 files changed, 68 insertions(+), 50 deletions(-)
+> 
+> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+> index 2a869c3..1e8cac6 100644
+> --- a/fs/nilfs2/sufile.c
+> +++ b/fs/nilfs2/sufile.c
+> @@ -138,14 +138,18 @@ unsigned long nilfs_sufile_get_ncleansegs(struct inode *sufile)
+>  /**
+>   * nilfs_sufile_updatev - modify multiple segment usages at a time
+>   * @sufile: inode of segment usage file
+> - * @segnumv: array of segment numbers
+> - * @nsegs: size of @segnumv array
+> + * @datav: array of segment numbers
+> + * @datasz: size of elements in @datav
+> + * @segoff: offset to segnum within the elements of @datav
+> + * @ndata: size of @datav array
+>   * @create: creation flag
+>   * @ndone: place to store number of modified segments on @segnumv
+>   * @dofunc: primitive operation for the update
+>   *
+>   * Description: nilfs_sufile_updatev() repeatedly calls @dofunc
+> - * against the given array of segments.  The @dofunc is called with
+> + * against the given array of data elements. Every data element has
+> + * to contain a valid segment number and @segoff should be the offset
+> + * to that within the data structure. The @dofunc is called with
+>   * buffers of a header block and the sufile block in which the target
+>   * segment usage entry is contained.  If @ndone is given, the number
+>   * of successfully modified segments from the head is stored in the
+> @@ -163,50 +167,55 @@ unsigned long nilfs_sufile_get_ncleansegs(struct inode *sufile)
+>   *
+>   * %-EINVAL - Invalid segment usage number
+>   */
+> -int nilfs_sufile_updatev(struct inode *sufile, __u64 *segnumv, size_t nsegs,
+> -			 int create, size_t *ndone,
+> -			 void (*dofunc)(struct inode *, __u64,
+> +int nilfs_sufile_updatev(struct inode *sufile, void *datav, size_t datasz,
+> +			 size_t segoff, size_t ndata, int create,
+> +			 size_t *ndone,
+> +			 void (*dofunc)(struct inode *, void *,
+>  					struct buffer_head *,
+>  					struct buffer_head *))
+
+Using offset byte of the data like segoff is nasty.
+
+Please consider defining a template structure and its variation:
+
+struct nilfs_sufile_update_data {
+       __u64 segnum;
+       /* Optional data comes after segnum */
+};
+
+/**
+ * struct nilfs_sufile_update_count - data type of nilfs_sufile_do_xxx
+ * @segnum: segment number
+ * @nadd: additional value to a counter
+ * Description: This structure derives from nilfs_sufile_update_data
+ * struct.
+ */
+struct nilfs_sufile_update_count {
+       __u64 segnum;
+       __u64 nadd;
+};
+
+int nilfs_sufile_updatev(struct inode *sufile,
+			 struct nilfs_sufile_update_data *datav,
+			 size_t datasz,
+			 size_t ndata, int create, size_t *ndone,
+                         void (*dofunc)(struct inode *,
+					struct nilfs_sufile_update_data *,
+					struct buffer_head *,
+					struct buffer_head *))
+{
+	...
+}
+
+If you need define segnum in the middle of structure, you can use
+container_of():
+
+Example:
+
+struct nilfs_sufile_update_xxx {
+       __u32 item_a;
+       __u32 item_b;
+       struct nilfs_sufile_update_data u_data;
+};
+
+static inline struct nilfs_sufile_update_xxx *
+NILFS_SU_UPDATE_XXX(struct nilfs_sufile_update_data *data)
+{
+	return container_of(data, struct nilfs_sufile_update_xxx, u_data);
+}
+
+void nilfs_sufile_do_xxx(...)
+{
+   struct nilfs_sufile_update_xxx *xxx;
+
+   xxx = NILFS_SU_UPDATA_XXX(data);
+   ...
+}
+
+I believe the former technique is enough in your case. (you can
+suppose that segnum is always the first member of data, right ?).
+
+
+>  {
+>  	struct buffer_head *header_bh, *bh;
+>  	unsigned long blkoff, prev_blkoff;
+>  	__u64 *seg;
+> -	size_t nerr = 0, n = 0;
+> +	void *data, *dataend = datav + ndata * datasz;
+> +	size_t n = 0;
+>  	int ret = 0;
+>  
+> -	if (unlikely(nsegs == 0))
+> +	if (unlikely(ndata == 0))
+>  		goto out;
+>  
+> -	down_write(&NILFS_MDT(sufile)->mi_sem);
+> -	for (seg = segnumv; seg < segnumv + nsegs; seg++) {
+> +
+> +	for (data = datav; data < dataend; data += datasz) {
+> +		seg = data + segoff;
+>  		if (unlikely(*seg >= nilfs_sufile_get_nsegments(sufile))) {
+>  			printk(KERN_WARNING
+>  			       "%s: invalid segment number: %llu\n", __func__,
+>  			       (unsigned long long)*seg);
+> -			nerr++;
+> +			ret = -EINVAL;
+> +			goto out;
+>  		}
+>  	}
+> -	if (nerr > 0) {
+> -		ret = -EINVAL;
+> -		goto out_sem;
+> -	}
+>  
+> +	down_write(&NILFS_MDT(sufile)->mi_sem);
+>  	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
+>  	if (ret < 0)
+>  		goto out_sem;
+>  
+> -	seg = segnumv;
+> +	data = datav;
+> +	seg = data + segoff;
+>  	blkoff = nilfs_sufile_get_blkoff(sufile, *seg);
+>  	ret = nilfs_mdt_get_block(sufile, blkoff, create, NULL, &bh);
+>  	if (ret < 0)
+>  		goto out_header;
+>  
+>  	for (;;) {
+> -		dofunc(sufile, *seg, header_bh, bh);
+> +		dofunc(sufile, data, header_bh, bh);
+>  
+> -		if (++seg >= segnumv + nsegs)
+> +		++n;
+> +		data += datasz;
+> +		if (data >= dataend)
+>  			break;
+> +		seg = data + segoff;
+>  		prev_blkoff = blkoff;
+>  		blkoff = nilfs_sufile_get_blkoff(sufile, *seg);
+>  		if (blkoff == prev_blkoff)
+> @@ -220,28 +229,30 @@ int nilfs_sufile_updatev(struct inode *sufile, __u64 *segnumv, size_t nsegs,
+>  	}
+>  	brelse(bh);
+>  
+> - out_header:
+> -	n = seg - segnumv;
+> +out_header:
+>  	brelse(header_bh);
+> - out_sem:
+> +out_sem:
+>  	up_write(&NILFS_MDT(sufile)->mi_sem);
+> - out:
+> +out:
+>  	if (ndone)
+>  		*ndone = n;
+>  	return ret;
+>  }
+>  
+> -int nilfs_sufile_update(struct inode *sufile, __u64 segnum, int create,
+> -			void (*dofunc)(struct inode *, __u64,
+> +int nilfs_sufile_update(struct inode *sufile, void *data, size_t segoff,
+> +			int create,
+> +			void (*dofunc)(struct inode *, void *,
+>  				       struct buffer_head *,
+>  				       struct buffer_head *))
+
+ditto.
+
+>  {
+>  	struct buffer_head *header_bh, *bh;
+> +	__u64 *seg;
+>  	int ret;
+>  
+> -	if (unlikely(segnum >= nilfs_sufile_get_nsegments(sufile))) {
+> +	seg = data + segoff;
+> +	if (unlikely(*seg >= nilfs_sufile_get_nsegments(sufile))) {
+>  		printk(KERN_WARNING "%s: invalid segment number: %llu\n",
+> -		       __func__, (unsigned long long)segnum);
+> +		       __func__, (unsigned long long)*seg);
+>  		return -EINVAL;
+>  	}
+
+You can remove these nasty changes.
+
+>  	down_write(&NILFS_MDT(sufile)->mi_sem);
+> @@ -250,9 +261,9 @@ int nilfs_sufile_update(struct inode *sufile, __u64 segnum, int create,
+>  	if (ret < 0)
+>  		goto out_sem;
+>  
+> -	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, create, &bh);
+> +	ret = nilfs_sufile_get_segment_usage_block(sufile, *seg, create, &bh);
+
+ditto.
+
+>  	if (!ret) {
+> -		dofunc(sufile, segnum, header_bh, bh);
+> +		dofunc(sufile, data, header_bh, bh);
+>  		brelse(bh);
+>  	}
+>  	brelse(header_bh);
+> @@ -406,12 +417,13 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
+>  	return ret;
+>  }
+>  
+> -void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 segnum,
+> +void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 *data,
+>  				 struct buffer_head *header_bh,
+>  				 struct buffer_head *su_bh)
+>  {
+>  	struct nilfs_segment_usage *su;
+>  	void *kaddr;
+> +	__u64 segnum = *data;
+>  
+>  	kaddr = kmap_atomic(su_bh->b_page);
+>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
+> @@ -431,13 +443,14 @@ void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 segnum,
+>  	nilfs_mdt_mark_dirty(sufile);
+>  }
+>  
+> -void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
+> +void nilfs_sufile_do_scrap(struct inode *sufile, __u64 *data,
+>  			   struct buffer_head *header_bh,
+>  			   struct buffer_head *su_bh)
+>  {
+>  	struct nilfs_segment_usage *su;
+>  	void *kaddr;
+>  	int clean, dirty;
+> +	__u64 segnum = *data;
+
+This can be converted to as follows:
+
+        __u64 segnum = data->segnum;
+
+>  
+>  	kaddr = kmap_atomic(su_bh->b_page);
+>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
+> @@ -462,13 +475,14 @@ void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
+>  	nilfs_mdt_mark_dirty(sufile);
+>  }
+>  
+> -void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+> +void nilfs_sufile_do_free(struct inode *sufile, __u64 *data,
+>  			  struct buffer_head *header_bh,
+>  			  struct buffer_head *su_bh)
+>  {
+>  	struct nilfs_segment_usage *su;
+>  	void *kaddr;
+>  	int sudirty;
+> +	__u64 segnum = *data;
+>  
+>  	kaddr = kmap_atomic(su_bh->b_page);
+>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
+> @@ -596,13 +610,14 @@ int nilfs_sufile_get_stat(struct inode *sufile, struct nilfs_sustat *sustat)
+>  	return ret;
+>  }
+>  
+> -void nilfs_sufile_do_set_error(struct inode *sufile, __u64 segnum,
+> +void nilfs_sufile_do_set_error(struct inode *sufile, __u64 *data,
+>  			       struct buffer_head *header_bh,
+>  			       struct buffer_head *su_bh)
+>  {
+>  	struct nilfs_segment_usage *su;
+>  	void *kaddr;
+>  	int suclean;
+> +	__u64 segnum = *data;
+>  
+>  	kaddr = kmap_atomic(su_bh->b_page);
+>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
+> diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+> index b8afd72..2df6c71 100644
+> --- a/fs/nilfs2/sufile.h
+> +++ b/fs/nilfs2/sufile.h
+> @@ -46,21 +46,21 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
+>  				size_t);
+>  ssize_t nilfs_sufile_set_suinfo(struct inode *, void *, unsigned , size_t);
+>  
+> -int nilfs_sufile_updatev(struct inode *, __u64 *, size_t, int, size_t *,
+> -			 void (*dofunc)(struct inode *, __u64,
+> -					struct buffer_head *,
+> -					struct buffer_head *));
+> -int nilfs_sufile_update(struct inode *, __u64, int,
+> -			void (*dofunc)(struct inode *, __u64,
+> +int nilfs_sufile_updatev(struct inode *, void *, size_t, size_t, size_t, int,
+> +			 size_t *, void (*dofunc)(struct inode *, void *,
+> +						  struct buffer_head *,
+> +						  struct buffer_head *));
+> +int nilfs_sufile_update(struct inode *, void *, size_t, int,
+> +			void (*dofunc)(struct inode *, void *,
+>  				       struct buffer_head *,
+>  				       struct buffer_head *));
+
+> -void nilfs_sufile_do_scrap(struct inode *, __u64, struct buffer_head *,
+> +void nilfs_sufile_do_scrap(struct inode *, __u64 *, struct buffer_head *,
+>  			   struct buffer_head *);
+> -void nilfs_sufile_do_free(struct inode *, __u64, struct buffer_head *,
+> +void nilfs_sufile_do_free(struct inode *, __u64 *, struct buffer_head *,
+>  			  struct buffer_head *);
+> -void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
+> +void nilfs_sufile_do_cancel_free(struct inode *, __u64 *, struct buffer_head *,
+>  				 struct buffer_head *);
+> -void nilfs_sufile_do_set_error(struct inode *, __u64, struct buffer_head *,
+> +void nilfs_sufile_do_set_error(struct inode *, __u64 *, struct buffer_head *,
+>  			       struct buffer_head *);
+
+Please, use "struct nilfs_sufile_update_data *" type for the second
+argument of these declaration.
+
+>  
+>  int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs);
+> @@ -75,7 +75,8 @@ int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range);
+>   */
+>  static inline int nilfs_sufile_scrap(struct inode *sufile, __u64 segnum)
+>  {
+> -	return nilfs_sufile_update(sufile, segnum, 1, nilfs_sufile_do_scrap);
+> +	return nilfs_sufile_update(sufile, &segnum, 0, 1,
+> +				   (void *)nilfs_sufile_do_scrap);
+>  }
+
+Then you can avoid this nasty (void *) cast to the callback function.
+
+>  
+>  /**
+> @@ -85,7 +86,8 @@ static inline int nilfs_sufile_scrap(struct inode *sufile, __u64 segnum)
+>   */
+>  static inline int nilfs_sufile_free(struct inode *sufile, __u64 segnum)
+>  {
+> -	return nilfs_sufile_update(sufile, segnum, 0, nilfs_sufile_do_free);
+> +	return nilfs_sufile_update(sufile, &segnum, 0, 0,
+> +				   (void *)nilfs_sufile_do_free);
+>  }
+
+ditto
+
+>  /**
+> @@ -98,8 +100,8 @@ static inline int nilfs_sufile_free(struct inode *sufile, __u64 segnum)
+>  static inline int nilfs_sufile_freev(struct inode *sufile, __u64 *segnumv,
+>  				     size_t nsegs, size_t *ndone)
+>  {
+> -	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
+> -				    nilfs_sufile_do_free);
+> +	return nilfs_sufile_updatev(sufile, segnumv, sizeof(__u64), 0, nsegs,
+> +				    0, ndone, (void *)nilfs_sufile_do_free);
+>  }
+
+ditto
+
+>  /**
+> @@ -116,8 +118,9 @@ static inline int nilfs_sufile_cancel_freev(struct inode *sufile,
+>  					    __u64 *segnumv, size_t nsegs,
+>  					    size_t *ndone)
+>  {
+> -	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
+> -				    nilfs_sufile_do_cancel_free);
+> +	return nilfs_sufile_updatev(sufile, segnumv, sizeof(__u64), 0, nsegs,
+> +				    0, ndone,
+> +				    (void *)nilfs_sufile_do_cancel_free);
+>  }
+
+ditto
+
+>  /**
+> @@ -139,8 +142,8 @@ static inline int nilfs_sufile_cancel_freev(struct inode *sufile,
+>   */
+>  static inline int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
+>  {
+> -	return nilfs_sufile_update(sufile, segnum, 0,
+> -				   nilfs_sufile_do_set_error);
+> +	return nilfs_sufile_update(sufile, &segnum, 0, 0,
+> +				   (void *)nilfs_sufile_do_set_error);
+>  }
+>  
+>  #endif	/* _NILFS_SUFILE_H */
+
+ditto
+
+
+Regards,
+Ryusuke Konishi
+
+> -- 
+> 2.3.0
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
