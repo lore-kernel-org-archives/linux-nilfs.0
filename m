@@ -1,58 +1,118 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 3/7] nilfs2: use bgl_lock_ptr()
-Date: Thu, 12 Mar 2015 23:38:10 +0900
-Message-ID: <1426171094-27414-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 6/7] nilfs2: add helper to find existent block on metadata file
+Date: Thu, 12 Mar 2015 23:38:13 +0900
+Message-ID: <1426171094-27414-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1426171094-27414-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=DBo2LeutyA7nTf2SNQ2jxAkuurY5ctv3J9MXTF6fxOQ=;
-        b=EMsE8oSrfzMUzG/sWDMNDXIcrm/oiFtEity02PotX079BPZQ5Bi4qGJsYQwwsBwxcr
-         2MXmXJ6VGS42TAct3Yn/q+V5STxYc3n7YbIoOwXO19EKVkMppzlGRya588XoFemU50jv
-         wG+JcdLKg4FRn+6TOWoxsjJyCJtuUC+OBVPCKjGRNtY5P+c1mME0D+kNRUOgIrlkHJRt
-         GTq38BNq0k3Q1Ll11nEGGs4Mo1B29xk8gk6M5pyYFWGOPQBu0i9HPJdTGn5wwWtsw9tq
-         f96Z++uG78IbnIWUkbqzBlpqSBefOLPIXQVXKtgDENfVWNUdQ9GmuHWREGw2eL4JiIwA
-         W3dg==
-In-Reply-To: <1426171094-27414-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+        bh=DIDuUsoxTQW7SUlnmhSrT9DrvpZx0pto/phjuwu9aXM=;
+        b=FUBSaYkMJjZcmgDMoAjzl95naqpVaBa2Pyeeg4apvZBUe3+DKbq0N++69VUnDzuwhG
+         BYdncYa6fvukjk0D5IpyJEhdATvcJ4RulepWFhr6fGCjYVFBwDCW7u84KW9JT5or+rMR
+         5zYpgwuixOccFSdSpMpDRwaBVAJxAcxinGMxRFCxdfDVOY5rSRYTrAAlrbxyoZ/4PjAz
+         oUHE9em0S+3SWX3yj3VzRFBnTQZNwSAEAPzTCkPA0Meaje4u5UPcss350yfkeK1WCrpp
+         VGnIWwKsjFi4xLXk36gGVIzt6u6d2Qv1ZjEOW3klcuQbGQEoeoVI1ve9RKcf9s0hSFUV
+         muxg==
+In-Reply-To: <1426171094-27414-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-Simplify nilfs_mdt_bgl_lock() by utilizing bgl_lock_ptr() helper in
-<linux/blockgroup_lock.h>.
+Add a new metadata file function, nilfs_mdt_find_block(), which finds
+an existent block on a metadata file in a given range of blocks.  This
+function skips continuous hole blocks efficiently by using
+nilfs_bmap_seek_key().
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/mdt.h | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ fs/nilfs2/mdt.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/mdt.h |  3 +++
+ 2 files changed, 57 insertions(+)
 
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index ab172e8..a294ea3 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -111,7 +111,10 @@ static inline __u64 nilfs_mdt_cno(struct inode *inode)
- 	return ((struct the_nilfs *)inode->i_sb->s_fs_info)->ns_cno;
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index 892cf5f..dee34d9 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -261,6 +261,60 @@ int nilfs_mdt_get_block(struct inode *inode, unsigned long blkoff, int create,
  }
  
--#define nilfs_mdt_bgl_lock(inode, bg) \
--	(&NILFS_MDT(inode)->mi_bgl->locks[(bg) & (NR_BG_LOCKS-1)].lock)
-+static inline spinlock_t *
-+nilfs_mdt_bgl_lock(struct inode *inode, unsigned int block_group)
+ /**
++ * nilfs_mdt_find_block - find and get a buffer on meta data file.
++ * @inode: inode of the meta data file
++ * @start: start block offset (inclusive)
++ * @end: end block offset (inclusive)
++ * @blkoff: block offset
++ * @out_bh: place to store a pointer to buffer_head struct
++ *
++ * nilfs_mdt_find_block() looks up an existing block in range of
++ * [@start, @end] and stores pointer to a buffer head of the block to
++ * @out_bh, and block offset to @blkoff, respectively.  @out_bh and
++ * @blkoff are substituted only when zero is returned.
++ *
++ * Return Value: On success, it returns 0. On error, the following negative
++ * error code is returned.
++ *
++ * %-ENOMEM - Insufficient memory available.
++ *
++ * %-EIO - I/O error
++ *
++ * %-ENOENT - no block was found in the range
++ */
++int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
++			 unsigned long end, unsigned long *blkoff,
++			 struct buffer_head **out_bh)
 +{
-+	return bgl_lock_ptr(NILFS_MDT(inode)->mi_bgl, block_group);
++	__u64 next;
++	int ret;
++
++	if (unlikely(start > end))
++		return -ENOENT;
++
++	ret = nilfs_mdt_read_block(inode, start, true, out_bh);
++	if (!ret) {
++		*blkoff = start;
++		goto out;
++	}
++	if (unlikely(ret != -ENOENT || start == ULONG_MAX))
++		goto out;
++
++	ret = nilfs_bmap_seek_key(NILFS_I(inode)->i_bmap, start + 1, &next);
++	if (!ret) {
++		if (next <= end) {
++			ret = nilfs_mdt_read_block(inode, next, true, out_bh);
++			if (!ret)
++				*blkoff = next;
++		} else {
++			ret = -ENOENT;
++		}
++	}
++out:
++	return ret;
 +}
- 
- #endif /* _NILFS_MDT_H */
++
++/**
+  * nilfs_mdt_delete_block - make a hole on the meta data file.
+  * @inode: inode of the meta data file
+  * @block: block offset
+diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
+index a294ea3..fe529a8 100644
+--- a/fs/nilfs2/mdt.h
++++ b/fs/nilfs2/mdt.h
+@@ -78,6 +78,9 @@ int nilfs_mdt_get_block(struct inode *, unsigned long, int,
+ 			void (*init_block)(struct inode *,
+ 					   struct buffer_head *, void *),
+ 			struct buffer_head **);
++int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
++			 unsigned long end, unsigned long *blkoff,
++			 struct buffer_head **out_bh);
+ int nilfs_mdt_delete_block(struct inode *, unsigned long);
+ int nilfs_mdt_forget_block(struct inode *, unsigned long);
+ int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
 -- 
 1.8.3.1
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
