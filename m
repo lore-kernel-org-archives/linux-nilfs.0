@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/7] nilfs2: use set_mask_bits() for operations on buffer state bitmap
-Date: Thu, 12 Mar 2015 23:38:09 +0900
-Message-ID: <1426171094-27414-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 4/7] nilfs2: unify type of key arguments in bmap interface
+Date: Thu, 12 Mar 2015 23:38:11 +0900
+Message-ID: <1426171094-27414-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1426171094-27414-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=CcV8nRt1r2kHLcQomoBzmhbNP/2kIxF1snP7nU4S1WM=;
-        b=VYpNH3YL59P0iRmHL6zD+KM46a6+wehaQ754M9jvohU4L2wn+psScjGz5mimoyWUPo
-         qE5JKWNk3kN30XQIVSmPHK/lVlazXpv65szLwzBngzIqnr3O/7BR+UHO/g55GOMFrewQ
-         vyHNlULVVMwi+1/LVCE7TCLN7KlG/634DZUZ9lKoih3l2xsPMinXkmpqR4Moo4Gdq9vc
-         LPFR2hUFgxmD08wui94EM5w4ov4irwJDS+2s3Rmh9uGtNAKHpmoCDWOX5+Hs3flFNGS0
-         WEgqBzQ3EXNLb2KsnjxU6VTyVMMA4go79fzx5w2jchSfq8WV/kov93DVSy6+O1o4pdaL
-         Aj2Q==
+        bh=dXQL+RJec3mzmIlWJm5+XjAYj9cphPCphGGhIiUYfyg=;
+        b=hX1Ti4bdRhXhSAKCABHXXAyNUPBJ2n4ei7UWuPiVALsB2rfSH5KolCfDsXjo80jwPE
+         ZlLgrb5EfR+OJQniwILAC9+23pCG+n8N51kB5p1oceoKdUQCfBj9O6bNvNOU+YHddMS4
+         bz2sNXyPfScVzSuRyPryU3c3iXtCl5ynozAoapVGCHKyYFv5mk+SY4XXA5H5f+4vL3+8
+         jUs1dsNvD+6AD4DJgPQCYNEeHBX80QUqkSgBPFuXvzX1OguksPQDcST+bPWlvGTUxBn9
+         +UX1Ot6bF/2ePOWLr4k41PDZwA6tPWOmpeqWUXWtp8ReVlZRdLbY0ACFuuaOuf5Elyy1
+         PMwA==
 In-Reply-To: <1426171094-27414-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -24,104 +24,156 @@ Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-nilfs_forget_buffer(), nilfs_clear_dirty_page(), and
-nilfs_segctor_complete_write() are using a bunch of atomic bit
-operations against buffer state bitmap.
+The type of key arguments in block mapping interface varies depending
+on function.  For instance, nilfs_bmap_lookup_at_level() takes "__u64"
+for its key argument whereas nilfs_bmap_lookup() takes "unsigned
+long".
 
-This reduces the number of them by utilizing set_mask_bits() macro.
+This fits them to "__u64" to eliminate the variation.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/page.c    | 24 ++++++++++--------------
- fs/nilfs2/segment.c | 14 ++++++++------
- 2 files changed, 18 insertions(+), 20 deletions(-)
+ fs/nilfs2/alloc.c |  5 +++--
+ fs/nilfs2/bmap.c  | 17 ++++++-----------
+ fs/nilfs2/bmap.h  |  8 ++++----
+ fs/nilfs2/inode.c |  6 +++---
+ 4 files changed, 16 insertions(+), 20 deletions(-)
 
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 700ecbc..45d650a 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -89,18 +89,16 @@ struct buffer_head *nilfs_grab_buffer(struct inode *inode,
- void nilfs_forget_buffer(struct buffer_head *bh)
+diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+index 741fd02..8df0f3b 100644
+--- a/fs/nilfs2/alloc.c
++++ b/fs/nilfs2/alloc.c
+@@ -405,13 +405,14 @@ nilfs_palloc_rest_groups_in_desc_block(const struct inode *inode,
+ static int nilfs_palloc_count_desc_blocks(struct inode *inode,
+ 					    unsigned long *desc_blocks)
  {
- 	struct page *page = bh->b_page;
-+	const unsigned long clear_bits =
-+		(1 << BH_Uptodate | 1 << BH_Dirty | 1 << BH_Mapped |
-+		 1 << BH_Async_Write | 1 << BH_NILFS_Volatile |
-+		 1 << BH_NILFS_Checked | 1 << BH_NILFS_Redirected);
+-	unsigned long blknum;
++	__u64 blknum;
+ 	int ret;
  
- 	lock_buffer(bh);
--	clear_buffer_nilfs_volatile(bh);
--	clear_buffer_nilfs_checked(bh);
--	clear_buffer_nilfs_redirected(bh);
--	clear_buffer_async_write(bh);
--	clear_buffer_dirty(bh);
-+	set_mask_bits(&bh->b_state, clear_bits, 0);
- 	if (nilfs_page_buffers_clean(page))
- 		__nilfs_clear_page_dirty(page);
+ 	ret = nilfs_bmap_last_key(NILFS_I(inode)->i_bmap, &blknum);
+ 	if (likely(!ret))
+ 		*desc_blocks = DIV_ROUND_UP(
+-			blknum, NILFS_MDT(inode)->mi_blocks_per_desc_block);
++			(unsigned long)blknum,
++			NILFS_MDT(inode)->mi_blocks_per_desc_block);
+ 	return ret;
+ }
  
--	clear_buffer_uptodate(bh);
--	clear_buffer_mapped(bh);
- 	bh->b_blocknr = -1;
- 	ClearPageUptodate(page);
- 	ClearPageMappedToDisk(page);
-@@ -421,6 +419,10 @@ void nilfs_clear_dirty_page(struct page *page, bool silent)
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index aadbd0b..c82f436 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -152,9 +152,7 @@ static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
+  *
+  * %-EEXIST - A record associated with @key already exist.
+  */
+-int nilfs_bmap_insert(struct nilfs_bmap *bmap,
+-		      unsigned long key,
+-		      unsigned long rec)
++int nilfs_bmap_insert(struct nilfs_bmap *bmap, __u64 key, unsigned long rec)
+ {
+ 	int ret;
  
- 	if (page_has_buffers(page)) {
- 		struct buffer_head *bh, *head;
-+		const unsigned long clear_bits =
-+			(1 << BH_Uptodate | 1 << BH_Dirty | 1 << BH_Mapped |
-+			 1 << BH_Async_Write | 1 << BH_NILFS_Volatile |
-+			 1 << BH_NILFS_Checked | 1 << BH_NILFS_Redirected);
+@@ -191,19 +189,16 @@ static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, __u64 key)
+ 	return bmap->b_ops->bop_delete(bmap, key);
+ }
  
- 		bh = head = page_buffers(page);
- 		do {
-@@ -430,13 +432,7 @@ void nilfs_clear_dirty_page(struct page *page, bool silent)
- 					"discard block %llu, size %zu",
- 					(u64)bh->b_blocknr, bh->b_size);
- 			}
--			clear_buffer_async_write(bh);
--			clear_buffer_dirty(bh);
--			clear_buffer_nilfs_volatile(bh);
--			clear_buffer_nilfs_checked(bh);
--			clear_buffer_nilfs_redirected(bh);
--			clear_buffer_uptodate(bh);
--			clear_buffer_mapped(bh);
-+			set_mask_bits(&bh->b_state, clear_bits, 0);
- 			unlock_buffer(bh);
- 		} while (bh = bh->b_this_page, bh != head);
- 	}
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index c9a4e60..c6abbad9 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -24,6 +24,7 @@
- #include <linux/pagemap.h>
- #include <linux/buffer_head.h>
- #include <linux/writeback.h>
-+#include <linux/bitops.h>
- #include <linux/bio.h>
- #include <linux/completion.h>
- #include <linux/blkdev.h>
-@@ -1785,12 +1786,13 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
- 		 */
- 		list_for_each_entry(bh, &segbuf->sb_payload_buffers,
- 				    b_assoc_buffers) {
--			set_buffer_uptodate(bh);
--			clear_buffer_dirty(bh);
--			clear_buffer_async_write(bh);
--			clear_buffer_delay(bh);
--			clear_buffer_nilfs_volatile(bh);
--			clear_buffer_nilfs_redirected(bh);
-+			const unsigned long set_bits = (1 << BH_Uptodate);
-+			const unsigned long clear_bits =
-+				(1 << BH_Dirty | 1 << BH_Async_Write |
-+				 1 << BH_Delay | 1 << BH_NILFS_Volatile |
-+				 1 << BH_NILFS_Redirected);
-+
-+			set_mask_bits(&bh->b_state, clear_bits, set_bits);
- 			if (bh == segbuf->sb_super_root) {
- 				if (bh->b_page != bd_page) {
- 					end_page_writeback(bd_page);
+-int nilfs_bmap_last_key(struct nilfs_bmap *bmap, unsigned long *key)
++int nilfs_bmap_last_key(struct nilfs_bmap *bmap, __u64 *keyp)
+ {
+-	__u64 lastkey;
+ 	int ret;
+ 
+ 	down_read(&bmap->b_sem);
+-	ret = bmap->b_ops->bop_last_key(bmap, &lastkey);
++	ret = bmap->b_ops->bop_last_key(bmap, keyp);
+ 	up_read(&bmap->b_sem);
+ 
+ 	if (ret < 0)
+ 		ret = nilfs_bmap_convert_error(bmap, __func__, ret);
+-	else
+-		*key = lastkey;
+ 	return ret;
+ }
+ 
+@@ -224,7 +219,7 @@ int nilfs_bmap_last_key(struct nilfs_bmap *bmap, unsigned long *key)
+  *
+  * %-ENOENT - A record associated with @key does not exist.
+  */
+-int nilfs_bmap_delete(struct nilfs_bmap *bmap, unsigned long key)
++int nilfs_bmap_delete(struct nilfs_bmap *bmap, __u64 key)
+ {
+ 	int ret;
+ 
+@@ -235,7 +230,7 @@ int nilfs_bmap_delete(struct nilfs_bmap *bmap, unsigned long key)
+ 	return nilfs_bmap_convert_error(bmap, __func__, ret);
+ }
+ 
+-static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, unsigned long key)
++static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, __u64 key)
+ {
+ 	__u64 lastkey;
+ 	int ret;
+@@ -276,7 +271,7 @@ static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, unsigned long key)
+  *
+  * %-ENOMEM - Insufficient amount of memory available.
+  */
+-int nilfs_bmap_truncate(struct nilfs_bmap *bmap, unsigned long key)
++int nilfs_bmap_truncate(struct nilfs_bmap *bmap, __u64 key)
+ {
+ 	int ret;
+ 
+diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
+index b89e680..9230d33 100644
+--- a/fs/nilfs2/bmap.h
++++ b/fs/nilfs2/bmap.h
+@@ -153,10 +153,10 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *);
+ int nilfs_bmap_read(struct nilfs_bmap *, struct nilfs_inode *);
+ void nilfs_bmap_write(struct nilfs_bmap *, struct nilfs_inode *);
+ int nilfs_bmap_lookup_contig(struct nilfs_bmap *, __u64, __u64 *, unsigned);
+-int nilfs_bmap_insert(struct nilfs_bmap *, unsigned long, unsigned long);
+-int nilfs_bmap_delete(struct nilfs_bmap *, unsigned long);
+-int nilfs_bmap_last_key(struct nilfs_bmap *, unsigned long *);
+-int nilfs_bmap_truncate(struct nilfs_bmap *, unsigned long);
++int nilfs_bmap_insert(struct nilfs_bmap *bmap, __u64 key, unsigned long rec);
++int nilfs_bmap_delete(struct nilfs_bmap *bmap, __u64 key);
++int nilfs_bmap_last_key(struct nilfs_bmap *bmap, __u64 *keyp);
++int nilfs_bmap_truncate(struct nilfs_bmap *bmap, __u64 key);
+ void nilfs_bmap_clear(struct nilfs_bmap *);
+ int nilfs_bmap_propagate(struct nilfs_bmap *, struct buffer_head *);
+ void nilfs_bmap_lookup_dirty_buffers(struct nilfs_bmap *, struct list_head *);
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 8b59695..cf9e489 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -106,7 +106,7 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
+ 		err = nilfs_transaction_begin(inode->i_sb, &ti, 1);
+ 		if (unlikely(err))
+ 			goto out;
+-		err = nilfs_bmap_insert(ii->i_bmap, (unsigned long)blkoff,
++		err = nilfs_bmap_insert(ii->i_bmap, blkoff,
+ 					(unsigned long)bh_result);
+ 		if (unlikely(err != 0)) {
+ 			if (err == -EEXIST) {
+@@ -714,7 +714,7 @@ void nilfs_update_inode(struct inode *inode, struct buffer_head *ibh, int flags)
+ static void nilfs_truncate_bmap(struct nilfs_inode_info *ii,
+ 				unsigned long from)
+ {
+-	unsigned long b;
++	__u64 b;
+ 	int ret;
+ 
+ 	if (!test_bit(NILFS_I_BMAP, &ii->i_state))
+@@ -729,7 +729,7 @@ repeat:
+ 	if (b < from)
+ 		return;
+ 
+-	b -= min_t(unsigned long, NILFS_MAX_TRUNCATE_BLOCKS, b - from);
++	b -= min_t(__u64, NILFS_MAX_TRUNCATE_BLOCKS, b - from);
+ 	ret = nilfs_bmap_truncate(ii->i_bmap, b);
+ 	nilfs_relax_pressure_in_lock(ii->vfs_inode.i_sb);
+ 	if (!ret || (ret == -ENOMEM &&
 -- 
 1.8.3.1
 
