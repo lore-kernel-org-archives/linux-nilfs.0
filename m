@@ -1,449 +1,337 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH 1/9] nilfs2: refactor nilfs_sufile_updatev()
-Date: Tue, 10 Mar 2015 21:40:43 +0100
-Message-ID: <54FF56CB.4060907@gmx.net>
-References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>	<1424804504-10914-2-git-send-email-andreas.rohner@gmx.net> <20150311.005220.1374468405510151934.konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH 0/9] nilfs2: implementation of cost-benefit GC policy
+Date: Thu, 12 Mar 2015 21:54:31 +0900 (JST)
+Message-ID: <20150312.215431.324210374799651841.konishi.ryusuke@lab.ntt.co.jp>
+References: <20150225.091804.1850885506186316087.konishi.ryusuke@lab.ntt.co.jp>
+	<20150310.142119.813265940569588216.konishi.ryusuke@lab.ntt.co.jp>
+	<54FF561E.7030409@gmx.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150311.005220.1374468405510151934.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-type:content-transfer-encoding;
+        bh=THMkuPiwj6E66OVy+xer4/EwkhXW3EJPBf1xrDhE1ZM=;
+        b=tw+5uPvGwFgQgPadixJKueUQnZiUI4Tg5E34asv4OYIM2RrRt2r4dRomyJ3mpXSHxL
+         PISzIMAqusKSeZYpgp5UqZHhorrAfNzTJCgLg2dxodZgLQQ1PE39he7vQ33uyKfKb3cX
+         3tGRQ/WzIlTfsvyTHfpweOS8Qs4K9bo8/n+5HzA1ucJTZALuYXPNTVfx2d1prgOpJEoT
+         s2dB1VegdfsD0fKphacmb48YKGoIkJxJBrZzfTBWnOiT1F7yCpE6dgm58jGRWyG1Udw6
+         VlxZQAZgoUONl/J4BWIAzJa/uhwNzDkquD7gkXbOnpYKBywnr/M/zU5afUis362Zjq48
+         Pw8A==
+In-Reply-To: <54FF561E.7030409-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Content-Type: Text/Plain; charset="windows-1254"
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On 2015-03-10 16:52, Ryusuke Konishi wrote:
-> On Tue, 24 Feb 2015 20:01:36 +0100, Andreas Rohner wrote:
->> This patch refactors nilfs_sufile_updatev() to take an array of
->> arbitrary data structures instead of an array of segment numbers as
->> input parameter. With this  change it is reusable for cases, where
->> it is necessary to pass extra data to the update function. The only
->> requirement for the data structures passed as input is, that they
->> contain the segment number within the structure. By passing the
->> offset to the segment number as another input parameter,
->> nilfs_sufile_updatev() can be oblivious to the actual type of the
->> input structures in the array.
->>
->> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
->> ---
->>  fs/nilfs2/sufile.c | 79 ++++++++++++++++++++++++++++++++----------------------
->>  fs/nilfs2/sufile.h | 39 ++++++++++++++-------------
->>  2 files changed, 68 insertions(+), 50 deletions(-)
->>
->> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
->> index 2a869c3..1e8cac6 100644
->> --- a/fs/nilfs2/sufile.c
->> +++ b/fs/nilfs2/sufile.c
->> @@ -138,14 +138,18 @@ unsigned long nilfs_sufile_get_ncleansegs(struct inode *sufile)
->>  /**
->>   * nilfs_sufile_updatev - modify multiple segment usages at a time
->>   * @sufile: inode of segment usage file
->> - * @segnumv: array of segment numbers
->> - * @nsegs: size of @segnumv array
->> + * @datav: array of segment numbers
->> + * @datasz: size of elements in @datav
->> + * @segoff: offset to segnum within the elements of @datav
->> + * @ndata: size of @datav array
->>   * @create: creation flag
->>   * @ndone: place to store number of modified segments on @segnumv
->>   * @dofunc: primitive operation for the update
->>   *
->>   * Description: nilfs_sufile_updatev() repeatedly calls @dofunc
->> - * against the given array of segments.  The @dofunc is called with
->> + * against the given array of data elements. Every data element has
->> + * to contain a valid segment number and @segoff should be the offset
->> + * to that within the data structure. The @dofunc is called with
->>   * buffers of a header block and the sufile block in which the target
->>   * segment usage entry is contained.  If @ndone is given, the number
->>   * of successfully modified segments from the head is stored in the
->> @@ -163,50 +167,55 @@ unsigned long nilfs_sufile_get_ncleansegs(struct inode *sufile)
->>   *
->>   * %-EINVAL - Invalid segment usage number
->>   */
->> -int nilfs_sufile_updatev(struct inode *sufile, __u64 *segnumv, size_t nsegs,
->> -			 int create, size_t *ndone,
->> -			 void (*dofunc)(struct inode *, __u64,
->> +int nilfs_sufile_updatev(struct inode *sufile, void *datav, size_t datasz,
->> +			 size_t segoff, size_t ndata, int create,
->> +			 size_t *ndone,
->> +			 void (*dofunc)(struct inode *, void *,
->>  					struct buffer_head *,
->>  					struct buffer_head *))
-> 
-> Using offset byte of the data like segoff is nasty.
-> 
-> Please consider defining a template structure and its variation:
-> 
-> struct nilfs_sufile_update_data {
->        __u64 segnum;
->        /* Optional data comes after segnum */
-> };
-> 
-> /**
->  * struct nilfs_sufile_update_count - data type of nilfs_sufile_do_xxx
->  * @segnum: segment number
->  * @nadd: additional value to a counter
->  * Description: This structure derives from nilfs_sufile_update_data
->  * struct.
->  */
-> struct nilfs_sufile_update_count {
->        __u64 segnum;
->        __u64 nadd;
-> };
-> 
-> int nilfs_sufile_updatev(struct inode *sufile,
-> 			 struct nilfs_sufile_update_data *datav,
-> 			 size_t datasz,
-> 			 size_t ndata, int create, size_t *ndone,
->                          void (*dofunc)(struct inode *,
-> 					struct nilfs_sufile_update_data *,
-> 					struct buffer_head *,
-> 					struct buffer_head *))
-> {
-> 	...
-> }
-
-I agree this is a much better solution. I'll change it.
-
-Regards,
-Andreas Rohner
-
-> If you need define segnum in the middle of structure, you can use
-> container_of():
-> 
-> Example:
-> 
-> struct nilfs_sufile_update_xxx {
->        __u32 item_a;
->        __u32 item_b;
->        struct nilfs_sufile_update_data u_data;
-> };
-> 
-> static inline struct nilfs_sufile_update_xxx *
-> NILFS_SU_UPDATE_XXX(struct nilfs_sufile_update_data *data)
-> {
-> 	return container_of(data, struct nilfs_sufile_update_xxx, u_data);
-> }
-> 
-> void nilfs_sufile_do_xxx(...)
-> {
->    struct nilfs_sufile_update_xxx *xxx;
-> 
->    xxx = NILFS_SU_UPDATA_XXX(data);
->    ...
-> }
-> 
-> I believe the former technique is enough in your case. (you can
-> suppose that segnum is always the first member of data, right ?).
-> 
-> 
->>  {
->>  	struct buffer_head *header_bh, *bh;
->>  	unsigned long blkoff, prev_blkoff;
->>  	__u64 *seg;
->> -	size_t nerr = 0, n = 0;
->> +	void *data, *dataend = datav + ndata * datasz;
->> +	size_t n = 0;
->>  	int ret = 0;
->>  
->> -	if (unlikely(nsegs == 0))
->> +	if (unlikely(ndata == 0))
->>  		goto out;
->>  
->> -	down_write(&NILFS_MDT(sufile)->mi_sem);
->> -	for (seg = segnumv; seg < segnumv + nsegs; seg++) {
->> +
->> +	for (data = datav; data < dataend; data += datasz) {
->> +		seg = data + segoff;
->>  		if (unlikely(*seg >= nilfs_sufile_get_nsegments(sufile))) {
->>  			printk(KERN_WARNING
->>  			       "%s: invalid segment number: %llu\n", __func__,
->>  			       (unsigned long long)*seg);
->> -			nerr++;
->> +			ret = -EINVAL;
->> +			goto out;
->>  		}
->>  	}
->> -	if (nerr > 0) {
->> -		ret = -EINVAL;
->> -		goto out_sem;
->> -	}
->>  
->> +	down_write(&NILFS_MDT(sufile)->mi_sem);
->>  	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
->>  	if (ret < 0)
->>  		goto out_sem;
->>  
->> -	seg = segnumv;
->> +	data = datav;
->> +	seg = data + segoff;
->>  	blkoff = nilfs_sufile_get_blkoff(sufile, *seg);
->>  	ret = nilfs_mdt_get_block(sufile, blkoff, create, NULL, &bh);
->>  	if (ret < 0)
->>  		goto out_header;
->>  
->>  	for (;;) {
->> -		dofunc(sufile, *seg, header_bh, bh);
->> +		dofunc(sufile, data, header_bh, bh);
->>  
->> -		if (++seg >= segnumv + nsegs)
->> +		++n;
->> +		data += datasz;
->> +		if (data >= dataend)
->>  			break;
->> +		seg = data + segoff;
->>  		prev_blkoff = blkoff;
->>  		blkoff = nilfs_sufile_get_blkoff(sufile, *seg);
->>  		if (blkoff == prev_blkoff)
->> @@ -220,28 +229,30 @@ int nilfs_sufile_updatev(struct inode *sufile, __u64 *segnumv, size_t nsegs,
->>  	}
->>  	brelse(bh);
->>  
->> - out_header:
->> -	n = seg - segnumv;
->> +out_header:
->>  	brelse(header_bh);
->> - out_sem:
->> +out_sem:
->>  	up_write(&NILFS_MDT(sufile)->mi_sem);
->> - out:
->> +out:
->>  	if (ndone)
->>  		*ndone = n;
->>  	return ret;
->>  }
->>  
->> -int nilfs_sufile_update(struct inode *sufile, __u64 segnum, int create,
->> -			void (*dofunc)(struct inode *, __u64,
->> +int nilfs_sufile_update(struct inode *sufile, void *data, size_t segoff,
->> +			int create,
->> +			void (*dofunc)(struct inode *, void *,
->>  				       struct buffer_head *,
->>  				       struct buffer_head *))
-> 
-> ditto.
-> 
->>  {
->>  	struct buffer_head *header_bh, *bh;
->> +	__u64 *seg;
->>  	int ret;
->>  
->> -	if (unlikely(segnum >= nilfs_sufile_get_nsegments(sufile))) {
->> +	seg = data + segoff;
->> +	if (unlikely(*seg >= nilfs_sufile_get_nsegments(sufile))) {
->>  		printk(KERN_WARNING "%s: invalid segment number: %llu\n",
->> -		       __func__, (unsigned long long)segnum);
->> +		       __func__, (unsigned long long)*seg);
->>  		return -EINVAL;
->>  	}
-> 
-> You can remove these nasty changes.
-> 
->>  	down_write(&NILFS_MDT(sufile)->mi_sem);
->> @@ -250,9 +261,9 @@ int nilfs_sufile_update(struct inode *sufile, __u64 segnum, int create,
->>  	if (ret < 0)
->>  		goto out_sem;
->>  
->> -	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, create, &bh);
->> +	ret = nilfs_sufile_get_segment_usage_block(sufile, *seg, create, &bh);
-> 
-> ditto.
-> 
->>  	if (!ret) {
->> -		dofunc(sufile, segnum, header_bh, bh);
->> +		dofunc(sufile, data, header_bh, bh);
->>  		brelse(bh);
->>  	}
->>  	brelse(header_bh);
->> @@ -406,12 +417,13 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
->>  	return ret;
->>  }
->>  
->> -void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 segnum,
->> +void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 *data,
->>  				 struct buffer_head *header_bh,
->>  				 struct buffer_head *su_bh)
->>  {
->>  	struct nilfs_segment_usage *su;
->>  	void *kaddr;
->> +	__u64 segnum = *data;
->>  
->>  	kaddr = kmap_atomic(su_bh->b_page);
->>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->> @@ -431,13 +443,14 @@ void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 segnum,
->>  	nilfs_mdt_mark_dirty(sufile);
->>  }
->>  
->> -void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
->> +void nilfs_sufile_do_scrap(struct inode *sufile, __u64 *data,
->>  			   struct buffer_head *header_bh,
->>  			   struct buffer_head *su_bh)
->>  {
->>  	struct nilfs_segment_usage *su;
->>  	void *kaddr;
->>  	int clean, dirty;
->> +	__u64 segnum = *data;
-> 
-> This can be converted to as follows:
-> 
->         __u64 segnum = data->segnum;
-> 
->>  
->>  	kaddr = kmap_atomic(su_bh->b_page);
->>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->> @@ -462,13 +475,14 @@ void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
->>  	nilfs_mdt_mark_dirty(sufile);
->>  }
->>  
->> -void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
->> +void nilfs_sufile_do_free(struct inode *sufile, __u64 *data,
->>  			  struct buffer_head *header_bh,
->>  			  struct buffer_head *su_bh)
->>  {
->>  	struct nilfs_segment_usage *su;
->>  	void *kaddr;
->>  	int sudirty;
->> +	__u64 segnum = *data;
->>  
->>  	kaddr = kmap_atomic(su_bh->b_page);
->>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->> @@ -596,13 +610,14 @@ int nilfs_sufile_get_stat(struct inode *sufile, struct nilfs_sustat *sustat)
->>  	return ret;
->>  }
->>  
->> -void nilfs_sufile_do_set_error(struct inode *sufile, __u64 segnum,
->> +void nilfs_sufile_do_set_error(struct inode *sufile, __u64 *data,
->>  			       struct buffer_head *header_bh,
->>  			       struct buffer_head *su_bh)
->>  {
->>  	struct nilfs_segment_usage *su;
->>  	void *kaddr;
->>  	int suclean;
->> +	__u64 segnum = *data;
->>  
->>  	kaddr = kmap_atomic(su_bh->b_page);
->>  	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
->> diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
->> index b8afd72..2df6c71 100644
->> --- a/fs/nilfs2/sufile.h
->> +++ b/fs/nilfs2/sufile.h
->> @@ -46,21 +46,21 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
->>  				size_t);
->>  ssize_t nilfs_sufile_set_suinfo(struct inode *, void *, unsigned , size_t);
->>  
->> -int nilfs_sufile_updatev(struct inode *, __u64 *, size_t, int, size_t *,
->> -			 void (*dofunc)(struct inode *, __u64,
->> -					struct buffer_head *,
->> -					struct buffer_head *));
->> -int nilfs_sufile_update(struct inode *, __u64, int,
->> -			void (*dofunc)(struct inode *, __u64,
->> +int nilfs_sufile_updatev(struct inode *, void *, size_t, size_t, size_t, int,
->> +			 size_t *, void (*dofunc)(struct inode *, void *,
->> +						  struct buffer_head *,
->> +						  struct buffer_head *));
->> +int nilfs_sufile_update(struct inode *, void *, size_t, int,
->> +			void (*dofunc)(struct inode *, void *,
->>  				       struct buffer_head *,
->>  				       struct buffer_head *));
-> 
->> -void nilfs_sufile_do_scrap(struct inode *, __u64, struct buffer_head *,
->> +void nilfs_sufile_do_scrap(struct inode *, __u64 *, struct buffer_head *,
->>  			   struct buffer_head *);
->> -void nilfs_sufile_do_free(struct inode *, __u64, struct buffer_head *,
->> +void nilfs_sufile_do_free(struct inode *, __u64 *, struct buffer_head *,
->>  			  struct buffer_head *);
->> -void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
->> +void nilfs_sufile_do_cancel_free(struct inode *, __u64 *, struct buffer_head *,
->>  				 struct buffer_head *);
->> -void nilfs_sufile_do_set_error(struct inode *, __u64, struct buffer_head *,
->> +void nilfs_sufile_do_set_error(struct inode *, __u64 *, struct buffer_head *,
->>  			       struct buffer_head *);
-> 
-> Please, use "struct nilfs_sufile_update_data *" type for the second
-> argument of these declaration.
-> 
->>  
->>  int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs);
->> @@ -75,7 +75,8 @@ int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range);
->>   */
->>  static inline int nilfs_sufile_scrap(struct inode *sufile, __u64 segnum)
->>  {
->> -	return nilfs_sufile_update(sufile, segnum, 1, nilfs_sufile_do_scrap);
->> +	return nilfs_sufile_update(sufile, &segnum, 0, 1,
->> +				   (void *)nilfs_sufile_do_scrap);
->>  }
-> 
-> Then you can avoid this nasty (void *) cast to the callback function.
-> 
->>  
->>  /**
->> @@ -85,7 +86,8 @@ static inline int nilfs_sufile_scrap(struct inode *sufile, __u64 segnum)
->>   */
->>  static inline int nilfs_sufile_free(struct inode *sufile, __u64 segnum)
->>  {
->> -	return nilfs_sufile_update(sufile, segnum, 0, nilfs_sufile_do_free);
->> +	return nilfs_sufile_update(sufile, &segnum, 0, 0,
->> +				   (void *)nilfs_sufile_do_free);
->>  }
-> 
-> ditto
-> 
->>  /**
->> @@ -98,8 +100,8 @@ static inline int nilfs_sufile_free(struct inode *sufile, __u64 segnum)
->>  static inline int nilfs_sufile_freev(struct inode *sufile, __u64 *segnumv,
->>  				     size_t nsegs, size_t *ndone)
->>  {
->> -	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
->> -				    nilfs_sufile_do_free);
->> +	return nilfs_sufile_updatev(sufile, segnumv, sizeof(__u64), 0, nsegs,
->> +				    0, ndone, (void *)nilfs_sufile_do_free);
->>  }
-> 
-> ditto
-> 
->>  /**
->> @@ -116,8 +118,9 @@ static inline int nilfs_sufile_cancel_freev(struct inode *sufile,
->>  					    __u64 *segnumv, size_t nsegs,
->>  					    size_t *ndone)
->>  {
->> -	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
->> -				    nilfs_sufile_do_cancel_free);
->> +	return nilfs_sufile_updatev(sufile, segnumv, sizeof(__u64), 0, nsegs,
->> +				    0, ndone,
->> +				    (void *)nilfs_sufile_do_cancel_free);
->>  }
-> 
-> ditto
-> 
->>  /**
->> @@ -139,8 +142,8 @@ static inline int nilfs_sufile_cancel_freev(struct inode *sufile,
->>   */
->>  static inline int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
->>  {
->> -	return nilfs_sufile_update(sufile, segnum, 0,
->> -				   nilfs_sufile_do_set_error);
->> +	return nilfs_sufile_update(sufile, &segnum, 0, 0,
->> +				   (void *)nilfs_sufile_do_set_error);
->>  }
->>  
->>  #endif	/* _NILFS_SUFILE_H */
-> 
-> ditto
-> 
-> 
-> Regards,
-> Ryusuke Konishi
-> 
->> -- 
->> 2.3.0
->>
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-
+SGkgQW5kcmVhcywNCg0KT24gVHVlLCAxMCBNYXIgMjAxNSAyMTozNzo1MCArMDEwMCwgQW5kcmVh
+cyBSb2huZXIgd3JvdGU6DQo+IEhpIFJ5dXN1a2UsDQo+IA0KPiBUaGFua3MgZm9yIHlvdXIgdGhv
+cm91Z2ggcmV2aWV3Lg0KPiANCj4gT24gMjAxNS0wMy0xMCAwNjoyMSwgUnl1c3VrZSBLb25pc2hp
+IHdyb3RlOg0KPj4gSGkgQW5kcmVhcywNCj4+IA0KPj4gSSBsb29rZWQgdGhyb3VnaCB3aG9sZSBr
+ZXJuZWwgcGF0Y2hlcyBhbmQgYSBwYXJ0IG9mIHV0aWwgcGF0Y2hlcy4NCj4+IE92ZXJhbGwgY29t
+bWVudHMgYXJlIGFzIGZvbGxvd3M6DQo+PiANCj4+IFtBbGdvcml0aG1dDQo+PiBBcyBmb3IgYWxn
+b3JpdGhtLCBpdCBsb29rcyBhYm91dCBPSyBleGNlcHQgZm9yIHRoZSBzdGFydmF0aW9uDQo+PiBj
+b3VudGVybWVhc3VyZS4gIFRoZSBzdGF2YXRpb24gY291bnRlcm1lYXN1cmUgbG9va3MgYWRob2Mv
+aGFja3ksIGJ1dA0KPj4gaXQncyBnb29kIHRoYXQgaXQgZG9lc24ndCBjaGFuZ2Uga2VybmVsL3Vz
+ZXJsYW5kIGludGVyZmFjZTsgd2UgbWF5IGJlDQo+PiBhYmxlIHRvIHJlcGxhY2UgaXQgd2l0aCBi
+ZXR0ZXIgd2F5cyBpbiBhIGZ1dHVyZSBvciBpbiBhIHJldmlzZWQNCj4+IHZlcnNpb24gb2YgdGhp
+cyBwYXRjaHNldC4NCj4+IA0KPj4gKDEpIERyYXdiYWNrIG9mIHRoZSBzdGFydmF0aW9uIGNvdW50
+ZXJtZWFzdXJlDQo+PiAgICAgVGhlIHBhdGNoIDkvOSBsb29rcyB0byBtYWtlIHRoZSBleGVjdXRp
+b24gdGltZSBvZiBjaGNwIG9wZXJhdGlvbg0KPj4gICAgIHdvcnNlIHNpbmNlIGl0IHdpbGwgc2Nh
+biB0aHJvdWdoIHN1ZmlsZSB0byBtb2RpZnkgbGl2ZSBibG9jaw0KPj4gICAgIGNvdW50ZXJzLiAg
+SG93IG11Y2ggZG9lcyBpdCBwcm9sb25nIHRoZSBleGVjdXRpb24gdGltZSA/DQo+IA0KPiBJJ2xs
+IGRvIHNvbWUgdGVzdHMsIGJ1dCBJIGhhdmVuJ3Qgbm90aWNlZCBhbnkgc2lnbmlmaWNhbnQgcGVy
+Zm9ybWFuY2UNCj4gZHJvcC4gVGhlIEdDIGJhc2ljYWxseSBkb2VzIHRoZSBzYW1lIHRoaW5nLCBl
+dmVyeSB0aW1lIGl0IHNlbGVjdHMNCj4gc2VnbWVudHMgdG8gcmVjbGFpbS4NCg0KR0MgaXMgcGVy
+Zm9ybWVkIGluIGJhY2tncm91bmQgYnkgYW4gaW5kZXBlbmRlbnQgcHJvY2Vzcy4gIFdoYXQgSSdt
+DQpjYXJlIGFib3V0IGl0IHRoYXQgTklMRlNfSU9DVExfQ0hBTkdFX0NQTU9ERSBpb2N0bCBpcyBj
+YWxsZWQgZnJvbQ0KY29tbWFuZCBsaW5lIGludGVyZmFjZSBvciBhcHBsaWNhdGlvbi4gIFRoZXkg
+ZGlmZmVyIGluIHRoaXMgbWVhbmluZy4NCg0KV2FzIGEgd29yc2UgY2FzZSBzZW5hcmlvIGNvbnNp
+ZGVyZWQgaW4gdGhlIHRlc3QgPw0KDQpGb3IgZXhhbXBsZToNCjEuIEZpbGwgYSBUQiBjbGFzcyBk
+cml2ZSB3aXRoIGRhdGEgZmlsZShzKSwgYW5kIG1ha2UgYSBzbmFwc2hvdCBvbiBpdC4NCjIuIFJ1
+biBvbmUgcGFzcyBHQyB0byB1cGRhdGUgc25hcHNob3QgYmxvY2sgY291bnRzLg0KMy4gQW5kIGRv
+ICJjaGNwIGNwIg0KDQpJZiB3ZSBkb24ndCBvYnNlcnZlIG5vdGljZWFibGUgZGVsYXkgb24gdGhp
+cyBjbGFzcyBvZiBkcml2ZSwgdGhlbiBJDQp0aGluayB3ZSBjYW4gcHV0IHRoZSBwcm9ibGVtIG9m
+Zi4NCg0KPj4gICAgIEluIGEgdXNlIGNhc2Ugb2YgbmlsZnMsIG1hbnkgc25hcHNob3RzIGFyZSBj
+cmVhdGVkIGFuZCB0aGV5IGFyZQ0KPj4gICAgIGF1dG9tYXRpY2FsbHkgY2hhbmdlZCBiYWNrIHRv
+IHBsYWluIGNoZWNrcG9pbnRzIGJlY2F1c2Ugb2xkDQo+PiAgICAgc25hcHNob3RzIGFyZSB0aGlu
+bmVkIG91dCBvdmVyIHRpbWUuICBUaGUgcGF0Y2ggOS85IG1heSBpbXBhY3Qgb24NCj4+ICAgICBz
+dWNoIHVzYWdlLg0KPj4NCj4+ICgyKSBDb21wYXRpYmlsaXR5DQo+PiAgICAgV2hhdCB3aWxsIGhh
+cHBlbiBpbiB0aGUgZm9sbG93aW5nIGNhc2U6DQo+PiAgICAgMS4gQ3JlYXRlIGEgZmlsZSBzeXN0
+ZW0sIHVzZSBpdCB3aXRoIHRoZSBuZXcgbW9kdWxlLCBhbmQNCj4+ICAgICAgICBjcmVhdGUgc25h
+cHNob3RzLg0KPj4gICAgIDIuIE1vdW50IGl0IHdpdGggYW4gb2xkIG1vZHVsZSwgYW5kIHJlbGVh
+c2Ugc25hcHNob3Qgd2l0aCAiY2hjcCBjcCINCj4+ICAgICAzLiBNb3VudCBpdCB3aXRoIHRoZSBu
+ZXcgbW9kdWxlLCBhbmQgY2xlYW5lcmQgcnVucyBnYyB3aXRoDQo+PiAgICAgICAgY29zdCBiZW5l
+Zml0IG9yIGdyZWVkeSBwb2xpY3kuDQo+IA0KPiBTb21lIHNlZ21lbnRzIGNvdWxkIGJlIHN1Ympl
+Y3QgdG8gc3RhcnZhdGlvbi4gQnV0IGl0IHdvdWxkIHByb2JhYmx5IG9ubHkNCj4gYWZmZWN0IGEg
+c21hbGwgbnVtYmVyIG9mIHNlZ21lbnRzIGFuZCBpdCBjb3VsZCBiZSBmaXhlZCBieSAiY2hjcCBz
+cw0KPiA8Q1A+OyBjaGNwIGNwIDxDUD4iLg0KDQpPaywgbGV0J3MgdHJlYXQgdGhpcyBhcyBhIHJl
+c3RyaWN0aW9uIGZvciBub3cuDQpJZiB5b3UgY29tZSB1cCB3aXRoIGFueSBnb29kIGlkZWEsIHBs
+ZWFzZSBwcm9wb3NlLg0KDQo+PiAoMykgRHVyYWJpbGl0eSBhZ2FpbnN0IHVuZXhwZWN0ZWQgcG93
+ZXIgZmFpbHVyZXMgKGp1c3QgYSBub3RlKQ0KPj4gICAgIFRoZSBjdXJyZW50IHBhdGNoc2V0IGxv
+b2tzIG5vdCB0byBjYXVzZSBzdGFydmF0aW9uIGlzc3VlIGV2ZW4gd2hlbg0KPj4gICAgIHVuZXhw
+ZWN0ZWQgcG93ZXIgZmFpbHVyZSBvY2N1cnMgZHVyaW5nIG9yIGFmdGVyIGV4ZWN1dGluZyAiY2hj
+cA0KPj4gICAgIGNwIiBiZWNhdXNlIG5pbGZzX2lvY3RsX2NoYW5nZV9jcG1vZGUoKSBkbyBjaGFu
+Z2VzIGluIGENCj4+ICAgICB0cmFuc2FjdGlvbmFsIHdheSB3aXRoIG5pbGZzX3RyYW5zYWN0aW9u
+X2JlZ2luL2NvbW1pdC4NCj4+ICAgICBXZSBzaG91bGQgYWx3YXlzIHRoaW5rIHRoaXMga2luZCBv
+ZiBzaXR1dGF0aW9uIHRvIGtlZXAgY29uc2lzdGVuY3kuDQo+PiANCj4+IFtDb2RpbmcgU3R5bGVd
+DQo+PiAoNCkgVGhpcyBwYXRjaHNldCBoYXMgc2V2ZXJhbCBjb2Rpbmcgc3R5bGUgaXNzdWVzLiBQ
+bGVhc2UgZml4IHRoZW0gYW5kDQo+PiAgICAgcmUtY2hlY2sgd2l0aCB0aGUgbGF0ZXN0IGNoZWNr
+cGF0Y2ggc2NyaXB0IChzY3JpcHQvY2hlY2twYXRjaC5wbCkuDQo+IA0KPiBJJ2xsIGZpeCB0aGF0
+LiBTb3JyeS4NCj4gDQo+PiBwYXRjaCAyOg0KPj4gV0FSTklORzogUHJlZmVyIGttYWxsb2NfYXJy
+YXkgb3ZlciBrbWFsbG9jIHdpdGggbXVsdGlwbHkNCj4+ICM4NTogRklMRTogZnMvbmlsZnMyL3N1
+ZmlsZS5jOjExOTI6DQo+PiArICAgIG1jLT5tY19tb2RzID0ga21hbGxvYyhjYXBhY2l0eSAqIHNp
+emVvZihzdHJ1Y3QgbmlsZnNfc3VmaWxlX21vZCksDQo+PiANCj4+IHBhdGNoIDUsNjoNCj4+IFdB
+Uk5JTkc6ICdhcXVpcmVkJyBtYXkgYmUgbWlzc3BlbGxlZCAtIHBlcmhhcHMgJ2FjcXVpcmVkJz8N
+Cj4+ICM2MDogDQo+PiB0aGUgc2FtZSBzZW1hcGhvcmUgaGFzIHRvIGJlIGFxdWlyZWQuIFNvIGlm
+IHRoZSBEQVQtRW50cnkgYmVsb25ncyB0bw0KPj4gDQo+PiBXQVJOSU5HOiAnYXF1aXJlZCcgbWF5
+IGJlIG1pc3NwZWxsZWQgLSBwZXJoYXBzICdhY3F1aXJlZCc/DQo+PiAjNDY6IA0KPj4gYmUgYXF1
+aXJlZCwgd2hpY2ggYmxvY2tzIHRoZSBlbnRpcmUgU1VGSUxFIGFuZCBlZmZlY3RpdmVseSB0dXJu
+cw0KPj4gDQo+PiBXQVJOSU5HOiAnYXF1aXJlZCcgbWF5IGJlIG1pc3NwZWxsZWQgLSBwZXJoYXBz
+ICdhY3F1aXJlZCc/DQo+PiAjNTM6IA0KPj4gYWZvcmUgbWVudGlvbmVkIGxvY2sgb25seSBuZWVk
+cyB0byBiZSBhcXVpcmVkLCBpZiB0aGUgY2FjaGUgaXMgZnVsbA0KPj4gDQo+PiAoNSkgc3ViX3Np
+emVvZiBtYWNybzoNCj4+ICAgICBUaGUgc2FtZSBkZWZpbml0aW9uIGV4aXN0cyBhcyBvZmZzZXRv
+ZmVuZCgpIGluIHZmaW8uaCwNCj4+ICAgICBhbmQgYSBwYXRjaCB0byBtb3ZlIGl0IHRvIHN0ZGRl
+Zi5oIGlzIG5vdyBwcm9wb3NlZC4NCj4+IA0KPj4gICAgIFBsZWFzZSB1c2UgdGhlIHNhbWUgbmFt
+ZSwgYW5kIHJlZGVmaW5lIGl0IG9ubHkgaWYgaXQncyBub3QNCj4+ICAgICBkZWZpbmVkOg0KPj4g
+DQo+PiAjaWZuZGVmIG9mZnNldG9mZW5kDQo+PiAjZGVmaW5lIG9mZnNldG9mZW5kKFRZUEUsIE1F
+TUJFUikgXA0KPj4gICAgICAgICAob2Zmc2V0b2YoVFlQRSwgTUVNQkVSKSArIHNpemVvZigoKFRZ
+UEUgKikwKS0+TUVNQkVSKSkNCj4+ICNlbmRpZg0KPiANCj4gT2sgSSdsbCBjaGFuZ2UgdGhhdC4N
+Cj4gDQo+PiBbSW1wbGVtZW50YXRpb25dDQo+PiAoNikgYl9ibG9ja25yDQo+PiAgICAgUGxlYXNl
+IGRvIG5vdCB1c2UgYmgtPmJfYmxvY2tuciB0byBzdG9yZSBkaXNrIGJsb2NrIG51bWJlci4gIFRo
+aXMNCj4+ICAgICBmaWVsZCBpcyB1c2VkIHRvIGtlZXAgdmlydHVhbCBibG9jayBudW1iZXIgZXhj
+ZXB0IGZvciBEQVQgZmlsZXMuDQo+PiAgICAgSXQgaXMgb25seSByZXBsYWNlZCB0byBhbiBhY3R1
+YWwgYmxvY2sgbnVtYmVyIGR1cmluZyBjYWxsaW5nDQo+PiAgICAgc3VibWl0X2JoKCkuICBLZWVw
+IHRoaXMgcG9saWN5Lg0KPiANCj4gQXMgZmFyIGFzIEkgY2FuIHRlbGwsIHRoaXMgaXMgb25seSB0
+cnVlIGZvciBibG9ja3Mgb2YgR0MgaW5vZGVzIGFuZCBub2RlDQo+IGJsb2Nrcy4gQWxsIG90aGVy
+IGJ1ZmZlcl9oZWFkcyBhcmUgYWx3YXlzIG1hcHBlZCB0byBvbiBkaXNrIGJsb2NrcyBieQ0KPiBu
+aWxmc19nZXRfYmxvY2soKS4gSSBvbmx5IGFkZGVkIHRoZSBtYXBwaW5nIGluIG5pbGZzX3NlZ2J1
+Zl9zdWJtaXRfYmgoKQ0KPiB0byBjb3JyZWN0bHkgc2V0IHRoZSB2YWx1ZSBpbiBiX2Jsb2NrbnIg
+dG8gdGhlIG5ldyBsb2NhdGlvbi4NCj4gDQoNCm5pbGZzX2dldF9ibG9jaygpIGlzIG9ubHkgdXNl
+ZCBmb3IgcmVndWxhciBmaWxlcywgZGlyZWN0b3JpZXMsIGFuZCBzbw0Kb24uICBCbG9ja3Mgb24g
+bWV0YWRhdGEgZmlsZXMgYXJlIG1hcHBlZCB0aHJvdWdoDQpuaWxmc19tZHRfc3VibWl0X2Jsb2Nr
+KCkuICBBbnl3YXksIHllcywgdGhleSBzdG9yZXMgYWN0dWFsIGRpc2sgYmxvY2sNCm51bWJlciBp
+biBiX2Jsb2NrbnIgaW4gdGhlIGN1cnJlbnQgaW1wbGVtZW50YXRpb24uICBCdXQsIGl0IGlzIGp1
+c3QgYQ0KY3V0dGluZyBjb3JuZXIgb2YgdGhlIGN1cnJlbnQgaW1wbGVtZW50YXRpb24sIHdoaWNo
+IGNvbWVzIGZyb20gdGhlDQpyZWFzb24gdGhhdCB3ZSBoYXZlIHRvIHNldCBhY3R1YWwgZGlzayBi
+bG9jayBudW1iZXJzIHdoZW4gcmVhZGluZw0KYmxvY2tzIHdpdGggdmZzL21tIGZ1bmN0aW9ucy4N
+Cg0KQW55d2F5IEkgZG9uJ3QgbGlrZSB5b3UgdG91Y2ggbmlsZnNfZ2V0X2Jsb2NrKCkgYW5kDQpu
+aWxmc19zZWdidWZfc3VibWl0X2JoKCkgaW4gYSBwYXJ0IG9mIHRoZSBiaWcgcGF0Y2guICBBdCBs
+ZWFzdCwgaXQNCnNob3VsZCBiZSBhIHNlcGFyYXRlIHBhdGNoLiAgSSBwcmVmZXIgeW91IHRha2Ug
+YWx0ZXJuYXRpdmUgYXBwcm9hY2gNCndoaWNoIGRvZXMgdGhlIHNhbWUgdGhpbmcgd2l0aG91dCBi
+X2Jsb2NrbnIuICBJIHdvdWxkIGxpa2UgdG8gaGVscCB0bw0KaW1wbGVtZW50IHRoZSBsYXR0ZXIg
+YXBwcm9hY2ggaWYgeW91IG5lZWQgdG8ga25vdyBkaXNrIGJsb2NrIG51bWJlciBpbg0KdGhlIHBh
+dGNoc2V0Lg0KDQo+PiAgICAgSW4gc2VnbWVudCBjb25zdHJ1Y3RvciBjb250ZXh0LCB5b3UgY2Fu
+IGNhbGN1bGF0ZSB0aGUgZGlzayBibG9jaw0KPj4gICAgIG51bWJlciBmcm9tIHRoZSBzdGFydCBk
+aXNrIGFkZHJlc3Mgb2YgdGhlIHNlZ21lbnQgYW5kIHRoZSBibG9jaw0KPj4gICAgIGluZGV4IChv
+ZmZzZXQpIGluIHRoZSBzZWdtZW50Lg0KPiANCj4gSWYgSSB1bmRlcnN0YW5kIHlvdSBjb3JyZWN0
+bHksIHRoaXMgYXBwcm9hY2ggd291bGQgZ2l2ZSBtZSB0aGUgb24gZGlzaw0KPiBsb2NhdGlvbiBp
+bnNpZGUgb2YgdGhlIHNlZ21lbnQgdGhhdCBpcyBjdXJyZW50bHkgY29uc3RydWN0ZWQuIEJ1dCBJ
+IG5lZWQNCj4gdG8ga25vdyB0aGUgcHJldmlvdXMgb24gZGlzayBsb2NhdGlvbiBvZiB0aGUgYnVm
+ZmVyX2hlYWQuIEkgaGF2ZSB0bw0KPiBkZWNyZW1lbnQgdGhlIGNvdW50ZXIgZm9yIHRoZSBwcmV2
+aW91cyBzZWdtZW50Lg0KDQpXaGF0IGRvZXMgdGhlIHByZXZpb3VzIG9uIGRpc2sgbG9jYXRpb24g
+bWVhbiA/DQpBbmQsIHdoeSBkbyB5b3UgbmVlZCB0byBrbm93IHRoZSBwcmV2aW91cyBvbiBkaXNr
+IGxvY2F0aW9uPw0KDQpJZiBpdCBtZWFucyByZWNsYWltaW5nIHNlZ21lbnQsIHlvdSBkb24ndCBu
+ZWVkIHRvIGRlY3JlbWVudCBpdHMNCmNvdW50ZXIgYmVjYXVzZSBpdCB3aWxsIGJlIGZyZWVkLg0K
+DQpJZiBpdCBtZWFucyB0aGUgb3JpZ2luYWwgYmxvY2sgdG8gYmUgb3ZlcndyaXR0ZW4sDQpuaWxm
+c19kYXRfY29tbWl0X2VuZCgpIGlzIGNhbGxlZCBmb3IgdGhlIGJsb2NrIHRocm91Z2gNCm5pbGZz
+X2JtYXBfcHJvcGFnYXRlKCkuDQoNCklmIGl0IG1lYW5zIHRoZSBvcmlnaW5hbCBibG9jayBvZiBE
+QVQgZmlsZSwgaXQncyBPSyB0byByZWZlciB0bw0KYl9ibG9ja25yIGJlY2F1c2UgREFUIGJsb2Nr
+cyBuZXZlciBzdG9yZSB2aXJ0dWFsIGJsb2NrIG51bWJlciBieQ0KZGVzaWduLiAgSSB0aGluayBp
+dCBzaG91bGQgYmUgZG9uZSBpbiBuaWxmc19idHJlZV9wcm9wYWdhdGVfcCgpIGFuZA0KbmlsZnNf
+ZGlyZWN0X3Byb3BhZ2F0ZSgpLCBpbiB3aGljaCBubyBzcGVjaWFsICJlbmQgb2YgbGlmZSIgcHJv
+Y2Vzc2luZw0KaXMgZG9uZSBhZ2FpbnN0IERBVCBibG9ja3MgYXQgcHJlc2VudC4NCg0KPj4gKDcp
+IHN1ZmlsZSBtb2QgY2FjaGUNCj4+ICAgICBDb25zaWRlciBnYXRoZXJpbmcgdGhlIGNhY2hlIGlu
+dG8gbmlsZnNfc3VmaWxlX2luZm8gc3RydWN0IGFuZA0KPj4gICAgIHN0b3BwaW5nIHRvIHBhc3Mg
+aXQgdmlhIGFyZ3VtZW50IG9mIGJtYXAvc3VmaWxlL2RhdCBpbnRlcmZhY2UNCj4+ICAgICBmdW5j
+dGlvbnMuICBJdCdzIGhhY2t5LCBhbmQgZGVjcmVhc2VzIHJlYWRhYmlsaXR5IG9mIHByb2dyYW1z
+LCBhbmQNCj4+ICAgICBpcyBibG9hdGluZyBjaGFuZ2VzIG9mIHRoaXMgcGF0Y2hzZXQgb3ZlciBt
+dWx0aXBsZSBmdW5jdGlvbg0KPj4gICAgIGJsb2Nrcy4NCj4gDQo+IElmIEkgdXNlIGEgZ2xvYmFs
+IHN0cnVjdHVyZSwgSSBoYXZlIHRvIHByb3RlY3QgaXQgd2l0aCBhIGxvY2suIFNpbmNlDQo+IGFs
+bW9zdCBhbnkgb3BlcmF0aW9uIGhhcyB0byBtb2RpZnkgdGhlIGNvdW50ZXJzIGluIHRoZSBTVUZJ
+TEUsIHRoaXMNCj4gd291bGQgc2VyaWFsaXplIHRoZSB3aG9sZSBmaWxlIHN5c3RlbS4NCj4gDQoN
+ClRoZSBsb2NrIGFjcXVpc2l0aW9uIHdpbGwgYmUgbmVlZGVkIGlmIHlvdSB3cml0ZSBiYWNrIHRv
+IGJ1ZmZlcnMgb24NClNVRklMRS4gIFRoYXQgaXMgdGhlIHJlYXNvbiB3aHkgSSBzYXkgeW91IHNo
+b3VsZCBhZ2dyZWdhdGUgdGhlDQp3cml0ZWJhY2sgdG8gc3VmaWxlIGludG8gdGhlIHNlZ21lbnQg
+Y29uc3RydWN0b3IgY29udGV4dC4NCg0KWW91IGRvbid0IGhhdmUgdG8gc3VwcG9zZSBhIGdsb2Jh
+bCBsb2NrLiAgWW91IGNhbiB1c2UgYmdsX2xvY2ssIGZvcg0KZXhhbXBsZSwgaWYgdGhlIGxvY2sg
+Y29udGVudGlvbiByZWFsbHkgbWF0dGVycy4NCg0KPj4gICAgIFRoZSBjYWNoZSBzaG91bGQgYmUg
+d2VsbCBkZXNpZ25lZC4gSXQncyBpbXBvcnRhbnQgdG8gYmFsYW5jZSB0aGUNCj4+ICAgICBwZXJm
+b3JtYW5jZSBhbmQgbG9jYWxpdHkvdHJhbnNwYXJlbmN5IG9mIHRoZSBmZWF0dXJlLiAgRm9yDQo+
+PiAgICAgaW5zdGFuY2UsIGl0IGNhbiBiZSBpbXBsZW1lbnRlZCB3aXRoIHJhZGl4LXRyZWUgb2Yg
+b2JqZWN0cyBpbg0KPj4gICAgIHdoaWNoIGVhY2ggb2JqZWN0IGhhcyBhIHZlY3RvciBvZiAyXmsg
+Y2FjaGUgZW50cmllcy4NCj4gDQo+IEknbGwgbG9vayBpbnRvIHRoYXQuDQo+IA0KPj4gICAgIEkg
+dGhpbmsgdGhlIGNhY2hlIHNob3VsZCBiZSB3cml0dGVuIGJhY2sgdG8gdGhlIHN1ZmlsZSBidWZm
+ZXJzDQo+PiAgICAgb25seSB3aXRoaW4gc2VnbWVudCBjb25zdHJ1Y3Rpb24gY29udGV4dC4gQXQg
+bGVhc3QsIGl0IHNob3VsZCBiZQ0KPj4gICAgIHdyaXR0ZW4gYmFjayBpbiB0aGUgY29udGV4dCBp
+biB3aGljaCBhIHRyYW5zYWN0aW9uIGxvY2sgaXMgaGVsZC4NCj4+IA0KPj4gICAgIEluIGFkZGl0
+aW9uLCBpbnRyb2R1Y2luZyBhIG5ldyBibWFwIGxvY2sgZGVwZW5kZW5jeSwNCj4+ICAgICBuaWxm
+c19zdWZpbGVfbG9ja19rZXksIGlzIHVuZGVzaXJlYmxlLiBZb3Ugc2hvdWxkIGF2b2lkIGl0DQo+
+PiAgICAgYnkgZGVsYXlpbmcgdGhlIHdyaXRlYmFjayBvZiBjYWNoZSBlbnRyaWVzIHRvIHN1Zmls
+ZS4NCj4gDQo+IFRoZSBjYWNoZSBjb3VsZCBlbmQgdXAgdXNpbmcgYSBsb3Qgb2YgbWVtb3J5LiBJ
+biB0aGUgd29yc3QgY2FzZSBvbmUNCj4gZW50cnkgcGVyIGJsb2NrLg0KDQpXaHkgZG8geW91IHRo
+aW5rIGl0IG1hdHRlcnM/ICBXaGVuIHlvdSBtb2RpZnkgYmxvY2sgY291bnRlciBvZg0Kc2VnbWVu
+dHMsIGFsbCB0aGUgbW9kaWZpZWQgU1VGSUxFIGJsb2NrcyBiZWNvbWUgZGlydHkgYW5kIHBpbm5l
+ZCB0bw0KbWVtb3J5LiAgVGhlIGNhY2hlIGNhbiBiZSBkZXNpZ25lZCBiZXR0ZXIgYXQgbGVhc3Qg
+dGhhbiB0aGUgZGlydHkNClNVRklMRSBidWZmZXJzLg0KDQpJZiB5b3UgY2FyZSBhYm91dCB0aGUg
+bmVlZCBvZiAic2hyaW5rZXIiLiAgV2UgY2FuIHRha2Ugb3RoZXINCnRlY2huaXF1ZXMgc3VjaCBh
+cyBxdWV1aW5nIGNoYW5nZXMgYW5kIHJlZmxlY3QgdGhlbSB0byBzdWZpbGUgaW4NCmJ1bmRsZSBi
+eSB1c2luZyB3b3JrcXVldWUuICBBbnl3YXkgaXQncyBhIG1hdHRlciBvZiBkZXNpZ24gb3INCmlt
+cGxlbWVudGF0aW9uIHRlY2huaXF1ZS4NCg0KPj4gKDgpIENoYW5nZXMgdG8gdGhlIHN1ZmlsZSBt
+dXN0IGJlIGZpbmlzaGVkIGJlZm9yZSBkaXJ0eSBidWZmZXINCj4+ICAgICBjb2xsZWN0aW9uIG9m
+IHN1ZmlsZS4NCj4+ICAgICBBbGwgbWFya19idWZmZXJfZGlydHkoKSBjYWxscyB0byBzdWZpbGUg
+bXVzdCBiZSBmaW5pc2hlZA0KPj4gICAgIGJlZm9yZSBvciBpbiBOSUxGU19TVF9TVUZJTEUgc3Rh
+Z2Ugb2YgbmlsZnNfc2VnY3Rvcl9jb2xsZWN0X2Jsb2NrcygpLg0KPj4gDQo+PiAgICAgKFlvdSBj
+YW4gd3JpdGUgZml4ZWQgZmlndXJlcyB0byBzdWZpbGUgYWZ0ZXIgdGhlIGNvbGxlY3Rpb24gcGhh
+c2UNCj4+ICAgICAgb2Ygc3VmaWxlIGJ5IHByZXBhcmF0b3J5IG1hcmtpbmcgYnVmZmVyIGRpcnR5
+IGJlZm9yZSB0aGUNCj4+ICAgICAgY29sZWN0aW9uIHBoYXNlLikNCj4+DQo+PiAgICAgSW4gdGhl
+IGN1cnJlbnQgcGF0Y2hzZXQsIHN1ZmlsZSBtb2QgY2FjaGUgY2FuIGJlIGZsdXNoZWQgaW4NCj4+
+ICAgICBuaWxmc19zZWdjdG9yX3VwZGF0ZV9wYWx5bG9hZF9ibG9ja25yKCksIHdoaWNoIGNvbWVz
+IGFmdGVyIHRoZQ0KPj4gICAgIGRpcnR5IGJ1ZmZlciBjb2xsZWN0aW9uIHBoYXNlLg0KPiANCj4g
+VGhpcyBpcyBhIGhhcmQgcHJvYmxlbS4gSSBoYXZlIHRvIGNvdW50IHRoZSBibG9ja3MgYWRkZWQg
+aW4gdGhlDQo+IE5JTEZTX1NUX0RBVCBzdGFnZS4gSSBkb24ndCBrbm93LCB3aGljaCBTVUZJTEUg
+YmxvY2tzIEkgaGF2ZSB0byBtYXJrIGluDQo+IGFkdmFuY2UuIEknbGwgaGF2ZSB0byB0aGluayBh
+Ym91dCB0aGlzLg0KPiANCj4+ICg5KSBjcGZpbGUgaXMgYWxzbyBleGNsdWRlZCBpbiB0aGUgZGVh
+ZCBibG9jayBjb3VudGluZyBsaWtlIHN1ZmlsZQ0KPj4gICAgIGNwZmlsZSBpcyBhbHdheXMgY2hh
+bmdlZCBhbmQgd3JpdHRlbiBiYWNrIGFsb25nIHdpdGggc3VmaWxlIGFuZCBkYXQuDQo+PiAgICAg
+U28sIGNwZmlsZSBtdXN0IGJlIGV4Y2x1ZGVkIGZyb20gdGhlIGRlYWQgYmxvY2sgY291bnRpbmcu
+DQo+PiAgICAgT3RoZXJ3aXNlLCBzdWZpbGUgY2hhbmdlIGNhbiB0cmlnZ2VyIGNwZmlsZSBjaGFu
+Z2VzLCBhbmQgaXQgaW4gdHVybg0KPj4gICAgIHRyaWdnZXJzIHN1ZmlsZS4NCj4gDQo+IEkgZG9u
+J3QgcXVpdGUgdW5kZXJzdGFuZCB5b3VyIGV4YW1wbGUuIEhvdyBleGFjdGx5IGNhbiBhIHN1Zmls
+ZSBjaGFuZ2UNCj4gdHJpZ2dlciBhIGNwZmlsZSBjaGFuZ2UgYW5kIGhvdyBjYW4gdGhpcyB0dXJu
+IGludG8gYW4gaW5maW5pdGUgbG9vcD8NCj4gDQoNClNvcnJ5LCBpdCdzIG15IG1pc3VuZGVyc3Rh
+bmRpbmcuICBTaW5jZSBkaXJ0eSBibG9ja3Mgb2YgY3BmaWxlIGlzDQpjb2xsZWN0ZWQgYmVmb3Jl
+IHN1ZmlsZSwgaXQgaXMgcG9zc2libGUgdG8gYXZvaWQgdGhlIGxvb3AgYnkgZmluaXNoaW5nDQph
+bGwgZGVhZCBibG9jayBjb3VudGluZyBvbiBjcGZpbGUgYW5kIGZsdXNoaW5nIGl0IHRvIHN1Zmls
+ZSBiZWZvcmUgb3INCmluIE5JTEZTX1NUX1NVRklMRSBzdGFnZSBvZiBuaWxmc19zZWdjdG9yX2Nv
+bGxlY3RfYmxvY2tzKCkuDQoNClJlZ2FyZHMsDQpSeXVzdWtlIEtvbmlzaGkNCg0KPiBUaGFua3Ms
+DQo+IEFuZHJlYXMgUm9obmVyDQo+IA0KPj4gICAgIFRoaXMgYWxzbyBoZWxwcyB0byBzaW1wbGlm
+eSBuaWxmc19kYXRfY29tbWl0X2VuZCgpIHRoYXQgdGhlIHBhdGNoc2V0DQo+PiAgICAgYWRkZWQg
+dHdvIGFyZ3VtZW50cyBmb3IgdGhlIGRlYWQgYmxvY2sgY291bnRpbmcgaW4gdGhlIHBhdGNoc2V0
+Lg0KPj4gICAgIEkgbWVhbiwgImRlYWQiIGFyZ3VtZW50IGFuZCAiY291bnRfYmxvY2tzIiBhcmd1
+bWVudCBjYW4gYmUgdW5pZmllZCBieQ0KPj4gICAgIGNoYW5naW5nIG1lYW5pbmcgb2YgdGhlICJk
+ZWFkIiBhcmd1bWVudC4NCj4+IA0KPj4gDQo+PiBJIHdpbGwgYWRkIGRldGFpbCBjb21tZW50cyBm
+b3IgcGF0Y2hlcyB0b25pZ2h0IG9yIGFub3RoZXIgZGF5Lg0KPj4gDQo+PiBSZWdhcmRzLA0KPj4g
+Unl1c3VrZSBLb25pc2hpDQo+PiANCj4+IE9uIFdlZCwgMjUgRmViIDIwMTUgMDk6MTg6MDQgKzA5
+MDAgKEpTVCksIFJ5dXN1a2UgS29uaXNoaSB3cm90ZToNCj4+PiBIaSBBbmRyZWFzLA0KPj4+DQo+
+Pj4gVGhhbmsgeW91IGZvciBwb3N0aW5nIHRoaXMgcHJvcG9zYWwhDQo+Pj4NCj4+PiBJIHdvdWxk
+IGxpa2UgdG8gaGF2ZSB0aW1lIHRvIHJldmlldyB0aGlzIHNlcmllcyB0aHJvdWdoLCBidXQgcGxl
+YXNlDQo+Pj4gd2FpdCBmb3Igc2V2ZXJhbCBkYXlzLiAoVGhpcyB3ZWVrIEknbSBxdWl0ZSBidXN5
+IHVudGlsIHdlZWtlbmQpDQo+Pj4NCj4+PiBUaGFua3MsDQo+Pj4gUnl1c3VrZSBLb25pc2hpDQo+
+Pj4NCj4+PiBPbiBUdWUsIDI0IEZlYiAyMDE1IDIwOjAxOjM1ICswMTAwLCBBbmRyZWFzIFJvaG5l
+ciB3cm90ZToNCj4+Pj4gSGkgZXZlcnlvbmUhDQo+Pj4+DQo+Pj4+IE9uZSBvZiB0aGUgYmlnZ2Vz
+dCBwZXJmb3JtYW5jZSBwcm9ibGVtcyBvZiBOSUxGUyBpcyBpdHMNCj4+Pj4gaW5lZmZpY2llbnQg
+VGltZXN0YW1wIEdDIHBvbGljeS4gVGhpcyBwYXRjaCBzZXQgaW50cm9kdWNlcyB0d28gbmV3IEdD
+DQo+Pj4+IHBvbGljaWVzLCBuYW1lbHkgQ29zdC1CZW5lZml0IGFuZCBHcmVlZHkuDQo+Pj4+DQo+
+Pj4+IFRoZSBDb3N0LUJlbmVmaXQgcG9saWN5IGlzIG5vdGhpbmcgbmV3LiBJdCBoYXMgYmVlbiBh
+cm91bmQgZm9yIGEgbG9uZw0KPj4+PiB0aW1lIHdpdGggbG9nLXN0cnVjdHVyZWQgZmlsZSBzeXN0
+ZW1zIFsxXS4gQnV0IGl0IHJlbGllcyBvbiBhY2N1cmF0ZQ0KPj4+PiBpbmZvcm1hdGlvbiwgYWJv
+dXQgdGhlIG51bWJlciBvZiBsaXZlIGJsb2NrcyBpbiBhIHNlZ21lbnQuIE5JTEZTDQo+Pj4+IGN1
+cnJlbnRseSBkb2VzIG5vdCBwcm92aWRlIHRoZSBuZWNlc3NhcnkgaW5mb3JtYXRpb24uIFNvIHRo
+aXMgcGF0Y2ggc2V0DQo+Pj4+IGV4dGVuZHMgdGhlIGVudHJpZXMgaW4gdGhlIFNVRklMRSB0byBp
+bmNsdWRlIGEgY291bnRlciBmb3IgdGhlIG51bWJlciBvZg0KPj4+PiBsaXZlIGJsb2Nrcy4gVGhp
+cyBjb3VudGVyIGlzIGRlY3JlbWVudGVkIHdoZW5ldmVyIGEgZmlsZSBpcyBkZWxldGVkIG9yDQo+
+Pj4+IG92ZXJ3cml0dGVuLg0KPj4+Pg0KPj4+PiBFeGNlcHQgZm9yIHNvbWUgdHJpY2t5IHBhcnRz
+LCB0aGUgY291bnRpbmcgb2YgbGl2ZSBibG9ja3MgaXMgcXVpdGUNCj4+Pj4gdHJpdmlhbC4gVGhl
+IHByb2JsZW0gaXMgc25hcHNob3RzLiBBdCBhbnkgdGltZSwgYSBjaGVja3BvaW50IGNhbiBiZQ0K
+Pj4+PiB0dXJuZWQgaW50byBhIHNuYXBzaG90IG9yIHZpY2UgdmVyc2EuIFNvIGJsb2NrcyB0aGF0
+IGFyZSByZWNsYWltYWJsZSBhdA0KPj4+PiBvbmUgcG9pbnQgaW4gdGltZSwgYXJlIHByb3RlY3Rl
+ZCBieSBhIHNuYXBzaG90IGEgbW9tZW50IGxhdGVyLg0KPj4+Pg0KPj4+PiBUaGlzIHBhdGNoIHNl
+dCBkb2VzIG5vdCB0cnkgdG8gdHJhY2sgc25hcHNob3RzIGF0IGFsbC4gSW5zdGVhZCBpdCB1c2Vz
+IGENCj4+Pj4gaGV1cmlzdGljIGFwcHJvYWNoIHRvIHByZXZlbnQgdGhlIHdvcnN0IGNhc2Ugc2Nl
+bmFyaW8uIFRoZSBwZXJmb3JtYW5jZQ0KPj4+PiBpcyBzdGlsbCBzaWduaWZpY2FudGx5IGJldHRl
+ciB0aGFuIHRpbWVzdGFtcCBmb3IgbXkgYmVuY2htYXJrcy4NCj4+Pj4NCj4+Pj4gVGhlIHdvcnN0
+IGNhc2Ugc2NlbmFyaW8gaXMsIHRoZSBmb2xsb3dpbmc6DQo+Pj4+DQo+Pj4+IDEuIFNlZ21lbnQg
+MSBpcyB3cml0dGVuDQo+Pj4+IDIuIFNuYXBzaG90IGlzIGNyZWF0ZWQNCj4+Pj4gMy4gR0MgdHJp
+ZXMgdG8gcmVjbGFpbSBTZWdtZW50IDEsIGJ1dCBhbGwgYmxvY2tzIGFyZSBwcm90ZWN0ZWQNCj4+
+Pj4gICAgYnkgdGhlIFNuYXBzaG90LiBUaGUgR0MgaGFzIHRvIHNldCB0aGUgbnVtYmVyIG9mIGxp
+dmUgYmxvY2tzDQo+Pj4+ICAgIHRvIG1heGltdW0gdG8gYXZvaWQgcmVjbGFpbWluZyB0aGlzIFNl
+Z21lbnQgYWdhaW4gaW4gdGhlIG5lYXIgZnV0dXJlLg0KPj4+PiA0LiBTbmFwc2hvdCBpcyBkZWxl
+dGVkDQo+Pj4+IDUuIFNlZ21lbnQgMSBpcyByZWNsYWltYWJsZSwgYnV0IGl0cyBjb3VudGVyIGlz
+IHNvIGhpZ2gsIHRoYXQgdGhlIEdDDQo+Pj4+ICAgIHdpbGwgbmV2ZXIgdHJ5IHRvIHJlY2xhaW0g
+aXQgYWdhaW4uDQo+Pj4+DQo+Pj4+IFRvIHByZXZlbnQgdGhpcyBraW5kIG9mIHN0YXJ2YXRpb24g
+SSB1c2UgYW5vdGhlciBmaWVsZCBpbiB0aGUgU1VGSUxFDQo+Pj4+IGVudHJ5LCB0byBzdG9yZSB0
+aGUgbnVtYmVyIG9mIGJsb2NrcyB0aGF0IGFyZSBwcm90ZWN0ZWQgYnkgYSBzbmFwc2hvdC4NCj4+
+Pj4gVGhpcyB2YWx1ZSBpcyBqdXN0IGEgaGV1cmlzdGljIGFuZCBpdCBpcyB1c3VhbGx5IHNldCB0
+byAwLiBPbmx5IGlmIHRoZQ0KPj4+PiBHQyByZWNsYWltcyBhIHNlZ21lbnQsIGl0IGlzIHdyaXR0
+ZW4gdG8gdGhlIFNVRklMRSBlbnRyeS4gVGhlIEdDIGhhcyB0bw0KPj4+PiBjaGVjayBmb3Igc25h
+cHNob3RzIGFueXdheSwgc28gd2UgZ2V0IHRoaXMgaW5mb3JtYXRpb24gZm9yIGZyZWUuIEJ5DQo+
+Pj4+IHN0b3JpbmcgdGhpcyBpbmZvcm1hdGlvbiBpbiB0aGUgU1VGSUxFIHdlIGNhbiBhdm9pZCBz
+dGFydmF0aW9uIGluIHRoZQ0KPj4+PiBmb2xsb3dpbmcgd2F5Og0KPj4+Pg0KPj4+PiAxLiBTZWdt
+ZW50IDEgaXMgd3JpdHRlbg0KPj4+PiAyLiBTbmFwc2hvdCBpcyBjcmVhdGVkDQo+Pj4+IDMuIEdD
+IHRyaWVzIHRvIHJlY2xhaW0gU2VnbWVudCAxLCBidXQgYWxsIGJsb2NrcyBhcmUgcHJvdGVjdGVk
+DQo+Pj4+ICAgIGJ5IHRoZSBTbmFwc2hvdC4gVGhlIEdDIGhhcyB0byBzZXQgdGhlIG51bWJlciBv
+ZiBsaXZlIGJsb2Nrcw0KPj4+PiAgICB0byBtYXhpbXVtIHRvIGF2b2lkIHJlY2xhaW1pbmcgdGhp
+cyBTZWdtZW50IGFnYWluIGluIHRoZSBuZWFyIGZ1dHVyZS4NCj4+Pj4gNC4gR0Mgc2V0cyB0aGUg
+bnVtYmVyIG9mIHNuYXBzaG90IGJsb2NrcyBpbiBTZWdtZW50IDEgaW4gdGhlIFNVRklMRQ0KPj4+
+PiAgICBlbnRyeQ0KPj4+PiA1LiBTbmFwc2hvdCBpcyBkZWxldGVkDQo+Pj4+IDYuIE9uIFNuYXBz
+aG90IGRlbGV0aW9uIHdlIHdhbGsgdGhyb3VnaCBldmVyeSBlbnRyeSBpbiB0aGUgU1VGSUxFIGFu
+ZA0KPj4+PiAgICByZWR1Y2UgdGhlIG51bWJlciBvZiBsaXZlIGJsb2NrcyB0byBoYWxmLCBpZiB0
+aGUgbnVtYmVyIG9mIHNuYXBzaG90DQo+Pj4+ICAgIGJsb2NrcyBpcyBiaWdnZXIgdGhhbiBoYWxm
+IG9mIHRoZSBtYXhpbXVtLg0KPj4+PiA3LiBTZWdtZW50IDEgaXMgcmVjbGFpbWFibGUgYW5kIHRo
+ZSBudW1iZXIgb2YgbGl2ZSBibG9ja3MgZW50cnkgaXMgYXQNCj4+Pj4gICAgaGFsZiB0aGUgbWF4
+aW11bS4gVGhlIEdDIHdpbGwgdHJ5IHRvIHJlY2xhaW0gdGhpcyBzZWdtZW50IGFzIHNvb24gYXMN
+Cj4+Pj4gICAgdGhlcmUgYXJlIG5vIG90aGVyIGJldHRlciBjaG9pY2VzLg0KPj4+Pg0KPj4+PiBC
+RU5DSE1BUktTOg0KPj4+PiAtLS0tLS0tLS0tLQ0KPj4+Pg0KPj4+PiBNeSBiZW5jaG1hcmsgaXMg
+cXVpdGUgc2ltcGxlLiBJdCBjb25zaXN0cyBvZiBhIHByb2Nlc3MsIHRoYXQgcmVwbGF5cw0KPj4+
+PiByZWFsIE5GUyB0cmFjZXMgYXQgYSBmYXN0ZXIgc3BlZWQuIEl0IHRoZXJlYnkgY3JlYXRlcyBy
+ZWxhdGl2ZWx5DQo+Pj4+IHJlYWxpc3RpYyBwYXR0ZXJucyBvZiBmaWxlIGNyZWF0aW9uIGFuZCBk
+ZWxldGlvbnMuIEF0IHRoZSBzYW1lIHRpbWUNCj4+Pj4gbXVsdGlwbGUgc25hcHNob3RzIGFyZSBj
+cmVhdGVkIGFuZCBkZWxldGVkIGluIHBhcmFsbGVsLiBJIHVzZSBhIDEwMEdCDQo+Pj4+IHBhcnRp
+dGlvbiBvZiBhIFNhbXN1bmcgU1NEOg0KPj4+Pg0KPj4+PiBXSVRIIFNOQVBTSE9UUyBFVkVSWSA1
+IE1JTlVURVM6DQo+Pj4+IC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQo+Pj4+ICAgICAgICAgICAgICAgICBFeGVjdXRp
+b24gdGltZSAgICAgICBXZWFyIChEYXRhIHdyaXR0ZW4gdG8gZGlzaykNCj4+Pj4gVGltZXN0YW1w
+OiAgICAgIDEwMCUgICAgICAgICAgICAgICAgIDEwMCUNCj4+Pj4gQ29zdC1CZW5lZml0OiAgIDgw
+JSAgICAgICAgICAgICAgICAgIDQzJQ0KPj4+Pg0KPj4+PiBOTyBTTkFQU0hPVFM6DQo+Pj4+IC0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLQ0KPj4+PiAgICAgICAgICAgICAgICAgRXhlY3V0aW9uIHRpbWUgICAgICAgV2Vh
+ciAoRGF0YSB3cml0dGVuIHRvIGRpc2spDQo+Pj4+IFRpbWVzdGFtcDogICAgICAxMDAlICAgICAg
+ICAgICAgICAgICAxMDAlDQo+Pj4+IENvc3QtQmVuZWZpdDogICA3MCUgICAgICAgICAgICAgICAg
+ICA0NSUNCj4+Pj4NCj4+Pj4gSSBwbGFuIG9uIGFkZGluZyBtb3JlIGJlbmNobWFyayByZXN1bHRz
+IHNvb24uDQo+Pj4+DQo+Pj4+IEJlc3QgcmVnYXJkcywNCj4+Pj4gQW5kcmVhcyBSb2huZXINCj4+
+Pj4NCj4+Pj4gWzFdIE1lbmRlbCBSb3NlbmJsdW0gYW5kIEpvaG4gSy4gT3VzdGVyaG91dC4gVGhl
+IGRlc2lnbiBhbmQgaW1wbGVtZW50YS0NCj4+Pj4gICAgIHRpb24gb2YgYSBsb2ctc3RydWN0dXJl
+ZCBmaWxlIHN5c3RlbS4gQUNNIFRyYW5zLiBDb21wdXQuIFN5c3QuLA0KPj4+PiAgICAgMTAoMSk6
+MjbigJM1MiwgRmVicnVhcnkgMTk5Mi4NCj4+Pj4NCj4+Pj4gQW5kcmVhcyBSb2huZXIgKDkpOg0K
+Pj4+PiAgIG5pbGZzMjogcmVmYWN0b3IgbmlsZnNfc3VmaWxlX3VwZGF0ZXYoKQ0KPj4+PiAgIG5p
+bGZzMjogYWRkIHNpbXBsZSBjYWNoZSBmb3IgbW9kaWZpY2F0aW9ucyB0byBTVUZJTEUNCj4+Pj4g
+ICBuaWxmczI6IGV4dGVuZCBTVUZJTEUgb24tZGlzayBmb3JtYXQgdG8gZW5hYmxlIGNvdW50aW5n
+IG9mIGxpdmUgYmxvY2tzDQo+Pj4+ICAgbmlsZnMyOiBhZGQgZnVuY3Rpb24gdG8gbW9kaWZ5IHN1
+X25saXZlX2Jsa3MNCj4+Pj4gICBuaWxmczI6IGFkZCBzaW1wbGUgdHJhY2tpbmcgb2YgYmxvY2sg
+ZGVsZXRpb25zIGFuZCB1cGRhdGVzDQo+Pj4+ICAgbmlsZnMyOiB1c2UgbW9kaWZpY2F0aW9uIGNh
+Y2hlIHRvIGltcHJvdmUgcGVyZm9ybWFuY2UNCj4+Pj4gICBuaWxmczI6IGFkZCBhZGRpdGlvbmFs
+IGZsYWdzIGZvciBuaWxmc192ZGVzYw0KPj4+PiAgIG5pbGZzMjogaW1wcm92ZSBhY2N1cmFjeSBh
+bmQgY29ycmVjdCBmb3IgaW52YWxpZCBHQyB2YWx1ZXMNCj4+Pj4gICBuaWxmczI6IHByZXZlbnQg
+c3RhcnZhdGlvbiBvZiBzZWdtZW50cyBwcm90ZWN0ZWQgYnkgc25hcHNob3RzDQo+Pj4+DQo+Pj4+
+ICBmcy9uaWxmczIvYm1hcC5jICAgICAgICAgIHwgIDg0ICsrKysrKystDQo+Pj4+ICBmcy9uaWxm
+czIvYm1hcC5oICAgICAgICAgIHwgIDE0ICstDQo+Pj4+ICBmcy9uaWxmczIvYnRyZWUuYyAgICAg
+ICAgIHwgICA0ICstDQo+Pj4+ICBmcy9uaWxmczIvY3BmaWxlLmMgICAgICAgIHwgICA1ICsNCj4+
+Pj4gIGZzL25pbGZzMi9kYXQuYyAgICAgICAgICAgfCAgOTUgKysrKysrKystDQo+Pj4+ICBmcy9u
+aWxmczIvZGF0LmggICAgICAgICAgIHwgICA4ICstDQo+Pj4+ICBmcy9uaWxmczIvZGlyZWN0LmMg
+ICAgICAgIHwgICA0ICstDQo+Pj4+ICBmcy9uaWxmczIvaW5vZGUuYyAgICAgICAgIHwgIDI0ICsr
+LQ0KPj4+PiAgZnMvbmlsZnMyL2lvY3RsLmMgICAgICAgICB8ICAyNyArKy0NCj4+Pj4gIGZzL25p
+bGZzMi9tZHQuYyAgICAgICAgICAgfCAgIDUgKy0NCj4+Pj4gIGZzL25pbGZzMi9wYWdlLmggICAg
+ICAgICAgfCAgIDYgKy0NCj4+Pj4gIGZzL25pbGZzMi9zZWdidWYuYyAgICAgICAgfCAgIDYgKw0K
+Pj4+PiAgZnMvbmlsZnMyL3NlZ2J1Zi5oICAgICAgICB8ICAgMyArDQo+Pj4+ICBmcy9uaWxmczIv
+c2VnbWVudC5jICAgICAgIHwgMTU1ICsrKysrKysrKysrKystDQo+Pj4+ICBmcy9uaWxmczIvc2Vn
+bWVudC5oICAgICAgIHwgICAzICsNCj4+Pj4gIGZzL25pbGZzMi9zdWZpbGUuYyAgICAgICAgfCA1
+MzMgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLQ0KPj4+PiAg
+ZnMvbmlsZnMyL3N1ZmlsZS5oICAgICAgICB8ICA5NyArKysrKysrLS0NCj4+Pj4gIGZzL25pbGZz
+Mi90aGVfbmlsZnMuYyAgICAgfCAgIDQgKw0KPj4+PiAgZnMvbmlsZnMyL3RoZV9uaWxmcy5oICAg
+ICB8ICAyMyArKw0KPj4+PiAgaW5jbHVkZS9saW51eC9uaWxmczJfZnMuaCB8IDEyMiArKysrKysr
+KysrLQ0KPj4+PiAgMjAgZmlsZXMgY2hhbmdlZCwgMTEyNiBpbnNlcnRpb25zKCspLCA5NiBkZWxl
+dGlvbnMoLSkNCj4+Pj4NCj4+Pj4gLS0gDQo+Pj4+IDIuMy4wDQo+Pj4+DQo+Pj4+IC0tDQo+Pj4+
+IFRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmli
+ZSBsaW51eC1uaWxmcyIgaW4NCj4+Pj4gdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9t
+b0B2Z2VyLmtlcm5lbC5vcmcNCj4+Pj4gTW9yZSBtYWpvcmRvbW8gaW5mbyBhdCAgaHR0cDovL3Zn
+ZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1sDQo+IA0KPiAtLQ0KPiBUbyB1bnN1YnNj
+cmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtbmls
+ZnMiIGluDQo+IHRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwu
+b3JnDQo+IE1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFq
+b3Jkb21vLWluZm8uaHRtbA0K
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
