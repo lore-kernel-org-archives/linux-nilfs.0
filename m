@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 6/7] nilfs2: add helper to find existent block on metadata file
-Date: Thu, 12 Mar 2015 23:38:13 +0900
-Message-ID: <1426171094-27414-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 7/7] nilfs2: improve execution time of NILFS_IOCTL_GET_CPINFO ioctl
+Date: Thu, 12 Mar 2015 23:38:14 +0900
+Message-ID: <1426171094-27414-8-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1426171094-27414-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=DIDuUsoxTQW7SUlnmhSrT9DrvpZx0pto/phjuwu9aXM=;
-        b=FUBSaYkMJjZcmgDMoAjzl95naqpVaBa2Pyeeg4apvZBUe3+DKbq0N++69VUnDzuwhG
-         BYdncYa6fvukjk0D5IpyJEhdATvcJ4RulepWFhr6fGCjYVFBwDCW7u84KW9JT5or+rMR
-         5zYpgwuixOccFSdSpMpDRwaBVAJxAcxinGMxRFCxdfDVOY5rSRYTrAAlrbxyoZ/4PjAz
-         oUHE9em0S+3SWX3yj3VzRFBnTQZNwSAEAPzTCkPA0Meaje4u5UPcss350yfkeK1WCrpp
-         VGnIWwKsjFi4xLXk36gGVIzt6u6d2Qv1ZjEOW3klcuQbGQEoeoVI1ve9RKcf9s0hSFUV
-         muxg==
+        bh=9LSHAfbea41sXF7SnjpY44XTEfjmL/3KUuQSvVrm0Kg=;
+        b=X0Gq4eK3/weFkIc77etkEy2D1cHQUPSfDXKd6Tj2wGO2fNyU+8IRj2KWaToxpM75pu
+         N3Rz8IJ1/oDWpYh4uZvlvEpwtz6Idh0EVQUTGZ2vlHvchNJyKi30lsEbEw8wHq58sJji
+         rDrzasIla6x4A8TscfebzMiDyTn5TP5ZwtyZStBckXCAcO8aEK5uFt4IFDq4IIftrKtK
+         a2kNSxnXdAXtdBX050znUOWwnZGZqCyzCWM73hC0amAAoh/U6Fi6NM/3aKrUXPNYhGmc
+         p9o2xtpaiqop1qRaXd0a41ElhsbYKwzdYvWJvcit4mPy4a75a7MfxqA1tZUGswf4ry3x
+         H4AQ==
 In-Reply-To: <1426171094-27414-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -24,36 +24,69 @@ Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-Add a new metadata file function, nilfs_mdt_find_block(), which finds
-an existent block on a metadata file in a given range of blocks.  This
-function skips continuous hole blocks efficiently by using
-nilfs_bmap_seek_key().
+The older a filesystem gets, the slower lscp command becomes.  This is
+because nilfs_cpfile_do_get_cpinfo() function meets more hole blocks
+as the start offset of valid checkpoint numbers gets bigger.
+
+This reduces the overhead by skipping hole blocks efficiently with
+nilfs_mdt_find_block() helper.
+
+A measurement result of this patch is as follows:
+
+Before:
+$ time lscp
+                 CNO        DATE     TIME  MODE  FLG      BLKCNT       ICNT
+             5769303  2015-02-22 19:31:33   cp    -          108          1
+             5769304  2015-02-22 19:38:54   cp    -          108          1
+
+real    0m0.182s
+user    0m0.003s
+sys     0m0.180s
+
+After:
+$ time lscp
+                 CNO        DATE     TIME  MODE  FLG      BLKCNT       ICNT
+             5769303  2015-02-22 19:31:33   cp    -          108          1
+             5769304  2015-02-22 19:38:54   cp    -          108          1
+
+real    0m0.003s
+user    0m0.001s
+sys     0m0.002s
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/mdt.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/mdt.h |  3 +++
- 2 files changed, 57 insertions(+)
+ fs/nilfs2/cpfile.c | 58 ++++++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 52 insertions(+), 6 deletions(-)
 
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 892cf5f..dee34d9 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -261,6 +261,60 @@ int nilfs_mdt_get_block(struct inode *inode, unsigned long blkoff, int create,
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index 0d58075..b6596ca 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -53,6 +53,13 @@ nilfs_cpfile_get_offset(const struct inode *cpfile, __u64 cno)
+ 	return do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
  }
  
- /**
-+ * nilfs_mdt_find_block - find and get a buffer on meta data file.
-+ * @inode: inode of the meta data file
-+ * @start: start block offset (inclusive)
-+ * @end: end block offset (inclusive)
-+ * @blkoff: block offset
-+ * @out_bh: place to store a pointer to buffer_head struct
-+ *
-+ * nilfs_mdt_find_block() looks up an existing block in range of
-+ * [@start, @end] and stores pointer to a buffer head of the block to
-+ * @out_bh, and block offset to @blkoff, respectively.  @out_bh and
-+ * @blkoff are substituted only when zero is returned.
++static __u64 nilfs_cpfile_first_checkpoint_in_block(const struct inode *cpfile,
++						    unsigned long blkoff)
++{
++	return (__u64)nilfs_cpfile_checkpoints_per_block(cpfile) * blkoff
++		+ 1 - NILFS_MDT(cpfile)->mi_first_entry_offset;
++}
++
+ static unsigned long
+ nilfs_cpfile_checkpoints_in_block(const struct inode *cpfile,
+ 				  __u64 curr,
+@@ -146,6 +153,44 @@ static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
+ 				   create, nilfs_cpfile_block_init, bhp);
+ }
+ 
++/**
++ * nilfs_cpfile_find_checkpoint_block - find and get a buffer on cpfile
++ * @cpfile: inode of cpfile
++ * @start_cno: start checkpoint number (inclusive)
++ * @end_cno: end checkpoint number (inclusive)
++ * @cnop: place to store the next checkpoint number
++ * @bhp: place to store a pointer to buffer_head struct
 + *
 + * Return Value: On success, it returns 0. On error, the following negative
 + * error code is returned.
@@ -62,57 +95,53 @@ index 892cf5f..dee34d9 100644
 + *
 + * %-EIO - I/O error
 + *
-+ * %-ENOENT - no block was found in the range
++ * %-ENOENT - no block exists in the range.
 + */
-+int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
-+			 unsigned long end, unsigned long *blkoff,
-+			 struct buffer_head **out_bh)
++static int nilfs_cpfile_find_checkpoint_block(struct inode *cpfile,
++					      __u64 start_cno, __u64 end_cno,
++					      __u64 *cnop,
++					      struct buffer_head **bhp)
 +{
-+	__u64 next;
++	unsigned long start, end, blkoff;
 +	int ret;
 +
-+	if (unlikely(start > end))
++	if (unlikely(start_cno > end_cno))
 +		return -ENOENT;
 +
-+	ret = nilfs_mdt_read_block(inode, start, true, out_bh);
-+	if (!ret) {
-+		*blkoff = start;
-+		goto out;
-+	}
-+	if (unlikely(ret != -ENOENT || start == ULONG_MAX))
-+		goto out;
++	start = nilfs_cpfile_get_blkoff(cpfile, start_cno);
++	end = nilfs_cpfile_get_blkoff(cpfile, end_cno);
 +
-+	ret = nilfs_bmap_seek_key(NILFS_I(inode)->i_bmap, start + 1, &next);
-+	if (!ret) {
-+		if (next <= end) {
-+			ret = nilfs_mdt_read_block(inode, next, true, out_bh);
-+			if (!ret)
-+				*blkoff = next;
-+		} else {
-+			ret = -ENOENT;
-+		}
-+	}
-+out:
++	ret = nilfs_mdt_find_block(cpfile, start, end, &blkoff, bhp);
++	if (!ret)
++		*cnop = (blkoff == start) ? start_cno :
++			nilfs_cpfile_first_checkpoint_in_block(cpfile, blkoff);
 +	return ret;
 +}
 +
-+/**
-  * nilfs_mdt_delete_block - make a hole on the meta data file.
-  * @inode: inode of the meta data file
-  * @block: block offset
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index a294ea3..fe529a8 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -78,6 +78,9 @@ int nilfs_mdt_get_block(struct inode *, unsigned long, int,
- 			void (*init_block)(struct inode *,
- 					   struct buffer_head *, void *),
- 			struct buffer_head **);
-+int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
-+			 unsigned long end, unsigned long *blkoff,
-+			 struct buffer_head **out_bh);
- int nilfs_mdt_delete_block(struct inode *, unsigned long);
- int nilfs_mdt_forget_block(struct inode *, unsigned long);
- int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
+ static inline int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,
+ 						       __u64 cno)
+ {
+@@ -403,14 +448,15 @@ static ssize_t nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 *cnop,
+ 		return -ENOENT; /* checkpoint number 0 is invalid */
+ 	down_read(&NILFS_MDT(cpfile)->mi_sem);
+ 
+-	for (n = 0; cno < cur_cno && n < nci; cno += ncps) {
+-		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, cur_cno);
+-		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
++	for (n = 0; n < nci; cno += ncps) {
++		ret = nilfs_cpfile_find_checkpoint_block(
++			cpfile, cno, cur_cno - 1, &cno, &bh);
+ 		if (ret < 0) {
+-			if (ret != -ENOENT)
+-				goto out;
+-			continue; /* skip hole */
++			if (likely(ret == -ENOENT))
++				break;
++			goto out;
+ 		}
++		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, cur_cno);
+ 
+ 		kaddr = kmap_atomic(bh->b_page);
+ 		cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
 -- 
 1.8.3.1
