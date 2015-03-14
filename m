@@ -1,9 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 7/9] nilfs2: add additional flags for nilfs_vdesc
-Date: Sat, 14 Mar 2015 12:21:12 +0900 (JST)
-Message-ID: <20150314.122112.881359681872630378.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH 5/9] nilfs2: add simple tracking of block deletions and
+ updates
+Date: Sat, 14 Mar 2015 12:46:15 +0900 (JST)
+Message-ID: <20150314.124615.1155695286216648391.konishi.ryusuke@lab.ntt.co.jp>
 References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>
-	<1424804504-10914-8-git-send-email-andreas.rohner@gmx.net>
+	<1424804504-10914-6-git-send-email-andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,224 +12,476 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=Gm+WNNvyGrPDWTj9oveG4MXT9B5AoTXsJ+wF+ZBo1Os=;
-        b=Ig4hl3t5oseOTUpnqh/Tyiv6LF4wWJl1gUNI+/x3idj/s+qV+VIyzuUyNS6SstFRLX
-         F5Ne2tVaOH1nC/b6olY0ut3qxBFIjDm4W4YpJ0e5u1oZnndtEoM1Yl4SSEXQyfV8jB/K
-         bjLEK+LzKpEwWt6IuQQAzOLLc7/Cb/YMwt6haPNgBI7WGGcZDxwXwa1HijyUj5deTRT/
-         tLdfqMYX7fcYRBBd25g+ce8IK+JxIh6ZdMCCHJL988o1TGnU4jWKFUKtE9ymkn33Cctf
-         Y00PYwWEwGiQV3EqxDfmuX0sm7f9Ba1xC9nBJSorfj8Cg/P+kjSpWcXrswUB6Ku9Mcsp
-         HIGw==
-In-Reply-To: <1424804504-10914-8-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+        bh=IZjrSD3riomofIiEMXZOpeeMrWUlpF6oEO0eSr3vir4=;
+        b=Losy9kcJH8ehLpC+HWH+NkUhKz/jMh8m+MsUTqnNRjm3j/pmlOv+/QeMn5Mz5d3nn7
+         HrhFdGbEk5hUGxpXmaPEF+vPPzJ4Ad/J52GGZtBJW+v7o4Ora2klQYj83HnzkyNmL+lw
+         CHTFPvA8XdyuNjlInVikFGgFfNJDXEo1uyQHpyw9mD+TpKj1BGQXWU/CwXusP2osVqRI
+         kX9EwPYuESqaUbLl2iX00VFFTgdUtwSkuucJTGp57p36D8m5CgaRH7H6UEbYub9kz6zO
+         Jq0UqKUDQ2qDwtGIkgnRYNZkfAYE7S1vO46WL4LppqHF1PWkkbzWcfs4rTrAiczIuGcP
+         iigA==
+In-Reply-To: <1424804504-10914-6-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+To: andreas.rohner-hi6Y0CQ0nG0@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 24 Feb 2015 20:01:42 +0100, Andreas Rohner wrote:
-> This patch adds support for additional bit-flags to the
-> nilfs_vdesc structure used by the GC to communicate block
-> information from userspace. The field vd_flags cannot be used for
-> this purpose, because it does not support bit-flags, and changing
-> that would break backwards compatibility. Therefore the padding
-> field is renamed to vd_blk_flags to contain more flags.
+On Tue, 24 Feb 2015 20:01:40 +0100, Andreas Rohner wrote:
+> This patch adds simple tracking of block deletions and updates for
+> all files except the DAT- and the SUFILE-Metadatafiles. It uses the
+> fact, that for every block, NILFS2 keeps an entry in the DAT-File
+> and stores the checkpoint where it was created and deleted or
+> overwritten. So whenever a block is deleted or overwritten
+> nilfs_dat_commit_end() is called to update the DAT-Entry. At this
+> point this patch simply decrements the su_nlive_blks field of the
+> corresponding segment. The value of su_nlive_blks is set at segment
+> creation time.
 > 
-> Unfortunately older versions of the userspace tools do not
-> initialize the padding field to zero. So it is necessary to signal
-> to the kernel if the new vd_blk_flags field contains usable flags
-> or just random data. Since the vd_period field is only used in
-> userspace, and is guaranteed to contain a value that is > 0
-> (NILFS_CNO_MIN == 1), it can be used to give the kernel a hint. So
-> if the userspace tools set vd_period.p_start to 0, the
-> vd_blk_flags field will be interpreted.
+> The blocks of the DAT-File cannot be counted this way, because it
+> does not contain any entries about itself, so the function
+> nilfs_dat_commit_end() is not called when its blocks are deleted or
+> overwritten.
 > 
-> To make the flags available for later stages of the GC process,
-> they are mapped to corresponding buffer_head flags.
+> The SUFILE cannot be counted this way, because it would lead to a
+> deadlock. When nilfs_dat_commit_end() is called, the bmap->b_sem is
+> held by code way up the call chain. To decrement the SUFILE entry
+> the same semaphore has to be aquired. So if the DAT-Entry belongs to
+> the SUFILE both semaphores are the same and a deadlock will occur.
+> But it works for any other file. So by excluding the SUFILE from
+> being counted by the extra parameter count_blocks a deadlock can be
+> avoided.
+> 
+> With the above changes the code does not pass the lock dependency
+> checks of the kernel, because all the locks have the same class and
+> the order in which the locks are taken is different. Usually it is:
+> 
+> 1. down_write(&NILFS_MDT(sufile)->mi_sem);
+> 2. down_write(&bmap->b_sem);
+> 
+> Now it can also be reversed, which leads to failed checks:
+> 
+> 1. down_write(&bmap->b_sem); /* lock of a file other than SUFILE */
+> 2. down_write(&NILFS_MDT(sufile)->mi_sem);
+> 
+> But this is safe as long as the first lock down_write(&bmap->b_sem)
+> doesn't belong to the SUFILE.
+> 
+> It is also possible, that two bmap->b_sem locks have to be taken at
+> the same time:
+> 
+> 1. down_write(&bmap->b_sem); /* lock of a file other than SUFILE */
+> 2. down_write(&bmap->b_sem); /* lock of SUFILE */
+> 
+> Since bmap->b_sem of normal files and the bmap->b_sem of the
+> SUFILE have the same lock class, the above behavior would also lead
+> to a warning.
+> 
+> Because of this, it is necessary to introduce two new lock classes
+> for the SUFILE. So the bmap->b_sem of the SUFILE gets its own lock
+> class and the NILFS_MDT(sufile)->mi_sem as well.
+> 
+> A new feature compatibility flag
+> NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS was added, so that the new
+> features introduced by this patch can be enabled or disabled at any
+> time.
 > 
 > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 > ---
->  fs/nilfs2/ioctl.c         | 23 ++++++++++++++++---
->  fs/nilfs2/page.h          |  6 ++++-
->  include/linux/nilfs2_fs.h | 58 +++++++++++++++++++++++++++++++++++++++++++++--
->  3 files changed, 81 insertions(+), 6 deletions(-)
+>  fs/nilfs2/bmap.c          |  8 +++++++-
+>  fs/nilfs2/bmap.h          |  5 +++--
+>  fs/nilfs2/btree.c         |  4 +++-
+>  fs/nilfs2/dat.c           | 25 ++++++++++++++++++++-----
+>  fs/nilfs2/dat.h           |  7 +++++--
+>  fs/nilfs2/direct.c        |  4 +++-
+>  fs/nilfs2/mdt.c           |  5 ++++-
+>  fs/nilfs2/segbuf.c        |  1 +
+>  fs/nilfs2/segbuf.h        |  1 +
+>  fs/nilfs2/segment.c       | 25 +++++++++++++++++++++----
+>  fs/nilfs2/the_nilfs.c     |  4 ++++
+>  fs/nilfs2/the_nilfs.h     | 16 ++++++++++++++++
+>  include/linux/nilfs2_fs.h |  4 +++-
+>  13 files changed, 91 insertions(+), 18 deletions(-)
 > 
-> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> index f6ee54e..63b1c77 100644
-> --- a/fs/nilfs2/ioctl.c
-> +++ b/fs/nilfs2/ioctl.c
-> @@ -578,7 +578,7 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
->  	struct buffer_head *bh;
+> diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+> index aadbd0b..ecd62ba 100644
+> --- a/fs/nilfs2/bmap.c
+> +++ b/fs/nilfs2/bmap.c
+> @@ -467,6 +467,7 @@ __u64 nilfs_bmap_find_target_in_group(const struct nilfs_bmap *bmap)
+>  
+>  static struct lock_class_key nilfs_bmap_dat_lock_key;
+>  static struct lock_class_key nilfs_bmap_mdt_lock_key;
+> +static struct lock_class_key nilfs_bmap_sufile_lock_key;
+>  
+>  /**
+>   * nilfs_bmap_read - read a bmap from an inode
+> @@ -498,12 +499,17 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
+>  		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
+>  		break;
+>  	case NILFS_CPFILE_INO:
+> -	case NILFS_SUFILE_INO:
+>  		bmap->b_ptr_type = NILFS_BMAP_PTR_VS;
+>  		bmap->b_last_allocated_key = 0;
+>  		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
+>  		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
+>  		break;
+> +	case NILFS_SUFILE_INO:
+> +		bmap->b_ptr_type = NILFS_BMAP_PTR_VS;
+> +		bmap->b_last_allocated_key = 0;
+> +		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
+> +		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_sufile_lock_key);
+> +		break;
+>  	case NILFS_IFILE_INO:
+>  		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
+>  		/* Fall through */
+> diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
+> index b89e680..718c814 100644
+> --- a/fs/nilfs2/bmap.h
+> +++ b/fs/nilfs2/bmap.h
+> @@ -222,8 +222,9 @@ static inline void nilfs_bmap_commit_end_ptr(struct nilfs_bmap *bmap,
+>  					     struct inode *dat)
+>  {
+>  	if (dat)
+> -		nilfs_dat_commit_end(dat, &req->bpr_req,
+> -				     bmap->b_ptr_type == NILFS_BMAP_PTR_VS);
+> +		nilfs_dat_commit_end(dat, &req->bpr_req, NULL,
+> +				     bmap->b_ptr_type == NILFS_BMAP_PTR_VS,
+> +				     bmap->b_inode->i_ino != NILFS_SUFILE_INO);
+>  }
+>  
+>  static inline void nilfs_bmap_abort_end_ptr(struct nilfs_bmap *bmap,
+> diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+> index b2e3ff3..2af0519 100644
+> --- a/fs/nilfs2/btree.c
+> +++ b/fs/nilfs2/btree.c
+> @@ -1851,7 +1851,9 @@ static void nilfs_btree_commit_update_v(struct nilfs_bmap *btree,
+>  
+>  	nilfs_dat_commit_update(dat, &path[level].bp_oldreq.bpr_req,
+>  				&path[level].bp_newreq.bpr_req,
+> -				btree->b_ptr_type == NILFS_BMAP_PTR_VS);
+> +				NULL,
+> +				btree->b_ptr_type == NILFS_BMAP_PTR_VS,
+> +				btree->b_inode->i_ino != NILFS_SUFILE_INO);
+>  
+>  	if (buffer_nilfs_node(path[level].bp_bh)) {
+>  		nilfs_btnode_commit_change_key(
+> diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+> index 0d5fada..d2c8f7e 100644
+> --- a/fs/nilfs2/dat.c
+> +++ b/fs/nilfs2/dat.c
+> @@ -28,6 +28,7 @@
+>  #include "mdt.h"
+>  #include "alloc.h"
+>  #include "dat.h"
+> +#include "sufile.h"
+>  
+>  
+>  #define NILFS_CNO_MIN	((__u64)1)
+> @@ -185,12 +186,14 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_palloc_req *req)
+>  }
+>  
+>  void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
+> -			  int dead)
+> +			  struct nilfs_sufile_mod_cache *mc,
+> +			  int dead, int count_blocks)
+>  {
+>  	struct nilfs_dat_entry *entry;
+> -	__u64 start, end;
+> +	__u64 start, end, segnum;
+>  	sector_t blocknr;
+>  	void *kaddr;
+> +	struct the_nilfs *nilfs;
+>  
+>  	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
+>  	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
+> @@ -206,8 +209,18 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
+>  
+>  	if (blocknr == 0)
+>  		nilfs_dat_commit_free(dat, req);
+> -	else
+> +	else {
+>  		nilfs_dat_commit_entry(dat, req);
+> +
+> +		nilfs = dat->i_sb->s_fs_info;
+> +
+> +		if (count_blocks && nilfs_feature_track_live_blks(nilfs)) {
+> +			segnum = nilfs_get_segnum_of_block(nilfs, blocknr);
+> +
+> +			nilfs_sufile_mod_nlive_blks(nilfs->ns_sufile, mc,
+> +						    segnum, -1);
+> +		}
+> +	}
+>  }
+>  
+>  void nilfs_dat_abort_end(struct inode *dat, struct nilfs_palloc_req *req)
+> @@ -246,9 +259,11 @@ int nilfs_dat_prepare_update(struct inode *dat,
+>  
+>  void nilfs_dat_commit_update(struct inode *dat,
+>  			     struct nilfs_palloc_req *oldreq,
+> -			     struct nilfs_palloc_req *newreq, int dead)
+> +			     struct nilfs_palloc_req *newreq,
+> +			     struct nilfs_sufile_mod_cache *mc,
+> +			     int dead, int count_blocks)
+>  {
+> -	nilfs_dat_commit_end(dat, oldreq, dead);
+> +	nilfs_dat_commit_end(dat, oldreq, mc, dead, count_blocks);
+>  	nilfs_dat_commit_alloc(dat, newreq);
+>  }
+>  
+> diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
+> index cbd8e97..d196f09 100644
+> --- a/fs/nilfs2/dat.h
+> +++ b/fs/nilfs2/dat.h
+> @@ -29,6 +29,7 @@
+>  
+>  
+>  struct nilfs_palloc_req;
+> +struct nilfs_sufile_mod_cache;
+>  
+>  int nilfs_dat_translate(struct inode *, __u64, sector_t *);
+>  
+> @@ -39,12 +40,14 @@ int nilfs_dat_prepare_start(struct inode *, struct nilfs_palloc_req *);
+>  void nilfs_dat_commit_start(struct inode *, struct nilfs_palloc_req *,
+>  			    sector_t);
+>  int nilfs_dat_prepare_end(struct inode *, struct nilfs_palloc_req *);
+> -void nilfs_dat_commit_end(struct inode *, struct nilfs_palloc_req *, int);
+> +void nilfs_dat_commit_end(struct inode *, struct nilfs_palloc_req *,
+> +			  struct nilfs_sufile_mod_cache *, int, int);
+>  void nilfs_dat_abort_end(struct inode *, struct nilfs_palloc_req *);
+>  int nilfs_dat_prepare_update(struct inode *, struct nilfs_palloc_req *,
+>  			     struct nilfs_palloc_req *);
+>  void nilfs_dat_commit_update(struct inode *, struct nilfs_palloc_req *,
+> -			     struct nilfs_palloc_req *, int);
+> +			     struct nilfs_palloc_req *,
+> +			     struct nilfs_sufile_mod_cache *, int, int);
+>  void nilfs_dat_abort_update(struct inode *, struct nilfs_palloc_req *,
+>  			    struct nilfs_palloc_req *);
+>  
+> diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
+> index 82f4865..e022cfb 100644
+> --- a/fs/nilfs2/direct.c
+> +++ b/fs/nilfs2/direct.c
+> @@ -272,7 +272,9 @@ static int nilfs_direct_propagate(struct nilfs_bmap *bmap,
+>  		if (ret < 0)
+>  			return ret;
+>  		nilfs_dat_commit_update(dat, &oldreq, &newreq,
+> -					bmap->b_ptr_type == NILFS_BMAP_PTR_VS);
+> +				NULL,
+> +				bmap->b_ptr_type == NILFS_BMAP_PTR_VS,
+> +				bmap->b_inode->i_ino != NILFS_SUFILE_INO);
+>  		set_buffer_nilfs_volatile(bh);
+>  		nilfs_direct_set_ptr(bmap, key, newreq.pr_entry_nr);
+>  	} else
+> diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+> index 892cf5f..2a81f82 100644
+> --- a/fs/nilfs2/mdt.c
+> +++ b/fs/nilfs2/mdt.c
+> @@ -414,7 +414,7 @@ static const struct address_space_operations def_mdt_aops = {
+>  
+>  static const struct inode_operations def_mdt_iops;
+>  static const struct file_operations def_mdt_fops;
+> -
+> +static struct lock_class_key nilfs_mdt_mi_sufile_lock_key;
+>  
+>  int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz)
+>  {
+> @@ -427,6 +427,9 @@ int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz)
+>  	init_rwsem(&mi->mi_sem);
+>  	inode->i_private = mi;
+>  
+> +	if (inode->i_ino == NILFS_SUFILE_INO)
+> +		lockdep_set_class(&mi->mi_sem, &nilfs_mdt_mi_sufile_lock_key);
+> +
+>  	inode->i_mode = S_IFREG;
+>  	mapping_set_gfp_mask(inode->i_mapping, gfp_mask);
+>  
+> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+> index dc3a9efd..7a6e9cd 100644
+> --- a/fs/nilfs2/segbuf.c
+> +++ b/fs/nilfs2/segbuf.c
+> @@ -57,6 +57,7 @@ struct nilfs_segment_buffer *nilfs_segbuf_new(struct super_block *sb)
+>  	INIT_LIST_HEAD(&segbuf->sb_segsum_buffers);
+>  	INIT_LIST_HEAD(&segbuf->sb_payload_buffers);
+>  	segbuf->sb_super_root = NULL;
+> +	segbuf->sb_nlive_blks_added = 0;
+>  
+>  	init_completion(&segbuf->sb_bio_event);
+>  	atomic_set(&segbuf->sb_err, 0);
+> diff --git a/fs/nilfs2/segbuf.h b/fs/nilfs2/segbuf.h
+> index b04f08c..d04da26 100644
+> --- a/fs/nilfs2/segbuf.h
+> +++ b/fs/nilfs2/segbuf.h
+> @@ -83,6 +83,7 @@ struct nilfs_segment_buffer {
+>  	sector_t		sb_fseg_start, sb_fseg_end;
+>  	sector_t		sb_pseg_start;
+>  	unsigned		sb_rest_blocks;
+> +	__u32			sb_nlive_blks_added;
+>  
+>  	/* Buffers */
+>  	struct list_head	sb_segsum_buffers;
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 469086b..6059f53 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -1367,9 +1367,10 @@ static void nilfs_free_incomplete_logs(struct list_head *logs,
+>  }
+>  
+>  static void nilfs_segctor_update_segusage(struct nilfs_sc_info *sci,
+> -					  struct inode *sufile)
+> +					  struct the_nilfs *nilfs)
+>  {
+>  	struct nilfs_segment_buffer *segbuf;
+> +	struct inode *sufile = nilfs->ns_sufile;
+>  	unsigned long live_blocks;
 >  	int ret;
 >  
-> -	if (vdesc->vd_flags == 0)
-> +	if (nilfs_vdesc_data(vdesc))
->  		ret = nilfs_gccache_submit_read_data(
->  			inode, vdesc->vd_offset, vdesc->vd_blocknr,
->  			vdesc->vd_vblocknr, &bh);
-> @@ -592,7 +592,8 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
->  			       "%s: invalid virtual block address (%s): "
->  			       "ino=%llu, cno=%llu, offset=%llu, "
->  			       "blocknr=%llu, vblocknr=%llu\n",
-> -			       __func__, vdesc->vd_flags ? "node" : "data",
-> +			       __func__,
-> +			       nilfs_vdesc_node(vdesc) ? "node" : "data",
->  			       (unsigned long long)vdesc->vd_ino,
->  			       (unsigned long long)vdesc->vd_cno,
->  			       (unsigned long long)vdesc->vd_offset,
-> @@ -603,7 +604,8 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
->  	if (unlikely(!list_empty(&bh->b_assoc_buffers))) {
->  		printk(KERN_CRIT "%s: conflicting %s buffer: ino=%llu, "
->  		       "cno=%llu, offset=%llu, blocknr=%llu, vblocknr=%llu\n",
-> -		       __func__, vdesc->vd_flags ? "node" : "data",
-> +		       __func__,
-> +		       nilfs_vdesc_node(vdesc) ? "node" : "data",
->  		       (unsigned long long)vdesc->vd_ino,
->  		       (unsigned long long)vdesc->vd_cno,
->  		       (unsigned long long)vdesc->vd_offset,
-> @@ -612,6 +614,12 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
->  		brelse(bh);
->  		return -EEXIST;
+> @@ -1380,12 +1381,22 @@ static void nilfs_segctor_update_segusage(struct nilfs_sc_info *sci,
+>  						     live_blocks,
+>  						     sci->sc_seg_ctime);
+>  		WARN_ON(ret); /* always succeed because the segusage is dirty */
+> +
+> +		/* should always be positive */
+> +		segbuf->sb_nlive_blks_added = segbuf->sb_sum.nfileblk;
+> +
+> +		if (nilfs_feature_track_live_blks(nilfs))
+> +			nilfs_sufile_mod_nlive_blks(sufile, NULL,
+> +						segbuf->sb_segnum,
+> +						segbuf->sb_nlive_blks_added);
 >  	}
-> +
-> +	if (nilfs_vdesc_snapshot(vdesc))
-> +		set_buffer_nilfs_snapshot(bh);
-> +	if (nilfs_vdesc_protection_period(vdesc))
-> +		set_buffer_nilfs_protection_period(bh);
-> +
->  	list_add_tail(&bh->b_assoc_buffers, buffers);
->  	return 0;
 >  }
-> @@ -662,6 +670,15 @@ static int nilfs_ioctl_move_blocks(struct super_block *sb,
+>  
+> -static void nilfs_cancel_segusage(struct list_head *logs, struct inode *sufile)
+> +static void nilfs_cancel_segusage(struct list_head *logs,
+> +				  struct the_nilfs *nilfs)
+>  {
+>  	struct nilfs_segment_buffer *segbuf;
+> +	struct inode *sufile = nilfs->ns_sufile;
+>  	int ret;
+>  
+>  	segbuf = NILFS_FIRST_SEGBUF(logs);
+> @@ -1394,6 +1405,12 @@ static void nilfs_cancel_segusage(struct list_head *logs, struct inode *sufile)
+>  					     segbuf->sb_fseg_start, 0);
+>  	WARN_ON(ret); /* always succeed because the segusage is dirty */
+>  
+> +	if (nilfs_feature_track_live_blks(nilfs))
+> +		nilfs_sufile_mod_nlive_blks(sufile, NULL, segbuf->sb_segnum,
+> +					-((__s64)segbuf->sb_nlive_blks_added));
+> +
+> +	segbuf->sb_nlive_blks_added = 0;
+> +
+>  	list_for_each_entry_continue(segbuf, logs, sb_list) {
+>  		ret = nilfs_sufile_set_segment_usage(sufile, segbuf->sb_segnum,
+>  						     0, 0);
+> @@ -1729,7 +1746,7 @@ static void nilfs_segctor_abort_construction(struct nilfs_sc_info *sci,
+>  	nilfs_abort_logs(&logs, ret ? : err);
+>  
+>  	list_splice_tail_init(&sci->sc_segbufs, &logs);
+> -	nilfs_cancel_segusage(&logs, nilfs->ns_sufile);
+> +	nilfs_cancel_segusage(&logs, nilfs);
+>  	nilfs_free_incomplete_logs(&logs, nilfs);
+>  
+>  	if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+> @@ -1995,7 +2012,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+>  
+>  			nilfs_segctor_fill_in_super_root(sci, nilfs);
 >  		}
+> -		nilfs_segctor_update_segusage(sci, nilfs->ns_sufile);
+> +		nilfs_segctor_update_segusage(sci, nilfs);
 >  
->  		do {
-> +			/*
-> +			 * old user space tools to not initialize vd_blk_flags
-> +			 * if vd_period.p_start > 0 then vd_blk_flags was
-> +			 * not initialized properly and may contain invalid
-> +			 * flags
-> +			 */
-> +			if (vdesc->vd_period.p_start > 0)
-> +				vdesc->vd_blk_flags = 0;
+>  		/* Write partial segments */
+>  		nilfs_segctor_prepare_write(sci);
+
+Please separate changes below.
+
+> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+> index 69bd801..606fdfc 100644
+> --- a/fs/nilfs2/the_nilfs.c
+> +++ b/fs/nilfs2/the_nilfs.c
+> @@ -630,6 +630,10 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
+>  	get_random_bytes(&nilfs->ns_next_generation,
+>  			 sizeof(nilfs->ns_next_generation));
+>  
+> +	nilfs->ns_feature_compat = le64_to_cpu(sbp->s_feature_compat);
+> +	nilfs->ns_feature_compat_ro = le64_to_cpu(sbp->s_feature_compat_ro);
+> +	nilfs->ns_feature_incompat = le64_to_cpu(sbp->s_feature_incompat);
 > +
->  			ret = nilfs_ioctl_move_inode_block(inode, vdesc,
->  							   &buffers);
->  			if (unlikely(ret < 0)) {
-> diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
-> index a43b828..b9117e6 100644
-> --- a/fs/nilfs2/page.h
-> +++ b/fs/nilfs2/page.h
-> @@ -36,13 +36,17 @@ enum {
->  	BH_NILFS_Volatile,
->  	BH_NILFS_Checked,
->  	BH_NILFS_Redirected,
-> +	BH_NILFS_Snapshot,
-> +	BH_NILFS_Protection_Period,
->  };
->  
->  BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
->  BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
->  BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verified */
->  BUFFER_FNS(NILFS_Redirected, nilfs_redirected)	/* redirected to a copy */
-> -
-
-> +BUFFER_FNS(NILFS_Snapshot, nilfs_snapshot)	/* belongs to a snapshot */
-> +BUFFER_FNS(NILFS_Protection_Period, nilfs_protection_period) /* protected by
-> +							protection period */
->  
-
-I propose alternative names: "snapshot_protected", and
-"period_protected" (or "time_protected") respectively to clarify
-meaning of the flags.
-
->  int __nilfs_clear_page_dirty(struct page *);
->  
-> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-> index 6ccb2ad..6ffdc09 100644
-> --- a/include/linux/nilfs2_fs.h
-> +++ b/include/linux/nilfs2_fs.h
-> @@ -900,7 +900,7 @@ struct nilfs_vinfo {
->   * @vd_blocknr: disk block number
->   * @vd_offset: logical block offset inside a file
->   * @vd_flags: flags (data or node block)
-> - * @vd_pad: padding
-> + * @vd_blk_flags: additional flags
+>  	err = nilfs_store_disk_layout(nilfs, sbp);
+>  	if (err)
+>  		goto failed_sbh;
+> diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+> index 23778d3..87cab10 100644
+> --- a/fs/nilfs2/the_nilfs.h
+> +++ b/fs/nilfs2/the_nilfs.h
+> @@ -101,6 +101,9 @@ enum {
+>   * @ns_dev_kobj: /sys/fs/<nilfs>/<device>
+>   * @ns_dev_kobj_unregister: completion state
+>   * @ns_dev_subgroups: <device> subgroups pointer
+> + * @ns_feature_compat: Compatible feature set
+> + * @ns_feature_compat_ro: Read-only compatible feature set
+> + * @ns_feature_incompat: Incompatible feature set
 >   */
->  struct nilfs_vdesc {
->  	__u64 vd_ino;
-> @@ -910,9 +910,63 @@ struct nilfs_vdesc {
->  	__u64 vd_blocknr;
->  	__u64 vd_offset;
->  	__u32 vd_flags;
-> -	__u32 vd_pad;
-> +	/*
-> +	 * vd_blk_flags needed because vd_flags doesn't support
-> +	 * bit-flags because of backwards compatibility
-> +	 */
-> +	__u32 vd_blk_flags;
+>  struct the_nilfs {
+>  	unsigned long		ns_flags;
+> @@ -201,6 +204,11 @@ struct the_nilfs {
+>  	struct kobject ns_dev_kobj;
+>  	struct completion ns_dev_kobj_unregister;
+>  	struct nilfs_sysfs_dev_subgroups *ns_dev_subgroups;
+> +
+> +	/* Features */
+> +	__u64			ns_feature_compat;
+> +	__u64			ns_feature_compat_ro;
+> +	__u64			ns_feature_incompat;
 >  };
 >  
-
-> +/* vdesc flags */
-> +enum {
-> +	NILFS_VDESC_DATA,
-> +	NILFS_VDESC_NODE,
-> +
-> +	/* ... */
-> +};
-> +enum {
-> +	NILFS_VDESC_SNAPSHOT,
-> +	NILFS_VDESC_PROTECTION_PERIOD,
-> +
-> +	/* ... */
-> +
-> +	__NR_NILFS_VDESC_FIELDS,
-> +};
-> +
-> +#define NILFS_VDESC_FNS(flag, name)					\
-> +static inline void							\
-> +nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
-> +{									\
-> +	vdesc->vd_flags = NILFS_VDESC_##flag;				\
-> +}									\
-> +static inline int							\
-> +nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
-> +{									\
-> +	return vdesc->vd_flags == NILFS_VDESC_##flag;			\
+>  #define THE_NILFS_FNS(bit, name)					\
+> @@ -393,4 +401,12 @@ static inline int nilfs_flush_device(struct the_nilfs *nilfs)
+>  	return err;
+>  }
+>  
+> +static inline int nilfs_feature_track_live_blks(struct the_nilfs *nilfs)
+> +{
+> +	return (nilfs->ns_feature_compat &
+> +		NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS) &&
+> +		(nilfs->ns_feature_compat &
+> +		NILFS_FEATURE_COMPAT_SUFILE_EXTENSION);
 > +}
 > +
 
-Do not add definitions for vd_flags, leave them, and
-simplify your patch.
+This should be written as below:
+
+static inline int nilfs_feature_track_live_blks(struct the_nilfs *nilfs)
+{
+	const __u64 required_bits = NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS |
+				    NILFS_FEATURE_COMPAT_SUFILE_EXTENSION;
+
+	return ((nilfs->ns_feature_compat & required_bits) == required_bits);
+}
+
+Or you can drop the track flag at mount time if
+NILFS_FEATURE_COMPAT_SUFILE_EXTENSION flag is not set or
+nilfs_sufile_ext_supported(sufile) is false.
 
 Regards,
 Ryusuke Konishi
 
-> +#define NILFS_VDESC_FNS2(flag, name)					\
-> +static inline void							\
-> +nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
-> +{									\
-> +	vdesc->vd_blk_flags |= (1UL << NILFS_VDESC_##flag);		\
-> +}									\
-> +static inline void							\
-> +nilfs_vdesc_clear_##name(struct nilfs_vdesc *vdesc)			\
-> +{									\
-> +	vdesc->vd_blk_flags &= ~(1UL << NILFS_VDESC_##flag);		\
-> +}									\
-> +static inline int							\
-> +nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
-> +{									\
-> +	return !!(vdesc->vd_blk_flags & (1UL << NILFS_VDESC_##flag));	\
-> +}
-> +
-> +NILFS_VDESC_FNS(DATA, data)
-> +NILFS_VDESC_FNS(NODE, node)
-> +NILFS_VDESC_FNS2(SNAPSHOT, snapshot)
-> +NILFS_VDESC_FNS2(PROTECTION_PERIOD, protection_period)
-> +
->  /**
->   * struct nilfs_bdesc - descriptor of disk block number
->   * @bd_ino: inode number
+>  #endif /* _THE_NILFS_H */
+> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+> index 5d83c55..6ccb2ad 100644
+> --- a/include/linux/nilfs2_fs.h
+> +++ b/include/linux/nilfs2_fs.h
+> @@ -221,10 +221,12 @@ struct nilfs_super_block {
+>   * doesn't know about, it should refuse to mount the filesystem.
+>   */
+>  #define NILFS_FEATURE_COMPAT_SUFILE_EXTENSION		(1ULL << 0)
+> +#define NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS		(1ULL << 1)
+>  
+>  #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT		(1ULL << 0)
+>  
+> -#define NILFS_FEATURE_COMPAT_SUPP	NILFS_FEATURE_COMPAT_SUFILE_EXTENSION
+> +#define NILFS_FEATURE_COMPAT_SUPP	(NILFS_FEATURE_COMPAT_SUFILE_EXTENSION \
+> +				| NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS)
+>  #define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
+>  #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
+>  
 > -- 
 > 2.3.0
 > 
