@@ -1,10 +1,9 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 8/9] nilfs2: improve accuracy and correct for invalid
- GC values
-Date: Sat, 14 Mar 2015 11:50:38 +0900 (JST)
-Message-ID: <20150314.115038.2269524624190084655.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH 7/9] nilfs2: add additional flags for nilfs_vdesc
+Date: Sat, 14 Mar 2015 12:21:12 +0900 (JST)
+Message-ID: <20150314.122112.881359681872630378.konishi.ryusuke@lab.ntt.co.jp>
 References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>
-	<1424804504-10914-9-git-send-email-andreas.rohner@gmx.net>
+	<1424804504-10914-8-git-send-email-andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -12,389 +11,224 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=Czt71iyegCxuSVbRNBdnkHgsTWtOVLCosetNfux/iXg=;
-        b=yhD2nyVFkaV4LMH07eeen9CZmxm7/9dnhtKz6wHaUeE/zsjTqKe9ZcjnNrCiL+oO+P
-         fvn+4Iee64XlYFheMZmbFGmw/Dm0qfp1SwItuAQ5YZLoy3wOZzFnBoq1VTeWjHKeLYxm
-         3vkQCH5EuisEquv5ODNkBj7WIzotSTZW7HDxzQRvE9sMCBXrlPfNNYAl+gqsxIUIt4kB
-         8SphJw7ATOw4feOwBVmFn/Q0H9HTKeF6t+H/gRXX7Mxrag7Py9w9awLOGX2QoNN3QL6k
-         d2eqLL3ufzBtSlCWpMxcKOiVsdKKrjPNCUW9gceB0n4AbAU6pBIKCassr9e6RW8Q2YRD
-         OdPg==
-In-Reply-To: <1424804504-10914-9-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+        bh=Gm+WNNvyGrPDWTj9oveG4MXT9B5AoTXsJ+wF+ZBo1Os=;
+        b=Ig4hl3t5oseOTUpnqh/Tyiv6LF4wWJl1gUNI+/x3idj/s+qV+VIyzuUyNS6SstFRLX
+         F5Ne2tVaOH1nC/b6olY0ut3qxBFIjDm4W4YpJ0e5u1oZnndtEoM1Yl4SSEXQyfV8jB/K
+         bjLEK+LzKpEwWt6IuQQAzOLLc7/Cb/YMwt6haPNgBI7WGGcZDxwXwa1HijyUj5deTRT/
+         tLdfqMYX7fcYRBBd25g+ce8IK+JxIh6ZdMCCHJL988o1TGnU4jWKFUKtE9ymkn33Cctf
+         Y00PYwWEwGiQV3EqxDfmuX0sm7f9Ba1xC9nBJSorfj8Cg/P+kjSpWcXrswUB6Ku9Mcsp
+         HIGw==
+In-Reply-To: <1424804504-10914-8-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 24 Feb 2015 20:01:43 +0100, Andreas Rohner wrote:
-> This patch improves the accuracy of the su_nlive_blks segment
-> usage field by also counting the blocks of the DAT-File. A block in
-> the DAT-File is considered reclaimable as soon as it is overwritten.
-> There is no need to consider protection periods, snapshots or
-> checkpoints. So whenever a block is overwritten during segment
-> construction, the segment usage information of the segment at the
-> previous location of the block is decremented. To get the previous
-> location of the block the b_blocknr field of the buffer_head
-> structure is used.
+On Tue, 24 Feb 2015 20:01:42 +0100, Andreas Rohner wrote:
+> This patch adds support for additional bit-flags to the
+> nilfs_vdesc structure used by the GC to communicate block
+> information from userspace. The field vd_flags cannot be used for
+> this purpose, because it does not support bit-flags, and changing
+> that would break backwards compatibility. Therefore the padding
+> field is renamed to vd_blk_flags to contain more flags.
 > 
-> SUFILE blocks are counted in a similar way, but if the GC reads a
-> block into a GC inode, that already is in the cache, then there are
-> two versions of the block. If this happens both versions will be
-> counted, which can lead to small seemingly random incorrect values.
-> But it is better to accept these small inaccuracies than to not
-> count the SUFILE at all. These inaccuracies do not occur for the
-> DAT-File, because it does not need a GC inode.
+> Unfortunately older versions of the userspace tools do not
+> initialize the padding field to zero. So it is necessary to signal
+> to the kernel if the new vd_blk_flags field contains usable flags
+> or just random data. Since the vd_period field is only used in
+> userspace, and is guaranteed to contain a value that is > 0
+> (NILFS_CNO_MIN == 1), it can be used to give the kernel a hint. So
+> if the userspace tools set vd_period.p_start to 0, the
+> vd_blk_flags field will be interpreted.
 > 
-> Additionally the blocks that belong to a GC inode are rechecked if
-> they are reclaimable. If so the corresponding counter is
-> decremented. The blocks were already checked in userspace, but
-> without the proper locking. It is furthermore possible, that blocks
-> become reclaimable during the cleaning process. For example by
-> deleting checkpoints. To improve the performance of these extra
-> checks, flags from userspace are used to determine reclaimability.
-> If a block belongs to a snapshot it cannot be reclaimable and if
-> it is within the protection period it must be counted as
-> reclaimable.
+> To make the flags available for later stages of the GC process,
+> they are mapped to corresponding buffer_head flags.
 > 
 > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 > ---
->  fs/nilfs2/dat.c     |  70 ++++++++++++++++++++++++++++++++++++
->  fs/nilfs2/dat.h     |   1 +
->  fs/nilfs2/inode.c   |   2 ++
->  fs/nilfs2/segbuf.c  |   4 +++
->  fs/nilfs2/segbuf.h  |   1 +
->  fs/nilfs2/segment.c | 101 ++++++++++++++++++++++++++++++++++++++++++++++++++--
->  6 files changed, 177 insertions(+), 2 deletions(-)
+>  fs/nilfs2/ioctl.c         | 23 ++++++++++++++++---
+>  fs/nilfs2/page.h          |  6 ++++-
+>  include/linux/nilfs2_fs.h | 58 +++++++++++++++++++++++++++++++++++++++++++++--
+>  3 files changed, 81 insertions(+), 6 deletions(-)
 > 
-> diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-> index d2c8f7e..63d079c 100644
-> --- a/fs/nilfs2/dat.c
-> +++ b/fs/nilfs2/dat.c
-> @@ -35,6 +35,17 @@
->  #define NILFS_CNO_MAX	(~(__u64)0)
+> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+> index f6ee54e..63b1c77 100644
+> --- a/fs/nilfs2/ioctl.c
+> +++ b/fs/nilfs2/ioctl.c
+> @@ -578,7 +578,7 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+>  	struct buffer_head *bh;
+>  	int ret;
 >  
->  /**
-> + * nilfs_dat_entry_is_alive - check if @entry is alive
-> + * @entry: DAT-Entry
-> + *
-> + * Description: Simple check if @entry is alive in the current checkpoint.
-> + */
-> +static inline int nilfs_dat_entry_is_live(struct nilfs_dat_entry *entry)
-> +{
-> +	return entry->de_end == cpu_to_le64(NILFS_CNO_MAX);
-> +}
-> +
-
-Do not use "inline" directive in *.c files.  Compiler aggressively
-does it.  "noinline" directive should be used instead for functions
-that we want to prevent from being inlined.
-
-> +/**
->   * struct nilfs_dat_info - on-memory private data of DAT file
->   * @mi: on-memory private data of metadata file
->   * @palloc_cache: persistent object allocator cache of DAT file
-> @@ -391,6 +402,65 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
->  }
->  
->  /**
-> + * nilfs_dat_is_live - checks if the virtual block number is alive
-> + * @dat: DAT file inode
-> + * @vblocknr: virtual block number
-> + * @errp: pointer to return code if error occurred
-> + *
-> + * Description: nilfs_dat_is_live() looks up the DAT-Entry for
-> + * @vblocknr and determines if the corresponding block is alive in the current
-> + * checkpoint or not. This check ignores snapshots and protection periods.
-> + *
-> + * Return Value: 1 if vblocknr is alive and 0 otherwise. On error, 0 is
-> + * returned and @errp is set to one of the following negative error codes.
-> + *
-> + * %-EIO - I/O error.
-> + *
-> + * %-ENOMEM - Insufficient amount of memory available.
-> + *
-> + * %-ENOENT - A block number associated with @vblocknr does not exist.
-> + */
-> +int nilfs_dat_is_live(struct inode *dat, __u64 vblocknr, int *errp)
-> +{
-> +	struct buffer_head *entry_bh, *bh;
-> +	struct nilfs_dat_entry *entry;
-> +	sector_t blocknr;
-> +	void *kaddr;
-> +	int ret = 0, err;
-> +
-> +	err = nilfs_palloc_get_entry_block(dat, vblocknr, 0, &entry_bh);
-> +	if (err < 0)
-> +		goto out;
-> +
-> +	if (!nilfs_doing_gc() && buffer_nilfs_redirected(entry_bh)) {
-> +		bh = nilfs_mdt_get_frozen_buffer(dat, entry_bh);
-> +		if (bh) {
-> +			WARN_ON(!buffer_uptodate(bh));
-> +			put_bh(entry_bh);
-> +			entry_bh = bh;
-> +		}
-> +	}
-> +
-> +	kaddr = kmap_atomic(entry_bh->b_page);
-> +	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
-> +	blocknr = le64_to_cpu(entry->de_blocknr);
-> +	if (blocknr == 0) {
-> +		err = -ENOENT;
-> +		goto out_unmap;
-> +	}
-> +
-> +	ret = nilfs_dat_entry_is_live(entry);
-> +
-> +out_unmap:
-> +	kunmap_atomic(kaddr);
-> +	put_bh(entry_bh);
-> +out:
-> +	if (errp)
-> +		*errp = err;
-
-Remove errp argument by returning it as the return value.  Rather, the
-true/false result should be returned via an argument if you'd like to
-avoid mixing these two.
-
-> +	return ret;
-> +}
-> +
-> +/**
->   * nilfs_dat_translate - translate a virtual block number to a block number
->   * @dat: DAT file inode
->   * @vblocknr: virtual block number
-> diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
-> index d196f09..3cbddd6 100644
-> --- a/fs/nilfs2/dat.h
-> +++ b/fs/nilfs2/dat.h
-> @@ -32,6 +32,7 @@ struct nilfs_palloc_req;
->  struct nilfs_sufile_mod_cache;
->  
->  int nilfs_dat_translate(struct inode *, __u64, sector_t *);
-> +int nilfs_dat_is_live(struct inode *, __u64, int *);
->  
->  int nilfs_dat_prepare_alloc(struct inode *, struct nilfs_palloc_req *);
->  void nilfs_dat_commit_alloc(struct inode *, struct nilfs_palloc_req *);
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index 7f6d056..5412a76 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -90,6 +90,8 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
->  	int err = 0, ret;
->  	unsigned maxblocks = bh_result->b_size >> inode->i_blkbits;
->  
-> +	bh_result->b_blocknr = 0;
-> +
-
-Please do not add this in this big patch as I mentioned before.
-
->  	down_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
->  	ret = nilfs_bmap_lookup_contig(ii->i_bmap, blkoff, &blknum, maxblocks);
->  	up_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
-> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-> index 7a6e9cd..bbd807b 100644
-> --- a/fs/nilfs2/segbuf.c
-> +++ b/fs/nilfs2/segbuf.c
-> @@ -58,6 +58,7 @@ struct nilfs_segment_buffer *nilfs_segbuf_new(struct super_block *sb)
->  	INIT_LIST_HEAD(&segbuf->sb_payload_buffers);
->  	segbuf->sb_super_root = NULL;
->  	segbuf->sb_nlive_blks_added = 0;
-> +	segbuf->sb_nlive_blks_diff = 0;
->  
->  	init_completion(&segbuf->sb_bio_event);
->  	atomic_set(&segbuf->sb_err, 0);
-> @@ -451,6 +452,9 @@ static int nilfs_segbuf_submit_bh(struct nilfs_segment_buffer *segbuf,
->  
-
->  	len = bio_add_page(wi->bio, bh->b_page, bh->b_size, bh_offset(bh));
->  	if (len == bh->b_size) {
-> +		lock_buffer(bh);
-> +		map_bh(bh, segbuf->sb_super, wi->blocknr + wi->end);
-> +		unlock_buffer(bh);
->  		wi->end++;
->  		return 0;
+> -	if (vdesc->vd_flags == 0)
+> +	if (nilfs_vdesc_data(vdesc))
+>  		ret = nilfs_gccache_submit_read_data(
+>  			inode, vdesc->vd_offset, vdesc->vd_blocknr,
+>  			vdesc->vd_vblocknr, &bh);
+> @@ -592,7 +592,8 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+>  			       "%s: invalid virtual block address (%s): "
+>  			       "ino=%llu, cno=%llu, offset=%llu, "
+>  			       "blocknr=%llu, vblocknr=%llu\n",
+> -			       __func__, vdesc->vd_flags ? "node" : "data",
+> +			       __func__,
+> +			       nilfs_vdesc_node(vdesc) ? "node" : "data",
+>  			       (unsigned long long)vdesc->vd_ino,
+>  			       (unsigned long long)vdesc->vd_cno,
+>  			       (unsigned long long)vdesc->vd_offset,
+> @@ -603,7 +604,8 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+>  	if (unlikely(!list_empty(&bh->b_assoc_buffers))) {
+>  		printk(KERN_CRIT "%s: conflicting %s buffer: ino=%llu, "
+>  		       "cno=%llu, offset=%llu, blocknr=%llu, vblocknr=%llu\n",
+> -		       __func__, vdesc->vd_flags ? "node" : "data",
+> +		       __func__,
+> +		       nilfs_vdesc_node(vdesc) ? "node" : "data",
+>  		       (unsigned long long)vdesc->vd_ino,
+>  		       (unsigned long long)vdesc->vd_cno,
+>  		       (unsigned long long)vdesc->vd_offset,
+> @@ -612,6 +614,12 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
+>  		brelse(bh);
+>  		return -EEXIST;
 >  	}
-
-ditto.  Stop this.
-
-> diff --git a/fs/nilfs2/segbuf.h b/fs/nilfs2/segbuf.h
-> index d04da26..4e994f7 100644
-> --- a/fs/nilfs2/segbuf.h
-> +++ b/fs/nilfs2/segbuf.h
-> @@ -84,6 +84,7 @@ struct nilfs_segment_buffer {
->  	sector_t		sb_pseg_start;
->  	unsigned		sb_rest_blocks;
->  	__u32			sb_nlive_blks_added;
-
-> +	__s64			sb_nlive_blks_diff;
-
-sb_nlive_blks_diff is always decremented.  It looks better
-to alter this to
-
-	__u32			sb_nlive_blks_deducted;
-
-and increment it. (The term "diff" is ambiguous. Maybe,
-it should be "deducted" or so.)
-
-
->  
->  	/* Buffers */
->  	struct list_head	sb_segsum_buffers;
-> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> index dc0070c..16c7c36 100644
-> --- a/fs/nilfs2/segment.c
-> +++ b/fs/nilfs2/segment.c
-> @@ -1385,7 +1385,8 @@ static void nilfs_segctor_update_segusage(struct nilfs_sc_info *sci,
->  		WARN_ON(ret); /* always succeed because the segusage is dirty */
->  
->  		/* should always be positive */
-> -		segbuf->sb_nlive_blks_added = segbuf->sb_sum.nfileblk;
-> +		segbuf->sb_nlive_blks_added = segbuf->sb_nlive_blks_diff +
-> +					      segbuf->sb_sum.nfileblk;
->  
->  		if (nilfs_feature_track_live_blks(nilfs))
->  			nilfs_sufile_mod_nlive_blks(sufile, sci->sc_mc,
-> @@ -1497,12 +1498,98 @@ static void nilfs_list_replace_buffer(struct buffer_head *old_bh,
->  	/* The caller must release old_bh */
+> +
+> +	if (nilfs_vdesc_snapshot(vdesc))
+> +		set_buffer_nilfs_snapshot(bh);
+> +	if (nilfs_vdesc_protection_period(vdesc))
+> +		set_buffer_nilfs_protection_period(bh);
+> +
+>  	list_add_tail(&bh->b_assoc_buffers, buffers);
+>  	return 0;
 >  }
+> @@ -662,6 +670,15 @@ static int nilfs_ioctl_move_blocks(struct super_block *sb,
+>  		}
 >  
-> +/**
-> + * nilfs_segctor_dec_nlive_blks_gc - dec. nlive_blks for blocks of GC-Inodes
-> + * @dat: dat inode
-> + * @segbuf: currtent segment buffer
-> + * @bh: current buffer head
-> + *
-> + * Description: nilfs_segctor_dec_nlive_blks_gc() is called if the inode to
-> + * which @bh belongs is a GC-Inode. In that case it is not necessary to
-> + * decrement the previous segment, because at the end of the GC process it
-> + * will be freed anyway. It is however necessary to check again if the blocks
-> + * are alive here, because the last check was in userspace without the proper
-> + * locking. Additionally the blocks protected by the protection period should
-> + * be considered reclaimable. It is assumed, that @bh->b_blocknr contains
-> + * a virtual block number, which is only true if @bh is part of a GC-Inode.
-> + */
-> +static void nilfs_segctor_dec_nlive_blks_gc(struct inode *dat,
-> +					    struct nilfs_segment_buffer *segbuf,
-> +					    struct buffer_head *bh) {
-> +	bool isreclaimable = buffer_nilfs_protection_period(bh) ||
-> +				!nilfs_dat_is_live(dat, bh->b_blocknr, NULL);
+>  		do {
+> +			/*
+> +			 * old user space tools to not initialize vd_blk_flags
+> +			 * if vd_period.p_start > 0 then vd_blk_flags was
+> +			 * not initialized properly and may contain invalid
+> +			 * flags
+> +			 */
+> +			if (vdesc->vd_period.p_start > 0)
+> +				vdesc->vd_blk_flags = 0;
 > +
-> +	if (!buffer_nilfs_snapshot(bh) && isreclaimable)
-> +		segbuf->sb_nlive_blks_diff--;
-> +}
-> +
-> +/**
-> + * nilfs_segctor_dec_nlive_blks_nogc - dec. nlive_blks of segment
-> + * @nilfs: the nilfs object
-> + * @mc: modification cache
-> + * @sb: currtent segment buffer
-> + * @blocknr: current block number
-> + *
-> + * Description: Gets the segment number of the segment @blocknr belongs to
-> + * and decrements the su_nlive_blks field of the corresponding segment usage
-> + * entry.
-> + */
-> +static void nilfs_segctor_dec_nlive_blks_nogc(struct the_nilfs *nilfs,
-> +					      struct nilfs_sufile_mod_cache *mc,
-> +					      struct nilfs_segment_buffer *sb,
-> +					      sector_t blocknr)
-> +{
-> +	__u64 segnum = nilfs_get_segnum_of_block(nilfs, blocknr);
-> +
-> +	if (segnum >= nilfs->ns_nsegments)
-> +		return;
-> +
-> +	if (segnum == sb->sb_segnum)
-> +		sb->sb_nlive_blks_diff--;
-> +	else
-> +		nilfs_sufile_mod_nlive_blks(nilfs->ns_sufile, mc, segnum, -1);
-> +}
+>  			ret = nilfs_ioctl_move_inode_block(inode, vdesc,
+>  							   &buffers);
+>  			if (unlikely(ret < 0)) {
+> diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
+> index a43b828..b9117e6 100644
+> --- a/fs/nilfs2/page.h
+> +++ b/fs/nilfs2/page.h
+> @@ -36,13 +36,17 @@ enum {
+>  	BH_NILFS_Volatile,
+>  	BH_NILFS_Checked,
+>  	BH_NILFS_Redirected,
+> +	BH_NILFS_Snapshot,
+> +	BH_NILFS_Protection_Period,
+>  };
+>  
+>  BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
+>  BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
+>  BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verified */
+>  BUFFER_FNS(NILFS_Redirected, nilfs_redirected)	/* redirected to a copy */
+> -
 
-As I mentioned before, sufile shouldn't be changed (in precise, newly
-marked dirty) after the collection phase of sufile.  This looks to be
-violating it.
+> +BUFFER_FNS(NILFS_Snapshot, nilfs_snapshot)	/* belongs to a snapshot */
+> +BUFFER_FNS(NILFS_Protection_Period, nilfs_protection_period) /* protected by
+> +							protection period */
+>  
+
+I propose alternative names: "snapshot_protected", and
+"period_protected" (or "time_protected") respectively to clarify
+meaning of the flags.
+
+>  int __nilfs_clear_page_dirty(struct page *);
+>  
+> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+> index 6ccb2ad..6ffdc09 100644
+> --- a/include/linux/nilfs2_fs.h
+> +++ b/include/linux/nilfs2_fs.h
+> @@ -900,7 +900,7 @@ struct nilfs_vinfo {
+>   * @vd_blocknr: disk block number
+>   * @vd_offset: logical block offset inside a file
+>   * @vd_flags: flags (data or node block)
+> - * @vd_pad: padding
+> + * @vd_blk_flags: additional flags
+>   */
+>  struct nilfs_vdesc {
+>  	__u64 vd_ino;
+> @@ -910,9 +910,63 @@ struct nilfs_vdesc {
+>  	__u64 vd_blocknr;
+>  	__u64 vd_offset;
+>  	__u32 vd_flags;
+> -	__u32 vd_pad;
+> +	/*
+> +	 * vd_blk_flags needed because vd_flags doesn't support
+> +	 * bit-flags because of backwards compatibility
+> +	 */
+> +	__u32 vd_blk_flags;
+>  };
+>  
+
+> +/* vdesc flags */
+> +enum {
+> +	NILFS_VDESC_DATA,
+> +	NILFS_VDESC_NODE,
+> +
+> +	/* ... */
+> +};
+> +enum {
+> +	NILFS_VDESC_SNAPSHOT,
+> +	NILFS_VDESC_PROTECTION_PERIOD,
+> +
+> +	/* ... */
+> +
+> +	__NR_NILFS_VDESC_FIELDS,
+> +};
+> +
+> +#define NILFS_VDESC_FNS(flag, name)					\
+> +static inline void							\
+> +nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
+> +{									\
+> +	vdesc->vd_flags = NILFS_VDESC_##flag;				\
+> +}									\
+> +static inline int							\
+> +nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
+> +{									\
+> +	return vdesc->vd_flags == NILFS_VDESC_##flag;			\
+> +}
+> +
+
+Do not add definitions for vd_flags, leave them, and
+simplify your patch.
 
 Regards,
 Ryusuke Konishi
 
-> +
-> +/**
-> + * nilfs_segctor_dec_nlive_blks - dec. nlive_blks of previous segment
-> + * @nilfs: the nilfs object
-> + * @mc: modification cache
-> + * @sb: currtent segment buffer
-> + * @bh: current buffer head
-> + * @ino: current inode number
-> + * @gc_inode: true if current inode is a GC-Inode
-> + *
-> + * Description: Handles GC-Inodes and normal inodes differently. For normal
-> + * inodes @bh->b_blocknr contains the location where the block was read in. If
-> + * the block is updated, the old version of it is considered reclaimable and so
-> + * the su_nlive_blks field of the segment usage information of the old segment
-> + * needs to be decremented. Only the DATFILE and SUFILE are decremented here,
-> + * because normal files and other meta data files can be better decremented in
-> + * nilfs_dat_commit_end().
-> + */
-> +static void nilfs_segctor_dec_nlive_blks(struct the_nilfs *nilfs,
-> +					 struct nilfs_sufile_mod_cache *mc,
-> +					 struct nilfs_segment_buffer *sb,
-> +					 struct buffer_head *bh,
-> +					 ino_t ino,
-> +					 bool gc_inode)
-> +{
-> +	bool isnode = buffer_nilfs_node(bh);
-> +
-> +	if (gc_inode)
-> +		nilfs_segctor_dec_nlive_blks_gc(nilfs->ns_dat, sb, bh);
-> +	else if (ino == NILFS_DAT_INO || (ino == NILFS_SUFILE_INO && !isnode))
-> +		nilfs_segctor_dec_nlive_blks_nogc(nilfs, mc, sb, bh->b_blocknr);
+> +#define NILFS_VDESC_FNS2(flag, name)					\
+> +static inline void							\
+> +nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
+> +{									\
+> +	vdesc->vd_blk_flags |= (1UL << NILFS_VDESC_##flag);		\
+> +}									\
+> +static inline void							\
+> +nilfs_vdesc_clear_##name(struct nilfs_vdesc *vdesc)			\
+> +{									\
+> +	vdesc->vd_blk_flags &= ~(1UL << NILFS_VDESC_##flag);		\
+> +}									\
+> +static inline int							\
+> +nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
+> +{									\
+> +	return !!(vdesc->vd_blk_flags & (1UL << NILFS_VDESC_##flag));	\
 > +}
 > +
->  static int
->  nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
->  				     struct nilfs_segment_buffer *segbuf,
->  				     int mode)
->  {
-> +	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
->  	struct inode *inode = NULL;
-> +	struct nilfs_inode_info *ii;
->  	sector_t blocknr;
->  	unsigned long nfinfo = segbuf->sb_sum.nfinfo;
->  	unsigned long nblocks = 0, ndatablk = 0;
-> @@ -1512,7 +1599,9 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
->  	union nilfs_binfo binfo;
->  	struct buffer_head *bh, *bh_org;
->  	ino_t ino = 0;
-> -	int err = 0;
-> +	int err = 0, gc_inode = 0, track_live_blks;
+> +NILFS_VDESC_FNS(DATA, data)
+> +NILFS_VDESC_FNS(NODE, node)
+> +NILFS_VDESC_FNS2(SNAPSHOT, snapshot)
+> +NILFS_VDESC_FNS2(PROTECTION_PERIOD, protection_period)
 > +
-> +	track_live_blks = nilfs_feature_track_live_blks(nilfs);
->  
->  	if (!nfinfo)
->  		goto out;
-> @@ -1533,6 +1622,9 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
->  
->  			inode = bh->b_page->mapping->host;
->  
-> +			ii = NILFS_I(inode);
-> +			gc_inode = test_bit(NILFS_I_GCINODE, &ii->i_state);
-> +
->  			if (mode == SC_LSEG_DSYNC)
->  				sc_op = &nilfs_sc_dsync_ops;
->  			else if (ino == NILFS_DAT_INO)
-> @@ -1540,6 +1632,11 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
->  			else /* file blocks */
->  				sc_op = &nilfs_sc_file_ops;
->  		}
-> +
-> +		if (track_live_blks)
-> +			nilfs_segctor_dec_nlive_blks(nilfs, sci->sc_mc, segbuf,
-> +						     bh, ino, gc_inode);
-> +
->  		bh_org = bh;
->  		get_bh(bh_org);
->  		err = nilfs_bmap_assign(NILFS_I(inode)->i_bmap, &bh, blocknr,
+>  /**
+>   * struct nilfs_bdesc - descriptor of disk block number
+>   * @bd_ino: inode number
 > -- 
 > 2.3.0
 > 
