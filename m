@@ -1,9 +1,10 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 4/9] nilfs2: add function to modify su_nlive_blks
-Date: Sat, 14 Mar 2015 13:57:04 +0900 (JST)
-Message-ID: <20150314.135704.2029475436182884660.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH 3/6] nilfs-utils: add support for tracking live blocks
+Date: Sat, 14 Mar 2015 14:52:50 +0900 (JST)
+Message-ID: <20150314.145250.2068629190053128024.konishi.ryusuke@lab.ntt.co.jp>
 References: <1424804504-10914-1-git-send-email-andreas.rohner@gmx.net>
-	<1424804504-10914-5-git-send-email-andreas.rohner@gmx.net>
+	<1424804659-10986-1-git-send-email-andreas.rohner@gmx.net>
+	<1424804659-10986-3-git-send-email-andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,215 +12,260 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=oHdPeR9NENL9A4LqzpE9JLMLy7ndZ5aGxBDl0r7XRF4=;
-        b=jOrcvCcbcdfndryFSLBPr7KJ6MVSVCMUqueka39CWMjvbh+bqDK/0ErORWnl3IE8cY
-         GPB+UCVEfajDeAxt1Cwsaej81skMs79AcssTWsP0XGKF0qhnpydGlC5DfhTquwDYUkI8
-         K9hlPxOASha3F9XebeUgZOXFTUEFygLPqEYraSro6T9GFB9Rlu7CKMkE5A16z3I6QvU4
-         kMp5N/GQvMsrC9uqnGUr16Qvwc4no01UEUhTp8942Eh8/FmONlmDvV1NEkXuuApo7E2f
-         tYtwxQZjshyL3tMYoIX33ocjuysMG2aU0Kawn/L6YfTm/DQoouO2QCIje5CgMf5LQQaC
-         RgoA==
-In-Reply-To: <1424804504-10914-5-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+        bh=Wfl4YwO3rYa6g8XTYSV9rKDBETbOGZ/9tAJ++QiQz3Q=;
+        b=dcVZDomakKg0LID3s7miumzFRHWvwdbhbMxYWVfaiVbTvwYUv/vfPeiVRL7EKrkvTJ
+         LQ5oFef3yqt65BETz0RhSZKz5sbisS/ZgTWbbpLDIfsMdgdO8KKKCj4uydqKQA4Kdtdc
+         vIJa26wpIDeRA5WU/gbZ0FuPSLE9n1x40DAJzpSBjbw3UkynJOEXjEk619Htp2bWBHJj
+         /B8NWkdiCZcGvd8PiMID1K8dmejU5HfO90ICu5wtgg8NmPg+9X+7gOf9t0Yb5s1R9pGp
+         7A98epe3hxqCyZsq79ObcS46D5bIkrZXu3w8e88olTzPSWT2w7rJeN+EQBpsNYDhZusN
+         GxVg==
+In-Reply-To: <1424804659-10986-3-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 24 Feb 2015 20:01:39 +0100, Andreas Rohner wrote:
-> This patch adds a function to modify the su_nlive_blks field of the
-> nilfs_segment_usage structure in the SUFILE. By using positive or
-> negative integers, it is possible to add and substract any value from
-> the su_nlive_blks field.
+On Tue, 24 Feb 2015 20:04:16 +0100, Andreas Rohner wrote:
+> This patch adds a new feature flag NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS,
+> which allows the user to enable and disable the tracking of live
+> blocks. The flag can be set at file system creation time with mkfs or
+> at any later time with nilfs-tune.
 > 
-> The use of a modification cache is optional and by passing a NULL
-> pointer the value will be added or subtracted directly. Otherwise it is
-> necessary to call nilfs_sufile_flush_nlive_blks() at some point to make
-> the modifications persistent.
+> Additionally a new option NILFS_OPT_TRACK_LIVE_BLKS is added to be
+> used by the GC. It is set to the same value as
+> NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS at startup. It is mainly used to
+> easily and efficiently check for the feature at runtime and to disable
+> it if the kernel doesn't support it.
 > 
-> The modification cache is useful, because it allows for small values,
-> like simple increments and decrements, to be added up before writing
-> them to the SUFILE.
+> It is fully backwards compatible, because
+> NILFS_FEATURE_COMPAT_SUFILE_EXTENSION also is backwards compatible and
+> it basically only tells the kernel to update a counter for every
+> segment in the SUFILE. If the kernel doesn't support it, the counter
+> won't be updated and the GC policies depending on that information
+> will work less efficient, but they would still work.
 > 
 > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 > ---
->  fs/nilfs2/sufile.c | 138 +++++++++++++++++++++++++++++++++++++++++++++++++++++
->  fs/nilfs2/sufile.h |   5 ++
->  2 files changed, 143 insertions(+)
+>  include/nilfs.h              | 30 +++++++++++++++++++++++++++---
+>  include/nilfs2_fs.h          |  4 +++-
+>  lib/feature.c                |  2 ++
+>  lib/nilfs.c                  | 32 ++++----------------------------
+>  man/mkfs.nilfs2.8            |  6 ++++++
+>  sbin/mkfs/mkfs.c             |  3 ++-
+>  sbin/nilfs-tune/nilfs-tune.c |  4 ++--
+>  7 files changed, 46 insertions(+), 35 deletions(-)
 > 
-> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-> index ae08050..574a77e 100644
-> --- a/fs/nilfs2/sufile.c
-> +++ b/fs/nilfs2/sufile.c
-> @@ -1380,6 +1380,144 @@ static inline int nilfs_sufile_mc_update(struct inode *sufile,
+> diff --git a/include/nilfs.h b/include/nilfs.h
+> index f695f48..22a9190 100644
+> --- a/include/nilfs.h
+> +++ b/include/nilfs.h
+> @@ -130,6 +130,7 @@ struct nilfs {
+>  
+>  #define NILFS_OPT_MMAP		0x01
+>  #define NILFS_OPT_SET_SUINFO	0x02
+> +#define NILFS_OPT_TRACK_LIVE_BLKS	0x04
+>  
+>  
+>  struct nilfs *nilfs_open(const char *, const char *, int);
+> @@ -141,9 +142,25 @@ void nilfs_opt_clear_mmap(struct nilfs *);
+>  int nilfs_opt_set_mmap(struct nilfs *);
+>  int nilfs_opt_test_mmap(struct nilfs *);
+>  
+> -void nilfs_opt_clear_set_suinfo(struct nilfs *);
+> -int nilfs_opt_set_set_suinfo(struct nilfs *);
+> -int nilfs_opt_test_set_suinfo(struct nilfs *);
+> +#define NILFS_OPT_FLAG(flag, name)					\
+> +static inline void							\
+> +nilfs_opt_set_##name(struct nilfs *nilfs)			\
+> +{									\
+> +	nilfs->n_opts |= NILFS_OPT_##flag;		\
+> +}									\
+> +static inline void							\
+> +nilfs_opt_clear_##name(struct nilfs *nilfs)			\
+> +{									\
+> +	nilfs->n_opts &= ~NILFS_OPT_##flag;		\
+> +}									\
+> +static inline int							\
+> +nilfs_opt_test_##name(const struct nilfs *nilfs)			\
+> +{									\
+> +	return !!(nilfs->n_opts & NILFS_OPT_##flag);	\
+> +}
+
+Don't break library compatibility by inlining.  Al least this should
+be done in a separate patch.
+
+I think we should do the opposite thing.  I mean that the
+implementation of nilfs structure should be hidden in nilfs library
+sometime when we will bump up the library version because it will
+break the library compatibility.
+
+> +
+> +NILFS_OPT_FLAG(SET_SUINFO, set_suinfo);
+> +NILFS_OPT_FLAG(TRACK_LIVE_BLKS, track_live_blks);
+>  
+>  nilfs_cno_t nilfs_get_oldest_cno(struct nilfs *);
+>  
+> @@ -326,4 +343,11 @@ static inline __u32 nilfs_get_blocks_per_segment(const struct nilfs *nilfs)
+>  	return le32_to_cpu(nilfs->n_sb->s_blocks_per_segment);
 >  }
 >  
->  /**
-> + * nilfs_sufile_do_flush_nlive_blks - apply modification to su_nlive_blks
-> + * @sufile: inode of segment usage file
-> + * @mod: modification structure
-> + * @header_bh: sufile header block
-> + * @su_bh: block containing segment usage of m_segnum in @mod
-> + *
-> + * Description: nilfs_sufile_do_flush_nlive_blks() is a callback function
-> + * used with nilfs_sufile_updatev(), that adds m_value in @mod to
-> + * the su_nlive_blks field of the segment usage entry belonging to m_segnum.
-> + */
-> +static void nilfs_sufile_do_flush_nlive_blks(struct inode *sufile,
-> +					     struct nilfs_sufile_mod *mod,
-> +					     struct buffer_head *header_bh,
-> +					     struct buffer_head *su_bh)
+> +static inline int nilfs_feature_track_live_blks(const struct nilfs *nilfs)
 > +{
-> +	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-> +	struct nilfs_segment_usage *su;
-> +	void *kaddr;
-> +	__u32 nblocks, nlive_blocks;
-> +	__u64 segnum = mod->m_segnum;
-> +	__s64 value = mod->m_value;
-> +
-> +	if (!value)
-> +		return;
-> +
-> +	kaddr = kmap_atomic(su_bh->b_page);
-> +
-> +	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
-> +	WARN_ON(nilfs_segment_usage_error(su));
-> +
-> +	nblocks = le32_to_cpu(su->su_nblocks);
-> +	nlive_blocks = le32_to_cpu(su->su_nlive_blks);
-> +
-> +	value += nlive_blocks;
-> +	if (value < 0)
-> +		value = 0;
-> +	else if (value > nblocks)
-> +		value = nblocks;
-> +
-> +	/* do nothing if the value didn't change */
-> +	if (value != nlive_blocks) {
-> +		su->su_nlive_blks = cpu_to_le32(value);
-> +		su->su_nlive_lastmod = cpu_to_le64(nilfs->ns_ctime);
-
-ns_ctime should not be used because it is updated after writing
-segment.  get_seconds() should be used.
-
-> +	}
-> +
-> +	kunmap_atomic(kaddr);
-> +
-> +	if (value != nlive_blocks) {
-> +		mark_buffer_dirty(su_bh);
-> +		nilfs_mdt_mark_dirty(sufile);
-> +	}
+> +	__u64 fc = le64_to_cpu(nilfs->n_sb->s_feature_compat);
+> +	return (fc & NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS) &&
+> +		(fc & NILFS_FEATURE_COMPAT_SUFILE_EXTENSION);
 > +}
 > +
-> +/**
-> + * nilfs_sufile_flush_nlive_blks - flush mod cache to su_nlive_blks
-> + * @sufile: inode of segment usage file
-> + * @mc: modification cache
-> + *
-> + * Description: nilfs_sufile_flush_nlive_blks() flushes the cached
-> + * modifications in @mc, by applying them to the su_nlive_blks field of
-> + * the corresponding segment usage entries. @mc can be NULL or empty. If
-> + * the sufile extension needed to support su_nlive_blks is not supported the
-> + * function will abort without error.
-> + *
-> + * Return Value: On success, zero is returned.  On error, one of the
-> + * following negative error codes is returned.
-> + *
-> + * %-EIO - I/O error.
-> + *
-> + * %-ENOMEM - Insufficient amount of memory available.
-> + *
-> + * %-ENOENT - Given segment usage is in hole block
-> + *
-> + * %-EINVAL - Invalid segment usage number
-> + */
-> +int nilfs_sufile_flush_nlive_blks(struct inode *sufile,
-> +				  struct nilfs_sufile_mod_cache *mc)
-> +{
-> +	int ret;
-> +
-> +	if (!mc || !mc->mc_size || !nilfs_sufile_ext_supported(sufile))
-> +		return 0;
-> +
-> +	ret = nilfs_sufile_mc_flush(sufile, mc,
-> +				    nilfs_sufile_do_flush_nlive_blks);
-> +
-> +	nilfs_sufile_mc_clear(mc);
-> +
-> +	return ret;
-> +}
-> +
-> +/**
-> + * nilfs_sufile_mod_nlive_blks - modifiy su_nlive_blks using mod cache
-> + * @sufile: inode of segment usage file
-> + * @mc: modification cache
-> + * @segnum: segment number
-> + * @value: signed value (can be positive and negative)
-> + *
-> + * Description: nilfs_sufile_mod_nlive_blks() adds @value to the su_nlive_blks
-> + * field of the segment usage entry for @segnum. If @mc is not NULL it first
-> + * accumulates all modifications in the cache and flushes it if it is full.
-> + * Otherwise the change is applied directly.
-> + *
-> + * Return Value: On success, zero is returned.  On error, one of the
-> + * following negative error codes is returned.
-> + *
-> + * %-EIO - I/O error.
-> + *
-> + * %-ENOMEM - Insufficient amount of memory available.
-> + *
-> + * %-ENOENT - Given segment usage is in hole block
-> + *
-> + * %-EINVAL - Invalid segment usage number
-> + */
-> +int nilfs_sufile_mod_nlive_blks(struct inode *sufile,
-> +				struct nilfs_sufile_mod_cache *mc,
-> +				__u64 segnum, __s64 value)
-> +{
-> +	int ret;
-> +
-> +	if (!value || !nilfs_sufile_ext_supported(sufile))
-> +		return 0;
-> +
-> +	if (!mc)
-> +		return nilfs_sufile_mc_update(sufile, segnum, value,
-> +				nilfs_sufile_do_flush_nlive_blks);
-> +
-> +	if (!nilfs_sufile_mc_add(mc, segnum, value))
-> +		return 0;
-> +
-> +	ret = nilfs_sufile_flush_nlive_blks(sufile, mc);
-> +
-> +	nilfs_sufile_mc_reset(mc, segnum, value);
-> +
-> +	return ret;
-> +}
-> +
-> +/**
->   * nilfs_sufile_read - read or get sufile inode
->   * @sb: super block instance
->   * @susize: size of a segment usage entry
-> diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-> index d56498b..ae3c52a 100644
-> --- a/fs/nilfs2/sufile.h
-> +++ b/fs/nilfs2/sufile.h
-> @@ -195,4 +195,9 @@ static inline void nilfs_sufile_mc_destroy(struct nilfs_sufile_mod_cache *mc)
->  	}
+>  #endif	/* NILFS_H */
+> diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
+> index d01a924..427ca53 100644
+> --- a/include/nilfs2_fs.h
+> +++ b/include/nilfs2_fs.h
+> @@ -220,10 +220,12 @@ struct nilfs_super_block {
+>   * doesn't know about, it should refuse to mount the filesystem.
+>   */
+>  #define NILFS_FEATURE_COMPAT_SUFILE_EXTENSION		(1ULL << 0)
+> +#define NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS		(1ULL << 1)
+>  
+>  #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT		(1ULL << 0)
+>  
+> -#define NILFS_FEATURE_COMPAT_SUPP	NILFS_FEATURE_COMPAT_SUFILE_EXTENSION
+> +#define NILFS_FEATURE_COMPAT_SUPP	(NILFS_FEATURE_COMPAT_SUFILE_EXTENSION \
+> +				| NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS)
+>  #define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
+>  #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
+>  
+> diff --git a/lib/feature.c b/lib/feature.c
+> index d954cda..ebe8c3f 100644
+> --- a/lib/feature.c
+> +++ b/lib/feature.c
+> @@ -57,6 +57,8 @@ static const struct nilfs_feature features[] = {
+>  	/* Compat features */
+>  	{ NILFS_FEATURE_TYPE_COMPAT,
+>  	  NILFS_FEATURE_COMPAT_SUFILE_EXTENSION, "sufile_ext" },
+> +	{ NILFS_FEATURE_TYPE_COMPAT,
+> +	  NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS, "track_live_blks" },
+>  	/* Read-only compat features */
+>  	{ NILFS_FEATURE_TYPE_COMPAT_RO,
+>  	  NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT, "block_count" },
+> diff --git a/lib/nilfs.c b/lib/nilfs.c
+> index 30db654..2067fc0 100644
+> --- a/lib/nilfs.c
+> +++ b/lib/nilfs.c
+> @@ -290,34 +290,6 @@ int nilfs_opt_test_mmap(struct nilfs *nilfs)
+>  	return !!(nilfs->n_opts & NILFS_OPT_MMAP);
 >  }
 >  
-> +int nilfs_sufile_flush_nlive_blks(struct inode *,
-> +				  struct nilfs_sufile_mod_cache *);
-> +int nilfs_sufile_mod_nlive_blks(struct inode *, struct nilfs_sufile_mod_cache *,
-> +				__u64, __s64);
-> +
+> -/**
+> - * nilfs_opt_set_set_suinfo - set set_suinfo option
+> - * @nilfs: nilfs object
+> - */
+> -int nilfs_opt_set_set_suinfo(struct nilfs *nilfs)
+> -{
+> -	nilfs->n_opts |= NILFS_OPT_SET_SUINFO;
+> -	return 0;
+> -}
+> -
+> -/**
+> - * nilfs_opt_clear_set_suinfo - clear set_suinfo option
+> - * @nilfs: nilfs object
+> - */
+> -void nilfs_opt_clear_set_suinfo(struct nilfs *nilfs)
+> -{
+> -	nilfs->n_opts &= ~NILFS_OPT_SET_SUINFO;
+> -}
+> -
+> -/**
+> - * nilfs_opt_test_set_suinfo - test whether set_suinfo option is set or not
+> - * @nilfs: nilfs object
+> - */
+> -int nilfs_opt_test_set_suinfo(struct nilfs *nilfs)
+> -{
+> -	return !!(nilfs->n_opts & NILFS_OPT_SET_SUINFO);
+> -}
+> -
+>  static int nilfs_open_sem(struct nilfs *nilfs)
+>  {
+>  	char semnambuf[NAME_MAX - 4];
+> @@ -382,6 +354,7 @@ struct nilfs *nilfs_open(const char *dev, const char *dir, int flags)
+>  	nilfs->n_dev = NULL;
+>  	nilfs->n_ioc = NULL;
+>  	nilfs->n_mincno = NILFS_CNO_MIN;
+> +	nilfs->n_opts = 0;
 
-Please add variable names to arguments of new declarations.
-(You don't have to add variable names to unrelated declarations)
+Please fix this as a separate patch.  This is a leak bug even though
+it doesn't really matters.
 
 Regards,
 Ryusuke Konishi
 
->  #endif	/* _NILFS_SUFILE_H */
+>  	memset(nilfs->n_sems, 0, sizeof(nilfs->n_sems));
+>  
+>  	if (flags & NILFS_OPEN_RAW) {
+> @@ -405,6 +378,9 @@ struct nilfs *nilfs_open(const char *dev, const char *dir, int flags)
+>  			errno = ENOTSUP;
+>  			goto out_fd;
+>  		}
+> +
+> +		if (nilfs_feature_track_live_blks(nilfs))
+> +			nilfs_opt_set_track_live_blks(nilfs);
+>  	}
+>  
+>  	if (flags &
+> diff --git a/man/mkfs.nilfs2.8 b/man/mkfs.nilfs2.8
+> index 6c9a644..2431ac9 100644
+> --- a/man/mkfs.nilfs2.8
+> +++ b/man/mkfs.nilfs2.8
+> @@ -176,6 +176,12 @@ cannot be disabled, because it changes the ondisk format. Nevertheless it
+>  is fully compatible with older versions of the file system. This feature
+>  is on by default, because it is fully backwards compatible and can only
+>  be set at file system creation time.
+> +.TP
+> +.B track_live_blks
+> +Enables the tracking of live blocks, which might improve the effectiveness of
+> +garbage collection, but entails a small runtime overhead. It is important to
+> +note, that this feature depends on sufile_ext, which can only be set
+> +at file system creation time.
+>  .RE
+>  .TP
+>  .B \-q
+> diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
+> index 3985262..680311c 100644
+> --- a/sbin/mkfs/mkfs.c
+> +++ b/sbin/mkfs/mkfs.c
+> @@ -1082,7 +1082,8 @@ static inline void check_ctime(time_t ctime)
+>  
+>  static const __u64 ok_features[NILFS_MAX_FEATURE_TYPES] = {
+>  	/* Compat */
+> -	NILFS_FEATURE_COMPAT_SUFILE_EXTENSION,
+> +	NILFS_FEATURE_COMPAT_SUFILE_EXTENSION |
+> +	NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS,
+>  	/* Read-only compat */
+>  	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
+>  	/* Incompat */
+> diff --git a/sbin/nilfs-tune/nilfs-tune.c b/sbin/nilfs-tune/nilfs-tune.c
+> index 60f1d39..7889310 100644
+> --- a/sbin/nilfs-tune/nilfs-tune.c
+> +++ b/sbin/nilfs-tune/nilfs-tune.c
+> @@ -84,7 +84,7 @@ static void nilfs_tune_usage(void)
+>  
+>  static const __u64 ok_features[NILFS_MAX_FEATURE_TYPES] = {
+>  	/* Compat */
+> -	0,
+> +	NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS,
+>  	/* Read-only compat */
+>  	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
+>  	/* Incompat */
+> @@ -93,7 +93,7 @@ static const __u64 ok_features[NILFS_MAX_FEATURE_TYPES] = {
+>  
+>  static const __u64 clear_ok_features[NILFS_MAX_FEATURE_TYPES] = {
+>  	/* Compat */
+> -	0,
+> +	NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS,
+>  	/* Read-only compat */
+>  	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
+>  	/* Incompat */
 > -- 
 > 2.3.0
 > 
