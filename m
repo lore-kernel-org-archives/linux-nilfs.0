@@ -1,43 +1,35 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/2] nilfs2: fix issues with nilfs_set_inode_flags()
-Date: Wed,  8 Apr 2015 23:49:43 +0900
-Message-ID: <1428504585-1111-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Linux NILFS <linuxnilfs-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: nilfs2-kmod7 v1.0 was released: back-port improvements from the
+ latest mainline kernel
+Date: Sun, 19 Apr 2015 13:49:38 +0900
+Message-ID: <CAE7Udf_wOnbHF8QHm_enRMXCUuJuX47Dt+NbkfxgDWi2JMuPSQ@mail.gmail.com>
+Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:lines;
-        bh=eqQ1BkC16DV9PGJt5reGsujvpiBXHw5co+3lMc0wzJk=;
-        b=kN01WgAmohLBfLAVZxBwp6jcf38YqXCnLamecIrGBaVctzTzLmCLPNCAe3kJoRRuU4
-         Pz8JpTgHfQo21FVVUX0yL/5LBXnyuEg/J1fO5X8vCUmoaCB8/nrv1VJ2J8WNd//ihbxn
-         5JwUi5xxi9AgfuiyTqPYlRg91mnr5teo1uxr9Qlh4KzgJgdJqFwq216xgz1mbkelT5yW
-         TbAZ7Mn3zR0TlmcF0295gajshSFeWVSKcHSrd9ckefefRmXcthU8zQGBZE3Bi7hEOL0E
-         6MsL8ngNFEL3fM31MMn91/ecfqlckS0Lx0PkS9V1MT8xKpXWSPH+oFSMB9h8qAtZxNfr
-         3MYQ==
+        h=mime-version:sender:date:message-id:subject:from:to:content-type;
+        bh=H55cTgqPKEIZ9lhVeHbB4/xOPLsXYGPKeEelrwqqZvE=;
+        b=r8NFt5itb4EAalEe3xXwQCXnnBlg6H5pejrJtwYVcWSccLXT3JM47CPMntqrHu+Ctu
+         +raDadRIpuu5STVYdKJ6Aw4qCH9CLvGg9pAXaciaHSZm0fDsVljcyjwYv4myKy/oeqLt
+         zdAzf56T+fvFpaZAeBBhmy2R0/n3d1qtiXodnceF5yi06CTHB8LJG0hRLyDYYzOWeC0m
+         frtpOuk8LZ5ziMDVRAcbA/lo3bXbiDHZZTfQ/RrqTRnM7n5/rdBLnVW+tFfqfninfCBE
+         VnHBbK2YOIoOLoKFDSVb5fkRmOFgh/jQqDGHz+uXUh5kZgdYEhk8dyT7oZUOdPNLcB6Q
+         x2zQ==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Andrew,
+Version 1.0 of nilfs2-kmod7, the stand-alone kernel module supporting
+CentOS 7, was released. Back-port improvements from the latest
+mainline kernel, including improved performance of checkpoint list
+output (lscp) on aged file systems. Also, support build for vanilla
+kernels v3.10+ and v4.0. For details, please see ChangeLog file or
+commit logs.
 
-Please queue the following changes for the next merge window:
-
-Ryusuke Konishi (2):
-      nilfs2: put out gfp mask manipulation from nilfs_set_inode_flags()
-      nilfs2: use inode_set_flags() in nilfs_set_inode_flags()
-
-These fix issues related to nilfs_set_inode_flags() function.
-
-Thanks,
-Ryusuke Konishi
---
-
- fs/nilfs2/inode.c | 19 ++++++++++---------
- 1 file changed, 10 insertions(+), 9 deletions(-)
-
+from NILFS http://ift.tt/1Dyb1w0
+via IFTTT
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
