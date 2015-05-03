@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v2 8/9] nilfs2: correct live block tracking for GC protection period
-Date: Sun,  3 May 2015 12:05:21 +0200
-Message-ID: <1430647522-14304-9-git-send-email-andreas.rohner@gmx.net>
+Subject: [PATCH v2 6/9] nilfs2: add tracking of block deletions and updates
+Date: Sun,  3 May 2015 12:05:19 +0200
+Message-ID: <1430647522-14304-7-git-send-email-andreas.rohner@gmx.net>
 References: <1430647522-14304-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1430647522-14304-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -12,327 +12,433 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-The userspace GC uses the concept of a so-called protection period,
-which is a period of time, where actually reclaimable blocks are
-protected. If a segment is cleaned and there are blocks in it that are
-protected by this, they have to be treated as if they were live blocks.
+This patch adds tracking of block deletions and updates for all files.
+It uses the fact, that for every block, NILFS2 keeps an entry in the
+DAT file and stores the checkpoint where it was created, deleted or
+overwritten. So whenever a block is deleted or overwritten
+nilfs_dat_commit_end() is called to update the DAT entry. At this
+point this patch simply decrements the su_nlive_blks field of the
+corresponding segment. The value of su_nlive_blks is set at segment
+creation time.
 
-This is a problem for the live block tracking on the kernel side,
-because the kernel knows nothing about the protection period. This patch
-introduces new flags for the nilfs_vdesc data structure, to mark blocks
-that need to be treated as if they were alive, but must be counted as if
-they were reclaimable. There are two reasons for this to happen.
-Either a block was deleted within the protection period, or it is
-part of a snapshot.
+The DAT file itself has of course no DAT entries for its own blocks, but
+it still has to propagate deletions and updates to its btree. When this
+happens this patch again decrements the su_nlive_blks field of the
+corresponding segment.
 
-After the blocks described by the nilfs_vdesc structures are read in,
-the flags are passed on to the buffer_heads to get the information to
-the segment construction phase. During segment construction, the live
-block tracking is adjusted accordingly.
-
-Additionally the blocks are rechecked if they are reclaimable, since the
-last check was in userspace without the proper locking.
+The new feature compatibility flag NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS
+can be used to enable or disable the block tracking at any time.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/dat.c           | 66 +++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/dat.h           |  1 +
- fs/nilfs2/ioctl.c         | 15 +++++++++++
- fs/nilfs2/page.h          |  6 +++++
- fs/nilfs2/segment.c       | 41 ++++++++++++++++++++++++++++-
- include/linux/nilfs2_fs.h | 38 +++++++++++++++++++++++++--
- 6 files changed, 164 insertions(+), 3 deletions(-)
+ fs/nilfs2/btree.c   | 33 ++++++++++++++++++++++++++++++---
+ fs/nilfs2/dat.c     | 15 +++++++++++++--
+ fs/nilfs2/direct.c  | 20 +++++++++++++++-----
+ fs/nilfs2/page.c    |  6 ++++--
+ fs/nilfs2/page.h    |  3 +++
+ fs/nilfs2/segbuf.c  |  3 +++
+ fs/nilfs2/segbuf.h  |  5 +++++
+ fs/nilfs2/segment.c | 48 +++++++++++++++++++++++++++++++++++++-----------
+ fs/nilfs2/sufile.c  | 17 ++++++++++++++++-
+ fs/nilfs2/sufile.h  |  3 ++-
+ 10 files changed, 128 insertions(+), 25 deletions(-)
 
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index 059f371..d3b2763 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -30,6 +30,7 @@
+ #include "btree.h"
+ #include "alloc.h"
+ #include "dat.h"
++#include "sufile.h"
+ 
+ static void __nilfs_btree_init(struct nilfs_bmap *bmap);
+ 
+@@ -1889,9 +1890,35 @@ static int nilfs_btree_propagate_p(struct nilfs_bmap *btree,
+ 				   int level,
+ 				   struct buffer_head *bh)
+ {
+-	while ((++level < nilfs_btree_height(btree) - 1) &&
+-	       !buffer_dirty(path[level].bp_bh))
+-		mark_buffer_dirty(path[level].bp_bh);
++	struct the_nilfs *nilfs = btree->b_inode->i_sb->s_fs_info;
++	struct nilfs_btree_node *node;
++	__u64 ptr, segnum;
++	int ncmax, vol, counted;
++
++	vol = buffer_nilfs_volatile(bh);
++	counted = buffer_nilfs_counted(bh);
++	set_buffer_nilfs_counted(bh);
++
++	while (++level < nilfs_btree_height(btree)) {
++		if (!vol && !counted && nilfs_feature_track_live_blks(nilfs)) {
++			node = nilfs_btree_get_node(btree, path, level, &ncmax);
++			ptr = nilfs_btree_node_get_ptr(node,
++						       path[level].bp_index,
++						       ncmax);
++			segnum = nilfs_get_segnum_of_block(nilfs, ptr);
++			nilfs_sufile_dec_nlive_blks(nilfs->ns_sufile, segnum);
++		}
++
++		if (path[level].bp_bh) {
++			if (buffer_dirty(path[level].bp_bh))
++				break;
++
++			mark_buffer_dirty(path[level].bp_bh);
++			vol = buffer_nilfs_volatile(path[level].bp_bh);
++			counted = buffer_nilfs_counted(path[level].bp_bh);
++			set_buffer_nilfs_counted(path[level].bp_bh);
++		}
++	}
+ 
+ 	return 0;
+ }
 diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 9c2fc32..80a1905 100644
+index 0d5fada..9c2fc32 100644
 --- a/fs/nilfs2/dat.c
 +++ b/fs/nilfs2/dat.c
-@@ -35,6 +35,17 @@
- #define NILFS_CNO_MAX	(~(__u64)0)
+@@ -28,6 +28,7 @@
+ #include "mdt.h"
+ #include "alloc.h"
+ #include "dat.h"
++#include "sufile.h"
  
- /**
-+ * nilfs_dat_entry_is_live - check if @entry is alive
-+ * @entry: DAT-Entry
-+ *
-+ * Description: Simple check if @entry is alive in the current checkpoint.
-+ */
-+static int nilfs_dat_entry_is_live(struct nilfs_dat_entry *entry)
-+{
-+	return entry->de_end == cpu_to_le64(NILFS_CNO_MAX);
-+}
-+
-+/**
-  * struct nilfs_dat_info - on-memory private data of DAT file
-  * @mi: on-memory private data of metadata file
-  * @palloc_cache: persistent object allocator cache of DAT file
-@@ -387,6 +398,61 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
- }
  
- /**
-+ * nilfs_dat_is_live - checks if the virtual block number is alive
-+ * @dat: DAT file inode
-+ * @vblocknr: virtual block number
-+ *
-+ * Description: nilfs_dat_is_live() looks up the DAT-Entry for
-+ * @vblocknr and determines if the corresponding block is alive in the current
-+ * checkpoint or not. This check ignores snapshots and protection periods.
-+ *
-+ * Return Value: 1 if vblocknr is alive and 0 otherwise. On error one of the
-+ * following negative error codes is returned
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ *
-+ * %-ENOENT - A block number associated with @vblocknr does not exist.
-+ */
-+int nilfs_dat_is_live(struct inode *dat, __u64 vblocknr)
-+{
-+	struct buffer_head *entry_bh, *bh;
-+	struct nilfs_dat_entry *entry;
-+	sector_t blocknr;
-+	void *kaddr;
-+	int ret;
+ #define NILFS_CNO_MIN	((__u64)1)
+@@ -188,9 +189,10 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
+ 			  int dead)
+ {
+ 	struct nilfs_dat_entry *entry;
+-	__u64 start, end;
++	__u64 start, end, segnum;
+ 	sector_t blocknr;
+ 	void *kaddr;
++	struct the_nilfs *nilfs;
+ 
+ 	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
+ 	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
+@@ -206,8 +208,17 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_palloc_req *req,
+ 
+ 	if (blocknr == 0)
+ 		nilfs_dat_commit_free(dat, req);
+-	else
++	else {
+ 		nilfs_dat_commit_entry(dat, req);
 +
-+	ret = nilfs_palloc_get_entry_block(dat, vblocknr, 0, &entry_bh);
-+	if (ret < 0)
-+		return ret;
++		nilfs = dat->i_sb->s_fs_info;
 +
-+	if (!nilfs_doing_gc() && buffer_nilfs_redirected(entry_bh)) {
-+		bh = nilfs_mdt_get_frozen_buffer(dat, entry_bh);
-+		if (bh) {
-+			WARN_ON(!buffer_uptodate(bh));
-+			put_bh(entry_bh);
-+			entry_bh = bh;
++		if (nilfs_feature_track_live_blks(nilfs)) {
++			segnum = nilfs_get_segnum_of_block(nilfs, blocknr);
++			nilfs_sufile_dec_nlive_blks(nilfs->ns_sufile, segnum);
 +		}
 +	}
 +
-+	kaddr = kmap_atomic(entry_bh->b_page);
-+	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
-+	blocknr = le64_to_cpu(entry->de_blocknr);
-+	if (blocknr == 0) {
-+		ret = -ENOENT;
-+		goto out_unmap;
+ }
+ 
+ void nilfs_dat_abort_end(struct inode *dat, struct nilfs_palloc_req *req)
+diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
+index ebf89fd..42704eb 100644
+--- a/fs/nilfs2/direct.c
++++ b/fs/nilfs2/direct.c
+@@ -26,6 +26,7 @@
+ #include "direct.h"
+ #include "alloc.h"
+ #include "dat.h"
++#include "sufile.h"
+ 
+ static inline __le64 *nilfs_direct_dptrs(const struct nilfs_bmap *direct)
+ {
+@@ -268,18 +269,27 @@ int nilfs_direct_delete_and_convert(struct nilfs_bmap *bmap,
+ static int nilfs_direct_propagate(struct nilfs_bmap *bmap,
+ 				  struct buffer_head *bh)
+ {
++	struct the_nilfs *nilfs = bmap->b_inode->i_sb->s_fs_info;
+ 	struct nilfs_palloc_req oldreq, newreq;
+ 	struct inode *dat;
+-	__u64 key;
+-	__u64 ptr;
++	__u64 key, ptr, segnum;
+ 	int ret;
+ 
+-	if (!NILFS_BMAP_USE_VBN(bmap))
+-		return 0;
+-
+ 	dat = nilfs_bmap_get_dat(bmap);
+ 	key = nilfs_bmap_data_get_key(bmap, bh);
+ 	ptr = nilfs_direct_get_ptr(bmap, key);
++
++	if (unlikely(!NILFS_BMAP_USE_VBN(bmap))) {
++		if (!buffer_nilfs_volatile(bh) && !buffer_nilfs_counted(bh) &&
++				nilfs_feature_track_live_blks(nilfs)) {
++			set_buffer_nilfs_counted(bh);
++			segnum = nilfs_get_segnum_of_block(nilfs, ptr);
++
++			nilfs_sufile_dec_nlive_blks(nilfs->ns_sufile, segnum);
++		}
++		return 0;
 +	}
 +
-+	ret = nilfs_dat_entry_is_live(entry);
-+
-+out_unmap:
-+	kunmap_atomic(kaddr);
-+	put_bh(entry_bh);
-+	return ret;
-+}
-+
-+/**
-  * nilfs_dat_translate - translate a virtual block number to a block number
-  * @dat: DAT file inode
-  * @vblocknr: virtual block number
-diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
-index cbd8e97..a95547c 100644
---- a/fs/nilfs2/dat.h
-+++ b/fs/nilfs2/dat.h
-@@ -47,6 +47,7 @@ void nilfs_dat_commit_update(struct inode *, struct nilfs_palloc_req *,
- 			     struct nilfs_palloc_req *, int);
- void nilfs_dat_abort_update(struct inode *, struct nilfs_palloc_req *,
- 			    struct nilfs_palloc_req *);
-+int nilfs_dat_is_live(struct inode *dat, __u64 vblocknr);
+ 	if (!buffer_nilfs_volatile(bh)) {
+ 		oldreq.pr_entry_nr = ptr;
+ 		newreq.pr_entry_nr = ptr;
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 45d650a..fd21b43 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -92,7 +92,8 @@ void nilfs_forget_buffer(struct buffer_head *bh)
+ 	const unsigned long clear_bits =
+ 		(1 << BH_Uptodate | 1 << BH_Dirty | 1 << BH_Mapped |
+ 		 1 << BH_Async_Write | 1 << BH_NILFS_Volatile |
+-		 1 << BH_NILFS_Checked | 1 << BH_NILFS_Redirected);
++		 1 << BH_NILFS_Checked | 1 << BH_NILFS_Redirected |
++		 1 << BH_NILFS_Counted);
  
- int nilfs_dat_mark_dirty(struct inode *, __u64);
- int nilfs_dat_freev(struct inode *, __u64 *, size_t);
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index f6ee54e..40bf74a 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -612,6 +612,12 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
- 		brelse(bh);
- 		return -EEXIST;
- 	}
-+
-+	if (nilfs_vdesc_snapshot_protected(vdesc))
-+		set_buffer_nilfs_snapshot_protected(bh);
-+	if (nilfs_vdesc_period_protected(vdesc))
-+		set_buffer_nilfs_period_protected(bh);
-+
- 	list_add_tail(&bh->b_assoc_buffers, buffers);
- 	return 0;
- }
-@@ -662,6 +668,15 @@ static int nilfs_ioctl_move_blocks(struct super_block *sb,
- 		}
+ 	lock_buffer(bh);
+ 	set_mask_bits(&bh->b_state, clear_bits, 0);
+@@ -422,7 +423,8 @@ void nilfs_clear_dirty_page(struct page *page, bool silent)
+ 		const unsigned long clear_bits =
+ 			(1 << BH_Uptodate | 1 << BH_Dirty | 1 << BH_Mapped |
+ 			 1 << BH_Async_Write | 1 << BH_NILFS_Volatile |
+-			 1 << BH_NILFS_Checked | 1 << BH_NILFS_Redirected);
++			 1 << BH_NILFS_Checked | 1 << BH_NILFS_Redirected |
++			 1 << BH_NILFS_Counted);
  
+ 		bh = head = page_buffers(page);
  		do {
-+			/*
-+			 * old user space tools to not initialize vd_blk_flags
-+			 * if vd_period.p_start > 0 then vd_blk_flags was
-+			 * not initialized properly and may contain invalid
-+			 * flags
-+			 */
-+			if (vdesc->vd_period.p_start > 0)
-+				vdesc->vd_blk_flags = 0;
-+
- 			ret = nilfs_ioctl_move_inode_block(inode, vdesc,
- 							   &buffers);
- 			if (unlikely(ret < 0)) {
 diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
-index 4e35814..4835e37 100644
+index a43b828..4e35814 100644
 --- a/fs/nilfs2/page.h
 +++ b/fs/nilfs2/page.h
-@@ -36,6 +36,8 @@ enum {
+@@ -36,12 +36,15 @@ enum {
  	BH_NILFS_Volatile,
  	BH_NILFS_Checked,
  	BH_NILFS_Redirected,
-+	BH_NILFS_Snapshot_Protected,
-+	BH_NILFS_Period_Protected,
- 	BH_NILFS_Counted,
++	BH_NILFS_Counted,
  };
  
-@@ -43,6 +45,10 @@ BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
+ BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
  BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
  BUFFER_FNS(NILFS_Checked, nilfs_checked)	/* buffer is verified */
  BUFFER_FNS(NILFS_Redirected, nilfs_redirected)	/* redirected to a copy */
-+/* buffer belongs to a snapshot and is protected by it */
-+BUFFER_FNS(NILFS_Snapshot_Protected, nilfs_snapshot_protected)
-+/* protected by protection period */
-+BUFFER_FNS(NILFS_Period_Protected, nilfs_period_protected)
- /* counted by propagate_p for segment usage */
- BUFFER_FNS(NILFS_Counted, nilfs_counted)
++/* counted by propagate_p for segment usage */
++BUFFER_FNS(NILFS_Counted, nilfs_counted)
  
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index ab8df33..b476ce7 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1564,12 +1564,41 @@ static void nilfs_list_replace_buffer(struct buffer_head *old_bh,
- 	/* The caller must release old_bh */
- }
  
-+/**
-+ * nilfs_segctor_dec_nlive_blks_gc - dec. nlive_blks for blocks of GC-Inodes
-+ * @dat: dat inode
-+ * @segbuf: currtent segment buffer
-+ * @bh: current buffer head
-+ *
-+ * Description: nilfs_segctor_dec_nlive_blks_gc() is called if the inode to
-+ * which @bh belongs is a GC-Inode. In that case it is not necessary to
-+ * decrement the previous segment, because at the end of the GC process it
-+ * will be freed anyway. It is however necessary to check again if the blocks
-+ * are alive here, because the last check was in userspace without the proper
-+ * locking. Additionally the blocks protected by the protection period should
-+ * be considered reclaimable. It is assumed, that @bh->b_blocknr contains
-+ * a virtual block number, which is only true if @bh is part of a GC-Inode.
-+ */
-+static void nilfs_segctor_dec_nlive_blks_gc(struct inode *dat,
-+					    struct nilfs_segment_buffer *segbuf,
-+					    struct buffer_head *bh) {
-+	bool isreclaimable = buffer_nilfs_period_protected(bh) ||
-+				nilfs_dat_is_live(dat, bh->b_blocknr) <= 0;
-+
-+	if (!buffer_nilfs_snapshot_protected(bh) && isreclaimable)
-+		segbuf->sb_nlive_blks--;
-+	if (buffer_nilfs_snapshot_protected(bh))
-+		segbuf->sb_nsnapshot_blks++;
-+}
-+
- static int
- nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
- 				     struct nilfs_segment_buffer *segbuf,
- 				     int mode)
- {
-+	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
- 	struct inode *inode = NULL;
-+	struct nilfs_inode_info *ii;
- 	sector_t blocknr;
- 	unsigned long nfinfo = segbuf->sb_sum.nfinfo;
- 	unsigned long nblocks = 0, ndatablk = 0;
-@@ -1579,7 +1608,9 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
- 	union nilfs_binfo binfo;
- 	struct buffer_head *bh, *bh_org;
- 	ino_t ino = 0;
--	int err = 0;
-+	int err = 0, gc_inode = 0, track_live_blks;
-+
-+	track_live_blks = nilfs_feature_track_live_blks(nilfs);
+ int __nilfs_clear_page_dirty(struct page *);
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index dc3a9efd..dabb65b 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -57,6 +57,9 @@ struct nilfs_segment_buffer *nilfs_segbuf_new(struct super_block *sb)
+ 	INIT_LIST_HEAD(&segbuf->sb_segsum_buffers);
+ 	INIT_LIST_HEAD(&segbuf->sb_payload_buffers);
+ 	segbuf->sb_super_root = NULL;
++	segbuf->sb_flags = 0;
++	segbuf->sb_nlive_blks = 0;
++	segbuf->sb_nsnapshot_blks = 0;
  
- 	if (!nfinfo)
- 		goto out;
-@@ -1601,6 +1632,9 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
+ 	init_completion(&segbuf->sb_bio_event);
+ 	atomic_set(&segbuf->sb_err, 0);
+diff --git a/fs/nilfs2/segbuf.h b/fs/nilfs2/segbuf.h
+index b04f08c..a802f61 100644
+--- a/fs/nilfs2/segbuf.h
++++ b/fs/nilfs2/segbuf.h
+@@ -83,6 +83,9 @@ struct nilfs_segment_buffer {
+ 	sector_t		sb_fseg_start, sb_fseg_end;
+ 	sector_t		sb_pseg_start;
+ 	unsigned		sb_rest_blocks;
++	int			sb_flags;
++	__u32			sb_nlive_blks;
++	__u32			sb_nsnapshot_blks;
  
- 			inode = bh->b_page->mapping->host;
- 
-+			ii = NILFS_I(inode);
-+			gc_inode = test_bit(NILFS_I_GCINODE, &ii->i_state);
-+
- 			if (mode == SC_LSEG_DSYNC)
- 				sc_op = &nilfs_sc_dsync_ops;
- 			else if (ino == NILFS_DAT_INO)
-@@ -1608,6 +1642,11 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
- 			else /* file blocks */
- 				sc_op = &nilfs_sc_file_ops;
- 		}
-+
-+		if (track_live_blks && gc_inode)
-+			nilfs_segctor_dec_nlive_blks_gc(nilfs->ns_dat,
-+							segbuf, bh);
-+
- 		bh_org = bh;
- 		get_bh(bh_org);
- 		err = nilfs_bmap_assign(NILFS_I(inode)->i_bmap, &bh, blocknr,
-diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index 5f05bbf..ddc98e8 100644
---- a/include/linux/nilfs2_fs.h
-+++ b/include/linux/nilfs2_fs.h
-@@ -905,7 +905,7 @@ struct nilfs_vinfo {
-  * @vd_blocknr: disk block number
-  * @vd_offset: logical block offset inside a file
-  * @vd_flags: flags (data or node block)
-- * @vd_pad: padding
-+ * @vd_blk_flags: additional flags
-  */
- struct nilfs_vdesc {
- 	__u64 vd_ino;
-@@ -915,9 +915,43 @@ struct nilfs_vdesc {
- 	__u64 vd_blocknr;
- 	__u64 vd_offset;
- 	__u32 vd_flags;
--	__u32 vd_pad;
-+	/*
-+	 * vd_blk_flags needed because vd_flags doesn't support
-+	 * bit-flags because of backwards compatibility
-+	 */
-+	__u32 vd_blk_flags;
+ 	/* Buffers */
+ 	struct list_head	sb_segsum_buffers;
+@@ -95,6 +98,8 @@ struct nilfs_segment_buffer {
+ 	struct completion	sb_bio_event;
  };
  
-+/* vdesc flags */
-+enum {
-+	NILFS_VDESC_SNAPSHOT_PROTECTED,
-+	NILFS_VDESC_PERIOD_PROTECTED,
++#define NILFS_SEGBUF_SUSET	BIT(0)	/* segment usage has been set */
 +
-+	/* ... */
+ #define NILFS_LIST_SEGBUF(head)  \
+ 	list_entry((head), struct nilfs_segment_buffer, sb_list)
+ #define NILFS_NEXT_SEGBUF(segbuf)  NILFS_LIST_SEGBUF((segbuf)->sb_list.next)
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index c6abbad9..14e76c3 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -762,7 +762,8 @@ static int nilfs_test_metadata_dirty(struct the_nilfs *nilfs,
+ 		ret++;
+ 	if (nilfs_mdt_fetch_dirty(nilfs->ns_cpfile))
+ 		ret++;
+-	if (nilfs_mdt_fetch_dirty(nilfs->ns_sufile))
++	if (nilfs_mdt_fetch_dirty(nilfs->ns_sufile) ||
++	    nilfs_sufile_cache_dirty(nilfs->ns_sufile))
+ 		ret++;
+ 	if ((ret || nilfs_doing_gc()) && nilfs_mdt_fetch_dirty(nilfs->ns_dat))
+ 		ret++;
+@@ -1368,36 +1369,49 @@ static void nilfs_free_incomplete_logs(struct list_head *logs,
+ }
+ 
+ static void nilfs_segctor_update_segusage(struct nilfs_sc_info *sci,
+-					  struct inode *sufile)
++					  struct the_nilfs *nilfs)
+ {
+ 	struct nilfs_segment_buffer *segbuf;
+-	unsigned long live_blocks;
++	struct inode *sufile = nilfs->ns_sufile;
++	unsigned long nblocks;
+ 	int ret;
+ 
+ 	list_for_each_entry(segbuf, &sci->sc_segbufs, sb_list) {
+-		live_blocks = segbuf->sb_sum.nblocks +
++		nblocks = segbuf->sb_sum.nblocks +
+ 			(segbuf->sb_pseg_start - segbuf->sb_fseg_start);
+ 		ret = nilfs_sufile_set_segment_usage(sufile, segbuf->sb_segnum,
+-						     live_blocks,
++						     nblocks,
++						     segbuf->sb_nlive_blks,
++						     segbuf->sb_nsnapshot_blks,
+ 						     sci->sc_seg_ctime);
+ 		WARN_ON(ret); /* always succeed because the segusage is dirty */
 +
-+	__NR_NILFS_VDESC_FIELDS,
-+};
++		segbuf->sb_flags |= NILFS_SEGBUF_SUSET;
+ 	}
+ }
+ 
+-static void nilfs_cancel_segusage(struct list_head *logs, struct inode *sufile)
++static void nilfs_cancel_segusage(struct list_head *logs,
++				  struct the_nilfs *nilfs)
+ {
+ 	struct nilfs_segment_buffer *segbuf;
++	struct inode *sufile = nilfs->ns_sufile;
++	__s64 nlive_blks = 0, nsnapshot_blks = 0;
+ 	int ret;
+ 
+ 	segbuf = NILFS_FIRST_SEGBUF(logs);
++	if (segbuf->sb_flags & NILFS_SEGBUF_SUSET) {
++		nlive_blks = -(__s64)segbuf->sb_nlive_blks;
++		nsnapshot_blks = -(__s64)segbuf->sb_nsnapshot_blks;
++	}
+ 	ret = nilfs_sufile_set_segment_usage(sufile, segbuf->sb_segnum,
+ 					     segbuf->sb_pseg_start -
+-					     segbuf->sb_fseg_start, 0);
++					     segbuf->sb_fseg_start,
++					     nlive_blks, nsnapshot_blks, 0);
+ 	WARN_ON(ret); /* always succeed because the segusage is dirty */
+ 
+ 	list_for_each_entry_continue(segbuf, logs, sb_list) {
+ 		ret = nilfs_sufile_set_segment_usage(sufile, segbuf->sb_segnum,
+-						     0, 0);
++						     0, 0, 0, 0);
+ 		WARN_ON(ret); /* always succeed */
+ 	}
+ }
+@@ -1499,6 +1513,7 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
+ 	if (!nfinfo)
+ 		goto out;
+ 
++	segbuf->sb_nlive_blks = segbuf->sb_sum.nfileblk;
+ 	blocknr = segbuf->sb_pseg_start + segbuf->sb_sum.nsumblk;
+ 	ssp.bh = NILFS_SEGBUF_FIRST_BH(&segbuf->sb_segsum_buffers);
+ 	ssp.offset = sizeof(struct nilfs_segment_summary);
+@@ -1728,7 +1743,7 @@ static void nilfs_segctor_abort_construction(struct nilfs_sc_info *sci,
+ 	nilfs_abort_logs(&logs, ret ? : err);
+ 
+ 	list_splice_tail_init(&sci->sc_segbufs, &logs);
+-	nilfs_cancel_segusage(&logs, nilfs->ns_sufile);
++	nilfs_cancel_segusage(&logs, nilfs);
+ 	nilfs_free_incomplete_logs(&logs, nilfs);
+ 
+ 	if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+@@ -1790,7 +1805,8 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+ 			const unsigned long clear_bits =
+ 				(1 << BH_Dirty | 1 << BH_Async_Write |
+ 				 1 << BH_Delay | 1 << BH_NILFS_Volatile |
+-				 1 << BH_NILFS_Redirected);
++				 1 << BH_NILFS_Redirected |
++				 1 << BH_NILFS_Counted);
+ 
+ 			set_mask_bits(&bh->b_state, clear_bits, set_bits);
+ 			if (bh == segbuf->sb_super_root) {
+@@ -1995,7 +2011,14 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 
+ 			nilfs_segctor_fill_in_super_root(sci, nilfs);
+ 		}
+-		nilfs_segctor_update_segusage(sci, nilfs->ns_sufile);
 +
-+#define NILFS_VDESC_FNS(flag, name)					\
-+static inline void							\
-+nilfs_vdesc_set_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_blk_flags |= (1UL << NILFS_VDESC_##flag);		\
-+}									\
-+static inline void							\
-+nilfs_vdesc_clear_##name(struct nilfs_vdesc *vdesc)			\
-+{									\
-+	vdesc->vd_blk_flags &= ~(1UL << NILFS_VDESC_##flag);		\
-+}									\
-+static inline int							\
-+nilfs_vdesc_##name(const struct nilfs_vdesc *vdesc)			\
-+{									\
-+	return !!(vdesc->vd_blk_flags & (1UL << NILFS_VDESC_##flag));	\
-+}
++		if (nilfs_feature_track_live_blks(nilfs)) {
++			err = nilfs_sufile_flush_cache(nilfs->ns_sufile, 0,
++						       NULL);
++			if (unlikely(err))
++				goto failed_to_write;
++		}
++		nilfs_segctor_update_segusage(sci, nilfs);
+ 
+ 		/* Write partial segments */
+ 		nilfs_segctor_prepare_write(sci);
+@@ -2022,6 +2045,9 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 		}
+ 	} while (sci->sc_stage.scnt != NILFS_ST_DONE);
+ 
++	if (nilfs_feature_track_live_blks(nilfs))
++		nilfs_sufile_shrink_cache(nilfs->ns_sufile);
 +
-+NILFS_VDESC_FNS(SNAPSHOT_PROTECTED, snapshot_protected)
-+NILFS_VDESC_FNS(PERIOD_PROTECTED, period_protected)
+  out:
+ 	nilfs_segctor_drop_written_files(sci, nilfs);
+ 	return err;
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index 80bbd87..9cd8820d 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -527,10 +527,13 @@ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
+  * @sufile: inode of segment usage file
+  * @segnum: segment number
+  * @nblocks: number of live blocks in the segment
++ * @nlive_blks: number of live blocks to add to the su_nlive_blks field
++ * @nsnapshot_blks: number of snapshot blocks to add to su_nsnapshot_blks
+  * @modtime: modification time (option)
+  */
+ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+-				   unsigned long nblocks, time_t modtime)
++				   unsigned long nblocks, __s64 nlive_blks,
++				   __s64 nsnapshot_blks, time_t modtime)
+ {
+ 	struct buffer_head *bh;
+ 	struct nilfs_segment_usage *su;
+@@ -548,6 +551,18 @@ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+ 	if (modtime)
+ 		su->su_lastmod = cpu_to_le64(modtime);
+ 	su->su_nblocks = cpu_to_le32(nblocks);
 +
- /**
-  * struct nilfs_bdesc - descriptor of disk block number
-  * @bd_ino: inode number
++	if (nilfs_sufile_live_blks_ext_supported(sufile)) {
++		nsnapshot_blks += le32_to_cpu(su->su_nsnapshot_blks);
++		nsnapshot_blks = min_t(__s64, max_t(__s64, nsnapshot_blks, 0),
++				       nblocks);
++		su->su_nsnapshot_blks = cpu_to_le32(nsnapshot_blks);
++
++		nlive_blks += le32_to_cpu(su->su_nlive_blks);
++		nlive_blks = min_t(__s64, max_t(__s64, nlive_blks, 0), nblocks);
++		su->su_nlive_blks = cpu_to_le32(nlive_blks);
++	}
++
+ 	kunmap_atomic(kaddr);
+ 
+ 	mark_buffer_dirty(bh);
+diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+index 662ab56..3466abb 100644
+--- a/fs/nilfs2/sufile.h
++++ b/fs/nilfs2/sufile.h
+@@ -60,7 +60,8 @@ int nilfs_sufile_set_alloc_range(struct inode *sufile, __u64 start, __u64 end);
+ int nilfs_sufile_alloc(struct inode *, __u64 *);
+ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum);
+ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+-				   unsigned long nblocks, time_t modtime);
++				   unsigned long nblocks, __s64 nlive_blks,
++				   __s64 nsnapshot_blks, time_t modtime);
+ int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
+ ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned,
+ 				size_t);
 -- 
 2.3.7
 
