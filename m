@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v2 9/9] nilfs2: prevent starvation of segments protected by snapshots
-Date: Sun,  3 May 2015 12:05:22 +0200
-Message-ID: <1430647522-14304-10-git-send-email-andreas.rohner@gmx.net>
+Subject: [PATCH v2 3/9] nilfs2: introduce new feature flag for tracking live blocks
+Date: Sun,  3 May 2015 12:05:16 +0200
+Message-ID: <1430647522-14304-4-git-send-email-andreas.rohner@gmx.net>
 References: <1430647522-14304-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1430647522-14304-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -12,240 +12,54 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-It doesn't really matter if the number of reclaimable blocks for a
-segment is inaccurate, as long as the overall performance is better than
-the simple timestamp algorithm and starvation is prevented.
-
-The following steps will lead to starvation of a segment:
-
-1. The segment is written
-2. A snapshot is created
-3. The files in the segment are deleted and the number of live
-   blocks for the segment is decremented to a very low value
-4. The GC tries to free the segment, but there are no reclaimable
-   blocks, because they are all protected by the snapshot. To prevent an
-   infinite loop the GC has to adjust the number of live blocks to the
-   correct value.
-5. The snapshot is converted to a checkpoint and the blocks in the
-   segment are now reclaimable.
-6. The GC will never attempt to clean the segment again, because it
-   looks as if it had a high number of live blocks.
-
-To prevent this, the already existing padding field of the SUFILE entry
-is used to track the number of snapshot blocks in the segment. This
-number is only set by the GC, since it collects the necessary
-information anyway. So there is no need, to track which block belongs to
-which segment. In step 4 of the list above the GC will set the new field
-su_nsnapshot_blks. In step 5 all entries in the SUFILE are checked and
-entries with a big su_nsnapshot_blks field get their su_nlive_blks field
-reduced.
+This patch introduces a new file system feature flag
+NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS. If it is enabled, the file system
+will keep track of the number of live blocks per segment. This
+information can be used by the GC to select segments for cleaning more
+efficiently.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/ioctl.c  | 50 +++++++++++++++++++++++++++++++-
- fs/nilfs2/sufile.c | 85 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/sufile.h |  3 ++
- 3 files changed, 137 insertions(+), 1 deletion(-)
+ fs/nilfs2/the_nilfs.h     | 8 ++++++++
+ include/linux/nilfs2_fs.h | 4 +++-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 40bf74a..431725f 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -200,6 +200,49 @@ static int nilfs_ioctl_getversion(struct inode *inode, void __user *argp)
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 12cd91d..d755b6b 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -401,4 +401,12 @@ static inline int nilfs_flush_device(struct the_nilfs *nilfs)
+ 	return err;
  }
  
- /**
-+ * nilfs_ioctl_fix_starving_segs - fix potentially starving segments
-+ * @nilfs: nilfs object
-+ * @inode: inode object
-+ *
-+ * Description: Scans for segments, which are potentially starving and
-+ * reduces the number of live blocks to less than half of the maximum
-+ * number of blocks in a segment. This requires a scan of the whole SUFILE,
-+ * which can take a long time on certain devices and under certain conditions.
-+ * To avoid blocking other file system operations for too long the SUFILE is
-+ * scanned in steps of NILFS_SUFILE_STARVING_SEGS_STEP. After each step the
-+ * locks are released and cond_resched() is called.
-+ *
-+ * Return Value: On success, 0 is returned and on error, one of the
-+ * following negative error codes is returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ */
-+static int nilfs_ioctl_fix_starving_segs(struct the_nilfs *nilfs,
-+					 struct inode *inode) {
-+	struct nilfs_transaction_info ti;
-+	unsigned long i, nsegs = nilfs_sufile_get_nsegments(nilfs->ns_sufile);
-+	int ret = 0;
-+
-+	for (i = 0; i < nsegs; i += NILFS_SUFILE_STARVING_SEGS_STEP) {
-+		nilfs_transaction_begin(inode->i_sb, &ti, 0);
-+
-+		ret = nilfs_sufile_fix_starving_segs(nilfs->ns_sufile, i,
-+				NILFS_SUFILE_STARVING_SEGS_STEP);
-+		if (unlikely(ret < 0)) {
-+			nilfs_transaction_abort(inode->i_sb);
-+			break;
-+		}
-+
-+		nilfs_transaction_commit(inode->i_sb); /* never fails */
-+		cond_resched();
-+	}
-+
-+	return ret;
-+}
-+
-+/**
-  * nilfs_ioctl_change_cpmode - change checkpoint mode (checkpoint/snapshot)
-  * @inode: inode object
-  * @filp: file object
-@@ -224,7 +267,7 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
- 	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
- 	struct nilfs_transaction_info ti;
- 	struct nilfs_cpmode cpmode;
--	int ret;
-+	int ret, is_snapshot;
- 
- 	if (!capable(CAP_SYS_ADMIN))
- 		return -EPERM;
-@@ -240,6 +283,7 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
- 	mutex_lock(&nilfs->ns_snapshot_mount_mutex);
- 
- 	nilfs_transaction_begin(inode->i_sb, &ti, 0);
-+	is_snapshot = nilfs_cpfile_is_snapshot(nilfs->ns_cpfile, cpmode.cm_cno);
- 	ret = nilfs_cpfile_change_cpmode(
- 		nilfs->ns_cpfile, cpmode.cm_cno, cpmode.cm_mode);
- 	if (unlikely(ret < 0))
-@@ -248,6 +292,10 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
- 		nilfs_transaction_commit(inode->i_sb); /* never fails */
- 
- 	mutex_unlock(&nilfs->ns_snapshot_mount_mutex);
-+
-+	if (is_snapshot > 0 && cpmode.cm_mode == NILFS_CHECKPOINT &&
-+			nilfs_feature_track_live_blks(nilfs))
-+		ret = nilfs_ioctl_fix_starving_segs(nilfs, inode);
- out:
- 	mnt_drop_write_file(filp);
- 	return ret;
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 9cd8820d..47e2c05 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -1215,6 +1215,91 @@ out_sem:
- }
- 
- /**
-+ * nilfs_sufile_fix_starving_segs - fix potentially starving segments
-+ * @sufile: inode of segment usage file
-+ * @segnum: segnum to start
-+ * @nsegs: number of segments to check
-+ *
-+ * Description: Scans for segments, which are potentially starving and
-+ * reduces the number of live blocks to less than half of the maximum
-+ * number of blocks in a segment. This way the segment is more likely to be
-+ * chosen by the GC. A segment is marked as potentially starving, if more
-+ * than half of the blocks it contains are protected by snapshots.
-+ *
-+ * Return Value: On success, 0 is returned and on error, one of the
-+ * following negative error codes is returned.
-+ *
-+ * %-EIO - I/O error.
-+ *
-+ * %-ENOMEM - Insufficient amount of memory available.
-+ */
-+int nilfs_sufile_fix_starving_segs(struct inode *sufile, __u64 segnum,
-+				   __u64 nsegs)
++static inline int nilfs_feature_track_live_blks(struct the_nilfs *nilfs)
 +{
-+	struct buffer_head *su_bh;
-+	struct nilfs_segment_usage *su;
-+	size_t n, i, susz = NILFS_MDT(sufile)->mi_entry_size;
-+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-+	void *kaddr;
-+	unsigned long maxnsegs, segusages_per_block;
-+	__u32 max_segblks = nilfs->ns_blocks_per_segment >> 1;
-+	int ret = 0, blkdirty, dirty = 0;
++	const __u64 required_bits = NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS |
++				    NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT;
 +
-+	down_write(&NILFS_MDT(sufile)->mi_sem);
-+
-+	maxnsegs = nilfs_sufile_get_nsegments(sufile);
-+	segusages_per_block = nilfs_sufile_segment_usages_per_block(sufile);
-+	nsegs += segnum;
-+	if (nsegs > maxnsegs)
-+		nsegs = maxnsegs;
-+
-+	while (segnum < nsegs) {
-+		n = nilfs_sufile_segment_usages_in_block(sufile, segnum,
-+							 nsegs - 1);
-+
-+		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum,
-+							   0, &su_bh);
-+		if (ret < 0) {
-+			if (ret != -ENOENT)
-+				goto out;
-+			/* hole */
-+			segnum += n;
-+			continue;
-+		}
-+
-+		kaddr = kmap_atomic(su_bh->b_page);
-+		su = nilfs_sufile_block_get_segment_usage(sufile, segnum,
-+							  su_bh, kaddr);
-+		blkdirty = 0;
-+		for (i = 0; i < n; ++i, ++segnum, su = (void *)su + susz) {
-+			if (le32_to_cpu(su->su_nsnapshot_blks) <= max_segblks)
-+				continue;
-+			if (le32_to_cpu(su->su_nlive_blks) <= max_segblks)
-+				continue;
-+
-+			su->su_nlive_blks = cpu_to_le32(max_segblks);
-+			su->su_nsnapshot_blks = cpu_to_le32(max_segblks);
-+			blkdirty = 1;
-+		}
-+
-+		kunmap_atomic(kaddr);
-+		if (blkdirty) {
-+			mark_buffer_dirty(su_bh);
-+			dirty = 1;
-+		}
-+		put_bh(su_bh);
-+		cond_resched();
-+	}
-+
-+out:
-+	if (dirty)
-+		nilfs_mdt_mark_dirty(sufile);
-+
-+	up_write(&NILFS_MDT(sufile)->mi_sem);
-+	return ret;
++	return ((nilfs->ns_feature_compat & required_bits) == required_bits);
 +}
 +
-+/**
-  * nilfs_sufile_alloc_cache_node - allocate and insert a new cache node
-  * @sufile: inode of segment usage file
-  * @group: group to allocate a node for
-diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-index 3466abb..f11e3e6 100644
---- a/fs/nilfs2/sufile.h
-+++ b/fs/nilfs2/sufile.h
-@@ -30,6 +30,7 @@
+ #endif /* _THE_NILFS_H */
+diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
+index 4800daa..5f05bbf 100644
+--- a/include/linux/nilfs2_fs.h
++++ b/include/linux/nilfs2_fs.h
+@@ -221,11 +221,13 @@ struct nilfs_super_block {
+  * doesn't know about, it should refuse to mount the filesystem.
+  */
+ #define NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT	BIT(0)
++#define NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS		BIT(1)
  
- #define NILFS_SUFILE_CACHE_NODE_SHIFT	6
- #define NILFS_SUFILE_CACHE_NODE_COUNT	(1 << NILFS_SUFILE_CACHE_NODE_SHIFT)
-+#define NILFS_SUFILE_STARVING_SEGS_STEP (1 << 15)
+ #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT		BIT(0)
  
- struct nilfs_sufile_cache_node {
- 	__u32 values[NILFS_SUFILE_CACHE_NODE_COUNT];
-@@ -88,6 +89,8 @@ int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs);
- int nilfs_sufile_read(struct super_block *sb, size_t susize,
- 		      struct nilfs_inode *raw_inode, struct inode **inodep);
- int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range);
-+int nilfs_sufile_fix_starving_segs(struct inode *sufile, __u64 segnum,
-+				   __u64 nsegs);
- int nilfs_sufile_dec_nlive_blks(struct inode *sufile, __u64 segnum);
- void nilfs_sufile_shrink_cache(struct inode *sufile);
- int nilfs_sufile_flush_cache(struct inode *sufile, int only_mark,
+ #define NILFS_FEATURE_COMPAT_SUPP					\
+-			(NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT)
++			(NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT |	\
++			 NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS)
+ #define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
+ #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
+ 
 -- 
 2.3.7
 
