@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v2 2/9] nilfs2: extend SUFILE on-disk format to enable tracking of live blocks
-Date: Sun,  3 May 2015 12:05:15 +0200
-Message-ID: <1430647522-14304-3-git-send-email-andreas.rohner@gmx.net>
+Subject: [PATCH v2 5/9] nilfs2: add SUFILE cache for changes to su_nlive_blks field
+Date: Sun,  3 May 2015 12:05:18 +0200
+Message-ID: <1430647522-14304-6-git-send-email-andreas.rohner@gmx.net>
 References: <1430647522-14304-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1430647522-14304-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -12,323 +12,450 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This patch extends the nilfs_segment_usage structure with two extra
-fields. This changes the on-disk format of the SUFILE, but the NILFS2
-metadata files are flexible enough, so that there are no compatibility
-issues. The extension is fully backwards compatible. Nevertheless a
-feature compatibility flag was added to indicate the on-disk format
-change.
+This patch adds a cache for the SUFILE to efficiently store lots of
+small changes to su_nlive_blks in memory and apply the accumulated
+results later at segment construction. This improves performance of
+these operations and reduces lock contention in the SUFILE.
 
-The new field su_nlive_blks is used to track the number of live blocks
-in the corresponding segment. Its value should always be smaller than
-su_nblocks, which contains the total number of blocks in the segment.
+The implementation uses a radix_tree to store cache nodes, which
+contain a certain number of values. Every value corresponds to
+exactly one SUFILE entry. If the cache is flushed the values are
+subtracted from the su_nlive_blks field of the corresponding SUFILE
+entry.
 
-The field su_nlive_lastmod is necessary because of the protection period
-used by the GC. It is a timestamp, which contains the last time
-su_nlive_blks was modified. For example if a file is deleted, its
-blocks are subtracted from su_nlive_blks and are therefore considered to
-be reclaimable by the kernel. But the GC additionally protects them with
-the protection period. So while su_nilve_blks contains the number of
-potentially reclaimable blocks, the actual number depends on the
-protection period. To enable GC policies to effectively choose or prefer
-segments with unprotected blocks, the timestamp in su_nlive_lastmod is
-necessary.
+If the parameter only_mark of the function nilfs_sufile_flush_cache() is
+set, then the blocks that would have been dirtied by the flush are
+marked as dirty, but nothing is actually written to them. This mode is
+useful during segment construction, when blocks need to be marked dirty
+in advance.
 
-The new field su_nsnapshot_blks contains the number of blocks in a
-segment that are protected by a snapshot. The value is meant to be a
-heuristic for the GC and is not necessarily always accurate.
+New nodes are allocated on demand. The lookup of nodes is protected by
+rcu_read_lock() and the modification of values is protected by a block
+group lock. This should allow for concurrent updates to the cache.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- fs/nilfs2/ioctl.c         |  4 +--
- fs/nilfs2/sufile.c        | 45 +++++++++++++++++++++++++++++++--
- fs/nilfs2/sufile.h        |  6 +++++
- include/linux/nilfs2_fs.h | 63 +++++++++++++++++++++++++++++++++++++++++------
- 4 files changed, 106 insertions(+), 12 deletions(-)
+ fs/nilfs2/sufile.c | 369 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/sufile.h |   5 +
+ 2 files changed, 374 insertions(+)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 9a20e51..f6ee54e 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -1250,7 +1250,7 @@ static int nilfs_ioctl_set_suinfo(struct inode *inode, struct file *filp,
- 		goto out;
- 
- 	ret = -EINVAL;
--	if (argv.v_size < sizeof(struct nilfs_suinfo_update))
-+	if (argv.v_size < NILFS_MIN_SUINFO_UPDATE_SIZE)
- 		goto out;
- 
- 	if (argv.v_nmembs > nilfs->ns_nsegments)
-@@ -1316,7 +1316,7 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return nilfs_ioctl_get_cpstat(inode, filp, cmd, argp);
- 	case NILFS_IOCTL_GET_SUINFO:
- 		return nilfs_ioctl_get_info(inode, filp, cmd, argp,
--					    sizeof(struct nilfs_suinfo),
-+					    NILFS_MIN_SEGMENT_USAGE_SIZE,
- 					    nilfs_ioctl_do_get_suinfo);
- 	case NILFS_IOCTL_SET_SUINFO:
- 		return nilfs_ioctl_set_suinfo(inode, filp, cmd, argp);
 diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 2a869c3..1cce358 100644
+index 1cce358..80bbd87 100644
 --- a/fs/nilfs2/sufile.c
 +++ b/fs/nilfs2/sufile.c
-@@ -453,6 +453,11 @@ void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
- 	su->su_lastmod = cpu_to_le64(0);
- 	su->su_nblocks = cpu_to_le32(0);
- 	su->su_flags = cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_DIRTY);
-+	if (nilfs_sufile_live_blks_ext_supported(sufile)) {
-+		su->su_nlive_blks = cpu_to_le32(0);
-+		su->su_nsnapshot_blks = cpu_to_le32(0);
-+		su->su_nlive_lastmod = cpu_to_le64(0);
-+	}
- 	kunmap_atomic(kaddr);
- 
- 	nilfs_sufile_mod_counter(header_bh, clean ? (u64)-1 : 0, dirty ? 0 : 1);
-@@ -482,7 +487,7 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
- 	WARN_ON(!nilfs_segment_usage_dirty(su));
- 
- 	sudirty = nilfs_segment_usage_dirty(su);
--	nilfs_segment_usage_set_clean(su);
-+	nilfs_segment_usage_set_clean(su, NILFS_MDT(sufile)->mi_entry_size);
- 	kunmap_atomic(kaddr);
- 	mark_buffer_dirty(su_bh);
- 
-@@ -698,7 +703,7 @@ static int nilfs_sufile_truncate_range(struct inode *sufile,
- 		nc = 0;
- 		for (su = su2, j = 0; j < n; j++, su = (void *)su + susz) {
- 			if (nilfs_segment_usage_error(su)) {
--				nilfs_segment_usage_set_clean(su);
-+				nilfs_segment_usage_set_clean(su, susz);
- 				nc++;
- 			}
- 		}
-@@ -821,6 +826,8 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
- 	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
- 	void *kaddr;
- 	unsigned long nsegs, segusages_per_block;
-+	__u64 lm = 0;
-+	__u32 nlb = 0, nsb = 0;
- 	ssize_t n;
- 	int ret, i, j;
- 
-@@ -858,6 +865,18 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
- 			if (nilfs_segment_is_active(nilfs, segnum + j))
- 				si->sui_flags |=
- 					(1UL << NILFS_SEGMENT_USAGE_ACTIVE);
-+
-+			if (susz >= NILFS_LIVE_BLKS_EXT_SEGMENT_USAGE_SIZE) {
-+				nlb = le32_to_cpu(su->su_nlive_blks);
-+				nsb = le32_to_cpu(su->su_nsnapshot_blks);
-+				lm = le64_to_cpu(su->su_nlive_lastmod);
-+			}
-+
-+			if (sisz >= NILFS_LIVE_BLKS_EXT_SUINFO_SIZE) {
-+				si->sui_nlive_blks = nlb;
-+				si->sui_nsnapshot_blks = nsb;
-+				si->sui_nlive_lastmod = lm;
-+			}
- 		}
- 		kunmap_atomic(kaddr);
- 		brelse(su_bh);
-@@ -901,6 +920,9 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
- 	int cleansi, cleansu, dirtysi, dirtysu;
- 	long ncleaned = 0, ndirtied = 0;
- 	int ret = 0;
-+	bool sup_ext = (supsz >= NILFS_LIVE_BLKS_EXT_SUINFO_UPDATE_SIZE);
-+	bool su_ext = nilfs_sufile_live_blks_ext_supported(sufile);
-+	bool supsu_ext = sup_ext && su_ext;
- 
- 	if (unlikely(nsup == 0))
- 		return ret;
-@@ -911,6 +933,13 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
- 				(~0UL << __NR_NILFS_SUINFO_UPDATE_FIELDS))
- 			|| (nilfs_suinfo_update_nblocks(sup) &&
- 				sup->sup_sui.sui_nblocks >
-+				nilfs->ns_blocks_per_segment)
-+			|| (nilfs_suinfo_update_nlive_blks(sup) && sup_ext &&
-+				sup->sup_sui.sui_nlive_blks >
-+				nilfs->ns_blocks_per_segment)
-+			|| (nilfs_suinfo_update_nsnapshot_blks(sup) &&
-+				sup_ext &&
-+				sup->sup_sui.sui_nsnapshot_blks >
- 				nilfs->ns_blocks_per_segment))
- 			return -EINVAL;
- 	}
-@@ -938,6 +967,18 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
- 		if (nilfs_suinfo_update_nblocks(sup))
- 			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
- 
-+		if (nilfs_suinfo_update_nlive_blks(sup) && supsu_ext)
-+			su->su_nlive_blks =
-+				cpu_to_le32(sup->sup_sui.sui_nlive_blks);
-+
-+		if (nilfs_suinfo_update_nsnapshot_blks(sup) && supsu_ext)
-+			su->su_nsnapshot_blks =
-+				cpu_to_le32(sup->sup_sui.sui_nsnapshot_blks);
-+
-+		if (nilfs_suinfo_update_nlive_lastmod(sup) && supsu_ext)
-+			su->su_nlive_lastmod =
-+				cpu_to_le64(sup->sup_sui.sui_nlive_lastmod);
-+
- 		if (nilfs_suinfo_update_flags(sup)) {
- 			/*
- 			 * Active flag is a virtual flag projected by running
-diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-index b8afd72..da78edf 100644
---- a/fs/nilfs2/sufile.h
-+++ b/fs/nilfs2/sufile.h
-@@ -28,6 +28,12 @@
+@@ -26,6 +26,7 @@
+ #include <linux/string.h>
+ #include <linux/buffer_head.h>
+ #include <linux/errno.h>
++#include <linux/radix-tree.h>
  #include <linux/nilfs2_fs.h>
  #include "mdt.h"
- 
-+static inline int
-+nilfs_sufile_live_blks_ext_supported(const struct inode *sufile)
-+{
-+	return NILFS_MDT(sufile)->mi_entry_size >=
-+			NILFS_LIVE_BLKS_EXT_SEGMENT_USAGE_SIZE;
-+}
- 
- static inline unsigned long nilfs_sufile_get_nsegments(struct inode *sufile)
- {
-diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-index ff3fea3..4800daa 100644
---- a/include/linux/nilfs2_fs.h
-+++ b/include/linux/nilfs2_fs.h
-@@ -220,9 +220,12 @@ struct nilfs_super_block {
-  * If there is a bit set in the incompatible feature set that the kernel
-  * doesn't know about, it should refuse to mount the filesystem.
-  */
--#define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT	0x00000001ULL
-+#define NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT	BIT(0)
- 
--#define NILFS_FEATURE_COMPAT_SUPP	0ULL
-+#define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT		BIT(0)
+ #include "sufile.h"
+@@ -42,6 +43,11 @@ struct nilfs_sufile_info {
+ 	unsigned long ncleansegs;/* number of clean segments */
+ 	__u64 allocmin;		/* lower limit of allocatable segment range */
+ 	__u64 allocmax;		/* upper limit of allocatable segment range */
 +
-+#define NILFS_FEATURE_COMPAT_SUPP					\
-+			(NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT)
- #define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
- #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
- 
-@@ -609,19 +612,34 @@ struct nilfs_cpfile_header {
- 	  sizeof(struct nilfs_checkpoint) - 1) /			\
- 			sizeof(struct nilfs_checkpoint))
- 
-+#ifndef offsetofend
-+#define offsetofend(TYPE, MEMBER) \
-+		(offsetof(TYPE, MEMBER) + sizeof(((TYPE *)0)->MEMBER))
-+#endif
-+
- /**
-  * struct nilfs_segment_usage - segment usage
-  * @su_lastmod: last modified timestamp
-  * @su_nblocks: number of blocks in segment
-  * @su_flags: flags
-+ * @su_nlive_blks: number of live blocks in the segment
-+ * @su_nsnapshot_blks: number of blocks belonging to a snapshot in the segment
-+ * @su_nlive_lastmod: timestamp nlive_blks was last modified
-  */
- struct nilfs_segment_usage {
- 	__le64 su_lastmod;
- 	__le32 su_nblocks;
- 	__le32 su_flags;
-+	__le32 su_nlive_blks;
-+	__le32 su_nsnapshot_blks;
-+	__le64 su_nlive_lastmod;
++	struct blockgroup_lock nlive_blks_cache_bgl;
++	spinlock_t nlive_blks_cache_lock;
++	int nlive_blks_cache_dirty;
++	struct radix_tree_root nlive_blks_cache;
  };
  
--#define NILFS_MIN_SEGMENT_USAGE_SIZE	16
-+#define NILFS_MIN_SEGMENT_USAGE_SIZE	\
-+	offsetofend(struct nilfs_segment_usage, su_flags)
-+
-+#define NILFS_LIVE_BLKS_EXT_SEGMENT_USAGE_SIZE	\
-+	offsetofend(struct nilfs_segment_usage, su_nlive_lastmod)
- 
- /* segment usage flag */
- enum {
-@@ -658,11 +676,16 @@ NILFS_SEGMENT_USAGE_FNS(DIRTY, dirty)
- NILFS_SEGMENT_USAGE_FNS(ERROR, error)
- 
- static inline void
--nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
-+nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su, size_t susz)
- {
- 	su->su_lastmod = cpu_to_le64(0);
- 	su->su_nblocks = cpu_to_le32(0);
- 	su->su_flags = cpu_to_le32(0);
-+	if (susz >= NILFS_LIVE_BLKS_EXT_SEGMENT_USAGE_SIZE) {
-+		su->su_nlive_blks = cpu_to_le32(0);
-+		su->su_nsnapshot_blks = cpu_to_le32(0);
-+		su->su_nlive_lastmod = cpu_to_le64(0);
-+	}
+ static inline struct nilfs_sufile_info *NILFS_SUI(struct inode *sufile)
+@@ -1194,6 +1200,362 @@ out_sem:
  }
  
- static inline int
-@@ -684,23 +707,33 @@ struct nilfs_sufile_header {
- 	/* ... */
- };
+ /**
++ * nilfs_sufile_alloc_cache_node - allocate and insert a new cache node
++ * @sufile: inode of segment usage file
++ * @group: group to allocate a node for
++ *
++ * Description: Allocates a new cache node and inserts it into the cache. If
++ * there is an error, nothing will be allocated. If there already exists
++ * a node for @group, no new node will be allocated.
++ *
++ * Return Value: On success, 0 is returned, on error, one of the following
++ * negative error codes is returned.
++ *
++ * %-ENOMEM - Insufficient amount of memory available.
++ */
++static int nilfs_sufile_alloc_cache_node(struct inode *sufile,
++					 unsigned long group)
++{
++	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
++	struct nilfs_sufile_cache_node *node;
++	int ret;
++
++	node = kmem_cache_alloc(nilfs_sufile_node_cachep, GFP_NOFS);
++	if (!node)
++		return -ENOMEM;
++
++	ret = radix_tree_preload(GFP_NOFS);
++	if (ret)
++		goto free_node;
++
++	spin_lock(&sui->nlive_blks_cache_lock);
++	ret = radix_tree_insert(&sui->nlive_blks_cache, group, node);
++	spin_unlock(&sui->nlive_blks_cache_lock);
++
++	radix_tree_preload_end();
++
++	if (ret == -EEXIST) {
++		ret = 0;
++		goto free_node;
++	} else if (ret)
++		goto free_node;
++
++	return 0;
++free_node:
++	kmem_cache_free(nilfs_sufile_node_cachep, node);
++	return ret;
++}
++
++/**
++ * nilfs_sufile_dec_nlive_blks - decrements nlive_blks in the cache
++ * @sufile: inode of segment usage file
++ * @segnum: segnum for which nlive_blks will be decremented
++ *
++ * Description: Decrements the number of live blocks for @segnum in the cache.
++ * This function only affects the cache. If the cache is not flushed at a
++ * later time the changes are lost. It tries to lookup the group node to
++ * which the @segnum belongs in a lock free manner and uses a blockgroup lock
++ * to do the actual modification on the node.
++ *
++ * Return Value: On success, 0 is returned on error, one of the following
++ * negative error codes is returned.
++ *
++ * %-ENOMEM - Insufficient amount of memory available.
++ */
++int nilfs_sufile_dec_nlive_blks(struct inode *sufile, __u64 segnum)
++{
++	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
++	struct nilfs_sufile_cache_node *node;
++	spinlock_t *lock;
++	unsigned long group;
++	int ret;
++
++	group = (unsigned long)(segnum >> NILFS_SUFILE_CACHE_NODE_SHIFT);
++
++try_again:
++	rcu_read_lock();
++	node = radix_tree_lookup(&sui->nlive_blks_cache, group);
++	if (!node) {
++		rcu_read_unlock();
++
++		ret = nilfs_sufile_alloc_cache_node(sufile, group);
++		if (ret)
++			return ret;
++
++		/*
++		 * It is important to acquire the rcu_read_lock() before using
++		 * the node pointer
++		 */
++		goto try_again;
++	}
++
++	lock = bgl_lock_ptr(&sui->nlive_blks_cache_bgl, (unsigned int)group);
++	spin_lock(lock);
++	node->values[segnum & ((1 << NILFS_SUFILE_CACHE_NODE_SHIFT) - 1)] += 1;
++	sui->nlive_blks_cache_dirty = 1;
++	spin_unlock(lock);
++	rcu_read_unlock();
++
++	return 0;
++}
++
++/**
++ * nilfs_sufile_flush_cache_node - flushes one cache node to the SUFILE
++ * @sufile: inode of segment usage file
++ * @node: cache node to flush
++ * @only_mark: do not write anything, but mark the blocks as dirty
++ * @pndirty_blks: pointer to return number of dirtied blocks
++ *
++ * Description: Flushes one cache node to the SUFILE and also clears the cache
++ * node at the same time. If @only_mark is 1, nothing is written to the
++ * SUFILE, but the blocks are still marked as dirty. This is useful to mark
++ * the blocks in one phase of the segment creation and write them in another.
++ *
++ * Return Value: On success, 0 is returned on error, one of the following
++ * negative error codes is returned.
++ *
++ * %-ENOMEM - Insufficient memory available.
++ *
++ * %-EIO - I/O error
++ *
++ * %-EROFS - Read only filesystem (for create mode)
++ */
++static int nilfs_sufile_flush_cache_node(struct inode *sufile,
++					 struct nilfs_sufile_cache_node *node,
++					 int only_mark,
++					 unsigned long *pndirty_blks)
++{
++	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
++	struct buffer_head *su_bh;
++	struct nilfs_segment_usage *su;
++	spinlock_t *lock;
++	void *kaddr;
++	size_t n, i, j;
++	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
++	__u64 segnum, seg_start, nsegs;
++	__u32 nlive_blocks, value;
++	unsigned long secs = get_seconds(), ndirty_blks = 0;
++	int ret, dirty;
++
++	nsegs = nilfs_sufile_get_nsegments(sufile);
++	seg_start = node->index << NILFS_SUFILE_CACHE_NODE_SHIFT;
++	lock = bgl_lock_ptr(&sui->nlive_blks_cache_bgl, node->index);
++
++	for (i = 0; i < NILFS_SUFILE_CACHE_NODE_COUNT;) {
++		segnum = seg_start + i;
++		if (segnum >= nsegs)
++			break;
++
++		n = nilfs_sufile_segment_usages_in_block(sufile, segnum,
++				seg_start + NILFS_SUFILE_CACHE_NODE_COUNT - 1);
++
++		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum,
++							   0, &su_bh);
++		if (ret < 0) {
++			if (ret != -ENOENT)
++				return ret;
++			/* hole */
++			i += n;
++			continue;
++		}
++
++		if (only_mark && buffer_dirty(su_bh)) {
++			/* buffer already dirty */
++			put_bh(su_bh);
++			i += n;
++			continue;
++		}
++
++		spin_lock(lock);
++		kaddr = kmap_atomic(su_bh->b_page);
++
++		dirty = 0;
++		su = nilfs_sufile_block_get_segment_usage(sufile, segnum,
++							  su_bh, kaddr);
++		for (j = 0; j < n; ++j, ++i, su = (void *)su + susz) {
++			value = node->values[i];
++			if (!value)
++				continue;
++			if (!only_mark)
++				node->values[i] = 0;
++
++			WARN_ON(nilfs_segment_usage_error(su));
++
++			nlive_blocks = le32_to_cpu(su->su_nlive_blks);
++			if (!nlive_blocks)
++				continue;
++
++			dirty = 1;
++			if (only_mark) {
++				i += n - j;
++				break;
++			}
++
++			if (nlive_blocks <= value)
++				nlive_blocks = 0;
++			else
++				nlive_blocks -= value;
++
++			su->su_nlive_blks = cpu_to_le32(nlive_blocks);
++			su->su_nlive_lastmod = cpu_to_le64(secs);
++		}
++
++		kunmap_atomic(kaddr);
++		spin_unlock(lock);
++
++		if (dirty && !buffer_dirty(su_bh)) {
++			mark_buffer_dirty(su_bh);
++			nilfs_mdt_mark_dirty(sufile);
++			++ndirty_blks;
++		}
++
++		put_bh(su_bh);
++	}
++
++	*pndirty_blks += ndirty_blks;
++	return 0;
++}
++
++/**
++ * nilfs_sufile_flush_cache - flushes cache to the SUFILE
++ * @sufile: inode of segment usage file
++ * @only_mark: do not write anything, but mark the blocks as dirty
++ * @pndirty_blks: pointer to return number of dirtied blocks
++ *
++ * Description: Flushes the whole cache to the SUFILE and also clears it
++ * at the same time. If @only_mark is 1, nothing is written to the
++ * SUFILE, but the blocks are still marked as dirty. This is useful to mark
++ * the blocks in one phase of the segment creation and write them in another.
++ * If there are concurrent inserts into the cache, it cannot be guaranteed,
++ * that everything is flushed when the function returns.
++ *
++ * Return Value: On success, 0 is returned on error, one of the following
++ * negative error codes is returned.
++ *
++ * %-ENOMEM - Insufficient memory available.
++ *
++ * %-EIO - I/O error
++ *
++ * %-EROFS - Read only filesystem (for create mode)
++ */
++int nilfs_sufile_flush_cache(struct inode *sufile, int only_mark,
++			     unsigned long *pndirty_blks)
++{
++	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
++	struct nilfs_sufile_cache_node *node;
++	LIST_HEAD(nodes);
++	struct radix_tree_iter iter;
++	void **slot;
++	unsigned long ndirty_blks = 0;
++	int ret = 0;
++
++	if (!sui->nlive_blks_cache_dirty)
++		goto out;
++
++	down_write(&NILFS_MDT(sufile)->mi_sem);
++
++	/* prevent concurrent inserts */
++	spin_lock(&sui->nlive_blks_cache_lock);
++	radix_tree_for_each_slot(slot, &sui->nlive_blks_cache, &iter, 0) {
++		node = radix_tree_deref_slot_protected(slot,
++				&sui->nlive_blks_cache_lock);
++		if (!node)
++			continue;
++		if (radix_tree_exception(node))
++			continue;
++
++		list_add(&node->list_head, &nodes);
++		node->index = iter.index;
++	}
++	if (!only_mark)
++		sui->nlive_blks_cache_dirty = 0;
++	spin_unlock(&sui->nlive_blks_cache_lock);
++
++	list_for_each_entry(node, &nodes, list_head) {
++		ret = nilfs_sufile_flush_cache_node(sufile, node, only_mark,
++						    &ndirty_blks);
++		if (ret)
++			goto out_sem;
++	}
++
++out_sem:
++	up_write(&NILFS_MDT(sufile)->mi_sem);
++out:
++	if (pndirty_blks)
++		*pndirty_blks = ndirty_blks;
++	return ret;
++}
++
++/**
++ * nilfs_sufile_cache_dirty - is the sufile cache dirty
++ * @sufile: inode of segment usage file
++ *
++ * Description: Returns whether the sufile cache is dirty. If this flag is
++ * true, the cache contains unflushed content.
++ *
++ * Return Value: If the cache is not dirty, 0 is returned, otherwise
++ * 1 is returned
++ */
++int nilfs_sufile_cache_dirty(struct inode *sufile)
++{
++	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
++
++	return sui->nlive_blks_cache_dirty;
++}
++
++/**
++ * nilfs_sufile_cache_node_release_rcu - rcu callback function to free nodes
++ * @head: rcu head
++ *
++ * Description: Rcu callback function to free nodes.
++ */
++static void nilfs_sufile_cache_node_release_rcu(struct rcu_head *head)
++{
++	struct nilfs_sufile_cache_node *node;
++
++	node = container_of(head, struct nilfs_sufile_cache_node, rcu_head);
++
++	kmem_cache_free(nilfs_sufile_node_cachep, node);
++}
++
++/**
++ * nilfs_sufile_shrink_cache - free all cache nodes
++ * @sufile: inode of segment usage file
++ *
++ * Description: Frees all cache nodes in the cache regardless of their
++ * content. The content will not be flushed and may be lost. This function
++ * is intended to free up memory after the cache was flushed by
++ * nilfs_sufile_flush_cache().
++ */
++void nilfs_sufile_shrink_cache(struct inode *sufile)
++{
++	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
++	struct nilfs_sufile_cache_node *node;
++	struct radix_tree_iter iter;
++	void **slot;
++
++	/* prevent flush form running at the same time */
++	down_read(&NILFS_MDT(sufile)->mi_sem);
++	/* prevent concurrent inserts */
++	spin_lock(&sui->nlive_blks_cache_lock);
++
++	radix_tree_for_each_slot(slot, &sui->nlive_blks_cache, &iter, 0) {
++		node = radix_tree_deref_slot_protected(slot,
++				&sui->nlive_blks_cache_lock);
++		if (!node)
++			continue;
++		if (radix_tree_exception(node))
++			continue;
++
++		radix_tree_delete(&sui->nlive_blks_cache, iter.index);
++		call_rcu(&node->rcu_head, nilfs_sufile_cache_node_release_rcu);
++	}
++
++	spin_unlock(&sui->nlive_blks_cache_lock);
++	up_read(&NILFS_MDT(sufile)->mi_sem);
++}
++
++/**
+  * nilfs_sufile_read - read or get sufile inode
+  * @sb: super block instance
+  * @susize: size of a segment usage entry
+@@ -1253,6 +1615,13 @@ int nilfs_sufile_read(struct super_block *sb, size_t susize,
+ 	sui->allocmax = nilfs_sufile_get_nsegments(sufile) - 1;
+ 	sui->allocmin = 0;
  
--#define NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET	\
--	((sizeof(struct nilfs_sufile_header) +				\
--	  sizeof(struct nilfs_segment_usage) - 1) /			\
--			 sizeof(struct nilfs_segment_usage))
-+#define NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET(susz)	\
-+	((sizeof(struct nilfs_sufile_header) + (susz) - 1) / (susz))
++	if (nilfs_feature_track_live_blks(sb->s_fs_info)) {
++		bgl_lock_init(&sui->nlive_blks_cache_bgl);
++		spin_lock_init(&sui->nlive_blks_cache_lock);
++		INIT_RADIX_TREE(&sui->nlive_blks_cache, GFP_ATOMIC);
++	}
++	sui->nlive_blks_cache_dirty = 0;
++
+ 	unlock_new_inode(sufile);
+  out:
+ 	*inodep = sufile;
+diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+index 520614f..662ab56 100644
+--- a/fs/nilfs2/sufile.h
++++ b/fs/nilfs2/sufile.h
+@@ -87,6 +87,11 @@ int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs);
+ int nilfs_sufile_read(struct super_block *sb, size_t susize,
+ 		      struct nilfs_inode *raw_inode, struct inode **inodep);
+ int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range);
++int nilfs_sufile_dec_nlive_blks(struct inode *sufile, __u64 segnum);
++void nilfs_sufile_shrink_cache(struct inode *sufile);
++int nilfs_sufile_flush_cache(struct inode *sufile, int only_mark,
++			     unsigned long *pndirty_blks);
++int nilfs_sufile_cache_dirty(struct inode *sufile);
  
  /**
-  * nilfs_suinfo - segment usage information
-  * @sui_lastmod: timestamp of last modification
-  * @sui_nblocks: number of written blocks in segment
-  * @sui_flags: segment usage flags
-+ * @sui_nlive_blks: number of live blocks in the segment
-+ * @sui_nsnapshot_blks: number of blocks belonging to a snapshot in the segment
-+ * @sui_nlive_lastmod: timestamp nlive_blks was last modified
-  */
- struct nilfs_suinfo {
- 	__u64 sui_lastmod;
- 	__u32 sui_nblocks;
- 	__u32 sui_flags;
-+	__u32 sui_nlive_blks;
-+	__u32 sui_nsnapshot_blks;
-+	__u64 sui_nlive_lastmod;
- };
- 
-+#define NILFS_MIN_SUINFO_SIZE	\
-+	offsetofend(struct nilfs_suinfo, sui_flags)
-+
-+#define NILFS_LIVE_BLKS_EXT_SUINFO_SIZE	\
-+	offsetofend(struct nilfs_suinfo, sui_nlive_lastmod)
-+
- #define NILFS_SUINFO_FNS(flag, name)					\
- static inline int							\
- nilfs_suinfo_##name(const struct nilfs_suinfo *si)			\
-@@ -736,6 +769,9 @@ enum {
- 	NILFS_SUINFO_UPDATE_LASTMOD,
- 	NILFS_SUINFO_UPDATE_NBLOCKS,
- 	NILFS_SUINFO_UPDATE_FLAGS,
-+	NILFS_SUINFO_UPDATE_NLIVE_BLKS,
-+	NILFS_SUINFO_UPDATE_NLIVE_LASTMOD,
-+	NILFS_SUINFO_UPDATE_NSNAPSHOT_BLKS,
- 	__NR_NILFS_SUINFO_UPDATE_FIELDS,
- };
- 
-@@ -759,6 +795,17 @@ nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
- NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
- NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
- NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
-+NILFS_SUINFO_UPDATE_FNS(NLIVE_BLKS, nlive_blks)
-+NILFS_SUINFO_UPDATE_FNS(NSNAPSHOT_BLKS, nsnapshot_blks)
-+NILFS_SUINFO_UPDATE_FNS(NLIVE_LASTMOD, nlive_lastmod)
-+
-+#define NILFS_MIN_SUINFO_UPDATE_SIZE	\
-+	(offsetofend(struct nilfs_suinfo_update, sup_reserved) + \
-+	NILFS_MIN_SUINFO_SIZE)
-+
-+#define NILFS_LIVE_BLKS_EXT_SUINFO_UPDATE_SIZE	\
-+	(offsetofend(struct nilfs_suinfo_update, sup_reserved) + \
-+	NILFS_LIVE_BLKS_EXT_SUINFO_SIZE)
- 
- enum {
- 	NILFS_CHECKPOINT,
+  * nilfs_sufile_scrap - make a segment garbage
 -- 
 2.3.7
 
