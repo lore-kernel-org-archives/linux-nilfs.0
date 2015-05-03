@@ -1,7 +1,7 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: [PATCH v2 1/5] nilfs-utils: extend SUFILE on-disk format to enable track live blocks
-Date: Sun,  3 May 2015 12:07:03 +0200
-Message-ID: <1430647627-18902-1-git-send-email-andreas.rohner@gmx.net>
+Subject: [PATCH v2 4/5] nilfs-utils: implement the tracking of live blocks for set_suinfo
+Date: Sun,  3 May 2015 12:07:06 +0200
+Message-ID: <1430647627-18902-4-git-send-email-andreas.rohner@gmx.net>
 References: <1430647522-14304-1-git-send-email-andreas.rohner@gmx.net>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1430647522-14304-1-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
@@ -12,387 +12,278 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-This patch extends the nilfs_segment_usage structure with two extra
-fields. This changes the on-disk format of the SUFILE, but the NILFS2
-metadata files are flexible enough, so that there are no compatibility
-issues. The extension is fully backwards compatible. Nevertheless a
-feature compatibility flag was added to indicate the on-disk format
-change.
+If the tracking of live blocks is enabled, the information passed to
+the kernel with the set_suinfo ioctl must also be modified. To this
+end the nilfs_count_nlive_blks() fucntion is introduced. It simply
+loops through the vdescv and bdescv vectors and counts the live
+blocks belonging to a certain segment. Here the new vdesc flags
+introduced earlier come in handy. If NILFS_VDESC_SNAPSHOT_PROTECTED flag
+is set, the block is always counted as alive. However if it is not set
+and NILFS_VDESC_PERIOD_PROTECTED is set instead it is counted as
+reclaimable.
 
-The new field su_nlive_blks is used to track the number of live blocks
-in the corresponding segment. Its value should always be smaller than
-su_nblocks, which contains the total number of blocks in the segment.
+Additionally the nilfs_xreclaim_segment() function is refactored, so
+that the set_suinfo part is extracted into its own function
+nilfs_try_set_suinfo(). This is useful, because the code gets more
+complicated with the new additions.
 
-The field su_nlive_lastmod is necessary because of the protection period
-used by the GC. It is a timestamp, which contains the last time
-su_nlive_blks was modified. For example if a file is deleted, its
-blocks are subtracted from su_nlive_blks and are therefore
-considered to be reclaimable by the kernel. But the GC additionally
-protects them with the protection period. So while su_nilve_blks
-contains the number of potentially reclaimable blocks, the actual number
-depends on the protection period. To enable GC policies to
-effectively choose or prefer segments with unprotected blocks, the
-timestamp in su_nlive_lastmod is necessary.
-
-Since the changes to the disk layout are fully backwards compatible and
-the feature flag cannot be set after file system creation time,
-NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT is set by default. It can
-however be disabled by mkfs.nilfs2 -O ^sufile_live_blks_ext
+If the kernel either doesn't support the set_suinfo ioctl or doesn't
+support the set_nlive_blks flag, it returns ENOTTY or EINVAL
+respectively and the corresponding options are disabled and not used
+again.
 
 Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 ---
- bin/lssu.c          | 14 +++++++----
- include/nilfs2_fs.h | 52 ++++++++++++++++++++++++++++++++++------
- lib/feature.c       |  2 ++
- man/mkfs.nilfs2.8   |  7 ++++++
- sbin/mkfs/mkfs.c    | 69 +++++++++++++++++++++++++++++++++++++++--------------
- 5 files changed, 114 insertions(+), 30 deletions(-)
+ include/nilfs.h |   6 ++
+ lib/gc.c        | 177 ++++++++++++++++++++++++++++++++++++++++++++------------
+ 2 files changed, 145 insertions(+), 38 deletions(-)
 
-diff --git a/bin/lssu.c b/bin/lssu.c
-index 09ed973..e50e628 100644
---- a/bin/lssu.c
-+++ b/bin/lssu.c
-@@ -104,8 +104,8 @@ static const struct lssu_format lssu_format[] = {
- 	},
- 	{
- 		"           SEGNUM        DATE     TIME STAT     NBLOCKS" \
--		"       NLIVEBLOCKS",
--		"%17llu  %s %c%c%c%c  %10u %10u (%3u%%)\n"
-+		"       NLIVEBLOCKS   NPREDLIVEBLOCKS",
-+		"%17llu  %s %c%c%c%c  %10u %10u (%3u%%) %10u (%3u%%)\n"
- 	}
- };
+diff --git a/include/nilfs.h b/include/nilfs.h
+index dbcb76e..5fd01fc 100644
+--- a/include/nilfs.h
++++ b/include/nilfs.h
+@@ -328,6 +328,12 @@ static inline __u32 nilfs_get_blocks_per_segment(const struct nilfs *nilfs)
+ 	return le32_to_cpu(nilfs->n_sb->s_blocks_per_segment);
+ }
  
-@@ -164,9 +164,9 @@ static ssize_t lssu_print_suinfo(struct nilfs *nilfs, __u64 segnum,
- 	time_t t;
- 	char timebuf[LSSU_BUFSIZE];
- 	ssize_t i, n = 0, ret;
--	int ratio;
-+	int ratio, predratio;
- 	int protected;
--	size_t nliveblks;
-+	size_t nliveblks, npredliveblks;
- 
- 	for (i = 0; i < nsi; i++, segnum++) {
- 		if (!all && nilfs_suinfo_clean(&suinfos[i]))
-@@ -192,7 +192,10 @@ static ssize_t lssu_print_suinfo(struct nilfs *nilfs, __u64 segnum,
- 			break;
- 		case LSSU_MODE_LATEST_USAGE:
- 			nliveblks = 0;
-+			npredliveblks = suinfos[i].sui_nlive_blks;
- 			ratio = 0;
-+			predratio = (npredliveblks * 100 + 99) /
-+					blocks_per_segment;
- 			protected = suinfos[i].sui_lastmod >= prottime;
- 
- 			if (!nilfs_suinfo_dirty(&suinfos[i]) ||
-@@ -223,7 +226,8 @@ skip_scan:
- 			       nilfs_suinfo_dirty(&suinfos[i]) ? 'd' : '-',
- 			       nilfs_suinfo_error(&suinfos[i]) ? 'e' : '-',
- 			       protected ? 'p' : '-',
--			       suinfos[i].sui_nblocks, nliveblks, ratio);
-+			       suinfos[i].sui_nblocks, nliveblks, ratio,
-+			       npredliveblks, predratio);
- 			break;
- 		}
- 		n++;
-diff --git a/include/nilfs2_fs.h b/include/nilfs2_fs.h
-index a16ad4c..6f0a27e 100644
---- a/include/nilfs2_fs.h
-+++ b/include/nilfs2_fs.h
-@@ -219,9 +219,12 @@ struct nilfs_super_block {
-  * If there is a bit set in the incompatible feature set that the kernel
-  * doesn't know about, it should refuse to mount the filesystem.
-  */
--#define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT	0x00000001ULL
-+#define NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT	(1ULL << 0)
- 
--#define NILFS_FEATURE_COMPAT_SUPP	0ULL
-+#define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT		(1ULL << 0)
++static inline __u64
++nilfs_get_segnum_of_block(const struct nilfs *nilfs, sector_t blocknr)
++{
++	return blocknr / nilfs_get_blocks_per_segment(nilfs);
++}
 +
-+#define NILFS_FEATURE_COMPAT_SUPP					\
-+			(NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT)
- #define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
- #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
- 
-@@ -607,18 +610,38 @@ struct nilfs_cpfile_header {
- 	  sizeof(struct nilfs_checkpoint) - 1) /			\
- 			sizeof(struct nilfs_checkpoint))
- 
-+#undef offsetof
-+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
-+
-+#ifndef offsetofend
-+#define offsetofend(TYPE, MEMBER) \
-+		(offsetof(TYPE, MEMBER) + sizeof(((TYPE *)0)->MEMBER))
-+#endif
-+
- /**
-  * struct nilfs_segment_usage - segment usage
-  * @su_lastmod: last modified timestamp
-  * @su_nblocks: number of blocks in segment
-  * @su_flags: flags
-+ * @su_nlive_blks: number of live blocks in the segment
-+ * @su_nsnapshot_blks: number of blocks belonging to a snapshot in the segment
-+ * @su_nlive_lastmod: timestamp nlive_blks was last modified
-  */
- struct nilfs_segment_usage {
- 	__le64 su_lastmod;
- 	__le32 su_nblocks;
- 	__le32 su_flags;
-+	__le32 su_nlive_blks;
-+	__le32 su_nsnapshot_blks;
-+	__le64 su_nlive_lastmod;
- };
- 
-+#define NILFS_MIN_SEGMENT_USAGE_SIZE	\
-+	offsetofend(struct nilfs_segment_usage, su_flags)
-+
-+#define NILFS_LIVE_BLKS_EXT_SEGMENT_USAGE_SIZE	\
-+	offsetofend(struct nilfs_segment_usage, su_nlive_lastmod)
-+
- /* segment usage flag */
- enum {
- 	NILFS_SEGMENT_USAGE_ACTIVE,
-@@ -654,11 +677,16 @@ NILFS_SEGMENT_USAGE_FNS(DIRTY, dirty)
- NILFS_SEGMENT_USAGE_FNS(ERROR, error)
- 
- static inline void
--nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
-+nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su, size_t susz)
+ static inline int nilfs_feature_track_live_blks(const struct nilfs *nilfs)
  {
- 	su->su_lastmod = cpu_to_le64(0);
- 	su->su_nblocks = cpu_to_le32(0);
- 	su->su_flags = cpu_to_le32(0);
-+	if (susz >= NILFS_LIVE_BLKS_EXT_SEGMENT_USAGE_SIZE) {
-+		su->su_nlive_blks = cpu_to_le32(0);
-+		su->su_nsnapshot_blks = cpu_to_le32(0);
-+		su->su_nlive_lastmod = cpu_to_le64(0);
+ 	const __u64 required_bits = NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS |
+diff --git a/lib/gc.c b/lib/gc.c
+index a830e45..3e3bb2c 100644
+--- a/lib/gc.c
++++ b/lib/gc.c
+@@ -619,6 +619,130 @@ static int nilfs_toss_bdescs(struct nilfs_vector *bdescv)
+ }
+ 
+ /**
++ * nilfs_count_nlive_blks - returns the number of live blocks in segnum
++ * @nilfs: nilfs object
++ * @segnum: segment number
++ * @bdescv: vector object storing (descriptors of) disk block numbers
++ * @vdescv: vector object storing (descriptors of) virtual block numbers
++ */
++static size_t nilfs_count_nlive_blks(const struct nilfs *nilfs,
++				     __u64 segnum,
++				     struct nilfs_vector *vdescv,
++				     struct nilfs_vector *bdescv,
++				     size_t *pnss)
++{
++	struct nilfs_vdesc *vdesc;
++	struct nilfs_bdesc *bdesc;
++	int i;
++	size_t res = 0, nss = 0;
++
++	for (i = 0; i < nilfs_vector_get_size(bdescv); i++) {
++		bdesc = nilfs_vector_get_element(bdescv, i);
++		assert(bdesc != NULL);
++
++		if (nilfs_get_segnum_of_block(nilfs, bdesc->bd_blocknr) ==
++		    segnum && nilfs_bdesc_is_live(bdesc))
++			++res;
 +	}
- }
- 
- static inline int
-@@ -680,21 +708,25 @@ struct nilfs_sufile_header {
- 	/* ... */
- };
- 
--#define NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET	\
--	((sizeof(struct nilfs_sufile_header) +				\
--	  sizeof(struct nilfs_segment_usage) - 1) /			\
--			 sizeof(struct nilfs_segment_usage))
-+#define NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET(susz)	\
-+	((sizeof(struct nilfs_sufile_header) + (susz) - 1) / (susz))
- 
- /**
-  * nilfs_suinfo - segment usage information
-  * @sui_lastmod: timestamp of last modification
-  * @sui_nblocks: number of written blocks in segment
-  * @sui_flags: segment usage flags
-+ * @sui_nlive_blks: number of live blocks in the segment
-+ * @sui_nsnapshot_blks: number of blocks belonging to a snapshot in the segment
-+ * @sui_nlive_lastmod: timestamp nlive_blks was last modified
-  */
- struct nilfs_suinfo {
- 	__u64 sui_lastmod;
- 	__u32 sui_nblocks;
- 	__u32 sui_flags;
-+	__u32 sui_nlive_blks;
-+	__u32 sui_nsnapshot_blks;
-+	__u64 sui_nlive_lastmod;
- };
- 
- #define NILFS_SUINFO_FNS(flag, name)					\
-@@ -732,6 +764,9 @@ enum {
- 	NILFS_SUINFO_UPDATE_LASTMOD,
- 	NILFS_SUINFO_UPDATE_NBLOCKS,
- 	NILFS_SUINFO_UPDATE_FLAGS,
-+	NILFS_SUINFO_UPDATE_NLIVE_BLKS,
-+	NILFS_SUINFO_UPDATE_NLIVE_LASTMOD,
-+	NILFS_SUINFO_UPDATE_NSNAPSHOT_BLKS,
- 	__NR_NILFS_SUINFO_UPDATE_FIELDS,
- };
- 
-@@ -755,6 +790,9 @@ nilfs_suinfo_update_##name(const struct nilfs_suinfo_update *sup)	\
- NILFS_SUINFO_UPDATE_FNS(LASTMOD, lastmod)
- NILFS_SUINFO_UPDATE_FNS(NBLOCKS, nblocks)
- NILFS_SUINFO_UPDATE_FNS(FLAGS, flags)
-+NILFS_SUINFO_UPDATE_FNS(NLIVE_BLKS, nlive_blks)
-+NILFS_SUINFO_UPDATE_FNS(NSNAPSHOT_BLKS, nsnapshot_blks)
-+NILFS_SUINFO_UPDATE_FNS(NLIVE_LASTMOD, nlive_lastmod)
- 
- enum {
- 	NILFS_CHECKPOINT,
-diff --git a/lib/feature.c b/lib/feature.c
-index b3317b7..ea3cb3d 100644
---- a/lib/feature.c
-+++ b/lib/feature.c
-@@ -55,6 +55,8 @@ struct nilfs_feature {
- 
- static const struct nilfs_feature features[] = {
- 	/* Compat features */
-+	{ NILFS_FEATURE_TYPE_COMPAT,
-+	  NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT, "sufile_live_blks_ext" },
- 	/* Read-only compat features */
- 	{ NILFS_FEATURE_TYPE_COMPAT_RO,
- 	  NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT, "block_count" },
-diff --git a/man/mkfs.nilfs2.8 b/man/mkfs.nilfs2.8
-index 0ff2fbe..f04d6be 100644
---- a/man/mkfs.nilfs2.8
-+++ b/man/mkfs.nilfs2.8
-@@ -168,6 +168,13 @@ pseudo-filesystem feature "none" will clear all filesystem features.
- .TP
- .B block_count
- Enable block count per checkpoint.
-+.TP
-+.B sufile_live_blks_ext
-+Enable SUFILE extension with extra fields. This is necessary for the
-+track_live_blks features to work. Once enabled it cannot be disabled, because
-+it changes the ondisk format. Nevertheless it is fully compatible with older
-+versions of the file system. This feature is on by default, because it is fully
-+backwards compatible and can only be set at file system creation time.
- .RE
- .TP
- .B \-q
-diff --git a/sbin/mkfs/mkfs.c b/sbin/mkfs/mkfs.c
-index f5f7dbb..96b944c 100644
---- a/sbin/mkfs/mkfs.c
-+++ b/sbin/mkfs/mkfs.c
-@@ -116,7 +116,12 @@ static time_t creation_time;
- static char volume_label[80];
- static __u64 compat_array[NILFS_MAX_FEATURE_TYPES] = {
- 	/* Compat */
--	0,
-+	/*
-+	 * SUFILE_EXTENSION is set by default, because
-+	 * it is fully compatible with previous versions and it
-+	 * cannot be enabled later with nilfs-tune
-+	 */
-+	NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT,
- 	/* Read-only compat */
- 	0,
- 	/* Incompat */
-@@ -375,12 +380,33 @@ static unsigned count_ifile_blocks(void)
- 	return nblocks;
- }
- 
-+static inline int sufile_live_blks_ext_enabled(void)
-+{
-+	return compat_array[NILFS_FEATURE_TYPE_COMPAT] &
-+			NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT;
++
++	for (i = 0; i < nilfs_vector_get_size(vdescv); i++) {
++		vdesc = nilfs_vector_get_element(vdescv, i);
++		assert(vdesc != NULL);
++
++		if (nilfs_get_segnum_of_block(nilfs, vdesc->vd_blocknr) ==
++		    segnum && (nilfs_vdesc_snapshot_protected(vdesc) ||
++		    !nilfs_vdesc_period_protected(vdesc))) {
++			++res;
++			if (nilfs_vdesc_snapshot_protected(vdesc))
++				++nss;
++		}
++	}
++
++	if (pnss)
++		*pnss = nss;
++
++	return res;
 +}
 +
-+static unsigned get_sufile_entry_size(void)
++/**
++ * nilfs_try_set_suinfo - wrapper for nilfs_set_suinfo
++ * @nilfs: nilfs object
++ * @segnums: array of segment numbers storing selected segments
++ * @nsegs: size of the @segnums array
++ * @vdescv: vector object storing (descriptors of) virtual block numbers
++ * @bdescv: vector object storing (descriptors of) disk block numbers
++ *
++ * Description: nilfs_try_set_suinfo() prepares the input data structure
++ * for nilfs_set_suinfo(). If the kernel doesn't support the
++ * NILFS_IOCTL_SET_SUINFO ioctl, errno is set to ENOTTY and the set_suinfo
++ * option is cleared to prevent future calls to nilfs_try_set_suinfo().
++ * Similarly if the SUFILE extension is not supported by the kernel,
++ * errno is set to EINVAL and the track_live_blks option is disabled.
++ *
++ * Return Value: On success, zero is returned.  On error, a negative value
++ * is returned. If errno is set to ENOTTY or EINVAL, the kernel doesn't support
++ * the current configuration for nilfs_set_suinfo().
++ */
++static int nilfs_try_set_suinfo(struct nilfs *nilfs, __u64 *segnums,
++		size_t nsegs, struct nilfs_vector *vdescv,
++		struct nilfs_vector *bdescv)
 +{
-+	if (sufile_live_blks_ext_enabled())
-+		return NILFS_LIVE_BLKS_EXT_SEGMENT_USAGE_SIZE;
-+	else
-+		return NILFS_MIN_SEGMENT_USAGE_SIZE;
++	struct nilfs_vector *supv;
++	struct nilfs_suinfo_update *sup;
++	struct timeval tv;
++	int ret = -1;
++	size_t i, nblocks, nss;
++
++	supv = nilfs_vector_create(sizeof(struct nilfs_suinfo_update));
++	if (!supv)
++		goto out;
++
++	ret = gettimeofday(&tv, NULL);
++	if (ret < 0)
++		goto out;
++
++	for (i = 0; i < nsegs; ++i) {
++		sup = nilfs_vector_get_new_element(supv);
++		if (!sup) {
++			ret = -1;
++			goto out;
++		}
++
++		sup->sup_segnum = segnums[i];
++		sup->sup_flags = 0;
++		nilfs_suinfo_update_set_lastmod(sup);
++		sup->sup_sui.sui_lastmod = tv.tv_sec;
++
++		if (nilfs_opt_test_track_live_blks(nilfs)) {
++			nilfs_suinfo_update_set_nlive_blks(sup);
++			nilfs_suinfo_update_set_nsnapshot_blks(sup);
++
++			nblocks = nilfs_count_nlive_blks(nilfs,
++					segnums[i], vdescv, bdescv, &nss);
++			sup->sup_sui.sui_nlive_blks = nblocks;
++			sup->sup_sui.sui_nsnapshot_blks = nss;
++		}
++	}
++
++	ret = nilfs_set_suinfo(nilfs, nilfs_vector_get_data(supv), nsegs);
++	if (ret < 0) {
++		if (errno == ENOTTY) {
++			nilfs_gc_logger(LOG_WARNING,
++					"set_suinfo ioctl is not supported");
++			nilfs_opt_clear_set_suinfo(nilfs);
++		} else if (errno == EINVAL) {
++			nilfs_gc_logger(LOG_WARNING,
++					"sufile extension is not supported");
++			nilfs_opt_clear_track_live_blks(nilfs);
++		}
++	}
++
++out:
++	nilfs_vector_destroy(supv);
++	return ret;
 +}
 +
-+static unsigned get_sufile_first_entry_offset(void)
-+{
-+	unsigned susz = get_sufile_entry_size();
-+
-+	return NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET(susz);
-+}
-+
- static unsigned count_sufile_blocks(void)
++/**
+  * nilfs_xreclaim_segment - reclaim segments (enhanced API)
+  * @nilfs: nilfs object
+  * @segnums: array of segment numbers storing selected segments
+@@ -632,14 +756,12 @@ int nilfs_xreclaim_segment(struct nilfs *nilfs,
+ 			   const struct nilfs_reclaim_params *params,
+ 			   struct nilfs_reclaim_stat *stat)
  {
- 	unsigned long sufile_segment_usages_per_block
--		= blocksize / sizeof(struct nilfs_segment_usage);
-+		= blocksize / get_sufile_entry_size();
- 	return DIV_ROUND_UP(nr_initial_segments +
--			   NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET,
-+			   get_sufile_first_entry_offset(),
- 			   sufile_segment_usages_per_block);
- }
+-	struct nilfs_vector *vdescv, *bdescv, *periodv, *vblocknrv, *supv;
++	struct nilfs_vector *vdescv, *bdescv, *periodv, *vblocknrv;
+ 	sigset_t sigset, oldset, waitset;
+ 	nilfs_cno_t protcno;
+-	ssize_t n, i, ret = -1;
++	ssize_t n, ret = -1;
+ 	size_t nblocks;
+ 	__u32 reclaimable_blocks;
+-	struct nilfs_suinfo_update *sup;
+-	struct timeval tv;
  
-@@ -1056,7 +1082,7 @@ static inline void check_ctime(time_t ctime)
+ 	if (!(params->flags & NILFS_RECLAIM_PARAM_PROTSEQ) ||
+ 	    (params->flags & (~0UL << __NR_NILFS_RECLAIM_PARAMS))) {
+@@ -658,8 +780,7 @@ int nilfs_xreclaim_segment(struct nilfs *nilfs,
+ 	bdescv = nilfs_vector_create(sizeof(struct nilfs_bdesc));
+ 	periodv = nilfs_vector_create(sizeof(struct nilfs_period));
+ 	vblocknrv = nilfs_vector_create(sizeof(__u64));
+-	supv = nilfs_vector_create(sizeof(struct nilfs_suinfo_update));
+-	if (!vdescv || !bdescv || !periodv || !vblocknrv || !supv)
++	if (!vdescv || !bdescv || !periodv || !vblocknrv)
+ 		goto out_vec;
  
- static const __u64 ok_features[NILFS_MAX_FEATURE_TYPES] = {
- 	/* Compat */
--	0,
-+	NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT,
- 	/* Read-only compat */
- 	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
- 	/* Incompat */
-@@ -1499,8 +1525,8 @@ static void commit_cpfile(void)
- static void prepare_sufile(void)
- {
- 	struct nilfs_file_info *fi = nilfs.files[NILFS_SUFILE_INO];
--	const unsigned entries_per_block
--		= blocksize / sizeof(struct nilfs_segment_usage);
-+	const size_t susz = get_sufile_entry_size();
-+	const unsigned entries_per_block = blocksize / susz;
- 	blocknr_t blocknr = fi->start;
- 	blocknr_t entry_block = blocknr;
- 	struct nilfs_sufile_header *header;
-@@ -1516,10 +1542,10 @@ static void prepare_sufile(void)
- 	for (entry_block = blocknr;
- 	     entry_block < blocknr + fi->nblocks; entry_block++) {
- 		i = (entry_block == blocknr) ?
--			NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET : 0;
--		su = (struct nilfs_segment_usage *)
--			map_disk_buffer(entry_block, 1) + i;
--		for (; i < entries_per_block; i++, su++, segnum++) {
-+			get_sufile_first_entry_offset() : 0;
-+		su = map_disk_buffer(entry_block, 1) + i * susz;
-+		for (; i < entries_per_block; i++, su = (void *)su + susz,
-+		     segnum++) {
- #if 0 /* these fields are cleared when mapped first */
- 			su->su_lastmod = 0;
- 			su->su_nblocks = 0;
-@@ -1529,7 +1555,7 @@ static void prepare_sufile(void)
- 				nilfs_segment_usage_set_active(su);
- 				nilfs_segment_usage_set_dirty(su);
- 			} else
--				nilfs_segment_usage_set_clean(su);
-+				nilfs_segment_usage_set_clean(su, susz);
- 		}
- 	}
- 	init_inode(NILFS_SUFILE_INO, DT_REG, 0, 0);
-@@ -1538,19 +1564,26 @@ static void prepare_sufile(void)
- static void commit_sufile(void)
- {
- 	struct nilfs_file_info *fi = nilfs.files[NILFS_SUFILE_INO];
--	const unsigned entries_per_block
--		= blocksize / sizeof(struct nilfs_segment_usage);
-+	const size_t susz = get_sufile_entry_size();
-+	const unsigned entries_per_block = blocksize / susz;
- 	struct nilfs_segment_usage *su;
- 	unsigned segnum = fi->start / nilfs.diskinfo->blocks_per_segment;
- 	blocknr_t blocknr = fi->start +
--		(segnum + NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET) /
-+		(segnum + get_sufile_first_entry_offset()) /
- 		entries_per_block;
+ 	sigemptyset(&sigset);
+@@ -757,46 +878,27 @@ int nilfs_xreclaim_segment(struct nilfs *nilfs,
+ 	if ((params->flags & NILFS_RECLAIM_PARAM_MIN_RECLAIMABLE_BLKS) &&
+ 			nilfs_opt_test_set_suinfo(nilfs) &&
+ 			reclaimable_blocks < params->min_reclaimable_blks * n) {
+-		if (stat) {
+-			stat->deferred_segs = n;
+-			stat->cleaned_segs = 0;
+-		}
+ 
+-		ret = gettimeofday(&tv, NULL);
+-		if (ret < 0)
++		ret = nilfs_try_set_suinfo(nilfs, segnums, n, vdescv, bdescv);
++		if (ret == 0) {
++			if (stat) {
++				stat->deferred_segs = n;
++				stat->cleaned_segs = 0;
++			}
+ 			goto out_lock;
 -
--	su = map_disk_buffer(blocknr, 1);
--	su += (segnum + NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET) %
-+	size_t entry_off = (segnum + get_sufile_first_entry_offset()) %
- 		entries_per_block;
-+
-+	su = map_disk_buffer(blocknr, 1) + entry_off * susz;
-+
- 	su->su_lastmod = cpu_to_le64(nilfs.diskinfo->ctime);
- 	su->su_nblocks = cpu_to_le32(nilfs.current_segment->nblocks);
-+	if (sufile_live_blks_ext_enabled()) {
-+		/* nlive_blks = nblocks - (nsummary_blks + nsuperroot_blks) */
-+		su->su_nlive_blks = cpu_to_le32(nilfs.current_segment->nblocks -
-+				(nilfs.current_segment->nblk_sum + 1));
-+		su->su_nlive_lastmod = su->su_lastmod;
-+	}
- }
+-		for (i = 0; i < n; ++i) {
+-			sup = nilfs_vector_get_new_element(supv);
+-			if (!sup)
+-				goto out_lock;
+-
+-			sup->sup_segnum = segnums[i];
+-			sup->sup_flags = 0;
+-			nilfs_suinfo_update_set_lastmod(sup);
+-			sup->sup_sui.sui_lastmod = tv.tv_sec;
+ 		}
  
- static void prepare_dat(void)
-@@ -1756,7 +1789,7 @@ static void prepare_super_block(struct nilfs_disk_info *di)
- 	raw_sb->s_checkpoint_size =
- 		cpu_to_le16(sizeof(struct nilfs_checkpoint));
- 	raw_sb->s_segment_usage_size =
--		cpu_to_le16(sizeof(struct nilfs_segment_usage));
-+		cpu_to_le16(get_sufile_entry_size());
+-		ret = nilfs_set_suinfo(nilfs, nilfs_vector_get_data(supv), n);
+-
+-		if (ret == 0)
+-			goto out_lock;
+-
+-		if (ret < 0 && errno != ENOTTY) {
++		if (ret < 0 && errno != ENOTTY && errno != EINVAL) {
+ 			nilfs_gc_logger(LOG_ERR, "cannot set suinfo: %s",
+ 					strerror(errno));
+ 			goto out_lock;
+ 		}
  
- 	raw_sb->s_feature_compat =
- 		cpu_to_le64(compat_array[NILFS_FEATURE_TYPE_COMPAT]);
+-		/* errno == ENOTTY */
+-		nilfs_gc_logger(LOG_WARNING,
+-				"set_suinfo ioctl is not supported");
+-		nilfs_opt_clear_set_suinfo(nilfs);
+-		if (stat) {
+-			stat->deferred_segs = 0;
+-			stat->cleaned_segs = n;
+-		}
+-		/* Try nilfs_clean_segments */
++		/*
++		 * errno == ENOTTY || errno == EINVAL
++		 * nilfs_try_set_suinfo() failed because it is not supported
++		 * so try nilfs_clean_segments() instead
++		 */
+ 	}
+ 
+ 	ret = nilfs_clean_segments(nilfs,
+@@ -829,7 +931,6 @@ out_vec:
+ 	nilfs_vector_destroy(bdescv);
+ 	nilfs_vector_destroy(periodv);
+ 	nilfs_vector_destroy(vblocknrv);
+-	nilfs_vector_destroy(supv);
+ 	/*
+ 	 * Flags of valid fields in stat->exflags must be unset.
+ 	 */
 -- 
 2.3.7
 
