@@ -1,10 +1,9 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2 3/9] nilfs2: introduce new feature flag for tracking
- live blocks
-Date: Sat, 09 May 2015 11:28:14 +0900 (JST)
-Message-ID: <20150509.112814.2026089040966346261.konishi.ryusuke@lab.ntt.co.jp>
+Subject: Re: [PATCH v2 4/9] nilfs2: add kmem_cache for SUFILE cache nodes
+Date: Sat, 09 May 2015 11:41:49 +0900 (JST)
+Message-ID: <20150509.114149.1643183669812667339.konishi.ryusuke@lab.ntt.co.jp>
 References: <1430647522-14304-1-git-send-email-andreas.rohner@gmx.net>
-	<1430647522-14304-4-git-send-email-andreas.rohner@gmx.net>
+	<1430647522-14304-5-git-send-email-andreas.rohner@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -12,80 +11,116 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=JlL5R0iI1OL/07XijdRISKYzGhU7DOdlcweBcKFvylo=;
-        b=eDyPfhOjlsN0A5s7vn0snz8VsOyVKBjv8ZUDl6Yd7re0kKzALUznwCeglt0NYot59E
-         3zCpiwOxWaKhoaaL6QWVjCt9nsDeo0LbJenj2h54xiCnVoGo6BbOCadPHxeTS+u2JkHe
-         KlkhpRwoUw45nVB583qkWddCSoYkT63R9x/G7C8s+yGNUfzXaxnR3rTUjsRNDYiuhmBO
-         /dn7ehh2Ne5nPCe4cr10ml0nWurrYEUMbRjzZTyIJH72uw2TfBzDrE4d2w1jFghqrjnN
-         DeWbf95sUPtQo1eeGaLGWUHYHdz6nZH3hJvnEZe04dzXhryRMa8GqfEbghj57oa1gnx1
-         3ZIQ==
-In-Reply-To: <1430647522-14304-4-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+        bh=+YD/LV4p+wIdSc1olQ6yN2932oYGJIFQMIbHBK45+KU=;
+        b=MuiAaUG7WrmYIQQpTtK+tC6aYQUfEnNC/hlOh62HU0RBOfevki69KCI13yaQ/EEeBo
+         hjUK8R8iX3Bu2j1zFilKJ+/GLP0B4UC8v6Knk3emU9K80DHeDrEJY5ky+UKzXwtEfbCL
+         9vvulb8UJj0bPIPr3u9/jyvPs5tzQQIWAA8nUhHkPcA8DSVBhHUBDD4UAQj41e6GGmCx
+         IGZ8gk8C/YdvGvTru1aJ456b6bkQ/7QwNXfwX4PkJeBxW1yh2rGcQZ/ZX/5s4p1mxpCB
+         dAj9JBNYvXLzn9MAXVz2dSXZAnvGVT5hF6dU/5nufcfnSbmC0hK5sar6mYDKns1EHfoo
+         sc5g==
+In-Reply-To: <1430647522-14304-5-git-send-email-andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sun,  3 May 2015 12:05:16 +0200, Andreas Rohner wrote:
-> This patch introduces a new file system feature flag
-> NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS. If it is enabled, the file system
-> will keep track of the number of live blocks per segment. This
-> information can be used by the GC to select segments for cleaning more
-> efficiently.
-
-Please describe the reason why you separated
-NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS and
-NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT that you mentioned before
-in the commit log.
-
+On Sun,  3 May 2015 12:05:17 +0200, Andreas Rohner wrote:
+> This patch adds a kmem_cache to efficiently allocate SUFILE cache nodes.
+> One cache node contains a certain number of unsigned 32 bit values and
+> either a list_head, to string a number of nodes together into a linked
+> list, or an rcu_head to be able to use the node with an rcu
+> callback.
+> 
+> These cache nodes can be used to cache small changes to the SUFILE and
+> apply them later at segment construction.
 > 
 > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 > ---
->  fs/nilfs2/the_nilfs.h     | 8 ++++++++
->  include/linux/nilfs2_fs.h | 4 +++-
->  2 files changed, 11 insertions(+), 1 deletion(-)
+>  fs/nilfs2/sufile.h | 14 ++++++++++++++
+>  fs/nilfs2/super.c  | 14 ++++++++++++++
+>  2 files changed, 28 insertions(+)
 > 
-> diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-> index 12cd91d..d755b6b 100644
-> --- a/fs/nilfs2/the_nilfs.h
-> +++ b/fs/nilfs2/the_nilfs.h
-> @@ -401,4 +401,12 @@ static inline int nilfs_flush_device(struct the_nilfs *nilfs)
->  	return err;
+> diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+> index da78edf..520614f 100644
+> --- a/fs/nilfs2/sufile.h
+> +++ b/fs/nilfs2/sufile.h
+> @@ -28,6 +28,20 @@
+>  #include <linux/nilfs2_fs.h>
+>  #include "mdt.h"
+>  
+> +#define NILFS_SUFILE_CACHE_NODE_SHIFT	6
+> +#define NILFS_SUFILE_CACHE_NODE_COUNT	(1 << NILFS_SUFILE_CACHE_NODE_SHIFT)
+> +
+> +struct nilfs_sufile_cache_node {
+> +	__u32 values[NILFS_SUFILE_CACHE_NODE_COUNT];
+> +	union {
+> +		struct rcu_head rcu_head;
+> +		struct list_head list_head;
+> +	};
+> +	unsigned long index;
+> +};
+> +
+> +extern struct kmem_cache *nilfs_sufile_node_cachep;
+> +
+>  static inline int
+>  nilfs_sufile_live_blks_ext_supported(const struct inode *sufile)
+>  {
+> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+> index f47585b..97a30db 100644
+> --- a/fs/nilfs2/super.c
+> +++ b/fs/nilfs2/super.c
+> @@ -71,6 +71,7 @@ static struct kmem_cache *nilfs_inode_cachep;
+>  struct kmem_cache *nilfs_transaction_cachep;
+>  struct kmem_cache *nilfs_segbuf_cachep;
+>  struct kmem_cache *nilfs_btree_path_cache;
+> +struct kmem_cache *nilfs_sufile_node_cachep;
+>  
+>  static int nilfs_setup_super(struct super_block *sb, int is_mount);
+>  static int nilfs_remount(struct super_block *sb, int *flags, char *data);
+> @@ -1397,6 +1398,11 @@ static void nilfs_segbuf_init_once(void *obj)
+>  	memset(obj, 0, sizeof(struct nilfs_segment_buffer));
 >  }
 >  
-> +static inline int nilfs_feature_track_live_blks(struct the_nilfs *nilfs)
+> +static void nilfs_sufile_cache_node_init_once(void *obj)
 > +{
-> +	const __u64 required_bits = NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS |
-> +				    NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT;
-> +
-> +	return ((nilfs->ns_feature_compat & required_bits) == required_bits);
+> +	memset(obj, 0, sizeof(struct nilfs_sufile_cache_node));
 > +}
 > +
->  #endif /* _THE_NILFS_H */
-> diff --git a/include/linux/nilfs2_fs.h b/include/linux/nilfs2_fs.h
-> index 4800daa..5f05bbf 100644
-> --- a/include/linux/nilfs2_fs.h
-> +++ b/include/linux/nilfs2_fs.h
-> @@ -221,11 +221,13 @@ struct nilfs_super_block {
->   * doesn't know about, it should refuse to mount the filesystem.
->   */
->  #define NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT	BIT(0)
-> +#define NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS		BIT(1)
 
-Ditto.  Avoid using BIT macro in nilfs2_fs.h for now.
+Note that nilfs_sufile_cache_node_init_once() is only called when each
+cache entry is allocated first time.  It doesn't ensure each cache
+entry is clean when it will be allocated with kmem_cache_alloc()
+the second time and afterwards.
 
 Regards,
 Ryusuke Konishi
 
->  #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT		BIT(0)
+>  static void nilfs_destroy_cachep(void)
+>  {
+>  	/*
+> @@ -1413,6 +1419,8 @@ static void nilfs_destroy_cachep(void)
+>  		kmem_cache_destroy(nilfs_segbuf_cachep);
+>  	if (nilfs_btree_path_cache)
+>  		kmem_cache_destroy(nilfs_btree_path_cache);
+> +	if (nilfs_sufile_node_cachep)
+> +		kmem_cache_destroy(nilfs_sufile_node_cachep);
+>  }
 >  
->  #define NILFS_FEATURE_COMPAT_SUPP					\
-> -			(NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT)
-> +			(NILFS_FEATURE_COMPAT_SUFILE_LIVE_BLKS_EXT |	\
-> +			 NILFS_FEATURE_COMPAT_TRACK_LIVE_BLKS)
->  #define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
->  #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
+>  static int __init nilfs_init_cachep(void)
+> @@ -1441,6 +1449,12 @@ static int __init nilfs_init_cachep(void)
+>  	if (!nilfs_btree_path_cache)
+>  		goto fail;
 >  
+> +	nilfs_sufile_node_cachep = kmem_cache_create("nilfs_sufile_node_cache",
+> +			sizeof(struct nilfs_sufile_cache_node), 0, 0,
+> +			nilfs_sufile_cache_node_init_once);
+> +	if (!nilfs_sufile_node_cachep)
+> +		goto fail;
+> +
+>  	return 0;
+>  
+>  fail:
 > -- 
 > 2.3.7
 > 
