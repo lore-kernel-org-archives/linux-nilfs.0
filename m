@@ -1,11 +1,11 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2 6/9] nilfs2: add tracking of block deletions and
- updates
-Date: Sun, 10 May 2015 12:17:29 +0900 (JST)
-Message-ID: <20150510.121729.1918039848761403115.konishi.ryusuke@lab.ntt.co.jp>
-References: <1430647522-14304-7-git-send-email-andreas.rohner@gmx.net>
-	<20150509.160512.1087140271092828536.konishi.ryusuke@lab.ntt.co.jp>
-	<554E67C0.1050309@gmx.net>
+Subject: Re: [PATCH v2 7/9] nilfs2: ensure that all dirty blocks are
+ written out
+Date: Sun, 10 May 2015 12:31:12 +0900 (JST)
+Message-ID: <20150510.123112.1905533372511793847.konishi.ryusuke@lab.ntt.co.jp>
+References: <1430647522-14304-8-git-send-email-andreas.rohner@gmx.net>
+	<20150509.211741.1463241033923032068.konishi.ryusuke@lab.ntt.co.jp>
+	<554E6B7E.8070000@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -13,152 +13,156 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=ExiiLt8NAfHZat5G49xRWCN4QW3XGiwWLCsPO62RKQA=;
-        b=xFof468xDnbPhjYgGSI/cmos0ZGLzoHaWkM+EOcRyVH0KcIC2LCliez2coN/MY4oW6
-         ZTFTwbRIEtYng5bTBXRR85iGCc5f2u0SfX7H2P+chQZMxbCJFOu22/bOS6Boe8o/G4Tv
-         p3WTlcKsjnMIeYYPcu9mvyoXGLABCq/Pxg6GQnSPQSU1h/IcCKvTTVOsUukrDsRFrG8j
-         OEB5ZQgjn4HY0ZmjedFepB/YMQNoEHqAaOMoMQkPT7dwXB0/cY/O8Ku8zUnMGh3J31wG
-         5z7JgkxNPetq52+bBMHNz2pIVsgOKwoqj0+BGILSbH/+n+f+kHutpQFfyaxsiQyCmuZz
-         ovww==
-In-Reply-To: <554E67C0.1050309-hi6Y0CQ0nG0@public.gmane.org>
+        bh=pLs7XfQJDeTTghzu8vJts006OoszU9nrvmvOCeFHi0A=;
+        b=SoBWCG9iReesU5n/7/mMUVxsWFpQO+tds6DKVvhVixef9JzJg8CV89Gjyatdf3opwi
+         ihur2b7BaC3MllHrsU+EMF6UmRtCg8hm5s4A09HpDfMo7POGaasvDYGSjXxWApKJLa0k
+         EkMrndGRAPdXUqYyQ9zv+zciwsjZikf43vnta5lG82Pvy8+unqxk+DGLE4f5PByR3otZ
+         JR0Ln50NuTdTRY5Mn+/P0D8j+khfiivJCXGy2AwhA+mBcTeadfpidxdbSiR2PA9EasfD
+         fOatgcR2pIJKk1E+lqagyZJ2FEPhttVwAIEW13qQ0UN7WJ6M1VlGvSGAYZF5jBVbwF6W
+         lfDw==
+In-Reply-To: <554E6B7E.8070000-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sat, 09 May 2015 22:02:08 +0200, Andreas Rohner wrote:
-> On 2015-05-09 09:05, Ryusuke Konishi wrote:
->> On Sun,  3 May 2015 12:05:19 +0200, Andreas Rohner wrote:
-<snip>
->>> @@ -1889,9 +1890,35 @@ static int nilfs_btree_propagate_p(struct nilfs_bmap *btree,
->>>  				   int level,
->>>  				   struct buffer_head *bh)
->>>  {
->>> -	while ((++level < nilfs_btree_height(btree) - 1) &&
->>> -	       !buffer_dirty(path[level].bp_bh))
->>> -		mark_buffer_dirty(path[level].bp_bh);
->>> +	struct the_nilfs *nilfs = btree->b_inode->i_sb->s_fs_info;
->>> +	struct nilfs_btree_node *node;
->>> +	__u64 ptr, segnum;
->>> +	int ncmax, vol, counted;
->>> +
->>> +	vol = buffer_nilfs_volatile(bh);
->>> +	counted = buffer_nilfs_counted(bh);
->>> +	set_buffer_nilfs_counted(bh);
->>> +
->>> +	while (++level < nilfs_btree_height(btree)) {
->>> +		if (!vol && !counted && nilfs_feature_track_live_blks(nilfs)) {
->>> +			node = nilfs_btree_get_node(btree, path, level, &ncmax);
->>> +			ptr = nilfs_btree_node_get_ptr(node,
->>> +						       path[level].bp_index,
->>> +						       ncmax);
->>> +			segnum = nilfs_get_segnum_of_block(nilfs, ptr);
->>> +			nilfs_sufile_dec_nlive_blks(nilfs->ns_sufile, segnum);
->>> +		}
->>> +
->>> +		if (path[level].bp_bh) {
->>> +			if (buffer_dirty(path[level].bp_bh))
->>> +				break;
->>> +
->>> +			mark_buffer_dirty(path[level].bp_bh);
->>> +			vol = buffer_nilfs_volatile(path[level].bp_bh);
->>> +			counted = buffer_nilfs_counted(path[level].bp_bh);
->>> +			set_buffer_nilfs_counted(path[level].bp_bh);
->>> +		}
->>> +	}
->>>  
->>>  	return 0;
+On Sat, 09 May 2015 22:18:06 +0200, Andreas Rohner wrote:
+> On 2015-05-09 14:17, Ryusuke Konishi wrote:
+>> On Sun,  3 May 2015 12:05:20 +0200, Andreas Rohner wrote:
+>>> @@ -1055,6 +1070,55 @@ static int nilfs_segctor_scan_file_dsync(struct nilfs_sc_info *sci,
+>>>  	return err;
 >>>  }
->> 
->> Consider the following comments:
->> 
->> - Please use volatile flag also for the duplication check instead of
->>   adding nilfs_counted flag.
-> 
-> I thought volatile already means something else. I wasn't sure if could
-> use it. I will change it and remove the nilfs_counted flag.
-
-Sorry for the confusing naming.
-
-The volatile flag originally meant that the parent node of the buffer
-stores a memory address of buffer_head struct of it instead of a disk
-block address (virtual or real one).  This is needed for newly created
-and never written buffers.
-
-It later got used for the duplication check of pointer updating as
-well.  For node buffers marked dirty through dirty flag propagation,
-the dirty flag can be used for this purpose.  However, for node or
-data buffers which trigger the propagation, another flag was needed
-since it's already marked dirty.
-
-For details, see what nilfs_btree_commit_propagate_v() and
-nilfs_btree_commit_update_v() are doing.
-
-Anyway, we can apply the same semantics for live block tracking of
-DAT.
-
-> 
->> - btree.c, direct.c, and dat.c shouldn't refer SUFILE directly.
->>   Please add a wrapper function like "nilfs_dec_nlive_blks(nilfs, blocknr)"
->>   to the implementation of the_nilfs.c, and use it instead.
->> - To clarify implementation separate function to update pointers
->>   like nilfs_btree_propagate_v() is doing.
-> 
-> Ok.
-> 
->> - The return value of nilfs_sufile_dec_nlive_blks() looks to be ignored
->>   intentionally.  Please add a comment explaining why you do so.
-> 
-> I just thought, that the block tracking isn't important enough to cause
-> a fatal error. I should at least use the WARN_ON() macro. Do you think I
-> should return possible errors?
-
-I think ignoring errors is ok.  Just I thought we should clarify the
-reason for other kernel developers.  Outputting some warning sounds
-good.  In that case, using nilfs_warning() seems better than WARN_ON()
-since the former can deliver a meaningful message.
-
-<snip>
->>> +	if (unlikely(!NILFS_BMAP_USE_VBN(bmap))) {
->>> +		if (!buffer_nilfs_volatile(bh) && !buffer_nilfs_counted(bh) &&
->>> +				nilfs_feature_track_live_blks(nilfs)) {
->>> +			set_buffer_nilfs_counted(bh);
->>> +			segnum = nilfs_get_segnum_of_block(nilfs, ptr);
+>>>  
+>>> +/**
+>>> + * nilfs_segctor_propagate_sufile - dirties all needed SUFILE blocks
+>>> + * @sci: nilfs_sc_info
+>>> + *
+>>> + * Description: Dirties and propagates all SUFILE blocks that need to be
+>>> + * available later in the segment construction process, when the SUFILE cache
+>>> + * is flushed. Here the SUFILE cache is not actually flushed, but the blocks
+>>> + * that are needed for a later flush are marked as dirty. Since the propagation
+>>> + * of the SUFILE can dirty DAT entries and vice versa, the functions
+>>> + * are executed in a loop until no new blocks are dirtied.
+>>> + *
+>>> + * Return Value: On success, 0 is returned on error, one of the following
+>>> + * negative error codes is returned.
+>>> + *
+>>> + * %-ENOMEM - Insufficient memory available.
+>>> + *
+>>> + * %-EIO - I/O error
+>>> + *
+>>> + * %-EROFS - Read only filesystem (for create mode)
+>>> + */
+>>> +static int nilfs_segctor_propagate_sufile(struct nilfs_sc_info *sci)
+>>> +{
+>>> +	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
+>>> +	unsigned long ndirty_blks;
+>>> +	int ret, retrycount = NILFS_SC_SUFILE_PROP_RETRY;
 >>> +
->>> +			nilfs_sufile_dec_nlive_blks(nilfs->ns_sufile, segnum);
->>> +		}
->>> +		return 0;
->>> +	}
+>>> +	do {
+>>> +		/* count changes to DAT file before flush */
+>>> +		ret = nilfs_segctor_scan_file(sci, nilfs->ns_dat,
+>>> +					      &nilfs_sc_prop_ops);
 >> 
->> Use the volatile flag also for duplication check, and do not use
->> unlikely() marcro when testing "!NILFS_BMAP_USE_VBN(bmap)".  It's
->> not exceptional as error:
+>> Use the previous nilfs_segctor_propagate_file() here.
 >> 
->> 	if (!NILFS_BMAP_USE_VBN(bmap)) {
->> 		if (!buffer_nilfs_volatile(bh)) {
->> 			if (nilfs_feature_track_live_blks(nilfs))
->> 				nilfs_dec_nlive_blks(nilfs, ptr);
->> 			set_buffer_nilfs_volatile(bh);
->> 		}
->> 		return 0;
->> 	}
+>>> +		if (unlikely(ret))
+>>> +			return ret;
+>>> +
+>>> +		ret = nilfs_sufile_flush_cache(nilfs->ns_sufile, 1,
+>>> +					       &ndirty_blks);
+>>> +		if (unlikely(ret))
+>>> +			return ret;
+>>> +		if (!ndirty_blks)
+>>> +			break;
+>>> +
+>>> +		ret = nilfs_segctor_scan_file(sci, nilfs->ns_sufile,
+>>> +					      &nilfs_sc_prop_ops);
+>> 
+>> Ditto.
+>> 
+>>> +		if (unlikely(ret))
+>>> +			return ret;
+>>> +	} while (ndirty_blks && retrycount-- > 0);
+>>> +
+>> 
+>> Uum. This still looks to have potential for leak of dirty block
+>> collection between DAT and SUFILE since this retry is limited by
+>> the fixed retry count.
 > 
-> During my tests, this was only called once directly after the first
-> bytes are written on a newly formatted volume. This can only be true for
-> the DAT-File and the DAT-File is very unlikely to be small enough to use
-> the direct bmap, except on a newly formatted volume. Do you mean, that
-> unlikely() should only be used for errors?
+> Yes unfortunately.
+> 
+>> How about adding function temporarily turning off the live block
+>> tracking and using it after this propagation loop until log write
+>> finishes ?
+> 
+> I think this is a great idea.
+> 
+>> It would reduce the accuracy of live block count, but is it enough ?
+>> How do you think ? 
+> 
+> I would suggest to iterate through the loop in
+> nilfs_segctor_propagate_sufile() at least once or twice, so that we can
+> count most of the DAT-File blocks. After that we temporarily turn off
+> the live block tracking until the end of the segment construction. This
+> should only lead to small inaccuracies.
 
-Ok, it sounds reasonable.
+Agreed, that sounds better.
 
-In general, unlikely() should only be used for errors.  But this is
-special; DAT-file soon becomes big and will be converted to b-tree,
-therefore nilfs_direct_propagate() soon becomes a function for other
-type of files.
+>> We have to eliminate the possibility of the leak
+>> because it can cause file system corruption.  Every checkpoint must be
+>> self-contained.
+> 
+> I didn't realize that it could cause file system corruption.
+> 
+>>> +	return 0;
+>>> +}
+>>> +
+>>>  static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+>>>  {
+>>>  	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
+>>> @@ -1160,6 +1224,13 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+>>>  		}
+>>>  		sci->sc_stage.flags |= NILFS_CF_SUFREED;
+>>>  
+>> 
+>>> +		if (mode == SC_LSEG_SR &&
+>> 
+>> This test ("mode == SC_LSEG_SR") can be removed.  When the thread
+>> comes here, it will always make a checkpoint.
+>> 
+>>> +		    nilfs_feature_track_live_blks(nilfs)) {
+>>> +			err = nilfs_segctor_propagate_sufile(sci);
+>>> +			if (unlikely(err))
+>>> +				break;
+>>> +		}
+>>> +
+>>>  		err = nilfs_segctor_scan_file(sci, nilfs->ns_sufile,
+>>>  					      &nilfs_sc_file_ops);
+>>>  		if (unlikely(err))
+>>> diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
+>>> index a48d6de..5aa7f91 100644
+>>> --- a/fs/nilfs2/segment.h
+>>> +++ b/fs/nilfs2/segment.h
+>>> @@ -208,7 +208,8 @@ enum {
+>>>   */
+>>>  #define NILFS_SC_CLEANUP_RETRY	    3  /* Retry count of construction when
+>>>  					  destroying segctord */
+>>> -
+>>> +#define NILFS_SC_SUFILE_PROP_RETRY  10 /* Retry count of the propagate
+>>> +					  sufile loop */
+>> 
+>> How many times does the propagation loop has to be repeated
+>> until it converges ?
+> 
+> Most of the time it runs only once, because all the blocks are already
+> dirty, but sometimes it can go on for more than 10 iterations.
+
+Thank you for the reply.  I got the situation.
 
 Regards,
-Ryusuke Konishi
+Ryusuke Konishi.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
