@@ -1,11 +1,11 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2 5/9] nilfs2: add SUFILE cache for changes to
- su_nlive_blks field
-Date: Sun, 10 May 2015 11:09:29 +0900 (JST)
-Message-ID: <20150510.110929.300032019699467562.konishi.ryusuke@lab.ntt.co.jp>
-References: <1430647522-14304-6-git-send-email-andreas.rohner@gmx.net>
-	<20150509.130900.223492430584220355.konishi.ryusuke@lab.ntt.co.jp>
-	<554E626A.2030503@gmx.net>
+Subject: Re: [PATCH v2 6/9] nilfs2: add tracking of block deletions and
+ updates
+Date: Sun, 10 May 2015 12:17:29 +0900 (JST)
+Message-ID: <20150510.121729.1918039848761403115.konishi.ryusuke@lab.ntt.co.jp>
+References: <1430647522-14304-7-git-send-email-andreas.rohner@gmx.net>
+	<20150509.160512.1087140271092828536.konishi.ryusuke@lab.ntt.co.jp>
+	<554E67C0.1050309@gmx.net>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -13,139 +13,152 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-type:content-transfer-encoding;
-        bh=z+Q/g385NLMRiiXis4upe8ud746pQt240zGS8rgpytc=;
-        b=Oz8lHqNM+zBiVs/m7iMynGn5Vf7c105qaPRIvrW7aMIPCnLHq3ytreATkoXysppliJ
-         SFTdch2/h1J/DQXSXpj1aQKDT8o1EtDlXMJi6Q6DSbm5zyPFgX2yYvFA64USUpP/RYxh
-         6GSoLHcvFDz71eHixnDiQ8P9OKs9HguEDST3j34XhL8VHciT8TxSr4zhWEOuXLpBFxBi
-         qMXRU1b0N99RwJbdC2djGfNW+wXsuDC0lntqMTCTxlUSKFYTw+zCCmD1xu3hOyTNchk+
-         xG9ayc2EN8D9leZcXmqN6gcySMkGwWehKICW803BBZAG1FhYuReA2hMa4TJss95P2X+k
-         zDqA==
-In-Reply-To: <554E626A.2030503-hi6Y0CQ0nG0@public.gmane.org>
+        bh=ExiiLt8NAfHZat5G49xRWCN4QW3XGiwWLCsPO62RKQA=;
+        b=xFof468xDnbPhjYgGSI/cmos0ZGLzoHaWkM+EOcRyVH0KcIC2LCliez2coN/MY4oW6
+         ZTFTwbRIEtYng5bTBXRR85iGCc5f2u0SfX7H2P+chQZMxbCJFOu22/bOS6Boe8o/G4Tv
+         p3WTlcKsjnMIeYYPcu9mvyoXGLABCq/Pxg6GQnSPQSU1h/IcCKvTTVOsUukrDsRFrG8j
+         OEB5ZQgjn4HY0ZmjedFepB/YMQNoEHqAaOMoMQkPT7dwXB0/cY/O8Ku8zUnMGh3J31wG
+         5z7JgkxNPetq52+bBMHNz2pIVsgOKwoqj0+BGILSbH/+n+f+kHutpQFfyaxsiQyCmuZz
+         ovww==
+In-Reply-To: <554E67C0.1050309-hi6Y0CQ0nG0@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
 To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sat, 09 May 2015 21:39:22 +0200, Andreas Rohner wrote:
-> On 2015-05-09 06:09, Ryusuke Konishi wrote:
->> On Sun,  3 May 2015 12:05:18 +0200, Andreas Rohner wrote:
+On Sat, 09 May 2015 22:02:08 +0200, Andreas Rohner wrote:
+> On 2015-05-09 09:05, Ryusuke Konishi wrote:
+>> On Sun,  3 May 2015 12:05:19 +0200, Andreas Rohner wrote:
 <snip>
->>> +	lock = bgl_lock_ptr(&sui->nlive_blks_cache_bgl, (unsigned int)group);
->>> +	spin_lock(lock);
->>> +	node->values[segnum & ((1 << NILFS_SUFILE_CACHE_NODE_SHIFT) - 1)] += 1;
->>> +	sui->nlive_blks_cache_dirty = 1;
->>> +	spin_unlock(lock);
->>> +	rcu_read_unlock();
+>>> @@ -1889,9 +1890,35 @@ static int nilfs_btree_propagate_p(struct nilfs_bmap *btree,
+>>>  				   int level,
+>>>  				   struct buffer_head *bh)
+>>>  {
+>>> -	while ((++level < nilfs_btree_height(btree) - 1) &&
+>>> -	       !buffer_dirty(path[level].bp_bh))
+>>> -		mark_buffer_dirty(path[level].bp_bh);
+>>> +	struct the_nilfs *nilfs = btree->b_inode->i_sb->s_fs_info;
+>>> +	struct nilfs_btree_node *node;
+>>> +	__u64 ptr, segnum;
+>>> +	int ncmax, vol, counted;
 >>> +
->>> +	return 0;
->>> +}
+>>> +	vol = buffer_nilfs_volatile(bh);
+>>> +	counted = buffer_nilfs_counted(bh);
+>>> +	set_buffer_nilfs_counted(bh);
+>>> +
+>>> +	while (++level < nilfs_btree_height(btree)) {
+>>> +		if (!vol && !counted && nilfs_feature_track_live_blks(nilfs)) {
+>>> +			node = nilfs_btree_get_node(btree, path, level, &ncmax);
+>>> +			ptr = nilfs_btree_node_get_ptr(node,
+>>> +						       path[level].bp_index,
+>>> +						       ncmax);
+>>> +			segnum = nilfs_get_segnum_of_block(nilfs, ptr);
+>>> +			nilfs_sufile_dec_nlive_blks(nilfs->ns_sufile, segnum);
+>>> +		}
+>>> +
+>>> +		if (path[level].bp_bh) {
+>>> +			if (buffer_dirty(path[level].bp_bh))
+>>> +				break;
+>>> +
+>>> +			mark_buffer_dirty(path[level].bp_bh);
+>>> +			vol = buffer_nilfs_volatile(path[level].bp_bh);
+>>> +			counted = buffer_nilfs_counted(path[level].bp_bh);
+>>> +			set_buffer_nilfs_counted(path[level].bp_bh);
+>>> +		}
+>>> +	}
+>>>  
+>>>  	return 0;
+>>>  }
 >> 
->> Consider using cmpxchg() or atomic_inc(), and using
-
->> NILFS_SUFILE_CACHE_NODE_MASK to mask segnum.
-
-Sorry, I meant NILFS_SUFILE_CACHE_NODE_COUNT as below.
-
->> The following is an
->> example in the case of using cmpxchg():
+>> Consider the following comments:
 >> 
->> 	__u32 old, new, *valuep;
->> 	...
->> 	old = node->values[segnum & (NILFS_SUFILE_CACHE_NODE_COUNT - 1)];
->> 	do {
->> 		old = ACCESS_ONCE(*valuep);
->> 		new = old + 1;
->> 	} while (cmpxchg(valuep, old, new) != old);
->> 
->> 	sui->nlive_blks_cache_dirty = 1;
->> 
->> 	rcu_read_unlock();
->> 	return 0;
->> }
->> 
->> The current atomic_xxxx() macros are actually defined in the same way
->> to the reduce overheads in smp environment.
->> 
->> Using atomic_xxxx() is more preferable but formally it requires
->> initialization with "atomic_set(&counter, 0)" or "ATOMIC_INIT(0)" for
->> every element.  I don't know whether initialization with memset()
->> function is allowed or not for atomic_t type variables.
+>> - Please use volatile flag also for the duplication check instead of
+>>   adding nilfs_counted flag.
 > 
-> Ok, but I would also have to use cmpxchg() in
-> nilfs_sufile_flush_cache_node(), if the value needs to be set to 0.
+> I thought volatile already means something else. I wasn't sure if could
+> use it. I will change it and remove the nilfs_counted flag.
+
+Sorry for the confusing naming.
+
+The volatile flag originally meant that the parent node of the buffer
+stores a memory address of buffer_head struct of it instead of a disk
+block address (virtual or real one).  This is needed for newly created
+and never written buffers.
+
+It later got used for the duplication check of pointer updating as
+well.  For node buffers marked dirty through dirty flag propagation,
+the dirty flag can be used for this purpose.  However, for node or
+data buffers which trigger the propagation, another flag was needed
+since it's already marked dirty.
+
+For details, see what nilfs_btree_commit_propagate_v() and
+nilfs_btree_commit_update_v() are doing.
+
+Anyway, we can apply the same semantics for live block tracking of
+DAT.
+
 > 
-> Currently the cache is only flushed during segment construction, so
-> there should be no concurrent calls to nilfs_sufile_dec_nlive_blks().
-> But I thought it would be best do design a thread safe flush function.
+>> - btree.c, direct.c, and dat.c shouldn't refer SUFILE directly.
+>>   Please add a wrapper function like "nilfs_dec_nlive_blks(nilfs, blocknr)"
+>>   to the implementation of the_nilfs.c, and use it instead.
+>> - To clarify implementation separate function to update pointers
+>>   like nilfs_btree_propagate_v() is doing.
+> 
+> Ok.
+> 
+>> - The return value of nilfs_sufile_dec_nlive_blks() looks to be ignored
+>>   intentionally.  Please add a comment explaining why you do so.
+> 
+> I just thought, that the block tracking isn't important enough to cause
+> a fatal error. I should at least use the WARN_ON() macro. Do you think I
+> should return possible errors?
 
-You don't have to use cmpxchg() if you just want to set the value
-to 0 since store operation is already atomic (see implementation of
-atomic_set).
-
-Do you mean atomic substraction is needed in
-nilfs_sufile_flush_cache_node() ?
-
-If so, using cmpxchg() is right.  But, note that, under the premise,
-nilfs_sufile_shrink_cache() may free counters with a non-zero value.
-
-At present, this is not a problem because nilfs_sufile_shrink_cache()
-is called within nilfs_segctor_do_construct().  And, even when we add
-its callsite in destructor of sufile, ignoring counters with a
-non-zero value is not critical.
+I think ignoring errors is ok.  Just I thought we should clarify the
+reason for other kernel developers.  Outputting some warning sounds
+good.  In that case, using nilfs_warning() seems better than WARN_ON()
+since the former can deliver a meaningful message.
 
 <snip>
->>> +void nilfs_sufile_shrink_cache(struct inode *sufile)
->>> +{
->>> +	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
->>> +	struct nilfs_sufile_cache_node *node;
->>> +	struct radix_tree_iter iter;
->>> +	void **slot;
+>>> +	if (unlikely(!NILFS_BMAP_USE_VBN(bmap))) {
+>>> +		if (!buffer_nilfs_volatile(bh) && !buffer_nilfs_counted(bh) &&
+>>> +				nilfs_feature_track_live_blks(nilfs)) {
+>>> +			set_buffer_nilfs_counted(bh);
+>>> +			segnum = nilfs_get_segnum_of_block(nilfs, ptr);
 >>> +
+>>> +			nilfs_sufile_dec_nlive_blks(nilfs->ns_sufile, segnum);
+>>> +		}
+>>> +		return 0;
+>>> +	}
 >> 
->>> +	/* prevent flush form running at the same time */
+>> Use the volatile flag also for duplication check, and do not use
+>> unlikely() marcro when testing "!NILFS_BMAP_USE_VBN(bmap)".  It's
+>> not exceptional as error:
 >> 
->> "flush from" ?
+>> 	if (!NILFS_BMAP_USE_VBN(bmap)) {
+>> 		if (!buffer_nilfs_volatile(bh)) {
+>> 			if (nilfs_feature_track_live_blks(nilfs))
+>> 				nilfs_dec_nlive_blks(nilfs, ptr);
+>> 			set_buffer_nilfs_volatile(bh);
+>> 		}
+>> 		return 0;
+>> 	}
 > 
-> Yes that is a typo. It should be "flush from".
-> 
->>> +	down_read(&NILFS_MDT(sufile)->mi_sem);
->> 
->> This protection with mi_sem seems to be needless because the current
->> implementation of nilfs_sufile_shrink_cache() doesn't touch buffers of
->> sufile.  The delete operation is protected by a spinlock and the
->> counter operations are protected with rcu.  What does this
->> down_read()/up_read() protect ?
-> 
-> It is intended to protect against a concurrently running
-> nilfs_sufile_flush_cache() function. This should not happen the way the
-> functions are called currently, but I wanted to make them thread safe.
-> 
-> In nilfs_sufile_flush_cache() I use references to nodes outside of the
-> spinlock, which I am not allowed to do if they can be deallocated at any
-> moment.
+> During my tests, this was only called once directly after the first
+> bytes are written on a newly formatted volume. This can only be true for
+> the DAT-File and the DAT-File is very unlikely to be small enough to use
+> the direct bmap, except on a newly formatted volume. Do you mean, that
+> unlikely() should only be used for errors?
 
-Ok, that's reasonable.	Thanks for detail explanation.
+Ok, it sounds reasonable.
+
+In general, unlikely() should only be used for errors.  But this is
+special; DAT-file soon becomes big and will be converted to b-tree,
+therefore nilfs_direct_propagate() soon becomes a function for other
+type of files.
 
 Regards,
 Ryusuke Konishi
-
-> I cannot hold the spinlock for the entire flush, because
-> nilfs_sufile_flush_cache_node() needs to be able to sleep. I cannot use
-> a mutex instead of a spinlock, because this would lead to a potential
-> deadlock:
-> 
-> nilfs_sufile_alloc_cache_node():
-> 1. bmap->b_sem
-> 2. sui->nlive_blks_cache_lock
-> 
-> nilfs_sufile_flush_cache_node():
-> 1. sui->nlive_blks_cache_lock
-> 2. bmap->b_sem
-> 
-> So I decided to "abuse" mi_sem for this purpose, since I already need to
-> hold mi_sem in nilfs_sufile_flush_cache().
-
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
