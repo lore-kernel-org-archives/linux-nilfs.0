@@ -1,126 +1,116 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2 8/9] nilfs2: correct live block tracking for GC
- protection period
-Date: Mon, 11 May 2015 11:07:26 +0900 (JST)
-Message-ID: <20150511.110726.725667075147435663.konishi.ryusuke@lab.ntt.co.jp>
-References: <1430647522-14304-9-git-send-email-andreas.rohner@gmx.net>
-	<20150511.031512.1036934606749624197.konishi.ryusuke@lab.ntt.co.jp>
-	<20150511.032323.1250231827423193240.konishi.ryusuke@lab.ntt.co.jp>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [PATCH 2/3] NILFS2: support NFSv2 export
+Date: Mon, 11 May 2015 17:02:51 +1000
+Message-ID: <20150511170251.4fb69e52@notabene.brown>
+References: <20150508001142.31129.7604.stgit@notabene.brown>
+	<20150508001623.31129.25102.stgit@notabene.brown>
+	<20150511.013143.706881749197692581.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=VsbLGQMhFnaamAZUF8Ox7xrsTNNjZ1I2M+84xacg67k=;
-        b=OP9WCZ3UqfyMxmJ/NZOkCOmv+qv3TAwDLZAJ/AZjUjEyJhN0QsEUEqW04JcrSf8ABf
-         n7zZReRxzjKOyPghMqquLGotfWGXE+SeNlpZwTRQXFiIUCYB/sJ36P+ksOWkgwpsuZhy
-         beRXE9qRpXWQUvDEWux1E3eO6ANlYzPq4RwT+J2CKsqo8GU0CGf64xuJkn7zGYzUF2T6
-         kYJxHgkw3W+EnoAtRZm1mhu7c4VDIhgmMMtu2dDKRnWxHhZl/m032js/ac+vCWL4koRJ
-         wIg/gfJXpZmARhun34braGFR4IB5zxR8Jdix1ZpwuE87S2ubKXUUNQdE7uSMHCkih8Nr
-         fseA==
-In-Reply-To: <20150511.032323.1250231827423193240.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/35.LbBM347yd6zox5nPIdTU"; protocol="application/pgp-signature"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150511.013143.706881749197692581.konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: Josef Bacik <jbacik@fb.com>, Chris Mason <clm@fb.com>, Jan Kara <jack@suse.cz>, David Sterba <dsterba@suse.cz>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-On Mon, 11 May 2015 03:23:23 +0900 (JST), Ryusuke Konishi wrote:
-> On Mon, 11 May 2015 03:15:12 +0900 (JST), Ryusuke Konishi wrote:
->> On Sun,  3 May 2015 12:05:21 +0200, Andreas Rohner wrote:
->>> +/**
->>> + * nilfs_segctor_dec_nlive_blks_gc - dec. nlive_blks for blocks of GC-Inodes
->>> + * @dat: dat inode
->>> + * @segbuf: currtent segment buffer
->>> + * @bh: current buffer head
->>> + *
->>> + * Description: nilfs_segctor_dec_nlive_blks_gc() is called if the inode to
->>> + * which @bh belongs is a GC-Inode. In that case it is not necessary to
->>> + * decrement the previous segment, because at the end of the GC process it
->>> + * will be freed anyway. It is however necessary to check again if the blocks
->>> + * are alive here, because the last check was in userspace without the proper
->>> + * locking. Additionally the blocks protected by the protection period should
->>> + * be considered reclaimable. It is assumed, that @bh->b_blocknr contains
->>> + * a virtual block number, which is only true if @bh is part of a GC-Inode.
->>> + */
->> 
->>> +static void nilfs_segctor_dec_nlive_blks_gc(struct inode *dat,
->>> +					    struct nilfs_segment_buffer *segbuf,
->>> +					    struct buffer_head *bh) {
->>> +	bool isreclaimable = buffer_nilfs_period_protected(bh) ||
->>> +				nilfs_dat_is_live(dat, bh->b_blocknr) <= 0;
->>> +
->>> +	if (!buffer_nilfs_snapshot_protected(bh) && isreclaimable)
->>> +		segbuf->sb_nlive_blks--;
->>> +	if (buffer_nilfs_snapshot_protected(bh))
->>> +		segbuf->sb_nsnapshot_blks++;
->>> +}
->> 
->> I have some comments on this function:
->> 
->>  - The position of the brace "{" violates a CodingStyle rule of function.
->>  - buffer_nilfs_snapshot_protected() is tested twice, but this can be
->>    reduced as follows:
->> 
->> 	if (buffer_nilfs_snapshot_protected(bh))
->> 		segbuf->sb_nsnapshot_blks++;
->> 	else if (isreclaimable)
->> 		segbuf->sb_nlive_blks--;
->> 
->>  - Additionally, I prefer "reclaimable" to "isreclaimable" since it's
->>    simpler and still trivial.
->> 
->>  - The logic of isreclaimable is counterintuitive.  
->> 
->>> +	bool isreclaimable = buffer_nilfs_period_protected(bh) ||
->>> +				nilfs_dat_is_live(dat, bh->b_blocknr) <= 0;
->> 
->>    It looks like buffer_nilfs_period_protected(bh) here implies that
->>    the block is deleted.  But it's independent from the buffer is
->>    protected by protection_period or not.
->> 
->>    Why not just adding "still alive" or "deleted" flag and its
->>    corresponding vdesc flag instead of adding the period protected
->>    flag ?
->> 
->>    If we add the "still alive" flag, which means that the block is
->>    not yet deleted from the latest checkpoint, then this function
->>    can be simplified as follows:
->> 
->> static void nilfs_segctor_dec_nlive_blks_gc(struct inode *dat,
->> 					    struct nilfs_segment_buffer *segbuf,
->> 					    struct buffer_head *bh)
->> {
->> 	if (buffer_nilfs_snapshot_protected(bh))
->> 		segbuf->sb_nsnapshot_blks++;
-> 
->> 	else if (!buffer_nilfs_still_alive(bh) ||
->> 		 nilfs_dat_is_live(dat, bh->b_blocknr) <= 0)
->> 		segbuf->sb_nlive_blks--;
-> 
-> This was wrong.  It should be:
-> 
-> 	else if (!buffer_nilfs_still_alive(bh) &&
-> 		 nilfs_dat_is_live(dat, bh->b_blocknr) <= 0)
-> 		segbuf->sb_nlive_blks--;
+--Sig_/35.LbBM347yd6zox5nPIdTU
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Sorry for confusing you.  I read again the code, and now feel
-the previous one (the following) was rather correct.
+On Mon, 11 May 2015 01:31:43 +0900 (JST) Ryusuke Konishi
+<konishi.ryusuke@lab.ntt.co.jp> wrote:
 
->> 	if (buffer_nilfs_snapshot_protected(bh))
->> 		segbuf->sb_nsnapshot_blks++;
->> 	else if (!buffer_nilfs_still_alive(bh) ||
->> 		 nilfs_dat_is_live(dat, bh->b_blocknr) <= 0)
->> 		segbuf->sb_nlive_blks--;
+> On Fri, 08 May 2015 10:16:23 +1000, NeilBrown <neilb@suse.de> wrote:
+> > The "fh_len" passed to ->fh_to_* is not guaranteed to be that same as
+> > that returned by encode_fh - it may be larger.
+> >=20
+> > With NFSv2, the filehandle is fixed length, so it may appear longer
+> > than expected and be zero-padded.
+> >=20
+> > So we must test that fh_len is at least some value, not exactly equal
+> > to it.
+> >=20
+> > Signed-off-by: NeilBrown <neilb@suse.de>
+> > ---
+> >  fs/nilfs2/namei.c |    6 +++---
+> >  1 file changed, 3 insertions(+), 3 deletions(-)
+> >=20
+> > diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+> > index 22180836ec22..b65fb79d16fd 100644
+> > --- a/fs/nilfs2/namei.c
+> > +++ b/fs/nilfs2/namei.c
+> > @@ -496,8 +496,8 @@ static struct dentry *nilfs_fh_to_dentry(struct sup=
+er_block *sb, struct fid *fh,
+> >  {
+> >  	struct nilfs_fid *fid =3D (struct nilfs_fid *)fh;
+> > =20
+> > -	if ((fh_len !=3D NILFS_FID_SIZE_NON_CONNECTABLE &&
+> > -	     fh_len !=3D NILFS_FID_SIZE_CONNECTABLE) ||
+>=20
+> > +	if ((fh_len < NILFS_FID_SIZE_NON_CONNECTABLE &&
+> > +	     fh_len < NILFS_FID_SIZE_CONNECTABLE) ||
+> >  	    (fh_type !=3D FILEID_NILFS_WITH_PARENT &&
+> >  	     fh_type !=3D FILEID_NILFS_WITHOUT_PARENT))
+> >  		return NULL;
+>=20
+> A bit weird.  "fh_len < NILFS_FID_SIZE_CONNECTABLE" implies "fh_len <
+> NILFS_FID_SIZE_NON_CONNECTABLE".
+>=20
+> How about the following fix ?
+>=20
+> 	if ((fh_type !=3D FILEID_NILFS_WITH_PARENT ||
+> 	     fh_len < NILFS_FID_SIZE_CONNECTABLE) &&
+> 	    (fh_type !=3D FILEID_NILFS_WITHOUT_PARENT ||
+> 	     fh_len < NILFS_FID_SIZE_NON_CONNECTABLE))
+> 		return NULL;
+>=20
 
-Could you confirm which logic correctly implements the algorithm that
-you intended ?
+Yes, weird.  The code only uses the early parts of the filehandle, so we
+only need to complain if the fh_len is less than FILEID_NILFS_WITHOUT_PAREN=
+T.
 
-Regards,
-Ryusuke Konishi
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+So I'd prefer:
+
+@@ -496,8 +496,7 @@ static struct dentry *nilfs_fh_to_dentry(struct super_b=
+lock *sb, struct fid *fh,
+ {
+        struct nilfs_fid *fid =3D (struct nilfs_fid *)fh;
+=20
+-       if ((fh_len !=3D NILFS_FID_SIZE_NON_CONNECTABLE &&
+-            fh_len !=3D NILFS_FID_SIZE_CONNECTABLE) ||
++       if (fh_len < NILFS_FID_SIZE_NON_CONNECTABLE ||
+            (fh_type !=3D FILEID_NILFS_WITH_PARENT &&
+             fh_type !=3D FILEID_NILFS_WITHOUT_PARENT))
+                return NULL;
+
+
+Would you be OK with that?  If so I'll resend.
+
+Thanks,
+NeilBrown
+
+--Sig_/35.LbBM347yd6zox5nPIdTU
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIVAwUBVVBUGznsnt1WYoG5AQJSNhAAw7yPbb31Q3bO0qM2CygGzjb9TKaaCWwG
+xj3P1mXLl+v8HCBOoQrrupA/UjQLKzvELW62KvQmywlyY73nSAZnYQ5y2fnrAgYg
+7I0pOPwXtE3nof0kNgLdiKDZdMdgGLXANnOrLy8lzelXvmIEZRhH4i/Hakjfe/9E
+nxRLlYdQAjo6FUadIQP9OMmogqz/ztX4leSto9HsfpM3f5R0bImK56NTzMynlUr+
+FOf4xvQKEFombS8HQc/VDX1LYWYCeBt66I0h8WySWyd6WNssnBALiWcAPue4nNas
+DDyeetLjeoNUYfUyCF+xjbB5yo9fZ1K2CmWIJEBtFQlFMC8TZYA6dKX0sWxPicxm
+QDVhSRxt7nLU+BwQiGjJcNLpGxmanvd1HcZbww7dUerCTeoyJMhRqo4i7Rvg+iDg
+acTsF0U62DRY5VXqc7x2DLlpYGAni6bV+Ur5sktJVCtn18nWcnReYWeqo65dnAo7
+qVX7TFMIFGeGWPp/IJ+dOcszNbCA4lJnKUHLCza28KZ8fHUyAzvDhz5M97ZAyE/1
+R4zelmnpxEezZv/eWM9SYsoEnKZzhDFbIKVZs82efC9oe+s5h2MQovKWdBv8ESow
+lqxlnv5Eu75/TDEfOhvaYWsIJYAdexmJxChfb5vyuE0dpwJKV27fNss43cO4q6D8
+RG5pbUxlcE8=
+=Qrom
+-----END PGP SIGNATURE-----
+
+--Sig_/35.LbBM347yd6zox5nPIdTU--
