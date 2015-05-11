@@ -1,83 +1,167 @@
-From: NeilBrown <neilb@suse.de>
-Subject: [PATCH v2] NILFS2: support NFSv2 export
-Date: Mon, 11 May 2015 21:13:02 +1000
-Message-ID: <20150511211302.1299aff5@notabene.brown>
-References: <20150508001623.31129.25102.stgit@notabene.brown>
-	<20150511.013143.706881749197692581.konishi.ryusuke@lab.ntt.co.jp>
-	<20150511170251.4fb69e52@notabene.brown>
-	<20150511.185458.913750783836948467.konishi.ryusuke@lab.ntt.co.jp>
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: Re: [PATCH v2 8/9] nilfs2: correct live block tracking for GC protection
+ period
+Date: Mon, 11 May 2015 14:32:50 +0200
+Message-ID: <5550A172.8040704@gmx.net>
+References: <1430647522-14304-9-git-send-email-andreas.rohner@gmx.net>	<20150511.031512.1036934606749624197.konishi.ryusuke@lab.ntt.co.jp>	<20150511.032323.1250231827423193240.konishi.ryusuke@lab.ntt.co.jp> <20150511.110726.725667075147435663.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/sxRqc3X6vzax+.w7_MJ83/b"; protocol="application/pgp-signature"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150511.185458.913750783836948467.konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="i373IdNLFv7Td2VB0sccomfp78qsCswJ5"
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150511.110726.725667075147435663.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Cc: Josef Bacik <jbacik@fb.com>, Chris Mason <clm@fb.com>, Jan Kara <jack@suse.cz>, David Sterba <dsterba@suse.cz>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
---Sig_/sxRqc3X6vzax+.w7_MJ83/b
-Content-Type: text/plain; charset=US-ASCII
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--i373IdNLFv7Td2VB0sccomfp78qsCswJ5
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
+On 2015-05-11 04:07, Ryusuke Konishi wrote:
+> On Mon, 11 May 2015 03:23:23 +0900 (JST), Ryusuke Konishi wrote:
+>> On Mon, 11 May 2015 03:15:12 +0900 (JST), Ryusuke Konishi wrote:
+>>> On Sun,  3 May 2015 12:05:21 +0200, Andreas Rohner wrote:
+>>>> +/**
+>>>> + * nilfs_segctor_dec_nlive_blks_gc - dec. nlive_blks for blocks of =
+GC-Inodes
+>>>> + * @dat: dat inode
+>>>> + * @segbuf: currtent segment buffer
+>>>> + * @bh: current buffer head
+>>>> + *
+>>>> + * Description: nilfs_segctor_dec_nlive_blks_gc() is called if the =
+inode to
+>>>> + * which @bh belongs is a GC-Inode. In that case it is not necessar=
+y to
+>>>> + * decrement the previous segment, because at the end of the GC pro=
+cess it
+>>>> + * will be freed anyway. It is however necessary to check again if =
+the blocks
+>>>> + * are alive here, because the last check was in userspace without =
+the proper
+>>>> + * locking. Additionally the blocks protected by the protection per=
+iod should
+>>>> + * be considered reclaimable. It is assumed, that @bh->b_blocknr co=
+ntains
+>>>> + * a virtual block number, which is only true if @bh is part of a G=
+C-Inode.
+>>>> + */
+>>>
+>>>> +static void nilfs_segctor_dec_nlive_blks_gc(struct inode *dat,
+>>>> +					    struct nilfs_segment_buffer *segbuf,
+>>>> +					    struct buffer_head *bh) {
+>>>> +	bool isreclaimable =3D buffer_nilfs_period_protected(bh) ||
+>>>> +				nilfs_dat_is_live(dat, bh->b_blocknr) <=3D 0;
+>>>> +
+>>>> +	if (!buffer_nilfs_snapshot_protected(bh) && isreclaimable)
+>>>> +		segbuf->sb_nlive_blks--;
+>>>> +	if (buffer_nilfs_snapshot_protected(bh))
+>>>> +		segbuf->sb_nsnapshot_blks++;
+>>>> +}
+>>>
+>>> I have some comments on this function:
+>>>
+>>>  - The position of the brace "{" violates a CodingStyle rule of funct=
+ion.
+>>>  - buffer_nilfs_snapshot_protected() is tested twice, but this can be=
 
-The "fh_len" passed to ->fh_to_* is not guaranteed to be that same as
-that returned by encode_fh - it may be larger.
+>>>    reduced as follows:
+>>>
+>>> 	if (buffer_nilfs_snapshot_protected(bh))
+>>> 		segbuf->sb_nsnapshot_blks++;
+>>> 	else if (isreclaimable)
+>>> 		segbuf->sb_nlive_blks--;
+>>>
+>>>  - Additionally, I prefer "reclaimable" to "isreclaimable" since it's=
 
-With NFSv2, the filehandle is fixed length, so it may appear longer
-than expected and be zero-padded.
+>>>    simpler and still trivial.
+>>>
+>>>  - The logic of isreclaimable is counterintuitive. =20
+>>>
+>>>> +	bool isreclaimable =3D buffer_nilfs_period_protected(bh) ||
+>>>> +				nilfs_dat_is_live(dat, bh->b_blocknr) <=3D 0;
+>>>
+>>>    It looks like buffer_nilfs_period_protected(bh) here implies that
+>>>    the block is deleted.  But it's independent from the buffer is
+>>>    protected by protection_period or not.
+>>>
+>>>    Why not just adding "still alive" or "deleted" flag and its
+>>>    corresponding vdesc flag instead of adding the period protected
+>>>    flag ?
+>>>
+>>>    If we add the "still alive" flag, which means that the block is
+>>>    not yet deleted from the latest checkpoint, then this function
+>>>    can be simplified as follows:
+>>>
+>>> static void nilfs_segctor_dec_nlive_blks_gc(struct inode *dat,
+>>> 					    struct nilfs_segment_buffer *segbuf,
+>>> 					    struct buffer_head *bh)
+>>> {
+>>> 	if (buffer_nilfs_snapshot_protected(bh))
+>>> 		segbuf->sb_nsnapshot_blks++;
+>>
+>>> 	else if (!buffer_nilfs_still_alive(bh) ||
+>>> 		 nilfs_dat_is_live(dat, bh->b_blocknr) <=3D 0)
+>>> 		segbuf->sb_nlive_blks--;
+>>
+>> This was wrong.  It should be:
+>>
+>> 	else if (!buffer_nilfs_still_alive(bh) &&
+>> 		 nilfs_dat_is_live(dat, bh->b_blocknr) <=3D 0)
+>> 		segbuf->sb_nlive_blks--;
+>=20
+> Sorry for confusing you.  I read again the code, and now feel
+> the previous one (the following) was rather correct.
+>=20
+>>> 	if (buffer_nilfs_snapshot_protected(bh))
+>>> 		segbuf->sb_nsnapshot_blks++;
+>>> 	else if (!buffer_nilfs_still_alive(bh) ||
+>>> 		 nilfs_dat_is_live(dat, bh->b_blocknr) <=3D 0)
+>>> 		segbuf->sb_nlive_blks--;
+>=20
+> Could you confirm which logic correctly implements the algorithm that
+> you intended ?
 
-So we must test that fh_len is at least some value, not exactly equal
-to it.
+This one is correct. We only have to call nilfs_dat_is_live() if the
+block is alive. nilfs_dat_is_live() is intended to confirm that a block
+is really live. If we know from userspace, that a block is
+dead/reclaimable we do not have to check it again.
 
-Signed-off-by: NeilBrown <neilb@suse.de>
+Regards,
+Andreas Rohner
 
-diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index 22180836ec22..37dd6b05b1b5 100644
---- a/fs/nilfs2/namei.c
-+++ b/fs/nilfs2/namei.c
-@@ -496,8 +496,7 @@ static struct dentry *nilfs_fh_to_dentry(struct super_b=
-lock *sb, struct fid *fh,
- {
- 	struct nilfs_fid *fid =3D (struct nilfs_fid *)fh;
-=20
--	if ((fh_len !=3D NILFS_FID_SIZE_NON_CONNECTABLE &&
--	     fh_len !=3D NILFS_FID_SIZE_CONNECTABLE) ||
-+	if (fh_len < NILFS_FID_SIZE_NON_CONNECTABLE ||
- 	    (fh_type !=3D FILEID_NILFS_WITH_PARENT &&
- 	     fh_type !=3D FILEID_NILFS_WITHOUT_PARENT))
- 		return NULL;
-@@ -510,7 +509,7 @@ static struct dentry *nilfs_fh_to_parent(struct super_b=
-lock *sb, struct fid *fh,
- {
- 	struct nilfs_fid *fid =3D (struct nilfs_fid *)fh;
-=20
--	if (fh_len !=3D NILFS_FID_SIZE_CONNECTABLE ||
-+	if (fh_len < NILFS_FID_SIZE_CONNECTABLE ||
- 	    fh_type !=3D FILEID_NILFS_WITH_PARENT)
- 		return NULL;
-=20
+> Regards,
+> Ryusuke Konishi
+>=20
 
---Sig_/sxRqc3X6vzax+.w7_MJ83/b
-Content-Type: application/pgp-signature
+
+
+--i373IdNLFv7Td2VB0sccomfp78qsCswJ5
+Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
 
-iQIVAwUBVVCOvznsnt1WYoG5AQKLPw/9ExmIXmAmCqhDat1l6E72RzYZ6OeXJG/N
-xnCYHPHzIA5/LJMTKQFAFGDSt68gOw5QBpo/ZDODC3SBgHmQGnE57TBtpR7ao/RB
-usfTHc3Lt0rTNSXsEyTNTONzWSPKpCraD6Hc+//BBP5lYWhZPmoSQwE69JDfaWiL
-TDmBMIE4KmsiBxM8X0NzXy6NBSyQSfgYhJTvlHlc+rqsgYz0hnJzPWaV4RoONJ+b
-kll/GOo+jLG9bT+I297Uo4fWIilmedk3tBsamrGGaS/9RfFHnWO5xTI8QxSjQvqI
-TbCQaLbMMFFNQg0GEQHn+C0kg5qQngoke1AU6L7PUqq4BZumpx7SnBbMkotqLtYc
-uF+6NiUhCNUHkBETn/fwIkMaz/OuQmkPhsRhyCSuLtTDdsoHnoFovAZZAc1ZBAb1
-jqgJg3mrzouBRg6Mv3Kf5VRdEPExanMLweGeeQK2oeO7mza1c0gwH6PEhaNuJhZZ
-+lFfpQ69oNDhyHRJY13oRovlx/ShvYTPIwXnON1EpMq4e4fDLWZZ2jYOlvGRNvOE
-49ENDzKY1o5GrTLFli8KWJWI6SHA6M/srB/ZXq1E6p8wVreC5ozKkHiu08oMFoYo
-OLjdmMR72iYPhJRy9aCMEQmV8i6NTruL/pF3F5m84xgy1vzUseTlh78uoTRl85sh
-A6YcaktGgaY=
-=VFc9
+iQIcBAEBCAAGBQJVUKFyAAoJEKnLCnsUYRwBnIkQAIUVV4pZT3IYZMmX81EoC9uW
+NU44tqVedVrxCkubJQCseZuhtw/y9eZOc2Y5EVdsZ7oI/CLIVKgUd3GI8X8u/w2k
+3/1TmPAOrNyblf0cwdQSZo2gxKQS9UtVFaJP4jprgPAvBszFkRxx46LGYlx1EgQ3
+0gia89DnB/7mKElV5zz1aZQaogfzKIlaWO2ETaDF/aYt2p+U8DbEwSQ9GKuMgVgN
+yyx6E3XmUuDHDAbH3tLtnNf7GXc6YfiCFcjBwat6olsVY0VyGNGYXA+XAqbwMZlU
+8ChnH3AwmgOLNrnjpeOWSYF7cICfnCKUb8RDNObGsMG9SrXrpFm+7qHaS8DB+dPX
+phmnfy/xLIu6fHNbmJhheCkLsWxiW38qqK898xDmiESOl/F7zBqEg3IXkjZgrm9U
+K6nd7kCJ+wcuHkSaIKt8Yc4hnbIJQwW62Rg1RL0Jntu64mKh+Xdv57fdeJmOfAR2
+lTCHqXaAh+ZFHg3hGiQ0zyybkOGUx9liG+1sN3gn5m0KTpMvYDMqKRnpAHYr/65I
+c+t3ZqMvKN7lhO6kYIIBzM1c4qhz9U4I/bR0xbYFr8pRUpdAAijEncreVzSGIqxn
+2fkAQOjX7KrolUkJK2FqpDa5+f90W678Vhcb60JI/AYdqt/UDCYGbulDVpMquoG+
+gn3fUT2Ovi+gx/fl5aiy
+=uP37
 -----END PGP SIGNATURE-----
 
---Sig_/sxRqc3X6vzax+.w7_MJ83/b--
+--i373IdNLFv7Td2VB0sccomfp78qsCswJ5--
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
