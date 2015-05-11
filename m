@@ -1,22 +1,21 @@
-From: David Sterba <dsterba@suse.cz>
-Subject: Re: [PATCH 1/3] BTRFS: support NFSv2 export
-Date: Mon, 11 May 2015 10:13:09 +0200
-Message-ID: <20150511081309.GI23255@suse.cz>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 3/3] UDF: support NFSv2 export
+Date: Mon, 11 May 2015 10:57:41 +0200
+Message-ID: <20150511085741.GA9962@quack.suse.cz>
 References: <20150508001142.31129.7604.stgit@notabene.brown>
- <20150508001623.31129.91695.stgit@notabene.brown>
-Reply-To: dsterba@suse.cz
+ <20150508001623.31129.24710.stgit@notabene.brown>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150508001623.31129.91695.stgit@notabene.brown>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20150508001623.31129.24710.stgit-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: NeilBrown <neilb@suse.de>
-Cc: Josef Bacik <jbacik@fb.com>, Chris Mason <clm@fb.com>, Jan Kara <jack@suse.cz>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org
+To: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+Cc: Josef Bacik <jbacik-b10kYP2dOMg@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, David Sterba <dsterba-AlSwsSmVLrQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, May 08, 2015 at 10:16:23AM +1000, NeilBrown wrote:
+On Fri 08-05-15 10:16:23, NeilBrown wrote:
 > The "fh_len" passed to ->fh_to_* is not guaranteed to be that same as
 > that returned by encode_fh - it may be larger.
 > 
@@ -26,6 +25,42 @@ On Fri, May 08, 2015 at 10:16:23AM +1000, NeilBrown wrote:
 > So we must test that fh_len is at least some value, not exactly equal
 > to it.
 > 
-> Signed-off-by: NeilBrown <neilb@suse.de>
+> Signed-off-by: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+  Thanks. The patch looks good to me. I've added it to my tree.
 
-Acked-by: David Sterba <dsterba@suse.cz>
+								Honza
+> ---
+>  fs/udf/namei.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/fs/udf/namei.c b/fs/udf/namei.c
+> index 5c03f0dfb98b..facc2a840f7b 100644
+> --- a/fs/udf/namei.c
+> +++ b/fs/udf/namei.c
+> @@ -1221,7 +1221,7 @@ static struct dentry *udf_nfs_get_inode(struct super_block *sb, u32 block,
+>  static struct dentry *udf_fh_to_dentry(struct super_block *sb,
+>  				       struct fid *fid, int fh_len, int fh_type)
+>  {
+> -	if ((fh_len != 3 && fh_len != 5) ||
+> +	if (fh_len < 3 ||
+>  	    (fh_type != FILEID_UDF_WITH_PARENT &&
+>  	     fh_type != FILEID_UDF_WITHOUT_PARENT))
+>  		return NULL;
+> @@ -1233,7 +1233,7 @@ static struct dentry *udf_fh_to_dentry(struct super_block *sb,
+>  static struct dentry *udf_fh_to_parent(struct super_block *sb,
+>  				       struct fid *fid, int fh_len, int fh_type)
+>  {
+> -	if (fh_len != 5 || fh_type != FILEID_UDF_WITH_PARENT)
+> +	if (fh_len < 5 || fh_type != FILEID_UDF_WITH_PARENT)
+>  		return NULL;
+>  
+>  	return udf_nfs_get_inode(sb, fid->udf.parent_block,
+> 
+> 
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
