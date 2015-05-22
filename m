@@ -1,40 +1,27 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH v2 9/9] nilfs2: prevent starvation of segments
- protected by snapshots
-Date: Thu, 21 May 2015 00:49:37 +0900 (JST)
-Message-ID: <20150521.004937.1737206804262552497.konishi.ryusuke@lab.ntt.co.jp>
-References: <1430647522-14304-1-git-send-email-andreas.rohner@gmx.net>
-	<1430647522-14304-10-git-send-email-andreas.rohner@gmx.net>
-	<20150520.234335.542615158366069430.konishi.ryusuke@lab.ntt.co.jp>
+From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Subject: Re: [PATCH v2 9/9] nilfs2: prevent starvation of segments protected
+ by snapshots
+Date: Fri, 22 May 2015 20:10:05 +0200
+Message-ID: <555F70FD.6090500@gmx.net>
+References: <1430647522-14304-1-git-send-email-andreas.rohner@gmx.net>	<1430647522-14304-10-git-send-email-andreas.rohner@gmx.net> <20150520.234335.542615158366069430.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=2PwoGzIilJrOQPHWPcrMCWxQy685LrBufjjzDy5FbNQ=;
-        b=WEEg6+VvcHGNMLUjn48WALxWCfqK+oq+4f76cRVj3fL83vwFI9iu1qetAmkaS+K1S+
-         7lWdm/IydUXSE6/ybekD+YYKqdN8o9cElygLhjmVuS2HjSXIdNPWibXE7q4c+f6qogNf
-         s0hbLJ0miG8ZUwXlJ1CS+aZSfgXekpTGf1WIXj42WJLxoJn9DNEwTqxxvW1GZj2oihyB
-         3wXr6zb2uRv2yPcOR3iN0frUtgN1BnvDpYMotD8zYXzQ2ShOHPO37hijkUd7PhGdCSCS
-         b0oXwZ9OhsaWhlhNGUFsDE+mA1UOXsO9QQ0AvcbNhzwz6SumA2pF6UOndA/5VaqSMCS3
-         JBIg==
 In-Reply-To: <20150520.234335.542615158366069430.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
+On 2015-05-20 16:43, Ryusuke Konishi wrote:
 > On Sun,  3 May 2015 12:05:22 +0200, Andreas Rohner wrote:
 >> It doesn't really matter if the number of reclaimable blocks for a
 >> segment is inaccurate, as long as the overall performance is better than
 >> the simple timestamp algorithm and starvation is prevented.
->> 
+>>
 >> The following steps will lead to starvation of a segment:
->> 
+>>
 >> 1. The segment is written
 >> 2. A snapshot is created
 >> 3. The files in the segment are deleted and the number of live
@@ -47,7 +34,7 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 >>    segment are now reclaimable.
 >> 6. The GC will never attempt to clean the segment again, because it
 >>    looks as if it had a high number of live blocks.
->> 
+>>
 >> To prevent this, the already existing padding field of the SUFILE entry
 >> is used to track the number of snapshot blocks in the segment. This
 >> number is only set by the GC, since it collects the necessary
@@ -56,7 +43,7 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 >> su_nsnapshot_blks. In step 5 all entries in the SUFILE are checked and
 >> entries with a big su_nsnapshot_blks field get their su_nlive_blks field
 >> reduced.
->> 
+>>
 >> Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 > 
 > I still don't know whether this workaround is the way we should take
@@ -74,19 +61,37 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 >     Even though this rewrite may not happen for contiguous "chcp cp"
 >     operations, it still has potential for creating sufile write blocks
 >     if the application of nilfs manipulates snapshots frequently.
-> 
+
+I could also implement this functionality in nilfs_cleanerd in
+userspace. Every time a "chcp cp" happens some kind of permanent flag
+like "snapshot_was_recently_deleted" is set at an appropriate location.
+The flag could be returned with GET_SUSTAT ioctl(). Then nilfs_cleanerd
+would, at certain intervals and if the flag is set, check all segments
+with GET_SUINFO ioctl() and set the ones that have potentially invalid
+values with SET_SUINFO ioctl(). After that it would clear the
+"snapshot_was_recently_deleted" flag. What do you think about this idea?
+
+If the policy is "timestamp" the GC would of course skip this scan,
+because it is unnecessary.
+
 >  3. The ratio of the threshold "max_segblks" is hard coded to 50%
 >     of blocks_per_segment.  It is not clear if the ratio is good
 >     (versatile).
-> 
+
+The interval and percentage could be set in /etc/nilfs_cleanerd.conf.
+
+I chose 50% kind of arbitrarily. My intent was to encourage the GC to
+check the segment again in the future. I guess anything between 25% and
+75% would also work.
+
 > I will add comments inline below.
-> 
+
 >> ---
 >>  fs/nilfs2/ioctl.c  | 50 +++++++++++++++++++++++++++++++-
 >>  fs/nilfs2/sufile.c | 85 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 >>  fs/nilfs2/sufile.h |  3 ++
 >>  3 files changed, 137 insertions(+), 1 deletion(-)
->> 
+>>
 >> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
 >> index 40bf74a..431725f 100644
 >> --- a/fs/nilfs2/ioctl.c
@@ -120,12 +125,16 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 > 
 > This "inode" argument is meaningless for this routine.
 > Consider passing "sb" instead.
-> 
+
+I agree.
+
 > I feel odd for the function name "fix starving segs".  It looks to
 > give a workaround rather than solve the root problem of gc in nilfs.
 > It looks like what this patch is doing, is "calibrating" live block
 > count.
-> 
+
+I like the name "calibrating". I will change it.
+
 >> +	struct nilfs_transaction_info ti;
 > 
 >> +	unsigned long i, nsegs = nilfs_sufile_get_nsegments(nilfs->ns_sufile);
@@ -135,7 +144,9 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 > Since the file system can be resized (both shrinked or extended)
 > outside the lock, nsegs must be initialized or updated in the
 > section where the tranaction lock is held.
-> 
+
+Good point. I'll change it.
+
 >> +	int ret = 0;
 >> +
 >> +	for (i = 0; i < nsegs; i += NILFS_SUFILE_STARVING_SEGS_STEP) {
@@ -192,7 +203,9 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 > nilfs_ioctl_fix_starving_segs() is called every time "chcp cp" is
 > called.  I prefer to delay this extra work with a workqueue and to
 > skip starting a new work if the previous work is still running.
-> 
+
+Good idea. I'll look into it.
+
 >>  out:
 >>  	mnt_drop_write_file(filp);
 >>  	return ret;
@@ -256,7 +269,12 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 > Note that the evaluation of each argument will never be done twice in
 > min_t() macro since min_t() temporarily stores the evaluation results
 > to hidden local variables and uses them for comparison.
-> 
+
+Ok.
+
+Regards,
+Andreas Rohner
+
 > Regards,
 > Ryusuke Konishi
 > 
@@ -279,31 +297,13 @@ On Wed, 20 May 2015 23:43:35 +0900 (JST), Ryusuke Konishi wrote:
 >> +							  su_bh, kaddr);
 >> +		blkdirty = 0;
 >> +		for (i = 0; i < n; ++i, ++segnum, su = (void *)su + susz) {
-
-I forgot a few comments.
-
-If the segment is not dirty then skip it first for safety.
-
 >> +			if (le32_to_cpu(su->su_nsnapshot_blks) <= max_segblks)
 >> +				continue;
 >> +			if (le32_to_cpu(su->su_nlive_blks) <= max_segblks)
 >> +				continue;
-
-The variable name "max_segblks" is not intuitive.  It gives a
-threshold of live block count to make the segment reclaimable or to
-calibrate live block counts.  Some sort of word having this nuance is
-preferable.
-
 >> +
 >> +			su->su_nlive_blks = cpu_to_le32(max_segblks);
 >> +			su->su_nsnapshot_blks = cpu_to_le32(max_segblks);
-
-Live block counts are changed, but "su_nlive_lastmod" is not changed.
-
-
-Regards,
-Ryusuke Konishi
-
 >> +			blkdirty = 1;
 >> +		}
 >> +
@@ -351,11 +351,13 @@ Ryusuke Konishi
 >>  int nilfs_sufile_flush_cache(struct inode *sufile, int only_mark,
 >> -- 
 >> 2.3.7
->> 
+>>
 >> --
 >> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 >> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 >> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
