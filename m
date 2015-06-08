@@ -1,81 +1,69 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+From: Heinz Diehl <htd+ml-iEI8Y0CNJBYdnm+yROfE0A@public.gmane.org>
 Subject: Re: NILFS2: double uuid
-Date: Mon, 08 Jun 2015 17:18:34 +0900
-Message-ID: <55754FDA.10406@lab.ntt.co.jp>
+Date: Mon, 8 Jun 2015 11:45:59 +0200
+Message-ID: <20150608094559.GB15702@fritha.org>
 References: <20150608064314.GA3172@fritha.org>
+ <55754FDA.10406@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150608064314.GA3172@fritha.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <55754FDA.10406-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-To: Heinz Diehl <htd+ml@fritha.org>
-Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-(CCed to linux-nilfs@vger.kernel.org)
-Hi Heinz,
+On 08.06.2015, Ryusuke Konishi wrote: 
 
-On 2015/06/08 15:43, Heinz Diehl wrote:
-> Hi,
->
-> a nilfs2 formatted disk fails to mount via fstab due to double uuid's=
-=2E
-> See lsblk output below. The logs indicate that the system attempts to
-> mount /dev/sdb rather than /dev/sdb1, which of course fails. In
-> addition, /dev/sdb should not have any uuid at all. Don't know why
-> that happens.
->
-> The phenomenon is easily reproducible: format a partition with nilfs2=
-,
-> register it with the proper uuid in fstab and reboot. Tried both with
-> USB memory and real HDD.
->
-> [root@keera ~]# lsblk -f
-> NAME        FSTYPE LABEL UUID                                 MOUNTPO=
-INT
-> sdb                      ff17dda9-fcae-42e7-a438-9087de58902e
-> `-sdb1      xfs          ff17dda9-fcae-42e7-a438-9087de58902e
->
-> Thanks,
->   Heinz
+> Could you tell us the version information of distro,
+> lsblk, libblkid, nilfs-utils, and kernel you are using ?
 
-On 2015/06/08 15:49, Heinz Diehl wrote:
- > On 08.06.2015, Heinz Diehl wrote:
- >
- >> [root@keera ~]# lsblk -f
- >> NAME        FSTYPE LABEL UUID                                 MOUNT=
-POINT
- >> sdb                      ff17dda9-fcae-42e7-a438-9087de58902e
- >> `-sdb1      xfs          ff17dda9-fcae-42e7-a438-9087de58902e
- >
- > Copy error: replace xfs with nilfs2. Sorry!
+It happens on two different systems:
 
-I couldn't reproduce the issue (in a CentOS 7 environment).
+The first one is bog-standard Fedora 21:
 
-Could you tell us the version information of distro,
-lsblk, libblkid, nilfs-utils, and kernel you are using ?
+[htd@chiara ~]$ rpm -qa | egrep 'lsblk|libblkid|nilfs'
+libblkid-devel-2.25.2-3.fc21.x86_64
+libblkid-2.25.2-3.fc21.x86_64
+nilfs-utils-2.2.3-1.fc21.x86_64
 
-The following is an example of mine:
-
-$ lsblk -f
-NAME   FSTYPE LABEL  UUID                                 MOUNTPOINT
-sda
-=E2=94=94=E2=94=80sda1 nilfs2        9dcd01c0-2bc8-41bf-a400-8ad8755aac=
-6a
-$ lsblk --version
-lsblk from util-linux 2.23.2
-
-$ lscp -V
+[htd@chiara ~]$ lscp -V
 lscp (nilfs-utils 2.2.3)
 
-$ rpm -q libblkid util-linux
-libblkid-2.23.2-22.el7_1.x86_64
-util-linux-2.23.2-22.el7_1.x86_64
+[htd@chiara ~]$ lsblk --version
+lsblk from util-linux 2.25.2
 
-$ uname -r
-4.1.0-rc7
+[htd@chiara ~]$ uname -a
+Linux chiara.fritha.org 4.0.5-rc1 #1 SMP PREEMPT Wed Jun 3 20:41:46 CEST 2015 x86_64 x86_64 x86_64 GNU/Linux
 
 
-Regards,
-Ryusuke Konishi
+The second one is Arch Linux on a Raspberry Pi:
+
+[root@keera ~]# pacman -Q | egrep 'libutil|nilfs'
+libutil-linux 2.26.2-1
+nilfs-utils 2.2.3-1
+
+[root@keera ~]# lsblk --version
+lsblk from util-linux 2.26.2
+
+[root@keera ~]# lscp -V
+lscp (nilfs-utils 2.2.3)
+
+[root@keera ~]# uname -a
+Linux keera 3.18.14-2-ARCH #1 SMP PREEMPT Thu May 28 07:19:33 MDT 2015 armv7l GNU/Linux
+
+Tried to re-format the home partition on a Fedora 21 laptop with
+nilfs2 and ran into the same problem as with USB memory as a samba
+share on the Pi: the system tried to mount the block device rather
+than the partition due to the uuid as shown in my previous email.
+
+Thanks, Heinz.
+
+-- 
+OpenPGP Fingerprint: 531E 8E75 4395 ED38 CEC2  FD75 A1EB 6944 60F4 A92C
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
