@@ -1,83 +1,37 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH 02/39] nilfs2: drop null test before destroy functions
-Date: Mon, 14 Sep 2015 12:29:06 +0900 (JST)
-Message-ID: <20150914.122906.1656489070901419863.konishi.ryusuke@lab.ntt.co.jp>
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Subject: Re: [PATCH 00/39] drop null test before destroy functions
+Date: Mon, 14 Sep 2015 13:55:06 +0200
+Message-ID: <55F6B59A.4040104@users.sourceforge.net>
 References: <1442146532-9100-1-git-send-email-Julia.Lawall@lip6.fr>
-	<1442146532-9100-3-git-send-email-Julia.Lawall@lip6.fr>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=cpD5tjOFQ9wMdmCVOLTK5i0RTPNd+uLXCxNa490ftiI=;
-        b=QQvvRm0m+GXSqF58ExnNYiV5GMb0JXIwtX69VEWH6m1rqrORnz48Yr5K0SV1u3natS
-         jxPtmtnTmY0EuL1vL76Kw8X/V0ci/qU1pP++NHgA86SPONnBdxoR7GNfvS3fdaKuZlpY
-         swlL1rqnQOSn+U50J4yAyl/uI5GMe2NQcDa3FRQp+zwyOJ6X/qYRCX5awVmM3CCBgs57
-         8toIdNXc9AQywKQTce4DtGHUhvlYuEKuyhRoUvAp8AnS3rACSrCRWOk7yZXZTRrL4ddf
-         B6T4y/hXwfuHOkjjZgV1DmTzv2XXJEL2SoyVEpxxzzuvwQY7oSkUVAdfwhqJN6oGJNvJ
-         INpQ==
-In-Reply-To: <1442146532-9100-3-git-send-email-Julia.Lawall-L2FTfq7BK8M@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <ecryptfs-owner@vger.kernel.org>
+In-Reply-To: <1442146532-9100-1-git-send-email-Julia.Lawall@lip6.fr>
+Sender: ecryptfs-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Julia Lawall <Julia.Lawall-L2FTfq7BK8M@public.gmane.org>
-Cc: sergey.senozhatsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kernel-janitors-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Julia Lawall <Julia.Lawall@lip6.fr>, kernel-janitors@vger.kernel.org
+Cc: iommu@lists.linux-foundation.org, dccp@vger.kernel.org, dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesktop.org, ecryptfs@vger.kernel.org, dmaengine@vger.kernel.org, sergey.senozhatsky@gmail.com, Dan Williams <dan.j.williams@intel.com>, cluster-devel@redhat.com, intel-wired-lan@lists.osuosl.org, Mitch Williams <mitch.a.williams@intel.com>, John Ronciak <john.ronciak@intel.com>, Matthew Vick <matthew.vick@intel.com>, Don Skidmore <donald.c.skidmore@intel.com>, Carolyn Wyborny <carolyn.wyborny@intel.com>, Shannon Nelson <shannon.nelson@intel.com>, Jesse Brandeburg <jesse.brandeburg@intel.com>, linux-nfs@vger.kernel.org, linux-raid@vger.kernel.org, netdev@vger.kernel.org, linux-atm-general@lists.sourceforge.net, linux-btrfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-usb@vger.kernel.org, linux
 
-On Sun, 13 Sep 2015 14:14:55 +0200, Julia Lawall <Julia.Lawall-L2FTfq7BK8M@public.gmane.org> wrote:
-> Remove unneeded NULL test.
-> 
-> The semantic patch that makes this change is as follows:
-> (http://coccinelle.lip6.fr/)
-> 
-> // <smpl>
-> @@ expression x; @@
-> -if (x != NULL)
->   \(kmem_cache_destroy\|mempool_destroy\|dma_pool_destroy\)(x);
-> // </smpl>
-> 
-> Signed-off-by: Julia Lawall <Julia.Lawall-L2FTfq7BK8M@public.gmane.org>
+> Recent commits to kernel/git/torvalds/linux.git have made the following
+> functions able to tolerate NULL arguments:
+>
+> kmem_cache_destroy (commit 3942d29918522)
+> mempool_destroy (commit 4e3ca3e033d1)
+> dma_pool_destroy (commit 44d7175da6ea)
 
-Looks OK.  I'll queue this in my tree.
+How do you think about to extend an other SmPL script?
 
-Thanks,
-Ryusuke Konishi
+Related topic:
+scripts/coccinelle/free: Delete NULL test before freeing functions
+https://systeme.lip6.fr/pipermail/cocci/2015-May/001960.html
+https://www.mail-archive.com/cocci@systeme.lip6.fr/msg01855.html
 
-> 
-> ---
->  fs/nilfs2/super.c |   12 ++++--------
->  1 file changed, 4 insertions(+), 8 deletions(-)
-> 
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index f47585b..c69455a 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -1405,14 +1405,10 @@ static void nilfs_destroy_cachep(void)
->  	 */
->  	rcu_barrier();
->  
-> -	if (nilfs_inode_cachep)
-> -		kmem_cache_destroy(nilfs_inode_cachep);
-> -	if (nilfs_transaction_cachep)
-> -		kmem_cache_destroy(nilfs_transaction_cachep);
-> -	if (nilfs_segbuf_cachep)
-> -		kmem_cache_destroy(nilfs_segbuf_cachep);
-> -	if (nilfs_btree_path_cache)
-> -		kmem_cache_destroy(nilfs_btree_path_cache);
-> +	kmem_cache_destroy(nilfs_inode_cachep);
-> +	kmem_cache_destroy(nilfs_transaction_cachep);
-> +	kmem_cache_destroy(nilfs_segbuf_cachep);
-> +	kmem_cache_destroy(nilfs_btree_path_cache);
->  }
->  
->  static int __init nilfs_init_cachep(void)
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+> If these changes are OK, I will address the remainder later.
+
+Would anybody like to reuse my general SmPL approach for similar source
+code clean-up?
+
+Regards,
+Markus
