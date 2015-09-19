@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 1/7] nilfs2: drop null test before destroy functions
-Date: Sat, 19 Sep 2015 19:32:56 +0900
-Message-ID: <1442658782-3147-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 5/7] nilfs2: get rid of nilfs_palloc_group_is_in()
+Date: Sat, 19 Sep 2015 19:33:00 +0900
+Message-ID: <1442658782-3147-6-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1442658782-3147-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=KR1/jXvHxfA5JBEKWzKJ18Xm6atrPUxZws1vbZyiWzk=;
-        b=rGl8zeRdomEp4CmuzlfLyeqSTLE4nj9IcdwneQ6ZcNOMk9qduW1NZEZ3n97iZ2n44w
-         wx3i6BzY5EEDcAJXRJeblHBT/gX+/Wy88hNSUFMXNSWoj/ggc2TW2id9Jejre/k8Top+
-         4BqZ20ta2pN5dtdZPLHcMRytTXvA6Md7OyqwfphsrL77J6YbFkNBVOyN6VnVoHMfjkIR
-         qmtIsajTjXriPsOy9joDEMl9vLitmyaEZfVOP5/Id0PflbrbM+EXReprpNcIM7ev34oS
-         Ks0Nym7UfZxuzZmGc+9hZedec+WYgD9Hu4Yi+WEEowsrzI7w43G4x11GZ/0MjczdMkQx
-         3Tjg==
+        bh=j+D4zT2eSeelOO46uI1z2W1Wzgm5u4X0td/BjARekdM=;
+        b=L9Jb+7dq3za6KzQtJg1HsKjsUI8qktJt/dt4C1Q3sgJ2BajcfYg6viiBD64tUE/8cE
+         UDI7gxzKPfe6slA5iLiTRSnX7K279SCLJLRWC4KdEIgkLpss5BQ4ttp/MTmRMf4YyS+U
+         VUA8DzcT0hu5ze+JZ6XNMQdu/U2ODclJTBtG1M1Gva2aPke+Mc22XZBHihBAyqw990M0
+         gO38cV1hi0ndQzPjhBqS/Pp87H7yCgD3AuEtDPMydvuhvO1jldBWNBXTmEq8qt9RG6nX
+         +/QcavayyMCP406Zk4Tm7QWjzeAg6hrOH5635NFU50YT0ZwedQ3btd6BDiQJNtHgAitM
+         P4Sw==
 In-Reply-To: <1442658782-3147-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -22,49 +22,77 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Julia Lawall <Julia.Lawall@lip6.fr>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-From: Julia Lawall <Julia.Lawall@lip6.fr>
+This unfolds nilfs_palloc_group_is_in() helper function into
+nilfs_palloc_freev() function to simplify a range check and an index
+calculation repeatedy performed in a loop of the function.
 
-Remove unneeded NULL test.
-
-The semantic patch that makes this change is as follows:
-(http://coccinelle.lip6.fr/)
-
-// <smpl>
-@@ expression x; @@
--if (x != NULL)
-  \(kmem_cache_destroy\|mempool_destroy\|dma_pool_destroy\)(x);
-// </smpl>
-
-Signed-off-by: Julia Lawall <Julia.Lawall@lip6.fr>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/super.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ fs/nilfs2/alloc.c | 28 +++++++++-------------------
+ 1 file changed, 9 insertions(+), 19 deletions(-)
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index f47585b..c69455a 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -1405,14 +1405,10 @@ static void nilfs_destroy_cachep(void)
- 	 */
- 	rcu_barrier();
- 
--	if (nilfs_inode_cachep)
--		kmem_cache_destroy(nilfs_inode_cachep);
--	if (nilfs_transaction_cachep)
--		kmem_cache_destroy(nilfs_transaction_cachep);
--	if (nilfs_segbuf_cachep)
--		kmem_cache_destroy(nilfs_segbuf_cachep);
--	if (nilfs_btree_path_cache)
--		kmem_cache_destroy(nilfs_btree_path_cache);
-+	kmem_cache_destroy(nilfs_inode_cachep);
-+	kmem_cache_destroy(nilfs_transaction_cachep);
-+	kmem_cache_destroy(nilfs_segbuf_cachep);
-+	kmem_cache_destroy(nilfs_btree_path_cache);
+diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+index b15daf8..5b7ee36 100644
+--- a/fs/nilfs2/alloc.c
++++ b/fs/nilfs2/alloc.c
+@@ -673,22 +673,6 @@ void nilfs_palloc_abort_free_entry(struct inode *inode,
  }
  
- static int __init nilfs_init_cachep(void)
+ /**
+- * nilfs_palloc_group_is_in - judge if an entry is in a group
+- * @inode: inode of metadata file using this allocator
+- * @group: group number
+- * @nr: serial number of the entry (e.g. inode number)
+- */
+-static int
+-nilfs_palloc_group_is_in(struct inode *inode, unsigned long group, __u64 nr)
+-{
+-	__u64 first, last;
+-
+-	first = group * nilfs_palloc_entries_per_group(inode);
+-	last = first + nilfs_palloc_entries_per_group(inode) - 1;
+-	return (nr >= first) && (nr <= last);
+-}
+-
+-/**
+  * nilfs_palloc_freev - deallocate a set of persistent objects
+  * @inode: inode of metadata file using this allocator
+  * @entry_nrs: array of entry numbers to be deallocated
+@@ -701,6 +685,8 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+ 	unsigned char *bitmap;
+ 	void *desc_kaddr, *bitmap_kaddr;
+ 	unsigned long group, group_offset;
++	__u64 group_min_nr;
++	const unsigned long epg = nilfs_palloc_entries_per_group(inode);
+ 	spinlock_t *lock;
+ 	int i, j, n, ret;
+ 
+@@ -715,6 +701,10 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+ 			brelse(desc_bh);
+ 			return ret;
+ 		}
++
++		/* Get the first entry number of the group */
++		group_min_nr = (__u64)group * epg;
++
+ 		desc_kaddr = kmap(desc_bh->b_page);
+ 		desc = nilfs_palloc_block_get_group_desc(
+ 			inode, group, desc_bh, desc_kaddr);
+@@ -722,10 +712,10 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+ 		bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
+ 		lock = nilfs_mdt_bgl_lock(inode, group);
+ 		for (j = i, n = 0;
+-		     (j < nitems) && nilfs_palloc_group_is_in(inode, group,
+-							      entry_nrs[j]);
++		     j < nitems && entry_nrs[j] >= group_min_nr &&
++			     entry_nrs[j] < group_min_nr + epg;
+ 		     j++) {
+-			nilfs_palloc_group(inode, entry_nrs[j], &group_offset);
++			group_offset = entry_nrs[j] - group_min_nr;
+ 			if (!nilfs_clear_bit_atomic(lock, group_offset,
+ 						    bitmap)) {
+ 				nilfs_warning(inode->i_sb, __func__,
 -- 
 1.8.3.1
