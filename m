@@ -1,108 +1,267 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 4/7] nilfs2: refactor nilfs_palloc_find_available_slot()
-Date: Sat, 19 Sep 2015 19:32:59 +0900
-Message-ID: <1442658782-3147-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 3/7] nilfs2: do not call nilfs_mdt_bgl_lock() needlessly
+Date: Sat, 19 Sep 2015 19:32:58 +0900
+Message-ID: <1442658782-3147-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1442658782-3147-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=qSBAD82pgroPJfgjw4OktSI+HT+RkdAZUT2L6vW5Ww0=;
-        b=FrVDszaOqjAaRiVuEP42UZIo+YMJG0gvlJCl7udNxrnG22BYeLvQuwEUpswFjmvUCk
-         564XIwvCRGQozeZI+eyRkrKKNHX3NtmB2XeZ/DvNakxgQLpJjF9G3oPE9In2MmKVOe/f
-         72ihpyp8KCQrFOqWmU1BnxCZNfD1wp6L3u+k2NnLZjCbtMXEVguzlvsQvVZGtZoohuWL
-         246gT8kwv2qfO5hWzrYAt6ARJedJXgnSExWIwUwYb0hepbVHZtG7MlOUEUrxmeZn0fN3
-         0H1VW5e03wtxNNFXw3nuc5oTGujbaWr4U0x5fjLiSv7gNgK7+MhhzVC32KaaaGgPT780
-         zZqQ==
-In-Reply-To: <1442658782-3147-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+        bh=MHoCI61Pc5PyR3tePDrJfZ/GxWOWOFIDv3eF0MG2nlw=;
+        b=I/HGMIkHcUBG7lJ4MyW96CIO2fgviPgX/JUeMWO7Su6to72cZfFcExehi+WXYL2HzW
+         //WANSfTOtc+JdtEtUzTlycKDXRYKfTSN7AMDXOY6dDsXMxJFSfxeJL7Q2cOh0rpEJWy
+         vfx9O7J769rqGAOouydWjLLC9DII2duj/PZ9cOycjJIzcGs0pxuOwUAgaGBvdqeIgaC8
+         k6A0TpER+HLy8/ZBqxBEXoUHyLm9KnclPSyQD+afyTuiT/5++u5QPAM5ObbqCcuMiA+H
+         tvW/21yIL6Jt2jCfhx46Nn9eRw0a1BhL4U2NV4iiW7FcObuVEp4hj/Nsg5gM9fh3I85v
+         u3ug==
+In-Reply-To: <1442658782-3147-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-The current implementation of nilfs_palloc_find_available_slot()
-function is overkill.  The underlying bit search routine is well
-optimized, so this uses it more simply in
-nilfs_palloc_find_available_slot().
+In the bitmap based allocator implementation, nilfs_mdt_bgl_lock()
+helper is frequently used to get a spinlock protecting a target block
+group.  This reduces its usage and simplifies arguments of some
+related functions by directly passing a pointer to the spinlock.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/alloc.c | 48 +++++++++++++++++++++---------------------------
- 1 file changed, 21 insertions(+), 27 deletions(-)
+ fs/nilfs2/alloc.c | 84 ++++++++++++++++++++++++++-----------------------------
+ 1 file changed, 40 insertions(+), 44 deletions(-)
 
 diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-index ff0d62c..b15daf8 100644
+index afe98364..ff0d62c 100644
 --- a/fs/nilfs2/alloc.c
 +++ b/fs/nilfs2/alloc.c
-@@ -335,39 +335,33 @@ void *nilfs_palloc_block_get_entry(const struct inode *inode, __u64 nr,
+@@ -133,38 +133,34 @@ nilfs_palloc_bitmap_blkoff(const struct inode *inode, unsigned long group)
+ 
+ /**
+  * nilfs_palloc_group_desc_nfrees - get the number of free entries in a group
+- * @inode: inode of metadata file using this allocator
+- * @group: group number
+  * @desc: pointer to descriptor structure for the group
++ * @lock: spin lock protecting @desc
   */
- static int nilfs_palloc_find_available_slot(unsigned char *bitmap,
- 					    unsigned long target,
--					    int bsize,
-+					    unsigned bsize,
- 					    spinlock_t *lock)
+ static unsigned long
+-nilfs_palloc_group_desc_nfrees(struct inode *inode, unsigned long group,
+-			       const struct nilfs_palloc_group_desc *desc)
++nilfs_palloc_group_desc_nfrees(const struct nilfs_palloc_group_desc *desc,
++			       spinlock_t *lock)
  {
--	int curr, pos, end, i;
-+	int pos, end = bsize;
+ 	unsigned long nfree;
  
--	if (target > 0) {
--		end = (target + BITS_PER_LONG - 1) & ~(BITS_PER_LONG - 1);
--		if (end > bsize)
--			end = bsize;
--		pos = nilfs_find_next_zero_bit(bitmap, end, target);
--		if (pos < end && !nilfs_set_bit_atomic(lock, pos, bitmap))
--			return pos;
--	} else {
--		end = 0;
-+	if (likely(target < bsize)) {
-+		pos = target;
-+		do {
-+			pos = nilfs_find_next_zero_bit(bitmap, end, pos);
-+			if (pos >= end)
-+				break;
-+			if (!nilfs_set_bit_atomic(lock, pos, bitmap))
-+				return pos;
-+		} while (++pos < end);
-+
-+		end = target;
- 	}
- 
--	for (i = 0, curr = end;
--	     i < bsize;
--	     i += BITS_PER_LONG, curr += BITS_PER_LONG) {
--		/* wrap around */
--		if (curr >= bsize)
--			curr = 0;
--		while (*((unsigned long *)bitmap + curr / BITS_PER_LONG)
--		       != ~0UL) {
--			end = curr + BITS_PER_LONG;
--			if (end > bsize)
--				end = bsize;
--			pos = nilfs_find_next_zero_bit(bitmap, end, curr);
--			if (pos < end &&
--			    !nilfs_set_bit_atomic(lock, pos, bitmap))
--				return pos;
--		}
-+	/* wrap around */
-+	for (pos = 0; pos < end; pos++) {
-+		pos = nilfs_find_next_zero_bit(bitmap, end, pos);
-+		if (pos >= end)
-+			break;
-+		if (!nilfs_set_bit_atomic(lock, pos, bitmap))
-+			return pos;
- 	}
-+
- 	return -ENOSPC;
+-	spin_lock(nilfs_mdt_bgl_lock(inode, group));
++	spin_lock(lock);
+ 	nfree = le32_to_cpu(desc->pg_nfrees);
+-	spin_unlock(nilfs_mdt_bgl_lock(inode, group));
++	spin_unlock(lock);
+ 	return nfree;
  }
  
+ /**
+  * nilfs_palloc_group_desc_add_entries - adjust count of free entries
+- * @inode: inode of metadata file using this allocator
+- * @group: group number
+  * @desc: pointer to descriptor structure for the group
++ * @lock: spin lock protecting @desc
+  * @n: delta to be added
+  */
+ static void
+-nilfs_palloc_group_desc_add_entries(struct inode *inode,
+-				    unsigned long group,
+-				    struct nilfs_palloc_group_desc *desc,
+-				    u32 n)
++nilfs_palloc_group_desc_add_entries(struct nilfs_palloc_group_desc *desc,
++				    spinlock_t *lock, u32 n)
+ {
+-	spin_lock(nilfs_mdt_bgl_lock(inode, group));
++	spin_lock(lock);
+ 	le32_add_cpu(&desc->pg_nfrees, n);
+-	spin_unlock(nilfs_mdt_bgl_lock(inode, group));
++	spin_unlock(lock);
+ }
+ 
+ /**
+@@ -332,17 +328,15 @@ void *nilfs_palloc_block_get_entry(const struct inode *inode, __u64 nr,
+ 
+ /**
+  * nilfs_palloc_find_available_slot - find available slot in a group
+- * @inode: inode of metadata file using this allocator
+- * @group: group number
+- * @target: offset number of an entry in the group (start point)
+  * @bitmap: bitmap of the group
++ * @target: offset number of an entry in the group (start point)
+  * @bsize: size in bits
++ * @lock: spin lock protecting @bitmap
+  */
+-static int nilfs_palloc_find_available_slot(struct inode *inode,
+-					    unsigned long group,
++static int nilfs_palloc_find_available_slot(unsigned char *bitmap,
+ 					    unsigned long target,
+-					    unsigned char *bitmap,
+-					    int bsize)
++					    int bsize,
++					    spinlock_t *lock)
+ {
+ 	int curr, pos, end, i;
+ 
+@@ -351,12 +345,11 @@ static int nilfs_palloc_find_available_slot(struct inode *inode,
+ 		if (end > bsize)
+ 			end = bsize;
+ 		pos = nilfs_find_next_zero_bit(bitmap, end, target);
+-		if (pos < end &&
+-		    !nilfs_set_bit_atomic(
+-			    nilfs_mdt_bgl_lock(inode, group), pos, bitmap))
++		if (pos < end && !nilfs_set_bit_atomic(lock, pos, bitmap))
+ 			return pos;
+-	} else
++	} else {
+ 		end = 0;
++	}
+ 
+ 	for (i = 0, curr = end;
+ 	     i < bsize;
+@@ -370,10 +363,8 @@ static int nilfs_palloc_find_available_slot(struct inode *inode,
+ 			if (end > bsize)
+ 				end = bsize;
+ 			pos = nilfs_find_next_zero_bit(bitmap, end, curr);
+-			if ((pos < end) &&
+-			    !nilfs_set_bit_atomic(
+-				    nilfs_mdt_bgl_lock(inode, group), pos,
+-				    bitmap))
++			if (pos < end &&
++			    !nilfs_set_bit_atomic(lock, pos, bitmap))
+ 				return pos;
+ 		}
+ 	}
+@@ -477,6 +468,7 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+ 	unsigned long group_offset, maxgroup_offset;
+ 	unsigned long n, entries_per_group, groups_per_desc_block;
+ 	unsigned long i, j;
++	spinlock_t *lock;
+ 	int pos, ret;
+ 
+ 	ngroups = nilfs_palloc_groups_count(inode);
+@@ -501,8 +493,8 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+ 		n = nilfs_palloc_rest_groups_in_desc_block(inode, group,
+ 							   maxgroup);
+ 		for (j = 0; j < n; j++, desc++, group++) {
+-			if (nilfs_palloc_group_desc_nfrees(inode, group, desc)
+-			    > 0) {
++			lock = nilfs_mdt_bgl_lock(inode, group);
++			if (nilfs_palloc_group_desc_nfrees(desc, lock) > 0) {
+ 				ret = nilfs_palloc_get_bitmap_block(
+ 					inode, group, 1, &bitmap_bh);
+ 				if (ret < 0)
+@@ -510,12 +502,12 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+ 				bitmap_kaddr = kmap(bitmap_bh->b_page);
+ 				bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
+ 				pos = nilfs_palloc_find_available_slot(
+-					inode, group, group_offset, bitmap,
+-					entries_per_group);
++					bitmap, group_offset,
++					entries_per_group, lock);
+ 				if (pos >= 0) {
+ 					/* found a free entry */
+ 					nilfs_palloc_group_desc_add_entries(
+-						inode, group, desc, -1);
++						desc, lock, -1);
+ 					req->pr_entry_nr =
+ 						entries_per_group * group + pos;
+ 					kunmap(desc_bh->b_page);
+@@ -573,6 +565,7 @@ void nilfs_palloc_commit_free_entry(struct inode *inode,
+ 	unsigned long group, group_offset;
+ 	unsigned char *bitmap;
+ 	void *desc_kaddr, *bitmap_kaddr;
++	spinlock_t *lock;
+ 
+ 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
+ 	desc_kaddr = kmap(req->pr_desc_bh->b_page);
+@@ -580,15 +573,15 @@ void nilfs_palloc_commit_free_entry(struct inode *inode,
+ 						 req->pr_desc_bh, desc_kaddr);
+ 	bitmap_kaddr = kmap(req->pr_bitmap_bh->b_page);
+ 	bitmap = bitmap_kaddr + bh_offset(req->pr_bitmap_bh);
++	lock = nilfs_mdt_bgl_lock(inode, group);
+ 
+-	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(inode, group),
+-				    group_offset, bitmap))
++	if (!nilfs_clear_bit_atomic(lock, group_offset, bitmap))
+ 		nilfs_warning(inode->i_sb, __func__,
+ 			      "entry number %llu already freed: ino=%lu\n",
+ 			      (unsigned long long)req->pr_entry_nr,
+ 			      (unsigned long)inode->i_ino);
+ 	else
+-		nilfs_palloc_group_desc_add_entries(inode, group, desc, 1);
++		nilfs_palloc_group_desc_add_entries(desc, lock, 1);
+ 
+ 	kunmap(req->pr_bitmap_bh->b_page);
+ 	kunmap(req->pr_desc_bh->b_page);
+@@ -613,6 +606,7 @@ void nilfs_palloc_abort_alloc_entry(struct inode *inode,
+ 	void *desc_kaddr, *bitmap_kaddr;
+ 	unsigned char *bitmap;
+ 	unsigned long group, group_offset;
++	spinlock_t *lock;
+ 
+ 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
+ 	desc_kaddr = kmap(req->pr_desc_bh->b_page);
+@@ -620,14 +614,15 @@ void nilfs_palloc_abort_alloc_entry(struct inode *inode,
+ 						 req->pr_desc_bh, desc_kaddr);
+ 	bitmap_kaddr = kmap(req->pr_bitmap_bh->b_page);
+ 	bitmap = bitmap_kaddr + bh_offset(req->pr_bitmap_bh);
+-	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(inode, group),
+-				    group_offset, bitmap))
++	lock = nilfs_mdt_bgl_lock(inode, group);
++
++	if (!nilfs_clear_bit_atomic(lock, group_offset, bitmap))
+ 		nilfs_warning(inode->i_sb, __func__,
+ 			      "entry number %llu already freed: ino=%lu\n",
+ 			      (unsigned long long)req->pr_entry_nr,
+ 			      (unsigned long)inode->i_ino);
+ 	else
+-		nilfs_palloc_group_desc_add_entries(inode, group, desc, 1);
++		nilfs_palloc_group_desc_add_entries(desc, lock, 1);
+ 
+ 	kunmap(req->pr_bitmap_bh->b_page);
+ 	kunmap(req->pr_desc_bh->b_page);
+@@ -712,6 +707,7 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+ 	unsigned char *bitmap;
+ 	void *desc_kaddr, *bitmap_kaddr;
+ 	unsigned long group, group_offset;
++	spinlock_t *lock;
+ 	int i, j, n, ret;
+ 
+ 	for (i = 0; i < nitems; i = j) {
+@@ -730,14 +726,14 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+ 			inode, group, desc_bh, desc_kaddr);
+ 		bitmap_kaddr = kmap(bitmap_bh->b_page);
+ 		bitmap = bitmap_kaddr + bh_offset(bitmap_bh);
++		lock = nilfs_mdt_bgl_lock(inode, group);
+ 		for (j = i, n = 0;
+ 		     (j < nitems) && nilfs_palloc_group_is_in(inode, group,
+ 							      entry_nrs[j]);
+ 		     j++) {
+ 			nilfs_palloc_group(inode, entry_nrs[j], &group_offset);
+-			if (!nilfs_clear_bit_atomic(
+-				    nilfs_mdt_bgl_lock(inode, group),
+-				    group_offset, bitmap)) {
++			if (!nilfs_clear_bit_atomic(lock, group_offset,
++						    bitmap)) {
+ 				nilfs_warning(inode->i_sb, __func__,
+ 					      "entry number %llu already freed: ino=%lu\n",
+ 					      (unsigned long long)entry_nrs[j],
+@@ -746,7 +742,7 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
+ 				n++;
+ 			}
+ 		}
+-		nilfs_palloc_group_desc_add_entries(inode, group, desc, n);
++		nilfs_palloc_group_desc_add_entries(desc, lock, n);
+ 
+ 		kunmap(bitmap_bh->b_page);
+ 		kunmap(desc_bh->b_page);
 -- 
 1.8.3.1
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
