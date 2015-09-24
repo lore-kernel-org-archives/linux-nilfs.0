@@ -1,118 +1,63 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 6/7] nilfs2: add helper functions to delete blocks from dat file
-Date: Sat, 19 Sep 2015 19:33:01 +0900
-Message-ID: <1442658782-3147-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1442658782-3147-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
-         :lines;
-        bh=EG+vFXCeJvOLP0Gds1jssSQPW2KBskLh/8/7WkN6ND4=;
-        b=pMZy9mXPWsxiPpVTh807b2o18PZ3wI/WpRYt2HhYWEv7QtplPImxXY9ABSCWVMJcI6
-         HFBTK9AqHCYuSaBQL7OgYUWf4kotHay0kPxTWv8URPfbLBdZRblW/Li5FrGge+rH60nt
-         gLdCEIiVeLtUQJEwq3KcLWfwWuPz6H7YjGbrSB+2klJWLAqpp4MSKKgaIJayCfPGeSwf
-         aihNV9lqMnIii0ZZWelwudIIGrw67ZvOi78bcWVaIZSI9qKY8ONvmBAs71EibBvlhCB9
-         VsLJ9wXU7E5d3MdtMXOpBPkVO/1UVUCwBYkuQrzSoUOr7j6u30o4yLL0ez1mSQzkSDYc
-         SW2Q==
-In-Reply-To: <1442658782-3147-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [PATCH 1/3] BTRFS: support NFSv2 export
+Date: Thu, 24 Sep 2015 11:59:02 +1000
+Message-ID: <87r3lowpax.fsf@notabene.neil.brown.name>
+References: <20150508001142.31129.7604.stgit@notabene.brown> <20150508001623.31129.91695.stgit@notabene.brown> <20150511081309.GI23255@suse.cz>
+Mime-Version: 1.0
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20150511081309.GI23255@suse.cz>
+Sender: linux-btrfs-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+To: dsterba@suse.cz
+Cc: Josef Bacik <jbacik@fb.com>, Chris Mason <clm@fb.com>, Jan Kara <jack@suse.cz>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-This adds delete functions for data blocks of metadata files using
-bitmap based allocator.  nilfs_palloc_delete_entry_block() deletes an
-entry block (e.g. block storing dat entries), and
-nilfs_palloc_delete_bitmap_block() deletes a bitmap block,
-respectively.
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-These helpers are intended to be used in the successive change on
-deallocator of block addresses ("nilfs2: free unused dat file blocks
-during garbage collection").
+David Sterba <dsterba@suse.cz> writes:
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
----
- fs/nilfs2/alloc.c | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 50 insertions(+)
+> On Fri, May 08, 2015 at 10:16:23AM +1000, NeilBrown wrote:
+>> The "fh_len" passed to ->fh_to_* is not guaranteed to be that same as
+>> that returned by encode_fh - it may be larger.
+>>=20
+>> With NFSv2, the filehandle is fixed length, so it may appear longer
+>> than expected and be zero-padded.
+>>=20
+>> So we must test that fh_len is at least some value, not exactly equal
+>> to it.
+>>=20
+>> Signed-off-by: NeilBrown <neilb@suse.de>
+>
+> Acked-by: David Sterba <dsterba@suse.cz>
 
-diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-index 5b7ee36..225b797 100644
---- a/fs/nilfs2/alloc.c
-+++ b/fs/nilfs2/alloc.c
-@@ -236,6 +236,26 @@ static int nilfs_palloc_get_block(struct inode *inode, unsigned long blkoff,
- }
- 
- /**
-+ * nilfs_palloc_delete_block - delete a block on the persistent allocator file
-+ * @inode: inode of metadata file using this allocator
-+ * @blkoff: block offset
-+ * @prev: nilfs_bh_assoc struct of the last used buffer
-+ * @lock: spin lock protecting @prev
-+ */
-+static int nilfs_palloc_delete_block(struct inode *inode, unsigned long blkoff,
-+				     struct nilfs_bh_assoc *prev,
-+				     spinlock_t *lock)
-+{
-+	spin_lock(lock);
-+	if (prev->bh && blkoff == prev->blkoff) {
-+		brelse(prev->bh);
-+		prev->bh = NULL;
-+	}
-+	spin_unlock(lock);
-+	return nilfs_mdt_delete_block(inode, blkoff);
-+}
-+
-+/**
-  * nilfs_palloc_get_desc_block - get buffer head of a group descriptor block
-  * @inode: inode of metadata file using this allocator
-  * @group: group number
-@@ -274,6 +294,22 @@ static int nilfs_palloc_get_bitmap_block(struct inode *inode,
- }
- 
- /**
-+ * nilfs_palloc_delete_bitmap_block - delete a bitmap block
-+ * @inode: inode of metadata file using this allocator
-+ * @group: group number
-+ */
-+static int nilfs_palloc_delete_bitmap_block(struct inode *inode,
-+					    unsigned long group)
-+{
-+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
-+
-+	return nilfs_palloc_delete_block(inode,
-+					 nilfs_palloc_bitmap_blkoff(inode,
-+								    group),
-+					 &cache->prev_bitmap, &cache->lock);
-+}
-+
-+/**
-  * nilfs_palloc_get_entry_block - get buffer head of an entry block
-  * @inode: inode of metadata file using this allocator
-  * @nr: serial number of the entry (e.g. inode number)
-@@ -292,6 +328,20 @@ int nilfs_palloc_get_entry_block(struct inode *inode, __u64 nr,
- }
- 
- /**
-+ * nilfs_palloc_delete_entry_block - delete an entry block
-+ * @inode: inode of metadata file using this allocator
-+ * @nr: serial number of the entry
-+ */
-+static int nilfs_palloc_delete_entry_block(struct inode *inode, __u64 nr)
-+{
-+	struct nilfs_palloc_cache *cache = NILFS_MDT(inode)->mi_palloc_cache;
-+
-+	return nilfs_palloc_delete_block(inode,
-+					 nilfs_palloc_entry_blkoff(inode, nr),
-+					 &cache->prev_entry, &cache->lock);
-+}
-+
-+/**
-  * nilfs_palloc_block_get_group_desc - get kernel address of a group descriptor
-  * @inode: inode of metadata file using this allocator
-  * @group: group number
--- 
-1.8.3.1
+Thanks.  However I just checked mainline and this still hasn't been
+applied.
+Should I resend it to someone?  Who?
+
+Thanks,
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJWA1jnAAoJEDnsnt1WYoG5KSAP/1716nmLGCRjmTwtXVI5R3mL
+io6SgWlTwBJvZYAF+vFys7UO5bgLnATHysY56EV5Pj3Ky3dWVz5NGap+qjCuyHNX
+fyCsXgfwbACB9zoYlKqADDsNMa0hpnUC0sLYiDzG9OyjQDaJyDPlv5mNJCFWHnyE
+fAohkp+OzBwi+v+SxFjtA5NjwGxzmJ2EXdxy5+klwspMcdLlbSLwveSOYMLxsh2b
+ZA5px7VCs6+lPDPZyI1u7nmv3z1NEBB+JZMcJhP3GJGBlv/f2aTGlaCaCHfI77EV
+zGOgZeTz6vkSw8kQTzq70sBGQsCyOBwioA7QgAXfiiQlfhYQZTV6bLPgPF9Qauu4
+C5x+8TreFMjUvAtFIbt18W4tiWSZqSj8uEfcwZSMBN6L+J76GDbT38FUr6ZoeAfj
+FLk9CZQEEb+ZolaMUi9l0dMgFdXKnciU3C601bHJPgedQVyxlM7Tx1d6qNFunmzE
+f0UnbuuoQJViY3ILQETE7XUxRtBp+VZSMZHxXNa3MbPqkV4P8cPZhiSlXGX9OOyn
+IFoT2a3xfvD1tJm2Hf2E7xUmbu+i4RBQvwc1KJJVK+VZpShN1M/c+FsuN2smCmzV
+KMDxqGAVmLDeJRzaoe0/WCLaBkG2sQcSqTH+FQUBwaElC2lL4ouDxqw2m1NVB/6p
+I+nRdvvjXrX/s1Jrq3jd
+=Zrth
+-----END PGP SIGNATURE-----
+--=-=-=--
