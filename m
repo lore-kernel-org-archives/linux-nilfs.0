@@ -1,178 +1,141 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH tracepoints] nilfs2: add tracepoints for analyzing sufile manipulation
-Date: Thu, 1 Oct 2015 00:06:21 +0900
-Message-ID: <CAKFNMomvgAFukQ+NH_Js9ayQva1orp_GO0ONmaYvKgqnQCtoGw@mail.gmail.com>
-References: <1443533856-18827-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
-Mime-Version: 1.0
+From: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH] nilfs2: add tracepoints for analyzing reading and writing metadata files
+Date: Sun,  4 Oct 2015 01:02:42 +0900
+Message-ID: <1443888162-14884-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
-         :cc:content-type;
-        bh=y3+2k8Q2B3PBbjjhp9TSkCl62gnzOJRDCmX/xUeeBaU=;
-        b=qK7FfqPFwOo7GLKklxx5fH2o4iqjaQgodKE6JiJOtaVWgZpXm2XgKJRkEChMc9ebjw
-         +nKehUCy45kgvZYxonAlXuBBOMk3w5KWn8gXq0/fcWVxy596Tub+kB4CMh4V1L61V3Mg
-         ICTr9XaXn9w5KMxTtLWWTmQF819IXIHklFlheW5BicJppUtO+Ya7V8CsCJRuvmMrZOUe
-         2AhGMzWXe1rqYz1gjVUeBuh585dIUUF6iM8NoGGkMjXT8cWu8qYdgyCWkM4WxmbEGwMs
-         32sBgVuwBFR7mVAdoLdoAXOd+IDo2h/USftNqPVmV5yJHVmqO1fyuLnlhVM7bpHjvUUe
-         ytEw==
-In-Reply-To: <1443533856-18827-1-git-send-email-mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+        h=sender:from:to:cc:subject:date:message-id;
+        bh=SppMu8MrQx670vSCKbW7NEIJYCkHKZOtrQ7Jffi75NM=;
+        b=yuxSZ398iu08ZZV8pdwN9D2FGuukGgYklcU9PMcKZG8XX4ZLFalIuuV1fOx708nmw6
+         jxb+rxsQ1svYunWLbL5DFjqQnHB96rE8FDPX7hnezS3834auEjlMloFN73iIlw+VDbq0
+         pwlCh9jg3UJs+0Kg1qNas5NfAktkF7pTHOe44FTrdlXExOY7kAHdsdCMFTBBN6iIE/Hq
+         /l7HxDn0Ujt300Q5XklWWviOSbz0/hX9IhCz2fFzaN0YL9a9Ml3yfTfPLzafd9W22pzX
+         PKWJIxFk58G3DwEoNgdPW66kFAcJKGV5oiLukLbzUd0FsVDgnbIO3zlhfg2Ti2mX3GjV
+         bHkQ==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hitoshi Mitake <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Benixon Dhas <benixon.dhas-Sjgp3cTcYWE@public.gmane.org>, TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
 
-2015-09-29 22:37 GMT+09:00 Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>:
-> This patch adds tracepoints which would be useful for analyzing
-> segment usage from a perspective of high level sufile manipulation
-> (check, alloc, free). sufile is an important in-place updated metadata
-> file, so analyzing the behavior would be useful for performance
-> turning.
->
-> example of usage (a case of allocation):
->
-> $ sudo bin/tpoint nilfs2:nilfs2_segment_usage_allocated
-> Tracing nilfs2:nilfs2_segment_usage_allocated. Ctrl-C to end.
->         segctord-17800 [002] ...1 10671.867294: nilfs2_segment_usage_allocated: sufile = ffff880054f908a8 segnum = 2
->         segctord-17800 [002] ...1 10675.073477: nilfs2_segment_usage_allocated: sufile = ffff880054f908a8 segnum = 3
->
-> Cc: Benixon Dhas <benixon.dhas-Sjgp3cTcYWE@public.gmane.org>
-> Cc: TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
-> Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+This patch adds tracepoints for analyzing requests of reading and
+writing metadata files. The tracepoints cover every in-place mdt files
+(cpfile, sufile, and datfile).
 
-Applied to the tracepoints branch.
+Example of tracing mdt_insert_new_block():
+              cp-14635 [000] ...1 30598.199309: nilfs2_mdt_insert_new_block: inode = ffff88022a8d0178 ino = 3 block = 155
+              cp-14635 [000] ...1 30598.199520: nilfs2_mdt_insert_new_block: inode = ffff88022a8d0178 ino = 3 block = 5
+              cp-14635 [000] ...1 30598.200828: nilfs2_mdt_insert_new_block: inode = ffff88022a8d0178 ino = 3 block = 253
 
-Thanks,
-Ryusuke Konishi
+Cc: TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/mdt.c               |  6 +++++
+ include/trace/events/nilfs2.h | 54 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 60 insertions(+)
 
-> ---
->  fs/nilfs2/sufile.c            |  8 ++++++
->  include/trace/events/nilfs2.h | 67 +++++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 75 insertions(+)
->
-> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-> index 2a869c3..7ff8f15 100644
-> --- a/fs/nilfs2/sufile.c
-> +++ b/fs/nilfs2/sufile.c
-> @@ -30,6 +30,8 @@
->  #include "mdt.h"
->  #include "sufile.h"
->
-> +#include <trace/events/nilfs2.h>
-> +
->  /**
->   * struct nilfs_sufile_info - on-memory private data of sufile
->   * @mi: on-memory private data of metadata file
-> @@ -358,6 +360,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
->                                 break; /* never happens */
->                         }
->                 }
-> +               trace_nilfs2_segment_usage_check(sufile, segnum, cnt);
->                 ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 1,
->                                                            &su_bh);
->                 if (ret < 0)
-> @@ -388,6 +391,9 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
->                         nilfs_mdt_mark_dirty(sufile);
->                         brelse(su_bh);
->                         *segnump = segnum;
-> +
-> +                       trace_nilfs2_segment_usage_allocated(sufile, segnum);
-> +
->                         goto out_header;
->                 }
->
-> @@ -490,6 +496,8 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
->         NILFS_SUI(sufile)->ncleansegs++;
->
->         nilfs_mdt_mark_dirty(sufile);
-> +
-> +       trace_nilfs2_segment_usage_freed(sufile, segnum);
->  }
->
->  /**
-> diff --git a/include/trace/events/nilfs2.h b/include/trace/events/nilfs2.h
-> index e5649ac..1b65ba6 100644
-> --- a/include/trace/events/nilfs2.h
-> +++ b/include/trace/events/nilfs2.h
-> @@ -95,6 +95,73 @@ TRACE_EVENT(nilfs2_transaction_transition,
->                       show_transaction_state(__entry->state))
->  );
->
-> +TRACE_EVENT(nilfs2_segment_usage_check,
-> +           TP_PROTO(struct inode *sufile,
-> +                    __u64 segnum,
-> +                    unsigned long cnt),
-> +
-> +           TP_ARGS(sufile, segnum, cnt),
-> +
-> +           TP_STRUCT__entry(
-> +                   __field(struct inode *, sufile)
-> +                   __field(__u64, segnum)
-> +                   __field(unsigned long, cnt)
-> +           ),
-> +
-> +           TP_fast_assign(
-> +                   __entry->sufile = sufile;
-> +                   __entry->segnum = segnum;
-> +                   __entry->cnt = cnt;
-> +                   ),
-> +
-> +           TP_printk("sufile = %p segnum = %llu cnt = %lu",
-> +                     __entry->sufile,
-> +                     __entry->segnum,
-> +                     __entry->cnt)
-> +);
-> +
-> +TRACE_EVENT(nilfs2_segment_usage_allocated,
-> +           TP_PROTO(struct inode *sufile,
-> +                    __u64 segnum),
-> +
-> +           TP_ARGS(sufile, segnum),
-> +
-> +           TP_STRUCT__entry(
-> +                   __field(struct inode *, sufile)
-> +                   __field(__u64, segnum)
-> +           ),
-> +
-> +           TP_fast_assign(
-> +                   __entry->sufile = sufile;
-> +                   __entry->segnum = segnum;
-> +                   ),
-> +
-> +           TP_printk("sufile = %p segnum = %llu",
-> +                     __entry->sufile,
-> +                     __entry->segnum)
-> +);
-> +
-> +TRACE_EVENT(nilfs2_segment_usage_freed,
-> +           TP_PROTO(struct inode *sufile,
-> +                    __u64 segnum),
-> +
-> +           TP_ARGS(sufile, segnum),
-> +
-> +           TP_STRUCT__entry(
-> +                   __field(struct inode *, sufile)
-> +                   __field(__u64, segnum)
-> +           ),
-> +
-> +           TP_fast_assign(
-> +                   __entry->sufile = sufile;
-> +                   __entry->segnum = segnum;
-> +                   ),
-> +
-> +           TP_printk("sufile = %p segnum = %llu",
-> +                     __entry->sufile,
-> +                     __entry->segnum)
-> +);
-> +
->  #endif /* _TRACE_NILFS2_H */
->
->  /* This part must be outside protection */
-> --
-> 1.9.1
->
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index dee34d9..1125f40 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -33,6 +33,7 @@
+ #include "page.h"
+ #include "mdt.h"
+ 
++#include <trace/events/nilfs2.h>
+ 
+ #define NILFS_MDT_MAX_RA_BLOCKS		(16 - 1)
+ 
+@@ -68,6 +69,9 @@ nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
+ 	set_buffer_uptodate(bh);
+ 	mark_buffer_dirty(bh);
+ 	nilfs_mdt_mark_dirty(inode);
++
++	trace_nilfs2_mdt_insert_new_block(inode, inode->i_ino, block);
++
+ 	return 0;
+ }
+ 
+@@ -158,6 +162,8 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
+ 	get_bh(bh);
+ 	submit_bh(mode, bh);
+ 	ret = 0;
++
++	trace_nilfs2_mdt_submit_block(inode, inode->i_ino, blkoff, mode);
+  out:
+ 	get_bh(bh);
+ 	*out_bh = bh;
+diff --git a/include/trace/events/nilfs2.h b/include/trace/events/nilfs2.h
+index 1b65ba6..c780581 100644
+--- a/include/trace/events/nilfs2.h
++++ b/include/trace/events/nilfs2.h
+@@ -162,6 +162,60 @@ TRACE_EVENT(nilfs2_segment_usage_freed,
+ 		      __entry->segnum)
+ );
+ 
++TRACE_EVENT(nilfs2_mdt_insert_new_block,
++	    TP_PROTO(struct inode *inode,
++		     unsigned long ino,
++		     unsigned long block),
++
++	    TP_ARGS(inode, ino, block),
++
++	    TP_STRUCT__entry(
++		    __field(struct inode *, inode)
++		    __field(unsigned long, ino)
++		    __field(unsigned long, block)
++	    ),
++
++	    TP_fast_assign(
++		    __entry->inode = inode;
++		    __entry->ino = ino;
++		    __entry->block = block;
++		    ),
++
++	    TP_printk("inode = %p ino = %lu block = %lu",
++		      __entry->inode,
++		      __entry->ino,
++		      __entry->block)
++);
++
++TRACE_EVENT(nilfs2_mdt_submit_block,
++	    TP_PROTO(struct inode *inode,
++		     unsigned long ino,
++		     unsigned long blkoff,
++		     int mode),
++
++	    TP_ARGS(inode, ino, blkoff, mode),
++
++	    TP_STRUCT__entry(
++		    __field(struct inode *, inode)
++		    __field(unsigned long, ino)
++		    __field(unsigned long, blkoff)
++		    __field(int, mode)
++	    ),
++
++	    TP_fast_assign(
++		    __entry->inode = inode;
++		    __entry->ino = ino;
++		    __entry->blkoff = blkoff;
++		    __entry->mode = mode;
++		    ),
++
++	    TP_printk("inode = %p ino = %lu blkoff = %lu mode = %x",
++		      __entry->inode,
++		      __entry->ino,
++		      __entry->blkoff,
++		      __entry->mode)
++);
++
+ #endif /* _TRACE_NILFS2_H */
+ 
+ /* This part must be outside protection */
+-- 
+1.9.1
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
