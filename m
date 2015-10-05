@@ -1,58 +1,51 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: add tracepoints for analyzing reading and
- writing metadata files
-Date: Mon, 05 Oct 2015 20:25:13 +0900 (JST)
-Message-ID: <20151005.202513.149043665808498169.konishi.ryusuke@lab.ntt.co.jp>
-References: <1443888162-14884-1-git-send-email-mitake.hitoshi@lab.ntt.co.jp>
-	<20151004.223343.974065670664209746.konishi.ryusuke@lab.ntt.co.jp>
-	<CAE1WaK+TTyKZNA2xk7qZsZdJBEUSvDKHmCWnhr_gJy6yR4hnSA@mail.gmail.com>
+From: Chris Mason <clm@fb.com>
+Subject: Re: [PATCH 1/3] BTRFS: support NFSv2 export
+Date: Mon, 5 Oct 2015 10:32:46 -0400
+Message-ID: <20151005143246.GW25218@ret.masoncoding.com>
+References: <20150508001142.31129.7604.stgit@notabene.brown>
+ <20150508001623.31129.91695.stgit@notabene.brown>
+ <20150511081309.GI23255@suse.cz>
+ <87r3lowpax.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=Z/AViz6N5g6sks2Pwk2AfL/XMZnaExSn5r3KDiLXNBo=;
-        b=K4zTxMWqe37OWour+9EV2NVSNW7nJJTnNfRTRQ1wEE/7gSdUEnTOkB5+uiIo+ECm5V
-         pGzs+GNCFPxVLm+K7woifCXBWs6IMJF74u+kRcM7cgySujTsHfRDulDQudrVDH0Go1l7
-         c+y9kDsBzoOBxfAkci+KH6ZDmIGa1np+Dse7dDnw9IoZhINrLFbofR7nif34dqRYNLYt
-         XQNohGASQNFUsCJPKWxt/Xdn5GiLL+Ov4RiZap0g0t6n2U4nMA8LPAQ/B85SDOLQPLfx
-         PvyxHSXRSl43WS+bw0v/LTxJragZy/eeaBuk6dea+WIi764eg5Yendsq/0MLocM+DRFo
-         d9Ig==
-In-Reply-To: <CAE1WaK+TTyKZNA2xk7qZsZdJBEUSvDKHmCWnhr_gJy6yR4hnSA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=fb.com; h=date : from : to : cc :
+ subject : message-id : references : mime-version : content-type :
+ in-reply-to; s=facebook; bh=wAnkcxl0dSOj8kExb+thM1uQYSvhcdlyXgVoM8Gp24I=;
+ b=Owz/crR8zl5EQtTmPkaDyPO0BDxX8JvN3OrFfIsUGaLk2EdMBRK7DdfUqrAF/QZwFGaP
+ d7qRrL6dyOy7TZ3qRZjUk5+m/R8Fg21yo35BeS/zcJu5LUxkAI4752RI5Ko3wxSVeBBq
+ cusYbfHF4gviSeiIbjJnKJaj4sPtF8vF7S0= 
+Content-Disposition: inline
+In-Reply-To: <87r3lowpax.fsf@notabene.neil.brown.name>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Mitake Hitoshi <mitake.hitoshi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: Neil Brown <neilb@suse.de>
+Cc: dsterba@suse.cz, Josef Bacik <jbacik@fb.com>, Jan Kara <jack@suse.cz>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-On Mon, 5 Oct 2015 19:21:43 +0900, Mitake Hitoshi wrote:
-> On Sun, Oct 4, 2015 at 10:33 PM, Ryusuke Konishi
-> <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
->> On Sun,  4 Oct 2015 01:02:42 +0900, Mitake Hitoshi wrote:
->>> This patch adds tracepoints for analyzing requests of reading and
->>> writing metadata files. The tracepoints cover every in-place mdt files
->>> (cpfile, sufile, and datfile).
->>>
->>> Example of tracing mdt_insert_new_block():
->>>               cp-14635 [000] ...1 30598.199309: nilfs2_mdt_insert_new_block: inode = ffff88022a8d0178 ino = 3 block = 155
->>>               cp-14635 [000] ...1 30598.199520: nilfs2_mdt_insert_new_block: inode = ffff88022a8d0178 ino = 3 block = 5
->>>               cp-14635 [000] ...1 30598.200828: nilfs2_mdt_insert_new_block: inode = ffff88022a8d0178 ino = 3 block = 253
->>>
->>> Cc: TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
->>> Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
->>
->> Applied to the tracepoints branch.  Thanks.
+On Thu, Sep 24, 2015 at 11:59:02AM +1000, Neil Brown wrote:
+> David Sterba <dsterba@suse.cz> writes:
 > 
-> Thanks, could you send the patches in the tracepoints branch to upstream?
+> > On Fri, May 08, 2015 at 10:16:23AM +1000, NeilBrown wrote:
+> >> The "fh_len" passed to ->fh_to_* is not guaranteed to be that same as
+> >> that returned by encode_fh - it may be larger.
+> >> 
+> >> With NFSv2, the filehandle is fixed length, so it may appear longer
+> >> than expected and be zero-padded.
+> >> 
+> >> So we must test that fh_len is at least some value, not exactly equal
+> >> to it.
+> >> 
+> >> Signed-off-by: NeilBrown <neilb@suse.de>
+> >
+> > Acked-by: David Sterba <dsterba@suse.cz>
+> 
+> Thanks.  However I just checked mainline and this still hasn't been
+> applied.
+> Should I resend it to someone?  Who?
 
-Sure, I will.
 
-Regards,
-Ryusuke Konishi
+Sorry Neil, I thought you were pushing these after it was ack'd.  I'll
+put it in my pull this week.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-chris
