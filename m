@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/5] nilfs2: add a tracepoint for transaction events
-Date: Wed,  7 Oct 2015 02:50:25 +0900
-Message-ID: <1444153828-6747-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 3/5] nilfs2: add tracepoints for analyzing sufile manipulation
+Date: Wed,  7 Oct 2015 02:50:26 +0900
+Message-ID: <1444153828-6747-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1444153828-6747-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=rGkM6D96pzYIsEndSsmKOLt//OG5vpvHICmXPTqP4p8=;
-        b=JMvJq+XlE6LFFjmzpZ1ISg5cCH/bg8lVXgjqiR38A+kv4EPsOHg0GQjYhoiAk4H6fb
-         ouTvOF9hOcCHnpcWXLgnLh7JPw/LiChb+miVnPY06QTKWvOXcut4fPMj8c6pfWyO9fbS
-         jBqsPrk0TZfwX3NAjvf4gStldfqxX6qMpS/D4XwWzgWwaIwJ5d8QHdxTzwLOycMf/cD6
-         8oHmqLo7gJvyEIR1ZxvfUXDwsVNYJdX26fD+XZJFBavaJkNINhrQglzO8BwnGGp/Cjb5
-         Ab8nwYvf1uKOQHyWnUZGITLkicAx+yy2dnCpJaWEukSvTr5xrEFMuw29A0FAdz8P7lRE
-         M1ng==
+        bh=KXF6vrXEyWOPbmiuJTdYgHH6NYPfaoRVk1c+FlJZcHA=;
+        b=xv9zsL2AcDDJiYeOLBXfCGFOsczPKUCFUNzCslU4X2ydinKM9q04DumfATmYPiLsrJ
+         4cXYUlwm1+C9U8/vGVS02O2FKyh0hq0Mkjl74tJp3GlckgDxHOh3AjEqJvQEH/1lUt0u
+         ZTrBzkwAktjYwEQ5HkWRH2Cx8IwGBTMHTtYoYBIveHFuir/RLmCCmTu7LcW5uQEskPl+
+         h9cZ40KinazGvYCSbEb8yvTdzdqC4g2TDJA4DNraHDYiLBtLGyBRwtXTnW2TKqA7n+KF
+         zCfOxIjQI/4cE+UqF7HBRM3rFHx4dRpQFpF8ameiUhdhrDAyzhUkQGN7Y/xKYjTvGIGn
+         HMwg==
 In-Reply-To: <1444153828-6747-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -22,203 +22,146 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Benixon Dhas <benixon.dhas-Sjgp3cTcYWE@public.gmane.org>, TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
 
 From: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-This patch adds a tracepoint for transaction events of nilfs. With the
-tracepoint, these events can be tracked: begin, abort, commit,
-trylock, lock, and unlock. Basically, these events have corresponding
-functions e.g. begin event corresponds nilfs_transaction_begin(). The
-unlock event is an exception. It corresponds to the iteration in
-nilfs_transaction_lock().
+This patch adds tracepoints which would be useful for analyzing
+segment usage from a perspective of high level sufile manipulation
+(check, alloc, free). sufile is an important in-place updated metadata
+file, so analyzing the behavior would be useful for performance
+turning.
 
-Only one tracepoint is introcued: nilfs2_transaction_transition. The
-above events are distinguished with newly introduced enum. With this
-tracepoint, we can analyse a critical section of segment constructoin.
+example of usage (a case of allocation):
 
-Sample output by tpoint of perf-tools:
-              cp-4457  [000] ...1    63.266220: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800bf5ccc58 count = 1 flags = 9 state = BEGIN
-              cp-4457  [000] ...1    63.266221: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800bf5ccc58 count = 0 flags = 9 state = COMMIT
-              cp-4457  [000] ...1    63.266221: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800bf5ccc58 count = 0 flags = 9 state = COMMIT
-        segctord-4371  [001] ...1    68.261196: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800b889bdf8 count = 0 flags = 10 state = TRYLOCK
-        segctord-4371  [001] ...1    68.261280: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800b889bdf8 count = 0 flags = 10 state = LOCK
-        segctord-4371  [001] ...1    68.261877: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800b889bdf8 count = 1 flags = 10 state = BEGIN
-        segctord-4371  [001] ...1    68.262116: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800b889bdf8 count = 0 flags = 18 state = COMMIT
-        segctord-4371  [001] ...1    68.265032: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800b889bdf8 count = 0 flags = 18 state = UNLOCK
-        segctord-4371  [001] ...1   132.376847: nilfs2_transaction_transition: sb = ffff8802112b8800 ti = ffff8800b889bdf8 count = 0 flags = 10 state = TRYLOCK
+$ sudo bin/tpoint nilfs2:nilfs2_segment_usage_allocated
+Tracing nilfs2:nilfs2_segment_usage_allocated. Ctrl-C to end.
+        segctord-17800 [002] ...1 10671.867294: nilfs2_segment_usage_allocated: sufile = ffff880054f908a8 segnum = 2
+        segctord-17800 [002] ...1 10675.073477: nilfs2_segment_usage_allocated: sufile = ffff880054f908a8 segnum = 3
 
-This patch also does trivial cleaning of comma usage in collection
-stage transition event for consistent coding style.
-
+Cc: Benixon Dhas <benixon.dhas-Sjgp3cTcYWE@public.gmane.org>
+Cc: TK Kato <TK.Kato-Sjgp3cTcYWE@public.gmane.org>
 Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
 ---
- fs/nilfs2/segment.c           | 33 ++++++++++++++++++++++++++-
- include/trace/events/nilfs2.h | 53 +++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 85 insertions(+), 1 deletion(-)
+ fs/nilfs2/sufile.c            |  8 ++++++
+ include/trace/events/nilfs2.h | 67 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 75 insertions(+)
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index ef35404..3fc4732 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -214,11 +214,18 @@ int nilfs_transaction_begin(struct super_block *sb,
- {
- 	struct the_nilfs *nilfs;
- 	int ret = nilfs_prepare_segment_lock(ti);
-+	struct nilfs_transaction_info *trace_ti;
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index 2a869c3..7ff8f15 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -30,6 +30,8 @@
+ #include "mdt.h"
+ #include "sufile.h"
  
- 	if (unlikely(ret < 0))
- 		return ret;
--	if (ret > 0)
-+	if (ret > 0) {
-+		trace_ti = current->journal_info;
++#include <trace/events/nilfs2.h>
 +
-+		trace_nilfs2_transaction_transition(sb, trace_ti,
-+				    trace_ti->ti_count, trace_ti->ti_flags,
-+				    TRACE_NILFS2_TRANSACTION_BEGIN);
- 		return 0;
-+	}
- 
- 	sb_start_intwrite(sb);
- 
-@@ -229,6 +236,11 @@ int nilfs_transaction_begin(struct super_block *sb,
- 		ret = -ENOSPC;
- 		goto failed;
- 	}
+ /**
+  * struct nilfs_sufile_info - on-memory private data of sufile
+  * @mi: on-memory private data of metadata file
+@@ -358,6 +360,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
+ 				break; /* never happens */
+ 			}
+ 		}
++		trace_nilfs2_segment_usage_check(sufile, segnum, cnt);
+ 		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 1,
+ 							   &su_bh);
+ 		if (ret < 0)
+@@ -388,6 +391,9 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
+ 			nilfs_mdt_mark_dirty(sufile);
+ 			brelse(su_bh);
+ 			*segnump = segnum;
 +
-+	trace_ti = current->journal_info;
-+	trace_nilfs2_transaction_transition(sb, trace_ti, trace_ti->ti_count,
-+					    trace_ti->ti_flags,
-+					    TRACE_NILFS2_TRANSACTION_BEGIN);
- 	return 0;
- 
-  failed:
-@@ -261,6 +273,8 @@ int nilfs_transaction_commit(struct super_block *sb)
- 	ti->ti_flags |= NILFS_TI_COMMIT;
- 	if (ti->ti_count > 0) {
- 		ti->ti_count--;
-+		trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
-+			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_COMMIT);
- 		return 0;
- 	}
- 	if (nilfs->ns_writer) {
-@@ -272,6 +286,9 @@ int nilfs_transaction_commit(struct super_block *sb)
- 			nilfs_segctor_do_flush(sci, 0);
- 	}
- 	up_read(&nilfs->ns_segctor_sem);
-+	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
-+			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_COMMIT);
++			trace_nilfs2_segment_usage_allocated(sufile, segnum);
 +
- 	current->journal_info = ti->ti_save;
+ 			goto out_header;
+ 		}
  
- 	if (ti->ti_flags & NILFS_TI_SYNC)
-@@ -290,10 +307,15 @@ void nilfs_transaction_abort(struct super_block *sb)
- 	BUG_ON(ti == NULL || ti->ti_magic != NILFS_TI_MAGIC);
- 	if (ti->ti_count > 0) {
- 		ti->ti_count--;
-+		trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
-+			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_ABORT);
- 		return;
- 	}
- 	up_read(&nilfs->ns_segctor_sem);
+@@ -490,6 +496,8 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+ 	NILFS_SUI(sufile)->ncleansegs++;
  
-+	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
-+		    ti->ti_flags, TRACE_NILFS2_TRANSACTION_ABORT);
+ 	nilfs_mdt_mark_dirty(sufile);
 +
- 	current->journal_info = ti->ti_save;
- 	if (ti->ti_flags & NILFS_TI_DYNAMIC_ALLOC)
- 		kmem_cache_free(nilfs_transaction_cachep, ti);
-@@ -339,6 +361,9 @@ static void nilfs_transaction_lock(struct super_block *sb,
- 	current->journal_info = ti;
- 
- 	for (;;) {
-+		trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
-+			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_TRYLOCK);
-+
- 		down_write(&nilfs->ns_segctor_sem);
- 		if (!test_bit(NILFS_SC_PRIOR_FLUSH, &sci->sc_flags))
- 			break;
-@@ -350,6 +375,9 @@ static void nilfs_transaction_lock(struct super_block *sb,
- 	}
- 	if (gcflag)
- 		ti->ti_flags |= NILFS_TI_GC;
-+
-+	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
-+			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_LOCK);
++	trace_nilfs2_segment_usage_freed(sufile, segnum);
  }
  
- static void nilfs_transaction_unlock(struct super_block *sb)
-@@ -362,6 +390,9 @@ static void nilfs_transaction_unlock(struct super_block *sb)
- 
- 	up_write(&nilfs->ns_segctor_sem);
- 	current->journal_info = ti->ti_save;
-+
-+	trace_nilfs2_transaction_transition(sb, ti, ti->ti_count,
-+			    ti->ti_flags, TRACE_NILFS2_TRANSACTION_UNLOCK);
- }
- 
- static void *nilfs_segctor_map_segsum_entry(struct nilfs_sc_info *sci,
+ /**
 diff --git a/include/trace/events/nilfs2.h b/include/trace/events/nilfs2.h
-index 573da00..e5649ac 100644
+index e5649ac..1b65ba6 100644
 --- a/include/trace/events/nilfs2.h
 +++ b/include/trace/events/nilfs2.h
-@@ -42,6 +42,59 @@ TRACE_EVENT(nilfs2_collection_stage_transition,
- 		      show_collection_stage(__entry->stage))
+@@ -95,6 +95,73 @@ TRACE_EVENT(nilfs2_transaction_transition,
+ 		      show_transaction_state(__entry->state))
  );
  
-+#ifndef TRACE_HEADER_MULTI_READ
-+enum nilfs2_transaction_transition_state {
-+	TRACE_NILFS2_TRANSACTION_BEGIN,
-+	TRACE_NILFS2_TRANSACTION_COMMIT,
-+	TRACE_NILFS2_TRANSACTION_ABORT,
-+	TRACE_NILFS2_TRANSACTION_TRYLOCK,
-+	TRACE_NILFS2_TRANSACTION_LOCK,
-+	TRACE_NILFS2_TRANSACTION_UNLOCK,
-+};
-+#endif
++TRACE_EVENT(nilfs2_segment_usage_check,
++	    TP_PROTO(struct inode *sufile,
++		     __u64 segnum,
++		     unsigned long cnt),
 +
-+#define show_transaction_state(type)					\
-+	__print_symbolic(type,						\
-+			 { TRACE_NILFS2_TRANSACTION_BEGIN, "BEGIN" },	\
-+			 { TRACE_NILFS2_TRANSACTION_COMMIT, "COMMIT" },	\
-+			 { TRACE_NILFS2_TRANSACTION_ABORT, "ABORT" },	\
-+			 { TRACE_NILFS2_TRANSACTION_TRYLOCK, "TRYLOCK" }, \
-+			 { TRACE_NILFS2_TRANSACTION_LOCK, "LOCK" },	\
-+			 { TRACE_NILFS2_TRANSACTION_UNLOCK, "UNLOCK" })
-+
-+TRACE_EVENT(nilfs2_transaction_transition,
-+	    TP_PROTO(struct super_block *sb,
-+		     struct nilfs_transaction_info *ti,
-+		     int count,
-+		     unsigned int flags,
-+		     enum nilfs2_transaction_transition_state state),
-+
-+	    TP_ARGS(sb, ti, count, flags, state),
++	    TP_ARGS(sufile, segnum, cnt),
 +
 +	    TP_STRUCT__entry(
-+		    __field(void *, sb)
-+		    __field(void *, ti)
-+		    __field(int, count)
-+		    __field(unsigned int, flags)
-+		    __field(int, state)
++		    __field(struct inode *, sufile)
++		    __field(__u64, segnum)
++		    __field(unsigned long, cnt)
 +	    ),
 +
 +	    TP_fast_assign(
-+		    __entry->sb = sb;
-+		    __entry->ti = ti;
-+		    __entry->count = count;
-+		    __entry->flags = flags;
-+		    __entry->state = state;
++		    __entry->sufile = sufile;
++		    __entry->segnum = segnum;
++		    __entry->cnt = cnt;
 +		    ),
 +
-+	    TP_printk("sb = %p ti = %p count = %d flags = %x state = %s",
-+		      __entry->sb,
-+		      __entry->ti,
-+		      __entry->count,
-+		      __entry->flags,
-+		      show_transaction_state(__entry->state))
++	    TP_printk("sufile = %p segnum = %llu cnt = %lu",
++		      __entry->sufile,
++		      __entry->segnum,
++		      __entry->cnt)
++);
++
++TRACE_EVENT(nilfs2_segment_usage_allocated,
++	    TP_PROTO(struct inode *sufile,
++		     __u64 segnum),
++
++	    TP_ARGS(sufile, segnum),
++
++	    TP_STRUCT__entry(
++		    __field(struct inode *, sufile)
++		    __field(__u64, segnum)
++	    ),
++
++	    TP_fast_assign(
++		    __entry->sufile = sufile;
++		    __entry->segnum = segnum;
++		    ),
++
++	    TP_printk("sufile = %p segnum = %llu",
++		      __entry->sufile,
++		      __entry->segnum)
++);
++
++TRACE_EVENT(nilfs2_segment_usage_freed,
++	    TP_PROTO(struct inode *sufile,
++		     __u64 segnum),
++
++	    TP_ARGS(sufile, segnum),
++
++	    TP_STRUCT__entry(
++		    __field(struct inode *, sufile)
++		    __field(__u64, segnum)
++	    ),
++
++	    TP_fast_assign(
++		    __entry->sufile = sufile;
++		    __entry->segnum = segnum;
++		    ),
++
++	    TP_printk("sufile = %p segnum = %llu",
++		      __entry->sufile,
++		      __entry->segnum)
 +);
 +
  #endif /* _TRACE_NILFS2_H */
