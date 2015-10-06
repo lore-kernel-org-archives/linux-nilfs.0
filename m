@@ -1,51 +1,55 @@
-From: Chris Mason <clm@fb.com>
-Subject: Re: [PATCH 1/3] BTRFS: support NFSv2 export
-Date: Mon, 5 Oct 2015 10:32:46 -0400
-Message-ID: <20151005143246.GW25218@ret.masoncoding.com>
-References: <20150508001142.31129.7604.stgit@notabene.brown>
- <20150508001623.31129.91695.stgit@notabene.brown>
- <20150511081309.GI23255@suse.cz>
- <87r3lowpax.fsf@notabene.neil.brown.name>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=fb.com; h=date : from : to : cc :
- subject : message-id : references : mime-version : content-type :
- in-reply-to; s=facebook; bh=wAnkcxl0dSOj8kExb+thM1uQYSvhcdlyXgVoM8Gp24I=;
- b=Owz/crR8zl5EQtTmPkaDyPO0BDxX8JvN3OrFfIsUGaLk2EdMBRK7DdfUqrAF/QZwFGaP
- d7qRrL6dyOy7TZ3qRZjUk5+m/R8Fg21yo35BeS/zcJu5LUxkAI4752RI5Ko3wxSVeBBq
- cusYbfHF4gviSeiIbjJnKJaj4sPtF8vF7S0= 
-Content-Disposition: inline
-In-Reply-To: <87r3lowpax.fsf@notabene.neil.brown.name>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 0/5] nilfs2: introduce tracepoints
+Date: Wed,  7 Oct 2015 02:50:23 +0900
+Message-ID: <1444153828-6747-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=OUa7NafZwS5Z+uatH6XCwVjZo37iIEd0pwDCCbKC0LU=;
+        b=iSa+eYiqvw7e2FdwP0BJIfm4CHOzUcLKqGvfZNc2pwGJ+Sg6vmkL02e+UUkf+Z3o/9
+         imsZMYoPRsWK+VdAMq32s30FgTchbjiEA3TS6cKogoqhHjH5bBHxpaHSY+E/n8JejdoC
+         pvrAhdx9NUiJhGFsraFxLflDUHp7CMLzOWWejMdIQEISdV8izTBLzYoARrdchobvSfF3
+         X1VYq8GBK4sYMnKHWas4dmABWkrp54MEHPDsO+k1tOAJaJRLROa7uoz2+vW/KO6Q2CkD
+         8r9SS6Rl9mM1jWkfPoqHsNaloNaxnmxQuOq+bb4n2ySjElqoWei0ttZfFa40hASl+ba8
+         b8ug==
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Neil Brown <neilb@suse.de>
-Cc: dsterba@suse.cz, Josef Bacik <jbacik@fb.com>, Jan Kara <jack@suse.cz>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Thu, Sep 24, 2015 at 11:59:02AM +1000, Neil Brown wrote:
-> David Sterba <dsterba@suse.cz> writes:
-> 
-> > On Fri, May 08, 2015 at 10:16:23AM +1000, NeilBrown wrote:
-> >> The "fh_len" passed to ->fh_to_* is not guaranteed to be that same as
-> >> that returned by encode_fh - it may be larger.
-> >> 
-> >> With NFSv2, the filehandle is fixed length, so it may appear longer
-> >> than expected and be zero-padded.
-> >> 
-> >> So we must test that fh_len is at least some value, not exactly equal
-> >> to it.
-> >> 
-> >> Signed-off-by: NeilBrown <neilb@suse.de>
-> >
-> > Acked-by: David Sterba <dsterba@suse.cz>
-> 
-> Thanks.  However I just checked mainline and this still hasn't been
-> applied.
-> Should I resend it to someone?  Who?
+Hi Andrew,
 
+Please queue the following changes for the next merge window:
 
-Sorry Neil, I thought you were pushing these after it was ack'd.  I'll
-put it in my pull this week.
+Hitoshi Mitake (4):
+      nilfs2: add a tracepoint for tracking stage transition of segment construction
+      nilfs2: add a tracepoint for transaction events
+      nilfs2: add tracepoints for analyzing sufile manipulation
+      nilfs2: add tracepoints for analyzing reading and writing metadata files
 
--chris
+Ryusuke Konishi (1):
+      MAINTAINERS: nilfs2: add header file for tracing
+
+These introduces some tracepoints to nilfs2 to help tracking its
+behavior for bottleneck detection, debugging, etc.
+
+Thanks,
+Ryusuke Konishi
+--
+
+ MAINTAINERS                   |   1 +
+ fs/nilfs2/mdt.c               |   6 ++
+ fs/nilfs2/segment.c           | 104 ++++++++++++++++----
+ fs/nilfs2/segment.h           |   3 +-
+ fs/nilfs2/sufile.c            |   8 ++
+ include/trace/events/nilfs2.h | 224 ++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 324 insertions(+), 22 deletions(-)
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
