@@ -1,18 +1,21 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 0/5] nilfs2: introduce tracepoints
-Date: Wed,  7 Oct 2015 02:50:23 +0900
-Message-ID: <1444153828-6747-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/5] nilfs2: add a tracepoint for tracking stage transition of segment construction
+Date: Wed,  7 Oct 2015 02:50:24 +0900
+Message-ID: <1444153828-6747-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1444153828-6747-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:lines;
-        bh=OUa7NafZwS5Z+uatH6XCwVjZo37iIEd0pwDCCbKC0LU=;
-        b=iSa+eYiqvw7e2FdwP0BJIfm4CHOzUcLKqGvfZNc2pwGJ+Sg6vmkL02e+UUkf+Z3o/9
-         imsZMYoPRsWK+VdAMq32s30FgTchbjiEA3TS6cKogoqhHjH5bBHxpaHSY+E/n8JejdoC
-         pvrAhdx9NUiJhGFsraFxLflDUHp7CMLzOWWejMdIQEISdV8izTBLzYoARrdchobvSfF3
-         X1VYq8GBK4sYMnKHWas4dmABWkrp54MEHPDsO+k1tOAJaJRLROa7uoz2+vW/KO6Q2CkD
-         8r9SS6Rl9mM1jWkfPoqHsNaloNaxnmxQuOq+bb4n2ySjElqoWei0ttZfFa40hASl+ba8
-         b8ug==
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
+         :lines;
+        bh=yCbgS0RHNpgV9V33zgfZdIdNmfOiks5IYKyF1Gbqkb8=;
+        b=Qvp+GPzPMENj1tGY5KbFlwirzyz/U9wL7kjENZOkaA9EjUaYH48fOUhIDUvRmlJn54
+         hQ24OMpX43nI4IEIwcqojgh0h0lmGW5OoQJA8OUKPD99fykgkSf4Nr5s/T3Aly22zg62
+         hQoTPCHOJRj7Hx5KC7bgjNd+lJXJBhgs30JYo6XsOYN0XBMNfv6hRRgBwaKxOK4J3yi/
+         i9dAQB6jhQ+Nkcw0SDRHqpcryq1CgkPAgkgCWVCt9Wz81MEFjfaBVwOkVIbRN6mFI8g8
+         pfMYqpDEYYVRuc30SxgCB/MeyrpzXxoFqUJvI5hruTldx2PbAhJCv4mKndjAIj7EbhnK
+         LrZg==
+In-Reply-To: <1444153828-6747-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -21,33 +24,327 @@ Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Cc: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Hi Andrew,
+From: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Please queue the following changes for the next merge window:
+This patch adds a tracepoint for tracking stage transition of block
+collection in segment construction. With the tracepoint, we can
+analysis the behavior of segment construction in depth. It would be
+useful for bottleneck detection and debugging, etc.
 
-Hitoshi Mitake (4):
-      nilfs2: add a tracepoint for tracking stage transition of segment construction
-      nilfs2: add a tracepoint for transaction events
-      nilfs2: add tracepoints for analyzing sufile manipulation
-      nilfs2: add tracepoints for analyzing reading and writing metadata files
+The tracepoint is created with the standard trace API of linux (like
+ext3, ext4, f2fs and btrfs). So we can analysis with existing tools
+easily. Of course, more detailed analysis will be possible if we can
+create nilfs specific analysis tools.
 
-Ryusuke Konishi (1):
-      MAINTAINERS: nilfs2: add header file for tracing
+Below is an example of event dump with Brendan Gregg's perf-tools
+(https://github.com/brendangregg/perf-tools). Time consumption between
+each stage can be obtained.
 
-These introduces some tracepoints to nilfs2 to help tracking its
-behavior for bottleneck detection, debugging, etc.
+$ sudo bin/tpoint nilfs2:nilfs2_collection_stage_transition
+Tracing nilfs2:nilfs2_collection_stage_transition. Ctrl-C to end.
+        segctord-14875 [003] ...1 28311.067794: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_INIT
+        segctord-14875 [003] ...1 28311.068139: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_GC
+        segctord-14875 [003] ...1 28311.068139: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_FILE
+        segctord-14875 [003] ...1 28311.068486: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_IFILE
+        segctord-14875 [003] ...1 28311.068540: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_CPFILE
+        segctord-14875 [003] ...1 28311.068561: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_SUFILE
+        segctord-14875 [003] ...1 28311.068565: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_DAT
+        segctord-14875 [003] ...1 28311.068573: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_SR
+        segctord-14875 [003] ...1 28311.068574: nilfs2_collection_stage_transition: sci = ffff8800ce6de000 stage = ST_DONE
 
-Thanks,
-Ryusuke Konishi
---
+For capturing transition correctly, this patch adds wrappers for the
+member scnt of nilfs_cstage. With this change, every transition of the
+stage can produce trace event in a correct manner.
 
- MAINTAINERS                   |   1 +
- fs/nilfs2/mdt.c               |   6 ++
- fs/nilfs2/segment.c           | 104 ++++++++++++++++----
- fs/nilfs2/segment.h           |   3 +-
- fs/nilfs2/sufile.c            |   8 ++
- include/trace/events/nilfs2.h | 224 ++++++++++++++++++++++++++++++++++++++++++
- 6 files changed, 324 insertions(+), 22 deletions(-)
+Signed-off-by: Hitoshi Mitake <mitake.hitoshi-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+---
+ fs/nilfs2/segment.c           | 71 +++++++++++++++++++++++++++++++------------
+ fs/nilfs2/segment.h           |  3 +-
+ include/trace/events/nilfs2.h | 50 ++++++++++++++++++++++++++++++
+ 3 files changed, 103 insertions(+), 21 deletions(-)
+ create mode 100644 include/trace/events/nilfs2.h
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index c6abbad9..ef35404 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -77,6 +77,36 @@ enum {
+ 	NILFS_ST_DONE,
+ };
+ 
++#define CREATE_TRACE_POINTS
++#include <trace/events/nilfs2.h>
++
++/*
++ * nilfs_sc_cstage_inc(), nilfs_sc_cstage_set(), nilfs_sc_cstage_get() are
++ * wrapper functions of stage count (nilfs_sc_info->sc_stage.scnt). Users of
++ * the variable must use them because transition of stage count must involve
++ * trace events (trace_nilfs2_collection_stage_transition).
++ *
++ * nilfs_sc_cstage_get() isn't required for the above purpose because it doesn't
++ * produce tracepoint events. It is provided just for making the intention
++ * clear.
++ */
++static inline void nilfs_sc_cstage_inc(struct nilfs_sc_info *sci)
++{
++	sci->sc_stage.scnt++;
++	trace_nilfs2_collection_stage_transition(sci);
++}
++
++static inline void nilfs_sc_cstage_set(struct nilfs_sc_info *sci, int next_scnt)
++{
++	sci->sc_stage.scnt = next_scnt;
++	trace_nilfs2_collection_stage_transition(sci);
++}
++
++static inline int nilfs_sc_cstage_get(struct nilfs_sc_info *sci)
++{
++	return sci->sc_stage.scnt;
++}
++
+ /* State flags of collection */
+ #define NILFS_CF_NODE		0x0001	/* Collecting node blocks */
+ #define NILFS_CF_IFILE_STARTED	0x0002	/* IFILE stage has started */
+@@ -1062,7 +1092,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 	size_t ndone;
+ 	int err = 0;
+ 
+-	switch (sci->sc_stage.scnt) {
++	switch (nilfs_sc_cstage_get(sci)) {
+ 	case NILFS_ST_INIT:
+ 		/* Pre-processes */
+ 		sci->sc_stage.flags = 0;
+@@ -1071,7 +1101,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 			sci->sc_nblk_inc = 0;
+ 			sci->sc_curseg->sb_sum.flags = NILFS_SS_LOGBGN;
+ 			if (mode == SC_LSEG_DSYNC) {
+-				sci->sc_stage.scnt = NILFS_ST_DSYNC;
++				nilfs_sc_cstage_set(sci, NILFS_ST_DSYNC);
+ 				goto dsync_mode;
+ 			}
+ 		}
+@@ -1079,10 +1109,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 		sci->sc_stage.dirty_file_ptr = NULL;
+ 		sci->sc_stage.gc_inode_ptr = NULL;
+ 		if (mode == SC_FLUSH_DAT) {
+-			sci->sc_stage.scnt = NILFS_ST_DAT;
++			nilfs_sc_cstage_set(sci, NILFS_ST_DAT);
+ 			goto dat_stage;
+ 		}
+-		sci->sc_stage.scnt++;  /* Fall through */
++		nilfs_sc_cstage_inc(sci);  /* Fall through */
+ 	case NILFS_ST_GC:
+ 		if (nilfs_doing_gc()) {
+ 			head = &sci->sc_gc_inodes;
+@@ -1103,7 +1133,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 			}
+ 			sci->sc_stage.gc_inode_ptr = NULL;
+ 		}
+-		sci->sc_stage.scnt++;  /* Fall through */
++		nilfs_sc_cstage_inc(sci);  /* Fall through */
+ 	case NILFS_ST_FILE:
+ 		head = &sci->sc_dirty_files;
+ 		ii = list_prepare_entry(sci->sc_stage.dirty_file_ptr, head,
+@@ -1125,10 +1155,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 		}
+ 		sci->sc_stage.dirty_file_ptr = NULL;
+ 		if (mode == SC_FLUSH_FILE) {
+-			sci->sc_stage.scnt = NILFS_ST_DONE;
++			nilfs_sc_cstage_set(sci, NILFS_ST_DONE);
+ 			return 0;
+ 		}
+-		sci->sc_stage.scnt++;
++		nilfs_sc_cstage_inc(sci);
+ 		sci->sc_stage.flags |= NILFS_CF_IFILE_STARTED;
+ 		/* Fall through */
+ 	case NILFS_ST_IFILE:
+@@ -1136,7 +1166,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 					      &nilfs_sc_file_ops);
+ 		if (unlikely(err))
+ 			break;
+-		sci->sc_stage.scnt++;
++		nilfs_sc_cstage_inc(sci);
+ 		/* Creating a checkpoint */
+ 		err = nilfs_segctor_create_checkpoint(sci);
+ 		if (unlikely(err))
+@@ -1147,7 +1177,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 					      &nilfs_sc_file_ops);
+ 		if (unlikely(err))
+ 			break;
+-		sci->sc_stage.scnt++;  /* Fall through */
++		nilfs_sc_cstage_inc(sci);  /* Fall through */
+ 	case NILFS_ST_SUFILE:
+ 		err = nilfs_sufile_freev(nilfs->ns_sufile, sci->sc_freesegs,
+ 					 sci->sc_nfreesegs, &ndone);
+@@ -1163,7 +1193,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 					      &nilfs_sc_file_ops);
+ 		if (unlikely(err))
+ 			break;
+-		sci->sc_stage.scnt++;  /* Fall through */
++		nilfs_sc_cstage_inc(sci);  /* Fall through */
+ 	case NILFS_ST_DAT:
+  dat_stage:
+ 		err = nilfs_segctor_scan_file(sci, nilfs->ns_dat,
+@@ -1171,10 +1201,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 		if (unlikely(err))
+ 			break;
+ 		if (mode == SC_FLUSH_DAT) {
+-			sci->sc_stage.scnt = NILFS_ST_DONE;
++			nilfs_sc_cstage_set(sci, NILFS_ST_DONE);
+ 			return 0;
+ 		}
+-		sci->sc_stage.scnt++;  /* Fall through */
++		nilfs_sc_cstage_inc(sci);  /* Fall through */
+ 	case NILFS_ST_SR:
+ 		if (mode == SC_LSEG_SR) {
+ 			/* Appending a super root */
+@@ -1184,7 +1214,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 		}
+ 		/* End of a logical segment */
+ 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
+-		sci->sc_stage.scnt = NILFS_ST_DONE;
++		nilfs_sc_cstage_set(sci, NILFS_ST_DONE);
+ 		return 0;
+ 	case NILFS_ST_DSYNC:
+  dsync_mode:
+@@ -1197,7 +1227,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
+ 		if (unlikely(err))
+ 			break;
+ 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
+-		sci->sc_stage.scnt = NILFS_ST_DONE;
++		nilfs_sc_cstage_set(sci, NILFS_ST_DONE);
+ 		return 0;
+ 	case NILFS_ST_DONE:
+ 		return 0;
+@@ -1442,7 +1472,8 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
+ 			goto failed;
+ 
+ 		/* The current segment is filled up */
+-		if (mode != SC_LSEG_SR || sci->sc_stage.scnt < NILFS_ST_CPFILE)
++		if (mode != SC_LSEG_SR ||
++		    nilfs_sc_cstage_get(sci) < NILFS_ST_CPFILE)
+ 			break;
+ 
+ 		nilfs_clear_logs(&sci->sc_segbufs);
+@@ -1946,7 +1977,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
+ 	int err;
+ 
+-	sci->sc_stage.scnt = NILFS_ST_INIT;
++	nilfs_sc_cstage_set(sci, NILFS_ST_INIT);
+ 	sci->sc_cno = nilfs->ns_cno;
+ 
+ 	err = nilfs_segctor_collect_dirty_files(sci, nilfs);
+@@ -1974,7 +2005,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 			goto failed;
+ 
+ 		/* Avoid empty segment */
+-		if (sci->sc_stage.scnt == NILFS_ST_DONE &&
++		if (nilfs_sc_cstage_get(sci) == NILFS_ST_DONE &&
+ 		    nilfs_segbuf_empty(sci->sc_curseg)) {
+ 			nilfs_segctor_abort_construction(sci, nilfs, 1);
+ 			goto out;
+@@ -1988,7 +2019,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 			nilfs_segctor_fill_in_file_bmap(sci);
+ 
+ 		if (mode == SC_LSEG_SR &&
+-		    sci->sc_stage.scnt >= NILFS_ST_CPFILE) {
++		    nilfs_sc_cstage_get(sci) >= NILFS_ST_CPFILE) {
+ 			err = nilfs_segctor_fill_in_checkpoint(sci);
+ 			if (unlikely(err))
+ 				goto failed_to_write;
+@@ -2007,7 +2038,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 		if (unlikely(err))
+ 			goto failed_to_write;
+ 
+-		if (sci->sc_stage.scnt == NILFS_ST_DONE ||
++		if (nilfs_sc_cstage_get(sci) == NILFS_ST_DONE ||
+ 		    nilfs->ns_blocksize_bits != PAGE_CACHE_SHIFT) {
+ 			/*
+ 			 * At this point, we avoid double buffering
+@@ -2020,7 +2051,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
+ 			if (err)
+ 				goto failed_to_write;
+ 		}
+-	} while (sci->sc_stage.scnt != NILFS_ST_DONE);
++	} while (nilfs_sc_cstage_get(sci) != NILFS_ST_DONE);
+ 
+  out:
+ 	nilfs_segctor_drop_written_files(sci, nilfs);
+diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
+index a48d6de..0408b9b 100644
+--- a/fs/nilfs2/segment.h
++++ b/fs/nilfs2/segment.h
+@@ -67,7 +67,8 @@ struct nilfs_recovery_info {
+ 
+ /**
+  * struct nilfs_cstage - Context of collection stage
+- * @scnt: Stage count
++ * @scnt: Stage count, must be accessed via wrappers:
++ *        nilfs_sc_cstage_inc(), nilfs_sc_cstage_set(), nilfs_sc_cstage_get()
+  * @flags: State flags
+  * @dirty_file_ptr: Pointer on dirty_files list, or inode of a target file
+  * @gc_inode_ptr: Pointer on the list of gc-inodes
+diff --git a/include/trace/events/nilfs2.h b/include/trace/events/nilfs2.h
+new file mode 100644
+index 0000000..573da00
+--- /dev/null
++++ b/include/trace/events/nilfs2.h
+@@ -0,0 +1,50 @@
++#undef TRACE_SYSTEM
++#define TRACE_SYSTEM nilfs2
++
++#if !defined(_TRACE_NILFS2_H) || defined(TRACE_HEADER_MULTI_READ)
++#define _TRACE_NILFS2_H
++
++#include <linux/tracepoint.h>
++
++struct nilfs_sc_info;
++
++#define show_collection_stage(type)					\
++	__print_symbolic(type,						\
++	{ NILFS_ST_INIT, "ST_INIT" },					\
++	{ NILFS_ST_GC, "ST_GC" },					\
++	{ NILFS_ST_FILE, "ST_FILE" },					\
++	{ NILFS_ST_IFILE, "ST_IFILE" },					\
++	{ NILFS_ST_CPFILE, "ST_CPFILE" },				\
++	{ NILFS_ST_SUFILE, "ST_SUFILE" },				\
++	{ NILFS_ST_DAT, "ST_DAT" },					\
++	{ NILFS_ST_SR, "ST_SR" },					\
++	{ NILFS_ST_DSYNC, "ST_DSYNC" },					\
++	{ NILFS_ST_DONE, "ST_DONE"})
++
++TRACE_EVENT(nilfs2_collection_stage_transition,
++
++	    TP_PROTO(struct nilfs_sc_info *sci),
++
++	    TP_ARGS(sci),
++
++	    TP_STRUCT__entry(
++		    __field(void *, sci)
++		    __field(int, stage)
++	    ),
++
++	    TP_fast_assign(
++			__entry->sci = sci;
++			__entry->stage = sci->sc_stage.scnt;
++		    ),
++
++	    TP_printk("sci = %p stage = %s",
++		      __entry->sci,
++		      show_collection_stage(__entry->stage))
++);
++
++#endif /* _TRACE_NILFS2_H */
++
++/* This part must be outside protection */
++#undef TRACE_INCLUDE_FILE
++#define TRACE_INCLUDE_FILE nilfs2
++#include <trace/define_trace.h>
+-- 
+1.8.3.1
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
