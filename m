@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 2/2] nilfs2: fix gcc uninitialized-variable warnings in powerpc build
-Date: Mon, 12 Oct 2015 12:45:31 +0900
-Message-ID: <1444621531-14142-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/2] nilfs2: fix gcc unused-but-set-variable warnings
+Date: Mon, 12 Oct 2015 12:45:30 +0900
+Message-ID: <1444621531-14142-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1444621531-14142-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=MenVXD3l4NiJsH7ik22d8aJ4WAnJfM9PtPWoaMbtdJc=;
-        b=RQB9pKKrLVUQcF0w3BCkYlX4hIm+3r1oUaaBIuPPxZmLWq/4HDQ0VdRlt0dIYD8WxN
-         MTrg9V+fFnoG1XkWX7lkrCjjnLakk4lA/7k5XgdUoEJlh3EfLWavsdeGg75c03d9+EaM
-         3XzZ08JzsgQbhhavQZYe5E+Zs0OnCYsrt/KKfUnIoaG0k00zAyGB3r97yyUysOr5k7QW
-         gtJaQBIV4+tw5ulYet8qBMkM04muI+K1s6/jHNG6qLwz+vTY7vpW603MPsrtFIPE3fUe
-         nCV9J3Ag8ktNM+w7ejZ2e4aq12UoUaUq+qGO5hi0kuqaWXAlb3yRrIb3v/xES9l5Dyr/
-         riiA==
+        bh=o8swl8gTiYXHG/RoiAzGwCa/graiUMwo9R5H3xyr0E8=;
+        b=qaIZzQJzhkyhl4dCl3nPd899HXI+XuDY3dzH94VEWFc4QEshOTTg7Scp9xDTUtTXv+
+         4cde3JvK/V8b6JWveLDQUlkeEBc72w+6TsjWKSuMwwDNxVUcn7Rbslt0qgB+2U4C/oND
+         BNbE8wHCD5n1f6SwUQv1QfKG3MSD2WcMYba+jTATgY+XNvyLap+PrbP7KvvQ11yQHAdP
+         zkIRnSVAGJ5BY/9/poKhqXApl979puYcARwhC6hrC4wrbW1JHd84P0/C4prXvBnQa/rk
+         wwOpEVlESKiIdbJEJATCh7RtQvBkfsT4NtZGsm/A9DR2+UEYkjQoVYZi9jHxNR7KWS0i
+         D7pg==
 In-Reply-To: <1444621531-14142-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -24,97 +24,153 @@ Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-Some false positive warnings are reported for powerpc build.
+Fix the following build warnings:
 
-The following warnings are reported in
- http://kisskb.ellerman.id.au/kisskb/buildresult/12519703/
-
-   CC      fs/nilfs2/super.o
- fs/nilfs2/super.c: In function 'nilfs_resize_fs':
- fs/nilfs2/super.c:376:2: warning: 'blocknr' may be used uninitialized in this function [-Wuninitialized]
- fs/nilfs2/super.c:362:11: note: 'blocknr' was declared here
-   CC      fs/nilfs2/recovery.o
- fs/nilfs2/recovery.c: In function 'nilfs_salvage_orphan_logs':
- fs/nilfs2/recovery.c:631:21: warning: 'sum' may be used uninitialized in this function [-Wuninitialized]
- fs/nilfs2/recovery.c:585:32: note: 'sum' was declared here
- fs/nilfs2/recovery.c: In function 'nilfs_search_super_root':
- fs/nilfs2/recovery.c:873:11: warning: 'sum' may be used uninitialized in this function [-Wuninitialized]
-
-Another similar warning is reported in
- http://kisskb.ellerman.id.au/kisskb/buildresult/12520079/
-
-   CC      fs/nilfs2/btree.o
- fs/nilfs2/btree.c: In function 'nilfs_btree_convert_and_insert':
- include/asm-generic/bitops/non-atomic.h:105:20: warning: 'bh' may be used uninitialized in this function [-Wuninitialized]
- fs/nilfs2/btree.c:1859:22: note: 'bh' was declared here
-
-This cleans out these warnings by forcing the variables to be initialized.
+ $ make W=1
+ [...]
+   CC [M]  fs/nilfs2/btree.o
+ fs/nilfs2/btree.c: In function 'nilfs_btree_split':
+ fs/nilfs2/btree.c:923:8: warning: variable 'newptr' set but not used [-Wunused-but-set-variable]
+   __u64 newptr;
+         ^
+ fs/nilfs2/btree.c:922:8: warning: variable 'newkey' set but not used [-Wunused-but-set-variable]
+   __u64 newkey;
+         ^
+   CC [M]  fs/nilfs2/dat.o
+ fs/nilfs2/dat.c: In function 'nilfs_dat_prepare_end':
+ fs/nilfs2/dat.c:158:8: warning: variable 'start' set but not used [-Wunused-but-set-variable]
+   __u64 start;
+         ^
+   CC [M]  fs/nilfs2/segment.o
+ fs/nilfs2/segment.c: In function 'nilfs_segctor_do_immediate_flush':
+ fs/nilfs2/segment.c:2433:6: warning: variable 'err' set but not used [-Wunused-but-set-variable]
+   int err;
+       ^
+   CC [M]  fs/nilfs2/sufile.o
+ fs/nilfs2/sufile.c: In function 'nilfs_sufile_alloc':
+ fs/nilfs2/sufile.c:320:27: warning: variable 'ncleansegs' set but not used [-Wunused-but-set-variable]
+   unsigned long nsegments, ncleansegs, nsus, cnt;
+                            ^
+   CC [M]  fs/nilfs2/alloc.o
+ fs/nilfs2/alloc.c: In function 'nilfs_palloc_prepare_alloc_entry':
+ fs/nilfs2/alloc.c:478:38: warning: variable 'groups_per_desc_block' set but not used [-Wunused-but-set-variable]
+   unsigned long n, entries_per_group, groups_per_desc_block;
+                                       ^
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Reported-by: Geert Uytterhoeven <geert@linux-m68k.org>
 ---
- fs/nilfs2/btree.c    | 2 +-
- fs/nilfs2/recovery.c | 4 ++--
- fs/nilfs2/super.c    | 5 ++++-
- 3 files changed, 7 insertions(+), 4 deletions(-)
+ fs/nilfs2/alloc.c   | 3 +--
+ fs/nilfs2/btree.c   | 5 -----
+ fs/nilfs2/dat.c     | 2 --
+ fs/nilfs2/segment.c | 3 +--
+ fs/nilfs2/sufile.c  | 3 +--
+ 5 files changed, 3 insertions(+), 13 deletions(-)
 
+diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+index 8df0f3b..dd6c142 100644
+--- a/fs/nilfs2/alloc.c
++++ b/fs/nilfs2/alloc.c
+@@ -475,7 +475,7 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+ 	void *desc_kaddr, *bitmap_kaddr;
+ 	unsigned long group, maxgroup, ngroups;
+ 	unsigned long group_offset, maxgroup_offset;
+-	unsigned long n, entries_per_group, groups_per_desc_block;
++	unsigned long n, entries_per_group;
+ 	unsigned long i, j;
+ 	int pos, ret;
+ 
+@@ -483,7 +483,6 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+ 	maxgroup = ngroups - 1;
+ 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
+ 	entries_per_group = nilfs_palloc_entries_per_group(inode);
+-	groups_per_desc_block = nilfs_palloc_groups_per_desc_block(inode);
+ 
+ 	for (i = 0; i < ngroups; i += n) {
+ 		if (group >= ngroups) {
 diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index f609a85..3a3821b 100644
+index 919fd5b..f609a85 100644
 --- a/fs/nilfs2/btree.c
 +++ b/fs/nilfs2/btree.c
-@@ -1851,7 +1851,7 @@ int nilfs_btree_convert_and_insert(struct nilfs_bmap *btree,
- 				   __u64 key, __u64 ptr,
- 				   const __u64 *keys, const __u64 *ptrs, int n)
+@@ -919,8 +919,6 @@ static void nilfs_btree_split(struct nilfs_bmap *btree,
+ 			      int level, __u64 *keyp, __u64 *ptrp)
  {
--	struct buffer_head *bh;
-+	struct buffer_head *bh = NULL;
- 	union nilfs_bmap_ptr_req dreq, nreq, *di, *ni;
- 	struct nilfs_bmap_stats stats;
- 	int ret;
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index ff00a0b..9b4f205 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -582,7 +582,7 @@ static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
- 				 struct nilfs_recovery_info *ri)
- {
- 	struct buffer_head *bh_sum = NULL;
--	struct nilfs_segment_summary *sum;
-+	struct nilfs_segment_summary *sum = NULL;
- 	sector_t pseg_start;
- 	sector_t seg_start, seg_end;  /* Starting/ending DBN of full segment */
- 	unsigned long nsalvaged_blocks = 0;
-@@ -814,7 +814,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs,
- 			    struct nilfs_recovery_info *ri)
- {
- 	struct buffer_head *bh_sum = NULL;
--	struct nilfs_segment_summary *sum;
-+	struct nilfs_segment_summary *sum = NULL;
- 	sector_t pseg_start, pseg_end, sr_pseg_start = 0;
- 	sector_t seg_start, seg_end; /* range of full segment (block number) */
- 	sector_t b, end;
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index f47585b..c6b5008 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -361,7 +361,7 @@ static int nilfs_move_2nd_super(struct super_block *sb, loff_t sb2off)
- 	struct nilfs_super_block *nsbp;
- 	sector_t blocknr, newblocknr;
- 	unsigned long offset;
--	int sb2i = -1;  /* array index of the secondary superblock */
-+	int sb2i;  /* array index of the secondary superblock */
- 	int ret = 0;
+ 	struct nilfs_btree_node *node, *right;
+-	__u64 newkey;
+-	__u64 newptr;
+ 	int nchildren, n, move, ncblk;
  
- 	/* nilfs->ns_sem must be locked by the caller. */
-@@ -372,6 +372,9 @@ static int nilfs_move_2nd_super(struct super_block *sb, loff_t sb2off)
- 	} else if (nilfs->ns_sbh[0]->b_blocknr > nilfs->ns_first_data_block) {
- 		sb2i = 0;
- 		blocknr = nilfs->ns_sbh[0]->b_blocknr;
-+	} else {
-+		sb2i = -1;
-+		blocknr = 0;
- 	}
- 	if (sb2i >= 0 && (u64)blocknr << nilfs->ns_blocksize_bits == sb2off)
- 		goto out;  /* super block location is unchanged */
+ 	node = nilfs_btree_get_nonroot_node(path, level);
+@@ -942,9 +940,6 @@ static void nilfs_btree_split(struct nilfs_bmap *btree,
+ 	if (!buffer_dirty(path[level].bp_sib_bh))
+ 		mark_buffer_dirty(path[level].bp_sib_bh);
+ 
+-	newkey = nilfs_btree_node_get_key(right, 0);
+-	newptr = path[level].bp_newreq.bpr_ptr;
+-
+ 	if (move) {
+ 		path[level].bp_index -= nilfs_btree_node_get_nchildren(node);
+ 		nilfs_btree_node_insert(right, path[level].bp_index,
+diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+index 0d5fada..7dc23f1 100644
+--- a/fs/nilfs2/dat.c
++++ b/fs/nilfs2/dat.c
+@@ -155,7 +155,6 @@ void nilfs_dat_commit_start(struct inode *dat, struct nilfs_palloc_req *req,
+ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_palloc_req *req)
+ {
+ 	struct nilfs_dat_entry *entry;
+-	__u64 start;
+ 	sector_t blocknr;
+ 	void *kaddr;
+ 	int ret;
+@@ -169,7 +168,6 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_palloc_req *req)
+ 	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
+ 	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
+ 					     req->pr_entry_bh, kaddr);
+-	start = le64_to_cpu(entry->de_start);
+ 	blocknr = le64_to_cpu(entry->de_blocknr);
+ 	kunmap_atomic(kaddr);
+ 
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index c6abbad9..11c06e9 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2430,7 +2430,6 @@ static void nilfs_segctor_thread_construct(struct nilfs_sc_info *sci, int mode)
+ static void nilfs_segctor_do_immediate_flush(struct nilfs_sc_info *sci)
+ {
+ 	int mode = 0;
+-	int err;
+ 
+ 	spin_lock(&sci->sc_state_lock);
+ 	mode = (sci->sc_flush_request & FLUSH_DAT_BIT) ?
+@@ -2438,7 +2437,7 @@ static void nilfs_segctor_do_immediate_flush(struct nilfs_sc_info *sci)
+ 	spin_unlock(&sci->sc_state_lock);
+ 
+ 	if (mode) {
+-		err = nilfs_segctor_do_construct(sci, mode);
++		nilfs_segctor_do_construct(sci, mode);
+ 
+ 		spin_lock(&sci->sc_state_lock);
+ 		sci->sc_flush_request &= (mode == SC_FLUSH_FILE) ?
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index 2a869c3..08e4c63 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -317,7 +317,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
+ 	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
+ 	__u64 segnum, maxsegnum, last_alloc;
+ 	void *kaddr;
+-	unsigned long nsegments, ncleansegs, nsus, cnt;
++	unsigned long nsegments, nsus, cnt;
+ 	int ret, j;
+ 
+ 	down_write(&NILFS_MDT(sufile)->mi_sem);
+@@ -327,7 +327,6 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
+ 		goto out_sem;
+ 	kaddr = kmap_atomic(header_bh->b_page);
+ 	header = kaddr + bh_offset(header_bh);
+-	ncleansegs = le64_to_cpu(header->sh_ncleansegs);
+ 	last_alloc = le64_to_cpu(header->sh_last_alloc);
+ 	kunmap_atomic(kaddr);
+ 
 -- 
 1.8.3.1
