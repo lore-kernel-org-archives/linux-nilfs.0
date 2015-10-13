@@ -1,176 +1,140 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 1/2] nilfs2: fix gcc unused-but-set-variable warnings
-Date: Mon, 12 Oct 2015 12:45:30 +0900
-Message-ID: <1444621531-14142-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-References: <1444621531-14142-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ross Zwisler <ross.zwisler@linux.intel.com>
+Subject: [PATCH] vfs: remove unused wrapper block_page_mkwrite()
+Date: Tue, 13 Oct 2015 10:19:40 -0600
+Message-ID: <1444753180-27993-1-git-send-email-ross.zwisler@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
-         :lines;
-        bh=o8swl8gTiYXHG/RoiAzGwCa/graiUMwo9R5H3xyr0E8=;
-        b=qaIZzQJzhkyhl4dCl3nPd899HXI+XuDY3dzH94VEWFc4QEshOTTg7Scp9xDTUtTXv+
-         4cde3JvK/V8b6JWveLDQUlkeEBc72w+6TsjWKSuMwwDNxVUcn7Rbslt0qgB+2U4C/oND
-         BNbE8wHCD5n1f6SwUQv1QfKG3MSD2WcMYba+jTATgY+XNvyLap+PrbP7KvvQ11yQHAdP
-         zkIRnSVAGJ5BY/9/poKhqXApl979puYcARwhC6hrC4wrbW1JHd84P0/C4prXvBnQa/rk
-         wwOpEVlESKiIdbJEJATCh7RtQvBkfsT4NtZGsm/A9DR2+UEYkjQoVYZi9jHxNR7KWS0i
-         D7pg==
-In-Reply-To: <1444621531-14142-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+To: linux-kernel@vger.kernel.org
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Theodore Ts'o <tytso@mit.edu>, Alexander Viro <viro@zeniv.linux.org.uk>, Andreas Dilger <adilger.kernel@dilger.ca>, Dave Chinner <david@fromorbit.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org, xfs@oss.sgi.com, Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@lst.de>
 
-Fix the following build warnings:
+The function currently called "__block_page_mkwrite()" used to be called
+"block_page_mkwrite()" until a wrapper for this function was added by:
 
- $ make W=1
- [...]
-   CC [M]  fs/nilfs2/btree.o
- fs/nilfs2/btree.c: In function 'nilfs_btree_split':
- fs/nilfs2/btree.c:923:8: warning: variable 'newptr' set but not used [-Wunused-but-set-variable]
-   __u64 newptr;
-         ^
- fs/nilfs2/btree.c:922:8: warning: variable 'newkey' set but not used [-Wunused-but-set-variable]
-   __u64 newkey;
-         ^
-   CC [M]  fs/nilfs2/dat.o
- fs/nilfs2/dat.c: In function 'nilfs_dat_prepare_end':
- fs/nilfs2/dat.c:158:8: warning: variable 'start' set but not used [-Wunused-but-set-variable]
-   __u64 start;
-         ^
-   CC [M]  fs/nilfs2/segment.o
- fs/nilfs2/segment.c: In function 'nilfs_segctor_do_immediate_flush':
- fs/nilfs2/segment.c:2433:6: warning: variable 'err' set but not used [-Wunused-but-set-variable]
-   int err;
-       ^
-   CC [M]  fs/nilfs2/sufile.o
- fs/nilfs2/sufile.c: In function 'nilfs_sufile_alloc':
- fs/nilfs2/sufile.c:320:27: warning: variable 'ncleansegs' set but not used [-Wunused-but-set-variable]
-   unsigned long nsegments, ncleansegs, nsus, cnt;
-                            ^
-   CC [M]  fs/nilfs2/alloc.o
- fs/nilfs2/alloc.c: In function 'nilfs_palloc_prepare_alloc_entry':
- fs/nilfs2/alloc.c:478:38: warning: variable 'groups_per_desc_block' set but not used [-Wunused-but-set-variable]
-   unsigned long n, entries_per_group, groups_per_desc_block;
-                                       ^
+commit 24da4fab5a61 ("vfs: Create __block_page_mkwrite() helper passing
+	error values back")
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+This wrapper, the current "block_page_mkwrite()", is currently unused.
+__block_page_mkwrite() is used directly by ext4, nilfs2 and xfs.
+
+Remove the unused wrapper and rename __block_page_mkwrite() back to
+block_page_mkwrite().
+
+Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: Jan Kara <jack@suse.cz>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
 ---
- fs/nilfs2/alloc.c   | 3 +--
- fs/nilfs2/btree.c   | 5 -----
- fs/nilfs2/dat.c     | 2 --
- fs/nilfs2/segment.c | 3 +--
- fs/nilfs2/sufile.c  | 3 +--
- 5 files changed, 3 insertions(+), 13 deletions(-)
+ fs/buffer.c                 | 22 +---------------------
+ fs/ext4/inode.c             |  4 ++--
+ fs/nilfs2/file.c            |  2 +-
+ fs/xfs/xfs_file.c           |  2 +-
+ include/linux/buffer_head.h |  2 --
+ 5 files changed, 5 insertions(+), 27 deletions(-)
 
-diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-index 8df0f3b..dd6c142 100644
---- a/fs/nilfs2/alloc.c
-+++ b/fs/nilfs2/alloc.c
-@@ -475,7 +475,7 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
- 	void *desc_kaddr, *bitmap_kaddr;
- 	unsigned long group, maxgroup, ngroups;
- 	unsigned long group_offset, maxgroup_offset;
--	unsigned long n, entries_per_group, groups_per_desc_block;
-+	unsigned long n, entries_per_group;
- 	unsigned long i, j;
- 	int pos, ret;
- 
-@@ -483,7 +483,6 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
- 	maxgroup = ngroups - 1;
- 	group = nilfs_palloc_group(inode, req->pr_entry_nr, &group_offset);
- 	entries_per_group = nilfs_palloc_entries_per_group(inode);
--	groups_per_desc_block = nilfs_palloc_groups_per_desc_block(inode);
- 
- 	for (i = 0; i < ngroups; i += n) {
- 		if (group >= ngroups) {
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 919fd5b..f609a85 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -919,8 +919,6 @@ static void nilfs_btree_split(struct nilfs_bmap *btree,
- 			      int level, __u64 *keyp, __u64 *ptrp)
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 82283ab..7e496dc 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -2422,7 +2422,7 @@ EXPORT_SYMBOL(block_commit_write);
+  * Direct callers of this function should protect against filesystem freezing
+  * using sb_start_write() - sb_end_write() functions.
+  */
+-int __block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
++int block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
+ 			 get_block_t get_block)
  {
- 	struct nilfs_btree_node *node, *right;
--	__u64 newkey;
--	__u64 newptr;
- 	int nchildren, n, move, ncblk;
- 
- 	node = nilfs_btree_get_nonroot_node(path, level);
-@@ -942,9 +940,6 @@ static void nilfs_btree_split(struct nilfs_bmap *btree,
- 	if (!buffer_dirty(path[level].bp_sib_bh))
- 		mark_buffer_dirty(path[level].bp_sib_bh);
- 
--	newkey = nilfs_btree_node_get_key(right, 0);
--	newptr = path[level].bp_newreq.bpr_ptr;
+ 	struct page *page = vmf->page;
+@@ -2459,26 +2459,6 @@ out_unlock:
+ 	unlock_page(page);
+ 	return ret;
+ }
+-EXPORT_SYMBOL(__block_page_mkwrite);
 -
- 	if (move) {
- 		path[level].bp_index -= nilfs_btree_node_get_nchildren(node);
- 		nilfs_btree_node_insert(right, path[level].bp_index,
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 0d5fada..7dc23f1 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -155,7 +155,6 @@ void nilfs_dat_commit_start(struct inode *dat, struct nilfs_palloc_req *req,
- int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_palloc_req *req)
- {
- 	struct nilfs_dat_entry *entry;
--	__u64 start;
- 	sector_t blocknr;
- 	void *kaddr;
- 	int ret;
-@@ -169,7 +168,6 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_palloc_req *req)
- 	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
- 	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
- 					     req->pr_entry_bh, kaddr);
--	start = le64_to_cpu(entry->de_start);
- 	blocknr = le64_to_cpu(entry->de_blocknr);
- 	kunmap_atomic(kaddr);
+-int block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
+-		   get_block_t get_block)
+-{
+-	int ret;
+-	struct super_block *sb = file_inode(vma->vm_file)->i_sb;
+-
+-	sb_start_pagefault(sb);
+-
+-	/*
+-	 * Update file times before taking page lock. We may end up failing the
+-	 * fault so this update may be superfluous but who really cares...
+-	 */
+-	file_update_time(vma->vm_file);
+-
+-	ret = __block_page_mkwrite(vma, vmf, get_block);
+-	sb_end_pagefault(sb);
+-	return block_page_mkwrite_return(ret);
+-}
+ EXPORT_SYMBOL(block_page_mkwrite);
  
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index c6abbad9..11c06e9 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -2430,7 +2430,6 @@ static void nilfs_segctor_thread_construct(struct nilfs_sc_info *sci, int mode)
- static void nilfs_segctor_do_immediate_flush(struct nilfs_sc_info *sci)
- {
- 	int mode = 0;
--	int err;
+ /*
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 612fbcf..2d1ecd2 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -5244,7 +5244,7 @@ int ext4_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 	    !ext4_should_journal_data(inode) &&
+ 	    !ext4_nonda_switch(inode->i_sb)) {
+ 		do {
+-			ret = __block_page_mkwrite(vma, vmf,
++			ret = block_page_mkwrite(vma, vmf,
+ 						   ext4_da_get_block_prep);
+ 		} while (ret == -ENOSPC &&
+ 		       ext4_should_retry_alloc(inode->i_sb, &retries));
+@@ -5291,7 +5291,7 @@ retry_alloc:
+ 		ret = VM_FAULT_SIGBUS;
+ 		goto out;
+ 	}
+-	ret = __block_page_mkwrite(vma, vmf, get_block);
++	ret = block_page_mkwrite(vma, vmf, get_block);
+ 	if (!ret && ext4_should_journal_data(inode)) {
+ 		if (ext4_walk_page_buffers(handle, page_buffers(page), 0,
+ 			  PAGE_CACHE_SIZE, NULL, do_journal_get_write_access)) {
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 54575e3..088ba00 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -109,7 +109,7 @@ static int nilfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
+ 		goto out;
  
- 	spin_lock(&sci->sc_state_lock);
- 	mode = (sci->sc_flush_request & FLUSH_DAT_BIT) ?
-@@ -2438,7 +2437,7 @@ static void nilfs_segctor_do_immediate_flush(struct nilfs_sc_info *sci)
- 	spin_unlock(&sci->sc_state_lock);
+ 	file_update_time(vma->vm_file);
+-	ret = __block_page_mkwrite(vma, vmf, nilfs_get_block);
++	ret = block_page_mkwrite(vma, vmf, nilfs_get_block);
+ 	if (ret) {
+ 		nilfs_transaction_abort(inode->i_sb);
+ 		goto out;
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index e78feb4..f80e90f 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -1506,7 +1506,7 @@ xfs_filemap_page_mkwrite(
+ 		ret = __dax_mkwrite(vma, vmf, xfs_get_blocks_direct,
+ 				    xfs_end_io_dax_write);
+ 	} else {
+-		ret = __block_page_mkwrite(vma, vmf, xfs_get_blocks);
++		ret = block_page_mkwrite(vma, vmf, xfs_get_blocks);
+ 		ret = block_page_mkwrite_return(ret);
+ 	}
  
- 	if (mode) {
--		err = nilfs_segctor_do_construct(sci, mode);
-+		nilfs_segctor_do_construct(sci, mode);
- 
- 		spin_lock(&sci->sc_state_lock);
- 		sci->sc_flush_request &= (mode == SC_FLUSH_FILE) ?
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 2a869c3..08e4c63 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -317,7 +317,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
- 	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
- 	__u64 segnum, maxsegnum, last_alloc;
- 	void *kaddr;
--	unsigned long nsegments, ncleansegs, nsus, cnt;
-+	unsigned long nsegments, nsus, cnt;
- 	int ret, j;
- 
- 	down_write(&NILFS_MDT(sufile)->mi_sem);
-@@ -327,7 +327,6 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
- 		goto out_sem;
- 	kaddr = kmap_atomic(header_bh->b_page);
- 	header = kaddr + bh_offset(header_bh);
--	ncleansegs = le64_to_cpu(header->sh_ncleansegs);
- 	last_alloc = le64_to_cpu(header->sh_last_alloc);
- 	kunmap_atomic(kaddr);
- 
+diff --git a/include/linux/buffer_head.h b/include/linux/buffer_head.h
+index e6797de..89d9aa9 100644
+--- a/include/linux/buffer_head.h
++++ b/include/linux/buffer_head.h
+@@ -227,8 +227,6 @@ int cont_write_begin(struct file *, struct address_space *, loff_t,
+ 			get_block_t *, loff_t *);
+ int generic_cont_expand_simple(struct inode *inode, loff_t size);
+ int block_commit_write(struct page *page, unsigned from, unsigned to);
+-int __block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
+-				get_block_t get_block);
+ int block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
+ 				get_block_t get_block);
+ /* Convert errno to return value from ->page_mkwrite() call */
 -- 
-1.8.3.1
+2.1.0
