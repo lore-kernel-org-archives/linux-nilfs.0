@@ -1,43 +1,33 @@
 From: Eric Lan <tenoreamer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Feature request: a mount option or a config file to tell NILFS2 to
- make a checkpoint only when file overwriting/deletion occurs
-Date: Fri, 5 Feb 2016 01:29:06 +0800
-Message-ID: <CAFm8q6evbnqSwU78iOGtBoGyjy-Q-zENdEWs9DDedThQP+=Wkg@mail.gmail.com>
+Subject: Feature request: time-shift function
+Date: Fri, 5 Feb 2016 01:57:40 +0800
+Message-ID: <CAFm8q6fJm-ZYKhGpV0b6PrdbaosSzUz4JUC9-XjiDLUvObQ0TA@mail.gmail.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=mime-version:date:message-id:subject:from:to:content-type;
-        bh=KPjXAveV7dMaAMDgJ6aJHxFqyCi9+ReKTy2CT0mC5C0=;
-        b=AhJrLZPCZCTU904sRaHU4pTz10aRmV2qqmkxq5oDxnhdEBe5tdHkhLm5ZK0QS5Lfz/
-         YW90BxYV/4r4MculnKkG+VNttB7AYmXqNVVeF7cIiytPcKyLB5//Tv6hKeWNjcbhRFUe
-         rF8a6tOiLHOp55lZiLgXrRg6Vvtuuo9rpvdetnSfOKiRBklGIlNICLQvyz70QR1iBWol
-         N5qbHo0Xb3RzeEbQeW5c23aDUQ5IYFWdKDBYM4Fo2xtM6WhbJF0I6XVJ3eYtJmMfcDvo
-         G+PUtNd9VIVuJEUy9twUdhmr4PjCMfc4/hpFKsMgJn1RBTyezZY1WtHEfSmds0VHiop8
-         Wt5A==
+        bh=7EV/KBEMV/cFF0PNFcmATp58O9AjOiBgSMrDNB8tRRc=;
+        b=rRN8a1+9s8ArJqvPkWGtbJpxXqArY5DDCtnEbI9asWNhvOulBmbO3s9sxZ2ew9Ojc2
+         Y9MNfWpgjSUA4JxpMfr6peY3kvXovqZCPpy2+4RiVB48n08i106PsK3Fg6kWbT3+UyAi
+         Vyds+EG35o2o+llzyPf+P5k/hhVCgBPHzmHRvgoIfVBIEY3jKjUuQtZlHGkMTe8WU9G4
+         BNepPDl8qD0SWxFZ5xVcWRseqVmsnHYDwxHYCUwwefLEpXrnJOLz6hHoo0v9kZ2iFVEg
+         iR28t+Zad7CeyFRM5/3IbGGBqAckimCCxZkM0p9jNrvwMwdHz51Q0X0orUzCM2xoh4ei
+         tb1Q==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi,
+Hello,
 
-When I copy a 58G folder into a NILFS2 filesystem, 345 checkpoints are
-automatically made for every 1-5 seconds. The folder contains just
-some office files, pictures, movies and etc. I thought it unnecessary
-to make these checkpoints. For a folder containing system states or
-application states, the default NILFS2 settings of making checkpoints
-are quite good. But for a folder such as mine described above, only
-overwritting/deletion action is important and the overhead of making
-checkpoints can be omitted to enhance filesystem performance.
-
-I think the condition of making a checkpoint may be classified into
-different levels, like:
-Level 1: only overwriting and deletion triggers
-Level 2: Level 1 + file creation
-Level 3: Level 2 + modification of file metadata/attribution/owner/time etc
-Level 4: Current default setting
+Every checkpoint represent a complete filesystem at a given time. When
+a system corruption occurs, is it possible to mount a specified
+checkpoint (when the system is still clean) as read-write to
+"time-shift" to the state when the bad thing still not happened. Of
+course the checkpoints newer than the "time-shift" point will be
+discarded.
 
 
 Best regards,
