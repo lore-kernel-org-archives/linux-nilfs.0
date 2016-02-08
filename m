@@ -1,37 +1,39 @@
-From: Eric Lan <tenoreamer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Feature request: time-shift function
-Date: Fri, 5 Feb 2016 01:57:40 +0800
-Message-ID: <CAFm8q6fJm-ZYKhGpV0b6PrdbaosSzUz4JUC9-XjiDLUvObQ0TA@mail.gmail.com>
+From: Heinz Diehl <htd+ml-iEI8Y0CNJBYdnm+yROfE0A@public.gmane.org>
+Subject: Re: Where is nilfs2 fsck
+Date: Mon, 8 Feb 2016 22:53:28 +0100
+Message-ID: <20160208215328.GA7586@fritha.org>
+References: <20160208135344.09a64c7e@ulgy_thing>
+Reply-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:date:message-id:subject:from:to:content-type;
-        bh=7EV/KBEMV/cFF0PNFcmATp58O9AjOiBgSMrDNB8tRRc=;
-        b=rRN8a1+9s8ArJqvPkWGtbJpxXqArY5DDCtnEbI9asWNhvOulBmbO3s9sxZ2ew9Ojc2
-         Y9MNfWpgjSUA4JxpMfr6peY3kvXovqZCPpy2+4RiVB48n08i106PsK3Fg6kWbT3+UyAi
-         Vyds+EG35o2o+llzyPf+P5k/hhVCgBPHzmHRvgoIfVBIEY3jKjUuQtZlHGkMTe8WU9G4
-         BNepPDl8qD0SWxFZ5xVcWRseqVmsnHYDwxHYCUwwefLEpXrnJOLz6hHoo0v9kZ2iFVEg
-         iR28t+Zad7CeyFRM5/3IbGGBqAckimCCxZkM0p9jNrvwMwdHz51Q0X0orUzCM2xoh4ei
-         tb1Q==
+Content-Disposition: inline
+In-Reply-To: <20160208135344.09a64c7e@ulgy_thing>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello,
+On 08.02.2016, David Niklas wrote: 
 
-Every checkpoint represent a complete filesystem at a given time. When
-a system corruption occurs, is it possible to mount a specified
-checkpoint (when the system is still clean) as read-write to
-"time-shift" to the state when the bad thing still not happened. Of
-course the checkpoints newer than the "time-shift" point will be
-discarded.
+> Alas, my beautiful fs has become damaged and fsck does nothing, I think
+> it's a nop.
+> What is wrong, something in the btree, the original message was in
+> syslog but it seems to have rotated, I could tell you but I'd have to
+> cause my kernel to remount my home dir RO, which is not acceptable at
+> this time.
+> I'm not interested in the files that can't be accessed, I was trying to
+> delete them when I found the error so even an experimental fsck would do.
+> I do have nilfs2-utils installed but I can't find anything useful in
+> there.
+> Do I need to backup and reformat the partition?
 
+There is no fsck.nilfs or similar, so yes. Nilfs2 automatically recovers most
+of the time, though, so there may be underlying hardware failure. I've
+been using it extensively in the last 2 years, and never seen a single
+fs damage which didn't get recovered immediately.
 
-Best regards,
-Eric Lan
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
