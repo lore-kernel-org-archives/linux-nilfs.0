@@ -1,56 +1,84 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: nilfs.org hacked?
-Date: Tue, 23 Feb 2016 23:29:43 +0900 (JST)
-Message-ID: <20160223.232943.1304336543066941119.konishi.ryusuke@lab.ntt.co.jp>
-References: <CAPG5_FBur_8=fk4aFbd8Bpwa82bqPuwXCHUegBGsd2c3H0fRPQ@mail.gmail.com>
-	<CAPG5_FCWKB9t5xtwHP=-RxdzPPw79wMjVL52dGvY36hP=m0zFQ@mail.gmail.com>
+From: Joel Brunenberg <ml-cjJSWhJYEmM@public.gmane.org>
+Subject: Re: Feature request: time-shift function
+Date: Fri, 4 Mar 2016 14:57:36 +0100
+Message-ID: <20160304135736.GG10877@taeko.vm.is.jjim.de>
+References: <CAFm8q6fJm-ZYKhGpV0b6PrdbaosSzUz4JUC9-XjiDLUvObQ0TA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="MiFvc8Vo6wRSORdP"
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-type:content-transfer-encoding;
-        bh=a/F9KG7ZnShHyWTpDRuBvgYYqoYtq8ia8vw62SxFA2Y=;
-        b=UGiTPbWHJzltq+SPWiyjljZGrWiUrKVCynBO59k8xLP1YbySTSZpB3WCsaTJ5LuqHx
-         PjRPYwT3VftaxQPQEOQdrT89v/fOw7kVZWnS2DFABaYbeExgwL2ALfZTfFKIAQg5WTUc
-         NIyFoWIZufICLX8ryf6lJ7m2YnpU4AiNdJXvEW8h243SFXg5twIsEEwGHS/8TJky5Rw4
-         vPLt+g44ttcYe16V9RqXza963Ka+1LlefTedNOISouJ3WgIlXvygubi+DpyEU8s7Uvw0
-         OJ5qtzIAXpl+LRm9CJaxjj/OjJzRMW9bb9JhKtA1DP8raL4nUqZA3PiUnD0mz6g4e3t6
-         o0cQ==
-In-Reply-To: <CAPG5_FCWKB9t5xtwHP=-RxdzPPw79wMjVL52dGvY36hP=m0zFQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=jjim.de; s=dkim200811;
+	h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:To:From:Date; bh=dwbcM4UveUqcYOSCsywo+Kcvz8nvBBqQP9jIAs+CVjw=;
+	b=V/Zx2P7IkJwTQtJ/wtNTY+KeEm1sh+IQ3varxWlC43tsnQ3XlbGha32bNWGwnm/Z1v1Cs7fpg1zsv3U6nCOXAmfojBBH6uBkSt7m9DzEYM6F8qTrFXQI/GxRkGO7VptZCcNKICqMP8WarAtZ2f5i8hhEvpZHoyDG1rNeELt6l08=;
+Content-Disposition: inline
+In-Reply-To: <CAFm8q6fJm-ZYKhGpV0b6PrdbaosSzUz4JUC9-XjiDLUvObQ0TA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="iso-8859-1"
-To: Roman =?iso-8859-1?Q?H=F6llen?= <romanhoellen-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+
+--MiFvc8Vo6wRSORdP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-On Mon, 22 Feb 2016 20:41:06 +0100, Roman H=F6llen <romanhoellen@gmail.=
-com> wrote:
-> Hello,
->=20
-> I think your project website nilfs.org was hacked. There are some
-> links to sexual content.
->=20
-> greets
-> hoellen
+On Fri, Feb 05, 2016 at 01:57:40AM +0800, Eric Lan wrote:
+> Every checkpoint represent a complete filesystem at a given time. When
+> a system corruption occurs, is it possible to mount a specified
+> checkpoint (when the system is still clean) as read-write to
+> "time-shift" to the state when the bad thing still not happened. Of
+> course the checkpoints newer than the "time-shift" point will be
+> discarded.
 
-The community site of nilfs is placed at
+I would also very much like to see an easy method to make the fs "forget"
+the checkpoints from a certain point onwards. I guess it would be enough
+to satisfy all the features from this mail, Eric would like to see.
 
-  http://nilfs.sourceforge.net/
-  or http://nilfs.osdn.jp/
+Mode of operation would be:
 
-Please visit these sites instead.
+ 1 Notice a problem with the data on a system (e.g. update went wrong,
+   all libraries are broken. We need to revert)
+ 2 Verify on an earlier checkpoint, that everything is fine
+ 3 Revert to that checkpoint, discarding all checkpoints later than
+   that.
+ 4 profit.
 
-"nilfs.org" is a fake site hosted by someone who are not related to us
-and NTT.  This issue is noticed in the official sites.
+I guess though that this is not as trivial as it seems.
 
-Regards,
-Ryusuke Konishi
+Kind regards,
+
+ /jbn
+
+--=20
+Joel Brunenberg - Troisdorf
+PGP: 0xAD25981C
+
+--MiFvc8Vo6wRSORdP
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQJCBAEBAgAsBQJW2ZRHJRpodHRwOi8vcGdwLmpqaW0uZGUvcG9saWN5L3BvbGlj
+eS50eHQACgkQ1N3ALa0lmBxAIg/9Eqbz2erMiBPlhCbSZsjQUSaVGTtzbYQQbMtz
+BrYw90Us8rDOXXFwKc+czF7y3BNhhk5WcQXPUgbQuN7pfvk405wskWzldy9yQC+4
+DANdIvvX6uq0VyIx0fs6ahWtbuAI0xdJxCB4WT/dP3CobhwDQMxqngfNDLy4DAV0
+wQTFR97rd1fjTnDwmICbCVvS4qqDVgVdM+jZ2Qa3+f/v2YnSz9oLdhR8kXtgzF6H
+SLnFqcRlyhHTu75tkTv8z607j4cErQaWxWQkulr7BtbyXy3SZ6vxMxs7LLuZa+uu
+pgdaWXFzeerejlwgmjqKQmtNYWKeU2BBLylEAcElSh6BFLFbCcRmKEkhI3YG551g
+ht0EDY5H/HKqJdVArM5/n96V2uw4GZ96yfVpWnZ/kQoEy7IwaeZovZ6yGyfs7GMY
+g3qEYSdzG+SrXXNXkl2CmcbS6681lkbcKgSIK5gf1XzqvRNp8IDvzOFRPAhq3skH
+sgiyDl+vCLHOjjQqNCPmiNz6xsgvwVxzdnBzwtv+hawmuWohugRzf9bfGM+TxHJR
+kILzxuopQm3N8rGhLwUB4N/r1iX65Ns5KfFi8ICOVKPUpQEqPhGpbk0CcLFQO/xb
+0vBWXEghswdXutoFAj2zgiuL4PdbLy0OyyiBb+Oq9jQT72OszcQ08NPkMNLSteS8
+w0ASAsw=
+=VCss
+-----END PGP SIGNATURE-----
+
+--MiFvc8Vo6wRSORdP--
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
-in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
