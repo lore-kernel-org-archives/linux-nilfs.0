@@ -1,83 +1,92 @@
-From: Joel Brunenberg <ml-cjJSWhJYEmM@public.gmane.org>
-Subject: Re: Feature request: time-shift function
-Date: Fri, 4 Mar 2016 14:57:36 +0100
-Message-ID: <20160304135736.GG10877@taeko.vm.is.jjim.de>
-References: <CAFm8q6fJm-ZYKhGpV0b6PrdbaosSzUz4JUC9-XjiDLUvObQ0TA@mail.gmail.com>
+From: KARBOWSKI Piotr <piotr.karbowski-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [!] Unable to mount nilfs2 filesystem after power outage - error
+ loading super root.
+Date: Fri, 18 Mar 2016 19:16:29 +0100
+Message-ID: <56EC45FD.7010808@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="MiFvc8Vo6wRSORdP"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=jjim.de; s=dkim200811;
-	h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:To:From:Date; bh=dwbcM4UveUqcYOSCsywo+Kcvz8nvBBqQP9jIAs+CVjw=;
-	b=V/Zx2P7IkJwTQtJ/wtNTY+KeEm1sh+IQ3varxWlC43tsnQ3XlbGha32bNWGwnm/Z1v1Cs7fpg1zsv3U6nCOXAmfojBBH6uBkSt7m9DzEYM6F8qTrFXQI/GxRkGO7VptZCcNKICqMP8WarAtZ2f5i8hhEvpZHoyDG1rNeELt6l08=;
-Content-Disposition: inline
-In-Reply-To: <CAFm8q6fJm-ZYKhGpV0b6PrdbaosSzUz4JUC9-XjiDLUvObQ0TA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=to:from:subject:message-id:date:user-agent:mime-version
+         :content-transfer-encoding;
+        bh=KaX16hN1XEN/K4OqHJWXCZSFOveOH4ucVri3qBSGQqA=;
+        b=ds+9F1WRn9aP0Y1TY7PZegIVV4tb5U+p0rYw9mJkd6jl5Yo8foh7nbFgm7FMfUFK+D
+         zs0ZUfRAXZ0dYis+nYKnekbgeR2qt/PbYQjsXZjJ7GX2nZCbJ5K3+WDCKrLyVPCpye/M
+         /1lkzJmRBBYz+iNlTpZOAw7Nz6B3ckk5nzRG996wOz8RJ61xtm+hq2mj+IXm5amxJ8wK
+         90kv7JslvnchlHUh39TVm/zoFj11FZuVOJA/iYQGtIkhIqhPybH3Z3jnnalazqZd2VSl
+         gGEuiABn1odcFFDtZIBa7AHQmUxwh0zswsX79iED/EWBEkNZcdICIOfws4lqvQvbQF8F
+         o7Pg==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-
-
---MiFvc8Vo6wRSORdP
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-On Fri, Feb 05, 2016 at 01:57:40AM +0800, Eric Lan wrote:
-> Every checkpoint represent a complete filesystem at a given time. When
-> a system corruption occurs, is it possible to mount a specified
-> checkpoint (when the system is still clean) as read-write to
-> "time-shift" to the state when the bad thing still not happened. Of
-> course the checkpoints newer than the "time-shift" point will be
-> discarded.
+Yesterday I had an power outage. After booting my notebook again, I was 
+no longer able to mount /home that was on the top of nilfs2 filesystem.
 
-I would also very much like to see an easy method to make the fs "forget"
-the checkpoints from a certain point onwards. I guess it would be enough
-to satisfy all the features from this mail, Eric would like to see.
+I've come across a post from 2011 about fsck in git.nilfs.org but that 
+repo is no longer accessable. The repo from githab does not have any 
+trace of the experimental fsck tool thus I've dumped the filesystem to 
+image, recreated ext4 and restored backup.
 
-Mode of operation would be:
+The symptoms:
 
- 1 Notice a problem with the data on a system (e.g. update went wrong,
-   all libraries are broken. We need to revert)
- 2 Verify on an earlier checkpoint, that everything is fine
- 3 Revert to that checkpoint, discarding all checkpoints later than
-   that.
- 4 profit.
+# mount -o loop ./kurogane_ssd-home.17.03.2016.img /mnt/tmp
+mount.nilfs2: Error while mounting /dev/loop/0 on /mnt/tmp: No such file 
+or directory
 
-I guess though that this is not as trivial as it seems.
+# dmesg
+[ 9591.626210] NILFS warning: mounting unchecked fs
+[ 9591.824166] NILFS: error loading super root.
 
-Kind regards,
+No nilfs-utils's tools works beside the tune with -l
 
- /jbn
+# nilfs-tune -l /dev/loop1
+nilfs-tune 2.2.2
+Filesystem volume name:	  home
+Filesystem UUID:	  6a915104-61d5-4214-bed4-2538d1bdfaa5
+Filesystem magic number:  0x3434
+Filesystem revision #:	  2.0
+Filesystem features:      (none)
+Filesystem state:	  invalid or mounted
+Filesystem OS type:	  Linux
+Block size:		  4096
+Filesystem created:	  Sat Nov 14 14:40:18 2015
+Last mount time:	  Thu Mar 17 17:41:23 2016
+Last write time:	  Thu Mar 17 22:46:08 2016
+Mount count:		  154
+Maximum mount count:	  50
+Reserve blocks uid:	  0 (user root)
+Reserve blocks gid:	  0 (group root)
+First inode:		  11
+Inode size:		  128
+DAT entry size:		  32
+Checkpoint size:	  192
+Segment usage size:	  16
+Number of segments:	  11294
+Device size:		  94745133056
+First data block:	  1
+# of blocks per segment:  2048
+Reserved segments %:	  5
+Last checkpoint #:	  1016585
+Last block address:	  17023836
+Last sequence #:	  80736
+Free blocks count:	  6764544
+Commit interval:	  0
+# of blks to create seg:  0
+CRC seed:		  0x60cb4676
+CRC check sum:		  0x68371ded
+CRC check data size:	  0x00000118
 
---=20
-Joel Brunenberg - Troisdorf
-PGP: 0xAD25981C
+This is something I woudn't expect from a log structured filesystem. I 
+am running kernel 4.5.0.
 
---MiFvc8Vo6wRSORdP
-Content-Type: application/pgp-signature; name="signature.asc"
+Any comments and help with restoring access to this fs much appriecieate
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQJCBAEBAgAsBQJW2ZRHJRpodHRwOi8vcGdwLmpqaW0uZGUvcG9saWN5L3BvbGlj
-eS50eHQACgkQ1N3ALa0lmBxAIg/9Eqbz2erMiBPlhCbSZsjQUSaVGTtzbYQQbMtz
-BrYw90Us8rDOXXFwKc+czF7y3BNhhk5WcQXPUgbQuN7pfvk405wskWzldy9yQC+4
-DANdIvvX6uq0VyIx0fs6ahWtbuAI0xdJxCB4WT/dP3CobhwDQMxqngfNDLy4DAV0
-wQTFR97rd1fjTnDwmICbCVvS4qqDVgVdM+jZ2Qa3+f/v2YnSz9oLdhR8kXtgzF6H
-SLnFqcRlyhHTu75tkTv8z607j4cErQaWxWQkulr7BtbyXy3SZ6vxMxs7LLuZa+uu
-pgdaWXFzeerejlwgmjqKQmtNYWKeU2BBLylEAcElSh6BFLFbCcRmKEkhI3YG551g
-ht0EDY5H/HKqJdVArM5/n96V2uw4GZ96yfVpWnZ/kQoEy7IwaeZovZ6yGyfs7GMY
-g3qEYSdzG+SrXXNXkl2CmcbS6681lkbcKgSIK5gf1XzqvRNp8IDvzOFRPAhq3skH
-sgiyDl+vCLHOjjQqNCPmiNz6xsgvwVxzdnBzwtv+hawmuWohugRzf9bfGM+TxHJR
-kILzxuopQm3N8rGhLwUB4N/r1iX65Ns5KfFi8ICOVKPUpQEqPhGpbk0CcLFQO/xb
-0vBWXEghswdXutoFAj2zgiuL4PdbLy0OyyiBb+Oq9jQT72OszcQ08NPkMNLSteS8
-w0ASAsw=
-=VCss
------END PGP SIGNATURE-----
-
---MiFvc8Vo6wRSORdP--
+-- Piotr.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
