@@ -1,81 +1,76 @@
-From: Viacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [!] Unable to mount nilfs2 filesystem after power outage -
- error loading super root.
-Date: Fri, 18 Mar 2016 15:45:07 -0700
-Message-ID: <1458341107.2615.27.camel@slavad-ubuntu-14.04>
-References: <56EC45FD.7010808@gmail.com>
-	 <1458331991.2615.6.camel@slavad-ubuntu-14.04> <56EC67A2.8050905@gmail.com>
-	 <1458337014.2615.14.camel@slavad-ubuntu-14.04> <56EC7DCE.1020906@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+From: Julia Lawall <Julia.Lawall-L2FTfq7BK8M@public.gmane.org>
+Subject: [PATCH] nilfs2: constify nilfs_sc_operations structures
+Date: Sat,  9 Apr 2016 10:28:23 +0200
+Message-ID: <1460190503-8672-1-git-send-email-Julia.Lawall@lip6.fr>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20150623.gappssmtp.com; s=20150623;
-        h=message-id:subject:from:to:cc:date:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=igYYOmKrADFmK9f1jYLryzyP+g43AkV2ZJIV8dhndbY=;
-        b=dzKS4TB2OK7ZAZf7Z9fVRXNoqmF9XSDHQsFMzzKqbyk8Cuyq00ShMDwVYxtkFaN1Do
-         j4dSxpsGaEBsjlHFdcklT4GjITiwxa/OPl6HLmUprbx2ZTdMxVLdqx13NjnQGAKdT7aC
-         CsWqDitqFwba7NJdX9fTEY7sI+C3mQLkqjy3Y2+ijOfVhkmbY0sp1yAg38hfysCxKEIw
-         Y/4fLsqwLXThEgGNAitXDUqKvAJLtVRaK7wxqEIymVARDMB2YEuDYUzKvR+FtgdkW7ze
-         Ekx/of8nL/yWnuo1yh0Ywl5TbBAb6BFV4Z3xKR+hgJvKJiTaZfjkQilg2J2mEP5nQvai
-         EwPA==
-In-Reply-To: <56EC7DCE.1020906-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: KARBOWSKI Piotr <piotr.karbowski-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: kernel-janitors-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, 2016-03-18 at 23:14 +0100, KARBOWSKI Piotr wrote:
-> Hi,
-> 
-> On 03/18/2016 10:36 PM, Viacheslav Dubeyko wrote:
-> > It needs to dive into state of the volume. You can use lscp and lssu
-> > tools with the goal to retrieve segments and checkpoints state. But,
-> > again, this path could provide opportunity for understanding the bug
-> > essence and environment. I could see only one way for "recovering"
-> > corrupted volume: (1) understand the current state of volume's segments;
-> > (2) localize erroneous segment; (3) try to zero erroneous segment(s) by
-> > means of dd utility; (4) try to mount again. But it's really dangerous
-> > way, you could loose your data.
-> 
-> I could try, but lscp and lssu does not work with this filesystem since 
-> crash. Only 'nilfs-tune -l' display anything.
-> 
-> # strace lssu /dev/loop/1 2>&1 | grep loop
-> execve("/usr/bin/lssu", ["lssu", "/dev/loop/1"], [/* 61 vars */]) = 0
-> readlink("/dev/loop", 0x7ffe6a073ac0, 4096) = -1 EINVAL (Invalid argument)
-> readlink("/dev/loop/1", 0x7ffe6a073ac0, 4096) = -1 EINVAL (Invalid argument)
-> readlink("/dev/loop", 0x7ffe6a073ac0, 4096) = -1 EINVAL (Invalid argument)
-> readlink("/dev/loop/1", 0x7ffe6a073ac0, 4096) = -1 EINVAL (Invalid argument)
-> write(2, "lssu: cannot open NILFS on /dev/"..., 66lssu: cannot open 
-> NILFS on /dev/loop/1: No such file or directory
-> 
-> Does lscp and lssu needs actually mounted filesystem? It does run 
-> readlink() and check /proc/mounts...
-> 
+The nilfs_sc_operations structures are never modified, so declare them
+as const.
 
-Ahhh, I've forgot that you cannot mount your volume. Yes, you can use
-lscp and lssu for mounted volume only. So, it needs to analyze raw
-volume's content in such situation. No another way. Welcome to the real
-world. Sorry..
+Done with the help of Coccinelle.
 
-If you have such issue after power outage then the most probable reason
-of such issue is corruption of the last segment. Theoretically, NILFS2
-has all necessary for recovering from such issue (because NILFS2 has
-checkpoints for all metadata in previous logs). But current state of
-NILFS2 code is unable to overcome such situation. Another possible
-reason could be inconsistent state of superblock. NILFS2 has two
-superblocks (in the beginning and in the end of the volume). So, it's
-possible that one of the superblock (or both) has inconsistent state. It
-means that some of superblock's field will contain some invalid state.
-So, you need to elaborate vision what's wrong on your volume and to
-modify the volume state manually.
+Signed-off-by: Julia Lawall <Julia.Lawall-L2FTfq7BK8M@public.gmane.org>
 
-Thanks,
-Vyacheslav Dubeyko.
+---
+ fs/nilfs2/segment.c |   10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 4317f72..483e663 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -617,7 +617,7 @@ static void nilfs_write_file_node_binfo(struct nilfs_sc_info *sci,
+ 	*vblocknr = binfo->bi_v.bi_vblocknr;
+ }
+ 
+-static struct nilfs_sc_operations nilfs_sc_file_ops = {
++static const struct nilfs_sc_operations nilfs_sc_file_ops = {
+ 	.collect_data = nilfs_collect_file_data,
+ 	.collect_node = nilfs_collect_file_node,
+ 	.collect_bmap = nilfs_collect_file_bmap,
+@@ -666,7 +666,7 @@ static void nilfs_write_dat_node_binfo(struct nilfs_sc_info *sci,
+ 	*binfo_dat = binfo->bi_dat;
+ }
+ 
+-static struct nilfs_sc_operations nilfs_sc_dat_ops = {
++static const struct nilfs_sc_operations nilfs_sc_dat_ops = {
+ 	.collect_data = nilfs_collect_dat_data,
+ 	.collect_node = nilfs_collect_file_node,
+ 	.collect_bmap = nilfs_collect_dat_bmap,
+@@ -674,7 +674,7 @@ static struct nilfs_sc_operations nilfs_sc_dat_ops = {
+ 	.write_node_binfo = nilfs_write_dat_node_binfo,
+ };
+ 
+-static struct nilfs_sc_operations nilfs_sc_dsync_ops = {
++static const struct nilfs_sc_operations nilfs_sc_dsync_ops = {
+ 	.collect_data = nilfs_collect_file_data,
+ 	.collect_node = NULL,
+ 	.collect_bmap = NULL,
+@@ -1043,7 +1043,7 @@ static size_t nilfs_segctor_buffer_rest(struct nilfs_sc_info *sci)
+ 
+ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
+ 				   struct inode *inode,
+-				   struct nilfs_sc_operations *sc_ops)
++				   const struct nilfs_sc_operations *sc_ops)
+ {
+ 	LIST_HEAD(data_buffers);
+ 	LIST_HEAD(node_buffers);
+@@ -1550,7 +1550,7 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
+ 	sector_t blocknr;
+ 	unsigned long nfinfo = segbuf->sb_sum.nfinfo;
+ 	unsigned long nblocks = 0, ndatablk = 0;
+-	struct nilfs_sc_operations *sc_op = NULL;
++	const struct nilfs_sc_operations *sc_op = NULL;
+ 	struct nilfs_segsum_pointer ssp;
+ 	struct nilfs_finfo *finfo = NULL;
+ 	union nilfs_binfo binfo;
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
