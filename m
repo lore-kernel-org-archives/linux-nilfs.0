@@ -1,126 +1,202 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 07/11] nilfs2: get rid of nilfs_mdt_mark_block_dirty()
-Date: Fri, 29 Apr 2016 22:15:43 +0900
-Message-ID: <1461935747-10380-8-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 10/11] nilfs2: add missing line spacing
+Date: Fri, 29 Apr 2016 22:15:46 +0900
+Message-ID: <1461935747-10380-11-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1461935747-10380-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=r93VUy6m1ZcuHuUt+PRxMHyI92eTcGanqTupIWdYWuk=;
-        b=B0RaybmeOM91suOzXmkh5WUVLufPrKQSJILYXtGZ/suKjUwmdk5eNFBtI/E3hip68E
-         boFBNEeB9IzpbM9kI30SBwyk3zf5jz8vR230tIYrqifD/sUBcZzOpRsBpbdNP9TIAdPo
-         yqARdOJubU+ZNCvZpVh+q/vs0MeXRG2TVgTwYhci0JWQDX6O4jo86k8bmf20A7PdpUnc
-         Fz8RzHzZ03yMvTr2X8+wEbiwipmq6Jjlk6PAYu7D+fnqu5gpv6lUmMzs00n6jNJOpgMD
-         DGB2gC2bfQmqGRTa9yXQw6aFGPwnLuXVVfrfUTYUVuGCCGxkKx76kyDDWIeYWHN4Y9E6
-         ttnw==
-In-Reply-To: <1461935747-10380-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
+        bh=pyLKGkNSxqD2ix07lm65Vy8mkul3G4VL5KFv39oY1RY=;
+        b=gNUqc2sRcDhVvddQcnBbR75wSIAyS7gcf6fy3zfiVDPyHFv+LMo4I4x0mREt4DXgD5
+         rYz7ozcAANxJNe7aFkhkT+ZVI+OHw8Pf9hyjYD5S+VFLcbs6D8wxCzAfxZKb6XlawT+Z
+         CEmdDzvKzVEe4w4qlNwGqgv35KaRO79Vfvd37PjidTGfxe/7vAVgiOUWFfdwZnyScdQs
+         Q/SxTIoMKBtvJi+HeR2qWxR1oGBGMkWMQLbobh3sWglWE/tUO+Edx697FiT1s17tNPuR
+         QyKt3Q1t+dTE30A5yqvlylphkLyAkiJeo0rxrfRyPFaPj3r2500FPQkXM4/buqi1E1pR
+         vYbQ==
+In-Reply-To: <1461935747-10380-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-nilfs_mdt_mark_block_dirty() can be replaced with primary functions
-like nilfs_mdt_get_block() and mark_buffer_dirty(), and it's used only
-by nilfs_ioctl_mark_blocks_dirty().
+Clean up checkpatch.pl warnings "WARNING: Missing a blank line after
+declarations" from nilfs2.
 
-This gets rid of the function to simplify the interface of metadata
-file.
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/ioctl.c | 11 ++++++++---
- fs/nilfs2/mdt.c   | 28 ----------------------------
- fs/nilfs2/mdt.h   |  1 -
- 3 files changed, 8 insertions(+), 32 deletions(-)
+ fs/nilfs2/cpfile.c    | 2 ++
+ fs/nilfs2/dir.c       | 2 ++
+ fs/nilfs2/ifile.h     | 1 +
+ fs/nilfs2/inode.c     | 1 +
+ fs/nilfs2/namei.c     | 1 +
+ fs/nilfs2/recovery.c  | 1 +
+ fs/nilfs2/segment.c   | 1 +
+ fs/nilfs2/sufile.c    | 2 ++
+ fs/nilfs2/super.c     | 1 +
+ fs/nilfs2/the_nilfs.h | 2 ++
+ 10 files changed, 14 insertions(+)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index e865998..358b57e 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -779,6 +779,7 @@ static int nilfs_ioctl_mark_blocks_dirty(struct the_nilfs *nilfs,
- 	size_t nmembs = argv->v_nmembs;
- 	struct nilfs_bmap *bmap = NILFS_I(nilfs->ns_dat)->i_bmap;
- 	struct nilfs_bdesc *bdescs = buf;
-+	struct buffer_head *bh;
- 	int ret, i;
- 
- 	for (i = 0; i < nmembs; i++) {
-@@ -796,12 +797,16 @@ static int nilfs_ioctl_mark_blocks_dirty(struct the_nilfs *nilfs,
- 			/* skip dead block */
- 			continue;
- 		if (bdescs[i].bd_level == 0) {
--			ret = nilfs_mdt_mark_block_dirty(nilfs->ns_dat,
--							 bdescs[i].bd_offset);
--			if (ret < 0) {
-+			ret = nilfs_mdt_get_block(nilfs->ns_dat,
-+						  bdescs[i].bd_offset,
-+						  false, NULL, &bh);
-+			if (unlikely(ret)) {
- 				WARN_ON(ret == -ENOENT);
- 				return ret;
- 			}
-+			mark_buffer_dirty(bh);
-+			nilfs_mdt_mark_dirty(nilfs->ns_dat);
-+			put_bh(bh);
- 		} else {
- 			ret = nilfs_bmap_mark(bmap, bdescs[i].bd_offset,
- 					      bdescs[i].bd_level);
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 36fa941..c8fe584 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -389,34 +389,6 @@ int nilfs_mdt_forget_block(struct inode *inode, unsigned long block)
- 	return ret;
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index d192b48..16f884b 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -37,6 +37,7 @@ static unsigned long
+ nilfs_cpfile_get_blkoff(const struct inode *cpfile, __u64 cno)
+ {
+ 	__u64 tcno = cno + NILFS_MDT(cpfile)->mi_first_entry_offset - 1;
++
+ 	do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
+ 	return (unsigned long)tcno;
+ }
+@@ -46,6 +47,7 @@ static unsigned long
+ nilfs_cpfile_get_offset(const struct inode *cpfile, __u64 cno)
+ {
+ 	__u64 tcno = cno + NILFS_MDT(cpfile)->mi_first_entry_offset - 1;
++
+ 	return do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
  }
  
--/**
-- * nilfs_mdt_mark_block_dirty - mark a block on the meta data file dirty.
-- * @inode: inode of the meta data file
-- * @block: block offset
-- *
-- * Return Value: On success, it returns 0. On error, the following negative
-- * error code is returned.
-- *
-- * %-ENOMEM - Insufficient memory available.
-- *
-- * %-EIO - I/O error
-- *
-- * %-ENOENT - the specified block does not exist (hole block)
-- */
--int nilfs_mdt_mark_block_dirty(struct inode *inode, unsigned long block)
--{
--	struct buffer_head *bh;
--	int err;
--
--	err = nilfs_mdt_read_block(inode, block, 0, &bh);
--	if (unlikely(err))
--		return err;
--	mark_buffer_dirty(bh);
--	nilfs_mdt_mark_dirty(inode);
--	brelse(bh);
--	return 0;
--}
--
- int nilfs_mdt_fetch_dirty(struct inode *inode)
+diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+index edd3ca9..6ac166e 100644
+--- a/fs/nilfs2/dir.c
++++ b/fs/nilfs2/dir.c
+@@ -74,6 +74,7 @@ static unsigned nilfs_last_byte(struct inode *inode, unsigned long page_nr)
+ static int nilfs_prepare_chunk(struct page *page, unsigned from, unsigned to)
  {
- 	struct nilfs_inode_info *ii = NILFS_I(inode);
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index 54e3b7f..dc88907 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -79,7 +79,6 @@ int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
- 			 struct buffer_head **out_bh);
- int nilfs_mdt_delete_block(struct inode *, unsigned long);
- int nilfs_mdt_forget_block(struct inode *, unsigned long);
--int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
- int nilfs_mdt_fetch_dirty(struct inode *);
+ 	loff_t pos = page_offset(page) + from;
++
+ 	return __block_write_begin(page, pos, to - from, nilfs_get_block);
+ }
  
- int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz);
+@@ -336,6 +337,7 @@ nilfs_find_entry(struct inode *dir, const struct qstr *qstr,
+ 	n = start;
+ 	do {
+ 		char *kaddr;
++
+ 		page = nilfs_get_page(dir, n);
+ 		if (!IS_ERR(page)) {
+ 			kaddr = page_address(page);
+diff --git a/fs/nilfs2/ifile.h b/fs/nilfs2/ifile.h
+index 1b7d7af..23ad2f0 100644
+--- a/fs/nilfs2/ifile.h
++++ b/fs/nilfs2/ifile.h
+@@ -32,6 +32,7 @@ static inline struct nilfs_inode *
+ nilfs_ifile_map_inode(struct inode *ifile, ino_t ino, struct buffer_head *ibh)
+ {
+ 	void *kaddr = kmap(ibh->b_page);
++
+ 	return nilfs_palloc_block_get_entry(ifile, ino, ibh, kaddr);
+ }
+ 
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 191bc218..bdd11c6 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -851,6 +851,7 @@ out_err:
+ int nilfs_permission(struct inode *inode, int mask)
+ {
+ 	struct nilfs_root *root = NILFS_I(inode)->i_root;
++
+ 	if ((mask & MAY_WRITE) && root &&
+ 	    root->cno != NILFS_CPTREE_CURRENT_CNO)
+ 		return -EROFS; /* snapshot is not writable */
+diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+index 3cf8169..e5bed2d 100644
+--- a/fs/nilfs2/namei.c
++++ b/fs/nilfs2/namei.c
+@@ -44,6 +44,7 @@
+ static inline int nilfs_add_nondir(struct dentry *dentry, struct inode *inode)
+ {
+ 	int err = nilfs_add_link(dentry, inode);
++
+ 	if (!err) {
+ 		d_instantiate(dentry, inode);
+ 		unlock_new_inode(inode);
+diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
+index 402a45c..685fa73 100644
+--- a/fs/nilfs2/recovery.c
++++ b/fs/nilfs2/recovery.c
+@@ -522,6 +522,7 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
+ 					0, &page, nilfs_get_block);
+ 		if (unlikely(err)) {
+ 			loff_t isize = inode->i_size;
++
+ 			if (pos + blocksize > isize)
+ 				nilfs_write_failed(inode->i_mapping,
+ 							pos + blocksize);
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index ddbfb09..69e9ea8 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2391,6 +2391,7 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci, int mode)
+ static void nilfs_construction_timeout(unsigned long data)
+ {
+ 	struct task_struct *p = (struct task_struct *)data;
++
+ 	wake_up_process(p);
+ }
+ 
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index df439da..1963595 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -57,6 +57,7 @@ static unsigned long
+ nilfs_sufile_get_blkoff(const struct inode *sufile, __u64 segnum)
+ {
+ 	__u64 t = segnum + NILFS_MDT(sufile)->mi_first_entry_offset;
++
+ 	do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
+ 	return (unsigned long)t;
+ }
+@@ -65,6 +66,7 @@ static unsigned long
+ nilfs_sufile_get_offset(const struct inode *sufile, __u64 segnum)
+ {
+ 	__u64 t = segnum + NILFS_MDT(sufile)->mi_first_entry_offset;
++
+ 	return do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
+ }
+ 
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 2cb78b8..92acb00 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -743,6 +743,7 @@ static int parse_options(char *options, struct super_block *sb, int is_remount)
+ 
+ 	while ((p = strsep(&options, ",")) != NULL) {
+ 		int token;
++
+ 		if (!*p)
+ 			continue;
+ 
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 6a26293..62bd7b1 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -269,6 +269,7 @@ struct nilfs_root {
+ static inline int nilfs_sb_need_update(struct the_nilfs *nilfs)
+ {
+ 	u64 t = get_seconds();
++
+ 	return t < nilfs->ns_sbwtime ||
+ 		t > nilfs->ns_sbwtime + nilfs->ns_sb_update_freq;
+ }
+@@ -276,6 +277,7 @@ static inline int nilfs_sb_need_update(struct the_nilfs *nilfs)
+ static inline int nilfs_sb_will_flip(struct the_nilfs *nilfs)
+ {
+ 	int flip_bits = nilfs->ns_sbwcount & 0x0FL;
++
+ 	return (flip_bits != 0x08 && flip_bits != 0x0F);
+ }
+ 
 -- 
 1.8.3.1
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
