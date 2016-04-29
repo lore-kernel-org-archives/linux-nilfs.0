@@ -1,29 +1,64 @@
-From: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Subject: NILFS utils 2.2.4 was released
-Date: Wed, 27 Apr 2016 01:39:16 -0400
-Message-ID: <CAKFNMo=gdS1BbhABHS3ue-OS54Khx6j6Mav-KRs2KE820Pg2-w@mail.gmail.com>
-Reply-To: Linux NILFS <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 01/11] nilfs2: fix white space issue in nilfs_mount()
+Date: Fri, 29 Apr 2016 22:15:37 +0900
+Message-ID: <1461935747-10380-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+References: <1461935747-10380-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:from:reply-to:date:message-id:subject:to;
-        bh=gjdPcB4VkKl+msZOx8jNeApOX5HyNSQ9UF75fS0dFIk=;
-        b=DtFKT0gCND/ekuIJIND4X+mJCNsHfe396kHBLuwLiMdZ6cpl1mOIUElk2YeEXd4XZY
-         yST8ZnwZC7MX1g63OyqrFnkYLNLANoeAai9YvWi96cs+zOfzO4VLxF6rn/daRl1D29zR
-         gQ0wB6Pvo0wgeolqj65wp8aWL1s8OW4jOACREgMYA7VvQeCCGJzeANe7a7bGPU3pDDUQ
-         xPB7YpJeIo2PiNrfNPWUDmLVCGa+cKNRsF6XJ2ZDSVs1zUGu6o71Q4bu4y2v1Cwe9gjO
-         W9KGBXdrHI40E9EmutNJSBiEbC8vHWgvzzCg0I4nNgBUT580JFKhvqZMsRwwHme5ud/G
-         xSew==
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
+         :lines;
+        bh=Z+KJFLolXRxn8Ddn8iq6BeEVbfvMDtR/za6SDOM5V/Q=;
+        b=xD1cmttxBmJodi1S8cI+tIkpi59xqYqQpNrF4nwigEqlG8SifcwHU+DjkVx8Ogkkm0
+         BBJTM3O1U/4cR//4beCPJ00eZtFf4yVppoiEpFxz/z/qUjTQAyP/MSSUlP3BtWSzay1e
+         3eFv4PQDfovEPksRHq9DqMAPNIKPf4eUCZBqR2Bb7n9IxNzBGZVLijRx/q6GnNIOQ7/d
+         y3iJhVi9SojbYI7TdSO3+vhuhQDe5sBm2wsjtq1ue+mWPNJW/el3mZMglaPMqeBl/VcH
+         uZDoNjRUCJ6uRwhSGFZOj65CzouSIi7FJU5RrAsH9etbW5ssvSK7NB1+MPlcFrIKCkh1
+         yDOA==
+In-Reply-To: <1461935747-10380-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-A maintenance release with minor fixes.
+Fix the following checkpatch.pl error and warnings:
 
-from http://nilfs.sourceforge.net/en/download.html#2.2.4-u
+ ERROR: code indent should use tabs where possible
+ #1317: FILE: super.c:1317:
+ + ^I^Is_new = true;$
+
+ WARNING: please, no space before tabs
+ #1317: FILE: super.c:1317:
+ + ^I^Is_new = true;$
+
+ WARNING: please, no spaces at the start of a line
+ #1317: FILE: super.c:1317:
+ + ^I^Is_new = true;$
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+---
+ fs/nilfs2/super.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 7f5d3d9..e05d184 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -1316,7 +1316,7 @@ nilfs_mount(struct file_system_type *fs_type, int flags,
+ 	}
+ 
+ 	if (!s->s_root) {
+- 		s_new = true;
++		s_new = true;
+ 
+ 		/* New superblock instance created */
+ 		s->s_mode = mode;
+-- 
+1.8.3.1
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
