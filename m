@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 08/11] nilfs2: move cleanup code of metadata file from inode routines
-Date: Fri, 29 Apr 2016 22:15:44 +0900
-Message-ID: <1461935747-10380-9-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 06/11] nilfs2: clarify permission to replicate the design
+Date: Fri, 29 Apr 2016 22:15:42 +0900
+Message-ID: <1461935747-10380-7-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1461935747-10380-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=ozc9KM8nEVvaDJHr/8GZedFS+ht39M56y1/cbrCh6MQ=;
-        b=xD8RwmWeIebRxVNHzhorJIOE5k8iZS1MnjPE17cubAuUztTBT9R6NzRFIVaAbgAWzP
-         2KQCXuhfcarku5lwSv7XHDLgEGs9CFSpF6Pt2hJ9Mxe1ndVWkFdkP1iLn4hkrnlyKIZB
-         f1rASih1UlsD7eDwjE3Z3j+grxikThmskuLbXPR8IhsIQxwJOMvu2rxLvPioquBgpSHH
-         o3GeYgJTj009pPrdH4lPXkZNbRu/za3QWkicgzwdwDsppGKMQpyAM34MmiRNFZyI1BSc
-         WzGNB6QVKVcnb/pcjbYLhuAjHyLOVURLM1NclSTxEwo/joDoRmFx60xh4Jyzbf629l45
-         X7Mg==
+        bh=APNeabYbBI4W+8AzE5p+RIfS/ouCY0tN0Nc3F9mvjTQ=;
+        b=zezU8QKEkjITuZGfJpylqaPX2Wz/nOHTnqo1kAjfqAx6D/vKzjz9kvc6rzeKYpUvy0
+         XJisg/IvnHnDy/NRkCWd4mR8LzCp24MsXWrM1Ig2H4Rhu0om2lSvFhVGEKxG78hOCKTw
+         L7vaQ7KjzSuXB9Gf1EWnHqCASSDBJ7l6yQ5Kz34sVyG9fdMy1DIOI4S+lGFBymzhMJ7s
+         mtqz+3KZ/4UN7v+opwnRvABhDjrgsD60lbWdNt5ezb/rAiTSVDgLJuaOQ1ebDdUbRtBk
+         njsKddHXWwBb2marjPUFrpurTDDLeb4R0kdTE6SWMWbdt99cOr/BIaaurp2fdcrunFJT
+         yzVQ==
 In-Reply-To: <1461935747-10380-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -24,130 +24,28 @@ Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-Refactor nilfs_clear_inode() and nilfs_i_callback() so that cleanup
-code or resource deallocation related to metadata file will be moved
-out to mdt.c.
+To respond to a certain developer's request, this explicitly state
+that developers can reimplement the nilfs2 design for other operating
+systems to share data stored in that format.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 ---
- fs/nilfs2/inode.c |  5 ++---
- fs/nilfs2/mdt.c   | 25 +++++++++++++++++++++++++
- fs/nilfs2/mdt.h   |  8 ++++++++
- fs/nilfs2/super.c |  8 +++-----
- 4 files changed, 38 insertions(+), 8 deletions(-)
+ Documentation/filesystems/nilfs2.txt | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 3d3ff46..191bc218 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -755,7 +755,6 @@ void nilfs_truncate(struct inode *inode)
- static void nilfs_clear_inode(struct inode *inode)
- {
- 	struct nilfs_inode_info *ii = NILFS_I(inode);
--	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
+diff --git a/Documentation/filesystems/nilfs2.txt b/Documentation/filesystems/nilfs2.txt
+index 41c3d33..5b21ef7 100644
+--- a/Documentation/filesystems/nilfs2.txt
++++ b/Documentation/filesystems/nilfs2.txt
+@@ -268,3 +268,8 @@ among NILFS2 files can be depicted as follows:
+                                     ( regular file, directory, or symlink )
  
- 	/*
- 	 * Free resources allocated in nilfs_read_inode(), here.
-@@ -764,8 +763,8 @@ static void nilfs_clear_inode(struct inode *inode)
- 	brelse(ii->i_bh);
- 	ii->i_bh = NULL;
- 
--	if (mdi && mdi->mi_palloc_cache)
--		nilfs_palloc_destroy_cache(inode);
-+	if (nilfs_is_metadata_file_inode(inode))
-+		nilfs_mdt_clear(inode);
- 
- 	if (test_bit(NILFS_I_BMAP, &ii->i_state))
- 		nilfs_bmap_clear(ii->i_bmap);
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index c8fe584..8a2f8b2 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -28,6 +28,7 @@
- #include "segment.h"
- #include "page.h"
- #include "mdt.h"
-+#include "alloc.h"		/* nilfs_palloc_destroy_cache() */
- 
- #include <trace/events/nilfs2.h>
- 
-@@ -465,6 +466,30 @@ int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz)
- 	return 0;
- }
- 
-+/**
-+ * nilfs_mdt_clear - do cleanup for the metadata file
-+ * @inode: inode of the metadata file
-+ */
-+void nilfs_mdt_clear(struct inode *inode)
-+{
-+	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
+ For detail on the format of each file, please see include/linux/nilfs2_fs.h.
 +
-+	if (mdi->mi_palloc_cache)
-+		nilfs_palloc_destroy_cache(inode);
-+}
-+
-+/**
-+ * nilfs_mdt_destroy - release resources used by the metadata file
-+ * @inode: inode of the metadata file
-+ */
-+void nilfs_mdt_destroy(struct inode *inode)
-+{
-+	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
-+
-+	kfree(mdi->mi_bgl); /* kfree(NULL) is safe */
-+	kfree(mdi);
-+}
-+
- void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size,
- 			      unsigned header_size)
- {
-diff --git a/fs/nilfs2/mdt.h b/fs/nilfs2/mdt.h
-index dc88907..ffb876e 100644
---- a/fs/nilfs2/mdt.h
-+++ b/fs/nilfs2/mdt.h
-@@ -67,6 +67,11 @@ static inline struct nilfs_mdt_info *NILFS_MDT(const struct inode *inode)
- 	return inode->i_private;
- }
- 
-+static inline int nilfs_is_metadata_file_inode(const struct inode *inode)
-+{
-+	return inode->i_private != NULL;
-+}
-+
- /* Default GFP flags using highmem */
- #define NILFS_MDT_GFP      (__GFP_RECLAIM | __GFP_IO | __GFP_HIGHMEM)
- 
-@@ -82,6 +87,9 @@ int nilfs_mdt_forget_block(struct inode *, unsigned long);
- int nilfs_mdt_fetch_dirty(struct inode *);
- 
- int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz);
-+void nilfs_mdt_clear(struct inode *inode);
-+void nilfs_mdt_destroy(struct inode *inode);
-+
- void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
- 
- int nilfs_mdt_setup_shadow_map(struct inode *inode,
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 2ed3e40..2cb78b8 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -169,12 +169,10 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
- static void nilfs_i_callback(struct rcu_head *head)
- {
- 	struct inode *inode = container_of(head, struct inode, i_rcu);
--	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
- 
--	if (mdi) {
--		kfree(mdi->mi_bgl); /* kfree(NULL) is safe */
--		kfree(mdi);
--	}
-+	if (nilfs_is_metadata_file_inode(inode))
-+		nilfs_mdt_destroy(inode);
-+
- 	kmem_cache_free(nilfs_inode_cachep, NILFS_I(inode));
- }
- 
++There are no patents or other intellectual property that we protect
++with regard to the design of NILFS2.  It is allowed to replicate the
++design in hopes that other operating systems could share (mount, read,
++write, etc.) data stored in this format.
 -- 
 1.8.3.1
 
