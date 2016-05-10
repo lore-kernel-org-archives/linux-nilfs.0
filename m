@@ -1,74 +1,83 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: [PATCH 11/11] nilfs2: clean trailing semicolons in macros
-Date: Mon, 09 May 2016 23:17:03 +0900 (JST)
-Message-ID: <20160509.231703.1481729973362188932.konishi.ryusuke@lab.ntt.co.jp>
-References: <1461935747-10380-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-	<1461935747-10380-12-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH 0/7] nilfs2 additional fixes
+Date: Tue, 10 May 2016 22:24:24 +0900
+Message-ID: <1462886671-3521-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=OLOxeXOVZCzTcByDo4xrmcsXSyTlY0AZHnhP0ePqUjM=;
-        b=oEm7KiyWW61k8+BFympTDat7TiKBpzQvJSDoRga6lKV1xLduSfauAiTZb4wJrOc/aY
-         cY41lP+ihQ+fYBKovvwlRpXO71cvc4kLuDW05w9mFGvScWLvgy1M1KggzKMn3x4nDIkm
-         xhsMo09/QgVEYnnxWYGsmfpreokG+AXo96Fn7rnQTgeBAWsKr4i+bQ9W5kNOJ1LmDg84
-         oQt6Tb9+ZYqhxppDgt65RX+on3+LpQB1By1DA/wsI4RebTVaeDj9+fz1zo81orjJ9GGx
-         LEMLBhL+tysd1i2orLQZaGdDHftt8heBm+XNnLhInIlw/Wnkp3Q7Wy1kzBUKWd92GG9p
-         wYVQ==
-In-Reply-To: <1461935747-10380-12-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=ZPxZO6BOw11fJrEYWua1KNr7yw7mwJzq9Nh5vyMmXds=;
+        b=qBWRPDBU2EOfzo5l8aY4/rzAlH5WspR4/j8cxz11FuNz67iVsLxekwegQPXzKicjrK
+         gaMo7s09XrFS5kczNiaEors/Uh2YyRC+BU+wzB21ljr/dAH3JUaAnrH7y60t03nK1X31
+         9akSKN0wotfGhhtTlxLSE3J91iKda9DYooILpIXTeACBXwyqnNb3AFbxuMyx32eeHN5x
+         giTLqHWQbURTVahNy6o03k+nBXuPdbiqF+TXnB5zW1NXagU1M2Pne49Ychd0S3MKW5Qs
+         uZlPr84uFH7daqqD2CSZII6fbFAGQWVlg0ochYiLz5K4HOsDsmEDonIzlmpBH6xMr6XV
+         EMBA==
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
 Hi Andrew,
 
-On Fri, 29 Apr 2016 22:15:47 +0900, Ryusuke Konishi wrote:
-> Remove trailing semicolons from macros, as suggested by checkpatch.pl.
-> 
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> ---
-<snip>
-> diff --git a/fs/nilfs2/sysfs.h b/fs/nilfs2/sysfs.h
-> index 677e3a1..648cedf 100644
-> --- a/fs/nilfs2/sysfs.h
-> +++ b/fs/nilfs2/sysfs.h
-> @@ -66,7 +66,7 @@ struct nilfs_##name##_attr { \
->  			char *); \
->  	ssize_t (*store)(struct kobject *, struct attribute *, \
->  			 const char *, size_t); \
-> -};
-> +}
->  
->  NILFS_COMMON_ATTR_STRUCT(feature);
->  
-> @@ -77,7 +77,7 @@ struct nilfs_##name##_attr { \
->  			char *); \
->  	ssize_t (*store)(struct nilfs_##name##_attr *, struct the_nilfs *, \
->  			 const char *, size_t); \
-> -};
-> +}
->  
->  NILFS_DEV_ATTR_STRUCT(dev);
->  NILFS_DEV_ATTR_STRUCT(segments);
-> @@ -93,7 +93,7 @@ struct nilfs_##name##_attr { \
->  			char *); \
->  	ssize_t (*store)(struct nilfs_##name##_attr *, struct nilfs_root *, \
->  			 const char *, size_t); \
-> -};
-> +}
->  
->  NILFS_CP_ATTR_STRUCT(snapshot);
->  
+Please append the following changes for the upcoming merge window:
 
-Could you apply the following amendment ?
+Ryusuke Konishi (7):
+      nilfs2: do not emit extra newline on nilfs_warning() and nilfs_error()
+      nilfs2: remove space before semicolon
+      nilfs2: fix code indent coding style issue
+      nilfs2: avoid bare use of 'unsigned'
+      nilfs2: remove unnecessary else after return or break
+      nilfs2: remove loops of single statement macros
+      nilfs2: fix block comments
 
-The above patch didn't modify the same style issue in nilfs2/sysfs.c.
-This addition covers the remaining places.
+
+The first patch "nilfs2: do not emit extra newline on nilfs_warning()
+and nilfs_error()" fixes the issue that part of warning/error messages
+of nilfs2 insert an empty line in the kernel ring buffer.
+
+The rest cleans several coding style issues caught by checkpatch.pl.
 
 Thanks,
 Ryusuke Konishi
+--
+
+ fs/nilfs2/alloc.c         |  30 +++++++------
+ fs/nilfs2/alloc.h         |   2 +-
+ fs/nilfs2/bmap.c          |   4 +-
+ fs/nilfs2/bmap.h          |  16 ++++---
+ fs/nilfs2/btree.c         |  15 ++++---
+ fs/nilfs2/cpfile.c        |  14 +++---
+ fs/nilfs2/cpfile.h        |   4 +-
+ fs/nilfs2/dat.c           |   2 +-
+ fs/nilfs2/dat.h           |   2 +-
+ fs/nilfs2/dir.c           |  51 +++++++++++-----------
+ fs/nilfs2/direct.c        |  11 ++---
+ fs/nilfs2/ifile.c         |   6 ++-
+ fs/nilfs2/inode.c         |  93 +++++++++++++++++++++++----------------
+ fs/nilfs2/mdt.c           |   4 +-
+ fs/nilfs2/mdt.h           |   6 +--
+ fs/nilfs2/namei.c         |   4 +-
+ fs/nilfs2/nilfs.h         |  26 +++++++----
+ fs/nilfs2/page.c          |   8 ++--
+ fs/nilfs2/page.h          |   3 +-
+ fs/nilfs2/recovery.c      |  18 +++++---
+ fs/nilfs2/segbuf.c        |   4 +-
+ fs/nilfs2/segbuf.h        |   5 ++-
+ fs/nilfs2/segment.c       | 108 ++++++++++++++++++++++++++--------------------
+ fs/nilfs2/segment.h       |  38 ++++++++++------
+ fs/nilfs2/super.c         |   4 +-
+ fs/nilfs2/sysfs.c         |   6 +--
+ fs/nilfs2/the_nilfs.c     |  10 +++--
+ fs/nilfs2/the_nilfs.h     |  19 ++++----
+ include/linux/nilfs2_fs.h |  72 ++++++++++++++++++++-----------
+ 29 files changed, 342 insertions(+), 243 deletions(-)
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
