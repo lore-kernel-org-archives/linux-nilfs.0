@@ -1,49 +1,76 @@
-From: =?UTF-8?B?SsOpcsO0bWUgUG91bGlu?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Bug with future timestamp
-Date: Tue, 14 Jun 2016 20:54:32 -0400
-Message-ID: <CALJXSJpSYW6jpPWWMUQEkmWoGyNhKBB7jJ+mUBxrM6=8G6uPEA@mail.gmail.com>
-References: <AM4PR07MB1443A58B1332FBF20D3ED835A0540@AM4PR07MB1443.eurprd07.prod.outlook.com>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: Re: [PATCH 3/3] nilfs2: move ioctl interface and disk layout to
+ uapi separately
+Date: Wed, 15 Jun 2016 22:27:13 +0900 (JST)
+Message-ID: <20160615.222713.1679449238980418194.konishi.ryusuke@lab.ntt.co.jp>
+References: <1465825507-3407-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+	<1465825507-3407-4-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+	<20160614152952.05480c4a15aaf7973f302080@linux-foundation.org>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
-        h=mime-version:in-reply-to:references:from:date:message-id:subject:to
-         :cc;
-        bh=82OM08vNOmtSEnitmWWVIEkSgxVZMJKnRuQt5/Nhwa0=;
-        b=fza51CMyrpAxE7o1zm1uB66yL1NrPGVHQueBV+FPiYw4/Kp7b9gG94Vb3HZSBq77Vv
-         gw160FtCZacYRtbsMu4WpFv44dyQqY2q59/SwjYF4UPn/guf9/h532t5K5UOJ8RKAQR/
-         6ybakofbxlBGetZFsT4OEY8y65SmH5pj8Xb+HVggF94L9tZJH8aokh9PvFLcGlJAx3AN
-         AqQDCstME8khbWKyj4mRFhURzvRk6tAiKL81QfA2+DeIW1zfmnnTk4gL3NN437l9/JNW
-         9pce5R1dSVHQr4C1PP43cIWWkOr34Ww56ef4T8W9dWsvtvwXrye+Ayw2GwT7/hR1aF6M
-         RTOQ==
-In-Reply-To: <AM4PR07MB1443A58B1332FBF20D3ED835A0540-OW1adBbnE/AmxLT4/akQWjzdlHkvsOLVvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
+        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=p11bNmwirw/UBE93B1oSsIycu9qo0djiG+eQqHfSiLU=;
+        b=cXc7jRlYe8mghUM3vIhEqk95iYqeK6aSNzmFFZOdwERfrcwqzl7dKPUDNyhHyin2Y+
+         SYfTpVi04ctUg058eqJ+K8hjSO6foBLtbkjptSSsFR+esRD3WEiVkuAOEc1EiDtzfEJd
+         E29KgVcm70nhSfQMsToAG96Ah6s0v7ilFlhEya1NOBtAgs5vBlE59O9BJDBvcu0gW8Bw
+         Z1ghAPzB7uKw24Y1qVCJqKGD9kKvzqoHTr6jRiHQ6+S5pGD51KXHKVzYnZP9OzOZ+m/g
+         Qbmyxi1c2mC/AWoDwgEG0/GMSC5AQoen4uFIvqAHbq7uFWL2G6TrQTr8l9Hyy0j7d6fC
+         y/pA==
+In-Reply-To: <20160614152952.05480c4a15aaf7973f302080-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Michele Marcon <M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org>
-Cc: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: Text/Plain; charset="us-ascii"
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Tue, Jun 14, 2016 at 10:54 AM, Michele Marcon
-<M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org> wrote:
-> When the garbage collector starts, it will notice that the checkpoint "from the future" is protected and will not remove it.
-> The problem is that it will not remove subsequent checkpoints (but with timestamp that shouldn't be protected), and therefore there won't be any garbage collection until 2020.
->
-> The only workaround is to manually remove the "future" checkpoints with rmcp.
->
-> Is this a known issue? Thanks!
+On Tue, 14 Jun 2016 15:29:52 -0700, Andrew Morton wrote:
+> On Mon, 13 Jun 2016 22:45:07 +0900 Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org> wrote:
+> 
+>> The header file "include/linux/nilfs2_fs.h" is composed of parts for
+>> ioctl and disk format, and both are intended to be shared with user
+>> space programs.
+>> 
+>> This moves them to the uapi directory "include/uapi/linux" splitting
+>> the file to "nilfs2_api.h" and "nilfs2_ondisk.h".  The following minor
+>> changes are accompanied by this migration:
+>> 
+>>  - nilfs_direct_node struct in nilfs2/direct.h is converged to
+>>    nilfs2_ondisk.h because it's an on-disk structure.
+>>  - inline functions nilfs_rec_len_from_disk() and
+>>    nilfs_rec_len_to_disk() are moved to nilfs2/dir.c.
+>> 
+>> ...
+>>
+>> +static inline __le16 nilfs_rec_len_to_disk(unsigned int len)
+>> +{
+>> +#if (PAGE_SIZE >= 65536)
+>> +	if (len == (1 << 16))
+>> +		return cpu_to_le16(NILFS_MAX_REC_LEN);
+>> +
+>> +	BUG_ON(len > (1 << 16));
+> 
+> Is there any way in which the mount of a corrupted filesystem could
+> trigger this BUG?  If so, that would be bad.
+
+This BUG is never triggered in theory because the length is limited to
+"chunk_size" by nilfs_check_page(), nilfs_make_empty(), etc, and the
+chunk_size is limited to s_blocksize which is verified to be less than
+or equal to NILFS_MAX_BLOCK_SIZE (= 65536) at mount time.
+
+This time I didn't come up with a simple way to remove it - I hope to
+clean it when refactoring the directory implementation.
+
+Thanks,
+Ryusuke Konishi
 
 
-I was bit by the opposite problem on my day to day laptop. I set my
-time in the past for some hours, then after restoring the correct
-time, the garbage collector destroyed all the checkpoints from the
-past. At this point, the FS was screwed. I reported the issue and
-can't find the patch that fixed it but I guess this is the kind of
-protection to be expected from my issue, checkpoints from the future
-can't be cleaned up.
-
-Pseudo-References:
-http://www.spinics.net/lists/linux-nilfs/msg00592.html
+>> +#endif
+>> +	return cpu_to_le16(len);
+>> +}
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
