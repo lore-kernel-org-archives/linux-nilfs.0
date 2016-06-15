@@ -1,8 +1,9 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Subject: Re: Bug with future timestamp
-Date: Thu, 16 Jun 2016 00:03:18 +0900 (JST)
-Message-ID: <20160616.000318.1116808914986780353.konishi.ryusuke@lab.ntt.co.jp>
+Date: Thu, 16 Jun 2016 00:22:55 +0900 (JST)
+Message-ID: <20160616.002255.2137939331212666701.konishi.ryusuke@lab.ntt.co.jp>
 References: <AM4PR07MB1443A58B1332FBF20D3ED835A0540@AM4PR07MB1443.eurprd07.prod.outlook.com>
+	<CALJXSJpSYW6jpPWWMUQEkmWoGyNhKBB7jJ+mUBxrM6=8G6uPEA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -10,88 +11,56 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20120113;
         h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=YjUx6cgrpPTRGrwy64SxHe70c/jV9oBFp/ol0tntSgA=;
-        b=wp5QkOKTWdtx4Lrhzh8avY6poUS1QIcP1ohsanK4DQq2TmXGKz0mzNQpWS2b5jzNds
-         I7RoJbeYlWr9GIFum3SRxxtiOunN39XYk81tPc0hTrBVzt+vdOpv+rA7VLaXuquXOjZP
-         5TpruIS6O0KzjTzPSlfhTXGy84nfohoy6bMncmqhjnSfpYpkRYwyZk5tZBKwMDsJrNOz
-         WHsklQdB3dhSZ0qQ60UZ2hadLsnmWceOsxBl+3IiH/y8OTgB9hs70hsWqxqHOUxGzpaV
-         NwDY+z+bXYtUuBlaoSY9ShJWLwKWf6ID58Q9Y0CkHG33WJOV5uhGeULhsnDGQoOjqhxB
-         lnjA==
-In-Reply-To: <AM4PR07MB1443A58B1332FBF20D3ED835A0540-OW1adBbnE/AmxLT4/akQWjzdlHkvsOLVvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
+        bh=auA2JPq2pX1IedLLrLcGRqqMLq3Jcya2rJoRYGw6gXo=;
+        b=wFzffxdhoy8jGZGC9YRxiz75/iFDavKV905hG+PfbXQFYW60Djax8G9QCDq1+piKLx
+         MubpgZ8Ib61fYrW2RlZBqa74QIHIQdCehQsvSusM+Tve1eqFRO7CUVioJFoT881GFUiC
+         KZBqF+xDih7ypVplCmd/3H/RzBOspFMY2wGvhy8kvkaZOFeroCVHGbuydlAl5BlGixu1
+         Z2bANymZ2e1PFdm8l88XCNNk+BUe0Wf+UQ0vPjWtM6o8/BdYEThHnfAJ15zyTkPSBZWj
+         d5VziWOQlnud7DL5HE0TuEdFmiAmwf1quL9ZQ0Rc3UzNsBa17HtdpmyTLi+ihzqxGlxl
+         c+RA==
+In-Reply-To: <CALJXSJpSYW6jpPWWMUQEkmWoGyNhKBB7jJ+mUBxrM6=8G6uPEA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="iso-8859-1"
-To: Michele Marcon <M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?iso-8859-1?Q?J=E9r=F4me?= Poulin <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Michele Marcon <M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
-On Tue, 14 Jun 2016 14:54:26 +0000, Michele Marcon wrote:
-> Hi,
-> I'm using nilfs on ARM I have found a problem when these conditions a=
-re met:
+On Tue, 14 Jun 2016 20:54:32 -0400, J=E9r=F4me Poulin wrote:
+> On Tue, Jun 14, 2016 at 10:54 AM, Michele Marcon
+> <M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org> wrote:
+>> When the garbage collector starts, it will notice that the checkpoin=
+t "from the future" is protected and will not remove it.
+>> The problem is that it will not remove subsequent checkpoints (but w=
+ith timestamp that shouldn't be protected), and therefore there won't b=
+e any garbage collection until 2020.
+>>
+>> The only workaround is to manually remove the "future" checkpoints w=
+ith rmcp.
+>>
+>> Is this a known issue? Thanks!
 >=20
-> - set protection period to 60 seconds
-> - set current time on the future (example: year 2020)
-> - write something on flash, so that some checkpoints are created
-> - set current time to the present
-> - perform writes on flash.
 >=20
-> When the garbage collector starts, it will notice that the
-> checkpoint "from the future" is protected and will not remove it.
-> The problem is that it will not remove subsequent checkpoints (but
-> with timestamp that shouldn't be protected), and therefore there
-> won't be any garbage collection until 2020.
-
-Does this state really continue even if you continue writing after the
-rewind ?
-
-Checkpoint is protected not only by the protection period but also by
-a few other conditions, for instance, recent segments are "active" and
-protected from GC.  (the data and checkpoints in the active segments
-may be protected regardless of their timestamps).  You can confirm if
-the segment is active or not through the 'a' flag of lssu command.
- =20
-If every block which belongs to a checkpoint is protected by GC,
-then the checkpoint will not be discarded even if it has a timestamp
-that can be removed.
-
+> I was bit by the opposite problem on my day to day laptop. I set my
+> time in the past for some hours, then after restoring the correct
+> time, the garbage collector destroyed all the checkpoints from the
+> past. At this point, the FS was screwed. I reported the issue and
+> can't find the patch that fixed it but I guess this is the kind of
+> protection to be expected from my issue, checkpoints from the future
+> can't be cleaned up.
 >=20
-> The only workaround is to manually remove the "future" checkpoints
-> with rmcp.
->=20
+> Pseudo-References:
+> http://www.spinics.net/lists/linux-nilfs/msg00592.html
 
-rmcp in reality doesn't help to reclaim blocks.  It only invalidates
-checkpoints and makes them unaccessible.
+Do you mean an fs curruption occurs (even now) after the above rewindin=
+g ?
+
+If you mean all checkpoints looks to be removed, could you try "-a"
+option of the lscp command ?
 
 Regards,
 Ryusuke Konishi
 
-
-> Is this a known issue? Thanks!
->=20
->=20
->=20
-> Michele Marcon
->=20
-> Centro Ricerche
-> RPS SpA
-> Viale Europa, 7
-> 37045=A0Legnago=A0VR
-> Tel. +39 0442 635939=A0Fax. +39 0442 635934
-> Skype Id: =A0- Voip:=20
-> E-mail: M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org
-> Web: www.riello-ups.com
-> ---------------------------------------------------------------------=
------
-> Per favore non stampare questo messaggio se proprio non =E8=20
-> necessario=20
-> Please consider the environment before printing this e-mail
-> ---------------------------------------------------------------------=
------
->=20
->=20
->=20
->=20
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
 " in
