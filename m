@@ -1,77 +1,132 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs: avoid warning about unused variables
-Date: Thu, 16 Jun 2016 07:05:32 +0900 (JST)
-Message-ID: <20160616.070532.298289408681530745.konishi.ryusuke@lab.ntt.co.jp>
-References: <20160615201945.3348205-1-arnd@arndb.de>
+From: Michele Marcon <M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org>
+Subject: Bug with future timestamp
+Date: Fri, 17 Jun 2016 07:28:47 +0000
+Message-ID: <AM4PR07MB144378F2ABD60581AED209D6A0570@AM4PR07MB1443.eurprd07.prod.outlook.com>
+References: <AM4PR07MB1443A58B1332FBF20D3ED835A0540@AM4PR07MB1443.eurprd07.prod.outlook.com>
+ <20160616.000318.1116808914986780353.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=AurrZUqdjU6YV2OEp6whyqYNQwyJx6KzRgAkU0j6iJg=;
-        b=O6H20ae5S2o7QcxdXzT9fu5TvRbxK43JwH6PmuWx3T6i3s+2C3yMBTIgiWZNiIkfS3
-         AYbD3mIgJHge1aatzZmWy/ifNQW/D92ydoxynOXBHnWltBUmtm0D5zLKOx/ovqDQT+8y
-         IwWXJmyonFmOFjDYNSUyGdiKQ1PJ1YlwWklxVLYnCI0NVhcCwUY2i7JEk2srz/goENSZ
-         Ma0GZn9nszOH5aUR4cHxoSsUhb660h3AjJ3fIBMjrr2BkvF/HnuluLEgQD47dG+nmPfi
-         HIk9437sR5NUvZ4QxH0n0kn/PD/FgE9zUb4j4wbwrKC2Idb+yj+S/RAIZ/S2fNgK+AF7
-         jWuA==
-In-Reply-To: <20160615201945.3348205-1-arnd-r2nGTMty4D4@public.gmane.org>
+ d=rielloups.onmicrosoft.com; s=selector1-rielloups-com01e;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
+ bh=xVZQ1CxG2AJ24JPKS95cPAIU1BnpEGuMKOz7Vag0eew=;
+ b=bDOpYsA/BwU1DrASx2ogLxw2xLryyyoDzGzz+OPEICyTBZhWyCsDzRKQZldodiEE6GH3ySFM2cUswefWKzPlsO9wnG+7XtTOm77GqDdmL24ZjtPRd0I6ex9fLdmmApr6UjKqfZHBRzYdHNopGZ5lI/9CqbI+9E+CkAZAOxhi820=
+Content-Language: it-IT
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="iso-8859-1"
+To: "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Wed, 15 Jun 2016 22:19:41 +0200, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
-> The newly added nilfs_msg() infrastructure caused a warning in
-> nilfs_clear_dirty_page() when it is disabled:
-> 
-> fs/nilfs2/page.c: In function 'nilfs_clear_dirty_page':
-> fs/nilfs2/page.c:402:22: error: unused variable 'sb' [-Werror=unused-variable]
->   struct super_block *sb = inode->i_sb;
-> 
-> We can avoid the warning by adding a cast to void for the first
-> argument of the macro.
-> 
-> Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-> Fixes: aede53d223f0 ("nilfs2: replace nilfs_warning() with nilfs_msg()")
 
-Thanks for the catch!
+Yes, the state continues until the system become unusable.
+No, these fragments aren't active.
+
+This is the log of the commands issued and the results:
+
+http://pastebin.com/jf6C5SST
+
+Thanks.
+
+-----Messaggio originale-----
+Da: Ryusuke Konishi [mailto:konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org] Per conto di Ryu=
+suke Konishi
+Inviato: mercoled=EC 15 giugno 2016 17:03
+A: Michele Marcon <M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Oggetto: Re: Bug with future timestamp
+
+Hi,
+On Tue, 14 Jun 2016 14:54:26 +0000, Michele Marcon wrote:
+> Hi,
+> I'm using nilfs on ARM I have found a problem when these conditions a=
+re met:
+>=20
+> - set protection period to 60 seconds
+> - set current time on the future (example: year 2020)
+> - write something on flash, so that some checkpoints are created
+> - set current time to the present
+> - perform writes on flash.
+>=20
+> When the garbage collector starts, it will notice that the checkpoint=
+=20
+> "from the future" is protected and will not remove it.
+> The problem is that it will not remove subsequent checkpoints (but=20
+> with timestamp that shouldn't be protected), and therefore there won'=
+t=20
+> be any garbage collection until 2020.
+
+Does this state really continue even if you continue writing after the =
+rewind ?
+
+Checkpoint is protected not only by the protection period but also by a=
+ few other conditions, for instance, recent segments are "active" and p=
+rotected from GC.  (the data and checkpoints in the active segments may=
+ be protected regardless of their timestamps).  You can confirm if the =
+segment is active or not through the 'a' flag of lssu command.
+ =20
+If every block which belongs to a checkpoint is protected by GC, then t=
+he checkpoint will not be discarded even if it has a timestamp that can=
+ be removed.
+
+>=20
+> The only workaround is to manually remove the "future" checkpoints=20
+> with rmcp.
+>=20
+
+rmcp in reality doesn't help to reclaim blocks.  It only invalidates ch=
+eckpoints and makes them unaccessible.
 
 Regards,
 Ryusuke Konishi
 
 
-> ---
->  fs/nilfs2/nilfs.h | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
-> 
-> diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-> index b7064faef217..46fbd4e00315 100644
-> --- a/fs/nilfs2/nilfs.h
-> +++ b/fs/nilfs2/nilfs.h
-> @@ -317,7 +317,10 @@ void __nilfs_error(struct super_block *sb, const char *function,
->  #else
->  
->  #define nilfs_msg(sb, level, fmt, ...)					\
-> -	no_printk(fmt, ##__VA_ARGS__)
-> +	do {								\
-> +		no_printk(fmt, ##__VA_ARGS__);				\
-> +		(void)(sb);						\
-> +	} while (0)
->  #define nilfs_error(sb, fmt, ...)					\
->  	do {								\
->  		no_printk(fmt, ##__VA_ARGS__);				\
-> -- 
-> 2.9.0
-> 
+> Is this a known issue? Thanks!
+>=20
+>=20
+>=20
+> Michele Marcon
+>=20
+> Centro Ricerche
+> RPS SpA
+> Viale Europa, 7
+> 37045=A0Legnago=A0VR
+> Tel. +39 0442 635939=A0Fax. +39 0442 635934 Skype Id: =A0- Voip:
+> E-mail: M.Marcon-wB/b/6WKJkjDzftRWevZcw@public.gmane.org
+> Web:=20
+> https://emea01.safelinks.protection.outlook.com/?url=3Dwww.riello-ups=
+=2Eco
+> m&data=3D01%7c01%7cM.Marcon%40riello-ups.com%7c9bd83d76a4a74e5957cc08=
+d39
+> 52e3523%7cd8fd0d398b2f4760af9e84aadb8587ef%7c0&sdata=3DepS8f0YmqRj5iG=
+%2f
+> xh27hngehxiqYPYKHpsq5EPFnRxI%3d
+> ---------------------------------------------------------------------=
+-
+> ---- Per favore non stampare questo messaggio se proprio non =E8=20
+> necessario Please consider the environment before printing this e-mai=
+l
+> ---------------------------------------------------------------------=
+-
+> ----
+>=20
+>=20
+>=20
+>=20
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs=
+"=20
+> in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org More majordomo=20
+> info at=20
+> https://emea01.safelinks.protection.outlook.com/?url=3Dhttp%3a%2f%2fv=
+ger
+> .kernel.org%2fmajordomo-info.html&data=3D01%7c01%7cM.Marcon%40riello-=
+ups
+> .com%7c9bd83d76a4a74e5957cc08d3952e3523%7cd8fd0d398b2f4760af9e84aadb8=
+5
+> 87ef%7c0&sdata=3DZPLbeEsIU%2fXq%2bXhA5LyU5jBEUUO31zLeLbIa8kijIK4%3d
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" =
+in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
