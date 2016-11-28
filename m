@@ -1,29 +1,39 @@
-From: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Subject: NILFS utils 2.2.6 was released
-Date: Mon, 10 Oct 2016 11:37:21 -0400
-Message-ID: <CAKFNMonYanvYdqnuZ2Kg8K5mdzzy82HPe0-qDruwgNHSic61yQ@mail.gmail.com>
-Reply-To: Linux NILFS <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Michael Conrad <mconrad-HsDW+lVSy7tZ66HEZ9PjWw@public.gmane.org>
+Subject: Re: Kernel Bug on Linux 4.1.31, possibly nilfs, not sure (correction)
+Date: Mon, 28 Nov 2016 13:08:14 -0500
+Message-ID: <f19bca1a-6b9e-f1eb-26ff-09e0674504a7@intellitree.com>
+References: <bd7164ee-8641-a950-3b6b-211f504013a5@intellitree.com>
+ <86ef5dca-d23a-7d11-08cb-5e065da63d63@intellitree.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20120113;
-        h=mime-version:from:reply-to:date:message-id:subject:to;
-        bh=MXMIy8HSPsntmh8/XosPXRXTHDHn/veirnQ4TWxdn1I=;
-        b=uAfiMOtaybNq7ayQ3DjZJHEfe6OXljNRFfNuKlINlUK/1d832sPmhhUqEZi7K2qjmV
-         kS4YTFI3/iI5JPQQwTAI8Qt1r9JXhe0AYri0QuMjSDn36a8mEaf9ftiPBySg26Zjc6/P
-         Ez/7DFD5ozfPYzf++BTYhBlzAbb9aXNXvTsEAbonGLigupfhghFgWGeXm/jsOFHmx3an
-         oPOwZMakhv45hrL7uvg8AJVFHI5PRtwBbFS5pASQ/VX/Qi59HA8y4ZtN9iPOK9PpBfHB
-         0P5qEb9UhudQ1wqAvq4zFOexaLkow6kMHrYmhDNNPvtJMCrgbiP7B43NA+bK6fM7TQNT
-         CvXw==
+In-Reply-To: <86ef5dca-d23a-7d11-08cb-5e065da63d63-HsDW+lVSy7tZ66HEZ9PjWw@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-A maintenance release with some fixes.
+On 11/28/2016 1:02 PM, Michael Conrad wrote:
+> Hello, I found a bug that might be related.
+>
+> https://patchwork.kernel.org/patch/9339843/
+>
+> On several of my crash dumps, I saw it die in 
+> "memcg_drain_all_list_lrus" and found this mentioned in a bug where 
+> FUSE was calling functions to modify the radix tree directly in a way 
+> that other kernel developers weren't expecting.  (I don't fully 
+> understand the details)
+>
+> Our systems that are crashing are not using the FUSE driver for 
+> anything, but the crashes still coincide with nilfs2 activity.  Is 
+> there a chance nilfs is affected by this same situation?
+>
+> I've attached another example crash log.  We're still on 4.1.31, but 
+> will move to 4.1.35 soon.
+>
+> -Mike 
 
-from http://nilfs.sourceforge.net/en/download.html#2.2.6-u
+Apologies, this system is actually running kernel 4.1.22
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
