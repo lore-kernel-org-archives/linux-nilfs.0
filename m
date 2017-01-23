@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH -mm 1/2] nilfs2: use nilfs_btree_node_size()
-Date: Tue, 24 Jan 2017 00:17:34 +0900
-Message-ID: <1485184655-3895-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH -mm 2/2] nilfs2: use i_blocksize()
+Date: Tue, 24 Jan 2017 00:17:35 +0900
+Message-ID: <1485184655-3895-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1485184655-3895-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=G55jQRCzbvHaSnkbvIsVNJgO6d8Y1qlLVj/nxF4Dx6M=;
-        b=ENdImyaaP35k0W4fpekaQlV3R0dLq+UpOzbmM5u2JDUG+lWjXVZZJ3BxD32Euvo5J2
-         fTF9hfcowfZ8ShO1v9TkSHKjDpy3+DVR5BRMc+HPXEGvwMg0zELEpcM3Ju1jp0W+IY9C
-         dZHlXT182bX6hfSloLFKmLvXDHlwwMrcsyNSrrJehZ6Z4AyGnxzGvCTTvHpg3m8gePR1
-         D768Ip5Z4P7ghHl4U6TEA3KzTuxNN986I9gAJR0A0x2AQN+DuajxwXCD5we4mJdjWodI
-         1vyQzB3pM/5uDgOD6X97MzUm9tX/6nPI/rPDMIaWNpgloxPKCh09J8IGOE4RQV//dt2f
-         2iSQ==
+        bh=EA6mdD3mOiQ7vIWq9t8fbFFEDluUeNv0wDteUlhlSPM=;
+        b=uFORO2qlNpq5MCCHAGOzqYLGPey8S1bgN8uaxhCNaLZ8LSxE+V1xHR8iD18UzVadzM
+         2EhF896w/HVAuE+I1UQWx8EI7xjOwVQT/yhItiCmksGZrpyCnBhiJdZ7jHpiSDd1kYwm
+         kNG/j+CLN7tIWY2UQp0cMRfuD6nQWrv/UqWgr6pzLRavwewfFUbOZa3MYIkavt5OnWuw
+         0+Z/s0F9mhjuP1/LvfVf4kTEimK2y1s68+s8MTmCRaJaXGe1a1pfC8nHDS9MVTFYn+uo
+         OOu+0XgUzniyHhedWAJSUPQDnQ+6fbEEnE+9Bju/JuB2RcFomWXGPSQ7VwLk1pY1+iKd
+         mrew==
 In-Reply-To: <1485184655-3895-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -26,27 +26,42 @@ Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.or
 
 From: Geliang Tang <geliangtang@gmail.com>
 
-Use nilfs_btree_node_size() instead of open-coding.
+Since i_blocksize() helper has been defined in fs.h, use it instead
+of open-coding.
 
 Signed-off-by: Geliang Tang <geliangtang@gmail.com>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
+ fs/nilfs2/alloc.c | 2 +-
  fs/nilfs2/btree.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
+diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
+index 2c90e28..03b8ba9 100644
+--- a/fs/nilfs2/alloc.c
++++ b/fs/nilfs2/alloc.c
+@@ -34,7 +34,7 @@
+ static inline unsigned long
+ nilfs_palloc_groups_per_desc_block(const struct inode *inode)
+ {
+-	return (1UL << inode->i_blkbits) /
++	return i_blocksize(inode) /
+ 		sizeof(struct nilfs_palloc_group_desc);
+ }
+ 
 diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 2e315f9..9c7ea17 100644
+index 9c7ea17..06ffa13 100644
 --- a/fs/nilfs2/btree.c
 +++ b/fs/nilfs2/btree.c
-@@ -1870,7 +1870,7 @@ int nilfs_btree_convert_and_insert(struct nilfs_bmap *btree,
- 		di = &dreq;
- 		ni = NULL;
- 	} else if ((n + 1) <= NILFS_BTREE_NODE_NCHILDREN_MAX(
--			   1 << btree->b_inode->i_blkbits)) {
-+			   nilfs_btree_node_size(btree))) {
- 		di = &dreq;
- 		ni = &nreq;
- 	} else {
+@@ -119,7 +119,7 @@ static int nilfs_btree_node_get_nchildren(const struct nilfs_btree_node *node)
+ 
+ static int nilfs_btree_node_size(const struct nilfs_bmap *btree)
+ {
+-	return 1 << btree->b_inode->i_blkbits;
++	return i_blocksize(btree->b_inode);
+ }
+ 
+ static int nilfs_btree_nchildren_per_block(const struct nilfs_bmap *btree)
 -- 
 1.8.3.1
 
