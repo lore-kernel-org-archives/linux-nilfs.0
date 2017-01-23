@@ -1,76 +1,48 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/2] nilfs2: use i_blocksize()
-Date: Mon, 23 Jan 2017 10:28:56 +0900 (JST)
-Message-ID: <20170123.102856.1031133549844815930.konishi.ryusuke@lab.ntt.co.jp>
-References: <ebd4d1fb0aada6ed0bb1d2de21230c3b1fb148a9.1484896146.git.geliangtang@gmail.com>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Subject: [PATCH -mm 0/2] nilfs2 minor changes
+Date: Tue, 24 Jan 2017 00:17:33 +0900
+Message-ID: <1485184655-3895-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=OgCwEUstFX8EXYeqeZbF3acQ1IaxOo4q0LqBpjDdrPE=;
-        b=LDpCEofFja+1pFgNuHsv3CFXHaiz6Vlmgk5Q8lLsrFQcLQQWgPELOEYwc6d9NSYHoi
-         4gm9X+utICSfhlr51qwxzkITqJtnjeIZaCFgwhbV89OEnwievtiviop3JUtjIn+TDsr7
-         ncqsTqPZhaU84BxqXIHG8wf+2Q5QjKZYnHl9n3IduZj0wVgQwwPLAgKyL+rXqBhocpC0
-         IOW/YI8h2WAixGR9+jMrejI8szBdb1KzkAA0220GpiXwXH3402rwRj/ihN0NzHI7SA41
-         pAhF3ApG8WkRT1LR/RmkEloNfPPKUSmhImS/bKe5PXVZ9qwwdu/XKhoBTKL2/7LW9MF9
-         J2GA==
-In-Reply-To: <ebd4d1fb0aada6ed0bb1d2de21230c3b1fb148a9.1484896146.git.geliangtang@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+        h=sender:from:to:cc:subject:date:message-id:lines;
+        bh=AcF2mvMe3HSE/fM7c1EadI22Gmi2ljy2APoLbtGNPPU=;
+        b=HcR5nC9Pp9kOD7edQquVX9AS9GXXYKbNbNYrPD0Bm2NegWK8UznkdfAfcFSyNdj6/o
+         zxtRzbg3NVydwGNw/2qnaskof1m+iPH/N82g53YbSrggR1533WQbxHqCzY3iLwukKcOM
+         iUh40eNXPnKcxRJS0+RuDBJKA4dYR5P7XWk0nDpkcuW8M29mAyQCvMksXRc/QqzlOzWs
+         8IqgmqUdZxX4z/SkbAA1PxPqeTdkrhU9iZx3N7e2v4AJquUtKFnu6sBp1CfARdNLsfHu
+         ufCEyswZzfXj92dik0i0KB4Rf+XH20i//4ALkQ9KVU3dAO6X6RFQIF0aMALWMOdqPaXX
+         C31g==
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Geliang Tang <geliangtang@gmail.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Geliang Tang <geliangtang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 
-On Fri, 20 Jan 2017 22:34:57 +0800, Geliang Tang wrote:
-> Since i_blocksize() helper has been defined in fs.h, use it instead
-> of open-coding.
-> 
-> Signed-off-by: Geliang Tang <geliangtang@gmail.com>
+Hi Andrew,
 
-i_blocksize() doesn't exist in the mainline kernel.
+Please queue the following changes for the next merge window:
 
-This needs another patch titled "fs: add i_blocksize()" which I found
-in the latest -mm tree.
+Geliang Tang (2):
+      nilfs2: use nilfs_btree_node_size()
+      nilfs2: use i_blocksize()
 
-I will send this to the -mm tree along with this dependency.
+where "nilfs2: use i_blocksize()" requires the patch "fs: add
+i_blocksize()" which resides in -mm tree.
 
-Regards,
+Meanwhile "nilfs2: use nilfs_btree_node_size()" is applicable
+independently.
+
+Thanks,
 Ryusuke Konishi
+--
+ fs/nilfs2/alloc.c | 2 +-
+ fs/nilfs2/btree.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-> ---
->  fs/nilfs2/alloc.c | 2 +-
->  fs/nilfs2/btree.c | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/fs/nilfs2/alloc.c b/fs/nilfs2/alloc.c
-> index 2c90e28..03b8ba9 100644
-> --- a/fs/nilfs2/alloc.c
-> +++ b/fs/nilfs2/alloc.c
-> @@ -34,7 +34,7 @@
->  static inline unsigned long
->  nilfs_palloc_groups_per_desc_block(const struct inode *inode)
->  {
-> -	return (1UL << inode->i_blkbits) /
-> +	return i_blocksize(inode) /
->  		sizeof(struct nilfs_palloc_group_desc);
->  }
->  
-> diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-> index 2e315f9..d75238a 100644
-> --- a/fs/nilfs2/btree.c
-> +++ b/fs/nilfs2/btree.c
-> @@ -119,7 +119,7 @@ nilfs_btree_node_set_nchildren(struct nilfs_btree_node *node, int nchildren)
->  
->  static int nilfs_btree_node_size(const struct nilfs_bmap *btree)
->  {
-> -	return 1 << btree->b_inode->i_blkbits;
-> +	return i_blocksize(btree->b_inode);
->  }
->  
->  static int nilfs_btree_nchildren_per_block(const struct nilfs_bmap *btree)
-> -- 
-> 2.9.3
-> 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
