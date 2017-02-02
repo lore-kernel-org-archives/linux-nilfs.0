@@ -1,42 +1,43 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: Read/Access Timestamp?
-Date: Tue, 24 Jan 2017 23:06:01 +0900 (JST)
-Message-ID: <20170124.230601.1574047725550983985.konishi.ryusuke@lab.ntt.co.jp>
-References: <trinity-c1b16ea0-3d14-4167-acfc-2d5f6c393a11-1485264632220@3capp-mailcom-bs10>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=ZNpfoTFmWFF/rWja8Gc+2PwvGkM0vvnYPVrnhR0DkvA=;
-        b=H+MPC1lGkDknmydSuNZxAjoLbWXNQgTG8jKCqZApN9WHlBU9F6Yjwa8K4vHxLVeGLD
-         b90vQo2xUP2sEA/NVnQq2DgkoN0jMXhplbuVBGC4vCh10x4dKNuHvDHSAgz1DjkCVn77
-         PE4r/zBv3sxNnvVhsJmlGF82919lajOsqHztvOqhfw/vfnVNyp0vbmNwtlW5G3wSodwd
-         26/oMZlpg2QD41G0581MdL64p8bbmHOHA5eLIc/4+KrYgVpyAwe5qpEz3SThKLj9PIYp
-         aY3IkpSsjZO2eJq3DqY45xvvm5OZNDESKp9iLTTh6FBoVBkl4ffyfNetxLNGKVHxaNpU
-         ZhUg==
-In-Reply-To: <trinity-c1b16ea0-3d14-4167-acfc-2d5f6c393a11-1485264632220@3capp-mailcom-bs10>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Jan Kara <jack@suse.cz>
+Subject: [PATCH 19/24] nilfs2: Convert to properly refcounting bdi
+Date: Thu,  2 Feb 2017 18:34:17 +0100
+Message-ID: <20170202173422.3240-20-jack@suse.cz>
+References: <20170202173422.3240-1-jack@suse.cz>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20170202173422.3240-1-jack@suse.cz>
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: real34-W9aAOI/tHPE@public.gmane.org
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-fsdevel@vger.kernel.org
+Cc: Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org, Jan Kara <jack@suse.cz>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-On Tue, 24 Jan 2017 14:30:32 +0100, real34-W9aAOI/tHPE@public.gmane.org wrote:
-> Hi
-> 
-> is there a last read/last access timestamp in nilfs2 ?
+Similarly to set_bdev_super() NILFS2 just used block device reference to
+bdi. Convert it to properly getting bdi reference. The reference will
+get automatically dropped on superblock destruction.
 
-No, nilfs2 does not support access time.
+CC: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+CC: linux-nilfs@vger.kernel.org
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ fs/nilfs2/super.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-It was addressed a future work, but still left unfulfilled for years,
-sorry.
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index e1872f36147f..feb796a38b8d 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -1068,7 +1068,8 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
+ 	sb->s_time_gran = 1;
+ 	sb->s_max_links = NILFS_LINK_MAX;
+ 
+-	sb->s_bdi = bdev_get_queue(sb->s_bdev)->backing_dev_info;
++	sb->s_bdi = bdi_get(sb->s_bdev->bd_bdi);
++	sb->s_iflags |= SB_I_DYNBDI;
+ 
+ 	err = load_nilfs(nilfs, sb);
+ 	if (err)
+-- 
+2.10.2
 
-Regards,
-Ryusuke Konishi
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
