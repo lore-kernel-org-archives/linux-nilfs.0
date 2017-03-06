@@ -1,102 +1,98 @@
-From: Jeff Layton <jlayton@redhat.com>
-Subject: Re: [PATCH 0/3] mm/fs: get PG_error out of the writeback reporting
- business
-Date: Sun, 05 Mar 2017 09:40:54 -0500
-Message-ID: <1488724854.2925.6.camel@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH 0/3] mm/fs: get PG_error out of the writeback reporting business
+Date: Mon, 06 Mar 2017 14:06:11 +1100
+Message-ID: <871subkst8.fsf@notabene.neil.brown.name>
 References: <20170305133535.6516-1-jlayton@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <20170305133535.6516-1-jlayton@redhat.com>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp
-Cc: linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, NeilBrown <neilb@suse.com>, Ross Zwisler <ross.zwisler@linux.intel.com>
+To: Jeff Layton <jlayton@redhat.com>, viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp
+Cc: linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org
 
-On Sun, 2017-03-05 at 08:35 -0500, Jeff Layton wrote:
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
+
+On Sun, Mar 05 2017, Jeff Layton wrote:
+
 > I recently did some work to wire up -ENOSPC handling in ceph, and found
 > I could get back -EIO errors in some cases when I should have instead
 > gotten -ENOSPC. The problem was that the ceph writeback code would set
 > PG_error on a writeback error, and that error would clobber the mapping
 > error.
-> 
-
-I should also note that relying on PG_error to report writeback errors
-is inherently unreliable as well. If someone calls sync() before your
-fsync gets in there, then you'll likely lose it anyway.
-
-filemap_fdatawait_keep_errors will preserve the error in the mapping,
-but not the individual PG_error flags, so I think we do want to ensure
-that the mapping error is set when there is a writeback error and not
-rely on PG_error bit for that.
-
+>
 > While I fixed that problem by simply not setting that bit on errors,
 > that led me down a rabbit hole of looking at how PG_error is being
 > handled in the kernel.
-> 
+
+Speaking of rabbit holes... I thought to wonder how IO error propagate
+up from NFS.
+It doesn't use SetPageError or mapping_set_error() for files (except in
+one case that looks a bit odd).
+It has an "nfs_open_context" and store the latest error in ctx->error.
+
+So when you get around to documenting how this is supposed to work, it
+would be worth while describing the required observable behaviour, and
+note that while filesystems can use mapping_set_error() to achieve this,
+they don't have to.
+
+I notice that
+  drivers/staging/lustre/lustre/llite/rw.c
+  fs/afs/write.c
+  fs/btrfs/extent_io.c
+  fs/cifs/file.c
+  fs/jffs2/file.c
+  fs/jfs/jfs_metapage.c
+  fs/ntfs/aops.c
+
+(and possible others) all have SetPageError() calls that seem to be
+in response to a write error to a file, but don't appear to have
+matching mapping_set_error() calls.  Did you look at these?  Did I miss
+something?
+
+Thanks,
+NeilBrown
+
+>
 > This patch series is a few fixes for things that I 100% noticed by
 > inspection. I don't have a great way to test these since they involve
 > error handling. I can certainly doctor up a kernel to inject errors
 > in this code and test by hand however if these look plausible up front.
-> 
+>
 > Jeff Layton (3):
 >   nilfs2: set the mapping error when calling SetPageError on writeback
 >   mm: don't TestClearPageError in __filemap_fdatawait_range
 >   mm: set mapping error when launder_pages fails
-> 
+>
 >  fs/nilfs2/segment.c |  1 +
 >  mm/filemap.c        | 19 ++++---------------
 >  mm/truncate.c       |  6 +++++-
 >  3 files changed, 10 insertions(+), 16 deletions(-)
-> 
+>
+> --=20
+> 2.9.3
 
-(cc'ing Ross...)
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
 
-Just when I thought that only NILFS2 needed a little work here, I see
-another spot...
+-----BEGIN PGP SIGNATURE-----
 
-I think that we should also need to fix dax_writeback_mapping_range to
-set a mapping error on writeback as well. It looks like that's not
-happening today. Something like the patch below (obviously untested).
-
-I'll also plan to follow up with a patch to vfs.txt to outline how
-writeback errors should be handled by filesystems, assuming that this
-patchset isn't completely off base.
-
--------------------8<-----------------------
-
-[PATCH] dax: set error in mapping when writeback fails
-
-In order to get proper error codes from fsync, we must set an error in
-the mapping range when writeback fails.
-
-Signed-off-by: Jeff Layton <jlayton@redhat.com>
----
- fs/dax.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
-
-diff --git a/fs/dax.c b/fs/dax.c
-index c45598b912e1..9005d90deeda 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -888,8 +888,10 @@ int dax_writeback_mapping_range(struct address_space *mapping,
- 
- 			ret = dax_writeback_one(bdev, mapping, indices[i],
- 					pvec.pages[i]);
--			if (ret < 0)
-+			if (ret < 0) {
-+				mapping_set_error(mapping, ret);
- 				return ret;
-+			}
- 		}
- 	}
- 	return 0;
--- 
-2.9.3
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAli80iQACgkQOeye3VZi
+gblO6hAAhio2Ndl5HR0tR+Ao1Kmj9lz3P41Gmjv4+PTuHhYn0311U38WQ42hvI7U
+CUu4mMv+b2M508vEk6w2VSgwYJdA6Mfs6yvEqEBkceKfWfgfcHjQ40Hk5xWuQ5kZ
+V0JFVMHK6vxKOn/GhZsVZ9Y7BllG6iY2gqRXwIoTyqqS7fxPt40KL+jEj1Xg9OMT
+nLBqfhaofimah+WlxPdajveOAAXbjRws/7NH+GEYaD/Z6zjhletSMKumNgkN6i1k
+kgoHNsN+wHMKULef7AoE3BS9mNQjxvu86VBXnS36MmFIHkVAiTcWXZTaUp98ye3a
+WvxapiMfcBl9x7tfQHV0QkK2aV0Xw/Y1KlqyO6f649ZQAMLsAvgyWOJd/2T/E7u1
+M+pa7GhVKFwBC5Sa7qm5WrriNsVR9Ue0+kMgPmjJxBXBZtuRh7idNxP+5Da7GRO2
+ySNK359Lv2ZpcbT9Z8H+fT3siueaMW835+dSCWqCaC/S2daEq5D6f9qB5V5hDmRD
+Hz/9TYDiyCvQt4U8Vr/2ne73Zu8hfpgiP8c7FtpUtcFgvo4sblfs1RTnoRz5CHWC
+gNG1K/04CLZgnR+Ya0SO4lU24lvP0NGId7Cyr6WfTA2zMxRRAR5wvG4zve3SOk8j
+DPjhAIyWf2mDhXSvKC0NVy0umRCPr/Kx03veJ+w88P64hbtyJvQ=
+=Z5g1
+-----END PGP SIGNATURE-----
+--=-=-=--
