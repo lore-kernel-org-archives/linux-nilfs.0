@@ -1,98 +1,91 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: [PATCH 0/3] mm/fs: get PG_error out of the writeback reporting business
-Date: Mon, 06 Mar 2017 14:06:11 +1100
-Message-ID: <871subkst8.fsf@notabene.neil.brown.name>
+From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 0/3] mm/fs: get PG_error out of the writeback reporting
+ business
+Date: Mon, 06 Mar 2017 06:43:34 -0500
+Message-ID: <1488800614.2989.4.camel@redhat.com>
 References: <20170305133535.6516-1-jlayton@redhat.com>
+         <871subkst8.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-        micalg=pgp-sha256; protocol="application/pgp-signature"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20170305133535.6516-1-jlayton@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <871subkst8.fsf-wvvUuzkyo1HefUI2i7LXDhCRmIWqnp/j@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Jeff Layton <jlayton@redhat.com>, viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp
-Cc: linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+To: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 
---=-=-=
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+On Mon, 2017-03-06 at 14:06 +1100, NeilBrown wrote:
+> On Sun, Mar 05 2017, Jeff Layton wrote:
+> 
+> > I recently did some work to wire up -ENOSPC handling in ceph, and found
+> > I could get back -EIO errors in some cases when I should have instead
+> > gotten -ENOSPC. The problem was that the ceph writeback code would set
+> > PG_error on a writeback error, and that error would clobber the mapping
+> > error.
+> > 
+> > While I fixed that problem by simply not setting that bit on errors,
+> > that led me down a rabbit hole of looking at how PG_error is being
+> > handled in the kernel.
+> 
+> Speaking of rabbit holes... I thought to wonder how IO error propagate
+> up from NFS.
+> It doesn't use SetPageError or mapping_set_error() for files (except in
+> one case that looks a bit odd).
+> It has an "nfs_open_context" and store the latest error in ctx->error.
+> 
+> So when you get around to documenting how this is supposed to work, it
+> would be worth while describing the required observable behaviour, and
+> note that while filesystems can use mapping_set_error() to achieve this,
+> they don't have to.
+> 
+> I notice that
+>   drivers/staging/lustre/lustre/llite/rw.c
+>   fs/afs/write.c
+>   fs/btrfs/extent_io.c
+>   fs/cifs/file.c
+>   fs/jffs2/file.c
+>   fs/jfs/jfs_metapage.c
+>   fs/ntfs/aops.c
+> 
+> (and possible others) all have SetPageError() calls that seem to be
+> in response to a write error to a file, but don't appear to have
+> matching mapping_set_error() calls.  Did you look at these?  Did I miss
+> something?
+> 
 
-On Sun, Mar 05 2017, Jeff Layton wrote:
+Those are all in writepage implementations, and the callers of writepage
+all call mapping_set_error if it returns error. The exception is
+write_one_page, which is typically used for writing out dir info and
+such, and so it's not really necessary there.
 
-> I recently did some work to wire up -ENOSPC handling in ceph, and found
-> I could get back -EIO errors in some cases when I should have instead
-> gotten -ENOSPC. The problem was that the ceph writeback code would set
-> PG_error on a writeback error, and that error would clobber the mapping
-> error.
->
-> While I fixed that problem by simply not setting that bit on errors,
-> that led me down a rabbit hole of looking at how PG_error is being
-> handled in the kernel.
+Now that I look though, I think I may have gotten the page migration
+codepath wrong. I had convinced myself it was ok before, but looking
+again, I think we probably need to add a mapping_set_error call to 
+writeout() as well. I'll go over that more carefully in a little while.
 
-Speaking of rabbit holes... I thought to wonder how IO error propagate
-up from NFS.
-It doesn't use SetPageError or mapping_set_error() for files (except in
-one case that looks a bit odd).
-It has an "nfs_open_context" and store the latest error in ctx->error.
+> > 
+> > This patch series is a few fixes for things that I 100% noticed by
+> > inspection. I don't have a great way to test these since they involve
+> > error handling. I can certainly doctor up a kernel to inject errors
+> > in this code and test by hand however if these look plausible up front.
+> > 
+> > Jeff Layton (3):
+> >   nilfs2: set the mapping error when calling SetPageError on writeback
+> >   mm: don't TestClearPageError in __filemap_fdatawait_range
+> >   mm: set mapping error when launder_pages fails
+> > 
+> >  fs/nilfs2/segment.c |  1 +
+> >  mm/filemap.c        | 19 ++++---------------
+> >  mm/truncate.c       |  6 +++++-
+> >  3 files changed, 10 insertions(+), 16 deletions(-)
+> > 
+> > -- 
+> > 2.9.3
 
-So when you get around to documenting how this is supposed to work, it
-would be worth while describing the required observable behaviour, and
-note that while filesystems can use mapping_set_error() to achieve this,
-they don't have to.
-
-I notice that
-  drivers/staging/lustre/lustre/llite/rw.c
-  fs/afs/write.c
-  fs/btrfs/extent_io.c
-  fs/cifs/file.c
-  fs/jffs2/file.c
-  fs/jfs/jfs_metapage.c
-  fs/ntfs/aops.c
-
-(and possible others) all have SetPageError() calls that seem to be
-in response to a write error to a file, but don't appear to have
-matching mapping_set_error() calls.  Did you look at these?  Did I miss
-something?
-
-Thanks,
-NeilBrown
-
->
-> This patch series is a few fixes for things that I 100% noticed by
-> inspection. I don't have a great way to test these since they involve
-> error handling. I can certainly doctor up a kernel to inject errors
-> in this code and test by hand however if these look plausible up front.
->
-> Jeff Layton (3):
->   nilfs2: set the mapping error when calling SetPageError on writeback
->   mm: don't TestClearPageError in __filemap_fdatawait_range
->   mm: set mapping error when launder_pages fails
->
->  fs/nilfs2/segment.c |  1 +
->  mm/filemap.c        | 19 ++++---------------
->  mm/truncate.c       |  6 +++++-
->  3 files changed, 10 insertions(+), 16 deletions(-)
->
-> --=20
-> 2.9.3
-
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAli80iQACgkQOeye3VZi
-gblO6hAAhio2Ndl5HR0tR+Ao1Kmj9lz3P41Gmjv4+PTuHhYn0311U38WQ42hvI7U
-CUu4mMv+b2M508vEk6w2VSgwYJdA6Mfs6yvEqEBkceKfWfgfcHjQ40Hk5xWuQ5kZ
-V0JFVMHK6vxKOn/GhZsVZ9Y7BllG6iY2gqRXwIoTyqqS7fxPt40KL+jEj1Xg9OMT
-nLBqfhaofimah+WlxPdajveOAAXbjRws/7NH+GEYaD/Z6zjhletSMKumNgkN6i1k
-kgoHNsN+wHMKULef7AoE3BS9mNQjxvu86VBXnS36MmFIHkVAiTcWXZTaUp98ye3a
-WvxapiMfcBl9x7tfQHV0QkK2aV0Xw/Y1KlqyO6f649ZQAMLsAvgyWOJd/2T/E7u1
-M+pa7GhVKFwBC5Sa7qm5WrriNsVR9Ue0+kMgPmjJxBXBZtuRh7idNxP+5Da7GRO2
-ySNK359Lv2ZpcbT9Z8H+fT3siueaMW835+dSCWqCaC/S2daEq5D6f9qB5V5hDmRD
-Hz/9TYDiyCvQt4U8Vr/2ne73Zu8hfpgiP8c7FtpUtcFgvo4sblfs1RTnoRz5CHWC
-gNG1K/04CLZgnR+Ya0SO4lU24lvP0NGId7Cyr6WfTA2zMxRRAR5wvG4zve3SOk8j
-DPjhAIyWf2mDhXSvKC0NVy0umRCPr/Kx03veJ+w88P64hbtyJvQ=
-=Z5g1
------END PGP SIGNATURE-----
---=-=-=--
+-- 
+Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
