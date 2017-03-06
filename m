@@ -1,69 +1,42 @@
-From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Ross Zwisler <ross.zwisler@linux.intel.com>
 Subject: Re: [PATCH 0/3] mm/fs: get PG_error out of the writeback reporting
  business
-Date: Mon, 06 Mar 2017 06:43:34 -0500
-Message-ID: <1488800614.2989.4.camel@redhat.com>
+Date: Mon, 6 Mar 2017 16:08:01 -0700
+Message-ID: <20170306230801.GA28111@linux.intel.com>
 References: <20170305133535.6516-1-jlayton@redhat.com>
-         <871subkst8.fsf@notabene.neil.brown.name>
+ <1488724854.2925.6.camel@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <871subkst8.fsf-wvvUuzkyo1HefUI2i7LXDhCRmIWqnp/j@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1488724854.2925.6.camel@redhat.com>
+Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: Jeff Layton <jlayton@redhat.com>
+Cc: viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, NeilBrown <neilb@suse.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jan Kara <jack@suse.cz>
 
-On Mon, 2017-03-06 at 14:06 +1100, NeilBrown wrote:
-> On Sun, Mar 05 2017, Jeff Layton wrote:
-> 
+On Sun, Mar 05, 2017 at 09:40:54AM -0500, Jeff Layton wrote:
+> On Sun, 2017-03-05 at 08:35 -0500, Jeff Layton wrote:
 > > I recently did some work to wire up -ENOSPC handling in ceph, and found
 > > I could get back -EIO errors in some cases when I should have instead
 > > gotten -ENOSPC. The problem was that the ceph writeback code would set
 > > PG_error on a writeback error, and that error would clobber the mapping
 > > error.
 > > 
+> 
+> I should also note that relying on PG_error to report writeback errors
+> is inherently unreliable as well. If someone calls sync() before your
+> fsync gets in there, then you'll likely lose it anyway.
+> 
+> filemap_fdatawait_keep_errors will preserve the error in the mapping,
+> but not the individual PG_error flags, so I think we do want to ensure
+> that the mapping error is set when there is a writeback error and not
+> rely on PG_error bit for that.
+> 
 > > While I fixed that problem by simply not setting that bit on errors,
 > > that led me down a rabbit hole of looking at how PG_error is being
 > > handled in the kernel.
-> 
-> Speaking of rabbit holes... I thought to wonder how IO error propagate
-> up from NFS.
-> It doesn't use SetPageError or mapping_set_error() for files (except in
-> one case that looks a bit odd).
-> It has an "nfs_open_context" and store the latest error in ctx->error.
-> 
-> So when you get around to documenting how this is supposed to work, it
-> would be worth while describing the required observable behaviour, and
-> note that while filesystems can use mapping_set_error() to achieve this,
-> they don't have to.
-> 
-> I notice that
->   drivers/staging/lustre/lustre/llite/rw.c
->   fs/afs/write.c
->   fs/btrfs/extent_io.c
->   fs/cifs/file.c
->   fs/jffs2/file.c
->   fs/jfs/jfs_metapage.c
->   fs/ntfs/aops.c
-> 
-> (and possible others) all have SetPageError() calls that seem to be
-> in response to a write error to a file, but don't appear to have
-> matching mapping_set_error() calls.  Did you look at these?  Did I miss
-> something?
-> 
-
-Those are all in writepage implementations, and the callers of writepage
-all call mapping_set_error if it returns error. The exception is
-write_one_page, which is typically used for writing out dir info and
-such, and so it's not really necessary there.
-
-Now that I look though, I think I may have gotten the page migration
-codepath wrong. I had convinced myself it was ok before, but looking
-again, I think we probably need to add a mapping_set_error call to 
-writeout() as well. I'll go over that more carefully in a little while.
-
 > > 
 > > This patch series is a few fixes for things that I 100% noticed by
 > > inspection. I don't have a great way to test these since they involve
@@ -80,12 +53,94 @@ writeout() as well. I'll go over that more carefully in a little while.
 > >  mm/truncate.c       |  6 +++++-
 > >  3 files changed, 10 insertions(+), 16 deletions(-)
 > > 
-> > -- 
-> > 2.9.3
+> 
+> (cc'ing Ross...)
+> 
+> Just when I thought that only NILFS2 needed a little work here, I see
+> another spot...
+> 
+> I think that we should also need to fix dax_writeback_mapping_range to
+> set a mapping error on writeback as well. It looks like that's not
+> happening today. Something like the patch below (obviously untested).
+> 
+> I'll also plan to follow up with a patch to vfs.txt to outline how
+> writeback errors should be handled by filesystems, assuming that this
+> patchset isn't completely off base.
+> 
+> -------------------8<-----------------------
+> 
+> [PATCH] dax: set error in mapping when writeback fails
+> 
+> In order to get proper error codes from fsync, we must set an error in
+> the mapping range when writeback fails.
+> 
+> Signed-off-by: Jeff Layton <jlayton@redhat.com>
+> ---
+>  fs/dax.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/fs/dax.c b/fs/dax.c
+> index c45598b912e1..9005d90deeda 100644
+> --- a/fs/dax.c
+> +++ b/fs/dax.c
+> @@ -888,8 +888,10 @@ int dax_writeback_mapping_range(struct address_space *mapping,
+>  
+>  			ret = dax_writeback_one(bdev, mapping, indices[i],
+>  					pvec.pages[i]);
+> -			if (ret < 0)
+> +			if (ret < 0) {
+> +				mapping_set_error(mapping, ret);
+>  				return ret;
+> +			}
 
--- 
-Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+(Adding Jan)
+
+I tested this a bit, and for the DAX case at least I don't think this does
+what you want.  The current code already returns -EIO if dax_writeback_one()
+hits an error, which bubbles up through the call stack and makes the fsync()
+call in userspace fail with EIO, as we want.  With both ext4 and xfs this
+patch (applied to v4.10) makes it so that we fail the current fsync() due to
+the return value of -EIO, then we fail the next fsync() as well because only
+then do we actually process the AS_EIO flag inside of filemap_check_errors().
+
+I think maybe the missing piece is that our normal DAX fsync call stack
+doesn't include a call to filemap_check_errors() if we return -EIO.  Here's
+our stack in xfs:
+
+    dax_writeback_mapping_range+0x32/0x70
+    xfs_vm_writepages+0x8c/0xf0
+    do_writepages+0x21/0x30
+    __filemap_fdatawrite_range+0xc6/0x100
+    filemap_write_and_wait_range+0x44/0x90
+    xfs_file_fsync+0x7a/0x2c0
+    vfs_fsync_range+0x4b/0xb0
+    ? trace_hardirqs_on_caller+0xf5/0x1b0
+    do_fsync+0x3d/0x70
+    SyS_fsync+0x10/0x20
+    entry_SYSCALL_64_fastpath+0x1f/0xc2
+
+On the subsequent fsync() call we *do* end up calling filemap_check_errors()
+via filemap_fdatawrite_range(), which tests & clears the AS_EIO flag in the
+mapping:
+
+    filemap_fdatawait_range+0x3b/0x80
+    filemap_write_and_wait_range+0x5a/0x90
+    xfs_file_fsync+0x7a/0x2c0
+    vfs_fsync_range+0x4b/0xb0
+    ? trace_hardirqs_on_caller+0xf5/0x1b0
+    do_fsync+0x3d/0x70
+    SyS_fsync+0x10/0x20
+    entry_SYSCALL_64_fastpath+0x1f/0xc2
+
+Was your concern just that you didn't think that fsync() was properly
+returning an error when dax_writeback_one() hit an error?  Or is there another
+path by which we need to report the error, where it is actually important that
+we set AS_EIO?  If it's the latter, then I think we need to rework the fsync
+call path so that we both generate and consume AS_EIO on the same call,
+probably in filemap_write_and_wait_range().
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
