@@ -1,23 +1,24 @@
-From: Jeff Layton <jlayton@redhat.com>
+From: Ross Zwisler <ross.zwisler@linux.intel.com>
 Subject: Re: [PATCH 0/3] mm/fs: get PG_error out of the writeback reporting
  business
-Date: Tue, 07 Mar 2017 09:03:17 -0500
-Message-ID: <1488895397.2788.3.camel@redhat.com>
+Date: Tue, 7 Mar 2017 08:59:16 -0700
+Message-ID: <20170307155916.GA31882@linux.intel.com>
 References: <20170305133535.6516-1-jlayton@redhat.com>
-	 <1488724854.2925.6.camel@redhat.com>
-	 <20170306230801.GA28111@linux.intel.com>
-	 <20170307102622.GB2578@quack2.suse.cz>
+ <1488724854.2925.6.camel@redhat.com>
+ <20170306230801.GA28111@linux.intel.com>
+ <20170307102622.GB2578@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
 In-Reply-To: <20170307102622.GB2578@quack2.suse.cz>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Jan Kara <jack@suse.cz>, Ross Zwisler <ross.zwisler@linux.intel.com>
-Cc: viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, NeilBrown <neilb@suse.com>, Kevin Wolf <kwolf@redhat.com>
+Content-Transfer-Encoding: 7bit
+To: Jan Kara <jack@suse.cz>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Jeff Layton <jlayton@redhat.com>, viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, NeilBrown <neilb@suse.com>
 
-On Tue, 2017-03-07 at 11:26 +0100, Jan Kara wrote:
+On Tue, Mar 07, 2017 at 11:26:22AM +0100, Jan Kara wrote:
 > On Mon 06-03-17 16:08:01, Ross Zwisler wrote:
 > > On Sun, Mar 05, 2017 at 09:40:54AM -0500, Jeff Layton wrote:
 > > > On Sun, 2017-03-05 at 08:35 -0500, Jeff Layton wrote:
@@ -144,15 +145,20 @@ On Tue, 2017-03-07 at 11:26 +0100, Jan Kara wrote:
 > 
 > So I believe this is due to the special handling of EIO inside
 > filemap_write_and_wait(). Normally, filemap_check_errors() happens inside
+
+s/filemap_write_and_wait/filemap_write_and_wait_range/ for this particular
+case, but we definitely want to make changes that keep them consistent.
+
 > filemap_fdatawait() there however not for EIO returned from
 > filemap_fdatawrite(). In that case we bail out immediately. So I think
 > Jeff's patch is correct but we need to change filemap_write_and_wait() to
 > call also filemap_check_errors() directly on EIO from filemap_fdatawrite().
-> 
 
-Yes that makes total sense. I've got a filemap_write_and_wait patch in
-my pile now that does this. I'll run what I have through an xfstests
-run, and see how it does, and will plan to post a v2 set once I do.
+So I guess my question was: why is it important that we set AS_EIO, if the EIO
+is already being reported correctly?  Is it just for consistency with the
+buffered fsync case, or is there currently a path where the -EIO from DAX will
+be missed, and we actually need AS_EIO to be set in mapping->flags so that we
+correctly report an error?
 
 > On a more general note (DAX is actually fine here), I find the current
 > practice of clearing page dirty bits on error and reporting it just once
@@ -161,17 +167,10 @@ run, and see how it does, and will plan to post a v2 set once I do.
 > this because it is a rare event but it seems like a problematic behavior.
 > But this is more for the discussion at LSF.
 > 
-
-That really is the crux of the matter. Unfortunately, that's sort of how
-the POSIX write/fsync model is designed. If we want to change that, then
-I think that we have to consider what a new interface for this would
-look like. Maybe we can do something there with new sync_file_range
-flags?
-
-I think this probably also dovetails with Kevin Wolf's proposed LSF
-topic too, so maybe we can discuss all of this together there.
--- 
-Jeff Layton <jlayton@redhat.com>
+> 								Honza
+> -- 
+> Jan Kara <jack@suse.com>
+> SUSE Labs, CR
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
