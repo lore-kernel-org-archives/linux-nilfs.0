@@ -1,71 +1,129 @@
-From: Trond Myklebust <trondmy@primarydata.com>
-Subject: Re: [PATCH v2 6/9] mm: set mapping error when launder_pages fails
-Date: Wed, 8 Mar 2017 19:16:32 +0000
-Message-ID: <1489000588.3098.8.camel@primarydata.com>
-References: <20170308162934.21989-1-jlayton@redhat.com>
-	 <20170308162934.21989-7-jlayton@redhat.com>
-	 <1488996103.3098.4.camel@primarydata.com>
-	 <1488998288.2802.25.camel@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH v2 3/9] mm: clear any AS_* errors when returning error on any fsync or close
+Date: Thu, 09 Mar 2017 08:23:43 +1100
+Message-ID: <8760jjv4ww.fsf@notabene.neil.brown.name>
+References: <20170308162934.21989-1-jlayton@redhat.com> <20170308162934.21989-4-jlayton@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
 Return-path: <owner-linux-mm@kvack.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=PrimaryData.onmicrosoft.com; s=selector1-primarydata-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
- bh=GgHbam6zpsKfm9kuQdyQTTrddliWqUX6pTekQPMkpqg=;
- b=EeVfDcoKiVXCyrYaVXFoITcyZHgIX/DYym/CwaZp+i2V+zVzLBDq/ELsGGyH8Sl1lScrmHpXDcTPsk5znHmWDBicYYBly6QMEJjJnJOSoNGqMwsgEt0ATKOfJztREYCeUlEHM3My9uN3dj8SgI9mK1XM/74MrYBnPqBxxWcTdr0=
-In-Reply-To: <1488998288.2802.25.camel@redhat.com>
-Content-Language: en-US
-Content-ID: <86D654C6A10F1C4D81696080C0DA62EE@namprd11.prod.outlook.com>
+In-Reply-To: <20170308162934.21989-4-jlayton@redhat.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "jlayton@redhat.com" <jlayton@redhat.com>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>
-Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "neilb@suse.com" <neilb@suse.com>, "konishi.ryusuke@lab.ntt.co.jp" <konishi.ryusuke@lab.ntt.co.jp>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+To: Jeff Layton <jlayton@redhat.com>, viro@zeniv.linux.org.uk, akpm@linux-foundation.org
+Cc: konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
 
-T24gV2VkLCAyMDE3LTAzLTA4IGF0IDEzOjM4IC0wNTAwLCBKZWZmIExheXRvbiB3cm90ZToNCj4g
-T24gV2VkLCAyMDE3LTAzLTA4IGF0IDE4OjAxICswMDAwLCBUcm9uZCBNeWtsZWJ1c3Qgd3JvdGU6
-DQo+ID4gT24gV2VkLCAyMDE3LTAzLTA4IGF0IDExOjI5IC0wNTAwLCBKZWZmIExheXRvbiB3cm90
-ZToNCj4gPiA+IElmIGxhdW5kZXJfcGFnZSBmYWlscywgdGhlbiB3ZSBoaXQgYSBwcm9ibGVtIHdy
-aXRpbmcgYmFjayBzb21lDQo+ID4gPiBpbm9kZQ0KPiA+ID4gZGF0YS4gRW5zdXJlIHRoYXQgd2Ug
-Y29tbXVuaWNhdGUgdGhhdCBmYWN0IGluIGEgc3Vic2VxdWVudCBmc3luYw0KPiA+ID4gc2luY2UN
-Cj4gPiA+IGFub3RoZXIgdGFzayBjb3VsZCBzdGlsbCBoYXZlIGl0IG9wZW4gZm9yIHdyaXRlLg0K
-PiA+ID4gDQo+ID4gPiBTaWduZWQtb2ZmLWJ5OiBKZWZmIExheXRvbiA8amxheXRvbkByZWRoYXQu
-Y29tPg0KPiA+ID4gLS0tDQo+ID4gPiDCoG1tL3RydW5jYXRlLmMgfCA2ICsrKysrLQ0KPiA+ID4g
-wqAxIGZpbGUgY2hhbmdlZCwgNSBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pDQo+ID4gPiAN
-Cj4gPiA+IGRpZmYgLS1naXQgYS9tbS90cnVuY2F0ZS5jIGIvbW0vdHJ1bmNhdGUuYw0KPiA+ID4g
-aW5kZXggNjI2M2FmZmRlZjg4Li4yOWFlNDIwYTViZjkgMTAwNjQ0DQo+ID4gPiAtLS0gYS9tbS90
-cnVuY2F0ZS5jDQo+ID4gPiArKysgYi9tbS90cnVuY2F0ZS5jDQo+ID4gPiBAQCAtNTk0LDExICs1
-OTQsMTUgQEAgaW52YWxpZGF0ZV9jb21wbGV0ZV9wYWdlMihzdHJ1Y3QNCj4gPiA+IGFkZHJlc3Nf
-c3BhY2UNCj4gPiA+ICptYXBwaW5nLCBzdHJ1Y3QgcGFnZSAqcGFnZSkNCj4gPiA+IMKgDQo+ID4g
-PiDCoHN0YXRpYyBpbnQgZG9fbGF1bmRlcl9wYWdlKHN0cnVjdCBhZGRyZXNzX3NwYWNlICptYXBw
-aW5nLCBzdHJ1Y3QNCj4gPiA+IHBhZ2UgKnBhZ2UpDQo+ID4gPiDCoHsNCj4gPiA+ICsJaW50IHJl
-dDsNCj4gPiA+ICsNCj4gPiA+IMKgCWlmICghUGFnZURpcnR5KHBhZ2UpKQ0KPiA+ID4gwqAJCXJl
-dHVybiAwOw0KPiA+ID4gwqAJaWYgKHBhZ2UtPm1hcHBpbmcgIT0gbWFwcGluZyB8fCBtYXBwaW5n
-LT5hX29wcy0NCj4gPiA+ID5sYXVuZGVyX3BhZ2XCoA0KPiA+ID4gPT0gTlVMTCkNCj4gPiA+IMKg
-CQlyZXR1cm4gMDsNCj4gPiA+IC0JcmV0dXJuIG1hcHBpbmctPmFfb3BzLT5sYXVuZGVyX3BhZ2Uo
-cGFnZSk7DQo+ID4gPiArCXJldCA9IG1hcHBpbmctPmFfb3BzLT5sYXVuZGVyX3BhZ2UocGFnZSk7
-DQo+ID4gPiArCW1hcHBpbmdfc2V0X2Vycm9yKG1hcHBpbmcsIHJldCk7DQo+ID4gPiArCXJldHVy
-biByZXQ7DQo+ID4gPiDCoH0NCj4gPiA+IMKgDQo+ID4gPiDCoC8qKg0KPiA+IA0KPiA+IE5vLiBB
-dCB0aGF0IGxheWVyLCB5b3UgZG9uJ3Qga25vdyB0aGF0IHRoaXMgaXMgYSBwYWdlIGVycm9yLiBJ
-biB0aGUNCj4gPiBORlMNCj4gPiBjYXNlLCBpdCBjb3VsZCwgZm9yIGluc3RhbmNlLCBqdXN0IGFz
-IHdlbGwgYmUgYSBmYXRhbCBzaWduYWwuDQo+ID4gDQo+IA0KPiBPay4uLmRvbid0IHdlIGhhdmUg
-dGhlIHNhbWUgcHJvYmxlbSB3aXRoIHdyaXRlcGFnZSB0aGVuPyBNb3N0IG9mIHRoZQ0KPiB3cml0
-ZXBhZ2UgY2FsbGVycyB3aWxsIHNldCBhbiBlcnJvciBpbiB0aGUgbWFwcGluZyBpZiB3cml0ZXBh
-Z2UNCj4gcmV0dXJucw0KPiBhbnkgc29ydCBvZiBlcnJvcj8gQSBmYXRhbCBzaWduYWwgaW4gdGhh
-dCBjb2RlcGF0aCBjb3VsZCBjYXVzZSB0aGUNCj4gc2FtZQ0KPiBwcm9ibGVtLCBpdCBzZWVtcy4g
-V2UgZG9uJ3QgZGlwIGludG8gZGlyZWN0IHJlY2xhaW0gc28gbXVjaCBhbnltb3JlLA0KPiBzbw0K
-PiBtYXliZSBzaWduYWxzIGFyZW4ndCBhbiBpc3N1ZSB0aGVyZT8NCg0KSWYgd3JpdGVwYWdlKCkg
-ZmFpbHMgZHVlIHRvIGEgc2lnbmFsLCB0aGVuIGl0IGhhcyB0aGUgb3B0aW9uIG9mIG1hcmtpbmcN
-CnRoZSBwYWdlIGFzIGRpcnR5IGFuZCByZXR1cm5pbmcgQU9QX1dSSVRFUEFHRV9BQ1RJVkFURS4g
-VGhhdCdzIG5vdA0KcG9zc2libGUgZm9yIGxhdW5kZXJfcGFnZSgpLg0KDQo+IFRoZSBhbHRlcm5h
-dGl2ZSBoZXJlIHdvdWxkIGJlIHRvIHB1c2ggdGhpcyBkb3duIGludG8gdGhlIGNhbGxlcnMuIEkN
-Cj4gd29ycnkgYSBiaXQgdGhvdWdoIGFib3V0IGdldHRpbmcgdGhpcyByaWdodCBhY3Jvc3MgZmls
-ZXN5c3RlbXMNCj4gdGhvdWdoLg0KPiBJdCdkIGJlIHByZWZlcmFibGUgaXQgaWYgd2UgY291bGQg
-a2VlcCB0aGUgbWFwcGluZ19zZXRfZXJyb3IgY2FsbCBpbg0KPiBnZW5lcmljIFZGUyBjb2RlIGlu
-c3RlYWQsIGJ1dCBpZiBub3QgdGhlbiBJJ2xsIGp1c3QgcGxhbiB0byBkbyB0aGF0Lg0KPiANCg0K
-DQoNCi0tIA0KVHJvbmQgTXlrbGVidXN0DQpMaW51eCBORlMgY2xpZW50IG1haW50YWluZXIsIFBy
-aW1hcnlEYXRhDQp0cm9uZC5teWtsZWJ1c3RAcHJpbWFyeWRhdGEuY29tDQo=
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, Mar 09 2017, Jeff Layton wrote:
+
+> Currently we don't clear the address space error when there is a -EIO
+> error on fsynci, due to writeback initiation failure. If writes fail
+> with -EIO and the mapping is flagged with an AS_EIO or AS_ENOSPC error,
+> then we can end up returning errors on two fsync calls, even when a
+> write between them succeeded (or there was no write).
+>
+> Ensure that we also clear out any mapping errors when initiating
+> writeback fails with -EIO in filemap_write_and_wait and
+> filemap_write_and_wait_range.
+
+This change appears to assume that filemap_write_and_wait* is only
+called from fsync() (or similar) and the return status is always
+checked.
+
+A __must_check annotation might be helpful.
+
+It would catch v9_fs_file_lock(), afs_setattr() and others.
+
+While I think your change is probably heading in the right direction,
+there seem to be some loose ends still.
+
+Thanks,
+NeilBrown
+
+
+>
+> Suggested-by: Jan Kara <jack@suse.cz>
+> Signed-off-by: Jeff Layton <jlayton@redhat.com>
+> ---
+>  mm/filemap.c | 20 ++++++++++++++++++--
+>  1 file changed, 18 insertions(+), 2 deletions(-)
+>
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index 1694623a6289..fc123b9833e1 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -488,7 +488,7 @@ EXPORT_SYMBOL(filemap_fdatawait);
+>=20=20
+>  int filemap_write_and_wait(struct address_space *mapping)
+>  {
+> -	int err =3D 0;
+> +	int err;
+>=20=20
+>  	if ((!dax_mapping(mapping) && mapping->nrpages) ||
+>  	    (dax_mapping(mapping) && mapping->nrexceptional)) {
+> @@ -499,10 +499,18 @@ int filemap_write_and_wait(struct address_space *ma=
+pping)
+>  		 * But the -EIO is special case, it may indicate the worst
+>  		 * thing (e.g. bug) happened, so we avoid waiting for it.
+>  		 */
+> -		if (err !=3D -EIO) {
+> +		if (likely(err !=3D -EIO)) {
+>  			int err2 =3D filemap_fdatawait(mapping);
+>  			if (!err)
+>  				err =3D err2;
+> +		} else {
+> +			/*
+> +			 * Clear the error in the address space since we're
+> +			 * returning an error here. -EIO takes precedence over
+> +			 * everything else though, so we can just discard
+> +			 * the return here.
+> +			 */
+> +			filemap_check_errors(mapping);
+>  		}
+>  	} else {
+>  		err =3D filemap_check_errors(mapping);
+> @@ -537,6 +545,14 @@ int filemap_write_and_wait_range(struct address_spac=
+e *mapping,
+>  						lstart, lend);
+>  			if (!err)
+>  				err =3D err2;
+> +		} else {
+> +			/*
+> +			 * Clear the error in the address space since we're
+> +			 * returning an error here. -EIO takes precedence over
+> +			 * everything else though, so we can just discard
+> +			 * the return here.
+> +			 */
+> +			filemap_check_errors(mapping);
+>  		}
+>  	} else {
+>  		err =3D filemap_check_errors(mapping);
+> --=20
+> 2.9.3
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljAdl8ACgkQOeye3VZi
+gbl3eA/+MHlvrAE/RoCtylFQeUKXcIJwyWqCGL5/a9GFsx4b7ThrjUDLSSn4O3Gz
+sqtpmMfUiFp+1f0P+R/khbRx52i29fPQ2oQEhcCtz/2RwDMsWqD1GzT6gZRt+zSs
+ez8CnRf4xPsI7HlY64nEj9XspXkGsqx88hamQuuB+jfiNUVPIxn9Oh18JZf6A1UD
+Seb38eTEt9DAZUQKaDdT36lsIEEqNNW/CdGwJoVQg75R4lubYngFi/PgJy4eQULp
+OSwB1i8aIFTEU0qMjkJH2uD60KA8jwhKZWWW8SKUsgehzfjKT928ScHmKnE3KU44
+zg0klEdPQe/L5DAMnzTkH4p7cT7cFo2bx6a8jVjgAPsOgYfmLe1GpFcRUjW/CbZw
+MPmE0OYFjLb07DbKqRrwP7z6raS6IN2/Gp3jQe/ijfG0/BqqSvaZcgG3zGkqkrp6
+sVAo1VvQv5fVpefXJ6VFFLN1yK/V6nOHuBA+Gi5YEgNBgV4DVEmGLTrT/Mwouoxn
+zgjhJsCnsy9rE8bAB6G8w2dFD+p3rHuH41rr+NygHEcFgnPK6O0WGFp97I9E4mN+
+JiD7Eh0GODBhvjDraTDKuwSBiSIj0/FtzbQyQYetGZm8guig4AB69s/1iNj+Tf14
+oT/26tlpK5GDYoYwMVW/7Hvq40FTFjpiADVkqWDHHoarP2I+szY=
+=5okT
+-----END PGP SIGNATURE-----
+--=-=-=--
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
