@@ -1,75 +1,71 @@
-From: Jeff Layton <jlayton@redhat.com>
+From: Trond Myklebust <trondmy@primarydata.com>
 Subject: Re: [PATCH v2 6/9] mm: set mapping error when launder_pages fails
-Date: Wed, 08 Mar 2017 13:38:08 -0500
-Message-ID: <1488998288.2802.25.camel@redhat.com>
+Date: Wed, 8 Mar 2017 19:16:32 +0000
+Message-ID: <1489000588.3098.8.camel@primarydata.com>
 References: <20170308162934.21989-1-jlayton@redhat.com>
 	 <20170308162934.21989-7-jlayton@redhat.com>
 	 <1488996103.3098.4.camel@primarydata.com>
+	 <1488998288.2802.25.camel@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: base64
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1488996103.3098.4.camel@primarydata.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=PrimaryData.onmicrosoft.com; s=selector1-primarydata-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
+ bh=GgHbam6zpsKfm9kuQdyQTTrddliWqUX6pTekQPMkpqg=;
+ b=EeVfDcoKiVXCyrYaVXFoITcyZHgIX/DYym/CwaZp+i2V+zVzLBDq/ELsGGyH8Sl1lScrmHpXDcTPsk5znHmWDBicYYBly6QMEJjJnJOSoNGqMwsgEt0ATKOfJztREYCeUlEHM3My9uN3dj8SgI9mK1XM/74MrYBnPqBxxWcTdr0=
+In-Reply-To: <1488998288.2802.25.camel@redhat.com>
+Content-Language: en-US
+Content-ID: <86D654C6A10F1C4D81696080C0DA62EE@namprd11.prod.outlook.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="utf-8"
-To: Trond Myklebust <trondmy@primarydata.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>
-Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "konishi.ryusuke@lab.ntt.co.jp" <konishi.ryusuke@lab.ntt.co.jp>, "neilb@suse.com" <neilb@suse.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "openosd@gmail.com" <openosd@gmail.com>, "jack@suse.cz" <jack@suse.cz>
+To: "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "jlayton@redhat.com" <jlayton@redhat.com>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>
+Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "neilb@suse.com" <neilb@suse.com>, "konishi.ryusuke@lab.ntt.co.jp" <konishi.ryusuke@lab.ntt.co.jp>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
 
-On Wed, 2017-03-08 at 18:01 +0000, Trond Myklebust wrote:
-> On Wed, 2017-03-08 at 11:29 -0500, Jeff Layton wrote:
-> > If launder_page fails, then we hit a problem writing back some inode
-> > data. Ensure that we communicate that fact in a subsequent fsync
-> > since
-> > another task could still have it open for write.
-> > 
-> > Signed-off-by: Jeff Layton <jlayton@redhat.com>
-> > ---
-> >  mm/truncate.c | 6 +++++-
-> >  1 file changed, 5 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/mm/truncate.c b/mm/truncate.c
-> > index 6263affdef88..29ae420a5bf9 100644
-> > --- a/mm/truncate.c
-> > +++ b/mm/truncate.c
-> > @@ -594,11 +594,15 @@ invalidate_complete_page2(struct address_space
-> > *mapping, struct page *page)
-> >  
-> >  static int do_launder_page(struct address_space *mapping, struct
-> > page *page)
-> >  {
-> > +	int ret;
-> > +
-> >  	if (!PageDirty(page))
-> >  		return 0;
-> >  	if (page->mapping != mapping || mapping->a_ops->launder_page 
-> > == NULL)
-> >  		return 0;
-> > -	return mapping->a_ops->launder_page(page);
-> > +	ret = mapping->a_ops->launder_page(page);
-> > +	mapping_set_error(mapping, ret);
-> > +	return ret;
-> >  }
-> >  
-> >  /**
-> 
-> No. At that layer, you don't know that this is a page error. In the NFS
-> case, it could, for instance, just as well be a fatal signal.
-> 
-
-Ok...don't we have the same problem with writepage then? Most of the
-writepage callers will set an error in the mapping if writepage returns
-any sort of error? A fatal signal in that codepath could cause the same
-problem, it seems. We don't dip into direct reclaim so much anymore, so
-maybe signals aren't an issue there?
-
-The alternative here would be to push this down into the callers. I
-worry a bit though about getting this right across filesystems though.
-It'd be preferable it if we could keep the mapping_set_error call in
-generic VFS code instead, but if not then I'll just plan to do that.
-
-Thanks,
--- 
-Jeff Layton <jlayton@redhat.com>
+T24gV2VkLCAyMDE3LTAzLTA4IGF0IDEzOjM4IC0wNTAwLCBKZWZmIExheXRvbiB3cm90ZToNCj4g
+T24gV2VkLCAyMDE3LTAzLTA4IGF0IDE4OjAxICswMDAwLCBUcm9uZCBNeWtsZWJ1c3Qgd3JvdGU6
+DQo+ID4gT24gV2VkLCAyMDE3LTAzLTA4IGF0IDExOjI5IC0wNTAwLCBKZWZmIExheXRvbiB3cm90
+ZToNCj4gPiA+IElmIGxhdW5kZXJfcGFnZSBmYWlscywgdGhlbiB3ZSBoaXQgYSBwcm9ibGVtIHdy
+aXRpbmcgYmFjayBzb21lDQo+ID4gPiBpbm9kZQ0KPiA+ID4gZGF0YS4gRW5zdXJlIHRoYXQgd2Ug
+Y29tbXVuaWNhdGUgdGhhdCBmYWN0IGluIGEgc3Vic2VxdWVudCBmc3luYw0KPiA+ID4gc2luY2UN
+Cj4gPiA+IGFub3RoZXIgdGFzayBjb3VsZCBzdGlsbCBoYXZlIGl0IG9wZW4gZm9yIHdyaXRlLg0K
+PiA+ID4gDQo+ID4gPiBTaWduZWQtb2ZmLWJ5OiBKZWZmIExheXRvbiA8amxheXRvbkByZWRoYXQu
+Y29tPg0KPiA+ID4gLS0tDQo+ID4gPiDCoG1tL3RydW5jYXRlLmMgfCA2ICsrKysrLQ0KPiA+ID4g
+wqAxIGZpbGUgY2hhbmdlZCwgNSBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pDQo+ID4gPiAN
+Cj4gPiA+IGRpZmYgLS1naXQgYS9tbS90cnVuY2F0ZS5jIGIvbW0vdHJ1bmNhdGUuYw0KPiA+ID4g
+aW5kZXggNjI2M2FmZmRlZjg4Li4yOWFlNDIwYTViZjkgMTAwNjQ0DQo+ID4gPiAtLS0gYS9tbS90
+cnVuY2F0ZS5jDQo+ID4gPiArKysgYi9tbS90cnVuY2F0ZS5jDQo+ID4gPiBAQCAtNTk0LDExICs1
+OTQsMTUgQEAgaW52YWxpZGF0ZV9jb21wbGV0ZV9wYWdlMihzdHJ1Y3QNCj4gPiA+IGFkZHJlc3Nf
+c3BhY2UNCj4gPiA+ICptYXBwaW5nLCBzdHJ1Y3QgcGFnZSAqcGFnZSkNCj4gPiA+IMKgDQo+ID4g
+PiDCoHN0YXRpYyBpbnQgZG9fbGF1bmRlcl9wYWdlKHN0cnVjdCBhZGRyZXNzX3NwYWNlICptYXBw
+aW5nLCBzdHJ1Y3QNCj4gPiA+IHBhZ2UgKnBhZ2UpDQo+ID4gPiDCoHsNCj4gPiA+ICsJaW50IHJl
+dDsNCj4gPiA+ICsNCj4gPiA+IMKgCWlmICghUGFnZURpcnR5KHBhZ2UpKQ0KPiA+ID4gwqAJCXJl
+dHVybiAwOw0KPiA+ID4gwqAJaWYgKHBhZ2UtPm1hcHBpbmcgIT0gbWFwcGluZyB8fCBtYXBwaW5n
+LT5hX29wcy0NCj4gPiA+ID5sYXVuZGVyX3BhZ2XCoA0KPiA+ID4gPT0gTlVMTCkNCj4gPiA+IMKg
+CQlyZXR1cm4gMDsNCj4gPiA+IC0JcmV0dXJuIG1hcHBpbmctPmFfb3BzLT5sYXVuZGVyX3BhZ2Uo
+cGFnZSk7DQo+ID4gPiArCXJldCA9IG1hcHBpbmctPmFfb3BzLT5sYXVuZGVyX3BhZ2UocGFnZSk7
+DQo+ID4gPiArCW1hcHBpbmdfc2V0X2Vycm9yKG1hcHBpbmcsIHJldCk7DQo+ID4gPiArCXJldHVy
+biByZXQ7DQo+ID4gPiDCoH0NCj4gPiA+IMKgDQo+ID4gPiDCoC8qKg0KPiA+IA0KPiA+IE5vLiBB
+dCB0aGF0IGxheWVyLCB5b3UgZG9uJ3Qga25vdyB0aGF0IHRoaXMgaXMgYSBwYWdlIGVycm9yLiBJ
+biB0aGUNCj4gPiBORlMNCj4gPiBjYXNlLCBpdCBjb3VsZCwgZm9yIGluc3RhbmNlLCBqdXN0IGFz
+IHdlbGwgYmUgYSBmYXRhbCBzaWduYWwuDQo+ID4gDQo+IA0KPiBPay4uLmRvbid0IHdlIGhhdmUg
+dGhlIHNhbWUgcHJvYmxlbSB3aXRoIHdyaXRlcGFnZSB0aGVuPyBNb3N0IG9mIHRoZQ0KPiB3cml0
+ZXBhZ2UgY2FsbGVycyB3aWxsIHNldCBhbiBlcnJvciBpbiB0aGUgbWFwcGluZyBpZiB3cml0ZXBh
+Z2UNCj4gcmV0dXJucw0KPiBhbnkgc29ydCBvZiBlcnJvcj8gQSBmYXRhbCBzaWduYWwgaW4gdGhh
+dCBjb2RlcGF0aCBjb3VsZCBjYXVzZSB0aGUNCj4gc2FtZQ0KPiBwcm9ibGVtLCBpdCBzZWVtcy4g
+V2UgZG9uJ3QgZGlwIGludG8gZGlyZWN0IHJlY2xhaW0gc28gbXVjaCBhbnltb3JlLA0KPiBzbw0K
+PiBtYXliZSBzaWduYWxzIGFyZW4ndCBhbiBpc3N1ZSB0aGVyZT8NCg0KSWYgd3JpdGVwYWdlKCkg
+ZmFpbHMgZHVlIHRvIGEgc2lnbmFsLCB0aGVuIGl0IGhhcyB0aGUgb3B0aW9uIG9mIG1hcmtpbmcN
+CnRoZSBwYWdlIGFzIGRpcnR5IGFuZCByZXR1cm5pbmcgQU9QX1dSSVRFUEFHRV9BQ1RJVkFURS4g
+VGhhdCdzIG5vdA0KcG9zc2libGUgZm9yIGxhdW5kZXJfcGFnZSgpLg0KDQo+IFRoZSBhbHRlcm5h
+dGl2ZSBoZXJlIHdvdWxkIGJlIHRvIHB1c2ggdGhpcyBkb3duIGludG8gdGhlIGNhbGxlcnMuIEkN
+Cj4gd29ycnkgYSBiaXQgdGhvdWdoIGFib3V0IGdldHRpbmcgdGhpcyByaWdodCBhY3Jvc3MgZmls
+ZXN5c3RlbXMNCj4gdGhvdWdoLg0KPiBJdCdkIGJlIHByZWZlcmFibGUgaXQgaWYgd2UgY291bGQg
+a2VlcCB0aGUgbWFwcGluZ19zZXRfZXJyb3IgY2FsbCBpbg0KPiBnZW5lcmljIFZGUyBjb2RlIGlu
+c3RlYWQsIGJ1dCBpZiBub3QgdGhlbiBJJ2xsIGp1c3QgcGxhbiB0byBkbyB0aGF0Lg0KPiANCg0K
+DQoNCi0tIA0KVHJvbmQgTXlrbGVidXN0DQpMaW51eCBORlMgY2xpZW50IG1haW50YWluZXIsIFBy
+aW1hcnlEYXRhDQp0cm9uZC5teWtsZWJ1c3RAcHJpbWFyeWRhdGEuY29tDQo=
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
