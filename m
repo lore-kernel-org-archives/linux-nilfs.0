@@ -1,7 +1,7 @@
 From: Jeff Layton <jlayton@redhat.com>
-Subject: [PATCH v2 6/9] mm: set mapping error when launder_pages fails
-Date: Wed,  8 Mar 2017 11:29:31 -0500
-Message-ID: <20170308162934.21989-7-jlayton@redhat.com>
+Subject: [PATCH v2 5/9] dax: set error in mapping when writeback fails
+Date: Wed,  8 Mar 2017 11:29:30 -0500
+Message-ID: <20170308162934.21989-6-jlayton@redhat.com>
 References: <20170308162934.21989-1-jlayton@redhat.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <20170308162934.21989-1-jlayton@redhat.com>
@@ -13,36 +13,30 @@ Content-Transfer-Encoding: 7bit
 To: viro@zeniv.linux.org.uk, akpm@linux-foundation.org
 Cc: konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, neilb@suse.com, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
 
-If launder_page fails, then we hit a problem writing back some inode
-data. Ensure that we communicate that fact in a subsequent fsync since
-another task could still have it open for write.
+In order to get proper error codes from fsync, we must set an error in
+the mapping range when writeback fails.
 
 Signed-off-by: Jeff Layton <jlayton@redhat.com>
 ---
- mm/truncate.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ fs/dax.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/mm/truncate.c b/mm/truncate.c
-index 6263affdef88..29ae420a5bf9 100644
---- a/mm/truncate.c
-+++ b/mm/truncate.c
-@@ -594,11 +594,15 @@ invalidate_complete_page2(struct address_space *mapping, struct page *page)
+diff --git a/fs/dax.c b/fs/dax.c
+index de622d4282a6..a601137286ed 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -892,8 +892,10 @@ int dax_writeback_mapping_range(struct address_space *mapping,
  
- static int do_launder_page(struct address_space *mapping, struct page *page)
- {
-+	int ret;
-+
- 	if (!PageDirty(page))
- 		return 0;
- 	if (page->mapping != mapping || mapping->a_ops->launder_page == NULL)
- 		return 0;
--	return mapping->a_ops->launder_page(page);
-+	ret = mapping->a_ops->launder_page(page);
-+	mapping_set_error(mapping, ret);
-+	return ret;
- }
- 
- /**
+ 			ret = dax_writeback_one(bdev, mapping, indices[i],
+ 					pvec.pages[i]);
+-			if (ret < 0)
++			if (ret < 0) {
++				mapping_set_error(mapping, ret);
+ 				return ret;
++			}
+ 		}
+ 	}
+ 	return 0;
 -- 
 2.9.3
 
