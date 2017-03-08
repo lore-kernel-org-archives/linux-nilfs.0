@@ -1,8 +1,10 @@
 From: Jeff Layton <jlayton@redhat.com>
-Subject: [PATCH v2 0/9] mm/fs: get PG_error out of the writeback reporting business
-Date: Wed,  8 Mar 2017 11:29:25 -0500
-Message-ID: <20170308162934.21989-1-jlayton@redhat.com>
+Subject: [PATCH v2 3/9] mm: clear any AS_* errors when returning error on any fsync or close
+Date: Wed,  8 Mar 2017 11:29:28 -0500
+Message-ID: <20170308162934.21989-4-jlayton@redhat.com>
+References: <20170308162934.21989-1-jlayton@redhat.com>
 Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170308162934.21989-1-jlayton@redhat.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -11,72 +13,70 @@ Content-Transfer-Encoding: 7bit
 To: viro@zeniv.linux.org.uk, akpm@linux-foundation.org
 Cc: konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, neilb@suse.com, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
 
-v2:
-- still ClearPageError during __filemap_fdatawait_range
-- clear AS_* errors when reporting errors during write initiation
-- set mapping errors when launder_page fails
-- set mapping errors when writeback fails during migration
-- set mapping errors when DAX writeback fails
-- Documentation patch to give guidance about writeback errors
+Currently we don't clear the address space error when there is a -EIO
+error on fsynci, due to writeback initiation failure. If writes fail
+with -EIO and the mapping is flagged with an AS_EIO or AS_ENOSPC error,
+then we can end up returning errors on two fsync calls, even when a
+write between them succeeded (or there was no write).
 
-Here is v2 of this set. The main difference is some new patches to
-ensure that mapping errors get set in a few rather obscure places when
-writeback fails, and a patch (based on Jan's suggestion) to clear out
-the address space errors when initiating writeback fails with -EIO. I
-also left the code clearing PG_error in __filemap_fdatawait_range. We
-may want to remove that eventually, but we need to ensure that it gets
-cleared in some way when writeback fails.
+Ensure that we also clear out any mapping errors when initiating
+writeback fails with -EIO in filemap_write_and_wait and
+filemap_write_and_wait_range.
 
-I've done a bit of testing with this (mostly xfstests on xfs), and it
-seems to work ok AFAICT.
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Jeff Layton <jlayton@redhat.com>
+---
+ mm/filemap.c | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
 
-Original cover letter follows:
-
-------------------------------8<-----------------------------
-
-I recently did some work to wire up -ENOSPC handling in ceph, and found
-I could get back -EIO errors in some cases when I should have instead
-gotten -ENOSPC. The problem was that the ceph writeback code would set
-PG_error on a writeback error, and that error would clobber the mapping
-error.
-
-While I fixed that problem by simply not setting that bit on errors,
-that led me down a rabbit hole of looking at how PG_error is being
-handled in the kernel.
-
-This patch series is a few fixes for things that I 100% noticed by
-inspection. I don't have a great way to test these since they involve
-error handling. I can certainly doctor up a kernel to inject errors
-in this code and test by hand however if these look plausible up front.
-
-Jeff Layton (9):
-  mm: fix mapping_set_error call in me_pagecache_dirty
-  mm: drop "wait" parameter from write_one_page
-  mm: clear any AS_* errors when returning error on any fsync or close
-  nilfs2: set the mapping error when calling SetPageError on writeback
-  dax: set error in mapping when writeback fails
-  mm: set mapping error when launder_pages fails
-  mm: ensure that we set mapping error if writeout() fails
-  mm: don't TestClearPageError in __filemap_fdatawait_range
-  Documentation: document what to do on a writeback error
-
- Documentation/filesystems/vfs.txt |  7 +++++++
- fs/dax.c                          |  4 +++-
- fs/exofs/dir.c                    |  2 +-
- fs/ext2/dir.c                     |  2 +-
- fs/jfs/jfs_metapage.c             |  4 ++--
- fs/minix/dir.c                    |  2 +-
- fs/nilfs2/segment.c               |  1 +
- fs/sysv/dir.c                     |  2 +-
- fs/ufs/dir.c                      |  2 +-
- include/linux/mm.h                |  2 +-
- mm/filemap.c                      | 40 ++++++++++++++++++++++-----------------
- mm/memory-failure.c               |  2 +-
- mm/migrate.c                      |  6 +++++-
- mm/page-writeback.c               | 14 +++++++-------
- mm/truncate.c                     |  6 +++++-
- 15 files changed, 60 insertions(+), 36 deletions(-)
-
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 1694623a6289..fc123b9833e1 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -488,7 +488,7 @@ EXPORT_SYMBOL(filemap_fdatawait);
+ 
+ int filemap_write_and_wait(struct address_space *mapping)
+ {
+-	int err = 0;
++	int err;
+ 
+ 	if ((!dax_mapping(mapping) && mapping->nrpages) ||
+ 	    (dax_mapping(mapping) && mapping->nrexceptional)) {
+@@ -499,10 +499,18 @@ int filemap_write_and_wait(struct address_space *mapping)
+ 		 * But the -EIO is special case, it may indicate the worst
+ 		 * thing (e.g. bug) happened, so we avoid waiting for it.
+ 		 */
+-		if (err != -EIO) {
++		if (likely(err != -EIO)) {
+ 			int err2 = filemap_fdatawait(mapping);
+ 			if (!err)
+ 				err = err2;
++		} else {
++			/*
++			 * Clear the error in the address space since we're
++			 * returning an error here. -EIO takes precedence over
++			 * everything else though, so we can just discard
++			 * the return here.
++			 */
++			filemap_check_errors(mapping);
+ 		}
+ 	} else {
+ 		err = filemap_check_errors(mapping);
+@@ -537,6 +545,14 @@ int filemap_write_and_wait_range(struct address_space *mapping,
+ 						lstart, lend);
+ 			if (!err)
+ 				err = err2;
++		} else {
++			/*
++			 * Clear the error in the address space since we're
++			 * returning an error here. -EIO takes precedence over
++			 * everything else though, so we can just discard
++			 * the return here.
++			 */
++			filemap_check_errors(mapping);
+ 		}
+ 	} else {
+ 		err = filemap_check_errors(mapping);
 -- 
 2.9.3
 
