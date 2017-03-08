@@ -1,104 +1,49 @@
-From: Jeff Layton <jlayton@redhat.com>
-Subject: [PATCH v2 8/9] mm: don't TestClearPageError in __filemap_fdatawait_range
-Date: Wed,  8 Mar 2017 11:29:33 -0500
-Message-ID: <20170308162934.21989-9-jlayton@redhat.com>
+From: Trond Myklebust <trondmy@primarydata.com>
+Subject: Re: [PATCH v2 6/9] mm: set mapping error when launder_pages fails
+Date: Wed, 8 Mar 2017 18:01:47 +0000
+Message-ID: <1488996103.3098.4.camel@primarydata.com>
 References: <20170308162934.21989-1-jlayton@redhat.com>
+	 <20170308162934.21989-7-jlayton@redhat.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: base64
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170308162934.21989-1-jlayton@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=PrimaryData.onmicrosoft.com; s=selector1-primarydata-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
+ bh=TOVcSK9z0RxMCvRqD4H6u26r73YUtUP4mGzxNbNechM=;
+ b=GPANIJ9CvlmnuEDLBRY0rRcHCAizo4I08HlU4ufwfFfJBR7uL8Yg1iPaYLeD3++o/EenTcNW6yashht+LDhoa+9vmZh2tMWI4zU4RlD/4lqU73OiniZjz1Xs8/wjd4PW4yo3HR4o9CdWd0SU3Szo6q+QGB+c7E/72LeodxhYEP8=
+In-Reply-To: <20170308162934.21989-7-jlayton@redhat.com>
+Content-Language: en-US
+Content-ID: <21F7418F71E31848A4493C2E2A5DBE3B@namprd11.prod.outlook.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: viro@zeniv.linux.org.uk, akpm@linux-foundation.org
-Cc: konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, neilb@suse.com, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
+To: "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "jlayton@redhat.com" <jlayton@redhat.com>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>
+Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "konishi.ryusuke@lab.ntt.co.jp" <konishi.ryusuke@lab.ntt.co.jp>, "neilb@suse.com" <neilb@suse.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "openosd@gmail.com" <openosd@gmail.com>, "jack@suse.cz" <jack@suse.cz>
 
-The -EIO returned here can end up overriding whatever error is marked in
-the address space. This means that an -ENOSPC error (AS_ENOSPC) can end
-up being turned into -EIO if a page gets PG_error set on it during error
-handling.
-
-Read errors are also sometimes tracked on a per-page level using
-PG_error. Suppose we have a read error on a page, and then that page is
-subsequently dirtied by overwriting the whole page. Writeback doesn't
-clear PG_error, so we can then end up successfully writing back that
-page and still return -EIO on fsync.
-
-Worse yet, PG_error is cleared during a sync() syscall, but the -EIO
-return from this code is silently discarded. Any subsystem that is
-relying on PG_error to report errors during fsync or close is already
-broken due to this. All you need is a stray sync() call on the box
-at the wrong time and you've lost the error.
-
-Since the handling of the PG_error flag is somewhat inconsistent across
-subsystems, let's just rely on marking the address space when there are
-writeback errors. Change the TestClearPageError call to ClearPageError,
-and make __filemap_fdatawait_range a void return function.
-
-Signed-off-by: Jeff Layton <jlayton@redhat.com>
----
- mm/filemap.c | 20 +++++---------------
- 1 file changed, 5 insertions(+), 15 deletions(-)
-
-diff --git a/mm/filemap.c b/mm/filemap.c
-index fc123b9833e1..150559e94f8a 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -376,17 +376,16 @@ int filemap_flush(struct address_space *mapping)
- }
- EXPORT_SYMBOL(filemap_flush);
- 
--static int __filemap_fdatawait_range(struct address_space *mapping,
-+static void __filemap_fdatawait_range(struct address_space *mapping,
- 				     loff_t start_byte, loff_t end_byte)
- {
- 	pgoff_t index = start_byte >> PAGE_SHIFT;
- 	pgoff_t end = end_byte >> PAGE_SHIFT;
- 	struct pagevec pvec;
- 	int nr_pages;
--	int ret = 0;
- 
- 	if (end_byte < start_byte)
--		goto out;
-+		return;
- 
- 	pagevec_init(&pvec, 0);
- 	while ((index <= end) &&
-@@ -403,14 +402,11 @@ static int __filemap_fdatawait_range(struct address_space *mapping,
- 				continue;
- 
- 			wait_on_page_writeback(page);
--			if (TestClearPageError(page))
--				ret = -EIO;
-+			ClearPageError(page);
- 		}
- 		pagevec_release(&pvec);
- 		cond_resched();
- 	}
--out:
--	return ret;
- }
- 
- /**
-@@ -430,14 +426,8 @@ static int __filemap_fdatawait_range(struct address_space *mapping,
- int filemap_fdatawait_range(struct address_space *mapping, loff_t start_byte,
- 			    loff_t end_byte)
- {
--	int ret, ret2;
--
--	ret = __filemap_fdatawait_range(mapping, start_byte, end_byte);
--	ret2 = filemap_check_errors(mapping);
--	if (!ret)
--		ret = ret2;
--
--	return ret;
-+	__filemap_fdatawait_range(mapping, start_byte, end_byte);
-+	return filemap_check_errors(mapping);
- }
- EXPORT_SYMBOL(filemap_fdatawait_range);
- 
--- 
-2.9.3
+T24gV2VkLCAyMDE3LTAzLTA4IGF0IDExOjI5IC0wNTAwLCBKZWZmIExheXRvbiB3cm90ZToNCj4g
+SWYgbGF1bmRlcl9wYWdlIGZhaWxzLCB0aGVuIHdlIGhpdCBhIHByb2JsZW0gd3JpdGluZyBiYWNr
+IHNvbWUgaW5vZGUNCj4gZGF0YS4gRW5zdXJlIHRoYXQgd2UgY29tbXVuaWNhdGUgdGhhdCBmYWN0
+IGluIGEgc3Vic2VxdWVudCBmc3luYw0KPiBzaW5jZQ0KPiBhbm90aGVyIHRhc2sgY291bGQgc3Rp
+bGwgaGF2ZSBpdCBvcGVuIGZvciB3cml0ZS4NCj4gDQo+IFNpZ25lZC1vZmYtYnk6IEplZmYgTGF5
+dG9uIDxqbGF5dG9uQHJlZGhhdC5jb20+DQo+IC0tLQ0KPiDCoG1tL3RydW5jYXRlLmMgfCA2ICsr
+KysrLQ0KPiDCoDEgZmlsZSBjaGFuZ2VkLCA1IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24oLSkN
+Cj4gDQo+IGRpZmYgLS1naXQgYS9tbS90cnVuY2F0ZS5jIGIvbW0vdHJ1bmNhdGUuYw0KPiBpbmRl
+eCA2MjYzYWZmZGVmODguLjI5YWU0MjBhNWJmOSAxMDA2NDQNCj4gLS0tIGEvbW0vdHJ1bmNhdGUu
+Yw0KPiArKysgYi9tbS90cnVuY2F0ZS5jDQo+IEBAIC01OTQsMTEgKzU5NCwxNSBAQCBpbnZhbGlk
+YXRlX2NvbXBsZXRlX3BhZ2UyKHN0cnVjdCBhZGRyZXNzX3NwYWNlDQo+ICptYXBwaW5nLCBzdHJ1
+Y3QgcGFnZSAqcGFnZSkNCj4gwqANCj4gwqBzdGF0aWMgaW50IGRvX2xhdW5kZXJfcGFnZShzdHJ1
+Y3QgYWRkcmVzc19zcGFjZSAqbWFwcGluZywgc3RydWN0DQo+IHBhZ2UgKnBhZ2UpDQo+IMKgew0K
+PiArCWludCByZXQ7DQo+ICsNCj4gwqAJaWYgKCFQYWdlRGlydHkocGFnZSkpDQo+IMKgCQlyZXR1
+cm4gMDsNCj4gwqAJaWYgKHBhZ2UtPm1hcHBpbmcgIT0gbWFwcGluZyB8fCBtYXBwaW5nLT5hX29w
+cy0+bGF1bmRlcl9wYWdlIA0KPiA9PSBOVUxMKQ0KPiDCoAkJcmV0dXJuIDA7DQo+IC0JcmV0dXJu
+IG1hcHBpbmctPmFfb3BzLT5sYXVuZGVyX3BhZ2UocGFnZSk7DQo+ICsJcmV0ID0gbWFwcGluZy0+
+YV9vcHMtPmxhdW5kZXJfcGFnZShwYWdlKTsNCj4gKwltYXBwaW5nX3NldF9lcnJvcihtYXBwaW5n
+LCByZXQpOw0KPiArCXJldHVybiByZXQ7DQo+IMKgfQ0KPiDCoA0KPiDCoC8qKg0KDQpOby4gQXQg
+dGhhdCBsYXllciwgeW91IGRvbid0IGtub3cgdGhhdCB0aGlzIGlzIGEgcGFnZSBlcnJvci4gSW4g
+dGhlIE5GUw0KY2FzZSwgaXQgY291bGQsIGZvciBpbnN0YW5jZSwganVzdCBhcyB3ZWxsIGJlIGEg
+ZmF0YWwgc2lnbmFsLg0KDQotLSANClRyb25kIE15a2xlYnVzdA0KTGludXggTkZTIGNsaWVudCBt
+YWludGFpbmVyLCBQcmltYXJ5RGF0YQ0KdHJvbmQubXlrbGVidXN0QHByaW1hcnlkYXRhLmNvbQ0K
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
