@@ -1,10 +1,8 @@
 From: Jeff Layton <jlayton@redhat.com>
-Subject: [PATCH v2 2/9] mm: drop "wait" parameter from write_one_page
-Date: Wed,  8 Mar 2017 11:29:27 -0500
-Message-ID: <20170308162934.21989-3-jlayton@redhat.com>
-References: <20170308162934.21989-1-jlayton@redhat.com>
+Subject: [PATCH v2 0/9] mm/fs: get PG_error out of the writeback reporting business
+Date: Wed,  8 Mar 2017 11:29:25 -0500
+Message-ID: <20170308162934.21989-1-jlayton@redhat.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170308162934.21989-1-jlayton@redhat.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -13,164 +11,72 @@ Content-Transfer-Encoding: 7bit
 To: viro@zeniv.linux.org.uk, akpm@linux-foundation.org
 Cc: konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, neilb@suse.com, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
 
-The callers all set it to 1. Also, make it clear that this function will
-not set any sort of AS_* error, and that the caller must do so if
-necessary. No existing caller uses this on normal files, so none of them
-need it.
+v2:
+- still ClearPageError during __filemap_fdatawait_range
+- clear AS_* errors when reporting errors during write initiation
+- set mapping errors when launder_page fails
+- set mapping errors when writeback fails during migration
+- set mapping errors when DAX writeback fails
+- Documentation patch to give guidance about writeback errors
 
-Signed-off-by: Jeff Layton <jlayton@redhat.com>
----
- fs/exofs/dir.c        |  2 +-
- fs/ext2/dir.c         |  2 +-
- fs/jfs/jfs_metapage.c |  4 ++--
- fs/minix/dir.c        |  2 +-
- fs/sysv/dir.c         |  2 +-
- fs/ufs/dir.c          |  2 +-
- include/linux/mm.h    |  2 +-
- mm/page-writeback.c   | 14 +++++++-------
- 8 files changed, 15 insertions(+), 15 deletions(-)
+Here is v2 of this set. The main difference is some new patches to
+ensure that mapping errors get set in a few rather obscure places when
+writeback fails, and a patch (based on Jan's suggestion) to clear out
+the address space errors when initiating writeback fails with -EIO. I
+also left the code clearing PG_error in __filemap_fdatawait_range. We
+may want to remove that eventually, but we need to ensure that it gets
+cleared in some way when writeback fails.
 
-diff --git a/fs/exofs/dir.c b/fs/exofs/dir.c
-index 42f9a0a0c4ca..e163ed980c20 100644
---- a/fs/exofs/dir.c
-+++ b/fs/exofs/dir.c
-@@ -72,7 +72,7 @@ static int exofs_commit_chunk(struct page *page, loff_t pos, unsigned len)
- 	set_page_dirty(page);
- 
- 	if (IS_DIRSYNC(dir))
--		err = write_one_page(page, 1);
-+		err = write_one_page(page);
- 	else
- 		unlock_page(page);
- 
-diff --git a/fs/ext2/dir.c b/fs/ext2/dir.c
-index d9650c9508e4..e2709695b177 100644
---- a/fs/ext2/dir.c
-+++ b/fs/ext2/dir.c
-@@ -100,7 +100,7 @@ static int ext2_commit_chunk(struct page *page, loff_t pos, unsigned len)
- 	}
- 
- 	if (IS_DIRSYNC(dir)) {
--		err = write_one_page(page, 1);
-+		err = write_one_page(page);
- 		if (!err)
- 			err = sync_inode_metadata(dir, 1);
- 	} else {
-diff --git a/fs/jfs/jfs_metapage.c b/fs/jfs/jfs_metapage.c
-index 489aaa1403e5..744fa3c079e6 100644
---- a/fs/jfs/jfs_metapage.c
-+++ b/fs/jfs/jfs_metapage.c
-@@ -711,7 +711,7 @@ void force_metapage(struct metapage *mp)
- 	get_page(page);
- 	lock_page(page);
- 	set_page_dirty(page);
--	write_one_page(page, 1);
-+	write_one_page(page);
- 	clear_bit(META_forcewrite, &mp->flag);
- 	put_page(page);
- }
-@@ -756,7 +756,7 @@ void release_metapage(struct metapage * mp)
- 		set_page_dirty(page);
- 		if (test_bit(META_sync, &mp->flag)) {
- 			clear_bit(META_sync, &mp->flag);
--			write_one_page(page, 1);
-+			write_one_page(page);
- 			lock_page(page); /* write_one_page unlocks the page */
- 		}
- 	} else if (mp->lsn)	/* discard_metapage doesn't remove it */
-diff --git a/fs/minix/dir.c b/fs/minix/dir.c
-index 7edc9b395700..baa9721f1299 100644
---- a/fs/minix/dir.c
-+++ b/fs/minix/dir.c
-@@ -57,7 +57,7 @@ static int dir_commit_chunk(struct page *page, loff_t pos, unsigned len)
- 		mark_inode_dirty(dir);
- 	}
- 	if (IS_DIRSYNC(dir))
--		err = write_one_page(page, 1);
-+		err = write_one_page(page);
- 	else
- 		unlock_page(page);
- 	return err;
-diff --git a/fs/sysv/dir.c b/fs/sysv/dir.c
-index 5bdae85ceef7..f5191cb2c947 100644
---- a/fs/sysv/dir.c
-+++ b/fs/sysv/dir.c
-@@ -45,7 +45,7 @@ static int dir_commit_chunk(struct page *page, loff_t pos, unsigned len)
- 		mark_inode_dirty(dir);
- 	}
- 	if (IS_DIRSYNC(dir))
--		err = write_one_page(page, 1);
-+		err = write_one_page(page);
- 	else
- 		unlock_page(page);
- 	return err;
-diff --git a/fs/ufs/dir.c b/fs/ufs/dir.c
-index de01b8f2aa78..48609f1d9580 100644
---- a/fs/ufs/dir.c
-+++ b/fs/ufs/dir.c
-@@ -53,7 +53,7 @@ static int ufs_commit_chunk(struct page *page, loff_t pos, unsigned len)
- 		mark_inode_dirty(dir);
- 	}
- 	if (IS_DIRSYNC(dir))
--		err = write_one_page(page, 1);
-+		err = write_one_page(page);
- 	else
- 		unlock_page(page);
- 	return err;
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 0d65dd72c0f4..0ac8fe63769a 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2164,7 +2164,7 @@ extern void filemap_map_pages(struct vm_fault *vmf,
- extern int filemap_page_mkwrite(struct vm_fault *vmf);
- 
- /* mm/page-writeback.c */
--int write_one_page(struct page *page, int wait);
-+int write_one_page(struct page *page);
- void task_dirty_inc(struct task_struct *tsk);
- 
- /* readahead.c */
-diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index d8ac2a7fb9e7..de0dbf12e2c1 100644
---- a/mm/page-writeback.c
-+++ b/mm/page-writeback.c
-@@ -2361,15 +2361,16 @@ int do_writepages(struct address_space *mapping, struct writeback_control *wbc)
- }
- 
- /**
-- * write_one_page - write out a single page and optionally wait on I/O
-+ * write_one_page - write out a single page and wait on I/O
-  * @page: the page to write
-- * @wait: if true, wait on writeout
-  *
-  * The page must be locked by the caller and will be unlocked upon return.
-  *
-- * write_one_page() returns a negative error code if I/O failed.
-+ * write_one_page() returns a negative error code if I/O failed. Note that
-+ * the address_space is not marked for error. The caller must do this if
-+ * needed.
-  */
--int write_one_page(struct page *page, int wait)
-+int write_one_page(struct page *page)
- {
- 	struct address_space *mapping = page->mapping;
- 	int ret = 0;
-@@ -2380,13 +2381,12 @@ int write_one_page(struct page *page, int wait)
- 
- 	BUG_ON(!PageLocked(page));
- 
--	if (wait)
--		wait_on_page_writeback(page);
-+	wait_on_page_writeback(page);
- 
- 	if (clear_page_dirty_for_io(page)) {
- 		get_page(page);
- 		ret = mapping->a_ops->writepage(page, &wbc);
--		if (ret == 0 && wait) {
-+		if (ret == 0) {
- 			wait_on_page_writeback(page);
- 			if (PageError(page))
- 				ret = -EIO;
+I've done a bit of testing with this (mostly xfstests on xfs), and it
+seems to work ok AFAICT.
+
+Original cover letter follows:
+
+------------------------------8<-----------------------------
+
+I recently did some work to wire up -ENOSPC handling in ceph, and found
+I could get back -EIO errors in some cases when I should have instead
+gotten -ENOSPC. The problem was that the ceph writeback code would set
+PG_error on a writeback error, and that error would clobber the mapping
+error.
+
+While I fixed that problem by simply not setting that bit on errors,
+that led me down a rabbit hole of looking at how PG_error is being
+handled in the kernel.
+
+This patch series is a few fixes for things that I 100% noticed by
+inspection. I don't have a great way to test these since they involve
+error handling. I can certainly doctor up a kernel to inject errors
+in this code and test by hand however if these look plausible up front.
+
+Jeff Layton (9):
+  mm: fix mapping_set_error call in me_pagecache_dirty
+  mm: drop "wait" parameter from write_one_page
+  mm: clear any AS_* errors when returning error on any fsync or close
+  nilfs2: set the mapping error when calling SetPageError on writeback
+  dax: set error in mapping when writeback fails
+  mm: set mapping error when launder_pages fails
+  mm: ensure that we set mapping error if writeout() fails
+  mm: don't TestClearPageError in __filemap_fdatawait_range
+  Documentation: document what to do on a writeback error
+
+ Documentation/filesystems/vfs.txt |  7 +++++++
+ fs/dax.c                          |  4 +++-
+ fs/exofs/dir.c                    |  2 +-
+ fs/ext2/dir.c                     |  2 +-
+ fs/jfs/jfs_metapage.c             |  4 ++--
+ fs/minix/dir.c                    |  2 +-
+ fs/nilfs2/segment.c               |  1 +
+ fs/sysv/dir.c                     |  2 +-
+ fs/ufs/dir.c                      |  2 +-
+ include/linux/mm.h                |  2 +-
+ mm/filemap.c                      | 40 ++++++++++++++++++++++-----------------
+ mm/memory-failure.c               |  2 +-
+ mm/migrate.c                      |  6 +++++-
+ mm/page-writeback.c               | 14 +++++++-------
+ mm/truncate.c                     |  6 +++++-
+ 15 files changed, 60 insertions(+), 36 deletions(-)
+
 -- 
 2.9.3
 
