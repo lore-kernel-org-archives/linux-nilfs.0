@@ -1,95 +1,128 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: [PATCH v2 6/9] mm: set mapping error when launder_pages fails
-Date: Thu, 09 Mar 2017 08:28:44 +1100
-Message-ID: <8737env4oj.fsf@notabene.neil.brown.name>
-References: <20170308162934.21989-1-jlayton@redhat.com> <20170308162934.21989-7-jlayton@redhat.com> <1488996103.3098.4.camel@primarydata.com>
+From: Jeff Layton <jlayton@redhat.com>
+Subject: Re: [PATCH v2 3/9] mm: clear any AS_* errors when returning error
+ on any fsync or close
+Date: Wed, 08 Mar 2017 19:10:15 -0500
+Message-ID: <1489018215.6107.4.camel@redhat.com>
+References: <20170308162934.21989-1-jlayton@redhat.com>
+	 <20170308162934.21989-4-jlayton@redhat.com>
+	 <8760jjv4ww.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1488996103.3098.4.camel@primarydata.com>
+In-Reply-To: <8760jjv4ww.fsf@notabene.neil.brown.name>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Trond Myklebust <trondmy@primarydata.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "jlayton@redhat.com" <jlayton@redhat.com>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>
-Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "konishi.ryusuke@lab.ntt.co.jp" <konishi.ryusuke@lab.ntt.co.jp>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "James.Bottomley@HansenPartnership.com" <James.Bottomley@HansenPartnership.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "ross.zwisler@linux.intel.com" <ross.zwisler@linux.intel.com>, "openosd@gmail.com" <openosd@gmail.com>, "jack@suse.cz" <jack@suse.cz>
+Content-Type: text/plain; charset="us-ascii"
+To: NeilBrown <neilb@suse.com>, viro@zeniv.linux.org.uk, akpm@linux-foundation.org
+Cc: konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
 
---=-=-=
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+On Thu, 2017-03-09 at 08:23 +1100, NeilBrown wrote:
+> On Thu, Mar 09 2017, Jeff Layton wrote:
+> 
+> > Currently we don't clear the address space error when there is a -EIO
+> > error on fsynci, due to writeback initiation failure. If writes fail
+> > with -EIO and the mapping is flagged with an AS_EIO or AS_ENOSPC error,
+> > then we can end up returning errors on two fsync calls, even when a
+> > write between them succeeded (or there was no write).
+> > 
+> > Ensure that we also clear out any mapping errors when initiating
+> > writeback fails with -EIO in filemap_write_and_wait and
+> > filemap_write_and_wait_range.
+> 
+> This change appears to assume that filemap_write_and_wait* is only
+> called from fsync() (or similar) and the return status is always
+> checked.
+> 
+> A __must_check annotation might be helpful.
+> 
 
-On Thu, Mar 09 2017, Trond Myklebust wrote:
+Yes, good idea.
 
-> On Wed, 2017-03-08 at 11:29 -0500, Jeff Layton wrote:
->> If launder_page fails, then we hit a problem writing back some inode
->> data. Ensure that we communicate that fact in a subsequent fsync
->> since
->> another task could still have it open for write.
->>=20
->> Signed-off-by: Jeff Layton <jlayton@redhat.com>
->> ---
->> =C2=A0mm/truncate.c | 6 +++++-
->> =C2=A01 file changed, 5 insertions(+), 1 deletion(-)
->>=20
->> diff --git a/mm/truncate.c b/mm/truncate.c
->> index 6263affdef88..29ae420a5bf9 100644
->> --- a/mm/truncate.c
->> +++ b/mm/truncate.c
->> @@ -594,11 +594,15 @@ invalidate_complete_page2(struct address_space
->> *mapping, struct page *page)
->> =C2=A0
->> =C2=A0static int do_launder_page(struct address_space *mapping, struct
->> page *page)
->> =C2=A0{
->> +	int ret;
->> +
->> =C2=A0	if (!PageDirty(page))
->> =C2=A0		return 0;
->> =C2=A0	if (page->mapping !=3D mapping || mapping->a_ops->launder_page=20
->> =3D=3D NULL)
->> =C2=A0		return 0;
->> -	return mapping->a_ops->launder_page(page);
->> +	ret =3D mapping->a_ops->launder_page(page);
->> +	mapping_set_error(mapping, ret);
->> +	return ret;
->> =C2=A0}
->> =C2=A0
->> =C2=A0/**
->
-> No. At that layer, you don't know that this is a page error. In the NFS
-> case, it could, for instance, just as well be a fatal signal.
->
+> It would catch v9_fs_file_lock(), afs_setattr() and others.
+> 
 
-In that case, would 'ret' be ERESTARTSYS or EAGAIN or similar?
-Should mapping_set_error() ignore those?
+Ouch -- good catch.
 
-Thanks,
-NeilBrown
+Actually, those look like bugs in the code as it exists today. If some
+background page writeback fails, but no write initiation fails on that
+call, then those callers are discarding errors that should have been
+reported at fsync.
 
-> --=20
-> Trond Myklebust
-> Linux NFS client maintainer, PrimaryData
-> trond.myklebust@primarydata.com
+> While I think your change is probably heading in the right direction,
+> there seem to be some loose ends still.
+> 
 
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
+Yes...I probably should be prefacing all of these patches with [RFC] at
+this point.
 
------BEGIN PGP SIGNATURE-----
+I think I'm starting to grasp the problem (and its scope), but we might
+have to think about how to approach this more strategically. Given that
+we have this wrong in so many places, I think that probably means that
+the interfaces we have make it easy to do so. I need to consider how to
+correct that.
 
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljAd4wACgkQOeye3VZi
-gbm1Aw/+KUaI5yaNmIZ/B1joRbcEHuqoYG5C+/qQf/DemKx0xH/GG+zANX6leXfH
-rWjSdfIlacmYOi4POgf1cgkcPv04PQIeb+9hZRC32tQL1AOYGMO1Yxsklt65hgto
-bbUz1NfKtohdNC4evGem/whT5lZcfEUOB2CM29FnG3rwluAGFrFRoPETaAiWSse8
-yg/UG4iScH6zfarf3ts3wf1wQ0vJEuqEMDoP298gQsWFi/ZildFlxbpjF6DTYchF
-LugVAQOhk68zrQ2xe9OJKDfiSQyTm2c3GptTotMa8KTvNT8ZFtfaC6lWA/14BZuS
-yJ8r1ZVJCprEVR/uYsclTEgouzuUbImnS/QyCoB+Nfd19KkxJAOC8+ssZsuhh/uH
-ERSV3j+mnJGpYhvBygUNDxyYwpkjZHPCOvLuIhWnb0u8YR40ldbwjrpN0Vd0ttZK
-rhQY6AxSIe9EcM2/NBR4U2KmFjY6/ErBgpBmeG5tOKkANG2od6j/bIwO9o9sIhp2
-euOXk/NzD0tqEbvRG9NYk0g9sFIUI+frn1vBj150VwSrcef3wJyOEED6IuXB5W00
-anHaZr8QfQXSIvwKPYEWW9TPo34oTMrTuN7cTV2zik275CBqsEEiFpiHLGbJSnHj
-JQ7j6EHBdoH9FYH9FIEsGFHm8fHnF9l2VzD0nO9C/09VkpFAt0U=
-=lbYc
------END PGP SIGNATURE-----
---=-=-=--
+> 
+> 
+> > 
+> > Suggested-by: Jan Kara <jack@suse.cz>
+> > Signed-off-by: Jeff Layton <jlayton@redhat.com>
+> > ---
+> >  mm/filemap.c | 20 ++++++++++++++++++--
+> >  1 file changed, 18 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/mm/filemap.c b/mm/filemap.c
+> > index 1694623a6289..fc123b9833e1 100644
+> > --- a/mm/filemap.c
+> > +++ b/mm/filemap.c
+> > @@ -488,7 +488,7 @@ EXPORT_SYMBOL(filemap_fdatawait);
+> >  
+> >  int filemap_write_and_wait(struct address_space *mapping)
+> >  {
+> > -	int err = 0;
+> > +	int err;
+> >  
+> >  	if ((!dax_mapping(mapping) && mapping->nrpages) ||
+> >  	    (dax_mapping(mapping) && mapping->nrexceptional)) {
+> > @@ -499,10 +499,18 @@ int filemap_write_and_wait(struct address_space *mapping)
+> >  		 * But the -EIO is special case, it may indicate the worst
+> >  		 * thing (e.g. bug) happened, so we avoid waiting for it.
+> >  		 */
+> > -		if (err != -EIO) {
+> > +		if (likely(err != -EIO)) {
+> >  			int err2 = filemap_fdatawait(mapping);
+> >  			if (!err)
+> >  				err = err2;
+> > +		} else {
+> > +			/*
+> > +			 * Clear the error in the address space since we're
+> > +			 * returning an error here. -EIO takes precedence over
+> > +			 * everything else though, so we can just discard
+> > +			 * the return here.
+> > +			 */
+> > +			filemap_check_errors(mapping);
+> >  		}
+> >  	} else {
+> >  		err = filemap_check_errors(mapping);
+> > @@ -537,6 +545,14 @@ int filemap_write_and_wait_range(struct address_space *mapping,
+> >  						lstart, lend);
+> >  			if (!err)
+> >  				err = err2;
+> > +		} else {
+> > +			/*
+> > +			 * Clear the error in the address space since we're
+> > +			 * returning an error here. -EIO takes precedence over
+> > +			 * everything else though, so we can just discard
+> > +			 * the return here.
+> > +			 */
+> > +			filemap_check_errors(mapping);
+> >  		}
+> >  	} else {
+> >  		err = filemap_check_errors(mapping);
+> > -- 
+> > 2.9.3
+
+-- 
+Jeff Layton <jlayton@redhat.com>
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
