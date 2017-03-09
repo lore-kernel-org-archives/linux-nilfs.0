@@ -1,128 +1,93 @@
-From: Jeff Layton <jlayton@redhat.com>
-Subject: Re: [PATCH v2 3/9] mm: clear any AS_* errors when returning error
- on any fsync or close
-Date: Wed, 08 Mar 2017 19:10:15 -0500
-Message-ID: <1489018215.6107.4.camel@redhat.com>
-References: <20170308162934.21989-1-jlayton@redhat.com>
-	 <20170308162934.21989-4-jlayton@redhat.com>
-	 <8760jjv4ww.fsf@notabene.neil.brown.name>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [PATCH 0/3] mm/fs: get PG_error out of the writeback reporting
+ business
+Date: Wed, 8 Mar 2017 21:57:25 -0500
+Message-ID: <20170309025725.5wrszri462zipiix@thunk.org>
+References: <20170305133535.6516-1-jlayton@redhat.com>
+ <1488724854.2925.6.camel@redhat.com>
+ <20170306230801.GA28111@linux.intel.com>
+ <20170307102622.GB2578@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <8760jjv4ww.fsf@notabene.neil.brown.name>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=thunk.org; s=ef5046eb;
+	h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date; bh=MeTuvnvnybm0vTgWQ4NjSIrs0NEc/I/W8dixwSAXmog=;
+	b=BxAqvA5Y6efjFDlY0U6PiOlJbXo0iZl5awzmWdG9uZg0KwUOWzIp8dxKqPLLyfAR7RgEV7l/nXkzxo+8h39YTya9Fyq9yzw7dr1lRMvkhmqtbuUQ728dpTsx2InDD6pnBxX9/NCCLbJ+EzUvfAvlY3te6SU0H4Fw+6Mnr70t7JA=;
+Content-Disposition: inline
+In-Reply-To: <20170307102622.GB2578@quack2.suse.cz>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: NeilBrown <neilb@suse.com>, viro@zeniv.linux.org.uk, akpm@linux-foundation.org
-Cc: konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
+Content-Transfer-Encoding: 7bit
+To: Jan Kara <jack@suse.cz>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Jeff Layton <jlayton@redhat.com>, viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, NeilBrown <neilb@suse.com>
 
-On Thu, 2017-03-09 at 08:23 +1100, NeilBrown wrote:
-> On Thu, Mar 09 2017, Jeff Layton wrote:
-> 
-> > Currently we don't clear the address space error when there is a -EIO
-> > error on fsynci, due to writeback initiation failure. If writes fail
-> > with -EIO and the mapping is flagged with an AS_EIO or AS_ENOSPC error,
-> > then we can end up returning errors on two fsync calls, even when a
-> > write between them succeeded (or there was no write).
-> > 
-> > Ensure that we also clear out any mapping errors when initiating
-> > writeback fails with -EIO in filemap_write_and_wait and
-> > filemap_write_and_wait_range.
-> 
-> This change appears to assume that filemap_write_and_wait* is only
-> called from fsync() (or similar) and the return status is always
-> checked.
-> 
-> A __must_check annotation might be helpful.
-> 
+On Tue, Mar 07, 2017 at 11:26:22AM +0100, Jan Kara wrote:
+> On a more general note (DAX is actually fine here), I find the current
+> practice of clearing page dirty bits on error and reporting it just once
+> problematic. It keeps the system running but data is lost and possibly
+> without getting the error anywhere where it is useful. We get away with
+> this because it is a rare event but it seems like a problematic behavior.
+> But this is more for the discussion at LSF.
 
-Yes, good idea.
+I'm actually running into this in the last day or two because some MM
+folks at $WORK have been trying to push hard for GFP_NOFS removal in
+ext4 (at least when we are holding some mutex/semaphore like
+i_data_sem) because otherwise it's possible for the OOM killer to be
+unable to kill processes because they are holding on to locks that
+ext4 is holding.
 
-> It would catch v9_fs_file_lock(), afs_setattr() and others.
-> 
+I've done some initial investigation, and while it's not that hard to
+remove GFP_NOFS from certain parts of the writepages() codepath (which
+is where we had been are running into problems), a really, REALLY big
+problem is if any_filesystem->writepages() returns ENOMEM, it causes
+silent data loss, because the pages are marked clean, and so data
+written using buffered writeback goes *poof*.
 
-Ouch -- good catch.
+I confirmed this by creating a test kernel with a simple patch such
+that if the ext4 file system is mounted with -o debug, there was a 1
+in 16 chance that ext4_writepages will immediately return with ENOMEM
+(and printk the inode number, so I knew which inodes had gotten the
+ENOMEM treatment).  The result was **NOT** pretty.
 
-Actually, those look like bugs in the code as it exists today. If some
-background page writeback fails, but no write initiation fails on that
-call, then those callers are discarding errors that should have been
-reported at fsync.
+What I think we should strongly consider is at the very least, special
+case ENOMEM being returned by writepages() during background
+writeback, and *not* mark the pages clean, and make sure the inode
+stays on the dirty inode list, so we can retry the write later.  This
+is especially important since the process that issued the write may
+have gone away, so there might not even be a userspace process to
+complain to.  By converting certain page allocations (most notably in
+ext4_mb_load_buddy) from GFP_NOFS to GFP_KMALLOC, this allows us to
+release the i_data_sem lock and return an error.  This should allow
+allow the OOM killer to do its dirty deed, and hopefully we can retry
+the writepages() for that inode later.
 
-> While I think your change is probably heading in the right direction,
-> there seem to be some loose ends still.
-> 
+In the case of a data integrity sync being issued by fsync() or
+umount(), we could allow ENOMEM to get returned to userspace in that
+case as well.  I'm not convinced all userspace code will handle an
+ENOMEM correctly or sanely, but at least they people will be (less
+likely) to blame file system developers.  :-)
 
-Yes...I probably should be prefacing all of these patches with [RFC] at
-this point.
+The real problem that's going on here, by the way, is that people are
+trying to run programs in insanely tight containers, and then when the
+kernel locks up, they blame the mm developers.  But if there is silent
+data corruption, they will blame the fs developers instead.  And while
+kernel lockups are temporary (all you have to do is let the watchdog
+reboot the system :-), silent data corruption is *forever*.  So what
+we really need to do is to allow the OOM killer do its work, and if
+job owners are unhappy that their processes are getting OOM killed,
+maybe they will be suitably incentivized to pay for more memory in
+their containers....
 
-I think I'm starting to grasp the problem (and its scope), but we might
-have to think about how to approach this more strategically. Given that
-we have this wrong in so many places, I think that probably means that
-the interfaces we have make it easy to do so. I need to consider how to
-correct that.
+						- Ted
 
-> 
-> 
-> > 
-> > Suggested-by: Jan Kara <jack@suse.cz>
-> > Signed-off-by: Jeff Layton <jlayton@redhat.com>
-> > ---
-> >  mm/filemap.c | 20 ++++++++++++++++++--
-> >  1 file changed, 18 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/mm/filemap.c b/mm/filemap.c
-> > index 1694623a6289..fc123b9833e1 100644
-> > --- a/mm/filemap.c
-> > +++ b/mm/filemap.c
-> > @@ -488,7 +488,7 @@ EXPORT_SYMBOL(filemap_fdatawait);
-> >  
-> >  int filemap_write_and_wait(struct address_space *mapping)
-> >  {
-> > -	int err = 0;
-> > +	int err;
-> >  
-> >  	if ((!dax_mapping(mapping) && mapping->nrpages) ||
-> >  	    (dax_mapping(mapping) && mapping->nrexceptional)) {
-> > @@ -499,10 +499,18 @@ int filemap_write_and_wait(struct address_space *mapping)
-> >  		 * But the -EIO is special case, it may indicate the worst
-> >  		 * thing (e.g. bug) happened, so we avoid waiting for it.
-> >  		 */
-> > -		if (err != -EIO) {
-> > +		if (likely(err != -EIO)) {
-> >  			int err2 = filemap_fdatawait(mapping);
-> >  			if (!err)
-> >  				err = err2;
-> > +		} else {
-> > +			/*
-> > +			 * Clear the error in the address space since we're
-> > +			 * returning an error here. -EIO takes precedence over
-> > +			 * everything else though, so we can just discard
-> > +			 * the return here.
-> > +			 */
-> > +			filemap_check_errors(mapping);
-> >  		}
-> >  	} else {
-> >  		err = filemap_check_errors(mapping);
-> > @@ -537,6 +545,14 @@ int filemap_write_and_wait_range(struct address_space *mapping,
-> >  						lstart, lend);
-> >  			if (!err)
-> >  				err = err2;
-> > +		} else {
-> > +			/*
-> > +			 * Clear the error in the address space since we're
-> > +			 * returning an error here. -EIO takes precedence over
-> > +			 * everything else though, so we can just discard
-> > +			 * the return here.
-> > +			 */
-> > +			filemap_check_errors(mapping);
-> >  		}
-> >  	} else {
-> >  		err = filemap_check_errors(mapping);
-> > -- 
-> > 2.9.3
-
--- 
-Jeff Layton <jlayton@redhat.com>
+P.S. Michael Hocko, apologies for not getting back to you with your
+GFP_NOFS removal patches.  But the possibility of fs malfunctions that
+might lead to silent data corruption is why I'm being very cautious,
+and I now have rather strong confirmation that this is not just an
+irrational concern on my part.  (This is also performance review
+season, FAST conference was last week, and Usenix ATC program
+committee reviews are due this week.  So apologies for any reply
+latency.)
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
