@@ -1,13 +1,14 @@
 From: Ross Zwisler <ross.zwisler@linux.intel.com>
-Subject: Re: [PATCH v2 2/9] mm: drop "wait" parameter from write_one_page
-Date: Thu, 9 Mar 2017 17:07:07 -0700
-Message-ID: <20170310000707.GB30285@linux.intel.com>
+Subject: Re: [PATCH v2 3/9] mm: clear any AS_* errors when returning error on
+ any fsync or close
+Date: Thu, 9 Mar 2017 17:09:39 -0700
+Message-ID: <20170310000939.GC30285@linux.intel.com>
 References: <20170308162934.21989-1-jlayton@redhat.com>
- <20170308162934.21989-3-jlayton@redhat.com>
+ <20170308162934.21989-4-jlayton@redhat.com>
 Mime-Version: 1.0
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170308162934.21989-3-jlayton@redhat.com>
+In-Reply-To: <20170308162934.21989-4-jlayton@redhat.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -15,15 +16,48 @@ Content-Transfer-Encoding: 7bit
 To: Jeff Layton <jlayton@redhat.com>
 Cc: viro@zeniv.linux.org.uk, akpm@linux-foundation.org, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, ross.zwisler@linux.intel.com, jack@suse.cz, neilb@suse.com, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
 
-On Wed, Mar 08, 2017 at 11:29:27AM -0500, Jeff Layton wrote:
-> The callers all set it to 1. Also, make it clear that this function will
-> not set any sort of AS_* error, and that the caller must do so if
-> necessary. No existing caller uses this on normal files, so none of them
-> need it.
-> 
-> Signed-off-by: Jeff Layton <jlayton@redhat.com>
+On Wed, Mar 08, 2017 at 11:29:28AM -0500, Jeff Layton wrote:
+> Currently we don't clear the address space error when there is a -EIO
+> error on fsynci, due to writeback initiation failure. If writes fail
+	   fsync
 
-Reviewed-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+> with -EIO and the mapping is flagged with an AS_EIO or AS_ENOSPC error,
+> then we can end up returning errors on two fsync calls, even when a
+> write between them succeeded (or there was no write).
+> 
+> Ensure that we also clear out any mapping errors when initiating
+> writeback fails with -EIO in filemap_write_and_wait and
+> filemap_write_and_wait_range.
+> 
+> Suggested-by: Jan Kara <jack@suse.cz>
+> Signed-off-by: Jeff Layton <jlayton@redhat.com>
+> ---
+>  mm/filemap.c | 20 ++++++++++++++++++--
+>  1 file changed, 18 insertions(+), 2 deletions(-)
+> 
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index 1694623a6289..fc123b9833e1 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -488,7 +488,7 @@ EXPORT_SYMBOL(filemap_fdatawait);
+>  
+>  int filemap_write_and_wait(struct address_space *mapping)
+>  {
+> -	int err = 0;
+> +	int err;
+>  
+>  	if ((!dax_mapping(mapping) && mapping->nrpages) ||
+>  	    (dax_mapping(mapping) && mapping->nrexceptional)) {
+> @@ -499,10 +499,18 @@ int filemap_write_and_wait(struct address_space *mapping)
+>  		 * But the -EIO is special case, it may indicate the worst
+>  		 * thing (e.g. bug) happened, so we avoid waiting for it.
+>  		 */
+> -		if (err != -EIO) {
+> +		if (likely(err != -EIO)) {
+
+The above two cleanup changes were made only to filemap_write_and_wait(), but
+should also probably be done to filemap_write_and_wait_range() to keep them as
+consistent as possible?
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
