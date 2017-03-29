@@ -1,100 +1,46 @@
-From: Jeff Layton <jlayton@redhat.com>
-Subject: Re: [PATCH v2 3/9] mm: clear any AS_* errors when returning error
- on any fsync or close
-Date: Thu, 09 Mar 2017 22:08:49 -0500
-Message-ID: <1489115329.15257.1.camel@redhat.com>
-References: <20170308162934.21989-1-jlayton@redhat.com>
-	 <20170308162934.21989-4-jlayton@redhat.com>
-	 <20170310000939.GC30285@linux.intel.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH 0/25 v2] fs: Convert all embedded bdis into
+	separate ones
+Date: Wed, 29 Mar 2017 12:55:58 +0200
+Message-ID: <20170329105623.18241-1-jack@suse.cz>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170310000939.GC30285@linux.intel.com>
-Sender: owner-linux-mm@kvack.org
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Ross Zwisler <ross.zwisler@linux.intel.com>
-Cc: viro@zeniv.linux.org.uk, akpm@linux-foundation.org, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, jack@suse.cz, neilb@suse.com, openosd@gmail.com, adilger@dilger.ca, James.Bottomley@HansenPartnership.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <lustre-devel-bounces-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <http://lists.lustre.org/options.cgi/lustre-devel-lustre.org>, 
+	<mailto:lustre-devel-request-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.lustre.org/pipermail/lustre-devel-lustre.org/>
+List-Post: <mailto:lustre-devel-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org>
+List-Help: <mailto:lustre-devel-request-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.lustre.org/listinfo.cgi/lustre-devel-lustre.org>, 
+	<mailto:lustre-devel-request-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org?subject=subscribe>
+Errors-To: lustre-devel-bounces-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org
+Sender: "lustre-devel" <lustre-devel-bounces-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org>
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ecryptfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, codalist-/uMB558Y47wP4a1z8dhFYw@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, osd-dev-yNzVSZO3znNg9hUCZPvPmw@public.gmane.org, v9fs-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Vandrovec <petr-vPk2MGR0e28uaRcfnNAh7A@public.gmane.org>, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lustre-devel-aLEFhgZF4x6X6Mz3xDxJMA@public.gmane.org
 
-On Thu, 2017-03-09 at 17:09 -0700, Ross Zwisler wrote:
-> On Wed, Mar 08, 2017 at 11:29:28AM -0500, Jeff Layton wrote:
-> > Currently we don't clear the address space error when there is a -EIO
-> > error on fsynci, due to writeback initiation failure. If writes fail
->=20
-> 	   fsync
->=20
-> > with -EIO and the mapping is flagged with an AS_EIO or AS_ENOSPC error,
-> > then we can end up returning errors on two fsync calls, even when a
-> > write between them succeeded (or there was no write).
-> >=20
-> > Ensure that we also clear out any mapping errors when initiating
-> > writeback fails with -EIO in filemap_write_and_wait and
-> > filemap_write_and_wait_range.
-> >=20
-> > Suggested-by: Jan Kara <jack@suse.cz>
-> > Signed-off-by: Jeff Layton <jlayton@redhat.com>
-> > ---
-> >  mm/filemap.c | 20 ++++++++++++++++++--
-> >  1 file changed, 18 insertions(+), 2 deletions(-)
-> >=20
-> > diff --git a/mm/filemap.c b/mm/filemap.c
-> > index 1694623a6289..fc123b9833e1 100644
-> > --- a/mm/filemap.c
-> > +++ b/mm/filemap.c
-> > @@ -488,7 +488,7 @@ EXPORT_SYMBOL(filemap_fdatawait);
-> > =20
-> >  int filemap_write_and_wait(struct address_space *mapping)
-> >  {
-> > -	int err =3D 0;
-> > +	int err;
-> > =20
-> >  	if ((!dax_mapping(mapping) && mapping->nrpages) ||
-> >  	    (dax_mapping(mapping) && mapping->nrexceptional)) {
-> > @@ -499,10 +499,18 @@ int filemap_write_and_wait(struct address_space *=
-mapping)
-> >  		 * But the -EIO is special case, it may indicate the worst
-> >  		 * thing (e.g. bug) happened, so we avoid waiting for it.
-> >  		 */
-> > -		if (err !=3D -EIO) {
-> > +		if (likely(err !=3D -EIO)) {
->=20
-> The above two cleanup changes were made only to filemap_write_and_wait(),=
- but
-> should also probably be done to filemap_write_and_wait_range() to keep th=
-em as
-> consistent as possible?
+Hello,
 
-Thanks, I fixed that in the patch in my tree. Unfortunately, as Neil
-pointed out, there is a bigger problem here...
+this is the second revision of the patch series which converts all embedded
+occurences of struct backing_dev_info to use standalone dynamically allocated
+structures. This makes bdi handling unified across all bdi users and generally
+removes some boilerplate code from filesystems setting up their own bdi. It
+also allows us to remove some code from generic bdi implementation.
 
-There are a lot of callers of the filemap_write_and_wait* functions
-that never check the return code at all, and some others that call this
-from codepaths that where we can't report errors properly. Yet, the
-mapping error gets cleared out anyway, which means that fsync will
-probably never see it.
+The patches were only compile-tested for most filesystems (I've tested
+mounting only for NFS & btrfs) so fs maintainers please have a look whether
+the changes look sound to you.
 
-So while I doubt this patch will make anything worse,=C2=A0I think we have
-to look at fixing those problems first. We need to ensure that when
-filemap_check_errors is called, that we're in a codepath where we can
-actually report the error to something that can interpret it properly.
-Basically, only in write, fsync, msync or close codepaths. For the
-others, we need to use something like filemap_fdatawait_keep_errors so
-that we don't end up dropping writeback errors onto the floor.
+This series is based on top of bdi fixes that were merged into linux-block
+git tree into for-next branch. I have pushed out the result as a branch to
 
-I'm going to look at fixing that up first (maybe as a preliminary
-series to this one). There are a lot of callers though, and I don't see
-a way around having to go and review all of these callsites
-individually. Maybe it's be best to just lift the filemap_check_errors
-calls higher in the call stack to ensure that? Not sure...
+git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdi
 
-Anyway...I'm first trying to collect a list of what I think needs
-fixing here, and figure out how to break all of this up into manageable
-pieces and order it sanely.
---=20
-Jeff Layton <jlayton@redhat.com>
+Changes since v1:
+* Added some acks
+* Added further FUSE cleanup patch
+* Added removal of unused argument to bdi_register()
+* Fixed up some compilation failures spotted by 0-day testing
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+								Honza
