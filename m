@@ -1,41 +1,55 @@
 From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 19/25] nilfs2: Convert to properly refcounting bdi
-Date: Wed, 12 Apr 2017 11:33:52 +0200
-Message-ID: <20170412093352.GA11138@quack2.suse.cz>
-References: <20170329105623.18241-1-jack@suse.cz>
- <20170329105623.18241-20-jack@suse.cz>
- <20170412081746.GS9830@infradead.org>
-Mime-Version: 1.0
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170412081746.GS9830@infradead.org>
-Sender: linux-block-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
+Subject: [PATCH 0/25 v3] fs: Convert all embedded bdis into
+	separate ones
+Date: Wed, 12 Apr 2017 12:24:24 +0200
+Message-ID: <20170412102449.16901-1-jack@suse.cz>
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com 10218EEF36
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com C531D6AADD
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/cluster-devel>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Sender: cluster-devel-bounces@redhat.com
+Errors-To: cluster-devel-bounces@redhat.com
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: codalist@TELEMANN.coda.cs.cmu.edu, cluster-devel@redhat.com, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-cifs@vger.kernel.org, ecryptfs@vger.kernel.org, linux-block@vger.kernel.org, linux-mtd@lists.infradead.org, osd-dev@open-osd.org, linux-fsdevel@vger.kernel.org, v9fs-developer@lists.sourceforge.net, ceph-devel@vger.kernel.org, Petr Vandrovec <petr@vandrovec.name>, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, lustre-devel@lists.lustre.org
 
-On Wed 12-04-17 01:17:46, Christoph Hellwig wrote:
-> On Wed, Mar 29, 2017 at 12:56:17PM +0200, Jan Kara wrote:
-> > Similarly to set_bdev_super() NILFS2 just used block device reference to
-> > bdi. Convert it to properly getting bdi reference. The reference will
-> > get automatically dropped on superblock destruction.
-> 
-> I really wish we could get rid of this open coding in block based
-> file systems..
+Hello,
 
-Well, nilfs has it because it has its own ->mount implementation (and
-similarly gfs2). If someone has idea how common code out of those could be
-factored out, bdi handling could be part of that...
+this is the third revision of the patch series which converts all embedded
+occurences of struct backing_dev_info to use standalone dynamically allocated
+structures. This makes bdi handling unified across all bdi users and generally
+removes some boilerplate code from filesystems setting up their own bdi. It
+also allows us to remove some code from generic bdi implementation.
 
-> Otherwise looks fine:
-> 
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
+The patches were only compile-tested for most filesystems (I've tested
+mounting only for NFS & btrfs) so fs maintainers please have a look whether
+the changes look sound to you.
 
-Thanks.
+This series is based on top of bdi fixes that were merged into linux-block
+git tree into for-next branch. I have pushed out the result as a branch to
+
+git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdi
+
+Since all patches got reviewed by Christoph, can you please pick them up Jens?
+Thanks!
+
+Changes since v2:
+* Added Reviewed-by tags from Christoph
+
+Changes since v1:
+* Added some acks
+* Added further FUSE cleanup patch
+* Added removal of unused argument to bdi_register()
+* Fixed up some compilation failures spotted by 0-day testing
 
 								Honza
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+
