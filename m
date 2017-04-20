@@ -1,52 +1,53 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: [PATCH 19/25] nilfs2: Convert to properly refcounting bdi
-Date: Wed, 12 Apr 2017 22:47:31 +0900
-Message-ID: <eb194a7c-d6cf-786d-0a06-d9836a2a05c5@lab.ntt.co.jp>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 0/25 v3] fs: Convert all embedded bdis into separate ones
+Date: Thu, 20 Apr 2017 12:11:16 -0600
+Message-ID: <20170420181115.GA22378@kernel.dk>
 References: <20170412102449.16901-1-jack@suse.cz>
- <20170412102449.16901-20-jack@suse.cz>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170412102449.16901-20-jack@suse.cz>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=WT6n/4enex0wYpz7NHpD1UBIoPPrgQ1KlG4Vbp5LflI=;
+        b=PTsKycKGgMM8qXlM/QGEzqWm6rMyuz2M1NADBNnYw2IdTPwrzOPXrxn5hL1t1S+gbA
+         QsC8E8Gg4wC03rVJLg2ZQGdkRXhFKOLPp9gO80Zan7sgBiKEMDy50E3OAW2LpUD48eDq
+         AunqxBNYM051/J2/3oO0yRO0IfvkQZO8Ge4jw5H48wmKPZOmrIUn6I9h8pPktQlEoK5K
+         Q19Vy8vlCeHkB1dzR6RTDaIXu+XzvnKjm4B1A8l24yEbWLDdEFw84ahwcIbCPTAcAqdf
+         byQ18xjWHjY5TQofvSw6xgaepSDJv0ronN/XOkDfF0/qW06XtZYPMzxx0AQlrfdBCyJg
+         YDPQ==
+Content-Disposition: inline
+In-Reply-To: <20170412102449.16901-1-jack@suse.cz>
 Sender: linux-block-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"; delsp="yes"
-To: Jan Kara <jack@suse.cz>, Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Jan Kara <jack@suse.cz>
+Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nfs@vger.kernel.org, Petr Vandrovec <petr@vandrovec.name>, linux-nilfs@vger.kernel.org, cluster-devel@redhat.com, osd-dev@open-osd.org, codalist@coda.cs.cmu.edu, linux-afs@lists.infradead.org, ecryptfs@vger.kernel.org, linux-cifs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, v9fs-developer@lists.sourceforge.net, lustre-devel@lists.lustre.org
 
-On 2017/04/12 19:24, Jan Kara wrote:
-> Similarly to set_bdev_super() NILFS2 just used block device reference to
-> bdi. Convert it to properly getting bdi reference. The reference will
-> get automatically dropped on superblock destruction.
->
-> CC: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> CC: linux-nilfs@vger.kernel.org
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
-> Signed-off-by: Jan Kara <jack@suse.cz>
+On Wed, Apr 12 2017, Jan Kara wrote:
+> Hello,
+> 
+> this is the third revision of the patch series which converts all embedded
+> occurences of struct backing_dev_info to use standalone dynamically allocated
+> structures. This makes bdi handling unified across all bdi users and generally
+> removes some boilerplate code from filesystems setting up their own bdi. It
+> also allows us to remove some code from generic bdi implementation.
+> 
+> The patches were only compile-tested for most filesystems (I've tested
+> mounting only for NFS & btrfs) so fs maintainers please have a look whether
+> the changes look sound to you.
+> 
+> This series is based on top of bdi fixes that were merged into linux-block
+> git tree into for-next branch. I have pushed out the result as a branch to
+> 
+> git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdi
+> 
+> Since all patches got reviewed by Christoph, can you please pick them up Jens?
+> Thanks!
 
-Looks fine, thanks.
+Yep, picked up for 4.12. Thanks Jan!
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-
-
-> ---
->  fs/nilfs2/super.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
->
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index e1872f36147f..feb796a38b8d 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -1068,7 +1068,8 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
->  	sb->s_time_gran = 1;
->  	sb->s_max_links = NILFS_LINK_MAX;
->
-> -	sb->s_bdi = bdev_get_queue(sb->s_bdev)->backing_dev_info;
-> +	sb->s_bdi = bdi_get(sb->s_bdev->bd_bdi);
-> +	sb->s_iflags |= SB_I_DYNBDI;
->
->  	err = load_nilfs(nilfs, sb);
->  	if (err)
->
-
+-- 
+Jens Axboe
 
