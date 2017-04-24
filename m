@@ -1,38 +1,53 @@
-From: Mike Marshall <hubcap@omnibond.com>
-Subject: Re: [PATCH v3 05/20] orangefs: don't call filemap_write_and_wait from fsync
-Date: Mon, 24 Apr 2017 14:18:41 -0400
-Message-ID: <CAOg9mSQPqSVLXqovLiezKycWJ+U2J1UZJ0tO2p8TeKh8WP2S2g@mail.gmail.com>
-References: <20170424132259.8680-1-jlayton@redhat.com> <20170424132259.8680-6-jlayton@redhat.com>
- <20170424152348.GE9112@infradead.org>
+From: Ross Zwisler <ross.zwisler@linux.intel.com>
+Subject: Re: [PATCH v3 06/20] dax: set errors in mapping when writeback fails
+Date: Mon, 24 Apr 2017 13:16:04 -0600
+Message-ID: <20170424191604.GA2884@linux.intel.com>
+References: <20170424132259.8680-1-jlayton@redhat.com>
+ <20170424132259.8680-7-jlayton@redhat.com>
 Mime-Version: 1.0
 Return-path: <owner-linux-mm@kvack.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=omnibond-com.20150623.gappssmtp.com; s=20150623;
-        h=mime-version:in-reply-to:references:from:date:message-id:subject:to
-         :cc;
-        bh=jB+d8SSipnaTdXA2ChIMEBVSqC6B8TorTmukpix3Twc=;
-        b=anCmZH09XFEGkhzKhpX/g949Ia3LEhTYhisKq5MQnMOi5I3OM367XT/Cs3/iIU31WC
-         8eLWTSTMpijZdmUSPN1/ds/Oi6hxynGDp+sIULxs86H76bu/bBW3LO0vYrjW0d78c3xp
-         mNCLphwdAtTFNJQgY0QGsJNdp230/0aoRKOzz/1sRk50+9/wXCweM2nCHUZqcozlSbvr
-         RzUT+v4fihaueQUKI0GH4NSGb8iyHp2s5hC7XOs/UIchGnHySN084aj+W/JeQJajysJI
-         Ma6rLmN8Hdq80J+9THxPaI0spSwOaTnctfSELF3PktLNtSvwiy8p8BjgAaDyx+ZruAZe
-         BY5Q==
-In-Reply-To: <20170424152348.GE9112@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <20170424132259.8680-7-jlayton@redhat.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jeff Layton <jlayton@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-btrfs@vger.kernel.org, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-cifs@vger.kernel.org, linux-mm <linux-mm@kvack.org>, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, osd-dev@open-osd.org, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Matthew Wilcox <mawilcox@microsoft.com>, jack@suse.com, Al Viro <viro@zeniv.linux.org.uk>, corbet@lwn.net, neilb@suse.de, Chris Mason <clm@fb.com>, Theodore Ts'o <tytso@mit.edu>, Jens Axboe <axboe@kernel.dk>
+To: Jeff Layton <jlayton@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cifs@vger.kernel.org, linux-mm@kvack.org, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, osd-dev@open-osd.org, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org, dhowells@redhat.com, akpm@linux-foundation.org, hch@infradead.org, ross.zwisler@linux.intel.com, mawilcox@microsoft.com, jack@suse.com, viro@zeniv.linux.org.uk, corbet@lwn.net, neilb@suse.de, clm@fb.com, tytso@mit.edu, axboe@kernel.dk
 
-I've been running it here...
+On Mon, Apr 24, 2017 at 09:22:45AM -0400, Jeff Layton wrote:
+> In order to get proper error codes from fsync, we must set an error in
+> the mapping range when writeback fails.
+> 
+> Signed-off-by: Jeff Layton <jlayton@redhat.com>
 
-Acked-by: Mike Marshall <hubcap@omnibond.com>
+Works fine in some error injection testing.
 
-On Mon, Apr 24, 2017 at 11:23 AM, Christoph Hellwig <hch@infradead.org> wrote:
-> Looks fine,
->
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
+Tested-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+
+> ---
+>  fs/dax.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/fs/dax.c b/fs/dax.c
+> index 85abd741253d..9b6b04030c3f 100644
+> --- a/fs/dax.c
+> +++ b/fs/dax.c
+> @@ -901,8 +901,10 @@ int dax_writeback_mapping_range(struct address_space *mapping,
+>  
+>  			ret = dax_writeback_one(bdev, mapping, indices[i],
+>  					pvec.pages[i]);
+> -			if (ret < 0)
+> +			if (ret < 0) {
+> +				mapping_set_error(mapping, ret);
+>  				return ret;
+> +			}
+>  		}
+>  	}
+>  	return 0;
+> -- 
+> 2.9.3
+> 
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
