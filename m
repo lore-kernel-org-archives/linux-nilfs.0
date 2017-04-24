@@ -1,53 +1,144 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 0/25 v3] fs: Convert all embedded bdis into separate ones
-Date: Thu, 20 Apr 2017 12:11:16 -0600
-Message-ID: <20170420181115.GA22378@kernel.dk>
-References: <20170412102449.16901-1-jack@suse.cz>
-Mime-Version: 1.0
-Return-path: <linux-block-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=WT6n/4enex0wYpz7NHpD1UBIoPPrgQ1KlG4Vbp5LflI=;
-        b=PTsKycKGgMM8qXlM/QGEzqWm6rMyuz2M1NADBNnYw2IdTPwrzOPXrxn5hL1t1S+gbA
-         QsC8E8Gg4wC03rVJLg2ZQGdkRXhFKOLPp9gO80Zan7sgBiKEMDy50E3OAW2LpUD48eDq
-         AunqxBNYM051/J2/3oO0yRO0IfvkQZO8Ge4jw5H48wmKPZOmrIUn6I9h8pPktQlEoK5K
-         Q19Vy8vlCeHkB1dzR6RTDaIXu+XzvnKjm4B1A8l24yEbWLDdEFw84ahwcIbCPTAcAqdf
-         byQ18xjWHjY5TQofvSw6xgaepSDJv0ronN/XOkDfF0/qW06XtZYPMzxx0AQlrfdBCyJg
-         YDPQ==
-Content-Disposition: inline
-In-Reply-To: <20170412102449.16901-1-jack@suse.cz>
-Sender: linux-block-owner@vger.kernel.org
+From: Jeff Layton <jlayton@redhat.com>
+Subject: [PATCH v3 00/20] fs: introduce new writeback error reporting and convert existing API as a wrapper around it
+Date: Mon, 24 Apr 2017 09:22:39 -0400
+Message-ID: <20170424132259.8680-1-jlayton@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com 1F8A161D28
+Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Jan Kara <jack@suse.cz>
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nfs@vger.kernel.org, Petr Vandrovec <petr@vandrovec.name>, linux-nilfs@vger.kernel.org, cluster-devel@redhat.com, osd-dev@open-osd.org, codalist@coda.cs.cmu.edu, linux-afs@lists.infradead.org, ecryptfs@vger.kernel.org, linux-cifs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, v9fs-developer@lists.sourceforge.net, lustre-devel@lists.lustre.org
+To: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cifs@vger.kernel.org, linux-mm@kvack.org, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, osd-dev@open-osd.org, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org
+Cc: dhowells@redhat.com, akpm@linux-foundation.org, hch@infradead.org, ross.zwisler@linux.intel.com, mawilcox@microsoft.com, jack@suse.com, viro@zeniv.linux.org.uk, corbet@lwn.net, neilb@suse.de, clm@fb.com, tytso@mit.edu, axboe@kernel.dk
 
-On Wed, Apr 12 2017, Jan Kara wrote:
-> Hello,
-> 
-> this is the third revision of the patch series which converts all embedded
-> occurences of struct backing_dev_info to use standalone dynamically allocated
-> structures. This makes bdi handling unified across all bdi users and generally
-> removes some boilerplate code from filesystems setting up their own bdi. It
-> also allows us to remove some code from generic bdi implementation.
-> 
-> The patches were only compile-tested for most filesystems (I've tested
-> mounting only for NFS & btrfs) so fs maintainers please have a look whether
-> the changes look sound to you.
-> 
-> This series is based on top of bdi fixes that were merged into linux-block
-> git tree into for-next branch. I have pushed out the result as a branch to
-> 
-> git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdi
-> 
-> Since all patches got reviewed by Christoph, can you please pick them up Jens?
-> Thanks!
+v3: wb_err_t -> errseq_t
+    clean up places that re-set errors after calling filemap_* functions
 
-Yep, picked up for 4.12. Thanks Jan!
+v2: introduce wb_err_t, use atomics
+
+Apologies for the wide posting here, but this touches a lot of areas.
+This is v3 of the patchset to improve how we're tracking and reporting
+errors that occur during pagecache writeback.
+
+There are several situations where the kernel can "lose" errors that
+occur during writeback, such that fsync will return success even
+though it failed to write back some data previously. The basic idea
+here is to have the kernel be more deliberate about the point from
+which errors are checked to ensure that that doesn't happen.
+
+Additionally, this set changes the behavior of fsync in Linux to report
+writeback errors on all fds instead of just the first one. This allows
+writers to reliably tell whether their data made it to the backing
+device without having to coordinate fsync calls with other writers.
+
+This set sprawls over a large swath of kernel code. I think the first 12
+patches in the series are pretty straightforward and are more or less
+ready for merge.
+
+The real changes start with patch 13. That adds support for errseq_t,
+builds a new writeback error tracking API on top of that, and converts
+the existing code to use it. After that, there are a few cleanup patches
+to eliminate some unneeded error re-setting, etc.
+
+Unfortunately, testing this across so many filesystems is rather
+difficult. I have a xfstest for block-based filesystems that uses
+dm_error that I'll post soon. That works well with ext4, but btrfs and
+xfs seem to go r/o soon after the first error. I also don't have a good
+general method for testing this on network filesystems (yet!).
+
+I'd like to see better testing here and am open to suggestions. I will
+note that the POSIX fsync spec says this:
+
+"It is reasonable to assert that the key aspects of fsync() are
+unreasonable to test in a test suite. That does not make the function
+any less valuable, just more difficult to test. [...] It would also not
+be unreasonable to omit testing for fsync(), allowing it to be treated
+as a quality-of-implementation issue."
+
+Of course, they're talking about a POSIX conformance test, but I
+think the same point applies here.
+
+At this point, I'd like to start getting some of the preliminary patches
+merged (the first 12 or so). Most of those aren't terribly controversial
+and seem like reasonable bugfixes and cleanups. If any subsystem
+maintainers want to pick those up, then please do.
+
+After that, I'd like to get the larger changes into linux-next with an
+aim for merge in v4.13 or v4.14 (depending on how testing goes).
+
+Feedback is of course welcome!
+
+Jeff Layton (20):
+  mm: drop "wait" parameter from write_one_page
+  mm: fix mapping_set_error call in me_pagecache_dirty
+  buffer: use mapping_set_error instead of setting the flag
+  fs: check for writeback errors after syncing out buffers in
+    generic_file_fsync
+  orangefs: don't call filemap_write_and_wait from fsync
+  dax: set errors in mapping when writeback fails
+  nilfs2: set the mapping error when calling SetPageError on writeback
+  mm: ensure that we set mapping error if writeout() fails
+  9p: set mapping error when writeback fails in launder_page
+  fuse: set mapping error in writepage_locked when it fails
+  cifs: set mapping error when page writeback fails in writepage or
+    launder_pages
+  lib: add errseq_t type and infrastructure for handling it
+  fs: new infrastructure for writeback error handling and reporting
+  fs: retrofit old error reporting API onto new infrastructure
+  mm: remove AS_EIO and AS_ENOSPC flags
+  mm: don't TestClearPageError in __filemap_fdatawait_range
+  cifs: cleanup writeback handling errors and comments
+  mm: clean up error handling in write_one_page
+  jbd2: don't reset error in journal_finish_inode_data_buffers
+  gfs2: clean up some filemap_* calls
+
+ Documentation/filesystems/vfs.txt |   9 +-
+ fs/9p/vfs_addr.c                  |   5 +-
+ fs/btrfs/file.c                   |  10 +-
+ fs/btrfs/tree-log.c               |   9 +-
+ fs/buffer.c                       |   2 +-
+ fs/cifs/cifsfs.c                  |   4 +-
+ fs/cifs/file.c                    |  17 ++--
+ fs/cifs/inode.c                   |  22 ++---
+ fs/dax.c                          |   4 +-
+ fs/exofs/dir.c                    |   2 +-
+ fs/ext2/dir.c                     |   2 +-
+ fs/ext2/file.c                    |   2 +-
+ fs/f2fs/file.c                    |   3 +
+ fs/f2fs/node.c                    |   6 +-
+ fs/fuse/file.c                    |   8 +-
+ fs/gfs2/glops.c                   |  12 +--
+ fs/gfs2/lops.c                    |   4 +-
+ fs/gfs2/super.c                   |   6 +-
+ fs/jbd2/commit.c                  |  13 +--
+ fs/jfs/jfs_metapage.c             |   4 +-
+ fs/libfs.c                        |   3 +
+ fs/minix/dir.c                    |   2 +-
+ fs/nilfs2/segment.c               |   1 +
+ fs/open.c                         |   3 +
+ fs/orangefs/file.c                |   5 +-
+ fs/sysv/dir.c                     |   2 +-
+ fs/ufs/dir.c                      |   2 +-
+ include/linux/errseq.h            |  16 +++
+ include/linux/fs.h                |  41 ++++++--
+ include/linux/mm.h                |   2 +-
+ include/linux/pagemap.h           |  18 ++--
+ lib/Makefile                      |   2 +-
+ lib/errseq.c                      | 199 ++++++++++++++++++++++++++++++++++++++
+ mm/filemap.c                      |  88 ++++++++++-------
+ mm/memory-failure.c               |   2 +-
+ mm/migrate.c                      |   6 +-
+ mm/page-writeback.c               |  23 +++--
+ 37 files changed, 398 insertions(+), 161 deletions(-)
+ create mode 100644 include/linux/errseq.h
+ create mode 100644 lib/errseq.c
 
 -- 
-Jens Axboe
+2.9.3
 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
