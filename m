@@ -1,10 +1,10 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v3 04/20] fs: check for writeback errors after syncing
- out buffers in generic_file_fsync
-Date: Mon, 24 Apr 2017 08:23:35 -0700
-Message-ID: <20170424152335.GD9112@infradead.org>
+Subject: Re: [PATCH v3 05/20] orangefs: don't call filemap_write_and_wait
+ from fsync
+Date: Mon, 24 Apr 2017 08:23:48 -0700
+Message-ID: <20170424152348.GE9112@infradead.org>
 References: <20170424132259.8680-1-jlayton@redhat.com>
- <20170424132259.8680-5-jlayton@redhat.com>
+ <20170424132259.8680-6-jlayton@redhat.com>
 Mime-Version: 1.0
 Return-path: <owner-linux-mm@kvack.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -13,14 +13,14 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
 	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
 	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-	 bh=75PIR0rjVOTeozry/HKkqiJI2pN0Bf5nstSazxrCPfQ=; b=FnfSY3nqgXxxnAyKR/aXthI9s
-	CCRF1s+s0ZHifKoLxjhBJYhPUYI4iuIenxd9Jq90xyPNcE4Tfk2DFB+RBqF+dRHuapahbTevN3gDg
-	ijsFFxfFcz4BcdoldOoj87vxhcA39GPdJJFnJCeU7BZrpaFY4c/OLB/m5AWCZjuStKDZ23MvNYBNf
-	RWobc8xnhibJNNOQySUSoJIy/tKje5vpoHG3MGB7ctpucOu8naGUi38yZ+lJ9b7bb/QGeT53A0NQl
-	mciGQ4exukRUC8RbOajD/+Suf5h0MEx0D40Q0ojhf2p0qq6aq4RdOlKQ1pQmLuIzVc8w7A95Guoc+
-	qxeY2Hv8A==;
+	 bh=yhVxFenIgPub/w/35qpJsH+EleYVEBaF1uzR5/OHDEM=; b=CSomDNy3bki6rye7MNkfp/eVf
+	p6qgfMcXbjevzHZk+GXNLJXFp5akPB1aIaafS/KJKLx7wuDnGvN6s1UpG3d0oDO03fqNk7uKMr53C
+	oAJsz2YZ0IVQbM+o2MOzGZLG8PNerk2Qv2gCFEhUbOEaW52uvI2uk1wtVSlRzmB3Ij5GgMnM4qOsa
+	M9nA0pdgsakNliw/2lQT+ptm5ZtfURzLQprWlpEMp+xyfe+g+EbQy1gStdQEbulJIOTmifGVuxpeJ
+	IbXqcuCJD3ugKzLIkBPL0JqVa84Eq/iQful8R/dC4DrqTQryKk2YJUHvENgxVuFhE4FUK/bj7upti
+	k+sGfXelA==;
 Content-Disposition: inline
-In-Reply-To: <20170424132259.8680-5-jlayton@redhat.com>
+In-Reply-To: <20170424132259.8680-6-jlayton@redhat.com>
 Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -28,16 +28,7 @@ Content-Transfer-Encoding: 7bit
 To: Jeff Layton <jlayton@redhat.com>
 Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cifs@vger.kernel.org, linux-mm@kvack.org, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, osd-dev@open-osd.org, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org, dhowells@redhat.com, akpm@linux-foundation.org, hch@infradead.org, ross.zwisler@linux.intel.com, mawilcox@microsoft.com, jack@suse.com, viro@zeniv.linux.org.uk, corbet@lwn.net, neilb@suse.de, clm@fb.com, tytso@mit.edu, axboe@kernel.dk
 
->  out:
->  	inode_unlock(inode);
-> -	return ret;
-> +	err = filemap_check_errors(inode->i_mapping);
-> +	return ret ? : err;
-
-Can you spell out the whole unary operation instead of this weird GCC
-extension?
-
-Otherwise looks fine:
+Looks fine,
 
 Reviewed-by: Christoph Hellwig <hch@lst.de>
 
