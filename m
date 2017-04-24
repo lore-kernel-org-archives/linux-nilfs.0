@@ -1,77 +1,38 @@
-From: Bob Peterson <rpeterso@redhat.com>
-Subject: Re: [PATCH v3 20/20] gfs2: clean up some filemap_* calls
-Date: Mon, 24 Apr 2017 10:12:55 -0400 (EDT)
-Message-ID: <2139341349.405174.1493043175630.JavaMail.zimbra@redhat.com>
-References: <20170424132259.8680-1-jlayton@redhat.com> <20170424132259.8680-21-jlayton@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [RFC xfstests PATCH] xfstests: add a writeback error handling
+ test
+Date: Mon, 24 Apr 2017 08:00:19 -0700
+Message-ID: <20170424150019.GA3288@infradead.org>
+References: <20170424134551.10301-1-jlayton@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com 11DA28004D
-In-Reply-To: <20170424132259.8680-21-jlayton@redhat.com>
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
+        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=8ejpWm4JRoudRltRutJMGrfPE6fai8YlNG1/tFgq0x0=; b=WzeuC3Od2SxgeesOafdw6fMOS
+        yFGk+/j5EOUS2+k3MczFE2poS00Li5lDjR3I/ihaz2odjXk4G/jmXkojA43IlInogzs2niPCh3TMT
+        y2M50z5SPjnuj4gHS1E3P0rDDjietITgKsuO6OD5awqio8eeomvsgZxm94OI1H8slcsC8BMaATYxw
+        wtsEGJo4TTgLmnc4H36MYkfz13tkh/995cpq49OewiX7kfc2+2QFItYyA/KOY3F9VN2w0btJqekx4
+        0cGGRR39wa8olAc/lWI1s1GWwG7J+17EDnxaxtXsPRHHe/aphOhIKQRxiKOzXHo0a2O6id0lQOEBx
+    
+Content-Disposition: inline
+In-Reply-To: <20170424134551.10301-1-jlayton@redhat.com>
+Sender: linux-btrfs-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: Jeff Layton <jlayton@redhat.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cifs@vger.kernel.org, linux-mm@kvack.org, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, osd-dev@open-osd.org, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org, dhowells@redhat.com, akpm@linux-foundation.org, hch@infradead.org, ross zwisler <ross.zwisler@linux.intel.com>, mawilcox@microsoft.com, jack@suse.com, viro@zeniv.linux.org.uk, corbet@lwn.net, neilb@suse.de, clm@fb.com, tytso@mit.edu, axboe@kernel.dk
+Cc: fstests@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cifs@vger.kernel.org, linux-mm@kvack.org, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, osd-dev@open-osd.org, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org, dhowells@redhat.com, akpm@linux-foundation.org, hch@infradead.org, ross.zwisler@linux.intel.com, mawilcox@microsoft.com, jack@suse.com, viro@zeniv.linux.org.uk, corbet@lwn.net, neilb@suse.de, clm@fb.com, tytso@mit.edu, axboe@kernel.dk
 
------ Original Message -----
-| In some places, it's trying to reset the mapping error after calling
-| filemap_fdatawait. That's no longer required. Also, turn several
-| filemap_fdatawrite+filemap_fdatawait calls into filemap_write_and_wait.
-| That will at least return writeback errors that occur during the write
-| phase.
-| 
-| Signed-off-by: Jeff Layton <jlayton@redhat.com>
-| ---
-|  fs/gfs2/glops.c | 12 ++++--------
-|  fs/gfs2/lops.c  |  4 +---
-|  fs/gfs2/super.c |  6 ++----
-|  3 files changed, 7 insertions(+), 15 deletions(-)
-| 
-| diff --git a/fs/gfs2/glops.c b/fs/gfs2/glops.c
-| index 5db59d444838..7362d19fdc4c 100644
-| --- a/fs/gfs2/glops.c
-| +++ b/fs/gfs2/glops.c
-| @@ -158,9 +158,7 @@ static void rgrp_go_sync(struct gfs2_glock *gl)
-|  	GLOCK_BUG_ON(gl, gl->gl_state != LM_ST_EXCLUSIVE);
-|  
-|  	gfs2_log_flush(sdp, gl, NORMAL_FLUSH);
-| -	filemap_fdatawrite_range(mapping, gl->gl_vm.start, gl->gl_vm.end);
-| -	error = filemap_fdatawait_range(mapping, gl->gl_vm.start, gl->gl_vm.end);
-| -	mapping_set_error(mapping, error);
-| +	filemap_write_and_wait_range(mapping, gl->gl_vm.start, gl->gl_vm.end);
+On Mon, Apr 24, 2017 at 09:45:51AM -0400, Jeff Layton wrote:
+> With the patch series above, ext4 now passes. xfs and btrfs end up in
+> r/o mode after the test. xfs returns -EIO at that point though, and
+> btrfs returns -EROFS. What behavior we actually want there, I'm not
+> certain. We might be able to mitigate that by putting the journals on a
+> separate device?
 
-This should probably have "error = ", no?
-
-|  	gfs2_ail_empty_gl(gl);
-|  
-|  	spin_lock(&gl->gl_lockref.lock);
-| @@ -225,12 +223,10 @@ static void inode_go_sync(struct gfs2_glock *gl)
-|  	filemap_fdatawrite(metamapping);
-|  	if (ip) {
-|  		struct address_space *mapping = ip->i_inode.i_mapping;
-| -		filemap_fdatawrite(mapping);
-| -		error = filemap_fdatawait(mapping);
-| -		mapping_set_error(mapping, error);
-| +		filemap_write_and_wait(mapping);
-| +	} else {
-| +		filemap_fdatawait(metamapping);
-|  	}
-| -	error = filemap_fdatawait(metamapping);
-| -	mapping_set_error(metamapping, error);
-
-This part doesn't look right at all. There's a big difference in gfs2 between
-mapping and metamapping. We need to wait for metamapping regardless.
-
-(snip)
-
-Regards,
-
-Bob Peterson
-Red Hat File Systems
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+This looks like XFS shut down because of a permanent write error from
+dm-error.  Which seems like the expected behavior.
