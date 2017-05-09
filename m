@@ -1,11 +1,11 @@
 From: Jeff Layton <jlayton@redhat.com>
-Subject: [PATCH v4 10/27] 9p: set mapping error when
-	writeback fails in launder_page
-Date: Tue,  9 May 2017 11:49:13 -0400
-Message-ID: <20170509154930.29524-11-jlayton@redhat.com>
+Subject: [PATCH v4 11/27] fuse: set mapping error in
+	writepage_locked when it fails
+Date: Tue,  9 May 2017 11:49:14 -0400
+Message-ID: <20170509154930.29524-12-jlayton@redhat.com>
 References: <20170509154930.29524-1-jlayton@redhat.com>
 Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com 5DFD97FD53
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com CD2027F6C7
 In-Reply-To: <20170509154930.29524-1-jlayton@redhat.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
@@ -23,32 +23,25 @@ Content-Transfer-Encoding: 7bit
 To: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-mm@kvack.org, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org
 Cc: axboe@kernel.dk, tytso@mit.edu, mawilcox@microsoft.com, neilb@suse.de, corbet@lwn.net, josef@toxicpanda.com, dhowells@redhat.com, clm@fb.com, bo.li.liu@oracle.com, viro@zeniv.linux.org.uk, jack@suse.com, akpm@linux-foundation.org, ross.zwisler@linux.intel.com, hubcap@omnibond.com
 
-launder_page is just writeback under the page lock. We still need to
-mark the mapping for errors there when they occur.
+This ensures that we see errors on fsync when writeback fails.
 
 Signed-off-by: Jeff Layton <jlayton@redhat.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
 Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/9p/vfs_addr.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ fs/fuse/file.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/fs/9p/vfs_addr.c b/fs/9p/vfs_addr.c
-index adaf6f6dd858..7af6e6501698 100644
---- a/fs/9p/vfs_addr.c
-+++ b/fs/9p/vfs_addr.c
-@@ -223,8 +223,11 @@ static int v9fs_launder_page(struct page *page)
- 	v9fs_fscache_wait_on_page_write(inode, page);
- 	if (clear_page_dirty_for_io(page)) {
- 		retval = v9fs_vfs_writepage_locked(page);
--		if (retval)
-+		if (retval) {
-+			if (retval != -EAGAIN)
-+				mapping_set_error(page->mapping, retval);
- 			return retval;
-+		}
- 	}
- 	return 0;
+diff --git a/fs/fuse/file.c b/fs/fuse/file.c
+index ec238fb5a584..07d0efcb050c 100644
+--- a/fs/fuse/file.c
++++ b/fs/fuse/file.c
+@@ -1669,6 +1669,7 @@ static int fuse_writepage_locked(struct page *page)
+ err_free:
+ 	fuse_request_free(req);
+ err:
++	mapping_set_error(page->mapping, error);
+ 	end_page_writeback(page);
+ 	return error;
  }
 -- 
 2.9.3
