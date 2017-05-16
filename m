@@ -1,155 +1,162 @@
-From: Jeff Layton <jlayton@redhat.com>
-Subject: Re: [PATCH v4 15/27] fs: retrofit old error reporting API onto new
- infrastructure
-Date: Mon, 15 May 2017 13:58:59 -0400
-Message-ID: <1494871139.4080.3.camel@redhat.com>
-References: <20170509154930.29524-1-jlayton@redhat.com>
-	 <20170509154930.29524-16-jlayton@redhat.com>
-	 <20170515104246.GC16182@quack2.suse.cz>
+From: Rodrigo Severo <rodrigo-sUXncmUOihszlUgHzu1iJkEOCMrvLtNR@public.gmane.org>
+Subject: nilfs_cleanerd high CPU usage
+Date: Tue, 16 May 2017 16:16:39 -0300
+Message-ID: <CAOdi6iZv-GSZfGmGbASpaXn26g8F2_F2J-ycDwJ421jcg+9iBA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170515104246.GC16182@quack2.suse.cz>
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=fabricadeideias-com.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=WS2IiNsde7dqCGHZtAtqKOv9YYrb2TV1sXd6vRd5YOg=;
+        b=sK2bYHMfPZdzJWbwXEHVQ28IePTMPcr96M9lSLSxIsw8U73hSOGsevOK88SFUXRu5n
+         BcY0o3IgJYk4MyCjZ/QM6HaYZEBV1v7dS6IojPSlkS9BBTpoaC8EPKNnWPeFpW6VD5JM
+         MG1d7snCg10MnqET/8G7Ztu0q0c7JaAscjR7HnK/z2kkm0AOCacYgykV9QoYLcN1djo/
+         ylAeo+SLk19MngIUg+06ynEB1Qt5noTVT5Y6bnOQdUbKmMyd1oKs0dB9yLWDN6iSdUPL
+         y4OLAzVGrGRkgGo2j8wTE51MbTglToiupq9ui4radrCUC/nGmZtZQpe89NFPd77Mmuor
+         b0tw==
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Jan Kara <jack@suse.cz>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-mm@kvack.org, jfs-discussion@lists.sourceforge.net, linux-xfs@vger.kernel.org, cluster-devel@redhat.com, linux-f2fs-devel@lists.sourceforge.net, v9fs-developer@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-block@vger.kernel.org, dhowells@redhat.com, akpm@linux-foundation.org, hch@infradead.org, ross.zwisler@linux.intel.com, mawilcox@microsoft.com, jack@suse.com, viro@zeniv.linux.org.uk, corbet@lwn.net, neilb@suse.de, clm@fb.com, tytso@mit.edu, axboe@kernel.dk, josef@toxicpanda.com, hubcap@omnibond.com, rpeterso@redhat.com, bo.li.liu@oracle.com
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 2017-05-15 at 12:42 +0200, Jan Kara wrote:
-> On Tue 09-05-17 11:49:18, Jeff Layton wrote:
-> > Now that we have a better way to store and report errors that occur
-> > during writeback, we need to convert the existing codebase to use it. We
-> > could just adapt all of the filesystem code and related infrastructure
-> > to the new API, but that's a lot of churn.
-> > 
-> > When it comes to setting errors in the mapping, filemap_set_wb_error is
-> > a drop-in replacement for mapping_set_error. Turn that function into a
-> > simple wrapper around the new one.
-> > 
-> > Because we want to ensure that writeback errors are always reported at
-> > fsync time, inject filemap_report_wb_error calls much closer to the
-> > syscall boundary, in call_fsync.
-> > 
-> > For fsync calls (and things like the nfsd equivalent), we either return
-> > the error that the fsync operation returns, or the one returned by
-> > filemap_report_wb_error. In both cases, we advance the file->f_wb_err to
-> > the latest value. This allows us to provide new fsync semantics that
-> > will return errors that may have occurred previously and been viewed
-> > via other file descriptors.
-> > 
-> > The final piece of the puzzle is what to do about filemap_check_errors
-> > calls that are being called directly or via filemap_* functions. Here,
-> > we must take a little "creative license".
-> > 
-> > Since we now handle advancing the file->f_wb_err value at the generic
-> > filesystem layer, we no longer need those callers to clear errors out
-> > of the mapping or advance an errseq_t.
-> > 
-> > A lot of the existing codebase relies on being getting an error back
-> > from those functions when there is a writeback problem, so we do still
-> > want to have them report writeback errors somehow.
-> > 
-> > When reporting writeback errors, we will always report errors that have
-> > occurred since a particular point in time. With the old writeback error
-> > reporting, the time we used was "since it was last tested/cleared" which
-> > is entirely arbitrary and potentially racy. Now, we can at least report
-> > the latest error that has occurred since an arbitrary point in time
-> > (represented as a sampled errseq_t value).
-> > 
-> > In the case where we don't have a struct file to work with, this patch
-> > just has the wrappers sample the current mapping->wb_err value, and use
-> > that as an arbitrary point from which to check for errors.
-> 
-> I think this is really dangerous and we shouldn't do this. You are quite
-> likely to lose IO errors in such calls because you will ignore all errors
-> that happened during previous background writeback or even for IO that
-> managed to complete before we called filemap_fdatawait(). Maybe we need to
-> keep the original set-clear-bit IO error reporting for these cases, until
-> we can convert them to fdatawait_range_since()?
-> 
+Hi,
 
-Yes that is a danger.
 
-In fact, late last week I was finally able to make my xfstest work with
-btrfs, and started hitting oopses with it because of the way the error
-reporting changed. I rolled up a patch to fix that (and it simplifies
-the code some, IMO), but other callers of filemap_fdatawait may have
-similar problems here.
+I currently have 7 disks formatted as nilfs, each one a 8 TB HD:
 
-I'll pick up working on this again in a more piecemeal way. I had
-originally looked at doing that, but there are some problematic places
-(e.g. buffer.c), where the code is shared by a bunch of different
-filesystems that makes it difficult.
+---------------------------------------------
+# df -h -t nilfs2
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sde1       7.3T  362G  6.6T   6% /empauta/arquivo_06
+/dev/sdc1       7.3T  6.3T  709G  90% /empauta/arquivo_03
+/dev/sdg1       7.3T  6.2T  740G  90% /empauta/arquivo_01
+/dev/sdh1       7.3T  5.8T  1.2T  84% /empauta/arquivo_02
+/dev/sdi1       7.3T  5.9T  1.1T  85% /empauta/arquivo_04
+/dev/sdf1       7.3T  1.8T  5.2T  26% /empauta/arquivo_05
+/dev/sdj1       7.3T  5.7T  1.3T  83% /mnt/velho
+---------------------------------------------
 
-We may end up needing some sort of FS_WB_ERRSEQ flag to do this
-correctly, at least until the transition to errseq_t is done.
+The cleanerd for the ones that got full enough are using what seems to
+me as an excessive amount of CPU:
 
-> > That's probably not "correct" in all cases, particularly in the case of
-> > something like filemap_fdatawait, but I'm not sure it's any worse than
-> > what we already have, and this gives us a basis from which to work.
-> > 
-> > A lot of those callers will likely want to change to a model where they
-> > sample the errseq_t much earlier (perhaps when starting a transaction),
-> > store it in an appropriate place and then use that value later when
-> > checking to see if an error occurred.
-> > 
-> > That will almost certainly take some involvement from other subsystem
-> > maintainers. I'm quite open to adding new API functions to help enable
-> > this if that would be helpful, but I don't really want to do that until
-> > I better understand what's needed.
-> > 
-> > Signed-off-by: Jeff Layton <jlayton@redhat.com>
-> 
-> ...
-> 
-> > diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-> > index 5f7317875a67..7ce13281925f 100644
-> > --- a/fs/f2fs/file.c
-> > +++ b/fs/f2fs/file.c
-> > @@ -187,6 +187,7 @@ static int f2fs_do_sync_file(struct file *file, loff_t start, loff_t end,
-> >  		.nr_to_write = LONG_MAX,
-> >  		.for_reclaim = 0,
-> >  	};
-> > +	errseq_t since = READ_ONCE(file->f_wb_err);
-> >  
-> >  	if (unlikely(f2fs_readonly(inode->i_sb)))
-> >  		return 0;
-> > @@ -265,6 +266,8 @@ static int f2fs_do_sync_file(struct file *file, loff_t start, loff_t end,
-> >  	}
-> >  
-> >  	ret = wait_on_node_pages_writeback(sbi, ino);
-> > +	if (ret == 0)
-> > +		ret = filemap_check_wb_error(NODE_MAPPING(sbi), since);
-> >  	if (ret)
-> >  		goto out;
-> 
-> So this conversion looks wrong and actually points to a larger issue with
-> the scheme. The problem is there are two mappings that come into play here
-> - file_inode(file)->i_mapping which is the data mapping and
-> NODE_MAPPING(sbi) which is the metadata mapping (and this is not a problem
-> specific to f2fs. For example ext2 also uses this scheme where block
-> devices' mapping is the metadata mapping). And we need to merge error
-> information from these two mappings so for the stamping scheme to work,
-> we'd need two stamps stored in struct file. One for data mapping and one
-> for metadata mapping. Or maybe there's some more clever scheme but for now
-> I don't see one...
-> 
+---------------------------------------------
+# ps auxww | grep nilfs
+root      1134  0.0  0.0  10716   124 ?        S    May13   0:00
+/sbin/nilfs_cleanerd /dev/sde1 /empauta/arquivo_06
+root      1147 13.4  0.1  40608 27316 ?        D    May13 614:40
+/sbin/nilfs_cleanerd /dev/sdc1 /empauta/arquivo_03
+root      7666  0.5  0.1  39704 27128 ?        D    May13  25:54
+/sbin/nilfs_cleanerd /dev/sdg1 /empauta/arquivo_01
+root      7679  4.7  0.1  39792 27368 ?        S    May13 217:54
+/sbin/nilfs_cleanerd /dev/sdh1 /empauta/arquivo_02
+root      7694 14.5  0.1  39792 27384 ?        S    May13 662:24
+/sbin/nilfs_cleanerd /dev/sdi1 /empauta/arquivo_04
+root      7705  0.0  0.0  10716   128 ?        S    May13   0:00
+/sbin/nilfs_cleanerd /dev/sdf1 /empauta/arquivo_05
+root     13579  0.0  0.0  10716   128 ?        S    May15   0:00
+/sbin/nilfs_cleanerd /dev/sdj1 /mnt/velho
+---------------------------------------------
 
-Got it -- since there are two mappings, there are two errseq_t's and
-you'd need a since cursor for each. I don't really like having to add a
-second 32-bit word to struct file, but I also don't see a real
-alternative right offhand. May be able to stash it in file->private_data 
-for some of these filesystems.
+I seeing nilfs_cleanerd processes with more than 25% CPU usage most of
+the time and sometimes getting up to 40% CPU on a AMD FX 8320.
 
-In any case, I'll ponder how to do this in a more piecemeal way.
+I'm using the ubuntu defaults on /etc/nilfs_cleanerd.conf:
 
-Thanks for all of the review so far!
--- 
-Jeff Layton <jlayton@redhat.com>
+---------------------------------------------
+# cat /etc/nilfs_cleanerd.conf
+# nilfs_cleanerd.conf - configuration file of NILFS cleaner daemon.
+#
+# This file contains GC parameters that are loaded when cleaner gets
+# started.  You can force them to be reloaded by sending a HUP signal
+# to the cleaner process.
+#
+# Each parameter is declared with a keyword-value pair or a directive
+# with no argument.  Lines beginning with "#" are ignored.  For
+# details, see the man page of nilfs_cleanerd.conf(5).
 
+# Protection period in second.
+protection_period       3600
+
+# Minimum number of clean segments
+#   0 = continuous cleaning
+# > 0 = pause cleaning until less segments are available
+min_clean_segments      10%
+
+# Maximum number of clean segments
+max_clean_segments      20%
+
+# The argument of min_clean_segments and max_clean_segments can be
+# followed by a percent sign (%) or one of the following
+# multiplicative suffixes: K 1024, MB 1000*1000, M 1024*1024, GB
+# 1000*1000*1000, G 1024*1024*1024, and so on for T, P, E.
+#
+# If the argument is followed by "%", it represents a disk capacity
+# ratio.
+
+# Clean segment check interval in seconds
+clean_check_interval    10
+
+# Segment selection policy.
+# In NILFS version 2.0.0, only the timestamp policy is supported.
+selection_policy        timestamp       # timestamp in ascend order
+
+# The maximum number of segments to be cleaned at a time.
+nsegments_per_clean     2
+
+# The maximum number of segments to be cleaned at a time
+# if clean segments < min_clean_segments
+mc_nsegments_per_clean  4
+
+# Cleaning interval in seconds.
+cleaning_interval       5
+
+# Cleaning interval in seconds
+# if clean segments < min_clean_segments
+mc_cleaning_interval    1
+
+# Retry interval in seconds.
+retry_interval          60
+
+# Specify the minimum number of reclaimable blocks in a segment
+# before it can be cleaned.
+min_reclaimable_blocks  10%
+
+# Specify the minimum number of reclaimable blocks in a segment
+# before it can be cleaned.
+# if clean segments < min_clean_segments
+mc_min_reclaimable_blocks       1%
+
+# The argument of min_reclaimable_blocks and mc_min_reclaimable_blocks
+# can be followed by a percent sign (%) or one of the following
+# multiplicative suffixes similar to min_clean_segments.
+#
+# If the argument is followed by "%", it represents a ratio for the
+# number of blocks per segment.
+
+# enable set_suinfo ioctl if supported
+# (needed for min_reclaimable_blocks)
+use_set_suinfo
+
+# Use mmap when reading segments if supported.
+use_mmap
+
+# Log priority.
+# Supported priorities are emerg, alert, crit, err, warning, notice, info, and
+# debug.
+log_priority            info
+---------------------------------------------
+
+Is this normal? Is the clean operation such a high CPU usage one?
+
+Is there a way to lower nilfs_cleanerd CPU usage without impacting the
+cleaning process?
+
+
+Regards,
+
+Rodrigo Severo
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
