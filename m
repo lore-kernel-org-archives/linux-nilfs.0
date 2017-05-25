@@ -1,77 +1,48 @@
-From: Liu Bo <bo.li.liu@oracle.com>
-Subject: Re: [PATCH v4 05/27] btrfs:
- btrfs_wait_tree_block_writeback can be void return
-Date: Thu, 18 May 2017 21:07:31 -0700
-Message-ID: <20170519040731.GA30704@lim.localdomain>
-References: <20170509154930.29524-1-jlayton@redhat.com>
-	<20170509154930.29524-6-jlayton@redhat.com>
-Reply-To: bo.li.liu@oracle.com
-Mime-Version: 1.0
+From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] nilfs2: set the mapping error when calling SetPageError on writeback
+Date: Thu, 25 May 2017 06:52:59 -0400
+Message-ID: <20170525105259.8325-1-jlayton@redhat.com>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com E0BE861D07
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <20170509154930.29524-6-jlayton@redhat.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
-	<mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
-	<mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Jeff Layton <jlayton@redhat.com>
-Cc: jfs-discussion@lists.sourceforge.net, hch@infradead.org, dhowells@redhat.com, linux-mm@kvack.org, hubcap@omnibond.com, linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, corbet@lwn.net, cluster-devel@redhat.com, v9fs-developer@lists.sourceforge.net, ross.zwisler@linux.intel.com, linux-ext4@vger.kernel.org, josef@toxicpanda.com, linux-block@vger.kernel.org, rpeterso@redhat.com, viro@zeniv.linux.org.uk, axboe@kernel.dk, linux-nfs@vger.kernel.org, tytso@mit.edu, clm@fb.com, mawilcox@microsoft.com, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, jack@suse.com, linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org, linux-btrfs@vger.kernel.org
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, May 09, 2017 at 11:49:08AM -0400, Jeff Layton wrote:
-> Nothing checks its return value.
+In a later patch, we're going to want to make the fsync codepath not do
+a TestClearPageError call as that can override the error set in the
+address space. To do that though, we need to ensure that filesystems
+that are relying on the PG_error bit for reporting writeback errors
+also set an error in the address space.
 
-Reviewed-by: Liu Bo <bo.li.liu@oracle.com>
+Ensure that this is set in nilfs2.
 
--liubo
-> 
-> Signed-off-by: Jeff Layton <jlayton@redhat.com>
-> ---
->  fs/btrfs/disk-io.c | 6 +++---
->  fs/btrfs/disk-io.h | 2 +-
->  2 files changed, 4 insertions(+), 4 deletions(-)
-> 
-> diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-> index eb1ee7b6f532..8c479bd5534a 100644
-> --- a/fs/btrfs/disk-io.c
-> +++ b/fs/btrfs/disk-io.c
-> @@ -1222,10 +1222,10 @@ int btrfs_write_tree_block(struct extent_buffer *buf)
->  					buf->start + buf->len - 1);
->  }
->  
-> -int btrfs_wait_tree_block_writeback(struct extent_buffer *buf)
-> +void btrfs_wait_tree_block_writeback(struct extent_buffer *buf)
->  {
-> -	return filemap_fdatawait_range(buf->pages[0]->mapping,
-> -				       buf->start, buf->start + buf->len - 1);
-> +	filemap_fdatawait_range(buf->pages[0]->mapping,
-> +			        buf->start, buf->start + buf->len - 1);
->  }
->  
->  struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
-> diff --git a/fs/btrfs/disk-io.h b/fs/btrfs/disk-io.h
-> index 2e0ec29bfd69..9cc87835abb5 100644
-> --- a/fs/btrfs/disk-io.h
-> +++ b/fs/btrfs/disk-io.h
-> @@ -127,7 +127,7 @@ int btrfs_wq_submit_bio(struct btrfs_fs_info *fs_info, struct inode *inode,
->  			extent_submit_bio_hook_t *submit_bio_done);
->  unsigned long btrfs_async_submit_limit(struct btrfs_fs_info *info);
->  int btrfs_write_tree_block(struct extent_buffer *buf);
-> -int btrfs_wait_tree_block_writeback(struct extent_buffer *buf);
-> +void btrfs_wait_tree_block_writeback(struct extent_buffer *buf);
->  int btrfs_init_log_root_tree(struct btrfs_trans_handle *trans,
->  			     struct btrfs_fs_info *fs_info);
->  int btrfs_add_log_tree(struct btrfs_trans_handle *trans,
-> -- 
-> 2.9.3
-> 
+Acked-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Signed-off-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+---
+ fs/nilfs2/segment.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index febed1217b3f..612d4b446793 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1745,6 +1745,7 @@ static void nilfs_end_page_io(struct page *page, int err)
+ 	} else {
+ 		__set_page_dirty_nobuffers(page);
+ 		SetPageError(page);
++		mapping_set_error(page_mapping(page), err);
+ 	}
+ 
+ 	end_page_writeback(page);
+-- 
+2.9.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
