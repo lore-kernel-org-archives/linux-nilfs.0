@@ -1,46 +1,43 @@
-From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] nilfs2: set the mapping error when calling SetPageError on writeback
-Date: Thu, 25 May 2017 06:52:59 -0400
-Message-ID: <20170525105259.8325-1-jlayton@redhat.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH 03/35] ext4: Fix off-by-in in loop termination in ext4_find_unwritten_pgoff()
+Date: Thu,  1 Jun 2017 11:32:13 +0200
+Message-ID: <20170601093245.29238-4-jack@suse.cz>
+References: <20170601093245.29238-1-jack@suse.cz>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx1.redhat.com E0BE861D07
+In-Reply-To: <20170601093245.29238-1-jack-AlSwsSmVLrQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bob Peterson <rpeterso-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ilya Dryomov <idryomov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Yan, Zheng" <zyan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Nadia Yvette Chambers <nyc-tGiaVUSOoeej7qYf8Sx8sA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 
-In a later patch, we're going to want to make the fsync codepath not do
-a TestClearPageError call as that can override the error set in the
-address space. To do that though, we need to ensure that filesystems
-that are relying on the PG_error bit for reporting writeback errors
-also set an error in the address space.
+There is an off-by-one error in loop termination conditions in
+ext4_find_unwritten_pgoff() since 'end' may index a page beyond end of
+desired range if 'endoff' is page aligned. It doesn't have any visible
+effects but still it is good to fix it.
 
-Ensure that this is set in nilfs2.
-
-Acked-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Signed-off-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/nilfs2/segment.c | 1 +
- 1 file changed, 1 insertion(+)
+ fs/ext4/file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index febed1217b3f..612d4b446793 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1745,6 +1745,7 @@ static void nilfs_end_page_io(struct page *page, int err)
- 	} else {
- 		__set_page_dirty_nobuffers(page);
- 		SetPageError(page);
-+		mapping_set_error(page_mapping(page), err);
- 	}
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index bbea2dccd584..2b00bf84c05b 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -474,7 +474,7 @@ static int ext4_find_unwritten_pgoff(struct inode *inode,
+ 	endoff = (loff_t)end_blk << blkbits;
  
- 	end_page_writeback(page);
+ 	index = startoff >> PAGE_SHIFT;
+-	end = endoff >> PAGE_SHIFT;
++	end = (endoff - 1) >> PAGE_SHIFT;
+ 
+ 	pagevec_init(&pvec, 0);
+ 	do {
 -- 
-2.9.4
+2.12.3
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
