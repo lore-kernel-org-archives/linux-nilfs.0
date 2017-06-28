@@ -1,58 +1,47 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 01/35] fscache: Remove unused ->now_uncached callback
-Date: Mon, 19 Jun 2017 15:12:53 +0200
-Message-ID: <20170619131253.GA22128@quack2.suse.cz>
-References: <20170601093245.29238-2-jack@suse.cz>
- <20170601093245.29238-1-jack@suse.cz>
- <10376.1496312768@warthog.procyon.org.uk>
- <20170601113434.GC23077@quack2.suse.cz>
+From: Rodrigo Severo <rodrigo-sUXncmUOihszlUgHzu1iJkEOCMrvLtNR@public.gmane.org>
+Subject: nilfs bad btree node and broken bmap
+Date: Wed, 28 Jun 2017 16:19:01 -0300
+Message-ID: <CAOdi6ianj9cgMHwjSzAkd=f2o3-i5KX4mznnR5hDzsN7ggKLdg@mail.gmail.com>
 Mime-Version: 1.0
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170601113434.GC23077@quack2.suse.cz>
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=fabricadeideias-com.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=Xa8Innf7eNo8VmaPsH3tV7STTx/WjeJ9BXPH4koTt9w=;
+        b=o/MnX0j8uA527TCWzAwVEi2r8qfF7g1uO28rMkj2T+f4MKJZyNY1Of3dXZtrkTg3gm
+         8GbfVKZxhS1hWCqXeADlLWI6rOXH7QmAydxj31z1AdZvqbrgHqR+eUwVK7m/P1ib93Xt
+         BZMPKZSPCmOUWegc72jH0NfCO7Fqmw1GOpA2pcqXENLxE2j4AWuYtQyXG9Kiqt2I2zv8
+         9IVH49ltfAMiDygrfqwx+P/vUM3DVlVN1OZXuIwpcMxTcOrs2b6e+XQR9VXDoh/GcLww
+         G+xoHNgQP7KaQrjrNVNAKYJllibJrf6fT5P+ZyQZ5txo+eJSS2HsuVDiqtoKuXcob/xR
+         A8Dw==
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: David Howells <dhowells@redhat.com>
-Cc: Jan Kara <jack@suse.cz>, linux-mm@kvack.org, Hugh Dickins <hughd@google.com>, linux-afs@lists.infradead.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Bob Peterson <rpeterso@redhat.com>, cluster-devel@redhat.com, Jaegeuk Kim <jaegeuk@kernel.org>, linux-f2fs-devel@lists.sourceforge.net, tytso@mit.edu, linux-ext4@vger.kernel.org, Ilya Dryomov <idryomov@gmail.com>, "Yan, Zheng" <zyan@redhat.com>, ceph-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, David Sterba <dsterba@suse.com>, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs@vger.kernel.org, Nadia Yvette Chambers <nyc@holomorphy.com>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Thu 01-06-17 13:34:34, Jan Kara wrote:
-> On Thu 01-06-17 11:26:08, David Howells wrote:
-> > Jan Kara <jack@suse.cz> wrote:
-> > 
-> > > The callback doesn't ever get called. Remove it.
-> > 
-> > Hmmm...  I should perhaps be calling this.  I'm not sure why I never did.
-> > 
-> > At the moment, it doesn't strictly matter as ops on pages marked with
-> > PG_fscache get ignored if the cache has suffered an I/O error or has been
-> > withdrawn - but it will incur a performance penalty (the PG_fscache flag is
-> > checked in the netfs before calling into fscache).
-> > 
-> > The downside of calling this is that when a cache is removed, fscache would go
-> > through all the cookies for that cache and iterate over all the pages
-> > associated with those cookies - which could cause a performance dip in the
-> > system.
-> 
-> So I know nothing about fscache. If you decide these functions should stay
-> in as you are going to use them soon, then I can just convert them to the
-> new API as everything else. What just caught my eye and why I had a more
-> detailed look is that I didn't understand that 'PAGEVEC_SIZE -
-> pagevec_count(&pvec)' as a pagevec_lookup() argument since pagevec_count()
-> should always return 0 at that point?
+Hi,
 
-David, what is your final decision regarding this? Do you want to keep
-these unused functions (and I will just update my patch to convert them to
-the new calling convention) or will you apply the patch to remove them?
 
-								Honza
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+I have a 8TG nilfs2 disk with started changing to read-only by itself.
 
+My log files are full of the following error messages:
+
+Jun 28 15:57:08 c1-df kernel: [ 1637.138168] NILFS (sdd1): bad btree
+node (ino=6069196, blocknr=446552325): level = 69, flags = 0x24,
+nchildren = 8203
+Jun 28 15:57:08 c1-df kernel: [ 1637.139363] NILFS error (device
+sdd1): nilfs_bmap_lookup_contig: broken bmap (inode number=6069196)
+
+I have already checked and there are not errors on the disk.
+
+How can I fix this?
+
+
+Regards,
+
+Rodrigo Severo
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
