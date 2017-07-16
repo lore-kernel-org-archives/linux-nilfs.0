@@ -1,144 +1,91 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: Fix race condition that causes file system
- corruption
-Date: Thu, 13 Jul 2017 08:44:34 +0200
-Message-ID: <20170713084434.4c68f7d6@terok>
-References: <20170711061907.19259-1-andreas.rohner@gmx.net>
-        <CAKFNMonzhYBKkjotNiNY0x0DnWxzHYF8WvO7f7xjGwr-8a=aRQ@mail.gmail.com>
+From: mikael-m2T68/X/qvZAfugRpC6u6w@public.gmane.org
+Subject: NILFS error after power loss
+Date: Sun, 16 Jul 2017 21:37:01 +0200
+Message-ID: <39eaa9df1d7d61fbcbfba585f26896e5@fripost.org>
+References: <3909a3843e9fc28c7c1f7812f47b7b2b@fripost.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKFNMonzhYBKkjotNiNY0x0DnWxzHYF8WvO7f7xjGwr-8a=aRQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=fripost.org; h=
+        user-agent:message-id:references:in-reply-to:subject:subject
+        :from:from:date:date:content-transfer-encoding:content-type
+        :content-type:mime-version; s=20140703; t=1500233827; x=
+        1502048228; bh=KBTKF0AtmpwJHJgAFOt6z+2/Uzl8Wbxml144DY5GHZY=; b=i
+        didWZCJBU5IeIFCij5w/IH7xIELVYIqM0xvBEEBkws32I1gFdu/CldbvGBXpTVbm
+        P2eW1ZPqxj0Mex5IbFhX/enOAn5IljgN8da0ScAgFYEwY52R6PIUMG3SmIt5Xe2M
+        wfGwsmhm05CI/aihFSEm1YRmIX8vPS8mQzJUGpsMXs=
+In-Reply-To: <3909a3843e9fc28c7c1f7812f47b7b2b-m2T68/X/qvZAfugRpC6u6w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
 
-Am Wed, 12 Jul 2017 09:08:57 +0900
-schrieb Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+The battery in my laptop, Lenovo X1 Carbon, with NixOS version 17.03 ran 
+out of power in May. When I started the laptop again, it did not boot 
+properly. I have used another laptop since then.
 
-> Hi,
-> 
-> 2017-07-11 15:19 GMT+09:00 Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:
-> >
-> > There is a race condition between the function nilfs_dirty_inode()
-> > and nilfs_set_file_dirty().
-> >
-> > When a file is opened, nilfs_dirty_inode() is called to update the
-> > access timestamp in the inode. It calls __nilfs_mark_inode_dirty()
-> > in a separate transaction. __nilfs_mark_inode_dirty() caches the
-> > ifile buffer_head in the i_bh field of the inode info structure and
-> > marks it as dirty.
-> >
-> > After some data was written to the file in another transaction, the
-> > function nilfs_set_file_dirty() is called, which adds the inode to
-> > the ns_dirty_files list.
-> >
-> > Then the segment construction calls
-> > nilfs_segctor_collect_dirty_files(), which goes through the
-> > ns_dirty_files list and checks the i_bh field. If there is a cached
-> > buffer_head in i_bh it is not marked as dirty again.
-> >
-> > Since nilfs_dirty_inode() and nilfs_set_file_dirty() use separate
-> > transactions, it is possible that a segment construction that
-> > writes out the ifile occurs in-between the two. If this happens the
-> > inode is not on the ns_dirty_files list, but its ifile block is
-> > still marked as dirty and written out.
-> >
-> > In the next segment construction, the data for the file is written
-> > out and nilfs_bmap_propagate() updates the b-tree. Eventually the
-> > bmap root is written into the i_bh block, which is not dirty,
-> > because it was written out in another segment construction.
-> >
-> > As a result the bmap update can be lost, which leads to file system
-> > corruption. Either the virtual block address points to an
-> > unallocated DAT block, or the DAT entry will be reused for
-> > something different.
-> >
-> > The error can remain undetected for a long time. A typical error
-> > message would be one of the "bad btree" errors or a warning that a
-> > DAT entry could not be found.
-> >
-> > This bug can be reproduced reliably by a simple benchmark that
-> > creates and overwrites millions of 4k files.
-> >
-> > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>  
-> 
-> Will review, please wait for a while.
+I booted it with a Live USB with NixOS 17.03 and followed the 
+instructions under the section 'NILFS got stuck' at 
+http://nilfs.sourceforge.net/en/faq.html:
 
-Thank you, I have uploaded my benchmark on GitHub:
+# echo t > /proc/sysrq-trigger
+# dmesg
 
-https://github.com/zeitgeist87/bugsimulator
+I should say I have no prior experience of sysrq. Anyhow, you can see 
+the dmesg output at the following link:
 
-The benchmark is very simple. It writes out 13107200 4k files in a two
-layer directory tree, so that every directory contains about 1000 files.
-Then it overwrites these files in an infinite loop.
+https://mega.nz/#F!4UoFwYaQ!u7GEnZ3n0BUyNexe3vI2-w
 
-You need quite aggressive cleaner settings for it to keep up with the
-bugsimulator:
+Please get back to me if you want more information.
 
-mc_nsegments_per_clean	16
-nsegments_per_clean	16
-max_clean_segments		30%
-cleaning_interval	0.1
-mc_cleaning_interval	0.1
+Not sure if this is of any interest but this is an excerpt from 
+journalctl:
 
-If you run this benchmark on a fresh 100GB NILFS2 partition with the
-above cleaner settings, the file system will be corrupt in about half an
-hour. At least on my machine.
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: Remounting filesystem read-only
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr 24 06:55:22 nixos kernel: NILFS (dm-0): bad btree node (ino=1609, 
+blocknr=13626216): level = 51, flags = 0x44, nchildren = 12298
+Apr 24 06:55:22 nixos kernel: NILFS error (device dm-0): 
+nilfs_bmap_lookup_contig: broken bmap (inode number=1609)
+Apr
 
-With the patch for the race condition, it can run indefinetly.
 
-Regards,
-Andreas
+Kind regards,
 
-> Regards,
-> Ryusuke Konishi
-> 
-> >
-> > ---
-> >  fs/nilfs2/segment.c | 6 ++++--
-> >  1 file changed, 4 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> > index 70ded52dc1dd..50e12956c737 100644
-> > --- a/fs/nilfs2/segment.c
-> > +++ b/fs/nilfs2/segment.c
-> > @@ -1958,8 +1958,6 @@ static int
-> > nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci, err,
-> > ii->vfs_inode.i_ino); return err;
-> >                         }
-> > -                       mark_buffer_dirty(ibh);
-> > -                       nilfs_mdt_mark_dirty(ifile);
-> >                         spin_lock(&nilfs->ns_inode_lock);
-> >                         if (likely(!ii->i_bh))
-> >                                 ii->i_bh = ibh;
-> > @@ -1968,6 +1966,10 @@ static int
-> > nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci, goto
-> > retry; }
-> >
-> > +               // Always redirty the buffer to avoid race condition
-> > +               mark_buffer_dirty(ii->i_bh);
-> > +               nilfs_mdt_mark_dirty(ifile);
-> > +
-> >                 clear_bit(NILFS_I_QUEUED, &ii->i_state);
-> >                 set_bit(NILFS_I_BUSY, &ii->i_state);
-> >                 list_move_tail(&ii->i_dirty, &sci->sc_dirty_files);
-> > --
-> > 2.13.2
-> >
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe
-> > linux-nilfs" in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html  
-> --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-nilfs" in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+Mikael Andersson
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
