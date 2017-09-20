@@ -1,50 +1,49 @@
-From: Waiman Long <longman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH v7] blktrace: Fix potentail deadlock between delete &
  sysfs ops
-Date: Wed, 20 Sep 2017 15:05:36 -0400
-Message-ID: <76cc6fea-fd1a-04fb-b18b-04ea5d69dde9@redhat.com>
+Date: Wed, 20 Sep 2017 13:09:31 -0600
+Message-ID: <eb3069f4-7803-32a0-0503-4258d47bb54d@kernel.dk>
 References: <1505928371-27829-1-git-send-email-longman@redhat.com>
- <20170920173552.GA14611@infradead.org>
+ <20170920133238.6d48fb93@gandalf.local.home>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170920173552.GA14611-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=subject:to:cc:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=eJNPQrl7q7iu3RUSzVAO6lRHIHwZxg4WY8oozm1mtQo=;
+        b=f1vZ8rFQTXwuysm9Ah3q3n8EB6eDtV33lxckIYfsWmU6AMHf/cVzLP/ViyyAUhGjcF
+         A+adtcoFY3DSXiMxbxqNOJsr0i4y+9nbf32wduIWfMgnHKiKA8xVVvILOu9i3j21o32B
+         GTjWMniVp5Bhdyf4LYNZN1PGnrf0NeMzFcNCjVh/lC59vS7Fd3wPvusuoBAYyBDM8TDP
+         9t1YtCkJ5VoSyjLendMr/TSHYNXwzgOjMTLIcoSpYwor0rvaUj7CVwuRkAmQjP9iuvUY
+         JvwXlRfgUyXm4t4pA+8QjJ/o4UuULSPweqzGgnAzBTdM1khSBJXmkGJlOIZ/Cd/0FNvx
+         z5og==
+In-Reply-To: <20170920133238.6d48fb93@gandalf.local.home>
 Content-Language: en-US
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-block-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>
+To: Steven Rostedt <rostedt@goodmis.org>, Waiman Long <longman@redhat.com>
+Cc: Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-nilfs@vger.kernel.org, cluster-devel@redhat.com, Bart Van Assche <Bart.VanAssche@wdc.com>, Christoph Hellwig <hch@infradead.org>
 
-On 09/20/2017 01:35 PM, Christoph Hellwig wrote:
->> +/*
->> + * When reading or writing the blktrace sysfs files, the references to the
->> + * opened sysfs or device files should prevent the underlying block device
->> + * from being removed. So no further delete protection is really needed.
->> + *
->> + * Protection from multiple readers and writers accessing blktrace data
->> + * concurrently is still required. The bd_mutex was used for this purpose.
->> + * That could lead to deadlock with concurrent block device deletion and
->> + * sysfs access. As a result, a new blk_trace_mutex is now added to be
->> + * used solely by the blktrace code.
->> + */
-> Comments about previous locking schemes really don't have a business
-> in the code - those are remarks for the commit logs.  And in general
-> please explain the locking scheme near the data that they proctect
-> it, as locks should always protected data, not code and the comments
-> should follow that.
+On 09/20/2017 11:32 AM, Steven Rostedt wrote:
+> 
+> Christoph,
+> 
+> Can you give an acked-by for this patch?
+> 
+> Jens,
+> 
+> You want to take this through your tree, or do you want me to?
+> 
+> If you want it, here's my:
+> 
+> Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 
-It seems to be a general practice that we don't put detailed comments in
-the header files. The comment was put above the function with the first
-instance of the blk_trace_mutex. Yes, I agree that talking about the
-past history may not be applicable here. I will keep that in mind in the
-future.
+I'll take it through my tree, and I'll prune some of that comment
+as well (which should be a commit message thing, not a code comment).
 
-Thanks,
-Longman
+-- 
+Jens Axboe
 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
