@@ -1,30 +1,58 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v7] blktrace: Fix potentail deadlock between delete &
- sysfs ops
-Date: Wed, 20 Sep 2017 15:27:33 -0400
-Message-ID: <20170920152733.0e8290e1@gandalf.local.home>
-References: <1505928371-27829-1-git-send-email-longman@redhat.com>
-        <20170920133238.6d48fb93@gandalf.local.home>
-        <eb3069f4-7803-32a0-0503-4258d47bb54d@kernel.dk>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <eb3069f4-7803-32a0-0503-4258d47bb54d@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH 09/15] nilfs2: Use pagevec_lookup_range_tag()
+Date: Wed, 27 Sep 2017 18:03:28 +0200
+Message-ID: <20170927160334.29513-10-jack@suse.cz>
+References: <20170927160334.29513-1-jack@suse.cz>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170927160334.29513-1-jack-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Waiman Long <longman@redhat.com>, Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-nilfs@vger.kernel.org, cluster-devel@redhat.com, Bart Van Assche <Bart.VanAssche@wdc.com>, Christoph Hellwig <hch@infradead.org>
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, 20 Sep 2017 13:09:31 -0600
-Jens Axboe <axboe@kernel.dk> wrote:
-> 
-> I'll take it through my tree, and I'll prune some of that comment
-> as well (which should be a commit message thing, not a code comment).
-> 
+We want only pages from given range in
+nilfs_lookup_dirty_data_buffers(). Use pagevec_lookup_range_tag()
+instead of pagevec_lookup_tag() and remove unnecessary code.
 
-Agreed, and thanks.
+CC: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+CC: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+---
+ fs/nilfs2/segment.c | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
 
--- Steve
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 70ded52dc1dd..68e5769cef3b 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -711,18 +711,14 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
+ 	pagevec_init(&pvec, 0);
+  repeat:
+ 	if (unlikely(index > last) ||
+-	    !pagevec_lookup_tag(&pvec, mapping, &index, PAGECACHE_TAG_DIRTY,
+-				min_t(pgoff_t, last - index,
+-				      PAGEVEC_SIZE - 1) + 1))
++	    !pagevec_lookup_range_tag(&pvec, mapping, &index, last,
++				PAGECACHE_TAG_DIRTY, PAGEVEC_SIZE))
+ 		return ndirties;
+ 
+ 	for (i = 0; i < pagevec_count(&pvec); i++) {
+ 		struct buffer_head *bh, *head;
+ 		struct page *page = pvec.pages[i];
+ 
+-		if (unlikely(page->index > last))
+-			break;
+-
+ 		lock_page(page);
+ 		if (!page_has_buffers(page))
+ 			create_empty_buffers(page, i_blocksize(inode), 0);
+-- 
+2.12.3
 
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
