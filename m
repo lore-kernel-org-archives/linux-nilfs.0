@@ -1,67 +1,97 @@
-From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: Re: [PATCH 09/15] nilfs2: Use pagevec_lookup_range_tag()
-Date: Thu, 28 Sep 2017 10:40:50 +0900
-Message-ID: <8960b327-5541-40ec-9966-ca4e43e8e9a0@lab.ntt.co.jp>
-References: <20170927160334.29513-1-jack@suse.cz>
- <20170927160334.29513-10-jack@suse.cz>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH] fs/nilfs2: Convert timers to use timer_setup()
+Date: Wed, 4 Oct 2017 17:52:45 -0700
+Message-ID: <20171005005245.GA23640@beast>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170927160334.29513-10-jack@suse.cz>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google;
+        h=date:from:to:cc:subject:message-id:mime-version:content-disposition;
+        bh=qEsqA2O1kbi6j+yWiAWF8xTXtLzGkKd0NtFHE3hkAFE=;
+        b=KEZwqFCyRalOvDoSLWk9ZXXOChDv7ASq4f4vwTXD5UIw+85EJMfOBmOt2Q1ge8mqk0
+         LaMsJB70C+BcpM8l5WKW93MN/KBIin4mUsZU+AUs06dm+UGly6LK9agetgSUnJnQuVE3
+         1Bze7FVIoSf+mBeEQHjainKwAXxdGn96uja0w=
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Jan Kara <jack@suse.cz>, Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-kernel@vger.kernel.org
+Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>
+
+In preparation for unconditionally passing the struct timer_list pointer to
+all timer callbacks, switch to using the new timer_setup() and from_timer()
+to pass the timer pointer explicitly. This requires adding a pointer to
+hold the timer's target task, as the lifetime of sc_task doesn't appear to
+match the timer's task.
+
+Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+This requires commit 686fef928bba ("timer: Prepare to change timer
+callback argument type") in v4.14-rc3, but should be otherwise
+stand-alone.
+---
+ fs/nilfs2/segment.c | 11 +++++------
+ fs/nilfs2/segment.h |  1 +
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 70ded52dc1dd..07b6154a081e 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2404,11 +2404,11 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci, int mode)
+ 	return err;
+ }
+ 
+-static void nilfs_construction_timeout(unsigned long data)
++static void nilfs_construction_timeout(struct timer_list *t)
+ {
+-	struct task_struct *p = (struct task_struct *)data;
++	struct nilfs_sc_info *sci = from_timer(sci, t, sc_timer);
+ 
+-	wake_up_process(p);
++	wake_up_process(sci->sc_timer_task);
+ }
+ 
+ static void
+@@ -2546,8 +2546,7 @@ static int nilfs_segctor_thread(void *arg)
+ 	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
+ 	int timeout = 0;
+ 
+-	sci->sc_timer.data = (unsigned long)current;
+-	sci->sc_timer.function = nilfs_construction_timeout;
++	sci->sc_timer_task = current;
+ 
+ 	/* start sync. */
+ 	sci->sc_task = current;
+@@ -2678,7 +2677,7 @@ static struct nilfs_sc_info *nilfs_segctor_new(struct super_block *sb,
+ 	INIT_LIST_HEAD(&sci->sc_gc_inodes);
+ 	INIT_LIST_HEAD(&sci->sc_iput_queue);
+ 	INIT_WORK(&sci->sc_iput_work, nilfs_iput_work_func);
+-	init_timer(&sci->sc_timer);
++	timer_setup(&sci->sc_timer, nilfs_construction_timeout, 0);
+ 
+ 	sci->sc_interval = HZ * NILFS_SC_DEFAULT_TIMEOUT;
+ 	sci->sc_mjcp_freq = HZ * NILFS_SC_DEFAULT_SR_FREQ;
+diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
+index 1060949d7dd2..84084a4d9b3e 100644
+--- a/fs/nilfs2/segment.h
++++ b/fs/nilfs2/segment.h
+@@ -180,6 +180,7 @@ struct nilfs_sc_info {
+ 	unsigned long		sc_watermark;
+ 
+ 	struct timer_list	sc_timer;
++	struct task_struct     *sc_timer_task;
+ 	struct task_struct     *sc_task;
+ };
+ 
+-- 
+2.7.4
 
 
-On 2017/09/28 1:03, Jan Kara wrote:
-> We want only pages from given range in
-> nilfs_lookup_dirty_data_buffers(). Use pagevec_lookup_range_tag()
-> instead of pagevec_lookup_tag() and remove unnecessary code.
-> 
-> CC: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-> CC: linux-nilfs@vger.kernel.org
-> Signed-off-by: Jan Kara <jack@suse.cz>
-> ---
->   fs/nilfs2/segment.c | 8 ++------
->   1 file changed, 2 insertions(+), 6 deletions(-)
-
-Nice patch. Thanks.
-
-Acked-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-
-> 
-> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> index 70ded52dc1dd..68e5769cef3b 100644
-> --- a/fs/nilfs2/segment.c
-> +++ b/fs/nilfs2/segment.c
-> @@ -711,18 +711,14 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
->   	pagevec_init(&pvec, 0);
->    repeat:
->   	if (unlikely(index > last) ||
-> -	    !pagevec_lookup_tag(&pvec, mapping, &index, PAGECACHE_TAG_DIRTY,
-> -				min_t(pgoff_t, last - index,
-> -				      PAGEVEC_SIZE - 1) + 1))
-> +	    !pagevec_lookup_range_tag(&pvec, mapping, &index, last,
-> +				PAGECACHE_TAG_DIRTY, PAGEVEC_SIZE))
->   		return ndirties;
->   
->   	for (i = 0; i < pagevec_count(&pvec); i++) {
->   		struct buffer_head *bh, *head;
->   		struct page *page = pvec.pages[i];
->   
-> -		if (unlikely(page->index > last))
-> -			break;
-> -
->   		lock_page(page);
->   		if (!page_has_buffers(page))
->   			create_empty_buffers(page, i_blocksize(inode), 0);
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Kees Cook
+Pixel Security
