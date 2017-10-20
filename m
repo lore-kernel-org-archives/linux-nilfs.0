@@ -1,95 +1,115 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: [PATCH] fs/nilfs2: Convert timers to use timer_setup()
-Date: Mon, 16 Oct 2017 16:59:00 -0700
-Message-ID: <20171016235900.GA102729@beast>
-Mime-Version: 1.0
+From: Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] fs, nilfs: convert nilfs_root.count from atomic_t to refcount_t
+Date: Fri, 20 Oct 2017 13:51:24 +0300
+Message-ID: <1508496684-4908-1-git-send-email-elena.reshetova@intel.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google;
-        h=date:from:to:cc:subject:message-id:mime-version:content-disposition;
-        bh=fDRG07VT1mwEgHLDeoeUsuGa/Y9fGavhA2IEttRhtkQ=;
-        b=cbcAi6zMO/nxfxOMQX5kHarP3nywi4d26dbfys0AuzQKtJmfoevoQcEmXYVyZVwajn
-         wsimyfWTv+yXzXnlsaYEEpXEaMM6R4fE0xeDP1o/5UjrIr3gvxHmFERRFtIHUpu2NwXH
-         quk5XC438kSeJnpEFxk3OGcTi9j00bjeZBX/0=
-Content-Disposition: inline
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-In preparation for unconditionally passing the struct timer_list pointer to
-all timer callbacks, switch to using the new timer_setup() and from_timer()
-to pass the timer pointer explicitly. This requires adding a pointer to
-hold the timer's target task, as the lifetime of sc_task doesn't appear to
-match the timer's task.
+atomic_t variables are currently used to implement reference
+counters with the following properties:
+ - counter is initialized to 1 using atomic_set()
+ - a resource is freed upon counter reaching zero
+ - once counter reaches zero, its further
+   increments aren't allowed
+ - counter schema uses basic atomic operations
+   (set, inc, inc_not_zero, dec_and_test, etc.)
 
-Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Such atomic variables should be converted to a newly provided
+refcount_t type and API that prevents accidental counter overflows
+and underflows. This is important since overflows and underflows
+can lead to use-after-free situation and be exploitable.
+
+The variable nilfs_root.count is used as pure reference counter.
+Convert it to refcount_t and fix up the operations.
+
+Suggested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Reviewed-by: David Windsor <dwindsor-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reviewed-by: Hans Liljestrand <ishkamiel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- fs/nilfs2/segment.c | 11 +++++------
- fs/nilfs2/segment.h |  1 +
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ fs/nilfs2/the_nilfs.c | 8 ++++----
+ fs/nilfs2/the_nilfs.h | 5 +++--
+ 2 files changed, 7 insertions(+), 6 deletions(-)
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 70ded52dc1dd..07b6154a081e 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -2404,11 +2404,11 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci, int mode)
- 	return err;
- }
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 2dd75bf..afebb50 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -737,7 +737,7 @@ struct nilfs_root *nilfs_lookup_root(struct the_nilfs *nilfs, __u64 cno)
+ 		} else if (cno > root->cno) {
+ 			n = n->rb_right;
+ 		} else {
+-			atomic_inc(&root->count);
++			refcount_inc(&root->count);
+ 			spin_unlock(&nilfs->ns_cptree_lock);
+ 			return root;
+ 		}
+@@ -776,7 +776,7 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
+ 		} else if (cno > root->cno) {
+ 			p = &(*p)->rb_right;
+ 		} else {
+-			atomic_inc(&root->count);
++			refcount_inc(&root->count);
+ 			spin_unlock(&nilfs->ns_cptree_lock);
+ 			kfree(new);
+ 			return root;
+@@ -786,7 +786,7 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
+ 	new->cno = cno;
+ 	new->ifile = NULL;
+ 	new->nilfs = nilfs;
+-	atomic_set(&new->count, 1);
++	refcount_set(&new->count, 1);
+ 	atomic64_set(&new->inodes_count, 0);
+ 	atomic64_set(&new->blocks_count, 0);
  
--static void nilfs_construction_timeout(unsigned long data)
-+static void nilfs_construction_timeout(struct timer_list *t)
+@@ -806,7 +806,7 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
+ 
+ void nilfs_put_root(struct nilfs_root *root)
  {
--	struct task_struct *p = (struct task_struct *)data;
-+	struct nilfs_sc_info *sci = from_timer(sci, t, sc_timer);
+-	if (atomic_dec_and_test(&root->count)) {
++	if (refcount_dec_and_test(&root->count)) {
+ 		struct the_nilfs *nilfs = root->nilfs;
  
--	wake_up_process(p);
-+	wake_up_process(sci->sc_timer_task);
+ 		nilfs_sysfs_delete_snapshot_group(root);
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index b305c6f..883d732 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -27,6 +27,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/backing-dev.h>
+ #include <linux/slab.h>
++#include <linux/refcount.h>
+ 
+ struct nilfs_sc_info;
+ struct nilfs_sysfs_dev_subgroups;
+@@ -246,7 +247,7 @@ struct nilfs_root {
+ 	__u64 cno;
+ 	struct rb_node rb_node;
+ 
+-	atomic_t count;
++	refcount_t count;
+ 	struct the_nilfs *nilfs;
+ 	struct inode *ifile;
+ 
+@@ -299,7 +300,7 @@ void nilfs_swap_super_block(struct the_nilfs *);
+ 
+ static inline void nilfs_get_root(struct nilfs_root *root)
+ {
+-	atomic_inc(&root->count);
++	refcount_inc(&root->count);
  }
  
- static void
-@@ -2546,8 +2546,7 @@ static int nilfs_segctor_thread(void *arg)
- 	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
- 	int timeout = 0;
- 
--	sci->sc_timer.data = (unsigned long)current;
--	sci->sc_timer.function = nilfs_construction_timeout;
-+	sci->sc_timer_task = current;
- 
- 	/* start sync. */
- 	sci->sc_task = current;
-@@ -2678,7 +2677,7 @@ static struct nilfs_sc_info *nilfs_segctor_new(struct super_block *sb,
- 	INIT_LIST_HEAD(&sci->sc_gc_inodes);
- 	INIT_LIST_HEAD(&sci->sc_iput_queue);
- 	INIT_WORK(&sci->sc_iput_work, nilfs_iput_work_func);
--	init_timer(&sci->sc_timer);
-+	timer_setup(&sci->sc_timer, nilfs_construction_timeout, 0);
- 
- 	sci->sc_interval = HZ * NILFS_SC_DEFAULT_TIMEOUT;
- 	sci->sc_mjcp_freq = HZ * NILFS_SC_DEFAULT_SR_FREQ;
-diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
-index 1060949d7dd2..84084a4d9b3e 100644
---- a/fs/nilfs2/segment.h
-+++ b/fs/nilfs2/segment.h
-@@ -180,6 +180,7 @@ struct nilfs_sc_info {
- 	unsigned long		sc_watermark;
- 
- 	struct timer_list	sc_timer;
-+	struct task_struct     *sc_timer_task;
- 	struct task_struct     *sc_task;
- };
- 
+ static inline int nilfs_valid_fs(struct the_nilfs *nilfs)
 -- 
 2.7.4
 
-
--- 
-Kees Cook
-Pixel Security
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
