@@ -1,124 +1,88 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] fs, nilfs: convert nilfs_root.count from atomic_t to
+From: "Reshetova, Elena" <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: RE: [PATCH] fs, nilfs: convert nilfs_root.count from atomic_t to
  refcount_t
-Date: Sat, 21 Oct 2017 03:46:24 +0900
-Message-ID: <423eab28-f68d-b7e9-d330-1f49df8c974a@lab.ntt.co.jp>
+Date: Mon, 23 Oct 2017 07:24:44 +0000
+Message-ID: <2236FBA76BA1254E88B949DDB74E612B802B4268@IRSMSX102.ger.corp.intel.com>
 References: <1508496684-4908-1-git-send-email-elena.reshetova@intel.com>
+ <423eab28-f68d-b7e9-d330-1f49df8c974a@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1508496684-4908-1-git-send-email-elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <423eab28-f68d-b7e9-d330-1f49df8c974a-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
 Content-Language: en-US
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org" <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 
-On 2017/10/20 19:51, Elena Reshetova wrote:
-> atomic_t variables are currently used to implement reference
-> counters with the following properties:
->   - counter is initialized to 1 using atomic_set()
->   - a resource is freed upon counter reaching zero
->   - once counter reaches zero, its further
->     increments aren't allowed
->   - counter schema uses basic atomic operations
->     (set, inc, inc_not_zero, dec_and_test, etc.)
-> 
-> Such atomic variables should be converted to a newly provided
-> refcount_t type and API that prevents accidental counter overflows
-> and underflows. This is important since overflows and underflows
-> can lead to use-after-free situation and be exploitable.
-> 
-> The variable nilfs_root.count is used as pure reference counter.
-> Convert it to refcount_t and fix up the operations.
-> 
-> Suggested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> Reviewed-by: David Windsor <dwindsor-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Reviewed-by: Hans Liljestrand <ishkamiel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-
-Applied, thank you.
-
-Ryusuke Konishi
-
-> ---
->   fs/nilfs2/the_nilfs.c | 8 ++++----
->   fs/nilfs2/the_nilfs.h | 5 +++--
->   2 files changed, 7 insertions(+), 6 deletions(-)
-> 
-> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-> index 2dd75bf..afebb50 100644
-> --- a/fs/nilfs2/the_nilfs.c
-> +++ b/fs/nilfs2/the_nilfs.c
-> @@ -737,7 +737,7 @@ struct nilfs_root *nilfs_lookup_root(struct the_nilfs *nilfs, __u64 cno)
->   		} else if (cno > root->cno) {
->   			n = n->rb_right;
->   		} else {
-> -			atomic_inc(&root->count);
-> +			refcount_inc(&root->count);
->   			spin_unlock(&nilfs->ns_cptree_lock);
->   			return root;
->   		}
-> @@ -776,7 +776,7 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
->   		} else if (cno > root->cno) {
->   			p = &(*p)->rb_right;
->   		} else {
-> -			atomic_inc(&root->count);
-> +			refcount_inc(&root->count);
->   			spin_unlock(&nilfs->ns_cptree_lock);
->   			kfree(new);
->   			return root;
-> @@ -786,7 +786,7 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
->   	new->cno = cno;
->   	new->ifile = NULL;
->   	new->nilfs = nilfs;
-> -	atomic_set(&new->count, 1);
-> +	refcount_set(&new->count, 1);
->   	atomic64_set(&new->inodes_count, 0);
->   	atomic64_set(&new->blocks_count, 0);
->   
-> @@ -806,7 +806,7 @@ nilfs_find_or_create_root(struct the_nilfs *nilfs, __u64 cno)
->   
->   void nilfs_put_root(struct nilfs_root *root)
->   {
-> -	if (atomic_dec_and_test(&root->count)) {
-> +	if (refcount_dec_and_test(&root->count)) {
->   		struct the_nilfs *nilfs = root->nilfs;
->   
->   		nilfs_sysfs_delete_snapshot_group(root);
-> diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-> index b305c6f..883d732 100644
-> --- a/fs/nilfs2/the_nilfs.h
-> +++ b/fs/nilfs2/the_nilfs.h
-> @@ -27,6 +27,7 @@
->   #include <linux/blkdev.h>
->   #include <linux/backing-dev.h>
->   #include <linux/slab.h>
-> +#include <linux/refcount.h>
->   
->   struct nilfs_sc_info;
->   struct nilfs_sysfs_dev_subgroups;
-> @@ -246,7 +247,7 @@ struct nilfs_root {
->   	__u64 cno;
->   	struct rb_node rb_node;
->   
-> -	atomic_t count;
-> +	refcount_t count;
->   	struct the_nilfs *nilfs;
->   	struct inode *ifile;
->   
-> @@ -299,7 +300,7 @@ void nilfs_swap_super_block(struct the_nilfs *);
->   
->   static inline void nilfs_get_root(struct nilfs_root *root)
->   {
-> -	atomic_inc(&root->count);
-> +	refcount_inc(&root->count);
->   }
->   
->   static inline int nilfs_valid_fs(struct the_nilfs *nilfs)
-> 
-
+PiBPbiAyMDE3LzEwLzIwIDE5OjUxLCBFbGVuYSBSZXNoZXRvdmEgd3JvdGU6DQo+ID4gYXRvbWlj
+X3QgdmFyaWFibGVzIGFyZSBjdXJyZW50bHkgdXNlZCB0byBpbXBsZW1lbnQgcmVmZXJlbmNlDQo+
+ID4gY291bnRlcnMgd2l0aCB0aGUgZm9sbG93aW5nIHByb3BlcnRpZXM6DQo+ID4gICAtIGNvdW50
+ZXIgaXMgaW5pdGlhbGl6ZWQgdG8gMSB1c2luZyBhdG9taWNfc2V0KCkNCj4gPiAgIC0gYSByZXNv
+dXJjZSBpcyBmcmVlZCB1cG9uIGNvdW50ZXIgcmVhY2hpbmcgemVybw0KPiA+ICAgLSBvbmNlIGNv
+dW50ZXIgcmVhY2hlcyB6ZXJvLCBpdHMgZnVydGhlcg0KPiA+ICAgICBpbmNyZW1lbnRzIGFyZW4n
+dCBhbGxvd2VkDQo+ID4gICAtIGNvdW50ZXIgc2NoZW1hIHVzZXMgYmFzaWMgYXRvbWljIG9wZXJh
+dGlvbnMNCj4gPiAgICAgKHNldCwgaW5jLCBpbmNfbm90X3plcm8sIGRlY19hbmRfdGVzdCwgZXRj
+LikNCj4gPg0KPiA+IFN1Y2ggYXRvbWljIHZhcmlhYmxlcyBzaG91bGQgYmUgY29udmVydGVkIHRv
+IGEgbmV3bHkgcHJvdmlkZWQNCj4gPiByZWZjb3VudF90IHR5cGUgYW5kIEFQSSB0aGF0IHByZXZl
+bnRzIGFjY2lkZW50YWwgY291bnRlciBvdmVyZmxvd3MNCj4gPiBhbmQgdW5kZXJmbG93cy4gVGhp
+cyBpcyBpbXBvcnRhbnQgc2luY2Ugb3ZlcmZsb3dzIGFuZCB1bmRlcmZsb3dzDQo+ID4gY2FuIGxl
+YWQgdG8gdXNlLWFmdGVyLWZyZWUgc2l0dWF0aW9uIGFuZCBiZSBleHBsb2l0YWJsZS4NCj4gPg0K
+PiA+IFRoZSB2YXJpYWJsZSBuaWxmc19yb290LmNvdW50IGlzIHVzZWQgYXMgcHVyZSByZWZlcmVu
+Y2UgY291bnRlci4NCj4gPiBDb252ZXJ0IGl0IHRvIHJlZmNvdW50X3QgYW5kIGZpeCB1cCB0aGUg
+b3BlcmF0aW9ucy4NCj4gPg0KPiA+IFN1Z2dlc3RlZC1ieTogS2VlcyBDb29rIDxrZWVzY29va0Bj
+aHJvbWl1bS5vcmc+DQo+ID4gUmV2aWV3ZWQtYnk6IERhdmlkIFdpbmRzb3IgPGR3aW5kc29yQGdt
+YWlsLmNvbT4NCj4gPiBSZXZpZXdlZC1ieTogSGFucyBMaWxqZXN0cmFuZCA8aXNoa2FtaWVsQGdt
+YWlsLmNvbT4NCj4gPiBTaWduZWQtb2ZmLWJ5OiBFbGVuYSBSZXNoZXRvdmEgPGVsZW5hLnJlc2hl
+dG92YUBpbnRlbC5jb20+DQo+IA0KPiBBcHBsaWVkLCB0aGFuayB5b3UuDQoNClRoYW5rIHlvdSB2
+ZXJ5IG11Y2ghDQoNCkJlc3QgUmVnYXJkcywNCkVsZW5hLg0KDQo+IA0KPiBSeXVzdWtlIEtvbmlz
+aGkNCj4gDQo+ID4gLS0tDQo+ID4gICBmcy9uaWxmczIvdGhlX25pbGZzLmMgfCA4ICsrKystLS0t
+DQo+ID4gICBmcy9uaWxmczIvdGhlX25pbGZzLmggfCA1ICsrKy0tDQo+ID4gICAyIGZpbGVzIGNo
+YW5nZWQsIDcgaW5zZXJ0aW9ucygrKSwgNiBkZWxldGlvbnMoLSkNCj4gPg0KPiA+IGRpZmYgLS1n
+aXQgYS9mcy9uaWxmczIvdGhlX25pbGZzLmMgYi9mcy9uaWxmczIvdGhlX25pbGZzLmMNCj4gPiBp
+bmRleCAyZGQ3NWJmLi5hZmViYjUwIDEwMDY0NA0KPiA+IC0tLSBhL2ZzL25pbGZzMi90aGVfbmls
+ZnMuYw0KPiA+ICsrKyBiL2ZzL25pbGZzMi90aGVfbmlsZnMuYw0KPiA+IEBAIC03MzcsNyArNzM3
+LDcgQEAgc3RydWN0IG5pbGZzX3Jvb3QgKm5pbGZzX2xvb2t1cF9yb290KHN0cnVjdCB0aGVfbmls
+ZnMgKm5pbGZzLA0KPiBfX3U2NCBjbm8pDQo+ID4gICAJCX0gZWxzZSBpZiAoY25vID4gcm9vdC0+
+Y25vKSB7DQo+ID4gICAJCQluID0gbi0+cmJfcmlnaHQ7DQo+ID4gICAJCX0gZWxzZSB7DQo+ID4g
+LQkJCWF0b21pY19pbmMoJnJvb3QtPmNvdW50KTsNCj4gPiArCQkJcmVmY291bnRfaW5jKCZyb290
+LT5jb3VudCk7DQo+ID4gICAJCQlzcGluX3VubG9jaygmbmlsZnMtPm5zX2NwdHJlZV9sb2NrKTsN
+Cj4gPiAgIAkJCXJldHVybiByb290Ow0KPiA+ICAgCQl9DQo+ID4gQEAgLTc3Niw3ICs3NzYsNyBA
+QCBuaWxmc19maW5kX29yX2NyZWF0ZV9yb290KHN0cnVjdCB0aGVfbmlsZnMgKm5pbGZzLCBfX3U2
+NA0KPiBjbm8pDQo+ID4gICAJCX0gZWxzZSBpZiAoY25vID4gcm9vdC0+Y25vKSB7DQo+ID4gICAJ
+CQlwID0gJigqcCktPnJiX3JpZ2h0Ow0KPiA+ICAgCQl9IGVsc2Ugew0KPiA+IC0JCQlhdG9taWNf
+aW5jKCZyb290LT5jb3VudCk7DQo+ID4gKwkJCXJlZmNvdW50X2luYygmcm9vdC0+Y291bnQpOw0K
+PiA+ICAgCQkJc3Bpbl91bmxvY2soJm5pbGZzLT5uc19jcHRyZWVfbG9jayk7DQo+ID4gICAJCQlr
+ZnJlZShuZXcpOw0KPiA+ICAgCQkJcmV0dXJuIHJvb3Q7DQo+ID4gQEAgLTc4Niw3ICs3ODYsNyBA
+QCBuaWxmc19maW5kX29yX2NyZWF0ZV9yb290KHN0cnVjdCB0aGVfbmlsZnMgKm5pbGZzLCBfX3U2
+NA0KPiBjbm8pDQo+ID4gICAJbmV3LT5jbm8gPSBjbm87DQo+ID4gICAJbmV3LT5pZmlsZSA9IE5V
+TEw7DQo+ID4gICAJbmV3LT5uaWxmcyA9IG5pbGZzOw0KPiA+IC0JYXRvbWljX3NldCgmbmV3LT5j
+b3VudCwgMSk7DQo+ID4gKwlyZWZjb3VudF9zZXQoJm5ldy0+Y291bnQsIDEpOw0KPiA+ICAgCWF0
+b21pYzY0X3NldCgmbmV3LT5pbm9kZXNfY291bnQsIDApOw0KPiA+ICAgCWF0b21pYzY0X3NldCgm
+bmV3LT5ibG9ja3NfY291bnQsIDApOw0KPiA+DQo+ID4gQEAgLTgwNiw3ICs4MDYsNyBAQCBuaWxm
+c19maW5kX29yX2NyZWF0ZV9yb290KHN0cnVjdCB0aGVfbmlsZnMgKm5pbGZzLCBfX3U2NA0KPiBj
+bm8pDQo+ID4NCj4gPiAgIHZvaWQgbmlsZnNfcHV0X3Jvb3Qoc3RydWN0IG5pbGZzX3Jvb3QgKnJv
+b3QpDQo+ID4gICB7DQo+ID4gLQlpZiAoYXRvbWljX2RlY19hbmRfdGVzdCgmcm9vdC0+Y291bnQp
+KSB7DQo+ID4gKwlpZiAocmVmY291bnRfZGVjX2FuZF90ZXN0KCZyb290LT5jb3VudCkpIHsNCj4g
+PiAgIAkJc3RydWN0IHRoZV9uaWxmcyAqbmlsZnMgPSByb290LT5uaWxmczsNCj4gPg0KPiA+ICAg
+CQluaWxmc19zeXNmc19kZWxldGVfc25hcHNob3RfZ3JvdXAocm9vdCk7DQo+ID4gZGlmZiAtLWdp
+dCBhL2ZzL25pbGZzMi90aGVfbmlsZnMuaCBiL2ZzL25pbGZzMi90aGVfbmlsZnMuaA0KPiA+IGlu
+ZGV4IGIzMDVjNmYuLjg4M2Q3MzIgMTAwNjQ0DQo+ID4gLS0tIGEvZnMvbmlsZnMyL3RoZV9uaWxm
+cy5oDQo+ID4gKysrIGIvZnMvbmlsZnMyL3RoZV9uaWxmcy5oDQo+ID4gQEAgLTI3LDYgKzI3LDcg
+QEANCj4gPiAgICNpbmNsdWRlIDxsaW51eC9ibGtkZXYuaD4NCj4gPiAgICNpbmNsdWRlIDxsaW51
+eC9iYWNraW5nLWRldi5oPg0KPiA+ICAgI2luY2x1ZGUgPGxpbnV4L3NsYWIuaD4NCj4gPiArI2lu
+Y2x1ZGUgPGxpbnV4L3JlZmNvdW50Lmg+DQo+ID4NCj4gPiAgIHN0cnVjdCBuaWxmc19zY19pbmZv
+Ow0KPiA+ICAgc3RydWN0IG5pbGZzX3N5c2ZzX2Rldl9zdWJncm91cHM7DQo+ID4gQEAgLTI0Niw3
+ICsyNDcsNyBAQCBzdHJ1Y3QgbmlsZnNfcm9vdCB7DQo+ID4gICAJX191NjQgY25vOw0KPiA+ICAg
+CXN0cnVjdCByYl9ub2RlIHJiX25vZGU7DQo+ID4NCj4gPiAtCWF0b21pY190IGNvdW50Ow0KPiA+
+ICsJcmVmY291bnRfdCBjb3VudDsNCj4gPiAgIAlzdHJ1Y3QgdGhlX25pbGZzICpuaWxmczsNCj4g
+PiAgIAlzdHJ1Y3QgaW5vZGUgKmlmaWxlOw0KPiA+DQo+ID4gQEAgLTI5OSw3ICszMDAsNyBAQCB2
+b2lkIG5pbGZzX3N3YXBfc3VwZXJfYmxvY2soc3RydWN0IHRoZV9uaWxmcyAqKTsNCj4gPg0KPiA+
+ICAgc3RhdGljIGlubGluZSB2b2lkIG5pbGZzX2dldF9yb290KHN0cnVjdCBuaWxmc19yb290ICpy
+b290KQ0KPiA+ICAgew0KPiA+IC0JYXRvbWljX2luYygmcm9vdC0+Y291bnQpOw0KPiA+ICsJcmVm
+Y291bnRfaW5jKCZyb290LT5jb3VudCk7DQo+ID4gICB9DQo+ID4NCj4gPiAgIHN0YXRpYyBpbmxp
+bmUgaW50IG5pbGZzX3ZhbGlkX2ZzKHN0cnVjdCB0aGVfbmlsZnMgKm5pbGZzKQ0KPiA+DQoNCg==
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
