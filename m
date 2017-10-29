@@ -1,78 +1,74 @@
-From: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH] nilfs2: Fix race condition that causes file system corruption
-Date: Sun, 29 Oct 2017 11:23:22 +0100
-Message-ID: <CAFvQSYTrjOV2Oq0u+Mf1y+PfPsBy3BvKuo19SL6Vz0whQMjUSw@mail.gmail.com>
+Date: Sun, 29 Oct 2017 21:53:38 +0900
+Message-ID: <CAKFNMo=6uOSA-bdkxN6dYnPo-7Svkm2vMXbFLzcP_eEp9ra_jg@mail.gmail.com>
 References: <20170711061907.19259-1-andreas.rohner@gmx.net>
  <CAKFNMonzhYBKkjotNiNY0x0DnWxzHYF8WvO7f7xjGwr-8a=aRQ@mail.gmail.com>
  <20170713084434.4c68f7d6@terok> <CAKFNMomD0qE3Q-bSfH=6-A82LaEVh2fK8Asp6emgYMa9BstQKw@mail.gmail.com>
- <CAKFNMomWEWyPZ4jSvJLk9AdzuDxn1T4-gxsOpbgRoZ-=6jH1Tg@mail.gmail.com> <20171029104629.7ce6cebb@terok>
+ <CAKFNMomWEWyPZ4jSvJLk9AdzuDxn1T4-gxsOpbgRoZ-=6jH1Tg@mail.gmail.com> <20171029090712.1b19ef66@terok>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=mime-version:in-reply-to:references:from:date:message-id:subject:to;
-        bh=01TpLLaGylPkO2rWI0CxZ87H5zKFfvO6oy2DyKaBBcg=;
-        b=ZYoPz0BoCNMJvhjHooWtuoPo3t5bVZy8trSKbvsgztIcthQhG23uKnSazaPGi5xbAx
-         aPUtNANM38mn8HTETBPR23XBNvGZ4s5reYThWiAfTFeJOUZ7YdKQWT3OryH0W3LcNQsm
-         ab5xhdR8pdkHrxYISGAoEcR+Fi6v2n9EMKjyEUjnox141AV98+wCvwMNFfIoILebDgTZ
-         Legd1vboYtbifvRDVQy8fkzxzfZJUgFy4L4YmAaSde8HokT7OhxWwDv0i/+2JbsACjlH
-         eCAHzMZCNfFWqNurLKEXlBy4hfVliymmeFWF5hZYBLO6aEOTVE8SzKUGQa+QdOntp01z
-         9z6A==
-In-Reply-To: <20171029104629.7ce6cebb@terok>
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to
+         :cc;
+        bh=A2SjQeoDgaj5xNdvbf2Gu5+G1nfXtL8hGNm0KxlRk0s=;
+        b=j0j7NWCJy1t3S24MBDu3BDneND42se09JpTzDz76EQC/SDv4hcA6QGVIFhSGbOHq5N
+         ad79vfHKVWeyMSyjQe4zNZfwmwPHvCURuyRU1IvQqnk5CopebycCeaMVPIun18C5MR0G
+         iuMYa695hyRpXjdQ2SNNWXMC5anvDXowjIaPeowUO8cANsBQck9qOLmRhXlCczcTnm8b
+         Rt6N4ii+HAlJ386C1DcVZmKvi0h+B+R3+UdCbn6toHPkqTRFzA5rE6bY3PxQE7ORJ53M
+         kzgd2K/3naup/3Y1K0VIXYhtWic1+pjKL1hGMofZJ4BGZLqVp/18OQD2FKhHQRaG5Kot
+         4vUQ==
+In-Reply-To: <20171029090712.1b19ef66@terok>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Hi Ryusuke,
-
-Thanks for taking the time and having a look at the issue / patch.
-I will be able to conduct a few tests by tomorrow.
-
-Best regards, Clemens
-
-2017-10-29 10:46 GMT+01:00 Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:
+2017-10-29 17:07 GMT+09:00 Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:
 > Hi Ryusuke,
 >
-> I ran my tests again and I can reproduce the issue within half an hour:
+> Thank you for reviewing my patch. I will rerun my tests to make sure
+> my conclusions were correct.
 >
-> [ 9823.056522] WARNING: CPU: 5 PID: 18461 at fs/nilfs2//dat.c:160
-> nilfs_dat_prepare_end+0xd3/0xe0 [nilfs2]
+> The log output suggests to me, that you are hitting a totally unrelated
+> bug. I have seen that message before on one of my experimental branches,
+> but I didn't think it could happen with stock NILFS2.
 >
-> ...
+> My solution was to add the following piece of code to
+> nilfs_vdesc_is_live() in nilfs-utils:
 >
-> [ 9823.056570] Call Trace:
-> [ 9823.056616]  nilfs_dat_prepare_update+0x20/0x60 [nilfs2]
-> [ 9823.056620]  nilfs_direct_propagate+0x71/0xd0 [nilfs2]
-> [ 9823.056623]  nilfs_bmap_propagate+0x2d/0x70 [nilfs2]
-> [ 9823.056626]  nilfs_collect_file_data+0x23/0x50 [nilfs2]
-> [ 9823.056629]  ? nilfs_collect_dat_data+0x50/0x50 [nilfs2]
-> [ 9823.056636]  nilfs_segctor_apply_buffers+0x7b/0xf0 [nilfs2]
-> [ 9823.056640]  nilfs_segctor_scan_file+0x135/0x190 [nilfs2]
-> [ 9823.056643]  nilfs_segctor_do_construct+0xb7a/0x2100 [nilfs2]
-> [ 9823.056647]  nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
-> [ 9823.056650]  ? nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
-> [ 9823.056653]  nilfs_segctor_thread+0x10a/0x390 [nilfs2]
-> [ 9823.056659]  kthread+0x109/0x140
-> [ 9823.056662]  ? nilfs_segctor_construct+0x300/0x300 [nilfs2]
-> [ 9823.056663]  ? kthread_create_on_node+0x70/0x70
-> [ 9823.056665]  ret_from_fork+0x25/0x30
+> if (vdesc->vd_period.p_end == vdesc->vd_cno) {
+>         /*
+>          * This block was overwritten in the same logical segment, but
+>          * in a different partial segment. Probably because of
+>          * fdatasync() or a flush to disk.
+>          * Without this check, gc will cause buffer confliction error
+>          * if both partial segments are cleaned at the same time.
+>          * In that case there will be two vdesc with the same ino,
+>          * cno and offset.
+>          */
+>         return 0;
+> }
 >
-> The result is a broken file system, and the kernel log is spammed with
-> the above warnings and stack traces.
+> I can't tell for sure if that will fix your problem. I am just guessing.
+> It isn't necessary with my setup, to reproduce the race condition bug.
+
+Thank you, Andreas.  This snippet looks to have fixed the error so far.
+
+Could you shape it to a patch (preferably a separate one) for nilfs-utils repo ?
+
+I haven't yet succeeded to reproduce the original fs corruption error.
+Will continue to try reproducing the bug waiting for report from you
+and/or Clemens.
+
+Thanks,
+Ryusuke Konishi
+
 >
-> The file system usage is at 71%:
->
-> $ LANG=C df /dev/sdb1
-> Filesystem     1K-blocks     Used Available Use% Mounted on
-> /dev/sdb1      104849404 70205436  29401088  71% /mnt
->
-> The patch for the race condition definitely resolves the problem. With
-> it, I can run the bugsimulator for hours without any problems.
->
-> However, I used quite an old kernel 4.12.0. I will update to the
-> latest version and test again.
+> I am rerunning my tests now to make sure I didn't make a mistake.
 >
 > Best regards,
 >
@@ -285,10 +281,6 @@ Best regards, Clemens
 >> linux-nilfs" in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 >> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 >
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
