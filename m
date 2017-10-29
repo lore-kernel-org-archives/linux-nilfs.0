@@ -1,275 +1,294 @@
-From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: Fix race condition that causes file system
- corruption
-Date: Sun, 29 Oct 2017 10:46:35 +0100
-Message-ID: <20171029104629.7ce6cebb@terok>
+From: Clemens Eisserer <linuxhippy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] nilfs2: Fix race condition that causes file system corruption
+Date: Sun, 29 Oct 2017 11:23:22 +0100
+Message-ID: <CAFvQSYTrjOV2Oq0u+Mf1y+PfPsBy3BvKuo19SL6Vz0whQMjUSw@mail.gmail.com>
 References: <20170711061907.19259-1-andreas.rohner@gmx.net>
-        <CAKFNMonzhYBKkjotNiNY0x0DnWxzHYF8WvO7f7xjGwr-8a=aRQ@mail.gmail.com>
-        <20170713084434.4c68f7d6@terok>
-        <CAKFNMomD0qE3Q-bSfH=6-A82LaEVh2fK8Asp6emgYMa9BstQKw@mail.gmail.com>
-        <CAKFNMomWEWyPZ4jSvJLk9AdzuDxn1T4-gxsOpbgRoZ-=6jH1Tg@mail.gmail.com>
+ <CAKFNMonzhYBKkjotNiNY0x0DnWxzHYF8WvO7f7xjGwr-8a=aRQ@mail.gmail.com>
+ <20170713084434.4c68f7d6@terok> <CAKFNMomD0qE3Q-bSfH=6-A82LaEVh2fK8Asp6emgYMa9BstQKw@mail.gmail.com>
+ <CAKFNMomWEWyPZ4jSvJLk9AdzuDxn1T4-gxsOpbgRoZ-=6jH1Tg@mail.gmail.com> <20171029104629.7ce6cebb@terok>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKFNMomWEWyPZ4jSvJLk9AdzuDxn1T4-gxsOpbgRoZ-=6jH1Tg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to;
+        bh=01TpLLaGylPkO2rWI0CxZ87H5zKFfvO6oy2DyKaBBcg=;
+        b=ZYoPz0BoCNMJvhjHooWtuoPo3t5bVZy8trSKbvsgztIcthQhG23uKnSazaPGi5xbAx
+         aPUtNANM38mn8HTETBPR23XBNvGZ4s5reYThWiAfTFeJOUZ7YdKQWT3OryH0W3LcNQsm
+         ab5xhdR8pdkHrxYISGAoEcR+Fi6v2n9EMKjyEUjnox141AV98+wCvwMNFfIoILebDgTZ
+         Legd1vboYtbifvRDVQy8fkzxzfZJUgFy4L4YmAaSde8HokT7OhxWwDv0i/+2JbsACjlH
+         eCAHzMZCNfFWqNurLKEXlBy4hfVliymmeFWF5hZYBLO6aEOTVE8SzKUGQa+QdOntp01z
+         9z6A==
+In-Reply-To: <20171029104629.7ce6cebb@terok>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi Ryusuke,
 
-I ran my tests again and I can reproduce the issue within half an hour:
+Thanks for taking the time and having a look at the issue / patch.
+I will be able to conduct a few tests by tomorrow.
 
-[ 9823.056522] WARNING: CPU: 5 PID: 18461 at fs/nilfs2//dat.c:160
-nilfs_dat_prepare_end+0xd3/0xe0 [nilfs2]
+Best regards, Clemens
 
-...
-
-[ 9823.056570] Call Trace:
-[ 9823.056616]  nilfs_dat_prepare_update+0x20/0x60 [nilfs2]
-[ 9823.056620]  nilfs_direct_propagate+0x71/0xd0 [nilfs2]
-[ 9823.056623]  nilfs_bmap_propagate+0x2d/0x70 [nilfs2]
-[ 9823.056626]  nilfs_collect_file_data+0x23/0x50 [nilfs2]
-[ 9823.056629]  ? nilfs_collect_dat_data+0x50/0x50 [nilfs2]
-[ 9823.056636]  nilfs_segctor_apply_buffers+0x7b/0xf0 [nilfs2]
-[ 9823.056640]  nilfs_segctor_scan_file+0x135/0x190 [nilfs2]
-[ 9823.056643]  nilfs_segctor_do_construct+0xb7a/0x2100 [nilfs2]
-[ 9823.056647]  nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
-[ 9823.056650]  ? nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
-[ 9823.056653]  nilfs_segctor_thread+0x10a/0x390 [nilfs2]
-[ 9823.056659]  kthread+0x109/0x140
-[ 9823.056662]  ? nilfs_segctor_construct+0x300/0x300 [nilfs2]
-[ 9823.056663]  ? kthread_create_on_node+0x70/0x70
-[ 9823.056665]  ret_from_fork+0x25/0x30
-
-The result is a broken file system, and the kernel log is spammed with
-the above warnings and stack traces.
-
-The file system usage is at 71%:
-
-$ LANG=C df /dev/sdb1 
-Filesystem     1K-blocks     Used Available Use% Mounted on
-/dev/sdb1      104849404 70205436  29401088  71% /mnt
-
-The patch for the race condition definitely resolves the problem. With
-it, I can run the bugsimulator for hours without any problems.
-
-However, I used quite an old kernel 4.12.0. I will update to the
-latest version and test again.
-
-Best regards,
-
-Andreas
-
-Am Sun, 29 Oct 2017 14:09:40 +0900
-schrieb Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
-
-> Unfortunately the patch didn't fix this issue:
-> 
-> [  612.614615] NILFS (sda1): segctord starting. Construction interval
-> = 5 seconds, CP frequency < 30 seconds
-> [ 4298.841376] NILFS (sda1): nilfs_ioctl_move_inode_block: conflicting
-> data buffer: ino=1155, cno=11, offset=1, blocknr=1216036,
-> vblocknr=1198436
-> [ 4298.841877] NILFS (sda1): error -17 preparing GC: cannot read
-> source blocks
-> 
-> Look like the bugsimulator hit other bug.
-> 
-> When this happened, the disk usage was 100%:
-> 
-> $ df /dev/sda1
+2017-10-29 10:46 GMT+01:00 Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:
+> Hi Ryusuke,
+>
+> I ran my tests again and I can reproduce the issue within half an hour:
+>
+> [ 9823.056522] WARNING: CPU: 5 PID: 18461 at fs/nilfs2//dat.c:160
+> nilfs_dat_prepare_end+0xd3/0xe0 [nilfs2]
+>
+> ...
+>
+> [ 9823.056570] Call Trace:
+> [ 9823.056616]  nilfs_dat_prepare_update+0x20/0x60 [nilfs2]
+> [ 9823.056620]  nilfs_direct_propagate+0x71/0xd0 [nilfs2]
+> [ 9823.056623]  nilfs_bmap_propagate+0x2d/0x70 [nilfs2]
+> [ 9823.056626]  nilfs_collect_file_data+0x23/0x50 [nilfs2]
+> [ 9823.056629]  ? nilfs_collect_dat_data+0x50/0x50 [nilfs2]
+> [ 9823.056636]  nilfs_segctor_apply_buffers+0x7b/0xf0 [nilfs2]
+> [ 9823.056640]  nilfs_segctor_scan_file+0x135/0x190 [nilfs2]
+> [ 9823.056643]  nilfs_segctor_do_construct+0xb7a/0x2100 [nilfs2]
+> [ 9823.056647]  nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
+> [ 9823.056650]  ? nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
+> [ 9823.056653]  nilfs_segctor_thread+0x10a/0x390 [nilfs2]
+> [ 9823.056659]  kthread+0x109/0x140
+> [ 9823.056662]  ? nilfs_segctor_construct+0x300/0x300 [nilfs2]
+> [ 9823.056663]  ? kthread_create_on_node+0x70/0x70
+> [ 9823.056665]  ret_from_fork+0x25/0x30
+>
+> The result is a broken file system, and the kernel log is spammed with
+> the above warnings and stack traces.
+>
+> The file system usage is at 71%:
+>
+> $ LANG=C df /dev/sdb1
 > Filesystem     1K-blocks     Used Available Use% Mounted on
-> /dev/sda1      104849404 99655676         0 100% /test
-> 
-> And, the error killed cleanerd.   However, I could cleanly unmount the
-> partition, and
-> I didn't see any errors after remount the partition.
-> 
-> As you commented, I have changed some parameters
-> in /etc/nilfs_cleanerd.conf:
-> ------------------------------------------- mc_nsegments_per_clean  16
-> nsegments_per_clean     16
-> max_clean_segments              30%
-> cleaning_interval       0.1
-> mc_cleaning_interval    0.1
-> -------------------------------------------
-> 
-> I will look into this issue with bugsimulator.
-> 
-> Anyone can reproduce the original corruption issue in other way?
-> 
-> Regards,
-> Ryusuke Konishi
-> 
-> 
-> 2017-10-29 2:16 GMT+09:00 Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
-> > Hi,
-> >
-> > Sorry for my late reponse.
-> > I could reproduce a corruption issue with the bug simulator.
-> >
-> > -----
-> > [88805.039545] NILFS (sda1): segctord starting. Construction
-> > interval = 5 second s, CP frequency < 30 seconds
-> > [92817.941644] NILFS (sda1): nilfs_ioctl_move_inode_block:
-> > conflicting data buff er: ino=10846, cno=92, offset=2,
-> > blocknr=11425709, vblocknr=11227714 [92817.941936] NILFS (sda1):
-> > error -17 preparing GC: cannot read source blocks -----
-> >
-> > Now I'm testing the patch.   I will send it to upstream after it
-> > turned out to suppress the issue.
-> >
-> > The patch itself looks good to me though I guess there may be
-> > similar bugs. What makes things complicated seems that inode block
-> > is not marked as dirty just when "propagate" function carries a
-> > dirty state from a dirty node/data block.
-> >
-> > Anyway, I hasten to apply this patch.
-> >
-> > Thanks,
-> > Ryusuke Konishi
-> >
-> >
-> > 2017-07-13 15:44 GMT+09:00 Andreas Rohner
-> > <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:  
-> >> Hi,
-> >>
-> >> Am Wed, 12 Jul 2017 09:08:57 +0900
-> >> schrieb Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
-> >>  
-> >>> Hi,
-> >>>
-> >>> 2017-07-11 15:19 GMT+09:00 Andreas Rohner
-> >>> <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:  
-> >>> >
-> >>> > There is a race condition between the function
-> >>> > nilfs_dirty_inode() and nilfs_set_file_dirty().
-> >>> >
-> >>> > When a file is opened, nilfs_dirty_inode() is called to update
-> >>> > the access timestamp in the inode. It calls
-> >>> > __nilfs_mark_inode_dirty() in a separate transaction.
-> >>> > __nilfs_mark_inode_dirty() caches the ifile buffer_head in the
-> >>> > i_bh field of the inode info structure and marks it as dirty.
-> >>> >
-> >>> > After some data was written to the file in another transaction,
-> >>> > the function nilfs_set_file_dirty() is called, which adds the
-> >>> > inode to the ns_dirty_files list.
-> >>> >
-> >>> > Then the segment construction calls
-> >>> > nilfs_segctor_collect_dirty_files(), which goes through the
-> >>> > ns_dirty_files list and checks the i_bh field. If there is a
-> >>> > cached buffer_head in i_bh it is not marked as dirty again.
-> >>> >
-> >>> > Since nilfs_dirty_inode() and nilfs_set_file_dirty() use
-> >>> > separate transactions, it is possible that a segment
-> >>> > construction that writes out the ifile occurs in-between the
-> >>> > two. If this happens the inode is not on the ns_dirty_files
-> >>> > list, but its ifile block is still marked as dirty and written
-> >>> > out.
-> >>> >
-> >>> > In the next segment construction, the data for the file is
-> >>> > written out and nilfs_bmap_propagate() updates the b-tree.
-> >>> > Eventually the bmap root is written into the i_bh block, which
-> >>> > is not dirty, because it was written out in another segment
-> >>> > construction.
-> >>> >
-> >>> > As a result the bmap update can be lost, which leads to file
-> >>> > system corruption. Either the virtual block address points to an
-> >>> > unallocated DAT block, or the DAT entry will be reused for
-> >>> > something different.
-> >>> >
-> >>> > The error can remain undetected for a long time. A typical error
-> >>> > message would be one of the "bad btree" errors or a warning
-> >>> > that a DAT entry could not be found.
-> >>> >
-> >>> > This bug can be reproduced reliably by a simple benchmark that
-> >>> > creates and overwrites millions of 4k files.
-> >>> >
-> >>> > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>  
-> >>>
-> >>> Will review, please wait for a while.  
-> >>
-> >> Thank you, I have uploaded my benchmark on GitHub:
-> >>
-> >> https://github.com/zeitgeist87/bugsimulator
-> >>
-> >> The benchmark is very simple. It writes out 13107200 4k files in a
-> >> two layer directory tree, so that every directory contains about
-> >> 1000 files. Then it overwrites these files in an infinite loop.
-> >>
-> >> You need quite aggressive cleaner settings for it to keep up with
-> >> the bugsimulator:
-> >>
-> >> mc_nsegments_per_clean  16
-> >> nsegments_per_clean     16
-> >> max_clean_segments              30%
-> >> cleaning_interval       0.1
-> >> mc_cleaning_interval    0.1
-> >>
-> >> If you run this benchmark on a fresh 100GB NILFS2 partition with
-> >> the above cleaner settings, the file system will be corrupt in
-> >> about half an hour. At least on my machine.
-> >>
-> >> With the patch for the race condition, it can run indefinetly.
-> >>
-> >> Regards,
-> >> Andreas
-> >>  
-> >>> Regards,
-> >>> Ryusuke Konishi
-> >>>  
-> >>> >
-> >>> > ---
-> >>> >  fs/nilfs2/segment.c | 6 ++++--
-> >>> >  1 file changed, 4 insertions(+), 2 deletions(-)
-> >>> >
-> >>> > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> >>> > index 70ded52dc1dd..50e12956c737 100644
-> >>> > --- a/fs/nilfs2/segment.c
-> >>> > +++ b/fs/nilfs2/segment.c
-> >>> > @@ -1958,8 +1958,6 @@ static int
-> >>> > nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
-> >>> > err, ii->vfs_inode.i_ino); return err;
-> >>> >                         }
-> >>> > -                       mark_buffer_dirty(ibh);
-> >>> > -                       nilfs_mdt_mark_dirty(ifile);
-> >>> >                         spin_lock(&nilfs->ns_inode_lock);
-> >>> >                         if (likely(!ii->i_bh))
-> >>> >                                 ii->i_bh = ibh;
-> >>> > @@ -1968,6 +1966,10 @@ static int
-> >>> > nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
-> >>> > goto retry; }
-> >>> >
-> >>> > +               // Always redirty the buffer to avoid race
-> >>> > condition
-> >>> > +               mark_buffer_dirty(ii->i_bh);
-> >>> > +               nilfs_mdt_mark_dirty(ifile);
-> >>> > +
-> >>> >                 clear_bit(NILFS_I_QUEUED, &ii->i_state);
-> >>> >                 set_bit(NILFS_I_BUSY, &ii->i_state);
-> >>> >                 list_move_tail(&ii->i_dirty,
-> >>> > &sci->sc_dirty_files); --
-> >>> > 2.13.2
-> >>> >
-> >>> > --
-> >>> > To unsubscribe from this list: send the line "unsubscribe
-> >>> > linux-nilfs" in the body of a message to
-> >>> > majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org More majordomo info at
-> >>> > http://vger.kernel.org/majordomo-info.html  
-> >>> --
-> >>> To unsubscribe from this list: send the line "unsubscribe
-> >>> linux-nilfs" in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> >>> More majordomo info at
-> >>> http://vger.kernel.org/majordomo-info.html  
-> >>  
+> /dev/sdb1      104849404 70205436  29401088  71% /mnt
+>
+> The patch for the race condition definitely resolves the problem. With
+> it, I can run the bugsimulator for hours without any problems.
+>
+> However, I used quite an old kernel 4.12.0. I will update to the
+> latest version and test again.
+>
+> Best regards,
+>
+> Andreas
+>
+> Am Sun, 29 Oct 2017 14:09:40 +0900
+> schrieb Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+>
+>> Unfortunately the patch didn't fix this issue:
+>>
+>> [  612.614615] NILFS (sda1): segctord starting. Construction interval
+>> = 5 seconds, CP frequency < 30 seconds
+>> [ 4298.841376] NILFS (sda1): nilfs_ioctl_move_inode_block: conflicting
+>> data buffer: ino=1155, cno=11, offset=1, blocknr=1216036,
+>> vblocknr=1198436
+>> [ 4298.841877] NILFS (sda1): error -17 preparing GC: cannot read
+>> source blocks
+>>
+>> Look like the bugsimulator hit other bug.
+>>
+>> When this happened, the disk usage was 100%:
+>>
+>> $ df /dev/sda1
+>> Filesystem     1K-blocks     Used Available Use% Mounted on
+>> /dev/sda1      104849404 99655676         0 100% /test
+>>
+>> And, the error killed cleanerd.   However, I could cleanly unmount the
+>> partition, and
+>> I didn't see any errors after remount the partition.
+>>
+>> As you commented, I have changed some parameters
+>> in /etc/nilfs_cleanerd.conf:
+>> ------------------------------------------- mc_nsegments_per_clean  16
+>> nsegments_per_clean     16
+>> max_clean_segments              30%
+>> cleaning_interval       0.1
+>> mc_cleaning_interval    0.1
+>> -------------------------------------------
+>>
+>> I will look into this issue with bugsimulator.
+>>
+>> Anyone can reproduce the original corruption issue in other way?
+>>
+>> Regards,
+>> Ryusuke Konishi
+>>
+>>
+>> 2017-10-29 2:16 GMT+09:00 Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+>> > Hi,
+>> >
+>> > Sorry for my late reponse.
+>> > I could reproduce a corruption issue with the bug simulator.
+>> >
+>> > -----
+>> > [88805.039545] NILFS (sda1): segctord starting. Construction
+>> > interval = 5 second s, CP frequency < 30 seconds
+>> > [92817.941644] NILFS (sda1): nilfs_ioctl_move_inode_block:
+>> > conflicting data buff er: ino=10846, cno=92, offset=2,
+>> > blocknr=11425709, vblocknr=11227714 [92817.941936] NILFS (sda1):
+>> > error -17 preparing GC: cannot read source blocks -----
+>> >
+>> > Now I'm testing the patch.   I will send it to upstream after it
+>> > turned out to suppress the issue.
+>> >
+>> > The patch itself looks good to me though I guess there may be
+>> > similar bugs. What makes things complicated seems that inode block
+>> > is not marked as dirty just when "propagate" function carries a
+>> > dirty state from a dirty node/data block.
+>> >
+>> > Anyway, I hasten to apply this patch.
+>> >
+>> > Thanks,
+>> > Ryusuke Konishi
+>> >
+>> >
+>> > 2017-07-13 15:44 GMT+09:00 Andreas Rohner
+>> > <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:
+>> >> Hi,
+>> >>
+>> >> Am Wed, 12 Jul 2017 09:08:57 +0900
+>> >> schrieb Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+>> >>
+>> >>> Hi,
+>> >>>
+>> >>> 2017-07-11 15:19 GMT+09:00 Andreas Rohner
+>> >>> <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>:
+>> >>> >
+>> >>> > There is a race condition between the function
+>> >>> > nilfs_dirty_inode() and nilfs_set_file_dirty().
+>> >>> >
+>> >>> > When a file is opened, nilfs_dirty_inode() is called to update
+>> >>> > the access timestamp in the inode. It calls
+>> >>> > __nilfs_mark_inode_dirty() in a separate transaction.
+>> >>> > __nilfs_mark_inode_dirty() caches the ifile buffer_head in the
+>> >>> > i_bh field of the inode info structure and marks it as dirty.
+>> >>> >
+>> >>> > After some data was written to the file in another transaction,
+>> >>> > the function nilfs_set_file_dirty() is called, which adds the
+>> >>> > inode to the ns_dirty_files list.
+>> >>> >
+>> >>> > Then the segment construction calls
+>> >>> > nilfs_segctor_collect_dirty_files(), which goes through the
+>> >>> > ns_dirty_files list and checks the i_bh field. If there is a
+>> >>> > cached buffer_head in i_bh it is not marked as dirty again.
+>> >>> >
+>> >>> > Since nilfs_dirty_inode() and nilfs_set_file_dirty() use
+>> >>> > separate transactions, it is possible that a segment
+>> >>> > construction that writes out the ifile occurs in-between the
+>> >>> > two. If this happens the inode is not on the ns_dirty_files
+>> >>> > list, but its ifile block is still marked as dirty and written
+>> >>> > out.
+>> >>> >
+>> >>> > In the next segment construction, the data for the file is
+>> >>> > written out and nilfs_bmap_propagate() updates the b-tree.
+>> >>> > Eventually the bmap root is written into the i_bh block, which
+>> >>> > is not dirty, because it was written out in another segment
+>> >>> > construction.
+>> >>> >
+>> >>> > As a result the bmap update can be lost, which leads to file
+>> >>> > system corruption. Either the virtual block address points to an
+>> >>> > unallocated DAT block, or the DAT entry will be reused for
+>> >>> > something different.
+>> >>> >
+>> >>> > The error can remain undetected for a long time. A typical error
+>> >>> > message would be one of the "bad btree" errors or a warning
+>> >>> > that a DAT entry could not be found.
+>> >>> >
+>> >>> > This bug can be reproduced reliably by a simple benchmark that
+>> >>> > creates and overwrites millions of 4k files.
+>> >>> >
+>> >>> > Signed-off-by: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
+>> >>>
+>> >>> Will review, please wait for a while.
+>> >>
+>> >> Thank you, I have uploaded my benchmark on GitHub:
+>> >>
+>> >> https://github.com/zeitgeist87/bugsimulator
+>> >>
+>> >> The benchmark is very simple. It writes out 13107200 4k files in a
+>> >> two layer directory tree, so that every directory contains about
+>> >> 1000 files. Then it overwrites these files in an infinite loop.
+>> >>
+>> >> You need quite aggressive cleaner settings for it to keep up with
+>> >> the bugsimulator:
+>> >>
+>> >> mc_nsegments_per_clean  16
+>> >> nsegments_per_clean     16
+>> >> max_clean_segments              30%
+>> >> cleaning_interval       0.1
+>> >> mc_cleaning_interval    0.1
+>> >>
+>> >> If you run this benchmark on a fresh 100GB NILFS2 partition with
+>> >> the above cleaner settings, the file system will be corrupt in
+>> >> about half an hour. At least on my machine.
+>> >>
+>> >> With the patch for the race condition, it can run indefinetly.
+>> >>
+>> >> Regards,
+>> >> Andreas
+>> >>
+>> >>> Regards,
+>> >>> Ryusuke Konishi
+>> >>>
+>> >>> >
+>> >>> > ---
+>> >>> >  fs/nilfs2/segment.c | 6 ++++--
+>> >>> >  1 file changed, 4 insertions(+), 2 deletions(-)
+>> >>> >
+>> >>> > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+>> >>> > index 70ded52dc1dd..50e12956c737 100644
+>> >>> > --- a/fs/nilfs2/segment.c
+>> >>> > +++ b/fs/nilfs2/segment.c
+>> >>> > @@ -1958,8 +1958,6 @@ static int
+>> >>> > nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
+>> >>> > err, ii->vfs_inode.i_ino); return err;
+>> >>> >                         }
+>> >>> > -                       mark_buffer_dirty(ibh);
+>> >>> > -                       nilfs_mdt_mark_dirty(ifile);
+>> >>> >                         spin_lock(&nilfs->ns_inode_lock);
+>> >>> >                         if (likely(!ii->i_bh))
+>> >>> >                                 ii->i_bh = ibh;
+>> >>> > @@ -1968,6 +1966,10 @@ static int
+>> >>> > nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
+>> >>> > goto retry; }
+>> >>> >
+>> >>> > +               // Always redirty the buffer to avoid race
+>> >>> > condition
+>> >>> > +               mark_buffer_dirty(ii->i_bh);
+>> >>> > +               nilfs_mdt_mark_dirty(ifile);
+>> >>> > +
+>> >>> >                 clear_bit(NILFS_I_QUEUED, &ii->i_state);
+>> >>> >                 set_bit(NILFS_I_BUSY, &ii->i_state);
+>> >>> >                 list_move_tail(&ii->i_dirty,
+>> >>> > &sci->sc_dirty_files); --
+>> >>> > 2.13.2
+>> >>> >
+>> >>> > --
+>> >>> > To unsubscribe from this list: send the line "unsubscribe
+>> >>> > linux-nilfs" in the body of a message to
+>> >>> > majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org More majordomo info at
+>> >>> > http://vger.kernel.org/majordomo-info.html
+>> >>> --
+>> >>> To unsubscribe from this list: send the line "unsubscribe
+>> >>> linux-nilfs" in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> >>> More majordomo info at
+>> >>> http://vger.kernel.org/majordomo-info.html
+>> >>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe
+>> linux-nilfs" in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 > --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-nilfs" in the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
