@@ -1,8 +1,8 @@
 From: Andreas Rohner <andreas.rohner-hi6Y0CQ0nG0@public.gmane.org>
 Subject: Re: [PATCH] nilfs2: Fix race condition that causes file system
  corruption
-Date: Sun, 29 Oct 2017 09:07:12 +0100
-Message-ID: <20171029090712.1b19ef66@terok>
+Date: Sun, 29 Oct 2017 10:46:35 +0100
+Message-ID: <20171029104629.7ce6cebb@terok>
 References: <20170711061907.19259-1-andreas.rohner@gmx.net>
         <CAKFNMonzhYBKkjotNiNY0x0DnWxzHYF8WvO7f7xjGwr-8a=aRQ@mail.gmail.com>
         <20170713084434.4c68f7d6@terok>
@@ -20,33 +20,44 @@ Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
 Hi Ryusuke,
 
-Thank you for reviewing my patch. I will rerun my tests to make sure
-my conclusions were correct.
+I ran my tests again and I can reproduce the issue within half an hour:
 
-The log output suggests to me, that you are hitting a totally unrelated
-bug. I have seen that message before on one of my experimental branches,
-but I didn't think it could happen with stock NILFS2.
+[ 9823.056522] WARNING: CPU: 5 PID: 18461 at fs/nilfs2//dat.c:160
+nilfs_dat_prepare_end+0xd3/0xe0 [nilfs2]
 
-My solution was to add the following piece of code to
-nilfs_vdesc_is_live() in nilfs-utils:
+...
 
-if (vdesc->vd_period.p_end == vdesc->vd_cno) {
-	/*
-	 * This block was overwritten in the same logical segment, but
-	 * in a different partial segment. Probably because of
-	 * fdatasync() or a flush to disk.
-	 * Without this check, gc will cause buffer confliction error
-	 * if both partial segments are cleaned at the same time.
-	 * In that case there will be two vdesc with the same ino,
-	 * cno and offset.
-	 */
-	return 0;
-}
+[ 9823.056570] Call Trace:
+[ 9823.056616]  nilfs_dat_prepare_update+0x20/0x60 [nilfs2]
+[ 9823.056620]  nilfs_direct_propagate+0x71/0xd0 [nilfs2]
+[ 9823.056623]  nilfs_bmap_propagate+0x2d/0x70 [nilfs2]
+[ 9823.056626]  nilfs_collect_file_data+0x23/0x50 [nilfs2]
+[ 9823.056629]  ? nilfs_collect_dat_data+0x50/0x50 [nilfs2]
+[ 9823.056636]  nilfs_segctor_apply_buffers+0x7b/0xf0 [nilfs2]
+[ 9823.056640]  nilfs_segctor_scan_file+0x135/0x190 [nilfs2]
+[ 9823.056643]  nilfs_segctor_do_construct+0xb7a/0x2100 [nilfs2]
+[ 9823.056647]  nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
+[ 9823.056650]  ? nilfs_segctor_construct+0x1c9/0x300 [nilfs2]
+[ 9823.056653]  nilfs_segctor_thread+0x10a/0x390 [nilfs2]
+[ 9823.056659]  kthread+0x109/0x140
+[ 9823.056662]  ? nilfs_segctor_construct+0x300/0x300 [nilfs2]
+[ 9823.056663]  ? kthread_create_on_node+0x70/0x70
+[ 9823.056665]  ret_from_fork+0x25/0x30
 
-I can't tell for sure if that will fix your problem. I am just guessing.
-It isn't necessary with my setup, to reproduce the race condition bug.
+The result is a broken file system, and the kernel log is spammed with
+the above warnings and stack traces.
 
-I am rerunning my tests now to make sure I didn't make a mistake.
+The file system usage is at 71%:
+
+$ LANG=C df /dev/sdb1 
+Filesystem     1K-blocks     Used Available Use% Mounted on
+/dev/sdb1      104849404 70205436  29401088  71% /mnt
+
+The patch for the race condition definitely resolves the problem. With
+it, I can run the bugsimulator for hours without any problems.
+
+However, I used quite an old kernel 4.12.0. I will update to the
+latest version and test again.
 
 Best regards,
 
