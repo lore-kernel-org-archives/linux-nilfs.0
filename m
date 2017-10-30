@@ -1,132 +1,52 @@
-From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: [PATCH 2/4] fs, nilfs: convert nilfs_root.count from atomic_t to refcount_t
-Date: Mon, 30 Oct 2017 21:52:13 +0900
-Message-ID: <1509367935-3086-3-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 4/4] nilfs2: use octal for unreadable permission macro
+Date: Mon, 30 Oct 2017 21:52:15 +0900
+Message-ID: <1509367935-3086-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1509367935-3086-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=w69jQb7g5c7zz0+CcrdCmGCfEMVTHefd/xk69UljQFI=;
-        b=EFCRTY5Axylip0/Xb1/9j0qV0+0LKShVc3aSu1cdVAMxEVrsfY4zjaTqWrEGYdrfKM
-         wKku70JTWVFmgPcJKq+zzR3Yej9VFCH+IS9UDyMzgh2wVry0BMn9WW5X8C9mXcdOZof0
-         iktcMNWJy1bd/l2wsW1ugCZkXlXOURw+Luzz0TtHM2FA1zrUpi0/cm3Fdi6V4qdPBcSJ
-         9YXU9o99eIkYLp7Ye4Qw00ciOtFLUiX1PZcgLR2jcNCCC8JwW38RvxPNSmd+VlcPf1b6
-         /xh4WqjllpVyzihEhLzR+wxjv1uJy40CHa7JUnp11+l98iBulLmoBB243iE36CJ8Rsnz
-         7sqA==
-In-Reply-To: <1509367935-3086-1-git-send-email-konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+        bh=AUH89S8IncksMoGtj9QqmuFndTg1S+gMirmxQREOID0=;
+        b=UPXTQHWejSywpp0f3vvdRgg6iBxZWGLF9jbo5LNM9j2mqVgHh/fC/qiZV1D4VOlSSZ
+         EjcDgoGpop0y7yFP0Ghqb5YCSu5tVSEvbXuaW/EM4f27OO52SmNNQ5WI7V/02P43ofyL
+         vgBPxsJEEmby9Hx2f9FsxMaF54zZUU0h2hUZdTixEHosbeuBmBKn1qEa8Fp1dATSLoO3
+         pcoOsgixHwwfrxN5HheQ3vDRW6cE1KCaOuRUpYnlGSptWLxQ98qyoa+bCRhOT+u6zK26
+         caNjJ2kXIbhyxKuS3oiUvhHOybJSxreF36TevEhmJ4OFzHLuN5mNU9HHLfxxzV7i8wHB
+         HfSA==
+In-Reply-To: <1509367935-3086-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 
-From: Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Replace S_IRWXUGO with 0777 because symbolic permissions are
+considered harmful:
 
-atomic_t variables are currently used to implement reference
-counters with the following properties:
- - counter is initialized to 1 using atomic_set()
- - a resource is freed upon counter reaching zero
- - once counter reaches zero, its further
-   increments aren't allowed
- - counter schema uses basic atomic operations
-   (set, inc, inc_not_zero, dec_and_test, etc.)
+ https://lwn.net/Articles/696229/
 
-Such atomic variables should be converted to a newly provided
-refcount_t type and API that prevents accidental counter overflows
-and underflows. This is important since overflows and underflows
-can lead to use-after-free situation and be exploitable.
-
-The variable nilfs_root.count is used as pure reference counter.
-Convert it to refcount_t and fix up the operations.
-
-Suggested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Reviewed-by: David Windsor <dwindsor-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Reviewed-by: Hans Liljestrand <ishkamiel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 ---
- fs/nilfs2/the_nilfs.c | 8 ++++----
- fs/nilfs2/the_nilfs.h | 5 +++--
- 2 files changed, 7 insertions(+), 6 deletions(-)
+ fs/nilfs2/namei.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 2dd75bf..afebb50 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -737,7 +737,7 @@ struct nilfs_root *nilfs_lookup_root(struct the_nilfs *nilfs, __u64 cno)
- 		} else if (cno > root->cno) {
- 			n = n->rb_right;
- 		} else {
--			atomic_inc(&root->count);
-+			refcount_inc(&root->count);
- 			spin_unlock(&nilfs->ns_cptree_lock);
- 			return root;
- 		}
-@@ -776,7 +776,7 @@ struct nilfs_root *
- 		} else if (cno > root->cno) {
- 			p = &(*p)->rb_right;
- 		} else {
--			atomic_inc(&root->count);
-+			refcount_inc(&root->count);
- 			spin_unlock(&nilfs->ns_cptree_lock);
- 			kfree(new);
- 			return root;
-@@ -786,7 +786,7 @@ struct nilfs_root *
- 	new->cno = cno;
- 	new->ifile = NULL;
- 	new->nilfs = nilfs;
--	atomic_set(&new->count, 1);
-+	refcount_set(&new->count, 1);
- 	atomic64_set(&new->inodes_count, 0);
- 	atomic64_set(&new->blocks_count, 0);
+diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+index 515d13c..1a2894a 100644
+--- a/fs/nilfs2/namei.c
++++ b/fs/nilfs2/namei.c
+@@ -150,7 +150,7 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
+ 	if (err)
+ 		return err;
  
-@@ -806,7 +806,7 @@ struct nilfs_root *
- 
- void nilfs_put_root(struct nilfs_root *root)
- {
--	if (atomic_dec_and_test(&root->count)) {
-+	if (refcount_dec_and_test(&root->count)) {
- 		struct the_nilfs *nilfs = root->nilfs;
- 
- 		nilfs_sysfs_delete_snapshot_group(root);
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index b305c6f..883d732 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -27,6 +27,7 @@
- #include <linux/blkdev.h>
- #include <linux/backing-dev.h>
- #include <linux/slab.h>
-+#include <linux/refcount.h>
- 
- struct nilfs_sc_info;
- struct nilfs_sysfs_dev_subgroups;
-@@ -246,7 +247,7 @@ struct nilfs_root {
- 	__u64 cno;
- 	struct rb_node rb_node;
- 
--	atomic_t count;
-+	refcount_t count;
- 	struct the_nilfs *nilfs;
- 	struct inode *ifile;
- 
-@@ -299,7 +300,7 @@ struct nilfs_root *nilfs_find_or_create_root(struct the_nilfs *nilfs,
- 
- static inline void nilfs_get_root(struct nilfs_root *root)
- {
--	atomic_inc(&root->count);
-+	refcount_inc(&root->count);
- }
- 
- static inline int nilfs_valid_fs(struct the_nilfs *nilfs)
+-	inode = nilfs_new_inode(dir, S_IFLNK | S_IRWXUGO);
++	inode = nilfs_new_inode(dir, S_IFLNK | 0777);
+ 	err = PTR_ERR(inode);
+ 	if (IS_ERR(inode))
+ 		goto out;
 -- 
 1.8.3.1
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
