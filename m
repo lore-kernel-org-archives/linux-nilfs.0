@@ -1,20 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-Subject: [PATCH 4/4] nilfs2: use octal for unreadable permission macro
-Date: Mon, 30 Oct 2017 21:52:15 +0900
-Message-ID: <1509367935-3086-5-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
+Subject: [PATCH 1/4] nilfs2: Fix race condition that causes file system corruption
+Date: Mon, 30 Oct 2017 21:52:12 +0900
+Message-ID: <1509367935-3086-2-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 References: <1509367935-3086-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :lines;
-        bh=AUH89S8IncksMoGtj9QqmuFndTg1S+gMirmxQREOID0=;
-        b=UPXTQHWejSywpp0f3vvdRgg6iBxZWGLF9jbo5LNM9j2mqVgHh/fC/qiZV1D4VOlSSZ
-         EjcDgoGpop0y7yFP0Ghqb5YCSu5tVSEvbXuaW/EM4f27OO52SmNNQ5WI7V/02P43ofyL
-         vgBPxsJEEmby9Hx2f9FsxMaF54zZUU0h2hUZdTixEHosbeuBmBKn1qEa8Fp1dATSLoO3
-         pcoOsgixHwwfrxN5HheQ3vDRW6cE1KCaOuRUpYnlGSptWLxQ98qyoa+bCRhOT+u6zK26
-         caNjJ2kXIbhyxKuS3oiUvhHOybJSxreF36TevEhmJ4OFzHLuN5mNU9HHLfxxzV7i8wHB
-         HfSA==
+        bh=S22NP1mdWS3eBD+3Nw3dPyobMZ2mBLOFPxGQUc3c4C8=;
+        b=Nwg5UsqV48ds4w2NsvYUNbaYJj/lh0u07SA65GPpqr8IIk6+E9MUZmTBUJOYIKw79V
+         SCtp9DNM97P8Qrzl7TlosHNfCrFsoEn3O2Sg6vK2+RTfFHBhHO+NkKl/N6/JJanYh77P
+         KRgVcMSzh/6RE45ark3/bZoCQHqwW9MM0BC02zEdRJgcocdCJ9tXbD0bvClXP/IzX5ht
+         uzXbRIV/oai5N8oWCEmVqTZwIy1LakQigtxszMzczQX1JSWNB9Xns4XUMdGj23Qulk+K
+         a8f5FXM4jjokraHXr8V8JyvWDp++39fhRvX/0saUAYRyzxpKESrW2DzZZUylrQcsvrCJ
+         qTaA==
 In-Reply-To: <1509367935-3086-1-git-send-email-konishi.ryusuke@lab.ntt.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -22,31 +22,82 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Andreas Rohner <andreas.rohner@gmx.net>
 
-Replace S_IRWXUGO with 0777 because symbolic permissions are
-considered harmful:
+From: Andreas Rohner <andreas.rohner@gmx.net>
 
- https://lwn.net/Articles/696229/
+There is a race condition between the function nilfs_dirty_inode() and
+nilfs_set_file_dirty().
 
+When a file is opened, nilfs_dirty_inode() is called to update the
+access timestamp in the inode. It calls __nilfs_mark_inode_dirty() in a
+separate transaction. __nilfs_mark_inode_dirty() caches the ifile
+buffer_head in the i_bh field of the inode info structure and marks it
+as dirty.
+
+After some data was written to the file in another transaction, the
+function nilfs_set_file_dirty() is called, which adds the inode to
+the ns_dirty_files list.
+
+Then the segment construction calls nilfs_segctor_collect_dirty_files(),
+which goes through the ns_dirty_files list and checks the i_bh field. If
+there is a cached buffer_head in i_bh it is not marked as dirty again.
+
+Since nilfs_dirty_inode() and nilfs_set_file_dirty() use separate
+transactions, it is possible that a segment construction that
+writes out the ifile occurs in-between the two. If this happens the
+inode is not on the ns_dirty_files list, but its ifile block is still
+marked as dirty and written out.
+
+In the next segment construction, the data for the file is written out
+and nilfs_bmap_propagate() updates the b-tree. Eventually the bmap root
+is written into the i_bh block, which is not dirty, because it was
+written out in another segment construction.
+
+As a result the bmap update can be lost, which leads to file system
+corruption. Either the virtual block address points to an unallocated
+DAT block, or the DAT entry will be reused for something different.
+
+The error can remain undetected for a long time. A typical error message
+would be one of the "bad btree" errors or a warning that a DAT entry
+could not be found.
+
+This bug can be reproduced reliably by a simple benchmark that creates
+and overwrites millions of 4k files.
+
+Signed-off-by: Andreas Rohner <andreas.rohner@gmx.net>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Tested-by: Andreas Rohner <andreas.rohner@gmx.net>
+Tested-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: stable@vger.kernel.org
 ---
- fs/nilfs2/namei.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/nilfs2/segment.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index 515d13c..1a2894a 100644
---- a/fs/nilfs2/namei.c
-+++ b/fs/nilfs2/namei.c
-@@ -150,7 +150,7 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
- 	if (err)
- 		return err;
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 70ded52..50e1295 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1958,8 +1958,6 @@ static int nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
+ 					  err, ii->vfs_inode.i_ino);
+ 				return err;
+ 			}
+-			mark_buffer_dirty(ibh);
+-			nilfs_mdt_mark_dirty(ifile);
+ 			spin_lock(&nilfs->ns_inode_lock);
+ 			if (likely(!ii->i_bh))
+ 				ii->i_bh = ibh;
+@@ -1968,6 +1966,10 @@ static int nilfs_segctor_collect_dirty_files(struct nilfs_sc_info *sci,
+ 			goto retry;
+ 		}
  
--	inode = nilfs_new_inode(dir, S_IFLNK | S_IRWXUGO);
-+	inode = nilfs_new_inode(dir, S_IFLNK | 0777);
- 	err = PTR_ERR(inode);
- 	if (IS_ERR(inode))
- 		goto out;
++		// Always redirty the buffer to avoid race condition
++		mark_buffer_dirty(ii->i_bh);
++		nilfs_mdt_mark_dirty(ifile);
++
+ 		clear_bit(NILFS_I_QUEUED, &ii->i_state);
+ 		set_bit(NILFS_I_BUSY, &ii->i_state);
+ 		list_move_tail(&ii->i_dirty, &sci->sc_dirty_files);
 -- 
 1.8.3.1
 
