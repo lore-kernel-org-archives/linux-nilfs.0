@@ -1,63 +1,109 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: remove inode->i_version initialization
-Date: Tue, 31 Oct 2017 13:22:42 +0900 (JST)
-Message-ID: <20171031.132242.2076528451559597103.konishi.ryusuke@lab.ntt.co.jp>
-References: <20171030151702.8368-1-jlayton@kernel.org>
+Subject: Re: [PATCH] fs/nilfs2: Convert timers to use timer_setup()
+Date: Sat, 4 Nov 2017 03:00:46 +0900
+Message-ID: <CAKFNMomNv9MzHCTsdKE-tZDUeo0dtUmaTNq9E8j8MuatvY4pAQ@mail.gmail.com>
+References: <20171016235900.GA102729@beast>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=sender:date:message-id:to:cc:subject:from:in-reply-to:references
-         :mime-version:content-transfer-encoding;
-        bh=iHFzWiK3UQyAYJcMqwtIZlc+tU9X+lzfx6zQBQ4wu34=;
-        b=YY9CkrixNSjXmhg2DE/gjEwq5+FUqLXPlZ2DfoVajRUHodVI05B2HHHnyrtQdx/hZU
-         TwXHespzLMNXx/lcmVFQPzJI/VQGwp9N+d9VD9zi9iXpJhS60n0+CdFGbAq2RJXoZTqw
-         p/4UCdJeaiDyJNLgP8LYiRHsBSq1qLHr39g79KIKbWSnTJofTAf00n/57tyIFxIvnL+f
-         5J3qno2erQ7bf/zGWB9dQDc6c0hbnKIhzAbqZXHfjivkuT9LNzB06lGjO1UPHzDSzTtx
-         VN6oRuJ7YmWv3QWQJiId38OzasIgf2+3armuyMqvohXUoZhbv+cW1+9xLaqFQde9UaIi
-         g8Gw==
-In-Reply-To: <20171030151702.8368-1-jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+        h=mime-version:sender:in-reply-to:references:from:date:message-id
+         :subject:to:cc;
+        bh=KZQByskc4JtAVxOLUzYSKzSlAyMih20oXLRoFrI1tak=;
+        b=Wu29pXnE12DcZ3yhJxO2/TRneEyhxD64WKQR+XeESJU+8wip7Yb5sbaXXRpFtxyVKJ
+         PO0HsRub+U/+rb0Ygi7WCn7oDJxdPL67wddzcOeiwjS42r4uffCSZYY6/eFIpHX1MPdb
+         eP/SrLPXqoVIWjHfTD/AVQVJtcjjpkfmmvp1eOGmc6CijemxVvmAQdxGyQ0YILFLcirh
+         8l649yORVmeN9ItAQX8ZzInjH/+FNDz95Tt/xLxICLiMFEab4VG0Ya4MINJ6+iHJ9AV9
+         dvPEQ+wey6I0QnyVOiMbO/mMohYITWbG9uxXCmi7on31WbXGJ1vvlUVMOiygg2dRxTF8
+         npBg==
+In-Reply-To: <20171016235900.GA102729@beast>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: Text/Plain; charset="us-ascii"
-To: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Mon, 30 Oct 2017 11:17:02 -0400, Jeff Layton wrote:
-> From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> 
-> It's never used in nilfs2.
-> 
-> Signed-off-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
+2017-10-17 8:59 GMT+09:00 Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>:
+> In preparation for unconditionally passing the struct timer_list pointer to
+> all timer callbacks, switch to using the new timer_setup() and from_timer()
+> to pass the timer pointer explicitly. This requires adding a pointer to
+> hold the timer's target task, as the lifetime of sc_task doesn't appear to
+> match the timer's task.
+>
+> Cc: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+> Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 
-Applied, thank you.
+Looks good.
 
+Acked-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+
+Thanks,
 Ryusuke Konishi
 
->  fs/nilfs2/super.c | 1 -
->  1 file changed, 1 deletion(-)
-> 
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index 4fc018dfcfae..3ce20cd44a20 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -160,7 +160,6 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
->  	ii->i_bh = NULL;
->  	ii->i_state = 0;
->  	ii->i_cno = 0;
-> -	ii->vfs_inode.i_version = 1;
->  	nilfs_mapping_init(&ii->i_btnode_cache, &ii->vfs_inode);
->  	return &ii->vfs_inode;
+> ---
+>  fs/nilfs2/segment.c | 11 +++++------
+>  fs/nilfs2/segment.h |  1 +
+>  2 files changed, 6 insertions(+), 6 deletions(-)
+>
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 70ded52dc1dd..07b6154a081e 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -2404,11 +2404,11 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci, int mode)
+>         return err;
 >  }
-> -- 
-> 2.13.6
-> 
+>
+> -static void nilfs_construction_timeout(unsigned long data)
+> +static void nilfs_construction_timeout(struct timer_list *t)
+>  {
+> -       struct task_struct *p = (struct task_struct *)data;
+> +       struct nilfs_sc_info *sci = from_timer(sci, t, sc_timer);
+>
+> -       wake_up_process(p);
+> +       wake_up_process(sci->sc_timer_task);
+>  }
+>
+>  static void
+> @@ -2546,8 +2546,7 @@ static int nilfs_segctor_thread(void *arg)
+>         struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
+>         int timeout = 0;
+>
+> -       sci->sc_timer.data = (unsigned long)current;
+> -       sci->sc_timer.function = nilfs_construction_timeout;
+> +       sci->sc_timer_task = current;
+>
+>         /* start sync. */
+>         sci->sc_task = current;
+> @@ -2678,7 +2677,7 @@ static struct nilfs_sc_info *nilfs_segctor_new(struct super_block *sb,
+>         INIT_LIST_HEAD(&sci->sc_gc_inodes);
+>         INIT_LIST_HEAD(&sci->sc_iput_queue);
+>         INIT_WORK(&sci->sc_iput_work, nilfs_iput_work_func);
+> -       init_timer(&sci->sc_timer);
+> +       timer_setup(&sci->sc_timer, nilfs_construction_timeout, 0);
+>
+>         sci->sc_interval = HZ * NILFS_SC_DEFAULT_TIMEOUT;
+>         sci->sc_mjcp_freq = HZ * NILFS_SC_DEFAULT_SR_FREQ;
+> diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
+> index 1060949d7dd2..84084a4d9b3e 100644
+> --- a/fs/nilfs2/segment.h
+> +++ b/fs/nilfs2/segment.h
+> @@ -180,6 +180,7 @@ struct nilfs_sc_info {
+>         unsigned long           sc_watermark;
+>
+>         struct timer_list       sc_timer;
+> +       struct task_struct     *sc_timer_task;
+>         struct task_struct     *sc_task;
+>  };
+>
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 2.7.4
+>
+>
+> --
+> Kees Cook
+> Pixel Security
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
