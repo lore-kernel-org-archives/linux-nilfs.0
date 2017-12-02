@@ -1,7 +1,7 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: =?UTF-8?B?SsOpcsO0bWUgUG91bGlu?= <jeromepoulin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: error mounting, input/output error
-Date: Sat, 2 Dec 2017 20:00:16 +0900
-Message-ID: <CAKFNMokvRJUy_+kfhHqFGudFPZv8cLr_i8Gz-UpWW330d_JOCQ@mail.gmail.com>
+Date: Sat, 2 Dec 2017 09:12:31 -0500
+Message-ID: <CALJXSJrpR_BzaXSBeVTUw=UCK=OjcmGnD14Yb86rehsi=pcPtg@mail.gmail.com>
 References: <20171202072129.Horde.hTiH1buA85eVlzWo5n2UQ-5@rapidbsure.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -9,13 +9,13 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=mime-version:in-reply-to:references:from:date:message-id:subject:to
          :cc;
-        bh=47uItyjvWGReDkqsXKaocwGFCGhuWeABo1VIx94bIts=;
-        b=U92lndtRHE25PMCPwsHQ9xXlEA98uSTDOcWtVelv8D17QHCUviFun+jjjMlu7smBuJ
-         /MqFXeNMITId/emSNTzmbBcnlSiHJJdl73tTfZQgIjV84URWnqxEDZCjeT4OMfEI9RBh
-         IkQk9MY7dDBBk6JDXeKNbyx8i8Kyy8VGUwbhZoe8Nq7jFFhByWTz6Mx/GuCtTZHNTywG
-         lL7ZT0HPv3Eaugb2JbV0toTgHnQhl4Qre33dtkq2Xb76pA6HY9iycZX54dR2YX1luiNw
-         NO/gj7M99pnPxnGCcq+ywIxWC0nvMMOcItFS3emfejwFTuK6nQw7qN+0jFHgtlqf0z5m
-         DbcA==
+        bh=LYg7pfi01c7SilmeMPelfk8JH7LF4w5sU3FYoHYzTA0=;
+        b=E0imik84QDPN+giG1N+CXBYIv/2TpyLhT4pmG5Yt4QXL0obji7l+/RqF6QV1i4ywXs
+         b6sJkxUVl7YCM/W214gx916QEfF9o0Uw+1v6MbJV8egja5em1qXL/jJNzItXmqDSYN17
+         2SVyC/3x+9v8h5dr/hRzi7NsBnullNqwa4JwL5vPM1h8GH0ndRAlH74iDEJwr8fKd21q
+         PrAt3f0YNp2/26CCB0kjD5axajWTdhGQPqbAvPvlBBqM3EsTRtJpIA/GuAmpx462eoYf
+         Dbccjj2LZQwqqR2Kgjqz6HgJRK6x8Dq4Vb6tNEST+aCuEc1nLQO8c2LSVLJOAr5yntzH
+         aQMg==
 In-Reply-To: <20171202072129.Horde.hTiH1buA85eVlzWo5n2UQ-5-F+CjGebjtwRZroRs9YW3xA@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -24,25 +24,14 @@ Content-Transfer-Encoding: 7bit
 To: customersupport-F+CjGebjtwRZroRs9YW3xA@public.gmane.org
 Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-2017-12-02 16:21 GMT+09:00  <customersupport-F+CjGebjtwRZroRs9YW3xA@public.gmane.org>:
+On Dec 2, 2017 02:39, <customersupport-F+CjGebjtwRZroRs9YW3xA@public.gmane.org> wrote:
 >
->
->
-> I have a working hard drive that stopped being able to read the nilfs2
-> partition after a low battery laptop shutdown
 >
 > There is no fsck function available, and I failed to copy the image and
 > reinstall to a reformated partition- as explained below.
->
-> Can someone please suggest how to recover the data?
->
-> When mounting the partition with
->
-> mount -t "nilfs2" -o "uhelper=udisks2,nodev,nosuid" "/dev/sdb2"
-> "/media/user/Unallocated"
-> or
-> mount -t "nilfs2" -o "errors=continue,uhelper=udisks2,nodev,nosuid"
-> "/dev/sdb2" "/media/user/Unallocated"
+
+Using fsck when there are IO errors would cause even more data lost.
+
 >
 > I get an I/O error "Error while mounting... Input/output error"
 >
@@ -69,36 +58,10 @@ Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 > 00 05 40 00
 > [ 3524.686221] print_req_error: I/O error, dev sdb, sector 3820642528
 > [ 3524.686272] ata2: EH complete
-> [ 3527.523500] ata2.00: exception Emask 0x0 SAct 0x4000000 SErr 0x0
-> action 0x0
-> [ 3527.523507] ata2.00: irq_stat 0x40000008
-> [ 3527.523510] ata2.00: failed command: READ FPDMA QUEUED
-> [ 3527.523514] ata2.00: cmd 60/08:d0:e0:60:ba/00:00:e3:00:00/40 tag 26
-> ncq dma 4096 in
->                         res 41/40:00:e0:60:ba/00:00:e3:00:00/40 Emask
-> 0x409 (media error) <F>
-> [ 3527.523516] ata2.00: status: { DRDY ERR }
-> [ 3527.523517] ata2.00: error: { UNC }
-> [ 3527.536847] ata2.00: configured for UDMA/133
-> [ 3527.536869] sd 1:0:0:0: [sdb] tag#26 FAILED Result: hostbyte=DID_OK
-> driverbyte=DRIVER_SENSE
-> [ 3527.536874] sd 1:0:0:0: [sdb] tag#26 Sense Key : Medium Error [current]
-> [ 3527.536878] sd 1:0:0:0: [sdb] tag#26 Add. Sense: Unrecovered read
-> error - auto reallocate failed
-> [ 3527.536885] sd 1:0:0:0: [sdb] tag#26 CDB: Read(10) 28 00 e3 ba 60 e0
-> 00 00 08 00
-> [ 3527.536887] print_req_error: I/O error, dev sdb, sector 3820642528
-> [ 3527.536927] ata2: EH complete
-> [ 3527.536930] NILFS (sdb2): I/O error reading segment
-> [ 3527.536932] NILFS (sdb2): error -5 while searching super root
-> --------------------------------------
 
-Look like nilfs aborted to mount due to an I/O error of underlying block device.
-
-Make sure whether you can directly read the device or not with dd command.
-
-Regards,
-Ryusuke Konishi
+When you see this message in the log, your best bet is to use ddrescue
+to copy thee disk onto a new one and try to mount again. Anything else
+will only damage the disk even more.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
