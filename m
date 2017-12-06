@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH v4 07/73] xarray: Define struct xa_node
-Date: Tue,  5 Dec 2017 16:40:53 -0800
-Message-ID: <20171206004159.3755-8-willy@infradead.org>
+Subject: [PATCH v4 72/73] xfs: Convert mru cache to XArray
+Date: Tue,  5 Dec 2017 16:41:58 -0800
+Message-ID: <20171206004159.3755-73-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=dQ1NqeA8wp9BmB63zj4IbtPPfSrTf5alzJbwxSnBm6U=; b=dwvUqh1l0tzKS2LMfNnrdT2D+
-        60lAJH2ZdbngxAol4lwhQbnCi2RuT5wqeHrSl2YKFor+IvdpvWvoH2oiqo7juI7o9xwsSv3CbYcfu
-        5UEzfbNBL2fVEqe7BPLpuu02Tm5es4yO6xKwoEECcTUOVWjOAdkAm7fKbHyJrAEhyseIfiibPLLQz
-        xwM9E3hJ2WTarlueBTCPuiBjvo6r0nytJlNixyUjfxXMD0Zr6w6umonBTRuC1sLU2ba2pWXWpBeIv
-        zpziM77Qhn64y+mNfabl3C1dmqmWOCYV0sZ2B0/uhebUTZyhZdCgR/gnhptz27tFeqT6tzRM+3t/T
+         bh=VYANvGTw3t5AL21prPURH5P1h2LTZL9Bhcj1xLxE2vA=; b=ivy0k/kEmQ0oiyYQ9LzxP1Yvl
+        Q8SzZ2dHN6aCQ53U1EDyC8TIECOTt8bqRn5Ej0dbdyEnQEupb5LGqbXDPGkwu1H49fmy9m0uiWHr+
+        /CN/S+qao6TNIaRaZ2BCPSNzHAZjm/Cknjmvmug6QHE35nulfK/H2nZAORVdc5b5SCTPtt9wRQf0C
+        kbwlOpyhdfWXosXN/yyTebWsnR/F2O2AhGIcqHeOEY85ntv1fGqVLB9FEZGGraqvcGuVubCMMLEuY
+        xY80/QQF7udJVvljdW11uZhPjrS6GGrxfiHlzOgaLBg6C4kzeRH9e41TMXdZM/WtW6ZcCukJ8EAJa
     
 In-Reply-To: <20171206004159.3755-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -27,106 +27,213 @@ Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwis
 
 From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 
-This is a direct replacement for struct radix_tree_node.  Use a #define
-so that radix tree users continue to work without change.
+This eliminates a call to radix_tree_preload().
 
 Signed-off-by: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 ---
- include/linux/radix-tree.h | 29 +++--------------------------
- include/linux/xarray.h     | 24 ++++++++++++++++++++++++
- 2 files changed, 27 insertions(+), 26 deletions(-)
+ fs/xfs/xfs_mru_cache.c | 72 +++++++++++++++++++++++---------------------------
+ 1 file changed, 33 insertions(+), 39 deletions(-)
 
-diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
-index f31a278de8eb..f46e3de57115 100644
---- a/include/linux/radix-tree.h
-+++ b/include/linux/radix-tree.h
-@@ -32,6 +32,7 @@
+diff --git a/fs/xfs/xfs_mru_cache.c b/fs/xfs/xfs_mru_cache.c
+index f8a674d7f092..2179bede5396 100644
+--- a/fs/xfs/xfs_mru_cache.c
++++ b/fs/xfs/xfs_mru_cache.c
+@@ -101,10 +101,9 @@
+  * an infinite loop in the code.
+  */
+ struct xfs_mru_cache {
+-	struct radix_tree_root	store;     /* Core storage data structure.  */
++	struct xarray		store;     /* Core storage data structure.  */
+ 	struct list_head	*lists;    /* Array of lists, one per grp.  */
+ 	struct list_head	reap_list; /* Elements overdue for reaping. */
+-	spinlock_t		lock;      /* Lock to protect this struct.  */
+ 	unsigned int		grp_count; /* Number of discrete groups.    */
+ 	unsigned int		grp_time;  /* Time period spanned by grps.  */
+ 	unsigned int		lru_grp;   /* Group containing time zero.   */
+@@ -232,22 +231,21 @@ _xfs_mru_cache_list_insert(
+  * data store, removing it from the reap list, calling the client's free
+  * function and deleting the element from the element zone.
+  *
+- * We get called holding the mru->lock, which we drop and then reacquire.
+- * Sparse need special help with this to tell it we know what we are doing.
++ * We get called holding the mru->store lock, which we drop and then reacquire.
++ * Sparse needs special help with this to tell it we know what we are doing.
+  */
+ STATIC void
+ _xfs_mru_cache_clear_reap_list(
+ 	struct xfs_mru_cache	*mru)
+-		__releases(mru->lock) __acquires(mru->lock)
++		__releases(mru->store) __acquires(mru->store)
+ {
+ 	struct xfs_mru_cache_elem *elem, *next;
+ 	struct list_head	tmp;
  
- /* Keep unconverted code working */
- #define radix_tree_root		xarray
-+#define radix_tree_node		xa_node
+ 	INIT_LIST_HEAD(&tmp);
+ 	list_for_each_entry_safe(elem, next, &mru->reap_list, list_node) {
+-
+ 		/* Remove the element from the data store. */
+-		radix_tree_delete(&mru->store, elem->key);
++		__xa_erase(&mru->store, elem->key);
+ 
+ 		/*
+ 		 * remove to temp list so it can be freed without
+@@ -255,14 +253,14 @@ _xfs_mru_cache_clear_reap_list(
+ 		 */
+ 		list_move(&elem->list_node, &tmp);
+ 	}
+-	spin_unlock(&mru->lock);
++	xa_unlock(&mru->store);
+ 
+ 	list_for_each_entry_safe(elem, next, &tmp, list_node) {
+ 		list_del_init(&elem->list_node);
+ 		mru->free_func(elem);
+ 	}
+ 
+-	spin_lock(&mru->lock);
++	xa_lock(&mru->store);
+ }
  
  /*
-  * The bottom two bits of the slot determine how the remaining bits in the
-@@ -60,41 +61,17 @@ static inline bool radix_tree_is_internal_node(void *ptr)
+@@ -284,7 +282,7 @@ _xfs_mru_cache_reap(
+ 	if (!mru || !mru->lists)
+ 		return;
  
- /*** radix-tree API starts here ***/
+-	spin_lock(&mru->lock);
++	xa_lock(&mru->store);
+ 	next = _xfs_mru_cache_migrate(mru, jiffies);
+ 	_xfs_mru_cache_clear_reap_list(mru);
  
--#define RADIX_TREE_MAX_TAGS 3
+@@ -298,7 +296,7 @@ _xfs_mru_cache_reap(
+ 		queue_delayed_work(xfs_mru_reap_wq, &mru->work, next);
+ 	}
+ 
+-	spin_unlock(&mru->lock);
++	xa_unlock(&mru->store);
+ }
+ 
+ int
+@@ -358,13 +356,8 @@ xfs_mru_cache_create(
+ 	for (grp = 0; grp < mru->grp_count; grp++)
+ 		INIT_LIST_HEAD(mru->lists + grp);
+ 
+-	/*
+-	 * We use GFP_KERNEL radix tree preload and do inserts under a
+-	 * spinlock so GFP_ATOMIC is appropriate for the radix tree itself.
+-	 */
+-	INIT_RADIX_TREE(&mru->store, GFP_ATOMIC);
++	xa_init(&mru->store);
+ 	INIT_LIST_HEAD(&mru->reap_list);
+-	spin_lock_init(&mru->lock);
+ 	INIT_DELAYED_WORK(&mru->work, _xfs_mru_cache_reap);
+ 
+ 	mru->grp_time  = grp_time;
+@@ -394,17 +387,17 @@ xfs_mru_cache_flush(
+ 	if (!mru || !mru->lists)
+ 		return;
+ 
+-	spin_lock(&mru->lock);
++	xa_lock(&mru->store);
+ 	if (mru->queued) {
+-		spin_unlock(&mru->lock);
++		xa_unlock(&mru->store);
+ 		cancel_delayed_work_sync(&mru->work);
+-		spin_lock(&mru->lock);
++		xa_lock(&mru->store);
+ 	}
+ 
+ 	_xfs_mru_cache_migrate(mru, jiffies + mru->grp_count * mru->grp_time);
+ 	_xfs_mru_cache_clear_reap_list(mru);
+ 
+-	spin_unlock(&mru->lock);
++	xa_unlock(&mru->store);
+ }
+ 
+ void
+@@ -431,24 +424,24 @@ xfs_mru_cache_insert(
+ 	unsigned long		key,
+ 	struct xfs_mru_cache_elem *elem)
+ {
++	XA_STATE(xas, &mru->store, key);
+ 	int			error;
+ 
+ 	ASSERT(mru && mru->lists);
+ 	if (!mru || !mru->lists)
+ 		return -EINVAL;
+ 
+-	if (radix_tree_preload(GFP_NOFS))
+-		return -ENOMEM;
 -
- #define RADIX_TREE_MAP_SHIFT	XA_CHUNK_SHIFT
- #define RADIX_TREE_MAP_SIZE	(1UL << RADIX_TREE_MAP_SHIFT)
- #define RADIX_TREE_MAP_MASK	(RADIX_TREE_MAP_SIZE-1)
+ 	INIT_LIST_HEAD(&elem->list_node);
+ 	elem->key = key;
  
--#define RADIX_TREE_TAG_LONGS	\
--	((RADIX_TREE_MAP_SIZE + BITS_PER_LONG - 1) / BITS_PER_LONG)
-+#define RADIX_TREE_MAX_TAGS	XA_MAX_TAGS
-+#define RADIX_TREE_TAG_LONGS	XA_TAG_LONGS
+-	spin_lock(&mru->lock);
+-	error = radix_tree_insert(&mru->store, key, elem);
+-	radix_tree_preload_end();
+-	if (!error)
+-		_xfs_mru_cache_list_insert(mru, elem);
+-	spin_unlock(&mru->lock);
++	do {
++		xas_lock(&xas);
++		xas_store(&xas, elem);
++		error = xas_error(&xas);
++		if (!error)
++			_xfs_mru_cache_list_insert(mru, elem);
++		xas_unlock(&xas);
++	} while (xas_nomem(&xas, GFP_NOFS));
  
- #define RADIX_TREE_INDEX_BITS  (8 /* CHAR_BIT */ * sizeof(unsigned long))
- #define RADIX_TREE_MAX_PATH (DIV_ROUND_UP(RADIX_TREE_INDEX_BITS, \
- 					  RADIX_TREE_MAP_SHIFT))
+ 	return error;
+ }
+@@ -470,11 +463,11 @@ xfs_mru_cache_remove(
+ 	if (!mru || !mru->lists)
+ 		return NULL;
  
--/*
-- * @count is the count of every non-NULL element in the ->slots array
-- * whether that is a data entry, a retry entry, a user pointer,
-- * a sibling entry or a pointer to the next level of the tree.
-- * @exceptional is the count of every element in ->slots which is
-- * either a data entry or a sibling entry for data.
-- */
--struct radix_tree_node {
--	unsigned char	shift;		/* Bits remaining in each slot */
--	unsigned char	offset;		/* Slot offset in parent */
--	unsigned char	count;		/* Total entry count */
--	unsigned char	exceptional;	/* Exceptional entry count */
--	struct radix_tree_node *parent;		/* Used when ascending tree */
--	struct radix_tree_root *root;		/* The tree we belong to */
--	union {
--		struct list_head private_list;	/* For tree user */
--		struct rcu_head	rcu_head;	/* Used when freeing node */
--	};
--	void __rcu	*slots[RADIX_TREE_MAP_SIZE];
--	unsigned long	tags[RADIX_TREE_MAX_TAGS][RADIX_TREE_TAG_LONGS];
--};
--
- /* The top bits of xa_flags are used to store the root tags and the IDR flag */
- #define ROOT_IS_IDR	((__force gfp_t)(1 << __GFP_BITS_SHIFT))
- #define ROOT_TAG_SHIFT	(__GFP_BITS_SHIFT + 1)
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index dcdac2053ea6..1aff0069458b 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -133,6 +133,30 @@ static inline bool xa_is_value(void *entry)
- #endif
- #define XA_CHUNK_SIZE		(1UL << XA_CHUNK_SHIFT)
- #define XA_CHUNK_MASK		(XA_CHUNK_SIZE - 1)
-+#define XA_MAX_TAGS		3
-+#define XA_TAG_LONGS		DIV_ROUND_UP(XA_CHUNK_SIZE, BITS_PER_LONG)
-+
-+/*
-+ * @count is the count of every non-NULL element in the ->slots array
-+ * whether that is a data value entry, a retry entry, a user pointer,
-+ * a sibling entry or a pointer to the next level of the tree.
-+ * @exceptional is the count of every element in ->slots which is
-+ * either a data value entry or a sibling entry for a data value.
-+ */
-+struct xa_node {
-+	unsigned char	shift;		/* Bits remaining in each slot */
-+	unsigned char	offset;		/* Slot offset in parent */
-+	unsigned char	count;		/* Total entry count */
-+	unsigned char	exceptional;	/* Exceptional entry count */
-+	struct xa_node *parent;		/* Used when ascending tree */
-+	struct xarray *	root;		/* The tree we belong to */
-+	union {
-+		struct list_head private_list;	/* For tree user */
-+		struct rcu_head	rcu_head;	/* Used when freeing node */
-+	};
-+	void __rcu	*slots[XA_CHUNK_SIZE];
-+	unsigned long	tags[XA_MAX_TAGS][XA_TAG_LONGS];
-+};
+-	spin_lock(&mru->lock);
+-	elem = radix_tree_delete(&mru->store, key);
++	xa_lock(&mru->store);
++	elem = __xa_erase(&mru->store, key);
+ 	if (elem)
+ 		list_del(&elem->list_node);
+-	spin_unlock(&mru->lock);
++	xa_unlock(&mru->store);
  
- /*
-  * Internal entries have the bottom two bits set to the value 10b.  Most
+ 	return elem;
+ }
+@@ -520,20 +513,21 @@ xfs_mru_cache_lookup(
+ 	struct xfs_mru_cache	*mru,
+ 	unsigned long		key)
+ {
++	XA_STATE(xas, &mru->store, key);
+ 	struct xfs_mru_cache_elem *elem;
+ 
+ 	ASSERT(mru && mru->lists);
+ 	if (!mru || !mru->lists)
+ 		return NULL;
+ 
+-	spin_lock(&mru->lock);
+-	elem = radix_tree_lookup(&mru->store, key);
++	xas_lock(&xas);
++	elem = xas_load(&xas);
+ 	if (elem) {
+ 		list_del(&elem->list_node);
+ 		_xfs_mru_cache_list_insert(mru, elem);
+-		__release(mru_lock); /* help sparse not be stupid */
++		__release(&xas); /* help sparse not be stupid */
+ 	} else
+-		spin_unlock(&mru->lock);
++		xas_unlock(&xas);
+ 
+ 	return elem;
+ }
+@@ -546,7 +540,7 @@ xfs_mru_cache_lookup(
+ void
+ xfs_mru_cache_done(
+ 	struct xfs_mru_cache	*mru)
+-		__releases(mru->lock)
++		__releases(mru->store)
+ {
+-	spin_unlock(&mru->lock);
++	xa_unlock(&mru->store);
+ }
 -- 
 2.15.0
 
