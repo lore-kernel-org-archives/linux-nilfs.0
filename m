@@ -1,137 +1,160 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH v4 00/73] XArray version 4
-Date: Wed, 6 Dec 2017 13:38:03 +1100
-Message-ID: <20171206023803.GD4094@dastard>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: [PATCH v4 34/73] mm: Convert cgroup writeback to XArray
+Date: Tue,  5 Dec 2017 16:41:20 -0800
+Message-ID: <20171206004159.3755-35-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
- <20171206014536.GA4094@dastard>
- <20171206020515.GL26021@bombadil.infradead.org>
-Mime-Version: 1.0
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171206020515.GL26021@bombadil.infradead.org>
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=DTpEWoflaLJWBHoJxJQrOfsrH9MArkX/wtY6G1JlwI8=; b=BArMzdOjTVDqRbt8php2TvHaa
+        Z9KBbF9OhCtTNB9cKRZe+dctdmSlCjKCjClrW0XiWxiS40/ZeoAkuKOAaCarm97jgTxBeiLqAzmsR
+        RBxpOUZaRiKnbfNbBSWBWJDuVSlheqMgRv3mB15EjqOPm4TMmKyf3MCOmuRJHXGZjZdbMDBN+Aulc
+        E+b0N47LOvcKGS+cpwZWlcUHdsSipMdawWGKS7VEbv/xT0Ds+GnJrkAvh/0UNgGeIvbAglrSItqXR
+        DUGopzXfhD/IFky0I6zDGRBT9Iy64ID0nzKUPXml4B4ekpeCSnniHZRFVi1YefQMxKUuxvaRlSz2x
+    
+In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
+Sender: linux-btrfs-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Matthew Wilcox <willy@infradead.org>
+To: 
 Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Tue, Dec 05, 2017 at 06:05:15PM -0800, Matthew Wilcox wrote:
-> On Wed, Dec 06, 2017 at 12:45:49PM +1100, Dave Chinner wrote:
-> > On Tue, Dec 05, 2017 at 04:40:46PM -0800, Matthew Wilcox wrote:
-> > > From: Matthew Wilcox <mawilcox@microsoft.com>
-> > > 
-> > > I looked through some notes and decided this was version 4 of the XArray.
-> > > Last posted two weeks ago, this version includes a *lot* of changes.
-> > > I'd like to thank Dave Chinner for his feedback, encouragement and
-> > > distracting ideas for improvement, which I'll get to once this is merged.
-> > 
-> > BTW, you need to fix the "To:" line on your patchbombs:
-> > 
-> > > To: unlisted-recipients: ;, no To-header on input <@gmail-pop.l.google.com> 
-> > 
-> > This bad email address getting quoted to the cc line makes some MTAs
-> > very unhappy.
-> 
-> I know :-(  I was unhappy when I realised what I'd done.
-> 
-> https://marc.info/?l=git&m=151252237912266&w=2
-> 
-> > I'll give this a quick burn this afternoon and see what catches fire...
-> 
-> All of the things ... 0day gave me a 90% chance of hanging in one
-> configuration.  Need to drill down on it more and find out what stupid
-> thing I've done wrong this time.
+From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Yup, Bad Stuff happened on boot:
+This is a fairly naive conversion, leaving in place the GFP_ATOMIC
+allocation.  By switching the locking around, we could use GFP_KERNEL
+and probably simplify the error handling.
 
-[   24.548039] INFO: rcu_preempt detected stalls on CPUs/tasks:
-[   24.548978]  1-...!: (0 ticks this GP) idle=688/0/0 softirq=143/143 fqs=0
-[   24.549926]  5-...!: (0 ticks this GP) idle=db8/0/0 softirq=120/120 fqs=0
-[   24.550864]  6-...!: (0 ticks this GP) idle=d58/0/0 softirq=111/111 fqs=0
-[   24.551802]  8-...!: (5 GPs behind) idle=514/0/0 softirq=189/189 fqs=0
-[   24.552722]  10-...!: (84 GPs behind) idle=ac0/0/0 softirq=80/80 fqs=0
-[   24.553617]  11-...!: (8 GPs behind) idle=cfc/0/0 softirq=95/95 fqs=0
-[   24.554496]  13-...!: (8 GPs behind) idle=b0c/0/0 softirq=82/82 fqs=0
-[   24.555382]  14-...!: (38 GPs behind) idle=a7c/0/0 softirq=93/93 fqs=0
-[   24.556305]  15-...!: (4 GPs behind) idle=b18/0/0 softirq=88/88 fqs=0
-[   24.557190]  (detected by 9, t=5252 jiffies, g=-178, c=-179, q=994)
-[   24.558051] Sending NMI from CPU 9 to CPUs 1:
-[   24.558703] NMI backtrace for cpu 1 skipped: idling at native_safe_halt+0x2/0x10
-[   24.559654] Sending NMI from CPU 9 to CPUs 5:
-[   24.559675] NMI backtrace for cpu 5 skipped: idling at native_safe_halt+0x2/0x10
-[   24.560654] Sending NMI from CPU 9 to CPUs 6:
-[   24.560689] NMI backtrace for cpu 6 skipped: idling at native_safe_halt+0x2/0x10
-[   24.561655] Sending NMI from CPU 9 to CPUs 8:
-[   24.561701] NMI backtrace for cpu 8 skipped: idling at native_safe_halt+0x2/0x10
-[   24.562654] Sending NMI from CPU 9 to CPUs 10:
-[   24.562675] NMI backtrace for cpu 10 skipped: idling at native_safe_halt+0x2/0x10
-[   24.563653] Sending NMI from CPU 9 to CPUs 11:
-[   24.563669] NMI backtrace for cpu 11 skipped: idling at native_safe_halt+0x2/0x10
-[   24.564653] Sending NMI from CPU 9 to CPUs 13:
-[   24.564670] NMI backtrace for cpu 13 skipped: idling at native_safe_halt+0x2/0x10
-[   24.565652] Sending NMI from CPU 9 to CPUs 14:
-[   24.565674] NMI backtrace for cpu 14 skipped: idling at native_safe_halt+0x2/0x10
-[   24.566652] Sending NMI from CPU 9 to CPUs 15:
-[   24.566669] NMI backtrace for cpu 15 skipped: idling at native_safe_halt+0x2/0x10
-[   24.567653] rcu_preempt kthread starved for 5256 jiffies! g18446744073709551438 c18446744073709551437 f0x0 RCU_GP_WAIT_FQS(3) ->state=0x402 ->7
-[   24.567654] rcu_preempt     I15128     9      2 0x80000000
-[   24.567660] Call Trace:
-[   24.567679]  ? __schedule+0x289/0x880
-[   24.567681]  schedule+0x2f/0x90
-[   24.567682]  schedule_timeout+0x152/0x370
-[   24.567686]  ? __next_timer_interrupt+0xc0/0xc0
-[   24.567689]  rcu_gp_kthread+0x561/0x880
-[   24.567691]  ? force_qs_rnp+0x1a0/0x1a0
-[   24.567693]  kthread+0x111/0x130
-[   24.567695]  ? __kthread_create_worker+0x120/0x120
-[   24.567697]  ret_from_fork+0x24/0x30
-[   44.064092] watchdog: BUG: soft lockup - CPU#0 stuck for 23s! [kswapd0:854]
-[   44.065920] CPU: 0 PID: 854 Comm: kswapd0 Not tainted 4.15.0-rc2-dgc #228
-[   44.067769] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-1 04/01/2014
-[   44.070030] RIP: 0010:smp_call_function_single+0xce/0x100
-[   44.071521] RSP: 0000:ffffc90001d2fb20 EFLAGS: 00000202 ORIG_RAX: ffffffffffffff11
-[   44.073592] RAX: 0000000000000000 RBX: ffff88013ab515c8 RCX: ffffc9000350bb20
-[   44.075560] RDX: 0000000000000001 RSI: ffffc90001d2fb20 RDI: ffffc90001d2fb20
-[   44.077531] RBP: ffffc90001d2fb50 R08: 0000000000000007 R09: 0000000000000080
-[   44.079483] R10: ffffc90001d2fb78 R11: ffffc90001d2fb30 R12: ffffc90001d2fc10
-[   44.081465] R13: ffffea000449fc78 R14: ffffea000449fc58 R15: ffff88013ba36c40
-[   44.083434] FS:  0000000000000000(0000) GS:ffff88013fc00000(0000) knlGS:0000000000000000
-[   44.085683] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   44.087276] CR2: 00007f1ad65f2260 CR3: 0000000002009001 CR4: 00000000000606f0
-[   44.089228] Call Trace:
-[   44.089942]  ? flush_tlb_func_common.constprop.9+0x240/0x240
-[   44.091509]  ? arch_tlbbatch_flush+0x66/0xd0
-[   44.092727]  arch_tlbbatch_flush+0x66/0xd0
-[   44.093882]  try_to_unmap_flush+0x26/0x40
-[   44.095013]  shrink_page_list+0x3f0/0xe20
-[   44.096155]  shrink_inactive_list+0x209/0x430
-[   44.097392]  ? lruvec_lru_size+0x1d/0xa0
-[   44.098495]  shrink_node_memcg.constprop.80+0x3f6/0x650
-[   44.099952]  ? _raw_spin_unlock+0xc/0x20
-[   44.101060]  ? list_lru_count_one+0x25/0x30
-[   44.102225]  ? shrink_node+0x44/0x180
-[   44.103252]  shrink_node+0x44/0x180
-[   44.104238]  kswapd+0x270/0x6b0
-[   44.105142]  ? node_reclaim+0x220/0x220
-[   44.106222]  kthread+0x111/0x130
-[   44.107109]  ? __kthread_create_worker+0x120/0x120
-[   44.108416]  ? call_usermodehelper_exec_async+0x11c/0x150
-[   44.109882]  ret_from_fork+0x24/0x30
-[   44.110866] Code: 89 3a ee 7e 74 3d 48 83 c4 28 41 5a 5d 49 8d 62 f8 c3 48 89 d1 48 89 f2 48 8d 75 d0 e8 cc fc ff ff 8b 55 e8 83 e2 01 74 0a f 
-[   45.596015] INFO: rcu_preempt detected stalls on CPUs/tasks:
-[   45.596911]  7-...0: (1 GPs behind) idle=e56/140000000000000/0 softirq=138/139 fqs=2567 
-[   45.598054]  (detected by 9, t=5252 jiffies, g=-177, c=-178, q=1001)
-[   45.598925] Sending NMI from CPU 9 to CPUs 7:
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+---
+ include/linux/backing-dev-defs.h |  2 +-
+ include/linux/backing-dev.h      |  2 +-
+ mm/backing-dev.c                 | 28 ++++++++++++++++------------
+ 3 files changed, 18 insertions(+), 14 deletions(-)
 
--Dave.
-
+diff --git a/include/linux/backing-dev-defs.h b/include/linux/backing-dev-defs.h
+index bfe86b54f6c1..074a54aad33c 100644
+--- a/include/linux/backing-dev-defs.h
++++ b/include/linux/backing-dev-defs.h
+@@ -187,7 +187,7 @@ struct backing_dev_info {
+ 	struct bdi_writeback wb;  /* the root writeback info for this bdi */
+ 	struct list_head wb_list; /* list of all wbs */
+ #ifdef CONFIG_CGROUP_WRITEBACK
+-	struct radix_tree_root cgwb_tree; /* radix tree of active cgroup wbs */
++	struct xarray cgwb_xa;		/* radix tree of active cgroup wbs */
+ 	struct rb_root cgwb_congested_tree; /* their congested states */
+ #else
+ 	struct bdi_writeback_congested *wb_congested;
+diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
+index 9038f6c1eeda..50f666d23527 100644
+--- a/include/linux/backing-dev.h
++++ b/include/linux/backing-dev.h
+@@ -271,7 +271,7 @@ static inline struct bdi_writeback *wb_find_current(struct backing_dev_info *bdi
+ 	if (!memcg_css->parent)
+ 		return &bdi->wb;
+ 
+-	wb = radix_tree_lookup(&bdi->cgwb_tree, memcg_css->id);
++	wb = xa_load(&bdi->cgwb_xa, memcg_css->id);
+ 
+ 	/*
+ 	 * %current's blkcg equals the effective blkcg of its memcg.  No
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index 84b2dc76f140..7aa2d893f929 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -417,8 +417,8 @@ static void wb_exit(struct bdi_writeback *wb)
+ #include <linux/memcontrol.h>
+ 
+ /*
+- * cgwb_lock protects bdi->cgwb_tree, bdi->cgwb_congested_tree,
+- * blkcg->cgwb_list, and memcg->cgwb_list.  bdi->cgwb_tree is also RCU
++ * cgwb_lock protects bdi->cgwb_xa, bdi->cgwb_congested_tree,
++ * blkcg->cgwb_list, and memcg->cgwb_list.  bdi->cgwb_xa is also RCU
+  * protected.
+  */
+ static DEFINE_SPINLOCK(cgwb_lock);
+@@ -539,7 +539,7 @@ static void cgwb_kill(struct bdi_writeback *wb)
+ {
+ 	lockdep_assert_held(&cgwb_lock);
+ 
+-	WARN_ON(!radix_tree_delete(&wb->bdi->cgwb_tree, wb->memcg_css->id));
++	WARN_ON(xa_erase(&wb->bdi->cgwb_xa, wb->memcg_css->id) != wb);
+ 	list_del(&wb->memcg_node);
+ 	list_del(&wb->blkcg_node);
+ 	percpu_ref_kill(&wb->refcnt);
+@@ -571,7 +571,7 @@ static int cgwb_create(struct backing_dev_info *bdi,
+ 
+ 	/* look up again under lock and discard on blkcg mismatch */
+ 	spin_lock_irqsave(&cgwb_lock, flags);
+-	wb = radix_tree_lookup(&bdi->cgwb_tree, memcg_css->id);
++	wb = xa_load(&bdi->cgwb_xa, memcg_css->id);
+ 	if (wb && wb->blkcg_css != blkcg_css) {
+ 		cgwb_kill(wb);
+ 		wb = NULL;
+@@ -615,13 +615,18 @@ static int cgwb_create(struct backing_dev_info *bdi,
+ 	if (test_bit(WB_registered, &bdi->wb.state) &&
+ 	    blkcg_cgwb_list->next && memcg_cgwb_list->next) {
+ 		/* we might have raced another instance of this function */
+-		ret = radix_tree_insert(&bdi->cgwb_tree, memcg_css->id, wb);
+-		if (!ret) {
++		void *curr = xa_cmpxchg(&bdi->cgwb_xa, memcg_css->id, NULL,
++					wb, GFP_ATOMIC);
++		if (!curr) {
+ 			list_add_tail_rcu(&wb->bdi_node, &bdi->wb_list);
+ 			list_add(&wb->memcg_node, memcg_cgwb_list);
+ 			list_add(&wb->blkcg_node, blkcg_cgwb_list);
+ 			css_get(memcg_css);
+ 			css_get(blkcg_css);
++		} else if (IS_ERR(curr)) {
++			ret = PTR_ERR(curr);
++		} else {
++			ret = -EEXIST;
+ 		}
+ 	}
+ 	spin_unlock_irqrestore(&cgwb_lock, flags);
+@@ -682,7 +687,7 @@ struct bdi_writeback *wb_get_create(struct backing_dev_info *bdi,
+ 
+ 	do {
+ 		rcu_read_lock();
+-		wb = radix_tree_lookup(&bdi->cgwb_tree, memcg_css->id);
++		wb = xa_load(&bdi->cgwb_xa, memcg_css->id);
+ 		if (wb) {
+ 			struct cgroup_subsys_state *blkcg_css;
+ 
+@@ -704,7 +709,7 @@ static int cgwb_bdi_init(struct backing_dev_info *bdi)
+ {
+ 	int ret;
+ 
+-	INIT_RADIX_TREE(&bdi->cgwb_tree, GFP_ATOMIC);
++	xa_init(&bdi->cgwb_xa);
+ 	bdi->cgwb_congested_tree = RB_ROOT;
+ 
+ 	ret = wb_init(&bdi->wb, bdi, 1, GFP_KERNEL);
+@@ -717,15 +722,14 @@ static int cgwb_bdi_init(struct backing_dev_info *bdi)
+ 
+ static void cgwb_bdi_unregister(struct backing_dev_info *bdi)
+ {
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &bdi->cgwb_xa, 0);
+ 	struct bdi_writeback *wb;
+ 
+ 	WARN_ON(test_bit(WB_registered, &bdi->wb.state));
+ 
+ 	spin_lock_irq(&cgwb_lock);
+-	radix_tree_for_each_slot(slot, &bdi->cgwb_tree, &iter, 0)
+-		cgwb_kill(*slot);
++	xas_for_each(&xas, wb, ULONG_MAX)
++		cgwb_kill(wb);
+ 
+ 	while (!list_empty(&bdi->wb_list)) {
+ 		wb = list_first_entry(&bdi->wb_list, struct bdi_writeback,
 -- 
-Dave Chinner
-david@fromorbit.com
+2.15.0
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
