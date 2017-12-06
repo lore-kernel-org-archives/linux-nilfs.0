@@ -1,287 +1,191 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 59/73] dax: More XArray conversion
-Date: Tue,  5 Dec 2017 16:41:45 -0800
-Message-ID: <20171206004159.3755-60-willy@infradead.org>
+From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: [PATCH v4 02/73] xarray: Add the xa_lock to the radix_tree_root
+Date: Tue,  5 Dec 2017 16:40:48 -0800
+Message-ID: <20171206004159.3755-3-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=9Je1AwixNPmUHnO9B6UFBZsTds0qTKg1mJ9lV17MtGA=; b=l5FmF+X70NZHn7YY9MbwA6yo9
-        HzPSjwF0dVQv1zK6Uyf35Dw09iI40bFvmR33Z6WbSAOgUdl2p+bK82LsS5bTKd37LRmIxc7UOq2Mv
-        elSAyaEVGSWVOU4E/Ic94PJMpQcnrWT6Px4YCZIwm11r/baVzs6AZcAOxYUmY9k68Zyl8Eayfm1Re
-        Cy8yTQa2JDMFYGfOIpBEZDLkHf9c2KUF5veIsP/1ZOmK2SQXJengd+gcDEEqOlHDLUaN1JusLV4a5
-        I6oUYHcVwnPu2jQ3naH1cf15FPWscjVSBUodtfV1DQjBayBFTSQ47xGJV7IpFh/uw8UdY74nFKtwr
+         bh=rg1Sf5dQ0/hAFzrFIF9B1N204gj4bovcGTo4XyW9OLY=; b=WA+npR4/lO5oBqj2sm4wb5crC
+        3zw6oy0Q0HIz7Ob8vME7AyNlu7x4Q4AN55uROX2WEhOPK9yXB0JIG3NBevWzb9E421j3AwkM77/Zs
+        ePb6FHt9QNQWqr52t1I5gIL4wW2B9tcnP88LCVGcjsEMpCvk4BjxMixUfRssbGl76gB9QGM9keq0Q
+        CuEsChsYyHq6T01RtOCYWWcoFDqS6Hfbg2+paV3yqR0pXwMPVqN6JMGzVaLB9Kkq8Dr9J6c+vX5T7
+        7RnenIQqyS+5rn7Rk01zfK5xSZ6P+GGWhU7AveWaSNS/kZPpJ2uVPnX+nCnuiBp2BwpKjrLdjXX7n
     
-In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
+In-Reply-To: <20171206004159.3755-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: 
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Matthew Wilcox <mawilcox@microsoft.com>
+From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 
-This time, we want to convert get_unlocked_mapping_entry() to use the
-XArray.  That has a ripple effect, causing us to change the waitqueues
-to hash on the address of the xarray rather than the address of the
-mapping (functionally equivalent), and create a lot of on-the-stack
-xa_state which are only used as a container for passing the xarray and
-the index down to deeper function calls.
+This results in no change in structure size on 64-bit x86 as it fits in
+the padding between the gfp_t and the void *.
 
-Also rename dax_wake_mapping_entry_waiter() to dax_wake_entry().
-
-Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+Signed-off-by: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 ---
- fs/dax.c | 80 +++++++++++++++++++++++++++++-----------------------------------
- 1 file changed, 36 insertions(+), 44 deletions(-)
+ fs/f2fs/gc.c                   |  2 +-
+ include/linux/idr.h            | 12 ++++++------
+ include/linux/radix-tree.h     |  7 +++++--
+ include/linux/xarray.h         | 34 ++++++++++++++++++++++++++++++++++
+ kernel/pid.c                   |  2 +-
+ tools/include/linux/spinlock.h |  1 +
+ 6 files changed, 48 insertions(+), 10 deletions(-)
+ create mode 100644 include/linux/xarray.h
 
-diff --git a/fs/dax.c b/fs/dax.c
-index d2007a17d257..ad984dece12e 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -120,7 +120,7 @@ static int dax_is_empty_entry(void *entry)
-  * DAX radix tree locking
-  */
- struct exceptional_entry_key {
--	struct address_space *mapping;
-+	struct xarray *xa;
- 	pgoff_t entry_start;
+diff --git a/fs/f2fs/gc.c b/fs/f2fs/gc.c
+index d844dcb80570..aac1e02f75df 100644
+--- a/fs/f2fs/gc.c
++++ b/fs/f2fs/gc.c
+@@ -991,7 +991,7 @@ int f2fs_gc(struct f2fs_sb_info *sbi, bool sync,
+ 	unsigned int init_segno = segno;
+ 	struct gc_inode_list gc_list = {
+ 		.ilist = LIST_HEAD_INIT(gc_list.ilist),
+-		.iroot = RADIX_TREE_INIT(GFP_NOFS),
++		.iroot = RADIX_TREE_INIT(gc_list.iroot, GFP_NOFS),
+ 	};
+ 
+ 	trace_f2fs_gc_begin(sbi->sb, sync, background,
+diff --git a/include/linux/idr.h b/include/linux/idr.h
+index 5f55e119d128..4ffdb7058121 100644
+--- a/include/linux/idr.h
++++ b/include/linux/idr.h
+@@ -30,11 +30,11 @@ struct idr {
+ /* Set the IDR flag and the IDR_FREE tag */
+ #define IDR_RT_MARKER		((__force gfp_t)(3 << __GFP_BITS_SHIFT))
+ 
+-#define IDR_INIT							\
++#define IDR_INIT(name)							\
+ {									\
+-	.idr_rt = RADIX_TREE_INIT(IDR_RT_MARKER)			\
++	.idr_rt = RADIX_TREE_INIT(name, IDR_RT_MARKER)			\
+ }
+-#define DEFINE_IDR(name)	struct idr name = IDR_INIT
++#define DEFINE_IDR(name)	struct idr name = IDR_INIT(name)
+ 
+ /**
+  * idr_get_cursor - Return the current position of the cyclic allocator
+@@ -193,10 +193,10 @@ struct ida {
+ 	struct radix_tree_root	ida_rt;
  };
  
-@@ -129,9 +129,10 @@ struct wait_exceptional_entry_queue {
- 	struct exceptional_entry_key key;
+-#define IDA_INIT	{						\
+-	.ida_rt = RADIX_TREE_INIT(IDR_RT_MARKER | GFP_NOWAIT),		\
++#define IDA_INIT(name)	{						\
++	.ida_rt = RADIX_TREE_INIT(name, IDR_RT_MARKER | GFP_NOWAIT),	\
+ }
+-#define DEFINE_IDA(name)	struct ida name = IDA_INIT
++#define DEFINE_IDA(name)	struct ida name = IDA_INIT(name)
+ 
+ int ida_pre_get(struct ida *ida, gfp_t gfp_mask);
+ int ida_get_new_above(struct ida *ida, int starting_id, int *p_id);
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index fc55ff31eca7..d2253b540cd7 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -109,20 +109,23 @@ struct radix_tree_node {
+ #define ROOT_TAG_SHIFT	(__GFP_BITS_SHIFT + 1)
+ 
+ struct radix_tree_root {
++	spinlock_t		xa_lock;
+ 	gfp_t			gfp_mask;
+ 	struct radix_tree_node	__rcu *rnode;
  };
  
--static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
--		pgoff_t index, void *entry, struct exceptional_entry_key *key)
-+static wait_queue_head_t *dax_entry_waitqueue(struct xa_state *xas,
-+		void *entry, struct exceptional_entry_key *key)
- {
-+	unsigned long index = xas->xa_index;
- 	unsigned long hash;
- 
- 	/*
-@@ -142,10 +143,10 @@ static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
- 	if (dax_is_pmd_entry(entry))
- 		index &= ~PG_PMD_COLOUR;
- 
--	key->mapping = mapping;
-+	key->xa = xas->xa;
- 	key->entry_start = index;
- 
--	hash = hash_long((unsigned long)mapping ^ index, DAX_WAIT_TABLE_BITS);
-+	hash = hash_long((unsigned long)xas->xa ^ index, DAX_WAIT_TABLE_BITS);
- 	return wait_table + hash;
+-#define RADIX_TREE_INIT(mask)	{					\
++#define RADIX_TREE_INIT(name, mask)	{				\
++	.xa_lock = __SPIN_LOCK_UNLOCKED(name.xa_lock),			\
+ 	.gfp_mask = (mask),						\
+ 	.rnode = NULL,							\
  }
  
-@@ -156,26 +157,23 @@ static int wake_exceptional_entry_func(wait_queue_entry_t *wait, unsigned int mo
- 	struct wait_exceptional_entry_queue *ewait =
- 		container_of(wait, struct wait_exceptional_entry_queue, wait);
+ #define RADIX_TREE(name, mask) \
+-	struct radix_tree_root name = RADIX_TREE_INIT(mask)
++	struct radix_tree_root name = RADIX_TREE_INIT(name, mask)
  
--	if (key->mapping != ewait->key.mapping ||
-+	if (key->xa != ewait->key.xa ||
- 	    key->entry_start != ewait->key.entry_start)
- 		return 0;
- 	return autoremove_wake_function(wait, mode, sync, NULL);
- }
- 
- /*
-- * We do not necessarily hold the mapping xa_lock when we call this
-- * function so it is possible that 'entry' is no longer a valid item in the
-- * radix tree.  This is okay because all we really need to do is to find the
-- * correct waitqueue where tasks might be waiting for that old 'entry' and
-- * wake them.
-+ * @entry may no longer be the entry at the index in the array.  The
-+ * important information it's conveying is whether the entry at this
-+ * index *used* to be a PMD entry..
+ #define INIT_RADIX_TREE(root, mask)					\
+ do {									\
++	spin_lock_init(&(root)->xa_lock);				\
+ 	(root)->gfp_mask = (mask);					\
+ 	(root)->rnode = NULL;						\
+ } while (0)
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+new file mode 100644
+index 000000000000..a5a933925b85
+--- /dev/null
++++ b/include/linux/xarray.h
+@@ -0,0 +1,34 @@
++#ifndef _LINUX_XARRAY_H
++#define _LINUX_XARRAY_H
++/*
++ * eXtensible Arrays
++ * Copyright (c) 2017 Microsoft Corporation
++ * Author: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of
++ * the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <linux/spinlock.h>
++
++#define xa_trylock(xa)		spin_trylock(&(xa)->xa_lock)
++#define xa_lock(xa)		spin_lock(&(xa)->xa_lock)
++#define xa_unlock(xa)		spin_unlock(&(xa)->xa_lock)
++#define xa_lock_bh(xa)		spin_lock_bh(&(xa)->xa_lock)
++#define xa_unlock_bh(xa)	spin_unlock_bh(&(xa)->xa_lock)
++#define xa_lock_irq(xa)		spin_lock_irq(&(xa)->xa_lock)
++#define xa_unlock_irq(xa)	spin_unlock_irq(&(xa)->xa_lock)
++#define xa_lock_irqsave(xa, flags) \
++				spin_lock_irqsave(&(xa)->xa_lock, flags)
++#define xa_unlock_irqrestore(xa, flags) \
++				spin_unlock_irqrestore(&(xa)->xa_lock, flags)
++#define xa_lock_held(xa)	lockdep_is_held(&(xa)->xa_lock)
++
++#endif /* _LINUX_XARRAY_H */
+diff --git a/kernel/pid.c b/kernel/pid.c
+index b13b624e2c49..b050b4643eee 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -58,7 +58,7 @@ int pid_max_max = PID_MAX_LIMIT;
   */
--static void dax_wake_mapping_entry_waiter(struct address_space *mapping,
--		pgoff_t index, void *entry, bool wake_all)
-+static void dax_wake_entry(struct xa_state *xas, void *entry, bool wake_all)
- {
- 	struct exceptional_entry_key key;
- 	wait_queue_head_t *wq;
+ struct pid_namespace init_pid_ns = {
+ 	.kref = KREF_INIT(2),
+-	.idr = IDR_INIT,
++	.idr = IDR_INIT(init_pid_ns.idr),
+ 	.pid_allocated = PIDNS_ADDING,
+ 	.level = 0,
+ 	.child_reaper = &init_task,
+diff --git a/tools/include/linux/spinlock.h b/tools/include/linux/spinlock.h
+index 4ed569fcb139..b21b586b9854 100644
+--- a/tools/include/linux/spinlock.h
++++ b/tools/include/linux/spinlock.h
+@@ -7,6 +7,7 @@
  
--	wq = dax_entry_waitqueue(mapping, index, entry, &key);
-+	wq = dax_entry_waitqueue(xas, entry, &key);
+ #define spinlock_t		pthread_mutex_t
+ #define DEFINE_SPINLOCK(x)	pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
++#define __SPIN_LOCK_UNLOCKED(x)	(pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
  
- 	/*
- 	 * Checking for locked entry and prepare_to_wait_exclusive() happens
-@@ -207,10 +205,9 @@ static inline void *lock_slot(struct xa_state *xas)
-  *
-  * The function must be called with mapping xa_lock held.
-  */
--static void *get_unlocked_mapping_entry(struct address_space *mapping,
--					pgoff_t index, void ***slotp)
-+static void *get_unlocked_mapping_entry(struct xa_state *xas)
- {
--	void *entry, **slot;
-+	void *entry;
- 	struct wait_exceptional_entry_queue ewait;
- 	wait_queue_head_t *wq;
- 
-@@ -218,22 +215,19 @@ static void *get_unlocked_mapping_entry(struct address_space *mapping,
- 	ewait.wait.func = wake_exceptional_entry_func;
- 
- 	for (;;) {
--		entry = __radix_tree_lookup(&mapping->pages, index, NULL,
--					  &slot);
--		if (!entry ||
--		    WARN_ON_ONCE(!xa_is_value(entry)) || !dax_locked(entry)) {
--			if (slotp)
--				*slotp = slot;
-+		entry = xas_load(xas);
-+		if (!entry || WARN_ON_ONCE(!xa_is_value(entry)) ||
-+		    !dax_locked(entry))
- 			return entry;
--		}
- 
--		wq = dax_entry_waitqueue(mapping, index, entry, &ewait.key);
-+		wq = dax_entry_waitqueue(xas, entry, &ewait.key);
- 		prepare_to_wait_exclusive(wq, &ewait.wait,
- 					  TASK_UNINTERRUPTIBLE);
--		xa_unlock_irq(&mapping->pages);
-+		xas_pause(xas);
-+		xas_unlock_irq(xas);
- 		schedule();
- 		finish_wait(wq, &ewait.wait);
--		xa_lock_irq(&mapping->pages);
-+		xas_lock_irq(xas);
- 	}
- }
- 
-@@ -253,7 +247,7 @@ static void dax_unlock_mapping_entry(struct address_space *mapping,
- 	xas_store(&xas, entry);
- 	/* Safe to not call xas_pause here -- we don't touch the array after */
- 	xas_unlock_irq(&xas);
--	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
-+	dax_wake_entry(&xas, entry, false);
- }
- 
- static void put_locked_mapping_entry(struct address_space *mapping,
-@@ -266,14 +260,13 @@ static void put_locked_mapping_entry(struct address_space *mapping,
-  * Called when we are done with radix tree entry we looked up via
-  * get_unlocked_mapping_entry() and which we didn't lock in the end.
-  */
--static void put_unlocked_mapping_entry(struct address_space *mapping,
--				       pgoff_t index, void *entry)
-+static void put_unlocked_mapping_entry(struct xa_state *xas, void *entry)
- {
- 	if (!entry)
- 		return;
- 
- 	/* We have to wake up next waiter for the radix tree entry lock */
--	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
-+	dax_wake_entry(xas, entry, false);
- }
- 
- /*
-@@ -310,7 +303,7 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
- 
- restart:
- 	xa_lock_irq(&mapping->pages);
--	entry = get_unlocked_mapping_entry(mapping, index, &slot);
-+	entry = get_unlocked_mapping_entry(&xas);
- 
- 	if (WARN_ON_ONCE(entry && !xa_is_value(entry))) {
- 		entry = ERR_PTR(-EIO);
-@@ -320,8 +313,7 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
- 	if (entry) {
- 		if (size_flag & DAX_PMD) {
- 			if (dax_is_pte_entry(entry)) {
--				put_unlocked_mapping_entry(mapping, index,
--						entry);
-+				put_unlocked_mapping_entry(&xas, entry);
- 				entry = ERR_PTR(-EEXIST);
- 				goto out_unlock;
- 			}
-@@ -384,8 +376,7 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
- 		if (pmd_downgrade) {
- 			radix_tree_delete(&mapping->pages, index);
- 			mapping->nrexceptional--;
--			dax_wake_mapping_entry_waiter(mapping, index, entry,
--					true);
-+			dax_wake_entry(&xas, entry, true);
- 		}
- 
- 		entry = dax_radix_locked_entry(0, size_flag | DAX_EMPTY);
-@@ -419,12 +410,13 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
- static int __dax_invalidate_mapping_entry(struct address_space *mapping,
- 					  pgoff_t index, bool trunc)
- {
-+	XA_STATE(xas, &mapping->pages, index);
- 	int ret = 0;
- 	void *entry;
- 	struct radix_tree_root *pages = &mapping->pages;
- 
- 	xa_lock_irq(&mapping->pages);
--	entry = get_unlocked_mapping_entry(mapping, index, NULL);
-+	entry = get_unlocked_mapping_entry(&xas);
- 	if (!entry || WARN_ON_ONCE(!xa_is_value(entry)))
- 		goto out;
- 	if (!trunc &&
-@@ -435,7 +427,7 @@ static int __dax_invalidate_mapping_entry(struct address_space *mapping,
- 	mapping->nrexceptional--;
- 	ret = 1;
- out:
--	put_unlocked_mapping_entry(mapping, index, entry);
-+	put_unlocked_mapping_entry(&xas, entry);
- 	xa_unlock_irq(&mapping->pages);
- 	return ret;
- }
-@@ -643,7 +635,7 @@ static int dax_writeback_one(struct block_device *bdev,
- {
- 	struct radix_tree_root *pages = &mapping->pages;
- 	XA_STATE(xas, pages, index);
--	void *entry2, **slot, *kaddr;
-+	void *entry2, *kaddr;
- 	long ret = 0, id;
- 	sector_t sector;
- 	pgoff_t pgoff;
-@@ -658,7 +650,7 @@ static int dax_writeback_one(struct block_device *bdev,
- 		return -EIO;
- 
- 	xa_lock_irq(&mapping->pages);
--	entry2 = get_unlocked_mapping_entry(mapping, index, &slot);
-+	entry2 = get_unlocked_mapping_entry(&xas);
- 	/* Entry got punched out / reallocated? */
- 	if (!entry2 || WARN_ON_ONCE(!xa_is_value(entry2)))
- 		goto put_unlocked;
-@@ -736,7 +728,7 @@ static int dax_writeback_one(struct block_device *bdev,
- 	return ret;
- 
-  put_unlocked:
--	put_unlocked_mapping_entry(mapping, index, entry2);
-+	put_unlocked_mapping_entry(&xas, entry2);
- 	xa_unlock_irq(&mapping->pages);
- 	return ret;
- }
-@@ -1506,16 +1498,16 @@ static int dax_insert_pfn_mkwrite(struct vm_fault *vmf,
- 	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
- 	pgoff_t index = vmf->pgoff;
- 	XA_STATE(xas, &mapping->pages, index);
--	void *entry, **slot;
-+	void *entry;
- 	int vmf_ret, error;
- 
- 	xa_lock_irq(&mapping->pages);
--	entry = get_unlocked_mapping_entry(mapping, index, &slot);
-+	entry = get_unlocked_mapping_entry(&xas);
- 	/* Did we race with someone splitting entry or so? */
- 	if (!entry ||
- 	    (pe_size == PE_SIZE_PTE && !dax_is_pte_entry(entry)) ||
- 	    (pe_size == PE_SIZE_PMD && !dax_is_pmd_entry(entry))) {
--		put_unlocked_mapping_entry(mapping, index, entry);
-+		put_unlocked_mapping_entry(&xas, entry);
- 		xa_unlock_irq(&mapping->pages);
- 		trace_dax_insert_pfn_mkwrite_no_entry(mapping->host, vmf,
- 						      VM_FAULT_NOPAGE);
+ #define spin_lock_irqsave(x, f)		(void)f, pthread_mutex_lock(x)
+ #define spin_unlock_irqrestore(x, f)	(void)f, pthread_mutex_unlock(x)
 -- 
 2.15.0
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
