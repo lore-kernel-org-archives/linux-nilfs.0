@@ -1,87 +1,284 @@
-From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
-Subject: RE: [PATCH v4 00/73] XArray version 4
-Date: Wed, 6 Dec 2017 01:53:41 +0000
-Message-ID: <MWHPR21MB0845A83B9E89E4A9499AEC2FCB320@MWHPR21MB0845.namprd21.prod.outlook.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH v4 72/73] xfs: Convert mru cache to XArray
+Date: Wed, 6 Dec 2017 19:44:04 +1100
+Message-ID: <20171206084404.GF4094@dastard>
 References: <20171206004159.3755-1-willy@infradead.org>
- <20171206014536.GA4094@dastard> <20171206015108.GB4094@dastard>
+ <20171206004159.3755-73-willy@infradead.org>
+ <20171206012901.GZ4094@dastard>
+ <20171206020208.GK26021@bombadil.infradead.org>
+ <20171206031456.GE4094@dastard>
+ <20171206044549.GO26021@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=selector1; h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
- bh=2s3e98iA3yEyffvHorcAksgfplk3PnZtX263Lh823eU=;
- b=ccMqa8RAjjUpS7f/04jZFBPqXL8VOWXiyuOWKaeHTOhW6E7Z3DRuy0dKGffxdov5UymTNoO6XnOthAsDHFDcJ8A+uuNZuLJP4/h3sZpa28niGmnvEu+t0zwFBiZCPbf01bRzyUCh9KSP3In7qF3t7Ja5qmdPTp99b9ThullbgMo=
-In-Reply-To: <20171206015108.GB4094@dastard>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20171206044549.GO26021-PfSpb0PWhxZc2C7mugBRk2EX/6BAtgUQ@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-SHVoLCB5b3UndmUgY2F1Z2h0IGEgY291cGxlIG9mIHByb2JsZW1zIHRoYXQgMGRheSBoYXNuJ3Qg
-c2VudCBtZSB5ZXQuICBUcnkgdHVybmluZyBvbiBEQVggb3IgVFJBTlNQQVJFTlRfSFVHRVBBR0Uu
-ICBUaGFua3MhDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogRGF2ZSBD
-aGlubmVyIFttYWlsdG86ZGF2aWRAZnJvbW9yYml0LmNvbV0NCj4gU2VudDogVHVlc2RheSwgRGVj
-ZW1iZXIgNSwgMjAxNyA4OjUxIFBNDQo+IFRvOiBNYXR0aGV3IFdpbGNveCA8d2lsbHlAaW5mcmFk
-ZWFkLm9yZz4NCj4gQ2M6IE1hdHRoZXcgV2lsY294IDxtYXdpbGNveEBtaWNyb3NvZnQuY29tPjsg
-Um9zcyBad2lzbGVyDQo+IDxyb3NzLnp3aXNsZXJAbGludXguaW50ZWwuY29tPjsgSmVucyBBeGJv
-ZSA8YXhib2VAa2VybmVsLmRrPjsgUmVoYXMNCj4gU2FjaGRldmEgPGFxdWFubmllQGdtYWlsLmNv
-bT47IGxpbnV4LW1tQGt2YWNrLm9yZzsgbGludXgtDQo+IGZzZGV2ZWxAdmdlci5rZXJuZWwub3Jn
-OyBsaW51eC1mMmZzLWRldmVsQGxpc3RzLnNvdXJjZWZvcmdlLm5ldDsgbGludXgtDQo+IG5pbGZz
-QHZnZXIua2VybmVsLm9yZzsgbGludXgtYnRyZnNAdmdlci5rZXJuZWwub3JnOyBsaW51eC14ZnNA
-dmdlci5rZXJuZWwub3JnOw0KPiBsaW51eC11c2JAdmdlci5rZXJuZWwub3JnOyBsaW51eC1rZXJu
-ZWxAdmdlci5rZXJuZWwub3JnDQo+IFN1YmplY3Q6IFJlOiBbUEFUQ0ggdjQgMDAvNzNdIFhBcnJh
-eSB2ZXJzaW9uIDQNCj4gDQo+IE9uIFdlZCwgRGVjIDA2LCAyMDE3IGF0IDEyOjQ1OjQ5UE0gKzEx
-MDAsIERhdmUgQ2hpbm5lciB3cm90ZToNCj4gPiBPbiBUdWUsIERlYyAwNSwgMjAxNyBhdCAwNDo0
-MDo0NlBNIC0wODAwLCBNYXR0aGV3IFdpbGNveCB3cm90ZToNCj4gPiA+IEZyb206IE1hdHRoZXcg
-V2lsY294IDxtYXdpbGNveEBtaWNyb3NvZnQuY29tPg0KPiA+ID4NCj4gPiA+IEkgbG9va2VkIHRo
-cm91Z2ggc29tZSBub3RlcyBhbmQgZGVjaWRlZCB0aGlzIHdhcyB2ZXJzaW9uIDQgb2YgdGhlIFhB
-cnJheS4NCj4gPiA+IExhc3QgcG9zdGVkIHR3byB3ZWVrcyBhZ28sIHRoaXMgdmVyc2lvbiBpbmNs
-dWRlcyBhICpsb3QqIG9mIGNoYW5nZXMuDQo+ID4gPiBJJ2QgbGlrZSB0byB0aGFuayBEYXZlIENo
-aW5uZXIgZm9yIGhpcyBmZWVkYmFjaywgZW5jb3VyYWdlbWVudCBhbmQNCj4gPiA+IGRpc3RyYWN0
-aW5nIGlkZWFzIGZvciBpbXByb3ZlbWVudCwgd2hpY2ggSSdsbCBnZXQgdG8gb25jZSB0aGlzIGlz
-IG1lcmdlZC4NCj4gPg0KPiA+IEJUVywgeW91IG5lZWQgdG8gZml4IHRoZSAiVG86IiBsaW5lIG9u
-IHlvdXIgcGF0Y2hib21iczoNCj4gPg0KPiA+ID4gVG86IHVubGlzdGVkLXJlY2lwaWVudHM6IDss
-IG5vIFRvLWhlYWRlciBvbiBpbnB1dCA8QGdtYWlsLQ0KPiBwb3AubC5nb29nbGUuY29tPg0KPiA+
-DQo+ID4gVGhpcyBiYWQgZW1haWwgYWRkcmVzcyBnZXR0aW5nIHF1b3RlZCB0byB0aGUgY2MgbGlu
-ZSBtYWtlcyBzb21lIE1UQXMNCj4gPiB2ZXJ5IHVuaGFwcHkuDQo+ID4NCj4gPiA+DQo+ID4gPiBI
-aWdobGlnaHRzOg0KPiA+ID4gIC0gT3ZlciAyMDAwIHdvcmRzIG9mIGRvY3VtZW50YXRpb24gaW4g
-cGF0Y2ggOCEgIEFuZCBsb3RzIG1vcmUga2VybmVsLWRvYy4NCj4gPiA+ICAtIFRoZSBwYWdlIGNh
-Y2hlIGlzIG5vdyBmdWxseSBjb252ZXJ0ZWQgdG8gdGhlIFhBcnJheS4NCj4gPiA+ICAtIE1hbnkg
-bW9yZSB0ZXN0cyBpbiB0aGUgdGVzdC1zdWl0ZS4NCj4gPiA+DQo+ID4gPiBUaGlzIHBhdGNoIHNl
-dCBpcyBub3QgZm9yIGFwcGx5aW5nLiAgMGRheSBpcyBzdGlsbCByZXBvcnRpbmcgcHJvYmxlbXMs
-DQo+ID4gPiBhbmQgSSdkIGZlZWwgYmFkIGZvciBlYXRpbmcgc29tZW9uZSdzIGRhdGEuICBUaGVz
-ZSBwYXRjaGVzIGFwcGx5IG9uIHRvcA0KPiA+ID4gb2YgYSBzZXQgb2YgcHJlcGF0b3J5IHBhdGNo
-ZXMgd2hpY2gganVzdCBhcmVuJ3QgaW50ZXJlc3RpbmcuICBJZiB5b3UNCj4gPiA+IHdhbnQgdG8g
-c2VlIHRoZSBwYXRjaGVzIGFwcGxpZWQgdG8gYSB0cmVlLCBJIHN1Z2dlc3QgcHVsbGluZyBteSBn
-aXQgdHJlZToNCj4gPiA+DQo+IGh0dHBzOi8vbmEwMS5zYWZlbGlua3MucHJvdGVjdGlvbi5vdXRs
-b29rLmNvbS8/dXJsPWh0dHAlM0ElMkYlMkZnaXQuaW5mcmFkZQ0KPiBhZC5vcmclMkZ1c2VycyUy
-RndpbGx5JTJGbGludXgtDQo+IGRheC5naXQlMkZzaG9ydGxvZyUyRnJlZnMlMkZoZWFkcyUyRnhh
-cnJheS0yMDE3LTEyLQ0KPiAwNCZkYXRhPTAyJTdDMDElN0NtYXdpbGNveCU0MG1pY3Jvc29mdC5j
-b20lN0NhM2U3MjE1NDVmOGI0YjlkZmYxDQo+IDYwOGQ1M2M0YmQ0MmYlN0M3MmY5ODhiZjg2ZjE0
-MWFmOTFhYjJkN2NkMDExZGI0NyU3QzElN0MwJTdDNjM2NA0KPiA4MTIxODc0MDM0MTMxMiZzZGF0
-YT1JWE5aWFhMVGY5NjRPUTBlTERwSnQyTEN2JTJCR0dXRlclMkZRZDRLYw0KPiBLWXU2em8lM0Qm
-cmVzZXJ2ZWQ9MA0KPiA+ID4gSSBhbHNvIGxlZnQgb3V0IHRoZSBpZHJfcHJlbG9hZCByZW1vdmFs
-cy4gIFRoZXkncmUgc3RpbGwgaW4gdGhlIGdpdCB0cmVlLA0KPiA+ID4gYnV0IEknbSBub3QgbG9v
-a2luZyBmb3IgZmVlZGJhY2sgb24gdGhlbS4NCj4gPg0KPiA+IEknbGwgZ2l2ZSB0aGlzIGEgcXVp
-Y2sgYnVybiB0aGlzIGFmdGVybm9vbiBhbmQgc2VlIHdoYXQgY2F0Y2hlcyBmaXJlLi4uDQo+IA0K
-PiBCdWlsZCB3YXJuaW5ncy9lcnJvcnM6DQo+IA0KPiAuLi4uLg0KPiBsaWIvcmFkaXgtdHJlZS5j
-OjcwMDoxMzogd2FybmluZzogwr9yYWRpeF90cmVlX2ZyZWVfbm9kZXPCvyBkZWZpbmVkIGJ1dCBu
-b3QgdXNlZA0KPiBbLVd1bnVzZWQtZnVuY3Rpb25dDQo+ICBzdGF0aWMgdm9pZCByYWRpeF90cmVl
-X2ZyZWVfbm9kZXMoc3RydWN0IHJhZGl4X3RyZWVfbm9kZSAqbm9kZSkNCj4gLi4uLi4NCj4gbGli
-L3hhcnJheS5jOiBJbiBmdW5jdGlvbiDCv3hhc19tYXjCvzoNCj4gbGliL3hhcnJheS5jOjI5MTox
-Njogd2FybmluZzogdW51c2VkIHZhcmlhYmxlIMK/bWFza8K/DQo+IFstV3VudXNlZC12YXJpYWJs
-ZV0NCj4gICB1bnNpZ25lZCBsb25nIG1hc2ssIG1heCA9IHhhcy0+eGFfaW5kZXg7DQo+ICAgICAg
-ICAgICAgICAgICAgIF5+fn4NCj4gLi4uLi4uDQo+IGZzL2RheC5jOiBJbiBmdW5jdGlvbiDCv2dy
-YWJfbWFwcGluZ19lbnRyecK/Og0KPiBmcy9kYXguYzozMDU6MjogZXJyb3I6IGltcGxpY2l0IGRl
-Y2xhcmF0aW9uIG9mIGZ1bmN0aW9uIMK/eGFzX3NldF9vcmRlcsK/OyBkaWQgeW91DQo+IG1lYW4g
-wr94YXNfc2V0X2VycsK/PyAgWy1XZXJyb3I9aW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb25d
-DQo+ICAgeGFzX3NldF9vcmRlcigmeGFzLCBpbmRleCwgc2l6ZV9mbGFnID8gUE1EX09SREVSIDog
-MCk7DQo+ICAgICBefn5+fn5+fn5+fn5+DQo+IHNjcmlwdHMvTWFrZWZpbGUuYnVpbGQ6MzEwOiBy
-ZWNpcGUgZm9yIHRhcmdldCAnZnMvZGF4Lm8nIGZhaWxlZA0KPiBtYWtlWzFdOiAqKiogW2ZzL2Rh
-eC5vXSBFcnJvciAxDQo+IA0KPiAtRGF2ZS4NCj4gLS0NCj4gRGF2ZSBDaGlubmVyDQo+IGRhdmlk
-QGZyb21vcmJpdC5jb20NCg==
+On Tue, Dec 05, 2017 at 08:45:49PM -0800, Matthew Wilcox wrote:
+> On Wed, Dec 06, 2017 at 02:14:56PM +1100, Dave Chinner wrote:
+> > > The other conversions use the normal API instead of the advanced API, so
+> > > all of this gets hidden away.  For example, the inode cache does this:
+> > 
+> > Ah, OK, that's not obvious from the code changes. :/
+> 
+> Yeah, it's a lot easier to understand (I think!) if you build the
+> docs in that tree and look at
+> file:///home/willy/kernel/xarray-3/Documentation/output/core-api/xarray.html
+> (mutatis mutandi).  I've tried to tell a nice story about how to put
+> all the pieces together from the normal to the advanced API.
+> 
+> > However, it's probably overkill for XFS. In all the cases, when we
+> > insert there should be no entry in the tree - the
+> > radix tree insert error handling code there was simply catching
+> > "should never happen" cases and handling it without crashing.
+> 
+> I thought it was probably overkill to be using xa_cmpxchg() in the
+> pag_ici patch.  I didn't want to take away your error handling as part
+> of the conversion, but I think a rational person implementing it today
+> would just call xa_store() and not even worry about the return value
+> except to check it for IS_ERR().
+
+*nod*
+
+> That said, using xa_cmpxchg() in the dquot code looked like the right
+> thing to do?  Since we'd dropped the qi mutex and the ILOCK, it looks
+> entirely reasonable for another thread to come in and set up the dquot.
+> But I'm obviously quite ignorant of the XFS internals, so maybe there's
+> something else going on that makes this essentially a "can't happen".
+
+It's no different to the inode cache code, which drops the RCU
+lock on lookup miss, instantiates the new inode (maybe reading it
+off disk), then locks the tree and attempts to insert it. Both cases
+use "insert if empty, otherwise retry lookup from start" semantics.
+
+cmpxchg is for replacing a known object in a store - it's not really
+intended for doing initial inserts after a lookup tells us there is
+nothing in the store.  The radix tree "insert only if empty" makes
+sense here, because it naturally takes care of lookup/insert races
+via the -EEXIST mechanism.
+
+I think that providing xa_store_excl() (which would return -EEXIST
+if the entry is not empty) would be a better interface here, because
+it matches the semantics of lookup cache population used all over
+the kernel....
+
+> > Now that I've looked at this, I have to say that having a return
+> > value of NULL meaning "success" is quite counter-intuitive. That's
+> > going to fire my "that looks so wrong" detector every time I look at
+> > the code and notice it's erroring out on a non-null return value
+> > that isn't a PTR_ERR case....
+> 
+> It's the same convention as cmpxchg().  I think it's triggering your
+> "looks so wrong" detector because it's fundamentally not the natural
+> thing to write.
+
+Most definitely the case, and this is why it's a really bad
+interface for the semantics we have. This how we end up with code
+that makes it easy for programmers to screw up pointer checks in
+error handling... :/
+
+> I'm quite happy to have normal API variants that don't save/restore
+> interrupts.  Just need to come up with good names ... I don't think
+> xa_store_noirq() is a good name, but maybe you do?
+
+I'd prefer not to have to deal with such things at all. :P
+
+How many subsystems actually require irq safety in the XA locking
+code? Make them use irqsafe versions, not make everyone else use
+"noirq" versions, as is the convention for the rest of the kernel
+code....
+
+> > > It's the design pattern I've always intended to use.  Naturally, the
+> > > xfs radix trees weren't my initial target; it was the page cache, and
+> > > the page cache does the same thing; uses the tree_lock to protect both
+> > > the radix tree and several other fields in that same data structure.
+> > > 
+> > > I'm open to argument on this though ... particularly if you have a better
+> > > design pattern in mind!
+> > 
+> > I don't mind structures having internal locking - I have a problem
+> > with leaking them into contexts outside the structure they protect.
+> > That way lies madness - you can't change the internal locking in
+> > future because of external dependencies, and the moment you need
+> > something different externally we've got to go back to an external
+> > lock anyway.
+> > 
+> > This is demonstrated by the way you converted the XFS dquot tree -
+> > you didn't replace the dquot tree lock with the internal xa_lock
+> > because it's a mutex and we have to sleep holding it. IOWs, we've
+> > added another layer of locking here, not simplified the code.
+> 
+> I agree the dquot code is no simpler than it was, but it's also no more
+> complicated from a locking analysis point of view; the xa_lock is just
+> not providing you with any useful exclusion.
+
+Sure, that's fine. All I'm doing is pointing out that we can't use
+the internal xa_lock to handle everything the indexed objects
+require, and so we're going to still need external locks in
+many cases.
+
+> At least, not today.  One of the future plans is to allow xa_nodes to
+> be allocated from ZONE_MOVABLE.  In order to do that, we have to be
+> able to tell which lock protects any given node.  With the XArray,
+> we can find that out (xa_node->root->xa_lock); with the radix tree,
+> we don't even know what kind of lock protects the tree.
+
+Yup, this is a prime example of why we shouldn't be creating
+external dependencies by smearing the locking context outside the XA
+structure itself. It's not a stretch to see something like a
+ZONE_MOVEABLE dependency because some other object indexed in a XA
+is stored in the same page as the xa_node that points to it, and
+both require the same xa_lock to move/update...
+
+> There are other costs to not having a lock.  The lockdep/RCU
+> analysis done on the radix tree code is none.  Because we have
+> no idea what lock might protect any individual radix tree, we use
+> rcu_dereference_raw(), disabling lockdep's ability to protect us.
+
+Unfortunately for you, I don't find arguments along the lines of
+"lockdep will save us" at all convincing.  lockdep already throws
+too many false positives to be useful as a tool that reliably and
+accurately points out rare, exciting, complex, intricate locking
+problems.
+
+> It's funny that you see the hodgepodge of different locking strategies
+> in the XFS code base as being a problem with the XArray.  I see it as
+> being a consequence of XFS's different needs.  No, the XArray can't
+> solve all of your problems, but it hasn't made your locking more complex.
+
+I'm not worried about changes in locking complexity here because, as
+you point out, there isn't a change. What I'm mostly concerned about
+is the removal of abstraction, modularity and isolation between
+the XFS code and the library infrastructure it uses.
+
+> 
+> And I don't agree that the existing radix tree code has clear, consistent
+> locking patterns.  For example, this use of RCU was unnecessary:
+> 
+>  xfs_queue_eofblocks(
+>         struct xfs_mount *mp)
+>  {
+> -       rcu_read_lock();
+> -       if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_EOFBLOCKS_TAG))
+> +       if (xa_tagged(&mp->m_perag_xa, XFS_ICI_EOFBLOCKS_TAG))
+>                 queue_delayed_work(mp->m_eofblocks_workqueue,
+>                                    &mp->m_eofblocks_work,
+>                                    msecs_to_jiffies(xfs_eofb_secs * 1000));
+> -       rcu_read_unlock();
+>  }
+> 
+> radix_tree_tagged never required the RCU lock (commit 7cf9c2c76c1a).
+> I think you're just used to the radix tree pattern of "we provide no
+> locking for you, come up with your own scheme".
+
+No, I'm used to having no-one really understand how "magic lockless
+RCU lookups" actually work.  When i originally wrote the lockless
+lookup code, I couldn't find anyone who both understood RCU and the
+XFS inode cache to review the code for correctness.  Hence it had to
+be dumbed down to the point that it was "stupidly obvious that it's
+safe".
+
+That problem has not gone away - very few people who read and have
+to maintain this code understandxs all the nasty little intricacies
+of RCU lookups.  Hiding /more/ of the locking semantics from the
+programmers makes it even harder to explain why the algorithm is
+safe. If the rules are basic (e.g. all radix tree lookups use RCU
+locking) then it's easier for everyone to understand, review and
+keep the code working correctly because there's almost no scope for
+getting it wrong.
+
+That's one of the advantages of the "we provide no locking for you,
+come up with your own scheme" approach - we can dumb it down to the
+point of being understandable and maintainable without anyone
+needing to hurt their brain on memory-barriers.txt every time
+someone changes the code.
+
+Also, it's worth keeping in mind that this dumb code provides the
+fastest and most scalable inode cache infrastructure in the kernel.
+i.e. it's the structures and algorithms iused that make the code
+fast, but it's the simplicity of the code that makes it
+understandable and maintainable. The XArray code is a good
+algorithm, we've just got to make the API suitable for dumb idiots
+like me to be able to write reliable, maintainable code that uses
+it.
+
+> What might make more sense for XFS is coming up with something
+> intermediate between the full on xa_state-based API and the "we handle
+> everything for you" normal API.  For example, how would you feel about
+> xfs_mru_cache_insert() looking like this:
+> 
+> 	xa_lock(&mru->store);
+> 	error = PTR_ERR_OR_ZERO(__xa_store(&mru->store, key, elem, GFP_NOFS));
+> 	if (!error)
+> 		_xfs_mru_cache_list_insert(mru, elem);
+> 	xa_unlock(&mru->store);
+> 
+> 	return error;
+> 
+> xfs_mru_cache_lookup would look like:
+> 
+> 	xa_lock(&mru->store);
+> 	elem = __xa_load(&mru->store, key);
+> 	....
+> There's no real need for the mru code to be using the full-on xa_state
+> API.  For something like DAX or the page cache, there's a real advantage,
+> but the mru code is, I think, a great example of a user who has somewhat
+> more complex locking requirements, but doesn't use the array in a
+> complex way.
+
+Yes, that's because the radix tree is not central to it's algorithm
+or purpose.  The MRU cache (Most Recently Used Cache) is mostly
+about the management of the items on lists in the priority
+reclaimation array.  The radix tree is just there to provide a fast
+"is there an item for this key already being aged" lookup so we
+don't have to scan lists to do this.
+
+i.e. Right now we could just as easily replace the radix tree with a
+rbtree or resizing hash table as an XArray - the radix tree was just
+a convenient "already implemented" key-based indexing mechanism that
+was in the kernel when the MRU cache was implemented. Put simply:
+the radix tree is not a primary structure in the MRU cache - it's
+only an implementation detail and that's another reason why I'm not
+a fan of smearing the internal locking of the replacement structure
+all through the MRU code....
+
+/me shrugs
+
+BTW, something else I just noticed: all the comments in XFS that
+talk about the radix trees would need updating.
+
+$ git grep radix fs/xfs
+fs/xfs/xfs_dquot.c:             /* uninit / unused quota found in radix tree, keep looking  */
+fs/xfs/xfs_icache.c:    /* propagate the reclaim tag up into the perag radix tree */
+fs/xfs/xfs_icache.c:    /* clear the reclaim tag from the perag radix tree */
+fs/xfs/xfs_icache.c: * We set the inode flag atomically with the radix tree tag.
+fs/xfs/xfs_icache.c: * Once we get tag lookups on the radix tree, this inode flag
+fs/xfs/xfs_icache.c:     * radix tree nodes not being updated yet. We monitor for this by
+fs/xfs/xfs_icache.c:     * Because the inode hasn't been added to the radix-tree yet it can't
+fs/xfs/xfs_icache.c:     * These values must be set before inserting the inode into the radix
+fs/xfs/xfs_icache.c:     * radix tree traversal here.  It assumes this function
+fs/xfs/xfs_icache.c: * radix tree lookups to a minimum. The batch size is a trade off between
+fs/xfs/xfs_icache.c:     * The radix tree lock here protects a thread in xfs_iget from racing
+fs/xfs/xfs_icache.c:     * Remove the inode from the per-AG radix tree.
+fs/xfs/xfs_icache.c:     * with inode cache radix tree lookups.  This is because the lookup
+fs/xfs/xfs_icache.c:     * Don't bother locking the AG and looking up in the radix trees
+fs/xfs/xfs_icache.c:            /* propagate the eofblocks tag up into the perag radix tree */
+fs/xfs/xfs_icache.c:            /* clear the eofblocks tag from the perag radix tree */
+fs/xfs/xfs_icache.h: * tags for inode radix tree
+fs/xfs/xfs_qm.c: * currently is the only interface into the radix tree code that allows
+$
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
 --
 To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
