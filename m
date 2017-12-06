@@ -1,23 +1,23 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 36/73] mm: Convert page migration to XArray
-Date: Tue,  5 Dec 2017 16:41:22 -0800
-Message-ID: <20171206004159.3755-37-willy@infradead.org>
+Subject: [PATCH v4 66/73] page cache: Finish XArray conversion
+Date: Tue,  5 Dec 2017 16:41:52 -0800
+Message-ID: <20171206004159.3755-67-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=h7aOOeRKdFlCK3tqBh8CkIS6qk37hPe6Qp9ye6pTi2c=; b=BLdfAP4Zm3oME+H0aL5SyD4ir
-        CSwmvunMJNt2YQ7ymXoWta4kRL2XggJD7z2DHl/KSXftSChJwLiN8qRCzwfEELhZi2TWZCzrjJdX+
-        CMOQ+HHIRss7ERD0lfCuL7ftP23bmCO3gl2/pOt5YS+l9gFLtUv95TdIF1bB07MEWeRe8wtb78xN2
-        DWi0DI24VxF2RMpivd3rsuL+v+VKOqaUJAlKDbWq4YPw6Z5/8Yqcfemxbou2GbOf3VXt2AqCHKaer
-        a7LuHdjKfSrQRO+Y8JWvY0eAXjODgdS9i8jfq+nFbwtxE12bxrz0Dgg9YNJQtONrM1+ki0o5YcES0
+         bh=yH0JuBUZX7AzE2v2NvRbKuw/HhsfLw8gHarVCY+9mjo=; b=acjWSZq9CtUo5OoABCpjLAXRZ
+        H2VWR0vIEpZVw3QRguhGbcHPC7ydQ3FgDztRLgK5yVu+R9JtnvBKiXnn1YRziG0aQpAAIgNL8DCyr
+        d1QFlxlzJ8pCyLP6wp7nAABgdfJEIsuk5tLzAo/YvwD5clDZjiiLtYY95nJL6765i8C1WVRuAAbDA
+        P8sq2vrquViSTecsLKGK8a6HOQPJKdqs+vueNUpAxdm3sKOxqS+7wcMnkx1S+Q0J3Pkb5bvvV9qCy
+        LI7fGSjOugJx53lGk5fdT3LkioQXIv7eosKvguaMWm6uWojRDXsnep3SuLbw1fAjpOGDxLRdP6E7L
     
 In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,130 +27,55 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
+With no more radix tree API users left, we can drop the GFP flags
+and use xa_init() instead of INIT_RADIX_TREE().
+
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/migrate.c | 40 ++++++++++++++++------------------------
- 1 file changed, 16 insertions(+), 24 deletions(-)
+ fs/inode.c         | 2 +-
+ include/linux/fs.h | 2 +-
+ mm/swap_state.c    | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/mm/migrate.c b/mm/migrate.c
-index 59f18c571120..7122fec9b075 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -322,7 +322,7 @@ void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
- 	page = migration_entry_to_page(entry);
- 
- 	/*
--	 * Once radix-tree replacement of page migration started, page_count
-+	 * Once page cache replacement of page migration started, page_count
- 	 * *must* be zero. And, we don't want to call wait_on_page_locked()
- 	 * against a page without get_page().
- 	 * So, we use get_page_unless_zero(), here. Even failed, page fault
-@@ -437,10 +437,10 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 		struct buffer_head *head, enum migrate_mode mode,
- 		int extra_count)
+diff --git a/fs/inode.c b/fs/inode.c
+index c7b00573c10d..2046ff6dd1b3 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -348,7 +348,7 @@ EXPORT_SYMBOL(inc_nlink);
+ void address_space_init_once(struct address_space *mapping)
  {
-+	XA_STATE(xas, &mapping->pages, page_index(page));
- 	struct zone *oldzone, *newzone;
- 	int dirty;
- 	int expected_count = 1 + extra_count;
--	void **pslot;
- 
- 	/*
- 	 * Device public or private pages have an extra refcount as they are
-@@ -466,20 +466,16 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 	oldzone = page_zone(page);
- 	newzone = page_zone(newpage);
- 
--	xa_lock_irq(&mapping->pages);
--
--	pslot = radix_tree_lookup_slot(&mapping->pages,
-- 					page_index(page));
-+	xas_lock_irq(&xas);
- 
- 	expected_count += 1 + page_has_private(page);
--	if (page_count(page) != expected_count ||
--		radix_tree_deref_slot_protected(pslot, &mapping->pages.xa_lock) != page) {
--		xa_unlock_irq(&mapping->pages);
-+	if (page_count(page) != expected_count || xas_load(&xas) != page) {
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
- 	if (!page_ref_freeze(page, expected_count)) {
--		xa_unlock_irq(&mapping->pages);
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
-@@ -493,7 +489,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 	if (mode == MIGRATE_ASYNC && head &&
- 			!buffer_migrate_lock_buffers(head, mode)) {
- 		page_ref_unfreeze(page, expected_count);
--		xa_unlock_irq(&mapping->pages);
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
-@@ -521,7 +517,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 		SetPageDirty(newpage);
- 	}
- 
--	radix_tree_replace_slot(&mapping->pages, pslot, newpage);
-+	xas_store(&xas, newpage);
- 
- 	/*
- 	 * Drop cache reference from old page by unfreezing
-@@ -530,7 +526,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 	 */
- 	page_ref_unfreeze(page, expected_count - 1);
- 
--	xa_unlock(&mapping->pages);
-+	xas_unlock(&xas);
- 	/* Leave irq disabled to prevent preemption while updating stats */
- 
- 	/*
-@@ -570,22 +566,18 @@ EXPORT_SYMBOL(migrate_page_move_mapping);
- int migrate_huge_page_move_mapping(struct address_space *mapping,
- 				   struct page *newpage, struct page *page)
- {
-+	XA_STATE(xas, &mapping->pages, page_index(page));
- 	int expected_count;
--	void **pslot;
--
--	xa_lock_irq(&mapping->pages);
--
--	pslot = radix_tree_lookup_slot(&mapping->pages, page_index(page));
- 
-+	xas_lock_irq(&xas);
- 	expected_count = 2 + page_has_private(page);
--	if (page_count(page) != expected_count ||
--		radix_tree_deref_slot_protected(pslot, &mapping->pages.xa_lock) != page) {
--		xa_unlock_irq(&mapping->pages);
-+	if (page_count(page) != expected_count || xas_load(&xas) != page) {
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
- 	if (!page_ref_freeze(page, expected_count)) {
--		xa_unlock_irq(&mapping->pages);
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
-@@ -594,11 +586,11 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
- 
- 	get_page(newpage);
- 
--	radix_tree_replace_slot(&mapping->pages, pslot, newpage);
-+	xas_store(&xas, newpage);
- 
- 	page_ref_unfreeze(page, expected_count - 1);
- 
--	xa_unlock_irq(&mapping->pages);
-+	xas_unlock_irq(&xas);
- 
- 	return MIGRATEPAGE_SUCCESS;
- }
+ 	memset(mapping, 0, sizeof(*mapping));
+-	INIT_RADIX_TREE(&mapping->pages, GFP_ATOMIC | __GFP_ACCOUNT);
++	xa_init(&mapping->pages);
+ 	init_rwsem(&mapping->i_mmap_rwsem);
+ 	INIT_LIST_HEAD(&mapping->private_list);
+ 	spin_lock_init(&mapping->private_lock);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index c58bc3c619bf..b459bf4ddb62 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -410,7 +410,7 @@ int pagecache_write_end(struct file *, struct address_space *mapping,
+  */
+ struct address_space {
+ 	struct inode		*host;
+-	struct radix_tree_root	pages;
++	struct xarray		pages;
+ 	gfp_t			gfp_mask;
+ 	atomic_t		i_mmap_writable;
+ 	struct rb_root_cached	i_mmap;
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 7c862258af66..101e952e01e6 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -573,7 +573,7 @@ int init_swap_address_space(unsigned int type, unsigned long nr_pages)
+ 		return -ENOMEM;
+ 	for (i = 0; i < nr; i++) {
+ 		space = spaces + i;
+-		INIT_RADIX_TREE(&space->pages, GFP_ATOMIC|__GFP_NOWARN);
++		xa_init(&space->pages);
+ 		atomic_set(&space->i_mmap_writable, 0);
+ 		space->a_ops = &swap_aops;
+ 		/* swap cache doesn't use writeback related tags */
 -- 
 2.15.0
 
