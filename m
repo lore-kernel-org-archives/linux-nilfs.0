@@ -1,237 +1,225 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH v4 54/73] nilfs2: Convert to XArray
-Date: Tue,  5 Dec 2017 16:41:40 -0800
-Message-ID: <20171206004159.3755-55-willy@infradead.org>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: [PATCH v4 14/73] xarray: Add xas_for_each_tag
+Date: Tue,  5 Dec 2017 16:41:00 -0800
+Message-ID: <20171206004159.3755-15-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=ycONPV+AKLZwAileCO0jJXsBCjV37VcV/KIlqWv15mo=; b=HslUAmG72YxSDsdIJ3ceDrzdu
-        mLaERdgtnCr56CFibbNIfowN3LPbvn1t1J9Sn+bJxHP5oX3DELJ3crXz/Jj8YDpMWSa78Us9swNfU
-        VT0lY5Y0eLyUqrjS3lIUI7f+3s8VU8vxNgLywXRhvtqQc2oLYpSfeHPAg1ncnvyLFqiHmFiDBAAyQ
-        Qu8wXF7AIgY2uNtbVI9xXAK4C5pYCHqT0OZC53B/mJfKmP2WX8I29kZm7AzO7gLIC0hPOwI3sV+NL
-        aukZ3tA2P2OOfL/sIj+JHR2V8vrYKvwHEZSQj5Q8qoN14wZhl+hjt5x9uNxQoDzleXKm/a9opUQS3
+         bh=AXXTTHvRGS+LGwjVBrjg6HZTR67CKbeYW/Kx0n2iUCM=; b=YYFvu1X51lVv0owzA8mQ/1Sjr
+        oPeVrdUJQ1KLNE5l22leGWsZ4st/aRPnRM4vWzHowCQ4jlGeXXG7ETMfcuVq8QwzHILSYxdbK9k+G
+        c/Ke3fULIC49bkzCuBuN6E/jf0D3JuJ+N3Bcglt//yjEzkxROdvUXqgFpx8jyrz31Dmxgrqs9fOfz
+        3r7mqFagJemt9g93Q7gVdd8PmHSoNYt+ceWBa/YGd6dx9wrb8HvH83hCM7PMNIxsYwSI5ZlClexpc
+        lvjcmLirvyH+A/iS3nRTGbnZ/sCDTlDDCrH/urQFcJoJUJHf7vwcekv5n7zUywWP8K+J2q5GqXqwU
     
-In-Reply-To: <20171206004159.3755-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: 
-Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
 
-From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+From: Matthew Wilcox <mawilcox@microsoft.com>
 
-I'm not 100% convinced that the rewrite of nilfs_copy_back_pages is
-correct, but it will at least have different bugs from the current
-version.
+This iterator operates across each tagged entry in the specified range.
+We do not yet have a user for an xa_for_each_tag iterator, but it would
+be straight-forward to add one if needed.  This commit also includes
+xas_find_tag() and xas_next_tag().
 
-Signed-off-by: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/nilfs2/btnode.c | 37 +++++++++++-----------------
- fs/nilfs2/page.c   | 72 +++++++++++++++++++++++++++++++-----------------------
- 2 files changed, 56 insertions(+), 53 deletions(-)
+ include/linux/xarray.h | 68 +++++++++++++++++++++++++++++++++++++++++++
+ lib/xarray.c           | 78 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 146 insertions(+)
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 9e2a00207436..92cf58e244f9 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -177,42 +177,36 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
- 	ctxt->newbh = NULL;
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index a62baf6f1a28..4e61ebd406f5 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -554,6 +554,7 @@ void *xas_find(struct xa_state *, unsigned long max);
+ bool xas_get_tag(const struct xa_state *, xa_tag_t);
+ void xas_set_tag(const struct xa_state *, xa_tag_t);
+ void xas_clear_tag(const struct xa_state *, xa_tag_t);
++void *xas_find_tag(struct xa_state *, unsigned long max, xa_tag_t);
+ void xas_init_tags(const struct xa_state *);
  
- 	if (inode->i_blkbits == PAGE_SHIFT) {
--		lock_page(obh->b_page);
--		/*
--		 * We cannot call radix_tree_preload for the kernels older
--		 * than 2.6.23, because it is not exported for modules.
--		 */
-+		void *entry;
-+		struct page *opage = obh->b_page;
-+		lock_page(opage);
- retry:
--		err = radix_tree_preload(GFP_NOFS & ~__GFP_HIGHMEM);
--		if (err)
--			goto failed_unlock;
- 		/* BUG_ON(oldkey != obh->b_page->index); */
--		if (unlikely(oldkey != obh->b_page->index))
--			NILFS_PAGE_BUG(obh->b_page,
-+		if (unlikely(oldkey != opage->index))
-+			NILFS_PAGE_BUG(opage,
- 				       "invalid oldkey %lld (newkey=%lld)",
- 				       (unsigned long long)oldkey,
- 				       (unsigned long long)newkey);
+ bool xas_nomem(struct xa_state *, gfp_t);
+@@ -676,6 +677,55 @@ static inline void *xas_next_entry(struct xa_state *xas, unsigned long max)
+ 	return entry;
+ }
  
--		xa_lock_irq(&btnc->pages);
--		err = radix_tree_insert(&btnc->pages, newkey, obh->b_page);
--		xa_unlock_irq(&btnc->pages);
-+		entry = xa_cmpxchg(&btnc->pages, newkey, NULL, opage, GFP_NOFS);
- 		/*
- 		 * Note: page->index will not change to newkey until
- 		 * nilfs_btnode_commit_change_key() will be called.
- 		 * To protect the page in intermediate state, the page lock
- 		 * is held.
- 		 */
--		radix_tree_preload_end();
--		if (!err)
-+		if (!entry)
- 			return 0;
--		else if (err != -EEXIST)
-+		if (IS_ERR(entry)) {
-+			err = PTR_ERR(entry);
- 			goto failed_unlock;
-+		}
++/* Private */
++static inline unsigned int xas_find_chunk(struct xa_state *xas, bool advance,
++		xa_tag_t tag)
++{
++	unsigned long *addr = xas->xa_node->tags[(__force unsigned)tag];
++	unsigned int offset = xas->xa_offset;
++
++	if (advance)
++		offset++;
++	if (XA_CHUNK_SIZE == BITS_PER_LONG) {
++		unsigned long data = *addr & (~0UL << offset);
++		if (data)
++			return __ffs(data);
++		return XA_CHUNK_SIZE;
++	}
++
++	return find_next_bit(addr, XA_CHUNK_SIZE, offset);
++}
++
++/**
++ * xas_next_tag() - Advance iterator to next tagged entry.
++ * @xas: XArray operation state.
++ * @max: Highest index to return.
++ * @tag: Tag to search for.
++ *
++ * xas_next_tag() is an inline function to optimise xarray traversal for
++ * speed.  It is equivalent to calling xas_find_tag(), and will call
++ * xas_find_tag() for all the hard cases.
++ *
++ * Return: The next tagged entry after the one currently referred to by @xas.
++ */
++static inline void *xas_next_tag(struct xa_state *xas, unsigned long max,
++								xa_tag_t tag)
++{
++	struct xa_node *node = xas->xa_node;
++	unsigned int offset;
++
++	if (unlikely(xas_not_node(node) || xa_node_shift(node)))
++		return xas_find_tag(xas, max, tag);
++	offset = xas_find_chunk(xas, true, tag);
++	xas->xa_offset = offset;
++	xas->xa_index = (xas->xa_index & ~XA_CHUNK_MASK) + offset;
++	if (xas->xa_index > max)
++		return NULL;
++	if (offset == XA_CHUNK_SIZE)
++		return xas_find_tag(xas, max, tag);
++	return xa_entry(xas->xa, node, offset);
++}
++
+ /*
+  * If iterating while holding a lock, drop the lock and reschedule
+  * every %XA_CHECK_SCHED loops.
+@@ -701,6 +751,24 @@ enum {
+ 	for (entry = xas_find(xas, max); entry; \
+ 	     entry = xas_next_entry(xas, max))
  
- 		err = invalidate_inode_pages2_range(btnc, newkey, newkey);
- 		if (!err)
- 			goto retry;
- 		/* fallback to copy mode */
--		unlock_page(obh->b_page);
-+		unlock_page(opage);
- 	}
++/**
++ * xas_for_each_tag() - Iterate over a range of an XArray
++ * @xas: XArray operation state.
++ * @entry: Entry retrieved from array.
++ * @max: Maximum index to retrieve from array.
++ * @tag: Tag to search for.
++ *
++ * The loop body will be executed for each tagged entry in the xarray
++ * between the current xas position and @max.  @entry will be set to
++ * the entry retrieved from the xarray.  It is safe to delete entries
++ * from the array in the loop body.  You should hold either the RCU lock
++ * or the xa_lock while iterating.  If you need to drop the lock, call
++ * xas_pause() first.
++ */
++#define xas_for_each_tag(xas, entry, max, tag) \
++	for (entry = xas_find_tag(xas, max, tag); entry; \
++	     entry = xas_next_tag(xas, max, tag))
++
+ /* Internal functions, mostly shared between radix-tree.c, xarray.c and idr.c */
+ void xas_destroy(struct xa_state *);
  
- 	nbh = nilfs_btnode_create_block(btnc, newkey);
-@@ -252,9 +246,8 @@ void nilfs_btnode_commit_change_key(struct address_space *btnc,
- 		mark_buffer_dirty(obh);
+diff --git a/lib/xarray.c b/lib/xarray.c
+index ac4ff3daf476..f9eaac2d85f9 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -858,6 +858,84 @@ void *xas_find(struct xa_state *xas, unsigned long max)
+ }
+ EXPORT_SYMBOL_GPL(xas_find);
  
- 		xa_lock_irq(&btnc->pages);
--		radix_tree_delete(&btnc->pages, oldkey);
--		radix_tree_tag_set(&btnc->pages, newkey,
--				   PAGECACHE_TAG_DIRTY);
-+		__xa_erase(&btnc->pages, oldkey);
-+		__xa_set_tag(&btnc->pages, newkey, PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irq(&btnc->pages);
- 
- 		opage->index = obh->b_blocknr = newkey;
-@@ -283,9 +276,7 @@ void nilfs_btnode_abort_change_key(struct address_space *btnc,
- 		return;
- 
- 	if (nbh == NULL) {	/* blocksize == pagesize */
--		xa_lock_irq(&btnc->pages);
--		radix_tree_delete(&btnc->pages, newkey);
--		xa_unlock_irq(&btnc->pages);
-+		xa_erase(&btnc->pages, newkey);
- 		unlock_page(ctxt->bh->b_page);
- 	} else
- 		brelse(nbh);
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 1c6703efde9e..31d20f624971 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -304,10 +304,10 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
- void nilfs_copy_back_pages(struct address_space *dmap,
- 			   struct address_space *smap)
- {
-+	XA_STATE(xas, &dmap->pages, 0);
- 	struct pagevec pvec;
- 	unsigned int i, n;
- 	pgoff_t index = 0;
--	int err;
- 
- 	pagevec_init(&pvec);
- repeat:
-@@ -317,43 +317,56 @@ void nilfs_copy_back_pages(struct address_space *dmap,
- 
- 	for (i = 0; i < pagevec_count(&pvec); i++) {
- 		struct page *page = pvec.pages[i], *dpage;
--		pgoff_t offset = page->index;
-+		xas_set(&xas, page->index);
- 
- 		lock_page(page);
--		dpage = find_lock_page(dmap, offset);
-+		do {
-+			xas_lock_irq(&xas);
-+			dpage = xas_create(&xas);
-+			if (!xas_error(&xas))
-+				break;
-+			xas_unlock_irq(&xas);
-+			if (!xas_nomem(&xas, GFP_NOFS)) {
-+				unlock_page(page);
-+				/*
-+				 * Callers have a touching faith that this
-+				 * function cannot fail.  Just leak the page.
-+				 * Other pages may be salvagable if the
-+				 * xarray doesn't need to allocate memory
-+				 * to store them.
-+				 */
-+				WARN_ON(1);
-+				page->mapping = NULL;
-+				put_page(page);
-+				goto shadow_remove;
++/**
++ * xas_find_tag() - Find the next tagged entry in the XArray.
++ * @xas: XArray operation state.
++ * @max: Highest index to return.
++ * @tag: Tag number to search for.
++ *
++ * If the xas has not yet been walked to an entry, return the tagged entry
++ * which has an index >= xas.xa_index.  If it has been walked, the entry
++ * currently being pointed at has been processed, and so we move to the
++ * next tagged entry.
++ *
++ * If no tagged entry is found and the array is smaller than @max, @xas is
++ * set to the restart state and xas->xa_index is set to the smallest index
++ * not yet in the array.  This allows @xas to be immediately passed to
++ * xas_create().
++ *
++ * Return: The entry, if found, otherwise NULL.
++ */
++void *xas_find_tag(struct xa_state *xas, unsigned long max, xa_tag_t tag)
++{
++	bool advance = true;
++	unsigned int offset;
++	void *entry;
++
++	if (xas_error(xas))
++		return NULL;
++
++	if (!xas->xa_node) {
++		xas->xa_index = 1;
++		goto out;
++	} else if (xas_top(xas->xa_node)) {
++		advance = false;
++		entry = xa_head(xas->xa);
++		if (xas->xa_index > max_index(entry))
++			goto out;
++		if (!xa_is_node(entry)) {
++			if (xa_tagged(xas->xa, tag)) {
++				xas->xa_node = NULL;
++				return entry;
 +			}
-+		} while (1);
++			xas->xa_index = 1;
++			goto out;
++		}
++		xas->xa_node = xa_to_node(entry);
++		xas->xa_offset = xas->xa_index >> xas->xa_node->shift;
++	}
 +
- 		if (dpage) {
--			/* override existing page on the destination cache */
-+			get_page(dpage);
-+			xas_unlock_irq(&xas);
-+			lock_page(dpage);
-+			/* override existing page in the destination cache */
- 			WARN_ON(PageDirty(dpage));
- 			nilfs_copy_page(dpage, page, 0);
- 			unlock_page(dpage);
- 			put_page(dpage);
- 		} else {
--			struct page *page2;
--
--			/* move the page to the destination cache */
--			xa_lock_irq(&smap->pages);
--			page2 = radix_tree_delete(&smap->pages, offset);
--			WARN_ON(page2 != page);
--
--			smap->nrpages--;
--			xa_unlock_irq(&smap->pages);
--
--			xa_lock_irq(&dmap->pages);
--			err = radix_tree_insert(&dmap->pages, offset, page);
--			if (unlikely(err < 0)) {
--				WARN_ON(err == -EEXIST);
--				page->mapping = NULL;
--				put_page(page); /* for cache */
--			} else {
--				page->mapping = dmap;
--				dmap->nrpages++;
--				if (PageDirty(page))
--					radix_tree_tag_set(&dmap->pages,
--							   offset,
--							   PAGECACHE_TAG_DIRTY);
--			}
-+			xas_store(&xas, page);
-+			page->mapping = dmap;
-+			dmap->nrpages++;
-+			if (PageDirty(page))
-+				xas_set_tag(&xas, PAGECACHE_TAG_DIRTY);
- 			xa_unlock_irq(&dmap->pages);
- 		}
++	while (xas->xa_index <= max) {
++		if (unlikely(xas->xa_offset == XA_CHUNK_SIZE)) {
++			xas->xa_offset = xas->xa_node->offset + 1;
++			xas->xa_node = xa_parent(xas->xa, xas->xa_node);
++			if (!xas->xa_node)
++				break;
++			advance = false;
++			continue;
++		}
 +
-+shadow_remove:
-+		/* remove the page from the shadow cache */
-+		xa_lock_irq(&smap->pages);
-+		WARN_ON(__xa_erase(&smap->pages, xas.xa_index) != page);
-+		smap->nrpages--;
-+		xa_unlock_irq(&smap->pages);
++		offset = xas_find_chunk(xas, advance, tag);
++		xas_add(xas, offset - xas->xa_offset);
++		if (offset == XA_CHUNK_SIZE) {
++			advance = false;
++			continue;
++		}
 +
- 		unlock_page(page);
- 	}
- 	pagevec_release(&pvec);
-@@ -476,8 +489,7 @@ int __nilfs_clear_page_dirty(struct page *page)
- 	if (mapping) {
- 		xa_lock_irq(&mapping->pages);
- 		if (test_bit(PG_dirty, &page->flags)) {
--			radix_tree_tag_clear(&mapping->pages,
--					     page_index(page),
-+			__xa_clear_tag(&mapping->pages, page_index(page),
- 					     PAGECACHE_TAG_DIRTY);
- 			xa_unlock_irq(&mapping->pages);
- 			return clear_page_dirty_for_io(page);
++		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
++		if (!xa_is_node(entry))
++			return entry;
++		xas->xa_node = xa_to_node(entry);
++		xas->xa_offset = get_offset(xas->xa_index, xas->xa_node);
++	}
++
++ out:
++	if (!xas->xa_node)
++		xas->xa_node = XAS_BOUNDS;
++	return NULL;
++}
++EXPORT_SYMBOL_GPL(xas_find_tag);
++
+ /**
+  * __xa_init() - Initialise an empty XArray.
+  * @xa: XArray.
 -- 
 2.15.0
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
