@@ -1,54 +1,88 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH v4 00/73] XArray version 4
-Date: Tue, 5 Dec 2017 18:05:15 -0800
-Message-ID: <20171206020515.GL26021@bombadil.infradead.org>
+From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+Subject: RE: [PATCH v4 00/73] XArray version 4
+Date: Wed, 6 Dec 2017 01:53:41 +0000
+Message-ID: <MWHPR21MB0845A83B9E89E4A9499AEC2FCB320@MWHPR21MB0845.namprd21.prod.outlook.com>
 References: <20171206004159.3755-1-willy@infradead.org>
- <20171206014536.GA4094@dastard>
+ <20171206014536.GA4094@dastard> <20171206015108.GB4094@dastard>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=RkFkT8VGsUTPdc0PFxEEcW3oSpzK/Ae1EfidcmtwgFM=; b=Er3Ldkr/k+kZOvXK6pQgHav5F
-        M17/DINMMOM9xUmnWpSYY/wHzcLeG/ddcY+F1/uNlw7xhAelth2ccjUr2X1rV8/Qng4ZKLtC7c9zR
-        y/gA3XgG94NvEiYSZjzN+mJS+bljXIQHFwCoo5Mxz8J3WH9WD4Nu1eGMFB9CXGNDgfasCCd413YLA
-        q5Cz6NyTHzDPiZfnDDDOa48MntIvIqhs+5BYrlAXdZRZbbh0gKqL4FmcaJWgTiCfe3ECT2BAygcJ8
-        P/89IfPfArCq5ux3yPQeh5Dj4pI0NE6EGLTSVsZHYHM2wMHmlGHTJVnM+RjA9F9pdBGjWo3nYK2zJ
-    
-Content-Disposition: inline
-In-Reply-To: <20171206014536.GA4094@dastard>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=selector1; h=From:Date:Subject:Message-ID:Content-Type:MIME-Version;
+ bh=2s3e98iA3yEyffvHorcAksgfplk3PnZtX263Lh823eU=;
+ b=ccMqa8RAjjUpS7f/04jZFBPqXL8VOWXiyuOWKaeHTOhW6E7Z3DRuy0dKGffxdov5UymTNoO6XnOthAsDHFDcJ8A+uuNZuLJP4/h3sZpa28niGmnvEu+t0zwFBiZCPbf01bRzyUCh9KSP3In7qF3t7Ja5qmdPTp99b9ThullbgMo=
+In-Reply-To: <20171206015108.GB4094@dastard>
+Content-Language: en-US
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Dave Chinner <david@fromorbit.com>
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Wed, Dec 06, 2017 at 12:45:49PM +1100, Dave Chinner wrote:
-> On Tue, Dec 05, 2017 at 04:40:46PM -0800, Matthew Wilcox wrote:
-> > From: Matthew Wilcox <mawilcox@microsoft.com>
-> > 
-> > I looked through some notes and decided this was version 4 of the XArray.
-> > Last posted two weeks ago, this version includes a *lot* of changes.
-> > I'd like to thank Dave Chinner for his feedback, encouragement and
-> > distracting ideas for improvement, which I'll get to once this is merged.
-> 
-> BTW, you need to fix the "To:" line on your patchbombs:
-> 
-> > To: unlisted-recipients: ;, no To-header on input <@gmail-pop.l.google.com> 
-> 
-> This bad email address getting quoted to the cc line makes some MTAs
-> very unhappy.
-
-I know :-(  I was unhappy when I realised what I'd done.
-
-https://marc.info/?l=git&m=151252237912266&w=2
-
-> I'll give this a quick burn this afternoon and see what catches fire...
-
-All of the things ... 0day gave me a 90% chance of hanging in one
-configuration.  Need to drill down on it more and find out what stupid
-thing I've done wrong this time.
+SHVoLCB5b3UndmUgY2F1Z2h0IGEgY291cGxlIG9mIHByb2JsZW1zIHRoYXQgMGRheSBoYXNuJ3Qg
+c2VudCBtZSB5ZXQuICBUcnkgdHVybmluZyBvbiBEQVggb3IgVFJBTlNQQVJFTlRfSFVHRVBBR0Uu
+ICBUaGFua3MhDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogRGF2ZSBD
+aGlubmVyIFttYWlsdG86ZGF2aWRAZnJvbW9yYml0LmNvbV0NCj4gU2VudDogVHVlc2RheSwgRGVj
+ZW1iZXIgNSwgMjAxNyA4OjUxIFBNDQo+IFRvOiBNYXR0aGV3IFdpbGNveCA8d2lsbHlAaW5mcmFk
+ZWFkLm9yZz4NCj4gQ2M6IE1hdHRoZXcgV2lsY294IDxtYXdpbGNveEBtaWNyb3NvZnQuY29tPjsg
+Um9zcyBad2lzbGVyDQo+IDxyb3NzLnp3aXNsZXJAbGludXguaW50ZWwuY29tPjsgSmVucyBBeGJv
+ZSA8YXhib2VAa2VybmVsLmRrPjsgUmVoYXMNCj4gU2FjaGRldmEgPGFxdWFubmllQGdtYWlsLmNv
+bT47IGxpbnV4LW1tQGt2YWNrLm9yZzsgbGludXgtDQo+IGZzZGV2ZWxAdmdlci5rZXJuZWwub3Jn
+OyBsaW51eC1mMmZzLWRldmVsQGxpc3RzLnNvdXJjZWZvcmdlLm5ldDsgbGludXgtDQo+IG5pbGZz
+QHZnZXIua2VybmVsLm9yZzsgbGludXgtYnRyZnNAdmdlci5rZXJuZWwub3JnOyBsaW51eC14ZnNA
+dmdlci5rZXJuZWwub3JnOw0KPiBsaW51eC11c2JAdmdlci5rZXJuZWwub3JnOyBsaW51eC1rZXJu
+ZWxAdmdlci5rZXJuZWwub3JnDQo+IFN1YmplY3Q6IFJlOiBbUEFUQ0ggdjQgMDAvNzNdIFhBcnJh
+eSB2ZXJzaW9uIDQNCj4gDQo+IE9uIFdlZCwgRGVjIDA2LCAyMDE3IGF0IDEyOjQ1OjQ5UE0gKzEx
+MDAsIERhdmUgQ2hpbm5lciB3cm90ZToNCj4gPiBPbiBUdWUsIERlYyAwNSwgMjAxNyBhdCAwNDo0
+MDo0NlBNIC0wODAwLCBNYXR0aGV3IFdpbGNveCB3cm90ZToNCj4gPiA+IEZyb206IE1hdHRoZXcg
+V2lsY294IDxtYXdpbGNveEBtaWNyb3NvZnQuY29tPg0KPiA+ID4NCj4gPiA+IEkgbG9va2VkIHRo
+cm91Z2ggc29tZSBub3RlcyBhbmQgZGVjaWRlZCB0aGlzIHdhcyB2ZXJzaW9uIDQgb2YgdGhlIFhB
+cnJheS4NCj4gPiA+IExhc3QgcG9zdGVkIHR3byB3ZWVrcyBhZ28sIHRoaXMgdmVyc2lvbiBpbmNs
+dWRlcyBhICpsb3QqIG9mIGNoYW5nZXMuDQo+ID4gPiBJJ2QgbGlrZSB0byB0aGFuayBEYXZlIENo
+aW5uZXIgZm9yIGhpcyBmZWVkYmFjaywgZW5jb3VyYWdlbWVudCBhbmQNCj4gPiA+IGRpc3RyYWN0
+aW5nIGlkZWFzIGZvciBpbXByb3ZlbWVudCwgd2hpY2ggSSdsbCBnZXQgdG8gb25jZSB0aGlzIGlz
+IG1lcmdlZC4NCj4gPg0KPiA+IEJUVywgeW91IG5lZWQgdG8gZml4IHRoZSAiVG86IiBsaW5lIG9u
+IHlvdXIgcGF0Y2hib21iczoNCj4gPg0KPiA+ID4gVG86IHVubGlzdGVkLXJlY2lwaWVudHM6IDss
+IG5vIFRvLWhlYWRlciBvbiBpbnB1dCA8QGdtYWlsLQ0KPiBwb3AubC5nb29nbGUuY29tPg0KPiA+
+DQo+ID4gVGhpcyBiYWQgZW1haWwgYWRkcmVzcyBnZXR0aW5nIHF1b3RlZCB0byB0aGUgY2MgbGlu
+ZSBtYWtlcyBzb21lIE1UQXMNCj4gPiB2ZXJ5IHVuaGFwcHkuDQo+ID4NCj4gPiA+DQo+ID4gPiBI
+aWdobGlnaHRzOg0KPiA+ID4gIC0gT3ZlciAyMDAwIHdvcmRzIG9mIGRvY3VtZW50YXRpb24gaW4g
+cGF0Y2ggOCEgIEFuZCBsb3RzIG1vcmUga2VybmVsLWRvYy4NCj4gPiA+ICAtIFRoZSBwYWdlIGNh
+Y2hlIGlzIG5vdyBmdWxseSBjb252ZXJ0ZWQgdG8gdGhlIFhBcnJheS4NCj4gPiA+ICAtIE1hbnkg
+bW9yZSB0ZXN0cyBpbiB0aGUgdGVzdC1zdWl0ZS4NCj4gPiA+DQo+ID4gPiBUaGlzIHBhdGNoIHNl
+dCBpcyBub3QgZm9yIGFwcGx5aW5nLiAgMGRheSBpcyBzdGlsbCByZXBvcnRpbmcgcHJvYmxlbXMs
+DQo+ID4gPiBhbmQgSSdkIGZlZWwgYmFkIGZvciBlYXRpbmcgc29tZW9uZSdzIGRhdGEuICBUaGVz
+ZSBwYXRjaGVzIGFwcGx5IG9uIHRvcA0KPiA+ID4gb2YgYSBzZXQgb2YgcHJlcGF0b3J5IHBhdGNo
+ZXMgd2hpY2gganVzdCBhcmVuJ3QgaW50ZXJlc3RpbmcuICBJZiB5b3UNCj4gPiA+IHdhbnQgdG8g
+c2VlIHRoZSBwYXRjaGVzIGFwcGxpZWQgdG8gYSB0cmVlLCBJIHN1Z2dlc3QgcHVsbGluZyBteSBn
+aXQgdHJlZToNCj4gPiA+DQo+IGh0dHBzOi8vbmEwMS5zYWZlbGlua3MucHJvdGVjdGlvbi5vdXRs
+b29rLmNvbS8/dXJsPWh0dHAlM0ElMkYlMkZnaXQuaW5mcmFkZQ0KPiBhZC5vcmclMkZ1c2VycyUy
+RndpbGx5JTJGbGludXgtDQo+IGRheC5naXQlMkZzaG9ydGxvZyUyRnJlZnMlMkZoZWFkcyUyRnhh
+cnJheS0yMDE3LTEyLQ0KPiAwNCZkYXRhPTAyJTdDMDElN0NtYXdpbGNveCU0MG1pY3Jvc29mdC5j
+b20lN0NhM2U3MjE1NDVmOGI0YjlkZmYxDQo+IDYwOGQ1M2M0YmQ0MmYlN0M3MmY5ODhiZjg2ZjE0
+MWFmOTFhYjJkN2NkMDExZGI0NyU3QzElN0MwJTdDNjM2NA0KPiA4MTIxODc0MDM0MTMxMiZzZGF0
+YT1JWE5aWFhMVGY5NjRPUTBlTERwSnQyTEN2JTJCR0dXRlclMkZRZDRLYw0KPiBLWXU2em8lM0Qm
+cmVzZXJ2ZWQ9MA0KPiA+ID4gSSBhbHNvIGxlZnQgb3V0IHRoZSBpZHJfcHJlbG9hZCByZW1vdmFs
+cy4gIFRoZXkncmUgc3RpbGwgaW4gdGhlIGdpdCB0cmVlLA0KPiA+ID4gYnV0IEknbSBub3QgbG9v
+a2luZyBmb3IgZmVlZGJhY2sgb24gdGhlbS4NCj4gPg0KPiA+IEknbGwgZ2l2ZSB0aGlzIGEgcXVp
+Y2sgYnVybiB0aGlzIGFmdGVybm9vbiBhbmQgc2VlIHdoYXQgY2F0Y2hlcyBmaXJlLi4uDQo+IA0K
+PiBCdWlsZCB3YXJuaW5ncy9lcnJvcnM6DQo+IA0KPiAuLi4uLg0KPiBsaWIvcmFkaXgtdHJlZS5j
+OjcwMDoxMzogd2FybmluZzogwr9yYWRpeF90cmVlX2ZyZWVfbm9kZXPCvyBkZWZpbmVkIGJ1dCBu
+b3QgdXNlZA0KPiBbLVd1bnVzZWQtZnVuY3Rpb25dDQo+ICBzdGF0aWMgdm9pZCByYWRpeF90cmVl
+X2ZyZWVfbm9kZXMoc3RydWN0IHJhZGl4X3RyZWVfbm9kZSAqbm9kZSkNCj4gLi4uLi4NCj4gbGli
+L3hhcnJheS5jOiBJbiBmdW5jdGlvbiDCv3hhc19tYXjCvzoNCj4gbGliL3hhcnJheS5jOjI5MTox
+Njogd2FybmluZzogdW51c2VkIHZhcmlhYmxlIMK/bWFza8K/DQo+IFstV3VudXNlZC12YXJpYWJs
+ZV0NCj4gICB1bnNpZ25lZCBsb25nIG1hc2ssIG1heCA9IHhhcy0+eGFfaW5kZXg7DQo+ICAgICAg
+ICAgICAgICAgICAgIF5+fn4NCj4gLi4uLi4uDQo+IGZzL2RheC5jOiBJbiBmdW5jdGlvbiDCv2dy
+YWJfbWFwcGluZ19lbnRyecK/Og0KPiBmcy9kYXguYzozMDU6MjogZXJyb3I6IGltcGxpY2l0IGRl
+Y2xhcmF0aW9uIG9mIGZ1bmN0aW9uIMK/eGFzX3NldF9vcmRlcsK/OyBkaWQgeW91DQo+IG1lYW4g
+wr94YXNfc2V0X2VycsK/PyAgWy1XZXJyb3I9aW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb25d
+DQo+ICAgeGFzX3NldF9vcmRlcigmeGFzLCBpbmRleCwgc2l6ZV9mbGFnID8gUE1EX09SREVSIDog
+MCk7DQo+ICAgICBefn5+fn5+fn5+fn5+DQo+IHNjcmlwdHMvTWFrZWZpbGUuYnVpbGQ6MzEwOiBy
+ZWNpcGUgZm9yIHRhcmdldCAnZnMvZGF4Lm8nIGZhaWxlZA0KPiBtYWtlWzFdOiAqKiogW2ZzL2Rh
+eC5vXSBFcnJvciAxDQo+IA0KPiAtRGF2ZS4NCj4gLS0NCj4gRGF2ZSBDaGlubmVyDQo+IGRhdmlk
+QGZyb21vcmJpdC5jb20NCg==
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
