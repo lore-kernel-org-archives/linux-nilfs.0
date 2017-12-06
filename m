@@ -1,109 +1,91 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH v4 12/73] xarray: Add xa_cmpxchg
-Date: Tue,  5 Dec 2017 16:40:58 -0800
-Message-ID: <20171206004159.3755-13-willy@infradead.org>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: [PATCH v4 53/73] fs: Convert writeback to XArray
+Date: Tue,  5 Dec 2017 16:41:39 -0800
+Message-ID: <20171206004159.3755-54-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=7gmPfR6sEN3OZqX34LT7hoRjNs5dFLccOVO1jiX2ybk=; b=Q7b/BXhwjOPDVvNvoSsSdl3kH
-        cgP2iOXmrKuFru5azsPN/+memUMyG9o67IiEudy0QCEE299tu7aPwJuKOrczDupFJHoLLD6bY21Vq
-        7KpsEZFr6/ZG8EWWqVD0dIORnILkKqLIs/TACVa1ky1+6JQVYGHuT1zEzR67wxVdO2/FsNNhrOgab
-        Gu28u5hkRTTxhaBcTa5fv61Vo4MN8I4SZ+dQ2bUaEdSKbM82tLY06mMhhihioKzmHWHwUw6DOTNvg
-        Vo03QEWNmN20bNGbgsahBZTr7Pne1E1P3Aa2nRcDdD/NP27hkk4TlLqZTVLEDSlRMgKGOx1hbUe6O
+         bh=yGYlWE0Q3UN71gCcCJY3/Up1efVO+4gWurwmrT/wgzw=; b=trByV+z324VMrM6sD2FfsYaJB
+        mOwcSWt7d1cRxNI6tyMKr8KsBmacwymddhNnEo/pPh+YV8aNnL8CUxv9dKP2wDWaKtwVvDMrzIfZA
+        98ei0XlqVu3DJKkwuV8K8CXwwEa57GcgOG44LVo+wMjBMkeWpqDnhA8qiCpVcA7SCTzcP+CCDdimN
+        Nm7qc62ckvACht0YPI6yJlcLt4SDFpw++Yf/KMhpNvOhbzCysdDsPU1C8WMaKMUQ/bHpgxhMO+39O
+        F8RSmyqFGA9HpyVA1pv/BaynVpC2MsKvJwnDCMdw//PdZfyjT8wLGEn7ijdMJ+7VkyhyCE56B42vB
     
-In-Reply-To: <20171206004159.3755-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
+Sender: linux-btrfs-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: 
-Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
 
-From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This works like doing cmpxchg() on an array entry.  Code which wants
-the radix_tree_insert() semantic of not overwriting an existing entry
-can cmpxchg() with NULL and get the action it wants.  Plus, instead of
-having an error returned, they get the value currently stored in the
-array, which often saves them a subsequent lookup.
+A couple of short loops.
 
-Signed-off-by: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h |  2 ++
- lib/xarray.c           | 37 +++++++++++++++++++++++++++++++++++++
- 2 files changed, 39 insertions(+)
+ fs/fs-writeback.c | 27 ++++++++++-----------------
+ 1 file changed, 10 insertions(+), 17 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 6f1f55d9fc94..a570d7d9a252 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -72,6 +72,8 @@ static inline void xa_init(struct xarray *xa)
+diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
+index a3c2352507f6..18ad86ccba96 100644
+--- a/fs/fs-writeback.c
++++ b/fs/fs-writeback.c
+@@ -339,9 +339,9 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
+ 	struct address_space *mapping = inode->i_mapping;
+ 	struct bdi_writeback *old_wb = inode->i_wb;
+ 	struct bdi_writeback *new_wb = isw->new_wb;
+-	struct radix_tree_iter iter;
++	XA_STATE(xas, &mapping->pages, 0);
++	struct page *page;
+ 	bool switched = false;
+-	void **slot;
  
- void *xa_load(struct xarray *, unsigned long index);
- void *xa_store(struct xarray *, unsigned long index, void *entry, gfp_t);
-+void *xa_cmpxchg(struct xarray *, unsigned long index,
-+			void *old, void *entry, gfp_t);
+ 	/*
+ 	 * By the time control reaches here, RCU grace period has passed
+@@ -373,27 +373,20 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
+ 	/*
+ 	 * Count and transfer stats.  Note that PAGECACHE_TAG_DIRTY points
+ 	 * to possibly dirty pages while PAGECACHE_TAG_WRITEBACK points to
+-	 * pages actually under underwriteback.
++	 * pages actually under writeback.
+ 	 */
+-	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, 0,
+-				   PAGECACHE_TAG_DIRTY) {
+-		struct page *page = radix_tree_deref_slot_protected(slot,
+-						&mapping->pages.xa_lock);
+-		if (likely(page) && PageDirty(page)) {
++	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_DIRTY) {
++		if (PageDirty(page)) {
+ 			dec_wb_stat(old_wb, WB_RECLAIMABLE);
+ 			inc_wb_stat(new_wb, WB_RECLAIMABLE);
+ 		}
+ 	}
  
- /**
-  * xa_erase() - Erase this entry from the XArray.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index fbbb02c25b6d..6625b1763123 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -852,6 +852,43 @@ void *xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
- }
- EXPORT_SYMBOL(xa_store);
+-	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, 0,
+-				   PAGECACHE_TAG_WRITEBACK) {
+-		struct page *page = radix_tree_deref_slot_protected(slot,
+-						&mapping->pages.xa_lock);
+-		if (likely(page)) {
+-			WARN_ON_ONCE(!PageWriteback(page));
+-			dec_wb_stat(old_wb, WB_WRITEBACK);
+-			inc_wb_stat(new_wb, WB_WRITEBACK);
+-		}
++	xas_set(&xas, 0);
++	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_WRITEBACK) {
++		WARN_ON_ONCE(!PageWriteback(page));
++		dec_wb_stat(old_wb, WB_WRITEBACK);
++		inc_wb_stat(new_wb, WB_WRITEBACK);
+ 	}
  
-+/**
-+ * xa_cmpxchg() - Conditionally replace an entry in the XArray.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ * @old: Old value to test against.
-+ * @entry: New value to place in array.
-+ * @gfp: Allocation flags.
-+ *
-+ * If the entry at @index is the same as @old, replace it with @entry.
-+ * If the return value is equal to @old, then the exchange was successful.
-+ *
-+ * Return: The old value at this index or ERR_PTR() if an error happened.
-+ */
-+void *xa_cmpxchg(struct xarray *xa, unsigned long index,
-+			void *old, void *entry, gfp_t gfp)
-+{
-+	XA_STATE(xas, xa, index);
-+	unsigned long flags;
-+	void *curr;
-+
-+	if (WARN_ON_ONCE(xa_is_internal(entry)))
-+		return ERR_PTR(-EINVAL);
-+
-+	do {
-+		xa_lock_irqsave(xa, flags);
-+		curr = xas_create(&xas);
-+		if (curr == old)
-+			xas_store(&xas, entry);
-+		xa_unlock_irqrestore(xa, flags);
-+	} while (xas_nomem(&xas, gfp));
-+
-+	if (xas_error(&xas))
-+		curr = ERR_PTR(xas_error(&xas));
-+	return curr;
-+}
-+EXPORT_SYMBOL(xa_cmpxchg);
-+
- /**
-  * __xa_set_tag() - Set this tag on this entry while locked.
-  * @xa: XArray.
+ 	wb_get(new_wb);
 -- 
 2.15.0
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-usb" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
