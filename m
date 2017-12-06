@@ -1,23 +1,21 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 73/73] usb: Convert xhci-mem to XArray
-Date: Tue,  5 Dec 2017 16:41:59 -0800
-Message-ID: <20171206004159.3755-74-willy@infradead.org>
-References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Subject: [PATCH v4 00/73] XArray version 4
+Date: Tue,  5 Dec 2017 16:40:46 -0800
+Message-ID: <20171206004159.3755-1-willy@infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        d=infradead.org; s=bombadil.20170209; h=Message-Id:Date:Subject:Cc:To:From:
+        Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+        Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+        Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=FbGSACjrV2kjnKvzF7kysZLHaiIXtOsSj5KvDsEx6qY=; b=IgtisLAnxfbuBubnRkwUNjDJA
-        fnswfKkCgXz3XPhkwa7bM81i2Zd+BThM5e7R4XrCoR0pg8TSGNjeYqMb4ib7vo9/bcAIrO+52aOI6
-        mucbfD43fC+c/IRq9VxqNVEnom+p319h4dv/X82J48ohPRz82MCHkGIy4ncNJlpQlPD2RXSZKtN8+
-        fe6XlHK9goTlBfDey5DMtn0x+sy5oYefwZzp3cDA4wghvnzgRuEYrnSgsKfJjlQVgfvENxzEffjAZ
-        dz/yFZlWojN6pmQD4pFYz+wh3801BOKfAZSJNoJAYhY5dxqjJyLQ0lEPoSWchyLsxf0tvF4gz2mmv
+         bh=tGZyO0SnyiYl1L00kDbf5R9Q9bLXgQbGn4/V1d7oeDY=; b=tQ8DdaOF1TGNMfD0zPrAHR8iR
+        tHSCL56OV9A3RohM9Gd/LIiGXJM/nVC+xwjXCgxgEpMdWY+qHIt7u1EulR5SZ58Y/X7jITPbGdCG0
+        BHul9fN5y59PuV+u/NtDPD+CF/2giGtq1SyOt7CSXk2RIz6ap4L1LnbF60Qvw2eJ/pLhi9eD+fD7j
+        18zxis5XBBEzgWAOUph2antlwKGMWDazF06yMNQ77G6j0b5iCz8ZKH0PK/bAshAG3S8A/HogpsJxx
+        XmmgB9VL8e4QoWY/JvxRtKQaeSbB3pqYvRI6ZcEZIm9XAwBB5Mkn0sYOYaX+2opYXvnVRwiq8OACl
     
-In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,181 +25,287 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-The XArray API is a slightly better fit for xhci_insert_segment_mapping()
-than the radix tree API was.
+I looked through some notes and decided this was version 4 of the XArray.
+Last posted two weeks ago, this version includes a *lot* of changes.
+I'd like to thank Dave Chinner for his feedback, encouragement and
+distracting ideas for improvement, which I'll get to once this is merged.
 
-Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
----
- drivers/usb/host/xhci-mem.c | 70 +++++++++++++++++++++------------------------
- drivers/usb/host/xhci.h     |  6 ++--
- 2 files changed, 35 insertions(+), 41 deletions(-)
+Highlights:
+ - Over 2000 words of documentation in patch 8!  And lots more kernel-doc.
+ - The page cache is now fully converted to the XArray.
+ - Many more tests in the test-suite.
 
-diff --git a/drivers/usb/host/xhci-mem.c b/drivers/usb/host/xhci-mem.c
-index e1fba4688509..533d813bdc52 100644
---- a/drivers/usb/host/xhci-mem.c
-+++ b/drivers/usb/host/xhci-mem.c
-@@ -149,70 +149,64 @@ static void xhci_link_rings(struct xhci_hcd *xhci, struct xhci_ring *ring,
- }
- 
- /*
-- * We need a radix tree for mapping physical addresses of TRBs to which stream
-- * ID they belong to.  We need to do this because the host controller won't tell
-+ * We need to map physical addresses of TRBs to the stream ID they belong to.
-+ * We need to do this because the host controller won't tell
-  * us which stream ring the TRB came from.  We could store the stream ID in an
-  * event data TRB, but that doesn't help us for the cancellation case, since the
-  * endpoint may stop before it reaches that event data TRB.
-  *
-- * The radix tree maps the upper portion of the TRB DMA address to a ring
-+ * The xarray maps the upper portion of the TRB DMA address to a ring
-  * segment that has the same upper portion of DMA addresses.  For example, say I
-  * have segments of size 1KB, that are always 1KB aligned.  A segment may
-  * start at 0x10c91000 and end at 0x10c913f0.  If I use the upper 10 bits, the
-- * key to the stream ID is 0x43244.  I can use the DMA address of the TRB to
-- * pass the radix tree a key to get the right stream ID:
-+ * index of the stream ID is 0x43244.  I can use the DMA address of the TRB as
-+ * the xarray index to get the right stream ID:
-  *
-  *	0x10c90fff >> 10 = 0x43243
-  *	0x10c912c0 >> 10 = 0x43244
-  *	0x10c91400 >> 10 = 0x43245
-  *
-  * Obviously, only those TRBs with DMA addresses that are within the segment
-- * will make the radix tree return the stream ID for that ring.
-+ * will make the xarray return the stream ID for that ring.
-  *
-- * Caveats for the radix tree:
-+ * Caveats for the xarray:
-  *
-- * The radix tree uses an unsigned long as a key pair.  On 32-bit systems, an
-+ * The xarray uses an unsigned long for the index.  On 32-bit systems, an
-  * unsigned long will be 32-bits; on a 64-bit system an unsigned long will be
-  * 64-bits.  Since we only request 32-bit DMA addresses, we can use that as the
-- * key on 32-bit or 64-bit systems (it would also be fine if we asked for 64-bit
-- * PCI DMA addresses on a 64-bit system).  There might be a problem on 32-bit
-- * extended systems (where the DMA address can be bigger than 32-bits),
-+ * index on 32-bit or 64-bit systems (it would also be fine if we asked for
-+ * 64-bit PCI DMA addresses on a 64-bit system).  There might be a problem on
-+ * 32-bit extended systems (where the DMA address can be bigger than 32-bits),
-  * if we allow the PCI dma mask to be bigger than 32-bits.  So don't do that.
-  */
--static int xhci_insert_segment_mapping(struct radix_tree_root *trb_address_map,
-+
-+static unsigned long trb_index(dma_addr_t dma)
-+{
-+	return (unsigned long)(dma >> TRB_SEGMENT_SHIFT);
-+}
-+
-+static int xhci_insert_segment_mapping(struct xarray *trb_address_map,
- 		struct xhci_ring *ring,
- 		struct xhci_segment *seg,
--		gfp_t mem_flags)
-+		gfp_t gfp)
- {
--	unsigned long key;
--	int ret;
--
--	key = (unsigned long)(seg->dma >> TRB_SEGMENT_SHIFT);
- 	/* Skip any segments that were already added. */
--	if (radix_tree_lookup(trb_address_map, key))
--		return 0;
-+	void *entry = xa_cmpxchg(trb_address_map, trb_index(seg->dma), NULL,
-+								ring, gfp);
- 
--	ret = radix_tree_maybe_preload(mem_flags);
--	if (ret)
--		return ret;
--	ret = radix_tree_insert(trb_address_map,
--			key, ring);
--	radix_tree_preload_end();
--	return ret;
-+	if (IS_ERR(entry))
-+		return PTR_ERR(entry);
-+	return 0;
- }
- 
--static void xhci_remove_segment_mapping(struct radix_tree_root *trb_address_map,
-+static void xhci_remove_segment_mapping(struct xarray *trb_address_map,
- 		struct xhci_segment *seg)
- {
--	unsigned long key;
--
--	key = (unsigned long)(seg->dma >> TRB_SEGMENT_SHIFT);
--	if (radix_tree_lookup(trb_address_map, key))
--		radix_tree_delete(trb_address_map, key);
-+	xa_erase(trb_address_map, trb_index(seg->dma));
- }
- 
- static int xhci_update_stream_segment_mapping(
--		struct radix_tree_root *trb_address_map,
-+		struct xarray *trb_address_map,
- 		struct xhci_ring *ring,
- 		struct xhci_segment *first_seg,
- 		struct xhci_segment *last_seg,
-@@ -574,8 +568,8 @@ struct xhci_ring *xhci_dma_to_transfer_ring(
- 		u64 address)
- {
- 	if (ep->ep_state & EP_HAS_STREAMS)
--		return radix_tree_lookup(&ep->stream_info->trb_address_map,
--				address >> TRB_SEGMENT_SHIFT);
-+		return xa_load(&ep->stream_info->trb_address_map,
-+				trb_index(address));
- 	return ep->ring;
- }
- 
-@@ -654,10 +648,10 @@ struct xhci_stream_info *xhci_alloc_stream_info(struct xhci_hcd *xhci,
- 	if (!stream_info->free_streams_command)
- 		goto cleanup_ctx;
- 
--	INIT_RADIX_TREE(&stream_info->trb_address_map, GFP_ATOMIC);
-+	xa_init(&stream_info->trb_address_map);
- 
- 	/* Allocate rings for all the streams that the driver will use,
--	 * and add their segment DMA addresses to the radix tree.
-+	 * and add their segment DMA addresses to the map.
- 	 * Stream 0 is reserved.
- 	 */
- 
-@@ -2362,7 +2356,7 @@ int xhci_mem_init(struct xhci_hcd *xhci, gfp_t flags)
- 	 * Initialize the ring segment pool.  The ring must be a contiguous
- 	 * structure comprised of TRBs.  The TRBs must be 16 byte aligned,
- 	 * however, the command ring segment needs 64-byte aligned segments
--	 * and our use of dma addresses in the trb_address_map radix tree needs
-+	 * and our use of dma addresses in the trb_address_map xarray needs
- 	 * TRB_SEGMENT_SIZE alignment, so we pick the greater alignment need.
- 	 */
- 	xhci->segment_pool = dma_pool_create("xHCI ring segments", dev,
-diff --git a/drivers/usb/host/xhci.h b/drivers/usb/host/xhci.h
-index 054ce74524af..e8208a3eee3c 100644
---- a/drivers/usb/host/xhci.h
-+++ b/drivers/usb/host/xhci.h
-@@ -15,7 +15,7 @@
- #include <linux/usb.h>
- #include <linux/timer.h>
- #include <linux/kernel.h>
--#include <linux/radix-tree.h>
-+#include <linux/xarray.h>
- #include <linux/usb/hcd.h>
- #include <linux/io-64-nonatomic-lo-hi.h>
- 
-@@ -837,7 +837,7 @@ struct xhci_stream_info {
- 	unsigned int			num_stream_ctxs;
- 	dma_addr_t			ctx_array_dma;
- 	/* For mapping physical TRB addresses to segments in stream rings */
--	struct radix_tree_root		trb_address_map;
-+	struct xarray			trb_address_map;
- 	struct xhci_command		*free_streams_command;
- };
- 
-@@ -1584,7 +1584,7 @@ struct xhci_ring {
- 	unsigned int		bounce_buf_len;
- 	enum xhci_ring_type	type;
- 	bool			last_td_was_short;
--	struct radix_tree_root	*trb_address_map;
-+	struct xarray		*trb_address_map;
- };
- 
- struct xhci_erst_entry {
+This patch set is not for applying.  0day is still reporting problems,
+and I'd feel bad for eating someone's data.  These patches apply on top
+of a set of prepatory patches which just aren't interesting.  If you
+want to see the patches applied to a tree, I suggest pulling my git tree:
+http://git.infradead.org/users/willy/linux-dax.git/shortlog/refs/heads/xarray-2017-12-04
+I also left out the idr_preload removals.  They're still in the git tree,
+but I'm not looking for feedback on them.
+
+Changes since v3:
+
+XArray API differences:
+ - Store a pointer to the struct xarray in the xa_state (changes almost
+   every prototype in the advanced API).
+ - Added xas_lock() etc to operate on the XArray stored in the xa_state.
+ - Added xa_erase() as a synonym for xa_store(..., NULL, 0).
+ - Added __xa_erase() which is an exact replacement for radix_tree_delete();
+   it assumes you are holding the xa_lock.
+ - Renamed xa_next() to xa_find_after().
+ - Renamed xas_next() to xas_next_entry().
+ - Renamed xas_prev_any() and xas_next_any() to xas_prev() and xas_next().
+ - Changed the semantics of xas_prev() and xas_next() substantially
+   (see their kernel-doc).
+ - Renamed skip entry to zero entry.
+ - Introduced a new XAS_BOUNDS state to distinguish between an xa_state
+   that has not been walked and an xa_state that has walked off the
+   current end of the array.
+ - Changed xas_set_err() to take a negative errno, not a positive one.
+   XAS_ERROR still takes a positive errno, but this is an undocumented
+   internal part of the implementation, not an API.
+ - Changed behaviour when returning a multi-index entry; xas.xa_index
+   is now always set to the first (canonical) index of this entry.
+   Before, it was never rewound.  Eg if you have an entry occupying
+   indices 4-7, and called xas_load() with xas.xa_index set to 6, it
+   will now set xas.xa_index to 4.
+ - Changed xas_nomem() to release any allocated memory if there is no
+   ENOMEM error.  This means that (unless the user explicitly bypasses
+   calling xas_nomem() on some path), there's no need to call xas_destroy()
+   and it is removed from the API.
+ - Added xas_create_range() for the benefit of our current hugepage users.
+   I hope to be able to remove it again once they are converted to use
+   multi-index entries.
+ - Add xa_get_maybe_tag() which will call xa_get_entries() if you specify
+   XA_NO_TAG and xa_get_tagged otherwise.
+
+IDR API differences:
+ - Removed the IDR cyclic API change (decided not to do it after all).
+ - Made idr_alloc_ul() and idr_alloc_u32() assign the ID before inserting
+   the pointer into the IDR, so a lookup cannot find an uninitialised object.
+
+Bug fixes:
+ - Made INIT_RADIX_TREE() initialise the xa_lock correctly so lockdep
+   doesn't whine about it.
+ - Fixed a locking bug in the IPC IDR conversion.
+ - If we call xas_store(&xas, NULL) and that causes the XArray to shrink,
+   set the xas to the XAS_BOUNDS state so we don't dereference a pointer
+   to a node which has been passed to RCU free.  This is only a problem
+   on !SMP machines.
+ - Fixed bug when shrinking the XArray to a single entry at index 0.
+ - Fixed bug where we could scan off the end of the slot array when storing
+   a NULL.
+ - Made xas_pause() not do anything if we're in an error state.  Before, it
+   would have dereferenced a NULL pointer.
+ - Fixed a bug in xa_find_after().  it just plain didn't work.  Now there is
+   a test-case for it.
+
+Conversions:
+ - Converted backing dev cgroup code from radix tree to XArray.
+ - Converted the USB XHCI driver from radix tree to XArray.
+ - Moved btrfs_page_exists_in_range() guts to page cache code.
+ - Renamed page_cache_{next,prev}_hole() to ..._gap().  The page cache
+   doesn't cache holes.
+ - Finished the page cache conversion.
+
+Miscellaneous:
+ - Documentation.  Lots and lots of documentation.  xarray.rst, more XArray
+   kernel-doc and also IDR kernel-doc which has been missing for years.
+ - Added MAINTAINERS entry for XArray/IDR.
+ - Deleted the now-unused parts of the radix tree API (see git tree).
+ - Added XA_DEBUG code and enable it in test-suite.
+ - Improved code generation for initialising xa_state by explicitly
+   initialising the struct padding (stupid gcc).
+ - Stub out more code if CONFIG_RADIX_TREE_MULTIORDER isn't enabled.
+ - Added more tests to the test-suite.
+ - Removed the IDR preload conversions from this patch set (see git tree).
+
+Matthew Wilcox (73):
+  xfs: Rename xa_ elements to ail_
+  xarray: Add the xa_lock to the radix_tree_root
+  page cache: Use xa_lock
+  xarray: Replace exceptional entries
+  xarray: Change definition of sibling entries
+  xarray: Add definition of struct xarray
+  xarray: Define struct xa_node
+  xarray: Add documentation
+  xarray: Add xa_load
+  xarray: Add xa_get_tag, xa_set_tag and xa_clear_tag
+  xarray: Add xa_store
+  xarray: Add xa_cmpxchg
+  xarray: Add xa_for_each
+  xarray: Add xas_for_each_tag
+  xarray: Add xa_get_entries, xa_get_tagged and xa_get_maybe_tag
+  xarray: Add xa_destroy
+  xarray: Add xas_next and xas_prev
+  xarray: Add xas_create_range
+  xarray: Add MAINTAINERS entry
+  idr: Convert to XArray
+  ida: Convert to XArray
+  page cache: Convert hole search to XArray
+  page cache: Add page_cache_range_empty function
+  page cache: Add and replace pages using the XArray
+  page cache: Convert page deletion to XArray
+  page cache: Convert page cache lookups to XArray
+  page cache: Convert delete_batch to XArray
+  page cache: Remove stray radix comment
+  mm: Convert page-writeback to XArray
+  mm: Convert workingset to XArray
+  mm: Convert truncate to XArray
+  mm: Convert add_to_swap_cache to XArray
+  mm: Convert delete_from_swap_cache to XArray
+  mm: Convert cgroup writeback to XArray
+  mm: Convert __do_page_cache_readahead to XArray
+  mm: Convert page migration to XArray
+  mm: Convert huge_memory to XArray
+  mm: Convert collapse_shmem to XArray
+  mm: Convert khugepaged_scan_shmem to XArray
+  pagevec: Use xa_tag_t
+  shmem: Convert replace to XArray
+  shmem: Convert shmem_confirm_swap to XArray
+  shmem: Convert find_swap_entry to XArray
+  shmem: Convert shmem_tag_pins to XArray
+  shmem: Convert shmem_wait_for_pins to XArray
+  shmem: Convert shmem_add_to_page_cache to XArray
+  shmem: Convert shmem_alloc_hugepage to XArray
+  shmem: Convert shmem_free_swap to XArray
+  shmem: Convert shmem_partial_swap_usage to XArray
+  shmem: Comment fixups
+  btrfs: Convert page cache to XArray
+  fs: Convert buffer to XArray
+  fs: Convert writeback to XArray
+  nilfs2: Convert to XArray
+  f2fs: Convert to XArray
+  lustre: Convert to XArray
+  dax: Convert dax_unlock_mapping_entry to XArray
+  dax: Convert lock_slot to XArray
+  dax: More XArray conversion
+  dax: Convert __dax_invalidate_mapping_entry to XArray
+  dax: Convert dax_writeback_one to XArray
+  dax: Convert dax_insert_pfn_mkwrite to XArray
+  dax: Convert dax_insert_mapping_entry to XArray
+  dax: Convert grab_mapping_entry to XArray
+  dax: Fix sparse warning
+  page cache: Finish XArray conversion
+  vmalloc: Convert to XArray
+  brd: Convert to XArray
+  xfs: Convert m_perag_tree to XArray
+  xfs: Convert pag_ici_root to XArray
+  xfs: Convert xfs dquot to XArray
+  xfs: Convert mru cache to XArray
+  usb: Convert xhci-mem to XArray
+
+ Documentation/cgroup-v1/memory.txt              |    2 +-
+ Documentation/core-api/index.rst                |    1 +
+ Documentation/core-api/xarray.rst               |  287 +++++
+ Documentation/vm/page_migration                 |   14 +-
+ MAINTAINERS                                     |   12 +
+ arch/arm/include/asm/cacheflush.h               |    6 +-
+ arch/nios2/include/asm/cacheflush.h             |    6 +-
+ arch/parisc/include/asm/cacheflush.h            |    6 +-
+ arch/powerpc/include/asm/book3s/64/pgtable.h    |    4 +-
+ arch/powerpc/include/asm/nohash/64/pgtable.h    |    4 +-
+ drivers/block/brd.c                             |   87 +-
+ drivers/gpu/drm/i915/i915_gem.c                 |   17 +-
+ drivers/staging/lustre/lustre/llite/glimpse.c   |   12 +-
+ drivers/staging/lustre/lustre/mdc/mdc_request.c |   16 +-
+ drivers/usb/host/xhci-mem.c                     |   70 +-
+ drivers/usb/host/xhci.h                         |    6 +-
+ fs/afs/write.c                                  |    2 +-
+ fs/btrfs/btrfs_inode.h                          |    7 +-
+ fs/btrfs/compression.c                          |    6 +-
+ fs/btrfs/extent_io.c                            |   16 +-
+ fs/btrfs/inode.c                                |   70 --
+ fs/buffer.c                                     |   22 +-
+ fs/cifs/file.c                                  |    2 +-
+ fs/dax.c                                        |  382 +++---
+ fs/ext4/inode.c                                 |    2 +-
+ fs/f2fs/data.c                                  |    9 +-
+ fs/f2fs/dir.c                                   |    5 +-
+ fs/f2fs/gc.c                                    |    2 +-
+ fs/f2fs/inline.c                                |    6 +-
+ fs/f2fs/node.c                                  |   10 +-
+ fs/fs-writeback.c                               |   37 +-
+ fs/gfs2/aops.c                                  |    2 +-
+ fs/inode.c                                      |   11 +-
+ fs/nfs/blocklayout/blocklayout.c                |    2 +-
+ fs/nilfs2/btnode.c                              |   41 +-
+ fs/nilfs2/page.c                                |   78 +-
+ fs/proc/task_mmu.c                              |    2 +-
+ fs/xfs/libxfs/xfs_sb.c                          |   11 +-
+ fs/xfs/libxfs/xfs_sb.h                          |    2 +-
+ fs/xfs/xfs_buf_item.c                           |   10 +-
+ fs/xfs/xfs_dquot.c                              |   37 +-
+ fs/xfs/xfs_dquot_item.c                         |   11 +-
+ fs/xfs/xfs_icache.c                             |  142 +--
+ fs/xfs/xfs_icache.h                             |   10 +-
+ fs/xfs/xfs_inode.c                              |   24 +-
+ fs/xfs/xfs_inode_item.c                         |   22 +-
+ fs/xfs/xfs_log.c                                |    6 +-
+ fs/xfs/xfs_log_recover.c                        |   80 +-
+ fs/xfs/xfs_mount.c                              |   22 +-
+ fs/xfs/xfs_mount.h                              |    6 +-
+ fs/xfs/xfs_mru_cache.c                          |   72 +-
+ fs/xfs/xfs_qm.c                                 |   32 +-
+ fs/xfs/xfs_qm.h                                 |   18 +-
+ fs/xfs/xfs_trans.c                              |   18 +-
+ fs/xfs/xfs_trans_ail.c                          |  152 +--
+ fs/xfs/xfs_trans_buf.c                          |    4 +-
+ fs/xfs/xfs_trans_priv.h                         |   42 +-
+ include/linux/backing-dev-defs.h                |    2 +-
+ include/linux/backing-dev.h                     |   14 +-
+ include/linux/fs.h                              |   68 +-
+ include/linux/idr.h                             |  173 ++-
+ include/linux/mm.h                              |    2 +-
+ include/linux/pagemap.h                         |   16 +-
+ include/linux/pagevec.h                         |    8 +-
+ include/linux/radix-tree.h                      |   95 +-
+ include/linux/swap.h                            |    5 +-
+ include/linux/swapops.h                         |   19 +-
+ include/linux/xarray.h                          |  887 +++++++++++++
+ kernel/pid.c                                    |    2 +-
+ lib/Makefile                                    |    2 +-
+ lib/idr.c                                       |  617 +++++----
+ lib/radix-tree.c                                |  413 ++----
+ lib/xarray.c                                    | 1520 +++++++++++++++++++++++
+ mm/backing-dev.c                                |   28 +-
+ mm/filemap.c                                    |  746 ++++-------
+ mm/huge_memory.c                                |   23 +-
+ mm/khugepaged.c                                 |  182 ++-
+ mm/madvise.c                                    |    2 +-
+ mm/memcontrol.c                                 |    4 +-
+ mm/migrate.c                                    |   41 +-
+ mm/mincore.c                                    |    2 +-
+ mm/page-writeback.c                             |   78 +-
+ mm/readahead.c                                  |   10 +-
+ mm/rmap.c                                       |    4 +-
+ mm/shmem.c                                      |  311 ++---
+ mm/swap.c                                       |    6 +-
+ mm/swap_state.c                                 |  124 +-
+ mm/truncate.c                                   |   45 +-
+ mm/vmalloc.c                                    |   39 +-
+ mm/vmscan.c                                     |   14 +-
+ mm/workingset.c                                 |   78 +-
+ tools/include/linux/spinlock.h                  |    2 +
+ tools/testing/radix-tree/.gitignore             |    2 +
+ tools/testing/radix-tree/Makefile               |   15 +-
+ tools/testing/radix-tree/idr-test.c             |   29 +-
+ tools/testing/radix-tree/linux/bug.h            |    1 +
+ tools/testing/radix-tree/linux/kconfig.h        |    1 +
+ tools/testing/radix-tree/linux/rcupdate.h       |    2 +
+ tools/testing/radix-tree/linux/xarray.h         |    3 +
+ tools/testing/radix-tree/multiorder.c           |   53 +-
+ tools/testing/radix-tree/regression1.c          |   68 +-
+ tools/testing/radix-tree/test.c                 |    8 +-
+ tools/testing/radix-tree/xarray-test.c          |  468 +++++++
+ 103 files changed, 5309 insertions(+), 2908 deletions(-)
+ create mode 100644 Documentation/core-api/xarray.rst
+ create mode 100644 include/linux/xarray.h
+ create mode 100644 lib/xarray.c
+ create mode 100644 tools/testing/radix-tree/linux/kconfig.h
+ create mode 100644 tools/testing/radix-tree/linux/xarray.h
+ create mode 100644 tools/testing/radix-tree/xarray-test.c
+
 -- 
 2.15.0
 
