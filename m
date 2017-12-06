@@ -1,147 +1,87 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH v4 67/73] vmalloc: Convert to XArray
-Date: Tue,  5 Dec 2017 16:41:53 -0800
-Message-ID: <20171206004159.3755-68-willy@infradead.org>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: [PATCH v4 18/73] xarray: Add xas_create_range
+Date: Tue,  5 Dec 2017 16:41:04 -0800
+Message-ID: <20171206004159.3755-19-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=RKZQGpmQNKayCSkcAjk2A5OsPf6EdyX1MOKO23TZbVY=; b=k6U0wYBMKxvqE3GBVB4fjcckD
-        RS/z5rWEPhFLfirQYHExMQBsAtEOCpGdvtOM9k0OKid9PL+fcOefbpeEVDMQM4Bhha1Hb1gVq6JUw
-        WeMdEcxenL1No3T4LOnLvYxyCm6IJhanV/0sIDvaRJaEQK1h9g/p08Jf/4Gtg8enfkKCM78c1ncEw
-        WFUFdjx3vtWoTA+aAqLBy17z+IqDFNUD+fGVKFqvTEV8Uco04ivzTdohT9jm96mVx22+3ZQqhCr9U
-        tvCUdZY972gnMNbNOJuWM5QbDwKIxqrOynRGPTUyN7h7w4r4+Q7hNcrC6ZQrEUuWXRx7SPShW7NYz
+         bh=ln8DVnVmZ/F8lfnVUjv5FGoEKLoDa90dAa4HcLubwzQ=; b=iA7nIfTljJ2VFoaKPgIypoVnp
+        TR/hzhzsk0gUMA//34JSHZJIeNRVQ8eSXxFArDUhVA7vLEXyNvh9NsmVcuD3zf3Wlu2oLz/LluDHa
+        5QtuFmbv432C0vJL2X42YBYkANFrF7yLG7IqngYJsWFvwWr7kV+jbUuwoi738aQehUJEDPeXRLSYf
+        DeMS0zkRBrJGoy5b7k6ZCc71uIUPC8u+XizeIQybXRVIOIeCANCc6VJed4WF4JyM3Mf91+3pVmN1x
+        fM1Y9fCdce9gSdMCHkdSTSv61EWHebVc0Fi9ImCEXd/O139e6l53L73FWGg8O8KXMuAl/xZd351cg
     
-In-Reply-To: <20171206004159.3755-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: 
-Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
 
-From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+From: Matthew Wilcox <mawilcox@microsoft.com>
 
-The radix tree of vmap blocks is simpler to express as an XArray.
-Saves a couple of hundred bytes of text and eliminates a user of the
-radix tree preload API.
+This hopefully temporary function is useful for users who have not yet
+been converted to multi-index entries.
 
-Signed-off-by: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/vmalloc.c | 39 +++++++++++++--------------------------
- 1 file changed, 13 insertions(+), 26 deletions(-)
+ include/linux/xarray.h |  2 ++
+ lib/xarray.c           | 22 ++++++++++++++++++++++
+ 2 files changed, 24 insertions(+)
 
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 673942094328..3a46efc27525 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -23,7 +23,7 @@
- #include <linux/list.h>
- #include <linux/notifier.h>
- #include <linux/rbtree.h>
--#include <linux/radix-tree.h>
-+#include <linux/xarray.h>
- #include <linux/rcupdate.h>
- #include <linux/pfn.h>
- #include <linux/kmemleak.h>
-@@ -821,12 +821,11 @@ struct vmap_block {
- static DEFINE_PER_CPU(struct vmap_block_queue, vmap_block_queue);
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 416708ace115..afa3374f20bd 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -594,6 +594,8 @@ void xas_init_tags(const struct xa_state *);
+ bool xas_nomem(struct xa_state *, gfp_t);
+ void xas_pause(struct xa_state *);
  
- /*
-- * Radix tree of vmap blocks, indexed by address, to quickly find a vmap block
-+ * XArray of vmap blocks, indexed by address, to quickly find a vmap block
-  * in the free path. Could get rid of this if we change the API to return a
-  * "cookie" from alloc, to be passed to free. But no big deal yet.
-  */
--static DEFINE_SPINLOCK(vmap_block_tree_lock);
--static RADIX_TREE(vmap_block_tree, GFP_ATOMIC);
-+static DEFINE_XARRAY(vmap_block_tree);
++void xas_create_range(struct xa_state *, unsigned long max);
++
+ /**
+  * xas_reload() - Refetch an entry from the xarray.
+  * @xas: XArray operation state.
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 8c6e83d10554..cc88df7bd6df 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -570,6 +570,28 @@ void *xas_create(struct xa_state *xas)
+ }
+ EXPORT_SYMBOL_GPL(xas_create);
  
- /*
-  * We should probably have a fallback mechanism to allocate virtual memory
-@@ -865,8 +864,8 @@ static void *new_vmap_block(unsigned int order, gfp_t gfp_mask)
- 	struct vmap_block *vb;
- 	struct vmap_area *va;
- 	unsigned long vb_idx;
--	int node, err;
--	void *vaddr;
-+	int node;
-+	void *ret, *vaddr;
- 
- 	node = numa_node_id();
- 
-@@ -883,13 +882,6 @@ static void *new_vmap_block(unsigned int order, gfp_t gfp_mask)
- 		return ERR_CAST(va);
- 	}
- 
--	err = radix_tree_preload(gfp_mask);
--	if (unlikely(err)) {
--		kfree(vb);
--		free_vmap_area(va);
--		return ERR_PTR(err);
--	}
--
- 	vaddr = vmap_block_vaddr(va->va_start, 0);
- 	spin_lock_init(&vb->lock);
- 	vb->va = va;
-@@ -902,11 +894,12 @@ static void *new_vmap_block(unsigned int order, gfp_t gfp_mask)
- 	INIT_LIST_HEAD(&vb->free_list);
- 
- 	vb_idx = addr_to_vb_idx(va->va_start);
--	spin_lock(&vmap_block_tree_lock);
--	err = radix_tree_insert(&vmap_block_tree, vb_idx, vb);
--	spin_unlock(&vmap_block_tree_lock);
--	BUG_ON(err);
--	radix_tree_preload_end();
-+	ret = xa_store(&vmap_block_tree, vb_idx, vb, gfp_mask);
-+	if (IS_ERR(ret)) {
-+		kfree(vb);
-+		free_vmap_area(va);
-+		return ret;
-+	}
- 
- 	vbq = &get_cpu_var(vmap_block_queue);
- 	spin_lock(&vbq->lock);
-@@ -923,9 +916,7 @@ static void free_vmap_block(struct vmap_block *vb)
- 	unsigned long vb_idx;
- 
- 	vb_idx = addr_to_vb_idx(vb->va->va_start);
--	spin_lock(&vmap_block_tree_lock);
--	tmp = radix_tree_delete(&vmap_block_tree, vb_idx);
--	spin_unlock(&vmap_block_tree_lock);
-+	tmp = xa_erase(&vmap_block_tree, vb_idx);
- 	BUG_ON(tmp != vb);
- 
- 	free_vmap_area_noflush(vb->va);
-@@ -1031,7 +1022,6 @@ static void *vb_alloc(unsigned long size, gfp_t gfp_mask)
- static void vb_free(const void *addr, unsigned long size)
++/**
++ * xas_create_range() - Ensure that stores to this range will succeed
++ * @xas: XArray operation state.
++ * @max: The highest index to create a slot for.
++ *
++ * Creates all of the slots in the range between the current position of
++ * @xas and @max.  This is for the benefit of users who have not yet been
++ * converted to multi-index entries.
++ *
++ * The implementation is naive.
++ */
++void xas_create_range(struct xa_state *xas, unsigned long max)
++{
++	XA_STATE(tmp, xas->xa, xas->xa_index);
++
++	do {
++		xas_create(&tmp);
++		xas_set(&tmp, tmp.xa_index + XA_CHUNK_SIZE);
++	} while (tmp.xa_index < max);
++}
++EXPORT_SYMBOL_GPL(xas_create_range);
++
+ static void store_siblings(struct xa_state *xas,
+ 				void *entry, int *countp, int *valuesp)
  {
- 	unsigned long offset;
--	unsigned long vb_idx;
- 	unsigned int order;
- 	struct vmap_block *vb;
- 
-@@ -1045,10 +1035,7 @@ static void vb_free(const void *addr, unsigned long size)
- 	offset = (unsigned long)addr & (VMAP_BLOCK_SIZE - 1);
- 	offset >>= PAGE_SHIFT;
- 
--	vb_idx = addr_to_vb_idx((unsigned long)addr);
--	rcu_read_lock();
--	vb = radix_tree_lookup(&vmap_block_tree, vb_idx);
--	rcu_read_unlock();
-+	vb = xa_load(&vmap_block_tree, addr_to_vb_idx((unsigned long)addr));
- 	BUG_ON(!vb);
- 
- 	vunmap_page_range((unsigned long)addr, (unsigned long)addr + size);
 -- 
 2.15.0
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
