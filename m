@@ -1,20 +1,22 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 00/73] XArray version 4
-Date: Tue,  5 Dec 2017 16:40:46 -0800
-Message-ID: <20171206004159.3755-1-willy@infradead.org>
+Subject: [PATCH v4 09/73] xarray: Add xa_load
+Date: Tue,  5 Dec 2017 16:40:55 -0800
+Message-ID: <20171206004159.3755-10-willy@infradead.org>
+References: <20171206004159.3755-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=Message-Id:Date:Subject:Cc:To:From:
-        Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
-        Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
-        Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=tGZyO0SnyiYl1L00kDbf5R9Q9bLXgQbGn4/V1d7oeDY=; b=tQ8DdaOF1TGNMfD0zPrAHR8iR
-        tHSCL56OV9A3RohM9Gd/LIiGXJM/nVC+xwjXCgxgEpMdWY+qHIt7u1EulR5SZ58Y/X7jITPbGdCG0
-        BHul9fN5y59PuV+u/NtDPD+CF/2giGtq1SyOt7CSXk2RIz6ap4L1LnbF60Qvw2eJ/pLhi9eD+fD7j
-        18zxis5XBBEzgWAOUph2antlwKGMWDazF06yMNQ77G6j0b5iCz8ZKH0PK/bAshAG3S8A/HogpsJxx
-        XmmgB9VL8e4QoWY/JvxRtKQaeSbB3pqYvRI6ZcEZIm9XAwBB5Mkn0sYOYaX+2opYXvnVRwiq8OACl
+         bh=g8TcgX4hFnThjUyTioCLqukD/pnZVutFbuuHSMpNiv4=; b=kW9OfcBFhwCb/oaRJ8WuNL88G
+        bGeDNnlZcIt5fLm1L406w7l90I/YppXVhH0CjGpp7DohW2MDX3VL976I2JoSfP3TNHNTvFx0IaWzy
+        GGOXmpiIHqrhLv5rdQaAvGRVj9YHrOCjvK4rQdQHccLPaO8xcX4n8Obtf1bIOxbdnSDVPNYU1OTUF
+        e+/xUX9m/yhi98klZL+XrHJw51/Lh/+Y2l0Mjd7Q7iyHkns6eXaWW9msyiToleog/4U3zB/FhiL4U
+        XDSfVOd02icW+bcv53lQDW9vmxGTid+jYaSxJQqf61NtH3rhpUEBrkoHaUAJ5Nc9/S5/OXkkAZghA
     
+In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -25,287 +27,657 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-I looked through some notes and decided this was version 4 of the XArray.
-Last posted two weeks ago, this version includes a *lot* of changes.
-I'd like to thank Dave Chinner for his feedback, encouragement and
-distracting ideas for improvement, which I'll get to once this is merged.
+This first function in the XArray API brings with it a lot of support
+infrastructure.  The advanced API is based around the xa_state which is
+a more capable version of the radix_tree_iter.
 
-Highlights:
- - Over 2000 words of documentation in patch 8!  And lots more kernel-doc.
- - The page cache is now fully converted to the XArray.
- - Many more tests in the test-suite.
+As the test-suite demonstrates, it is possible to use the xarray and
+radix tree APIs on the same data structure.
 
-This patch set is not for applying.  0day is still reporting problems,
-and I'd feel bad for eating someone's data.  These patches apply on top
-of a set of prepatory patches which just aren't interesting.  If you
-want to see the patches applied to a tree, I suggest pulling my git tree:
-http://git.infradead.org/users/willy/linux-dax.git/shortlog/refs/heads/xarray-2017-12-04
-I also left out the idr_preload removals.  They're still in the git tree,
-but I'm not looking for feedback on them.
-
-Changes since v3:
-
-XArray API differences:
- - Store a pointer to the struct xarray in the xa_state (changes almost
-   every prototype in the advanced API).
- - Added xas_lock() etc to operate on the XArray stored in the xa_state.
- - Added xa_erase() as a synonym for xa_store(..., NULL, 0).
- - Added __xa_erase() which is an exact replacement for radix_tree_delete();
-   it assumes you are holding the xa_lock.
- - Renamed xa_next() to xa_find_after().
- - Renamed xas_next() to xas_next_entry().
- - Renamed xas_prev_any() and xas_next_any() to xas_prev() and xas_next().
- - Changed the semantics of xas_prev() and xas_next() substantially
-   (see their kernel-doc).
- - Renamed skip entry to zero entry.
- - Introduced a new XAS_BOUNDS state to distinguish between an xa_state
-   that has not been walked and an xa_state that has walked off the
-   current end of the array.
- - Changed xas_set_err() to take a negative errno, not a positive one.
-   XAS_ERROR still takes a positive errno, but this is an undocumented
-   internal part of the implementation, not an API.
- - Changed behaviour when returning a multi-index entry; xas.xa_index
-   is now always set to the first (canonical) index of this entry.
-   Before, it was never rewound.  Eg if you have an entry occupying
-   indices 4-7, and called xas_load() with xas.xa_index set to 6, it
-   will now set xas.xa_index to 4.
- - Changed xas_nomem() to release any allocated memory if there is no
-   ENOMEM error.  This means that (unless the user explicitly bypasses
-   calling xas_nomem() on some path), there's no need to call xas_destroy()
-   and it is removed from the API.
- - Added xas_create_range() for the benefit of our current hugepage users.
-   I hope to be able to remove it again once they are converted to use
-   multi-index entries.
- - Add xa_get_maybe_tag() which will call xa_get_entries() if you specify
-   XA_NO_TAG and xa_get_tagged otherwise.
-
-IDR API differences:
- - Removed the IDR cyclic API change (decided not to do it after all).
- - Made idr_alloc_ul() and idr_alloc_u32() assign the ID before inserting
-   the pointer into the IDR, so a lookup cannot find an uninitialised object.
-
-Bug fixes:
- - Made INIT_RADIX_TREE() initialise the xa_lock correctly so lockdep
-   doesn't whine about it.
- - Fixed a locking bug in the IPC IDR conversion.
- - If we call xas_store(&xas, NULL) and that causes the XArray to shrink,
-   set the xas to the XAS_BOUNDS state so we don't dereference a pointer
-   to a node which has been passed to RCU free.  This is only a problem
-   on !SMP machines.
- - Fixed bug when shrinking the XArray to a single entry at index 0.
- - Fixed bug where we could scan off the end of the slot array when storing
-   a NULL.
- - Made xas_pause() not do anything if we're in an error state.  Before, it
-   would have dereferenced a NULL pointer.
- - Fixed a bug in xa_find_after().  it just plain didn't work.  Now there is
-   a test-case for it.
-
-Conversions:
- - Converted backing dev cgroup code from radix tree to XArray.
- - Converted the USB XHCI driver from radix tree to XArray.
- - Moved btrfs_page_exists_in_range() guts to page cache code.
- - Renamed page_cache_{next,prev}_hole() to ..._gap().  The page cache
-   doesn't cache holes.
- - Finished the page cache conversion.
-
-Miscellaneous:
- - Documentation.  Lots and lots of documentation.  xarray.rst, more XArray
-   kernel-doc and also IDR kernel-doc which has been missing for years.
- - Added MAINTAINERS entry for XArray/IDR.
- - Deleted the now-unused parts of the radix tree API (see git tree).
- - Added XA_DEBUG code and enable it in test-suite.
- - Improved code generation for initialising xa_state by explicitly
-   initialising the struct padding (stupid gcc).
- - Stub out more code if CONFIG_RADIX_TREE_MULTIORDER isn't enabled.
- - Added more tests to the test-suite.
- - Removed the IDR preload conversions from this patch set (see git tree).
-
-Matthew Wilcox (73):
-  xfs: Rename xa_ elements to ail_
-  xarray: Add the xa_lock to the radix_tree_root
-  page cache: Use xa_lock
-  xarray: Replace exceptional entries
-  xarray: Change definition of sibling entries
-  xarray: Add definition of struct xarray
-  xarray: Define struct xa_node
-  xarray: Add documentation
-  xarray: Add xa_load
-  xarray: Add xa_get_tag, xa_set_tag and xa_clear_tag
-  xarray: Add xa_store
-  xarray: Add xa_cmpxchg
-  xarray: Add xa_for_each
-  xarray: Add xas_for_each_tag
-  xarray: Add xa_get_entries, xa_get_tagged and xa_get_maybe_tag
-  xarray: Add xa_destroy
-  xarray: Add xas_next and xas_prev
-  xarray: Add xas_create_range
-  xarray: Add MAINTAINERS entry
-  idr: Convert to XArray
-  ida: Convert to XArray
-  page cache: Convert hole search to XArray
-  page cache: Add page_cache_range_empty function
-  page cache: Add and replace pages using the XArray
-  page cache: Convert page deletion to XArray
-  page cache: Convert page cache lookups to XArray
-  page cache: Convert delete_batch to XArray
-  page cache: Remove stray radix comment
-  mm: Convert page-writeback to XArray
-  mm: Convert workingset to XArray
-  mm: Convert truncate to XArray
-  mm: Convert add_to_swap_cache to XArray
-  mm: Convert delete_from_swap_cache to XArray
-  mm: Convert cgroup writeback to XArray
-  mm: Convert __do_page_cache_readahead to XArray
-  mm: Convert page migration to XArray
-  mm: Convert huge_memory to XArray
-  mm: Convert collapse_shmem to XArray
-  mm: Convert khugepaged_scan_shmem to XArray
-  pagevec: Use xa_tag_t
-  shmem: Convert replace to XArray
-  shmem: Convert shmem_confirm_swap to XArray
-  shmem: Convert find_swap_entry to XArray
-  shmem: Convert shmem_tag_pins to XArray
-  shmem: Convert shmem_wait_for_pins to XArray
-  shmem: Convert shmem_add_to_page_cache to XArray
-  shmem: Convert shmem_alloc_hugepage to XArray
-  shmem: Convert shmem_free_swap to XArray
-  shmem: Convert shmem_partial_swap_usage to XArray
-  shmem: Comment fixups
-  btrfs: Convert page cache to XArray
-  fs: Convert buffer to XArray
-  fs: Convert writeback to XArray
-  nilfs2: Convert to XArray
-  f2fs: Convert to XArray
-  lustre: Convert to XArray
-  dax: Convert dax_unlock_mapping_entry to XArray
-  dax: Convert lock_slot to XArray
-  dax: More XArray conversion
-  dax: Convert __dax_invalidate_mapping_entry to XArray
-  dax: Convert dax_writeback_one to XArray
-  dax: Convert dax_insert_pfn_mkwrite to XArray
-  dax: Convert dax_insert_mapping_entry to XArray
-  dax: Convert grab_mapping_entry to XArray
-  dax: Fix sparse warning
-  page cache: Finish XArray conversion
-  vmalloc: Convert to XArray
-  brd: Convert to XArray
-  xfs: Convert m_perag_tree to XArray
-  xfs: Convert pag_ici_root to XArray
-  xfs: Convert xfs dquot to XArray
-  xfs: Convert mru cache to XArray
-  usb: Convert xhci-mem to XArray
-
- Documentation/cgroup-v1/memory.txt              |    2 +-
- Documentation/core-api/index.rst                |    1 +
- Documentation/core-api/xarray.rst               |  287 +++++
- Documentation/vm/page_migration                 |   14 +-
- MAINTAINERS                                     |   12 +
- arch/arm/include/asm/cacheflush.h               |    6 +-
- arch/nios2/include/asm/cacheflush.h             |    6 +-
- arch/parisc/include/asm/cacheflush.h            |    6 +-
- arch/powerpc/include/asm/book3s/64/pgtable.h    |    4 +-
- arch/powerpc/include/asm/nohash/64/pgtable.h    |    4 +-
- drivers/block/brd.c                             |   87 +-
- drivers/gpu/drm/i915/i915_gem.c                 |   17 +-
- drivers/staging/lustre/lustre/llite/glimpse.c   |   12 +-
- drivers/staging/lustre/lustre/mdc/mdc_request.c |   16 +-
- drivers/usb/host/xhci-mem.c                     |   70 +-
- drivers/usb/host/xhci.h                         |    6 +-
- fs/afs/write.c                                  |    2 +-
- fs/btrfs/btrfs_inode.h                          |    7 +-
- fs/btrfs/compression.c                          |    6 +-
- fs/btrfs/extent_io.c                            |   16 +-
- fs/btrfs/inode.c                                |   70 --
- fs/buffer.c                                     |   22 +-
- fs/cifs/file.c                                  |    2 +-
- fs/dax.c                                        |  382 +++---
- fs/ext4/inode.c                                 |    2 +-
- fs/f2fs/data.c                                  |    9 +-
- fs/f2fs/dir.c                                   |    5 +-
- fs/f2fs/gc.c                                    |    2 +-
- fs/f2fs/inline.c                                |    6 +-
- fs/f2fs/node.c                                  |   10 +-
- fs/fs-writeback.c                               |   37 +-
- fs/gfs2/aops.c                                  |    2 +-
- fs/inode.c                                      |   11 +-
- fs/nfs/blocklayout/blocklayout.c                |    2 +-
- fs/nilfs2/btnode.c                              |   41 +-
- fs/nilfs2/page.c                                |   78 +-
- fs/proc/task_mmu.c                              |    2 +-
- fs/xfs/libxfs/xfs_sb.c                          |   11 +-
- fs/xfs/libxfs/xfs_sb.h                          |    2 +-
- fs/xfs/xfs_buf_item.c                           |   10 +-
- fs/xfs/xfs_dquot.c                              |   37 +-
- fs/xfs/xfs_dquot_item.c                         |   11 +-
- fs/xfs/xfs_icache.c                             |  142 +--
- fs/xfs/xfs_icache.h                             |   10 +-
- fs/xfs/xfs_inode.c                              |   24 +-
- fs/xfs/xfs_inode_item.c                         |   22 +-
- fs/xfs/xfs_log.c                                |    6 +-
- fs/xfs/xfs_log_recover.c                        |   80 +-
- fs/xfs/xfs_mount.c                              |   22 +-
- fs/xfs/xfs_mount.h                              |    6 +-
- fs/xfs/xfs_mru_cache.c                          |   72 +-
- fs/xfs/xfs_qm.c                                 |   32 +-
- fs/xfs/xfs_qm.h                                 |   18 +-
- fs/xfs/xfs_trans.c                              |   18 +-
- fs/xfs/xfs_trans_ail.c                          |  152 +--
- fs/xfs/xfs_trans_buf.c                          |    4 +-
- fs/xfs/xfs_trans_priv.h                         |   42 +-
- include/linux/backing-dev-defs.h                |    2 +-
- include/linux/backing-dev.h                     |   14 +-
- include/linux/fs.h                              |   68 +-
- include/linux/idr.h                             |  173 ++-
- include/linux/mm.h                              |    2 +-
- include/linux/pagemap.h                         |   16 +-
- include/linux/pagevec.h                         |    8 +-
- include/linux/radix-tree.h                      |   95 +-
- include/linux/swap.h                            |    5 +-
- include/linux/swapops.h                         |   19 +-
- include/linux/xarray.h                          |  887 +++++++++++++
- kernel/pid.c                                    |    2 +-
- lib/Makefile                                    |    2 +-
- lib/idr.c                                       |  617 +++++----
- lib/radix-tree.c                                |  413 ++----
- lib/xarray.c                                    | 1520 +++++++++++++++++++++++
- mm/backing-dev.c                                |   28 +-
- mm/filemap.c                                    |  746 ++++-------
- mm/huge_memory.c                                |   23 +-
- mm/khugepaged.c                                 |  182 ++-
- mm/madvise.c                                    |    2 +-
- mm/memcontrol.c                                 |    4 +-
- mm/migrate.c                                    |   41 +-
- mm/mincore.c                                    |    2 +-
- mm/page-writeback.c                             |   78 +-
- mm/readahead.c                                  |   10 +-
- mm/rmap.c                                       |    4 +-
- mm/shmem.c                                      |  311 ++---
- mm/swap.c                                       |    6 +-
- mm/swap_state.c                                 |  124 +-
- mm/truncate.c                                   |   45 +-
- mm/vmalloc.c                                    |   39 +-
- mm/vmscan.c                                     |   14 +-
- mm/workingset.c                                 |   78 +-
- tools/include/linux/spinlock.h                  |    2 +
- tools/testing/radix-tree/.gitignore             |    2 +
- tools/testing/radix-tree/Makefile               |   15 +-
- tools/testing/radix-tree/idr-test.c             |   29 +-
- tools/testing/radix-tree/linux/bug.h            |    1 +
- tools/testing/radix-tree/linux/kconfig.h        |    1 +
- tools/testing/radix-tree/linux/rcupdate.h       |    2 +
- tools/testing/radix-tree/linux/xarray.h         |    3 +
- tools/testing/radix-tree/multiorder.c           |   53 +-
- tools/testing/radix-tree/regression1.c          |   68 +-
- tools/testing/radix-tree/test.c                 |    8 +-
- tools/testing/radix-tree/xarray-test.c          |  468 +++++++
- 103 files changed, 5309 insertions(+), 2908 deletions(-)
- create mode 100644 Documentation/core-api/xarray.rst
- create mode 100644 include/linux/xarray.h
- create mode 100644 lib/xarray.c
- create mode 100644 tools/testing/radix-tree/linux/kconfig.h
- create mode 100644 tools/testing/radix-tree/linux/xarray.h
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+---
+ include/linux/xarray.h                      | 235 ++++++++++++++++++++++++++++
+ lib/radix-tree.c                            |  43 -----
+ lib/xarray.c                                | 160 +++++++++++++++++++
+ tools/testing/radix-tree/.gitignore         |   1 +
+ tools/testing/radix-tree/Makefile           |   7 +-
+ tools/testing/radix-tree/linux/radix-tree.h |   1 -
+ tools/testing/radix-tree/linux/rcupdate.h   |   1 +
+ tools/testing/radix-tree/linux/xarray.h     |   1 +
+ tools/testing/radix-tree/xarray-test.c      |  56 +++++++
+ 9 files changed, 459 insertions(+), 46 deletions(-)
  create mode 100644 tools/testing/radix-tree/xarray-test.c
 
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 1aff0069458b..af52ba75e6a3 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -21,6 +21,8 @@
+ #include <linux/bug.h>
+ #include <linux/compiler.h>
+ #include <linux/kconfig.h>
++#include <linux/kernel.h>
++#include <linux/rcupdate.h>
+ #include <linux/spinlock.h>
+ #include <linux/types.h>
+ 
+@@ -67,6 +69,8 @@ static inline void xa_init(struct xarray *xa)
+ 	__xa_init(xa, 0);
+ }
+ 
++void *xa_load(struct xarray *, unsigned long index);
++
+ #define BITS_PER_XA_VALUE	(BITS_PER_LONG - 1)
+ 
+ /**
+@@ -158,6 +162,46 @@ struct xa_node {
+ 	unsigned long	tags[XA_MAX_TAGS][XA_TAG_LONGS];
+ };
+ 
++#ifdef XA_DEBUG
++void xa_dump(const struct xarray *);
++void xa_dump_node(const struct xa_node *);
++#define XA_BUG_ON(node, x) do { \
++		if ((x) && (node)) \
++			xa_dump_node(node); \
++		BUG_ON(x); \
++	} while (0)
++#else
++#define XA_BUG_ON(node, x)	do { } while (0)
++#endif
++
++/* Private */
++static inline void *xa_head(struct xarray *xa)
++{
++	return rcu_dereference_check(xa->xa_head, xa_lock_held(xa));
++}
++
++/* Private */
++static inline void *xa_head_locked(struct xarray *xa)
++{
++	return rcu_dereference_protected(xa->xa_head, xa_lock_held(xa));
++}
++
++/* Private */
++static inline void *xa_entry(struct xarray *xa,
++				const struct xa_node *node, unsigned int offset)
++{
++	XA_BUG_ON(node, offset >= XA_CHUNK_SIZE);
++	return rcu_dereference_check(node->slots[offset], xa_lock_held(xa));
++}
++
++/* Private */
++static inline void *xa_entry_locked(struct xarray *xa,
++				const struct xa_node *node, unsigned int offset)
++{
++	XA_BUG_ON(node, offset >= XA_CHUNK_SIZE);
++	return rcu_dereference_protected(node->slots[offset], xa_lock_held(xa));
++}
++
+ /*
+  * Internal entries have the bottom two bits set to the value 10b.  Most
+  * internal entries are pointers to the next node in the tree.  Since the
+@@ -189,6 +233,12 @@ static inline bool xa_is_internal(void *entry)
+ 	return ((unsigned long)entry & 3) == 2;
+ }
+ 
++/* Private */
++static inline struct xa_node *xa_to_node(void *entry)
++{
++	return (struct xa_node *)((unsigned long)entry & ~3UL);
++}
++
+ /* Private */
+ static inline bool xa_is_node(void *entry)
+ {
+@@ -222,4 +272,189 @@ static inline bool xa_is_sibling(void *entry)
+ 
+ #define XA_RETRY_ENTRY		xa_mk_internal(256)
+ 
++/**
++ * xa_is_retry() - Is the entry a retry entry?
++ * @entry: Entry retrieved from the XArray
++ *
++ * Return: %true if the entry is a retry entry.
++ */
++static inline bool xa_is_retry(void *entry)
++{
++	return unlikely(entry == XA_RETRY_ENTRY);
++}
++
++/**
++ * typedef xa_update_node_t - A callback function from the XArray.
++ * @node: The node which is being processed
++ *
++ * This function is called every time the XArray updates the count of
++ * present and value entries in a node.  It allows advanced users to
++ * maintain the private_list in the node.
++ */
++typedef void (*xa_update_node_t)(struct xa_node *node);
++
++/*
++ * The xa_state is opaque to its users.  It contains various different pieces
++ * of state involved in the current operation on the XArray.  It should be
++ * declared on the stack and passed between the various internal routines.
++ * The various elements in it should not be accessed directly, but only
++ * through the provided accessor functions.  The below documentation is for
++ * the benefit of those working on the code, not for users of the XArray.
++ *
++ * @xa_node usually points to the xa_node containing the slot we're operating
++ * on (and @xa_offset is the offset in the slots array).  If there is a
++ * single entry in the array at index 0, there are no allocated xa_nodes to
++ * point to, and so we store %NULL in @xa_node.  @xa_node is set to
++ * the value %XAS_RESTART if the xa_state is not walked to the correct
++ * position in the tree of nodes for this operation.  If an error occurs
++ * during an operation, it is set to an %XAS_ERROR value.  If we run off the
++ * end of the allocated nodes, it is set to %XAS_BOUNDS.
++ */
++struct xa_state {
++	struct xarray *xa;
++	unsigned long xa_index;
++	unsigned char xa_shift;
++	unsigned char xa_sibs;
++	unsigned char xa_offset;
++	unsigned char xa_pad;		/* Helps gcc generate better code */
++	struct xa_node *xa_node;
++	struct xa_node *xa_alloc;
++	xa_update_node_t xa_update;
++};
++
++/*
++ * We encode errnos in the xas->xa_node.  If an error has happened, we need to
++ * drop the lock to fix it, and once we've done so the xa_state is invalid.
++ */
++#define XAS_ERROR(errno) ((struct xa_node *)(((unsigned long)errno << 1) | 1))
++#define XAS_RESTART	 XAS_ERROR(0)
++#define XAS_BOUNDS	 ((struct xa_node *)2UL)
++
++#define __XA_STATE(array, index)  {			\
++	.xa = array,					\
++	.xa_index = index,				\
++	.xa_shift = 0,					\
++	.xa_sibs = 0,					\
++	.xa_offset = 0,					\
++	.xa_pad = 0,					\
++	.xa_node = XAS_RESTART,				\
++	.xa_alloc = NULL,				\
++	.xa_update = NULL				\
++}
++
++/**
++ * XA_STATE() - Declare an XArray operation state.
++ * @name: Name of this operation state (usually xas).
++ * @index: Initial index of interest.
++ *
++ * Declare and initialise an xa_state on the stack.
++ */
++#define XA_STATE(name, array, index)			\
++	struct xa_state name = __XA_STATE(array, index)
++
++#define xas_tagged(xas, tag)	xa_tagged((xas)->xa, (tag))
++#define xas_trylock(xas)	xa_trylock((xas)->xa)
++#define xas_lock(xas)		xa_lock((xas)->xa)
++#define xas_unlock(xas)		xa_unlock((xas)->xa)
++#define xas_lock_bh(xas)	xa_lock_bh((xas)->xa)
++#define xas_unlock_bh(xas)	xa_unlock_bh((xas)->xa)
++#define xas_lock_irq(xas)	xa_lock_irq((xas)->xa)
++#define xas_unlock_irq(xas)	xa_unlock_irq((xas)->xa)
++#define xas_lock_irqsave(xas, flags) \
++				xa_lock_irqsave((xas)->xa, flags)
++#define xas_unlock_irqrestore(xas, flags) \
++				xa_unlock_irqrestore((xas)->xa, flags)
++
++/**
++ * xas_error() - Return an errno stored in the xa_state.
++ * @xas: XArray operation state.
++ *
++ * Return: 0 if no error has been noted.  A negative errno if one has.
++ */
++static inline int xas_error(const struct xa_state *xas)
++{
++	unsigned long v = (unsigned long)xas->xa_node;
++	return (v & 1) ? -(v >> 1) : 0;
++}
++
++/**
++ * xas_set_err() - Note an error in the xa_state.
++ * @xas: XArray operation state.
++ * @err: Negative error number.
++ *
++ * You can call this function with @err set to 0 to take the xa_state
++ * out of the error state.  The next operation will walk it to the correct
++ * location.
++ */
++static inline void xas_set_err(struct xa_state *xas, long err)
++{
++	xas->xa_node = XAS_ERROR(-err);
++}
++
++/**
++ * xas_invalid() - Is the xas in a retry or error state?
++ * @xas: XArray operation state.
++ *
++ * Return: %true if the xas cannot be used for operations.
++ */
++static inline bool xas_invalid(const struct xa_state *xas)
++{
++	return (unsigned long)xas->xa_node & 3;
++}
++
++/**
++ * xas_valid() - Is the xas a valid cursor into the array?
++ * @xas: XArray operation state.
++ *
++ * Return: %true if the xas can be used for operations.
++ */
++static inline bool xas_valid(const struct xa_state *xas)
++{
++	return !xas_invalid(xas);
++}
++
++/**
++ * xas_retry() - Handle a retry entry.
++ * @xas: XArray operation state.
++ * @entry: Entry from xarray.
++ *
++ * An RCU-protected read may see a retry entry as a side-effect of a
++ * simultaneous modification.  This function sets up the @xas to retry
++ * the walk from the head of the array.
++ *
++ * Return: true if the operation needs to be retried.
++ */
++static inline bool xas_retry(struct xa_state *xas, void *entry)
++{
++	if (!xa_is_retry(entry))
++		return false;
++	xas->xa_node = XAS_RESTART;
++	return true;
++}
++
++void *xas_load(struct xa_state *);
++
++/**
++ * xas_reload() - Refetch an entry from the xarray.
++ * @xas: XArray operation state.
++ *
++ * Use this function to check that a previously loaded entry still has
++ * the same value.  This is useful for the lockless pagecache lookup where
++ * we walk the array with only the RCU lock to protect us, lock the page,
++ * then check that the page hasn't moved since we looked it up.
++ *
++ * The caller guarantees that @xas is still valid.  If it may be in an
++ * error or restart state, call xas_load() instead.
++ *
++ * Return: The entry at this location in the xarray.
++ */
++static inline void *xas_reload(struct xa_state *xas)
++{
++	struct xa_node *node = xas->xa_node;
++
++	if (node)
++		return xa_entry(xas->xa, node, xas->xa_offset);
++	return xa_head(xas->xa);
++}
++
+ #endif /* _LINUX_XARRAY_H */
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index 930eb7d298d7..a919c60b10a4 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -255,49 +255,6 @@ static unsigned long next_index(unsigned long index,
+ }
+ 
+ #ifndef __KERNEL__
+-static void dump_node(struct radix_tree_node *node, unsigned long index)
+-{
+-	unsigned long i;
+-
+-	pr_debug("radix node: %p offset %d indices %lu-%lu parent %p tags %lx %lx %lx shift %d count %d exceptional %d\n",
+-		node, node->offset, index, index | node_maxindex(node),
+-		node->parent,
+-		node->tags[0][0], node->tags[1][0], node->tags[2][0],
+-		node->shift, node->count, node->exceptional);
+-
+-	for (i = 0; i < RADIX_TREE_MAP_SIZE; i++) {
+-		unsigned long first = index | (i << node->shift);
+-		unsigned long last = first | ((1UL << node->shift) - 1);
+-		void *entry = node->slots[i];
+-		if (!entry)
+-			continue;
+-		if (entry == RADIX_TREE_RETRY) {
+-			pr_debug("radix retry offset %ld indices %lu-%lu parent %p\n",
+-					i, first, last, node);
+-		} else if (!radix_tree_is_internal_node(entry)) {
+-			pr_debug("radix entry %p offset %ld indices %lu-%lu parent %p\n",
+-					entry, i, first, last, node);
+-		} else if (xa_is_sibling(entry)) {
+-			pr_debug("radix sblng %p offset %ld indices %lu-%lu parent %p val %p\n",
+-					entry, i, first, last, node,
+-					node->slots[xa_to_sibling(entry)]);
+-		} else {
+-			dump_node(entry_to_node(entry), first);
+-		}
+-	}
+-}
+-
+-/* For debug */
+-static void radix_tree_dump(struct radix_tree_root *root)
+-{
+-	pr_debug("radix root: %p xa_head %p tags %x\n",
+-			root, root->xa_head,
+-			root->xa_flags >> ROOT_TAG_SHIFT);
+-	if (!radix_tree_is_internal_node(root->xa_head))
+-		return;
+-	dump_node(entry_to_node(root->xa_head), 0);
+-}
+-
+ static void dump_ida_node(void *entry, unsigned long index)
+ {
+ 	unsigned long i;
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 67ddcb3e630c..2f77e4c5d0b8 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -31,6 +31,94 @@
+  * @entry refers to something stored in a slot in the xarray
+  */
+ 
++/* extracts the offset within this node from the index */
++static unsigned int get_offset(unsigned long index, struct xa_node *node)
++{
++	return (index >> node->shift) & XA_CHUNK_MASK;
++}
++
++static void *set_bounds(struct xa_state *xas)
++{
++	xas->xa_node = XAS_BOUNDS;
++	return NULL;
++}
++
++/*
++ * Starts a walk.  If the @xas is already valid, we assume that it's on
++ * the right path and just return where we've got to.  If we're in an
++ * error state, return NULL.  If the index is outside the current scope
++ * of the xarray, return NULL without changing @xas->xa_node.  Otherwise
++ * set @xas->xa_node to NULL and return the current head of the array.
++ */
++static void *xas_start(struct xa_state *xas)
++{
++	void *entry;
++
++	if (xas_valid(xas))
++		return xas_reload(xas);
++	if (xas_error(xas))
++		return NULL;
++
++	entry = xa_head(xas->xa);
++	if (!xa_is_node(entry)) {
++		if (xas->xa_index)
++			return set_bounds(xas);
++	} else {
++		if ((xas->xa_index >> xa_to_node(entry)->shift) > XA_CHUNK_MASK)
++			return set_bounds(xas);
++	}
++
++	xas->xa_node = NULL;
++	return entry;
++}
++
++static void *xas_descend(struct xa_state *xas, struct xa_node *node)
++{
++	unsigned int offset = get_offset(xas->xa_index, node);
++	void *entry = xa_entry(xas->xa, node, offset);
++
++	if (xa_is_sibling(entry)) {
++		offset = xa_to_sibling(entry);
++		entry = xa_entry(xas->xa, node, offset);
++		/* Move xa_index to the first index of this entry */
++		xas->xa_index = (((xas->xa_index >> node->shift) &
++				  ~XA_CHUNK_MASK) | offset) << node->shift;
++	}
++
++	xas->xa_node = node;
++	xas->xa_offset = offset;
++	return entry;
++}
++
++/**
++ * xas_load() - Load an entry from the XArray (advanced).
++ * @xas: XArray operation state.
++ *
++ * Usually walks the @xas to the appropriate state to load the entry stored
++ * at xa_index.  However, it will do nothing and return NULL  if @xas is
++ * holding an error.  If the xa_shift indicates we're operating on a
++ * multislot entry, it will terminate early and potentially return an
++ * internal entry.  xas_load() will never expand the tree (see xas_create()).
++ *
++ * The caller should hold the xa_lock or the RCU lock.
++ *
++ * Return: Usually an entry in the XArray, but see description for exceptions.
++ */
++void *xas_load(struct xa_state *xas)
++{
++	void *entry = xas_start(xas);
++
++	while (xa_is_node(entry)) {
++		struct xa_node *node = xa_to_node(entry);
++
++		if (xas->xa_shift > node->shift)
++			break;
++		entry = xas_descend(xas, node);
++	}
++	return entry;
++}
++EXPORT_SYMBOL_GPL(xas_load);
++
+ /**
+  * __xa_init() - Initialise an empty XArray.
+  * @xa: XArray.
+@@ -45,3 +133,75 @@ void __xa_init(struct xarray *xa, gfp_t flags)
+ 	xa->xa_head = NULL;
+ }
+ EXPORT_SYMBOL(__xa_init);
++
++/**
++ * xa_load() - Load an entry from an XArray.
++ * @xa: XArray.
++ * @index: index into array.
++ *
++ * Return: The entry at @index in @xa.
++ */
++void *xa_load(struct xarray *xa, unsigned long index)
++{
++	XA_STATE(xas, xa, index);
++	void *entry;
++
++	rcu_read_lock();
++	do {
++		entry = xas_load(&xas);
++	} while (xas_retry(&xas, entry));
++	rcu_read_unlock();
++
++	return entry;
++}
++EXPORT_SYMBOL(xa_load);
++
++#ifdef XA_DEBUG
++void xa_dump_entry(void *entry, unsigned long index)
++{
++	if (!entry)
++		return;
++
++	if (xa_is_value(entry))
++		printk("%lu: value %#lx\n", index, xa_to_value(entry));
++	else if (!xa_is_internal(entry))
++		printk("%lu: %p\n", index, entry);
++	else if (xa_is_node(entry)) {
++		unsigned long i;
++		struct xa_node *node = xa_to_node(entry);
++		printk("node %p %s %d parent %p shift %d count %d "
++			"exceptional %d tags %lx %lx %lx indices %lu-%lu\n",
++			node, node->parent ? "offset" : "max", node->offset,
++			node->parent, node->shift, node->count,
++			node->exceptional,
++			node->tags[0][0], node->tags[1][0], node->tags[2][0],
++			index, index |
++			(((unsigned long)XA_CHUNK_SIZE << node->shift) - 1));
++		for (i = 0; i < XA_CHUNK_SIZE; i++)
++			xa_dump_entry(node->slots[i],
++					index + (i << node->shift));
++	} else if (xa_is_retry(entry))
++		printk("%lu: retry (%ld)\n", index, xa_to_internal(entry));
++	else if (xa_is_sibling(entry))
++		printk("%lu: sibling (%ld)\n", index, xa_to_sibling(entry));
++	else
++		printk("%lu: UNKNOWN ENTRY (%p)\n", index, entry);
++}
++
++void xa_dump_node(const struct xa_node *node)
++{
++	printk("xadn: node %p %s %d parent %p shift %d count %d "
++		"exceptional %d array %p list %p %p tags %lx %lx %lx\n",
++		node, node->parent ? "offset" : "max", node->offset,
++		node->parent, node->shift, node->count,
++		node->exceptional, node->root, node->private_list.prev,
++		node->private_list.next,
++		node->tags[0][0], node->tags[1][0], node->tags[2][0]);
++}
++
++void xa_dump(const struct xarray *xa)
++{
++	printk("xarray: %p %x %p\n", xa, xa->xa_flags, xa->xa_head);
++	xa_dump_entry(xa->xa_head, 0);
++}
++#endif
+diff --git a/tools/testing/radix-tree/.gitignore b/tools/testing/radix-tree/.gitignore
+index 8d4df7a72a8e..833136896b91 100644
+--- a/tools/testing/radix-tree/.gitignore
++++ b/tools/testing/radix-tree/.gitignore
+@@ -5,3 +5,4 @@ main
+ multiorder
+ radix-tree.c
+ xarray.c
++xarray-test
+diff --git a/tools/testing/radix-tree/Makefile b/tools/testing/radix-tree/Makefile
+index 3868bc189199..749ef734a87c 100644
+--- a/tools/testing/radix-tree/Makefile
++++ b/tools/testing/radix-tree/Makefile
+@@ -3,10 +3,11 @@
+ CFLAGS += -I. -I../../include -g -O2 -Wall -D_LGPL_SOURCE -fsanitize=address
+ LDFLAGS += -fsanitize=address
+ LDLIBS+= -lpthread -lurcu
+-TARGETS = main idr-test multiorder
++TARGETS = main idr-test multiorder xarray-test
+ CORE_OFILES := xarray.o radix-tree.o idr.o linux.o test.o find_bit.o
+ OFILES = main.o $(CORE_OFILES) regression1.o regression2.o regression3.o \
+-	 tag_check.o multiorder.o idr-test.o iteration_check.o benchmark.o
++	 tag_check.o multiorder.o idr-test.o iteration_check.o benchmark.o \
++	 xarray-test.o
+ 
+ ifndef SHIFT
+ 	SHIFT=3
+@@ -23,6 +24,8 @@ main:	$(OFILES)
+ 
+ idr-test: idr-test.o $(CORE_OFILES)
+ 
++xarray-test: idr-test.o $(CORE_OFILES)
++
+ multiorder: multiorder.o $(CORE_OFILES)
+ 
+ clean:
+diff --git a/tools/testing/radix-tree/linux/radix-tree.h b/tools/testing/radix-tree/linux/radix-tree.h
+index 40c9671ee365..36fb716d5557 100644
+--- a/tools/testing/radix-tree/linux/radix-tree.h
++++ b/tools/testing/radix-tree/linux/radix-tree.h
+@@ -5,7 +5,6 @@
+ #include "generated/map-shift.h"
+ #include "linux/bug.h"
+ #include "../../../../include/linux/radix-tree.h"
+-#include <linux/xarray.h>
+ 
+ extern int kmalloc_verbose;
+ extern int test_verbose;
+diff --git a/tools/testing/radix-tree/linux/rcupdate.h b/tools/testing/radix-tree/linux/rcupdate.h
+index 73ed33658203..25010bf86c1d 100644
+--- a/tools/testing/radix-tree/linux/rcupdate.h
++++ b/tools/testing/radix-tree/linux/rcupdate.h
+@@ -6,5 +6,6 @@
+ 
+ #define rcu_dereference_raw(p) rcu_dereference(p)
+ #define rcu_dereference_protected(p, cond) rcu_dereference(p)
++#define rcu_dereference_check(p, cond) rcu_dereference(p)
+ 
+ #endif
+diff --git a/tools/testing/radix-tree/linux/xarray.h b/tools/testing/radix-tree/linux/xarray.h
+index df3812cda376..3eaf9596c2a6 100644
+--- a/tools/testing/radix-tree/linux/xarray.h
++++ b/tools/testing/radix-tree/linux/xarray.h
+@@ -1,2 +1,3 @@
+ #include "generated/map-shift.h"
++#define XA_DEBUG
+ #include "../../../../include/linux/xarray.h"
+diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
+new file mode 100644
+index 000000000000..3f8f19cb3739
+--- /dev/null
++++ b/tools/testing/radix-tree/xarray-test.c
+@@ -0,0 +1,56 @@
++/*
++ * xarray-test.c: Test the XArray API
++ * Copyright (c) 2017 Microsoft Corporation <mawilcox@microsoft.com>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ */
++#include <linux/bitmap.h>
++#include <linux/xarray.h>
++#include <linux/slab.h>
++#include <linux/kernel.h>
++#include <linux/errno.h>
++
++#include "test.h"
++
++void check_xa_load(struct xarray *xa)
++{
++	unsigned long i, j;
++
++	for (i = 0; i < 1024; i++) {
++		for (j = 0; j < 1024; j++) {
++			void *entry = xa_load(xa, j);
++			if (j < i)
++				assert(xa_to_value(entry) == j);
++			else
++				assert(!entry);
++		}
++		radix_tree_insert(xa, i, xa_mk_value(i));
++	}
++}
++
++void xarray_checks(void)
++{
++	RADIX_TREE(array, GFP_KERNEL);
++
++	check_xa_load(&array);
++
++	item_kill_tree(&array);
++}
++
++int __weak main(void)
++{
++	radix_tree_init();
++	xarray_checks();
++	radix_tree_cpu_dead(1);
++	rcu_barrier();
++	if (nr_allocated)
++		printf("nr_allocated = %d\n", nr_allocated);
++	return 0;
++}
 -- 
 2.15.0
 
