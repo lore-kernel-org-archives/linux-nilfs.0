@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 16/73] xarray: Add xa_destroy
-Date: Tue,  5 Dec 2017 16:41:02 -0800
-Message-ID: <20171206004159.3755-17-willy@infradead.org>
+Subject: [PATCH v4 57/73] dax: Convert dax_unlock_mapping_entry to XArray
+Date: Tue,  5 Dec 2017 16:41:43 -0800
+Message-ID: <20171206004159.3755-58-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=7MAWtlUzLpedaelWnQcuXXz8j9EM9EIprKttz7mvaVI=; b=KXy6oZsQvSVLsazlFw79TLcrt
-        Xhcd7qba3TEyAtCL7rKQ+Q/8yo4w+XBGaNt6f4OKaEPj4OWtlhKqE+mje+JhRjqGfIQHPz4aqs4b5
-        3IRiYj7F33//1PM89O7xUKSkywYLu2QLSYZip6pJnneujHYLbdoKTukwBqjW29jAZMIOYG1KEu2nZ
-        F7wSjy/NbPuePLIcWEBsVdCzgtXkLW4ssxm6YvGulavZnHOkCbncled5bNqUSEqFo37c5UADWP7Lv
-        5H/vnju0WkELvueaxUK68CzA0cCNCam/D6ppCKWj1ZN8oQnBfXUVY6h4wI8zP2lQoDRddn02KL+l9
+         bh=qshGfIUQEf7mAsQZOb/N6wdM1bVoCUFWgcSQhBR8/UU=; b=QjeKGqsG2feniPOm2R6O0LCX6
+        bfuyAoXT0FmBuoVYPFaCLcc7tn6MDOS3QJIPeiI5RF9Di8AjvVEXJUsEe7TNO3hAH8YDvIliVReCO
+        4e/rRet/UIDYKkZlxtwFpYjzdpq/1X0DYHv7UEgZkbH3QpdcynuO9P0X6cdoD9Sd/iqROGigdvt1H
+        DH3n2SlTnK3JRN/a3EVQJYQHMtu0Zj70ih4gXIu3Lstt/xZfec19ttKn/aKNXcoUDH1/dc2AuWFYo
+        sTK0bQtMiKV1MYLwgeovYqo1vHNEuQ8riHIqcgjbvm2tNjhIvIhw9zs4VgEKuqVgIFA7Ufrb/Hy3p
     
 In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,64 +27,106 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This function frees all the internal memory allocated to the xarray
-and reinitialises it to be empty.
+Replace slot_locked() with dax_locked() and inline unlock_slot() into
+its only caller.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h |  1 +
- lib/xarray.c           | 26 ++++++++++++++++++++++++++
- 2 files changed, 27 insertions(+)
+ fs/dax.c | 50 ++++++++++++++++----------------------------------
+ 1 file changed, 16 insertions(+), 34 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index c3efcc3432f7..b648c1b93d9f 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -74,6 +74,7 @@ void *xa_load(struct xarray *, unsigned long index);
- void *xa_store(struct xarray *, unsigned long index, void *entry, gfp_t);
- void *xa_cmpxchg(struct xarray *, unsigned long index,
- 			void *old, void *entry, gfp_t);
-+void xa_destroy(struct xarray *);
+diff --git a/fs/dax.c b/fs/dax.c
+index 86bacca51eed..03bfa599f75c 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -73,6 +73,11 @@ fs_initcall(init_dax_wait_table);
+ #define DAX_ZERO_PAGE	(1UL << 2)
+ #define DAX_EMPTY	(1UL << 3)
  
- /**
-  * xa_erase() - Erase this entry from the XArray.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index 251724f62b11..f3875b251b41 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -1341,6 +1341,32 @@ int xa_get_tagged(struct xarray *xa, void **dst, unsigned long start,
- }
- EXPORT_SYMBOL(xa_get_tagged);
- 
-+/**
-+ * xa_destroy() - Free all internal data structures.
-+ * @xa: XArray.
-+ *
-+ * After calling this function, the XArray is empty and has freed all memory
-+ * allocated for its internal data structures.  You are responsible for
-+ * freeing the objects referenced by the XArray.
-+ */
-+void xa_destroy(struct xarray *xa)
++static bool dax_locked(void *entry)
 +{
-+	XA_STATE(xas, xa, 0);
-+	unsigned long flags;
-+	void *entry;
-+
-+	xas.xa_node = NULL;
-+	xa_lock_irqsave(xa, flags);
-+	entry = xa_head_locked(xa);
-+	RCU_INIT_POINTER(xa->xa_head, NULL);
-+	xas_init_tags(&xas);
-+	/* lockdep checks we're still holding the lock in xas_free_nodes() */
-+	if (xa_is_node(entry))
-+		xas_free_nodes(&xas, xa_to_node(entry));
-+	xa_unlock_irqrestore(xa, flags);
++	return xa_to_value(entry) & DAX_ENTRY_LOCK;
 +}
-+EXPORT_SYMBOL(xa_destroy);
 +
- #ifdef XA_DEBUG
- void xa_dump_entry(void *entry, unsigned long index)
+ static unsigned long dax_radix_sector(void *entry)
  {
+ 	return xa_to_value(entry) >> DAX_SHIFT;
+@@ -182,17 +187,6 @@ static void dax_wake_mapping_entry_waiter(struct address_space *mapping,
+ 		__wake_up(wq, TASK_NORMAL, wake_all ? 0 : 1, &key);
+ }
+ 
+-/*
+- * Check whether the given slot is locked. The function must be called with
+- * mapping xa_lock held
+- */
+-static inline int slot_locked(struct address_space *mapping, void **slot)
+-{
+-	unsigned long entry = xa_to_value(
+-		radix_tree_deref_slot_protected(slot, &mapping->pages.xa_lock));
+-	return entry & DAX_ENTRY_LOCK;
+-}
+-
+ /*
+  * Mark the given slot is locked. The function must be called with
+  * mapping xa_lock held
+@@ -206,19 +200,6 @@ static inline void *lock_slot(struct address_space *mapping, void **slot)
+ 	return entry;
+ }
+ 
+-/*
+- * Mark the given slot is unlocked. The function must be called with
+- * mapping xa_lock held
+- */
+-static inline void *unlock_slot(struct address_space *mapping, void **slot)
+-{
+-	unsigned long v = xa_to_value(
+-		radix_tree_deref_slot_protected(slot, &mapping->pages.xa_lock));
+-	void *entry = xa_mk_value(v & ~DAX_ENTRY_LOCK);
+-	radix_tree_replace_slot(&mapping->pages, slot, entry);
+-	return entry;
+-}
+-
+ /*
+  * Lookup entry in radix tree, wait for it to become unlocked if it is
+  * a data value entry and return it. The caller must call
+@@ -242,8 +223,7 @@ static void *get_unlocked_mapping_entry(struct address_space *mapping,
+ 		entry = __radix_tree_lookup(&mapping->pages, index, NULL,
+ 					  &slot);
+ 		if (!entry ||
+-		    WARN_ON_ONCE(!xa_is_value(entry)) ||
+-		    !slot_locked(mapping, slot)) {
++		    WARN_ON_ONCE(!xa_is_value(entry)) || !dax_locked(entry)) {
+ 			if (slotp)
+ 				*slotp = slot;
+ 			return entry;
+@@ -262,17 +242,19 @@ static void *get_unlocked_mapping_entry(struct address_space *mapping,
+ static void dax_unlock_mapping_entry(struct address_space *mapping,
+ 				     pgoff_t index)
+ {
+-	void *entry, **slot;
++	XA_STATE(xas, &mapping->pages, index);
++	void *entry;
+ 
+-	xa_lock_irq(&mapping->pages);
+-	entry = __radix_tree_lookup(&mapping->pages, index, NULL, &slot);
+-	if (WARN_ON_ONCE(!entry || !xa_is_value(entry) ||
+-			 !slot_locked(mapping, slot))) {
+-		xa_unlock_irq(&mapping->pages);
++	xas_lock_irq(&xas);
++	entry = xas_load(&xas);
++	if (WARN_ON_ONCE(!entry || !xa_is_value(entry) || !dax_locked(entry))) {
++		xas_unlock_irq(&xas);
+ 		return;
+ 	}
+-	unlock_slot(mapping, slot);
+-	xa_unlock_irq(&mapping->pages);
++	entry = xa_mk_value(xa_to_value(entry) & ~DAX_ENTRY_LOCK);
++	xas_store(&xas, entry);
++	/* Safe to not call xas_pause here -- we don't touch the array after */
++	xas_unlock_irq(&xas);
+ 	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
+ }
+ 
 -- 
 2.15.0
 
