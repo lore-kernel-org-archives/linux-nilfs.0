@@ -1,192 +1,75 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 23/73] page cache: Add page_cache_range_empty function
-Date: Tue,  5 Dec 2017 16:41:09 -0800
-Message-ID: <20171206004159.3755-24-willy@infradead.org>
+Subject: [PATCH v4 51/73] btrfs: Convert page cache to XArray
+Date: Tue,  5 Dec 2017 16:41:37 -0800
+Message-ID: <20171206004159.3755-52-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=7XKBXTWw0oI2+2HIwqbxU7wne/NKJGdpYGAU6B65Gmo=; b=PVn3vGLcOhDSkHWO1TbqJGAU4
-        ioOJrLV/wMyYQXTLBY0ZVI6nGPmZbW08y30+iLftP9Zklpd9Q4lMI78fF/ew2ka++rLKRJm3ehUAC
-        39AvzpbN/gZ13LbX5MLvAR6KmAxfH7UoTLd+3LB/3W1yQUxWyvPTkJrxvYk6j7xY+xctiRvx3PRTI
-        hTtBNXZlfs9k13LmSrFE14qJSwhBtskXWRTyBgYJtcTx0D7FA6imr9FRo+mgYvyZ4c7KqV6xQyjov
-        QXiBhQD3LJvkZrH9aRqXMSYlWSrXQ+q/ms/Xx7JwKChAsWXI0u/ermioi3owJw9BWw2Dhhm7lZ7bm
-    
+	d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+	Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	 bh=aZQQeya/5yeMcoU9tOJOCt/Xand1m1fAUXYdyYt6N9w=; b=V8bke0VkDuZRGFPWlxP7BaGvf
+	4cQqlk3EjHA9QVUIgP3MwUn9qZ1BISZiMwlsX/C+7TtYUWJMxUIh0yqi8SnpQ/Ts7f0vGppOPHxl3
+	m1otulPYRCA62D3naAr2H6SEp516LJUpNx7U8PHM0ea3+tiWvF4d/4p0UuNDtJkV2I5f6JbPILpXM
+	5iye5cybgBzub1uFnhYEO9arRA9bHzfeAPBs0un/vrB7n8Ll4rR7Xdk2oumwluxoeS5+EA1XmYM/K
+	loEBWDrL/p3Cc3rAsZez8j/lCoFlMpF/ppA394EbW/vmyVaJ4Z9VpN91by3dJfgrrztxkOgfylb/M
+	xqUEiGUhQ==;
 In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
-Sender: linux-btrfs-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: 
 Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-btrfs has its own custom function for determining whether the page cache
-has any pages in a particular range.  Move this functionality to the
-page cache, and call it from btrfs.
-
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/btrfs/btrfs_inode.h  |  7 ++++-
- fs/btrfs/inode.c        | 70 -------------------------------------------------
- include/linux/pagemap.h |  2 ++
- mm/filemap.c            | 26 ++++++++++++++++++
- 4 files changed, 34 insertions(+), 71 deletions(-)
+ fs/btrfs/compression.c | 4 +---
+ fs/btrfs/extent_io.c   | 6 ++----
+ 2 files changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/fs/btrfs/btrfs_inode.h b/fs/btrfs/btrfs_inode.h
-index 63f0ccc92a71..a48bd6e0a0bb 100644
---- a/fs/btrfs/btrfs_inode.h
-+++ b/fs/btrfs/btrfs_inode.h
-@@ -365,6 +365,11 @@ static inline void btrfs_print_data_csum_error(struct btrfs_inode *inode,
- 			logical_start, csum, csum_expected, mirror_num);
- }
+diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
+index e687d06cd97c..4174b166e235 100644
+--- a/fs/btrfs/compression.c
++++ b/fs/btrfs/compression.c
+@@ -449,9 +449,7 @@ static noinline int add_ra_bio_pages(struct inode *inode,
+ 		if (pg_index > end_index)
+ 			break;
  
--bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end);
-+static inline bool btrfs_page_exists_in_range(struct inode *inode,
-+						loff_t start, loff_t end)
-+{
-+	return page_cache_range_empty(inode->i_mapping, start >> PAGE_SHIFT,
-+							end >> PAGE_SHIFT);
-+}
+-		rcu_read_lock();
+-		page = radix_tree_lookup(&mapping->pages, pg_index);
+-		rcu_read_unlock();
++		page = xa_load(&mapping->pages, pg_index);
+ 		if (page && !xa_is_value(page)) {
+ 			misses++;
+ 			if (misses > 4)
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index b8b5b4562d50..96328c3a548e 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -5197,11 +5197,9 @@ void clear_extent_buffer_dirty(struct extent_buffer *eb)
  
- #endif
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index 72f763c56127..a2692bceaa98 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -7539,76 +7539,6 @@ noinline int can_nocow_extent(struct inode *inode, u64 offset, u64 *len,
- 	return ret;
- }
- 
--bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end)
--{
--	struct radix_tree_root *root = &inode->i_mapping->pages;
--	bool found = false;
--	void **pagep = NULL;
--	struct page *page = NULL;
--	unsigned long start_idx;
--	unsigned long end_idx;
--
--	start_idx = start >> PAGE_SHIFT;
--
--	/*
--	 * end is the last byte in the last page.  end == start is legal
--	 */
--	end_idx = end >> PAGE_SHIFT;
--
--	rcu_read_lock();
--
--	/* Most of the code in this while loop is lifted from
--	 * find_get_page.  It's been modified to begin searching from a
--	 * page and return just the first page found in that range.  If the
--	 * found idx is less than or equal to the end idx then we know that
--	 * a page exists.  If no pages are found or if those pages are
--	 * outside of the range then we're fine (yay!) */
--	while (page == NULL &&
--	       radix_tree_gang_lookup_slot(root, &pagep, NULL, start_idx, 1)) {
--		page = radix_tree_deref_slot(pagep);
--		if (unlikely(!page))
--			break;
--
--		if (radix_tree_exception(page)) {
--			if (radix_tree_deref_retry(page)) {
--				page = NULL;
--				continue;
--			}
--			/*
--			 * Otherwise, shmem/tmpfs must be storing a swap entry
--			 * here so return it without attempting to raise page
--			 * count.
--			 */
--			page = NULL;
--			break; /* TODO: Is this relevant for this use case? */
+ 		clear_page_dirty_for_io(page);
+ 		xa_lock_irq(&page->mapping->pages);
+-		if (!PageDirty(page)) {
+-			radix_tree_tag_clear(&page->mapping->pages,
+-						page_index(page),
++		if (!PageDirty(page))
++			__xa_clear_tag(&page->mapping->pages, page_index(page),
+ 						PAGECACHE_TAG_DIRTY);
 -		}
--
--		if (!page_cache_get_speculative(page)) {
--			page = NULL;
--			continue;
--		}
--
--		/*
--		 * Has the page moved?
--		 * This is part of the lockless pagecache protocol. See
--		 * include/linux/pagemap.h for details.
--		 */
--		if (unlikely(page != *pagep)) {
--			put_page(page);
--			page = NULL;
--		}
--	}
--
--	if (page) {
--		if (page->index <= end_idx)
--			found = true;
--		put_page(page);
--	}
--
--	rcu_read_unlock();
--	return found;
--}
--
- static int lock_extent_direct(struct inode *inode, u64 lockstart, u64 lockend,
- 			      struct extent_state **cached_state, int writing)
- {
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 0db127c3ccac..34d4fa3ad1c5 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -245,6 +245,8 @@ pgoff_t page_cache_next_gap(struct address_space *mapping,
- 			     pgoff_t index, unsigned long max_scan);
- pgoff_t page_cache_prev_gap(struct address_space *mapping,
- 			     pgoff_t index, unsigned long max_scan);
-+bool page_cache_range_empty(struct address_space *mapping,
-+				pgoff_t index, pgoff_t max);
- 
- #define FGP_ACCESSED		0x00000001
- #define FGP_LOCK		0x00000002
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 650624f7b79d..51f88ffc5319 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -1397,6 +1397,32 @@ pgoff_t page_cache_prev_gap(struct address_space *mapping,
- }
- EXPORT_SYMBOL(page_cache_prev_gap);
- 
-+bool page_cache_range_empty(struct address_space *mapping, pgoff_t index,
-+				pgoff_t max)
-+{
-+	struct page *page;
-+	XA_STATE(xas, &mapping->pages, index);
-+
-+	rcu_read_lock();
-+	do {
-+		page = xas_find(&xas, max);
-+		if (xas_retry(&xas, page))
-+			continue;
-+		/* Shadow entries don't count */
-+		if (xa_is_value(page))
-+			continue;
-+		/*
-+		 * We don't need to try to pin this page; we're about to
-+		 * release the RCU lock anyway.  It is enough to know that
-+		 * there was a page here recently.
-+		 */
-+	} while (0);
-+	rcu_read_unlock();
-+
-+	return page != NULL;
-+}
-+EXPORT_SYMBOL_GPL(page_cache_range_empty);
-+
- /**
-  * find_get_entry - find and get a page cache entry
-  * @mapping: the address_space to search
+ 		xa_unlock_irq(&page->mapping->pages);
+ 		ClearPageError(page);
+ 		unlock_page(page);
 -- 
 2.15.0
 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
