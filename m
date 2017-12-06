@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 45/73] shmem: Convert shmem_wait_for_pins to XArray
-Date: Tue,  5 Dec 2017 16:41:31 -0800
-Message-ID: <20171206004159.3755-46-willy@infradead.org>
+Subject: [PATCH v4 27/73] page cache: Convert delete_batch to XArray
+Date: Tue,  5 Dec 2017 16:41:13 -0800
+Message-ID: <20171206004159.3755-28-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=JFoDC8t20QGNXCo7L8uYWQveKfqd7pNLZhX2YRPpxas=; b=dNK2iWU7I2DYaiot01Ap47qtC
-        djDemFctquPOZbrfj9dxP3o6FAgrsPFb3BduZumbzI/38yC8vGDhd1BQw7/cL7PvrVWqoH6QkdeXf
-        xcDn3qco3XRSTX62z+ovqlRPeE0HNSwEiUieBhGHnNwakk3AsB85IJIn6/4CAu7xBSaPCYmNeG5o2
-        Sf7XvTdA2KqUymvWSbwmJHh4K0PRBCO3KmQdbul4mN4i5qnnZQ3/mrSYfqjgfRwgkLhLIggXq8s3S
-        GsFqxU9pmtPFmlFZytyA/P2Kb9ozejvrA0JuhabzJuyU9m7bG/qovjxNm508Ht4oFWCq6AS1mFdpk
+         bh=tfB8KE2AEacdXmwTx7K5tSUqE7sxOKNJayGvrKE4tds=; b=DQNPe/RLWNgCeVvgOzD6GspKy
+        TQkJrOo/8b6zEEKpNNMfe0jxPu3j78Ym9gZw3LnpP15GEg321UV7THSNmMvm6eUiCgPepA1Hj44dp
+        ngZnnpfrcgcUQEGHEjbz2JCGUYWRmm6Moxsd0G0Dxw4YAD7PYDxG1ubwFBA3YMxMXSHLKJMcRmpMH
+        2+Nql02NN+GkwzaYuaixCS2w1omeAk12AgcvesornzNP3HUikF7ffUI+ihmB7p5M3fKte0jlSU4dC
+        YksOUZlfEIPJKNhd5E3wqzAYkWmiaLEd5SIBIM0duzpzB30DS/lelgLV3ME7ut8g1N++s2edB7gWd
     
 In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,106 +27,75 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-As with shmem_tag_pins(), hold the lock around the entire loop instead
-of acquiring & dropping it for each entry we're going to untag.
+Rename the function from page_cache_tree_delete_batch to just
+page_cache_delete_batch.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 59 ++++++++++++++++++++++++-----------------------------------
- 1 file changed, 24 insertions(+), 35 deletions(-)
+ mm/filemap.c | 21 +++++++--------------
+ 1 file changed, 7 insertions(+), 14 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 2f41c7ceea18..e4a2eb1336be 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -2636,9 +2636,7 @@ static void shmem_tag_pins(struct address_space *mapping)
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 6c9cad248e7f..9e6158cfbaeb 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -276,7 +276,7 @@ void delete_from_page_cache(struct page *page)
+ EXPORT_SYMBOL(delete_from_page_cache);
+ 
+ /*
+- * page_cache_tree_delete_batch - delete several pages from page cache
++ * page_cache_delete_batch - delete several pages from page cache
+  * @mapping: the mapping to which pages belong
+  * @pvec: pagevec with pages to delete
+  *
+@@ -289,23 +289,18 @@ EXPORT_SYMBOL(delete_from_page_cache);
+  *
+  * The function expects xa_lock to be held.
   */
- static int shmem_wait_for_pins(struct address_space *mapping)
+-static void
+-page_cache_tree_delete_batch(struct address_space *mapping,
++static void page_cache_delete_batch(struct address_space *mapping,
+ 			     struct pagevec *pvec)
  {
 -	struct radix_tree_iter iter;
 -	void **slot;
--	pgoff_t start;
-+	XA_STATE(xas, &mapping->pages, 0);
++	XA_STATE(xas, &mapping->pages, pvec->pages[0]->index);
+ 	int total_pages = 0;
+ 	int i = 0, tail_pages = 0;
  	struct page *page;
- 	int error, scan;
+-	pgoff_t start;
  
-@@ -2646,7 +2644,9 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 
- 	error = 0;
- 	for (scan = 0; scan <= LAST_SCAN; scan++) {
--		if (!radix_tree_tagged(&mapping->pages, SHMEM_TAG_PINNED))
-+		unsigned int tagged = 0;
-+
-+		if (!xas_tagged(&xas, SHMEM_TAG_PINNED))
+-	start = pvec->pages[0]->index;
+-	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
++	xas_set_update(&xas, workingset_lookup_update(mapping));
++	xas_for_each(&xas, page, ULONG_MAX) {
+ 		if (i >= pagevec_count(pvec) && !tail_pages)
  			break;
- 
- 		if (!scan)
-@@ -2654,45 +2654,34 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 		else if (schedule_timeout_killable((HZ << scan) / 200))
- 			scan = LAST_SCAN;
- 
--		start = 0;
--		rcu_read_lock();
--		radix_tree_for_each_tagged(slot, &mapping->pages, &iter,
--					   start, SHMEM_TAG_PINNED) {
--
--			page = radix_tree_deref_slot(slot);
--			if (radix_tree_exception(page)) {
--				if (radix_tree_deref_retry(page)) {
--					slot = radix_tree_iter_retry(&iter);
--					continue;
--				}
--
--				page = NULL;
--			}
--
--			if (page &&
--			    page_count(page) - page_mapcount(page) != 1) {
--				if (scan < LAST_SCAN)
--					goto continue_resched;
--
-+		xas_set(&xas, 0);
-+		xas_lock_irq(&xas);
-+		xas_for_each_tag(&xas, page, ULONG_MAX, SHMEM_TAG_PINNED) {
-+			bool clear = true;
-+			if (xa_is_value(page))
-+				continue;
-+			if (page_count(page) - page_mapcount(page) != 1) {
- 				/*
- 				 * On the last scan, we clean up all those tags
- 				 * we inserted; but make a note that we still
- 				 * found pages pinned.
- 				 */
--				error = -EBUSY;
-+				if (scan == LAST_SCAN)
-+					error = -EBUSY;
-+				else
-+					clear = false;
- 			}
-+			if (clear)
-+				xas_clear_tag(&xas, SHMEM_TAG_PINNED);
-+			if (++tagged % XA_CHECK_SCHED)
-+				continue;
- 
--			xa_lock_irq(&mapping->pages);
--			radix_tree_tag_clear(&mapping->pages,
--					     iter.index, SHMEM_TAG_PINNED);
--			xa_unlock_irq(&mapping->pages);
--continue_resched:
--			if (need_resched()) {
--				slot = radix_tree_iter_resume(slot, &iter);
--				cond_resched_rcu();
--			}
-+			xas_pause(&xas);
-+			xas_unlock_irq(&xas);
-+			cond_resched();
-+			xas_lock_irq(&xas);
+-		page = radix_tree_deref_slot_protected(slot,
+-						       &mapping->pages.xa_lock);
+ 		if (xa_is_value(page))
+ 			continue;
+ 		if (!tail_pages) {
+@@ -328,9 +323,7 @@ page_cache_tree_delete_batch(struct address_space *mapping,
+ 		} else {
+ 			tail_pages--;
  		}
--		rcu_read_unlock();
-+		xas_unlock_irq(&xas);
+-		radix_tree_clear_tags(&mapping->pages, iter.node, slot);
+-		__radix_tree_replace(&mapping->pages, iter.node, slot, NULL,
+-				workingset_lookup_update(mapping));
++		xas_store(&xas, NULL);
+ 		total_pages++;
  	}
+ 	mapping->nrpages -= total_pages;
+@@ -351,7 +344,7 @@ void delete_from_page_cache_batch(struct address_space *mapping,
  
- 	return error;
+ 		unaccount_page_cache_page(mapping, pvec->pages[i]);
+ 	}
+-	page_cache_tree_delete_batch(mapping, pvec);
++	page_cache_delete_batch(mapping, pvec);
+ 	xa_unlock_irqrestore(&mapping->pages, flags);
+ 
+ 	for (i = 0; i < pagevec_count(pvec); i++)
 -- 
 2.15.0
 
