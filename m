@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 14/73] xarray: Add xas_for_each_tag
-Date: Tue,  5 Dec 2017 16:41:00 -0800
-Message-ID: <20171206004159.3755-15-willy@infradead.org>
+Subject: [PATCH v4 38/73] mm: Convert collapse_shmem to XArray
+Date: Tue,  5 Dec 2017 16:41:24 -0800
+Message-ID: <20171206004159.3755-39-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=AXXTTHvRGS+LGwjVBrjg6HZTR67CKbeYW/Kx0n2iUCM=; b=YYFvu1X51lVv0owzA8mQ/1Sjr
-        oPeVrdUJQ1KLNE5l22leGWsZ4st/aRPnRM4vWzHowCQ4jlGeXXG7ETMfcuVq8QwzHILSYxdbK9k+G
-        c/Ke3fULIC49bkzCuBuN6E/jf0D3JuJ+N3Bcglt//yjEzkxROdvUXqgFpx8jyrz31Dmxgrqs9fOfz
-        3r7mqFagJemt9g93Q7gVdd8PmHSoNYt+ceWBa/YGd6dx9wrb8HvH83hCM7PMNIxsYwSI5ZlClexpc
-        lvjcmLirvyH+A/iS3nRTGbnZ/sCDTlDDCrH/urQFcJoJUJHf7vwcekv5n7zUywWP8K+J2q5GqXqwU
+         bh=9Zjso45s4GYoKPVOyRZJrQ4U7pI/z1q/NiZB7Ck73Vc=; b=cbwVxpAmwHf6f/q8wTmGYDFDo
+        v/v92GLAPTMm9Tyj22dd2yKif6haryX/a2jWljtk4ccmPehDhhzMgfocxZIKzhdw5Ww+Ys/dIrDJ0
+        p7VXhH/kAzd+VUidtZMG84CJs6mfwAlmobRH4nZBpwiGiP7liZc/6lPokeZlhzju5GDDc2F2+mB/c
+        tnBVBnD02eap1CByoQ45pgo8Ml11HNArQrem+cywk6tZ6ecYNnUmj1B2pbiGKMmZdpV9aQqF3s0sa
+        Mmohu7RigdAn42gW4jSaob6Kl+xNg63gqQ3fF3WsUVnifg5buXnGYFGwas8DOQ7g6L/eA1zBAvzlE
     
 In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,199 +27,325 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This iterator operates across each tagged entry in the specified range.
-We do not yet have a user for an xa_for_each_tag iterator, but it would
-be straight-forward to add one if needed.  This commit also includes
-xas_find_tag() and xas_next_tag().
+I found another victim of the radix tree being hard to use.  Because
+there was no call to radix_tree_preload(), khugepaged was allocating
+radix_tree_nodes using GFP_ATOMIC.
+
+I also converted a local_irq_save()/restore() pair to
+disable()/enable().
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h | 68 +++++++++++++++++++++++++++++++++++++++++++
- lib/xarray.c           | 78 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 146 insertions(+)
+ include/linux/swap.h |   4 +-
+ mm/khugepaged.c      | 158 +++++++++++++++++++++------------------------------
+ 2 files changed, 67 insertions(+), 95 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index a62baf6f1a28..4e61ebd406f5 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -554,6 +554,7 @@ void *xas_find(struct xa_state *, unsigned long max);
- bool xas_get_tag(const struct xa_state *, xa_tag_t);
- void xas_set_tag(const struct xa_state *, xa_tag_t);
- void xas_clear_tag(const struct xa_state *, xa_tag_t);
-+void *xas_find_tag(struct xa_state *, unsigned long max, xa_tag_t);
- void xas_init_tags(const struct xa_state *);
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index 569a8ac4fe3f..9774f43d3e4f 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -300,12 +300,12 @@ bool workingset_refault(void *shadow);
+ void workingset_activation(struct page *page);
  
- bool xas_nomem(struct xa_state *, gfp_t);
-@@ -676,6 +677,55 @@ static inline void *xas_next_entry(struct xa_state *xas, unsigned long max)
- 	return entry;
- }
+ /* Do not use directly, use workingset_lookup_update */
+-void workingset_update_node(struct xa_node *node);
++void workingset_update_node(struct radix_tree_node *node);
  
-+/* Private */
-+static inline unsigned int xas_find_chunk(struct xa_state *xas, bool advance,
-+		xa_tag_t tag)
-+{
-+	unsigned long *addr = xas->xa_node->tags[(__force unsigned)tag];
-+	unsigned int offset = xas->xa_offset;
-+
-+	if (advance)
-+		offset++;
-+	if (XA_CHUNK_SIZE == BITS_PER_LONG) {
-+		unsigned long data = *addr & (~0UL << offset);
-+		if (data)
-+			return __ffs(data);
-+		return XA_CHUNK_SIZE;
-+	}
-+
-+	return find_next_bit(addr, XA_CHUNK_SIZE, offset);
-+}
-+
-+/**
-+ * xas_next_tag() - Advance iterator to next tagged entry.
-+ * @xas: XArray operation state.
-+ * @max: Highest index to return.
-+ * @tag: Tag to search for.
-+ *
-+ * xas_next_tag() is an inline function to optimise xarray traversal for
-+ * speed.  It is equivalent to calling xas_find_tag(), and will call
-+ * xas_find_tag() for all the hard cases.
-+ *
-+ * Return: The next tagged entry after the one currently referred to by @xas.
-+ */
-+static inline void *xas_next_tag(struct xa_state *xas, unsigned long max,
-+								xa_tag_t tag)
-+{
-+	struct xa_node *node = xas->xa_node;
-+	unsigned int offset;
-+
-+	if (unlikely(xas_not_node(node) || xa_node_shift(node)))
-+		return xas_find_tag(xas, max, tag);
-+	offset = xas_find_chunk(xas, true, tag);
-+	xas->xa_offset = offset;
-+	xas->xa_index = (xas->xa_index & ~XA_CHUNK_MASK) + offset;
-+	if (xas->xa_index > max)
-+		return NULL;
-+	if (offset == XA_CHUNK_SIZE)
-+		return xas_find_tag(xas, max, tag);
-+	return xa_entry(xas->xa, node, offset);
-+}
-+
- /*
-  * If iterating while holding a lock, drop the lock and reschedule
-  * every %XA_CHECK_SCHED loops.
-@@ -701,6 +751,24 @@ enum {
- 	for (entry = xas_find(xas, max); entry; \
- 	     entry = xas_next_entry(xas, max))
+ /* Returns workingset_update_node() if the mapping has shadow entries. */
+ #define workingset_lookup_update(mapping)				\
+ ({									\
+-	xa_update_node_t __helper = workingset_update_node;		\
++	radix_tree_update_node_t __helper = workingset_update_node;	\
+ 	if (dax_mapping(mapping) || shmem_mapping(mapping))		\
+ 		__helper = NULL;					\
+ 	__helper;							\
+diff --git a/mm/khugepaged.c b/mm/khugepaged.c
+index 55ade70c33bb..9f49d0cd61c2 100644
+--- a/mm/khugepaged.c
++++ b/mm/khugepaged.c
+@@ -1282,17 +1282,17 @@ static void retract_page_tables(struct address_space *mapping, pgoff_t pgoff)
+  *
+  * Basic scheme is simple, details are more complex:
+  *  - allocate and freeze a new huge page;
+- *  - scan over radix tree replacing old pages the new one
++ *  - scan page cache replacing old pages with the new one
+  *    + swap in pages if necessary;
+  *    + fill in gaps;
+- *    + keep old pages around in case if rollback is required;
+- *  - if replacing succeed:
++ *    + keep old pages around in case rollback is required;
++ *  - if replacing succeeds:
+  *    + copy data over;
+  *    + free old pages;
+  *    + unfreeze huge page;
+  *  - if replacing failed;
+  *    + put all pages back and unfreeze them;
+- *    + restore gaps in the radix-tree;
++ *    + restore gaps in the page cache;
+  *    + free huge page;
+  */
+ static void collapse_shmem(struct mm_struct *mm,
+@@ -1300,12 +1300,11 @@ static void collapse_shmem(struct mm_struct *mm,
+ 		struct page **hpage, int node)
+ {
+ 	gfp_t gfp;
+-	struct page *page, *new_page, *tmp;
++	struct page *new_page;
+ 	struct mem_cgroup *memcg;
+ 	pgoff_t index, end = start + HPAGE_PMD_NR;
+ 	LIST_HEAD(pagelist);
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, start);
+ 	int nr_none = 0, result = SCAN_SUCCEED;
  
-+/**
-+ * xas_for_each_tag() - Iterate over a range of an XArray
-+ * @xas: XArray operation state.
-+ * @entry: Entry retrieved from array.
-+ * @max: Maximum index to retrieve from array.
-+ * @tag: Tag to search for.
-+ *
-+ * The loop body will be executed for each tagged entry in the xarray
-+ * between the current xas position and @max.  @entry will be set to
-+ * the entry retrieved from the xarray.  It is safe to delete entries
-+ * from the array in the loop body.  You should hold either the RCU lock
-+ * or the xa_lock while iterating.  If you need to drop the lock, call
-+ * xas_pause() first.
-+ */
-+#define xas_for_each_tag(xas, entry, max, tag) \
-+	for (entry = xas_find_tag(xas, max, tag); entry; \
-+	     entry = xas_next_tag(xas, max, tag))
-+
- /* Internal functions, mostly shared between radix-tree.c, xarray.c and idr.c */
- void xas_destroy(struct xa_state *);
+ 	VM_BUG_ON(start & (HPAGE_PMD_NR - 1));
+@@ -1330,48 +1329,48 @@ static void collapse_shmem(struct mm_struct *mm,
+ 	__SetPageLocked(new_page);
+ 	BUG_ON(!page_ref_freeze(new_page, 1));
  
-diff --git a/lib/xarray.c b/lib/xarray.c
-index ac4ff3daf476..f9eaac2d85f9 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -858,6 +858,84 @@ void *xas_find(struct xa_state *xas, unsigned long max)
- }
- EXPORT_SYMBOL_GPL(xas_find);
+-
+ 	/*
+-	 * At this point the new_page is 'frozen' (page_count() is zero), locked
+-	 * and not up-to-date. It's safe to insert it into radix tree, because
+-	 * nobody would be able to map it or use it in other way until we
+-	 * unfreeze it.
++	 * At this point the new_page is 'frozen' (page_count() is zero),
++	 * locked and not up-to-date. It's safe to insert it into the page
++	 * cache, because nobody would be able to map it or use it in other
++	 * way until we unfreeze it.
+ 	 */
  
-+/**
-+ * xas_find_tag() - Find the next tagged entry in the XArray.
-+ * @xas: XArray operation state.
-+ * @max: Highest index to return.
-+ * @tag: Tag number to search for.
-+ *
-+ * If the xas has not yet been walked to an entry, return the tagged entry
-+ * which has an index >= xas.xa_index.  If it has been walked, the entry
-+ * currently being pointed at has been processed, and so we move to the
-+ * next tagged entry.
-+ *
-+ * If no tagged entry is found and the array is smaller than @max, @xas is
-+ * set to the restart state and xas->xa_index is set to the smallest index
-+ * not yet in the array.  This allows @xas to be immediately passed to
-+ * xas_create().
-+ *
-+ * Return: The entry, if found, otherwise NULL.
-+ */
-+void *xas_find_tag(struct xa_state *xas, unsigned long max, xa_tag_t tag)
-+{
-+	bool advance = true;
-+	unsigned int offset;
-+	void *entry;
-+
-+	if (xas_error(xas))
-+		return NULL;
-+
-+	if (!xas->xa_node) {
-+		xas->xa_index = 1;
-+		goto out;
-+	} else if (xas_top(xas->xa_node)) {
-+		advance = false;
-+		entry = xa_head(xas->xa);
-+		if (xas->xa_index > max_index(entry))
+-	index = start;
+-	xa_lock_irq(&mapping->pages);
+-	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
+-		int n = min(iter.index, end) - index;
+-
+-		/*
+-		 * Handle holes in the radix tree: charge it from shmem and
+-		 * insert relevant subpage of new_page into the radix-tree.
+-		 */
+-		if (n && !shmem_charge(mapping->host, n)) {
+-			result = SCAN_FAIL;
++	/* This will be less messy when we use multi-index entries */
++	do {
++		xas_lock_irq(&xas);
++		xas_create_range(&xas, end - 1);
++		if (!xas_error(&xas))
+ 			break;
+-		}
+-		nr_none += n;
+-		for (; index < min(iter.index, end); index++) {
+-			radix_tree_insert(&mapping->pages, index,
+-					new_page + (index % HPAGE_PMD_NR));
+-		}
++		xas_unlock_irq(&xas);
++		if (!xas_nomem(&xas, GFP_KERNEL))
 +			goto out;
-+		if (!xa_is_node(entry)) {
-+			if (xa_tagged(xas->xa, tag)) {
-+				xas->xa_node = NULL;
-+				return entry;
-+			}
-+			xas->xa_index = 1;
-+			goto out;
-+		}
-+		xas->xa_node = xa_to_node(entry);
-+		xas->xa_offset = xas->xa_index >> xas->xa_node->shift;
-+	}
++	} while (1);
+ 
+-		/* We are done. */
+-		if (index >= end)
+-			break;
++	for (index = start; index < end; index++) {
++		struct page *page = xas_next(&xas);
 +
-+	while (xas->xa_index <= max) {
-+		if (unlikely(xas->xa_offset == XA_CHUNK_SIZE)) {
-+			xas->xa_offset = xas->xa_node->offset + 1;
-+			xas->xa_node = xa_parent(xas->xa, xas->xa_node);
-+			if (!xas->xa_node)
++		VM_BUG_ON(index != xas.xa_index);
++		if (!page) {
++			if (!shmem_charge(mapping->host, 1)) {
++				result = SCAN_FAIL;
 +				break;
-+			advance = false;
++			}
++			xas_store(&xas, new_page + (index % HPAGE_PMD_NR));
++			nr_none++;
 +			continue;
 +		}
-+
-+		offset = xas_find_chunk(xas, advance, tag);
-+		xas_add(xas, offset - xas->xa_offset);
-+		if (offset == XA_CHUNK_SIZE) {
-+			advance = false;
-+			continue;
-+		}
-+
-+		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
-+		if (!xa_is_node(entry))
-+			return entry;
-+		xas->xa_node = xa_to_node(entry);
-+		xas->xa_offset = get_offset(xas->xa_index, xas->xa_node);
-+	}
-+
-+ out:
-+	if (!xas->xa_node)
-+		xas->xa_node = XAS_BOUNDS;
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(xas_find_tag);
-+
- /**
-  * __xa_init() - Initialise an empty XArray.
-  * @xa: XArray.
+ 
+-		page = radix_tree_deref_slot_protected(slot,
+-				&mapping->pages.xa_lock);
+ 		if (xa_is_value(page) || !PageUptodate(page)) {
+-			xa_unlock_irq(&mapping->pages);
++			xas_unlock_irq(&xas);
+ 			/* swap in or instantiate fallocated page */
+ 			if (shmem_getpage(mapping->host, index, &page,
+ 						SGP_NOHUGE)) {
+ 				result = SCAN_FAIL;
+-				goto tree_unlocked;
++				goto xa_unlocked;
+ 			}
+-			xa_lock_irq(&mapping->pages);
++			xas_lock_irq(&xas);
++			xas_set(&xas, index);
+ 		} else if (trylock_page(page)) {
+ 			get_page(page);
+ 		} else {
+@@ -1391,7 +1390,7 @@ static void collapse_shmem(struct mm_struct *mm,
+ 			result = SCAN_TRUNCATED;
+ 			goto out_unlock;
+ 		}
+-		xa_unlock_irq(&mapping->pages);
++		xas_unlock_irq(&xas);
+ 
+ 		if (isolate_lru_page(page)) {
+ 			result = SCAN_DEL_PAGE_LRU;
+@@ -1402,17 +1401,16 @@ static void collapse_shmem(struct mm_struct *mm,
+ 			unmap_mapping_range(mapping, index << PAGE_SHIFT,
+ 					PAGE_SIZE, 0);
+ 
+-		xa_lock_irq(&mapping->pages);
++		xas_lock(&xas);
++		xas_set(&xas, index);
+ 
+-		slot = radix_tree_lookup_slot(&mapping->pages, index);
+-		VM_BUG_ON_PAGE(page != radix_tree_deref_slot_protected(slot,
+-					&mapping->pages.xa_lock), page);
++		VM_BUG_ON_PAGE(page != xas_load(&xas), page);
+ 		VM_BUG_ON_PAGE(page_mapped(page), page);
+ 
+ 		/*
+ 		 * The page is expected to have page_count() == 3:
+ 		 *  - we hold a pin on it;
+-		 *  - one reference from radix tree;
++		 *  - one reference from page cache;
+ 		 *  - one from isolate_lru_page;
+ 		 */
+ 		if (!page_ref_freeze(page, 3)) {
+@@ -1427,56 +1425,30 @@ static void collapse_shmem(struct mm_struct *mm,
+ 		list_add_tail(&page->lru, &pagelist);
+ 
+ 		/* Finally, replace with the new page. */
+-		radix_tree_replace_slot(&mapping->pages, slot,
+-				new_page + (index % HPAGE_PMD_NR));
+-
+-		slot = radix_tree_iter_resume(slot, &iter);
+-		index++;
++		xas_store(&xas, new_page + (index % HPAGE_PMD_NR));
+ 		continue;
+ out_lru:
+-		xa_unlock_irq(&mapping->pages);
++		xas_unlock_irq(&xas);
+ 		putback_lru_page(page);
+ out_isolate_failed:
+ 		unlock_page(page);
+ 		put_page(page);
+-		goto tree_unlocked;
++		goto xa_unlocked;
+ out_unlock:
+ 		unlock_page(page);
+ 		put_page(page);
+ 		break;
+ 	}
++	xas_unlock_irq(&xas);
+ 
+-	/*
+-	 * Handle hole in radix tree at the end of the range.
+-	 * This code only triggers if there's nothing in radix tree
+-	 * beyond 'end'.
+-	 */
+-	if (result == SCAN_SUCCEED && index < end) {
+-		int n = end - index;
+-
+-		if (!shmem_charge(mapping->host, n)) {
+-			result = SCAN_FAIL;
+-			goto tree_locked;
+-		}
+-
+-		for (; index < end; index++) {
+-			radix_tree_insert(&mapping->pages, index,
+-					new_page + (index % HPAGE_PMD_NR));
+-		}
+-		nr_none += n;
+-	}
+-
+-tree_locked:
+-	xa_unlock_irq(&mapping->pages);
+-tree_unlocked:
+-
++xa_unlocked:
+ 	if (result == SCAN_SUCCEED) {
+-		unsigned long flags;
++		struct page *page, *tmp;
+ 		struct zone *zone = page_zone(new_page);
+ 
+ 		/*
+-		 * Replacing old pages with new one has succeed, now we need to
+-		 * copy the content and free old pages.
++		 * Replacing old pages with new one has succeeded, now we
++		 * need to copy the content and free the old pages.
+ 		 */
+ 		list_for_each_entry_safe(page, tmp, &pagelist, lru) {
+ 			copy_highpage(new_page + (page->index % HPAGE_PMD_NR),
+@@ -1490,16 +1462,16 @@ static void collapse_shmem(struct mm_struct *mm,
+ 			put_page(page);
+ 		}
+ 
+-		local_irq_save(flags);
++		local_irq_disable();
+ 		__inc_node_page_state(new_page, NR_SHMEM_THPS);
+ 		if (nr_none) {
+ 			__mod_node_page_state(zone->zone_pgdat, NR_FILE_PAGES, nr_none);
+ 			__mod_node_page_state(zone->zone_pgdat, NR_SHMEM, nr_none);
+ 		}
+-		local_irq_restore(flags);
++		local_irq_enable();
+ 
+ 		/*
+-		 * Remove pte page tables, so we can re-faulti
++		 * Remove pte page tables, so we can re-fault
+ 		 * the page as huge.
+ 		 */
+ 		retract_page_tables(mapping, start);
+@@ -1514,37 +1486,37 @@ static void collapse_shmem(struct mm_struct *mm,
+ 
+ 		*hpage = NULL;
+ 	} else {
+-		/* Something went wrong: rollback changes to the radix-tree */
++		struct page *page;
++		/* Something went wrong: roll back page cache changes */
+ 		shmem_uncharge(mapping->host, nr_none);
+-		xa_lock_irq(&mapping->pages);
+-		radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
+-			if (iter.index >= end)
+-				break;
++		xas_lock_irq(&xas);
++		xas_set(&xas, start);
++		xas_for_each(&xas, page, end - 1) {
+ 			page = list_first_entry_or_null(&pagelist,
+ 					struct page, lru);
+-			if (!page || iter.index < page->index) {
++			if (!page || xas.xa_index < page->index) {
+ 				if (!nr_none)
+ 					break;
+ 				nr_none--;
+ 				/* Put holes back where they were */
+-				radix_tree_delete(&mapping->pages, iter.index);
++				xas_store(&xas, NULL);
+ 				continue;
+ 			}
+ 
+-			VM_BUG_ON_PAGE(page->index != iter.index, page);
++			VM_BUG_ON_PAGE(page->index != xas.xa_index, page);
+ 
+ 			/* Unfreeze the page. */
+ 			list_del(&page->lru);
+ 			page_ref_unfreeze(page, 2);
+-			radix_tree_replace_slot(&mapping->pages, slot, page);
+-			slot = radix_tree_iter_resume(slot, &iter);
+-			xa_unlock_irq(&mapping->pages);
++			xas_store(&xas, page);
++			xas_pause(&xas);
++			xas_unlock_irq(&xas);
+ 			putback_lru_page(page);
+ 			unlock_page(page);
+-			xa_lock_irq(&mapping->pages);
++			xas_lock_irq(&xas);
+ 		}
+ 		VM_BUG_ON(nr_none);
+-		xa_unlock_irq(&mapping->pages);
++		xas_unlock_irq(&xas);
+ 
+ 		/* Unfreeze new_page, caller would take care about freeing it */
+ 		page_ref_unfreeze(new_page, 1);
 -- 
 2.15.0
 
