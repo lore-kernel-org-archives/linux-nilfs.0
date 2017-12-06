@@ -1,23 +1,23 @@
 From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH v4 69/73] xfs: Convert m_perag_tree to XArray
-Date: Tue,  5 Dec 2017 16:41:55 -0800
-Message-ID: <20171206004159.3755-70-willy@infradead.org>
+Subject: [PATCH v4 29/73] mm: Convert page-writeback to XArray
+Date: Tue,  5 Dec 2017 16:41:15 -0800
+Message-ID: <20171206004159.3755-30-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=HgwW3mt10O72ZZObq/P/Z7mbcRzLo7xQv/76HXqBwP0=; b=fEdCLL1sNzKTlJoU5CNzz3Mb9
-        nmildbhA8TBCE0L7dDbX71+kErC6FabJ5s7UftnBDUDh2NQ2wL7eCcp5qqgVzdyVtfhIPIaa3lqXu
-        0UOkjZyGEaSC4gXx8yEcJeLMMMqdkWqEmA3nV8pQQZPZ4WAkr7Q72TF/+ZlVOuOdo3aw8JZpsuRDO
-        qS23cHITRz617uQXOvSc7nAVUDTEcC+6YyT1hoVR7OuSOh3mJUs5ik9wW+EvcLMQPvRxvqH1JuC/T
-        aC33bIi9BKKMi7mh2Nn04U/enT0+gklt/NP43WMbeKPxPoDdVKMIgHnLi3nQPSiK8EDY3os+aOmoz
+         bh=nJ2hnUyBHOpsC52E4V7nF4xNuoDtmig+8gYvsAfZl8I=; b=aW9/Pn5HrjnquATelfyUYIPkM
+        wY76qGbZH6hz9APM2nDep+o/H5gU3ofiITRn0EdBGs4M6YstdMl14AcDjNGDEHM9d8g8myi5y5SRn
+        X4VZ6rT1PLhbqV8rij7+3KCivjPNp3ndVe2joaOMn5CQuJamR0TwMztEiHeSU55ih8PFlH/yKuEs6
+        u1mYLZfo280ERp0WUQd/ljLtAjIK6LAv7irBUPi2qBdR1HVNK+xyHNL93fPntEhYuR2l2k0Qm8m4P
+        6H3Osa5B6zxnlN4ybPjMlXh8YBFZ4pXrRaLtsbE80o1WH+dGtOc0+bwCrwHNt2fVQobFk0kIEyG2k
     
 In-Reply-To: <20171206004159.3755-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,257 +27,191 @@ Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwis
 
 From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 
-Getting rid of the m_perag_lock lets us also get rid of the call to
-radix_tree_preload().  This is a relatively naive conversion; we could
-improve performance over the radix tree implementation by passing around
-xa_state pointers instead of indices, possibly at the expense of extending
-rcu_read_lock() periods.
+Includes moving mapping_tagged() to fs.h as a static inline, and
+changing it to return bool.
 
 Signed-off-by: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 ---
- fs/xfs/libxfs/xfs_sb.c |  9 ++++-----
- fs/xfs/xfs_icache.c    | 35 +++++++++--------------------------
- fs/xfs/xfs_icache.h    |  6 +++---
- fs/xfs/xfs_mount.c     | 19 ++++---------------
- fs/xfs/xfs_mount.h     |  3 +--
- 5 files changed, 21 insertions(+), 51 deletions(-)
+ include/linux/fs.h  | 17 +++++++++------
+ mm/page-writeback.c | 62 +++++++++++++++++++----------------------------------
+ 2 files changed, 32 insertions(+), 47 deletions(-)
 
-diff --git a/fs/xfs/libxfs/xfs_sb.c b/fs/xfs/libxfs/xfs_sb.c
-index 9b5aae2bcc0b..3b0b65eb8224 100644
---- a/fs/xfs/libxfs/xfs_sb.c
-+++ b/fs/xfs/libxfs/xfs_sb.c
-@@ -59,7 +59,7 @@ xfs_perag_get(
- 	int			ref = 0;
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index e4345c13e237..c58bc3c619bf 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -470,15 +470,18 @@ struct block_device {
+ 	struct mutex		bd_fsfreeze_mutex;
+ } __randomize_layout;
  
- 	rcu_read_lock();
--	pag = radix_tree_lookup(&mp->m_perag_tree, agno);
-+	pag = xa_load(&mp->m_perag_xa, agno);
- 	if (pag) {
- 		ASSERT(atomic_read(&pag->pag_ref) >= 0);
- 		ref = atomic_inc_return(&pag->pag_ref);
-@@ -78,14 +78,13 @@ xfs_perag_get_tag(
- 	xfs_agnumber_t		first,
- 	int			tag)
- {
-+	XA_STATE(xas, &mp->m_perag_xa, first);
- 	struct xfs_perag	*pag;
--	int			found;
- 	int			ref;
- 
- 	rcu_read_lock();
--	found = radix_tree_gang_lookup_tag(&mp->m_perag_tree,
--					(void **)&pag, first, 1, tag);
--	if (found <= 0) {
-+	pag = xas_find_tag(&xas, ULONG_MAX, tag);
-+	if (!pag) {
- 		rcu_read_unlock();
- 		return NULL;
- 	}
-diff --git a/fs/xfs/xfs_icache.c b/fs/xfs/xfs_icache.c
-index 43005fbe8b1e..f56e500d89e2 100644
---- a/fs/xfs/xfs_icache.c
-+++ b/fs/xfs/xfs_icache.c
-@@ -156,13 +156,10 @@ static void
- xfs_reclaim_work_queue(
- 	struct xfs_mount        *mp)
- {
--
--	rcu_read_lock();
--	if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_RECLAIM_TAG)) {
-+	if (xa_tagged(&mp->m_perag_xa, XFS_ICI_RECLAIM_TAG)) {
- 		queue_delayed_work(mp->m_reclaim_workqueue, &mp->m_reclaim_work,
- 			msecs_to_jiffies(xfs_syncd_centisecs / 6 * 10));
- 	}
--	rcu_read_unlock();
- }
- 
++/* XArray tags, for tagging dirty and writeback pages in the pagecache. */
++#define PAGECACHE_TAG_DIRTY	XA_TAG_0
++#define PAGECACHE_TAG_WRITEBACK	XA_TAG_1
++#define PAGECACHE_TAG_TOWRITE	XA_TAG_2
++
  /*
-@@ -194,10 +191,7 @@ xfs_perag_set_reclaim_tag(
- 		return;
- 
- 	/* propagate the reclaim tag up into the perag radix tree */
--	spin_lock(&mp->m_perag_lock);
--	radix_tree_tag_set(&mp->m_perag_tree, pag->pag_agno,
--			   XFS_ICI_RECLAIM_TAG);
--	spin_unlock(&mp->m_perag_lock);
-+	xa_set_tag(&mp->m_perag_xa, pag->pag_agno, XFS_ICI_RECLAIM_TAG);
- 
- 	/* schedule periodic background inode reclaim */
- 	xfs_reclaim_work_queue(mp);
-@@ -216,10 +210,7 @@ xfs_perag_clear_reclaim_tag(
- 		return;
- 
- 	/* clear the reclaim tag from the perag radix tree */
--	spin_lock(&mp->m_perag_lock);
--	radix_tree_tag_clear(&mp->m_perag_tree, pag->pag_agno,
--			     XFS_ICI_RECLAIM_TAG);
--	spin_unlock(&mp->m_perag_lock);
-+	xa_clear_tag(&mp->m_perag_xa, pag->pag_agno, XFS_ICI_RECLAIM_TAG);
- 	trace_xfs_perag_clear_reclaim(mp, pag->pag_agno, -1, _RET_IP_);
- }
- 
-@@ -847,12 +838,10 @@ void
- xfs_queue_eofblocks(
- 	struct xfs_mount *mp)
- {
--	rcu_read_lock();
--	if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_EOFBLOCKS_TAG))
-+	if (xa_tagged(&mp->m_perag_xa, XFS_ICI_EOFBLOCKS_TAG))
- 		queue_delayed_work(mp->m_eofblocks_workqueue,
- 				   &mp->m_eofblocks_work,
- 				   msecs_to_jiffies(xfs_eofb_secs * 1000));
--	rcu_read_unlock();
- }
- 
- void
-@@ -874,12 +863,10 @@ STATIC void
- xfs_queue_cowblocks(
- 	struct xfs_mount *mp)
- {
--	rcu_read_lock();
--	if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_COWBLOCKS_TAG))
-+	if (xa_tagged(&mp->m_perag_xa, XFS_ICI_COWBLOCKS_TAG))
- 		queue_delayed_work(mp->m_eofblocks_workqueue,
- 				   &mp->m_cowblocks_work,
- 				   msecs_to_jiffies(xfs_cowb_secs * 1000));
--	rcu_read_unlock();
- }
- 
- void
-@@ -1542,7 +1529,7 @@ __xfs_inode_set_eofblocks_tag(
- 	void		(*execute)(struct xfs_mount *mp),
- 	void		(*set_tp)(struct xfs_mount *mp, xfs_agnumber_t agno,
- 				  int error, unsigned long caller_ip),
--	int		tag)
-+	xa_tag_t	tag)
- {
- 	struct xfs_mount *mp = ip->i_mount;
- 	struct xfs_perag *pag;
-@@ -1566,11 +1553,9 @@ __xfs_inode_set_eofblocks_tag(
- 			   XFS_INO_TO_AGINO(ip->i_mount, ip->i_ino), tag);
- 	if (!tagged) {
- 		/* propagate the eofblocks tag up into the perag radix tree */
--		spin_lock(&ip->i_mount->m_perag_lock);
--		radix_tree_tag_set(&ip->i_mount->m_perag_tree,
-+		xa_set_tag(&ip->i_mount->m_perag_xa,
- 				   XFS_INO_TO_AGNO(ip->i_mount, ip->i_ino),
- 				   tag);
--		spin_unlock(&ip->i_mount->m_perag_lock);
- 
- 		/* kick off background trimming */
- 		execute(ip->i_mount);
-@@ -1597,7 +1582,7 @@ __xfs_inode_clear_eofblocks_tag(
- 	xfs_inode_t	*ip,
- 	void		(*clear_tp)(struct xfs_mount *mp, xfs_agnumber_t agno,
- 				    int error, unsigned long caller_ip),
--	int		tag)
-+	xa_tag_t	tag)
- {
- 	struct xfs_mount *mp = ip->i_mount;
- 	struct xfs_perag *pag;
-@@ -1613,11 +1598,9 @@ __xfs_inode_clear_eofblocks_tag(
- 			     XFS_INO_TO_AGINO(ip->i_mount, ip->i_ino), tag);
- 	if (!radix_tree_tagged(&pag->pag_ici_root, tag)) {
- 		/* clear the eofblocks tag from the perag radix tree */
--		spin_lock(&ip->i_mount->m_perag_lock);
--		radix_tree_tag_clear(&ip->i_mount->m_perag_tree,
-+		xa_clear_tag(&ip->i_mount->m_perag_xa,
- 				     XFS_INO_TO_AGNO(ip->i_mount, ip->i_ino),
- 				     tag);
--		spin_unlock(&ip->i_mount->m_perag_lock);
- 		clear_tp(ip->i_mount, pag->pag_agno, -1, _RET_IP_);
- 	}
- 
-diff --git a/fs/xfs/xfs_icache.h b/fs/xfs/xfs_icache.h
-index bff4d85e5498..bd04d5adadfe 100644
---- a/fs/xfs/xfs_icache.h
-+++ b/fs/xfs/xfs_icache.h
-@@ -37,9 +37,9 @@ struct xfs_eofblocks {
+- * Radix-tree tags, for tagging dirty and writeback pages within the pagecache
+- * radix trees
++ * Returns true if any of the pages in the mapping are marked with the tag.
   */
- #define XFS_ICI_NO_TAG		(-1)	/* special flag for an untagged lookup
- 					   in xfs_inode_ag_iterator */
--#define XFS_ICI_RECLAIM_TAG	0	/* inode is to be reclaimed */
--#define XFS_ICI_EOFBLOCKS_TAG	1	/* inode has blocks beyond EOF */
--#define XFS_ICI_COWBLOCKS_TAG	2	/* inode can have cow blocks to gc */
-+#define XFS_ICI_RECLAIM_TAG	XA_TAG_0 /* inode is to be reclaimed */
-+#define XFS_ICI_EOFBLOCKS_TAG	XA_TAG_1 /* inode has blocks beyond EOF */
-+#define XFS_ICI_COWBLOCKS_TAG	XA_TAG_2 /* inode can have cow blocks to gc */
+-#define PAGECACHE_TAG_DIRTY	0
+-#define PAGECACHE_TAG_WRITEBACK	1
+-#define PAGECACHE_TAG_TOWRITE	2
+-
+-int mapping_tagged(struct address_space *mapping, int tag);
++static inline bool mapping_tagged(struct address_space *mapping, xa_tag_t tag)
++{
++	return xa_tagged(&mapping->pages, tag);
++}
+ 
+ static inline void i_mmap_lock_write(struct address_space *mapping)
+ {
+diff --git a/mm/page-writeback.c b/mm/page-writeback.c
+index 588ce729d199..0407436a8305 100644
+--- a/mm/page-writeback.c
++++ b/mm/page-writeback.c
+@@ -2098,33 +2098,25 @@ void __init page_writeback_init(void)
+  * dirty pages in the file (thus it is important for this function to be quick
+  * so that it can tag pages faster than a dirtying process can create them).
+  */
+-/*
+- * We tag pages in batches of WRITEBACK_TAG_BATCH to reduce xa_lock latency.
+- */
+ void tag_pages_for_writeback(struct address_space *mapping,
+ 			     pgoff_t start, pgoff_t end)
+ {
+-#define WRITEBACK_TAG_BATCH 4096
+-	unsigned long tagged = 0;
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, start);
++	unsigned int tagged = 0;
++	void *page;
+ 
+-	xa_lock_irq(&mapping->pages);
+-	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, start,
+-							PAGECACHE_TAG_DIRTY) {
+-		if (iter.index > end)
+-			break;
+-		radix_tree_iter_tag_set(&mapping->pages, &iter,
+-							PAGECACHE_TAG_TOWRITE);
+-		tagged++;
+-		if ((tagged % WRITEBACK_TAG_BATCH) != 0)
++	xas_lock_irq(&xas);
++	xas_for_each_tag(&xas, page, end, PAGECACHE_TAG_DIRTY) {
++		xas_set_tag(&xas, PAGECACHE_TAG_TOWRITE);
++		if (++tagged % XA_CHECK_SCHED)
+ 			continue;
+-		slot = radix_tree_iter_resume(slot, &iter);
+-		xa_unlock_irq(&mapping->pages);
++
++		xas_pause(&xas);
++		xas_unlock_irq(&xas);
+ 		cond_resched();
+-		xa_lock_irq(&mapping->pages);
++		xas_lock_irq(&xas);
+ 	}
+-	xa_unlock_irq(&mapping->pages);
++	xas_unlock_irq(&xas);
+ }
+ EXPORT_SYMBOL(tag_pages_for_writeback);
+ 
+@@ -2164,7 +2156,7 @@ int write_cache_pages(struct address_space *mapping,
+ 	pgoff_t done_index;
+ 	int cycled;
+ 	int range_whole = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	pagevec_init(&pvec);
+ 	if (wbc->range_cyclic) {
+@@ -2445,7 +2437,7 @@ void account_page_cleaned(struct page *page, struct address_space *mapping,
  
  /*
-  * Flags for xfs_iget()
-diff --git a/fs/xfs/xfs_mount.c b/fs/xfs/xfs_mount.c
-index c879b517cc94..0541aeb8449c 100644
---- a/fs/xfs/xfs_mount.c
-+++ b/fs/xfs/xfs_mount.c
-@@ -156,9 +156,7 @@ xfs_free_perag(
- 	struct xfs_perag *pag;
+  * For address_spaces which do not use buffers.  Just tag the page as dirty in
+- * its radix tree.
++ * the xarray.
+  *
+  * This is also used when a single buffer is being dirtied: we want to set the
+  * page dirty in that case, but not all the buffers.  This is a "bottom-up"
+@@ -2471,7 +2463,7 @@ int __set_page_dirty_nobuffers(struct page *page)
+ 		BUG_ON(page_mapping(page) != mapping);
+ 		WARN_ON_ONCE(!PagePrivate(page) && !PageUptodate(page));
+ 		account_page_dirtied(page, mapping);
+-		radix_tree_tag_set(&mapping->pages, page_index(page),
++		__xa_set_tag(&mapping->pages, page_index(page),
+ 				   PAGECACHE_TAG_DIRTY);
+ 		xa_unlock_irqrestore(&mapping->pages, flags);
+ 		unlock_page_memcg(page);
+@@ -2634,13 +2626,13 @@ EXPORT_SYMBOL(__cancel_dirty_page);
+  * Returns true if the page was previously dirty.
+  *
+  * This is for preparing to put the page under writeout.  We leave the page
+- * tagged as dirty in the radix tree so that a concurrent write-for-sync
++ * tagged as dirty in the xarray so that a concurrent write-for-sync
+  * can discover it via a PAGECACHE_TAG_DIRTY walk.  The ->writepage
+  * implementation will run either set_page_writeback() or set_page_dirty(),
+- * at which stage we bring the page's dirty flag and radix-tree dirty tag
++ * at which stage we bring the page's dirty flag and xarray dirty tag
+  * back into sync.
+  *
+- * This incoherency between the page's dirty flag and radix-tree tag is
++ * This incoherency between the page's dirty flag and xarray tag is
+  * unfortunate, but it only exists while the page is locked.
+  */
+ int clear_page_dirty_for_io(struct page *page)
+@@ -2721,7 +2713,7 @@ int test_clear_page_writeback(struct page *page)
+ 		xa_lock_irqsave(&mapping->pages, flags);
+ 		ret = TestClearPageWriteback(page);
+ 		if (ret) {
+-			radix_tree_tag_clear(&mapping->pages, page_index(page),
++			__xa_clear_tag(&mapping->pages, page_index(page),
+ 						PAGECACHE_TAG_WRITEBACK);
+ 			if (bdi_cap_account_writeback(bdi)) {
+ 				struct bdi_writeback *wb = inode_to_wb(inode);
+@@ -2773,7 +2765,7 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
+ 			on_wblist = mapping_tagged(mapping,
+ 						   PAGECACHE_TAG_WRITEBACK);
  
- 	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
--		spin_lock(&mp->m_perag_lock);
--		pag = radix_tree_delete(&mp->m_perag_tree, agno);
--		spin_unlock(&mp->m_perag_lock);
-+		pag = xa_erase(&mp->m_perag_xa, agno);
- 		ASSERT(pag);
- 		ASSERT(atomic_read(&pag->pag_ref) == 0);
- 		xfs_buf_hash_destroy(pag);
-@@ -219,19 +217,11 @@ xfs_initialize_perag(
- 			goto out_free_pag;
- 		init_waitqueue_head(&pag->pagb_wait);
- 
--		if (radix_tree_preload(GFP_NOFS))
--			goto out_hash_destroy;
--
--		spin_lock(&mp->m_perag_lock);
--		if (radix_tree_insert(&mp->m_perag_tree, index, pag)) {
-+		if (xa_store(&mp->m_perag_xa, index, pag, GFP_NOFS)) {
- 			BUG();
--			spin_unlock(&mp->m_perag_lock);
--			radix_tree_preload_end();
- 			error = -EEXIST;
- 			goto out_hash_destroy;
+-			radix_tree_tag_set(&mapping->pages, page_index(page),
++			__xa_set_tag(&mapping->pages, page_index(page),
+ 						PAGECACHE_TAG_WRITEBACK);
+ 			if (bdi_cap_account_writeback(bdi))
+ 				inc_wb_stat(inode_to_wb(inode), WB_WRITEBACK);
+@@ -2787,10 +2779,10 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
+ 				sb_mark_inode_writeback(mapping->host);
  		}
--		spin_unlock(&mp->m_perag_lock);
--		radix_tree_preload_end();
- 		/* first new pag is fully initialized */
- 		if (first_initialised == NULLAGNUMBER)
- 			first_initialised = index;
-@@ -252,7 +242,7 @@ xfs_initialize_perag(
- out_unwind_new_pags:
- 	/* unwind any prior newly initialized pags */
- 	for (index = first_initialised; index < agcount; index++) {
--		pag = radix_tree_delete(&mp->m_perag_tree, index);
-+		pag = xa_erase(&mp->m_perag_xa, index);
- 		if (!pag)
- 			break;
- 		xfs_buf_hash_destroy(pag);
-@@ -816,8 +806,7 @@ xfs_mountfs(
- 	/*
- 	 * Allocate and initialize the per-ag data.
- 	 */
--	spin_lock_init(&mp->m_perag_lock);
--	INIT_RADIX_TREE(&mp->m_perag_tree, GFP_ATOMIC);
-+	xa_init(&mp->m_perag_xa);
- 	error = xfs_initialize_perag(mp, sbp->sb_agcount, &mp->m_maxagi);
- 	if (error) {
- 		xfs_warn(mp, "Failed per-ag init: %d", error);
-diff --git a/fs/xfs/xfs_mount.h b/fs/xfs/xfs_mount.h
-index e0792d036be2..6e5ad7b26f46 100644
---- a/fs/xfs/xfs_mount.h
-+++ b/fs/xfs/xfs_mount.h
-@@ -134,8 +134,7 @@ typedef struct xfs_mount {
- 	xfs_extlen_t		m_ag_prealloc_blocks; /* reserved ag blocks */
- 	uint			m_alloc_set_aside; /* space we can't use */
- 	uint			m_ag_max_usable; /* max space per AG */
--	struct radix_tree_root	m_perag_tree;	/* per-ag accounting info */
--	spinlock_t		m_perag_lock;	/* lock for m_perag_tree */
-+	struct xarray		m_perag_xa;	/* per-ag accounting info */
- 	struct mutex		m_growlock;	/* growfs mutex */
- 	int			m_fixedfsid[2];	/* unchanged for life of FS */
- 	uint			m_dmevmask;	/* DMI events for this FS */
+ 		if (!PageDirty(page))
+-			radix_tree_tag_clear(&mapping->pages, page_index(page),
++			__xa_clear_tag(&mapping->pages, page_index(page),
+ 						PAGECACHE_TAG_DIRTY);
+ 		if (!keep_write)
+-			radix_tree_tag_clear(&mapping->pages, page_index(page),
++			__xa_clear_tag(&mapping->pages, page_index(page),
+ 						PAGECACHE_TAG_TOWRITE);
+ 		xa_unlock_irqrestore(&mapping->pages, flags);
+ 	} else {
+@@ -2806,16 +2798,6 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
+ }
+ EXPORT_SYMBOL(__test_set_page_writeback);
+ 
+-/*
+- * Return true if any of the pages in the mapping are marked with the
+- * passed tag.
+- */
+-int mapping_tagged(struct address_space *mapping, int tag)
+-{
+-	return radix_tree_tagged(&mapping->pages, tag);
+-}
+-EXPORT_SYMBOL(mapping_tagged);
+-
+ /**
+  * wait_for_stable_page() - wait for writeback to finish, if necessary.
+  * @page:	The page to wait on.
 -- 
 2.15.0
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
