@@ -1,101 +1,54 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v4 27/73] page cache: Convert delete_batch to XArray
-Date: Tue,  5 Dec 2017 16:41:13 -0800
-Message-ID: <20171206004159.3755-28-willy@infradead.org>
+From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: [PATCH v4 28/73] page cache: Remove stray radix comment
+Date: Tue,  5 Dec 2017 16:41:14 -0800
+Message-ID: <20171206004159.3755-29-willy@infradead.org>
 References: <20171206004159.3755-1-willy@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=tfB8KE2AEacdXmwTx7K5tSUqE7sxOKNJayGvrKE4tds=; b=DQNPe/RLWNgCeVvgOzD6GspKy
-        TQkJrOo/8b6zEEKpNNMfe0jxPu3j78Ym9gZw3LnpP15GEg321UV7THSNmMvm6eUiCgPepA1Hj44dp
-        ngZnnpfrcgcUQEGHEjbz2JCGUYWRmm6Moxsd0G0Dxw4YAD7PYDxG1ubwFBA3YMxMXSHLKJMcRmpMH
-        2+Nql02NN+GkwzaYuaixCS2w1omeAk12AgcvesornzNP3HUikF7ffUI+ihmB7p5M3fKte0jlSU4dC
-        YksOUZlfEIPJKNhd5E3wqzAYkWmiaLEd5SIBIM0duzpzB30DS/lelgLV3ME7ut8g1N++s2edB7gWd
+         bh=hHvz3uC3zSPi7Xo/Ox/tcBnGt/avat4rB+HlWe8HRxU=; b=AmXvLOcHS4jqVQN/4lcmZhlV5
+        i60Bp/HQz0yvq0VdpVbzWLTiDfN5QPHaUThWpO+K0a1uUQrBeTmFGTIdX4zuEftvgVqNDkDNxRiOw
+        BpfJnITs4oMAO5+nMIcmFV3IOVBqwqZZwuUwY+XGfhfxiGMEgdy3WOv/8K4tObTpuITXYrBemNv3b
+        nxQjdxrjMqJLqwJ0RjlsJAFnKhGByOOr/T+//k6RVMLneeoMrsdEht+8jcekAhB6hWbbsI+dDeNm4
+        z08cnGPMPBAqRy4U0F1htnniyveKh/mGW748cx9qLtTrrSvODY1bD7xGLhEJQ88km222HtSSElnhq
     
-In-Reply-To: <20171206004159.3755-1-willy@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20171206004159.3755-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: 
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Matthew Wilcox <mawilcox@microsoft.com>
+From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 
-Rename the function from page_cache_tree_delete_batch to just
-page_cache_delete_batch.
-
-Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+Signed-off-by: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 ---
- mm/filemap.c | 21 +++++++--------------
- 1 file changed, 7 insertions(+), 14 deletions(-)
+ mm/filemap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 6c9cad248e7f..9e6158cfbaeb 100644
+index 9e6158cfbaeb..79d0731b8762 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
-@@ -276,7 +276,7 @@ void delete_from_page_cache(struct page *page)
- EXPORT_SYMBOL(delete_from_page_cache);
- 
- /*
-- * page_cache_tree_delete_batch - delete several pages from page cache
-+ * page_cache_delete_batch - delete several pages from page cache
-  * @mapping: the mapping to which pages belong
-  * @pvec: pagevec with pages to delete
-  *
-@@ -289,23 +289,18 @@ EXPORT_SYMBOL(delete_from_page_cache);
-  *
-  * The function expects xa_lock to be held.
-  */
--static void
--page_cache_tree_delete_batch(struct address_space *mapping,
-+static void page_cache_delete_batch(struct address_space *mapping,
- 			     struct pagevec *pvec)
- {
--	struct radix_tree_iter iter;
--	void **slot;
-+	XA_STATE(xas, &mapping->pages, pvec->pages[0]->index);
- 	int total_pages = 0;
- 	int i = 0, tail_pages = 0;
- 	struct page *page;
--	pgoff_t start;
- 
--	start = pvec->pages[0]->index;
--	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
-+	xas_set_update(&xas, workingset_lookup_update(mapping));
-+	xas_for_each(&xas, page, ULONG_MAX) {
- 		if (i >= pagevec_count(pvec) && !tail_pages)
- 			break;
--		page = radix_tree_deref_slot_protected(slot,
--						       &mapping->pages.xa_lock);
- 		if (xa_is_value(page))
- 			continue;
- 		if (!tail_pages) {
-@@ -328,9 +323,7 @@ page_cache_tree_delete_batch(struct address_space *mapping,
- 		} else {
- 			tail_pages--;
+@@ -2601,7 +2601,7 @@ static struct page *do_read_cache_page(struct address_space *mapping,
+ 			put_page(page);
+ 			if (err == -EEXIST)
+ 				goto repeat;
+-			/* Presumably ENOMEM for radix tree node */
++			/* Presumably ENOMEM for xarray node */
+ 			return ERR_PTR(err);
  		}
--		radix_tree_clear_tags(&mapping->pages, iter.node, slot);
--		__radix_tree_replace(&mapping->pages, iter.node, slot, NULL,
--				workingset_lookup_update(mapping));
-+		xas_store(&xas, NULL);
- 		total_pages++;
- 	}
- 	mapping->nrpages -= total_pages;
-@@ -351,7 +344,7 @@ void delete_from_page_cache_batch(struct address_space *mapping,
  
- 		unaccount_page_cache_page(mapping, pvec->pages[i]);
- 	}
--	page_cache_tree_delete_batch(mapping, pvec);
-+	page_cache_delete_batch(mapping, pvec);
- 	xa_unlock_irqrestore(&mapping->pages, flags);
- 
- 	for (i = 0; i < pagevec_count(pvec); i++)
 -- 
 2.15.0
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
