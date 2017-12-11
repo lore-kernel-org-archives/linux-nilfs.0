@@ -1,9 +1,8 @@
-From: Dave Chinner <david@fromorbit.com>
+From: Matthew Wilcox <willy@infradead.org>
 Subject: Re: [PATCH v4 72/73] xfs: Convert mru cache to XArray
-Date: Mon, 11 Dec 2017 10:57:45 +1100
-Message-ID: <20171210235745.GR5858@dastard>
-References: <20171206004159.3755-1-willy@infradead.org>
- <20171206004159.3755-73-willy@infradead.org>
+Date: Sun, 10 Dec 2017 20:23:15 -0800
+Message-ID: <20171211042315.GA25236@bombadil.infradead.org>
+References: <20171206004159.3755-73-willy@infradead.org>
  <20171206012901.GZ4094@dastard>
  <20171206020208.GK26021@bombadil.infradead.org>
  <20171206031456.GE4094@dastard>
@@ -12,140 +11,173 @@ References: <20171206004159.3755-1-willy@infradead.org>
  <20171206140648.GB32044@bombadil.infradead.org>
  <20171207003843.GG4094@dastard>
  <20171208230131.GC32293@bombadil.infradead.org>
+ <20171210235745.GR5858@dastard>
 Mime-Version: 1.0
+Return-path: <owner-linux-mm@kvack.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	 bh=RLOHBIrA0TOdeUVUjrq7egOn1K5MJ5cp6En3yKjbe+Y=; b=JxBEKfBn/9GAIrJkMSYyb0iMp
+	JtXX+HraeqOT8ksz0/ZOPX6zGOsTI4sN/96xM+Kc3Ncoe89EVYtzunP7qThD1sqZX4OVF5yA0fDLw
+	KxhPc8uL4IIDKkTudRP59t0Vi0AmahSYBZdpW3gRxytngmK9RgIIHmqop8fEYFCgm+DpZK5LAiJkG
+	q0Lnp09hbWbeCTc4m/EtVcwjY5rgXvr2k1EEH50O8VeIWIJ+OdPDd5vKfyYHr8IKc/4eA/pchJFJD
+	9hDSUJZOL9aJfujZnNWKAK1vIqlrVsDTFbXEuQLE/6r8jCQ5AFbid3umrkm6h8UPZeBrKyYKaKher
+	Uy59/3CiQ==;
+Content-Disposition: inline
+In-Reply-To: <20171210235745.GR5858@dastard>
+Sender: owner-linux-mm@kvack.org
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=LggVn7oUODNKxt2fts9Oe+Xv/+6eijktT2Hg7I7S14I=; b=CK9Bsqon4SBb8eQS6N4Y1vYmDt
- wCD2722uYrpTIzXSJxbniO1U6A0YDT0hFLngQROd03MIC3zcY10wQL7PB2jAjsiR5JLL9QFo02Ama
- 4ESJF1zmVrCkpcRWHcs7AQ9Th5cVhL/wTXN+tZei1I4gSBIyoywPt1CeNsekG2wquQp8=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=LggVn7oUODNKxt2fts9Oe+Xv/+6eijktT2Hg7I7S14I=; b=PGY7tz5/UqH7/FldFLVZPBU3xA
- AWoVDAvaOVWr0KqK+W3cyDxGkk4ADjAHXj2A3cObfTEgzabXqLgxKr5FC6/1bkruCovtC3T8ItMAF
- Lc/8oYo2oS0pgViwTRWi8YEJFXmztLOt0Ia96F9S8zSV1MapVHwvHiiaPSv/TgcpEpRo=;
-Content-Disposition: inline
-In-Reply-To: <20171208230131.GC32293@bombadil.infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-nilfs@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Rehas Sachdeva <aquannie@gmail.com>, linux-btrfs@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Fri, Dec 08, 2017 at 03:01:31PM -0800, Matthew Wilcox wrote:
-> On Thu, Dec 07, 2017 at 11:38:43AM +1100, Dave Chinner wrote:
-> > > > cmpxchg is for replacing a known object in a store - it's not really
-> > > > intended for doing initial inserts after a lookup tells us there is
-> > > > nothing in the store.  The radix tree "insert only if empty" makes
-> > > > sense here, because it naturally takes care of lookup/insert races
-> > > > via the -EEXIST mechanism.
-> > > > 
-> > > > I think that providing xa_store_excl() (which would return -EEXIST
-> > > > if the entry is not empty) would be a better interface here, because
-> > > > it matches the semantics of lookup cache population used all over
-> > > > the kernel....
-> > > 
-> > > I'm not thrilled with xa_store_excl(), but I need to think about that
-> > > a bit more.
-> > 
-> > Not fussed about the name - I just think we need a function that
-> > matches the insert semantics of the code....
+On Mon, Dec 11, 2017 at 10:57:45AM +1100, Dave Chinner wrote:
+> i.e.  the fact the cmpxchg failed may not have anything to do with a
+> race condtion - it failed because the slot wasn't empty like we
+> expected it to be. There can be any number of reasons the slot isn't
+> empty - the API should not "document" that the reason the insert
+> failed was a race condition. It should document the case that we
+> "couldn't insert because there was an existing entry in the slot".
+> Let the surrounding code document the reason why that might have
+> happened - it's not for the API to assume reasons for failure.
 > 
-> I think I have something that works better for you than returning -EEXIST
-> (because you don't actually want -EEXIST, you want -EAGAIN):
+> i.e. this API and potential internal implementation makes much
+> more sense:
 > 
->         /* insert the new inode */
-> -       spin_lock(&pag->pag_ici_lock);
-> -       error = radix_tree_insert(&pag->pag_ici_root, agino, ip);
-> -       if (unlikely(error)) {
-> -               WARN_ON(error != -EEXIST);
-> -               XFS_STATS_INC(mp, xs_ig_dup);
-> -               error = -EAGAIN;
-> -               goto out_preload_end;
-> -       }
-> -       spin_unlock(&pag->pag_ici_lock);
-> -       radix_tree_preload_end();
-> +       curr = xa_cmpxchg(&pag->pag_ici_xa, agino, NULL, ip, GFP_NOFS);
-> +       error = __xa_race(curr, -EAGAIN);
-> +       if (error)
-> +               goto out_unlock;
+> int
+> xa_store_iff_empty(...)
+> {
+> 	curr = xa_cmpxchg(&pag->pag_ici_xa, agino, NULL, ip, GFP_NOFS);
+> 	if (!curr)
+> 		return 0;	/* success! */
+> 	if (!IS_ERR(curr))
+> 		return -EEXIST;	/* failed - slot not empty */
+> 	return PTR_ERR(curr);	/* failed - XA internal issue */
+> }
 > 
-> ...
-> 
-> -out_preload_end:
-> -       spin_unlock(&pag->pag_ici_lock);
-> -       radix_tree_preload_end();
-> +out_unlock:
-> +       if (error == -EAGAIN)
-> +               XFS_STATS_INC(mp, xs_ig_dup);
-> 
-> I've changed the behaviour slightly in that returning an -ENOMEM used to
-> hit a WARN_ON, and I don't think that's the right response -- GFP_NOFS
-> returning -ENOMEM probably gets you a nice warning already from the
-> mm code.
+> as it replaces the existing preload and insert code in the XFS code
+> paths whilst letting us handle and document the "insert failed
+> because slot not empty" case however we want. It implies nothing
+> about *why* the slot wasn't empty, just that we couldn't do the
+> insert because it wasn't empty.
 
-It's been a couple of days since I first looked at this, and my
-initial reaction of "that's horrible!" hasn't changed.
+Yeah, OK.  So, over the top of the recent changes I'm looking at this:
 
-What you are proposing here might be a perfectly reasonable
-*internal implemention* of xa_store_excl(), but it makes for a
-terrible external API because the sematics and behaviour are so
-vague. e.g. what does "race" mean here with respect to an insert
-failure?
+I'm not in love with xa_store_empty() as a name.  I almost want
+xa_store_weak(), but after my MAP_FIXED_WEAK proposed name got shot
+down, I'm leery of it.  "empty" is at least a concept we already have
+in the API with the comment for xa_init() talking about an empty array
+and xa_empty().  I also considered xa_store_null and xa_overwrite_null
+and xa_replace_null().  Naming remains hard.
 
-i.e.  the fact the cmpxchg failed may not have anything to do with a
-race condtion - it failed because the slot wasn't empty like we
-expected it to be. There can be any number of reasons the slot isn't
-empty - the API should not "document" that the reason the insert
-failed was a race condition. It should document the case that we
-"couldn't insert because there was an existing entry in the slot".
-Let the surrounding code document the reason why that might have
-happened - it's not for the API to assume reasons for failure.
+diff --git a/fs/xfs/xfs_icache.c b/fs/xfs/xfs_icache.c
+index 941f38bb94a4..586b43836905 100644
+--- a/fs/xfs/xfs_icache.c
++++ b/fs/xfs/xfs_icache.c
+@@ -451,7 +451,7 @@ xfs_iget_cache_miss(
+ 	int			flags,
+ 	int			lock_flags)
+ {
+-	struct xfs_inode	*ip, *curr;
++	struct xfs_inode	*ip;
+ 	int			error;
+ 	xfs_agino_t		agino = XFS_INO_TO_AGINO(mp, ino);
+ 	int			iflags;
+@@ -498,8 +498,7 @@ xfs_iget_cache_miss(
+ 	xfs_iflags_set(ip, iflags);
+ 
+ 	/* insert the new inode */
+-	curr = xa_cmpxchg(&pag->pag_ici_xa, agino, NULL, ip, GFP_NOFS);
+-	error = __xa_race(curr, -EAGAIN);
++	error = xa_store_empty(&pag->pag_ici_xa, agino, ip, GFP_NOFS, -EAGAIN);
+ 	if (error)
+ 		goto out_unlock;
+ 
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 5792b6dbb040..cc7cc5253a67 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -271,43 +271,30 @@ static inline int xa_err(void *entry)
+ }
+ 
+ /**
+- * __xa_race() - Turn a cmpxchg result into an errno.
+- * @entry: Result from calling an XArray function.
+- * @errno: Error number to return if we lost the race.
++ * xa_store_empty() - Store this entry in the XArray unless another entry is
++ * 			already present.
++ * @xa: XArray.
++ * @index: Index into array.
++ * @entry: New entry.
++ * @gfp: Memory allocation flags.
++ * @rc: Number to return if another entry was present.
+  *
+- * Like xa_race(), but returns the error number of your choice.  Calling
+- * __xa_race(entry, 0) has the same result (but is less efficient) as
+- * calling xa_err().
++ * Like xa_store(), but will fail and return the supplied error number if
++ * the existing entry at @index is not %NULL.
+  *
+  * Return: A negative errno or 0.
+  */
+-static inline int __xa_race(void *entry, int errno)
++static inline int xa_store_empty(struct xarray *xa, unsigned long index,
++		void *entry, gfp_t gfp, int errno)
+ {
+-	if (!entry)
++	void *curr = xa_cmpxchg(xa, index, NULL, entry, gfp);
++	if (!curr)
+ 		return 0;
+-	if (xa_is_err(entry))
+-		return (long)entry >> 2;
++	if (xa_is_err(curr))
++		return xa_err(curr);
+ 	return errno;
+ }
+ 
+-/**
+- * xa_race() - Turn a cmpxchg result into an errno.
+- * @entry: Result from calling an XArray function.
+- *
+- * It is common to use xa_cmpxchg() to ensure that only one thread assigns
+- * a value to an index.  Pass the result from xa_cmpxchg() to xa_race() to
+- * get an errno back.  This function also handles any other error which
+- * may have been returned by xa_cmpxchg() such as ENOMEM.
+- *
+- * If you don't care that you lost the race, you can use xa_err() instead.
+- *
+- * Return: A negative errno or 0.
+- */
+-static inline int xa_race(void *entry)
+-{
+-	return __xa_race(entry, -EEXIST);
+-}
+-
+ /* Everything below here is the Advanced API.  Proceed with caution. */
+ 
+ #define xa_trylock(xa)		spin_trylock(&(xa)->xa_lock)
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index 85d1bc963ab6..87ed55af823e 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -614,8 +614,8 @@ static int cgwb_create(struct backing_dev_info *bdi,
+ 	spin_lock_irqsave(&cgwb_lock, flags);
+ 	if (test_bit(WB_registered, &bdi->wb.state) &&
+ 	    blkcg_cgwb_list->next && memcg_cgwb_list->next) {
+-		ret = xa_race(xa_cmpxchg(&bdi->cgwb_xa, memcg_css->id, NULL,
+-						wb, GFP_ATOMIC));
++		ret = xa_store_empty(&bdi->cgwb_xa, memcg_css->id, wb,
++					GFP_ATOMIC, -EEXIST);
+ 		if (!ret) {
+ 			list_add_tail_rcu(&wb->bdi_node, &bdi->wb_list);
+ 			list_add(&wb->memcg_node, memcg_cgwb_list);
 
-i.e. this API and potential internal implementation makes much
-more sense:
-
-int
-xa_store_iff_empty(...)
-{
-	curr = xa_cmpxchg(&pag->pag_ici_xa, agino, NULL, ip, GFP_NOFS);
-	if (!curr)
-		return 0;	/* success! */
-	if (!IS_ERR(curr))
-		return -EEXIST;	/* failed - slot not empty */
-	return PTR_ERR(curr);	/* failed - XA internal issue */
-}
-
-as it replaces the existing preload and insert code in the XFS code
-paths whilst letting us handle and document the "insert failed
-because slot not empty" case however we want. It implies nothing
-about *why* the slot wasn't empty, just that we couldn't do the
-insert because it wasn't empty.
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
