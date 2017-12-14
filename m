@@ -1,94 +1,102 @@
-From: Alan Stern <stern@rowland.harvard.edu>
+From: Joe Perches <joe@perches.com>
 Subject: Re: [PATCH v4 72/73] xfs: Convert mru cache to XArray
-Date: Tue, 12 Dec 2017 10:51:37 -0500 (EST)
-Message-ID: <Pine.LNX.4.44L0.1712121041240.1358-100000@iolanthe.rowland.org>
-References: <1513035963.3036.17.camel@perches.com>
+Date: Thu, 14 Dec 2017 10:23:42 -0800
+Message-ID: <1513275822.27409.73.camel@perches.com>
+References: <fd7130d7-9066-524e-1053-a61eeb27cb36@lge.com>
+	 <Pine.LNX.4.44L0.1712081228430.1371-100000@iolanthe.rowland.org>
+	 <20171208223654.GP5858@dastard> <1512838818.26342.7.camel@perches.com>
+	 <20171211214300.GT5858@dastard> <1513030348.3036.5.camel@perches.com>
+	 <20171211224301.GA3925@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Type:MIME-Version:Message-ID:In-Reply-To:
- Subject:cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:References:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=OT7IoOR6cg7GsEoh8ZMqfyHAfNhodIf0n2ypBC/tOH8=; b=LZQrWycGXHnqCU2elsDhVvI/Ui
- CXNIwpxsT2k8FUcjTqWxyuqnfYNvFOwUjGjbundLEVmE3XkpCq4L657Iwzf1icg/cjSMnajhBwDUb
- Lx62I189Pwa/zefiDP64pFdpy+LB6geSzXrihZDt5GlkxqiiYln/72D1qsMx8ZC/O34s=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Type:MIME-Version:Message-ID:In-Reply-To:Subject:cc:To:From:Date:
- Sender:Reply-To:Content-Transfer-Encoding:Content-ID:Content-Description:
- Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
- References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:
- List-Owner:List-Archive; bh=OT7IoOR6cg7GsEoh8ZMqfyHAfNhodIf0n2ypBC/tOH8=; b=L
- BExhRBIkaosFpUSLglzNEGN5PKFEadsz+VlWD/4PpcV72XhzuIXimgpcJvXkHfFs93dxBtQ+CSkmw
- cGE39H1bEINe58s3FF6N26gmoOg9Z+nQIRT+eH5r9QmpnG2WB9D79qBPV7UNIJS6AybdGcEmgM8vb
- oE0cPz1VxhPMXvGg=;
-In-Reply-To: <1513035963.3036.17.camel@perches.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Joe Perches <joe@perches.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Matthew Wilcox <mawilcox@microsoft.com>, linux-usb@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Byungchul Park <byungchul.park@lge.com>, linux-mm@kvack.org, kernel-team@lge.com, Andy Whitcroft <apw@shadowen.org>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Rehas Sachdeva <aquannie@gmail.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-btrfs@vger.kernel.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171211224301.GA3925@bombadil.infradead.org>
+Sender: owner-linux-mm@kvack.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Dave Chinner <david@fromorbit.com>, Alan Stern <stern@rowland.harvard.edu>, Byungchul Park <byungchul.park@lge.com>, Theodore Ts'o <tytso@mit.edu>, Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@lge.com
 
-On Mon, 11 Dec 2017, Joe Perches wrote:
-
-> >  - I don't understand the error for xa_head here:
-> > 
-> > struct xarray {
-> >         spinlock_t      xa_lock;
-> >         gfp_t           xa_flags;
-> >         void __rcu *    xa_head;
-> > };
-> > 
-> >    Do people really think that:
-> > 
-> > struct xarray {
-> >         spinlock_t      xa_lock;
-> >         gfp_t           xa_flags;
-> >         void __rcu	*xa_head;
-> > };
-> > 
-> >    is more aesthetically pleasing?  And not just that, but it's an *error*
-> >    so the former is *RIGHT* and this is *WRONG*.  And not just a matter
-
-Not sure what was meant here.  Neither one is *WRONG* in the sense of 
-being invalid C code.  In the sense of what checkpatch will accept, the 
-former is *WRONG* and the latter is *RIGHT* -- the opposite of what 
-was written.
-
-> >    of taste?
+On Mon, 2017-12-11 at 14:43 -0800, Matthew Wilcox wrote:
+>  - There's no warning for the first paragraph of section 6:
 > 
-> No opinion really.
-> That's from Andy Whitcroft's original implementation.
+> 6) Functions
+> ------------
+> 
+> Functions should be short and sweet, and do just one thing.  They should
+> fit on one or two screenfuls of text (the ISO/ANSI screen size is 80x24,
+> as we all know), and do one thing and do that well.
+> 
+>    I'm not expecting you to be able to write a perl script that checks
+>    the first line, but we have way too many 200-plus line functions in
+>    the kernel.  I'd like a warning on anything over 200 lines (a factor
+>    of 4 over Linus's stated goal).
 
-This one, at least, is easy to explain.  The original version tends to
-lead to bugs, or easily misunderstood code.  Consider if another
-variable was added to the declaration; it could easily turn into:
+Perhaps something like this?
 
-	void __rcu *	xa_head, xa_head2;
+(very very lightly tested, more testing appreciated)
+---
+ scripts/checkpatch.pl | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-(The compiler will reject this, but it wouldn't if the underlying type
-had been int instead of void.)
+diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
+index 4306b7616cdd..523aead40b87 100755
+--- a/scripts/checkpatch.pl
++++ b/scripts/checkpatch.pl
+@@ -59,6 +59,7 @@ my $conststructsfile = "$D/const_structs.checkpatch";
+ my $typedefsfile = "";
+ my $color = "auto";
+ my $allow_c99_comments = 1;
++my $max_function_length = 200;
+ 
+ sub help {
+ 	my ($exitcode) = @_;
+@@ -2202,6 +2203,7 @@ sub process {
+ 	my $realcnt = 0;
+ 	my $here = '';
+ 	my $context_function;		#undef'd unless there's a known function
++	my $context_function_linenum;
+ 	my $in_comment = 0;
+ 	my $comment_edge = 0;
+ 	my $first_line = 0;
+@@ -2341,6 +2343,7 @@ sub process {
+ 			} else {
+ 				undef $context_function;
+ 			}
++			undef $context_function_linenum;
+ 			next;
+ 
+ # track the line number as we move through the hunk, note that
+@@ -3200,11 +3203,18 @@ sub process {
+ 		if ($sline =~ /^\+\{\s*$/ &&
+ 		    $prevline =~ /^\+(?:(?:(?:$Storage|$Inline)\s*)*\s*$Type\s*)?($Ident)\(/) {
+ 			$context_function = $1;
++			$context_function_linenum = $realline;
+ 		}
+ 
+ # check if this appears to be the end of function declaration
+ 		if ($sline =~ /^\+\}\s*$/) {
++			if (defined($context_function_linenum) &&
++			    ($realline - $context_function_linenum) > $max_function_length) {
++				WARN("LONG_FUNCTION",
++				     "'$context_function' function definition is " . ($realline - $context_function_linenum) . " lines, perhaps refactor\n" . $herecurr);
++			}
+ 			undef $context_function;
++			undef $context_function_linenum;
+ 		}
+ 
+ # check indentation of any line with a bare else
+@@ -5983,6 +5993,7 @@ sub process {
+ 		    defined $stat &&
+ 		    $stat =~ /^.\s*(?:$Storage\s+)?$Type\s*($Ident)\s*$balanced_parens\s*{/s) {
+ 			$context_function = $1;
++			$context_function_linenum = $realline;
+ 
+ # check for multiline function definition with misplaced open brace
+ 			my $ok = 0;
 
-Doing it the other way makes the meaning a lot more clear:
-
-	void __rcu	*xa_head, *xa_head2;
-
-This is an idiom specifically intended to reduce the likelihood of 
-errors.  Rather like avoiding assignments inside conditionals.
-
-Alan Stern
-
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
