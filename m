@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 67/78] page cache: Finish XArray conversion
-Date: Fri, 15 Dec 2017 14:04:39 -0800
-Message-ID: <20171215220450.7899-68-willy@infradead.org>
+Subject: [PATCH v5 64/78] dax: Convert dax_insert_mapping_entry
+ to XArray
+Date: Fri, 15 Dec 2017 14:04:36 -0800
+Message-ID: <20171215220450.7899-65-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=tKQOl0vDgGc/1Dp8cnYTYXe0Rr75h7fPE9HnDcT2JL0=; b=QkjLK+I9vOfYl/MUPV/RUMKMQ3
- 5vGMy3JJeqWvslp6XQN4E3L3j1jnaQHszR+Rhi4kSp6ltdi36XH19h4E9EtRyZRFjI+5fBv3q5hOn
- 2G/LCAI+Ugo0l08KpacoLrC2JUTiZpI5zZL89yIexL2ySwcZdMfdQm9k57yd86n4PC58=;
+ bh=7tPDoqs87772IfLubU8+tHtD87IxbWpnhrTcqQR7GQ0=; b=KffXCMko/jJ+OgEv5FQkb8tPST
+ XjDnwSXnavwUIcMKYKSOicI1pip0d36u/3R6kIjtSx0j/bFPfL93egn6DWIfgLbR2463ya+Y4ZuaZ
+ Meu+CbijEzFaqO8qKobndaia2tgHO05P4DoM+eFeQkNIwGMAK9c02oLYyWAQW/g9kSas=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=tKQOl0vDgGc/1Dp8cnYTYXe0Rr75h7fPE9HnDcT2JL0=; b=KwQt+IWMQDNfDFRhXvOH6YsXgA
- NSFq3zCJULu9Yb9gjRfMgOrX4GCzyVbDNBnS92DIc97tfqaVWRcnZCBCbgcXqnaJFrHQnOT9fZLTc
- ppsLWJgfox5+SYdC7iaX5XpSvVKPYxanN+zBKt4Pnnb1H05C26/2PtkDILAq2c2jNMMg=;
+ bh=7tPDoqs87772IfLubU8+tHtD87IxbWpnhrTcqQR7GQ0=; b=O8hM6m3CC/PlJWoXmhpOfPjlYx
+ Z++jfmBtMBy6PejrCthFl1tPaVrjFKzstjUAsMDuwmInJOfYlHHVEs4xMbmg+cY/PMeNfTAB3oVWM
+ dFReN/CC2wBA0pviKvefVwX4GtwJTD2tPwuKCxHCOkjMB8dOXyLcPWWGfjZEjFpkLOPE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=tKQOl0vDgGc/1Dp8cnYTYXe0Rr75h7fPE9HnDcT2JL0=; b=pObaet+EKfUAVbVMRJs6A0/Eg
- OgNDMs6ijKQdhKf9Q863JRPenOoGgrIOXCglKGfegFDjfLIp0++lEx7f1vBMkeTiKX+x0C32B9YSs
- CoSz7oepK56xuopVYi+SELElrYs8nSxaZwu4azoWpYQBVziDClSO9kFsngTkxp4+Yvw3tNbvBkDr9
- /h8imuqRDS79kKUJVwhSPI93PHjBzeCcoi0veopqJUKbp3bf+UfaKczrMuXnkzfkxkcSIdo0yasmu
- aKZ94B5MQRZQ1JwOUEH/0OENaBCu04aA+yh0ldjJyerO7ORvOzO/i0HY78upg1VRTbB/KiJcQF4iF
- 1tgVaOMdA==;
+ bh=7tPDoqs87772IfLubU8+tHtD87IxbWpnhrTcqQR7GQ0=; b=RuuaFQoFx91hAiDcIS6mrqbpl
+ siLk4Zo4gdZ0fndX2MS4+7zHrSkfSGykGgxohYsjj4odKlMcZSg7i8K6gFOgyKzMxAl6+GLPhy9IW
+ 0O9Ts26HR7sWH130HgpjP40t8og+5Sf6aOGl6aBXIGg3joXEmtHQueEw4MfJ/DO5czpAwViCtcmAH
+ zDY4amEHlltj3fagcp32TktjxAV3btBQa9KiK7GlqqRAI0wJuq7Afo9yaJ4CdX9zY1JErwxEMV4KU
+ 2XI0GuHNQe18xKHmkLpUYDxovH0ZLCARm+IVwCfIKQooC3cbL7X8supk32lm1SCxtr/6WXTo5/Cy8
+ zYU2+sTNg==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,55 +54,61 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-With no more radix tree API users left, we can drop the GFP flags
-and use xa_init() instead of INIT_RADIX_TREE().
-
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/inode.c         | 2 +-
- include/linux/fs.h | 2 +-
- mm/swap_state.c    | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ fs/dax.c | 18 ++++++------------
+ 1 file changed, 6 insertions(+), 12 deletions(-)
 
-diff --git a/fs/inode.c b/fs/inode.c
-index c7b00573c10d..2046ff6dd1b3 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -348,7 +348,7 @@ EXPORT_SYMBOL(inc_nlink);
- void address_space_init_once(struct address_space *mapping)
+diff --git a/fs/dax.c b/fs/dax.c
+index 9cfd4fcc0b0d..a3e795ad2493 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -498,9 +498,9 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 				      void *entry, sector_t sector,
+ 				      unsigned long flags, bool dirty)
  {
- 	memset(mapping, 0, sizeof(*mapping));
--	INIT_RADIX_TREE(&mapping->pages, GFP_ATOMIC | __GFP_ACCOUNT);
-+	xa_init(&mapping->pages);
- 	init_rwsem(&mapping->i_mmap_rwsem);
- 	INIT_LIST_HEAD(&mapping->private_list);
- 	spin_lock_init(&mapping->private_lock);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index c58bc3c619bf..b459bf4ddb62 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -410,7 +410,7 @@ int pagecache_write_end(struct file *, struct address_space *mapping,
-  */
- struct address_space {
- 	struct inode		*host;
--	struct radix_tree_root	pages;
-+	struct xarray		pages;
- 	gfp_t			gfp_mask;
- 	atomic_t		i_mmap_writable;
- 	struct rb_root_cached	i_mmap;
-diff --git a/mm/swap_state.c b/mm/swap_state.c
-index 219e3b4f09e6..6ee5b17d7e79 100644
---- a/mm/swap_state.c
-+++ b/mm/swap_state.c
-@@ -573,7 +573,7 @@ int init_swap_address_space(unsigned int type, unsigned long nr_pages)
- 		return -ENOMEM;
- 	for (i = 0; i < nr; i++) {
- 		space = spaces + i;
--		INIT_RADIX_TREE(&space->pages, GFP_ATOMIC|__GFP_NOWARN);
-+		xa_init(&space->pages);
- 		atomic_set(&space->i_mmap_writable, 0);
- 		space->a_ops = &swap_aops;
- 		/* swap cache doesn't use writeback related tags */
+-	struct radix_tree_root *pages = &mapping->pages;
+ 	void *new_entry;
+ 	pgoff_t index = vmf->pgoff;
++	XA_STATE(xas, &mapping->pages, index);
+ 
+ 	if (dirty)
+ 		__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
+@@ -516,7 +516,7 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 					PAGE_SIZE, 0);
+ 	}
+ 
+-	xa_lock_irq(&mapping->pages);
++	xas_lock_irq(&xas);
+ 	new_entry = dax_radix_locked_entry(sector, flags);
+ 
+ 	if (dax_is_zero_entry(entry) || dax_is_empty_entry(entry)) {
+@@ -528,21 +528,15 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 		 * existing entry is a PMD, we will just leave the PMD in the
+ 		 * tree and dirty it if necessary.
+ 		 */
+-		struct radix_tree_node *node;
+-		void **slot;
+-		void *ret;
+-
+-		ret = __radix_tree_lookup(pages, index, &node, &slot);
+-		WARN_ON_ONCE(ret != entry);
+-		__radix_tree_replace(pages, node, slot,
+-				     new_entry, NULL);
++		void *prev = xas_store(&xas, new_entry);
++		WARN_ON_ONCE(prev != entry);
+ 		entry = new_entry;
+ 	}
+ 
+ 	if (dirty)
+-		radix_tree_tag_set(pages, index, PAGECACHE_TAG_DIRTY);
++		xas_set_tag(&xas, PAGECACHE_TAG_DIRTY);
+ 
+-	xa_unlock_irq(&mapping->pages);
++	xas_unlock_irq(&xas);
+ 	return entry;
+ }
+ 
 -- 
 2.15.1
 
