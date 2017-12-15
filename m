@@ -1,478 +1,1112 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 18/78] xarray: Add xas_next and xas_prev
-Date: Fri, 15 Dec 2017 14:03:50 -0800
-Message-ID: <20171215220450.7899-19-willy@infradead.org>
+Subject: [PATCH v5 22/78] idr: Convert to XArray
+Date: Fri, 15 Dec 2017 14:03:54 -0800
+Message-ID: <20171215220450.7899-23-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Return-path: <owner-linux-mm@kvack.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-	Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-	 bh=UsuFxRxWB3t7oup23G+BSg7747bppSFM53jBmIqXe0M=; b=J4zfobqgrHCyfcO7Q1SZQBFkn
-	9x2a7pefNN0MMCFuWTAoEndtlmfaU9rW7qlgH9GiINxGckIUqsLPZaOaVeFLauVPX0K4J+hME6UEZ
-	IxBVX5Aqr9YMmZ9vT5kM8RlWUKd1wF2aRnemvEbPEHfGq2iLDFopR6qCIbIzZBARmn3kJsRojBStd
-	93Fal5F4R86LdNgSU2a6WKEZj1LLJya72k1IfUh2CctzD94Nx5ohvJ/P3obU7l5QFrpNBN5pST/km
-	ant6I87BI43Ij8zIt9vTCv14IWi00xyJvpxbsVmqsg64QLQxPsgi5EBMFl3uSDwwIEKeT3z0Q+uRM
-	ZYHmy3Vzw==;
-In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-Sender: owner-linux-mm@kvack.org
-List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
+ To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=ddFKZKI6zHRG9zWpzBQWs15gE7HFWF50YEykDuJBRLU=; b=C8sx1Nf8LeaOLUJOQ5U2HvHRJu
+ u5xZbdHEIcEguOCU8Tvo5OfWFSgrmW0aMsS2ygOneh9djLtB5Vt1ouc/Ixw5BnA4FY/rfG3DVCNSL
+ I/RgGJdxqiu0I7pCU9ms6Vw9o9O0ksYA0yMkJUTdE/xng1BFU7olproinxFiytZwQkog=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
+ :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=ddFKZKI6zHRG9zWpzBQWs15gE7HFWF50YEykDuJBRLU=; b=EWxc6g1aKXMJdncii2xP27k84k
+ nUW6c8V5gUWqjwvf3DzwrObT23ZGfM3HORUD1TtMe0RoJRb9Da2GHc2QGu15A9ipIR6jkG8OKIIaC
+ 5rvfCUPP7ZJRhc6b8U8Bu1UxEvETNMqK4pw+DQs7e1w7V6JAs7hqDqbFjCvQtslgggcg=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+ Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+ Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+ List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=ddFKZKI6zHRG9zWpzBQWs15gE7HFWF50YEykDuJBRLU=; b=gqWoQl02txCZjO2yzqooaJ/na
+ PPazm4GAw0E8MeQQlrlO9cjawiUUjgknd1cPs6lMoFQ/NjOUYlO0O1vziR9qNwCVvGraDdYTalYHg
+ C5691jEyvvOp00uAXDR25HDdZerd5VX/JWkVppK0PdblFDrn1MlAh+t5aBdxpHn/9JpBgFyW+t0wh
+ K6IQcocobCNN8aAbsXyC7okhXfyQVE1Hwo9zST15mKottd9SjmtTo3RVxozRNoONboLFoRGIduK5C
+ vMHlHIUnugBQ1w2cF9wvDm2E5yCJCX0/VjBs65DuG1bi1vSuXlia1QpkEW4REVtig/V1ExQ+cEDYb
+ zs76dhpmQ==;
+In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-kernel@vger.kernel.org
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
+Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-raid@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-usb@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Rehas Sachdeva <aquannie@gmail.com>, Shaohua Li <shli@kernel.org>, linux-btrfs@vger.kernel.org
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-These two functions move the xas index by one position, and adjust the
-rest of the iterator state to match it.  This is more efficient than
-calling xas_set() as it keeps the iterator at the leaves of the tree
-instead of walking the iterator from the root each time.
+The IDR distinguishes between unallocated entries (read as NULL) and
+entries where the user has chosen to store NULL.  The radix tree was
+modified to consider NULL entries which had tag 0 _clear_ as being
+allocated, but it added a lot of complexity.
+
+Instead, the XArray has a 'zero entry', which the normal API will treat
+as NULL, but is distinct from NULL when using the advanced API.  The IDR
+code converts between NULL and zero entries.
+
+The idr_for_each_entry_ul() iterator becomes an alias for xa_for_each(),
+so we drop the idr_get_next_ul() function as it has no users.
+
+The exported IDR API was a weird mix of GPL-only and general symbols;
+I converted them all to GPL as there was no way to use the IDR API
+without being GPL.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h                 |  71 ++++++++++-
- lib/xarray.c                           |  74 ++++++++++++
- tools/testing/radix-tree/xarray-test.c | 213 +++++++++++++++++++++++++++++++++
- 3 files changed, 356 insertions(+), 2 deletions(-)
+ Documentation/core-api/xarray.rst   |   6 +
+ include/linux/idr.h                 | 154 ++++++++++++-------
+ include/linux/xarray.h              |  27 +++-
+ lib/idr.c                           | 298 ++++++++++++++++++++++--------------
+ lib/radix-tree.c                    |  77 +++++-----
+ lib/xarray.c                        |  11 +-
+ tools/testing/radix-tree/idr-test.c |  23 +++
+ 7 files changed, 382 insertions(+), 214 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index fea81383a301..2d889208b68d 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -640,6 +640,12 @@ static inline bool xas_not_node(struct xa_node *node)
- 	return ((unsigned long)node & 3) || !node;
- }
+diff --git a/Documentation/core-api/xarray.rst b/Documentation/core-api/xarray.rst
+index 57a494026d96..8ba2a4dc021e 100644
+--- a/Documentation/core-api/xarray.rst
++++ b/Documentation/core-api/xarray.rst
+@@ -260,6 +260,12 @@ to :c:func:`xas_retry`, and retry the operation if it returns ``true``.
+        this RCU period.  You should restart the lookup from the head of the
+        array.
  
-+/* True if the node represents RESTART or an error */
-+static inline bool xas_frozen(struct xa_node *node)
++   * - Zero
++     - :c:func:`xa_is_zero`
++     - Zero entries appear as ``NULL`` through the Normal API, but occupy an
++       entry in the XArray which can be tagged or otherwise used to reserve
++       the index.
++
+ Other internal entries may be added in the future.  As far as possible, they
+ will be handled by :c:func:`xas_retry`.
+ 
+diff --git a/include/linux/idr.h b/include/linux/idr.h
+index 45a77d32dcf6..08a3f5900d53 100644
+--- a/include/linux/idr.h
++++ b/include/linux/idr.h
+@@ -9,34 +9,34 @@
+  * tables.
+  */
+ 
+-#ifndef __IDR_H__
+-#define __IDR_H__
++#ifndef _LINUX_IDR_H
++#define _LINUX_IDR_H
+ 
+ #include <linux/radix-tree.h>
+ #include <linux/gfp.h>
+ #include <linux/percpu.h>
+-#include <linux/bug.h>
++#include <linux/xarray.h>
+ 
+ struct idr {
+-	struct radix_tree_root	idr_rt;
+-	unsigned int		idr_next;
++	struct xarray	idr_xa;
++	unsigned int	idr_next;
+ };
+ 
+-/*
+- * The IDR API does not expose the tagging functionality of the radix tree
+- * to users.  Use tag 0 to track whether a node has free space below it.
+- */
+-#define IDR_FREE	0
+-
+-/* Set the IDR flag and the IDR_FREE tag */
+-#define IDR_RT_MARKER		((__force gfp_t)(3 << __GFP_BITS_SHIFT))
++#define IDR_INIT_FLAGS		(XA_FLAGS_TRACK_FREE | XA_FLAGS_TAG(0))
+ 
+ #define IDR_INIT(name)							\
+ {									\
+-	.idr_rt = RADIX_TREE_INIT(name, IDR_RT_MARKER)			\
++	.idr_xa = __XARRAY_INIT(name.idr_xa, IDR_INIT_FLAGS),		\
++	.idr_next = 0,							\
+ }
+ #define DEFINE_IDR(name)	struct idr name = IDR_INIT(name)
+ 
++static inline void idr_init(struct idr *idr)
 +{
-+	return (unsigned long)node & 2;
++	__xa_init(&idr->idr_xa, IDR_INIT_FLAGS);
++	idr->idr_next = 0;
 +}
 +
- /* True if the node represents head-of-tree, RESTART or BOUNDS */
- static inline bool xas_top(struct xa_node *node)
+ /**
+  * idr_get_cursor - Return the current position of the cyclic allocator
+  * @idr: idr handle
+@@ -65,62 +65,83 @@ static inline void idr_set_cursor(struct idr *idr, unsigned int val)
+ 
+ /**
+  * DOC: idr sync
+- * idr synchronization (stolen from radix-tree.h)
++ * idr synchronization
+  *
+- * idr_find() is able to be called locklessly, using RCU. The caller must
+- * ensure calls to this function are made within rcu_read_lock() regions.
+- * Other readers (lock-free or otherwise) and modifications may be running
+- * concurrently.
++ * The IDR manages its own locking, using irqsafe spinlocks for operations
++ * which modify the IDR and RCU for operations which do not.  The user of
++ * the IDR may choose to wrap accesses to it in a lock if it needs to
++ * guarantee the IDR does not change during a read access.  The easiest way
++ * to do this is to grab the same lock the IDR uses for write accesses
++ * using one of the idr_lock() wrappers.
+  *
+- * It is still required that the caller manage the synchronization and
+- * lifetimes of the items. So if RCU lock-free lookups are used, typically
+- * this would mean that the items have their own locks, or are amenable to
+- * lock-free access; and that the items are freed by RCU (or only freed after
+- * having been deleted from the idr tree *and* a synchronize_rcu() grace
+- * period).
++ * The caller must still manage the synchronization and lifetimes of the
++ * items. So if RCU lock-free lookups are used, typically this would mean
++ * that the items have their own locks, or are amenable to lock-free access;
++ * and that the items are freed by RCU (or only freed after having been
++ * deleted from the IDR *and* a synchronize_rcu() grace period has elapsed).
+  */
+ 
+-void idr_preload(gfp_t gfp_mask);
++#define idr_lock(idr)		xa_lock(&(idr)->idr_xa)
++#define idr_unlock(idr)		xa_unlock(&(idr)->idr_xa)
++#define idr_lock_bh(idr)	xa_lock_bh(&(idr)->idr_xa)
++#define idr_unlock_bh(idr)	xa_unlock_bh(&(idr)->idr_xa)
++#define idr_lock_irq(idr)	xa_lock_irq(&(idr)->idr_xa)
++#define idr_unlock_irq(idr)	xa_unlock_irq(&(idr)->idr_xa)
++#define idr_lock_irqsave(idr, flags) \
++				xa_lock_irqsave(&(idr)->idr_xa, flags)
++#define idr_unlock_irqrestore(idr, flags) \
++				xa_unlock_irqrestore(&(idr)->idr_xa, flags)
++
++void idr_preload(gfp_t);
+ 
+ int idr_alloc(struct idr *, void *, int start, int end, gfp_t);
+ int __must_check idr_alloc_ul(struct idr *, void *, unsigned long *nextid,
+ 			unsigned long max, gfp_t);
+ int idr_alloc_cyclic(struct idr *, void *entry, int start, int end, gfp_t);
+-int idr_for_each(const struct idr *,
++void *idr_remove(struct idr *, unsigned long id);
++void *idr_replace(struct idr *, void *, unsigned long id);
++int idr_for_each(struct idr *,
+ 		 int (*fn)(int id, void *p, void *data), void *data);
+ void *idr_get_next(struct idr *, int *nextid);
+-void *idr_get_next_ul(struct idr *, unsigned long *nextid);
+-void *idr_replace(struct idr *, void *, unsigned long id);
+-void idr_destroy(struct idr *);
+ 
++#ifdef CONFIG_64BIT
++int __must_check idr_alloc_u32(struct idr *, void *, unsigned int *nextid,
++			unsigned int max, gfp_t);
++#else /* !CONFIG_64BIT */
+ static inline int __must_check idr_alloc_u32(struct idr *idr, void *ptr,
+-				u32 *nextid, unsigned long max, gfp_t gfp)
+-{
+-	unsigned long tmp = *nextid;
+-	int ret = idr_alloc_ul(idr, ptr, &tmp, max, gfp);
+-	*nextid = tmp;
+-	return ret;
+-}
+-
+-static inline void *idr_remove(struct idr *idr, unsigned long id)
++		unsigned int *nextid, unsigned int max, gfp_t gfp)
  {
-@@ -758,8 +764,8 @@ static inline bool xa_iter_skip(const void *entry)
+-	return radix_tree_delete_item(&idr->idr_rt, id, NULL);
++	return idr_alloc_ul(idr, ptr, (unsigned long *)nextid, max, gfp);
+ }
++#endif
+ 
+-static inline void idr_init(struct idr *idr)
++/**
++ * idr_is_empty() - Determine if there are no entries in the IDR
++ * @idr: IDR handle.
++ *
++ * Return: %true if there are no entries in the IDR.
++ */
++static inline bool idr_is_empty(const struct idr *idr)
+ {
+-	INIT_RADIX_TREE(&idr->idr_rt, IDR_RT_MARKER);
+-	idr->idr_next = 0;
++	return xa_empty(&idr->idr_xa);
+ }
+ 
+-static inline bool idr_is_empty(const struct idr *idr)
++/**
++ * idr_destroy() - Free all internal memory used by an IDR.
++ * @idr: IDR handle.
++ *
++ * When you have finished using an IDR, you can free all the memory used
++ * for the IDR data structure by calling this function.  If you also
++ * wish to free the objects referenced by the IDR, you can use idr_for_each()
++ * or idr_for_each_entry() to do that first.
++ */
++static inline void idr_destroy(struct idr *idr)
+ {
+-	return radix_tree_empty(&idr->idr_rt) &&
+-		radix_tree_tagged(&idr->idr_rt, IDR_FREE);
++	xa_destroy(&idr->idr_xa);
+ }
+ 
+ /**
+- * idr_preload_end - end preload section started with idr_preload()
++ * idr_preload_end() - end preload section started with idr_preload()
+  *
+  * Each idr_preload() should be matched with an invocation of this
+  * function.  See idr_preload() for details.
+@@ -131,7 +152,7 @@ static inline void idr_preload_end(void)
+ }
+ 
+ /**
+- * idr_find - return pointer for given id
++ * idr_find() - return pointer for given id
+  * @idr: idr handle
+  * @id: lookup key
+  *
+@@ -139,14 +160,35 @@ static inline void idr_preload_end(void)
+  * return indicates that @id is not valid or you passed %NULL in
+  * idr_get_new().
+  *
+- * This function can be called under rcu_read_lock(), given that the leaf
+- * pointers lifetimes are correctly managed.
++ * This function is protected by the RCU read lock.  If you want to ensure
++ * that it does not race with a call to idr_remove(), perhaps because you
++ * need to establish a refcount on the object, you can use idr_lock() and
++ * idr_unlock() to prevent simultaneous modification.
+  */
+-static inline void *idr_find(const struct idr *idr, unsigned long id)
++static inline void *idr_find(struct idr *idr, unsigned long id)
+ {
+-	return radix_tree_lookup(&idr->idr_rt, id);
++	return xa_load(&idr->idr_xa, id);
+ }
+ 
++/**
++ * idr_for_each_entry_ul() - Iterate over the entries in an IDR.
++ * @idr: IDR handle.
++ * @entry: Pointer to each entry in turn.
++ * @id: ID of each entry.
++ *
++ * Initialise @id to the lowest ID before using this iterator.
++ * In the body of the loop, @entry will point to the object stored in the
++ * IDR.  After the loop has finished normally, @entry will be %NULL, which
++ * is a convenient way to distinguish between a 'break' exit from the loop
++ * and normal termination.
++ *
++ * The control elements of this loop protect themselves with the RCU read
++ * lock, which is dropped before invoking the body.  You may sleep unless
++ * your own locking prevents that.
++ */
++#define idr_for_each_entry_ul(idr, entry, id)			\
++	xa_for_each(&(idr)->idr_xa, entry, id, ULONG_MAX)
++
+ /**
+  * idr_for_each_entry - iterate over an idr's elements of a given type
+  * @idr:     idr handle
+@@ -159,8 +201,6 @@ static inline void *idr_find(const struct idr *idr, unsigned long id)
+  */
+ #define idr_for_each_entry(idr, entry, id)			\
+ 	for (id = 0; ((entry) = idr_get_next(idr, &(id))) != NULL; ++id)
+-#define idr_for_each_entry_ul(idr, entry, id)			\
+-	for (id = 0; ((entry) = idr_get_next_ul(idr, &(id))) != NULL; ++id)
+ 
+ /**
+  * idr_for_each_entry_continue - continue iteration over an idr's elements of a given type
+@@ -195,7 +235,7 @@ struct ida {
+ };
+ 
+ #define IDA_INIT(name)	{						\
+-	.ida_rt = RADIX_TREE_INIT(name, IDR_RT_MARKER | GFP_NOWAIT),	\
++	.ida_rt = RADIX_TREE_INIT(name, IDR_INIT_FLAGS | GFP_NOWAIT),	\
+ }
+ #define DEFINE_IDA(name)	struct ida name = IDA_INIT(name)
+ 
+@@ -210,7 +250,7 @@ void ida_simple_remove(struct ida *ida, unsigned int id);
+ 
+ static inline void ida_init(struct ida *ida)
+ {
+-	INIT_RADIX_TREE(&ida->ida_rt, IDR_RT_MARKER | GFP_NOWAIT);
++	INIT_RADIX_TREE(&ida->ida_rt, IDR_INIT_FLAGS | GFP_NOWAIT);
+ }
+ 
+ /**
+@@ -229,4 +269,4 @@ static inline bool ida_is_empty(const struct ida *ida)
+ {
+ 	return radix_tree_empty(&ida->ida_rt);
+ }
+-#endif /* __IDR_H__ */
++#endif /* _LINUX_IDR_H */
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index e0f8eb06b874..eba544f26b70 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -473,7 +473,8 @@ static inline void *xa_entry_locked(struct xarray *xa,
+  * internal entries are pointers to the next node in the tree.  Since the
+  * kernel unmaps page 0 to trap NULL pointer dereferences, we can use values
+  * 0-1023 for special purposes.  Values 0-62 are used for sibling
+- * entries.  Value 256 is used for the retry entry.
++ * entries.  Value 256 is used for zero entries.  Value 257 is used for the
++ * retry entry.
+  *
+  * Errors are also represented as internal entries, but use the negative
+  * space (-4094 to -2).  They're never stored in the slots array; only
+@@ -535,7 +536,19 @@ static inline bool xa_is_sibling(const void *entry)
+ 		(entry < xa_mk_sibling(XA_CHUNK_SIZE - 1));
+ }
+ 
+-#define XA_RETRY_ENTRY		xa_mk_internal(256)
++#define XA_ZERO_ENTRY		xa_mk_internal(256)
++#define XA_RETRY_ENTRY		xa_mk_internal(257)
++
++/**
++ * xa_is_zero() - Is the entry a zero entry?
++ * @entry: Entry retrieved from the XArray
++ *
++ * Return: %true if the entry is a zero entry.
++ */
++static inline bool xa_is_zero(const void *entry)
++{
++	return unlikely(entry == XA_ZERO_ENTRY);
++}
+ 
+ /**
+  * xa_is_retry() - Is the entry a retry entry?
+@@ -697,18 +710,20 @@ static inline bool xas_top(struct xa_node *node)
+ }
+ 
+ /**
+- * xas_retry() - Handle a retry entry.
++ * xas_retry() - Retry the operation if appropriate.
+  * @xas: XArray operation state.
+  * @entry: Entry from xarray.
+  *
+- * An RCU-protected read may see a retry entry as a side-effect of a
+- * simultaneous modification.  This function sets up the @xas to retry
+- * the walk from the head of the array.
++ * The advanced functions may sometimes return an internal entry, such as
++ * a retry entry or a zero entry.  This function sets up the @xas to restart
++ * the walk from the head of the array if needed.
+  *
+  * Return: true if the operation needs to be retried.
+  */
+ static inline bool xas_retry(struct xa_state *xas, const void *entry)
+ {
++	if (xa_is_zero(entry))
++		return true;
+ 	if (!xa_is_retry(entry))
+ 		return false;
+ 	xas->xa_node = XAS_RESTART;
+diff --git a/lib/idr.c b/lib/idr.c
+index b9aa08e198a2..a383a1c5767b 100644
+--- a/lib/idr.c
++++ b/lib/idr.c
+@@ -1,3 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++/*
++ * IDR implementation
++ * Copyright (c) 2017 Microsoft Corporation
++ * Author: Matthew Wilcox <mawilcox@microsoft.com>
++ */
++
+ #include <linux/bitmap.h>
+ #include <linux/export.h>
+ #include <linux/idr.h>
+@@ -8,67 +15,121 @@
+ DEFINE_PER_CPU(struct ida_bitmap *, ida_bitmap);
+ static DEFINE_SPINLOCK(simple_ida_lock);
+ 
++/* In radix-tree.c temporarily */
++extern bool idr_nomem(struct xa_state *, gfp_t);
++
+ /**
+- * idr_alloc_ul() - allocate a large ID
+- * @idr: idr handle
+- * @ptr: pointer to be associated with the new ID
+- * @nextid: Pointer to minimum ID to allocate
+- * @max: the maximum ID (inclusive)
+- * @gfp: memory allocation flags
++ * idr_alloc_ul() - Allocate a large ID.
++ * @idr: IDR handle.
++ * @ptr: Pointer to be associated with the new ID.
++ * @nextid: Pointer to minimum ID to allocate.
++ * @max: The maximum ID (inclusive).
++ * @gfp: Memory allocation flags.
+  *
+  * Allocates an unused ID in the range [*nextid, end] and stores it in
+  * @nextid.  Note that @max differs from the @end parameter to idr_alloc().
+  *
+- * Simultaneous modifications to the @idr are not allowed and should be
+- * prevented by the user, usually with a lock.  idr_alloc_ul() may be called
+- * concurrently with read-only accesses to the @idr, such as idr_find() and
+- * idr_for_each_entry().
++ * The IDR uses its own spinlock to protect against simultaneous
++ * modification.  @nextid is assigned to before @ptr is stored in the IDR;
++ * if @nextid points into the object referenced by @ptr, it will not be
++ * possible for a simultaneous lookup to see the wrong value in @nextid.
+  *
+- * Return: 0 on success or a negative errno on failure (ENOMEM or ENOSPC)
++ * Return: 0 on success or a negative errno on failure (ENOMEM or ENOSPC).
+  */
+ int idr_alloc_ul(struct idr *idr, void *ptr, unsigned long *nextid,
+ 			unsigned long max, gfp_t gfp)
+ {
+-	struct radix_tree_iter iter;
+-	void __rcu **slot;
++	XA_STATE(xas, &idr->idr_xa, *nextid);
++	unsigned long flags;
+ 
+-	if (WARN_ON_ONCE(radix_tree_is_internal_node(ptr)))
++	if (WARN_ON_ONCE(xa_is_internal(ptr)))
+ 		return -EINVAL;
++	if (!ptr)
++		ptr = XA_ZERO_ENTRY;
++
++	do {
++		xas_lock_irqsave(&xas, flags);
++		xas_find_tag(&xas, max, XA_FREE_TAG);
++		if (xas.xa_index > max)
++			xas_set_err(&xas, -ENOSPC);
++		else
++			*nextid = xas.xa_index;
++		xas_store(&xas, ptr);
++		xas_clear_tag(&xas, XA_FREE_TAG);
++		xas_unlock_irqrestore(&xas, flags);
++	} while (idr_nomem(&xas, gfp));
++
++	return xas_error(&xas);
++}
++EXPORT_SYMBOL_GPL(idr_alloc_ul);
+ 
+-	if (WARN_ON_ONCE(!(idr->idr_rt.xa_flags & ROOT_IS_IDR)))
+-		idr->idr_rt.xa_flags |= IDR_RT_MARKER;
+-
+-	radix_tree_iter_init(&iter, *nextid);
+-	slot = idr_get_free(&idr->idr_rt, &iter, gfp, max);
+-	if (IS_ERR(slot))
+-		return PTR_ERR(slot);
+-
+-	radix_tree_iter_replace(&idr->idr_rt, &iter, slot, ptr);
+-	radix_tree_iter_tag_clear(&idr->idr_rt, &iter, IDR_FREE);
++/**
++ * idr_alloc_u32() - Allocate an ID.
++ * @idr: IDR handle.
++ * @ptr: Pointer to be associated with the new ID.
++ * @nextid: Pointer to minimum ID to allocate.
++ * @max: The maximum ID (inclusive).
++ * @gfp: Memory allocation flags.
++ *
++ * Allocates an unused ID in the range [*nextid, end] and stores it in
++ * @nextid.  Note that @max differs from the @end parameter to idr_alloc().
++ *
++ * The IDR uses its own spinlock to protect against simultaneous
++ * modification.  @nextid is assigned to before @ptr is stored in the IDR;
++ * if @nextid points into the object referenced by @ptr, it will not be
++ * possible for a simultaneous lookup to see the wrong value in @nextid.
++ *
++ * Return: 0 on success or a negative errno on failure (ENOMEM or ENOSPC).
++ */
++#ifdef CONFIG_64BIT
++int idr_alloc_u32(struct idr *idr, void *ptr, unsigned int *nextid,
++			unsigned int max, gfp_t gfp)
++{
++	XA_STATE(xas, &idr->idr_xa, *nextid);
++	unsigned long flags;
+ 
+-	*nextid = iter.index;
+-	return 0;
++	if (WARN_ON_ONCE(xa_is_internal(ptr)))
++		return -EINVAL;
++	if (!ptr)
++		ptr = XA_ZERO_ENTRY;
++
++	do {
++		xas_lock_irqsave(&xas, flags);
++		xas_find_tag(&xas, max, XA_FREE_TAG);
++		if (xas.xa_index > max)
++			xas_set_err(&xas, -ENOSPC);
++		else
++			*nextid = xas.xa_index;
++		xas_store(&xas, ptr);
++		xas_clear_tag(&xas, XA_FREE_TAG);
++		xas_unlock_irqrestore(&xas, flags);
++	} while (idr_nomem(&xas, gfp));
++
++	return xas_error(&xas);
+ }
+-EXPORT_SYMBOL_GPL(idr_alloc_ul);
++EXPORT_SYMBOL_GPL(idr_alloc_u32);
++#endif
+ 
+ /**
+- * idr_alloc - allocate an id
+- * @idr: idr handle
+- * @ptr: pointer to be associated with the new id
+- * @start: the minimum id (inclusive)
+- * @end: the maximum id (exclusive)
+- * @gfp: memory allocation flags
++ * idr_alloc() - Allocate an ID.
++ * @idr: IDR handle.
++ * @ptr: Pointer to be associated with the new ID.
++ * @start: The minimum id (inclusive).
++ * @end: The maximum id (exclusive).
++ * @gfp: Memory allocation flags.
++ *
++ * Allocates an unused ID >= start and < end.
+  *
+- * Allocates an unused ID in the range [start, end).  Returns -ENOSPC
+- * if there are no unused IDs in that range.
++ * If @end is <= 0, it is treated as %INT_MAX + 1.  This is to always
++ * allow using @start + N as @end as long as N is <= %INT_MAX.  This
++ * differs from the @max parameter to idr_alloc_ul() and idr_alloc_u32().
+  *
+- * Note that @end is treated as max when <= 0.  This is to always allow
+- * using @start + N as @end as long as N is inside integer range.
++ * The IDR uses its own spinlock to protect against simultaneous
++ * modification.  The @ptr is visible to other simultaneous readers
++ * like idr_find() before this function returns.
+  *
+- * Simultaneous modifications to the @idr are not allowed and should be
+- * prevented by the user, usually with a lock.  idr_alloc() may be called
+- * concurrently with read-only accesses to the @idr, such as idr_find() and
+- * idr_for_each_entry().
++ * Return: The newly allocated ID on success.  -ENOMEM for a memory
++ * allocation failure.  -ENOSPC if there are no free IDs in the range.
+  */
+ int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
+ {
+@@ -88,16 +149,22 @@ int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
+ EXPORT_SYMBOL_GPL(idr_alloc);
+ 
+ /**
+- * idr_alloc_cyclic - allocate new idr entry in a cyclical fashion
+- * @idr: idr handle
+- * @ptr: pointer to be associated with the new id
+- * @start: the minimum id (inclusive)
+- * @end: the maximum id (exclusive)
+- * @gfp: memory allocation flags
+- *
+- * Allocates an ID larger than the last ID allocated if one is available.
+- * If not, it will attempt to allocate the smallest ID that is larger or
+- * equal to @start.
++ * idr_alloc_cyclic - Allocate an ID cyclically.
++ * @idr: IDR handle.
++ * @ptr: Pointer to be associated with the new ID.
++ * @start: The minimum id (inclusive).
++ * @end: The maximum id (exclusive).
++ * @gfp: Memory allocation flags.
++ *
++ * Allocates an unused ID >= @start and < @end.  It will start searching
++ * after the last ID allocated and wrap back around to @start.
++ *
++ * The IDR uses its own spinlock to protect against simultaneous
++ * modification.  The @ptr is visible to other simultaneous readers
++ * like idr_find() before this function returns.
++ *
++ * Return: The newly allocated ID on success.  -ENOMEM for a memory
++ * allocation failure.  -ENOSPC if there are no free IDs in the range.
+  */
+ int idr_alloc_cyclic(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
+ {
+@@ -119,88 +186,91 @@ int idr_alloc_cyclic(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
+ 	idr->idr_next = id + 1U;
+ 	return id;
+ }
+-EXPORT_SYMBOL(idr_alloc_cyclic);
++EXPORT_SYMBOL_GPL(idr_alloc_cyclic);
+ 
+ /**
+- * idr_for_each - iterate through all stored pointers
++ * idr_for_each() - iterate through all stored pointers
+  * @idr: idr handle
+  * @fn: function to be called for each pointer
+  * @data: data passed to callback function
+  *
+- * The callback function will be called for each entry in @idr, passing
+- * the id, the pointer and the data pointer passed to this function.
++ * The callback function will be called for each non-NULL pointer in
++ * @idr, passing the id, the pointer and @data.  No internal locks are
++ * held while @fn is called, so @fn may sleep unless otherwise prevented
++ * by your own locking.
+  *
+  * If @fn returns anything other than %0, the iteration stops and that
+  * value is returned from this function.
+  *
+- * idr_for_each() can be called concurrently with idr_alloc() and
+- * idr_remove() if protected by RCU.  Newly added entries may not be
+- * seen and deleted entries may be seen, but adding and removing entries
+- * will not cause other entries to be skipped, nor spurious ones to be seen.
++ * idr_for_each() protects itself with the RCU read lock.  Newly added
++ * entries may not be seen and deleted entries may be seen, but adding
++ * and removing entries will not cause other entries to be skipped, nor
++ * spurious ones to be seen.
++ *
++ * Return: The value returned by the last call to @fn.
+  */
+-int idr_for_each(const struct idr *idr,
++int idr_for_each(struct idr *idr,
+ 		int (*fn)(int id, void *p, void *data), void *data)
+ {
+-	struct radix_tree_iter iter;
+-	void __rcu **slot;
++	unsigned long i = 0;
++	void *p;
+ 
+-	radix_tree_for_each_slot(slot, &idr->idr_rt, &iter, 0) {
+-		int ret = fn(iter.index, rcu_dereference_raw(*slot), data);
++	xa_for_each(&idr->idr_xa, p, i, INT_MAX) {
++		int ret = fn(i, p, data);
+ 		if (ret)
+ 			return ret;
+ 	}
+ 
+ 	return 0;
+ }
+-EXPORT_SYMBOL(idr_for_each);
++EXPORT_SYMBOL_GPL(idr_for_each);
+ 
+ /**
+- * idr_get_next - Find next populated entry
++ * idr_get_next() - Find next populated entry
+  * @idr: idr handle
+- * @nextid: Pointer to lowest possible ID to return
++ * @id: Pointer to lowest possible ID to return
+  *
+  * Returns the next populated entry in the tree with an ID greater than
+  * or equal to the value pointed to by @nextid.  On exit, @nextid is updated
+  * to the ID of the found value.  To use in a loop, the value pointed to by
+  * nextid must be incremented by the user.
++ *
++ * This function protects itself with the RCU read lock, so may return a
++ * stale entry or may skip a newly added entry unless synchronised with
++ * a lock.
+  */
+-void *idr_get_next(struct idr *idr, int *nextid)
++void *idr_get_next(struct idr *idr, int *id)
+ {
+-	struct radix_tree_iter iter;
+-	void __rcu **slot;
+-
+-	slot = radix_tree_iter_find(&idr->idr_rt, &iter, *nextid);
+-	if (!slot)
+-		return NULL;
++	unsigned long index = *id;
++	void *entry = xa_find(&idr->idr_xa, &index, INT_MAX);
+ 
+-	*nextid = iter.index;
+-	return rcu_dereference_raw(*slot);
++	*id = index;
++	return entry;
+ }
+-EXPORT_SYMBOL(idr_get_next);
++EXPORT_SYMBOL_GPL(idr_get_next);
+ 
+ /**
+- * idr_get_next_ul - Find next populated entry
+- * @idr: idr handle
+- * @nextid: Pointer to lowest possible ID to return
++ * idr_remove() - Remove an item from the IDR.
++ * @idr: IDR handle.
++ * @id: Object ID.
+  *
+- * Returns the next populated entry in the tree with an ID greater than
+- * or equal to the value pointed to by @nextid.  On exit, @nextid is updated
+- * to the ID of the found value.  To use in a loop, the value pointed to by
+- * nextid must be incremented by the user.
++ * Once this function returns, the ID is available for allocation again.
++ * This function protects itself with the IDR lock.
++ *
++ * Return: The pointer associated with this ID.
+  */
+-void *idr_get_next_ul(struct idr *idr, unsigned long *nextid)
++void *idr_remove(struct idr *idr, unsigned long id)
+ {
+-	struct radix_tree_iter iter;
+-	void __rcu **slot;
++	unsigned long flags;
++	void *entry;
+ 
+-	slot = radix_tree_iter_find(&idr->idr_rt, &iter, *nextid);
+-	if (!slot)
+-		return NULL;
++	xa_lock_irqsave(&idr->idr_xa, flags);
++	entry = __xa_erase(&idr->idr_xa, id);
++	xa_unlock_irqrestore(&idr->idr_xa, flags);
+ 
+-	*nextid = iter.index;
+-	return rcu_dereference_raw(*slot);
++	return entry;
+ }
+-EXPORT_SYMBOL(idr_get_next_ul);
++EXPORT_SYMBOL_GPL(idr_remove);
+ 
+ /**
+  * idr_replace - replace pointer for given id
+@@ -209,31 +279,35 @@ EXPORT_SYMBOL(idr_get_next_ul);
+  * @id: Lookup key
+  *
+  * Replace the pointer registered with an ID and return the old value.
+- * This function can be called under the RCU read lock concurrently with
+- * idr_alloc() and idr_remove() (as long as the ID being removed is not
+- * the one being replaced!).
++ * This function protects itself with a spinlock.
+  *
+  * Returns: the old value on success.  %-ENOENT indicates that @id was not
+  * found.  %-EINVAL indicates that @id or @ptr were not valid.
+  */
+ void *idr_replace(struct idr *idr, void *ptr, unsigned long id)
+ {
+-	struct radix_tree_node *node;
+-	void __rcu **slot = NULL;
+-	void *entry;
++	XA_STATE(xas, &idr->idr_xa, id);
++	unsigned long flags;
++	void *curr;
+ 
+-	if (WARN_ON_ONCE(radix_tree_is_internal_node(ptr)))
++	if (WARN_ON_ONCE(xa_is_internal(ptr)))
+ 		return ERR_PTR(-EINVAL);
+-
+-	entry = __radix_tree_lookup(&idr->idr_rt, id, &node, &slot);
+-	if (!slot || radix_tree_tag_get(&idr->idr_rt, id, IDR_FREE))
+-		return ERR_PTR(-ENOENT);
+-
+-	__radix_tree_replace(&idr->idr_rt, node, slot, ptr, NULL);
+-
+-	return entry;
++	if (!ptr)
++		ptr = XA_ZERO_ENTRY;
++
++	xas_lock_irqsave(&xas, flags);
++	curr = xas_load(&xas);
++	if (curr)
++		xas_store(&xas, ptr);
++	else
++		curr = ERR_PTR(-ENOENT);
++	xas_unlock_irqrestore(&xas, flags);
++
++	if (xa_is_zero(curr))
++		return NULL;
++	return curr;
+ }
+-EXPORT_SYMBOL(idr_replace);
++EXPORT_SYMBOL_GPL(idr_replace);
+ 
+ /**
+  * DOC: IDA description
+@@ -264,7 +338,7 @@ EXPORT_SYMBOL(idr_replace);
+  * Developer's notes:
+  *
+  * The IDA uses the functionality provided by the IDR & radix tree to store
+- * bitmaps in each entry.  The IDR_FREE tag means there is at least one bit
++ * bitmaps in each entry.  The XA_FREE_TAG tag means there is at least one bit
+  * free, unlike the IDR where it means at least one entry is free.
+  *
+  * I considered telling the radix tree that each slot is an order-10 node
+@@ -370,7 +444,7 @@ int ida_get_new_above(struct ida *ida, int start, int *id)
+ 			__set_bit(bit, bitmap->bitmap);
+ 			if (bitmap_full(bitmap->bitmap, IDA_BITMAP_BITS))
+ 				radix_tree_iter_tag_clear(root, &iter,
+-								IDR_FREE);
++								XA_FREE_TAG);
+ 		} else {
+ 			new += bit;
+ 			if (new < 0)
+@@ -426,7 +500,7 @@ void ida_remove(struct ida *ida, int id)
+ 		goto err;
+ 
+ 	__clear_bit(offset, btmp);
+-	radix_tree_iter_tag_set(&ida->ida_rt, &iter, IDR_FREE);
++	radix_tree_iter_tag_set(&ida->ida_rt, &iter, XA_FREE_TAG);
+ 	if (xa_is_value(bitmap)) {
+ 		if (xa_to_value(rcu_dereference_raw(*slot)) == 0)
+ 			radix_tree_iter_delete(&ida->ida_rt, &iter, slot);
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index 36e24dde6356..5eb4a519462a 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -529,6 +529,30 @@ int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
+ 	return __radix_tree_preload(gfp_mask, nr_nodes);
+ }
+ 
++/* Once the IDR users abandon the preload API, we can use xas_nomem */
++bool idr_nomem(struct xa_state *xas, gfp_t gfp)
++{
++	if (xas->xa_node != XA_ERROR(-ENOMEM)) {
++		xas_destroy(xas);
++		return false;
++	}
++	xas->xa_alloc = kmem_cache_alloc(radix_tree_node_cachep,
++						gfp | __GFP_NOWARN);
++	if (!xas->xa_alloc) {
++		struct radix_tree_preload *rtp;
++
++		rtp = this_cpu_ptr(&radix_tree_preloads);
++		if (!rtp->nr)
++			return false;
++		xas->xa_alloc = rtp->nodes;
++		rtp->nodes = xas->xa_alloc->parent;
++		rtp->nr--;
++	}
++
++	xas->xa_node = XAS_RESTART;
++	return true;
++}
++
+ static unsigned radix_tree_load_root(const struct radix_tree_root *root,
+ 		struct radix_tree_node **nodep, unsigned long *maxindex)
+ {
+@@ -562,7 +586,7 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
+ 		maxshift += RADIX_TREE_MAP_SHIFT;
+ 
+ 	entry = rcu_dereference_raw(root->xa_head);
+-	if (!entry && (!is_idr(root) || root_tag_get(root, IDR_FREE)))
++	if (!entry && (!is_idr(root) || root_tag_get(root, XA_FREE_TAG)))
+ 		goto out;
+ 
+ 	do {
+@@ -572,10 +596,10 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
+ 			return -ENOMEM;
+ 
+ 		if (is_idr(root)) {
+-			all_tag_set(node, IDR_FREE);
+-			if (!root_tag_get(root, IDR_FREE)) {
+-				rtag_clear(node, IDR_FREE, 0);
+-				root_tag_set(root, IDR_FREE);
++			all_tag_set(node, XA_FREE_TAG);
++			if (!root_tag_get(root, XA_FREE_TAG)) {
++				rtag_clear(node, XA_FREE_TAG, 0);
++				root_tag_set(root, XA_FREE_TAG);
+ 			}
+ 		} else {
+ 			/* Propagate the aggregated tag info to the new child */
+@@ -646,8 +670,8 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
+ 		 * one (root->xa_head) as far as dependent read barriers go.
+ 		 */
+ 		root->xa_head = (void __rcu *)child;
+-		if (is_idr(root) && !rtag_get(node, IDR_FREE, 0))
+-			root_tag_clear(root, IDR_FREE);
++		if (is_idr(root) && !rtag_get(node, XA_FREE_TAG, 0))
++			root_tag_clear(root, XA_FREE_TAG);
+ 
+ 		/*
+ 		 * We have a dilemma here. The node's slot[0] must not be
+@@ -1074,7 +1098,7 @@ static bool node_tag_get(const struct radix_tree_root *root,
+ /*
+  * IDR users want to be able to store NULL in the tree, so if the slot isn't
+  * free, don't adjust the count, even if it's transitioning between NULL and
+- * non-NULL.  For the IDA, we mark slots as being IDR_FREE while they still
++ * non-NULL.  For the IDA, we mark slots as being XA_FREE_TAG while they still
+  * have empty bits, but it only stores NULL in slots when they're being
+  * deleted.
+  */
+@@ -1084,7 +1108,7 @@ static int calculate_count(struct radix_tree_root *root,
+ {
+ 	if (is_idr(root)) {
+ 		unsigned offset = get_slot_offset(node, slot);
+-		bool free = node_tag_get(root, node, IDR_FREE, offset);
++		bool free = node_tag_get(root, node, XA_FREE_TAG, offset);
+ 		if (!free)
+ 			return 0;
+ 		if (!old)
+@@ -1915,7 +1939,7 @@ static bool __radix_tree_delete(struct radix_tree_root *root,
+ 	int tag;
+ 
+ 	if (is_idr(root))
+-		node_tag_set(root, node, IDR_FREE, offset);
++		node_tag_set(root, node, XA_FREE_TAG, offset);
+ 	else
+ 		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+ 			node_tag_clear(root, node, tag, offset);
+@@ -1963,7 +1987,7 @@ void *radix_tree_delete_item(struct radix_tree_root *root,
+ 	void *entry;
+ 
+ 	entry = __radix_tree_lookup(root, index, &node, &slot);
+-	if (!entry && (!is_idr(root) || node_tag_get(root, node, IDR_FREE,
++	if (!entry && (!is_idr(root) || node_tag_get(root, node, XA_FREE_TAG,
+ 						get_slot_offset(node, slot))))
+ 		return NULL;
+ 
+@@ -2070,7 +2094,7 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
+ 
+  grow:
+ 	shift = radix_tree_load_root(root, &child, &maxindex);
+-	if (!radix_tree_tagged(root, IDR_FREE))
++	if (!radix_tree_tagged(root, XA_FREE_TAG))
+ 		start = max(start, maxindex + 1);
+ 	if (start > max)
+ 		return ERR_PTR(-ENOSPC);
+@@ -2091,7 +2115,7 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
+ 							offset, 0, 0);
+ 			if (!child)
+ 				return ERR_PTR(-ENOMEM);
+-			all_tag_set(child, IDR_FREE);
++			all_tag_set(child, XA_FREE_TAG);
+ 			rcu_assign_pointer(*slot, node_to_entry(child));
+ 			if (node)
+ 				node->count++;
+@@ -2100,8 +2124,8 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
+ 
+ 		node = entry_to_node(child);
+ 		offset = radix_tree_descend(node, &child, start);
+-		if (!rtag_get(node, IDR_FREE, offset)) {
+-			offset = radix_tree_find_next_bit(node, IDR_FREE,
++		if (!rtag_get(node, XA_FREE_TAG, offset)) {
++			offset = radix_tree_find_next_bit(node, XA_FREE_TAG,
+ 							offset + 1);
+ 			start = rnext_index(start, node, offset);
+ 			if (start > max)
+@@ -2125,32 +2149,11 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
+ 		iter->next_index = 1;
+ 	iter->node = node;
+ 	__set_iter_shift(iter, shift);
+-	set_iter_tags(iter, node, offset, IDR_FREE);
++	set_iter_tags(iter, node, offset, XA_FREE_TAG);
+ 
+ 	return slot;
+ }
+ 
+-/**
+- * idr_destroy - release all internal memory from an IDR
+- * @idr: idr handle
+- *
+- * After this function is called, the IDR is empty, and may be reused or
+- * the data structure containing it may be freed.
+- *
+- * A typical clean-up sequence for objects stored in an idr tree will use
+- * idr_for_each() to free all objects, if necessary, then idr_destroy() to
+- * free the memory used to keep track of those objects.
+- */
+-void idr_destroy(struct idr *idr)
+-{
+-	struct radix_tree_node *node = rcu_dereference_raw(idr->idr_rt.xa_head);
+-	if (radix_tree_is_internal_node(node))
+-		radix_tree_free_nodes(node);
+-	idr->idr_rt.xa_head = NULL;
+-	root_tag_set(&idr->idr_rt, IDR_FREE);
+-}
+-EXPORT_SYMBOL(idr_destroy);
+-
+ static void
+ radix_tree_node_ctor(void *arg)
+ {
+diff --git a/lib/xarray.c b/lib/xarray.c
+index e3be7c0c2e35..013e81281465 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -1101,6 +1101,8 @@ void *xa_load(struct xarray *xa, unsigned long index)
+ 	rcu_read_lock();
+ 	do {
+ 		entry = xas_load(&xas);
++		if (xa_is_zero(entry))
++			entry = NULL;
+ 	} while (xas_retry(&xas, entry));
+ 	rcu_read_unlock();
+ 
+@@ -1110,6 +1112,8 @@ EXPORT_SYMBOL(xa_load);
+ 
+ static void *xas_result(struct xa_state *xas, void *curr)
+ {
++	if (xa_is_zero(curr))
++		return NULL;
+ 	XA_BUG_ON(xas->xa_node, xa_is_internal(curr));
+ 	if (xas_error(xas))
+ 		curr = xas->xa_node;
+@@ -1525,17 +1529,18 @@ EXPORT_SYMBOL(xa_get_tagged);
+ void xa_destroy(struct xarray *xa)
+ {
+ 	XA_STATE(xas, xa, 0);
++	unsigned long flags;
+ 	void *entry;
+ 
+ 	xas.xa_node = NULL;
+-	xa_lock(xa);
++	xa_lock_irqsave(xa, flags);
+ 	entry = xa_head_locked(xa);
+ 	RCU_INIT_POINTER(xa->xa_head, NULL);
+ 	xas_init_tags(&xas);
+ 	/* lockdep checks we're still holding the lock in xas_free_nodes() */
+ 	if (xa_is_node(entry))
+ 		xas_free_nodes(&xas, xa_to_node(entry));
+-	xa_unlock(xa);
++	xa_unlock_irqrestore(xa, flags);
+ }
+ EXPORT_SYMBOL(xa_destroy);
+ 
+@@ -1595,6 +1600,8 @@ void xa_dump_entry(const void *entry, unsigned long index, unsigned long shift)
+ 		printk("retry (%ld)\n", xa_to_internal(entry));
+ 	else if (xa_is_sibling(entry))
+ 		printk("sibling (slot %ld)\n", xa_to_sibling(entry));
++	else if (xa_is_zero(entry))
++		printk("zero (%ld)\n", xa_to_internal(entry));
+ 	else
+ 		printk("UNKNOWN ENTRY (%p)\n", entry);
+ }
+diff --git a/tools/testing/radix-tree/idr-test.c b/tools/testing/radix-tree/idr-test.c
+index 7499319e85f8..7b710145d2ae 100644
+--- a/tools/testing/radix-tree/idr-test.c
++++ b/tools/testing/radix-tree/idr-test.c
+@@ -177,6 +177,22 @@ void idr_get_next_test(void)
+ 	idr_destroy(&idr);
+ }
+ 
++/*
++ * Check that growing the IDR works properly.
++ */
++void idr_alloc_far(struct idr *idr, unsigned long end)
++{
++	int i;
++
++	for (i = 1; i < end; i++)
++		assert(idr_alloc(idr, idr, i, i + 1, GFP_KERNEL) == i);
++
++	for (i = 1; i <= end; i++) {
++		assert(idr_alloc(idr, idr, 1, 0, GFP_KERNEL) == end);
++		idr_remove(idr, end);
++	}
++}
++
+ void idr_checks(void)
+ {
+ 	unsigned long i;
+@@ -227,6 +243,11 @@ void idr_checks(void)
+ 	idr_null_test();
+ 	idr_nowait_test();
+ 	idr_get_next_test();
++
++	for (i = 2; i < 18; i++) {
++		idr_alloc_far(&idr, 1UL << i);
++		idr_destroy(&idr);
++	}
  }
  
  /*
-- * node->shift is always 0 for the inline iterators unless we're processing
-- * a multi-index entry.
-+ * node->shift is always 0 for next_entry and next_tag unless we're processing
-+ * a multi-index entry.  It can be non-0 for next/prev, so it's not used there.
-  */
- #ifdef CONFIG_RADIX_TREE_MULTIORDER
- #define xa_node_shift(node)	node->shift
-@@ -767,6 +773,67 @@ static inline bool xa_iter_skip(const void *entry)
- #define xa_node_shift(node)	0
- #endif
- 
-+void *__xas_next(struct xa_state *);
-+void *__xas_prev(struct xa_state *);
-+
-+/**
-+ * xas_prev() - Move iterator to previous index.
-+ * @xas: XArray operation state.
-+ *
-+ * If the @xas was in an error state, it will remain in an error state
-+ * and this function will return %NULL.  If the @xas has never been walked,
-+ * it will have the effect of calling xas_load().  Otherwise one will be
-+ * subtracted from the index and the state will be walked to the correct
-+ * location in the array for the next operation.
-+ *
-+ * If the iterator was referencing index 0, this function wraps
-+ * around to %ULONG_MAX.
-+ *
-+ * Return: The entry at the new index.  This may be %NULL or an internal
-+ * entry, although it should never be a node entry.
-+ */
-+static inline void *xas_prev(struct xa_state *xas)
-+{
-+	struct xa_node *node = xas->xa_node;
-+
-+	if (unlikely(xas_not_node(node) || node->shift ||
-+				xas->xa_offset == 0))
-+		return __xas_prev(xas);
-+
-+	xas->xa_index--;
-+	xas->xa_offset--;
-+	return xa_entry(xas->xa, node, xas->xa_offset);
-+}
-+
-+/**
-+ * xas_next() - Move state to next index.
-+ * @xas: XArray operation state.
-+ *
-+ * If the @xas was in an error state, it will remain in an error state
-+ * and this function will return %NULL.  If the @xas has never been walked,
-+ * it will have the effect of calling xas_load().  Otherwise one will be
-+ * added to the index and the state will be walked to the correct
-+ * location in the array for the next operation.
-+ *
-+ * If the iterator was referencing index %ULONG_MAX, this function wraps
-+ * around to 0.
-+ *
-+ * Return: The entry at the new index.  This may be %NULL or an internal
-+ * entry, although it should never be a node entry.
-+ */
-+static inline void *xas_next(struct xa_state *xas)
-+{
-+	struct xa_node *node = xas->xa_node;
-+
-+	if (unlikely(xas_not_node(node) || node->shift ||
-+				xas->xa_offset == XA_CHUNK_MASK))
-+		return __xas_next(xas);
-+
-+	xas->xa_index++;
-+	xas->xa_offset++;
-+	return xa_entry(xas->xa, node, xas->xa_offset);
-+}
-+
- /**
-  * xas_next_entry() - Advance iterator to next present entry.
-  * @xas: XArray operation state.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index a51fa1e1f74f..a4975aeedf6b 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -838,6 +838,80 @@ void xas_pause(struct xa_state *xas)
- }
- EXPORT_SYMBOL_GPL(xas_pause);
- 
-+/*
-+ * __xas_prev() - Find the previous entry in the XArray.
-+ * @xas: XArray operation state.
-+ *
-+ * Helper function for xas_prev() which handles all the complex cases
-+ * out of line.
-+ */
-+void *__xas_prev(struct xa_state *xas)
-+{
-+	void *entry;
-+
-+	if (!xas_frozen(xas->xa_node))
-+		xas->xa_index--;
-+	if (xas_not_node(xas->xa_node))
-+		return xas_load(xas);
-+
-+	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
-+		xas->xa_offset--;
-+
-+	while (xas->xa_offset == 255) {
-+		xas->xa_offset = xas->xa_node->offset - 1;
-+		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
-+		if (!xas->xa_node)
-+			return set_bounds(xas);
-+	}
-+
-+	for (;;) {
-+		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
-+		if (!xa_is_node(entry))
-+			return entry;
-+
-+		xas->xa_node = xa_to_node(entry);
-+		xas->xa_offset = get_offset(xas->xa_index, xas->xa_node);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(__xas_prev);
-+
-+/*
-+ * __xas_next() - Find the next entry in the XArray.
-+ * @xas: XArray operation state.
-+ *
-+ * Helper function for xas_next() which handles all the complex cases
-+ * out of line.
-+ */
-+void *__xas_next(struct xa_state *xas)
-+{
-+	void *entry;
-+
-+	if (!xas_frozen(xas->xa_node))
-+		xas->xa_index++;
-+	if (xas_not_node(xas->xa_node))
-+		return xas_load(xas);
-+
-+	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
-+		xas->xa_offset++;
-+
-+	while (xas->xa_offset == XA_CHUNK_SIZE) {
-+		xas->xa_offset = xas->xa_node->offset + 1;
-+		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
-+		if (!xas->xa_node)
-+			return set_bounds(xas);
-+	}
-+
-+	for (;;) {
-+		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
-+		if (!xa_is_node(entry))
-+			return entry;
-+
-+		xas->xa_node = xa_to_node(entry);
-+		xas->xa_offset = get_offset(xas->xa_index, xas->xa_node);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(__xas_next);
-+
- /**
-  * xas_find() - Find the next present entry in the XArray.
-  * @xas: XArray operation state.
-diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
-index 10de5d3d977a..43111786ebdd 100644
---- a/tools/testing/radix-tree/xarray-test.c
-+++ b/tools/testing/radix-tree/xarray-test.c
-@@ -92,6 +92,104 @@ void check_xas_error(struct xarray *xa)
- 	assert(xas.xa_node == XAS_BOUNDS);
- }
- 
-+void check_xas_pause(struct xarray *xa)
-+{
-+	XA_STATE(xas, xa, 0);
-+	void *entry;
-+	unsigned int seen;
-+
-+	xa_store(xa, 0, xa_mk_value(0), GFP_KERNEL);
-+	xa_set_tag(xa, 0, XA_TAG_0);
-+
-+	seen = 0;
-+	rcu_read_lock();
-+	xas_for_each_tag(&xas, entry, ULONG_MAX, XA_TAG_0) {
-+		if (!seen++) {
-+			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
-+			xa_set_tag(xa, 1, XA_TAG_0);
-+		}
-+	}
-+	rcu_read_unlock();
-+	/* We don't see an entry that was added after we started */
-+	assert(seen == 1);
-+
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	rcu_read_lock();
-+	xas_for_each_tag(&xas, entry, ULONG_MAX, XA_TAG_0) {
-+		if (!seen++)
-+			xa_erase(xa, 1);
-+	}
-+	rcu_read_unlock();
-+	assert(seen == 1);
-+
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	rcu_read_lock();
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (!seen++)
-+			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
-+	}
-+	rcu_read_unlock();
-+	assert(seen == 1);
-+
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	rcu_read_lock();
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (!seen++)
-+			xa_erase(xa, 1);
-+	}
-+	rcu_read_unlock();
-+	assert(seen == 1);
-+
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	rcu_read_lock();
-+	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
-+		if (!seen++)
-+			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
-+	}
-+	rcu_read_unlock();
-+	assert(seen == 2);
-+
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	rcu_read_lock();
-+	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
-+		if (!seen++)
-+			xa_erase(xa, 1);
-+	}
-+	rcu_read_unlock();
-+	assert(seen == 1);
-+
-+	xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (!seen++)
-+			xas_pause(&xas);
-+	}
-+	assert(seen == 2);
-+
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
-+		if (!seen++)
-+			xas_pause(&xas);
-+	}
-+	assert(seen == 2);
-+
-+	seen = 0;
-+	xas_set(&xas, 0);
-+	xa_set_tag(xa, 1, XA_TAG_0);
-+	xas_for_each_tag(&xas, entry, ULONG_MAX, XA_TAG_0) {
-+		if (!seen++)
-+			xas_pause(&xas);
-+	}
-+	assert(seen == 2);
-+}
-+
- void check_xas_retry(struct xarray *xa)
- {
- 	XA_STATE(xas, xa, 0);
-@@ -249,9 +347,108 @@ void check_xas_delete(struct xarray *xa)
- 	}
- }
- 
-+void check_move_small(struct xarray *xa, unsigned long idx)
-+{
-+	XA_STATE(xas, xa, 0);
-+	unsigned long i;
-+
-+	xa_store(xa, 0, xa_mk_value(0), GFP_KERNEL);
-+	xa_store(xa, idx, xa_mk_value(idx), GFP_KERNEL);
-+
-+	for (i = 0; i < idx * 4; i++) {
-+		void *entry = xas_next(&xas);
-+		if (i <= idx)
-+			assert(xas.xa_node != XAS_RESTART);
-+		assert(xas.xa_index == i);
-+		if (i == 0 || i == idx)
-+			assert(entry == xa_mk_value(i));
-+		else
-+			assert(entry == NULL);
-+	}
-+	xas_next(&xas);
-+	assert(xas.xa_index == i);
-+
-+	do {
-+		void *entry = xas_prev(&xas);
-+		i--;
-+		if (i <= idx)
-+			assert(xas.xa_node != XAS_RESTART);
-+		assert(xas.xa_index == i);
-+		if (i == 0 || i == idx)
-+			assert(entry == xa_mk_value(i));
-+		else
-+			assert(entry == NULL);
-+	} while (i > 0);
-+
-+	xas_set(&xas, ULONG_MAX);
-+	assert(xas_next(&xas) == NULL);
-+	assert(xas.xa_index == ULONG_MAX);
-+	assert(xas_next(&xas) == xa_mk_value(0));
-+	assert(xas.xa_index == 0);
-+	assert(xas_prev(&xas) == NULL);
-+	assert(xas.xa_index == ULONG_MAX);
-+}
-+
-+void check_move(struct xarray *xa)
-+{
-+	XA_STATE(xas, xa, (1 << 16) - 1);
-+	unsigned long i;
-+
-+	for (i = 0; i < (1 << 16); i++) {
-+		xa_store(xa, i, xa_mk_value(i), GFP_KERNEL);
-+	}
-+
-+	do {
-+		void *entry = xas_prev(&xas);
-+		i--;
-+		assert(entry == xa_mk_value(i));
-+		assert(i == xas.xa_index);
-+	} while (i != 0);
-+
-+	assert(xas_prev(&xas) == NULL);
-+	assert(xas.xa_index == ULONG_MAX);
-+
-+	do {
-+		void *entry = xas_next(&xas);
-+		assert(entry == xa_mk_value(i));
-+		assert(i == xas.xa_index);
-+		i++;
-+	} while (i < (1 << 16));
-+
-+	for (i = (1 << 8); i < (1 << 15); i++) {
-+		xa_erase(xa, i);
-+	}
-+
-+	i = xas.xa_index;
-+
-+	do {
-+		void *entry = xas_prev(&xas);
-+		i--;
-+		if ((i < (1 << 8)) || (i >= (1 << 15)))
-+			assert(entry == xa_mk_value(i));
-+		else
-+			assert(entry == NULL);
-+		assert(i == xas.xa_index);
-+	} while (i != 0);
-+
-+	assert(xas_prev(&xas) == NULL);
-+	assert(xas.xa_index == ULONG_MAX);
-+
-+	do {
-+		void *entry = xas_next(&xas);
-+		if ((i < (1 << 8)) || (i >= (1 << 15)))
-+			assert(entry == xa_mk_value(i));
-+		else
-+			assert(entry == NULL);
-+		assert(i == xas.xa_index);
-+		i++;
-+	} while (i < (1 << 16));
-+}
-+
- void xarray_checks(void)
- {
- 	DEFINE_XARRAY(array);
-+	unsigned long i;
- 
- 	check_xa_err(&array);
- 	item_kill_tree(&array);
-@@ -265,6 +462,9 @@ void xarray_checks(void)
- 	check_xas_retry(&array);
- 	item_kill_tree(&array);
- 
-+	check_xas_pause(&array);
-+	item_kill_tree(&array);
-+
- 	check_xa_load(&array);
- 	item_kill_tree(&array);
- 
-@@ -279,6 +479,19 @@ void xarray_checks(void)
- 
- 	check_xas_delete(&array);
- 	item_kill_tree(&array);
-+
-+	for (i = 0; i < 16; i++) {
-+		check_move_small(&array, 1UL << i);
-+		item_kill_tree(&array);
-+	}
-+
-+	for (i = 2; i < 16; i++) {
-+		check_move_small(&array, (1UL << i) - 1);
-+		item_kill_tree(&array);
-+	}
-+
-+	check_move(&array);
-+	item_kill_tree(&array);
- }
- 
+@@ -505,7 +526,9 @@ void ida_thread_tests(void)
  int __weak main(void)
+ {
+ 	radix_tree_init();
++	printv(0, "starting IDR checks\n");
+ 	idr_checks();
++	printv(0, "starting IDA checks\n");
+ 	ida_checks();
+ 	ida_thread_tests();
+ 	radix_tree_cpu_dead(1);
 -- 
 2.15.1
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most
+engaging tech sites, Slashdot.org! http://sdm.link/slashdot
