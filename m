@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 50/78] shmem: Convert shmem_partial_swap_usage
- to XArray
-Date: Fri, 15 Dec 2017 14:04:22 -0800
-Message-ID: <20171215220450.7899-51-willy@infradead.org>
+Subject: [PATCH v5 52/78] btrfs: Convert page cache to XArray
+Date: Fri, 15 Dec 2017 14:04:24 -0800
+Message-ID: <20171215220450.7899-53-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=iG44ap0ocZrbdP72gCov45nVEezyshoeoQcvsJ/3YwU=; b=kg9eCJwtQNMaUNvvlMtHfjQn54
- d0oZIiVfbpSCzUh+u/i3LNqkTiVbMpwAd02qeJSC7U/F8i5p6UFx5dbu6kG7eRX0CZ7Z7LcDWQgDa
- qbdszmodyhPV+ETDRExo9H0LTZ2t+cB8qR4QK3zyNQ8keJSTSDiDrqNdf1rkSDxKjHFM=;
+ bh=rB/9t7LpOsmVd4X3ijI5CeNPcYs8VhDGc9cOiAuygfo=; b=Piuw0vK+tsRUzoFnIiD1ti3aSO
+ KV0sj23W9/VlQezNFMSB1+FB8O4PAfRTdzZRORkm25BN0sw5k0ieBLWFhsfykGm+I3I8Gu67Byyvh
+ +L3lq9g+rplOsxsyZDr/SnEJb526b30VlTb92TRidS3DdD9ncKe40r47mtAYBcAFHgRs=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=iG44ap0ocZrbdP72gCov45nVEezyshoeoQcvsJ/3YwU=; b=h3YXlXpWbfgEKxmUaPZ+75fYpI
- sVoRNcRkNcq+jcX0+3A5reKdEerHobQtSMD7yr2hnw4kI6SJgGYq539YnGvlJ1+32GSxPLnVq4XT7
- lhbUFMyG0t5IEliCV7a2rlsVbubJQGOFCm5fuCCEBlKzzgtZx1KMlg4WXBrW2jXWWPws=;
+ bh=rB/9t7LpOsmVd4X3ijI5CeNPcYs8VhDGc9cOiAuygfo=; b=cevJMEU97U3KQr/qV9FbuWcKII
+ Vinf4tJpPZpbu/HLGxo6FJ4jas7nnX4CYBJfLjmajtcnqNSzFNovYq+9bT9x1e34gi3p/fe/uuo+e
+ 2cCxyuEtuwgJveHvtWzx/4d2qI1xIiCzu39zOdf9qKrkknrMr1rqEw+/Jw2td82gCUG8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=iG44ap0ocZrbdP72gCov45nVEezyshoeoQcvsJ/3YwU=; b=ksI4ZXdoSvl23FCJETLfR/o/5
- 3UpRaqoTlLg3Xi1RsV8MvSBMyfccu3kXkLkD1a9B1RMBcFLz2jlUgxbfnQ8t+XDJBJZJ1typo14OB
- VSy4pALPgcc/B6fYxFl8k7aYbsCAMzrKq4F/5tIPo/RH08He6gDqje6pJfA7/1Yt0RjUJHYYGs4+A
- dhDPHmUunktwzFwzviWDIFI1QA7LnNiacWMRopkkQxHcLeXfMPKE3wpwWsRb1/UQ0YE/JOXVvee1E
- +7NIJKX39mNInWYCKuojkHGK7H65LDLQzYBq0WmN2RNEO95hhU7XKGBWSonRnGEbX8QChDF0RsgxX
- vcGLWWXAw==;
+ bh=rB/9t7LpOsmVd4X3ijI5CeNPcYs8VhDGc9cOiAuygfo=; b=jvDAo1xHWJ58vgP0ZX4iYTup/
+ a1ViwFiwEDBrvt9jC4AEBkA3omhdzA5dYF23DL8sBYZupU29kXb6hnVcITFdSVcEKHhBOIKpL+FPW
+ 0409dSh/dKQU2e7jPHuwCI7FEqedDvoYDKwv8p19c6H+Cem9yCCrQ8gV8wabSGSrTrbahPStyONXe
+ ESuJVSWSx6CRKng5Z283LifXX7Hq332z+UNy8VhXd1oxPoey4zm93oAZ9mvIyjT2ui2VKFOIaemNP
+ JVpGJgDya8nppPYJdaC2R3xIYrbuVu7D62FMdOcp5wLIstajrJUHKAfme0nS/umy7K5ssotrRIdo/
+ +/3LxkK7w==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,51 +53,45 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Simpler code because the xarray takes care of things like the limit and
-dereferencing the slot.
-
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 18 +++---------------
- 1 file changed, 3 insertions(+), 15 deletions(-)
+ fs/btrfs/compression.c | 4 +---
+ fs/btrfs/extent_io.c   | 6 ++----
+ 2 files changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index dd663341e01e..ecf05645509b 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -658,29 +658,17 @@ static int shmem_free_swap(struct address_space *mapping,
- unsigned long shmem_partial_swap_usage(struct address_space *mapping,
- 						pgoff_t start, pgoff_t end)
- {
--	struct radix_tree_iter iter;
--	void **slot;
-+	XA_STATE(xas, &mapping->pages, start);
- 	struct page *page;
- 	unsigned long swapped = 0;
+diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
+index e687d06cd97c..4174b166e235 100644
+--- a/fs/btrfs/compression.c
++++ b/fs/btrfs/compression.c
+@@ -449,9 +449,7 @@ static noinline int add_ra_bio_pages(struct inode *inode,
+ 		if (pg_index > end_index)
+ 			break;
  
- 	rcu_read_lock();
--
--	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
--		if (iter.index >= end)
--			break;
--
--		page = radix_tree_deref_slot(slot);
--
--		if (radix_tree_deref_retry(page)) {
--			slot = radix_tree_iter_retry(&iter);
--			continue;
+-		rcu_read_lock();
+-		page = radix_tree_lookup(&mapping->pages, pg_index);
+-		rcu_read_unlock();
++		page = xa_load(&mapping->pages, pg_index);
+ 		if (page && !xa_is_value(page)) {
+ 			misses++;
+ 			if (misses > 4)
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index 4301cbf4e31f..fd5e9d887328 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -5197,11 +5197,9 @@ void clear_extent_buffer_dirty(struct extent_buffer *eb)
+ 
+ 		clear_page_dirty_for_io(page);
+ 		xa_lock_irq(&page->mapping->pages);
+-		if (!PageDirty(page)) {
+-			radix_tree_tag_clear(&page->mapping->pages,
+-						page_index(page),
++		if (!PageDirty(page))
++			__xa_clear_tag(&page->mapping->pages, page_index(page),
+ 						PAGECACHE_TAG_DIRTY);
 -		}
--
-+	xas_for_each(&xas, page, end - 1) {
- 		if (xa_is_value(page))
- 			swapped++;
- 
- 		if (need_resched()) {
--			slot = radix_tree_iter_resume(slot, &iter);
-+			xas_pause(&xas);
- 			cond_resched_rcu();
- 		}
- 	}
+ 		xa_unlock_irq(&page->mapping->pages);
+ 		ClearPageError(page);
+ 		unlock_page(page);
 -- 
 2.15.1
 
