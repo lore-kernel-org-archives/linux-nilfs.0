@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 74/78] xfs: Convert mru cache to XArray
-Date: Fri, 15 Dec 2017 14:04:46 -0800
-Message-ID: <20171215220450.7899-75-willy@infradead.org>
+Subject: [PATCH v5 41/78] pagevec: Use xa_tag_t
+Date: Fri, 15 Dec 2017 14:04:13 -0800
+Message-ID: <20171215220450.7899-42-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=pQoPAZH+LdTNlYHSvc0jw9KpY7VbWvr8hV9iL3hlNZg=; b=g/4io9esFennM20jnsinHCxKHa
- X9Im1bS60DaD6ksSyv9INH4ect1RP7vkfFOzoXCHNy/UdempPv9SFGXciLaQReYE+ibY78UJq8wu0
- eg0WWDMOgtotu4ulIcEP0iT3slw0VUlmretYRSp+xnR8WolWrEKHd5atog1C2ZnuYSSY=;
+ bh=2ijOV4StyJHdvodBUo5s8IrnDW59eP1TCtXr+xEPBcA=; b=RrKpy16MGVFwn8yZYdrF8f26On
+ JPKtUZkdVYUfy4Mfd6Mxmtn8X3ihwS/b0Avki3Gf5fERjZQtpMTeRLv2ob4hfJLGOnPpA2rVDic83
+ 5EmCo69MTPLIQ/kxNReXEiWTidaTI/hjqhamY7zPZRp5fUX9AZGC2eMrMWZlCDUTH/OE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=pQoPAZH+LdTNlYHSvc0jw9KpY7VbWvr8hV9iL3hlNZg=; b=hTabGqv99vupC3uM6xwPoY0l3u
- gC6c261ZN3Y3EruP3sZ94JwAlcaRP8ySGDzYdMltGCshpx+18bPH89hIMRE69Z/e9uVKkQkhUom7V
- SX7btfH8b4SvxmCjNv6gecnN5P79x3YULtBZ+a+YZ442kCcbP9IAZpWO6Fe+Q5TFMgE8=;
+ bh=2ijOV4StyJHdvodBUo5s8IrnDW59eP1TCtXr+xEPBcA=; b=msUCsRGUT2vfQwQnEfxOYPh0TY
+ ShrERCIqj0A+GmIMuANKIohuyCWUesS3u/U3w7JReQlsmouid17/9rQh1lsnP+3rnnHpmZQazZ3+8
+ IwfzV+i+gZW9ASoHqzF1CfdMVf5lsFWtEGWnHXh3BhJkYUGbvgfiv9ooXFtrECUBangM=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=pQoPAZH+LdTNlYHSvc0jw9KpY7VbWvr8hV9iL3hlNZg=; b=eW4uJfOYlv0iSRk5Uj+lql5bB
- +k/SWZdnWAAjSPlc8A8KjPKmxH5G+CTdlonJOkQp6hviwIfPQ62PVRjeSx268FeQ9jSHK950AZj8X
- /BnvO2dqdDw5QXXy0HL0V3NtpREleEOOKlyKOqhE/MQ5gxe5fHSle7edJdY/0/TcVOvhx824N3Ztr
- udOJhCUkbMhUDl1cXZ6dvlh5LevHVgVmMKPVFQWxZkorzKrxTAjFF6u6m3Nw2LBR3BK6qK1lAqJCK
- FEKLeu7Ox20rF+55otvsM2jYLgSOlKMd6hOgQSWYKKK6aB92JuRNjP7G1/Hwp24cOIOu4VPO4HWag
- n5HT6MKmQ==;
+ bh=2ijOV4StyJHdvodBUo5s8IrnDW59eP1TCtXr+xEPBcA=; b=IbAHMDJycE9fctWZpopMVDeWM
+ hxhG8gup9jdRHnunliW2YSeeRAtdVyT29fi7rSz9y1VVNsODqs1lngHD+pnwHZVwQlymJ4kyRtFzR
+ XZZBoeo0ut7eiHp2fq6Jl4WJOGQjM/sJjUsyUMUaL/At8cA+lisOa614QmKAATKemYDpH8nTOhiND
+ Myy5IxJ9FM2826Oft75kOTQumJ6xm06J71K+Yj4fS7fK7a6SRccW5FbIZZ79/n7yqk2nocizOm7/Z
+ fawHPCBodZfq3zhb3URd+JH8aNTAQLX7EfjTzwCAPY+Jz3neoyBpvz15r2suHFc+tKopf+gqJEW8X
+ CBnVWx/vQ==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,213 +53,130 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This eliminates a call to radix_tree_preload().
+Removes sparse warnings.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/xfs/xfs_mru_cache.c | 72 +++++++++++++++++++++++---------------------------
- 1 file changed, 33 insertions(+), 39 deletions(-)
+ fs/btrfs/extent_io.c    | 4 ++--
+ fs/ext4/inode.c         | 2 +-
+ fs/f2fs/data.c          | 2 +-
+ fs/gfs2/aops.c          | 2 +-
+ include/linux/pagevec.h | 8 +++++---
+ mm/swap.c               | 4 ++--
+ 6 files changed, 12 insertions(+), 10 deletions(-)
 
-diff --git a/fs/xfs/xfs_mru_cache.c b/fs/xfs/xfs_mru_cache.c
-index f8a674d7f092..2179bede5396 100644
---- a/fs/xfs/xfs_mru_cache.c
-+++ b/fs/xfs/xfs_mru_cache.c
-@@ -101,10 +101,9 @@
-  * an infinite loop in the code.
-  */
- struct xfs_mru_cache {
--	struct radix_tree_root	store;     /* Core storage data structure.  */
-+	struct xarray		store;     /* Core storage data structure.  */
- 	struct list_head	*lists;    /* Array of lists, one per grp.  */
- 	struct list_head	reap_list; /* Elements overdue for reaping. */
--	spinlock_t		lock;      /* Lock to protect this struct.  */
- 	unsigned int		grp_count; /* Number of discrete groups.    */
- 	unsigned int		grp_time;  /* Time period spanned by grps.  */
- 	unsigned int		lru_grp;   /* Group containing time zero.   */
-@@ -232,22 +231,21 @@ _xfs_mru_cache_list_insert(
-  * data store, removing it from the reap list, calling the client's free
-  * function and deleting the element from the element zone.
-  *
-- * We get called holding the mru->lock, which we drop and then reacquire.
-- * Sparse need special help with this to tell it we know what we are doing.
-+ * We get called holding the mru->store lock, which we drop and then reacquire.
-+ * Sparse needs special help with this to tell it we know what we are doing.
-  */
- STATIC void
- _xfs_mru_cache_clear_reap_list(
- 	struct xfs_mru_cache	*mru)
--		__releases(mru->lock) __acquires(mru->lock)
-+		__releases(mru->store) __acquires(mru->store)
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index 22948f4febe7..4301cbf4e31f 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -3795,7 +3795,7 @@ int btree_write_cache_pages(struct address_space *mapping,
+ 	pgoff_t index;
+ 	pgoff_t end;		/* Inclusive */
+ 	int scanned = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	pagevec_init(&pvec);
+ 	if (wbc->range_cyclic) {
+@@ -3922,7 +3922,7 @@ static int extent_write_cache_pages(struct address_space *mapping,
+ 	pgoff_t done_index;
+ 	int range_whole = 0;
+ 	int scanned = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	/*
+ 	 * We have to hold onto the inode so that ordered extents can do their
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 7df2c5644e59..2534304daec3 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -2605,7 +2605,7 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
+ 	long left = mpd->wbc->nr_to_write;
+ 	pgoff_t index = mpd->first_page;
+ 	pgoff_t end = mpd->last_page;
+-	int tag;
++	xa_tag_t tag;
+ 	int i, err = 0;
+ 	int blkbits = mpd->inode->i_blkbits;
+ 	ext4_lblk_t lblk;
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index 8f51ac47b77f..c8f6d9806896 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -1640,7 +1640,7 @@ static int f2fs_write_cache_pages(struct address_space *mapping,
+ 	pgoff_t last_idx = ULONG_MAX;
+ 	int cycled;
+ 	int range_whole = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	pagevec_init(&pvec);
+ 
+diff --git a/fs/gfs2/aops.c b/fs/gfs2/aops.c
+index 1daf15a1f00c..c78ecd008191 100644
+--- a/fs/gfs2/aops.c
++++ b/fs/gfs2/aops.c
+@@ -369,7 +369,7 @@ static int gfs2_write_cache_jdata(struct address_space *mapping,
+ 	pgoff_t done_index;
+ 	int cycled;
+ 	int range_whole = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	pagevec_init(&pvec);
+ 	if (wbc->range_cyclic) {
+diff --git a/include/linux/pagevec.h b/include/linux/pagevec.h
+index 5fb6580f7f23..5168901bf06d 100644
+--- a/include/linux/pagevec.h
++++ b/include/linux/pagevec.h
+@@ -9,6 +9,8 @@
+ #ifndef _LINUX_PAGEVEC_H
+ #define _LINUX_PAGEVEC_H
+ 
++#include <linux/xarray.h>
++
+ /* 14 pointers + two long's align the pagevec structure to a power of two */
+ #define PAGEVEC_SIZE	14
+ 
+@@ -40,12 +42,12 @@ static inline unsigned pagevec_lookup(struct pagevec *pvec,
+ 
+ unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag);
++		xa_tag_t tag);
+ unsigned pagevec_lookup_range_nr_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag, unsigned max_pages);
++		xa_tag_t tag, unsigned max_pages);
+ static inline unsigned pagevec_lookup_tag(struct pagevec *pvec,
+-		struct address_space *mapping, pgoff_t *index, int tag)
++		struct address_space *mapping, pgoff_t *index, xa_tag_t tag)
  {
- 	struct xfs_mru_cache_elem *elem, *next;
- 	struct list_head	tmp;
- 
- 	INIT_LIST_HEAD(&tmp);
- 	list_for_each_entry_safe(elem, next, &mru->reap_list, list_node) {
--
- 		/* Remove the element from the data store. */
--		radix_tree_delete(&mru->store, elem->key);
-+		__xa_erase(&mru->store, elem->key);
- 
- 		/*
- 		 * remove to temp list so it can be freed without
-@@ -255,14 +253,14 @@ _xfs_mru_cache_clear_reap_list(
- 		 */
- 		list_move(&elem->list_node, &tmp);
- 	}
--	spin_unlock(&mru->lock);
-+	xa_unlock(&mru->store);
- 
- 	list_for_each_entry_safe(elem, next, &tmp, list_node) {
- 		list_del_init(&elem->list_node);
- 		mru->free_func(elem);
- 	}
- 
--	spin_lock(&mru->lock);
-+	xa_lock(&mru->store);
+ 	return pagevec_lookup_range_tag(pvec, mapping, index, (pgoff_t)-1, tag);
  }
+diff --git a/mm/swap.c b/mm/swap.c
+index 8d7773cb2c3f..31d79479dacf 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -991,7 +991,7 @@ EXPORT_SYMBOL(pagevec_lookup_range);
  
- /*
-@@ -284,7 +282,7 @@ _xfs_mru_cache_reap(
- 	if (!mru || !mru->lists)
- 		return;
- 
--	spin_lock(&mru->lock);
-+	xa_lock(&mru->store);
- 	next = _xfs_mru_cache_migrate(mru, jiffies);
- 	_xfs_mru_cache_clear_reap_list(mru);
- 
-@@ -298,7 +296,7 @@ _xfs_mru_cache_reap(
- 		queue_delayed_work(xfs_mru_reap_wq, &mru->work, next);
- 	}
- 
--	spin_unlock(&mru->lock);
-+	xa_unlock(&mru->store);
- }
- 
- int
-@@ -358,13 +356,8 @@ xfs_mru_cache_create(
- 	for (grp = 0; grp < mru->grp_count; grp++)
- 		INIT_LIST_HEAD(mru->lists + grp);
- 
--	/*
--	 * We use GFP_KERNEL radix tree preload and do inserts under a
--	 * spinlock so GFP_ATOMIC is appropriate for the radix tree itself.
--	 */
--	INIT_RADIX_TREE(&mru->store, GFP_ATOMIC);
-+	xa_init(&mru->store);
- 	INIT_LIST_HEAD(&mru->reap_list);
--	spin_lock_init(&mru->lock);
- 	INIT_DELAYED_WORK(&mru->work, _xfs_mru_cache_reap);
- 
- 	mru->grp_time  = grp_time;
-@@ -394,17 +387,17 @@ xfs_mru_cache_flush(
- 	if (!mru || !mru->lists)
- 		return;
- 
--	spin_lock(&mru->lock);
-+	xa_lock(&mru->store);
- 	if (mru->queued) {
--		spin_unlock(&mru->lock);
-+		xa_unlock(&mru->store);
- 		cancel_delayed_work_sync(&mru->work);
--		spin_lock(&mru->lock);
-+		xa_lock(&mru->store);
- 	}
- 
- 	_xfs_mru_cache_migrate(mru, jiffies + mru->grp_count * mru->grp_time);
- 	_xfs_mru_cache_clear_reap_list(mru);
- 
--	spin_unlock(&mru->lock);
-+	xa_unlock(&mru->store);
- }
- 
- void
-@@ -431,24 +424,24 @@ xfs_mru_cache_insert(
- 	unsigned long		key,
- 	struct xfs_mru_cache_elem *elem)
+ unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag)
++		xa_tag_t tag)
  {
-+	XA_STATE(xas, &mru->store, key);
- 	int			error;
+ 	pvec->nr = find_get_pages_range_tag(mapping, index, end, tag,
+ 					PAGEVEC_SIZE, pvec->pages);
+@@ -1001,7 +1001,7 @@ EXPORT_SYMBOL(pagevec_lookup_range_tag);
  
- 	ASSERT(mru && mru->lists);
- 	if (!mru || !mru->lists)
- 		return -EINVAL;
- 
--	if (radix_tree_preload(GFP_NOFS))
--		return -ENOMEM;
--
- 	INIT_LIST_HEAD(&elem->list_node);
- 	elem->key = key;
- 
--	spin_lock(&mru->lock);
--	error = radix_tree_insert(&mru->store, key, elem);
--	radix_tree_preload_end();
--	if (!error)
--		_xfs_mru_cache_list_insert(mru, elem);
--	spin_unlock(&mru->lock);
-+	do {
-+		xas_lock(&xas);
-+		xas_store(&xas, elem);
-+		error = xas_error(&xas);
-+		if (!error)
-+			_xfs_mru_cache_list_insert(mru, elem);
-+		xas_unlock(&xas);
-+	} while (xas_nomem(&xas, GFP_NOFS));
- 
- 	return error;
- }
-@@ -470,11 +463,11 @@ xfs_mru_cache_remove(
- 	if (!mru || !mru->lists)
- 		return NULL;
- 
--	spin_lock(&mru->lock);
--	elem = radix_tree_delete(&mru->store, key);
-+	xa_lock(&mru->store);
-+	elem = __xa_erase(&mru->store, key);
- 	if (elem)
- 		list_del(&elem->list_node);
--	spin_unlock(&mru->lock);
-+	xa_unlock(&mru->store);
- 
- 	return elem;
- }
-@@ -520,20 +513,21 @@ xfs_mru_cache_lookup(
- 	struct xfs_mru_cache	*mru,
- 	unsigned long		key)
+ unsigned pagevec_lookup_range_nr_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag, unsigned max_pages)
++		xa_tag_t tag, unsigned max_pages)
  {
-+	XA_STATE(xas, &mru->store, key);
- 	struct xfs_mru_cache_elem *elem;
- 
- 	ASSERT(mru && mru->lists);
- 	if (!mru || !mru->lists)
- 		return NULL;
- 
--	spin_lock(&mru->lock);
--	elem = radix_tree_lookup(&mru->store, key);
-+	xas_lock(&xas);
-+	elem = xas_load(&xas);
- 	if (elem) {
- 		list_del(&elem->list_node);
- 		_xfs_mru_cache_list_insert(mru, elem);
--		__release(mru_lock); /* help sparse not be stupid */
-+		__release(&xas); /* help sparse not be stupid */
- 	} else
--		spin_unlock(&mru->lock);
-+		xas_unlock(&xas);
- 
- 	return elem;
- }
-@@ -546,7 +540,7 @@ xfs_mru_cache_lookup(
- void
- xfs_mru_cache_done(
- 	struct xfs_mru_cache	*mru)
--		__releases(mru->lock)
-+		__releases(mru->store)
- {
--	spin_unlock(&mru->lock);
-+	xa_unlock(&mru->store);
- }
+ 	pvec->nr = find_get_pages_range_tag(mapping, index, end, tag,
+ 		min_t(unsigned int, max_pages, PAGEVEC_SIZE), pvec->pages);
 -- 
 2.15.1
 
