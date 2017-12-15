@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 76/78] md: Convert raid5-cache to XArray
-Date: Fri, 15 Dec 2017 14:04:48 -0800
-Message-ID: <20171215220450.7899-77-willy@infradead.org>
+Subject: [PATCH v5 25/78] page cache: Add page_cache_range_empty
+ function
+Date: Fri, 15 Dec 2017 14:03:57 -0800
+Message-ID: <20171215220450.7899-26-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=ucYQQuyaU+seUhVdZCjb+7+0+lr/dpjcuW6qV2Sduvk=; b=jHVwK8OLzL5WVacTg1PQQH5Aox
- dXUeFzpFyKJqPnFobRdZxF7nPA/DMRpZsckEQjaG/XAPTKcSQCq9FInTYQKXZ90PJJX5Z+MBw67h+
- Rt5m3WBN0BEBr/Z5Q7ptsAb6v6G96cNGClF78mX+6AeuTdwhxZswnTzwDZXiNFlm25/Q=;
+ bh=WmXvZpBeEv3qtPchMWQI6SbRbU4BFsdbZY1NmyUCjzA=; b=h/B0SAMY/i3DDYp0QoGumEFHr5
+ wLElhoGhagExMNDf5+OjQb60nmPV+l4BOn1Q+mn9dUrdLnX1+Mp04WxOrVj6XjonDBcau8Pse5Z6E
+ MOxDFtUC69k3zgQSLMxRu7Y3P0dJr6vXp7QP1DB65DYDlUVAMgzwK4n1jNYJX9daWYZ0=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=ucYQQuyaU+seUhVdZCjb+7+0+lr/dpjcuW6qV2Sduvk=; b=IMHbf3xR+QmwoL3XECNv6n5Az1
- N/0sZApQ6l29SWphPC6cSHCfy2iPyh9SJ264IbylhsQRhzgkNdIrZUHSLUV+57vr9BDXc9A4uGe46
- YK4O7hw8DgirzlP67QQut02U/CgiCsfLxhejLLW8pDIrcP5z7hfjaVk81O4PnviApWw4=;
+ bh=WmXvZpBeEv3qtPchMWQI6SbRbU4BFsdbZY1NmyUCjzA=; b=DjfAfSuJuBXOVBOVK/MyI8Nx94
+ ZCH9Plre0ipMXviZilRMgUygavV6EK1OGqgD8iH39rKPMt/W4d3zLglAtHVqcIpUt4OKSl4+6Garv
+ 8rAzyp+CUf6LyNUFU2cNdfp135oWE9qBDj6vLU/Gmr/k3l6DAcWEmLSGYD+4q6fAViHA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=ucYQQuyaU+seUhVdZCjb+7+0+lr/dpjcuW6qV2Sduvk=; b=UGO9wnsQ0fe7ZQqK9IK/7AdBa
- 8Pu/nMSfJXRe+aYptCtLS86fQIPIPW0lnIwDo5AiP/KhXt+SeTMfHIf1f1S8oTGVRyu9sXVTWwdIn
- hF/cLd1DGEJMJh8EoZwQ2JzZmTP3HPvNI7TcQRIbpJ2rXxX6Vi1+SfEMV6nHKkonoWHnIVp4XGCYR
- C8i7sQciYi14qS8/s5d0NqVU8bXLTE4zcVbrmQKbyOENA8t1t2oH7ldPKgPK5v6bHXCwqa9mKk5d5
- vhO1XXuspycGWBnmsFcWgRqQ4PBBh/q4Saks0O/DnXEW5kYSq2ybCEhj9lz4t2wFLB93rQM32KMNp
- aKHNXw8YA==;
+ bh=WmXvZpBeEv3qtPchMWQI6SbRbU4BFsdbZY1NmyUCjzA=; b=pKHt8OcgpG+WPM22QIlL4hFer
+ OV6rw3qA25DPIIcYk7zh7HNxG8cSYPOhmYSMt5iVXoPPV4QrsOSwt6qXk7A9xspMJM95CBxwwccHj
+ MPOyJtNZO0aiBt/N6E7P3hd5ce9GkP4lzL1S++dff4WWEiC9SCVarP9yX6UDec5CTEyYlpY5cbyRl
+ IZKKAw4ByZs/4JoKQfl8joBmNo34cO9dtrHU3F6bpRpFFEnrU9mirnsVNrPxQZpB1SS8vkkIldzUo
+ suScOzr9mVXL6bR8hJUkvsw8H3vF82kAWKFYQ2s1M7pRrYkdqxwhltv4jSpGLt076hSRuADoZHyyS
+ NcGVWfYCQ==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,228 +54,166 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is the first user of the radix tree I've converted which was
-storing numbers rather than pointers.  I'm fairly pleased with how
-well it came out.  There's less boiler-plate involved than there was
-with the radix tree, so that's a win.  It does use the advanced API,
-and I think that's a signal that there needs to be a separate API for
-using the XArray for only integers.
+btrfs has its own custom function for determining whether the page cache
+has any pages in a particular range.  Move this functionality to the
+page cache, and call it from btrfs.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- drivers/md/raid5-cache.c | 119 ++++++++++++++++-------------------------------
- 1 file changed, 40 insertions(+), 79 deletions(-)
+ fs/btrfs/btrfs_inode.h  |  7 ++++-
+ fs/btrfs/inode.c        | 70 -------------------------------------------------
+ include/linux/pagemap.h |  2 ++
+ mm/filemap.c            | 26 ++++++++++++++++++
+ 4 files changed, 34 insertions(+), 71 deletions(-)
 
-diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
-index 39f31f07ffe9..2c8ad0ed9b48 100644
---- a/drivers/md/raid5-cache.c
-+++ b/drivers/md/raid5-cache.c
-@@ -158,9 +158,8 @@ struct r5l_log {
- 	/* to disable write back during in degraded mode */
- 	struct work_struct disable_writeback_work;
- 
--	/* to for chunk_aligned_read in writeback mode, details below */
--	spinlock_t tree_lock;
--	struct radix_tree_root big_stripe_tree;
-+	/* for chunk_aligned_read in writeback mode, details below */
-+	struct xarray big_stripe;
- };
- 
- /*
-@@ -170,9 +169,8 @@ struct r5l_log {
-  * chunk contains 64 4kB-page, so this chunk contain 64 stripes). For
-  * chunk_aligned_read, these stripes are grouped into one "big_stripe".
-  * For each big_stripe, we count how many stripes of this big_stripe
-- * are in the write back cache. These data are tracked in a radix tree
-- * (big_stripe_tree). We use radix_tree item pointer as the counter.
-- * r5c_tree_index() is used to calculate keys for the radix tree.
-+ * are in the write back cache. This counter is tracked in an xarray
-+ * (big_stripe). r5c_index() is used to calculate the index.
-  *
-  * chunk_aligned_read() calls r5c_big_stripe_cached() to look up
-  * big_stripe of each chunk in the tree. If this big_stripe is in the
-@@ -180,9 +178,9 @@ struct r5l_log {
-  * rcu_read_lock().
-  *
-  * It is necessary to remember whether a stripe is counted in
-- * big_stripe_tree. Instead of adding new flag, we reuses existing flags:
-+ * big_stripe. Instead of adding new flag, we reuses existing flags:
-  * STRIPE_R5C_PARTIAL_STRIPE and STRIPE_R5C_FULL_STRIPE. If either of these
-- * two flags are set, the stripe is counted in big_stripe_tree. This
-+ * two flags are set, the stripe is counted in big_stripe. This
-  * requires moving set_bit(STRIPE_R5C_PARTIAL_STRIPE) to
-  * r5c_try_caching_write(); and moving clear_bit of
-  * STRIPE_R5C_PARTIAL_STRIPE and STRIPE_R5C_FULL_STRIPE to
-@@ -190,23 +188,13 @@ struct r5l_log {
-  */
- 
- /*
-- * radix tree requests lowest 2 bits of data pointer to be 2b'00.
-- * So it is necessary to left shift the counter by 2 bits before using it
-- * as data pointer of the tree.
-- */
--#define R5C_RADIX_COUNT_SHIFT 2
--
--/*
-- * calculate key for big_stripe_tree
-+ * calculate key for big_stripe
-  *
-  * sect: align_bi->bi_iter.bi_sector or sh->sector
-  */
--static inline sector_t r5c_tree_index(struct r5conf *conf,
--				      sector_t sect)
-+static inline sector_t r5c_index(struct r5conf *conf, sector_t sect)
- {
--	sector_t offset;
--
--	offset = sector_div(sect, conf->chunk_sectors);
-+	sector_div(sect, conf->chunk_sectors);
- 	return sect;
+diff --git a/fs/btrfs/btrfs_inode.h b/fs/btrfs/btrfs_inode.h
+index 63f0ccc92a71..a48bd6e0a0bb 100644
+--- a/fs/btrfs/btrfs_inode.h
++++ b/fs/btrfs/btrfs_inode.h
+@@ -365,6 +365,11 @@ static inline void btrfs_print_data_csum_error(struct btrfs_inode *inode,
+ 			logical_start, csum, csum_expected, mirror_num);
  }
  
-@@ -2646,10 +2634,6 @@ int r5c_try_caching_write(struct r5conf *conf,
- 	int i;
- 	struct r5dev *dev;
- 	int to_cache = 0;
--	void **pslot;
--	sector_t tree_index;
--	int ret;
--	uintptr_t refcount;
+-bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end);
++static inline bool btrfs_page_exists_in_range(struct inode *inode,
++						loff_t start, loff_t end)
++{
++	return page_cache_range_empty(inode->i_mapping, start >> PAGE_SHIFT,
++							end >> PAGE_SHIFT);
++}
  
- 	BUG_ON(!r5c_is_writeback(log));
+ #endif
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index dbdb5bf6bca1..d7d2c556d5a2 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -7541,76 +7541,6 @@ noinline int can_nocow_extent(struct inode *inode, u64 offset, u64 *len,
+ 	return ret;
+ }
  
-@@ -2697,39 +2681,29 @@ int r5c_try_caching_write(struct r5conf *conf,
- 		}
- 	}
- 
--	/* if the stripe is not counted in big_stripe_tree, add it now */
-+	/* if the stripe is not counted in big_stripe, add it now */
- 	if (!test_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state) &&
- 	    !test_bit(STRIPE_R5C_FULL_STRIPE, &sh->state)) {
--		tree_index = r5c_tree_index(conf, sh->sector);
--		spin_lock(&log->tree_lock);
--		pslot = radix_tree_lookup_slot(&log->big_stripe_tree,
--					       tree_index);
--		if (pslot) {
--			refcount = (uintptr_t)radix_tree_deref_slot_protected(
--				pslot, &log->tree_lock) >>
--				R5C_RADIX_COUNT_SHIFT;
--			radix_tree_replace_slot(
--				&log->big_stripe_tree, pslot,
--				(void *)((refcount + 1) << R5C_RADIX_COUNT_SHIFT));
--		} else {
--			/*
--			 * this radix_tree_insert can fail safely, so no
--			 * need to call radix_tree_preload()
--			 */
--			ret = radix_tree_insert(
--				&log->big_stripe_tree, tree_index,
--				(void *)(1 << R5C_RADIX_COUNT_SHIFT));
--			if (ret) {
--				spin_unlock(&log->tree_lock);
--				r5c_make_stripe_write_out(sh);
--				return -EAGAIN;
+-bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end)
+-{
+-	struct radix_tree_root *root = &inode->i_mapping->pages;
+-	bool found = false;
+-	void **pagep = NULL;
+-	struct page *page = NULL;
+-	unsigned long start_idx;
+-	unsigned long end_idx;
+-
+-	start_idx = start >> PAGE_SHIFT;
+-
+-	/*
+-	 * end is the last byte in the last page.  end == start is legal
+-	 */
+-	end_idx = end >> PAGE_SHIFT;
+-
+-	rcu_read_lock();
+-
+-	/* Most of the code in this while loop is lifted from
+-	 * find_get_page.  It's been modified to begin searching from a
+-	 * page and return just the first page found in that range.  If the
+-	 * found idx is less than or equal to the end idx then we know that
+-	 * a page exists.  If no pages are found or if those pages are
+-	 * outside of the range then we're fine (yay!) */
+-	while (page == NULL &&
+-	       radix_tree_gang_lookup_slot(root, &pagep, NULL, start_idx, 1)) {
+-		page = radix_tree_deref_slot(pagep);
+-		if (unlikely(!page))
+-			break;
+-
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				page = NULL;
+-				continue;
 -			}
-+		XA_STATE(xas, &log->big_stripe, r5c_index(conf, sh->sector));
-+		void *entry;
-+
-+		/* Caller would rather handle failures than supply GFP flags */
-+		xas_lock(&xas);
-+		entry = xas_create(&xas);
-+		if (entry)
-+			entry = xa_mk_value(xa_to_value(entry) + 1);
-+		else
-+			entry = xa_mk_value(1);
-+		xas_store(&xas, entry);
-+		xas_unlock(&xas);
-+		if (xas_error(&xas)) {
-+			r5c_make_stripe_write_out(sh);
-+			return -EAGAIN;
- 		}
--		spin_unlock(&log->tree_lock);
- 
- 		/*
- 		 * set STRIPE_R5C_PARTIAL_STRIPE, this shows the stripe is
--		 * counted in the radix tree
-+		 * counted in big_stripe
- 		 */
- 		set_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state);
- 		atomic_inc(&conf->r5c_cached_partial_stripes);
-@@ -2812,9 +2786,6 @@ void r5c_finish_stripe_write_out(struct r5conf *conf,
- 	struct r5l_log *log = conf->log;
- 	int i;
- 	int do_wakeup = 0;
--	sector_t tree_index;
--	void **pslot;
--	uintptr_t refcount;
- 
- 	if (!log || !test_bit(R5_InJournal, &sh->dev[sh->pd_idx].flags))
- 		return;
-@@ -2852,24 +2823,21 @@ void r5c_finish_stripe_write_out(struct r5conf *conf,
- 	atomic_dec(&log->stripe_in_journal_count);
- 	r5c_update_log_state(log);
- 
--	/* stop counting this stripe in big_stripe_tree */
-+	/* stop counting this stripe in big_stripe */
- 	if (test_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state) ||
- 	    test_bit(STRIPE_R5C_FULL_STRIPE, &sh->state)) {
--		tree_index = r5c_tree_index(conf, sh->sector);
--		spin_lock(&log->tree_lock);
--		pslot = radix_tree_lookup_slot(&log->big_stripe_tree,
--					       tree_index);
--		BUG_ON(pslot == NULL);
--		refcount = (uintptr_t)radix_tree_deref_slot_protected(
--			pslot, &log->tree_lock) >>
--			R5C_RADIX_COUNT_SHIFT;
--		if (refcount == 1)
--			radix_tree_delete(&log->big_stripe_tree, tree_index);
-+		XA_STATE(xas, &log->big_stripe, r5c_index(conf, sh->sector));
-+		void *entry;
-+
-+		xas_lock(&xas);
-+		entry = xas_load(&xas);
-+		BUG_ON(!entry);
-+		if (entry == xa_mk_value(1))
-+			entry = NULL;
- 		else
--			radix_tree_replace_slot(
--				&log->big_stripe_tree, pslot,
--				(void *)((refcount - 1) << R5C_RADIX_COUNT_SHIFT));
--		spin_unlock(&log->tree_lock);
-+			entry = xa_mk_value(xa_to_value(entry) - 1);
-+		xas_store(&xas, entry);
-+		xas_unlock(&xas);
- 	}
- 
- 	if (test_and_clear_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state)) {
-@@ -2949,16 +2917,10 @@ int r5c_cache_data(struct r5l_log *log, struct stripe_head *sh)
- bool r5c_big_stripe_cached(struct r5conf *conf, sector_t sect)
- {
- 	struct r5l_log *log = conf->log;
--	sector_t tree_index;
--	void *slot;
- 
- 	if (!log)
- 		return false;
+-			/*
+-			 * Otherwise, shmem/tmpfs must be storing a swap entry
+-			 * here so return it without attempting to raise page
+-			 * count.
+-			 */
+-			page = NULL;
+-			break; /* TODO: Is this relevant for this use case? */
+-		}
 -
--	WARN_ON_ONCE(!rcu_read_lock_held());
--	tree_index = r5c_tree_index(conf, sect);
--	slot = radix_tree_lookup(&log->big_stripe_tree, tree_index);
--	return slot != NULL;
-+	return xa_load(&log->big_stripe, r5c_index(conf, sect)) != NULL;
+-		if (!page_cache_get_speculative(page)) {
+-			page = NULL;
+-			continue;
+-		}
+-
+-		/*
+-		 * Has the page moved?
+-		 * This is part of the lockless pagecache protocol. See
+-		 * include/linux/pagemap.h for details.
+-		 */
+-		if (unlikely(page != *pagep)) {
+-			put_page(page);
+-			page = NULL;
+-		}
+-	}
+-
+-	if (page) {
+-		if (page->index <= end_idx)
+-			found = true;
+-		put_page(page);
+-	}
+-
+-	rcu_read_unlock();
+-	return found;
+-}
+-
+ static int lock_extent_direct(struct inode *inode, u64 lockstart, u64 lockend,
+ 			      struct extent_state **cached_state, int writing)
+ {
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index 0db127c3ccac..34d4fa3ad1c5 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -245,6 +245,8 @@ pgoff_t page_cache_next_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
+ pgoff_t page_cache_prev_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
++bool page_cache_range_empty(struct address_space *mapping,
++				pgoff_t index, pgoff_t max);
+ 
+ #define FGP_ACCESSED		0x00000001
+ #define FGP_LOCK		0x00000002
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 146e8ec16ec0..f1b4480723dd 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1398,6 +1398,32 @@ pgoff_t page_cache_prev_gap(struct address_space *mapping,
  }
+ EXPORT_SYMBOL(page_cache_prev_gap);
  
- static int r5l_load_log(struct r5l_log *log)
-@@ -3112,8 +3074,7 @@ int r5l_init_log(struct r5conf *conf, struct md_rdev *rdev)
- 	if (!log->meta_pool)
- 		goto out_mempool;
- 
--	spin_lock_init(&log->tree_lock);
--	INIT_RADIX_TREE(&log->big_stripe_tree, GFP_NOWAIT | __GFP_NOWARN);
-+	xa_init(&log->big_stripe);
- 
- 	log->reclaim_thread = md_register_thread(r5l_reclaim_thread,
- 						 log->rdev->mddev, "reclaim");
++bool page_cache_range_empty(struct address_space *mapping, pgoff_t index,
++				pgoff_t max)
++{
++	struct page *page;
++	XA_STATE(xas, &mapping->pages, index);
++
++	rcu_read_lock();
++	do {
++		page = xas_find(&xas, max);
++		if (xas_retry(&xas, page))
++			continue;
++		/* Shadow entries don't count */
++		if (xa_is_value(page))
++			continue;
++		/*
++		 * We don't need to try to pin this page; we're about to
++		 * release the RCU lock anyway.  It is enough to know that
++		 * there was a page here recently.
++		 */
++	} while (0);
++	rcu_read_unlock();
++
++	return page != NULL;
++}
++EXPORT_SYMBOL_GPL(page_cache_range_empty);
++
+ /**
+  * find_get_entry - find and get a page cache entry
+  * @mapping: the address_space to search
 -- 
 2.15.1
 
