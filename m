@@ -1,118 +1,252 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 64/78] dax: Convert dax_insert_mapping_entry
- to XArray
-Date: Fri, 15 Dec 2017 14:04:36 -0800
-Message-ID: <20171215220450.7899-65-willy@infradead.org>
+Subject: [PATCH v5 26/78] page cache: Add and replace pages using the XArray
+Date: Fri, 15 Dec 2017 14:03:58 -0800
+Message-ID: <20171215220450.7899-27-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Mime-Version: 1.0
+Return-path: <owner-linux-mm@kvack.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+	Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	 bh=YS4NyzhfCgppChs07Eh/sxSSV4s5rFVNWWgsQbEFeag=; b=iy3kuP6InFlV+lmhGG4T57ctd
+	9/HmgUFhCF6+is5JT068eC5cv50W2TZ6bLdFAuLNh1fLsXKoDM4gKlP7SzdJOki0JsdkreZZl/iR4
+	BnAafZNyczWra49c5sXIvHq7iCNoJBUS34QY8GIeTdGr1yv4k9KBaiHT/XUndzNnJJHmZSdM13x55
+	u/11kLY4k5A2ztURDWAwP/wlLmQC51KZLGGu8ZOBf0De2proVKV6gKgy1LJsOkxUNpCHh1EiR8TL5
+	xj952Zc66U9gI6Qn0RNIcMQkZXM1RanG5bgyShAmfwg1H3z1gWwOgUJwh1ndhSz2Qu7uGmELYJ817
+	dTGsCWOmw==;
+In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
+Sender: owner-linux-mm@kvack.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=7tPDoqs87772IfLubU8+tHtD87IxbWpnhrTcqQR7GQ0=; b=KffXCMko/jJ+OgEv5FQkb8tPST
- XjDnwSXnavwUIcMKYKSOicI1pip0d36u/3R6kIjtSx0j/bFPfL93egn6DWIfgLbR2463ya+Y4ZuaZ
- Meu+CbijEzFaqO8qKobndaia2tgHO05P4DoM+eFeQkNIwGMAK9c02oLYyWAQW/g9kSas=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
- :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=7tPDoqs87772IfLubU8+tHtD87IxbWpnhrTcqQR7GQ0=; b=O8hM6m3CC/PlJWoXmhpOfPjlYx
- Z++jfmBtMBy6PejrCthFl1tPaVrjFKzstjUAsMDuwmInJOfYlHHVEs4xMbmg+cY/PMeNfTAB3oVWM
- dFReN/CC2wBA0pviKvefVwX4GtwJTD2tPwuKCxHCOkjMB8dOXyLcPWWGfjZEjFpkLOPE=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=7tPDoqs87772IfLubU8+tHtD87IxbWpnhrTcqQR7GQ0=; b=RuuaFQoFx91hAiDcIS6mrqbpl
- siLk4Zo4gdZ0fndX2MS4+7zHrSkfSGykGgxohYsjj4odKlMcZSg7i8K6gFOgyKzMxAl6+GLPhy9IW
- 0O9Ts26HR7sWH130HgpjP40t8og+5Sf6aOGl6aBXIGg3joXEmtHQueEw4MfJ/DO5czpAwViCtcmAH
- zDY4amEHlltj3fagcp32TktjxAV3btBQa9KiK7GlqqRAI0wJuq7Afo9yaJ4CdX9zY1JErwxEMV4KU
- 2XI0GuHNQe18xKHmkLpUYDxovH0ZLCARm+IVwCfIKQooC3cbL7X8supk32lm1SCxtr/6WXTo5/Cy8
- zYU2+sTNg==;
-In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-kernel@vger.kernel.org
-Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-raid@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-usb@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Rehas Sachdeva <aquannie@gmail.com>, Shaohua Li <shli@kernel.org>, linux-btrfs@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
+Use the XArray APIs to add and replace pages in the page cache.  This
+removes two uses of the radix tree preload API and is significantly
+shorter code.
+
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 18 ++++++------------
- 1 file changed, 6 insertions(+), 12 deletions(-)
+ mm/filemap.c | 143 +++++++++++++++++++++++++----------------------------------
+ 1 file changed, 61 insertions(+), 82 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 9cfd4fcc0b0d..a3e795ad2493 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -498,9 +498,9 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
- 				      void *entry, sector_t sector,
- 				      unsigned long flags, bool dirty)
- {
--	struct radix_tree_root *pages = &mapping->pages;
- 	void *new_entry;
- 	pgoff_t index = vmf->pgoff;
-+	XA_STATE(xas, &mapping->pages, index);
+diff --git a/mm/filemap.c b/mm/filemap.c
+index f1b4480723dd..91df92f5c96d 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -112,35 +112,6 @@
+  *   ->tasklist_lock            (memory_failure, collect_procs_ao)
+  */
  
- 	if (dirty)
- 		__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
-@@ -516,7 +516,7 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
- 					PAGE_SIZE, 0);
+-static int page_cache_tree_insert(struct address_space *mapping,
+-				  struct page *page, void **shadowp)
+-{
+-	struct radix_tree_node *node;
+-	void **slot;
+-	int error;
+-
+-	error = __radix_tree_create(&mapping->pages, page->index, 0,
+-				    &node, &slot);
+-	if (error)
+-		return error;
+-	if (*slot) {
+-		void *p;
+-
+-		p = radix_tree_deref_slot_protected(slot,
+-						    &mapping->pages.xa_lock);
+-		if (!xa_is_value(p))
+-			return -EEXIST;
+-
+-		mapping->nrexceptional--;
+-		if (shadowp)
+-			*shadowp = p;
+-	}
+-	__radix_tree_replace(&mapping->pages, node, slot, page,
+-			     workingset_lookup_update(mapping));
+-	mapping->nrpages++;
+-	return 0;
+-}
+-
+ static void page_cache_tree_delete(struct address_space *mapping,
+ 				   struct page *page, void *shadow)
+ {
+@@ -776,51 +747,44 @@ EXPORT_SYMBOL(file_write_and_wait_range);
+  * locked.  This function does not add the new page to the LRU, the
+  * caller must do that.
+  *
+- * The remove + add is atomic.  The only way this function can fail is
+- * memory allocation failure.
++ * The remove + add is atomic.  This function cannot fail.
+  */
+ int replace_page_cache_page(struct page *old, struct page *new, gfp_t gfp_mask)
+ {
+-	int error;
++	struct address_space *mapping = old->mapping;
++	void (*freepage)(struct page *) = mapping->a_ops->freepage;
++	pgoff_t offset = old->index;
++	XA_STATE(xas, &mapping->pages, offset);
++	unsigned long flags;
+ 
+ 	VM_BUG_ON_PAGE(!PageLocked(old), old);
+ 	VM_BUG_ON_PAGE(!PageLocked(new), new);
+ 	VM_BUG_ON_PAGE(new->mapping, new);
+ 
+-	error = radix_tree_preload(gfp_mask & ~__GFP_HIGHMEM);
+-	if (!error) {
+-		struct address_space *mapping = old->mapping;
+-		void (*freepage)(struct page *);
+-		unsigned long flags;
+-
+-		pgoff_t offset = old->index;
+-		freepage = mapping->a_ops->freepage;
+-
+-		get_page(new);
+-		new->mapping = mapping;
+-		new->index = offset;
++	get_page(new);
++	new->mapping = mapping;
++	new->index = offset;
+ 
+-		xa_lock_irqsave(&mapping->pages, flags);
+-		__delete_from_page_cache(old, NULL);
+-		error = page_cache_tree_insert(mapping, new, NULL);
+-		BUG_ON(error);
++	xas_lock_irqsave(&xas, flags);
++	xas_store(&xas, new);
+ 
+-		/*
+-		 * hugetlb pages do not participate in page cache accounting.
+-		 */
+-		if (!PageHuge(new))
+-			__inc_node_page_state(new, NR_FILE_PAGES);
+-		if (PageSwapBacked(new))
+-			__inc_node_page_state(new, NR_SHMEM);
+-		xa_unlock_irqrestore(&mapping->pages, flags);
+-		mem_cgroup_migrate(old, new);
+-		radix_tree_preload_end();
+-		if (freepage)
+-			freepage(old);
+-		put_page(old);
+-	}
++	old->mapping = NULL;
++	/* hugetlb pages do not participate in page cache accounting. */
++	if (!PageHuge(old))
++		__dec_node_page_state(new, NR_FILE_PAGES);
++	if (!PageHuge(new))
++		__inc_node_page_state(new, NR_FILE_PAGES);
++	if (PageSwapBacked(old))
++		__dec_node_page_state(new, NR_SHMEM);
++	if (PageSwapBacked(new))
++		__inc_node_page_state(new, NR_SHMEM);
++	xas_unlock_irqrestore(&xas, flags);
++	mem_cgroup_migrate(old, new);
++	if (freepage)
++		freepage(old);
++	put_page(old);
+ 
+-	return error;
++	return 0;
+ }
+ EXPORT_SYMBOL_GPL(replace_page_cache_page);
+ 
+@@ -829,12 +793,15 @@ static int __add_to_page_cache_locked(struct page *page,
+ 				      pgoff_t offset, gfp_t gfp_mask,
+ 				      void **shadowp)
+ {
++	XA_STATE(xas, &mapping->pages, offset);
+ 	int huge = PageHuge(page);
+ 	struct mem_cgroup *memcg;
+ 	int error;
++	void *old;
+ 
+ 	VM_BUG_ON_PAGE(!PageLocked(page), page);
+ 	VM_BUG_ON_PAGE(PageSwapBacked(page), page);
++	xas_set_update(&xas, workingset_lookup_update(mapping));
+ 
+ 	if (!huge) {
+ 		error = mem_cgroup_try_charge(page, current->mm,
+@@ -843,39 +810,51 @@ static int __add_to_page_cache_locked(struct page *page,
+ 			return error;
  	}
+ 
+-	error = radix_tree_maybe_preload(gfp_mask & ~__GFP_HIGHMEM);
+-	if (error) {
+-		if (!huge)
+-			mem_cgroup_cancel_charge(page, memcg, false);
+-		return error;
+-	}
+-
+ 	get_page(page);
+ 	page->mapping = mapping;
+ 	page->index = offset;
  
 -	xa_lock_irq(&mapping->pages);
-+	xas_lock_irq(&xas);
- 	new_entry = dax_radix_locked_entry(sector, flags);
+-	error = page_cache_tree_insert(mapping, page, shadowp);
+-	radix_tree_preload_end();
+-	if (unlikely(error))
+-		goto err_insert;
++	do {
++		xas_lock_irq(&xas);
++		old = xas_create(&xas);
++		if (xas_error(&xas))
++			goto unlock;
++		if (xa_is_value(old)) {
++			mapping->nrexceptional--;
++			if (shadowp)
++				*shadowp = old;
++		} else if (old) {
++			xas_set_err(&xas, -EEXIST);
++			goto unlock;
++		}
++
++		xas_store(&xas, page);
++		mapping->nrpages++;
++
++		/*
++		 * hugetlb pages do not participate in
++		 * page cache accounting.
++		 */
++		if (!huge)
++			__inc_node_page_state(page, NR_FILE_PAGES);
++unlock:
++		xas_unlock_irq(&xas);
++	} while (xas_nomem(&xas, gfp_mask & ~__GFP_HIGHMEM));
++
++	if (xas_error(&xas))
++		goto error;
  
- 	if (dax_is_zero_entry(entry) || dax_is_empty_entry(entry)) {
-@@ -528,21 +528,15 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
- 		 * existing entry is a PMD, we will just leave the PMD in the
- 		 * tree and dirty it if necessary.
- 		 */
--		struct radix_tree_node *node;
--		void **slot;
--		void *ret;
--
--		ret = __radix_tree_lookup(pages, index, &node, &slot);
--		WARN_ON_ONCE(ret != entry);
--		__radix_tree_replace(pages, node, slot,
--				     new_entry, NULL);
-+		void *prev = xas_store(&xas, new_entry);
-+		WARN_ON_ONCE(prev != entry);
- 		entry = new_entry;
- 	}
- 
- 	if (dirty)
--		radix_tree_tag_set(pages, index, PAGECACHE_TAG_DIRTY);
-+		xas_set_tag(&xas, PAGECACHE_TAG_DIRTY);
- 
+-	/* hugetlb pages do not participate in page cache accounting. */
+-	if (!huge)
+-		__inc_node_page_state(page, NR_FILE_PAGES);
 -	xa_unlock_irq(&mapping->pages);
-+	xas_unlock_irq(&xas);
- 	return entry;
+ 	if (!huge)
+ 		mem_cgroup_commit_charge(page, memcg, false, false);
+ 	trace_mm_filemap_add_to_page_cache(page);
+ 	return 0;
+-err_insert:
++error:
+ 	page->mapping = NULL;
+ 	/* Leave page->index set: truncation relies upon it */
+-	xa_unlock_irq(&mapping->pages);
+ 	if (!huge)
+ 		mem_cgroup_cancel_charge(page, memcg, false);
+ 	put_page(page);
+-	return error;
++	return xas_error(&xas);
  }
  
+ /**
 -- 
 2.15.1
 
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
