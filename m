@@ -1,255 +1,279 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 15/78] xarray: Add xas_for_each_tag
-Date: Fri, 15 Dec 2017 14:03:47 -0800
-Message-ID: <20171215220450.7899-16-willy@infradead.org>
+Subject: [PATCH v5 71/78] xfs: Convert m_perag_tree to XArray
+Date: Fri, 15 Dec 2017 14:04:43 -0800
+Message-ID: <20171215220450.7899-72-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Mime-Version: 1.0
+Return-path: <linux-raid-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=a3irxt/UWwZTPf021OiX1s1Q5H8mh1v2DsU5FyoNnpk=; b=WfTlTADIhSducsZ9tTQL5mJvt
+        EBxK2QPVovdQFPoOlIZRDia5VaS4vjyn2EuHO0sYqH6okx7yimkeCFJtSfPSfNeM6M/HqMdWVYp03
+        ESgsD98iKV9Zc8olXvdTr9Y5kICQzALIWZJLUOek4kNCp3yPckZJkpmwtpDkb8nPP0MTyykNZk3I7
+        C4LxnnW4R333tvXplodhcxcyeyqUb3A8le3SLjJaWrWM1EQe8+iF4rO+3UjHCsBw3d9/jyD4uNO2S
+        RBM/gRYO30vW7wQNNO7T4MVpqZbkj7S8swJKCa7OQJDM1sv9kmdJVgaK060Xm3bMStKxnEgzUxjn7
+    
+In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
+Sender: linux-raid-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=K3sGeIhFItgACVngHc9iPoNCAn3k8GAn3MwDMvCt9xM=; b=GTkvAR08J4W1BWUW7O9XhhsRNM
- AGgZGfuk+qqx4gbDK3W/BWFuhYI3LBa9s2fTO0dAtqb1ScoG7lsH+gnCw1E7wffP/z2X7wGYl9xG/
- jp5PH8280Jg5HnfBwyT2TuZ7iXYwgye3p7sVq1PzdCrBTYNauo8Nt0GhBgcWTfDXa4qs=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
- :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=K3sGeIhFItgACVngHc9iPoNCAn3k8GAn3MwDMvCt9xM=; b=cUObWdMcxQKmfjFjTYJZSmqI8O
- HOzyva9Yhp4Ve4G7UC9AVPeGa4SAIoQ71LmPIw5foKXeQ0B9Ec5xi24dyKGDwqzwSDG3VORvmbfnT
- bnPwyjek4g1twlCWgVKl08A8xGDD8Hdm1ytEwMVE33fMLF8zjrQZgw/6VNyu1qwkiWN0=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=K3sGeIhFItgACVngHc9iPoNCAn3k8GAn3MwDMvCt9xM=; b=EJpQ3+CD8+633tE+QKzxFgz17
- Qp0Fi5kRb54s/+e8dUlmllrkoWsUCKXT28nOIWEBt1t30WvkYtnKVV7VydSXk0BawlfI9ryQ+Sz3U
- ZBgddNy1mr9QLeXU1ndyQgMtU7O+W2PHmsBU8yLIcUjm4HGyRPfdkX5wCo7dBrlI+lVjP9e26lW62
- 9zNFks8tj05s6+HgRXpcgE/8AmvlvCXqilSYEtjC7TSOth9t7BcVgdXHcqFCMgR5P5UFea/qCqbEW
- rXdzZZZZNbXNNr2MHDgWaUatWVsdUVsQWjcYdhQAkUd8jTvOzDLTeC6Z60j45Eunj2FRM76jmctir
- 5NezVWNBA==;
-In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-kernel@vger.kernel.org
-Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-raid@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-usb@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Rehas Sachdeva <aquannie@gmail.com>, Shaohua Li <shli@kernel.org>, linux-btrfs@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This iterator operates across each tagged entry in the specified range.
-We do not yet have a user for an xa_for_each_tag iterator, but it would
-be straight-forward to add one if needed.  This commit also includes
-xas_find_tag() and xas_next_tag().
+Getting rid of the m_perag_lock lets us also get rid of the call to
+radix_tree_preload().  This is a relatively naive conversion; we could
+improve performance over the radix tree implementation by passing around
+xa_state pointers instead of indices, possibly at the expense of extending
+rcu_read_lock() periods.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h | 68 +++++++++++++++++++++++++++++++++++++++++++
- lib/xarray.c           | 78 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 146 insertions(+)
+ fs/xfs/libxfs/xfs_sb.c |  9 ++++-----
+ fs/xfs/xfs_icache.c    | 35 +++++++++--------------------------
+ fs/xfs/xfs_icache.h    |  6 +++---
+ fs/xfs/xfs_mount.c     | 19 ++++---------------
+ fs/xfs/xfs_mount.h     |  3 +--
+ 5 files changed, 21 insertions(+), 51 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index c4eef03ad12d..85a319463e46 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -645,6 +645,7 @@ void *xas_find(struct xa_state *, unsigned long max);
- bool xas_get_tag(const struct xa_state *, xa_tag_t);
- void xas_set_tag(const struct xa_state *, xa_tag_t);
- void xas_clear_tag(const struct xa_state *, xa_tag_t);
-+void *xas_find_tag(struct xa_state *, unsigned long max, xa_tag_t);
- void xas_init_tags(const struct xa_state *);
+diff --git a/fs/xfs/libxfs/xfs_sb.c b/fs/xfs/libxfs/xfs_sb.c
+index 9b5aae2bcc0b..3b0b65eb8224 100644
+--- a/fs/xfs/libxfs/xfs_sb.c
++++ b/fs/xfs/libxfs/xfs_sb.c
+@@ -59,7 +59,7 @@ xfs_perag_get(
+ 	int			ref = 0;
  
- bool xas_nomem(struct xa_state *, gfp_t);
-@@ -770,6 +771,55 @@ static inline void *xas_next_entry(struct xa_state *xas, unsigned long max)
- 	return entry;
+ 	rcu_read_lock();
+-	pag = radix_tree_lookup(&mp->m_perag_tree, agno);
++	pag = xa_load(&mp->m_perag_xa, agno);
+ 	if (pag) {
+ 		ASSERT(atomic_read(&pag->pag_ref) >= 0);
+ 		ref = atomic_inc_return(&pag->pag_ref);
+@@ -78,14 +78,13 @@ xfs_perag_get_tag(
+ 	xfs_agnumber_t		first,
+ 	int			tag)
+ {
++	XA_STATE(xas, &mp->m_perag_xa, first);
+ 	struct xfs_perag	*pag;
+-	int			found;
+ 	int			ref;
+ 
+ 	rcu_read_lock();
+-	found = radix_tree_gang_lookup_tag(&mp->m_perag_tree,
+-					(void **)&pag, first, 1, tag);
+-	if (found <= 0) {
++	pag = xas_find_tag(&xas, ULONG_MAX, tag);
++	if (!pag) {
+ 		rcu_read_unlock();
+ 		return NULL;
+ 	}
+diff --git a/fs/xfs/xfs_icache.c b/fs/xfs/xfs_icache.c
+index 43005fbe8b1e..f56e500d89e2 100644
+--- a/fs/xfs/xfs_icache.c
++++ b/fs/xfs/xfs_icache.c
+@@ -156,13 +156,10 @@ static void
+ xfs_reclaim_work_queue(
+ 	struct xfs_mount        *mp)
+ {
+-
+-	rcu_read_lock();
+-	if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_RECLAIM_TAG)) {
++	if (xa_tagged(&mp->m_perag_xa, XFS_ICI_RECLAIM_TAG)) {
+ 		queue_delayed_work(mp->m_reclaim_workqueue, &mp->m_reclaim_work,
+ 			msecs_to_jiffies(xfs_syncd_centisecs / 6 * 10));
+ 	}
+-	rcu_read_unlock();
  }
  
-+/* Private */
-+static inline unsigned int xas_find_chunk(struct xa_state *xas, bool advance,
-+		xa_tag_t tag)
-+{
-+	unsigned long *addr = xas->xa_node->tags[(__force unsigned)tag];
-+	unsigned int offset = xas->xa_offset;
-+
-+	if (advance)
-+		offset++;
-+	if (XA_CHUNK_SIZE == BITS_PER_LONG) {
-+		unsigned long data = *addr & (~0UL << offset);
-+		if (data)
-+			return __ffs(data);
-+		return XA_CHUNK_SIZE;
-+	}
-+
-+	return find_next_bit(addr, XA_CHUNK_SIZE, offset);
-+}
-+
-+/**
-+ * xas_next_tag() - Advance iterator to next tagged entry.
-+ * @xas: XArray operation state.
-+ * @max: Highest index to return.
-+ * @tag: Tag to search for.
-+ *
-+ * xas_next_tag() is an inline function to optimise xarray traversal for
-+ * speed.  It is equivalent to calling xas_find_tag(), and will call
-+ * xas_find_tag() for all the hard cases.
-+ *
-+ * Return: The next tagged entry after the one currently referred to by @xas.
-+ */
-+static inline void *xas_next_tag(struct xa_state *xas, unsigned long max,
-+								xa_tag_t tag)
-+{
-+	struct xa_node *node = xas->xa_node;
-+	unsigned int offset;
-+
-+	if (unlikely(xas_not_node(node) || xa_node_shift(node)))
-+		return xas_find_tag(xas, max, tag);
-+	offset = xas_find_chunk(xas, true, tag);
-+	xas->xa_offset = offset;
-+	xas->xa_index = (xas->xa_index & ~XA_CHUNK_MASK) + offset;
-+	if (xas->xa_index > max)
-+		return NULL;
-+	if (offset == XA_CHUNK_SIZE)
-+		return xas_find_tag(xas, max, tag);
-+	return xa_entry(xas->xa, node, offset);
-+}
-+
  /*
-  * If iterating while holding a lock, drop the lock and reschedule
-  * every %XA_CHECK_SCHED loops.
-@@ -795,6 +845,24 @@ enum {
- 	for (entry = xas_find(xas, max); entry; \
- 	     entry = xas_next_entry(xas, max))
+@@ -194,10 +191,7 @@ xfs_perag_set_reclaim_tag(
+ 		return;
  
-+/**
-+ * xas_for_each_tag() - Iterate over a range of an XArray
-+ * @xas: XArray operation state.
-+ * @entry: Entry retrieved from array.
-+ * @max: Maximum index to retrieve from array.
-+ * @tag: Tag to search for.
-+ *
-+ * The loop body will be executed for each tagged entry in the xarray
-+ * between the current xas position and @max.  @entry will be set to
-+ * the entry retrieved from the xarray.  It is safe to delete entries
-+ * from the array in the loop body.  You should hold either the RCU lock
-+ * or the xa_lock while iterating.  If you need to drop the lock, call
-+ * xas_pause() first.
-+ */
-+#define xas_for_each_tag(xas, entry, max, tag) \
-+	for (entry = xas_find_tag(xas, max, tag); entry; \
-+	     entry = xas_next_tag(xas, max, tag))
-+
- /* Internal functions, mostly shared between radix-tree.c, xarray.c and idr.c */
- void xas_destroy(struct xa_state *);
+ 	/* propagate the reclaim tag up into the perag radix tree */
+-	spin_lock(&mp->m_perag_lock);
+-	radix_tree_tag_set(&mp->m_perag_tree, pag->pag_agno,
+-			   XFS_ICI_RECLAIM_TAG);
+-	spin_unlock(&mp->m_perag_lock);
++	xa_set_tag(&mp->m_perag_xa, pag->pag_agno, XFS_ICI_RECLAIM_TAG);
  
-diff --git a/lib/xarray.c b/lib/xarray.c
-index 4d8962d2341c..9ac1e9730c24 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -897,6 +897,84 @@ void *xas_find(struct xa_state *xas, unsigned long max)
+ 	/* schedule periodic background inode reclaim */
+ 	xfs_reclaim_work_queue(mp);
+@@ -216,10 +210,7 @@ xfs_perag_clear_reclaim_tag(
+ 		return;
+ 
+ 	/* clear the reclaim tag from the perag radix tree */
+-	spin_lock(&mp->m_perag_lock);
+-	radix_tree_tag_clear(&mp->m_perag_tree, pag->pag_agno,
+-			     XFS_ICI_RECLAIM_TAG);
+-	spin_unlock(&mp->m_perag_lock);
++	xa_clear_tag(&mp->m_perag_xa, pag->pag_agno, XFS_ICI_RECLAIM_TAG);
+ 	trace_xfs_perag_clear_reclaim(mp, pag->pag_agno, -1, _RET_IP_);
  }
- EXPORT_SYMBOL_GPL(xas_find);
  
-+/**
-+ * xas_find_tag() - Find the next tagged entry in the XArray.
-+ * @xas: XArray operation state.
-+ * @max: Highest index to return.
-+ * @tag: Tag number to search for.
-+ *
-+ * If the xas has not yet been walked to an entry, return the tagged entry
-+ * which has an index >= xas.xa_index.  If it has been walked, the entry
-+ * currently being pointed at has been processed, and so we move to the
-+ * next tagged entry.
-+ *
-+ * If no tagged entry is found and the array is smaller than @max, @xas is
-+ * set to the restart state and xas->xa_index is set to the smallest index
-+ * not yet in the array.  This allows @xas to be immediately passed to
-+ * xas_create().
-+ *
-+ * Return: The entry, if found, otherwise NULL.
-+ */
-+void *xas_find_tag(struct xa_state *xas, unsigned long max, xa_tag_t tag)
-+{
-+	bool advance = true;
-+	unsigned int offset;
-+	void *entry;
-+
-+	if (xas_error(xas))
-+		return NULL;
-+
-+	if (!xas->xa_node) {
-+		xas->xa_index = 1;
-+		goto out;
-+	} else if (xas_top(xas->xa_node)) {
-+		advance = false;
-+		entry = xa_head(xas->xa);
-+		if (xas->xa_index > max_index(entry))
-+			goto out;
-+		if (!xa_is_node(entry)) {
-+			if (xa_tagged(xas->xa, tag)) {
-+				xas->xa_node = NULL;
-+				return entry;
-+			}
-+			xas->xa_index = 1;
-+			goto out;
-+		}
-+		xas->xa_node = xa_to_node(entry);
-+		xas->xa_offset = xas->xa_index >> xas->xa_node->shift;
-+	}
-+
-+	while (xas->xa_index <= max) {
-+		if (unlikely(xas->xa_offset == XA_CHUNK_SIZE)) {
-+			xas->xa_offset = xas->xa_node->offset + 1;
-+			xas->xa_node = xa_parent(xas->xa, xas->xa_node);
-+			if (!xas->xa_node)
-+				break;
-+			advance = false;
-+			continue;
-+		}
-+
-+		offset = xas_find_chunk(xas, advance, tag);
-+		xas_add(xas, offset - xas->xa_offset);
-+		if (offset == XA_CHUNK_SIZE) {
-+			advance = false;
-+			continue;
-+		}
-+
-+		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
-+		if (!xa_is_node(entry))
-+			return entry;
-+		xas->xa_node = xa_to_node(entry);
-+		xas->xa_offset = get_offset(xas->xa_index, xas->xa_node);
-+	}
-+
-+ out:
-+	if (!xas->xa_node)
-+		xas->xa_node = XAS_BOUNDS;
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(xas_find_tag);
-+
- /**
-  * __xa_init() - Initialise an empty XArray with flags.
-  * @xa: XArray.
+@@ -847,12 +838,10 @@ void
+ xfs_queue_eofblocks(
+ 	struct xfs_mount *mp)
+ {
+-	rcu_read_lock();
+-	if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_EOFBLOCKS_TAG))
++	if (xa_tagged(&mp->m_perag_xa, XFS_ICI_EOFBLOCKS_TAG))
+ 		queue_delayed_work(mp->m_eofblocks_workqueue,
+ 				   &mp->m_eofblocks_work,
+ 				   msecs_to_jiffies(xfs_eofb_secs * 1000));
+-	rcu_read_unlock();
+ }
+ 
+ void
+@@ -874,12 +863,10 @@ STATIC void
+ xfs_queue_cowblocks(
+ 	struct xfs_mount *mp)
+ {
+-	rcu_read_lock();
+-	if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_COWBLOCKS_TAG))
++	if (xa_tagged(&mp->m_perag_xa, XFS_ICI_COWBLOCKS_TAG))
+ 		queue_delayed_work(mp->m_eofblocks_workqueue,
+ 				   &mp->m_cowblocks_work,
+ 				   msecs_to_jiffies(xfs_cowb_secs * 1000));
+-	rcu_read_unlock();
+ }
+ 
+ void
+@@ -1542,7 +1529,7 @@ __xfs_inode_set_eofblocks_tag(
+ 	void		(*execute)(struct xfs_mount *mp),
+ 	void		(*set_tp)(struct xfs_mount *mp, xfs_agnumber_t agno,
+ 				  int error, unsigned long caller_ip),
+-	int		tag)
++	xa_tag_t	tag)
+ {
+ 	struct xfs_mount *mp = ip->i_mount;
+ 	struct xfs_perag *pag;
+@@ -1566,11 +1553,9 @@ __xfs_inode_set_eofblocks_tag(
+ 			   XFS_INO_TO_AGINO(ip->i_mount, ip->i_ino), tag);
+ 	if (!tagged) {
+ 		/* propagate the eofblocks tag up into the perag radix tree */
+-		spin_lock(&ip->i_mount->m_perag_lock);
+-		radix_tree_tag_set(&ip->i_mount->m_perag_tree,
++		xa_set_tag(&ip->i_mount->m_perag_xa,
+ 				   XFS_INO_TO_AGNO(ip->i_mount, ip->i_ino),
+ 				   tag);
+-		spin_unlock(&ip->i_mount->m_perag_lock);
+ 
+ 		/* kick off background trimming */
+ 		execute(ip->i_mount);
+@@ -1597,7 +1582,7 @@ __xfs_inode_clear_eofblocks_tag(
+ 	xfs_inode_t	*ip,
+ 	void		(*clear_tp)(struct xfs_mount *mp, xfs_agnumber_t agno,
+ 				    int error, unsigned long caller_ip),
+-	int		tag)
++	xa_tag_t	tag)
+ {
+ 	struct xfs_mount *mp = ip->i_mount;
+ 	struct xfs_perag *pag;
+@@ -1613,11 +1598,9 @@ __xfs_inode_clear_eofblocks_tag(
+ 			     XFS_INO_TO_AGINO(ip->i_mount, ip->i_ino), tag);
+ 	if (!radix_tree_tagged(&pag->pag_ici_root, tag)) {
+ 		/* clear the eofblocks tag from the perag radix tree */
+-		spin_lock(&ip->i_mount->m_perag_lock);
+-		radix_tree_tag_clear(&ip->i_mount->m_perag_tree,
++		xa_clear_tag(&ip->i_mount->m_perag_xa,
+ 				     XFS_INO_TO_AGNO(ip->i_mount, ip->i_ino),
+ 				     tag);
+-		spin_unlock(&ip->i_mount->m_perag_lock);
+ 		clear_tp(ip->i_mount, pag->pag_agno, -1, _RET_IP_);
+ 	}
+ 
+diff --git a/fs/xfs/xfs_icache.h b/fs/xfs/xfs_icache.h
+index bff4d85e5498..bd04d5adadfe 100644
+--- a/fs/xfs/xfs_icache.h
++++ b/fs/xfs/xfs_icache.h
+@@ -37,9 +37,9 @@ struct xfs_eofblocks {
+  */
+ #define XFS_ICI_NO_TAG		(-1)	/* special flag for an untagged lookup
+ 					   in xfs_inode_ag_iterator */
+-#define XFS_ICI_RECLAIM_TAG	0	/* inode is to be reclaimed */
+-#define XFS_ICI_EOFBLOCKS_TAG	1	/* inode has blocks beyond EOF */
+-#define XFS_ICI_COWBLOCKS_TAG	2	/* inode can have cow blocks to gc */
++#define XFS_ICI_RECLAIM_TAG	XA_TAG_0 /* inode is to be reclaimed */
++#define XFS_ICI_EOFBLOCKS_TAG	XA_TAG_1 /* inode has blocks beyond EOF */
++#define XFS_ICI_COWBLOCKS_TAG	XA_TAG_2 /* inode can have cow blocks to gc */
+ 
+ /*
+  * Flags for xfs_iget()
+diff --git a/fs/xfs/xfs_mount.c b/fs/xfs/xfs_mount.c
+index c879b517cc94..0541aeb8449c 100644
+--- a/fs/xfs/xfs_mount.c
++++ b/fs/xfs/xfs_mount.c
+@@ -156,9 +156,7 @@ xfs_free_perag(
+ 	struct xfs_perag *pag;
+ 
+ 	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
+-		spin_lock(&mp->m_perag_lock);
+-		pag = radix_tree_delete(&mp->m_perag_tree, agno);
+-		spin_unlock(&mp->m_perag_lock);
++		pag = xa_erase(&mp->m_perag_xa, agno);
+ 		ASSERT(pag);
+ 		ASSERT(atomic_read(&pag->pag_ref) == 0);
+ 		xfs_buf_hash_destroy(pag);
+@@ -219,19 +217,11 @@ xfs_initialize_perag(
+ 			goto out_free_pag;
+ 		init_waitqueue_head(&pag->pagb_wait);
+ 
+-		if (radix_tree_preload(GFP_NOFS))
+-			goto out_hash_destroy;
+-
+-		spin_lock(&mp->m_perag_lock);
+-		if (radix_tree_insert(&mp->m_perag_tree, index, pag)) {
++		if (xa_store(&mp->m_perag_xa, index, pag, GFP_NOFS)) {
+ 			BUG();
+-			spin_unlock(&mp->m_perag_lock);
+-			radix_tree_preload_end();
+ 			error = -EEXIST;
+ 			goto out_hash_destroy;
+ 		}
+-		spin_unlock(&mp->m_perag_lock);
+-		radix_tree_preload_end();
+ 		/* first new pag is fully initialized */
+ 		if (first_initialised == NULLAGNUMBER)
+ 			first_initialised = index;
+@@ -252,7 +242,7 @@ xfs_initialize_perag(
+ out_unwind_new_pags:
+ 	/* unwind any prior newly initialized pags */
+ 	for (index = first_initialised; index < agcount; index++) {
+-		pag = radix_tree_delete(&mp->m_perag_tree, index);
++		pag = xa_erase(&mp->m_perag_xa, index);
+ 		if (!pag)
+ 			break;
+ 		xfs_buf_hash_destroy(pag);
+@@ -816,8 +806,7 @@ xfs_mountfs(
+ 	/*
+ 	 * Allocate and initialize the per-ag data.
+ 	 */
+-	spin_lock_init(&mp->m_perag_lock);
+-	INIT_RADIX_TREE(&mp->m_perag_tree, GFP_ATOMIC);
++	xa_init(&mp->m_perag_xa);
+ 	error = xfs_initialize_perag(mp, sbp->sb_agcount, &mp->m_maxagi);
+ 	if (error) {
+ 		xfs_warn(mp, "Failed per-ag init: %d", error);
+diff --git a/fs/xfs/xfs_mount.h b/fs/xfs/xfs_mount.h
+index e0792d036be2..6e5ad7b26f46 100644
+--- a/fs/xfs/xfs_mount.h
++++ b/fs/xfs/xfs_mount.h
+@@ -134,8 +134,7 @@ typedef struct xfs_mount {
+ 	xfs_extlen_t		m_ag_prealloc_blocks; /* reserved ag blocks */
+ 	uint			m_alloc_set_aside; /* space we can't use */
+ 	uint			m_ag_max_usable; /* max space per AG */
+-	struct radix_tree_root	m_perag_tree;	/* per-ag accounting info */
+-	spinlock_t		m_perag_lock;	/* lock for m_perag_tree */
++	struct xarray		m_perag_xa;	/* per-ag accounting info */
+ 	struct mutex		m_growlock;	/* growfs mutex */
+ 	int			m_fixedfsid[2];	/* unchanged for life of FS */
+ 	uint			m_dmevmask;	/* DMI events for this FS */
 -- 
 2.15.1
 
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
