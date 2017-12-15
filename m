@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 62/78] dax: Convert dax_writeback_one to XArray
-Date: Fri, 15 Dec 2017 14:04:34 -0800
-Message-ID: <20171215220450.7899-63-willy@infradead.org>
+Subject: [PATCH v5 27/78] page cache: Convert page deletion to
+ XArray
+Date: Fri, 15 Dec 2017 14:03:59 -0800
+Message-ID: <20171215220450.7899-28-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=ehQmXzOud9JZwlbl8LBPddx5wQCRUgUygA98ecRbjis=; b=eh9notBXGDJ1Ob2LVsKLRpOHq8
- E29Di/+GhDgkHwrj+QJo3GSx4ofJ1aQILh2mRkxGkF+bNo/LtAdJd3fB+u1moPATorKjuVyVrV21f
- vrrqACSiFSnJzK6MrANZHriVr2jRV98aRBD6k6NYs276B/s3sVwXRKc/okuf1mSwfh2Q=;
+ bh=Q69+Wj076p6U0Esf3JxjMdaU2B+mCgdgZ4c1IthPP9A=; b=jdmDQeTkEYth8u5qzvqv2+jSSd
+ 9qVbg7FSLQ6MF872dMfW+t9BtjevzvZjXxQxtNdYq4+Cokk/3XUeYnHnPd2FvK1tU0HDDfJ7GHUq3
+ nUa6ZSDDLjZ8z/bJSCJdXe2JISe8OA2icKfc7LX1yUJmNu8pGx3lpPaULYE8RnUT8TmY=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=ehQmXzOud9JZwlbl8LBPddx5wQCRUgUygA98ecRbjis=; b=elE4tSG5r9/LAMvA971Jy0ij7f
- JXiZs6msZI+B3YWWuGxvqokmwFPurNi2u3olS/hZ4y9bO91/y4+Ty6m36dwmAj/V075ZdGvsyKHN4
- jFIwV8Rzadk27UOSlz+vj5lKnYG3HcZ/DO06gupDlEoRoqpvOdwUB/LPpvNEiqQVCi+o=;
+ bh=Q69+Wj076p6U0Esf3JxjMdaU2B+mCgdgZ4c1IthPP9A=; b=LPO12X8YkFx9WJ2jSVS7I0MN3U
+ MN0QBHAl6cpNIwtoUnd7mgDY3uK7afz6cAM/vJwyPTeU7K6A0pF3bA14MCtpfojtaR3zGtKyyAObu
+ 93RNL+y8Y63dvWBd/inbpb99lmSk5yKkCtzfnpC76h2WSQZ4EoSPgtfP63PwLD4oqnVY=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=ehQmXzOud9JZwlbl8LBPddx5wQCRUgUygA98ecRbjis=; b=rpiYXiGh4dbbLeDDdfVeFzt6s
- WNzB17wkpsrsdhuuPCjZZlbtygSvXMFKgX5mqB0twPLyp0kDtjPdgmWuaks5A0awZnHkC8ZfLZAPA
- 8mZwaq8vhOYqowt+07rtPzrPdUpTmE1Aj8ueS/4dIkne9Y5Y/n+uz+BAbKJSEQMndhZ2G33JZH3ED
- 8uTN30c2ecwpQLR68j1igxkqVfkObPR+MCqMgL/91bWQrxGBecT9MR3l/c/36WHARw70xpkKqXCp4
- UgNq3NIU60JFNrmM1JPj21YAu/l+W22M0dDzWtMlUGINCMEMXffqAHUPrdARtX5FyMlLdEwUyvkSE
- WSGSb3q9A==;
+ bh=Q69+Wj076p6U0Esf3JxjMdaU2B+mCgdgZ4c1IthPP9A=; b=a43fBk2q7ZykHm4WWmQJd34qW
+ g9D3CHCMqwbmwbGMjEfM/AhTHx68usTp7Ekh7thASyvOcQvFHK9uFempK+pC5hV4ERMs1wYnOP+wV
+ NvRG6iuJiZ2D793AaD2a70JWlnQTkef8Vny72FCsXwMSaYeeGkoji2/QEazVXjiUY7dIS+tDIf0VO
+ p7y5luZy/GGsWXE7SU2R/K32l/r1iW6Z558rjNtOaSIaf7Sxk6IKkUI3yJ3GkTmIG5jgVPUUQ7udT
+ By9wWdE+j1ZtL+zwG00A2oi5W0cGhTkjCEhWy7BHUxg3GodtZIXrCc5R3Y9YuOsXd9r1q6kbYm3+o
+ 2EbPAF23g==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,76 +54,57 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Likewise easy
+The code is slightly shorter and simpler.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 17 +++++++----------
- 1 file changed, 7 insertions(+), 10 deletions(-)
+ mm/filemap.c | 26 ++++++++++++--------------
+ 1 file changed, 12 insertions(+), 14 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index d3894c15609a..d6dd779e1b46 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -633,8 +633,7 @@ static int dax_writeback_one(struct block_device *bdev,
- 		struct dax_device *dax_dev, struct address_space *mapping,
- 		pgoff_t index, void *entry)
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 91df92f5c96d..c9bc0dee0154 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -115,27 +115,25 @@
+ static void page_cache_tree_delete(struct address_space *mapping,
+ 				   struct page *page, void *shadow)
  {
--	struct radix_tree_root *pages = &mapping->pages;
--	XA_STATE(xas, pages, index);
-+	XA_STATE(xas, &mapping->pages, index);
- 	void *entry2, *kaddr;
- 	long ret = 0, id;
- 	sector_t sector;
-@@ -649,7 +648,7 @@ static int dax_writeback_one(struct block_device *bdev,
- 	if (WARN_ON(!xa_is_value(entry)))
- 		return -EIO;
+-	int i, nr;
++	XA_STATE(xas, &mapping->pages, page->index);
++	unsigned int i, nr;
  
--	xa_lock_irq(&mapping->pages);
-+	xas_lock_irq(&xas);
- 	entry2 = get_unlocked_mapping_entry(&xas);
- 	/* Entry got punched out / reallocated? */
- 	if (!entry2 || WARN_ON_ONCE(!xa_is_value(entry2)))
-@@ -668,7 +667,7 @@ static int dax_writeback_one(struct block_device *bdev,
+-	/* hugetlb pages are represented by one entry in the radix tree */
++	xas_set_update(&xas, workingset_lookup_update(mapping));
++
++	/* hugetlb pages are represented by a single entry in the xarray */
+ 	nr = PageHuge(page) ? 1 : hpage_nr_pages(page);
+ 
+ 	VM_BUG_ON_PAGE(!PageLocked(page), page);
+ 	VM_BUG_ON_PAGE(PageTail(page), page);
+ 	VM_BUG_ON_PAGE(nr != 1 && shadow, page);
+ 
+-	for (i = 0; i < nr; i++) {
+-		struct radix_tree_node *node;
+-		void **slot;
+-
+-		__radix_tree_lookup(&mapping->pages, page->index + i,
+-				    &node, &slot);
+-
+-		VM_BUG_ON_PAGE(!node && nr != 1, page);
+-
+-		radix_tree_clear_tags(&mapping->pages, node, slot);
+-		__radix_tree_replace(&mapping->pages, node, slot, shadow,
+-				workingset_lookup_update(mapping));
++	i = nr;
++repeat:
++	xas_store(&xas, shadow);
++	xas_init_tags(&xas);
++	if (--i) {
++		xas_next(&xas);
++		goto repeat;
  	}
  
- 	/* Another fsync thread may have already written back this entry */
--	if (!radix_tree_tag_get(pages, index, PAGECACHE_TAG_TOWRITE))
-+	if (!xas_get_tag(&xas, PAGECACHE_TAG_TOWRITE))
- 		goto put_unlocked;
- 	/* Lock the entry to serialize with page faults */
- 	entry = lock_slot(&xas);
-@@ -679,8 +678,8 @@ static int dax_writeback_one(struct block_device *bdev,
- 	 * at the entry only under xa_lock and once they do that they will
- 	 * see the entry locked and wait for it to unlock.
- 	 */
--	radix_tree_tag_clear(pages, index, PAGECACHE_TAG_TOWRITE);
--	xa_unlock_irq(&mapping->pages);
-+	xas_clear_tag(&xas, PAGECACHE_TAG_TOWRITE);
-+	xas_unlock_irq(&xas);
- 
- 	/*
- 	 * Even if dax_writeback_mapping_range() was given a wbc->range_start
-@@ -718,9 +717,7 @@ static int dax_writeback_one(struct block_device *bdev,
- 	 * the pfn mappings are writeprotected and fault waits for mapping
- 	 * entry lock.
- 	 */
--	xa_lock_irq(&mapping->pages);
--	radix_tree_tag_clear(pages, index, PAGECACHE_TAG_DIRTY);
--	xa_unlock_irq(&mapping->pages);
-+	xa_clear_tag(&mapping->pages, index, PAGECACHE_TAG_DIRTY);
- 	trace_dax_writeback_one(mapping->host, index, size >> PAGE_SHIFT);
-  dax_unlock:
- 	dax_read_unlock(id);
-@@ -729,7 +726,7 @@ static int dax_writeback_one(struct block_device *bdev,
- 
-  put_unlocked:
- 	put_unlocked_mapping_entry(&xas, entry2);
--	xa_unlock_irq(&mapping->pages);
-+	xas_unlock_irq(&xas);
- 	return ret;
- }
- 
+ 	page->mapping = NULL;
 -- 
 2.15.1
 
