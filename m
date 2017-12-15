@@ -1,23 +1,23 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 21/78] xarray: Add ability to store errno values
-Date: Fri, 15 Dec 2017 14:03:53 -0800
-Message-ID: <20171215220450.7899-22-willy@infradead.org>
+Subject: [PATCH v5 53/78] fs: Convert buffer to XArray
+Date: Fri, 15 Dec 2017 14:04:25 -0800
+Message-ID: <20171215220450.7899-54-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=eq2jT5kinIsVxQNaXKvA5tvZgi1xWoJUgoGClNJSMAs=; b=ZOfati2LOkyjQeSJRvFvKv432
-        rX0yTyEQqrrkvqHizkl9pvUvKFp+bSMcxlsqwYb8KeB7cCiOeAD5MdR77oICjTqWTXDXYauFjWXZw
-        IFF8FDL1v4PRe6D0ZPgJRH7hqrDuB+OVrsBKNVKSElzvQWu2xaL5WLoN2GD0ZjAZI3fn7+vGiN3OL
-        yLpW9CmVpT/+1on5qToDGNbxLofj7VQcdN1tqwcmw0DcNMAkNpViGahd7LMRnxRArGAZSWUKif1Lo
-        VoyU3w1OVVNY2eJb5ek6VpA4X/A/GQM1jk4YqJUMfMW5GeSpdGUmFl5mIfgYGlDaYkqD1TKo19kS9
-    
+	d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+	Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	 bh=Pu5JcXjlly25xQrgLzXZh25F7ow6+azETppMFJy1RFw=; b=mMIH9iAoB1YpEinuKwJnVAv06
+	TmGdLzpkwJUIKE+qylmXeja5VAKmBVPz5CWWLtef58+GMjSWyyZ4jFWhp6DkOCAlKR8rHgBQbPhiC
+	6TOstLyH3jiFUn00BImHEGRnt++FqburdhzX3hgeDffqlDUD7mOydhAU2wPMJabBlciLDwBU7+b+P
+	2UtLm+7VcLrKqWRnWEKuVviN1od0H8SVA9CxNz1BgU/maJfiGkIUowCx3K6VCsBISFtRdj63C6kUp
+	hxAS7m8gnYaoJKzYX2CvFKXpuquzrJ43TcyN+/XACvZNke5S6zWCBV7aF/T43bdGTGrBVFzjwges+
+	C833xg9zw==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,124 +27,64 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-While the radix tree offers no ability to store IS_ERR pointers,
-documenting that the XArray does not led to some concern.  Here is a
-sanctioned way to store errnos in the XArray.  I'm concerned that it
-will confuse people who can't tell the difference between xa_is_err()
-and xa_is_errno(), so I've added copious kernel-doc to help them tell
-the difference.
+Mostly comment fixes, but one use of __xa_set_tag.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- Documentation/core-api/xarray.rst      |  9 ++++---
- include/linux/xarray.h                 | 46 +++++++++++++++++++++++++++++++++-
- tools/testing/radix-tree/xarray-test.c |  8 +++++-
- 3 files changed, 57 insertions(+), 6 deletions(-)
+ fs/buffer.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/Documentation/core-api/xarray.rst b/Documentation/core-api/xarray.rst
-index 706081bfe92f..57a494026d96 100644
---- a/Documentation/core-api/xarray.rst
-+++ b/Documentation/core-api/xarray.rst
-@@ -42,11 +42,12 @@ When you retrieve an entry from the XArray, you can check whether it is
- a value entry by calling :c:func:`xa_is_value`, and convert it back to
- an integer by calling :c:func:`xa_to_value`.
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 1a6ae530156b..e1d18307d5c8 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -592,7 +592,7 @@ void mark_buffer_dirty_inode(struct buffer_head *bh, struct inode *inode)
+ EXPORT_SYMBOL(mark_buffer_dirty_inode);
  
--The XArray does not support storing :c:func:`IS_ERR` pointers as some
-+The XArray does not support storing :c:func:`IS_ERR` pointers because some
- conflict with value entries or internal entries.  If you need to store
--error numbers in the array, you can store ``(errno << 2)`` as these values
--will be aligned to a multiple of 4 and are not valid kernel pointers.
--The values 4, 8, ... 4092 are also not valid kernel pointers.
-+error numbers in the array, you can encode them into error entries
-+with :c:func:`xa_mk_errno`, check whether a returned entry is an error
-+with :c:func:`xa_is_errno` and convert it back into an errno with
-+:c:func:`xa_to_errno`.
- 
- An unusual feature of the XArray is the ability to create entries which
- occupy a range of indices.  Once stored to, looking up any index in
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index bcc321fb280f..e0f8eb06b874 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -231,6 +231,50 @@ static inline bool xa_is_value(const void *entry)
- 	return (unsigned long)entry & 1;
+ /*
+- * Mark the page dirty, and set it dirty in the radix tree, and mark the inode
++ * Mark the page dirty, and set it dirty in the page cache, and mark the inode
+  * dirty.
+  *
+  * If warn is true, then emit a warning if the page is not uptodate and has
+@@ -609,8 +609,8 @@ void __set_page_dirty(struct page *page, struct address_space *mapping,
+ 	if (page->mapping) {	/* Race with truncate? */
+ 		WARN_ON_ONCE(warn && !PageUptodate(page));
+ 		account_page_dirtied(page, mapping);
+-		radix_tree_tag_set(&mapping->pages,
+-				page_index(page), PAGECACHE_TAG_DIRTY);
++		__xa_set_tag(&mapping->pages, page_index(page),
++				PAGECACHE_TAG_DIRTY);
+ 	}
+ 	xa_unlock_irqrestore(&mapping->pages, flags);
  }
- 
-+/**
-+ * xa_mk_errno() - Create an XArray entry from an error number.
-+ * @error: Error number to store in XArray.
-+ *
-+ * Return: An entry suitable for storing in the XArray.
-+ */
-+static inline void *xa_mk_errno(long error)
-+{
-+	return (void *)(error << 2);
-+}
-+
-+/**
-+ * xa_to_errno() - Get error number stored in an XArray entry.
-+ * @entry: XArray entry.
-+ *
-+ * Calling this function on an entry which is not an xa_is_errno() will
-+ * yield unpredictable results.  Do not confuse this function with xa_err();
-+ * this function is for errnos which have been stored in the XArray, and
-+ * that function is for errors returned from the XArray implementation.
-+ *
-+ * Return: The error number stored in the XArray entry.
-+ */
-+static inline long xa_to_errno(const void *entry)
-+{
-+	return (long)entry >> 2;
-+}
-+
-+/**
-+ * xa_is_errno() - Determine if an entry is an errno.
-+ * @entry: XArray entry.
-+ *
-+ * Do not confuse this function with xa_is_err(); that function tells you
-+ * whether the XArray implementation returned an error; this function
-+ * tells you whether the entry you successfully stored in the XArray
-+ * represented an errno.  If you have never stored an errno in the XArray,
-+ * you do not have to check this.
-+ *
-+ * Return: True if the entry is an errno, false if it is a pointer.
-+ */
-+static inline bool xa_is_errno(const void *entry)
-+{
-+	return (((unsigned long)entry & 3) == 0) && (entry > (void *)-4096);
-+}
-+
- /**
-  * xa_is_internal() - Is the entry an internal entry?
-  * @entry: Entry retrieved from the XArray
-@@ -277,7 +321,7 @@ static inline int xa_err(void *entry)
- 
- /**
-  * xa_store_empty() - Store this entry in the XArray unless another entry is
-- * 			already present.
-+ *			already present.
-  * @xa: XArray.
-  * @index: Index into array.
-  * @entry: New entry.
-diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
-index 43111786ebdd..b843cedf3988 100644
---- a/tools/testing/radix-tree/xarray-test.c
-+++ b/tools/testing/radix-tree/xarray-test.c
-@@ -29,7 +29,13 @@ void check_xa_err(struct xarray *xa)
- 	assert(xa_err(xa_store(xa, 1, xa_mk_value(0), GFP_KERNEL)) == 0);
- 	assert(xa_err(xa_store(xa, 1, NULL, 0)) == 0);
- // kills the test-suite :-(
--//     assert(xa_err(xa_store(xa, 0, xa_mk_internal(0), 0)) == -EINVAL);
-+//	assert(xa_err(xa_store(xa, 0, xa_mk_internal(0), 0)) == -EINVAL);
-+
-+	assert(xa_err(xa_store(xa, 0, xa_mk_errno(-ENOMEM), GFP_KERNEL)) == 0);
-+	assert(xa_err(xa_load(xa, 0)) == 0);
-+	assert(xa_is_errno(xa_load(xa, 0)) == true);
-+	assert(xa_to_errno(xa_load(xa, 0)) == -ENOMEM);
-+	xa_erase(xa, 0);
- }
- 
- void check_xa_tag(struct xarray *xa)
+@@ -1072,7 +1072,7 @@ __getblk_slow(struct block_device *bdev, sector_t block,
+  * The relationship between dirty buffers and dirty pages:
+  *
+  * Whenever a page has any dirty buffers, the page's dirty bit is set, and
+- * the page is tagged dirty in its radix tree.
++ * the page is tagged dirty in the page cache.
+  *
+  * At all times, the dirtiness of the buffers represents the dirtiness of
+  * subsections of the page.  If the page has buffers, the page dirty bit is
+@@ -1095,9 +1095,9 @@ __getblk_slow(struct block_device *bdev, sector_t block,
+  * mark_buffer_dirty - mark a buffer_head as needing writeout
+  * @bh: the buffer_head to mark dirty
+  *
+- * mark_buffer_dirty() will set the dirty bit against the buffer, then set its
+- * backing page dirty, then tag the page as dirty in its address_space's radix
+- * tree and then attach the address_space's inode to its superblock's dirty
++ * mark_buffer_dirty() will set the dirty bit against the buffer, then set
++ * its backing page dirty, then tag the page as dirty in the page cache
++ * and then attach the address_space's inode to its superblock's dirty
+  * inode list.
+  *
+  * mark_buffer_dirty() is atomic.  It takes bh->b_page->mapping->private_lock,
 -- 
 2.15.1
 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
