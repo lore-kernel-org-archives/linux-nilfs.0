@@ -1,98 +1,356 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 63/78] dax: Convert dax_insert_pfn_mkwrite to
- XArray
-Date: Fri, 15 Dec 2017 14:04:35 -0800
-Message-ID: <20171215220450.7899-64-willy@infradead.org>
+Subject: [PATCH v5 39/78] mm: Convert collapse_shmem to XArray
+Date: Fri, 15 Dec 2017 14:04:11 -0800
+Message-ID: <20171215220450.7899-40-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Mime-Version: 1.0
+Return-path: <owner-linux-mm@kvack.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+	Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	 bh=cya0+eQJOgvaRHxzoP6V36p3o4hoHbSjWJk53xdkac0=; b=Ztt8e1XdRTcqSDoMq4Wdbw+9R
+	5ksh8Ds3OYjX8kBYfBZfTw9BDkF5Plu2r4NuX4hfA3z+hpkQgiWsHNwAzkbI2K7lDygODjAO5SFQI
+	9tdXAh9DlXhD/ZElGExcX6csZ6W+FS/0SIql0Z6RSbbuJWUa30b0vCBnv8j0/9r9mx71YVPv54MUs
+	2PKfhKMTZ28oIul7HTBXwYBPFM2znSaRYxC13/vsofdLNkBI6GbDoq5OKHPUGoaT4JBpvKz1407v5
+	VfsuzMjNQXa9+jn/lbyzR2NoDU5YG0MljPq9OH4z/FnhU9I0C9ZZa29297yBlvv5HrS1J8WM+z4ZZ
+	0DBSa2blw==;
+In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
+Sender: owner-linux-mm@kvack.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=PY9fMkZ30w/J7QLqcoNp+sl7TgC2W4QfPSzGutHlCgM=; b=LGMUSHgxNDV6v0Nppw4oOlmW9y
- TY8ycBQuQwuYbDise8i2CTHgK0GEcG9sfyd88U3hYz6p0dsoh0KnjNNRZVrnp6kuPFyPdmWNBaOl9
- pTVTYitZYjZ5pQGmzXsLNJ+yDBIvt+xJB9qcvBYL7s1QDX/jRO99Un/n0+QRzd3jYQj4=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
- :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=PY9fMkZ30w/J7QLqcoNp+sl7TgC2W4QfPSzGutHlCgM=; b=eknQVK+BwwTXT/KYbgMKu4pF1Y
- xH526tmqTR9LauTaxSzK1Xv+ipklQE3XqL7G8nElCN3c5m1Ae1HEIm1sup+5eMfAoCI1zH+XrHgPx
- WjyOiFXlJJUOp+ntUpCxL3nSrjx0mMuW3Ev1n5Ap6ypOSzj+tA+/WE5x+j/QR2MyPLVs=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=PY9fMkZ30w/J7QLqcoNp+sl7TgC2W4QfPSzGutHlCgM=; b=N9DGDqi/ctkdMBkjbhz64a2tB
- JfCbYsHjLTw89lLQlDtHejIpoD38tav67w5KWu5TTbjLGU6IJnfh/+jBKrKr6NVuGwlNaU8XRMgpM
- roDCf6tBZWHf5Rf0A2vrxGw5ISQDyXeUK2wj9T89CENu6DT2rzRCi3GSoWzzERI2TXLzNDsb0VrFB
- Db3Mm+/99YPuUfgRWAXusS1wxYNI0esPBqluqySrTLBdvhnZycA2WwnioiBUAfKteEZb7ybeRx6Ft
- 9gyMHlSqndFR1YJGZtno/clKetyRFUHchs9Yofb/maeNF6xZRq2eaigUQvy9VWBNRDOfJu8VPxE0E
- PR34vlvhw==;
-In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-kernel@vger.kernel.org
-Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-raid@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-usb@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Rehas Sachdeva <aquannie@gmail.com>, Shaohua Li <shli@kernel.org>, linux-btrfs@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
+I found another victim of the radix tree being hard to use.  Because
+there was no call to radix_tree_preload(), khugepaged was allocating
+radix_tree_nodes using GFP_ATOMIC.
+
+I also converted a local_irq_save()/restore() pair to
+disable()/enable().
+
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ include/linux/swap.h |   4 +-
+ mm/khugepaged.c      | 158 +++++++++++++++++++++------------------------------
+ 2 files changed, 67 insertions(+), 95 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index d6dd779e1b46..9cfd4fcc0b0d 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1498,21 +1498,21 @@ static int dax_insert_pfn_mkwrite(struct vm_fault *vmf,
- 	void *entry;
- 	int vmf_ret, error;
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index 569a8ac4fe3f..9774f43d3e4f 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -300,12 +300,12 @@ bool workingset_refault(void *shadow);
+ void workingset_activation(struct page *page);
  
+ /* Do not use directly, use workingset_lookup_update */
+-void workingset_update_node(struct xa_node *node);
++void workingset_update_node(struct radix_tree_node *node);
+ 
+ /* Returns workingset_update_node() if the mapping has shadow entries. */
+ #define workingset_lookup_update(mapping)				\
+ ({									\
+-	xa_update_node_t __helper = workingset_update_node;		\
++	radix_tree_update_node_t __helper = workingset_update_node;	\
+ 	if (dax_mapping(mapping) || shmem_mapping(mapping))		\
+ 		__helper = NULL;					\
+ 	__helper;							\
+diff --git a/mm/khugepaged.c b/mm/khugepaged.c
+index 55ade70c33bb..9f49d0cd61c2 100644
+--- a/mm/khugepaged.c
++++ b/mm/khugepaged.c
+@@ -1282,17 +1282,17 @@ static void retract_page_tables(struct address_space *mapping, pgoff_t pgoff)
+  *
+  * Basic scheme is simple, details are more complex:
+  *  - allocate and freeze a new huge page;
+- *  - scan over radix tree replacing old pages the new one
++ *  - scan page cache replacing old pages with the new one
+  *    + swap in pages if necessary;
+  *    + fill in gaps;
+- *    + keep old pages around in case if rollback is required;
+- *  - if replacing succeed:
++ *    + keep old pages around in case rollback is required;
++ *  - if replacing succeeds:
+  *    + copy data over;
+  *    + free old pages;
+  *    + unfreeze huge page;
+  *  - if replacing failed;
+  *    + put all pages back and unfreeze them;
+- *    + restore gaps in the radix-tree;
++ *    + restore gaps in the page cache;
+  *    + free huge page;
+  */
+ static void collapse_shmem(struct mm_struct *mm,
+@@ -1300,12 +1300,11 @@ static void collapse_shmem(struct mm_struct *mm,
+ 		struct page **hpage, int node)
+ {
+ 	gfp_t gfp;
+-	struct page *page, *new_page, *tmp;
++	struct page *new_page;
+ 	struct mem_cgroup *memcg;
+ 	pgoff_t index, end = start + HPAGE_PMD_NR;
+ 	LIST_HEAD(pagelist);
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, start);
+ 	int nr_none = 0, result = SCAN_SUCCEED;
+ 
+ 	VM_BUG_ON(start & (HPAGE_PMD_NR - 1));
+@@ -1330,48 +1329,48 @@ static void collapse_shmem(struct mm_struct *mm,
+ 	__SetPageLocked(new_page);
+ 	BUG_ON(!page_ref_freeze(new_page, 1));
+ 
+-
+ 	/*
+-	 * At this point the new_page is 'frozen' (page_count() is zero), locked
+-	 * and not up-to-date. It's safe to insert it into radix tree, because
+-	 * nobody would be able to map it or use it in other way until we
+-	 * unfreeze it.
++	 * At this point the new_page is 'frozen' (page_count() is zero),
++	 * locked and not up-to-date. It's safe to insert it into the page
++	 * cache, because nobody would be able to map it or use it in other
++	 * way until we unfreeze it.
+ 	 */
+ 
+-	index = start;
 -	xa_lock_irq(&mapping->pages);
-+	xas_lock_irq(&xas);
- 	entry = get_unlocked_mapping_entry(&xas);
- 	/* Did we race with someone splitting entry or so? */
- 	if (!entry ||
- 	    (pe_size == PE_SIZE_PTE && !dax_is_pte_entry(entry)) ||
- 	    (pe_size == PE_SIZE_PMD && !dax_is_pmd_entry(entry))) {
- 		put_unlocked_mapping_entry(&xas, entry);
+-	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
+-		int n = min(iter.index, end) - index;
+-
+-		/*
+-		 * Handle holes in the radix tree: charge it from shmem and
+-		 * insert relevant subpage of new_page into the radix-tree.
+-		 */
+-		if (n && !shmem_charge(mapping->host, n)) {
+-			result = SCAN_FAIL;
++	/* This will be less messy when we use multi-index entries */
++	do {
++		xas_lock_irq(&xas);
++		xas_create_range(&xas, end - 1);
++		if (!xas_error(&xas))
+ 			break;
+-		}
+-		nr_none += n;
+-		for (; index < min(iter.index, end); index++) {
+-			radix_tree_insert(&mapping->pages, index,
+-					new_page + (index % HPAGE_PMD_NR));
+-		}
++		xas_unlock_irq(&xas);
++		if (!xas_nomem(&xas, GFP_KERNEL))
++			goto out;
++	} while (1);
+ 
+-		/* We are done. */
+-		if (index >= end)
+-			break;
++	for (index = start; index < end; index++) {
++		struct page *page = xas_next(&xas);
++
++		VM_BUG_ON(index != xas.xa_index);
++		if (!page) {
++			if (!shmem_charge(mapping->host, 1)) {
++				result = SCAN_FAIL;
++				break;
++			}
++			xas_store(&xas, new_page + (index % HPAGE_PMD_NR));
++			nr_none++;
++			continue;
++		}
+ 
+-		page = radix_tree_deref_slot_protected(slot,
+-				&mapping->pages.xa_lock);
+ 		if (xa_is_value(page) || !PageUptodate(page)) {
+-			xa_unlock_irq(&mapping->pages);
++			xas_unlock_irq(&xas);
+ 			/* swap in or instantiate fallocated page */
+ 			if (shmem_getpage(mapping->host, index, &page,
+ 						SGP_NOHUGE)) {
+ 				result = SCAN_FAIL;
+-				goto tree_unlocked;
++				goto xa_unlocked;
+ 			}
+-			xa_lock_irq(&mapping->pages);
++			xas_lock_irq(&xas);
++			xas_set(&xas, index);
+ 		} else if (trylock_page(page)) {
+ 			get_page(page);
+ 		} else {
+@@ -1391,7 +1390,7 @@ static void collapse_shmem(struct mm_struct *mm,
+ 			result = SCAN_TRUNCATED;
+ 			goto out_unlock;
+ 		}
 -		xa_unlock_irq(&mapping->pages);
 +		xas_unlock_irq(&xas);
- 		trace_dax_insert_pfn_mkwrite_no_entry(mapping->host, vmf,
- 						      VM_FAULT_NOPAGE);
- 		return VM_FAULT_NOPAGE;
+ 
+ 		if (isolate_lru_page(page)) {
+ 			result = SCAN_DEL_PAGE_LRU;
+@@ -1402,17 +1401,16 @@ static void collapse_shmem(struct mm_struct *mm,
+ 			unmap_mapping_range(mapping, index << PAGE_SHIFT,
+ 					PAGE_SIZE, 0);
+ 
+-		xa_lock_irq(&mapping->pages);
++		xas_lock(&xas);
++		xas_set(&xas, index);
+ 
+-		slot = radix_tree_lookup_slot(&mapping->pages, index);
+-		VM_BUG_ON_PAGE(page != radix_tree_deref_slot_protected(slot,
+-					&mapping->pages.xa_lock), page);
++		VM_BUG_ON_PAGE(page != xas_load(&xas), page);
+ 		VM_BUG_ON_PAGE(page_mapped(page), page);
+ 
+ 		/*
+ 		 * The page is expected to have page_count() == 3:
+ 		 *  - we hold a pin on it;
+-		 *  - one reference from radix tree;
++		 *  - one reference from page cache;
+ 		 *  - one from isolate_lru_page;
+ 		 */
+ 		if (!page_ref_freeze(page, 3)) {
+@@ -1427,56 +1425,30 @@ static void collapse_shmem(struct mm_struct *mm,
+ 		list_add_tail(&page->lru, &pagelist);
+ 
+ 		/* Finally, replace with the new page. */
+-		radix_tree_replace_slot(&mapping->pages, slot,
+-				new_page + (index % HPAGE_PMD_NR));
+-
+-		slot = radix_tree_iter_resume(slot, &iter);
+-		index++;
++		xas_store(&xas, new_page + (index % HPAGE_PMD_NR));
+ 		continue;
+ out_lru:
+-		xa_unlock_irq(&mapping->pages);
++		xas_unlock_irq(&xas);
+ 		putback_lru_page(page);
+ out_isolate_failed:
+ 		unlock_page(page);
+ 		put_page(page);
+-		goto tree_unlocked;
++		goto xa_unlocked;
+ out_unlock:
+ 		unlock_page(page);
+ 		put_page(page);
+ 		break;
  	}
--	radix_tree_tag_set(&mapping->pages, index, PAGECACHE_TAG_DIRTY);
-+	xas_set_tag(&xas, PAGECACHE_TAG_DIRTY);
- 	entry = lock_slot(&xas);
--	xa_unlock_irq(&mapping->pages);
 +	xas_unlock_irq(&xas);
- 	switch (pe_size) {
- 	case PE_SIZE_PTE:
- 		error = vm_insert_mixed_mkwrite(vmf->vma, vmf->address, pfn);
+ 
+-	/*
+-	 * Handle hole in radix tree at the end of the range.
+-	 * This code only triggers if there's nothing in radix tree
+-	 * beyond 'end'.
+-	 */
+-	if (result == SCAN_SUCCEED && index < end) {
+-		int n = end - index;
+-
+-		if (!shmem_charge(mapping->host, n)) {
+-			result = SCAN_FAIL;
+-			goto tree_locked;
+-		}
+-
+-		for (; index < end; index++) {
+-			radix_tree_insert(&mapping->pages, index,
+-					new_page + (index % HPAGE_PMD_NR));
+-		}
+-		nr_none += n;
+-	}
+-
+-tree_locked:
+-	xa_unlock_irq(&mapping->pages);
+-tree_unlocked:
+-
++xa_unlocked:
+ 	if (result == SCAN_SUCCEED) {
+-		unsigned long flags;
++		struct page *page, *tmp;
+ 		struct zone *zone = page_zone(new_page);
+ 
+ 		/*
+-		 * Replacing old pages with new one has succeed, now we need to
+-		 * copy the content and free old pages.
++		 * Replacing old pages with new one has succeeded, now we
++		 * need to copy the content and free the old pages.
+ 		 */
+ 		list_for_each_entry_safe(page, tmp, &pagelist, lru) {
+ 			copy_highpage(new_page + (page->index % HPAGE_PMD_NR),
+@@ -1490,16 +1462,16 @@ static void collapse_shmem(struct mm_struct *mm,
+ 			put_page(page);
+ 		}
+ 
+-		local_irq_save(flags);
++		local_irq_disable();
+ 		__inc_node_page_state(new_page, NR_SHMEM_THPS);
+ 		if (nr_none) {
+ 			__mod_node_page_state(zone->zone_pgdat, NR_FILE_PAGES, nr_none);
+ 			__mod_node_page_state(zone->zone_pgdat, NR_SHMEM, nr_none);
+ 		}
+-		local_irq_restore(flags);
++		local_irq_enable();
+ 
+ 		/*
+-		 * Remove pte page tables, so we can re-faulti
++		 * Remove pte page tables, so we can re-fault
+ 		 * the page as huge.
+ 		 */
+ 		retract_page_tables(mapping, start);
+@@ -1514,37 +1486,37 @@ static void collapse_shmem(struct mm_struct *mm,
+ 
+ 		*hpage = NULL;
+ 	} else {
+-		/* Something went wrong: rollback changes to the radix-tree */
++		struct page *page;
++		/* Something went wrong: roll back page cache changes */
+ 		shmem_uncharge(mapping->host, nr_none);
+-		xa_lock_irq(&mapping->pages);
+-		radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
+-			if (iter.index >= end)
+-				break;
++		xas_lock_irq(&xas);
++		xas_set(&xas, start);
++		xas_for_each(&xas, page, end - 1) {
+ 			page = list_first_entry_or_null(&pagelist,
+ 					struct page, lru);
+-			if (!page || iter.index < page->index) {
++			if (!page || xas.xa_index < page->index) {
+ 				if (!nr_none)
+ 					break;
+ 				nr_none--;
+ 				/* Put holes back where they were */
+-				radix_tree_delete(&mapping->pages, iter.index);
++				xas_store(&xas, NULL);
+ 				continue;
+ 			}
+ 
+-			VM_BUG_ON_PAGE(page->index != iter.index, page);
++			VM_BUG_ON_PAGE(page->index != xas.xa_index, page);
+ 
+ 			/* Unfreeze the page. */
+ 			list_del(&page->lru);
+ 			page_ref_unfreeze(page, 2);
+-			radix_tree_replace_slot(&mapping->pages, slot, page);
+-			slot = radix_tree_iter_resume(slot, &iter);
+-			xa_unlock_irq(&mapping->pages);
++			xas_store(&xas, page);
++			xas_pause(&xas);
++			xas_unlock_irq(&xas);
+ 			putback_lru_page(page);
+ 			unlock_page(page);
+-			xa_lock_irq(&mapping->pages);
++			xas_lock_irq(&xas);
+ 		}
+ 		VM_BUG_ON(nr_none);
+-		xa_unlock_irq(&mapping->pages);
++		xas_unlock_irq(&xas);
+ 
+ 		/* Unfreeze new_page, caller would take care about freeing it */
+ 		page_ref_unfreeze(new_page, 1);
 -- 
 2.15.1
 
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
