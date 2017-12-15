@@ -1,113 +1,83 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: Storing errors in the XArray
-Date: Fri, 15 Dec 2017 09:10:12 -0800
-Message-ID: <20171215171012.GA11918@bombadil.infradead.org>
-References: <20171206004159.3755-1-willy@infradead.org>
- <20171206004159.3755-9-willy@infradead.org>
- <66ad068b-1973-ca41-7bbf-8a0634cc488d@infradead.org>
-Mime-Version: 1.0
-Return-path: <owner-linux-mm@kvack.org>
+Subject: [PATCH v5 40/78] mm: Convert khugepaged_scan_shmem to XArray
+Date: Fri, 15 Dec 2017 14:04:12 -0800
+Message-ID: <20171215220450.7899-41-willy@infradead.org>
+References: <20171215220450.7899-1-willy@infradead.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-	 bh=iJH7l8lpuFlxh4QnVPh6zRoyLwVI5jfRKefeePYqrhk=; b=AtBMGvTSOaArkbzVoMwv79tY0
-	j7xSySmnT9hbS1wwsiW+CIp/klUi9G2CQpyla20/YOI5oz2TUgooWfPViMLYBGdSMBxeHfoqBH1Ce
-	JrCvAbjFNoOD7qZtWDYQmhi0eQ92DqL6tNZNb9jVFOAVpHE7PkipAf7k5I3crNyLzMfbBX/0HlzFQ
-	8cgZLIjZ9ItFKVS6K2yMZLluz7CvmN+hhGAu3KsR5GRmNM6p/ntSK/IaaQuubr/t/IOxjsfZq9U5m
-	qHH7gpvfWhdWH+w1sNWTCn8LJaV/r+xRW/elP3RM6b5GLpb/t9jYAtzszZ+ISWiLsdokErx9Hjz95
-	UdKFrBB2Q==;
-Content-Disposition: inline
-In-Reply-To: <66ad068b-1973-ca41-7bbf-8a0634cc488d@infradead.org>
-Sender: owner-linux-mm@kvack.org
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=PaT37owr/YpSqtBMVCXpJsWlREI0zmsi77XgyaU2bpM=; b=G85rAqggMiJCOhwvSe9WQ06d4
+        u/fwSzGfcphM2Oqcv/7CehCCqeQq6XywGxEwuogJHzhm36fHlQB65vA/idalcagKt0fxJpSuaiEHY
+        PjSuXhwP3D8mEEKPQ7mnHNHx0hQJdfbEbGQNcpAfG+fvZYAS3GGzKl4TqyXESJMcLkWFFAMvlSZFn
+        N6Y8P3aeqUgUIuWHRyW5K6eOw6C49IYIYoTpGXNFHV7Of2dQr34JtuIKT3o2vFyW+HuwxT4Ai7FCy
+        3uF0ot1TibAScjvB4LbMnIbXI2DE+HQBSSq257/4xWQSmhQIXfHOcGH6BHcCgw+UAPyUqD1NKCr7+
+    
+In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
-On Mon, Dec 11, 2017 at 03:10:22PM -0800, Randy Dunlap wrote:
-> > +The XArray does not support storing :c:func:`IS_ERR` pointers; some
-> > +conflict with data values and others conflict with entries the XArray
-> > +uses for its own purposes.  If you need to store special values which
-> > +cannot be confused with real kernel pointers, the values 4, 8, ... 4092
-> > +are available.
-> 
-> or if I know that they values are errno-range values, I can just shift them
-> left by 2 to store them and then shift them right by 2 to use them?
+From: Matthew Wilcox <mawilcox@microsoft.com>
 
-On further thought, I like this idea so much, it's worth writing helpers
-for this usage.  And test-suite (also doubles as a demonstration of how
-to use it).
+Slightly shorter and easier to read code.
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index c616e9319c7c..53aa251df57a 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -232,6 +232,39 @@ static inline bool xa_is_value(const void *entry)
- 	return (unsigned long)entry & 1;
- }
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+---
+ mm/khugepaged.c | 17 +++++------------
+ 1 file changed, 5 insertions(+), 12 deletions(-)
+
+diff --git a/mm/khugepaged.c b/mm/khugepaged.c
+index 9f49d0cd61c2..15f1b2d81a69 100644
+--- a/mm/khugepaged.c
++++ b/mm/khugepaged.c
+@@ -1534,8 +1534,7 @@ static void khugepaged_scan_shmem(struct mm_struct *mm,
+ 		pgoff_t start, struct page **hpage)
+ {
+ 	struct page *page = NULL;
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, start);
+ 	int present, swap;
+ 	int node = NUMA_NO_NODE;
+ 	int result = SCAN_SUCCEED;
+@@ -1544,17 +1543,11 @@ static void khugepaged_scan_shmem(struct mm_struct *mm,
+ 	swap = 0;
+ 	memset(khugepaged_node_load, 0, sizeof(khugepaged_node_load));
+ 	rcu_read_lock();
+-	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
+-		if (iter.index >= start + HPAGE_PMD_NR)
+-			break;
+-
+-		page = radix_tree_deref_slot(slot);
+-		if (radix_tree_deref_retry(page)) {
+-			slot = radix_tree_iter_retry(&iter);
++	xas_for_each(&xas, page, start + HPAGE_PMD_NR - 1) {
++		if (xas_retry(&xas, page))
+ 			continue;
+-		}
  
-+/**
-+ * xa_mk_errno() - Create an XArray entry from an error number.
-+ * @error: Error number to store in XArray.
-+ *
-+ * Return: An entry suitable for storing in the XArray.
-+ */
-+static inline void *xa_mk_errno(long error)
-+{
-+	return (void *)(error << 2);
-+}
-+
-+/**
-+ * xa_to_errno() - Get error number stored in an XArray entry.
-+ * @entry: XArray entry.
-+ *
-+ * Return: The error number stored in the XArray entry.
-+ */
-+static inline unsigned long xa_to_errno(const void *entry)
-+{
-+	return (long)entry >> 2;
-+}
-+
-+/**
-+ * xa_is_errno() - Determine if an entry is an errno.
-+ * @entry: XArray entry.
-+ *
-+ * Return: True if the entry is an errno, false if it is a pointer.
-+ */
-+static inline bool xa_is_errno(const void *entry)
-+{
-+	return (((unsigned long)entry & 3) == 0) && (entry > (void *)-4096);
-+}
-+
- /**
-  * xa_is_internal() - Is the entry an internal entry?
-  * @entry: Entry retrieved from the XArray
-diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
-index 43111786ebdd..b843cedf3988 100644
---- a/tools/testing/radix-tree/xarray-test.c
-+++ b/tools/testing/radix-tree/xarray-test.c
-@@ -29,7 +29,13 @@ void check_xa_err(struct xarray *xa)
- 	assert(xa_err(xa_store(xa, 1, xa_mk_value(0), GFP_KERNEL)) == 0);
- 	assert(xa_err(xa_store(xa, 1, NULL, 0)) == 0);
- // kills the test-suite :-(
--//     assert(xa_err(xa_store(xa, 0, xa_mk_internal(0), 0)) == -EINVAL);
-+//	assert(xa_err(xa_store(xa, 0, xa_mk_internal(0), 0)) == -EINVAL);
-+
-+	assert(xa_err(xa_store(xa, 0, xa_mk_errno(-ENOMEM), GFP_KERNEL)) == 0);
-+	assert(xa_err(xa_load(xa, 0)) == 0);
-+	assert(xa_is_errno(xa_load(xa, 0)) == true);
-+	assert(xa_to_errno(xa_load(xa, 0)) == -ENOMEM);
-+	xa_erase(xa, 0);
- }
+-		if (radix_tree_exception(page)) {
++		if (xa_is_value(page)) {
+ 			if (++swap > khugepaged_max_ptes_swap) {
+ 				result = SCAN_EXCEED_SWAP_PTE;
+ 				break;
+@@ -1593,7 +1586,7 @@ static void khugepaged_scan_shmem(struct mm_struct *mm,
+ 		present++;
  
- void check_xa_tag(struct xarray *xa)
+ 		if (need_resched()) {
+-			slot = radix_tree_iter_resume(slot, &iter);
++			xas_pause(&xas);
+ 			cond_resched_rcu();
+ 		}
+ 	}
+-- 
+2.15.1
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
