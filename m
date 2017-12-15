@@ -1,102 +1,133 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH v4 72/73] xfs: Convert mru cache to XArray
-Date: Thu, 14 Dec 2017 10:23:42 -0800
-Message-ID: <1513275822.27409.73.camel@perches.com>
-References: <fd7130d7-9066-524e-1053-a61eeb27cb36@lge.com>
-	 <Pine.LNX.4.44L0.1712081228430.1371-100000@iolanthe.rowland.org>
-	 <20171208223654.GP5858@dastard> <1512838818.26342.7.camel@perches.com>
-	 <20171211214300.GT5858@dastard> <1513030348.3036.5.camel@perches.com>
-	 <20171211224301.GA3925@bombadil.infradead.org>
+From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v4 08/73] xarray: Add documentation
+Date: Thu, 14 Dec 2017 20:22:14 -0800
+Message-ID: <20171215042214.GA17444@bombadil.infradead.org>
+References: <20171206004159.3755-1-willy@infradead.org>
+ <20171206004159.3755-9-willy@infradead.org>
+ <66ad068b-1973-ca41-7bbf-8a0634cc488d@infradead.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171211224301.GA3925@bombadil.infradead.org>
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
+        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=nL6ozUd14JAJzSMAj7FEjESyJc+oi1IG83k7nEDhA+0=; b=G6VKtpYENxJBaOxKMW+DJhaFt
+        GYVXwitwX+e71BheilB0FUXTCI6FSj98l6M2SaBQV24xN6q3m1tKkYoztbOrOgAE+YDgNr7qqj6H5
+        jUb/C8ySO6hTZd+FNcqG/eoyLrgSLP/0vJYWfJbnoyZXtqqZWWywrwEDe6jP+UgvJAyDZZE6pphjE
+        8wWzzZ97Msk2NS9tdGe6VZE4NfB0O4mCpUiKOXzhMFxMzCKAg8ImXUCC8jdk3LVDej0bgqxSW3m/y
+        GAC/EUzLWGTmLu4aHMsFI3LQHCZI+HdSxaw5TYSADceWh6e9KiYC34gTr+E6owmUKF7x80CF+8caD
+    
+Content-Disposition: inline
+In-Reply-To: <66ad068b-1973-ca41-7bbf-8a0634cc488d-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Dave Chinner <david@fromorbit.com>, Alan Stern <stern@rowland.harvard.edu>, Byungchul Park <byungchul.park@lge.com>, Theodore Ts'o <tytso@mit.edu>, Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@lge.com
+Content-Transfer-Encoding: 7bit
+To: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 2017-12-11 at 14:43 -0800, Matthew Wilcox wrote:
->  - There's no warning for the first paragraph of section 6:
+On Mon, Dec 11, 2017 at 03:10:22PM -0800, Randy Dunlap wrote:
+> > +A freshly-initialised XArray contains a ``NULL`` pointer at every index.
+> > +Each non-``NULL`` entry in the array has three bits associated with
+> > +it called tags.  Each tag may be flipped on or off independently of
+> > +the others.  You can search for entries with a given tag set.
 > 
-> 6) Functions
-> ------------
+> Only tags that are set, or search for entries with some tag(s) cleared?
+> Or is that like a mathematical set?
+
+hmm ...
+
+"Each tag may be set or cleared independently of the others.  You can
+search for entries which have a particular tag set."
+
+Doesn't completely remove the ambiguity, but I can't think of how to phrase
+that better ...
+
+> > +Normal pointers may be stored in the XArray directly.  They must be 4-byte
+> > +aligned, which is true for any pointer returned from :c:func:`kmalloc` and
+> > +:c:func:`alloc_page`.  It isn't true for arbitrary user-space pointers,
+> > +nor for function pointers.  You can store pointers to statically allocated
+> > +objects, as long as those objects have an alignment of at least 4.
 > 
-> Functions should be short and sweet, and do just one thing.  They should
-> fit on one or two screenfuls of text (the ISO/ANSI screen size is 80x24,
-> as we all know), and do one thing and do that well.
+> This (above) is due to the internal usage of low bits for flags?
+
+Sort of ... if bit 0 is set then we're storing an integer (see below),
+and if bit 0 is clear and bit 1 is set, then it's an internal entry.
+
+But I don't want the implementation details to leak into the user manual.
+From the user's point of view, they can store a pointer to anything they
+allocated with kmalloc.  If they want to store an arbitrary pointer,
+they're out of luck.
+
+> > +The XArray does not support storing :c:func:`IS_ERR` pointers; some
+> > +conflict with data values and others conflict with entries the XArray
+> > +uses for its own purposes.  If you need to store special values which
+> > +cannot be confused with real kernel pointers, the values 4, 8, ... 4092
+> > +are available.
 > 
->    I'm not expecting you to be able to write a perl script that checks
->    the first line, but we have way too many 200-plus line functions in
->    the kernel.  I'd like a warning on anything over 200 lines (a factor
->    of 4 over Linus's stated goal).
+> or if I know that they values are errno-range values, I can just shift them
+> left by 2 to store them and then shift them right by 2 to use them?
 
-Perhaps something like this?
+Yes, the values -4 to -4092 also make good error signals.
 
-(very very lightly tested, more testing appreciated)
----
- scripts/checkpatch.pl | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+> oh, or use the following function?
+> 
+> > +You can also store integers between 0 and ``LONG_MAX`` in the XArray.
+> > +You must first convert it into an entry using :c:func:`xa_mk_value`.
+> > +When you retrieve an entry from the XArray, you can check whether it is
+> > +a data value by calling :c:func:`xa_is_value`, and convert it back to
+> > +an integer by calling :c:func:`xa_to_value`.
 
-diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
-index 4306b7616cdd..523aead40b87 100755
---- a/scripts/checkpatch.pl
-+++ b/scripts/checkpatch.pl
-@@ -59,6 +59,7 @@ my $conststructsfile = "$D/const_structs.checkpatch";
- my $typedefsfile = "";
- my $color = "auto";
- my $allow_c99_comments = 1;
-+my $max_function_length = 200;
- 
- sub help {
- 	my ($exitcode) = @_;
-@@ -2202,6 +2203,7 @@ sub process {
- 	my $realcnt = 0;
- 	my $here = '';
- 	my $context_function;		#undef'd unless there's a known function
-+	my $context_function_linenum;
- 	my $in_comment = 0;
- 	my $comment_edge = 0;
- 	my $first_line = 0;
-@@ -2341,6 +2343,7 @@ sub process {
- 			} else {
- 				undef $context_function;
- 			}
-+			undef $context_function_linenum;
- 			next;
- 
- # track the line number as we move through the hunk, note that
-@@ -3200,11 +3203,18 @@ sub process {
- 		if ($sline =~ /^\+\{\s*$/ &&
- 		    $prevline =~ /^\+(?:(?:(?:$Storage|$Inline)\s*)*\s*$Type\s*)?($Ident)\(/) {
- 			$context_function = $1;
-+			$context_function_linenum = $realline;
- 		}
- 
- # check if this appears to be the end of function declaration
- 		if ($sline =~ /^\+\}\s*$/) {
-+			if (defined($context_function_linenum) &&
-+			    ($realline - $context_function_linenum) > $max_function_length) {
-+				WARN("LONG_FUNCTION",
-+				     "'$context_function' function definition is " . ($realline - $context_function_linenum) . " lines, perhaps refactor\n" . $herecurr);
-+			}
- 			undef $context_function;
-+			undef $context_function_linenum;
- 		}
- 
- # check indentation of any line with a bare else
-@@ -5983,6 +5993,7 @@ sub process {
- 		    defined $stat &&
- 		    $stat =~ /^.\s*(?:$Storage\s+)?$Type\s*($Ident)\s*$balanced_parens\s*{/s) {
- 			$context_function = $1;
-+			$context_function_linenum = $realline;
- 
- # check for multiline function definition with misplaced open brace
- 			my $ok = 0;
+Yup, you could also store errors as integers, if you like.  Your choice :-)
 
+> > +You can enquire whether a tag is set on an entry by using
+> > +:c:func:`xa_get_tag`.  If the entry is not ``NULL``, you can set a tag
+> > +on it by using :c:func:`xa_set_tag` and remove the tag from an entry by
+> > +calling :c:func:`xa_clear_tag`.  You can ask whether any entry in the
+> 
+>                                                         an entry
+> 
+> > +XArray has a particular tag set by calling :c:func:`xa_tagged`.
+> 
+> or maybe I don't understand.  Does xa_tagged() test one entry and return its
+> "tagged" result/status?  or does it test (potentially) the entire array to search
+> for a particular tag value?
+
+It asks the question "Does any entry in the array have tag N set?"
+
+> > +If the xa_state is holding an %ENOMEM error, calling :c:func:`xas_nomem`
+> > +will attempt to allocate more memory using the specified gfp flags and
+> > +cache it in the xa_state for the next attempt.  The idea is that you take
+> > +the xa_lock, attempt the operation and drop the lock.  The operation
+> > +attempts to allocate memory while holding the lock, but it is more
+> > +likely to fail.  Once you have dropped the lock, :c:func:`xas_nomem`
+> > +can try harder to allocate more memory.  It will return ``true`` if it
+> > +is worth retrying the operation (ie that there was a memory error *and*
+> 
+>                          usually    i.e.
+> 
+> > +more memory was allocated.  If it has previously allocated memory, and
+> 
+>                    allocated).
+
+Thanks!
+
+> > +If you need to move to a different index in the XArray, call
+> > +:c:func:`xas_set`.  This reinitialises the cursor which will generally
+> 
+> I would put a comma .... here.......................^
+> but consult your $editor.  :)
+
+I'll ask her, but I think you're right :-)
+
+> Nicely done.  Thanks.
+
+Thanks for the review!  I think we're still struggling a little to
+talk about tags in an unambiguous way, but apart from that it feels
+pretty good.
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
