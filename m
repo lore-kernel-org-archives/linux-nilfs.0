@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 11/78] xarray: Add xa_get_tag,
- xa_set_tag and xa_clear_tag
-Date: Fri, 15 Dec 2017 14:03:43 -0800
-Message-ID: <20171215220450.7899-12-willy@infradead.org>
+Subject: [PATCH v5 07/78] xarray: Add definition of struct xarray
+Date: Fri, 15 Dec 2017 14:03:39 -0800
+Message-ID: <20171215220450.7899-8-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=q77esD+Qa+N4l6ADMoRKkTZsfNEYDB9HEV1ZYzbd254=; b=CdhgjKV4/ejBNyVfkGFTDvIQPK
- EKnXlbuyfY+8RP/35q8k6mc43VPUGBTo3uXjyycrKP8p70swgDZqGJkT1WyBATJpgpkWwbWh+1Cde
- QnBv8BK4Y/rym+Olv6Q+n8dY0JBCXQRil8eYKvef+yt9yRJfglCDF9LT03vbGceoo5qM=;
+ bh=scPxkNnSEVoa7k9JLC5EiWdmlRxbW6NfscXPuGvErt4=; b=IKdLkMx7ezHLYW7cDyjebzNiQ3
+ 89gv2C/+aaciu5Rfux1C5qMknuGx8gFjEZxI9vd+bl1M5iNquc89rhih6P7dCB7xkkoCQa0R8sM7r
+ DboRobGmjB9w2IUtoIU+Wur+lS3IuO6ZDzoVhW7kXGg9bgRo/ZUzfDzslTCgOSWTu6xA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=q77esD+Qa+N4l6ADMoRKkTZsfNEYDB9HEV1ZYzbd254=; b=mAcXkFuBzF0Kf39h7Yajf2FtYE
- YRlKXq5VvqvkKhh9J5xSzmFUgL+fI0ucl+Vf7DMUYuN77hnIgbEx2GJUlERcrpIMIyFx3IUomwF66
- I7NTkW+ijx+sQIMlM8lJ+y0tJ3q8QP104tCxRAKBylpYmT3+9CYh80bywu4aC2Evf7Jk=;
+ bh=scPxkNnSEVoa7k9JLC5EiWdmlRxbW6NfscXPuGvErt4=; b=hBZ7MqBuuIZNI0G5msADzltI+e
+ YVY8JCq55UPPkkZ/vhnHTFGSOV63RTircHHNP+j5RLhVfc0q5O2+0fx2j/VKyMs0Cq5cJmKl+B1DA
+ 4NhocgCvMq/89rKP5lUnxCQc/aMmGlX3vCKI6tdLB7RXmA987A0wftc+SEJLQEugQnno=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=q77esD+Qa+N4l6ADMoRKkTZsfNEYDB9HEV1ZYzbd254=; b=KPJXVjxIM3w/G25nJPHjToMS3
- eJdnsIQX6Y9scAm0Hi+6vB6tquHKNkn2EiZWJq5+wVsocuN4/88eNvhiJ/YtATSaZIw0rJShL6c8F
- k8TVR3RRZ95xsFeoz/ri9eXc2HUYfbd5LW6hZHVoBArA3ce6Gow8xLXZqt+8rZy6USC6h7lZbU+Oi
- ORTBYKLNXb8aF0iI/Fwf4uvwT21/pzHcr9s1290vFdfIGrkl0d3Sx+GKyOV/pNSskTqk26FYk+Cw3
- Wov4NAllFHl+l5NDXmg/rY6TyJ5dege2GiwhMX1nIsg9uY9ckviaXcJOhDsx+14vaVAK2XXdvf2R1
- VY6AOA3Fg==;
+ bh=scPxkNnSEVoa7k9JLC5EiWdmlRxbW6NfscXPuGvErt4=; b=YBpEveLz5OfpKzXxdPKXkqDvX
+ zXQ6bavjkY9GWbtf9dWNMb9PYn62kmN1RBwuXROGamQHDsqJSzh3V3IGOsf0lNfWTHNKHcuEkBxva
+ ouR+MKd1NEoxHKKRcgwIyuti/5xgoMb5xctlrgG8/LG4NJsOB/gv6mKCe1tHkZOzzBhMFe8/mq8w+
+ y6E6I3jcZlFEBs9AO09ESEuLF1Lc4hOJJl3mC683eGXsxx71fNKK8c37aj38IdQN1pvKAKnlpZMdI
+ 9OGA1/mzQIudqP8SilEhpRFXoSQmrXeJDfj+Gb8wlCsBzeXIP0QOF6OhIZ5eCqG+9pvaXfk0cDnll
+ oT/Zg6/RA==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,544 +53,628 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-XArray tags are slightly more strongly typed than the radix tree tags,
-but occupy the same bits.  This commit also adds the xas_ family of tag
-operations, for cases where the caller is already holding the lock, and
-xa_tagged() to ask whether any array member has a particular tag set.
+This is a direct replacement for struct radix_tree_root.  Some of the
+struct members have changed name; convert those, and use a #define so
+that radix_tree users continue to work without change.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h |  36 ++++++++
- lib/radix-tree.c       |  52 +++++------
- lib/xarray.c           | 229 +++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 291 insertions(+), 26 deletions(-)
+ include/linux/radix-tree.h               | 31 ++++---------
+ include/linux/xarray.h                   | 57 ++++++++++++++++++++++++
+ lib/Makefile                             |  2 +-
+ lib/idr.c                                |  4 +-
+ lib/radix-tree.c                         | 75 ++++++++++++++++----------------
+ lib/xarray.c                             | 40 +++++++++++++++++
+ tools/include/linux/spinlock.h           |  1 +
+ tools/testing/radix-tree/.gitignore      |  1 +
+ tools/testing/radix-tree/Makefile        |  8 +++-
+ tools/testing/radix-tree/linux/bug.h     |  1 +
+ tools/testing/radix-tree/linux/kconfig.h |  1 +
+ tools/testing/radix-tree/linux/xarray.h  |  2 +
+ tools/testing/radix-tree/multiorder.c    |  6 +--
+ tools/testing/radix-tree/test.c          |  6 +--
+ 14 files changed, 163 insertions(+), 72 deletions(-)
+ create mode 100644 lib/xarray.c
+ create mode 100644 tools/testing/radix-tree/linux/kconfig.h
+ create mode 100644 tools/testing/radix-tree/linux/xarray.h
 
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index 3e4d700bd1bd..260fef3c9bc2 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -30,6 +30,9 @@
+ #include <linux/types.h>
+ #include <linux/xarray.h>
+ 
++/* Keep unconverted code working */
++#define radix_tree_root		xarray
++
+ /*
+  * The bottom two bits of the slot determine how the remaining bits in the
+  * slot are interpreted:
+@@ -59,10 +62,7 @@ static inline bool radix_tree_is_internal_node(void *ptr)
+ 
+ #define RADIX_TREE_MAX_TAGS 3
+ 
+-#ifndef RADIX_TREE_MAP_SHIFT
+-#define RADIX_TREE_MAP_SHIFT	(CONFIG_BASE_SMALL ? 4 : 6)
+-#endif
+-
++#define RADIX_TREE_MAP_SHIFT	XA_CHUNK_SHIFT
+ #define RADIX_TREE_MAP_SIZE	(1UL << RADIX_TREE_MAP_SHIFT)
+ #define RADIX_TREE_MAP_MASK	(RADIX_TREE_MAP_SIZE-1)
+ 
+@@ -95,35 +95,20 @@ struct radix_tree_node {
+ 	unsigned long	tags[RADIX_TREE_MAX_TAGS][RADIX_TREE_TAG_LONGS];
+ };
+ 
+-/* The top bits of gfp_mask are used to store the root tags and the IDR flag */
++/* The top bits of xa_flags are used to store the root tags and the IDR flag */
+ #define ROOT_IS_IDR	((__force gfp_t)(1 << __GFP_BITS_SHIFT))
+ #define ROOT_TAG_SHIFT	(__GFP_BITS_SHIFT + 1)
+ 
+-struct radix_tree_root {
+-	spinlock_t		xa_lock;
+-	gfp_t			gfp_mask;
+-	struct radix_tree_node	__rcu *rnode;
+-};
+-
+-#define RADIX_TREE_INIT(name, mask)	{				\
+-	.xa_lock = __SPIN_LOCK_UNLOCKED(name.xa_lock),			\
+-	.gfp_mask = (mask),						\
+-	.rnode = NULL,							\
+-}
++#define RADIX_TREE_INIT(name, mask)	__XARRAY_INIT(name, mask)
+ 
+ #define RADIX_TREE(name, mask) \
+ 	struct radix_tree_root name = RADIX_TREE_INIT(name, mask)
+ 
+-#define INIT_RADIX_TREE(root, mask)					\
+-do {									\
+-	spin_lock_init(&(root)->xa_lock);				\
+-	(root)->gfp_mask = (mask);					\
+-	(root)->rnode = NULL;						\
+-} while (0)
++#define INIT_RADIX_TREE(root, mask) __xa_init(root, mask)
+ 
+ static inline bool radix_tree_empty(const struct radix_tree_root *root)
+ {
+-	return root->rnode == NULL;
++	return root->xa_head == NULL;
+ }
+ 
+ /**
 diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index df2ef4f19f3d..16d896861e33 100644
+index f175350560fd..920f5a809df6 100644
 --- a/include/linux/xarray.h
 +++ b/include/linux/xarray.h
-@@ -11,6 +11,7 @@
+@@ -10,9 +10,66 @@
+  */
  
  #include <linux/bug.h>
- #include <linux/compiler.h>
-+#include <linux/gfp.h>
- #include <linux/kconfig.h>
- #include <linux/kernel.h>
- #include <linux/rcupdate.h>
-@@ -74,6 +75,33 @@ static inline void xa_init(struct xarray *xa)
++#include <linux/compiler.h>
++#include <linux/kconfig.h>
+ #include <linux/spinlock.h>
+ #include <linux/types.h>
  
- void *xa_load(struct xarray *, unsigned long index);
- 
-+typedef unsigned __bitwise xa_tag_t;
-+#define XA_TAG_0		((__force xa_tag_t)0U)
-+#define XA_TAG_1		((__force xa_tag_t)1U)
-+#define XA_TAG_2		((__force xa_tag_t)2U)
-+#define XA_NO_TAG		((__force xa_tag_t)4U)
-+
-+#define XA_TAG_MAX		XA_TAG_2
-+#define XA_FREE_TAG		XA_TAG_0
-+#define XA_FLAGS_TAG(tag)	((__force gfp_t)((2U << __GFP_BITS_SHIFT) << \
-+				(__force unsigned)(tag)))
-+
 +/**
-+ * xa_tagged() - Inquire whether any entry in this array has a tag set
-+ * @xa: Array
-+ * @tag: Tag value
++ * struct xarray - The anchor of the XArray.
++ * @xa_lock: Lock that protects the contents of the XArray.
 + *
-+ * Return: %true if any entry has this tag set.
++ * To use the xarray, define it statically or embed it in your data structure.
++ * It is a very small data structure, so it does not usually make sense to
++ * allocate it separately and keep a pointer to it in your data structure.
++ *
++ * You may use the xa_lock to protect your own data structures as well.
 + */
-+static inline bool xa_tagged(const struct xarray *xa, xa_tag_t tag)
-+{
-+	return xa->xa_flags & XA_FLAGS_TAG(tag);
++/*
++ * If all of the entries in the array are NULL, @xa_head is a NULL pointer.
++ * If the only non-NULL entry in the array is at index 0, @xa_head is that
++ * entry.  If any other entry in the array is non-NULL, @xa_head points
++ * to an @xa_node.
++ */
++struct xarray {
++	spinlock_t	xa_lock;
++/* private: The rest of the data structure is not to be used directly. */
++	gfp_t		xa_flags;
++	void __rcu *	xa_head;
++};
++
++#define __XARRAY_INIT(name, flags) {				\
++	.xa_lock = __SPIN_LOCK_UNLOCKED(name.xa_lock),		\
++	.xa_flags = flags,					\
++	.xa_head = NULL,					\
 +}
 +
-+bool xa_get_tag(struct xarray *, unsigned long index, xa_tag_t);
-+void xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
-+void xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
++#define XARRAY_INIT(name) __XARRAY_INIT(name, 0)
++
++/**
++ * DEFINE_XARRAY() - Define an XArray
++ * @name: A string that names your XArray
++ *
++ * This is intended for file scope definitions of XArrays.  It declares
++ * and initialises an empty XArray with the chosen name.  It is equivalent
++ * to calling xa_init() on the array, but it does the initialisation at
++ * compiletime instead of runtime.
++ */
++#define DEFINE_XARRAY(name) struct xarray name = XARRAY_INIT(name)
++
++void __xa_init(struct xarray *, gfp_t flags);
++
++/**
++ * xa_init() - Initialise an empty XArray.
++ * @xa: XArray.
++ *
++ * An empty XArray is full of NULL entries.
++ */
++static inline void xa_init(struct xarray *xa)
++{
++	__xa_init(xa, 0);
++}
 +
  #define BITS_PER_XA_VALUE	(BITS_PER_LONG - 1)
  
  /**
-@@ -166,6 +194,10 @@ static inline int xa_err(void *entry)
- #define xa_unlock_irqrestore(xa, flags) \
- 				spin_unlock_irqrestore(&(xa)->xa_lock, flags)
+diff --git a/lib/Makefile b/lib/Makefile
+index d11c48ec8ffd..6aa523acc7c1 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -18,7 +18,7 @@ KCOV_INSTRUMENT_debugobjects.o := n
+ KCOV_INSTRUMENT_dynamic_debug.o := n
  
-+/* Versions of the normal API which require the caller to hold the xa_lock */
-+void __xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
-+void __xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
-+
- /* Everything below here is the Advanced API.  Proceed with caution. */
+ lib-y := ctype.o string.o vsprintf.o cmdline.o \
+-	 rbtree.o radix-tree.o dump_stack.o timerqueue.o\
++	 rbtree.o radix-tree.o dump_stack.o timerqueue.o xarray.o \
+ 	 idr.o int_sqrt.o extable.o \
+ 	 sha1.o chacha20.o irq_regs.o argv_split.o \
+ 	 flex_proportions.o ratelimit.o show_mem.o \
+diff --git a/lib/idr.c b/lib/idr.c
+index 48c53890adc0..b9aa08e198a2 100644
+--- a/lib/idr.c
++++ b/lib/idr.c
+@@ -35,8 +35,8 @@ int idr_alloc_ul(struct idr *idr, void *ptr, unsigned long *nextid,
+ 	if (WARN_ON_ONCE(radix_tree_is_internal_node(ptr)))
+ 		return -EINVAL;
  
- /*
-@@ -473,6 +505,10 @@ static inline bool xas_retry(struct xa_state *xas, const void *entry)
+-	if (WARN_ON_ONCE(!(idr->idr_rt.gfp_mask & ROOT_IS_IDR)))
+-		idr->idr_rt.gfp_mask |= IDR_RT_MARKER;
++	if (WARN_ON_ONCE(!(idr->idr_rt.xa_flags & ROOT_IS_IDR)))
++		idr->idr_rt.xa_flags |= IDR_RT_MARKER;
  
- void *xas_load(struct xa_state *);
- 
-+bool xas_get_tag(const struct xa_state *, xa_tag_t);
-+void xas_set_tag(const struct xa_state *, xa_tag_t);
-+void xas_clear_tag(const struct xa_state *, xa_tag_t);
-+
- /**
-  * xas_reload() - Refetch an entry from the xarray.
-  * @xas: XArray operation state.
+ 	radix_tree_iter_init(&iter, *nextid);
+ 	slot = idr_get_free(&idr->idr_rt, &iter, gfp, max);
 diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-index cf5b84c9b890..d9e93b828ed0 100644
+index 0a7a21dd9398..930eb7d298d7 100644
 --- a/lib/radix-tree.c
 +++ b/lib/radix-tree.c
-@@ -126,19 +126,19 @@ static inline gfp_t root_gfp_mask(const struct radix_tree_root *root)
- 	return root->xa_flags & __GFP_BITS_MASK;
+@@ -123,7 +123,7 @@ static unsigned int radix_tree_descend(const struct radix_tree_node *parent,
+ 
+ static inline gfp_t root_gfp_mask(const struct radix_tree_root *root)
+ {
+-	return root->gfp_mask & __GFP_BITS_MASK;
++	return root->xa_flags & __GFP_BITS_MASK;
  }
  
--static inline void tag_set(struct radix_tree_node *node, unsigned int tag,
-+static inline void rtag_set(struct radix_tree_node *node, unsigned int tag,
- 		int offset)
+ static inline void tag_set(struct radix_tree_node *node, unsigned int tag,
+@@ -146,32 +146,32 @@ static inline int tag_get(const struct radix_tree_node *node, unsigned int tag,
+ 
+ static inline void root_tag_set(struct radix_tree_root *root, unsigned tag)
  {
- 	__set_bit(offset, node->tags[tag]);
+-	root->gfp_mask |= (__force gfp_t)(1 << (tag + ROOT_TAG_SHIFT));
++	root->xa_flags |= (__force gfp_t)(1 << (tag + ROOT_TAG_SHIFT));
  }
  
--static inline void tag_clear(struct radix_tree_node *node, unsigned int tag,
-+static inline void rtag_clear(struct radix_tree_node *node, unsigned int tag,
- 		int offset)
+ static inline void root_tag_clear(struct radix_tree_root *root, unsigned tag)
  {
- 	__clear_bit(offset, node->tags[tag]);
+-	root->gfp_mask &= (__force gfp_t)~(1 << (tag + ROOT_TAG_SHIFT));
++	root->xa_flags &= (__force gfp_t)~(1 << (tag + ROOT_TAG_SHIFT));
  }
  
--static inline int tag_get(const struct radix_tree_node *node, unsigned int tag,
-+static inline int rtag_get(const struct radix_tree_node *node, unsigned int tag,
- 		int offset)
+ static inline void root_tag_clear_all(struct radix_tree_root *root)
  {
- 	return test_bit(offset, node->tags[tag]);
-@@ -574,14 +574,14 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
- 		if (is_idr(root)) {
- 			all_tag_set(node, IDR_FREE);
- 			if (!root_tag_get(root, IDR_FREE)) {
--				tag_clear(node, IDR_FREE, 0);
-+				rtag_clear(node, IDR_FREE, 0);
- 				root_tag_set(root, IDR_FREE);
- 			}
- 		} else {
- 			/* Propagate the aggregated tag info to the new child */
- 			for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++) {
- 				if (root_tag_get(root, tag))
--					tag_set(node, tag, 0);
-+					rtag_set(node, tag, 0);
- 			}
+-	root->gfp_mask &= (1 << ROOT_TAG_SHIFT) - 1;
++	root->xa_flags &= (__force gfp_t)((1 << ROOT_TAG_SHIFT) - 1);
+ }
+ 
+ static inline int root_tag_get(const struct radix_tree_root *root, unsigned tag)
+ {
+-	return (__force int)root->gfp_mask & (1 << (tag + ROOT_TAG_SHIFT));
++	return (__force int)root->xa_flags & (1 << (tag + ROOT_TAG_SHIFT));
+ }
+ 
+ static inline unsigned root_tags_get(const struct radix_tree_root *root)
+ {
+-	return (__force unsigned)root->gfp_mask >> ROOT_TAG_SHIFT;
++	return (__force unsigned)root->xa_flags >> ROOT_TAG_SHIFT;
+ }
+ 
+ static inline bool is_idr(const struct radix_tree_root *root)
+ {
+-	return !!(root->gfp_mask & ROOT_IS_IDR);
++	return !!(root->xa_flags & ROOT_IS_IDR);
+ }
+ 
+ /*
+@@ -290,12 +290,12 @@ static void dump_node(struct radix_tree_node *node, unsigned long index)
+ /* For debug */
+ static void radix_tree_dump(struct radix_tree_root *root)
+ {
+-	pr_debug("radix root: %p rnode %p tags %x\n",
+-			root, root->rnode,
+-			root->gfp_mask >> ROOT_TAG_SHIFT);
+-	if (!radix_tree_is_internal_node(root->rnode))
++	pr_debug("radix root: %p xa_head %p tags %x\n",
++			root, root->xa_head,
++			root->xa_flags >> ROOT_TAG_SHIFT);
++	if (!radix_tree_is_internal_node(root->xa_head))
+ 		return;
+-	dump_node(entry_to_node(root->rnode), 0);
++	dump_node(entry_to_node(root->xa_head), 0);
+ }
+ 
+ static void dump_ida_node(void *entry, unsigned long index)
+@@ -339,9 +339,9 @@ static void dump_ida_node(void *entry, unsigned long index)
+ static void ida_dump(struct ida *ida)
+ {
+ 	struct radix_tree_root *root = &ida->ida_rt;
+-	pr_debug("ida: %p node %p free %d\n", ida, root->rnode,
+-				root->gfp_mask >> ROOT_TAG_SHIFT);
+-	dump_ida_node(root->rnode, 0);
++	pr_debug("ida: %p node %p free %d\n", ida, root->xa_head,
++				root->xa_flags >> ROOT_TAG_SHIFT);
++	dump_ida_node(root->xa_head, 0);
+ }
+ #endif
+ 
+@@ -575,7 +575,7 @@ int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
+ static unsigned radix_tree_load_root(const struct radix_tree_root *root,
+ 		struct radix_tree_node **nodep, unsigned long *maxindex)
+ {
+-	struct radix_tree_node *node = rcu_dereference_raw(root->rnode);
++	struct radix_tree_node *node = rcu_dereference_raw(root->xa_head);
+ 
+ 	*nodep = node;
+ 
+@@ -604,7 +604,7 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
+ 	while (index > shift_maxindex(maxshift))
+ 		maxshift += RADIX_TREE_MAP_SHIFT;
+ 
+-	entry = rcu_dereference_raw(root->rnode);
++	entry = rcu_dereference_raw(root->xa_head);
+ 	if (!entry && (!is_idr(root) || root_tag_get(root, IDR_FREE)))
+ 		goto out;
+ 
+@@ -632,7 +632,7 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
+ 		if (radix_tree_is_internal_node(entry)) {
+ 			entry_to_node(entry)->parent = node;
+ 		} else if (xa_is_value(entry)) {
+-			/* Moving an exceptional root->rnode to a node */
++			/* Moving an exceptional root->xa_head to a node */
+ 			node->exceptional = 1;
  		}
- 
-@@ -646,7 +646,7 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
- 		 * one (root->xa_head) as far as dependent read barriers go.
+ 		/*
+@@ -641,7 +641,7 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
  		 */
- 		root->xa_head = (void __rcu *)child;
--		if (is_idr(root) && !tag_get(node, IDR_FREE, 0))
-+		if (is_idr(root) && !rtag_get(node, IDR_FREE, 0))
+ 		node->slots[0] = (void __rcu *)entry;
+ 		entry = node_to_entry(node);
+-		rcu_assign_pointer(root->rnode, entry);
++		rcu_assign_pointer(root->xa_head, entry);
+ 		shift += RADIX_TREE_MAP_SHIFT;
+ 	} while (shift <= maxshift);
+ out:
+@@ -658,7 +658,7 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
+ 	bool shrunk = false;
+ 
+ 	for (;;) {
+-		struct radix_tree_node *node = rcu_dereference_raw(root->rnode);
++		struct radix_tree_node *node = rcu_dereference_raw(root->xa_head);
+ 		struct radix_tree_node *child;
+ 
+ 		if (!radix_tree_is_internal_node(node))
+@@ -686,9 +686,9 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
+ 		 * moving the node from one part of the tree to another: if it
+ 		 * was safe to dereference the old pointer to it
+ 		 * (node->slots[0]), it will be safe to dereference the new
+-		 * one (root->rnode) as far as dependent read barriers go.
++		 * one (root->xa_head) as far as dependent read barriers go.
+ 		 */
+-		root->rnode = (void __rcu *)child;
++		root->xa_head = (void __rcu *)child;
+ 		if (is_idr(root) && !tag_get(node, IDR_FREE, 0))
  			root_tag_clear(root, IDR_FREE);
  
- 		/*
-@@ -853,7 +853,7 @@ static inline int insert_entries(struct radix_tree_node *node,
- 			if (replace) {
- 				node->count--;
- 				for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
--					if (tag_get(node, tag, offset + i))
-+					if (rtag_get(node, tag, offset + i))
- 						tags |= 1 << tag;
- 			} else
- 				return -EEXIST;
-@@ -866,12 +866,12 @@ static inline int insert_entries(struct radix_tree_node *node,
- 			rcu_assign_pointer(slot[i], sibling);
- 			for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
- 				if (tags & (1 << tag))
--					tag_clear(node, tag, offset + i);
-+					rtag_clear(node, tag, offset + i);
- 		} else {
- 			rcu_assign_pointer(slot[i], item);
- 			for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
- 				if (tags & (1 << tag))
--					tag_set(node, tag, offset);
-+					rtag_set(node, tag, offset);
+@@ -736,9 +736,8 @@ static bool delete_node(struct radix_tree_root *root,
+ 
+ 		if (node->count) {
+ 			if (node_to_entry(node) ==
+-					rcu_dereference_raw(root->rnode))
+-				deleted |= radix_tree_shrink(root,
+-								update_node);
++					rcu_dereference_raw(root->xa_head))
++				deleted |= radix_tree_shrink(root, update_node);
+ 			return deleted;
  		}
- 		if (xa_is_node(old))
- 			radix_tree_free_nodes(old);
-@@ -929,9 +929,9 @@ int __radix_tree_insert(struct radix_tree_root *root, unsigned long index,
  
- 	if (node) {
- 		unsigned offset = get_slot_offset(node, slot);
--		BUG_ON(tag_get(node, 0, offset));
--		BUG_ON(tag_get(node, 1, offset));
--		BUG_ON(tag_get(node, 2, offset));
-+		BUG_ON(rtag_get(node, 0, offset));
-+		BUG_ON(rtag_get(node, 1, offset));
-+		BUG_ON(rtag_get(node, 2, offset));
- 	} else {
- 		BUG_ON(root_tags_get(root));
- 	}
-@@ -1067,7 +1067,7 @@ static bool node_tag_get(const struct radix_tree_root *root,
- 				unsigned int tag, unsigned int offset)
+@@ -753,7 +752,7 @@ static bool delete_node(struct radix_tree_root *root,
+ 			 */
+ 			if (!is_idr(root))
+ 				root_tag_clear_all(root);
+-			root->rnode = NULL;
++			root->xa_head = NULL;
+ 		}
+ 
+ 		WARN_ON_ONCE(!list_empty(&node->private_list));
+@@ -778,7 +777,7 @@ static bool delete_node(struct radix_tree_root *root,
+  *	at position @index in the radix tree @root.
+  *
+  *	Until there is more than one item in the tree, no nodes are
+- *	allocated and @root->rnode is used as a direct slot instead of
++ *	allocated and @root->xa_head is used as a direct slot instead of
+  *	pointing to a node, in which case *@nodep will be NULL.
+  *
+  *	Returns -ENOMEM, or 0 for success.
+@@ -788,7 +787,7 @@ int __radix_tree_create(struct radix_tree_root *root, unsigned long index,
+ 			void __rcu ***slotp)
  {
- 	if (node)
--		return tag_get(node, tag, offset);
-+		return rtag_get(node, tag, offset);
- 	return root_tag_get(root, tag);
+ 	struct radix_tree_node *node = NULL, *child;
+-	void __rcu **slot = (void __rcu **)&root->rnode;
++	void __rcu **slot = (void __rcu **)&root->xa_head;
+ 	unsigned long maxindex;
+ 	unsigned int shift, offset = 0;
+ 	unsigned long max = index | ((1UL << order) - 1);
+@@ -804,7 +803,7 @@ int __radix_tree_create(struct radix_tree_root *root, unsigned long index,
+ 		if (error < 0)
+ 			return error;
+ 		shift = error;
+-		child = rcu_dereference_raw(root->rnode);
++		child = rcu_dereference_raw(root->xa_head);
+ 	}
+ 
+ 	while (shift > order) {
+@@ -995,7 +994,7 @@ EXPORT_SYMBOL(__radix_tree_insert);
+  *	tree @root.
+  *
+  *	Until there is more than one item in the tree, no nodes are
+- *	allocated and @root->rnode is used as a direct slot instead of
++ *	allocated and @root->xa_head is used as a direct slot instead of
+  *	pointing to a node, in which case *@nodep will be NULL.
+  */
+ void *__radix_tree_lookup(const struct radix_tree_root *root,
+@@ -1008,7 +1007,7 @@ void *__radix_tree_lookup(const struct radix_tree_root *root,
+ 
+  restart:
+ 	parent = NULL;
+-	slot = (void __rcu **)&root->rnode;
++	slot = (void __rcu **)&root->xa_head;
+ 	radix_tree_load_root(root, &node, &maxindex);
+ 	if (index > maxindex)
+ 		return NULL;
+@@ -1160,9 +1159,9 @@ void __radix_tree_replace(struct radix_tree_root *root,
+ 	/*
+ 	 * This function supports replacing exceptional entries and
+ 	 * deleting entries, but that needs accounting against the
+-	 * node unless the slot is root->rnode.
++	 * node unless the slot is root->xa_head.
+ 	 */
+-	WARN_ON_ONCE(!node && (slot != (void __rcu **)&root->rnode) &&
++	WARN_ON_ONCE(!node && (slot != (void __rcu **)&root->xa_head) &&
+ 			(count || exceptional));
+ 	replace_slot(slot, item, node, count, exceptional);
+ 
+@@ -1714,7 +1713,7 @@ void __rcu **radix_tree_next_chunk(const struct radix_tree_root *root,
+ 		iter->tags = 1;
+ 		iter->node = NULL;
+ 		__set_iter_shift(iter, 0);
+-		return (void __rcu **)&root->rnode;
++		return (void __rcu **)&root->xa_head;
+ 	}
+ 
+ 	do {
+@@ -2108,7 +2107,7 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
+ 			      unsigned long max)
+ {
+ 	struct radix_tree_node *node = NULL, *child;
+-	void __rcu **slot = (void __rcu **)&root->rnode;
++	void __rcu **slot = (void __rcu **)&root->xa_head;
+ 	unsigned long maxindex, start = iter->next_index;
+ 	unsigned int shift, offset = 0;
+ 
+@@ -2124,7 +2123,7 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
+ 		if (error < 0)
+ 			return ERR_PTR(error);
+ 		shift = error;
+-		child = rcu_dereference_raw(root->rnode);
++		child = rcu_dereference_raw(root->xa_head);
+ 	}
+ 
+ 	while (shift) {
+@@ -2187,10 +2186,10 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
+  */
+ void idr_destroy(struct idr *idr)
+ {
+-	struct radix_tree_node *node = rcu_dereference_raw(idr->idr_rt.rnode);
++	struct radix_tree_node *node = rcu_dereference_raw(idr->idr_rt.xa_head);
+ 	if (radix_tree_is_internal_node(node))
+ 		radix_tree_free_nodes(node);
+-	idr->idr_rt.rnode = NULL;
++	idr->idr_rt.xa_head = NULL;
+ 	root_tag_set(&idr->idr_rt, IDR_FREE);
  }
- 
-@@ -1237,7 +1237,7 @@ int radix_tree_split(struct radix_tree_root *root, unsigned long index,
- 	offset = get_slot_offset(parent, slot);
- 
- 	for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
--		if (tag_get(parent, tag, offset))
-+		if (rtag_get(parent, tag, offset))
- 			tags |= 1 << tag;
- 
- 	for (end = offset + 1; end < RADIX_TREE_MAP_SIZE; end++) {
-@@ -1245,7 +1245,7 @@ int radix_tree_split(struct radix_tree_root *root, unsigned long index,
- 			break;
- 		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
- 			if (tags & (1 << tag))
--				tag_set(parent, tag, end);
-+				rtag_set(parent, tag, end);
- 		/* rcu_assign_pointer ensures tags are set before RETRY */
- 		rcu_assign_pointer(parent->slots[end], RADIX_TREE_RETRY);
- 	}
-@@ -1276,7 +1276,7 @@ int radix_tree_split(struct radix_tree_root *root, unsigned long index,
- 							node_to_entry(child));
- 				for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
- 					if (tags & (1 << tag))
--						tag_set(node, tag, offset);
-+						rtag_set(node, tag, offset);
- 			}
- 
- 			node = child;
-@@ -1290,7 +1290,7 @@ int radix_tree_split(struct radix_tree_root *root, unsigned long index,
- 
- 		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
- 			if (tags & (1 << tag))
--				tag_set(node, tag, offset);
-+				rtag_set(node, tag, offset);
- 		offset += n;
- 
- 		while (offset == RADIX_TREE_MAP_SIZE) {
-@@ -1320,9 +1320,9 @@ static void node_tag_set(struct radix_tree_root *root,
- 				unsigned int tag, unsigned int offset)
- {
- 	while (node) {
--		if (tag_get(node, tag, offset))
-+		if (rtag_get(node, tag, offset))
- 			return;
--		tag_set(node, tag, offset);
-+		rtag_set(node, tag, offset);
- 		offset = node->offset;
- 		node = node->parent;
- 	}
-@@ -1360,8 +1360,8 @@ void *radix_tree_tag_set(struct radix_tree_root *root,
- 		offset = radix_tree_descend(parent, &node, index);
- 		BUG_ON(!node);
- 
--		if (!tag_get(parent, tag, offset))
--			tag_set(parent, tag, offset);
-+		if (!rtag_get(parent, tag, offset))
-+			rtag_set(parent, tag, offset);
- 	}
- 
- 	/* set the root's tag bit */
-@@ -1389,9 +1389,9 @@ static void node_tag_clear(struct radix_tree_root *root,
- 				unsigned int tag, unsigned int offset)
- {
- 	while (node) {
--		if (!tag_get(node, tag, offset))
-+		if (!rtag_get(node, tag, offset))
- 			return;
--		tag_clear(node, tag, offset);
-+		rtag_clear(node, tag, offset);
- 		if (any_tag_set(node, tag))
- 			return;
- 
-@@ -1489,7 +1489,7 @@ int radix_tree_tag_get(const struct radix_tree_root *root,
- 		parent = entry_to_node(node);
- 		offset = radix_tree_descend(parent, &node, index);
- 
--		if (!tag_get(parent, tag, offset))
-+		if (!rtag_get(parent, tag, offset))
- 			return 0;
- 		if (node == RADIX_TREE_RETRY)
- 			break;
-@@ -1678,7 +1678,7 @@ void __rcu **radix_tree_next_chunk(const struct radix_tree_root *root,
- 		offset = radix_tree_descend(node, &child, index);
- 
- 		if ((flags & RADIX_TREE_ITER_TAGGED) ?
--				!tag_get(node, tag, offset) : !child) {
-+				!rtag_get(node, tag, offset) : !child) {
- 			/* Hole detected */
- 			if (flags & RADIX_TREE_ITER_CONTIG)
- 				return NULL;
-@@ -2100,7 +2100,7 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
- 
- 		node = entry_to_node(child);
- 		offset = radix_tree_descend(node, &child, start);
--		if (!tag_get(node, IDR_FREE, offset)) {
-+		if (!rtag_get(node, IDR_FREE, offset)) {
- 			offset = radix_tree_find_next_bit(node, IDR_FREE,
- 							offset + 1);
- 			start = next_index(start, node, offset);
+ EXPORT_SYMBOL(idr_destroy);
 diff --git a/lib/xarray.c b/lib/xarray.c
-index 94b8dc1fdac3..f380e92e7d17 100644
---- a/lib/xarray.c
+new file mode 100644
+index 000000000000..24591b3ea84d
+--- /dev/null
 +++ b/lib/xarray.c
-@@ -5,6 +5,7 @@
-  * Author: Matthew Wilcox <mawilcox@microsoft.com>
-  */
+@@ -0,0 +1,40 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++/*
++ * XArray implementation
++ * Copyright (c) 2017 Microsoft Corporation
++ * Author: Matthew Wilcox <mawilcox@microsoft.com>
++ */
++
++#include <linux/export.h>
++#include <linux/xarray.h>
++
++/*
++ * Coding conventions in this file:
++ *
++ * @xa is used to refer to the entire xarray.
++ * @xas is the 'xarray operation state'.  It may be either a pointer to
++ * an xa_state, or an xa_state stored on the stack.  This is an unfortunate
++ * ambiguity.
++ * @index is the index of the entry being operated on
++ * @tag is an xa_tag_t; a small number indicating one of the tag bits.
++ * @node refers to an xa_node; usually the primary one being operated on by
++ * this function.
++ * @offset is the index into the slots array inside an xa_node.
++ * @parent refers to the @xa_node closer to the head than @node.
++ * @entry refers to something stored in a slot in the xarray
++ */
++
++/**
++ * __xa_init() - Initialise an empty XArray with flags.
++ * @xa: XArray.
++ * @flags: XA_FLAG values.
++ *
++ * If you don't kow what an XA_FLAG is, use xa_init().
++ */
++void __xa_init(struct xarray *xa, gfp_t flags)
++{
++	spin_lock_init(&xa->xa_lock);
++	xa->xa_flags = flags;
++	xa->xa_head = NULL;
++}
++EXPORT_SYMBOL(__xa_init);
+diff --git a/tools/include/linux/spinlock.h b/tools/include/linux/spinlock.h
+index b21b586b9854..34fed5c38da2 100644
+--- a/tools/include/linux/spinlock.h
++++ b/tools/include/linux/spinlock.h
+@@ -8,6 +8,7 @@
+ #define spinlock_t		pthread_mutex_t
+ #define DEFINE_SPINLOCK(x)	pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
+ #define __SPIN_LOCK_UNLOCKED(x)	(pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
++#define spin_lock_init(x)	pthread_mutex_init(x, NULL);
  
-+#include <linux/bitmap.h>
- #include <linux/export.h>
- #include <linux/xarray.h>
+ #define spin_lock_irqsave(x, f)		(void)f, pthread_mutex_lock(x)
+ #define spin_unlock_irqrestore(x, f)	(void)f, pthread_mutex_unlock(x)
+diff --git a/tools/testing/radix-tree/.gitignore b/tools/testing/radix-tree/.gitignore
+index d4706c0ffceb..8d4df7a72a8e 100644
+--- a/tools/testing/radix-tree/.gitignore
++++ b/tools/testing/radix-tree/.gitignore
+@@ -4,3 +4,4 @@ idr-test
+ main
+ multiorder
+ radix-tree.c
++xarray.c
+diff --git a/tools/testing/radix-tree/Makefile b/tools/testing/radix-tree/Makefile
+index fa7ee369b3c9..3868bc189199 100644
+--- a/tools/testing/radix-tree/Makefile
++++ b/tools/testing/radix-tree/Makefile
+@@ -4,7 +4,7 @@ CFLAGS += -I. -I../../include -g -O2 -Wall -D_LGPL_SOURCE -fsanitize=address
+ LDFLAGS += -fsanitize=address
+ LDLIBS+= -lpthread -lurcu
+ TARGETS = main idr-test multiorder
+-CORE_OFILES := radix-tree.o idr.o linux.o test.o find_bit.o
++CORE_OFILES := xarray.o radix-tree.o idr.o linux.o test.o find_bit.o
+ OFILES = main.o $(CORE_OFILES) regression1.o regression2.o regression3.o \
+ 	 tag_check.o multiorder.o idr-test.o iteration_check.o benchmark.o
  
-@@ -24,6 +25,55 @@
-  * @entry refers to something stored in a slot in the xarray
-  */
+@@ -33,9 +33,13 @@ vpath %.c ../../lib
+ $(OFILES): Makefile *.h */*.h generated/map-shift.h \
+ 	../../include/linux/*.h \
+ 	../../include/asm/*.h \
++	../../../include/linux/xarray.h \
+ 	../../../include/linux/radix-tree.h \
+ 	../../../include/linux/idr.h
  
-+static inline struct xa_node *xa_parent(struct xarray *xa,
-+					const struct xa_node *node)
-+{
-+	return rcu_dereference_check(node->parent,
-+						lockdep_is_held(&xa->xa_lock));
-+}
++xarray.c: ../../../lib/xarray.c
++	sed -e 's/^static //' -e 's/__always_inline //' -e 's/inline //' < $< > $@
 +
-+static inline struct xa_node *xa_parent_locked(struct xarray *xa,
-+					const struct xa_node *node)
-+{
-+	return rcu_dereference_protected(node->parent,
-+						lockdep_is_held(&xa->xa_lock));
-+}
-+
-+static inline void xa_tag_set(struct xarray *xa, xa_tag_t tag)
-+{
-+	if (!(xa->xa_flags & XA_FLAGS_TAG(tag)))
-+		xa->xa_flags |= XA_FLAGS_TAG(tag);
-+}
-+
-+static inline void xa_tag_clear(struct xarray *xa, xa_tag_t tag)
-+{
-+	if (xa->xa_flags & XA_FLAGS_TAG(tag))
-+		xa->xa_flags &= ~(XA_FLAGS_TAG(tag));
-+}
-+
-+static inline bool tag_get(const struct xa_node *node, unsigned int offset,
-+				xa_tag_t tag)
-+{
-+	return test_bit(offset, node->tags[(__force unsigned)tag]);
-+}
-+
-+static inline void tag_set(struct xa_node *node, unsigned int offset,
-+				xa_tag_t tag)
-+{
-+	__set_bit(offset, node->tags[(__force unsigned)tag]);
-+}
-+
-+static inline void tag_clear(struct xa_node *node, unsigned int offset,
-+				xa_tag_t tag)
-+{
-+	__clear_bit(offset, node->tags[(__force unsigned)tag]);
-+}
-+
-+static inline bool tag_any_set(struct xa_node *node, xa_tag_t tag)
-+{
-+	return !bitmap_empty(node->tags[(__force unsigned)tag], XA_CHUNK_SIZE);
-+}
-+
- /* extracts the offset within this node from the index */
- static unsigned int get_offset(unsigned long index, struct xa_node *node)
+ radix-tree.c: ../../../lib/radix-tree.c
+ 	sed -e 's/^static //' -e 's/__always_inline //' -e 's/inline //' < $< > $@
+ 
+@@ -46,6 +50,6 @@ idr.c: ../../../lib/idr.c
+ 
+ mapshift:
+ 	@if ! grep -qws $(SHIFT) generated/map-shift.h; then		\
+-		echo "#define RADIX_TREE_MAP_SHIFT $(SHIFT)" >		\
++		echo "#define XA_CHUNK_SHIFT $(SHIFT)" >		\
+ 				generated/map-shift.h;			\
+ 	fi
+diff --git a/tools/testing/radix-tree/linux/bug.h b/tools/testing/radix-tree/linux/bug.h
+index 23b8ed52f8c8..03dc8a57eb99 100644
+--- a/tools/testing/radix-tree/linux/bug.h
++++ b/tools/testing/radix-tree/linux/bug.h
+@@ -1 +1,2 @@
++#include <stdio.h>
+ #include "asm/bug.h"
+diff --git a/tools/testing/radix-tree/linux/kconfig.h b/tools/testing/radix-tree/linux/kconfig.h
+new file mode 100644
+index 000000000000..6c8675859913
+--- /dev/null
++++ b/tools/testing/radix-tree/linux/kconfig.h
+@@ -0,0 +1 @@
++#include "../../../../include/linux/kconfig.h"
+diff --git a/tools/testing/radix-tree/linux/xarray.h b/tools/testing/radix-tree/linux/xarray.h
+new file mode 100644
+index 000000000000..df3812cda376
+--- /dev/null
++++ b/tools/testing/radix-tree/linux/xarray.h
+@@ -0,0 +1,2 @@
++#include "generated/map-shift.h"
++#include "../../../../include/linux/xarray.h"
+diff --git a/tools/testing/radix-tree/multiorder.c b/tools/testing/radix-tree/multiorder.c
+index 684e76f79f4a..24293a2fd82d 100644
+--- a/tools/testing/radix-tree/multiorder.c
++++ b/tools/testing/radix-tree/multiorder.c
+@@ -191,13 +191,13 @@ static void multiorder_shrink(unsigned long index, int order)
+ 
+ 	assert(item_insert_order(&tree, 0, order) == 0);
+ 
+-	node = tree.rnode;
++	node = tree.xa_head;
+ 
+ 	assert(item_insert(&tree, index) == 0);
+-	assert(node != tree.rnode);
++	assert(node != tree.xa_head);
+ 
+ 	assert(item_delete(&tree, index) != 0);
+-	assert(node == tree.rnode);
++	assert(node == tree.xa_head);
+ 
+ 	for (i = 0; i < max; i++) {
+ 		struct item *item = item_lookup(&tree, i);
+diff --git a/tools/testing/radix-tree/test.c b/tools/testing/radix-tree/test.c
+index 0d69c49177c6..6e1cc2040817 100644
+--- a/tools/testing/radix-tree/test.c
++++ b/tools/testing/radix-tree/test.c
+@@ -262,7 +262,7 @@ static int verify_node(struct radix_tree_node *slot, unsigned int tag,
+ 
+ void verify_tag_consistency(struct radix_tree_root *root, unsigned int tag)
  {
-@@ -112,6 +162,85 @@ void *xas_load(struct xa_state *xas)
+-	struct radix_tree_node *node = root->rnode;
++	struct radix_tree_node *node = root->xa_head;
+ 	if (!radix_tree_is_internal_node(node))
+ 		return;
+ 	verify_node(node, tag, !!root_tag_get(root, tag));
+@@ -292,13 +292,13 @@ void item_kill_tree(struct radix_tree_root *root)
+ 		}
+ 	}
+ 	assert(radix_tree_gang_lookup(root, (void **)items, 0, 32) == 0);
+-	assert(root->rnode == NULL);
++	assert(root->xa_head == NULL);
  }
- EXPORT_SYMBOL_GPL(xas_load);
  
-+/**
-+ * xas_get_tag() - Returns the state of this tag.
-+ * @xas: XArray operation state.
-+ * @tag: Tag number.
-+ *
-+ * Return: true if the tag is set, false if the tag is clear or @xas
-+ * is in an error state.
-+ */
-+bool xas_get_tag(const struct xa_state *xas, xa_tag_t tag)
-+{
-+	if (xas_invalid(xas))
-+		return false;
-+	if (!xas->xa_node)
-+		return xa_tagged(xas->xa, tag);
-+	return tag_get(xas->xa_node, xas->xa_offset, tag);
-+}
-+EXPORT_SYMBOL_GPL(xas_get_tag);
-+
-+/**
-+ * xas_set_tag() - Sets the tag on this entry and its parents.
-+ * @xas: XArray operation state.
-+ * @tag: Tag number.
-+ *
-+ * Sets the specified tag on this entry, and walks up the tree setting it
-+ * on all the ancestor entries.  Does nothing if @xas has not been walked to
-+ * an entry, or is in an error state.
-+ */
-+void xas_set_tag(const struct xa_state *xas, xa_tag_t tag)
-+{
-+	struct xa_node *node = xas->xa_node;
-+	unsigned int offset = xas->xa_offset;
-+
-+	if (xas_invalid(xas))
-+		return;
-+
-+	while (node) {
-+		if (tag_get(node, offset, tag))
-+			return;
-+		tag_set(node, offset, tag);
-+		offset = node->offset;
-+		node = xa_parent_locked(xas->xa, node);
-+	}
-+
-+	if (!xa_tagged(xas->xa, tag))
-+		xa_tag_set(xas->xa, tag);
-+}
-+EXPORT_SYMBOL_GPL(xas_set_tag);
-+
-+/**
-+ * xas_clear_tag() - Clears the tag on this entry and its parents.
-+ * @xas: XArray operation state.
-+ * @tag: Tag number.
-+ *
-+ * Clears the specified tag on this entry, and walks back to the head
-+ * attempting to clear it on all the ancestor entries.  Does nothing if
-+ * @xas has not been walked to an entry, or is in an error state.
-+ */
-+void xas_clear_tag(const struct xa_state *xas, xa_tag_t tag)
-+{
-+	struct xa_node *node = xas->xa_node;
-+	unsigned int offset = xas->xa_offset;
-+
-+	if (xas_invalid(xas))
-+		return;
-+
-+	while (node) {
-+		tag_clear(node, offset, tag);
-+		if (tag_any_set(node, tag))
-+			return;
-+
-+		offset = node->offset;
-+		node = xa_parent_locked(xas->xa, node);
-+	}
-+
-+	if (xa_tagged(xas->xa, tag))
-+		xa_tag_clear(xas->xa, tag);
-+}
-+EXPORT_SYMBOL_GPL(xas_clear_tag);
-+
- /**
-  * __xa_init() - Initialise an empty XArray with flags.
-  * @xa: XArray.
-@@ -149,6 +278,106 @@ void *xa_load(struct xarray *xa, unsigned long index)
- }
- EXPORT_SYMBOL(xa_load);
- 
-+/**
-+ * __xa_set_tag() - Set this tag on this entry while locked.
-+ * @xa: XArray.
-+ * @index: Index of entry.
-+ * @tag: Tag number.
-+ *
-+ * Attempting to set a tag on a NULL entry does not succeed.
-+ * This function expects the xa_lock to be held on entry.
-+ */
-+void __xa_set_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
-+{
-+	XA_STATE(xas, xa, index);
-+	void *entry = xas_load(&xas);
-+
-+	if (entry)
-+		xas_set_tag(&xas, tag);
-+}
-+EXPORT_SYMBOL_GPL(__xa_set_tag);
-+
-+/**
-+ * __xa_clear_tag() - Clear this tag on this entry while locked.
-+ * @xa: XArray.
-+ * @index: Index of entry.
-+ * @tag: Tag number.
-+ *
-+ * This function expects the xa_lock to be held on entry.
-+ */
-+void __xa_clear_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
-+{
-+	XA_STATE(xas, xa, index);
-+	void *entry = xas_load(&xas);
-+
-+	if (entry)
-+		xas_clear_tag(&xas, tag);
-+}
-+EXPORT_SYMBOL_GPL(__xa_clear_tag);
-+
-+/**
-+ * xa_get_tag() - Inquire whether this tag is set on this entry.
-+ * @xa: XArray.
-+ * @index: Index of entry.
-+ * @tag: Tag number.
-+ *
-+ * This function uses the RCU read lock, so the result may be out of date
-+ * by the time it returns.  If you need the result to be stable, use a lock.
-+ *
-+ * Return: True if the entry at @index has this tag set, false if it doesn't.
-+ */
-+bool xa_get_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
-+{
-+	XA_STATE(xas, xa, index);
-+	void *entry;
-+
-+	rcu_read_lock();
-+	entry = xas_start(&xas);
-+	while (xas_get_tag(&xas, tag)) {
-+		if (!xa_is_node(entry))
-+			goto found;
-+		entry = xas_descend(&xas, xa_to_node(entry));
-+	}
-+	rcu_read_unlock();
-+	return false;
-+ found:
-+	rcu_read_unlock();
-+	return true;
-+}
-+EXPORT_SYMBOL(xa_get_tag);
-+
-+/**
-+ * xa_set_tag() - Set this tag on this entry.
-+ * @xa: XArray.
-+ * @index: Index of entry.
-+ * @tag: Tag number.
-+ *
-+ * Attempting to set a tag on a NULL entry does not succeed.
-+ */
-+void xa_set_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
-+{
-+	xa_lock(xa);
-+	__xa_set_tag(xa, index, tag);
-+	xa_unlock(xa);
-+}
-+EXPORT_SYMBOL(xa_set_tag);
-+
-+/**
-+ * xa_clear_tag() - Clear this tag on this entry.
-+ * @xa: XArray.
-+ * @index: Index of entry.
-+ * @tag: Tag number.
-+ *
-+ * Clearing a tag always succeeds.
-+ */
-+void xa_clear_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
-+{
-+	xa_lock(xa);
-+	__xa_clear_tag(xa, index, tag);
-+	xa_unlock(xa);
-+}
-+EXPORT_SYMBOL(xa_clear_tag);
-+
- #ifdef XA_DEBUG
- void xa_dump_node(const struct xa_node *node)
+ void tree_verify_min_height(struct radix_tree_root *root, int maxindex)
  {
+ 	unsigned shift;
+-	struct radix_tree_node *node = root->rnode;
++	struct radix_tree_node *node = root->xa_head;
+ 	if (!radix_tree_is_internal_node(node)) {
+ 		assert(maxindex == 0);
+ 		return;
 -- 
 2.15.1
 
