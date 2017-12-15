@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 46/78] shmem: Convert shmem_wait_for_pins to
- XArray
-Date: Fri, 15 Dec 2017 14:04:18 -0800
-Message-ID: <20171215220450.7899-47-willy@infradead.org>
+Subject: [PATCH v5 54/78] fs: Convert writeback to XArray
+Date: Fri, 15 Dec 2017 14:04:26 -0800
+Message-ID: <20171215220450.7899-55-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=tm395P+07Nr+JL+jzuW6+85raWyo2+0xXriULUgqQxI=; b=cyV/K8pMGfsh0boqxGodXYfMNK
- mKmVz2G8IuPFrqHD9GhvrWZP1lsFnx4h6NReZW8rerVom6775PwY7CymMsVukvG3tZcJmv34mlELJ
- bxPMbiE3m7TCe5ia0bTXWc9mvjhjQcs7CrYu79vTikC0r2fCciSEyK0C50s5JSlznUvI=;
+ bh=ocf6wl8zYKtw5m0lmpIHnD421UfKbAxeuZFBoq38Wv8=; b=PzAYvINoV//FWkWwfFWI4aTWNJ
+ Z70BhZIsF4jYsyc/7XTizfc6AGQl3JFiMA1drNmui1jIX7JFxgROaZ9h56br1n0rfihSJlB+NXXxt
+ j8g/EmI44P4iMD3QlCfDlRppm3f3p78/y1Lx1og3RA5lkfzXu9DXTWDELM8b/sbbYVAg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=tm395P+07Nr+JL+jzuW6+85raWyo2+0xXriULUgqQxI=; b=RGGuanJ8dl6eNwESroaQwTmgZ2
- IWPpb91vlTo/HQqNV4W27iRqAxbvp00H8aouS3hxESxjOcZmRk7ngnsGMXxYbEiBq+HwnwGR5Chbs
- 2LGwHHqwXYpcuf2FWz55RTBiZbIzyJQ+UJHX/Coht8IcNRJ/ERGBF2IHuHke2IbjPAHQ=;
+ bh=ocf6wl8zYKtw5m0lmpIHnD421UfKbAxeuZFBoq38Wv8=; b=nSfH0SczXIsU2yt4X31v4pQNB3
+ BNPzeIUl52+OUNjncWlNT3gRzBUY6suVW84ctfBR2h/kYPmZJ3chJNkZnPr6r0p5Q2XHMKK45P/Wz
+ 0D4XMuNwOUqm5jT/sumJ5VTdxEWGELs7JgyrghN8OmhN/0b/IZ1j/AobB7c0y92Sb9HA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=tm395P+07Nr+JL+jzuW6+85raWyo2+0xXriULUgqQxI=; b=YreIEwZpTzh3tEArKjiSAvhWi
- SjKFoMtRlvKyd/MhJ7uZa3nINYqGIjqQ9brH8ju/QHslt164D+0NEyM7dhviq+oh7hZrJewWHqfJO
- +DxssnPugxTlvQkLGruY9WilHsXhmBohEv1qvCTCSn9u57EH7qxYFmeRV0zFC2wmD4Tqzfp4o2qmF
- gYslVsXGBK7khTWHFlavlPxCn/aw40zG8PnsEh6EQYf+sTF5CAxmixm1Y8etoY7IZXu0DtU03p600
- WIsPLMtvl+dpbwhdu1aWpGdbxaYp4E8JnNsg4NXwHUMMGCdKVh0U0BZZWxuzdHlz+aYyhRkuN2xyl
- VF6/JX6/w==;
+ bh=ocf6wl8zYKtw5m0lmpIHnD421UfKbAxeuZFBoq38Wv8=; b=aIwszvi9uPzx44st4Du5jlBCM
+ EZCjQGEDbgVJWIMUMo9PElqeSMoOGJv9dvRyoiiKKVwbLylsusGEE76b0AYduQ1T48zumcwMWthIJ
+ bOMaHtwyPYze+Edvnjk48j7NAt+BLJoDvX6M657c2zIDuNUw2H4aTxr+cgnqcS58l79S3CdurGAcn
+ PtMbPimNq3Ia2Bude1SVFH3uNBYAT384NJP77FE6vLcIu/a4ubQ4fbPu1qHosQsivkYd3pdqQfKSM
+ /ZB1YlkjpJl6lYi2rFv+wzZAsck4B+Pyo/NW16B0I1yerW8y54rpFfxaTCvure16ZDjNjj6mVScVP
+ pEVvXdZ3w==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,106 +53,62 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-As with shmem_tag_pins(), hold the lock around the entire loop instead
-of acquiring & dropping it for each entry we're going to untag.
+A couple of short loops.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 59 ++++++++++++++++++++++++-----------------------------------
- 1 file changed, 24 insertions(+), 35 deletions(-)
+ fs/fs-writeback.c | 25 +++++++++----------------
+ 1 file changed, 9 insertions(+), 16 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 2f41c7ceea18..e4a2eb1336be 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -2636,9 +2636,7 @@ static void shmem_tag_pins(struct address_space *mapping)
-  */
- static int shmem_wait_for_pins(struct address_space *mapping)
- {
+diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
+index e2c1ca667d9a..897a89489fe9 100644
+--- a/fs/fs-writeback.c
++++ b/fs/fs-writeback.c
+@@ -339,9 +339,9 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
+ 	struct address_space *mapping = inode->i_mapping;
+ 	struct bdi_writeback *old_wb = inode->i_wb;
+ 	struct bdi_writeback *new_wb = isw->new_wb;
 -	struct radix_tree_iter iter;
--	void **slot;
--	pgoff_t start;
 +	XA_STATE(xas, &mapping->pages, 0);
- 	struct page *page;
- 	int error, scan;
++	struct page *page;
+ 	bool switched = false;
+-	void **slot;
  
-@@ -2646,7 +2644,9 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 
- 	error = 0;
- 	for (scan = 0; scan <= LAST_SCAN; scan++) {
--		if (!radix_tree_tagged(&mapping->pages, SHMEM_TAG_PINNED))
-+		unsigned int tagged = 0;
-+
-+		if (!xas_tagged(&xas, SHMEM_TAG_PINNED))
- 			break;
- 
- 		if (!scan)
-@@ -2654,45 +2654,34 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 		else if (schedule_timeout_killable((HZ << scan) / 200))
- 			scan = LAST_SCAN;
- 
--		start = 0;
--		rcu_read_lock();
--		radix_tree_for_each_tagged(slot, &mapping->pages, &iter,
--					   start, SHMEM_TAG_PINNED) {
--
--			page = radix_tree_deref_slot(slot);
--			if (radix_tree_exception(page)) {
--				if (radix_tree_deref_retry(page)) {
--					slot = radix_tree_iter_retry(&iter);
--					continue;
--				}
--
--				page = NULL;
--			}
--
--			if (page &&
--			    page_count(page) - page_mapcount(page) != 1) {
--				if (scan < LAST_SCAN)
--					goto continue_resched;
--
-+		xas_set(&xas, 0);
-+		xas_lock_irq(&xas);
-+		xas_for_each_tag(&xas, page, ULONG_MAX, SHMEM_TAG_PINNED) {
-+			bool clear = true;
-+			if (xa_is_value(page))
-+				continue;
-+			if (page_count(page) - page_mapcount(page) != 1) {
- 				/*
- 				 * On the last scan, we clean up all those tags
- 				 * we inserted; but make a note that we still
- 				 * found pages pinned.
- 				 */
--				error = -EBUSY;
-+				if (scan == LAST_SCAN)
-+					error = -EBUSY;
-+				else
-+					clear = false;
- 			}
-+			if (clear)
-+				xas_clear_tag(&xas, SHMEM_TAG_PINNED);
-+			if (++tagged % XA_CHECK_SCHED)
-+				continue;
- 
--			xa_lock_irq(&mapping->pages);
--			radix_tree_tag_clear(&mapping->pages,
--					     iter.index, SHMEM_TAG_PINNED);
--			xa_unlock_irq(&mapping->pages);
--continue_resched:
--			if (need_resched()) {
--				slot = radix_tree_iter_resume(slot, &iter);
--				cond_resched_rcu();
--			}
-+			xas_pause(&xas);
-+			xas_unlock_irq(&xas);
-+			cond_resched();
-+			xas_lock_irq(&xas);
+ 	/*
+ 	 * By the time control reaches here, RCU grace period has passed
+@@ -375,25 +375,18 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
+ 	 * to possibly dirty pages while PAGECACHE_TAG_WRITEBACK points to
+ 	 * pages actually under writeback.
+ 	 */
+-	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, 0,
+-				   PAGECACHE_TAG_DIRTY) {
+-		struct page *page = radix_tree_deref_slot_protected(slot,
+-						&mapping->pages.xa_lock);
+-		if (likely(page) && PageDirty(page)) {
++	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_DIRTY) {
++		if (PageDirty(page)) {
+ 			dec_wb_stat(old_wb, WB_RECLAIMABLE);
+ 			inc_wb_stat(new_wb, WB_RECLAIMABLE);
  		}
--		rcu_read_unlock();
-+		xas_unlock_irq(&xas);
  	}
  
- 	return error;
+-	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, 0,
+-				   PAGECACHE_TAG_WRITEBACK) {
+-		struct page *page = radix_tree_deref_slot_protected(slot,
+-						&mapping->pages.xa_lock);
+-		if (likely(page)) {
+-			WARN_ON_ONCE(!PageWriteback(page));
+-			dec_wb_stat(old_wb, WB_WRITEBACK);
+-			inc_wb_stat(new_wb, WB_WRITEBACK);
+-		}
++	xas_set(&xas, 0);
++	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_WRITEBACK) {
++		WARN_ON_ONCE(!PageWriteback(page));
++		dec_wb_stat(old_wb, WB_WRITEBACK);
++		inc_wb_stat(new_wb, WB_WRITEBACK);
+ 	}
+ 
+ 	wb_get(new_wb);
 -- 
 2.15.1
 
