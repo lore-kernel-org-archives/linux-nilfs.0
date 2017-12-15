@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 31/78] mm: Convert page-writeback to XArray
-Date: Fri, 15 Dec 2017 14:04:03 -0800
-Message-ID: <20171215220450.7899-32-willy@infradead.org>
+Subject: [PATCH v5 76/78] md: Convert raid5-cache to XArray
+Date: Fri, 15 Dec 2017 14:04:48 -0800
+Message-ID: <20171215220450.7899-77-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=qPrgouP58kWLR8jrX70FWhTUzHZLolfaOU1e75K8fVc=; b=RlTb+F6iMfeoAOLqaWRtq2yPvO
- omLVbgGs6QIELOZGKhiusysov5ZFOGnWCKs9egWn+2RJhotzfTPTtHhOF5GLLG1pveB0T4CeQUHr5
- a/ZcJEl5wk2L5ERZEIlBhSCP5oIK96lqtecVETb+WnmAo/LVMaQEsftB3Fqa4dUlLcVE=;
+ bh=ucYQQuyaU+seUhVdZCjb+7+0+lr/dpjcuW6qV2Sduvk=; b=jHVwK8OLzL5WVacTg1PQQH5Aox
+ dXUeFzpFyKJqPnFobRdZxF7nPA/DMRpZsckEQjaG/XAPTKcSQCq9FInTYQKXZ90PJJX5Z+MBw67h+
+ Rt5m3WBN0BEBr/Z5Q7ptsAb6v6G96cNGClF78mX+6AeuTdwhxZswnTzwDZXiNFlm25/Q=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=qPrgouP58kWLR8jrX70FWhTUzHZLolfaOU1e75K8fVc=; b=T4Yr86x713IJ3yPzRbuNo7bO8A
- Zg9xRRrZebPrG4R+q9+Waj0swkrzwaAN0jx3M5UDG/JtksLcSz8BfichtbJIsYXqwuwUMN+8ak58A
- Mx7PopYeeJGFhOd4+w14FNiZqMYibyYfnrSMjNTTqSEfbFvg6DN65Q6aKv02AMZPpfYw=;
+ bh=ucYQQuyaU+seUhVdZCjb+7+0+lr/dpjcuW6qV2Sduvk=; b=IMHbf3xR+QmwoL3XECNv6n5Az1
+ N/0sZApQ6l29SWphPC6cSHCfy2iPyh9SJ264IbylhsQRhzgkNdIrZUHSLUV+57vr9BDXc9A4uGe46
+ YK4O7hw8DgirzlP67QQut02U/CgiCsfLxhejLLW8pDIrcP5z7hfjaVk81O4PnviApWw4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=qPrgouP58kWLR8jrX70FWhTUzHZLolfaOU1e75K8fVc=; b=K4V6F3dXYx8wyzXzEMOTsN67v
- 3WSZQco5GyAcxaZiv/DHuNteS+OeukCEq1VTjuXHLkk0gq3NgurusBJN3prSDse8kJm+EKeiEmcfg
- xB5sD4ZyFdTyog8FLeeEm4A4c70V9iVXjrVz7bTmHSUi9P3hQHJ48JRwyARo1bt0rj2uC/Xgs7xvY
- tmX4/LvgYZleuL3hYATrR0IIAuqFSlfSiyqGom568ZbQoNguP2wiV7N/mZPtK4ZMuJbP+Ac/BkQLx
- nPkUdhjfpVEgXArnYKA85GRa+UMAqCXZvD1q9sMXpFL7Jb34m5Fr652pnHr3CcpoDSjfliP2wV+7z
- Cst3cOtlA==;
+ bh=ucYQQuyaU+seUhVdZCjb+7+0+lr/dpjcuW6qV2Sduvk=; b=UGO9wnsQ0fe7ZQqK9IK/7AdBa
+ 8Pu/nMSfJXRe+aYptCtLS86fQIPIPW0lnIwDo5AiP/KhXt+SeTMfHIf1f1S8oTGVRyu9sXVTWwdIn
+ hF/cLd1DGEJMJh8EoZwQ2JzZmTP3HPvNI7TcQRIbpJ2rXxX6Vi1+SfEMV6nHKkonoWHnIVp4XGCYR
+ C8i7sQciYi14qS8/s5d0NqVU8bXLTE4zcVbrmQKbyOENA8t1t2oH7ldPKgPK5v6bHXCwqa9mKk5d5
+ vhO1XXuspycGWBnmsFcWgRqQ4PBBh/q4Saks0O/DnXEW5kYSq2ybCEhj9lz4t2wFLB93rQM32KMNp
+ aKHNXw8YA==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,187 +53,228 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Includes moving mapping_tagged() to fs.h as a static inline, and
-changing it to return bool.
+This is the first user of the radix tree I've converted which was
+storing numbers rather than pointers.  I'm fairly pleased with how
+well it came out.  There's less boiler-plate involved than there was
+with the radix tree, so that's a win.  It does use the advanced API,
+and I think that's a signal that there needs to be a separate API for
+using the XArray for only integers.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/fs.h  | 17 +++++++++------
- mm/page-writeback.c | 62 +++++++++++++++++++----------------------------------
- 2 files changed, 32 insertions(+), 47 deletions(-)
+ drivers/md/raid5-cache.c | 119 ++++++++++++++++-------------------------------
+ 1 file changed, 40 insertions(+), 79 deletions(-)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index e4345c13e237..c58bc3c619bf 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -470,15 +470,18 @@ struct block_device {
- 	struct mutex		bd_fsfreeze_mutex;
- } __randomize_layout;
+diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
+index 39f31f07ffe9..2c8ad0ed9b48 100644
+--- a/drivers/md/raid5-cache.c
++++ b/drivers/md/raid5-cache.c
+@@ -158,9 +158,8 @@ struct r5l_log {
+ 	/* to disable write back during in degraded mode */
+ 	struct work_struct disable_writeback_work;
  
-+/* XArray tags, for tagging dirty and writeback pages in the pagecache. */
-+#define PAGECACHE_TAG_DIRTY	XA_TAG_0
-+#define PAGECACHE_TAG_WRITEBACK	XA_TAG_1
-+#define PAGECACHE_TAG_TOWRITE	XA_TAG_2
-+
+-	/* to for chunk_aligned_read in writeback mode, details below */
+-	spinlock_t tree_lock;
+-	struct radix_tree_root big_stripe_tree;
++	/* for chunk_aligned_read in writeback mode, details below */
++	struct xarray big_stripe;
+ };
+ 
  /*
-- * Radix-tree tags, for tagging dirty and writeback pages within the pagecache
-- * radix trees
-+ * Returns true if any of the pages in the mapping are marked with the tag.
+@@ -170,9 +169,8 @@ struct r5l_log {
+  * chunk contains 64 4kB-page, so this chunk contain 64 stripes). For
+  * chunk_aligned_read, these stripes are grouped into one "big_stripe".
+  * For each big_stripe, we count how many stripes of this big_stripe
+- * are in the write back cache. These data are tracked in a radix tree
+- * (big_stripe_tree). We use radix_tree item pointer as the counter.
+- * r5c_tree_index() is used to calculate keys for the radix tree.
++ * are in the write back cache. This counter is tracked in an xarray
++ * (big_stripe). r5c_index() is used to calculate the index.
+  *
+  * chunk_aligned_read() calls r5c_big_stripe_cached() to look up
+  * big_stripe of each chunk in the tree. If this big_stripe is in the
+@@ -180,9 +178,9 @@ struct r5l_log {
+  * rcu_read_lock().
+  *
+  * It is necessary to remember whether a stripe is counted in
+- * big_stripe_tree. Instead of adding new flag, we reuses existing flags:
++ * big_stripe. Instead of adding new flag, we reuses existing flags:
+  * STRIPE_R5C_PARTIAL_STRIPE and STRIPE_R5C_FULL_STRIPE. If either of these
+- * two flags are set, the stripe is counted in big_stripe_tree. This
++ * two flags are set, the stripe is counted in big_stripe. This
+  * requires moving set_bit(STRIPE_R5C_PARTIAL_STRIPE) to
+  * r5c_try_caching_write(); and moving clear_bit of
+  * STRIPE_R5C_PARTIAL_STRIPE and STRIPE_R5C_FULL_STRIPE to
+@@ -190,23 +188,13 @@ struct r5l_log {
   */
--#define PAGECACHE_TAG_DIRTY	0
--#define PAGECACHE_TAG_WRITEBACK	1
--#define PAGECACHE_TAG_TOWRITE	2
--
--int mapping_tagged(struct address_space *mapping, int tag);
-+static inline bool mapping_tagged(struct address_space *mapping, xa_tag_t tag)
-+{
-+	return xa_tagged(&mapping->pages, tag);
-+}
  
- static inline void i_mmap_lock_write(struct address_space *mapping)
- {
-diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 588ce729d199..0407436a8305 100644
---- a/mm/page-writeback.c
-+++ b/mm/page-writeback.c
-@@ -2098,33 +2098,25 @@ void __init page_writeback_init(void)
-  * dirty pages in the file (thus it is important for this function to be quick
-  * so that it can tag pages faster than a dirtying process can create them).
-  */
--/*
-- * We tag pages in batches of WRITEBACK_TAG_BATCH to reduce xa_lock latency.
+ /*
+- * radix tree requests lowest 2 bits of data pointer to be 2b'00.
+- * So it is necessary to left shift the counter by 2 bits before using it
+- * as data pointer of the tree.
 - */
- void tag_pages_for_writeback(struct address_space *mapping,
- 			     pgoff_t start, pgoff_t end)
- {
--#define WRITEBACK_TAG_BATCH 4096
--	unsigned long tagged = 0;
--	struct radix_tree_iter iter;
--	void **slot;
-+	XA_STATE(xas, &mapping->pages, start);
-+	unsigned int tagged = 0;
-+	void *page;
- 
--	xa_lock_irq(&mapping->pages);
--	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, start,
--							PAGECACHE_TAG_DIRTY) {
--		if (iter.index > end)
--			break;
--		radix_tree_iter_tag_set(&mapping->pages, &iter,
--							PAGECACHE_TAG_TOWRITE);
--		tagged++;
--		if ((tagged % WRITEBACK_TAG_BATCH) != 0)
-+	xas_lock_irq(&xas);
-+	xas_for_each_tag(&xas, page, end, PAGECACHE_TAG_DIRTY) {
-+		xas_set_tag(&xas, PAGECACHE_TAG_TOWRITE);
-+		if (++tagged % XA_CHECK_SCHED)
- 			continue;
--		slot = radix_tree_iter_resume(slot, &iter);
--		xa_unlock_irq(&mapping->pages);
-+
-+		xas_pause(&xas);
-+		xas_unlock_irq(&xas);
- 		cond_resched();
--		xa_lock_irq(&mapping->pages);
-+		xas_lock_irq(&xas);
- 	}
--	xa_unlock_irq(&mapping->pages);
-+	xas_unlock_irq(&xas);
- }
- EXPORT_SYMBOL(tag_pages_for_writeback);
- 
-@@ -2164,7 +2156,7 @@ int write_cache_pages(struct address_space *mapping,
- 	pgoff_t done_index;
- 	int cycled;
- 	int range_whole = 0;
--	int tag;
-+	xa_tag_t tag;
- 
- 	pagevec_init(&pvec);
- 	if (wbc->range_cyclic) {
-@@ -2445,7 +2437,7 @@ void account_page_cleaned(struct page *page, struct address_space *mapping,
- 
- /*
-  * For address_spaces which do not use buffers.  Just tag the page as dirty in
-- * its radix tree.
-+ * the xarray.
+-#define R5C_RADIX_COUNT_SHIFT 2
+-
+-/*
+- * calculate key for big_stripe_tree
++ * calculate key for big_stripe
   *
-  * This is also used when a single buffer is being dirtied: we want to set the
-  * page dirty in that case, but not all the buffers.  This is a "bottom-up"
-@@ -2471,7 +2463,7 @@ int __set_page_dirty_nobuffers(struct page *page)
- 		BUG_ON(page_mapping(page) != mapping);
- 		WARN_ON_ONCE(!PagePrivate(page) && !PageUptodate(page));
- 		account_page_dirtied(page, mapping);
--		radix_tree_tag_set(&mapping->pages, page_index(page),
-+		__xa_set_tag(&mapping->pages, page_index(page),
- 				   PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irqrestore(&mapping->pages, flags);
- 		unlock_page_memcg(page);
-@@ -2634,13 +2626,13 @@ EXPORT_SYMBOL(__cancel_dirty_page);
-  * Returns true if the page was previously dirty.
-  *
-  * This is for preparing to put the page under writeout.  We leave the page
-- * tagged as dirty in the radix tree so that a concurrent write-for-sync
-+ * tagged as dirty in the xarray so that a concurrent write-for-sync
-  * can discover it via a PAGECACHE_TAG_DIRTY walk.  The ->writepage
-  * implementation will run either set_page_writeback() or set_page_dirty(),
-- * at which stage we bring the page's dirty flag and radix-tree dirty tag
-+ * at which stage we bring the page's dirty flag and xarray dirty tag
-  * back into sync.
-  *
-- * This incoherency between the page's dirty flag and radix-tree tag is
-+ * This incoherency between the page's dirty flag and xarray tag is
-  * unfortunate, but it only exists while the page is locked.
+  * sect: align_bi->bi_iter.bi_sector or sh->sector
   */
- int clear_page_dirty_for_io(struct page *page)
-@@ -2721,7 +2713,7 @@ int test_clear_page_writeback(struct page *page)
- 		xa_lock_irqsave(&mapping->pages, flags);
- 		ret = TestClearPageWriteback(page);
- 		if (ret) {
--			radix_tree_tag_clear(&mapping->pages, page_index(page),
-+			__xa_clear_tag(&mapping->pages, page_index(page),
- 						PAGECACHE_TAG_WRITEBACK);
- 			if (bdi_cap_account_writeback(bdi)) {
- 				struct bdi_writeback *wb = inode_to_wb(inode);
-@@ -2773,7 +2765,7 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- 			on_wblist = mapping_tagged(mapping,
- 						   PAGECACHE_TAG_WRITEBACK);
+-static inline sector_t r5c_tree_index(struct r5conf *conf,
+-				      sector_t sect)
++static inline sector_t r5c_index(struct r5conf *conf, sector_t sect)
+ {
+-	sector_t offset;
+-
+-	offset = sector_div(sect, conf->chunk_sectors);
++	sector_div(sect, conf->chunk_sectors);
+ 	return sect;
+ }
  
--			radix_tree_tag_set(&mapping->pages, page_index(page),
-+			__xa_set_tag(&mapping->pages, page_index(page),
- 						PAGECACHE_TAG_WRITEBACK);
- 			if (bdi_cap_account_writeback(bdi))
- 				inc_wb_stat(inode_to_wb(inode), WB_WRITEBACK);
-@@ -2787,10 +2779,10 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- 				sb_mark_inode_writeback(mapping->host);
+@@ -2646,10 +2634,6 @@ int r5c_try_caching_write(struct r5conf *conf,
+ 	int i;
+ 	struct r5dev *dev;
+ 	int to_cache = 0;
+-	void **pslot;
+-	sector_t tree_index;
+-	int ret;
+-	uintptr_t refcount;
+ 
+ 	BUG_ON(!r5c_is_writeback(log));
+ 
+@@ -2697,39 +2681,29 @@ int r5c_try_caching_write(struct r5conf *conf,
  		}
- 		if (!PageDirty(page))
--			radix_tree_tag_clear(&mapping->pages, page_index(page),
-+			__xa_clear_tag(&mapping->pages, page_index(page),
- 						PAGECACHE_TAG_DIRTY);
- 		if (!keep_write)
--			radix_tree_tag_clear(&mapping->pages, page_index(page),
-+			__xa_clear_tag(&mapping->pages, page_index(page),
- 						PAGECACHE_TAG_TOWRITE);
- 		xa_unlock_irqrestore(&mapping->pages, flags);
- 	} else {
-@@ -2806,16 +2798,6 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- }
- EXPORT_SYMBOL(__test_set_page_writeback);
+ 	}
  
--/*
-- * Return true if any of the pages in the mapping are marked with the
-- * passed tag.
-- */
--int mapping_tagged(struct address_space *mapping, int tag)
--{
--	return radix_tree_tagged(&mapping->pages, tag);
--}
--EXPORT_SYMBOL(mapping_tagged);
+-	/* if the stripe is not counted in big_stripe_tree, add it now */
++	/* if the stripe is not counted in big_stripe, add it now */
+ 	if (!test_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state) &&
+ 	    !test_bit(STRIPE_R5C_FULL_STRIPE, &sh->state)) {
+-		tree_index = r5c_tree_index(conf, sh->sector);
+-		spin_lock(&log->tree_lock);
+-		pslot = radix_tree_lookup_slot(&log->big_stripe_tree,
+-					       tree_index);
+-		if (pslot) {
+-			refcount = (uintptr_t)radix_tree_deref_slot_protected(
+-				pslot, &log->tree_lock) >>
+-				R5C_RADIX_COUNT_SHIFT;
+-			radix_tree_replace_slot(
+-				&log->big_stripe_tree, pslot,
+-				(void *)((refcount + 1) << R5C_RADIX_COUNT_SHIFT));
+-		} else {
+-			/*
+-			 * this radix_tree_insert can fail safely, so no
+-			 * need to call radix_tree_preload()
+-			 */
+-			ret = radix_tree_insert(
+-				&log->big_stripe_tree, tree_index,
+-				(void *)(1 << R5C_RADIX_COUNT_SHIFT));
+-			if (ret) {
+-				spin_unlock(&log->tree_lock);
+-				r5c_make_stripe_write_out(sh);
+-				return -EAGAIN;
+-			}
++		XA_STATE(xas, &log->big_stripe, r5c_index(conf, sh->sector));
++		void *entry;
++
++		/* Caller would rather handle failures than supply GFP flags */
++		xas_lock(&xas);
++		entry = xas_create(&xas);
++		if (entry)
++			entry = xa_mk_value(xa_to_value(entry) + 1);
++		else
++			entry = xa_mk_value(1);
++		xas_store(&xas, entry);
++		xas_unlock(&xas);
++		if (xas_error(&xas)) {
++			r5c_make_stripe_write_out(sh);
++			return -EAGAIN;
+ 		}
+-		spin_unlock(&log->tree_lock);
+ 
+ 		/*
+ 		 * set STRIPE_R5C_PARTIAL_STRIPE, this shows the stripe is
+-		 * counted in the radix tree
++		 * counted in big_stripe
+ 		 */
+ 		set_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state);
+ 		atomic_inc(&conf->r5c_cached_partial_stripes);
+@@ -2812,9 +2786,6 @@ void r5c_finish_stripe_write_out(struct r5conf *conf,
+ 	struct r5l_log *log = conf->log;
+ 	int i;
+ 	int do_wakeup = 0;
+-	sector_t tree_index;
+-	void **pslot;
+-	uintptr_t refcount;
+ 
+ 	if (!log || !test_bit(R5_InJournal, &sh->dev[sh->pd_idx].flags))
+ 		return;
+@@ -2852,24 +2823,21 @@ void r5c_finish_stripe_write_out(struct r5conf *conf,
+ 	atomic_dec(&log->stripe_in_journal_count);
+ 	r5c_update_log_state(log);
+ 
+-	/* stop counting this stripe in big_stripe_tree */
++	/* stop counting this stripe in big_stripe */
+ 	if (test_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state) ||
+ 	    test_bit(STRIPE_R5C_FULL_STRIPE, &sh->state)) {
+-		tree_index = r5c_tree_index(conf, sh->sector);
+-		spin_lock(&log->tree_lock);
+-		pslot = radix_tree_lookup_slot(&log->big_stripe_tree,
+-					       tree_index);
+-		BUG_ON(pslot == NULL);
+-		refcount = (uintptr_t)radix_tree_deref_slot_protected(
+-			pslot, &log->tree_lock) >>
+-			R5C_RADIX_COUNT_SHIFT;
+-		if (refcount == 1)
+-			radix_tree_delete(&log->big_stripe_tree, tree_index);
++		XA_STATE(xas, &log->big_stripe, r5c_index(conf, sh->sector));
++		void *entry;
++
++		xas_lock(&xas);
++		entry = xas_load(&xas);
++		BUG_ON(!entry);
++		if (entry == xa_mk_value(1))
++			entry = NULL;
+ 		else
+-			radix_tree_replace_slot(
+-				&log->big_stripe_tree, pslot,
+-				(void *)((refcount - 1) << R5C_RADIX_COUNT_SHIFT));
+-		spin_unlock(&log->tree_lock);
++			entry = xa_mk_value(xa_to_value(entry) - 1);
++		xas_store(&xas, entry);
++		xas_unlock(&xas);
+ 	}
+ 
+ 	if (test_and_clear_bit(STRIPE_R5C_PARTIAL_STRIPE, &sh->state)) {
+@@ -2949,16 +2917,10 @@ int r5c_cache_data(struct r5l_log *log, struct stripe_head *sh)
+ bool r5c_big_stripe_cached(struct r5conf *conf, sector_t sect)
+ {
+ 	struct r5l_log *log = conf->log;
+-	sector_t tree_index;
+-	void *slot;
+ 
+ 	if (!log)
+ 		return false;
 -
- /**
-  * wait_for_stable_page() - wait for writeback to finish, if necessary.
-  * @page:	The page to wait on.
+-	WARN_ON_ONCE(!rcu_read_lock_held());
+-	tree_index = r5c_tree_index(conf, sect);
+-	slot = radix_tree_lookup(&log->big_stripe_tree, tree_index);
+-	return slot != NULL;
++	return xa_load(&log->big_stripe, r5c_index(conf, sect)) != NULL;
+ }
+ 
+ static int r5l_load_log(struct r5l_log *log)
+@@ -3112,8 +3074,7 @@ int r5l_init_log(struct r5conf *conf, struct md_rdev *rdev)
+ 	if (!log->meta_pool)
+ 		goto out_mempool;
+ 
+-	spin_lock_init(&log->tree_lock);
+-	INIT_RADIX_TREE(&log->big_stripe_tree, GFP_NOWAIT | __GFP_NOWARN);
++	xa_init(&log->big_stripe);
+ 
+ 	log->reclaim_thread = md_register_thread(r5l_reclaim_thread,
+ 						 log->rdev->mddev, "reclaim");
 -- 
 2.15.1
 
