@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 55/78] nilfs2: Convert to XArray
-Date: Fri, 15 Dec 2017 14:04:27 -0800
-Message-ID: <20171215220450.7899-56-willy@infradead.org>
+Subject: [PATCH v5 30/78] page cache: Remove stray radix comment
+Date: Fri, 15 Dec 2017 14:04:02 -0800
+Message-ID: <20171215220450.7899-31-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=F/Hnj8kvYaykj3i37anX56d7f76QWBnAUFP09kA4Ex8=; b=hBVdwIOIFv2tP6E48qD8YoeE0k
- kW3hpj15ZVE+2dzfxfqDw7M2Ix/i970jXUbEAXZIObeT3ohDqUovApk+wiOowjpAuElEzWkq59OT7
- UG5KZjI5zUze211ICeRj5ORyDICO3IXySep+RkD8bLxS3mb73tjiIUa+OC0nB6ZKTMao=;
+ bh=7IyUF0nPi50kSJ4UlNKqtDM0Q5He4hT1vQEM8VhyBRE=; b=WDInYnmQeNJS/25HFlcljBMiRi
+ t16XOSNBD/RMmvoulrf/jzgpc2RU9Do2XOqPj4V5gS6DXlYXO6JaWrICHkKLIHJvB93FeckM+UNbf
+ nPebQK09fPv5es0A+lTxJU7YpvgKq5jsdD1g7o2XSrFOCBnjcshPfXhwe5Bm8NnVyIqE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=F/Hnj8kvYaykj3i37anX56d7f76QWBnAUFP09kA4Ex8=; b=F/53kvMY2nqD4djM3s2kYjKEB+
- hO4Bew/cLCb7OhhlyGHnjXYmXVT+QejVSXnr9754CaGlBV/+AA9fkkkwpNzQuZhGfzPdLdcgihTxN
- KjLOU9M1Sq75XnB/f0VZbHmYSZQ0hg0M8j/+4twA961d/iKFVsk5lS82EQsrnIFI7m9Y=;
+ bh=7IyUF0nPi50kSJ4UlNKqtDM0Q5He4hT1vQEM8VhyBRE=; b=SVh4WxtGGhTnmPUoR4xNssg26c
+ qdZB2DEiEhAs2Ef8vQGIpRwMX4A7ItAk2RjrHDI3r9Xagp5fWICTHltTuiw3F/NHN+wQpnjAjzbv2
+ X3bMCEuJUQHBgtP/uCgTxg6h0MNEXsAW6VCiaERY1Vejp8/7y8TYusNDl9oTCDFxcLsg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=F/Hnj8kvYaykj3i37anX56d7f76QWBnAUFP09kA4Ex8=; b=a2Aij33CJrhfNJoEfEd2HqM2J
- T8qmIxAeiEsRwVYGrqjFJM8tQU/9+LtXkHGuR0rD5Hjnz7WklwjB+5HfI40LVA4JceFDkn4e1eP8g
- 6V2huL2TwP9QAJXxKa2vtEjtBSxF8MaqwntNl9gKFcWwTleYPhkxD28MPNqwmLfrTpKM11/AIZtq2
- K/Fh8HKlDe+FNdwqSeX7cLf7WaPzfV4n2lzTmRJn5C7XKpcw00QLZ2UqN1H/b/gnjfk4CQeMYmN1y
- WvU95KvE4pS0M79xS8sMgJ7qypdcjpWvl9TRl6erMM85HYiRuCUcoj9x39Xw5pVu2wl92iWkANJcT
- Pb9X2sLYA==;
+ bh=7IyUF0nPi50kSJ4UlNKqtDM0Q5He4hT1vQEM8VhyBRE=; b=CaCaExazoZUvdbiUDmLpg/eyO
+ hcVCG8bA1w/da2UYbMPsUBg7hg/ujXLjhB8X7N6GwVamib4tzRka+FF65W8V0gx2kB+lJKdCauB7y
+ tepX98huW2mnKV6sm342em0xn+u3yUEuLxrYi8WHvRRSAyrJtUhtycC3aJ0XLAG/sdTXxb0lWpd60
+ J8wDIvlo7TbmjyIkUKv8F8nTaGSwuzOhdvAbVPLPG/ROoXZtlawJndt246+HkTylfFqbyaqizcysg
+ 2HGr3Ci3bqljXItio31xk3NsywwntZyuk5DJKWIiyDOGlk9PN+fbLMqfif2aPvq2OZ03w9N55saSe
+ JE4y3El4A==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,207 +53,24 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-I'm not 100% convinced that the rewrite of nilfs_copy_back_pages is
-correct, but it will at least have different bugs from the current
-version.
-
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/nilfs2/btnode.c | 37 +++++++++++-----------------
- fs/nilfs2/page.c   | 72 +++++++++++++++++++++++++++++++-----------------------
- 2 files changed, 56 insertions(+), 53 deletions(-)
+ mm/filemap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 9e2a00207436..b5997e8c5441 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -177,42 +177,36 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
- 	ctxt->newbh = NULL;
- 
- 	if (inode->i_blkbits == PAGE_SHIFT) {
--		lock_page(obh->b_page);
--		/*
--		 * We cannot call radix_tree_preload for the kernels older
--		 * than 2.6.23, because it is not exported for modules.
--		 */
-+		void *entry;
-+		struct page *opage = obh->b_page;
-+		lock_page(opage);
- retry:
--		err = radix_tree_preload(GFP_NOFS & ~__GFP_HIGHMEM);
--		if (err)
--			goto failed_unlock;
- 		/* BUG_ON(oldkey != obh->b_page->index); */
--		if (unlikely(oldkey != obh->b_page->index))
--			NILFS_PAGE_BUG(obh->b_page,
-+		if (unlikely(oldkey != opage->index))
-+			NILFS_PAGE_BUG(opage,
- 				       "invalid oldkey %lld (newkey=%lld)",
- 				       (unsigned long long)oldkey,
- 				       (unsigned long long)newkey);
- 
--		xa_lock_irq(&btnc->pages);
--		err = radix_tree_insert(&btnc->pages, newkey, obh->b_page);
--		xa_unlock_irq(&btnc->pages);
-+		entry = xa_cmpxchg(&btnc->pages, newkey, NULL, opage, GFP_NOFS);
- 		/*
- 		 * Note: page->index will not change to newkey until
- 		 * nilfs_btnode_commit_change_key() will be called.
- 		 * To protect the page in intermediate state, the page lock
- 		 * is held.
- 		 */
--		radix_tree_preload_end();
--		if (!err)
-+		if (!entry)
- 			return 0;
--		else if (err != -EEXIST)
-+		if (xa_is_err(entry)) {
-+			err = xa_err(entry);
- 			goto failed_unlock;
-+		}
- 
- 		err = invalidate_inode_pages2_range(btnc, newkey, newkey);
- 		if (!err)
- 			goto retry;
- 		/* fallback to copy mode */
--		unlock_page(obh->b_page);
-+		unlock_page(opage);
- 	}
- 
- 	nbh = nilfs_btnode_create_block(btnc, newkey);
-@@ -252,9 +246,8 @@ void nilfs_btnode_commit_change_key(struct address_space *btnc,
- 		mark_buffer_dirty(obh);
- 
- 		xa_lock_irq(&btnc->pages);
--		radix_tree_delete(&btnc->pages, oldkey);
--		radix_tree_tag_set(&btnc->pages, newkey,
--				   PAGECACHE_TAG_DIRTY);
-+		__xa_erase(&btnc->pages, oldkey);
-+		__xa_set_tag(&btnc->pages, newkey, PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irq(&btnc->pages);
- 
- 		opage->index = obh->b_blocknr = newkey;
-@@ -283,9 +276,7 @@ void nilfs_btnode_abort_change_key(struct address_space *btnc,
- 		return;
- 
- 	if (nbh == NULL) {	/* blocksize == pagesize */
--		xa_lock_irq(&btnc->pages);
--		radix_tree_delete(&btnc->pages, newkey);
--		xa_unlock_irq(&btnc->pages);
-+		xa_erase(&btnc->pages, newkey);
- 		unlock_page(ctxt->bh->b_page);
- 	} else
- 		brelse(nbh);
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 1c6703efde9e..31d20f624971 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -304,10 +304,10 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
- void nilfs_copy_back_pages(struct address_space *dmap,
- 			   struct address_space *smap)
- {
-+	XA_STATE(xas, &dmap->pages, 0);
- 	struct pagevec pvec;
- 	unsigned int i, n;
- 	pgoff_t index = 0;
--	int err;
- 
- 	pagevec_init(&pvec);
- repeat:
-@@ -317,43 +317,56 @@ void nilfs_copy_back_pages(struct address_space *dmap,
- 
- 	for (i = 0; i < pagevec_count(&pvec); i++) {
- 		struct page *page = pvec.pages[i], *dpage;
--		pgoff_t offset = page->index;
-+		xas_set(&xas, page->index);
- 
- 		lock_page(page);
--		dpage = find_lock_page(dmap, offset);
-+		do {
-+			xas_lock_irq(&xas);
-+			dpage = xas_create(&xas);
-+			if (!xas_error(&xas))
-+				break;
-+			xas_unlock_irq(&xas);
-+			if (!xas_nomem(&xas, GFP_NOFS)) {
-+				unlock_page(page);
-+				/*
-+				 * Callers have a touching faith that this
-+				 * function cannot fail.  Just leak the page.
-+				 * Other pages may be salvagable if the
-+				 * xarray doesn't need to allocate memory
-+				 * to store them.
-+				 */
-+				WARN_ON(1);
-+				page->mapping = NULL;
-+				put_page(page);
-+				goto shadow_remove;
-+			}
-+		} while (1);
-+
- 		if (dpage) {
--			/* override existing page on the destination cache */
-+			get_page(dpage);
-+			xas_unlock_irq(&xas);
-+			lock_page(dpage);
-+			/* override existing page in the destination cache */
- 			WARN_ON(PageDirty(dpage));
- 			nilfs_copy_page(dpage, page, 0);
- 			unlock_page(dpage);
- 			put_page(dpage);
- 		} else {
--			struct page *page2;
--
--			/* move the page to the destination cache */
--			xa_lock_irq(&smap->pages);
--			page2 = radix_tree_delete(&smap->pages, offset);
--			WARN_ON(page2 != page);
--
--			smap->nrpages--;
--			xa_unlock_irq(&smap->pages);
--
--			xa_lock_irq(&dmap->pages);
--			err = radix_tree_insert(&dmap->pages, offset, page);
--			if (unlikely(err < 0)) {
--				WARN_ON(err == -EEXIST);
--				page->mapping = NULL;
--				put_page(page); /* for cache */
--			} else {
--				page->mapping = dmap;
--				dmap->nrpages++;
--				if (PageDirty(page))
--					radix_tree_tag_set(&dmap->pages,
--							   offset,
--							   PAGECACHE_TAG_DIRTY);
--			}
-+			xas_store(&xas, page);
-+			page->mapping = dmap;
-+			dmap->nrpages++;
-+			if (PageDirty(page))
-+				xas_set_tag(&xas, PAGECACHE_TAG_DIRTY);
- 			xa_unlock_irq(&dmap->pages);
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 92ddee25f19b..75d1b32080a4 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2603,7 +2603,7 @@ static struct page *do_read_cache_page(struct address_space *mapping,
+ 			put_page(page);
+ 			if (err == -EEXIST)
+ 				goto repeat;
+-			/* Presumably ENOMEM for radix tree node */
++			/* Presumably ENOMEM for xarray node */
+ 			return ERR_PTR(err);
  		}
-+
-+shadow_remove:
-+		/* remove the page from the shadow cache */
-+		xa_lock_irq(&smap->pages);
-+		WARN_ON(__xa_erase(&smap->pages, xas.xa_index) != page);
-+		smap->nrpages--;
-+		xa_unlock_irq(&smap->pages);
-+
- 		unlock_page(page);
- 	}
- 	pagevec_release(&pvec);
-@@ -476,8 +489,7 @@ int __nilfs_clear_page_dirty(struct page *page)
- 	if (mapping) {
- 		xa_lock_irq(&mapping->pages);
- 		if (test_bit(PG_dirty, &page->flags)) {
--			radix_tree_tag_clear(&mapping->pages,
--					     page_index(page),
-+			__xa_clear_tag(&mapping->pages, page_index(page),
- 					     PAGECACHE_TAG_DIRTY);
- 			xa_unlock_irq(&mapping->pages);
- 			return clear_page_dirty_for_io(page);
+ 
 -- 
 2.15.1
 
