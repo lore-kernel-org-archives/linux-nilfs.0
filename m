@@ -1,117 +1,478 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 19/78] xarray: Add xas_create_range
-Date: Fri, 15 Dec 2017 14:03:51 -0800
-Message-ID: <20171215220450.7899-20-willy@infradead.org>
+Subject: [PATCH v5 18/78] xarray: Add xas_next and xas_prev
+Date: Fri, 15 Dec 2017 14:03:50 -0800
+Message-ID: <20171215220450.7899-19-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Mime-Version: 1.0
+Return-path: <owner-linux-mm@kvack.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+	Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	 bh=UsuFxRxWB3t7oup23G+BSg7747bppSFM53jBmIqXe0M=; b=J4zfobqgrHCyfcO7Q1SZQBFkn
+	9x2a7pefNN0MMCFuWTAoEndtlmfaU9rW7qlgH9GiINxGckIUqsLPZaOaVeFLauVPX0K4J+hME6UEZ
+	IxBVX5Aqr9YMmZ9vT5kM8RlWUKd1wF2aRnemvEbPEHfGq2iLDFopR6qCIbIzZBARmn3kJsRojBStd
+	93Fal5F4R86LdNgSU2a6WKEZj1LLJya72k1IfUh2CctzD94Nx5ohvJ/P3obU7l5QFrpNBN5pST/km
+	ant6I87BI43Ij8zIt9vTCv14IWi00xyJvpxbsVmqsg64QLQxPsgi5EBMFl3uSDwwIEKeT3z0Q+uRM
+	ZYHmy3Vzw==;
+In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
+Sender: owner-linux-mm@kvack.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=VsNQh1fdv8Focxwh2MU+9hBSKnRZnr4VFPK+a5By27U=; b=LUltApZq/5vislDcUJmJCRC8jj
- OIBFL70hglt7dZMFxwJarlCM8QUJ43RO+77GeMKMFmH+aIgMHlEWsuzEsCP34ph1DhoEoY+5V/vvg
- K+M9Ko4tjCYAO/+aimev+uJQ0kSuN96zBZu3aqtMcHCi5BLo/opYhErly7feicLbJk+o=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
- :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=VsNQh1fdv8Focxwh2MU+9hBSKnRZnr4VFPK+a5By27U=; b=B2bERL4yvOwQGiuJCStfBj/+It
- 3JVFGT0QFs1N9uDQy4DoRchLpTfUZObLjcPLwDVLV3oO404SxuPV1sisR1JYdyjE5Pr0BRwEaYxek
- fAeNIgs0N2omol44y6x9OfCexWnZmzRlDsfQnoOvm2tIsCOBaU6hJxe4iZRJgA6m+8ZY=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=VsNQh1fdv8Focxwh2MU+9hBSKnRZnr4VFPK+a5By27U=; b=G6ld/bF56TIvV1hoh+dXoY6ZO
- nUG3TdyV6Xs/LyPJt2avcmOacbqOZtbkHhCzsnd4QJRblb3RWYVkKyqz/2PouZLht9e5wI+v35hNi
- PkgpsWZeY4XQvsYFlhS3aLfjViv0BvB2oQRNF6Ji2yWPSCuHAvkQRk/hpijSIfWRHR1Z9/BAhpEfa
- QYh/DJJvV7/LQ+6b30CYINFzIVQvhXsGf7n8DE73rWQLDHdrLgU6+uKUfEbYvAyxb7Jj44Ffe6+WB
- d+hsek4zu+oR4w4Ijj/gztvpob3epS7OCRw0uA5ifV0IehDZldQ/FZsVCEEJOJW3sxhYK+Dc/oyci
- Bt9+BZO1A==;
-In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-kernel@vger.kernel.org
-Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-raid@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-usb@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Rehas Sachdeva <aquannie@gmail.com>, Shaohua Li <shli@kernel.org>, linux-btrfs@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This hopefully temporary function is useful for users who have not yet
-been converted to multi-index entries.
+These two functions move the xas index by one position, and adjust the
+rest of the iterator state to match it.  This is more efficient than
+calling xas_set() as it keeps the iterator at the leaves of the tree
+instead of walking the iterator from the root each time.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h |  2 ++
- lib/xarray.c           | 22 ++++++++++++++++++++++
- 2 files changed, 24 insertions(+)
+ include/linux/xarray.h                 |  71 ++++++++++-
+ lib/xarray.c                           |  74 ++++++++++++
+ tools/testing/radix-tree/xarray-test.c | 213 +++++++++++++++++++++++++++++++++
+ 3 files changed, 356 insertions(+), 2 deletions(-)
 
 diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 2d889208b68d..bcc321fb280f 100644
+index fea81383a301..2d889208b68d 100644
 --- a/include/linux/xarray.h
 +++ b/include/linux/xarray.h
-@@ -685,6 +685,8 @@ void xas_init_tags(const struct xa_state *);
- bool xas_nomem(struct xa_state *, gfp_t);
- void xas_pause(struct xa_state *);
+@@ -640,6 +640,12 @@ static inline bool xas_not_node(struct xa_node *node)
+ 	return ((unsigned long)node & 3) || !node;
+ }
  
-+void xas_create_range(struct xa_state *, unsigned long max);
++/* True if the node represents RESTART or an error */
++static inline bool xas_frozen(struct xa_node *node)
++{
++	return (unsigned long)node & 2;
++}
++
+ /* True if the node represents head-of-tree, RESTART or BOUNDS */
+ static inline bool xas_top(struct xa_node *node)
+ {
+@@ -758,8 +764,8 @@ static inline bool xa_iter_skip(const void *entry)
+ }
+ 
+ /*
+- * node->shift is always 0 for the inline iterators unless we're processing
+- * a multi-index entry.
++ * node->shift is always 0 for next_entry and next_tag unless we're processing
++ * a multi-index entry.  It can be non-0 for next/prev, so it's not used there.
+  */
+ #ifdef CONFIG_RADIX_TREE_MULTIORDER
+ #define xa_node_shift(node)	node->shift
+@@ -767,6 +773,67 @@ static inline bool xa_iter_skip(const void *entry)
+ #define xa_node_shift(node)	0
+ #endif
+ 
++void *__xas_next(struct xa_state *);
++void *__xas_prev(struct xa_state *);
++
++/**
++ * xas_prev() - Move iterator to previous index.
++ * @xas: XArray operation state.
++ *
++ * If the @xas was in an error state, it will remain in an error state
++ * and this function will return %NULL.  If the @xas has never been walked,
++ * it will have the effect of calling xas_load().  Otherwise one will be
++ * subtracted from the index and the state will be walked to the correct
++ * location in the array for the next operation.
++ *
++ * If the iterator was referencing index 0, this function wraps
++ * around to %ULONG_MAX.
++ *
++ * Return: The entry at the new index.  This may be %NULL or an internal
++ * entry, although it should never be a node entry.
++ */
++static inline void *xas_prev(struct xa_state *xas)
++{
++	struct xa_node *node = xas->xa_node;
++
++	if (unlikely(xas_not_node(node) || node->shift ||
++				xas->xa_offset == 0))
++		return __xas_prev(xas);
++
++	xas->xa_index--;
++	xas->xa_offset--;
++	return xa_entry(xas->xa, node, xas->xa_offset);
++}
++
++/**
++ * xas_next() - Move state to next index.
++ * @xas: XArray operation state.
++ *
++ * If the @xas was in an error state, it will remain in an error state
++ * and this function will return %NULL.  If the @xas has never been walked,
++ * it will have the effect of calling xas_load().  Otherwise one will be
++ * added to the index and the state will be walked to the correct
++ * location in the array for the next operation.
++ *
++ * If the iterator was referencing index %ULONG_MAX, this function wraps
++ * around to 0.
++ *
++ * Return: The entry at the new index.  This may be %NULL or an internal
++ * entry, although it should never be a node entry.
++ */
++static inline void *xas_next(struct xa_state *xas)
++{
++	struct xa_node *node = xas->xa_node;
++
++	if (unlikely(xas_not_node(node) || node->shift ||
++				xas->xa_offset == XA_CHUNK_MASK))
++		return __xas_next(xas);
++
++	xas->xa_index++;
++	xas->xa_offset++;
++	return xa_entry(xas->xa, node, xas->xa_offset);
++}
 +
  /**
-  * xas_reload() - Refetch an entry from the xarray.
+  * xas_next_entry() - Advance iterator to next present entry.
   * @xas: XArray operation state.
 diff --git a/lib/xarray.c b/lib/xarray.c
-index a4975aeedf6b..e3be7c0c2e35 100644
+index a51fa1e1f74f..a4975aeedf6b 100644
 --- a/lib/xarray.c
 +++ b/lib/xarray.c
-@@ -605,6 +605,28 @@ void *xas_create(struct xa_state *xas)
+@@ -838,6 +838,80 @@ void xas_pause(struct xa_state *xas)
  }
- EXPORT_SYMBOL_GPL(xas_create);
+ EXPORT_SYMBOL_GPL(xas_pause);
  
-+/**
-+ * xas_create_range() - Ensure that stores to this range will succeed
++/*
++ * __xas_prev() - Find the previous entry in the XArray.
 + * @xas: XArray operation state.
-+ * @max: The highest index to create a slot for.
 + *
-+ * Creates all of the slots in the range between the current position of
-+ * @xas and @max.  This is for the benefit of users who have not yet been
-+ * converted to multi-index entries.
-+ *
-+ * The implementation is naive.
++ * Helper function for xas_prev() which handles all the complex cases
++ * out of line.
 + */
-+void xas_create_range(struct xa_state *xas, unsigned long max)
++void *__xas_prev(struct xa_state *xas)
 +{
-+	XA_STATE(tmp, xas->xa, xas->xa_index);
++	void *entry;
++
++	if (!xas_frozen(xas->xa_node))
++		xas->xa_index--;
++	if (xas_not_node(xas->xa_node))
++		return xas_load(xas);
++
++	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
++		xas->xa_offset--;
++
++	while (xas->xa_offset == 255) {
++		xas->xa_offset = xas->xa_node->offset - 1;
++		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
++		if (!xas->xa_node)
++			return set_bounds(xas);
++	}
++
++	for (;;) {
++		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
++		if (!xa_is_node(entry))
++			return entry;
++
++		xas->xa_node = xa_to_node(entry);
++		xas->xa_offset = get_offset(xas->xa_index, xas->xa_node);
++	}
++}
++EXPORT_SYMBOL_GPL(__xas_prev);
++
++/*
++ * __xas_next() - Find the next entry in the XArray.
++ * @xas: XArray operation state.
++ *
++ * Helper function for xas_next() which handles all the complex cases
++ * out of line.
++ */
++void *__xas_next(struct xa_state *xas)
++{
++	void *entry;
++
++	if (!xas_frozen(xas->xa_node))
++		xas->xa_index++;
++	if (xas_not_node(xas->xa_node))
++		return xas_load(xas);
++
++	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
++		xas->xa_offset++;
++
++	while (xas->xa_offset == XA_CHUNK_SIZE) {
++		xas->xa_offset = xas->xa_node->offset + 1;
++		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
++		if (!xas->xa_node)
++			return set_bounds(xas);
++	}
++
++	for (;;) {
++		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
++		if (!xa_is_node(entry))
++			return entry;
++
++		xas->xa_node = xa_to_node(entry);
++		xas->xa_offset = get_offset(xas->xa_index, xas->xa_node);
++	}
++}
++EXPORT_SYMBOL_GPL(__xas_next);
++
+ /**
+  * xas_find() - Find the next present entry in the XArray.
+  * @xas: XArray operation state.
+diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
+index 10de5d3d977a..43111786ebdd 100644
+--- a/tools/testing/radix-tree/xarray-test.c
++++ b/tools/testing/radix-tree/xarray-test.c
+@@ -92,6 +92,104 @@ void check_xas_error(struct xarray *xa)
+ 	assert(xas.xa_node == XAS_BOUNDS);
+ }
+ 
++void check_xas_pause(struct xarray *xa)
++{
++	XA_STATE(xas, xa, 0);
++	void *entry;
++	unsigned int seen;
++
++	xa_store(xa, 0, xa_mk_value(0), GFP_KERNEL);
++	xa_set_tag(xa, 0, XA_TAG_0);
++
++	seen = 0;
++	rcu_read_lock();
++	xas_for_each_tag(&xas, entry, ULONG_MAX, XA_TAG_0) {
++		if (!seen++) {
++			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++			xa_set_tag(xa, 1, XA_TAG_0);
++		}
++	}
++	rcu_read_unlock();
++	/* We don't see an entry that was added after we started */
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	xas_for_each_tag(&xas, entry, ULONG_MAX, XA_TAG_0) {
++		if (!seen++)
++			xa_erase(xa, 1);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		if (!seen++)
++			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		if (!seen++)
++			xa_erase(xa, 1);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
++		if (!seen++)
++			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++	}
++	rcu_read_unlock();
++	assert(seen == 2);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
++		if (!seen++)
++			xa_erase(xa, 1);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++	seen = 0;
++	xas_set(&xas, 0);
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		if (!seen++)
++			xas_pause(&xas);
++	}
++	assert(seen == 2);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
++		if (!seen++)
++			xas_pause(&xas);
++	}
++	assert(seen == 2);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	xa_set_tag(xa, 1, XA_TAG_0);
++	xas_for_each_tag(&xas, entry, ULONG_MAX, XA_TAG_0) {
++		if (!seen++)
++			xas_pause(&xas);
++	}
++	assert(seen == 2);
++}
++
+ void check_xas_retry(struct xarray *xa)
+ {
+ 	XA_STATE(xas, xa, 0);
+@@ -249,9 +347,108 @@ void check_xas_delete(struct xarray *xa)
+ 	}
+ }
+ 
++void check_move_small(struct xarray *xa, unsigned long idx)
++{
++	XA_STATE(xas, xa, 0);
++	unsigned long i;
++
++	xa_store(xa, 0, xa_mk_value(0), GFP_KERNEL);
++	xa_store(xa, idx, xa_mk_value(idx), GFP_KERNEL);
++
++	for (i = 0; i < idx * 4; i++) {
++		void *entry = xas_next(&xas);
++		if (i <= idx)
++			assert(xas.xa_node != XAS_RESTART);
++		assert(xas.xa_index == i);
++		if (i == 0 || i == idx)
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++	}
++	xas_next(&xas);
++	assert(xas.xa_index == i);
 +
 +	do {
-+		xas_create(&tmp);
-+		xas_set(&tmp, tmp.xa_index + XA_CHUNK_SIZE);
-+	} while (tmp.xa_index < max);
-+}
-+EXPORT_SYMBOL_GPL(xas_create_range);
++		void *entry = xas_prev(&xas);
++		i--;
++		if (i <= idx)
++			assert(xas.xa_node != XAS_RESTART);
++		assert(xas.xa_index == i);
++		if (i == 0 || i == idx)
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++	} while (i > 0);
 +
- static void store_siblings(struct xa_state *xas,
- 				void *entry, int *countp, int *valuesp)
++	xas_set(&xas, ULONG_MAX);
++	assert(xas_next(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++	assert(xas_next(&xas) == xa_mk_value(0));
++	assert(xas.xa_index == 0);
++	assert(xas_prev(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++}
++
++void check_move(struct xarray *xa)
++{
++	XA_STATE(xas, xa, (1 << 16) - 1);
++	unsigned long i;
++
++	for (i = 0; i < (1 << 16); i++) {
++		xa_store(xa, i, xa_mk_value(i), GFP_KERNEL);
++	}
++
++	do {
++		void *entry = xas_prev(&xas);
++		i--;
++		assert(entry == xa_mk_value(i));
++		assert(i == xas.xa_index);
++	} while (i != 0);
++
++	assert(xas_prev(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++
++	do {
++		void *entry = xas_next(&xas);
++		assert(entry == xa_mk_value(i));
++		assert(i == xas.xa_index);
++		i++;
++	} while (i < (1 << 16));
++
++	for (i = (1 << 8); i < (1 << 15); i++) {
++		xa_erase(xa, i);
++	}
++
++	i = xas.xa_index;
++
++	do {
++		void *entry = xas_prev(&xas);
++		i--;
++		if ((i < (1 << 8)) || (i >= (1 << 15)))
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++		assert(i == xas.xa_index);
++	} while (i != 0);
++
++	assert(xas_prev(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++
++	do {
++		void *entry = xas_next(&xas);
++		if ((i < (1 << 8)) || (i >= (1 << 15)))
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++		assert(i == xas.xa_index);
++		i++;
++	} while (i < (1 << 16));
++}
++
+ void xarray_checks(void)
  {
+ 	DEFINE_XARRAY(array);
++	unsigned long i;
+ 
+ 	check_xa_err(&array);
+ 	item_kill_tree(&array);
+@@ -265,6 +462,9 @@ void xarray_checks(void)
+ 	check_xas_retry(&array);
+ 	item_kill_tree(&array);
+ 
++	check_xas_pause(&array);
++	item_kill_tree(&array);
++
+ 	check_xa_load(&array);
+ 	item_kill_tree(&array);
+ 
+@@ -279,6 +479,19 @@ void xarray_checks(void)
+ 
+ 	check_xas_delete(&array);
+ 	item_kill_tree(&array);
++
++	for (i = 0; i < 16; i++) {
++		check_move_small(&array, 1UL << i);
++		item_kill_tree(&array);
++	}
++
++	for (i = 2; i < 16; i++) {
++		check_move_small(&array, (1UL << i) - 1);
++		item_kill_tree(&array);
++	}
++
++	check_move(&array);
++	item_kill_tree(&array);
+ }
+ 
+ int __weak main(void)
 -- 
 2.15.1
 
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
