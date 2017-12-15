@@ -1,165 +1,189 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 56/78] f2fs: Convert to XArray
-Date: Fri, 15 Dec 2017 14:04:28 -0800
-Message-ID: <20171215220450.7899-57-willy@infradead.org>
+Subject: [PATCH v5 65/78] dax: Convert grab_mapping_entry to XArray
+Date: Fri, 15 Dec 2017 14:04:37 -0800
+Message-ID: <20171215220450.7899-66-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Mime-Version: 1.0
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=5enVL2+ecZXEO2ncwvbJ44OA+bvhuwFbhX08nI01kqs=; b=ttC2oLCN9yIp69u6Kb5tidyLq
+        VvfGEBNP3IH1HzMlm14VRsbCt+IOmMqnrBNiLAVsOqUj88J4a+S9YkhZWxdL/gNe11dMub3W4TeCJ
+        TAp7FeS09GKHp5tNJ0jcvE/oYRJ4CUFGLhqazLGzH15jX5I7gu65A9XUtFC/GaBTBqzJAFqR/aa61
+        3cKUd069hoIx4wBbrBQZl9XMeWKPB7oWWQuEVe5H2xcepqJ4+XZIoMlvqMoZU2Ttr5+96iCIaD4P/
+        0LMvoL83iQ4dh6DHAbIaagqzZG7sf142lQPDNLUCjSZVe2yu9ZdQo5eMa5uRjxh8HQ2IS3X+Oi4Ai
+    
+In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=T9UHgjsvMOlJWcNj5ey/5z9/Dj+z9dBtLpmY7uJEkvk=; b=SSuTV7ikcdqXmpHEfomV8aTNAT
- rKGm2gOfhvE0aCpm712Sn/0tHzt+Eothnn6vTiSX/I7mlrmY3D2rDr/1j6uZdsuJuIxFXmd04EeyG
- UqEBWqTYJimiR//zZvMYQS7IH634Cg2WNd5RKLqLxKT+RXEDwq/GY7PGKz3vo4UtJshg=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
- :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=T9UHgjsvMOlJWcNj5ey/5z9/Dj+z9dBtLpmY7uJEkvk=; b=dAz8Uvqe9EHwZUOhU91DLb4Q1J
- tf+7FWm3rfEt9zOaBDH5U3pZIK3NO7qoXoCDnEkbpzvKv7+Oltrg4CCtBPo/jvQFZ5SauV0lLS14D
- ye124SLbPX53gAZyDg3/1GM+cubM6lHqlALr6PxrwfTfuGFSNP7CaF13u8Mez9J0qz1g=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=T9UHgjsvMOlJWcNj5ey/5z9/Dj+z9dBtLpmY7uJEkvk=; b=QAYpIVuHgMErqCX28Wgz3re6r
- Yaziu0vjT40Pylin/sLzSMi8Ue1Fy/5bkrLwAC4tiKAb61PlvuRtAaXa+OFdTStk0om0z/ICQuSOO
- kdG5ArlRgrfxfz1hu/Zl6FCnZTWodyTHCAXoQBmFvwoYI+U8ktXTAKv4b0Pn2+3mS8Q7CI7KAGorR
- 4BjhEHB5igSI2350G8oVlgTokSt+M72rLB2p0e94nuU3lDb9EPyLzgMtiK2XCslXxGzELxki2PW4O
- 49ZrjEM6xHLJbDgoFSlaNUtEhtA4pb0GRG/U0Br9FrDQfWGxuTOTOcVi6HOw0xytB1kiHZHmbilRi
- Dz6BQffUQ==;
-In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-kernel@vger.kernel.org
-Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-raid@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-usb@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Rehas Sachdeva <aquannie@gmail.com>, Shaohua Li <shli@kernel.org>, linux-btrfs@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is a straightforward conversion.
-
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/f2fs/data.c   |  3 +--
- fs/f2fs/dir.c    |  5 +----
- fs/f2fs/inline.c |  6 +-----
- fs/f2fs/node.c   | 10 ++--------
- 4 files changed, 5 insertions(+), 19 deletions(-)
+ fs/dax.c | 98 +++++++++++++++++-----------------------------------------------
+ 1 file changed, 26 insertions(+), 72 deletions(-)
 
-diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-index c8f6d9806896..1f3f192f152f 100644
---- a/fs/f2fs/data.c
-+++ b/fs/f2fs/data.c
-@@ -2175,8 +2175,7 @@ void f2fs_set_page_dirty_nobuffers(struct page *page)
- 	xa_lock_irqsave(&mapping->pages, flags);
- 	WARN_ON_ONCE(!PageUptodate(page));
- 	account_page_dirtied(page, mapping);
--	radix_tree_tag_set(&mapping->pages,
--			page_index(page), PAGECACHE_TAG_DIRTY);
-+	__xa_set_tag(&mapping->pages, page_index(page), PAGECACHE_TAG_DIRTY);
- 	xa_unlock_irqrestore(&mapping->pages, flags);
- 	unlock_page_memcg(page);
+diff --git a/fs/dax.c b/fs/dax.c
+index a3e795ad2493..f591ab5be590 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -44,6 +44,7 @@
  
-diff --git a/fs/f2fs/dir.c b/fs/f2fs/dir.c
-index b5515ea6bb2f..296070016ec9 100644
---- a/fs/f2fs/dir.c
-+++ b/fs/f2fs/dir.c
-@@ -708,7 +708,6 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
- 	unsigned int bit_pos;
- 	int slots = GET_DENTRY_SLOTS(le16_to_cpu(dentry->name_len));
- 	struct address_space *mapping = page_mapping(page);
--	unsigned long flags;
- 	int i;
+ /* The 'colour' (ie low bits) within a PMD of a page offset.  */
+ #define PG_PMD_COLOUR	((PMD_SIZE >> PAGE_SHIFT) - 1)
++#define PMD_ORDER	(PMD_SHIFT - PAGE_SHIFT)
  
- 	f2fs_update_time(F2FS_I_SB(dir), REQ_TIME);
-@@ -739,10 +738,8 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
+ static wait_queue_head_t wait_table[DAX_WAIT_TABLE_ENTRIES];
  
- 	if (bit_pos == NR_DENTRY_IN_BLOCK &&
- 			!truncate_hole(dir, page->index, page->index + 1)) {
--		xa_lock_irqsave(&mapping->pages, flags);
--		radix_tree_tag_clear(&mapping->pages, page_index(page),
-+		xa_clear_tag(&mapping->pages, page_index(page),
- 				     PAGECACHE_TAG_DIRTY);
--		xa_unlock_irqrestore(&mapping->pages, flags);
+@@ -89,10 +90,10 @@ static void *dax_radix_locked_entry(sector_t sector, unsigned long flags)
+ 			DAX_ENTRY_LOCK);
+ }
  
- 		clear_page_dirty_for_io(page);
- 		ClearPagePrivate(page);
-diff --git a/fs/f2fs/inline.c b/fs/f2fs/inline.c
-index 7858b8e15f33..d3c3f84beca9 100644
---- a/fs/f2fs/inline.c
-+++ b/fs/f2fs/inline.c
-@@ -204,7 +204,6 @@ int f2fs_write_inline_data(struct inode *inode, struct page *page)
- 	void *src_addr, *dst_addr;
- 	struct dnode_of_data dn;
- 	struct address_space *mapping = page_mapping(page);
--	unsigned long flags;
- 	int err;
- 
- 	set_new_dnode(&dn, inode, NULL, NULL, 0);
-@@ -226,10 +225,7 @@ int f2fs_write_inline_data(struct inode *inode, struct page *page)
- 	kunmap_atomic(src_addr);
- 	set_page_dirty(dn.inode_page);
- 
--	xa_lock_irqsave(&mapping->pages, flags);
--	radix_tree_tag_clear(&mapping->pages, page_index(page),
--			     PAGECACHE_TAG_DIRTY);
--	xa_unlock_irqrestore(&mapping->pages, flags);
-+	xa_clear_tag(&mapping->pages, page_index(page), PAGECACHE_TAG_DIRTY);
- 
- 	set_inode_flag(inode, FI_APPEND_WRITE);
- 	set_inode_flag(inode, FI_DATA_EXIST);
-diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index 6b64a3009d55..0a6d5c2f996e 100644
---- a/fs/f2fs/node.c
-+++ b/fs/f2fs/node.c
-@@ -88,14 +88,10 @@ bool available_free_memory(struct f2fs_sb_info *sbi, int type)
- static void clear_node_page_dirty(struct page *page)
+-static unsigned int dax_radix_order(void *entry)
++static unsigned int dax_entry_order(void *entry)
  {
- 	struct address_space *mapping = page->mapping;
--	unsigned int long flags;
+ 	if (xa_to_value(entry) & DAX_PMD)
+-		return PMD_SHIFT - PAGE_SHIFT;
++		return PMD_ORDER;
+ 	return 0;
+ }
  
- 	if (PageDirty(page)) {
--		xa_lock_irqsave(&mapping->pages, flags);
--		radix_tree_tag_clear(&mapping->pages,
--				page_index(page),
-+		xa_clear_tag(&mapping->pages, page_index(page),
- 				PAGECACHE_TAG_DIRTY);
--		xa_unlock_irqrestore(&mapping->pages, flags);
+@@ -299,10 +300,11 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
+ {
+ 	XA_STATE(xas, &mapping->pages, index);
+ 	bool pmd_downgrade = false; /* splitting 2MiB entry into 4k entries? */
+-	void *entry, **slot;
++	void *entry;
  
- 		clear_page_dirty_for_io(page);
- 		dec_page_count(F2FS_M_SB(mapping), F2FS_DIRTY_NODES);
-@@ -1142,9 +1138,7 @@ void ra_node_page(struct f2fs_sb_info *sbi, nid_t nid)
- 		return;
- 	f2fs_bug_on(sbi, check_nid_range(sbi, nid));
++	xas_set_order(&xas, index, size_flag ? PMD_ORDER : 0);
+ restart:
+-	xa_lock_irq(&mapping->pages);
++	xas_lock_irq(&xas);
+ 	entry = get_unlocked_mapping_entry(&xas);
  
--	rcu_read_lock();
--	apage = radix_tree_lookup(&NODE_MAPPING(sbi)->pages, nid);
--	rcu_read_unlock();
-+	apage = xa_load(&NODE_MAPPING(sbi)->pages, nid);
- 	if (apage)
- 		return;
+ 	if (WARN_ON_ONCE(entry && !xa_is_value(entry))) {
+@@ -326,84 +328,36 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
+ 		}
+ 	}
  
+-	/* No entry for given index? Make sure radix tree is big enough. */
+-	if (!entry || pmd_downgrade) {
+-		int err;
+-
+-		if (pmd_downgrade) {
+-			/*
+-			 * Make sure 'entry' remains valid while we drop
+-			 * xa_lock.
+-			 */
+-			entry = lock_slot(&xas);
+-		}
+-
+-		xa_unlock_irq(&mapping->pages);
++	if (pmd_downgrade) {
++		entry = lock_slot(&xas);
+ 		/*
+ 		 * Besides huge zero pages the only other thing that gets
+ 		 * downgraded are empty entries which don't need to be
+ 		 * unmapped.
+ 		 */
+-		if (pmd_downgrade && dax_is_zero_entry(entry))
++		if (dax_is_zero_entry(entry)) {
++			xas_pause(&xas);
++			xas_unlock_irq(&xas);
+ 			unmap_mapping_range(mapping,
+ 				(index << PAGE_SHIFT) & PMD_MASK, PMD_SIZE, 0);
+-
+-		err = radix_tree_preload(
+-				mapping_gfp_mask(mapping) & ~__GFP_HIGHMEM);
+-		if (err) {
+-			if (pmd_downgrade)
+-				put_locked_mapping_entry(mapping, index);
+-			return ERR_PTR(err);
++			xas_lock_irq(&xas);
+ 		}
+-		xa_lock_irq(&mapping->pages);
+-
+-		if (!entry) {
+-			/*
+-			 * We needed to drop the pages lock while calling
+-			 * radix_tree_preload() and we didn't have an entry to
+-			 * lock.  See if another thread inserted an entry at
+-			 * our index during this time.
+-			 */
+-			entry = __radix_tree_lookup(&mapping->pages, index,
+-					NULL, &slot);
+-			if (entry) {
+-				radix_tree_preload_end();
+-				xa_unlock_irq(&mapping->pages);
+-				goto restart;
+-			}
+-		}
+-
+-		if (pmd_downgrade) {
+-			radix_tree_delete(&mapping->pages, index);
+-			mapping->nrexceptional--;
+-			dax_wake_entry(&xas, entry, true);
+-		}
+-
++		xas_store(&xas, NULL);
++		mapping->nrexceptional--;
++		dax_wake_entry(&xas, entry, true);
++	}
++	if (!entry || pmd_downgrade) {
+ 		entry = dax_radix_locked_entry(0, size_flag | DAX_EMPTY);
+-
+-		err = __radix_tree_insert(&mapping->pages, index,
+-				dax_radix_order(entry), entry);
+-		radix_tree_preload_end();
+-		if (err) {
+-			xa_unlock_irq(&mapping->pages);
+-			/*
+-			 * Our insertion of a DAX entry failed, most likely
+-			 * because we were inserting a PMD entry and it
+-			 * collided with a PTE sized entry at a different
+-			 * index in the PMD range.  We haven't inserted
+-			 * anything into the radix tree and have no waiters to
+-			 * wake.
+-			 */
+-			return ERR_PTR(err);
+-		}
+-		/* Good, we have inserted empty locked entry into the tree. */
+-		mapping->nrexceptional++;
+-		xa_unlock_irq(&mapping->pages);
+-		return entry;
++		xas_store(&xas, entry);
++		if (!xas_error(&xas))
++			mapping->nrexceptional++;
++	} else {
++		entry = lock_slot(&xas);
+ 	}
+-	entry = lock_slot(&xas);
+  out_unlock:
+-	xa_unlock_irq(&mapping->pages);
++	xas_unlock_irq(&xas);
++	if (xas_nomem(&xas, GFP_NOIO))
++		goto restart;
+ 	return entry;
+ }
+ 
+@@ -683,7 +637,7 @@ static int dax_writeback_one(struct block_device *bdev,
+ 	 * worry about partial PMD writebacks.
+ 	 */
+ 	sector = dax_radix_sector(entry);
+-	size = PAGE_SIZE << dax_radix_order(entry);
++	size = PAGE_SIZE << dax_entry_order(entry);
+ 
+ 	id = dax_read_lock();
+ 	ret = bdev_dax_pgoff(bdev, sector, size, &pgoff);
 -- 
 2.15.1
 
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
