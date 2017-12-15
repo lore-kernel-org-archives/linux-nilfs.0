@@ -1,23 +1,23 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 48/78] shmem: Convert shmem_alloc_hugepage to XArray
-Date: Fri, 15 Dec 2017 14:04:20 -0800
-Message-ID: <20171215220450.7899-49-willy@infradead.org>
+Subject: [PATCH v5 21/78] xarray: Add ability to store errno values
+Date: Fri, 15 Dec 2017 14:03:53 -0800
+Message-ID: <20171215220450.7899-22-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-	Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-	 bh=3P9IXgtYxCuBf0ewPuaYtGHUYvhgsukOYhjlMODNTNo=; b=qC54fhaq9SmdNA5tWJ8DXjSJh
-	pnmuUulBDxqlTwMIuHkxLcaVjdLGzJqBBNV2F73qbcfubRy/Q4LY++gxkF1DfM8a8VemfLPO0XJJh
-	gDzzfuCGkD7wejXgke6fsvfy+lmN+yJvVMB9kz4B2RqJBPcuMnfO1rNP9NOaDhYt7LLnnUSoMid5g
-	8nJVeakqJIIPuC3sYGpyqjigwzOD05dNOuAI7lv8+IXSnmVM8DlnZc9QqnLkhUjyQxH1NVJToL4pl
-	heWLV+S9heWLqr48QF1CZziEfxDNspXsYDGuQoX2s73A6Ai63xV9UTxOZGt6Yis1MxobPvdSYrpLv
-	KJa0UlY2A==;
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=eq2jT5kinIsVxQNaXKvA5tvZgi1xWoJUgoGClNJSMAs=; b=ZOfati2LOkyjQeSJRvFvKv432
+        rX0yTyEQqrrkvqHizkl9pvUvKFp+bSMcxlsqwYb8KeB7cCiOeAD5MdR77oICjTqWTXDXYauFjWXZw
+        IFF8FDL1v4PRe6D0ZPgJRH7hqrDuB+OVrsBKNVKSElzvQWu2xaL5WLoN2GD0ZjAZI3fn7+vGiN3OL
+        yLpW9CmVpT/+1on5qToDGNbxLofj7VQcdN1tqwcmw0DcNMAkNpViGahd7LMRnxRArGAZSWUKif1Lo
+        VoyU3w1OVVNY2eJb5ek6VpA4X/A/GQM1jk4YqJUMfMW5GeSpdGUmFl5mIfgYGlDaYkqD1TKo19kS9
+    
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,50 +27,124 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.in
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-xa_find() is a slightly easier API to use than
-radix_tree_gang_lookup_slot() because it contains its own RCU locking.
+While the radix tree offers no ability to store IS_ERR pointers,
+documenting that the XArray does not led to some concern.  Here is a
+sanctioned way to store errnos in the XArray.  I'm concerned that it
+will confuse people who can't tell the difference between xa_is_err()
+and xa_is_errno(), so I've added copious kernel-doc to help them tell
+the difference.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 13 +++----------
- 1 file changed, 3 insertions(+), 10 deletions(-)
+ Documentation/core-api/xarray.rst      |  9 ++++---
+ include/linux/xarray.h                 | 46 +++++++++++++++++++++++++++++++++-
+ tools/testing/radix-tree/xarray-test.c |  8 +++++-
+ 3 files changed, 57 insertions(+), 6 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 0f49edae05e4..bd66bbd40499 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1413,23 +1413,16 @@ static struct page *shmem_alloc_hugepage(gfp_t gfp,
- 		struct shmem_inode_info *info, pgoff_t index)
- {
- 	struct vm_area_struct pvma;
--	struct inode *inode = &info->vfs_inode;
--	struct address_space *mapping = inode->i_mapping;
--	pgoff_t idx, hindex;
--	void __rcu **results;
-+	struct address_space *mapping = info->vfs_inode.i_mapping;
-+	pgoff_t hindex;
- 	struct page *page;
+diff --git a/Documentation/core-api/xarray.rst b/Documentation/core-api/xarray.rst
+index 706081bfe92f..57a494026d96 100644
+--- a/Documentation/core-api/xarray.rst
++++ b/Documentation/core-api/xarray.rst
+@@ -42,11 +42,12 @@ When you retrieve an entry from the XArray, you can check whether it is
+ a value entry by calling :c:func:`xa_is_value`, and convert it back to
+ an integer by calling :c:func:`xa_to_value`.
  
- 	if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
- 		return NULL;
+-The XArray does not support storing :c:func:`IS_ERR` pointers as some
++The XArray does not support storing :c:func:`IS_ERR` pointers because some
+ conflict with value entries or internal entries.  If you need to store
+-error numbers in the array, you can store ``(errno << 2)`` as these values
+-will be aligned to a multiple of 4 and are not valid kernel pointers.
+-The values 4, 8, ... 4092 are also not valid kernel pointers.
++error numbers in the array, you can encode them into error entries
++with :c:func:`xa_mk_errno`, check whether a returned entry is an error
++with :c:func:`xa_is_errno` and convert it back into an errno with
++:c:func:`xa_to_errno`.
  
- 	hindex = round_down(index, HPAGE_PMD_NR);
--	rcu_read_lock();
--	if (radix_tree_gang_lookup_slot(&mapping->pages, &results, &idx,
--				hindex, 1) && idx < hindex + HPAGE_PMD_NR) {
--		rcu_read_unlock();
-+	if (xa_find(&mapping->pages, &hindex, hindex + HPAGE_PMD_NR - 1))
- 		return NULL;
--	}
--	rcu_read_unlock();
+ An unusual feature of the XArray is the ability to create entries which
+ occupy a range of indices.  Once stored to, looking up any index in
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index bcc321fb280f..e0f8eb06b874 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -231,6 +231,50 @@ static inline bool xa_is_value(const void *entry)
+ 	return (unsigned long)entry & 1;
+ }
  
- 	shmem_pseudo_vma_init(&pvma, info, hindex);
- 	page = alloc_pages_vma(gfp | __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN,
++/**
++ * xa_mk_errno() - Create an XArray entry from an error number.
++ * @error: Error number to store in XArray.
++ *
++ * Return: An entry suitable for storing in the XArray.
++ */
++static inline void *xa_mk_errno(long error)
++{
++	return (void *)(error << 2);
++}
++
++/**
++ * xa_to_errno() - Get error number stored in an XArray entry.
++ * @entry: XArray entry.
++ *
++ * Calling this function on an entry which is not an xa_is_errno() will
++ * yield unpredictable results.  Do not confuse this function with xa_err();
++ * this function is for errnos which have been stored in the XArray, and
++ * that function is for errors returned from the XArray implementation.
++ *
++ * Return: The error number stored in the XArray entry.
++ */
++static inline long xa_to_errno(const void *entry)
++{
++	return (long)entry >> 2;
++}
++
++/**
++ * xa_is_errno() - Determine if an entry is an errno.
++ * @entry: XArray entry.
++ *
++ * Do not confuse this function with xa_is_err(); that function tells you
++ * whether the XArray implementation returned an error; this function
++ * tells you whether the entry you successfully stored in the XArray
++ * represented an errno.  If you have never stored an errno in the XArray,
++ * you do not have to check this.
++ *
++ * Return: True if the entry is an errno, false if it is a pointer.
++ */
++static inline bool xa_is_errno(const void *entry)
++{
++	return (((unsigned long)entry & 3) == 0) && (entry > (void *)-4096);
++}
++
+ /**
+  * xa_is_internal() - Is the entry an internal entry?
+  * @entry: Entry retrieved from the XArray
+@@ -277,7 +321,7 @@ static inline int xa_err(void *entry)
+ 
+ /**
+  * xa_store_empty() - Store this entry in the XArray unless another entry is
+- * 			already present.
++ *			already present.
+  * @xa: XArray.
+  * @index: Index into array.
+  * @entry: New entry.
+diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
+index 43111786ebdd..b843cedf3988 100644
+--- a/tools/testing/radix-tree/xarray-test.c
++++ b/tools/testing/radix-tree/xarray-test.c
+@@ -29,7 +29,13 @@ void check_xa_err(struct xarray *xa)
+ 	assert(xa_err(xa_store(xa, 1, xa_mk_value(0), GFP_KERNEL)) == 0);
+ 	assert(xa_err(xa_store(xa, 1, NULL, 0)) == 0);
+ // kills the test-suite :-(
+-//     assert(xa_err(xa_store(xa, 0, xa_mk_internal(0), 0)) == -EINVAL);
++//	assert(xa_err(xa_store(xa, 0, xa_mk_internal(0), 0)) == -EINVAL);
++
++	assert(xa_err(xa_store(xa, 0, xa_mk_errno(-ENOMEM), GFP_KERNEL)) == 0);
++	assert(xa_err(xa_load(xa, 0)) == 0);
++	assert(xa_is_errno(xa_load(xa, 0)) == true);
++	assert(xa_to_errno(xa_load(xa, 0)) == -ENOMEM);
++	xa_erase(xa, 0);
+ }
+ 
+ void check_xa_tag(struct xarray *xa)
 -- 
 2.15.1
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
