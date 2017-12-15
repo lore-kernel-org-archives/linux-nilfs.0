@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v5 78/78] fscache: Convert to XArray
-Date: Fri, 15 Dec 2017 14:04:50 -0800
-Message-ID: <20171215220450.7899-79-willy@infradead.org>
+Subject: [PATCH v5 28/78] page cache: Convert page cache lookups
+ to XArray
+Date: Fri, 15 Dec 2017 14:04:00 -0800
+Message-ID: <20171215220450.7899-29-willy@infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=gJLSJIQdkTZJ3vKRCiFCRPonU4osKRFNR8bAKnv+g7Q=; b=lwmUFUX48xaVXZ8uMWjVujhPRI
- xtM1GW9Z3bAnCV1XXywPtktura39Ex2lFT2z41ESmMfXGzqU2lBHZfO8J3yvSwpb0pzTUOjhd72ae
- 5HvV4Qub8vTvJ7dintMPdBi+jivz30eRZrVUfYUJWS//rA0qweTFYSviIrkXRW1HS+Nk=;
+ bh=yhWgEq4bcX2fBV95r3Q7OTnpuBUtRSyC+YLy2OFOMmY=; b=hsxurm4u8uL8Wp6N7vdLmUqzaA
+ 9bUcLW2w+Bmgju3T41BkvCHP2WjZNn0Rl9Tq7yNMfSgyFXUw/dmlECnKdewzjRS7F+BY9V7/DQkTs
+ 0yCaDu89MNK4+R2dVa/Zb4gtoiHi2sLpnr4FEoB29uzUpEvlxdaIZZQ6oWX9UA0eZV2A=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=gJLSJIQdkTZJ3vKRCiFCRPonU4osKRFNR8bAKnv+g7Q=; b=b8O0+9TKviimpQ00Az2m5WjVif
- BFbS/V/xQHiaX8bw0hQ5Qysf5v1uTC0wn3nupFF1hqXkFMxDFw4SVU8fShLyBhXO7UrLGuu8gqcUB
- CZswiCL6OmWa2WO4ocX5QZc5BunO47OCQ/IOWD6r8QlUUwNMapfwDmxk17J3FXSlVY7s=;
+ bh=yhWgEq4bcX2fBV95r3Q7OTnpuBUtRSyC+YLy2OFOMmY=; b=BtZzG0WGJfGw1TQAoBUOY8IHyZ
+ fOTwucz8Xan8yXEUZynzRKUkyysWJ4NeQwjwiT6wvh0sEmykoeYV0vgLG5aw+AgGQVIqBe4URelwq
+ OUopqw6gD5N9EBq3s21JbCeTiQHLDp2F3DBLCAUvn7TfKM3fTlgl+TE9hyk+PcEUhAXE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=gJLSJIQdkTZJ3vKRCiFCRPonU4osKRFNR8bAKnv+g7Q=; b=szgM3Qh1H3+HI8bd8yv6hoT8s
- sH+7JaZr2KlpCG3Le9+qiOlAZgAps9zbRbhwjJl0vkibAbEqGkWevbNAlLj/4FesNFV6eM7aJb9yi
- qtnf4hY3GmrM6utCSszcQpEfpDNB+PtB3hIvcabdu2kW/exxJQJZ0I8JqobGY/p/QYl+DtaNjkSy3
- ot+O6/BqUqZViAcZcOOx25JGkfpUcSKcrFZLVh1iDteFJFdXGN3qYxDY9FAgC+dCewn+VCMtFonyn
- Z0WuvpT50o4UatzL4BuozzepTynOS0VNTjsBrgbcGJUCoUh4utqsOX/cFouDYrHYww4tuVuGEAgpX
- 4PP6ukEZg==;
+ bh=yhWgEq4bcX2fBV95r3Q7OTnpuBUtRSyC+YLy2OFOMmY=; b=SIYeJIDqsG6TO8yDYdm8ImuUv
+ MvN2ydA9X/mKoNe9HvpSsHNhyMBlgmi6aD6yhbYuPxXPf51JHW5tCYPYyW5vcCQ8nRnIsu0SMWuSs
+ WutcJpiv+2GJzAXhKhxs9aPdu6NG7J2DxzD6azLbtQmgKDAEQZIZfpgERR6RvZx7o8cnQWmv7bUVU
+ J0hAu2eYCphZy2pfWvJWRVe1VNrrGivJ2S2bwcUwWwOnfgSmY6RTcUUvINz425Zog3bV0ob1bwRwc
+ oc1Gwdp1uUJFbdq3M4hLAOU4Q4zf22gi4C9Rt8kBipH2ZqkJu/yPkPpchbRlk9pP6JxV4n7OrgeUi
+ 4Fzy0kHGQ==;
 In-Reply-To: <20171215220450.7899-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,456 +54,688 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, linux-nilfs@vger.ke
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Removes another user of radix_tree_preload().
+Introduce page_cache_pin() to factor out the common logic between the
+various lookup routines:
+
+find_get_entry
+find_get_entries
+find_get_pages_range
+find_get_pages_contig
+find_get_pages_range_tag
+find_get_entries_tag
+filemap_map_pages
+
+By using the xa_state to control the iteration, we can remove most of
+the gotos and just use the normal break/continue loop control flow.
+
+Also convert the regression1 read-side to XArray since that simulates
+the functions being modified here.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/fscache/cookie.c     |   6 +-
- fs/fscache/internal.h   |   2 +-
- fs/fscache/object.c     |   2 +-
- fs/fscache/page.c       | 152 +++++++++++++++++++++---------------------------
- fs/fscache/stats.c      |   6 +-
- include/linux/fscache.h |   8 +--
- 6 files changed, 76 insertions(+), 100 deletions(-)
+ include/linux/pagemap.h                |   6 +-
+ mm/filemap.c                           | 380 +++++++++------------------------
+ tools/testing/radix-tree/regression1.c |  68 +++---
+ 3 files changed, 129 insertions(+), 325 deletions(-)
 
-diff --git a/fs/fscache/cookie.c b/fs/fscache/cookie.c
-index e9054e0c1a49..6d45134d609e 100644
---- a/fs/fscache/cookie.c
-+++ b/fs/fscache/cookie.c
-@@ -109,9 +109,7 @@ struct fscache_cookie *__fscache_acquire_cookie(
- 	cookie->netfs_data	= netfs_data;
- 	cookie->flags		= (1 << FSCACHE_COOKIE_NO_DATA_YET);
- 
--	/* radix tree insertion won't use the preallocation pool unless it's
--	 * told it may not wait */
--	INIT_RADIX_TREE(&cookie->stores, GFP_NOFS & ~__GFP_DIRECT_RECLAIM);
-+	xa_init(&cookie->stores);
- 
- 	switch (cookie->def->type) {
- 	case FSCACHE_COOKIE_TYPE_INDEX:
-@@ -608,7 +606,7 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie, bool retire)
- 	/* Clear pointers back to the netfs */
- 	cookie->netfs_data	= NULL;
- 	cookie->def		= NULL;
--	BUG_ON(!radix_tree_empty(&cookie->stores));
-+	BUG_ON(!xa_empty(&cookie->stores));
- 
- 	if (cookie->parent) {
- 		ASSERTCMP(atomic_read(&cookie->parent->usage), >, 0);
-diff --git a/fs/fscache/internal.h b/fs/fscache/internal.h
-index 0ff4b49a0037..468d9bd7f8c3 100644
---- a/fs/fscache/internal.h
-+++ b/fs/fscache/internal.h
-@@ -200,7 +200,7 @@ extern atomic_t fscache_n_stores_oom;
- extern atomic_t fscache_n_store_ops;
- extern atomic_t fscache_n_store_calls;
- extern atomic_t fscache_n_store_pages;
--extern atomic_t fscache_n_store_radix_deletes;
-+extern atomic_t fscache_n_store_xarray_deletes;
- extern atomic_t fscache_n_store_pages_over_limit;
- 
- extern atomic_t fscache_n_store_vmscan_not_storing;
-diff --git a/fs/fscache/object.c b/fs/fscache/object.c
-index aa0e71f02c33..ed165736a358 100644
---- a/fs/fscache/object.c
-+++ b/fs/fscache/object.c
-@@ -956,7 +956,7 @@ static const struct fscache_state *_fscache_invalidate_object(struct fscache_obj
- 	 * retire the object instead.
- 	 */
- 	if (!fscache_use_cookie(object)) {
--		ASSERT(radix_tree_empty(&object->cookie->stores));
-+		ASSERT(xa_empty(&object->cookie->stores));
- 		set_bit(FSCACHE_OBJECT_RETIRED, &object->flags);
- 		_leave(" [no cookie]");
- 		return transit_to(KILL_OBJECT);
-diff --git a/fs/fscache/page.c b/fs/fscache/page.c
-index 961029e04027..315e2745f822 100644
---- a/fs/fscache/page.c
-+++ b/fs/fscache/page.c
-@@ -22,13 +22,7 @@
-  */
- bool __fscache_check_page_write(struct fscache_cookie *cookie, struct page *page)
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index 34d4fa3ad1c5..1a59f4a5424a 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -365,17 +365,17 @@ static inline unsigned find_get_pages(struct address_space *mapping,
+ unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
+ 			       unsigned int nr_pages, struct page **pages);
+ unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
+-			pgoff_t end, int tag, unsigned int nr_pages,
++			pgoff_t end, xa_tag_t tag, unsigned int nr_pages,
+ 			struct page **pages);
+ static inline unsigned find_get_pages_tag(struct address_space *mapping,
+-			pgoff_t *index, int tag, unsigned int nr_pages,
++			pgoff_t *index, xa_tag_t tag, unsigned int nr_pages,
+ 			struct page **pages)
  {
--	void *val;
--
--	rcu_read_lock();
--	val = radix_tree_lookup(&cookie->stores, page->index);
--	rcu_read_unlock();
--
--	return val != NULL;
-+	return xa_load(&cookie->stores, page->index) != NULL;
+ 	return find_get_pages_range_tag(mapping, index, (pgoff_t)-1, tag,
+ 					nr_pages, pages);
  }
- EXPORT_SYMBOL(__fscache_check_page_write);
+ unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
+-			int tag, unsigned int nr_entries,
++			xa_tag_t tag, unsigned int nr_entries,
+ 			struct page **entries, pgoff_t *indices);
  
-@@ -64,15 +58,15 @@ bool __fscache_maybe_release_page(struct fscache_cookie *cookie,
- 				  struct page *page,
- 				  gfp_t gfp)
+ struct page *grab_cache_page_write_begin(struct address_space *mapping,
+diff --git a/mm/filemap.c b/mm/filemap.c
+index c9bc0dee0154..94496567d2c2 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1401,6 +1401,32 @@ bool page_cache_range_empty(struct address_space *mapping, pgoff_t index,
+ }
+ EXPORT_SYMBOL_GPL(page_cache_range_empty);
+ 
++/*
++ * page_cache_pin() - Try to pin a page in the page cache.
++ * @xas: The XArray operation state.
++ * @pagep: The page which has been previously found at this location.
++ *
++ * On success, the page has an elevated refcount, but is not locked.
++ * This implements the lockless pagecache protocol as described in
++ * include/linux/pagemap.h; see page_cache_get_speculative().
++ *
++ * Return: True if the page is still in the cache.
++ */
++static bool page_cache_pin(struct xa_state *xas, struct page *page)
++{
++	struct page *head = compound_head(page);
++	bool got = page_cache_get_speculative(head);
++
++	if (likely(got && (xas_reload(xas) == page) &&
++						(compound_head(page) == head)))
++		return true;
++
++	if (got)
++		put_page(head);
++	xas_retry(xas, XA_RETRY_ENTRY);
++	return false;
++}
++
+ /**
+  * find_get_entry - find and get a page cache entry
+  * @mapping: the address_space to search
+@@ -1416,51 +1442,21 @@ EXPORT_SYMBOL_GPL(page_cache_range_empty);
+  */
+ struct page *find_get_entry(struct address_space *mapping, pgoff_t offset)
  {
-+	XA_STATE(xas, &cookie->stores, page->index);
- 	struct page *xpage;
--	void *val;
+-	void **pagep;
+-	struct page *head, *page;
++	XA_STATE(xas, &mapping->pages, offset);
++	struct page *page;
  
- 	_enter("%p,%p,%x", cookie, page, gfp);
- 
- try_again:
  	rcu_read_lock();
--	val = radix_tree_lookup(&cookie->stores, page->index);
--	if (!val) {
-+	xpage = xas_load(&xas);
-+	if (!xpage) {
- 		rcu_read_unlock();
- 		fscache_stat(&fscache_n_store_vmscan_not_storing);
- 		__fscache_uncache_page(cookie, page);
-@@ -81,31 +75,32 @@ bool __fscache_maybe_release_page(struct fscache_cookie *cookie,
- 
- 	/* see if the page is actually undergoing storage - if so we can't get
- 	 * rid of it till the cache has finished with it */
--	if (radix_tree_tag_get(&cookie->stores, page->index,
--			       FSCACHE_COOKIE_STORING_TAG)) {
-+	if (xas_get_tag(&xas, FSCACHE_COOKIE_STORING_TAG)) {
- 		rcu_read_unlock();
-+		xas_retry(&xas, XA_RETRY_ENTRY);
- 		goto page_busy;
- 	}
- 
- 	/* the page is pending storage, so we attempt to cancel the store and
- 	 * discard the store request so that the page can be reclaimed */
--	spin_lock(&cookie->stores_lock);
-+	xas_retry(&xas, XA_RETRY_ENTRY);
-+	xas_lock(&xas);
- 	rcu_read_unlock();
- 
--	if (radix_tree_tag_get(&cookie->stores, page->index,
--			       FSCACHE_COOKIE_STORING_TAG)) {
-+	xpage = xas_load(&xas);
-+	if (xas_get_tag(&xas, FSCACHE_COOKIE_STORING_TAG)) {
- 		/* the page started to undergo storage whilst we were looking,
- 		 * so now we can only wait or return */
- 		spin_unlock(&cookie->stores_lock);
- 		goto page_busy;
- 	}
- 
--	xpage = radix_tree_delete(&cookie->stores, page->index);
-+	xas_store(&xas, NULL);
- 	spin_unlock(&cookie->stores_lock);
- 
- 	if (xpage) {
- 		fscache_stat(&fscache_n_store_vmscan_cancelled);
--		fscache_stat(&fscache_n_store_radix_deletes);
-+		fscache_stat(&fscache_n_store_xarray_deletes);
- 		ASSERTCMP(xpage, ==, page);
- 	} else {
- 		fscache_stat(&fscache_n_store_vmscan_gone);
-@@ -149,17 +144,19 @@ static void fscache_end_page_write(struct fscache_object *object,
- 	spin_lock(&object->lock);
- 	cookie = object->cookie;
- 	if (cookie) {
-+		XA_STATE(xas, &cookie->stores, page->index);
- 		/* delete the page from the tree if it is now no longer
- 		 * pending */
--		spin_lock(&cookie->stores_lock);
--		radix_tree_tag_clear(&cookie->stores, page->index,
--				     FSCACHE_COOKIE_STORING_TAG);
--		if (!radix_tree_tag_get(&cookie->stores, page->index,
--					FSCACHE_COOKIE_PENDING_TAG)) {
--			fscache_stat(&fscache_n_store_radix_deletes);
--			xpage = radix_tree_delete(&cookie->stores, page->index);
-+		xas_lock(&xas);
-+		xpage = xas_load(&xas);
-+		xas_clear_tag(&xas, FSCACHE_COOKIE_STORING_TAG);
-+		if (xas_get_tag(&xas, FSCACHE_COOKIE_PENDING_TAG)) {
-+			xpage = NULL;
-+		} else {
-+			fscache_stat(&fscache_n_store_xarray_deletes);
-+			xas_store(&xas, NULL);
- 		}
--		spin_unlock(&cookie->stores_lock);
-+		xas_unlock(&xas);
- 		wake_up_bit(&cookie->flags, 0);
- 	}
- 	spin_unlock(&object->lock);
-@@ -765,13 +762,12 @@ static void fscache_release_write_op(struct fscache_operation *_op)
-  */
- static void fscache_write_op(struct fscache_operation *_op)
- {
-+	XA_STATE(xas, NULL, 0);
- 	struct fscache_storage *op =
- 		container_of(_op, struct fscache_storage, op);
- 	struct fscache_object *object = op->op.object;
- 	struct fscache_cookie *cookie;
- 	struct page *page;
--	unsigned n;
--	void *results[1];
- 	int ret;
- 
- 	_enter("{OP%x,%d}", op->op.debug_id, atomic_read(&op->op.usage));
-@@ -804,29 +800,25 @@ static void fscache_write_op(struct fscache_operation *_op)
- 		return;
- 	}
- 
--	spin_lock(&cookie->stores_lock);
-+	xas.xa = &cookie->stores;
-+	xas_lock(&xas);
- 
- 	fscache_stat(&fscache_n_store_calls);
- 
- 	/* find a page to store */
+-repeat:
 -	page = NULL;
--	n = radix_tree_gang_lookup_tag(&cookie->stores, results, 0, 1,
--				       FSCACHE_COOKIE_PENDING_TAG);
--	if (n != 1)
-+	page = xas_find_tag(&xas, ULONG_MAX, FSCACHE_COOKIE_PENDING_TAG);
-+	if (!page)
- 		goto superseded;
--	page = results[0];
--	_debug("gang %d [%lx]", n, page->index);
-+	_debug("found %lx", page->index);
- 	if (page->index >= op->store_limit) {
- 		fscache_stat(&fscache_n_store_pages_over_limit);
- 		goto superseded;
- 	}
- 
--	radix_tree_tag_set(&cookie->stores, page->index,
--			   FSCACHE_COOKIE_STORING_TAG);
--	radix_tree_tag_clear(&cookie->stores, page->index,
--			     FSCACHE_COOKIE_PENDING_TAG);
-+	xas_set_tag(&xas, FSCACHE_COOKIE_STORING_TAG);
-+	xas_clear_tag(&xas, FSCACHE_COOKIE_PENDING_TAG);
-+	xas_unlock(&xas);
- 
--	spin_unlock(&cookie->stores_lock);
- 	spin_unlock(&object->lock);
- 
- 	fscache_stat(&fscache_n_store_pages);
-@@ -848,7 +840,7 @@ static void fscache_write_op(struct fscache_operation *_op)
- 	/* this writer is going away and there aren't any more things to
- 	 * write */
- 	_debug("cease");
--	spin_unlock(&cookie->stores_lock);
-+	xas_unlock(&xas);
- 	clear_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags);
- 	spin_unlock(&object->lock);
- 	fscache_op_complete(&op->op, true);
-@@ -860,32 +852,25 @@ static void fscache_write_op(struct fscache_operation *_op)
-  */
- void fscache_invalidate_writes(struct fscache_cookie *cookie)
- {
-+	XA_STATE(xas, &cookie->stores, 0);
-+	unsigned int cleared = 0;
- 	struct page *page;
--	void *results[16];
--	int n, i;
- 
- 	_enter("");
- 
--	for (;;) {
--		spin_lock(&cookie->stores_lock);
--		n = radix_tree_gang_lookup_tag(&cookie->stores, results, 0,
--					       ARRAY_SIZE(results),
--					       FSCACHE_COOKIE_PENDING_TAG);
--		if (n == 0) {
--			spin_unlock(&cookie->stores_lock);
--			break;
+-	pagep = radix_tree_lookup_slot(&mapping->pages, offset);
+-	if (pagep) {
+-		page = radix_tree_deref_slot(pagep);
+-		if (unlikely(!page))
+-			goto out;
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page))
+-				goto repeat;
+-			/*
+-			 * A shadow entry of a recently evicted page,
+-			 * or a swap entry from shmem/tmpfs.  Return
+-			 * it without attempting to raise page count.
+-			 */
+-			goto out;
 -		}
 -
--		for (i = n - 1; i >= 0; i--) {
--			page = results[i];
--			radix_tree_delete(&cookie->stores, page->index);
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
+-
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
 -		}
-+	xas_lock(&xas);
-+	xas_for_each_tag(&xas, page, ULONG_MAX, FSCACHE_COOKIE_PENDING_TAG) {
-+		xas_store(&xas, NULL);
-+		put_page(page);
-+		if (++cleared % XA_CHECK_SCHED)
++	do {
++		page = xas_load(&xas);
++		if (xas_retry(&xas, page))
++			continue;
++		if (!page || xa_is_value(page))
++			break;
++		if (!page_cache_pin(&xas, page))
++			continue;
++	} while (0);
+ 
+-		/*
+-		 * Has the page moved?
+-		 * This is part of the lockless pagecache protocol. See
+-		 * include/linux/pagemap.h for details.
+-		 */
+-		if (unlikely(page != *pagep)) {
+-			put_page(head);
+-			goto repeat;
+-		}
+-	}
+-out:
+ 	rcu_read_unlock();
+-
+ 	return page;
+ }
+ EXPORT_SYMBOL(find_get_entry);
+@@ -1487,7 +1483,7 @@ struct page *find_lock_entry(struct address_space *mapping, pgoff_t offset)
+ 
+ repeat:
+ 	page = find_get_entry(mapping, offset);
+-	if (page && !radix_tree_exception(page)) {
++	if (page && !xa_is_value(page)) {
+ 		lock_page(page);
+ 		/* Has the page been truncated? */
+ 		if (unlikely(page_mapping(page) != mapping)) {
+@@ -1620,50 +1616,21 @@ unsigned find_get_entries(struct address_space *mapping,
+ 			  pgoff_t start, unsigned int nr_entries,
+ 			  struct page **entries, pgoff_t *indices)
+ {
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, start);
++	struct page *page;
+ 	unsigned int ret = 0;
+-	struct radix_tree_iter iter;
+ 
+ 	if (!nr_entries)
+ 		return 0;
+ 
+ 	rcu_read_lock();
+-	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start) {
+-		struct page *head, *page;
+-repeat:
+-		page = radix_tree_deref_slot(slot);
+-		if (unlikely(!page))
++	xas_for_each(&xas, page, ULONG_MAX) {
++		if (xas_retry(&xas, page))
++			continue;
++		if (!xa_is_value(page) && !page_cache_pin(&xas, page))
+ 			continue;
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
+-			/*
+-			 * A shadow entry of a recently evicted page, a swap
+-			 * entry from shmem/tmpfs or a DAX entry.  Return it
+-			 * without attempting to raise page count.
+-			 */
+-			goto export;
+-		}
+-
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
+-
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
+ 
+-		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
+-export:
+-		indices[ret] = iter.index;
++		indices[ret] = xas.xa_index;
+ 		entries[ret] = page;
+ 		if (++ret == nr_entries)
+ 			break;
+@@ -1697,56 +1664,26 @@ unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
+ 			      pgoff_t end, unsigned int nr_pages,
+ 			      struct page **pages)
+ {
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, *start);
++	struct page *page;
+ 	unsigned ret = 0;
+ 
+ 	if (unlikely(!nr_pages))
+ 		return 0;
+ 
+ 	rcu_read_lock();
+-	radix_tree_for_each_slot(slot, &mapping->pages, &iter, *start) {
+-		struct page *head, *page;
+-
+-		if (iter.index > end)
+-			break;
+-repeat:
+-		page = radix_tree_deref_slot(slot);
+-		if (unlikely(!page))
++	xas_for_each(&xas, page, end) {
++		if (xas_retry(&xas, page))
+ 			continue;
+-
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
+-			/*
+-			 * A shadow entry of a recently evicted page,
+-			 * or a swap entry from shmem/tmpfs.  Skip
+-			 * over it.
+-			 */
++		/* Skip over shadow or swap entries */
++		if (xa_is_value(page))
++			continue;
++		if (!page_cache_pin(&xas, page))
+ 			continue;
+-		}
+-
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
+-
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
+-
+-		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
+ 
+ 		pages[ret] = page;
+ 		if (++ret == nr_pages) {
+-			*start = pages[ret - 1]->index + 1;
++			*start = page->index + 1;
+ 			goto out;
+ 		}
+ 	}
+@@ -1754,7 +1691,7 @@ unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
+ 	/*
+ 	 * We come here when there is no page beyond @end. We take care to not
+ 	 * overflow the index @start as it confuses some of the callers. This
+-	 * breaks the iteration when there is page at index -1 but that is
++	 * breaks the iteration when there is a page at index -1 but that is
+ 	 * already broken anyway.
+ 	 */
+ 	if (end == (pgoff_t)-1)
+@@ -1782,57 +1719,28 @@ unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
+ unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t index,
+ 			       unsigned int nr_pages, struct page **pages)
+ {
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, index);
++	struct page *page;
+ 	unsigned int ret = 0;
+ 
+ 	if (unlikely(!nr_pages))
+ 		return 0;
+ 
+ 	rcu_read_lock();
+-	radix_tree_for_each_contig(slot, &mapping->pages, &iter, index) {
+-		struct page *head, *page;
+-repeat:
+-		page = radix_tree_deref_slot(slot);
+-		/* The hole, there no reason to continue */
+-		if (unlikely(!page))
+-			break;
+-
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
+-			/*
+-			 * A shadow entry of a recently evicted page,
+-			 * or a swap entry from shmem/tmpfs.  Stop
+-			 * looking for contiguous pages.
+-			 */
++	for (page = xas_load(&xas); page; page = xas_next(&xas)) {
++		if (xas_retry(&xas, page))
++			continue;
++		if (xa_is_value(page))
+ 			break;
+-		}
+-
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
+-
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
+-
+-		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
++		if (!page_cache_pin(&xas, page))
 +			continue;
  
--		spin_unlock(&cookie->stores_lock);
--
--		for (i = n - 1; i >= 0; i--)
--			put_page(results[i]);
-+		xas_pause(&xas);
-+		xas_unlock(&xas);
-+		cond_resched();
-+		xas_lock(&xas);
- 	}
-+	xas_unlock(&xas);
- 
- 	wake_up_bit(&cookie->flags, 0);
- 
-@@ -925,9 +910,11 @@ int __fscache_write_page(struct fscache_cookie *cookie,
- 			 struct page *page,
- 			 gfp_t gfp)
+ 		/*
+ 		 * must check mapping and index after taking the ref.
+ 		 * otherwise we can get both false positives and false
+ 		 * negatives, which is just confusing to the caller.
+ 		 */
+-		if (page->mapping == NULL || page_to_pgoff(page) != iter.index) {
++		if (!page->mapping || page_to_pgoff(page) != xas.xa_index) {
+ 			put_page(page);
+ 			break;
+ 		}
+@@ -1859,74 +1767,42 @@ EXPORT_SYMBOL(find_get_pages_contig);
+  * @tag.   We update @index to index the next page for the traversal.
+  */
+ unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
+-			pgoff_t end, int tag, unsigned int nr_pages,
++			pgoff_t end, xa_tag_t tag, unsigned int nr_pages,
+ 			struct page **pages)
  {
-+	XA_STATE(xas, &cookie->stores, page->index);
- 	struct fscache_storage *op;
- 	struct fscache_object *object;
- 	bool wake_cookie = false;
-+	struct page *xpage;
- 	int ret;
+-	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, *index);
++	struct page *page;
+ 	unsigned ret = 0;
  
- 	_enter("%p,%x,", cookie, (u32) page->flags);
-@@ -952,10 +939,7 @@ int __fscache_write_page(struct fscache_cookie *cookie,
- 		(1 << FSCACHE_OP_WAITING) |
- 		(1 << FSCACHE_OP_UNUSE_COOKIE);
+ 	if (unlikely(!nr_pages))
+ 		return 0;
  
--	ret = radix_tree_maybe_preload(gfp & ~__GFP_HIGHMEM);
--	if (ret < 0)
--		goto nomem_free;
+ 	rcu_read_lock();
+-	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, *index, tag) {
+-		struct page *head, *page;
 -
-+retry:
- 	ret = -ENOBUFS;
- 	spin_lock(&cookie->lock);
- 
-@@ -967,23 +951,19 @@ int __fscache_write_page(struct fscache_cookie *cookie,
- 	if (test_bit(FSCACHE_IOERROR, &object->cache->flags))
- 		goto nobufs;
- 
--	/* add the page to the pending-storage radix tree on the backing
--	 * object */
-+	/* add the page to the pending-storage xarray on the backing object */
- 	spin_lock(&object->lock);
--	spin_lock(&cookie->stores_lock);
-+	xas_lock(&xas);
- 
- 	_debug("store limit %llx", (unsigned long long) object->store_limit);
- 
--	ret = radix_tree_insert(&cookie->stores, page->index, page);
--	if (ret < 0) {
--		if (ret == -EEXIST)
--			goto already_queued;
--		_debug("insert failed %d", ret);
-+	xpage = xas_create(&xas);
-+	if (xpage)
-+		goto already_queued;
-+	if (xas_error(&xas))
- 		goto nobufs_unlock_obj;
--	}
+-		if (iter.index > end)
+-			break;
+-repeat:
+-		page = radix_tree_deref_slot(slot);
+-		if (unlikely(!page))
++	xas_for_each_tag(&xas, page, end, tag) {
++		if (xas_retry(&xas, page))
+ 			continue;
 -
--	radix_tree_tag_set(&cookie->stores, page->index,
--			   FSCACHE_COOKIE_PENDING_TAG);
-+	xas_store(&xas, page);
-+	xas_set_tag(&xas, FSCACHE_COOKIE_PENDING_TAG);
- 	get_page(page);
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
+-			/*
+-			 * A shadow entry of a recently evicted page.
+-			 *
+-			 * Those entries should never be tagged, but
+-			 * this tree walk is lockless and the tags are
+-			 * looked up in bulk, one radix tree node at a
+-			 * time, so there is a sizable window for page
+-			 * reclaim to evict a page we saw tagged.
+-			 *
+-			 * Skip over it.
+-			 */
++		/*
++		 * Shadow entries should never be tagged, but this tree walk
++		 * is lockless so there is a window for page reclaim to evict
++		 * a page we saw tagged.  Skip over it.
++		 */
++		if (xa_is_value(page))
++			continue;
++		if (!page_cache_pin(&xas, page))
+ 			continue;
+-		}
+-
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
+-
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
+-
+-		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
  
- 	/* we only want one writer at a time, but we do need to queue new
-@@ -991,7 +971,7 @@ int __fscache_write_page(struct fscache_cookie *cookie,
- 	if (test_and_set_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags))
- 		goto already_pending;
+ 		pages[ret] = page;
+ 		if (++ret == nr_pages) {
+-			*index = pages[ret - 1]->index + 1;
++			*index = page->index + 1;
+ 			goto out;
+ 		}
+ 	}
  
--	spin_unlock(&cookie->stores_lock);
-+	xas_unlock(&xas);
- 	spin_unlock(&object->lock);
+ 	/*
+-	 * We come here when we got at @end. We take care to not overflow the
++	 * We come here when we got to @end. We take care to not overflow the
+ 	 * index @index as it confuses some of the callers. This breaks the
+-	 * iteration when there is page at index -1 but that is already broken
+-	 * anyway.
++	 * iteration when there is a page at index -1 but that is already
++	 * broken anyway.
+ 	 */
+ 	if (end == (pgoff_t)-1)
+ 		*index = (pgoff_t)-1;
+@@ -1952,54 +1828,24 @@ EXPORT_SYMBOL(find_get_pages_range_tag);
+  * @tag.
+  */
+ unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
+-			int tag, unsigned int nr_entries,
++			xa_tag_t tag, unsigned int nr_entries,
+ 			struct page **entries, pgoff_t *indices)
+ {
+-	void **slot;
++	XA_STATE(xas, &mapping->pages, start);
++	struct page *page;
+ 	unsigned int ret = 0;
+-	struct radix_tree_iter iter;
  
- 	op->op.debug_id	= atomic_inc_return(&fscache_op_debug_id);
-@@ -1002,7 +982,6 @@ int __fscache_write_page(struct fscache_cookie *cookie,
- 		goto submit_failed;
+ 	if (!nr_entries)
+ 		return 0;
  
- 	spin_unlock(&cookie->lock);
--	radix_tree_preload_end();
- 	fscache_stat(&fscache_n_store_ops);
- 	fscache_stat(&fscache_n_stores_ok);
+ 	rcu_read_lock();
+-	radix_tree_for_each_tagged(slot, &mapping->pages, &iter, start, tag) {
+-		struct page *head, *page;
+-repeat:
+-		page = radix_tree_deref_slot(slot);
+-		if (unlikely(!page))
++	xas_for_each_tag(&xas, page, ULONG_MAX, tag) {
++		if (xas_retry(&xas, page))
++			continue;
++		if (!xa_is_value(page) && !page_cache_pin(&xas, page))
+ 			continue;
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
+-
+-			/*
+-			 * A shadow entry of a recently evicted page, a swap
+-			 * entry from shmem/tmpfs or a DAX entry.  Return it
+-			 * without attempting to raise page count.
+-			 */
+-			goto export;
+-		}
+-
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
+-
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
  
-@@ -1014,30 +993,31 @@ int __fscache_write_page(struct fscache_cookie *cookie,
- already_queued:
- 	fscache_stat(&fscache_n_stores_again);
- already_pending:
--	spin_unlock(&cookie->stores_lock);
-+	xas_unlock(&xas);
- 	spin_unlock(&object->lock);
- 	spin_unlock(&cookie->lock);
--	radix_tree_preload_end();
- 	fscache_put_operation(&op->op);
- 	fscache_stat(&fscache_n_stores_ok);
- 	_leave(" = 0");
- 	return 0;
+-		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
+-export:
+-		indices[ret] = iter.index;
++		indices[ret] = xas.xa_index;
+ 		entries[ret] = page;
+ 		if (++ret == nr_entries)
+ 			break;
+@@ -2608,45 +2454,21 @@ EXPORT_SYMBOL(filemap_fault);
+ void filemap_map_pages(struct vm_fault *vmf,
+ 		pgoff_t start_pgoff, pgoff_t end_pgoff)
+ {
+-	struct radix_tree_iter iter;
+-	void **slot;
+ 	struct file *file = vmf->vma->vm_file;
+ 	struct address_space *mapping = file->f_mapping;
+ 	pgoff_t last_pgoff = start_pgoff;
+ 	unsigned long max_idx;
+-	struct page *head, *page;
++	XA_STATE(xas, &mapping->pages, start_pgoff);
++	struct page *page;
  
- submit_failed:
--	spin_lock(&cookie->stores_lock);
--	radix_tree_delete(&cookie->stores, page->index);
--	spin_unlock(&cookie->stores_lock);
-+	xa_erase(&cookie->stores, page->index);
- 	wake_cookie = __fscache_unuse_cookie(cookie);
- 	put_page(page);
- 	ret = -ENOBUFS;
- 	goto nobufs;
+ 	rcu_read_lock();
+-	radix_tree_for_each_slot(slot, &mapping->pages, &iter, start_pgoff) {
+-		if (iter.index > end_pgoff)
+-			break;
+-repeat:
+-		page = radix_tree_deref_slot(slot);
+-		if (unlikely(!page))
+-			goto next;
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
++	xas_for_each(&xas, page, end_pgoff) {
++		if (xas_retry(&xas, page))
++			continue;
++		if (xa_is_value(page))
+ 			goto next;
+-		}
+-
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
+-
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
+-
+-		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
++		if (!page_cache_pin(&xas, page))
++			continue;
  
- nobufs_unlock_obj:
--	spin_unlock(&cookie->stores_lock);
-+	xas_unlock(&xas);
- 	spin_unlock(&object->lock);
-+	spin_unlock(&cookie->lock);
-+	if (xas_nomem(&xas, gfp))
-+		goto retry;
-+	goto nobufs2;
- nobufs:
- 	spin_unlock(&cookie->lock);
--	radix_tree_preload_end();
-+nobufs2:
- 	fscache_put_operation(&op->op);
- 	if (wake_cookie)
- 		__fscache_wake_unused_cookie(cookie);
-@@ -1045,8 +1025,6 @@ int __fscache_write_page(struct fscache_cookie *cookie,
- 	_leave(" = -ENOBUFS");
- 	return -ENOBUFS;
+ 		if (!PageUptodate(page) ||
+ 				PageReadahead(page) ||
+@@ -2665,10 +2487,10 @@ void filemap_map_pages(struct vm_fault *vmf,
+ 		if (file->f_ra.mmap_miss > 0)
+ 			file->f_ra.mmap_miss--;
  
--nomem_free:
--	fscache_put_operation(&op->op);
- nomem:
- 	fscache_stat(&fscache_n_stores_oom);
- 	_leave(" = -ENOMEM");
-diff --git a/fs/fscache/stats.c b/fs/fscache/stats.c
-index 7ac6e839b065..9c012b4229cd 100644
---- a/fs/fscache/stats.c
-+++ b/fs/fscache/stats.c
-@@ -63,7 +63,7 @@ atomic_t fscache_n_stores_oom;
- atomic_t fscache_n_store_ops;
- atomic_t fscache_n_store_calls;
- atomic_t fscache_n_store_pages;
--atomic_t fscache_n_store_radix_deletes;
-+atomic_t fscache_n_store_xarray_deletes;
- atomic_t fscache_n_store_pages_over_limit;
+-		vmf->address += (iter.index - last_pgoff) << PAGE_SHIFT;
++		vmf->address += (xas.xa_index - last_pgoff) << PAGE_SHIFT;
+ 		if (vmf->pte)
+-			vmf->pte += iter.index - last_pgoff;
+-		last_pgoff = iter.index;
++			vmf->pte += xas.xa_index - last_pgoff;
++		last_pgoff = xas.xa_index;
+ 		if (alloc_set_pte(vmf, NULL, page))
+ 			goto unlock;
+ 		unlock_page(page);
+@@ -2681,8 +2503,6 @@ void filemap_map_pages(struct vm_fault *vmf,
+ 		/* Huge page is mapped? No need to proceed. */
+ 		if (pmd_trans_huge(*vmf->pmd))
+ 			break;
+-		if (iter.index == end_pgoff)
+-			break;
+ 	}
+ 	rcu_read_unlock();
+ }
+diff --git a/tools/testing/radix-tree/regression1.c b/tools/testing/radix-tree/regression1.c
+index 0aece092f40e..008393906be5 100644
+--- a/tools/testing/radix-tree/regression1.c
++++ b/tools/testing/radix-tree/regression1.c
+@@ -58,7 +58,7 @@ static struct page *page_alloc(void)
+ 	struct page *p;
+ 	p = malloc(sizeof(struct page));
+ 	p->count = 1;
+-	p->index = 1;
++	p->index = (unsigned long)p;
+ 	pthread_mutex_init(&p->lock, NULL);
  
- atomic_t fscache_n_store_vmscan_not_storing;
-@@ -232,11 +232,11 @@ static int fscache_stats_show(struct seq_file *m, void *v)
- 		   atomic_read(&fscache_n_stores_again),
- 		   atomic_read(&fscache_n_stores_nobufs),
- 		   atomic_read(&fscache_n_stores_oom));
--	seq_printf(m, "Stores : ops=%u run=%u pgs=%u rxd=%u olm=%u\n",
-+	seq_printf(m, "Stores : ops=%u run=%u pgs=%u xar=%u olm=%u\n",
- 		   atomic_read(&fscache_n_store_ops),
- 		   atomic_read(&fscache_n_store_calls),
- 		   atomic_read(&fscache_n_store_pages),
--		   atomic_read(&fscache_n_store_radix_deletes),
-+		   atomic_read(&fscache_n_store_xarray_deletes),
- 		   atomic_read(&fscache_n_store_pages_over_limit));
+ 	return p;
+@@ -77,53 +77,37 @@ static void page_free(struct page *p)
+ 	call_rcu(&p->rcu, page_rcu_free);
+ }
  
- 	seq_printf(m, "VmScan : nos=%u gon=%u bsy=%u can=%u wt=%u\n",
-diff --git a/include/linux/fscache.h b/include/linux/fscache.h
-index 6a2f631a913f..74ea31368c09 100644
---- a/include/linux/fscache.h
-+++ b/include/linux/fscache.h
-@@ -22,7 +22,7 @@
- #include <linux/list.h>
- #include <linux/pagemap.h>
- #include <linux/pagevec.h>
--#include <linux/radix-tree.h>
-+#include <linux/xarray.h>
++static bool page_cache_pin(struct xa_state *xas, struct page *page)
++{
++	pthread_mutex_lock(&page->lock);
++	if (!page->count) {
++		pthread_mutex_unlock(&page->lock);
++		goto fail;
++	}
++	/* don't actually update page refcount */
++	pthread_mutex_unlock(&page->lock);
++
++	/* Has the page moved? */
++	if (xas_reload(xas) == page)
++		return true;
++fail:
++	xas_retry(xas, XA_RETRY_ENTRY);
++	return false;
++}
++
+ static unsigned find_get_pages(unsigned long start,
+ 			    unsigned int nr_pages, struct page **pages)
+ {
+-	unsigned int i;
+-	unsigned int ret;
+-	unsigned int nr_found;
++	XA_STATE(xas, &mt_tree, start);
++	struct page *page;
++	unsigned int ret = 0;
  
- #if defined(CONFIG_FSCACHE) || defined(CONFIG_FSCACHE_MODULE)
- #define fscache_available() (1)
-@@ -175,9 +175,9 @@ struct fscache_cookie {
- 	const struct fscache_cookie_def	*def;		/* definition */
- 	struct fscache_cookie		*parent;	/* parent of this entry */
- 	void				*netfs_data;	/* back pointer to netfs */
--	struct radix_tree_root		stores;		/* pages to be stored on this cookie */
--#define FSCACHE_COOKIE_PENDING_TAG	0		/* pages tag: pending write to cache */
--#define FSCACHE_COOKIE_STORING_TAG	1		/* pages tag: writing to cache */
-+	struct xarray			stores;		/* pages to be stored on this cookie */
-+#define FSCACHE_COOKIE_PENDING_TAG	XA_TAG_0	/* pages tag: pending write to cache */
-+#define FSCACHE_COOKIE_STORING_TAG	XA_TAG_1	/* pages tag: writing to cache */
+ 	rcu_read_lock();
+-restart:
+-	nr_found = radix_tree_gang_lookup_slot(&mt_tree,
+-				(void ***)pages, NULL, start, nr_pages);
+-	ret = 0;
+-	for (i = 0; i < nr_found; i++) {
+-		struct page *page;
+-repeat:
+-		page = radix_tree_deref_slot((void **)pages[i]);
+-		if (unlikely(!page))
++	xas_for_each(&xas, page, ULONG_MAX) {
++		if (xas_retry(&xas, page))
++			continue;
++		if (!page_cache_pin(&xas, page))
+ 			continue;
+-
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				/*
+-				 * Transient condition which can only trigger
+-				 * when entry at index 0 moves out of or back
+-				 * to root: none yet gotten, safe to restart.
+-				 */
+-				assert((start | i) == 0);
+-				goto restart;
+-			}
+-			/*
+-			 * No exceptional entries are inserted in this test.
+-			 */
+-			assert(0);
+-		}
+-
+-		pthread_mutex_lock(&page->lock);
+-		if (!page->count) {
+-			pthread_mutex_unlock(&page->lock);
+-			goto repeat;
+-		}
+-		/* don't actually update page refcount */
+-		pthread_mutex_unlock(&page->lock);
+-
+-		/* Has the page moved? */
+-		if (unlikely(page != *((void **)pages[i]))) {
+-			goto repeat;
+-		}
  
- 	unsigned long			flags;
- #define FSCACHE_COOKIE_LOOKING_UP	0	/* T if non-index cookie being looked up still */
+ 		pages[ret] = page;
+ 		ret++;
 -- 
 2.15.1
 
