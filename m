@@ -1,42 +1,75 @@
-From: "Sra. Angel Rania" <sra.angelrania83-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: You will definetely be interested...
-Date: Wed, 27 Dec 2017 10:17:06 +0000
-Message-ID: <CAKx+QTtL6hVN3Sv0baZHHBnMxgEeMprK=PALd6GuhxU+MNPauw__19118.0761823945$1514369731$gmane$org@mail.gmail.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH v5 03/78] xarray: Add the xa_lock to the radix_tree_root
+Date: Wed, 27 Dec 2017 13:18:34 +0300
+Message-ID: <20171227101834.qfjsy6eqaojiifsr@node.shutemov.name>
+References: <20171215220450.7899-1-willy@infradead.org>
+ <20171215220450.7899-4-willy@infradead.org>
+ <20171226165440.tv6inwa2fgk3bfy6@node.shutemov.name>
+ <20171227034340.GC24828@bombadil.infradead.org>
+ <20171227035815.GD24828@bombadil.infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=XI1MOmnl6BkSX8cgp/62sLK1Xp5/a5cU5hSOyUNTaJ4=;
-        b=iYnnw+1XudeU/0/gA3zyw9Zi+uIAz8ETLiStFzzezBHZzuDzNqHQzb1Nq/6vSjaCX3
-         wqv2lgWfMXg5mUIubULd9EfW8jh88l7thwXbt/XIPROEVyQHPE75mA3BbsfJBznuvkc5
-         erSyFMRlwIQcm8kBSq5SpjpB/fWmMwZreSjRGb5qD9O06oRHVCDNDYJl45ctn8L54X7M
-         8Pfx+QFBR+9PwThQS1nqjbQ6+EsSaG6DcrNtHJZPOauuVBeDcW8Bc5N2GR8gmzhL0v4f
-         6+LMUTOP/iVwZxv5q3ltyxwjrhT5YYxVdFcWpf0wIc+HLC2ztK2OT0yLI7CXvtx2Gef8
-         4g+w==
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+        d=shutemov-name.20150623.gappssmtp.com; s=20150623;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to:user-agent;
+        bh=yBfQVT3oFqhNgNRHy/5mlCCHdHfi+E/c/vLmLyhHQOA=;
+        b=M1FDDjv7ElUgqyQzwZi0psofpAFkLiwxtdSlmTbukXxRRijYzF1/TBMOVIkwRxIBdq
+         X4L5xZfY2rP9HS09Ru7nl/U6OJrXmOCQEytzu/6e3tRf52lFhV0vOu7ihMz4p3QPTQTD
+         +5gIHKG2zOfWgoFGaGFFbCTkdI4jDZd2yVR2y7gJHRDdXaCf326sKqpmYt7zwys936rL
+         aYQ99Qauez9Pxv5RZ2IKzJBi68tID8oF0YUO1aNNTEumlELn/I/rcHwyg0yKC9I2kTdH
+         cxthi+tleqzECCL8fHx1mk/I9nIgx0FPvDjZK+GHLUzTWoqFU0C2xS1qkj3xzClM1PMV
+         mVDw==
+Content-Disposition: inline
+In-Reply-To: <20171227035815.GD24828@bombadil.infradead.org>
+Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: 
+To: Matthew Wilcox <willy@infradead.org>
+Cc: linux-kernel@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
-Hi Dear,
+On Tue, Dec 26, 2017 at 07:58:15PM -0800, Matthew Wilcox wrote:
+> On Tue, Dec 26, 2017 at 07:43:40PM -0800, Matthew Wilcox wrote:
+> >     Also add the xa_lock() and xa_unlock() family of wrappers to make it
+> >     easier to use the lock.  If we could rely on -fplan9-extensions in
+> >     the compiler, we could avoid all of this syntactic sugar, but that
+> >     wasn't added until gcc 4.6.
+> 
+> Oh, in case anyone's wondering, here's how I'd do it with plan9 extensions:
+> 
+> struct xarray {
+>         spinlock_t;
+>         int xa_flags;
+>         void *xa_head;
+> };
+> 
+> ...
+>         spin_lock_irqsave(&mapping->pages, flags);
+>         __delete_from_page_cache(page, NULL);
+>         spin_unlock_irqrestore(&mapping->pages, flags);
+> ...
+> 
+> The plan9 extensions permit passing a pointer to a struct which has an
+> unnamed element to a function which is expecting a pointer to the type
+> of that element.  The compiler does any necessary arithmetic to produce 
+> a pointer.  It's exactly as if I had written:
+> 
+>         spin_lock_irqsave(&mapping->pages.xa_lock, flags);
+>         __delete_from_page_cache(page, NULL);
+>         spin_unlock_irqrestore(&mapping->pages.xa_lock, flags);
+> 
+> More details here: https://9p.io/sys/doc/compiler.html
 
-Reading your profile has given me courage in search of a reasponsable
-and trust worthy Fellow. The past has treated me so awfully but now I
-am ready to move on despite of my health condition. I will like to
-have a sincere and important discussion with you that will be in your
-favor likewise to you and your environment especially to your close
-family. Endeavor to reply me and I have attached my picture in case
-you long to know who emailed you. I will be waiting to hear from you
-as soon as possble.
-Thanks for paying attention to my mail and will appreciate so much if
-I receive a reply from you for understable details.
+Yeah, that's neat.
 
-Thanks,
+Dealing with old compilers is frustrating...
 
-Mrs. Rania Hassan
+-- 
+ Kirill A. Shutemov
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
