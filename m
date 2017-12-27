@@ -1,96 +1,65 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v5 06/78] xarray: Change definition of sibling entries
-Date: Tue, 26 Dec 2017 19:13:26 -0800
-Message-ID: <20171227031326.GB24828@bombadil.infradead.org>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH v5 03/78] xarray: Add the xa_lock to the radix_tree_root
+Date: Tue, 26 Dec 2017 19:43:40 -0800
+Message-ID: <20171227034340.GC24828@bombadil.infradead.org>
 References: <20171215220450.7899-1-willy@infradead.org>
- <20171215220450.7899-7-willy@infradead.org>
- <20171226172153.pylgdefajcrthe3b@node.shutemov.name>
+ <20171215220450.7899-4-willy@infradead.org>
+ <20171226165440.tv6inwa2fgk3bfy6@node.shutemov.name>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=6egaDQY+G8tHKZ9n3xMYYZ/f5TuJiYylnU3+F7AAsy8=; b=OgSRf1hczecfzkCyLiYsxLGWQ
-        mPJhI9yPOhbejdFP0vyiI/bH7x3UMWHuPz57ryWnhj9uA9OZG+YlngMl/M7XBpIlZ2FH2eegQpk0z
-        qkZZFLF7NGbnWbx908ivU57JCxdH2QxdSFmJTxqku6UCAv2mmwVHicrjrEkUNgLNofr1Ml0FMw/U/
-        bs2LB25QW7iSpl7YWKMUBcbasA8gC7ExVJeBG6GphxzadUYenEi2PSmMidiAI+aSKAVtBPlBiLy9m
-        0iJI+slQk6+XcK3a4vcXTobeJuEDDUEcWDgGcpBlf5JewH8mWtn8yEHGa5k/f/GWTWpYoNV1LEpQb
-    
+	d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+	Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	 bh=LkpX01Y26Wny44Hpk2zisvdnsJu1sWO+nGCBTYh9Jro=; b=A/2zCSbJy4PYOdaf9InnwSgoq
+	HhrBKpKTy7rKkJNo+3LP737iIZW1aEc0QoIZEl8Sej53kXPFW0mUGKP+DkxJhPTqku40Kme3ZFAul
+	I86vbyXYS9mhQr7iT7Y1d+4c1LphKzpaZagXWcVq0L92BMuDJxJUEsTIZOxkkvLCPnicE0H7R2vjQ
+	2lkRYvk+yaVpDhpvziNOlB52DcGHvxAovQcM548rVB28IQ19FKh+szr6IbPJpY7A8iyis/l5sjn8e
+	K4FCotXnnx5kOhfz1cVndCxIq7WTCMvjMwCToGMeMUSX7i5uIi5BhUEQtt56NEeetZALLQumZCfkM
+	IGK8T/djw==;
 Content-Disposition: inline
-In-Reply-To: <20171226172153.pylgdefajcrthe3b-sVvlyX1904swdBt8bTSxpkEMvNT87kid@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20171226165440.tv6inwa2fgk3bfy6@node.shutemov.name>
+Sender: owner-linux-mm@kvack.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Rehas Sachdeva <aquannie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: linux-kernel@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Howells <dhowells@redhat.com>, Shaohua Li <shli@kernel.org>, Jens Axboe <axboe@kernel.dk>, Rehas Sachdeva <aquannie@gmail.com>, Marc Zyngier <marc.zyngier@arm.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, linux-usb@vger.kernel.org, linux-raid@vger.kernel.org
 
-On Tue, Dec 26, 2017 at 08:21:53PM +0300, Kirill A. Shutemov wrote:
-> > +/**
-> > + * xa_is_internal() - Is the entry an internal entry?
-> > + * @entry: Entry retrieved from the XArray
-> > + *
-> > + * Return: %true if the entry is an internal entry.
-> > + */
+On Tue, Dec 26, 2017 at 07:54:40PM +0300, Kirill A. Shutemov wrote:
+> On Fri, Dec 15, 2017 at 02:03:35PM -0800, Matthew Wilcox wrote:
+> > From: Matthew Wilcox <mawilcox@microsoft.com>
+> > 
+> > This results in no change in structure size on 64-bit x86 as it fits in
+> > the padding between the gfp_t and the void *.
 > 
-> What does it mean "internal entry"? Is it just a term for non-value and
-> non-data pointer entry? Do we allow anybody besides xarray implementation to
-> use internal entires?
+> The patch does more than described in the subject and commit message. At first
+> I was confused why do you need to touch idr here. It took few minutes to figure
+> it out.
 > 
-> Do we have it documented?
+> Could you please add more into commit message about lockname and xa_ locking
+> interface since you introduce it here?
 
-We do!  include/linux/radix-tree.h has it documented right now:
+Sure!  How's this?
 
-/*
- * The bottom two bits of the slot determine how the remaining bits in the
- * slot are interpreted:
- *
- * 00 - data pointer
- * 01 - internal entry
- * 10 - exceptional entry
- * 11 - this bit combination is currently unused/reserved
+    xarray: Add the xa_lock to the radix_tree_root
+    
+    This results in no change in structure size on 64-bit x86 as it fits in
+    the padding between the gfp_t and the void *.
+    
+    Initialising the spinlock requires a name for the benefit of lockdep,
+    so RADIX_TREE_INIT() now needs to know the name of the radix tree it's
+    initialising, and so do IDR_INIT() and IDA_INIT().
+    
+    Also add the xa_lock() and xa_unlock() family of wrappers to make it
+    easier to use the lock.  If we could rely on -fplan9-extensions in
+    the compiler, we could avoid all of this syntactic sugar, but that
+    wasn't added until gcc 4.6.
 
-Slightly further down this same patch you're commenting on, this comment
-is added:
-
-+/*
-+ * Internal entries have the bottom two bits set to the value 10b.  Most
-+ * internal entries are pointers to the next node in the tree.  Since the
-+ * kernel unmaps page 0 to trap NULL pointer dereferences, we can use values
-+ * 0-1023 for special purposes.  Values 0-62 are used for sibling
-+ * entries.  Value 256 is used for the retry entry.
-+ */
-
-That comment is later changed to:
-
-/*
- * Internal entries have the bottom two bits set to the value 10b.  Most
- * internal entries are pointers to the next node in the tree.  Since the
- * kernel unmaps page 0 to trap NULL pointer dereferences, we can use values
- * 0-1023 for special purposes.  Values 0-62 are used for sibling
- * entries.  Value 256 is used for zero entries.  Value 257 is used for the
- * retry entry.
- *
- * Errors are also represented as internal entries, but use the negative
- * space (-4094 to -2).  They're never stored in the slots array; only
- * generated by the normal API.
- */
-
-Also, this section exists in the documentation patch:
-
-+Internal Entries
-+----------------
-+
-+The XArray reserves some entries for its own purposes.  These are never
-+exposed through the normal API, but when using the advanced API, it's
-+possible to see them.  Usually the best way to handle them is to pass them
-+to :c:func:`xas_retry`, and retry the operation if it returns ``true``.
-
-[...]
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
