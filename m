@@ -1,291 +1,167 @@
 From: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: use time64_t internally
-Date: Tue, 23 Jan 2018 09:31:09 +0900
-Message-ID: <CAKFNMomACRQvA0Noo7gVESQu-oTpccfjXfqdYVD09hRt2hJWZQ@mail.gmail.com>
-References: <20180122211050.1286441-1-arnd@arndb.de>
+Subject: Re: [PATCH] libmount, libblkid: use PKG_CHECK_MODULES for probing
+Date: Tue, 23 Jan 2018 09:44:34 +0900
+Message-ID: <CAKFNMo=ZwtT0A8mC9YuO8Ei7WHa9QHTm52pTpPS=BOk7+TOaOw@mail.gmail.com>
+References: <1516655654-12684-1-git-send-email-dev.kurt@vandijck-laurijssen.be>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=mime-version:sender:in-reply-to:references:from:date:message-id
          :subject:to:cc;
-        bh=ZlZBGK3eLhzoKnqz7gRVSZjTEo8iu447XS+OmPW7XM8=;
-        b=KlMEMjwKtFW6fhDOwgvg9NeGhOiRY06b34AaytRigx5Yjbs43esn9OsOzDWAIy8FvB
-         xmvmjn9JgzZ+4gYFqNiecz/rqQTrkxF3EcfVfMHoIoFwojqyj9ifTZWaYlyy1q6xopBe
-         ZcpkjCoWl6y7mpdm6AFZS96N/G0/3CUc4hRcBQfxGUaBEw2nrowcPF04Hb2RUHelOX3U
-         m58AJLcGCby9bxtI7rQxsh857qR/LqKmIm6l1639Ub03n6bpoDafl80ckwxRgLxikJbF
-         LHUUFk8PHwltatA79IdCHn44y0hhmLRFjUwGT5JZuxf/4kh3ekC1SzfsSVzsCOtYwEHT
-         nkHA==
-In-Reply-To: <20180122211050.1286441-1-arnd-r2nGTMty4D4@public.gmane.org>
+        bh=YfVxp7I1Au38l8zkmxCWeZCwx0U/peqkySXZaptXFRA=;
+        b=bdt9/VrVUE8Xoww/RfuoRK8lhd4HXRFwdFJYvot7FvimyjpxNoYCW9wxLIN6hWmhhe
+         FsauG85ZBQA8EpISWyFkMj+RYIk2QqBS7xUFtsH8vA83UZzAv7nwZhUqhqLjEIk7T6+s
+         Rdly/vhfeAr8MezchYqxzapTgmLkGg2gRLcNIk1vshaeKwIuI6cjj2/DBbP1tpqlqvMD
+         k9ZaopMrMi/W37HHM4ihLFQBqtTK6j2YXgYARKA9nb063JcKPDNSk/17lsgOnUJ17Z38
+         2Kg84o84wUhoFgCnsUFKmgoW1fdEhFmYIzGTsO5BgMFiG5YnoCCAVnhwHja03DDX1CrX
+         X6fA==
+In-Reply-To: <1516655654-12684-1-git-send-email-dev.kurt-yI9piX4KPfawT/RRk36CISFp6vIno51x@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Kurt Van Dijck <dev.kurt-yI9piX4KPfawT/RRk36CISFp6vIno51x@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-2018-01-23 6:10 GMT+09:00 Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>:
-> The superblock and segment timestamps are used only internally in nilfs2
-> and can be read out using sysfs. Since we are using the old 'get_seconds()'
-> interface and store the data as timestamps, the behavior differs slightly
-> between 64-bit and 32-bit kernels, the latter will show incorrect timestamps
-> after 2038 in sysfs, and presumably fail completely in 2106 as comparisons
-> go wrong.
+2018-01-23 6:14 GMT+09:00 Kurt Van Dijck <dev.kurt-yI9piX4KPfawT/RRk36CISFp6vIno51x@public.gmane.org>:
+> After a round to add this to buildroot, I learned that
+> the proper way to check the dependencies seems to point to pkg-config.
+> This commit migrates the libmount & libblkid checks to use PKG_CHECK_MODULES.
+> I added a similar patch to current buildroot, and this succeeds
+> all daily tests as well.
 >
-> This changes nilfs2 to use time64_t with ktime_get_real_seconds() to handle
-> timestamps, making the behavior consistent and correct on both 32-bit
-> and 64-bit machines.
->
-> The on-disk format already uses 64-bit timestamps, so nothing changes
-> there.
->
-> Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> Signed-off-by: Kurt Van Dijck <dev.kurt-yI9piX4KPfawT/RRk36CISFp6vIno51x@public.gmane.org>
 
-Thank you for this patch.
+Thank you again.   Will review later.
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
-
+Regards,
+Ryusuke Konishi
 
 > ---
->  fs/nilfs2/segbuf.c    |  2 +-
->  fs/nilfs2/segbuf.h    |  4 ++--
->  fs/nilfs2/segment.c   |  2 +-
->  fs/nilfs2/segment.h   |  2 +-
->  fs/nilfs2/sufile.c    |  2 +-
->  fs/nilfs2/sufile.h    |  2 +-
->  fs/nilfs2/super.c     |  4 ++--
->  fs/nilfs2/sysfs.c     | 21 ++++++++++-----------
->  fs/nilfs2/the_nilfs.h |  8 ++++----
->  9 files changed, 23 insertions(+), 24 deletions(-)
+>  configure.ac                 | 13 +++----------
+>  sbin/Makefile.am             |  3 ++-
+>  sbin/mkfs.c                  |  6 +++---
+>  sbin/mount/Makefile.am       |  4 ++--
+>  sbin/mount/mount_libmount.c  |  4 +---
+>  sbin/mount/umount_libmount.c |  4 +---
+>  6 files changed, 12 insertions(+), 22 deletions(-)
 >
-> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-> index 6c5009cc4e6f..68cb9e4740b4 100644
-> --- a/fs/nilfs2/segbuf.c
-> +++ b/fs/nilfs2/segbuf.c
-> @@ -130,7 +130,7 @@ int nilfs_segbuf_extend_payload(struct nilfs_segment_buffer *segbuf,
->  }
+> diff --git a/configure.ac b/configure.ac
+> index c92d1c5..6a824f2 100644
+> --- a/configure.ac
+> +++ b/configure.ac
+> @@ -106,27 +106,20 @@ fi
 >
->  int nilfs_segbuf_reset(struct nilfs_segment_buffer *segbuf, unsigned int flags,
-> -                      time_t ctime, __u64 cno)
-> +                      time64_t ctime, __u64 cno)
->  {
->         int err;
+>  # Check for conditional libraries and headers.
+>  if test "${with_blkid}" = "yes"; then
+> -   AC_CHECK_LIB(blkid, blkid_new_probe_from_filename,
+> +   PKG_CHECK_MODULES([BLKID], [blkid],
+>                 [AC_DEFINE(HAVE_LIBBLKID, 1,
+>                     [Define to 1 if you have the 'blkid' library (-lblkid).])
+> -                LIB_BLKID="-lblkid -luuid"
+> -               ],
+> -               AC_MSG_ERROR([BLKID library not found]), [-luuid])
+> -   AC_CHECK_HEADERS([blkid/blkid.h])
+> +               ])
+>  fi
+> -AC_SUBST(LIB_BLKID)
 >
-> diff --git a/fs/nilfs2/segbuf.h b/fs/nilfs2/segbuf.h
-> index 7bbccc099709..10e16935fff6 100644
-> --- a/fs/nilfs2/segbuf.h
-> +++ b/fs/nilfs2/segbuf.h
-> @@ -46,7 +46,7 @@ struct nilfs_segsum_info {
->         unsigned long           nfileblk;
->         u64                     seg_seq;
->         __u64                   cno;
-> -       time_t                  ctime;
-> +       time64_t                ctime;
->         sector_t                next;
->  };
+>  if test "${with_libmount}" = "yes"; then
+>     if test "$mtab_type" = file; then
+>        AC_MSG_WARN([Use --without-libmount option to generate mount helpers that work with the legacy mtab file.])
+>     fi
+> -   AC_CHECK_LIB(mount, mnt_context_do_mount, [LIB_MOUNT="-lmount $LIB_BLKID"],
+> -       AC_MSG_ERROR([Mount library is enabled but libmount not found]), [$LIB_BLKID])
+> -   AC_CHECK_HEADERS([libmount/libmount.h])
+> +   PKG_CHECK_MODULES([MOUNT], [mount])
+>     with_selinux=no
+>  fi
+>  AM_CONDITIONAL(CONFIG_LIBMOUNT, [test "$with_libmount" = "yes"])
+> -AC_SUBST(LIB_MOUNT)
 >
-> @@ -120,7 +120,7 @@ void nilfs_segbuf_map_cont(struct nilfs_segment_buffer *segbuf,
->                            struct nilfs_segment_buffer *prev);
->  void nilfs_segbuf_set_next_segnum(struct nilfs_segment_buffer *, __u64,
->                                   struct the_nilfs *);
-> -int nilfs_segbuf_reset(struct nilfs_segment_buffer *, unsigned int, time_t,
-> +int nilfs_segbuf_reset(struct nilfs_segment_buffer *, unsigned int, time64_t,
->                        __u64);
->  int nilfs_segbuf_extend_segsum(struct nilfs_segment_buffer *);
->  int nilfs_segbuf_extend_payload(struct nilfs_segment_buffer *,
-> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> index 9f3ffba41533..0953635e7d48 100644
-> --- a/fs/nilfs2/segment.c
-> +++ b/fs/nilfs2/segment.c
-> @@ -2040,7 +2040,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
->                         goto out;
+>  if test "${with_selinux}" = "yes"; then
+>     AC_CHECK_LIB(selinux, getprevcon,
+> diff --git a/sbin/Makefile.am b/sbin/Makefile.am
+> index 7729166..4eac742 100644
+> --- a/sbin/Makefile.am
+> +++ b/sbin/Makefile.am
+> @@ -10,7 +10,8 @@ root_sbin_PROGRAMS = mkfs.nilfs2 nilfs_cleanerd
+>  sbin_PROGRAMS = nilfs-clean nilfs-resize nilfs-tune
 >
->                 /* Update time stamp */
-> -               sci->sc_seg_ctime = get_seconds();
-> +               sci->sc_seg_ctime = ktime_get_real_seconds();
+>  mkfs_nilfs2_SOURCES = mkfs.c bitops.c mkfs.h
+> -mkfs_nilfs2_LDADD = $(LIB_BLKID) -luuid \
+> +mkfs_nilfs2_CFLAGS = -Wall $(BLKID_CFLAGS)
+> +mkfs_nilfs2_LDADD = $(BLKID_LIBS) -luuid \
+>         $(top_builddir)/lib/libcrc32.la \
+>         $(top_builddir)/lib/libmountchk.la \
+>         $(top_builddir)/lib/libnilfsfeature.la
+> diff --git a/sbin/mkfs.c b/sbin/mkfs.c
+> index a0da7fe..95679dc 100644
+> --- a/sbin/mkfs.c
+> +++ b/sbin/mkfs.c
+> @@ -58,9 +58,9 @@
 >
->                 err = nilfs_segctor_collect(sci, nilfs, mode);
->                 if (unlikely(err))
-> diff --git a/fs/nilfs2/segment.h b/fs/nilfs2/segment.h
-> index 84084a4d9b3e..04634e3e3d58 100644
-> --- a/fs/nilfs2/segment.h
-> +++ b/fs/nilfs2/segment.h
-> @@ -157,7 +157,7 @@ struct nilfs_sc_info {
->         unsigned long           sc_blk_cnt;
->         unsigned long           sc_datablk_cnt;
->         unsigned long           sc_nblk_this_inc;
-> -       time_t                  sc_seg_ctime;
-> +       time64_t                sc_seg_ctime;
->         __u64                   sc_cno;
->         unsigned long           sc_flags;
+>  #include <errno.h>
 >
-> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-> index 1341a41e7b43..c7fa139d50e8 100644
-> --- a/fs/nilfs2/sufile.c
-> +++ b/fs/nilfs2/sufile.c
-> @@ -526,7 +526,7 @@ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
->   * @modtime: modification time (option)
->   */
->  int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
-> -                                  unsigned long nblocks, time_t modtime)
-> +                                  unsigned long nblocks, time64_t modtime)
->  {
->         struct buffer_head *bh;
->         struct nilfs_segment_usage *su;
-> diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
-> index 158a9190c8ec..673a891350f4 100644
-> --- a/fs/nilfs2/sufile.h
-> +++ b/fs/nilfs2/sufile.h
-> @@ -35,7 +35,7 @@ int nilfs_sufile_set_alloc_range(struct inode *sufile, __u64 start, __u64 end);
->  int nilfs_sufile_alloc(struct inode *, __u64 *);
->  int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum);
->  int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
-> -                                  unsigned long nblocks, time_t modtime);
-> +                                  unsigned long nblocks, time64_t modtime);
->  int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
->  ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned int,
->                                 size_t);
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index 3073b646e1ba..6ffeca84d7c3 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -283,10 +283,10 @@ int nilfs_commit_super(struct super_block *sb, int flag)
->  {
->         struct the_nilfs *nilfs = sb->s_fs_info;
->         struct nilfs_super_block **sbp = nilfs->ns_sbp;
-> -       time_t t;
-> +       time64_t t;
+> -#if HAVE_BLKID_BLKID_H
+> -#include <blkid/blkid.h>
+> -#endif /* HAVE_BLKID_BLKID_H */
+> +#if HAVE_LIBBLKID
+> +#include <blkid.h>
+> +#endif /* HAVE_LIBBLKID */
 >
->         /* nilfs->ns_sem must be locked by the caller. */
-> -       t = get_seconds();
-> +       t = ktime_get_real_seconds();
->         nilfs->ns_sbwtime = t;
->         sbp[0]->s_wtime = cpu_to_le64(t);
->         sbp[0]->s_sum = 0;
-> diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-> index 490303e3d517..4b25837e7724 100644
-> --- a/fs/nilfs2/sysfs.c
-> +++ b/fs/nilfs2/sysfs.c
-> @@ -31,7 +31,7 @@ static struct kset *nilfs_kset;
->  #define NILFS_SHOW_TIME(time_t_val, buf) ({ \
->                 struct tm res; \
->                 int count = 0; \
-> -               time_to_tm(time_t_val, 0, &res); \
-> +               time64_to_tm(time_t_val, 0, &res); \
->                 res.tm_year += 1900; \
->                 res.tm_mon += 1; \
->                 count = scnprintf(buf, PAGE_SIZE, \
-> @@ -579,7 +579,7 @@ nilfs_segctor_last_seg_write_time_show(struct nilfs_segctor_attr *attr,
->                                         struct the_nilfs *nilfs,
->                                         char *buf)
->  {
-> -       time_t ctime;
-> +       time64_t ctime;
+>  #include "nilfs.h"
+>  #include "mkfs.h"
+> diff --git a/sbin/mount/Makefile.am b/sbin/mount/Makefile.am
+> index f5d3c27..9554aa5 100644
+> --- a/sbin/mount/Makefile.am
+> +++ b/sbin/mount/Makefile.am
+> @@ -6,10 +6,10 @@ COMMONHEADERS = mount.nilfs2.h sundries.h xmalloc.h
+>  LEGACYSOURCES = fstab.c mount_mntent.c mount_opts.c
+>  LEGACYHEADERS = fstab.h mount_constants.h mount_mntent.h mount_opts.h
 >
->         down_read(&nilfs->ns_segctor_sem);
->         ctime = nilfs->ns_ctime;
-> @@ -593,13 +593,13 @@ nilfs_segctor_last_seg_write_time_secs_show(struct nilfs_segctor_attr *attr,
->                                             struct the_nilfs *nilfs,
->                                             char *buf)
->  {
-> -       time_t ctime;
-> +       time64_t ctime;
+> -AM_CFLAGS = -Wall
+> +AM_CFLAGS = -Wall $(MOUNT_CFLAGS)
+>  AM_CPPFLAGS = -I$(top_srcdir)/include
+>  LDADD = $(top_builddir)/lib/librealpath.la \
+> -       $(top_builddir)/lib/libcleanerexec.la $(LIB_MOUNT) $(LIB_SELINUX) \
+> +       $(top_builddir)/lib/libcleanerexec.la $(MOUNT_LIBS) $(LIB_SELINUX) \
+>         $(LIB_POSIX_TIMER)
 >
->         down_read(&nilfs->ns_segctor_sem);
->         ctime = nilfs->ns_ctime;
->         up_read(&nilfs->ns_segctor_sem);
+>  root_sbin_PROGRAMS = mount.nilfs2 umount.nilfs2
+> diff --git a/sbin/mount/mount_libmount.c b/sbin/mount/mount_libmount.c
+> index ef40e68..a7fec00 100644
+> --- a/sbin/mount/mount_libmount.c
+> +++ b/sbin/mount/mount_libmount.c
+> @@ -67,9 +67,7 @@
+>  #include <syslog.h>
+>  #endif /* HAVE_SYSLOG_H */
 >
-> -       return snprintf(buf, PAGE_SIZE, "%llu\n", (unsigned long long)ctime);
-> +       return snprintf(buf, PAGE_SIZE, "%llu\n", ctime);
->  }
+> -#if HAVE_LIBMOUNT_LIBMOUNT_H
+> -#include <libmount/libmount.h>
+> -#endif /* HAVE_LIBMOUNT_H */
+> +#include <libmount.h>
 >
->  static ssize_t
-> @@ -607,7 +607,7 @@ nilfs_segctor_last_nongc_write_time_show(struct nilfs_segctor_attr *attr,
->                                          struct the_nilfs *nilfs,
->                                          char *buf)
->  {
-> -       time_t nongc_ctime;
-> +       time64_t nongc_ctime;
+>  #include <stdarg.h>
+>  #include <errno.h>
+> diff --git a/sbin/mount/umount_libmount.c b/sbin/mount/umount_libmount.c
+> index ae5a337..b678f54 100644
+> --- a/sbin/mount/umount_libmount.c
+> +++ b/sbin/mount/umount_libmount.c
+> @@ -59,9 +59,7 @@
+>  #include <syslog.h>
+>  #endif /* HAVE_SYSLOG_H */
 >
->         down_read(&nilfs->ns_segctor_sem);
->         nongc_ctime = nilfs->ns_nongc_ctime;
-> @@ -621,14 +621,13 @@ nilfs_segctor_last_nongc_write_time_secs_show(struct nilfs_segctor_attr *attr,
->                                                 struct the_nilfs *nilfs,
->                                                 char *buf)
->  {
-> -       time_t nongc_ctime;
-> +       time64_t nongc_ctime;
+> -#if HAVE_LIBMOUNT_LIBMOUNT_H
+> -#include <libmount/libmount.h>
+> -#endif /* HAVE_LIBMOUNT_H */
+> +#include <libmount.h>
 >
->         down_read(&nilfs->ns_segctor_sem);
->         nongc_ctime = nilfs->ns_nongc_ctime;
->         up_read(&nilfs->ns_segctor_sem);
->
-> -       return snprintf(buf, PAGE_SIZE, "%llu\n",
-> -                       (unsigned long long)nongc_ctime);
-> +       return snprintf(buf, PAGE_SIZE, "%llu\n", nongc_ctime);
->  }
->
->  static ssize_t
-> @@ -728,7 +727,7 @@ nilfs_superblock_sb_write_time_show(struct nilfs_superblock_attr *attr,
->                                      struct the_nilfs *nilfs,
->                                      char *buf)
->  {
-> -       time_t sbwtime;
-> +       time64_t sbwtime;
->
->         down_read(&nilfs->ns_sem);
->         sbwtime = nilfs->ns_sbwtime;
-> @@ -742,13 +741,13 @@ nilfs_superblock_sb_write_time_secs_show(struct nilfs_superblock_attr *attr,
->                                          struct the_nilfs *nilfs,
->                                          char *buf)
->  {
-> -       time_t sbwtime;
-> +       time64_t sbwtime;
->
->         down_read(&nilfs->ns_sem);
->         sbwtime = nilfs->ns_sbwtime;
->         up_read(&nilfs->ns_sem);
->
-> -       return snprintf(buf, PAGE_SIZE, "%llu\n", (unsigned long long)sbwtime);
-> +       return snprintf(buf, PAGE_SIZE, "%llu\n", sbwtime);
->  }
->
->  static ssize_t
-> diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-> index 883d732b0259..36da1779f976 100644
-> --- a/fs/nilfs2/the_nilfs.h
-> +++ b/fs/nilfs2/the_nilfs.h
-> @@ -116,7 +116,7 @@ struct the_nilfs {
->          */
->         struct buffer_head     *ns_sbh[2];
->         struct nilfs_super_block *ns_sbp[2];
-> -       time_t                  ns_sbwtime;
-> +       time64_t                ns_sbwtime;
->         unsigned int            ns_sbwcount;
->         unsigned int            ns_sbsize;
->         unsigned int            ns_mount_state;
-> @@ -131,8 +131,8 @@ struct the_nilfs {
->         __u64                   ns_nextnum;
->         unsigned long           ns_pseg_offset;
->         __u64                   ns_cno;
-> -       time_t                  ns_ctime;
-> -       time_t                  ns_nongc_ctime;
-> +       time64_t                ns_ctime;
-> +       time64_t                ns_nongc_ctime;
->         atomic_t                ns_ndirtyblks;
->
->         /*
-> @@ -267,7 +267,7 @@ struct nilfs_root {
->
->  static inline int nilfs_sb_need_update(struct the_nilfs *nilfs)
->  {
-> -       u64 t = get_seconds();
-> +       u64 t = ktime_get_real_seconds();
->
->         return t < nilfs->ns_sbwtime ||
->                 t > nilfs->ns_sbwtime + nilfs->ns_sb_update_freq;
+>  #include <stdarg.h>
+>  #include <errno.h>
 > --
-> 2.9.0
+> 1.8.5.rc3
 >
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-nilfs" in
