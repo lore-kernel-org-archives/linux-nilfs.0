@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 25/63] xarray: Add MAINTAINERS entry
-Date: Tue,  6 Mar 2018 11:23:35 -0800
-Message-ID: <20180306192413.5499-26-willy@infradead.org>
+Subject: [PATCH v8 27/63] page cache: Convert hole search to XArray
+Date: Tue,  6 Mar 2018 11:23:37 -0800
+Message-ID: <20180306192413.5499-28-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=zplCmU9+9f/8Z6OwfiY1p6q4BmhmwOOZVTob47pP2iw=; b=WVuaHQTe2OOV0djUA/leT6702
-        n4u8knT6PFGrPolL90Uxve3QnoAX6z7gr7WMm9D1lR7ZkLhK3mW9NXvFHOXu/VjLqArhXsmICG+Hy
-        hxnPkepajWbaTIufIE8PVEiSRn+F0xavGP2SEajWk/Kae4tF8Kb6J+grL7fqOkRfj4foQNApG2igP
-        LCoOYL8s3Y/KiovGIy3wmr5RI7ZzK2FJJO51WtRmSkcQmJDQL6nM7qFapLDjMTBIU7oeXTM6JWzSs
-        C6NEuANWFFiKHyA/XWYWPI3izl1NX/LvrQpBWQHNhRF/4orshP5ZyJ1fmysHfcDLIpl1A6uQPgm13
+         bh=Qaxd6nFGMSHrcSi/Gm1erttpZgrsDW+4B4vPM0DMScA=; b=Wof7LjOWNnLEcmJET4ir6D31N
+        C3LyUpysv05HcREtEOwzMul1No3dkE5j/XsNqfpinScET3qzZG94PSerP0yueYZzi76v7y61/EtCt
+        k5LffWr5bnR26Unfl/tNouMN/pLZRPrKgy/8XGnFOeuoKW29i6CG3rxkgbjsvSI1O4kDtBA9Iw0vV
+        C4Q0l0rF9FooPeDVDDrue9a+WqTi4OdEHeBHXoD2Vi7LmREiTm19qFW5WjlS9Md6mH2+cdjNJZyVV
+        FByagm+SDq8fUA9Me1ep5eTAuCBBwgIegiip0oROanBJzDjt3H7TKZH8tscjNJMXbIX91mTKc3AYT
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,36 +27,212 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Add myself as XArray and IDR maintainer.
+The page cache offers the ability to search for a miss in the previous or
+next N locations.  Rather than teach the XArray about the page cache's
+definition of a miss, use xas_prev() and xas_next() to search the page
+array.  This should be more efficient as it does not have to start the
+lookup from the top for each index.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- MAINTAINERS | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ fs/nfs/blocklayout/blocklayout.c |   2 +-
+ include/linux/pagemap.h          |   4 +-
+ mm/filemap.c                     | 110 ++++++++++++++++++---------------------
+ mm/readahead.c                   |   4 +-
+ 4 files changed, 55 insertions(+), 65 deletions(-)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 6d78237066ab..08613d97a74d 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -15293,6 +15293,18 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git x86/vdso
- S:	Maintained
- F:	arch/x86/entry/vdso/
+diff --git a/fs/nfs/blocklayout/blocklayout.c b/fs/nfs/blocklayout/blocklayout.c
+index 7cb5c38c19e4..961901685007 100644
+--- a/fs/nfs/blocklayout/blocklayout.c
++++ b/fs/nfs/blocklayout/blocklayout.c
+@@ -895,7 +895,7 @@ static u64 pnfs_num_cont_bytes(struct inode *inode, pgoff_t idx)
+ 	end = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+ 	if (end != inode->i_mapping->nrpages) {
+ 		rcu_read_lock();
+-		end = page_cache_next_hole(mapping, idx + 1, ULONG_MAX);
++		end = page_cache_next_gap(mapping, idx + 1, ULONG_MAX);
+ 		rcu_read_unlock();
+ 	}
  
-+XARRAY
-+M:	Matthew Wilcox <mawilcox@microsoft.com>
-+M:	Matthew Wilcox <willy@infradead.org>
-+L:	linux-fsdevel@vger.kernel.org
-+S:	Supported
-+F:	Documentation/core-api/xarray.rst
-+F:	lib/idr.c
-+F:	lib/xarray.c
-+F:	include/linux/idr.h
-+F:	include/linux/xarray.h
-+F:	tools/testing/radix-tree
-+
- XC2028/3028 TUNER DRIVER
- M:	Mauro Carvalho Chehab <mchehab@s-opensource.com>
- M:	Mauro Carvalho Chehab <mchehab@kernel.org>
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index b1bd2186e6d2..2f5d2d3ebaac 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -241,9 +241,9 @@ static inline gfp_t readahead_gfp_mask(struct address_space *x)
+ 
+ typedef int filler_t(void *, struct page *);
+ 
+-pgoff_t page_cache_next_hole(struct address_space *mapping,
++pgoff_t page_cache_next_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
+-pgoff_t page_cache_prev_hole(struct address_space *mapping,
++pgoff_t page_cache_prev_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
+ 
+ #define FGP_ACCESSED		0x00000001
+diff --git a/mm/filemap.c b/mm/filemap.c
+index f2251183a977..efe227940784 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1326,86 +1326,76 @@ int __lock_page_or_retry(struct page *page, struct mm_struct *mm,
+ }
+ 
+ /**
+- * page_cache_next_hole - find the next hole (not-present entry)
+- * @mapping: mapping
+- * @index: index
+- * @max_scan: maximum range to search
+- *
+- * Search the set [index, min(index+max_scan-1, MAX_INDEX)] for the
+- * lowest indexed hole.
+- *
+- * Returns: the index of the hole if found, otherwise returns an index
+- * outside of the set specified (in which case 'return - index >=
+- * max_scan' will be true). In rare cases of index wrap-around, 0 will
+- * be returned.
+- *
+- * page_cache_next_hole may be called under rcu_read_lock. However,
+- * like radix_tree_gang_lookup, this will not atomically search a
+- * snapshot of the tree at a single point in time. For example, if a
+- * hole is created at index 5, then subsequently a hole is created at
+- * index 10, page_cache_next_hole covering both indexes may return 10
+- * if called under rcu_read_lock.
++ * page_cache_next_gap() - Find the next gap in the page cache.
++ * @mapping: Mapping.
++ * @index: Index.
++ * @max_scan: Maximum range to search.
++ *
++ * Search the range [index, min(index + max_scan - 1, ULONG_MAX)] for the
++ * gap with the lowest index.
++ *
++ * This function may be called under the rcu_read_lock.  However, this will
++ * not atomically search a snapshot of the cache at a single point in time.
++ * For example, if a gap is created at index 5, then subsequently a gap is
++ * created at index 10, page_cache_next_gap covering both indices may
++ * return 10 if called under the rcu_read_lock.
++ *
++ * Return: The index of the gap if found, otherwise an index outside the
++ * range specified (in which case 'return - index >= max_scan' will be true).
++ * In the rare case of index wrap-around, 0 will be returned.
+  */
+-pgoff_t page_cache_next_hole(struct address_space *mapping,
++pgoff_t page_cache_next_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan)
+ {
+-	unsigned long i;
++	XA_STATE(xas, &mapping->i_pages, index);
+ 
+-	for (i = 0; i < max_scan; i++) {
+-		struct page *page;
+-
+-		page = radix_tree_lookup(&mapping->i_pages, index);
+-		if (!page || xa_is_value(page))
++	while (max_scan--) {
++		void *entry = xas_next(&xas);
++		if (!entry || xa_is_value(entry))
+ 			break;
+-		index++;
+-		if (index == 0)
++		if (xas.xa_index == 0)
+ 			break;
+ 	}
+ 
+-	return index;
++	return xas.xa_index;
+ }
+-EXPORT_SYMBOL(page_cache_next_hole);
++EXPORT_SYMBOL(page_cache_next_gap);
+ 
+ /**
+- * page_cache_prev_hole - find the prev hole (not-present entry)
+- * @mapping: mapping
+- * @index: index
+- * @max_scan: maximum range to search
+- *
+- * Search backwards in the range [max(index-max_scan+1, 0), index] for
+- * the first hole.
+- *
+- * Returns: the index of the hole if found, otherwise returns an index
+- * outside of the set specified (in which case 'index - return >=
+- * max_scan' will be true). In rare cases of wrap-around, ULONG_MAX
+- * will be returned.
+- *
+- * page_cache_prev_hole may be called under rcu_read_lock. However,
+- * like radix_tree_gang_lookup, this will not atomically search a
+- * snapshot of the tree at a single point in time. For example, if a
+- * hole is created at index 10, then subsequently a hole is created at
+- * index 5, page_cache_prev_hole covering both indexes may return 5 if
+- * called under rcu_read_lock.
++ * page_cache_prev_gap() - Find the next gap in the page cache.
++ * @mapping: Mapping.
++ * @index: Index.
++ * @max_scan: Maximum range to search.
++ *
++ * Search the range [max(index - max_scan + 1, 0), index] for the
++ * gap with the highest index.
++ *
++ * This function may be called under the rcu_read_lock.  However, this will
++ * not atomically search a snapshot of the cache at a single point in time.
++ * For example, if a gap is created at index 10, then subsequently a gap is
++ * created at index 5, page_cache_prev_gap() covering both indices may
++ * return 5 if called under the rcu_read_lock.
++ *
++ * Return: The index of the gap if found, otherwise an index outside the
++ * range specified (in which case 'index - return >= max_scan' will be true).
++ * In the rare case of wrap-around, ULONG_MAX will be returned.
+  */
+-pgoff_t page_cache_prev_hole(struct address_space *mapping,
++pgoff_t page_cache_prev_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan)
+ {
+-	unsigned long i;
+-
+-	for (i = 0; i < max_scan; i++) {
+-		struct page *page;
++	XA_STATE(xas, &mapping->i_pages, index);
+ 
+-		page = radix_tree_lookup(&mapping->i_pages, index);
+-		if (!page || xa_is_value(page))
++	while (max_scan--) {
++		void *entry = xas_prev(&xas);
++		if (!entry || xa_is_value(entry))
+ 			break;
+-		index--;
+-		if (index == ULONG_MAX)
++		if (xas.xa_index == ULONG_MAX)
+ 			break;
+ 	}
+ 
+-	return index;
++	return xas.xa_index;
+ }
+-EXPORT_SYMBOL(page_cache_prev_hole);
++EXPORT_SYMBOL(page_cache_prev_gap);
+ 
+ /**
+  * find_get_entry - find and get a page cache entry
+diff --git a/mm/readahead.c b/mm/readahead.c
+index a1555ec59fa8..3ff9763b0461 100644
+--- a/mm/readahead.c
++++ b/mm/readahead.c
+@@ -329,7 +329,7 @@ static pgoff_t count_history_pages(struct address_space *mapping,
+ 	pgoff_t head;
+ 
+ 	rcu_read_lock();
+-	head = page_cache_prev_hole(mapping, offset - 1, max);
++	head = page_cache_prev_gap(mapping, offset - 1, max);
+ 	rcu_read_unlock();
+ 
+ 	return offset - 1 - head;
+@@ -417,7 +417,7 @@ ondemand_readahead(struct address_space *mapping,
+ 		pgoff_t start;
+ 
+ 		rcu_read_lock();
+-		start = page_cache_next_hole(mapping, offset + 1, max_pages);
++		start = page_cache_next_gap(mapping, offset + 1, max_pages);
+ 		rcu_read_unlock();
+ 
+ 		if (!start || start - offset > max_pages)
 -- 
 2.16.1
 
