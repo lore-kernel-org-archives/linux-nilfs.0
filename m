@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 45/63] shmem: Convert replace to XArray
-Date: Tue,  6 Mar 2018 11:23:55 -0800
-Message-ID: <20180306192413.5499-46-willy@infradead.org>
+Subject: [PATCH v8 62/63] page cache: Finish XArray conversion
+Date: Tue,  6 Mar 2018 11:24:12 -0800
+Message-ID: <20180306192413.5499-63-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=FUeHHltbPCt4ghXEKtN6tuVGKFndIr/DHJPVKl1Uh8I=; b=psePMs31zDqaXRlRE1iA5Oueb
-        TBBeyFfr6TmaEzXUe6P22UTzwq5ni4hQoq4F5rhS4grg5B38Vnpe5K3DIM7eP4gSHy3W/aHqEYHji
-        ShLidGFJgwerAGWHrNwqxEK8f2R4SI/CFHS1VcXm2T2llYJjv1Wd6ztw7xGUmsLJkC62p3rregIgH
-        vn7o/wboPVqPkS9b0gmqAvbtTINeyXPJSiOEuDjWQtC+wwZv0nONMfXHuNz6eRoO0GbKkPOze1QR0
-        MjTCCXvPftlBXf/4f4aTPegDVA6JPiFEa/2lZJ2w6yHK9ZKS5lsnn7kkgYv7fEBEoY//K5f9GKG1e
+         bh=4ef3ULN8vqN/jL+gDysrRTeOdOMCgny0ObqrINpLEro=; b=BA2iZ3osC7rXlt6Mj7CwXck7T
+        qgULD8l4h3GvMusZ2vuIg8eOko6/lNH7GOlTxq/z7VUJJkM03DiwMgP/EmfWuXQ4srPHoAlqzTX/M
+        LYizJKeBXsohG3cSxgy/RKjBnax4+EVTARwlry/LMx58ytVtuaWKXAC88SrU68BU60AY3YKwrqF6F
+        n/mc3b1+eHkJgSgEdynFEVO+YHCMGSJ7tV4OKUQCdlfCPyTBCQCycVLPhXWaphUTLa17bhFqej1be
+        x/LnIKWNuYiY7yN2bPPERzy14aPX/mDE6eETjPChykVhsww4DCoiL5Ithgx70GsTUvlb8e0I+dCTS
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,77 +27,41 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-shmem_radix_tree_replace() is renamed to shmem_xa_replace() and
-converted to use the XArray API.
+With no more radix tree API users left, we can drop the GFP flags
+and use xa_init() instead of INIT_RADIX_TREE().
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 22 ++++++++--------------
- 1 file changed, 8 insertions(+), 14 deletions(-)
+ fs/inode.c      | 2 +-
+ mm/swap_state.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index ac53cae5d3a7..5813808965cd 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -321,24 +321,20 @@ void shmem_uncharge(struct inode *inode, long pages)
- }
- 
- /*
-- * Replace item expected in radix tree by a new item, while holding tree lock.
-+ * Replace item expected in xarray by a new item, while holding xa_lock.
-  */
--static int shmem_radix_tree_replace(struct address_space *mapping,
-+static int shmem_xa_replace(struct address_space *mapping,
- 			pgoff_t index, void *expected, void *replacement)
+diff --git a/fs/inode.c b/fs/inode.c
+index 14d938e2c9a2..6dcbb1b47fb7 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -349,7 +349,7 @@ EXPORT_SYMBOL(inc_nlink);
+ void address_space_init_once(struct address_space *mapping)
  {
--	struct radix_tree_node *node;
--	void **pslot;
-+	XA_STATE(xas, &mapping->i_pages, index);
- 	void *item;
- 
- 	VM_BUG_ON(!expected);
- 	VM_BUG_ON(!replacement);
--	item = __radix_tree_lookup(&mapping->i_pages, index, &node, &pslot);
--	if (!item)
--		return -ENOENT;
-+	item = xas_load(&xas);
- 	if (item != expected)
- 		return -ENOENT;
--	__radix_tree_replace(&mapping->i_pages, node, pslot,
--			     replacement, NULL);
-+	xas_store(&xas, replacement);
- 	return 0;
- }
- 
-@@ -605,8 +601,7 @@ static int shmem_add_to_page_cache(struct page *page,
- 	} else if (!expected) {
- 		error = radix_tree_insert(&mapping->i_pages, index, page);
- 	} else {
--		error = shmem_radix_tree_replace(mapping, index, expected,
--								 page);
-+		error = shmem_xa_replace(mapping, index, expected, page);
- 	}
- 
- 	if (!error) {
-@@ -635,7 +630,7 @@ static void shmem_delete_from_page_cache(struct page *page, void *radswap)
- 	VM_BUG_ON_PAGE(PageCompound(page), page);
- 
- 	xa_lock_irq(&mapping->i_pages);
--	error = shmem_radix_tree_replace(mapping, page->index, page, radswap);
-+	error = shmem_xa_replace(mapping, page->index, page, radswap);
- 	page->mapping = NULL;
- 	mapping->nrpages--;
- 	__dec_node_page_state(page, NR_FILE_PAGES);
-@@ -1553,8 +1548,7 @@ static int shmem_replace_page(struct page **pagep, gfp_t gfp,
- 	 * a nice clean interface for us to replace oldpage by newpage there.
- 	 */
- 	xa_lock_irq(&swap_mapping->i_pages);
--	error = shmem_radix_tree_replace(swap_mapping, swap_index, oldpage,
--								   newpage);
-+	error = shmem_xa_replace(swap_mapping, swap_index, oldpage, newpage);
- 	if (!error) {
- 		__inc_node_page_state(newpage, NR_FILE_PAGES);
- 		__dec_node_page_state(oldpage, NR_FILE_PAGES);
+ 	memset(mapping, 0, sizeof(*mapping));
+-	INIT_RADIX_TREE(&mapping->i_pages, GFP_ATOMIC | __GFP_ACCOUNT);
++	xa_init_flags(&mapping->i_pages, XA_FLAGS_LOCK_IRQ);
+ 	init_rwsem(&mapping->i_mmap_rwsem);
+ 	INIT_LIST_HEAD(&mapping->private_list);
+ 	spin_lock_init(&mapping->private_lock);
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 21218f6e438b..ebf837d13d2d 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -595,7 +595,7 @@ int init_swap_address_space(unsigned int type, unsigned long nr_pages)
+ 		return -ENOMEM;
+ 	for (i = 0; i < nr; i++) {
+ 		space = spaces + i;
+-		INIT_RADIX_TREE(&space->i_pages, GFP_ATOMIC|__GFP_NOWARN);
++		xa_init_flags(&space->i_pages, XA_FLAGS_LOCK_IRQ);
+ 		atomic_set(&space->i_mmap_writable, 0);
+ 		space->a_ops = &swap_aops;
+ 		/* swap cache doesn't use writeback related tags */
 -- 
 2.16.1
 
