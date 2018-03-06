@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 52/63] memfd: Convert shmem_tag_pins to XArray
-Date: Tue,  6 Mar 2018 11:24:02 -0800
-Message-ID: <20180306192413.5499-53-willy@infradead.org>
+Subject: [PATCH v8 47/63] shmem: Convert find_swap_entry to XArray
+Date: Tue,  6 Mar 2018 11:23:57 -0800
+Message-ID: <20180306192413.5499-48-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=gyb9Qm4DfyPt3dYM4uU9XVaSLgvPmG8u7M2kgi/AW98=; b=QIDyVPo7hluVBR7LaQVHPOL3W
-        UzbHPHSjzUyHmKGeCCz+uKBAu2EaahfwAhTmEsVmEu/YIBuzu8jugPw3L9UF6sm9h5yBjN2TJZPjk
-        qSD+vswEfzwG6FcQzVMQRGki6jR6md9oUL5kXrlItTXmEWji4+q5XRI9YnTbIVr6AVXmFdf5DIscC
-        P7YFelD5ZfVEd39bYf++Y9AB0iP+SQ1SVDYYloB7zWW6egShf+aTcnhbqdx7L08YV+eXG7aOIDT9J
-        DGK2mqB6k/QQz7C+llwexZK6SVsMY+/QOAmUkIxdApX73bkwoBaNOrJ7Uw+oaA9P6n7EScU+oWVXu
+         bh=QB9lBewDLPQPuLPUyrQu3li0QQyVZNTK4bLkM2yi5dw=; b=tgoMFETh1J6wvGCmLEN1LgTT/
+        qjjFrH69vkEvuTj2oI00nBlJmzNtXZ54A1TdN2lbW1Clq38vqXlrn4zFswZWf7+wcGsHkYbzJ7PI4
+        cb7Jm70bIV8T8D1o0ZER50u+guZH+pfdj/rA8NVzJ/PsnD0RxodD2+sC92LkuZfCkdTIYUOcZl4SC
+        VCaUXmordEYVNQzUkuCuPnS1MGbyEkCLOiqiU/Q1VpZe8dbvP1vKTGqhvQpoesZ4d2NfXBPPBrHdT
+        DN9UC2Jtm7zGR87GxBfvJ8uG593n1WzeM4GBFnvqtqQVhbByNncA7CLDYnxOXARjUPwaMQ0ZxHAfs
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,82 +27,54 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Simplify the locking by taking the spinlock while we walk the tree on
-the assumption that many acquires and releases of the lock will be
-worse than holding the lock for a (potentially) long time.
-
-We could replicate the same locking behaviour with the xarray, but would
-have to be careful that the xa_node wasn't RCU-freed under us before we
-took the lock.
+This is a 1:1 conversion.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/memfd.c | 43 ++++++++++++++++++-------------------------
- 1 file changed, 18 insertions(+), 25 deletions(-)
+ mm/shmem.c | 23 +++++++++++------------
+ 1 file changed, 11 insertions(+), 12 deletions(-)
 
-diff --git a/mm/memfd.c b/mm/memfd.c
-index 4cf7401cb09c..3b299d72df78 100644
---- a/mm/memfd.c
-+++ b/mm/memfd.c
-@@ -21,7 +21,7 @@
- #include <uapi/linux/memfd.h>
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 0af8a439dfad..49f42dc9e1dc 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -1076,28 +1076,27 @@ static void shmem_evict_inode(struct inode *inode)
+ 	clear_inode(inode);
+ }
  
- /*
-- * We need a tag: a new tag would expand every radix_tree_node by 8 bytes,
-+ * We need a tag: a new tag would expand every xa_node by 8 bytes,
-  * so reuse a tag which we firmly believe is never set or cleared on shmem.
-  */
- #define SHMEM_TAG_PINNED        PAGECACHE_TAG_TOWRITE
-@@ -29,35 +29,28 @@
- 
- static void shmem_tag_pins(struct address_space *mapping)
+-static unsigned long find_swap_entry(struct radix_tree_root *root, void *item)
++static unsigned long find_swap_entry(struct xarray *xa, void *item)
  {
 -	struct radix_tree_iter iter;
--	void __rcu **slot;
--	pgoff_t start;
-+	XA_STATE(xas, &mapping->i_pages, 0);
- 	struct page *page;
-+	unsigned int tagged = 0;
+-	void **slot;
+-	unsigned long found = -1;
++	XA_STATE(xas, xa, 0);
+ 	unsigned int checked = 0;
++	void *entry;
  
- 	lru_add_drain();
--	start = 0;
--	rcu_read_lock();
--
--	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
--		page = radix_tree_deref_slot(slot);
--		if (!page || radix_tree_exception(page)) {
--			if (radix_tree_deref_retry(page)) {
--				slot = radix_tree_iter_retry(&iter);
--				continue;
--			}
--		} else if (page_count(page) - page_mapcount(page) > 1) {
--			xa_lock_irq(&mapping->i_pages);
--			radix_tree_tag_set(&mapping->i_pages, iter.index,
--					   SHMEM_TAG_PINNED);
--			xa_unlock_irq(&mapping->i_pages);
--		}
- 
--		if (need_resched()) {
--			slot = radix_tree_iter_resume(slot, &iter);
--			cond_resched_rcu();
--		}
-+	xas_lock_irq(&xas);
-+	xas_for_each(&xas, page, ULONG_MAX) {
-+		if (xa_is_value(page))
+ 	rcu_read_lock();
+-	radix_tree_for_each_slot(slot, root, &iter, 0) {
+-		if (*slot == item) {
+-			found = iter.index;
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		if (xas_retry(&xas, entry))
 +			continue;
-+		if (page_count(page) - page_mapcount(page) > 1)
-+			xas_set_tag(&xas, SHMEM_TAG_PINNED);
-+
-+		if (++tagged % XA_CHECK_SCHED)
-+			continue;
-+
++		if (entry == item)
+ 			break;
+-		}
+ 		checked++;
+-		if ((checked % 4096) != 0)
++		if ((checked % XA_CHECK_SCHED) != 0)
+ 			continue;
+-		slot = radix_tree_iter_resume(slot, &iter);
 +		xas_pause(&xas);
-+		xas_unlock_irq(&xas);
-+		cond_resched();
-+		xas_lock_irq(&xas);
+ 		cond_resched_rcu();
  	}
--	rcu_read_unlock();
-+	xas_unlock_irq(&xas);
+-
+ 	rcu_read_unlock();
+-	return found;
++
++	return xas_invalid(&xas) ? -1 : xas.xa_index;
  }
  
  /*
