@@ -1,23 +1,23 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 53/63] memfd: Convert shmem_wait_for_pins to XArray
-Date: Tue,  6 Mar 2018 11:24:03 -0800
-Message-ID: <20180306192413.5499-54-willy@infradead.org>
+Subject: [PATCH v8 51/63] shmem: Convert shmem_partial_swap_usage to XArray
+Date: Tue,  6 Mar 2018 11:24:01 -0800
+Message-ID: <20180306192413.5499-52-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=vUPKR/5OptlQ4BngjrDJXGHNjkGi/TUPNgExS/XXlcQ=; b=g7nEOhEYUJyJ3W5sduHBv/erK
-        kztWVXa3LfJcTYUqwPqCVvzoeXzRqCx86f5NCbdJHfRIULbkGbXt+EbqWOfpNskn9f9FJkFNLhrjp
-        q7KsBdV/LYu/eGDAOkfBYdB4NL1y0zzW/vqLZl3ENdd7dzAx+pZZjy8Ukz5ga3TzMVWnooqqtLmAa
-        ftDgizKsh5igIX2r676VXQvT2Wkv+Ws0G4Rp5sy5EvM6sgG0yHFd+cNL1yo+YgmgV9NlqoZEyTonr
-        V6CUk7ha76+QhLPToIpSFsm0gMV9BUzfcQd+F1G3kGTNHP45EIoklRxkD+lDcDMun5MiGFR1h0/PC
+         bh=ilG1gJosbTyyuNQT1Kd+mdCYou0B9zfa+ME2Qhkq8Tw=; b=R7+6Q0NFM5G/O7qhKU1uiccms
+        J7aG9DDyd3IDZiSH5qaoB7/GaZ5wz8um44hEogw5y2smJskpY5vZDE/W7EWRnBwAwrHUGfKe1GuQn
+        awiCKRw0Y6JXsaJyitRRnjSQMuwTow3D0bjrPJceh18ZDVq2xX7tBnfCGDoUn+gv5YdWgWBoAZc9u
+        K2wkD0pm7Xm2mvTjJmKAIiITyNGZTW7xTabYhtvUA/I+e2dco54HIWazb5yw8BW73Jzig/Zks7Rrd
+        rRltG8RP5sA6uM4kjeUvqYMaPNT4N1uLG00fu0DlIeHuyPpdodowUEPeVyulNALRdxa+9NgkYJTvo
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
-Sender: linux-btrfs-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,107 +27,51 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-As with shmem_tag_pins(), hold the lock around the entire loop instead
-of acquiring & dropping it for each entry we're going to untag.
+Simpler code because the xarray takes care of things like the limit and
+dereferencing the slot.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/memfd.c | 61 +++++++++++++++++++++++++------------------------------------
- 1 file changed, 25 insertions(+), 36 deletions(-)
+ mm/shmem.c | 18 +++---------------
+ 1 file changed, 3 insertions(+), 15 deletions(-)
 
-diff --git a/mm/memfd.c b/mm/memfd.c
-index 3b299d72df78..0e0835e63af2 100644
---- a/mm/memfd.c
-+++ b/mm/memfd.c
-@@ -64,9 +64,7 @@ static void shmem_tag_pins(struct address_space *mapping)
-  */
- static int shmem_wait_for_pins(struct address_space *mapping)
+diff --git a/mm/shmem.c b/mm/shmem.c
+index cfbffb4b47a2..707430003ec7 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -658,29 +658,17 @@ static int shmem_free_swap(struct address_space *mapping,
+ unsigned long shmem_partial_swap_usage(struct address_space *mapping,
+ 						pgoff_t start, pgoff_t end)
  {
 -	struct radix_tree_iter iter;
--	void __rcu **slot;
--	pgoff_t start;
-+	XA_STATE(xas, &mapping->i_pages, 0);
+-	void **slot;
++	XA_STATE(xas, &mapping->i_pages, start);
  	struct page *page;
- 	int error, scan;
+ 	unsigned long swapped = 0;
  
-@@ -74,7 +72,9 @@ static int shmem_wait_for_pins(struct address_space *mapping)
+ 	rcu_read_lock();
+-
+-	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
+-		if (iter.index >= end)
+-			break;
+-
+-		page = radix_tree_deref_slot(slot);
+-
+-		if (radix_tree_deref_retry(page)) {
+-			slot = radix_tree_iter_retry(&iter);
+-			continue;
+-		}
+-
++	xas_for_each(&xas, page, end - 1) {
+ 		if (xa_is_value(page))
+ 			swapped++;
  
- 	error = 0;
- 	for (scan = 0; scan <= LAST_SCAN; scan++) {
--		if (!radix_tree_tagged(&mapping->i_pages, SHMEM_TAG_PINNED))
-+		unsigned int tagged = 0;
-+
-+		if (!xas_tagged(&xas, SHMEM_TAG_PINNED))
- 			break;
- 
- 		if (!scan)
-@@ -82,45 +82,34 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 		else if (schedule_timeout_killable((HZ << scan) / 200))
- 			scan = LAST_SCAN;
- 
--		start = 0;
--		rcu_read_lock();
--		radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter,
--					   start, SHMEM_TAG_PINNED) {
--
--			page = radix_tree_deref_slot(slot);
--			if (radix_tree_exception(page)) {
--				if (radix_tree_deref_retry(page)) {
--					slot = radix_tree_iter_retry(&iter);
--					continue;
--				}
--
--				page = NULL;
--			}
--
--			if (page &&
--			    page_count(page) - page_mapcount(page) != 1) {
--				if (scan < LAST_SCAN)
--					goto continue_resched;
--
-+		xas_set(&xas, 0);
-+		xas_lock_irq(&xas);
-+		xas_for_each_tag(&xas, page, ULONG_MAX, SHMEM_TAG_PINNED) {
-+			bool clear = true;
-+			if (xa_is_value(page))
-+				continue;
-+			if (page_count(page) - page_mapcount(page) != 1) {
- 				/*
- 				 * On the last scan, we clean up all those tags
- 				 * we inserted; but make a note that we still
- 				 * found pages pinned.
- 				 */
--				error = -EBUSY;
--			}
--
--			xa_lock_irq(&mapping->i_pages);
--			radix_tree_tag_clear(&mapping->i_pages,
--					     iter.index, SHMEM_TAG_PINNED);
--			xa_unlock_irq(&mapping->i_pages);
--continue_resched:
--			if (need_resched()) {
--				slot = radix_tree_iter_resume(slot, &iter);
--				cond_resched_rcu();
-+				if (scan == LAST_SCAN)
-+					error = -EBUSY;
-+				else
-+					clear = false;
- 			}
-+			if (clear)
-+				xas_clear_tag(&xas, SHMEM_TAG_PINNED);
-+			if (++tagged % XA_CHECK_SCHED)
-+				continue;
-+
+ 		if (need_resched()) {
+-			slot = radix_tree_iter_resume(slot, &iter);
 +			xas_pause(&xas);
-+			xas_unlock_irq(&xas);
-+			cond_resched();
-+			xas_lock_irq(&xas);
+ 			cond_resched_rcu();
  		}
--		rcu_read_unlock();
-+		xas_unlock_irq(&xas);
  	}
- 
- 	return error;
 -- 
 2.16.1
 
