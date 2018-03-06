@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 47/63] shmem: Convert find_swap_entry to XArray
-Date: Tue,  6 Mar 2018 11:23:57 -0800
-Message-ID: <20180306192413.5499-48-willy@infradead.org>
+Subject: [PATCH v8 43/63] mm: Convert khugepaged_scan_shmem to XArray
+Date: Tue,  6 Mar 2018 11:23:53 -0800
+Message-ID: <20180306192413.5499-44-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=QB9lBewDLPQPuLPUyrQu3li0QQyVZNTK4bLkM2yi5dw=; b=tgoMFETh1J6wvGCmLEN1LgTT/
-        qjjFrH69vkEvuTj2oI00nBlJmzNtXZ54A1TdN2lbW1Clq38vqXlrn4zFswZWf7+wcGsHkYbzJ7PI4
-        cb7Jm70bIV8T8D1o0ZER50u+guZH+pfdj/rA8NVzJ/PsnD0RxodD2+sC92LkuZfCkdTIYUOcZl4SC
-        VCaUXmordEYVNQzUkuCuPnS1MGbyEkCLOiqiU/Q1VpZe8dbvP1vKTGqhvQpoesZ4d2NfXBPPBrHdT
-        DN9UC2Jtm7zGR87GxBfvJ8uG593n1WzeM4GBFnvqtqQVhbByNncA7CLDYnxOXARjUPwaMQ0ZxHAfs
+         bh=fMGveMqJ+AfhMwu7w/CIfEaV6iAA+0Ik35yRaUfo3/M=; b=qrDOFa4fvyVKZjv0i7Jz/F2eG
+        o707cKYb8ipyu0TOMtj3AOLDX18s2x5uY2y1SAfuqmiwM+t1p4j4JCPF70RfMf2gw8gJsXb18bBGM
+        OVMCDfhOdqUHLsBuRRDzbA27uTp8V81FQiI98xBtsKozaoRhuIhV6Qzc4+wkFwy8eMqkzYOOQCnPl
+        O9dNRgGVJU7JNkiuZexGLI7q1EN7xCuF2Ylp90VyxqeRAfj8nUPlaxo/Mba3x0iMxiMedkkrGkruI
+        fR/Z6tdx8v9s9hkdY8UUatB/fn2Ogq3CsXel9Y64EZLFakOOvx67FkwcbRiwNQeJvonLr8oAQZuZ7
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,57 +27,57 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is a 1:1 conversion.
+Slightly shorter and easier to read code.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 23 +++++++++++------------
- 1 file changed, 11 insertions(+), 12 deletions(-)
+ mm/khugepaged.c | 17 +++++------------
+ 1 file changed, 5 insertions(+), 12 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 0af8a439dfad..49f42dc9e1dc 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1076,28 +1076,27 @@ static void shmem_evict_inode(struct inode *inode)
- 	clear_inode(inode);
- }
- 
--static unsigned long find_swap_entry(struct radix_tree_root *root, void *item)
-+static unsigned long find_swap_entry(struct xarray *xa, void *item)
+diff --git a/mm/khugepaged.c b/mm/khugepaged.c
+index 3685c8e2b3dc..39e260a0639c 100644
+--- a/mm/khugepaged.c
++++ b/mm/khugepaged.c
+@@ -1533,8 +1533,7 @@ static void khugepaged_scan_shmem(struct mm_struct *mm,
+ 		pgoff_t start, struct page **hpage)
  {
+ 	struct page *page = NULL;
 -	struct radix_tree_iter iter;
 -	void **slot;
--	unsigned long found = -1;
-+	XA_STATE(xas, xa, 0);
- 	unsigned int checked = 0;
-+	void *entry;
- 
++	XA_STATE(xas, &mapping->i_pages, start);
+ 	int present, swap;
+ 	int node = NUMA_NO_NODE;
+ 	int result = SCAN_SUCCEED;
+@@ -1543,17 +1542,11 @@ static void khugepaged_scan_shmem(struct mm_struct *mm,
+ 	swap = 0;
+ 	memset(khugepaged_node_load, 0, sizeof(khugepaged_node_load));
  	rcu_read_lock();
--	radix_tree_for_each_slot(slot, root, &iter, 0) {
--		if (*slot == item) {
--			found = iter.index;
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (xas_retry(&xas, entry))
-+			continue;
-+		if (entry == item)
- 			break;
--		}
- 		checked++;
--		if ((checked % 4096) != 0)
-+		if ((checked % XA_CHECK_SCHED) != 0)
- 			continue;
--		slot = radix_tree_iter_resume(slot, &iter);
-+		xas_pause(&xas);
- 		cond_resched_rcu();
- 	}
+-	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
+-		if (iter.index >= start + HPAGE_PMD_NR)
+-			break;
 -
- 	rcu_read_unlock();
--	return found;
-+
-+	return xas_invalid(&xas) ? -1 : xas.xa_index;
- }
+-		page = radix_tree_deref_slot(slot);
+-		if (radix_tree_deref_retry(page)) {
+-			slot = radix_tree_iter_retry(&iter);
++	xas_for_each(&xas, page, start + HPAGE_PMD_NR - 1) {
++		if (xas_retry(&xas, page))
+ 			continue;
+-		}
  
- /*
+-		if (radix_tree_exception(page)) {
++		if (xa_is_value(page)) {
+ 			if (++swap > khugepaged_max_ptes_swap) {
+ 				result = SCAN_EXCEED_SWAP_PTE;
+ 				break;
+@@ -1592,7 +1585,7 @@ static void khugepaged_scan_shmem(struct mm_struct *mm,
+ 		present++;
+ 
+ 		if (need_resched()) {
+-			slot = radix_tree_iter_resume(slot, &iter);
++			xas_pause(&xas);
+ 			cond_resched_rcu();
+ 		}
+ 	}
 -- 
 2.16.1
 
