@@ -1,23 +1,23 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 09/63] xarray: Add the xa_lock to the radix_tree_root
-Date: Tue,  6 Mar 2018 11:23:19 -0800
-Message-ID: <20180306192413.5499-10-willy@infradead.org>
+Subject: [PATCH v8 06/63] btrfs: Use filemap_range_has_page()
+Date: Tue,  6 Mar 2018 11:23:16 -0800
+Message-ID: <20180306192413.5499-7-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
         Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=VGUPocvfdtL+my65d4cRB6c1jHZac7TIZ96NnVyU16s=; b=ifFFUtMquc3rwG0SJzRYdYAjw
-        mVa8tfSPOTOBYFf5YCLtQDAoJmduSa6bM2Z4YRyccnBe8aG7W3DKD8HVznlbdm0/3rTUZnW2IaMb/
-        hFjNSVgTMy/NHWACMqKkzPThoj3Y5d+D6o2yk7td2xYIoPtmYnynNL9zZae6DivgD0uFLTJJOMn/R
-        xGU3XmrvX2TYlDUDB4kxw+TXrfKcSUExQ6I/+yr1p6qPou1GHmfoJQF/ZRVL/HOqthT9XgS0CpDSd
-        zRk49NzDgCdwek4x9UUIefRcCuz3FX67nBrd5JiVl4WICkoCBKw75QPCg7Kfvup26iCTbT+qOXVOG
+         bh=L58tEN6gAjGqWdCEBSpkYfoj8VFhsagKG4f/Zw+AXjE=; b=uKNw1nFKGoERd0HMdaVNVctpM
+        YOgSSXxUjienxl3J6jFBGBYLt3ANgvvqE1Zmxi05Q0PLVHVMEbWQqRS9CXsrXSiqGfMBodvVU9jTC
+        25u6aqdcMv/sXCbxjMNbRPFQ8OLOwNgsVUA7xH92+e/iwXDhZ72PE2+RJjIOeXHKunC+I+lIdDSGy
+        LtgZMz5c/zYMmjrr9CNhfALV5oQr6+fEcaNxpUxy4xGytxI2nehEE5wErgRea11+Zl0/bhLf1Cykj
+        6RsBnJVviHBgFhhJ0nidEuOXUd6GnABOta5fAzVMPVX+K6kufE844fo37mDEY7hKUWOPdTx/wuh2k
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-btrfs-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -27,184 +27,114 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This results in no change in structure size on 64-bit machines as it
-fits in the padding between the gfp_t and the void *.  32-bit machines
-will grow the structure from 8 to 12 bytes.  Almost all radix trees
-are protected with (at least) a spinlock, so as they are converted from
-radix trees to xarrays, the data structures will shrink again.
-
-Initialising the spinlock requires a name for the benefit of lockdep,
-so RADIX_TREE_INIT() now needs to know the name of the radix tree it's
-initialising, and so do IDR_INIT() and IDA_INIT().
-
-Also add the xa_lock() and xa_unlock() family of wrappers to make it
-easier to use the lock.  If we could rely on -fplan9-extensions in
-the compiler, we could avoid all of this syntactic sugar, but that
-wasn't added until gcc 4.6.
+The current implementation of btrfs_page_exists_in_range() gives the
+wrong answer if the workingset code has stored a shadow entry in the
+page cache.  The filemap_range_has_page() function does not have this
+problem, and it's shared code, so use it instead.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
-Reviewed-by: Jeff Layton <jlayton@kernel.org>
 ---
- fs/f2fs/gc.c                   |  2 +-
- include/linux/idr.h            | 19 ++++++++++---------
- include/linux/radix-tree.h     |  7 +++++--
- include/linux/xarray.h         | 24 ++++++++++++++++++++++++
- kernel/pid.c                   |  2 +-
- tools/include/linux/spinlock.h |  1 +
- 6 files changed, 42 insertions(+), 13 deletions(-)
- create mode 100644 include/linux/xarray.h
+ fs/btrfs/btrfs_inode.h |  6 ++++-
+ fs/btrfs/inode.c       | 70 --------------------------------------------------
+ 2 files changed, 5 insertions(+), 71 deletions(-)
 
-diff --git a/fs/f2fs/gc.c b/fs/f2fs/gc.c
-index aa720cc44509..7aa15134180e 100644
---- a/fs/f2fs/gc.c
-+++ b/fs/f2fs/gc.c
-@@ -1006,7 +1006,7 @@ int f2fs_gc(struct f2fs_sb_info *sbi, bool sync,
- 	unsigned int init_segno = segno;
- 	struct gc_inode_list gc_list = {
- 		.ilist = LIST_HEAD_INIT(gc_list.ilist),
--		.iroot = RADIX_TREE_INIT(GFP_NOFS),
-+		.iroot = RADIX_TREE_INIT(gc_list.iroot, GFP_NOFS),
- 	};
- 
- 	trace_f2fs_gc_begin(sbi->sb, sync, background,
-diff --git a/include/linux/idr.h b/include/linux/idr.h
-index 913c335054f0..e856f4e0ab35 100644
---- a/include/linux/idr.h
-+++ b/include/linux/idr.h
-@@ -32,27 +32,28 @@ struct idr {
- #define IDR_RT_MARKER	(ROOT_IS_IDR | (__force gfp_t)			\
- 					(1 << (ROOT_TAG_SHIFT + IDR_FREE)))
- 
--#define IDR_INIT_BASE(base) {						\
--	.idr_rt = RADIX_TREE_INIT(IDR_RT_MARKER),			\
-+#define IDR_INIT_BASE(name, base) {					\
-+	.idr_rt = RADIX_TREE_INIT(name, IDR_RT_MARKER),			\
- 	.idr_base = (base),						\
- 	.idr_next = 0,							\
+diff --git a/fs/btrfs/btrfs_inode.h b/fs/btrfs/btrfs_inode.h
+index f527e99c9f8d..078a53e01ece 100644
+--- a/fs/btrfs/btrfs_inode.h
++++ b/fs/btrfs/btrfs_inode.h
+@@ -364,6 +364,10 @@ static inline void btrfs_print_data_csum_error(struct btrfs_inode *inode,
+ 			logical_start, csum, csum_expected, mirror_num);
  }
  
- /**
-  * IDR_INIT() - Initialise an IDR.
-+ * @name: Name of IDR.
-  *
-  * A freshly-initialised IDR contains no IDs.
-  */
--#define IDR_INIT	IDR_INIT_BASE(0)
-+#define IDR_INIT(name)	IDR_INIT_BASE(name, 0)
+-bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end);
++static inline bool btrfs_page_exists_in_range(struct inode *inode,
++						loff_t start, loff_t end)
++{
++	return filemap_range_has_page(inode->i_mapping, start, end);
++}
  
- /**
-- * DEFINE_IDR() - Define a statically-allocated IDR
-- * @name: Name of IDR
-+ * DEFINE_IDR() - Define a statically-allocated IDR.
-+ * @name: Name of IDR.
-  *
-  * An IDR defined using this macro is ready for use with no additional
-  * initialisation required.  It contains no IDs.
-  */
--#define DEFINE_IDR(name)	struct idr name = IDR_INIT
-+#define DEFINE_IDR(name)	struct idr name = IDR_INIT(name)
- 
- /**
-  * idr_get_cursor - Return the current position of the cyclic allocator
-@@ -219,10 +220,10 @@ struct ida {
- 	struct radix_tree_root	ida_rt;
- };
- 
--#define IDA_INIT	{						\
--	.ida_rt = RADIX_TREE_INIT(IDR_RT_MARKER | GFP_NOWAIT),		\
-+#define IDA_INIT(name)	{						\
-+	.ida_rt = RADIX_TREE_INIT(name, IDR_RT_MARKER | GFP_NOWAIT),	\
- }
--#define DEFINE_IDA(name)	struct ida name = IDA_INIT
-+#define DEFINE_IDA(name)	struct ida name = IDA_INIT(name)
- 
- int ida_pre_get(struct ida *ida, gfp_t gfp_mask);
- int ida_get_new_above(struct ida *ida, int starting_id, int *p_id);
-diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
-index 6c4e2e716dac..34149e8b5f73 100644
---- a/include/linux/radix-tree.h
-+++ b/include/linux/radix-tree.h
-@@ -110,20 +110,23 @@ struct radix_tree_node {
- #define ROOT_TAG_SHIFT	(__GFP_BITS_SHIFT)
- 
- struct radix_tree_root {
-+	spinlock_t		xa_lock;
- 	gfp_t			gfp_mask;
- 	struct radix_tree_node	__rcu *rnode;
- };
- 
--#define RADIX_TREE_INIT(mask)	{					\
-+#define RADIX_TREE_INIT(name, mask)	{				\
-+	.xa_lock = __SPIN_LOCK_UNLOCKED(name.xa_lock),			\
- 	.gfp_mask = (mask),						\
- 	.rnode = NULL,							\
+ #endif
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 1f5b93ecffca..3340de232944 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -7476,76 +7476,6 @@ noinline int can_nocow_extent(struct inode *inode, u64 offset, u64 *len,
+ 	return ret;
  }
  
- #define RADIX_TREE(name, mask) \
--	struct radix_tree_root name = RADIX_TREE_INIT(mask)
-+	struct radix_tree_root name = RADIX_TREE_INIT(name, mask)
- 
- #define INIT_RADIX_TREE(root, mask)					\
- do {									\
-+	spin_lock_init(&(root)->xa_lock);				\
- 	(root)->gfp_mask = (mask);					\
- 	(root)->rnode = NULL;						\
- } while (0)
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-new file mode 100644
-index 000000000000..2dfc8006fe64
---- /dev/null
-+++ b/include/linux/xarray.h
-@@ -0,0 +1,24 @@
-+/* SPDX-License-Identifier: GPL-2.0+ */
-+#ifndef _LINUX_XARRAY_H
-+#define _LINUX_XARRAY_H
-+/*
-+ * eXtensible Arrays
-+ * Copyright (c) 2017 Microsoft Corporation
-+ * Author: Matthew Wilcox <mawilcox@microsoft.com>
-+ */
-+
-+#include <linux/spinlock.h>
-+
-+#define xa_trylock(xa)		spin_trylock(&(xa)->xa_lock)
-+#define xa_lock(xa)		spin_lock(&(xa)->xa_lock)
-+#define xa_unlock(xa)		spin_unlock(&(xa)->xa_lock)
-+#define xa_lock_bh(xa)		spin_lock_bh(&(xa)->xa_lock)
-+#define xa_unlock_bh(xa)	spin_unlock_bh(&(xa)->xa_lock)
-+#define xa_lock_irq(xa)		spin_lock_irq(&(xa)->xa_lock)
-+#define xa_unlock_irq(xa)	spin_unlock_irq(&(xa)->xa_lock)
-+#define xa_lock_irqsave(xa, flags) \
-+				spin_lock_irqsave(&(xa)->xa_lock, flags)
-+#define xa_unlock_irqrestore(xa, flags) \
-+				spin_unlock_irqrestore(&(xa)->xa_lock, flags)
-+
-+#endif /* _LINUX_XARRAY_H */
-diff --git a/kernel/pid.c b/kernel/pid.c
-index ed6c343fe50d..157fe4b19971 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -70,7 +70,7 @@ int pid_max_max = PID_MAX_LIMIT;
-  */
- struct pid_namespace init_pid_ns = {
- 	.kref = KREF_INIT(2),
--	.idr = IDR_INIT,
-+	.idr = IDR_INIT(init_pid_ns.idr),
- 	.pid_allocated = PIDNS_ADDING,
- 	.level = 0,
- 	.child_reaper = &init_task,
-diff --git a/tools/include/linux/spinlock.h b/tools/include/linux/spinlock.h
-index 4ed569fcb139..b21b586b9854 100644
---- a/tools/include/linux/spinlock.h
-+++ b/tools/include/linux/spinlock.h
-@@ -7,6 +7,7 @@
- 
- #define spinlock_t		pthread_mutex_t
- #define DEFINE_SPINLOCK(x)	pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
-+#define __SPIN_LOCK_UNLOCKED(x)	(pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
- 
- #define spin_lock_irqsave(x, f)		(void)f, pthread_mutex_lock(x)
- #define spin_unlock_irqrestore(x, f)	(void)f, pthread_mutex_unlock(x)
+-bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end)
+-{
+-	struct radix_tree_root *root = &inode->i_mapping->page_tree;
+-	bool found = false;
+-	void **pagep = NULL;
+-	struct page *page = NULL;
+-	unsigned long start_idx;
+-	unsigned long end_idx;
+-
+-	start_idx = start >> PAGE_SHIFT;
+-
+-	/*
+-	 * end is the last byte in the last page.  end == start is legal
+-	 */
+-	end_idx = end >> PAGE_SHIFT;
+-
+-	rcu_read_lock();
+-
+-	/* Most of the code in this while loop is lifted from
+-	 * find_get_page.  It's been modified to begin searching from a
+-	 * page and return just the first page found in that range.  If the
+-	 * found idx is less than or equal to the end idx then we know that
+-	 * a page exists.  If no pages are found or if those pages are
+-	 * outside of the range then we're fine (yay!) */
+-	while (page == NULL &&
+-	       radix_tree_gang_lookup_slot(root, &pagep, NULL, start_idx, 1)) {
+-		page = radix_tree_deref_slot(pagep);
+-		if (unlikely(!page))
+-			break;
+-
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				page = NULL;
+-				continue;
+-			}
+-			/*
+-			 * Otherwise, shmem/tmpfs must be storing a swap entry
+-			 * here as an exceptional entry: so return it without
+-			 * attempting to raise page count.
+-			 */
+-			page = NULL;
+-			break; /* TODO: Is this relevant for this use case? */
+-		}
+-
+-		if (!page_cache_get_speculative(page)) {
+-			page = NULL;
+-			continue;
+-		}
+-
+-		/*
+-		 * Has the page moved?
+-		 * This is part of the lockless pagecache protocol. See
+-		 * include/linux/pagemap.h for details.
+-		 */
+-		if (unlikely(page != *pagep)) {
+-			put_page(page);
+-			page = NULL;
+-		}
+-	}
+-
+-	if (page) {
+-		if (page->index <= end_idx)
+-			found = true;
+-		put_page(page);
+-	}
+-
+-	rcu_read_unlock();
+-	return found;
+-}
+-
+ static int lock_extent_direct(struct inode *inode, u64 lockstart, u64 lockend,
+ 			      struct extent_state **cached_state, int writing)
+ {
 -- 
 2.16.1
 
