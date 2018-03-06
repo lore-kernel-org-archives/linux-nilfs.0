@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 51/63] shmem: Convert shmem_partial_swap_usage to XArray
-Date: Tue,  6 Mar 2018 11:24:01 -0800
-Message-ID: <20180306192413.5499-52-willy@infradead.org>
+Subject: [PATCH v8 49/63] shmem: Convert shmem_alloc_hugepage to XArray
+Date: Tue,  6 Mar 2018 11:23:59 -0800
+Message-ID: <20180306192413.5499-50-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=ilG1gJosbTyyuNQT1Kd+mdCYou0B9zfa+ME2Qhkq8Tw=; b=R7+6Q0NFM5G/O7qhKU1uiccms
-        J7aG9DDyd3IDZiSH5qaoB7/GaZ5wz8um44hEogw5y2smJskpY5vZDE/W7EWRnBwAwrHUGfKe1GuQn
-        awiCKRw0Y6JXsaJyitRRnjSQMuwTow3D0bjrPJceh18ZDVq2xX7tBnfCGDoUn+gv5YdWgWBoAZc9u
-        K2wkD0pm7Xm2mvTjJmKAIiITyNGZTW7xTabYhtvUA/I+e2dco54HIWazb5yw8BW73Jzig/Zks7Rrd
-        rRltG8RP5sA6uM4kjeUvqYMaPNT4N1uLG00fu0DlIeHuyPpdodowUEPeVyulNALRdxa+9NgkYJTvo
+         bh=rXzXhtVcMtSI73Tb4Vc4OGoMQ9ed2P7MXl58GYL2T3o=; b=DOxZg9+nxN/YGVmhJv0hZIC/J
+        rXxt+DCwV4YJ2fK0uq9LSxyo2bGk1sdtnMzMqNc/imQGqDwZV7u+sgufpOc6eozCQQQ8w0T5St3a3
+        vZKsi9STxBwhbW2nCED7w3K5Ta+oW/M8GbseYGoU/MNMnE6mmRc3/N5SvD2OpWp1fRrOvF8T8Qlt6
+        AxQ+TrhkRnnfRM2qeblIBhTOfoRq8kKD2qauQcj2Jt7Skg1TU+8g5XHUAWszkuvwWjRRDNrrys0iR
+        HtCQncgQ51wWlneTZPNMbfBs4cONX9ADQkfl0vbZtnjOuWGpC2aeBbBVSN7rvazpRdr87cQdttTxK
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,51 +27,46 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Simpler code because the xarray takes care of things like the limit and
-dereferencing the slot.
+xa_find() is a slightly easier API to use than
+radix_tree_gang_lookup_slot() because it contains its own RCU locking.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 18 +++---------------
- 1 file changed, 3 insertions(+), 15 deletions(-)
+ mm/shmem.c | 14 ++++----------
+ 1 file changed, 4 insertions(+), 10 deletions(-)
 
 diff --git a/mm/shmem.c b/mm/shmem.c
-index cfbffb4b47a2..707430003ec7 100644
+index fb06fb3e644a..a0a354a87f3b 100644
 --- a/mm/shmem.c
 +++ b/mm/shmem.c
-@@ -658,29 +658,17 @@ static int shmem_free_swap(struct address_space *mapping,
- unsigned long shmem_partial_swap_usage(struct address_space *mapping,
- 						pgoff_t start, pgoff_t end)
+@@ -1416,23 +1416,17 @@ static struct page *shmem_alloc_hugepage(gfp_t gfp,
+ 		struct shmem_inode_info *info, pgoff_t index)
  {
--	struct radix_tree_iter iter;
--	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, start);
+ 	struct vm_area_struct pvma;
+-	struct inode *inode = &info->vfs_inode;
+-	struct address_space *mapping = inode->i_mapping;
+-	pgoff_t idx, hindex;
+-	void __rcu **results;
++	struct address_space *mapping = info->vfs_inode.i_mapping;
++	pgoff_t hindex;
  	struct page *page;
- 	unsigned long swapped = 0;
  
- 	rcu_read_lock();
--
--	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
--		if (iter.index >= end)
--			break;
--
--		page = radix_tree_deref_slot(slot);
--
--		if (radix_tree_deref_retry(page)) {
--			slot = radix_tree_iter_retry(&iter);
--			continue;
--		}
--
-+	xas_for_each(&xas, page, end - 1) {
- 		if (xa_is_value(page))
- 			swapped++;
+ 	if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
+ 		return NULL;
  
- 		if (need_resched()) {
--			slot = radix_tree_iter_resume(slot, &iter);
-+			xas_pause(&xas);
- 			cond_resched_rcu();
- 		}
- 	}
+ 	hindex = round_down(index, HPAGE_PMD_NR);
+-	rcu_read_lock();
+-	if (radix_tree_gang_lookup_slot(&mapping->i_pages, &results, &idx,
+-				hindex, 1) && idx < hindex + HPAGE_PMD_NR) {
+-		rcu_read_unlock();
++	if (xa_find(&mapping->i_pages, &hindex, hindex + HPAGE_PMD_NR - 1,
++								XA_PRESENT))
+ 		return NULL;
+-	}
+-	rcu_read_unlock();
+ 
+ 	shmem_pseudo_vma_init(&pvma, info, hindex);
+ 	page = alloc_pages_vma(gfp | __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN,
 -- 
 2.16.1
 
