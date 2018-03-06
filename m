@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 29/63] page cache: Convert page deletion to XArray
-Date: Tue,  6 Mar 2018 11:23:39 -0800
-Message-ID: <20180306192413.5499-30-willy@infradead.org>
+Subject: [PATCH v8 21/63] xarray: Add xa_extract
+Date: Tue,  6 Mar 2018 11:23:31 -0800
+Message-ID: <20180306192413.5499-22-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=AfhSPT6lIdBDimHGD4rCQ3/lGnIg9ct3nIy9Q9t+N4o=; b=nwTUcLJwJWlv5XmUQ3luDO29K
-        aPDWuHKcDdvFpq3HRKUIZGA+XbRluTE21iMnZRSoMiSuaro5i5a4zimoneXRX1uG8PALN8/av1+dK
-        asTItur2wbgIh8SN7J1AsHdjGMTfBqumf8vYz5kfZAHriQa/GUAy0Gi+ze+V6gnhSOTiltV/NP63A
-        7CRA33XsJF6yZjufkyb+XGOLqSntuvI0nSsQ67JfxWLpXlM5DZ7R8F8LuifoZPs/PInafTBKPn4bB
-        9LkNO6cUDOdrN4wzECrUQIkQ7i34TkuBK78xGvJ5mANQl3Y/PSR2RO0Upfyk9Ij7eiqRz+lkV68j2
+         bh=xGQQGmjllep0kxYKulB0Lo0kYYvyd9LburzqxePTOck=; b=TZ4VWnLETR4aqhf43LEU/mg+q
+        H57Y1Z5aw3um97cVuHEfb1IubiOLV0d5TqDGoZ3BHs3EJdhADpczqVC5Ij5wUQUg7wFxU3Maq2BnN
+        6tYYnxxAlaVryO8Xve2v3c4cqZIcpEKAvfTTnDocKBHHKRZmQKheJwNfX0m1vCANeNMzUXG4fJFQe
+        tAbobsvIrRMbW/q6Jkk81zelAYpTDVLlyg3r+eX7dU8+x2T7g01JZe9xo0Du9oGMKc14zQOnMCZlS
+        ogoB86rJ3fck9soQOUnoMECb3IV6ZU0H9xZSrkWyFLboECVm5+NX1eqkMvJAY21+KfLYpYcuaL5za
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,70 +27,120 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-The code is slightly shorter and simpler.
+This function combines the functionality of radix_tree_gang_lookup() and
+radix_tree_gang_lookup_tagged().  It extracts entries matching the
+specified filter into a normal array.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/filemap.c | 30 ++++++++++++++----------------
- 1 file changed, 14 insertions(+), 16 deletions(-)
+ include/linux/xarray.h |  2 ++
+ lib/xarray.c           | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 82 insertions(+)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 0e19ea454cba..bdda1beda932 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -111,30 +111,28 @@
-  *   ->tasklist_lock            (memory_failure, collect_procs_ao)
-  */
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index cf7966bfdd3e..85dd909586f0 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -227,6 +227,8 @@ void *xa_find(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
+ void *xa_find_after(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
++unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
++		unsigned long max, unsigned int n, xa_tag_t);
  
--static void page_cache_tree_delete(struct address_space *mapping,
-+static void page_cache_delete(struct address_space *mapping,
- 				   struct page *page, void *shadow)
- {
--	int i, nr;
-+	XA_STATE(xas, &mapping->i_pages, page->index);
-+	unsigned int i, nr;
- 
--	/* hugetlb pages are represented by one entry in the radix tree */
-+	mapping_set_update(&xas, mapping);
-+
-+	/* hugetlb pages are represented by a single entry in the xarray */
- 	nr = PageHuge(page) ? 1 : hpage_nr_pages(page);
- 
- 	VM_BUG_ON_PAGE(!PageLocked(page), page);
- 	VM_BUG_ON_PAGE(PageTail(page), page);
- 	VM_BUG_ON_PAGE(nr != 1 && shadow, page);
- 
--	for (i = 0; i < nr; i++) {
--		struct radix_tree_node *node;
--		void **slot;
--
--		__radix_tree_lookup(&mapping->i_pages, page->index + i,
--				    &node, &slot);
--
--		VM_BUG_ON_PAGE(!node && nr != 1, page);
--
--		radix_tree_clear_tags(&mapping->i_pages, node, slot);
--		__radix_tree_replace(&mapping->i_pages, node, slot, shadow,
--				workingset_lookup_update(mapping));
-+	i = nr;
-+repeat:
-+	xas_store(&xas, shadow);
-+	xas_init_tags(&xas);
-+	if (--i) {
-+		xas_next(&xas);
-+		goto repeat;
- 	}
- 
- 	page->mapping = NULL;
-@@ -234,7 +232,7 @@ void __delete_from_page_cache(struct page *page, void *shadow)
- 	trace_mm_filemap_delete_from_page_cache(page);
- 
- 	unaccount_page_cache_page(mapping, page);
--	page_cache_tree_delete(mapping, page, shadow);
-+	page_cache_delete(mapping, page, shadow);
+ /**
+  * xa_init() - Initialise an empty XArray.
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 267510e98a57..124bbfec66ae 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -1388,6 +1388,86 @@ void *xa_find_after(struct xarray *xa, unsigned long *indexp,
  }
+ EXPORT_SYMBOL(xa_find_after);
  
- static void page_cache_free_page(struct address_space *mapping,
++static unsigned int xas_extract_present(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each(xas, entry, max) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++static unsigned int xas_extract_tag(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n, xa_tag_t tag)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each_tag(xas, entry, max, tag) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++/**
++ * xa_extract() - Copy selected entries from the XArray into a normal array.
++ * @xa: The source XArray to copy from.
++ * @dst: The buffer to copy entries into.
++ * @start: The first index in the XArray eligible to be selected.
++ * @max: The last index in the XArray eligible to be selected.
++ * @n: The maximum number of entries to copy.
++ * @filter: Selection criterion.
++ *
++ * Copies up to @n entries that match @filter from the XArray.  The
++ * copied entries will have indices between @start and @max, inclusive.
++ *
++ * The @filter may be an XArray tag value, in which case entries which are
++ * tagged with that tag will be copied.  It may also be %XA_PRESENT, in
++ * which case non-NULL entries will be copied.
++ *
++ * The entries returned may not represent a snapshot of the XArray at a
++ * moment in time.  For example, if another thread stores to index 5, then
++ * index 10, calling xa_extract() may return the old contents of index 5
++ * and the new contents of index 10.  Indices not modified while this
++ * function is running will not be skipped.
++ *
++ * If you need stronger guarantees, holding the xa_lock across calls to this
++ * function will prevent concurrent modification.
++ *
++ * Context: Any context.  Takes and releases the RCU lock.
++ * Return: The number of entries copied.
++ */
++unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
++			unsigned long max, unsigned int n, xa_tag_t filter)
++{
++	XA_STATE(xas, xa, start);
++
++	if (!n)
++		return 0;
++
++	if ((__force unsigned int)filter < XA_MAX_TAGS)
++		return xas_extract_tag(&xas, dst, max, n, filter);
++	return xas_extract_present(&xas, dst, max, n);
++}
++EXPORT_SYMBOL(xa_extract);
++
+ #ifdef XA_DEBUG
+ void xa_dump_node(const struct xa_node *node)
+ {
 -- 
 2.16.1
 
