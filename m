@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 26/63] page cache: Rearrange address_space
-Date: Tue,  6 Mar 2018 11:23:36 -0800
-Message-ID: <20180306192413.5499-27-willy@infradead.org>
+Subject: [PATCH v8 25/63] xarray: Add MAINTAINERS entry
+Date: Tue,  6 Mar 2018 11:23:35 -0800
+Message-ID: <20180306192413.5499-26-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=6DZkgQjQ5W8d9t293P9ePnplYlZMYf9sWzYIIn1V3Q8=; b=YMz0nMNlULJEAGipgie0t0ONI
-        ahXNW6klZnR4tzEY21mgxakOpy325oBz19DibQARs7mEG3ue2eEuN3J8oFT6nYzBlPHwdbYfwMqzP
-        6Q3lNtOPR6YOSSieFTKOFEThWmdmVpiX8MphYtqtgptjtXK92qlJlP5WahmeCo8mC0L/QcH44HzOT
-        USEnmYIGFjMHjXC42K4YGJp1x3IF4LF0iS0aRhXw6dwCNzPhAD8qemWRvcbwGU9a6+ypVUc0HxD0R
-        U8Vo+Gd0wx6IUN54vnnnkvn7NNkXdoEAdXu9AIbZgFpB4XSJNIXDAUpxwuHug1qjzPT+V+dgrYurU
+         bh=zplCmU9+9f/8Z6OwfiY1p6q4BmhmwOOZVTob47pP2iw=; b=WVuaHQTe2OOV0djUA/leT6702
+        n4u8knT6PFGrPolL90Uxve3QnoAX6z7gr7WMm9D1lR7ZkLhK3mW9NXvFHOXu/VjLqArhXsmICG+Hy
+        hxnPkepajWbaTIufIE8PVEiSRn+F0xavGP2SEajWk/Kae4tF8Kb6J+grL7fqOkRfj4foQNApG2igP
+        LCoOYL8s3Y/KiovGIy3wmr5RI7ZzK2FJJO51WtRmSkcQmJDQL6nM7qFapLDjMTBIU7oeXTM6JWzSs
+        C6NEuANWFFiKHyA/XWYWPI3izl1NX/LvrQpBWQHNhRF/4orshP5ZyJ1fmysHfcDLIpl1A6uQPgm13
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,75 +27,36 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Change i_pages from a radix_tree_root to an xarray, convert the
-documentation into kernel-doc format and change the order of the elements
-to pack them better on 64-bit systems.
+Add myself as XArray and IDR maintainer.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/fs.h | 46 +++++++++++++++++++++++++++++++---------------
- 1 file changed, 31 insertions(+), 15 deletions(-)
+ MAINTAINERS | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 75f1f66aec35..785100c2b835 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -389,24 +389,40 @@ int pagecache_write_end(struct file *, struct address_space *mapping,
- 				loff_t pos, unsigned len, unsigned copied,
- 				struct page *page, void *fsdata);
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 6d78237066ab..08613d97a74d 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -15293,6 +15293,18 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git x86/vdso
+ S:	Maintained
+ F:	arch/x86/entry/vdso/
  
-+/**
-+ * struct address_space - Contents of a cacheable, mappable object.
-+ * @host: Owner, either the inode or the block_device.
-+ * @i_pages: Cached pages.
-+ * @gfp_mask: Memory allocation flags to use for allocating pages.
-+ * @i_mmap_writable: Number of VM_SHARED mappings.
-+ * @i_mmap: Tree of private and shared mappings.
-+ * @i_mmap_rwsem: Protects @i_mmap and @i_mmap_writable.
-+ * @nrpages: Number of page entries, protected by the i_pages lock.
-+ * @nrexceptional: Shadow or DAX entries, protected by the i_pages lock.
-+ * @writeback_index: Writeback starts here.
-+ * @a_ops: Methods.
-+ * @flags: Error bits and flags (AS_*).
-+ * @wb_err: The most recent error which has occurred.
-+ * @private_lock: For use by the owner of the address_space.
-+ * @private_list: For use by the owner of the address_space.
-+ * @private_data: For use by the owner of the address_space.
-+ */
- struct address_space {
--	struct inode		*host;		/* owner: inode, block_device */
--	struct radix_tree_root	i_pages;	/* cached pages */
--	atomic_t		i_mmap_writable;/* count VM_SHARED mappings */
--	struct rb_root_cached	i_mmap;		/* tree of private and shared mappings */
--	struct rw_semaphore	i_mmap_rwsem;	/* protect tree, count, list */
--	/* Protected by the i_pages lock */
--	unsigned long		nrpages;	/* number of total pages */
--	/* number of shadow or DAX exceptional entries */
-+	struct inode		*host;
-+	struct xarray		i_pages;
-+	gfp_t			gfp_mask;
-+	atomic_t		i_mmap_writable;
-+	struct rb_root_cached	i_mmap;
-+	struct rw_semaphore	i_mmap_rwsem;
-+	unsigned long		nrpages;
- 	unsigned long		nrexceptional;
--	pgoff_t			writeback_index;/* writeback starts here */
--	const struct address_space_operations *a_ops;	/* methods */
--	unsigned long		flags;		/* error bits */
--	spinlock_t		private_lock;	/* for use by the address_space */
--	gfp_t			gfp_mask;	/* implicit gfp mask for allocations */
--	struct list_head	private_list;	/* for use by the address_space */
--	void			*private_data;	/* ditto */
-+	pgoff_t			writeback_index;
-+	const struct address_space_operations *a_ops;
-+	unsigned long		flags;
- 	errseq_t		wb_err;
-+	spinlock_t		private_lock;
-+	struct list_head	private_list;
-+	void			*private_data;
- } __attribute__((aligned(sizeof(long)))) __randomize_layout;
- 	/*
- 	 * On most architectures that alignment is already the case; but
++XARRAY
++M:	Matthew Wilcox <mawilcox@microsoft.com>
++M:	Matthew Wilcox <willy@infradead.org>
++L:	linux-fsdevel@vger.kernel.org
++S:	Supported
++F:	Documentation/core-api/xarray.rst
++F:	lib/idr.c
++F:	lib/xarray.c
++F:	include/linux/idr.h
++F:	include/linux/xarray.h
++F:	tools/testing/radix-tree
++
+ XC2028/3028 TUNER DRIVER
+ M:	Mauro Carvalho Chehab <mchehab@s-opensource.com>
+ M:	Mauro Carvalho Chehab <mchehab@kernel.org>
 -- 
 2.16.1
 
