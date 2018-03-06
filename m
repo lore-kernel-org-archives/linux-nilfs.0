@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 55/63] btrfs: Convert page cache to XArray
-Date: Tue,  6 Mar 2018 11:24:05 -0800
-Message-ID: <20180306192413.5499-56-willy@infradead.org>
+Subject: [PATCH v8 56/63] fs: Convert buffer to XArray
+Date: Tue,  6 Mar 2018 11:24:06 -0800
+Message-ID: <20180306192413.5499-57-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=kAQ0MsAETEgPCc80Tmqgp3OKH9ML3eJpVOU3moWcVzc=; b=F95B20XFhujeZUlaxQjWuvGAT
-        kgV0/EPD+GgyzISPbWA+QcutvaPAkBhX8a41zvlWF8XeVxPMt/dX2RFoh2lmzn/0ET4hkQ+Y1K6dk
-        lFQAGIxUbfLNlgn8b+MJipMl3YX3e4v49cNCohtsqwYuf3ooDmwhc6rlbAXnVPYz/8MTpktkOr4iw
-        PdI2UyC+nQbBL2JGkeuLcZkUfYzIUIpcVJiZs+ov2o2yRQAM0/uVCIL04/5q4Cf8oYtPiIUubEeFF
-        Z8OsmH1mV2XRzgs0iyQ0YYSc0xtPrRs0PiIGuD/BLboD2aLKlxV/vX6NSnMVZdchtlqdxSpToQLGD
+         bh=ZyQFfhUIs9bwr5N0BItU1YI8yy5m9kV/Cu5RDhv4iQ0=; b=fwmUtUMACQmx2TGQKK6fWtJui
+        BWTJSV/6IdRAGNJ37FTOZc+Ce1kSUtmkiaBwicVl09sMTSoOz/ZMkQcHebhK1XUFawE33JJZ86dud
+        RUr1PLHOJ66KENqQ+l1nAbo9ba4yud0gYrmuMA14LuF8EwYZDWVgBtiXwRaLuYXB/bmRjzpFJOtqH
+        WYtfZvKmgkcDSESN3Sgtiq6+bSaxP7HrPXwTQ6lRC1bZv/BDVqB8siB5MxedCvBN7xyyE7J13Tg6C
+        n1q88avGJGFbTNjSYpZb0hbq8YkhEH2f//oQfT8wTUyGUGEdTKx1Vg7HmFyFUgfDUjbLunU3sppiy
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,46 +27,59 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
+Mostly comment fixes, but one use of __xa_set_tag.
+
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/btrfs/compression.c | 4 +---
- fs/btrfs/extent_io.c   | 8 +++-----
- 2 files changed, 4 insertions(+), 8 deletions(-)
+ fs/buffer.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
-index ad330af89eef..c2286f436571 100644
---- a/fs/btrfs/compression.c
-+++ b/fs/btrfs/compression.c
-@@ -457,9 +457,7 @@ static noinline int add_ra_bio_pages(struct inode *inode,
- 		if (pg_index > end_index)
- 			break;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 3ee82c056d85..70af8fbc64cf 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -585,7 +585,7 @@ void mark_buffer_dirty_inode(struct buffer_head *bh, struct inode *inode)
+ EXPORT_SYMBOL(mark_buffer_dirty_inode);
  
--		rcu_read_lock();
--		page = radix_tree_lookup(&mapping->i_pages, pg_index);
--		rcu_read_unlock();
-+		page = xa_load(&mapping->i_pages, pg_index);
- 		if (page && !xa_is_value(page)) {
- 			misses++;
- 			if (misses > 4)
-diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
-index bcc24ee5a2c9..edc472b41037 100644
---- a/fs/btrfs/extent_io.c
-+++ b/fs/btrfs/extent_io.c
-@@ -5170,11 +5170,9 @@ void clear_extent_buffer_dirty(struct extent_buffer *eb)
- 
- 		clear_page_dirty_for_io(page);
- 		xa_lock_irq(&page->mapping->i_pages);
--		if (!PageDirty(page)) {
--			radix_tree_tag_clear(&page->mapping->i_pages,
--						page_index(page),
--						PAGECACHE_TAG_DIRTY);
--		}
-+		if (!PageDirty(page))
-+			__xa_clear_tag(&page->mapping->i_pages,
-+					page_index(page), PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irq(&page->mapping->i_pages);
- 		ClearPageError(page);
- 		unlock_page(page);
+ /*
+- * Mark the page dirty, and set it dirty in the radix tree, and mark the inode
++ * Mark the page dirty, and set it dirty in the page cache, and mark the inode
+  * dirty.
+  *
+  * If warn is true, then emit a warning if the page is not uptodate and has
+@@ -602,8 +602,8 @@ void __set_page_dirty(struct page *page, struct address_space *mapping,
+ 	if (page->mapping) {	/* Race with truncate? */
+ 		WARN_ON_ONCE(warn && !PageUptodate(page));
+ 		account_page_dirtied(page, mapping);
+-		radix_tree_tag_set(&mapping->i_pages,
+-				page_index(page), PAGECACHE_TAG_DIRTY);
++		__xa_set_tag(&mapping->i_pages, page_index(page),
++				PAGECACHE_TAG_DIRTY);
+ 	}
+ 	xa_unlock_irqrestore(&mapping->i_pages, flags);
+ }
+@@ -1066,7 +1066,7 @@ __getblk_slow(struct block_device *bdev, sector_t block,
+  * The relationship between dirty buffers and dirty pages:
+  *
+  * Whenever a page has any dirty buffers, the page's dirty bit is set, and
+- * the page is tagged dirty in its radix tree.
++ * the page is tagged dirty in the page cache.
+  *
+  * At all times, the dirtiness of the buffers represents the dirtiness of
+  * subsections of the page.  If the page has buffers, the page dirty bit is
+@@ -1089,9 +1089,9 @@ __getblk_slow(struct block_device *bdev, sector_t block,
+  * mark_buffer_dirty - mark a buffer_head as needing writeout
+  * @bh: the buffer_head to mark dirty
+  *
+- * mark_buffer_dirty() will set the dirty bit against the buffer, then set its
+- * backing page dirty, then tag the page as dirty in its address_space's radix
+- * tree and then attach the address_space's inode to its superblock's dirty
++ * mark_buffer_dirty() will set the dirty bit against the buffer, then set
++ * its backing page dirty, then tag the page as dirty in the page cache
++ * and then attach the address_space's inode to its superblock's dirty
+  * inode list.
+  *
+  * mark_buffer_dirty() is atomic.  It takes bh->b_page->mapping->private_lock,
 -- 
 2.16.1
 
