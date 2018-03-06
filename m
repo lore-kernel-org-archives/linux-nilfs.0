@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v8 08/63] fscache: Use appropriate radix tree accessors
-Date: Tue,  6 Mar 2018 11:23:18 -0800
-Message-ID: <20180306192413.5499-9-willy@infradead.org>
+Subject: [PATCH v8 04/63] unicore32: Turn flush_dcache_mmap_lock into a no-op
+Date: Tue,  6 Mar 2018 11:23:14 -0800
+Message-ID: <20180306192413.5499-5-willy@infradead.org>
 References: <20180306192413.5499-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=gTwaAOmkxOUrfIJir/pggY0Nw3BL5DZX3vgbsCoydCU=; b=LL25MKlQyoMas0TIqXwdBy/Zb
-        CC+RdB9ERpDEVlXsvPZG526LhQMMP+SXFro7+jNNX50z/FPTI2G1l+Xu69RZ+dGD/5UfKn1Now+7v
-        9qW8viPP7XW13aqNn359eOl2rm6fPd7kYNVdRX84+YhYYH9exinRf9/KpHtavLsBKFfwORM7kNbEa
-        V6aYY35lUOKTlTykDxPCup4LYlgXngSikvacEVGP9SwxP2bSlUMf7Fuw6nPdSq27xkvCytw+VgsHG
-        qJzMULoQCKjdhwnbWQiEeUkmJmiAlFT4h5o5uhm5Npmj+RhUnMI5hxMQ2A0o0FI8+31P2cxpSNWn3
+         bh=LNdl9xwnGce9andWyEPDDsS6Pi2hPfcZinV72VWZDgg=; b=VNv2AR7S9Ex2FQdW/XC+NVqVO
+        7Rh1HC9Bx4ElemSnwTaaJm2juyLPI45IFurOSsEZ59/snKPASq9psP40+TL8a46LPoOBwUNNajwwG
+        tuJn4t2Lhk+NnF5AjiQ/DVMkcFLY8//X9BSQV6U76wSZgc1i54QDMFrdLbOvH6VMHs6T5KhwjTpYP
+        H2LLCfgWxs7cwktk1EovEaybGvM4BLuQXbK3NNoRbw1XSapC2zK4Y+HkjmH9J4nY6CA2PJV/m0qKJ
+        34wXEEITG1kQZdM19A1BN53s67bM6fXLfCwF+xufNXYYbZYFWn4pr7lmIwq7g3A23mEiXUiT7W1Ob
     
 In-Reply-To: <20180306192413.5499-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,41 +27,31 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Don't open-code accesses to data structure internals.
+Unicore doesn't walk the VMA tree in its flush_dcache_page()
+implementation, so has no need to take the tree_lock.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
-Reviewed-by: Jeff Layton <jlayton@redhat.com>
 ---
- fs/fscache/cookie.c | 2 +-
- fs/fscache/object.c | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ arch/unicore32/include/asm/cacheflush.h | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/fs/fscache/cookie.c b/fs/fscache/cookie.c
-index ff84258132bb..e9054e0c1a49 100644
---- a/fs/fscache/cookie.c
-+++ b/fs/fscache/cookie.c
-@@ -608,7 +608,7 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie, bool retire)
- 	/* Clear pointers back to the netfs */
- 	cookie->netfs_data	= NULL;
- 	cookie->def		= NULL;
--	BUG_ON(cookie->stores.rnode);
-+	BUG_ON(!radix_tree_empty(&cookie->stores));
+diff --git a/arch/unicore32/include/asm/cacheflush.h b/arch/unicore32/include/asm/cacheflush.h
+index a5e08e2d5d6d..1d9132b66039 100644
+--- a/arch/unicore32/include/asm/cacheflush.h
++++ b/arch/unicore32/include/asm/cacheflush.h
+@@ -170,10 +170,8 @@ extern void flush_cache_page(struct vm_area_struct *vma,
+ #define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
+ extern void flush_dcache_page(struct page *);
  
- 	if (cookie->parent) {
- 		ASSERTCMP(atomic_read(&cookie->parent->usage), >, 0);
-diff --git a/fs/fscache/object.c b/fs/fscache/object.c
-index 7a182c87f378..aa0e71f02c33 100644
---- a/fs/fscache/object.c
-+++ b/fs/fscache/object.c
-@@ -956,7 +956,7 @@ static const struct fscache_state *_fscache_invalidate_object(struct fscache_obj
- 	 * retire the object instead.
- 	 */
- 	if (!fscache_use_cookie(object)) {
--		ASSERT(object->cookie->stores.rnode == NULL);
-+		ASSERT(radix_tree_empty(&object->cookie->stores));
- 		set_bit(FSCACHE_OBJECT_RETIRED, &object->flags);
- 		_leave(" [no cookie]");
- 		return transit_to(KILL_OBJECT);
+-#define flush_dcache_mmap_lock(mapping)			\
+-	spin_lock_irq(&(mapping)->tree_lock)
+-#define flush_dcache_mmap_unlock(mapping)		\
+-	spin_unlock_irq(&(mapping)->tree_lock)
++#define flush_dcache_mmap_lock(mapping)		do { } while (0)
++#define flush_dcache_mmap_unlock(mapping)	do { } while (0)
+ 
+ #define flush_icache_user_range(vma, page, addr, len)	\
+ 	flush_dcache_page(page)
 -- 
 2.16.1
 
