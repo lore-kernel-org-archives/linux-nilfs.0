@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v9 45/61] shmem: Convert find_swap_entry to XArray
-Date: Tue, 13 Mar 2018 06:26:23 -0700
-Message-ID: <20180313132639.17387-46-willy@infradead.org>
+Subject: [PATCH v9 55/61] fs: Convert writeback to XArray
+Date: Tue, 13 Mar 2018 06:26:33 -0700
+Message-ID: <20180313132639.17387-56-willy@infradead.org>
 References: <20180313132639.17387-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=QB9lBewDLPQPuLPUyrQu3li0QQyVZNTK4bLkM2yi5dw=; b=gq2aVBdDSLxREDjH3UNLiV+M4
-        aI939jb7R5SSi74kvhprtf0j6NJBoSpR8jzlC772Wxu2B99T9u5PojeXC10shZyCKdqp4Q6BG/sFV
-        V9ISEVPFoc3lR0beJHUg6uV3zM0JLg//A9e8W3iOu5/yvYEJD8D7/OCGsKvKj5LAL+fhf3rLMr4qr
-        6G2MERvP3HZP/xhRva8kQAcx2WPCOK5n6/CplEY5oql2YHwe3PSq63rPZLtDum3ZkfIfHGqj4sQCS
-        hF5g9pVHRHHOCEjeTMZpUKDT3HOZm8TihcYZcxgx/0soQRJDoEsH2V7L8VucaZFwK0t05JtJiRsbX
+         bh=QIGG0xhBMi69prC5wMNjigBBfQGawNcCDlqjj9zzld0=; b=mTsFQKSfryL6UgxSkeuWqwimo
+        xgaigUJEOC+5LOhjigjAZPCBLqdkgW5a6r2AtXMKTznr6sLNsZinnFdpYDN7VkixFMcfGcK5aw7g1
+        +UpJFiok3qzhxFsRWL4f269oCSodTzEqixVA3qcZkW6x4DKKPEGe3M1NNwMiEoWVrRA2gCfBswQXz
+        fUUM2E58pQwtyBC93W0o6mV7MiEh9zgYHqHrJjzawkAtoAQ7pAWHEvAJskAS9kZxfvt34Rzrt/2bu
+        g66/wrnQVZ74BrUZi9sy3aMlRPOXJWa8qRMESfKb+sKH6Z/LYc+HkSzIZ11DzGnKCy91qydDyZc+S
     
 In-Reply-To: <20180313132639.17387-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,57 +27,62 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is a 1:1 conversion.
+A couple of short loops.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 23 +++++++++++------------
- 1 file changed, 11 insertions(+), 12 deletions(-)
+ fs/fs-writeback.c | 25 +++++++++----------------
+ 1 file changed, 9 insertions(+), 16 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 0af8a439dfad..49f42dc9e1dc 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1076,28 +1076,27 @@ static void shmem_evict_inode(struct inode *inode)
- 	clear_inode(inode);
- }
- 
--static unsigned long find_swap_entry(struct radix_tree_root *root, void *item)
-+static unsigned long find_swap_entry(struct xarray *xa, void *item)
- {
+diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
+index 091577edc497..98e5e08274a2 100644
+--- a/fs/fs-writeback.c
++++ b/fs/fs-writeback.c
+@@ -339,9 +339,9 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
+ 	struct address_space *mapping = inode->i_mapping;
+ 	struct bdi_writeback *old_wb = inode->i_wb;
+ 	struct bdi_writeback *new_wb = isw->new_wb;
 -	struct radix_tree_iter iter;
++	XA_STATE(xas, &mapping->i_pages, 0);
++	struct page *page;
+ 	bool switched = false;
 -	void **slot;
--	unsigned long found = -1;
-+	XA_STATE(xas, xa, 0);
- 	unsigned int checked = 0;
-+	void *entry;
  
- 	rcu_read_lock();
--	radix_tree_for_each_slot(slot, root, &iter, 0) {
--		if (*slot == item) {
--			found = iter.index;
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (xas_retry(&xas, entry))
-+			continue;
-+		if (entry == item)
- 			break;
--		}
- 		checked++;
--		if ((checked % 4096) != 0)
-+		if ((checked % XA_CHECK_SCHED) != 0)
- 			continue;
--		slot = radix_tree_iter_resume(slot, &iter);
-+		xas_pause(&xas);
- 		cond_resched_rcu();
+ 	/*
+ 	 * By the time control reaches here, RCU grace period has passed
+@@ -375,25 +375,18 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
+ 	 * to possibly dirty pages while PAGECACHE_TAG_WRITEBACK points to
+ 	 * pages actually under writeback.
+ 	 */
+-	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, 0,
+-				   PAGECACHE_TAG_DIRTY) {
+-		struct page *page = radix_tree_deref_slot_protected(slot,
+-						&mapping->i_pages.xa_lock);
+-		if (likely(page) && PageDirty(page)) {
++	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_DIRTY) {
++		if (PageDirty(page)) {
+ 			dec_wb_stat(old_wb, WB_RECLAIMABLE);
+ 			inc_wb_stat(new_wb, WB_RECLAIMABLE);
+ 		}
  	}
--
- 	rcu_read_unlock();
--	return found;
-+
-+	return xas_invalid(&xas) ? -1 : xas.xa_index;
- }
  
- /*
+-	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, 0,
+-				   PAGECACHE_TAG_WRITEBACK) {
+-		struct page *page = radix_tree_deref_slot_protected(slot,
+-						&mapping->i_pages.xa_lock);
+-		if (likely(page)) {
+-			WARN_ON_ONCE(!PageWriteback(page));
+-			dec_wb_stat(old_wb, WB_WRITEBACK);
+-			inc_wb_stat(new_wb, WB_WRITEBACK);
+-		}
++	xas_set(&xas, 0);
++	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_WRITEBACK) {
++		WARN_ON_ONCE(!PageWriteback(page));
++		dec_wb_stat(old_wb, WB_WRITEBACK);
++		inc_wb_stat(new_wb, WB_WRITEBACK);
+ 	}
+ 
+ 	wb_get(new_wb);
 -- 
 2.16.1
 
