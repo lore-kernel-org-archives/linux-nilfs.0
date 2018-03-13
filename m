@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v9 51/61] memfd: Convert shmem_wait_for_pins to XArray
-Date: Tue, 13 Mar 2018 06:26:29 -0700
-Message-ID: <20180313132639.17387-52-willy@infradead.org>
+Subject: [PATCH v9 47/61] shmem: Convert shmem_alloc_hugepage to XArray
+Date: Tue, 13 Mar 2018 06:26:25 -0700
+Message-ID: <20180313132639.17387-48-willy@infradead.org>
 References: <20180313132639.17387-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=vUPKR/5OptlQ4BngjrDJXGHNjkGi/TUPNgExS/XXlcQ=; b=tHcWo7BKdhbtBuT7GG/5RGPTA
-        qrQIfZkpzGUWDo4lNJr11kVMzfaJmMzVZCyeX+m5gwqYdsNW19XOGSlfvN+x+KxX/ilu8HjpwAI7w
-        DaHhwmGG22iRJVqFGxVIeYZKYDSGqO8zv6m8DM++w3a51DqtDGfM1tgWpqtbhV3oexxxKyhC9AHft
-        qrpolWXOmCFaPxungcnW9DRowoc/B59WVQXQcyivJk+c2RzBiE2jMgQpJjNBf5MrqLNfLpVEOCX5R
-        8QNFgJFzj0/WMjVXJJIWzcgQ9cSdeNmZ8Bm+jbGmL0Mwn0Q6cyga7eFultqQbb4MsO/b28rHFVTiz
+         bh=rXzXhtVcMtSI73Tb4Vc4OGoMQ9ed2P7MXl58GYL2T3o=; b=S4uPXcxWlcwOHLLb5P5lqs3Ca
+        h/+cLv4bBUfkg8bu3iqb2LT+aLFeAnANR+gdj+Wdem1TrvT0NmRQf0x7S6/ryxAo4SXblFw3d7ahz
+        xSbkeqMppVXWHa58ukmB0eBF+M4pEXfnXshQQShwqD9rOguZGzHiyOVx7CySu4mEkBVwte8jncO+v
+        6VNrBIMBxSEwsTRczBKEdgBmPSwsNlGYOgehKM8yhbeT2UHVUnh3mkPiede1N6BjRbN1sGK5iFSLa
+        3PpARw0pu5r+aMinmRaoy8huLxC1+A9Urqfv3GsjOH1D7yYXDmVAaNM1PSxDFgFSnYhmFY6VFLhhV
     
 In-Reply-To: <20180313132639.17387-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,107 +27,46 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-As with shmem_tag_pins(), hold the lock around the entire loop instead
-of acquiring & dropping it for each entry we're going to untag.
+xa_find() is a slightly easier API to use than
+radix_tree_gang_lookup_slot() because it contains its own RCU locking.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/memfd.c | 61 +++++++++++++++++++++++++------------------------------------
- 1 file changed, 25 insertions(+), 36 deletions(-)
+ mm/shmem.c | 14 ++++----------
+ 1 file changed, 4 insertions(+), 10 deletions(-)
 
-diff --git a/mm/memfd.c b/mm/memfd.c
-index 3b299d72df78..0e0835e63af2 100644
---- a/mm/memfd.c
-+++ b/mm/memfd.c
-@@ -64,9 +64,7 @@ static void shmem_tag_pins(struct address_space *mapping)
-  */
- static int shmem_wait_for_pins(struct address_space *mapping)
+diff --git a/mm/shmem.c b/mm/shmem.c
+index fb06fb3e644a..a0a354a87f3b 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -1416,23 +1416,17 @@ static struct page *shmem_alloc_hugepage(gfp_t gfp,
+ 		struct shmem_inode_info *info, pgoff_t index)
  {
--	struct radix_tree_iter iter;
--	void __rcu **slot;
--	pgoff_t start;
-+	XA_STATE(xas, &mapping->i_pages, 0);
+ 	struct vm_area_struct pvma;
+-	struct inode *inode = &info->vfs_inode;
+-	struct address_space *mapping = inode->i_mapping;
+-	pgoff_t idx, hindex;
+-	void __rcu **results;
++	struct address_space *mapping = info->vfs_inode.i_mapping;
++	pgoff_t hindex;
  	struct page *page;
- 	int error, scan;
  
-@@ -74,7 +72,9 @@ static int shmem_wait_for_pins(struct address_space *mapping)
+ 	if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
+ 		return NULL;
  
- 	error = 0;
- 	for (scan = 0; scan <= LAST_SCAN; scan++) {
--		if (!radix_tree_tagged(&mapping->i_pages, SHMEM_TAG_PINNED))
-+		unsigned int tagged = 0;
-+
-+		if (!xas_tagged(&xas, SHMEM_TAG_PINNED))
- 			break;
- 
- 		if (!scan)
-@@ -82,45 +82,34 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 		else if (schedule_timeout_killable((HZ << scan) / 200))
- 			scan = LAST_SCAN;
- 
--		start = 0;
--		rcu_read_lock();
--		radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter,
--					   start, SHMEM_TAG_PINNED) {
--
--			page = radix_tree_deref_slot(slot);
--			if (radix_tree_exception(page)) {
--				if (radix_tree_deref_retry(page)) {
--					slot = radix_tree_iter_retry(&iter);
--					continue;
--				}
--
--				page = NULL;
--			}
--
--			if (page &&
--			    page_count(page) - page_mapcount(page) != 1) {
--				if (scan < LAST_SCAN)
--					goto continue_resched;
--
-+		xas_set(&xas, 0);
-+		xas_lock_irq(&xas);
-+		xas_for_each_tag(&xas, page, ULONG_MAX, SHMEM_TAG_PINNED) {
-+			bool clear = true;
-+			if (xa_is_value(page))
-+				continue;
-+			if (page_count(page) - page_mapcount(page) != 1) {
- 				/*
- 				 * On the last scan, we clean up all those tags
- 				 * we inserted; but make a note that we still
- 				 * found pages pinned.
- 				 */
--				error = -EBUSY;
--			}
--
--			xa_lock_irq(&mapping->i_pages);
--			radix_tree_tag_clear(&mapping->i_pages,
--					     iter.index, SHMEM_TAG_PINNED);
--			xa_unlock_irq(&mapping->i_pages);
--continue_resched:
--			if (need_resched()) {
--				slot = radix_tree_iter_resume(slot, &iter);
--				cond_resched_rcu();
-+				if (scan == LAST_SCAN)
-+					error = -EBUSY;
-+				else
-+					clear = false;
- 			}
-+			if (clear)
-+				xas_clear_tag(&xas, SHMEM_TAG_PINNED);
-+			if (++tagged % XA_CHECK_SCHED)
-+				continue;
-+
-+			xas_pause(&xas);
-+			xas_unlock_irq(&xas);
-+			cond_resched();
-+			xas_lock_irq(&xas);
- 		}
+ 	hindex = round_down(index, HPAGE_PMD_NR);
+-	rcu_read_lock();
+-	if (radix_tree_gang_lookup_slot(&mapping->i_pages, &results, &idx,
+-				hindex, 1) && idx < hindex + HPAGE_PMD_NR) {
 -		rcu_read_unlock();
-+		xas_unlock_irq(&xas);
- 	}
++	if (xa_find(&mapping->i_pages, &hindex, hindex + HPAGE_PMD_NR - 1,
++								XA_PRESENT))
+ 		return NULL;
+-	}
+-	rcu_read_unlock();
  
- 	return error;
+ 	shmem_pseudo_vma_init(&pvma, info, hindex);
+ 	page = alloc_pages_vma(gfp | __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN,
 -- 
 2.16.1
 
