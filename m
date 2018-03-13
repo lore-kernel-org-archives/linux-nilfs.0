@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v9 20/61] xarray: Add xa_destroy
-Date: Tue, 13 Mar 2018 06:25:58 -0700
-Message-ID: <20180313132639.17387-21-willy@infradead.org>
+Subject: [PATCH v9 19/61] xarray: Add xa_extract
+Date: Tue, 13 Mar 2018 06:25:57 -0700
+Message-ID: <20180313132639.17387-20-willy@infradead.org>
 References: <20180313132639.17387-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=aH4yrtv2qE3HK2kXGA2/w1w6dA7MUpr29nVQLaLiphU=; b=kp2j43tQowowa5+Cwtv1yLJva
-        vf/Xt1EBkd860H+vQSXaNpOf2kkTgvTdb13yEbZYFyZS9g/TzHKS4H1N5TmeYa3JMzAf04NLZWIIi
-        z9IUntb9RSGGgkMaRU2m/fpG8q4OBBvOoBlYfGbFApgo1j/mT6i1yRjSMz4a9XPWk77Ea9mThCaa2
-        j6wXj05DIBpTBUBEAgMA6vVg5XRLN2EOq3HlpAp5t9J77AHK1Wntt5+meDGaoLoVcU5oWwoXs6AXK
-        Jwg8UFhd/cZewjb6J/3j5Ic0bvornAPTvQL3OtoLG1lMofYGqE5Uj0sGpPxyMCvKsYA79Ysml1Sf6
+         bh=xGQQGmjllep0kxYKulB0Lo0kYYvyd9LburzqxePTOck=; b=a/VVtCw4b7Z6m+NvTHslwRwq7
+        pEEF1N1LSd1jVYTarR8W7Y4ApuLK7w3XzHlDCHMGjthCNz/DffFjYSPO7F65uTDnXB2zd7yES+Oj5
+        KDoKgvjrOBFH7DRHmaWxa9aJZCIfkoYsV1W2rxEia4iIDk8TxJBLFtYmR834V0zKokt/GoDbDa2Sh
+        c/vQJShoRFpabF5RZ6zR9yEozV4KLcU2nlqdWOfZ5K4idw4nJRvD+rLO1c47kRVqtYOpKRPwMrg5r
+        HZyfgEUXnFW5u29sSiK61H4025nX1qrpo5A8IpOzjY0wSrowGiIncxs5sB5O+MPtkth6VIinQqiWz
     
 In-Reply-To: <20180313132639.17387-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,62 +27,116 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This function frees all the internal memory allocated to the xarray
-and reinitialises it to be empty.
+This function combines the functionality of radix_tree_gang_lookup() and
+radix_tree_gang_lookup_tagged().  It extracts entries matching the
+specified filter into a normal array.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h |  1 +
- lib/xarray.c           | 28 ++++++++++++++++++++++++++++
- 2 files changed, 29 insertions(+)
+ include/linux/xarray.h |  2 ++
+ lib/xarray.c           | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 82 insertions(+)
 
 diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 85dd909586f0..96773f83ae03 100644
+index cf7966bfdd3e..85dd909586f0 100644
 --- a/include/linux/xarray.h
 +++ b/include/linux/xarray.h
-@@ -229,6 +229,7 @@ void *xa_find_after(struct xarray *xa, unsigned long *index,
+@@ -227,6 +227,8 @@ void *xa_find(struct xarray *xa, unsigned long *index,
  		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
- unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
- 		unsigned long max, unsigned int n, xa_tag_t);
-+void xa_destroy(struct xarray *);
+ void *xa_find_after(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
++unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
++		unsigned long max, unsigned int n, xa_tag_t);
  
  /**
   * xa_init() - Initialise an empty XArray.
 diff --git a/lib/xarray.c b/lib/xarray.c
-index 124bbfec66ae..080ed0fc3feb 100644
+index 267510e98a57..124bbfec66ae 100644
 --- a/lib/xarray.c
 +++ b/lib/xarray.c
-@@ -1468,6 +1468,34 @@ unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
+@@ -1388,6 +1388,86 @@ void *xa_find_after(struct xarray *xa, unsigned long *indexp,
  }
- EXPORT_SYMBOL(xa_extract);
+ EXPORT_SYMBOL(xa_find_after);
  
-+/**
-+ * xa_destroy() - Free all internal data structures.
-+ * @xa: XArray.
-+ *
-+ * After calling this function, the XArray is empty and has freed all memory
-+ * allocated for its internal data structures.  You are responsible for
-+ * freeing the objects referenced by the XArray.
-+ *
-+ * Context: Any context.  Takes and releases the xa_lock, interrupt-safe.
-+ */
-+void xa_destroy(struct xarray *xa)
++static unsigned int xas_extract_present(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n)
 +{
-+	XA_STATE(xas, xa, 0);
-+	unsigned long flags;
 +	void *entry;
++	unsigned int i = 0;
 +
-+	xas.xa_node = NULL;
-+	xas_lock_irqsave(&xas, flags);
-+	entry = xa_head_locked(xa);
-+	RCU_INIT_POINTER(xa->xa_head, NULL);
-+	xas_init_tags(&xas);
-+	/* lockdep checks we're still holding the lock in xas_free_nodes() */
-+	if (xa_is_node(entry))
-+		xas_free_nodes(&xas, xa_to_node(entry));
-+	xas_unlock_irqrestore(&xas, flags);
++	rcu_read_lock();
++	xas_for_each(xas, entry, max) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
 +}
-+EXPORT_SYMBOL(xa_destroy);
++
++static unsigned int xas_extract_tag(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n, xa_tag_t tag)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each_tag(xas, entry, max, tag) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++/**
++ * xa_extract() - Copy selected entries from the XArray into a normal array.
++ * @xa: The source XArray to copy from.
++ * @dst: The buffer to copy entries into.
++ * @start: The first index in the XArray eligible to be selected.
++ * @max: The last index in the XArray eligible to be selected.
++ * @n: The maximum number of entries to copy.
++ * @filter: Selection criterion.
++ *
++ * Copies up to @n entries that match @filter from the XArray.  The
++ * copied entries will have indices between @start and @max, inclusive.
++ *
++ * The @filter may be an XArray tag value, in which case entries which are
++ * tagged with that tag will be copied.  It may also be %XA_PRESENT, in
++ * which case non-NULL entries will be copied.
++ *
++ * The entries returned may not represent a snapshot of the XArray at a
++ * moment in time.  For example, if another thread stores to index 5, then
++ * index 10, calling xa_extract() may return the old contents of index 5
++ * and the new contents of index 10.  Indices not modified while this
++ * function is running will not be skipped.
++ *
++ * If you need stronger guarantees, holding the xa_lock across calls to this
++ * function will prevent concurrent modification.
++ *
++ * Context: Any context.  Takes and releases the RCU lock.
++ * Return: The number of entries copied.
++ */
++unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
++			unsigned long max, unsigned int n, xa_tag_t filter)
++{
++	XA_STATE(xas, xa, start);
++
++	if (!n)
++		return 0;
++
++	if ((__force unsigned int)filter < XA_MAX_TAGS)
++		return xas_extract_tag(&xas, dst, max, n, filter);
++	return xas_extract_present(&xas, dst, max, n);
++}
++EXPORT_SYMBOL(xa_extract);
 +
  #ifdef XA_DEBUG
  void xa_dump_node(const struct xa_node *node)
