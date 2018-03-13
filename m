@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v9 47/61] shmem: Convert shmem_alloc_hugepage to XArray
-Date: Tue, 13 Mar 2018 06:26:25 -0700
-Message-ID: <20180313132639.17387-48-willy@infradead.org>
+Subject: [PATCH v9 48/61] shmem: Convert shmem_free_swap to XArray
+Date: Tue, 13 Mar 2018 06:26:26 -0700
+Message-ID: <20180313132639.17387-49-willy@infradead.org>
 References: <20180313132639.17387-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=rXzXhtVcMtSI73Tb4Vc4OGoMQ9ed2P7MXl58GYL2T3o=; b=S4uPXcxWlcwOHLLb5P5lqs3Ca
-        h/+cLv4bBUfkg8bu3iqb2LT+aLFeAnANR+gdj+Wdem1TrvT0NmRQf0x7S6/ryxAo4SXblFw3d7ahz
-        xSbkeqMppVXWHa58ukmB0eBF+M4pEXfnXshQQShwqD9rOguZGzHiyOVx7CySu4mEkBVwte8jncO+v
-        6VNrBIMBxSEwsTRczBKEdgBmPSwsNlGYOgehKM8yhbeT2UHVUnh3mkPiede1N6BjRbN1sGK5iFSLa
-        3PpARw0pu5r+aMinmRaoy8huLxC1+A9Urqfv3GsjOH1D7yYXDmVAaNM1PSxDFgFSnYhmFY6VFLhhV
+         bh=s45HmMDP7/Lh87o/Az3eaE9LOfvR4oj5fV0qPSxpKec=; b=erigPmuOigWy/x3GbDyXMBYoF
+        xWKGuCm4S0R4csWw7C9o913Cg2uGgmTGbraYeNEQ+sqTBOahln8utBUPjv4PvsvqS/1M2XtYntw/y
+        g2Difg8l9J6yw7Dpr75PzOUffP3Y41fK2f+goGmg0gj4NrKDKW1wjVi/vo0/QkBk2eOW4AmoAy+m+
+        9qdo4dx/m63cG/F3PzzSF1lRNDNVmjYwS1bJB10gaNu7kNmLpU9N8x+TwbRGrVhqdgSzpP0fHfMBo
+        rkXR8s9pviSsvHOwK3+ljmxixQ5GKc87XbTBzHvA4kMuV4duewYX0x5yNBLHjIA1+/HOQmF/MeiFa
     
 In-Reply-To: <20180313132639.17387-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -27,46 +27,37 @@ Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-xa_find() is a slightly easier API to use than
-radix_tree_gang_lookup_slot() because it contains its own RCU locking.
+This is a perfect use for xa_cmpxchg().  Note the use of 0 for GFP
+flags; we won't be allocating memory.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 14 ++++----------
- 1 file changed, 4 insertions(+), 10 deletions(-)
+ mm/shmem.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
 diff --git a/mm/shmem.c b/mm/shmem.c
-index fb06fb3e644a..a0a354a87f3b 100644
+index a0a354a87f3b..cfbffb4b47a2 100644
 --- a/mm/shmem.c
 +++ b/mm/shmem.c
-@@ -1416,23 +1416,17 @@ static struct page *shmem_alloc_hugepage(gfp_t gfp,
- 		struct shmem_inode_info *info, pgoff_t index)
+@@ -635,16 +635,13 @@ static void shmem_delete_from_page_cache(struct page *page, void *radswap)
+ }
+ 
+ /*
+- * Remove swap entry from radix tree, free the swap and its page cache.
++ * Remove swap entry from page cache, free the swap and its page cache.
+  */
+ static int shmem_free_swap(struct address_space *mapping,
+ 			   pgoff_t index, void *radswap)
  {
- 	struct vm_area_struct pvma;
--	struct inode *inode = &info->vfs_inode;
--	struct address_space *mapping = inode->i_mapping;
--	pgoff_t idx, hindex;
--	void __rcu **results;
-+	struct address_space *mapping = info->vfs_inode.i_mapping;
-+	pgoff_t hindex;
- 	struct page *page;
+-	void *old;
++	void *old = xa_cmpxchg(&mapping->i_pages, index, radswap, NULL, 0);
  
- 	if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
- 		return NULL;
- 
- 	hindex = round_down(index, HPAGE_PMD_NR);
--	rcu_read_lock();
--	if (radix_tree_gang_lookup_slot(&mapping->i_pages, &results, &idx,
--				hindex, 1) && idx < hindex + HPAGE_PMD_NR) {
--		rcu_read_unlock();
-+	if (xa_find(&mapping->i_pages, &hindex, hindex + HPAGE_PMD_NR - 1,
-+								XA_PRESENT))
- 		return NULL;
--	}
--	rcu_read_unlock();
- 
- 	shmem_pseudo_vma_init(&pvma, info, hindex);
- 	page = alloc_pages_vma(gfp | __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN,
+-	xa_lock_irq(&mapping->i_pages);
+-	old = radix_tree_delete_item(&mapping->i_pages, index, radswap);
+-	xa_unlock_irq(&mapping->i_pages);
+ 	if (old != radswap)
+ 		return -ENOENT;
+ 	free_swap_and_cache(radix_to_swp_entry(radswap));
 -- 
 2.16.1
 
