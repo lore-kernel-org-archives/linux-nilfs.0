@@ -1,24 +1,24 @@
 From: Josef Bacik <josef@toxicpanda.com>
-Subject: Re: [PATCH v9 09/61] xarray: Replace exceptional entries
-Date: Fri, 16 Mar 2018 14:53:50 -0400
-Message-ID: <20180316185349.c4ebbwuzlhihec5f@destiny>
+Subject: Re: [PATCH v9 10/61] xarray: Change definition of sibling entries
+Date: Fri, 16 Mar 2018 15:00:02 -0400
+Message-ID: <20180316190001.56clqrub6gy6lzh5@destiny>
 References: <20180313132639.17387-1-willy@infradead.org>
- <20180313132639.17387-10-willy@infradead.org>
+ <20180313132639.17387-11-willy@infradead.org>
 Mime-Version: 1.0
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=toxicpanda-com.20150623.gappssmtp.com; s=20150623;
         h=date:from:to:cc:subject:message-id:references:mime-version
          :content-disposition:in-reply-to:user-agent;
-        bh=CzyD/OYuGRsIGNGBIqvEmvM8o6pjsHHUujjOgnQiJjo=;
-        b=TEzPTPwxVnth8p267AmsTS0Ac4aMkF8k95MhvCWCqQILj81IdGLqFivnUKllUrpp8w
-         +AKghg07cgnPWQzfXu5PHY9oeMrnc2ZUpbSeKumFwQihNItUeHsgw/1Y/MfgDgznOjxP
-         f/0KqdqTzxYQjs5tvVG9zzFPZcWd4Wwh6XGbzMYlrID9vTQxsZEA+6Rdsvr2PWj0GbeX
-         cWQeCKR9pKq9dnJR/Abxz72GlTFT/8yHhsyxEeJDFLjPNwbSQAV0+FLtsh6Zsvuipz3Q
-         nYceEmWJlq2dW+3wmtL28fa6F39OIcFXuuVZhb75dsAZA4FHfYimB0SQTlTowIn9RhHA
-         i21Q==
+        bh=uuAQ5LHP2J2TtYlsQZWQco+P1TxU74toR075q7kOwsM=;
+        b=NoWV8+PXAKFpvrqJYDgCuD2Tw8SAtRyyf9/PKjt+oYW7CjKYGAwvGupSq3FvmGnEPo
+         M+1V+5EFmanm68XSkIDGPv14p98uenedH7j68LWlpP56VrZi1h/9LBbCNvMELaahTc7W
+         7Y2jmw636+Ns7wHjVLQjAIkkbz8rjXLCdzQCtZKn141ZpejyyQxZSP0xTQvcZuI4aMy9
+         xvDvA0NDDGYZV/3Ec/JfLMouU1fB40BOUW+ju8cqpSFGSoO7m9O5TkWDrprIYCS6g/HE
+         q7Cg2bllI8mOPwtzJO6DAuIwN6eKh54A/z7IeMng+OS71LfHowlD/XbKATpM62WqBlao
+         RnCw==
 Content-Disposition: inline
-In-Reply-To: <20180313132639.17387-10-willy@infradead.org>
+In-Reply-To: <20180313132639.17387-11-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -26,111 +26,19 @@ Content-Transfer-Encoding: 7bit
 To: Matthew Wilcox <willy@infradead.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-On Tue, Mar 13, 2018 at 06:25:47AM -0700, Matthew Wilcox wrote:
+On Tue, Mar 13, 2018 at 06:25:48AM -0700, Matthew Wilcox wrote:
 > From: Matthew Wilcox <mawilcox@microsoft.com>
 > 
-> Introduce xarray value entries to replace the radix tree exceptional
-> entry code.  This is a slight change in encoding to allow the use of an
-> extra bit (we can now store BITS_PER_LONG - 1 bits in a value entry).
-> It is also a change in emphasis; exceptional entries are intimidating
-> and different.  As the comment explains, you can choose to store values
-> or pointers in the xarray and they are both first-class citizens.
+> Instead of storing a pointer to the slot containing the canonical entry,
+> store the offset of the slot.  Produces slightly more efficient code
+> (~300 bytes) and simplifies the implementation.
 > 
 > Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 > ---
->  arch/powerpc/include/asm/book3s/64/pgtable.h    |   4 +-
->  arch/powerpc/include/asm/nohash/64/pgtable.h    |   4 +-
->  drivers/gpu/drm/i915/i915_gem.c                 |  17 ++--
->  drivers/staging/lustre/lustre/mdc/mdc_request.c |   2 +-
->  fs/btrfs/compression.c                          |   2 +-
->  fs/dax.c                                        | 107 ++++++++++++------------
->  fs/proc/task_mmu.c                              |   2 +-
->  include/linux/radix-tree.h                      |  36 ++------
->  include/linux/swapops.h                         |  19 ++---
->  include/linux/xarray.h                          |  54 ++++++++++++
->  lib/idr.c                                       |  61 ++++++--------
->  lib/radix-tree.c                                |  21 ++---
->  mm/filemap.c                                    |  10 +--
->  mm/khugepaged.c                                 |   2 +-
->  mm/madvise.c                                    |   2 +-
->  mm/memcontrol.c                                 |   2 +-
->  mm/mincore.c                                    |   2 +-
->  mm/readahead.c                                  |   2 +-
->  mm/shmem.c                                      |  10 +--
->  mm/swap.c                                       |   2 +-
->  mm/truncate.c                                   |  12 +--
->  mm/workingset.c                                 |  12 ++-
->  tools/testing/radix-tree/idr-test.c             |   6 +-
->  tools/testing/radix-tree/linux/radix-tree.h     |   1 +
->  tools/testing/radix-tree/multiorder.c           |  47 +++++------
->  tools/testing/radix-tree/test.c                 |   2 +-
->  26 files changed, 223 insertions(+), 218 deletions(-)
+>  include/linux/xarray.h | 93 ++++++++++++++++++++++++++++++++++++++++++++++++++
+>  lib/radix-tree.c       | 66 +++++++++++------------------------
+>  2 files changed, 112 insertions(+), 47 deletions(-)
 > 
-
-<snip>
-
->  
-> @@ -453,18 +449,14 @@ int ida_get_new_above(struct ida *ida, int start, int *id)
->  			new += bit;
->  			if (new < 0)
->  				return -ENOSPC;
-> -			if (ebit < BITS_PER_LONG) {
-> -				bitmap = (void *)((1UL << ebit) |
-> -						RADIX_TREE_EXCEPTIONAL_ENTRY);
-> -				radix_tree_iter_replace(root, &iter, slot,
-> -						bitmap);
-> -				*id = new;
-> -				return 0;
-> +			if (bit < BITS_PER_XA_VALUE) {
-> +				bitmap = xa_mk_value(1UL << bit);
-> +			} else {
-> +				bitmap = this_cpu_xchg(ida_bitmap, NULL);
-> +				if (!bitmap)
-> +					return -EAGAIN;
-> +				__set_bit(bit, bitmap->bitmap);
->  			}
-> -			bitmap = this_cpu_xchg(ida_bitmap, NULL);
-> -			if (!bitmap)
-> -				return -EAGAIN;
-> -			__set_bit(bit, bitmap->bitmap);
->  			radix_tree_iter_replace(root, &iter, slot, bitmap);
->  		}
->  
-
-This threw me off a bit, but we do *id = new below.
-
-> @@ -495,9 +487,9 @@ void ida_remove(struct ida *ida, int id)
->  		goto err;
->  
->  	bitmap = rcu_dereference_raw(*slot);
-> -	if (radix_tree_exception(bitmap)) {
-> +	if (xa_is_value(bitmap)) {
->  		btmp = (unsigned long *)slot;
-> -		offset += RADIX_TREE_EXCEPTIONAL_SHIFT;
-> +		offset += 1; /* Intimate knowledge of the xa_data encoding */
->  		if (offset >= BITS_PER_LONG)
->  			goto err;
->  	} else {
-
-Ick.
-
-<snip>
-
-> @@ -393,11 +393,11 @@ void ida_check_conv(void)
->  	for (i = 0; i < 1000000; i++) {
->  		int err = ida_get_new(&ida, &id);
->  		if (err == -EAGAIN) {
-> -			assert((i % IDA_BITMAP_BITS) == (BITS_PER_LONG - 2));
-> +			assert((i % IDA_BITMAP_BITS) == (BITS_PER_LONG - 1));
->  			assert(ida_pre_get(&ida, GFP_KERNEL));
->  			err = ida_get_new(&ida, &id);
->  		} else {
-> -			assert((i % IDA_BITMAP_BITS) != (BITS_PER_LONG - 2));
-> +			assert((i % IDA_BITMAP_BITS) != (BITS_PER_LONG - 1));
-
-Can we just use BITS_PER_XA_VALUE here?
-
-Overall looks fine to me, I'm not married to changing any of the nits.
 
 Reviewed-by: Josef Bacik <jbacik@fb.com>
 
