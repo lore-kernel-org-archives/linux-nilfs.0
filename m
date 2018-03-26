@@ -1,43 +1,47 @@
-From: Josef Bacik <josef@toxicpanda.com>
-Subject: Re: [PATCH v9 13/61] xarray: Add documentation
-Date: Fri, 16 Mar 2018 15:12:37 -0400
-Message-ID: <20180316191236.jsmlnwgy76htz5fi@destiny>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v9 00/61] XArray v9
+Date: Mon, 26 Mar 2018 15:36:48 -0700
+Message-ID: <20180326153648.27f53e9a1398812203745257@linux-foundation.org>
 References: <20180313132639.17387-1-willy@infradead.org>
- <20180313132639.17387-14-willy@infradead.org>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=toxicpanda-com.20150623.gappssmtp.com; s=20150623;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to:user-agent;
-        bh=uF2PMW1VOlC7AoZKKuw9dUzMdYbnEKuHnfQM/oq8L9c=;
-        b=fd/U95HCcEWnnffGFocj5qR0fJt5LLHGXEy1SehT62G8MJuTa/qSbn6LAum65URNSE
-         JBq+fg8uWMrJzQwx/8DYVB0vXmRBV7EnN4WUYhRQLFVwPlI49ex+t9Oj8g9xWEy6nbJS
-         ZtdFKvEkgulPklS6fL1liJFccLagg6inlumtrqub3qkdK/qM42KAAG1tFLpwet6nVDdC
-         W0w24rrA1BCf3DavQKWtX0DRaFJ45Suq8/di4scylIpfzwBQwk5A4Z1HfXIM29nrucGS
-         OgAV9KOO0bUzpn9krR5pZdF5r1KoxtlXYuwOI7dMngX0b5OGvXUYpyeVBKHNidnwUGKR
-         xcEQ==
-Content-Disposition: inline
-In-Reply-To: <20180313132639.17387-14-willy@infradead.org>
+In-Reply-To: <20180313132639.17387-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: Matthew Wilcox <willy@infradead.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-On Tue, Mar 13, 2018 at 06:25:51AM -0700, Matthew Wilcox wrote:
-> From: Matthew Wilcox <mawilcox@microsoft.com>
-> 
-> This is documentation on how to use the XArray, not details about its
-> internal implementation.
-> 
-> Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+On Tue, 13 Mar 2018 06:25:38 -0700 Matthew Wilcox <willy@infradead.org> wrote:
 
-I'm just going to assume you know what you are talking about here
+> This patchset is, I believe, appropriate for merging for 4.17.
+> It contains the XArray implementation, to eventually replace the radix
+> tree, and converts the page cache to use it.
 
-Acked-by: Josef Bacik <jbacik@fb.com>
+I looked at this from a for-4.17 POV and ran out of nerve at "[PATCH v9
+09/61] xarray: Replace exceptional entries".  It's awfully late.
 
-Thanks,
+"[PATCH v9 08/61] page cache: Use xa_lock" looks sufficiently
+mechanical to be if-it-compiles-it-works, although perhaps that
+shouldn't be in 4.17 either.  Mainly because it commits us to merging
+the rest of XArray and there hasn't been a ton of review and test
+activity.
 
-Josef
+
+
+It looks like btrfs has changed in -next:
+
+--- a/fs/btrfs/inode.c~page-cache-use-xa_lock-fix
++++ a/fs/btrfs/inode.c
+@@ -7445,7 +7445,7 @@ out:
+ 
+ bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end)
+ {
+-	struct radix_tree_root *root = &inode->i_mapping->page_tree;
++	struct radix_tree_root *root = &inode->i_mapping->i_pages;
+ 	bool found = false;
+ 	void **pagep = NULL;
+ 	struct page *page = NULL;
+_
+
