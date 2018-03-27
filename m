@@ -1,65 +1,108 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH v9 00/61] XArray v9
-Date: Mon, 26 Mar 2018 16:26:34 -0700
-Message-ID: <20180326232634.GA10054@bombadil.infradead.org>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH v9 05/61] Export __set_page_dirty
+Date: Mon, 26 Mar 2018 17:28:41 -0700
+Message-ID: <20180327002841.GI4807@magnolia>
 References: <20180313132639.17387-1-willy@infradead.org>
- <20180326153648.27f53e9a1398812203745257@linux-foundation.org>
+ <20180313132639.17387-6-willy@infradead.org>
 Mime-Version: 1.0
 Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=wYjeX3lCT3BPFdg62HQEnRvtf2UCMF6rFyoWqS3xi48=; b=KnYdjsKSdZjBUlrc28sgjrFZ9
-        qoNfbJcLC2WyMAXRl+wiGq5V5/0st4VjRWBL7P6z+ruTZtT9il+zSb+ZXU4QFYXBij8K7L1Bo9APa
-        U7jGtSbEDKrgD8pBjjK7dn5r3mtiCMRJKXTOs/NNNnzXqBIK/ROMJPdhuoC+Nz4eWdgimCqfi+ox9
-        fa0EX/+bG8GyR0SQLSUF5SFOGL5Besi74m1XBOmEsH5luIo6LqtsxLuRd94XCzhu/4MEk2NqYwClt
-        WGzhtx89Sh2it1WMUABMGY5Ia38iIcowTTxWAshcL1Xw3p0d8f3Xh5NDDwgTQWsHIqgwvsUEyeHvm
-    
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=date : from : to : cc
+ : subject : message-id : references : mime-version : content-type :
+ in-reply-to; s=corp-2017-10-26;
+ bh=1W8cZ1tudT+OE4CD0hhPYfrp8/9Tuk5tvw1ZXxAYwVI=;
+ b=nEgOoTmZA02DpHgoIN/Ay8iRXqHWX5Oo6ApTgu1TSPNYdmuaODr9gF5iDqj/8ZPppxfy
+ e9eiXK2sAkW4P5N3ZzEbeKDd45viXiacqecysHqacwdnNjU4iWpGuM0GFC6FeRRqxLFe
+ +B9+I8LXRovVhs6fHsOd3MzdHkwmUMnd353lpPQ4DkdvEKgk4LBzNQkBV1MxC2cTknYu
+ 4s27qFA5h5W2mxkGLJKR4xOoaodiFmN6JP0A0CcCuoM0gyexCmNeZnL/f5pu0edDURSa
+ Umd0uPSlkYyUmFnSDmCTCGH3o4o2tGo7CWW4nPpuI4l97h2W4NaXCnAcvxBCWJiCjMqy 5Q== 
 Content-Disposition: inline
-In-Reply-To: <20180326153648.27f53e9a1398812203745257@linux-foundation.org>
+In-Reply-To: <20180313132639.17387-6-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-On Mon, Mar 26, 2018 at 03:36:48PM -0700, Andrew Morton wrote:
-> I looked at this from a for-4.17 POV and ran out of nerve at "[PATCH v9
-> 09/61] xarray: Replace exceptional entries".  It's awfully late.
-
-I did post v7 five weeks ago ... it wasn't late at the time.
-
-> "[PATCH v9 08/61] page cache: Use xa_lock" looks sufficiently
-> mechanical to be if-it-compiles-it-works, although perhaps that
-> shouldn't be in 4.17 either.  Mainly because it commits us to merging
-> the rest of XArray and there hasn't been a ton of review and test
-> activity.
-
-I think we should commit to that.  The API has had a pretty thorough
-review, and nobody's stepped up to say "Hey, no, I prefer the old API,
-I don't want to see it change".  Merging patch 8 would move us a good
-chunk of the way towards getting the IDA in a position where it can
-be converted.  Patch 9 would get us even further, but I'm willing to
-respin in order to build on just patch 8.
-
-> It looks like btrfs has changed in -next:
+On Tue, Mar 13, 2018 at 06:25:43AM -0700, Matthew Wilcox wrote:
+> From: Matthew Wilcox <mawilcox@microsoft.com>
 > 
-> --- a/fs/btrfs/inode.c~page-cache-use-xa_lock-fix
-> +++ a/fs/btrfs/inode.c
-> @@ -7445,7 +7445,7 @@ out:
->  
->  bool btrfs_page_exists_in_range(struct inode *inode, loff_t start, loff_t end)
->  {
-> -	struct radix_tree_root *root = &inode->i_mapping->page_tree;
-> +	struct radix_tree_root *root = &inode->i_mapping->i_pages;
->  	bool found = false;
->  	void **pagep = NULL;
->  	struct page *page = NULL;
+> XFS currently contains a copy-and-paste of __set_page_dirty().  Export
+> it from buffer.c instead.
+> 
+> Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+> Acked-by: Jeff Layton <jlayton@kernel.org>
 
-btrfs_page_exists_in_range() has been deleted -- David Sterba merged the
-patch v8-0006-btrfs-Use-filemap_range_has_page.patch ... which was dropped
-from v9 of the patchset, so I'm not sure what you're actually looking at?
+Looks ok,
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+
+--D
+
+> ---
+>  fs/buffer.c        |  3 ++-
+>  fs/xfs/xfs_aops.c  | 15 ++-------------
+>  include/linux/mm.h |  1 +
+>  3 files changed, 5 insertions(+), 14 deletions(-)
+> 
+> diff --git a/fs/buffer.c b/fs/buffer.c
+> index 17f13191a552..62bf5445c921 100644
+> --- a/fs/buffer.c
+> +++ b/fs/buffer.c
+> @@ -594,7 +594,7 @@ EXPORT_SYMBOL(mark_buffer_dirty_inode);
+>   *
+>   * The caller must hold lock_page_memcg().
+>   */
+> -static void __set_page_dirty(struct page *page, struct address_space *mapping,
+> +void __set_page_dirty(struct page *page, struct address_space *mapping,
+>  			     int warn)
+>  {
+>  	unsigned long flags;
+> @@ -608,6 +608,7 @@ static void __set_page_dirty(struct page *page, struct address_space *mapping,
+>  	}
+>  	spin_unlock_irqrestore(&mapping->tree_lock, flags);
+>  }
+> +EXPORT_SYMBOL_GPL(__set_page_dirty);
+>  
+>  /*
+>   * Add a page to the dirty page list.
+> diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
+> index a0afb6411417..f51350cb98a7 100644
+> --- a/fs/xfs/xfs_aops.c
+> +++ b/fs/xfs/xfs_aops.c
+> @@ -1473,19 +1473,8 @@ xfs_vm_set_page_dirty(
+>  	newly_dirty = !TestSetPageDirty(page);
+>  	spin_unlock(&mapping->private_lock);
+>  
+> -	if (newly_dirty) {
+> -		/* sigh - __set_page_dirty() is static, so copy it here, too */
+> -		unsigned long flags;
+> -
+> -		spin_lock_irqsave(&mapping->tree_lock, flags);
+> -		if (page->mapping) {	/* Race with truncate? */
+> -			WARN_ON_ONCE(!PageUptodate(page));
+> -			account_page_dirtied(page, mapping);
+> -			radix_tree_tag_set(&mapping->page_tree,
+> -					page_index(page), PAGECACHE_TAG_DIRTY);
+> -		}
+> -		spin_unlock_irqrestore(&mapping->tree_lock, flags);
+> -	}
+> +	if (newly_dirty)
+> +		__set_page_dirty(page, mapping, 1);
+>  	unlock_page_memcg(page);
+>  	if (newly_dirty)
+>  		__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
+> diff --git a/include/linux/mm.h b/include/linux/mm.h
+> index 4d02524a7998..7f7bb4c28497 100644
+> --- a/include/linux/mm.h
+> +++ b/include/linux/mm.h
+> @@ -1456,6 +1456,7 @@ extern int try_to_release_page(struct page * page, gfp_t gfp_mask);
+>  extern void do_invalidatepage(struct page *page, unsigned int offset,
+>  			      unsigned int length);
+>  
+> +void __set_page_dirty(struct page *, struct address_space *, int warn);
+>  int __set_page_dirty_nobuffers(struct page *page);
+>  int __set_page_dirty_no_writeback(struct page *page);
+>  int redirty_page_for_writepage(struct writeback_control *wbc,
+> -- 
+> 2.16.1
+> 
