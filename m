@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 48/62] fs: Convert writeback to XArray
-Date: Thu, 29 Mar 2018 20:42:31 -0700
-Message-ID: <20180330034245.10462-49-willy@infradead.org>
+Subject: [PATCH v10 50/62] f2fs: Convert to XArray
+Date: Thu, 29 Mar 2018 20:42:33 -0700
+Message-ID: <20180330034245.10462-51-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jRuCgGJsPckDxVByLyw97pVlMysPZzMerEmKa1KeQOU=; b=lJmxbrwW4+3p3iJ+jO8vnGTXpi
- 2mD5Nkua4SNs57GqUrs7G1+kmmPKMhum5q8Z8VcWoUslvbDRDdv6hFn9JGO1Efd0OIl3y22EPCV6D
- juJlfVRIiCR+EzGYVBQWMNlElJ68IJ1Hxt929P7kTFL0oGmCvsOdPiApEwOmGoDPivhU=;
+ bh=uQ9HV77Lgkvf1u+jRkugm6dCZK6WEvbesNm0TrYf/cc=; b=SIb/7P5Qu3KnW5hnCXzmglFyG3
+ Kn0Nq1wb7aVGVBqKiG4BMzyASF2YUI+O1h45sv7z3sg3N7wV2y1WEfeWvnk6GWzfiLx06j3jZaveu
+ 7aPa03myPdcooiGqG4TlK618463jTNO7tQgjJ8KPBSSU5Asp/grSXuo2g/rMIU4BNDlc=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=jRuCgGJsPckDxVByLyw97pVlMysPZzMerEmKa1KeQOU=; b=PaiELeAa4dbf4kYwt7hURVtzI1
- ahukk+zK35QJxECZw4iDBXkQ26ua613Q8vfdlwogqjxSpWVzzk5ENVJvlDEKgwzbZF0PjKlk8P3Vt
- ybYhc5DnPFqFz6BPm5gevfm3yYO2Zf2LjDiw6FU1akxzIrUvz19ittKOaTsqu1vV7/Mg=;
+ bh=uQ9HV77Lgkvf1u+jRkugm6dCZK6WEvbesNm0TrYf/cc=; b=dVdd5kgILYuAqKCnKtV3ubBFGI
+ YBkM5fA2V0DkKReSQ68PFG3SjeHcP+8n2uGQ4vnv66vbGBmhEBOGSw1mv+BXbySHSxCW8Mrav1lVo
+ vJ5WW3LIdln/QKIwqHtWAdER1EpvoIACYIMbGdyS4rmvbu04k5FzKqUa9ohayrcyUIrs=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jRuCgGJsPckDxVByLyw97pVlMysPZzMerEmKa1KeQOU=; b=Ce/mkD+9Ar1WK2DZIdUkF9p2c
- 7hSxuisbEnDojcglje78AOjD+BVSS2UQ/RPBS8jM412VxbuCVrUIyHY9uCg9xGmYjpeSiI5JP2sKY
- iIrJIMOFV6pG/W4fQX6XGjL5JRnktKQ3lX0S3rrJuYAJJoXdfzVRLfPyIDh91OoKAKV4d6V8C/gpr
- U6tqzS4wWMLxqgdwnxwtotPMLUQWUscKm1+fkf56yJ3bP6ouaB0a2GsQ/WwiDyPLO9wFzVUGhz800
- /kSBu6GKPoqvcqTbCX30Jn7dwVoaotOb5LXgkJ3xay9fF3HzaQAKnIbAwQl/do4tXK6JC8VwXoyMJ
- XPBYrhZRA==;
+ bh=uQ9HV77Lgkvf1u+jRkugm6dCZK6WEvbesNm0TrYf/cc=; b=WmII8r+tpsrH4ZWK19S9JWXeP
+ F47h2ttirTAYsU4lV1IWLA7Fz4BYeZ+4rcUKL62FT8lRfTlOTb2oP8VWORwwSZDNufSB7KlGwcDFC
+ Tt2LytT3R4md2DntWIaflrJuVHa58vhnbNoqkhchSx037sIY2tikPEZPBou+92+7oEBct264GaFVH
+ livM1wt/pqRPUb9ow0Kc3YFcpkrbJl1o8UR+XjjE7AoJhfCHz/P2gEmW5M801RTquNgTkae26Rp3Y
+ kQu15lxyS0Rw9JIHHuQkQLNTYa6xjwTlWpo0WfKyqirkMCzIp4wv1/6Zx0AAb+gB+nxREkdqbgXhl
+ /3KkTd9Kw==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,62 +53,109 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-A couple of short loops.
+This is a straightforward conversion.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/fs-writeback.c | 25 +++++++++----------------
- 1 file changed, 9 insertions(+), 16 deletions(-)
+ fs/f2fs/data.c   |  3 +--
+ fs/f2fs/dir.c    |  5 +----
+ fs/f2fs/inline.c |  6 +-----
+ fs/f2fs/node.c   | 10 ++--------
+ 4 files changed, 5 insertions(+), 19 deletions(-)
 
-diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
-index 4b12ba70a895..7d90d3beb591 100644
---- a/fs/fs-writeback.c
-+++ b/fs/fs-writeback.c
-@@ -339,9 +339,9 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
- 	struct address_space *mapping = inode->i_mapping;
- 	struct bdi_writeback *old_wb = inode->i_wb;
- 	struct bdi_writeback *new_wb = isw->new_wb;
--	struct radix_tree_iter iter;
-+	XA_STATE(xas, &mapping->i_pages, 0);
-+	struct page *page;
- 	bool switched = false;
--	void **slot;
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index d836bfc160f1..676d6a34a7d5 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -2427,8 +2427,7 @@ void f2fs_set_page_dirty_nobuffers(struct page *page)
+ 	xa_lock_irqsave(&mapping->i_pages, flags);
+ 	WARN_ON_ONCE(!PageUptodate(page));
+ 	account_page_dirtied(page, mapping);
+-	radix_tree_tag_set(&mapping->i_pages,
+-			page_index(page), PAGECACHE_TAG_DIRTY);
++	__xa_set_tag(&mapping->i_pages, page_index(page), PAGECACHE_TAG_DIRTY);
+ 	xa_unlock_irqrestore(&mapping->i_pages, flags);
+ 	unlock_page_memcg(page);
  
- 	/*
- 	 * By the time control reaches here, RCU grace period has passed
-@@ -375,25 +375,18 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
- 	 * to possibly dirty pages while PAGECACHE_TAG_WRITEBACK points to
- 	 * pages actually under writeback.
- 	 */
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, 0,
--				   PAGECACHE_TAG_DIRTY) {
--		struct page *page = radix_tree_deref_slot_protected(slot,
--						&mapping->i_pages.xa_lock);
--		if (likely(page) && PageDirty(page)) {
-+	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_DIRTY) {
-+		if (PageDirty(page)) {
- 			dec_wb_stat(old_wb, WB_RECLAIMABLE);
- 			inc_wb_stat(new_wb, WB_RECLAIMABLE);
- 		}
- 	}
+diff --git a/fs/f2fs/dir.c b/fs/f2fs/dir.c
+index 8c9c2f31b253..bd75a3ab95ac 100644
+--- a/fs/f2fs/dir.c
++++ b/fs/f2fs/dir.c
+@@ -699,7 +699,6 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
+ 	unsigned int bit_pos;
+ 	int slots = GET_DENTRY_SLOTS(le16_to_cpu(dentry->name_len));
+ 	struct address_space *mapping = page_mapping(page);
+-	unsigned long flags;
+ 	int i;
  
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, 0,
--				   PAGECACHE_TAG_WRITEBACK) {
--		struct page *page = radix_tree_deref_slot_protected(slot,
--						&mapping->i_pages.xa_lock);
--		if (likely(page)) {
--			WARN_ON_ONCE(!PageWriteback(page));
--			dec_wb_stat(old_wb, WB_WRITEBACK);
--			inc_wb_stat(new_wb, WB_WRITEBACK);
--		}
-+	xas_set(&xas, 0);
-+	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_WRITEBACK) {
-+		WARN_ON_ONCE(!PageWriteback(page));
-+		dec_wb_stat(old_wb, WB_WRITEBACK);
-+		inc_wb_stat(new_wb, WB_WRITEBACK);
- 	}
+ 	f2fs_update_time(F2FS_I_SB(dir), REQ_TIME);
+@@ -732,10 +731,8 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
  
- 	wb_get(new_wb);
+ 	if (bit_pos == NR_DENTRY_IN_BLOCK &&
+ 			!truncate_hole(dir, page->index, page->index + 1)) {
+-		xa_lock_irqsave(&mapping->i_pages, flags);
+-		radix_tree_tag_clear(&mapping->i_pages, page_index(page),
++		xa_clear_tag(&mapping->i_pages, page_index(page),
+ 				     PAGECACHE_TAG_DIRTY);
+-		xa_unlock_irqrestore(&mapping->i_pages, flags);
+ 
+ 		clear_page_dirty_for_io(page);
+ 		ClearPagePrivate(page);
+diff --git a/fs/f2fs/inline.c b/fs/f2fs/inline.c
+index 265da200daa8..98b9f99a7f76 100644
+--- a/fs/f2fs/inline.c
++++ b/fs/f2fs/inline.c
+@@ -204,7 +204,6 @@ int f2fs_write_inline_data(struct inode *inode, struct page *page)
+ 	void *src_addr, *dst_addr;
+ 	struct dnode_of_data dn;
+ 	struct address_space *mapping = page_mapping(page);
+-	unsigned long flags;
+ 	int err;
+ 
+ 	set_new_dnode(&dn, inode, NULL, NULL, 0);
+@@ -226,10 +225,7 @@ int f2fs_write_inline_data(struct inode *inode, struct page *page)
+ 	kunmap_atomic(src_addr);
+ 	set_page_dirty(dn.inode_page);
+ 
+-	xa_lock_irqsave(&mapping->i_pages, flags);
+-	radix_tree_tag_clear(&mapping->i_pages, page_index(page),
+-			     PAGECACHE_TAG_DIRTY);
+-	xa_unlock_irqrestore(&mapping->i_pages, flags);
++	xa_clear_tag(&mapping->i_pages, page_index(page), PAGECACHE_TAG_DIRTY);
+ 
+ 	set_inode_flag(inode, FI_APPEND_WRITE);
+ 	set_inode_flag(inode, FI_DATA_EXIST);
+diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
+index ad1c2bf41ddd..27f0c033a0b7 100644
+--- a/fs/f2fs/node.c
++++ b/fs/f2fs/node.c
+@@ -88,14 +88,10 @@ bool available_free_memory(struct f2fs_sb_info *sbi, int type)
+ static void clear_node_page_dirty(struct page *page)
+ {
+ 	struct address_space *mapping = page->mapping;
+-	unsigned int long flags;
+ 
+ 	if (PageDirty(page)) {
+-		xa_lock_irqsave(&mapping->i_pages, flags);
+-		radix_tree_tag_clear(&mapping->i_pages,
+-				page_index(page),
++		xa_clear_tag(&mapping->i_pages, page_index(page),
+ 				PAGECACHE_TAG_DIRTY);
+-		xa_unlock_irqrestore(&mapping->i_pages, flags);
+ 
+ 		clear_page_dirty_for_io(page);
+ 		dec_page_count(F2FS_M_SB(mapping), F2FS_DIRTY_NODES);
+@@ -1139,9 +1135,7 @@ void ra_node_page(struct f2fs_sb_info *sbi, nid_t nid)
+ 		return;
+ 	f2fs_bug_on(sbi, check_nid_range(sbi, nid));
+ 
+-	rcu_read_lock();
+-	apage = radix_tree_lookup(&NODE_MAPPING(sbi)->i_pages, nid);
+-	rcu_read_unlock();
++	apage = xa_load(&NODE_MAPPING(sbi)->i_pages, nid);
+ 	if (apage)
+ 		return;
+ 
 -- 
 2.16.2
 
