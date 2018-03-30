@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 52/62] dax: Fix use of zero page
-Date: Thu, 29 Mar 2018 20:42:35 -0700
-Message-ID: <20180330034245.10462-53-willy@infradead.org>
+Subject: [PATCH v10 32/62] mm: Convert huge_memory to XArray
+Date: Thu, 29 Mar 2018 20:42:15 -0700
+Message-ID: <20180330034245.10462-33-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=aH6CYkBFbEmdokS9BSeZj1QdQGdPwjoJG+bafqlngJo=; b=BuVkv6P7/TCuj72VT1gUd/N6Mc
- 5MlB/cYdtnwtt5o4vPkPVLjL1dUUBw+ID5nJNCm+uYl1VsXr8x/dQJeM0axzGDAojBI1j8wT5QJdQ
- EQvpAy6hdq78QOx3nkeg0lAaV1ZcyhbhB3Rgow0vGdP8epdxN+j6rg+o3sLkZnDqleZk=;
+ bh=jI6SZ/Os78TIb9FtyyeHdJaeqQJYtcYzMBgbF/FUNWg=; b=G5ZWg+PvCdLYUQqa7kejbyNuHH
+ BzL97wJoSq3mUxhh986lBcHIYjVqxTcpGzrKxcIj5XmC9NT4rLLf0IpEPGhfqRtfMTGRcmlxBQ2ct
+ CLgFsAml3CzTagphCzHYh2NQv7Uh5FY6xnEx5EmWudf0ttc6tcN74yzStAvvhG4alYPg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=aH6CYkBFbEmdokS9BSeZj1QdQGdPwjoJG+bafqlngJo=; b=Xh9TdLT18GRo3XAeYnqkY+KGst
- 1JgIiwu3W7w/myEqYE5uICIqzNTRuZ8PbnAEPArI1h5XqKUsM3t1tg2BIiz2NpFRw6nFRLqxLHayo
- YzfOC8p0umcUWF5SEKtZVVblMX0d397+AR8AU8UV61RRTB1EBOrcVTzG7Enxjeu2Jvb4=;
+ bh=jI6SZ/Os78TIb9FtyyeHdJaeqQJYtcYzMBgbF/FUNWg=; b=Sa4TtdE6NIocGi7Bncexw1/dwi
+ tHqIn7SXsBkOJkItIhnW35rI7E/Eik2Pauibk8FN3hFJuniZbC18McaF+zXUB4D6hymCL4zWIooWc
+ ZhVTALnzQl5NgSJGmeU85DKUSScmY/vvy15ma/0/MEEZYlFVF+jBN9F7qj9Z5ekvv9gE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=aH6CYkBFbEmdokS9BSeZj1QdQGdPwjoJG+bafqlngJo=; b=ARaZ9kgWGWDYjijGCjRAwq/St
- 3zX4g+RKEOxmvu7yScsBM41VEhbhYkO4d9hEgUyAPCBQTh3z382lY/EAcNqVZVOarBbw3j02vhjRk
- wfURjQ4hknRNAK9jmktLKTNHZ+0BYL0At6mHiFOBW1YSGbXYdTvH9BlS5hhdAGJ6D+HSEarX+SGez
- 531/Oec02oHFtBotPyuXtkGRthFkM8meNwbKiOuYYRzimbnOoqEjvkWcrb93xSpRCuG6Y+KobeVQg
- FT7AfI5+i+os9L8/juQC5u8DCQbZQLy61O2K0Vg2hxeJMsvDmMSeHou4eSA77WBVP9Un143y7/E82
- ri9EOdq5A==;
+ bh=jI6SZ/Os78TIb9FtyyeHdJaeqQJYtcYzMBgbF/FUNWg=; b=eq/MpuPOxrh2MwGb6AjNV4dGT
+ 2m1hXT8pn0C2ik4j28Ir+lqA7QCLM5YQ0/DQ0tqLEz937kaySiJUhxbGZT99RonOt+WYE1lDTNiik
+ 3ciwL17T4L4Dt8xTMclCqZ13PFApwQRrT8xn3zWibINEvlcB49MlRQ6VgxQ1EwThXVsIF6+NrwgeA
+ 5JO7jTwG5Hk0rzX9+VihVN6bUxGBdzAKRTjG4NiVJICorjyeZzgssCDUSgOnBE7paZfGahByTcg8Z
+ YFLyp2UqgEIVR9qC2zFlGBITOU204syW0uPJIENuCkrKvmrgW+tU3mf75m2iti8Oii7tLHRmN0jpG
+ 4Y55UbySw==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,37 +53,64 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Use my_zero_pfn instead of ZERO_PAGE, and pass the vaddr to it so it
-works on MIPS and s390.
+Quite a straightforward conversion.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 10 +---------
- 1 file changed, 1 insertion(+), 9 deletions(-)
+ mm/huge_memory.c | 17 +++++++----------
+ 1 file changed, 7 insertions(+), 10 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index de40ecc9bfd6..371d50a1c14e 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -994,17 +994,9 @@ static int dax_load_hole(struct address_space *mapping, void *entry,
- 	struct inode *inode = mapping->host;
- 	unsigned long vaddr = vmf->address;
- 	int ret = VM_FAULT_NOPAGE;
--	struct page *zero_page;
- 	void *entry2;
--	pfn_t pfn;
--
--	zero_page = ZERO_PAGE(0);
--	if (unlikely(!zero_page)) {
--		ret = VM_FAULT_OOM;
--		goto out;
--	}
-+	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 2aff58624886..56559ee1cb13 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -2443,13 +2443,13 @@ static void __split_huge_page(struct page *page, struct list_head *list,
+ 	ClearPageCompound(head);
+ 	/* See comment in __split_huge_page_tail() */
+ 	if (PageAnon(head)) {
+-		/* Additional pin to radix tree of swap cache */
++		/* Additional pin to swap cache */
+ 		if (PageSwapCache(head))
+ 			page_ref_add(head, 2);
+ 		else
+ 			page_ref_inc(head);
+ 	} else {
+-		/* Additional pin to radix tree */
++		/* Additional pin to page cache */
+ 		page_ref_add(head, 2);
+ 		xa_unlock(&head->mapping->i_pages);
+ 	}
+@@ -2561,7 +2561,7 @@ bool can_split_huge_page(struct page *page, int *pextra_pins)
+ {
+ 	int extra_pins;
  
--	pfn = page_to_pfn_t(zero_page);
- 	entry2 = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
- 			DAX_ZERO_PAGE, false);
- 	if (IS_ERR(entry2)) {
+-	/* Additional pins from radix tree */
++	/* Additional pins from page cache */
+ 	if (PageAnon(page))
+ 		extra_pins = PageSwapCache(page) ? HPAGE_PMD_NR : 0;
+ 	else
+@@ -2657,17 +2657,14 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
+ 	spin_lock_irqsave(zone_lru_lock(page_zone(head)), flags);
+ 
+ 	if (mapping) {
+-		void **pslot;
++		XA_STATE(xas, &mapping->i_pages, page_index(head));
+ 
+-		xa_lock(&mapping->i_pages);
+-		pslot = radix_tree_lookup_slot(&mapping->i_pages,
+-				page_index(head));
+ 		/*
+-		 * Check if the head page is present in radix tree.
++		 * Check if the head page is present in page cache.
+ 		 * We assume all tail are present too, if head is there.
+ 		 */
+-		if (radix_tree_deref_slot_protected(pslot,
+-					&mapping->i_pages.xa_lock) != head)
++		xa_lock(&mapping->i_pages);
++		if (xas_load(&xas) != head)
+ 			goto fail;
+ 	}
+ 
 -- 
 2.16.2
 
