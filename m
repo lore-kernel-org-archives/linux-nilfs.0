@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 27/62] mm: Convert truncate to XArray
-Date: Thu, 29 Mar 2018 20:42:10 -0700
-Message-ID: <20180330034245.10462-28-willy@infradead.org>
+Subject: [PATCH v10 43/62] memfd: Convert shmem_tag_pins to XArray
+Date: Thu, 29 Mar 2018 20:42:26 -0700
+Message-ID: <20180330034245.10462-44-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=qYgDOBOBRuJAkk3Tq/s2Dyykdryp6g0XgybQcE0Us6Y=; b=L65nyjLcWvXG4EcrJ1lCAP0Wvj
- XNMNEKvJbWmX9Phx5Yw9azcvEcjYBIddmRLRLoqy5mku3+/ac4LX0ZfDx8XkKqw4AQs9tgYjFzVQ9
- N+/eCEmcbK/Gi/djNgLGOBw3UJemiLV4i+QKq4dQqNdqbWfcyYBo/Jv+ncMaafUQZ/es=;
+ bh=Kwmjn3C+1I1auj74fd/REnYkivjtnlP75vjR3ufF7kk=; b=LdZHWS0h8P+n3DRP2XIMy4HvuD
+ yhko81ABFbuudsFvAD0rAB7NHBpHnPau0vHSq/cSobmbc5BUiTiuqw2we46Whe7/R3xAZQOQXR5Cg
+ kO4Uhtwz7JdGCvAur07dzLVKrmGJxPIwpWjdP8l/6W35R4T1zyCylEDQto2yI8uTyXz0=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=qYgDOBOBRuJAkk3Tq/s2Dyykdryp6g0XgybQcE0Us6Y=; b=TkSGBJNQIYkZbOPv5HhiTgUTFA
- IH0R3eQTMXXIb/f4OyUWCbBL8XCnY+6VDGwGTU+mGLbaWiCEWy1gm+r1E4k035wJ4xgmL932oNvje
- qzSeKxbqKQ3Q/AlQ2kLZOym+VRtj/cuFP0y1mfBRYnCZD4JlZ3VRRX/rDppBGADqJMUM=;
+ bh=Kwmjn3C+1I1auj74fd/REnYkivjtnlP75vjR3ufF7kk=; b=NxylogfKVl1qnNItpxqYalqDOF
+ sbdEPs/9xY5ULU5969HrSVakX3gtieENohTGyKm4SeXnfjVjx4fGRmBgMfGSaGYW0ZWANvjoIsVDC
+ m7+k7hxEIiWvE+XRkH2BFOekftVojRs2xCFOvB7lyR2ab0NboUxwkxCgHodF7TKPGCGA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=qYgDOBOBRuJAkk3Tq/s2Dyykdryp6g0XgybQcE0Us6Y=; b=FJuCHVxt8jyJsuq+ewo8pqySs
- eeM30vk0IE0ZNkcDe9b5caafT7jTPckKl06NZCPZDq5dtV+a2MD1TIl1vgqghFGMafg/5OUtUcai6
- fZWeBo8pXRHPm3lWvfgjdNXkpTsfRO3azufdJeIqgUhNqStCLKDHcn2Ajwn7toNyoiS8/VLFh76pc
- JVccu0N0GyrBl3q+azfeQoXe1tT+5d/NhBalXhR1SfiJ0LvFUkogrd7M53QiIVJlXgeBoBMKcswFi
- rw3vG9LQI7aNqvfl4/AX2af/mRCAQQ7lunuA3/LM1GwIMCW+eXG6SQvWl3DieV061BmSELsdadiE0
- X8XGVSHeg==;
+ bh=Kwmjn3C+1I1auj74fd/REnYkivjtnlP75vjR3ufF7kk=; b=GF8u9qVPiJpYlJ6ZCyIPg7ydx
+ YgcVgmzBPCsCK2F4al1/LTwStaz1NNLuDj+VmhMsxdNIuB67vmE1iO50Wo5NwweGUYxdc1i14Srdo
+ pm2AuzhphVmmXOqsmh8T8mAuHxoXobXbV+ur9pYy5DX8Zk4g8W72+hR3BoZLtyq+BRRJ8bpW/JoUu
+ xANbMElcudRdQeHM4TRoeMM/uSyd3oXH2NZCi14dsvgKsfNGLtS2lb6xpgcWQI9bDq2Jh+0gGOwuX
+ Clz8Znj4Dgw5VIIlwEh/ndXlXfL8Kti2/f+dk6QV52b9OvWA8fYyeVeriZxREvFVSUFt/lnK5skPs
+ oSzHnDpZw==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,51 +53,85 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is essentially xa_cmpxchg() with the locking handled above us,
-and it doesn't have to handle replacing a NULL entry.
+Simplify the locking by taking the spinlock while we walk the tree on
+the assumption that many acquires and releases of the lock will be
+worse than holding the lock for a (potentially) long time.
+
+We could replicate the same locking behaviour with the xarray, but would
+have to be careful that the xa_node wasn't RCU-freed under us before we
+took the lock.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/truncate.c | 15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+ mm/memfd.c | 43 ++++++++++++++++++-------------------------
+ 1 file changed, 18 insertions(+), 25 deletions(-)
 
-diff --git a/mm/truncate.c b/mm/truncate.c
-index ed778555c9f3..45d68e90b703 100644
---- a/mm/truncate.c
-+++ b/mm/truncate.c
-@@ -33,15 +33,12 @@
- static inline void __clear_shadow_entry(struct address_space *mapping,
- 				pgoff_t index, void *entry)
- {
--	struct radix_tree_node *node;
--	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, index);
+diff --git a/mm/memfd.c b/mm/memfd.c
+index 4cf7401cb09c..3b299d72df78 100644
+--- a/mm/memfd.c
++++ b/mm/memfd.c
+@@ -21,7 +21,7 @@
+ #include <uapi/linux/memfd.h>
  
--	if (!__radix_tree_lookup(&mapping->i_pages, index, &node, &slot))
-+	xas_set_update(&xas, workingset_update_node);
-+	if (xas_load(&xas) != entry)
- 		return;
--	if (*slot != entry)
--		return;
--	__radix_tree_replace(&mapping->i_pages, node, slot, NULL,
--			     workingset_update_node);
-+	xas_store(&xas, NULL);
- 	mapping->nrexceptional--;
+ /*
+- * We need a tag: a new tag would expand every radix_tree_node by 8 bytes,
++ * We need a tag: a new tag would expand every xa_node by 8 bytes,
+  * so reuse a tag which we firmly believe is never set or cleared on shmem.
+  */
+ #define SHMEM_TAG_PINNED        PAGECACHE_TAG_TOWRITE
+@@ -29,35 +29,28 @@
+ 
+ static void shmem_tag_pins(struct address_space *mapping)
+ {
+-	struct radix_tree_iter iter;
+-	void __rcu **slot;
+-	pgoff_t start;
++	XA_STATE(xas, &mapping->i_pages, 0);
+ 	struct page *page;
++	unsigned int tagged = 0;
+ 
+ 	lru_add_drain();
+-	start = 0;
+-	rcu_read_lock();
+-
+-	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
+-		page = radix_tree_deref_slot(slot);
+-		if (!page || radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
+-		} else if (page_count(page) - page_mapcount(page) > 1) {
+-			xa_lock_irq(&mapping->i_pages);
+-			radix_tree_tag_set(&mapping->i_pages, iter.index,
+-					   SHMEM_TAG_PINNED);
+-			xa_unlock_irq(&mapping->i_pages);
+-		}
+ 
+-		if (need_resched()) {
+-			slot = radix_tree_iter_resume(slot, &iter);
+-			cond_resched_rcu();
+-		}
++	xas_lock_irq(&xas);
++	xas_for_each(&xas, page, ULONG_MAX) {
++		if (xa_is_value(page))
++			continue;
++		if (page_count(page) - page_mapcount(page) > 1)
++			xas_set_tag(&xas, SHMEM_TAG_PINNED);
++
++		if (++tagged % XA_CHECK_SCHED)
++			continue;
++
++		xas_pause(&xas);
++		xas_unlock_irq(&xas);
++		cond_resched();
++		xas_lock_irq(&xas);
+ 	}
+-	rcu_read_unlock();
++	xas_unlock_irq(&xas);
  }
  
-@@ -738,10 +735,10 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
- 		index++;
- 	}
- 	/*
--	 * For DAX we invalidate page tables after invalidating radix tree.  We
-+	 * For DAX we invalidate page tables after invalidating page cache.  We
- 	 * could invalidate page tables while invalidating each entry however
- 	 * that would be expensive. And doing range unmapping before doesn't
--	 * work as we have no cheap way to find whether radix tree entry didn't
-+	 * work as we have no cheap way to find whether page cache entry didn't
- 	 * get remapped later.
- 	 */
- 	if (dax_mapping(mapping)) {
+ /*
 -- 
 2.16.2
 
