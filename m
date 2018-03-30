@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 31/62] mm: Convert page migration to XArray
-Date: Thu, 29 Mar 2018 20:42:14 -0700
-Message-ID: <20180330034245.10462-32-willy@infradead.org>
+Subject: [PATCH v10 06/62] xarray: Add documentation
+Date: Thu, 29 Mar 2018 20:41:49 -0700
+Message-ID: <20180330034245.10462-7-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=ey3BGjDj/d6pJRAxMfolMEyg99pLa6HbAFTHpia7sK0=; b=LWICM3LSGLxKA0ak5x94FJ/UX4
- KKXbPPR3C9+FsgxZovRX9Xu8dd4wDJzCmfq6ElmAEbJMQ2Ga93NfEhyhw24zPDnTrdp/fQyhpFNME
- nloK7gMVcSen1AGPyGMNWluulFGFBh83h2BLsuFcRigkgMHCETsysPzyalp9XS8sbacM=;
+ bh=2vDEN88FylokDYmh2hga5miham9AtMR9yPcrFbSiSbk=; b=JuZDRMe2lnLczdEKgjT5Y+E2ki
+ 4M3gjPHynv1kkGpyac8re9CttIs6GmrTCzBq4JLJ297L9NwULqJOXrgbe02+/ZsBdRfCH45rVQ35W
+ P5jJigaQauS8rqbQ93s3ay2gQojp1zMd6xA1ko7mrkXTT/Xqdjzz73vYtCqjz+6MRm7g=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=ey3BGjDj/d6pJRAxMfolMEyg99pLa6HbAFTHpia7sK0=; b=EhObuFe3Y5GcKl1f0PhoQ11s1B
- AWPdIoPUyB93VYnWLO9RYtJ4kt26bLdvx7ujQ+e0LST8f8KDF7bBm4WVIo5Jym2O4G3bNTOI/LLDb
- n21498Iucut6QHCVjAsXkQ/gS1J9vyfoxTlcd49epnFXi2ROwUc9CjHjqhW6b07+VJBc=;
+ bh=2vDEN88FylokDYmh2hga5miham9AtMR9yPcrFbSiSbk=; b=ZjE/kQ3IdddGdB3a6MHOWCjhce
+ p0atuopG4JZbJyeGjYdZ9nUqGpyFA1aMjWnCSWPfCFgyEEwcFXKP+ga3B1KlFQ+7Ofntv7DgFy3ez
+ ghjvXehzPKux6rnVwULyj983cTvEMO3O9dVwk9Ak2icEv580bIhwjjWzUZTJJzqJnrso=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=ey3BGjDj/d6pJRAxMfolMEyg99pLa6HbAFTHpia7sK0=; b=XjthqhzL9LppC/AYQMgEkf5tN
- GBcqLyWc8AM0L5kN6KO2VghXI9zeV/W+8HeL8N4YpetDOphVGPgzcpFbd0knKRKg+DndkkVZ//TPX
- I9OAn5stKKyq3eQra+mxw0CTS+v5ViAFn0vTJi1XUbmJZTRIP3PuqMriV7Ps69BOTDB5jVzeE4Kx5
- EYlEB4eXsDwai05Bqn2C1/5jHaSInuiAAVNznCuiguElJMvw4yFO91Up2+mQAB9AvbXbisQrwzGJ3
- MkHev/fAhf7OVVxjmkuhIf9u5wSLJ7tWcc8v8c3bUJRMP6OEy1YMPfXXg1/9pR7SSZcKqJuD5Jsb3
- p5wj096Ew==;
+ bh=2vDEN88FylokDYmh2hga5miham9AtMR9yPcrFbSiSbk=; b=cDJ450FcitH01I/9FA6DmTINm
+ HaLJn/mIJWNraoq2cE+UpRx7CtR/0OR0x3orX6b/WdB/OsPxnuWgnjA035QtRRokoUyOD9fYyeoZ5
+ ptiQrn733qPTqanjUc5BsrtOqX1TDHv7ERRYnqYdaNEyGawDcF2wCBgLiNSRD771r/EkTJfIxveNU
+ flnfPkJq8NXk0p9qheEcSxlqcv6MlY0nIUkAEjGXqBPsqMzwWAcdwod1V0J3JD5Ffp0YzupfeqPSC
+ /ackl3H4xk2J14bJqhns5MSalRoHVJhM8dKAgbrYx7XolUvFzFtUs1M3RsZ7CZr0byM1I2UKbi6QA
+ 2VUW4GdWg==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,131 +53,396 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
----
- mm/migrate.c | 41 ++++++++++++++++-------------------------
- 1 file changed, 16 insertions(+), 25 deletions(-)
+This is documentation on how to use the XArray, not details about its
+internal implementation.
 
-diff --git a/mm/migrate.c b/mm/migrate.c
-index bdef905b1737..16fbbffec185 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -323,7 +323,7 @@ void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
- 	page = migration_entry_to_page(entry);
- 
- 	/*
--	 * Once radix-tree replacement of page migration started, page_count
-+	 * Once page cache replacement of page migration started, page_count
- 	 * *must* be zero. And, we don't want to call wait_on_page_locked()
- 	 * against a page without get_page().
- 	 * So, we use get_page_unless_zero(), here. Even failed, page fault
-@@ -438,10 +438,10 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 		struct buffer_head *head, enum migrate_mode mode,
- 		int extra_count)
- {
-+	XA_STATE(xas, &mapping->i_pages, page_index(page));
- 	struct zone *oldzone, *newzone;
- 	int dirty;
- 	int expected_count = 1 + extra_count;
--	void **pslot;
- 
- 	/*
- 	 * Device public or private pages have an extra refcount as they are
-@@ -467,21 +467,16 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 	oldzone = page_zone(page);
- 	newzone = page_zone(newpage);
- 
--	xa_lock_irq(&mapping->i_pages);
--
--	pslot = radix_tree_lookup_slot(&mapping->i_pages,
-- 					page_index(page));
-+	xas_lock_irq(&xas);
- 
- 	expected_count += 1 + page_has_private(page);
--	if (page_count(page) != expected_count ||
--		radix_tree_deref_slot_protected(pslot,
--					&mapping->i_pages.xa_lock) != page) {
--		xa_unlock_irq(&mapping->i_pages);
-+	if (page_count(page) != expected_count || xas_load(&xas) != page) {
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
- 	if (!page_ref_freeze(page, expected_count)) {
--		xa_unlock_irq(&mapping->i_pages);
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
-@@ -495,7 +490,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 	if (mode == MIGRATE_ASYNC && head &&
- 			!buffer_migrate_lock_buffers(head, mode)) {
- 		page_ref_unfreeze(page, expected_count);
--		xa_unlock_irq(&mapping->i_pages);
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
-@@ -523,7 +518,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 		SetPageDirty(newpage);
- 	}
- 
--	radix_tree_replace_slot(&mapping->i_pages, pslot, newpage);
-+	xas_store(&xas, newpage);
- 
- 	/*
- 	 * Drop cache reference from old page by unfreezing
-@@ -532,7 +527,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
- 	 */
- 	page_ref_unfreeze(page, expected_count - 1);
- 
--	xa_unlock(&mapping->i_pages);
-+	xas_unlock(&xas);
- 	/* Leave irq disabled to prevent preemption while updating stats */
- 
- 	/*
-@@ -572,22 +567,18 @@ EXPORT_SYMBOL(migrate_page_move_mapping);
- int migrate_huge_page_move_mapping(struct address_space *mapping,
- 				   struct page *newpage, struct page *page)
- {
-+	XA_STATE(xas, &mapping->i_pages, page_index(page));
- 	int expected_count;
--	void **pslot;
--
--	xa_lock_irq(&mapping->i_pages);
--
--	pslot = radix_tree_lookup_slot(&mapping->i_pages, page_index(page));
- 
-+	xas_lock_irq(&xas);
- 	expected_count = 2 + page_has_private(page);
--	if (page_count(page) != expected_count ||
--		radix_tree_deref_slot_protected(pslot, &mapping->i_pages.xa_lock) != page) {
--		xa_unlock_irq(&mapping->i_pages);
-+	if (page_count(page) != expected_count || xas_load(&xas) != page) {
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
- 	if (!page_ref_freeze(page, expected_count)) {
--		xa_unlock_irq(&mapping->i_pages);
-+		xas_unlock_irq(&xas);
- 		return -EAGAIN;
- 	}
- 
-@@ -596,11 +587,11 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
- 
- 	get_page(newpage);
- 
--	radix_tree_replace_slot(&mapping->i_pages, pslot, newpage);
-+	xas_store(&xas, newpage);
- 
- 	page_ref_unfreeze(page, expected_count - 1);
- 
--	xa_unlock_irq(&mapping->i_pages);
-+	xas_unlock_irq(&xas);
- 
- 	return MIGRATEPAGE_SUCCESS;
- }
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+Acked-by: Josef Bacik <jbacik@fb.com>
+---
+ Documentation/core-api/index.rst  |   1 +
+ Documentation/core-api/xarray.rst | 361 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 362 insertions(+)
+ create mode 100644 Documentation/core-api/xarray.rst
+
+diff --git a/Documentation/core-api/index.rst b/Documentation/core-api/index.rst
+index c670a8031786..e4e15f0f608b 100644
+--- a/Documentation/core-api/index.rst
++++ b/Documentation/core-api/index.rst
+@@ -20,6 +20,7 @@ Core utilities
+    local_ops
+    workqueue
+    genericirq
++   xarray
+    flexible-arrays
+    librs
+    genalloc
+diff --git a/Documentation/core-api/xarray.rst b/Documentation/core-api/xarray.rst
+new file mode 100644
+index 000000000000..914999c0bf3f
+--- /dev/null
++++ b/Documentation/core-api/xarray.rst
+@@ -0,0 +1,361 @@
++.. SPDX-License-Identifier: CC-BY-SA-4.0
++
++======
++XArray
++======
++
++:Author: Matthew Wilcox
++
++Overview
++========
++
++The XArray is an abstract data type which behaves like a very large array
++of pointers.  It meets many of the same needs as a hash or a conventional
++resizable array.  Unlike a hash, it allows you to sensibly go to the
++next or previous entry in a cache-efficient manner.  In contrast to
++a resizable array, there is no need for copying data or changing MMU
++mappings in order to grow the array.  It is more memory-efficient,
++parallelisable and cache friendly than a doubly-linked list.  It takes
++advantage of RCU to perform lookups without locking.
++
++The XArray implementation is efficient when the indices used are densely
++clustered; hashing the object and using the hash as the index will not
++perform well.  The XArray is optimised for small indices, but still has
++good performance with large indices.  If your index can be larger than
++``ULONG_MAX`` then the XArray is not the data type for you.  The most
++important user of the XArray is the page cache.
++
++A freshly-initialised XArray contains a ``NULL`` pointer at every index.
++Each non-``NULL`` entry in the array has three bits associated with it
++called tags.  Each tag may be set or cleared independently of the others.
++You can iterate over entries which are tagged.
++
++Normal pointers may be stored in the XArray directly.  They must be 4-byte
++aligned, which is true for any pointer returned from :c:func:`kmalloc` and
++:c:func:`alloc_page`.  It isn't true for arbitrary user-space pointers,
++nor for function pointers.  You can store pointers to statically allocated
++objects, as long as those objects have an alignment of at least 4.
++
++You can also store integers between 0 and ``LONG_MAX`` in the XArray.
++You must first convert it into an entry using :c:func:`xa_mk_value`.
++When you retrieve an entry from the XArray, you can check whether it is
++a value entry by calling :c:func:`xa_is_value`, and convert it back to
++an integer by calling :c:func:`xa_to_value`.
++
++The XArray does not support storing :c:func:`IS_ERR` pointers as some
++conflict with value entries or internal entries.
++
++An unusual feature of the XArray is the ability to create entries which
++occupy a range of indices.  Once stored to, looking up any index in
++the range will return the same entry as looking up any other index in
++the range.  Setting a tag on one index will set it on all of them.
++Storing to any index will store to all of them.  Multi-index entries can
++be explicitly split into smaller entries, or storing ``NULL`` into any
++entry will cause the XArray to forget about the range.
++
++Normal API
++==========
++
++Start by initialising an XArray, either with :c:func:`DEFINE_XARRAY`
++for statically allocated XArrays or :c:func:`xa_init` for dynamically
++allocated ones.
++
++You can then set entries using :c:func:`xa_store` and get entries
++using :c:func:`xa_load`.  xa_store will overwrite any entry with the
++new entry and return the previous entry stored at that index.  You can
++use :c:func:`xa_erase` instead of calling :c:func:`xa_store` with a
++%NULL entry.  There is no difference between an entry that has never
++been stored to and one that has most recently had ``NULL`` stored to it.
++
++You can conditionally replace an entry at an index by using
++:c:func:`xa_cmpxchg`.  Like :c:func:`cmpxchg`, it will only succeed if
++the entry at that index has the 'old' value.  It also returns the entry
++which was at that index; if it returns the same entry which was passed as
++'old', then :c:func:`xa_cmpxchg` succeeded.
++
++If you want to only store a new entry to an index if the current entry
++at that index is ``NULL``, you can use :c:func:`xa_insert` which
++returns ``-EEXIST`` if the entry is not empty.
++
++Calling :c:func:`xa_reserve` ensures that there is enough memory allocated
++to store an entry at the specified index.  This is not normally needed,
++but some users have a complicated locking scheme.
++
++You can enquire whether a tag is set on an entry by using
++:c:func:`xa_get_tag`.  If the entry is not ``NULL``, you can set a tag
++on it by using :c:func:`xa_set_tag` and remove the tag from an entry by
++calling :c:func:`xa_clear_tag`.  You can ask whether any entry in the
++XArray has a particular tag set by calling :c:func:`xa_tagged`.
++
++You can copy entries out of the XArray into a plain array by calling
++:c:func:`xa_extract`.  Or you can iterate over the present entries in
++the XArray by calling :c:func:`xa_for_each`.  You may prefer to use
++:c:func:`xa_find` or :c:func:`xa_find_after` to move to the next present
++entry in the XArray.
++
++Finally, you can remove all entries from an XArray by calling
++:c:func:`xa_destroy`.  If the XArray entries are pointers, you may wish
++to free the entries first.  You can do this by iterating over all present
++entries in the XArray using the :c:func:`xa_for_each` iterator.
++
++Memory allocation
++-----------------
++
++The :c:func:`xa_store`, :c:func:`xa_cmpxchg`, :c:func:`xa_reserve`
++and :c:func:`xa_insert` functions take a gfp_t parameter in case
++the XArray needs to allocate memory to store this entry.  If the entry
++being stored is ``NULL``, no memory allocation needs to be performed,
++and the GFP flags specified will be ignored.
++
++It is possible for no memory to be allocatable, particularly if you pass
++a restrictive set of GFP flags.  In that case, the functions return a
++special value which can be turned into an errno using :c:func:`xa_err`.
++If you don't need to know exactly which error occurred, using
++:c:func:`xa_is_err` is slightly more efficient.
++
++Locking
++-------
++
++When using the Normal API, you do not have to worry about locking.
++The XArray uses RCU and an internal spinlock to synchronise access:
++
++No lock needed:
++ * :c:func:`xa_empty`
++ * :c:func:`xa_tagged`
++
++Takes RCU read lock:
++ * :c:func:`xa_load`
++ * :c:func:`xa_for_each`
++ * :c:func:`xa_find`
++ * :c:func:`xa_find_after`
++ * :c:func:`xa_extract`
++ * :c:func:`xa_get_tag`
++
++Takes xa_lock internally:
++ * :c:func:`xa_store`
++ * :c:func:`xa_insert`
++ * :c:func:`xa_erase`
++ * :c:func:`xa_cmpxchg`
++ * :c:func:`xa_reserve`
++ * :c:func:`xa_destroy`
++ * :c:func:`xa_set_tag`
++ * :c:func:`xa_clear_tag`
++
++Assumes xa_lock held on entry:
++ * :c:func:`__xa_store`
++ * :c:func:`__xa_insert`
++ * :c:func:`__xa_erase`
++ * :c:func:`__xa_cmpxchg`
++ * :c:func:`__xa_set_tag`
++ * :c:func:`__xa_clear_tag`
++
++If you want to take advantage of the lock to protect the data structures
++that you are storing in the XArray, you can call :c:func:`xa_lock`
++before calling :c:func:`xa_load`, then take a reference count on the
++object you have found before calling :c:func:`xa_unlock`.  This will
++prevent stores from removing the object from the array between looking
++up the object and incrementing the refcount.  You can also use RCU to
++avoid dereferencing freed memory, but an explanation of that is beyond
++the scope of this document.
++
++The XArray does not disable interrupts or softirqs while modifying
++the array.  It is safe to read the XArray from interrupt or softirq
++context as the RCU lock provides enough protection.
++
++If, for example, you want to store entries in the XArray in process
++context and then erase them in softirq context, you can do that this way::
++
++    foo_init(struct foo *foo)
++    {
++        xa_init_flags(&foo->array, XA_FLAGS_LOCK_BH);
++    }
++
++    foo_store(struct foo *foo, unsigned long index, void *entry)
++    {
++        xa_lock_bh(&foo->array);
++        __xa_store(&foo->array, index, entry, GFP_KERNEL);
++        foo->count++;
++        xa_unlock_bh(&foo->array);
++    }
++
++    /* foo_erase() is only called from softirq context */
++    foo_erase(struct foo *foo, unsigned long index)
++    {
++        xa_erase(&foo->array, index);
++    }
++
++If you are going to modify the XArray from interrupt or softirq context,
++you need to initialise the array using :c:func:`xa_init_flags`, passing
++``XA_FLAGS_LOCK_IRQ`` or ``XA_FLAGS_LOCK_BH``.
++
++The above example also shows a common pattern of wanting to extend the
++coverage of the xa_lock on the store side to protect some statistics
++associated with the array.
++
++Sharing the XArray with interrupt context is also possible, either
++using :c:func:`xa_lock_irqsave` in both the interrupt handler and process
++context, or :c:func:`xa_lock_irq` in process context and :c:func:`xa_lock`
++in the interrupt handler.
++
++Sometimes you need to protect access to the XArray with a mutex because
++that lock sits above another mutex in the locking hierarchy.  That does
++not entitle you to use functions like :c:func:`__xa_erase` without taking
++the xa_lock; the xa_lock is used for lockdep validation and will be used
++for other purposes in the future.
++
++The :c:func:`__xa_set_tag` and :c:func:`__xa_clear_tag` functions are also
++available for situations where you look up an entry and want to atomically
++set or clear a tag.  It may be more efficient to use the advanced API
++in this case, as it will save you from walking the tree twice.
++
++Advanced API
++============
++
++The advanced API offers more flexibility and better performance at the
++cost of an interface which can be harder to use and has fewer safeguards.
++No locking is done for you by the advanced API, and you are required
++to use the xa_lock while modifying the array.  You can choose whether
++to use the xa_lock or the RCU lock while doing read-only operations on
++the array.  You can mix advanced and normal operations on the same array;
++indeed the normal API is implemented in terms of the advanced API.  The
++advanced API is only available to modules with a GPL-compatible license.
++
++The advanced API is based around the xa_state.  This is an opaque data
++structure which you declare on the stack using the :c:func:`XA_STATE`
++macro.  This macro initialises the xa_state ready to start walking
++around the XArray.  It is used as a cursor to maintain the position
++in the XArray and let you compose various operations together without
++having to restart from the top every time.
++
++The xa_state is also used to store errors.  You can call
++:c:func:`xas_error` to retrieve the error.  All operations check whether
++the xa_state is in an error state before proceeding, so there's no need
++for you to check for an error after each call; you can make multiple
++calls in succession and only check at a convenient point.  The only
++errors currently generated by the xarray code itself are %ENOMEM and
++%EINVAL, but it supports arbitrary errors in case you want to call
++:c:func:`xas_set_err` yourself.
++
++If the xa_state is holding an %ENOMEM error, calling :c:func:`xas_nomem`
++will attempt to allocate more memory using the specified gfp flags and
++cache it in the xa_state for the next attempt.  The idea is that you take
++the xa_lock, attempt the operation and drop the lock.  The operation
++attempts to allocate memory while holding the lock, but it is more
++likely to fail.  Once you have dropped the lock, :c:func:`xas_nomem`
++can try harder to allocate more memory.  It will return ``true`` if it
++is worth retrying the operation (i.e. that there was a memory error *and*
++more memory was allocated).  If it has previously allocated memory, and
++that memory wasn't used, and there is no error (or some error that isn't
++%ENOMEM), then it will free the memory previously allocated.
++
++Internal Entries
++----------------
++
++The XArray reserves some entries for its own purposes.  These are never
++exposed through the normal API, but when using the advanced API, it's
++possible to see them.  Usually the best way to handle them is to pass them
++to :c:func:`xas_retry`, and retry the operation if it returns ``true``.
++
++.. flat-table::
++   :widths: 1 1 6
++
++   * - Name
++     - Test
++     - Usage
++
++   * - Node
++     - :c:func:`xa_is_node`
++     - An XArray node.  Should never be visible; all functions should recurse
++       into an XArray node.
++
++   * - Sibling
++     - :c:func:`xa_is_sibling`
++     - A non-canonical entry for a multi-index entry.  The value indicates
++       which slot in this node has the canonical entry.
++
++   * - Retry
++     - :c:func:`xa_is_retry`
++     - This entry is currently being modified by a thread which has the
++       xa_lock.  The node containing this entry may be freed at the end of
++       this RCU period.  You should restart the lookup from the head of the
++       array.
++
++Other internal entries may be added in the future.  As far as possible, they
++will be handled by :c:func:`xas_retry`.
++
++Additional functionality
++------------------------
++
++The :c:func:`xas_create` function ensures that there is somewhere in the
++XArray to store an entry.  It will store ENOMEM in the xa_state if it
++cannot allocate memory.  You do not normally need to call this function
++yourself as it is called by :c:func:`xas_store`.
++
++You can use :c:func:`xas_init_tags` to reset the tags on an entry
++to their default state.  This is usually all tags clear, unless the
++XArray is marked with ``XA_FLAGS_TRACK_FREE``, in which case tag 0 is set
++and all other tags are clear.  Replacing one entry with another using
++:c:func:`xas_store` will not reset the tags on that entry; if you want
++the tags reset, you should do that explicitly.
++
++The :c:func:`xas_load` will walk the xa_state as close to the entry
++as it can.  If you know the xa_state has already been walked to the
++entry and need to check that the entry hasn't changed, you can use
++:c:func:`xas_reload` to save a function call.
++
++If you need to move to a different index in the XArray, call
++:c:func:`xas_set`.  This reinitialises the cursor, which will generally
++have the effect of making the next operation walk the cursor to the
++desired spot in the tree.  If you want to move to the next or previous
++index, call :c:func:`xas_next` or :c:func:`xas_prev`.  Setting the index
++does not walk the cursor around the array so does not require a lock to
++be held, while moving to the next or previous index does.
++
++You can create a multi-index entry by using :c:func:`xas_set_order`.
++If a load or find operation finds a multi-index entry, the index in the
++xa_state will be the one searched for, and not necessarily the
++lowest or highest index used by the entry.
++Currently the only supported multi-index entries supported are powers
++of two, but there are two potential users of arbitrary ranges, so that
++functionality may be added soon.
++
++You can search for the next present entry using :c:func:`xas_find`.  This
++is the equivalent of both :c:func:`xa_find` and :c:func:`xa_find_after`;
++if the cursor has been walked to an entry, then it will find the next
++entry after the one currently referenced.  If not, it will return the
++entry at the index of the xa_state.  Using :c:func:`xas_next_entry` to
++move to the next present entry instead of :c:func:`xas_find` will save
++a function call in the majority of cases at the expense of emitting more
++inline code.
++
++The :c:func:`xas_find_tag` function is similar, returning the first tagged
++entry after the entry referenced by the xa_state if it has already been
++walked, and returning the entry at the index of the xa_state if it is
++tagged, and the xa_state has not been walked.  The :c:func:`xas_next_tag`
++function is the equivalent of :c:func:`xas_next_entry`.
++
++When iterating over a range of the XArray using :c:func:`xas_for_each`
++or :c:func:`xas_for_each_tag`, it may be necessary to temporarily stop
++the iteration.  The :c:func:`xas_pause` function exists for this purpose.
++After you have done the necessary work and wish to resume, the xa_state
++is in an appropriate state to continue the iteration after the entry
++you last processed.  If you have interrupts disabled while iterating,
++then it is good manners to pause the iteration and reenable interrupts
++every ``XA_CHECK_SCHED`` entries.
++
++The :c:func:`xas_get_tag`, :c:func:`xas_set_tag` and
++:c:func:`xas_clear_tag` functions require the xa_state cursor to have
++been moved to the appropriate location in the xarray; they will do
++nothing if you have called :c:func:`xas_pause` or :c:func:`xas_set`
++immediately before.
++
++You can call :c:func:`xas_set_update` to have a callback function
++called each time the XArray updates a node.  This is used by the page
++cache workingset code to maintain its list of nodes which contain only
++shadow entries.
++
++Functions and structures
++========================
++
++.. kernel-doc:: include/linux/xarray.h
++.. kernel-doc:: lib/xarray.c
 -- 
 2.16.2
 
