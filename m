@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 40/62] shmem: Convert shmem_alloc_hugepage to
- XArray
-Date: Thu, 29 Mar 2018 20:42:23 -0700
-Message-ID: <20180330034245.10462-41-willy@infradead.org>
+Subject: [PATCH v10 12/62] xarray: Add xa_extract
+Date: Thu, 29 Mar 2018 20:41:55 -0700
+Message-ID: <20180330034245.10462-13-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=KOXCuk41JG1m1qdHNGzgtKGDckK8hgzZgcpgLh8i/go=; b=M85eY+id0afoN9m1/pdIqDJO8D
- PmmApE5Z84djVRIbmIltYHwyTK5W+AveEOEQ3cl9LfU+9/nuVgUwPAwOeHQS+aN0JLsXV4hUTGEdm
- mvUYsYMCE/NS2i0nKP4o0yiDZWAo2uTAtyKzJapue++4OpoKvcym5V6mS+he77Mzfbuw=;
+ bh=hcH0cEvpSONNcZEswbv0iDOVWk5uLCFDLS1OUlRcoBo=; b=H5qCaeSupJpGLMaP906tEoYic/
+ nm8KyWndNsPk4pfQ3BEiS4HKE0zskJaHIcXgk0VLw25FcrhjKe50Vzh1KF+U4PxQu7fp4reMn1JHj
+ ShCxXxVSKmwElterGrHcDOHfXUwToSgdpT/NS23mHpdMVvleFeZoJLvbYrozIWRJVtko=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=KOXCuk41JG1m1qdHNGzgtKGDckK8hgzZgcpgLh8i/go=; b=llgT3aC/lL4ae62Cb1I1safRvh
- F0U5L7TgwVxgz7qkt0p0lFE/KYiepiyFGX1w5M6YJHsHsrkdchP0fLvdg1v8GjUcVzF3b/OlE8amj
- BVkMnVb/BXZJZxKo1SSPzt5NMugbdOOUDbAbFE3HGmycr2nN4WTQzydrVDbXzkJfYANo=;
+ bh=hcH0cEvpSONNcZEswbv0iDOVWk5uLCFDLS1OUlRcoBo=; b=Uu+SlhVzd+8k6jU5ziuC70kZBg
+ c7OMZ41PJrltnPqT2LrN4A83o7bpqiKWo/tTfhVp1BNTdaLmqLpyImFQYJajqq/Ly3PelK9AoInmw
+ +Lz0ldk6Qlvm231TI5mWU8F6elMsujRPHsPOxO1MV8xszGBMBcqzJ+cVRMMDkcOOZc+w=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=KOXCuk41JG1m1qdHNGzgtKGDckK8hgzZgcpgLh8i/go=; b=Yqz0vDrE+l5Tbfdf3dchaRjjP
- /gkke+YT+UOZWrDXd916kV6Apeti8awslBNcPa5Oen2SWrTdZLb1z5SPnTQmK6t/NHjlanaELxW33
- NOZfwnGbWxuaI5LorNPl+LbH7ASVuRJq5/sT7sLKjUBpOK9usX0mUHxkfM6DhHFe7JzWPn6bynAQx
- GMDNqG8moEbIgJxbA9VU2qitp6FHLFzl2HVZTmsz8C+PLF2Crfhuup2Uiw7jU7oWZs7iH6e+9gu42
- dm8zx6EjZP8c4zHbHtxIGucct6D1KuEXIUdfMg/JDFe5N0QFZzfrbz6mPUL5JuUmTHHzHFBUACOaI
- G8y1oPU1w==;
+ bh=hcH0cEvpSONNcZEswbv0iDOVWk5uLCFDLS1OUlRcoBo=; b=LkMJwNG5Zybslevgubi/K36PM
+ 4QJL8MHM/0CyiSmEAMDC+NnOHSVRbo0xeqigAICcBSu51bwaCDkXulWQW7STAN+hpOK7TXPrgA4Eu
+ +1sR5Cl1WTR9678b3mD0niwzlOzbdKuNPHtEMOLqmdMU5m9l1mUiM7wS4cLwuVxCEIem/TqqLu9r7
+ KAj1drcIVat+6E2BTnat0dLzljaO9Be29i+YcRkVXFFIGk08uIktlP3CF9uIDe/nKTon66NZpgLCm
+ Z5zL5u0y09j4bLJlPPo7zPNzBOKFvwcKTixfM0XibOFoLDbq6WG6brakc5T77TQQUXUWDyBUEDTr6
+ 1sZBnxPvQ==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,46 +53,120 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-xa_find() is a slightly easier API to use than
-radix_tree_gang_lookup_slot() because it contains its own RCU locking.
+This function combines the functionality of radix_tree_gang_lookup() and
+radix_tree_gang_lookup_tagged().  It extracts entries matching the
+specified filter into a normal array.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 14 ++++----------
- 1 file changed, 4 insertions(+), 10 deletions(-)
+ include/linux/xarray.h |  2 ++
+ lib/xarray.c           | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 82 insertions(+)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 75c8db931d35..aa7e92b24c19 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1425,23 +1425,17 @@ static struct page *shmem_alloc_hugepage(gfp_t gfp,
- 		struct shmem_inode_info *info, pgoff_t index)
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index c8b3645c6760..864f16660785 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -227,6 +227,8 @@ void *xa_find(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
+ void *xa_find_after(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
++unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
++		unsigned long max, unsigned int n, xa_tag_t);
+ 
+ /**
+  * xa_init() - Initialise an empty XArray.
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 73cf4c984c2d..77133bc5419f 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -1402,6 +1402,86 @@ void *xa_find_after(struct xarray *xa, unsigned long *indexp,
+ }
+ EXPORT_SYMBOL(xa_find_after);
+ 
++static unsigned int xas_extract_present(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each(xas, entry, max) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++static unsigned int xas_extract_tag(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n, xa_tag_t tag)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each_tag(xas, entry, max, tag) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++/**
++ * xa_extract() - Copy selected entries from the XArray into a normal array.
++ * @xa: The source XArray to copy from.
++ * @dst: The buffer to copy entries into.
++ * @start: The first index in the XArray eligible to be selected.
++ * @max: The last index in the XArray eligible to be selected.
++ * @n: The maximum number of entries to copy.
++ * @filter: Selection criterion.
++ *
++ * Copies up to @n entries that match @filter from the XArray.  The
++ * copied entries will have indices between @start and @max, inclusive.
++ *
++ * The @filter may be an XArray tag value, in which case entries which are
++ * tagged with that tag will be copied.  It may also be %XA_PRESENT, in
++ * which case non-NULL entries will be copied.
++ *
++ * The entries returned may not represent a snapshot of the XArray at a
++ * moment in time.  For example, if another thread stores to index 5, then
++ * index 10, calling xa_extract() may return the old contents of index 5
++ * and the new contents of index 10.  Indices not modified while this
++ * function is running will not be skipped.
++ *
++ * If you need stronger guarantees, holding the xa_lock across calls to this
++ * function will prevent concurrent modification.
++ *
++ * Context: Any context.  Takes and releases the RCU lock.
++ * Return: The number of entries copied.
++ */
++unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
++			unsigned long max, unsigned int n, xa_tag_t filter)
++{
++	XA_STATE(xas, xa, start);
++
++	if (!n)
++		return 0;
++
++	if ((__force unsigned int)filter < XA_MAX_TAGS)
++		return xas_extract_tag(&xas, dst, max, n, filter);
++	return xas_extract_present(&xas, dst, max, n);
++}
++EXPORT_SYMBOL(xa_extract);
++
+ #ifdef XA_DEBUG
+ void xa_dump_node(const struct xa_node *node)
  {
- 	struct vm_area_struct pvma;
--	struct inode *inode = &info->vfs_inode;
--	struct address_space *mapping = inode->i_mapping;
--	pgoff_t idx, hindex;
--	void __rcu **results;
-+	struct address_space *mapping = info->vfs_inode.i_mapping;
-+	pgoff_t hindex;
- 	struct page *page;
- 
- 	if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
- 		return NULL;
- 
- 	hindex = round_down(index, HPAGE_PMD_NR);
--	rcu_read_lock();
--	if (radix_tree_gang_lookup_slot(&mapping->i_pages, &results, &idx,
--				hindex, 1) && idx < hindex + HPAGE_PMD_NR) {
--		rcu_read_unlock();
-+	if (xa_find(&mapping->i_pages, &hindex, hindex + HPAGE_PMD_NR - 1,
-+								XA_PRESENT))
- 		return NULL;
--	}
--	rcu_read_unlock();
- 
- 	shmem_pseudo_vma_init(&pvma, info, hindex);
- 	page = alloc_pages_vma(gfp | __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN,
 -- 
 2.16.2
 
