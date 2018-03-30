@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 29/62] mm: Convert delete_from_swap_cache to
- XArray
-Date: Thu, 29 Mar 2018 20:42:12 -0700
-Message-ID: <20180330034245.10462-30-willy@infradead.org>
+Subject: [PATCH v10 53/62] dax: dax_insert_mapping_entry always
+ succeeds
+Date: Thu, 29 Mar 2018 20:42:36 -0700
+Message-ID: <20180330034245.10462-54-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=yiBn0tT0UQvJ7uhJeijnbSC2sFGtLQUouSdfdEjM7cM=; b=I8kHik6kqSqN7gx7/05XXnT0KL
- D4IKe2pNR3CVnGoWaiNhpBdO3FZc6rgbYj/O7hBIpas9BAs2+Wxf/yxU/Ng64e42b0N4jzdg2F/xw
- 98vekebi4iZTH8yY17V8WB2hpUmEMHu87q22nrWkI/qPvuWmkrH37TqAyK0bELyJvHb0=;
+ bh=2RxoRv1Fhn0WQ8po9Y9ZZ/QqeY3lj+T+WBBCzPUIJDI=; b=IWTWcH227fGAlZhxY46FEScDBs
+ 6amYoc0ld3fYsuEafW6+BEByS/e5CaLfuIYgh5fbIPCnIh78iL9uKizIxTnDanTB007zfuMQ/75Rl
+ QK9LeHQe8wVBvW9e4TAt5Y6cBSKmpB+lxlW9U/79WfwcG3KacR93sKJi3ogibx/3oh3Q=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=yiBn0tT0UQvJ7uhJeijnbSC2sFGtLQUouSdfdEjM7cM=; b=HbiEx66dZDe+XKig7P6HodleVn
- RZGsI8ladKIQ92ImEDrr9kzg1IKX5fkeeeCZhI8qZBWVMqnMEQmeOUTmKwbaFMV0jp5a7IY+EE+5P
- EOJjvHcJiFg4ASwDuawBf3pmM6Z6wx35qsVnrmv9RBDoXzbXj6MXRmkUYauC1khxB1eg=;
+ bh=2RxoRv1Fhn0WQ8po9Y9ZZ/QqeY3lj+T+WBBCzPUIJDI=; b=m+LYAZP9ryOKjXHMHDYP+wCJ9T
+ 5NFem1pEMCO6WnuQziyQ9A9sHWu9+6gYOfe9w0x7AJ7M7DYv5WjFSKbVBBnoCWUsJiCJKp+GP6kLK
+ J/lTVk671Zv3xiRalK5sovdpqZNrIn5l9A2O0ssSQ+M6SxPqlvRqcXokZGERNRh3Ep1U=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=yiBn0tT0UQvJ7uhJeijnbSC2sFGtLQUouSdfdEjM7cM=; b=dRX35DrHOEvMGTr/WURybIvFG
- fInjkJhlymJDnLair4E34VBuP2ofRPlZo3tep9iz71JCIfj2zobiPM6Ue+w+zmd2X3u2NyT+Ss63H
- jAUeBCqp30IeabXKsf/6zqW2g0EF4UF/ee0X6LHKvaACWHh6GryD7cKlQdRjw3PQ8DFChyBSUlPdw
- MfX4Abj+BK+HQDunoa4Ufhy5QGCVdm4BUZutD/mUN9/lsNpgZHIJeX6qLQlVq7SLaIsVG/pDWyB+r
- 7gPe3TM5oeeZ7C5X5q93pWLA6QnYnwAyCxu7lD6o4eoSXrfkW6Usm52GgJKpQ32M4lSKYgTa1+unS
- gEKTsbqQQ==;
+ bh=2RxoRv1Fhn0WQ8po9Y9ZZ/QqeY3lj+T+WBBCzPUIJDI=; b=Tn9l2i3f5Y1tUGy6dKeC5ye93
+ RI1Xlc05hhfpMBQDFkt9J3AtJQtArupXh9JMJCNpHnXZq0WMDSriYdEzLwCDUOTPabxgHQmCAAzq+
+ 2QIUI2Jcdyf+DuGRz8EDG3XSW1wdebSpmBZuOfOyHj+I4cmLXBnnoOE5rxOq2i7ZKXUnX/gzf4r2d
+ OGI14iL/CTlCaVloTKhMabNWeGzGFQ6iZAWtRp/uU8DLHJ2VNmPLr6JwlWDcfO4ayAmbZlJ6AY0jp
+ /siX1FAFyXh19QXm0GOzjdDbdifTDOPHCU35P2+GyoRJU+/FC4qymGSM6wn9omH9uCtj9SlQWgNqz
+ CMZOmyj8Q==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,105 +54,67 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Both callers of __delete_from_swap_cache have the swp_entry_t already,
-so pass that in to make constructing the XA_STATE easier.
+It does not return an error, so we don't need to check the return value
+for IS_ERR().
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/swap.h |  5 +++--
- mm/swap_state.c      | 24 ++++++++++--------------
- mm/vmscan.c          |  2 +-
- 3 files changed, 14 insertions(+), 17 deletions(-)
+ fs/dax.c | 16 +---------------
+ 1 file changed, 1 insertion(+), 15 deletions(-)
 
-diff --git a/include/linux/swap.h b/include/linux/swap.h
-index dab96af23d96..0b6a47a46c55 100644
---- a/include/linux/swap.h
-+++ b/include/linux/swap.h
-@@ -404,7 +404,7 @@ extern void show_swap_cache_info(void);
- extern int add_to_swap(struct page *page);
- extern int add_to_swap_cache(struct page *, swp_entry_t, gfp_t);
- extern int __add_to_swap_cache(struct page *page, swp_entry_t entry);
--extern void __delete_from_swap_cache(struct page *);
-+extern void __delete_from_swap_cache(struct page *, swp_entry_t entry);
- extern void delete_from_swap_cache(struct page *);
- extern void free_page_and_swap_cache(struct page *);
- extern void free_pages_and_swap_cache(struct page **, int);
-@@ -564,7 +564,8 @@ static inline int add_to_swap_cache(struct page *page, swp_entry_t entry,
- 	return -1;
+diff --git a/fs/dax.c b/fs/dax.c
+index 371d50a1c14e..3bd9f624c1f8 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -994,18 +994,12 @@ static int dax_load_hole(struct address_space *mapping, void *entry,
+ 	struct inode *inode = mapping->host;
+ 	unsigned long vaddr = vmf->address;
+ 	int ret = VM_FAULT_NOPAGE;
+-	void *entry2;
+ 	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
+ 
+-	entry2 = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++	dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 			DAX_ZERO_PAGE, false);
+-	if (IS_ERR(entry2)) {
+-		ret = VM_FAULT_SIGBUS;
+-		goto out;
+-	}
+ 
+ 	vm_insert_mixed(vmf->vma, vaddr, pfn);
+-out:
+ 	trace_dax_load_hole(inode, vmf, ret);
+ 	return ret;
  }
+@@ -1315,10 +1309,6 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
  
--static inline void __delete_from_swap_cache(struct page *page)
-+static inline void __delete_from_swap_cache(struct page *page,
-+							swp_entry_t entry)
- {
- }
+ 		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 						 0, write && !sync);
+-		if (IS_ERR(entry)) {
+-			error = PTR_ERR(entry);
+-			goto error_finish_iomap;
+-		}
  
-diff --git a/mm/swap_state.c b/mm/swap_state.c
-index 53e27894c1bc..a0a562fbc65f 100644
---- a/mm/swap_state.c
-+++ b/mm/swap_state.c
-@@ -154,23 +154,22 @@ int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
-  * This must be called only on pages that have
-  * been verified to be in the swap cache.
-  */
--void __delete_from_swap_cache(struct page *page)
-+void __delete_from_swap_cache(struct page *page, swp_entry_t entry)
- {
--	struct address_space *address_space;
-+	struct address_space *address_space = swap_address_space(entry);
- 	int i, nr = hpage_nr_pages(page);
--	swp_entry_t entry;
--	pgoff_t idx;
-+	pgoff_t idx = swp_offset(entry);
-+	XA_STATE(xas, &address_space->i_pages, idx);
+ 		/*
+ 		 * If we are doing synchronous page fault and inode needs fsync,
+@@ -1402,8 +1392,6 @@ static int dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
+ 	pfn = page_to_pfn_t(zero_page);
+ 	ret = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 			DAX_PMD | DAX_ZERO_PAGE, false);
+-	if (IS_ERR(ret))
+-		goto fallback;
  
- 	VM_BUG_ON_PAGE(!PageLocked(page), page);
- 	VM_BUG_ON_PAGE(!PageSwapCache(page), page);
- 	VM_BUG_ON_PAGE(PageWriteback(page), page);
+ 	ptl = pmd_lock(vmf->vma->vm_mm, vmf->pmd);
+ 	if (!pmd_none(*(vmf->pmd))) {
+@@ -1525,8 +1513,6 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
  
--	entry.val = page_private(page);
--	address_space = swap_address_space(entry);
--	idx = swp_offset(entry);
- 	for (i = 0; i < nr; i++) {
--		radix_tree_delete(&address_space->i_pages, idx + i);
-+		void *entry = xas_store(&xas, NULL);
-+		VM_BUG_ON_PAGE(entry != page + i, entry);
- 		set_page_private(page + i, 0);
-+		xas_next(&xas);
- 	}
- 	ClearPageSwapCache(page);
- 	address_space->nrpages -= nr;
-@@ -246,14 +245,11 @@ int add_to_swap(struct page *page)
-  */
- void delete_from_swap_cache(struct page *page)
- {
--	swp_entry_t entry;
--	struct address_space *address_space;
--
--	entry.val = page_private(page);
-+	swp_entry_t entry = { .val = page_private(page) };
-+	struct address_space *address_space = swap_address_space(entry);
+ 		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 						DAX_PMD, write && !sync);
+-		if (IS_ERR(entry))
+-			goto finish_iomap;
  
--	address_space = swap_address_space(entry);
- 	xa_lock_irq(&address_space->i_pages);
--	__delete_from_swap_cache(page);
-+	__delete_from_swap_cache(page, entry);
- 	xa_unlock_irq(&address_space->i_pages);
- 
- 	put_swap_page(page, entry);
-diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 4e57f97c579b..e42d3fdb38fe 100644
---- a/mm/vmscan.c
-+++ b/mm/vmscan.c
-@@ -721,7 +721,7 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
- 	if (PageSwapCache(page)) {
- 		swp_entry_t swap = { .val = page_private(page) };
- 		mem_cgroup_swapout(page, swap);
--		__delete_from_swap_cache(page);
-+		__delete_from_swap_cache(page, swap);
- 		xa_unlock_irqrestore(&mapping->i_pages, flags);
- 		put_swap_page(page, swap);
- 	} else {
+ 		/*
+ 		 * If we are doing synchronous page fault and inode needs fsync,
 -- 
 2.16.2
 
