@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 17/62] page cache: Rearrange address_space
-Date: Thu, 29 Mar 2018 20:42:00 -0700
-Message-ID: <20180330034245.10462-18-willy@infradead.org>
+Subject: [PATCH v10 37/62] shmem: Convert shmem_confirm_swap to
+ XArray
+Date: Thu, 29 Mar 2018 20:42:20 -0700
+Message-ID: <20180330034245.10462-38-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=rnrDIi/CbTfEZ9k1ozA3qq04o63fO7M3waGl/fl4aoE=; b=A8JFURcy+435MCUpf507a2NAVX
- ypD6Epxsd4QGozeHH8VjPg3cuYENWrMD52IruQn9dOIwvxt4jr/Tg0Er5t93uR4sKOEb0auNsnlY9
- mADAFaoLtDV/Kq+5sjjk/aW72UIfPcOfsZR/AZfXfphoB16J3LUGkHF3RAhmMiAftfEo=;
+ bh=KuOjcPlTQ9KpziGyEx+C7mqN9cLTotY5ZX0wX57D+RM=; b=h3WV0XLhHw74wnh+SPBsAXNFfK
+ zMynRAsx2FbMTgXc4oIMS9AHaOIxcYPgXBbdxTPegbJ/Wfz8r6Po5JEvGnigPV7oagHLjEy9aurMy
+ /46MCJvJlkZcArBXfr7wcCtt9rGIOtrCEop8OXq2T9pboT5GkHh21ktnPNsTYk6UPonI=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=rnrDIi/CbTfEZ9k1ozA3qq04o63fO7M3waGl/fl4aoE=; b=AeAxJREkF4HmkMwpBDSX5GhxsF
- mfXYS4HTHhoxaaytHZup1ixCUF8HrHRK/jHbrS7W4WBQlWsmed0pJRLEHmf74LpQLXlfiRuJ6V+7G
- Bdov+SBH5UQA1akmlPebXfZYzbbYJXM+KfIiiJvCqouh8bhwT0qLiW/nFKuGURbQXPAU=;
+ bh=KuOjcPlTQ9KpziGyEx+C7mqN9cLTotY5ZX0wX57D+RM=; b=i0GLsFj34V5MKIyo+FVWAP707h
+ oKwgY4ei5U78vNjT/kk4OrG3yyC6GmWmV4xzcI5/5/Xc+e5fN1kS40Q0mDj+eHOKHUtkAoR03T9zU
+ PTQzMblP1Gb4+CwAOllPgw6gtozqsKvkZKCZBNnZ1D5Zh3zZ9Ku0k8q0AeBm+y+bo1SI=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=rnrDIi/CbTfEZ9k1ozA3qq04o63fO7M3waGl/fl4aoE=; b=ndpxmwhkM/7GjBJWtV1Rj3LYB
- v3Tmehox40rzXAV+tVmTRwiAEd8Gd66X8VnNjCloiZ83sA2OAllvRbLcCaPSjPLsaSjGOsGAJc1Fl
- yQhL42PYGPq4pKPEsUCpKgRYRXYKX71hoiksomHOtqP/fc7rYikJLrdt14XWGlXPPvLNcDpQN6JiL
- HPt7/KOtlGQJIvhs4ZG0gfhBpTXcyCDkUph7nw/TmN6uAN4i+awOPlWTp3pEIpASeTf5MLlWqbM2F
- l2D7mY0nK7fZjLcchAFbmGlGzUf0llZlFEazDXknhlW4FOKZjQftWcRmAIDQVjvtZ2cZr4xlrcDDV
- DRwyyQoDQ==;
+ bh=KuOjcPlTQ9KpziGyEx+C7mqN9cLTotY5ZX0wX57D+RM=; b=TTLrp2zUqlWT3dybaZo7SFki1
+ h9LhUyCviMKTncQBdeYkb48+o0ivia8mVPbw5sFoYp+tbgUfc1KPojRUJPChS6EozOwaXwXC8ygaP
+ tDh1r1eYEKWflQ+GuXl+ALg8xQrIIFeKKd1ro1QHwhIvFZJ7uOVEY4WJX8IZ0o/MQKIPGJH5wDKPW
+ E/F7/GXyaKXuxiinxp5mUVxIuKjN0/qs0E5hLWH2hdSYu4XsFQ2qO5S/T37JbF5mRxTs9lRlaBSLX
+ +YV5nSjUUwRvF+5ONQLuTBar+AqtU/5ZNjcZ1C6YbWX1FAepDTiOYfsJUBFI/kbHJQiczfTFkrHBX
+ NrMG9IhfA==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,75 +54,31 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Change i_pages from a radix_tree_root to an xarray, convert the
-documentation into kernel-doc format and change the order of the elements
-to pack them better on 64-bit systems.
+xa_load has its own RCU locking, so we can eliminate it here.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/fs.h | 46 +++++++++++++++++++++++++++++++---------------
- 1 file changed, 31 insertions(+), 15 deletions(-)
+ mm/shmem.c | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 364f217c278d..d41df4e6ce04 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -389,24 +389,40 @@ int pagecache_write_end(struct file *, struct address_space *mapping,
- 				loff_t pos, unsigned len, unsigned copied,
- 				struct page *page, void *fsdata);
+diff --git a/mm/shmem.c b/mm/shmem.c
+index fced882e0b7a..4b66bcedd21c 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -348,12 +348,7 @@ static int shmem_xa_replace(struct address_space *mapping,
+ static bool shmem_confirm_swap(struct address_space *mapping,
+ 			       pgoff_t index, swp_entry_t swap)
+ {
+-	void *item;
+-
+-	rcu_read_lock();
+-	item = radix_tree_lookup(&mapping->i_pages, index);
+-	rcu_read_unlock();
+-	return item == swp_to_radix_entry(swap);
++	return xa_load(&mapping->i_pages, index) == swp_to_radix_entry(swap);
+ }
  
-+/**
-+ * struct address_space - Contents of a cacheable, mappable object.
-+ * @host: Owner, either the inode or the block_device.
-+ * @i_pages: Cached pages.
-+ * @gfp_mask: Memory allocation flags to use for allocating pages.
-+ * @i_mmap_writable: Number of VM_SHARED mappings.
-+ * @i_mmap: Tree of private and shared mappings.
-+ * @i_mmap_rwsem: Protects @i_mmap and @i_mmap_writable.
-+ * @nrpages: Number of page entries, protected by the i_pages lock.
-+ * @nrexceptional: Shadow or DAX entries, protected by the i_pages lock.
-+ * @writeback_index: Writeback starts here.
-+ * @a_ops: Methods.
-+ * @flags: Error bits and flags (AS_*).
-+ * @wb_err: The most recent error which has occurred.
-+ * @private_lock: For use by the owner of the address_space.
-+ * @private_list: For use by the owner of the address_space.
-+ * @private_data: For use by the owner of the address_space.
-+ */
- struct address_space {
--	struct inode		*host;		/* owner: inode, block_device */
--	struct radix_tree_root	i_pages;	/* cached pages */
--	atomic_t		i_mmap_writable;/* count VM_SHARED mappings */
--	struct rb_root_cached	i_mmap;		/* tree of private and shared mappings */
--	struct rw_semaphore	i_mmap_rwsem;	/* protect tree, count, list */
--	/* Protected by the i_pages lock */
--	unsigned long		nrpages;	/* number of total pages */
--	/* number of shadow or DAX exceptional entries */
-+	struct inode		*host;
-+	struct xarray		i_pages;
-+	gfp_t			gfp_mask;
-+	atomic_t		i_mmap_writable;
-+	struct rb_root_cached	i_mmap;
-+	struct rw_semaphore	i_mmap_rwsem;
-+	unsigned long		nrpages;
- 	unsigned long		nrexceptional;
--	pgoff_t			writeback_index;/* writeback starts here */
--	const struct address_space_operations *a_ops;	/* methods */
--	unsigned long		flags;		/* error bits */
--	spinlock_t		private_lock;	/* for use by the address_space */
--	gfp_t			gfp_mask;	/* implicit gfp mask for allocations */
--	struct list_head	private_list;	/* for use by the address_space */
--	void			*private_data;	/* ditto */
-+	pgoff_t			writeback_index;
-+	const struct address_space_operations *a_ops;
-+	unsigned long		flags;
- 	errseq_t		wb_err;
-+	spinlock_t		private_lock;
-+	struct list_head	private_list;
-+	void			*private_data;
- } __attribute__((aligned(sizeof(long)))) __randomize_layout;
- 	/*
- 	 * On most architectures that alignment is already the case; but
+ /*
 -- 
 2.16.2
 
