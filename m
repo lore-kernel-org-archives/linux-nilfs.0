@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 55/62] dax: Hash on XArray instead of mapping
-Date: Thu, 29 Mar 2018 20:42:38 -0700
-Message-ID: <20180330034245.10462-56-willy@infradead.org>
+Subject: [PATCH v10 18/62] page cache: Convert hole search to
+ XArray
+Date: Thu, 29 Mar 2018 20:42:01 -0700
+Message-ID: <20180330034245.10462-19-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=XvMBk2DTdZEv4EjzqdWr4q0pcxOLtVXb6t/R8hxIEIM=; b=TtT3rBtK0GTG9NWDbicKb2NnHg
- YnW0epZ4DNf9R/vg2oenmUwXsTkVMkNP7R33HdXA/JIhvMcd3hM4y6ohma/o3VQW0c5DiTq4lkFWq
- aG8cvGNBiFuSVuKkQ0/vAfJ+PRAcwrONCUrszwecU9c8nC7dC/I7eMLWR38ji1bHjlVE=;
+ bh=85PaWtLeB/Xo17AiP3R6pnePw2H9lCep32oyqYUwSv8=; b=QP0xX8tpQujWL4qDinHJTaJ+n4
+ 5BkUE7lwz8AfR5+H4FTRU+p3uAiOJqAkgUCY+76jiePCEPioyE8tXe1XbwB4NivgDDUtFy75CXY48
+ u8n6JAkR/K4tbksr21Aee2Y/ldMHPMJ99SSZSBeJLFgw2f8kG43jF+bbr0vXGDembTbs=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=XvMBk2DTdZEv4EjzqdWr4q0pcxOLtVXb6t/R8hxIEIM=; b=LRNU27vQKwwRDHg9M2AnJCVD1B
- O37oQeMeufWHln7UbKPvHck3u/Yl5Ps0rih5MVZT8KQxwGfwCgn8GSexqMll7UZR+bVy/o7Ji49TF
- PqM9u4oM05aUdfYO8GXuIMY6jZg4Tx+9u8akfuDXbEB2e27zUBm/NUzF3ZWAiF+rcdqo=;
+ bh=85PaWtLeB/Xo17AiP3R6pnePw2H9lCep32oyqYUwSv8=; b=JHWuTJWw+mix8oN2xnulhrhQjH
+ tyLMpsy34jf6Ocl3EP+piFNzqzVAphBUv0QHLOJ1NAI30353GoIgb5u8+FPrsjkz0SjM9OqFhFZAi
+ a7DPY6k14bnkoWhFI9KP3wjIiflVgPDEcwaVnd5/kkiKEHkCCMmSoVXI9GpPW3nxon70=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=XvMBk2DTdZEv4EjzqdWr4q0pcxOLtVXb6t/R8hxIEIM=; b=Rw7r0dosjq4MWIoo+ZUnQK7wb
- w4EBL0N5yXT5lahFCzXuRf0ManWFh+qH5Z1Rtkqq0RljUAd7Vhva2OxsQ1jQ2SqdoFXtEfh2+FqnP
- Hqv9sxEL7IQecVP1ezRkv0yAunFtPck4A3DUEsVdTq5BX2kJW7PcQyiOB/8FdUW34dtg0QfXr/6Ph
- INp3j0UZsmbTzHFHU+Zea2+8pEoVFKRtEsWRdsKa7geyd5bLlTcujsrZYDLMULZ3D0DmmUJdeV9SN
- VnCzwR5ksw3kuL+OJWfHxPozcDL6+0TdPPRWFkr2bZPsdRdb1rmJh4fx6uspDHgFanhAJ/EBXeyQK
- eWB/RPFFw==;
+ bh=85PaWtLeB/Xo17AiP3R6pnePw2H9lCep32oyqYUwSv8=; b=BUyMG8uKfIjVN3+SkAMd2S8ip
+ xnWuIzarVCOrbBkeQJg0zDdsAjA2cK4GbdMwiDG4T6ePCnS2AZfkhCRBbNVVBY7kmsJQz/gdfDPU1
+ K0ZVRCj/VKPFxRKSkeLOT41lg4mBnUkmm34xhai+NGbxXOhdfEQaavFucXKlQ7a7PUkJQqy7UMOia
+ iGwJ0F8vUsL8LeYHYYsqItYtHYV4+ibrAEapUU1VUVT72JoFKR5Cc0gNsh0uEnzs9cHmjtXS49GDQ
+ 3zIeAsus03LGWZ8Gxs+Ox1PCQGnoKqYnPSvpOkI7IBAySHE3FKs6HcJIyvTBqj7Ltwn3T3XVGgO15
+ Ub7WK4syg==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,118 +54,212 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Since the XArray is embedded in the struct address_space, this contains
-exactly as much entropy as the address of the mapping.
+The page cache offers the ability to search for a miss in the previous or
+next N locations.  Rather than teach the XArray about the page cache's
+definition of a miss, use xas_prev() and xas_next() to search the page
+array.  This should be more efficient as it does not have to start the
+lookup from the top for each index.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 29 +++++++++++++++--------------
- 1 file changed, 15 insertions(+), 14 deletions(-)
+ fs/nfs/blocklayout/blocklayout.c |   2 +-
+ include/linux/pagemap.h          |   4 +-
+ mm/filemap.c                     | 110 ++++++++++++++++++---------------------
+ mm/readahead.c                   |   4 +-
+ 4 files changed, 55 insertions(+), 65 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index ce4ad6a99e78..2d6e21e41567 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -116,7 +116,7 @@ static int dax_is_empty_entry(void *entry)
-  * DAX page cache entry locking
-  */
- struct exceptional_entry_key {
--	struct address_space *mapping;
-+	struct xarray *xa;
- 	pgoff_t entry_start;
- };
- 
-@@ -125,7 +125,7 @@ struct wait_exceptional_entry_queue {
- 	struct exceptional_entry_key key;
- };
- 
--static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
-+static wait_queue_head_t *dax_entry_waitqueue(struct xarray *xa,
- 		pgoff_t index, void *entry, struct exceptional_entry_key *key)
- {
- 	unsigned long hash;
-@@ -138,21 +138,21 @@ static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
- 	if (dax_is_pmd_entry(entry))
- 		index &= ~PG_PMD_COLOUR;
- 
--	key->mapping = mapping;
-+	key->xa = xa;
- 	key->entry_start = index;
- 
--	hash = hash_long((unsigned long)mapping ^ index, DAX_WAIT_TABLE_BITS);
-+	hash = hash_long((unsigned long)xa ^ index, DAX_WAIT_TABLE_BITS);
- 	return wait_table + hash;
- }
- 
--static int wake_exceptional_entry_func(wait_queue_entry_t *wait, unsigned int mode,
--				       int sync, void *keyp)
-+static int wake_exceptional_entry_func(wait_queue_entry_t *wait,
-+		unsigned int mode, int sync, void *keyp)
- {
- 	struct exceptional_entry_key *key = keyp;
- 	struct wait_exceptional_entry_queue *ewait =
- 		container_of(wait, struct wait_exceptional_entry_queue, wait);
- 
--	if (key->mapping != ewait->key.mapping ||
-+	if (key->xa != ewait->key.xa ||
- 	    key->entry_start != ewait->key.entry_start)
- 		return 0;
- 	return autoremove_wake_function(wait, mode, sync, NULL);
-@@ -163,13 +163,13 @@ static int wake_exceptional_entry_func(wait_queue_entry_t *wait, unsigned int mo
-  * The important information it's conveying is whether the entry at
-  * this index used to be a PMD entry.
-  */
--static void dax_wake_mapping_entry_waiter(struct address_space *mapping,
-+static void dax_wake_mapping_entry_waiter(struct xarray *xa,
- 		pgoff_t index, void *entry, bool wake_all)
- {
- 	struct exceptional_entry_key key;
- 	wait_queue_head_t *wq;
- 
--	wq = dax_entry_waitqueue(mapping, index, entry, &key);
-+	wq = dax_entry_waitqueue(xa, index, entry, &key);
- 
- 	/*
- 	 * Checking for locked entry and prepare_to_wait_exclusive() happens
-@@ -246,7 +246,8 @@ static void *get_unlocked_mapping_entry(struct address_space *mapping,
- 			return entry;
- 		}
- 
--		wq = dax_entry_waitqueue(mapping, index, entry, &ewait.key);
-+		wq = dax_entry_waitqueue(&mapping->i_pages, index, entry,
-+				&ewait.key);
- 		prepare_to_wait_exclusive(wq, &ewait.wait,
- 					  TASK_UNINTERRUPTIBLE);
- 		xa_unlock_irq(&mapping->i_pages);
-@@ -270,7 +271,7 @@ static void dax_unlock_mapping_entry(struct address_space *mapping,
+diff --git a/fs/nfs/blocklayout/blocklayout.c b/fs/nfs/blocklayout/blocklayout.c
+index 7cb5c38c19e4..961901685007 100644
+--- a/fs/nfs/blocklayout/blocklayout.c
++++ b/fs/nfs/blocklayout/blocklayout.c
+@@ -895,7 +895,7 @@ static u64 pnfs_num_cont_bytes(struct inode *inode, pgoff_t idx)
+ 	end = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+ 	if (end != inode->i_mapping->nrpages) {
+ 		rcu_read_lock();
+-		end = page_cache_next_hole(mapping, idx + 1, ULONG_MAX);
++		end = page_cache_next_gap(mapping, idx + 1, ULONG_MAX);
+ 		rcu_read_unlock();
  	}
- 	unlock_slot(mapping, slot);
- 	xa_unlock_irq(&mapping->i_pages);
--	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
-+	dax_wake_mapping_entry_waiter(&mapping->i_pages, index, entry, false);
+ 
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index b1bd2186e6d2..2f5d2d3ebaac 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -241,9 +241,9 @@ static inline gfp_t readahead_gfp_mask(struct address_space *x)
+ 
+ typedef int filler_t(void *, struct page *);
+ 
+-pgoff_t page_cache_next_hole(struct address_space *mapping,
++pgoff_t page_cache_next_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
+-pgoff_t page_cache_prev_hole(struct address_space *mapping,
++pgoff_t page_cache_prev_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
+ 
+ #define FGP_ACCESSED		0x00000001
+diff --git a/mm/filemap.c b/mm/filemap.c
+index f2251183a977..efe227940784 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1326,86 +1326,76 @@ int __lock_page_or_retry(struct page *page, struct mm_struct *mm,
  }
  
- static void put_locked_mapping_entry(struct address_space *mapping,
-@@ -290,7 +291,7 @@ static void put_unlocked_mapping_entry(struct address_space *mapping,
- 		return;
+ /**
+- * page_cache_next_hole - find the next hole (not-present entry)
+- * @mapping: mapping
+- * @index: index
+- * @max_scan: maximum range to search
+- *
+- * Search the set [index, min(index+max_scan-1, MAX_INDEX)] for the
+- * lowest indexed hole.
+- *
+- * Returns: the index of the hole if found, otherwise returns an index
+- * outside of the set specified (in which case 'return - index >=
+- * max_scan' will be true). In rare cases of index wrap-around, 0 will
+- * be returned.
+- *
+- * page_cache_next_hole may be called under rcu_read_lock. However,
+- * like radix_tree_gang_lookup, this will not atomically search a
+- * snapshot of the tree at a single point in time. For example, if a
+- * hole is created at index 5, then subsequently a hole is created at
+- * index 10, page_cache_next_hole covering both indexes may return 10
+- * if called under rcu_read_lock.
++ * page_cache_next_gap() - Find the next gap in the page cache.
++ * @mapping: Mapping.
++ * @index: Index.
++ * @max_scan: Maximum range to search.
++ *
++ * Search the range [index, min(index + max_scan - 1, ULONG_MAX)] for the
++ * gap with the lowest index.
++ *
++ * This function may be called under the rcu_read_lock.  However, this will
++ * not atomically search a snapshot of the cache at a single point in time.
++ * For example, if a gap is created at index 5, then subsequently a gap is
++ * created at index 10, page_cache_next_gap covering both indices may
++ * return 10 if called under the rcu_read_lock.
++ *
++ * Return: The index of the gap if found, otherwise an index outside the
++ * range specified (in which case 'return - index >= max_scan' will be true).
++ * In the rare case of index wrap-around, 0 will be returned.
+  */
+-pgoff_t page_cache_next_hole(struct address_space *mapping,
++pgoff_t page_cache_next_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan)
+ {
+-	unsigned long i;
++	XA_STATE(xas, &mapping->i_pages, index);
  
- 	/* We have to wake up next waiter for the page cache entry lock */
--	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
-+	dax_wake_mapping_entry_waiter(&mapping->i_pages, index, entry, false);
+-	for (i = 0; i < max_scan; i++) {
+-		struct page *page;
+-
+-		page = radix_tree_lookup(&mapping->i_pages, index);
+-		if (!page || xa_is_value(page))
++	while (max_scan--) {
++		void *entry = xas_next(&xas);
++		if (!entry || xa_is_value(entry))
+ 			break;
+-		index++;
+-		if (index == 0)
++		if (xas.xa_index == 0)
+ 			break;
+ 	}
+ 
+-	return index;
++	return xas.xa_index;
  }
+-EXPORT_SYMBOL(page_cache_next_hole);
++EXPORT_SYMBOL(page_cache_next_gap);
  
- static unsigned long dax_entry_size(void *entry)
-@@ -464,8 +465,8 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
- 			dax_disassociate_entry(entry, mapping, false);
- 			radix_tree_delete(&mapping->i_pages, index);
- 			mapping->nrexceptional--;
--			dax_wake_mapping_entry_waiter(mapping, index, entry,
--					true);
-+			dax_wake_mapping_entry_waiter(&mapping->i_pages,
-+					index, entry, true);
- 		}
+ /**
+- * page_cache_prev_hole - find the prev hole (not-present entry)
+- * @mapping: mapping
+- * @index: index
+- * @max_scan: maximum range to search
+- *
+- * Search backwards in the range [max(index-max_scan+1, 0), index] for
+- * the first hole.
+- *
+- * Returns: the index of the hole if found, otherwise returns an index
+- * outside of the set specified (in which case 'index - return >=
+- * max_scan' will be true). In rare cases of wrap-around, ULONG_MAX
+- * will be returned.
+- *
+- * page_cache_prev_hole may be called under rcu_read_lock. However,
+- * like radix_tree_gang_lookup, this will not atomically search a
+- * snapshot of the tree at a single point in time. For example, if a
+- * hole is created at index 10, then subsequently a hole is created at
+- * index 5, page_cache_prev_hole covering both indexes may return 5 if
+- * called under rcu_read_lock.
++ * page_cache_prev_gap() - Find the next gap in the page cache.
++ * @mapping: Mapping.
++ * @index: Index.
++ * @max_scan: Maximum range to search.
++ *
++ * Search the range [max(index - max_scan + 1, 0), index] for the
++ * gap with the highest index.
++ *
++ * This function may be called under the rcu_read_lock.  However, this will
++ * not atomically search a snapshot of the cache at a single point in time.
++ * For example, if a gap is created at index 10, then subsequently a gap is
++ * created at index 5, page_cache_prev_gap() covering both indices may
++ * return 5 if called under the rcu_read_lock.
++ *
++ * Return: The index of the gap if found, otherwise an index outside the
++ * range specified (in which case 'index - return >= max_scan' will be true).
++ * In the rare case of wrap-around, ULONG_MAX will be returned.
+  */
+-pgoff_t page_cache_prev_hole(struct address_space *mapping,
++pgoff_t page_cache_prev_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan)
+ {
+-	unsigned long i;
+-
+-	for (i = 0; i < max_scan; i++) {
+-		struct page *page;
++	XA_STATE(xas, &mapping->i_pages, index);
  
- 		entry = dax_mk_locked(0, size_flag | DAX_EMPTY);
+-		page = radix_tree_lookup(&mapping->i_pages, index);
+-		if (!page || xa_is_value(page))
++	while (max_scan--) {
++		void *entry = xas_prev(&xas);
++		if (!entry || xa_is_value(entry))
+ 			break;
+-		index--;
+-		if (index == ULONG_MAX)
++		if (xas.xa_index == ULONG_MAX)
+ 			break;
+ 	}
+ 
+-	return index;
++	return xas.xa_index;
+ }
+-EXPORT_SYMBOL(page_cache_prev_hole);
++EXPORT_SYMBOL(page_cache_prev_gap);
+ 
+ /**
+  * find_get_entry - find and get a page cache entry
+diff --git a/mm/readahead.c b/mm/readahead.c
+index 3ac9ca63f686..c7ddcf60ac6d 100644
+--- a/mm/readahead.c
++++ b/mm/readahead.c
+@@ -329,7 +329,7 @@ static pgoff_t count_history_pages(struct address_space *mapping,
+ 	pgoff_t head;
+ 
+ 	rcu_read_lock();
+-	head = page_cache_prev_hole(mapping, offset - 1, max);
++	head = page_cache_prev_gap(mapping, offset - 1, max);
+ 	rcu_read_unlock();
+ 
+ 	return offset - 1 - head;
+@@ -417,7 +417,7 @@ ondemand_readahead(struct address_space *mapping,
+ 		pgoff_t start;
+ 
+ 		rcu_read_lock();
+-		start = page_cache_next_hole(mapping, offset + 1, max_pages);
++		start = page_cache_next_gap(mapping, offset + 1, max_pages);
+ 		rcu_read_unlock();
+ 
+ 		if (!start || start - offset > max_pages)
 -- 
 2.16.2
 
