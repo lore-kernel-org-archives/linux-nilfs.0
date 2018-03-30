@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 09/62] xarray: Add xa_store
-Date: Thu, 29 Mar 2018 20:41:52 -0700
-Message-ID: <20180330034245.10462-10-willy@infradead.org>
+Subject: [PATCH v10 54/62] dax: Rename some functions
+Date: Thu, 29 Mar 2018 20:42:37 -0700
+Message-ID: <20180330034245.10462-55-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=hdwiP6FuIXFtrxG2wtS2OZeINNBUgxcjWXQhWfxkrSE=; b=CRA4nMbJQf8YptjDmxIUASY76D
- ZrJ3DOWK/JVzicue/Xxqt04dwrSlQIss6FqsRQ4Yz0axN7oPi8Z2bDFr+JEkUY1+H0rY2cwDlxKa/
- xOFz00jzOA4qyMeJISS0/rTVeU4Tbl7DnsUOYjXt47zAaNWxNOD1LXQMmzL7ixcO6RXQ=;
+ bh=4xSISjPz4J6oauPmuC9Nw9pAu9SY/1hj6/mlaMuiewQ=; b=EAjYdHZmhdCQhdLo/n6m4kVa7V
+ HH85dcVT4Ub1L4ks/o3aBzzxvMv6U0cykiH0hpYXQlpiBKPQwhh/PTX2GsF45zmNe+w+Df5Y2ZFpA
+ 49hNTzwYWDuUAOD//oHuBdhwGgeAom/sEq1nveqNZ98q8jrOZVHGxiu3Hj08vNaWeGtI=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=hdwiP6FuIXFtrxG2wtS2OZeINNBUgxcjWXQhWfxkrSE=; b=Ze6vHxwbMx210yHw4nwhIoxM/I
- oKq2kjWewyviTGBg/6p4yzGFrKdkjQSZFGg7I3PCY6FfIAUpY1fXhEU7NK0Va92dmXeEAd7MtIitp
- E7Z6qiyI9NG+vIRrkMwe5THVT5Hoevozdt3wleC5ZUXXU1vhyEBcoAPHV2pnFF8aSfUo=;
+ bh=4xSISjPz4J6oauPmuC9Nw9pAu9SY/1hj6/mlaMuiewQ=; b=BOO3P4f70o1MOzDNG2nWIPJXoX
+ 2NG+9wQfGtQu1JgsSnE2EhO6KJ+4aZ5ZpQLK9RofKb5p3U2nEqHuE2bSir91gNf3jPleu3ngOrZ0F
+ EF/x1MbkIGZJacCd3yipCCxxLbiMDi0UiMBkwhG6nnSYgZTH8/fkkGZhwQfinXheb508=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=hdwiP6FuIXFtrxG2wtS2OZeINNBUgxcjWXQhWfxkrSE=; b=UnaPF8wQElvT52fZLE57aMmih
- v3XVdTvH6MV+t4IhsAhqhIdoUeauJpVN5vQ6Q8GXyU8s1UjAh+BFswB6+hZwSHXXcoKjGAP6QvsOH
- RzPsJq4Vg84UJwTwGIVKXH6tiDdzo0Nl92mr99HrS0E1hhrm08oYSrntAzF00Udb/OkjSUwHLI/DJ
- VbrbrFFf7RzUtLxpmEbr7Ml4qn/WbI1qihG+dklkvetECK6CzwcyTNLxM5RSv/zcxS8gV6wuaTOn4
- j3vs4pnmiL/nftfqKa2b9rs8V61Lf61+muvU7y/bqJGJys9NnRh0RbHo6TXm/HUvzhbHLZTgwsSXo
- ZKA03F55w==;
+ bh=4xSISjPz4J6oauPmuC9Nw9pAu9SY/1hj6/mlaMuiewQ=; b=ClBqSye7qiG7UOGj2Fm1cG/me
+ 8m7pTs/8+qlEu7vyNhkvd1ye/lMU7Tj2IToEIJw7gmV0SR3HD2YQ21B27nZeGCobIYs/D0O0caGed
+ OnXaO4yq6vaVeAdlm3oaH/EHwkXNGTPoTe/HvURqGEZSk2/mtiB9Fx0Di2L3cg/FLB8nmjqbcInvV
+ s4LqKlq+XlhylAKmfn7ac6IC+3anU3G4OJ95+/5WZ/qG6/ixRHzbO28MS9Tvq/1gK2/vgVid81Mgs
+ wOZQneAyJnZT7VGh2Fw9NnTxratuBxLqdLoYg9yBHM3groGjlbhwCBh8cBfo/ZG8WS/ZDtf4z4Ga4
+ If0Zq9n+A==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,1235 +53,289 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-xa_store() differs from radix_tree_insert() in that it will overwrite an
-existing element in the array rather than returning an error.  This is
-the behaviour which most users want, and those that want more complex
-behaviour generally want to use the xas family of routines anyway.
-
-For memory allocation, xa_store() will first attempt to request memory
-from the slab allocator; if memory is not immediately available, it will
-drop the xa_lock and allocate memory, keeping a pointer in the xa_state.
-It does not use the per-CPU cache, although those will continue to exist
-until all radix tree users are converted to the xarray.
-
-This patch also includes xa_erase() and __xa_erase() for a streamlined
-way to store NULL.  Since there is no need to allocate memory in order
-to store a NULL in the XArray, we do not need to trouble the user with
-deciding what memory allocation flags to use.
+Remove mentions of 'radix' and 'radix tree'.  Simplify some names by
+dropping the word 'mapping'.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h                    | 109 +++++
- lib/radix-tree.c                          |   4 +-
- lib/xarray.c                              | 648 ++++++++++++++++++++++++++++++
- tools/include/linux/spinlock.h            |   2 +
- tools/testing/radix-tree/linux/kernel.h   |   4 +
- tools/testing/radix-tree/linux/lockdep.h  |  11 +
- tools/testing/radix-tree/linux/rcupdate.h |   1 +
- tools/testing/radix-tree/test.c           |  32 ++
- tools/testing/radix-tree/test.h           |   5 +
- tools/testing/radix-tree/xarray-test.c    | 158 +++++++-
- 10 files changed, 970 insertions(+), 4 deletions(-)
- create mode 100644 tools/testing/radix-tree/linux/lockdep.h
+ fs/dax.c | 81 +++++++++++++++++++++++++++++++---------------------------------
+ 1 file changed, 39 insertions(+), 42 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 09f8e93989cc..546c9d425e24 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -157,10 +157,17 @@ typedef unsigned __bitwise xa_tag_t;
- #define XA_PRESENT		((__force xa_tag_t)8U)
- #define XA_TAG_MAX		XA_TAG_2
+diff --git a/fs/dax.c b/fs/dax.c
+index 3bd9f624c1f8..ce4ad6a99e78 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -74,18 +74,18 @@ fs_initcall(init_dax_wait_table);
+ #define DAX_ZERO_PAGE	(1UL << 2)
+ #define DAX_EMPTY	(1UL << 3)
  
-+enum xa_lock_type {
-+	XA_LOCK_IRQ = 1,
-+	XA_LOCK_BH = 2,
-+};
-+
+-static unsigned long dax_radix_pfn(void *entry)
++static unsigned long dax_to_pfn(void *entry)
+ {
+ 	return xa_to_value(entry) >> DAX_SHIFT;
+ }
+ 
+-static void *dax_radix_locked_entry(unsigned long pfn, unsigned long flags)
++static void *dax_mk_locked(unsigned long pfn, unsigned long flags)
+ {
+ 	return xa_mk_value(flags | ((unsigned long)pfn << DAX_SHIFT) |
+ 			DAX_ENTRY_LOCK);
+ }
+ 
+-static unsigned int dax_radix_order(void *entry)
++static unsigned int dax_entry_order(void *entry)
+ {
+ 	if (xa_to_value(entry) & DAX_PMD)
+ 		return PMD_SHIFT - PAGE_SHIFT;
+@@ -113,7 +113,7 @@ static int dax_is_empty_entry(void *entry)
+ }
+ 
  /*
-  * Values for xa_flags.  The radix tree stores its GFP flags in the xa_flags,
-  * and we remain compatible with that.
+- * DAX radix tree locking
++ * DAX page cache entry locking
   */
-+#define XA_FLAGS_LOCK_IRQ	((__force gfp_t)XA_LOCK_IRQ)
-+#define XA_FLAGS_LOCK_BH	((__force gfp_t)XA_LOCK_BH)
- #define XA_FLAGS_TAG(tag)	((__force gfp_t)((1U << __GFP_BITS_SHIFT) << \
- 						(__force unsigned)(tag)))
- 
-@@ -210,6 +217,7 @@ struct xarray {
- 
- void xa_init_flags(struct xarray *, gfp_t flags);
- void *xa_load(struct xarray *, unsigned long index);
-+void *xa_store(struct xarray *, unsigned long index, void *entry, gfp_t);
- bool xa_get_tag(struct xarray *, unsigned long index, xa_tag_t);
- void xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
- void xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
-@@ -227,6 +235,35 @@ static inline void xa_init(struct xarray *xa)
- 	xa_init_flags(xa, 0);
+ struct exceptional_entry_key {
+ 	struct address_space *mapping;
+@@ -217,7 +217,7 @@ static inline void *unlock_slot(struct address_space *mapping, void **slot)
  }
  
-+/**
-+ * xa_erase() - Erase this entry from the XArray.
-+ * @xa: XArray.
-+ * @index: Index of entry.
-+ *
-+ * This function is the equivalent of calling xa_store() with %NULL as
-+ * the third argument.  The XArray does not need to allocate memory, so
-+ * the user does not need to provide GFP flags.
-+ *
-+ * Context: Process context.  Takes and releases the xa_lock.
-+ * Return: The entry which used to be at this index.
-+ */
-+static inline void *xa_erase(struct xarray *xa, unsigned long index)
-+{
-+	return xa_store(xa, index, NULL, 0);
-+}
-+
-+/**
-+ * xa_empty() - Determine if an array has any present entries.
-+ * @xa: XArray.
-+ *
-+ * Context: Any context.
-+ * Return: %true if the array contains only NULL pointers.
-+ */
-+static inline bool xa_empty(const struct xarray *xa)
-+{
-+	return xa->xa_head == NULL;
-+}
-+
- /**
-  * xa_tagged() - Inquire whether any entry in this array has a tag set
-  * @xa: Array
-@@ -254,7 +291,11 @@ static inline bool xa_tagged(const struct xarray *xa, xa_tag_t tag)
+ /*
+- * Lookup entry in radix tree, wait for it to become unlocked if it is
++ * Lookup entry in page cache, wait for it to become unlocked if it is
+  * a DAX entry and return it. The caller must call
+  * put_unlocked_mapping_entry() when he decided not to lock the entry or
+  * put_locked_mapping_entry() when he locked the entry and now wants to
+@@ -280,7 +280,7 @@ static void put_locked_mapping_entry(struct address_space *mapping,
+ }
  
  /*
-  * Versions of the normal API which require the caller to hold the xa_lock.
-+ * If the GFP flags allow it, will drop the lock in order to allocate
-+ * memory, then reacquire it afterwards.
+- * Called when we are done with radix tree entry we looked up via
++ * Called when we are done with page cache entry we looked up via
+  * get_unlocked_mapping_entry() and which we didn't lock in the end.
   */
-+void *__xa_erase(struct xarray *, unsigned long index);
-+void *__xa_store(struct xarray *, unsigned long index, void *entry, gfp_t);
- void __xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
- void __xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
+ static void put_unlocked_mapping_entry(struct address_space *mapping,
+@@ -289,7 +289,7 @@ static void put_unlocked_mapping_entry(struct address_space *mapping,
+ 	if (!entry)
+ 		return;
  
-@@ -350,6 +391,12 @@ static inline void *xa_entry_locked(struct xarray *xa,
- 						lockdep_is_held(&xa->xa_lock));
+-	/* We have to wake up next waiter for the radix tree entry lock */
++	/* We have to wake up next waiter for the page cache entry lock */
+ 	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
  }
  
-+/* Private */
-+static inline void *xa_mk_node(const struct xa_node *node)
-+{
-+	return (void *)((unsigned long)node | 2);
-+}
-+
- /* Private */
- static inline struct xa_node *xa_to_node(const void *entry)
- {
-@@ -551,6 +598,12 @@ static inline bool xas_valid(const struct xa_state *xas)
- 	return !xas_invalid(xas);
+@@ -306,7 +306,7 @@ static unsigned long dax_entry_size(void *entry)
  }
  
-+/* True if the node represents head-of-tree, RESTART or BOUNDS */
-+static inline bool xas_top(struct xa_node *node)
-+{
-+	return node <= XAS_RESTART;
-+}
-+
- /**
-  * xas_reset() - Reset an XArray operation state.
-  * @xas: XArray operation state.
-@@ -587,10 +640,15 @@ static inline bool xas_retry(struct xa_state *xas, const void *entry)
+ #define for_each_entry_pfn(entry, pfn, end_pfn) \
+-	for (pfn = dax_radix_pfn(entry), \
++	for (pfn = dax_to_pfn(entry), \
+ 			end_pfn = pfn + dax_entry_size(entry) / PAGE_SIZE; \
+ 			pfn < end_pfn; \
+ 			pfn++)
+@@ -357,9 +357,9 @@ static struct page *dax_busy_page(void *entry)
  }
- 
- void *xas_load(struct xa_state *);
-+void *xas_store(struct xa_state *, void *entry);
-+void *xas_create(struct xa_state *);
- 
- bool xas_get_tag(const struct xa_state *, xa_tag_t);
- void xas_set_tag(const struct xa_state *, xa_tag_t);
- void xas_clear_tag(const struct xa_state *, xa_tag_t);
-+void xas_init_tags(const struct xa_state *);
-+
-+bool xas_nomem(struct xa_state *, gfp_t);
- 
- /**
-  * xas_reload() - Refetch an entry from the xarray.
-@@ -615,4 +673,55 @@ static inline void *xas_reload(struct xa_state *xas)
- 	return xa_head(xas->xa);
- }
- 
-+/**
-+ * xas_set() - Set up XArray operation state for a different index.
-+ * @xas: XArray operation state.
-+ * @index: New index into the XArray.
-+ *
-+ * Move the operation state to refer to a different index.  This will
-+ * have the effect of starting a walk from the top; see xas_next()
-+ * to move to an adjacent index.
-+ */
-+static inline void xas_set(struct xa_state *xas, unsigned long index)
-+{
-+	xas->xa_index = index;
-+	xas->xa_node = XAS_RESTART;
-+}
-+
-+/**
-+ * xas_set_order() - Set up XArray operation state for a multislot entry.
-+ * @xas: XArray operation state.
-+ * @index: Target of the operation.
-+ * @order: Entry occupies 2^@order indices.
-+ */
-+static inline void xas_set_order(struct xa_state *xas, unsigned long index,
-+					unsigned int order)
-+{
-+#ifdef CONFIG_RADIX_TREE_MULTIORDER
-+	xas->xa_index = (index >> order) << order;
-+	xas->xa_shift = order - (order % XA_CHUNK_SHIFT);
-+	xas->xa_sibs = (1 << (order % XA_CHUNK_SHIFT)) - 1;
-+	xas->xa_node = XAS_RESTART;
-+#else
-+	BUG_ON(order > 0);
-+	xas_set(xas, index);
-+#endif
-+}
-+
-+/**
-+ * xas_set_update() - Set up XArray operation state for a callback.
-+ * @xas: XArray operation state.
-+ * @update: Function to call when updating a node.
-+ *
-+ * The XArray can notify a caller after it has updated an xa_node.
-+ * This is advanced functionality and is only needed by the page cache.
-+ */
-+static inline void xas_set_update(struct xa_state *xas, xa_update_node_t update)
-+{
-+	xas->xa_update = update;
-+}
-+
-+/* Internal functions, mostly shared between radix-tree.c, xarray.c and idr.c */
-+void xas_destroy(struct xa_state *);
-+
- #endif /* _LINUX_XARRAY_H */
-diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-index dd219aa4ba78..71697bd25140 100644
---- a/lib/radix-tree.c
-+++ b/lib/radix-tree.c
-@@ -47,7 +47,7 @@ static unsigned long height_to_maxnodes[RADIX_TREE_MAX_PATH + 1] __read_mostly;
- /*
-  * Radix tree node cache.
-  */
--static struct kmem_cache *radix_tree_node_cachep;
-+struct kmem_cache *radix_tree_node_cachep;
  
  /*
-  * The radix tree is variable-height, so an insert operation not only has
-@@ -365,7 +365,7 @@ radix_tree_node_alloc(gfp_t gfp_mask, struct radix_tree_node *parent,
- 	return ret;
- }
- 
--static void radix_tree_node_rcu_free(struct rcu_head *head)
-+void radix_tree_node_rcu_free(struct rcu_head *head)
- {
- 	struct radix_tree_node *node =
- 			container_of(head, struct radix_tree_node, rcu_head);
-diff --git a/lib/xarray.c b/lib/xarray.c
-index 07c1155fa933..de77a2c9b3a1 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -7,6 +7,8 @@
- 
- #include <linux/bitmap.h>
- #include <linux/export.h>
-+#include <linux/list.h>
-+#include <linux/slab.h>
- #include <linux/xarray.h>
- 
- /*
-@@ -39,6 +41,11 @@ static inline struct xa_node *xa_parent_locked(struct xarray *xa,
- 						lockdep_is_held(&xa->xa_lock));
- }
- 
-+static inline unsigned int xa_lock_type(const struct xarray *xa)
-+{
-+	return (__force unsigned int)xa->xa_flags & 3;
-+}
-+
- static inline void xa_tag_set(struct xarray *xa, xa_tag_t tag)
- {
- 	if (!(xa->xa_flags & XA_FLAGS_TAG(tag)))
-@@ -74,6 +81,10 @@ static inline bool node_any_tag(struct xa_node *node, xa_tag_t tag)
- 	return !bitmap_empty(node->tags[(__force unsigned)tag], XA_CHUNK_SIZE);
- }
- 
-+#define tag_inc(tag) do { \
-+	tag = (__force xa_tag_t)((__force unsigned)(tag) + 1); \
-+} while (0)
-+
- /* extracts the offset within this node from the index */
- static unsigned int get_offset(unsigned long index, struct xa_node *node)
- {
-@@ -182,6 +193,515 @@ void *xas_load(struct xa_state *xas)
- }
- EXPORT_SYMBOL_GPL(xas_load);
- 
-+/* Move the radix tree node cache here */
-+extern struct kmem_cache *radix_tree_node_cachep;
-+extern void radix_tree_node_rcu_free(struct rcu_head *head);
-+
-+#define XA_RCU_FREE	((struct xarray *)1)
-+
-+static void xa_node_free(struct xa_node *node)
-+{
-+	XA_NODE_BUG_ON(node, !list_empty(&node->private_list));
-+	node->array = XA_RCU_FREE;
-+	call_rcu(&node->rcu_head, radix_tree_node_rcu_free);
-+}
-+
-+/*
-+ * xas_destroy() - Free any resources allocated during the XArray operation.
-+ * @xas: XArray operation state.
-+ *
-+ * This function is now internal-only (and will be made static once
-+ * idr_preload() is removed).
-+ */
-+void xas_destroy(struct xa_state *xas)
-+{
-+	struct xa_node *node = xas->xa_alloc;
-+
-+	if (!node)
-+		return;
-+	XA_NODE_BUG_ON(node, !list_empty(&node->private_list));
-+	kmem_cache_free(radix_tree_node_cachep, node);
-+	xas->xa_alloc = NULL;
-+}
-+
-+/**
-+ * xas_nomem() - Allocate memory if needed.
-+ * @xas: XArray operation state.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * If we need to add new nodes to the XArray, we try to allocate memory
-+ * with GFP_NOWAIT while holding the lock, which will usually succeed.
-+ * If it fails, @xas is flagged as needing memory to continue.  The caller
-+ * should drop the lock and call xas_nomem().  If xas_nomem() succeeds,
-+ * the caller should retry the operation.
-+ *
-+ * Forward progress is guaranteed as one node is allocated here and
-+ * stored in the xa_state where it will be found by xas_alloc().  More
-+ * nodes will likely be found in the slab allocator, but we do not tie
-+ * them up here.
-+ *
-+ * Return: true if memory was needed, and was successfully allocated.
-+ */
-+bool xas_nomem(struct xa_state *xas, gfp_t gfp)
-+{
-+	if (xas->xa_node != XA_ERROR(-ENOMEM)) {
-+		xas_destroy(xas);
-+		return false;
-+	}
-+	xas->xa_alloc = kmem_cache_alloc(radix_tree_node_cachep, gfp);
-+	if (!xas->xa_alloc)
-+		return false;
-+	XA_NODE_BUG_ON(xas->xa_alloc, !list_empty(&xas->xa_alloc->private_list));
-+	xas->xa_node = XAS_RESTART;
-+	return true;
-+}
-+EXPORT_SYMBOL_GPL(xas_nomem);
-+
-+/*
-+ * __xas_nomem() - Drop locks and allocate memory if needed.
-+ * @xas: XArray operation state.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * Internal variant of xas_nomem().
-+ *
-+ * Return: true if memory was needed, and was successfully allocated.
-+ */
-+static bool __xas_nomem(struct xa_state *xas, gfp_t gfp)
-+	__must_hold(xas->xa->xa_lock)
-+{
-+	unsigned int lock_type = xa_lock_type(xas->xa);
-+
-+	if (xas->xa_node != XA_ERROR(-ENOMEM)) {
-+		xas_destroy(xas);
-+		return false;
-+	}
-+	if (gfpflags_allow_blocking(gfp)) {
-+		if (lock_type == XA_LOCK_IRQ)
-+			xas_unlock_irq(xas);
-+		else if (lock_type == XA_LOCK_BH)
-+			xas_unlock_bh(xas);
-+		else
-+			xas_unlock(xas);
-+		xas->xa_alloc = kmem_cache_alloc(radix_tree_node_cachep, gfp);
-+		if (lock_type == XA_LOCK_IRQ)
-+			xas_lock_irq(xas);
-+		else if (lock_type == XA_LOCK_BH)
-+			xas_lock_bh(xas);
-+		else
-+			xas_lock(xas);
-+	} else {
-+		xas->xa_alloc = kmem_cache_alloc(radix_tree_node_cachep, gfp);
-+	}
-+	if (!xas->xa_alloc)
-+		return false;
-+	XA_NODE_BUG_ON(xas->xa_alloc, !list_empty(&xas->xa_alloc->private_list));
-+	xas->xa_node = XAS_RESTART;
-+	return true;
-+}
-+
-+static void xas_update(struct xa_state *xas, struct xa_node *node)
-+{
-+	if (xas->xa_update)
-+		xas->xa_update(node);
-+	else
-+		XA_NODE_BUG_ON(node, !list_empty(&node->private_list));
-+}
-+
-+static void *xas_alloc(struct xa_state *xas, unsigned int shift)
-+{
-+	struct xa_node *parent = xas->xa_node;
-+	struct xa_node *node = xas->xa_alloc;
-+
-+	if (xas_invalid(xas))
-+		return NULL;
-+
-+	if (node) {
-+		xas->xa_alloc = NULL;
-+	} else {
-+		node = kmem_cache_alloc(radix_tree_node_cachep,
-+					GFP_NOWAIT | __GFP_NOWARN);
-+		if (!node) {
-+			xas_set_err(xas, -ENOMEM);
-+			return NULL;
-+		}
-+	}
-+
-+	if (parent) {
-+		node->offset = xas->xa_offset;
-+		parent->count++;
-+		XA_NODE_BUG_ON(node, parent->count > XA_CHUNK_SIZE);
-+		xas_update(xas, parent);
-+	}
-+	XA_NODE_BUG_ON(node, shift > BITS_PER_LONG);
-+	XA_NODE_BUG_ON(node, !list_empty(&node->private_list));
-+	node->shift = shift;
-+	node->count = 0;
-+	node->nr_values = 0;
-+	RCU_INIT_POINTER(node->parent, xas->xa_node);
-+	node->array = xas->xa;
-+
-+	return node;
-+}
-+
-+/*
-+ * Use this to calculate the maximum index that will need to be created
-+ * in order to add the entry described by @xas.  Because we cannot store a
-+ * multiple-index entry at index 0, the calculation is a little more complex
-+ * than you might expect.
-+ */
-+static unsigned long xas_max(struct xa_state *xas)
-+{
-+	unsigned long max = xas->xa_index;
-+
-+#ifdef CONFIG_RADIX_TREE_MULTIORDER
-+	if (xas->xa_shift || xas->xa_sibs) {
-+		unsigned long mask;
-+		mask = (((xas->xa_sibs + 1UL) << xas->xa_shift) - 1);
-+		max |= mask;
-+		if (mask == max)
-+			max++;
-+	}
-+#endif
-+
-+	return max;
-+}
-+
-+/* The maximum index that can be contained in the array without expanding it */
-+static unsigned long max_index(void *entry)
-+{
-+	if (!xa_is_node(entry))
-+		return 0;
-+	return (XA_CHUNK_SIZE << xa_to_node(entry)->shift) - 1;
-+}
-+
-+static void xas_shrink(struct xa_state *xas)
-+{
-+	struct xarray *xa = xas->xa;
-+	struct xa_node *node = xas->xa_node;
-+
-+	for (;;) {
-+		void *entry;
-+
-+		XA_NODE_BUG_ON(node, node->count > XA_CHUNK_SIZE);
-+		if (node->count != 1)
-+			break;
-+		entry = xa_entry_locked(xa, node, 0);
-+		if (!entry)
-+			break;
-+		if (!xa_is_node(entry) && node->shift)
-+			break;
-+		xas->xa_node = XAS_BOUNDS;
-+
-+		RCU_INIT_POINTER(xa->xa_head, entry);
-+
-+		node->count = 0;
-+		node->nr_values = 0;
-+		if (!xa_is_node(entry))
-+			RCU_INIT_POINTER(node->slots[0], XA_RETRY_ENTRY);
-+		xas_update(xas, node);
-+		xa_node_free(node);
-+		if (!xa_is_node(entry))
-+			break;
-+		node = xa_to_node(entry);
-+		node->parent = NULL;
-+	}
-+}
-+
-+/*
-+ * xas_delete_node() - Attempt to delete an xa_node
-+ * @xas: Array operation state.
-+ *
-+ * Attempts to delete the @xas->xa_node.  This will fail if xa->node has
-+ * a non-zero reference count.
-+ */
-+static void xas_delete_node(struct xa_state *xas)
-+{
-+	struct xa_node *node = xas->xa_node;
-+
-+	for (;;) {
-+		struct xa_node *parent;
-+
-+		XA_NODE_BUG_ON(node, node->count > XA_CHUNK_SIZE);
-+		if (node->count)
-+			break;
-+
-+		parent = xa_parent_locked(xas->xa, node);
-+		xas->xa_node = parent;
-+		xas->xa_offset = node->offset;
-+		xa_node_free(node);
-+
-+		if (!parent) {
-+			xas->xa->xa_head = NULL;
-+			xas->xa_node = XAS_BOUNDS;
-+			return;
-+		}
-+
-+		parent->slots[xas->xa_offset] = NULL;
-+		parent->count--;
-+		XA_NODE_BUG_ON(parent, parent->count > XA_CHUNK_SIZE);
-+		node = parent;
-+		xas_update(xas, node);
-+	}
-+
-+	if (!node->parent)
-+		xas_shrink(xas);
-+}
-+
-+/**
-+ * xas_free_nodes() - Free this node and all nodes that it references
-+ * @xas: Array operation state.
-+ * @top: Node to free
-+ *
-+ * This node has been removed from the tree.  We must now free it and all
-+ * of its subnodes.  There may be RCU walkers with references into the tree,
-+ * so we must replace all entries with retry markers.
-+ */
-+static void xas_free_nodes(struct xa_state *xas, struct xa_node *top)
-+{
-+	unsigned int offset = 0;
-+	struct xa_node *node = top;
-+
-+	for (;;) {
-+		void *entry = xa_entry_locked(xas->xa, node, offset);
-+
-+		if (xa_is_node(entry)) {
-+			node = xa_to_node(entry);
-+			offset = 0;
-+			continue;
-+		}
-+		if (entry)
-+			RCU_INIT_POINTER(node->slots[offset], XA_RETRY_ENTRY);
-+		offset++;
-+		while (offset == XA_CHUNK_SIZE) {
-+			struct xa_node *parent;
-+
-+			parent = xa_parent_locked(xas->xa, node);
-+			offset = node->offset + 1;
-+			node->count = 0;
-+			node->nr_values = 0;
-+			xas_update(xas, node);
-+			xa_node_free(node);
-+			if (node == top)
-+				return;
-+			node = parent;
-+		}
-+	}
-+}
-+
-+/*
-+ * xas_expand adds nodes to the head of the tree until it has reached
-+ * sufficient height to be able to contain @xas->xa_index
-+ */
-+static int xas_expand(struct xa_state *xas, void *head)
-+{
-+	struct xarray *xa = xas->xa;
-+	struct xa_node *node = NULL;
-+	unsigned int shift = 0;
-+	unsigned long max = xas_max(xas);
-+
-+	if (!head) {
-+		if (max == 0)
-+			return 0;
-+		while ((max >> shift) >= XA_CHUNK_SIZE)
-+			shift += XA_CHUNK_SHIFT;
-+		return shift + XA_CHUNK_SHIFT;
-+	} else if (xa_is_node(head)) {
-+		node = xa_to_node(head);
-+		shift = node->shift + XA_CHUNK_SHIFT;
-+	}
-+	xas->xa_node = NULL;
-+
-+	while (max > max_index(head)) {
-+		xa_tag_t tag = 0;
-+
-+		XA_NODE_BUG_ON(node, shift > BITS_PER_LONG);
-+		node = xas_alloc(xas, shift);
-+		if (!node)
-+			return -ENOMEM;
-+
-+		node->count = 1;
-+		if (xa_is_value(head))
-+			node->nr_values = 1;
-+		RCU_INIT_POINTER(node->slots[0], head);
-+
-+		/* Propagate the aggregated tag info to the new child */
-+		for (;;) {
-+			if (xa_tagged(xa, tag))
-+				node_set_tag(node, 0, tag);
-+			if (tag == XA_TAG_MAX)
-+				break;
-+			tag_inc(tag);
-+		}
-+
-+		/*
-+		 * Now that the new node is fully initialised, we can add
-+		 * it to the tree
-+		 */
-+		if (xa_is_node(head)) {
-+			xa_to_node(head)->offset = 0;
-+			rcu_assign_pointer(xa_to_node(head)->parent, node);
-+		}
-+		head = xa_mk_node(node);
-+		rcu_assign_pointer(xa->xa_head, head);
-+		xas_update(xas, node);
-+
-+		shift += XA_CHUNK_SHIFT;
-+	}
-+
-+	xas->xa_node = node;
-+	return shift;
-+}
-+
-+/**
-+ * xas_create() - Create a slot to store an entry in.
-+ * @xas: XArray operation state.
-+ *
-+ * Most users will not need to call this function directly, as it is called
-+ * by xas_store().  It is useful for doing conditional store operations
-+ * (see the xa_cmpxchg() implementation for an example).
-+ *
-+ * Return: If the slot already existed, returns the contents of this slot.
-+ * If the slot was newly created, returns NULL.  If it failed to create the
-+ * slot, returns NULL and indicates the error in @xas.
-+ */
-+void *xas_create(struct xa_state *xas)
-+{
-+	struct xarray *xa = xas->xa;
-+	void *entry;
-+	void __rcu **slot;
-+	struct xa_node *node = xas->xa_node;
-+	int shift;
-+	unsigned int order = xas->xa_shift;
-+
-+	if (xas_top(node)) {
-+		entry = xa_head_locked(xa);
-+		xas->xa_node = NULL;
-+		shift = xas_expand(xas, entry);
-+		if (shift < 0)
-+			return NULL;
-+		entry = xa_head_locked(xa);
-+		slot = &xa->xa_head;
-+	} else if (xas_error(xas)) {
-+		return NULL;
-+	} else if (node) {
-+		unsigned int offset = xas->xa_offset;
-+
-+		shift = node->shift;
-+		entry = xa_entry_locked(xa, node, offset);
-+		slot = &node->slots[offset];
-+	} else {
-+		shift = 0;
-+		entry = xa_head_locked(xa);
-+		slot = &xa->xa_head;
-+	}
-+
-+	while (shift > order) {
-+		shift -= XA_CHUNK_SHIFT;
-+		if (!entry) {
-+			node = xas_alloc(xas, shift);
-+			if (!node)
-+				break;
-+			rcu_assign_pointer(*slot, xa_mk_node(node));
-+		} else if (xa_is_node(entry)) {
-+			node = xa_to_node(entry);
-+		} else {
-+			break;
-+		}
-+		entry = xas_descend(xas, node);
-+		slot = &node->slots[xas->xa_offset];
-+	}
-+
-+	return entry;
-+}
-+EXPORT_SYMBOL_GPL(xas_create);
-+
-+static void store_siblings(struct xa_state *xas, void *entry, void *curr,
-+				int *countp, int *valuesp)
-+{
-+#ifdef CONFIG_RADIX_TREE_MULTIORDER
-+	struct xa_node *node = xas->xa_node;
-+	unsigned int sibs, offset = xas->xa_offset;
-+	void *sibling = entry ? xa_mk_sibling(offset) : NULL;
-+
-+	if (!entry)
-+		sibs = XA_CHUNK_MASK - offset;
-+	else if (xas->xa_shift < node->shift)
-+		sibs = 0;
-+	else
-+		sibs = xas->xa_sibs;
-+
-+	while (sibs--) {
-+		void *next = xa_entry(xas->xa, node, ++offset);
-+
-+		if (!xa_is_sibling(next)) {
-+			if (!entry)
-+				break;
-+			curr = next;
-+		}
-+		RCU_INIT_POINTER(node->slots[offset], sibling);
-+		if (xa_is_node(next))
-+			xas_free_nodes(xas, xa_to_node(next));
-+		*countp += !next - !entry;
-+		*valuesp += !xa_is_value(curr) - !xa_is_value(entry);
-+	}
-+#endif
-+}
-+
-+/**
-+ * xas_store() - Store this entry in the XArray.
-+ * @xas: XArray operation state.
-+ * @entry: New entry.
-+ *
-+ * Return: The old entry at this index.
-+ */
-+void *xas_store(struct xa_state *xas, void *entry)
-+{
-+	struct xa_node *node;
-+	int count, values;
-+	void *curr;
-+
-+	if (entry)
-+		curr = xas_create(xas);
-+	else
-+		curr = xas_load(xas);
-+	if (xas_invalid(xas))
-+		return curr;
-+	if ((curr == entry) && !xas->xa_sibs)
-+		return curr;
-+
-+	node = xas->xa_node;
-+	if (!entry)
-+		xas_init_tags(xas);
-+	/*
-+	 * Must clear the tags before setting the entry to NULL otherwise
-+	 * xas_for_each_tag may find a NULL entry and stop early.
-+	 */
-+	if (node)
-+		rcu_assign_pointer(node->slots[xas->xa_offset], entry);
-+	else
-+		rcu_assign_pointer(xas->xa->xa_head, entry);
-+
-+	values = !xa_is_value(curr) - !xa_is_value(entry);
-+	count = !curr - !entry;
-+	if (xa_is_node(curr))
-+		xas_free_nodes(xas, xa_to_node(curr));
-+
-+	if (node) {
-+		store_siblings(xas, entry, curr, &count, &values);
-+		node->count += count;
-+		XA_NODE_BUG_ON(node, node->count > XA_CHUNK_SIZE);
-+		node->nr_values += values;
-+		XA_NODE_BUG_ON(node, node->nr_values > XA_CHUNK_SIZE);
-+		if (count || values)
-+			xas_update(xas, node);
-+		if (count < 0)
-+			xas_delete_node(xas);
-+	}
-+
-+	return curr;
-+}
-+EXPORT_SYMBOL_GPL(xas_store);
-+
- /**
-  * xas_get_tag() - Returns the state of this tag.
-  * @xas: XArray operation state.
-@@ -261,6 +781,30 @@ void xas_clear_tag(const struct xa_state *xas, xa_tag_t tag)
- }
- EXPORT_SYMBOL_GPL(xas_clear_tag);
- 
-+/**
-+ * xas_init_tags() - Initialise all tags for the entry
-+ * @xas: Array operations state.
-+ *
-+ * Initialise all tags for the entry specified by @xas.  If we're tracking
-+ * free entries with a tag, we need to set it on all entries.  All other
-+ * tags are cleared.
-+ *
-+ * This implementation is not as efficient as it could be; we may walk
-+ * up the tree multiple times.
-+ */
-+void xas_init_tags(const struct xa_state *xas)
-+{
-+	xa_tag_t tag = 0;
-+
-+	for (;;) {
-+		xas_clear_tag(xas, tag);
-+		if (tag == XA_TAG_MAX)
-+			break;
-+		tag_inc(tag);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(xas_init_tags);
-+
- /**
-  * xa_init_flags() - Initialise an empty XArray with flags.
-  * @xa: XArray.
-@@ -274,9 +818,19 @@ EXPORT_SYMBOL_GPL(xas_clear_tag);
-  */
- void xa_init_flags(struct xarray *xa, gfp_t flags)
- {
-+	unsigned int lock_type;
-+	static struct lock_class_key xa_lock_irq;
-+	static struct lock_class_key xa_lock_bh;
-+
- 	spin_lock_init(&xa->xa_lock);
- 	xa->xa_flags = flags;
- 	xa->xa_head = NULL;
-+
-+	lock_type = xa_lock_type(xa);
-+	if (lock_type == XA_LOCK_IRQ)
-+		lockdep_set_class(&xa->xa_lock, &xa_lock_irq);
-+	else if (lock_type == XA_LOCK_BH)
-+		lockdep_set_class(&xa->xa_lock, &xa_lock_bh);
- }
- EXPORT_SYMBOL(xa_init_flags);
- 
-@@ -303,6 +857,100 @@ void *xa_load(struct xarray *xa, unsigned long index)
- }
- EXPORT_SYMBOL(xa_load);
- 
-+static void *xas_result(struct xa_state *xas, void *curr)
-+{
-+	XA_NODE_BUG_ON(xas->xa_node, xa_is_internal(curr));
-+	if (xas_error(xas))
-+		curr = xas->xa_node;
-+	return curr;
-+}
-+
-+/**
-+ * __xa_erase() - Erase this entry from the XArray while locked.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ *
-+ * If the entry at this index is a multi-index entry then all indices will
-+ * be erased, and the entry will no longer be a multi-index entry.
-+ * This function expects the xa_lock to be held on entry.
-+ *
-+ * Context: Any context.  Expects xa_lock to be held on entry.  May
-+ * release and reacquire xa_lock if @gfp flags permit.
-+ * Return: The old entry at this index.
-+ */
-+void *__xa_erase(struct xarray *xa, unsigned long index)
-+{
-+	XA_STATE(xas, xa, index);
-+	return xas_result(&xas, xas_store(&xas, NULL));
-+}
-+EXPORT_SYMBOL_GPL(__xa_erase);
-+
-+/**
-+ * xa_store() - Store this entry in the XArray.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ * @entry: New entry.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * After this function returns, loads from this index will return @entry.
-+ * Storing into an existing multislot entry updates the entry of every index.
-+ * The tags associated with @index are unaffected unless @entry is %NULL.
-+ *
-+ * Context: Process context.  Takes and releases the xa_lock.  May sleep
-+ * if the @gfp flags permit.
-+ * Return: The old entry at this index on success, xa_err(-EINVAL) if @entry
-+ * cannot be stored in an XArray, or xa_err(-ENOMEM) if memory allocation
-+ * failed.
-+ */
-+void *xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
-+{
-+	XA_STATE(xas, xa, index);
-+	void *curr;
-+
-+	if (WARN_ON_ONCE(xa_is_internal(entry)))
-+		return XA_ERROR(-EINVAL);
-+
-+	do {
-+		xas_lock(&xas);
-+		curr = xas_store(&xas, entry);
-+		xas_unlock(&xas);
-+	} while (xas_nomem(&xas, gfp));
-+
-+	return xas_result(&xas, curr);
-+}
-+EXPORT_SYMBOL(xa_store);
-+
-+/**
-+ * __xa_store() - Store this entry in the XArray.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ * @entry: New entry.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * You must already be holding the xa_lock when calling this function.
-+ * It will drop the lock if needed to allocate memory, and then reacquire
-+ * it afterwards.
-+ *
-+ * Context: Any context.  Expects xa_lock to be held on entry.  May
-+ * release and reacquire xa_lock if @gfp flags permit.
-+ * Return: The old entry at this index or xa_err() if an error happened.
-+ */
-+void *__xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
-+{
-+	XA_STATE(xas, xa, index);
-+	void *curr;
-+
-+	if (WARN_ON_ONCE(xa_is_internal(entry)))
-+		return XA_ERROR(-EINVAL);
-+
-+	do {
-+		curr = xas_store(&xas, entry);
-+	} while (__xas_nomem(&xas, gfp));
-+
-+	return xas_result(&xas, curr);
-+}
-+EXPORT_SYMBOL(__xa_store);
-+
- /**
-  * __xa_set_tag() - Set this tag on this entry while locked.
-  * @xa: XArray.
-diff --git a/tools/include/linux/spinlock.h b/tools/include/linux/spinlock.h
-index 622266b197d0..c934572d935c 100644
---- a/tools/include/linux/spinlock.h
-+++ b/tools/include/linux/spinlock.h
-@@ -37,4 +37,6 @@ static inline bool arch_spin_is_locked(arch_spinlock_t *mutex)
- 	return true;
- }
- 
-+#include <linux/lockdep.h>
-+
- #endif
-diff --git a/tools/testing/radix-tree/linux/kernel.h b/tools/testing/radix-tree/linux/kernel.h
-index 5d06ac75a14d..4568248222ae 100644
---- a/tools/testing/radix-tree/linux/kernel.h
-+++ b/tools/testing/radix-tree/linux/kernel.h
-@@ -18,4 +18,8 @@
- #define pr_debug printk
- #define pr_cont printk
- 
-+#define __acquires(x)
-+#define __releases(x)
-+#define __must_hold(x)
-+
- #endif /* _KERNEL_H */
-diff --git a/tools/testing/radix-tree/linux/lockdep.h b/tools/testing/radix-tree/linux/lockdep.h
-new file mode 100644
-index 000000000000..565fccdfe6e9
---- /dev/null
-+++ b/tools/testing/radix-tree/linux/lockdep.h
-@@ -0,0 +1,11 @@
-+#ifndef _LINUX_LOCKDEP_H
-+#define _LINUX_LOCKDEP_H
-+struct lock_class_key {
-+	unsigned int a;
-+};
-+
-+static inline void lockdep_set_class(spinlock_t *lock,
-+					struct lock_class_key *key)
-+{
-+}
-+#endif /* _LINUX_LOCKDEP_H */
-diff --git a/tools/testing/radix-tree/linux/rcupdate.h b/tools/testing/radix-tree/linux/rcupdate.h
-index 25010bf86c1d..fd280b070fdb 100644
---- a/tools/testing/radix-tree/linux/rcupdate.h
-+++ b/tools/testing/radix-tree/linux/rcupdate.h
-@@ -7,5 +7,6 @@
- #define rcu_dereference_raw(p) rcu_dereference(p)
- #define rcu_dereference_protected(p, cond) rcu_dereference(p)
- #define rcu_dereference_check(p, cond) rcu_dereference(p)
-+#define RCU_INIT_POINTER(p, v)	(p) = (v)
- 
- #endif
-diff --git a/tools/testing/radix-tree/test.c b/tools/testing/radix-tree/test.c
-index 6e1cc2040817..f151588d04a0 100644
---- a/tools/testing/radix-tree/test.c
-+++ b/tools/testing/radix-tree/test.c
-@@ -8,6 +8,38 @@
- 
- #include "test.h"
- 
-+void *xa_store_order(struct xarray *xa, unsigned long index, unsigned order,
-+			void *entry, gfp_t gfp)
-+{
-+	XA_STATE(xas, xa, 0);
-+	void *curr;
-+
-+	xas_set_order(&xas, index, order);
-+	do {
-+		curr = xas_store(&xas, entry);
-+	} while (xas_nomem(&xas, gfp));
-+
-+	return curr;
-+}
-+
-+int xa_insert_order(struct xarray *xa, unsigned long index, unsigned order,
-+			void *entry, gfp_t gfp)
-+{
-+	XA_STATE(xas, xa, 0);
-+	void *curr;
-+
-+	xas_set_order(&xas, index, order);
-+	do {
-+		curr = xas_create(&xas);
-+		if (!curr)
-+			xas_store(&xas, entry);
-+	} while (xas_nomem(&xas, gfp));
-+
-+	if (xas_error(&xas))
-+		return xas_error(&xas);
-+	return curr ? -EEXIST : 0;
-+}
-+
- struct item *
- item_tag_set(struct radix_tree_root *root, unsigned long index, int tag)
- {
-diff --git a/tools/testing/radix-tree/test.h b/tools/testing/radix-tree/test.h
-index d9c031dbeb1a..ffd162645c11 100644
---- a/tools/testing/radix-tree/test.h
-+++ b/tools/testing/radix-tree/test.h
-@@ -4,6 +4,11 @@
- #include <linux/radix-tree.h>
- #include <linux/rcupdate.h>
- 
-+void *xa_store_order(struct xarray *, unsigned long index, unsigned order,
-+			void *entry, gfp_t);
-+int xa_insert_order(struct xarray *, unsigned long index, unsigned order,
-+			void *entry, gfp_t);
-+
- struct item {
- 	unsigned long index;
- 	unsigned int order;
-diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
-index 99f726693aa4..cb7d886dc89d 100644
---- a/tools/testing/radix-tree/xarray-test.c
-+++ b/tools/testing/radix-tree/xarray-test.c
-@@ -12,6 +12,36 @@
- 
- #include "test.h"
- 
-+void check_xa_err(struct xarray *xa)
-+{
-+	assert(xa_err(xa_store(xa, 0, xa_mk_value(0), GFP_NOWAIT)) == 0);
-+	assert(xa_err(xa_store(xa, 0, NULL, 0)) == 0);
-+	assert(xa_err(xa_store(xa, 1, xa_mk_value(1), GFP_NOWAIT)) == -ENOMEM);
-+	assert(xa_err(xa_store(xa, 1, xa_mk_value(1), GFP_NOWAIT)) == -ENOMEM);
-+	assert(xa_err(xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL)) == 0);
-+	assert(xa_err(xa_store(xa, 1, xa_mk_value(0), GFP_KERNEL)) == 0);
-+	assert(xa_err(xa_store(xa, 1, NULL, 0)) == 0);
-+// kills the test-suite :-(
-+//     assert(xa_err(xa_store(xa, 0, xa_mk_internal(0), 0)) == -EINVAL);
-+}
-+
-+void check_xa_tag(struct xarray *xa)
-+{
-+	assert(xa_get_tag(xa, 0, XA_TAG_0) == false);
-+	xa_set_tag(xa, 0, XA_TAG_0);
-+	assert(xa_get_tag(xa, 0, XA_TAG_0) == false);
-+	assert(xa_store(xa, 0, xa, GFP_KERNEL) == NULL);
-+	assert(xa_get_tag(xa, 0, XA_TAG_0) == false);
-+	xa_set_tag(xa, 0, XA_TAG_0);
-+	assert(xa_get_tag(xa, 0, XA_TAG_0) == true);
-+	assert(xa_get_tag(xa, 1, XA_TAG_0) == false);
-+	assert(xa_store(xa, 0, NULL, GFP_KERNEL) == xa);
-+	assert(xa_empty(xa));
-+	assert(xa_get_tag(xa, 0, XA_TAG_0) == false);
-+	xa_set_tag(xa, 0, XA_TAG_0);
-+	assert(xa_get_tag(xa, 0, XA_TAG_0) == false);
-+}
-+
- void check_xa_load(struct xarray *xa)
- {
- 	unsigned long i, j;
-@@ -24,17 +54,141 @@ void check_xa_load(struct xarray *xa)
- 			else
- 				assert(!entry);
+- * Find radix tree entry at given index. If it is a DAX entry, return it
+- * with the radix tree entry locked. If the radix tree doesn't contain the
+- * given index, create an empty entry for the index and return with it locked.
++ * Find page cache entry at given index. If it is a DAX entry, return it
++ * with the entry locked. If the page cache doesn't contain an entry at
++ * that index, add a locked empty entry.
+  *
+  * When requesting an entry with size DAX_PMD, grab_mapping_entry() will
+  * either return that locked entry or will return an error.  This error will
+@@ -468,10 +468,10 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
+ 					true);
  		}
--		radix_tree_insert(xa, i, xa_mk_value(i));
-+		xa_store(xa, i, xa_mk_value(i), GFP_KERNEL);
-+	}
-+}
-+
-+void check_xa_shrink(struct xarray *xa)
-+{
-+	XA_STATE(xas, xa, 1);
-+	struct xa_node *node;
-+
-+	xa_store(xa, 0, xa_mk_value(0), GFP_KERNEL);
-+	xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
-+
-+	assert(xas_load(&xas) == xa_mk_value(1));
-+	node = xas.xa_node;
-+	assert(node->slots[0] == xa_mk_value(0));
-+	rcu_read_lock();
-+	xas_store(&xas, NULL);
-+	assert(xas.xa_node == XAS_BOUNDS);
-+	assert(node->slots[0] == XA_RETRY_ENTRY);
-+	rcu_read_unlock();
-+	assert(xa_load(xa, 0) == xa_mk_value(0));
-+}
-+
-+void check_multi_store(struct xarray *xa)
-+{
-+	unsigned long i, j, k;
-+
-+	xa_store_order(xa, 0, 1, xa_mk_value(0), GFP_KERNEL);
-+	assert(xa_load(xa, 0) == xa_mk_value(0));
-+	assert(xa_load(xa, 1) == xa_mk_value(0));
-+	assert(xa_load(xa, 2) == NULL);
-+	assert(xa_to_node(xa_head(xa))->count == 2);
-+	assert(xa_to_node(xa_head(xa))->nr_values == 2);
-+
-+	xa_store(xa, 3, xa, GFP_KERNEL);
-+	assert(xa_load(xa, 0) == xa_mk_value(0));
-+	assert(xa_load(xa, 1) == xa_mk_value(0));
-+	assert(xa_load(xa, 2) == NULL);
-+	assert(xa_to_node(xa_head(xa))->count == 3);
-+	assert(xa_to_node(xa_head(xa))->nr_values == 2);
-+
-+	xa_store_order(xa, 0, 2, xa_mk_value(1), GFP_KERNEL);
-+	assert(xa_load(xa, 0) == xa_mk_value(1));
-+	assert(xa_load(xa, 1) == xa_mk_value(1));
-+	assert(xa_load(xa, 2) == xa_mk_value(1));
-+	assert(xa_load(xa, 3) == xa_mk_value(1));
-+	assert(xa_load(xa, 4) == NULL);
-+	assert(xa_to_node(xa_head(xa))->count == 4);
-+	assert(xa_to_node(xa_head(xa))->nr_values == 4);
-+
-+	xa_store_order(xa, 0, 64, NULL, GFP_KERNEL);
-+	assert(xa_empty(xa));
-+
-+	for (i = 0; i < 60; i++) {
-+		for (j = 0; j < 60; j++) {
-+			xa_store_order(xa, 0, i, xa_mk_value(i), GFP_KERNEL);
-+			xa_store_order(xa, 0, j, xa_mk_value(j), GFP_KERNEL);
-+
-+			for (k = 0; k < 60; k++) {
-+				void *entry = xa_load(xa, (1UL << k) - 1);
-+				if ((i < k) && (j < k))
-+					assert(entry == NULL);
-+				else
-+					assert(entry == xa_mk_value(j));
-+			}
-+
-+			xa_erase(xa, 0);
-+			assert(xa_empty(xa));
-+		}
-+	}
-+}
-+
-+void __check_multi_load(struct xarray *xa, unsigned long index,
-+		unsigned int order)
-+{
-+	XA_STATE_ORDER(xas, xa, index, order);
-+	void *entry;
-+	unsigned long i, end = index + (1UL << order);
-+
-+	assert(xas_load(&xas) == NULL);
-+
-+	for (i = index; i < end; i++) {
-+		xa_store(xa, i, xa_mk_value(i), GFP_KERNEL);
-+		assert(xa_load(xa, i) == xa_mk_value(i));
-+		entry = xas_load(&xas);
-+		assert(entry == xa_mk_value(i) || xa_is_internal(entry));
-+		assert(xas_not_node(xas.xa_node) ||
-+				xas.xa_node->shift == xas.xa_shift);
-+		xa_erase(xa, i);
-+		assert(xa_empty(xa));
-+		xas_reset(&xas);
- 	}
-+
-+	xa_store(xa, i, xa_mk_value(i), GFP_KERNEL);
-+	assert(xas_load(&xas) == NULL);
-+	xa_erase(xa, i);
-+	assert(xa_empty(xa));
-+}
-+
-+void check_multi_load(struct xarray *xa)
-+{
-+	__check_multi_load(xa, 0, 3);
-+	__check_multi_load(xa, 32, 3);
-+	__check_multi_load(xa, 0, 4);
-+	__check_multi_load(xa, 32, 4);
-+	__check_multi_load(xa, 0, 5);
-+	__check_multi_load(xa, 32, 5);
-+	__check_multi_load(xa, 0, 6);
-+	__check_multi_load(xa, 256, 6);
-+	__check_multi_load(xa, 0, 12);
-+	__check_multi_load(xa, 4096, 11);
-+	__check_multi_load(xa, 4096, 12);
-+	__check_multi_load(xa, 8192, 12);
-+	__check_multi_load(xa, 8192, 13);
- }
  
- void xarray_checks(void)
+-		entry = dax_radix_locked_entry(0, size_flag | DAX_EMPTY);
++		entry = dax_mk_locked(0, size_flag | DAX_EMPTY);
+ 
+ 		err = __radix_tree_insert(&mapping->i_pages, index,
+-				dax_radix_order(entry), entry);
++				dax_entry_order(entry), entry);
+ 		radix_tree_preload_end();
+ 		if (err) {
+ 			xa_unlock_irq(&mapping->i_pages);
+@@ -575,7 +575,7 @@ struct page *dax_layout_busy_page(struct address_space *mapping)
+ }
+ EXPORT_SYMBOL_GPL(dax_layout_busy_page);
+ 
+-static int __dax_invalidate_mapping_entry(struct address_space *mapping,
++static int __dax_invalidate_entry(struct address_space *mapping,
+ 					  pgoff_t index, bool trunc)
  {
--	RADIX_TREE(array, GFP_KERNEL);
-+	DEFINE_XARRAY(array);
-+
-+	check_xa_err(&array);
-+	item_kill_tree(&array);
-+
-+	check_xa_tag(&array);
-+	item_kill_tree(&array);
+ 	int ret = 0;
+@@ -605,12 +605,12 @@ static int __dax_invalidate_mapping_entry(struct address_space *mapping,
+  */
+ int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index)
+ {
+-	int ret = __dax_invalidate_mapping_entry(mapping, index, true);
++	int ret = __dax_invalidate_entry(mapping, index, true);
  
- 	check_xa_load(&array);
-+	item_kill_tree(&array);
-+
-+	check_xa_shrink(&array);
-+	item_kill_tree(&array);
- 
-+	check_multi_store(&array);
- 	item_kill_tree(&array);
-+	check_multi_load(&array);
+ 	/*
+ 	 * This gets called from truncate / punch_hole path. As such, the caller
+ 	 * must hold locks protecting against concurrent modifications of the
+-	 * radix tree (usually fs-private i_mmap_sem for writing). Since the
++	 * page cache (usually fs-private i_mmap_sem for writing). Since the
+ 	 * caller has seen a DAX entry for this index, we better find it
+ 	 * at that index as well...
+ 	 */
+@@ -624,7 +624,7 @@ int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index)
+ int dax_invalidate_mapping_entry_sync(struct address_space *mapping,
+ 				      pgoff_t index)
+ {
+-	return __dax_invalidate_mapping_entry(mapping, index, false);
++	return __dax_invalidate_entry(mapping, index, false);
  }
  
- int __weak main(void)
+ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
+@@ -661,10 +661,9 @@ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
+  * already in the tree, we will skip the insertion and just dirty the PMD as
+  * appropriate.
+  */
+-static void *dax_insert_mapping_entry(struct address_space *mapping,
+-				      struct vm_fault *vmf,
+-				      void *entry, pfn_t pfn_t,
+-				      unsigned long flags, bool dirty)
++static void *dax_insert_entry(struct address_space *mapping,
++				struct vm_fault *vmf, void *entry, pfn_t pfn_t,
++				unsigned long flags, bool dirty)
+ {
+ 	struct radix_tree_root *pages = &mapping->i_pages;
+ 	unsigned long pfn = pfn_t_to_pfn(pfn_t);
+@@ -684,7 +683,7 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 	}
+ 
+ 	xa_lock_irq(pages);
+-	new_entry = dax_radix_locked_entry(pfn, flags);
++	new_entry = dax_mk_locked(pfn, flags);
+ 	if (dax_entry_size(entry) != dax_entry_size(new_entry)) {
+ 		dax_disassociate_entry(entry, mapping, false);
+ 		dax_associate_entry(new_entry, mapping);
+@@ -692,9 +691,9 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 
+ 	if (dax_is_zero_entry(entry) || dax_is_empty_entry(entry)) {
+ 		/*
+-		 * Only swap our new entry into the radix tree if the current
++		 * Only swap our new entry into the page cache if the current
+ 		 * entry is a zero page or an empty entry.  If a normal PTE or
+-		 * PMD entry is already in the tree, we leave it alone.  This
++		 * PMD entry is already in the cache, we leave it alone.  This
+ 		 * means that if we are trying to insert a PTE and the
+ 		 * existing entry is a PMD, we will just leave the PMD in the
+ 		 * tree and dirty it if necessary.
+@@ -717,8 +716,8 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 	return entry;
+ }
+ 
+-static inline unsigned long
+-pgoff_address(pgoff_t pgoff, struct vm_area_struct *vma)
++static inline
++unsigned long pgoff_address(pgoff_t pgoff, struct vm_area_struct *vma)
+ {
+ 	unsigned long address;
+ 
+@@ -728,8 +727,8 @@ pgoff_address(pgoff_t pgoff, struct vm_area_struct *vma)
+ }
+ 
+ /* Walk all mappings of a given index of a file and writeprotect them */
+-static void dax_mapping_entry_mkclean(struct address_space *mapping,
+-				      pgoff_t index, unsigned long pfn)
++static void dax_entry_mkclean(struct address_space *mapping, pgoff_t index,
++		unsigned long pfn)
+ {
+ 	struct vm_area_struct *vma;
+ 	pte_t pte, *ptep = NULL;
+@@ -825,7 +824,7 @@ static int dax_writeback_one(struct dax_device *dax_dev,
+ 	 * compare pfns as we must not bail out due to difference in lockbit
+ 	 * or entry type.
+ 	 */
+-	if (dax_radix_pfn(entry2) != dax_radix_pfn(entry))
++	if (dax_to_pfn(entry2) != dax_to_pfn(entry))
+ 		goto put_unlocked;
+ 	if (WARN_ON_ONCE(dax_is_empty_entry(entry) ||
+ 				dax_is_zero_entry(entry))) {
+@@ -855,10 +854,10 @@ static int dax_writeback_one(struct dax_device *dax_dev,
+ 	 * This allows us to flush for PMD_SIZE and not have to worry about
+ 	 * partial PMD writebacks.
+ 	 */
+-	pfn = dax_radix_pfn(entry);
+-	size = PAGE_SIZE << dax_radix_order(entry);
++	pfn = dax_to_pfn(entry);
++	size = PAGE_SIZE << dax_entry_order(entry);
+ 
+-	dax_mapping_entry_mkclean(mapping, index, pfn);
++	dax_entry_mkclean(mapping, index, pfn);
+ 	dax_flush(dax_dev, page_address(pfn_to_page(pfn)), size);
+ 	/*
+ 	 * After we have flushed the cache, we can clear the dirty tag. There
+@@ -996,8 +995,7 @@ static int dax_load_hole(struct address_space *mapping, void *entry,
+ 	int ret = VM_FAULT_NOPAGE;
+ 	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
+ 
+-	dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+-			DAX_ZERO_PAGE, false);
++	dax_insert_entry(mapping, vmf, entry, pfn, DAX_ZERO_PAGE, false);
+ 
+ 	vm_insert_mixed(vmf->vma, vaddr, pfn);
+ 	trace_dax_load_hole(inode, vmf, ret);
+@@ -1307,7 +1305,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 		if (error < 0)
+ 			goto error_finish_iomap;
+ 
+-		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++		entry = dax_insert_entry(mapping, vmf, entry, pfn,
+ 						 0, write && !sync);
+ 
+ 		/*
+@@ -1390,7 +1388,7 @@ static int dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
+ 		goto fallback;
+ 
+ 	pfn = page_to_pfn_t(zero_page);
+-	ret = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++	ret = dax_insert_entry(mapping, vmf, entry, pfn,
+ 			DAX_PMD | DAX_ZERO_PAGE, false);
+ 
+ 	ptl = pmd_lock(vmf->vma->vm_mm, vmf->pmd);
+@@ -1443,7 +1441,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 	 * Make sure that the faulting address's PMD offset (color) matches
+ 	 * the PMD offset from the start of the file.  This is necessary so
+ 	 * that a PMD range in the page table overlaps exactly with a PMD
+-	 * range in the radix tree.
++	 * range in the page cache.
+ 	 */
+ 	if ((vmf->pgoff & PG_PMD_COLOUR) !=
+ 	    ((vmf->address >> PAGE_SHIFT) & PG_PMD_COLOUR))
+@@ -1511,7 +1509,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 		if (error < 0)
+ 			goto finish_iomap;
+ 
+-		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++		entry = dax_insert_entry(mapping, vmf, entry, pfn,
+ 						DAX_PMD, write && !sync);
+ 
+ 		/*
+@@ -1604,15 +1602,14 @@ int dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
+ }
+ EXPORT_SYMBOL_GPL(dax_iomap_fault);
+ 
+-/**
++/*
+  * dax_insert_pfn_mkwrite - insert PTE or PMD entry into page tables
+  * @vmf: The description of the fault
+  * @pe_size: Size of entry to be inserted
+  * @pfn: PFN to insert
+  *
+- * This function inserts writeable PTE or PMD entry into page tables for mmaped
+- * DAX file.  It takes care of marking corresponding radix tree entry as dirty
+- * as well.
++ * This function inserts a writeable PTE or PMD entry into the page tables
++ * for an mmaped DAX file.  It also marks the page cache entry as dirty.
+  */
+ static int dax_insert_pfn_mkwrite(struct vm_fault *vmf,
+ 				  enum page_entry_size pe_size,
 -- 
 2.16.2
 
