@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 25/62] mm: Convert page-writeback to XArray
-Date: Thu, 29 Mar 2018 20:42:08 -0700
-Message-ID: <20180330034245.10462-26-willy@infradead.org>
+Subject: [PATCH v10 55/62] dax: Hash on XArray instead of mapping
+Date: Thu, 29 Mar 2018 20:42:38 -0700
+Message-ID: <20180330034245.10462-56-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=YH0i/V0L3UEsknXJWPhYfA4DaxNYSIfE7D1DWctNCMk=; b=e4pDjeQ74nBWpz48QqB94yLAU8
- OZnRwVl2e5E4BDZGCU24mUnlufjK8ouc5Un30K/8ictnKR/YdkB/WPq4DgxtzQ3/qPBTbJ5ZWgrDc
- RRXfGgdOcNm/Fct6tQYEJdlUhLKYhemkmfuS9lwXn+X0wxDofiiwcKeszRjQepsFdqi8=;
+ bh=XvMBk2DTdZEv4EjzqdWr4q0pcxOLtVXb6t/R8hxIEIM=; b=TtT3rBtK0GTG9NWDbicKb2NnHg
+ YnW0epZ4DNf9R/vg2oenmUwXsTkVMkNP7R33HdXA/JIhvMcd3hM4y6ohma/o3VQW0c5DiTq4lkFWq
+ aG8cvGNBiFuSVuKkQ0/vAfJ+PRAcwrONCUrszwecU9c8nC7dC/I7eMLWR38ji1bHjlVE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=YH0i/V0L3UEsknXJWPhYfA4DaxNYSIfE7D1DWctNCMk=; b=cEMgt/T3ZceUUqZfyMSZ8PwoxU
- uowHQ+lV4V75PC9G9B3FnCAiBGf58TCVbXv7znAZkORBw2WFJj8pPOCPVDuXfdXmzNYPpL1M7CmeT
- X7WFfzHlD/E3gXuxmTq2U1wvUGkUNIzodmECMMClSLhpp85j+HlkaMiPGg2E0SJoF9pk=;
+ bh=XvMBk2DTdZEv4EjzqdWr4q0pcxOLtVXb6t/R8hxIEIM=; b=LRNU27vQKwwRDHg9M2AnJCVD1B
+ O37oQeMeufWHln7UbKPvHck3u/Yl5Ps0rih5MVZT8KQxwGfwCgn8GSexqMll7UZR+bVy/o7Ji49TF
+ PqM9u4oM05aUdfYO8GXuIMY6jZg4Tx+9u8akfuDXbEB2e27zUBm/NUzF3ZWAiF+rcdqo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=YH0i/V0L3UEsknXJWPhYfA4DaxNYSIfE7D1DWctNCMk=; b=XzTakbpTmCKS3I80i9dNIweK3
- PEnUUY6TKA5bfGzhBzDgGmhq4RpeKpeVYFZq5w0PH7AJXOfPrCUERf0ZJbuiM7DknkZ0m8xFFq+du
- kZrb0P51xoJouf5mqYWj/v84yT2+zwM7hWPoRMuoEopmKr69MV9mUgqqzlRIA8vfdP+qHO0r9DVh+
- tF1EE9iVGASkxiH59Zv8ioBKFIgho5ZBmIPBZXdpv3owZCXtG8AxwTtj50COo9tfz5lm2VfRs2Vm8
- buBMop2fF4E8G/1FseNOlS0tJG71qXjKNmkG/PNMujjbbOFhn9GQANfDE9twtZu1svgoe0AWeSQtD
- wY5ihCcEA==;
+ bh=XvMBk2DTdZEv4EjzqdWr4q0pcxOLtVXb6t/R8hxIEIM=; b=Rw7r0dosjq4MWIoo+ZUnQK7wb
+ w4EBL0N5yXT5lahFCzXuRf0ManWFh+qH5Z1Rtkqq0RljUAd7Vhva2OxsQ1jQ2SqdoFXtEfh2+FqnP
+ Hqv9sxEL7IQecVP1ezRkv0yAunFtPck4A3DUEsVdTq5BX2kJW7PcQyiOB/8FdUW34dtg0QfXr/6Ph
+ INp3j0UZsmbTzHFHU+Zea2+8pEoVFKRtEsWRdsKa7geyd5bLlTcujsrZYDLMULZ3D0DmmUJdeV9SN
+ VnCzwR5ksw3kuL+OJWfHxPozcDL6+0TdPPRWFkr2bZPsdRdb1rmJh4fx6uspDHgFanhAJ/EBXeyQK
+ eWB/RPFFw==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,188 +53,118 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Includes moving mapping_tagged() to fs.h as a static inline, and
-changing it to return bool.
+Since the XArray is embedded in the struct address_space, this contains
+exactly as much entropy as the address of the mapping.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/fs.h  | 17 +++++++++------
- mm/page-writeback.c | 63 +++++++++++++++++++----------------------------------
- 2 files changed, 32 insertions(+), 48 deletions(-)
+ fs/dax.c | 29 +++++++++++++++--------------
+ 1 file changed, 15 insertions(+), 14 deletions(-)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index d41df4e6ce04..551852133331 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -469,15 +469,18 @@ struct block_device {
- 	struct mutex		bd_fsfreeze_mutex;
- } __randomize_layout;
- 
-+/* XArray tags, for tagging dirty and writeback pages in the pagecache. */
-+#define PAGECACHE_TAG_DIRTY	XA_TAG_0
-+#define PAGECACHE_TAG_WRITEBACK	XA_TAG_1
-+#define PAGECACHE_TAG_TOWRITE	XA_TAG_2
-+
- /*
-- * Radix-tree tags, for tagging dirty and writeback pages within the pagecache
-- * radix trees
-+ * Returns true if any of the pages in the mapping are marked with the tag.
+diff --git a/fs/dax.c b/fs/dax.c
+index ce4ad6a99e78..2d6e21e41567 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -116,7 +116,7 @@ static int dax_is_empty_entry(void *entry)
+  * DAX page cache entry locking
   */
--#define PAGECACHE_TAG_DIRTY	0
--#define PAGECACHE_TAG_WRITEBACK	1
--#define PAGECACHE_TAG_TOWRITE	2
--
--int mapping_tagged(struct address_space *mapping, int tag);
-+static inline bool mapping_tagged(struct address_space *mapping, xa_tag_t tag)
-+{
-+	return xa_tagged(&mapping->i_pages, tag);
-+}
+ struct exceptional_entry_key {
+-	struct address_space *mapping;
++	struct xarray *xa;
+ 	pgoff_t entry_start;
+ };
  
- static inline void i_mmap_lock_write(struct address_space *mapping)
- {
-diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 5c1a3279e63f..195ccd0b30c8 100644
---- a/mm/page-writeback.c
-+++ b/mm/page-writeback.c
-@@ -2098,34 +2098,25 @@ void __init page_writeback_init(void)
-  * dirty pages in the file (thus it is important for this function to be quick
-  * so that it can tag pages faster than a dirtying process can create them).
-  */
--/*
-- * We tag pages in batches of WRITEBACK_TAG_BATCH to reduce the i_pages lock
-- * latency.
-- */
- void tag_pages_for_writeback(struct address_space *mapping,
- 			     pgoff_t start, pgoff_t end)
- {
--#define WRITEBACK_TAG_BATCH 4096
--	unsigned long tagged = 0;
--	struct radix_tree_iter iter;
--	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, start);
-+	unsigned int tagged = 0;
-+	void *page;
+@@ -125,7 +125,7 @@ struct wait_exceptional_entry_queue {
+ 	struct exceptional_entry_key key;
+ };
  
--	xa_lock_irq(&mapping->i_pages);
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, start,
--							PAGECACHE_TAG_DIRTY) {
--		if (iter.index > end)
--			break;
--		radix_tree_iter_tag_set(&mapping->i_pages, &iter,
--							PAGECACHE_TAG_TOWRITE);
--		tagged++;
--		if ((tagged % WRITEBACK_TAG_BATCH) != 0)
-+	xas_lock_irq(&xas);
-+	xas_for_each_tag(&xas, page, end, PAGECACHE_TAG_DIRTY) {
-+		xas_set_tag(&xas, PAGECACHE_TAG_TOWRITE);
-+		if (++tagged % XA_CHECK_SCHED)
- 			continue;
--		slot = radix_tree_iter_resume(slot, &iter);
--		xa_unlock_irq(&mapping->i_pages);
-+
-+		xas_pause(&xas);
-+		xas_unlock_irq(&xas);
- 		cond_resched();
--		xa_lock_irq(&mapping->i_pages);
-+		xas_lock_irq(&xas);
- 	}
--	xa_unlock_irq(&mapping->i_pages);
-+	xas_unlock_irq(&xas);
+-static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
++static wait_queue_head_t *dax_entry_waitqueue(struct xarray *xa,
+ 		pgoff_t index, void *entry, struct exceptional_entry_key *key)
+ {
+ 	unsigned long hash;
+@@ -138,21 +138,21 @@ static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
+ 	if (dax_is_pmd_entry(entry))
+ 		index &= ~PG_PMD_COLOUR;
+ 
+-	key->mapping = mapping;
++	key->xa = xa;
+ 	key->entry_start = index;
+ 
+-	hash = hash_long((unsigned long)mapping ^ index, DAX_WAIT_TABLE_BITS);
++	hash = hash_long((unsigned long)xa ^ index, DAX_WAIT_TABLE_BITS);
+ 	return wait_table + hash;
  }
- EXPORT_SYMBOL(tag_pages_for_writeback);
  
-@@ -2165,7 +2156,7 @@ int write_cache_pages(struct address_space *mapping,
- 	pgoff_t done_index;
- 	int cycled;
- 	int range_whole = 0;
--	int tag;
-+	xa_tag_t tag;
+-static int wake_exceptional_entry_func(wait_queue_entry_t *wait, unsigned int mode,
+-				       int sync, void *keyp)
++static int wake_exceptional_entry_func(wait_queue_entry_t *wait,
++		unsigned int mode, int sync, void *keyp)
+ {
+ 	struct exceptional_entry_key *key = keyp;
+ 	struct wait_exceptional_entry_queue *ewait =
+ 		container_of(wait, struct wait_exceptional_entry_queue, wait);
  
- 	pagevec_init(&pvec);
- 	if (wbc->range_cyclic) {
-@@ -2446,7 +2437,7 @@ void account_page_cleaned(struct page *page, struct address_space *mapping,
- 
- /*
-  * For address_spaces which do not use buffers.  Just tag the page as dirty in
-- * its radix tree.
-+ * the xarray.
-  *
-  * This is also used when a single buffer is being dirtied: we want to set the
-  * page dirty in that case, but not all the buffers.  This is a "bottom-up"
-@@ -2472,7 +2463,7 @@ int __set_page_dirty_nobuffers(struct page *page)
- 		BUG_ON(page_mapping(page) != mapping);
- 		WARN_ON_ONCE(!PagePrivate(page) && !PageUptodate(page));
- 		account_page_dirtied(page, mapping);
--		radix_tree_tag_set(&mapping->i_pages, page_index(page),
-+		__xa_set_tag(&mapping->i_pages, page_index(page),
- 				   PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irqrestore(&mapping->i_pages, flags);
- 		unlock_page_memcg(page);
-@@ -2635,13 +2626,13 @@ EXPORT_SYMBOL(__cancel_dirty_page);
-  * Returns true if the page was previously dirty.
-  *
-  * This is for preparing to put the page under writeout.  We leave the page
-- * tagged as dirty in the radix tree so that a concurrent write-for-sync
-+ * tagged as dirty in the xarray so that a concurrent write-for-sync
-  * can discover it via a PAGECACHE_TAG_DIRTY walk.  The ->writepage
-  * implementation will run either set_page_writeback() or set_page_dirty(),
-- * at which stage we bring the page's dirty flag and radix-tree dirty tag
-+ * at which stage we bring the page's dirty flag and xarray dirty tag
-  * back into sync.
-  *
-- * This incoherency between the page's dirty flag and radix-tree tag is
-+ * This incoherency between the page's dirty flag and xarray tag is
-  * unfortunate, but it only exists while the page is locked.
+-	if (key->mapping != ewait->key.mapping ||
++	if (key->xa != ewait->key.xa ||
+ 	    key->entry_start != ewait->key.entry_start)
+ 		return 0;
+ 	return autoremove_wake_function(wait, mode, sync, NULL);
+@@ -163,13 +163,13 @@ static int wake_exceptional_entry_func(wait_queue_entry_t *wait, unsigned int mo
+  * The important information it's conveying is whether the entry at
+  * this index used to be a PMD entry.
   */
- int clear_page_dirty_for_io(struct page *page)
-@@ -2722,7 +2713,7 @@ int test_clear_page_writeback(struct page *page)
- 		xa_lock_irqsave(&mapping->i_pages, flags);
- 		ret = TestClearPageWriteback(page);
- 		if (ret) {
--			radix_tree_tag_clear(&mapping->i_pages, page_index(page),
-+			__xa_clear_tag(&mapping->i_pages, page_index(page),
- 						PAGECACHE_TAG_WRITEBACK);
- 			if (bdi_cap_account_writeback(bdi)) {
- 				struct bdi_writeback *wb = inode_to_wb(inode);
-@@ -2774,7 +2765,7 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- 			on_wblist = mapping_tagged(mapping,
- 						   PAGECACHE_TAG_WRITEBACK);
+-static void dax_wake_mapping_entry_waiter(struct address_space *mapping,
++static void dax_wake_mapping_entry_waiter(struct xarray *xa,
+ 		pgoff_t index, void *entry, bool wake_all)
+ {
+ 	struct exceptional_entry_key key;
+ 	wait_queue_head_t *wq;
  
--			radix_tree_tag_set(&mapping->i_pages, page_index(page),
-+			__xa_set_tag(&mapping->i_pages, page_index(page),
- 						PAGECACHE_TAG_WRITEBACK);
- 			if (bdi_cap_account_writeback(bdi))
- 				inc_wb_stat(inode_to_wb(inode), WB_WRITEBACK);
-@@ -2788,10 +2779,10 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- 				sb_mark_inode_writeback(mapping->host);
+-	wq = dax_entry_waitqueue(mapping, index, entry, &key);
++	wq = dax_entry_waitqueue(xa, index, entry, &key);
+ 
+ 	/*
+ 	 * Checking for locked entry and prepare_to_wait_exclusive() happens
+@@ -246,7 +246,8 @@ static void *get_unlocked_mapping_entry(struct address_space *mapping,
+ 			return entry;
  		}
- 		if (!PageDirty(page))
--			radix_tree_tag_clear(&mapping->i_pages, page_index(page),
-+			__xa_clear_tag(&mapping->i_pages, page_index(page),
- 						PAGECACHE_TAG_DIRTY);
- 		if (!keep_write)
--			radix_tree_tag_clear(&mapping->i_pages, page_index(page),
-+			__xa_clear_tag(&mapping->i_pages, page_index(page),
- 						PAGECACHE_TAG_TOWRITE);
- 		xa_unlock_irqrestore(&mapping->i_pages, flags);
- 	} else {
-@@ -2807,16 +2798,6 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- }
- EXPORT_SYMBOL(__test_set_page_writeback);
  
--/*
-- * Return true if any of the pages in the mapping are marked with the
-- * passed tag.
-- */
--int mapping_tagged(struct address_space *mapping, int tag)
--{
--	return radix_tree_tagged(&mapping->i_pages, tag);
--}
--EXPORT_SYMBOL(mapping_tagged);
--
- /**
-  * wait_for_stable_page() - wait for writeback to finish, if necessary.
-  * @page:	The page to wait on.
+-		wq = dax_entry_waitqueue(mapping, index, entry, &ewait.key);
++		wq = dax_entry_waitqueue(&mapping->i_pages, index, entry,
++				&ewait.key);
+ 		prepare_to_wait_exclusive(wq, &ewait.wait,
+ 					  TASK_UNINTERRUPTIBLE);
+ 		xa_unlock_irq(&mapping->i_pages);
+@@ -270,7 +271,7 @@ static void dax_unlock_mapping_entry(struct address_space *mapping,
+ 	}
+ 	unlock_slot(mapping, slot);
+ 	xa_unlock_irq(&mapping->i_pages);
+-	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
++	dax_wake_mapping_entry_waiter(&mapping->i_pages, index, entry, false);
+ }
+ 
+ static void put_locked_mapping_entry(struct address_space *mapping,
+@@ -290,7 +291,7 @@ static void put_unlocked_mapping_entry(struct address_space *mapping,
+ 		return;
+ 
+ 	/* We have to wake up next waiter for the page cache entry lock */
+-	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
++	dax_wake_mapping_entry_waiter(&mapping->i_pages, index, entry, false);
+ }
+ 
+ static unsigned long dax_entry_size(void *entry)
+@@ -464,8 +465,8 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
+ 			dax_disassociate_entry(entry, mapping, false);
+ 			radix_tree_delete(&mapping->i_pages, index);
+ 			mapping->nrexceptional--;
+-			dax_wake_mapping_entry_waiter(mapping, index, entry,
+-					true);
++			dax_wake_mapping_entry_waiter(&mapping->i_pages,
++					index, entry, true);
+ 		}
+ 
+ 		entry = dax_mk_locked(0, size_flag | DAX_EMPTY);
 -- 
 2.16.2
 
