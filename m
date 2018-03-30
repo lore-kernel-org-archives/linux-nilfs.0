@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 47/62] fs: Convert buffer to XArray
-Date: Thu, 29 Mar 2018 20:42:30 -0700
-Message-ID: <20180330034245.10462-48-willy@infradead.org>
+Subject: [PATCH v10 31/62] mm: Convert page migration to XArray
+Date: Thu, 29 Mar 2018 20:42:14 -0700
+Message-ID: <20180330034245.10462-32-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=gv1oMTmQdUuwAkdJPB7q9UDk2644tkQRgQmQ+YR/UYA=; b=aHwJvxnImHRzu2vY0Y/0BsBcQh
- OqpEKN3Qc9hVBF3em0PumajYSp38BymClEIDco9lja7wK7F+8NMzSjSwMySX2eccdczgpGOumGZUY
- /DiSK1A8rwEtpZKn1vYZ9hyI3zu7BuOv/cjAPfCB+6uhJSFPPS7AEkEM+kvcmFOvxRrI=;
+ bh=ey3BGjDj/d6pJRAxMfolMEyg99pLa6HbAFTHpia7sK0=; b=LWICM3LSGLxKA0ak5x94FJ/UX4
+ KKXbPPR3C9+FsgxZovRX9Xu8dd4wDJzCmfq6ElmAEbJMQ2Ga93NfEhyhw24zPDnTrdp/fQyhpFNME
+ nloK7gMVcSen1AGPyGMNWluulFGFBh83h2BLsuFcRigkgMHCETsysPzyalp9XS8sbacM=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=gv1oMTmQdUuwAkdJPB7q9UDk2644tkQRgQmQ+YR/UYA=; b=bZT1ztaGJTd8psuZ7bNlJDApNj
- /hWC7U+C2hHwelZIuPaTAwkBdlH6C5GtzopRedOSW9zagyRvn2od0QbsRboloSuoW4zbls99WpFnt
- W8P+MJ0HVkgz0iD6Zz94k7i3qQ/FMyQ58zUTm7ysSyNgASru4zt8oJ3m8d2ARYy66bd0=;
+ bh=ey3BGjDj/d6pJRAxMfolMEyg99pLa6HbAFTHpia7sK0=; b=EhObuFe3Y5GcKl1f0PhoQ11s1B
+ AWPdIoPUyB93VYnWLO9RYtJ4kt26bLdvx7ujQ+e0LST8f8KDF7bBm4WVIo5Jym2O4G3bNTOI/LLDb
+ n21498Iucut6QHCVjAsXkQ/gS1J9vyfoxTlcd49epnFXi2ROwUc9CjHjqhW6b07+VJBc=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=gv1oMTmQdUuwAkdJPB7q9UDk2644tkQRgQmQ+YR/UYA=; b=ZUyiyl3Dc5/iOqC8R6wvyzbp4
- oJc6Q9Kc61J+jGZKhvKbQtg47Un/r5QPt5NfusIS0mWJF0L1frE1WK5CNty7uNjuEonKyU8y1P/5O
- xl04PASUnAeGa014GtLEMS0C4wNI+5c80K/quctYKWn7C/ZU7BmAoy9GQAgvocmRrIIANinSVwjV4
- Vyx7XcTk3e+G/q4UBGDATrcsLNGvwWxIitMJDzJusCDT3vVgaJXmGGkVv2fugP43jBJHpPHNvjfi/
- B7iTQVu2uC7bCnfRqfjQXXd7lisiJoiPaWQxAJ6t+Wplqs4pbjzlLsj5xsF2/wPhgoOhiH3qJlG/J
- RqphNMh8Q==;
+ bh=ey3BGjDj/d6pJRAxMfolMEyg99pLa6HbAFTHpia7sK0=; b=XjthqhzL9LppC/AYQMgEkf5tN
+ GBcqLyWc8AM0L5kN6KO2VghXI9zeV/W+8HeL8N4YpetDOphVGPgzcpFbd0knKRKg+DndkkVZ//TPX
+ I9OAn5stKKyq3eQra+mxw0CTS+v5ViAFn0vTJi1XUbmJZTRIP3PuqMriV7Ps69BOTDB5jVzeE4Kx5
+ EYlEB4eXsDwai05Bqn2C1/5jHaSInuiAAVNznCuiguElJMvw4yFO91Up2+mQAB9AvbXbisQrwzGJ3
+ MkHev/fAhf7OVVxjmkuhIf9u5wSLJ7tWcc8v8c3bUJRMP6OEy1YMPfXXg1/9pR7SSZcKqJuD5Jsb3
+ p5wj096Ew==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,59 +53,131 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Mostly comment fixes, but one use of __xa_set_tag.
-
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/buffer.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ mm/migrate.c | 41 ++++++++++++++++-------------------------
+ 1 file changed, 16 insertions(+), 25 deletions(-)
 
-diff --git a/fs/buffer.c b/fs/buffer.c
-index f3059f929dd6..5c798ecf7a39 100644
---- a/fs/buffer.c
-+++ b/fs/buffer.c
-@@ -585,7 +585,7 @@ void mark_buffer_dirty_inode(struct buffer_head *bh, struct inode *inode)
- EXPORT_SYMBOL(mark_buffer_dirty_inode);
+diff --git a/mm/migrate.c b/mm/migrate.c
+index bdef905b1737..16fbbffec185 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -323,7 +323,7 @@ void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
+ 	page = migration_entry_to_page(entry);
  
- /*
-- * Mark the page dirty, and set it dirty in the radix tree, and mark the inode
-+ * Mark the page dirty, and set it dirty in the page cache, and mark the inode
-  * dirty.
-  *
-  * If warn is true, then emit a warning if the page is not uptodate and has
-@@ -602,8 +602,8 @@ void __set_page_dirty(struct page *page, struct address_space *mapping,
- 	if (page->mapping) {	/* Race with truncate? */
- 		WARN_ON_ONCE(warn && !PageUptodate(page));
- 		account_page_dirtied(page, mapping);
--		radix_tree_tag_set(&mapping->i_pages,
--				page_index(page), PAGECACHE_TAG_DIRTY);
-+		__xa_set_tag(&mapping->i_pages, page_index(page),
-+				PAGECACHE_TAG_DIRTY);
+ 	/*
+-	 * Once radix-tree replacement of page migration started, page_count
++	 * Once page cache replacement of page migration started, page_count
+ 	 * *must* be zero. And, we don't want to call wait_on_page_locked()
+ 	 * against a page without get_page().
+ 	 * So, we use get_page_unless_zero(), here. Even failed, page fault
+@@ -438,10 +438,10 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 		struct buffer_head *head, enum migrate_mode mode,
+ 		int extra_count)
+ {
++	XA_STATE(xas, &mapping->i_pages, page_index(page));
+ 	struct zone *oldzone, *newzone;
+ 	int dirty;
+ 	int expected_count = 1 + extra_count;
+-	void **pslot;
+ 
+ 	/*
+ 	 * Device public or private pages have an extra refcount as they are
+@@ -467,21 +467,16 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	oldzone = page_zone(page);
+ 	newzone = page_zone(newpage);
+ 
+-	xa_lock_irq(&mapping->i_pages);
+-
+-	pslot = radix_tree_lookup_slot(&mapping->i_pages,
+- 					page_index(page));
++	xas_lock_irq(&xas);
+ 
+ 	expected_count += 1 + page_has_private(page);
+-	if (page_count(page) != expected_count ||
+-		radix_tree_deref_slot_protected(pslot,
+-					&mapping->i_pages.xa_lock) != page) {
+-		xa_unlock_irq(&mapping->i_pages);
++	if (page_count(page) != expected_count || xas_load(&xas) != page) {
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
  	}
- 	xa_unlock_irqrestore(&mapping->i_pages, flags);
+ 
+ 	if (!page_ref_freeze(page, expected_count)) {
+-		xa_unlock_irq(&mapping->i_pages);
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+@@ -495,7 +490,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	if (mode == MIGRATE_ASYNC && head &&
+ 			!buffer_migrate_lock_buffers(head, mode)) {
+ 		page_ref_unfreeze(page, expected_count);
+-		xa_unlock_irq(&mapping->i_pages);
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+@@ -523,7 +518,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 		SetPageDirty(newpage);
+ 	}
+ 
+-	radix_tree_replace_slot(&mapping->i_pages, pslot, newpage);
++	xas_store(&xas, newpage);
+ 
+ 	/*
+ 	 * Drop cache reference from old page by unfreezing
+@@ -532,7 +527,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	 */
+ 	page_ref_unfreeze(page, expected_count - 1);
+ 
+-	xa_unlock(&mapping->i_pages);
++	xas_unlock(&xas);
+ 	/* Leave irq disabled to prevent preemption while updating stats */
+ 
+ 	/*
+@@ -572,22 +567,18 @@ EXPORT_SYMBOL(migrate_page_move_mapping);
+ int migrate_huge_page_move_mapping(struct address_space *mapping,
+ 				   struct page *newpage, struct page *page)
+ {
++	XA_STATE(xas, &mapping->i_pages, page_index(page));
+ 	int expected_count;
+-	void **pslot;
+-
+-	xa_lock_irq(&mapping->i_pages);
+-
+-	pslot = radix_tree_lookup_slot(&mapping->i_pages, page_index(page));
+ 
++	xas_lock_irq(&xas);
+ 	expected_count = 2 + page_has_private(page);
+-	if (page_count(page) != expected_count ||
+-		radix_tree_deref_slot_protected(pslot, &mapping->i_pages.xa_lock) != page) {
+-		xa_unlock_irq(&mapping->i_pages);
++	if (page_count(page) != expected_count || xas_load(&xas) != page) {
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+ 	if (!page_ref_freeze(page, expected_count)) {
+-		xa_unlock_irq(&mapping->i_pages);
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+@@ -596,11 +587,11 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
+ 
+ 	get_page(newpage);
+ 
+-	radix_tree_replace_slot(&mapping->i_pages, pslot, newpage);
++	xas_store(&xas, newpage);
+ 
+ 	page_ref_unfreeze(page, expected_count - 1);
+ 
+-	xa_unlock_irq(&mapping->i_pages);
++	xas_unlock_irq(&xas);
+ 
+ 	return MIGRATEPAGE_SUCCESS;
  }
-@@ -1066,7 +1066,7 @@ __getblk_slow(struct block_device *bdev, sector_t block,
-  * The relationship between dirty buffers and dirty pages:
-  *
-  * Whenever a page has any dirty buffers, the page's dirty bit is set, and
-- * the page is tagged dirty in its radix tree.
-+ * the page is tagged dirty in the page cache.
-  *
-  * At all times, the dirtiness of the buffers represents the dirtiness of
-  * subsections of the page.  If the page has buffers, the page dirty bit is
-@@ -1089,9 +1089,9 @@ __getblk_slow(struct block_device *bdev, sector_t block,
-  * mark_buffer_dirty - mark a buffer_head as needing writeout
-  * @bh: the buffer_head to mark dirty
-  *
-- * mark_buffer_dirty() will set the dirty bit against the buffer, then set its
-- * backing page dirty, then tag the page as dirty in its address_space's radix
-- * tree and then attach the address_space's inode to its superblock's dirty
-+ * mark_buffer_dirty() will set the dirty bit against the buffer, then set
-+ * its backing page dirty, then tag the page as dirty in the page cache
-+ * and then attach the address_space's inode to its superblock's dirty
-  * inode list.
-  *
-  * mark_buffer_dirty() is atomic.  It takes bh->b_page->mapping->private_lock,
 -- 
 2.16.2
 
