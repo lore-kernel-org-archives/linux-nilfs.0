@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 32/62] mm: Convert huge_memory to XArray
-Date: Thu, 29 Mar 2018 20:42:15 -0700
-Message-ID: <20180330034245.10462-33-willy@infradead.org>
+Subject: [PATCH v10 45/62] shmem: Comment fixups
+Date: Thu, 29 Mar 2018 20:42:28 -0700
+Message-ID: <20180330034245.10462-46-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jI6SZ/Os78TIb9FtyyeHdJaeqQJYtcYzMBgbF/FUNWg=; b=G5ZWg+PvCdLYUQqa7kejbyNuHH
- BzL97wJoSq3mUxhh986lBcHIYjVqxTcpGzrKxcIj5XmC9NT4rLLf0IpEPGhfqRtfMTGRcmlxBQ2ct
- CLgFsAml3CzTagphCzHYh2NQv7Uh5FY6xnEx5EmWudf0ttc6tcN74yzStAvvhG4alYPg=;
+ bh=XydK7O6GjuuYmQ9Khzkk+4oSTE8vY4qFdC7vH9xIfMg=; b=Eiegcey5uBSvPJsZ+Cl445LSyY
+ ZlC5piTQombgFvEPLelShArbk5EZeMBcp+l268/gti54sGn4LfMoSQdT+RhTyP/G9Gw6d+jTG2Fwy
+ CLjve7NrUd+NR+vZpcqJxTNsZF7b6tG8kbOIGFu6J1z8cWV4ja/6VDanPFFYhfYeUqV4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=jI6SZ/Os78TIb9FtyyeHdJaeqQJYtcYzMBgbF/FUNWg=; b=Sa4TtdE6NIocGi7Bncexw1/dwi
- tHqIn7SXsBkOJkItIhnW35rI7E/Eik2Pauibk8FN3hFJuniZbC18McaF+zXUB4D6hymCL4zWIooWc
- ZhVTALnzQl5NgSJGmeU85DKUSScmY/vvy15ma/0/MEEZYlFVF+jBN9F7qj9Z5ekvv9gE=;
+ bh=XydK7O6GjuuYmQ9Khzkk+4oSTE8vY4qFdC7vH9xIfMg=; b=V/xuox5C72E67GWVacMsH0nyKn
+ P5P3V7lXHU8zKq84jLCEiXESJDRutMsenUzgWLcggO2nCRNP/qTZGCMjGudCGqKRJvMIxnqHmCydm
+ wPNSa4H99CAeOcEhzrQZY4eZcpPcuFVxBRR+O8BY9g5Y0QGxHixyikFrrq5pGOZlWOAw=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jI6SZ/Os78TIb9FtyyeHdJaeqQJYtcYzMBgbF/FUNWg=; b=eq/MpuPOxrh2MwGb6AjNV4dGT
- 2m1hXT8pn0C2ik4j28Ir+lqA7QCLM5YQ0/DQ0tqLEz937kaySiJUhxbGZT99RonOt+WYE1lDTNiik
- 3ciwL17T4L4Dt8xTMclCqZ13PFApwQRrT8xn3zWibINEvlcB49MlRQ6VgxQ1EwThXVsIF6+NrwgeA
- 5JO7jTwG5Hk0rzX9+VihVN6bUxGBdzAKRTjG4NiVJICorjyeZzgssCDUSgOnBE7paZfGahByTcg8Z
- YFLyp2UqgEIVR9qC2zFlGBITOU204syW0uPJIENuCkrKvmrgW+tU3mf75m2iti8Oii7tLHRmN0jpG
- 4Y55UbySw==;
+ bh=XydK7O6GjuuYmQ9Khzkk+4oSTE8vY4qFdC7vH9xIfMg=; b=fD632Qe8opgJIfWJMQSS8vjZ6
+ vbnb7mzka09le/gjj+TkXwGUN6MGCjo98uuDHMxu0TqJrBUr+0o5GYZQrshzJBJyl+1DTUivCymgB
+ nFUqHIHqR9lDrq+/3ULwjcstQRuz0RmY0JjGS7DrhmCJYwxAyFmij4rGIct4k7BVfursX/qAkP+pU
+ rErqR74b/5uaSgy/ra5xO5+dudBzd2qvoTxFvzgHOAX/LuGsB47Mi7gO3yxPYTS66HO3Dfq7itIE3
+ p9z+2dtS5imXsIxxmrxLg2T5GTVr5C1mR70AK43fz1Fy6wORNTFEOe47mFycwpiH04T67HCzKKJC8
+ So8AxzaNg==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,64 +53,66 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Quite a straightforward conversion.
+Remove the last mentions of radix tree from various comments.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/huge_memory.c | 17 +++++++----------
- 1 file changed, 7 insertions(+), 10 deletions(-)
+ mm/shmem.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 2aff58624886..56559ee1cb13 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -2443,13 +2443,13 @@ static void __split_huge_page(struct page *page, struct list_head *list,
- 	ClearPageCompound(head);
- 	/* See comment in __split_huge_page_tail() */
- 	if (PageAnon(head)) {
--		/* Additional pin to radix tree of swap cache */
-+		/* Additional pin to swap cache */
- 		if (PageSwapCache(head))
- 			page_ref_add(head, 2);
- 		else
- 			page_ref_inc(head);
- 	} else {
--		/* Additional pin to radix tree */
-+		/* Additional pin to page cache */
- 		page_ref_add(head, 2);
- 		xa_unlock(&head->mapping->i_pages);
+diff --git a/mm/shmem.c b/mm/shmem.c
+index cffb3b6294b7..4735f8ebeb46 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -752,7 +752,7 @@ void shmem_unlock_mapping(struct address_space *mapping)
+ }
+ 
+ /*
+- * Remove range of pages and swap entries from radix tree, and free them.
++ * Remove range of pages and swap entries from page cache, and free them.
+  * If !unfalloc, truncate or punch hole; if unfalloc, undo failed fallocate.
+  */
+ static void shmem_undo_range(struct inode *inode, loff_t lstart, loff_t lend,
+@@ -1127,10 +1127,10 @@ static int shmem_unuse_inode(struct shmem_inode_info *info,
+ 		 * We needed to drop mutex to make that restrictive page
+ 		 * allocation, but the inode might have been freed while we
+ 		 * dropped it: although a racing shmem_evict_inode() cannot
+-		 * complete without emptying the radix_tree, our page lock
++		 * complete without emptying the page cache, our page lock
+ 		 * on this swapcache page is not enough to prevent that -
+ 		 * free_swap_and_cache() of our swap entry will only
+-		 * trylock_page(), removing swap from radix_tree whatever.
++		 * trylock_page(), removing swap from page cache whatever.
+ 		 *
+ 		 * We must not proceed to shmem_add_to_page_cache() if the
+ 		 * inode has been freed, but of course we cannot rely on
+@@ -1196,7 +1196,7 @@ int shmem_unuse(swp_entry_t swap, struct page *page)
+ 			false);
+ 	if (error)
+ 		goto out;
+-	/* No radix_tree_preload: swap entry keeps a place for page in tree */
++	/* No memory allocation: swap entry occupies the slot for the page */
+ 	error = -EAGAIN;
+ 
+ 	mutex_lock(&shmem_swaplist_mutex);
+@@ -1875,7 +1875,7 @@ alloc_nohuge:		page = shmem_alloc_and_acct_page(gfp, inode,
+ 		spin_unlock_irq(&info->lock);
+ 		goto repeat;
  	}
-@@ -2561,7 +2561,7 @@ bool can_split_huge_page(struct page *page, int *pextra_pins)
- {
- 	int extra_pins;
+-	if (error == -EEXIST)	/* from above or from radix_tree_insert */
++	if (error == -EEXIST)
+ 		goto repeat;
+ 	return error;
+ }
+@@ -2487,7 +2487,7 @@ static ssize_t shmem_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
+ }
  
--	/* Additional pins from radix tree */
-+	/* Additional pins from page cache */
- 	if (PageAnon(page))
- 		extra_pins = PageSwapCache(page) ? HPAGE_PMD_NR : 0;
- 	else
-@@ -2657,17 +2657,14 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
- 	spin_lock_irqsave(zone_lru_lock(page_zone(head)), flags);
- 
- 	if (mapping) {
--		void **pslot;
-+		XA_STATE(xas, &mapping->i_pages, page_index(head));
- 
--		xa_lock(&mapping->i_pages);
--		pslot = radix_tree_lookup_slot(&mapping->i_pages,
--				page_index(head));
- 		/*
--		 * Check if the head page is present in radix tree.
-+		 * Check if the head page is present in page cache.
- 		 * We assume all tail are present too, if head is there.
- 		 */
--		if (radix_tree_deref_slot_protected(pslot,
--					&mapping->i_pages.xa_lock) != head)
-+		xa_lock(&mapping->i_pages);
-+		if (xas_load(&xas) != head)
- 			goto fail;
- 	}
- 
+ /*
+- * llseek SEEK_DATA or SEEK_HOLE through the radix_tree.
++ * llseek SEEK_DATA or SEEK_HOLE through the page cache.
+  */
+ static pgoff_t shmem_seek_hole_data(struct address_space *mapping,
+ 				    pgoff_t index, pgoff_t end, int whence)
 -- 
 2.16.2
 
