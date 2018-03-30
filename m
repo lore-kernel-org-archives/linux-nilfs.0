@@ -1,108 +1,107 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH v9 05/61] Export __set_page_dirty
-Date: Mon, 26 Mar 2018 17:28:41 -0700
-Message-ID: <20180327002841.GI4807@magnolia>
-References: <20180313132639.17387-1-willy@infradead.org>
- <20180313132639.17387-6-willy@infradead.org>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: [PATCH v10 27/62] mm: Convert truncate to XArray
+Date: Thu, 29 Mar 2018 20:42:10 -0700
+Message-ID: <20180330034245.10462-28-willy@infradead.org>
+References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=date : from : to : cc
- : subject : message-id : references : mime-version : content-type :
- in-reply-to; s=corp-2017-10-26;
- bh=1W8cZ1tudT+OE4CD0hhPYfrp8/9Tuk5tvw1ZXxAYwVI=;
- b=nEgOoTmZA02DpHgoIN/Ay8iRXqHWX5Oo6ApTgu1TSPNYdmuaODr9gF5iDqj/8ZPppxfy
- e9eiXK2sAkW4P5N3ZzEbeKDd45viXiacqecysHqacwdnNjU4iWpGuM0GFC6FeRRqxLFe
- +B9+I8LXRovVhs6fHsOd3MzdHkwmUMnd353lpPQ4DkdvEKgk4LBzNQkBV1MxC2cTknYu
- 4s27qFA5h5W2mxkGLJKR4xOoaodiFmN6JP0A0CcCuoM0gyexCmNeZnL/f5pu0edDURSa
- Umd0uPSlkYyUmFnSDmCTCGH3o4o2tGo7CWW4nPpuI4l97h2W4NaXCnAcvxBCWJiCjMqy 5Q== 
-Content-Disposition: inline
-In-Reply-To: <20180313132639.17387-6-willy@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
+ To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=qYgDOBOBRuJAkk3Tq/s2Dyykdryp6g0XgybQcE0Us6Y=; b=L65nyjLcWvXG4EcrJ1lCAP0Wvj
+ XNMNEKvJbWmX9Phx5Yw9azcvEcjYBIddmRLRLoqy5mku3+/ac4LX0ZfDx8XkKqw4AQs9tgYjFzVQ9
+ N+/eCEmcbK/Gi/djNgLGOBw3UJemiLV4i+QKq4dQqNdqbWfcyYBo/Jv+ncMaafUQZ/es=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
+ :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=qYgDOBOBRuJAkk3Tq/s2Dyykdryp6g0XgybQcE0Us6Y=; b=TkSGBJNQIYkZbOPv5HhiTgUTFA
+ IH0R3eQTMXXIb/f4OyUWCbBL8XCnY+6VDGwGTU+mGLbaWiCEWy1gm+r1E4k035wJ4xgmL932oNvje
+ qzSeKxbqKQ3Q/AlQ2kLZOym+VRtj/cuFP0y1mfBRYnCZD4JlZ3VRRX/rDppBGADqJMUM=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+ Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+ Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+ List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=qYgDOBOBRuJAkk3Tq/s2Dyykdryp6g0XgybQcE0Us6Y=; b=FJuCHVxt8jyJsuq+ewo8pqySs
+ eeM30vk0IE0ZNkcDe9b5caafT7jTPckKl06NZCPZDq5dtV+a2MD1TIl1vgqghFGMafg/5OUtUcai6
+ fZWeBo8pXRHPm3lWvfgjdNXkpTsfRO3azufdJeIqgUhNqStCLKDHcn2Ajwn7toNyoiS8/VLFh76pc
+ JVccu0N0GyrBl3q+azfeQoXe1tT+5d/NhBalXhR1SfiJ0LvFUkogrd7M53QiIVJlXgeBoBMKcswFi
+ rw3vG9LQI7aNqvfl4/AX2af/mRCAQQ7lunuA3/LM1GwIMCW+eXG6SQvWl3DieV061BmSELsdadiE0
+ X8XGVSHeg==;
+In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
+Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, James Simmons <jsimmons@infradead.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <andreas.dilger@intel.com>, Nicholas Piggin <npiggin@gmail.com>, linux-f2fs-devel@lists.sourceforge.net, Oleg Drokin <oleg.drokin@intel.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Mike Kravetz <mike.kravetz@oracle.com>
 
-On Tue, Mar 13, 2018 at 06:25:43AM -0700, Matthew Wilcox wrote:
-> From: Matthew Wilcox <mawilcox@microsoft.com>
-> 
-> XFS currently contains a copy-and-paste of __set_page_dirty().  Export
-> it from buffer.c instead.
-> 
-> Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
-> Acked-by: Jeff Layton <jlayton@kernel.org>
+From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Looks ok,
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+This is essentially xa_cmpxchg() with the locking handled above us,
+and it doesn't have to handle replacing a NULL entry.
 
---D
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+---
+ mm/truncate.c | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
 
-> ---
->  fs/buffer.c        |  3 ++-
->  fs/xfs/xfs_aops.c  | 15 ++-------------
->  include/linux/mm.h |  1 +
->  3 files changed, 5 insertions(+), 14 deletions(-)
-> 
-> diff --git a/fs/buffer.c b/fs/buffer.c
-> index 17f13191a552..62bf5445c921 100644
-> --- a/fs/buffer.c
-> +++ b/fs/buffer.c
-> @@ -594,7 +594,7 @@ EXPORT_SYMBOL(mark_buffer_dirty_inode);
->   *
->   * The caller must hold lock_page_memcg().
->   */
-> -static void __set_page_dirty(struct page *page, struct address_space *mapping,
-> +void __set_page_dirty(struct page *page, struct address_space *mapping,
->  			     int warn)
->  {
->  	unsigned long flags;
-> @@ -608,6 +608,7 @@ static void __set_page_dirty(struct page *page, struct address_space *mapping,
->  	}
->  	spin_unlock_irqrestore(&mapping->tree_lock, flags);
->  }
-> +EXPORT_SYMBOL_GPL(__set_page_dirty);
->  
->  /*
->   * Add a page to the dirty page list.
-> diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
-> index a0afb6411417..f51350cb98a7 100644
-> --- a/fs/xfs/xfs_aops.c
-> +++ b/fs/xfs/xfs_aops.c
-> @@ -1473,19 +1473,8 @@ xfs_vm_set_page_dirty(
->  	newly_dirty = !TestSetPageDirty(page);
->  	spin_unlock(&mapping->private_lock);
->  
-> -	if (newly_dirty) {
-> -		/* sigh - __set_page_dirty() is static, so copy it here, too */
-> -		unsigned long flags;
-> -
-> -		spin_lock_irqsave(&mapping->tree_lock, flags);
-> -		if (page->mapping) {	/* Race with truncate? */
-> -			WARN_ON_ONCE(!PageUptodate(page));
-> -			account_page_dirtied(page, mapping);
-> -			radix_tree_tag_set(&mapping->page_tree,
-> -					page_index(page), PAGECACHE_TAG_DIRTY);
-> -		}
-> -		spin_unlock_irqrestore(&mapping->tree_lock, flags);
-> -	}
-> +	if (newly_dirty)
-> +		__set_page_dirty(page, mapping, 1);
->  	unlock_page_memcg(page);
->  	if (newly_dirty)
->  		__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
-> diff --git a/include/linux/mm.h b/include/linux/mm.h
-> index 4d02524a7998..7f7bb4c28497 100644
-> --- a/include/linux/mm.h
-> +++ b/include/linux/mm.h
-> @@ -1456,6 +1456,7 @@ extern int try_to_release_page(struct page * page, gfp_t gfp_mask);
->  extern void do_invalidatepage(struct page *page, unsigned int offset,
->  			      unsigned int length);
->  
-> +void __set_page_dirty(struct page *, struct address_space *, int warn);
->  int __set_page_dirty_nobuffers(struct page *page);
->  int __set_page_dirty_no_writeback(struct page *page);
->  int redirty_page_for_writepage(struct writeback_control *wbc,
-> -- 
-> 2.16.1
-> 
+diff --git a/mm/truncate.c b/mm/truncate.c
+index ed778555c9f3..45d68e90b703 100644
+--- a/mm/truncate.c
++++ b/mm/truncate.c
+@@ -33,15 +33,12 @@
+ static inline void __clear_shadow_entry(struct address_space *mapping,
+ 				pgoff_t index, void *entry)
+ {
+-	struct radix_tree_node *node;
+-	void **slot;
++	XA_STATE(xas, &mapping->i_pages, index);
+ 
+-	if (!__radix_tree_lookup(&mapping->i_pages, index, &node, &slot))
++	xas_set_update(&xas, workingset_update_node);
++	if (xas_load(&xas) != entry)
+ 		return;
+-	if (*slot != entry)
+-		return;
+-	__radix_tree_replace(&mapping->i_pages, node, slot, NULL,
+-			     workingset_update_node);
++	xas_store(&xas, NULL);
+ 	mapping->nrexceptional--;
+ }
+ 
+@@ -738,10 +735,10 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
+ 		index++;
+ 	}
+ 	/*
+-	 * For DAX we invalidate page tables after invalidating radix tree.  We
++	 * For DAX we invalidate page tables after invalidating page cache.  We
+ 	 * could invalidate page tables while invalidating each entry however
+ 	 * that would be expensive. And doing range unmapping before doesn't
+-	 * work as we have no cheap way to find whether radix tree entry didn't
++	 * work as we have no cheap way to find whether page cache entry didn't
+ 	 * get remapped later.
+ 	 */
+ 	if (dax_mapping(mapping)) {
+-- 
+2.16.2
+
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most
+engaging tech sites, Slashdot.org! http://sdm.link/slashdot
