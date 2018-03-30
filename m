@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 12/62] xarray: Add xa_extract
-Date: Thu, 29 Mar 2018 20:41:55 -0700
-Message-ID: <20180330034245.10462-13-willy@infradead.org>
+Subject: [PATCH v10 36/62] shmem: Convert replace to XArray
+Date: Thu, 29 Mar 2018 20:42:19 -0700
+Message-ID: <20180330034245.10462-37-willy@infradead.org>
 References: <20180330034245.10462-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=hcH0cEvpSONNcZEswbv0iDOVWk5uLCFDLS1OUlRcoBo=; b=H5qCaeSupJpGLMaP906tEoYic/
- nm8KyWndNsPk4pfQ3BEiS4HKE0zskJaHIcXgk0VLw25FcrhjKe50Vzh1KF+U4PxQu7fp4reMn1JHj
- ShCxXxVSKmwElterGrHcDOHfXUwToSgdpT/NS23mHpdMVvleFeZoJLvbYrozIWRJVtko=;
+ bh=ouiCa5xT8srSD9TFGwNrZtquNaTrnMBUsKY3Aj4xtrM=; b=L0nS8ocrY7ZUEE7RMkstzrvYzT
+ 77Yw8/rArZv7OUR7heHf4Li7PTAbjwOuWM8dpno6aOAWkzq12CtQqETYfph0uTZKdRvxI8fOXhwUu
+ DKqAbqItXShezWRpyHR+Jo59oBJ/QQl9ME9V/WIHZSwEfegVXTAZFK7FDbcFnmV8gKFI=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=hcH0cEvpSONNcZEswbv0iDOVWk5uLCFDLS1OUlRcoBo=; b=Uu+SlhVzd+8k6jU5ziuC70kZBg
- c7OMZ41PJrltnPqT2LrN4A83o7bpqiKWo/tTfhVp1BNTdaLmqLpyImFQYJajqq/Ly3PelK9AoInmw
- +Lz0ldk6Qlvm231TI5mWU8F6elMsujRPHsPOxO1MV8xszGBMBcqzJ+cVRMMDkcOOZc+w=;
+ bh=ouiCa5xT8srSD9TFGwNrZtquNaTrnMBUsKY3Aj4xtrM=; b=UkMCt6Ih9cKVnM/DJYnw0D8M1t
+ YzhbPe0qPK8lgdap0r6TMbGr7bvvdYlhRpGwjs6DLdUDCyOQnj51omVeCDSWDPfNtujze5ODz2ESL
+ wT2sUd5Z3sMSbZfrQ00t7e9OLifDxI07jnoey9Oy5UxTTUgD5UGsF50tmc7VVk93I3+4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=hcH0cEvpSONNcZEswbv0iDOVWk5uLCFDLS1OUlRcoBo=; b=LkMJwNG5Zybslevgubi/K36PM
- 4QJL8MHM/0CyiSmEAMDC+NnOHSVRbo0xeqigAICcBSu51bwaCDkXulWQW7STAN+hpOK7TXPrgA4Eu
- +1sR5Cl1WTR9678b3mD0niwzlOzbdKuNPHtEMOLqmdMU5m9l1mUiM7wS4cLwuVxCEIem/TqqLu9r7
- KAj1drcIVat+6E2BTnat0dLzljaO9Be29i+YcRkVXFFIGk08uIktlP3CF9uIDe/nKTon66NZpgLCm
- Z5zL5u0y09j4bLJlPPo7zPNzBOKFvwcKTixfM0XibOFoLDbq6WG6brakc5T77TQQUXUWDyBUEDTr6
- 1sZBnxPvQ==;
+ bh=ouiCa5xT8srSD9TFGwNrZtquNaTrnMBUsKY3Aj4xtrM=; b=n784hWh1ZNr6yrZFA09oJE8bG
+ ss8jle4nwa+9viFWy/xKd28UMaK3QtGzc1ewjH4SOPr4gmO3IHEl1ekYZ8K4SHh++0hGAmqHS/816
+ qZak7cp+jzPUiyyxcsfNZsnwsqfhGsGgthWWCT5y5T6/XyPiBfESgbrOhxwzQjqKmebfwoD5H0bbi
+ 4asnDqi78cL3wWH0/oyXvHhE4lIKCZzqk7++nSS9uhPsjyklaBgDOHhK8AlG/ezmB+Ju6pPkrTlIm
+ FFYP08uKAD/MzlGndvYJ3b6nmhTosSSlHPFM8RcHzBTdKNn/4mDmvG6Ub2JFo7JbPIbFhsp1d5KYn
+ EtZbDq35g==;
 In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,120 +53,77 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This function combines the functionality of radix_tree_gang_lookup() and
-radix_tree_gang_lookup_tagged().  It extracts entries matching the
-specified filter into a normal array.
+shmem_radix_tree_replace() is renamed to shmem_xa_replace() and
+converted to use the XArray API.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h |  2 ++
- lib/xarray.c           | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 82 insertions(+)
+ mm/shmem.c | 22 ++++++++--------------
+ 1 file changed, 8 insertions(+), 14 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index c8b3645c6760..864f16660785 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -227,6 +227,8 @@ void *xa_find(struct xarray *xa, unsigned long *index,
- 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
- void *xa_find_after(struct xarray *xa, unsigned long *index,
- 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
-+unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
-+		unsigned long max, unsigned int n, xa_tag_t);
- 
- /**
-  * xa_init() - Initialise an empty XArray.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index 73cf4c984c2d..77133bc5419f 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -1402,6 +1402,86 @@ void *xa_find_after(struct xarray *xa, unsigned long *indexp,
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 5cb52a797ea0..fced882e0b7a 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -321,24 +321,20 @@ void shmem_uncharge(struct inode *inode, long pages)
  }
- EXPORT_SYMBOL(xa_find_after);
  
-+static unsigned int xas_extract_present(struct xa_state *xas, void **dst,
-+			unsigned long max, unsigned int n)
-+{
-+	void *entry;
-+	unsigned int i = 0;
-+
-+	rcu_read_lock();
-+	xas_for_each(xas, entry, max) {
-+		if (xas_retry(xas, entry))
-+			continue;
-+		dst[i++] = entry;
-+		if (i == n)
-+			break;
-+	}
-+	rcu_read_unlock();
-+
-+	return i;
-+}
-+
-+static unsigned int xas_extract_tag(struct xa_state *xas, void **dst,
-+			unsigned long max, unsigned int n, xa_tag_t tag)
-+{
-+	void *entry;
-+	unsigned int i = 0;
-+
-+	rcu_read_lock();
-+	xas_for_each_tag(xas, entry, max, tag) {
-+		if (xas_retry(xas, entry))
-+			continue;
-+		dst[i++] = entry;
-+		if (i == n)
-+			break;
-+	}
-+	rcu_read_unlock();
-+
-+	return i;
-+}
-+
-+/**
-+ * xa_extract() - Copy selected entries from the XArray into a normal array.
-+ * @xa: The source XArray to copy from.
-+ * @dst: The buffer to copy entries into.
-+ * @start: The first index in the XArray eligible to be selected.
-+ * @max: The last index in the XArray eligible to be selected.
-+ * @n: The maximum number of entries to copy.
-+ * @filter: Selection criterion.
-+ *
-+ * Copies up to @n entries that match @filter from the XArray.  The
-+ * copied entries will have indices between @start and @max, inclusive.
-+ *
-+ * The @filter may be an XArray tag value, in which case entries which are
-+ * tagged with that tag will be copied.  It may also be %XA_PRESENT, in
-+ * which case non-NULL entries will be copied.
-+ *
-+ * The entries returned may not represent a snapshot of the XArray at a
-+ * moment in time.  For example, if another thread stores to index 5, then
-+ * index 10, calling xa_extract() may return the old contents of index 5
-+ * and the new contents of index 10.  Indices not modified while this
-+ * function is running will not be skipped.
-+ *
-+ * If you need stronger guarantees, holding the xa_lock across calls to this
-+ * function will prevent concurrent modification.
-+ *
-+ * Context: Any context.  Takes and releases the RCU lock.
-+ * Return: The number of entries copied.
-+ */
-+unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
-+			unsigned long max, unsigned int n, xa_tag_t filter)
-+{
-+	XA_STATE(xas, xa, start);
-+
-+	if (!n)
-+		return 0;
-+
-+	if ((__force unsigned int)filter < XA_MAX_TAGS)
-+		return xas_extract_tag(&xas, dst, max, n, filter);
-+	return xas_extract_present(&xas, dst, max, n);
-+}
-+EXPORT_SYMBOL(xa_extract);
-+
- #ifdef XA_DEBUG
- void xa_dump_node(const struct xa_node *node)
+ /*
+- * Replace item expected in radix tree by a new item, while holding tree lock.
++ * Replace item expected in xarray by a new item, while holding xa_lock.
+  */
+-static int shmem_radix_tree_replace(struct address_space *mapping,
++static int shmem_xa_replace(struct address_space *mapping,
+ 			pgoff_t index, void *expected, void *replacement)
  {
+-	struct radix_tree_node *node;
+-	void **pslot;
++	XA_STATE(xas, &mapping->i_pages, index);
+ 	void *item;
+ 
+ 	VM_BUG_ON(!expected);
+ 	VM_BUG_ON(!replacement);
+-	item = __radix_tree_lookup(&mapping->i_pages, index, &node, &pslot);
+-	if (!item)
+-		return -ENOENT;
++	item = xas_load(&xas);
+ 	if (item != expected)
+ 		return -ENOENT;
+-	__radix_tree_replace(&mapping->i_pages, node, pslot,
+-			     replacement, NULL);
++	xas_store(&xas, replacement);
+ 	return 0;
+ }
+ 
+@@ -614,8 +610,7 @@ static int shmem_add_to_page_cache(struct page *page,
+ 	} else if (!expected) {
+ 		error = radix_tree_insert(&mapping->i_pages, index, page);
+ 	} else {
+-		error = shmem_radix_tree_replace(mapping, index, expected,
+-								 page);
++		error = shmem_xa_replace(mapping, index, expected, page);
+ 	}
+ 
+ 	if (!error) {
+@@ -644,7 +639,7 @@ static void shmem_delete_from_page_cache(struct page *page, void *radswap)
+ 	VM_BUG_ON_PAGE(PageCompound(page), page);
+ 
+ 	xa_lock_irq(&mapping->i_pages);
+-	error = shmem_radix_tree_replace(mapping, page->index, page, radswap);
++	error = shmem_xa_replace(mapping, page->index, page, radswap);
+ 	page->mapping = NULL;
+ 	mapping->nrpages--;
+ 	__dec_node_page_state(page, NR_FILE_PAGES);
+@@ -1562,8 +1557,7 @@ static int shmem_replace_page(struct page **pagep, gfp_t gfp,
+ 	 * a nice clean interface for us to replace oldpage by newpage there.
+ 	 */
+ 	xa_lock_irq(&swap_mapping->i_pages);
+-	error = shmem_radix_tree_replace(swap_mapping, swap_index, oldpage,
+-								   newpage);
++	error = shmem_xa_replace(swap_mapping, swap_index, oldpage, newpage);
+ 	if (!error) {
+ 		__inc_node_page_state(newpage, NR_FILE_PAGES);
+ 		__dec_node_page_state(oldpage, NR_FILE_PAGES);
 -- 
 2.16.2
 
