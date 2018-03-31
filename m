@@ -1,44 +1,45 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v10 28/62] mm: Convert add_to_swap_cache to XArray
-Date: Thu, 29 Mar 2018 20:42:11 -0700
-Message-ID: <20180330034245.10462-29-willy@infradead.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [PATCH v10 44/62] memfd: Convert shmem_wait_for_pins
+ to XArray
+Date: Fri, 30 Mar 2018 17:07:34 -0700
+Message-ID: <4b70ad17-a176-9510-5525-30da01eba18e@oracle.com>
 References: <20180330034245.10462-1-willy@infradead.org>
+ <20180330034245.10462-45-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:In-Reply-To:
+ MIME-Version:Date:Message-ID:From:References:Cc:To:Subject:Sender:Reply-To:
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=EitFpxCHyrBctILPY1Gqn8vUBzM30gE+xJAMsmpJzt8=; b=mJosdOrkghDh1FOoYWGXBrNjdE
- XqbhhWRCtjP9Wtc1FM18awBv6DRhS9juRgZP58yzpU53gWCAVliu0UJyc2en5Ry58APtXeYMM8Sbl
- sdu65KSErTzVQUOsDW9nzvhaboQ4bg0n2BdU1IMNbtAMYKXGBM56abe/7gfiZaVnHmGc=;
+ bh=gWt3RxM+zzPZA4msqcuJgOEhDkvVMMvKDUheO/QelKA=; b=jwbAy1t5cv/zKAvRDgTSNtENz3
+ TJUGxco4ONP1YUAUIcy7KKUEL4wSS+mYrsK4xg4XTPu6qw+FyeaLQZ8BbLEL8pqZnKoev82c3oJvk
+ Rax0W3KEWn83v71O+aZbS5VtDPTFsyxdXJIphFXWq8GjQ3ohw2LsD3iFbw/4Oda3VZj8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
- h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
- :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ h=Content-Transfer-Encoding:Content-Type:In-Reply-To:MIME-Version:Date:
+ Message-ID:From:References:Cc:To:Subject:Sender:Reply-To:Content-ID:
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=EitFpxCHyrBctILPY1Gqn8vUBzM30gE+xJAMsmpJzt8=; b=Sssvn6WZh1qJv3an2U0p/Y81Xn
- KFMgmm1HRtLd5sjZRuWsDNhCi0uH1T8ltXWUdzNyXFiIT7jOLvhITrX+h35Ft709OIlO1lZEpifR/
- NAPUKVpFznBDGPeuNeWBVRXpfJP+S/95vVBalsWLEOPIdCapv/yRct6G6v1hvvrz3QNo=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=EitFpxCHyrBctILPY1Gqn8vUBzM30gE+xJAMsmpJzt8=; b=qUaUWqvAfw08PLEnCrJ/nzJ35
- MWNvaIzcbXdCPKWXCtR4TFGT7jfTthZZaTGwlC/WdLGBkRk4pt6XlGHuNKKeofOugHyydWruQs5kF
- iuPskj83ta2qrEA0GjRBjyzWQydNKtfZeBLs/p8QM+HsNciaIZY49zLq06pPa1HCWDBR1tZt6EQy2
- rmlxvSBHTR77XzUz9G/lT0C/GY0Bb3Ys+vwU0yKPS4XRkkwjzrgEJj2k5AajXQH6OamkGmBpwNa9c
- QYMT8s0c9NnHzh1+4v5OwVLiwi3UoqIBAP2lXQ5N33mIxOUZrdQaO9RQdj+QlZkhsv/6zAyv9x5bN
- 5eDoTXO7A==;
-In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
+ bh=gWt3RxM+zzPZA4msqcuJgOEhDkvVMMvKDUheO/QelKA=; b=IYN8McvR+I8Yyn7rjQCmZ+APpe
+ 0ZNg67BdvMzi27avLwF//2J48Q/85HOro8NPOMx3cRUWdqkfOdP0w+/24/o5pnKHsKCSfIuXBUapK
+ c501a9db0pFJ9f9cBYtsADq47XjJg/iOdpS0Nk+7GK3G1S+L4j6RlgrI4L4JJNBN1mHk=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
+ h=subject : to : cc :
+ references : from : message-id : date : mime-version : in-reply-to :
+ content-type : content-transfer-encoding; s=corp-2017-10-26;
+ bh=gWt3RxM+zzPZA4msqcuJgOEhDkvVMMvKDUheO/QelKA=;
+ b=PpfonO86zMUy/9EKmHJ9OzUXpnjS2T8795YmRXhCDkeCm/ol8w+FpkM7XQbGnQJlQeK4
+ PNgKo+id8JQNZpt+2XNEA4poFVv4/86K6HqC9g1yj5zizEtg9FtXkasE0j69tlcxwz+q
+ Ds6ek+yJ6pgxD9niet+uv/WT1aLMa1PbFBueARiSJcIuE6DI9oyFP8959WWkdSdVxVP0
+ y9t3+s2nIvT2X8YmSMpDOnEnKlff/qO532QbNG2g8IY2erYbE/jHiXCvSkkFD1cIC/H/
+ jaJ6Y4FzRbbzicK0edP1Mm4HLbGyUSufJRDjSVtrPGnsH7/w0SujU7J8/3uKKnoGMbOw oQ== 
+In-Reply-To: <20180330034245.10462-45-willy@infradead.org>
+Content-Language: en-US
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -48,184 +49,121 @@ List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
 List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
-Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, James Simmons <jsimmons@infradead.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <andreas.dilger@intel.com>, Nicholas Piggin <npiggin@gmail.com>, linux-f2fs-devel@lists.sourceforge.net, Oleg Drokin <oleg.drokin@intel.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Mike Kravetz <mike.kravetz@oracle.com>
+To: Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
+Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, James Simmons <jsimmons@infradead.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <andreas.dilger@intel.com>, Nicholas Piggin <npiggin@gmail.com>, linux-f2fs-devel@lists.sourceforge.net, Oleg Drokin <oleg.drokin@intel.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-From: Matthew Wilcox <mawilcox@microsoft.com>
+On 03/29/2018 08:42 PM, Matthew Wilcox wrote:
+> From: Matthew Wilcox <mawilcox@microsoft.com>
+> 
+> As with shmem_tag_pins(), hold the lock around the entire loop instead
+> of acquiring & dropping it for each entry we're going to untag.
+> 
+> Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 
-Combine __add_to_swap_cache and add_to_swap_cache into one function
-since there is no more need to preload.
+Same comments as with with the previous shmem_tag_pins patch.
 
-Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
----
- mm/swap_state.c | 93 ++++++++++++++++++---------------------------------------
- 1 file changed, 29 insertions(+), 64 deletions(-)
-
-diff --git a/mm/swap_state.c b/mm/swap_state.c
-index fe079756bb18..53e27894c1bc 100644
---- a/mm/swap_state.c
-+++ b/mm/swap_state.c
-@@ -107,14 +107,15 @@ void show_swap_cache_info(void)
- }
- 
- /*
-- * __add_to_swap_cache resembles add_to_page_cache_locked on swapper_space,
-+ * add_to_swap_cache resembles add_to_page_cache_locked on swapper_space,
-  * but sets SwapCache flag and private instead of mapping and index.
-  */
--int __add_to_swap_cache(struct page *page, swp_entry_t entry)
-+int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
- {
--	int error, i, nr = hpage_nr_pages(page);
--	struct address_space *address_space;
-+	struct address_space *address_space = swap_address_space(entry);
- 	pgoff_t idx = swp_offset(entry);
-+	XA_STATE(xas, &address_space->i_pages, idx);
-+	unsigned long i, nr = 1UL << compound_order(page);
- 
- 	VM_BUG_ON_PAGE(!PageLocked(page), page);
- 	VM_BUG_ON_PAGE(PageSwapCache(page), page);
-@@ -123,50 +124,30 @@ int __add_to_swap_cache(struct page *page, swp_entry_t entry)
- 	page_ref_add(page, nr);
- 	SetPageSwapCache(page);
- 
--	address_space = swap_address_space(entry);
--	xa_lock_irq(&address_space->i_pages);
--	for (i = 0; i < nr; i++) {
--		set_page_private(page + i, entry.val + i);
--		error = radix_tree_insert(&address_space->i_pages,
--					  idx + i, page + i);
--		if (unlikely(error))
--			break;
--	}
--	if (likely(!error)) {
-+	do {
-+		xas_lock_irq(&xas);
-+		xas_create_range(&xas, idx + nr - 1);
-+		if (xas_error(&xas))
-+			goto unlock;
-+		for (i = 0; i < nr; i++) {
-+			VM_BUG_ON_PAGE(xas.xa_index != idx + i, page);
-+			set_page_private(page + i, entry.val + i);
-+			xas_store(&xas, page + i);
-+			xas_next(&xas);
-+		}
- 		address_space->nrpages += nr;
- 		__mod_node_page_state(page_pgdat(page), NR_FILE_PAGES, nr);
- 		ADD_CACHE_INFO(add_total, nr);
--	} else {
--		/*
--		 * Only the context which have set SWAP_HAS_CACHE flag
--		 * would call add_to_swap_cache().
--		 * So add_to_swap_cache() doesn't returns -EEXIST.
--		 */
--		VM_BUG_ON(error == -EEXIST);
--		set_page_private(page + i, 0UL);
--		while (i--) {
--			radix_tree_delete(&address_space->i_pages, idx + i);
--			set_page_private(page + i, 0UL);
--		}
--		ClearPageSwapCache(page);
--		page_ref_sub(page, nr);
--	}
--	xa_unlock_irq(&address_space->i_pages);
-+unlock:
-+		xas_unlock_irq(&xas);
-+	} while (xas_nomem(&xas, gfp));
- 
--	return error;
--}
--
--
--int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp_mask)
--{
--	int error;
-+	if (!xas_error(&xas))
-+		return 0;
- 
--	error = radix_tree_maybe_preload_order(gfp_mask, compound_order(page));
--	if (!error) {
--		error = __add_to_swap_cache(page, entry);
--		radix_tree_preload_end();
--	}
--	return error;
-+	ClearPageSwapCache(page);
-+	page_ref_sub(page, nr);
-+	return xas_error(&xas);
- }
- 
- /*
-@@ -220,7 +201,7 @@ int add_to_swap(struct page *page)
- 		goto fail;
- 
- 	/*
--	 * Radix-tree node allocations from PF_MEMALLOC contexts could
-+	 * XArray node allocations from PF_MEMALLOC contexts could
- 	 * completely exhaust the page allocator. __GFP_NOMEMALLOC
- 	 * stops emergency reserves from being allocated.
- 	 *
-@@ -232,7 +213,6 @@ int add_to_swap(struct page *page)
- 	 */
- 	err = add_to_swap_cache(page, entry,
- 			__GFP_HIGH|__GFP_NOMEMALLOC|__GFP_NOWARN);
--	/* -ENOMEM radix-tree allocation failure */
- 	if (err)
- 		/*
- 		 * add_to_swap_cache() doesn't return -EEXIST, so we can safely
-@@ -426,19 +406,11 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
- 				break;		/* Out of memory */
- 		}
- 
--		/*
--		 * call radix_tree_preload() while we can wait.
--		 */
--		err = radix_tree_maybe_preload(gfp_mask & GFP_KERNEL);
--		if (err)
--			break;
--
- 		/*
- 		 * Swap entry may have been freed since our caller observed it.
- 		 */
- 		err = swapcache_prepare(entry);
- 		if (err == -EEXIST) {
--			radix_tree_preload_end();
- 			/*
- 			 * We might race against get_swap_page() and stumble
- 			 * across a SWAP_HAS_CACHE swap_map entry whose page
-@@ -446,26 +418,19 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
- 			 */
- 			cond_resched();
- 			continue;
--		}
--		if (err) {		/* swp entry is obsolete ? */
--			radix_tree_preload_end();
-+		} else if (err)		/* swp entry is obsolete ? */
- 			break;
--		}
- 
--		/* May fail (-ENOMEM) if radix-tree node allocation failed. */
-+		/* May fail (-ENOMEM) if XArray node allocation failed. */
- 		__SetPageLocked(new_page);
- 		__SetPageSwapBacked(new_page);
--		err = __add_to_swap_cache(new_page, entry);
-+		err = add_to_swap_cache(new_page, entry, gfp_mask & GFP_KERNEL);
- 		if (likely(!err)) {
--			radix_tree_preload_end();
--			/*
--			 * Initiate read into locked page and return.
--			 */
-+			/* Initiate read into locked page */
- 			lru_cache_add_anon(new_page);
- 			*new_page_allocated = true;
- 			return new_page;
- 		}
--		radix_tree_preload_end();
- 		__ClearPageLocked(new_page);
- 		/*
- 		 * add_to_swap_cache() doesn't return -EEXIST, so we can safely
+Reviewed-by: Mike Kravetz <mike.kravetz@oracle.com>
 -- 
-2.16.2
+Mike Kravetz
 
+> ---
+>  mm/memfd.c | 61 +++++++++++++++++++++++++------------------------------------
+>  1 file changed, 25 insertions(+), 36 deletions(-)
+> 
+> diff --git a/mm/memfd.c b/mm/memfd.c
+> index 3b299d72df78..0e0835e63af2 100644
+> --- a/mm/memfd.c
+> +++ b/mm/memfd.c
+> @@ -64,9 +64,7 @@ static void shmem_tag_pins(struct address_space *mapping)
+>   */
+>  static int shmem_wait_for_pins(struct address_space *mapping)
+>  {
+> -	struct radix_tree_iter iter;
+> -	void __rcu **slot;
+> -	pgoff_t start;
+> +	XA_STATE(xas, &mapping->i_pages, 0);
+>  	struct page *page;
+>  	int error, scan;
+>  
+> @@ -74,7 +72,9 @@ static int shmem_wait_for_pins(struct address_space *mapping)
+>  
+>  	error = 0;
+>  	for (scan = 0; scan <= LAST_SCAN; scan++) {
+> -		if (!radix_tree_tagged(&mapping->i_pages, SHMEM_TAG_PINNED))
+> +		unsigned int tagged = 0;
+> +
+> +		if (!xas_tagged(&xas, SHMEM_TAG_PINNED))
+>  			break;
+>  
+>  		if (!scan)
+> @@ -82,45 +82,34 @@ static int shmem_wait_for_pins(struct address_space *mapping)
+>  		else if (schedule_timeout_killable((HZ << scan) / 200))
+>  			scan = LAST_SCAN;
+>  
+> -		start = 0;
+> -		rcu_read_lock();
+> -		radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter,
+> -					   start, SHMEM_TAG_PINNED) {
+> -
+> -			page = radix_tree_deref_slot(slot);
+> -			if (radix_tree_exception(page)) {
+> -				if (radix_tree_deref_retry(page)) {
+> -					slot = radix_tree_iter_retry(&iter);
+> -					continue;
+> -				}
+> -
+> -				page = NULL;
+> -			}
+> -
+> -			if (page &&
+> -			    page_count(page) - page_mapcount(page) != 1) {
+> -				if (scan < LAST_SCAN)
+> -					goto continue_resched;
+> -
+> +		xas_set(&xas, 0);
+> +		xas_lock_irq(&xas);
+> +		xas_for_each_tag(&xas, page, ULONG_MAX, SHMEM_TAG_PINNED) {
+> +			bool clear = true;
+> +			if (xa_is_value(page))
+> +				continue;
+> +			if (page_count(page) - page_mapcount(page) != 1) {
+>  				/*
+>  				 * On the last scan, we clean up all those tags
+>  				 * we inserted; but make a note that we still
+>  				 * found pages pinned.
+>  				 */
+> -				error = -EBUSY;
+> -			}
+> -
+> -			xa_lock_irq(&mapping->i_pages);
+> -			radix_tree_tag_clear(&mapping->i_pages,
+> -					     iter.index, SHMEM_TAG_PINNED);
+> -			xa_unlock_irq(&mapping->i_pages);
+> -continue_resched:
+> -			if (need_resched()) {
+> -				slot = radix_tree_iter_resume(slot, &iter);
+> -				cond_resched_rcu();
+> +				if (scan == LAST_SCAN)
+> +					error = -EBUSY;
+> +				else
+> +					clear = false;
+>  			}
+> +			if (clear)
+> +				xas_clear_tag(&xas, SHMEM_TAG_PINNED);
+> +			if (++tagged % XA_CHECK_SCHED)
+> +				continue;
+> +
+> +			xas_pause(&xas);
+> +			xas_unlock_irq(&xas);
+> +			cond_resched();
+> +			xas_lock_irq(&xas);
+>  		}
+> -		rcu_read_unlock();
+> +		xas_unlock_irq(&xas);
+>  	}
+>  
+>  	return error;
+> 
 
 ------------------------------------------------------------------------------
 Check out the vibrant tech community on one of the world's most
