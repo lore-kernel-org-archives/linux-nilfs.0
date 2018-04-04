@@ -1,49 +1,43 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH v10 43/62] memfd: Convert shmem_tag_pins to
- XArray
-Date: Tue, 3 Apr 2018 13:51:17 -0700
-Message-ID: <20180403205117.GA30145@bombadil.infradead.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [PATCH v10 00/62] Convert page cache to XArray
+Date: Wed, 4 Apr 2018 09:35:46 -0700
+Message-ID: <ff6a317f-920b-62c7-9a7a-9bf235371d41@oracle.com>
 References: <20180330034245.10462-1-willy@infradead.org>
- <20180330034245.10462-44-willy@infradead.org>
- <39ea3393-c3d7-07c3-a072-344f3a65cef3@oracle.com>
- <20180331021111.GB13332@bombadil.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:In-Reply-To:
+ MIME-Version:Date:Message-ID:From:References:Cc:To:Subject:Sender:Reply-To:
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=LtacMbILicM6sGvhtUgkLJHvhMpudLRuiAQm7d0C6eI=; b=iLZHw9+Ky4f++wDwHOwLK7oykY
- mJ27KRks2tTiJWIC0nAvoJ0aE9U3jbpi4kbpwrE1F2A7WNTukKm18OBIbkKwBN9uKJ3lnHnnlPIzm
- GArKekmWA6MuEUslbLVOe4ao91oB1gqyB1F1/sU5z+SpjDucl4k+f8UcKXe0QSxgUHIU=;
+ bh=TOyoFunfV+qXC+F//G8/pUv0R0aoc+TlIAInzNJWPss=; b=iJWRcz0164+CLD7hsILCQpBpde
+ qr3rKd7qGFOzaqqu9zKAaKY0w3uECjBT7532q0ojXNJkk6eKWfURKtfvo9sjU9WDMg22kl0xcyTTL
+ 2jIpjHQRwA8jo2DakOqgE1OdKLGCzHs5duBVwW7+rl0IcDTsCQoGBdcj33OXc8W+6naU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+ h=Content-Transfer-Encoding:Content-Type:In-Reply-To:MIME-Version:Date:
+ Message-ID:From:References:Cc:To:Subject:Sender:Reply-To:Content-ID:
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=LtacMbILicM6sGvhtUgkLJHvhMpudLRuiAQm7d0C6eI=; b=OqgN8eDyB7cvcguhZ0Dveu4pMO
- gFvrmlJqIie22Sb+3pbxWY8VVfU1Ghr/4tg6qpbIwaT8O+IdjYpT93vL9lTK+L1F9jD+6GQPJVwAn
- zHY7OCgsot4urJ6rVh3B442NTdNOYGHgPXBAons4m97CyOJaIViOOvN7ytYfdbLZP5gM=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
- :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=LtacMbILicM6sGvhtUgkLJHvhMpudLRuiAQm7d0C6eI=; b=B91MoxxMceX/1waqJ3te9scsR
- 8Ndoa973KZTpGmfTDsqvHELfIGKdN06aPRiONBP1bxOR4LFA50M3+32YbGB+CAhllcP4hCsVvVfRC
- IjCwMZu7jhTnHrGbKxynI7d/KW+LQEfv5y1XcU1CbNvJMMKfBlkAp8hSGlihd3MgiMHdNdEtmb2x5
- JHfArtyr5Aq+kZz+8HEdAPMpHvMsT7qQ8QAAeWjYGrS02z8Q8UTF2tFjEkzE03DWWPgbk3hJfaDgs
- rxikdVTfDWJLnbshRPD8sFtOE0hYqumfTwIjCT/VwT606t2jX5veRVR1P/4BEfEsWVCCua6tu8P+e
- tlKCHyDVw==;
-Content-Disposition: inline
-In-Reply-To: <20180331021111.GB13332@bombadil.infradead.org>
+ bh=TOyoFunfV+qXC+F//G8/pUv0R0aoc+TlIAInzNJWPss=; b=JYZxsXxaL3EMeNYFb4u/xjmFGN
+ 3noqKHB8FysR9Qf8qTDMPW/MO7ey29mzqxwngiAypo+mURMGKbjf1aplOK4/BDk1CWP6NEBdL1Liv
+ NfbajT1EtXY/tzZxn77Olrdd3bR3eBYU1U7C5LHCCPGs1ANY+6mCGtXOA9ZrT7HdkCPs=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
+ h=subject : to : cc :
+ references : from : message-id : date : mime-version : in-reply-to :
+ content-type : content-transfer-encoding; s=corp-2017-10-26;
+ bh=TOyoFunfV+qXC+F//G8/pUv0R0aoc+TlIAInzNJWPss=;
+ b=rA+cyxO9qBK8pvSpF0G/WhWJnXF+Y6lOhEoA2kdVZFAnCb+hWBZIJIwIvBdah5KUFL5r
+ ONAa5qnu9Omq0xr4gaao2rl89PNkoQpouCIdFyH59sEQtPsIrH5sVY1I0lmk7vF2c70g
+ 0Tvzl+tzNl3olL5lae04qnpFV6n9Sy/6938ztIwDQmAxnIOmDhEf1NDE0PQhUitvQmJN
+ BwkvArN3hFwZDxWI1SruopB16Dv0dCZPIN8Bu8Ja37jYNwlA357eObbip5s7SCJEsA21
+ uZbLqaZlRD2ggoad/pl3cr0RrrmlKL9xjrpIxHTdNVvK4Q8oTHsXAAbISsDZ3Cwi5Ulc +g== 
+In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
+Content-Language: en-US
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -53,323 +47,64 @@ List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
 List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, James Simmons <jsimmons@infradead.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <andreas.dilger@intel.com>, Nicholas Piggin <npiggin@gmail.com>, linux-f2fs-devel@lists.sourceforge.net, Oleg Drokin <oleg.drokin@intel.com>, linux-mm@kvack.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
+To: Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
+Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, James Simmons <jsimmons@infradead.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <andreas.dilger@intel.com>, Nicholas Piggin <npiggin@gmail.com>, linux-f2fs-devel@lists.sourceforge.net, Oleg Drokin <oleg.drokin@intel.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-On Fri, Mar 30, 2018 at 07:11:11PM -0700, Matthew Wilcox wrote:
-> On Fri, Mar 30, 2018 at 05:05:05PM -0700, Mike Kravetz wrote:
-> > On 03/29/2018 08:42 PM, Matthew Wilcox wrote:
-> > > Simplify the locking by taking the spinlock while we walk the tree on
-> > > the assumption that many acquires and releases of the lock will be
-> > > worse than holding the lock for a (potentially) long time.
-> > 
-> > I see this change made in several of the patches and do not have a
-> > specific issue with it.  As part of the XArray implementation you
-> > have XA_CHECK_SCHED = 4096.   So, we drop locks and do a cond_resched
-> > after XA_CHECK_SCHED iterations.  Just curious how you came up with
-> > that number.  Apologies in advance if this was discussed in a previous
-> > round of reviews.
+On 03/29/2018 08:41 PM, Matthew Wilcox wrote:
+> From: Matthew Wilcox <mawilcox@microsoft.com>
 > 
-> It comes from two places, the current implementations of
-> tag_pages_for_writeback() and find_swap_entry().  I have no idea if it's
-> the optimal number for anybody, but it's the only number that anyone
-> was using.  I'll have no problem if somebody suggests we tweak the number
-> in the future.
+> I'd like to thank Andrew for taking the first eight XArray patches
+> into -next.  He's understandably nervous about taking the rest of the
+> patches into -next given how few of the remaining patches have review
+> tags on them.  So ... if you're on the cc, I'd really appreciate a review
+> on something that you feel somewhat responsible for, eg the particular
+> filesystem (nilfs, f2fs, lustre) that I've touched, or something in the
+> mm/ or fs/ directories that you've worked on recently.
+> 
+> This is against next-20180329.
+> 
 
-I thought about this some more.  One of the principles behind the xarray
-rewrite was to make it easier to use than the radix tree.  Even this
-interface succeeds at that; compare:
+I applied this series to next-20180329 and booted in a debug environment.
+My root fs is ext4, and next-20180329 had the first (bad) fix in bug
+https://bugzilla.kernel.org/show_bug.cgi?id=199185
+so, I had to apply the revised fix.
 
--       radix_tree_for_each_slot(slot, root, &iter, 0) {
--               if (*slot == item) {
--                       found = iter.index;
-+       xas_for_each(&xas, entry, ULONG_MAX) {
-+               if (xas_retry(&xas, entry))
-+                       continue;
-+               if (entry == item)
-                        break;
--               }
-                checked++;
--               if ((checked % 4096) != 0)
-+               if ((checked % XA_CHECK_SCHED) != 0)
-                        continue;
--               slot = radix_tree_iter_resume(slot, &iter);
-+               xas_pause(&xas);
-                cond_resched_rcu();
-        }
+Running with this XArray series on top of next-20180329 consistently 'hangs'
+on shutdown looping (?forever?) in tag_pages_for_writeback/xas_for_each_tag.
+All I have to do is make sure there is some activity on the ext4 fs before
+shutdown.  Not sure if this is a 'next-20180329' issue or XArray issue.
+But the fact that we are looping in xas_for_each_tag looks suspicious.
 
-But it's not *great*.  It doesn't succeed in capturing all the necessary
-state in the xa_state so that the user doesn't have to worry about this.
-It's subtle and relatively easy to get wrong.  And, as you say, why this
-magic number?
+#0  xas_find_chunk (tag=<optimized out>, advance=<optimized out>, 
+    xas=<optimized out>) at ./include/linux/xarray.h:886
+#1  xas_next_tag (tag=<optimized out>, max=<optimized out>, 
+    xas=<optimized out>) at ./include/linux/xarray.h:915
+#2  tag_pages_for_writeback (mapping=<optimized out>, start=<optimized out>, 
+    end=2251799813685247) at mm/page-writeback.c:2109
+#3  0xffffffff812eccf0 in ext4_writepages (mapping=0xffff88012bf9b918, 
+    wbc=<optimized out>) at fs/ext4/inode.c:2793
+#4  0xffffffff811bbe4b in do_writepages (mapping=0xffffc90001727a28, 
+    wbc=0xffffffffffffffff) at mm/page-writeback.c:2332
+#5  0xffffffff812743bd in __writeback_single_inode (inode=0xffffc90001727a28, 
+    wbc=0xffffc90001727cc0) at fs/fs-writeback.c:1315
+#6  0xffffffff81274aaf in writeback_sb_inodes (sb=0xffff88012e2e2e98, 
+    wb=0xffff88012c02e000, work=0xffff88012c4aae18) at fs/fs-writeback.c:1579
+#7  0xffffffff81274ff7 in wb_writeback (wb=0xffff88012c02e000, 
+    work=0xffff88012c4aae18) at fs/fs-writeback.c:1755
+#8  0xffffffff812757df in wb_do_writeback (wb=<optimized out>)
+    at fs/fs-writeback.c:1900
+#9  wb_workfn (work=0xffffc90001727a28) at fs/fs-writeback.c:1941
+#10 0xffffffff810b7415 in process_one_work (worker=0xffff88012eff6d68, 
+    work=0xffff88012c02e190) at kernel/workqueue.c:2145
+#11 0xffffffff810b762e in worker_thread (__worker=0xffff88012eff6d68)
+    at kernel/workqueue.c:2279
+#12 0xffffffff810bd7c3 in kthread (_create=0xffff88012e88fc28)
+    at kernel/kthread.c:238
+#13 0xffffffff81a00205 in ret_from_fork () at arch/x86/entry/entry_64.S:411
+#14 0x0000000000000000 in ?? ()
 
-I came up with this, which does capture everything necessary in the
-xa_state -- just one bit which tells the xa_state whether we're in an
-iteration with interrupts disabled.  If that bit is set, iterations
-pause at the end of every second-level group of the tree.  That's every
-4096 _indices_ (as opposed to every 4096 _processed entries_), but those
-should be close to each other in dense trees.
-
-I don't love the name of the function (xas_long_iter_irq()), but I'm
-expecting somebody else will have a better name.  I did notice that
-shmem_tag_pins() was only called from shmem_wait_for_pins(), so it
-doesn't need its own XA_STATE; we can just pass in the xa_state pointer.
-
-I rather like the outcome in the callers; the loops are reduced to doing
-the thing that the loops are supposed to do instead of having this silly
-tail on them that handles bookkeeping.
-
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index eac04922eba2..7ac25c402e19 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -842,6 +842,31 @@ static inline void xas_set_order(struct xa_state *xas, unsigned long index,
- #endif
- }
- 
-+#define XAS_FLAG_PAUSE	(1 << 7)
-+
-+/**
-+ * xas_long_iter_irq() - Mark XArray operation state as being used for a long
-+ * iteration.
-+ * @xas: XArray operation state.
-+ *
-+ * If you are about to start an iteration over a potentially large array
-+ * with the xa_lock held and interrupts off, call this function to have
-+ * the iteration pause itself at opportune moments and check whether other
-+ * threads need to run.
-+ *
-+ * If your iteration uses the rcu lock or the xa_lock without interrupts
-+ * disabled, you can use cond_resched_rcu() or cond_resched_lock() at the
-+ * end of each loop.  There is no cond_resched_lock_irq() (because most
-+ * of the ways which notify a thread that a higher-priority thread wants
-+ * to run depend on interrupts being enabled).
-+ *
-+ * Context: Process context.
-+ */
-+static inline void xas_long_iter_irq(struct xa_state *xas)
-+{
-+	xas->xa_flags |= XAS_FLAG_PAUSE;
-+}
-+
- /**
-  * xas_set_update() - Set up XArray operation state for a callback.
-  * @xas: XArray operation state.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index 653ab0555673..9328e7b7ac85 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -948,6 +948,18 @@ void *__xas_next(struct xa_state *xas)
- }
- EXPORT_SYMBOL_GPL(__xas_next);
- 
-+static
-+void *xas_find_restart(struct xa_state *xas, unsigned long max, xa_tag_t tag)
-+{
-+	xas_unlock_irq(xas);
-+	cond_resched();
-+	xas_reset(xas);
-+	xas_lock_irq(xas);
-+	if (tag == XA_PRESENT)
-+		return xas_find(xas, max);
-+	return xas_find_tag(xas, max, tag);
-+}
-+
- /**
-  * xas_find() - Find the next present entry in the XArray.
-  * @xas: XArray operation state.
-@@ -984,6 +996,9 @@ void *xas_find(struct xa_state *xas, unsigned long max)
- 
- 	while (xas->xa_node && (xas->xa_index <= max)) {
- 		if (unlikely(xas->xa_offset == XA_CHUNK_SIZE)) {
-+			if ((xas->xa_flags & XAS_FLAG_PAUSE) &&
-+					xas->xa_node->shift)
-+				return xas_find_restart(xas, max, XA_PRESENT);
- 			xas->xa_offset = xas->xa_node->offset + 1;
- 			xas->xa_node = xa_parent(xas->xa, xas->xa_node);
- 			continue;
-@@ -1056,6 +1071,9 @@ void *xas_find_tag(struct xa_state *xas, unsigned long max, xa_tag_t tag)
- 
- 	while (xas->xa_index <= max) {
- 		if (unlikely(xas->xa_offset == XA_CHUNK_SIZE)) {
-+			if ((xas->xa_flags & XAS_FLAG_PAUSE) &&
-+					xas->xa_node->shift)
-+				return xas_find_restart(xas, max, tag);
- 			xas->xa_offset = xas->xa_node->offset + 1;
- 			xas->xa_node = xa_parent(xas->xa, xas->xa_node);
- 			if (!xas->xa_node)
-diff --git a/mm/memfd.c b/mm/memfd.c
-index 0e0835e63af2..7eb703651a73 100644
---- a/mm/memfd.c
-+++ b/mm/memfd.c
-@@ -27,30 +27,20 @@
- #define SHMEM_TAG_PINNED        PAGECACHE_TAG_TOWRITE
- #define LAST_SCAN               4       /* about 150ms max */
- 
--static void shmem_tag_pins(struct address_space *mapping)
-+static void shmem_tag_pins(struct xa_state *xas)
- {
--	XA_STATE(xas, &mapping->i_pages, 0);
- 	struct page *page;
--	unsigned int tagged = 0;
- 
- 	lru_add_drain();
- 
--	xas_lock_irq(&xas);
--	xas_for_each(&xas, page, ULONG_MAX) {
-+	xas_lock_irq(xas);
-+	xas_for_each(xas, page, ULONG_MAX) {
- 		if (xa_is_value(page))
- 			continue;
- 		if (page_count(page) - page_mapcount(page) > 1)
--			xas_set_tag(&xas, SHMEM_TAG_PINNED);
--
--		if (++tagged % XA_CHECK_SCHED)
--			continue;
--
--		xas_pause(&xas);
--		xas_unlock_irq(&xas);
--		cond_resched();
--		xas_lock_irq(&xas);
-+			xas_set_tag(xas, SHMEM_TAG_PINNED);
- 	}
--	xas_unlock_irq(&xas);
-+	xas_unlock_irq(xas);
- }
- 
- /*
-@@ -68,12 +58,11 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 	struct page *page;
- 	int error, scan;
- 
--	shmem_tag_pins(mapping);
-+	xas_long_iter_irq(&xas);
-+	shmem_tag_pins(&xas);
- 
- 	error = 0;
- 	for (scan = 0; scan <= LAST_SCAN; scan++) {
--		unsigned int tagged = 0;
--
- 		if (!xas_tagged(&xas, SHMEM_TAG_PINNED))
- 			break;
- 
-@@ -101,13 +90,6 @@ static int shmem_wait_for_pins(struct address_space *mapping)
- 			}
- 			if (clear)
- 				xas_clear_tag(&xas, SHMEM_TAG_PINNED);
--			if (++tagged % XA_CHECK_SCHED)
--				continue;
--
--			xas_pause(&xas);
--			xas_unlock_irq(&xas);
--			cond_resched();
--			xas_lock_irq(&xas);
- 		}
- 		xas_unlock_irq(&xas);
- 	}
-diff --git a/tools/testing/radix-tree/linux.c b/tools/testing/radix-tree/linux.c
-index 44a0d1ad4408..22421ad63559 100644
---- a/tools/testing/radix-tree/linux.c
-+++ b/tools/testing/radix-tree/linux.c
-@@ -16,6 +16,12 @@ int nr_allocated;
- int preempt_count;
- int kmalloc_verbose;
- int test_verbose;
-+int resched_count;
-+
-+void cond_resched(void)
-+{
-+	resched_count++;
-+}
- 
- struct kmem_cache {
- 	pthread_mutex_t lock;
-diff --git a/tools/testing/radix-tree/linux/kernel.h b/tools/testing/radix-tree/linux/kernel.h
-index 9fa1828dde5e..57e16a2554f6 100644
---- a/tools/testing/radix-tree/linux/kernel.h
-+++ b/tools/testing/radix-tree/linux/kernel.h
-@@ -25,4 +25,6 @@
- #define local_irq_disable()	rcu_read_lock()
- #define local_irq_enable()	rcu_read_unlock()
- 
-+extern void cond_resched(void);
-+
- #endif /* _KERNEL_H */
-diff --git a/tools/testing/radix-tree/test.h b/tools/testing/radix-tree/test.h
-index f97cacd1422d..730d91849d8f 100644
---- a/tools/testing/radix-tree/test.h
-+++ b/tools/testing/radix-tree/test.h
-@@ -54,6 +54,7 @@ void tree_verify_min_height(struct radix_tree_root *root, int maxindex);
- void verify_tag_consistency(struct radix_tree_root *root, unsigned int tag);
- 
- extern int nr_allocated;
-+extern int resched_count;
- 
- /* Normally private parts of lib/radix-tree.c */
- struct radix_tree_node *entry_to_node(void *ptr);
-diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
-index f8909eb09cbc..3a70ad1734cf 100644
---- a/tools/testing/radix-tree/xarray-test.c
-+++ b/tools/testing/radix-tree/xarray-test.c
-@@ -183,6 +183,48 @@ void check_xas_pause(struct xarray *xa)
- 	assert(seen == 2);
- }
- 
-+void check_xas_set_pause(struct xarray *xa)
-+{
-+	XA_STATE(xas, xa, 0);
-+	void *entry;
-+	unsigned i = 0;
-+	int count = resched_count;
-+
-+	BUG_ON(!xa_empty(xa));
-+
-+	xa_store(xa, 4095, xa_mk_value(4095), GFP_KERNEL);
-+	xa_store(xa, 4096, xa_mk_value(4096), GFP_KERNEL);
-+
-+	xas_lock_irq(&xas);
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (i == 0)
-+			BUG_ON(entry != xa_mk_value(4095));
-+		else if (i == 1)
-+			BUG_ON(entry != xa_mk_value(4096));
-+		i++;
-+	}
-+	xas_unlock_irq(&xas);
-+	BUG_ON(resched_count != count);
-+	BUG_ON(i != 2);
-+	BUG_ON(entry != NULL);
-+
-+	xas_set(&xas, 0);
-+	i = 0;
-+	xas_long_iter_irq(&xas);
-+	xas_lock_irq(&xas);
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (i == 0)
-+			BUG_ON(entry != xa_mk_value(4095));
-+		else if (i == 1)
-+			BUG_ON(entry != xa_mk_value(4096));
-+		i++;
-+	}
-+	xas_unlock_irq(&xas);
-+	BUG_ON(i != 2);
-+	BUG_ON(entry != NULL);
-+	BUG_ON(resched_count == count);
-+}
-+
- void check_xas_retry(struct xarray *xa)
- {
- 	XA_STATE(xas, xa, 0);
-@@ -553,6 +595,9 @@ void xarray_checks(void)
- 	check_xas_pause(&array);
- 	item_kill_tree(&array);
- 
-+	check_xas_set_pause(&array);
-+	item_kill_tree(&array);
-+
- 	check_xa_load(&array);
- 	item_kill_tree(&array);
- 
+-- 
+Mike Kravetz
 
 ------------------------------------------------------------------------------
 Check out the vibrant tech community on one of the world's most
