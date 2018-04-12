@@ -1,246 +1,74 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.com>
-Subject: [PATCH v10 00/62] Convert page cache to XArray
-Date: Mon, 9 Apr 2018 16:18:07 -0500
-Message-ID: <a27d5689-49d9-2802-3819-afd0f1f98483@suse.com>
-References: <20180330034245.10462-1-willy@infradead.org>
+From: Ross Zwisler <zwisler@gmail.com>
+Subject: Re: [PATCH v9 07/61] xarray: Add the xa_lock to the radix_tree_root
+Date: Thu, 12 Apr 2018 14:59:32 -0600
+Message-ID: <CAOxpaSXDX1fyrOnnsehEoRgQz2_K1OmOn9TikZzJcXmwMLEfnA@mail.gmail.com>
+References: <20180313132639.17387-1-willy@infradead.org> <20180313132639.17387-8-willy@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:In-Reply-To:
- MIME-Version:Date:Message-ID:References:Cc:To:Subject:From:Sender:Reply-To:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=1rSr+LZgjhbkpoateKZb0PwXlh+obwmHjN9kU7k3ACU=; b=XunEvzPYl9LA8ydSRyM8RTWMhq
- mEB2H/BLgPV9zJ5lzaC7hkqliPP6XogCxT6eXsotOEvuumbrKl4G3CzrbU/viRsmYaEJ3lu3tioRR
- 5Jxw5Zsx3P4IwCFOfp1JhAl4sJLYED/ld6JwjW8on520kBnx0cQTjXfySSlm+dcNZuEY=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Transfer-Encoding:Content-Type:In-Reply-To:MIME-Version:Date:
- Message-ID:References:Cc:To:Subject:From:Sender:Reply-To:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=1rSr+LZgjhbkpoateKZb0PwXlh+obwmHjN9kU7k3ACU=; b=l24AnDeO/z2ShBEuTQzV9s9ioM
- ezYuAljg7rDDlF2PXx4eSJ4LUv+qXDsycw3erU8sJJuo+tKfGlkYslmkNimI9HBZPSOmkEjgh8TbN
- XVlVsGwKUrRrmN2kT0Au4hv6VtG4/ut34w4GA/WG+rnl/N466nOmNtAb0JQaJfdmUS7M=;
-In-Reply-To: <20180330034245.10462-1-willy@infradead.org>
-Content-Language: en-US
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
-Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, James Simmons <jsimmons@infradead.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <andreas.dilger@intel.com>, Nicholas Piggin <npiggin@gmail.com>, linux-f2fs-devel@lists.sourceforge.net, Oleg Drokin <oleg.drokin@intel.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Mike Kravetz <mike.kravetz@oracle.com>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to
+         :cc:content-transfer-encoding;
+        bh=EMsk8lrTQSZfUeipbnCRp5jfEaYCHZDQTlL2aq2cX0k=;
+        b=tgz0YVDSM8Lbm5IcJtrKeKYxnRNOb4x3qvQRW6X6ILS9XxFG2yCKKYvsjISdsAklcV
+         pTH1rZJzci/mi0zjXbue4R1fYmZMyaMEM9twWNhdXPU6UIUBnRmuib58PLNnr0mVfETK
+         X/yJ460TusAZ3xXMJycJx38dxBvzdZJjmROxaoG/xSLPohIuXGPrlW5z17NaE6ZhZhWj
+         wCWZxnUIsr6AcrVyzapUk+7P10H6bBBRM5UliZBp4q+GyheTd6bP983YL+5I/eMQkeJD
+         AtNZCBg1Iwc0dOhcZBropA7YkavhZW4mPCFpRxG6UHDpyEj3pKDNqWaPfKWIRvz6jdy4
+         lsdQ==
+In-Reply-To: <20180313132639.17387-8-willy@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <mawilcox@microsoft.com>, LKML <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-Hi Matthew,
-
-On 03/29/2018 10:41 PM, Matthew Wilcox wrote:
+On Tue, Mar 13, 2018 at 7:25 AM, Matthew Wilcox <willy@infradead.org> wrote=
+:
 > From: Matthew Wilcox <mawilcox@microsoft.com>
-> 
-> I'd like to thank Andrew for taking the first eight XArray patches
-> into -next.  He's understandably nervous about taking the rest of the
-> patches into -next given how few of the remaining patches have review
-> tags on them.  So ... if you're on the cc, I'd really appreciate a review
-> on something that you feel somewhat responsible for, eg the particular
-> filesystem (nilfs, f2fs, lustre) that I've touched, or something in the
-> mm/ or fs/ directories that you've worked on recently.
-> 
-> This is against next-20180329.
+>
+> This results in no change in structure size on 64-bit machines as it
+> fits in the padding between the gfp_t and the void *.  32-bit machines
+> will grow the structure from 8 to 12 bytes.  Almost all radix trees
+> are protected with (at least) a spinlock, so as they are converted from
+> radix trees to xarrays, the data structures will shrink again.
+>
+> Initialising the spinlock requires a name for the benefit of lockdep,
+> so RADIX_TREE_INIT() now needs to know the name of the radix tree it's
+> initialising, and so do IDR_INIT() and IDA_INIT().
+>
+> Also add the xa_lock() and xa_unlock() family of wrappers to make it
+> easier to use the lock.  If we could rely on -fplan9-extensions in
+> the compiler, we could avoid all of this syntactic sugar, but that
+> wasn't added until gcc 4.6.
+>
+> Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+> Reviewed-by: Jeff Layton <jlayton@kernel.org>
 
-I tried these patches against next-20180329 and added the patch for the
-bug reported by Mike Kravetz. I am getting the following BUG on ext4 and
-xfs, running generic/048 tests of fstests. Each trace is from a
-different instance/run.
+This is causing build breakage in the radix tree test suite in the
+current linux/master:
 
-BTW, for my convenience, do you have these patches in a public git tree?
+5d1365940a68 (linux/master) Merge
+git://git.kernel.org/pub/scm/linux/kernel/git/davem/net
 
-[  222.007071] BUG: Bad page state in process kswapd0  pfn:132f25
-[  222.007108] page:ffffd6f144cbc940 count:0 mapcount:0
-mapping:ffff94b2735e3918 index:0x1
-[  222.007140] flags: 0x4000000000000000()
-[  222.007157] raw: 4000000000000000 ffff94b2735e3918 0000000000000001
-00000000ffffffff
-[  222.007186] raw: dead000000000100 dead000000000200 0000000000000000
-0000000000000000
-[  222.007216] page dumped because: non-NULL mapping
-[  222.007288] CPU: 0 PID: 55 Comm: kswapd0 Tainted: G            E
-4.16.0-rc7-next-20180329-xarray #2
-[  222.007289] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996),
-BIOS 1.0.0-prebuilt.qemu-project.org 04/01/2014
-[  222.007290] Call Trace:
-[  222.007297]  dump_stack+0x63/0x85
-[  222.007300]  bad_page+0xd5/0x140
-[  222.007302]  free_pages_check_bad+0x5f/0x70
-[  222.007304]  free_pcppages_bulk+0x423/0x5c0
-[  222.007308]  ? xas_load+0x3d/0xc0
-[  222.007310]  free_unref_page_commit+0xad/0xd0
-[  222.007312]  free_unref_page_list+0x101/0x190
-[  222.007315]  release_pages+0x17c/0x3f0
-[  222.007317]  __pagevec_release+0x2f/0x40
-[  222.007319]  invalidate_mapping_pages+0x2d8/0x310
-[  222.007323]  ? memcg_drain_all_list_lrus+0x120/0x120
-[  222.007326]  inode_lru_isolate+0x131/0x180
-[  222.007328]  __list_lru_walk_one.isra.7+0x92/0x150
-[  222.007329]  ? iput+0x220/0x220
-[  222.007331]  list_lru_walk_one+0x23/0x30
-[  222.007332]  prune_icache_sb+0x40/0x60
-[  222.007334]  super_cache_scan+0x137/0x1b0
-[  222.007336]  shrink_slab.part.53+0x1ae/0x3a0
-[  222.007338]  shrink_slab+0x35/0x40
-[  222.007340]  shrink_node+0x158/0x490
-[  222.007342]  balance_pgdat+0x149/0x320
-[  222.007344]  kswapd+0x15f/0x400
-[  222.007347]  ? wait_woken+0x80/0x80
-[  222.007350]  kthread+0x121/0x140
-[  222.007352]  ? balance_pgdat+0x320/0x320
-[  222.007353]  ? kthread_create_worker_on_cpu+0x50/0x50
-[  222.007356]  ret_from_fork+0x35/0x40
-[  222.007357] Disabling lock debugging due to kernel taint
+Here's the first breakage:
 
-
-
-
-17252.906122] ------------[ cut here ]------------
-[17252.906124] kernel BUG at fs/inode.c:512!
-[17252.906150] invalid opcode: 0000 [#1] SMP PTI
-[17252.906467] CPU: 2 PID: 31588 Comm: umount Tainted: G            E
- 4.16.0-rc7-next-20180329-xarray #2
-[17252.906492] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996),
-BIOS 1.0.0-prebuilt.qemu-project.org 04/01/2014
-[17252.906523] RIP: 0010:clear_inode+0x8a/0xa0
-[17252.906536] RSP: 0018:ffffba2302213d28 EFLAGS: 00010086
-[17252.906552] RAX: 0000000000000000 RBX: ffff8f1efb3976d8 RCX:
-0000000000000000
-[17252.906571] RDX: 0000000000000001 RSI: ffffffffffffffff RDI:
-ffff8f1efb397858
-[17252.906590] RBP: ffffba2302213d38 R08: 0000000000000000 R09:
-0000000000000000
-[17252.906609] R10: ffffba2302213ae8 R11: ffffba2302213ae8 R12:
-ffff8f1efb397858
-[17252.906628] R13: ffffffffc067e580 R14: ffff8f1dcc4281e8 R15:
-ffff8f1ef9fddc68
-[17252.906648] FS:  00007f6b9eae0fc0(0000) GS:ffff8f1effd00000(0000)
-knlGS:0000000000000000
-[17252.906670] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[17252.906686] CR2: 000055927e5f2118 CR3: 00000000ab29a000 CR4:
-00000000000006e0
-[17252.906708] DR0: 0000000000000000 DR1: 0000000000000000 DR2:
-0000000000000000
-[17252.906728] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7:
-0000000000000400
-[17252.906747] Call Trace:
-[17252.906786]  ext4_clear_inode+0x1a/0x80 [ext4]
-[17252.906808]  ext4_evict_inode+0x54/0x590 [ext4]
-[17252.906823]  evict+0xca/0x1a0
-[17252.906833]  dispose_list+0x39/0x50
-[17252.906844]  evict_inodes+0x158/0x170
-[17252.906857]  generic_shutdown_super+0x44/0x120
-[17252.906871]  kill_block_super+0x27/0x50
-[17252.906883]  deactivate_locked_super+0x48/0x80
-[17252.906897]  deactivate_super+0x40/0x60
-[17252.906910]  cleanup_mnt+0x3f/0x80
-[17252.906921]  __cleanup_mnt+0x12/0x20
-[17252.906933]  task_work_run+0x9d/0xc0
-[17252.907593]  exit_to_usermode_loop+0xa5/0xb0
-[17252.908237]  do_syscall_64+0x14a/0x1e0
-[17252.908884]  entry_SYSCALL_64_after_hwframe+0x3d/0xa2
-[17252.909522] RIP: 0033:0x7f6b9e3b2a57
-[17252.910154] RSP: 002b:00007ffff1d2e6f8 EFLAGS: 00000246 ORIG_RAX:
-00000000000000a6
-[17252.910810] RAX: 0000000000000000 RBX: 000055927e5e7970 RCX:
-00007f6b9e3b2a57
-[17252.911462] RDX: 0000000000000001 RSI: 0000000000000000 RDI:
-000055927e5f08b0
-[17252.912109] RBP: 0000000000000000 R08: 0000000000000004 R09:
-00000000ffffffff
-[17252.912765] R10: 000055927e5f08d0 R11: 0000000000000246 R12:
-000055927e5f08b0
-[17252.913420] R13: 00007f6b9e8cd1c4 R14: 000055927e5e7b50 R15:
-0000000000000000
-[17252.914053] Code: 74 2d a8 40 75 2b 48 8b 83 30 01 00 00 48 8d 93 30
-01 00 00 48 39 c2 75 1a 48 c7 83 a0 00 00 00 60 00 00 00 5b 41 5c 5d c3
-0f 0b <0f> 0b 0f 0b 0f 0b 0f 0b 0f 0b 66 90 66 2e 0f 1f 84 00 00 00 00
-[17252.915348] RIP: clear_inode+0x8a/0xa0 RSP: ffffba2302213d28
-[17252.915968] ---[ end trace eca08dd7383f4777 ]---
-
-And with xfs:
-
-[  818.192680] ------------[ cut here ]------------
-[  818.192682] kernel BUG at fs/inode.c:512!
-[  818.192710] invalid opcode: 0000 [#1] SMP PTI
-[  818.193034] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996),
-BIOS 1.0.0-prebuilt.qemu-project.org 04/01/2014
-[  818.193063] RIP: 0010:clear_inode+0x8a/0xa0
-[  818.193075] RSP: 0018:ffffa8ced21cbd70 EFLAGS: 00010086
-[  818.193090] RAX: 0000000000000000 RBX: ffff933521e294f8 RCX:
-0000000000000000
-[  818.193108] RDX: 0000000000000001 RSI: ffffffffffffffff RDI:
-ffff933521e29678
-[  818.193127] RBP: ffffa8ced21cbd80 R08: 0000000000000000 R09:
-0000000000000000
-[  818.193145] R10: ffffa8ced21cbb18 R11: ffffa8ced21cbb18 R12:
-ffff933521e29678
-[  818.193164] R13: ffffffffc0921920 R14: ffff9334afd1f8b8 R15:
-ffff933523592c68
-[  818.193183] FS:  00007f3da7d1dfc0(0000) GS:ffff93353fd80000(0000)
-knlGS:0000000000000000
-[  818.193203] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[  818.193219] CR2: 00005577f6a42118 CR3: 00000000b52ae000 CR4:
-00000000000006e0
-[  818.193241] DR0: 0000000000000000 DR1: 0000000000000000 DR2:
-0000000000000000
-[  818.193260] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7:
-0000000000000400
-[  818.193278] Call Trace:
-[  818.193290]  evict+0x190/0x1a0
-[  818.193300]  dispose_list+0x39/0x50
-[  818.193311]  evict_inodes+0x158/0x170
-[  818.193324]  generic_shutdown_super+0x44/0x120
-[  818.193337]  kill_block_super+0x27/0x50
-[  818.193349]  deactivate_locked_super+0x48/0x80
-[  818.193362]  deactivate_super+0x40/0x60
-[  818.193374]  cleanup_mnt+0x3f/0x80
-[  818.193385]  __cleanup_mnt+0x12/0x20
-[  818.193397]  task_work_run+0x9d/0xc0
-[  818.193410]  exit_to_usermode_loop+0xa5/0xb0
-[  818.193423]  do_syscall_64+0x14a/0x1e0
-[  818.193435]  entry_SYSCALL_64_after_hwframe+0x3d/0xa2
-[  818.193450] RIP: 0033:0x7f3da75efa57
-[  818.194081] RSP: 002b:00007fff9bf60d08 EFLAGS: 00000246 ORIG_RAX:
-00000000000000a6
-[  818.194724] RAX: 0000000000000000 RBX: 00005577f6a37970 RCX:
-00007f3da75efa57
-[  818.195328] RDX: 0000000000000001 RSI: 0000000000000000 RDI:
-00005577f6a40ff0
-[  818.195937] RBP: 0000000000000000 R08: 0000000000000003 R09:
-00000000ffffffff
-[  818.196540] R10: 00005577f6a41010 R11: 0000000000000246 R12:
-00005577f6a40ff0
-[  818.197150] R13: 00007f3da7b0a1c4 R14: 00005577f6a37b50 R15:
-0000000000000000
-[  818.197761] Code: 74 2d a8 40 75 2b 48 8b 83 30 01 00 00 48 8d 93 30
-01 00 00 48 39 c2 75 1a 48 c7 83 a0 00 00 00 60 00 00 00 5b 41 5c 5d c3
-0f 0b <0f> 0b 0f 0b 0f 0b 0f 0b 0f 0b 66 90 66 2e 0f 1f 84 00 00 00 00
-[  818.198996] RIP: clear_inode+0x8a/0xa0 RSP: ffffa8ced21cbd70
-[  818.199556] ---[ end trace d7d41ef1791143ea ]---
-[ 1976.784393] ------------[ cut here ]------------
-
-
-
-
--- 
-Goldwyn
-
-
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+cc -I. -I../../include -g -O2 -Wall -D_LGPL_SOURCE -fsanitize=3Daddress
+ -c -o idr.o idr.c
+In file included from ./linux/radix-tree.h:6:0,
+                 from ./linux/../../../../include/linux/idr.h:15,
+                 from ./linux/idr.h:1,
+                 from idr.c:4:
+./linux/../../../../include/linux/idr.h: In function =E2=80=98idr_init_base=
+=E2=80=99:
+./linux/../../../../include/linux/radix-tree.h:129:2: warning:
+implicit declaration of function =E2=80=98spin_lock_init=E2=80=99; did you =
+mean
+=E2=80=98spinlock_t=E2=80=99? [-Wimplicit-function-declaration]
+  spin_lock_init(&(root)->xa_lock);    \
+  ^
+./linux/../../../../include/linux/idr.h:126:2: note: in expansion of
+macro =E2=80=98INIT_RADIX_TREE=E2=80=99
+  INIT_RADIX_TREE(&idr->idr_rt, IDR_RT_MARKER);
+  ^~~~~~~~~~~~~~~
