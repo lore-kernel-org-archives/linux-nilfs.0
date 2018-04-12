@@ -1,68 +1,73 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH] radix tree test suite: fix mapshift build target
-Date: Thu, 12 Apr 2018 14:19:41 -0700
-Message-ID: <20180412211941.GC18364@bombadil.infradead.org>
-References: <20180412210518.27557-1-ross.zwisler@linux.intel.com>
- <20180412141543.a9d587c3836338e78de33d30@linux-foundation.org>
+Subject: Re: [PATCH v9 07/61] xarray: Add the xa_lock to the radix_tree_root
+Date: Thu, 12 Apr 2018 14:22:03 -0700
+Message-ID: <20180412212203.GD18364@bombadil.infradead.org>
+References: <20180313132639.17387-1-willy@infradead.org>
+ <20180313132639.17387-8-willy@infradead.org>
+ <CAOxpaSXDX1fyrOnnsehEoRgQz2_K1OmOn9TikZzJcXmwMLEfnA@mail.gmail.com>
+ <20180412211036.GB18364@bombadil.infradead.org>
+ <CAOxpaSV5L_O9zO_+JLXk9e3SMjm0Gc90ZxSEHaJmvN5YsYpjMA@mail.gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=cF/PmJWSw103CZky1TX4LRknwzi4RarSKD4AKGDh2qI=; b=S985yAGrUQ6EakQQLCg8xGX/I
-        Pg5jKE8/NfKrEJHjE2sWq+4CwmlhxZ0AhMf7iXPOoMhnvjLBmLH9DToXZTNI8Kveo9A6xtlhn8cVX
-        34T6zHCZSz0tjpGH4vlLANLu/PAL7JkqgDJxjsuKQXLi4wJjpFbm/Y5X5/wBS4lD5Pv7t9H1L6/Ox
-        ugKn7zQ07epD9gIKTeIzVURWL0LvUjgtLh7KgB7Xs9z/JULCG/HhXFBYW1lIwZmyIOt6ibPYUqhTt
-        a18rRiN7CK78yXLdYfqXD8OCLyz4fxShgJS0O6WhRoIYmY0/R3pEZTjVDAl0JtGFhDfbBNqVNCPLi
+        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Transfer-Encoding
+        :Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+        Sender:Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:
+        Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:
+        List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+        bh=U7qEjcQDDzpOq49nKog7j5mj7NvH8obFjGXe8MnWq0M=; b=avCIs7eKid0KGG+k9ekpGVl2N2
+        mldyWWv6axTRtXTuOCs1X23mdO5xfrBRDX1A6o6gWxbtKGsT3ksZ/+aFTMAWZHtwcDbgjr73VNNQm
+        yo306H/R9gWKcgB0oRhMnhM8xUbkIagEGW5wqXQM8j3Wue5vwEWh8VpE+nQCvRPAgMj4QEV/EXmN3
+        lw4EwOq7NkGqUNsXMqpaab2knumwRWEQJUFcA4rb++RZThHfwWPNuTCvaML8bH+N1Aj+5SHU27rzt
+        TNs9UT5a4aXOQRQnNVOMq1uvu2vopAvg/GcmANk+g07tnate4dNuV5m9iaL57zJ5AElHIN0ZT476t
     
 Content-Disposition: inline
-In-Reply-To: <20180412141543.a9d587c3836338e78de33d30@linux-foundation.org>
+In-Reply-To: <CAOxpaSV5L_O9zO_+JLXk9e3SMjm0Gc90ZxSEHaJmvN5YsYpjMA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Matthew Wilcox <mawilcox@microsoft.com>, LKML <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+To: Ross Zwisler <zwisler@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <mawilcox@microsoft.com>, LKML <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-On Thu, Apr 12, 2018 at 02:15:43PM -0700, Andrew Morton wrote:
-> On Thu, 12 Apr 2018 15:05:18 -0600 Ross Zwisler <ross.zwisler@linux.intel.com> wrote:
+On Thu, Apr 12, 2018 at 03:16:23PM -0600, Ross Zwisler wrote:
+> On Thu, Apr 12, 2018 at 3:10 PM, Matthew Wilcox <willy@infradead.org> wrote:
+> > On Thu, Apr 12, 2018 at 02:59:32PM -0600, Ross Zwisler wrote:
+> >> This is causing build breakage in the radix tree test suite in the
+> >> current linux/master:
+> >>
+> >> ./linux/../../../../include/linux/idr.h: In function ‘idr_init_base’:
+> >> ./linux/../../../../include/linux/radix-tree.h:129:2: warning:
+> >> implicit declaration of function ‘spin_lock_init’; did you mean
+> >> ‘spinlock_t’? [-Wimplicit-function-declaration]
+> >
+> > Argh.  That was added two patches later in
+> > "xarray: Add definition of struct xarray":
+> >
+> > diff --git a/tools/include/linux/spinlock.h b/tools/include/linux/spinlock.h
+> > index b21b586b9854..4ec4d2cbe27a 100644
+> > --- a/tools/include/linux/spinlock.h
+> > +++ b/tools/include/linux/spinlock.h
+> > @@ -6,8 +6,9 @@
+> >  #include <stdbool.h>
+> >
+> >  #define spinlock_t             pthread_mutex_t
+> > -#define DEFINE_SPINLOCK(x)     pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
+> > +#define DEFINE_SPINLOCK(x)     pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER
+> >  #define __SPIN_LOCK_UNLOCKED(x)        (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
+> > +#define spin_lock_init(x)      pthread_mutex_init(x, NULL)
+> >
+> >  #define spin_lock_irqsave(x, f)                (void)f, pthread_mutex_lock(x)
+> >  #define spin_unlock_irqrestore(x, f)   (void)f, pthread_mutex_unlock(x)
+> >
+> > I didn't pick up that it was needed this early on in the patch series.
 > 
-> > The following commit
-> > 
-> >   commit c6ce3e2fe3da ("radix tree test suite: Add config option for map
-> >   shift")
-> > 
-> > Introduced a phony makefile target called 'mapshift' that ends up
-> > generating the file generated/map-shift.h.  This phony target was then
-> > added as a dependency of the top level 'targets' build target, which is
-> > what is run when you go to tools/testing/radix-tree and just type 'make'.
-> > 
-> > Unfortunately, this phony target doesn't actually work as a dependency, so
-> > you end up getting:
-> > 
-> > $ make
-> > make: *** No rule to make target 'generated/map-shift.h', needed by 'main.o'.  Stop.
-> > make: *** Waiting for unfinished jobs....
-> > 
-> > Fix this by making the file generated/map-shift.h our real makefile target,
-> > and add this a dependency of the top level build target.
-> 
-> I still get
-> 
-> akpm3:/usr/src/25/tools/testing/radix-tree> make
-> cc -I. -I../../include -g -O2 -Wall -D_LGPL_SOURCE -fsanitize=address   -c -o main.o main.c
-> In file included from ./linux/../../../../include/linux/radix-tree.h:28:0,
->                  from ./linux/radix-tree.h:6,
->                  from main.c:10:
-> ./linux/rcupdate.h:5:10: fatal error: urcu.h: No such file or directory
+> Hmmm..I don't know if it's a patch ordering issue, because this
+> happens with the current linux/master where presumably all the patches
+> are present?
 
-apt-get install liburcu-dev
+No, Andrew only merged the first 8 or so because of lack of review of
+the remaining patches.  Even though I cc'd people as hard as I could.
+Including you.  :-P
 
->  #include <urcu.h>
-> 
-> 
-> lots of breakage here :(
-> 
+You could, for example, review the DAX patches ...
