@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 46/63] fs: Convert buffer to XArray
-Date: Sat, 14 Apr 2018 07:12:59 -0700
-Message-ID: <20180414141316.7167-47-willy@infradead.org>
+Subject: [PATCH v11 39/63] shmem: Convert shmem_alloc_hugepage to
+ XArray
+Date: Sat, 14 Apr 2018 07:12:52 -0700
+Message-ID: <20180414141316.7167-40-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=o1fdnX72DN8SNmun6F8lu+vN4CQ7pfSyEbEelJb64gc=; b=BKN4R79WG/vL0/XiJgtWJcGz1q
- 8VNdkiqz/xcnumdDT2M16CCRIzIyYgY3geSYMZ1ujI3bK8pDjODHi8ZxbMS9nWozVm/LOJUTkoLfg
- DVMbwT/puJRX80yxR1wCjF9kE35SxluKF6HPpMkTfSd258HPr3AJZmf0XKLyWnXff2vE=;
+ bh=Zs5aTwmvm2PODrufCBHHeizYU+0FPGF7eS2t8j2yoAA=; b=FbSj12T/I/I4PGqthL22Op2kqO
+ 5AfJSzgSbWA2td3+IJm72JGjnmcXfsOJtB2v6IxMi2O+Sfj4pPoMTBY93YV5QeAOzaf0DsWOWRXfr
+ dWo5paspn8yvyhFEJs/cD1xKUINvqPg2/lTMeqT4BOJZiP5lVYmckInhi8sD1Hs/Gn4s=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=o1fdnX72DN8SNmun6F8lu+vN4CQ7pfSyEbEelJb64gc=; b=YH86P+xuVFTnxikM+84DCBg1Ds
- XNDwTII7u/aHOcrOd93UQPfAr1eaxct0gZzJQ0/tAlfrHOYp754Xs2dWlqG4T76zvI5bjF7slLkhm
- AS5thpzsgynSAVPdP4en8wtXQT3q7DMJlqg1G2WLsPKGQZZZaA4/cIrNbsxcywYb0kP4=;
+ bh=Zs5aTwmvm2PODrufCBHHeizYU+0FPGF7eS2t8j2yoAA=; b=hsXz3AJ9Q8N1tFh9SVcTL57Wi1
+ i2DGDj/etGt+pnbucInwF5/jIuVL8PWUs3wx6GZQpRmY6DevfY+/jJrRRLduaoTL/ARzJihDmmvCG
+ qcUbMmy2Wa7a/g4PBxS77s/rvbdzsKZjJEzf6SKqT4M0Z1jw0ETbqusNvGU3VBu6s5ho=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=o1fdnX72DN8SNmun6F8lu+vN4CQ7pfSyEbEelJb64gc=; b=Fsn4I7xE8gJVdNR2cFU7o9hOX
- 2/ds1Oki6R1hFOkmNqKZFApB42KGOnYrgjbrTE9izJeprkpgWxx5vVUYpy4tUSyNf8BVhIQJB7RV1
- 6kvxUAAW4D2LJQ5X6ONPzOTHoLEJ7N2F/0dq1t7z5OZZDWs7dj35OKJInXsbT0i904xeB3aoID+xs
- DE+ooDeo/MC3bp/FAegb1YzCYHXAM5RB6w+fCEyY7Cl3xYE5lVqhp+Q1Di+QiyOPhZ3xl2sc4la5U
- npM9P0ixUGIWwGJjMSdUCNHEA3XAIX3Z05MXobNNHtgMErSEGMO3THFs5sII5SQj+fNpXC5nRyU7v
- oebKBkR/A==;
+ bh=Zs5aTwmvm2PODrufCBHHeizYU+0FPGF7eS2t8j2yoAA=; b=pm9C8JoANIubDn1W0uuF4p5vH
+ 7esHMIDDCH2MKhGV2oH8eiUXgKz4RJIZ8tPkkk29D2P7g6LzeT54XgU7IMlo76RWGCt/sInCBRCCG
+ bvj+1wUjhbq1EvbAfbPK3kPx3sXMYQ5ypVwiEZ3sYISq9qOicZDNiPjrm3cdXa49cewatJvVODN+/
+ XqcPtg3gl2yuAwunRXosWRULoJgmrvNUqLV6hJhNt82Ko3tP9b24YL8ixDsh8V543vrp3b3iukhFD
+ cTDFdKaiiW5p6ogoX6XgOsYRVQwBPn7PnwEFiFNGPTcnPdMTuy7unz4RZOM+DC+de4P0B16LFilEf
+ zeF7DX0Qg==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,59 +54,46 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Mostly comment fixes, but one use of __xa_set_tag.
+xa_find() is a slightly easier API to use than
+radix_tree_gang_lookup_slot() because it contains its own RCU locking.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/buffer.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ mm/shmem.c | 14 ++++----------
+ 1 file changed, 4 insertions(+), 10 deletions(-)
 
-diff --git a/fs/buffer.c b/fs/buffer.c
-index fda79261aa08..2dcca4263b5c 100644
---- a/fs/buffer.c
-+++ b/fs/buffer.c
-@@ -562,7 +562,7 @@ void mark_buffer_dirty_inode(struct buffer_head *bh, struct inode *inode)
- EXPORT_SYMBOL(mark_buffer_dirty_inode);
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 8d24d59b0e67..985c5cdec7f7 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -1425,23 +1425,17 @@ static struct page *shmem_alloc_hugepage(gfp_t gfp,
+ 		struct shmem_inode_info *info, pgoff_t index)
+ {
+ 	struct vm_area_struct pvma;
+-	struct inode *inode = &info->vfs_inode;
+-	struct address_space *mapping = inode->i_mapping;
+-	pgoff_t idx, hindex;
+-	void __rcu **results;
++	struct address_space *mapping = info->vfs_inode.i_mapping;
++	pgoff_t hindex;
+ 	struct page *page;
  
- /*
-- * Mark the page dirty, and set it dirty in the radix tree, and mark the inode
-+ * Mark the page dirty, and set it dirty in the page cache, and mark the inode
-  * dirty.
-  *
-  * If warn is true, then emit a warning if the page is not uptodate and has
-@@ -579,8 +579,8 @@ void __set_page_dirty(struct page *page, struct address_space *mapping,
- 	if (page->mapping) {	/* Race with truncate? */
- 		WARN_ON_ONCE(warn && !PageUptodate(page));
- 		account_page_dirtied(page, mapping);
--		radix_tree_tag_set(&mapping->i_pages,
--				page_index(page), PAGECACHE_TAG_DIRTY);
-+		__xa_set_tag(&mapping->i_pages, page_index(page),
-+				PAGECACHE_TAG_DIRTY);
- 	}
- 	xa_unlock_irqrestore(&mapping->i_pages, flags);
- }
-@@ -1043,7 +1043,7 @@ __getblk_slow(struct block_device *bdev, sector_t block,
-  * The relationship between dirty buffers and dirty pages:
-  *
-  * Whenever a page has any dirty buffers, the page's dirty bit is set, and
-- * the page is tagged dirty in its radix tree.
-+ * the page is tagged dirty in the page cache.
-  *
-  * At all times, the dirtiness of the buffers represents the dirtiness of
-  * subsections of the page.  If the page has buffers, the page dirty bit is
-@@ -1066,9 +1066,9 @@ __getblk_slow(struct block_device *bdev, sector_t block,
-  * mark_buffer_dirty - mark a buffer_head as needing writeout
-  * @bh: the buffer_head to mark dirty
-  *
-- * mark_buffer_dirty() will set the dirty bit against the buffer, then set its
-- * backing page dirty, then tag the page as dirty in its address_space's radix
-- * tree and then attach the address_space's inode to its superblock's dirty
-+ * mark_buffer_dirty() will set the dirty bit against the buffer, then set
-+ * its backing page dirty, then tag the page as dirty in the page cache
-+ * and then attach the address_space's inode to its superblock's dirty
-  * inode list.
-  *
-  * mark_buffer_dirty() is atomic.  It takes bh->b_page->mapping->private_lock,
+ 	if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
+ 		return NULL;
+ 
+ 	hindex = round_down(index, HPAGE_PMD_NR);
+-	rcu_read_lock();
+-	if (radix_tree_gang_lookup_slot(&mapping->i_pages, &results, &idx,
+-				hindex, 1) && idx < hindex + HPAGE_PMD_NR) {
+-		rcu_read_unlock();
++	if (xa_find(&mapping->i_pages, &hindex, hindex + HPAGE_PMD_NR - 1,
++								XA_PRESENT))
+ 		return NULL;
+-	}
+-	rcu_read_unlock();
+ 
+ 	shmem_pseudo_vma_init(&pvma, info, hindex);
+ 	page = alloc_pages_vma(gfp | __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN,
 -- 
 2.17.0
 
