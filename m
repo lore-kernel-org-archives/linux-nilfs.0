@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 59/63] dax: Return fault code from
- dax_load_hole
-Date: Sat, 14 Apr 2018 07:13:12 -0700
-Message-ID: <20180414141316.7167-60-willy@infradead.org>
+Subject: [PATCH v11 56/63] dax: Convert __dax_invalidate_entry to
+ XArray
+Date: Sat, 14 Apr 2018 07:13:09 -0700
+Message-ID: <20180414141316.7167-57-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=LykSuSt/CWwf+4GGWhfeqmkyUr1W81F3zXE08T8PYcY=; b=i3/ghvsSsbQMYpxVl5xCYUOh+G
- VuHh+4O0/t9TUJbRC76B61QxDmWhtl6fh5fJPga2a8sFFxgyD1Fr3ZAaqLWkV30PAOHjpSH64vBzf
- GMENoIBnKugLE4/S79HGc8oumHTEluCquj8kbXRwUZlFEJQTXv8enHdvIcvxGst3yb6c=;
+ bh=QHlUY1Jc6CgLgtxrc+iSg/6ndpWn0vz6Z2ZUN5umMAI=; b=Gj5iIMPF2wNldXpysWdiY5YdgU
+ 5Sn0O+4mk1TOJUUG/nP3sIL52SLaLrnoUVzuoWow7dpticDu9LKlqg60nqs0dpTdNqn86EQVivCxE
+ 9yc8a2CuOMnMAvGteZbV4gbTp0BsJcjIZlZY68GzrMZQty1bIdrAWw6ehG2RkpPXlTgg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=LykSuSt/CWwf+4GGWhfeqmkyUr1W81F3zXE08T8PYcY=; b=XxT5ZA06pnVka8sV5jSRVewjsn
- RdlIm3YaC8R2M8J7bzdx2TA0PzrWv+5zG/qvJqFNI4hHF02Hj+cdDC2vYq+JF5xuJ6ZyRTe7KFdBQ
- 2daWMPMgbKJmuprgvbBzO/Ia24OK7h0oHKp1MtN+nlHrPw8dcLxH/lhKkuwm4eKciKek=;
+ bh=QHlUY1Jc6CgLgtxrc+iSg/6ndpWn0vz6Z2ZUN5umMAI=; b=c0BY4wooJ85z5GJShUvyjjJB1M
+ LFMsZBJ0zArePIH1hxQpQCavb7HVGijUHgzDXX26cyKBEnecNh+8j9yrNnfkmtjFVG7Fi1gLct1Ca
+ 0FJzG33a3421znIS1UXp9M68DG1s8YgCoujc2TduZSU7vqQFZahXPvHkutGid4f3BXzk=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=LykSuSt/CWwf+4GGWhfeqmkyUr1W81F3zXE08T8PYcY=; b=JIijM2jS1UMscg2SwUKznN7vB
- ehogHbWAezdxA6HnMpBR4BKw7LxH4FAlmce2jTu59iCLTNe+zNvkk2QIxStzkxho+2ta8TAC30avX
- K+bYZ+Z+N36n+yfI4AtNTdu83z35t1gGpfNQgGdiIqOLITQ2k8+lEqkByWhBsNjUDxbzEOaUSruNb
- +QH7RE0HFuC4AdtsQ9bVX6L2FUbQN1XOHv4SWHBUkhdZUzVHNnv4l1LEQEy1YOnD92RnGE52gI4gF
- jCHJGxWJjWGE55lhaFMN80Qti2z/uC4SoDqBHsbFelyxVuc/kiGwdUyf+I8C+e7zLcReakJS15olV
- qeYVmQWhQ==;
+ bh=QHlUY1Jc6CgLgtxrc+iSg/6ndpWn0vz6Z2ZUN5umMAI=; b=fzOSZ1NTqKDjtboM97SJ+abgR
+ hsm2dXzskr0zbQWD1+sO6rvzk6ptZ7ZAN7DaDP7zv8Iokcewy0YSWmxQr3sn7qhxw9Sk7Pm+5aIbN
+ NE8m80HVTEDefpEd0+qcQ2hLuzp7O1l4gOFcqu/j/xmOmiK7hzgyuOD1eGfoRQIhwn/ebkN7GrCmW
+ PHYJ1rGyKhxUJ8C+nt8bcSDlzkB378SGrNK33oGZvEqK0HSTgH8NrLzCpeGaJwyuPY2jzw97NEgam
+ WXkMv344ogcRWCgfkw3X+3gGRWz4qfuRhsc913cL1kkzyapEqS3+lIjr0j900RD/+knN7fLeovlml
+ b/i8GJGOQ==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,43 +54,54 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-dax_load_hole was swallowing the errors from vm_insert_mixed().
-Use vmf_insert_mixed() instead to get a vm_fault_t, and convert
-dax_load_hole() to the vm_fault_t convention.
+Avoids walking the radix tree multiple times looking for tags.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ fs/dax.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
 diff --git a/fs/dax.c b/fs/dax.c
-index bcc3fd05ab03..44785346c02f 100644
+index 19ac013204a1..b68b2f81fa47 100644
 --- a/fs/dax.c
 +++ b/fs/dax.c
-@@ -808,18 +808,19 @@ static int dax_iomap_pfn(struct iomap *iomap, loff_t pos, size_t size,
-  * If this page is ever written to we will re-fault and change the mapping to
-  * point to real DAX storage instead.
-  */
--static int dax_load_hole(struct xa_state *xas, struct address_space *mapping,
--		void **entry, struct vm_fault *vmf)
-+static vm_fault_t dax_load_hole(struct xa_state *xas,
-+		struct address_space *mapping, void **entry,
-+		struct vm_fault *vmf)
+@@ -586,27 +586,28 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
+ static int __dax_invalidate_entry(struct address_space *mapping,
+ 					  pgoff_t index, bool trunc)
  {
- 	struct inode *inode = mapping->host;
- 	unsigned long vaddr = vmf->address;
--	int ret = VM_FAULT_NOPAGE;
-+	vm_fault_t ret;
- 	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
++	XA_STATE(xas, &mapping->i_pages, index);
+ 	int ret = 0;
+ 	void *entry;
+-	struct radix_tree_root *pages = &mapping->i_pages;
  
- 	*entry = dax_insert_entry(xas, mapping, *entry, pfn, DAX_ZERO_PAGE,
- 			false);
- 
--	vm_insert_mixed(vmf->vma, vaddr, pfn);
-+	ret = vmf_insert_mixed(vmf->vma, vaddr, pfn);
- 	trace_dax_load_hole(inode, vmf, ret);
+-	xa_lock_irq(pages);
+-	entry = get_unlocked_mapping_entry(mapping, index, NULL);
++	xas_lock_irq(&xas);
++	entry = get_unlocked_entry(&xas);
+ 	if (!entry || WARN_ON_ONCE(!xa_is_value(entry)))
+ 		goto out;
+ 	if (!trunc &&
+-	    (radix_tree_tag_get(pages, index, PAGECACHE_TAG_DIRTY) ||
+-	     radix_tree_tag_get(pages, index, PAGECACHE_TAG_TOWRITE)))
++	    (xas_get_tag(&xas, PAGECACHE_TAG_DIRTY) ||
++	     xas_get_tag(&xas, PAGECACHE_TAG_TOWRITE)))
+ 		goto out;
+ 	dax_disassociate_entry(entry, mapping, trunc);
+-	radix_tree_delete(pages, index);
++	xas_store(&xas, NULL);
+ 	mapping->nrexceptional--;
+ 	ret = 1;
+ out:
+-	put_unlocked_mapping_entry(mapping, index, entry);
+-	xa_unlock_irq(pages);
++	put_unlocked_entry(&xas, entry);
++	xas_unlock_irq(&xas);
  	return ret;
  }
++
+ /*
+  * Delete DAX entry at @index from @mapping.  Wait for it
+  * to be unlocked before deleting it.
 -- 
 2.17.0
 
