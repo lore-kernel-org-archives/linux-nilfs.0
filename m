@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 25/63] mm: Convert workingset to XArray
-Date: Sat, 14 Apr 2018 07:12:38 -0700
-Message-ID: <20180414141316.7167-26-willy@infradead.org>
+Subject: [PATCH v11 02/63] xarray: Change definition of sibling
+ entries
+Date: Sat, 14 Apr 2018 07:12:15 -0700
+Message-ID: <20180414141316.7167-3-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=8oZgFaJ1jQc071QClx67FYCH+9jnC6AskSsYzwsqA9c=; b=TQAMEM/dW0QIy8adR2S2k3ouck
- B2p9KtbFPobaksO0aFIAMpRbH+9AkETze/7+mlWU9SK+FQaEjS3D9pdfXgMXfx4iRFO9ctzK7SbND
- lWnQXY5OaLQBLtaagd27r88bDyNi7CCu64Ip1hOmWVyv5V4CEe+n90T/n31c0RV/Q7Tg=;
+ bh=1QOoHEvIV9Pze5ulQxnNFJJ820ZPb5hp33N3gwp1f3s=; b=Fa79Yk2IBWxzha67ifGPtACRx8
+ YICIbHxRqLTtIxD+hMFJH3lZZHAhZ5mJCnwilFsymJ9uMWSxnRldRdgU3u7ruTZ+nmSCNbAa9/h3T
+ lrMXm0NLYtQ9NPCT6QFRh+Q+e91jRtc1eC1wpirgJXdPCIDrh5jVTEtfaWSsajgH5dUs=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=8oZgFaJ1jQc071QClx67FYCH+9jnC6AskSsYzwsqA9c=; b=BYlRSYJUvofWjBHgf8xtZsHrt4
- RXJt/n5H+xhlOWYwjnJgp1YtbaDQdNJd8kDKF3P/o0LykjvePBeaAPEc0jC6VhM4+3rfTmzcTkUKH
- u3A+FgPNsrEQgVhpIrt7UvnfFnlgYVxX1534ymBsXL1RySvk9kFl6jOP7zkXN37k+E+w=;
+ bh=1QOoHEvIV9Pze5ulQxnNFJJ820ZPb5hp33N3gwp1f3s=; b=jp/g7l0nh2G97YmnEoppLVf3aL
+ uBZSdcVbBVD3M6GuTWXnyf+YdNmb4DLMRQcCFItAgI5/vaSBBjynuonaXpm1795iljDrbQFI/xOOG
+ VLWAdss/BZkTI3UcQTlOE8kqW2U+X7FYR0BmreeltAF0EyNq69nPeuY2OaYxLQwyVkAY=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=8oZgFaJ1jQc071QClx67FYCH+9jnC6AskSsYzwsqA9c=; b=EFSrqtxvASXPZsYXZ9WgR5FT/
- GJG1E2wsHtfb042mNfGv7Wx3npSyN+r2JcOdDyp3DWddXUVs0jtG3J0acZtsjL8zBIOBerRsyoBTc
- Hk/syFFswodVYIyfCUoo2rZHQbHhg4rTHFRJDAswJBePSpfUQan1Ys+liduB5LHi4GBfDCgdKZ6Gd
- JXUWH59gWImnpwunz98pfVRkdBkC+zkq+c8NQRqZXYTSrjOaGKXGzB5NXCsaGa6SfortUGbLnDjEP
- CxLSalVN09KTeWRIvikXxYfNI/nshiLLksus/HMbs27eJiGPIWuUilg/f7XnYCim/Nb/tFhWxp+Ke
- hvUYwnmAQ==;
+ bh=1QOoHEvIV9Pze5ulQxnNFJJ820ZPb5hp33N3gwp1f3s=; b=qU82HN0eUP+OozZI4JH3pPTrf
+ HCOrtubrkBaqQg3xuFBQmkcZ6axVy6c8RzZFoMGPbA+sKRRxTFyPpRsfloy2z8ra4Gergm3//azHa
+ Xb71GvUI28I14amg/4N7fajjxZ9Ppzksz2qMSI7llGAzJwEDBRXiyyDLbBfc5UpPmugs660hPRACy
+ L9o+mcirFtqzEezLAMUoBZj1dzvkLiyQVms6ojtuwbkZ+BTcgGxQXNEoN/dvwY/7gyf6594UUqvJy
+ YDGl0iwAVm8lYItN1wf+vBnVwE1IMitr5fcBJ8AlAbGwvM/LBu/RkHYcB313lmpdTOoRVt04+QRHl
+ 2YZnB4xNA==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,159 +54,314 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-We construct a fake XA_STATE and use it to delete the node with xa_store()
-rather than adding a special function for this unique use case.
+Instead of storing a pointer to the slot containing the canonical entry,
+store the offset of the slot.  Produces slightly more efficient code
+(~300 bytes) and simplifies the implementation.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+Reviewed-by: Josef Bacik <jbacik@fb.com>
 ---
- include/linux/swap.h |  9 --------
- mm/workingset.c      | 51 +++++++++++++++++++-------------------------
- 2 files changed, 22 insertions(+), 38 deletions(-)
+ include/linux/xarray.h | 93 ++++++++++++++++++++++++++++++++++++++++++
+ lib/radix-tree.c       | 66 +++++++++---------------------
+ 2 files changed, 112 insertions(+), 47 deletions(-)
 
-diff --git a/include/linux/swap.h b/include/linux/swap.h
-index a0ebb5deea2d..dab96af23d96 100644
---- a/include/linux/swap.h
-+++ b/include/linux/swap.h
-@@ -307,15 +307,6 @@ void workingset_update_node(struct xa_node *node);
- 		xas_set_update(xas, workingset_update_node);		\
- } while (0)
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index f61806fd8002..283beb5aac58 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -22,6 +22,12 @@
+  * x1: Value entry
+  *
+  * Attempting to store internal entries in the XArray is a bug.
++ *
++ * Most internal entries are pointers to the next node in the tree.
++ * The following internal entries have a special meaning:
++ *
++ * 0-62: Sibling entries
++ * 256: Retry entry
+  */
  
--/* Returns workingset_update_node() if the mapping has shadow entries. */
--#define workingset_lookup_update(mapping)				\
--({									\
--	radix_tree_update_node_t __helper = workingset_update_node;	\
--	if (dax_mapping(mapping) || shmem_mapping(mapping))		\
--		__helper = NULL;					\
--	__helper;							\
--})
+ #define BITS_PER_XA_VALUE	(BITS_PER_LONG - 1)
+@@ -63,6 +69,42 @@ static inline bool xa_is_value(const void *entry)
+ 	return (unsigned long)entry & 1;
+ }
+ 
++/*
++ * xa_mk_internal() - Create an internal entry.
++ * @v: Value to turn into an internal entry.
++ *
++ * Context: Any context.
++ * Return: An XArray internal entry corresponding to this value.
++ */
++static inline void *xa_mk_internal(unsigned long v)
++{
++	return (void *)((v << 2) | 2);
++}
++
++/*
++ * xa_to_internal() - Extract the value from an internal entry.
++ * @entry: XArray entry.
++ *
++ * Context: Any context.
++ * Return: The value which was stored in the internal entry.
++ */
++static inline unsigned long xa_to_internal(const void *entry)
++{
++	return (unsigned long)entry >> 2;
++}
++
++/*
++ * xa_is_internal() - Is the entry an internal entry?
++ * @entry: XArray entry.
++ *
++ * Context: Any context.
++ * Return: %true if the entry is an internal entry.
++ */
++static inline bool xa_is_internal(const void *entry)
++{
++	return ((unsigned long)entry & 3) == 2;
++}
++
+ #define xa_trylock(xa)		spin_trylock(&(xa)->xa_lock)
+ #define xa_lock(xa)		spin_lock(&(xa)->xa_lock)
+ #define xa_unlock(xa)		spin_unlock(&(xa)->xa_lock)
+@@ -75,4 +117,55 @@ static inline bool xa_is_value(const void *entry)
+ #define xa_unlock_irqrestore(xa, flags) \
+ 				spin_unlock_irqrestore(&(xa)->xa_lock, flags)
+ 
++/* Everything below here is the Advanced API.  Proceed with caution. */
++
++/*
++ * The xarray is constructed out of a set of 'chunks' of pointers.  Choosing
++ * the best chunk size requires some tradeoffs.  A power of two recommends
++ * itself so that we can walk the tree based purely on shifts and masks.
++ * Generally, the larger the better; as the number of slots per level of the
++ * tree increases, the less tall the tree needs to be.  But that needs to be
++ * balanced against the memory consumption of each node.  On a 64-bit system,
++ * xa_node is currently 576 bytes, and we get 7 of them per 4kB page.  If we
++ * doubled the number of slots per node, we'd get only 3 nodes per 4kB page.
++ */
++#ifndef XA_CHUNK_SHIFT
++#define XA_CHUNK_SHIFT		(CONFIG_BASE_SMALL ? 4 : 6)
++#endif
++#define XA_CHUNK_SIZE		(1UL << XA_CHUNK_SHIFT)
++#define XA_CHUNK_MASK		(XA_CHUNK_SIZE - 1)
++
++/* Private */
++static inline bool xa_is_node(const void *entry)
++{
++	return xa_is_internal(entry) && (unsigned long)entry > 4096;
++}
++
++/* Private */
++static inline void *xa_mk_sibling(unsigned int offset)
++{
++	return xa_mk_internal(offset);
++}
++
++/* Private */
++static inline unsigned long xa_to_sibling(const void *entry)
++{
++	return xa_to_internal(entry);
++}
++
++/**
++ * xa_is_sibling() - Is the entry a sibling entry?
++ * @entry: Entry retrieved from the XArray
++ *
++ * Return: %true if the entry is a sibling entry.
++ */
++static inline bool xa_is_sibling(const void *entry)
++{
++	return IS_ENABLED(CONFIG_RADIX_TREE_MULTIORDER) &&
++		xa_is_internal(entry) &&
++		(entry < xa_mk_sibling(XA_CHUNK_SIZE - 1));
++}
++
++#define XA_RETRY_ENTRY		xa_mk_internal(256)
++
+ #endif /* _LINUX_XARRAY_H */
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index c7246de3f367..dd4669b3c30e 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -38,6 +38,7 @@
+ #include <linux/rcupdate.h>
+ #include <linux/slab.h>
+ #include <linux/string.h>
++#include <linux/xarray.h>
+ 
+ 
+ /* Number of nodes in fully populated tree of given height */
+@@ -98,24 +99,7 @@ static inline void *node_to_entry(void *ptr)
+ 	return (void *)((unsigned long)ptr | RADIX_TREE_INTERNAL_NODE);
+ }
+ 
+-#define RADIX_TREE_RETRY	node_to_entry(NULL)
 -
- /* linux/mm/page_alloc.c */
- extern unsigned long totalram_pages;
- extern unsigned long totalreserve_pages;
-diff --git a/mm/workingset.c b/mm/workingset.c
-index bad4e58881cd..564e97bd5934 100644
---- a/mm/workingset.c
-+++ b/mm/workingset.c
-@@ -148,7 +148,7 @@
-  * and activations is maintained (node->inactive_age).
-  *
-  * On eviction, a snapshot of this counter (along with some bits to
-- * identify the node) is stored in the now empty page cache radix tree
-+ * identify the node) is stored in the now empty page cache
-  * slot of the evicted page.  This is called a shadow entry.
-  *
-  * On cache misses for which there are shadow entries, an eligible
-@@ -162,7 +162,7 @@
+-#ifdef CONFIG_RADIX_TREE_MULTIORDER
+-/* Sibling slots point directly to another slot in the same node */
+-static inline
+-bool is_sibling_entry(const struct radix_tree_node *parent, void *node)
+-{
+-	void __rcu **ptr = node;
+-	return (parent->slots <= ptr) &&
+-			(ptr < parent->slots + RADIX_TREE_MAP_SIZE);
+-}
+-#else
+-static inline
+-bool is_sibling_entry(const struct radix_tree_node *parent, void *node)
+-{
+-	return false;
+-}
+-#endif
++#define RADIX_TREE_RETRY	XA_RETRY_ENTRY
  
- /*
-  * Eviction timestamps need to be able to cover the full range of
-- * actionable refaults. However, bits are tight in the radix tree
-+ * actionable refaults. However, bits are tight in the xarray
-  * entry, and after storing the identifier for the lruvec there might
-  * not be enough left to represent every single actionable refault. In
-  * that case, we have to sacrifice granularity for distance, and group
-@@ -338,7 +338,7 @@ void workingset_activation(struct page *page)
+ static inline unsigned long
+ get_slot_offset(const struct radix_tree_node *parent, void __rcu **slot)
+@@ -129,16 +113,10 @@ static unsigned int radix_tree_descend(const struct radix_tree_node *parent,
+ 	unsigned int offset = (index >> parent->shift) & RADIX_TREE_MAP_MASK;
+ 	void __rcu **entry = rcu_dereference_raw(parent->slots[offset]);
  
- static struct list_lru shadow_nodes;
- 
--void workingset_update_node(struct radix_tree_node *node)
-+void workingset_update_node(struct xa_node *node)
- {
- 	/*
- 	 * Track non-empty nodes that contain only shadow entries;
-@@ -370,7 +370,7 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
- 	local_irq_enable();
- 
- 	/*
--	 * Approximate a reasonable limit for the radix tree nodes
-+	 * Approximate a reasonable limit for the nodes
- 	 * containing shadow entries. We don't need to keep more
- 	 * shadow entries than possible pages on the active list,
- 	 * since refault distances bigger than that are dismissed.
-@@ -385,11 +385,11 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
- 	 * worst-case density of 1/8th. Below that, not all eligible
- 	 * refaults can be detected anymore.
- 	 *
--	 * On 64-bit with 7 radix_tree_nodes per page and 64 slots
-+	 * On 64-bit with 7 xa_nodes per page and 64 slots
- 	 * each, this will reclaim shadow entries when they consume
- 	 * ~1.8% of available memory:
- 	 *
--	 * PAGE_SIZE / radix_tree_nodes / node_entries * 8 / PAGE_SIZE
-+	 * PAGE_SIZE / xa_nodes / node_entries * 8 / PAGE_SIZE
- 	 */
- 	if (sc->memcg) {
- 		cache = mem_cgroup_node_nr_lru_pages(sc->memcg, sc->nid,
-@@ -398,7 +398,7 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
- 		cache = node_page_state(NODE_DATA(sc->nid), NR_ACTIVE_FILE) +
- 			node_page_state(NODE_DATA(sc->nid), NR_INACTIVE_FILE);
- 	}
--	max_nodes = cache >> (RADIX_TREE_MAP_SHIFT - 3);
-+	max_nodes = cache >> (XA_CHUNK_SHIFT - 3);
- 
- 	if (nodes <= max_nodes)
- 		return 0;
-@@ -408,11 +408,11 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
- static enum lru_status shadow_lru_isolate(struct list_head *item,
- 					  struct list_lru_one *lru,
- 					  spinlock_t *lru_lock,
--					  void *arg)
-+					  void *arg) __must_hold(lru_lock)
- {
-+	XA_STATE(xas, NULL, 0);
- 	struct address_space *mapping;
--	struct radix_tree_node *node;
--	unsigned int i;
-+	struct xa_node *node;
- 	int ret;
- 
- 	/*
-@@ -420,7 +420,7 @@ static enum lru_status shadow_lru_isolate(struct list_head *item,
- 	 * the shadow node LRU under the i_pages lock and the
- 	 * lru_lock.  Because the page cache tree is emptied before
- 	 * the inode can be destroyed, holding the lru_lock pins any
--	 * address_space that has radix tree nodes on the LRU.
-+	 * address_space that has nodes on the LRU.
- 	 *
- 	 * We can then safely transition to the i_pages lock to
- 	 * pin only the address_space of the particular node we want
-@@ -449,25 +449,18 @@ static enum lru_status shadow_lru_isolate(struct list_head *item,
- 		goto out_invalid;
- 	if (WARN_ON_ONCE(node->count != node->nr_values))
- 		goto out_invalid;
--	for (i = 0; i < RADIX_TREE_MAP_SIZE; i++) {
--		if (node->slots[i]) {
--			if (WARN_ON_ONCE(!xa_is_value(node->slots[i])))
--				goto out_invalid;
--			if (WARN_ON_ONCE(!node->nr_values))
--				goto out_invalid;
--			if (WARN_ON_ONCE(!mapping->nrexceptional))
--				goto out_invalid;
--			node->slots[i] = NULL;
--			node->nr_values--;
--			node->count--;
--			mapping->nrexceptional--;
+-#ifdef CONFIG_RADIX_TREE_MULTIORDER
+-	if (radix_tree_is_internal_node(entry)) {
+-		if (is_sibling_entry(parent, entry)) {
+-			void __rcu **sibentry;
+-			sibentry = (void __rcu **) entry_to_node(entry);
+-			offset = get_slot_offset(parent, sibentry);
+-			entry = rcu_dereference_raw(*sibentry);
 -		}
--	}
--	if (WARN_ON_ONCE(node->nr_values))
--		goto out_invalid;
-+	mapping->nrexceptional -= node->nr_values;
-+	xas.xa = node->array;
-+	xas.xa_node = rcu_dereference_protected(node->parent,
-+				lockdep_is_held(&mapping->i_pages.xa_lock));
-+	xas.xa_offset = node->offset;
-+	xas.xa_update = workingset_update_node;
-+	/*
-+	 * We could store a shadow entry here which was the minimum of the
-+	 * shadow entries we were tracking ...
-+	 */
-+	xas_store(&xas, NULL);
- 	inc_lruvec_page_state(virt_to_page(node), WORKINGSET_NODERECLAIM);
--	__radix_tree_delete_node(&mapping->i_pages, node,
--				 workingset_lookup_update(mapping));
++	if (xa_is_sibling(entry)) {
++		offset = xa_to_sibling(entry);
++		entry = rcu_dereference_raw(parent->slots[offset]);
+ 	}
+-#endif
  
- out_invalid:
- 	xa_unlock(&mapping->i_pages);
+ 	*nodep = (void *)entry;
+ 	return offset;
+@@ -300,10 +278,10 @@ static void dump_node(struct radix_tree_node *node, unsigned long index)
+ 		} else if (!radix_tree_is_internal_node(entry)) {
+ 			pr_debug("radix entry %p offset %ld indices %lu-%lu parent %p\n",
+ 					entry, i, first, last, node);
+-		} else if (is_sibling_entry(node, entry)) {
++		} else if (xa_is_sibling(entry)) {
+ 			pr_debug("radix sblng %p offset %ld indices %lu-%lu parent %p val %p\n",
+ 					entry, i, first, last, node,
+-					*(void **)entry_to_node(entry));
++					node->slots[xa_to_sibling(entry)]);
+ 		} else {
+ 			dump_node(entry_to_node(entry), first);
+ 		}
+@@ -873,8 +851,7 @@ static void radix_tree_free_nodes(struct radix_tree_node *node)
+ 
+ 	for (;;) {
+ 		void *entry = rcu_dereference_raw(child->slots[offset]);
+-		if (radix_tree_is_internal_node(entry) &&
+-					!is_sibling_entry(child, entry)) {
++		if (xa_is_node(entry)) {
+ 			child = entry_to_node(entry);
+ 			offset = 0;
+ 			continue;
+@@ -896,7 +873,7 @@ static void radix_tree_free_nodes(struct radix_tree_node *node)
+ static inline int insert_entries(struct radix_tree_node *node,
+ 		void __rcu **slot, void *item, unsigned order, bool replace)
+ {
+-	struct radix_tree_node *child;
++	void *sibling;
+ 	unsigned i, n, tag, offset, tags = 0;
+ 
+ 	if (node) {
+@@ -914,7 +891,7 @@ static inline int insert_entries(struct radix_tree_node *node,
+ 		offset = offset & ~(n - 1);
+ 		slot = &node->slots[offset];
+ 	}
+-	child = node_to_entry(slot);
++	sibling = xa_mk_sibling(offset);
+ 
+ 	for (i = 0; i < n; i++) {
+ 		if (slot[i]) {
+@@ -931,7 +908,7 @@ static inline int insert_entries(struct radix_tree_node *node,
+ 	for (i = 0; i < n; i++) {
+ 		struct radix_tree_node *old = rcu_dereference_raw(slot[i]);
+ 		if (i) {
+-			rcu_assign_pointer(slot[i], child);
++			rcu_assign_pointer(slot[i], sibling);
+ 			for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+ 				if (tags & (1 << tag))
+ 					tag_clear(node, tag, offset + i);
+@@ -941,9 +918,7 @@ static inline int insert_entries(struct radix_tree_node *node,
+ 				if (tags & (1 << tag))
+ 					tag_set(node, tag, offset);
+ 		}
+-		if (radix_tree_is_internal_node(old) &&
+-					!is_sibling_entry(node, old) &&
+-					(old != RADIX_TREE_RETRY))
++		if (xa_is_node(old))
+ 			radix_tree_free_nodes(old);
+ 		if (xa_is_value(old))
+ 			node->exceptional--;
+@@ -1102,10 +1077,10 @@ static inline void replace_sibling_entries(struct radix_tree_node *node,
+ 				void __rcu **slot, int count, int exceptional)
+ {
+ #ifdef CONFIG_RADIX_TREE_MULTIORDER
+-	void *ptr = node_to_entry(slot);
+-	unsigned offset = get_slot_offset(node, slot) + 1;
++	unsigned offset = get_slot_offset(node, slot);
++	void *ptr = xa_mk_sibling(offset);
+ 
+-	while (offset < RADIX_TREE_MAP_SIZE) {
++	while (++offset < RADIX_TREE_MAP_SIZE) {
+ 		if (rcu_dereference_raw(node->slots[offset]) != ptr)
+ 			break;
+ 		if (count < 0) {
+@@ -1113,7 +1088,6 @@ static inline void replace_sibling_entries(struct radix_tree_node *node,
+ 			node->count--;
+ 		}
+ 		node->exceptional += exceptional;
+-		offset++;
+ 	}
+ #endif
+ }
+@@ -1312,8 +1286,7 @@ int radix_tree_split(struct radix_tree_root *root, unsigned long index,
+ 			tags |= 1 << tag;
+ 
+ 	for (end = offset + 1; end < RADIX_TREE_MAP_SIZE; end++) {
+-		if (!is_sibling_entry(parent,
+-				rcu_dereference_raw(parent->slots[end])))
++		if (!xa_is_sibling(rcu_dereference_raw(parent->slots[end])))
+ 			break;
+ 		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+ 			if (tags & (1 << tag))
+@@ -1609,11 +1582,9 @@ static void set_iter_tags(struct radix_tree_iter *iter,
+ static void __rcu **skip_siblings(struct radix_tree_node **nodep,
+ 			void __rcu **slot, struct radix_tree_iter *iter)
+ {
+-	void *sib = node_to_entry(slot - 1);
+-
+ 	while (iter->index < iter->next_index) {
+ 		*nodep = rcu_dereference_raw(*slot);
+-		if (*nodep && *nodep != sib)
++		if (*nodep && !xa_is_sibling(*nodep))
+ 			return slot;
+ 		slot++;
+ 		iter->index = __radix_tree_iter_add(iter, 1);
+@@ -1764,7 +1735,7 @@ void __rcu **radix_tree_next_chunk(const struct radix_tree_root *root,
+ 				while (++offset	< RADIX_TREE_MAP_SIZE) {
+ 					void *slot = rcu_dereference_raw(
+ 							node->slots[offset]);
+-					if (is_sibling_entry(node, slot))
++					if (xa_is_sibling(slot))
+ 						continue;
+ 					if (slot)
+ 						break;
+@@ -2283,6 +2254,7 @@ void __init radix_tree_init(void)
+ 
+ 	BUILD_BUG_ON(RADIX_TREE_MAX_TAGS + __GFP_BITS_SHIFT > 32);
+ 	BUILD_BUG_ON(ROOT_IS_IDR & ~GFP_ZONEMASK);
++	BUILD_BUG_ON(XA_CHUNK_SIZE > 255);
+ 	radix_tree_node_cachep = kmem_cache_create("radix_tree_node",
+ 			sizeof(struct radix_tree_node), 0,
+ 			SLAB_PANIC | SLAB_RECLAIM_ACCOUNT,
 -- 
 2.17.0
 
