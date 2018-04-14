@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 09/63] xarray: Add xa_cmpxchg and xa_insert
-Date: Sat, 14 Apr 2018 07:12:22 -0700
-Message-ID: <20180414141316.7167-10-willy@infradead.org>
+Subject: [PATCH v11 51/63] dax: Fix use of zero page
+Date: Sat, 14 Apr 2018 07:13:04 -0700
+Message-ID: <20180414141316.7167-52-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jdeRTkg8FqlYq2KjBY56vujJBI/qOAiYyEFE1MqE1vo=; b=TIw4UFexPhy6tmLLcCeoVmarlG
- 6u0sNrWdAczyt+d4uiINvuZ5OMQiiupEj1cAH1VirtyM9/Sq7isjGCbUA42AA+gA4SBh1/CnSAQNo
- Tz3t0NAp1rD7Es3zW+VuGQEq9+vHq1NuzFkhO5Be5kjnC4RWdAt4dpDywwDyliHDXAbQ=;
+ bh=kO0TY+AG8mnwCvxUavVJq8o2dSt+DO4i4pVBnPyXu0o=; b=cmLUGKQ+fbje8IsO4t6N7q64sb
+ JgY1kaf+dfho1RdilcxdkBldzpANaHcjLuz59pbteAX6lcTDt/SncbmGjqagM++L+BcfyRrnys2rT
+ gW3Jrd9CgWU47qUn4pozPpunELGtBuzEFCphbheGsIvyWL3qzE8BozJFdLPOC7kYNHG8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=jdeRTkg8FqlYq2KjBY56vujJBI/qOAiYyEFE1MqE1vo=; b=COxfZwopCGV3+geomfHKaeFJt+
- dx+H8VvAkdpJwpoWz5fWTRPieT91HiaU5jq4k8FgNMsuIsDYovurFSWweq2LCKfh2SX5ObfFCw6oD
- 2F67MmvUigCNIHhVklX14IY87J0TVXy+p7V3PO1ocDg6bMomaWS24zKKMMaEGOUPF7S4=;
+ bh=kO0TY+AG8mnwCvxUavVJq8o2dSt+DO4i4pVBnPyXu0o=; b=KoYYcvq0ixN17rn7ul/AajC4r4
+ VUdiHcMeUXDXtzwZsx3QAWeTEpbU2IRYtWHMTeAAMIQMQP9/Yj3mvnvN+2z7/p1XzwmsuEhw/xZWg
+ U3w1/1wgt5UNH1wWnawkcYhBpWd0kkWbkVKvh7vB6ux2R300u/kFF+9lExxB9CjXalcw=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jdeRTkg8FqlYq2KjBY56vujJBI/qOAiYyEFE1MqE1vo=; b=tcVR02X5hHW4lB5cUGtZcRVbK
- M4X24//OuPuCRZaWigFJEcP8FwcM4QzFkCV+r0yyN+OqLNujD1k85u9oM32fnWMDNtAJJ4UcHIESQ
- wEFa4uRrWkCYt/iw2o4j7c8KYBrTZvqRyTfDiGJgSSZrEZmF1POfFrePLU8d979YHBiRh8W4Iy2oV
- 5OJ6d0+SSEoVSUAlnqcNxAIWNQC3vcibu7kPlAdth4Xx64M7pRqcysBwSn75mBZNdOI6h46d/9/+D
- kVS5O2BpzvBWS7lf+QZcLF2OEMEgaUlgKu5qFsaR4FOtaKMcbUIKtdcuOG5/ZEh4fU8Ci8S+3/HB2
- bu+r3fYlA==;
+ bh=kO0TY+AG8mnwCvxUavVJq8o2dSt+DO4i4pVBnPyXu0o=; b=Ivjdw/VDHAEI8Zyai5FPArLxj
+ L/pWzu8BsdlLzVIe7P9nVpXtjs0uLIkxf8X5qaEeSyYDfvvrl+S9fXSHIJo8BxXDq+/t+xn2vOl3u
+ TyZ8Dup6TIJMnFMb5LAtIcIdwEiPejNvUVb4EPLzEQQgw4dp/Tcy1WRDlcJADIJ1h3N0c2YBZrm3l
+ jROavAlVLdkX8MQ+NrbVhcoES050lRgADpX7h01GApMsN+JnBjqcR7Y3LapBhxZcPSeXZYHypBZha
+ jAgKSPdOfVKMzaHhJJwqg5VbS13bGRSwBSLpaEn0k2Xejk4fBSl9MB43kUK1gNgIFKJWudkGPVfKt
+ JEOb/ACpg==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,217 +53,37 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Like cmpxchg(), xa_cmpxchg will only store to the index if the current
-entry matches the old entry.  It returns the current entry, which is
-usually more useful than the errno returned by radix_tree_insert().
-For the users who really only want the errno, the xa_insert() wrapper
-provides a more convenient calling convention.
+Use my_zero_pfn instead of ZERO_PAGE, and pass the vaddr to it so it
+works on MIPS and s390.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h                 | 60 ++++++++++++++++++++++
- lib/xarray.c                           | 71 ++++++++++++++++++++++++++
- tools/testing/radix-tree/xarray-test.c | 10 ++++
- 3 files changed, 141 insertions(+)
+ fs/dax.c | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 51b6cdbb374b..78acafe109ab 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -218,6 +218,8 @@ struct xarray {
- void xa_init_flags(struct xarray *, gfp_t flags);
- void *xa_load(struct xarray *, unsigned long index);
- void *xa_store(struct xarray *, unsigned long index, void *entry, gfp_t);
-+void *xa_cmpxchg(struct xarray *, unsigned long index,
-+			void *old, void *entry, gfp_t);
- bool xa_get_tag(struct xarray *, unsigned long index, xa_tag_t);
- void xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
- void xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
-@@ -277,6 +279,34 @@ static inline bool xa_tagged(const struct xarray *xa, xa_tag_t tag)
- 	return xa->xa_flags & XA_FLAGS_TAG(tag);
- }
+diff --git a/fs/dax.c b/fs/dax.c
+index e014c99b21fd..b0efb0a9604a 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -909,17 +909,9 @@ static int dax_load_hole(struct address_space *mapping, void *entry,
+ 	struct inode *inode = mapping->host;
+ 	unsigned long vaddr = vmf->address;
+ 	int ret = VM_FAULT_NOPAGE;
+-	struct page *zero_page;
+ 	void *entry2;
+-	pfn_t pfn;
+-
+-	zero_page = ZERO_PAGE(0);
+-	if (unlikely(!zero_page)) {
+-		ret = VM_FAULT_OOM;
+-		goto out;
+-	}
++	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
  
-+/**
-+ * xa_insert() - Store this entry in the XArray unless another entry is
-+ *			already present.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ * @entry: New entry.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * If you would rather see the existing entry in the array, use xa_cmpxchg().
-+ * This function is for users who don't care what the entry is, only that
-+ * one is present.
-+ *
-+ * Context: Process context.  Takes and releases the xa_lock.
-+ *	    May sleep if the @gfp flags permit.
-+ * Return: 0 if the store succeeded.  -EEXIST if another entry was present.
-+ * 	   -ENOMEM if memory could not be allocated.
-+ */
-+static inline int xa_insert(struct xarray *xa, unsigned long index,
-+		void *entry, gfp_t gfp)
-+{
-+	void *curr = xa_cmpxchg(xa, index, NULL, entry, gfp);
-+	if (!curr)
-+		return 0;
-+	if (xa_is_err(curr))
-+		return xa_err(curr);
-+	return -EEXIST;
-+}
-+
- #define xa_trylock(xa)		spin_trylock(&(xa)->xa_lock)
- #define xa_lock(xa)		spin_lock(&(xa)->xa_lock)
- #define xa_unlock(xa)		spin_unlock(&(xa)->xa_lock)
-@@ -296,9 +326,39 @@ static inline bool xa_tagged(const struct xarray *xa, xa_tag_t tag)
-  */
- void *__xa_erase(struct xarray *, unsigned long index);
- void *__xa_store(struct xarray *, unsigned long index, void *entry, gfp_t);
-+void *__xa_cmpxchg(struct xarray *, unsigned long index, void *old,
-+		void *entry, gfp_t);
- void __xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
- void __xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
- 
-+/**
-+ * __xa_insert() - Store this entry in the XArray unless another entry is
-+ *			already present.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ * @entry: New entry.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * If you would rather see the existing entry in the array, use __xa_cmpxchg().
-+ * This function is for users who don't care what the entry is, only that
-+ * one is present.
-+ *
-+ * Context: Any context.  Expects xa_lock to be held on entry.  May
-+ *	    release and reacquire xa_lock if the @gfp flags permit.
-+ * Return: 0 if the store succeeded.  -EEXIST if another entry was present.
-+ *	   -ENOMEM if memory could not be allocated.
-+ */
-+static inline int __xa_insert(struct xarray *xa, unsigned long index,
-+		void *entry, gfp_t gfp)
-+{
-+	void *curr = __xa_cmpxchg(xa, index, NULL, entry, gfp);
-+	if (!curr)
-+		return 0;
-+	if (xa_is_err(curr))
-+		return xa_err(curr);
-+	return -EEXIST;
-+}
-+
- /* Everything below here is the Advanced API.  Proceed with caution. */
- 
- /*
-diff --git a/lib/xarray.c b/lib/xarray.c
-index de77a2c9b3a1..c9228a0953d7 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -951,6 +951,77 @@ void *__xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
- }
- EXPORT_SYMBOL(__xa_store);
- 
-+/**
-+ * xa_cmpxchg() - Conditionally replace an entry in the XArray.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ * @old: Old value to test against.
-+ * @entry: New value to place in array.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * If the entry at @index is the same as @old, replace it with @entry.
-+ * If the return value is equal to @old, then the exchange was successful.
-+ *
-+ * Context: Process context.  Takes and releases the xa_lock.  May sleep
-+ * if the @gfp flags permit.
-+ * Return: The old value at this index or xa_err() if an error happened.
-+ */
-+void *xa_cmpxchg(struct xarray *xa, unsigned long index,
-+			void *old, void *entry, gfp_t gfp)
-+{
-+	XA_STATE(xas, xa, index);
-+	void *curr;
-+
-+	if (WARN_ON_ONCE(xa_is_internal(entry)))
-+		return XA_ERROR(-EINVAL);
-+
-+	do {
-+		xas_lock(&xas);
-+		curr = xas_load(&xas);
-+		if (curr == old)
-+			xas_store(&xas, entry);
-+		xas_unlock(&xas);
-+	} while (xas_nomem(&xas, gfp));
-+
-+	return xas_result(&xas, curr);
-+}
-+EXPORT_SYMBOL(xa_cmpxchg);
-+
-+/**
-+ * __xa_cmpxchg() - Store this entry in the XArray.
-+ * @xa: XArray.
-+ * @index: Index into array.
-+ * @old: Old value to test against.
-+ * @entry: New entry.
-+ * @gfp: Memory allocation flags.
-+ *
-+ * You must already be holding the xa_lock when calling this function.
-+ * It will drop the lock if needed to allocate memory, and then reacquire
-+ * it afterwards.
-+ *
-+ * Context: Any context.  Expects xa_lock to be held on entry.  May
-+ * release and reacquire xa_lock if @gfp flags permit.
-+ * Return: The old entry at this index or xa_err() if an error happened.
-+ */
-+void *__xa_cmpxchg(struct xarray *xa, unsigned long index,
-+			void *old, void *entry, gfp_t gfp)
-+{
-+	XA_STATE(xas, xa, index);
-+	void *curr;
-+
-+	if (WARN_ON_ONCE(xa_is_internal(entry)))
-+		return XA_ERROR(-EINVAL);
-+
-+	do {
-+		curr = xas_load(&xas);
-+		if (curr == old)
-+			xas_store(&xas, entry);
-+	} while (__xas_nomem(&xas, gfp));
-+
-+	return xas_result(&xas, curr);
-+}
-+EXPORT_SYMBOL(__xa_cmpxchg);
-+
- /**
-  * __xa_set_tag() - Set this tag on this entry while locked.
-  * @xa: XArray.
-diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
-index cb7d886dc89d..d71603bfa41d 100644
---- a/tools/testing/radix-tree/xarray-test.c
-+++ b/tools/testing/radix-tree/xarray-test.c
-@@ -77,6 +77,15 @@ void check_xa_shrink(struct xarray *xa)
- 	assert(xa_load(xa, 0) == xa_mk_value(0));
- }
- 
-+void check_cmpxchg(struct xarray *xa)
-+{
-+	assert(xa_empty(xa));
-+	assert(!xa_store(xa, 12345678, xa_mk_value(12345678), GFP_KERNEL));
-+	assert(!xa_cmpxchg(xa, 5, xa_mk_value(5), NULL, GFP_KERNEL));
-+	assert(xa_erase(xa, 12345678) == xa_mk_value(12345678));
-+	assert(xa_empty(xa));
-+}
-+
- void check_multi_store(struct xarray *xa)
- {
- 	unsigned long i, j, k;
-@@ -186,6 +195,7 @@ void xarray_checks(void)
- 	check_xa_shrink(&array);
- 	item_kill_tree(&array);
- 
-+	check_cmpxchg(&array);
- 	check_multi_store(&array);
- 	item_kill_tree(&array);
- 	check_multi_load(&array);
+-	pfn = page_to_pfn_t(zero_page);
+ 	entry2 = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 			DAX_ZERO_PAGE, false);
+ 	if (IS_ERR(entry2)) {
 -- 
 2.17.0
 
