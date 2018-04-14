@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 57/63] dax: Convert dax writeback to XArray
-Date: Sat, 14 Apr 2018 07:13:10 -0700
-Message-ID: <20180414141316.7167-58-willy@infradead.org>
+Subject: [PATCH v11 61/63] radix tree: Remove unused functions
+Date: Sat, 14 Apr 2018 07:13:14 -0700
+Message-ID: <20180414141316.7167-62-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=k2z49SArJgzX205RJh2rhu4Tr5v3tHTa5/0qUiIMQNk=; b=XL6W8/E17rmYsPY6Gn2hlD11q8
- gr45vRLVvn4vF8bLVwUT3LDLQq3r9pmfMnwbU7fJQROb0SaUGbJtXveruYi/AOytGFmRbvf99fy7q
- SM1X9I31TKOCaRBcXrx/yeErWy1tHoWTdcS08gQSgY7M0qHOL2mcJDytDCLGZVD/Tib0=;
+ bh=bAp+kOCa0SEMDWBKmmnLDXodoEle9SLSmREWjKrVaYo=; b=VfjyNna3hvtNKho2Bby80HcM9z
+ P7+qsjqCG4M2bAL0H3iG8DMw+LDnQGv7o6GdGJRHd50oMvfCm95V26EdDi6X1YNS74GND+RqgNRfv
+ LY8HofSRyyxP+lV9LSIiLbtL8YstajdIFla0VCEa6a6/uaue7x673Izn66rTH9RDg9ZQ=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=k2z49SArJgzX205RJh2rhu4Tr5v3tHTa5/0qUiIMQNk=; b=Kxd7pXx8LFrFifLoo8mkuvgjjK
- jo4D2FkJOx6EIOGnEpRY0OP9IkgTRPV3n77E5V98FFiSW4duuQjHME1Seko1LsLIPExS/ACYg1qRc
- cTZRXqqPVttzsXYUC9esJ9FzpaTl514YaANMmowdi+nAWxszs9fP9Wt5Etp6RBHwW/tM=;
+ bh=bAp+kOCa0SEMDWBKmmnLDXodoEle9SLSmREWjKrVaYo=; b=WZp4LZlk5zKyuj5nHdBMEGh075
+ ye4xXKfDUtKc40Tw9gl2H1FEmVI9AXnqqvd6OfR4Tgp1EuWWRH4ALAT8flJiKhtZi2MXT3A6IM3yF
+ jtnqDwGydDImgxEoB65TCcRGQ1Pqb7Po4hT9dg2A/x1kL1lvXpO9OutkjPGBob/sY9dc=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=k2z49SArJgzX205RJh2rhu4Tr5v3tHTa5/0qUiIMQNk=; b=WdBTIAJ6vR6n2N0xFzDlAkrzJ
- prEQvo6TJeqNNU2Ge9SgMhpsQLafmvaTFWuMnT5XMv42DXcLYXOZ/Cg80yP1yBEje0MZLHoUiW6Mo
- cUS0UneC3XiHCzrfEmqKzz8XtPQvdzBARMkWdbtpdovDk+ycEqMmfUQSNXUWOOTgocKvgJY+pxUZW
- hztDIiYXDDpRSPg2RKtDIU8gNy42cNhDbIWEIfUDJLHYZs2NH6VnghLjVD66SJVMnS9sIatR7SEMx
- D1McERq02gx3S2Vi39KoXSBJrKbkecyRmysYvSudwlZc33t/k7RE6c1ttPqSDiiO54PtsQ0POsZJX
- pK0GNAmlg==;
+ bh=bAp+kOCa0SEMDWBKmmnLDXodoEle9SLSmREWjKrVaYo=; b=E10NS2G/Wx87yb53jKaeHdAFk
+ 5almH83AKH1xbAaI6cGoH8WGDw2Z/kD+0026uTMRfoOjr/rSx1LxxjsHZQAd5KoRjkQTiqjrxQh3z
+ 8tqWLK+CDA1LZkN467MfwqpQpTeMMh7WsB6oFaW9e6QeiIBjFOFoAtCVew3vJzrDjQSMUwSatGedv
+ OkVCeam+XfO8YIgGGpFmfjlajTNNsfmIceMJnFFIMGWH9XtsK9PjejhvO80Sbp+SIsQGjKLuMhmFM
+ LdzV7aQpNACfDFa6AWIxO0eiA+5MYEkYoOj8hktWn/q0VF4RTM29m8+QoylTfhSMxlKKrY1JpSuoS
+ 4E+npmMYw==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,210 +53,900 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Use XArray iteration instead of a pagevec.
+The following functions are (now) unused:
+ - __radix_tree_delete_node
+ - radix_tree_for_each_contig
+ - radix_tree_gang_lookup_slot
+ - radix_tree_join
+ - radix_tree_maybe_preload_order
+ - radix_tree_split
+ - radix_tree_split_preload
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 129 ++++++++++++++++++++++++++-----------------------------
- 1 file changed, 61 insertions(+), 68 deletions(-)
+ .clang-format                          |   1 -
+ include/linux/radix-tree.h             |  33 +--
+ lib/radix-tree.c                       | 306 +------------------------
+ tools/testing/radix-tree/benchmark.c   |  91 --------
+ tools/testing/radix-tree/multiorder.c  | 247 --------------------
+ tools/testing/radix-tree/regression3.c |  22 --
+ 6 files changed, 4 insertions(+), 696 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index b68b2f81fa47..87da84c761a7 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -807,11 +807,9 @@ static void dax_entry_mkclean(struct address_space *mapping, pgoff_t index,
- 	i_mmap_unlock_read(mapping);
+diff --git a/.clang-format b/.clang-format
+index faffc0d5af4e..c1de31c6875e 100644
+--- a/.clang-format
++++ b/.clang-format
+@@ -323,7 +323,6 @@ ForEachMacros:
+   - 'protocol_for_each_card'
+   - 'protocol_for_each_dev'
+   - 'queue_for_each_hw_ctx'
+-  - 'radix_tree_for_each_contig'
+   - 'radix_tree_for_each_slot'
+   - 'radix_tree_for_each_tagged'
+   - 'rbtree_postorder_for_each_entry_safe'
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index f64beb9ba175..3f0cecc6122c 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -147,12 +147,11 @@ static inline unsigned int iter_shift(const struct radix_tree_iter *iter)
+  * radix_tree_lookup_slot
+  * radix_tree_tag_get
+  * radix_tree_gang_lookup
+- * radix_tree_gang_lookup_slot
+  * radix_tree_gang_lookup_tag
+  * radix_tree_gang_lookup_tag_slot
+  * radix_tree_tagged
+  *
+- * The first 8 functions are able to be called locklessly, using RCU. The
++ * The first 7 functions are able to be called locklessly, using RCU. The
+  * caller must ensure calls to these functions are made within rcu_read_lock()
+  * regions. Other readers (lock-free or otherwise) and modifications may be
+  * running concurrently.
+@@ -254,9 +253,6 @@ void radix_tree_iter_replace(struct radix_tree_root *,
+ 		const struct radix_tree_iter *, void __rcu **slot, void *entry);
+ void radix_tree_replace_slot(struct radix_tree_root *,
+ 			     void __rcu **slot, void *entry);
+-void __radix_tree_delete_node(struct radix_tree_root *,
+-			      struct radix_tree_node *,
+-			      radix_tree_update_node_t update_node);
+ void radix_tree_iter_delete(struct radix_tree_root *,
+ 			struct radix_tree_iter *iter, void __rcu **slot);
+ void *radix_tree_delete_item(struct radix_tree_root *, unsigned long, void *);
+@@ -266,12 +262,8 @@ void radix_tree_clear_tags(struct radix_tree_root *, struct radix_tree_node *,
+ unsigned int radix_tree_gang_lookup(const struct radix_tree_root *,
+ 			void **results, unsigned long first_index,
+ 			unsigned int max_items);
+-unsigned int radix_tree_gang_lookup_slot(const struct radix_tree_root *,
+-			void __rcu ***results, unsigned long *indices,
+-			unsigned long first_index, unsigned int max_items);
+ int radix_tree_preload(gfp_t gfp_mask);
+ int radix_tree_maybe_preload(gfp_t gfp_mask);
+-int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order);
+ void radix_tree_init(void);
+ void *radix_tree_tag_set(struct radix_tree_root *,
+ 			unsigned long index, unsigned int tag);
+@@ -296,12 +288,6 @@ static inline void radix_tree_preload_end(void)
+ 	preempt_enable();
  }
  
--static int dax_writeback_one(struct dax_device *dax_dev,
--		struct address_space *mapping, pgoff_t index, void *entry)
-+static int dax_writeback_one(struct xa_state *xas, struct dax_device *dax_dev,
-+		struct address_space *mapping, void *entry)
- {
--	struct radix_tree_root *pages = &mapping->i_pages;
--	void *entry2, **slot;
- 	unsigned long pfn;
- 	long ret = 0;
- 	size_t size;
-@@ -823,29 +821,35 @@ static int dax_writeback_one(struct dax_device *dax_dev,
- 	if (WARN_ON(!xa_is_value(entry)))
- 		return -EIO;
+-int radix_tree_split_preload(unsigned old_order, unsigned new_order, gfp_t);
+-int radix_tree_split(struct radix_tree_root *, unsigned long index,
+-			unsigned new_order);
+-int radix_tree_join(struct radix_tree_root *, unsigned long index,
+-			unsigned new_order, void *);
+-
+ void __rcu **idr_get_free(struct radix_tree_root *root,
+ 			      struct radix_tree_iter *iter, gfp_t gfp,
+ 			      unsigned long max);
+@@ -525,23 +511,6 @@ static __always_inline void __rcu **radix_tree_next_slot(void __rcu **slot,
+ 	     slot || (slot = radix_tree_next_chunk(root, iter, 0)) ;	\
+ 	     slot = radix_tree_next_slot(slot, iter, 0))
  
--	xa_lock_irq(pages);
--	entry2 = get_unlocked_mapping_entry(mapping, index, &slot);
--	/* Entry got punched out / reallocated? */
--	if (!entry2 || WARN_ON_ONCE(!xa_is_value(entry2)))
--		goto put_unlocked;
+-/**
+- * radix_tree_for_each_contig - iterate over contiguous slots
+- *
+- * @slot:	the void** variable for pointer to slot
+- * @root:	the struct radix_tree_root pointer
+- * @iter:	the struct radix_tree_iter pointer
+- * @start:	iteration starting index
+- *
+- * @slot points to radix tree slot, @iter->index contains its index.
+- */
+-#define radix_tree_for_each_contig(slot, root, iter, start)		\
+-	for (slot = radix_tree_iter_init(iter, start) ;			\
+-	     slot || (slot = radix_tree_next_chunk(root, iter,		\
+-				RADIX_TREE_ITER_CONTIG)) ;		\
+-	     slot = radix_tree_next_slot(slot, iter,			\
+-				RADIX_TREE_ITER_CONTIG))
+-
+ /**
+  * radix_tree_for_each_tagged - iterate over tagged slots
+  *
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index 71697bd25140..5a1f2b052194 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -41,9 +41,6 @@
+ #include <linux/xarray.h>
+ 
+ 
+-/* Number of nodes in fully populated tree of given height */
+-static unsigned long height_to_maxnodes[RADIX_TREE_MAX_PATH + 1] __read_mostly;
+-
+ /*
+  * Radix tree node cache.
+  */
+@@ -463,73 +460,6 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
+ }
+ EXPORT_SYMBOL(radix_tree_maybe_preload);
+ 
+-#ifdef CONFIG_RADIX_TREE_MULTIORDER
+-/*
+- * Preload with enough objects to ensure that we can split a single entry
+- * of order @old_order into many entries of size @new_order
+- */
+-int radix_tree_split_preload(unsigned int old_order, unsigned int new_order,
+-							gfp_t gfp_mask)
+-{
+-	unsigned top = 1 << (old_order % RADIX_TREE_MAP_SHIFT);
+-	unsigned layers = (old_order / RADIX_TREE_MAP_SHIFT) -
+-				(new_order / RADIX_TREE_MAP_SHIFT);
+-	unsigned nr = 0;
+-
+-	WARN_ON_ONCE(!gfpflags_allow_blocking(gfp_mask));
+-	BUG_ON(new_order >= old_order);
+-
+-	while (layers--)
+-		nr = nr * RADIX_TREE_MAP_SIZE + 1;
+-	return __radix_tree_preload(gfp_mask, top * nr);
+-}
+-#endif
+-
+-/*
+- * The same as function above, but preload number of nodes required to insert
+- * (1 << order) continuous naturally-aligned elements.
+- */
+-int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
+-{
+-	unsigned long nr_subtrees;
+-	int nr_nodes, subtree_height;
+-
+-	/* Preloading doesn't help anything with this gfp mask, skip it */
+-	if (!gfpflags_allow_blocking(gfp_mask)) {
+-		preempt_disable();
+-		return 0;
+-	}
+-
 -	/*
--	 * Entry got reallocated elsewhere? No need to writeback. We have to
--	 * compare pfns as we must not bail out due to difference in lockbit
--	 * or entry type.
+-	 * Calculate number and height of fully populated subtrees it takes to
+-	 * store (1 << order) elements.
 -	 */
--	if (dax_to_pfn(entry2) != dax_to_pfn(entry))
--		goto put_unlocked;
--	if (WARN_ON_ONCE(dax_is_empty_entry(entry) ||
--				dax_is_zero_entry(entry))) {
--		ret = -EIO;
--		goto put_unlocked;
-+	if (unlikely(dax_is_locked(entry))) {
-+		void *old_entry = entry;
-+
-+		entry = get_unlocked_entry(xas);
-+
-+		/* Entry got punched out / reallocated? */
-+		if (!entry || WARN_ON_ONCE(!xa_is_value(entry)))
-+			goto put_unlocked;
-+		/*
-+		 * Entry got reallocated elsewhere? No need to writeback.
-+		 * We have to compare pfns as we must not bail out due to
-+		 * difference in lockbit or entry type.
-+		 */
-+		if (dax_to_pfn(old_entry) != dax_to_pfn(entry))
-+			goto put_unlocked;
-+		if (WARN_ON_ONCE(dax_is_empty_entry(entry) ||
-+					dax_is_zero_entry(entry))) {
-+			ret = -EIO;
-+			goto put_unlocked;
-+		}
-+
-+		/* Another fsync thread may have already done this entry */
-+		if (!xas_get_tag(xas, PAGECACHE_TAG_TOWRITE))
-+			goto put_unlocked;
- 	}
- 
--	/* Another fsync thread may have already written back this entry */
--	if (!radix_tree_tag_get(pages, index, PAGECACHE_TAG_TOWRITE))
--		goto put_unlocked;
- 	/* Lock the entry to serialize with page faults */
--	entry = lock_slot(mapping, slot);
-+	dax_lock_entry(xas, entry);
-+
- 	/*
- 	 * We can clear the tag now but we have to be careful so that concurrent
- 	 * dax_writeback_one() calls for the same index cannot finish before we
-@@ -853,8 +857,8 @@ static int dax_writeback_one(struct dax_device *dax_dev,
- 	 * at the entry only under the i_pages lock and once they do that
- 	 * they will see the entry locked and wait for it to unlock.
- 	 */
--	radix_tree_tag_clear(pages, index, PAGECACHE_TAG_TOWRITE);
--	xa_unlock_irq(pages);
-+	xas_clear_tag(xas, PAGECACHE_TAG_TOWRITE);
-+	xas_unlock_irq(xas);
- 
- 	/*
- 	 * Even if dax_writeback_mapping_range() was given a wbc->range_start
-@@ -866,7 +870,7 @@ static int dax_writeback_one(struct dax_device *dax_dev,
- 	pfn = dax_to_pfn(entry);
- 	size = PAGE_SIZE << dax_entry_order(entry);
- 
--	dax_entry_mkclean(mapping, index, pfn);
-+	dax_entry_mkclean(mapping, xas->xa_index, pfn);
- 	dax_flush(dax_dev, page_address(pfn_to_page(pfn)), size);
- 	/*
- 	 * After we have flushed the cache, we can clear the dirty tag. There
-@@ -874,16 +878,17 @@ static int dax_writeback_one(struct dax_device *dax_dev,
- 	 * the pfn mappings are writeprotected and fault waits for mapping
- 	 * entry lock.
- 	 */
--	xa_lock_irq(pages);
--	radix_tree_tag_clear(pages, index, PAGECACHE_TAG_DIRTY);
--	xa_unlock_irq(pages);
--	trace_dax_writeback_one(mapping->host, index, size >> PAGE_SHIFT);
--	put_locked_mapping_entry(mapping, index);
-+	xas_reset(xas);
-+	xas_lock_irq(xas);
-+	xas_store(xas, entry);
-+	xas_clear_tag(xas, PAGECACHE_TAG_DIRTY);
-+
-+	trace_dax_writeback_one(mapping->host, xas->xa_index,
-+			size >> PAGE_SHIFT);
- 	return ret;
- 
-  put_unlocked:
--	put_unlocked_mapping_entry(mapping, index, entry2);
--	xa_unlock_irq(pages);
-+	put_unlocked_entry(xas, entry);
- 	return ret;
- }
- 
-@@ -895,13 +900,13 @@ static int dax_writeback_one(struct dax_device *dax_dev,
- int dax_writeback_mapping_range(struct address_space *mapping,
- 		struct block_device *bdev, struct writeback_control *wbc)
+-	nr_subtrees = 1 << order;
+-	for (subtree_height = 0; nr_subtrees > RADIX_TREE_MAP_SIZE;
+-			subtree_height++)
+-		nr_subtrees >>= RADIX_TREE_MAP_SHIFT;
+-
+-	/*
+-	 * The worst case is zero height tree with a single item at index 0 and
+-	 * then inserting items starting at ULONG_MAX - (1 << order).
+-	 *
+-	 * This requires RADIX_TREE_MAX_PATH nodes to build branch from root to
+-	 * 0-index item.
+-	 */
+-	nr_nodes = RADIX_TREE_MAX_PATH;
+-
+-	/* Plus branch to fully populated subtrees. */
+-	nr_nodes += RADIX_TREE_MAX_PATH - subtree_height;
+-
+-	/* Root node is shared. */
+-	nr_nodes--;
+-
+-	/* Plus nodes required to build subtrees. */
+-	nr_nodes += nr_subtrees * height_to_maxnodes[subtree_height];
+-
+-	return __radix_tree_preload(gfp_mask, nr_nodes);
+-}
+-
+ static unsigned radix_tree_load_root(const struct radix_tree_root *root,
+ 		struct radix_tree_node **nodep, unsigned long *maxindex)
  {
-+	XA_STATE(xas, &mapping->i_pages, wbc->range_start >> PAGE_SHIFT);
- 	struct inode *inode = mapping->host;
--	pgoff_t start_index, end_index;
--	pgoff_t indices[PAGEVEC_SIZE];
-+	pgoff_t end_index = wbc->range_end >> PAGE_SHIFT;
- 	struct dax_device *dax_dev;
--	struct pagevec pvec;
--	bool done = false;
--	int i, ret = 0;
-+	void *entry;
-+	int ret = 0;
-+	unsigned int scanned = 0;
- 
- 	if (WARN_ON_ONCE(inode->i_blkbits != PAGE_SHIFT))
- 		return -EIO;
-@@ -913,41 +918,29 @@ int dax_writeback_mapping_range(struct address_space *mapping,
- 	if (!dax_dev)
- 		return -EIO;
- 
--	start_index = wbc->range_start >> PAGE_SHIFT;
--	end_index = wbc->range_end >> PAGE_SHIFT;
--
--	trace_dax_writeback_range(inode, start_index, end_index);
-+	trace_dax_writeback_range(inode, xas.xa_index, end_index);
- 
--	tag_pages_for_writeback(mapping, start_index, end_index);
-+	tag_pages_for_writeback(mapping, xas.xa_index, end_index);
- 
--	pagevec_init(&pvec);
--	while (!done) {
--		pvec.nr = find_get_entries_tag(mapping, start_index,
--				PAGECACHE_TAG_TOWRITE, PAGEVEC_SIZE,
--				pvec.pages, indices);
--
--		if (pvec.nr == 0)
-+	xas_lock_irq(&xas);
-+	xas_for_each_tag(&xas, entry, end_index, PAGECACHE_TAG_TOWRITE) {
-+		ret = dax_writeback_one(&xas, dax_dev, mapping, entry);
-+		if (ret < 0) {
-+			mapping_set_error(mapping, ret);
- 			break;
--
--		for (i = 0; i < pvec.nr; i++) {
--			if (indices[i] > end_index) {
--				done = true;
--				break;
--			}
--
--			ret = dax_writeback_one(dax_dev, mapping, indices[i],
--					pvec.pages[i]);
--			if (ret < 0) {
--				mapping_set_error(mapping, ret);
--				goto out;
--			}
- 		}
--		start_index = indices[pvec.nr - 1] + 1;
-+		if (++scanned % XA_CHECK_SCHED)
-+			continue;
-+
-+		xas_pause(&xas);
-+		xas_unlock_irq(&xas);
-+		cond_resched();
-+		xas_lock_irq(&xas);
- 	}
--out:
-+	xas_unlock_irq(&xas);
- 	put_dax(dax_dev);
--	trace_dax_writeback_range_done(inode, start_index, end_index);
--	return (ret < 0 ? ret : 0);
-+	trace_dax_writeback_range_done(inode, xas.xa_index, end_index);
-+	return ret;
+@@ -1138,7 +1068,7 @@ void __radix_tree_replace(struct radix_tree_root *root,
+  * @slot:	pointer to slot
+  * @item:	new item to store in the slot.
+  *
+- * For use with radix_tree_lookup_slot(), radix_tree_gang_lookup_slot(),
++ * For use with radix_tree_lookup_slot() and
+  * radix_tree_gang_lookup_tag_slot().  Caller must hold tree write locked
+  * across slot lookup and replacement.
+  *
+@@ -1161,8 +1091,8 @@ EXPORT_SYMBOL(radix_tree_replace_slot);
+  * @slot:	pointer to slot
+  * @item:	new item to store in the slot.
+  *
+- * For use with radix_tree_split() and radix_tree_for_each_slot().
+- * Caller must hold tree write locked across split and replacement.
++ * For use with radix_tree_for_each_slot().
++ * Caller must hold tree write locked.
+  */
+ void radix_tree_iter_replace(struct radix_tree_root *root,
+ 				const struct radix_tree_iter *iter,
+@@ -1171,151 +1101,6 @@ void radix_tree_iter_replace(struct radix_tree_root *root,
+ 	__radix_tree_replace(root, iter->node, slot, item, NULL);
  }
- EXPORT_SYMBOL_GPL(dax_writeback_mapping_range);
  
+-#ifdef CONFIG_RADIX_TREE_MULTIORDER
+-/**
+- * radix_tree_join - replace multiple entries with one multiorder entry
+- * @root: radix tree root
+- * @index: an index inside the new entry
+- * @order: order of the new entry
+- * @item: new entry
+- *
+- * Call this function to replace several entries with one larger entry.
+- * The existing entries are presumed to not need freeing as a result of
+- * this call.
+- *
+- * The replacement entry will have all the tags set on it that were set
+- * on any of the entries it is replacing.
+- */
+-int radix_tree_join(struct radix_tree_root *root, unsigned long index,
+-			unsigned order, void *item)
+-{
+-	struct radix_tree_node *node;
+-	void __rcu **slot;
+-	int error;
+-
+-	BUG_ON(radix_tree_is_internal_node(item));
+-
+-	error = __radix_tree_create(root, index, order, &node, &slot);
+-	if (!error)
+-		error = insert_entries(node, slot, item, order, true);
+-	if (error > 0)
+-		error = 0;
+-
+-	return error;
+-}
+-
+-/**
+- * radix_tree_split - Split an entry into smaller entries
+- * @root: radix tree root
+- * @index: An index within the large entry
+- * @order: Order of new entries
+- *
+- * Call this function as the first step in replacing a multiorder entry
+- * with several entries of lower order.  After this function returns,
+- * loop over the relevant portion of the tree using radix_tree_for_each_slot()
+- * and call radix_tree_iter_replace() to set up each new entry.
+- *
+- * The tags from this entry are replicated to all the new entries.
+- *
+- * The radix tree should be locked against modification during the entire
+- * replacement operation.  Lock-free lookups will see RADIX_TREE_RETRY which
+- * should prompt RCU walkers to restart the lookup from the root.
+- */
+-int radix_tree_split(struct radix_tree_root *root, unsigned long index,
+-				unsigned order)
+-{
+-	struct radix_tree_node *parent, *node, *child;
+-	void __rcu **slot;
+-	unsigned int offset, end;
+-	unsigned n, tag, tags = 0;
+-	gfp_t gfp = root_gfp_mask(root);
+-
+-	if (!__radix_tree_lookup(root, index, &parent, &slot))
+-		return -ENOENT;
+-	if (!parent)
+-		return -ENOENT;
+-
+-	offset = get_slot_offset(parent, slot);
+-
+-	for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+-		if (tag_get(parent, tag, offset))
+-			tags |= 1 << tag;
+-
+-	for (end = offset + 1; end < RADIX_TREE_MAP_SIZE; end++) {
+-		if (!xa_is_sibling(rcu_dereference_raw(parent->slots[end])))
+-			break;
+-		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+-			if (tags & (1 << tag))
+-				tag_set(parent, tag, end);
+-		/* rcu_assign_pointer ensures tags are set before RETRY */
+-		rcu_assign_pointer(parent->slots[end], RADIX_TREE_RETRY);
+-	}
+-	rcu_assign_pointer(parent->slots[offset], RADIX_TREE_RETRY);
+-	parent->nr_values -= (end - offset);
+-
+-	if (order == parent->shift)
+-		return 0;
+-	if (order > parent->shift) {
+-		while (offset < end)
+-			offset += insert_entries(parent, &parent->slots[offset],
+-					RADIX_TREE_RETRY, order, true);
+-		return 0;
+-	}
+-
+-	node = parent;
+-
+-	for (;;) {
+-		if (node->shift > order) {
+-			child = radix_tree_node_alloc(gfp, node, root,
+-					node->shift - RADIX_TREE_MAP_SHIFT,
+-					offset, 0, 0);
+-			if (!child)
+-				goto nomem;
+-			if (node != parent) {
+-				node->count++;
+-				rcu_assign_pointer(node->slots[offset],
+-							node_to_entry(child));
+-				for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+-					if (tags & (1 << tag))
+-						tag_set(node, tag, offset);
+-			}
+-
+-			node = child;
+-			offset = 0;
+-			continue;
+-		}
+-
+-		n = insert_entries(node, &node->slots[offset],
+-					RADIX_TREE_RETRY, order, false);
+-		BUG_ON(n > RADIX_TREE_MAP_SIZE);
+-
+-		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+-			if (tags & (1 << tag))
+-				tag_set(node, tag, offset);
+-		offset += n;
+-
+-		while (offset == RADIX_TREE_MAP_SIZE) {
+-			if (node == parent)
+-				break;
+-			offset = node->offset;
+-			child = node;
+-			node = node->parent;
+-			rcu_assign_pointer(node->slots[offset],
+-						node_to_entry(child));
+-			offset++;
+-		}
+-		if ((node == parent) && (offset == end))
+-			return 0;
+-	}
+-
+- nomem:
+-	/* Shouldn't happen; did user forget to preload? */
+-	/* TODO: free all the allocated nodes */
+-	WARN_ON(1);
+-	return -ENOMEM;
+-}
+-#endif
+-
+ static void node_tag_set(struct radix_tree_root *root,
+ 				struct radix_tree_node *node,
+ 				unsigned int tag, unsigned int offset)
+@@ -1772,48 +1557,6 @@ radix_tree_gang_lookup(const struct radix_tree_root *root, void **results,
+ }
+ EXPORT_SYMBOL(radix_tree_gang_lookup);
+ 
+-/**
+- *	radix_tree_gang_lookup_slot - perform multiple slot lookup on radix tree
+- *	@root:		radix tree root
+- *	@results:	where the results of the lookup are placed
+- *	@indices:	where their indices should be placed (but usually NULL)
+- *	@first_index:	start the lookup from this key
+- *	@max_items:	place up to this many items at *results
+- *
+- *	Performs an index-ascending scan of the tree for present items.  Places
+- *	their slots at *@results and returns the number of items which were
+- *	placed at *@results.
+- *
+- *	The implementation is naive.
+- *
+- *	Like radix_tree_gang_lookup as far as RCU and locking goes. Slots must
+- *	be dereferenced with radix_tree_deref_slot, and if using only RCU
+- *	protection, radix_tree_deref_slot may fail requiring a retry.
+- */
+-unsigned int
+-radix_tree_gang_lookup_slot(const struct radix_tree_root *root,
+-			void __rcu ***results, unsigned long *indices,
+-			unsigned long first_index, unsigned int max_items)
+-{
+-	struct radix_tree_iter iter;
+-	void __rcu **slot;
+-	unsigned int ret = 0;
+-
+-	if (unlikely(!max_items))
+-		return 0;
+-
+-	radix_tree_for_each_slot(slot, root, &iter, first_index) {
+-		results[ret] = slot;
+-		if (indices)
+-			indices[ret] = iter.index;
+-		if (++ret == max_items)
+-			break;
+-	}
+-
+-	return ret;
+-}
+-EXPORT_SYMBOL(radix_tree_gang_lookup_slot);
+-
+ /**
+  *	radix_tree_gang_lookup_tag - perform multiple lookup on a radix tree
+  *	                             based on a tag
+@@ -1890,23 +1633,6 @@ radix_tree_gang_lookup_tag_slot(const struct radix_tree_root *root,
+ }
+ EXPORT_SYMBOL(radix_tree_gang_lookup_tag_slot);
+ 
+-/**
+- *	__radix_tree_delete_node    -    try to free node after clearing a slot
+- *	@root:		radix tree root
+- *	@node:		node containing @index
+- *	@update_node:	callback for changing leaf nodes
+- *
+- *	After clearing the slot at @index in @node from radix tree
+- *	rooted at @root, call this function to attempt freeing the
+- *	node and shrinking the tree.
+- */
+-void __radix_tree_delete_node(struct radix_tree_root *root,
+-			      struct radix_tree_node *node,
+-			      radix_tree_update_node_t update_node)
+-{
+-	delete_node(root, node, update_node);
+-}
+-
+ static bool __radix_tree_delete(struct radix_tree_root *root,
+ 				struct radix_tree_node *node, void __rcu **slot)
+ {
+@@ -2161,31 +1887,6 @@ radix_tree_node_ctor(void *arg)
+ 	INIT_LIST_HEAD(&node->private_list);
+ }
+ 
+-static __init unsigned long __maxindex(unsigned int height)
+-{
+-	unsigned int width = height * RADIX_TREE_MAP_SHIFT;
+-	int shift = RADIX_TREE_INDEX_BITS - width;
+-
+-	if (shift < 0)
+-		return ~0UL;
+-	if (shift >= BITS_PER_LONG)
+-		return 0UL;
+-	return ~0UL >> shift;
+-}
+-
+-static __init void radix_tree_init_maxnodes(void)
+-{
+-	unsigned long height_to_maxindex[RADIX_TREE_MAX_PATH + 1];
+-	unsigned int i, j;
+-
+-	for (i = 0; i < ARRAY_SIZE(height_to_maxindex); i++)
+-		height_to_maxindex[i] = __maxindex(i);
+-	for (i = 0; i < ARRAY_SIZE(height_to_maxnodes); i++) {
+-		for (j = i; j > 0; j--)
+-			height_to_maxnodes[i] += height_to_maxindex[j - 1] + 1;
+-	}
+-}
+-
+ static int radix_tree_cpu_dead(unsigned int cpu)
+ {
+ 	struct radix_tree_preload *rtp;
+@@ -2215,7 +1916,6 @@ void __init radix_tree_init(void)
+ 			sizeof(struct radix_tree_node), 0,
+ 			SLAB_PANIC | SLAB_RECLAIM_ACCOUNT,
+ 			radix_tree_node_ctor);
+-	radix_tree_init_maxnodes();
+ 	ret = cpuhp_setup_state_nocalls(CPUHP_RADIX_DEAD, "lib/radix:dead",
+ 					NULL, radix_tree_cpu_dead);
+ 	WARN_ON(ret < 0);
+diff --git a/tools/testing/radix-tree/benchmark.c b/tools/testing/radix-tree/benchmark.c
+index 99c40f3ed133..35741b9c2a4a 100644
+--- a/tools/testing/radix-tree/benchmark.c
++++ b/tools/testing/radix-tree/benchmark.c
+@@ -146,90 +146,6 @@ static void benchmark_size(unsigned long size, unsigned long step, int order)
+ 	rcu_barrier();
+ }
+ 
+-static long long  __benchmark_split(unsigned long index,
+-				    int old_order, int new_order)
+-{
+-	struct timespec start, finish;
+-	long long nsec;
+-	RADIX_TREE(tree, GFP_ATOMIC);
+-
+-	item_insert_order(&tree, index, old_order);
+-
+-	clock_gettime(CLOCK_MONOTONIC, &start);
+-	radix_tree_split(&tree, index, new_order);
+-	clock_gettime(CLOCK_MONOTONIC, &finish);
+-	nsec = (finish.tv_sec - start.tv_sec) * NSEC_PER_SEC +
+-	       (finish.tv_nsec - start.tv_nsec);
+-
+-	item_kill_tree(&tree);
+-
+-	return nsec;
+-
+-}
+-
+-static void benchmark_split(unsigned long size, unsigned long step)
+-{
+-	int i, j, idx;
+-	long long nsec = 0;
+-
+-
+-	for (idx = 0; idx < size; idx += step) {
+-		for (i = 3; i < 11; i++) {
+-			for (j = 0; j < i; j++) {
+-				nsec += __benchmark_split(idx, i, j);
+-			}
+-		}
+-	}
+-
+-	printv(2, "Size %8ld, step %8ld, split time %10lld ns\n",
+-			size, step, nsec);
+-
+-}
+-
+-static long long  __benchmark_join(unsigned long index,
+-			     unsigned order1, unsigned order2)
+-{
+-	unsigned long loc;
+-	struct timespec start, finish;
+-	long long nsec;
+-	void *item, *item2 = item_create(index + 1, order1);
+-	RADIX_TREE(tree, GFP_KERNEL);
+-
+-	item_insert_order(&tree, index, order2);
+-	item = radix_tree_lookup(&tree, index);
+-
+-	clock_gettime(CLOCK_MONOTONIC, &start);
+-	radix_tree_join(&tree, index + 1, order1, item2);
+-	clock_gettime(CLOCK_MONOTONIC, &finish);
+-	nsec = (finish.tv_sec - start.tv_sec) * NSEC_PER_SEC +
+-		(finish.tv_nsec - start.tv_nsec);
+-
+-	loc = find_item(&tree, item);
+-	if (loc == -1)
+-		free(item);
+-
+-	item_kill_tree(&tree);
+-
+-	return nsec;
+-}
+-
+-static void benchmark_join(unsigned long step)
+-{
+-	int i, j, idx;
+-	long long nsec = 0;
+-
+-	for (idx = 0; idx < 1 << 10; idx += step) {
+-		for (i = 1; i < 15; i++) {
+-			for (j = 0; j < i; j++) {
+-				nsec += __benchmark_join(idx, i, j);
+-			}
+-		}
+-	}
+-
+-	printv(2, "Size %8d, step %8ld, join time %10lld ns\n",
+-			1 << 10, step, nsec);
+-}
+-
+ void benchmark(void)
+ {
+ 	unsigned long size[] = {1 << 10, 1 << 20, 0};
+@@ -247,11 +163,4 @@ void benchmark(void)
+ 	for (c = 0; size[c]; c++)
+ 		for (s = 0; step[s]; s++)
+ 			benchmark_size(size[c], step[s] << 9, 9);
+-
+-	for (c = 0; size[c]; c++)
+-		for (s = 0; step[s]; s++)
+-			benchmark_split(size[c], step[s]);
+-
+-	for (s = 0; step[s]; s++)
+-		benchmark_join(step[s]);
+ }
+diff --git a/tools/testing/radix-tree/multiorder.c b/tools/testing/radix-tree/multiorder.c
+index ed51edc008fd..146b490d5823 100644
+--- a/tools/testing/radix-tree/multiorder.c
++++ b/tools/testing/radix-tree/multiorder.c
+@@ -355,251 +355,6 @@ void multiorder_tagged_iteration(void)
+ 	item_kill_tree(&tree);
+ }
+ 
+-/*
+- * Basic join checks: make sure we can't find an entry in the tree after
+- * a larger entry has replaced it
+- */
+-static void multiorder_join1(unsigned long index,
+-				unsigned order1, unsigned order2)
+-{
+-	unsigned long loc;
+-	void *item, *item2 = item_create(index + 1, order1);
+-	RADIX_TREE(tree, GFP_KERNEL);
+-
+-	item_insert_order(&tree, index, order2);
+-	item = radix_tree_lookup(&tree, index);
+-	radix_tree_join(&tree, index + 1, order1, item2);
+-	loc = find_item(&tree, item);
+-	if (loc == -1)
+-		free(item);
+-	item = radix_tree_lookup(&tree, index + 1);
+-	assert(item == item2);
+-	item_kill_tree(&tree);
+-}
+-
+-/*
+- * Check that the accounting of inline data entries is handled correctly
+- * by joining a data entry to a normal pointer.
+- */
+-static void multiorder_join2(unsigned order1, unsigned order2)
+-{
+-	RADIX_TREE(tree, GFP_KERNEL);
+-	struct radix_tree_node *node;
+-	void *item1 = item_create(0, order1);
+-	void *item2;
+-
+-	item_insert_order(&tree, 0, order2);
+-	radix_tree_insert(&tree, 1 << order2, xa_mk_value(5));
+-	item2 = __radix_tree_lookup(&tree, 1 << order2, &node, NULL);
+-	assert(item2 == xa_mk_value(5));
+-	assert(node->nr_values == 1);
+-
+-	item2 = radix_tree_lookup(&tree, 0);
+-	free(item2);
+-
+-	radix_tree_join(&tree, 0, order1, item1);
+-	item2 = __radix_tree_lookup(&tree, 1 << order2, &node, NULL);
+-	assert(item2 == item1);
+-	assert(node->nr_values == 0);
+-	item_kill_tree(&tree);
+-}
+-
+-/*
+- * This test revealed an accounting bug for inline data entries at one point.
+- * Nodes were being freed back into the pool with an elevated exception count
+- * by radix_tree_join() and then radix_tree_split() was failing to zero the
+- * count of value entries.
+- */
+-static void multiorder_join3(unsigned int order)
+-{
+-	RADIX_TREE(tree, GFP_KERNEL);
+-	struct radix_tree_node *node;
+-	void **slot;
+-	struct radix_tree_iter iter;
+-	unsigned long i;
+-
+-	for (i = 0; i < (1 << order); i++) {
+-		radix_tree_insert(&tree, i, xa_mk_value(5));
+-	}
+-
+-	radix_tree_join(&tree, 0, order, xa_mk_value(7));
+-	rcu_barrier();
+-
+-	radix_tree_split(&tree, 0, 0);
+-
+-	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+-		radix_tree_iter_replace(&tree, &iter, slot, xa_mk_value(5));
+-	}
+-
+-	__radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(node->nr_values == node->count);
+-
+-	item_kill_tree(&tree);
+-}
+-
+-static void multiorder_join(void)
+-{
+-	int i, j, idx;
+-
+-	for (idx = 0; idx < 1024; idx = idx * 2 + 3) {
+-		for (i = 1; i < 15; i++) {
+-			for (j = 0; j < i; j++) {
+-				multiorder_join1(idx, i, j);
+-			}
+-		}
+-	}
+-
+-	for (i = 1; i < 15; i++) {
+-		for (j = 0; j < i; j++) {
+-			multiorder_join2(i, j);
+-		}
+-	}
+-
+-	for (i = 3; i < 10; i++) {
+-		multiorder_join3(i);
+-	}
+-}
+-
+-static void check_mem(unsigned old_order, unsigned new_order, unsigned alloc)
+-{
+-	struct radix_tree_preload *rtp = &radix_tree_preloads;
+-	if (rtp->nr != 0)
+-		printv(2, "split(%u %u) remaining %u\n", old_order, new_order,
+-							rtp->nr);
+-	/*
+-	 * Can't check for equality here as some nodes may have been
+-	 * RCU-freed while we ran.  But we should never finish with more
+-	 * nodes allocated since they should have all been preloaded.
+-	 */
+-	if (nr_allocated > alloc)
+-		printv(2, "split(%u %u) allocated %u %u\n", old_order, new_order,
+-							alloc, nr_allocated);
+-}
+-
+-static void __multiorder_split(int old_order, int new_order)
+-{
+-	RADIX_TREE(tree, GFP_ATOMIC);
+-	void **slot;
+-	struct radix_tree_iter iter;
+-	unsigned alloc;
+-	struct item *item;
+-
+-	radix_tree_preload(GFP_KERNEL);
+-	assert(item_insert_order(&tree, 0, old_order) == 0);
+-	radix_tree_preload_end();
+-
+-	/* Wipe out the preloaded cache or it'll confuse check_mem() */
+-	radix_tree_cpu_dead(0);
+-
+-	item = radix_tree_tag_set(&tree, 0, 2);
+-
+-	radix_tree_split_preload(old_order, new_order, GFP_KERNEL);
+-	alloc = nr_allocated;
+-	radix_tree_split(&tree, 0, new_order);
+-	check_mem(old_order, new_order, alloc);
+-	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+-		radix_tree_iter_replace(&tree, &iter, slot,
+-					item_create(iter.index, new_order));
+-	}
+-	radix_tree_preload_end();
+-
+-	item_kill_tree(&tree);
+-	free(item);
+-}
+-
+-static void __multiorder_split2(int old_order, int new_order)
+-{
+-	RADIX_TREE(tree, GFP_KERNEL);
+-	void **slot;
+-	struct radix_tree_iter iter;
+-	struct radix_tree_node *node;
+-	void *item;
+-
+-	__radix_tree_insert(&tree, 0, old_order, xa_mk_value(5));
+-
+-	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(item == xa_mk_value(5));
+-	assert(node->nr_values > 0);
+-
+-	radix_tree_split(&tree, 0, new_order);
+-	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+-		radix_tree_iter_replace(&tree, &iter, slot,
+-					item_create(iter.index, new_order));
+-	}
+-
+-	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(item != xa_mk_value(5));
+-	assert(node->nr_values == 0);
+-
+-	item_kill_tree(&tree);
+-}
+-
+-static void __multiorder_split3(int old_order, int new_order)
+-{
+-	RADIX_TREE(tree, GFP_KERNEL);
+-	void **slot;
+-	struct radix_tree_iter iter;
+-	struct radix_tree_node *node;
+-	void *item;
+-
+-	__radix_tree_insert(&tree, 0, old_order, xa_mk_value(5));
+-
+-	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(item == xa_mk_value(5));
+-	assert(node->nr_values > 0);
+-
+-	radix_tree_split(&tree, 0, new_order);
+-	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+-		radix_tree_iter_replace(&tree, &iter, slot, xa_mk_value(7));
+-	}
+-
+-	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(item == xa_mk_value(7));
+-	assert(node->nr_values > 0);
+-
+-	item_kill_tree(&tree);
+-
+-	__radix_tree_insert(&tree, 0, old_order, xa_mk_value(5));
+-
+-	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(item == xa_mk_value(5));
+-	assert(node->nr_values > 0);
+-
+-	radix_tree_split(&tree, 0, new_order);
+-	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+-		if (iter.index == (1 << new_order))
+-			radix_tree_iter_replace(&tree, &iter, slot,
+-						xa_mk_value(7));
+-		else
+-			radix_tree_iter_replace(&tree, &iter, slot, NULL);
+-	}
+-
+-	item = __radix_tree_lookup(&tree, 1 << new_order, &node, NULL);
+-	assert(item == xa_mk_value(7));
+-	assert(node->count == node->nr_values);
+-	do {
+-		node = node->parent;
+-		if (!node)
+-			break;
+-		assert(node->count == 1);
+-		assert(node->nr_values == 0);
+-	} while (1);
+-
+-	item_kill_tree(&tree);
+-}
+-
+-static void multiorder_split(void)
+-{
+-	int i, j;
+-
+-	for (i = 3; i < 11; i++)
+-		for (j = 0; j < i; j++) {
+-			__multiorder_split(i, j);
+-			__multiorder_split2(i, j);
+-			__multiorder_split3(i, j);
+-		}
+-}
+-
+ static void multiorder_account(void)
+ {
+ 	RADIX_TREE(tree, GFP_KERNEL);
+@@ -640,8 +395,6 @@ void multiorder_checks(void)
+ 	multiorder_tag_tests();
+ 	multiorder_iteration();
+ 	multiorder_tagged_iteration();
+-	multiorder_join();
+-	multiorder_split();
+ 	multiorder_account();
+ 
+ 	radix_tree_cpu_dead(0);
+diff --git a/tools/testing/radix-tree/regression3.c b/tools/testing/radix-tree/regression3.c
+index ace2543c3eda..b55d87d89108 100644
+--- a/tools/testing/radix-tree/regression3.c
++++ b/tools/testing/radix-tree/regression3.c
+@@ -71,20 +71,6 @@ void regression3_test(void)
+ 	}
+ 	radix_tree_delete(&root, 1);
+ 
+-	first = true;
+-	radix_tree_for_each_contig(slot, &root, &iter, 0) {
+-		printv(2, "contig %ld %p\n", iter.index, *slot);
+-		if (first) {
+-			radix_tree_insert(&root, 1, ptr);
+-			first = false;
+-		}
+-		if (radix_tree_deref_retry(*slot)) {
+-			printv(2, "retry at %ld\n", iter.index);
+-			slot = radix_tree_iter_retry(&iter);
+-			continue;
+-		}
+-	}
+-
+ 	radix_tree_for_each_slot(slot, &root, &iter, 0) {
+ 		printv(2, "slot %ld %p\n", iter.index, *slot);
+ 		if (!iter.index) {
+@@ -93,14 +79,6 @@ void regression3_test(void)
+ 		}
+ 	}
+ 
+-	radix_tree_for_each_contig(slot, &root, &iter, 0) {
+-		printv(2, "contig %ld %p\n", iter.index, *slot);
+-		if (!iter.index) {
+-			printv(2, "next at %ld\n", iter.index);
+-			slot = radix_tree_iter_resume(slot, &iter);
+-		}
+-	}
+-
+ 	radix_tree_tag_set(&root, 0, 0);
+ 	radix_tree_tag_set(&root, 1, 0);
+ 	radix_tree_for_each_tagged(slot, &root, &iter, 0, 0) {
 -- 
 2.17.0
 
