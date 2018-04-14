@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 24/63] mm: Convert page-writeback to XArray
-Date: Sat, 14 Apr 2018 07:12:37 -0700
-Message-ID: <20180414141316.7167-25-willy@infradead.org>
+Subject: [PATCH v11 18/63] page cache: Add and replace pages
+ using the XArray
+Date: Sat, 14 Apr 2018 07:12:31 -0700
+Message-ID: <20180414141316.7167-19-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=bJqZAhMOY6zqGnd/H05dXVp3pb8TpMLt6YbVk20GAn0=; b=exFTWHR7v2t5GkcYrqdpfoSnMm
- V3FezegRtHecKwZxFqSPDCUxzbeZbPTRxhNuI6MxlBGOKbbsyWbI0O/NqTY6Gm/c7f8faBO2GucO8
- f/r7+6xeL/opEMjiDD+9KN219XyOFUKVbC4b9d+vqCkdbsVOpQM2rH4KtZ4Ri1ySiSfI=;
+ bh=LP3sOyaGv9/QJmOUSZ+iXjHYZZtoqhBqLA9garZQgmM=; b=gf8chpyELcg2kidL2i4FjW6lA0
+ WVIznMcax46+zC6qRCzAqALG9iadNtaJQLjdixBzMXwmdCePv4iauPDaERtajZrZQyEVGEkZoxnQ5
+ XHdfoDHsDUMI3qh7gK1yDST4atx0ZXapgKuAsFeTZqSerQQxetr0br/S3DN+75i2Sn70=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=bJqZAhMOY6zqGnd/H05dXVp3pb8TpMLt6YbVk20GAn0=; b=IT5w+6HaQQDSSOp2aWCC65ax4b
- ugErmZfY/ju56yyEMb6XVKb+kU8Rx9PBlKLJRkmymh5ooQehAdkYP8/+RDg3zMZUbaTtzepPvBXFF
- aCf1DT1GzE3FGF4qyr9Y6UA4NyAcmj+sjYtDd0MLzKFDnx4qHRwwvS1NhNKf3d1C46oM=;
+ bh=LP3sOyaGv9/QJmOUSZ+iXjHYZZtoqhBqLA9garZQgmM=; b=Bdo7w/0/dibDhpJI6WmMh9/vvp
+ PxJC8smio2OmadS6JzMEBK6bvfPMdQ+is9QSlAmZRZqzO7GC/AwilvV+Hyngw3sGZALiQh5cDATv8
+ DEM2wIDxNbFQYhRv2tcj4GIBn4uhJhz3nVT3JC1bqEM98JkNO7H1pG5WA7ku0spszY/Q=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=bJqZAhMOY6zqGnd/H05dXVp3pb8TpMLt6YbVk20GAn0=; b=L0sjg9k2uJDLXf2P5/qmCqdso
- kjlKr3GB9n5MOvC61cMWw0ZtZfI73aOPnuPtxYiEjr5ztSVacsA55+q7r2pVRh+uG0dGnLLzNF+Q0
- AIHERkk1CUPRtb6Y8lcthKBx/LVswJ9Rn/J7nygfCoElBWnTNZPFoaxd2ECNUkHOOIfAOiPjv4O6e
- bP0OhC38/ZEJxsWQAx5K1naxwLZ2HQeoQ82oD4jJqiDBJQQykr6/LUxuDaVlBy1YlFXr0SvDDxBHh
- RaUFYGtLUaY9uxt0bgWipkHzoG+DmuKzkBu/19+znccLtKUa++k28TBYi8Ndp+WY4zakJdaoylp3l
- YEjjM7Txg==;
+ bh=LP3sOyaGv9/QJmOUSZ+iXjHYZZtoqhBqLA9garZQgmM=; b=hCS8ivp4eHbgqr7uKYnL6T5H6
+ j3c5wdlGUaDh828AFZO7xJE8w3QsWEP7Y7N/EBAgjLMryPPgwn7Uq/MiWhQUgihZde6se84xVlJp0
+ 4XZyMPIEzk2ABgEmiXQGGTcrM2tlBBsmZBPmBiYZp71Nesmjk51kGhWX7QcBYpaqYIVFy5Zktza9L
+ N1rn2QZqZe6e1WyJ82TNs/EGGEVZ3uN5nYHgsbozT6C09jc7XfEcmUd7DqUB7+xQ/6jsZPITmUlFV
+ 5EyPrqHBVoXyOYIgTAmm7dE37PkCkufkw37v3nuqGDUjtl0CqbGsko6xRF05ff9lrKmHJmHMms5a9
+ JTeMlNX5Q==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,207 +54,241 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Includes moving mapping_tagged() to fs.h as a static inline, and
-changing it to return bool.
+Use the XArray APIs to add and replace pages in the page cache.  This
+removes two uses of the radix tree preload API and is significantly
+shorter code.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/fs.h  | 17 ++++++-----
- mm/page-writeback.c | 72 ++++++++++++++++-----------------------------
- 2 files changed, 36 insertions(+), 53 deletions(-)
+ include/linux/swap.h |   8 ++-
+ mm/filemap.c         | 143 ++++++++++++++++++-------------------------
+ 2 files changed, 67 insertions(+), 84 deletions(-)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 0a4e213f1069..620cce9a97f0 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -469,15 +469,18 @@ struct block_device {
- 	struct mutex		bd_fsfreeze_mutex;
- } __randomize_layout;
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index 1985940af479..a0ebb5deea2d 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -300,8 +300,12 @@ void *workingset_eviction(struct address_space *mapping, struct page *page);
+ bool workingset_refault(void *shadow);
+ void workingset_activation(struct page *page);
  
-+/* XArray tags, for tagging dirty and writeback pages in the pagecache. */
-+#define PAGECACHE_TAG_DIRTY	XA_TAG_0
-+#define PAGECACHE_TAG_WRITEBACK	XA_TAG_1
-+#define PAGECACHE_TAG_TOWRITE	XA_TAG_2
-+
- /*
-- * Radix-tree tags, for tagging dirty and writeback pages within the pagecache
-- * radix trees
-+ * Returns true if any of the pages in the mapping are marked with the tag.
-  */
--#define PAGECACHE_TAG_DIRTY	0
--#define PAGECACHE_TAG_WRITEBACK	1
--#define PAGECACHE_TAG_TOWRITE	2
--
--int mapping_tagged(struct address_space *mapping, int tag);
-+static inline bool mapping_tagged(struct address_space *mapping, xa_tag_t tag)
-+{
-+	return xa_tagged(&mapping->i_pages, tag);
-+}
+-/* Do not use directly, use workingset_lookup_update */
+-void workingset_update_node(struct radix_tree_node *node);
++/* Only track the nodes of mappings with shadow entries */
++void workingset_update_node(struct xa_node *node);
++#define mapping_set_update(xas, mapping) do {				\
++	if (!dax_mapping(mapping) && !shmem_mapping(mapping))		\
++		xas_set_update(xas, workingset_update_node);		\
++} while (0)
  
- static inline void i_mmap_lock_write(struct address_space *mapping)
- {
-diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 337c6afb3345..93b44af5abe2 100644
---- a/mm/page-writeback.c
-+++ b/mm/page-writeback.c
-@@ -2098,34 +2098,25 @@ void __init page_writeback_init(void)
-  * dirty pages in the file (thus it is important for this function to be quick
-  * so that it can tag pages faster than a dirtying process can create them).
+ /* Returns workingset_update_node() if the mapping has shadow entries. */
+ #define workingset_lookup_update(mapping)				\
+diff --git a/mm/filemap.c b/mm/filemap.c
+index f692000b0729..070b5e4527ac 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -111,35 +111,6 @@
+  *   ->tasklist_lock            (memory_failure, collect_procs_ao)
   */
--/*
-- * We tag pages in batches of WRITEBACK_TAG_BATCH to reduce the i_pages lock
-- * latency.
-- */
- void tag_pages_for_writeback(struct address_space *mapping,
- 			     pgoff_t start, pgoff_t end)
- {
--#define WRITEBACK_TAG_BATCH 4096
--	unsigned long tagged = 0;
--	struct radix_tree_iter iter;
+ 
+-static int page_cache_tree_insert(struct address_space *mapping,
+-				  struct page *page, void **shadowp)
+-{
+-	struct radix_tree_node *node;
 -	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, start);
-+	unsigned int tagged = 0;
-+	void *page;
- 
--	xa_lock_irq(&mapping->i_pages);
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, start,
--							PAGECACHE_TAG_DIRTY) {
--		if (iter.index > end)
--			break;
--		radix_tree_iter_tag_set(&mapping->i_pages, &iter,
--							PAGECACHE_TAG_TOWRITE);
--		tagged++;
--		if ((tagged % WRITEBACK_TAG_BATCH) != 0)
-+	xas_lock_irq(&xas);
-+	xas_for_each_tag(&xas, page, end, PAGECACHE_TAG_DIRTY) {
-+		xas_set_tag(&xas, PAGECACHE_TAG_TOWRITE);
-+		if (++tagged % XA_CHECK_SCHED)
- 			continue;
--		slot = radix_tree_iter_resume(slot, &iter);
--		xa_unlock_irq(&mapping->i_pages);
-+
-+		xas_pause(&xas);
-+		xas_unlock_irq(&xas);
- 		cond_resched();
--		xa_lock_irq(&mapping->i_pages);
-+		xas_lock_irq(&xas);
- 	}
--	xa_unlock_irq(&mapping->i_pages);
-+	xas_unlock_irq(&xas);
- }
- EXPORT_SYMBOL(tag_pages_for_writeback);
- 
-@@ -2165,7 +2156,7 @@ int write_cache_pages(struct address_space *mapping,
- 	pgoff_t done_index;
- 	int cycled;
- 	int range_whole = 0;
--	int tag;
-+	xa_tag_t tag;
- 
- 	pagevec_init(&pvec);
- 	if (wbc->range_cyclic) {
-@@ -2446,7 +2437,7 @@ void account_page_cleaned(struct page *page, struct address_space *mapping,
- 
- /*
-  * For address_spaces which do not use buffers.  Just tag the page as dirty in
-- * its radix tree.
-+ * the xarray.
+-	int error;
+-
+-	error = __radix_tree_create(&mapping->i_pages, page->index, 0,
+-				    &node, &slot);
+-	if (error)
+-		return error;
+-	if (*slot) {
+-		void *p;
+-
+-		p = radix_tree_deref_slot_protected(slot,
+-						    &mapping->i_pages.xa_lock);
+-		if (!xa_is_value(p))
+-			return -EEXIST;
+-
+-		mapping->nrexceptional--;
+-		if (shadowp)
+-			*shadowp = p;
+-	}
+-	__radix_tree_replace(&mapping->i_pages, node, slot, page,
+-			     workingset_lookup_update(mapping));
+-	mapping->nrpages++;
+-	return 0;
+-}
+-
+ static void page_cache_tree_delete(struct address_space *mapping,
+ 				   struct page *page, void *shadow)
+ {
+@@ -775,51 +746,44 @@ EXPORT_SYMBOL(file_write_and_wait_range);
+  * locked.  This function does not add the new page to the LRU, the
+  * caller must do that.
   *
-  * This is also used when a single buffer is being dirtied: we want to set the
-  * page dirty in that case, but not all the buffers.  This is a "bottom-up"
-@@ -2472,7 +2463,7 @@ int __set_page_dirty_nobuffers(struct page *page)
- 		BUG_ON(page_mapping(page) != mapping);
- 		WARN_ON_ONCE(!PagePrivate(page) && !PageUptodate(page));
- 		account_page_dirtied(page, mapping);
--		radix_tree_tag_set(&mapping->i_pages, page_index(page),
-+		__xa_set_tag(&mapping->i_pages, page_index(page),
- 				   PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irqrestore(&mapping->i_pages, flags);
- 		unlock_page_memcg(page);
-@@ -2635,13 +2626,13 @@ EXPORT_SYMBOL(__cancel_dirty_page);
-  * Returns true if the page was previously dirty.
-  *
-  * This is for preparing to put the page under writeout.  We leave the page
-- * tagged as dirty in the radix tree so that a concurrent write-for-sync
-+ * tagged as dirty in the xarray so that a concurrent write-for-sync
-  * can discover it via a PAGECACHE_TAG_DIRTY walk.  The ->writepage
-  * implementation will run either set_page_writeback() or set_page_dirty(),
-- * at which stage we bring the page's dirty flag and radix-tree dirty tag
-+ * at which stage we bring the page's dirty flag and xarray dirty tag
-  * back into sync.
-  *
-- * This incoherency between the page's dirty flag and radix-tree tag is
-+ * This incoherency between the page's dirty flag and xarray tag is
-  * unfortunate, but it only exists while the page is locked.
+- * The remove + add is atomic.  The only way this function can fail is
+- * memory allocation failure.
++ * The remove + add is atomic.  This function cannot fail.
   */
- int clear_page_dirty_for_io(struct page *page)
-@@ -2722,7 +2713,7 @@ int test_clear_page_writeback(struct page *page)
- 		xa_lock_irqsave(&mapping->i_pages, flags);
- 		ret = TestClearPageWriteback(page);
- 		if (ret) {
--			radix_tree_tag_clear(&mapping->i_pages, page_index(page),
-+			__xa_clear_tag(&mapping->i_pages, page_index(page),
- 						PAGECACHE_TAG_WRITEBACK);
- 			if (bdi_cap_account_writeback(bdi)) {
- 				struct bdi_writeback *wb = inode_to_wb(inode);
-@@ -2762,11 +2753,13 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
+ int replace_page_cache_page(struct page *old, struct page *new, gfp_t gfp_mask)
+ {
+-	int error;
++	struct address_space *mapping = old->mapping;
++	void (*freepage)(struct page *) = mapping->a_ops->freepage;
++	pgoff_t offset = old->index;
++	XA_STATE(xas, &mapping->i_pages, offset);
++	unsigned long flags;
  
- 	lock_page_memcg(page);
- 	if (mapping && mapping_use_writeback_tags(mapping)) {
-+		XA_STATE(xas, &mapping->i_pages, page_index(page));
- 		struct inode *inode = mapping->host;
- 		struct backing_dev_info *bdi = inode_to_bdi(inode);
- 		unsigned long flags;
+ 	VM_BUG_ON_PAGE(!PageLocked(old), old);
+ 	VM_BUG_ON_PAGE(!PageLocked(new), new);
+ 	VM_BUG_ON_PAGE(new->mapping, new);
+ 
+-	error = radix_tree_preload(gfp_mask & ~__GFP_HIGHMEM);
+-	if (!error) {
+-		struct address_space *mapping = old->mapping;
+-		void (*freepage)(struct page *);
+-		unsigned long flags;
+-
+-		pgoff_t offset = old->index;
+-		freepage = mapping->a_ops->freepage;
+-
+-		get_page(new);
+-		new->mapping = mapping;
+-		new->index = offset;
++	get_page(new);
++	new->mapping = mapping;
++	new->index = offset;
  
 -		xa_lock_irqsave(&mapping->i_pages, flags);
-+		xas_lock_irqsave(&xas, flags);
-+		xas_load(&xas);
- 		ret = TestSetPageWriteback(page);
- 		if (!ret) {
- 			bool on_wblist;
-@@ -2774,8 +2767,7 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- 			on_wblist = mapping_tagged(mapping,
- 						   PAGECACHE_TAG_WRITEBACK);
+-		__delete_from_page_cache(old, NULL);
+-		error = page_cache_tree_insert(mapping, new, NULL);
+-		BUG_ON(error);
++	xas_lock_irqsave(&xas, flags);
++	xas_store(&xas, new);
  
--			radix_tree_tag_set(&mapping->i_pages, page_index(page),
--						PAGECACHE_TAG_WRITEBACK);
-+			xas_set_tag(&xas, PAGECACHE_TAG_WRITEBACK);
- 			if (bdi_cap_account_writeback(bdi))
- 				inc_wb_stat(inode_to_wb(inode), WB_WRITEBACK);
- 
-@@ -2788,12 +2780,10 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- 				sb_mark_inode_writeback(mapping->host);
- 		}
- 		if (!PageDirty(page))
--			radix_tree_tag_clear(&mapping->i_pages, page_index(page),
--						PAGECACHE_TAG_DIRTY);
-+			xas_clear_tag(&xas, PAGECACHE_TAG_DIRTY);
- 		if (!keep_write)
--			radix_tree_tag_clear(&mapping->i_pages, page_index(page),
--						PAGECACHE_TAG_TOWRITE);
+-		/*
+-		 * hugetlb pages do not participate in page cache accounting.
+-		 */
+-		if (!PageHuge(new))
+-			__inc_node_page_state(new, NR_FILE_PAGES);
+-		if (PageSwapBacked(new))
+-			__inc_node_page_state(new, NR_SHMEM);
 -		xa_unlock_irqrestore(&mapping->i_pages, flags);
-+			xas_clear_tag(&xas, PAGECACHE_TAG_TOWRITE);
-+		xas_unlock_irqrestore(&xas, flags);
- 	} else {
- 		ret = TestSetPageWriteback(page);
- 	}
-@@ -2807,16 +2797,6 @@ int __test_set_page_writeback(struct page *page, bool keep_write)
- }
- EXPORT_SYMBOL(__test_set_page_writeback);
+-		mem_cgroup_migrate(old, new);
+-		radix_tree_preload_end();
+-		if (freepage)
+-			freepage(old);
+-		put_page(old);
+-	}
++	old->mapping = NULL;
++	/* hugetlb pages do not participate in page cache accounting. */
++	if (!PageHuge(old))
++		__dec_node_page_state(new, NR_FILE_PAGES);
++	if (!PageHuge(new))
++		__inc_node_page_state(new, NR_FILE_PAGES);
++	if (PageSwapBacked(old))
++		__dec_node_page_state(new, NR_SHMEM);
++	if (PageSwapBacked(new))
++		__inc_node_page_state(new, NR_SHMEM);
++	xas_unlock_irqrestore(&xas, flags);
++	mem_cgroup_migrate(old, new);
++	if (freepage)
++		freepage(old);
++	put_page(old);
  
--/*
-- * Return true if any of the pages in the mapping are marked with the
-- * passed tag.
-- */
--int mapping_tagged(struct address_space *mapping, int tag)
--{
--	return radix_tree_tagged(&mapping->i_pages, tag);
--}
--EXPORT_SYMBOL(mapping_tagged);
+-	return error;
++	return 0;
+ }
+ EXPORT_SYMBOL_GPL(replace_page_cache_page);
+ 
+@@ -828,12 +792,15 @@ static int __add_to_page_cache_locked(struct page *page,
+ 				      pgoff_t offset, gfp_t gfp_mask,
+ 				      void **shadowp)
+ {
++	XA_STATE(xas, &mapping->i_pages, offset);
+ 	int huge = PageHuge(page);
+ 	struct mem_cgroup *memcg;
+ 	int error;
++	void *old;
+ 
+ 	VM_BUG_ON_PAGE(!PageLocked(page), page);
+ 	VM_BUG_ON_PAGE(PageSwapBacked(page), page);
++	mapping_set_update(&xas, mapping);
+ 
+ 	if (!huge) {
+ 		error = mem_cgroup_try_charge(page, current->mm,
+@@ -842,39 +809,51 @@ static int __add_to_page_cache_locked(struct page *page,
+ 			return error;
+ 	}
+ 
+-	error = radix_tree_maybe_preload(gfp_mask & ~__GFP_HIGHMEM);
+-	if (error) {
+-		if (!huge)
+-			mem_cgroup_cancel_charge(page, memcg, false);
+-		return error;
+-	}
 -
+ 	get_page(page);
+ 	page->mapping = mapping;
+ 	page->index = offset;
+ 
+-	xa_lock_irq(&mapping->i_pages);
+-	error = page_cache_tree_insert(mapping, page, shadowp);
+-	radix_tree_preload_end();
+-	if (unlikely(error))
+-		goto err_insert;
++	do {
++		xas_lock_irq(&xas);
++		old = xas_create(&xas);
++		if (xas_error(&xas))
++			goto unlock;
++		if (xa_is_value(old)) {
++			mapping->nrexceptional--;
++			if (shadowp)
++				*shadowp = old;
++		} else if (old) {
++			xas_set_err(&xas, -EEXIST);
++			goto unlock;
++		}
++
++		xas_store(&xas, page);
++		mapping->nrpages++;
++
++		/*
++		 * hugetlb pages do not participate in
++		 * page cache accounting.
++		 */
++		if (!huge)
++			__inc_node_page_state(page, NR_FILE_PAGES);
++unlock:
++		xas_unlock_irq(&xas);
++	} while (xas_nomem(&xas, gfp_mask & ~__GFP_HIGHMEM));
++
++	if (xas_error(&xas))
++		goto error;
+ 
+-	/* hugetlb pages do not participate in page cache accounting. */
+-	if (!huge)
+-		__inc_node_page_state(page, NR_FILE_PAGES);
+-	xa_unlock_irq(&mapping->i_pages);
+ 	if (!huge)
+ 		mem_cgroup_commit_charge(page, memcg, false, false);
+ 	trace_mm_filemap_add_to_page_cache(page);
+ 	return 0;
+-err_insert:
++error:
+ 	page->mapping = NULL;
+ 	/* Leave page->index set: truncation relies upon it */
+-	xa_unlock_irq(&mapping->i_pages);
+ 	if (!huge)
+ 		mem_cgroup_cancel_charge(page, memcg, false);
+ 	put_page(page);
+-	return error;
++	return xas_error(&xas);
+ }
+ 
  /**
-  * wait_for_stable_page() - wait for writeback to finish, if necessary.
-  * @page:	The page to wait on.
 -- 
 2.17.0
 
