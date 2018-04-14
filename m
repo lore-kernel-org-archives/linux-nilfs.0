@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 47/63] fs: Convert writeback to XArray
-Date: Sat, 14 Apr 2018 07:13:00 -0700
-Message-ID: <20180414141316.7167-48-willy@infradead.org>
+Subject: [PATCH v11 52/63] dax: dax_insert_mapping_entry always
+ succeeds
+Date: Sat, 14 Apr 2018 07:13:05 -0700
+Message-ID: <20180414141316.7167-53-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jvxp0MvE20zFjWVPb7ElIXz78nUCaBwiKxKFv8/DiNE=; b=JxpgZnzaGI9QvKDlv74mW8tSlC
- HkIw+kLfWr9FasAawt9Gq5QKDkpTTt71ms11jwZQQxGnpWhHHNyDyWtrUfQqUaXiCZTCq5qMTSfqK
- UpxWDawzSrmB+1G/flY0XuqeZktWV7TFUjrmC5y4fdsx5lNJKSTnLhom27VuhMGNP86s=;
+ bh=gD3e4IXF+CbNHUlFmvkrg0YaE8l/vd5NzMmLl0Pt7j8=; b=PsZP/wNbfA/sDqX/ZIjACkoEYn
+ nn/iFA+sSydQcEaLtomRYpikgnNV5bA07sF7VCzQtPQZf+NN+10NvMW6U6Jjg1x6GKzKX1bzoPrQW
+ Akbilgi9/TWpp2IsE2nEsB879YUSx2T2cgISxCDldMr74jWXYw559Z2EL1xTbOq4NBtk=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=jvxp0MvE20zFjWVPb7ElIXz78nUCaBwiKxKFv8/DiNE=; b=KNBwPJ/NUdIquy3Rr3YrqbDHlP
- FPymqb2ry3oe9ZrHqqH6vm4RpKfBnqxiNn6PedFkamPynlwdp3kR8iAjSKmIDkGHUlw/0JUXcXiSA
- z3J1uR3+8oKy1INgDvsbvJxyoG5fQ1p9n2DbEpzSeb+l1pR2hw7S0gN28MoMcjvRJlpg=;
+ bh=gD3e4IXF+CbNHUlFmvkrg0YaE8l/vd5NzMmLl0Pt7j8=; b=DJL8vbV8I6iKxrLSOsJ+m/u7Xl
+ vh4ijU8EQ/DUonpY/6U+c/dbWsoAF/NinDIHwOALiMFFW0DVjLcaGsYyR52qF9NdPIDF5+P0EzDJS
+ AJmlwtnTV8/THuN08GDPYl+sn5K6zj/pPoLpqN77sErVYOiVFku6hPO0qULLCj9Db15w=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jvxp0MvE20zFjWVPb7ElIXz78nUCaBwiKxKFv8/DiNE=; b=gENPx0/tsfp/lLavYLyjLczeQ
- zABVwS3I9mpqmTl5JhBWJqI70jTweGbv5mqovut4XHaRipvFdmunRqF9hThxwgpJRUV2OmwXZGYO1
- XO9+PkaU3o90yEsRLVzw+yco7BCDMEaAxpjNLKQNN+LMinwIAIn76a9YcuusZGM8bIUvYQ0uKbE2M
- Of2gj/OEC4hsxgwBgt/HSezksDCHiQQfRTlqZB1QBcwJimbL8U3OEv1AO7y7d9LZIDnl6KOcO1bjd
- tpbWtaNvgaTovtp+c+Ox2uaM0nUd7CidLVDL3/yGgaJXpKM++PHpRpAukvf6FfN+0Koghb3uSr5Fh
- sAMrNMh2A==;
+ bh=gD3e4IXF+CbNHUlFmvkrg0YaE8l/vd5NzMmLl0Pt7j8=; b=FATEBd5lRoZseslOac0BIa1lj
+ uMhnVprWIodhq7jeeR1B7tmpTConahXRE+ksFqSCIAD1qjX8NmN+ugdgUwXEa/iVEaneAbg5G3W4Z
+ XInL9B5mvza04cBoiz6AfHPXs8h6EHUwUPdMQVqvVw7tq8DI4AT7iTsiue7ls0ckBGvHDHUTeRNeJ
+ yww6+K7c9bGaJDMJqqMBnK8lnUqXhbCb7XNm8rfesVJNmMM4gztf95BgaFRb67wL2V7M8jRBpaYY2
+ qJmLuY+x3RO7u03wIFna5VtA0C8tU5QZzPu7UVH2YFyZyuGG0Yla6+p+ZBQE0BnFXFJnd/K8jOE6A
+ STXzM9LAA==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,62 +54,67 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-A couple of short loops.
+It does not return an error, so we don't need to check the return value
+for IS_ERR().
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/fs-writeback.c | 25 +++++++++----------------
- 1 file changed, 9 insertions(+), 16 deletions(-)
+ fs/dax.c | 16 +---------------
+ 1 file changed, 1 insertion(+), 15 deletions(-)
 
-diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
-index 18e7807c74ea..87a2827721e0 100644
---- a/fs/fs-writeback.c
-+++ b/fs/fs-writeback.c
-@@ -339,9 +339,9 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
- 	struct address_space *mapping = inode->i_mapping;
- 	struct bdi_writeback *old_wb = inode->i_wb;
- 	struct bdi_writeback *new_wb = isw->new_wb;
--	struct radix_tree_iter iter;
-+	XA_STATE(xas, &mapping->i_pages, 0);
-+	struct page *page;
- 	bool switched = false;
--	void **slot;
+diff --git a/fs/dax.c b/fs/dax.c
+index b0efb0a9604a..c6086e7566c3 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -909,18 +909,12 @@ static int dax_load_hole(struct address_space *mapping, void *entry,
+ 	struct inode *inode = mapping->host;
+ 	unsigned long vaddr = vmf->address;
+ 	int ret = VM_FAULT_NOPAGE;
+-	void *entry2;
+ 	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
  
- 	/*
- 	 * By the time control reaches here, RCU grace period has passed
-@@ -375,25 +375,18 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
- 	 * to possibly dirty pages while PAGECACHE_TAG_WRITEBACK points to
- 	 * pages actually under writeback.
- 	 */
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, 0,
--				   PAGECACHE_TAG_DIRTY) {
--		struct page *page = radix_tree_deref_slot_protected(slot,
--						&mapping->i_pages.xa_lock);
--		if (likely(page) && PageDirty(page)) {
-+	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_DIRTY) {
-+		if (PageDirty(page)) {
- 			dec_wb_stat(old_wb, WB_RECLAIMABLE);
- 			inc_wb_stat(new_wb, WB_RECLAIMABLE);
- 		}
- 	}
+-	entry2 = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++	dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 			DAX_ZERO_PAGE, false);
+-	if (IS_ERR(entry2)) {
+-		ret = VM_FAULT_SIGBUS;
+-		goto out;
+-	}
  
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, 0,
--				   PAGECACHE_TAG_WRITEBACK) {
--		struct page *page = radix_tree_deref_slot_protected(slot,
--						&mapping->i_pages.xa_lock);
--		if (likely(page)) {
--			WARN_ON_ONCE(!PageWriteback(page));
--			dec_wb_stat(old_wb, WB_WRITEBACK);
--			inc_wb_stat(new_wb, WB_WRITEBACK);
+ 	vm_insert_mixed(vmf->vma, vaddr, pfn);
+-out:
+ 	trace_dax_load_hole(inode, vmf, ret);
+ 	return ret;
+ }
+@@ -1230,10 +1224,6 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 
+ 		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 						 0, write && !sync);
+-		if (IS_ERR(entry)) {
+-			error = PTR_ERR(entry);
+-			goto error_finish_iomap;
 -		}
-+	xas_set(&xas, 0);
-+	xas_for_each_tag(&xas, page, ULONG_MAX, PAGECACHE_TAG_WRITEBACK) {
-+		WARN_ON_ONCE(!PageWriteback(page));
-+		dec_wb_stat(old_wb, WB_WRITEBACK);
-+		inc_wb_stat(new_wb, WB_WRITEBACK);
- 	}
  
- 	wb_get(new_wb);
+ 		/*
+ 		 * If we are doing synchronous page fault and inode needs fsync,
+@@ -1317,8 +1307,6 @@ static int dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
+ 	pfn = page_to_pfn_t(zero_page);
+ 	ret = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 			DAX_PMD | DAX_ZERO_PAGE, false);
+-	if (IS_ERR(ret))
+-		goto fallback;
+ 
+ 	ptl = pmd_lock(vmf->vma->vm_mm, vmf->pmd);
+ 	if (!pmd_none(*(vmf->pmd))) {
+@@ -1440,8 +1428,6 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 
+ 		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+ 						DAX_PMD, write && !sync);
+-		if (IS_ERR(entry))
+-			goto finish_iomap;
+ 
+ 		/*
+ 		 * If we are doing synchronous page fault and inode needs fsync,
 -- 
 2.17.0
 
