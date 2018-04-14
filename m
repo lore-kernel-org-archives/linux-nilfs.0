@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 36/63] shmem: Convert shmem_confirm_swap to
- XArray
-Date: Sat, 14 Apr 2018 07:12:49 -0700
-Message-ID: <20180414141316.7167-37-willy@infradead.org>
+Subject: [PATCH v11 23/63] page cache: Convert
+ filemap_range_has_page to XArray
+Date: Sat, 14 Apr 2018 07:12:36 -0700
+Message-ID: <20180414141316.7167-24-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=8l3beMAsjLYABdZ9B8801cxeVmbjtSS6inrc+sVBqC4=; b=jafIQrC2sspETu8EIZjfZkqWHh
- wpRy96hyKXvtBzI/W3wA2fkgrXSWuPRSG+tzcaMm3jZLSb70jEsxx/++XcHHhiy6VXBPjU+j2I55Z
- Iiku/NHAFFXwf4So2LFeEYX1y1E77VjfaEU3QfFdX6cHpMOAxhZMxP5QJS6UnhKwAJRY=;
+ bh=UCapYsmRXk4fY2P03sxiTRKQhWeTVypTBTD8XEnqgLM=; b=N/gyU35l9gJufZuGxhodv1uJBl
+ DROXSUNo/zVrDeXY2l2+Ie7oImpn7/L0tkFdWm9Kj71jGeT7SGsT4AN8tUUqr6U0hzu7OwFQXub8w
+ Oyz8feaIPaDgrXypafCIfX3Jk56LuTRoiJT8Z3vGllVuebjq+sjOsGUnwrNzpPM3fxLU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=8l3beMAsjLYABdZ9B8801cxeVmbjtSS6inrc+sVBqC4=; b=QCc4fiuRIqpyMZjHTE+uW8OLVC
- rQBSWTGqlYvnRikmq22O1ZmwrBC4MLxmbMQDTjRFi1ViPFaFRFFnbB4K6BBMU2LgwfcC4nyyGz3Nb
- FVFurPfZDzePLwV/fsOUN/RGSeAv5qEFhdBXtaXWakWWmcbr7SJog9gakDHHU72M8cpg=;
+ bh=UCapYsmRXk4fY2P03sxiTRKQhWeTVypTBTD8XEnqgLM=; b=aJAqCrDSK9y6Fq1yNhPRz3k+ad
+ R8oUxfQUZaoZjcD6/EX+19PSaT8/Iu74xxafRZ3g15ZEJx2yaavuchyrq/oLAa69UO1Vyj9Ii4kNF
+ MGaq57jQOcV/5eAjKCBmTcddYn0sVZi0fg8B4ZWUKlpsPSkdZ2suwM+YGOFu2japbfVg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=8l3beMAsjLYABdZ9B8801cxeVmbjtSS6inrc+sVBqC4=; b=kH6WIsAuGvNqODeS3K159Dg10
- C3VwsXNnCQxCQC4Sobli4NuR6ZqXMyI0EjVlQnuX7z6a6T5dR5tzLGPB2tvL4+Urh6Sf7DMza/K05
- e+izKfBe4AqS9hhXRH+t4iPf9i5TXcrt83ow19cbMSyKUHAxvUX0DwqF025r9/ezsUM2A9ORcZRES
- xEB+TdJyTo9NlBRoIfm/fBhaCotu2fHyn/Flwf58QuiWmuzuLinbo5lgfLme3mwDFAq2fZcHu0llm
- np0VsTWb0YxBDsOM9vMd8adkuV4RyNWEJcdadHdGt256aTHGx3YgAmgbd4YVjPUIQZ8hRcR5brTZa
- x8tCdOpsw==;
+ bh=UCapYsmRXk4fY2P03sxiTRKQhWeTVypTBTD8XEnqgLM=; b=qJMYDhjtTBbftXdBbihNVRQwn
+ ws6Xmj5ZrpQrajFlnN18nl3TQCCDQlM0pBi+7fghNHLsnGTSD0meJBjNTCB/OwxLhwOLxY8oYWa8p
+ DPsBptdlCJgsIdAL9p8pdgOyq3FO89WMsKUWMt0TFAN5UmvQteXI152j1cbJotnHFfdUG5zalsPRz
+ 1WctS2Rqr2TW37dwMh5BqLeTlS1T7ouVzprV1ci+0Aqs/Es4fbbpnY6MRUsAsBD+4ajW0eK3v0w+2
+ kkVQU24DJBaGgKw1BIjZJ11Y6E6QqDqK6gz7bcjkebx54Xe68Rub6DDYVhy2MdsA2HSWCWPRkfRd/
+ dzIt8jNYQ==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,31 +54,58 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-xa_load has its own RCU locking, so we can eliminate it here.
+Instead of calling find_get_pages_range() and putting any reference,
+use xas_find() to iterate over any entries in the range, skipping the
+shadow/swap entries.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 7 +------
- 1 file changed, 1 insertion(+), 6 deletions(-)
+ mm/filemap.c | 26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index b538cd71f772..5b8a2d944a0c 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -348,12 +348,7 @@ static int shmem_xa_replace(struct address_space *mapping,
- static bool shmem_confirm_swap(struct address_space *mapping,
- 			       pgoff_t index, swp_entry_t swap)
+diff --git a/mm/filemap.c b/mm/filemap.c
+index bf231ebadb86..b260c83751b8 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -458,20 +458,30 @@ EXPORT_SYMBOL(filemap_flush);
+ bool filemap_range_has_page(struct address_space *mapping,
+ 			   loff_t start_byte, loff_t end_byte)
  {
--	void *item;
--
--	rcu_read_lock();
--	item = radix_tree_lookup(&mapping->i_pages, index);
--	rcu_read_unlock();
--	return item == swp_to_radix_entry(swap);
-+	return xa_load(&mapping->i_pages, index) == swp_to_radix_entry(swap);
- }
+-	pgoff_t index = start_byte >> PAGE_SHIFT;
+-	pgoff_t end = end_byte >> PAGE_SHIFT;
+ 	struct page *page;
++	XA_STATE(xas, &mapping->i_pages, start_byte >> PAGE_SHIFT);
++	pgoff_t max = end_byte >> PAGE_SHIFT;
  
- /*
+ 	if (end_byte < start_byte)
+ 		return false;
+ 
+-	if (mapping->nrpages == 0)
+-		return false;
++	rcu_read_lock();
++	do {
++		page = xas_find(&xas, max);
++		if (xas_retry(&xas, page))
++			continue;
++		/* Shadow entries don't count */
++		if (xa_is_value(page))
++			continue;
++		/*
++		 * We don't need to try to pin this page; we're about to
++		 * release the RCU lock anyway.  It is enough to know that
++		 * there was a page here recently.
++		 */
++	} while (0);
++	rcu_read_unlock();
+ 
+-	if (!find_get_pages_range(mapping, &index, end, 1, &page))
+-		return false;
+-	put_page(page);
+-	return true;
++	return page != NULL;
+ }
+ EXPORT_SYMBOL(filemap_range_has_page);
+ 
 -- 
 2.17.0
 
