@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 02/63] xarray: Change definition of sibling
- entries
-Date: Sat, 14 Apr 2018 07:12:15 -0700
-Message-ID: <20180414141316.7167-3-willy@infradead.org>
+Subject: [PATCH v11 29/63] mm: Convert __do_page_cache_readahead
+ to XArray
+Date: Sat, 14 Apr 2018 07:12:42 -0700
+Message-ID: <20180414141316.7167-30-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=1QOoHEvIV9Pze5ulQxnNFJJ820ZPb5hp33N3gwp1f3s=; b=Fa79Yk2IBWxzha67ifGPtACRx8
- YICIbHxRqLTtIxD+hMFJH3lZZHAhZ5mJCnwilFsymJ9uMWSxnRldRdgU3u7ruTZ+nmSCNbAa9/h3T
- lrMXm0NLYtQ9NPCT6QFRh+Q+e91jRtc1eC1wpirgJXdPCIDrh5jVTEtfaWSsajgH5dUs=;
+ bh=m69AnburJMDp0saJO8vz/YDQV3lsLgqic5Z6yOQi4B4=; b=EUJvYBgTLDCbEpmtLVdqHkHGN5
+ EuFNIKxL0tUpiFjykLVqC0rAfQs+kVMnUPD8Eydxi2d5LdQi4UuzXvBicC9iIIc0rrGIKXBulctks
+ KhIjuYUSV7eQ9UkZLBLAKucSIoFO3F4p01aiS47w+ZzqQZ4C/BNDmLh1U5QlK76Q/gVM=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=1QOoHEvIV9Pze5ulQxnNFJJ820ZPb5hp33N3gwp1f3s=; b=jp/g7l0nh2G97YmnEoppLVf3aL
- uBZSdcVbBVD3M6GuTWXnyf+YdNmb4DLMRQcCFItAgI5/vaSBBjynuonaXpm1795iljDrbQFI/xOOG
- VLWAdss/BZkTI3UcQTlOE8kqW2U+X7FYR0BmreeltAF0EyNq69nPeuY2OaYxLQwyVkAY=;
+ bh=m69AnburJMDp0saJO8vz/YDQV3lsLgqic5Z6yOQi4B4=; b=Eq9Ej3JShjaz1HxgKlu4sj3C+7
+ wl6/a+3Ybn4PAdnuCmEW//VHEp+XerckISqJmd98+UnaUKHCpqEus5ndo9jphKRmXdMTNGqqC9XCX
+ MZt7u63MeIpkqaIbC0YFxxX+9qcWFvRs46df1F28KX7VkazCcQBrnsFA7p+Hrb6aJEYg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=1QOoHEvIV9Pze5ulQxnNFJJ820ZPb5hp33N3gwp1f3s=; b=qU82HN0eUP+OozZI4JH3pPTrf
- HCOrtubrkBaqQg3xuFBQmkcZ6axVy6c8RzZFoMGPbA+sKRRxTFyPpRsfloy2z8ra4Gergm3//azHa
- Xb71GvUI28I14amg/4N7fajjxZ9Ppzksz2qMSI7llGAzJwEDBRXiyyDLbBfc5UpPmugs660hPRACy
- L9o+mcirFtqzEezLAMUoBZj1dzvkLiyQVms6ojtuwbkZ+BTcgGxQXNEoN/dvwY/7gyf6594UUqvJy
- YDGl0iwAVm8lYItN1wf+vBnVwE1IMitr5fcBJ8AlAbGwvM/LBu/RkHYcB313lmpdTOoRVt04+QRHl
- 2YZnB4xNA==;
+ bh=m69AnburJMDp0saJO8vz/YDQV3lsLgqic5Z6yOQi4B4=; b=dSSH7SGGo4lN7sdIAEx+lhfff
+ HbpOu2FJnoaxp9UH5J8xUPxqnXtlqtQzVuPKXfik88vs02WinqXo3V7t7wL0nSS0Hr9fhutZZVAuV
+ tSM2rFYKvPwxe6CYojJ3vEi8CEmeTLr5cCzvlnGRiBujjsish2T2jk/jai+v1SxVHakLmgXLz/Ptx
+ QIO9NxXuqmTnhGFL8ZosCQk6CzkyPjxbyIGD47fdl/BFLYPpZWhTDH+k7RnCOJE7DmboC54DS+1BK
+ huOQVUC2ASzCqqWP1/F2WiyljgC8mZEczY2ACOJsgolG/h21s4A/aCYypfYgbZRjJepWw8wHLRPW/
+ XHjVIoWYg==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,314 +54,28 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Instead of storing a pointer to the slot containing the canonical entry,
-store the offset of the slot.  Produces slightly more efficient code
-(~300 bytes) and simplifies the implementation.
+This one is trivial.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
-Reviewed-by: Josef Bacik <jbacik@fb.com>
 ---
- include/linux/xarray.h | 93 ++++++++++++++++++++++++++++++++++++++++++
- lib/radix-tree.c       | 66 +++++++++---------------------
- 2 files changed, 112 insertions(+), 47 deletions(-)
+ mm/readahead.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index f61806fd8002..283beb5aac58 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -22,6 +22,12 @@
-  * x1: Value entry
-  *
-  * Attempting to store internal entries in the XArray is a bug.
-+ *
-+ * Most internal entries are pointers to the next node in the tree.
-+ * The following internal entries have a special meaning:
-+ *
-+ * 0-62: Sibling entries
-+ * 256: Retry entry
-  */
+diff --git a/mm/readahead.c b/mm/readahead.c
+index c7ddcf60ac6d..50910c27b372 100644
+--- a/mm/readahead.c
++++ b/mm/readahead.c
+@@ -174,9 +174,7 @@ int __do_page_cache_readahead(struct address_space *mapping, struct file *filp,
+ 		if (page_offset > end_index)
+ 			break;
  
- #define BITS_PER_XA_VALUE	(BITS_PER_LONG - 1)
-@@ -63,6 +69,42 @@ static inline bool xa_is_value(const void *entry)
- 	return (unsigned long)entry & 1;
- }
- 
-+/*
-+ * xa_mk_internal() - Create an internal entry.
-+ * @v: Value to turn into an internal entry.
-+ *
-+ * Context: Any context.
-+ * Return: An XArray internal entry corresponding to this value.
-+ */
-+static inline void *xa_mk_internal(unsigned long v)
-+{
-+	return (void *)((v << 2) | 2);
-+}
-+
-+/*
-+ * xa_to_internal() - Extract the value from an internal entry.
-+ * @entry: XArray entry.
-+ *
-+ * Context: Any context.
-+ * Return: The value which was stored in the internal entry.
-+ */
-+static inline unsigned long xa_to_internal(const void *entry)
-+{
-+	return (unsigned long)entry >> 2;
-+}
-+
-+/*
-+ * xa_is_internal() - Is the entry an internal entry?
-+ * @entry: XArray entry.
-+ *
-+ * Context: Any context.
-+ * Return: %true if the entry is an internal entry.
-+ */
-+static inline bool xa_is_internal(const void *entry)
-+{
-+	return ((unsigned long)entry & 3) == 2;
-+}
-+
- #define xa_trylock(xa)		spin_trylock(&(xa)->xa_lock)
- #define xa_lock(xa)		spin_lock(&(xa)->xa_lock)
- #define xa_unlock(xa)		spin_unlock(&(xa)->xa_lock)
-@@ -75,4 +117,55 @@ static inline bool xa_is_value(const void *entry)
- #define xa_unlock_irqrestore(xa, flags) \
- 				spin_unlock_irqrestore(&(xa)->xa_lock, flags)
- 
-+/* Everything below here is the Advanced API.  Proceed with caution. */
-+
-+/*
-+ * The xarray is constructed out of a set of 'chunks' of pointers.  Choosing
-+ * the best chunk size requires some tradeoffs.  A power of two recommends
-+ * itself so that we can walk the tree based purely on shifts and masks.
-+ * Generally, the larger the better; as the number of slots per level of the
-+ * tree increases, the less tall the tree needs to be.  But that needs to be
-+ * balanced against the memory consumption of each node.  On a 64-bit system,
-+ * xa_node is currently 576 bytes, and we get 7 of them per 4kB page.  If we
-+ * doubled the number of slots per node, we'd get only 3 nodes per 4kB page.
-+ */
-+#ifndef XA_CHUNK_SHIFT
-+#define XA_CHUNK_SHIFT		(CONFIG_BASE_SMALL ? 4 : 6)
-+#endif
-+#define XA_CHUNK_SIZE		(1UL << XA_CHUNK_SHIFT)
-+#define XA_CHUNK_MASK		(XA_CHUNK_SIZE - 1)
-+
-+/* Private */
-+static inline bool xa_is_node(const void *entry)
-+{
-+	return xa_is_internal(entry) && (unsigned long)entry > 4096;
-+}
-+
-+/* Private */
-+static inline void *xa_mk_sibling(unsigned int offset)
-+{
-+	return xa_mk_internal(offset);
-+}
-+
-+/* Private */
-+static inline unsigned long xa_to_sibling(const void *entry)
-+{
-+	return xa_to_internal(entry);
-+}
-+
-+/**
-+ * xa_is_sibling() - Is the entry a sibling entry?
-+ * @entry: Entry retrieved from the XArray
-+ *
-+ * Return: %true if the entry is a sibling entry.
-+ */
-+static inline bool xa_is_sibling(const void *entry)
-+{
-+	return IS_ENABLED(CONFIG_RADIX_TREE_MULTIORDER) &&
-+		xa_is_internal(entry) &&
-+		(entry < xa_mk_sibling(XA_CHUNK_SIZE - 1));
-+}
-+
-+#define XA_RETRY_ENTRY		xa_mk_internal(256)
-+
- #endif /* _LINUX_XARRAY_H */
-diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-index c7246de3f367..dd4669b3c30e 100644
---- a/lib/radix-tree.c
-+++ b/lib/radix-tree.c
-@@ -38,6 +38,7 @@
- #include <linux/rcupdate.h>
- #include <linux/slab.h>
- #include <linux/string.h>
-+#include <linux/xarray.h>
- 
- 
- /* Number of nodes in fully populated tree of given height */
-@@ -98,24 +99,7 @@ static inline void *node_to_entry(void *ptr)
- 	return (void *)((unsigned long)ptr | RADIX_TREE_INTERNAL_NODE);
- }
- 
--#define RADIX_TREE_RETRY	node_to_entry(NULL)
--
--#ifdef CONFIG_RADIX_TREE_MULTIORDER
--/* Sibling slots point directly to another slot in the same node */
--static inline
--bool is_sibling_entry(const struct radix_tree_node *parent, void *node)
--{
--	void __rcu **ptr = node;
--	return (parent->slots <= ptr) &&
--			(ptr < parent->slots + RADIX_TREE_MAP_SIZE);
--}
--#else
--static inline
--bool is_sibling_entry(const struct radix_tree_node *parent, void *node)
--{
--	return false;
--}
--#endif
-+#define RADIX_TREE_RETRY	XA_RETRY_ENTRY
- 
- static inline unsigned long
- get_slot_offset(const struct radix_tree_node *parent, void __rcu **slot)
-@@ -129,16 +113,10 @@ static unsigned int radix_tree_descend(const struct radix_tree_node *parent,
- 	unsigned int offset = (index >> parent->shift) & RADIX_TREE_MAP_MASK;
- 	void __rcu **entry = rcu_dereference_raw(parent->slots[offset]);
- 
--#ifdef CONFIG_RADIX_TREE_MULTIORDER
--	if (radix_tree_is_internal_node(entry)) {
--		if (is_sibling_entry(parent, entry)) {
--			void __rcu **sibentry;
--			sibentry = (void __rcu **) entry_to_node(entry);
--			offset = get_slot_offset(parent, sibentry);
--			entry = rcu_dereference_raw(*sibentry);
--		}
-+	if (xa_is_sibling(entry)) {
-+		offset = xa_to_sibling(entry);
-+		entry = rcu_dereference_raw(parent->slots[offset]);
- 	}
--#endif
- 
- 	*nodep = (void *)entry;
- 	return offset;
-@@ -300,10 +278,10 @@ static void dump_node(struct radix_tree_node *node, unsigned long index)
- 		} else if (!radix_tree_is_internal_node(entry)) {
- 			pr_debug("radix entry %p offset %ld indices %lu-%lu parent %p\n",
- 					entry, i, first, last, node);
--		} else if (is_sibling_entry(node, entry)) {
-+		} else if (xa_is_sibling(entry)) {
- 			pr_debug("radix sblng %p offset %ld indices %lu-%lu parent %p val %p\n",
- 					entry, i, first, last, node,
--					*(void **)entry_to_node(entry));
-+					node->slots[xa_to_sibling(entry)]);
- 		} else {
- 			dump_node(entry_to_node(entry), first);
- 		}
-@@ -873,8 +851,7 @@ static void radix_tree_free_nodes(struct radix_tree_node *node)
- 
- 	for (;;) {
- 		void *entry = rcu_dereference_raw(child->slots[offset]);
--		if (radix_tree_is_internal_node(entry) &&
--					!is_sibling_entry(child, entry)) {
-+		if (xa_is_node(entry)) {
- 			child = entry_to_node(entry);
- 			offset = 0;
+-		rcu_read_lock();
+-		page = radix_tree_lookup(&mapping->i_pages, page_offset);
+-		rcu_read_unlock();
++		page = xa_load(&mapping->i_pages, page_offset);
+ 		if (page && !xa_is_value(page))
  			continue;
-@@ -896,7 +873,7 @@ static void radix_tree_free_nodes(struct radix_tree_node *node)
- static inline int insert_entries(struct radix_tree_node *node,
- 		void __rcu **slot, void *item, unsigned order, bool replace)
- {
--	struct radix_tree_node *child;
-+	void *sibling;
- 	unsigned i, n, tag, offset, tags = 0;
  
- 	if (node) {
-@@ -914,7 +891,7 @@ static inline int insert_entries(struct radix_tree_node *node,
- 		offset = offset & ~(n - 1);
- 		slot = &node->slots[offset];
- 	}
--	child = node_to_entry(slot);
-+	sibling = xa_mk_sibling(offset);
- 
- 	for (i = 0; i < n; i++) {
- 		if (slot[i]) {
-@@ -931,7 +908,7 @@ static inline int insert_entries(struct radix_tree_node *node,
- 	for (i = 0; i < n; i++) {
- 		struct radix_tree_node *old = rcu_dereference_raw(slot[i]);
- 		if (i) {
--			rcu_assign_pointer(slot[i], child);
-+			rcu_assign_pointer(slot[i], sibling);
- 			for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
- 				if (tags & (1 << tag))
- 					tag_clear(node, tag, offset + i);
-@@ -941,9 +918,7 @@ static inline int insert_entries(struct radix_tree_node *node,
- 				if (tags & (1 << tag))
- 					tag_set(node, tag, offset);
- 		}
--		if (radix_tree_is_internal_node(old) &&
--					!is_sibling_entry(node, old) &&
--					(old != RADIX_TREE_RETRY))
-+		if (xa_is_node(old))
- 			radix_tree_free_nodes(old);
- 		if (xa_is_value(old))
- 			node->exceptional--;
-@@ -1102,10 +1077,10 @@ static inline void replace_sibling_entries(struct radix_tree_node *node,
- 				void __rcu **slot, int count, int exceptional)
- {
- #ifdef CONFIG_RADIX_TREE_MULTIORDER
--	void *ptr = node_to_entry(slot);
--	unsigned offset = get_slot_offset(node, slot) + 1;
-+	unsigned offset = get_slot_offset(node, slot);
-+	void *ptr = xa_mk_sibling(offset);
- 
--	while (offset < RADIX_TREE_MAP_SIZE) {
-+	while (++offset < RADIX_TREE_MAP_SIZE) {
- 		if (rcu_dereference_raw(node->slots[offset]) != ptr)
- 			break;
- 		if (count < 0) {
-@@ -1113,7 +1088,6 @@ static inline void replace_sibling_entries(struct radix_tree_node *node,
- 			node->count--;
- 		}
- 		node->exceptional += exceptional;
--		offset++;
- 	}
- #endif
- }
-@@ -1312,8 +1286,7 @@ int radix_tree_split(struct radix_tree_root *root, unsigned long index,
- 			tags |= 1 << tag;
- 
- 	for (end = offset + 1; end < RADIX_TREE_MAP_SIZE; end++) {
--		if (!is_sibling_entry(parent,
--				rcu_dereference_raw(parent->slots[end])))
-+		if (!xa_is_sibling(rcu_dereference_raw(parent->slots[end])))
- 			break;
- 		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
- 			if (tags & (1 << tag))
-@@ -1609,11 +1582,9 @@ static void set_iter_tags(struct radix_tree_iter *iter,
- static void __rcu **skip_siblings(struct radix_tree_node **nodep,
- 			void __rcu **slot, struct radix_tree_iter *iter)
- {
--	void *sib = node_to_entry(slot - 1);
--
- 	while (iter->index < iter->next_index) {
- 		*nodep = rcu_dereference_raw(*slot);
--		if (*nodep && *nodep != sib)
-+		if (*nodep && !xa_is_sibling(*nodep))
- 			return slot;
- 		slot++;
- 		iter->index = __radix_tree_iter_add(iter, 1);
-@@ -1764,7 +1735,7 @@ void __rcu **radix_tree_next_chunk(const struct radix_tree_root *root,
- 				while (++offset	< RADIX_TREE_MAP_SIZE) {
- 					void *slot = rcu_dereference_raw(
- 							node->slots[offset]);
--					if (is_sibling_entry(node, slot))
-+					if (xa_is_sibling(slot))
- 						continue;
- 					if (slot)
- 						break;
-@@ -2283,6 +2254,7 @@ void __init radix_tree_init(void)
- 
- 	BUILD_BUG_ON(RADIX_TREE_MAX_TAGS + __GFP_BITS_SHIFT > 32);
- 	BUILD_BUG_ON(ROOT_IS_IDR & ~GFP_ZONEMASK);
-+	BUILD_BUG_ON(XA_CHUNK_SIZE > 255);
- 	radix_tree_node_cachep = kmem_cache_create("radix_tree_node",
- 			sizeof(struct radix_tree_node), 0,
- 			SLAB_PANIC | SLAB_RECLAIM_ACCOUNT,
 -- 
 2.17.0
 
