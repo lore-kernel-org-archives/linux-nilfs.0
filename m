@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 49/63] f2fs: Convert to XArray
-Date: Sat, 14 Apr 2018 07:13:02 -0700
-Message-ID: <20180414141316.7167-50-willy@infradead.org>
+Subject: [PATCH v11 46/63] fs: Convert buffer to XArray
+Date: Sat, 14 Apr 2018 07:12:59 -0700
+Message-ID: <20180414141316.7167-47-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=uC5r9VNmylEYCyceeTLYI/qscgL3thDU1SJQtGAYfzk=; b=m8Ek3Iiyf6WDXwsh/7/SUH0ROg
- eUncZbFHWU4ZeBtQukgErV9eoVinE1YI6VW5ec/39HWL86Jwmxt1z8qqPRuyrUzuBATJ3lH4kP42y
- QcL1COcWPEap0J8n1An5DOPJlhku/61PgN2NzUXO3EI17L4MUwTasdRVRHEfcBKx7A8I=;
+ bh=o1fdnX72DN8SNmun6F8lu+vN4CQ7pfSyEbEelJb64gc=; b=BKN4R79WG/vL0/XiJgtWJcGz1q
+ 8VNdkiqz/xcnumdDT2M16CCRIzIyYgY3geSYMZ1ujI3bK8pDjODHi8ZxbMS9nWozVm/LOJUTkoLfg
+ DVMbwT/puJRX80yxR1wCjF9kE35SxluKF6HPpMkTfSd258HPr3AJZmf0XKLyWnXff2vE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=uC5r9VNmylEYCyceeTLYI/qscgL3thDU1SJQtGAYfzk=; b=DUcnCVMljs6R7wo0boyoQKoMr5
- kUFgVqZpdqfcW6vFFphWSgU1fKuX6tnl6sxrovic4f5wZZ8wS0msFbgqWLOGPHr8lL6W4L+3vipGs
- 9903+6LfSpEzF99QIaBob0kf1FdMEhYsKSjK4xQTx9M6Os7sr3fiy5Y7KfxGIYhMnZ5w=;
+ bh=o1fdnX72DN8SNmun6F8lu+vN4CQ7pfSyEbEelJb64gc=; b=YH86P+xuVFTnxikM+84DCBg1Ds
+ XNDwTII7u/aHOcrOd93UQPfAr1eaxct0gZzJQ0/tAlfrHOYp754Xs2dWlqG4T76zvI5bjF7slLkhm
+ AS5thpzsgynSAVPdP4en8wtXQT3q7DMJlqg1G2WLsPKGQZZZaA4/cIrNbsxcywYb0kP4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=uC5r9VNmylEYCyceeTLYI/qscgL3thDU1SJQtGAYfzk=; b=ClIbRyP7RtkaYL/h9bijOjALi
- CHzfS6NT1hYKqedi7bS+luuuf0FSiAgWwGtXfoXxwIhfIZ0NK5RKCBY/iXmtFmm3YhKXF7tUgsMAN
- Ets06pVO2f/OwsiAvNVASnpyRQAQFGy3TE3yk7rJSi5TQIPIaDtDigW3Ih7H1gFvykY3a1XTl0fJ2
- S6lDm9P+rDipMzX2KaVTqKPjL+vIlGKfCVWpZwyWYGYHS4tEq+AZ46BUHVl1fiGuEkZlVDIm6Vtrd
- ac56nIOQD4uTDvsBb0oa/2FNtN9MAO7HKohPm7wdZgm/C63hcre4oBDAoDab0bWDYrYM88d28T8v5
- FlGFA6zEQ==;
+ bh=o1fdnX72DN8SNmun6F8lu+vN4CQ7pfSyEbEelJb64gc=; b=Fsn4I7xE8gJVdNR2cFU7o9hOX
+ 2/ds1Oki6R1hFOkmNqKZFApB42KGOnYrgjbrTE9izJeprkpgWxx5vVUYpy4tUSyNf8BVhIQJB7RV1
+ 6kvxUAAW4D2LJQ5X6ONPzOTHoLEJ7N2F/0dq1t7z5OZZDWs7dj35OKJInXsbT0i904xeB3aoID+xs
+ DE+ooDeo/MC3bp/FAegb1YzCYHXAM5RB6w+fCEyY7Cl3xYE5lVqhp+Q1Di+QiyOPhZ3xl2sc4la5U
+ npM9P0ixUGIWwGJjMSdUCNHEA3XAIX3Z05MXobNNHtgMErSEGMO3THFs5sII5SQj+fNpXC5nRyU7v
+ oebKBkR/A==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,88 +53,59 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is a straightforward conversion.
+Mostly comment fixes, but one use of __xa_set_tag.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/f2fs/data.c   | 3 +--
- fs/f2fs/dir.c    | 2 +-
- fs/f2fs/inline.c | 4 ++--
- fs/f2fs/node.c   | 9 +++------
- 4 files changed, 7 insertions(+), 11 deletions(-)
+ fs/buffer.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-index d836bfc160f1..676d6a34a7d5 100644
---- a/fs/f2fs/data.c
-+++ b/fs/f2fs/data.c
-@@ -2427,8 +2427,7 @@ void f2fs_set_page_dirty_nobuffers(struct page *page)
- 	xa_lock_irqsave(&mapping->i_pages, flags);
- 	WARN_ON_ONCE(!PageUptodate(page));
- 	account_page_dirtied(page, mapping);
--	radix_tree_tag_set(&mapping->i_pages,
--			page_index(page), PAGECACHE_TAG_DIRTY);
-+	__xa_set_tag(&mapping->i_pages, page_index(page), PAGECACHE_TAG_DIRTY);
+diff --git a/fs/buffer.c b/fs/buffer.c
+index fda79261aa08..2dcca4263b5c 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -562,7 +562,7 @@ void mark_buffer_dirty_inode(struct buffer_head *bh, struct inode *inode)
+ EXPORT_SYMBOL(mark_buffer_dirty_inode);
+ 
+ /*
+- * Mark the page dirty, and set it dirty in the radix tree, and mark the inode
++ * Mark the page dirty, and set it dirty in the page cache, and mark the inode
+  * dirty.
+  *
+  * If warn is true, then emit a warning if the page is not uptodate and has
+@@ -579,8 +579,8 @@ void __set_page_dirty(struct page *page, struct address_space *mapping,
+ 	if (page->mapping) {	/* Race with truncate? */
+ 		WARN_ON_ONCE(warn && !PageUptodate(page));
+ 		account_page_dirtied(page, mapping);
+-		radix_tree_tag_set(&mapping->i_pages,
+-				page_index(page), PAGECACHE_TAG_DIRTY);
++		__xa_set_tag(&mapping->i_pages, page_index(page),
++				PAGECACHE_TAG_DIRTY);
+ 	}
  	xa_unlock_irqrestore(&mapping->i_pages, flags);
- 	unlock_page_memcg(page);
- 
-diff --git a/fs/f2fs/dir.c b/fs/f2fs/dir.c
-index 8c9c2f31b253..73d1f7b879cf 100644
---- a/fs/f2fs/dir.c
-+++ b/fs/f2fs/dir.c
-@@ -733,7 +733,7 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
- 	if (bit_pos == NR_DENTRY_IN_BLOCK &&
- 			!truncate_hole(dir, page->index, page->index + 1)) {
- 		xa_lock_irqsave(&mapping->i_pages, flags);
--		radix_tree_tag_clear(&mapping->i_pages, page_index(page),
-+		__xa_clear_tag(&mapping->i_pages, page_index(page),
- 				     PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irqrestore(&mapping->i_pages, flags);
- 
-diff --git a/fs/f2fs/inline.c b/fs/f2fs/inline.c
-index 265da200daa8..d1f00d56eee1 100644
---- a/fs/f2fs/inline.c
-+++ b/fs/f2fs/inline.c
-@@ -227,8 +227,8 @@ int f2fs_write_inline_data(struct inode *inode, struct page *page)
- 	set_page_dirty(dn.inode_page);
- 
- 	xa_lock_irqsave(&mapping->i_pages, flags);
--	radix_tree_tag_clear(&mapping->i_pages, page_index(page),
--			     PAGECACHE_TAG_DIRTY);
-+	__xa_clear_tag(&mapping->i_pages, page_index(page),
-+			PAGECACHE_TAG_DIRTY);
- 	xa_unlock_irqrestore(&mapping->i_pages, flags);
- 
- 	set_inode_flag(inode, FI_APPEND_WRITE);
-diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index f202398e20ea..fd8b9191c7c5 100644
---- a/fs/f2fs/node.c
-+++ b/fs/f2fs/node.c
-@@ -88,12 +88,11 @@ bool available_free_memory(struct f2fs_sb_info *sbi, int type)
- static void clear_node_page_dirty(struct page *page)
- {
- 	struct address_space *mapping = page->mapping;
--	unsigned int long flags;
-+	unsigned long flags;
- 
- 	if (PageDirty(page)) {
- 		xa_lock_irqsave(&mapping->i_pages, flags);
--		radix_tree_tag_clear(&mapping->i_pages,
--				page_index(page),
-+		__xa_clear_tag(&mapping->i_pages, page_index(page),
- 				PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irqrestore(&mapping->i_pages, flags);
- 
-@@ -1160,9 +1159,7 @@ void ra_node_page(struct f2fs_sb_info *sbi, nid_t nid)
- 		return;
- 	f2fs_bug_on(sbi, check_nid_range(sbi, nid));
- 
--	rcu_read_lock();
--	apage = radix_tree_lookup(&NODE_MAPPING(sbi)->i_pages, nid);
--	rcu_read_unlock();
-+	apage = xa_load(&NODE_MAPPING(sbi)->i_pages, nid);
- 	if (apage)
- 		return;
- 
+ }
+@@ -1043,7 +1043,7 @@ __getblk_slow(struct block_device *bdev, sector_t block,
+  * The relationship between dirty buffers and dirty pages:
+  *
+  * Whenever a page has any dirty buffers, the page's dirty bit is set, and
+- * the page is tagged dirty in its radix tree.
++ * the page is tagged dirty in the page cache.
+  *
+  * At all times, the dirtiness of the buffers represents the dirtiness of
+  * subsections of the page.  If the page has buffers, the page dirty bit is
+@@ -1066,9 +1066,9 @@ __getblk_slow(struct block_device *bdev, sector_t block,
+  * mark_buffer_dirty - mark a buffer_head as needing writeout
+  * @bh: the buffer_head to mark dirty
+  *
+- * mark_buffer_dirty() will set the dirty bit against the buffer, then set its
+- * backing page dirty, then tag the page as dirty in its address_space's radix
+- * tree and then attach the address_space's inode to its superblock's dirty
++ * mark_buffer_dirty() will set the dirty bit against the buffer, then set
++ * its backing page dirty, then tag the page as dirty in the page cache
++ * and then attach the address_space's inode to its superblock's dirty
+  * inode list.
+  *
+  * mark_buffer_dirty() is atomic.  It takes bh->b_page->mapping->private_lock,
 -- 
 2.17.0
 
