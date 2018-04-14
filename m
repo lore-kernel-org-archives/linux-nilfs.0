@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 39/63] shmem: Convert shmem_alloc_hugepage to
- XArray
-Date: Sat, 14 Apr 2018 07:12:52 -0700
-Message-ID: <20180414141316.7167-40-willy@infradead.org>
+Subject: [PATCH v11 30/63] mm: Convert page migration to XArray
+Date: Sat, 14 Apr 2018 07:12:43 -0700
+Message-ID: <20180414141316.7167-31-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=Zs5aTwmvm2PODrufCBHHeizYU+0FPGF7eS2t8j2yoAA=; b=FbSj12T/I/I4PGqthL22Op2kqO
- 5AfJSzgSbWA2td3+IJm72JGjnmcXfsOJtB2v6IxMi2O+Sfj4pPoMTBY93YV5QeAOzaf0DsWOWRXfr
- dWo5paspn8yvyhFEJs/cD1xKUINvqPg2/lTMeqT4BOJZiP5lVYmckInhi8sD1Hs/Gn4s=;
+ bh=mHc5PGiQh6aJZix6sVqoBuTzZIK0NG61T/6bCwCLQAo=; b=XmpUbXqAjORg5Vtc2VdfWtwPJH
+ scDFfupis2NfAF1czeKn7xd7YvA0ZZPs3QZVJtFHVL7bjhqBngEe0V3LCewZ5hQCLfixufSkiCgA1
+ jk2KsM0GrgDIzQHljEw/OJ+Pr/ajBoN/5deYTBpxUcQfNU2n+GSVryCquNTJEb/meSJ0=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=Zs5aTwmvm2PODrufCBHHeizYU+0FPGF7eS2t8j2yoAA=; b=hsXz3AJ9Q8N1tFh9SVcTL57Wi1
- i2DGDj/etGt+pnbucInwF5/jIuVL8PWUs3wx6GZQpRmY6DevfY+/jJrRRLduaoTL/ARzJihDmmvCG
- qcUbMmy2Wa7a/g4PBxS77s/rvbdzsKZjJEzf6SKqT4M0Z1jw0ETbqusNvGU3VBu6s5ho=;
+ bh=mHc5PGiQh6aJZix6sVqoBuTzZIK0NG61T/6bCwCLQAo=; b=CI+gYq4VeYOhhXTUew9bYTijJ4
+ UUXR82FKIi9Ye64RRxUefOL81ke2QlcJjODpuRuBaNdbs8a6pVFma4hBUcoQ5zUg5TmCbDP0LB4zX
+ p1Hto6GMRle0jim4C7BiJ3B+1Ye1VEHTKeYd1XEPZ6pJUGFFZ9RCctoo/h+uhH7AOwHg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=Zs5aTwmvm2PODrufCBHHeizYU+0FPGF7eS2t8j2yoAA=; b=pm9C8JoANIubDn1W0uuF4p5vH
- 7esHMIDDCH2MKhGV2oH8eiUXgKz4RJIZ8tPkkk29D2P7g6LzeT54XgU7IMlo76RWGCt/sInCBRCCG
- bvj+1wUjhbq1EvbAfbPK3kPx3sXMYQ5ypVwiEZ3sYISq9qOicZDNiPjrm3cdXa49cewatJvVODN+/
- XqcPtg3gl2yuAwunRXosWRULoJgmrvNUqLV6hJhNt82Ko3tP9b24YL8ixDsh8V543vrp3b3iukhFD
- cTDFdKaiiW5p6ogoX6XgOsYRVQwBPn7PnwEFiFNGPTcnPdMTuy7unz4RZOM+DC+de4P0B16LFilEf
- zeF7DX0Qg==;
+ bh=mHc5PGiQh6aJZix6sVqoBuTzZIK0NG61T/6bCwCLQAo=; b=L3gHtbkoUiuqJlM+nu3keRMbS
+ XDNGRBprTYXDjM8Pn0oCZF2HsXTX0Gm///su8KQ1iuju//sQ+yc6/Yj1Pm5VSEWF8sV0CHuhu6S74
+ sqldBXblDpzoxvyCT7rtrWaIQlwYVQiMLVJZKW8R8OMh02AdN3EzZdcTErayip3hWQDQ//wIxXaTd
+ VOT9di1LV5ffBWVbwOtreUitR1FYPudGi93F7oduQRXt8OBSdv5P4zlwjhlYo50KURiSBfLdrliry
+ QoBoLvJqvrDoqyly7fV7Qw5hF8fOU7Ha2pKS/dZU22CZxyq7sB0MVaLFO6Elo5EgkqU5pyEmC3y6K
+ XxjDpfd7A==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,46 +53,131 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-xa_find() is a slightly easier API to use than
-radix_tree_gang_lookup_slot() because it contains its own RCU locking.
-
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 14 ++++----------
- 1 file changed, 4 insertions(+), 10 deletions(-)
+ mm/migrate.c | 41 ++++++++++++++++-------------------------
+ 1 file changed, 16 insertions(+), 25 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 8d24d59b0e67..985c5cdec7f7 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1425,23 +1425,17 @@ static struct page *shmem_alloc_hugepage(gfp_t gfp,
- 		struct shmem_inode_info *info, pgoff_t index)
+diff --git a/mm/migrate.c b/mm/migrate.c
+index f65dd69e1fd1..de1a602d0056 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -323,7 +323,7 @@ void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
+ 	page = migration_entry_to_page(entry);
+ 
+ 	/*
+-	 * Once radix-tree replacement of page migration started, page_count
++	 * Once page cache replacement of page migration started, page_count
+ 	 * *must* be zero. And, we don't want to call wait_on_page_locked()
+ 	 * against a page without get_page().
+ 	 * So, we use get_page_unless_zero(), here. Even failed, page fault
+@@ -438,10 +438,10 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 		struct buffer_head *head, enum migrate_mode mode,
+ 		int extra_count)
  {
- 	struct vm_area_struct pvma;
--	struct inode *inode = &info->vfs_inode;
--	struct address_space *mapping = inode->i_mapping;
--	pgoff_t idx, hindex;
--	void __rcu **results;
-+	struct address_space *mapping = info->vfs_inode.i_mapping;
-+	pgoff_t hindex;
- 	struct page *page;
++	XA_STATE(xas, &mapping->i_pages, page_index(page));
+ 	struct zone *oldzone, *newzone;
+ 	int dirty;
+ 	int expected_count = 1 + extra_count;
+-	void **pslot;
  
- 	if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
- 		return NULL;
+ 	/*
+ 	 * Device public or private pages have an extra refcount as they are
+@@ -467,21 +467,16 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	oldzone = page_zone(page);
+ 	newzone = page_zone(newpage);
  
- 	hindex = round_down(index, HPAGE_PMD_NR);
--	rcu_read_lock();
--	if (radix_tree_gang_lookup_slot(&mapping->i_pages, &results, &idx,
--				hindex, 1) && idx < hindex + HPAGE_PMD_NR) {
--		rcu_read_unlock();
-+	if (xa_find(&mapping->i_pages, &hindex, hindex + HPAGE_PMD_NR - 1,
-+								XA_PRESENT))
- 		return NULL;
--	}
--	rcu_read_unlock();
+-	xa_lock_irq(&mapping->i_pages);
+-
+-	pslot = radix_tree_lookup_slot(&mapping->i_pages,
+- 					page_index(page));
++	xas_lock_irq(&xas);
  
- 	shmem_pseudo_vma_init(&pvma, info, hindex);
- 	page = alloc_pages_vma(gfp | __GFP_COMP | __GFP_NORETRY | __GFP_NOWARN,
+ 	expected_count += 1 + page_has_private(page);
+-	if (page_count(page) != expected_count ||
+-		radix_tree_deref_slot_protected(pslot,
+-					&mapping->i_pages.xa_lock) != page) {
+-		xa_unlock_irq(&mapping->i_pages);
++	if (page_count(page) != expected_count || xas_load(&xas) != page) {
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+ 	if (!page_ref_freeze(page, expected_count)) {
+-		xa_unlock_irq(&mapping->i_pages);
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+@@ -495,7 +490,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	if (mode == MIGRATE_ASYNC && head &&
+ 			!buffer_migrate_lock_buffers(head, mode)) {
+ 		page_ref_unfreeze(page, expected_count);
+-		xa_unlock_irq(&mapping->i_pages);
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+@@ -523,7 +518,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 		SetPageDirty(newpage);
+ 	}
+ 
+-	radix_tree_replace_slot(&mapping->i_pages, pslot, newpage);
++	xas_store(&xas, newpage);
+ 
+ 	/*
+ 	 * Drop cache reference from old page by unfreezing
+@@ -532,7 +527,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	 */
+ 	page_ref_unfreeze(page, expected_count - 1);
+ 
+-	xa_unlock(&mapping->i_pages);
++	xas_unlock(&xas);
+ 	/* Leave irq disabled to prevent preemption while updating stats */
+ 
+ 	/*
+@@ -572,22 +567,18 @@ EXPORT_SYMBOL(migrate_page_move_mapping);
+ int migrate_huge_page_move_mapping(struct address_space *mapping,
+ 				   struct page *newpage, struct page *page)
+ {
++	XA_STATE(xas, &mapping->i_pages, page_index(page));
+ 	int expected_count;
+-	void **pslot;
+-
+-	xa_lock_irq(&mapping->i_pages);
+-
+-	pslot = radix_tree_lookup_slot(&mapping->i_pages, page_index(page));
+ 
++	xas_lock_irq(&xas);
+ 	expected_count = 2 + page_has_private(page);
+-	if (page_count(page) != expected_count ||
+-		radix_tree_deref_slot_protected(pslot, &mapping->i_pages.xa_lock) != page) {
+-		xa_unlock_irq(&mapping->i_pages);
++	if (page_count(page) != expected_count || xas_load(&xas) != page) {
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+ 	if (!page_ref_freeze(page, expected_count)) {
+-		xa_unlock_irq(&mapping->i_pages);
++		xas_unlock_irq(&xas);
+ 		return -EAGAIN;
+ 	}
+ 
+@@ -596,11 +587,11 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
+ 
+ 	get_page(newpage);
+ 
+-	radix_tree_replace_slot(&mapping->i_pages, pslot, newpage);
++	xas_store(&xas, newpage);
+ 
+ 	page_ref_unfreeze(page, expected_count - 1);
+ 
+-	xa_unlock_irq(&mapping->i_pages);
++	xas_unlock_irq(&xas);
+ 
+ 	return MIGRATEPAGE_SUCCESS;
+ }
 -- 
 2.17.0
 
