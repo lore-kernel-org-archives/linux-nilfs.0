@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 54/63] dax: Hash on XArray instead of mapping
-Date: Sat, 14 Apr 2018 07:13:07 -0700
-Message-ID: <20180414141316.7167-55-willy@infradead.org>
+Subject: [PATCH v11 59/63] dax: Return fault code from
+ dax_load_hole
+Date: Sat, 14 Apr 2018 07:13:12 -0700
+Message-ID: <20180414141316.7167-60-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=h5o/kccxQztvFvzALyRXJP+yHPrheSEUnj6Pp1janoA=; b=K0dx4269pHFKrMJMYnqPt2xP1z
- HdsG/1Onmo9UY/M3vE25tMpVaCreT/tqdqK7OUOGmKlyc5TFmu4XsiqfU8ZHp4psc7t1EwsD7mMv2
- NSx/wAZS6lb8d/Tzfzzr67kfdUKvvYqSz3GlpmcQ4okjBu3K12ieFHSEcPHceiMs7j5c=;
+ bh=LykSuSt/CWwf+4GGWhfeqmkyUr1W81F3zXE08T8PYcY=; b=i3/ghvsSsbQMYpxVl5xCYUOh+G
+ VuHh+4O0/t9TUJbRC76B61QxDmWhtl6fh5fJPga2a8sFFxgyD1Fr3ZAaqLWkV30PAOHjpSH64vBzf
+ GMENoIBnKugLE4/S79HGc8oumHTEluCquj8kbXRwUZlFEJQTXv8enHdvIcvxGst3yb6c=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=h5o/kccxQztvFvzALyRXJP+yHPrheSEUnj6Pp1janoA=; b=dwLJc7Zgw0L6vwqjjlZMMYTetn
- 8G6nY7KXleb71x54d1q2lYwYT8xJNOT4vEltaHnOBf4ugaUzijf/RCYprpSYlKP/kq2gfknOgQwMH
- teJVDqMLVpLrgj0aaMvibjWzsn7uoJjhNHBU9qOnDdaunUfMMQEeQSk+2jsCV7dw3mvA=;
+ bh=LykSuSt/CWwf+4GGWhfeqmkyUr1W81F3zXE08T8PYcY=; b=XxT5ZA06pnVka8sV5jSRVewjsn
+ RdlIm3YaC8R2M8J7bzdx2TA0PzrWv+5zG/qvJqFNI4hHF02Hj+cdDC2vYq+JF5xuJ6ZyRTe7KFdBQ
+ 2daWMPMgbKJmuprgvbBzO/Ia24OK7h0oHKp1MtN+nlHrPw8dcLxH/lhKkuwm4eKciKek=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=h5o/kccxQztvFvzALyRXJP+yHPrheSEUnj6Pp1janoA=; b=iHBNJsqjvZV1TVfexta7vq1rH
- 64SjiC0iVGD0DbfHpFrlRG4sn7tsjYl0PhJhcuUu6QXJZS30YKslYU5X0kGCpPFOEfEAtSrr+omyU
- cPzjS/PwHcdmRZFCEjGyL/CW5nQMGNZQm6bcqdXjPOpDWYeeDUAXEkiXPqV3JF8Dn3aNtWYXw1Njl
- 04kaFFXd3nvSgOd6+fTMa71tnq01tHo3ZWmmrQpJyoDREMwrvmKORVqpKQ7gRT69pHssh7wnn8pij
- sSvaERCJC2HA4fLTYTnQtoVTLpq8vzHkpnYbYh5kuuTYUXC6kqswGwdlUk8GiRqjOh5IeQQT+Qcex
- 2BpurgDPQ==;
+ bh=LykSuSt/CWwf+4GGWhfeqmkyUr1W81F3zXE08T8PYcY=; b=JIijM2jS1UMscg2SwUKznN7vB
+ ehogHbWAezdxA6HnMpBR4BKw7LxH4FAlmce2jTu59iCLTNe+zNvkk2QIxStzkxho+2ta8TAC30avX
+ K+bYZ+Z+N36n+yfI4AtNTdu83z35t1gGpfNQgGdiIqOLITQ2k8+lEqkByWhBsNjUDxbzEOaUSruNb
+ +QH7RE0HFuC4AdtsQ9bVX6L2FUbQN1XOHv4SWHBUkhdZUzVHNnv4l1LEQEy1YOnD92RnGE52gI4gF
+ jCHJGxWJjWGE55lhaFMN80Qti2z/uC4SoDqBHsbFelyxVuc/kiGwdUyf+I8C+e7zLcReakJS15olV
+ qeYVmQWhQ==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,118 +54,43 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Since the XArray is embedded in the struct address_space, this contains
-exactly as much entropy as the address of the mapping.
+dax_load_hole was swallowing the errors from vm_insert_mixed().
+Use vmf_insert_mixed() instead to get a vm_fault_t, and convert
+dax_load_hole() to the vm_fault_t convention.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 29 +++++++++++++++--------------
- 1 file changed, 15 insertions(+), 14 deletions(-)
+ fs/dax.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/fs/dax.c b/fs/dax.c
-index f2d1ac92466d..af669ca5020a 100644
+index bcc3fd05ab03..44785346c02f 100644
 --- a/fs/dax.c
 +++ b/fs/dax.c
-@@ -116,7 +116,7 @@ static int dax_is_empty_entry(void *entry)
-  * DAX page cache entry locking
+@@ -808,18 +808,19 @@ static int dax_iomap_pfn(struct iomap *iomap, loff_t pos, size_t size,
+  * If this page is ever written to we will re-fault and change the mapping to
+  * point to real DAX storage instead.
   */
- struct exceptional_entry_key {
--	struct address_space *mapping;
-+	struct xarray *xa;
- 	pgoff_t entry_start;
- };
- 
-@@ -125,7 +125,7 @@ struct wait_exceptional_entry_queue {
- 	struct exceptional_entry_key key;
- };
- 
--static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
-+static wait_queue_head_t *dax_entry_waitqueue(struct xarray *xa,
- 		pgoff_t index, void *entry, struct exceptional_entry_key *key)
+-static int dax_load_hole(struct xa_state *xas, struct address_space *mapping,
+-		void **entry, struct vm_fault *vmf)
++static vm_fault_t dax_load_hole(struct xa_state *xas,
++		struct address_space *mapping, void **entry,
++		struct vm_fault *vmf)
  {
- 	unsigned long hash;
-@@ -138,21 +138,21 @@ static wait_queue_head_t *dax_entry_waitqueue(struct address_space *mapping,
- 	if (dax_is_pmd_entry(entry))
- 		index &= ~PG_PMD_COLOUR;
+ 	struct inode *inode = mapping->host;
+ 	unsigned long vaddr = vmf->address;
+-	int ret = VM_FAULT_NOPAGE;
++	vm_fault_t ret;
+ 	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
  
--	key->mapping = mapping;
-+	key->xa = xa;
- 	key->entry_start = index;
+ 	*entry = dax_insert_entry(xas, mapping, *entry, pfn, DAX_ZERO_PAGE,
+ 			false);
  
--	hash = hash_long((unsigned long)mapping ^ index, DAX_WAIT_TABLE_BITS);
-+	hash = hash_long((unsigned long)xa ^ index, DAX_WAIT_TABLE_BITS);
- 	return wait_table + hash;
+-	vm_insert_mixed(vmf->vma, vaddr, pfn);
++	ret = vmf_insert_mixed(vmf->vma, vaddr, pfn);
+ 	trace_dax_load_hole(inode, vmf, ret);
+ 	return ret;
  }
- 
--static int wake_exceptional_entry_func(wait_queue_entry_t *wait, unsigned int mode,
--				       int sync, void *keyp)
-+static int wake_exceptional_entry_func(wait_queue_entry_t *wait,
-+		unsigned int mode, int sync, void *keyp)
- {
- 	struct exceptional_entry_key *key = keyp;
- 	struct wait_exceptional_entry_queue *ewait =
- 		container_of(wait, struct wait_exceptional_entry_queue, wait);
- 
--	if (key->mapping != ewait->key.mapping ||
-+	if (key->xa != ewait->key.xa ||
- 	    key->entry_start != ewait->key.entry_start)
- 		return 0;
- 	return autoremove_wake_function(wait, mode, sync, NULL);
-@@ -163,13 +163,13 @@ static int wake_exceptional_entry_func(wait_queue_entry_t *wait, unsigned int mo
-  * The important information it's conveying is whether the entry at
-  * this index used to be a PMD entry.
-  */
--static void dax_wake_mapping_entry_waiter(struct address_space *mapping,
-+static void dax_wake_mapping_entry_waiter(struct xarray *xa,
- 		pgoff_t index, void *entry, bool wake_all)
- {
- 	struct exceptional_entry_key key;
- 	wait_queue_head_t *wq;
- 
--	wq = dax_entry_waitqueue(mapping, index, entry, &key);
-+	wq = dax_entry_waitqueue(xa, index, entry, &key);
- 
- 	/*
- 	 * Checking for locked entry and prepare_to_wait_exclusive() happens
-@@ -246,7 +246,8 @@ static void *get_unlocked_mapping_entry(struct address_space *mapping,
- 			return entry;
- 		}
- 
--		wq = dax_entry_waitqueue(mapping, index, entry, &ewait.key);
-+		wq = dax_entry_waitqueue(&mapping->i_pages, index, entry,
-+				&ewait.key);
- 		prepare_to_wait_exclusive(wq, &ewait.wait,
- 					  TASK_UNINTERRUPTIBLE);
- 		xa_unlock_irq(&mapping->i_pages);
-@@ -270,7 +271,7 @@ static void dax_unlock_mapping_entry(struct address_space *mapping,
- 	}
- 	unlock_slot(mapping, slot);
- 	xa_unlock_irq(&mapping->i_pages);
--	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
-+	dax_wake_mapping_entry_waiter(&mapping->i_pages, index, entry, false);
- }
- 
- static void put_locked_mapping_entry(struct address_space *mapping,
-@@ -290,7 +291,7 @@ static void put_unlocked_mapping_entry(struct address_space *mapping,
- 		return;
- 
- 	/* We have to wake up next waiter for the page cache entry lock */
--	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
-+	dax_wake_mapping_entry_waiter(&mapping->i_pages, index, entry, false);
- }
- 
- static unsigned long dax_entry_size(void *entry)
-@@ -458,8 +459,8 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
- 			dax_disassociate_entry(entry, mapping, false);
- 			radix_tree_delete(&mapping->i_pages, index);
- 			mapping->nrexceptional--;
--			dax_wake_mapping_entry_waiter(mapping, index, entry,
--					true);
-+			dax_wake_mapping_entry_waiter(&mapping->i_pages,
-+					index, entry, true);
- 		}
- 
- 		entry = dax_mk_locked(0, size_flag | DAX_EMPTY);
 -- 
 2.17.0
 
