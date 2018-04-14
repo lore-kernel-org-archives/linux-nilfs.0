@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 37/63] shmem: Convert find_swap_entry to
- XArray
-Date: Sat, 14 Apr 2018 07:12:50 -0700
-Message-ID: <20180414141316.7167-38-willy@infradead.org>
+Subject: [PATCH v11 14/63] xarray: Add xas_create_range
+Date: Sat, 14 Apr 2018 07:12:27 -0700
+Message-ID: <20180414141316.7167-15-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=s0hTSSuxyvXrpg9qt2Kdod8SuL3dDVn7Qs2A5bFdSs4=; b=dp4QUce6ale/H5+ZSgKjAjiFBU
- 3F4iLhLVyzUkiC2H24yu7kReFWXiQipHCwcj1/XGTU6m3oDjC2wIRc8cRzzH+ol1wdZhtkc7HB/cF
- Z9keA8Gp9bKSBNoRDTFMntICTSS5APkktH5y1NU5LKm7t/9ol1Wdyj0xY6nTzG+ncMoI=;
+ bh=WP770Xy2T7I4XLn3dGxGYkgt4g3m6R4NZXkw/Ei4UoM=; b=NXnlVCy/ED9fL6J7OYFXi+LfB4
+ SXlBHAa88YH/Fj082L7zJRHrdH4d0NyolBBV5+tNn5nAJkymbgIrohNoNXqjM0rnD8EOlbcpOwUOq
+ 05zStcy9tO0SZ0K1wMC7kwV1XwVHN1+Kh037CC3KcM2qSPwspwinNfsO8CVY5S+69ZMI=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=s0hTSSuxyvXrpg9qt2Kdod8SuL3dDVn7Qs2A5bFdSs4=; b=SMj7+sgjAqE+Cppmo8IQEeG3sv
- FCQ/WoyA5o26KvHnpjWTMNObXFvGb5A1YV8oQdkg6l6KwY0Jru/AZJokxzdXjLHKjxBJWqjuoWObk
- fop5oGtq/lj/XCsv38T+En/XJAgUpOVnb6Jfdef78+JJY4tK/JJ1QYNl2frVyMvnzkeU=;
+ bh=WP770Xy2T7I4XLn3dGxGYkgt4g3m6R4NZXkw/Ei4UoM=; b=JOhYf6vtC60MEZBXQL0KGy30xd
+ U6WXdiE2xeZfgXVnyHM28MVnYrfFmW23QbzYDNpCk4qohFIDj8sAFYCkc6P59loyRoDE8x27PDJ8D
+ J2Ol9WZ16It5q2vjUS6NsKR4Kj6MOtEGcQ2J2LUHYQ0+9FepltJLyOvjh6Nn6atTPsk4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=s0hTSSuxyvXrpg9qt2Kdod8SuL3dDVn7Qs2A5bFdSs4=; b=LRXvei7E2+utf39/vU37X3GtK
- M5CstlASCRf5xK9dUvY4nSNEti6BaHcrW9bbRYMrXeG3NPA8607wb5hSuBwiBVeZAcACXunLNX7Ja
- sXGcLX/wNgZLHPciP1rR39w6Op3xTIDbV7iBN6aPerBiN0nJAFvr1oGvFzspPTbNACdbt6NEe0UKW
- YixgLiBKsCT2gTD8w2VWbgwNVA5OUqzOUarBPWKsM/yemqOG17p8jzEFkbAxqWr1wyTyDm0W3GS8N
- ex4VAQT1F18OMnJAJr6URabOV8Iyd+yPg/+y01jHflYi+ZuzYpUg1aHJ9if7zOEE+OyIocw0ogRh3
- xnNnwoyfg==;
+ bh=WP770Xy2T7I4XLn3dGxGYkgt4g3m6R4NZXkw/Ei4UoM=; b=D7Ly6nmsmuzv5xvzKq4blYm+/
+ rozQxsq45GTZ3tXWkfB9r7aos0/087tW5qH/iU8oI7FAGUfWZyK5sibdgMIwAOOYSCgIqEgkXpFeS
+ SfJlhruonDiADQAEceuR0CbzS8c56t1btCc//1cr/bK5Jzn04+ZhZQ2zGXfcL/zptJ/QJyTYp7jWx
+ dzKbVdEb84bXgvf7oMljx++TlxREbeWn9rzAkj+Mc7Hbqk+pU5O1zUAIjUNKbR8uZ92Jq4+Fw3zcg
+ EtfDmuaGaXUEkkGw6yQFl8QYCLTFjG0ckf7OVBQ4szevq8k7eQEswYYVLSfEzEsYBTiJDD9EtvgJj
+ 0Cf5B7umQ==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,57 +53,61 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is a 1:1 conversion.
+This hopefully temporary function is useful for users who have not yet
+been converted to multi-index entries.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/shmem.c | 23 +++++++++++------------
- 1 file changed, 11 insertions(+), 12 deletions(-)
+ include/linux/xarray.h |  2 ++
+ lib/xarray.c           | 22 ++++++++++++++++++++++
+ 2 files changed, 24 insertions(+)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 5b8a2d944a0c..784a49aad902 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1085,28 +1085,27 @@ static void shmem_evict_inode(struct inode *inode)
- 	clear_inode(inode);
- }
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 6f764705382b..b158433b1924 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -761,6 +761,8 @@ void xas_init_tags(const struct xa_state *);
+ bool xas_nomem(struct xa_state *, gfp_t);
+ void xas_pause(struct xa_state *);
  
--static unsigned long find_swap_entry(struct radix_tree_root *root, void *item)
-+static unsigned long find_swap_entry(struct xarray *xa, void *item)
- {
--	struct radix_tree_iter iter;
--	void **slot;
--	unsigned long found = -1;
-+	XA_STATE(xas, xa, 0);
- 	unsigned int checked = 0;
-+	void *entry;
- 
- 	rcu_read_lock();
--	radix_tree_for_each_slot(slot, root, &iter, 0) {
--		if (*slot == item) {
--			found = iter.index;
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (xas_retry(&xas, entry))
-+			continue;
-+		if (entry == item)
- 			break;
--		}
- 		checked++;
--		if ((checked % 4096) != 0)
-+		if ((checked % XA_CHECK_SCHED) != 0)
- 			continue;
--		slot = radix_tree_iter_resume(slot, &iter);
-+		xas_pause(&xas);
- 		cond_resched_rcu();
- 	}
--
- 	rcu_read_unlock();
--	return found;
++void xas_create_range(struct xa_state *, unsigned long max);
 +
-+	return xas_invalid(&xas) ? -1 : xas.xa_index;
+ /**
+  * xas_reload() - Refetch an entry from the xarray.
+  * @xas: XArray operation state.
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 7574bafbc6ff..653ab0555673 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -626,6 +626,28 @@ void *xas_create(struct xa_state *xas)
  }
+ EXPORT_SYMBOL_GPL(xas_create);
  
- /*
++/**
++ * xas_create_range() - Ensure that stores to this range will succeed
++ * @xas: XArray operation state.
++ * @max: The highest index to create a slot for.
++ *
++ * Creates all of the slots in the range between the current position of
++ * @xas and @max.  This is for the benefit of users who have not yet been
++ * converted to multi-index entries.
++ *
++ * The implementation is naive.
++ */
++void xas_create_range(struct xa_state *xas, unsigned long max)
++{
++	XA_STATE(tmp, xas->xa, xas->xa_index);
++
++	do {
++		xas_create(&tmp);
++		xas_set(&tmp, tmp.xa_index + XA_CHUNK_SIZE);
++	} while (tmp.xa_index < max);
++}
++EXPORT_SYMBOL_GPL(xas_create_range);
++
+ static void store_siblings(struct xa_state *xas, void *entry, void *curr,
+ 				int *countp, int *valuesp)
+ {
 -- 
 2.17.0
 
