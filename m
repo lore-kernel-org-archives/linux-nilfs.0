@@ -1,42 +1,45 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 00/63] Convert page cache to XArray
-Date: Sat, 14 Apr 2018 07:12:13 -0700
-Message-ID: <20180414141316.7167-1-willy@infradead.org>
+Subject: [PATCH v11 28/63] mm: Convert delete_from_swap_cache to
+ XArray
+Date: Sat, 14 Apr 2018 07:12:41 -0700
+Message-ID: <20180414141316.7167-29-willy@infradead.org>
+References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
- MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
+ d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
+ To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=Vm/EZ0kho1oiNUz7pbbNJzZMsIfbR3x0OlCi/vBEXnw=; b=FES1u04MYTuQx66UnMMELltHmy
- wXkk0hyx0B6jXjGizW37QZDaW8Yar2jTIghW8P9CQ/lE3oTI4LZ/Vg8F9LMlD8idRQNBSQwBi26At
- BJ4WmO9oU7Xn88o4t4aqdm/cSvqifjGIZHJV9s76qjyWKhEGT1oWvXeZJNWVNJx0rk3Q=;
+ bh=f53UcJe57vMhX/PjMWjM0mVsBrvYOEKvnYIfhQzMDuI=; b=Q38kSqevFu40GbV8un76IJn9dV
+ 9qxgId6DNVx4DoXkHSL1xQD11VjgOlIyvhXNQ5844VlQQshnr96sFoU7d/5rpjON1EHLqfPOTECsP
+ AtCN+RjnNpW3Sc5BCokzrnaLSJR5MGh9fiJ4NXAPjRZs3dbPUXtjMtDTooFTwzGlWaT8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
- h=Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:
- Content-Type:Content-Transfer-Encoding:Content-ID:Content-Description:
- Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
- In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
+ :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=Vm/EZ0kho1oiNUz7pbbNJzZMsIfbR3x0OlCi/vBEXnw=; b=RvcehSzbbm2pI+Cc7b/rurEA1k
- ez7r5SMGQvN9FjJqTpNTl05DuYthEQIRDjQJYOksTXNLy47tpfzeDvEyuo23K1HRP7lT0KzP2cS34
- zcG92XhgqJ6z9wJHOm9/9oF11omMnMIMKaqT9imynzvNeriOoFtZrLEtUNmjcv1LyOsA=;
+ bh=f53UcJe57vMhX/PjMWjM0mVsBrvYOEKvnYIfhQzMDuI=; b=QrPPYfXrag+sWZUwCCKqyZxtdq
+ 5yl85FT12/nzoC1HDta60DMe6uQ9wnyuF955WipH7u2VBLKY3qhRZhgtywMls/bzYdKjWrMgNRxh1
+ BG+q67ctuiQm/4FejFm6qNva5X7/UwafAO2wvlmO9d87TFYe4jH8Sm2SLz79buyDTkZs=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=Message-Id:Date:Subject:Cc:To:From:
- Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
+ d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+ Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+ Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=Vm/EZ0kho1oiNUz7pbbNJzZMsIfbR3x0OlCi/vBEXnw=; b=P7eTo2B7pkUZr1tLLTED823hA
- 6QPg0TYL3Ftj9mxV22cWpOQSkj/eaeMayRCO5cYO4oxUjTxVoyiw4jc+eWP8T7miyCQjb0axhm4q3
- zkfLqDNONzcBHNt326tmIDz44mpDyRykUXNhxptyh0vx6qnwcIfJoCh2Cby8VXpJefiVtSpigdF6p
- XXUPHRRDO/+JoEArB7ykvk30aRpy3ezmcRKXVjcKsk5zCKvfxXMXoCSJzeS8iaeCP3Tgrwi3GtyWM
- t5L3Q7TTjRvYJLBpqZnFIeDjLOMqeAJ6JEnnPRkyr9lIB9XLgju8KRdS8r0QUcsNG2p+Q5lny83o5
- kfVz/uZvA==;
+ bh=f53UcJe57vMhX/PjMWjM0mVsBrvYOEKvnYIfhQzMDuI=; b=sBaiBnkUl2VxfPJqmc9e4bd9q
+ TfWVSFieLNukCbvZt4Wd5RKp8nAh9ThNPVMDZJZTjv++aI2lyLfutsUgmOPgKNVENw313gWuqjlvY
+ e6BDbvL6SymNUdeb3uyF+iLUi2KjRn12vRtuFyvDuQ2ceY0Mukli6WGrzZ+qVgWxFbDWmd8gj06VK
+ efsW61xgrbsJojz2uEdcVKK5CqHaHoQv7ynhfblwL3IkdTsYyc5vlXrjUZ4C7Czb+wtmhP4VgWWjM
+ SLedE4zPsRN7ZLPFkEo3fv8urmpdrFL2HVHCk3bcjtOj5nv2hCJ/E3Edzad6D53u5RQGZYna4ifQ9
+ SKemzKDNA==;
+In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -51,236 +54,105 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This conversion keeps the radix tree and XArray data structures in sync
-at all times.  That allows us to convert the page cache one function at
-a time and should allow for easier bisection.  Other than renaming some
-elements of the structures, the data structures are fundamentally
-unchanged; a radix tree walk and an XArray walk will touch the same
-number of cachelines.  I have changes planned to the XArray data
-structure, but those will happen in future patches.
+Both callers of __delete_from_swap_cache have the swp_entry_t already,
+so pass that in to make constructing the XA_STATE easier.
 
-Improvements the XArray has over the radix tree:
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+---
+ include/linux/swap.h |  5 +++--
+ mm/swap_state.c      | 24 ++++++++++--------------
+ mm/vmscan.c          |  2 +-
+ 3 files changed, 14 insertions(+), 17 deletions(-)
 
- - The radix tree provides operations like other trees do; 'insert' and
-   'delete'.  But what most users really want is an automatically resizing
-   array, and so it makes more sense to give users an API that is like
-   an array -- 'load' and 'store'.  We still have an 'insert' operation
-   for users that really want that semantic.
- - The XArray considers locking as part of its API.  This simplifies a lot
-   of users who formerly had to manage their own locking just for the
-   radix tree.  It also improves code generation as we can now tell RCU
-   that we're holding a lock and it doesn't need to generate as much
-   fencing code.  The other advantage is that tree nodes can be moved
-   (not yet implemented).
- - GFP flags are now parameters to calls which may need to allocate
-   memory.  The radix tree forced users to decide what the allocation
-   flags would be at creation time.  It's much clearer to specify them
-   at allocation time.
- - Memory is not preloaded; we don't tie up dozens of pages on the
-   off chance that the slab allocator fails.  Instead, we drop the lock,
-   allocate a new node and retry the operation.  We have to convert all
-   the radix tree, IDA and IDR preload users before we can realise this
-   benefit, but I have not yet found a user which cannot be converted.
- - The XArray provides a cmpxchg operation.  The radix tree forces users
-   to roll their own (and at least four have).
- - Iterators take a 'max' parameter.  That simplifies many users and
-   will reduce the amount of iteration done.
- - Iteration can proceed backwards.  We only have one user for this, but
-   since it's called as part of the pagefault readahead algorithm, that
-   seemed worth mentioning.
- - RCU-protected pointers are not exposed as part of the API.  There are
-   some fun bugs where the page cache forgets to use rcu_dereference()
-   in the current codebase.
- - Value entries gain an extra bit compared to radix tree exceptional
-   entries.  That gives us the extra bit we need to put huge page swap
-   entries in the page cache.
- - Some iterators now take a 'filter' argument instead of having
-   separate iterators for tagged/untagged iterations.
-
-The page cache is improved by this:
- - Shorter, easier to read code
- - More efficient iterations
- - Reduction in size of struct address_space
- - Fewer walks from the top of the data structure; the XArray API
-   encourages staying at the leaf node and conducting operations there.
-
-Since version 10, I've fixed a few bugs.
-
- - There were some places in f2fs where the spinlock was being taken in a
-   not-irq-safe manner.  I spotted it by review, but lockdep would have
-   noticed if anybody had tested this patchset on f2fs.
- - Fixed the bug that Mike Kravetz found where we could end up in an
-   infinite loop when doing a tagged iteration.
- - Added UBSAN to the userspace testing framework and fixed some
-   problems that it caught (shifting a negative number, shifting by
-   BITS_PER_LONG).
- - Fixed an unlikely bug in shmem_partial_swap_usage() where I'd
-   forgotten to call xas_retry() in an RCU-protected iteration.
- - Added a patch to fix dax_load_hole; it wasn't returning errors
-   properly.
-
-Things that aren't bug fixes:
-
- - dax_layout_busy_page() got removed, so I dropped the adaptation of
-   that function.
- - Made __test_set_page_writeback more efficient by only walking the
-   tree once instead of up to three times (once per tag).
- - Redid the shmem_wait_for_pins / shmem_tag_pins patches so they share
-   an xa_state between them.  Cuts down stack usage a bit.
- - Removed more radix tree functionality that's not being used
-   - radix_tree_for_each_contig
-   - radix_tree_update_node_t
-   - radix_tree_clear_tags
-
-This is against next-20180413.
-
-If you're going to review anything, please review anything in patches 16
-and higher; they're the ones mostly missing review, and most likely where
-the bugs are going to be.
-
-Matthew Wilcox (63):
-  xarray: Replace exceptional entries
-  xarray: Change definition of sibling entries
-  xarray: Add definition of struct xarray
-  xarray: Define struct xa_node
-  xarray: Add documentation
-  xarray: Add xa_load
-  xarray: Add xa_get_tag, xa_set_tag and xa_clear_tag
-  xarray: Add xa_store
-  xarray: Add xa_cmpxchg and xa_insert
-  xarray: Add xa_for_each
-  xarray: Add xa_extract
-  xarray: Add xa_destroy
-  xarray: Add xas_next and xas_prev
-  xarray: Add xas_create_range
-  xarray: Add MAINTAINERS entry
-  page cache: Rearrange address_space
-  page cache: Convert hole search to XArray
-  page cache: Add and replace pages using the XArray
-  page cache: Convert page deletion to XArray
-  page cache: Convert page cache lookups to XArray
-  page cache: Convert delete_batch to XArray
-  page cache: Remove stray radix comment
-  page cache: Convert filemap_range_has_page to XArray
-  mm: Convert page-writeback to XArray
-  mm: Convert workingset to XArray
-  mm: Convert truncate to XArray
-  mm: Convert add_to_swap_cache to XArray
-  mm: Convert delete_from_swap_cache to XArray
-  mm: Convert __do_page_cache_readahead to XArray
-  mm: Convert page migration to XArray
-  mm: Convert huge_memory to XArray
-  mm: Convert collapse_shmem to XArray
-  mm: Convert khugepaged_scan_shmem to XArray
-  pagevec: Use xa_tag_t
-  shmem: Convert replace to XArray
-  shmem: Convert shmem_confirm_swap to XArray
-  shmem: Convert find_swap_entry to XArray
-  shmem: Convert shmem_add_to_page_cache to XArray
-  shmem: Convert shmem_alloc_hugepage to XArray
-  shmem: Convert shmem_free_swap to XArray
-  shmem: Convert shmem_partial_swap_usage to XArray
-  memfd: Convert shmem_wait_for_pins to XArray
-  memfd: Convert shmem_tag_pins to XArray
-  shmem: Comment fixups
-  btrfs: Convert page cache to XArray
-  fs: Convert buffer to XArray
-  fs: Convert writeback to XArray
-  nilfs2: Convert to XArray
-  f2fs: Convert to XArray
-  lustre: Convert to XArray
-  dax: Fix use of zero page
-  dax: dax_insert_mapping_entry always succeeds
-  dax: Rename some functions
-  dax: Hash on XArray instead of mapping
-  dax: Convert dax_insert_pfn_mkwrite to XArray
-  dax: Convert __dax_invalidate_entry to XArray
-  dax: Convert dax writeback to XArray
-  dax: Convert page fault handlers to XArray
-  dax: Return fault code from dax_load_hole
-  page cache: Finish XArray conversion
-  radix tree: Remove unused functions
-  radix tree: Remove radix_tree_update_node_t
-  radix tree: Remove radix_tree_clear_tags
-
- .clang-format                                 |    1 -
- Documentation/core-api/index.rst              |    1 +
- Documentation/core-api/xarray.rst             |  361 ++++
- MAINTAINERS                                   |   12 +
- arch/powerpc/include/asm/book3s/64/pgtable.h  |    4 +-
- arch/powerpc/include/asm/nohash/64/pgtable.h  |    4 +-
- drivers/gpu/drm/i915/i915_gem.c               |   17 +-
- drivers/staging/lustre/lustre/llite/glimpse.c |   12 +-
- .../staging/lustre/lustre/mdc/mdc_request.c   |   16 +-
- fs/btrfs/compression.c                        |    6 +-
- fs/btrfs/extent_io.c                          |   12 +-
- fs/buffer.c                                   |   14 +-
- fs/dax.c                                      |  725 +++----
- fs/ext4/inode.c                               |    2 +-
- fs/f2fs/data.c                                |    5 +-
- fs/f2fs/dir.c                                 |    2 +-
- fs/f2fs/inline.c                              |    4 +-
- fs/f2fs/node.c                                |    9 +-
- fs/fs-writeback.c                             |   25 +-
- fs/gfs2/aops.c                                |    2 +-
- fs/inode.c                                    |    2 +-
- fs/nfs/blocklayout/blocklayout.c              |    2 +-
- fs/nilfs2/btnode.c                            |   37 +-
- fs/nilfs2/page.c                              |   72 +-
- fs/proc/task_mmu.c                            |    2 +-
- include/linux/fs.h                            |   63 +-
- include/linux/pagemap.h                       |   10 +-
- include/linux/pagevec.h                       |    8 +-
- include/linux/radix-tree.h                    |  133 +-
- include/linux/swap.h                          |   22 +-
- include/linux/swapops.h                       |   19 +-
- include/linux/xarray.h                        | 1010 ++++++++++
- lib/Makefile                                  |    2 +-
- lib/idr.c                                     |   67 +-
- lib/radix-tree.c                              |  571 +-----
- lib/xarray.c                                  | 1681 +++++++++++++++++
- mm/filemap.c                                  |  723 +++----
- mm/huge_memory.c                              |   17 +-
- mm/khugepaged.c                               |  177 +-
- mm/madvise.c                                  |    2 +-
- mm/memcontrol.c                               |    2 +-
- mm/migrate.c                                  |   41 +-
- mm/mincore.c                                  |    2 +-
- mm/page-writeback.c                           |   72 +-
- mm/readahead.c                                |   10 +-
- mm/shmem.c                                    |  301 ++-
- mm/swap.c                                     |    6 +-
- mm/swap_state.c                               |  119 +-
- mm/truncate.c                                 |   27 +-
- mm/vmscan.c                                   |    2 +-
- mm/workingset.c                               |   71 +-
- tools/include/linux/spinlock.h                |   13 +-
- tools/testing/radix-tree/.gitignore           |    2 +
- tools/testing/radix-tree/Makefile             |   15 +-
- tools/testing/radix-tree/benchmark.c          |   91 -
- tools/testing/radix-tree/idr-test.c           |    6 +-
- tools/testing/radix-tree/linux/bug.h          |    1 +
- tools/testing/radix-tree/linux/kconfig.h      |    1 +
- tools/testing/radix-tree/linux/kernel.h       |    5 +
- tools/testing/radix-tree/linux/lockdep.h      |   11 +
- tools/testing/radix-tree/linux/rcupdate.h     |    2 +
- tools/testing/radix-tree/linux/xarray.h       |    3 +
- tools/testing/radix-tree/main.c               |   12 +-
- tools/testing/radix-tree/multiorder.c         |  272 +--
- tools/testing/radix-tree/regression1.c        |   68 +-
- tools/testing/radix-tree/regression3.c        |   22 -
- tools/testing/radix-tree/tag_check.c          |   32 +-
- tools/testing/radix-tree/test.c               |   53 +-
- tools/testing/radix-tree/test.h               |    6 +
- tools/testing/radix-tree/xarray-test.c        |  594 ++++++
- 70 files changed, 5032 insertions(+), 2684 deletions(-)
- create mode 100644 Documentation/core-api/xarray.rst
- create mode 100644 lib/xarray.c
- create mode 100644 tools/testing/radix-tree/linux/kconfig.h
- create mode 100644 tools/testing/radix-tree/linux/lockdep.h
- create mode 100644 tools/testing/radix-tree/linux/xarray.h
- create mode 100644 tools/testing/radix-tree/xarray-test.c
-
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index dab96af23d96..0b6a47a46c55 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -404,7 +404,7 @@ extern void show_swap_cache_info(void);
+ extern int add_to_swap(struct page *page);
+ extern int add_to_swap_cache(struct page *, swp_entry_t, gfp_t);
+ extern int __add_to_swap_cache(struct page *page, swp_entry_t entry);
+-extern void __delete_from_swap_cache(struct page *);
++extern void __delete_from_swap_cache(struct page *, swp_entry_t entry);
+ extern void delete_from_swap_cache(struct page *);
+ extern void free_page_and_swap_cache(struct page *);
+ extern void free_pages_and_swap_cache(struct page **, int);
+@@ -564,7 +564,8 @@ static inline int add_to_swap_cache(struct page *page, swp_entry_t entry,
+ 	return -1;
+ }
+ 
+-static inline void __delete_from_swap_cache(struct page *page)
++static inline void __delete_from_swap_cache(struct page *page,
++							swp_entry_t entry)
+ {
+ }
+ 
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 53e27894c1bc..a0a562fbc65f 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -154,23 +154,22 @@ int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
+  * This must be called only on pages that have
+  * been verified to be in the swap cache.
+  */
+-void __delete_from_swap_cache(struct page *page)
++void __delete_from_swap_cache(struct page *page, swp_entry_t entry)
+ {
+-	struct address_space *address_space;
++	struct address_space *address_space = swap_address_space(entry);
+ 	int i, nr = hpage_nr_pages(page);
+-	swp_entry_t entry;
+-	pgoff_t idx;
++	pgoff_t idx = swp_offset(entry);
++	XA_STATE(xas, &address_space->i_pages, idx);
+ 
+ 	VM_BUG_ON_PAGE(!PageLocked(page), page);
+ 	VM_BUG_ON_PAGE(!PageSwapCache(page), page);
+ 	VM_BUG_ON_PAGE(PageWriteback(page), page);
+ 
+-	entry.val = page_private(page);
+-	address_space = swap_address_space(entry);
+-	idx = swp_offset(entry);
+ 	for (i = 0; i < nr; i++) {
+-		radix_tree_delete(&address_space->i_pages, idx + i);
++		void *entry = xas_store(&xas, NULL);
++		VM_BUG_ON_PAGE(entry != page + i, entry);
+ 		set_page_private(page + i, 0);
++		xas_next(&xas);
+ 	}
+ 	ClearPageSwapCache(page);
+ 	address_space->nrpages -= nr;
+@@ -246,14 +245,11 @@ int add_to_swap(struct page *page)
+  */
+ void delete_from_swap_cache(struct page *page)
+ {
+-	swp_entry_t entry;
+-	struct address_space *address_space;
+-
+-	entry.val = page_private(page);
++	swp_entry_t entry = { .val = page_private(page) };
++	struct address_space *address_space = swap_address_space(entry);
+ 
+-	address_space = swap_address_space(entry);
+ 	xa_lock_irq(&address_space->i_pages);
+-	__delete_from_swap_cache(page);
++	__delete_from_swap_cache(page, entry);
+ 	xa_unlock_irq(&address_space->i_pages);
+ 
+ 	put_swap_page(page, entry);
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 8b920ce3ae02..a33b60a52449 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -734,7 +734,7 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
+ 	if (PageSwapCache(page)) {
+ 		swp_entry_t swap = { .val = page_private(page) };
+ 		mem_cgroup_swapout(page, swap);
+-		__delete_from_swap_cache(page);
++		__delete_from_swap_cache(page, swap);
+ 		xa_unlock_irqrestore(&mapping->i_pages, flags);
+ 		put_swap_page(page, swap);
+ 	} else {
 -- 
 2.17.0
 
