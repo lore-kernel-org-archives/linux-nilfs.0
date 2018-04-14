@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11 26/63] mm: Convert truncate to XArray
-Date: Sat, 14 Apr 2018 07:12:39 -0700
-Message-ID: <20180414141316.7167-27-willy@infradead.org>
+Subject: [PATCH v11 25/63] mm: Convert workingset to XArray
+Date: Sat, 14 Apr 2018 07:12:38 -0700
+Message-ID: <20180414141316.7167-26-willy@infradead.org>
 References: <20180414141316.7167-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=znQAhIMkJzP9ESvhntPJQ5m/xpSmzb9cHMg6HTY3Aqc=; b=LzmjUlCdYliH0brHdKF3EXQ8oB
- qhbTiB8a9f2OnKljZsk5xzitCw7RUh4QlnsZGmgjdKljwOWyITaPYBLFfHbIeL2HGYunH2GdCO8vy
- tgY9ZcB6iGT/1aJZvzgKdYblBf3end0erTdLlaQUYzjAeo61R3IzCOg4cdlE4Mm7sSRU=;
+ bh=8oZgFaJ1jQc071QClx67FYCH+9jnC6AskSsYzwsqA9c=; b=TQAMEM/dW0QIy8adR2S2k3ouck
+ B2p9KtbFPobaksO0aFIAMpRbH+9AkETze/7+mlWU9SK+FQaEjS3D9pdfXgMXfx4iRFO9ctzK7SbND
+ lWnQXY5OaLQBLtaagd27r88bDyNi7CCu64Ip1hOmWVyv5V4CEe+n90T/n31c0RV/Q7Tg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=znQAhIMkJzP9ESvhntPJQ5m/xpSmzb9cHMg6HTY3Aqc=; b=caBoQUIOV9oRWxaX/p0VCI9WIx
- iSYL2MI5A48W2GaNeOYo0uWfrZ3FTz27KXmFhSfJTNmevl3cAxNga9eUsWKcn8kACD2vJmRP7QiEx
- wYbPJs3qe/hiuJauLjlOIEGkPZ1Gfp4DhB9+XgfwXUXOSJHer7QtqO/Yo70ECLzobm2A=;
+ bh=8oZgFaJ1jQc071QClx67FYCH+9jnC6AskSsYzwsqA9c=; b=BYlRSYJUvofWjBHgf8xtZsHrt4
+ RXJt/n5H+xhlOWYwjnJgp1YtbaDQdNJd8kDKF3P/o0LykjvePBeaAPEc0jC6VhM4+3rfTmzcTkUKH
+ u3A+FgPNsrEQgVhpIrt7UvnfFnlgYVxX1534ymBsXL1RySvk9kFl6jOP7zkXN37k+E+w=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=znQAhIMkJzP9ESvhntPJQ5m/xpSmzb9cHMg6HTY3Aqc=; b=JCylc9DZjHW6ZYGPh0teNmAm4
- lRYiNnsA4FpJoliRGwV5ESJZi+wrR71+QP05Ky40KMmYjx+BM+iXR3XC+VLA4G5Djd4VJq0RV0ZmO
- ykxMlEl3y94ybg9M0nAXBt7iOpUPpLGBfn9CwaoUQYYMtuHLkINeiJN41spA/hi6PiI+/USMAoGfV
- mgbsoLbO/beVWJjWrLbM/TX7Zxb/NqHkurIMatN2W5CXGPna7mtQq+lfTbSkynFp5neQ20oQe0kQP
- H69pRiwUMDYt7TpOdpwpiFu+ziblk/8WymDBQ/QSVRXeFOuYENdydc5C8Khhg89KbzhfHTBuHbxsl
- 5wUwSbUEw==;
+ bh=8oZgFaJ1jQc071QClx67FYCH+9jnC6AskSsYzwsqA9c=; b=EFSrqtxvASXPZsYXZ9WgR5FT/
+ GJG1E2wsHtfb042mNfGv7Wx3npSyN+r2JcOdDyp3DWddXUVs0jtG3J0acZtsjL8zBIOBerRsyoBTc
+ Hk/syFFswodVYIyfCUoo2rZHQbHhg4rTHFRJDAswJBePSpfUQan1Ys+liduB5LHi4GBfDCgdKZ6Gd
+ JXUWH59gWImnpwunz98pfVRkdBkC+zkq+c8NQRqZXYTSrjOaGKXGzB5NXCsaGa6SfortUGbLnDjEP
+ CxLSalVN09KTeWRIvikXxYfNI/nshiLLksus/HMbs27eJiGPIWuUilg/f7XnYCim/Nb/tFhWxp+Ke
+ hvUYwnmAQ==;
 In-Reply-To: <20180414141316.7167-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,51 +53,159 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is essentially xa_cmpxchg() with the locking handled above us,
-and it doesn't have to handle replacing a NULL entry.
+We construct a fake XA_STATE and use it to delete the node with xa_store()
+rather than adding a special function for this unique use case.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/truncate.c | 15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+ include/linux/swap.h |  9 --------
+ mm/workingset.c      | 51 +++++++++++++++++++-------------------------
+ 2 files changed, 22 insertions(+), 38 deletions(-)
 
-diff --git a/mm/truncate.c b/mm/truncate.c
-index ed778555c9f3..45d68e90b703 100644
---- a/mm/truncate.c
-+++ b/mm/truncate.c
-@@ -33,15 +33,12 @@
- static inline void __clear_shadow_entry(struct address_space *mapping,
- 				pgoff_t index, void *entry)
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index a0ebb5deea2d..dab96af23d96 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -307,15 +307,6 @@ void workingset_update_node(struct xa_node *node);
+ 		xas_set_update(xas, workingset_update_node);		\
+ } while (0)
+ 
+-/* Returns workingset_update_node() if the mapping has shadow entries. */
+-#define workingset_lookup_update(mapping)				\
+-({									\
+-	radix_tree_update_node_t __helper = workingset_update_node;	\
+-	if (dax_mapping(mapping) || shmem_mapping(mapping))		\
+-		__helper = NULL;					\
+-	__helper;							\
+-})
+-
+ /* linux/mm/page_alloc.c */
+ extern unsigned long totalram_pages;
+ extern unsigned long totalreserve_pages;
+diff --git a/mm/workingset.c b/mm/workingset.c
+index bad4e58881cd..564e97bd5934 100644
+--- a/mm/workingset.c
++++ b/mm/workingset.c
+@@ -148,7 +148,7 @@
+  * and activations is maintained (node->inactive_age).
+  *
+  * On eviction, a snapshot of this counter (along with some bits to
+- * identify the node) is stored in the now empty page cache radix tree
++ * identify the node) is stored in the now empty page cache
+  * slot of the evicted page.  This is called a shadow entry.
+  *
+  * On cache misses for which there are shadow entries, an eligible
+@@ -162,7 +162,7 @@
+ 
+ /*
+  * Eviction timestamps need to be able to cover the full range of
+- * actionable refaults. However, bits are tight in the radix tree
++ * actionable refaults. However, bits are tight in the xarray
+  * entry, and after storing the identifier for the lruvec there might
+  * not be enough left to represent every single actionable refault. In
+  * that case, we have to sacrifice granularity for distance, and group
+@@ -338,7 +338,7 @@ void workingset_activation(struct page *page)
+ 
+ static struct list_lru shadow_nodes;
+ 
+-void workingset_update_node(struct radix_tree_node *node)
++void workingset_update_node(struct xa_node *node)
  {
--	struct radix_tree_node *node;
--	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, index);
- 
--	if (!__radix_tree_lookup(&mapping->i_pages, index, &node, &slot))
-+	xas_set_update(&xas, workingset_update_node);
-+	if (xas_load(&xas) != entry)
- 		return;
--	if (*slot != entry)
--		return;
--	__radix_tree_replace(&mapping->i_pages, node, slot, NULL,
--			     workingset_update_node);
-+	xas_store(&xas, NULL);
- 	mapping->nrexceptional--;
- }
- 
-@@ -738,10 +735,10 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
- 		index++;
- 	}
  	/*
--	 * For DAX we invalidate page tables after invalidating radix tree.  We
-+	 * For DAX we invalidate page tables after invalidating page cache.  We
- 	 * could invalidate page tables while invalidating each entry however
- 	 * that would be expensive. And doing range unmapping before doesn't
--	 * work as we have no cheap way to find whether radix tree entry didn't
-+	 * work as we have no cheap way to find whether page cache entry didn't
- 	 * get remapped later.
+ 	 * Track non-empty nodes that contain only shadow entries;
+@@ -370,7 +370,7 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
+ 	local_irq_enable();
+ 
+ 	/*
+-	 * Approximate a reasonable limit for the radix tree nodes
++	 * Approximate a reasonable limit for the nodes
+ 	 * containing shadow entries. We don't need to keep more
+ 	 * shadow entries than possible pages on the active list,
+ 	 * since refault distances bigger than that are dismissed.
+@@ -385,11 +385,11 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
+ 	 * worst-case density of 1/8th. Below that, not all eligible
+ 	 * refaults can be detected anymore.
+ 	 *
+-	 * On 64-bit with 7 radix_tree_nodes per page and 64 slots
++	 * On 64-bit with 7 xa_nodes per page and 64 slots
+ 	 * each, this will reclaim shadow entries when they consume
+ 	 * ~1.8% of available memory:
+ 	 *
+-	 * PAGE_SIZE / radix_tree_nodes / node_entries * 8 / PAGE_SIZE
++	 * PAGE_SIZE / xa_nodes / node_entries * 8 / PAGE_SIZE
  	 */
- 	if (dax_mapping(mapping)) {
+ 	if (sc->memcg) {
+ 		cache = mem_cgroup_node_nr_lru_pages(sc->memcg, sc->nid,
+@@ -398,7 +398,7 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
+ 		cache = node_page_state(NODE_DATA(sc->nid), NR_ACTIVE_FILE) +
+ 			node_page_state(NODE_DATA(sc->nid), NR_INACTIVE_FILE);
+ 	}
+-	max_nodes = cache >> (RADIX_TREE_MAP_SHIFT - 3);
++	max_nodes = cache >> (XA_CHUNK_SHIFT - 3);
+ 
+ 	if (nodes <= max_nodes)
+ 		return 0;
+@@ -408,11 +408,11 @@ static unsigned long count_shadow_nodes(struct shrinker *shrinker,
+ static enum lru_status shadow_lru_isolate(struct list_head *item,
+ 					  struct list_lru_one *lru,
+ 					  spinlock_t *lru_lock,
+-					  void *arg)
++					  void *arg) __must_hold(lru_lock)
+ {
++	XA_STATE(xas, NULL, 0);
+ 	struct address_space *mapping;
+-	struct radix_tree_node *node;
+-	unsigned int i;
++	struct xa_node *node;
+ 	int ret;
+ 
+ 	/*
+@@ -420,7 +420,7 @@ static enum lru_status shadow_lru_isolate(struct list_head *item,
+ 	 * the shadow node LRU under the i_pages lock and the
+ 	 * lru_lock.  Because the page cache tree is emptied before
+ 	 * the inode can be destroyed, holding the lru_lock pins any
+-	 * address_space that has radix tree nodes on the LRU.
++	 * address_space that has nodes on the LRU.
+ 	 *
+ 	 * We can then safely transition to the i_pages lock to
+ 	 * pin only the address_space of the particular node we want
+@@ -449,25 +449,18 @@ static enum lru_status shadow_lru_isolate(struct list_head *item,
+ 		goto out_invalid;
+ 	if (WARN_ON_ONCE(node->count != node->nr_values))
+ 		goto out_invalid;
+-	for (i = 0; i < RADIX_TREE_MAP_SIZE; i++) {
+-		if (node->slots[i]) {
+-			if (WARN_ON_ONCE(!xa_is_value(node->slots[i])))
+-				goto out_invalid;
+-			if (WARN_ON_ONCE(!node->nr_values))
+-				goto out_invalid;
+-			if (WARN_ON_ONCE(!mapping->nrexceptional))
+-				goto out_invalid;
+-			node->slots[i] = NULL;
+-			node->nr_values--;
+-			node->count--;
+-			mapping->nrexceptional--;
+-		}
+-	}
+-	if (WARN_ON_ONCE(node->nr_values))
+-		goto out_invalid;
++	mapping->nrexceptional -= node->nr_values;
++	xas.xa = node->array;
++	xas.xa_node = rcu_dereference_protected(node->parent,
++				lockdep_is_held(&mapping->i_pages.xa_lock));
++	xas.xa_offset = node->offset;
++	xas.xa_update = workingset_update_node;
++	/*
++	 * We could store a shadow entry here which was the minimum of the
++	 * shadow entries we were tracking ...
++	 */
++	xas_store(&xas, NULL);
+ 	inc_lruvec_page_state(virt_to_page(node), WORKINGSET_NODERECLAIM);
+-	__radix_tree_delete_node(&mapping->i_pages, node,
+-				 workingset_lookup_update(mapping));
+ 
+ out_invalid:
+ 	xa_unlock(&mapping->i_pages);
 -- 
 2.17.0
 
