@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 28/72] page cache: Convert
- find_get_entries_tag to XArray
-Date: Mon, 11 Jun 2018 07:05:55 -0700
-Message-ID: <20180611140639.17215-29-willy@infradead.org>
+Subject: [PATCH v13 39/72] mm: Convert __do_page_cache_readahead
+ to XArray
+Date: Mon, 11 Jun 2018 07:06:06 -0700
+Message-ID: <20180611140639.17215-40-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=fwqoMbRfGsDMvYDOCVix3zU3Jbw64C7uj9ufKhyC6y4=; b=mcwzLLXOAJ42B8WX28t7ftSefs
- LiBnkrYtrhWYsr4K547OH/OhkrvzMgcDqHgLFxneodPCmwu4TLF6eGbJFotTe9CMXTGJ/BMgU9wj8
- npbBdNMFJEoUivEt7T1mK6All95N37KDvePWl/LTo4R/wWe4MlU+WmaOAgtcdGL9wzO8=;
+ bh=MujQtudD6HapXlrwSi8huMmGpeKkjTkBkrUZuiJikXE=; b=arBlaYcW/2kTUnwurM3HbOy5Oz
+ d7+KJ9s7lZZq7KvwXTTFr0xMvOf0FiOzreeWWN8oMNViuDv1rvfu1nKbzrt5cGoLM29aMYMjwkVVz
+ jntVE/lEQRDd41hOHHzevesc3yD+IzEp4k/L/Cqq7ghTm5E0ftlnUKETBSyG9kztwLI4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=fwqoMbRfGsDMvYDOCVix3zU3Jbw64C7uj9ufKhyC6y4=; b=SHnTvsJCqRi19arvN4ZOK69E0A
- QS2/OAf/eP+2jvQlPKCMIeEqW08GSsiAoN41BpAQzWyAVlgUIX3pLVm+ixzgpmShBqqHtS3K7n/Rq
- 043ZCVv9bOoqzUXmBoNAS5+/Jl5tu7nptVw0tt/+WX+yqtgiqDIcSjqTkxZNBi3f1D3Y=;
+ bh=MujQtudD6HapXlrwSi8huMmGpeKkjTkBkrUZuiJikXE=; b=jNFINzltgdxi8dF3PdWdpx0lqS
+ SRNYN3lmBI8wsCxVAyMwYHxYjp++XRol1LcNpXlYqCqQYPn1OLwLHNtkhcEv0lDuAONogfdoVQt2f
+ mRbouGqbZbd4L2TP/JTWGJ98n5dkBzEyPm1+jQZlkk8rx+Ij/phZxYbNS39fMtfWvoaw=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=fwqoMbRfGsDMvYDOCVix3zU3Jbw64C7uj9ufKhyC6y4=; b=a4cv7/sWTzuX3VMy+74ENBJsu
- uDXnsLwh8pfamO8PHVtIM4BfGFuFmkuWaAuTd2OyiSzwc4yvucEgPS2M4CO1fKcI9tzuzZfSr7wcY
- 49M405DypPQkLX2MqXuOaElrel2+hxTERI8Sx3xocIbWTLqNA0xnv+vCVDBkLSQvc3bC2Otopgb5k
- orYWU/Fj09Ch/hZh4TgyvmISicIli+YdFMbTpC1nuIOU4ekuXWNZG4au6rPtJ74XWny4VTXxO9Koq
- A4NVc+l9AZ8BJgOb5sslB15T9PTo6NdzkmBEduTVzLOR45aUY9gDp8vH6y78aI0HyO01q028HInGj
- iOsZN43Yg==;
+ bh=MujQtudD6HapXlrwSi8huMmGpeKkjTkBkrUZuiJikXE=; b=oeORb1zkr0yVfKJawkiF8tapz
+ AP283ohq5CrZArgIGTWnvMCIr8sfI3jNzzfxmmQ9fD+AbFJKaKb8ZREua/EzVkPyErflY/DfaReCs
+ rgzrDHCyo4jU+nseYGNF7ybp3CxQkfWrN6PXsONZYBtGv8e616D9KXlg3kBWPtEorGlakzOd4wRkb
+ UAy70hJFoIYsui4qBhNL9KnBopPmd+zunjg7yYGCietgss5AcobvIiEGOO0tziaAa6SdDPdELVPOM
+ rQwtM+v7XaDX5tLNQnBOE+uaDpRWkxq1PffuCjrgUjHazMoPA9DC+YDW/yyrsJRQ00p5kWB6wu9qU
+ UM1uOmuIA==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,113 +54,28 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Slightly shorter and simpler code.
+This one is trivial.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/pagemap.h |  2 +-
- mm/filemap.c            | 54 ++++++++++++++++++-----------------------
- 2 files changed, 25 insertions(+), 31 deletions(-)
+ mm/readahead.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index a6d635fefb01..442977811b59 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -373,7 +373,7 @@ static inline unsigned find_get_pages_tag(struct address_space *mapping,
- 					nr_pages, pages);
- }
- unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
--			int tag, unsigned int nr_entries,
-+			xa_tag_t tag, unsigned int nr_entries,
- 			struct page **entries, pgoff_t *indices);
- 
- struct page *grab_cache_page_write_begin(struct address_space *mapping,
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 83328635edaa..67f04bcdf9ef 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -1866,57 +1866,51 @@ EXPORT_SYMBOL(find_get_pages_range_tag);
-  * @tag.
-  */
- unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
--			int tag, unsigned int nr_entries,
-+			xa_tag_t tag, unsigned int nr_entries,
- 			struct page **entries, pgoff_t *indices)
- {
--	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, start);
-+	struct page *page;
- 	unsigned int ret = 0;
--	struct radix_tree_iter iter;
- 
- 	if (!nr_entries)
- 		return 0;
- 
- 	rcu_read_lock();
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, start, tag) {
--		struct page *head, *page;
--repeat:
--		page = radix_tree_deref_slot(slot);
--		if (unlikely(!page))
-+	xas_for_each_tagged(&xas, page, ULONG_MAX, tag) {
-+		struct page *head;
-+		if (xas_retry(&xas, page))
- 			continue;
--		if (radix_tree_exception(page)) {
--			if (radix_tree_deref_retry(page)) {
--				slot = radix_tree_iter_retry(&iter);
--				continue;
--			}
--
--			/*
--			 * A shadow entry of a recently evicted page, a swap
--			 * entry from shmem/tmpfs or a DAX entry.  Return it
--			 * without attempting to raise page count.
--			 */
-+		/*
-+		 * A shadow entry of a recently evicted page, a swap
-+		 * entry from shmem/tmpfs or a DAX entry.  Return it
-+		 * without attempting to raise page count.
-+		 */
-+		if (xa_is_value(page))
- 			goto export;
--		}
- 
- 		head = compound_head(page);
- 		if (!page_cache_get_speculative(head))
--			goto repeat;
-+			goto retry;
- 
- 		/* The page was split under us? */
--		if (compound_head(page) != head) {
--			put_page(head);
--			goto repeat;
--		}
-+		if (compound_head(page) != head)
-+			goto put_page;
- 
- 		/* Has the page moved? */
--		if (unlikely(page != *slot)) {
--			put_page(head);
--			goto repeat;
--		}
-+		if (unlikely(page != xas_reload(&xas)))
-+			goto put_page;
-+
- export:
--		indices[ret] = iter.index;
-+		indices[ret] = xas.xa_index;
- 		entries[ret] = page;
- 		if (++ret == nr_entries)
+diff --git a/mm/readahead.c b/mm/readahead.c
+index 59998ca31f2a..07f9734dc79f 100644
+--- a/mm/readahead.c
++++ b/mm/readahead.c
+@@ -174,9 +174,7 @@ unsigned int __do_page_cache_readahead(struct address_space *mapping,
+ 		if (page_offset > end_index)
  			break;
-+		continue;
-+put_page:
-+		put_page(head);
-+retry:
-+		xas_reset(&xas);
- 	}
- 	rcu_read_unlock();
- 	return ret;
+ 
+-		rcu_read_lock();
+-		page = radix_tree_lookup(&mapping->i_pages, page_offset);
+-		rcu_read_unlock();
++		page = xa_load(&mapping->i_pages, page_offset);
+ 		if (page && !xa_is_value(page)) {
+ 			/*
+ 			 * Page already present?  Kick off the current batch of
 -- 
 2.17.1
 
