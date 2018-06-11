@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 64/72] dax: Convert dax_layout_busy_page to
- XArray
-Date: Mon, 11 Jun 2018 07:06:31 -0700
-Message-ID: <20180611140639.17215-65-willy@infradead.org>
+Subject: [PATCH v13 69/72] radix tree: Remove
+ radix_tree_update_node_t
+Date: Mon, 11 Jun 2018 07:06:36 -0700
+Message-ID: <20180611140639.17215-70-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=YZEZhtidxbERQmqpIgTJPIyTZV3rzcBKGQfijbq6eAo=; b=an5cHkDUjxx+HcyIAdSvWpAkxG
- b3jgDNYd6LXObWHh4oszGBEoSSHp5YlpISbWdHucOhIlihvqvJ7DjJMBADWkC9nz9YbGsj/8iWkAG
- CVu6d9AMda/woNxSD6NO3Y866Qr2Ed2XA9zS1feyX4bZs4gepgqk+fFwzAUFLqwGBAqs=;
+ bh=ynh2wcxEjkHUCCf5sVGFt2iVMlo/bLiazXSXh5mbgyo=; b=jrJAaGROem/wqP/1epI8Ph0sHz
+ Tltm6GEHpjhZF65DAAwREPpbEXehUsZEwnT9CoCGi5g3FYgXfh3vBqJMTlkSipuq6LAZ1LD0ubwcd
+ uKsZs7UFbXwWCzTKGKFeaQ0Y9BP2C5WRUEOh/sss+t88mkzTDpd5UxOJl4s8ee3iWmak=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=YZEZhtidxbERQmqpIgTJPIyTZV3rzcBKGQfijbq6eAo=; b=I+siEonhObrL6mjG5H+BTLH2Ry
- KX9JT14jxSXmPaTjAPc/eeCzY0j4T5akLRs0fVZDInUgoZY3HLPTEQiMEIhf1o+K3gS9Um8Qa5Cft
- hCeBkE8XCf8MQmVAwRcUtB4V4aXOMQ3BFc1DwdfBytOGiK6w/eorT79M0bzKeXTqZJU4=;
+ bh=ynh2wcxEjkHUCCf5sVGFt2iVMlo/bLiazXSXh5mbgyo=; b=S7cwaWQA5V6/Cx0TJwelSZ2ijV
+ eWPuO/YdsGtOlHvHVk6sXHIxjT5MlxTS2blG7+R6SYYWrWwkS8KFZJOTJSDpAMNmorvCHD7+TtFz0
+ llpYQxBxxKtEh5FTN2QPOCVkbSJT9mrgaiLAmz870AwDPG9S8HABrjZcp7VHOZGv3YIM=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=YZEZhtidxbERQmqpIgTJPIyTZV3rzcBKGQfijbq6eAo=; b=LJNjD8aUGTWjXHythh3JGMmev
- DadDkFu9xiNsI+UxD/Dsb82sgXExm0x9/32u8bsG8kwv4EwcoWDD842fiRDgilchWtqkHQU/8vjSr
- 3OmSUKv0EUDPaWYsOTbizx8iQyTE02XtMS3ZlzT8KhtjEbjeMyhwANJd8YXmv1GfldWlRqBWMuABn
- y2BKT6VL3/YvsLoYABSGRcSlYKCPzgnsZxe9m2SXmgO2kBq9KtmegYM0Ajg49E4j3SH3Zrmu/4Zvs
- eWUms6flEVIJlQbeZZ5VzfYmet+roI8W6iiFGi4kD4NT4peqWhHo5mLGg6mqL2SXafXxpQLkB2jYc
- UAFgq/gfg==;
+ bh=ynh2wcxEjkHUCCf5sVGFt2iVMlo/bLiazXSXh5mbgyo=; b=W7MyQqs2mqDmueKISb2fnPkpk
+ y/GOIFtUtIazDSRPCIdIrI7q0D3IDURUIyI8mPo8p6Mxtt8T4HR1TvdlXi4f7sohCdoiM7FljzA6d
+ 0vT6lvRK51yCe5Oyjd6aUtw8iAsF2p/qP0CvULrr6E+IIogqKNAhgiMiFi4X2lRfT++DSHhHg9NxK
+ tn8CgFwxTADAlRbOIjRti4P0vRvPWCx7SJnzWP3SBtiKBpJyxGQ8rsQwkFXZKDBksCeW9grr3yp+N
+ KNbow2xqcdOcqTrwe8x9VE2ynyS0DPNCmctlw1uPaYI7nMiiSWc1dnVt3Xo8IP+YCQqcnjcQHuFRg
+ fRknCI0tQ==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,103 +54,189 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Instead of using a pagevec, just use the XArray iterators.  Add a
-conditional rescheduling point which probably should have been there in
-the original.
+The only user of this functionality was the workingset code, and it's
+now been converted to the XArray.  Remove __radix_tree_delete_node()
+entirely as it was also only used by the workingset code.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/dax.c | 57 +++++++++++++++++++++-----------------------------------
- 1 file changed, 21 insertions(+), 36 deletions(-)
+ include/linux/radix-tree.h            |  7 +----
+ lib/idr.c                             |  2 +-
+ lib/radix-tree.c                      | 42 +++++----------------------
+ tools/testing/radix-tree/multiorder.c |  2 +-
+ 4 files changed, 11 insertions(+), 42 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 1c9b736147d3..b8ed7bf32ba1 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -621,11 +621,10 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
-  */
- struct page *dax_layout_busy_page(struct address_space *mapping)
- {
--	pgoff_t	indices[PAGEVEC_SIZE];
-+	XA_STATE(xas, &mapping->i_pages, 0);
-+	void *entry;
-+	unsigned int scanned = 0;
- 	struct page *page = NULL;
--	struct pagevec pvec;
--	pgoff_t	index, end;
--	unsigned i;
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index 081e68b4376b..fc13c4b1afdb 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -242,17 +242,12 @@ void *__radix_tree_lookup(const struct radix_tree_root *, unsigned long index,
+ void *radix_tree_lookup(const struct radix_tree_root *, unsigned long);
+ void __rcu **radix_tree_lookup_slot(const struct radix_tree_root *,
+ 					unsigned long index);
+-typedef void (*radix_tree_update_node_t)(struct radix_tree_node *);
+ void __radix_tree_replace(struct radix_tree_root *, struct radix_tree_node *,
+-			  void __rcu **slot, void *entry,
+-			  radix_tree_update_node_t update_node);
++			  void __rcu **slot, void *entry);
+ void radix_tree_iter_replace(struct radix_tree_root *,
+ 		const struct radix_tree_iter *, void __rcu **slot, void *entry);
+ void radix_tree_replace_slot(struct radix_tree_root *,
+ 			     void __rcu **slot, void *entry);
+-void __radix_tree_delete_node(struct radix_tree_root *,
+-			      struct radix_tree_node *,
+-			      radix_tree_update_node_t update_node);
+ void radix_tree_iter_delete(struct radix_tree_root *,
+ 			struct radix_tree_iter *iter, void __rcu **slot);
+ void *radix_tree_delete_item(struct radix_tree_root *, unsigned long, void *);
+diff --git a/lib/idr.c b/lib/idr.c
+index 0d7410d1fb7c..58b88f5eb672 100644
+--- a/lib/idr.c
++++ b/lib/idr.c
+@@ -303,7 +303,7 @@ void *idr_replace(struct idr *idr, void *ptr, unsigned long id)
+ 	if (!slot || radix_tree_tag_get(&idr->idr_rt, id, IDR_FREE))
+ 		return ERR_PTR(-ENOENT);
  
- 	/*
- 	 * In the 'limited' case get_user_pages() for dax is disabled.
-@@ -636,13 +635,9 @@ struct page *dax_layout_busy_page(struct address_space *mapping)
- 	if (!dax_mapping(mapping) || !mapping_mapped(mapping))
- 		return NULL;
+-	__radix_tree_replace(&idr->idr_rt, node, slot, ptr, NULL);
++	__radix_tree_replace(&idr->idr_rt, node, slot, ptr);
  
--	pagevec_init(&pvec);
--	index = 0;
--	end = -1;
--
- 	/*
- 	 * If we race get_user_pages_fast() here either we'll see the
--	 * elevated page count in the pagevec_lookup and wait, or
-+	 * elevated page count in the iteration and wait, or
- 	 * get_user_pages_fast() will see that the page it took a reference
- 	 * against is no longer mapped in the page tables and bail to the
- 	 * get_user_pages() slow path.  The slow path is protected by
-@@ -654,36 +649,26 @@ struct page *dax_layout_busy_page(struct address_space *mapping)
- 	 */
- 	unmap_mapping_range(mapping, 0, 0, 1);
- 
--	while (index < end && pagevec_lookup_entries(&pvec, mapping, index,
--				min(end - index, (pgoff_t)PAGEVEC_SIZE),
--				indices)) {
--		for (i = 0; i < pagevec_count(&pvec); i++) {
--			struct page *pvec_ent = pvec.pages[i];
--			void *entry;
--
--			index = indices[i];
--			if (index >= end)
--				break;
--
--			if (!xa_is_value(pvec_ent))
--				continue;
--
--			xa_lock_irq(&mapping->i_pages);
--			entry = get_unlocked_mapping_entry(mapping, index, NULL);
--			if (entry)
--				page = dax_busy_page(entry);
--			put_unlocked_mapping_entry(mapping, index, entry);
--			xa_unlock_irq(&mapping->i_pages);
--			if (page)
--				break;
--		}
--		pagevec_remove_exceptionals(&pvec);
--		pagevec_release(&pvec);
--		index++;
--
-+	xas_lock_irq(&xas);
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (!xa_is_value(entry))
-+			continue;
-+		if (unlikely(dax_is_locked(entry)))
-+			entry = get_unlocked_entry(&xas);
-+		if (entry)
-+			page = dax_busy_page(entry);
-+		put_unlocked_entry(&xas, entry);
- 		if (page)
- 			break;
-+		if (++scanned % XA_CHECK_SCHED)
-+			continue;
-+
-+		xas_pause(&xas);
-+		xas_unlock_irq(&xas);
-+		cond_resched();
-+		xas_lock_irq(&xas);
- 	}
-+	xas_unlock_irq(&xas);
- 	return page;
+ 	return entry;
  }
- EXPORT_SYMBOL_GPL(dax_layout_busy_page);
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index d0f44ea96945..001062d41f9f 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -610,8 +610,7 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
+  *	radix_tree_shrink    -    shrink radix tree to minimum height
+  *	@root		radix tree root
+  */
+-static inline bool radix_tree_shrink(struct radix_tree_root *root,
+-				     radix_tree_update_node_t update_node)
++static inline bool radix_tree_shrink(struct radix_tree_root *root)
+ {
+ 	bool shrunk = false;
+ 
+@@ -671,8 +670,6 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
+ 		node->count = 0;
+ 		if (!radix_tree_is_internal_node(child)) {
+ 			node->slots[0] = (void __rcu *)RADIX_TREE_RETRY;
+-			if (update_node)
+-				update_node(node);
+ 		}
+ 
+ 		WARN_ON_ONCE(!list_empty(&node->private_list));
+@@ -684,8 +681,7 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
+ }
+ 
+ static bool delete_node(struct radix_tree_root *root,
+-			struct radix_tree_node *node,
+-			radix_tree_update_node_t update_node)
++			struct radix_tree_node *node)
+ {
+ 	bool deleted = false;
+ 
+@@ -695,7 +691,7 @@ static bool delete_node(struct radix_tree_root *root,
+ 		if (node->count) {
+ 			if (node_to_entry(node) ==
+ 					rcu_dereference_raw(root->xa_head))
+-				deleted |= radix_tree_shrink(root, update_node);
++				deleted |= radix_tree_shrink(root);
+ 			return deleted;
+ 		}
+ 
+@@ -1100,15 +1096,13 @@ static int calculate_count(struct radix_tree_root *root,
+  * @node:		pointer to tree node
+  * @slot:		pointer to slot in @node
+  * @item:		new item to store in the slot.
+- * @update_node:	callback for changing leaf nodes
+  *
+  * For use with __radix_tree_lookup().  Caller must hold tree write locked
+  * across slot lookup and replacement.
+  */
+ void __radix_tree_replace(struct radix_tree_root *root,
+ 			  struct radix_tree_node *node,
+-			  void __rcu **slot, void *item,
+-			  radix_tree_update_node_t update_node)
++			  void __rcu **slot, void *item)
+ {
+ 	void *old = rcu_dereference_raw(*slot);
+ 	int values = !!xa_is_value(item) - !!xa_is_value(old);
+@@ -1126,10 +1120,7 @@ void __radix_tree_replace(struct radix_tree_root *root,
+ 	if (!node)
+ 		return;
+ 
+-	if (update_node)
+-		update_node(node);
+-
+-	delete_node(root, node, update_node);
++	delete_node(root, node);
+ }
+ 
+ /**
+@@ -1151,7 +1142,7 @@ void __radix_tree_replace(struct radix_tree_root *root,
+ void radix_tree_replace_slot(struct radix_tree_root *root,
+ 			     void __rcu **slot, void *item)
+ {
+-	__radix_tree_replace(root, NULL, slot, item, NULL);
++	__radix_tree_replace(root, NULL, slot, item);
+ }
+ EXPORT_SYMBOL(radix_tree_replace_slot);
+ 
+@@ -1168,7 +1159,7 @@ void radix_tree_iter_replace(struct radix_tree_root *root,
+ 				const struct radix_tree_iter *iter,
+ 				void __rcu **slot, void *item)
+ {
+-	__radix_tree_replace(root, iter->node, slot, item, NULL);
++	__radix_tree_replace(root, iter->node, slot, item);
+ }
+ 
+ #ifdef CONFIG_RADIX_TREE_MULTIORDER
+@@ -1848,23 +1839,6 @@ radix_tree_gang_lookup_tag_slot(const struct radix_tree_root *root,
+ }
+ EXPORT_SYMBOL(radix_tree_gang_lookup_tag_slot);
+ 
+-/**
+- *	__radix_tree_delete_node    -    try to free node after clearing a slot
+- *	@root:		radix tree root
+- *	@node:		node containing @index
+- *	@update_node:	callback for changing leaf nodes
+- *
+- *	After clearing the slot at @index in @node from radix tree
+- *	rooted at @root, call this function to attempt freeing the
+- *	node and shrinking the tree.
+- */
+-void __radix_tree_delete_node(struct radix_tree_root *root,
+-			      struct radix_tree_node *node,
+-			      radix_tree_update_node_t update_node)
+-{
+-	delete_node(root, node, update_node);
+-}
+-
+ static bool __radix_tree_delete(struct radix_tree_root *root,
+ 				struct radix_tree_node *node, void __rcu **slot)
+ {
+@@ -1880,7 +1854,7 @@ static bool __radix_tree_delete(struct radix_tree_root *root,
+ 			node_tag_clear(root, node, tag, offset);
+ 
+ 	replace_slot(slot, NULL, node, -1, values);
+-	return node && delete_node(root, node, NULL);
++	return node && delete_node(root, node);
+ }
+ 
+ /**
+diff --git a/tools/testing/radix-tree/multiorder.c b/tools/testing/radix-tree/multiorder.c
+index c659056340df..fc7d0c4e812a 100644
+--- a/tools/testing/radix-tree/multiorder.c
++++ b/tools/testing/radix-tree/multiorder.c
+@@ -618,7 +618,7 @@ static void multiorder_account(void)
+ 	__radix_tree_insert(&tree, 1 << 5, 5, xa_mk_value(5));
+ 	__radix_tree_lookup(&tree, 1 << 5, &node, &slot);
+ 	assert(node->count == node->nr_values * 2);
+-	__radix_tree_replace(&tree, node, slot, NULL, NULL);
++	__radix_tree_replace(&tree, node, slot, NULL);
+ 	assert(node->nr_values == 0);
+ 
+ 	item_kill_tree(&tree);
 -- 
 2.17.1
 
