@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 13/72] xarray: Add xa_extract
-Date: Mon, 11 Jun 2018 07:05:40 -0700
-Message-ID: <20180611140639.17215-14-willy@infradead.org>
+Subject: [PATCH v13 06/72] xarray: Define struct xa_node
+Date: Mon, 11 Jun 2018 07:05:33 -0700
+Message-ID: <20180611140639.17215-7-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=QHopodgOckH0JnTMC74cz/L5jvYaTcy0lLTV0wcZbXM=; b=C54XIYDqikodWN+KjlWucGPYcZ
- c/zzGPgMIJOS1HU5Er7T639aJRx74+f4Bw3YTl2vQXtK3yV1FviwMZY35JaPkOb9+QWa9uAooFJZF
- q45VrrEfR+7Oq19nUTZ7TgufYNub93/+15BfHtzMSrgqkYpApv/rhF0yQ94zsrbYSvWo=;
+ bh=7qbr5nWog0hqeHn5/x9BVjhbA4ee3GgTT6eyITyyMl8=; b=hSxWIE+PJLR4Tn1Qxvm/8+vry2
+ 8baq4OD6msroAy52ACr96/x9MQJDUprKeUo1GrfDoQGIoBKvvTukL7PE8pHjOSsOEaCsaO+U+A6DO
+ E/ALvq0VfuT5Lp9omGWpi8A/dR76zWveGBMMTu1vi76YSYDOix3+O1XZFdba762tROX8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=QHopodgOckH0JnTMC74cz/L5jvYaTcy0lLTV0wcZbXM=; b=VHFsT2ECspcxRY/VnFa1gGny8j
- JaDb+IyTVAnRoKzu9fZ+dich9muyFlorvXOIhpbOj/xX0ZrFSkpWOs30ecxfO5Ej7K8KTeDje/9Zd
- y/iSbBmuQ2bhbQVj7sp/S19eX0yKpfNt0WTewwnz5tuhAJLrIPd0JLapccaPoyN2aClo=;
+ bh=7qbr5nWog0hqeHn5/x9BVjhbA4ee3GgTT6eyITyyMl8=; b=jvkCLjQc67XTCSR8nvpIYFz5p2
+ gKxYU0RBckw4Q4h+/MX45RKaHZAPTR5DnVlKIKeV6A1yv3p57WF3/e8jivdd2IcfiH/qMh3J61cK6
+ w0Cdh+Uz/mCGcnI9qQQtHRwyUfZZp5DHVUSpGXh59Jc6N0MLYvkpaXf18wpRcpCBEMNA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=QHopodgOckH0JnTMC74cz/L5jvYaTcy0lLTV0wcZbXM=; b=GecsTcI+M6rjNPEH8IVnZO/7U
- csPI9XxMj9/MVftlaHS2asCmBAsHsk6ok6my/n0U4albS3QAbSEnCvvR1BEMX9uLORgrBOFyDq0Rn
- 8gf9gYBzcXqmTRTJwYYJUck6kiM1xYgOmsEBpHUIRe+yqAX0v3C702kcj3+eWFYYgDgxoruulWJhv
- RS68PiGzLZu29vPOVlzjfZzVVs3ILwQikbFoZSk0ZppAyCG5lHSvoV1wDcHeVZ93msMf81zyYlHDY
- leddNtMmGcvh07C8cSmooDQngcilxEVbh5pyUk8mBTY+GejmCFx2g/VguyMcsUuItsMXm2tRG/lXz
- muC85uX9g==;
+ bh=7qbr5nWog0hqeHn5/x9BVjhbA4ee3GgTT6eyITyyMl8=; b=JC7LbPlP5yuHK4O0d1iWINqFb
+ 8tCmlHl7ZSmR3cdEWmYK+QCC40s8Dc5GGhhIoK/jzoZC3FmHYDsDp83MB3gjvdJsp0Fnx/ugmuwfN
+ 06ueDoWIWRAheIYhUxy4eFkMPFp6B2adKj8FV7KVtu/HAohqO/X2/dRqbeTe46dZDYByRWnXHVvxO
+ dpWh+jaKLTK4TL+RuCqaQIKNT4FT68DECWl/7oR08pmWaJ0NpyQZEmRonR5ZwNr36zYqz0U3jbTlt
+ cXFdDkovT05et97K6mahYNzrvn/v1EnNCl5Ilyz0T9t5wLbqlIgewO3AUtyYZXZk45qUw1amdUg+I
+ w12f72XlQ==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,120 +53,455 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This function combines the functionality of radix_tree_gang_lookup() and
-radix_tree_gang_lookup_tagged().  It extracts entries matching the
-specified filter into a normal array.
+This is a direct replacement for struct radix_tree_node.  A couple of
+struct members have changed name, so convert those.  Use a #define so
+that radix tree users continue to work without change.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+Reviewed-by: Josef Bacik <jbacik@fb.com>
 ---
- include/linux/xarray.h |  2 ++
- lib/xarray.c           | 80 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 82 insertions(+)
+ include/linux/radix-tree.h            | 29 ++--------------
+ include/linux/xarray.h                | 24 ++++++++++++++
+ lib/radix-tree.c                      | 48 +++++++++++++--------------
+ mm/workingset.c                       | 16 ++++-----
+ tools/testing/radix-tree/multiorder.c | 30 ++++++++---------
+ 5 files changed, 74 insertions(+), 73 deletions(-)
 
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index c8a33e9e9a3c..f64beb9ba175 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -32,6 +32,7 @@
+ 
+ /* Keep unconverted code working */
+ #define radix_tree_root		xarray
++#define radix_tree_node		xa_node
+ 
+ /*
+  * The bottom two bits of the slot determine how the remaining bits in the
+@@ -60,41 +61,17 @@ static inline bool radix_tree_is_internal_node(void *ptr)
+ 
+ /*** radix-tree API starts here ***/
+ 
+-#define RADIX_TREE_MAX_TAGS 3
+-
+ #define RADIX_TREE_MAP_SHIFT	XA_CHUNK_SHIFT
+ #define RADIX_TREE_MAP_SIZE	(1UL << RADIX_TREE_MAP_SHIFT)
+ #define RADIX_TREE_MAP_MASK	(RADIX_TREE_MAP_SIZE-1)
+ 
+-#define RADIX_TREE_TAG_LONGS	\
+-	((RADIX_TREE_MAP_SIZE + BITS_PER_LONG - 1) / BITS_PER_LONG)
++#define RADIX_TREE_MAX_TAGS	XA_MAX_TAGS
++#define RADIX_TREE_TAG_LONGS	XA_TAG_LONGS
+ 
+ #define RADIX_TREE_INDEX_BITS  (8 /* CHAR_BIT */ * sizeof(unsigned long))
+ #define RADIX_TREE_MAX_PATH (DIV_ROUND_UP(RADIX_TREE_INDEX_BITS, \
+ 					  RADIX_TREE_MAP_SHIFT))
+ 
+-/*
+- * @count is the count of every non-NULL element in the ->slots array
+- * whether that is a data entry, a retry entry, a user pointer,
+- * a sibling entry or a pointer to the next level of the tree.
+- * @exceptional is the count of every element in ->slots which is
+- * either a data entry or a sibling entry for data.
+- */
+-struct radix_tree_node {
+-	unsigned char	shift;		/* Bits remaining in each slot */
+-	unsigned char	offset;		/* Slot offset in parent */
+-	unsigned char	count;		/* Total entry count */
+-	unsigned char	exceptional;	/* Exceptional entry count */
+-	struct radix_tree_node *parent;		/* Used when ascending tree */
+-	struct radix_tree_root *root;		/* The tree we belong to */
+-	union {
+-		struct list_head private_list;	/* For tree user */
+-		struct rcu_head	rcu_head;	/* Used when freeing node */
+-	};
+-	void __rcu	*slots[RADIX_TREE_MAP_SIZE];
+-	unsigned long	tags[RADIX_TREE_MAX_TAGS][RADIX_TREE_TAG_LONGS];
+-};
+-
+ /* The IDR tag is stored in the low bits of xa_flags */
+ #define ROOT_IS_IDR	((__force gfp_t)4)
+ /* The top bits of xa_flags are used to store the root tags */
 diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 89f37d841d18..3764f4b4c1a8 100644
+index 9b05b907062b..b51f354dfbf0 100644
 --- a/include/linux/xarray.h
 +++ b/include/linux/xarray.h
-@@ -227,6 +227,8 @@ void *xa_find(struct xarray *xa, unsigned long *index,
- 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
- void *xa_find_after(struct xarray *xa, unsigned long *index,
- 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
-+unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
-+		unsigned long max, unsigned int n, xa_tag_t);
- 
- /**
-  * xa_init() - Initialise an empty XArray.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index c6b7adcd6131..c3a53f09aa88 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -1427,6 +1427,86 @@ void *xa_find_after(struct xarray *xa, unsigned long *indexp,
- }
- EXPORT_SYMBOL(xa_find_after);
- 
-+static unsigned int xas_extract_present(struct xa_state *xas, void **dst,
-+			unsigned long max, unsigned int n)
-+{
-+	void *entry;
-+	unsigned int i = 0;
+@@ -195,6 +195,30 @@ static inline void xa_init(struct xarray *xa)
+ #endif
+ #define XA_CHUNK_SIZE		(1UL << XA_CHUNK_SHIFT)
+ #define XA_CHUNK_MASK		(XA_CHUNK_SIZE - 1)
++#define XA_MAX_TAGS		3
++#define XA_TAG_LONGS		DIV_ROUND_UP(XA_CHUNK_SIZE, BITS_PER_LONG)
 +
-+	rcu_read_lock();
-+	xas_for_each(xas, entry, max) {
-+		if (xas_retry(xas, entry))
-+			continue;
-+		dst[i++] = entry;
-+		if (i == n)
-+			break;
-+	}
-+	rcu_read_unlock();
-+
-+	return i;
-+}
-+
-+static unsigned int xas_extract_tag(struct xa_state *xas, void **dst,
-+			unsigned long max, unsigned int n, xa_tag_t tag)
-+{
-+	void *entry;
-+	unsigned int i = 0;
-+
-+	rcu_read_lock();
-+	xas_for_each_tagged(xas, entry, max, tag) {
-+		if (xas_retry(xas, entry))
-+			continue;
-+		dst[i++] = entry;
-+		if (i == n)
-+			break;
-+	}
-+	rcu_read_unlock();
-+
-+	return i;
-+}
-+
-+/**
-+ * xa_extract() - Copy selected entries from the XArray into a normal array.
-+ * @xa: The source XArray to copy from.
-+ * @dst: The buffer to copy entries into.
-+ * @start: The first index in the XArray eligible to be selected.
-+ * @max: The last index in the XArray eligible to be selected.
-+ * @n: The maximum number of entries to copy.
-+ * @filter: Selection criterion.
-+ *
-+ * Copies up to @n entries that match @filter from the XArray.  The
-+ * copied entries will have indices between @start and @max, inclusive.
-+ *
-+ * The @filter may be an XArray tag value, in which case entries which are
-+ * tagged with that tag will be copied.  It may also be %XA_PRESENT, in
-+ * which case non-NULL entries will be copied.
-+ *
-+ * The entries returned may not represent a snapshot of the XArray at a
-+ * moment in time.  For example, if another thread stores to index 5, then
-+ * index 10, calling xa_extract() may return the old contents of index 5
-+ * and the new contents of index 10.  Indices not modified while this
-+ * function is running will not be skipped.
-+ *
-+ * If you need stronger guarantees, holding the xa_lock across calls to this
-+ * function will prevent concurrent modification.
-+ *
-+ * Context: Any context.  Takes and releases the RCU lock.
-+ * Return: The number of entries copied.
++/*
++ * @count is the count of every non-NULL element in the ->slots array
++ * whether that is a value entry, a retry entry, a user pointer,
++ * a sibling entry or a pointer to the next level of the tree.
++ * @nr_values is the count of every element in ->slots which is
++ * either a value entry or a sibling entry to a value entry.
 + */
-+unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
-+			unsigned long max, unsigned int n, xa_tag_t filter)
-+{
-+	XA_STATE(xas, xa, start);
-+
-+	if (!n)
-+		return 0;
-+
-+	if ((__force unsigned int)filter < XA_MAX_TAGS)
-+		return xas_extract_tag(&xas, dst, max, n, filter);
-+	return xas_extract_present(&xas, dst, max, n);
-+}
-+EXPORT_SYMBOL(xa_extract);
-+
- #ifdef XA_DEBUG
- void xa_dump_node(const struct xa_node *node)
++struct xa_node {
++	unsigned char	shift;		/* Bits remaining in each slot */
++	unsigned char	offset;		/* Slot offset in parent */
++	unsigned char	count;		/* Total entry count */
++	unsigned char	nr_values;	/* Value entry count */
++	struct xa_node __rcu *parent;	/* NULL at top of tree */
++	struct xarray	*array;		/* The array we belong to */
++	union {
++		struct list_head private_list;	/* For tree user */
++		struct rcu_head	rcu_head;	/* Used when freeing node */
++	};
++	void __rcu	*slots[XA_CHUNK_SIZE];
++	unsigned long	tags[XA_MAX_TAGS][XA_TAG_LONGS];
++};
+ 
+ /* Private */
+ static inline bool xa_is_node(const void *entry)
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index 2f57c98c4da6..3764c97a2147 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -260,11 +260,11 @@ static void dump_node(struct radix_tree_node *node, unsigned long index)
  {
+ 	unsigned long i;
+ 
+-	pr_debug("radix node: %p offset %d indices %lu-%lu parent %p tags %lx %lx %lx shift %d count %d exceptional %d\n",
++	pr_debug("radix node: %p offset %d indices %lu-%lu parent %p tags %lx %lx %lx shift %d count %d nr_values %d\n",
+ 		node, node->offset, index, index | node_maxindex(node),
+ 		node->parent,
+ 		node->tags[0][0], node->tags[1][0], node->tags[2][0],
+-		node->shift, node->count, node->exceptional);
++		node->shift, node->count, node->nr_values);
+ 
+ 	for (i = 0; i < RADIX_TREE_MAP_SIZE; i++) {
+ 		unsigned long first = index | (i << node->shift);
+@@ -354,7 +354,7 @@ static struct radix_tree_node *
+ radix_tree_node_alloc(gfp_t gfp_mask, struct radix_tree_node *parent,
+ 			struct radix_tree_root *root,
+ 			unsigned int shift, unsigned int offset,
+-			unsigned int count, unsigned int exceptional)
++			unsigned int count, unsigned int nr_values)
+ {
+ 	struct radix_tree_node *ret = NULL;
+ 
+@@ -401,9 +401,9 @@ radix_tree_node_alloc(gfp_t gfp_mask, struct radix_tree_node *parent,
+ 		ret->shift = shift;
+ 		ret->offset = offset;
+ 		ret->count = count;
+-		ret->exceptional = exceptional;
++		ret->nr_values = nr_values;
+ 		ret->parent = parent;
+-		ret->root = root;
++		ret->array = root;
+ 	}
+ 	return ret;
+ }
+@@ -633,8 +633,8 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
+ 		if (radix_tree_is_internal_node(entry)) {
+ 			entry_to_node(entry)->parent = node;
+ 		} else if (xa_is_value(entry)) {
+-			/* Moving an exceptional root->xa_head to a node */
+-			node->exceptional = 1;
++			/* Moving a value entry root->xa_head to a node */
++			node->nr_values = 1;
+ 		}
+ 		/*
+ 		 * entry was already in the radix tree, so we do not need
+@@ -920,12 +920,12 @@ static inline int insert_entries(struct radix_tree_node *node,
+ 		if (xa_is_node(old))
+ 			radix_tree_free_nodes(old);
+ 		if (xa_is_value(old))
+-			node->exceptional--;
++			node->nr_values--;
+ 	}
+ 	if (node) {
+ 		node->count += n;
+ 		if (xa_is_value(item))
+-			node->exceptional += n;
++			node->nr_values += n;
+ 	}
+ 	return n;
+ }
+@@ -939,7 +939,7 @@ static inline int insert_entries(struct radix_tree_node *node,
+ 	if (node) {
+ 		node->count++;
+ 		if (xa_is_value(item))
+-			node->exceptional++;
++			node->nr_values++;
+ 	}
+ 	return 1;
+ }
+@@ -1073,7 +1073,7 @@ void *radix_tree_lookup(const struct radix_tree_root *root, unsigned long index)
+ EXPORT_SYMBOL(radix_tree_lookup);
+ 
+ static inline void replace_sibling_entries(struct radix_tree_node *node,
+-				void __rcu **slot, int count, int exceptional)
++				void __rcu **slot, int count, int values)
+ {
+ #ifdef CONFIG_RADIX_TREE_MULTIORDER
+ 	unsigned offset = get_slot_offset(node, slot);
+@@ -1086,21 +1086,21 @@ static inline void replace_sibling_entries(struct radix_tree_node *node,
+ 			node->slots[offset] = NULL;
+ 			node->count--;
+ 		}
+-		node->exceptional += exceptional;
++		node->nr_values += values;
+ 	}
+ #endif
+ }
+ 
+ static void replace_slot(void __rcu **slot, void *item,
+-		struct radix_tree_node *node, int count, int exceptional)
++		struct radix_tree_node *node, int count, int values)
+ {
+ 	if (WARN_ON_ONCE(radix_tree_is_internal_node(item)))
+ 		return;
+ 
+-	if (node && (count || exceptional)) {
++	if (node && (count || values)) {
+ 		node->count += count;
+-		node->exceptional += exceptional;
+-		replace_sibling_entries(node, slot, count, exceptional);
++		node->nr_values += values;
++		replace_sibling_entries(node, slot, count, values);
+ 	}
+ 
+ 	rcu_assign_pointer(*slot, item);
+@@ -1154,17 +1154,17 @@ void __radix_tree_replace(struct radix_tree_root *root,
+ 			  radix_tree_update_node_t update_node)
+ {
+ 	void *old = rcu_dereference_raw(*slot);
+-	int exceptional = !!xa_is_value(item) - !!xa_is_value(old);
++	int values = !!xa_is_value(item) - !!xa_is_value(old);
+ 	int count = calculate_count(root, node, slot, item, old);
+ 
+ 	/*
+-	 * This function supports replacing exceptional entries and
++	 * This function supports replacing value entries and
+ 	 * deleting entries, but that needs accounting against the
+ 	 * node unless the slot is root->xa_head.
+ 	 */
+ 	WARN_ON_ONCE(!node && (slot != (void __rcu **)&root->xa_head) &&
+-			(count || exceptional));
+-	replace_slot(slot, item, node, count, exceptional);
++			(count || values));
++	replace_slot(slot, item, node, count, values);
+ 
+ 	if (!node)
+ 		return;
+@@ -1186,7 +1186,7 @@ void __radix_tree_replace(struct radix_tree_root *root,
+  * across slot lookup and replacement.
+  *
+  * NOTE: This cannot be used to switch between non-entries (empty slots),
+- * regular entries, and exceptional entries, as that requires accounting
++ * regular entries, and value entries, as that requires accounting
+  * inside the radix tree node. When switching from one type of entry or
+  * deleting, use __radix_tree_lookup() and __radix_tree_replace() or
+  * radix_tree_iter_replace().
+@@ -1294,7 +1294,7 @@ int radix_tree_split(struct radix_tree_root *root, unsigned long index,
+ 		rcu_assign_pointer(parent->slots[end], RADIX_TREE_RETRY);
+ 	}
+ 	rcu_assign_pointer(parent->slots[offset], RADIX_TREE_RETRY);
+-	parent->exceptional -= (end - offset);
++	parent->nr_values -= (end - offset);
+ 
+ 	if (order == parent->shift)
+ 		return 0;
+@@ -1954,7 +1954,7 @@ static bool __radix_tree_delete(struct radix_tree_root *root,
+ 				struct radix_tree_node *node, void __rcu **slot)
+ {
+ 	void *old = rcu_dereference_raw(*slot);
+-	int exceptional = xa_is_value(old) ? -1 : 0;
++	int values = xa_is_value(old) ? -1 : 0;
+ 	unsigned offset = get_slot_offset(node, slot);
+ 	int tag;
+ 
+@@ -1964,7 +1964,7 @@ static bool __radix_tree_delete(struct radix_tree_root *root,
+ 		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+ 			node_tag_clear(root, node, tag, offset);
+ 
+-	replace_slot(slot, NULL, node, -1, exceptional);
++	replace_slot(slot, NULL, node, -1, values);
+ 	return node && delete_node(root, node, NULL);
+ }
+ 
+diff --git a/mm/workingset.c b/mm/workingset.c
+index b5dd3936e697..bad4e58881cd 100644
+--- a/mm/workingset.c
++++ b/mm/workingset.c
+@@ -348,7 +348,7 @@ void workingset_update_node(struct radix_tree_node *node)
+ 	 * already where they should be. The list_empty() test is safe
+ 	 * as node->private_list is protected by the i_pages lock.
+ 	 */
+-	if (node->count && node->count == node->exceptional) {
++	if (node->count && node->count == node->nr_values) {
+ 		if (list_empty(&node->private_list))
+ 			list_lru_add(&shadow_nodes, &node->private_list);
+ 	} else {
+@@ -427,8 +427,8 @@ static enum lru_status shadow_lru_isolate(struct list_head *item,
+ 	 * to reclaim, take the node off-LRU, and drop the lru_lock.
+ 	 */
+ 
+-	node = container_of(item, struct radix_tree_node, private_list);
+-	mapping = container_of(node->root, struct address_space, i_pages);
++	node = container_of(item, struct xa_node, private_list);
++	mapping = container_of(node->array, struct address_space, i_pages);
+ 
+ 	/* Coming from the list, invert the lock order */
+ 	if (!xa_trylock(&mapping->i_pages)) {
+@@ -445,25 +445,25 @@ static enum lru_status shadow_lru_isolate(struct list_head *item,
+ 	 * no pages, so we expect to be able to remove them all and
+ 	 * delete and free the empty node afterwards.
+ 	 */
+-	if (WARN_ON_ONCE(!node->exceptional))
++	if (WARN_ON_ONCE(!node->nr_values))
+ 		goto out_invalid;
+-	if (WARN_ON_ONCE(node->count != node->exceptional))
++	if (WARN_ON_ONCE(node->count != node->nr_values))
+ 		goto out_invalid;
+ 	for (i = 0; i < RADIX_TREE_MAP_SIZE; i++) {
+ 		if (node->slots[i]) {
+ 			if (WARN_ON_ONCE(!xa_is_value(node->slots[i])))
+ 				goto out_invalid;
+-			if (WARN_ON_ONCE(!node->exceptional))
++			if (WARN_ON_ONCE(!node->nr_values))
+ 				goto out_invalid;
+ 			if (WARN_ON_ONCE(!mapping->nrexceptional))
+ 				goto out_invalid;
+ 			node->slots[i] = NULL;
+-			node->exceptional--;
++			node->nr_values--;
+ 			node->count--;
+ 			mapping->nrexceptional--;
+ 		}
+ 	}
+-	if (WARN_ON_ONCE(node->exceptional))
++	if (WARN_ON_ONCE(node->nr_values))
+ 		goto out_invalid;
+ 	inc_lruvec_page_state(virt_to_page(node), WORKINGSET_NODERECLAIM);
+ 	__radix_tree_delete_node(&mapping->i_pages, node,
+diff --git a/tools/testing/radix-tree/multiorder.c b/tools/testing/radix-tree/multiorder.c
+index 3bba18e1ba65..c659056340df 100644
+--- a/tools/testing/radix-tree/multiorder.c
++++ b/tools/testing/radix-tree/multiorder.c
+@@ -393,7 +393,7 @@ static void multiorder_join2(unsigned order1, unsigned order2)
+ 	radix_tree_insert(&tree, 1 << order2, xa_mk_value(5));
+ 	item2 = __radix_tree_lookup(&tree, 1 << order2, &node, NULL);
+ 	assert(item2 == xa_mk_value(5));
+-	assert(node->exceptional == 1);
++	assert(node->nr_values == 1);
+ 
+ 	item2 = radix_tree_lookup(&tree, 0);
+ 	free(item2);
+@@ -401,7 +401,7 @@ static void multiorder_join2(unsigned order1, unsigned order2)
+ 	radix_tree_join(&tree, 0, order1, item1);
+ 	item2 = __radix_tree_lookup(&tree, 1 << order2, &node, NULL);
+ 	assert(item2 == item1);
+-	assert(node->exceptional == 0);
++	assert(node->nr_values == 0);
+ 	item_kill_tree(&tree);
+ }
+ 
+@@ -409,7 +409,7 @@ static void multiorder_join2(unsigned order1, unsigned order2)
+  * This test revealed an accounting bug for inline data entries at one point.
+  * Nodes were being freed back into the pool with an elevated exception count
+  * by radix_tree_join() and then radix_tree_split() was failing to zero the
+- * count of exceptional entries.
++ * count of value entries.
+  */
+ static void multiorder_join3(unsigned int order)
+ {
+@@ -433,7 +433,7 @@ static void multiorder_join3(unsigned int order)
+ 	}
+ 
+ 	__radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(node->exceptional == node->count);
++	assert(node->nr_values == node->count);
+ 
+ 	item_kill_tree(&tree);
+ }
+@@ -520,7 +520,7 @@ static void __multiorder_split2(int old_order, int new_order)
+ 
+ 	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+ 	assert(item == xa_mk_value(5));
+-	assert(node->exceptional > 0);
++	assert(node->nr_values > 0);
+ 
+ 	radix_tree_split(&tree, 0, new_order);
+ 	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+@@ -530,7 +530,7 @@ static void __multiorder_split2(int old_order, int new_order)
+ 
+ 	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+ 	assert(item != xa_mk_value(5));
+-	assert(node->exceptional == 0);
++	assert(node->nr_values == 0);
+ 
+ 	item_kill_tree(&tree);
+ }
+@@ -547,7 +547,7 @@ static void __multiorder_split3(int old_order, int new_order)
+ 
+ 	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+ 	assert(item == xa_mk_value(5));
+-	assert(node->exceptional > 0);
++	assert(node->nr_values > 0);
+ 
+ 	radix_tree_split(&tree, 0, new_order);
+ 	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+@@ -556,7 +556,7 @@ static void __multiorder_split3(int old_order, int new_order)
+ 
+ 	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+ 	assert(item == xa_mk_value(7));
+-	assert(node->exceptional > 0);
++	assert(node->nr_values > 0);
+ 
+ 	item_kill_tree(&tree);
+ 
+@@ -564,7 +564,7 @@ static void __multiorder_split3(int old_order, int new_order)
+ 
+ 	item = __radix_tree_lookup(&tree, 0, &node, NULL);
+ 	assert(item == xa_mk_value(5));
+-	assert(node->exceptional > 0);
++	assert(node->nr_values > 0);
+ 
+ 	radix_tree_split(&tree, 0, new_order);
+ 	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+@@ -577,13 +577,13 @@ static void __multiorder_split3(int old_order, int new_order)
+ 
+ 	item = __radix_tree_lookup(&tree, 1 << new_order, &node, NULL);
+ 	assert(item == xa_mk_value(7));
+-	assert(node->count == node->exceptional);
++	assert(node->count == node->nr_values);
+ 	do {
+ 		node = node->parent;
+ 		if (!node)
+ 			break;
+ 		assert(node->count == 1);
+-		assert(node->exceptional == 0);
++		assert(node->nr_values == 0);
+ 	} while (1);
+ 
+ 	item_kill_tree(&tree);
+@@ -611,15 +611,15 @@ static void multiorder_account(void)
+ 
+ 	__radix_tree_insert(&tree, 1 << 5, 5, xa_mk_value(5));
+ 	__radix_tree_lookup(&tree, 0, &node, NULL);
+-	assert(node->count == node->exceptional * 2);
++	assert(node->count == node->nr_values * 2);
+ 	radix_tree_delete(&tree, 1 << 5);
+-	assert(node->exceptional == 0);
++	assert(node->nr_values == 0);
+ 
+ 	__radix_tree_insert(&tree, 1 << 5, 5, xa_mk_value(5));
+ 	__radix_tree_lookup(&tree, 1 << 5, &node, &slot);
+-	assert(node->count == node->exceptional * 2);
++	assert(node->count == node->nr_values * 2);
+ 	__radix_tree_replace(&tree, node, slot, NULL, NULL);
+-	assert(node->exceptional == 0);
++	assert(node->nr_values == 0);
+ 
+ 	item_kill_tree(&tree);
+ }
 -- 
 2.17.1
 
