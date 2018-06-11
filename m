@@ -1,89 +1,93 @@
-From: Ross Zwisler <ross.zwisler@linux.intel.com>
-Subject: Re: [PATCH v11 00/63] Convert page cache to XArray
-Date: Thu, 31 May 2018 15:53:29 -0600
-Message-ID: <20180531215329.GG28256@linux.intel.com>
-References: <20180414141316.7167-1-willy@infradead.org>
- <20180416160133.GA12434@linux.intel.com>
- <20180531213643.GD28256@linux.intel.com>
- <20180531213742.GE28256@linux.intel.com>
- <20180531214612.GA12216@bombadil.infradead.org>
-Mime-Version: 1.0
+From: Matthew Wilcox <willy@infradead.org>
+Subject: [PATCH v13 01/72] radix tree test suite: Enable ubsan
+Date: Mon, 11 Jun 2018 07:05:28 -0700
+Message-ID: <20180611140639.17215-2-willy@infradead.org>
+References: <20180611140639.17215-1-willy@infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=X1L/lNU3X/ge1Nfw3qLsCs8ltR97g23r4GAfLRjj7Uc=; b=i9+vRjZAnFxqSPtOjBtrGY51p
+        8rDNxb6SrjlvZW0HgswAPhmPaoJpe8tmxyss5lQzSnpCrTxaN6uw4zFGzIrHOC4dN/mPtIIRsoVUX
+        zx230RSsAxMbIW1KKWAtL2UXwE74DPcUY4XdZNiAy5SMIF1j4jnfG3bMJF87DcMz9r5VVSm6bkUJO
+        Neb8EkhttGqUHd+2rpC9upuSosw5ovGWujxmfN85Q2c/MbTKGeGLfKajzxrFo0hUVKLJ3IAfTHMTx
+        u2MwJMaGvjw/vWvJ9EvW4VDKNauBDBki/vVF8SoFBTzuDQTa9xyekrcIjj5KCgDCo9nwzLO/pj1qS
+    
+In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=SSIqY+c4rmpO57L2t53YXD4ZAq9CLoYA8rhmJn4RcEU=; b=JaixCaBaUBVLKFog0483DoVk61
- npexsjhWnrHFAmoV8CPTP26WBP2Kwaf6p3529OcqN0SagNi42CxM29VhM8nMvDpucuIlA/bCsQbZ4
- YbXVlJDpNjxIQgUuWd5bF8NwcFtmFRN/ExwSD5SXQukAoLAiM8fcAH6HLHFyaBjMZ7wA=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=SSIqY+c4rmpO57L2t53YXD4ZAq9CLoYA8rhmJn4RcEU=; b=SqSKhRMTItTcM+LuebluK/jLS9
- uJqqLkDVBefTHuzWZn4aUnOSLUZlcasnICSyB9OTfkeb5uSmdwFAcG+nRvt/dnfNgsX8DqwE4D0ID
- xk12+pgpJcGFgKxFuhLY53kJwDVVOevYxkV9/CY8nN1sufg21Xg1E5pxdL0ZsAuXGgAs=;
-Content-Disposition: inline
-In-Reply-To: <20180531214612.GA12216@bombadil.infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Matthew Wilcox <willy@infradead.org>
-Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, James Simmons <jsimmons@infradead.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Andreas Dilger <andreas.dilger@intel.com>, Nicholas Piggin <npiggin@gmail.com>, linux-f2fs-devel@lists.sourceforge.net, Oleg Drokin <oleg.drokin@intel.com>, linux-mm@kvack.org, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-fsdevel@vger.kernel.org, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Mike Kravetz <mike.kravetz@oracle.com>
+To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
 
-On Thu, May 31, 2018 at 02:46:12PM -0700, Matthew Wilcox wrote:
-> On Thu, May 31, 2018 at 03:37:42PM -0600, Ross Zwisler wrote:
-> > Never mind, just saw your mail from a few weeks ago.  :-/  I'll retest on my
-> > end.
-> 
-> Don't strain too hard; I found (and fixed) some bugs in the DAX
-> conversion.  I keep finding new bugs though -- the latest was that
-> xas_store(xas, NULL); doesn't work properly if xas is multiindex and some
-> of the covered entries are not NULL.  And in fixing that, I noticed that
-> xas_store(xas, not-null) doesn't handle tagged entries correctly.
-> 
-> I'd offer to push out the current version for testing but I've pulled
-> everything apart and nothing works right now ;-)  I always think "it'll
-> be ready tomorrow", but I don't want to make a promise I can't keep.
-> 
-> Here's my current changelog (may have forgotten a few things; need to
-> compare a diff once I've put together a decent patch series)
-> 
->  - Reordered two DAX bugfixes to the head of the queue to allow them to
->    be merged independently.
->  - Converted apparmor secid to IDR
->  - Fixed bug in page cache lookup conversion which could lead to returning
->    pages which had been released from the page cache.
->  - Fixed several bugs in DAX conversion
->  - Re-added conversion of dax_layout_busy_page
->  - At Ross's request, renamed dax_mk_foo() to dax_make_foo().
->  - Split out the radix tree test suite addition of ubsan.
->  - Split out radix tree code deletion.
->  - Removed __radix_tree_create from the public API
->  - Fixed up a couple of comments in DAX
->  - Renamed shmem_xa_replace() to shmem_replace_entry()
->  * Undid change of xas_load() behaviour with multislot xa_state
->  - Added xas_store_for_each() and use it in DAX
->  - Corrected some typos in the XArray kerneldoc.
->  - Fixed multi-index xas_store(xas, NULL)
->  - Fixed tag handling in multi-index xas_store(xas, not-null)
+From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Ah, okay.  I'll retest & resume review once things settle down and you send
-out a new version.
+Add support for the undefined behaviour sanitizer and fix the bugs
+that ubsan pointed out.  Nothing major, and all in the test suite,
+not the code.
 
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+---
+ tools/testing/radix-tree/Makefile |  5 +++--
+ tools/testing/radix-tree/main.c   | 20 +++++++++++---------
+ 2 files changed, 14 insertions(+), 11 deletions(-)
+
+diff --git a/tools/testing/radix-tree/Makefile b/tools/testing/radix-tree/Makefile
+index db66f8a0d4be..da030a65d6d6 100644
+--- a/tools/testing/radix-tree/Makefile
++++ b/tools/testing/radix-tree/Makefile
+@@ -1,7 +1,8 @@
+ # SPDX-License-Identifier: GPL-2.0
+ 
+-CFLAGS += -I. -I../../include -g -O2 -Wall -D_LGPL_SOURCE -fsanitize=address
+-LDFLAGS += -fsanitize=address
++CFLAGS += -I. -I../../include -g -Og -Wall -D_LGPL_SOURCE -fsanitize=address \
++	  -fsanitize=undefined
++LDFLAGS += -fsanitize=address -fsanitize=undefined
+ LDLIBS+= -lpthread -lurcu
+ TARGETS = main idr-test multiorder
+ CORE_OFILES := radix-tree.o idr.o linux.o test.o find_bit.o
+diff --git a/tools/testing/radix-tree/main.c b/tools/testing/radix-tree/main.c
+index 257f3f8aacaa..584a8732f5ce 100644
+--- a/tools/testing/radix-tree/main.c
++++ b/tools/testing/radix-tree/main.c
+@@ -27,20 +27,22 @@ void __gang_check(unsigned long middle, long down, long up, int chunk, int hop)
+ 		item_check_present(&tree, middle + idx);
+ 	item_check_absent(&tree, middle + up);
+ 
+-	item_gang_check_present(&tree, middle - down,
+-			up + down, chunk, hop);
+-	item_full_scan(&tree, middle - down, down + up, chunk);
++	if (chunk > 0) {
++		item_gang_check_present(&tree, middle - down, up + down,
++				chunk, hop);
++		item_full_scan(&tree, middle - down, down + up, chunk);
++	}
+ 	item_kill_tree(&tree);
+ }
+ 
+ void gang_check(void)
+ {
+-	__gang_check(1 << 30, 128, 128, 35, 2);
+-	__gang_check(1 << 31, 128, 128, 32, 32);
+-	__gang_check(1 << 31, 128, 128, 32, 100);
+-	__gang_check(1 << 31, 128, 128, 17, 7);
+-	__gang_check(0xffff0000, 0, 65536, 17, 7);
+-	__gang_check(0xfffffffe, 1, 1, 17, 7);
++	__gang_check(1UL << 30, 128, 128, 35, 2);
++	__gang_check(1UL << 31, 128, 128, 32, 32);
++	__gang_check(1UL << 31, 128, 128, 32, 100);
++	__gang_check(1UL << 31, 128, 128, 17, 7);
++	__gang_check(0xffff0000UL, 0, 65536, 17, 7);
++	__gang_check(0xfffffffeUL, 1, 1, 17, 7);
+ }
+ 
+ void __big_gang_check(void)
+-- 
+2.17.1
+
