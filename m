@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 41/72] mm: Convert huge_memory to XArray
-Date: Mon, 11 Jun 2018 07:06:08 -0700
-Message-ID: <20180611140639.17215-42-willy@infradead.org>
+Subject: [PATCH v13 09/72] xarray: Add XArray tags
+Date: Mon, 11 Jun 2018 07:05:36 -0700
+Message-ID: <20180611140639.17215-10-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=yMvq9C+7xk7yZk7cjnEEnp5fI210x4S9onkG7brkez0=; b=RPXyAEPeJFAaF9NCB8VS2EAUiS
- YMPCcU6jpvCSAa6/9J5Sto+dNJ1yXLjTZ23Id4dX4pT3DsdCKqXP49Tb6TPwOpHNFeRe4qbsuTGuz
- spJ7ZZaNjwrKvzV2iyfm/26WKs80FlMXprmDC3+Byn79Z3p/Lw8enyVAdGO9GM6VU93Q=;
+ bh=WHQ1SO4mkJyzHwSgklOplR1+44UNnCfrh+I4g0f2f0U=; b=dHLLJFoFQYsKlG6n6Cc5AeJmU7
+ AzUY+NXs9YVZ3gw0alO016AICK7o15jmsds8GTba4NERLLMZ4/xL5yWBqF8xylbycpGpYzrTNi8Bk
+ wPLOBDXksYxv/9wrUicrWNtbxb3XF8arPSpyBZpAIdLyChbAjABYVX+ZF9U5iKFN7ARg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=yMvq9C+7xk7yZk7cjnEEnp5fI210x4S9onkG7brkez0=; b=cgvZTllFmBlah2N5oYF9j4RMiH
- TLwOMbO6zx8RRyu6llgF5SdRSAMvCtDoH4tjuh5PCYfZr17fXEPObfFjbz8B2ARVI0qVwMF5Q+Kj5
- FhMblF2iTP/AkqnXwS14FGZO3cmoikYSxHWkvhPmJhULE6CF1hoWMzHYRvfdpx8F3jwQ=;
+ bh=WHQ1SO4mkJyzHwSgklOplR1+44UNnCfrh+I4g0f2f0U=; b=cR6+/3YqbB+/E8d7xI+Uk/Qi17
+ /XPs2yr5JVmwN6NbYYl4EHAKgo1jKBOXMcfB6yoPDpZZrnhvnIlmxnkMMVlsZIH1glRx94ocezaV+
+ EoUtQ/XpyNmO3nY3dLE7P7nhjo3WoW7bMWDa7Xv9XJhE8NUEmY1YpPpi90trXGaJuapU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=yMvq9C+7xk7yZk7cjnEEnp5fI210x4S9onkG7brkez0=; b=ThsXXNtlY6IPV9ZR2YAl6K5Se
- FWn+hSURSdwUDmvX687LlqYlpCYeDLRmJFEqYpl8rJWTB4p0VmOJB7eEzFXKCPk6gzyCwpaO3ZlR0
- y3HUAt5NymLtJS5WL5WLoTi+Radwl4xIl5HfTZrxo37DBUorH7WcUX8St4Gufw+iTEHOZ8x5xE48t
- DAwBik0HH1MUJxycWDptrDFGu0n1SjFgO/UyccSBBWG7NVTHitCpARsVe+les9eecAIYOaPi8nlta
- jTgJ3dMPYcKQQaL6QKYF0cJV8bFYr/NXEgIMQCWQf0+dmOMJ+1GxfBYM1Ac7sScmBFKASCjzkGJdt
- iVzBqw4Ow==;
+ bh=WHQ1SO4mkJyzHwSgklOplR1+44UNnCfrh+I4g0f2f0U=; b=qqh6twZRxUxjuAhNsYiQE255O
+ D3WN/a5kpnxWoO0IvpWAKF4jLSH9lh+1Szb9AZ5wFBB0yN370PWPOrGJP7PrzbpKDoUGGBuS1ZMRY
+ K3MH05LlHMS9eOTDHUOW9KNrowW+CV/oou1smbeB/u+iPhtrapKprCMDGrWSz9dfCu2lS8miGXvGq
+ inKipW3yKGZlknSgqZvizrfFZVTTlXU0879YU11nx7wprCT3oGp/aM/2GZuzuOhN0xIgPDZgyuutN
+ q+BmJCUVF0jCuftUB0Znlv5GyUNnxuaJiGE0o/RSBAN+6uEr+sASACuXcmrsKdIcIuoZY1fUVRWP3
+ iK207FrxA==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,63 +53,550 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Quite a straightforward conversion.
+XArray tags are slightly more strongly typed than the radix tree tags,
+but occupy the same bits.  This commit adds the basic get/set/clear
+operations.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/huge_memory.c | 17 +++++++----------
- 1 file changed, 7 insertions(+), 10 deletions(-)
+ include/linux/xarray.h                        |  47 ++++
+ lib/xarray.c                                  | 237 ++++++++++++++++++
+ tools/include/asm-generic/bitops.h            |   1 +
+ tools/include/asm-generic/bitops/atomic.h     |   9 -
+ tools/include/asm-generic/bitops/non-atomic.h | 109 ++++++++
+ tools/include/linux/spinlock.h                |   6 +
+ 6 files changed, 400 insertions(+), 9 deletions(-)
+ create mode 100644 tools/include/asm-generic/bitops/non-atomic.h
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index d43394fadbfd..1dfa4542fed9 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -2439,13 +2439,13 @@ static void __split_huge_page(struct page *page, struct list_head *list,
- 	ClearPageCompound(head);
- 	/* See comment in __split_huge_page_tail() */
- 	if (PageAnon(head)) {
--		/* Additional pin to radix tree of swap cache */
-+		/* Additional pin to swap cache */
- 		if (PageSwapCache(head))
- 			page_ref_add(head, 2);
- 		else
- 			page_ref_inc(head);
- 	} else {
--		/* Additional pin to radix tree */
-+		/* Additional pin to page cache */
- 		page_ref_add(head, 2);
- 		xa_unlock(&head->mapping->i_pages);
- 	}
-@@ -2557,7 +2557,7 @@ bool can_split_huge_page(struct page *page, int *pextra_pins)
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 099fc36177b9..f712baba956e 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -11,6 +11,7 @@
+ 
+ #include <linux/bug.h>
+ #include <linux/compiler.h>
++#include <linux/gfp.h>
+ #include <linux/kconfig.h>
+ #include <linux/kernel.h>
+ #include <linux/rcupdate.h>
+@@ -149,6 +150,20 @@ static inline int xa_err(void *entry)
+ 	return 0;
+ }
+ 
++typedef unsigned __bitwise xa_tag_t;
++#define XA_TAG_0		((__force xa_tag_t)0U)
++#define XA_TAG_1		((__force xa_tag_t)1U)
++#define XA_TAG_2		((__force xa_tag_t)2U)
++#define XA_PRESENT		((__force xa_tag_t)8U)
++#define XA_TAG_MAX		XA_TAG_2
++
++/*
++ * Values for xa_flags.  The radix tree stores its GFP flags in the xa_flags,
++ * and we remain compatible with that.
++ */
++#define XA_FLAGS_TAG(tag)	((__force gfp_t)((1U << __GFP_BITS_SHIFT) << \
++						(__force unsigned)(tag)))
++
+ /**
+  * struct xarray - The anchor of the XArray.
+  * @xa_lock: Lock that protects the contents of the XArray.
+@@ -195,6 +210,9 @@ struct xarray {
+ 
+ void xa_init_flags(struct xarray *, gfp_t flags);
+ void *xa_load(struct xarray *, unsigned long index);
++bool xa_get_tag(struct xarray *, unsigned long index, xa_tag_t);
++void xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
++void xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
+ 
+ /**
+  * xa_init() - Initialise an empty XArray.
+@@ -209,6 +227,19 @@ static inline void xa_init(struct xarray *xa)
+ 	xa_init_flags(xa, 0);
+ }
+ 
++/**
++ * xa_tagged() - Inquire whether any entry in this array has a tag set
++ * @xa: Array
++ * @tag: Tag value
++ *
++ * Context: Any context.
++ * Return: %true if any entry has this tag set.
++ */
++static inline bool xa_tagged(const struct xarray *xa, xa_tag_t tag)
++{
++	return xa->xa_flags & XA_FLAGS_TAG(tag);
++}
++
+ #define xa_trylock(xa)		spin_trylock(&(xa)->xa_lock)
+ #define xa_lock(xa)		spin_lock(&(xa)->xa_lock)
+ #define xa_unlock(xa)		spin_unlock(&(xa)->xa_lock)
+@@ -221,6 +252,12 @@ static inline void xa_init(struct xarray *xa)
+ #define xa_unlock_irqrestore(xa, flags) \
+ 				spin_unlock_irqrestore(&(xa)->xa_lock, flags)
+ 
++/*
++ * Versions of the normal API which require the caller to hold the xa_lock.
++ */
++void __xa_set_tag(struct xarray *, unsigned long index, xa_tag_t);
++void __xa_clear_tag(struct xarray *, unsigned long index, xa_tag_t);
++
+ /* Everything below here is the Advanced API.  Proceed with caution. */
+ 
+ /*
+@@ -514,6 +551,12 @@ static inline bool xas_valid(const struct xa_state *xas)
+ 	return !xas_invalid(xas);
+ }
+ 
++/* True if the pointer is something other than a node */
++static inline bool xas_not_node(struct xa_node *node)
++{
++	return ((unsigned long)node & 3) || !node;
++}
++
+ /**
+  * xas_reset() - Reset an XArray operation state.
+  * @xas: XArray operation state.
+@@ -551,6 +594,10 @@ static inline bool xas_retry(struct xa_state *xas, const void *entry)
+ 
+ void *xas_load(struct xa_state *);
+ 
++bool xas_get_tag(const struct xa_state *, xa_tag_t);
++void xas_set_tag(const struct xa_state *, xa_tag_t);
++void xas_clear_tag(const struct xa_state *, xa_tag_t);
++
+ /**
+  * xas_reload() - Refetch an entry from the xarray.
+  * @xas: XArray operation state.
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 600550e78a11..2d6f509ff498 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -5,6 +5,7 @@
+  * Author: Matthew Wilcox <mawilcox@microsoft.com>
+  */
+ 
++#include <linux/bitmap.h>
+ #include <linux/export.h>
+ #include <linux/xarray.h>
+ 
+@@ -24,6 +25,57 @@
+  * @entry refers to something stored in a slot in the xarray
+  */
+ 
++static inline struct xa_node *xa_parent(struct xarray *xa,
++					const struct xa_node *node)
++{
++	return rcu_dereference_check(node->parent,
++						lockdep_is_held(&xa->xa_lock));
++}
++
++static inline struct xa_node *xa_parent_locked(struct xarray *xa,
++					const struct xa_node *node)
++{
++	return rcu_dereference_protected(node->parent,
++						lockdep_is_held(&xa->xa_lock));
++}
++
++static inline void xa_tag_set(struct xarray *xa, xa_tag_t tag)
++{
++	if (!(xa->xa_flags & XA_FLAGS_TAG(tag)))
++		xa->xa_flags |= XA_FLAGS_TAG(tag);
++}
++
++static inline void xa_tag_clear(struct xarray *xa, xa_tag_t tag)
++{
++	if (xa->xa_flags & XA_FLAGS_TAG(tag))
++		xa->xa_flags &= ~(XA_FLAGS_TAG(tag));
++}
++
++static inline bool node_get_tag(const struct xa_node *node, unsigned int offset,
++				xa_tag_t tag)
++{
++	return test_bit(offset, node->tags[(__force unsigned)tag]);
++}
++
++/* returns true if the bit was set */
++static inline bool node_set_tag(struct xa_node *node, unsigned int offset,
++				xa_tag_t tag)
++{
++	return __test_and_set_bit(offset, node->tags[(__force unsigned)tag]);
++}
++
++/* returns true if the bit was set */
++static inline bool node_clear_tag(struct xa_node *node, unsigned int offset,
++				xa_tag_t tag)
++{
++	return __test_and_clear_bit(offset, node->tags[(__force unsigned)tag]);
++}
++
++static inline bool node_any_tag(struct xa_node *node, xa_tag_t tag)
++{
++	return !bitmap_empty(node->tags[(__force unsigned)tag], XA_CHUNK_SIZE);
++}
++
+ /* extracts the offset within this node from the index */
+ static unsigned int get_offset(unsigned long index, struct xa_node *node)
  {
- 	int extra_pins;
+@@ -119,6 +171,85 @@ void *xas_load(struct xa_state *xas)
+ }
+ EXPORT_SYMBOL_GPL(xas_load);
  
--	/* Additional pins from radix tree */
-+	/* Additional pins from page cache */
- 	if (PageAnon(page))
- 		extra_pins = PageSwapCache(page) ? HPAGE_PMD_NR : 0;
- 	else
-@@ -2653,17 +2653,14 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
- 	spin_lock_irqsave(zone_lru_lock(page_zone(head)), flags);
++/**
++ * xas_get_tag() - Returns the state of this tag.
++ * @xas: XArray operation state.
++ * @tag: Tag number.
++ *
++ * Return: true if the tag is set, false if the tag is clear or @xas
++ * is in an error state.
++ */
++bool xas_get_tag(const struct xa_state *xas, xa_tag_t tag)
++{
++	if (xas_invalid(xas))
++		return false;
++	if (!xas->xa_node)
++		return xa_tagged(xas->xa, tag);
++	return node_get_tag(xas->xa_node, xas->xa_offset, tag);
++}
++EXPORT_SYMBOL_GPL(xas_get_tag);
++
++/**
++ * xas_set_tag() - Sets the tag on this entry and its parents.
++ * @xas: XArray operation state.
++ * @tag: Tag number.
++ *
++ * Sets the specified tag on this entry, and walks up the tree setting it
++ * on all the ancestor entries.  Does nothing if @xas has not been walked to
++ * an entry, or is in an error state.
++ */
++void xas_set_tag(const struct xa_state *xas, xa_tag_t tag)
++{
++	struct xa_node *node = xas->xa_node;
++	unsigned int offset = xas->xa_offset;
++
++	if (xas_invalid(xas))
++		return;
++
++	while (node) {
++		if (node_set_tag(node, offset, tag))
++			return;
++		offset = node->offset;
++		node = xa_parent_locked(xas->xa, node);
++	}
++
++	if (!xa_tagged(xas->xa, tag))
++		xa_tag_set(xas->xa, tag);
++}
++EXPORT_SYMBOL_GPL(xas_set_tag);
++
++/**
++ * xas_clear_tag() - Clears the tag on this entry and its parents.
++ * @xas: XArray operation state.
++ * @tag: Tag number.
++ *
++ * Clears the specified tag on this entry, and walks back to the head
++ * attempting to clear it on all the ancestor entries.  Does nothing if
++ * @xas has not been walked to an entry, or is in an error state.
++ */
++void xas_clear_tag(const struct xa_state *xas, xa_tag_t tag)
++{
++	struct xa_node *node = xas->xa_node;
++	unsigned int offset = xas->xa_offset;
++
++	if (xas_invalid(xas))
++		return;
++
++	while (node) {
++		if (!node_clear_tag(node, offset, tag))
++			return;
++		if (node_any_tag(node, tag))
++			return;
++
++		offset = node->offset;
++		node = xa_parent_locked(xas->xa, node);
++	}
++
++	if (xa_tagged(xas->xa, tag))
++		xa_tag_clear(xas->xa, tag);
++}
++EXPORT_SYMBOL_GPL(xas_clear_tag);
++
+ /**
+  * xa_init_flags() - Initialise an empty XArray with flags.
+  * @xa: XArray.
+@@ -161,6 +292,112 @@ void *xa_load(struct xarray *xa, unsigned long index)
+ }
+ EXPORT_SYMBOL(xa_load);
  
- 	if (mapping) {
--		void **pslot;
-+		XA_STATE(xas, &mapping->i_pages, page_index(head));
++/**
++ * __xa_set_tag() - Set this tag on this entry while locked.
++ * @xa: XArray.
++ * @index: Index of entry.
++ * @tag: Tag number.
++ *
++ * Attempting to set a tag on a NULL entry does not succeed.
++ *
++ * Context: Any context.  Expects xa_lock to be held on entry.
++ */
++void __xa_set_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
++{
++	XA_STATE(xas, xa, index);
++	void *entry = xas_load(&xas);
++
++	if (entry)
++		xas_set_tag(&xas, tag);
++}
++EXPORT_SYMBOL_GPL(__xa_set_tag);
++
++/**
++ * __xa_clear_tag() - Clear this tag on this entry while locked.
++ * @xa: XArray.
++ * @index: Index of entry.
++ * @tag: Tag number.
++ *
++ * Context: Any context.  Expects xa_lock to be held on entry.
++ */
++void __xa_clear_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
++{
++	XA_STATE(xas, xa, index);
++	void *entry = xas_load(&xas);
++
++	if (entry)
++		xas_clear_tag(&xas, tag);
++}
++EXPORT_SYMBOL_GPL(__xa_clear_tag);
++
++/**
++ * xa_get_tag() - Inquire whether this tag is set on this entry.
++ * @xa: XArray.
++ * @index: Index of entry.
++ * @tag: Tag number.
++ *
++ * This function uses the RCU read lock, so the result may be out of date
++ * by the time it returns.  If you need the result to be stable, use a lock.
++ *
++ * Context: Any context.  Takes and releases the RCU lock.
++ * Return: True if the entry at @index has this tag set, false if it doesn't.
++ */
++bool xa_get_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
++{
++	XA_STATE(xas, xa, index);
++	void *entry;
++
++	rcu_read_lock();
++	entry = xas_start(&xas);
++	while (xas_get_tag(&xas, tag)) {
++		if (!xa_is_node(entry))
++			goto found;
++		entry = xas_descend(&xas, xa_to_node(entry));
++	}
++	rcu_read_unlock();
++	return false;
++ found:
++	rcu_read_unlock();
++	return true;
++}
++EXPORT_SYMBOL(xa_get_tag);
++
++/**
++ * xa_set_tag() - Set this tag on this entry.
++ * @xa: XArray.
++ * @index: Index of entry.
++ * @tag: Tag number.
++ *
++ * Attempting to set a tag on a NULL entry does not succeed.
++ *
++ * Context: Process context.  Takes and releases the xa_lock.
++ */
++void xa_set_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
++{
++	xa_lock(xa);
++	__xa_set_tag(xa, index, tag);
++	xa_unlock(xa);
++}
++EXPORT_SYMBOL(xa_set_tag);
++
++/**
++ * xa_clear_tag() - Clear this tag on this entry.
++ * @xa: XArray.
++ * @index: Index of entry.
++ * @tag: Tag number.
++ *
++ * Clearing a tag always succeeds.
++ *
++ * Context: Process context.  Takes and releases the xa_lock.
++ */
++void xa_clear_tag(struct xarray *xa, unsigned long index, xa_tag_t tag)
++{
++	xa_lock(xa);
++	__xa_clear_tag(xa, index, tag);
++	xa_unlock(xa);
++}
++EXPORT_SYMBOL(xa_clear_tag);
++
+ #ifdef XA_DEBUG
+ void xa_dump_node(const struct xa_node *node)
+ {
+diff --git a/tools/include/asm-generic/bitops.h b/tools/include/asm-generic/bitops.h
+index 9bce3b56b5e7..5d2ab38965cc 100644
+--- a/tools/include/asm-generic/bitops.h
++++ b/tools/include/asm-generic/bitops.h
+@@ -27,5 +27,6 @@
+ #include <asm-generic/bitops/hweight.h>
  
--		xa_lock(&mapping->i_pages);
--		pslot = radix_tree_lookup_slot(&mapping->i_pages,
--				page_index(head));
- 		/*
--		 * Check if the head page is present in radix tree.
-+		 * Check if the head page is present in page cache.
- 		 * We assume all tail are present too, if head is there.
- 		 */
--		if (radix_tree_deref_slot_protected(pslot,
--					&mapping->i_pages.xa_lock) != head)
-+		xa_lock(&mapping->i_pages);
-+		if (xas_load(&xas) != head)
- 			goto fail;
- 	}
+ #include <asm-generic/bitops/atomic.h>
++#include <asm-generic/bitops/non-atomic.h>
+ 
+ #endif /* __TOOLS_ASM_GENERIC_BITOPS_H */
+diff --git a/tools/include/asm-generic/bitops/atomic.h b/tools/include/asm-generic/bitops/atomic.h
+index 21c41ccd1266..2f6ea28764a7 100644
+--- a/tools/include/asm-generic/bitops/atomic.h
++++ b/tools/include/asm-generic/bitops/atomic.h
+@@ -15,13 +15,4 @@ static inline void clear_bit(int nr, unsigned long *addr)
+ 	addr[nr / __BITS_PER_LONG] &= ~(1UL << (nr % __BITS_PER_LONG));
+ }
+ 
+-static __always_inline int test_bit(unsigned int nr, const unsigned long *addr)
+-{
+-	return ((1UL << (nr % __BITS_PER_LONG)) &
+-		(((unsigned long *)addr)[nr / __BITS_PER_LONG])) != 0;
+-}
+-
+-#define __set_bit(nr, addr)	set_bit(nr, addr)
+-#define __clear_bit(nr, addr)	clear_bit(nr, addr)
+-
+ #endif /* _TOOLS_LINUX_ASM_GENERIC_BITOPS_ATOMIC_H_ */
+diff --git a/tools/include/asm-generic/bitops/non-atomic.h b/tools/include/asm-generic/bitops/non-atomic.h
+new file mode 100644
+index 000000000000..7e10c4b50c5d
+--- /dev/null
++++ b/tools/include/asm-generic/bitops/non-atomic.h
+@@ -0,0 +1,109 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_GENERIC_BITOPS_NON_ATOMIC_H_
++#define _ASM_GENERIC_BITOPS_NON_ATOMIC_H_
++
++#include <asm/types.h>
++
++/**
++ * __set_bit - Set a bit in memory
++ * @nr: the bit to set
++ * @addr: the address to start counting from
++ *
++ * Unlike set_bit(), this function is non-atomic and may be reordered.
++ * If it's called on the same region of memory simultaneously, the effect
++ * may be that only one operation succeeds.
++ */
++static inline void __set_bit(int nr, volatile unsigned long *addr)
++{
++	unsigned long mask = BIT_MASK(nr);
++	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
++
++	*p  |= mask;
++}
++
++static inline void __clear_bit(int nr, volatile unsigned long *addr)
++{
++	unsigned long mask = BIT_MASK(nr);
++	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
++
++	*p &= ~mask;
++}
++
++/**
++ * __change_bit - Toggle a bit in memory
++ * @nr: the bit to change
++ * @addr: the address to start counting from
++ *
++ * Unlike change_bit(), this function is non-atomic and may be reordered.
++ * If it's called on the same region of memory simultaneously, the effect
++ * may be that only one operation succeeds.
++ */
++static inline void __change_bit(int nr, volatile unsigned long *addr)
++{
++	unsigned long mask = BIT_MASK(nr);
++	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
++
++	*p ^= mask;
++}
++
++/**
++ * __test_and_set_bit - Set a bit and return its old value
++ * @nr: Bit to set
++ * @addr: Address to count from
++ *
++ * This operation is non-atomic and can be reordered.
++ * If two examples of this operation race, one can appear to succeed
++ * but actually fail.  You must protect multiple accesses with a lock.
++ */
++static inline int __test_and_set_bit(int nr, volatile unsigned long *addr)
++{
++	unsigned long mask = BIT_MASK(nr);
++	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
++	unsigned long old = *p;
++
++	*p = old | mask;
++	return (old & mask) != 0;
++}
++
++/**
++ * __test_and_clear_bit - Clear a bit and return its old value
++ * @nr: Bit to clear
++ * @addr: Address to count from
++ *
++ * This operation is non-atomic and can be reordered.
++ * If two examples of this operation race, one can appear to succeed
++ * but actually fail.  You must protect multiple accesses with a lock.
++ */
++static inline int __test_and_clear_bit(int nr, volatile unsigned long *addr)
++{
++	unsigned long mask = BIT_MASK(nr);
++	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
++	unsigned long old = *p;
++
++	*p = old & ~mask;
++	return (old & mask) != 0;
++}
++
++/* WARNING: non atomic and it can be reordered! */
++static inline int __test_and_change_bit(int nr,
++					    volatile unsigned long *addr)
++{
++	unsigned long mask = BIT_MASK(nr);
++	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
++	unsigned long old = *p;
++
++	*p = old ^ mask;
++	return (old & mask) != 0;
++}
++
++/**
++ * test_bit - Determine whether a bit is set
++ * @nr: bit number to test
++ * @addr: Address to start counting from
++ */
++static inline int test_bit(int nr, const volatile unsigned long *addr)
++{
++	return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
++}
++
++#endif /* _ASM_GENERIC_BITOPS_NON_ATOMIC_H_ */
+diff --git a/tools/include/linux/spinlock.h b/tools/include/linux/spinlock.h
+index 4ec4d2cbe27a..622266b197d0 100644
+--- a/tools/include/linux/spinlock.h
++++ b/tools/include/linux/spinlock.h
+@@ -10,6 +10,12 @@
+ #define __SPIN_LOCK_UNLOCKED(x)	(pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
+ #define spin_lock_init(x)	pthread_mutex_init(x, NULL)
+ 
++#define spin_lock(x)			pthread_mutex_lock(x)
++#define spin_unlock(x)			pthread_mutex_unlock(x)
++#define spin_lock_bh(x)			pthread_mutex_lock(x)
++#define spin_unlock_bh(x)		pthread_mutex_unlock(x)
++#define spin_lock_irq(x)		pthread_mutex_lock(x)
++#define spin_unlock_irq(x)		pthread_mutex_unlock(x)
+ #define spin_lock_irqsave(x, f)		(void)f, pthread_mutex_lock(x)
+ #define spin_unlock_irqrestore(x, f)	(void)f, pthread_mutex_unlock(x)
  
 -- 
 2.17.1
