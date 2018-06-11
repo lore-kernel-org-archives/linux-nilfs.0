@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 36/72] mm: Convert truncate to XArray
-Date: Mon, 11 Jun 2018 07:06:03 -0700
-Message-ID: <20180611140639.17215-37-willy@infradead.org>
+Subject: [PATCH v13 44/72] mm: Convert is_page_cache_freeable to
+ XArray
+Date: Mon, 11 Jun 2018 07:06:11 -0700
+Message-ID: <20180611140639.17215-45-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=Uf6g1DCKoZTcsIod4MBFbPjjHdDF87hOdzkkZTr2U34=; b=LsoT0jGV4gyok9R+2DA/17rESY
- CUZ0bzzEbXaaZOCqvqyhPWk6etA2UZAoSmlLI8HPKKEY70TKaSIsSZoZBGSfp8uMnDgL8Rv1ZYJOm
- fsjHGVwbUtCIBk3v4zJww8OOigT2Ggqwkcss5mfnth4sf/rQp8bhLINNIPNNlAhGVJk4=;
+ bh=cp1noagiBNyq9HAsILQXj5VlZgjwOoF7k27YeP6vh0Y=; b=hy63ELMsB+XnAVaFWs5RmY0M+K
+ qnLinS5tAywebbHne1ihpjbsDQMsYNmKYuaH3EfW45qM8yAK0Z83NTLZvC9Y9MtikovpIt+bxZSqH
+ EkAAbxDKthjrkZzbyH0Gr4sqhlphMkFUwCF0//ebcQiiRTwyOEUsnpYzy7g1bfYMUEL0=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=Uf6g1DCKoZTcsIod4MBFbPjjHdDF87hOdzkkZTr2U34=; b=TKY7VxyJBU76tmHxdQQzciZzsS
- f1IBmyhch1RO5qmlksjs0jfb8fhcKVMmwnIEU8MgApdtjI1Thrc9hAsZfP+TSY/RRxSVaVlMSVQKk
- EplLtaPcGq1lDE2tAT5KWdcFsVw3QJCFNEFBWIk9hliMgqN68uU7m8I7EiFmeKEb98pA=;
+ bh=cp1noagiBNyq9HAsILQXj5VlZgjwOoF7k27YeP6vh0Y=; b=SKLA75ZOWS2q5Rw4dQ4JD9PJYx
+ Pdq9258uhl6+EFZTnd096LFf5CKXa2qW0zrJkzQpPL9ZrTtftm9QRRp1/qPlNOg7pCmqPRWOhyYeP
+ R4qucPjj5lcwkBQZIpTHc3aCaeKlN6Vje2VRwEsmpdEjgMKgerB82CAJKR9xpiSPqDDg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=Uf6g1DCKoZTcsIod4MBFbPjjHdDF87hOdzkkZTr2U34=; b=o+RFy7+6TUUhlW2A8nui01xxd
- /Glab80k/TZGU2wA0JpNNAQlgTl8vnyVOsvoxO7vVfQwTIwqVY91UvDdxk2wAZbHjjMfZee0aDYL/
- 61ehSv+o8e31ex3K+xGOPK56//Ua44BCMImv3rfWrI/DEuU4J5a8hUuKduiSa3e2oSZq+nY6DluE1
- yU7SBK1e+qHo5FJkdSEVmlBUg/ZP5vEVJIAGGg7pCHS0mJaDGdACPJ7jneyhdTOsBABxSWYP3KKD6
- zcsPVVPOSBRln7DGa5appg0Tz7uwMk9jxqAlB5/WIsDFr92Lg1HQ38Ttudtxb8Ms5uOFJ9p0w+crE
- p3MpYxtfg==;
+ bh=cp1noagiBNyq9HAsILQXj5VlZgjwOoF7k27YeP6vh0Y=; b=SxnE1mBapiL1y28hZwNeGhwJ/
+ 09GiEhWbiib7/g4Cf75aq6Mmb1CR7cHxMapWj7kfybfOHAnN4e8Z/pRh0APfHIQ8UORSfvNeE4yAT
+ OgRbmoYJ5MsXrO7CXw1orPGIwM61vo6P8lAv+KtPFjAZF4KsMOU0C6rHaXJG7/QUHP67Xst6/T1j3
+ kKeGvrj03NUAd30r20e6DEpV3rYn/8f6mNT07W8BPtRbJFcJjBA2wsF31eiThUGDptumCq90fytF8
+ 99wUYAh4T4zj5KSBLms74ym6yGsbRfaL2G7ODSleL9hApFG3JeXlnoD35k2xeeOQ45RfrFk3M1t2Y
+ zPgRHySzA==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,51 +54,34 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This is essentially xa_cmpxchg() with the locking handled above us,
-and it doesn't have to handle replacing a NULL entry.
+This is just a variable rename and comment change.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/truncate.c | 15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+ mm/vmscan.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/mm/truncate.c b/mm/truncate.c
-index ed778555c9f3..45d68e90b703 100644
---- a/mm/truncate.c
-+++ b/mm/truncate.c
-@@ -33,15 +33,12 @@
- static inline void __clear_shadow_entry(struct address_space *mapping,
- 				pgoff_t index, void *entry)
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 0448b1b366d9..575747728ee6 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -572,12 +572,12 @@ static inline int is_page_cache_freeable(struct page *page)
  {
--	struct radix_tree_node *node;
--	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, index);
- 
--	if (!__radix_tree_lookup(&mapping->i_pages, index, &node, &slot))
-+	xas_set_update(&xas, workingset_update_node);
-+	if (xas_load(&xas) != entry)
- 		return;
--	if (*slot != entry)
--		return;
--	__radix_tree_replace(&mapping->i_pages, node, slot, NULL,
--			     workingset_update_node);
-+	xas_store(&xas, NULL);
- 	mapping->nrexceptional--;
+ 	/*
+ 	 * A freeable page cache page is referenced only by the caller
+-	 * that isolated the page, the page cache radix tree and
+-	 * optional buffer heads at page->private.
++	 * that isolated the page, the page cache and optional buffer
++	 * heads at page->private.
+ 	 */
+-	int radix_pins = PageTransHuge(page) && PageSwapCache(page) ?
++	int page_cache_pins = PageTransHuge(page) && PageSwapCache(page) ?
+ 		HPAGE_PMD_NR : 1;
+-	return page_count(page) - page_has_private(page) == 1 + radix_pins;
++	return page_count(page) - page_has_private(page) == 1 + page_cache_pins;
  }
  
-@@ -738,10 +735,10 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
- 		index++;
- 	}
- 	/*
--	 * For DAX we invalidate page tables after invalidating radix tree.  We
-+	 * For DAX we invalidate page tables after invalidating page cache.  We
- 	 * could invalidate page tables while invalidating each entry however
- 	 * that would be expensive. And doing range unmapping before doesn't
--	 * work as we have no cheap way to find whether radix tree entry didn't
-+	 * work as we have no cheap way to find whether page cache entry didn't
- 	 * get remapped later.
- 	 */
- 	if (dax_mapping(mapping)) {
+ static int may_write_to_inode(struct inode *inode, struct scan_control *sc)
 -- 
 2.17.1
 
