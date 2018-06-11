@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 14/72] xarray: Add xa_destroy
-Date: Mon, 11 Jun 2018 07:05:41 -0700
-Message-ID: <20180611140639.17215-15-willy@infradead.org>
+Subject: [PATCH v13 30/72] radix tree test suite: Convert
+ regression1 to XArray
+Date: Mon, 11 Jun 2018 07:05:57 -0700
+Message-ID: <20180611140639.17215-31-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=nbY05u5jx+2zgCzyQJUXznqPWLWRJUQUQdOdMyGJxM0=; b=MC/gTfqz52OYEptUTmXBQl/X0b
- 4nsncNytAcYW5867126RfhZISO+zYVxggRiPUogjmWt6tEc4c/E3H3WcsG43Oj2vWvi1gyrw50s/e
- u16/BgGphQAMhIqpYCPKwq/bw939y8I7C42VIqGK39Pm0AMpmeQReYSSH8qV4oGEu+6Y=;
+ bh=SEKhh9tEySLT3DK6sNrlXzWkfXE7JM5uLwDQy4eqfzg=; b=eWqEX/UnMVyc1S22ddwXGWRiEl
+ 0JeVGKhDk+NQnaHnRPnAZ/Lop39xjmDCYM6dFjmuSZVbYGwSMtAza3xVSrcTIK+8DQEKCJak3tINN
+ ug607vOlvE0THgu4Lrts9sBH6iWO+Ek+gir2aPIF/0651THmKMFMWfj03xsW9ZHMPEnY=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=nbY05u5jx+2zgCzyQJUXznqPWLWRJUQUQdOdMyGJxM0=; b=Z3Sh8kL/r/vkCsXgYSWZxC/Gps
- AfP0RzI4mJHT19trpEbCWfpWypwwfLw3ScQJmERt9RxFPfUZSYQTHj3ts7BzyxKw8PLPZd4fVwLJf
- Vu/N7gvy0siNleMi1EHEWo8ekIWA+VccEr6CtPKTP4cqvR7zPtKf9vni0K6/qda/KxT8=;
+ bh=SEKhh9tEySLT3DK6sNrlXzWkfXE7JM5uLwDQy4eqfzg=; b=irfOj2z40fKMjJ/fgwbbuHM2J4
+ pvMvRhjxVlf0cuBuvrqv0KEPCYSiZ6qyn5X2KFNCcAFlLxQetA2XMjisVdjOMNyyVAfzIAoyIKZau
+ xbycdACOTm+q2vslCqUlILJALEs434ZNGOvffYIo3GtR+5B3HrRk5PRotRg349jCznQc=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=nbY05u5jx+2zgCzyQJUXznqPWLWRJUQUQdOdMyGJxM0=; b=g/V8+PfoP8BltXy7w9VxGblMc
- bHxjfhX2P31FEMyWo9VMWyvAnNJNnZVUCjyZovcJw03DPkveKbIBNwpsX6ujCgnKZ9v/50TyDJtPh
- yxMElhWR1fnHBSInlF1ezsyQwQ7imvbb+tyup3agX8SistDby+PvtlYAUa0IY1/YQgLxZWhP0bn1c
- YgxIwj6HIKAGafE1yEuomIXBO3rl99flAOwx2u9zupkAQDVKkI1I1iJp0Vhz9CYWuF+RTJjl7ppHh
- Y9LOKwxJ/tc5zJEnOpp2pCG5vRHGHReR4laDC44DPiq7QDBSQv4UHEGv126D2cC7p1Mp296YHITuH
- NasiHLpoQ==;
+ bh=SEKhh9tEySLT3DK6sNrlXzWkfXE7JM5uLwDQy4eqfzg=; b=RnaMWJcSdqsx60dv3lyYDZitM
+ 5csUaOl0AXVOY8v8s2KM5XzAVAZSMjL6zE3g9K3rTdSwdmAGoCuoIxxTk5GwdGNDtWbvE1rxNMzGk
+ NdT+Nsy4rWu0sDmy3fmNfPNPlMX+1/jwILHUDXy8KgdeUBdPCw2+3oJecaPl9+OUANANTeKXc9rfx
+ nNfD/eqt6Fs2ulrlfonm+hsgvtMprDoqdbpgE28p+ChxnO1REMALI2nusYPRswbx212AvorDUlZzb
+ Iz64YO4A4o8aqYJAgBtn/PftGs/aIIVd2Scb2cO2Ku5ptS/GxvJ0cBy7qcb/vozqyr84iY2yMVK8R
+ pQScC4V4g==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,66 +54,118 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-This function frees all the internal memory allocated to the xarray
-and reinitialises it to be empty.
+Now the page cache lookup is using the XArray, let's convert this
+regression test from the radix tree API to the XArray so it's testing
+roughly the same thing it was testing before.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- include/linux/xarray.h |  1 +
- lib/xarray.c           | 28 ++++++++++++++++++++++++++++
- 2 files changed, 29 insertions(+)
+ tools/testing/radix-tree/regression1.c | 58 +++++++++-----------------
+ 1 file changed, 19 insertions(+), 39 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 3764f4b4c1a8..6273dd222fda 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -229,6 +229,7 @@ void *xa_find_after(struct xarray *xa, unsigned long *index,
- 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
- unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
- 		unsigned long max, unsigned int n, xa_tag_t);
-+void xa_destroy(struct xarray *);
+diff --git a/tools/testing/radix-tree/regression1.c b/tools/testing/radix-tree/regression1.c
+index 0aece092f40e..b4a4a7168986 100644
+--- a/tools/testing/radix-tree/regression1.c
++++ b/tools/testing/radix-tree/regression1.c
+@@ -53,12 +53,12 @@ struct page {
+ 	unsigned long index;
+ };
  
- /**
-  * xa_init() - Initialise an empty XArray.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index c3a53f09aa88..c505084ad43a 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -1507,6 +1507,34 @@ unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
- }
- EXPORT_SYMBOL(xa_extract);
- 
-+/**
-+ * xa_destroy() - Free all internal data structures.
-+ * @xa: XArray.
-+ *
-+ * After calling this function, the XArray is empty and has freed all memory
-+ * allocated for its internal data structures.  You are responsible for
-+ * freeing the objects referenced by the XArray.
-+ *
-+ * Context: Any context.  Takes and releases the xa_lock, interrupt-safe.
-+ */
-+void xa_destroy(struct xarray *xa)
-+{
-+	XA_STATE(xas, xa, 0);
-+	unsigned long flags;
-+	void *entry;
-+
-+	xas.xa_node = NULL;
-+	xas_lock_irqsave(&xas, flags);
-+	entry = xa_head_locked(xa);
-+	RCU_INIT_POINTER(xa->xa_head, NULL);
-+	xas_init_tags(&xas);
-+	/* lockdep checks we're still holding the lock in xas_free_nodes() */
-+	if (xa_is_node(entry))
-+		xas_free_nodes(&xas, xa_to_node(entry));
-+	xas_unlock_irqrestore(&xas, flags);
-+}
-+EXPORT_SYMBOL(xa_destroy);
-+
- #ifdef XA_DEBUG
- void xa_dump_node(const struct xa_node *node)
+-static struct page *page_alloc(void)
++static struct page *page_alloc(int index)
  {
+ 	struct page *p;
+ 	p = malloc(sizeof(struct page));
+ 	p->count = 1;
+-	p->index = 1;
++	p->index = index;
+ 	pthread_mutex_init(&p->lock, NULL);
+ 
+ 	return p;
+@@ -80,53 +80,33 @@ static void page_free(struct page *p)
+ static unsigned find_get_pages(unsigned long start,
+ 			    unsigned int nr_pages, struct page **pages)
+ {
+-	unsigned int i;
+-	unsigned int ret;
+-	unsigned int nr_found;
++	XA_STATE(xas, &mt_tree, start);
++	struct page *page;
++	unsigned int ret = 0;
+ 
+ 	rcu_read_lock();
+-restart:
+-	nr_found = radix_tree_gang_lookup_slot(&mt_tree,
+-				(void ***)pages, NULL, start, nr_pages);
+-	ret = 0;
+-	for (i = 0; i < nr_found; i++) {
+-		struct page *page;
+-repeat:
+-		page = radix_tree_deref_slot((void **)pages[i]);
+-		if (unlikely(!page))
++	xas_for_each(&xas, page, ULONG_MAX) {
++		if (xas_retry(&xas, page))
+ 			continue;
+ 
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				/*
+-				 * Transient condition which can only trigger
+-				 * when entry at index 0 moves out of or back
+-				 * to root: none yet gotten, safe to restart.
+-				 */
+-				assert((start | i) == 0);
+-				goto restart;
+-			}
+-			/*
+-			 * No exceptional entries are inserted in this test.
+-			 */
+-			assert(0);
+-		}
+-
+ 		pthread_mutex_lock(&page->lock);
+-		if (!page->count) {
+-			pthread_mutex_unlock(&page->lock);
+-			goto repeat;
+-		}
++		if (!page->count)
++			goto unlock;
++
+ 		/* don't actually update page refcount */
+ 		pthread_mutex_unlock(&page->lock);
+ 
+ 		/* Has the page moved? */
+-		if (unlikely(page != *((void **)pages[i]))) {
+-			goto repeat;
+-		}
++		if (unlikely(page != xas_reload(&xas)))
++			goto put_page;
+ 
+ 		pages[ret] = page;
+ 		ret++;
++		continue;
++unlock:
++		pthread_mutex_unlock(&page->lock);
++put_page:
++		xas_reset(&xas);
+ 	}
+ 	rcu_read_unlock();
+ 	return ret;
+@@ -145,12 +125,12 @@ static void *regression1_fn(void *arg)
+ 		for (j = 0; j < 1000000; j++) {
+ 			struct page *p;
+ 
+-			p = page_alloc();
++			p = page_alloc(0);
+ 			pthread_mutex_lock(&mt_lock);
+ 			radix_tree_insert(&mt_tree, 0, p);
+ 			pthread_mutex_unlock(&mt_lock);
+ 
+-			p = page_alloc();
++			p = page_alloc(1);
+ 			pthread_mutex_lock(&mt_lock);
+ 			radix_tree_insert(&mt_tree, 1, p);
+ 			pthread_mutex_unlock(&mt_lock);
 -- 
 2.17.1
 
