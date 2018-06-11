@@ -1,42 +1,44 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 00/72] Convert page cache to XArray
-Date: Mon, 11 Jun 2018 07:05:27 -0700
-Message-ID: <20180611140639.17215-1-willy@infradead.org>
+Subject: [PATCH v13 15/72] xarray: Add xas_next and xas_prev
+Date: Mon, 11 Jun 2018 07:05:42 -0700
+Message-ID: <20180611140639.17215-16-willy@infradead.org>
+References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
- MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
+ d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
+ To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=b97DwwVrc8rHLFvjKplVbfyNNJ9JE2iwoiXANNZEbXg=; b=MeUdvVpmf/j1Pepg9zm8Aa9n+t
- XkLgVX+Ep6qN5y5Zi/YZrsC6S4uyDgxV30V8o2V5gIudlyMEKdbdx8ZuQGLcWjdi2+sXM2nkF9xTf
- KXZTWPFoOImvZDOyyiluTc3rL/BkHm1xo1Dft3tREGa79ZueNN14lDrcFSTmm14fjsrI=;
+ bh=yw3BRSyoVlCfRjM4bq/lyt26MoqfnYKVoQhDORT3K5I=; b=Zn+hdwVTWTnKTPHiFHekSL3i7h
+ tzyzgjiALXRcibNFraRJUu4n+iP2xeLgBcKSmHgeEfyvkSGTJD7lv4shAOkDNcoo0zvfq1yptm3A7
+ y0bRnUaVSdafp8USiyhpHyuOOivz5r2spoy1a8q3QCP1BPfntdf/TGUxCYN15F0o5pjI=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
- h=Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:
- Content-Type:Content-Transfer-Encoding:Content-ID:Content-Description:
- Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
- In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
+ :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=b97DwwVrc8rHLFvjKplVbfyNNJ9JE2iwoiXANNZEbXg=; b=DovkvXPThABBRs+q2Jfvrdr4Vz
- ICvYOay2R0gT0CboT/PhZncpSQWoI6lppS8buQ4XYFADJ5iAFXiaFYWRys404jxgX9TttWtZwjURg
- kraJPKiDmk2RXzWV1GkubFIfzaTz6kzCBk5TEo85kxOOS8Y8ruPQhNs1IgyuvcREsUWQ=;
+ bh=yw3BRSyoVlCfRjM4bq/lyt26MoqfnYKVoQhDORT3K5I=; b=g6JsdiEb77QL+X2k+husH068Xn
+ zV6mFWz0zhdE7MMu76O5LLQ+QFNDJlb2pIqXA7e1SWWjeWMpSYtHh7pQ1wPQZM5cIOJceTK+3AXIe
+ hEBdOVGKmeyzaAiDPlhd9JIzpd62tnvcwL8Agob3zoXAP8NowHH3LD9mJdkQvH6MgN6s=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=Message-Id:Date:Subject:Cc:To:From:
- Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
+ d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+ Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+ Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=b97DwwVrc8rHLFvjKplVbfyNNJ9JE2iwoiXANNZEbXg=; b=U4FYZs02pHLMn4wAnYb7dA8Ag
- mQsz/vfN76b92sk5sVIhgDUaV43aSi/HGgEwhxXY1LdMLFXeCswy7KnkI+ooODNfsKfyHAOk+5Dxq
- r1gc+NJGckb8sVGXrCVU8VvKESUiWQZ3jN6kSdV2jvgIZH1sDT2Q2O6KRz4v6EdY5nT9A2Ro00y50
- Vw8wVIh5tkOH+eUAFI4uFlYwHrrCoRddqqDkmn4f5Dv3jC6q6VZlxgM0fg2jCporhHc5m6pku/ANL
- S3Db0qNjfWwRRknrjZLmIWrLyohBpnmPomUYWQ4NgcwGEQnq61rd9rmoBIYXAh23208DyNd8BdsPv
- fUgMP8Okw==;
+ bh=yw3BRSyoVlCfRjM4bq/lyt26MoqfnYKVoQhDORT3K5I=; b=Xij//VxPOrfYWhuvauXOrmiZq
+ klmUA6iGDuTRPWrF+vgSQyPT9wSxGwFacv55pbW6kWS2GbXBXwnf0rbwwK8/NtRw84Zh1K9z90jkb
+ 4xVCdIyBscL3CX+rPOM8S2QHnQSkhzC7XIPx3Uwbpi68EePEK8Q4rpVXVYoNvHFqxeemVEqPVg8kW
+ kJla1fg5tFE9sIg9mgmf7MyaOKX0dh7x2PtUg3lpoTAT44WsNHjoNGOfIseRr9cBImfWj8RLBHmKw
+ p4XTgNGwvGJjykSl71kwqQFjye8QUWGs0dpVa4lDSrU9Oxgjqh8XPWD2Mv/EIK+ux7j8S1YMuYlae
+ gK3JObgdQ==;
+In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -51,224 +53,494 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-The XArray is a replacement for the radix tree.  For the moment it uses
-the same data structures, enabling a gradual replacement.  This patch
-set implements the XArray and converts the page cache to use it.
+These two functions move the xas index by one position, and adjust the
+rest of the iterator state to match it.  This is more efficient than
+calling xas_set() as it keeps the iterator at the leaves of the tree
+instead of walking the iterator from the root each time.
 
-A version of these patches has been running under xfstests for over 48
-hours, so I have some confidence in them.  The DAX changes are untested.
-This is based on next-20180608 and is available as a git tree at
-git://git.infradead.org/users/willy/linux-dax.git xarray-20180608
+Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
+---
+ include/linux/xarray.h                 |  67 +++++++
+ lib/xarray.c                           |  74 +++++++
+ tools/testing/radix-tree/xarray-test.c | 261 ++++++++++++++++++++++++-
+ 3 files changed, 401 insertions(+), 1 deletion(-)
 
-My plan for getting this lot merged is to create a git branch from -rc1
-and ask that to be included in -next.  Last call for reviews/acks.
-I'd suggest looking at the page cache changes (patches 19-68) rather
-than the XArray patches themselves.  I know there's a lot of patches,
-but each individual patch is quite small.
-
-In particular, I'd like reviews from filesystem people of their own
-filesystem conversions.  I have that from David Sterba for btrfs, but
-I've had no response from the nilfs2 or f2fs people.
-
-Changes since v12:
- - Fixed bug in page cache lookup conversion which could lead to
-   returning pages which had been released from the page cache.  Split
-   out the seven converted functions each into their own patch to allow
-   for better bisection.
- - Fixed bug in workingset conversion that led to exceptional entries not
-   being deleted from the XArray.
- - Fixed several bugs in DAX conversion.
- - Added xas_for_each_conflict() and use it in DAX.
- - Undid change of xas_load() behaviour with multislot xa_state that
-   was introduced in v10.  Removed test cases, since we don't want that
-   behaviour.
- - Re-added conversion of dax_layout_busy_page.
- - Reordered a DAX bugfix to the head of the queue to allow it to
-   be merged independently.
- - Dropped "dax_insert_mapping_entry always succeeds" due to being
-   merged by Dan.  Thanks, Dan!
- - Dropped "dax: Return fault code from dax_load_hole" as it was taken
-   care of by Souptick's patch.
- - At Ross's request, renamed dax_mk_foo() to dax_make_foo().
- - Renamed DAX_ENTRY_LOCK to DAX_LOCKED.
- - Updated migrate_page_move_mapping conversion.
- - Split out the radix tree test suite addition of ubsan.
- - Split out radix tree code deletion.
- - Removed __radix_tree_create from the public API.
- - Fixed up a couple of comments in DAX.
- - Renamed shmem_xa_replace() to shmem_replace_entry().
- - Corrected some typos in the XArray kerneldoc and reworded a few
-   sentences in xarray.rst.
- - Added a new section on multi-index entries to xarray.rst, replacing the
-   single paragraph we used to have.
- - Fixed multi-index xas_store(xas, NULL) and added test-cases.
- - Fixed multi-index xas_store() in the presence of tags (the new entry is
-   tagged if any of the entries it is replacing is tagged).
- - Dropped lustre patch due to removal from staging
- - Use XA_BUG_ON() more in the test suite rather than assert().
-   Conversion not completed.
- - Deleted an unused variable from nilfs2 conversion.
- - Rename f2fs_clear_radix_tree_dirty_tag to f2fs_clear_page_cache_dirty_tag
-
-Matthew Wilcox (72):
-  radix tree test suite: Enable ubsan
-  dax: Fix use of zero page
-  xarray: Replace exceptional entries
-  xarray: Change definition of sibling entries
-  xarray: Add definition of struct xarray
-  xarray: Define struct xa_node
-  xarray: Add documentation
-  xarray: Add xa_load
-  xarray: Add XArray tags
-  xarray: Add xa_store
-  xarray: Add xa_cmpxchg and xa_insert
-  xarray: Add xa_for_each
-  xarray: Add xa_extract
-  xarray: Add xa_destroy
-  xarray: Add xas_next and xas_prev
-  xarray: Add xas_for_each_conflict
-  xarray: Add xas_create_range
-  xarray: Add MAINTAINERS entry
-  page cache: Rearrange address_space
-  page cache: Convert hole search to XArray
-  page cache: Add and replace pages using the XArray
-  page cache: Convert page deletion to XArray
-  page cache: Convert find_get_entry to XArray
-  page cache: Convert find_get_entries to XArray
-  page cache: Convert find_get_pages_range to XArray
-  page cache: Convert find_get_pages_contig to XArray
-  page cache; Convert find_get_pages_range_tag to XArray
-  page cache: Convert find_get_entries_tag to XArray
-  page cache: Convert filemap_map_pages to XArray
-  radix tree test suite: Convert regression1 to XArray
-  page cache: Convert delete_batch to XArray
-  page cache: Remove stray radix comment
-  page cache: Convert filemap_range_has_page to XArray
-  mm: Convert page-writeback to XArray
-  mm: Convert workingset to XArray
-  mm: Convert truncate to XArray
-  mm: Convert add_to_swap_cache to XArray
-  mm: Convert delete_from_swap_cache to XArray
-  mm: Convert __do_page_cache_readahead to XArray
-  mm: Convert page migration to XArray
-  mm: Convert huge_memory to XArray
-  mm: Convert collapse_shmem to XArray
-  mm: Convert khugepaged_scan_shmem to XArray
-  mm: Convert is_page_cache_freeable to XArray
-  pagevec: Use xa_tag_t
-  shmem: Convert shmem_radix_tree_replace to XArray
-  shmem: Convert shmem_confirm_swap to XArray
-  shmem: Convert find_swap_entry to XArray
-  shmem: Convert shmem_add_to_page_cache to XArray
-  shmem: Convert shmem_alloc_hugepage to XArray
-  shmem: Convert shmem_free_swap to XArray
-  shmem: Convert shmem_partial_swap_usage to XArray
-  memfd: Convert memfd_wait_for_pins to XArray
-  memfd: Convert memfd_tag_pins to XArray
-  shmem: Comment fixups
-  btrfs: Convert page cache to XArray
-  fs: Convert buffer to XArray
-  fs: Convert writeback to XArray
-  nilfs2: Convert to XArray
-  f2fs: Convert to XArray
-  dax: Rename some functions
-  dax: Hash on XArray instead of mapping
-  dax: Convert dax_insert_pfn_mkwrite to XArray
-  dax: Convert dax_layout_busy_page to XArray
-  dax: Convert __dax_invalidate_entry to XArray
-  dax: Convert dax writeback to XArray
-  dax: Convert page fault handlers to XArray
-  page cache: Finish XArray conversion
-  radix tree: Remove radix_tree_update_node_t
-  radix tree: Remove split/join code
-  radix tree: Remove radix_tree_maybe_preload_order
-  radix tree: Remove radix_tree_clear_tags
-
- .clang-format                                 |    1 -
- Documentation/core-api/index.rst              |    1 +
- Documentation/core-api/xarray.rst             |  395 ++++
- MAINTAINERS                                   |   12 +
- arch/powerpc/include/asm/book3s/64/pgtable.h  |    4 +-
- arch/powerpc/include/asm/nohash/64/pgtable.h  |    4 +-
- drivers/gpu/drm/i915/i915_gem.c               |   17 +-
- fs/btrfs/compression.c                        |    6 +-
- fs/btrfs/extent_io.c                          |   12 +-
- fs/buffer.c                                   |   14 +-
- fs/dax.c                                      |  792 ++++----
- fs/ext4/inode.c                               |    2 +-
- fs/f2fs/data.c                                |    6 +-
- fs/f2fs/dir.c                                 |    2 +-
- fs/f2fs/f2fs.h                                |    2 +-
- fs/f2fs/inline.c                              |    2 +-
- fs/f2fs/node.c                                |    6 +-
- fs/fs-writeback.c                             |   25 +-
- fs/gfs2/aops.c                                |    2 +-
- fs/inode.c                                    |    2 +-
- fs/nfs/blocklayout/blocklayout.c              |    2 +-
- fs/nilfs2/btnode.c                            |   26 +-
- fs/nilfs2/page.c                              |   29 +-
- fs/proc/task_mmu.c                            |    2 +-
- include/linux/fs.h                            |   63 +-
- include/linux/pagemap.h                       |   10 +-
- include/linux/pagevec.h                       |    8 +-
- include/linux/radix-tree.h                    |  136 +-
- include/linux/swap.h                          |   22 +-
- include/linux/swapops.h                       |   19 +-
- include/linux/xarray.h                        | 1026 ++++++++++
- lib/Makefile                                  |    2 +-
- lib/idr.c                                     |   66 +-
- lib/radix-tree.c                              |  575 +-----
- lib/xarray.c                                  | 1767 +++++++++++++++++
- mm/filemap.c                                  |  723 +++----
- mm/huge_memory.c                              |   17 +-
- mm/khugepaged.c                               |  177 +-
- mm/madvise.c                                  |    2 +-
- mm/memcontrol.c                               |    2 +-
- mm/memfd.c                                    |  105 +-
- mm/migrate.c                                  |   48 +-
- mm/mincore.c                                  |    2 +-
- mm/page-writeback.c                           |   72 +-
- mm/readahead.c                                |   10 +-
- mm/shmem.c                                    |  201 +-
- mm/swap.c                                     |    6 +-
- mm/swap_state.c                               |  119 +-
- mm/truncate.c                                 |   27 +-
- mm/vmscan.c                                   |   10 +-
- mm/workingset.c                               |   71 +-
- tools/include/asm-generic/bitops.h            |    1 +
- tools/include/asm-generic/bitops/atomic.h     |    9 -
- tools/include/asm-generic/bitops/non-atomic.h |  109 +
- tools/include/linux/bitmap.h                  |    1 +
- tools/include/linux/spinlock.h                |   12 +-
- tools/testing/radix-tree/.gitignore           |    2 +
- tools/testing/radix-tree/Makefile             |   20 +-
- tools/testing/radix-tree/benchmark.c          |   91 -
- tools/testing/radix-tree/bitmap.c             |   23 +
- tools/testing/radix-tree/idr-test.c           |    6 +-
- tools/testing/radix-tree/linux/bug.h          |    1 +
- tools/testing/radix-tree/linux/kconfig.h      |    1 +
- tools/testing/radix-tree/linux/kernel.h       |    5 +
- tools/testing/radix-tree/linux/lockdep.h      |   11 +
- tools/testing/radix-tree/linux/rcupdate.h     |    2 +
- tools/testing/radix-tree/linux/xarray.h       |    3 +
- tools/testing/radix-tree/main.c               |   20 +-
- tools/testing/radix-tree/multiorder.c         |  272 +--
- tools/testing/radix-tree/regression1.c        |   58 +-
- tools/testing/radix-tree/regression3.c        |   23 -
- tools/testing/radix-tree/tag_check.c          |   32 +-
- tools/testing/radix-tree/test.c               |   53 +-
- tools/testing/radix-tree/test.h               |    6 +
- tools/testing/radix-tree/xarray-test.c        |  631 ++++++
- 75 files changed, 5392 insertions(+), 2652 deletions(-)
- create mode 100644 Documentation/core-api/xarray.rst
- create mode 100644 lib/xarray.c
- create mode 100644 tools/include/asm-generic/bitops/non-atomic.h
- create mode 100644 tools/testing/radix-tree/bitmap.c
- create mode 100644 tools/testing/radix-tree/linux/kconfig.h
- create mode 100644 tools/testing/radix-tree/linux/lockdep.h
- create mode 100644 tools/testing/radix-tree/linux/xarray.h
- create mode 100644 tools/testing/radix-tree/xarray-test.c
-
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 6273dd222fda..dd941454bb5b 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -700,6 +700,12 @@ static inline bool xas_not_node(struct xa_node *node)
+ 	return ((unsigned long)node & 3) || !node;
+ }
+ 
++/* True if the node represents RESTART or an error */
++static inline bool xas_frozen(struct xa_node *node)
++{
++	return (unsigned long)node & 2;
++}
++
+ /* True if the node represents head-of-tree, RESTART or BOUNDS */
+ static inline bool xas_top(struct xa_node *node)
+ {
+@@ -958,6 +964,67 @@ enum {
+ 	for (entry = xas_find_tagged(xas, max, tag); entry; \
+ 	     entry = xas_next_tagged(xas, max, tag))
+ 
++void *__xas_next(struct xa_state *);
++void *__xas_prev(struct xa_state *);
++
++/**
++ * xas_prev() - Move iterator to previous index.
++ * @xas: XArray operation state.
++ *
++ * If the @xas was in an error state, it will remain in an error state
++ * and this function will return %NULL.  If the @xas has never been walked,
++ * it will have the effect of calling xas_load().  Otherwise one will be
++ * subtracted from the index and the state will be walked to the correct
++ * location in the array for the next operation.
++ *
++ * If the iterator was referencing index 0, this function wraps
++ * around to %ULONG_MAX.
++ *
++ * Return: The entry at the new index.  This may be %NULL or an internal
++ * entry.
++ */
++static inline void *xas_prev(struct xa_state *xas)
++{
++	struct xa_node *node = xas->xa_node;
++
++	if (unlikely(xas_not_node(node) || node->shift ||
++				xas->xa_offset == 0))
++		return __xas_prev(xas);
++
++	xas->xa_index--;
++	xas->xa_offset--;
++	return xa_entry(xas->xa, node, xas->xa_offset);
++}
++
++/**
++ * xas_next() - Move state to next index.
++ * @xas: XArray operation state.
++ *
++ * If the @xas was in an error state, it will remain in an error state
++ * and this function will return %NULL.  If the @xas has never been walked,
++ * it will have the effect of calling xas_load().  Otherwise one will be
++ * added to the index and the state will be walked to the correct
++ * location in the array for the next operation.
++ *
++ * If the iterator was referencing index %ULONG_MAX, this function wraps
++ * around to 0.
++ *
++ * Return: The entry at the new index.  This may be %NULL or an internal
++ * entry.
++ */
++static inline void *xas_next(struct xa_state *xas)
++{
++	struct xa_node *node = xas->xa_node;
++
++	if (unlikely(xas_not_node(node) || node->shift ||
++				xas->xa_offset == XA_CHUNK_MASK))
++		return __xas_next(xas);
++
++	xas->xa_index++;
++	xas->xa_offset++;
++	return xa_entry(xas->xa, node, xas->xa_offset);
++}
++
+ /* Internal functions, mostly shared between radix-tree.c, xarray.c and idr.c */
+ void xas_destroy(struct xa_state *);
+ 
+diff --git a/lib/xarray.c b/lib/xarray.c
+index c505084ad43a..3b2c2f2240bf 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -877,6 +877,80 @@ void xas_pause(struct xa_state *xas)
+ }
+ EXPORT_SYMBOL_GPL(xas_pause);
+ 
++/*
++ * __xas_prev() - Find the previous entry in the XArray.
++ * @xas: XArray operation state.
++ *
++ * Helper function for xas_prev() which handles all the complex cases
++ * out of line.
++ */
++void *__xas_prev(struct xa_state *xas)
++{
++	void *entry;
++
++	if (!xas_frozen(xas->xa_node))
++		xas->xa_index--;
++	if (xas_not_node(xas->xa_node))
++		return xas_load(xas);
++
++	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
++		xas->xa_offset--;
++
++	while (xas->xa_offset == 255) {
++		xas->xa_offset = xas->xa_node->offset - 1;
++		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
++		if (!xas->xa_node)
++			return set_bounds(xas);
++	}
++
++	for (;;) {
++		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
++		if (!xa_is_node(entry))
++			return entry;
++
++		xas->xa_node = xa_to_node(entry);
++		xas_set_offset(xas);
++	}
++}
++EXPORT_SYMBOL_GPL(__xas_prev);
++
++/*
++ * __xas_next() - Find the next entry in the XArray.
++ * @xas: XArray operation state.
++ *
++ * Helper function for xas_next() which handles all the complex cases
++ * out of line.
++ */
++void *__xas_next(struct xa_state *xas)
++{
++	void *entry;
++
++	if (!xas_frozen(xas->xa_node))
++		xas->xa_index++;
++	if (xas_not_node(xas->xa_node))
++		return xas_load(xas);
++
++	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
++		xas->xa_offset++;
++
++	while (xas->xa_offset == XA_CHUNK_SIZE) {
++		xas->xa_offset = xas->xa_node->offset + 1;
++		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
++		if (!xas->xa_node)
++			return set_bounds(xas);
++	}
++
++	for (;;) {
++		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
++		if (!xa_is_node(entry))
++			return entry;
++
++		xas->xa_node = xa_to_node(entry);
++		xas_set_offset(xas);
++	}
++}
++EXPORT_SYMBOL_GPL(__xas_next);
++
+ /**
+  * xas_find() - Find the next present entry in the XArray.
+  * @xas: XArray operation state.
+diff --git a/tools/testing/radix-tree/xarray-test.c b/tools/testing/radix-tree/xarray-test.c
+index 24eb1bda4a79..eeafbf8c948c 100644
+--- a/tools/testing/radix-tree/xarray-test.c
++++ b/tools/testing/radix-tree/xarray-test.c
+@@ -53,6 +53,147 @@ void check_xa_tag(struct xarray *xa)
+ 	xa_store(xa, 0, NULL, 0);
+ }
+ 
++/* Check that putting the xas into an error state works correctly */
++void check_xas_error(struct xarray *xa)
++{
++	XA_STATE(xas, xa, 0);
++
++	assert(xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL) == 0);
++	assert(xa_load(xa, 1) == xa_mk_value(1));
++
++	assert(xas_error(&xas) == 0);
++
++	xas_set_err(&xas, -ENOTTY);
++	assert(xas_error(&xas) == -ENOTTY);
++
++	xas_set_err(&xas, -ENOSPC);
++	assert(xas_error(&xas) == -ENOSPC);
++
++	xas_set_err(&xas, -ENOMEM);
++	assert(xas_error(&xas) == -ENOMEM);
++
++	assert(xas_load(&xas) == NULL);
++	assert(xas_store(&xas, &xas) == NULL);
++	assert(xas_load(&xas) == NULL);
++
++	assert(xas.xa_index == 0);
++	assert(xas_next(&xas) == NULL);
++	assert(xas.xa_index == 0);
++
++	assert(xas_prev(&xas) == NULL);
++	assert(xas.xa_index == 0);
++
++	xas_retry(&xas, XA_RETRY_ENTRY);
++	assert(xas_error(&xas) == 0);
++
++	assert(xas_find(&xas, ULONG_MAX) == xa_mk_value(1));
++	assert(xas.xa_index == 1);
++	assert(xas_error(&xas) == 0);
++
++	assert(xas_find(&xas, ULONG_MAX) == NULL);
++	assert(xas.xa_index > 1);
++	assert(xas_error(&xas) == 0);
++	assert(xas.xa_node == XAS_BOUNDS);
++}
++
++void check_xas_pause(struct xarray *xa)
++{
++	XA_STATE(xas, xa, 0);
++	void *entry;
++	unsigned int seen;
++
++	xa_store(xa, 0, xa_mk_value(0), GFP_KERNEL);
++	xa_set_tag(xa, 0, XA_TAG_0);
++
++	seen = 0;
++	rcu_read_lock();
++	xas_for_each_tagged(&xas, entry, ULONG_MAX, XA_TAG_0) {
++		if (!seen++) {
++			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++			xa_set_tag(xa, 1, XA_TAG_0);
++		}
++	}
++	rcu_read_unlock();
++	/* We don't see an entry that was added after we started */
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	xas_for_each_tagged(&xas, entry, ULONG_MAX, XA_TAG_0) {
++		if (!seen++)
++			xa_erase(xa, 1);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		if (!seen++)
++			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		if (!seen++)
++			xa_erase(xa, 1);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
++		if (!seen++)
++			xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++	}
++	rcu_read_unlock();
++	assert(seen == 2);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	rcu_read_lock();
++	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
++		if (!seen++)
++			xa_erase(xa, 1);
++	}
++	rcu_read_unlock();
++	assert(seen == 1);
++
++	xa_store(xa, 1, xa_mk_value(1), GFP_KERNEL);
++	seen = 0;
++	xas_set(&xas, 0);
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		if (!seen++)
++			xas_pause(&xas);
++	}
++	assert(seen == 2);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	for (entry = xas_load(&xas); entry; entry = xas_next(&xas)) {
++		if (!seen++)
++			xas_pause(&xas);
++	}
++	assert(seen == 2);
++
++	seen = 0;
++	xas_set(&xas, 0);
++	xa_set_tag(xa, 1, XA_TAG_0);
++	xas_for_each_tagged(&xas, entry, ULONG_MAX, XA_TAG_0) {
++		if (!seen++)
++			xas_pause(&xas);
++	}
++	assert(seen == 2);
++}
++
+ void check_xas_retry(struct xarray *xa)
+ {
+ 	XA_STATE(xas, xa, 0);
+@@ -65,7 +206,7 @@ void check_xas_retry(struct xarray *xa)
+ 	assert(xa_is_retry(xas_reload(&xas)));
+ 	assert(!xas_retry(&xas, NULL));
+ 	assert(!xas_retry(&xas, xa_mk_value(0)));
+-	assert(xas_retry(&xas, XA_RETRY_ENTRY));
++	xas_reset(&xas);
+ 	assert(xas.xa_node == XAS_RESTART);
+ 	assert(xas_next_entry(&xas, ULONG_MAX) == xa_mk_value(0));
+ 	assert(xas.xa_node == NULL);
+@@ -269,9 +410,108 @@ void check_xas_delete(struct xarray *xa)
+ 	}
+ }
+ 
++void check_move_small(struct xarray *xa, unsigned long idx)
++{
++	XA_STATE(xas, xa, 0);
++	unsigned long i;
++
++	xa_store(xa, 0, xa_mk_value(0), GFP_KERNEL);
++	xa_store(xa, idx, xa_mk_value(idx), GFP_KERNEL);
++
++	for (i = 0; i < idx * 4; i++) {
++		void *entry = xas_next(&xas);
++		if (i <= idx)
++			assert(xas.xa_node != XAS_RESTART);
++		assert(xas.xa_index == i);
++		if (i == 0 || i == idx)
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++	}
++	xas_next(&xas);
++	assert(xas.xa_index == i);
++
++	do {
++		void *entry = xas_prev(&xas);
++		i--;
++		if (i <= idx)
++			assert(xas.xa_node != XAS_RESTART);
++		assert(xas.xa_index == i);
++		if (i == 0 || i == idx)
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++	} while (i > 0);
++
++	xas_set(&xas, ULONG_MAX);
++	assert(xas_next(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++	assert(xas_next(&xas) == xa_mk_value(0));
++	assert(xas.xa_index == 0);
++	assert(xas_prev(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++}
++
++void check_move(struct xarray *xa)
++{
++	XA_STATE(xas, xa, (1 << 16) - 1);
++	unsigned long i;
++
++	for (i = 0; i < (1 << 16); i++) {
++		xa_store(xa, i, xa_mk_value(i), GFP_KERNEL);
++	}
++
++	do {
++		void *entry = xas_prev(&xas);
++		i--;
++		assert(entry == xa_mk_value(i));
++		assert(i == xas.xa_index);
++	} while (i != 0);
++
++	assert(xas_prev(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++
++	do {
++		void *entry = xas_next(&xas);
++		assert(entry == xa_mk_value(i));
++		assert(i == xas.xa_index);
++		i++;
++	} while (i < (1 << 16));
++
++	for (i = (1 << 8); i < (1 << 15); i++) {
++		xa_erase(xa, i);
++	}
++
++	i = xas.xa_index;
++
++	do {
++		void *entry = xas_prev(&xas);
++		i--;
++		if ((i < (1 << 8)) || (i >= (1 << 15)))
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++		assert(i == xas.xa_index);
++	} while (i != 0);
++
++	assert(xas_prev(&xas) == NULL);
++	assert(xas.xa_index == ULONG_MAX);
++
++	do {
++		void *entry = xas_next(&xas);
++		if ((i < (1 << 8)) || (i >= (1 << 15)))
++			assert(entry == xa_mk_value(i));
++		else
++			assert(entry == NULL);
++		assert(i == xas.xa_index);
++		i++;
++	} while (i < (1 << 16));
++}
++
+ void xarray_checks(void)
+ {
+ 	DEFINE_XARRAY(array);
++	unsigned long i;
+ 
+ 	check_xa_err(&array);
+ 	item_kill_tree(&array);
+@@ -279,9 +519,15 @@ void xarray_checks(void)
+ 	check_xa_tag(&array);
+ 	item_kill_tree(&array);
+ 
++	check_xas_error(&array);
++	item_kill_tree(&array);
++
+ 	check_xas_retry(&array);
+ 	item_kill_tree(&array);
+ 
++	check_xas_pause(&array);
++	item_kill_tree(&array);
++
+ 	check_xa_load(&array);
+ 	item_kill_tree(&array);
+ 
+@@ -295,6 +541,19 @@ void xarray_checks(void)
+ 	check_find(&array);
+ 	check_xas_delete(&array);
+ 	item_kill_tree(&array);
++
++	for (i = 0; i < 16; i++) {
++		check_move_small(&array, 1UL << i);
++		item_kill_tree(&array);
++	}
++
++	for (i = 2; i < 16; i++) {
++		check_move_small(&array, (1UL << i) - 1);
++		item_kill_tree(&array);
++	}
++
++	check_move(&array);
++	item_kill_tree(&array);
+ }
+ 
+ int __weak main(void)
 -- 
 2.17.1
 
