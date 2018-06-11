@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 68/72] page cache: Finish XArray conversion
-Date: Mon, 11 Jun 2018 07:06:35 -0700
-Message-ID: <20180611140639.17215-69-willy@infradead.org>
+Subject: [PATCH v13 13/72] xarray: Add xa_extract
+Date: Mon, 11 Jun 2018 07:05:40 -0700
+Message-ID: <20180611140639.17215-14-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=rkKDu3vTH95GYyX6Q7oTKTgCqcU3ZiAjGwWtWlGisVY=; b=NbItsEeNOfgcgrSDStVfdaSxYl
- xfPhjV6qLavAudvMdF9l05BT3smZLu2qNJdP9LPF0nRRQZq5ka0mJ0FUNCjmVa+0WAzMOAnm3ZH+/
- geFTTMlL1KqlWeqBEDQjiAnwSWn0RbEwZWaCT2cnwR/KMx/eZTJy8Y7Z91atw3qGdu2g=;
+ bh=QHopodgOckH0JnTMC74cz/L5jvYaTcy0lLTV0wcZbXM=; b=C54XIYDqikodWN+KjlWucGPYcZ
+ c/zzGPgMIJOS1HU5Er7T639aJRx74+f4Bw3YTl2vQXtK3yV1FviwMZY35JaPkOb9+QWa9uAooFJZF
+ q45VrrEfR+7Oq19nUTZ7TgufYNub93/+15BfHtzMSrgqkYpApv/rhF0yQ94zsrbYSvWo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=rkKDu3vTH95GYyX6Q7oTKTgCqcU3ZiAjGwWtWlGisVY=; b=blo+/g60kQvZk2HETy1EFTqMxM
- Ul8mHe3HcGFI6mAbD1VIPLTGkUk9HrQ+LOBa1KshnWUoM+KJw7DtL38LbfnB12Y4yr/AZ0gCpNBqJ
- USVy679lc05eTMZpbIxM8DVIPx6Xko4bCfEdnPjceS0es7g2ZtnT/OmGCj1cocuURoIA=;
+ bh=QHopodgOckH0JnTMC74cz/L5jvYaTcy0lLTV0wcZbXM=; b=VHFsT2ECspcxRY/VnFa1gGny8j
+ JaDb+IyTVAnRoKzu9fZ+dich9muyFlorvXOIhpbOj/xX0ZrFSkpWOs30ecxfO5Ej7K8KTeDje/9Zd
+ y/iSbBmuQ2bhbQVj7sp/S19eX0yKpfNt0WTewwnz5tuhAJLrIPd0JLapccaPoyN2aClo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=rkKDu3vTH95GYyX6Q7oTKTgCqcU3ZiAjGwWtWlGisVY=; b=LozaAukSqaOLKf9BKzR5XnhLn
- TQ1Q/54HKr3xYSppi9uWakcDM6HeUF7aRKv251JJbg6AAROh9sFKY/HqovaOVtc5LKErsre/Sb3Ky
- ezTrA+BtIGgfQpWjagzIblxOVGen1Da25+KPCT8dFgZb2fVeucNxtmpeNRu7Wz//FZeG7Nq3T5VEV
- L6xsDUFYOTY4zFU+mYi+wYuYGMVjpcr8SEy+sB2ZEjrm7gSvDD/d9O7UoyABk8olkN5v6IPgJ95RF
- rkH3Fh1LBpkrde4lqkrNAzQMnaxswBp5z/2k6nugiVV+9D8IdJugN0Wq9f+RD8xN5Zx41XzCvI/4L
- QVZHXyBkw==;
+ bh=QHopodgOckH0JnTMC74cz/L5jvYaTcy0lLTV0wcZbXM=; b=GecsTcI+M6rjNPEH8IVnZO/7U
+ csPI9XxMj9/MVftlaHS2asCmBAsHsk6ok6my/n0U4albS3QAbSEnCvvR1BEMX9uLORgrBOFyDq0Rn
+ 8gf9gYBzcXqmTRTJwYYJUck6kiM1xYgOmsEBpHUIRe+yqAX0v3C702kcj3+eWFYYgDgxoruulWJhv
+ RS68PiGzLZu29vPOVlzjfZzVVs3ILwQikbFoZSk0ZppAyCG5lHSvoV1wDcHeVZ93msMf81zyYlHDY
+ leddNtMmGcvh07C8cSmooDQngcilxEVbh5pyUk8mBTY+GejmCFx2g/VguyMcsUuItsMXm2tRG/lXz
+ muC85uX9g==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,41 +53,120 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-With no more radix tree API users left, we can drop the GFP flags
-and use xa_init() instead of INIT_RADIX_TREE().
+This function combines the functionality of radix_tree_gang_lookup() and
+radix_tree_gang_lookup_tagged().  It extracts entries matching the
+specified filter into a normal array.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- fs/inode.c      | 2 +-
- mm/swap_state.c | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ include/linux/xarray.h |  2 ++
+ lib/xarray.c           | 80 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 82 insertions(+)
 
-diff --git a/fs/inode.c b/fs/inode.c
-index bdc5e952ebbb..4ea629d7d32c 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -349,7 +349,7 @@ EXPORT_SYMBOL(inc_nlink);
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 89f37d841d18..3764f4b4c1a8 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -227,6 +227,8 @@ void *xa_find(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
+ void *xa_find_after(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
++unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
++		unsigned long max, unsigned int n, xa_tag_t);
  
- static void __address_space_init_once(struct address_space *mapping)
+ /**
+  * xa_init() - Initialise an empty XArray.
+diff --git a/lib/xarray.c b/lib/xarray.c
+index c6b7adcd6131..c3a53f09aa88 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -1427,6 +1427,86 @@ void *xa_find_after(struct xarray *xa, unsigned long *indexp,
+ }
+ EXPORT_SYMBOL(xa_find_after);
+ 
++static unsigned int xas_extract_present(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each(xas, entry, max) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++static unsigned int xas_extract_tag(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n, xa_tag_t tag)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each_tagged(xas, entry, max, tag) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++/**
++ * xa_extract() - Copy selected entries from the XArray into a normal array.
++ * @xa: The source XArray to copy from.
++ * @dst: The buffer to copy entries into.
++ * @start: The first index in the XArray eligible to be selected.
++ * @max: The last index in the XArray eligible to be selected.
++ * @n: The maximum number of entries to copy.
++ * @filter: Selection criterion.
++ *
++ * Copies up to @n entries that match @filter from the XArray.  The
++ * copied entries will have indices between @start and @max, inclusive.
++ *
++ * The @filter may be an XArray tag value, in which case entries which are
++ * tagged with that tag will be copied.  It may also be %XA_PRESENT, in
++ * which case non-NULL entries will be copied.
++ *
++ * The entries returned may not represent a snapshot of the XArray at a
++ * moment in time.  For example, if another thread stores to index 5, then
++ * index 10, calling xa_extract() may return the old contents of index 5
++ * and the new contents of index 10.  Indices not modified while this
++ * function is running will not be skipped.
++ *
++ * If you need stronger guarantees, holding the xa_lock across calls to this
++ * function will prevent concurrent modification.
++ *
++ * Context: Any context.  Takes and releases the RCU lock.
++ * Return: The number of entries copied.
++ */
++unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
++			unsigned long max, unsigned int n, xa_tag_t filter)
++{
++	XA_STATE(xas, xa, start);
++
++	if (!n)
++		return 0;
++
++	if ((__force unsigned int)filter < XA_MAX_TAGS)
++		return xas_extract_tag(&xas, dst, max, n, filter);
++	return xas_extract_present(&xas, dst, max, n);
++}
++EXPORT_SYMBOL(xa_extract);
++
+ #ifdef XA_DEBUG
+ void xa_dump_node(const struct xa_node *node)
  {
--	INIT_RADIX_TREE(&mapping->i_pages, GFP_ATOMIC | __GFP_ACCOUNT);
-+	xa_init_flags(&mapping->i_pages, XA_FLAGS_LOCK_IRQ);
- 	init_rwsem(&mapping->i_mmap_rwsem);
- 	INIT_LIST_HEAD(&mapping->private_list);
- 	spin_lock_init(&mapping->private_lock);
-diff --git a/mm/swap_state.c b/mm/swap_state.c
-index 84595e1a4cd7..eee052936b66 100644
---- a/mm/swap_state.c
-+++ b/mm/swap_state.c
-@@ -596,7 +596,7 @@ int init_swap_address_space(unsigned int type, unsigned long nr_pages)
- 		return -ENOMEM;
- 	for (i = 0; i < nr; i++) {
- 		space = spaces + i;
--		INIT_RADIX_TREE(&space->i_pages, GFP_ATOMIC|__GFP_NOWARN);
-+		xa_init_flags(&space->i_pages, XA_FLAGS_LOCK_IRQ);
- 		atomic_set(&space->i_mmap_writable, 0);
- 		space->a_ops = &swap_aops;
- 		/* swap cache doesn't use writeback related tags */
 -- 
 2.17.1
 
