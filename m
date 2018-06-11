@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 29/72] page cache: Convert filemap_map_pages
- to XArray
-Date: Mon, 11 Jun 2018 07:05:56 -0700
-Message-ID: <20180611140639.17215-30-willy@infradead.org>
+Subject: [PATCH v13 36/72] mm: Convert truncate to XArray
+Date: Mon, 11 Jun 2018 07:06:03 -0700
+Message-ID: <20180611140639.17215-37-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=TZ3/gaq6XS6yRX727fCrlQmNfcqbJPfvdc+FduOIwpI=; b=g0eKQ9Z617jOsDXjrsqBh+GVea
- lLw1D8Qug/JdFpvWPLd1aAE5YoM7HRkDHJIhGlLUJwJL0K8PH3QXp/uwzN0/udYrjgCd+8XZYCumh
- jLGPFdkZfhaWPGyeF/NeHkqZeqNkZHPNbBjURhTX98zK3+HzeRX0SLqwNBk8WVmHh1n8=;
+ bh=Uf6g1DCKoZTcsIod4MBFbPjjHdDF87hOdzkkZTr2U34=; b=LsoT0jGV4gyok9R+2DA/17rESY
+ CUZ0bzzEbXaaZOCqvqyhPWk6etA2UZAoSmlLI8HPKKEY70TKaSIsSZoZBGSfp8uMnDgL8Rv1ZYJOm
+ fsjHGVwbUtCIBk3v4zJww8OOigT2Ggqwkcss5mfnth4sf/rQp8bhLINNIPNNlAhGVJk4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=TZ3/gaq6XS6yRX727fCrlQmNfcqbJPfvdc+FduOIwpI=; b=c8rvNVaImQD8/+sJX2+Sub2HGH
- CMPEWwiS2tbM/5KZTbx6qfzYkrh5lEnlQXKp83iqW6J+2+hGSXodYKEKZG1pyRp+toO8yjEfq+r9m
- XRUzSXDVaoSv7JYgvFzksjo7KebSEhAgrHRYfddpiJn9qrVNo2m2KCbeFGiz1vv0hqpo=;
+ bh=Uf6g1DCKoZTcsIod4MBFbPjjHdDF87hOdzkkZTr2U34=; b=TKY7VxyJBU76tmHxdQQzciZzsS
+ f1IBmyhch1RO5qmlksjs0jfb8fhcKVMmwnIEU8MgApdtjI1Thrc9hAsZfP+TSY/RRxSVaVlMSVQKk
+ EplLtaPcGq1lDE2tAT5KWdcFsVw3QJCFNEFBWIk9hliMgqN68uU7m8I7EiFmeKEb98pA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=TZ3/gaq6XS6yRX727fCrlQmNfcqbJPfvdc+FduOIwpI=; b=YiYGMkML2TP6QrHAOotEIc/Iw
- l7Q3bbAMEQIubujejBI60eDPOtbr+ZxiI0CKH7qkxCNs1ARFZ4YljMs8cT55WJhCxAaNdccgQTQRT
- sab92D61SOpyLqfjvzbCxiXLpC67uibJHdUcPFXDXA4rZLyGN06zvmk7K96YUB80nIL/KNtQbKR8J
- dzMrG93s6enYV7X4+niS795fg5vHqWEPauU3FprP9EApeDVop+dnmi56Hw9R6H53dVoxVrhVDA/3o
- LzVV5WEgiBNgGq5FEQr2VKzEQU1fXe+lh0Z+SrCDtXl7loU+o3pyHOUBDxaizXEJAD5TjfHcXzhYP
- EUoHcnFCw==;
+ bh=Uf6g1DCKoZTcsIod4MBFbPjjHdDF87hOdzkkZTr2U34=; b=o+RFy7+6TUUhlW2A8nui01xxd
+ /Glab80k/TZGU2wA0JpNNAQlgTl8vnyVOsvoxO7vVfQwTIwqVY91UvDdxk2wAZbHjjMfZee0aDYL/
+ 61ehSv+o8e31ex3K+xGOPK56//Ua44BCMImv3rfWrI/DEuU4J5a8hUuKduiSa3e2oSZq+nY6DluE1
+ yU7SBK1e+qHo5FJkdSEVmlBUg/ZP5vEVJIAGGg7pCHS0mJaDGdACPJ7jneyhdTOsBABxSWYP3KKD6
+ zcsPVVPOSBRln7DGa5appg0Tz7uwMk9jxqAlB5/WIsDFr92Lg1HQ38Ttudtxb8Ms5uOFJ9p0w+crE
+ p3MpYxtfg==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,102 +53,51 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Slight change of strategy here; if we have trouble getting hold of a
-page for whatever reason (eg a compound page is split underneath us),
-don't spin to stabilise the page, just continue the iteration, like we
-would if we failed to trylock the page.  Since this is a speculative
-optimisation, it feels like we should allow the process to take an extra
-fault if it turns out to need this page instead of spending time to pin
-down a page it may not need.
+This is essentially xa_cmpxchg() with the locking handled above us,
+and it doesn't have to handle replacing a NULL entry.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/filemap.c | 42 +++++++++++++-----------------------------
- 1 file changed, 13 insertions(+), 29 deletions(-)
+ mm/truncate.c | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 67f04bcdf9ef..4204d9df003b 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2516,45 +2516,31 @@ EXPORT_SYMBOL(filemap_fault);
- void filemap_map_pages(struct vm_fault *vmf,
- 		pgoff_t start_pgoff, pgoff_t end_pgoff)
+diff --git a/mm/truncate.c b/mm/truncate.c
+index ed778555c9f3..45d68e90b703 100644
+--- a/mm/truncate.c
++++ b/mm/truncate.c
+@@ -33,15 +33,12 @@
+ static inline void __clear_shadow_entry(struct address_space *mapping,
+ 				pgoff_t index, void *entry)
  {
--	struct radix_tree_iter iter;
+-	struct radix_tree_node *node;
 -	void **slot;
- 	struct file *file = vmf->vma->vm_file;
- 	struct address_space *mapping = file->f_mapping;
- 	pgoff_t last_pgoff = start_pgoff;
- 	unsigned long max_idx;
-+	XA_STATE(xas, &mapping->i_pages, start_pgoff);
- 	struct page *head, *page;
++	XA_STATE(xas, &mapping->i_pages, index);
  
- 	rcu_read_lock();
--	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start_pgoff) {
--		if (iter.index > end_pgoff)
--			break;
--repeat:
--		page = radix_tree_deref_slot(slot);
--		if (unlikely(!page))
--			goto next;
--		if (radix_tree_exception(page)) {
--			if (radix_tree_deref_retry(page)) {
--				slot = radix_tree_iter_retry(&iter);
--				continue;
--			}
-+	xas_for_each(&xas, page, end_pgoff) {
-+		if (xas_retry(&xas, page))
-+			continue;
-+		if (xa_is_value(page))
- 			goto next;
--		}
- 
- 		head = compound_head(page);
- 		if (!page_cache_get_speculative(head))
--			goto repeat;
-+			goto next;
- 
- 		/* The page was split under us? */
--		if (compound_head(page) != head) {
--			put_page(head);
--			goto repeat;
--		}
-+		if (compound_head(page) != head)
-+			goto skip;
- 
- 		/* Has the page moved? */
--		if (unlikely(page != *slot)) {
--			put_page(head);
--			goto repeat;
--		}
-+		if (unlikely(page != xas_reload(&xas)))
-+			goto skip;
- 
- 		if (!PageUptodate(page) ||
- 				PageReadahead(page) ||
-@@ -2573,10 +2559,10 @@ void filemap_map_pages(struct vm_fault *vmf,
- 		if (file->f_ra.mmap_miss > 0)
- 			file->f_ra.mmap_miss--;
- 
--		vmf->address += (iter.index - last_pgoff) << PAGE_SHIFT;
-+		vmf->address += (xas.xa_index - last_pgoff) << PAGE_SHIFT;
- 		if (vmf->pte)
--			vmf->pte += iter.index - last_pgoff;
--		last_pgoff = iter.index;
-+			vmf->pte += xas.xa_index - last_pgoff;
-+		last_pgoff = xas.xa_index;
- 		if (alloc_set_pte(vmf, NULL, page))
- 			goto unlock;
- 		unlock_page(page);
-@@ -2589,8 +2575,6 @@ void filemap_map_pages(struct vm_fault *vmf,
- 		/* Huge page is mapped? No need to proceed. */
- 		if (pmd_trans_huge(*vmf->pmd))
- 			break;
--		if (iter.index == end_pgoff)
--			break;
- 	}
- 	rcu_read_unlock();
+-	if (!__radix_tree_lookup(&mapping->i_pages, index, &node, &slot))
++	xas_set_update(&xas, workingset_update_node);
++	if (xas_load(&xas) != entry)
+ 		return;
+-	if (*slot != entry)
+-		return;
+-	__radix_tree_replace(&mapping->i_pages, node, slot, NULL,
+-			     workingset_update_node);
++	xas_store(&xas, NULL);
+ 	mapping->nrexceptional--;
  }
+ 
+@@ -738,10 +735,10 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
+ 		index++;
+ 	}
+ 	/*
+-	 * For DAX we invalidate page tables after invalidating radix tree.  We
++	 * For DAX we invalidate page tables after invalidating page cache.  We
+ 	 * could invalidate page tables while invalidating each entry however
+ 	 * that would be expensive. And doing range unmapping before doesn't
+-	 * work as we have no cheap way to find whether radix tree entry didn't
++	 * work as we have no cheap way to find whether page cache entry didn't
+ 	 * get remapped later.
+ 	 */
+ 	if (dax_mapping(mapping)) {
 -- 
 2.17.1
 
