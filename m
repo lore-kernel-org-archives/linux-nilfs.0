@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 37/72] mm: Convert add_to_swap_cache to XArray
-Date: Mon, 11 Jun 2018 07:06:04 -0700
-Message-ID: <20180611140639.17215-38-willy@infradead.org>
+Subject: [PATCH v13 28/72] page cache: Convert
+ find_get_entries_tag to XArray
+Date: Mon, 11 Jun 2018 07:05:55 -0700
+Message-ID: <20180611140639.17215-29-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=zyhH5+bVh3EAsMsHVZxgQbY7nD/2huoeYClE42xj+rQ=; b=IhPxv4uW1YqPD/j6tZJwCpIZbR
- mVjYwtWvEg9HY+dxJRFuE6GkeTvX38e/z64IVCTtuRaF8Bf/d2jRQbBGMdIBZMd7coGYzvMFG3d+e
- wG8WWdnpPlG0ZkmFnoFL9dggL95U2bwDIjSPYJNfRVNr2/WlGWcRuoL6qwYFGhL+UM2k=;
+ bh=fwqoMbRfGsDMvYDOCVix3zU3Jbw64C7uj9ufKhyC6y4=; b=mcwzLLXOAJ42B8WX28t7ftSefs
+ LiBnkrYtrhWYsr4K547OH/OhkrvzMgcDqHgLFxneodPCmwu4TLF6eGbJFotTe9CMXTGJ/BMgU9wj8
+ npbBdNMFJEoUivEt7T1mK6All95N37KDvePWl/LTo4R/wWe4MlU+WmaOAgtcdGL9wzO8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=zyhH5+bVh3EAsMsHVZxgQbY7nD/2huoeYClE42xj+rQ=; b=iwZ4NYP3BVfIU3TdGAMqu+yrec
- Tlz9xiGkemZG29VE2sz2SWWEmikM1BjyuLSRI6IDw/fVgmcLEpUkKBGg361PjcaHKb2byDmnSFQzL
- kwfMDqMQQxR3Wl03edsLb0lg9gK7hzNLSq4BzGsYPiX7m716DnfNVk2fF/TB4yaL188Y=;
+ bh=fwqoMbRfGsDMvYDOCVix3zU3Jbw64C7uj9ufKhyC6y4=; b=SHnTvsJCqRi19arvN4ZOK69E0A
+ QS2/OAf/eP+2jvQlPKCMIeEqW08GSsiAoN41BpAQzWyAVlgUIX3pLVm+ixzgpmShBqqHtS3K7n/Rq
+ 043ZCVv9bOoqzUXmBoNAS5+/Jl5tu7nptVw0tt/+WX+yqtgiqDIcSjqTkxZNBi3f1D3Y=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=zyhH5+bVh3EAsMsHVZxgQbY7nD/2huoeYClE42xj+rQ=; b=hN/yJqA7082+vh18/gZhykbjF
- EUvxAlpaZUrJr546BQrmvwPPjaP92lyOTfiGd/cfSIzWbV4UzHdYVwzEr1q9sIYvuY4doxC/14fb7
- witrHGPbQa8EP4fDzev2uBbdIbGn458R8zwCD+2/nqOsbQ12TMxk/Lv4NNLUdv3fn8/bSHEUSYzlK
- Rapc7nEH1t0UMkGVIvnYahj8pR8n9gIf6flMa63zCCoB4q9hgPbhrpiCn963prsMKttdFeYLLcXTC
- V9DzGBiNCS5zDLS2lRSAwe3womNHnI5zjHUiF4T50A2h6tqvrVp773nbHLSlsorDdF/9gtyc5FiKL
- JDRbgS95g==;
+ bh=fwqoMbRfGsDMvYDOCVix3zU3Jbw64C7uj9ufKhyC6y4=; b=a4cv7/sWTzuX3VMy+74ENBJsu
+ uDXnsLwh8pfamO8PHVtIM4BfGFuFmkuWaAuTd2OyiSzwc4yvucEgPS2M4CO1fKcI9tzuzZfSr7wcY
+ 49M405DypPQkLX2MqXuOaElrel2+hxTERI8Sx3xocIbWTLqNA0xnv+vCVDBkLSQvc3bC2Otopgb5k
+ orYWU/Fj09Ch/hZh4TgyvmISicIli+YdFMbTpC1nuIOU4ekuXWNZG4au6rPtJ74XWny4VTXxO9Koq
+ A4NVc+l9AZ8BJgOb5sslB15T9PTo6NdzkmBEduTVzLOR45aUY9gDp8vH6y78aI0HyO01q028HInGj
+ iOsZN43Yg==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -53,176 +54,113 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-Combine __add_to_swap_cache and add_to_swap_cache into one function
-since there is no more need to preload.
+Slightly shorter and simpler code.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/swap_state.c | 93 +++++++++++++++----------------------------------
- 1 file changed, 29 insertions(+), 64 deletions(-)
+ include/linux/pagemap.h |  2 +-
+ mm/filemap.c            | 54 ++++++++++++++++++-----------------------
+ 2 files changed, 25 insertions(+), 31 deletions(-)
 
-diff --git a/mm/swap_state.c b/mm/swap_state.c
-index c6b3eab73fde..ac07db436c15 100644
---- a/mm/swap_state.c
-+++ b/mm/swap_state.c
-@@ -107,14 +107,15 @@ void show_swap_cache_info(void)
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index a6d635fefb01..442977811b59 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -373,7 +373,7 @@ static inline unsigned find_get_pages_tag(struct address_space *mapping,
+ 					nr_pages, pages);
  }
+ unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
+-			int tag, unsigned int nr_entries,
++			xa_tag_t tag, unsigned int nr_entries,
+ 			struct page **entries, pgoff_t *indices);
  
- /*
-- * __add_to_swap_cache resembles add_to_page_cache_locked on swapper_space,
-+ * add_to_swap_cache resembles add_to_page_cache_locked on swapper_space,
-  * but sets SwapCache flag and private instead of mapping and index.
+ struct page *grab_cache_page_write_begin(struct address_space *mapping,
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 83328635edaa..67f04bcdf9ef 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1866,57 +1866,51 @@ EXPORT_SYMBOL(find_get_pages_range_tag);
+  * @tag.
   */
--int __add_to_swap_cache(struct page *page, swp_entry_t entry)
-+int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
+ unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
+-			int tag, unsigned int nr_entries,
++			xa_tag_t tag, unsigned int nr_entries,
+ 			struct page **entries, pgoff_t *indices)
  {
--	int error, i, nr = hpage_nr_pages(page);
--	struct address_space *address_space;
-+	struct address_space *address_space = swap_address_space(entry);
- 	pgoff_t idx = swp_offset(entry);
-+	XA_STATE(xas, &address_space->i_pages, idx);
-+	unsigned long i, nr = 1UL << compound_order(page);
+-	void **slot;
++	XA_STATE(xas, &mapping->i_pages, start);
++	struct page *page;
+ 	unsigned int ret = 0;
+-	struct radix_tree_iter iter;
  
- 	VM_BUG_ON_PAGE(!PageLocked(page), page);
- 	VM_BUG_ON_PAGE(PageSwapCache(page), page);
-@@ -123,50 +124,30 @@ int __add_to_swap_cache(struct page *page, swp_entry_t entry)
- 	page_ref_add(page, nr);
- 	SetPageSwapCache(page);
- 
--	address_space = swap_address_space(entry);
--	xa_lock_irq(&address_space->i_pages);
--	for (i = 0; i < nr; i++) {
--		set_page_private(page + i, entry.val + i);
--		error = radix_tree_insert(&address_space->i_pages,
--					  idx + i, page + i);
--		if (unlikely(error))
--			break;
--	}
--	if (likely(!error)) {
-+	do {
-+		xas_lock_irq(&xas);
-+		xas_create_range(&xas, idx + nr - 1);
-+		if (xas_error(&xas))
-+			goto unlock;
-+		for (i = 0; i < nr; i++) {
-+			VM_BUG_ON_PAGE(xas.xa_index != idx + i, page);
-+			set_page_private(page + i, entry.val + i);
-+			xas_store(&xas, page + i);
-+			xas_next(&xas);
-+		}
- 		address_space->nrpages += nr;
- 		__mod_node_page_state(page_pgdat(page), NR_FILE_PAGES, nr);
- 		ADD_CACHE_INFO(add_total, nr);
--	} else {
--		/*
--		 * Only the context which have set SWAP_HAS_CACHE flag
--		 * would call add_to_swap_cache().
--		 * So add_to_swap_cache() doesn't returns -EEXIST.
--		 */
--		VM_BUG_ON(error == -EEXIST);
--		set_page_private(page + i, 0UL);
--		while (i--) {
--			radix_tree_delete(&address_space->i_pages, idx + i);
--			set_page_private(page + i, 0UL);
--		}
--		ClearPageSwapCache(page);
--		page_ref_sub(page, nr);
--	}
--	xa_unlock_irq(&address_space->i_pages);
-+unlock:
-+		xas_unlock_irq(&xas);
-+	} while (xas_nomem(&xas, gfp));
- 
--	return error;
--}
--
--
--int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp_mask)
--{
--	int error;
-+	if (!xas_error(&xas))
-+		return 0;
- 
--	error = radix_tree_maybe_preload_order(gfp_mask, compound_order(page));
--	if (!error) {
--		error = __add_to_swap_cache(page, entry);
--		radix_tree_preload_end();
--	}
--	return error;
-+	ClearPageSwapCache(page);
-+	page_ref_sub(page, nr);
-+	return xas_error(&xas);
- }
- 
- /*
-@@ -217,7 +198,7 @@ int add_to_swap(struct page *page)
+ 	if (!nr_entries)
  		return 0;
  
- 	/*
--	 * Radix-tree node allocations from PF_MEMALLOC contexts could
-+	 * XArray node allocations from PF_MEMALLOC contexts could
- 	 * completely exhaust the page allocator. __GFP_NOMEMALLOC
- 	 * stops emergency reserves from being allocated.
- 	 *
-@@ -229,7 +210,6 @@ int add_to_swap(struct page *page)
- 	 */
- 	err = add_to_swap_cache(page, entry,
- 			__GFP_HIGH|__GFP_NOMEMALLOC|__GFP_NOWARN);
--	/* -ENOMEM radix-tree allocation failure */
- 	if (err)
- 		/*
- 		 * add_to_swap_cache() doesn't return -EEXIST, so we can safely
-@@ -423,19 +403,11 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
- 				break;		/* Out of memory */
- 		}
- 
--		/*
--		 * call radix_tree_preload() while we can wait.
--		 */
--		err = radix_tree_maybe_preload(gfp_mask & GFP_KERNEL);
--		if (err)
--			break;
--
- 		/*
- 		 * Swap entry may have been freed since our caller observed it.
- 		 */
- 		err = swapcache_prepare(entry);
- 		if (err == -EEXIST) {
--			radix_tree_preload_end();
- 			/*
- 			 * We might race against get_swap_page() and stumble
- 			 * across a SWAP_HAS_CACHE swap_map entry whose page
-@@ -443,26 +415,19 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
- 			 */
- 			cond_resched();
+ 	rcu_read_lock();
+-	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, start, tag) {
+-		struct page *head, *page;
+-repeat:
+-		page = radix_tree_deref_slot(slot);
+-		if (unlikely(!page))
++	xas_for_each_tagged(&xas, page, ULONG_MAX, tag) {
++		struct page *head;
++		if (xas_retry(&xas, page))
  			continue;
--		}
--		if (err) {		/* swp entry is obsolete ? */
--			radix_tree_preload_end();
-+		} else if (err)		/* swp entry is obsolete ? */
- 			break;
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page)) {
+-				slot = radix_tree_iter_retry(&iter);
+-				continue;
+-			}
+-
+-			/*
+-			 * A shadow entry of a recently evicted page, a swap
+-			 * entry from shmem/tmpfs or a DAX entry.  Return it
+-			 * without attempting to raise page count.
+-			 */
++		/*
++		 * A shadow entry of a recently evicted page, a swap
++		 * entry from shmem/tmpfs or a DAX entry.  Return it
++		 * without attempting to raise page count.
++		 */
++		if (xa_is_value(page))
+ 			goto export;
 -		}
  
--		/* May fail (-ENOMEM) if radix-tree node allocation failed. */
-+		/* May fail (-ENOMEM) if XArray node allocation failed. */
- 		__SetPageLocked(new_page);
- 		__SetPageSwapBacked(new_page);
--		err = __add_to_swap_cache(new_page, entry);
-+		err = add_to_swap_cache(new_page, entry, gfp_mask & GFP_KERNEL);
- 		if (likely(!err)) {
--			radix_tree_preload_end();
--			/*
--			 * Initiate read into locked page and return.
--			 */
-+			/* Initiate read into locked page */
- 			lru_cache_add_anon(new_page);
- 			*new_page_allocated = true;
- 			return new_page;
- 		}
--		radix_tree_preload_end();
- 		__ClearPageLocked(new_page);
- 		/*
- 		 * add_to_swap_cache() doesn't return -EEXIST, so we can safely
+ 		head = compound_head(page);
+ 		if (!page_cache_get_speculative(head))
+-			goto repeat;
++			goto retry;
+ 
+ 		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
++		if (compound_head(page) != head)
++			goto put_page;
+ 
+ 		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
++		if (unlikely(page != xas_reload(&xas)))
++			goto put_page;
++
+ export:
+-		indices[ret] = iter.index;
++		indices[ret] = xas.xa_index;
+ 		entries[ret] = page;
+ 		if (++ret == nr_entries)
+ 			break;
++		continue;
++put_page:
++		put_page(head);
++retry:
++		xas_reset(&xas);
+ 	}
+ 	rcu_read_unlock();
+ 	return ret;
 -- 
 2.17.1
 
