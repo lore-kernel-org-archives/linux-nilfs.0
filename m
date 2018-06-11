@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 22/72] page cache: Convert page deletion to
- XArray
-Date: Mon, 11 Jun 2018 07:05:49 -0700
-Message-ID: <20180611140639.17215-23-willy@infradead.org>
+Subject: [PATCH v13 46/72] shmem: Convert
+ shmem_radix_tree_replace to XArray
+Date: Mon, 11 Jun 2018 07:06:13 -0700
+Message-ID: <20180611140639.17215-47-willy@infradead.org>
 References: <20180611140639.17215-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=xgN5I86dlSi53bLy0zP0slssD0IoeCly8roO5uiBf6g=; b=QRJu+Nw8FEUcMZJXGOSDbC77e3
- 1DAHQZO8998zWm8iNaN63ccebS2u9i4ei3H6mLXh+RJnmeI+D9uLdtAdDfPO8VrVHzP67qqpmVdBZ
- QqDbTFLTM3CfIwwOeRtBR09l9S/Gd0zA8Mbf+rlqOJ6pMDxkrwLAZMf3xhXLC8kqVJzE=;
+ bh=p6NnmI89u0sq1FU15L+NpkGefGHhKJMhHQetKgwT18I=; b=GY5lIbreDnsruZs+zJseoYMGrM
+ 6QGSoMdp80KOcpcojs3NYw2gd0eM5EbF8OQR4c5FgTsdZC6pwDyrwSKiTsmN7wk6IvDWqj4MCYDwE
+ 1mj2iwLm2Vr5LPothHsAIXCE6veQn/P4GbqEgg/6e2fi6dppUVyt07jSfJc3d+VfB+Ys=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=xgN5I86dlSi53bLy0zP0slssD0IoeCly8roO5uiBf6g=; b=l6R+UHgm6DMmrdgrfuJyaADEYe
- pniWo2Bb+vS62wNSV0UoFV0fgQmkSpcDdnn4jV0YC9YCEPTryCwen7in6NSwPLnlQC3QXNnuMzSKx
- O+bEijcbXnK/bc3fDYh5o5ZWDJuMea/43oy7YEoTcLtUMqbM7iciR1PjCIE8NnHnxvjg=;
+ bh=p6NnmI89u0sq1FU15L+NpkGefGHhKJMhHQetKgwT18I=; b=NyiL2Hz3fBwbFQ+q18LTICs5PD
+ PnCRccKXKxGpTL+9rR6f8ErVMx4e2Z+O8aus/P/3oQiDahAwM5uGqV5cupMfItAO+Dijl6ZXyN8kH
+ iEJPfThww9ub341AfcMoy5efq46oweptpjeZHYY9zCKU8BY9VGDFzRjyKrr3a+RzVB+M=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=xgN5I86dlSi53bLy0zP0slssD0IoeCly8roO5uiBf6g=; b=R1VwQYpNTyLCGomBjeT//5+TU
- JDOn3gv29DKZlI7fLZwDSnmlVLadQJE6EAuddV7MO1WzLBKlsg0qUXgar0AVGJBmOSZkPpxtkcnKE
- MBQuIPWOnjFhPcHi5GhOa3DJo2OW46clunsLADcfquya6wxMRxzhvMJiw/ScTXvq8gclwhBxYyYRr
- 0So/upa+AODnb60UxFal3h3InRgRHPGkiH9uTBo3ZqJ9rYHu50yLVNe3U4yQWOV6pu2dmYOtlzoUf
- Tp8a/ck1PE50zcZ4rWJAJ29cxo93qobxaBSjGYXqz2qKv4tPYCANTG06IM13QRoV7k+fmbfByVGpz
- D9DefgZfA==;
+ bh=p6NnmI89u0sq1FU15L+NpkGefGHhKJMhHQetKgwT18I=; b=K9IZIManm8qnl8VgceF/LH0sE
+ /TEB0rGfI7w/GjS50xYkL8QnUx/M1GRU+kQhbvu8pFpQm9Rvf2P/bl5U4stjs0x9T0PV3qPqcEt1U
+ yPEqiURARaAtIWWiGU1uICNlSofinMRaghWmX5dUXrOl+iaivI83KdlY91+vF9IHaF9D8JuH3o8vE
+ IwL8gKdyjIBfDdNaT5Z3nuBWbm3WIl8kAb0s/qTvhG+oL9rIr8Npn6v4QHUtlmDFIn/av8UlMx8z/
+ 0pbQuqo2lLrba0JnCGBz0D/ULrmR74/IvSfhkXhtulXLLeJZzGNXGTdfzW0gG3RfkpH3cMm3fHQ2X
+ noVVn9ktQ==;
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -54,70 +54,77 @@ Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@r
 
 From: Matthew Wilcox <mawilcox@microsoft.com>
 
-The code is slightly shorter and simpler.
+Rename shmem_radix_tree_replace() to shmem_replace_entry() and
+convert it to use the XArray API.
 
 Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
 ---
- mm/filemap.c | 31 +++++++++++++------------------
- 1 file changed, 13 insertions(+), 18 deletions(-)
+ mm/shmem.c | 22 ++++++++--------------
+ 1 file changed, 8 insertions(+), 14 deletions(-)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 965ff68e5b8d..7cdb1d4b8117 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -111,31 +111,26 @@
-  *   ->tasklist_lock            (memory_failure, collect_procs_ao)
-  */
- 
--static void page_cache_tree_delete(struct address_space *mapping,
-+static void page_cache_delete(struct address_space *mapping,
- 				   struct page *page, void *shadow)
- {
--	int i, nr;
-+	XA_STATE(xas, &mapping->i_pages, page->index);
-+	unsigned int nr = 1;
- 
--	/* hugetlb pages are represented by one entry in the radix tree */
--	nr = PageHuge(page) ? 1 : hpage_nr_pages(page);
-+	mapping_set_update(&xas, mapping);
-+
-+	/* hugetlb pages are represented by a single entry in the xarray */
-+	if (!PageHuge(page)) {
-+		xas_set_order(&xas, page->index, compound_order(page));
-+		nr = 1U << compound_order(page);
-+	}
- 
- 	VM_BUG_ON_PAGE(!PageLocked(page), page);
- 	VM_BUG_ON_PAGE(PageTail(page), page);
- 	VM_BUG_ON_PAGE(nr != 1 && shadow, page);
- 
--	for (i = 0; i < nr; i++) {
--		struct radix_tree_node *node;
--		void **slot;
--
--		__radix_tree_lookup(&mapping->i_pages, page->index + i,
--				    &node, &slot);
--
--		VM_BUG_ON_PAGE(!node && nr != 1, page);
--
--		radix_tree_clear_tags(&mapping->i_pages, node, slot);
--		__radix_tree_replace(&mapping->i_pages, node, slot, shadow,
--				workingset_lookup_update(mapping));
--	}
-+	xas_store(&xas, shadow);
-+	xas_init_tags(&xas);
- 
- 	page->mapping = NULL;
- 	/* Leave page->index set: truncation lookup relies upon it */
-@@ -234,7 +229,7 @@ void __delete_from_page_cache(struct page *page, void *shadow)
- 	trace_mm_filemap_delete_from_page_cache(page);
- 
- 	unaccount_page_cache_page(mapping, page);
--	page_cache_tree_delete(mapping, page, shadow);
-+	page_cache_delete(mapping, page, shadow);
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 3b03ede3515c..2b8720d32e7a 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -321,24 +321,20 @@ void shmem_uncharge(struct inode *inode, long pages)
  }
  
- static void page_cache_free_page(struct address_space *mapping,
+ /*
+- * Replace item expected in radix tree by a new item, while holding tree lock.
++ * Replace item expected in xarray by a new item, while holding xa_lock.
+  */
+-static int shmem_radix_tree_replace(struct address_space *mapping,
++static int shmem_replace_entry(struct address_space *mapping,
+ 			pgoff_t index, void *expected, void *replacement)
+ {
+-	struct radix_tree_node *node;
+-	void __rcu **pslot;
++	XA_STATE(xas, &mapping->i_pages, index);
+ 	void *item;
+ 
+ 	VM_BUG_ON(!expected);
+ 	VM_BUG_ON(!replacement);
+-	item = __radix_tree_lookup(&mapping->i_pages, index, &node, &pslot);
+-	if (!item)
+-		return -ENOENT;
++	item = xas_load(&xas);
+ 	if (item != expected)
+ 		return -ENOENT;
+-	__radix_tree_replace(&mapping->i_pages, node, pslot,
+-			     replacement, NULL);
++	xas_store(&xas, replacement);
+ 	return 0;
+ }
+ 
+@@ -623,8 +619,7 @@ static int shmem_add_to_page_cache(struct page *page,
+ 	} else if (!expected) {
+ 		error = radix_tree_insert(&mapping->i_pages, index, page);
+ 	} else {
+-		error = shmem_radix_tree_replace(mapping, index, expected,
+-								 page);
++		error = shmem_replace_entry(mapping, index, expected, page);
+ 	}
+ 
+ 	if (!error) {
+@@ -653,7 +648,7 @@ static void shmem_delete_from_page_cache(struct page *page, void *radswap)
+ 	VM_BUG_ON_PAGE(PageCompound(page), page);
+ 
+ 	xa_lock_irq(&mapping->i_pages);
+-	error = shmem_radix_tree_replace(mapping, page->index, page, radswap);
++	error = shmem_replace_entry(mapping, page->index, page, radswap);
+ 	page->mapping = NULL;
+ 	mapping->nrpages--;
+ 	__dec_node_page_state(page, NR_FILE_PAGES);
+@@ -1577,8 +1572,7 @@ static int shmem_replace_page(struct page **pagep, gfp_t gfp,
+ 	 * a nice clean interface for us to replace oldpage by newpage there.
+ 	 */
+ 	xa_lock_irq(&swap_mapping->i_pages);
+-	error = shmem_radix_tree_replace(swap_mapping, swap_index, oldpage,
+-								   newpage);
++	error = shmem_replace_entry(swap_mapping, swap_index, oldpage, newpage);
+ 	if (!error) {
+ 		__inc_node_page_state(newpage, NR_FILE_PAGES);
+ 		__dec_node_page_state(oldpage, NR_FILE_PAGES);
 -- 
 2.17.1
 
