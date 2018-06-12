@@ -1,159 +1,77 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v13 71/72] radix tree: Remove radix_tree_maybe_preload_order
-Date: Mon, 11 Jun 2018 07:06:38 -0700
-Message-ID: <20180611140639.17215-72-willy@infradead.org>
+From: David Sterba <dsterba@suse.cz>
+Subject: Re: [PATCH v13 00/72] Convert page cache to XArray
+Date: Tue, 12 Jun 2018 12:40:41 +0200
+Message-ID: <20180612104041.GB24375@twin.jikos.cz>
 References: <20180611140639.17215-1-willy@infradead.org>
+Reply-To: dsterba@suse.cz
+Mime-Version: 1.0
 Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=FLt+uuv8x4/brk+GgaQwJBuXMctM8W14N4Xfz3gb9PA=; b=nYb1tBGsWBpzv9MuXzojicTxC
-        hZ0LHskREnfZ4C0bykm7mc9jcuBVk9eS9E3VgCN658IMlzwokzyPok0AKoyZmUIarWlhokfxVgenW
-        O0h+we4ZRo6Ugrip4Axjpbh/tRs4nyqFK7Aao+zNwefFpsk3mjhy2m7NIOtDsg/AwqfmaW2iXRPTT
-        EMUC/09mR4giGBZMBvl3/SUI/fgtaNRJV6zeLzcz8Mw7TqQxNSkKiI7inPezQkKiBquwS86J/1cOw
-        ZSf7vKAHlWkhGSTqZHT5Y2n7ITYOB+rv7YceEXXJ2nm+yYPyieM+Dhhh9jvC4US9SrUnYyJp7nI0V
-    
+Content-Disposition: inline
 In-Reply-To: <20180611140639.17215-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
+To: Matthew Wilcox <willy@infradead.org>
+Cc: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
 
-From: Matthew Wilcox <mawilcox@microsoft.com>
+On Mon, Jun 11, 2018 at 07:05:27AM -0700, Matthew Wilcox wrote:
+> From: Matthew Wilcox <mawilcox@microsoft.com>
+> 
+> The XArray is a replacement for the radix tree.  For the moment it uses
+> the same data structures, enabling a gradual replacement.  This patch
+> set implements the XArray and converts the page cache to use it.
+> 
+> A version of these patches has been running under xfstests for over 48
+> hours, so I have some confidence in them.  The DAX changes are untested.
+> This is based on next-20180608 and is available as a git tree at
+> git://git.infradead.org/users/willy/linux-dax.git xarray-20180608
 
-This function was only used by the page cache which is now converted
-to the XArray.
+I've hit a crash, triggered by fstests/btrfs/141 and with ext4 on the stack.
+The test itself does not use ext4, so it must be the root partition of the VM
+(qemu 2G ram, 4 cpus). Other tests up to that point were ok.
 
-Signed-off-by: Matthew Wilcox <mawilcox@microsoft.com>
----
- include/linux/radix-tree.h |  1 -
- lib/radix-tree.c           | 74 --------------------------------------
- 2 files changed, 75 deletions(-)
+[ 9875.174796] kernel BUG at fs/inode.c:513!
+[ 9875.176519] invalid opcode: 0000 [#1] PREEMPT SMP
+[ 9875.177532] CPU: 3 PID: 30077 Comm: 141 Not tainted 4.17.0-next-20180608-default+ #1
+[ 9875.179235] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.0.0-prebuilt.qemu-project.org 04/01/2014
+[ 9875.181152] RIP: 0010:clear_inode+0x7a/0x90
+[ 9875.185414] RSP: 0018:ffffae6b49893c40 EFLAGS: 00010086
+[ 9875.186381] RAX: 0000000000000000 RBX: ffff8f427d3024a0 RCX: 0000000000000000
+[ 9875.187629] RDX: 0000000000000001 RSI: 0000000000000000 RDI: ffff8f427d302608
+[ 9875.188838] RBP: ffff8f427d302608 R08: 0000000000000000 R09: ffffffffffffffff
+[ 9875.190061] R10: ffffae6b49893a28 R11: ffffffffffffffff R12: ffffffff83a338c0
+[ 9875.191348] R13: ffff8f427bfd9000 R14: 000000000000011f R15: 0000000000000000
+[ 9875.192750] FS:  00007fde1859ab80(0000) GS:ffff8f427fd80000(0000) knlGS:0000000000000000
+[ 9875.194370] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[ 9875.195504] CR2: 000055c95307e1a0 CR3: 000000007be57000 CR4: 00000000000006e0
+[ 9875.196957] Call Trace:
+[ 9875.197593]  ext4_clear_inode+0x16/0x80
+[ 9875.198519]  ext4_evict_inode+0x44/0x510
+[ 9875.199458]  evict+0xcd/0x190
+[ 9875.200205]  dispose_list+0x48/0x60
+[ 9875.201050]  prune_icache_sb+0x42/0x50
+[ 9875.201943]  super_cache_scan+0x124/0x1a0
+[ 9875.202896]  shrink_slab+0x1c9/0x3d0
+[ 9875.203760]  drop_slab_node+0x22/0x50
+[ 9875.204636]  drop_caches_sysctl_handler+0x47/0xb0
+[ 9875.205707]  proc_sys_call_handler+0xb5/0xd0
+[ 9875.206671]  __vfs_write+0x23/0x150
+[ 9875.207322]  ? set_close_on_exec+0x30/0x70
+[ 9875.208062]  vfs_write+0xad/0x1e0
+[ 9875.208762]  ksys_write+0x42/0x90
+[ 9875.209487]  do_syscall_64+0x4f/0xe0
+[ 9875.210272]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
 
-diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
-index b882d644cc47..f8ef267e4975 100644
---- a/include/linux/radix-tree.h
-+++ b/include/linux/radix-tree.h
-@@ -259,7 +259,6 @@ unsigned int radix_tree_gang_lookup(const struct radix_tree_root *,
- 			unsigned int max_items);
- int radix_tree_preload(gfp_t gfp_mask);
- int radix_tree_maybe_preload(gfp_t gfp_mask);
--int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order);
- void radix_tree_init(void);
- void *radix_tree_tag_set(struct radix_tree_root *,
- 			unsigned long index, unsigned int tag);
-diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-index c472ceeb6a97..ad03dc0c562f 100644
---- a/lib/radix-tree.c
-+++ b/lib/radix-tree.c
-@@ -41,9 +41,6 @@
- #include <linux/xarray.h>
- 
- 
--/* Number of nodes in fully populated tree of given height */
--static unsigned long height_to_maxnodes[RADIX_TREE_MAX_PATH + 1] __read_mostly;
--
- /*
-  * Radix tree node cache.
-  */
-@@ -463,51 +460,6 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
- }
- EXPORT_SYMBOL(radix_tree_maybe_preload);
- 
--/*
-- * The same as function above, but preload number of nodes required to insert
-- * (1 << order) continuous naturally-aligned elements.
-- */
--int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
--{
--	unsigned long nr_subtrees;
--	int nr_nodes, subtree_height;
--
--	/* Preloading doesn't help anything with this gfp mask, skip it */
--	if (!gfpflags_allow_blocking(gfp_mask)) {
--		preempt_disable();
--		return 0;
--	}
--
--	/*
--	 * Calculate number and height of fully populated subtrees it takes to
--	 * store (1 << order) elements.
--	 */
--	nr_subtrees = 1 << order;
--	for (subtree_height = 0; nr_subtrees > RADIX_TREE_MAP_SIZE;
--			subtree_height++)
--		nr_subtrees >>= RADIX_TREE_MAP_SHIFT;
--
--	/*
--	 * The worst case is zero height tree with a single item at index 0 and
--	 * then inserting items starting at ULONG_MAX - (1 << order).
--	 *
--	 * This requires RADIX_TREE_MAX_PATH nodes to build branch from root to
--	 * 0-index item.
--	 */
--	nr_nodes = RADIX_TREE_MAX_PATH;
--
--	/* Plus branch to fully populated subtrees. */
--	nr_nodes += RADIX_TREE_MAX_PATH - subtree_height;
--
--	/* Root node is shared. */
--	nr_nodes--;
--
--	/* Plus nodes required to build subtrees. */
--	nr_nodes += nr_subtrees * height_to_maxnodes[subtree_height];
--
--	return __radix_tree_preload(gfp_mask, nr_nodes);
--}
--
- static unsigned radix_tree_load_root(const struct radix_tree_root *root,
- 		struct radix_tree_node **nodep, unsigned long *maxindex)
- {
-@@ -1928,31 +1880,6 @@ radix_tree_node_ctor(void *arg)
- 	INIT_LIST_HEAD(&node->private_list);
- }
- 
--static __init unsigned long __maxindex(unsigned int height)
--{
--	unsigned int width = height * RADIX_TREE_MAP_SHIFT;
--	int shift = RADIX_TREE_INDEX_BITS - width;
--
--	if (shift < 0)
--		return ~0UL;
--	if (shift >= BITS_PER_LONG)
--		return 0UL;
--	return ~0UL >> shift;
--}
--
--static __init void radix_tree_init_maxnodes(void)
--{
--	unsigned long height_to_maxindex[RADIX_TREE_MAX_PATH + 1];
--	unsigned int i, j;
--
--	for (i = 0; i < ARRAY_SIZE(height_to_maxindex); i++)
--		height_to_maxindex[i] = __maxindex(i);
--	for (i = 0; i < ARRAY_SIZE(height_to_maxnodes); i++) {
--		for (j = i; j > 0; j--)
--			height_to_maxnodes[i] += height_to_maxindex[j - 1] + 1;
--	}
--}
--
- static int radix_tree_cpu_dead(unsigned int cpu)
- {
- 	struct radix_tree_preload *rtp;
-@@ -1982,7 +1909,6 @@ void __init radix_tree_init(void)
- 			sizeof(struct radix_tree_node), 0,
- 			SLAB_PANIC | SLAB_RECLAIM_ACCOUNT,
- 			radix_tree_node_ctor);
--	radix_tree_init_maxnodes();
- 	ret = cpuhp_setup_state_nocalls(CPUHP_RADIX_DEAD, "lib/radix:dead",
- 					NULL, radix_tree_cpu_dead);
- 	WARN_ON(ret < 0);
--- 
-2.17.1
+ 504 void clear_inode(struct inode *inode)
+ 505 {
+ 506         /*
+ 507          * We have to cycle the i_pages lock here because reclaim can be in the
+ 508          * process of removing the last page (in __delete_from_page_cache())
+ 509          * and we must not free the mapping under it.
+ 510          */
+ 511         xa_lock_irq(&inode->i_data.i_pages);
+ 512         BUG_ON(inode->i_data.nrpages);
+ 513         BUG_ON(inode->i_data.nrexceptional);
 
+'exceptional' is from the page cache realm so I think it's not an ext4 bug.
