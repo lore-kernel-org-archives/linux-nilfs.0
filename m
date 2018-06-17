@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 17/74] xarray: Add xas_for_each_conflict
-Date: Sat, 16 Jun 2018 18:59:55 -0700
-Message-ID: <20180617020052.4759-18-willy@infradead.org>
+Subject: [PATCH v14 24/74] page cache: Convert find_get_entry to
+ XArray
+Date: Sat, 16 Jun 2018 19:00:02 -0700
+Message-ID: <20180617020052.4759-25-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=gPrs5Xvr6/lmTcgM+ymDV8Z0qRreZjww6huepXU7wTQ=; b=ltVg8bum6dbU8d/X3CDU3T5ymr
- S/1uho5YRaDsUPdHhtYvBLbAFWLfQqs0k2m4FBfVi4dcAEcZDzXgVwRzIqvIbFG1JgWgdLQaRrt0j
- 4ihJ1NQP/+nC0xK5m0Tc1Zo+Pb4dXeJLE/SBtVncJp3e4gCw4agg79bS/vGbvRT6SgOg=;
+ bh=rCVZhsdA5Rcv4AP6f/xRevR0MXpf3pzSs7BrlelCiww=; b=PcAN3fjdTmYVPXKFCEDRLdCR4P
+ x+x27Tykfot2SlQe6uMlLaZnxrfAdV80k2ZRuKm+SpnEySoxg8WjAaufWnof1ygqcigwjfVATA709
+ ZgrL9DZRYavpwATNc5EE8RCngXLYVktlha91lCfccft7xFiCeGErW6J58g+oTUkUapgE=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=gPrs5Xvr6/lmTcgM+ymDV8Z0qRreZjww6huepXU7wTQ=; b=VqXgYsCrXeSRRtvcOGWTjbgOtn
- VCbKKjvGA+EqE6zVLpZrB/fZ9yiI+vU+31gzTaT74sIeLj2aLLmvcJ/u+qeEwMEkQEIpK/n9oRFJB
- acOzaON8a5Kg0hqVB6FRPUlOZGg5YB0Zvb0lujLKRFPNux1znOaoaAjjisodbkC5ei2Y=;
+ bh=rCVZhsdA5Rcv4AP6f/xRevR0MXpf3pzSs7BrlelCiww=; b=DeVtfaISo2ZzkZMNTs1n8DltDR
+ WtC9pjdOfMFOlLfXCmCSxmVPa2z/GXhahhP+vASiiFpvCEaoNSwiKKU3BMr6FQ89XXWgu1+79zEU9
+ xxY/vflGGaqw+9CAWg8glLplPVb+WtO7lKljMWJ82U/P3xTOiXdsiizq0qrsiJ4xoVUc=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=gPrs5Xvr6/lmTcgM+ymDV8Z0qRreZjww6huepXU7wTQ=; b=ZoCgZtfYJajiqM+kKHesM7z45
- Kj7i2SLRh2j9cfQ+xHX6Ov4+o0h6xySn5M3hMiY3OFZssH3JLMMmVXzZYrJ9l12qVsVnFG5c5r0yp
- YkG4A4q+2nI3fnc7/lvV0q54/DukRlSK4QvjpW128Wm2Qg1n+f8roLCBpm92Vs7GM2DV/P9tazMFT
- 5qyhtHeKxeWOdhYmB0d4vb9h5yN2kU5Jj0F9ZoLBB1AF494gRvZoP2kZugFjj/v7o708MlWrUyaeo
- gYFcm8UBt8Hh2V58PWC6kEgr+gDzo3PxADzfXH7FOB6zh2cn/Q8n5NwZSH0yDhbwZ+Y3ls0p38hqn
- FNMp5d/pQ==;
+ bh=rCVZhsdA5Rcv4AP6f/xRevR0MXpf3pzSs7BrlelCiww=; b=VxIvaptiWu8tJwy+XJHfCIOXP
+ MlUg//TobYXZ5kWc/JgUmaVxvrp6Xte7PsHNVLQpRT/7yfkBgQQuDKyGnWpz8u98uKgSRW4Pg9JUa
+ 9n1nAwOYkWsTXjvQWKqiedWyc5YPBv3wKfpcIvGZ4WuRQBkHd7MzKv3I/00i8XqjLh8g1eOAVSxs9
+ rys5B1SZIEgjYOlnzqQ+5ClJfNLVKsRvBMs3PWjhaJbYg4JkmGH3zjyKpsBEMWbZ2q8Dqk+9t/4uj
+ b8BRCgDQY1ZiFm7i+71AFpDKHoGAiIRQ1aQs804+JK26qziy3gf2fKALzC6pgd6VB631LXxT+9WAE
+ UL8RGJ+Lg==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -51,206 +52,101 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-This iterator iterates over each entry that is stored in the index or
-indices specified by the xa_state.  This is intended for use for a
-conditional store of a multiindex entry, or to allow entries which are
-about to be removed from the xarray to be disposed of properly.
+Slightly shorter and simpler code.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- include/linux/xarray.h | 17 ++++++++++++
- lib/test_xarray.c      | 63 ++++++++++++++++++++++++++++++++++++++++++
- lib/xarray.c           | 61 ++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 141 insertions(+)
+ mm/filemap.c | 63 +++++++++++++++++++++++-----------------------------
+ 1 file changed, 28 insertions(+), 35 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 921d41034d7d..0a9f66266c9a 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -769,6 +769,7 @@ static inline bool xas_retry(struct xa_state *xas, const void *entry)
- void *xas_load(struct xa_state *);
- void *xas_store(struct xa_state *, void *entry);
- void *xas_find(struct xa_state *, unsigned long max);
-+void *xas_next_conflict(struct xa_state *);
- 
- bool xas_get_tag(const struct xa_state *, xa_tag_t);
- void xas_set_tag(const struct xa_state *, xa_tag_t);
-@@ -983,6 +984,22 @@ enum {
- 	for (entry = xas_find_tagged(xas, max, tag); entry; \
- 	     entry = xas_next_tagged(xas, max, tag))
- 
-+/**
-+ * xas_for_each_conflict() - Iterate over a range of an XArray.
-+ * @xas: XArray operation state.
-+ * @entry: Entry retrieved from the array.
-+ *
-+ * The loop body will be executed for each entry in the XArray that lies
-+ * within the range specified by @xas.  If the loop completes successfully,
-+ * any entries that lie in this range will be replaced by @entry.  The caller
-+ * may break out of the loop; if they do so, the contents of the XArray will
-+ * be unchanged.  The operation may fail due to an out of memory condition.
-+ * The caller may also call xa_set_err() to exit the loop while setting an
-+ * error to record the reason.
-+ */
-+#define xas_for_each_conflict(xas, entry) \
-+	while ((entry = xas_next_conflict(xas)))
-+
- void *__xas_next(struct xa_state *);
- void *__xas_prev(struct xa_state *);
- 
-diff --git a/lib/test_xarray.c b/lib/test_xarray.c
-index e74ade12c663..818cfd8746ba 100644
---- a/lib/test_xarray.c
-+++ b/lib/test_xarray.c
-@@ -315,6 +315,68 @@ static void check_multi_store(struct xarray *xa)
- 	}
- }
- 
-+static void __check_store_iter(struct xarray *xa, unsigned long start,
-+			unsigned int order, unsigned int present)
-+{
-+	XA_STATE_ORDER(xas, xa, start, order);
-+	void *entry;
-+	unsigned int count = 0;
-+
-+retry:
-+	xas_for_each_conflict(&xas, entry) {
-+		XA_BUG_ON(xa, !xa_is_value(entry));
-+		XA_BUG_ON(xa, entry < xa_mk_value(start));
-+		XA_BUG_ON(xa, entry > xa_mk_value(start + (1UL << order) - 1));
-+		count++;
-+	}
-+	xas_store(&xas, xa_mk_value(start));
-+	if (xas_nomem(&xas, GFP_KERNEL)) {
-+		count = 0;
-+		goto retry;
-+	}
-+	XA_BUG_ON(xa, xas_error(&xas));
-+	XA_BUG_ON(xa, count != present);
-+	XA_BUG_ON(xa, xa_load(xa, start) != xa_mk_value(start));
-+	XA_BUG_ON(xa, xa_load(xa, start + (1UL << order) - 1) !=
-+			xa_mk_value(start));
-+	xa_erase_value(xa, start);
-+}
-+
-+static void check_store_iter(struct xarray *xa)
-+{
-+	unsigned int i, j;
-+
-+	for (i = 0; i < 20; i++) {
-+		unsigned int min = 1 << i;
-+		unsigned int max = (2 << i) - 1;
-+		__check_store_iter(xa, 0, i, 0);
-+		XA_BUG_ON(xa, !xa_empty(xa));
-+		__check_store_iter(xa, min, i, 0);
-+		XA_BUG_ON(xa, !xa_empty(xa));
-+
-+		xa_store_value(xa, min, GFP_KERNEL);
-+		__check_store_iter(xa, min, i, 1);
-+		XA_BUG_ON(xa, !xa_empty(xa));
-+		xa_store_value(xa, max, GFP_KERNEL);
-+		__check_store_iter(xa, min, i, 1);
-+		XA_BUG_ON(xa, !xa_empty(xa));
-+
-+		for (j = 0; j < min; j++)
-+			xa_store_value(xa, j, GFP_KERNEL);
-+		__check_store_iter(xa, 0, i, min);
-+		XA_BUG_ON(xa, !xa_empty(xa));
-+		for (j = 0; j < min; j++)
-+			xa_store_value(xa, min + j, GFP_KERNEL);
-+		__check_store_iter(xa, min, i, min);
-+		XA_BUG_ON(xa, !xa_empty(xa));
-+	}
-+	xa_store_value(xa, 63, GFP_KERNEL);
-+	xa_store_value(xa, 65, GFP_KERNEL);
-+	__check_store_iter(xa, 64, 2, 1);
-+	xa_erase_value(xa, 63);
-+	XA_BUG_ON(xa, !xa_empty(xa));
-+}
-+
- static void check_multi_find(struct xarray *xa)
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 7cdb1d4b8117..6db3d35ff5f6 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1382,47 +1382,40 @@ EXPORT_SYMBOL(page_cache_prev_gap);
+  */
+ struct page *find_get_entry(struct address_space *mapping, pgoff_t offset)
  {
- 	unsigned long index;
-@@ -506,6 +568,7 @@ static int xarray_checks(void)
- 	check_multi_store(&array);
- 	check_find(&array);
- 	check_move(&array);
-+	check_store_iter(&array);
+-	void **pagep;
++	XA_STATE(xas, &mapping->i_pages, offset);
+ 	struct page *head, *page;
  
- 	printk("XArray: %u of %u tests passed\n", tests_passed, tests_run);
- 	return (tests_run != tests_passed) ? 0 : -EINVAL;
-diff --git a/lib/xarray.c b/lib/xarray.c
-index ab1b6786711e..31c5332c8146 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -1086,6 +1086,67 @@ void *xas_find_tagged(struct xa_state *xas, unsigned long max, xa_tag_t tag)
- }
- EXPORT_SYMBOL_GPL(xas_find_tagged);
+ 	rcu_read_lock();
+ repeat:
+-	page = NULL;
+-	pagep = radix_tree_lookup_slot(&mapping->i_pages, offset);
+-	if (pagep) {
+-		page = radix_tree_deref_slot(pagep);
+-		if (unlikely(!page))
+-			goto out;
+-		if (radix_tree_exception(page)) {
+-			if (radix_tree_deref_retry(page))
+-				goto repeat;
+-			/*
+-			 * A shadow entry of a recently evicted page,
+-			 * or a swap entry from shmem/tmpfs.  Return
+-			 * it without attempting to raise page count.
+-			 */
+-			goto out;
+-		}
++	xas_reset(&xas);
++	page = xas_load(&xas);
++	if (xas_retry(&xas, page))
++		goto repeat;
++	/*
++	 * A shadow entry of a recently evicted page, or a swap entry from
++	 * shmem/tmpfs.  Return it without attempting to raise page count.
++	 */
++	if (!page || xa_is_value(page))
++		goto out;
  
-+/**
-+ * xas_next_conflict() - Step for xas_for_each_conflict().
-+ * @xas: XArray operation state.
-+ *
-+ * This function does the work for xas_for_each_conflict().
-+ *
-+ * Context: Any context.  Expects xa_lock to be held.
-+ * Return: The next entry in the range covered by @xas or %NULL.
-+ */
-+void *xas_next_conflict(struct xa_state *xas)
-+{
-+	void *curr;
-+
-+	if (xas_error(xas))
-+		return NULL;
-+
-+	if (!xas->xa_node)
-+		return NULL;
-+
-+	if (xas_top(xas->xa_node)) {
-+		curr = xas_start(xas);
-+		if (!curr)
-+			return NULL;
-+		while (xa_is_node(curr)) {
-+			struct xa_node *node = xa_to_node(curr);
-+			curr = xas_descend(xas, node);
-+		}
-+		if (curr)
-+			return curr;
+-		head = compound_head(page);
+-		if (!page_cache_get_speculative(head))
+-			goto repeat;
++	head = compound_head(page);
++	if (!page_cache_get_speculative(head))
++		goto repeat;
+ 
+-		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
++	/* The page was split under us? */
++	if (compound_head(page) != head) {
++		put_page(head);
++		goto repeat;
 +	}
-+
-+	if (xas->xa_node->shift > xas->xa_shift)
-+		return NULL;
-+
-+	for (;;) {
-+		if (xas->xa_node->shift == xas->xa_shift) {
-+			if ((xas->xa_offset & xas->xa_sibs) == xas->xa_sibs)
-+				break;
-+		} else if (xas->xa_offset == XA_CHUNK_MASK) {
-+			xas->xa_offset = xas->xa_node->offset;
-+			xas->xa_node = xas->xa_node->parent;
-+			if (!xas->xa_node)
-+				break;
-+			continue;
-+		}
-+		curr = xa_entry_locked(xas->xa, xas->xa_node, ++xas->xa_offset);
-+		if (xa_is_sibling(curr))
-+			continue;
-+		while (xa_is_node(curr)) {
-+			xas->xa_node = xa_to_node(curr);
-+			xas->xa_offset = 0;
-+			curr = xa_entry_locked(xas->xa, xas->xa_node, 0);
-+		}
-+		if (curr)
-+			return curr;
-+	}
-+	xas->xa_offset -= xas->xa_sibs;
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(xas_next_conflict);
-+
- /**
-  * xa_init_flags() - Initialise an empty XArray with flags.
-  * @xa: XArray.
+ 
+-		/*
+-		 * Has the page moved?
+-		 * This is part of the lockless pagecache protocol. See
+-		 * include/linux/pagemap.h for details.
+-		 */
+-		if (unlikely(page != *pagep)) {
+-			put_page(head);
+-			goto repeat;
+-		}
++	/*
++	 * Has the page moved?
++	 * This is part of the lockless pagecache protocol. See
++	 * include/linux/pagemap.h for details.
++	 */
++	if (unlikely(page != xas_reload(&xas))) {
++		put_page(head);
++		goto repeat;
+ 	}
+ out:
+ 	rcu_read_unlock();
+@@ -1453,7 +1446,7 @@ struct page *find_lock_entry(struct address_space *mapping, pgoff_t offset)
+ 
+ repeat:
+ 	page = find_get_entry(mapping, offset);
+-	if (page && !radix_tree_exception(page)) {
++	if (page && !xa_is_value(page)) {
+ 		lock_page(page);
+ 		/* Has the page been truncated? */
+ 		if (unlikely(page_mapping(page) != mapping)) {
 -- 
 2.17.1
 
