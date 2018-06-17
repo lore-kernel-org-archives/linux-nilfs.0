@@ -1,7 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 55/74] memfd: Convert memfd_tag_pins to XArray
-Date: Sat, 16 Jun 2018 19:00:33 -0700
-Message-ID: <20180617020052.4759-56-willy@infradead.org>
+Subject: [PATCH v14 30/74] page cache: Convert filemap_map_pages
+ to XArray
+Date: Sat, 16 Jun 2018 19:00:08 -0700
+Message-ID: <20180617020052.4759-31-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=3dt1i9NP1EXxETQ4D4nD6mkkx/fkw3evvLQHvoVxbqY=; b=DwwbmQW0tZu8puYABi46FVgf35
- 7ledf0KYwGrt9fO6gUMOfVJioK2T+MFlSRhfS8HGuj864SxNCwxAQ/FdEGrRoJUTPLbfSaWcL8sVH
- y7ymdWlGxOcZiUpI5nvTztxIXYsPfZ7RlDYd1LDCnGxeeNSOpxtX10A4dSaVYHEYhE9U=;
+ bh=Yeiu2kmNiusFRVYFnSwKz/rR6RSVxilKq9nNpzSrFOE=; b=K9NvW6IVqVxFzIGuBSvFrG/bKi
+ 5HpxSh76mYtFewNTjUdDsegYa+Db2mtOZKqt7qbmtc8Jdv9YCqheB1fbtcx9rJu6fuPP3fdDLcfgh
+ meihcdEkPZF2bW4DJhgdD31P5J0/eLpUAJnG+g9mbDXRLzCgOIgv+tQnXVbNUK3PyYcA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=3dt1i9NP1EXxETQ4D4nD6mkkx/fkw3evvLQHvoVxbqY=; b=NCwXwa/4sipcA0ra0WZ8ePcVLR
- E/EQJK4IYcRmm20LceHeDJaCJlj17m8YWRIt9mH7JESrihJo8atq3M5x6iTv7SV011l8QTfTDuy4I
- 0QFFN44vJOqJfMW0eTWOAeDOV9Ti1L4kTCvgxbeg6DNhCGU6v2HzqhmtBjrwXvMbZQxo=;
+ bh=Yeiu2kmNiusFRVYFnSwKz/rR6RSVxilKq9nNpzSrFOE=; b=Cm+B5rxUVgtJYnfkrFtUAfxK/0
+ MnYx4SbEN32BomJEGEXUIGjAM3vnXVV2UN2omOAVEd6KRTyHl7vchRYv97Aj4S+jeobH/gudIF0iB
+ /RVv1aicmcB1NaB4eub/Bc7a47tHP4dWllYK6eF0ga7Or5ECVSBONnpSLyp9xMjJyecA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=3dt1i9NP1EXxETQ4D4nD6mkkx/fkw3evvLQHvoVxbqY=; b=hBhoTythSko0pFY65cmmmSvgH
- k2HXrqUZ3It06bxZLbP7ijoSrRGWitmutjXTJjSfEIh/TXudmVVJCox6fMusITIZRrLbt0BM/toUB
- wQV2ThXABL0BEAUAZxy4SKjGCeKLU/M4k9EBHd1u+G7r0ud03kQYqSAniHfKkfsmx9rfQxWhJ3PVW
- ZfYMttSmUwDZWba0W5tMCQU7tkUNyFbjSmDt3fHI8Ah9GJaEqt9wuHSBUynvZVteNowLlgFFZ/IGA
- lVwubIOV2QQ3nwZu0pXN/riLYUln9uL77TLx7Kd9ODbWvQrW2Q2lk8l6zqGAmtgo2zT1pfO65DeHC
- rIr54DZvg==;
+ bh=Yeiu2kmNiusFRVYFnSwKz/rR6RSVxilKq9nNpzSrFOE=; b=m+LOI1px17ZSX5HKevG2D55D6
+ WGE20+eKIdSX26zGYKp1NJ6fKmQVz9TeDZYY2DXweQpbJxgCHb3Hi5OE61FnLqgC9mCXy7ziofOeN
+ 9wrsRmwJGlNfGUUIX6s0jhoqytilmgM4katZytiJIuds+7k9iRJY0mVTVXPc+G9txr3bE2z8iCKPR
+ w42OLBaGlBN/PWDF3t3EbBHftT2tyegU/WqWin9w+H/PFRZHu2IFFTXmhaTQ1DIOhMzcU2q4yNL0F
+ sqRF1xwdUMq+DK8WxDBpeTFS51/Fu9NqDsrxJA8BmxnEyzJ3C93MWVLru6U1HWrEECsEWSazm8sIQ
+ LaP1JPyjg==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -51,83 +52,102 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Switch to a batch-processing model like memfd_wait_for_pins() and
-use the xa_state previously set up by memfd_wait_for_pins().
+Slight change of strategy here; if we have trouble getting hold of a
+page for whatever reason (eg a compound page is split underneath us),
+don't spin to stabilise the page, just continue the iteration, like we
+would if we failed to trylock the page.  Since this is a speculative
+optimisation, it feels like we should allow the process to take an extra
+fault if it turns out to need this page instead of spending time to pin
+down a page it may not need.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
-Reviewed-by: Mike Kravetz <mike.kravetz@oracle.com>
 ---
- mm/memfd.c | 44 ++++++++++++++++++--------------------------
- 1 file changed, 18 insertions(+), 26 deletions(-)
+ mm/filemap.c | 42 +++++++++++++-----------------------------
+ 1 file changed, 13 insertions(+), 29 deletions(-)
 
-diff --git a/mm/memfd.c b/mm/memfd.c
-index e7d6be725b7a..636de8d5c7c3 100644
---- a/mm/memfd.c
-+++ b/mm/memfd.c
-@@ -28,37 +28,29 @@
- #define MEMFD_TAG_PINNED        PAGECACHE_TAG_TOWRITE
- #define LAST_SCAN               4       /* about 150ms max */
- 
--static void memfd_tag_pins(struct address_space *mapping)
-+static void memfd_tag_pins(struct xa_state *xas)
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 67f04bcdf9ef..4204d9df003b 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2516,45 +2516,31 @@ EXPORT_SYMBOL(filemap_fault);
+ void filemap_map_pages(struct vm_fault *vmf,
+ 		pgoff_t start_pgoff, pgoff_t end_pgoff)
  {
 -	struct radix_tree_iter iter;
--	void __rcu **slot;
--	pgoff_t start;
- 	struct page *page;
-+	unsigned int tagged = 0;
+-	void **slot;
+ 	struct file *file = vmf->vma->vm_file;
+ 	struct address_space *mapping = file->f_mapping;
+ 	pgoff_t last_pgoff = start_pgoff;
+ 	unsigned long max_idx;
++	XA_STATE(xas, &mapping->i_pages, start_pgoff);
+ 	struct page *head, *page;
  
- 	lru_add_drain();
--	start = 0;
--	rcu_read_lock();
--
--	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
+ 	rcu_read_lock();
+-	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start_pgoff) {
+-		if (iter.index > end_pgoff)
+-			break;
+-repeat:
 -		page = radix_tree_deref_slot(slot);
--		if (!page || radix_tree_exception(page)) {
+-		if (unlikely(!page))
+-			goto next;
+-		if (radix_tree_exception(page)) {
 -			if (radix_tree_deref_retry(page)) {
 -				slot = radix_tree_iter_retry(&iter);
 -				continue;
 -			}
--		} else if (page_count(page) - page_mapcount(page) > 1) {
--			xa_lock_irq(&mapping->i_pages);
--			radix_tree_tag_set(&mapping->i_pages, iter.index,
--					   MEMFD_TAG_PINNED);
--			xa_unlock_irq(&mapping->i_pages);
--		}
- 
--		if (need_resched()) {
--			slot = radix_tree_iter_resume(slot, &iter);
--			cond_resched_rcu();
--		}
-+	xas_lock_irq(xas);
-+	xas_for_each(xas, page, ULONG_MAX) {
++	xas_for_each(&xas, page, end_pgoff) {
++		if (xas_retry(&xas, page))
++			continue;
 +		if (xa_is_value(page))
-+			continue;
-+		if (page_count(page) - page_mapcount(page) > 1)
-+			xas_set_tag(xas, MEMFD_TAG_PINNED);
-+
-+		if (++tagged % XA_CHECK_SCHED)
-+			continue;
-+
-+		xas_pause(xas);
-+		xas_unlock_irq(xas);
-+		cond_resched();
-+		xas_lock_irq(xas);
+ 			goto next;
+-		}
+ 
+ 		head = compound_head(page);
+ 		if (!page_cache_get_speculative(head))
+-			goto repeat;
++			goto next;
+ 
+ 		/* The page was split under us? */
+-		if (compound_head(page) != head) {
+-			put_page(head);
+-			goto repeat;
+-		}
++		if (compound_head(page) != head)
++			goto skip;
+ 
+ 		/* Has the page moved? */
+-		if (unlikely(page != *slot)) {
+-			put_page(head);
+-			goto repeat;
+-		}
++		if (unlikely(page != xas_reload(&xas)))
++			goto skip;
+ 
+ 		if (!PageUptodate(page) ||
+ 				PageReadahead(page) ||
+@@ -2573,10 +2559,10 @@ void filemap_map_pages(struct vm_fault *vmf,
+ 		if (file->f_ra.mmap_miss > 0)
+ 			file->f_ra.mmap_miss--;
+ 
+-		vmf->address += (iter.index - last_pgoff) << PAGE_SHIFT;
++		vmf->address += (xas.xa_index - last_pgoff) << PAGE_SHIFT;
+ 		if (vmf->pte)
+-			vmf->pte += iter.index - last_pgoff;
+-		last_pgoff = iter.index;
++			vmf->pte += xas.xa_index - last_pgoff;
++		last_pgoff = xas.xa_index;
+ 		if (alloc_set_pte(vmf, NULL, page))
+ 			goto unlock;
+ 		unlock_page(page);
+@@ -2589,8 +2575,6 @@ void filemap_map_pages(struct vm_fault *vmf,
+ 		/* Huge page is mapped? No need to proceed. */
+ 		if (pmd_trans_huge(*vmf->pmd))
+ 			break;
+-		if (iter.index == end_pgoff)
+-			break;
  	}
--	rcu_read_unlock();
-+	xas_unlock_irq(xas);
+ 	rcu_read_unlock();
  }
- 
- /*
-@@ -76,7 +68,7 @@ static int memfd_wait_for_pins(struct address_space *mapping)
- 	struct page *page;
- 	int error, scan;
- 
--	memfd_tag_pins(mapping);
-+	memfd_tag_pins(&xas);
- 
- 	error = 0;
- 	for (scan = 0; scan <= LAST_SCAN; scan++) {
 -- 
 2.17.1
 
