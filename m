@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 64/74] dax: Convert dax_insert_pfn_mkwrite to
- XArray
-Date: Sat, 16 Jun 2018 19:00:42 -0700
-Message-ID: <20180617020052.4759-65-willy@infradead.org>
+Subject: [PATCH v14 74/74] radix tree: Remove
+ radix_tree_clear_tags
+Date: Sat, 16 Jun 2018 19:00:52 -0700
+Message-ID: <20180617020052.4759-75-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=NR83KzpqxOCMo/mNGinQ7Yp0eJl39Zsg1RoPo491hDg=; b=IxfTQsZaXUKb2R9isLRCwyrVxn
- Rq0pyLg+X99Z3V1VWp1jm92AHrkPs+uZXgrxLacNQyfmlfe12aXUuJSTgdTaL4G6RDS/Id6AosEDh
- QDikzUkruYursSKRIxgwnRr1iMznfmVapjkqohVfGZ95cv5+l9hl/VSXs0Tv8eB2/5j8=;
+ bh=tlIfOaZD65OibIYNa71Eb6Qj73wPp5+FWyuOeHJmT1I=; b=R9JYaRCA7aCmLc0QdiCkt3F0CW
+ si23Cgs9dpOUUu4zYffqA5iw8CtxvptUJuu/B9KMK22P4Pvljqqh5BQuXafuWWxRact1+0uB54MvI
+ A3HX8KNRFLmXkU1ldDYi0Ocb/Cax8KXkLGVNhEOIsZ1bJ66uv2KYYCfaLXKLPEb3u3X4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=NR83KzpqxOCMo/mNGinQ7Yp0eJl39Zsg1RoPo491hDg=; b=Qvzgyhpg5FjkLjVyVtxqQToaGQ
- hC0er7bPLqT6Pvo9h7M521wEXJP5hN3l/EmjrMQh5ZP7Vo979FpHv8QY26ahIxHJaG+LrSWK8k/Tf
- J7g94E6KGPK5NBNWrMvNnJ/2VY9L2my9Rz56Ck5cv4RN5cATKpdT9WrgdYmKy3h0Nty8=;
+ bh=tlIfOaZD65OibIYNa71Eb6Qj73wPp5+FWyuOeHJmT1I=; b=EkAIpIq1W23liXH2jG91Te1YFO
+ Z4gLEwLpxvo7C8e3kofSQuHzv+d8sZufqBNjR9SxzxyTiH7Lrmek821s+cbUHkqbL/BHH6HNphqv7
+ 95FTxJvlkNAs3xXDIHjK70tvV4rJe4HiTZE9XASJH6lUStv1k0lamcA2VjzLsF3s6Q+g=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=NR83KzpqxOCMo/mNGinQ7Yp0eJl39Zsg1RoPo491hDg=; b=itzEUVdSx+m4jyLwMg1g/keER
- nDNphqo4osY+ueyPND3c9xL8mW6s3u7W3juedLrbUhj/J7hBVFNHM/kH0JiKwfXdPzeBRDMNBjgvC
- t/jr9Y3bMbEQQChEn4BOj+VHI2TR8TCPwutUu7C3wnyrMaj/4sNQmd2UtOX0bmDKPHO0SEsJVUw0j
- uNJ9r/UJme9kUnUOGikwUBOOP/ixJl3LSyUloqOdIPVEvivGZVm/WZzh9YhJGhQ4uEKH+jbhHukCY
- AocqCUSOZqVBP1nJ2+IASF3/lM2IXmvruDgXm5+uafip6QHZ04MMgOcC62LqhARSW+Gyemj3IdzFJ
- qcXHd9FhQ==;
+ bh=tlIfOaZD65OibIYNa71Eb6Qj73wPp5+FWyuOeHJmT1I=; b=V/VP50i1eGq1JBQnXZQYQRIOA
+ 5LuYCBaKRl82oGGXEJmt+4m8/2BmzbrRhIUa2JSfJEleDINrEiAbIHVA6fM/JtH3iG6Lh5AJtSWbW
+ 11k0991Zkcqc8hwTeen1vgdanb9r1NhVoL1JSpFGDBqORQWeRjMIoaAN9fcTyx4i7kzp8oA0cIYZs
+ 8F7vBGmx56kmQjmyjuB4B/B0oSNVzKAE/x11+j18U9GJail1FJJy0ci+y1qkPTJycDDUDTM4ksRgW
+ s5pT0JujDsHjOG6BM4OcnLEQcdiKsiC/vNHIcnnt0g4pId8rJsNZ11XXrQWXHDwJjkl2zsWF4JxMw
+ vsK9H5MmA==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,236 +52,150 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Add some XArray-based helper functions to replace the radix tree based
-metaphors currently in use.  The biggest change is that converted code
-doesn't see its own lock bit; get_unlocked_entry() always returns an
-entry with the lock bit clear, and locking the entry now returns void.
-So we don't have to mess around loading the current entry and clearing
-the lock bit; we can just store the entry that we were using.
+The page cache was the only user of this interface and it has now
+been converted to the XArray.  Transform the test into a test of
+xas_init_tags().
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- fs/dax.c | 145 +++++++++++++++++++++++++++++++++++++++++++------------
- 1 file changed, 113 insertions(+), 32 deletions(-)
+ include/linux/radix-tree.h           |  2 --
+ lib/radix-tree.c                     | 13 -----------
+ lib/test_xarray.c                    | 33 ++++++++++++++++++++++++++++
+ tools/testing/radix-tree/tag_check.c | 29 ------------------------
+ 4 files changed, 33 insertions(+), 44 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index b7f54e386da8..71181f4bb1d3 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -38,6 +38,17 @@
- #define CREATE_TRACE_POINTS
- #include <trace/events/fs_dax.h>
- 
-+static inline unsigned int pe_order(enum page_entry_size pe_size)
-+{
-+	if (pe_size == PE_SIZE_PTE)
-+		return PAGE_SHIFT - PAGE_SHIFT;
-+	if (pe_size == PE_SIZE_PMD)
-+		return PMD_SHIFT - PAGE_SHIFT;
-+	if (pe_size == PE_SIZE_PUD)
-+		return PUD_SHIFT - PAGE_SHIFT;
-+	return ~0;
-+}
-+
- /* We choose 4096 entries - same as per-zone page wait tables */
- #define DAX_WAIT_TABLE_BITS 12
- #define DAX_WAIT_TABLE_ENTRIES (1 << DAX_WAIT_TABLE_BITS)
-@@ -46,6 +57,9 @@
- #define PG_PMD_COLOUR	((PMD_SIZE >> PAGE_SHIFT) - 1)
- #define PG_PMD_NR	(PMD_SIZE >> PAGE_SHIFT)
- 
-+/* The order of a PMD entry */
-+#define PMD_ORDER	(PMD_SHIFT - PAGE_SHIFT)
-+
- static wait_queue_head_t wait_table[DAX_WAIT_TABLE_ENTRIES];
- 
- static int __init init_dax_wait_table(void)
-@@ -85,10 +99,15 @@ static void *dax_make_locked(unsigned long pfn, unsigned long flags)
- 			DAX_LOCKED);
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index f8ef267e4975..27c15990951d 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -252,8 +252,6 @@ void radix_tree_iter_delete(struct radix_tree_root *,
+ 			struct radix_tree_iter *iter, void __rcu **slot);
+ void *radix_tree_delete_item(struct radix_tree_root *, unsigned long, void *);
+ void *radix_tree_delete(struct radix_tree_root *, unsigned long);
+-void radix_tree_clear_tags(struct radix_tree_root *, struct radix_tree_node *,
+-			   void __rcu **slot);
+ unsigned int radix_tree_gang_lookup(const struct radix_tree_root *,
+ 			void **results, unsigned long first_index,
+ 			unsigned int max_items);
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index ad03dc0c562f..101f1c28e1b6 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -1711,19 +1711,6 @@ void *radix_tree_delete(struct radix_tree_root *root, unsigned long index)
  }
+ EXPORT_SYMBOL(radix_tree_delete);
  
-+static bool dax_is_locked(void *entry)
-+{
-+	return xa_to_value(entry) & DAX_LOCKED;
-+}
-+
- static unsigned int dax_entry_order(void *entry)
- {
- 	if (xa_to_value(entry) & DAX_PMD)
--		return PMD_SHIFT - PAGE_SHIFT;
-+		return PMD_ORDER;
- 	return 0;
- }
- 
-@@ -181,6 +200,77 @@ static void dax_wake_mapping_entry_waiter(struct xarray *xa,
- 		__wake_up(wq, TASK_NORMAL, wake_all ? 0 : 1, &key);
- }
- 
-+static void dax_wake_entry(struct xa_state *xas, void *entry, bool wake_all)
-+{
-+	return dax_wake_mapping_entry_waiter(xas->xa, xas->xa_index, entry,
-+								wake_all);
-+}
-+
-+/*
-+ * Look up entry in page cache, wait for it to become unlocked if it
-+ * is a DAX entry and return it.  The caller must subsequently call
-+ * put_unlocked_entry() if it did not lock the entry or put_locked_entry()
-+ * if it did.
-+ *
-+ * Must be called with the i_pages lock held.
-+ */
-+static void *get_unlocked_entry(struct xa_state *xas)
-+{
-+	void *entry;
-+	struct wait_exceptional_entry_queue ewait;
-+	wait_queue_head_t *wq;
-+
-+	init_wait(&ewait.wait);
-+	ewait.wait.func = wake_exceptional_entry_func;
-+
-+	for (;;) {
-+		entry = xas_load(xas);
-+		if (!entry || WARN_ON_ONCE(!xa_is_value(entry)) ||
-+				!dax_is_locked(entry))
-+			return entry;
-+
-+		wq = dax_entry_waitqueue(xas->xa, xas->xa_index, entry,
-+				&ewait.key);
-+		prepare_to_wait_exclusive(wq, &ewait.wait,
-+					  TASK_UNINTERRUPTIBLE);
-+		xas_unlock_irq(xas);
-+		xas_reset(xas);
-+		schedule();
-+		finish_wait(wq, &ewait.wait);
-+		xas_lock_irq(xas);
-+	}
-+}
-+
-+static void put_unlocked_entry(struct xa_state *xas, void *entry)
-+{
-+	/* If we were the only waiter woken, wake the next one */
-+	if (entry)
-+		dax_wake_entry(xas, entry, false);
-+}
-+
-+/*
-+ * We used the xa_state to get the entry, but then we locked the entry and
-+ * dropped the xa_lock, so we know the xa_state is stale and must be reset
-+ * before use.
-+ */
-+static void put_locked_entry(struct xa_state *xas, void *entry)
-+{
-+	void *old;
-+
-+	xas_reset(xas);
-+	xas_lock_irq(xas);
-+	old = xas_store(xas, entry);
-+	xas_unlock_irq(xas);
-+	BUG_ON(!dax_is_locked(old));
-+	dax_wake_entry(xas, entry, false);
-+}
-+
-+static void dax_lock_entry(struct xa_state *xas, void *entry)
-+{
-+	unsigned long v = xa_to_value(entry);
-+	xas_store(xas, xa_mk_value(v | DAX_LOCKED));
-+}
-+
- /*
-  * Check whether the given slot is locked.  Must be called with the i_pages
-  * lock held.
-@@ -1705,50 +1795,46 @@ EXPORT_SYMBOL_GPL(dax_iomap_fault);
- /*
-  * dax_insert_pfn_mkwrite - insert PTE or PMD entry into page tables
-  * @vmf: The description of the fault
-- * @pe_size: Size of entry to be inserted
-  * @pfn: PFN to insert
-+ * @order: Order of entry to insert.
-  *
-  * This function inserts a writeable PTE or PMD entry into the page tables
-  * for an mmaped DAX file.  It also marks the page cache entry as dirty.
-  */
--static vm_fault_t dax_insert_pfn_mkwrite(struct vm_fault *vmf,
--				  enum page_entry_size pe_size,
--				  pfn_t pfn)
-+static vm_fault_t
-+dax_insert_pfn_mkwrite(struct vm_fault *vmf, pfn_t pfn, unsigned int order)
- {
- 	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
--	void *entry, **slot;
--	pgoff_t index = vmf->pgoff;
-+	XA_STATE_ORDER(xas, &mapping->i_pages, vmf->pgoff, order);
-+	void *entry;
- 	vm_fault_t ret;
- 
--	xa_lock_irq(&mapping->i_pages);
--	entry = get_unlocked_mapping_entry(mapping, index, &slot);
-+	xas_lock_irq(&xas);
-+	entry = get_unlocked_entry(&xas);
- 	/* Did we race with someone splitting entry or so? */
- 	if (!entry ||
--	    (pe_size == PE_SIZE_PTE && !dax_is_pte_entry(entry)) ||
--	    (pe_size == PE_SIZE_PMD && !dax_is_pmd_entry(entry))) {
--		put_unlocked_mapping_entry(mapping, index, entry);
--		xa_unlock_irq(&mapping->i_pages);
-+	    (order == 0 && !dax_is_pte_entry(entry)) ||
-+	    (order == PMD_ORDER && (xa_is_internal(entry) ||
-+				    !dax_is_pmd_entry(entry)))) {
-+		put_unlocked_entry(&xas, entry);
-+		xas_unlock_irq(&xas);
- 		trace_dax_insert_pfn_mkwrite_no_entry(mapping->host, vmf,
- 						      VM_FAULT_NOPAGE);
- 		return VM_FAULT_NOPAGE;
- 	}
--	radix_tree_tag_set(&mapping->i_pages, index, PAGECACHE_TAG_DIRTY);
--	entry = lock_slot(mapping, slot);
--	xa_unlock_irq(&mapping->i_pages);
--	switch (pe_size) {
--	case PE_SIZE_PTE:
-+	xas_set_tag(&xas, PAGECACHE_TAG_DIRTY);
-+	dax_lock_entry(&xas, entry);
-+	xas_unlock_irq(&xas);
-+	if (order == 0)
- 		ret = vmf_insert_mixed_mkwrite(vmf->vma, vmf->address, pfn);
--		break;
- #ifdef CONFIG_FS_DAX_PMD
--	case PE_SIZE_PMD:
-+	else if (order == PMD_ORDER)
- 		ret = vmf_insert_pfn_pmd(vmf->vma, vmf->address, vmf->pmd,
- 			pfn, true);
--		break;
- #endif
--	default:
-+	else
- 		ret = VM_FAULT_FALLBACK;
+-void radix_tree_clear_tags(struct radix_tree_root *root,
+-			   struct radix_tree_node *node,
+-			   void __rcu **slot)
+-{
+-	if (node) {
+-		unsigned int tag, offset = get_slot_offset(node, slot);
+-		for (tag = 0; tag < RADIX_TREE_MAX_TAGS; tag++)
+-			node_tag_clear(root, node, tag, offset);
+-	} else {
+-		root_tag_clear_all(root);
 -	}
--	put_locked_mapping_entry(mapping, index);
-+	put_locked_entry(&xas, entry);
- 	trace_dax_insert_pfn_mkwrite(mapping->host, vmf, ret);
- 	return ret;
+-}
+-
+ /**
+  *	radix_tree_tagged - test whether any items in the tree are tagged
+  *	@root:		radix tree root
+diff --git a/lib/test_xarray.c b/lib/test_xarray.c
+index 0ac0c8108ef4..98c0efdd27a0 100644
+--- a/lib/test_xarray.c
++++ b/lib/test_xarray.c
+@@ -170,12 +170,45 @@ static void check_xa_tag_1(struct xarray *xa, unsigned long index)
+ 	XA_BUG_ON(xa, !xa_empty(xa));
  }
-@@ -1768,17 +1854,12 @@ vm_fault_t dax_finish_sync_fault(struct vm_fault *vmf,
- {
- 	int err;
- 	loff_t start = ((loff_t)vmf->pgoff) << PAGE_SHIFT;
--	size_t len = 0;
-+	unsigned int order = pe_order(pe_size);
-+	size_t len = PAGE_SIZE << order;
  
--	if (pe_size == PE_SIZE_PTE)
--		len = PAGE_SIZE;
--	else if (pe_size == PE_SIZE_PMD)
--		len = PMD_SIZE;
--	else
--		WARN_ON_ONCE(1);
- 	err = vfs_fsync_range(vmf->vma->vm_file, start, start + len - 1, 1);
- 	if (err)
- 		return VM_FAULT_SIGBUS;
--	return dax_insert_pfn_mkwrite(vmf, pe_size, pfn);
-+	return dax_insert_pfn_mkwrite(vmf, pfn, order);
++static void check_xa_tag_2(struct xarray *xa)
++{
++	XA_STATE(xas, xa, 0);
++	unsigned long index;
++	unsigned int count = 0;
++	void *entry;
++
++	xa_store_value(xa, 0, GFP_KERNEL);
++	xa_set_tag(xa, 0, XA_TAG_0);
++	xas_load(&xas);
++	xas_init_tags(&xas);
++	XA_BUG_ON(xa, !xa_get_tag(xa, 0, XA_TAG_0) == 0);
++
++	for (index = 3500; index < 4500; index++) {
++		xa_store_value(xa, index, GFP_KERNEL);
++		xa_set_tag(xa, index, XA_TAG_0);
++	}
++
++	xas_reset(&xas);
++	xas_for_each_tagged(&xas, entry, ULONG_MAX, XA_TAG_0)
++		count++;
++	XA_BUG_ON(xa, count != 1000);
++
++	xas_for_each(&xas, entry, ULONG_MAX) {
++		xas_init_tags(&xas);
++		XA_BUG_ON(xa, !xa_get_tag(xa, xas.xa_index, XA_TAG_0));
++		XA_BUG_ON(xa, !xas_get_tag(&xas, XA_TAG_0));
++	}
++
++	xa_destroy(xa);
++}
++
+ static void check_xa_tag(struct xarray *xa)
+ {
+ 	check_xa_tag_1(xa, 0);
+ 	check_xa_tag_1(xa, 4);
+ 	check_xa_tag_1(xa, 64);
+ 	check_xa_tag_1(xa, 4096);
++	check_xa_tag_2(xa);
  }
- EXPORT_SYMBOL_GPL(dax_finish_sync_fault);
+ 
+ static void check_xa_shrink(struct xarray *xa)
+diff --git a/tools/testing/radix-tree/tag_check.c b/tools/testing/radix-tree/tag_check.c
+index 543181e4847b..56a42f1c5ab0 100644
+--- a/tools/testing/radix-tree/tag_check.c
++++ b/tools/testing/radix-tree/tag_check.c
+@@ -331,34 +331,6 @@ static void single_check(void)
+ 	item_kill_tree(&tree);
+ }
+ 
+-void radix_tree_clear_tags_test(void)
+-{
+-	unsigned long index;
+-	struct radix_tree_node *node;
+-	struct radix_tree_iter iter;
+-	void **slot;
+-
+-	RADIX_TREE(tree, GFP_KERNEL);
+-
+-	item_insert(&tree, 0);
+-	item_tag_set(&tree, 0, 0);
+-	__radix_tree_lookup(&tree, 0, &node, &slot);
+-	radix_tree_clear_tags(&tree, node, slot);
+-	assert(item_tag_get(&tree, 0, 0) == 0);
+-
+-	for (index = 0; index < 1000; index++) {
+-		item_insert(&tree, index);
+-		item_tag_set(&tree, index, 0);
+-	}
+-
+-	radix_tree_for_each_slot(slot, &tree, &iter, 0) {
+-		radix_tree_clear_tags(&tree, iter.node, slot);
+-		assert(item_tag_get(&tree, iter.index, 0) == 0);
+-	}
+-
+-	item_kill_tree(&tree);
+-}
+-
+ void tag_check(void)
+ {
+ 	single_check();
+@@ -376,5 +348,4 @@ void tag_check(void)
+ 	thrash_tags();
+ 	rcu_barrier();
+ 	printv(2, "after thrash_tags: %d allocated\n", nr_allocated);
+-	radix_tree_clear_tags_test();
+ }
 -- 
 2.17.1
 
