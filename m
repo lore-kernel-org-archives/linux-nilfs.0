@@ -1,187 +1,109 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 68/74] dax: Convert dax_lock_page to XArray
-Date: Sat, 16 Jun 2018 19:00:46 -0700
-Message-ID: <20180617020052.4759-69-willy@infradead.org>
+Subject: [PATCH v14 66/74] dax: Convert __dax_invalidate_entry to
+ XArray
+Date: Sat, 16 Jun 2018 19:00:44 -0700
+Message-ID: <20180617020052.4759-67-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=XHBdRC4wAAIIJPvc5v66ahFvCLbNhUPOOBir9x+fl4o=; b=MAFweyd8mRdC9AxifD41RhNDS
-        eXPxz2MI78svrs1avUCBnzCxPjFzueL/9MXYznghlhEqD29UNRldYx/V78PD1OtWIBg1R286NiDeB
-        8+wb2+5CBb6PAUqIckRog3g5JOL7/Q9Fk9sTq+IDQzyyMzkKAwemejKc1RL2uA3cAEEzQ89JZUzSn
-        QAK50+nMaAfegvsRLk/j3xAeu2ZiUaVLsCJjzEHO+fq1rbhz7gCItne8lbiQ3VcyGpom7JGyail6D
-        emv/0sbjzPYJXbEm5Mafgb9v9eESav32xE48uIR7Lk9RMmAFWL5NQ2eVrmPELYL/oOPLKjKm50RC/
-    
-In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
+ To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=UA9o0iaVhFtqezgiirGGm+bPNJF17A4r3z0ShuPnQ4c=; b=IWzFfI9dg6WQ25Jh2aXkIPaP8Y
+ ioen8RnfoLt2NnZgcbCpW6D5k2+PnPB/pgtkTUceUds2TKfvv0PSxQhhjBAsGtrQjsDUSQW8h+Obf
+ 5hQAwLViSKSSO0tEXfFzWDIMDXNNSV+Qv5tdHiARjY5N/++dl90wM7g9qS9CSHvGhbog=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
+ :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=UA9o0iaVhFtqezgiirGGm+bPNJF17A4r3z0ShuPnQ4c=; b=KgP9HI3I45VQDPTGoJmWN2i388
+ mOHWG6I9VGQqmloHAasoHYSCH6TufSrBqFDzCcQtr8Wh0PfzMOJi7OOVk6w1dvnSOhtWxtNCvfADl
+ jhah51snocMN9gKeO3MOhGtpVIaZf+mbdOhGt/hJReDkpNFvrRz+bo21wJiuf0ddvKtY=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+ Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+ Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+ List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=UA9o0iaVhFtqezgiirGGm+bPNJF17A4r3z0ShuPnQ4c=; b=ql/wfpn5LSVOPxYexYXsNeUE+
+ T6PHGdTfmCCMq0avBk4klofASUjMTgH8KOCPqQfRWFfCCJ90txc8PeKKsR/NOnb04CxDxlLl58RAp
+ grWhIYVLPabmoFLKwodnJPZLs97gCAD9mAE3XXQfp1MYkMAo3PxBa4Txv3z1d7KCSyVibcEfLMSu4
+ Sc1unUgmFNslDU7+rKP1JYLx5YShEqNrh6TxMA6UMT21ocuLHWwWoE0lxLzM4fOMZhplpzG0lYGP0
+ SWj9y3dt6i5YjIGENp/SmDK06ZAmyUL8bw9AvlYguW30b9lTAKA2qihF6zZeI0GEJKsTQlca9WenD
+ zXzM+UHuQ==;
+In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
+Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
+
+Avoids walking the radix tree multiple times looking for tags.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- fs/dax.c | 96 +++++++++++++++++++++++++++++---------------------------
- 1 file changed, 50 insertions(+), 46 deletions(-)
+ fs/dax.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
 diff --git a/fs/dax.c b/fs/dax.c
-index 08595ffde566..54a01380527a 100644
+index 7b80b17cba50..fe5cc4470d99 100644
 --- a/fs/dax.c
 +++ b/fs/dax.c
-@@ -99,6 +99,22 @@ static void *dax_make_locked(unsigned long pfn, unsigned long flags)
- 			DAX_LOCKED);
- }
- 
-+static unsigned long dax_is_pmd_entry(void *entry)
-+{
-+	return xa_to_value(entry) & DAX_PMD;
-+}
-+
-+static void *dax_make_entry(pfn_t pfn, unsigned long flags)
-+{
-+	return xa_mk_value(flags | (pfn_t_to_pfn(pfn) << DAX_SHIFT));
-+}
-+
-+static void *dax_make_page_entry(struct page *page, void *entry)
-+{
-+	pfn_t pfn = page_to_pfn_t(page);
-+	return dax_make_entry(pfn, dax_is_pmd_entry(entry));
-+}
-+
- static bool dax_is_locked(void *entry)
+@@ -752,27 +752,28 @@ EXPORT_SYMBOL_GPL(dax_layout_busy_page);
+ static int __dax_invalidate_entry(struct address_space *mapping,
+ 					  pgoff_t index, bool trunc)
  {
- 	return xa_to_value(entry) & DAX_LOCKED;
-@@ -111,11 +127,6 @@ static unsigned int dax_entry_order(void *entry)
- 	return 0;
- }
++	XA_STATE(xas, &mapping->i_pages, index);
+ 	int ret = 0;
+ 	void *entry;
+-	struct radix_tree_root *pages = &mapping->i_pages;
  
--static int dax_is_pmd_entry(void *entry)
--{
--	return xa_to_value(entry) & DAX_PMD;
--}
--
- static int dax_is_pte_entry(void *entry)
- {
- 	return !(xa_to_value(entry) & DAX_PMD);
-@@ -466,78 +477,71 @@ static struct page *dax_busy_page(void *entry)
- 
- struct page *dax_lock_page(unsigned long pfn)
- {
--	pgoff_t index;
--	struct inode *inode;
--	wait_queue_head_t *wq;
--	void *entry = NULL, **slot;
-+	struct page *page = pfn_to_page(pfn);
-+	XA_STATE(xas, NULL, 0);
-+	void *entry;
- 	struct address_space *mapping;
--	struct wait_exceptional_entry_queue ewait;
--	struct page *ret = NULL, *page = pfn_to_page(pfn);
- 
--	rcu_read_lock();
- 	for (;;) {
-+		rcu_read_lock();
- 		mapping = READ_ONCE(page->mapping);
- 
--		if (!mapping || !IS_DAX(mapping->host))
-+		if (!mapping || !IS_DAX(mapping->host)) {
-+			page = NULL;
- 			break;
-+		}
- 
- 		/*
- 		 * In the device-dax case there's no need to lock, a
- 		 * struct dev_pagemap pin is sufficient to keep the
- 		 * inode alive.
- 		 */
--		inode = mapping->host;
--		if (S_ISCHR(inode->i_mode)) {
--			ret = page;
-+		if (S_ISCHR(mapping->host->i_mode))
- 			break;
--		}
- 
--		xa_lock_irq(&mapping->i_pages);
-+		xas.xa = &mapping->i_pages;
-+		xas_lock_irq(&xas);
-+		rcu_read_unlock();
- 		if (mapping != page->mapping) {
- 			xa_unlock_irq(&mapping->i_pages);
- 			continue;
- 		}
--		index = page->index;
--
--		init_wait(&ewait.wait);
--		ewait.wait.func = wake_exceptional_entry_func;
--
--		entry = __radix_tree_lookup(&mapping->i_pages, index, NULL,
--				&slot);
--		if (!entry || WARN_ON_ONCE(!xa_is_value(entry))) {
--			xa_unlock_irq(&mapping->i_pages);
--			break;
--		} else if (!slot_locked(mapping, slot)) {
--			lock_slot(mapping, slot);
--			ret = page;
--			xa_unlock_irq(&mapping->i_pages);
--			break;
-+		xas_set(&xas, page->index);
-+		entry = xas_load(&xas);
-+		if (dax_is_locked(entry)) {
-+			entry = get_unlocked_entry(&xas);
-+			/* Did the page move while we slept? */
-+			if (dax_to_pfn(entry) != pfn) {
-+				xas_unlock_irq(&xas);
-+				continue;
-+			}
- 		}
--
--		wq = dax_entry_waitqueue(&mapping->i_pages, index, entry,
--				&ewait.key);
--		prepare_to_wait_exclusive(wq, &ewait.wait,
--				TASK_UNINTERRUPTIBLE);
--		xa_unlock_irq(&mapping->i_pages);
--		rcu_read_unlock();
--		schedule();
--		finish_wait(wq, &ewait.wait);
--		rcu_read_lock();
-+		dax_lock_entry(&xas, entry);
-+		xas_unlock_irq(&xas);
-+		goto out;
- 	}
- 	rcu_read_unlock();
- 
-+out:
- 	return page;
- }
- 
- void dax_unlock_page(struct page *page)
- {
- 	struct address_space *mapping = page->mapping;
--	struct inode *inode = mapping->host;
-+	XA_STATE(xas, &mapping->i_pages, page->index);
-+	void *entry;
- 
--	if (S_ISCHR(inode->i_mode))
-+	if (S_ISCHR(mapping->host->i_mode))
- 		return;
- 
--	dax_unlock_mapping_entry(mapping, page->index);
+-	xa_lock_irq(pages);
+-	entry = get_unlocked_mapping_entry(mapping, index, NULL);
 +	xas_lock_irq(&xas);
-+	entry = xas_load(&xas);
-+	BUG_ON(!dax_is_locked(entry));
-+	entry = dax_make_page_entry(page, entry);
-+	xas_store(&xas, entry);
-+	dax_wake_entry(&xas, entry, false);
++	entry = get_unlocked_entry(&xas);
+ 	if (!entry || WARN_ON_ONCE(!xa_is_value(entry)))
+ 		goto out;
+ 	if (!trunc &&
+-	    (radix_tree_tag_get(pages, index, PAGECACHE_TAG_DIRTY) ||
+-	     radix_tree_tag_get(pages, index, PAGECACHE_TAG_TOWRITE)))
++	    (xas_get_tag(&xas, PAGECACHE_TAG_DIRTY) ||
++	     xas_get_tag(&xas, PAGECACHE_TAG_TOWRITE)))
+ 		goto out;
+ 	dax_disassociate_entry(entry, mapping, trunc);
+-	radix_tree_delete(pages, index);
++	xas_store(&xas, NULL);
+ 	mapping->nrexceptional--;
+ 	ret = 1;
+ out:
+-	put_unlocked_mapping_entry(mapping, index, entry);
+-	xa_unlock_irq(pages);
++	put_unlocked_entry(&xas, entry);
 +	xas_unlock_irq(&xas);
+ 	return ret;
  }
- 
++
  /*
+  * Delete DAX entry at @index from @mapping.  Wait for it
+  * to be unlocked before deleting it.
 -- 
 2.17.1
 
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most
+engaging tech sites, Slashdot.org! http://sdm.link/slashdot
