@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 16/74] xarray: Step through an XArray
-Date: Sat, 16 Jun 2018 18:59:54 -0700
-Message-ID: <20180617020052.4759-17-willy@infradead.org>
+Subject: [PATCH v14 02/74] radix tree test suite: Enable ubsan
+Date: Sat, 16 Jun 2018 18:59:40 -0700
+Message-ID: <20180617020052.4759-3-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
@@ -10,11 +10,11 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
         Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
         List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=czrxuIIJmcJc5dHPTHEXxpepAs+QdQPljzwWCR9U87A=; b=Hsny3N4kY5Ch5Pu3+ULFuFKbd
-        vCHGbdRxXLIGL/YjZIjqu4A7YoLS0skexHwJSphnEv2fQ6IoWpIm8atcuo/fPYqWzQ/ttB4uRpB3L
-        3hzsVYtux/ObykIqaGXzUXzpfufZWfFYZZYbpPmzsWNI8C+Exa1I93D4JNzfQlVzKiz8Os1kYcsN6
-        P4GJC559codJhX/9GnghOk10DhfLw22SkSKfUmpaxrBDJTc8+XmPRDXtgwvmMZE4E592nqCl0fmLC
-        15LfjptxlVi+eRYP3sPGZbTClvL66C2sy/lPMgS/j5CIBgMuC7ieUODYOxt9m34TbrG64rWtkEwYq
+         bh=nEu/iSteNkAMtQpngBIONZNFiPmqdnQM7MosSEs/KsA=; b=kODSpXqayiCTcEDvEYp/du24p
+        sHIETX/XLFNJ2x1FtUmzvI+5AhfyICUN1P1iIrKcZZq4YS2bTVrtulRcevE++kOxNSgE9liMK3r6y
+        B9W1fyERkDG3EG57hLYrOLC9W9mM/T7XuEPCz5XHayZU28oZAyZy7s45OyHux0Y21ru2/DpO/Jhnr
+        g88/XZN1qYipFNG/U74ZdF/zfrUkcn4xC3+So1vXqrCuTT1sbApIxqGcXNvJG+Ue1lPgZGfVkkbGy
+        kWfqitaQrO3YxVqhDCbghShp5VcdY/qCIG3Cux4b4pP7GOw9uWh5m4qlogtT4/tkCou/hCmpF0b8C
     
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -25,315 +25,67 @@ Content-Transfer-Encoding: 7bit
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
 
-The xas_next and xas_prev functions move the xas index by one position,
-and adjust the rest of the iterator state to match it.  This is more
-efficient than calling xas_set() as it keeps the iterator at the leaves
-of the tree instead of walking the iterator from the root each time.
+Add support for the undefined behaviour sanitizer and fix the bugs
+that ubsan pointed out.  Nothing major, and all in the test suite,
+not the code.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- include/linux/xarray.h |  67 +++++++++++++++++++++++++
- lib/test_xarray.c      | 109 +++++++++++++++++++++++++++++++++++++++++
- lib/xarray.c           |  74 ++++++++++++++++++++++++++++
- 3 files changed, 250 insertions(+)
+ tools/testing/radix-tree/Makefile |  5 +++--
+ tools/testing/radix-tree/main.c   | 20 +++++++++++---------
+ 2 files changed, 14 insertions(+), 11 deletions(-)
 
-diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index fa36a0670988..921d41034d7d 100644
---- a/include/linux/xarray.h
-+++ b/include/linux/xarray.h
-@@ -719,6 +719,12 @@ static inline bool xas_not_node(struct xa_node *node)
- 	return ((unsigned long)node & 3) || !node;
+diff --git a/tools/testing/radix-tree/Makefile b/tools/testing/radix-tree/Makefile
+index db66f8a0d4be..da030a65d6d6 100644
+--- a/tools/testing/radix-tree/Makefile
++++ b/tools/testing/radix-tree/Makefile
+@@ -1,7 +1,8 @@
+ # SPDX-License-Identifier: GPL-2.0
+ 
+-CFLAGS += -I. -I../../include -g -O2 -Wall -D_LGPL_SOURCE -fsanitize=address
+-LDFLAGS += -fsanitize=address
++CFLAGS += -I. -I../../include -g -Og -Wall -D_LGPL_SOURCE -fsanitize=address \
++	  -fsanitize=undefined
++LDFLAGS += -fsanitize=address -fsanitize=undefined
+ LDLIBS+= -lpthread -lurcu
+ TARGETS = main idr-test multiorder
+ CORE_OFILES := radix-tree.o idr.o linux.o test.o find_bit.o
+diff --git a/tools/testing/radix-tree/main.c b/tools/testing/radix-tree/main.c
+index 257f3f8aacaa..584a8732f5ce 100644
+--- a/tools/testing/radix-tree/main.c
++++ b/tools/testing/radix-tree/main.c
+@@ -27,20 +27,22 @@ void __gang_check(unsigned long middle, long down, long up, int chunk, int hop)
+ 		item_check_present(&tree, middle + idx);
+ 	item_check_absent(&tree, middle + up);
+ 
+-	item_gang_check_present(&tree, middle - down,
+-			up + down, chunk, hop);
+-	item_full_scan(&tree, middle - down, down + up, chunk);
++	if (chunk > 0) {
++		item_gang_check_present(&tree, middle - down, up + down,
++				chunk, hop);
++		item_full_scan(&tree, middle - down, down + up, chunk);
++	}
+ 	item_kill_tree(&tree);
  }
  
-+/* True if the node represents RESTART or an error */
-+static inline bool xas_frozen(struct xa_node *node)
-+{
-+	return (unsigned long)node & 2;
-+}
-+
- /* True if the node represents head-of-tree, RESTART or BOUNDS */
- static inline bool xas_top(struct xa_node *node)
+ void gang_check(void)
  {
-@@ -977,6 +983,67 @@ enum {
- 	for (entry = xas_find_tagged(xas, max, tag); entry; \
- 	     entry = xas_next_tagged(xas, max, tag))
- 
-+void *__xas_next(struct xa_state *);
-+void *__xas_prev(struct xa_state *);
-+
-+/**
-+ * xas_prev() - Move iterator to previous index.
-+ * @xas: XArray operation state.
-+ *
-+ * If the @xas was in an error state, it will remain in an error state
-+ * and this function will return %NULL.  If the @xas has never been walked,
-+ * it will have the effect of calling xas_load().  Otherwise one will be
-+ * subtracted from the index and the state will be walked to the correct
-+ * location in the array for the next operation.
-+ *
-+ * If the iterator was referencing index 0, this function wraps
-+ * around to %ULONG_MAX.
-+ *
-+ * Return: The entry at the new index.  This may be %NULL or an internal
-+ * entry.
-+ */
-+static inline void *xas_prev(struct xa_state *xas)
-+{
-+	struct xa_node *node = xas->xa_node;
-+
-+	if (unlikely(xas_not_node(node) || node->shift ||
-+				xas->xa_offset == 0))
-+		return __xas_prev(xas);
-+
-+	xas->xa_index--;
-+	xas->xa_offset--;
-+	return xa_entry(xas->xa, node, xas->xa_offset);
-+}
-+
-+/**
-+ * xas_next() - Move state to next index.
-+ * @xas: XArray operation state.
-+ *
-+ * If the @xas was in an error state, it will remain in an error state
-+ * and this function will return %NULL.  If the @xas has never been walked,
-+ * it will have the effect of calling xas_load().  Otherwise one will be
-+ * added to the index and the state will be walked to the correct
-+ * location in the array for the next operation.
-+ *
-+ * If the iterator was referencing index %ULONG_MAX, this function wraps
-+ * around to 0.
-+ *
-+ * Return: The entry at the new index.  This may be %NULL or an internal
-+ * entry.
-+ */
-+static inline void *xas_next(struct xa_state *xas)
-+{
-+	struct xa_node *node = xas->xa_node;
-+
-+	if (unlikely(xas_not_node(node) || node->shift ||
-+				xas->xa_offset == XA_CHUNK_MASK))
-+		return __xas_next(xas);
-+
-+	xas->xa_index++;
-+	xas->xa_offset++;
-+	return xa_entry(xas->xa, node, xas->xa_offset);
-+}
-+
- /* Internal functions, mostly shared between radix-tree.c, xarray.c and idr.c */
- void xas_destroy(struct xa_state *);
- 
-diff --git a/lib/test_xarray.c b/lib/test_xarray.c
-index a6a3705165ca..e74ade12c663 100644
---- a/lib/test_xarray.c
-+++ b/lib/test_xarray.c
-@@ -384,6 +384,114 @@ static void check_find(struct xarray *xa)
- 	check_multi_find(xa);
+-	__gang_check(1 << 30, 128, 128, 35, 2);
+-	__gang_check(1 << 31, 128, 128, 32, 32);
+-	__gang_check(1 << 31, 128, 128, 32, 100);
+-	__gang_check(1 << 31, 128, 128, 17, 7);
+-	__gang_check(0xffff0000, 0, 65536, 17, 7);
+-	__gang_check(0xfffffffe, 1, 1, 17, 7);
++	__gang_check(1UL << 30, 128, 128, 35, 2);
++	__gang_check(1UL << 31, 128, 128, 32, 32);
++	__gang_check(1UL << 31, 128, 128, 32, 100);
++	__gang_check(1UL << 31, 128, 128, 17, 7);
++	__gang_check(0xffff0000UL, 0, 65536, 17, 7);
++	__gang_check(0xfffffffeUL, 1, 1, 17, 7);
  }
  
-+static void check_move_small(struct xarray *xa, unsigned long idx)
-+{
-+	XA_STATE(xas, xa, 0);
-+	unsigned long i;
-+
-+	xa_store_value(xa, 0, GFP_KERNEL);
-+	xa_store_value(xa, idx, GFP_KERNEL);
-+
-+	for (i = 0; i < idx * 4; i++) {
-+		void *entry = xas_next(&xas);
-+		if (i <= idx)
-+			XA_BUG_ON(xa, xas.xa_node == XAS_RESTART);
-+		XA_BUG_ON(xa, xas.xa_index != i);
-+		if (i == 0 || i == idx)
-+			XA_BUG_ON(xa, entry != xa_mk_value(i));
-+		else
-+			XA_BUG_ON(xa, entry != NULL);
-+	}
-+	xas_next(&xas);
-+	XA_BUG_ON(xa, xas.xa_index != i);
-+
-+	do {
-+		void *entry = xas_prev(&xas);
-+		i--;
-+		if (i <= idx)
-+			XA_BUG_ON(xa, xas.xa_node == XAS_RESTART);
-+		XA_BUG_ON(xa, xas.xa_index != i);
-+		if (i == 0 || i == idx)
-+			XA_BUG_ON(xa, entry != xa_mk_value(i));
-+		else
-+			XA_BUG_ON(xa, entry != NULL);
-+	} while (i > 0);
-+
-+	xas_set(&xas, ULONG_MAX);
-+	XA_BUG_ON(xa, xas_next(&xas) != NULL);
-+	XA_BUG_ON(xa, xas.xa_index != ULONG_MAX);
-+	XA_BUG_ON(xa, xas_next(&xas) != xa_mk_value(0));
-+	XA_BUG_ON(xa, xas.xa_index != 0);
-+	XA_BUG_ON(xa, xas_prev(&xas) != NULL);
-+	XA_BUG_ON(xa, xas.xa_index != ULONG_MAX);
-+
-+	xa_erase_value(xa, 0);
-+	xa_erase_value(xa, idx);
-+	XA_BUG_ON(xa, !xa_empty(xa));
-+}
-+
-+static void check_move(struct xarray *xa)
-+{
-+	XA_STATE(xas, xa, (1 << 16) - 1);
-+	unsigned long i;
-+
-+	for (i = 0; i < (1 << 16); i++)
-+		XA_BUG_ON(xa, xa_store_value(xa, i, GFP_KERNEL) != NULL);
-+
-+	do {
-+		void *entry = xas_prev(&xas);
-+		i--;
-+		XA_BUG_ON(xa, entry != xa_mk_value(i));
-+		XA_BUG_ON(xa, i != xas.xa_index);
-+	} while (i != 0);
-+
-+	XA_BUG_ON(xa, xas_prev(&xas) != NULL);
-+	XA_BUG_ON(xa, xas.xa_index != ULONG_MAX);
-+
-+	do {
-+		void *entry = xas_next(&xas);
-+		XA_BUG_ON(xa, entry != xa_mk_value(i));
-+		XA_BUG_ON(xa, i != xas.xa_index);
-+		i++;
-+	} while (i < (1 << 16));
-+
-+	for (i = (1 << 8); i < (1 << 15); i++)
-+		xa_erase_value(xa, i);
-+
-+	i = xas.xa_index;
-+
-+	do {
-+		void *entry = xas_prev(&xas);
-+		i--;
-+		if ((i < (1 << 8)) || (i >= (1 << 15)))
-+			XA_BUG_ON(xa, entry != xa_mk_value(i));
-+		else
-+			XA_BUG_ON(xa, entry != NULL);
-+		XA_BUG_ON(xa, i != xas.xa_index);
-+	} while (i != 0);
-+
-+	XA_BUG_ON(xa, xas_prev(&xas) != NULL);
-+	XA_BUG_ON(xa, xas.xa_index != ULONG_MAX);
-+
-+	do {
-+		void *entry = xas_next(&xas);
-+		if ((i < (1 << 8)) || (i >= (1 << 15)))
-+			XA_BUG_ON(xa, entry != xa_mk_value(i));
-+		else
-+			XA_BUG_ON(xa, entry != NULL);
-+		XA_BUG_ON(xa, i != xas.xa_index);
-+		i++;
-+	} while (i < (1 << 16));
-+
-+	xa_destroy(xa);
-+
-+	for (i = 0; i < 16; i++)
-+		check_move_small(xa, 1UL << i);
-+
-+	for (i = 2; i < 16; i++)
-+		check_move_small(xa, (1UL << i) - 1);
-+}
-+
- static int xarray_checks(void)
- {
- 	DEFINE_XARRAY(array);
-@@ -397,6 +505,7 @@ static int xarray_checks(void)
- 	check_cmpxchg(&array);
- 	check_multi_store(&array);
- 	check_find(&array);
-+	check_move(&array);
- 
- 	printk("XArray: %u of %u tests passed\n", tests_passed, tests_run);
- 	return (tests_run != tests_passed) ? 0 : -EINVAL;
-diff --git a/lib/xarray.c b/lib/xarray.c
-index e90ba76404ae..ab1b6786711e 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -863,6 +863,80 @@ void xas_pause(struct xa_state *xas)
- }
- EXPORT_SYMBOL_GPL(xas_pause);
- 
-+/*
-+ * __xas_prev() - Find the previous entry in the XArray.
-+ * @xas: XArray operation state.
-+ *
-+ * Helper function for xas_prev() which handles all the complex cases
-+ * out of line.
-+ */
-+void *__xas_prev(struct xa_state *xas)
-+{
-+	void *entry;
-+
-+	if (!xas_frozen(xas->xa_node))
-+		xas->xa_index--;
-+	if (xas_not_node(xas->xa_node))
-+		return xas_load(xas);
-+
-+	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
-+		xas->xa_offset--;
-+
-+	while (xas->xa_offset == 255) {
-+		xas->xa_offset = xas->xa_node->offset - 1;
-+		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
-+		if (!xas->xa_node)
-+			return set_bounds(xas);
-+	}
-+
-+	for (;;) {
-+		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
-+		if (!xa_is_node(entry))
-+			return entry;
-+
-+		xas->xa_node = xa_to_node(entry);
-+		xas_set_offset(xas);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(__xas_prev);
-+
-+/*
-+ * __xas_next() - Find the next entry in the XArray.
-+ * @xas: XArray operation state.
-+ *
-+ * Helper function for xas_next() which handles all the complex cases
-+ * out of line.
-+ */
-+void *__xas_next(struct xa_state *xas)
-+{
-+	void *entry;
-+
-+	if (!xas_frozen(xas->xa_node))
-+		xas->xa_index++;
-+	if (xas_not_node(xas->xa_node))
-+		return xas_load(xas);
-+
-+	if (xas->xa_offset != get_offset(xas->xa_index, xas->xa_node))
-+		xas->xa_offset++;
-+
-+	while (xas->xa_offset == XA_CHUNK_SIZE) {
-+		xas->xa_offset = xas->xa_node->offset + 1;
-+		xas->xa_node = xa_parent(xas->xa, xas->xa_node);
-+		if (!xas->xa_node)
-+			return set_bounds(xas);
-+	}
-+
-+	for (;;) {
-+		entry = xa_entry(xas->xa, xas->xa_node, xas->xa_offset);
-+		if (!xa_is_node(entry))
-+			return entry;
-+
-+		xas->xa_node = xa_to_node(entry);
-+		xas_set_offset(xas);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(__xas_next);
-+
- /**
-  * xas_find() - Find the next present entry in the XArray.
-  * @xas: XArray operation state.
+ void __big_gang_check(void)
 -- 
 2.17.1
 
