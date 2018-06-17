@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 53/74] shmem: Convert
- shmem_partial_swap_usage to XArray
-Date: Sat, 16 Jun 2018 19:00:31 -0700
-Message-ID: <20180617020052.4759-54-willy@infradead.org>
+Subject: [PATCH v14 46/74] pagevec: Use xa_tag_t
+Date: Sat, 16 Jun 2018 19:00:24 -0700
+Message-ID: <20180617020052.4759-47-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=cG68gKkTs5UYbRuctTjnA5DJ1Hlo3K420tinQxGQS78=; b=jSdw7qzs234vN+qWNbGATI0MCP
- pZR/sBcZNn6VG8yC34lyyC6Z32gaeeMFe4BY4o4FebzGJox7OiTe93IqYZ/VRzonOSq5Bel76BGCo
- OHuoviUmCU13iTJ2gVXac3cfjBe8clrq/kLk7zdi7RjLNjxU9E6TuNLOUfh8CVaUmd20=;
+ bh=Jma1TiXYXgzbd/mOR5mS37ALLbcKLGTSgi/PIzREx/M=; b=G8OPdnzT/ukJpWrK7rG9mHPjfm
+ r0dEhJm+jd6B8nDumKte3Ya8WhEN+2k3iM8jsK5dZ5AbOYSOpA3NsrIHjme6CDa9a1SC37CsGt7dm
+ z2J9MZ3GHp5c5RBTgClPpEUNHK8DoBv1JkZAttFgPwflpBlDZm64X8cxwBhXqYt/xsSg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=cG68gKkTs5UYbRuctTjnA5DJ1Hlo3K420tinQxGQS78=; b=h961yw1l5ws01pXy27edfJla9r
- P8QsUMwRxEuMaAjhUO9Vuklk+VlrA74oRp7vGTCpqKu4+HMHAJqcQcHztOP0zQLE+JdgBwGc7MRVN
- O8eJ3HQ3tMobC15j2UCnGtMkFYTLVTL1e1xlFr90QXvxNvrgJoYXoOVdC53lOJ+pPA3A=;
+ bh=Jma1TiXYXgzbd/mOR5mS37ALLbcKLGTSgi/PIzREx/M=; b=FlIbHRS3m8AYrXqWbj6NmEE0Yl
+ q+GATbEtx80lsLgariPSQfv0btqEph3RD76KiLHZpOR/3oNOumaTTOw6LLcZAX8Lqxs8UVhAq5jBt
+ mG4h5nk/y453oJ9fPJXc9FU2gnpHWYo6iII+dFCepUrXEBurxut+DCQ949EXnQ6UiHkU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=cG68gKkTs5UYbRuctTjnA5DJ1Hlo3K420tinQxGQS78=; b=c0oiJt9vr2RZyOX28lNA3rwqz
- hfl0ZlZ1FzLhhgLV2vmQ8nMAwdBeCTtb407HvZsHcqTrxzUmLBQZQOJx4krdvm2WgkVITInaNjBHY
- ERaYaqnG7/RdpnjAHCbd/CxaHCW+SVYrn+TTmqHwAFR4Fm3ABpaPnXTz23OZJC5pZmwHanqPFfcUo
- Sy821ttd2CNHL6cP8VgmTa2apeymy6o5svDu6t6LdzkzjgphePdD7GnKn7E1ZbLWs+UN0hoKbLwjz
- 3J7v3MaN5L18L5SmElcIUL9730UmvnMVistmH0+Dwaq4gbFpeqjWynYFS2tjfoaKG21GwWnCQ06CE
- 7FldP2KrA==;
+ bh=Jma1TiXYXgzbd/mOR5mS37ALLbcKLGTSgi/PIzREx/M=; b=fwWZtttCxY+0MmbUgv/KTnqSz
+ 2QxR9WoCQwWJjtieIzUFai9TwYYAJpBFStnrHWuq9wrjhOy/zirnUHLes7qf7jj+ljtnxorPvz5Am
+ YHaBRaeZk8nTfE9bXmAtmAYd4ZXBkTDraDqN/2m1QFHX8leQhEzitQwUeVij6Jbk5OHiHtoTT9TAt
+ 0NQbeAkf7oRDz89TaaYgkNLafY7lj7wA6X2C7/W4KZTnWsIO0mwBYgcofzH1E+FdpZUKcKBbB1LRt
+ bJFhOejTG3H7M0nWxZgz/VghNiH+UINRZDcNCLZJ2PWtbxpP77y2e7iXse8ORK3/AYogrMqNBaqWl
+ eOYDnzEpw==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,52 +51,130 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Simpler code because the xarray takes care of things like the limit and
-dereferencing the slot.
+Removes sparse warnings.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- mm/shmem.c | 18 ++++--------------
- 1 file changed, 4 insertions(+), 14 deletions(-)
+ fs/btrfs/extent_io.c    | 4 ++--
+ fs/ext4/inode.c         | 2 +-
+ fs/f2fs/data.c          | 2 +-
+ fs/gfs2/aops.c          | 2 +-
+ include/linux/pagevec.h | 8 +++++---
+ mm/swap.c               | 4 ++--
+ 6 files changed, 12 insertions(+), 10 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 9dbbdd5dee30..bffb87854852 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -679,29 +679,19 @@ static int shmem_free_swap(struct address_space *mapping,
- unsigned long shmem_partial_swap_usage(struct address_space *mapping,
- 						pgoff_t start, pgoff_t end)
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index cce6087d6880..ac105d97dd81 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -3792,7 +3792,7 @@ int btree_write_cache_pages(struct address_space *mapping,
+ 	pgoff_t index;
+ 	pgoff_t end;		/* Inclusive */
+ 	int scanned = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	pagevec_init(&pvec);
+ 	if (wbc->range_cyclic) {
+@@ -3917,7 +3917,7 @@ static int extent_write_cache_pages(struct address_space *mapping,
+ 	pgoff_t done_index;
+ 	int range_whole = 0;
+ 	int scanned = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	/*
+ 	 * We have to hold onto the inode so that ordered extents can do their
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 38214c05f204..e6c433527dce 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -2615,7 +2615,7 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
+ 	long left = mpd->wbc->nr_to_write;
+ 	pgoff_t index = mpd->first_page;
+ 	pgoff_t end = mpd->last_page;
+-	int tag;
++	xa_tag_t tag;
+ 	int i, err = 0;
+ 	int blkbits = mpd->inode->i_blkbits;
+ 	ext4_lblk_t lblk;
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index 8f931d699287..e5c0b1e74ce6 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -1942,7 +1942,7 @@ static int f2fs_write_cache_pages(struct address_space *mapping,
+ 	pgoff_t last_idx = ULONG_MAX;
+ 	int cycled;
+ 	int range_whole = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	pagevec_init(&pvec);
+ 
+diff --git a/fs/gfs2/aops.c b/fs/gfs2/aops.c
+index 35f5ee23566d..b8609bb1e2e0 100644
+--- a/fs/gfs2/aops.c
++++ b/fs/gfs2/aops.c
+@@ -370,7 +370,7 @@ static int gfs2_write_cache_jdata(struct address_space *mapping,
+ 	pgoff_t done_index;
+ 	int cycled;
+ 	int range_whole = 0;
+-	int tag;
++	xa_tag_t tag;
+ 
+ 	pagevec_init(&pvec);
+ 	if (wbc->range_cyclic) {
+diff --git a/include/linux/pagevec.h b/include/linux/pagevec.h
+index 6dc456ac6136..955bd6425903 100644
+--- a/include/linux/pagevec.h
++++ b/include/linux/pagevec.h
+@@ -9,6 +9,8 @@
+ #ifndef _LINUX_PAGEVEC_H
+ #define _LINUX_PAGEVEC_H
+ 
++#include <linux/xarray.h>
++
+ /* 15 pointers + header align the pagevec structure to a power of two */
+ #define PAGEVEC_SIZE	15
+ 
+@@ -40,12 +42,12 @@ static inline unsigned pagevec_lookup(struct pagevec *pvec,
+ 
+ unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag);
++		xa_tag_t tag);
+ unsigned pagevec_lookup_range_nr_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag, unsigned max_pages);
++		xa_tag_t tag, unsigned max_pages);
+ static inline unsigned pagevec_lookup_tag(struct pagevec *pvec,
+-		struct address_space *mapping, pgoff_t *index, int tag)
++		struct address_space *mapping, pgoff_t *index, xa_tag_t tag)
  {
--	struct radix_tree_iter iter;
--	void __rcu **slot;
-+	XA_STATE(xas, &mapping->i_pages, start);
- 	struct page *page;
- 	unsigned long swapped = 0;
+ 	return pagevec_lookup_range_tag(pvec, mapping, index, (pgoff_t)-1, tag);
+ }
+diff --git a/mm/swap.c b/mm/swap.c
+index 4c5c7fcc6e46..a7ff602213a9 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -1002,7 +1002,7 @@ EXPORT_SYMBOL(pagevec_lookup_range);
  
- 	rcu_read_lock();
--
--	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
--		if (iter.index >= end)
--			break;
--
--		page = radix_tree_deref_slot(slot);
--
--		if (radix_tree_deref_retry(page)) {
--			slot = radix_tree_iter_retry(&iter);
-+	xas_for_each(&xas, page, end - 1) {
-+		if (xas_retry(&xas, page))
- 			continue;
--		}
--
- 		if (xa_is_value(page))
- 			swapped++;
+ unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag)
++		xa_tag_t tag)
+ {
+ 	pvec->nr = find_get_pages_range_tag(mapping, index, end, tag,
+ 					PAGEVEC_SIZE, pvec->pages);
+@@ -1012,7 +1012,7 @@ EXPORT_SYMBOL(pagevec_lookup_range_tag);
  
- 		if (need_resched()) {
--			slot = radix_tree_iter_resume(slot, &iter);
-+			xas_pause(&xas);
- 			cond_resched_rcu();
- 		}
- 	}
+ unsigned pagevec_lookup_range_nr_tag(struct pagevec *pvec,
+ 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+-		int tag, unsigned max_pages)
++		xa_tag_t tag, unsigned max_pages)
+ {
+ 	pvec->nr = find_get_pages_range_tag(mapping, index, end, tag,
+ 		min_t(unsigned int, max_pages, PAGEVEC_SIZE), pvec->pages);
 -- 
 2.17.1
 
