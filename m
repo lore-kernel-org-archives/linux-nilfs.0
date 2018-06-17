@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 71/74] radix tree: Remove
- radix_tree_update_node_t
-Date: Sat, 16 Jun 2018 19:00:49 -0700
-Message-ID: <20180617020052.4759-72-willy@infradead.org>
+Subject: [PATCH v14 14/74] xarray: Extract entries from an XArray
+Date: Sat, 16 Jun 2018 18:59:52 -0700
+Message-ID: <20180617020052.4759-15-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jdCvzur2+vrs4wIgTMkWQ7nA24iiOf417klTR62NNZM=; b=ceRgAEVMU5TL2izsKS1bc5+Prj
- OPJ3nPLsBDMcJi7c51QdJw7lGMg1dHW7Ew713MofZmsQpcf9LFesJcU8qQMY5BxdGXAj+Ght3SMHN
- xFjbvmBDnzVTiyhOvlGhefXNeQFFx1Z05HV2Fzly75wpUxTWwFqvEqUVOm5rO548mXWs=;
+ bh=6CtH22NpoaemDSFVaBuH/UKCnAIo12i5SDA7CsPpPB8=; b=mX5zunOZPK8lus927oYcORrGDo
+ 7NJtHR24AR76NEchYkiH8kzz9lZYlvx8kP8QpH2RSvNspPHnpchh6nMZzv3MBqtyOwczSwZ02ZB5Y
+ wvPHODR25u4QbkkwLCJNVK36fRKqbq1QYoz9rU6EwaHF+UCND9yMpW/5wWQV9oq6Sskc=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=jdCvzur2+vrs4wIgTMkWQ7nA24iiOf417klTR62NNZM=; b=Tb5xUcnAwEauYI4hUFVuIfnxPj
- 7hXh1VdhVPBb8vgANNUUxXNvqn76Z+jtg1Yqkd8Z5sDXwP+L1v6dNWSdONbVyeQqHOmqHLO7kTG0b
- xUsATR1uKsXuMrjEbp+TmyB/6Ng7J4cRxifMZ5zBnzWF2wMiuiathKQGHrIaDoKtxKbE=;
+ bh=6CtH22NpoaemDSFVaBuH/UKCnAIo12i5SDA7CsPpPB8=; b=foh1P8nZUnSRHIHhSIRj89wEEj
+ CBP+awcX+b7sfOIQF5vLsDh+3B6xFYbgCtmIpwBzwAfp6JC0tpg1iqdiKDC5PoFRngLLjhtFHCt/u
+ njauXCaq9K5f/PaN1VX0ZSPRmM7QzkuoY79ELh2bsFC5FoTEV7z/0UYzrzrR3ku26yjU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jdCvzur2+vrs4wIgTMkWQ7nA24iiOf417klTR62NNZM=; b=btzhY0I/O0huyXg3okKQ8nEWO
- s25I4By4smS12FjyffqK3zQ3kckINP0wQDKDMFG68PTL9/wJ0BHxJP6PntJAeEF44tF978cfN85og
- VvjNDbDyAAtS7HximdC1btnnXWgvhseXnjNdVopJiMgdgzJF8zXRU5AEupT5Uv0/jylbGuOWbwIYH
- YRPqjRK/vPFgqT5sffcnJP7WRi+Rz6Ep4ZZshgqXDVon7hdBWWpvkYJCgmnUvup8mvJfEN28va+7s
- 2evlzhUgbwMuSm1NAwaplqSAnbY66aT7qnGiemxK65vgppU9ZKygqodQNosLsNnX+lIg6uApspQY0
- 8w1XH6u8g==;
+ bh=6CtH22NpoaemDSFVaBuH/UKCnAIo12i5SDA7CsPpPB8=; b=enZlbfI9wXXz6+EBEkFiy9m/k
+ kt+C1t9v+DOjsgRjSlROOtXSExB0JfbGElKzRRlkpDixFmAsj7NqoYl2vkaNRaAV9e2qsBLbawMd7
+ 2V+NPrpcpZr6Tz9vH6txcgm1gsZQEthoYzoWVpuIbZN9iKx8Nczisl6Kf7ODKpnWM5U4nNqJUzKQU
+ k2dxk7v2a30hWRXlDFVIobiPkbwfGy5H5+5On4MFGEIG4gDqydppCgcT8oHofRynWzWHq3ynIWJKE
+ yI4DbKG1dLpTYowlYpBvwZBWXNe7JCH1ajp+0EW+pTITfO03ovzN3TENi+EQ8pMTkW4/YaYTdvDrE
+ 75myFGVhg==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,189 +51,120 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-The only user of this functionality was the workingset code, and it's
-now been converted to the XArray.  Remove __radix_tree_delete_node()
-entirely as it was also only used by the workingset code.
+The xa_extract function combines the functionality of
+radix_tree_gang_lookup() and radix_tree_gang_lookup_tagged().
+It extracts entries matching the specified filter into a normal array.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- include/linux/radix-tree.h            |  7 +----
- lib/idr.c                             |  2 +-
- lib/radix-tree.c                      | 42 +++++----------------------
- tools/testing/radix-tree/multiorder.c |  2 +-
- 4 files changed, 11 insertions(+), 42 deletions(-)
+ include/linux/xarray.h |  2 ++
+ lib/xarray.c           | 80 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 82 insertions(+)
 
-diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
-index 081e68b4376b..fc13c4b1afdb 100644
---- a/include/linux/radix-tree.h
-+++ b/include/linux/radix-tree.h
-@@ -242,17 +242,12 @@ void *__radix_tree_lookup(const struct radix_tree_root *, unsigned long index,
- void *radix_tree_lookup(const struct radix_tree_root *, unsigned long);
- void __rcu **radix_tree_lookup_slot(const struct radix_tree_root *,
- 					unsigned long index);
--typedef void (*radix_tree_update_node_t)(struct radix_tree_node *);
- void __radix_tree_replace(struct radix_tree_root *, struct radix_tree_node *,
--			  void __rcu **slot, void *entry,
--			  radix_tree_update_node_t update_node);
-+			  void __rcu **slot, void *entry);
- void radix_tree_iter_replace(struct radix_tree_root *,
- 		const struct radix_tree_iter *, void __rcu **slot, void *entry);
- void radix_tree_replace_slot(struct radix_tree_root *,
- 			     void __rcu **slot, void *entry);
--void __radix_tree_delete_node(struct radix_tree_root *,
--			      struct radix_tree_node *,
--			      radix_tree_update_node_t update_node);
- void radix_tree_iter_delete(struct radix_tree_root *,
- 			struct radix_tree_iter *iter, void __rcu **slot);
- void *radix_tree_delete_item(struct radix_tree_root *, unsigned long, void *);
-diff --git a/lib/idr.c b/lib/idr.c
-index 0d7410d1fb7c..58b88f5eb672 100644
---- a/lib/idr.c
-+++ b/lib/idr.c
-@@ -303,7 +303,7 @@ void *idr_replace(struct idr *idr, void *ptr, unsigned long id)
- 	if (!slot || radix_tree_tag_get(&idr->idr_rt, id, IDR_FREE))
- 		return ERR_PTR(-ENOENT);
- 
--	__radix_tree_replace(&idr->idr_rt, node, slot, ptr, NULL);
-+	__radix_tree_replace(&idr->idr_rt, node, slot, ptr);
- 
- 	return entry;
- }
-diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-index d0f44ea96945..001062d41f9f 100644
---- a/lib/radix-tree.c
-+++ b/lib/radix-tree.c
-@@ -610,8 +610,7 @@ static int radix_tree_extend(struct radix_tree_root *root, gfp_t gfp,
-  *	radix_tree_shrink    -    shrink radix tree to minimum height
-  *	@root		radix tree root
-  */
--static inline bool radix_tree_shrink(struct radix_tree_root *root,
--				     radix_tree_update_node_t update_node)
-+static inline bool radix_tree_shrink(struct radix_tree_root *root)
- {
- 	bool shrunk = false;
- 
-@@ -671,8 +670,6 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
- 		node->count = 0;
- 		if (!radix_tree_is_internal_node(child)) {
- 			node->slots[0] = (void __rcu *)RADIX_TREE_RETRY;
--			if (update_node)
--				update_node(node);
- 		}
- 
- 		WARN_ON_ONCE(!list_empty(&node->private_list));
-@@ -684,8 +681,7 @@ static inline bool radix_tree_shrink(struct radix_tree_root *root,
- }
- 
- static bool delete_node(struct radix_tree_root *root,
--			struct radix_tree_node *node,
--			radix_tree_update_node_t update_node)
-+			struct radix_tree_node *node)
- {
- 	bool deleted = false;
- 
-@@ -695,7 +691,7 @@ static bool delete_node(struct radix_tree_root *root,
- 		if (node->count) {
- 			if (node_to_entry(node) ==
- 					rcu_dereference_raw(root->xa_head))
--				deleted |= radix_tree_shrink(root, update_node);
-+				deleted |= radix_tree_shrink(root);
- 			return deleted;
- 		}
- 
-@@ -1100,15 +1096,13 @@ static int calculate_count(struct radix_tree_root *root,
-  * @node:		pointer to tree node
-  * @slot:		pointer to slot in @node
-  * @item:		new item to store in the slot.
-- * @update_node:	callback for changing leaf nodes
-  *
-  * For use with __radix_tree_lookup().  Caller must hold tree write locked
-  * across slot lookup and replacement.
-  */
- void __radix_tree_replace(struct radix_tree_root *root,
- 			  struct radix_tree_node *node,
--			  void __rcu **slot, void *item,
--			  radix_tree_update_node_t update_node)
-+			  void __rcu **slot, void *item)
- {
- 	void *old = rcu_dereference_raw(*slot);
- 	int values = !!xa_is_value(item) - !!xa_is_value(old);
-@@ -1126,10 +1120,7 @@ void __radix_tree_replace(struct radix_tree_root *root,
- 	if (!node)
- 		return;
- 
--	if (update_node)
--		update_node(node);
--
--	delete_node(root, node, update_node);
-+	delete_node(root, node);
- }
+diff --git a/include/linux/xarray.h b/include/linux/xarray.h
+index 0790b3b098f0..6f398732b664 100644
+--- a/include/linux/xarray.h
++++ b/include/linux/xarray.h
+@@ -227,6 +227,8 @@ void *xa_find(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
+ void *xa_find_after(struct xarray *xa, unsigned long *index,
+ 		unsigned long max, xa_tag_t) __attribute__((nonnull(2)));
++unsigned int xa_extract(struct xarray *, void **dst, unsigned long start,
++		unsigned long max, unsigned int n, xa_tag_t);
  
  /**
-@@ -1151,7 +1142,7 @@ void __radix_tree_replace(struct radix_tree_root *root,
- void radix_tree_replace_slot(struct radix_tree_root *root,
- 			     void __rcu **slot, void *item)
+  * xa_init() - Initialise an empty XArray.
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 8756ca22363e..1e15ead40d78 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -1413,6 +1413,86 @@ void *xa_find_after(struct xarray *xa, unsigned long *indexp,
+ }
+ EXPORT_SYMBOL(xa_find_after);
+ 
++static unsigned int xas_extract_present(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each(xas, entry, max) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++static unsigned int xas_extract_tag(struct xa_state *xas, void **dst,
++			unsigned long max, unsigned int n, xa_tag_t tag)
++{
++	void *entry;
++	unsigned int i = 0;
++
++	rcu_read_lock();
++	xas_for_each_tagged(xas, entry, max, tag) {
++		if (xas_retry(xas, entry))
++			continue;
++		dst[i++] = entry;
++		if (i == n)
++			break;
++	}
++	rcu_read_unlock();
++
++	return i;
++}
++
++/**
++ * xa_extract() - Copy selected entries from the XArray into a normal array.
++ * @xa: The source XArray to copy from.
++ * @dst: The buffer to copy entries into.
++ * @start: The first index in the XArray eligible to be selected.
++ * @max: The last index in the XArray eligible to be selected.
++ * @n: The maximum number of entries to copy.
++ * @filter: Selection criterion.
++ *
++ * Copies up to @n entries that match @filter from the XArray.  The
++ * copied entries will have indices between @start and @max, inclusive.
++ *
++ * The @filter may be an XArray tag value, in which case entries which are
++ * tagged with that tag will be copied.  It may also be %XA_PRESENT, in
++ * which case non-NULL entries will be copied.
++ *
++ * The entries returned may not represent a snapshot of the XArray at a
++ * moment in time.  For example, if another thread stores to index 5, then
++ * index 10, calling xa_extract() may return the old contents of index 5
++ * and the new contents of index 10.  Indices not modified while this
++ * function is running will not be skipped.
++ *
++ * If you need stronger guarantees, holding the xa_lock across calls to this
++ * function will prevent concurrent modification.
++ *
++ * Context: Any context.  Takes and releases the RCU lock.
++ * Return: The number of entries copied.
++ */
++unsigned int xa_extract(struct xarray *xa, void **dst, unsigned long start,
++			unsigned long max, unsigned int n, xa_tag_t filter)
++{
++	XA_STATE(xas, xa, start);
++
++	if (!n)
++		return 0;
++
++	if ((__force unsigned int)filter < XA_MAX_TAGS)
++		return xas_extract_tag(&xas, dst, max, n, filter);
++	return xas_extract_present(&xas, dst, max, n);
++}
++EXPORT_SYMBOL(xa_extract);
++
+ #ifdef XA_DEBUG
+ void xa_dump_node(const struct xa_node *node)
  {
--	__radix_tree_replace(root, NULL, slot, item, NULL);
-+	__radix_tree_replace(root, NULL, slot, item);
- }
- EXPORT_SYMBOL(radix_tree_replace_slot);
- 
-@@ -1168,7 +1159,7 @@ void radix_tree_iter_replace(struct radix_tree_root *root,
- 				const struct radix_tree_iter *iter,
- 				void __rcu **slot, void *item)
- {
--	__radix_tree_replace(root, iter->node, slot, item, NULL);
-+	__radix_tree_replace(root, iter->node, slot, item);
- }
- 
- #ifdef CONFIG_RADIX_TREE_MULTIORDER
-@@ -1848,23 +1839,6 @@ radix_tree_gang_lookup_tag_slot(const struct radix_tree_root *root,
- }
- EXPORT_SYMBOL(radix_tree_gang_lookup_tag_slot);
- 
--/**
-- *	__radix_tree_delete_node    -    try to free node after clearing a slot
-- *	@root:		radix tree root
-- *	@node:		node containing @index
-- *	@update_node:	callback for changing leaf nodes
-- *
-- *	After clearing the slot at @index in @node from radix tree
-- *	rooted at @root, call this function to attempt freeing the
-- *	node and shrinking the tree.
-- */
--void __radix_tree_delete_node(struct radix_tree_root *root,
--			      struct radix_tree_node *node,
--			      radix_tree_update_node_t update_node)
--{
--	delete_node(root, node, update_node);
--}
--
- static bool __radix_tree_delete(struct radix_tree_root *root,
- 				struct radix_tree_node *node, void __rcu **slot)
- {
-@@ -1880,7 +1854,7 @@ static bool __radix_tree_delete(struct radix_tree_root *root,
- 			node_tag_clear(root, node, tag, offset);
- 
- 	replace_slot(slot, NULL, node, -1, values);
--	return node && delete_node(root, node, NULL);
-+	return node && delete_node(root, node);
- }
- 
- /**
-diff --git a/tools/testing/radix-tree/multiorder.c b/tools/testing/radix-tree/multiorder.c
-index c659056340df..fc7d0c4e812a 100644
---- a/tools/testing/radix-tree/multiorder.c
-+++ b/tools/testing/radix-tree/multiorder.c
-@@ -618,7 +618,7 @@ static void multiorder_account(void)
- 	__radix_tree_insert(&tree, 1 << 5, 5, xa_mk_value(5));
- 	__radix_tree_lookup(&tree, 1 << 5, &node, &slot);
- 	assert(node->count == node->nr_values * 2);
--	__radix_tree_replace(&tree, node, slot, NULL, NULL);
-+	__radix_tree_replace(&tree, node, slot, NULL);
- 	assert(node->nr_values == 0);
- 
- 	item_kill_tree(&tree);
 -- 
 2.17.1
 
