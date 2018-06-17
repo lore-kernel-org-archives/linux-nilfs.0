@@ -1,158 +1,157 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 65/74] dax: Convert dax_layout_busy_page to
- XArray
-Date: Sat, 16 Jun 2018 19:00:43 -0700
-Message-ID: <20180617020052.4759-66-willy@infradead.org>
+Subject: [PATCH v14 73/74] radix tree: Remove radix_tree_maybe_preload_order
+Date: Sat, 16 Jun 2018 19:00:51 -0700
+Message-ID: <20180617020052.4759-74-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
-Mime-Version: 1.0
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+         bh=jpDj55nnZzY2oE988t2G5k90VBDDvIKhi51+JUE9KDc=; b=kUSPEDR2TlIhlWmySWpHHeDzy
+        PrXOpZ1y64bTep41fvjcaw69gAk7haVv5SP+XdJEBLKXFrpSokGi4njzrXOp2tDSsAtAbFdDX3tva
+        NO+QmUa+SbuXjy2Ngr+OgPcgKogHHaVR+Ai7ZoNy3SYxneT0Fr7nIyPhXQKY6trKeqTIESAsHZ9T4
+        wI2EZglfKrTfZwkmSzSM+Pxi3gpe95l84KZAfTnw2+ETh/ECTNDxjSaGJHUgramqS3kSRYFHbTFMd
+        lCwHjtxPdDuDt5p9rRQYxFTWU2ccjWpliUM75gBenJzq1k+6oT7orDktacMlYhvthZxTOo5pJkpUi
+    
+In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=tEOFzlT+od5bOh/ypS1B0w/JWs8F+t7+Bb3rIKpKXVE=; b=T4ONSrQ3NBQ/6CGrBqUNojeIwz
- xTVWP1RGVPnRhFTL9dJ8RgtN5zfjbedbVWGD4b/M2EvnyH9trC0zhMU6x0ver0ZuzWDWk4O6tntdr
- DaxE/lkSUBiOJeEOYXI05iEjfFrlL+mhrH5gCcad4WaLJ758TpIaca5aX6cB5RsmvjJs=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
- :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=tEOFzlT+od5bOh/ypS1B0w/JWs8F+t7+Bb3rIKpKXVE=; b=cpap2enAlhi+va7kJR874IYjh1
- 9t+K3XUYLs0MbRf1z5tOQ3Bb3xG3Ek9maG+MdnVOWC4EUl0hIGYkFXHaZsKdF8umhP1IiNb/zXRTh
- N6yxNAVDB4eCBMv4mkuWTfzTAtgb8yNuNkYeqP2wxihcijf2nTY3JTwiM3FBNNkaMXn0=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=tEOFzlT+od5bOh/ypS1B0w/JWs8F+t7+Bb3rIKpKXVE=; b=ekXbeFxcrWCKvvU7zDX+ol38A
- 43Vty+N9h9n1RbL4ER3Q/jb6kwujjlJHYpCpdPn5B3WypBVhOWL8tXiycJtM+OZb5xo/M2/DqX220
- sWc0nLMkzFG/VPkuCxy8afGjp90uN18FEy5nRfbcCksC5hv38VuMbm2R+PUdAGbf/GTX54h3XmPmE
- 4CiiLUtYjWBuDBz4MLwwuI+Jk8LXEsF2g7PjxZ1bGWCHkPeHnmrnK7HbH14z81GDsi0FmGOfoAmkU
- vhm9hD9ANSvnO9vdJ2pUoqjUzv2KP5vwzfYW/+wFvOgjFhBAge/7aqbMtibL5Sk9O0Q7ak/ZMPPlZ
- cCQPQ2LKA==;
-In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Cc: Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
 
-Instead of using a pagevec, just use the XArray iterators.  Add a
-conditional rescheduling point which probably should have been there in
-the original.
+This function was only used by the page cache which is now converted
+to the XArray.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- fs/dax.c | 57 +++++++++++++++++++++-----------------------------------
- 1 file changed, 21 insertions(+), 36 deletions(-)
+ include/linux/radix-tree.h |  1 -
+ lib/radix-tree.c           | 74 --------------------------------------
+ 2 files changed, 75 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 71181f4bb1d3..7b80b17cba50 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -697,11 +697,10 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index b882d644cc47..f8ef267e4975 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -259,7 +259,6 @@ unsigned int radix_tree_gang_lookup(const struct radix_tree_root *,
+ 			unsigned int max_items);
+ int radix_tree_preload(gfp_t gfp_mask);
+ int radix_tree_maybe_preload(gfp_t gfp_mask);
+-int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order);
+ void radix_tree_init(void);
+ void *radix_tree_tag_set(struct radix_tree_root *,
+ 			unsigned long index, unsigned int tag);
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index c472ceeb6a97..ad03dc0c562f 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -41,9 +41,6 @@
+ #include <linux/xarray.h>
+ 
+ 
+-/* Number of nodes in fully populated tree of given height */
+-static unsigned long height_to_maxnodes[RADIX_TREE_MAX_PATH + 1] __read_mostly;
+-
+ /*
+  * Radix tree node cache.
   */
- struct page *dax_layout_busy_page(struct address_space *mapping)
- {
--	pgoff_t	indices[PAGEVEC_SIZE];
-+	XA_STATE(xas, &mapping->i_pages, 0);
-+	void *entry;
-+	unsigned int scanned = 0;
- 	struct page *page = NULL;
--	struct pagevec pvec;
--	pgoff_t	index, end;
--	unsigned i;
- 
- 	/*
- 	 * In the 'limited' case get_user_pages() for dax is disabled.
-@@ -712,13 +711,9 @@ struct page *dax_layout_busy_page(struct address_space *mapping)
- 	if (!dax_mapping(mapping) || !mapping_mapped(mapping))
- 		return NULL;
- 
--	pagevec_init(&pvec);
--	index = 0;
--	end = -1;
--
- 	/*
- 	 * If we race get_user_pages_fast() here either we'll see the
--	 * elevated page count in the pagevec_lookup and wait, or
-+	 * elevated page count in the iteration and wait, or
- 	 * get_user_pages_fast() will see that the page it took a reference
- 	 * against is no longer mapped in the page tables and bail to the
- 	 * get_user_pages() slow path.  The slow path is protected by
-@@ -730,36 +725,26 @@ struct page *dax_layout_busy_page(struct address_space *mapping)
- 	 */
- 	unmap_mapping_range(mapping, 0, 0, 1);
- 
--	while (index < end && pagevec_lookup_entries(&pvec, mapping, index,
--				min(end - index, (pgoff_t)PAGEVEC_SIZE),
--				indices)) {
--		for (i = 0; i < pagevec_count(&pvec); i++) {
--			struct page *pvec_ent = pvec.pages[i];
--			void *entry;
--
--			index = indices[i];
--			if (index >= end)
--				break;
--
--			if (!xa_is_value(pvec_ent))
--				continue;
--
--			xa_lock_irq(&mapping->i_pages);
--			entry = get_unlocked_mapping_entry(mapping, index, NULL);
--			if (entry)
--				page = dax_busy_page(entry);
--			put_unlocked_mapping_entry(mapping, index, entry);
--			xa_unlock_irq(&mapping->i_pages);
--			if (page)
--				break;
--		}
--		pagevec_remove_exceptionals(&pvec);
--		pagevec_release(&pvec);
--		index++;
--
-+	xas_lock_irq(&xas);
-+	xas_for_each(&xas, entry, ULONG_MAX) {
-+		if (!xa_is_value(entry))
-+			continue;
-+		if (unlikely(dax_is_locked(entry)))
-+			entry = get_unlocked_entry(&xas);
-+		if (entry)
-+			page = dax_busy_page(entry);
-+		put_unlocked_entry(&xas, entry);
- 		if (page)
- 			break;
-+		if (++scanned % XA_CHECK_SCHED)
-+			continue;
-+
-+		xas_pause(&xas);
-+		xas_unlock_irq(&xas);
-+		cond_resched();
-+		xas_lock_irq(&xas);
- 	}
-+	xas_unlock_irq(&xas);
- 	return page;
+@@ -463,51 +460,6 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
  }
- EXPORT_SYMBOL_GPL(dax_layout_busy_page);
+ EXPORT_SYMBOL(radix_tree_maybe_preload);
+ 
+-/*
+- * The same as function above, but preload number of nodes required to insert
+- * (1 << order) continuous naturally-aligned elements.
+- */
+-int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
+-{
+-	unsigned long nr_subtrees;
+-	int nr_nodes, subtree_height;
+-
+-	/* Preloading doesn't help anything with this gfp mask, skip it */
+-	if (!gfpflags_allow_blocking(gfp_mask)) {
+-		preempt_disable();
+-		return 0;
+-	}
+-
+-	/*
+-	 * Calculate number and height of fully populated subtrees it takes to
+-	 * store (1 << order) elements.
+-	 */
+-	nr_subtrees = 1 << order;
+-	for (subtree_height = 0; nr_subtrees > RADIX_TREE_MAP_SIZE;
+-			subtree_height++)
+-		nr_subtrees >>= RADIX_TREE_MAP_SHIFT;
+-
+-	/*
+-	 * The worst case is zero height tree with a single item at index 0 and
+-	 * then inserting items starting at ULONG_MAX - (1 << order).
+-	 *
+-	 * This requires RADIX_TREE_MAX_PATH nodes to build branch from root to
+-	 * 0-index item.
+-	 */
+-	nr_nodes = RADIX_TREE_MAX_PATH;
+-
+-	/* Plus branch to fully populated subtrees. */
+-	nr_nodes += RADIX_TREE_MAX_PATH - subtree_height;
+-
+-	/* Root node is shared. */
+-	nr_nodes--;
+-
+-	/* Plus nodes required to build subtrees. */
+-	nr_nodes += nr_subtrees * height_to_maxnodes[subtree_height];
+-
+-	return __radix_tree_preload(gfp_mask, nr_nodes);
+-}
+-
+ static unsigned radix_tree_load_root(const struct radix_tree_root *root,
+ 		struct radix_tree_node **nodep, unsigned long *maxindex)
+ {
+@@ -1928,31 +1880,6 @@ radix_tree_node_ctor(void *arg)
+ 	INIT_LIST_HEAD(&node->private_list);
+ }
+ 
+-static __init unsigned long __maxindex(unsigned int height)
+-{
+-	unsigned int width = height * RADIX_TREE_MAP_SHIFT;
+-	int shift = RADIX_TREE_INDEX_BITS - width;
+-
+-	if (shift < 0)
+-		return ~0UL;
+-	if (shift >= BITS_PER_LONG)
+-		return 0UL;
+-	return ~0UL >> shift;
+-}
+-
+-static __init void radix_tree_init_maxnodes(void)
+-{
+-	unsigned long height_to_maxindex[RADIX_TREE_MAX_PATH + 1];
+-	unsigned int i, j;
+-
+-	for (i = 0; i < ARRAY_SIZE(height_to_maxindex); i++)
+-		height_to_maxindex[i] = __maxindex(i);
+-	for (i = 0; i < ARRAY_SIZE(height_to_maxnodes); i++) {
+-		for (j = i; j > 0; j--)
+-			height_to_maxnodes[i] += height_to_maxindex[j - 1] + 1;
+-	}
+-}
+-
+ static int radix_tree_cpu_dead(unsigned int cpu)
+ {
+ 	struct radix_tree_preload *rtp;
+@@ -1982,7 +1909,6 @@ void __init radix_tree_init(void)
+ 			sizeof(struct radix_tree_node), 0,
+ 			SLAB_PANIC | SLAB_RECLAIM_ACCOUNT,
+ 			radix_tree_node_ctor);
+-	radix_tree_init_maxnodes();
+ 	ret = cpuhp_setup_state_nocalls(CPUHP_RADIX_DEAD, "lib/radix:dead",
+ 					NULL, radix_tree_cpu_dead);
+ 	WARN_ON(ret < 0);
 -- 
 2.17.1
 
-
-------------------------------------------------------------------------------
-Check out the vibrant tech community on one of the world's most
-engaging tech sites, Slashdot.org! http://sdm.link/slashdot
