@@ -1,91 +1,267 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 02/74] radix tree test suite: Enable ubsan
-Date: Sat, 16 Jun 2018 18:59:40 -0700
-Message-ID: <20180617020052.4759-3-willy@infradead.org>
+Subject: [PATCH v14 21/74] page cache: Convert hole search to
+ XArray
+Date: Sat, 16 Jun 2018 18:59:59 -0700
+Message-ID: <20180617020052.4759-22-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=nEu/iSteNkAMtQpngBIONZNFiPmqdnQM7MosSEs/KsA=; b=kODSpXqayiCTcEDvEYp/du24p
-        sHIETX/XLFNJ2x1FtUmzvI+5AhfyICUN1P1iIrKcZZq4YS2bTVrtulRcevE++kOxNSgE9liMK3r6y
-        B9W1fyERkDG3EG57hLYrOLC9W9mM/T7XuEPCz5XHayZU28oZAyZy7s45OyHux0Y21ru2/DpO/Jhnr
-        g88/XZN1qYipFNG/U74ZdF/zfrUkcn4xC3+So1vXqrCuTT1sbApIxqGcXNvJG+Ue1lPgZGfVkkbGy
-        kWfqitaQrO3YxVqhDCbghShp5VcdY/qCIG3Cux4b4pP7GOw9uWh5m4qlogtT4/tkCou/hCmpF0b8C
-    
-In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=References:In-Reply-To:Message-Id:Date:Subject:Cc:
+ To:From:Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=ZknMFf1EBgxh8JXW2iXsRYKErSknCKbuLaQiFwSf5lE=; b=j1aSuo+go0RaUS3030PYZrRpVb
+ IShJrlCwNUvSmcBQYIzR8iqekrDWqJOkKtbtamfjLX1a5yFPsWBWh0lXIVZg3QpQwoxIwOlRkmSN/
+ aaxVzBBKdNErRCtIrrnZI240N3uqR74UghQFW9zwRp1mzrMRknO/psubN771BPkXmGiI=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
+ :MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=ZknMFf1EBgxh8JXW2iXsRYKErSknCKbuLaQiFwSf5lE=; b=f/RQKvkx6XpT15KL17q/lWR4Aw
+ CPcN4DSTHaTLYnNqcLQgZzZVGueeJ4ZK3D/4ydWBs3HOAeAZ6Aqdalm6Ubb3o3vTD4DGqLlRe55Gh
+ sxTceQumai8cQoqhW0+eYtN1pVrGeuhTYeGVeXtUvfSOBEWeMYbEG1hAKjCaVYnAbKpg=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
+ Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
+ Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
+ List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=ZknMFf1EBgxh8JXW2iXsRYKErSknCKbuLaQiFwSf5lE=; b=UE+DTm1/XJKSP/yG1FhYs0aQQ
+ EgrNraz0cQ/yXL6R5p98pMpFnKgqtG0nrwUTtgsK8P8gNRgO5XQvfyOPi6VEgxxaN9QlJIzJFhaK1
+ MO5e1Gw61fIaVmTmlORQacK4UoCtKv76yLQ1UEp6qDpyliJ4crOvgcvZ40ADn7tFKGfzO0psNnVSJ
+ JuwuxuViHpdE0YJpwTn6gHogVAlxsZ4FZSnIRmyrX+5OYqu9fmUto6NSMSs4eP9VHB9zQky2otCHo
+ MBd5md1NnjQNHfPzDJr1nFrp9/QtnXCJ2KweAnVUe/4KmdG1mK9Crsot4Z8WDI+qjc2LOp/ZSFoEq
+ TaoxiJhBw==;
+In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
+Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Add support for the undefined behaviour sanitizer and fix the bugs
-that ubsan pointed out.  Nothing major, and all in the test suite,
-not the code.
+The page cache offers the ability to search for a miss in the previous or
+next N locations.  Rather than teach the XArray about the page cache's
+definition of a miss, use xas_prev() and xas_next() to search the page
+array.  This should be more efficient as it does not have to start the
+lookup from the top for each index.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- tools/testing/radix-tree/Makefile |  5 +++--
- tools/testing/radix-tree/main.c   | 20 +++++++++++---------
- 2 files changed, 14 insertions(+), 11 deletions(-)
+ fs/nfs/blocklayout/blocklayout.c |   2 +-
+ include/linux/pagemap.h          |   4 +-
+ mm/filemap.c                     | 110 ++++++++++++++-----------------
+ mm/readahead.c                   |   4 +-
+ 4 files changed, 55 insertions(+), 65 deletions(-)
 
-diff --git a/tools/testing/radix-tree/Makefile b/tools/testing/radix-tree/Makefile
-index db66f8a0d4be..da030a65d6d6 100644
---- a/tools/testing/radix-tree/Makefile
-+++ b/tools/testing/radix-tree/Makefile
-@@ -1,7 +1,8 @@
- # SPDX-License-Identifier: GPL-2.0
+diff --git a/fs/nfs/blocklayout/blocklayout.c b/fs/nfs/blocklayout/blocklayout.c
+index 7cb5c38c19e4..961901685007 100644
+--- a/fs/nfs/blocklayout/blocklayout.c
++++ b/fs/nfs/blocklayout/blocklayout.c
+@@ -895,7 +895,7 @@ static u64 pnfs_num_cont_bytes(struct inode *inode, pgoff_t idx)
+ 	end = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+ 	if (end != inode->i_mapping->nrpages) {
+ 		rcu_read_lock();
+-		end = page_cache_next_hole(mapping, idx + 1, ULONG_MAX);
++		end = page_cache_next_gap(mapping, idx + 1, ULONG_MAX);
+ 		rcu_read_unlock();
+ 	}
  
--CFLAGS += -I. -I../../include -g -O2 -Wall -D_LGPL_SOURCE -fsanitize=address
--LDFLAGS += -fsanitize=address
-+CFLAGS += -I. -I../../include -g -Og -Wall -D_LGPL_SOURCE -fsanitize=address \
-+	  -fsanitize=undefined
-+LDFLAGS += -fsanitize=address -fsanitize=undefined
- LDLIBS+= -lpthread -lurcu
- TARGETS = main idr-test multiorder
- CORE_OFILES := radix-tree.o idr.o linux.o test.o find_bit.o
-diff --git a/tools/testing/radix-tree/main.c b/tools/testing/radix-tree/main.c
-index 257f3f8aacaa..584a8732f5ce 100644
---- a/tools/testing/radix-tree/main.c
-+++ b/tools/testing/radix-tree/main.c
-@@ -27,20 +27,22 @@ void __gang_check(unsigned long middle, long down, long up, int chunk, int hop)
- 		item_check_present(&tree, middle + idx);
- 	item_check_absent(&tree, middle + up);
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index b1bd2186e6d2..2f5d2d3ebaac 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -241,9 +241,9 @@ static inline gfp_t readahead_gfp_mask(struct address_space *x)
  
--	item_gang_check_present(&tree, middle - down,
--			up + down, chunk, hop);
--	item_full_scan(&tree, middle - down, down + up, chunk);
-+	if (chunk > 0) {
-+		item_gang_check_present(&tree, middle - down, up + down,
-+				chunk, hop);
-+		item_full_scan(&tree, middle - down, down + up, chunk);
-+	}
- 	item_kill_tree(&tree);
+ typedef int filler_t(void *, struct page *);
+ 
+-pgoff_t page_cache_next_hole(struct address_space *mapping,
++pgoff_t page_cache_next_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
+-pgoff_t page_cache_prev_hole(struct address_space *mapping,
++pgoff_t page_cache_prev_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan);
+ 
+ #define FGP_ACCESSED		0x00000001
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 4de14e75c4ec..8de36e14e22f 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1326,86 +1326,76 @@ int __lock_page_or_retry(struct page *page, struct mm_struct *mm,
  }
  
- void gang_check(void)
+ /**
+- * page_cache_next_hole - find the next hole (not-present entry)
+- * @mapping: mapping
+- * @index: index
+- * @max_scan: maximum range to search
+- *
+- * Search the set [index, min(index+max_scan-1, MAX_INDEX)] for the
+- * lowest indexed hole.
+- *
+- * Returns: the index of the hole if found, otherwise returns an index
+- * outside of the set specified (in which case 'return - index >=
+- * max_scan' will be true). In rare cases of index wrap-around, 0 will
+- * be returned.
+- *
+- * page_cache_next_hole may be called under rcu_read_lock. However,
+- * like radix_tree_gang_lookup, this will not atomically search a
+- * snapshot of the tree at a single point in time. For example, if a
+- * hole is created at index 5, then subsequently a hole is created at
+- * index 10, page_cache_next_hole covering both indexes may return 10
+- * if called under rcu_read_lock.
++ * page_cache_next_gap() - Find the next gap in the page cache.
++ * @mapping: Mapping.
++ * @index: Index.
++ * @max_scan: Maximum range to search.
++ *
++ * Search the range [index, min(index + max_scan - 1, ULONG_MAX)] for the
++ * gap with the lowest index.
++ *
++ * This function may be called under the rcu_read_lock.  However, this will
++ * not atomically search a snapshot of the cache at a single point in time.
++ * For example, if a gap is created at index 5, then subsequently a gap is
++ * created at index 10, page_cache_next_gap covering both indices may
++ * return 10 if called under the rcu_read_lock.
++ *
++ * Return: The index of the gap if found, otherwise an index outside the
++ * range specified (in which case 'return - index >= max_scan' will be true).
++ * In the rare case of index wrap-around, 0 will be returned.
+  */
+-pgoff_t page_cache_next_hole(struct address_space *mapping,
++pgoff_t page_cache_next_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan)
  {
--	__gang_check(1 << 30, 128, 128, 35, 2);
--	__gang_check(1 << 31, 128, 128, 32, 32);
--	__gang_check(1 << 31, 128, 128, 32, 100);
--	__gang_check(1 << 31, 128, 128, 17, 7);
--	__gang_check(0xffff0000, 0, 65536, 17, 7);
--	__gang_check(0xfffffffe, 1, 1, 17, 7);
-+	__gang_check(1UL << 30, 128, 128, 35, 2);
-+	__gang_check(1UL << 31, 128, 128, 32, 32);
-+	__gang_check(1UL << 31, 128, 128, 32, 100);
-+	__gang_check(1UL << 31, 128, 128, 17, 7);
-+	__gang_check(0xffff0000UL, 0, 65536, 17, 7);
-+	__gang_check(0xfffffffeUL, 1, 1, 17, 7);
- }
+-	unsigned long i;
++	XA_STATE(xas, &mapping->i_pages, index);
  
- void __big_gang_check(void)
+-	for (i = 0; i < max_scan; i++) {
+-		struct page *page;
+-
+-		page = radix_tree_lookup(&mapping->i_pages, index);
+-		if (!page || xa_is_value(page))
++	while (max_scan--) {
++		void *entry = xas_next(&xas);
++		if (!entry || xa_is_value(entry))
+ 			break;
+-		index++;
+-		if (index == 0)
++		if (xas.xa_index == 0)
+ 			break;
+ 	}
+ 
+-	return index;
++	return xas.xa_index;
+ }
+-EXPORT_SYMBOL(page_cache_next_hole);
++EXPORT_SYMBOL(page_cache_next_gap);
+ 
+ /**
+- * page_cache_prev_hole - find the prev hole (not-present entry)
+- * @mapping: mapping
+- * @index: index
+- * @max_scan: maximum range to search
+- *
+- * Search backwards in the range [max(index-max_scan+1, 0), index] for
+- * the first hole.
+- *
+- * Returns: the index of the hole if found, otherwise returns an index
+- * outside of the set specified (in which case 'index - return >=
+- * max_scan' will be true). In rare cases of wrap-around, ULONG_MAX
+- * will be returned.
+- *
+- * page_cache_prev_hole may be called under rcu_read_lock. However,
+- * like radix_tree_gang_lookup, this will not atomically search a
+- * snapshot of the tree at a single point in time. For example, if a
+- * hole is created at index 10, then subsequently a hole is created at
+- * index 5, page_cache_prev_hole covering both indexes may return 5 if
+- * called under rcu_read_lock.
++ * page_cache_prev_gap() - Find the next gap in the page cache.
++ * @mapping: Mapping.
++ * @index: Index.
++ * @max_scan: Maximum range to search.
++ *
++ * Search the range [max(index - max_scan + 1, 0), index] for the
++ * gap with the highest index.
++ *
++ * This function may be called under the rcu_read_lock.  However, this will
++ * not atomically search a snapshot of the cache at a single point in time.
++ * For example, if a gap is created at index 10, then subsequently a gap is
++ * created at index 5, page_cache_prev_gap() covering both indices may
++ * return 5 if called under the rcu_read_lock.
++ *
++ * Return: The index of the gap if found, otherwise an index outside the
++ * range specified (in which case 'index - return >= max_scan' will be true).
++ * In the rare case of wrap-around, ULONG_MAX will be returned.
+  */
+-pgoff_t page_cache_prev_hole(struct address_space *mapping,
++pgoff_t page_cache_prev_gap(struct address_space *mapping,
+ 			     pgoff_t index, unsigned long max_scan)
+ {
+-	unsigned long i;
+-
+-	for (i = 0; i < max_scan; i++) {
+-		struct page *page;
++	XA_STATE(xas, &mapping->i_pages, index);
+ 
+-		page = radix_tree_lookup(&mapping->i_pages, index);
+-		if (!page || xa_is_value(page))
++	while (max_scan--) {
++		void *entry = xas_prev(&xas);
++		if (!entry || xa_is_value(entry))
+ 			break;
+-		index--;
+-		if (index == ULONG_MAX)
++		if (xas.xa_index == ULONG_MAX)
+ 			break;
+ 	}
+ 
+-	return index;
++	return xas.xa_index;
+ }
+-EXPORT_SYMBOL(page_cache_prev_hole);
++EXPORT_SYMBOL(page_cache_prev_gap);
+ 
+ /**
+  * find_get_entry - find and get a page cache entry
+diff --git a/mm/readahead.c b/mm/readahead.c
+index 3757aa549709..59998ca31f2a 100644
+--- a/mm/readahead.c
++++ b/mm/readahead.c
+@@ -334,7 +334,7 @@ static pgoff_t count_history_pages(struct address_space *mapping,
+ 	pgoff_t head;
+ 
+ 	rcu_read_lock();
+-	head = page_cache_prev_hole(mapping, offset - 1, max);
++	head = page_cache_prev_gap(mapping, offset - 1, max);
+ 	rcu_read_unlock();
+ 
+ 	return offset - 1 - head;
+@@ -422,7 +422,7 @@ ondemand_readahead(struct address_space *mapping,
+ 		pgoff_t start;
+ 
+ 		rcu_read_lock();
+-		start = page_cache_next_hole(mapping, offset + 1, max_pages);
++		start = page_cache_next_gap(mapping, offset + 1, max_pages);
+ 		rcu_read_unlock();
+ 
+ 		if (!start || start - offset > max_pages)
 -- 
 2.17.1
 
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most
+engaging tech sites, Slashdot.org! http://sdm.link/slashdot
