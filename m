@@ -1,8 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 52/74] shmem: Convert shmem_free_swap to
- XArray
-Date: Sat, 16 Jun 2018 19:00:30 -0700
-Message-ID: <20180617020052.4759-53-willy@infradead.org>
+Subject: [PATCH v14 62/74] dax: Rename some functions
+Date: Sat, 16 Jun 2018 19:00:40 -0700
+Message-ID: <20180617020052.4759-63-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jlPJjd97phkgtLpaFqwtKpwhcV6aMOInwpP/oXccAJE=; b=KyBhXfRq7zR3ZrSrkLkUEF3TIL
- B5BVzN8e1wzyxXVsSsD6fj8hkPLgJPHIEIRWnJeDAGHXtpn7+f9NkbT2t3rO+naMIHqUdRy3TH5VW
- YpEpu1gE3CkpNBf60r7SHqZ/RbxUrbLkYPpnXdfbJIpiEKt9WsKEuPXQlWOMIF4SAnzg=;
+ bh=dx+Kgt1csVzTxxi1gAKfCbfkHa/YvYezIH6JQpT1Km8=; b=I4sz1S2fywILTIornAvr2H4ZHK
+ GvhxEWAY9KOi/rF12lL/I6sK4BCoGyjCy0o/RKR2aAkyYzIH0ozPvKePw3SlKmRTiI4hVEvTK6wmT
+ Vvj9wjEuCQWI8MAGULH11L1/uESmFCXzwSX/J4E3w/jEgW7vVWtngktSMwshXtSEHits=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=jlPJjd97phkgtLpaFqwtKpwhcV6aMOInwpP/oXccAJE=; b=R79wAR5qjkM3LOquJ/gT+F3Y/X
- L5EljWB79ojHZMg2rGzGW7uWD6RSOMbCmuyAdr+Wd0MZz8YbmGrp9RpK5wftWos177f4/7Fre9fup
- T59/bUCgJa5CjJmO+pHLqeasGC8Q90u4vRGxTZvneiOkgxcHgQpUv4UOJIpsYeg4HNTs=;
+ bh=dx+Kgt1csVzTxxi1gAKfCbfkHa/YvYezIH6JQpT1Km8=; b=hRMaPCiK56V7456IF+D9aMuxBB
+ txzxixPwOYJ5W12s9N2R2V1fDjAp5I5AJ0vl/axRxw1/YOqGz+3YpmV79MPOUcuSzUkHUafsZN/C+
+ FdYtUrBFbV/e7FW2+y+k2gyfvqW8joOoTX0ymluNNWCO6ixIrKOu/kr13hplo9Hia/Pk=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=jlPJjd97phkgtLpaFqwtKpwhcV6aMOInwpP/oXccAJE=; b=hWK1Br71IXraKoB6WwcincedS
- yWb6z9VzFKd2qCNUwYvcUCz/ZkBSH3pTmCnZcM8VhWwzsurZVKs/y2ioqp/4693fTfYXgfz+vx944
- NsdOdcv1YLUgbu+EArt8hB3HROEw8AxJYF6mGcNneDhanlqjsiXRiE2OlmSZQ0pwAj0XqLys/X3Nr
- tKf7bEjnqsaTxWaNYMRXXWoJz3BSU4R8+p3JPT/Z7eMsY9lV/N0jg0rwr4DQ8aMW7ByQeQF63ysQn
- 7qnYe+4ERWy1PNu7PqKEeli0cpvPhFfeHduHsbbrR99rf86PZNRIUfNNETuJb7IaIR4DuBEKt+9Wq
- BXCNe+gLg==;
+ bh=dx+Kgt1csVzTxxi1gAKfCbfkHa/YvYezIH6JQpT1Km8=; b=ewyne7BzFdH76LOKBmN2mWXhu
+ 4PveZ2f1X7wcGOJOaLtHjaZxEF3Gg6U9U80/UMnnWIg9Mt97yJIynlXgO3kMhxEAY1zqlMEdura4y
+ nWOSaCFBWyRLlqQTliUWa/BUU1+AEBEzWxeCB5Af6YBupb3TYmlufw2Z/yMOxq39Ual+NGkLOF/8L
+ 9kTOR0+6uiAAZfByZwdN79yWOSFQi4egnJJepMm3stRjWGLVAOtrL88eR4qKTtXcem0wLVNh9x+qI
+ CNOMPAHggP68f2i9ajXNx7X0K4Bdp2fI5rKnDD0Umw63YeIsHxnJGd9F53JLFkBai6gYQpW1IBdeB
+ sOuoUA5rA==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,36 +51,302 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Since we are conditionally storing NULL in the XArray, we do not need
-to allocate memory and the GFP flags will be unused.
+Remove mentions of 'radix' and 'radix tree'.  Simplify some names by
+dropping the word 'mapping'.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- mm/shmem.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/dax.c | 86 +++++++++++++++++++++++++++-----------------------------
+ 1 file changed, 42 insertions(+), 44 deletions(-)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 09452ca79220..9dbbdd5dee30 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -653,7 +653,7 @@ static void shmem_delete_from_page_cache(struct page *page, void *radswap)
+diff --git a/fs/dax.c b/fs/dax.c
+index 704059ecfa88..157762fe2ba1 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -74,18 +74,18 @@ fs_initcall(init_dax_wait_table);
+ #define DAX_ZERO_PAGE	(1UL << 2)
+ #define DAX_EMPTY	(1UL << 3)
+ 
+-static unsigned long dax_radix_pfn(void *entry)
++static unsigned long dax_to_pfn(void *entry)
+ {
+ 	return xa_to_value(entry) >> DAX_SHIFT;
+ }
+ 
+-static void *dax_radix_locked_entry(unsigned long pfn, unsigned long flags)
++static void *dax_make_locked(unsigned long pfn, unsigned long flags)
+ {
+ 	return xa_mk_value(flags | ((unsigned long)pfn << DAX_SHIFT) |
+ 			DAX_LOCKED);
+ }
+ 
+-static unsigned int dax_radix_order(void *entry)
++static unsigned int dax_entry_order(void *entry)
+ {
+ 	if (xa_to_value(entry) & DAX_PMD)
+ 		return PMD_SHIFT - PAGE_SHIFT;
+@@ -113,7 +113,7 @@ static int dax_is_empty_entry(void *entry)
  }
  
  /*
-- * Remove swap entry from radix tree, free the swap and its page cache.
-+ * Remove swap entry from page cache, free the swap and its page cache.
+- * DAX radix tree locking
++ * DAX page cache entry locking
   */
- static int shmem_free_swap(struct address_space *mapping,
- 			   pgoff_t index, void *radswap)
-@@ -661,7 +661,7 @@ static int shmem_free_swap(struct address_space *mapping,
- 	void *old;
+ struct exceptional_entry_key {
+ 	struct address_space *mapping;
+@@ -217,7 +217,7 @@ static inline void *unlock_slot(struct address_space *mapping, void **slot)
+ }
  
- 	xa_lock_irq(&mapping->i_pages);
--	old = radix_tree_delete_item(&mapping->i_pages, index, radswap);
-+	old = __xa_cmpxchg(&mapping->i_pages, index, radswap, NULL, 0);
- 	xa_unlock_irq(&mapping->i_pages);
- 	if (old != radswap)
- 		return -ENOENT;
+ /*
+- * Lookup entry in radix tree, wait for it to become unlocked if it is
++ * Lookup entry in page cache, wait for it to become unlocked if it is
+  * a DAX entry and return it. The caller must call
+  * put_unlocked_mapping_entry() when he decided not to lock the entry or
+  * put_locked_mapping_entry() when he locked the entry and now wants to
+@@ -280,7 +280,7 @@ static void put_locked_mapping_entry(struct address_space *mapping,
+ }
+ 
+ /*
+- * Called when we are done with radix tree entry we looked up via
++ * Called when we are done with page cache entry we looked up via
+  * get_unlocked_mapping_entry() and which we didn't lock in the end.
+  */
+ static void put_unlocked_mapping_entry(struct address_space *mapping,
+@@ -289,7 +289,7 @@ static void put_unlocked_mapping_entry(struct address_space *mapping,
+ 	if (!entry)
+ 		return;
+ 
+-	/* We have to wake up next waiter for the radix tree entry lock */
++	/* We have to wake up next waiter for the page cache entry lock */
+ 	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
+ }
+ 
+@@ -305,9 +305,9 @@ static unsigned long dax_entry_size(void *entry)
+ 		return PAGE_SIZE;
+ }
+ 
+-static unsigned long dax_radix_end_pfn(void *entry)
++static unsigned long dax_end_pfn(void *entry)
+ {
+-	return dax_radix_pfn(entry) + dax_entry_size(entry) / PAGE_SIZE;
++	return dax_to_pfn(entry) + dax_entry_size(entry) / PAGE_SIZE;
+ }
+ 
+ /*
+@@ -315,8 +315,8 @@ static unsigned long dax_radix_end_pfn(void *entry)
+  * 'empty' and 'zero' entries.
+  */
+ #define for_each_mapped_pfn(entry, pfn) \
+-	for (pfn = dax_radix_pfn(entry); \
+-			pfn < dax_radix_end_pfn(entry); pfn++)
++	for (pfn = dax_to_pfn(entry); \
++			pfn < dax_end_pfn(entry); pfn++)
+ 
+ /*
+  * TODO: for reflink+dax we need a way to associate a single page with
+@@ -449,9 +449,9 @@ void dax_unlock_page(struct page *page)
+ }
+ 
+ /*
+- * Find radix tree entry at given index. If it is a DAX entry, return it
+- * with the radix tree entry locked. If the radix tree doesn't contain the
+- * given index, create an empty entry for the index and return with it locked.
++ * Find page cache entry at given index. If it is a DAX entry, return it
++ * with the entry locked. If the page cache doesn't contain an entry at
++ * that index, add a locked empty entry.
+  *
+  * When requesting an entry with size DAX_PMD, grab_mapping_entry() will
+  * either return that locked entry or will return an error.  This error will
+@@ -560,10 +560,10 @@ static void *grab_mapping_entry(struct address_space *mapping, pgoff_t index,
+ 					true);
+ 		}
+ 
+-		entry = dax_radix_locked_entry(0, size_flag | DAX_EMPTY);
++		entry = dax_make_locked(0, size_flag | DAX_EMPTY);
+ 
+ 		err = __radix_tree_insert(&mapping->i_pages, index,
+-				dax_radix_order(entry), entry);
++				dax_entry_order(entry), entry);
+ 		radix_tree_preload_end();
+ 		if (err) {
+ 			xa_unlock_irq(&mapping->i_pages);
+@@ -672,7 +672,7 @@ struct page *dax_layout_busy_page(struct address_space *mapping)
+ }
+ EXPORT_SYMBOL_GPL(dax_layout_busy_page);
+ 
+-static int __dax_invalidate_mapping_entry(struct address_space *mapping,
++static int __dax_invalidate_entry(struct address_space *mapping,
+ 					  pgoff_t index, bool trunc)
+ {
+ 	int ret = 0;
+@@ -702,12 +702,12 @@ static int __dax_invalidate_mapping_entry(struct address_space *mapping,
+  */
+ int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index)
+ {
+-	int ret = __dax_invalidate_mapping_entry(mapping, index, true);
++	int ret = __dax_invalidate_entry(mapping, index, true);
+ 
+ 	/*
+ 	 * This gets called from truncate / punch_hole path. As such, the caller
+ 	 * must hold locks protecting against concurrent modifications of the
+-	 * radix tree (usually fs-private i_mmap_sem for writing). Since the
++	 * page cache (usually fs-private i_mmap_sem for writing). Since the
+ 	 * caller has seen a DAX entry for this index, we better find it
+ 	 * at that index as well...
+ 	 */
+@@ -721,7 +721,7 @@ int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index)
+ int dax_invalidate_mapping_entry_sync(struct address_space *mapping,
+ 				      pgoff_t index)
+ {
+-	return __dax_invalidate_mapping_entry(mapping, index, false);
++	return __dax_invalidate_entry(mapping, index, false);
+ }
+ 
+ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
+@@ -758,10 +758,9 @@ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
+  * already in the tree, we will skip the insertion and just dirty the PMD as
+  * appropriate.
+  */
+-static void *dax_insert_mapping_entry(struct address_space *mapping,
+-				      struct vm_fault *vmf,
+-				      void *entry, pfn_t pfn_t,
+-				      unsigned long flags, bool dirty)
++static void *dax_insert_entry(struct address_space *mapping,
++		struct vm_fault *vmf,
++		void *entry, pfn_t pfn_t, unsigned long flags, bool dirty)
+ {
+ 	struct radix_tree_root *pages = &mapping->i_pages;
+ 	unsigned long pfn = pfn_t_to_pfn(pfn_t);
+@@ -781,7 +780,7 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 	}
+ 
+ 	xa_lock_irq(pages);
+-	new_entry = dax_radix_locked_entry(pfn, flags);
++	new_entry = dax_make_locked(pfn, flags);
+ 	if (dax_entry_size(entry) != dax_entry_size(new_entry)) {
+ 		dax_disassociate_entry(entry, mapping, false);
+ 		dax_associate_entry(new_entry, mapping, vmf->vma, vmf->address);
+@@ -789,9 +788,9 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 
+ 	if (dax_is_zero_entry(entry) || dax_is_empty_entry(entry)) {
+ 		/*
+-		 * Only swap our new entry into the radix tree if the current
++		 * Only swap our new entry into the page cache if the current
+ 		 * entry is a zero page or an empty entry.  If a normal PTE or
+-		 * PMD entry is already in the tree, we leave it alone.  This
++		 * PMD entry is already in the cache, we leave it alone.  This
+ 		 * means that if we are trying to insert a PTE and the
+ 		 * existing entry is a PMD, we will just leave the PMD in the
+ 		 * tree and dirty it if necessary.
+@@ -814,8 +813,8 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
+ 	return entry;
+ }
+ 
+-static inline unsigned long
+-pgoff_address(pgoff_t pgoff, struct vm_area_struct *vma)
++static inline
++unsigned long pgoff_address(pgoff_t pgoff, struct vm_area_struct *vma)
+ {
+ 	unsigned long address;
+ 
+@@ -825,8 +824,8 @@ pgoff_address(pgoff_t pgoff, struct vm_area_struct *vma)
+ }
+ 
+ /* Walk all mappings of a given index of a file and writeprotect them */
+-static void dax_mapping_entry_mkclean(struct address_space *mapping,
+-				      pgoff_t index, unsigned long pfn)
++static void dax_entry_mkclean(struct address_space *mapping, pgoff_t index,
++		unsigned long pfn)
+ {
+ 	struct vm_area_struct *vma;
+ 	pte_t pte, *ptep = NULL;
+@@ -922,7 +921,7 @@ static int dax_writeback_one(struct dax_device *dax_dev,
+ 	 * compare pfns as we must not bail out due to difference in lockbit
+ 	 * or entry type.
+ 	 */
+-	if (dax_radix_pfn(entry2) != dax_radix_pfn(entry))
++	if (dax_to_pfn(entry2) != dax_to_pfn(entry))
+ 		goto put_unlocked;
+ 	if (WARN_ON_ONCE(dax_is_empty_entry(entry) ||
+ 				dax_is_zero_entry(entry))) {
+@@ -952,10 +951,10 @@ static int dax_writeback_one(struct dax_device *dax_dev,
+ 	 * This allows us to flush for PMD_SIZE and not have to worry about
+ 	 * partial PMD writebacks.
+ 	 */
+-	pfn = dax_radix_pfn(entry);
+-	size = PAGE_SIZE << dax_radix_order(entry);
++	pfn = dax_to_pfn(entry);
++	size = PAGE_SIZE << dax_entry_order(entry);
+ 
+-	dax_mapping_entry_mkclean(mapping, index, pfn);
++	dax_entry_mkclean(mapping, index, pfn);
+ 	dax_flush(dax_dev, page_address(pfn_to_page(pfn)), size);
+ 	/*
+ 	 * After we have flushed the cache, we can clear the dirty tag. There
+@@ -1093,7 +1092,7 @@ static vm_fault_t dax_load_hole(struct address_space *mapping, void *entry,
+ 	pfn_t pfn = pfn_to_pfn_t(my_zero_pfn(vaddr));
+ 	vm_fault_t ret;
+ 
+-	dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++	dax_insert_entry(mapping, vmf, entry, pfn,
+ 			DAX_ZERO_PAGE, false);
+ 
+ 	ret = vmf_insert_mixed(vmf->vma, vaddr, pfn);
+@@ -1407,7 +1406,7 @@ static vm_fault_t dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 		if (error < 0)
+ 			goto error_finish_iomap;
+ 
+-		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++		entry = dax_insert_entry(mapping, vmf, entry, pfn,
+ 						 0, write && !sync);
+ 
+ 		/*
+@@ -1487,7 +1486,7 @@ static vm_fault_t dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
+ 		goto fallback;
+ 
+ 	pfn = page_to_pfn_t(zero_page);
+-	ret = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++	ret = dax_insert_entry(mapping, vmf, entry, pfn,
+ 			DAX_PMD | DAX_ZERO_PAGE, false);
+ 
+ 	ptl = pmd_lock(vmf->vma->vm_mm, vmf->pmd);
+@@ -1540,7 +1539,7 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 	 * Make sure that the faulting address's PMD offset (color) matches
+ 	 * the PMD offset from the start of the file.  This is necessary so
+ 	 * that a PMD range in the page table overlaps exactly with a PMD
+-	 * range in the radix tree.
++	 * range in the page cache.
+ 	 */
+ 	if ((vmf->pgoff & PG_PMD_COLOUR) !=
+ 	    ((vmf->address >> PAGE_SHIFT) & PG_PMD_COLOUR))
+@@ -1608,7 +1607,7 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 		if (error < 0)
+ 			goto finish_iomap;
+ 
+-		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
++		entry = dax_insert_entry(mapping, vmf, entry, pfn,
+ 						DAX_PMD, write && !sync);
+ 
+ 		/*
+@@ -1701,15 +1700,14 @@ vm_fault_t dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
+ }
+ EXPORT_SYMBOL_GPL(dax_iomap_fault);
+ 
+-/**
++/*
+  * dax_insert_pfn_mkwrite - insert PTE or PMD entry into page tables
+  * @vmf: The description of the fault
+  * @pe_size: Size of entry to be inserted
+  * @pfn: PFN to insert
+  *
+- * This function inserts writeable PTE or PMD entry into page tables for mmaped
+- * DAX file.  It takes care of marking corresponding radix tree entry as dirty
+- * as well.
++ * This function inserts a writeable PTE or PMD entry into the page tables
++ * for an mmaped DAX file.  It also marks the page cache entry as dirty.
+  */
+ static vm_fault_t dax_insert_pfn_mkwrite(struct vm_fault *vmf,
+ 				  enum page_entry_size pe_size,
 -- 
 2.17.1
 
