@@ -1,192 +1,262 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 60/74] nilfs2: Convert to XArray
-Date: Sat, 16 Jun 2018 19:00:38 -0700
-Message-ID: <20180617020052.4759-61-willy@infradead.org>
-References: <20180617020052.4759-1-willy@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
-        Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=CjM3ufNnj7C7JJCH94R+YEBzzht8Do1jsqaRSwkI/Ok=; b=XrCh3f2VfRQxnl9MOIXQ7HjQA
-        zS5FFePOn100Yh7aPRqfcg0H2Ykcft6L0xum9lFOCSw+osQvK5Mn8PswAZF9mN8T4oRprG+kcxngU
-        DReirM7B5h83tN8J1du5ziLedeL1jEx0XrnRjbK2TTqn001cl/fM/bak4nvz6IcldNADgjBx0fkZ5
-        Q+nOPPh/mCgoBD3FiZJAtcRHeIaCbaapiai50jQWiFztQMmC0afa6oF8izmvkggcK5BWi/qH2y8kf
-        OB+1qkKsqKCX7utOwm4/WMnuQ+t5sPFCwtlm24U82IYj9icymynWaHVr9UJC1SDJpsOJ+jwy1Eh0x
-    
-In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
+Subject: [PATCH v14 00/74] Convert page cache to XArray
+Date: Sat, 16 Jun 2018 18:59:38 -0700
+Message-ID: <20180617020052.4759-1-willy@infradead.org>
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+ MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=un5RPHiZpuPv1Ddl0TI9kUAEgyeh1KmB8SXTxaDzC3c=; b=knWbX+B9ncWDQGLxy/68WX2Api
+ y71tADG3tVzBpH3TqAEgTCr/HKQcDoLjnLJNevbuAKxyFnE3dnex3ElaUSibyUlbECa5kE9lONm+x
+ 09nP9IhAIZBMCPRnoJP61yZ9A36VC1OLUYNoLG23BkJ3mNk4nURC8CMclF5GxbfrjPzU=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:
+ Content-Type:Content-Transfer-Encoding:Content-ID:Content-Description:
+ Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+ In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=un5RPHiZpuPv1Ddl0TI9kUAEgyeh1KmB8SXTxaDzC3c=; b=PAQ1gvGfGmFWaHZj21ZIbfnxJ6
+ NCBkG57P5GTu5o87xQ55GSangQNLBYWmkk3YaWeXfFml3iOmC0n0i5nEKp/Zs5NuoHVLqbCsPWUk0
+ GD3yhpcZ18Kz+IQQgAGANgSJvGyksc+po+Zu5kVVDrMlK2oyv1qIHfBAQSXI154Sod1g=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=infradead.org; s=bombadil.20170209; h=Message-Id:Date:Subject:Cc:To:From:
+ Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
+ List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=un5RPHiZpuPv1Ddl0TI9kUAEgyeh1KmB8SXTxaDzC3c=; b=R/f1/wbe9/B13hO+L4w6YKZAy
+ J9EI1eKPYO92qWs5Un8Ki/W3aqtuZCmqpIM/ISNnRVB1qXKnWg92xWeRHM9sgPguxu1O/0AVc6R6A
+ PqtAtviQ05MqUjGkaV09RBNLwkM9wPjS07Ey4WmzFlzhxAndlSOb7Ml2PwsDEugRc9YIWcvCzCkxQ
+ Nblpc/3yKHuTTm9mhw3Sc38Hp/SaH9KWW7L4vZolRrljlmrtMZ8dx4zssYBZAWVW/O1F0BsIY+z/Q
+ 5l0iCEDzUxpAHHVBq+2TjmTRZIcq20zcLYvh2IFwiJ/t6qSmC0X3Z39TuJufi6CsBJZjCPx9xVqFZ
+ F2MCfMSKA==;
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
+Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-This is close to a 1:1 replacement of radix tree APIs with their XArray
-equivalents.  It would be possible to optimise nilfs_copy_back_pages(),
-but that doesn't seem to be in the performance path.  Also, I think
-it has a pre-existing bug, and I've added a note to that effect in the
-source code.
+The XArray is a replacement for the radix tree.  For the moment it uses
+the same data structures, enabling a gradual replacement.  This patch
+set implements the XArray and converts the page cache to use it.
 
-Signed-off-by: Matthew Wilcox <willy@infradead.org>
----
- fs/nilfs2/btnode.c | 26 +++++++++-----------------
- fs/nilfs2/page.c   | 29 +++++++++++++----------------
- 2 files changed, 22 insertions(+), 33 deletions(-)
+A version of these patches has been running under xfstests for over
+48 hours, so I have some confidence in them.  The DAX changes have now
+also had a reasonable test outing.  This is based on next-20180615 and
+is available as a git tree at
+git://git.infradead.org/users/willy/linux-dax.git xarray-20180615
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index dec98cab729d..e9fcffb3a15c 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -177,24 +177,18 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
- 	ctxt->newbh = NULL;
- 
- 	if (inode->i_blkbits == PAGE_SHIFT) {
--		lock_page(obh->b_page);
--		/*
--		 * We cannot call radix_tree_preload for the kernels older
--		 * than 2.6.23, because it is not exported for modules.
--		 */
-+		struct page *opage = obh->b_page;
-+		lock_page(opage);
- retry:
--		err = radix_tree_preload(GFP_NOFS & ~__GFP_HIGHMEM);
--		if (err)
--			goto failed_unlock;
- 		/* BUG_ON(oldkey != obh->b_page->index); */
--		if (unlikely(oldkey != obh->b_page->index))
--			NILFS_PAGE_BUG(obh->b_page,
-+		if (unlikely(oldkey != opage->index))
-+			NILFS_PAGE_BUG(opage,
- 				       "invalid oldkey %lld (newkey=%lld)",
- 				       (unsigned long long)oldkey,
- 				       (unsigned long long)newkey);
- 
- 		xa_lock_irq(&btnc->i_pages);
--		err = radix_tree_insert(&btnc->i_pages, newkey, obh->b_page);
-+		err = __xa_insert(&btnc->i_pages, newkey, opage, GFP_NOFS);
- 		xa_unlock_irq(&btnc->i_pages);
- 		/*
- 		 * Note: page->index will not change to newkey until
-@@ -202,7 +196,6 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
- 		 * To protect the page in intermediate state, the page lock
- 		 * is held.
- 		 */
--		radix_tree_preload_end();
- 		if (!err)
- 			return 0;
- 		else if (err != -EEXIST)
-@@ -212,7 +205,7 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
- 		if (!err)
- 			goto retry;
- 		/* fallback to copy mode */
--		unlock_page(obh->b_page);
-+		unlock_page(opage);
- 	}
- 
- 	nbh = nilfs_btnode_create_block(btnc, newkey);
-@@ -252,9 +245,8 @@ void nilfs_btnode_commit_change_key(struct address_space *btnc,
- 		mark_buffer_dirty(obh);
- 
- 		xa_lock_irq(&btnc->i_pages);
--		radix_tree_delete(&btnc->i_pages, oldkey);
--		radix_tree_tag_set(&btnc->i_pages, newkey,
--				   PAGECACHE_TAG_DIRTY);
-+		__xa_erase(&btnc->i_pages, oldkey);
-+		__xa_set_tag(&btnc->i_pages, newkey, PAGECACHE_TAG_DIRTY);
- 		xa_unlock_irq(&btnc->i_pages);
- 
- 		opage->index = obh->b_blocknr = newkey;
-@@ -284,7 +276,7 @@ void nilfs_btnode_abort_change_key(struct address_space *btnc,
- 
- 	if (nbh == NULL) {	/* blocksize == pagesize */
- 		xa_lock_irq(&btnc->i_pages);
--		radix_tree_delete(&btnc->i_pages, newkey);
-+		__xa_erase(&btnc->i_pages, newkey);
- 		xa_unlock_irq(&btnc->i_pages);
- 		unlock_page(ctxt->bh->b_page);
- 	} else
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 4cb850a6f1c2..8384473b98b8 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -298,7 +298,7 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
-  * @dmap: destination page cache
-  * @smap: source page cache
-  *
-- * No pages must no be added to the cache during this process.
-+ * No pages must be added to the cache during this process.
-  * This must be ensured by the caller.
-  */
- void nilfs_copy_back_pages(struct address_space *dmap,
-@@ -307,7 +307,6 @@ void nilfs_copy_back_pages(struct address_space *dmap,
- 	struct pagevec pvec;
- 	unsigned int i, n;
- 	pgoff_t index = 0;
--	int err;
- 
- 	pagevec_init(&pvec);
- repeat:
-@@ -322,35 +321,34 @@ void nilfs_copy_back_pages(struct address_space *dmap,
- 		lock_page(page);
- 		dpage = find_lock_page(dmap, offset);
- 		if (dpage) {
--			/* override existing page on the destination cache */
-+			/* overwrite existing page in the destination cache */
- 			WARN_ON(PageDirty(dpage));
- 			nilfs_copy_page(dpage, page, 0);
- 			unlock_page(dpage);
- 			put_page(dpage);
-+			/* Do we not need to remove page from smap here? */
- 		} else {
--			struct page *page2;
-+			struct page *p;
- 
- 			/* move the page to the destination cache */
- 			xa_lock_irq(&smap->i_pages);
--			page2 = radix_tree_delete(&smap->i_pages, offset);
--			WARN_ON(page2 != page);
--
-+			p = __xa_erase(&smap->i_pages, offset);
-+			WARN_ON(page != p);
- 			smap->nrpages--;
- 			xa_unlock_irq(&smap->i_pages);
- 
- 			xa_lock_irq(&dmap->i_pages);
--			err = radix_tree_insert(&dmap->i_pages, offset, page);
--			if (unlikely(err < 0)) {
--				WARN_ON(err == -EEXIST);
-+			p = __xa_store(&dmap->i_pages, offset, page, GFP_NOFS);
-+			if (unlikely(p)) {
-+				/* Probably -ENOMEM */
- 				page->mapping = NULL;
--				put_page(page); /* for cache */
-+				put_page(page);
- 			} else {
- 				page->mapping = dmap;
- 				dmap->nrpages++;
- 				if (PageDirty(page))
--					radix_tree_tag_set(&dmap->i_pages,
--							   offset,
--							   PAGECACHE_TAG_DIRTY);
-+					__xa_set_tag(&dmap->i_pages, offset,
-+							PAGECACHE_TAG_DIRTY);
- 			}
- 			xa_unlock_irq(&dmap->i_pages);
- 		}
-@@ -476,8 +474,7 @@ int __nilfs_clear_page_dirty(struct page *page)
- 	if (mapping) {
- 		xa_lock_irq(&mapping->i_pages);
- 		if (test_bit(PG_dirty, &page->flags)) {
--			radix_tree_tag_clear(&mapping->i_pages,
--					     page_index(page),
-+			__xa_clear_tag(&mapping->i_pages, page_index(page),
- 					     PAGECACHE_TAG_DIRTY);
- 			xa_unlock_irq(&mapping->i_pages);
- 			return clear_page_dirty_for_io(page);
+I shall create a git branch from -rc1 and ask for that to be included in
+-next.  I'm a little concerned I still have no reviews on some of the
+later patches.
+
+Changes since v13:
+ - Actually fixed bug in workingset conversion that led to exceptional
+   entries not being deleted from the XArray.  Not sure how I dropped
+   that patch for v13.  Thanks to David Sterba for noticing.
+ - Fixed bug in DAX writeback conversion that failed to wake up waiters.
+   Thanks to Ross for testing, and to Dan & Jeff for helping me get a
+   setup working to reproduce the problem.
+ - Converted the new dax_lock_page / dax_unlock_page functions.
+ - Moved XArray test suite entirely into the test_xarray kernel module
+   to match other test suites.  It can still be built in userspace as
+   part of the radix tree test suite.
+ - Changed email address.
+ - Moved a few functions into different patches to make the test-suite
+   additions more logical.
+ - Fixed a bug in XA_BUG_ON (oh the irony) where it evaluated the
+   condition twice.
+ - Constified xa_head() / xa_parent() / xa_entry() and their _locked
+   variants.
+ - Moved xa_parent() to xarray.h so it can be used from the workingset code.
+ - Call the xarray testsuite from the radix tree test suite to ensure
+   that I remember to run both test suites ;-)
+ - Added some more tests to the test suite.
+
+Matthew Wilcox (74):
+  Update email address
+  radix tree test suite: Enable ubsan
+  dax: Fix use of zero page
+  xarray: Replace exceptional entries
+  xarray: Change definition of sibling entries
+  xarray: Add definition of struct xarray
+  xarray: Define struct xa_node
+  xarray: Add documentation
+  xarray: Add XArray load operation
+  xarray: Add XArray tags
+  xarray: Add XArray unconditional store operations
+  xarray: Add XArray conditional store operations
+  xarray: Add XArray iterators
+  xarray: Extract entries from an XArray
+  xarray: Destroy an XArray
+  xarray: Step through an XArray
+  xarray: Add xas_for_each_conflict
+  xarray: Add xas_create_range
+  xarray: Add MAINTAINERS entry
+  page cache: Rearrange address_space
+  page cache: Convert hole search to XArray
+  page cache: Add and replace pages using the XArray
+  page cache: Convert page deletion to XArray
+  page cache: Convert find_get_entry to XArray
+  page cache: Convert find_get_entries to XArray
+  page cache: Convert find_get_pages_range to XArray
+  page cache: Convert find_get_pages_contig to XArray
+  page cache; Convert find_get_pages_range_tag to XArray
+  page cache: Convert find_get_entries_tag to XArray
+  page cache: Convert filemap_map_pages to XArray
+  radix tree test suite: Convert regression1 to XArray
+  page cache: Convert delete_batch to XArray
+  page cache: Remove stray radix comment
+  page cache: Convert filemap_range_has_page to XArray
+  mm: Convert page-writeback to XArray
+  mm: Convert workingset to XArray
+  mm: Convert truncate to XArray
+  mm: Convert add_to_swap_cache to XArray
+  mm: Convert delete_from_swap_cache to XArray
+  mm: Convert __do_page_cache_readahead to XArray
+  mm: Convert page migration to XArray
+  mm: Convert huge_memory to XArray
+  mm: Convert collapse_shmem to XArray
+  mm: Convert khugepaged_scan_shmem to XArray
+  mm: Convert is_page_cache_freeable to XArray
+  pagevec: Use xa_tag_t
+  shmem: Convert shmem_radix_tree_replace to XArray
+  shmem: Convert shmem_confirm_swap to XArray
+  shmem: Convert find_swap_entry to XArray
+  shmem: Convert shmem_add_to_page_cache to XArray
+  shmem: Convert shmem_alloc_hugepage to XArray
+  shmem: Convert shmem_free_swap to XArray
+  shmem: Convert shmem_partial_swap_usage to XArray
+  memfd: Convert memfd_wait_for_pins to XArray
+  memfd: Convert memfd_tag_pins to XArray
+  shmem: Comment fixups
+  btrfs: Convert page cache to XArray
+  fs: Convert buffer to XArray
+  fs: Convert writeback to XArray
+  nilfs2: Convert to XArray
+  f2fs: Convert to XArray
+  dax: Rename some functions
+  dax: Hash on XArray instead of mapping
+  dax: Convert dax_insert_pfn_mkwrite to XArray
+  dax: Convert dax_layout_busy_page to XArray
+  dax: Convert __dax_invalidate_entry to XArray
+  dax: Convert dax writeback to XArray
+  dax: Convert dax_lock_page to XArray
+  dax: Convert page fault handlers to XArray
+  page cache: Finish XArray conversion
+  radix tree: Remove radix_tree_update_node_t
+  radix tree: Remove split/join code
+  radix tree: Remove radix_tree_maybe_preload_order
+  radix tree: Remove radix_tree_clear_tags
+
+ .clang-format                                 |    1 -
+ .mailmap                                      |    7 +
+ Documentation/core-api/index.rst              |    1 +
+ Documentation/core-api/xarray.rst             |  395 ++++
+ MAINTAINERS                                   |   17 +-
+ arch/powerpc/include/asm/book3s/64/pgtable.h  |    4 +-
+ arch/powerpc/include/asm/nohash/64/pgtable.h  |    4 +-
+ drivers/gpu/drm/i915/i915_gem.c               |   17 +-
+ fs/btrfs/compression.c                        |    6 +-
+ fs/btrfs/extent_io.c                          |   12 +-
+ fs/buffer.c                                   |   14 +-
+ fs/dax.c                                      |  878 ++++-----
+ fs/ext4/inode.c                               |    2 +-
+ fs/f2fs/data.c                                |    6 +-
+ fs/f2fs/dir.c                                 |    2 +-
+ fs/f2fs/f2fs.h                                |    2 +-
+ fs/f2fs/inline.c                              |    2 +-
+ fs/f2fs/node.c                                |    6 +-
+ fs/fs-writeback.c                             |   25 +-
+ fs/gfs2/aops.c                                |    2 +-
+ fs/inode.c                                    |    2 +-
+ fs/nfs/blocklayout/blocklayout.c              |    2 +-
+ fs/nilfs2/btnode.c                            |   26 +-
+ fs/nilfs2/page.c                              |   29 +-
+ fs/proc/task_mmu.c                            |    2 +-
+ include/linux/fs.h                            |   63 +-
+ include/linux/pagemap.h                       |   10 +-
+ include/linux/pagevec.h                       |    8 +-
+ include/linux/radix-tree.h                    |  136 +-
+ include/linux/swap.h                          |   22 +-
+ include/linux/swapops.h                       |   19 +-
+ include/linux/xarray.h                        | 1047 +++++++++-
+ lib/Kconfig.debug                             |    3 +
+ lib/Makefile                                  |    3 +-
+ lib/idr.c                                     |   66 +-
+ lib/radix-tree.c                              |  575 +-----
+ lib/test_xarray.c                             |  676 +++++++
+ lib/xarray.c                                  | 1753 +++++++++++++++++
+ mm/filemap.c                                  |  723 +++----
+ mm/huge_memory.c                              |   17 +-
+ mm/khugepaged.c                               |  177 +-
+ mm/madvise.c                                  |    2 +-
+ mm/memcontrol.c                               |    2 +-
+ mm/memfd.c                                    |  105 +-
+ mm/migrate.c                                  |   48 +-
+ mm/mincore.c                                  |    2 +-
+ mm/page-writeback.c                           |   72 +-
+ mm/readahead.c                                |   10 +-
+ mm/shmem.c                                    |  201 +-
+ mm/swap.c                                     |    6 +-
+ mm/swap_state.c                               |  119 +-
+ mm/truncate.c                                 |   27 +-
+ mm/vmscan.c                                   |   10 +-
+ mm/workingset.c                               |   69 +-
+ tools/include/asm-generic/bitops.h            |    1 +
+ tools/include/asm-generic/bitops/atomic.h     |    9 -
+ tools/include/asm-generic/bitops/non-atomic.h |  109 +
+ tools/include/linux/bitmap.h                  |    1 +
+ tools/include/linux/kernel.h                  |    1 +
+ tools/include/linux/spinlock.h                |   12 +-
+ tools/testing/radix-tree/.gitignore           |    1 +
+ tools/testing/radix-tree/Makefile             |   16 +-
+ tools/testing/radix-tree/benchmark.c          |   91 -
+ tools/testing/radix-tree/bitmap.c             |   23 +
+ tools/testing/radix-tree/idr-test.c           |    6 +-
+ tools/testing/radix-tree/linux/bug.h          |    1 +
+ tools/testing/radix-tree/linux/kconfig.h      |    1 +
+ tools/testing/radix-tree/linux/kernel.h       |    5 +
+ tools/testing/radix-tree/linux/lockdep.h      |   11 +
+ tools/testing/radix-tree/linux/radix-tree.h   |    1 -
+ tools/testing/radix-tree/linux/rcupdate.h     |    2 +
+ tools/testing/radix-tree/linux/xarray.h       |    2 +
+ tools/testing/radix-tree/main.c               |   21 +-
+ tools/testing/radix-tree/multiorder.c         |  272 +--
+ tools/testing/radix-tree/regression1.c        |   58 +-
+ tools/testing/radix-tree/regression3.c        |   23 -
+ tools/testing/radix-tree/tag_check.c          |   29 -
+ tools/testing/radix-tree/test.c               |    8 +-
+ tools/testing/radix-tree/test.h               |    1 +
+ tools/testing/radix-tree/xarray.c             |   33 +
+ 80 files changed, 5462 insertions(+), 2711 deletions(-)
+ create mode 100644 Documentation/core-api/xarray.rst
+ create mode 100644 lib/test_xarray.c
+ create mode 100644 lib/xarray.c
+ create mode 100644 tools/include/asm-generic/bitops/non-atomic.h
+ create mode 100644 tools/testing/radix-tree/bitmap.c
+ create mode 100644 tools/testing/radix-tree/linux/kconfig.h
+ create mode 100644 tools/testing/radix-tree/linux/lockdep.h
+ create mode 100644 tools/testing/radix-tree/linux/xarray.h
+ create mode 100644 tools/testing/radix-tree/xarray.c
+
 -- 
 2.17.1
 
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most
+engaging tech sites, Slashdot.org! http://sdm.link/slashdot
