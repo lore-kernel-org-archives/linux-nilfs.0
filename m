@@ -1,7 +1,7 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 18/74] xarray: Add xas_create_range
-Date: Sat, 16 Jun 2018 18:59:56 -0700
-Message-ID: <20180617020052.4759-19-willy@infradead.org>
+Subject: [PATCH v14 17/74] xarray: Add xas_for_each_conflict
+Date: Sat, 16 Jun 2018 18:59:55 -0700
+Message-ID: <20180617020052.4759-18-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=OyTxRmV4rAGKG2darjx2yztVr7oEJA+CTmBQXtKXahU=; b=Bu/Dv3+4aJnylOhJiLBtFG5XPq
- 9g5JGDILoq3tTBavnM5gKuG6ujtX4mgd5qFrvQMhAAnXNSzq3XNFP1g8xeaZr6q6PjcaDdEA2ViOg
- wjxfeyC9Im86oQaDhKaqOiv7c4ApTA6wqP+XNzEWCGgqfScNdLlcWggA+cp7dPxMC/5I=;
+ bh=gPrs5Xvr6/lmTcgM+ymDV8Z0qRreZjww6huepXU7wTQ=; b=ltVg8bum6dbU8d/X3CDU3T5ymr
+ S/1uho5YRaDsUPdHhtYvBLbAFWLfQqs0k2m4FBfVi4dcAEcZDzXgVwRzIqvIbFG1JgWgdLQaRrt0j
+ 4ihJ1NQP/+nC0xK5m0Tc1Zo+Pb4dXeJLE/SBtVncJp3e4gCw4agg79bS/vGbvRT6SgOg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -23,21 +23,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=OyTxRmV4rAGKG2darjx2yztVr7oEJA+CTmBQXtKXahU=; b=SRFJiT02yeBC0ByT4T2Oa8e6fm
- RBMEkHHmHOC7OyvNf/2JObC90wFrj1PCW8RbVow827xh++K2DS27XZ5HSv3EIocSdH6v8BBVQAEEe
- nhdK+eC8wxAEZ57Ohg2ITIMsqmSjYdOtdowFz7zUtT779ir2ZDrUQky9MgUI4v4fPFB0=;
+ bh=gPrs5Xvr6/lmTcgM+ymDV8Z0qRreZjww6huepXU7wTQ=; b=VqXgYsCrXeSRRtvcOGWTjbgOtn
+ VCbKKjvGA+EqE6zVLpZrB/fZ9yiI+vU+31gzTaT74sIeLj2aLLmvcJ/u+qeEwMEkQEIpK/n9oRFJB
+ acOzaON8a5Kg0hqVB6FRPUlOZGg5YB0Zvb0lujLKRFPNux1znOaoaAjjisodbkC5ei2Y=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=OyTxRmV4rAGKG2darjx2yztVr7oEJA+CTmBQXtKXahU=; b=gDF3lmtKPsIfl/KAjw0ZGO5lb
- Oz3l57T7cUbwXB++x26fnGv4h1FC/U7AwhfOSit0DD0lz+suJ7uk1YdKchwDBcBBbvGhsRGzwpG1A
- KsBakYBNx9W0h5XuKS33Hd3Xg8A31SplhEfMTJrD0ZkTLOPhqNdYZI9vNcdFn3vTJ1AJxOIdICnMw
- SoRP5Eqf8Nk0vREpa8lgzOsLVOH1M8U5ABopvFYzPgtjbCzCUGepXp94Z2AAwYQNjw1ufqVpWjS5J
- QjpNih1c0jMNLwMvl62NQTpaZqt3NqGEKmoLoL4M/8VR3Hn8l6FwDkc4IClxwJw8w+sbQwk2WEG7F
- jrCv2EQXw==;
+ bh=gPrs5Xvr6/lmTcgM+ymDV8Z0qRreZjww6huepXU7wTQ=; b=ZoCgZtfYJajiqM+kKHesM7z45
+ Kj7i2SLRh2j9cfQ+xHX6Ov4+o0h6xySn5M3hMiY3OFZssH3JLMMmVXzZYrJ9l12qVsVnFG5c5r0yp
+ YkG4A4q+2nI3fnc7/lvV0q54/DukRlSK4QvjpW128Wm2Qg1n+f8roLCBpm92Vs7GM2DV/P9tazMFT
+ 5qyhtHeKxeWOdhYmB0d4vb9h5yN2kU5Jj0F9ZoLBB1AF494gRvZoP2kZugFjj/v7o708MlWrUyaeo
+ gYFcm8UBt8Hh2V58PWC6kEgr+gDzo3PxADzfXH7FOB6zh2cn/Q8n5NwZSH0yDhbwZ+Y3ls0p38hqn
+ FNMp5d/pQ==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -51,61 +51,206 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-This hopefully temporary function is useful for users who have not yet
-been converted to multi-index entries.
+This iterator iterates over each entry that is stored in the index or
+indices specified by the xa_state.  This is intended for use for a
+conditional store of a multiindex entry, or to allow entries which are
+about to be removed from the xarray to be disposed of properly.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- include/linux/xarray.h |  2 ++
- lib/xarray.c           | 22 ++++++++++++++++++++++
- 2 files changed, 24 insertions(+)
+ include/linux/xarray.h | 17 ++++++++++++
+ lib/test_xarray.c      | 63 ++++++++++++++++++++++++++++++++++++++++++
+ lib/xarray.c           | 61 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 141 insertions(+)
 
 diff --git a/include/linux/xarray.h b/include/linux/xarray.h
-index 0a9f66266c9a..b78c2e9aa065 100644
+index 921d41034d7d..0a9f66266c9a 100644
 --- a/include/linux/xarray.h
 +++ b/include/linux/xarray.h
-@@ -780,6 +780,8 @@ void xas_init_tags(const struct xa_state *);
- bool xas_nomem(struct xa_state *, gfp_t);
- void xas_pause(struct xa_state *);
+@@ -769,6 +769,7 @@ static inline bool xas_retry(struct xa_state *xas, const void *entry)
+ void *xas_load(struct xa_state *);
+ void *xas_store(struct xa_state *, void *entry);
+ void *xas_find(struct xa_state *, unsigned long max);
++void *xas_next_conflict(struct xa_state *);
  
-+void xas_create_range(struct xa_state *, unsigned long max);
-+
- /**
-  * xas_reload() - Refetch an entry from the xarray.
-  * @xas: XArray operation state.
-diff --git a/lib/xarray.c b/lib/xarray.c
-index 31c5332c8146..8dddad5b237c 100644
---- a/lib/xarray.c
-+++ b/lib/xarray.c
-@@ -624,6 +624,28 @@ static void *xas_create(struct xa_state *xas)
- 	return entry;
- }
+ bool xas_get_tag(const struct xa_state *, xa_tag_t);
+ void xas_set_tag(const struct xa_state *, xa_tag_t);
+@@ -983,6 +984,22 @@ enum {
+ 	for (entry = xas_find_tagged(xas, max, tag); entry; \
+ 	     entry = xas_next_tagged(xas, max, tag))
  
 +/**
-+ * xas_create_range() - Ensure that stores to this range will succeed
++ * xas_for_each_conflict() - Iterate over a range of an XArray.
 + * @xas: XArray operation state.
-+ * @max: The highest index to create a slot for.
++ * @entry: Entry retrieved from the array.
 + *
-+ * Creates all of the slots in the range between the current position of
-+ * @xas and @max.  This is for the benefit of users who have not yet been
-+ * converted to multi-index entries.
-+ *
-+ * The implementation is naive.
++ * The loop body will be executed for each entry in the XArray that lies
++ * within the range specified by @xas.  If the loop completes successfully,
++ * any entries that lie in this range will be replaced by @entry.  The caller
++ * may break out of the loop; if they do so, the contents of the XArray will
++ * be unchanged.  The operation may fail due to an out of memory condition.
++ * The caller may also call xa_set_err() to exit the loop while setting an
++ * error to record the reason.
 + */
-+void xas_create_range(struct xa_state *xas, unsigned long max)
++#define xas_for_each_conflict(xas, entry) \
++	while ((entry = xas_next_conflict(xas)))
++
+ void *__xas_next(struct xa_state *);
+ void *__xas_prev(struct xa_state *);
+ 
+diff --git a/lib/test_xarray.c b/lib/test_xarray.c
+index e74ade12c663..818cfd8746ba 100644
+--- a/lib/test_xarray.c
++++ b/lib/test_xarray.c
+@@ -315,6 +315,68 @@ static void check_multi_store(struct xarray *xa)
+ 	}
+ }
+ 
++static void __check_store_iter(struct xarray *xa, unsigned long start,
++			unsigned int order, unsigned int present)
 +{
-+	XA_STATE(tmp, xas->xa, xas->xa_index);
++	XA_STATE_ORDER(xas, xa, start, order);
++	void *entry;
++	unsigned int count = 0;
 +
-+	do {
-+		xas_create(&tmp);
-+		xas_set(&tmp, tmp.xa_index + XA_CHUNK_SIZE);
-+	} while (tmp.xa_index < max);
++retry:
++	xas_for_each_conflict(&xas, entry) {
++		XA_BUG_ON(xa, !xa_is_value(entry));
++		XA_BUG_ON(xa, entry < xa_mk_value(start));
++		XA_BUG_ON(xa, entry > xa_mk_value(start + (1UL << order) - 1));
++		count++;
++	}
++	xas_store(&xas, xa_mk_value(start));
++	if (xas_nomem(&xas, GFP_KERNEL)) {
++		count = 0;
++		goto retry;
++	}
++	XA_BUG_ON(xa, xas_error(&xas));
++	XA_BUG_ON(xa, count != present);
++	XA_BUG_ON(xa, xa_load(xa, start) != xa_mk_value(start));
++	XA_BUG_ON(xa, xa_load(xa, start + (1UL << order) - 1) !=
++			xa_mk_value(start));
++	xa_erase_value(xa, start);
 +}
-+EXPORT_SYMBOL_GPL(xas_create_range);
 +
- static void update_node(struct xa_state *xas, struct xa_node *node,
- 		int count, int values)
++static void check_store_iter(struct xarray *xa)
++{
++	unsigned int i, j;
++
++	for (i = 0; i < 20; i++) {
++		unsigned int min = 1 << i;
++		unsigned int max = (2 << i) - 1;
++		__check_store_iter(xa, 0, i, 0);
++		XA_BUG_ON(xa, !xa_empty(xa));
++		__check_store_iter(xa, min, i, 0);
++		XA_BUG_ON(xa, !xa_empty(xa));
++
++		xa_store_value(xa, min, GFP_KERNEL);
++		__check_store_iter(xa, min, i, 1);
++		XA_BUG_ON(xa, !xa_empty(xa));
++		xa_store_value(xa, max, GFP_KERNEL);
++		__check_store_iter(xa, min, i, 1);
++		XA_BUG_ON(xa, !xa_empty(xa));
++
++		for (j = 0; j < min; j++)
++			xa_store_value(xa, j, GFP_KERNEL);
++		__check_store_iter(xa, 0, i, min);
++		XA_BUG_ON(xa, !xa_empty(xa));
++		for (j = 0; j < min; j++)
++			xa_store_value(xa, min + j, GFP_KERNEL);
++		__check_store_iter(xa, min, i, min);
++		XA_BUG_ON(xa, !xa_empty(xa));
++	}
++	xa_store_value(xa, 63, GFP_KERNEL);
++	xa_store_value(xa, 65, GFP_KERNEL);
++	__check_store_iter(xa, 64, 2, 1);
++	xa_erase_value(xa, 63);
++	XA_BUG_ON(xa, !xa_empty(xa));
++}
++
+ static void check_multi_find(struct xarray *xa)
  {
+ 	unsigned long index;
+@@ -506,6 +568,7 @@ static int xarray_checks(void)
+ 	check_multi_store(&array);
+ 	check_find(&array);
+ 	check_move(&array);
++	check_store_iter(&array);
+ 
+ 	printk("XArray: %u of %u tests passed\n", tests_passed, tests_run);
+ 	return (tests_run != tests_passed) ? 0 : -EINVAL;
+diff --git a/lib/xarray.c b/lib/xarray.c
+index ab1b6786711e..31c5332c8146 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -1086,6 +1086,67 @@ void *xas_find_tagged(struct xa_state *xas, unsigned long max, xa_tag_t tag)
+ }
+ EXPORT_SYMBOL_GPL(xas_find_tagged);
+ 
++/**
++ * xas_next_conflict() - Step for xas_for_each_conflict().
++ * @xas: XArray operation state.
++ *
++ * This function does the work for xas_for_each_conflict().
++ *
++ * Context: Any context.  Expects xa_lock to be held.
++ * Return: The next entry in the range covered by @xas or %NULL.
++ */
++void *xas_next_conflict(struct xa_state *xas)
++{
++	void *curr;
++
++	if (xas_error(xas))
++		return NULL;
++
++	if (!xas->xa_node)
++		return NULL;
++
++	if (xas_top(xas->xa_node)) {
++		curr = xas_start(xas);
++		if (!curr)
++			return NULL;
++		while (xa_is_node(curr)) {
++			struct xa_node *node = xa_to_node(curr);
++			curr = xas_descend(xas, node);
++		}
++		if (curr)
++			return curr;
++	}
++
++	if (xas->xa_node->shift > xas->xa_shift)
++		return NULL;
++
++	for (;;) {
++		if (xas->xa_node->shift == xas->xa_shift) {
++			if ((xas->xa_offset & xas->xa_sibs) == xas->xa_sibs)
++				break;
++		} else if (xas->xa_offset == XA_CHUNK_MASK) {
++			xas->xa_offset = xas->xa_node->offset;
++			xas->xa_node = xas->xa_node->parent;
++			if (!xas->xa_node)
++				break;
++			continue;
++		}
++		curr = xa_entry_locked(xas->xa, xas->xa_node, ++xas->xa_offset);
++		if (xa_is_sibling(curr))
++			continue;
++		while (xa_is_node(curr)) {
++			xas->xa_node = xa_to_node(curr);
++			xas->xa_offset = 0;
++			curr = xa_entry_locked(xas->xa, xas->xa_node, 0);
++		}
++		if (curr)
++			return curr;
++	}
++	xas->xa_offset -= xas->xa_sibs;
++	return NULL;
++}
++EXPORT_SYMBOL_GPL(xas_next_conflict);
++
+ /**
+  * xa_init_flags() - Initialise an empty XArray with flags.
+  * @xa: XArray.
 -- 
 2.17.1
 
