@@ -1,8 +1,8 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v14 29/74] page cache: Convert
- find_get_entries_tag to XArray
-Date: Sat, 16 Jun 2018 19:00:07 -0700
-Message-ID: <20180617020052.4759-30-willy@infradead.org>
+Subject: [PATCH v14 32/74] page cache: Convert delete_batch to
+ XArray
+Date: Sat, 16 Jun 2018 19:00:10 -0700
+Message-ID: <20180617020052.4759-33-willy@infradead.org>
 References: <20180617020052.4759-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=swEIFSIKt2NvfdWOTUWTQV6Qzybb5fYEWm8H1x1L5ac=; b=VTcz0IZgXfImE761b1U9KdKisE
- Hf/X7OI9/d35YhqPqMXN+Af6YBF4A0R8XIJ+IMM4g/Hy1ITxvpQ2t0e0S/bc9c0+6SPmKmvPY9tMF
- BdhtdzgV8O3yiTl+leGqhr+SgjLMKmpb9f2y4exiVLS7lIU/3/zFX0F1S+635cCusPek=;
+ bh=I3UYxOubL92+FRQCHMpYAsogvmB5EZGLLIeZ/JtzqLA=; b=He0k+Xwbph6rHHpANh13AOeF0M
+ Gzhg5v6Xby7K/X4dwjGzgKGp0f7a3rFTJL3Gln5r2Yse8IIB+G5ow0x8lcIHQnpqf/3Wz9YRywO9J
+ FR8RhJRbKA7Z77P92+6+D8aBaOBRJ0nHSdenRXyg/KswYtERAzTVvvnWFtfheFw/0CTo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To
@@ -24,21 +24,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=swEIFSIKt2NvfdWOTUWTQV6Qzybb5fYEWm8H1x1L5ac=; b=YY7L8BCcTR4vReAmeTnkQhBXxD
- PuOgcHuT/VNvebTRbGrUqJmSMKHh2QWSJfrMz9uUQwlv+x+jSPVt/4N911Z7hEyOQSdAQg478KGTl
- QMn4a5E71hEOWtRhRp9QqqQEHL69Ug1k1hU4zES4iebHx13Nkza4dfA7gb8y6RqxLRLk=;
+ bh=I3UYxOubL92+FRQCHMpYAsogvmB5EZGLLIeZ/JtzqLA=; b=kzmICHcPmpGKaAmydNOO51BeFN
+ D/57LxZNSRfUlSx6whdqLzvHeFXEoWmOEBuvrdgQWxXJLV1ubxYVdrm0O1i1dXMqixVozjfBVDopv
+ 5NjE7ijANuG8+XW6dBwQDl7egQ23TNqX3EP5tkD/EM2gBDaJlgG4M4q0zPhrvgcF7olM=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20170209; h=References:In-Reply-To:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:MIME-Version:Content-Type:
  Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
  Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
  List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=swEIFSIKt2NvfdWOTUWTQV6Qzybb5fYEWm8H1x1L5ac=; b=aAQmFyx0cVjTXqtePBlN/Gge1
- 6GAqypN2Sd/9jLth3wwwkxuXRtSKKxfGDSJxHjw7XruOko4f2+J0aQEazFxZbT9st3pkFvQLjdS5O
- Uk8iT+UyZGL2vvJgRvMNeJOih+Olkwe0ZNKGxWm42YfgBEXYLL+Ma3PKpwudp432g9+I4RYJqK+Rh
- ShFqf+Mwx7QTpycJl7TivE24r6HwkGfGeKRQP82noTMR4vc4FBRZ7+njOGBaBtiXX9Myku4R08p+7
- jzlcpj59lkspt2+2QvIHBLvky5rchFeVlmSuULPcfE4kugcNx4j+dd/kEeomdvqXgUTOhmgR/EyOe
- 4DdD+SVBA==;
+ bh=I3UYxOubL92+FRQCHMpYAsogvmB5EZGLLIeZ/JtzqLA=; b=EQE3FOTEF9wQtH0fGRuJdRy51
+ Uppi47EMy2yO6d1DXQSRTcumVl3sFNX19HANo1Cu7IQ0IAWyYJHftsWZnn+HAiIU8aCxQXSbMMuA8
+ 7XjgOUnwjnyUYpEDOHi617u44LKBvG/ztdbIsKnrWe0r7YC1vruDTnmjlyfXq4fDrLLonktNGKVIf
+ YEdiywJWQkhWRAmmRqHIVcUTNw5qT4y1hSJszTPwy9OUzqMqieGmNYuQkT6Z66jkfT8ySLWJEv1GG
+ /lLTyO9SmDpLtoHSMVdlKPVxxFZnqpWz0RFIifkzMLJ9hC3H5YtHao+vTnWHoJ8WsXhiHteRjcXik
+ UFAmXRh+g==;
 In-Reply-To: <20180617020052.4759-1-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,113 +52,92 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Lukas Czerner <lczerner@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Slightly shorter and simpler code.
+Rename the function from page_cache_tree_delete_batch to just
+page_cache_delete_batch.
 
 Signed-off-by: Matthew Wilcox <willy@infradead.org>
 ---
- include/linux/pagemap.h |  2 +-
- mm/filemap.c            | 54 ++++++++++++++++++-----------------------
- 2 files changed, 25 insertions(+), 31 deletions(-)
+ mm/filemap.c | 28 +++++++++++++---------------
+ 1 file changed, 13 insertions(+), 15 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index a6d635fefb01..442977811b59 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -373,7 +373,7 @@ static inline unsigned find_get_pages_tag(struct address_space *mapping,
- 					nr_pages, pages);
- }
- unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
--			int tag, unsigned int nr_entries,
-+			xa_tag_t tag, unsigned int nr_entries,
- 			struct page **entries, pgoff_t *indices);
- 
- struct page *grab_cache_page_write_begin(struct address_space *mapping,
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 83328635edaa..67f04bcdf9ef 100644
+index 4204d9df003b..025077bc82be 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
-@@ -1866,57 +1866,51 @@ EXPORT_SYMBOL(find_get_pages_range_tag);
-  * @tag.
+@@ -272,7 +272,7 @@ void delete_from_page_cache(struct page *page)
+ EXPORT_SYMBOL(delete_from_page_cache);
+ 
+ /*
+- * page_cache_tree_delete_batch - delete several pages from page cache
++ * page_cache_delete_batch - delete several pages from page cache
+  * @mapping: the mapping to which pages belong
+  * @pvec: pagevec with pages to delete
+  *
+@@ -285,23 +285,18 @@ EXPORT_SYMBOL(delete_from_page_cache);
+  *
+  * The function expects the i_pages lock to be held.
   */
- unsigned find_get_entries_tag(struct address_space *mapping, pgoff_t start,
--			int tag, unsigned int nr_entries,
-+			xa_tag_t tag, unsigned int nr_entries,
- 			struct page **entries, pgoff_t *indices)
+-static void
+-page_cache_tree_delete_batch(struct address_space *mapping,
++static void page_cache_delete_batch(struct address_space *mapping,
+ 			     struct pagevec *pvec)
  {
--	void **slot;
-+	XA_STATE(xas, &mapping->i_pages, start);
-+	struct page *page;
- 	unsigned int ret = 0;
 -	struct radix_tree_iter iter;
+-	void **slot;
++	XA_STATE(xas, &mapping->i_pages, pvec->pages[0]->index);
+ 	int total_pages = 0;
+ 	int i = 0, tail_pages = 0;
+ 	struct page *page;
+-	pgoff_t start;
  
- 	if (!nr_entries)
- 		return 0;
- 
- 	rcu_read_lock();
--	radix_tree_for_each_tagged(slot, &mapping->i_pages, &iter, start, tag) {
--		struct page *head, *page;
--repeat:
--		page = radix_tree_deref_slot(slot);
--		if (unlikely(!page))
-+	xas_for_each_tagged(&xas, page, ULONG_MAX, tag) {
-+		struct page *head;
-+		if (xas_retry(&xas, page))
- 			continue;
--		if (radix_tree_exception(page)) {
--			if (radix_tree_deref_retry(page)) {
--				slot = radix_tree_iter_retry(&iter);
--				continue;
--			}
--
--			/*
--			 * A shadow entry of a recently evicted page, a swap
--			 * entry from shmem/tmpfs or a DAX entry.  Return it
--			 * without attempting to raise page count.
--			 */
-+		/*
-+		 * A shadow entry of a recently evicted page, a swap
-+		 * entry from shmem/tmpfs or a DAX entry.  Return it
-+		 * without attempting to raise page count.
-+		 */
-+		if (xa_is_value(page))
- 			goto export;
--		}
- 
- 		head = compound_head(page);
- 		if (!page_cache_get_speculative(head))
--			goto repeat;
-+			goto retry;
- 
- 		/* The page was split under us? */
--		if (compound_head(page) != head) {
--			put_page(head);
--			goto repeat;
--		}
-+		if (compound_head(page) != head)
-+			goto put_page;
- 
- 		/* Has the page moved? */
--		if (unlikely(page != *slot)) {
--			put_page(head);
--			goto repeat;
--		}
-+		if (unlikely(page != xas_reload(&xas)))
-+			goto put_page;
-+
- export:
--		indices[ret] = iter.index;
-+		indices[ret] = xas.xa_index;
- 		entries[ret] = page;
- 		if (++ret == nr_entries)
+-	start = pvec->pages[0]->index;
+-	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
++	mapping_set_update(&xas, mapping);
++	xas_for_each(&xas, page, ULONG_MAX) {
+ 		if (i >= pagevec_count(pvec) && !tail_pages)
  			break;
-+		continue;
-+put_page:
-+		put_page(head);
-+retry:
-+		xas_reset(&xas);
+-		page = radix_tree_deref_slot_protected(slot,
+-						       &mapping->i_pages.xa_lock);
+ 		if (xa_is_value(page))
+ 			continue;
+ 		if (!tail_pages) {
+@@ -310,8 +305,11 @@ page_cache_tree_delete_batch(struct address_space *mapping,
+ 			 * have our pages locked so they are protected from
+ 			 * being removed.
+ 			 */
+-			if (page != pvec->pages[i])
++			if (page != pvec->pages[i]) {
++				VM_BUG_ON_PAGE(page->index >
++						pvec->pages[i]->index, page);
+ 				continue;
++			}
+ 			WARN_ON_ONCE(!PageLocked(page));
+ 			if (PageTransHuge(page) && !PageHuge(page))
+ 				tail_pages = HPAGE_PMD_NR - 1;
+@@ -322,11 +320,11 @@ page_cache_tree_delete_batch(struct address_space *mapping,
+ 			 */
+ 			i++;
+ 		} else {
++			VM_BUG_ON_PAGE(page->index + HPAGE_PMD_NR - tail_pages
++					!= pvec->pages[i]->index, page);
+ 			tail_pages--;
+ 		}
+-		radix_tree_clear_tags(&mapping->i_pages, iter.node, slot);
+-		__radix_tree_replace(&mapping->i_pages, iter.node, slot, NULL,
+-				workingset_lookup_update(mapping));
++		xas_store(&xas, NULL);
+ 		total_pages++;
  	}
- 	rcu_read_unlock();
- 	return ret;
+ 	mapping->nrpages -= total_pages;
+@@ -347,7 +345,7 @@ void delete_from_page_cache_batch(struct address_space *mapping,
+ 
+ 		unaccount_page_cache_page(mapping, pvec->pages[i]);
+ 	}
+-	page_cache_tree_delete_batch(mapping, pvec);
++	page_cache_delete_batch(mapping, pvec);
+ 	xa_unlock_irqrestore(&mapping->i_pages, flags);
+ 
+ 	for (i = 0; i < pagevec_count(pvec); i++)
 -- 
 2.17.1
 
