@@ -1,121 +1,39 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH v14 00/74] Convert page cache to XArray
-Date: Tue, 19 Jun 2018 10:16:38 -0700
-Message-ID: <20180619171638.GE1438@bombadil.infradead.org>
-References: <20180617020052.4759-1-willy@infradead.org>
- <20180619031257.GA12527@linux.intel.com>
- <20180619092230.GA1438@bombadil.infradead.org>
- <20180619164037.GA6679@linux.intel.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH] nilfs2: use 64-bit superblock timstamps
+Date: Wed, 20 Jun 2018 09:50:26 +0200
+Message-ID: <20180620075041.4154396-1-arnd@arndb.de>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:To:From:Date:Sender:Reply-To:Cc:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=6emQNh++UzDOqYRQb8xqC6h5z80Dp8EyRhTHtuzZYpw=; b=JafN8s6SgFSstt9kytRzxdumd
-        KEXQHlRl26LRIqQHMyW8rjAaIn9xm5b3IfHq//YvR99NTZwvhnTw0zScmKr9zf0RMbZpyjzpW4yuf
-        QYsyWKML/wnxoh6PJjP602C8r7aHW6sGVLC2+fMuNCpENsEAxqPyKvCUIxDlNg3H/DTcFyG1g74ZS
-        g6t4HQm0mYWuhdnr3Y0e0vpecM9+KYlsrdLAtwSrJYntnP+4kT9v2zu6/PoFhfmWKFRbmuMmdYfvL
-        2jFN1zNoFXZWy50mffZVKJqz2dtPC099EdbGIUJ5hwNHmVcnwzIHBhtvEwTqxHnK0l72Drj0LXFCu
-    
-Content-Disposition: inline
-In-Reply-To: <20180619164037.GA6679@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ross Zwisler <ross.zwisler@linux.intel.com>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Jan Kara <jack@suse.cz>, Jeff Layton <jlayton@redhat.com>, Lukas Czerner <lczerner@redhat.com>, Christoph Hellwig <hch@lst.de>, Goldwyn Rodrigues <rgoldwyn@suse.com>, Nicholas Piggin <npiggin@gmail.com>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, linux-f2fs-devel@lists.sourceforge.net
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: linux-nilfs@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Jeff Layton <jlayton@redhat.com>, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
 
-On Tue, Jun 19, 2018 at 10:40:37AM -0600, Ross Zwisler wrote:
-> On Tue, Jun 19, 2018 at 02:22:30AM -0700, Matthew Wilcox wrote:
-> > On Mon, Jun 18, 2018 at 09:12:57PM -0600, Ross Zwisler wrote:
-> > > Hit another deadlock.  This one reproduces 100% of the time in my setup with
-> > > XFS + DAX + generic/340.  It doesn't reproduce for me at all with
-> > > next-20180615.  Here's the output from "echo w > /proc/sysrq-trigger":
-> > 
-> > *sigh*.  I wonder what the differences are between our setups ...
-> > 
-> > > [   92.849119] sysrq: SysRq : Show Blocked State
-> > > [   92.850506]   task                        PC stack   pid father
-> > > [   92.852299] holetest        D    0  1651   1466 0x00000000
-> > > [   92.853912] Call Trace:
-> > > [   92.854610]  __schedule+0x2c5/0xad0
-> > > [   92.855612]  schedule+0x36/0x90
-> > > [   92.856602]  get_unlocked_entry+0xce/0x120
-> > > [   92.857756]  ? dax_insert_entry+0x2b0/0x2b0
-> > > [   92.858931]  grab_mapping_entry+0x19e/0x250
-> > > [   92.860119]  dax_iomap_pte_fault+0x115/0x1140
-> > > [   92.860836]  dax_iomap_fault+0x37/0x40
-> > ...
-> > > This looks very similar to the one I reported last week with generic/269.
-> > 
-> > Yeah, another missing wakeup, no doubt.  Can you bisect this?  That was
-> > how I found the last one; bisected it to a single patch and stared very
-> > hard at the patch until I saw it.  I'm not going to be in a position to
-> > tinker with my DAX setup until the first week of July.
-> 
-> It bisected to this commit:
-> 
-> b4b4daa7e8fb0ad0fee35d3e28d00e97c849a6cb is the first bad commit
-> commit b4b4daa7e8fb0ad0fee35d3e28d00e97c849a6cb
-> Author: Matthew Wilcox <willy@infradead.org>
-> Date:   Thu Mar 29 22:58:27 2018 -0400
-> 
->     dax: Convert page fault handlers to XArray
-> 
->     This is the last part of DAX to be converted to the XArray so
->     remove all the old helper functions.
-> 
->     Signed-off-by: Matthew Wilcox <willy@infradead.org>
-
-I think I see a bug.  No idea if it's the one you're hitting ;-)
-
-I had been intending to not use the 'entry' to decide whether we were
-waiting on a 2MB or 4kB page, but rather the xas.  I shelved that idea,
-but not before dropping the DAX_PMD flag being passed from the PMD
-pagefault caller.  So if I put that back ...
-
-
-diff --git a/fs/dax.c b/fs/dax.c
-index 9919b6b545fb..75cc160d2f0b 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -367,13 +367,13 @@ static struct page *dax_busy_page(void *entry)
-  * a VM_FAULT code, encoded as an xarray internal entry.  The ERR_PTR values
-  * overlap with xarray value entries.
-  */
--static
--void *grab_mapping_entry(struct xa_state *xas, struct address_space *mapping)
-+static void *grab_mapping_entry(struct xa_state *xas,
-+		struct address_space *mapping, unsigned long size)
- {
- 	bool pmd_downgrade = false; /* splitting 2MiB entry into 4k entries? */
- 	void *locked = dax_make_entry(pfn_to_pfn_t(0),
--						DAX_EMPTY | DAX_LOCKED);
--	void *unlocked = dax_make_entry(pfn_to_pfn_t(0), DAX_EMPTY);
-+						size | DAX_EMPTY | DAX_LOCKED);
-+	void *unlocked = dax_make_entry(pfn_to_pfn_t(0), size | DAX_EMPTY);
- 	void *entry;
- 
- retry:
-@@ -1163,7 +1163,7 @@ static vm_fault_t dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	if (write && !vmf->cow_page)
- 		flags |= IOMAP_WRITE;
- 
--	entry = grab_mapping_entry(&xas, mapping);
-+	entry = grab_mapping_entry(&xas, mapping, 0);
- 	if (xa_is_internal(entry)) {
- 		ret = xa_to_internal(entry);
- 		goto out;
-@@ -1396,7 +1396,7 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	 * page is already in the tree, for instance), it will return
- 	 * VM_FAULT_FALLBACK.
- 	 */
--	entry = grab_mapping_entry(&xas, mapping);
-+	entry = grab_mapping_entry(&xas, mapping, DAX_PMD);
- 	if (xa_is_internal(entry)) {
- 		result = xa_to_internal(entry);
- 		goto fallback;
-
+VGhlIG1vdW50IHRpbWUgZmllbGQgaW4gdGhlIHN1cGVyYmxvY2sgdXNlcyBhIDY0LWJpdCB0aW1l
+c3RhbXAsIGJ1dApjYWxsaW5nIGdldF9zZWNvbmRzKCkgbWF5IHRydW5jYXRlIHRoZSBjdXJyZW50
+IHRpbWUgdG8gMzIgYml0cy4KClRoaXMgY2hhbmdlcyBpdCB0byBrdGltZV9nZXRfcmVhbF9zZWNv
+bmRzKCkgdG8gYXZvaWQgdGhlIHBvdGVudGlhbApvdmVyZmxvdy4KClNpZ25lZC1vZmYtYnk6IEFy
+bmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+Ci0tLQogZnMvbmlsZnMyL3N1cGVyLmMgfCAyICst
+CiAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkKCmRpZmYgLS1n
+aXQgYS9mcy9uaWxmczIvc3VwZXIuYyBiL2ZzL25pbGZzMi9zdXBlci5jCmluZGV4IDZmZmVjYTg0
+ZDdjMy4uMWI5MDY3Y2Y0NTExIDEwMDY0NAotLS0gYS9mcy9uaWxmczIvc3VwZXIuYworKysgYi9m
+cy9uaWxmczIvc3VwZXIuYwpAQCAtODM0LDcgKzgzNCw3IEBAIHN0YXRpYyBpbnQgbmlsZnNfc2V0
+dXBfc3VwZXIoc3RydWN0IHN1cGVyX2Jsb2NrICpzYiwgaW50IGlzX21vdW50KQogCQlzYnBbMF0t
+PnNfbWF4X21udF9jb3VudCA9IGNwdV90b19sZTE2KE5JTEZTX0RGTF9NQVhfTU5UX0NPVU5UKTsK
+IAogCXNicFswXS0+c19tbnRfY291bnQgPSBjcHVfdG9fbGUxNihtbnRfY291bnQgKyAxKTsKLQlz
+YnBbMF0tPnNfbXRpbWUgPSBjcHVfdG9fbGU2NChnZXRfc2Vjb25kcygpKTsKKwlzYnBbMF0tPnNf
+bXRpbWUgPSBjcHVfdG9fbGU2NChrdGltZV9nZXRfcmVhbF9zZWNvbmRzKCkpOwogCiBza2lwX21v
+dW50X3NldHVwOgogCXNicFswXS0+c19zdGF0ZSA9Ci0tIAoyLjkuMAoKX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4
+QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGlu
+Zm8veTIwMzgK
