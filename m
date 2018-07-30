@@ -1,38 +1,40 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Souptick Joarder <jrdr.linux@gmail.com>
 Subject: Re: [PATCH] fs/buffer: Convert return type int to vm_fault_t
-Date: Sat, 28 Jul 2018 09:04:03 -0600
-Message-ID: <bf0ac658-582e-25a2-3a1d-1046d2c6228f@kernel.dk>
-References: <20180728095043.GA24085@jordon-HP-15-Notebook-PC>
+Date: Mon, 30 Jul 2018 10:19:56 +0530
+Message-ID: <CAFqt6zY2756xkqQruBtfRun+fQNHRRF2dXJHOQYfrhW4g1-HFg@mail.gmail.com>
+References: <20180728095043.GA24085@jordon-HP-15-Notebook-PC> <bf0ac658-582e-25a2-3a1d-1046d2c6228f@kernel.dk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=IwRbCXQ2YaHI1aMdP9cps1U9m+EQOmzTZqBCJ1t7Mq0=;
-        b=xaAfaGuogm4cGOqyDZ0PJUeqZdM4laDmXJB3jWtelOfXrVE/l+XC1+mYNvYAqsSsNB
-         afP5D7nQxOwDzMD/GQzmk0iG3vGgr6w26AZ3I5LXiDPB//E/YKRC7PzHFBQEzbe5Qa7b
-         5T5oRvD3/t5bYTjijPBndrbPqBZx4GcyGf4Oc7nrFflAobfcPw7KySu9FgQCuQAYE4e9
-         w77sW7QvouRNE8eNmLgskXEuB6LAakU6T8kqHZsjkVrdrHEeZ3evhbGt6QmxMKRS+eMw
-         Q6zpMVdY6M/1fWxiVVpIJtq7LPYNqYzoEGkZgCkYhkxADLYQBg8cCkbn8k2vz31gfFa+
-         KqaA==
-In-Reply-To: <20180728095043.GA24085@jordon-HP-15-Notebook-PC>
-Content-Language: en-US
+        d=gmail.com; s=20161025;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to
+         :cc;
+        bh=KAu0lnE+i48nXxt0r7z0sA8TcpvLp4I4zbDy5VBL3iw=;
+        b=CRY/RlepBUjHt+a3sfpc5LWG0OCYd5018k4NQ0E9cEDTnsTkXFor68x9R4HhIsseLw
+         Lr43RrB/vC35mVEWb+aZr4Mg9jK+EO8yf60XzttGe0gkz4cSflXPlLzCz0KRLLu6mp0o
+         KJmxNCBiGv535PJFTemWkw4W7HHp1PpT+FS0ogxe2YslYqwVLGUQrYNni5t706HR7RCA
+         Itdn74UEVXPRGWDM1YFzx0ZJ1DnliFncAHgsJ8O7zfhtIrjrcf1Ut6H85Mn8moe9owR6
+         W27tw9LAcZ1IzC6G40qGoLBPyInPqxWodtt6PlxNCn1xiM92FltaHnjBumTZzWwDqcGj
+         NSzg==
+In-Reply-To: <bf0ac658-582e-25a2-3a1d-1046d2c6228f@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Souptick Joarder <jrdr.linux@gmail.com>, willy@infradead.org, viro@zeniv.linux.org.uk, konishi.ryusuke@lab.ntt.co.jp, darrick.wong@oracle.com, dchinner@redhat.com, pombredanne@nexb.com, ebiggers@google.com, gregkh@linuxfoundation.org, kemi.wang@intel.com
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, sabyasachi.linux@gmail.com, brajeswar.linux@gmail.com
+Content-Transfer-Encoding: 7bit
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Matthew Wilcox <willy@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, "Darrick J. Wong" <darrick.wong@oracle.com>, Dave Chinner <dchinner@redhat.com>, Philippe Ombredanne <pombredanne@nexb.com>, Eric Biggers <ebiggers@google.com>, Greg KH <gregkh@linuxfoundation.org>, kemi.wang@intel.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-kernel@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>, Sabyasachi Gupta <sabyasachi.linux@gmail.com>, Brajeswar Ghosh <brajeswar.linux@gmail.com>
 
-On 7/28/18 3:50 AM, Souptick Joarder wrote:
->  out_unlock:
->  	unlock_page(page);
-> +	ret = block_page_mkwrite_return(err);
->  	return ret;
+On Sat, Jul 28, 2018 at 8:34 PM, Jens Axboe <axboe@kernel.dk> wrote:
+> On 7/28/18 3:50 AM, Souptick Joarder wrote:
+>>  out_unlock:
+>>       unlock_page(page);
+>> +     ret = block_page_mkwrite_return(err);
+>>       return ret;
+>
+>         return block_page_mkwrite_return(err);
+>
+> --
+> Jens Axboe
+>
 
-	return block_page_mkwrite_return(err);
-
--- 
-Jens Axboe
-
+OK, I will post v2.
