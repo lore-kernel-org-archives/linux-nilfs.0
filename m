@@ -1,63 +1,67 @@
-From: Souptick Joarder <jrdr.linux@gmail.com>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
 Subject: Re: [PATCH v2] fs: Convert return type int to vm_fault_t
-Date: Fri, 31 Aug 2018 11:33:48 +0530
-Message-ID: <CAFqt6zZckYhLJuJr9TSw2KOZrt6qD25xDctuvbKfm0jyBoPycA@mail.gmail.com>
-References: <20180830172547.GA4408@jordon-HP-15-Notebook-PC> <20180830163352.5a96cc721ce069bed95fdbe8@linux-foundation.org>
+Date: Fri, 31 Aug 2018 12:58:44 -0400
+Message-ID: <20180831165844.GB3303@thunk.org>
+References: <20180830172547.GA4408@jordon-HP-15-Notebook-PC>
+ <20180830163521.728f3ff2fd3cc93b52a5dcc0@linux-foundation.org>
 Mime-Version: 1.0
 Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=ExvZ+hbmKKEeL0zrsIcx4hEayt9avlErupWR9P73DQg=;
-        b=rFeCm5uH7qTG20R+dH06zGACWa/C6ndSgDgLHwbjfcPxB8nFXcq1kliinTgh7YdC67
-         P2AE0iIM8gSyWjEA/JsV/fDby3ukxGhmI24h13P6TX2ykomeH8qS/FpuAyUOG+JnplAs
-         dN8A4nEIBvuLcjTIr1XowF7re49cK2nUG8JZkaZ1xHjMDLybLkYOe4MS8QXqNT9i9x5e
-         VeOW83ELOoTpruXaTZu0/kYmWAwWHBWzoaZH/MCTL8+RAqtDm+LcmfazBkCoTQ50Bn3i
-         cGSpTQomJTGwgFU3mSNiF4+IN9xq/kSdzlB7UYIllvvH7Svczsglxyk2cs2azuj/aZiv
-         jtJg==
-In-Reply-To: <20180830163352.5a96cc721ce069bed95fdbe8@linux-foundation.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=thunk.org;
+         s=ef5046eb; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
+        Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+        Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+        :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+        List-Post:List-Owner:List-Archive;
+        bh=nUuZ7DQjh5isKaGRTm5p/SjTOpSLEXUfQdJrLt4lFHw=; b=lJyCADikQVUYxYnBJT9BQLhiml
+        G+/+3r4gXtkgMD7AqfKMX2J4EZNjyfcKhJG7TZZ7whdGkUGwSo4zmXknLc6i3LrGdEHHF5nnpIojX
+        6FZN8MH+Npzi1ojdygLMjfWamd2OOW0WWZCkzg8WJISlKRl23P81Ynm0gpo+X0dZSkmM=;
+Content-Disposition: inline
+In-Reply-To: <20180830163521.728f3ff2fd3cc93b52a5dcc0@linux-foundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, Al Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, adilger.kernel@dilger.ca, Jens Axboe <axboe@kernel.dk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Eric Biggers <ebiggers@google.com>, Philippe Ombredanne <pombredanne@nexb.com>, Andreas Gruenbacher <agruenba@redhat.com>, Greg KH <gregkh@linuxfoundation.org>, kemi.wang@intel.com, Matthew Wilcox <willy@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>
+Cc: Souptick Joarder <jrdr.linux@gmail.com>, konishi.ryusuke@lab.ntt.co.jp, viro@zeniv.linux.org.uk, adilger.kernel@dilger.ca, axboe@kernel.dk, darrick.wong@oracle.com, ebiggers@google.com, pombredanne@nexb.com, agruenba@redhat.com, gregkh@linuxfoundation.org, kemi.wang@intel.com, willy@infradead.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org
 
-On Fri, Aug 31, 2018 at 5:03 AM Andrew Morton <akpm@linux-foundation.org> wrote:
->
-> On Thu, 30 Aug 2018 22:55:47 +0530 Souptick Joarder <jrdr.linux@gmail.com> wrote:
->
-> > Return type for fault handlers  in ext4 and nilfs are
-> > changed to use vm_fault_t.
-> >
-> > Return type of block_page_mkwrite() is changed from
-> > int to vm_fault_t. The function signature of
-> > block_page_mkwrite() is changed to add one new parameter
-> > int *err. This will provide a way for caller functions
-> > to get error value along with return value and use it
-> > further.
-> >
-> > Return type of block_page_mkwrite_return() is also changed
-> > to use new vm_fault_t type.
-> > --- a/fs/nilfs2/file.c
-> > +++ b/fs/nilfs2/file.c
-> > @@ -51,13 +51,14 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
-> >       return err;
-> >  }
-> >
-> > -static int nilfs_page_mkwrite(struct vm_fault *vmf)
-> > +static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
->
-> nilfs_page_mkwrite() already has return type vm_fault_t in Linus's
-> kernel, due to the now-merged
-> fs-nilfs2-adding-new-return-type-vm_fault_t.patch.  Looks like a simple
-> fix.
->
-> I'm beginning to feel vm_fault_t exhaustion.  Please remind me what
-> benefit we're going to get out of all this churn?
+On Thu, Aug 30, 2018 at 04:35:21PM -0700, Andrew Morton wrote:
+> 
+> The v1->v2 delta (below) reveals unchangelogged ext4 changes?
 
-The problem and benefit of these changes was discussed under this mail
-thread when the first vm_fault_t patch was posted.
+Souptick, please don't make unrelated changes in a vm_fault_t patch.
 
-https://marc.info/?l=linux-mm&m=152054772413234&w=4
+Especially please don't make whitespace changes that will cause
+checkpatch.pl to whine about line lengths longer than 80 characters.
+There's a *reason* for the original indentation.
+
+> @@ -6239,8 +6237,7 @@ retry_alloc:
+>  		ext4_set_inode_state(inode, EXT4_STATE_JDATA);
+>  	}
+>  	ext4_journal_stop(handle);
+> -	if (err == -ENOSPC &&
+> -		ext4_should_retry_alloc(inode->i_sb, &retries))
+> +	if (err == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
+>  		goto retry_alloc;
+>  out_ret:
+>  	ret = block_page_mkwrite_return(err);
+
+The fact that this is not a non-trivials set of changes means anything
+to make reviews harder is really not appreciated.
+
+
+Also, the fact that the patch series involves multiple file system is
+a massive pain.  It means I'm going to have to do a separate
+regression test --- or preferably, I would ask *you* to run a file
+system regression test[1] --- to make sure what is *not* a trivial
+patch doesn't break things.  Also, it means that this patch series is
+going to get more complicated to get into kernel, and we may have to
+deal with patch conflicts if this goes in via some third party tree
+(such as Andrew's tree).
+
+[1] https:/thunk.org/gce-xfstests
+
+One way to make life easier is to add the new function with the new
+interface first, and then wait a release cycle, and then move file
+systems over in independant patches.  
+
+					- Ted
