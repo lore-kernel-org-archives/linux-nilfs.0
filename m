@@ -1,46 +1,84 @@
-From: Matthew Wilcox <willy@infradead.org>
+From: Souptick Joarder <jrdr.linux@gmail.com>
 Subject: Re: [PATCH v2] fs: Convert return type int to vm_fault_t
-Date: Sun, 2 Sep 2018 21:49:49 -0700
-Message-ID: <20180903044949.GB17856@bombadil.infradead.org>
+Date: Mon, 3 Sep 2018 17:28:46 +0530
+Message-ID: <CAFqt6zY41OnT6F8F7vyUEJcc_RPoF3mALAOS7CUMUvQv8GdG0w@mail.gmail.com>
 References: <20180830172547.GA4408@jordon-HP-15-Notebook-PC>
+ <20180830163352.5a96cc721ce069bed95fdbe8@linux-foundation.org> <20180903.111310.853324894545237861.konishi.ryusuke@lab.ntt.co.jp>
 Mime-Version: 1.0
 Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
-        Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
-        List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-         bh=xssHXQ9TFloh+QLsqre9b/6qtjcnjcD+GmpNadCPBy8=; b=kdjpFoLhERhb+vRc5Q0eIQW3j
-        z0vSd1/ZcKFUP+es+fIToqFeu91wUiH8P6FOsh4Kqbado7YmKAl3CCaepb41ezMbxDEjg76gwSlmH
-        k2DX/X9LVIAmJUi3cwDp9Lg2L26CMzyqyxnATSU/ecpE2DJcSAryNfyyknUlMtaOc9o892kY1/yym
-        vc7YRU1Uc9THwUxGu8WQcEm8WaQtyPL51gGZYSj5hZB61BZjBMX9PaOqk2f8yT76/rbKEi/5+hAcd
-        V3pwSXPDjauTMjVr1S6YdkiQGjidVZu8vyiHPdMK34gnGmJRg7VO+bJr79S9Bsx3zF+JWdXjwrtX/
-    
-Content-Disposition: inline
-In-Reply-To: <20180830172547.GA4408@jordon-HP-15-Notebook-PC>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=zWfFtKEXLIgf34eCbvIIXYJRnv6Mn0W+bU4lB0gtq4c=;
+        b=RDBsSsPjcj6d10ax10aWoMLYqx+2XHJM4jfnxxQVLzq2ZAv50atQ3CMUJ1zp9x+WIO
+         UDGz9yjYDJrPVhUPx6wXbVMh/nlF+b0XwATOlGblPmIoerHfM2TTeT5bEMaFiyAoUryz
+         +J1D1LZp6a13X4JNDHmgkrD4wuZRoffDDn/Utm0LADHBYwTmvQsYeRcSpgPXOjmnGcQL
+         MFNt4FNMj3MowmJEXuToFN46/LFyHDy+MbL+LGScIQPVSwkvnzd2/ei8bVyyE5/cc1as
+         9ARKj0bYx1o7peSWHMZ7tllUiyJ3AzIeUoqBmKkVkkps+8uvHvhXZPZBVLhrocPuYkdL
+         ZFqw==
+In-Reply-To: <20180903.111310.853324894545237861.konishi.ryusuke@lab.ntt.co.jp>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Souptick Joarder <jrdr.linux@gmail.com>
-Cc: akpm@linux-foundation.org, konishi.ryusuke@lab.ntt.co.jp, viro@zeniv.linux.org.uk, tytso@mit.edu, adilger.kernel@dilger.ca, axboe@kernel.dk, darrick.wong@oracle.com, ebiggers@google.com, pombredanne@nexb.com, agruenba@redhat.com, gregkh@linuxfoundation.org, kemi.wang@intel.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org
+To: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, adilger.kernel@dilger.ca, Jens Axboe <axboe@kernel.dk>, "Darrick J. Wong" <darrick.wong@oracle.com>, Eric Biggers <ebiggers@google.com>, Philippe Ombredanne <pombredanne@nexb.com>, Andreas Gruenbacher <agruenba@redhat.com>, Greg KH <gregkh@linuxfoundation.org>, kemi.wang@intel.com, Matthew Wilcox <willy@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>
 
-On Thu, Aug 30, 2018 at 10:55:47PM +0530, Souptick Joarder wrote:
-> +vm_fault_t block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
-> +			 get_block_t get_block, int *err)
+On Mon, Sep 3, 2018 at 7:43 AM Ryusuke Konishi
+<konishi.ryusuke@lab.ntt.co.jp> wrote:
+>
+> Hi Souptick,
+>
+> On Thu, 30 Aug 2018 16:33:52 -0700, Andrew Morton wrote:
+> > On Thu, 30 Aug 2018 22:55:47 +0530 Souptick Joarder wrote:
+> >
+> >> Return type for fault handlers  in ext4 and nilfs are
+> >> changed to use vm_fault_t.
+> >>
+> >> Return type of block_page_mkwrite() is changed from
+> >> int to vm_fault_t. The function signature of
+> >> block_page_mkwrite() is changed to add one new parameter
+> >> int *err. This will provide a way for caller functions
+> >> to get error value along with return value and use it
+> >> further.
+> >>
+> >> Return type of block_page_mkwrite_return() is also changed
+> >> to use new vm_fault_t type.
+> >> --- a/fs/nilfs2/file.c
+> >> +++ b/fs/nilfs2/file.c
+> >> @@ -51,13 +51,14 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+> >>      return err;
+> >>  }
+> >>
+> >> -static int nilfs_page_mkwrite(struct vm_fault *vmf)
+> >> +static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
+> >
+> > nilfs_page_mkwrite() already has return type vm_fault_t in Linus's
+> > kernel, due to the now-merged
+> > fs-nilfs2-adding-new-return-type-vm_fault_t.patch.  Looks like a simple
+> > fix.
+>
+> In the first patch in this thread, this return type change was
+> excluded correctly for nilfs_page_mkwrite() though the changelog was
+> inaccurate in that sense.
+>
+> Please confirm your base point of the revised patch.
+>
 
-I don't like returning both the errno and the vm_fault_t.  To me that's a
-sign we need to rethink this interface.
+Ryusuku,
+Base point of revised patch is to address your comment by
+removing err = 0. Nothing else was suppose to there in v2.
 
-I have two suggestions.  First, we could allocate a new VM_FAULT_NOSPC
-bit.  Second, we could repurpose one of the existing bits, such as
-VM_FAULT_RETRY for this purpose.
+But unfortunately I mixed up my local branches and created v2 against
+old branch which leads to confusion of v1 -> v2 delta changes.
+Sorry for creating more confusions.
 
-> -int ext4_page_mkwrite(struct vm_fault *vmf)
-> +vm_fault_t ext4_page_mkwrite(struct vm_fault *vmf)
-
-I also think perhaps we could start by _not_ converting block_page_mkwrite().
-Just convert ext4_page_mkwrite(), and save converting block_page_mkwrite()
-for later.
-
+>
+> >
+> > I'm beginning to feel vm_fault_t exhaustion.  Please remind me what
+> > benefit we're going to get out of all this churn?
+> >
+> >>
+> >> ...
+> >>
