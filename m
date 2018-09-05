@@ -1,112 +1,61 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 07/11] UAPI: nilfs2: Fix use of undefined byteswapping
- functions
-Date: Wed, 05 Sep 2018 16:55:23 +0100
-Message-ID: <153616292366.23468.14988166998690800938.stgit@warthog.procyon.org.uk>
+From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] UAPI: Check headers by compiling all together as C++
+Date: Wed, 5 Sep 2018 18:55:52 +0200
+Message-ID: <20180905165552.GB25206@kroah.com>
 References: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
-Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kroah.com; h=cc
+ :content-type:date:from:in-reply-to:message-id:mime-version
+ :references:subject:to:x-me-sender:x-me-sender:x-sasl-enc; s=
+ fm1; bh=g3Wo1svdxqKojbKIUC+Cblg7FXnA3MWmsDAbvryG6P8=; b=MMFKJVW1
+ W/Riod0piHOgIr0ZmkKTu7rVKhEP/CJaxwPwZKjOeg6ZP2TJaY5werKXtgaCK+Z9
+ c0JqE2c0Tow4p2d1+Y8srtvtu/SmaSCsFaNlfLuGeF5xip8OVHUIg8TljwBHgOJ0
+ mNz7hyrtXPxT5/stzBMbC99+ipze9r6mMjlaETUnm+py2soavkRTxphWLCetTbqZ
+ 7TS8P5mSwz9veD8hxzMzAkavUq6O4EZJGHNZYcAzg2hhI3+HBS4TyC2lZjAPxU4x
+ QarrSfd1DQBNcdFxxXm/H+jNkYoS6Ay7+IC3BoUnqS5+hseqksXrEMqBL2tJnq5O
+ z+C1DOFhd7UloA==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+ messagingengine.com; h=cc:content-type:date:from:in-reply-to
+ :message-id:mime-version:references:subject:to:x-me-sender
+ :x-me-sender:x-sasl-enc; s=fm3; bh=g3Wo1svdxqKojbKIUC+Cblg7FXnA3
+ MWmsDAbvryG6P8=; b=A8TTHrhvVgceutAfwJ/8U7xsbt7rdT6xnEe+DXyLVnhdb
+ Hg+pRKfkpqMBt5nBj2V4unigX74xPr8B6CW/JRCGiIlVt28w0UUweMg1RxoLJcd+
+ ZlqtqAesV73eET8CyV4iosCS0LCj4hMqBN+lmDvCDhK4wzdCqRsHWaL2DKdrkkHr
+ PEP+I/U+NTCcsmLX3Hb2civ+ceQuKdiDMPgQnX77615KDya5mU4H2cFcJKfFoMtp
+ IMiT58TL3ImCpbvO0mWoE0i7UyUEgmk/IvIZq9undGg2D4H8kQNxX8FR26ZPpCfT
+ n/4FJhB3v7lD/q9aVgQlw78ZxJHvVbkcDqYokByMg==
+Content-Disposition: inline
+In-Reply-To: <153616286704.23468.584491117180383924.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: moderated for non-subscribers <alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mat Martineau <mathew.j.martineau-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Masahiro Yamada <yamada.masahiro-uWyLwvC0a2jby3iVrkZq2A@public.gmane.org>, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, codalist-/uMB558Y47wP4a1z8dhFYw@public.gmane.org, coda-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Jan Harkes <jaharkes-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>, Michal Marek <michal.lkml-yyZNWGI4GtDR7s880joybQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Takashi Iwai <tiwai-IBi9RG/b67k@public.gmane.org>, 
 
-nilfs2 exports a load of inline functions to userspace that call kernel
-byteswapping functions that don't exist in UAPI.  Fix this by making it
-#include asm/byteorder.h and use the functions declared there.
+On Wed, Sep 05, 2018 at 04:54:27PM +0100, David Howells wrote:
+> 
+> Here's a set of patches that inserts a step into the build process to make
+> sure that the UAPI headers can all be built together with C++ (if the
+> compiler being used supports C++).  All but the final patch perform fixups,
+> including:
 
-A better way is probably to remove these inline functions from the nilfs2
-header since they are technically broken.
+Wait, why do we care?  What has recently changed to start to directly
+import kernel uapi files into C++ code?
 
-Signed-off-by: David Howells <dhowells@redhat.com>
-cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
-cc: linux-nilfs@vger.kernel.org
-cc: linux-fsdevel@vger.kernel.org
----
+And if userspace wants to do this, can't they do the C namespace trick
+themselves when they do the import?  That must be how they are doing it
+today, right?
 
- include/uapi/linux/nilfs2_ondisk.h |   21 +++++++++++----------
- 1 file changed, 11 insertions(+), 10 deletions(-)
+thanks,
 
-diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
-index a7e66ab11d1d..d3bd2fe08791 100644
---- a/include/uapi/linux/nilfs2_ondisk.h
-+++ b/include/uapi/linux/nilfs2_ondisk.h
-@@ -29,6 +29,7 @@
- 
- #include <linux/types.h>
- #include <linux/magic.h>
-+#include <asm/byteorder.h>
- 
- 
- #define NILFS_INODE_BMAP_SIZE	7
-@@ -533,19 +534,19 @@ enum {
- static inline void							\
- nilfs_checkpoint_set_##name(struct nilfs_checkpoint *cp)		\
- {									\
--	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) |		\
-+	cp->cp_flags = __cpu_to_le32(__le32_to_cpu(cp->cp_flags) |	\
- 				   (1UL << NILFS_CHECKPOINT_##flag));	\
- }									\
- static inline void							\
- nilfs_checkpoint_clear_##name(struct nilfs_checkpoint *cp)		\
- {									\
--	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) &		\
-+	cp->cp_flags = __cpu_to_le32(__le32_to_cpu(cp->cp_flags) &	\
- 				   ~(1UL << NILFS_CHECKPOINT_##flag));	\
- }									\
- static inline int							\
- nilfs_checkpoint_##name(const struct nilfs_checkpoint *cp)		\
- {									\
--	return !!(le32_to_cpu(cp->cp_flags) &				\
-+	return !!(__le32_to_cpu(cp->cp_flags) &				\
- 		  (1UL << NILFS_CHECKPOINT_##flag));			\
- }
- 
-@@ -595,20 +596,20 @@ enum {
- static inline void							\
- nilfs_segment_usage_set_##name(struct nilfs_segment_usage *su)		\
- {									\
--	su->su_flags = cpu_to_le32(le32_to_cpu(su->su_flags) |		\
-+	su->su_flags = __cpu_to_le32(__le32_to_cpu(su->su_flags) |	\
- 				   (1UL << NILFS_SEGMENT_USAGE_##flag));\
- }									\
- static inline void							\
- nilfs_segment_usage_clear_##name(struct nilfs_segment_usage *su)	\
- {									\
- 	su->su_flags =							\
--		cpu_to_le32(le32_to_cpu(su->su_flags) &			\
-+		__cpu_to_le32(__le32_to_cpu(su->su_flags) &		\
- 			    ~(1UL << NILFS_SEGMENT_USAGE_##flag));      \
- }									\
- static inline int							\
- nilfs_segment_usage_##name(const struct nilfs_segment_usage *su)	\
- {									\
--	return !!(le32_to_cpu(su->su_flags) &				\
-+	return !!(__le32_to_cpu(su->su_flags) &				\
- 		  (1UL << NILFS_SEGMENT_USAGE_##flag));			\
- }
- 
-@@ -619,15 +620,15 @@ NILFS_SEGMENT_USAGE_FNS(ERROR, error)
- static inline void
- nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
- {
--	su->su_lastmod = cpu_to_le64(0);
--	su->su_nblocks = cpu_to_le32(0);
--	su->su_flags = cpu_to_le32(0);
-+	su->su_lastmod = __cpu_to_le64(0);
-+	su->su_nblocks = __cpu_to_le32(0);
-+	su->su_flags = __cpu_to_le32(0);
- }
- 
- static inline int
- nilfs_segment_usage_clean(const struct nilfs_segment_usage *su)
- {
--	return !le32_to_cpu(su->su_flags);
-+	return !__le32_to_cpu(su->su_flags);
- }
- 
- /**
-
+greg k-h
