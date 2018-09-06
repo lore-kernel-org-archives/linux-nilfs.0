@@ -1,96 +1,114 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC] UAPI: Check headers by compiling all together as
- C++
-Date: Thu, 06 Sep 2018 10:18:17 +0100
-Message-ID: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
+From: David Howells <dhowells@redhat.com>
+Subject: [PATCH 08/11] UAPI: nilfs2: Fix use of undefined byteswapping
+ functions [ver #2]
+Date: Thu, 06 Sep 2018 10:19:17 +0100
+Message-ID: <153622555770.14298.17748806314555967351.stgit@warthog.procyon.org.uk>
+References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
-Return-path: <freedreno-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/freedreno>,
- <mailto:freedreno-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/freedreno>
-List-Post: <mailto:freedreno-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-List-Help: <mailto:freedreno-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/freedreno>,
- <mailto:freedreno-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=subscribe>
-Errors-To: freedreno-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-Sender: "Freedreno" <freedreno-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mat Martineau <mathew.j.martineau-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Masahiro Yamada <yamada.masahiro-uWyLwvC0a2jby3iVrkZq2A@public.gmane.org>, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, codalist-/uMB558Y47wP4a1z8dhFYw@public.gmane.org, coda-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jan Harkes <jaharkes-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>, Michal Marek <michal.lkml-yyZNWGI4GtDR7s880joybQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
+Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
 
-CkhlcmUncyBhIHNldCBvZiBwYXRjaGVzIHRoYXQgaW5zZXJ0cyBhIHN0ZXAgaW50byB0aGUgYnVp
-bGQgcHJvY2VzcyB0byBtYWtlCnN1cmUgdGhhdCB0aGUgVUFQSSBoZWFkZXJzIGNhbiBhbGwgYmUg
-YnVpbHQgdG9nZXRoZXIgd2l0aCBDKysgKGlmIHRoZQpjb21waWxlciBiZWluZyB1c2VkIHN1cHBv
-cnRzIEMrKykuCgpOb3RlIHRoYXQgaXQncyBiYXNlZCBvbiBhIGNvbW1pdCBmcm9tIHRoZSBzb3Vu
-ZCB0cmVlIHRvIGZpeCB1c2FnZSBvZiB1MzIKYW5kIGNvLi4KCk1vc3Qgb2YgdGhlIHBhdGNoZXMg
-cGVyZm9ybSBmaXh1cHMsIGluY2x1ZGluZzoKCiAoMSkgRml4IG1lbWJlciBuYW1lcyB0aGF0IGNv
-bmZsaWN0IHdpdGggQysrIHJlc2VydmVkIHdvcmRzIGJ5IHByb3ZpZGluZwogICAgIGFsdGVybmF0
-ZXMgdGhhdCBjYW4gYmUgdXNlZCBhbnl3aGVyZS4gIEFuIGFub255bW91cyB1bmlvbiBpcyB1c2Vk
-IHNvCiAgICAgdGhhdCB0aGF0IHRoZSBjb25mbGljdGluZyBuYW1lIGlzIHN0aWxsIGF2YWlsYWJs
-ZSBvdXRzaWRlIG9mIEMrKy4KCiAoMikgRml4IHRoZSB1c2Ugb2YgZmxleGlibGUgYXJyYXlzIGlu
-IHN0cnVjdHMgdGhhdCBnZXQgZW1iZWRkZWQgKHdoaWNoIGlzCiAgICAgaWxsZWdhbCBpbiBDKysp
-LgoKICgzKSBSZW1vdmUgdGhlIHVzZSBvZiBpbnRlcm5hbCBrZXJuZWwgc3RydWN0cyBpbiBVQVBJ
-IHN0cnVjdHVyZXMuCgogKDQpIEZpeCBzeW1ib2wgY29sbGlzaW9ucy4KCiAoNSkgRml4IHVzZSBv
-ZiBzcGFyc2VseSBpbml0aWFsaXNlZCBhcnJheXMgKHdoaWNoIGcrKyBkb2Vzbid0IGltcGxlbWVu
-dCkuCgogKDYpIFJlbW92ZSBzb21lIHVzZSBvZiBQQUdFX1NJWkUgc2luY2UgdGhpcyBpc24ndCB2
-YWxpZCBvdXRzaWRlIG9mIHRoZQogICAgIGtlcm5lbC4KClRoZXJlJ3MgYWxzbzoKCiAoNykgTW92
-ZSB0aGUgY29kYV9wc2Rldi5oIGhlYWRlciBmaWxlIHRvIGZzL2NvZGEvLgoKQW5kIGxhc3RseToK
-CiAoOCkgQ29tcGlsZSBhbGwgb2YgdGhlIFVBUEkgaGVhZGVycyAod2l0aCBhIGZldyBleGNlcHRp
-b25zKSB0b2dldGhlciBhcwogICAgIEMrKyB0byBjYXRjaCBuZXcgZXJyb3JzIG9jY3VycmluZyBh
-cyBwYXJ0IG9mIHRoZSByZWd1bGFyIGJ1aWxkCiAgICAgcHJvY2Vzcy4KCkNoYW5nZXMgZm9yIHYy
-OgoKIC0gTWVyZ2UgY29tbWl0IGZyb20gc291bmQgdHJlZSB0byBmaXggdTMyIHVzYWdlIGlzc3Vl
-cwogLSBVc2UgYSBzd2l0Y2ggdG8gZml4IHNwYXJzZSBhcnJheSBpbml0aWFsaXNhdGlvbgogLSBT
-aW1wbGlmeSBuaWxmczIgYnkgcGVyZm9ybWluZyBiaXR3aXNlIG9wcyBpbiBMRSBzcGFjZSBub3Qg
-Q1BVIHNwYWNlCiAtIEhhbmRsZSBjb25mbGljdGluZyBmaXggdG8gdXNlIG9mICdwcml2YXRlJyBp
-biBrZXljdGwuaAogLSBNb3ZlIGtlcm5lbCBpbnRlcm5hbCBjb2RhIGJpdHMgdG8gY29kYSBpbnRl
-cm5hbCBoZWFkZXJzCiAtIE1vdmUgY29kYV9wc2Rldi5oIGhlYWRlciB0byBmcy9jb2RhLy4KClRo
-ZSBwYXRjaGVzIGNhbiBhbHNvIGJlIGZvdW5kIGhlcmU6CgoJaHR0cDovL2dpdC5rZXJuZWwub3Jn
-L2NnaXQvbGludXgva2VybmVsL2dpdC9kaG93ZWxscy9saW51eC1mcy5naXQvbG9nLz9oPXVhcGkt
-Y2hlY2sKClRoYW5rcywKRGF2aWQKLS0tCkRhdmlkIEhvd2VsbHMgKDExKToKICAgICAgVUFQSTog
-ZHJtOiBGaXggdXNlIG9mIEMrKyBrZXl3b3JkcyBhcyBzdHJ1Y3R1cmFsIG1lbWJlcnMKICAgICAg
-VUFQSToga2V5czogRml4IHVzZSBvZiBDKysga2V5d29yZHMgYXMgc3RydWN0dXJhbCBtZW1iZXJz
-CiAgICAgIFVBUEk6IHZpcnRpb19uZXQ6IEZpeCB1c2Ugb2YgQysrIGtleXdvcmRzIGFzIHN0cnVj
-dHVyYWwgbWVtYmVycwogICAgICBVQVBJOiBiY2FjaGU6IEZpeCB1c2Ugb2YgZW1iZWRkZWQgZmxl
-eGlibGUgYXJyYXkKICAgICAgVUFQSTogY29kYTogTW92ZSBrZXJuZWwgaW50ZXJuYWxzIG91dCBv
-ZiBwdWJsaWMgdmlldwogICAgICBjb2RhOiBNb3ZlIGludGVybmFsIGRlZnMgb3V0IG9mIGluY2x1
-ZGUvbGludXgvCiAgICAgIFVBUEk6IG5ldGZpbHRlcjogRml4IHN5bWJvbCBjb2xsaXNpb24gaXNz
-dWVzCiAgICAgIFVBUEk6IG5pbGZzMjogRml4IHVzZSBvZiB1bmRlZmluZWQgYnl0ZXN3YXBwaW5n
-IGZ1bmN0aW9ucwogICAgICBVQVBJOiBuZGN0bDogRml4IGcrKy11bnN1cHBvcnRlZCBpbml0aWFs
-aXNhdGlvbiBpbiBoZWFkZXJzCiAgICAgIFVBUEk6IG5kY3RsOiBSZW1vdmUgdXNlIG9mIFBBR0Vf
-U0laRQogICAgICBVQVBJOiBDaGVjayBoZWFkZXJzIGJ1aWxkIGZvciBDKysKCgogTWFrZWZpbGUg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAgIDEgCiBmcy9jb2Rh
-L2NhY2hlLmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgICAgMiAKIGZzL2Nv
-ZGEvY25vZGUuYyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgICAyIAogZnMv
-Y29kYS9jb2RhX2xpbnV4LmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAgIDIgCiBm
-cy9jb2RhL2NvZGFfcHNkZXYuaCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgICA4OCAr
-KysrKysrKysrKysrKysKIGZzL2NvZGEvZGlyLmMgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgfCAgICAyIAogZnMvY29kYS9maWxlLmMgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICB8ICAgIDMgLQogZnMvY29kYS9pbm9kZS5jICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICB8ICAgIDIgCiBmcy9jb2RhL3Bpb2N0bC5jICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIHwgICAgMyAtCiBmcy9jb2RhL3BzZGV2LmMgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgIHwgICAgMyAtCiBmcy9jb2RhL3N5bWxpbmsuYyAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgIHwgICAgMyAtCiBmcy9jb2RhL3VwY2FsbC5jICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgIHwgICAgMiAKIGluY2x1ZGUvbGludXgvY29kYV9wc2Rl
-di5oICAgICAgICAgICAgICAgICAgICAgICAgfCAgIDcyIC0tLS0tLS0tLS0tLQogaW5jbHVkZS9s
-aW51eC9uZGN0bC5oICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAgMjIgKysrKwogaW5j
-bHVkZS91YXBpL2RybS9pODEwX2RybS5oICAgICAgICAgICAgICAgICAgICAgICB8ICAgIDcgKwog
-aW5jbHVkZS91YXBpL2RybS9tc21fZHJtLmggICAgICAgICAgICAgICAgICAgICAgICB8ICAgIDcg
-KwogaW5jbHVkZS91YXBpL2xpbnV4L2JjYWNoZS5oICAgICAgICAgICAgICAgICAgICAgICB8ICAg
-IDIgCiBpbmNsdWRlL3VhcGkvbGludXgvY29kYV9wc2Rldi5oICAgICAgICAgICAgICAgICAgIHwg
-ICAxOCAtLS0KIGluY2x1ZGUvdWFwaS9saW51eC9rZXljdGwuaCAgICAgICAgICAgICAgICAgICAg
-ICAgfCAgICA3ICsKIGluY2x1ZGUvdWFwaS9saW51eC9uZGN0bC5oICAgICAgICAgICAgICAgICAg
-ICAgICAgfCAgIDUyICsrKystLS0tLQogaW5jbHVkZS91YXBpL2xpbnV4L25ldGZpbHRlci9uZm5l
-dGxpbmtfY3RoZWxwZXIuaCB8ICAgIDIgCiBpbmNsdWRlL3VhcGkvbGludXgvbmV0ZmlsdGVyX2lw
-djQvaXB0X0VDTi5oICAgICAgIHwgICAgOSAtLQogaW5jbHVkZS91YXBpL2xpbnV4L25pbGZzMl9v
-bmRpc2suaCAgICAgICAgICAgICAgICB8ICAgMjggKystLS0KIGluY2x1ZGUvdWFwaS9saW51eC92
-aXJ0aW9fbmV0LmggICAgICAgICAgICAgICAgICAgfCAgICA3ICsKIHNjcmlwdHMvaGVhZGVycy1j
-Kysuc2ggICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMTI0ICsrKysrKysrKysrKysrKysr
-KysrKwogMjUgZmlsZXMgY2hhbmdlZCwgMzA0IGluc2VydGlvbnMoKyksIDE2NiBkZWxldGlvbnMo
-LSkKIGNyZWF0ZSBtb2RlIDEwMDY0NCBmcy9jb2RhL2NvZGFfcHNkZXYuaAogZGVsZXRlIG1vZGUg
-MTAwNjQ0IGluY2x1ZGUvbGludXgvY29kYV9wc2Rldi5oCiBjcmVhdGUgbW9kZSAxMDA2NDQgaW5j
-bHVkZS9saW51eC9uZGN0bC5oCiBjcmVhdGUgbW9kZSAxMDA3NTUgc2NyaXB0cy9oZWFkZXJzLWMr
-Ky5zaAoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KRnJl
-ZWRyZW5vIG1haWxpbmcgbGlzdApGcmVlZHJlbm9AbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBz
-Oi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZnJlZWRyZW5vCg==
+nilfs2 exports a load of inline functions to userspace that call kernel
+byteswapping functions that don't exist in UAPI.  Fix this by making it
+#include asm/byteorder.h and use the functions declared there.
+
+A better way is probably to remove these inline functions from the nilfs2
+header since they are technically broken.
+
+Signed-off-by: David Howells <dhowells@redhat.com>
+cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+cc: linux-nilfs@vger.kernel.org
+cc: linux-fsdevel@vger.kernel.org
+---
+
+ include/uapi/linux/nilfs2_ondisk.h |   28 +++++++++++-----------------
+ 1 file changed, 11 insertions(+), 17 deletions(-)
+
+diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
+index a7e66ab11d1d..47f8f596ff1c 100644
+--- a/include/uapi/linux/nilfs2_ondisk.h
++++ b/include/uapi/linux/nilfs2_ondisk.h
+@@ -29,6 +29,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/magic.h>
++#include <asm/byteorder.h>
+ 
+ 
+ #define NILFS_INODE_BMAP_SIZE	7
+@@ -533,20 +534,17 @@ enum {
+ static inline void							\
+ nilfs_checkpoint_set_##name(struct nilfs_checkpoint *cp)		\
+ {									\
+-	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) |		\
+-				   (1UL << NILFS_CHECKPOINT_##flag));	\
++	cp->cp_flags |= __cpu_to_le32(1UL << NILFS_CHECKPOINT_##flag);	\
+ }									\
+ static inline void							\
+ nilfs_checkpoint_clear_##name(struct nilfs_checkpoint *cp)		\
+ {									\
+-	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) &		\
+-				   ~(1UL << NILFS_CHECKPOINT_##flag));	\
++	cp->cp_flags &= __cpu_to_le32(~(1UL << NILFS_CHECKPOINT_##flag)); \
+ }									\
+ static inline int							\
+ nilfs_checkpoint_##name(const struct nilfs_checkpoint *cp)		\
+ {									\
+-	return !!(le32_to_cpu(cp->cp_flags) &				\
+-		  (1UL << NILFS_CHECKPOINT_##flag));			\
++	return !!(cp->cp_flags & __cpu_to_le32(1UL << NILFS_CHECKPOINT_##flag)); \
+ }
+ 
+ NILFS_CHECKPOINT_FNS(SNAPSHOT, snapshot)
+@@ -595,21 +593,17 @@ enum {
+ static inline void							\
+ nilfs_segment_usage_set_##name(struct nilfs_segment_usage *su)		\
+ {									\
+-	su->su_flags = cpu_to_le32(le32_to_cpu(su->su_flags) |		\
+-				   (1UL << NILFS_SEGMENT_USAGE_##flag));\
++	su->su_flags |= __cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_##flag); \
+ }									\
+ static inline void							\
+ nilfs_segment_usage_clear_##name(struct nilfs_segment_usage *su)	\
+ {									\
+-	su->su_flags =							\
+-		cpu_to_le32(le32_to_cpu(su->su_flags) &			\
+-			    ~(1UL << NILFS_SEGMENT_USAGE_##flag));      \
++	su->su_flags &= __cpu_to_le32(~(1UL << NILFS_SEGMENT_USAGE_##flag)); \
+ }									\
+ static inline int							\
+ nilfs_segment_usage_##name(const struct nilfs_segment_usage *su)	\
+ {									\
+-	return !!(le32_to_cpu(su->su_flags) &				\
+-		  (1UL << NILFS_SEGMENT_USAGE_##flag));			\
++	return !!(su->su_flags & __cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_##flag)); \
+ }
+ 
+ NILFS_SEGMENT_USAGE_FNS(ACTIVE, active)
+@@ -619,15 +613,15 @@ NILFS_SEGMENT_USAGE_FNS(ERROR, error)
+ static inline void
+ nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
+ {
+-	su->su_lastmod = cpu_to_le64(0);
+-	su->su_nblocks = cpu_to_le32(0);
+-	su->su_flags = cpu_to_le32(0);
++	su->su_lastmod = __cpu_to_le64(0);
++	su->su_nblocks = __cpu_to_le32(0);
++	su->su_flags = __cpu_to_le32(0);
+ }
+ 
+ static inline int
+ nilfs_segment_usage_clean(const struct nilfs_segment_usage *su)
+ {
+-	return !le32_to_cpu(su->su_flags);
++	return !su->su_flags;
+ }
+ 
+ /**
+
