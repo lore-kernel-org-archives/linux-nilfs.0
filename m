@@ -1,8 +1,7 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 1/7] mm/fs: don't allow writes to immutable
-	files
-Date: Fri, 21 Jun 2019 16:56:58 -0700
-Message-ID: <156116141836.1664939.12249697737780481978.stgit@magnolia>
+Subject: [PATCH 7/7] vfs: don't allow writes to swap files
+Date: Fri, 21 Jun 2019 16:57:46 -0700
+Message-ID: <156116146628.1664939.13724544486987830540.stgit@magnolia>
 References: <156116141046.1664939.11424021489724835645.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -12,12 +11,12 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to 
  message-id : in-reply-to : references : mime-version : cc : subject :
  list-id : list-unsubscribe : list-archive : list-post : list-help :
  list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=JDGjr7pdl0j1KEMiwziERzU6pPymVBdLRXXlPsum6zM=;
- b=ZgUGmgcSNrtcRKQZ7W9QCOZzINOQf5qvdEKurt1kcZpGCHCciI4TwJcgDboSt8qjBraa
- YLj+vvIgQQmETUHhPQlr08CqJZcRTjkEI8hPxxYlEAuel50pEzjBx/4Xkn2KdRDUetqe
- chNnBlGb+eHhaIaRJ4vKhxruutUOAvpaccl3XsNj8MWOTP6aSMK10VKfAkAXjg0xXRpo
- uLP7aRPD1o36avFMMME+d5JexHqBX7t8hZJQLrJc44xKynQAHn9KJSqeCpFSuJz97l6H
- bfWD03JszLzWclV75UxARogOJDTjdui3spkYgrQhrcx9jcqYPyEA7vhbhQ+VHtVF9l1K Sg== 
+ s=corp-2018-07-02; bh=+au6csb7bTQS4wpexqvxhs4VTFXdAodTxYeWtWLIHFg=;
+ b=FKkyFmW8/tu0LZZoigAWqU8y6sAKP+WyHrAngP6NYhI1OYs5GvqeZ+pMtC/M3Ci5FuBx
+ /ay2tBGidZzDUE1fkDPkzSM9GHLJ1Wpg/1osyvDr4Zo+dGd+TeElmDhB0QQuJbrZN1aD
+ 4zBf4/RqXG3AzWayZmK7I0zymJ0nO8fOJ/D5LIpHqDuDTeNGOUx5veSd6hANUDVxTaX9
+ pwoFhpOJYgKJDztLzYMBJDoORxjngwUNYChS2pTjG3REfQZXpEVU++GyUNi8Zmxomp/Q
+ 35lvtMIJSKKfpLzDfxQAz68pdIMup9S3WNEivaOwwmOUFiLlpN42zu3yZhGh8Y7BIFwn jg== 
 In-Reply-To: <156116141046.1664939.11424021489724835645.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
@@ -34,114 +33,106 @@ Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.ke
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-The chattr manpage has this to say about immutable files:
-
-"A file with the 'i' attribute cannot be modified: it cannot be deleted
-or renamed, no link can be created to this file, most of the file's
-metadata can not be modified, and the file can not be opened in write
-mode."
-
-Once the flag is set, it is enforced for quite a few file operations,
-such as fallocate, fpunch, fzero, rm, touch, open, etc.  However, we
-don't check for immutability when doing a write(), a PROT_WRITE mmap(),
-a truncate(), or a write to a previously established mmap.
-
-If a program has an open write fd to a file that the administrator
-subsequently marks immutable, the program still can change the file
-contents.  Weird!
-
-The ability to write to an immutable file does not follow the manpage
-promise that immutable files cannot be modified.  Worse yet it's
-inconsistent with the behavior of other syscalls which don't allow
-modifications of immutable files.
-
-Therefore, add the necessary checks to make the write, mmap, and
-truncate behavior consistent with what the manpage says and consistent
-with other syscalls on filesystems which support IMMUTABLE.
+Don't let userspace write to an active swap file because the kernel
+effectively has a long term lease on the storage and things could get
+seriously corrupted if we let this happen.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/attr.c    |   13 ++++++-------
- mm/filemap.c |    3 +++
- mm/memory.c  |    3 +++
- mm/mmap.c    |    8 ++++++--
- 4 files changed, 18 insertions(+), 9 deletions(-)
+ fs/attr.c     |    3 +++
+ mm/filemap.c  |    3 +++
+ mm/memory.c   |    4 +++-
+ mm/mmap.c     |    2 ++
+ mm/swapfile.c |   15 +++++++++++++--
+ 5 files changed, 24 insertions(+), 3 deletions(-)
 
 
 diff --git a/fs/attr.c b/fs/attr.c
-index d22e8187477f..1fcfdcc5b367 100644
+index 1fcfdcc5b367..42f4d4fb0631 100644
 --- a/fs/attr.c
 +++ b/fs/attr.c
-@@ -233,19 +233,18 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
+@@ -236,6 +236,9 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
+ 	if (IS_IMMUTABLE(inode))
+ 		return -EPERM;
  
- 	WARN_ON_ONCE(!inode_is_locked(inode));
- 
--	if (ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) {
--		if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
--			return -EPERM;
--	}
-+	if (IS_IMMUTABLE(inode))
-+		return -EPERM;
++	if (IS_SWAPFILE(inode))
++		return -ETXTBSY;
 +
-+	if ((ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) &&
-+	    IS_APPEND(inode))
-+		return -EPERM;
- 
- 	/*
- 	 * If utimes(2) and friends are called with times == NULL (or both
- 	 * times are UTIME_NOW), then we need to check for write permission
- 	 */
- 	if (ia_valid & ATTR_TOUCH) {
--		if (IS_IMMUTABLE(inode))
--			return -EPERM;
--
- 		if (!inode_owner_or_capable(inode)) {
- 			error = inode_permission(inode, MAY_WRITE);
- 			if (error)
+ 	if ((ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) &&
+ 	    IS_APPEND(inode))
+ 		return -EPERM;
 diff --git a/mm/filemap.c b/mm/filemap.c
-index aac71aef4c61..dad85e10f5f8 100644
+index dad85e10f5f8..fd80bc20e30a 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
-@@ -2935,6 +2935,9 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
- 	loff_t count;
- 	int ret;
+@@ -2938,6 +2938,9 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
+ 	if (IS_IMMUTABLE(inode))
+ 		return -EPERM;
  
-+	if (IS_IMMUTABLE(inode))
-+		return -EPERM;
++	if (IS_SWAPFILE(inode))
++		return -ETXTBSY;
 +
  	if (!iov_iter_count(from))
  		return 0;
  
 diff --git a/mm/memory.c b/mm/memory.c
-index ddf20bd0c317..4311cfdade90 100644
+index 4311cfdade90..c04c6a689995 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -2235,6 +2235,9 @@ static vm_fault_t do_page_mkwrite(struct vm_fault *vmf)
+@@ -2235,7 +2235,9 @@ static vm_fault_t do_page_mkwrite(struct vm_fault *vmf)
  
  	vmf->flags = FAULT_FLAG_WRITE|FAULT_FLAG_MKWRITE;
  
-+	if (vmf->vma->vm_file && IS_IMMUTABLE(file_inode(vmf->vma->vm_file)))
-+		return VM_FAULT_SIGBUS;
-+
+-	if (vmf->vma->vm_file && IS_IMMUTABLE(file_inode(vmf->vma->vm_file)))
++	if (vmf->vma->vm_file &&
++	    (IS_IMMUTABLE(file_inode(vmf->vma->vm_file)) ||
++	     IS_SWAPFILE(file_inode(vmf->vma->vm_file))))
+ 		return VM_FAULT_SIGBUS;
+ 
  	ret = vmf->vma->vm_ops->page_mkwrite(vmf);
- 	/* Restore original flags so that caller is not surprised */
- 	vmf->flags = old_flags;
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 7e8c3e8ae75f..ac1e32205237 100644
+index ac1e32205237..031807339869 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
-@@ -1483,8 +1483,12 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 		case MAP_SHARED_VALIDATE:
- 			if (flags & ~flags_mask)
- 				return -EOPNOTSUPP;
--			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
--				return -EACCES;
-+			if (prot & PROT_WRITE) {
-+				if (!(file->f_mode & FMODE_WRITE))
-+					return -EACCES;
-+				if (IS_IMMUTABLE(file_inode(file)))
-+					return -EPERM;
-+			}
+@@ -1488,6 +1488,8 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 					return -EACCES;
+ 				if (IS_IMMUTABLE(file_inode(file)))
+ 					return -EPERM;
++				if (IS_SWAPFILE(file_inode(file)))
++					return -ETXTBSY;
+ 			}
  
  			/*
- 			 * Make sure we don't allow writing to an append-only
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 596ac98051c5..390859785558 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -3165,6 +3165,19 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
+ 	if (error)
+ 		goto bad_swap;
+ 
++	/*
++	 * Flush any pending IO and dirty mappings before we start using this
++	 * swap file.
++	 */
++	if (S_ISREG(inode->i_mode)) {
++		inode->i_flags |= S_SWAPFILE;
++		error = inode_flush_data(inode);
++		if (error) {
++			inode->i_flags &= ~S_SWAPFILE;
++			goto bad_swap;
++		}
++	}
++
+ 	mutex_lock(&swapon_mutex);
+ 	prio = -1;
+ 	if (swap_flags & SWAP_FLAG_PREFER)
+@@ -3185,8 +3198,6 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
+ 	atomic_inc(&proc_poll_event);
+ 	wake_up_interruptible(&proc_poll_wait);
+ 
+-	if (S_ISREG(inode->i_mode))
+-		inode->i_flags |= S_SWAPFILE;
+ 	error = 0;
+ 	goto out;
+ bad_swap:
