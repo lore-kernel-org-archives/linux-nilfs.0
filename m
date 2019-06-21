@@ -1,70 +1,414 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH v2 0/4] vfs: clean up SETFLAGS and FSSETXATTR option processing
-Date: Fri, 21 Jun 2019 16:56:07 -0700
-Message-ID: <156116136742.1664814.17093419199766834123.stgit@magnolia>
+Subject: [PATCH 2/4] vfs: create a generic checking function for
+ FS_IOC_FSSETXATTR
+Date: Fri, 21 Jun 2019 16:56:29 -0700
+Message-ID: <156116138952.1664814.16552129914959122837.stgit@magnolia>
+References: <156116136742.1664814.17093419199766834123.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=lists.infradead.org; s=bombadil.20170209; h=Sender:
-	Content-Transfer-Encoding:Content-Type:Cc:List-Subscribe:List-Help:List-Post:
-	List-Archive:List-Unsubscribe:List-Id:MIME-Version:Message-ID:Date:To:From:
-	Subject:Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:
-	Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:
-	List-Owner; bh=2pIp4YMXJEgwl8PHoK4X+Z1obl0f+8OzEzMaUz1gEeY=; b=Im8XBygOhqfs6F
-	tl7NNALndvtDom+XAsEGoso2Nulb9Vt7iHVwfhI/OeVJevfIb3/s2lO89/d/rdpIPW6h6WaoXQQpi
-	Cd4QSBYb4WXiPirF+s4sl6kjWY+irI3kpXcyrxZGeXjEPPU3HE+T7AUd3yqpvtejoJ/rIFhY8jOKQ
-	X9gBD4vO30L4vRn5NpYY0+QP8yqhAb5nIeEoLoRej7SCY6LEEIxf34/S8fZkW4w6Ldx4hIqnjf10k
-	ARs1PV+1VJR+NLfc3WP+2iHKidsuHbRPoxhBrFEYVu0SUmdST4CnCy1qwDdJzTLYQn5KJdXCUTA4b
-	IKgMUUI6weGGbF7hmbeA==;
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:MIME-Version
+ :References:In-Reply-To:Message-ID:Date:Cc:To:From:Subject:Sender:Reply-To:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=9PJTGN9x6qjEBTUeY0pgpFP+vfVwXojpN3x10y/+n0w=; b=e3dlXqMdGFGccBofje3f3WvjGy
+ 5XNTUqshOA3+b8yAdAwWQuTNzAULwLn/fHUwNSpUhDt59Pc283PsAov5ubKE+VLvF5O+RLbd0YWmL
+ cZ1wQcnyy8yd3unYDP/zxWIflrsPsnXgFZziwTM4PM2o8EJu49bk5VK+8I5xvuwZNoHM=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:Content-Type:MIME-Version:References:
+ In-Reply-To:Message-ID:Date:Cc:To:From:Subject:Sender:Reply-To:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=9PJTGN9x6qjEBTUeY0pgpFP+vfVwXojpN3x10y/+n0w=; b=AxTV2aev60y/82944q7/AmsW+P
+ UuXwQhFdA5wQOPf2YuviNiwz6+qlhOeuLsQp8eM0xFmBig7SvOIzyIPjBahIlV+bli1CxDDYaBamk
+ M6XYXin3k/AH5BuT+2cfT1Jbs0MBVK9PeXolmjHT//nNsUNTMWedpElt1b2riwwNRrHM=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
  h=subject : from : to :
- cc : date : message-id : mime-version : content-type :
- content-transfer-encoding; s=corp-2018-07-02;
- bh=cAdDQjLmw3paRsCYayAMtBFRH59fRNc4vYLBHuqjsSA=;
- b=TzR6Wru1xSjTTRJAS5YLkE/BrGnsLOB3oXc++TPNZTilrEotX+w/PXZSlo2GmgalFn6q
- EFIn2g7OnCMHKiU/KYZQjoVVDHvaifoE42AmpxsuNL7wnDmrtZhKVTyFzOJI7etrK4kK
- KEBGejr346UOlFcuSkyuDnIO/5wd6UqT/S/KQGVF+NHJ5J7mmhYyVd5c2jc+HbQbg3wB
- wa4pvaZQ8fS5HuyXYBN1pV+PfgLDpbPcaxs+KsA+sgcG7mAhRxGd5p97mdMZnG6Ft3yd
- IEh9EmQpStxpaanEvQR/EobOi//ZfTjzIl0oWYndnxgPHklvyg0k1RPOB0QGCH15ATwX mw== 
+ cc : date : message-id : in-reply-to : references : mime-version :
+ content-type : content-transfer-encoding; s=corp-2018-07-02;
+ bh=9PJTGN9x6qjEBTUeY0pgpFP+vfVwXojpN3x10y/+n0w=;
+ b=rweOK5t5+YVB40qJyhz9haoKaxJ6RnYnO9aOtyQw3HPILQ5hqR24EjOrIoVciD62u7Sq
+ HnRptwFU2LetTGRkerU4u8S+38OWrM4vNzzWSComZlmtAnEkluk9t0eAucSMd4RrcUKP
+ 996AjhnZ7CMQq3Z+EJ+SismdSC3n8svWj5kjNbTCsuXcUy9o2Iu1Bs/S7F540p8p1iFD
+ 6Wo6GqGDnWYIeRi5E7lG1T2c0ojxDFBJR+vukFP0vkmU0Jko+Wl22oCzxQDhRvQfJgXX
+ +NnfTYD3NtjU6nxPXLLMyBG5ojp6oOdPvkEFYUqgPMSq9CkCjAxO0mm8ZrfbqJAVzYxS 0g== 
+In-Reply-To: <156116136742.1664814.17093419199766834123.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, darrick.wong@oracle.com, shaggy@kernel.org, ard.biesheuvel@linaro.org, josef@toxicpanda.com, clm@fb.com, adilger.kernel@dilger.ca, jk@ozlabs.org, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, viro@zeniv.linux.org.uk
-Cc: linux-xfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-efi@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, ocfs2-devel@oss.oracle.com
+Cc: linux-xfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-efi@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-ext4@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-kernel@vger.kernel.org, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, ocfs2-devel@oss.oracle.com
 
-Hi all,
+From: Darrick J. Wong <darrick.wong@oracle.com>
 
-The FS_IOC_SETFLAGS and FS_IOC_FSSETXATTR ioctls were promoted from ext4
-and XFS, respectively, into the VFS.  However, we didn't promote any of
-the parameter checking code from those filesystems, which lead to a mess
-where each filesystem open-codes whatever parameter checks they want and
-the behavior across filesystems is no longer consistent.
+Create a generic checking function for the incoming FS_IOC_FSSETXATTR
+fsxattr values so that we can standardize some of the implementation
+behaviors.
 
-Therefore, create some generic checking functions in the VFS and remove
-all the open-coded pieces in each filesystem.  This preserves the
-current behavior where a filesystem can choose to ignore fields it
-doesn't understand.
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+---
+ fs/btrfs/ioctl.c   |   21 +++++++++-------
+ fs/ext4/ioctl.c    |   27 ++++++++++++++------
+ fs/f2fs/file.c     |   26 ++++++++++++++-----
+ fs/inode.c         |   17 +++++++++++++
+ fs/xfs/xfs_ioctl.c |   70 ++++++++++++++++++++++++++++++----------------------
+ include/linux/fs.h |    3 ++
+ 6 files changed, 111 insertions(+), 53 deletions(-)
 
-If you're going to start using this mess, you probably ought to just
-pull from my git trees, which are linked below.
 
-This has been lightly tested with fstests.  Enjoy!
-Comments and questions are, as always, welcome.
-
---D
-
-kernel git tree:
-https://git.kernel.org/cgit/linux/kernel/git/djwong/xfs-linux.git/log/?h=file-ioctl-cleanups
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
+index f408aa93b0cf..7ddda5b4b6a6 100644
+--- a/fs/btrfs/ioctl.c
++++ b/fs/btrfs/ioctl.c
+@@ -366,6 +366,13 @@ static int check_xflags(unsigned int flags)
+ 	return 0;
+ }
+ 
++static void __btrfs_ioctl_fsgetxattr(struct btrfs_inode *binode,
++				     struct fsxattr *fa)
++{
++	memset(fa, 0, sizeof(*fa));
++	fa->fsx_xflags = btrfs_inode_flags_to_xflags(binode->flags);
++}
++
+ /*
+  * Set the xflags from the internal inode flags. The remaining items of fsxattr
+  * are zeroed.
+@@ -375,8 +382,7 @@ static int btrfs_ioctl_fsgetxattr(struct file *file, void __user *arg)
+ 	struct btrfs_inode *binode = BTRFS_I(file_inode(file));
+ 	struct fsxattr fa;
+ 
+-	memset(&fa, 0, sizeof(fa));
+-	fa.fsx_xflags = btrfs_inode_flags_to_xflags(binode->flags);
++	__btrfs_ioctl_fsgetxattr(binode, &fa);
+ 
+ 	if (copy_to_user(arg, &fa, sizeof(fa)))
+ 		return -EFAULT;
+@@ -390,7 +396,7 @@ static int btrfs_ioctl_fssetxattr(struct file *file, void __user *arg)
+ 	struct btrfs_inode *binode = BTRFS_I(inode);
+ 	struct btrfs_root *root = binode->root;
+ 	struct btrfs_trans_handle *trans;
+-	struct fsxattr fa;
++	struct fsxattr fa, old_fa;
+ 	unsigned old_flags;
+ 	unsigned old_i_flags;
+ 	int ret = 0;
+@@ -421,13 +427,10 @@ static int btrfs_ioctl_fssetxattr(struct file *file, void __user *arg)
+ 	old_flags = binode->flags;
+ 	old_i_flags = inode->i_flags;
+ 
+-	/* We need the capabilities to change append-only or immutable inode */
+-	if (((old_flags & (BTRFS_INODE_APPEND | BTRFS_INODE_IMMUTABLE)) ||
+-	     (fa.fsx_xflags & (FS_XFLAG_APPEND | FS_XFLAG_IMMUTABLE))) &&
+-	    !capable(CAP_LINUX_IMMUTABLE)) {
+-		ret = -EPERM;
++	__btrfs_ioctl_fsgetxattr(binode, &old_fa);
++	ret = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
++	if (ret)
+ 		goto out_unlock;
+-	}
+ 
+ 	if (fa.fsx_xflags & FS_XFLAG_SYNC)
+ 		binode->flags |= BTRFS_INODE_SYNC;
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index 5126ee351a84..c2f48c90ca45 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -721,6 +721,19 @@ static int ext4_ioctl_check_project(struct inode *inode, struct fsxattr *fa)
+ 	return 0;
+ }
+ 
++static void ext4_fsgetxattr(struct inode *inode, struct fsxattr *fa)
++{
++	struct ext4_inode_info *ei = EXT4_I(inode);
++
++	memset(fa, 0, sizeof(struct fsxattr));
++	fa->fsx_xflags = ext4_iflags_to_xflags(ei->i_flags & EXT4_FL_USER_VISIBLE);
++
++	if (ext4_has_feature_project(inode->i_sb)) {
++		fa->fsx_projid = (__u32)from_kprojid(&init_user_ns,
++				ei->i_projid);
++	}
++}
++
+ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ {
+ 	struct inode *inode = file_inode(filp);
+@@ -1089,13 +1102,7 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	{
+ 		struct fsxattr fa;
+ 
+-		memset(&fa, 0, sizeof(struct fsxattr));
+-		fa.fsx_xflags = ext4_iflags_to_xflags(ei->i_flags & EXT4_FL_USER_VISIBLE);
+-
+-		if (ext4_has_feature_project(inode->i_sb)) {
+-			fa.fsx_projid = (__u32)from_kprojid(&init_user_ns,
+-				EXT4_I(inode)->i_projid);
+-		}
++		ext4_fsgetxattr(inode, &fa);
+ 
+ 		if (copy_to_user((struct fsxattr __user *)arg,
+ 				 &fa, sizeof(fa)))
+@@ -1104,7 +1111,7 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	}
+ 	case EXT4_IOC_FSSETXATTR:
+ 	{
+-		struct fsxattr fa;
++		struct fsxattr fa, old_fa;
+ 		int err;
+ 
+ 		if (copy_from_user(&fa, (struct fsxattr __user *)arg,
+@@ -1127,7 +1134,11 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 			return err;
+ 
+ 		inode_lock(inode);
++		ext4_fsgetxattr(inode, &old_fa);
+ 		err = ext4_ioctl_check_project(inode, &fa);
++		if (err)
++			goto out;
++		err = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
+ 		if (err)
+ 			goto out;
+ 		flags = (ei->i_flags & ~EXT4_FL_XFLAG_VISIBLE) |
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index a969d5497e03..f707de6bd4a8 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -2773,19 +2773,26 @@ static inline unsigned long f2fs_xflags_to_iflags(__u32 xflags)
+ 	return iflags;
+ }
+ 
+-static int f2fs_ioc_fsgetxattr(struct file *filp, unsigned long arg)
++static void __f2fs_ioc_fsgetxattr(struct inode *inode,
++				  struct fsxattr *fa)
+ {
+-	struct inode *inode = file_inode(filp);
+ 	struct f2fs_inode_info *fi = F2FS_I(inode);
+-	struct fsxattr fa;
+ 
+-	memset(&fa, 0, sizeof(struct fsxattr));
+-	fa.fsx_xflags = f2fs_iflags_to_xflags(fi->i_flags &
++	memset(fa, 0, sizeof(struct fsxattr));
++	fa->fsx_xflags = f2fs_iflags_to_xflags(fi->i_flags &
+ 				F2FS_FL_USER_VISIBLE);
+ 
+ 	if (f2fs_sb_has_project_quota(F2FS_I_SB(inode)))
+-		fa.fsx_projid = (__u32)from_kprojid(&init_user_ns,
++		fa->fsx_projid = (__u32)from_kprojid(&init_user_ns,
+ 							fi->i_projid);
++}
++
++static int f2fs_ioc_fsgetxattr(struct file *filp, unsigned long arg)
++{
++	struct inode *inode = file_inode(filp);
++	struct fsxattr fa;
++
++	__f2fs_ioc_fsgetxattr(inode, &fa);
+ 
+ 	if (copy_to_user((struct fsxattr __user *)arg, &fa, sizeof(fa)))
+ 		return -EFAULT;
+@@ -2820,7 +2827,7 @@ static int f2fs_ioc_fssetxattr(struct file *filp, unsigned long arg)
+ {
+ 	struct inode *inode = file_inode(filp);
+ 	struct f2fs_inode_info *fi = F2FS_I(inode);
+-	struct fsxattr fa;
++	struct fsxattr fa, old_fa;
+ 	unsigned int flags;
+ 	int err;
+ 
+@@ -2844,6 +2851,11 @@ static int f2fs_ioc_fssetxattr(struct file *filp, unsigned long arg)
+ 
+ 	inode_lock(inode);
+ 	err = f2fs_ioctl_check_project(inode, &fa);
++	if (err)
++		goto out;
++
++	__f2fs_ioc_fsgetxattr(inode, &old_fa);
++	err = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
+ 	if (err)
+ 		goto out;
+ 	flags = (fi->i_flags & ~F2FS_FL_XFLAG_VISIBLE) |
+diff --git a/fs/inode.c b/fs/inode.c
+index 403ddbb81335..ddfe60679b53 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -2207,3 +2207,20 @@ int vfs_ioc_setflags_check(struct inode *inode, int oldflags, int flags)
+ 	return 0;
+ }
+ EXPORT_SYMBOL(vfs_ioc_setflags_check);
++
++/* Generic function to check FS_IOC_FSSETXATTR values. */
++int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
++			     struct fsxattr *fa)
++{
++	/*
++	 * Can't modify an immutable/append-only file unless we have
++	 * appropriate permission.
++	 */
++	if ((old_fa->fsx_xflags ^ fa->fsx_xflags) &
++			(FS_XFLAG_IMMUTABLE | FS_XFLAG_APPEND) &&
++	    !capable(CAP_LINUX_IMMUTABLE))
++		return -EPERM;
++
++	return 0;
++}
++EXPORT_SYMBOL(vfs_ioc_fssetxattr_check);
+diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
+index d7dfc13f30f5..08c24f2f55c3 100644
+--- a/fs/xfs/xfs_ioctl.c
++++ b/fs/xfs/xfs_ioctl.c
+@@ -879,37 +879,45 @@ xfs_di2lxflags(
+ 	return flags;
+ }
+ 
+-STATIC int
+-xfs_ioc_fsgetxattr(
+-	xfs_inode_t		*ip,
+-	int			attr,
+-	void			__user *arg)
++static void
++__xfs_ioc_fsgetxattr(
++	struct xfs_inode	*ip,
++	bool			attr,
++	struct fsxattr		*fa)
+ {
+-	struct fsxattr		fa;
+-
+-	memset(&fa, 0, sizeof(struct fsxattr));
+-
+-	xfs_ilock(ip, XFS_ILOCK_SHARED);
+-	fa.fsx_xflags = xfs_ip2xflags(ip);
+-	fa.fsx_extsize = ip->i_d.di_extsize << ip->i_mount->m_sb.sb_blocklog;
+-	fa.fsx_cowextsize = ip->i_d.di_cowextsize <<
++	memset(fa, 0, sizeof(struct fsxattr));
++	fa->fsx_xflags = xfs_ip2xflags(ip);
++	fa->fsx_extsize = ip->i_d.di_extsize << ip->i_mount->m_sb.sb_blocklog;
++	fa->fsx_cowextsize = ip->i_d.di_cowextsize <<
+ 			ip->i_mount->m_sb.sb_blocklog;
+-	fa.fsx_projid = xfs_get_projid(ip);
++	fa->fsx_projid = xfs_get_projid(ip);
+ 
+ 	if (attr) {
+ 		if (ip->i_afp) {
+ 			if (ip->i_afp->if_flags & XFS_IFEXTENTS)
+-				fa.fsx_nextents = xfs_iext_count(ip->i_afp);
++				fa->fsx_nextents = xfs_iext_count(ip->i_afp);
+ 			else
+-				fa.fsx_nextents = ip->i_d.di_anextents;
++				fa->fsx_nextents = ip->i_d.di_anextents;
+ 		} else
+-			fa.fsx_nextents = 0;
++			fa->fsx_nextents = 0;
+ 	} else {
+ 		if (ip->i_df.if_flags & XFS_IFEXTENTS)
+-			fa.fsx_nextents = xfs_iext_count(&ip->i_df);
++			fa->fsx_nextents = xfs_iext_count(&ip->i_df);
+ 		else
+-			fa.fsx_nextents = ip->i_d.di_nextents;
++			fa->fsx_nextents = ip->i_d.di_nextents;
+ 	}
++}
++
++STATIC int
++xfs_ioc_fsgetxattr(
++	xfs_inode_t		*ip,
++	int			attr,
++	void			__user *arg)
++{
++	struct fsxattr		fa;
++
++	xfs_ilock(ip, XFS_ILOCK_SHARED);
++	__xfs_ioc_fsgetxattr(ip, attr, &fa);
+ 	xfs_iunlock(ip, XFS_ILOCK_SHARED);
+ 
+ 	if (copy_to_user(arg, &fa, sizeof(fa)))
+@@ -1035,15 +1043,6 @@ xfs_ioctl_setattr_xflags(
+ 	if ((fa->fsx_xflags & FS_XFLAG_DAX) && xfs_is_reflink_inode(ip))
+ 		return -EINVAL;
+ 
+-	/*
+-	 * Can't modify an immutable/append-only file unless
+-	 * we have appropriate permission.
+-	 */
+-	if (((ip->i_d.di_flags & (XFS_DIFLAG_IMMUTABLE | XFS_DIFLAG_APPEND)) ||
+-	     (fa->fsx_xflags & (FS_XFLAG_IMMUTABLE | FS_XFLAG_APPEND))) &&
+-	    !capable(CAP_LINUX_IMMUTABLE))
+-		return -EPERM;
+-
+ 	/* diflags2 only valid for v3 inodes. */
+ 	di_flags2 = xfs_flags2diflags2(ip, fa->fsx_xflags);
+ 	if (di_flags2 && ip->i_d.di_version < 3)
+@@ -1323,6 +1322,7 @@ xfs_ioctl_setattr(
+ 	xfs_inode_t		*ip,
+ 	struct fsxattr		*fa)
+ {
++	struct fsxattr		old_fa;
+ 	struct xfs_mount	*mp = ip->i_mount;
+ 	struct xfs_trans	*tp;
+ 	struct xfs_dquot	*udqp = NULL;
+@@ -1370,7 +1370,6 @@ xfs_ioctl_setattr(
+ 		goto error_free_dquots;
+ 	}
+ 
+-
+ 	if (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_PQUOTA_ON(mp) &&
+ 	    xfs_get_projid(ip) != fa->fsx_projid) {
+ 		code = xfs_qm_vop_chown_reserve(tp, ip, udqp, NULL, pdqp,
+@@ -1379,6 +1378,11 @@ xfs_ioctl_setattr(
+ 			goto error_trans_cancel;
+ 	}
+ 
++	__xfs_ioc_fsgetxattr(ip, false, &old_fa);
++	code = vfs_ioc_fssetxattr_check(VFS_I(ip), &old_fa, fa);
++	if (code)
++		goto error_trans_cancel;
++
+ 	code = xfs_ioctl_setattr_check_extsize(ip, fa);
+ 	if (code)
+ 		goto error_trans_cancel;
+@@ -1489,6 +1493,7 @@ xfs_ioc_setxflags(
+ {
+ 	struct xfs_trans	*tp;
+ 	struct fsxattr		fa;
++	struct fsxattr		old_fa;
+ 	unsigned int		flags;
+ 	int			join_flags = 0;
+ 	int			error;
+@@ -1524,6 +1529,13 @@ xfs_ioc_setxflags(
+ 		goto out_drop_write;
+ 	}
+ 
++	__xfs_ioc_fsgetxattr(ip, false, &old_fa);
++	error = vfs_ioc_fssetxattr_check(VFS_I(ip), &old_fa, &fa);
++	if (error) {
++		xfs_trans_cancel(tp);
++		goto out_drop_write;
++	}
++
+ 	error = xfs_ioctl_setattr_xflags(tp, ip, &fa);
+ 	if (error) {
+ 		xfs_trans_cancel(tp);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 4d6feee18778..0c3ef24afe22 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -3557,4 +3557,7 @@ static inline struct sock *io_uring_get_socket(struct file *file)
+ 
+ int vfs_ioc_setflags_check(struct inode *inode, int oldflags, int flags);
+ 
++int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
++			     struct fsxattr *fa);
++
+ #endif /* _LINUX_FS_H */
