@@ -1,136 +1,111 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
+From: Jan Kara <jack@suse.cz>
 Subject: Re: [Ocfs2-devel] [PATCH 2/7] vfs: flush and wait for io when
  setting the immutable flag via SETFLAGS
-Date: Mon, 24 Jun 2019 20:04:39 -0700
-Message-ID: <20190625030439.GA5379@magnolia>
+Date: Tue, 25 Jun 2019 09:08:04 +0200
+Message-ID: <20190625070804.GA31527@quack2.suse.cz>
 References: <156116141046.1664939.11424021489724835645.stgit@magnolia>
  <156116142734.1664939.5074567130774423066.stgit@magnolia>
  <20190624113737.GG32376@quack2.suse.cz>
  <20190624215817.GE1611011@magnolia>
+ <20190625030439.GA5379@magnolia>
 Mime-Version: 1.0
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190625030439.GA5379@magnolia>
+Sender: linux-kernel-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=lists.infradead.org; s=bombadil.20170209; h=Sender:
-	Content-Transfer-Encoding:Content-Type:Cc:List-Subscribe:List-Help:List-Post:
-	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
-	Message-ID:Subject:To:From:Date:Reply-To:Content-ID:Content-Description:
-	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=F3Bn3lgvu1plPP+/sWzVQdJWqxatl+U6p2zq7JMCk28=; b=IKbjv/TfDOsG9F
-	dTNsPgyPNh646s8vorItTR/AkO4/hlqV8ecwKQjLq7nuum04HkcxdJ0+LrMNwpVWk0W7pG7bIgdV/
-	MyJ9kek/qW0tubLKULP8yBB7I6srjabIJ7fadOaDA4y6McNot/YIwsIj541vMRj42zz8Bv1WxEZzD
-	oWzLm7t2a9g+dZaWe8oyqmhLFw6S83XROdztZqK46tKfK4lBLVvHY99kfI+GY2/5id/quKkYQuYHX
-	rfB4SzJqwZP5nnr1x+gqlcanZSlVBaK3A5PPjhczIpKn7fkBYZaCbokscfWX1cSIU3PiRPCaQyGqf
-	Fi6q723zou0iOP/5Cfcg==;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
- h=date : from : to : cc
- : subject : message-id : references : mime-version : content-type :
- in-reply-to; s=corp-2018-07-02;
- bh=y1nTqvm5zm2oVuuxHsrGpbU4gEqHpmqSXspC8Bne9NM=;
- b=BXJlUqAKvMETApXDcsKgEZiNdrmlXkQGnY88kMW3AMxNKcXyyaE6UXAlpYECy+ntv7pH
- 6uhEP1tj4tycY9LMVwQSwCJ1OFoN8XiURaWWP5MgMDhRGeWBYKJ5F+hDMXeWyXvzw09Y
- W93kGqDhXdEUxHJGprg0ZqzGMSQuXc6a6uPIBselde0/QnSPFrNudLSF4JrDCRjZHlSe
- PtPwNFzZ3qhrAqfZeA252/OTt3UOJ6W5XclgLFaB43nqCHJq7hk5QCcLKtksxGRz16et
- vcWpg2Ca0sMBi64yleW6uVf2BPJY2qw2eabFh6Nu+9cNmwvp3CwrP4l2harCRSOmeEeb 1g== 
-Content-Disposition: inline
-In-Reply-To: <20190624215817.GE1611011@magnolia>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
-To: Jan Kara <jack@suse.cz>
-Cc: linux-efi@vger.kernel.org, yuchao0@huawei.com, linux-mm@kvack.org, clm@fb.com, adilger.kernel@dilger.ca, ocfs2-devel@oss.oracle.com, matthew.garrett@nebula.com, linux-nilfs@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, josef@toxicpanda.com, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk, dsterba@suse.com, jaegeuk@kernel.org, tytso@mit.edu, ard.biesheuvel@linaro.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, jk@ozlabs.org, jack@suse.com, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Jan Kara <jack@suse.cz>, linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, yuchao0@huawei.com, linux-mm@kvack.org, clm@fb.com, adilger.kernel@dilger.ca, matthew.garrett@nebula.com, linux-nilfs@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, josef@toxicpanda.com, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk, dsterba@suse.com, jaegeuk@kernel.org, tytso@mit.edu, ard.biesheuvel@linaro.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, jk@ozlabs.org, jack@suse.com, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com
 
-On Mon, Jun 24, 2019 at 02:58:17PM -0700, Darrick J. Wong wrote:
-> On Mon, Jun 24, 2019 at 01:37:37PM +0200, Jan Kara wrote:
-> > On Fri 21-06-19 16:57:07, Darrick J. Wong wrote:
-> > > From: Darrick J. Wong <darrick.wong@oracle.com>
+On Mon 24-06-19 20:04:39, Darrick J. Wong wrote:
+> On Mon, Jun 24, 2019 at 02:58:17PM -0700, Darrick J. Wong wrote:
+> > On Mon, Jun 24, 2019 at 01:37:37PM +0200, Jan Kara wrote:
+> > > On Fri 21-06-19 16:57:07, Darrick J. Wong wrote:
+> > > > From: Darrick J. Wong <darrick.wong@oracle.com>
+> > > > 
+> > > > When we're using FS_IOC_SETFLAGS to set the immutable flag on a file, we
+> > > > need to ensure that userspace can't continue to write the file after the
+> > > > file becomes immutable.  To make that happen, we have to flush all the
+> > > > dirty pagecache pages to disk to ensure that we can fail a page fault on
+> > > > a mmap'd region, wait for pending directio to complete, and hope the
+> > > > caller locked out any new writes by holding the inode lock.
+> > > > 
+> > > > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 > > > 
-> > > When we're using FS_IOC_SETFLAGS to set the immutable flag on a file, we
-> > > need to ensure that userspace can't continue to write the file after the
-> > > file becomes immutable.  To make that happen, we have to flush all the
-> > > dirty pagecache pages to disk to ensure that we can fail a page fault on
-> > > a mmap'd region, wait for pending directio to complete, and hope the
-> > > caller locked out any new writes by holding the inode lock.
+> > > Seeing the way this worked out, is there a reason to have separate
+> > > vfs_ioc_setflags_flush_data() instead of folding the functionality in
+> > > vfs_ioc_setflags_check() (possibly renaming it to
+> > > vfs_ioc_setflags_prepare() to indicate it does already some changes)? I
+> > > don't see any place that would need these two separated...
+> > 
+> > XFS needs them to be separated.
+> > 
+> > If we even /think/ that we're going to be setting the immutable flag
+> > then we need to grab the IOLOCK and the MMAPLOCK to prevent further
+> > writes while we drain all the directio writes and dirty data.  IO
+> > completions for the write draining can take the ILOCK, which means that
+> > we can't have grabbed it yet.
+> > 
+> > Next, we grab the ILOCK so we can check the new flags against the inode
+> > and then update the inode core.
+> > 
+> > For most filesystems I think it suffices to inode_lock and then do both,
+> > though.
+> 
+> Heh, lol, that applies to fssetxattr, not to setflags, because xfs
+> setflags implementation open-codes the relevant fssetxattr pieces.
+> So for setflags we can combine both parts into a single _prepare
+> function.
+
+Yeah. Also for fssetxattr we could use the prepare helper at least for
+ext4, f2fs, and btrfs where the situation isn't so complex as for xfs to
+save some boilerplate code.
+
+								Honza
+
+> > > > +/*
+> > > > + * Flush all pending IO and dirty mappings before setting S_IMMUTABLE on an
+> > > > + * inode via FS_IOC_SETFLAGS.  If the flush fails we'll clear the flag before
+> > > > + * returning error.
+> > > > + *
+> > > > + * Note: the caller should be holding i_mutex, or else be sure that
+> > > > + * they have exclusive access to the inode structure.
+> > > > + */
+> > > > +static inline int vfs_ioc_setflags_flush_data(struct inode *inode, int flags)
+> > > > +{
+> > > > +	int ret;
+> > > > +
+> > > > +	if (!vfs_ioc_setflags_need_flush(inode, flags))
+> > > > +		return 0;
+> > > > +
+> > > > +	inode_set_flags(inode, S_IMMUTABLE, S_IMMUTABLE);
+> > > > +	ret = inode_flush_data(inode);
+> > > > +	if (ret)
+> > > > +		inode_set_flags(inode, 0, S_IMMUTABLE);
+> > > > +	return ret;
+> > > > +}
 > > > 
-> > > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> > > Also this sets S_IMMUTABLE whenever vfs_ioc_setflags_need_flush() returns
+> > > true. That is currently the right thing but seems like a landmine waiting
+> > > to trip? So I'd just drop the vfs_ioc_setflags_need_flush() abstraction to
+> > > make it clear what's going on.
 > > 
-> > Seeing the way this worked out, is there a reason to have separate
-> > vfs_ioc_setflags_flush_data() instead of folding the functionality in
-> > vfs_ioc_setflags_check() (possibly renaming it to
-> > vfs_ioc_setflags_prepare() to indicate it does already some changes)? I
-> > don't see any place that would need these two separated...
-> 
-> XFS needs them to be separated.
-> 
-> If we even /think/ that we're going to be setting the immutable flag
-> then we need to grab the IOLOCK and the MMAPLOCK to prevent further
-> writes while we drain all the directio writes and dirty data.  IO
-> completions for the write draining can take the ILOCK, which means that
-> we can't have grabbed it yet.
-> 
-> Next, we grab the ILOCK so we can check the new flags against the inode
-> and then update the inode core.
-> 
-> For most filesystems I think it suffices to inode_lock and then do both,
-> though.
-
-Heh, lol, that applies to fssetxattr, not to setflags, because xfs
-setflags implementation open-codes the relevant fssetxattr pieces.
-So for setflags we can combine both parts into a single _prepare
-function.
-
---D
-
-> > > +/*
-> > > + * Flush all pending IO and dirty mappings before setting S_IMMUTABLE on an
-> > > + * inode via FS_IOC_SETFLAGS.  If the flush fails we'll clear the flag before
-> > > + * returning error.
-> > > + *
-> > > + * Note: the caller should be holding i_mutex, or else be sure that
-> > > + * they have exclusive access to the inode structure.
-> > > + */
-> > > +static inline int vfs_ioc_setflags_flush_data(struct inode *inode, int flags)
-> > > +{
-> > > +	int ret;
-> > > +
-> > > +	if (!vfs_ioc_setflags_need_flush(inode, flags))
-> > > +		return 0;
-> > > +
-> > > +	inode_set_flags(inode, S_IMMUTABLE, S_IMMUTABLE);
-> > > +	ret = inode_flush_data(inode);
-> > > +	if (ret)
-> > > +		inode_set_flags(inode, 0, S_IMMUTABLE);
-> > > +	return ret;
-> > > +}
+> > Ok.
 > > 
-> > Also this sets S_IMMUTABLE whenever vfs_ioc_setflags_need_flush() returns
-> > true. That is currently the right thing but seems like a landmine waiting
-> > to trip? So I'd just drop the vfs_ioc_setflags_need_flush() abstraction to
-> > make it clear what's going on.
-> 
-> Ok.
-> 
-> --D
-> 
+> > --D
 > > 
-> > 								Honza
-> > -- 
-> > Jan Kara <jack@suse.com>
-> > SUSE Labs, CR
-> 
-> _______________________________________________
-> Ocfs2-devel mailing list
-> Ocfs2-devel@oss.oracle.com
-> https://oss.oracle.com/mailman/listinfo/ocfs2-devel
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+> > > 
+> > > 								Honza
+> > > -- 
+> > > Jan Kara <jack@suse.com>
+> > > SUSE Labs, CR
+> > 
+> > _______________________________________________
+> > Ocfs2-devel mailing list
+> > Ocfs2-devel@oss.oracle.com
+> > https://oss.oracle.com/mailman/listinfo/ocfs2-devel
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
