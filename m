@@ -1,76 +1,95 @@
-From: David Sterba <dsterba@suse.cz>
-Subject: Re: [PATCH 2/4] vfs: create a generic checking function for
- FS_IOC_FSSETXATTR
-Date: Tue, 25 Jun 2019 19:33:16 +0200
-Message-ID: <20190625173316.GU8917@twin.jikos.cz>
-References: <156116136742.1664814.17093419199766834123.stgit@magnolia>
- <156116138952.1664814.16552129914959122837.stgit@magnolia>
- <20190625105725.GB26085@infradead.org>
- <20190625170248.GS8917@twin.jikos.cz>
- <20190625171616.GB2230847@magnolia>
-Reply-To: dsterba@suse.cz
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH v4 0/7] vfs: make immutable files actually immutable
+Date: Tue, 25 Jun 2019 11:03:26 -0700
+Message-ID: <20190625180326.GC2230847@magnolia>
+References: <156116141046.1664939.11424021489724835645.stgit@magnolia>
+ <20190625103631.GB30156@infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190625171616.GB2230847@magnolia>
-Sender: linux-kernel-owner@vger.kernel.org
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: dsterba@suse.cz, Christoph Hellwig <hch@infradead.org>, matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, shaggy@kernel.org, ard.biesheuvel@linaro.org, josef@toxicpanda.com, clm@fb.com, adilger.kernel@dilger.ca, jk@ozlabs.org, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, viro@zeniv.linux.org.uk, cluster-devel@redhat.com, jfs-discussion@lists.sourceforge.net, linux-efi@vger.kernel.org, Jan Kara <jack@suse.cz>, reiserfs-devel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20170209; h=Sender:
+	Content-Transfer-Encoding:Content-Type:Cc:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
+	Message-ID:Subject:To:From:Date:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=mc0LoJ5L37N3SSmGEyk5IUCDaKMeRddj+4DfgESUVJg=; b=ir2x4SShIg17to
+	JLgQiTUwnekA33z54GUzclizO/vdC6HT2/KnMm4MifQfdBhtLu0IFp/O3mxy69K1pkepGqr45xoko
+	Bgk0C9Z28PiOLC8/zrsKRs4EkpxxlVF8W4AR1yoasb0Gbr8G9jpY/ko+7EBuh5QBVcrgJF9MkI69m
+	s5YtCMfSoTDJsTxqOiJiFbLeruFQySvzIUWHAVoVjbXUH7DH8u19XwnBSPdvleqSPOYVVw5Do6Vgs
+	qhPWlo+rXBrjLVWTdFTqBF3oHROKN/7DKtclF2frNfbNAFSKRQxYYGwiiXPp7maGPluOdbdEuw//w
+	KYzyS9mmILTt16qgPvLw==;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
+ h=date : from : to : cc
+ : subject : message-id : references : mime-version : content-type :
+ in-reply-to; s=corp-2018-07-02;
+ bh=q3PQ3FdT4Cu9ZFxkmPMEB5w+ChSGz6mW1jtUBkoDAvw=;
+ b=ksyT2XyNq/sBFuNf0kcEOahW5dSfpRm2xoyvLHIl5Mejyeb4JLMflOsVy5quxvpN67j2
+ IsKXQAf1HGSoM5FioAjK6ozKyUInygd/ml7l4zpRXtxh/UWz20oKY/FTMlcYaDZBA7N9
+ MY/zMgGVdosxoetsazUmPfKqNstqSPWvasVhjypJJqeFcHhDaP62mxpCpMaNSfCtaBX3
+ JdFoGt472fc1h8ZFinUmpgHsBMZcZBqagXk/T9NnnQ5VQ3pfbtpwxQaYR4yLbxZKG58n
+ MOx1qf1doyupoPytNdwt2e/QYdozJOX4KCvtmdKWmiW/VFWoTbAzfyslOGA2S3jKu5TS Qg== 
+Content-Disposition: inline
+In-Reply-To: <20190625103631.GB30156@infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, yuchao0@huawei.com, linux-mm@kvack.org, clm@fb.com, adilger.kernel@dilger.ca, matthew.garrett@nebula.com, linux-nilfs@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, josef@toxicpanda.com, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk, dsterba@suse.com, jaegeuk@kernel.org, tytso@mit.edu, ard.biesheuvel@linaro.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, jk@ozlabs.org, jack@suse.com, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com
 
-On Tue, Jun 25, 2019 at 10:16:16AM -0700, Darrick J. Wong wrote:
-> On Tue, Jun 25, 2019 at 07:02:48PM +0200, David Sterba wrote:
-> > On Tue, Jun 25, 2019 at 03:57:25AM -0700, Christoph Hellwig wrote:
-> > > On Fri, Jun 21, 2019 at 04:56:29PM -0700, Darrick J. Wong wrote:
-> > > > From: Darrick J. Wong <darrick.wong@oracle.com>
-> > > > 
-> > > > Create a generic checking function for the incoming FS_IOC_FSSETXATTR
-> > > > fsxattr values so that we can standardize some of the implementation
-> > > > behaviors.
-> > > > 
-> > > > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> > > > Reviewed-by: Jan Kara <jack@suse.cz>
-> > > > ---
-> > > >  fs/btrfs/ioctl.c   |   21 +++++++++-------
-> > > >  fs/ext4/ioctl.c    |   27 ++++++++++++++------
-> > > >  fs/f2fs/file.c     |   26 ++++++++++++++-----
-> > > >  fs/inode.c         |   17 +++++++++++++
-> > > >  fs/xfs/xfs_ioctl.c |   70 ++++++++++++++++++++++++++++++----------------------
-> > > >  include/linux/fs.h |    3 ++
-> > > >  6 files changed, 111 insertions(+), 53 deletions(-)
-> > > > 
-> > > > 
-> > > > diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-> > > > index f408aa93b0cf..7ddda5b4b6a6 100644
-> > > > --- a/fs/btrfs/ioctl.c
-> > > > +++ b/fs/btrfs/ioctl.c
-> > > > @@ -366,6 +366,13 @@ static int check_xflags(unsigned int flags)
-> > > >  	return 0;
-> > > >  }
-> > > >  
-> > > > +static void __btrfs_ioctl_fsgetxattr(struct btrfs_inode *binode,
-> > > > +				     struct fsxattr *fa)
-> > > > +{
-> > > > +	memset(fa, 0, sizeof(*fa));
-> > > > +	fa->fsx_xflags = btrfs_inode_flags_to_xflags(binode->flags);
-> > > 
-> > > Is there really much of a point in this helper? Epeciall as
-> > > the zeroing could easily be done in the variable declaration
-> > > line using
-> > > 
-> > > 	struct fsxattr fa = { };
+On Tue, Jun 25, 2019 at 03:36:31AM -0700, Christoph Hellwig wrote:
+> On Fri, Jun 21, 2019 at 04:56:50PM -0700, Darrick J. Wong wrote:
+> > Hi all,
 > > 
-> > Agreed, not counting the initialization the wrapper is merely another
-> > name for btrfs_inode_flags_to_xflags. I also find it slightly confusing
-> > that __btrfs_ioctl_fsgetxattr name is too close to the ioctl callback
-> > implementation btrfs_ioctl_fsgetxattr but only does some initialization.
+> > The chattr(1) manpage has this to say about the immutable bit that
+> > system administrators can set on files:
+> > 
+> > "A file with the 'i' attribute cannot be modified: it cannot be deleted
+> > or renamed, no link can be created to this file, most of the file's
+> > metadata can not be modified, and the file can not be opened in write
+> > mode."
+> > 
+> > Given the clause about how the file 'cannot be modified', it is
+> > surprising that programs holding writable file descriptors can continue
+> > to write to and truncate files after the immutable flag has been set,
+> > but they cannot call other things such as utimes, fallocate, unlink,
+> > link, setxattr, or reflink.
 > 
-> Ok; it's easily enough changed to:
-> 
-> 	struct fsxattr old_fa = {
-> 		.fsx_xflags = btrfs_inode_flags_to_xflags(binode->flags),
-> 	};
+> I still think living code beats documentation.  And as far as I can
+> tell the immutable bit never behaved as documented or implemented
+> in this series on Linux, and it originated on Linux.
 
-Works for me, thanks.
+The behavior has never been consistent -- since the beginning you can
+keep write()ing to a fd after the file becomes immutable, but you can't
+ftruncate() it.  I would really like to make the behavior consistent.
+Since the authors of nearly every new system call and ioctl since the
+late 1990s have interpreted S_IMMUTABLE to mean "immutable takes effect
+everywhere immediately" I resolved the inconsistency in favor of that
+interpretation.
+
+I asked Ted what he thought that that userspace having the ability to
+continue writing to an immutable file, and he thought it was an
+implementation bug that had been there for 25 years.  Even he thought
+that immutable should take effect immediately everywhere.
+
+> If you want  hard cut off style immutable flag it should really be a
+> new API, but I don't really see the point.  It isn't like the usual
+> workload is to set the flag on a file actively in use.
+
+FWIW Ted also thought that since it's rare for admins to set +i on a
+file actively in use we could just change it without forcing everyone
+onto a new api.
+
+--D
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
