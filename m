@@ -1,8 +1,8 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 1/5] mm/fs: don't allow writes to immutable
-	files
-Date: Tue, 25 Jun 2019 19:33:00 -0700
-Message-ID: <156151638036.2283603.8347635093125152699.stgit@magnolia>
+Subject: [PATCH 2/5] vfs: flush and wait for io when setting
+ the immutable flag via SETFLAGS
+Date: Tue, 25 Jun 2019 19:33:08 -0700
+Message-ID: <156151638826.2283603.17232416684567376466.stgit@magnolia>
 References: <156151637248.2283603.8458727861336380714.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -12,12 +12,12 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to 
  message-id : in-reply-to : references : mime-version : cc : subject :
  list-id : list-unsubscribe : list-archive : list-post : list-help :
  list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=hvgtOI0H/h3ma8C+eiJfG4R2QKME7PR7D9+OFXKxE5k=;
- b=hhaCw5KR6N01uFqmJ6MRqo94GHHojpVog4gbt9C1yDL8vRyRsc/ZrRziDCBzcf+f5yFe
- EWl1UUf7mVbxzH99rPMp9zba9ClpwWetmTY/Y2cTMG3xOc9jvoCG3geeQTEuRZbXJ4P5
- FtUyiXEZXf6yOshs/BEbDkIhv2E8EEKxitAmdXNw6xqnSUfxXxRhiRr06IlDTMrQdiTh
- VfuPQn7Qjai4Vi8uEvqhicFZ7pb2E06y08Z00L1wYYIGz6cP1du2H7cPeqtK4sRxlZ7J
- woGD1Qn58HcfqW6qFRVnK85znb4CRLKj2X/ZsMwfyLNlpaZ2R61cOrq+c2+0VHQmpTlL gQ== 
+ s=corp-2018-07-02; bh=IQNFhsvhUAXZDR0FcpAf7DIGabaoU7uwNE1ju11p0p8=;
+ b=AYjmdVgS1Ym5E2dqybyQY053qx5Z4ixHt2V8zHuNgrzHyxnURzRtpg9ocZsaVd/DE0Vu
+ Vq7gIbpzcS1Q5UAl7oWD35KEQczg/2xtw70zggyZ1JWYkYbEjpztDyHiBlKqi4W1bJWK
+ d9qzWl3LfL7tDQTkoazfT/nL2AF5MHR1FZSvy90yCPmQ2TDoDAH6dNqd/fTkzoi8R1/G
+ eO7ieRRgZMYq1mygbApmjkrszHxddm8HXi2FmTEIpj1NMvQ5KU6hkqVsb43hB4GiPCTS
+ 62+80UXICCzxzJSwG/j/SqQjoFFpaS0+Umopd0w/8ZU0T8MHow/ZNI8DS1aCMrRc0xtd Xw== 
 In-Reply-To: <156151637248.2283603.8458727861336380714.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
@@ -30,119 +30,87 @@ List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
 Sender: ocfs2-devel-bounces@oss.oracle.com
 Errors-To: ocfs2-devel-bounces@oss.oracle.com
 To: matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, darrick.wong@oracle.com, ard.biesheuvel@linaro.org, josef@toxicpanda.com, hch@infradead.org, clm@fb.com, adilger.kernel@dilger.ca, viro@zeniv.linux.org.uk, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, jk@ozlabs.org
-Cc: linux-efi@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org
+Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-The chattr manpage has this to say about immutable files:
-
-"A file with the 'i' attribute cannot be modified: it cannot be deleted
-or renamed, no link can be created to this file, most of the file's
-metadata can not be modified, and the file can not be opened in write
-mode."
-
-Once the flag is set, it is enforced for quite a few file operations,
-such as fallocate, fpunch, fzero, rm, touch, open, etc.  However, we
-don't check for immutability when doing a write(), a PROT_WRITE mmap(),
-a truncate(), or a write to a previously established mmap.
-
-If a program has an open write fd to a file that the administrator
-subsequently marks immutable, the program still can change the file
-contents.  Weird!
-
-The ability to write to an immutable file does not follow the manpage
-promise that immutable files cannot be modified.  Worse yet it's
-inconsistent with the behavior of other syscalls which don't allow
-modifications of immutable files.
-
-Therefore, add the necessary checks to make the write, mmap, and
-truncate behavior consistent with what the manpage says and consistent
-with other syscalls on filesystems which support IMMUTABLE.
+When we're using FS_IOC_SETFLAGS to set the immutable flag on a file, we
+need to ensure that userspace can't continue to write the file after the
+file becomes immutable.  To make that happen, we have to flush all the
+dirty pagecache pages to disk to ensure that we can fail a page fault on
+a mmap'd region, wait for pending directio to complete, and hope the
+caller locked out any new writes by holding the inode lock.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- fs/attr.c    |   13 ++++++-------
- mm/filemap.c |    3 +++
- mm/memory.c  |    3 +++
- mm/mmap.c    |    8 ++++++--
- 4 files changed, 18 insertions(+), 9 deletions(-)
+ fs/inode.c         |   21 +++++++++++++++++++--
+ include/linux/fs.h |   11 +++++++++++
+ 2 files changed, 30 insertions(+), 2 deletions(-)
 
 
-diff --git a/fs/attr.c b/fs/attr.c
-index d22e8187477f..1fcfdcc5b367 100644
---- a/fs/attr.c
-+++ b/fs/attr.c
-@@ -233,19 +233,18 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
+diff --git a/fs/inode.c b/fs/inode.c
+index f08711b34341..65a412af3ffb 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -2193,7 +2193,8 @@ EXPORT_SYMBOL(current_time);
  
- 	WARN_ON_ONCE(!inode_is_locked(inode));
- 
--	if (ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) {
--		if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
--			return -EPERM;
--	}
-+	if (IS_IMMUTABLE(inode))
-+		return -EPERM;
+ /*
+  * Generic function to check FS_IOC_SETFLAGS values and reject any invalid
+- * configurations.
++ * configurations.  Once we're done, prepare the inode for whatever changes
++ * are coming down the pipeline.
+  *
+  * Note: the caller should be holding i_mutex, or else be sure that they have
+  * exclusive access to the inode structure.
+@@ -2201,6 +2202,8 @@ EXPORT_SYMBOL(current_time);
+ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
+ 			     unsigned int flags)
+ {
++	int ret;
 +
-+	if ((ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) &&
-+	    IS_APPEND(inode))
-+		return -EPERM;
- 
  	/*
- 	 * If utimes(2) and friends are called with times == NULL (or both
- 	 * times are UTIME_NOW), then we need to check for write permission
- 	 */
- 	if (ia_valid & ATTR_TOUCH) {
--		if (IS_IMMUTABLE(inode))
--			return -EPERM;
--
- 		if (!inode_owner_or_capable(inode)) {
- 			error = inode_permission(inode, MAY_WRITE);
- 			if (error)
-diff --git a/mm/filemap.c b/mm/filemap.c
-index aac71aef4c61..dad85e10f5f8 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2935,6 +2935,9 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
- 	loff_t count;
- 	int ret;
+ 	 * The IMMUTABLE and APPEND_ONLY flags can only be changed by
+ 	 * the relevant capability.
+@@ -2211,7 +2214,21 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
+ 	    !capable(CAP_LINUX_IMMUTABLE))
+ 		return -EPERM;
  
-+	if (IS_IMMUTABLE(inode))
-+		return -EPERM;
+-	return 0;
++	/*
++	 * Now that we're done checking the new flags, flush all pending IO and
++	 * dirty mappings before setting S_IMMUTABLE on an inode via
++	 * FS_IOC_SETFLAGS.  If the flush fails we'll clear the flag before
++	 * returning error.
++	 */
++	if (!S_ISREG(inode->i_mode) || IS_IMMUTABLE(inode) ||
++	    !(flags & FS_IMMUTABLE_FL))
++		return 0;
 +
- 	if (!iov_iter_count(from))
- 		return 0;
++	inode_set_flags(inode, S_IMMUTABLE, S_IMMUTABLE);
++	ret = inode_drain_writes(inode);
++	if (ret)
++		inode_set_flags(inode, 0, S_IMMUTABLE);
++	return ret;
+ }
+ EXPORT_SYMBOL(vfs_ioc_setflags_prepare);
  
-diff --git a/mm/memory.c b/mm/memory.c
-index ddf20bd0c317..4311cfdade90 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -2235,6 +2235,9 @@ static vm_fault_t do_page_mkwrite(struct vm_fault *vmf)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 48322bfd7299..51266c9dbadc 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -3561,4 +3561,15 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
+ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
+ 			     struct fsxattr *fa);
  
- 	vmf->flags = FAULT_FLAG_WRITE|FAULT_FLAG_MKWRITE;
- 
-+	if (vmf->vma->vm_file && IS_IMMUTABLE(file_inode(vmf->vma->vm_file)))
-+		return VM_FAULT_SIGBUS;
++/*
++ * Flush file data before changing attributes.  Caller must hold any locks
++ * required to prevent further writes to this file until we're done setting
++ * flags.
++ */
++static inline int inode_drain_writes(struct inode *inode)
++{
++	inode_dio_wait(inode);
++	return filemap_write_and_wait(inode->i_mapping);
++}
 +
- 	ret = vmf->vma->vm_ops->page_mkwrite(vmf);
- 	/* Restore original flags so that caller is not surprised */
- 	vmf->flags = old_flags;
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 7e8c3e8ae75f..ac1e32205237 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1483,8 +1483,12 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 		case MAP_SHARED_VALIDATE:
- 			if (flags & ~flags_mask)
- 				return -EOPNOTSUPP;
--			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
--				return -EACCES;
-+			if (prot & PROT_WRITE) {
-+				if (!(file->f_mode & FMODE_WRITE))
-+					return -EACCES;
-+				if (IS_IMMUTABLE(file_inode(file)))
-+					return -EPERM;
-+			}
- 
- 			/*
- 			 * Make sure we don't allow writing to an append-only
+ #endif /* _LINUX_FS_H */
