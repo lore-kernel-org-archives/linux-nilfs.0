@@ -1,8 +1,7 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 3/5] vfs: flush and wait for io when setting
- the immutable flag via FSSETXATTR
-Date: Tue, 25 Jun 2019 19:33:16 -0700
-Message-ID: <156151639615.2283603.2028690322950797383.stgit@magnolia>
+Subject: [PATCH 5/5] vfs: don't allow writes to swap files
+Date: Tue, 25 Jun 2019 19:33:31 -0700
+Message-ID: <156151641177.2283603.7806026378321236401.stgit@magnolia>
 References: <156151637248.2283603.8458727861336380714.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -12,12 +11,12 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to 
  message-id : in-reply-to : references : mime-version : cc : subject :
  list-id : list-unsubscribe : list-archive : list-post : list-help :
  list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=8trrc7H9M4o4Je2OFfyl7OTlhekP1VFbQx/o3an9m+c=;
- b=On0ZMKokT0dQ+3hsv5doZztXMj32TVZua5Nz3Y8GpoymhfpJ/ZRMa8YEuUq8ygMLdUZr
- Aq7AhGEkcqKflQvjIOwNbExF/g25hTT1MHngQN+OPSo+0qgjmsBdnG+LWpzz/rKhAQ18
- AVghVQ3G2eH6ftFna9r1mcVBt4e04Eg8p78C55TWSS+VNH9Vwwzi8J+1RmAAclTAEA3H
- 3gs8riF5vGQgkupc/4KCBKG++Ksuuda8O1e/T9YLtlOQj90xKGzTWMnA4318KjT9L4F9
- 0ZAzCT9EUaWigsi/mOn7G0G9CE766icJO8IBXyGpkfDtXwlgh9TR/ZIlvv3m5Q+GL4Uk 6g== 
+ s=corp-2018-07-02; bh=lZGrXmbJOcBc6Tg6tTThoqCtGkYa3AP1CUboc63rMOs=;
+ b=y5+7I5g/mgIq0OdOldjO2sRfD+V8FT8AmV54x7vOqqJc/8+95NJJxK1ANBO1qovIjj5I
+ CftrEU3/6Cz//wo1i4+futSjHrWelb4JAPwzNkOykfkx+Mha7gWT+G9rZYrlQXi/XO3u
+ qm5wlCcfBD3l5QyNz6a7mdtEgEg9NOHLoyyEzn/jyAFBOLbSHy8sWEePDIwz+WsuGMww
+ xUUyqaz0Jt6pSMDsDvAeSAG5fZn7jihFbWFd8w7zwIk05Qzi3ppFd2TEro5t08RXXJFo
+ hnJzO8rRyfEIbupuva/Wb2Krk12iEwl64Q04yjkHOefC5mPQ951SuQanUTEh8Dc7BysT sA== 
 In-Reply-To: <156151637248.2283603.8458727861336380714.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
@@ -34,250 +33,106 @@ Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.ke
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-When we're using FS_IOC_FSSETXATTR to set the immutable flag on a file,
-we need to ensure that userspace can't continue to write the file after
-the file becomes immutable.  To make that happen, we have to flush all
-the dirty pagecache pages to disk to ensure that we can fail a page
-fault on a mmap'd region, wait for pending directio to complete, and
-hope the caller locked out any new writes by holding the inode lock.
-
-XFS has more complex locking than other FSSETXATTR implementations so we
-have to keep the checking and preparation code in different functions.
+Don't let userspace write to an active swap file because the kernel
+effectively has a long term lease on the storage and things could get
+seriously corrupted if we let this happen.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/btrfs/ioctl.c   |    2 +
- fs/ext4/ioctl.c    |    2 +
- fs/f2fs/file.c     |    2 +
- fs/inode.c         |   31 +++++++++++++++++++++++
- fs/xfs/xfs_ioctl.c |   71 +++++++++++++++++++++++++++++++++++++++-------------
- include/linux/fs.h |    3 ++
- 6 files changed, 90 insertions(+), 21 deletions(-)
+ fs/attr.c     |    3 +++
+ mm/filemap.c  |    3 +++
+ mm/memory.c   |    4 +++-
+ mm/mmap.c     |    2 ++
+ mm/swapfile.c |   15 +++++++++++++--
+ 5 files changed, 24 insertions(+), 3 deletions(-)
 
 
-diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-index 0f5af7c5f66b..bbd6d908900e 100644
---- a/fs/btrfs/ioctl.c
-+++ b/fs/btrfs/ioctl.c
-@@ -423,7 +423,7 @@ static int btrfs_ioctl_fssetxattr(struct file *file, void __user *arg)
- 	old_flags = binode->flags;
- 	old_i_flags = inode->i_flags;
+diff --git a/fs/attr.c b/fs/attr.c
+index 1fcfdcc5b367..42f4d4fb0631 100644
+--- a/fs/attr.c
++++ b/fs/attr.c
+@@ -236,6 +236,9 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
+ 	if (IS_IMMUTABLE(inode))
+ 		return -EPERM;
  
--	ret = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
-+	ret = vfs_ioc_fssetxattr_prepare(inode, &old_fa, &fa);
- 	if (ret)
- 		goto out_unlock;
++	if (IS_SWAPFILE(inode))
++		return -ETXTBSY;
++
+ 	if ((ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) &&
+ 	    IS_APPEND(inode))
+ 		return -EPERM;
+diff --git a/mm/filemap.c b/mm/filemap.c
+index dad85e10f5f8..fd80bc20e30a 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2938,6 +2938,9 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
+ 	if (IS_IMMUTABLE(inode))
+ 		return -EPERM;
  
-diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
-index 1e88c3af9a8d..146587c3fe8e 100644
---- a/fs/ext4/ioctl.c
-+++ b/fs/ext4/ioctl.c
-@@ -1109,7 +1109,7 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 
- 		inode_lock(inode);
- 		ext4_fill_fsxattr(inode, &old_fa);
--		err = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
-+		err = vfs_ioc_fssetxattr_prepare(inode, &old_fa, &fa);
- 		if (err)
- 			goto out;
- 		flags = (ei->i_flags & ~EXT4_FL_XFLAG_VISIBLE) |
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index d6ed319388d6..af0fc040a15c 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -2826,7 +2826,7 @@ static int f2fs_ioc_fssetxattr(struct file *filp, unsigned long arg)
- 	inode_lock(inode);
- 
- 	f2fs_fill_fsxattr(inode, &old_fa);
--	err = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
-+	err = vfs_ioc_fssetxattr_prepare(inode, &old_fa, &fa);
- 	if (err)
- 		goto out;
- 	flags = (fi->i_flags & ~F2FS_FL_XFLAG_VISIBLE) |
-diff --git a/fs/inode.c b/fs/inode.c
-index 65a412af3ffb..cf07378e5731 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -2293,3 +2293,34 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
- 	return 0;
- }
- EXPORT_SYMBOL(vfs_ioc_fssetxattr_check);
++	if (IS_SWAPFILE(inode))
++		return -ETXTBSY;
 +
-+/*
-+ * Generic function to check FS_IOC_FSSETXATTR values and reject any invalid
-+ * configurations.  If none are found, flush all pending IO and dirty mappings
-+ * before setting S_IMMUTABLE on an inode.  If the flush fails we'll clear the
-+ * flag before returning error.
-+ *
-+ * Note: the caller must hold whatever locks are necessary to block any other
-+ * threads from starting a write to the file.
-+ */
-+int vfs_ioc_fssetxattr_prepare(struct inode *inode,
-+			       const struct fsxattr *old_fa,
-+			       struct fsxattr *fa)
-+{
-+	int ret;
-+
-+	ret = vfs_ioc_fssetxattr_check(inode, old_fa, fa);
-+	if (ret)
-+		return ret;
-+
-+	if (!S_ISREG(inode->i_mode) || IS_IMMUTABLE(inode) ||
-+	    !(fa->fsx_xflags & FS_XFLAG_IMMUTABLE))
-+		return 0;
-+
-+	inode_set_flags(inode, S_IMMUTABLE, S_IMMUTABLE);
-+	ret = inode_drain_writes(inode);
-+	if (ret)
-+		inode_set_flags(inode, 0, S_IMMUTABLE);
-+	return ret;
-+}
-+EXPORT_SYMBOL(vfs_ioc_fssetxattr_prepare);
-diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
-index 011657bd50ca..723550c8a2e4 100644
---- a/fs/xfs/xfs_ioctl.c
-+++ b/fs/xfs/xfs_ioctl.c
-@@ -1058,6 +1058,30 @@ xfs_ioctl_setattr_xflags(
- 	return 0;
- }
- 
-+/*
-+ * If we're setting immutable on a regular file, we need to prevent new writes.
-+ * Once we've done that, we must wait for all the other writes to complete.
-+ *
-+ * The caller must use @join_flags to release the locks which are held on @ip
-+ * regardless of return value.
-+ */
-+static int
-+xfs_ioctl_setattr_drain_writes(
-+	struct xfs_inode	*ip,
-+	const struct fsxattr	*fa,
-+	int			*join_flags)
-+{
-+	struct inode		*inode = VFS_I(ip);
-+
-+	if (!S_ISREG(inode->i_mode) || !(fa->fsx_xflags & FS_XFLAG_IMMUTABLE))
-+		return 0;
-+
-+	*join_flags = XFS_IOLOCK_EXCL | XFS_MMAPLOCK_EXCL;
-+	xfs_ilock(ip, *join_flags);
-+
-+	return inode_drain_writes(inode);
-+}
-+
- /*
-  * If we are changing DAX flags, we have to ensure the file is clean and any
-  * cached objects in the address space are invalidated and removed. This
-@@ -1065,6 +1089,9 @@ xfs_ioctl_setattr_xflags(
-  * operation. The locks need to be held until the transaction has been committed
-  * so that the cache invalidation is atomic with respect to the DAX flag
-  * manipulation.
-+ *
-+ * The caller must use @join_flags to release the locks which are held on @ip
-+ * regardless of return value.
-  */
- static int
- xfs_ioctl_setattr_dax_invalidate(
-@@ -1076,8 +1103,6 @@ xfs_ioctl_setattr_dax_invalidate(
- 	struct super_block	*sb = inode->i_sb;
- 	int			error;
- 
--	*join_flags = 0;
--
- 	/*
- 	 * It is only valid to set the DAX flag on regular files and
- 	 * directories on filesystems where the block size is equal to the page
-@@ -1103,21 +1128,15 @@ xfs_ioctl_setattr_dax_invalidate(
+ 	if (!iov_iter_count(from))
  		return 0;
  
- 	/* lock, flush and invalidate mapping in preparation for flag change */
--	xfs_ilock(ip, XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL);
--	error = filemap_write_and_wait(inode->i_mapping);
--	if (error)
--		goto out_unlock;
--	error = invalidate_inode_pages2(inode->i_mapping);
--	if (error)
--		goto out_unlock;
--
--	*join_flags = XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL;
--	return 0;
--
--out_unlock:
--	xfs_iunlock(ip, XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL);
--	return error;
-+	if (*join_flags == 0) {
-+		*join_flags = XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL;
-+		xfs_ilock(ip, *join_flags);
-+		error = filemap_write_and_wait(inode->i_mapping);
-+		if (error)
-+			return error;
-+	}
+diff --git a/mm/memory.c b/mm/memory.c
+index 4311cfdade90..c04c6a689995 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -2235,7 +2235,9 @@ static vm_fault_t do_page_mkwrite(struct vm_fault *vmf)
  
-+	return invalidate_inode_pages2(inode->i_mapping);
- }
+ 	vmf->flags = FAULT_FLAG_WRITE|FAULT_FLAG_MKWRITE;
  
- /*
-@@ -1326,6 +1345,12 @@ xfs_ioctl_setattr(
- 			return code;
- 	}
+-	if (vmf->vma->vm_file && IS_IMMUTABLE(file_inode(vmf->vma->vm_file)))
++	if (vmf->vma->vm_file &&
++	    (IS_IMMUTABLE(file_inode(vmf->vma->vm_file)) ||
++	     IS_SWAPFILE(file_inode(vmf->vma->vm_file))))
+ 		return VM_FAULT_SIGBUS;
  
-+	code = xfs_ioctl_setattr_drain_writes(ip, fa, &join_flags);
-+	if (code) {
-+		xfs_iunlock(ip, join_flags);
-+		goto error_free_dquots;
-+	}
-+
- 	/*
- 	 * Changing DAX config may require inode locking for mapping
- 	 * invalidation. These need to be held all the way to transaction commit
-@@ -1334,8 +1359,10 @@ xfs_ioctl_setattr(
- 	 * appropriately.
- 	 */
- 	code = xfs_ioctl_setattr_dax_invalidate(ip, fa, &join_flags);
--	if (code)
-+	if (code) {
-+		xfs_iunlock(ip, join_flags);
- 		goto error_free_dquots;
-+	}
+ 	ret = vmf->vma->vm_ops->page_mkwrite(vmf);
+diff --git a/mm/mmap.c b/mm/mmap.c
+index ac1e32205237..031807339869 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1488,6 +1488,8 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 					return -EACCES;
+ 				if (IS_IMMUTABLE(file_inode(file)))
+ 					return -EPERM;
++				if (IS_SWAPFILE(file_inode(file)))
++					return -ETXTBSY;
+ 			}
  
- 	tp = xfs_ioctl_setattr_get_trans(ip, join_flags);
- 	if (IS_ERR(tp)) {
-@@ -1485,6 +1512,12 @@ xfs_ioc_setxflags(
+ 			/*
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 596ac98051c5..1ca4ee8c2d60 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -3165,6 +3165,19 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
  	if (error)
- 		return error;
+ 		goto bad_swap;
  
-+	error = xfs_ioctl_setattr_drain_writes(ip, &fa, &join_flags);
-+	if (error) {
-+		xfs_iunlock(ip, join_flags);
-+		goto out_drop_write;
++	/*
++	 * Flush any pending IO and dirty mappings before we start using this
++	 * swap file.
++	 */
++	if (S_ISREG(inode->i_mode)) {
++		inode->i_flags |= S_SWAPFILE;
++		error = inode_drain_writes(inode);
++		if (error) {
++			inode->i_flags &= ~S_SWAPFILE;
++			goto bad_swap;
++		}
 +	}
 +
- 	/*
- 	 * Changing DAX config may require inode locking for mapping
- 	 * invalidation. These need to be held all the way to transaction commit
-@@ -1493,8 +1526,10 @@ xfs_ioc_setxflags(
- 	 * appropriately.
- 	 */
- 	error = xfs_ioctl_setattr_dax_invalidate(ip, &fa, &join_flags);
--	if (error)
-+	if (error) {
-+		xfs_iunlock(ip, join_flags);
- 		goto out_drop_write;
-+	}
+ 	mutex_lock(&swapon_mutex);
+ 	prio = -1;
+ 	if (swap_flags & SWAP_FLAG_PREFER)
+@@ -3185,8 +3198,6 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
+ 	atomic_inc(&proc_poll_event);
+ 	wake_up_interruptible(&proc_poll_wait);
  
- 	tp = xfs_ioctl_setattr_get_trans(ip, join_flags);
- 	if (IS_ERR(tp)) {
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 51266c9dbadc..675ce9743bc1 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -3560,6 +3560,9 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
- 
- int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
- 			     struct fsxattr *fa);
-+int vfs_ioc_fssetxattr_prepare(struct inode *inode,
-+			       const struct fsxattr *old_fa,
-+			       struct fsxattr *fa);
- 
- /*
-  * Flush file data before changing attributes.  Caller must hold any locks
+-	if (S_ISREG(inode->i_mode))
+-		inode->i_flags |= S_SWAPFILE;
+ 	error = 0;
+ 	goto out;
+ bad_swap:
