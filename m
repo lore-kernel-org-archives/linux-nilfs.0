@@ -1,67 +1,90 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 2/5] vfs: create a generic checking function for
- FS_IOC_FSSETXATTR
-Date: Wed, 26 Jun 2019 08:43:02 -0700
-Message-ID: <20190626154302.GA31445@infradead.org>
-References: <156151632209.2283456.3592379873620132456.stgit@magnolia>
- <156151633829.2283456.834142172527987802.stgit@magnolia>
- <20190626041133.GB32272@ZenIV.linux.org.uk>
- <20190626153542.GE5171@magnolia>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH 5/5] vfs: don't allow writes to swap files
+Date: Wed, 26 Jun 2019 09:28:31 -0700
+Message-ID: <20190626162831.GF5171@magnolia>
+References: <156151637248.2283603.8458727861336380714.stgit@magnolia>
+	<156151641177.2283603.7806026378321236401.stgit@magnolia>
+	<20190626035151.GA10613@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=lists.infradead.org; s=bombadil.20170209; h=Sender:
-	Content-Transfer-Encoding:Content-Type:Cc:List-Subscribe:List-Help:List-Post:
-	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
-	Message-ID:Subject:To:From:Date:Reply-To:Content-ID:Content-Description:
-	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=G3T8Xo3Jak9o4HNdG+z7LyikCnZoqGeuuyfmLa8mkaI=; b=ghi6yFk3P9QqXx
-	5VkdWwABwCRjzHnPW1A9t2t20N8lsS+f50zFVuJFWG8260KKYTBMi4EOhTzvMHSmFlc3YlRZZu0Mh
-	dL7w7VGJG0odlag4nrN7+Z1VswmeyLmYHMe/eq8drADCm0p5k4AR/ME9vggEVOda9zgzf49zwIf8m
-	uFZlHpKzSiBGFpk9cvFZKY7LU0l0bB/t0CX+2VjnP7Z/3eoaNRYYlFPgrhyJIp2obDRl2e+tbApjC
-	HI0t6uSgs+SGx7t32joDu6TkR7nxoNxSWOwAJB8r6+Fmr53bSZxfwwZ6oNmdgqqzHDLaqD3czBA0u
-	0JIOSiBe2Piyfo1ucNYQ==;
+Return-path: <ocfs2-devel-bounces@oss.oracle.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=date : from : to :
+ message-id : references : mime-version : in-reply-to : cc : subject :
+ list-id : list-unsubscribe : list-archive : list-post : list-help :
+ list-subscribe : content-type : content-transfer-encoding : sender;
+ s=corp-2018-07-02; bh=oYrFpsa7m38VFCZxdd8UBdtHC2a21A24EtIJKYREoCg=;
+ b=jm8jqu9ruZ0MEtEIAH4kN/hgvN31119e8F/bImT0+fLkPBSVa+JeHUB3ar2Yoay3emFd
+ fDg/Bc+rpRBTmobzpLO9zjW0cU7fpU/8F2DCpsoOcq7bWk2dN0+en9t2cizYXNBFITN0
+ hqW38Kd4AjJi7vv3DgA0rWKShw/86YRobN8LHuC0e9FNAzJLYNAtNfqoPssKkh3Zc/uJ
+ ElAjdCgai0LL2Sh42zqP+adecQ/OlgRFo24KCVUGneTIeenUbY3vgNVtbCZLpJloBOZ/
+ FtYgL+HauZfd9RKS4wXV/w1Z3keELg9x/8Ky3qkIIzb7cUyhC49/Q76/Yi6/8mSeP864 zA== 
 Content-Disposition: inline
-In-Reply-To: <20190626153542.GE5171@magnolia>
+In-Reply-To: <20190626035151.GA10613@ZenIV.linux.org.uk>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: shaggy@kernel.org, jfs-discussion@lists.sourceforge.net, linux-efi@vger.kernel.org, Jan Kara <jack@suse.cz>, hch@infradead.org, linux-btrfs@vger.kernel.org, yuchao0@huawei.com, clm@fb.com, adilger.kernel@dilger.ca, matthew.garrett@nebula.com, linux-nilfs@vger.kernel.org, cluster-devel@redhat.com, linux-ext4@vger.kernel.org, josef@toxicpanda.com, reiserfs-devel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, dsterba@suse.com, jaegeuk@kernel.org, tytso@mit.edu, ard.biesheuvel@linaro.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, jk@ozlabs.org, jack@suse.com, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com
+List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
+	<mailto:ocfs2-devel-request@oss.oracle.com?subject=unsubscribe>
+List-Archive: <http://oss.oracle.com/pipermail/ocfs2-devel>
+List-Post: <mailto:ocfs2-devel@oss.oracle.com>
+List-Help: <mailto:ocfs2-devel-request@oss.oracle.com?subject=help>
+List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
+	<mailto:ocfs2-devel-request@oss.oracle.com?subject=subscribe>
+Sender: ocfs2-devel-bounces@oss.oracle.com
+Errors-To: ocfs2-devel-bounces@oss.oracle.com
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, yuchao0@huawei.com, linux-mm@kvack.org, clm@fb.com, adilger.kernel@dilger.ca, matthew.garrett@nebula.com, linux-nilfs@vger.kernel.org, hch@infradead.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, josef@toxicpanda.com, reiserfs-devel@vger.kernel.org, dsterba@suse.com, jaegeuk@kernel.org, tytso@mit.edu, ard.biesheuvel@linaro.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, jk@ozlabs.org, jack@suse.com, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com
 
-On Wed, Jun 26, 2019 at 08:35:42AM -0700, Darrick J. Wong wrote:
-> > static inline void simple_fill_fsxattr(struct fsxattr *fa, unsigned xflags)
-> > {
-> > 	memset(fa, 0, sizeof(*fa));
-> > 	fa->fsx_xflags = xflags;
-> > }
-> > 
-> > and let the compiler optimize the crap out?
+On Wed, Jun 26, 2019 at 04:51:51AM +0100, Al Viro wrote:
+> On Tue, Jun 25, 2019 at 07:33:31PM -0700, Darrick J. Wong wrote:
+> > --- a/fs/attr.c
+> > +++ b/fs/attr.c
+> > @@ -236,6 +236,9 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
+> >  	if (IS_IMMUTABLE(inode))
+> >  		return -EPERM;
+> >  
+> > +	if (IS_SWAPFILE(inode))
+> > +		return -ETXTBSY;
+> > +
+> >  	if ((ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) &&
+> >  	    IS_APPEND(inode))
+> >  		return -EPERM;
 > 
-> The v2 series used to do that, but Christoph complained that having a
-> helper for a two-line memset and initialization was silly[1] so now we
-> have this version.
+> Er...  So why exactly is e.g. chmod(2) forbidden for swapfiles?  Or touch(1),
+> for that matter...
+
+Oops, that check is overly broad; I think the only attribute change we
+need to filter here is ATTR_SIZE.... which we could do unconditionally
+in inode_newsize_ok.
+
+What's the use case for allowing userspace to increase the size of an
+active swapfile?  I don't see any; the kernel has a permanent lease on
+the file space mapping (at least until swapoff)...
+
+> > diff --git a/mm/swapfile.c b/mm/swapfile.c
+> > index 596ac98051c5..1ca4ee8c2d60 100644
+> > --- a/mm/swapfile.c
+> > +++ b/mm/swapfile.c
+> > @@ -3165,6 +3165,19 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
+> >  	if (error)
+> >  		goto bad_swap;
+> >  
+> > +	/*
+> > +	 * Flush any pending IO and dirty mappings before we start using this
+> > +	 * swap file.
+> > +	 */
+> > +	if (S_ISREG(inode->i_mode)) {
+> > +		inode->i_flags |= S_SWAPFILE;
+> > +		error = inode_drain_writes(inode);
+> > +		if (error) {
+> > +			inode->i_flags &= ~S_SWAPFILE;
+> > +			goto bad_swap;
+> > +		}
+> > +	}
 > 
-> I don't mind reinstating it as a static inline helper, but I'd like some
-> input from any of the btrfs developers (or you, Al) about which form is
-> preferred.
+> Why are swap partitions any less worthy of protection?
 
-I complained having that helper in btrfs.  I think Al wants a generic
-one, which at least makes a little more sense.
+Hmm, yeah, S_SWAPFILE should apply to block devices too.  I figured that
+the mantra of "sane tools will open block devices with O_EXCL" should
+have sufficed, but there's really no reason to allow that either.
 
-That being said I wonder if we should lift these attr ioctls to
-file op methods and deal with all that crap in VFS code instead of
-having all those duplicated ioctl parsers.
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+--D
