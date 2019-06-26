@@ -1,8 +1,8 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 2/5] vfs: flush and wait for io when setting
- the immutable flag via SETFLAGS
-Date: Tue, 25 Jun 2019 19:33:08 -0700
-Message-ID: <156151638826.2283603.17232416684567376466.stgit@magnolia>
+Subject: [PATCH 4/5] vfs: don't allow most setxattr to
+	immutable files
+Date: Tue, 25 Jun 2019 19:33:24 -0700
+Message-ID: <156151640402.2283603.11025968584452701508.stgit@magnolia>
 References: <156151637248.2283603.8458727861336380714.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -12,12 +12,12 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to 
  message-id : in-reply-to : references : mime-version : cc : subject :
  list-id : list-unsubscribe : list-archive : list-post : list-help :
  list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=IQNFhsvhUAXZDR0FcpAf7DIGabaoU7uwNE1ju11p0p8=;
- b=AYjmdVgS1Ym5E2dqybyQY053qx5Z4ixHt2V8zHuNgrzHyxnURzRtpg9ocZsaVd/DE0Vu
- Vq7gIbpzcS1Q5UAl7oWD35KEQczg/2xtw70zggyZ1JWYkYbEjpztDyHiBlKqi4W1bJWK
- d9qzWl3LfL7tDQTkoazfT/nL2AF5MHR1FZSvy90yCPmQ2TDoDAH6dNqd/fTkzoi8R1/G
- eO7ieRRgZMYq1mygbApmjkrszHxddm8HXi2FmTEIpj1NMvQ5KU6hkqVsb43hB4GiPCTS
- 62+80UXICCzxzJSwG/j/SqQjoFFpaS0+Umopd0w/8ZU0T8MHow/ZNI8DS1aCMrRc0xtd Xw== 
+ s=corp-2018-07-02; bh=dcqvClx2AIhxuzaQbwVbhi03RZsNiZEYTFmr+CuIdjo=;
+ b=496ucVQjTNySPR0Xps9rY/nuOVrYLy623ah4k/XzRGzXtK4qKYh5gdD/SrU/Nn7udUR5
+ O8RMN35NH74pzbx8J2FE/FSEp3leF8y2S3G2eR6K0bYsFQ1PbwM19IidgYRINVhpmpOm
+ YCxeOGmzcLU9S0EgyhV9b1WUXlSN6ml1TKfnHXR3g3f4JCvf27gmgNU0vOwIvznqkahw
+ BYIBHZ7s+RmSmi+Td976hZwKuyr3ATaxlErTVO1UKDXITbez6iAZv3uRxKOYIG2xD7SG
+ CGrnUt/ZA8aTIFKYCwSRVmNTcDWwUh2Uxt6HWk2DURGiolqfEAdsVU9ZvEugvOta7Hoy MA== 
 In-Reply-To: <156151637248.2283603.8458727861336380714.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
@@ -34,83 +34,67 @@ Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.ke
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-When we're using FS_IOC_SETFLAGS to set the immutable flag on a file, we
-need to ensure that userspace can't continue to write the file after the
-file becomes immutable.  To make that happen, we have to flush all the
-dirty pagecache pages to disk to ensure that we can fail a page fault on
-a mmap'd region, wait for pending directio to complete, and hope the
-caller locked out any new writes by holding the inode lock.
+The chattr manpage has this to say about immutable files:
+
+"A file with the 'i' attribute cannot be modified: it cannot be deleted
+or renamed, no link can be created to this file, most of the file's
+metadata can not be modified, and the file can not be opened in write
+mode."
+
+However, we don't actually check the immutable flag in the setattr code,
+which means that we can update inode flags and project ids and extent
+size hints on supposedly immutable files.  Therefore, reject setflags
+and fssetxattr calls on an immutable file if the file is immutable and
+will remain that way.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/inode.c         |   21 +++++++++++++++++++--
- include/linux/fs.h |   11 +++++++++++
- 2 files changed, 30 insertions(+), 2 deletions(-)
+ fs/inode.c |   27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
 
 diff --git a/fs/inode.c b/fs/inode.c
-index f08711b34341..65a412af3ffb 100644
+index cf07378e5731..4261c709e50e 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
-@@ -2193,7 +2193,8 @@ EXPORT_SYMBOL(current_time);
- 
- /*
-  * Generic function to check FS_IOC_SETFLAGS values and reject any invalid
-- * configurations.
-+ * configurations.  Once we're done, prepare the inode for whatever changes
-+ * are coming down the pipeline.
-  *
-  * Note: the caller should be holding i_mutex, or else be sure that they have
-  * exclusive access to the inode structure.
-@@ -2201,6 +2202,8 @@ EXPORT_SYMBOL(current_time);
- int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
- 			     unsigned int flags)
- {
-+	int ret;
-+
- 	/*
- 	 * The IMMUTABLE and APPEND_ONLY flags can only be changed by
- 	 * the relevant capability.
-@@ -2211,7 +2214,21 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
+@@ -2214,6 +2214,14 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
  	    !capable(CAP_LINUX_IMMUTABLE))
  		return -EPERM;
  
--	return 0;
 +	/*
-+	 * Now that we're done checking the new flags, flush all pending IO and
-+	 * dirty mappings before setting S_IMMUTABLE on an inode via
-+	 * FS_IOC_SETFLAGS.  If the flush fails we'll clear the flag before
-+	 * returning error.
++	 * We aren't allowed to change any other flags if the immutable flag is
++	 * already set and is not being unset.
 +	 */
-+	if (!S_ISREG(inode->i_mode) || IS_IMMUTABLE(inode) ||
-+	    !(flags & FS_IMMUTABLE_FL))
-+		return 0;
++	if ((oldflags & FS_IMMUTABLE_FL) && (flags & FS_IMMUTABLE_FL) &&
++	    oldflags != flags)
++		return -EPERM;
 +
-+	inode_set_flags(inode, S_IMMUTABLE, S_IMMUTABLE);
-+	ret = inode_drain_writes(inode);
-+	if (ret)
-+		inode_set_flags(inode, 0, S_IMMUTABLE);
-+	return ret;
- }
- EXPORT_SYMBOL(vfs_ioc_setflags_prepare);
+ 	/*
+ 	 * Now that we're done checking the new flags, flush all pending IO and
+ 	 * dirty mappings before setting S_IMMUTABLE on an inode via
+@@ -2284,6 +2292,25 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
+ 	    !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
+ 		return -EINVAL;
  
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 48322bfd7299..51266c9dbadc 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -3561,4 +3561,15 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
- int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
- 			     struct fsxattr *fa);
- 
-+/*
-+ * Flush file data before changing attributes.  Caller must hold any locks
-+ * required to prevent further writes to this file until we're done setting
-+ * flags.
-+ */
-+static inline int inode_drain_writes(struct inode *inode)
-+{
-+	inode_dio_wait(inode);
-+	return filemap_write_and_wait(inode->i_mapping);
-+}
++	/*
++	 * We aren't allowed to change any fields if the immutable flag is
++	 * already set and is not being unset.
++	 */
++	if ((old_fa->fsx_xflags & FS_XFLAG_IMMUTABLE) &&
++	    (fa->fsx_xflags & FS_XFLAG_IMMUTABLE)) {
++		if (old_fa->fsx_xflags != fa->fsx_xflags)
++			return -EPERM;
++		if (old_fa->fsx_projid != fa->fsx_projid)
++			return -EPERM;
++		if ((fa->fsx_xflags & (FS_XFLAG_EXTSIZE |
++				       FS_XFLAG_EXTSZINHERIT)) &&
++		    old_fa->fsx_extsize != fa->fsx_extsize)
++			return -EPERM;
++		if ((old_fa->fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
++		    old_fa->fsx_cowextsize != fa->fsx_cowextsize)
++			return -EPERM;
++	}
 +
- #endif /* _LINUX_FS_H */
+ 	/* Extent size hints of zero turn off the flags. */
+ 	if (fa->fsx_extsize == 0)
+ 		fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
