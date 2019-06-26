@@ -1,82 +1,81 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 5/5] vfs: only allow FSSETXATTR to set DAX flag
- on files and dirs
-Date: Tue, 25 Jun 2019 19:32:47 -0700
-Message-ID: <156151636789.2283456.3835262849301472968.stgit@magnolia>
-References: <156151632209.2283456.3592379873620132456.stgit@magnolia>
+Subject: [PATCH v5 0/5] vfs: make immutable files actually
+	immutable
+Date: Tue, 25 Jun 2019 19:32:52 -0700 (PDT)
+Message-ID: <156151637248.2283603.8458727861336380714.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:MIME-Version
- :References:In-Reply-To:Message-ID:Date:Cc:To:From:Subject:Sender:Reply-To:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=h0lWCLVuyu0P/36h1LaiA53s/qIbwAY/ZQm2+JFVybY=; b=XNpSKzQIUw+kWGOIjZsFsVDtsu
- sra9HsCIc0R1x7S+gMvbWf+Dsi9/mQ4VC2AbHFER7jZem08KbFSBRtneH0FPTLtm7xvFYqNECiKMG
- TSN9PWfzXG+U/YfsMkjLn40I+406gU/lY2EFid886UtdRs6s/E4Uvh7j03RKitNYEn5I=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Transfer-Encoding:Content-Type:MIME-Version:References:
- In-Reply-To:Message-ID:Date:Cc:To:From:Subject:Sender:Reply-To:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=h0lWCLVuyu0P/36h1LaiA53s/qIbwAY/ZQm2+JFVybY=; b=OQ11JNOMQjR7sqRlzJEPNBhth9
- DBjKmmF9wgeWDXsZQg6w+EjXE0GWbq45TbXCTYZ5PXEi2+DIinIEhS2IQMbf3WO/vv4pUvTi8KPSz
- wqVTPB1xOhuuxHochRbit9ghvbW7DUUK5H68X8jgnBTweH2isZOgE0/OneCJ1oSosGgU=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
- h=subject : from : to :
- cc : date : message-id : in-reply-to : references : mime-version :
- content-type : content-transfer-encoding; s=corp-2018-07-02;
- bh=h0lWCLVuyu0P/36h1LaiA53s/qIbwAY/ZQm2+JFVybY=;
- b=WVzGJQhS0xFxS9ZetgIjbt11O8dEzX+ntxaHJA/Dp/fXfdPu7h/tulaSw1kwfk0cARJ2
- 6P7+LaBlGhrlBlTBixL7H1joLQrl5v0O8Wq+iChywtxq2zREmo1SZZsiPwhchYHf5vcY
- R0rhHWm3t8w9kIzGZYGPtpv/6JW+V9DMY/ig7caUEniKBDHwAAFFsm07Eaqv5HMAGarc
- SKeFMzwagbIiY2I+pTgKcZn6a1g5ugBqrBvCiKUeVmttxdxpA1/1SINzfxzwgoTvWkZP
- UjKlu1lIQbbY9YDXdOtJshWXzjUfBugIbz/OPW6NC+6WJf+WV9PZRfD4hUj2cSIcQL/8 JQ== 
-In-Reply-To: <156151632209.2283456.3592379873620132456.stgit@magnolia>
+Return-path: <ocfs2-devel-bounces@oss.oracle.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=mime-version :
+ message-id : date : from : to : cc : subject : list-id : list-unsubscribe
+ : list-archive : list-post : list-help : list-subscribe : content-type :
+ content-transfer-encoding : sender; s=corp-2018-07-02;
+ bh=v9lHOQqdxa+gAds53trZvNGGeCq3LsiSw99vIS/icPw=;
+ b=LzJBkMIAuX6vqAPgk7/l+NRkCE3poPzLbLXqYNdR0Fi19v7QeHR3UdFPNMPaS6W1a51D
+ G/bvTfDOSAR4inCj/Gn9qF7ilMGg4mcqyi+ufdFK/LXcvlEQ1oD1xaxC4QDLaFd3dkaQ
+ ugHSYg7szRNV14qcl1wK68GJSDj9RS/GPaF1CUdxFRXRjiJfkmnV/fZeeqHgbtJnv414
+ 50iiy9/Lw1LgSJo39m9/J7yB1x6GNiRJf0AHTJs4QWQcPml+egOfHQJFONn7Q9xZBDLh
+ BHierr+hzosgp/u7ycolKv0tmQ80p7j6xGRa2D5g1dovUv4be7w039D3TM6vbt1otY33 yg== 
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, darrick.wong@oracle.com, shaggy@kernel.org, ard.biesheuvel@linaro.org, josef@toxicpanda.com, hch@infradead.org, clm@fb.com, adilger.kernel@dilger.ca, jk@ozlabs.org, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, viro@zeniv.linux.org.uk
-Cc: linux-xfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-efi@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, ocfs2-devel@oss.oracle.com
+List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
+	<mailto:ocfs2-devel-request@oss.oracle.com?subject=unsubscribe>
+List-Archive: <http://oss.oracle.com/pipermail/ocfs2-devel>
+List-Post: <mailto:ocfs2-devel@oss.oracle.com>
+List-Help: <mailto:ocfs2-devel-request@oss.oracle.com?subject=help>
+List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
+	<mailto:ocfs2-devel-request@oss.oracle.com?subject=subscribe>
+Sender: ocfs2-devel-bounces@oss.oracle.com
+Errors-To: ocfs2-devel-bounces@oss.oracle.com
+To: matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, darrick.wong@oracle.com, ard.biesheuvel@linaro.org, josef@toxicpanda.com, hch@infradead.org, clm@fb.com, adilger.kernel@dilger.ca, viro@zeniv.linux.org.uk, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, jk@ozlabs.org
+Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org
 
-From: Darrick J. Wong <darrick.wong@oracle.com>
+Hi all,
 
-The DAX flag only applies to files and directories, so don't let it get
-set for other types of files.
+The chattr(1) manpage has this to say about the immutable bit that
+system administrators can set on files:
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- fs/inode.c |    8 ++++++++
- 1 file changed, 8 insertions(+)
+"A file with the 'i' attribute cannot be modified: it cannot be deleted
+or renamed, no link can be created to this file, most of the file's
+metadata can not be modified, and the file can not be opened in write
+mode."
 
+Given the clause about how the file 'cannot be modified', it is
+surprising that programs holding writable file descriptors can continue
+to write to and truncate files after the immutable flag has been set,
+but they cannot call other things such as utimes, fallocate, unlink,
+link, setxattr, or reflink.
 
-diff --git a/fs/inode.c b/fs/inode.c
-index 670d5408d022..f08711b34341 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -2259,6 +2259,14 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
- 	    !S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
- 		return -EINVAL;
- 
-+	/*
-+	 * It is only valid to set the DAX flag on regular files and
-+	 * directories on filesystems.
-+	 */
-+	if ((fa->fsx_xflags & FS_XFLAG_DAX) &&
-+	    !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
-+		return -EINVAL;
-+
- 	/* Extent size hints of zero turn off the flags. */
- 	if (fa->fsx_extsize == 0)
- 		fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
+Since the immutable flag is only settable by administrators, resolve
+this inconsistent behavior in favor of the documented behavior -- once
+the flag is set, the file cannot be modified, period.  We presume that
+administrators must be trusted to know what they're doing, and that
+cutting off programs with writable fds will probably break them.
+
+Therefore, add immutability checks to the relevant VFS functions, then
+refactor the SETFLAGS and FSSETXATTR implementations to use common
+argument checking functions so that we can then force pagefaults on all
+the file data when setting immutability.
+
+Note that various distro manpages points out the inconsistent behavior
+of the various Linux filesystems w.r.t. immutable.  This fixes all that.
+
+I also discovered that userspace programs can write and create writable
+memory mappings to active swap files.  This is extremely bad because
+this allows anyone with write privileges to corrupt system memory.  The
+final patch in this series closes off that hole, at least for swap
+files.
+
+If you're going to start using this mess, you probably ought to just
+pull from my git trees, which are linked below.
+
+This has been lightly tested with fstests.  Enjoy!
+Comments and questions are, as always, welcome.
+
+--D
+
+kernel git tree:
+https://git.kernel.org/cgit/linux/kernel/git/djwong/xfs-linux.git/log/?h=immutable-files
+
+fstests git tree:
+https://git.kernel.org/cgit/linux/kernel/git/djwong/xfstests-dev.git/log/?h=immutable-files
