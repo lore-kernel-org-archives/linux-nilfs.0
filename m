@@ -1,181 +1,82 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 4/5] vfs: teach vfs_ioc_fssetxattr_check to
- check extent size hints
-Date: Tue, 25 Jun 2019 19:32:34 -0700
-Message-ID: <156151635447.2283456.10360232786079330374.stgit@magnolia>
+Subject: [PATCH 5/5] vfs: only allow FSSETXATTR to set DAX flag
+ on files and dirs
+Date: Tue, 25 Jun 2019 19:32:47 -0700
+Message-ID: <156151636789.2283456.3835262849301472968.stgit@magnolia>
 References: <156151632209.2283456.3592379873620132456.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <ocfs2-devel-bounces@oss.oracle.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : date :
- message-id : in-reply-to : references : mime-version : cc : subject :
- list-id : list-unsubscribe : list-archive : list-post : list-help :
- list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=HBG0iGPfARAvSdSHFvzMS+SP2UkGE9UG5YJKkhkQJL0=;
- b=vSAUUaqKcUoys8nN43Kih3aOTh19wi2APgx/FeuMaye7Tw51PPAAGk+MNz5RXfYTWkum
- 2Ydp8ADZ8FEicZwlN+Vvk80e5lGpExNh9d0HqA2SDfgVrydsVkgRViuSk7f2S0KnaqDU
- pz0qC2WQbJmAQoGZeorIyXSw3ZhBv/Fy34s2PSzkElVu1UNHv4IeOPyYI0jUMGbSiWKz
- V7u4cyxanq5WrZSB4aL3NNWxV/03zkn/ioB8N2TRirEfGxqquXm4Y+5JMyxTa6bVzUoy
- GwctDnt0/ZvlyRF1kvFuj9eP18ZLj1CnO9Dna+6oqdni3B1tsxIv0CnKdBSvg6Y/NN6B Zg== 
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:MIME-Version
+ :References:In-Reply-To:Message-ID:Date:Cc:To:From:Subject:Sender:Reply-To:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=h0lWCLVuyu0P/36h1LaiA53s/qIbwAY/ZQm2+JFVybY=; b=XNpSKzQIUw+kWGOIjZsFsVDtsu
+ sra9HsCIc0R1x7S+gMvbWf+Dsi9/mQ4VC2AbHFER7jZem08KbFSBRtneH0FPTLtm7xvFYqNECiKMG
+ TSN9PWfzXG+U/YfsMkjLn40I+406gU/lY2EFid886UtdRs6s/E4Uvh7j03RKitNYEn5I=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:Content-Type:MIME-Version:References:
+ In-Reply-To:Message-ID:Date:Cc:To:From:Subject:Sender:Reply-To:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=h0lWCLVuyu0P/36h1LaiA53s/qIbwAY/ZQm2+JFVybY=; b=OQ11JNOMQjR7sqRlzJEPNBhth9
+ DBjKmmF9wgeWDXsZQg6w+EjXE0GWbq45TbXCTYZ5PXEi2+DIinIEhS2IQMbf3WO/vv4pUvTi8KPSz
+ wqVTPB1xOhuuxHochRbit9ghvbW7DUUK5H68X8jgnBTweH2isZOgE0/OneCJ1oSosGgU=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
+ h=subject : from : to :
+ cc : date : message-id : in-reply-to : references : mime-version :
+ content-type : content-transfer-encoding; s=corp-2018-07-02;
+ bh=h0lWCLVuyu0P/36h1LaiA53s/qIbwAY/ZQm2+JFVybY=;
+ b=WVzGJQhS0xFxS9ZetgIjbt11O8dEzX+ntxaHJA/Dp/fXfdPu7h/tulaSw1kwfk0cARJ2
+ 6P7+LaBlGhrlBlTBixL7H1joLQrl5v0O8Wq+iChywtxq2zREmo1SZZsiPwhchYHf5vcY
+ R0rhHWm3t8w9kIzGZYGPtpv/6JW+V9DMY/ig7caUEniKBDHwAAFFsm07Eaqv5HMAGarc
+ SKeFMzwagbIiY2I+pTgKcZn6a1g5ugBqrBvCiKUeVmttxdxpA1/1SINzfxzwgoTvWkZP
+ UjKlu1lIQbbY9YDXdOtJshWXzjUfBugIbz/OPW6NC+6WJf+WV9PZRfD4hUj2cSIcQL/8 JQ== 
 In-Reply-To: <156151632209.2283456.3592379873620132456.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=unsubscribe>
-List-Archive: <http://oss.oracle.com/pipermail/ocfs2-devel>
-List-Post: <mailto:ocfs2-devel@oss.oracle.com>
-List-Help: <mailto:ocfs2-devel-request@oss.oracle.com?subject=help>
-List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=subscribe>
-Sender: ocfs2-devel-bounces@oss.oracle.com
-Errors-To: ocfs2-devel-bounces@oss.oracle.com
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, darrick.wong@oracle.com, shaggy@kernel.org, ard.biesheuvel@linaro.org, josef@toxicpanda.com, hch@infradead.org, clm@fb.com, adilger.kernel@dilger.ca, jk@ozlabs.org, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, viro@zeniv.linux.org.uk
-Cc: linux-xfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-efi@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-ext4@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-kernel@vger.kernel.org, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, ocfs2-devel@oss.oracle.com
+Cc: linux-xfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-efi@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, ocfs2-devel@oss.oracle.com
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-Move the extent size hint checks that aren't xfs-specific to the vfs.
+The DAX flag only applies to files and directories, so don't let it get
+set for other types of files.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- fs/inode.c         |   18 +++++++++++++
- fs/xfs/xfs_ioctl.c |   70 ++++++++++++++++++++++------------------------------
- 2 files changed, 47 insertions(+), 41 deletions(-)
+ fs/inode.c |    8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 
 diff --git a/fs/inode.c b/fs/inode.c
-index c4f8fb16f633..670d5408d022 100644
+index 670d5408d022..f08711b34341 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
-@@ -2247,6 +2247,24 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
- 			return -EINVAL;
- 	}
- 
-+	/* Check extent size hints. */
-+	if ((fa->fsx_xflags & FS_XFLAG_EXTSIZE) && !S_ISREG(inode->i_mode))
-+		return -EINVAL;
-+
-+	if ((fa->fsx_xflags & FS_XFLAG_EXTSZINHERIT) &&
-+			!S_ISDIR(inode->i_mode))
-+		return -EINVAL;
-+
-+	if ((fa->fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
-+	    !S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-+		return -EINVAL;
-+
-+	/* Extent size hints of zero turn off the flags. */
-+	if (fa->fsx_extsize == 0)
-+		fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
-+	if (fa->fsx_cowextsize == 0)
-+		fa->fsx_xflags &= ~FS_XFLAG_COWEXTSIZE;
-+
- 	return 0;
- }
- EXPORT_SYMBOL(vfs_ioc_fssetxattr_check);
-diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
-index d8c02b9905a7..011657bd50ca 100644
---- a/fs/xfs/xfs_ioctl.c
-+++ b/fs/xfs/xfs_ioctl.c
-@@ -1201,39 +1201,31 @@ xfs_ioctl_setattr_check_extsize(
- 	struct fsxattr		*fa)
- {
- 	struct xfs_mount	*mp = ip->i_mount;
--
--	if ((fa->fsx_xflags & FS_XFLAG_EXTSIZE) && !S_ISREG(VFS_I(ip)->i_mode))
--		return -EINVAL;
--
--	if ((fa->fsx_xflags & FS_XFLAG_EXTSZINHERIT) &&
--	    !S_ISDIR(VFS_I(ip)->i_mode))
--		return -EINVAL;
-+	xfs_extlen_t		size;
-+	xfs_fsblock_t		extsize_fsb;
- 
- 	if (S_ISREG(VFS_I(ip)->i_mode) && ip->i_d.di_nextents &&
- 	    ((ip->i_d.di_extsize << mp->m_sb.sb_blocklog) != fa->fsx_extsize))
+@@ -2259,6 +2259,14 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
+ 	    !S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
  		return -EINVAL;
  
--	if (fa->fsx_extsize != 0) {
--		xfs_extlen_t    size;
--		xfs_fsblock_t   extsize_fsb;
--
--		extsize_fsb = XFS_B_TO_FSB(mp, fa->fsx_extsize);
--		if (extsize_fsb > MAXEXTLEN)
--			return -EINVAL;
-+	if (fa->fsx_extsize == 0)
-+		return 0;
- 
--		if (XFS_IS_REALTIME_INODE(ip) ||
--		    (fa->fsx_xflags & FS_XFLAG_REALTIME)) {
--			size = mp->m_sb.sb_rextsize << mp->m_sb.sb_blocklog;
--		} else {
--			size = mp->m_sb.sb_blocksize;
--			if (extsize_fsb > mp->m_sb.sb_agblocks / 2)
--				return -EINVAL;
--		}
-+	extsize_fsb = XFS_B_TO_FSB(mp, fa->fsx_extsize);
-+	if (extsize_fsb > MAXEXTLEN)
++	/*
++	 * It is only valid to set the DAX flag on regular files and
++	 * directories on filesystems.
++	 */
++	if ((fa->fsx_xflags & FS_XFLAG_DAX) &&
++	    !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
 +		return -EINVAL;
- 
--		if (fa->fsx_extsize % size)
-+	if (XFS_IS_REALTIME_INODE(ip) ||
-+	    (fa->fsx_xflags & FS_XFLAG_REALTIME)) {
-+		size = mp->m_sb.sb_rextsize << mp->m_sb.sb_blocklog;
-+	} else {
-+		size = mp->m_sb.sb_blocksize;
-+		if (extsize_fsb > mp->m_sb.sb_agblocks / 2)
- 			return -EINVAL;
--	} else
--		fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
-+	}
 +
-+	if (fa->fsx_extsize % size)
-+		return -EINVAL;
- 
- 	return 0;
- }
-@@ -1259,6 +1251,8 @@ xfs_ioctl_setattr_check_cowextsize(
- 	struct fsxattr		*fa)
- {
- 	struct xfs_mount	*mp = ip->i_mount;
-+	xfs_extlen_t		size;
-+	xfs_fsblock_t		cowextsize_fsb;
- 
- 	if (!(fa->fsx_xflags & FS_XFLAG_COWEXTSIZE))
- 		return 0;
-@@ -1267,25 +1261,19 @@ xfs_ioctl_setattr_check_cowextsize(
- 	    ip->i_d.di_version != 3)
- 		return -EINVAL;
- 
--	if (!S_ISREG(VFS_I(ip)->i_mode) && !S_ISDIR(VFS_I(ip)->i_mode))
--		return -EINVAL;
--
--	if (fa->fsx_cowextsize != 0) {
--		xfs_extlen_t    size;
--		xfs_fsblock_t   cowextsize_fsb;
-+	if (fa->fsx_cowextsize == 0)
-+		return 0;
- 
--		cowextsize_fsb = XFS_B_TO_FSB(mp, fa->fsx_cowextsize);
--		if (cowextsize_fsb > MAXEXTLEN)
--			return -EINVAL;
-+	cowextsize_fsb = XFS_B_TO_FSB(mp, fa->fsx_cowextsize);
-+	if (cowextsize_fsb > MAXEXTLEN)
-+		return -EINVAL;
- 
--		size = mp->m_sb.sb_blocksize;
--		if (cowextsize_fsb > mp->m_sb.sb_agblocks / 2)
--			return -EINVAL;
-+	size = mp->m_sb.sb_blocksize;
-+	if (cowextsize_fsb > mp->m_sb.sb_agblocks / 2)
-+		return -EINVAL;
- 
--		if (fa->fsx_cowextsize % size)
--			return -EINVAL;
--	} else
--		fa->fsx_xflags &= ~FS_XFLAG_COWEXTSIZE;
-+	if (fa->fsx_cowextsize % size)
-+		return -EINVAL;
- 
- 	return 0;
- }
+ 	/* Extent size hints of zero turn off the flags. */
+ 	if (fa->fsx_extsize == 0)
+ 		fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
