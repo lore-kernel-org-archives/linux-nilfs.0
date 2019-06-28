@@ -1,8 +1,8 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 2/4] vfs: flush and wait for io when setting
- the immutable flag via SETFLAGS
-Date: Fri, 28 Jun 2019 11:34:51 -0700
-Message-ID: <156174689192.1557469.17945809794748607270.stgit@magnolia>
+Subject: [PATCH 3/4] vfs: flush and wait for io when setting
+ the immutable flag via FSSETXATTR
+Date: Fri, 28 Jun 2019 11:34:59 -0700
+Message-ID: <156174689965.1557469.9018924813461417576.stgit@magnolia>
 References: <156174687561.1557469.7505651950825460767.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -12,12 +12,12 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to 
  message-id : in-reply-to : references : mime-version : cc : subject :
  list-id : list-unsubscribe : list-archive : list-post : list-help :
  list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=IzffXaVhodc+ZwZLvJP69Qva32V8jc2x4zVxENHM5eU=;
- b=eAj00YJusZ+Bw7uS0aITAQgQt+IA3RqPjx0Z1wFZR8liPT8khSVgHYbZ+hYBa1DNcoNp
- DEf0M7BNwXTvyvlgRlQOMAXRye8F2jtG2fSFFdkxTOQeJgU+5WQIICnVzMbqZtGrRhKe
- Dn0TShX89fK4q+mprnBg191ss3kNFN+HnnCC+sgO2oTvR2J8nwBbkOPKdrLkM+damVQy
- 1NZwO93fIw/TDzF6gZuTLHIwtoN8gm8FXRMehsZLHUF7OkyTraKQ/nFaynXAO1iwz3d8
- xBkRJYsw+qvAH7qs5mYK2fdakXFW5aZ7QJjylRxPxCIV118OQX5LW9zo/WCconvSsmc5 IQ== 
+ s=corp-2018-07-02; bh=8wtk3bxpWswan1Y8W39egRSRBg8ldDX4Mnn82hJCv6I=;
+ b=say3sNyGLecEMgRcx0jIkFAqlm3acRKSH4puAMsMtCxk8Bo7NlR51uoS+basAn5TvpAs
+ 9VfBEj2QxQ0DSQ4VdTYOf2NhOLQBYoBQMbdk680XtOW+KR0I0BHDmhMDOJl2XkscQ9nU
+ UOLdVPj8c88+oxVQ1KjGgkdRmr36WaNQdH/8MSXp3mWnwJZcDUfKgEf8c1TnwlDO+tai
+ dgZ8tqfjjTBtyTVA7Yqd/slSZ/xmkWleW/vMSKQ8MRRPCNjvjmio906BK2LIQsx9/GYw
+ XrLuQNCKstN2rJEqMMh/bc1ciFx1HO+eWttwoq3GxgK9/xSBJ+QYvnarFEY3FX6HqIX3 Pw== 
 In-Reply-To: <156174687561.1557469.7505651950825460767.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
@@ -34,56 +34,96 @@ Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.ke
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-When we're using FS_IOC_SETFLAGS to set the immutable flag on a file, we
-need to ensure that userspace can't continue to write the file after the
-file becomes immutable.  To make that happen, we have to flush all the
-dirty pagecache pages to disk to ensure that we can fail a page fault on
-a mmap'd region, wait for pending directio to complete, and hope the
-caller locked out any new writes by holding the inode lock.
+When we're using FS_IOC_FSSETXATTR to set the immutable flag on a file,
+we need to ensure that userspace can't continue to write the file after
+the file becomes immutable.  To make that happen, we have to flush all
+the dirty pagecache pages to disk to ensure that we can fail a page
+fault on a mmap'd region, wait for pending directio to complete, and
+hope the caller locked out any new writes by holding the inode lock.
+
+XFS has more complex locking than other FSSETXATTR implementations so we
+have to keep the checking and preparation code in different functions.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/inode.c         |   21 +++++++++++++++++++--
- include/linux/fs.h |   11 +++++++++++
- 2 files changed, 30 insertions(+), 2 deletions(-)
+ fs/btrfs/ioctl.c   |    2 +
+ fs/ext4/ioctl.c    |    2 +
+ fs/f2fs/file.c     |    2 +
+ fs/inode.c         |   31 +++++++++++++++++++++++
+ fs/xfs/xfs_ioctl.c |   71 +++++++++++++++++++++++++++++++++++++++-------------
+ include/linux/fs.h |    3 ++
+ 6 files changed, 90 insertions(+), 21 deletions(-)
 
 
+diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
+index 3cd66efdb99d..aeffe3fd99c4 100644
+--- a/fs/btrfs/ioctl.c
++++ b/fs/btrfs/ioctl.c
+@@ -420,7 +420,7 @@ static int btrfs_ioctl_fssetxattr(struct file *file, void __user *arg)
+ 
+ 	simple_fill_fsxattr(&old_fa,
+ 			    btrfs_inode_flags_to_xflags(binode->flags));
+-	ret = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
++	ret = vfs_ioc_fssetxattr_prepare(inode, &old_fa, &fa);
+ 	if (ret)
+ 		goto out_unlock;
+ 
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index 566dfac28b3f..69810e59f89a 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -1109,7 +1109,7 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 
+ 		inode_lock(inode);
+ 		ext4_fill_fsxattr(inode, &old_fa);
+-		err = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
++		err = vfs_ioc_fssetxattr_prepare(inode, &old_fa, &fa);
+ 		if (err)
+ 			goto out;
+ 		flags = (ei->i_flags & ~EXT4_FL_XFLAG_VISIBLE) |
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 8799468724f9..b47f22eb483e 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -2825,7 +2825,7 @@ static int f2fs_ioc_fssetxattr(struct file *filp, unsigned long arg)
+ 	inode_lock(inode);
+ 
+ 	f2fs_fill_fsxattr(inode, &old_fa);
+-	err = vfs_ioc_fssetxattr_check(inode, &old_fa, &fa);
++	err = vfs_ioc_fssetxattr_prepare(inode, &old_fa, &fa);
+ 	if (err)
+ 		goto out;
+ 	flags = (fi->i_flags & ~F2FS_FL_XFLAG_VISIBLE) |
 diff --git a/fs/inode.c b/fs/inode.c
-index f08711b34341..65a412af3ffb 100644
+index 65a412af3ffb..cf07378e5731 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
-@@ -2193,7 +2193,8 @@ EXPORT_SYMBOL(current_time);
- 
- /*
-  * Generic function to check FS_IOC_SETFLAGS values and reject any invalid
-- * configurations.
-+ * configurations.  Once we're done, prepare the inode for whatever changes
-+ * are coming down the pipeline.
-  *
-  * Note: the caller should be holding i_mutex, or else be sure that they have
-  * exclusive access to the inode structure.
-@@ -2201,6 +2202,8 @@ EXPORT_SYMBOL(current_time);
- int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
- 			     unsigned int flags)
- {
+@@ -2293,3 +2293,34 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
+ 	return 0;
+ }
+ EXPORT_SYMBOL(vfs_ioc_fssetxattr_check);
++
++/*
++ * Generic function to check FS_IOC_FSSETXATTR values and reject any invalid
++ * configurations.  If none are found, flush all pending IO and dirty mappings
++ * before setting S_IMMUTABLE on an inode.  If the flush fails we'll clear the
++ * flag before returning error.
++ *
++ * Note: the caller must hold whatever locks are necessary to block any other
++ * threads from starting a write to the file.
++ */
++int vfs_ioc_fssetxattr_prepare(struct inode *inode,
++			       const struct fsxattr *old_fa,
++			       struct fsxattr *fa)
++{
 +	int ret;
 +
- 	/*
- 	 * The IMMUTABLE and APPEND_ONLY flags can only be changed by
- 	 * the relevant capability.
-@@ -2211,7 +2214,21 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
- 	    !capable(CAP_LINUX_IMMUTABLE))
- 		return -EPERM;
- 
--	return 0;
-+	/*
-+	 * Now that we're done checking the new flags, flush all pending IO and
-+	 * dirty mappings before setting S_IMMUTABLE on an inode via
-+	 * FS_IOC_SETFLAGS.  If the flush fails we'll clear the flag before
-+	 * returning error.
-+	 */
++	ret = vfs_ioc_fssetxattr_check(inode, old_fa, fa);
++	if (ret)
++		return ret;
++
 +	if (!S_ISREG(inode->i_mode) || IS_IMMUTABLE(inode) ||
-+	    !(flags & FS_IMMUTABLE_FL))
++	    !(fa->fsx_xflags & FS_XFLAG_IMMUTABLE))
 +		return 0;
 +
 +	inode_set_flags(inode, S_IMMUTABLE, S_IMMUTABLE);
@@ -91,26 +131,153 @@ index f08711b34341..65a412af3ffb 100644
 +	if (ret)
 +		inode_set_flags(inode, 0, S_IMMUTABLE);
 +	return ret;
- }
- EXPORT_SYMBOL(vfs_ioc_setflags_prepare);
- 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 91482ab4556a..0efe749de577 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -3567,4 +3567,15 @@ static inline void simple_fill_fsxattr(struct fsxattr *fa, __u32 xflags)
- 	fa->fsx_xflags = xflags;
++}
++EXPORT_SYMBOL(vfs_ioc_fssetxattr_prepare);
+diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
+index fe29aa61293c..552f18554c48 100644
+--- a/fs/xfs/xfs_ioctl.c
++++ b/fs/xfs/xfs_ioctl.c
+@@ -1057,6 +1057,30 @@ xfs_ioctl_setattr_xflags(
+ 	return 0;
  }
  
 +/*
-+ * Flush file data before changing attributes.  Caller must hold any locks
-+ * required to prevent further writes to this file until we're done setting
-+ * flags.
++ * If we're setting immutable on a regular file, we need to prevent new writes.
++ * Once we've done that, we must wait for all the other writes to complete.
++ *
++ * The caller must use @join_flags to release the locks which are held on @ip
++ * regardless of return value.
 + */
-+static inline int inode_drain_writes(struct inode *inode)
++static int
++xfs_ioctl_setattr_drain_writes(
++	struct xfs_inode	*ip,
++	const struct fsxattr	*fa,
++	int			*join_flags)
 +{
-+	inode_dio_wait(inode);
-+	return filemap_write_and_wait(inode->i_mapping);
++	struct inode		*inode = VFS_I(ip);
++
++	if (!S_ISREG(inode->i_mode) || !(fa->fsx_xflags & FS_XFLAG_IMMUTABLE))
++		return 0;
++
++	*join_flags = XFS_IOLOCK_EXCL | XFS_MMAPLOCK_EXCL;
++	xfs_ilock(ip, *join_flags);
++
++	return inode_drain_writes(inode);
 +}
 +
- #endif /* _LINUX_FS_H */
+ /*
+  * If we are changing DAX flags, we have to ensure the file is clean and any
+  * cached objects in the address space are invalidated and removed. This
+@@ -1064,6 +1088,9 @@ xfs_ioctl_setattr_xflags(
+  * operation. The locks need to be held until the transaction has been committed
+  * so that the cache invalidation is atomic with respect to the DAX flag
+  * manipulation.
++ *
++ * The caller must use @join_flags to release the locks which are held on @ip
++ * regardless of return value.
+  */
+ static int
+ xfs_ioctl_setattr_dax_invalidate(
+@@ -1075,8 +1102,6 @@ xfs_ioctl_setattr_dax_invalidate(
+ 	struct super_block	*sb = inode->i_sb;
+ 	int			error;
+ 
+-	*join_flags = 0;
+-
+ 	/*
+ 	 * It is only valid to set the DAX flag on regular files and
+ 	 * directories on filesystems where the block size is equal to the page
+@@ -1102,21 +1127,15 @@ xfs_ioctl_setattr_dax_invalidate(
+ 		return 0;
+ 
+ 	/* lock, flush and invalidate mapping in preparation for flag change */
+-	xfs_ilock(ip, XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL);
+-	error = filemap_write_and_wait(inode->i_mapping);
+-	if (error)
+-		goto out_unlock;
+-	error = invalidate_inode_pages2(inode->i_mapping);
+-	if (error)
+-		goto out_unlock;
+-
+-	*join_flags = XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL;
+-	return 0;
+-
+-out_unlock:
+-	xfs_iunlock(ip, XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL);
+-	return error;
++	if (*join_flags == 0) {
++		*join_flags = XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL;
++		xfs_ilock(ip, *join_flags);
++		error = filemap_write_and_wait(inode->i_mapping);
++		if (error)
++			return error;
++	}
+ 
++	return invalidate_inode_pages2(inode->i_mapping);
+ }
+ 
+ /*
+@@ -1325,6 +1344,12 @@ xfs_ioctl_setattr(
+ 			return code;
+ 	}
+ 
++	code = xfs_ioctl_setattr_drain_writes(ip, fa, &join_flags);
++	if (code) {
++		xfs_iunlock(ip, join_flags);
++		goto error_free_dquots;
++	}
++
+ 	/*
+ 	 * Changing DAX config may require inode locking for mapping
+ 	 * invalidation. These need to be held all the way to transaction commit
+@@ -1333,8 +1358,10 @@ xfs_ioctl_setattr(
+ 	 * appropriately.
+ 	 */
+ 	code = xfs_ioctl_setattr_dax_invalidate(ip, fa, &join_flags);
+-	if (code)
++	if (code) {
++		xfs_iunlock(ip, join_flags);
+ 		goto error_free_dquots;
++	}
+ 
+ 	tp = xfs_ioctl_setattr_get_trans(ip, join_flags);
+ 	if (IS_ERR(tp)) {
+@@ -1484,6 +1511,12 @@ xfs_ioc_setxflags(
+ 	if (error)
+ 		return error;
+ 
++	error = xfs_ioctl_setattr_drain_writes(ip, &fa, &join_flags);
++	if (error) {
++		xfs_iunlock(ip, join_flags);
++		goto out_drop_write;
++	}
++
+ 	/*
+ 	 * Changing DAX config may require inode locking for mapping
+ 	 * invalidation. These need to be held all the way to transaction commit
+@@ -1492,8 +1525,10 @@ xfs_ioc_setxflags(
+ 	 * appropriately.
+ 	 */
+ 	error = xfs_ioctl_setattr_dax_invalidate(ip, &fa, &join_flags);
+-	if (error)
++	if (error) {
++		xfs_iunlock(ip, join_flags);
+ 		goto out_drop_write;
++	}
+ 
+ 	tp = xfs_ioctl_setattr_get_trans(ip, join_flags);
+ 	if (IS_ERR(tp)) {
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 0efe749de577..73a8bd789e36 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -3560,6 +3560,9 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
+ 
+ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
+ 			     struct fsxattr *fa);
++int vfs_ioc_fssetxattr_prepare(struct inode *inode,
++			       const struct fsxattr *old_fa,
++			       struct fsxattr *fa);
+ 
+ static inline void simple_fill_fsxattr(struct fsxattr *fa, __u32 xflags)
+ {
