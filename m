@@ -1,149 +1,136 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 1/4] mm/fs: don't allow writes to immutable
-	files
-Date: Fri, 28 Jun 2019 11:34:43 -0700
-Message-ID: <156174688345.1557469.793195935067841912.stgit@magnolia>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [PATCH 4/4] vfs: don't allow most setxattr to
+ immutable files
+Date: Sat, 29 Jun 2019 10:04:50 +0300
+Message-ID: <CAOQ4uxgG5Kijx=nzFRB0uFPMghJXDfCqxKEWQoePwKZTGO+NMg@mail.gmail.com>
 References: <156174687561.1557469.7505651950825460767.stgit@magnolia>
+ <156174690758.1557469.9258105121276292687.stgit@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <ocfs2-devel-bounces@oss.oracle.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : date :
- message-id : in-reply-to : references : mime-version : cc : subject :
- list-id : list-unsubscribe : list-archive : list-post : list-help :
- list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=zbwTHNx4bDzthEEmW91CEIQsxKdu7RPmyGjMJ/0U5rY=;
- b=l/5HHdy2JkgEsmsC2/Q4g7nSUfhrwuoTD+5KITHkUkm1D9coSpLPVFx6Du0gFElVQ/iG
- ZShC6rF+vBpYKD6E9XmQ5EXFNuu6FtleXlc45fMa36CJOHCfgKU/nylYB3ONPo4gF143
- GuB0BSVviN+I1O7AtHKiMQmiSa45OZfDS2O89UY8wbRHd5kRYFsM+yghfSSJDXq7rz2i
- fT7O0rZu9N4Ye1XT2tOea19fTw+IRCQHAPtTQJI+IksGoltMsrYwrRvV5XCC0qssIevR
- pYJMa4KGFNWRB1yOOQLJ5vGCD8moVfLl78xpKukqF3c2ycFT/HzhKAhv4XwM9Nznt8rk vQ== 
-In-Reply-To: <156174687561.1557469.7505651950825460767.stgit@magnolia>
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Type:Cc:To:Subject:Message-ID:Date:From:
+ In-Reply-To:References:MIME-Version:Sender:Reply-To:Content-Transfer-Encoding
+ :Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=xM/xcvkzohmQdtVDVPIgTFxuHjb4HOBVLFjrfhylohA=; b=PpOyXuzbY2O/iF3VE8W5hy8oC7
+ 1AMCtwoXOnwd+URLLSqu6fXKvIepg8ED7VIZo6D0O3yU3THTzaPiTkZ2r2de2PJBsYeR/9goOersq
+ +kky9kDqD2HzWEbSlvQnd4VABQCN3P3wmf3B+gVUUJ7dbiAYEtzMf+vPKGy7SFFmrfik=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Type:Cc:To:Subject:Message-ID:Date:From:In-Reply-To:References:
+ MIME-Version:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=xM/xcvkzohmQdtVDVPIgTFxuHjb4HOBVLFjrfhylohA=; b=KVr0yaCqece/x5QPkf88rZuj4j
+ nzM+wvb/lcqZ+H/bxf9NS2+ZQTzHJfEyuKjZhiKVQCYIH5LS3CeUqxCajwB+VfkJ53oqf7gge2jZ+
+ tKANHCCmYx0m7gK02t3aQupkhyIcwbfvigigL2dol+KoR998iDVqVH9xcMg4aHExiddM=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20161025;
+ h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+ :cc; bh=xM/xcvkzohmQdtVDVPIgTFxuHjb4HOBVLFjrfhylohA=;
+ b=Gfu5Pz78tLVKvI8Q9WtRwxoZiso9oqghADUZOQqtlF6a4PF4ZC24i4bhdxEFOWT9mb
+ ogpxVnV34CUKT9Hp3X/zqMkMMajHb+ZB117iqrYsimXsLjh5l46Ev8rT8yc8cIX3yIvp
+ pPvNValE4fvXkmuBjtLVOlUXgnPgouNfZrFrcwZJP2fDEoyBu6UDZfe0+vDH3DvWwhm2
+ zDFMbFYJkqZlfRqwPcIjOiXLiRHvuGtOYey5wWMnlJCELzFsocHIwB5e56zebm7P/vZi
+ S6f79kvT8PuUPJTo2r7gwPTQl2Z6a4vDBem6y6JYpyyoLzjF+dqkakkpoHJf+XnufEOL
+ I8qA==
+In-Reply-To: <156174690758.1557469.9258105121276292687.stgit@magnolia>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=unsubscribe>
-List-Archive: <http://oss.oracle.com/pipermail/ocfs2-devel>
-List-Post: <mailto:ocfs2-devel@oss.oracle.com>
-List-Help: <mailto:ocfs2-devel-request@oss.oracle.com?subject=help>
-List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=subscribe>
-Sender: ocfs2-devel-bounces@oss.oracle.com
-Errors-To: ocfs2-devel-bounces@oss.oracle.com
-To: matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, darrick.wong@oracle.com, ard.biesheuvel@linaro.org, josef@toxicpanda.com, hch@infradead.org, clm@fb.com, adilger.kernel@dilger.ca, viro@zeniv.linux.org.uk, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, jk@ozlabs.org
-Cc: linux-efi@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: linux-efi@vger.kernel.org, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, matthew.garrett@nebula.com, linux-nilfs@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Ext4 <linux-ext4@vger.kernel.org>, devel@lists.orangefs.org, Josef Bacik <josef@toxicpanda.com>, reiserfs-devel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Theodore Tso <tytso@mit.edu>, ard.biesheuvel@linaro.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs <linux-xfs@vger.kernel.org>, jk@ozlabs.org, Jan Kara <jack@suse.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com
 
-From: Darrick J. Wong <darrick.wong@oracle.com>
+On Fri, Jun 28, 2019 at 9:37 PM Darrick J. Wong <darrick.wong@oracle.com> wrote:
+>
+> From: Darrick J. Wong <darrick.wong@oracle.com>
+>
+> The chattr manpage has this to say about immutable files:
+>
+> "A file with the 'i' attribute cannot be modified: it cannot be deleted
+> or renamed, no link can be created to this file, most of the file's
+> metadata can not be modified, and the file can not be opened in write
+> mode."
+>
+> However, we don't actually check the immutable flag in the setattr code,
+> which means that we can update inode flags and project ids and extent
+> size hints on supposedly immutable files.  Therefore, reject setflags
+> and fssetxattr calls on an immutable file if the file is immutable and
+> will remain that way.
+>
+> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> ---
+>  fs/inode.c |   27 +++++++++++++++++++++++++++
+>  1 file changed, 27 insertions(+)
+>
+>
+> diff --git a/fs/inode.c b/fs/inode.c
+> index cf07378e5731..4261c709e50e 100644
+> --- a/fs/inode.c
+> +++ b/fs/inode.c
+> @@ -2214,6 +2214,14 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
+>             !capable(CAP_LINUX_IMMUTABLE))
+>                 return -EPERM;
+>
+> +       /*
+> +        * We aren't allowed to change any other flags if the immutable flag is
+> +        * already set and is not being unset.
+> +        */
+> +       if ((oldflags & FS_IMMUTABLE_FL) && (flags & FS_IMMUTABLE_FL) &&
+> +           oldflags != flags)
+> +               return -EPERM;
+> +
+>         /*
+>          * Now that we're done checking the new flags, flush all pending IO and
+>          * dirty mappings before setting S_IMMUTABLE on an inode via
+> @@ -2284,6 +2292,25 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
+>             !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
+>                 return -EINVAL;
+>
+> +       /*
+> +        * We aren't allowed to change any fields if the immutable flag is
+> +        * already set and is not being unset.
+> +        */
+> +       if ((old_fa->fsx_xflags & FS_XFLAG_IMMUTABLE) &&
+> +           (fa->fsx_xflags & FS_XFLAG_IMMUTABLE)) {
+> +               if (old_fa->fsx_xflags != fa->fsx_xflags)
+> +                       return -EPERM;
+> +               if (old_fa->fsx_projid != fa->fsx_projid)
+> +                       return -EPERM;
+> +               if ((fa->fsx_xflags & (FS_XFLAG_EXTSIZE |
+> +                                      FS_XFLAG_EXTSZINHERIT)) &&
+> +                   old_fa->fsx_extsize != fa->fsx_extsize)
+> +                       return -EPERM;
+> +               if ((old_fa->fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
+> +                   old_fa->fsx_cowextsize != fa->fsx_cowextsize)
+> +                       return -EPERM;
+> +       }
+> +
 
-The chattr manpage has this to say about immutable files:
+I would like to reject this for the sheer effort on my eyes, but
+I'll try harder to rationalize.
 
-"A file with the 'i' attribute cannot be modified: it cannot be deleted
-or renamed, no link can be created to this file, most of the file's
-metadata can not be modified, and the file can not be opened in write
-mode."
+How about memcmp(fa, old_fa, offsetof(struct fsxattr, fsx_pad))?
 
-Once the flag is set, it is enforced for quite a few file operations,
-such as fallocate, fpunch, fzero, rm, touch, open, etc.  However, we
-don't check for immutability when doing a write(), a PROT_WRITE mmap(),
-a truncate(), or a write to a previously established mmap.
+Would be more robust to future struct fsxattr changes and generally
+more easy on the eyes.
 
-If a program has an open write fd to a file that the administrator
-subsequently marks immutable, the program still can change the file
-contents.  Weird!
+Sure, there is the possibility of userspace passing uninitialized
+fsx_extsize/fsx_cowextsize without setting the flag, but is that
+a real concern for the very few tools that are used to chattr?
+Those tools, when asked to set an attribute, will first get
+struct fsxattr from fs, then change the requested attr and set the
+fsxattr struct. So IMO the chances of this causing any regression
+or unexpected behavior are ridiculously low.
 
-The ability to write to an immutable file does not follow the manpage
-promise that immutable files cannot be modified.  Worse yet it's
-inconsistent with the behavior of other syscalls which don't allow
-modifications of immutable files.
-
-Therefore, add the necessary checks to make the write, mmap, and
-truncate behavior consistent with what the manpage says and consistent
-with other syscalls on filesystems which support IMMUTABLE.
-
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
----
- fs/attr.c    |   13 ++++++-------
- mm/filemap.c |    3 +++
- mm/memory.c  |    4 ++++
- mm/mmap.c    |    8 ++++++--
- 4 files changed, 19 insertions(+), 9 deletions(-)
-
-
-diff --git a/fs/attr.c b/fs/attr.c
-index d22e8187477f..1fcfdcc5b367 100644
---- a/fs/attr.c
-+++ b/fs/attr.c
-@@ -233,19 +233,18 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
- 
- 	WARN_ON_ONCE(!inode_is_locked(inode));
- 
--	if (ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) {
--		if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
--			return -EPERM;
--	}
-+	if (IS_IMMUTABLE(inode))
-+		return -EPERM;
-+
-+	if ((ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) &&
-+	    IS_APPEND(inode))
-+		return -EPERM;
- 
- 	/*
- 	 * If utimes(2) and friends are called with times == NULL (or both
- 	 * times are UTIME_NOW), then we need to check for write permission
- 	 */
- 	if (ia_valid & ATTR_TOUCH) {
--		if (IS_IMMUTABLE(inode))
--			return -EPERM;
--
- 		if (!inode_owner_or_capable(inode)) {
- 			error = inode_permission(inode, MAY_WRITE);
- 			if (error)
-diff --git a/mm/filemap.c b/mm/filemap.c
-index aac71aef4c61..dad85e10f5f8 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2935,6 +2935,9 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
- 	loff_t count;
- 	int ret;
- 
-+	if (IS_IMMUTABLE(inode))
-+		return -EPERM;
-+
- 	if (!iov_iter_count(from))
- 		return 0;
- 
-diff --git a/mm/memory.c b/mm/memory.c
-index ddf20bd0c317..abf795277f36 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -2235,6 +2235,10 @@ static vm_fault_t do_page_mkwrite(struct vm_fault *vmf)
- 
- 	vmf->flags = FAULT_FLAG_WRITE|FAULT_FLAG_MKWRITE;
- 
-+	if (vmf->vma->vm_file &&
-+	    IS_IMMUTABLE(vmf->vma->vm_file->f_mapping->host))
-+		return VM_FAULT_SIGBUS;
-+
- 	ret = vmf->vma->vm_ops->page_mkwrite(vmf);
- 	/* Restore original flags so that caller is not surprised */
- 	vmf->flags = old_flags;
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 7e8c3e8ae75f..b3ebca2702bf 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1483,8 +1483,12 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 		case MAP_SHARED_VALIDATE:
- 			if (flags & ~flags_mask)
- 				return -EOPNOTSUPP;
--			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
--				return -EACCES;
-+			if (prot & PROT_WRITE) {
-+				if (!(file->f_mode & FMODE_WRITE))
-+					return -EACCES;
-+				if (IS_IMMUTABLE(file->f_mapping->host))
-+					return -EPERM;
-+			}
- 
- 			/*
- 			 * Make sure we don't allow writing to an append-only
+Thanks,
+Amir.
