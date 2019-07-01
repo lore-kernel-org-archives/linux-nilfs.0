@@ -1,93 +1,73 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH v2 4/4] vfs: don't allow most setxattr to
-	immutable files
-Date: Mon, 1 Jul 2019 08:42:00 -0700
-Message-ID: <20190701154200.GK1404256@magnolia>
+From: Boaz Harrosh <boaz@plexistor.com>
+Subject: Re: [PATCH v6 0/4] vfs: make immutable files actually immutable
+Date: Mon, 1 Jul 2019 20:20:51 +0300
+Message-ID: <72f01c73-a1eb-efde-58fa-7667221255c7@plexistor.com>
 References: <156174687561.1557469.7505651950825460767.stgit@magnolia>
-	<156174690758.1557469.9258105121276292687.stgit@magnolia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <ocfs2-devel-bounces@oss.oracle.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=date : from : to :
- message-id : references : mime-version : in-reply-to : cc : subject :
- list-id : list-unsubscribe : list-archive : list-post : list-help :
- list-subscribe : content-type : content-transfer-encoding : sender;
- s=corp-2018-07-02; bh=GDKI4jxma30W8dysQyH6fGQQmEcxGjDQ/l/FsFe6Oig=;
- b=nSisQxKthP8/pgT9bQOIVBnHl8trZ2mNN3u3VpDv0JMhnbBlHhnGd8bxgUNLTTf05o82
- irOJ0OO4lXB1dPfYeabn9nNSB7tOyyd9xukHIJQnhMDB521GVsr6cwYyaq4JJqU9S9F0
- NsJWJmBMNnromFVpQ8EX9xpJcoIIlQ/UnMMZwZlMVEDx9LlLJX6DHnw4TpTKR4GJe8/6
- INb9DsYoi5+fMl8wXh/36TETEbt1Bel9CcJFE0Ltk57T04cbakVVBOZJJLPYhNEwduQn
- OF/qqljg8vrMw8yk/eIl8vdYB9y2sbfruP+stFZ2DX5JI2SbeGNq9FzqQLZj3zYysYNa HQ== 
-Content-Disposition: inline
-In-Reply-To: <156174690758.1557469.9258105121276292687.stgit@magnolia>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=unsubscribe>
-List-Archive: <http://oss.oracle.com/pipermail/ocfs2-devel>
-List-Post: <mailto:ocfs2-devel@oss.oracle.com>
-List-Help: <mailto:ocfs2-devel-request@oss.oracle.com?subject=help>
-List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
-	<mailto:ocfs2-devel-request@oss.oracle.com?subject=subscribe>
-Sender: ocfs2-devel-bounces@oss.oracle.com
-Errors-To: ocfs2-devel-bounces@oss.oracle.com
-To: matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, ard.biesheuvel@linaro.org, josef@toxicpanda.com, hch@infradead.org, clm@fb.com, adilger.kernel@dilger.ca, viro@zeniv.linux.org.uk, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, jk@ozlabs.org
-Cc: linux-efi@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, devel@lists.orangefs.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=plexistor-com.20150623.gappssmtp.com; s=20150623;
+        h=subject:to:cc:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=RMtO9zTMwULPwpFiTkeooNGzR9zKo/UB7YgL+t4fgzA=;
+        b=1wUdmopYsOTGEBPctCCQBJNp/Weny3U0OdMAgIX7XMpDLNjX7yi2BQKVOeIOZfgf1b
+         I2dQPvs1YcMd4MKfGasxoR1vUF57n1uWvGfOwCBn+dFFXqdtzk7+nDTMfgxaIC1cMqAd
+         CyXSD5wWJrsSE7f66iNNQpS8suPAgj9SNlBFoRgvaYPLl2O9hulyvjxbO8s6Guhj4y1S
+         Nf6nnLqhsslQUJQ8lQjHCR002MedRLPvKNFje/NywIlwBVxr1dbYLS/Ag6d45MoLEFLA
+         TB43Jl9ECXn6C3ClznsgSlBckfDR8AQM1se/327D0FreZlmY9S9DkHpcHai8gVFUiAbk
+         jAnQ==
+In-Reply-To: <156174687561.1557469.7505651950825460767.stgit@magnolia>
+Content-Language: en-MW
+Sender: linux-btrfs-owner@vger.kernel.org
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: "Darrick J. Wong" <darrick.wong@oracle.com>, matthew.garrett@nebula.com, yuchao0@huawei.com, tytso@mit.edu, ard.biesheuvel@linaro.org, josef@toxicpanda.com, hch@infradead.org, clm@fb.com, adilger.kernel@dilger.ca, viro@zeniv.linux.org.uk, jack@suse.com, dsterba@suse.com, jaegeuk@kernel.org, jk@ozlabs.org
+Cc: reiserfs-devel@vger.kernel.org, linux-efi@vger.kernel.org, devel@lists.orangefs.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-From: Darrick J. Wong <darrick.wong@oracle.com>
+On 28/06/2019 21:34, Darrick J. Wong wrote:
+> Hi all,
+> 
+> The chattr(1) manpage has this to say about the immutable bit that
+> system administrators can set on files:
+> 
+> "A file with the 'i' attribute cannot be modified: it cannot be deleted
+> or renamed, no link can be created to this file, most of the file's
+> metadata can not be modified, and the file can not be opened in write
+> mode."
+> 
+> Given the clause about how the file 'cannot be modified', it is
+> surprising that programs holding writable file descriptors can continue
+> to write to and truncate files after the immutable flag has been set,
+> but they cannot call other things such as utimes, fallocate, unlink,
+> link, setxattr, or reflink.
+> 
+> Since the immutable flag is only settable by administrators, resolve
+> this inconsistent behavior in favor of the documented behavior -- once
+> the flag is set, the file cannot be modified, period.  We presume that
+> administrators must be trusted to know what they're doing, and that
+> cutting off programs with writable fds will probably break them.
+> 
 
-The chattr manpage has this to say about immutable files:
+This effort sounds very logical to me and sound. But are we allowed to
+do it? IE: Is it not breaking ABI. I do agree previous ABI was evil but
+are we allowed to break it?
 
-"A file with the 'i' attribute cannot be modified: it cannot be deleted
-or renamed, no link can be created to this file, most of the file's
-metadata can not be modified, and the file can not be opened in write
-mode."
+I would not mind breaking it if %99.99 of the time the immutable bit
+was actually set manually by a human administrator. But what if there
+are automated systems that set it relying on the current behaviour?
 
-However, we don't actually check the immutable flag in the setattr code,
-which means that we can update inode flags and project ids and extent
-size hints on supposedly immutable files.  Therefore, reject setflags
-and fssetxattr calls on an immutable file if the file is immutable and
-will remain that way.
+For example I have a very distant and vague recollection of a massive
+camera capture system, that was DMAing directly to file (splice). And setting
+the immutable bit right away on start. Then once the capture is done
+(capture file recycled) the file becomes immutable. Such program is now
+broken. Who's fault is it?
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
-v2: use memcmp instead of open coding a bunch of checks
----
- fs/inode.c |   17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
+I'm totally not sure and maybe you are right. But have you made a
+survey of the majority of immutable uses, and are positive that
+the guys are not broken after this change?
 
-diff --git a/fs/inode.c b/fs/inode.c
-index cf07378e5731..31f694e405fe 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -2214,6 +2214,14 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
- 	    !capable(CAP_LINUX_IMMUTABLE))
- 		return -EPERM;
- 
-+	/*
-+	 * We aren't allowed to change any other flags if the immutable flag is
-+	 * already set and is not being unset.
-+	 */
-+	if ((oldflags & FS_IMMUTABLE_FL) && (flags & FS_IMMUTABLE_FL) &&
-+	    oldflags != flags)
-+		return -EPERM;
-+
- 	/*
- 	 * Now that we're done checking the new flags, flush all pending IO and
- 	 * dirty mappings before setting S_IMMUTABLE on an inode via
-@@ -2284,6 +2292,15 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
- 	    !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
- 		return -EINVAL;
- 
-+	/*
-+	 * We aren't allowed to change any fields if the immutable flag is
-+	 * already set and is not being unset.
-+	 */
-+	if ((old_fa->fsx_xflags & FS_XFLAG_IMMUTABLE) &&
-+	    (fa->fsx_xflags & FS_XFLAG_IMMUTABLE) &&
-+	    memcmp(fa, old_fa, offsetof(struct fsxattr, fsx_pad)))
-+		return -EPERM;
-+
- 	/* Extent size hints of zero turn off the flags. */
- 	if (fa->fsx_extsize == 0)
- 		fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
+For me this is kind of scary. Yes I am known to be a SW coward ;-)
+
+Thanks
+Boaz
