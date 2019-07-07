@@ -1,93 +1,178 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [PATCH v2 4/4] vfs: don't allow most setxattr to immutable files
-Date: Tue, 2 Jul 2019 13:45:32 +0300
-Message-ID: <CAOQ4uxizFXgSa4KzkwxmoPAvpiENg=y0=fsxEC1PkCX5J1ybag@mail.gmail.com>
-References: <156174687561.1557469.7505651950825460767.stgit@magnolia>
- <156174690758.1557469.9258105121276292687.stgit@magnolia> <20190701154200.GK1404256@magnolia>
+From: Masahiro Yamada <yamada.masahiro@socionext.com>
+Subject: Re: [PATCH] nilfs2: do not use unexported cpu_to_le32()/le32_to_cpu()
+ in uapi header
+Date: Sun, 7 Jul 2019 11:40:58 +0900
+Message-ID: <CAK7LNAQMuZrDTX2-zynf=8gS1UqnygnMHoAfQr4wZ8uqEzd_qQ@mail.gmail.com>
+References: <20190605053006.14332-1-yamada.masahiro@socionext.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=vlidC+hQ/gD/8v9eleM4nXtfiap8zhCG0j5qbLCVw18=;
-        b=kdVby+/PzZu5i6Y9UcQYatHEHHsEPhAQY+mjVHF6xlggt8o+nszbdHXCHfEBil5H5H
-         UL+/28eYKfUAOv8AvNzRMQHWK/y4MABFSamQhRwNZH1hpEc5BUQCjqITvhev6DLWRzG3
-         uOgpinFcBt7pSePpbwiWspS3cbj7dBXMod+4Z94YngJ+nIPc3qdhbsYftXAC3oBGhakE
-         Bt+6iCjbrfqQEg0SzB1WdrzlyuHEb0JfhuYdop7KFU8fbo4QPvOCj4+Z+NVkWFYsg5RT
-         IRHHoit1jxeDZWaJHULPmpdSPTutxwczS9nSE3h7MYk2MPhM/kHniCv9ovLGXWy3LfTv
-         lmfQ==
-In-Reply-To: <20190701154200.GK1404256@magnolia>
+DKIM-Filter: OpenDKIM Filter v2.10.3 conssluserg-05.nifty.com x672fZY9026926
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nifty.com;
+        s=dec2015msa; t=1562467296;
+        bh=I0xyGzOgFAL5V9jjmDuVTuK7LMrU6TFfqca/VNGQTuo=;
+        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+        b=Wa5JxMcvVj6AgYUBS6WiwXAFtlJVgmEH9aDbiKUz3StwWul7EQ/BuZLEDgbmIGcal
+         iXwUElIgnsU0rEcL9jzB3CmRHFrzy8+mjtZZg/2tMtUysqvuIuvQIt2kgzgDr/nMDi
+         DvByIaq/7/Vj+UuAVPyiZ49Rb/PIF0UskKjJeVKcKVTXXn1KpWgs/MQybXO1Qgr/hN
+         CavjsbmtKMg8jBhN8PjmSPSGASyRNTHWo3GM2pFyOig0a1LIYK7Tdb+eOz7QASqoNi
+         /CGM85gPgxvf78QA/vFFFvX1GSyFA2uVFt0wdAUQvQLbDFPTSgKKFo2TGpIBr5R1Kl
+         8bb9i1ZD0NjaA==
+In-Reply-To: <20190605053006.14332-1-yamada.masahiro@socionext.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: matthew.garrett@nebula.com, Chao Yu <yuchao0@huawei.com>, Theodore Tso <tytso@mit.edu>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Josef Bacik <josef@toxicpanda.com>, Christoph Hellwig <hch@infradead.org>, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Al Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>, jk@ozlabs.org, reiserfs-devel@vger.kernel.org, linux-efi@vger.kernel.org, devel@lists.orangefs.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs <linux-xfs@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, linux-nilfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel
+Content-Type: text/plain; charset="utf-8"
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg KH <gregkh@linuxfoundation.org>, Joe Perches <joe@perches.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org
 
-On Mon, Jul 1, 2019 at 7:31 PM Darrick J. Wong <darrick.wong@oracle.com> wrote:
+Hi Andrew,
+
+Could you pick up this?
+
+The maintainer of nilfs2 is silent, but
+this is obviously build error.
+
+Masahiro Yamada
+
+
+On Wed, Jun 5, 2019 at 2:32 PM Masahiro Yamada
+<yamada.masahiro@socionext.com> wrote:
 >
-> From: Darrick J. Wong <darrick.wong@oracle.com>
+> cpu_to_le32/le32_to_cpu is defined in include/linux/byteorder/generic.h,
+> which is not exported to user-space.
 >
-> The chattr manpage has this to say about immutable files:
+> UAPI headers must use the ones prefixed with double-underscore.
 >
-> "A file with the 'i' attribute cannot be modified: it cannot be deleted
-> or renamed, no link can be created to this file, most of the file's
-> metadata can not be modified, and the file can not be opened in write
-> mode."
+> Detected by compile-testing exported headers:
 >
-> However, we don't actually check the immutable flag in the setattr code,
-> which means that we can update inode flags and project ids and extent
-> size hints on supposedly immutable files.  Therefore, reject setflags
-> and fssetxattr calls on an immutable file if the file is immutable and
-> will remain that way.
+> ./usr/include/linux/nilfs2_ondisk.h: In function =E2=80=98nilfs_checkpoin=
+t_set_snapshot=E2=80=99:
+> ./usr/include/linux/nilfs2_ondisk.h:536:17: error: implicit declaration o=
+f function =E2=80=98cpu_to_le32=E2=80=99 [-Werror=3Dimplicit-function-decla=
+ration]
+>   cp->cp_flags =3D cpu_to_le32(le32_to_cpu(cp->cp_flags) |  \
+>                  ^
+> ./usr/include/linux/nilfs2_ondisk.h:552:1: note: in expansion of macro =
+=E2=80=98NILFS_CHECKPOINT_FNS=E2=80=99
+>  NILFS_CHECKPOINT_FNS(SNAPSHOT, snapshot)
+>  ^~~~~~~~~~~~~~~~~~~~
+> ./usr/include/linux/nilfs2_ondisk.h:536:29: error: implicit declaration o=
+f function =E2=80=98le32_to_cpu=E2=80=99 [-Werror=3Dimplicit-function-decla=
+ration]
+>   cp->cp_flags =3D cpu_to_le32(le32_to_cpu(cp->cp_flags) |  \
+>                              ^
+> ./usr/include/linux/nilfs2_ondisk.h:552:1: note: in expansion of macro =
+=E2=80=98NILFS_CHECKPOINT_FNS=E2=80=99
+>  NILFS_CHECKPOINT_FNS(SNAPSHOT, snapshot)
+>  ^~~~~~~~~~~~~~~~~~~~
+> ./usr/include/linux/nilfs2_ondisk.h: In function =E2=80=98nilfs_segment_u=
+sage_set_clean=E2=80=99:
+> ./usr/include/linux/nilfs2_ondisk.h:622:19: error: implicit declaration o=
+f function =E2=80=98cpu_to_le64=E2=80=99 [-Werror=3Dimplicit-function-decla=
+ration]
+>   su->su_lastmod =3D cpu_to_le64(0);
+>                    ^~~~~~~~~~~
 >
-> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> Signed-off-by: Masahiro Yamada <yamada.masahiro@socionext.com>
 > ---
-> v2: use memcmp instead of open coding a bunch of checks
-
-
-Thanks,
-
-Reviewed-by: Amir Goldstein <amir73il@gmail.com>
-
-
-> ---
->  fs/inode.c |   17 +++++++++++++++++
->  1 file changed, 17 insertions(+)
 >
-> diff --git a/fs/inode.c b/fs/inode.c
-> index cf07378e5731..31f694e405fe 100644
-> --- a/fs/inode.c
-> +++ b/fs/inode.c
-> @@ -2214,6 +2214,14 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
->             !capable(CAP_LINUX_IMMUTABLE))
->                 return -EPERM;
+>  include/uapi/linux/nilfs2_ondisk.h | 24 ++++++++++++------------
+>  1 file changed, 12 insertions(+), 12 deletions(-)
 >
-> +       /*
-> +        * We aren't allowed to change any other flags if the immutable flag is
-> +        * already set and is not being unset.
-> +        */
-> +       if ((oldflags & FS_IMMUTABLE_FL) && (flags & FS_IMMUTABLE_FL) &&
-> +           oldflags != flags)
-> +               return -EPERM;
-> +
->         /*
->          * Now that we're done checking the new flags, flush all pending IO and
->          * dirty mappings before setting S_IMMUTABLE on an inode via
-> @@ -2284,6 +2292,15 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
->             !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
->                 return -EINVAL;
+> diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilf=
+s2_ondisk.h
+> index a7e66ab11d1d..c23f91ae5fe8 100644
+> --- a/include/uapi/linux/nilfs2_ondisk.h
+> +++ b/include/uapi/linux/nilfs2_ondisk.h
+> @@ -29,7 +29,7 @@
 >
-> +       /*
-> +        * We aren't allowed to change any fields if the immutable flag is
-> +        * already set and is not being unset.
-> +        */
-> +       if ((old_fa->fsx_xflags & FS_XFLAG_IMMUTABLE) &&
-> +           (fa->fsx_xflags & FS_XFLAG_IMMUTABLE) &&
-> +           memcmp(fa, old_fa, offsetof(struct fsxattr, fsx_pad)))
-> +               return -EPERM;
-> +
->         /* Extent size hints of zero turn off the flags. */
->         if (fa->fsx_extsize == 0)
->                 fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
+>  #include <linux/types.h>
+>  #include <linux/magic.h>
+> -
+> +#include <asm/byteorder.h>
+>
+>  #define NILFS_INODE_BMAP_SIZE  7
+>
+> @@ -533,19 +533,19 @@ enum {
+>  static inline void                                                     \
+>  nilfs_checkpoint_set_##name(struct nilfs_checkpoint *cp)               \
+>  {                                                                      \
+> -       cp->cp_flags =3D cpu_to_le32(le32_to_cpu(cp->cp_flags) |         =
+ \
+> -                                  (1UL << NILFS_CHECKPOINT_##flag));   \
+> +       cp->cp_flags =3D __cpu_to_le32(__le32_to_cpu(cp->cp_flags) |     =
+ \
+> +                                    (1UL << NILFS_CHECKPOINT_##flag)); \
+>  }                                                                      \
+>  static inline void                                                     \
+>  nilfs_checkpoint_clear_##name(struct nilfs_checkpoint *cp)             \
+>  {                                                                      \
+> -       cp->cp_flags =3D cpu_to_le32(le32_to_cpu(cp->cp_flags) &         =
+ \
+> +       cp->cp_flags =3D __cpu_to_le32(__le32_to_cpu(cp->cp_flags) &     =
+ \
+>                                    ~(1UL << NILFS_CHECKPOINT_##flag));  \
+>  }                                                                      \
+>  static inline int                                                      \
+>  nilfs_checkpoint_##name(const struct nilfs_checkpoint *cp)             \
+>  {                                                                      \
+> -       return !!(le32_to_cpu(cp->cp_flags) &                           \
+> +       return !!(__le32_to_cpu(cp->cp_flags) &                         \
+>                   (1UL << NILFS_CHECKPOINT_##flag));                    \
+>  }
+>
+> @@ -595,20 +595,20 @@ enum {
+>  static inline void                                                     \
+>  nilfs_segment_usage_set_##name(struct nilfs_segment_usage *su)         \
+>  {                                                                      \
+> -       su->su_flags =3D cpu_to_le32(le32_to_cpu(su->su_flags) |         =
+ \
+> +       su->su_flags =3D __cpu_to_le32(__le32_to_cpu(su->su_flags) |     =
+ \
+>                                    (1UL << NILFS_SEGMENT_USAGE_##flag));\
+>  }                                                                      \
+>  static inline void                                                     \
+>  nilfs_segment_usage_clear_##name(struct nilfs_segment_usage *su)       \
+>  {                                                                      \
+>         su->su_flags =3D                                                 =
+ \
+> -               cpu_to_le32(le32_to_cpu(su->su_flags) &                 \
+> +               __cpu_to_le32(__le32_to_cpu(su->su_flags) &             \
+>                             ~(1UL << NILFS_SEGMENT_USAGE_##flag));      \
+>  }                                                                      \
+>  static inline int                                                      \
+>  nilfs_segment_usage_##name(const struct nilfs_segment_usage *su)       \
+>  {                                                                      \
+> -       return !!(le32_to_cpu(su->su_flags) &                           \
+> +       return !!(__le32_to_cpu(su->su_flags) &                         \
+>                   (1UL << NILFS_SEGMENT_USAGE_##flag));                 \
+>  }
+>
+> @@ -619,15 +619,15 @@ NILFS_SEGMENT_USAGE_FNS(ERROR, error)
+>  static inline void
+>  nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
+>  {
+> -       su->su_lastmod =3D cpu_to_le64(0);
+> -       su->su_nblocks =3D cpu_to_le32(0);
+> -       su->su_flags =3D cpu_to_le32(0);
+> +       su->su_lastmod =3D __cpu_to_le64(0);
+> +       su->su_nblocks =3D __cpu_to_le32(0);
+> +       su->su_flags =3D __cpu_to_le32(0);
+>  }
+>
+>  static inline int
+>  nilfs_segment_usage_clean(const struct nilfs_segment_usage *su)
+>  {
+> -       return !le32_to_cpu(su->su_flags);
+> +       return !__le32_to_cpu(su->su_flags);
+>  }
+>
+>  /**
+> --
+> 2.17.1
+>
+
+
+--=20
+Best Regards
+Masahiro Yamada
