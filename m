@@ -1,14 +1,14 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v5 04/18] fs: compat_ioctl: move FITRIM
+Subject: [PATCH v6 30/43] fs: compat_ioctl: move FITRIM
 	emulation into file systems
-Date: Wed, 14 Aug 2019 22:42:31 +0200
-Message-ID: <20190814204259.120942-5-arnd@arndb.de>
-References: <20190814204259.120942-1-arnd@arndb.de>
+Date: Wed,  9 Oct 2019 21:10:31 +0200
+Message-ID: <20191009191044.308087-31-arnd@arndb.de>
+References: <20191009190853.245077-1-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <ocfs2-devel-bounces@oss.oracle.com>
-In-Reply-To: <20190814204259.120942-1-arnd@arndb.de>
+In-Reply-To: <20191009190853.245077-1-arnd@arndb.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
 	<mailto:ocfs2-devel-request@oss.oracle.com?subject=unsubscribe>
@@ -19,13 +19,18 @@ List-Subscribe: <https://oss.oracle.com/mailman/listinfo/ocfs2-devel>,
 	<mailto:ocfs2-devel-request@oss.oracle.com?subject=subscribe>
 Sender: ocfs2-devel-bounces@oss.oracle.com
 Errors-To: ocfs2-devel-bounces@oss.oracle.com
-To: linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, Tyler Hicks <tyhicks@canonical.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Mark Fasheh <mark@fasheh.com>, Joel Becker <jlbec@evilplan.org>, Joseph Qi <joseph.qi@linux.alibaba.com>
-Cc: ecryptfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Wang Shilong <wshilong@ddn.com>, yangerkun <yangerkun@huawei.com>, Eric Biggers <ebiggers@google.com>, linux-f2fs-devel@lists.sourceforge.net, Chandan Rajendra <chandan@linux.vnet.ibm.com>, Mauro Carvalho Chehab <mchehab+samsung@kernel.org>, linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-nilfs@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, ocfs2-devel@oss.oracle.com
 
 Remove the special case for FITRIM, and make file systems
 handle that like all other ioctl commands with their own
 handlers.
 
+Cc: linux-ext4@vger.kernel.org
+Cc: linux-f2fs-devel@lists.sourceforge.net
+Cc: Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>
+Cc: linux-nilfs@vger.kernel.org
+Cc: ocfs2-devel@oss.oracle.com
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
  fs/compat_ioctl.c  | 2 --
@@ -64,10 +69,10 @@ index feecb57defa7..5fb45d865ce5 100644
  	case FS_IOC32_SETFLAGS:
  	case FS_IOC32_GETVERSION:
 diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
-index 442f7ef873fc..7a6e0f0f69e2 100644
+index 0b7f316fd30f..e8870fff8224 100644
 --- a/fs/ext4/ioctl.c
 +++ b/fs/ext4/ioctl.c
-@@ -1227,6 +1227,7 @@ long ext4_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+@@ -1360,6 +1360,7 @@ long ext4_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
  	}
  	case EXT4_IOC_MOVE_EXT:
  	case EXT4_IOC_RESIZE_FS:
@@ -76,10 +81,10 @@ index 442f7ef873fc..7a6e0f0f69e2 100644
  	case EXT4_IOC_SET_ENCRYPTION_POLICY:
  	case EXT4_IOC_GET_ENCRYPTION_PWSALT:
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 3e58a6f697dd..befd2692160c 100644
+index 29bc0a542759..57d82f2d2ebd 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
-@@ -3216,6 +3216,7 @@ long f2fs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+@@ -3403,6 +3403,7 @@ long f2fs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
  	case F2FS_IOC_RELEASE_VOLATILE_WRITE:
  	case F2FS_IOC_ABORT_VOLATILE_WRITE:
  	case F2FS_IOC_SHUTDOWN:
