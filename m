@@ -1,96 +1,149 @@
-From: Tomas Hlavaty <tom-3l5KtCzVe0PQT0dZR+AlfA@public.gmane.org>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference at 00000000000000a8 in nilfs_segctor_do_construct
-Date: Thu, 23 Jan 2020 14:00:21 +0100
-Message-ID: <87sgk6tjiy.fsf@logand.com>
-References: <8736emquds.fsf@logand.com> <CAKFNMo=k1wVHOwXhTLEOJ+A-nwmvJ+sN_PPa8kY8fMxrQ4R+Jw@mail.gmail.com> <76887BD9-D6C4-4A89-8F55-4BEAF2828FD3@dubeyko.com>
+From: ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>
+Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
+ 00000000000000a8 in nilfs_segctor_do_construct
+Date: Thu, 23 Jan 2020 23:07:41 +0900 (JST)
+Message-ID: <20200123.230741.1435519633766712935.hermes@ceres.dti.ne.jp>
+References: <8736emquds.fsf@logand.com>
+        <CAKFNMo=k1wVHOwXhTLEOJ+A-nwmvJ+sN_PPa8kY8fMxrQ4R+Jw@mail.gmail.com>
+        <20200123.225827.1155989593018204741.hermes@ceres.dti.ne.jp>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <76887BD9-D6C4-4A89-8F55-4BEAF2828FD3-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <20200123.225827.1155989593018204741.hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: Viacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: Text/Plain; charset="iso-2022-jp"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Viacheslav,
+Hi,
 
-Viacheslav Dubeyko <slava-yeENwD64cLxBDgjK7y7TUQ@public.gmane.org> writes:
-> (1) the partition size?
+I fogot to send it to this ML...
 
-the first disk with crash was 1TB
+In <20200123.225827.1155989593018204741.hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>;
+   ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org> wrote
+   as Subject "Re: BUG: unable to handle kernel NULL pointer dereference at 00000000000000a8 in nilfs_segctor_do_construct":
 
-the second disk with crash, which i have by me, is 2TB:
-
-$ lsblk /dev/sdb
-NAME      MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
-sdb         8:16   0  1.8T  0 disk  
-└─extdisk 254:2    0  1.8T  0 crypt /mnt/b
-
-> (2) the logical block size?
-> (3) the segment size?
-
-how can i find (2) and (3) out?
-
-here is the output of nilfs-tune:
-
-$ sudo nilfs-tune -l /dev/mapper/extdisk
-nilfs-tune 2.2.7
-Filesystem volume name:	  backup1_nilfs2
-Filesystem UUID:	  7d9708f9-464f-41b7-a0c6-eda18741012f
-Filesystem magic number:  0x3434
-Filesystem revision #:	  2.0
-Filesystem features:      (none)
-Filesystem state:	  valid
-Filesystem OS type:	  Linux
-Block size:		  4096
-Filesystem created:	  Thu Dec 27 14:14:14 2018
-Last mount time:	  Fri Dec 20 13:06:15 2019
-Last write time:	  Thu Jan 23 13:04:30 2020
-Mount count:		  15
-Maximum mount count:	  50
-Reserve blocks uid:	  0 (user root)
-Reserve blocks gid:	  0 (group root)
-First inode:		  11
-Inode size:		  128
-DAT entry size:		  32
-Checkpoint size:	  192
-Segment usage size:	  16
-Number of segments:	  238465
-Device size:		  2000396834816
-First data block:	  1
-# of blocks per segment:  2048
-Reserved segments %:	  5
-Last checkpoint #:	  9884
-Last block address:	  280841435
-Last sequence #:	  137120
-Free blocks count:	  207591424
-Commit interval:	  0
-# of blks to create seg:  0
-CRC seed:		  0x5172270a
-CRC check sum:		  0x2ef767d2
-CRC check data size:	  0x00000118
-
-it seems strange that the last write time is today, even though i
-mounted the partition read-only
-
-/dev/mapper/extdisk on /mnt/b type nilfs2 (ro,relatime)
-
-> (4) how the partition was created?
-
-using parted
-then cryptsetup luksFormat
-then cryptsetup luksOpen
-then mkfs.nilfs2
-
-> (5) the version of tools that created the partition?
-
-how can i find this out?  is it saved somewhere?
-
-> (6) the amount of free space on the partition?
-
-/dev/mapper/extdisk  1.9T  1.1T  699G  61% /mnt/b
-
-Regards,
-
-Tomas
+> Hi,
+> 
+> It is reproducible in my environment.
+> Kernel version is 4.19.86 (Gentoo).
+> NILFS2 with kernel 4.19.82 works well.
+> 
+> I did following for the test.
+> 
+> i) mount corrupt partition with read-only option
+>  (this partition causes "mounting fs with errors" at every rw mount)
+>  i-1) wait a few minutes ... not crash
+>  i-2) fs access (ls, du, ...) ... not crash
+> 
+> ii) create small NILFS2 fs and read-write mount
+>  dd if=/dev/zero of=/tmp/n bs=1M count=500
+>  mount -o loop /tmp/n /mnt/tmp
+>  ii-1) wait a few minutes ... not crash
+>  ii-2) touch file in the fs ... crash (in few seconds)
+> 
+> 
+> In <CAKFNMo=k1wVHOwXhTLEOJ+A-nwmvJ+sN_PPa8kY8fMxrQ4R+Jw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>;
+>    Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote
+>    as Subject "Re: BUG: unable to handle kernel NULL pointer dereference at 00000000000000a8 in nilfs_segctor_do_construct":
+> 
+>> Hi,
+>> 
+>>> It was likely caused by improper shutdown and following nilfs2 partition
+>>> corruption.  Now I can still read the data, but on the whole the
+>>> computer is not useable, because starting a process which uses the
+>>> corrupted file system simply crashes in kernel.
+>> 
+>> Thank you for reporting the issue.
+>> Let me ask you a few questions:
+>> 
+>> 1) Is the crash reproducible in the environment ?
+>> 2) Can you mount the corrupted(?) partition from a recent version of kernel ?
+>> 3) Does read-only mount option (-r) work to avoid the crash ?
+>> 
+>> Thanks,
+>> Ryusuke Konishi
+>> 
+>> 2019$BG/(B11$B7n(B18$BF|(B($B7n(B) 2:34 Tomas Hlavaty <tom-3l5KtCzVe0PQT0dZR+AlfA@public.gmane.org>:
+>>>
+>>> Hi Ryusuke,
+>>>
+>>> today I got this bug in kernel, which seems to be related to nilfs2.
+>>>
+>>> It was likely caused by improper shutdown and following nilfs2 partition
+>>> corruption.  Now I can still read the data, but on the whole the
+>>> computer is not useable, because starting a process which uses the
+>>> corrupted file system simply crashes in kernel.  I am actually not sure
+>>> if the filesystem is corrupted, as I don't know about any tool to check
+>>> that.  The relevant parts of dmesg log are bellow.
+>>>
+>>> Please let me know if you are the right contact or if you need more info
+>>> about the problem.
+>>>
+>>> Thank you,
+>>>
+>>> Tomas
+>>>
+>>> [    0.000000] Linux version 4.19.84 (nixbld@localhost) (gcc version 8.3.0 (GCC)) #1-NixOS SMP Tue Nov 12 18:21:46 UTC 2019
+>>> [    0.000000] Command line: initrd=\efi\nixos\4s51zw36kd1qb0ymk0charxjg8x6k5k3-initrd-linux-4.19.84-initrd.efi systemConfig=/nix/store/gdbxhzysr929abrymjqala0b5bh2fqmv-nixos-system-ushi-19.09.1258.07e66484e67 init=/nix/store/gdbxhzysr929abrymjqala0b5bh2fqmv-nixos-system-ushi-19.09.1258.07e66484e67/init loglevel=4
+>>>
+>>>
+>>>
+>>> [   37.741106] systemd-journald[470]: Received client request to flush runtime journal.
+>>> [   37.749084] systemd-journald[470]: File /var/log/journal/55a4ea9159c14c0bb8767a43819c6927/system.journal corrupted or uncleanly shut down, renaming and replacing.
+>>> [   37.810819] audit: type=1130 audit(1573985039.617:3): pid=1 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='unit=systemd-udevd comm="systemd" exe="/nix/store/v8flm2h07zcfg5k5npz56m0ayj0qm1q8-systemd-243/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+>>>
+>>> [   38.321561] NILFS version 2 loaded
+>>> [   38.323236] NILFS (dm-1): mounting unchecked fs
+>>>
+>>>
+>>> [   38.349185] NILFS (dm-1): recovery complete
+>>> [   38.353228] NILFS (dm-1): segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
+>>>
+>>> [   63.543941] systemd-journald[470]: File
+>>> /var/log/journal/55a4ea9159c14c0bb8767a43819c6927/user-1000.journal
+>>> corrupted or uncleanly shut down, renaming and replacing.
+>>>
+>>> [12637.085548] BUG: unable to handle kernel NULL pointer dereference at 00000000000000a8
+>>> [12637.085558] PGD 0 P4D 0
+>>> [12637.085567] Oops: 0000 [#1] SMP PTI
+>>> [12637.085574] CPU: 0 PID: 657 Comm: segctord Not tainted 4.19.84 #1-NixOS
+>>> [12637.085577] Hardware name: ASUSTeK COMPUTER INC. VivoBook 15_ASUS Laptop X507MA_R507MA/X507MA, BIOS X507MA.301 09/14/2018
+>>> [12637.085589] RIP: 0010:percpu_counter_add_batch+0x4/0x60
+>>> [12637.085593] Code: 89 e6 89 c7 e8 dd 3b 28 00 3b 05 fb e0 b6 00 72 d8 4c 89 ee 48 89 ef e8 7a 63 2a 00 48 89 d8 5b 5d 41 5c 41 5d c3 41 54 55 53 <48> 8b 47 20 65 44 8b 20 49 63 ec 48 63 ca 48 01 f5 48 39 e9 7e 0a
+>>> [12637.085597] RSP: 0018:ffff9d1b00a0bd20 EFLAGS: 00010006
+>>> [12637.085601] RAX: 0000000000000002 RBX: 0000000000000000 RCX: 0000000000000018
+>>> [12637.085604] RDX: 0000000000000018 RSI: 0000000000000001 RDI: 0000000000000088
+>>> [12637.085608] RBP: ffff8df67a2988d0 R08: 0000000000000000 R09: ffff8df66fe0cfe0
+>>> [12637.085611] R10: 0000000000000230 R11: 0000000000000000 R12: 0000000000000000
+>>> [12637.085614] R13: ffff8df67a298758 R14: ffff8df67a2988c8 R15: ffffccd684229a80
+>>> [12637.085618] FS:  0000000000000000(0000) GS:ffff8df67ba00000(0000) knlGS:0000000000000000
+>>> [12637.085621] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+>>> [12637.085624] CR2: 00000000000000a8 CR3: 000000011ac0a000 CR4: 0000000000340ef0
+>>> [12637.085628] Call Trace:
+>>> [12637.085640]  __test_set_page_writeback+0x37c/0x3f0
+>>> [12637.085663]  nilfs_segctor_do_construct+0x184e/0x2040 [nilfs2]
+>>> [12637.085680]  nilfs_segctor_construct+0x1f5/0x2e0 [nilfs2]
+>>> [12637.085693]  nilfs_segctor_thread+0x129/0x370 [nilfs2]
+>>> [12637.085706]  ? nilfs_segctor_construct+0x2e0/0x2e0 [nilfs2]
+>>> [12637.085713]  kthread+0x112/0x130
+>>> [12637.085719]  ? kthread_bind+0x30/0x30
+>>> [12637.085728]  ret_from_fork+0x1f/0x40
+>>> [12637.085734] Modules linked in: ctr ccm af_packet msr 8021q snd_hda_codec_hdmi snd_hda_codec_realtek snd_hda_codec_generic hid_multitouch arc4 ath9k ath9k_common ath9k_hw ath mac80211 snd_soc_skl snd_soc_skl_ipc spi_pxa2xx_platform asus_nb_wmi snd_soc_sst_ipc snd_soc_sst_dsp asus_wmi 8250_dw i2c_designware_platform sparse_keymap i2c_designware_core wmi_bmof i915 snd_hda_ext_core nilfs2 snd_soc_acpi_intel_match snd_soc_acpi uvcvideo videobuf2_vmalloc nls_iso8859_1 videobuf2_memops videobuf2_v4l2 snd_soc_core nls_cp437 rtsx_usb_ms intel_telemetry_pltdrv vfat intel_punit_ipc intel_telemetry_core fat intel_pmc_ipc memstick videobuf2_common snd_compress kvmgt vfio_mdev mdev ath3k vfio_iommu_type1 vfio btusb ac97_bus snd_pcm_dmaengine btrtl x86_pkg_temp_thermal intel_powerclamp btbcm cec c
+ oretemp btintel
+>>> [12637.085819]  crct10dif_pclmul crc32_pclmul videodev snd_hda_intel bluetooth drm_kms_helper ghash_clmulni_intel deflate media efi_pstore intel_cstate pstore intel_rapl_perf cfg80211 snd_hda_codec joydev mousedev evdev wdat_wdt serio_raw mac_hid efivars drm snd_hda_core snd_hwdep ecdh_generic snd_pcm snd_timer mei_me idma64 virt_dma snd intel_gtt agpgart i2c_i801 i2c_algo_bit mei fb_sys_fops syscopyarea soundcore rfkill processor_thermal_device sysfillrect sysimgblt intel_lpss_pci intel_soc_dts_iosf thermal wmi intel_lpss i2c_hid i2c_core battery tpm_crb button ac tpm_tis tpm_tis_core asus_wireless video pcc_cpufreq tpm rng_core pinctrl_geminilake int3400_thermal int3403_thermal pinctrl_intel int340x_thermal_zone acpi_thermal_rel iptable_nat nf_nat_ipv4 nf_nat xt_conntrack nf_conntrac
+ k nf_defrag_ipv6
+>>> [12637.085912]  nf_defrag_ipv4 libcrc32c ip6t_rpfilter ipt_rpfilter ip6table_raw iptable_raw xt_pkttype nf_log_ipv6 nf_log_ipv4 nf_log_common xt_LOG xt_tcpudp ip6table_filter ip6_tables iptable_filter sch_fq_codel loop cpufreq_powersave tun tap macvlan bridge stp llc kvm_intel kvm irqbypass efivarfs ip_tables x_tables ipv6 crc_ccitt autofs4 ext4 crc32c_generic crc16 mbcache jbd2 fscrypto dm_crypt algif_skcipher af_alg rtsx_usb_sdmmc mmc_core rtsx_usb hid_generic usbhid hid sd_mod input_leds led_class atkbd libps2 ahci libahci xhci_pci libata xhci_hcd aesni_intel usbcore aes_x86_64 crypto_simd scsi_mod cryptd glue_helper crc32c_intel usb_common rtc_cmos i8042 serio dm_mod
+>>> [12637.086000] CR2: 00000000000000a8
+>>> [12637.086005] ---[ end trace ee0079180c990cd2 ]---
+>>> [12637.120805] RIP: 0010:percpu_counter_add_batch+0x4/0x60
+>>> [12637.120807] Code: 89 e6 89 c7 e8 dd 3b 28 00 3b 05 fb e0 b6 00 72 d8 4c 89 ee 48 89 ef e8 7a 63 2a 00 48 89 d8 5b 5d 41 5c 41 5d c3 41 54 55 53 <48> 8b 47 20 65 44 8b 20 49 63 ec 48 63 ca 48 01 f5 48 39 e9 7e 0a
+>>> [12637.120809] RSP: 0018:ffff9d1b00a0bd20 EFLAGS: 00010006
+>>> [12637.120811] RAX: 0000000000000002 RBX: 0000000000000000 RCX: 0000000000000018
+>>> [12637.120812] RDX: 0000000000000018 RSI: 0000000000000001 RDI: 0000000000000088
+>>> [12637.120814] RBP: ffff8df67a2988d0 R08: 0000000000000000 R09: ffff8df66fe0cfe0
+>>> [12637.120815] R10: 0000000000000230 R11: 0000000000000000 R12: 0000000000000000
+>>> [12637.120816] R13: ffff8df67a298758 R14: ffff8df67a2988c8 R15: ffffccd684229a80
+>>> [12637.120818] FS:  0000000000000000(0000) GS:ffff8df67ba00000(0000) knlGS:0000000000000000
+>>> [12637.120820] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+>>> [12637.120821] CR2: 00000000000000a8 CR3: 0000000138e0a000 CR4: 0000000000340ef0
