@@ -1,8 +1,8 @@
 From: ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>
 Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
  00000000000000a8 in nilfs_segctor_do_construct
-Date: Thu, 23 Jan 2020 23:07:41 +0900 (JST)
-Message-ID: <20200123.230741.1435519633766712935.hermes@ceres.dti.ne.jp>
+Date: Thu, 23 Jan 2020 23:30:54 +0900 (JST)
+Message-ID: <20200123.233054.1176220936128499438.hermes@ceres.dti.ne.jp>
 References: <8736emquds.fsf@logand.com>
         <CAKFNMo=k1wVHOwXhTLEOJ+A-nwmvJ+sN_PPa8kY8fMxrQ4R+Jw@mail.gmail.com>
         <20200123.225827.1155989593018204741.hermes@ceres.dti.ne.jp>
@@ -13,11 +13,17 @@ In-Reply-To: <20200123.225827.1155989593018204741.hermes-akuOmOme3sQYOdUovKs6ag@
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="iso-2022-jp"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
 
-I fogot to send it to this ML...
+Now I found that my /tmp is not tmpfs, it is in root partition (!!!???)
+
+And, I use LUKS for it.
+ LUKS - VG - LV (root, usr, ...)
+
+I want to try "ii)" without LUKS/LVM, but cannot reboot now.
+
 
 In <20200123.225827.1155989593018204741.hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>;
    ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org> wrote
