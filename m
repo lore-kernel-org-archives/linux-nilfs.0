@@ -1,8 +1,8 @@
 From: ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>
 Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
  00000000000000a8 in nilfs_segctor_do_construct
-Date: Thu, 23 Jan 2020 23:30:54 +0900 (JST)
-Message-ID: <20200123.233054.1176220936128499438.hermes@ceres.dti.ne.jp>
+Date: Mon, 10 Feb 2020 22:46:09 +0900 (JST)
+Message-ID: <20200210.224609.499887311281343618.hermes@ceres.dti.ne.jp>
 References: <8736emquds.fsf@logand.com>
         <CAKFNMo=k1wVHOwXhTLEOJ+A-nwmvJ+sN_PPa8kY8fMxrQ4R+Jw@mail.gmail.com>
         <20200123.225827.1155989593018204741.hermes@ceres.dti.ne.jp>
@@ -13,16 +13,35 @@ In-Reply-To: <20200123.225827.1155989593018204741.hermes-akuOmOme3sQYOdUovKs6ag@
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="iso-2022-jp"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 Hi,
 
-Now I found that my /tmp is not tmpfs, it is in root partition (!!!???)
+FYI, reporting additional test results.
 
-And, I use LUKS for it.
- LUKS - VG - LV (root, usr, ...)
+I reproduced this problem with clean NILFS2 fs in previous mail.
+"clean" means that "make filesystem before every tests."
+In this mail, I tried to reproduct with/without VG/LV, LUKS, loopback.
 
-I want to try "ii)" without LUKS/LVM, but cannot reboot now.
+* Not reproduced
+ USB stick - primary partition - NILFS2
+ USB stick - primary partition - VG/LV - NILFS2
+ USB stick - primary partition - VG/LV - LUKS - NILFS2
+ USB stick - primary partition - LUKS - VG/LV - NILFS2
+ USB stick - primary partition - LUKS - VG/LV - LUKS - NILFS2
+ /tmp (tmpfs) - regular file - NILFS2 (loopback mount, kernel 4.19.82)
+ USB stick - primary partition(512MiB) - NILFS2
+
+* Reproduced (always, immediately)
+ /tmp (tmpfs) - regular file - NILFS2 (loopback mount)
+ USB stick - primary partition - ext4 - regular file - NILFS2 (loopback mount)
+
+Test conditions:
+ kernel 4.19.86 (same as previous test)
+ NILFS2/ext4 filesystem, VG/LV, LUKS were made with default parameters
+ size of "primary partition" in USB stick is approx. 14GiB
+ size of "regular file" is approx. 512MiB
+ "reproduce": mount NILFS2, touch file, sync
 
 
 In <20200123.225827.1155989593018204741.hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>;
