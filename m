@@ -1,8 +1,8 @@
-From: "Brian G." <gissf1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
  00000000000000a8 in nilfs_segctor_do_construct
-Date: Sat, 15 Feb 2020 20:24:41 -0600
-Message-ID: <CAAq45aOKxDXkb=4CqrM1HrbP-=VcLcgV9o468muJfWFg8JSKBA@mail.gmail.com>
+Date: Sun, 16 Feb 2020 12:59:59 +0900
+Message-ID: <CAKFNMo=ddKezZ7_q8R0N6Ldzqbf=J6NsOvfHQ2N2XLZdeiYCjg@mail.gmail.com>
 References: <CAKFNMo=k1wVHOwXhTLEOJ+A-nwmvJ+sN_PPa8kY8fMxrQ4R+Jw@mail.gmail.com>
  <20200123.225827.1155989593018204741.hermes@ceres.dti.ne.jp>
  <20200210.224609.499887311281343618.hermes@ceres.dti.ne.jp> <20200216.111029.687350152614907818.hermes@ceres.dti.ne.jp>
@@ -12,62 +12,30 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc;
-        bh=hn1LAaGTLMUYM/u3qFiUMUaaIMVmNm5PW8Pt3lKNegM=;
-        b=Fvutr1hZbHBtGkF7oeQ/BdZ9cdHyLFGQF+ZfrNYLS8239jrnE8YQvZW4ZZm58G2bCy
-         Z2MJpzqM4uwhUe1wjyVFAm4jJJvQjnTVZzNgDVluvY6XbyDgWZ6lBKfUbc/YmhwwGebN
-         R1nP0Z2Q4tdPNgGgB8nZs1s4k0JqIyK5rMK8xyRtGdqQmWki5tPeJ5cVyyAyUn+xP1q/
-         lkVLLiz9ySKl/J5cybUX51i34qtwKleoR/twuSqu426+7qrcKoeKjyW8oP+72X8WK83d
-         V05qS14D/P8EudKj19OodvR9lWvNAMOY5lqSjm5+47E145IAKVuCv0HmbaiDGzrdkyGf
-         gTKQ==
+        bh=ZumH7VSrBkKR9NuOEmDOA6BzNCZCemt1XDqhscI/Rg8=;
+        b=oCKRXQmLkUaU9aBBVuQLL49iWPzXFYxZff6uobWah6jW+qQ07eqAIwApdkyYiYi5Ap
+         wLI95FcbLBhSE/mfgqdXZxfE1zmhlR3hDWg323ma/ErVn2kVy0472MdERY5RalCIQKn1
+         XOVWcSl19OfC5BgJHqkcJzD/mh/4pC8FNo+cxTkzOxqqh7A2UNbONOv6COOsdxoUO5hx
+         0htoYl6MMNcJ3MeF6RzyyPhDadoQDUwpC0UATY1VzRMq5MPnxWMezdkaTkwlDAtwswgH
+         p6ezQNFoZvTuB3/sqZ85+E4qZOeoXDWds/h9/yCa2+B0Qd+7J5jLC4ojKK7I2X9sJuoz
+         OQgQ==
 In-Reply-To: <20200216.111029.687350152614907818.hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Brian G." <gissf1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-This is my first post to the LKML, so please be kind :)  I also have
-been affected by this bug.  The bug is triggered whenever a write
-happens to the filesystem, which means mounting read-only is an
-available option to recover data.  I took the time to do a full bisect
-on the kernel sources and have identified the commit where the
-breakage happens.
+Thank you Arai-san,
 
-Regarding versions, I can confirm that 4.19.83 is stable with regards
-to NILFS, and 4.19.84 and later are broken.  I can also confirm that
-5.3.10 works fine and have heard that 5.3.12 breaks NILFS as well.  I
-can also confirm that the 5.4.18 kernel still has this issue.  I did
-not trace how far back the issue goes on the 5.4.x series, or even in
-more detail on the 5.3.x series.
+Your method with loopback device worked to reproduce the issue
+even where the bug doesn't easily hit for physical devices.
 
-To simplify my bisection task, I used the 4.19.x series, and
-determined that commit d3b3c0a14615c495118acc4bdca23d53eea46ed2 is the
-commit that breaks NILFS.  Furthermore, when reverting this commit on
-otherwise clean 4.19.84 kernel sources, the NILFS issue does not occur
-anymore.
+Regards,
+Ryusuke Konishi
 
-I'm not familiar enough with NILFS's internals to determine why the
-small caching change to the kernel from that commit breaks NILFS, nor
-can I offer a patch to fix it (besides reverting the offending change)
-but I can confirm that this is the initial cause.  I also know there
-has been alot of new changes to kernel caching in more recent (5.4 /
-5.5 / 5.6) kernels, so perhaps there is still more diagnostics to do.
-
-I have the test VM that I used for bisection available if someone
-wants to coordinate with me to put together a patch for this, but
-ideally someone can take my diagnostics effort here and make use of it
-directly.  I saved dmesg logs from both good and bad cases and I can
-send them if someone is interested.  I can also provide some level of
-detailed system setup instructions to reproduce the issue.  I did my
-testing against an existing external hard drive, but I have been able
-to reproduce the issue consistently against a freshly created loopback
-mount as well, so it is not just caused by disk corruption or an
-unclean unmount.
-
-- Brian
-
-On Sat, Feb 15, 2020 at 8:11 PM ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org> wrote:
+On Sun, Feb 16, 2020 at 11:11 AM ARAI Shun-ichi <hermes-akuOmOme3sQYOdUovKs6ag@public.gmane.org> wrote:
 >
 > And,
 >
