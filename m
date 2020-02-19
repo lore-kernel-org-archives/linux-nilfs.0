@@ -1,102 +1,55 @@
-From: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
-Subject: Re: [PATCH 00/44] Manually convert filesystem FS documents to ReST
-Date: Tue, 18 Feb 2020 11:04:06 +0100
-Message-ID: <20200218110406.098fdc09@kernel.org>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [PATCH 00/44] Manually convert filesystem FS
+	documents to ReST
+Date: Wed, 19 Feb 2020 02:32:34 -0700
+Message-ID: <20200219023234.7b704acb@lwn.net>
 References: <cover.1581955849.git.mchehab+huawei@kernel.org>
- <20200218040146.GM7778@bombadil.infradead.org>
+	<20200218040146.GM7778@bombadil.infradead.org>
+	<20200218110406.098fdc09@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=m.gmane-mx.org@lists.infradead.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=lists.infradead.org; s=bombadil.20170209; h=Sender:
-	Content-Transfer-Encoding:Content-Type:Cc:List-Subscribe:List-Help:List-Post:
-	List-Archive:List-Unsubscribe:List-Id:MIME-Version:References:In-Reply-To:
-	Message-ID:Subject:To:From:Date:Reply-To:Content-ID:Content-Description:
-	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=2edZqVayklgD493Helxa+CAJTwR0drqPQnZUcTxC1/Y=; b=aTy4GgoJgv+ZHG
-	qd/nUj93ETt5NgAJp7PbSC3RSVVOIdvqan3H4kX8ZPjkVJ6qzZTq7OaOz6qfD1+3Ut0ceEIdJ/rAZ
-	UbThWt8bo5+QJXaAFttYaxo8cRlltwF7voENadBhA+7WI3xD4g09r1tpfdcK3YdADKNOJZCPnXn2a
-	nQoBkQxXEmAeE6T//51U60ySXb43jA7iAr1SwAcRDY4tDl7rOye8b9FZk5ZA4uPiqN4tv5vFySj6w
-	wW7inYjfkaaG4vOfkWtvxJtE7P3Z8AqB6gvRYxe0tz2/IbRotU5t/8AcSeau/C2uoRXOpHQaG5iZl
-	DLxI5f2BJCwGFXmw1cFQ==;
-In-Reply-To: <20200218040146.GM7778@bombadil.infradead.org>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1582104797;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=g7qX9mp4oJ6yBemyXwClHjkdSOM0BIl1OFgwFQscLhE=;
+	b=dOBcALV0PAFd6IIrPklyfdxJltd3LFJI/OHUUGnAY8FoRuDrsJh2Oy1aVbQtQr6gN5Nd7Z
+	XeIshF+u1MSmUVzRSOI9m5H2mp1i7YATYuPzKYY4X1iBzLERTncZOYKce54TYkY9NjvdKm
+	1RNu3ad6u2gu6/jDq+/R3CigzQwMSrg=
+In-Reply-To: <20200218110406.098fdc09@kernel.org>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=m.gmane-mx.org@lists.infradead.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Latchesar Ionkov <lucho@ionkov.net>, Martin Brandenburg <martin@omnibond.com>, Jan Kara <jack@suse.cz>, Linux Doc Mailing List <linux-doc@vger.kernel.org>, Dominique Martinet <asmadeus@codewreck.org>, Amir Goldstein <amir73il@gmail.com>, Bob Copeland <me@bobcopeland.com>, David Howells <dhowells@redhat.com>, Chris Mason <clm@fb.com>, linux-mtd@lists.infradead.org, Ilya Dryomov <idryomov@gmail.com>, linux-afs@lists.infradead.org, Mike Marshall <hubcap@omnibond.com>, Naohiro Aota <naohiro.aota@wdc.com>, Christoph Hellwig <hch@infradead.org>, linux-nilfs@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>, Sage Weil <sage@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Richard Weinberger <richard@nod.at>, Tyler Hicks <code@tyhicks.com>, cluster-devel@redhat.com, v9fs-developer@lists.sourceforge.net, Gao Xiang <xiang@kernel.org>, linux-ext4@vger.kernel.org, Salah
+List-Unsubscribe: <https://www.redhat.com/mailman/options/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/cluster-devel>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/cluster-devel>,
+	<mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Sender: cluster-devel-bounces@redhat.com
+Errors-To: cluster-devel-bounces@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+To: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+Cc: Latchesar Ionkov <lucho@ionkov.net>, Brandenburg <martin@omnibond.com>, Jan Kara <jack@suse.cz>, Linux Doc Mailing List <linux-doc@vger.kernel.org>, Martinet <asmadeus@codewreck.org>, Amir Goldstein <amir73il@gmail.com>, Copeland <me@bobcopeland.com>, David Howells <dhowells@redhat.com>, Mason <clm@fb.com>, linux-mtd@lists.infradead.org, Dominique, Ilya Dryomov <idryomov@gmail.com>, linux-afs@lists.infradead.org, Jan Kara <jack@suse.com>, Mike Marshall <hubcap@omnibond.com>, Aota <naohiro.aota@wdc.com>, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, Sage Weil <sage@redhat.com>, Richard Weinberger <richard@nod.at>, Matthew Wilcox <willy@infradead.org>, Tyler Hicks <code@tyhicks.com>, Naohiro, v9fs-developer@lists.sourceforge.net, Gao Xiang <xiang@kernel.org>, linux-ext4@vger.kernel.org, Salah Triki <salah.triki@gmail.com>, Alexey Dobriyan <adobriyan@gmail.com>
 
-Em Mon, 17 Feb 2020 20:01:46 -0800
-Matthew Wilcox <willy@infradead.org> escreveu:
+On Tue, 18 Feb 2020 11:04:06 +0100
+Mauro Carvalho Chehab <mchehab+huawei@kernel.org> wrote:
 
-> On Mon, Feb 17, 2020 at 05:11:46PM +0100, Mauro Carvalho Chehab wrote:
-> > There are lots of plain text documents under Documentation/filesystems.
-> > 
-> > Manually convert several of those to ReST and add them to the index file.  
-> 
-> I think at least 90% of this material needs to be in admin-guide.  Should
-> we create Documentation/admin-guide/filesystems/ and move most of these
-> files there?
+> Then, do a second pass at files outside the new directories (like
+> admin-guide), in order to better organize things, eventually splitting
+> some files into kAPI, uAPI and/or admin-guide.
 
-It makes sense to me. Yet, there are some of those files that contains
-both user-facing and kernel-facing docs at the same place. 
+I'm looking forward to this phase!  Yes it is harder, and it often
+requires selling the idea to skeptical maintainers.  But that is how,
+IMO, we get from where we're at now to something closer to a set of
+coherent kernel docs.
 
-Btw, I found the same pattern on *several* other subsystems: when
-someone is documenting some feature, it tends to document both kAPI,
-uAPI and admin.
+Thanks,
 
-Right now, what we did so far on most places were to keep the stuff 
-together, as splitting them could sometimes be painful.
+jon
 
-As we are too close to finish the ReST conversion[1], I would prefer to
-first finish it. 
 
-Then, do a second pass at files outside the new directories (like
-admin-guide), in order to better organize things, eventually splitting
-some files into kAPI, uAPI and/or admin-guide.
-
-[1] Looking at next-20200217, after my last doc patches applied on this tree:
-
-	https://git.linuxtv.org/mchehab/experimental.git/log/?h=all_docs_merged
-
-excluding (most) false positives, we have now only ~50 text files left to
-convert:
-
-$ dirname $(find Documentation/ -type f|grep -vE '\.(rst|svg|dot|py|awk|sh|pl|gitignore|S|yaml|c|inf|vim|modes)'|grep -vE '(Makefile|Kconfig|LICENSE|COPYING-logo|ChangeLog|CREDITS)'|grep -v devicetree/bindings|grep -vE 'Documentation/(ABI|features|output|SubmittingPatches|CodingStyle|logo.gif|dontdiff|sphinx/requirements.txt|admin-guide/kdump/gdbmacros.txt|admin-guide/aoe/udev.txt|EDID/hex|netlabel/draft-ietf-cipso-ipsecurity-01.txt|firmware_class/hotplug-script|target/target-export-device|networking/mac80211-auth-assoc-deauth.txt|sparc/oradax/dax-hv-api.txt)'|grep -v translations)|sort|uniq -c|sort -n
-$ echo -n "Total: "
-$ dirname $(find Documentation/ -type f|grep -vE '\.(rst|svg|dot|py|awk|sh|pl|gitignore|S|yaml|c|inf|vim|modes)'|grep -vE '(Makefile|Kconfig|LICENSE|COPYING-logo|ChangeLog|CREDITS)'|grep -v devicetree/bindings|grep -vE 'Documentation/(ABI|features|output|SubmittingPatches|CodingStyle|logo.gif|dontdiff|sphinx/requirements.txt|admin-guide/kdump/gdbmacros.txt|admin-guide/aoe/udev.txt|EDID/hex|netlabel/draft-ietf-cipso-ipsecurity-01.txt|firmware_class/hotplug-script|target/target-export-device|networking/mac80211-auth-assoc-deauth.txt|sparc/oradax/dax-hv-api.txt)'|grep -v translations)|wc -l
-
-      1 Documentation/filesystems/cifs
-      1 Documentation/filesystems/configfs
-      1 Documentation/scsi
-      1 Documentation/virt/kvm/devices
-      2 Documentation/admin-guide
-      3 Documentation
-      6 Documentation/devicetree
-      6 Documentation/filesystems/caching
-      8 Documentation/RCU
-     21 Documentation/filesystems
-Total: 50
-
-Once we get this series merged, I'm planning to prepare and submit a second
-series doing the conversion for the other ~20 filesystem files.
-
-Btw, if you want to look how things will become after my patch series,
-I'm keeping a html build after all my patch series at:
-
-	https://www.infradead.org/~mchehab/kernel_docs/
-
-Cheers,
-Mauro
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
