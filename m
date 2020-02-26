@@ -1,7 +1,7 @@
 From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
 Subject: NiLFS support on Pinebook
-Date: Wed, 26 Feb 2020 11:22:35 +0100
-Message-ID: <20200226102235.GA2060@dropje.13thmonkey.org>
+Date: Wed, 26 Feb 2020 11:40:07 +0100
+Message-ID: <20200226104006.GA19476@dropje.13thmonkey.org>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
@@ -10,7 +10,6 @@ List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 Dear folks, dear Ryusuke,
 
@@ -23,6 +22,5 @@ shipped with it, but only the tools?
 How can I install the nilfs2 filesystem? Or is that up to the distribution and
 out of my control?
 
-With regards,
-Reinoud
+With regards, Reinoud
 
