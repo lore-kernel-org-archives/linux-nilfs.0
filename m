@@ -1,44 +1,57 @@
 From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
-Subject: Qemu (Re: NiLFS support on Pinebook)
-Date: Fri, 28 Feb 2020 11:55:03 +0100
-Message-ID: <20200228105503.GA345@dropje.13thmonkey.org>
+Subject: Re: Qemu (Re: NiLFS support on Pinebook)
+Date: Fri, 28 Feb 2020 20:20:04 +0100
+Message-ID: <20200228192004.GA7355@dropje.13thmonkey.org>
 References: <20200226102235.GA2060@dropje.13thmonkey.org>
  <20200227.001457.2102675267682326035.konishi.ryusuke@lab.ntt.co.jp>
+ <20200228105503.GA345@dropje.13thmonkey.org>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20200227.001457.2102675267682326035.konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>
+In-Reply-To: <20200228105503.GA345-WweU7nrmO3INqjISwOrxaLFspR4gePGN@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On Thu, Feb 27, 2020 at 12:14:57AM +0900, Ryusuke Konishi wrote:
-> Hi Reinoud,
-> 
-> > when i mount a partition it gives the error "mount.nilfs2: cannot find or load
-> > nilfs2 filesystem". Does this mean the linux kernel has no nilfs2 module
-> > shipped with it, but only the tools?
-> 
-> We see this message if nilfs2 kernel module (nilfs2.ko) doesn't exists in
-> /lib/modules/$(uname -r)/... .
-> 
-> Some distros don't have nilfs2 module (e.g. RHEL/CentOS), and some
-> need an extra package like kernel-modules-extra (e.g. Fedora).
-> 
-> I don't know that is there in the Pinebook.
+Hi Ryusuke,
 
-Problem with pinebook is that there are distro's around to test but they seem
-to like the 3.10 kernel too much and update all but the kernel. The linux
-headers they ship are for 4.x and 5.x so no use for compiling the kernel
-module itself.
+On Fri, Feb 28, 2020 at 11:55:03AM +0100, Reinoud Zandijk wrote:
+> Can you recommend a lightweigth linux distro with nilfs support that runs fast
+> in `unaided' Qemu?  I.e. with only the `tcg' acceleration and with no
+> graphics?
 
-Can you recommend a lightweigth linux distro with nilfs support that runs fast
-in `unaided' Qemu?  I.e. with only the `tcg' acceleration and with no
-graphics?
+I've settled for a Debian without graphics and it works quite well AND it has
+NiLFS2 support!
 
-Thanks in advance,
+Testing it on one of my older test NiLFS2 images I had around it paniced when
+I did this:
+
+qemu-system-x86_64 -drive file=root.debian.fs,format=raw -accel
+  tcg,thread=multi -smp cpus=4 -m 4096 -drive
+  file=/usr/tmp/nilfs.4g.img,format=raw
+....
+    mount.nilfs2 /dev/sdb1 /mnt
+    touch /mnt/UDF
+wait a second or two
+    CRASH
+
+Note that /mnt/UDF exists and is a directory. It gives a NULL pointer
+dereference at 0xa8
+Call trace:
+    __test_set_page_writeback+0x38c/0x3f0
+    nilfs_segctor_do_construct+0x190f
+    nilfs_segctor_construct+0x1f5
+    nilfs_segctor_thread+0x127
+....
+RIP: 0010:percpu_counter_add_batch+0x04
+....
+
+Do you like to receive a copy of this image? It used to work fine and should
+only be touched by your NiLFS code.
+
+With regards,
 Reinoud
 
