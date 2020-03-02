@@ -1,57 +1,50 @@
-From: Reinoud Zandijk <reinoud-qavaossjCcEdnm+yROfE0A@public.gmane.org>
-Subject: Re: Qemu (Re: NiLFS support on Pinebook)
-Date: Fri, 28 Feb 2020 20:20:04 +0100
-Message-ID: <20200228192004.GA7355@dropje.13thmonkey.org>
-References: <20200226102235.GA2060@dropje.13thmonkey.org>
- <20200227.001457.2102675267682326035.konishi.ryusuke@lab.ntt.co.jp>
- <20200228105503.GA345@dropje.13thmonkey.org>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [PATCH 00/44] Manually convert filesystem FS documents to ReST
+Date: Mon, 2 Mar 2020 14:13:16 -0700
+Message-ID: <20200302141316.4269b22d@lwn.net>
+References: <cover.1581955849.git.mchehab+huawei@kernel.org>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200228105503.GA345-WweU7nrmO3INqjISwOrxaLFspR4gePGN@public.gmane.org>
-Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=m.gmane-mx.org@lists.infradead.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20170209; h=Sender:
+	Content-Transfer-Encoding:Content-Type:Cc:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:MIME-Version:References:In-Reply-To:
+	Message-ID:Subject:To:From:Date:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=/K6Pjf8bwlMcB0q5Ez8hNsmE5loIn7Rb+C7vd8pdsXU=; b=efpjMFUx6v8afC
+	s20yaen/z783SmO45zp2MKb81mWu1cpNJgbJe/mJhw/DGayYxvQEVdxs2R9XJDyxJQWGT9Q+fl/1g
+	1pCfNf3g2CPaPuyuCBj5O4ezRrshs2hGnXla5KA70gJT0gWi3zL4zK+EFyzRgKq599cW58cGJczfr
+	QClcOLrsmbfVYv+Q8/6SpIQtS7sQGTsQwHhyqvZ4Q6pOug57g3JNGFkuK5i7oZXFpVS5jPMvPjHMK
+	0oSSmebHKS7r5xBwVvXQXX0d556Pw20L5xHkuftfyEgKjjBW81s69GfjseZPDWJn6LwMngo+NcNaJ
+	EPAFedE4gt3mNqc6NDEA==;
+In-Reply-To: <cover.1581955849.git.mchehab+huawei@kernel.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=m.gmane-mx.org@lists.infradead.org
+To: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+Cc: Latchesar Ionkov <lucho@ionkov.net>, Martin Brandenburg <martin@omnibond.com>, Jan Kara <jack@suse.cz>, Linux Doc Mailing List <linux-doc@vger.kernel.org>, Dominique Martinet <asmadeus@codewreck.org>, Amir Goldstein <amir73il@gmail.com>, Bob Copeland <me@bobcopeland.com>, David Howells <dhowells@redhat.com>, Joseph Qi <joseph.qi@linux.alibaba.com>, linux-mtd@lists.infradead.org, Tyler Hicks <code@tyhicks.com>, linux-afs@lists.infradead.org, Mike Marshall <hubcap@omnibond.com>, Naohiro Aota <naohiro.aota@wdc.com>, Christoph Hellwig <hch@infradead.org>, linux-nilfs@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>, Sage Weil <sage@redhat.com>, Richard Weinberger <richard@nod.at>, Mark Fasheh <mark@fasheh.com>, Chris Mason <clm@fb.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, cluster-devel@redhat.com, v9fs-developer@lists.sourceforge.net, Gao Xiang <xiang@kern>
 
-Hi Ryusuke,
+On Mon, 17 Feb 2020 17:11:46 +0100
+Mauro Carvalho Chehab <mchehab+huawei@kernel.org> wrote:
 
-On Fri, Feb 28, 2020 at 11:55:03AM +0100, Reinoud Zandijk wrote:
-> Can you recommend a lightweigth linux distro with nilfs support that runs fast
-> in `unaided' Qemu?  I.e. with only the `tcg' acceleration and with no
-> graphics?
+> There are lots of plain text documents under Documentation/filesystems.
+> 
+> Manually convert several of those to ReST and add them to the index file.
 
-I've settled for a Debian without graphics and it works quite well AND it has
-NiLFS2 support!
+OK, I've finally managed to add all the acks and wrestle this pile into
+docs-next - thanks.
 
-Testing it on one of my older test NiLFS2 images I had around it paniced when
-I did this:
+jon
 
-qemu-system-x86_64 -drive file=root.debian.fs,format=raw -accel
-  tcg,thread=multi -smp cpus=4 -m 4096 -drive
-  file=/usr/tmp/nilfs.4g.img,format=raw
-....
-    mount.nilfs2 /dev/sdb1 /mnt
-    touch /mnt/UDF
-wait a second or two
-    CRASH
-
-Note that /mnt/UDF exists and is a directory. It gives a NULL pointer
-dereference at 0xa8
-Call trace:
-    __test_set_page_writeback+0x38c/0x3f0
-    nilfs_segctor_do_construct+0x190f
-    nilfs_segctor_construct+0x1f5
-    nilfs_segctor_thread+0x127
-....
-RIP: 0010:percpu_counter_add_batch+0x04
-....
-
-Do you like to receive a copy of this image? It used to work fine and should
-only be touched by your NiLFS code.
-
-With regards,
-Reinoud
-
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
