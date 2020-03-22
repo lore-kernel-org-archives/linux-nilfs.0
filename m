@@ -1,51 +1,44 @@
-From: pg-9Cpm1x5jwYpury8xqvH7Ik8g8846gVy9@public.gmane.org (Peter Grandi)
-Subject: Re: null pointer dereferenced with Ubuntu kernel 4.15
-Date: Fri, 13 Mar 2020 18:57:05 +0000
-Message-ID: <24171.55169.327616.643008@base.ty.sabi.co.uk>
-References: <24166.20345.583274.370928@base.ty.sabi.co.uk>
-        <20200309184240.GA14772@dropje.13thmonkey.org>
+From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 0/2] nilfs2: Logging style changes
+Date: Sun, 22 Mar 2020 09:38:09 -0700
+Message-ID: <cover.1584894497.git.joe@perches.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=sabi.unospace.net; s=default; h=From:References:In-Reply-To:Subject:To:Date
-        :Message-ID:Content-Transfer-Encoding:Content-Type:MIME-Version:Sender:
-        Reply-To:Cc:Content-ID:Content-Description:Resent-Date:Resent-From:
-        Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:
-        List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-        bh=dgBaw7d5ChDmyOuhZ9dexHK2X+tah/N3o86zmBB4rXo=; b=qQ7j80iFAFcEA19LutJTdaFYex
-        omDwyXNzRULzHvrW1iH/3SGmlrwDDo2JFD12G6gWUvCaW/D3an/gVMS7eKqH5scuy6wmgsF7Wcz17
-        7D3yBuh/xapEDMftyGD/cSJ36FqO0X9kix/nt8GJOSWnXmk4qP0XJglzptn9blBcYPKXf5RaJ7Jgg
-        eIeJXV1gsswT10tfYtxcRGujI7FXqQ/bN8Dr7lu6ue0e9W0V0nuOhWnposovpazwLOxGv4uSteDHK
-        3ZAkd6Kx4rzpzAkYLtjSm137KdwkMaTbg0v2HbxhVLhB90PwGfBtQeMcYpQ+y9jBlDEOVxDWcq7V5
-        w 
-In-Reply-To: <20200309184240.GA14772-WweU7nrmO3INqjISwOrxaLFspR4gePGN@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Linux fs NILFS <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
->> Dear NILFSers I am perplexed because on upgrading my standard
->> Ubuntu LTS kernel "4.15.0-88-generic" I keep getting null
->> pointer dereferences as per attached kernel messages, and this
->> did not happen with the previous version "4.15.0-72-generic".
+Reduce object size and use more common kernel logging styles.
 
-> I have these too, it looks like something in the linux kernel
-> must hsve changed and tgey didn't test or looked for issues in
-> the nilfs code.
+Joe Perches (2):
+  nilfs2: Convert __nilfs_msg to integrate the level and format
+  nilfs2: Use a more common logging style
 
-That's my guess too, but it is a bit strange that it happens
-between two minor versions of the same base kernel. But then
-Debian and Ubuntu backport stuff to their kernels, so that's
-probably why.
+ fs/nilfs2/alloc.c     | 38 +++++++++----------
+ fs/nilfs2/btree.c     | 42 ++++++++++-----------
+ fs/nilfs2/cpfile.c    | 10 ++---
+ fs/nilfs2/dat.c       | 14 +++----
+ fs/nilfs2/direct.c    | 14 ++++---
+ fs/nilfs2/gcinode.c   |  2 +-
+ fs/nilfs2/ifile.c     |  4 +-
+ fs/nilfs2/inode.c     | 29 +++++++--------
+ fs/nilfs2/ioctl.c     | 37 +++++++++----------
+ fs/nilfs2/mdt.c       |  2 +-
+ fs/nilfs2/namei.c     |  6 +--
+ fs/nilfs2/nilfs.h     | 18 ++++++---
+ fs/nilfs2/page.c      | 11 +++---
+ fs/nilfs2/recovery.c  | 32 +++++++---------
+ fs/nilfs2/segbuf.c    |  2 +-
+ fs/nilfs2/segment.c   | 38 +++++++++----------
+ fs/nilfs2/sufile.c    | 29 +++++++--------
+ fs/nilfs2/super.c     | 73 +++++++++++++++++++------------------
+ fs/nilfs2/sysfs.c     | 29 +++++++--------
+ fs/nilfs2/the_nilfs.c | 85 ++++++++++++++++++++-----------------------
+ 20 files changed, 254 insertions(+), 261 deletions(-)
 
-> It only starts here with writing on a previously written
-> volume. A new volume works fine.
+-- 
+2.24.0
 
-I have checked and that happens here too: if I recreated and
-reload the volume no problems, but on the next reboot and mount
-the problem reappears. I guess I'll try deleting the last
-checkpoint to see if that helps, and/or looking at what changes
-between the -72 and -88 versions of the 4.15.0 kernel if
-anything seems related (there will be lots of changes I guess
-though).
