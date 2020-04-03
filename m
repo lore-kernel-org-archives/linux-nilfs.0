@@ -1,85 +1,63 @@
-From: ARAI Shun-ichi <hermes@ceres.dti.ne.jp>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
- 00000000000000a8 in nilfs_segctor_do_construct
-Date: Sat, 28 Mar 2020 18:26:40 +0900 (JST)
-Message-ID: <20200328.182640.1933740379722138264.hermes@ceres.dti.ne.jp>
-References: <87immckp07.fsf@logand.com>
-        <87v9p2tkut.fsf@logand.com>
-        <874kuapb2s.fsf@logand.com>
-        <CAKFNMomjWkNvHvHkEp=Jv_BiGPNj=oLEChyoXX1yCj5xctAkMA@mail.gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Subject: Re: [PATCH 0/2] nilfs2: Logging style changes
+Date: Fri, 03 Apr 2020 22:31:47 +0900 (JST)
+Message-ID: <20200403.223147.300007237674208339.konishi.ryusuke@gmail.com>
+References: <cover.1584894497.git.joe@perches.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <874kuapb2s.fsf@logand.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=date:message-id:to:cc:subject:from:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=+5T4dr5Yj+Mhb55fdklnxhoPtZWRWoLnIoAzNL4iVzc=;
+        b=YOS+cGlm77/Ojm1G7l/cgTl+O9eIf7FvOdio5AmN0XCQNvKAlcgfvAA8nPvEnxc60/
+         UeEutpFvnmnXG+k29rtqTnWG5wKEeF3nsoh2YIN4w/zdDLmDz/pzID+bWlKrATeRO7Vs
+         ORor44JDozSzkP6XSEBEV9XPa6Na0AzTRvvS1mKtrxZdgBEVYhVhT1E6mE5CXk58rX77
+         vuceNkSa7MJiYMFrSLXmivaptAQP+unrQloq5ziJE4kzFvfuRxNcdSYbiWONymUpN6B0
+         3/vEaKHhqNFIX1mg37gDSq7EP5OEuxqcpQzuxHN+fHrGr7sfeAUpoZTvfTOTvbPc+71p
+         /xvg==
+In-Reply-To: <cover.1584894497.git.joe@perches.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: Text/Plain; charset="us-ascii"
-To: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Joe Perches <joe@perches.com>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
 
-In Msg <874kuapb2s.fsf@logand.com>;
-   Subject "Re: BUG: unable to handle kernel NULL pointer dereference at 00000000000000a8 in nilfs_segctor_do_construct":
-
-> Tomas Hlavaty <tom@logand.com> writes:
->>>> 2) Can you mount the corrupted(?) partition from a recent version of
->>>> kernel ?
+On Sun, 22 Mar 2020 09:38:09 -0700, Joe Perches <joe@perches.com> wrote:
+> Reduce object size and use more common kernel logging styles.
 > 
-> I tried the following Linux kernel versions:
+> Joe Perches (2):
+>   nilfs2: Convert __nilfs_msg to integrate the level and format
+>   nilfs2: Use a more common logging style
+
+Applied. Thank you.
+
+Ryusuke Konishi
+
 > 
-> - v4.19
-> - v5.4
-> - v5.5.11
+>  fs/nilfs2/alloc.c     | 38 +++++++++----------
+>  fs/nilfs2/btree.c     | 42 ++++++++++-----------
+>  fs/nilfs2/cpfile.c    | 10 ++---
+>  fs/nilfs2/dat.c       | 14 +++----
+>  fs/nilfs2/direct.c    | 14 ++++---
+>  fs/nilfs2/gcinode.c   |  2 +-
+>  fs/nilfs2/ifile.c     |  4 +-
+>  fs/nilfs2/inode.c     | 29 +++++++--------
+>  fs/nilfs2/ioctl.c     | 37 +++++++++----------
+>  fs/nilfs2/mdt.c       |  2 +-
+>  fs/nilfs2/namei.c     |  6 +--
+>  fs/nilfs2/nilfs.h     | 18 ++++++---
+>  fs/nilfs2/page.c      | 11 +++---
+>  fs/nilfs2/recovery.c  | 32 +++++++---------
+>  fs/nilfs2/segbuf.c    |  2 +-
+>  fs/nilfs2/segment.c   | 38 +++++++++----------
+>  fs/nilfs2/sufile.c    | 29 +++++++--------
+>  fs/nilfs2/super.c     | 73 +++++++++++++++++++------------------
+>  fs/nilfs2/sysfs.c     | 29 +++++++--------
+>  fs/nilfs2/the_nilfs.c | 85 ++++++++++++++++++++-----------------------
+>  20 files changed, 254 insertions(+), 261 deletions(-)
 > 
-> and still get the crash
-
-Ryusuke Konishi pointed out:
-
-In Msg <CAKFNMomjWkNvHvHkEp=Jv_BiGPNj=oLEChyoXX1yCj5xctAkMA@mail.gmail.com>;
-   Subject "Re: BUG: kernel NULL pointer dereference, address: 00000000000000a8":
-
-> As the result of bisection,  it turned out that commit
-> f4bdb2697ccc9cecf1a9de86905c309ad901da4c on 5.3.y
-> ("mm/filemap.c: don't initiate writeback if mapping has no dirty pages")
-> triggers the crash.
-
-This commit modifies __filemap_fdatawrite_range() as follows.
-
-[before]
-	if (!mapping_cap_writeback_dirty(mapping))
-		return 0;
-
-[after]
-	if (!mapping_cap_writeback_dirty(mapping) ||
-	    !mapping_tagged(mapping, PAGECACHE_TAG_DIRTY))
-		return 0;
-
-I did simple test with this code (Kernel 5.5.13).
-
-[test]
-	if (!mapping_cap_writeback_dirty(mapping) ||
-	    mapping_tagged(mapping, PAGECACHE_TAG_WRITEBACK))
-		return 0;
-
-It does not cause crash by the test (without long-term operation). So,
-I think that it may be related to PAGECACHE_TAG_TOWRITE.
-
-
-One possible(?) scenario is:
-
-0. some write operation
-
-1. sync (WB_SYNC_ALL)
-
-2. tagged "PAGECACHE_TAG_TOWRITE"
-
-3. __filemap_fdatawrite_range() is called and returns successfully
-  (but no-op)
-
-4. some data is/are free-ed
-  (because of 3.)
-
-5. crash at test/setting writeback for free-ed data
-  nilfs_segctor_do_construct()
-   nilfs_segctor_prepare_write()
-    set_page_writeback()
-
-How about this?
+> -- 
+> 2.24.0
+> 
