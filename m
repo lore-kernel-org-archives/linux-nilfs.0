@@ -1,50 +1,74 @@
-From: Eric Biggers <ebiggers-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH] nilfs2: only call unlock_new_inode() if I_NEW
-Date: Sun, 28 Jun 2020 00:01:52 -0700
-Message-ID: <20200628070152.820311-1-ebiggers@kernel.org>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 0/3] nilfs2 updates
+Date: Mon, 27 Jul 2020 23:28:28 +0900
+Message-ID: <1595860111-3920-1-git-send-email-konishi.ryusuke@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1593327770;
-        bh=kfgopL0W3FtXqsVa/V5I6oQEZ9ZcW4URkZcEXEWUVKo=;
-        h=From:To:Cc:Subject:Date:From;
-        b=IYeU8A+Tvxs0WSfkv8jixPZMMpRMTIle7EdHOg6Tl5HgyFqfJAPx31xAACKxMxS2b
-         OphWbGZwru9rEl9chZHBkKdd8Un94ahNMrfbRyr+nFMXcW/5wZ2PA7zERsy4UWjRQl
-         qjoleNut6qzThofLcauuILWD4VHFr4jXiWlNTEEw=
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=from:to:cc:subject:date:message-id;
+        bh=HabJRMADlao94yEJSHvnaFVFEzocZspVEhiAVrZ3aoQ=;
+        b=EiK/d5uDMNQE9vA1GyKcPJPFxOOm+RbyqY0iYHtKHqhk2ffuujz6UNYW1/cqPpvYfZ
+         gU3F5MFFPtqU45FZKE/tg/H+j0MXV8L2UjDlzTaP3cpzOjc3r7cGwTO56lSda8fexDMO
+         9mLL/KhNY7Kb+TgTsMa9JWKbCS6fu7VZs5kX+QjdvZw9VVIl15AlmcQ4p6ogFq97gSV5
+         BvDtJZ8s99qTPau/B1aB/B52LMH5VkipFeRkIutLMCh5v6fb1UnhXy8RfFBjnveTEnNH
+         moDN1EA2OOV4ZKxnOjV30eZi57X0aQD5TvGToA97VmyjJzFHZH/Ca/jvsAVMeLu/6W6j
+         WvXw==
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-From: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Hi Andrew,
 
-unlock_new_inode() is only meant to be called after a new inode has
-already been inserted into the hash table.  But nilfs_new_inode() can
-call it even before it has inserted the inode, triggering the WARNING in
-unlock_new_inode().  Fix this by only calling unlock_new_inode() if the
-inode has the I_NEW flag set, indicating that it's in the table.
+Please queue the following changes for the next merge window:
 
-Signed-off-by: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- fs/nilfs2/inode.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+Eric Biggers (1):
+  nilfs2: only call unlock_new_inode() if I_NEW
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 28009ec54420..3318dd1350b2 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -388,7 +388,8 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
- 
-  failed_after_creation:
- 	clear_nlink(inode);
--	unlock_new_inode(inode);
-+	if (inode->i_state & I_NEW)
-+		unlock_new_inode(inode);
- 	iput(inode);  /*
- 		       * raw_inode will be deleted through
- 		       * nilfs_evict_inode().
+Joe Perches (2):
+  nilfs2: Convert __nilfs_msg to integrate the level and format
+  nilfs2: Use a more common logging style
+
+In this series,
+
+>  nilfs2: only call unlock_new_inode() if I_NEW
+
+fixes wrong unlock_new_inode() call and related WARNING which can be
+triggered from error paths of nilfs_new_inode().
+
+>  nilfs2: Convert __nilfs_msg to integrate the level and format
+>  nilfs2: Use a more common logging style
+
+reduce object size and use more common kernel logging styles.
+
+Thanks,
+Ryusuke Konishi
+--
+ fs/nilfs2/alloc.c     | 38 +++++++++++------------
+ fs/nilfs2/btree.c     | 42 ++++++++++++-------------
+ fs/nilfs2/cpfile.c    | 10 +++---
+ fs/nilfs2/dat.c       | 14 ++++-----
+ fs/nilfs2/direct.c    | 14 +++++----
+ fs/nilfs2/gcinode.c   |  2 +-
+ fs/nilfs2/ifile.c     |  4 +--
+ fs/nilfs2/inode.c     | 32 +++++++++----------
+ fs/nilfs2/ioctl.c     | 37 +++++++++++-----------
+ fs/nilfs2/mdt.c       |  2 +-
+ fs/nilfs2/namei.c     |  6 ++--
+ fs/nilfs2/nilfs.h     | 18 ++++++++---
+ fs/nilfs2/page.c      | 11 +++----
+ fs/nilfs2/recovery.c  | 32 +++++++++----------
+ fs/nilfs2/segbuf.c    |  2 +-
+ fs/nilfs2/segment.c   | 38 +++++++++++------------
+ fs/nilfs2/sufile.c    | 29 ++++++++----------
+ fs/nilfs2/super.c     | 73 ++++++++++++++++++++++---------------------
+ fs/nilfs2/sysfs.c     | 29 ++++++++----------
+ fs/nilfs2/the_nilfs.c | 85 ++++++++++++++++++++++++---------------------------
+ 20 files changed, 256 insertions(+), 262 deletions(-)
+
 -- 
-2.27.0
+1.8.3.1
 
