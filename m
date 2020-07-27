@@ -1,18 +1,20 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 0/3] nilfs2 updates
-Date: Mon, 27 Jul 2020 23:28:28 +0900
-Message-ID: <1595860111-3920-1-git-send-email-konishi.ryusuke@gmail.com>
+Subject: [PATCH 2/3] nilfs2: Convert __nilfs_msg to integrate the level and format
+Date: Mon, 27 Jul 2020 23:28:30 +0900
+Message-ID: <1595860111-3920-3-git-send-email-konishi.ryusuke@gmail.com>
+References: <1595860111-3920-1-git-send-email-konishi.ryusuke@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=from:to:cc:subject:date:message-id;
-        bh=HabJRMADlao94yEJSHvnaFVFEzocZspVEhiAVrZ3aoQ=;
-        b=EiK/d5uDMNQE9vA1GyKcPJPFxOOm+RbyqY0iYHtKHqhk2ffuujz6UNYW1/cqPpvYfZ
-         gU3F5MFFPtqU45FZKE/tg/H+j0MXV8L2UjDlzTaP3cpzOjc3r7cGwTO56lSda8fexDMO
-         9mLL/KhNY7Kb+TgTsMa9JWKbCS6fu7VZs5kX+QjdvZw9VVIl15AlmcQ4p6ogFq97gSV5
-         BvDtJZ8s99qTPau/B1aB/B52LMH5VkipFeRkIutLMCh5v6fb1UnhXy8RfFBjnveTEnNH
-         moDN1EA2OOV4ZKxnOjV30eZi57X0aQD5TvGToA97VmyjJzFHZH/Ca/jvsAVMeLu/6W6j
-         WvXw==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=ByU1/eNsYuK+GvYyh2kCuTxeEuK1AGp+s4ZtpbXbVKU=;
+        b=o3SnS5cuvequyTLFcS+lezgeWpNLkUtAmwe6DnMeHTy/MxmANCgHVsSpEhLvBTM76Z
+         oLwhVYeuXBw39dvfolBjCQ9lW1sW8fF4vvwmhC2Yt4fVoa0er0GJeBTWN0nEn39fLeJu
+         yJueqvcQ/qS6605ydP+dlCSsvWjg44rUT10pg12fePozF2rJkc6d5gXjGerCCvGLPED2
+         CfCppqOH4SincYE547zDZ5H5gPMIkVuQ4Pgsmq0ZekfsiFKrkHPG9EoWpjV3W75klSeN
+         fbP7dXwryyACOzbT3p5KlcZyhEuM6uUt1pJfRm1guIhBegsp0Dr72okkzz+Z/hz+QHmZ
+         GpgA==
+In-Reply-To: <1595860111-3920-1-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -21,54 +23,97 @@ Content-Transfer-Encoding: 7bit
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Hi Andrew,
+From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
 
-Please queue the following changes for the next merge window:
+Reduce object size a bit by removing the KERN_<LEVEL> as a
+separate argument and adding it to the format string.
 
-Eric Biggers (1):
-  nilfs2: only call unlock_new_inode() if I_NEW
+Reduce overall object size by about ~.5% (x86-64 defconfig w/ nilfs2)
 
-Joe Perches (2):
-  nilfs2: Convert __nilfs_msg to integrate the level and format
-  nilfs2: Use a more common logging style
+old:
+$ size -t fs/nilfs2/built-in.a | tail -1
+ 191738	   8676	     44	 200458	  30f0a	(TOTALS)
 
-In this series,
+new:
+$ size -t fs/nilfs2/built-in.a | tail -1
+ 190971	   8676	     44	 199691	  30c0b	(TOTALS)
 
->  nilfs2: only call unlock_new_inode() if I_NEW
+Signed-off-by: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nilfs2/nilfs.h |  9 ++++-----
+ fs/nilfs2/super.c | 16 +++++++++++-----
+ 2 files changed, 15 insertions(+), 10 deletions(-)
 
-fixes wrong unlock_new_inode() call and related WARNING which can be
-triggered from error paths of nilfs_new_inode().
-
->  nilfs2: Convert __nilfs_msg to integrate the level and format
->  nilfs2: Use a more common logging style
-
-reduce object size and use more common kernel logging styles.
-
-Thanks,
-Ryusuke Konishi
---
- fs/nilfs2/alloc.c     | 38 +++++++++++------------
- fs/nilfs2/btree.c     | 42 ++++++++++++-------------
- fs/nilfs2/cpfile.c    | 10 +++---
- fs/nilfs2/dat.c       | 14 ++++-----
- fs/nilfs2/direct.c    | 14 +++++----
- fs/nilfs2/gcinode.c   |  2 +-
- fs/nilfs2/ifile.c     |  4 +--
- fs/nilfs2/inode.c     | 32 +++++++++----------
- fs/nilfs2/ioctl.c     | 37 +++++++++++-----------
- fs/nilfs2/mdt.c       |  2 +-
- fs/nilfs2/namei.c     |  6 ++--
- fs/nilfs2/nilfs.h     | 18 ++++++++---
- fs/nilfs2/page.c      | 11 +++----
- fs/nilfs2/recovery.c  | 32 +++++++++----------
- fs/nilfs2/segbuf.c    |  2 +-
- fs/nilfs2/segment.c   | 38 +++++++++++------------
- fs/nilfs2/sufile.c    | 29 ++++++++----------
- fs/nilfs2/super.c     | 73 ++++++++++++++++++++++---------------------
- fs/nilfs2/sysfs.c     | 29 ++++++++----------
- fs/nilfs2/the_nilfs.c | 85 ++++++++++++++++++++++++---------------------------
- 20 files changed, 256 insertions(+), 262 deletions(-)
-
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 42395ba52da6..979a41016743 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -289,9 +289,8 @@ static inline int nilfs_mark_inode_dirty_sync(struct inode *inode)
+ /* super.c */
+ extern struct inode *nilfs_alloc_inode(struct super_block *);
+ 
+-extern __printf(3, 4)
+-void __nilfs_msg(struct super_block *sb, const char *level,
+-		 const char *fmt, ...);
++__printf(2, 3)
++void __nilfs_msg(struct super_block *sb, const char *fmt, ...);
+ extern __printf(3, 4)
+ void __nilfs_error(struct super_block *sb, const char *function,
+ 		   const char *fmt, ...);
+@@ -299,7 +298,7 @@ void __nilfs_error(struct super_block *sb, const char *function,
+ #ifdef CONFIG_PRINTK
+ 
+ #define nilfs_msg(sb, level, fmt, ...)					\
+-	__nilfs_msg(sb, level, fmt, ##__VA_ARGS__)
++	__nilfs_msg(sb, level fmt, ##__VA_ARGS__)
+ #define nilfs_error(sb, fmt, ...)					\
+ 	__nilfs_error(sb, __func__, fmt, ##__VA_ARGS__)
+ 
+@@ -307,7 +306,7 @@ void __nilfs_error(struct super_block *sb, const char *function,
+ 
+ #define nilfs_msg(sb, level, fmt, ...)					\
+ 	do {								\
+-		no_printk(fmt, ##__VA_ARGS__);				\
++		no_printk(level fmt, ##__VA_ARGS__);			\
+ 		(void)(sb);						\
+ 	} while (0)
+ #define nilfs_error(sb, fmt, ...)					\
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 5729ee86da9a..fef4821a1f0f 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -62,19 +62,25 @@
+ static int nilfs_setup_super(struct super_block *sb, int is_mount);
+ static int nilfs_remount(struct super_block *sb, int *flags, char *data);
+ 
+-void __nilfs_msg(struct super_block *sb, const char *level, const char *fmt,
+-		 ...)
++void __nilfs_msg(struct super_block *sb, const char *fmt, ...)
+ {
+ 	struct va_format vaf;
+ 	va_list args;
++	int level;
+ 
+ 	va_start(args, fmt);
+-	vaf.fmt = fmt;
++
++	level = printk_get_level(fmt);
++	vaf.fmt = printk_skip_level(fmt);
+ 	vaf.va = &args;
++
+ 	if (sb)
+-		printk("%sNILFS (%s): %pV\n", level, sb->s_id, &vaf);
++		printk("%c%cNILFS (%s): %pV\n",
++		       KERN_SOH_ASCII, level, sb->s_id, &vaf);
+ 	else
+-		printk("%sNILFS: %pV\n", level, &vaf);
++		printk("%c%cNILFS: %pV\n",
++		       KERN_SOH_ASCII, level, &vaf);
++
+ 	va_end(args);
+ }
+ 
 -- 
 1.8.3.1
 
