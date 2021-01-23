@@ -1,115 +1,44 @@
-From: gianluca <gianlucarenzi-nshbqAY+RnA@public.gmane.org>
-Subject: Re: Strange issue on disk usage with nilfs2 and df command
-Date: Fri, 22 Jan 2021 09:42:11 +0100
-Message-ID: <8f536c36-43e6-ae2c-e774-650dbf32b78b@eurek.it>
-References: <ab9c4da7-428d-1ed4-c3a6-07d6d90815ba@eurek.it>
- <CAKFNMokm-Ciz+---m+sqG10e+JERSH8mhHdnOJppZPgk=T2d+w@mail.gmail.com>
+From: <Joachim.Henke-kyawv7ubMNaakBO8gow8eQ@public.gmane.org>
+Subject: [PATCH] nilfs2: make splice write available again
+Date: Sat, 23 Jan 2021 14:27:16 +0000
+Message-ID: <FR2P281MB0283D8B316988BB9F697BF3BB2BF0@FR2P281MB0283.DEUP281.PROD.OUTLOOK.COM>
+References: <YAwwjEuHpfeFDqNo@localhost.localdomain>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKFNMokm-Ciz+---m+sqG10e+JERSH8mhHdnOJppZPgk=T2d+w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=t-systems.com; i=@t-systems.com; q=dns/txt; s=mail;
+  t=1611412755; x=1642948755;
+  h=from:to:cc:subject:date:message-id:references:
+   in-reply-to:content-transfer-encoding:mime-version;
+  bh=r9Yy2Nt+b2nnEDqG3mFDIzNmoSgNWzVdxHU4e5rfr3g=;
+  b=iMlwUQ3rgTZm9lt9wmIR0fFkP4X20OU0eXUK+BLheBfh6NAEZcyBuN4X
+   ZW7G3s1owWxwIEaNt5Aii4+dLdEtY8BxcOM/obs5Otjkb8hQM7kpNoUuf
+   Sfk4Tp5YmvvpNvORPsGvCph4cs6x+i2CJt8nSz40BkpBxH7o7I+5sNkPS
+   H0eVjMJ2yhvAU7HyGR4+iNs5BcnPalDruD4FicYFLGSsxXioDeRyFTkVX
+   eEu5ejSSVgw1m2BNevan6WCGHyyljVqaq7iWTAi+/svwXVlCCpcu6vr8U
+   e+0J9Ueo+IWb8Hq5HabC4H7+y1Jqj59tJx0nBvUnqniVm7ZZ6Vxy2Ga/w
+   Q==;
+In-Reply-To: <YAwwjEuHpfeFDqNo-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+Content-Language: de-DE
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michele Ciavari <M.Ciavari-wB/b/6WKJkjDzftRWevZcw@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Joachim.Henke-kyawv7ubMNaakBO8gow8eQ@public.gmane.org
 
-On 1/21/21 4:02 PM, Ryusuke Konishi wrote:
-> Hi,
-> 
-> Can you try "sudo lssu -l -p 60" ?
-> 
-
-
-I will try this. Thanks.
-
-I will keep you updated.
-
-> This shows the percentage of live blocks for every in-use segment
-> at the time.
-> ("Live block" here means in-use block, which is not reclaimable
->   with GC.  If you are using snapshots of NILFS, this pushes up the
->   number of live blocks)
-> 
-> "df" command reports disk usage based on the percentage of in-use
-> segments instead of actual live blocks.  "lssu -l" may give more hints
-> about disk usage.
-> 
-> Regards,
-> Ryusuke Konishi
-> 
-> On Sat, Jan 16, 2021 at 12:13 AM gianluca <gianlucarenzi-nshbqAY+RnA@public.gmane.org> wrote:
->>
->> Hello,
->> I am facing a little annoying issue in a Debian Stretch 9.13 (armel)
->> board with rootfilesystem with nilfs2 type.
->>
->> The system has a iMX28 CPU with 256MB DDR2 Ram and 4GB emmC flash storage.
->>
->> The system has /var /run /tmp in tempfs ramdisk.
->>
->> In the beginning the filesystem is full at 50% so about 2Gb.
->> All the remaining space is technically empty.
->>
->> The application is writing the same sqlite3 database every 30s or 60s
->> dipending on the configuration (it writes few kilobytes every time, so
->> the database size increase very little each time).
->>
->> The rootfs is mounted with: noatime,nodiratime,rw in the /etc/fstab
->> configuration file.
->>
->> The nilfs tools are 2.2.6 as per Debian Stretch version.
->>
->> The Linux Kernel is 4.9.78 vanilla.
->>
->> The cleaner configuration file is the standard vanilla Debian version
->> with some changes:
->>
->> protection_period is 60 (original has 3600)
->>
->> The min_clean_segments is 10% (90% of usage of the disk triggers the
->> start of garbage collector)
->>
->> The max_clean_segments is 20% (80% of usage of the disk triggers the
->> stop of the garbage collector)
->>
->> But in my board it seems something goes partially wrong.
->>
->> After some days/week of usage:
->>
->> 1- the garbage collector is a running state (nilfs-clean -l)
->>
->> 2- The usage is 90% (df command)
->>
->> After some time the gc goes in idle but the disk space still at 90%.
->>
->> If I create a big file to increase the usage of the storage up to 95% of
->> real disk space, the gc starts after a while, and it remains running
->> forever.
->>
->> If I delete this big file, it runs for a while, then the space returns
->> to 90%. But using lsblk it gives me the 80% or less of filesystem usage.
->>
->> What the heck is happening?
->>
->> The GC is working as expected, but it gives me wrong status or wrong
->> disk usage (df)...
->>
->> Weird
->>
->> Anybody has issued this problem yet?
->>
->> Regards
->> --
->> Eurek s.r.l.                          |
->> Electronic Engineering                | http://www.eurek.it
->> via Celletta 8/B, 40026 Imola, Italy  | Phone: +39-(0)542-609120
->> p.iva 00690621206 - c.f. 04020030377  | Fax:   +39-(0)542-609212
-> 
-
-
--- 
-Eurek s.r.l.                          |
-Electronic Engineering                | http://www.eurek.it
-via Celletta 8/B, 40026 Imola, Italy  | Phone: +39-(0)542-609120
-p.iva 00690621206 - c.f. 04020030377  | Fax:   +39-(0)542-609212
+U2luY2UgNS4xMCwgc3BsaWNlKCkgb3Igc2VuZGZpbGUoKSB0byBOSUxGUzIgcmV0dXJuIEVJTlZB
+TC4gVGhpcyB3YXMNCnByb2JhYmx5IGNhdXNlZCBieSBjb21taXQgMzZlMmM3NDIxZjAyICgiZnM6
+IGRvbid0IGFsbG93IHNwbGljZQ0KcmVhZC93cml0ZSB3aXRob3V0IGV4cGxpY2l0IG9wcyIpLg0K
+DQpUaGlzIHBhdGNoIGluaXRpYWxpemVzIHRoZSBzcGxpY2Vfd3JpdGUgZmllbGQgaW4gZmlsZV9v
+cGVyYXRpb25zLCBsaWtlDQptb3N0IGZpbGUgc3lzdGVtcyBkbywgdG8gcmVzdG9yZSB0aGUgZnVu
+Y3Rpb25hbGl0eS4NCg0KU2lnbmVkLW9mZi1ieTogSm9hY2hpbSBIZW5rZSA8am9hY2hpbS5oZW5r
+ZUB0LXN5c3RlbXMuY29tPg0KLS0tDQogZnMvbmlsZnMyL2ZpbGUuYyB8IDEgKw0KIDEgZmlsZSBj
+aGFuZ2VkLCAxIGluc2VydGlvbigrKQ0KDQpkaWZmIC0tZ2l0IGEvZnMvbmlsZnMyL2ZpbGUuYyBi
+L2ZzL25pbGZzMi9maWxlLmMNCmluZGV4IDY0YmM4MTM2M2M2Y2MuLjRjN2E2NjIwNDc1MTMgMTAw
+NjQ0DQotLS0gYS9mcy9uaWxmczIvZmlsZS5jDQorKysgYi9mcy9uaWxmczIvZmlsZS5jDQpAQCAt
+MTQxLDYgKzE0MSw3IEBAIGNvbnN0IHN0cnVjdCBmaWxlX29wZXJhdGlvbnMgbmlsZnNfZmlsZV9v
+cGVyYXRpb25zID0gew0KIAkvKiAucmVsZWFzZQk9IG5pbGZzX3JlbGVhc2VfZmlsZSwgKi8NCiAJ
+LmZzeW5jCQk9IG5pbGZzX3N5bmNfZmlsZSwNCiAJLnNwbGljZV9yZWFkCT0gZ2VuZXJpY19maWxl
+X3NwbGljZV9yZWFkLA0KKwkuc3BsaWNlX3dyaXRlCT0gaXRlcl9maWxlX3NwbGljZV93cml0ZSwN
+CiB9Ow0KDQogY29uc3Qgc3RydWN0IGlub2RlX29wZXJhdGlvbnMgbmlsZnNfZmlsZV9pbm9kZV9v
+cGVyYXRpb25zID0gew0K
