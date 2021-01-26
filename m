@@ -1,8 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/17] f2fs: use blkdev_issue_flush in
-	__submit_flush_wait
-Date: Tue, 26 Jan 2021 15:52:37 +0100
-Message-ID: <20210126145247.1964410-8-hch@lst.de>
+Subject: [PATCH 08/17] f2fs: remove FAULT_ALLOC_BIO
+Date: Tue, 26 Jan 2021 15:52:38 +0100
+Message-ID: <20210126145247.1964410-9-hch@lst.de>
 References: <20210126145247.1964410-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,63 +21,106 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
 Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>, dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org, Josef Bacik <josef@toxicpanda.com>, Chao Yu <chao@kernel.org>, linux-nfs@vger.kernel.org, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, drbd-dev@tron.linbit.com, Jaegeuk Kim <jaegeuk@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-block@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, Philipp Reisner <philipp.reisner@linbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-btrfs@vger.kernel.org
 
-Use the blkdev_issue_flush helper instead of duplicating it.
+Sleeping bio allocations do not fail, which means that injecting an error
+into sleeping bio allocations is a little silly.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/f2fs/data.c    |  3 ++-
- fs/f2fs/f2fs.h    |  1 -
- fs/f2fs/segment.c | 12 +-----------
- 3 files changed, 3 insertions(+), 13 deletions(-)
+ Documentation/filesystems/f2fs.rst |  1 -
+ fs/f2fs/data.c                     | 29 ++++-------------------------
+ fs/f2fs/f2fs.h                     |  1 -
+ fs/f2fs/super.c                    |  1 -
+ 4 files changed, 4 insertions(+), 28 deletions(-)
 
+diff --git a/Documentation/filesystems/f2fs.rst b/Documentation/filesystems/f2fs.rst
+index dae15c96e659e2..624f5f3ed93e86 100644
+--- a/Documentation/filesystems/f2fs.rst
++++ b/Documentation/filesystems/f2fs.rst
+@@ -179,7 +179,6 @@ fault_type=%d		 Support configuring fault injection type, should be
+ 			 FAULT_KVMALLOC		  0x000000002
+ 			 FAULT_PAGE_ALLOC	  0x000000004
+ 			 FAULT_PAGE_GET		  0x000000008
+-			 FAULT_ALLOC_BIO	  0x000000010
+ 			 FAULT_ALLOC_NID	  0x000000020
+ 			 FAULT_ORPHAN		  0x000000040
+ 			 FAULT_BLOCK		  0x000000080
 diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-index 8cbf0315975228..0cf0c605992431 100644
+index 0cf0c605992431..9fb6be65592b1f 100644
 --- a/fs/f2fs/data.c
 +++ b/fs/f2fs/data.c
-@@ -56,7 +56,8 @@ static inline struct bio *__f2fs_bio_alloc(gfp_t gfp_mask,
- 	return bio_alloc_bioset(gfp_mask, nr_iovecs, &f2fs_bioset);
+@@ -50,28 +50,6 @@ void f2fs_destroy_bioset(void)
+ 	bioset_exit(&f2fs_bioset);
  }
  
--struct bio *f2fs_bio_alloc(struct f2fs_sb_info *sbi, int npages, bool noio)
-+static struct bio *f2fs_bio_alloc(struct f2fs_sb_info *sbi, int npages,
-+		bool noio)
+-static inline struct bio *__f2fs_bio_alloc(gfp_t gfp_mask,
+-						unsigned int nr_iovecs)
+-{
+-	return bio_alloc_bioset(gfp_mask, nr_iovecs, &f2fs_bioset);
+-}
+-
+-static struct bio *f2fs_bio_alloc(struct f2fs_sb_info *sbi, int npages,
+-		bool noio)
+-{
+-	if (noio) {
+-		/* No failure on bio allocation */
+-		return __f2fs_bio_alloc(GFP_NOIO, npages);
+-	}
+-
+-	if (time_to_inject(sbi, FAULT_ALLOC_BIO)) {
+-		f2fs_show_injection_info(sbi, FAULT_ALLOC_BIO);
+-		return NULL;
+-	}
+-
+-	return __f2fs_bio_alloc(GFP_KERNEL, npages);
+-}
+-
+ static bool __is_cp_guaranteed(struct page *page)
  {
- 	if (noio) {
- 		/* No failure on bio allocation */
+ 	struct address_space *mapping = page->mapping;
+@@ -433,7 +411,7 @@ static struct bio *__bio_alloc(struct f2fs_io_info *fio, int npages)
+ 	struct f2fs_sb_info *sbi = fio->sbi;
+ 	struct bio *bio;
+ 
+-	bio = f2fs_bio_alloc(sbi, npages, true);
++	bio = bio_alloc_bioset(GFP_NOIO, npages, &f2fs_bioset);
+ 
+ 	f2fs_target_device(sbi, fio->new_blkaddr, bio);
+ 	if (is_read_io(fio->op)) {
+@@ -1029,8 +1007,9 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
+ 	struct bio_post_read_ctx *ctx;
+ 	unsigned int post_read_steps = 0;
+ 
+-	bio = f2fs_bio_alloc(sbi, min_t(int, nr_pages, BIO_MAX_PAGES),
+-								for_write);
++	bio = bio_alloc_bioset(for_write ? GFP_NOIO : GFP_KERNEL,
++			       min_t(int, nr_pages, BIO_MAX_PAGES),
++			       &f2fs_bioset);
+ 	if (!bio)
+ 		return ERR_PTR(-ENOMEM);
+ 
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index bb11759191dcc9..902bd3267c03e1 100644
+index 902bd3267c03e1..6c78365d80ceb5 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
-@@ -3424,7 +3424,6 @@ void f2fs_destroy_checkpoint_caches(void);
-  */
- int __init f2fs_init_bioset(void);
- void f2fs_destroy_bioset(void);
--struct bio *f2fs_bio_alloc(struct f2fs_sb_info *sbi, int npages, bool noio);
- int f2fs_init_bio_entry_cache(void);
- void f2fs_destroy_bio_entry_cache(void);
- void f2fs_submit_bio(struct f2fs_sb_info *sbi,
-diff --git a/fs/f2fs/segment.c b/fs/f2fs/segment.c
-index deca74cb17dfd8..c495f170ee400b 100644
---- a/fs/f2fs/segment.c
-+++ b/fs/f2fs/segment.c
-@@ -566,17 +566,7 @@ void f2fs_balance_fs_bg(struct f2fs_sb_info *sbi, bool from_bg)
- static int __submit_flush_wait(struct f2fs_sb_info *sbi,
- 				struct block_device *bdev)
- {
--	struct bio *bio;
--	int ret;
--
--	bio = f2fs_bio_alloc(sbi, 0, false);
--	if (!bio)
--		return -ENOMEM;
--
--	bio->bi_opf = REQ_OP_WRITE | REQ_SYNC | REQ_PREFLUSH;
--	bio_set_dev(bio, bdev);
--	ret = submit_bio_wait(bio);
--	bio_put(bio);
-+	int ret = blkdev_issue_flush(bdev);
- 
- 	trace_f2fs_issue_flush(bdev, test_opt(sbi, NOBARRIER),
- 				test_opt(sbi, FLUSH_MERGE), ret);
+@@ -43,7 +43,6 @@ enum {
+ 	FAULT_KVMALLOC,
+ 	FAULT_PAGE_ALLOC,
+ 	FAULT_PAGE_GET,
+-	FAULT_ALLOC_BIO,
+ 	FAULT_ALLOC_NID,
+ 	FAULT_ORPHAN,
+ 	FAULT_BLOCK,
+diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+index b4a07fe62d1a58..3a312642907e86 100644
+--- a/fs/f2fs/super.c
++++ b/fs/f2fs/super.c
+@@ -45,7 +45,6 @@ const char *f2fs_fault_name[FAULT_MAX] = {
+ 	[FAULT_KVMALLOC]	= "kvmalloc",
+ 	[FAULT_PAGE_ALLOC]	= "page alloc",
+ 	[FAULT_PAGE_GET]	= "page get",
+-	[FAULT_ALLOC_BIO]	= "alloc bio",
+ 	[FAULT_ALLOC_NID]	= "alloc nid",
+ 	[FAULT_ORPHAN]		= "orphan",
+ 	[FAULT_BLOCK]		= "no more block",
 -- 
 2.29.2
