@@ -1,51 +1,45 @@
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 16/17] nilfs2: remove cruft in
- nilfs_alloc_seg_bio
-Date: Tue, 26 Jan 2021 19:17:39 +0000
-Message-ID: <BYAPR04MB49655561B914F4157914AE7186BC9@BYAPR04MB4965.namprd04.prod.outlook.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH 03/17] blk-crypto: use bio_kmalloc in
+ blk_crypto_clone_bio
+Date: Tue, 26 Jan 2021 13:51:04 -0800
+Message-ID: <YBCOyBxDnSsT4jzU@sol.localdomain>
 References: <20210126145247.1964410-1-hch@lst.de>
- <20210126145247.1964410-17-hch@lst.de>
+ <20210126145247.1964410-4-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=MIME-Version:Content-Transfer-Encoding:Content-Type
- :References:Message-ID:Date:Subject:CC:To:From:Sender:Reply-To:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:In-Reply-To:List-Id:List-Help:List-Unsubscribe:
+ d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
+ Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=MNBteCCasQ58cOiyvvoKF7ZhXhfgS0KrHj5nbUsP/jk=; b=XVLNO/ugQuPevdvUbBTnG90xuw
- 1kDKAV+5JuRJHij/LJHzoP2YeCUy65xZMfLSJ/pASVnuiN2R3nTFLsRdlTn+ar9B15OX8za2Ly1pd
- 7k1LtnVc39iJ/GhjlMb+ImE4J5etuO+rOlaQceFVztGEuHayIi/eZgff7g3FBSVc6bL8=;
+ bh=PVXe/0mnYC9gBx+P4ki/TAy9pdcHveLUHCBkOxpzoLI=; b=DlB/8lOc0iUrGh9yGtKqyPelkt
+ heKM75meyu58E7w8neX4ivJDmTXlD9/2kU79t79abCEklXHxkS/gJbw2sJYkZodYkaYUsEM8mQLhm
+ kDwbdXnaSG5UtWm6S+TxWW9f3QJNGnHEAt0D8bT1Nbz9W7YAK2xYoZwCdQMp1dPX16zk=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
- h=MIME-Version:Content-Transfer-Encoding:Content-Type:References:Message-ID
- :Date:Subject:CC:To:From:Sender:Reply-To:Content-ID:Content-Description:
- Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
- In-Reply-To:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:
- List-Owner:List-Archive; bh=MNBteCCasQ58cOiyvvoKF7ZhXhfgS0KrHj5nbUsP/jk=; b=K
- 5r8FY2iaDGnJjqw/LSbOwl1d/UKLWaAIYis1epRVX+U1VrLiTTn7qef6VLrX1C4W7zRFX8YiTl1x1
- 9BgLPujuV0ND+k0y9AKrE2w1p8gGlbDYpc9rbgBDdcUX6siINV+sKifheWP48CIG7EX4zd2ytoN5B
- wDKePfA3LW2pb4DM=;
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
- d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
- t=1611688668; x=1643224668;
- h=from:to:cc:subject:date:message-id:references:
- content-transfer-encoding:mime-version;
- bh=MNBteCCasQ58cOiyvvoKF7ZhXhfgS0KrHj5nbUsP/jk=;
- b=LHiTN8EKkGSRjy3RmwbXq02AVzGVkDG5xCWfExm16MlV/Gu01mgcS988
- hh/VXT7sC46H2EXm86gNsinwcfL1DgoWGAj2AmrxjvO08jHVragIF7EJ5
- 0BHFIcf93A4awverhG3fhSMLxSblZsoDFGQI6k8Fa+IGES4CW2Wa3K+Zl
- vFu5gIwQ91wU0o7ztA6lXXZIFxz/gsnjCEXBURbhEjGvYmAm+a/5oIv5w
- /0o2si1vUtd9MQ253zGN3fJgCTWFKwmvQDQZhKwVh+UXU8hKj+7fJqwOB
- My67486T+Cig1/3/mCsCDVhFP4u8B8UuKZs0hstXF26MSjvL1AiW0h1AP Q==;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=MNBteCCasQ58cOiyvvoKF7ZhXhfgS0KrHj5nbUsP/jk=;
- b=SQdFN1zLANhCr1XsqkXnbh6sy4/70F0JXqH3QZ6804+ZVih/Jg8ohzLqEigtlsRf7JKG7ke/6TyEQUGaE3GhnYl/DUMwDC/4S7t6GCW2IM/vkAhS5F/IK1UCIUyhkvf/E4kAsDdZaS9qIy+bsrMDXh1tXHybB64D1L/OJj1fikM=
-Content-Language: en-US
+ h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
+ :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=PVXe/0mnYC9gBx+P4ki/TAy9pdcHveLUHCBkOxpzoLI=; b=eYWM1KfJ+9FUjGWQ3iNVYDyWKe
+ mUrvI9pEDttmlWCsezwJxJjeEsq8IxQhJVOtYZ5DotuCYoIIOXtDhYB4T/46SZJzA78OFZYXz5jg4
+ wAy8hNBa70BDjDY222Sc95afBmgMvCwZKDYwumcpAv4s8QGiVlUPu0ugxJWnOTeyM1aQ=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+ s=k20201202; t=1611697866;
+ bh=uF4Zh493+gdGT/Bg0kWKqJydeGxsHWjFoA7xBs16rsw=;
+ h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+ b=lCGLIreDb/5Hwx8N2JmnAiiS0jiqRFkx5lWB+dYgajzTx5WDO2x1R1zbHYLyQO1UE
+ 98ScSw7v1shjHJr3DWN8DeVEKxjccGxz8l94yiaaEhvMgOjW92D6rHh7wIPb+Z8Wcf
+ /WrH9o9CZLj9VLpBgdfMlPa9On6Ygs1IpZ1Ijf2DQsb5xhrrGFiJVmYaEU6R3mgkut
+ QaKR1+XYY5LF7MORkDaq36e+R/ZWRbwey+gnJIfZYHPT0K+eh+0B9d6nRjRnNDd/S0
+ dIZkNMAj/KUbyyLBEMzujKws37eYXRnxT13Nwk2S64RN7RIaBpTrze3+70kHOv4aD1
+ nwTbNcB4SZj3w==
+Content-Disposition: inline
+In-Reply-To: <20210126145247.1964410-4-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -55,14 +49,32 @@ List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
 List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, Naohiro Aota <Naohiro.Aota@wdc.com>, "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, Josef Bacik <josef@toxicpanda.com>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, Coly Li <colyli@suse.de>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Damien Le Moal <Damien.LeMoal@wdc.com>, Andrew Morton <akpm@linux-foundation.org>, Philipp Reisner <philipp.reisner@linbit.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-deve>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>, Josef Bacik <josef@toxicpanda.com>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, drbd-dev@tron.linbit.com, Jaegeuk Kim <jaegeuk@kernel.org>, Coly Li <colyli@suse.de>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Song Liu <song@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-btrfs@vger.kernel.org
 
-On 1/26/21 7:27 AM, Christoph Hellwig wrote:
-> bio_alloc never returns NULL when it can sleep.
->
+On Tue, Jan 26, 2021 at 03:52:33PM +0100, Christoph Hellwig wrote:
+> Use bio_kmalloc instead of open coding it.
+> 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
-Looks good.
+>  block/blk-crypto-fallback.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
+> index 50c225398e4d60..e8327c50d7c9f4 100644
+> --- a/block/blk-crypto-fallback.c
+> +++ b/block/blk-crypto-fallback.c
+> @@ -164,7 +164,7 @@ static struct bio *blk_crypto_clone_bio(struct bio *bio_src)
+>  	struct bio_vec bv;
+>  	struct bio *bio;
+>  
+> -	bio = bio_alloc_bioset(GFP_NOIO, bio_segments(bio_src), NULL);
+> +	bio = bio_kmalloc(GFP_NOIO, bio_segments(bio_src));
+>  	if (!bio)
+>  		return NULL;
+>  	bio->bi_bdev		= bio_src->bi_bdev;
+> -- 
 
-Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+Looks good,
+
+Reviewed-by: Eric Biggers <ebiggers@google.com>
