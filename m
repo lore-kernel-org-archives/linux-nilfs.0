@@ -1,45 +1,51 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH 03/17] blk-crypto: use bio_kmalloc in
- blk_crypto_clone_bio
-Date: Tue, 26 Jan 2021 13:51:04 -0800
-Message-ID: <YBCOyBxDnSsT4jzU@sol.localdomain>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: Re: [dm-devel] [PATCH 01/17] zonefs: use bio_alloc in
+ zonefs_file_dio_append
+Date: Tue, 26 Jan 2021 23:23:15 +0000
+Message-ID: <BL0PR04MB65145D02027D58CAF3F59626E7BC9@BL0PR04MB6514.namprd04.prod.outlook.com>
 References: <20210126145247.1964410-1-hch@lst.de>
- <20210126145247.1964410-4-hch@lst.de>
+ <20210126145247.1964410-2-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ d=sourceforge.net; s=x; h=MIME-Version:Content-Transfer-Encoding:Content-Type
+ :References:Message-ID:Date:Subject:CC:To:From:Sender:Reply-To:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:In-Reply-To:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=PVXe/0mnYC9gBx+P4ki/TAy9pdcHveLUHCBkOxpzoLI=; b=DlB/8lOc0iUrGh9yGtKqyPelkt
- heKM75meyu58E7w8neX4ivJDmTXlD9/2kU79t79abCEklXHxkS/gJbw2sJYkZodYkaYUsEM8mQLhm
- kDwbdXnaSG5UtWm6S+TxWW9f3QJNGnHEAt0D8bT1Nbz9W7YAK2xYoZwCdQMp1dPX16zk=;
+ bh=DT8br6vz/nOOn/SezbAG3agpr8MhS4DjGU3jfMYuX/c=; b=Qxg/Gog9sNNn+Z5OiMMmV17RCi
+ 7h6tYkqAl/akqeaLbygRr+XSoCuBQbtXVbL467o5nyB2mfbaWti6jbF1/VB0j+iXZ1L9FgcPn0IQC
+ XqPRNTVLmF2mnEQ/EcxKuhJ46sHWKfSA3oI/E3GLr2ajLOOxrX1hLXEimEXysQisQRBw=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=PVXe/0mnYC9gBx+P4ki/TAy9pdcHveLUHCBkOxpzoLI=; b=eYWM1KfJ+9FUjGWQ3iNVYDyWKe
- mUrvI9pEDttmlWCsezwJxJjeEsq8IxQhJVOtYZ5DotuCYoIIOXtDhYB4T/46SZJzA78OFZYXz5jg4
- wAy8hNBa70BDjDY222Sc95afBmgMvCwZKDYwumcpAv4s8QGiVlUPu0ugxJWnOTeyM1aQ=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
- s=k20201202; t=1611697866;
- bh=uF4Zh493+gdGT/Bg0kWKqJydeGxsHWjFoA7xBs16rsw=;
- h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
- b=lCGLIreDb/5Hwx8N2JmnAiiS0jiqRFkx5lWB+dYgajzTx5WDO2x1R1zbHYLyQO1UE
- 98ScSw7v1shjHJr3DWN8DeVEKxjccGxz8l94yiaaEhvMgOjW92D6rHh7wIPb+Z8Wcf
- /WrH9o9CZLj9VLpBgdfMlPa9On6Ygs1IpZ1Ijf2DQsb5xhrrGFiJVmYaEU6R3mgkut
- QaKR1+XYY5LF7MORkDaq36e+R/ZWRbwey+gnJIfZYHPT0K+eh+0B9d6nRjRnNDd/S0
- dIZkNMAj/KUbyyLBEMzujKws37eYXRnxT13Nwk2S64RN7RIaBpTrze3+70kHOv4aD1
- nwTbNcB4SZj3w==
-Content-Disposition: inline
-In-Reply-To: <20210126145247.1964410-4-hch@lst.de>
+ h=MIME-Version:Content-Transfer-Encoding:Content-Type:References:Message-ID
+ :Date:Subject:CC:To:From:Sender:Reply-To:Content-ID:Content-Description:
+ Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+ In-Reply-To:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:
+ List-Owner:List-Archive; bh=DT8br6vz/nOOn/SezbAG3agpr8MhS4DjGU3jfMYuX/c=; b=F
+ WYEsIrTZ7LTwfpxkPuX+T/2qCfANzp7aaH5Eid5VVvQJl+z1pdY4GIFzhoxemPHEcOUaUwRmtV9Ow
+ Y0JaDa9ScnT96aUeO6ILGFGixI2iWSzyAJXdFp1XkvFUpBoGsKoKW9C9CEfWudpvaq/LZY1uviy9v
+ 5YltXpkZMhmUhvak=;
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
+ d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
+ t=1611704621; x=1643240621;
+ h=from:to:cc:subject:date:message-id:references:
+ content-transfer-encoding:mime-version;
+ bh=mTnNOaMvhWmSpCd7MNBWRJxVKCJ235YDnMqY4qDrjlg=;
+ b=qeOsMTePm2PvWOuMbeBbalcAuyXQLIRoJL5jbpcDPaYy2/Zz+vXC98k5
+ +/haCXa39A3xkd92s+JT5HihG/Xp13TOpbWRPg+bpCP4vpeE+S0XfD7Kq
+ 2vi4lBsg0MCZbZhTlmZIlW9cGpv2zYruGDqR6lP+gLAU5GYN+kdip00tm
+ diq/MVQXW4zDF8iVwudBOU+2O4/txz7/fErwVSv6bN/UUZIQ51nz4bYUL
+ /TYGOjQvxZVVNBqZV4vLww89N37MgKHtXtjXLT+ELcfIdX9WTaGX0RdRc
+ xWlpqGDtTvdypkeXvEh9+fxkO9eWma7pF+W+cBIHYC9iteOST+JYAQXDy A==;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=DT8br6vz/nOOn/SezbAG3agpr8MhS4DjGU3jfMYuX/c=;
+ b=Tx18zRFy4C7/LLfZjiC2xYNq9vYqLVmtds3ZXIly6Pkbb7rooc87Vv0ThAVno8Ww+urBcp/0bbimTFQl7hf/7JFqW1bUySUlV9m1ePMEwNcYkeKPjHCNdA8MPOQpDagkwq7KBSS7E36KqzwTKiTxpMh7eNlXaQ8IkvBbHhNEmmQ=
+Content-Language: en-US
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -49,32 +55,34 @@ List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
 List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Christoph Hellwig <hch@lst.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>, Josef Bacik <josef@toxicpanda.com>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, drbd-dev@tron.linbit.com, Jaegeuk Kim <jaegeuk@kernel.org>, Coly Li <colyli@suse.de>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Song Liu <song@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-btrfs@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Naohiro Aota <Naohiro.Aota@wdc.com>, "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, David Sterba <dsterba@suse.com>, "drbd-dev@tron.linbit.com" <drbd-dev@tron.linbit.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Lars Ellenberg <lars.ellenberg@linbit.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-devel@lists.sourceforge.net>, linux-fsdevel@v
 
-On Tue, Jan 26, 2021 at 03:52:33PM +0100, Christoph Hellwig wrote:
-> Use bio_kmalloc instead of open coding it.
+On 2021/01/26 23:58, Christoph Hellwig wrote:
+> Use bio_alloc instead of open coding it.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  block/blk-crypto-fallback.c | 2 +-
+>  fs/zonefs/super.c | 2 +-
 >  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
-> index 50c225398e4d60..e8327c50d7c9f4 100644
-> --- a/block/blk-crypto-fallback.c
-> +++ b/block/blk-crypto-fallback.c
-> @@ -164,7 +164,7 @@ static struct bio *blk_crypto_clone_bio(struct bio *bio_src)
->  	struct bio_vec bv;
->  	struct bio *bio;
+> diff --git a/fs/zonefs/super.c b/fs/zonefs/super.c
+> index bec47f2d074beb..faea2ed34b4a37 100644
+> --- a/fs/zonefs/super.c
+> +++ b/fs/zonefs/super.c
+> @@ -678,7 +678,7 @@ static ssize_t zonefs_file_dio_append(struct kiocb *iocb, struct iov_iter *from)
+>  	if (!nr_pages)
+>  		return 0;
 >  
-> -	bio = bio_alloc_bioset(GFP_NOIO, bio_segments(bio_src), NULL);
-> +	bio = bio_kmalloc(GFP_NOIO, bio_segments(bio_src));
+> -	bio = bio_alloc_bioset(GFP_NOFS, nr_pages, &fs_bio_set);
+> +	bio = bio_alloc(GFP_NOFS, nr_pages);
 >  	if (!bio)
->  		return NULL;
->  	bio->bi_bdev		= bio_src->bi_bdev;
-> -- 
+>  		return -ENOMEM;
+>  
+> 
 
-Looks good,
+Acked-by: Damien Le Moal <damien.lemoal@wdc.com>
 
-Reviewed-by: Eric Biggers <ebiggers@google.com>
+-- 
+Damien Le Moal
+Western Digital Research
