@@ -1,67 +1,50 @@
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-Subject: Re: [PATCH 02/17] btrfs: use bio_kmalloc in
- __alloc_device
-Date: Tue, 26 Jan 2021 19:11:18 +0000
-Message-ID: <BYAPR04MB4965808085867317CEDE615186BC9@BYAPR04MB4965.namprd04.prod.outlook.com>
+From: Chaitanya Kulkarni <Chaitanya.Kulkarni-Sjgp3cTcYWE@public.gmane.org>
+Subject: Re: [PATCH 05/17] block: use an on-stack bio in
+	blkdev_issue_flush
+Date: Tue, 26 Jan 2021 19:15:02 +0000
+Message-ID: <BYAPR04MB4965E6615D7173005E4C634586BC9@BYAPR04MB4965.namprd04.prod.outlook.com>
 References: <20210126145247.1964410-1-hch@lst.de>
- <20210126145247.1964410-3-hch@lst.de>
+	<20210126145247.1964410-6-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=MIME-Version:Content-Transfer-Encoding:Content-Type
- :References:Message-ID:Date:Subject:CC:To:From:Sender:Reply-To:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:In-Reply-To:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=qycwswdKEkfSrfBGHipxmgVrIyfCcU42WNDTcdPx4d0=; b=FoP05sCVLRx5OM3u60mossDcH9
- Vd7IM2PjX3oYt/IqL4tIT1hfLxNMweVZ68R+zzBDjgjdmPeRhMsNd6jLUEaISRiTDMdKaLkqWzCh5
- NlLiIJZgcR28+r9M937WemDcaBef3nTNKT83uZIeWp3JZr55iTA2FXgGmIGybT2wey6c=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=MIME-Version:Content-Transfer-Encoding:Content-Type:References:Message-ID
- :Date:Subject:CC:To:From:Sender:Reply-To:Content-ID:Content-Description:
- Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
- In-Reply-To:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:
- List-Owner:List-Archive; bh=qycwswdKEkfSrfBGHipxmgVrIyfCcU42WNDTcdPx4d0=; b=a
- aJQatxRI1jqepW4MlpodnSfib0h5fpE/yfGXdQYnAbP9BGilq98KLoW/fDFQK9zJn2CG96v7b5vox
- o3eHpiXmsjCu9j8Vh3Jd5jyqZoPJFjVIiFh2ZEwVQvoDyJpc3YSQmiuxt3g4tdCRZ89U+k1OZRv+e
- vgEByY6QbVIVm12A=;
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
- d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
- t=1611688293; x=1643224293;
- h=from:to:cc:subject:date:message-id:references:
- content-transfer-encoding:mime-version;
- bh=qycwswdKEkfSrfBGHipxmgVrIyfCcU42WNDTcdPx4d0=;
- b=nv381jdnD5PVXteNA1pnmlTphGQP4HlBwOcS3R1zIiv3MqMZ6+ZrmLSt
- 1kLYJzvEKZoJOr3su9MDUNp8YrMm+RKCWI8qpdL9Q25vbaDq7RnmDRjCW
- XeJOwFuQQ3cvzff/dZdcINzxt6BVBAhyWmSLayM8y4rXHmc+J2viLQNEr
- I+Vz9MtvXbI7BAU25kYh81MpS1CVKCNtr26caYLjUdWAGtOOt+X4LlErX
- Cd/hm1eFyvrxgqxZ7C/PXryAI0FikELbpQKFPiK3YhxmGSDUmn33B7juq
- 9Y1qeFEMOBNKQuSxzUTNe+DUpEgDVFAA9wT0qUpieZNaoi59KsW5hjRdM A==;
+	d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
+	t=1611688507; x=1643224507;
+	h=from:to:cc:subject:date:message-id:references:
+	content-transfer-encoding:mime-version;
+	bh=KNUDY51cFN89cFLkxV84w9yHk/E66+9qddWBN8QDq9w=;
+	b=pP0AgalHkfiMEDWkKCigde1WbklIN2AhSpRW+fshwyJqNFG9ebJ7eEQ5
+	7ecF88neUs9/+c1GXHbjQZXp2ys3jQDqoohcj2kPEfBGrMq1qfVdpLaAt
+	ArvaT9soNcUMJIyWLZRTHc+U1UxfR1A+S6wul+s6+hKEEVQ7KHf8Xoqbc
+	xIRB5lrR2BC80hncZkSGSM8FQusI+85HR8mR0+qOJ1wi4fIuPeX2XJxg2
+	2fNvTOaPgq+6irSBCTWy+G7e9vEu4oDpaHzCln9PnYG/a4GUOFSTBIaDQ
+	zxMRDDnVvYIHA0mfDOWrU4q06csbJyVQ2fpVstODB6PcCq6ewzxKYZrN5 w==;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=qycwswdKEkfSrfBGHipxmgVrIyfCcU42WNDTcdPx4d0=;
- b=PrVh+41fYjjTea3vPDoMebpSZh/LOBX+Wy5D7i2YyXFwnEktcnu04SFNCPZgwromMFrPzERw99RGdu2i3N+UOCF33YF6Gnm289xkUWn7uihL6uhwqUolBOdp661zHcnM7MY+4INjSee6xVFJa4rizpquDOZIx8NDnbSCYPpAdfs=
+	d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com; 
+	h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+	bh=KNUDY51cFN89cFLkxV84w9yHk/E66+9qddWBN8QDq9w=;
+	b=FQuF/oxOCpteS65+OEJYNhD4SLodAeq84LUWNm+payTM0LKZIvCujeLwmkPO6okCD+L3w01zJjQh21wtlrSqWbj7MG72Ork3CQ0fYh7nWD4qR8uBkhWPrD0qTJqzc3ee/A66GnkicBo+jmCHpWfvFx5wEfyvhjD6QtUf8+4wVMQ=
 Content-Language: en-US
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, Naohiro Aota <Naohiro.Aota@wdc.com>, "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, Josef Bacik <josef@toxicpanda.com>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, Coly Li <colyli@suse.de>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Damien Le Moal <Damien.LeMoal@wdc.com>, Andrew Morton <akpm@linux-foundation.org>, Philipp Reisner <philipp.reisner@linbit.com>, "linux-f2fs-devel@lists.sourceforge.net" <linux-f2fs-deve>
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Damien Le Moal <Damien.LeMoal-Sjgp3cTcYWE@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ryusuke-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Philipp-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Naohiro Aota <Naohiro.Aota-Sjgp3cTcYWE@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-
 
-On 1/26/21 7:04 AM, Christoph Hellwig wrote:
-> Use bio_kmalloc instead of open coding it.
+On 1/26/21 7:07 AM, Christoph Hellwig wrote:
+> There is no point in allocating memory for a synchronous flush.
 >
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-Looks good.
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 
-Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+True, looks good.
+
+Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni-Sjgp3cTcYWE@public.gmane.org>
