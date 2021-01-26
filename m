@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/17] drbd: remove bio_alloc_drbd
-Date: Tue, 26 Jan 2021 15:52:39 +0100
-Message-ID: <20210126145247.1964410-10-hch@lst.de>
+Subject: [PATCH 11/17] md: remove bio_alloc_mddev
+Date: Tue, 26 Jan 2021 15:52:41 +0100
+Message-ID: <20210126145247.1964410-12-hch@lst.de>
 References: <20210126145247.1964410-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,80 +21,86 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
 Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>, dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org, Josef Bacik <josef@toxicpanda.com>, Chao Yu <chao@kernel.org>, linux-nfs@vger.kernel.org, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, drbd-dev@tron.linbit.com, Jaegeuk Kim <jaegeuk@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-block@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, Philipp Reisner <philipp.reisner@linbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-btrfs@vger.kernel.org
 
-Given that drbd_md_io_bio_set is initialized during module initialization
-and the module fails to load if the initialization fails there is no need
-to fall back to plain bio_alloc.
+bio_alloc_mddev is never called with a NULL mddev, and ->bio_set is
+initialized in md_run, so it always must be initialized as well.  Just
+open code the remaining call to bio_alloc_bioset.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/drbd/drbd_actlog.c |  2 +-
- drivers/block/drbd/drbd_bitmap.c |  2 +-
- drivers/block/drbd/drbd_int.h    |  2 --
- drivers/block/drbd/drbd_main.c   | 13 -------------
- 4 files changed, 2 insertions(+), 17 deletions(-)
+ drivers/md/md.c     | 12 +-----------
+ drivers/md/md.h     |  2 --
+ drivers/md/raid1.c  |  2 +-
+ drivers/md/raid10.c |  2 +-
+ 4 files changed, 3 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_actlog.c b/drivers/block/drbd/drbd_actlog.c
-index 7227fc7ab8ed1e..72cf7603d51fc7 100644
---- a/drivers/block/drbd/drbd_actlog.c
-+++ b/drivers/block/drbd/drbd_actlog.c
-@@ -138,7 +138,7 @@ static int _drbd_md_sync_page_io(struct drbd_device *device,
- 		op_flags |= REQ_FUA | REQ_PREFLUSH;
- 	op_flags |= REQ_SYNC;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 7d1bb24add3107..e2b9dbb6e888f6 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -340,16 +340,6 @@ static int start_readonly;
+  */
+ static bool create_on_open = true;
  
--	bio = bio_alloc_drbd(GFP_NOIO);
-+	bio = bio_alloc_bioset(GFP_NOIO, 1, &drbd_md_io_bio_set);
- 	bio_set_dev(bio, bdev->md_bdev);
- 	bio->bi_iter.bi_sector = sector;
- 	err = -EIO;
-diff --git a/drivers/block/drbd/drbd_bitmap.c b/drivers/block/drbd/drbd_bitmap.c
-index df53dca5d02c7e..c1f816f896a89a 100644
---- a/drivers/block/drbd/drbd_bitmap.c
-+++ b/drivers/block/drbd/drbd_bitmap.c
-@@ -976,7 +976,7 @@ static void drbd_bm_endio(struct bio *bio)
- 
- static void bm_page_io_async(struct drbd_bm_aio_ctx *ctx, int page_nr) __must_hold(local)
- {
--	struct bio *bio = bio_alloc_drbd(GFP_NOIO);
-+	struct bio *bio = bio_alloc_bioset(GFP_NOIO, 1, &drbd_md_io_bio_set);
- 	struct drbd_device *device = ctx->device;
- 	struct drbd_bitmap *b = device->bitmap;
- 	struct page *page;
-diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
-index b2c93a29c251fd..02db50d7e4c668 100644
---- a/drivers/block/drbd/drbd_int.h
-+++ b/drivers/block/drbd/drbd_int.h
-@@ -1422,8 +1422,6 @@ extern mempool_t drbd_md_io_page_pool;
- /* We also need to make sure we get a bio
-  * when we need it for housekeeping purposes */
- extern struct bio_set drbd_md_io_bio_set;
--/* to allocate from that set */
--extern struct bio *bio_alloc_drbd(gfp_t gfp_mask);
- 
- /* And a bio_set for cloning */
- extern struct bio_set drbd_io_bio_set;
-diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
-index 1c8c18b2a25f33..788dd97e6026b8 100644
---- a/drivers/block/drbd/drbd_main.c
-+++ b/drivers/block/drbd/drbd_main.c
-@@ -138,19 +138,6 @@ static const struct block_device_operations drbd_ops = {
- 	.release	= drbd_release,
- };
- 
--struct bio *bio_alloc_drbd(gfp_t gfp_mask)
+-struct bio *bio_alloc_mddev(gfp_t gfp_mask, int nr_iovecs,
+-			    struct mddev *mddev)
 -{
--	struct bio *bio;
+-	if (!mddev || !bioset_initialized(&mddev->bio_set))
+-		return bio_alloc(gfp_mask, nr_iovecs);
 -
--	if (!bioset_initialized(&drbd_md_io_bio_set))
--		return bio_alloc(gfp_mask, 1);
--
--	bio = bio_alloc_bioset(gfp_mask, 1, &drbd_md_io_bio_set);
--	if (!bio)
--		return NULL;
--	return bio;
+-	return bio_alloc_bioset(gfp_mask, nr_iovecs, &mddev->bio_set);
 -}
+-EXPORT_SYMBOL_GPL(bio_alloc_mddev);
 -
- #ifdef __CHECKER__
- /* When checking with sparse, and this is an inline function, sparse will
-    give tons of false positives. When this is a real functions sparse works.
+ static struct bio *md_bio_alloc_sync(struct mddev *mddev)
+ {
+ 	if (!mddev || !bioset_initialized(&mddev->sync_set))
+@@ -613,7 +603,7 @@ static void submit_flushes(struct work_struct *ws)
+ 			atomic_inc(&rdev->nr_pending);
+ 			atomic_inc(&rdev->nr_pending);
+ 			rcu_read_unlock();
+-			bi = bio_alloc_mddev(GFP_NOIO, 0, mddev);
++			bi = bio_alloc_bioset(GFP_NOIO, 0, &mddev->bio_set);
+ 			bi->bi_end_io = md_end_flush;
+ 			bi->bi_private = rdev;
+ 			bio_set_dev(bi, rdev->bdev);
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index f13290ccc1c248..bcbba1b5ec4a71 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -742,8 +742,6 @@ extern void md_rdev_clear(struct md_rdev *rdev);
+ extern void md_handle_request(struct mddev *mddev, struct bio *bio);
+ extern void mddev_suspend(struct mddev *mddev);
+ extern void mddev_resume(struct mddev *mddev);
+-extern struct bio *bio_alloc_mddev(gfp_t gfp_mask, int nr_iovecs,
+-				   struct mddev *mddev);
+ 
+ extern void md_reload_sb(struct mddev *mddev, int raid_disk);
+ extern void md_update_sb(struct mddev *mddev, int force);
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 3b19141cdb4bc2..d2378765dc154f 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1104,7 +1104,7 @@ static void alloc_behind_master_bio(struct r1bio *r1_bio,
+ 	int i = 0;
+ 	struct bio *behind_bio = NULL;
+ 
+-	behind_bio = bio_alloc_mddev(GFP_NOIO, vcnt, r1_bio->mddev);
++	behind_bio = bio_alloc_bioset(GFP_NOIO, vcnt, &r1_bio->mddev->bio_set);
+ 	if (!behind_bio)
+ 		return;
+ 
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index be8f14afb6d143..e1eefbec15d444 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -4531,7 +4531,7 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr,
+ 		return sectors_done;
+ 	}
+ 
+-	read_bio = bio_alloc_mddev(GFP_KERNEL, RESYNC_PAGES, mddev);
++	read_bio = bio_alloc_bioset(GFP_KERNEL, RESYNC_PAGES, &mddev->bio_set);
+ 
+ 	bio_set_dev(read_bio, rdev->bdev);
+ 	read_bio->bi_iter.bi_sector = (r10_bio->devs[r10_bio->read_slot].addr
 -- 
 2.29.2
