@@ -1,7 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/17] btrfs: use bio_kmalloc in __alloc_device
-Date: Tue, 26 Jan 2021 15:52:32 +0100
-Message-ID: <20210126145247.1964410-3-hch@lst.de>
+Subject: [PATCH 03/17] blk-crypto: use bio_kmalloc in
+	blk_crypto_clone_bio
+Date: Tue, 26 Jan 2021 15:52:33 +0100
+Message-ID: <20210126145247.1964410-4-hch@lst.de>
 References: <20210126145247.1964410-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,21 +26,21 @@ Use bio_kmalloc instead of open coding it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/btrfs/volumes.c | 2 +-
+ block/blk-crypto-fallback.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 0a6de859eb2226..584ba093cf4966 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -421,7 +421,7 @@ static struct btrfs_device *__alloc_device(struct btrfs_fs_info *fs_info)
- 	 * Preallocate a bio that's always going to be used for flushing device
- 	 * barriers and matches the device lifespan
- 	 */
--	dev->flush_bio = bio_alloc_bioset(GFP_KERNEL, 0, NULL);
-+	dev->flush_bio = bio_kmalloc(GFP_KERNEL, 0);
- 	if (!dev->flush_bio) {
- 		kfree(dev);
- 		return ERR_PTR(-ENOMEM);
+diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
+index 50c225398e4d60..e8327c50d7c9f4 100644
+--- a/block/blk-crypto-fallback.c
++++ b/block/blk-crypto-fallback.c
+@@ -164,7 +164,7 @@ static struct bio *blk_crypto_clone_bio(struct bio *bio_src)
+ 	struct bio_vec bv;
+ 	struct bio *bio;
+ 
+-	bio = bio_alloc_bioset(GFP_NOIO, bio_segments(bio_src), NULL);
++	bio = bio_kmalloc(GFP_NOIO, bio_segments(bio_src));
+ 	if (!bio)
+ 		return NULL;
+ 	bio->bi_bdev		= bio_src->bi_bdev;
 -- 
 2.29.2
