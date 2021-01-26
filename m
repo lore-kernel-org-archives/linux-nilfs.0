@@ -1,8 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 15/17] nfs/blocklayout: remove cruft in
-	bl_alloc_init_bio
-Date: Tue, 26 Jan 2021 15:52:45 +0100
-Message-ID: <20210126145247.1964410-16-hch@lst.de>
+Subject: [PATCH 16/17] nilfs2: remove cruft in nilfs_alloc_seg_bio
+Date: Tue, 26 Jan 2021 15:52:46 +0100
+Message-ID: <20210126145247.1964410-17-hch@lst.de>
 References: <20210126145247.1964410-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,24 +25,23 @@ bio_alloc never returns NULL when it can sleep.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/nfs/blocklayout/blocklayout.c | 5 -----
- 1 file changed, 5 deletions(-)
+ fs/nilfs2/segbuf.c | 4 ----
+ 1 file changed, 4 deletions(-)
 
-diff --git a/fs/nfs/blocklayout/blocklayout.c b/fs/nfs/blocklayout/blocklayout.c
-index 3be6836074ae92..1a96ce28efb026 100644
---- a/fs/nfs/blocklayout/blocklayout.c
-+++ b/fs/nfs/blocklayout/blocklayout.c
-@@ -123,11 +123,6 @@ bl_alloc_init_bio(int npg, struct block_device *bdev, sector_t disk_sector,
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index 1a8729eded8b14..1e75417bfe6e52 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -386,10 +386,6 @@ static struct bio *nilfs_alloc_seg_bio(struct the_nilfs *nilfs, sector_t start,
+ 	struct bio *bio;
  
- 	npg = min(npg, BIO_MAX_PAGES);
- 	bio = bio_alloc(GFP_NOIO, npg);
--	if (!bio && (current->flags & PF_MEMALLOC)) {
--		while (!bio && (npg /= 2))
--			bio = bio_alloc(GFP_NOIO, npg);
+ 	bio = bio_alloc(GFP_NOIO, nr_vecs);
+-	if (bio == NULL) {
+-		while (!bio && (nr_vecs >>= 1))
+-			bio = bio_alloc(GFP_NOIO, nr_vecs);
 -	}
--
- 	if (bio) {
- 		bio->bi_iter.bi_sector = disk_sector;
- 		bio_set_dev(bio, bdev);
+ 	if (likely(bio)) {
+ 		bio_set_dev(bio, nilfs->ns_bdev);
+ 		bio->bi_iter.bi_sector =
 -- 
 2.29.2
