@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 14/34] fs/buffer: use bio_new in submit_bh_wbc
-Date: Wed, 27 Jan 2021 23:11:13 -0800
-Message-ID: <20210128071133.60335-15-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 15/34] fscrypt: use bio_new in fscrypt_zeroout_range
+Date: Wed, 27 Jan 2021 23:11:14 -0800
+Message-ID: <20210128071133.60335-16-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818027; x=1643354027;
+  t=1611818166; x=1643354166;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=ph9rmwEURyYiJjcGgT3e2aApJZNJOSNpUoZqKSV1dx8=;
-  b=R0H0BBlYwokmIFrBez2p9fEC8db94MCPractRJhmKSgF/0N/EwjucYDp
-   eInEL+qyXGnxxTG86wUtt/iEWKav4ntKme4SwWqQA4xGYtFSXhfQ04MxW
-   XXeP/JbbboWTFmyOgcplJH7RHIyoQ1LZI8c5yO/EMTkEIZL2MpHiripYl
-   s4UZ8Eemx2yAV7seL0AUPeyVJbhHX8kgU87L3h3OYpZcIbWRJyLRq1Oue
-   746ki6pS2w1WTulu1CS4W6DwGVSyHr7vAGiAatIBAiYVoCvGBirxusRFh
-   elZDMhiH/HYtyOToZZ3FiA8wvn9KhpVlfJ7Lb2OK8RdpTD1tLAp+55gUz
-   Q==;
+  bh=wUwjN0vBouMAu1m5itQWMc9ceGIiyWjYqyXKNeHEsnQ=;
+  b=nxzJflacH2hbguCGRxCBP9wduYQ3myDzwmPyGdPjQhY6sNVghRPXRdjj
+   ikYM3FqSQvPqimwtOSoO2oHA9krYU8WLH1VbZhvIfVvxqB0VIbnWt4OO3
+   LW7g5jCWJc7ZeTc0MqfI1dqccsxWNf8I6Oura1JvK8zN1P8yKik8cR+OT
+   f6dwbGrduhi1BWQPyvGXXvhpiIW4yaaL7S9zUQvg0q0cnP2e0VVPuUHdG
+   VnBWfnBrD4AEYV0zSYCnsEOlzQqe4EhIRoLV+6L1B172B43ZNFS//4/TA
+   HIZM/XqVX+pX/lpJcRccqkVnWG1WwsfGXFyUOBT8pzMLENyY84OyQCD87
+   g==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,46 +35,28 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/buffer.c | 16 +++++++---------
- 1 file changed, 7 insertions(+), 9 deletions(-)
+ fs/crypto/bio.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/fs/buffer.c b/fs/buffer.c
-index 32647d2011df..fcbea667fa04 100644
---- a/fs/buffer.c
-+++ b/fs/buffer.c
-@@ -3023,12 +3023,16 @@ static int submit_bh_wbc(int op, int op_flags, struct buffer_head *bh,
- 	if (test_set_buffer_req(bh) && (op == REQ_OP_WRITE))
- 		clear_buffer_write_io_error(bh);
+diff --git a/fs/crypto/bio.c b/fs/crypto/bio.c
+index b048a0e38516..20dab9bdf098 100644
+--- a/fs/crypto/bio.c
++++ b/fs/crypto/bio.c
+@@ -148,12 +148,11 @@ int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
+ 		return -EINVAL;
  
--	bio = bio_alloc(GFP_NOIO, 1);
-+	if (buffer_meta(bh))
-+		op_flags |= REQ_META;
-+	if (buffer_prio(bh))
-+		op_flags |= REQ_PRIO;
-+
-+	bio = bio_new(bh->b_bdev,  bh->b_blocknr * (bh->b_size >> 9), op,
-+		      op_flags, GFP_NOIO, 1);
+ 	/* This always succeeds since __GFP_DIRECT_RECLAIM is set. */
+-	bio = bio_alloc(GFP_NOFS, nr_pages);
++	bio = bio_alloc(inode->i_sb->s_bdev, 0, REQ_OP_WRITE, 0, nr_pages,
++			GFP_NOFS);
  
- 	fscrypt_set_bio_crypt_ctx_bh(bio, bh, GFP_NOIO);
+ 	do {
+-		bio_set_dev(bio, inode->i_sb->s_bdev);
+ 		bio->bi_iter.bi_sector = pblk << (blockbits - 9);
+-		bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
  
--	bio->bi_iter.bi_sector = bh->b_blocknr * (bh->b_size >> 9);
--	bio_set_dev(bio, bh->b_bdev);
- 	bio->bi_write_hint = write_hint;
- 
- 	bio_add_page(bio, bh->b_page, bh->b_size, bh_offset(bh));
-@@ -3037,12 +3041,6 @@ static int submit_bh_wbc(int op, int op_flags, struct buffer_head *bh,
- 	bio->bi_end_io = end_bio_bh_io_sync;
- 	bio->bi_private = bh;
- 
--	if (buffer_meta(bh))
--		op_flags |= REQ_META;
--	if (buffer_prio(bh))
--		op_flags |= REQ_PRIO;
--	bio_set_op_attrs(bio, op, op_flags);
--
- 	/* Take care of bh's that straddle the end of the device */
- 	guard_bio_eod(bio);
- 
+ 		i = 0;
+ 		offset = 0;
 -- 
 2.22.1
 
