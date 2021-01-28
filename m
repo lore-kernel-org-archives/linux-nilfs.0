@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 22/34] fs/jfs/jfs_metapage.c: use bio_new in metapage_readpage
-Date: Wed, 27 Jan 2021 23:11:21 -0800
-Message-ID: <20210128071133.60335-23-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 23/34] fs/mpage.c: use bio_new mpage_alloc
+Date: Wed, 27 Jan 2021 23:11:22 -0800
+Message-ID: <20210128071133.60335-24-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,16 +17,16 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818088; x=1643354088;
+  t=1611818095; x=1643354095;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=3pvsXY5ThsGIWZu3d1vhsE8XvMocy29CAsL/BvlC2XE=;
-  b=mPm7CbOZdmLtpobO9yq+nQO72k+7QULfahO5kuNYGQLLSAB6X63SC2d9
-   CF4yrUPyPLt+tJg2JxreIoEztTiJ7udO2KztyBJFsxmdrY+DEBgSt+B+b
-   GsVvUGzSYXwFB3j1Nqc4PLIJyCn9jPAFaPCLDf9CTKcK8eIOioEbrfdl7
-   wEysO8uJyun88U9+IOcGefNYsTNIp9OkM6CbwcuFePIByKW/eXC6/sXFW
-   n2GZ0ZA2zRrBDEc/Kd3ttPxBJOC0m0YP5O5kL/iAXrMPpoYBjcPSeN3fP
-   QMxDg5aNPWHHzVln1HdHpuns9NU8KVNZyI5X1wMrCYlP/zhZztHje3rGF
+  bh=XPaYjcRaIFpnYMD3YBMMFWgQznGRHjSurwf/uHFVwCI=;
+  b=SDKTSJBx1LDuT+ovpg7fbM1obKQGt0ELwHjkPJ1R6+e+SbEYeYRSNqqE
+   o+eKG/MzL7uW502w7slZ1s1ufnYm5lsTlfmbxj+yPxIJ/16y6J11jaYpH
+   tAOABVX1/+ObhwmtqOD/DRGC1ZRhOc+XL7cRkcpwzd0U6w3SlulcGnXaf
+   pQgenO7GD/RB74w+nwtOTdKibbPpCnbavE/t+JBP7pwnDF8hRlTAoFvkn
+   Ex/F70h2Yxs8V6vmg3qZBYo9qakH5trmnAEp0soYC9YPc5m6/toJ9Jf5q
+   WtfFQQadH9aV+9okqxsEOMIc4pLqO2SO2VkUjs4tpYDmXV0SmsZwvzVdv
    A==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
@@ -35,30 +35,55 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/jfs/jfs_metapage.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ fs/mpage.c | 18 ++++++------------
+ 1 file changed, 6 insertions(+), 12 deletions(-)
 
-diff --git a/fs/jfs/jfs_metapage.c b/fs/jfs/jfs_metapage.c
-index 3fa09d9a0b94..c7be3a2773bf 100644
---- a/fs/jfs/jfs_metapage.c
-+++ b/fs/jfs/jfs_metapage.c
-@@ -495,13 +495,11 @@ static int metapage_readpage(struct file *fp, struct page *page)
- 			if (bio)
- 				submit_bio(bio);
+diff --git a/fs/mpage.c b/fs/mpage.c
+index 830e6cc2a9e7..01725126e81f 100644
+--- a/fs/mpage.c
++++ b/fs/mpage.c
+@@ -68,25 +68,21 @@ static struct bio *mpage_bio_submit(int op, int op_flags, struct bio *bio)
+ }
  
--			bio = bio_alloc(GFP_NOFS, 1);
--			bio_set_dev(bio, inode->i_sb->s_bdev);
--			bio->bi_iter.bi_sector =
--				pblock << (inode->i_blkbits - 9);
-+			bio = bio_new(inode->i_sb->s_bdev,
-+					pblock << (inode->i_blkbits - 9),
-+					REQ_OP_READ, 0, 1, GFP_NOFS);
- 			bio->bi_end_io = metapage_read_end_io;
- 			bio->bi_private = page;
--			bio_set_op_attrs(bio, REQ_OP_READ, 0);
- 			len = xlen << inode->i_blkbits;
- 			offset = block_offset << inode->i_blkbits;
- 			if (bio_add_page(bio, page, len, offset) < len)
+ static struct bio *
+-mpage_alloc(struct block_device *bdev,
+-		sector_t first_sector, int nr_vecs,
+-		gfp_t gfp_flags)
++mpage_alloc(struct block_device *bdev, sector_t first_sector, int nr_vecs,
++	    gfp_t gfp_flags)
+ {
+ 	struct bio *bio;
+ 
+ 	/* Restrict the given (page cache) mask for slab allocations */
+ 	gfp_flags &= GFP_KERNEL;
+-	bio = bio_alloc(gfp_flags, nr_vecs);
++	bio = bio_new(bdev, first_sector, 0, 0, nr_vecs, gfp_flags);
+ 
+ 	if (bio == NULL && (current->flags & PF_MEMALLOC)) {
+ 		while (!bio && (nr_vecs /= 2))
+-			bio = bio_alloc(gfp_flags, nr_vecs);
++			bio = bio_new(bdev, first_sector, 0, 0, nr_vecs,
++					gfp_flags);
+ 	}
+ 
+-	if (bio) {
+-		bio_set_dev(bio, bdev);
+-		bio->bi_iter.bi_sector = first_sector;
+-	}
+ 	return bio;
+ }
+ 
+@@ -304,9 +300,7 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
+ 				goto out;
+ 		}
+ 		args->bio = mpage_alloc(bdev, blocks[0] << (blkbits - 9),
+-					min_t(int, args->nr_pages,
+-					      BIO_MAX_PAGES),
+-					gfp);
++					args->nr_pages, gfp);
+ 		if (args->bio == NULL)
+ 			goto confused;
+ 	}
 -- 
 2.22.1
 
