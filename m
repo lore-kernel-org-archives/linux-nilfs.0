@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 11/34] nvmet: use bio_new in nvmet_bdev_execute_rw
-Date: Wed, 27 Jan 2021 23:11:10 -0800
-Message-ID: <20210128071133.60335-12-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 12/34] scsi: target/iblock: use bio_new
+Date: Wed, 27 Jan 2021 23:11:11 -0800
+Message-ID: <20210128071133.60335-13-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818004; x=1643354004;
+  t=1611818012; x=1643354012;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=g8HJbcPmpqxtxJgQpVgZEQpuhn8q+oe36W4m3E0vxow=;
-  b=XI0ykKj/3zgNK4sf+v7xp9lq/h6L+2YFPel83iOYaHKerDSqtKOr+24f
-   fa5MlVF00jCXb5UG4SV5lp1cMfen1eryHuczjkB60XCYCSsPdrKXjL6GH
-   3hcrRhOA6kMe5XWR0x/kiTndQXq3S+VMVi3Fr63rdMzkwCd7ye7KNubKp
-   mckYbemMizhDK1jtXZSrCnrHJjtEqNIls5ba8ZAZqgFtAciV5Hi1jI2rl
-   2qr0jNty/KqiuY6FzEOynYNDpr1/8PpxGHL4SHgM+FPEkfvQDoljmpFws
-   MxUDS2URF+mWm9ZEsqM6pKEZOMrlpOreqW/9hvJjE2MBDSePRYASFJ7RS
-   Q==;
+  bh=5eayPzy70EKVB5mFbuCcXtyHCS4v72l8k3GegXWivXI=;
+  b=gjv9D3mADvHpA+LqUN1+c+ixsCLpRda/g/1RcAhfbilIGKRQDAKHCy5q
+   8qLJ55npy8pen8HfkPJIvsE/IWDduVvt0ZQbFzvF8J/ZW8VlJbs8+DSaj
+   eeODw3fBQF+v1N/VjY4G4RT2FyM9hwTs6NnP0vx2IZNpONhNYE2qqJ7Ft
+   PT6F0eD//qfEbTYxdU/yyij8ekped/wOXpmZYzqKaVkNSGGjrKnIXhmMG
+   OhHn95OsvNfyeZNPMsEAcM53OBnkgCMIXCHlZLgRwIb12jcKvUo9HUXbA
+   LcCpcedt2YixJYqSjjS3S33m98UXyiK0d+xB/Lnmn99nLI6C+OD8NnFz5
+   g==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,43 +35,26 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- drivers/nvme/target/io-cmd-bdev.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ drivers/target/target_core_iblock.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/nvme/target/io-cmd-bdev.c b/drivers/nvme/target/io-cmd-bdev.c
-index bf6e0ac9ad28..f5fd93a796a6 100644
---- a/drivers/nvme/target/io-cmd-bdev.c
-+++ b/drivers/nvme/target/io-cmd-bdev.c
-@@ -225,6 +225,7 @@ static int nvmet_bdev_alloc_bip(struct nvmet_req *req, struct bio *bio,
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index 8ed93fd205c7..f1264918aee1 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -379,10 +379,9 @@ iblock_execute_sync_cache(struct se_cmd *cmd)
+ 	if (immed)
+ 		target_complete_cmd(cmd, SAM_STAT_GOOD);
  
- static void nvmet_bdev_execute_rw(struct nvmet_req *req)
- {
-+	struct block_device *bdev = req->ns->bdev;
- 	int sg_cnt = req->sg_cnt;
- 	struct bio *bio;
- 	struct scatterlist *sg;
-@@ -265,7 +266,7 @@ static void nvmet_bdev_execute_rw(struct nvmet_req *req)
- 	} else {
- 		bio = bio_alloc(GFP_KERNEL, min(sg_cnt, BIO_MAX_PAGES));
- 	}
--	bio_set_dev(bio, req->ns->bdev);
-+	bio_set_dev(bio, bdev);
- 	bio->bi_iter.bi_sector = sector;
- 	bio->bi_private = req;
- 	bio->bi_end_io = nvmet_bio_done;
-@@ -290,11 +291,7 @@ static void nvmet_bdev_execute_rw(struct nvmet_req *req)
- 				}
- 			}
- 
--			bio = bio_alloc(GFP_KERNEL, min(sg_cnt, BIO_MAX_PAGES));
--			bio_set_dev(bio, req->ns->bdev);
--			bio->bi_iter.bi_sector = sector;
--			bio->bi_opf = op;
--
-+			bio = bio_new(bdev, sector, op, 0, sg_cnt, GFP_KERNEL);
- 			bio_chain(bio, prev);
- 			submit_bio(prev);
- 		}
+-	bio = bio_alloc(GFP_KERNEL, 0);
++	bio = bio_new(ib_dev->ibd_bd, 0, REQ_OP_WRITE, REQ_PREFLUSH, 0,
++		      GFP_KERNEL);
+ 	bio->bi_end_io = iblock_end_io_flush;
+-	bio_set_dev(bio, ib_dev->ibd_bd);
+-	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
+ 	if (!immed)
+ 		bio->bi_private = cmd;
+ 	submit_bio(bio);
 -- 
 2.22.1
 
