@@ -1,9 +1,9 @@
 From: "Darrick J. Wong" <djwong@kernel.org>
-Subject: Re: [RFC PATCH 27/34] xfs: use bio_new in xfs_buf_ioapply_map
-Date: Thu, 28 Jan 2021 09:21:51 -0800
-Message-ID: <20210128172151.GN7698@magnolia>
+Subject: Re: [RFC PATCH 18/34] iomap: use bio_new in iomap_dio_bio_actor
+Date: Thu, 28 Jan 2021 09:24:02 -0800
+Message-ID: <20210128172402.GO7698@magnolia>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
- <20210128071133.60335-28-chaitanya.kulkarni@wdc.com>
+ <20210128071133.60335-19-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Return-path: <xen-devel-bounces@lists.xenproject.org>
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -16,52 +16,54 @@ List-Subscribe: <https://lists.xenproject.org/mailman/listinfo/xen-devel>,
 Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1611854512;
-	bh=3wcbDXIsfKokQbmfUCYjGrgS3GF5z08Qdptdga5fUN4=;
+	s=k20201202; t=1611854642;
+	bh=Zs2s8ZvTIPYGR4BFwbfSOZLDbQpy7x8YdhBNvxD8Dok=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=QWOP7EPqmN6b3MiW9yEAgNNtNjSRtrXyFEpjaAGYBZII1sVNYI1YtSMwAvt9fuQBa
-	 67CiLo3o5RvfcoATyHS1j02NITEEA3iqExwlLXezGs5RMp4QWJbqX9Dn+nc6m+I4rS
-	 ryQ81C45k5DR4mIk6Zm2DTepJlJx7ughkR/Vt0AUwH3+rYDSQLjDOWM7DJGp0ETUnl
-	 xurghfp/gRCwfqedNMDMPHZbg7F0alqw1H/gKUa0SjDmFnvopggMP4TjgUC2t6LP2S
-	 1ujXulQBT2zqjOQLupxjXSsgT0HMqyI+WyoITl6y/0OvHf8iHp4HzyLmR4yVI/FSxp
-	 yznAeENjD3n6w==
+	b=dYixlgG2K3aWwDLaJowzYgnOFmByUyz6PjYTAvhTfbvB+e9gPk0mBgRRvBez32mDu
+	 g+/BEjUeO2s7tBkV+OtFiT2UlC3mn8gjSXsXC5Xpxm6KRmfDNpc8Z7+gIuibodKK4H
+	 l1i2cwlyEJsSukyTcGjNrcpQfEjVAbCBE6DwgrePquTtnF0XcOLlk2eq3YbBOrXlcF
+	 50KQtEwBjnE5+b+zJhPCQRu9YN8ISWqvJskcg8GQfdpqKteYo166Aso1a23IfJvuVj
+	 VfAojNA36QPu6qz6sKkxuvacugxCY5JwWT3tNh6OxRrRzVwkEqP+vyF3JrdyJAT+Ys
+	 o8BRepJ02vTLA==
 Content-Disposition: inline
-In-Reply-To: <20210128071133.60335-28-chaitanya.kulkarni@wdc.com>
+In-Reply-To: <20210128071133.60335-19-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 Cc: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org, axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konrad.wilk@oracle.com, roger.pau@citrix.com, minchan@kernel.org, ngupta@vflare.org, sergey.senozhatsky.work@gmail.com, agk@redhat.com, snitzer@redhat.com, hch@lst.de, sagi@grimberg.me, martin.petersen@oracle.com, viro@zeniv.linux.org.uk, tytso@mit.edu, jaegeuk@kernel.org, ebiggers@kernel.org, shaggy@kernel.org, konishi.ryusuke@gmail.com, mark@fashe
 
-On Wed, Jan 27, 2021 at 11:11:26PM -0800, Chaitanya Kulkarni wrote:
+On Wed, Jan 27, 2021 at 11:11:17PM -0800, Chaitanya Kulkarni wrote:
 > Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+> ---
+>  fs/iomap/direct-io.c | 5 ++---
+>  1 file changed, 2 insertions(+), 3 deletions(-)
+> 
+> diff --git a/fs/iomap/direct-io.c b/fs/iomap/direct-io.c
+> index f6c557a1bd25..0737192f7e5c 100644
+> --- a/fs/iomap/direct-io.c
+> +++ b/fs/iomap/direct-io.c
+> @@ -267,9 +267,8 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
+>  			goto out;
+>  		}
+>  
+> -		bio = bio_alloc(GFP_KERNEL, nr_pages);
+> -		bio_set_dev(bio, iomap->bdev);
+> -		bio->bi_iter.bi_sector = iomap_sector(iomap, pos);
+> +		bio = bio_new(iomap->bdev, iomap_sector(iomap, pos), 0, 0,
+> +			      nr_pages, GFP_KERNEL);
 
-Reviewed-by: Darrick J. Wong <djwong@kernel.org>
+op == 0?  It seems a little odd to me that we'd set the field to zero
+and then construct bi_opf later.
+
+It also strikes me as a little strange that bi_opf is combined from the
+third and fourth parameters, but maybe some day you'll want to do some
+parameter verification on debug kernels or something...?
 
 --D
 
-> ---
->  fs/xfs/xfs_buf.c | 6 ++----
->  1 file changed, 2 insertions(+), 4 deletions(-)
-> 
-> diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
-> index f8400bbd6473..3ff6235e4f94 100644
-> --- a/fs/xfs/xfs_buf.c
-> +++ b/fs/xfs/xfs_buf.c
-> @@ -1507,12 +1507,10 @@ xfs_buf_ioapply_map(
->  	atomic_inc(&bp->b_io_remaining);
->  	nr_pages = min(total_nr_pages, BIO_MAX_PAGES);
->  
-> -	bio = bio_alloc(GFP_NOIO, nr_pages);
-> -	bio_set_dev(bio, bp->b_target->bt_bdev);
-> -	bio->bi_iter.bi_sector = sector;
-> +	bio = bio_new(bp->b_target->bt_bdev, sector, op, 0, nr_pages,
-> +		      GFP_NOIO);
->  	bio->bi_end_io = xfs_buf_bio_end_io;
->  	bio->bi_private = bp;
-> -	bio->bi_opf = op;
->  
->  	for (; size && nr_pages; nr_pages--, page_index++) {
->  		int	rbytes, nbytes = PAGE_SIZE - offset;
+>  		bio->bi_write_hint = dio->iocb->ki_hint;
+>  		bio->bi_ioprio = dio->iocb->ki_ioprio;
+>  		bio->bi_private = dio;
 > -- 
 > 2.22.1
 > 
