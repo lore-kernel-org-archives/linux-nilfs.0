@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 23/34] fs/mpage.c: use bio_new mpage_alloc
-Date: Wed, 27 Jan 2021 23:11:22 -0800
-Message-ID: <20210128071133.60335-24-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 24/34] fs/nilfs: use bio_new nilfs_alloc_seg_bio
+Date: Wed, 27 Jan 2021 23:11:23 -0800
+Message-ID: <20210128071133.60335-25-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818095; x=1643354095;
+  t=1611818103; x=1643354103;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=XPaYjcRaIFpnYMD3YBMMFWgQznGRHjSurwf/uHFVwCI=;
-  b=SDKTSJBx1LDuT+ovpg7fbM1obKQGt0ELwHjkPJ1R6+e+SbEYeYRSNqqE
-   o+eKG/MzL7uW502w7slZ1s1ufnYm5lsTlfmbxj+yPxIJ/16y6J11jaYpH
-   tAOABVX1/+ObhwmtqOD/DRGC1ZRhOc+XL7cRkcpwzd0U6w3SlulcGnXaf
-   pQgenO7GD/RB74w+nwtOTdKibbPpCnbavE/t+JBP7pwnDF8hRlTAoFvkn
-   Ex/F70h2Yxs8V6vmg3qZBYo9qakH5trmnAEp0soYC9YPc5m6/toJ9Jf5q
-   WtfFQQadH9aV+9okqxsEOMIc4pLqO2SO2VkUjs4tpYDmXV0SmsZwvzVdv
-   A==;
+  bh=hTRBelY7PTDZbFRPdQdHgUhYseaoF0bY2tLyF8ypbSg=;
+  b=ByXjOQviNjNgXtwnqW/T6IzPNeS+qZuS8XIl7jeqlnsAk1geM1Btt4M4
+   WRoe0Emeatja+qXFuDNDq+qspChDgoKSlT1GVE7O/SmfF5msw0Jevid/a
+   fHlghhurHoF0Hd4L/+89L+Ap40DYT2mwt26PO+Jd3oxo7EKEDa3xNaY9g
+   39keBLXzYhqgSmaj1f1pdfGU3SKNgPm8LIMgE+EAcNKSTbc3BzXPhXs/2
+   5izk9S5T/tDVNHbXCScMrOVBzyoop1ABRegzpnDjLzRephGz4WyRPsk3o
+   XoIaf4CJQlZa4AQjO8+3zUUtF/HbPJtOED6zbdqF7oBbQzfq/RohiXWz6
+   w==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,55 +35,31 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/mpage.c | 18 ++++++------------
- 1 file changed, 6 insertions(+), 12 deletions(-)
+ fs/nilfs2/segbuf.c | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
 
-diff --git a/fs/mpage.c b/fs/mpage.c
-index 830e6cc2a9e7..01725126e81f 100644
---- a/fs/mpage.c
-+++ b/fs/mpage.c
-@@ -68,25 +68,21 @@ static struct bio *mpage_bio_submit(int op, int op_flags, struct bio *bio)
- }
- 
- static struct bio *
--mpage_alloc(struct block_device *bdev,
--		sector_t first_sector, int nr_vecs,
--		gfp_t gfp_flags)
-+mpage_alloc(struct block_device *bdev, sector_t first_sector, int nr_vecs,
-+	    gfp_t gfp_flags)
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index 1e75417bfe6e..df352cab7a93 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -383,15 +383,9 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+ static struct bio *nilfs_alloc_seg_bio(struct the_nilfs *nilfs, sector_t start,
+ 				       int nr_vecs)
  {
- 	struct bio *bio;
+-	struct bio *bio;
++	sector_t sect = start << (nilfs->ns_blocksize_bits - 9);
  
- 	/* Restrict the given (page cache) mask for slab allocations */
- 	gfp_flags &= GFP_KERNEL;
--	bio = bio_alloc(gfp_flags, nr_vecs);
-+	bio = bio_new(bdev, first_sector, 0, 0, nr_vecs, gfp_flags);
- 
- 	if (bio == NULL && (current->flags & PF_MEMALLOC)) {
- 		while (!bio && (nr_vecs /= 2))
--			bio = bio_alloc(gfp_flags, nr_vecs);
-+			bio = bio_new(bdev, first_sector, 0, 0, nr_vecs,
-+					gfp_flags);
- 	}
- 
--	if (bio) {
--		bio_set_dev(bio, bdev);
--		bio->bi_iter.bi_sector = first_sector;
+-	bio = bio_alloc(GFP_NOIO, nr_vecs);
+-	if (likely(bio)) {
+-		bio_set_dev(bio, nilfs->ns_bdev);
+-		bio->bi_iter.bi_sector =
+-			start << (nilfs->ns_blocksize_bits - 9);
 -	}
- 	return bio;
+-	return bio;
++	return bio_new(nilfs->ns_bdev, sect, 0, 0, nr_vecs, GFP_NOIO);
  }
  
-@@ -304,9 +300,7 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 				goto out;
- 		}
- 		args->bio = mpage_alloc(bdev, blocks[0] << (blkbits - 9),
--					min_t(int, args->nr_pages,
--					      BIO_MAX_PAGES),
--					gfp);
-+					args->nr_pages, gfp);
- 		if (args->bio == NULL)
- 			goto confused;
- 	}
+ static void nilfs_segbuf_prepare_write(struct nilfs_segment_buffer *segbuf,
 -- 
 2.22.1
 
