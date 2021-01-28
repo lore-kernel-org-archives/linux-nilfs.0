@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 25/34] ocfs/cluster: use bio_new in dm-log-writes
-Date: Wed, 27 Jan 2021 23:11:24 -0800
-Message-ID: <20210128071133.60335-26-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 26/34] xfs: use bio_new in xfs_rw_bdev
+Date: Wed, 27 Jan 2021 23:11:25 -0800
+Message-ID: <20210128071133.60335-27-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818109; x=1643354109;
+  t=1611818117; x=1643354117;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=MfH3EN2qKmNoDMJp2ceJniIXfb1rQ8RA/+9VrY6oRvA=;
-  b=i0tcfM8LPDdJD76KNz+KebHt7aNu8dhDBYf/yXb5/+nYgQh0WMse7Sn9
-   ozH9xc9Sc+UfsdK76ohaCN6GCCqFE6bAY2B1MPyc5DLSfnPLPwFnYTKgo
-   C+OoNr6y2lvG3ysq55KlUUYx0SyWumd7F1WOxvIw9Fep6NoRLLh1itIGY
-   olcxqnkChE8DQ21CN5uYlkYXOgVZGydZPzcofilVELDK1rCglBJtI88zl
-   XslA1BLq6AxPBwEweAnxe/9kwmqcWSX4LyaLSH9Hi5ekxO6pVUVdSUFMV
-   Lfq5RSA+OdcgwBD60MbPkiMMaeX9mBe48U+a84ScWlpFvvr5FvH74xaRT
-   w==;
+  bh=Oh6V4IvaBATnJjcr0mcg+O0k1fwwkwTxUMEnAmiYk7w=;
+  b=N/9xsZ4vaUqT4FOnsamVd0tO/aQtqkb2SkD9Lqw5RnvjLL3jaD5MzkR5
+   +Kke1qnUFvRlpJzQI+sSe6H6sUN6iGFdjl9jqpGX2mjPG6wZ1jk7n6+Tt
+   4QyAlu2458qBnQqPRGCFSYmi6NLhhDeBHtSjX68uOIf1Un/z8/FkLlu1q
+   h7Ecg9AsPAKbYSY8QsKN32WQyr2E2duO2g0plsYxJSpyrpcthtYPbHtpv
+   HAZWy6aj72kMtxTeXIXumTxoxrKZZjNitFc7fFtBJJdZdeWfcrVBvgeAb
+   X6kYsiK11Dw0t5Bf77LLh0vlmjjFLh3+8h01K7b8QsCM6uC7ZymXjU33t
+   A==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,40 +35,27 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/ocfs2/cluster/heartbeat.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ fs/xfs/xfs_bio_io.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-diff --git a/fs/ocfs2/cluster/heartbeat.c b/fs/ocfs2/cluster/heartbeat.c
-index 0179a73a3fa2..b34518036446 100644
---- a/fs/ocfs2/cluster/heartbeat.c
-+++ b/fs/ocfs2/cluster/heartbeat.c
-@@ -515,12 +515,13 @@ static struct bio *o2hb_setup_one_bio(struct o2hb_region *reg,
- 	unsigned int cs = *current_slot;
- 	struct bio *bio;
- 	struct page *page;
-+	sector_t sect = (reg->hr_start_block + cs) << (bits - 9);
+diff --git a/fs/xfs/xfs_bio_io.c b/fs/xfs/xfs_bio_io.c
+index e2148f2d5d6b..e4644f22ebe6 100644
+--- a/fs/xfs/xfs_bio_io.c
++++ b/fs/xfs/xfs_bio_io.c
+@@ -26,11 +26,8 @@ xfs_rw_bdev(
+ 	if (is_vmalloc && op == REQ_OP_WRITE)
+ 		flush_kernel_vmap_range(data, count);
  
- 	/* Testing has shown this allocation to take long enough under
- 	 * GFP_KERNEL that the local node can get fenced. It would be
- 	 * nicest if we could pre-allocate these bios and avoid this
- 	 * all together. */
--	bio = bio_alloc(GFP_ATOMIC, 16);
-+	bio = bio_new(reg->hr_bdev, sect, op, op_flags, 16, GFP_ATOMIC);
- 	if (!bio) {
- 		mlog(ML_ERROR, "Could not alloc slots BIO!\n");
- 		bio = ERR_PTR(-ENOMEM);
-@@ -528,11 +529,8 @@ static struct bio *o2hb_setup_one_bio(struct o2hb_region *reg,
- 	}
- 
- 	/* Must put everything in 512 byte sectors for the bio... */
--	bio->bi_iter.bi_sector = (reg->hr_start_block + cs) << (bits - 9);
--	bio_set_dev(bio, reg->hr_bdev);
- 	bio->bi_private = wc;
- 	bio->bi_end_io = o2hb_bio_end_io;
--	bio_set_op_attrs(bio, op, op_flags);
- 
- 	vec_start = (cs << bits) % PAGE_SIZE;
- 	while(cs < max_slots) {
+-	bio = bio_alloc(GFP_KERNEL, bio_max_vecs(left));
+-	bio_set_dev(bio, bdev);
+-	bio->bi_iter.bi_sector = sector;
+-	bio->bi_opf = op | REQ_META | REQ_SYNC;
+-
++	bio = bio_new(bdev, sector, op, REQ_META | REQ_SYNC, bio_max_vecs(left),
++		      GFP_KERNEL);
+ 	do {
+ 		struct page	*page = kmem_to_page(data);
+ 		unsigned int	off = offset_in_page(data);
 -- 
 2.22.1
 
