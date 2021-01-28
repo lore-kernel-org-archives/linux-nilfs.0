@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 19/34] fs/jfs/jfs_logmgr.c: use bio_new in lbmRead
-Date: Wed, 27 Jan 2021 23:11:18 -0800
-Message-ID: <20210128071133.60335-20-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 31/34] iomap: use bio_new in iomap_readpage_actor
+Date: Wed, 27 Jan 2021 23:11:30 -0800
+Message-ID: <20210128071133.60335-32-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818215; x=1643354215;
+  t=1611818156; x=1643354156;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=ehPvHcNFObZpIErrj099M/D2lwJDNRsp+vZtBu0oImM=;
-  b=k/Jru1VNjukvwvnvZz0pM0LaZbG8K+F6BQzUFH9Qf1jMHx0aq5ApLu88
-   Rb8tduHQb5dWDKKlXRj44rBBaKXeXcDl6Txj9hhXUnD6FJrAChKpq1Vfb
-   oanL2XI1ICrkolTcMjRJecKzIA8dvr8BsxJEByutfSpkAxv9nfF5ZUAlM
-   Bp1kUF7CRdOmzo2LnZg3/Rv9p80v2i2se7EeTNdMM5Wg5HV6AdsYYHl2F
-   FJogJwPPr1Ps6OJyuned0ffgeWjG6oX5RNUBVys95X8RP9zmoILZN2pXE
-   cjAsTfUjOYhIFE8SIIP7Sf+KfGs/Fytf/0LEMcdcuZNM2CiCRP5VAcy88
-   g==;
+  bh=Y9+Mnjxua+V7f2wybPN6k7Lk3+3v11itMxG4MZ3QMkM=;
+  b=CsawMGiqvoAV9E1wzdlqWHzFa/o/XTDpW+RwCvV6hN5B7lfpJX3nqqqg
+   IiwDkVPjYFNfvaPy4ZvlyQAC8SSwLkvUl39gPNHV4Y2KySVtVmf2G/21K
+   rgtqo5PZyyusW6hD9cXQjLerpVixKAUp3XCf3d03f5wH00jGJcK1HgiFw
+   n9mvFFhsFY14nG2/yx/+EpZ1U6tGLPFivP/qBIAJqnNnlmma5XXLfop9H
+   0TW4Ols4UePg9AdlsX8kunQ+grhQ6ue+VMUZius0QI4fuzLcerS3QxwnH
+   FvBm0N0bmWPIN1T+EY4U+CtmvzvVNrPCSh/CSvwHx+1oWhPo6OY2kqQe2
+   w==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,33 +35,45 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/jfs/jfs_logmgr.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ fs/iomap/buffered-io.c | 12 +++++-------
+ 1 file changed, 5 insertions(+), 7 deletions(-)
 
-diff --git a/fs/jfs/jfs_logmgr.c b/fs/jfs/jfs_logmgr.c
-index 9330eff210e0..4481f3e33a3f 100644
---- a/fs/jfs/jfs_logmgr.c
-+++ b/fs/jfs/jfs_logmgr.c
-@@ -1979,17 +1979,14 @@ static int lbmRead(struct jfs_log * log, int pn, struct lbuf ** bpp)
+diff --git a/fs/iomap/buffered-io.c b/fs/iomap/buffered-io.c
+index 16a1e82e3aeb..08d119b62cf5 100644
+--- a/fs/iomap/buffered-io.c
++++ b/fs/iomap/buffered-io.c
+@@ -241,6 +241,9 @@ iomap_readpage_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
+ 	struct page *page = ctx->cur_page;
+ 	struct iomap_page *iop = iomap_page_create(inode, page);
+ 	bool same_page = false, is_contig = false;
++	struct block_device *bdev = iomap->bdev;
++	unsigned opf = ctx->rac ? REQ_RAHEAD : 0;
++	unsigned op = REQ_OP_READ;
+ 	loff_t orig_pos = pos;
+ 	unsigned poff, plen;
+ 	sector_t sector;
+@@ -285,19 +288,14 @@ iomap_readpage_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
  
- 	bp->l_flag |= lbmREAD;
+ 		if (ctx->rac) /* same as readahead_gfp_mask */
+ 			gfp |= __GFP_NORETRY | __GFP_NOWARN;
+-		ctx->bio = bio_alloc(gfp, min(BIO_MAX_PAGES, nr_vecs));
++		ctx->bio = bio_new(bdev, sector, op, opf, gfp, nr_vecs);
+ 		/*
+ 		 * If the bio_alloc fails, try it again for a single page to
+ 		 * avoid having to deal with partial page reads.  This emulates
+ 		 * what do_mpage_readpage does.
+ 		 */
+ 		if (!ctx->bio)
+-			ctx->bio = bio_alloc(orig_gfp, 1);
+-		ctx->bio->bi_opf = REQ_OP_READ;
+-		if (ctx->rac)
+-			ctx->bio->bi_opf |= REQ_RAHEAD;
+-		ctx->bio->bi_iter.bi_sector = sector;
+-		bio_set_dev(ctx->bio, iomap->bdev);
++			ctx->bio = bio_new(bdev, sector, op, opf, orig_gfp, 1);
+ 		ctx->bio->bi_end_io = iomap_read_end_io;
+ 	}
  
--	bio = bio_alloc(GFP_NOFS, 1);
--
--	bio->bi_iter.bi_sector = bp->l_blkno << (log->l2bsize - 9);
--	bio_set_dev(bio, log->bdev);
-+	bio = bio_new(log->bdev, bp->l_blkno << (log->l2bsize - 9),
-+			REQ_OP_READ, 0, 1, GFP_NOFS);
- 
- 	bio_add_page(bio, bp->l_page, LOGPSIZE, bp->l_offset);
- 	BUG_ON(bio->bi_iter.bi_size != LOGPSIZE);
- 
- 	bio->bi_end_io = lbmIODone;
- 	bio->bi_private = bp;
--	bio->bi_opf = REQ_OP_READ;
- 	/*check if journaling to disk has been disabled*/
- 	if (log->no_integrity) {
- 		bio->bi_iter.bi_size = 0;
 -- 
 2.22.1
 
