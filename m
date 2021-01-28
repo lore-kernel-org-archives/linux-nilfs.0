@@ -1,162 +1,147 @@
-From: Jaegeuk Kim <jaegeuk@kernel.org>
-Subject: Re: [PATCH 08/17] f2fs: remove FAULT_ALLOC_BIO
-Date: Thu, 28 Jan 2021 08:11:28 -0800
-Message-ID: <YBLiMN7zm44VWaBI@google.com>
-References: <20210126145247.1964410-1-hch@lst.de>
- <20210126145247.1964410-9-hch@lst.de>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [Ocfs2-devel] [RFC PATCH 02/34] block: introduce and use bio_new
+Date: Thu, 28 Jan 2021 16:47:09 +0000
+Message-ID: <20210128164709.GZ308988@casper.infradead.org>
+References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
+ <20210128071133.60335-3-chaitanya.kulkarni@wdc.com>
+ <BL0PR04MB6514C554B4AC96866BC1B16FE7BA9@BL0PR04MB6514.namprd04.prod.outlook.com>
+ <DM6PR04MB4972DA86892CF4531440064F86BA9@DM6PR04MB4972.namprd04.prod.outlook.com>
 Mime-Version: 1.0
+Return-path: <xen-devel-bounces@lists.xenproject.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.xenproject.org/mailman/options/xen-devel>,
+ <mailto:xen-devel-request@lists.xenproject.org?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xenproject.org>
+List-Help: <mailto:xen-devel-request@lists.xenproject.org?subject=help>
+List-Subscribe: <https://lists.xenproject.org/mailman/listinfo/xen-devel>,
+ <mailto:xen-devel-request@lists.xenproject.org?subject=subscribe>
+Errors-To: xen-devel-bounces@lists.xenproject.org
+Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=ok1YlK16MaIquA7ZYUHxK/CMaFxxxwNWazaMAgFieLU=; b=vuOaMGbyB7/+Dg91fNUqvgBiBD
+	4apxS7jU5nU9b/DveQFuS18fYHTQPOpBZxMrv3tCqxWOuQg228bSNlkmvJ1gQneLnOfM3WL1ObNGi
+	MTuz8xXL3LKzE+DH7errCMxepgPQ3Thh2HpLy2Nat9DQOLy35B1FC3UkIZuvmKmdZzwX86t+WV5Mk
+	/pCa23DxPP5a3Rlkwfqrn59vty95NQBRWyuZpKNZRkjNLQlQ2KJrMub6IYLsf3IL2tz3nuZRbVWe7
+	TKvbqzYB3UBc6MLrjn2HVQGE6rKRMshHOwu50Myfj/erONbRzfW9chvly9np7Q4o+a4JR4iRTNdIG
+	5mKhGc+Q==;
+Content-Disposition: inline
+In-Reply-To: <DM6PR04MB4972DA86892CF4531440064F86BA9@DM6PR04MB4972.namprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=HByha+5zBmKRkUXCSrQ4MQRd21N7Dkyqss7cxHNnCU0=; b=SRwNn2JZ4PNtFOivi1MiluMj44
- FlPQ3q4GRYJuHHGF6lrcWuQN18/7IzNbtjYe0oxPmjPLxv1JvofJeis3wpXsXNKtNEKJ/WShGcOTl
- cn73CAwxlJeYAWw95dTHgkfY8bTMbW+B+gibJ0eCxvS5vR1SSy0xAu+NbXpsFibajyDI=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=HByha+5zBmKRkUXCSrQ4MQRd21N7Dkyqss7cxHNnCU0=; b=mCrQYEGh5DEAkwZ53Eq2zb7DPn
- 15b3eRIIBfuGJ/d8eJSK77eKaDnea7/eTtbdrlUuclbOUu9kstnCZoBFNlGVkkQchb7xZIFeR0Kxs
- +r6wWzT9lXtAe/aEy+0DqwdaL/l+HM+cj+YvwBn5UhecxCvuyNVT6sY6iSbGaf/GRPIY=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
- s=k20201202; t=1611850291;
- bh=l1fZVj6lNKrtqOWXBXFlHL9KLwU2deosKLGUjGIPhaQ=;
- h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
- b=Ae6xo2EqTNtPiMkPuwUBcZnLyMNEeIUX+7ThLWDfngvLkjuzBSsT7Pp5WbxiOPQho
- O6jLUshdETUx1nN4PLVPFnCLafOw9dc+CXzttS8jN/C7hNRWXbzwJxsWaoyVHO2Zak
- boAYycf/k6EsmAbrDlF+KkgSnuk0aRy1li4Y1jQCu0cqT5tL3yDWnu6TkthAWMZ7Dx
- DC7+JL5QB88HCrDHygJRXveBJosYNKqjW8sNNn4SLZ0p6m6F4YaeXBueIVrn/8gnEY
- BRgUeUzaBoReyjCxZvUdOjJysQUQlUOO/PKLFRuM9Cf/ybkQZOvsk0t6nN8lV4QP9L
- vk5bWmlQu//Pg==
-Content-Disposition: inline
-In-Reply-To: <20210126145247.1964410-9-hch@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Christoph Hellwig <hch@lst.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, drbd-dev@lists.linbit.com, Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, Philipp Reisner <philipp.reisner@linbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org
+To: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
+Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "xen-devel@lists.xenproject.org" <xen-devel@lists.xenproject.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>, "linux-fscrypt@vger.kernel.org" <linux-fscrypt@vger.kernel.org>, "jfs-discussion@lists.sourceforge.net" <jfs-discussion@lists.sourceforge.net>, "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "ocfs2-devel@oss.oracle.com" <ocf>
 
-On 01/26, Christoph Hellwig wrote:
-> Sleeping bio allocations do not fail, which means that injecting an error
-> into sleeping bio allocations is a little silly.
+
+FYI your email is completely unreadable to those not using html.
+I can't tell what you wrote and what Damien wrote.
+
+On Thu, Jan 28, 2021 at 08:33:10AM +0000, Chaitanya Kulkarni wrote:
+> On 1/27/21 11:21 PM, Damien Le Moal wrote:
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-
-Already merged tho.
-
-Acked-by: Jaegeuk Kim <jaegeuk@kernel.org>
-
+> On 2021/01/28 16:12, Chaitanya Kulkarni wrote:
+> 
+> 
+> Introduce bio_new() helper and use it in blk-lib.c to allocate and
+> initialize various non-optional or semi-optional members of the bio
+> along with bio allocation done with bio_alloc(). Here we also calmp the
+> max_bvecs for bio with BIO_MAX_PAGES before we pass to bio_alloc().
+> 
+> Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com><mailto:chaitanya.kulkarni@wdc.com>
 > ---
->  Documentation/filesystems/f2fs.rst |  1 -
->  fs/f2fs/data.c                     | 29 ++++-------------------------
->  fs/f2fs/f2fs.h                     |  1 -
->  fs/f2fs/super.c                    |  1 -
->  4 files changed, 4 insertions(+), 28 deletions(-)
+>  block/blk-lib.c     |  6 +-----
+>  include/linux/bio.h | 25 +++++++++++++++++++++++++
+>  2 files changed, 26 insertions(+), 5 deletions(-)
 > 
-> diff --git a/Documentation/filesystems/f2fs.rst b/Documentation/filesystems/f2fs.rst
-> index dae15c96e659e2..624f5f3ed93e86 100644
-> --- a/Documentation/filesystems/f2fs.rst
-> +++ b/Documentation/filesystems/f2fs.rst
-> @@ -179,7 +179,6 @@ fault_type=%d		 Support configuring fault injection type, should be
->  			 FAULT_KVMALLOC		  0x000000002
->  			 FAULT_PAGE_ALLOC	  0x000000004
->  			 FAULT_PAGE_GET		  0x000000008
-> -			 FAULT_ALLOC_BIO	  0x000000010
->  			 FAULT_ALLOC_NID	  0x000000020
->  			 FAULT_ORPHAN		  0x000000040
->  			 FAULT_BLOCK		  0x000000080
-> diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-> index 0cf0c605992431..9fb6be65592b1f 100644
-> --- a/fs/f2fs/data.c
-> +++ b/fs/f2fs/data.c
-> @@ -50,28 +50,6 @@ void f2fs_destroy_bioset(void)
->  	bioset_exit(&f2fs_bioset);
->  }
->  
-> -static inline struct bio *__f2fs_bio_alloc(gfp_t gfp_mask,
-> -						unsigned int nr_iovecs)
-> -{
-> -	return bio_alloc_bioset(gfp_mask, nr_iovecs, &f2fs_bioset);
-> -}
-> -
-> -static struct bio *f2fs_bio_alloc(struct f2fs_sb_info *sbi, int npages,
-> -		bool noio)
-> -{
-> -	if (noio) {
-> -		/* No failure on bio allocation */
-> -		return __f2fs_bio_alloc(GFP_NOIO, npages);
-> -	}
-> -
-> -	if (time_to_inject(sbi, FAULT_ALLOC_BIO)) {
-> -		f2fs_show_injection_info(sbi, FAULT_ALLOC_BIO);
-> -		return NULL;
-> -	}
-> -
-> -	return __f2fs_bio_alloc(GFP_KERNEL, npages);
-> -}
-> -
->  static bool __is_cp_guaranteed(struct page *page)
+> diff --git a/block/blk-lib.c b/block/blk-lib.c
+> index fb486a0bdb58..ec29415f00dd 100644
+> --- a/block/blk-lib.c
+> +++ b/block/blk-lib.c
+> @@ -14,17 +14,13 @@ struct bio *blk_next_bio(struct bio *bio, struct block_device *bdev,
+>                         sector_t sect, unsigned op, unsigned opf,
+>                         unsigned int nr_pages, gfp_t gfp)
 >  {
->  	struct address_space *mapping = page->mapping;
-> @@ -433,7 +411,7 @@ static struct bio *__bio_alloc(struct f2fs_io_info *fio, int npages)
->  	struct f2fs_sb_info *sbi = fio->sbi;
->  	struct bio *bio;
->  
-> -	bio = f2fs_bio_alloc(sbi, npages, true);
-> +	bio = bio_alloc_bioset(GFP_NOIO, npages, &f2fs_bioset);
->  
->  	f2fs_target_device(sbi, fio->new_blkaddr, bio);
->  	if (is_read_io(fio->op)) {
-> @@ -1029,8 +1007,9 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
->  	struct bio_post_read_ctx *ctx;
->  	unsigned int post_read_steps = 0;
->  
-> -	bio = f2fs_bio_alloc(sbi, min_t(int, nr_pages, BIO_MAX_PAGES),
-> -								for_write);
-> +	bio = bio_alloc_bioset(for_write ? GFP_NOIO : GFP_KERNEL,
-> +			       min_t(int, nr_pages, BIO_MAX_PAGES),
-> +			       &f2fs_bioset);
->  	if (!bio)
->  		return ERR_PTR(-ENOMEM);
->  
-> diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-> index 902bd3267c03e1..6c78365d80ceb5 100644
-> --- a/fs/f2fs/f2fs.h
-> +++ b/fs/f2fs/f2fs.h
-> @@ -43,7 +43,6 @@ enum {
->  	FAULT_KVMALLOC,
->  	FAULT_PAGE_ALLOC,
->  	FAULT_PAGE_GET,
-> -	FAULT_ALLOC_BIO,
->  	FAULT_ALLOC_NID,
->  	FAULT_ORPHAN,
->  	FAULT_BLOCK,
-> diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
-> index b4a07fe62d1a58..3a312642907e86 100644
-> --- a/fs/f2fs/super.c
-> +++ b/fs/f2fs/super.c
-> @@ -45,7 +45,6 @@ const char *f2fs_fault_name[FAULT_MAX] = {
->  	[FAULT_KVMALLOC]	= "kvmalloc",
->  	[FAULT_PAGE_ALLOC]	= "page alloc",
->  	[FAULT_PAGE_GET]	= "page get",
-> -	[FAULT_ALLOC_BIO]	= "alloc bio",
->  	[FAULT_ALLOC_NID]	= "alloc nid",
->  	[FAULT_ORPHAN]		= "orphan",
->  	[FAULT_BLOCK]		= "no more block",
-> -- 
-> 2.29.2
+> -       struct bio *new = bio_alloc(gfp, nr_pages);
+> +       struct bio *new = bio_new(bdev, sect, op, opf, gfp, nr_pages);
+> 
+>         if (bio) {
+>                 bio_chain(bio, new);
+>                 submit_bio(bio);
+>         }
+> 
+> -       new->bi_iter.bi_sector = sect;
+> -       bio_set_dev(new, bdev);
+> -       bio_set_op_attrs(new, op, opf);
+> -
+>         return new;
+>  }
+> 
+> diff --git a/include/linux/bio.h b/include/linux/bio.h
+> index c74857cf1252..2a09ba100546 100644
+> --- a/include/linux/bio.h
+> +++ b/include/linux/bio.h
+> @@ -826,5 +826,30 @@ static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
+>         if (!is_sync_kiocb(kiocb))
+>                 bio->bi_opf |= REQ_NOWAIT;
+>  }
+> +/**
+> + * bio_new -   allcate and initialize new bio
+> + * @bdev:      blockdev to issue discard for
+> + * @sector:    start sector
+> + * @op:                REQ_OP_XXX from enum req_opf
+> + * @op_flags:  REQ_XXX from enum req_flag_bits
+> + * @max_bvecs: maximum bvec to be allocated for this bio
+> + * @gfp_mask:  memory allocation flags (for bio_alloc)
+> + *
+> + * Description:
+> + *    Allocates, initializes common members, and returns a new bio.
+> + */
+> +static inline struct bio *bio_new(struct block_device *bdev, sector_t sector,
+> +                                 unsigned int op, unsigned int op_flags,
+> +                                 unsigned int max_bvecs, gfp_t gfp_mask)
+> +{
+> +       unsigned nr_bvec = clamp_t(unsigned int, max_bvecs, 0, BIO_MAX_PAGES);
+> +       struct bio *bio = bio_alloc(gfp_mask, nr_bvec);
+> 
+> 
+> I think that depending on the gfp_mask passed, bio can be NULL. So this should
+> be checked.
+> 
+> 
+> true, I'll add that check.
+> 
+> 
+> 
+> 
+> +
+> +       bio_set_dev(bio, bdev);
+> +       bio->bi_iter.bi_sector = sector;
+> +       bio_set_op_attrs(bio, op, op_flags);
+> 
+> 
+> This function is obsolete. Open code this.
+> 
+> 
+> true, will do.
+> 
+> 
+> 
+> 
+> +
+> +       return bio;
+> +}
+> 
+>  #endif /* __LINUX_BIO_H */
+> 
+> 
+> 
+> Thanks for the comments Damien.
+
+> _______________________________________________
+> Ocfs2-devel mailing list
+> Ocfs2-devel@oss.oracle.com
+> https://oss.oracle.com/mailman/listinfo/ocfs2-devel
+
+
