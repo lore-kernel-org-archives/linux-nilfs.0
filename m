@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 16/34] fs/direct-io: use bio_new in dio_bio_alloc
-Date: Wed, 27 Jan 2021 23:11:15 -0800
-Message-ID: <20210128071133.60335-17-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 17/34] iomap: use bio_new in iomap_dio_zero
+Date: Wed, 27 Jan 2021 23:11:16 -0800
+Message-ID: <20210128071133.60335-18-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818043; x=1643354043;
+  t=1611818051; x=1643354051;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=+nCtEeEc6ftLNfXULXJD9MfOSjGF3wrLBEXOv9oezHI=;
-  b=mGMHMACVYdi5FiLtGjJiyXx6tYott3zQopn4qTNBqtOG7JuQ2trtio0O
-   9aUONhKGZkoO5i0NgCH96neygJdAFv4CT7cIyRIw0xwdBfpzVWcqemvPA
-   xbZTxuruuZjfnRzHoz0Tk4cdeyj+jqwW3U/qqhf11t2OToho4vVzRd2bx
-   zKd8EmnhWqkhMSzVDsmvUdO4mExjkBF1NZyuee6JPZNukp6BlYDmwNyWp
-   3O3jkCGKmOKR5IYHS9qkyeHfuLASbOdBcpKLzGZ2oAy+z0AzWMaafYaeB
-   hsV/xvUmeFQ9I1IOiOldMW+i31fRKH38Y4R5v6YdEGpTrqnS04wiGBPc8
-   g==;
+  bh=0nkVYESNcCP1ZuiY2joF5zZXurD0RzvJ1s1BM2N7jGA=;
+  b=ZVcxLlzRKElg0u8TXFmI4lzEQt9BWuAqWhttYEhWH3KoMO6Z91dGYaKT
+   a7fwpum/0OmqryxvtnKMyDssyMtKOJiUIbubWZhgY8Vz8e/P8NE+C60X3
+   MCRdGhtlQjoyI/sMRvEtbbCRzGOnVx8Rzta6a8W1QAd1LL23Sjz+4GMqe
+   JMsUMku4Us/MZaY4oQbQNgiCa8k3sjPor4FoWqSktj7h8YmQmwKqrcmKH
+   Lq9FabIXMnRNE+0zNQttALYDA96Ks6KO6gBOS9QC0dXbIJ+PZMTdr8i1D
+   yKrSefYQpyHmHIY6B7rwbIoACt3EZviclFoYYWDqp/DOd6WbEehLmTI6a
+   Q==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,41 +35,31 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/crypto/bio.c | 2 +-
- fs/direct-io.c  | 6 ++----
- 2 files changed, 3 insertions(+), 5 deletions(-)
+ fs/iomap/direct-io.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/fs/crypto/bio.c b/fs/crypto/bio.c
-index 20dab9bdf098..28cd62ce853e 100644
---- a/fs/crypto/bio.c
-+++ b/fs/crypto/bio.c
-@@ -148,7 +148,7 @@ int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
- 		return -EINVAL;
+diff --git a/fs/iomap/direct-io.c b/fs/iomap/direct-io.c
+index ea1e8f696076..f6c557a1bd25 100644
+--- a/fs/iomap/direct-io.c
++++ b/fs/iomap/direct-io.c
+@@ -189,15 +189,13 @@ iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
+ 	int flags = REQ_SYNC | REQ_IDLE;
+ 	struct bio *bio;
  
- 	/* This always succeeds since __GFP_DIRECT_RECLAIM is set. */
--	bio = bio_alloc(inode->i_sb->s_bdev, 0, REQ_OP_WRITE, 0, nr_pages,
-+	bio = bio_new(inode->i_sb->s_bdev, 0, REQ_OP_WRITE, 0, nr_pages,
- 			GFP_NOFS);
+-	bio = bio_alloc(GFP_KERNEL, 1);
+-	bio_set_dev(bio, iomap->bdev);
+-	bio->bi_iter.bi_sector = iomap_sector(iomap, pos);
++	bio = bio_new(iomap->bdev, iomap_sector(iomap, pos), REQ_OP_WRITE,
++		      flags, 1, GFP_KERNEL);
+ 	bio->bi_private = dio;
+ 	bio->bi_end_io = iomap_dio_bio_end_io;
  
- 	do {
-diff --git a/fs/direct-io.c b/fs/direct-io.c
-index aa1083ecd623..6aab1bd167bc 100644
---- a/fs/direct-io.c
-+++ b/fs/direct-io.c
-@@ -397,11 +397,9 @@ dio_bio_alloc(struct dio *dio, struct dio_submit *sdio,
- 	 * bio_alloc() is guaranteed to return a bio when allowed to sleep and
- 	 * we request a valid number of vectors.
- 	 */
--	bio = bio_alloc(GFP_KERNEL, nr_vecs);
-+	bio = bio_new(bdev, first_sector, dio->op, dio->op_flags, nr_vecs,
-+		      GFP_KERNEL);
+ 	get_page(page);
+ 	__bio_add_page(bio, page, len, 0);
+-	bio_set_op_attrs(bio, REQ_OP_WRITE, flags);
+ 	iomap_dio_submit_bio(dio, iomap, bio, pos);
+ }
  
--	bio_set_dev(bio, bdev);
--	bio->bi_iter.bi_sector = first_sector;
--	bio_set_op_attrs(bio, dio->op, dio->op_flags);
- 	if (dio->is_async)
- 		bio->bi_end_io = dio_bio_end_aio;
- 	else
 -- 
 2.22.1
 
