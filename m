@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 30/34] hfsplus: use bio_new in hfsplus_submit_bio()
-Date: Wed, 27 Jan 2021 23:11:29 -0800
-Message-ID: <20210128071133.60335-31-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 32/34] mm: use bio_new in __swap_writepage
+Date: Wed, 27 Jan 2021 23:11:31 -0800
+Message-ID: <20210128071133.60335-33-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818149; x=1643354149;
+  t=1611818165; x=1643354165;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=NNQh//SoJS4GqMqJS7HaqIWs/nAFaMjGpU2K0hvKGW0=;
-  b=fQfK9wUdOyIrIsfy9RLLvC5xPgYcSXg3MNYnHSc9IsYLZx30nRHzIAUZ
-   294UUudQQlYk8gJcK/edZROZYlJIE1eNrjLm1JGiz/Q21FfSGShI1OpDG
-   AVL3nWWtzIN++jlZ98TQAnqMod+6Ql8ECPGPLXwk9xo2jd9Tx5vttBp8A
-   MKW1qB5k/Qt/1N/OTPnz9MYuOySMfX9ETamQAGkN5rbbeVBg424fAd1GQ
-   hDTtCXp/Z9hfKKx9hoSKub7BrBRCs+yLmSqVgpJS1F86spUPwH+/QWj7g
-   HR1yP3TJs98ynx2C6xmfLztXq4e7yWbpoTlZnnY6hLXY72FFMg4KLmomH
-   Q==;
+  bh=gllqHMP2deuE0vZ0qLUvAasM9UgJt1wGssSRSahQx/E=;
+  b=hOGHLilUmvGxftol4u3kaHh/IdpbjeATrhmzK2p5u3wlcOEAGVolUwiC
+   ijbbza2rMpSD0nIG909thINsbBpAouH+uSekpnwnBUg93ZAO3U5auD88H
+   CFORGFo1Pr7Xk67T7/tcRqjkXscVFk6dzsxMBM3CoKEb9K0KOU9o7mBFJ
+   IsOW2SrDDadHEZSq75JiQrHdn930EF8m8WAAkQvrdsRQfGVQoLs7M15rS
+   eZRPONG5dBLWI5EafB+spMp9kR+MX7PmUiZNoXZcTeDAEJLwPYPyQD0aK
+   YM92r0meR2GBK9vsqgfmuJsMzaGILCu1X5kJ7zgepRUgzohRH4kNV/HO2
+   A==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,25 +35,26 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/hfsplus/wrapper.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ mm/page_io.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/fs/hfsplus/wrapper.c b/fs/hfsplus/wrapper.c
-index 0350dc7821bf..8341ee6c9b31 100644
---- a/fs/hfsplus/wrapper.c
-+++ b/fs/hfsplus/wrapper.c
-@@ -64,10 +64,7 @@ int hfsplus_submit_bio(struct super_block *sb, sector_t sector,
- 	offset = start & (io_size - 1);
- 	sector &= ~((io_size >> HFSPLUS_SECTOR_SHIFT) - 1);
+diff --git a/mm/page_io.c b/mm/page_io.c
+index 92f7941c6d01..25b321489703 100644
+--- a/mm/page_io.c
++++ b/mm/page_io.c
+@@ -342,10 +342,8 @@ int __swap_writepage(struct page *page, struct writeback_control *wbc,
+ 		return 0;
+ 	}
  
 -	bio = bio_alloc(GFP_NOIO, 1);
--	bio->bi_iter.bi_sector = sector;
--	bio_set_dev(bio, sb->s_bdev);
--	bio_set_op_attrs(bio, op, op_flags);
-+	bio = bio_new(sb->s_bdev, sector, op, op_flags, 1, GFP_NOIO);
+-	bio_set_dev(bio, sis->bdev);
+-	bio->bi_iter.bi_sector = swap_page_sector(page);
+-	bio->bi_opf = REQ_OP_WRITE | REQ_SWAP | wbc_to_write_flags(wbc);
++	bio = bio_alloc(sis->bdev, swap_page_sector(page), REQ_OP_WRITE,
++			REQ_SWAP | wbc_to_write_flags(wbc), 1, GFP_NOIO);
+ 	bio->bi_end_io = end_write_func;
+ 	bio_add_page(bio, page, thp_size(page), 0);
  
- 	if (op != WRITE && data)
- 		*data = (u8 *)buf + offset;
 -- 
 2.22.1
 
