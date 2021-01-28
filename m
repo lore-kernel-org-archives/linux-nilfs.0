@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 06/34] zram: use bio_new
-Date: Wed, 27 Jan 2021 23:11:05 -0800
-Message-ID: <20210128071133.60335-7-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 07/34] dm: use bio_new in dm-log-writes
+Date: Wed, 27 Jan 2021 23:11:06 -0800
+Message-ID: <20210128071133.60335-8-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,16 +17,16 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611817956; x=1643353956;
+  t=1611818074; x=1643354074;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=QAiSNZxQXn+fhhqJHg770cKqGnQ7j5esbXKR/QGBS14=;
-  b=RNtHyDvzb2x/JasSn0QZOEbJpP5zeOlEybaSVBsHNyZvxPZ1mQGM8OeE
-   /mpvvBXQgzPpFvNGZca4WFxZP0t0Uq9vH+64z1pDkKLeawUgvGYHVBfyo
-   7/4l6mOAmK3q+07LZS3UNYFO3NLprJpMcnFDB+U54SwkA28XzApXFkUYZ
-   MXwA2yx8ggC+K5heZa/s7tie9hxHhrBy0Ex/X3ueF9OrmOTx6Va9IaT/K
-   XBQrAMKSXKuuayq9HAu743O+Pxt6EZGX2RHd1EY+Gcvtf04n0HCcd0MrI
-   HT3904xH+7hIRuFfbGvBaeDIO7YED1Sq4cVHeeSW0GKEfHdRoQBMuJEQ2
+  bh=A6gWT2+anXyYq2Hv6qVI+iojoFiSM9Vb51ZpjBpkhPc=;
+  b=gM/RwNIq1yMz3moNmYY7tIHWnvLEFZi3it25y6vCR8uyG74Ok+VaQrVD
+   dQplJFcYrzQ62nAgkEVt6DyO75+H8w87LM/hbmJYMIFh3+jN7anHpphm5
+   HoOL77UagK5gxoYb4b0q62/lQCt70KprQ3d83VZBiK2E2MbzXYu+HgSPa
+   dIQn9kWdAN5EwG4um1EkSTVT3aVddLRIdHp2jQYne1FSROA/eQCfhoHbU
+   NQXguNFM+7JTRpTNVkNh1cGH+Fwnk3D7DzNxXVQnAPYN2J/TAknDdjSrQ
+   LvOoq/eE6Q4eyF860CxYDp4dM922/vhVXX/IMx7EX83T79ZT7Hcd6AYV9
    w==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
@@ -35,28 +35,119 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- drivers/block/zram/zram_drv.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ drivers/md/dm-log-writes.c | 30 ++++++++++--------------------
+ 1 file changed, 10 insertions(+), 20 deletions(-)
 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index d7018543842e..5d744e528d4f 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -587,12 +587,11 @@ static int read_from_bdev_async(struct zram *zram, struct bio_vec *bvec,
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index e3d35c6c9f71..7ca9af407647 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -217,18 +217,15 @@ static int write_metadata(struct log_writes_c *lc, void *entry,
+ 	void *ptr;
+ 	size_t ret;
+ 
+-	bio = bio_alloc(GFP_KERNEL, 1);
++	bio = bio_new(lc->logdev->bdev, sector, REQ_OP_WRITE, 0, 1, GFP_KERNEL);
+ 	if (!bio) {
+ 		DMERR("Couldn't alloc log bio");
+ 		goto error;
+ 	}
+ 	bio->bi_iter.bi_size = 0;
+-	bio->bi_iter.bi_sector = sector;
+-	bio_set_dev(bio, lc->logdev->bdev);
+ 	bio->bi_end_io = (sector == WRITE_LOG_SUPER_SECTOR) ?
+ 			  log_end_super : log_end_io;
+ 	bio->bi_private = lc;
+-	bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+ 
+ 	page = alloc_page(GFP_KERNEL);
+ 	if (!page) {
+@@ -264,7 +261,7 @@ static int write_inline_data(struct log_writes_c *lc, void *entry,
+ 			     size_t entrylen, void *data, size_t datalen,
+ 			     sector_t sector)
  {
+-	int num_pages, bio_pages, pg_datalen, pg_sectorlen, i;
++	int num_pages, pg_datalen, pg_sectorlen, i;
+ 	struct page *page;
  	struct bio *bio;
+ 	size_t ret;
+@@ -272,24 +269,21 @@ static int write_inline_data(struct log_writes_c *lc, void *entry,
  
--	bio = bio_alloc(GFP_ATOMIC, 1);
-+	bio = bio_alloc(zram->bdev, entry * (PAGE_SIZE >> 9), 0, 0,
-+			1, GFP_ATOMIC);
- 	if (!bio)
- 		return -ENOMEM;
+ 	while (datalen) {
+ 		num_pages = ALIGN(datalen, PAGE_SIZE) >> PAGE_SHIFT;
+-		bio_pages = min(num_pages, BIO_MAX_PAGES);
  
--	bio->bi_iter.bi_sector = entry * (PAGE_SIZE >> 9);
--	bio_set_dev(bio, zram->bdev);
- 	if (!bio_add_page(bio, bvec->bv_page, bvec->bv_len, bvec->bv_offset)) {
- 		bio_put(bio);
- 		return -EIO;
+ 		atomic_inc(&lc->io_blocks);
+ 
+-		bio = bio_alloc(GFP_KERNEL, bio_pages);
++		bio = bio_new(lc->logdev->bdev, sector, REQ_OP_WRITE, 0,
++			      num_pages, GFP_KERNEL);
+ 		if (!bio) {
+ 			DMERR("Couldn't alloc inline data bio");
+ 			goto error;
+ 		}
+ 
+ 		bio->bi_iter.bi_size = 0;
+-		bio->bi_iter.bi_sector = sector;
+-		bio_set_dev(bio, lc->logdev->bdev);
+ 		bio->bi_end_io = log_end_io;
+ 		bio->bi_private = lc;
+-		bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+ 
+-		for (i = 0; i < bio_pages; i++) {
++		for (i = 0; i < bio->bi_max_vecs; i++) {
+ 			pg_datalen = min_t(int, datalen, PAGE_SIZE);
+ 			pg_sectorlen = ALIGN(pg_datalen, lc->sectorsize);
+ 
+@@ -317,7 +311,7 @@ static int write_inline_data(struct log_writes_c *lc, void *entry,
+ 		}
+ 		submit_bio(bio);
+ 
+-		sector += bio_pages * PAGE_SECTORS;
++		sector += bio->bi_max_vecs * PAGE_SECTORS;
+ 	}
+ 	return 0;
+ error_bio:
+@@ -364,17 +358,15 @@ static int log_one_block(struct log_writes_c *lc,
+ 		goto out;
+ 
+ 	atomic_inc(&lc->io_blocks);
+-	bio = bio_alloc(GFP_KERNEL, min(block->vec_cnt, BIO_MAX_PAGES));
++	bio = bio_new(lc->logdev->bdev, sector, REQ_OP_WRITE, 0,
++			block->vec_cnt, GFP_KERNEL);
+ 	if (!bio) {
+ 		DMERR("Couldn't alloc log bio");
+ 		goto error;
+ 	}
+ 	bio->bi_iter.bi_size = 0;
+-	bio->bi_iter.bi_sector = sector;
+-	bio_set_dev(bio, lc->logdev->bdev);
+ 	bio->bi_end_io = log_end_io;
+ 	bio->bi_private = lc;
+-	bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+ 
+ 	for (i = 0; i < block->vec_cnt; i++) {
+ 		/*
+@@ -386,17 +378,15 @@ static int log_one_block(struct log_writes_c *lc,
+ 		if (ret != block->vecs[i].bv_len) {
+ 			atomic_inc(&lc->io_blocks);
+ 			submit_bio(bio);
+-			bio = bio_alloc(GFP_KERNEL, min(block->vec_cnt - i, BIO_MAX_PAGES));
++			bio = bio_new(lc->logdev->bdev, sector, REQ_OP_WRITE,
++					0, block->vec_cnt - i, GFP_KERNEL);
+ 			if (!bio) {
+ 				DMERR("Couldn't alloc log bio");
+ 				goto error;
+ 			}
+ 			bio->bi_iter.bi_size = 0;
+-			bio->bi_iter.bi_sector = sector;
+-			bio_set_dev(bio, lc->logdev->bdev);
+ 			bio->bi_end_io = log_end_io;
+ 			bio->bi_private = lc;
+-			bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+ 
+ 			ret = bio_add_page(bio, block->vecs[i].bv_page,
+ 					   block->vecs[i].bv_len, 0);
 -- 
 2.22.1
 
