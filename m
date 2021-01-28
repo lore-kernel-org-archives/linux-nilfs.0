@@ -1,59 +1,66 @@
-From: Joseph Qi <joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-Subject: Re: [RFC PATCH 25/34] ocfs/cluster: use bio_new in dm-log-writes
-Date: Thu, 28 Jan 2021 20:13:28 +0800
-Message-ID: <8ba2c461-6042-757d-a3c1-0490932e749e@linux.alibaba.com>
+From: Dave Kleikamp <dave.kleikamp@oracle.com>
+Subject: Re: [RFC PATCH 19/34] fs/jfs/jfs_logmgr.c: use bio_new in lbmRead
+Date: Thu, 28 Jan 2021 06:43:03 -0600
+Message-ID: <8d3f7e70-1c7a-567a-0e60-97bac846bf13@oracle.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
- <20210128071133.60335-26-chaitanya.kulkarni@wdc.com>
+ <20210128071133.60335-20-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20210128071133.60335-26-chaitanya.kulkarni-Sjgp3cTcYWE@public.gmane.org>
+Return-path: <linux-block-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=subject : to : cc :
+ references : from : message-id : date : in-reply-to : content-type :
+ content-transfer-encoding : mime-version; s=corp-2020-01-29;
+ bh=4s6f1Z4X6xFsF2Ee1gAGevBW8HhU6VhaeckNt9jWQHc=;
+ b=kX6Rlr0au8sY4I6yUJwn2LXmhSeVCZE3jKgLuqO1QhpGfaIM4g2+Ig07nc+VWL7SzJVg
+ Bj72iFAcU9Za8alm5F6IopQUt9S9FRLVjgKOzpkdupcC+hpfJjJHBLB/bmz88hbIhmKm
+ R5V6ChjnvtAW/+gc2yOzLGfoJTVsrsbY+kr8JgLDbWqNF4+R6cbKMt3a3s7X48K4271x
+ CDkPKyy97rdwx0sWjQDA2+7KudY+HrQldnAORaUtHWSSe5HKI9gYe3WuYasENMKo4H26
+ YZHYf/IJQe1vowSGdXaismmdrzSvukfzxgZgsVxZUPtuzVPDomuh8lDLOEXGRn0omBFg Fg== 
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=4s6f1Z4X6xFsF2Ee1gAGevBW8HhU6VhaeckNt9jWQHc=;
+ b=Mr0nOt0UdZbc4cbI+3mzml8n5Q2KLA4MNetq2+yWthAXAn2HGggfFVZFDPIA5a75lWpBuhsz6jb+7Hv4R+QLC6SnfehG7z67W5eJYq42XFUyMZ/Wqub2sQs6r+KdZ2HwpgSqYLe4paKq0Af/xnNbc+FBBI7IKZugdF6TcuEkdt4=
+In-Reply-To: <20210128071133.60335-20-chaitanya.kulkarni@wdc.com>
 Content-Language: en-US
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Chaitanya Kulkarni <chaitanya.kulkarni-Sjgp3cTcYWE@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, konrad.wilk-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, roger.pau-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org, minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ngupta-KNmc09w0p+Ednm+yROfE0A@public.gmane.org, sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ebiggers-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark-qFb/fKtWg+rQT0dZR+AlfA@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org, damien.lemoal-Sjgp3cTcYWE@public.gmane.org, naohiro.aota-Sjgp3cTcYWE@public.gmane.org, jth-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pavel-+ZI9xUNit7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hare-l3A5Bk7waGM@public.gmane.org, gustavoars-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tiwai-l3A5Bk7waGM@public.gmane.org, alex.shi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org, asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ming.lei-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, osandov-b10kYP2dOMg@public.gmane.org, bvanassche-HInyCGIudOg@public.gmane.org, jeffl
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
+Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konrad.wilk@oracle.com, roger.pau@citrix.com, minchan@kernel.org, ngupta@vflare.org, sergey.senozhatsky.work@gmail.com, agk@redhat.com, snitzer@redhat.com, hch@lst.de, sagi@grimberg.me, martin.petersen@oracle.com, viro@zeniv.linux.org.uk, tytso@mit.edu, jaegeuk@kernel.org, ebiggers@kernel.org, djwong@kernel.org, shaggy@kernel.org, konishi.ryusuke@gmail.com, mark@fasheh.com, jlbec@evilplan.org, joseph.qi@linux.alibaba.com, damien.lemoal@wdc.com, naohiro.aota@wdc.com, jth@kernel.org, rjw@rjwysocki.net, len.brown@intel.com, pavel@ucw.cz, akpm@linux-foundation.org, hare@suse.de, gustavoars@kernel.org, tiwai@suse.de, alex.shi@linux.alibaba.com, asml.silence@gmail.com, ming.lei@redhat.com, tj@kernel.org, osandov@fb.c
 
-I think you send a wrong subject by mistake.
+You probably don't need 4 patches to fs/jfs/. These can be combined into 
+a single patch.
 
-Thanks,
-Joseph
+Dave
 
-On 1/28/21 3:11 PM, Chaitanya Kulkarni wrote:
-> Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni-Sjgp3cTcYWE@public.gmane.org>
+On 1/28/21 1:11 AM, Chaitanya Kulkarni wrote:
+> Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 > ---
->  fs/ocfs2/cluster/heartbeat.c | 6 ++----
->  1 file changed, 2 insertions(+), 4 deletions(-)
+>   fs/jfs/jfs_logmgr.c | 7 ++-----
+>   1 file changed, 2 insertions(+), 5 deletions(-)
 > 
-> diff --git a/fs/ocfs2/cluster/heartbeat.c b/fs/ocfs2/cluster/heartbeat.c
-> index 0179a73a3fa2..b34518036446 100644
-> --- a/fs/ocfs2/cluster/heartbeat.c
-> +++ b/fs/ocfs2/cluster/heartbeat.c
-> @@ -515,12 +515,13 @@ static struct bio *o2hb_setup_one_bio(struct o2hb_region *reg,
->  	unsigned int cs = *current_slot;
->  	struct bio *bio;
->  	struct page *page;
-> +	sector_t sect = (reg->hr_start_block + cs) << (bits - 9);
->  
->  	/* Testing has shown this allocation to take long enough under
->  	 * GFP_KERNEL that the local node can get fenced. It would be
->  	 * nicest if we could pre-allocate these bios and avoid this
->  	 * all together. */
-> -	bio = bio_alloc(GFP_ATOMIC, 16);
-> +	bio = bio_new(reg->hr_bdev, sect, op, op_flags, 16, GFP_ATOMIC);
->  	if (!bio) {
->  		mlog(ML_ERROR, "Could not alloc slots BIO!\n");
->  		bio = ERR_PTR(-ENOMEM);
-> @@ -528,11 +529,8 @@ static struct bio *o2hb_setup_one_bio(struct o2hb_region *reg,
->  	}
->  
->  	/* Must put everything in 512 byte sectors for the bio... */
-> -	bio->bi_iter.bi_sector = (reg->hr_start_block + cs) << (bits - 9);
-> -	bio_set_dev(bio, reg->hr_bdev);
->  	bio->bi_private = wc;
->  	bio->bi_end_io = o2hb_bio_end_io;
-> -	bio_set_op_attrs(bio, op, op_flags);
->  
->  	vec_start = (cs << bits) % PAGE_SIZE;
->  	while(cs < max_slots) {
+> diff --git a/fs/jfs/jfs_logmgr.c b/fs/jfs/jfs_logmgr.c
+> index 9330eff210e0..4481f3e33a3f 100644
+> --- a/fs/jfs/jfs_logmgr.c
+> +++ b/fs/jfs/jfs_logmgr.c
+> @@ -1979,17 +1979,14 @@ static int lbmRead(struct jfs_log * log, int pn, struct lbuf ** bpp)
+>   
+>   	bp->l_flag |= lbmREAD;
+>   
+> -	bio = bio_alloc(GFP_NOFS, 1);
+> -
+> -	bio->bi_iter.bi_sector = bp->l_blkno << (log->l2bsize - 9);
+> -	bio_set_dev(bio, log->bdev);
+> +	bio = bio_new(log->bdev, bp->l_blkno << (log->l2bsize - 9),
+> +			REQ_OP_READ, 0, 1, GFP_NOFS);
+>   
+>   	bio_add_page(bio, bp->l_page, LOGPSIZE, bp->l_offset);
+>   	BUG_ON(bio->bi_iter.bi_size != LOGPSIZE);
+>   
+>   	bio->bi_end_io = lbmIODone;
+>   	bio->bi_private = bp;
+> -	bio->bi_opf = REQ_OP_READ;
+>   	/*check if journaling to disk has been disabled*/
+>   	if (log->no_integrity) {
+>   		bio->bi_iter.bi_size = 0;
 > 
