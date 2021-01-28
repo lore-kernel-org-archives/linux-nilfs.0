@@ -1,7 +1,7 @@
 From: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Subject: [RFC PATCH 13/34] block: use bio_new in __blkdev_direct_IO
-Date: Wed, 27 Jan 2021 23:11:12 -0800
-Message-ID: <20210128071133.60335-14-chaitanya.kulkarni@wdc.com>
+Subject: [RFC PATCH 14/34] fs/buffer: use bio_new in submit_bh_wbc
+Date: Wed, 27 Jan 2021 23:11:13 -0800
+Message-ID: <20210128071133.60335-15-chaitanya.kulkarni@wdc.com>
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -17,17 +17,17 @@ Errors-To: xen-devel-bounces@lists.xenproject.org
 Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1611818019; x=1643354019;
+  t=1611818027; x=1643354027;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=OdHsUuhLqy4MrzmNdd/tdpH4dcVzXnQrrHk/wuqLVYg=;
-  b=BmcUjl2e66oFnSa18MPNVGlB/flKPZ+C9X/e27m609RMD6t4EEHkLQvS
-   ihTY/41u+4v8g5AgvKg5QTRxjluYE4xvKMI5B2XTEP1oqo/M+sYQCS91n
-   Y/huMQPesj9CKY+W2icBSGBWAb3lWOEWy8V+02A3a6ez+aOEt+fHLeYOh
-   DGePOZllzlDtHTetWOWpMjD753bxWA48wdbjhWIFnc7nL6FRG99jZ3iG4
-   krm8v3Mx1/2lhg6DzR9Bk8qdbXDWolxSBQ61tEXWT4Gl57X4bSaKDova8
-   wqrabiM8qBHRKwl1/ZNrjmCIRJ3z0qFn+7a6cpPxBNHsbPplVfJqvBxCY
-   w==;
+  bh=ph9rmwEURyYiJjcGgT3e2aApJZNJOSNpUoZqKSV1dx8=;
+  b=R0H0BBlYwokmIFrBez2p9fEC8db94MCPractRJhmKSgF/0N/EwjucYDp
+   eInEL+qyXGnxxTG86wUtt/iEWKav4ntKme4SwWqQA4xGYtFSXhfQ04MxW
+   XXeP/JbbboWTFmyOgcplJH7RHIyoQ1LZI8c5yO/EMTkEIZL2MpHiripYl
+   s4UZ8Eemx2yAV7seL0AUPeyVJbhHX8kgU87L3h3OYpZcIbWRJyLRq1Oue
+   746ki6pS2w1WTulu1CS4W6DwGVSyHr7vAGiAatIBAiYVoCvGBirxusRFh
+   elZDMhiH/HYtyOToZZ3FiA8wvn9KhpVlfJ7Lb2OK8RdpTD1tLAp+55gUz
+   Q==;
 In-Reply-To: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
@@ -35,40 +35,46 @@ Cc: axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konr
 
 Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 ---
- fs/block_dev.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ fs/buffer.c | 16 +++++++---------
+ 1 file changed, 7 insertions(+), 9 deletions(-)
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 9d4b1a884d76..f3e3247894d7 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -367,6 +367,8 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
- 		return -EINVAL;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 32647d2011df..fcbea667fa04 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -3023,12 +3023,16 @@ static int submit_bh_wbc(int op, int op_flags, struct buffer_head *bh,
+ 	if (test_set_buffer_req(bh) && (op == REQ_OP_WRITE))
+ 		clear_buffer_write_io_error(bh);
  
- 	bio = bio_alloc_bioset(GFP_KERNEL, nr_pages, &blkdev_dio_pool);
-+	bio_set_dev(bio, bdev);
-+	bio->bi_iter.bi_sector = pos >> 9;
+-	bio = bio_alloc(GFP_NOIO, 1);
++	if (buffer_meta(bh))
++		op_flags |= REQ_META;
++	if (buffer_prio(bh))
++		op_flags |= REQ_PRIO;
++
++	bio = bio_new(bh->b_bdev,  bh->b_blocknr * (bh->b_size >> 9), op,
++		      op_flags, GFP_NOIO, 1);
  
- 	dio = container_of(bio, struct blkdev_dio, bio);
- 	dio->is_sync = is_sync = is_sync_kiocb(iocb);
-@@ -389,8 +391,6 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
- 		blk_start_plug(&plug);
+ 	fscrypt_set_bio_crypt_ctx_bh(bio, bh, GFP_NOIO);
  
- 	for (;;) {
--		bio_set_dev(bio, bdev);
--		bio->bi_iter.bi_sector = pos >> 9;
- 		bio->bi_write_hint = iocb->ki_hint;
- 		bio->bi_private = dio;
- 		bio->bi_end_io = blkdev_bio_end_io;
-@@ -446,7 +446,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
- 		}
+-	bio->bi_iter.bi_sector = bh->b_blocknr * (bh->b_size >> 9);
+-	bio_set_dev(bio, bh->b_bdev);
+ 	bio->bi_write_hint = write_hint;
  
- 		submit_bio(bio);
--		bio = bio_alloc(GFP_KERNEL, nr_pages);
-+		bio = bio_new(bdev, pos >> 9, 0, 0, nr_pages, GFP_KERNEL);
- 	}
+ 	bio_add_page(bio, bh->b_page, bh->b_size, bh_offset(bh));
+@@ -3037,12 +3041,6 @@ static int submit_bh_wbc(int op, int op_flags, struct buffer_head *bh,
+ 	bio->bi_end_io = end_bio_bh_io_sync;
+ 	bio->bi_private = bh;
  
- 	if (!is_poll)
+-	if (buffer_meta(bh))
+-		op_flags |= REQ_META;
+-	if (buffer_prio(bh))
+-		op_flags |= REQ_PRIO;
+-	bio_set_op_attrs(bio, op, op_flags);
+-
+ 	/* Take care of bh's that straddle the end of the device */
+ 	guard_bio_eod(bio);
+ 
 -- 
 2.22.1
 
