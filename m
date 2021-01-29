@@ -1,70 +1,52 @@
-From: "Darrick J. Wong" <djwong@kernel.org>
-Subject: Re: [RFC PATCH 18/34] iomap: use bio_new in iomap_dio_bio_actor
-Date: Thu, 28 Jan 2021 09:24:02 -0800
-Message-ID: <20210128172402.GO7698@magnolia>
-References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
- <20210128071133.60335-19-chaitanya.kulkarni@wdc.com>
+From: Chao Yu <yuchao0@huawei.com>
+Subject: Re: [PATCH 07/17] f2fs: use blkdev_issue_flush in
+ __submit_flush_wait
+Date: Fri, 29 Jan 2021 09:03:57 +0800
+Message-ID: <a36e80ab-20b5-47db-7e20-6ac1c7fc4517@huawei.com>
+References: <20210126145247.1964410-1-hch@lst.de>
+ <20210126145247.1964410-8-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <xen-devel-bounces@lists.xenproject.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.xenproject.org/mailman/options/xen-devel>,
- <mailto:xen-devel-request@lists.xenproject.org?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xenproject.org>
-List-Help: <mailto:xen-devel-request@lists.xenproject.org?subject=help>
-List-Subscribe: <https://lists.xenproject.org/mailman/listinfo/xen-devel>,
- <mailto:xen-devel-request@lists.xenproject.org?subject=subscribe>
-Errors-To: xen-devel-bounces@lists.xenproject.org
-Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1611854642;
-	bh=Zs2s8ZvTIPYGR4BFwbfSOZLDbQpy7x8YdhBNvxD8Dok=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=dYixlgG2K3aWwDLaJowzYgnOFmByUyz6PjYTAvhTfbvB+e9gPk0mBgRRvBez32mDu
-	 g+/BEjUeO2s7tBkV+OtFiT2UlC3mn8gjSXsXC5Xpxm6KRmfDNpc8Z7+gIuibodKK4H
-	 l1i2cwlyEJsSukyTcGjNrcpQfEjVAbCBE6DwgrePquTtnF0XcOLlk2eq3YbBOrXlcF
-	 50KQtEwBjnE5+b+zJhPCQRu9YN8ISWqvJskcg8GQfdpqKteYo166Aso1a23IfJvuVj
-	 VfAojNA36QPu6qz6sKkxuvacugxCY5JwWT3tNh6OxRrRzVwkEqP+vyF3JrdyJAT+Ys
-	 o8BRepJ02vTLA==
-Content-Disposition: inline
-In-Reply-To: <20210128071133.60335-19-chaitanya.kulkarni@wdc.com>
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Cc: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, xen-devel@lists.xenproject.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org, axboe@kernel.dk, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, konrad.wilk@oracle.com, roger.pau@citrix.com, minchan@kernel.org, ngupta@vflare.org, sergey.senozhatsky.work@gmail.com, agk@redhat.com, snitzer@redhat.com, hch@lst.de, sagi@grimberg.me, martin.petersen@oracle.com, viro@zeniv.linux.org.uk, tytso@mit.edu, jaegeuk@kernel.org, ebiggers@kernel.org, shaggy@kernel.org, konishi.ryusuke@gmail.com, mark@fashe
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:In-Reply-To:
+ MIME-Version:Date:Message-ID:From:References:CC:To:Subject:Sender:Reply-To:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=MOFhdxVwN1frM25Y/F48/QUoEnQnAOz4O6+GkDU3ylg=; b=A1PSVwL/BV+crZT6F/JkK/dHSU
+ 4J2eqz2nAe9fszKpcy8u2aRYkjXcQ8IAOY4/Vtnn7vfhykoHWhTKED01OKinUJAvA/4URs6QqAiUy
+ z7HCEie+lpGWv1F7VShZgRlyUulxtfdVglICsIcqn59jDkJfu6jkaVXuarLmUS6qpmTI=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:Content-Type:In-Reply-To:MIME-Version:Date:
+ Message-ID:From:References:CC:To:Subject:Sender:Reply-To:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=MOFhdxVwN1frM25Y/F48/QUoEnQnAOz4O6+GkDU3ylg=; b=XkFvSdnws+u7+fnD066lW5bndz
+ Y17hoP/Ct1EM+jfB2JPvFC0YCAZ5/mS7F+SGT6PNc5ScIeIMZcyd5pvKOjsS/XWiRwBodMP3hQD0T
+ EyOtXe4UV8SJd2GHqvCrBP6IeV6WULiK2nsND0oVqa9Xc5F6TN5q607ycEn3USv2ot/0=;
+In-Reply-To: <20210126145247.1964410-8-hch@lst.de>
+Content-Language: en-US
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Damien Le Moal <damien.lemoal@wdc.com>, Josef Bacik <josef@toxicpanda.com>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Coly Li <colyli@suse.de>, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-btrfs@vger.kernel.org
 
-On Wed, Jan 27, 2021 at 11:11:17PM -0800, Chaitanya Kulkarni wrote:
-> Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-> ---
->  fs/iomap/direct-io.c | 5 ++---
->  1 file changed, 2 insertions(+), 3 deletions(-)
+On 2021/1/26 22:52, Christoph Hellwig wrote:
+> Use the blkdev_issue_flush helper instead of duplicating it.
 > 
-> diff --git a/fs/iomap/direct-io.c b/fs/iomap/direct-io.c
-> index f6c557a1bd25..0737192f7e5c 100644
-> --- a/fs/iomap/direct-io.c
-> +++ b/fs/iomap/direct-io.c
-> @@ -267,9 +267,8 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
->  			goto out;
->  		}
->  
-> -		bio = bio_alloc(GFP_KERNEL, nr_pages);
-> -		bio_set_dev(bio, iomap->bdev);
-> -		bio->bi_iter.bi_sector = iomap_sector(iomap, pos);
-> +		bio = bio_new(iomap->bdev, iomap_sector(iomap, pos), 0, 0,
-> +			      nr_pages, GFP_KERNEL);
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-op == 0?  It seems a little odd to me that we'd set the field to zero
-and then construct bi_opf later.
+Acked-by: Chao Yu <yuchao0@huawei.com>
 
-It also strikes me as a little strange that bi_opf is combined from the
-third and fourth parameters, but maybe some day you'll want to do some
-parameter verification on debug kernels or something...?
-
---D
-
->  		bio->bi_write_hint = dio->iocb->ki_hint;
->  		bio->bi_ioprio = dio->iocb->ki_ioprio;
->  		bio->bi_private = dio;
-> -- 
-> 2.22.1
-> 
-
+Thanks,
