@@ -1,84 +1,44 @@
-From: syzbot <syzbot+ce18ece82e1fede33bf7-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: KMSAN: uninit-value in crc32_le_base (2)
-Date: Mon, 01 Feb 2021 01:06:13 -0800
-Message-ID: <000000000000694ba505ba42aa9b@google.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 04/17] block: split bio_kmalloc from
+	bio_alloc_bioset
+Date: Mon, 1 Feb 2021 13:22:04 +0100
+Message-ID: <20210201122204.GA22727@lst.de>
+References: <20210126145247.1964410-1-hch@lst.de>
+	<20210126145247.1964410-5-hch@lst.de>
+	<20210130035646.GH308988@casper.infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20210130035646.GH308988@casper.infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org, Chao Yu <chao@kernel.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, drbd-dev@tron.linbit.com, Jaegeuk Kim <jaegeuk@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>, linux-mm@kvack.org, Philipp Reisner <philipp.reisner@linbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-Hello,
+On Sat, Jan 30, 2021 at 03:56:46AM +0000, Matthew Wilcox wrote:
+> On Tue, Jan 26, 2021 at 03:52:34PM +0100, Christoph Hellwig wrote:
+> > bio_kmalloc shares almost no logic with the bio_set based fast path
+> > in bio_alloc_bioset.  Split it into an entirely separate implementation.
+> > 
+> > Signed-off-by: Christoph Hellwig <hch@lst.de>
+> > ---
+> >  block/bio.c         | 167 ++++++++++++++++++++++----------------------
+> >  include/linux/bio.h |   6 +-
+> >  2 files changed, 86 insertions(+), 87 deletions(-)
+> 
+> This patch causes current linux-next to OOM for me when running xfstests
+> after about ten minutes.  Haven't looked into why yet, this is just the
+> results of a git bisect.
 
-syzbot found the following issue on:
-
-HEAD commit:    73d62e81 kmsan: random: prevent boot-time reports in _mix_..
-git tree:       https://github.com/google/kmsan.git master
-console output: https://syzkaller.appspot.com/x/log.txt?x=120020acd00000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=31d3b433c9628854
-dashboard link: https://syzkaller.appspot.com/bug?extid=ce18ece82e1fede33bf7
-compiler:       clang version 11.0.1
-userspace arch: i386
-
-Unfortunately, I don't have any reproducer for this issue yet.
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+ce18ece82e1fede33bf7-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-
-=====================================================
-BUG: KMSAN: uninit-value in crc32_body lib/crc32.c:110 [inline]
-BUG: KMSAN: uninit-value in crc32_le_generic lib/crc32.c:179 [inline]
-BUG: KMSAN: uninit-value in crc32_le_base+0x558/0xe70 lib/crc32.c:197
-CPU: 1 PID: 11631 Comm: segctord Not tainted 5.10.0-rc4-syzkaller #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
-Call Trace:
- __dump_stack lib/dump_stack.c:77 [inline]
- dump_stack+0x21c/0x280 lib/dump_stack.c:118
- kmsan_report+0xfb/0x1e0 mm/kmsan/kmsan_report.c:118
- __msan_warning+0x5f/0xa0 mm/kmsan/kmsan_instr.c:197
- crc32_body lib/crc32.c:110 [inline]
- crc32_le_generic lib/crc32.c:179 [inline]
- crc32_le_base+0x558/0xe70 lib/crc32.c:197
- nilfs_segbuf_fill_in_segsum_crc fs/nilfs2/segbuf.c:182 [inline]
- nilfs_add_checksums_on_logs+0x388/0xde0 fs/nilfs2/segbuf.c:320
- nilfs_segctor_do_construct+0x7dd6/0xbf20 fs/nilfs2/segment.c:2072
- nilfs_segctor_construct+0x302/0x1040 fs/nilfs2/segment.c:2377
- nilfs_segctor_thread_construct+0xd6/0x840 fs/nilfs2/segment.c:2485
- nilfs_segctor_thread+0xf35/0x13c0 fs/nilfs2/segment.c:2568
- kthread+0x51c/0x560 kernel/kthread.c:292
- ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:296
-
-Uninit was stored to memory at:
- kmsan_save_stack_with_flags mm/kmsan/kmsan.c:121 [inline]
- kmsan_internal_chain_origin+0xad/0x130 mm/kmsan/kmsan.c:289
- kmsan_memcpy_memmove_metadata+0x25e/0x2d0 mm/kmsan/kmsan.c:226
- kmsan_memcpy_metadata+0xb/0x10 mm/kmsan/kmsan.c:246
- __msan_memcpy+0x46/0x60 mm/kmsan/kmsan_instr.c:110
- nilfs_write_dat_node_binfo+0x17a/0x370 fs/nilfs2/segment.c:663
- nilfs_segctor_update_payload_blocknr fs/nilfs2/segment.c:1602 [inline]
- nilfs_segctor_assign fs/nilfs2/segment.c:1625 [inline]
- nilfs_segctor_do_construct+0x4b00/0xbf20 fs/nilfs2/segment.c:2052
- nilfs_segctor_construct+0x302/0x1040 fs/nilfs2/segment.c:2377
- nilfs_segctor_thread_construct+0xd6/0x840 fs/nilfs2/segment.c:2485
- nilfs_segctor_thread+0xf35/0x13c0 fs/nilfs2/segment.c:2568
- kthread+0x51c/0x560 kernel/kthread.c:292
- ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:296
-
-Local variable ----binfo.i.i@nilfs_segctor_do_construct created at:
- nilfs_segctor_update_payload_blocknr fs/nilfs2/segment.c:1558 [inline]
- nilfs_segctor_assign fs/nilfs2/segment.c:1625 [inline]
- nilfs_segctor_do_construct+0x3deb/0xbf20 fs/nilfs2/segment.c:2052
- nilfs_segctor_update_payload_blocknr fs/nilfs2/segment.c:1558 [inline]
- nilfs_segctor_assign fs/nilfs2/segment.c:1625 [inline]
- nilfs_segctor_do_construct+0x3deb/0xbf20 fs/nilfs2/segment.c:2052
-=====================================================
-
-
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
-
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+I've run tests on linux-next all weekend and could not reproduce
+the issue.  Can you share your .config?
