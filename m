@@ -1,28 +1,24 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH 04/17] block: split bio_kmalloc from
-	bio_alloc_bioset
-Date: Sat, 30 Jan 2021 03:56:46 +0000
-Message-ID: <20210130035646.GH308988@casper.infradead.org>
+From: Guoqing Jiang <guoqing.jiang-8+5b1tb3oTXfrHaScsAUWw@public.gmane.org>
+Subject: Re: misc bio allocation cleanups
+Date: Mon, 1 Feb 2021 02:16:04 +0100
+Message-ID: <9d376309-5d67-d859-1ad0-a669bdb75cdd@cloud.ionos.com>
 References: <20210126145247.1964410-1-hch@lst.de>
-	<20210126145247.1964410-5-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209;
-	h=In-Reply-To:Content-Transfer-Encoding:
-	Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
-	Sender:Reply-To:Content-ID:Content-Description;
-	bh=DenP85I1Njjb0sm/Pv5awH6u78JiwmjeMN74Dl7XDmA=;
-	b=H8SDl3brId4iyEQMOwW4BfEUQ2
-	Xy9mZcqFmFvcWvR6dxLgQ3QUwF+RwC9GNnBM28jr+2J7JQ5Bm8pWtzkJy9Bu5683unOHOgLMv+gFM
-	jYIfOM6Ao2NNEjEzqoWU83ro0i2k1QtT++2jpOr8mpPL1+MxGJTvy2GRgyUg+z6xssmGMSAnWY2zd
-	lqlVaZEtkQfNNrYTdAkx5Dh4tKL60XSKbWMPsTXg7ShS8Q1MALyQ1L4XvADIPpEa3DQT7A35auYCK
-	RYKeUzMDMR7ROqaOWCMHMSpzECR3dkUR8mtXMmO0lgMzXZcgza2tXYiFwaZvQ9UvVr3UoISIOLjsY
-	syMo01WQ==;
-Content-Disposition: inline
-In-Reply-To: <20210126145247.1964410-5-hch-jcswGhMUV9g@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=cloud.ionos.com; s=google;
+	h=subject:to:cc:references:from:message-id:date:user-agent
+	:mime-version:in-reply-to:content-language:content-transfer-encoding;
+	bh=RLU8sNVXRSwQvcQ9Qv8D6rwZxuEAO9er5VHUrLUQ6lo=;
+	b=L2BSNt7JuuX3qwrFkNZjtFXfNANw5QJ85Zzv/tI14dXMoLSgBfFXpzNkCEQk/s7y+n
+	c9pr4KSWgfja57hPagkEj3aixUcSalBsGKYezPNuM5yfObu8/dbV04WdroKRi/Rd0a4w
+	O7Op0qUxgDVAKuovjloSRmC6zp8ufwg0s/wfHy8/sbP+huWE2bBFaNK0SHu7Z66ebzwf
+	r4vJ8bEssS00XyFQhuv1gG82ev6Tu8DEyCSdg7CFvkSrHv19xK7s2AvSa8t8Cq2ux+g+
+	DWjitlTOE0tXzXdee8aSLYl8CyS9NTAnBlNZXO4d2SLYFiJ/RLu6oOcYTz2Iw+p3kOZx
+	L3SQ==
+In-Reply-To: <20210126145247.1964410-1-hch-jcswGhMUV9g@public.gmane.org>
+Content-Language: en-US
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
 	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
@@ -33,25 +29,97 @@ List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
 	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
 Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Naohiro Aota <naohiro.aota-Sjgp3cTcYWE@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Damien Le Moal <damien.lemoal-Sjgp3cTcYWE@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Naohiro Aota <naohiro.aota-Sjgp3cTcYWE@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Damien Le Moal <damien.lemoal-Sjgp3cTcYWE@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, Jan 26, 2021 at 03:52:34PM +0100, Christoph Hellwig wrote:
-> bio_kmalloc shares almost no logic with the bio_set based fast path
-> in bio_alloc_bioset.  Split it into an entirely separate implementation.
-> 
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> ---
->  block/bio.c         | 167 ++++++++++++++++++++++----------------------
->  include/linux/bio.h |   6 +-
->  2 files changed, 86 insertions(+), 87 deletions(-)
+Hi Christoph,
 
-This patch causes current linux-next to OOM for me when running xfstests
-after about ten minutes.  Haven't looked into why yet, this is just the
-results of a git bisect.
+I tried with latest for-5.12/block branch, and got below issue when 
+trying to create raid1 array.
 
-The qemu command line is:
+[   80.605832] BUG: kernel NULL pointer dereference, address: 
+0000000000000018
+[   80.606159] #PF: supervisor read access in kernel mode
+[   80.606159] #PF: error_code(0x0000) - not-present page
+[   80.606159] PGD 0 P4D 0
+[   80.606159] Oops: 0000 [#1] SMP NOPTI
+[   80.606159] CPU: 1 PID: 207 Comm: mdadm Not tainted 5.11.0-rc5+ #37
+[   80.606159] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), 
+BIOS 1.10.2-1ubuntu1 04/01/2014
+[   80.606159] RIP: 0010:bdev_read_only+0x0/0x30
+[   80.606159] Code: 89 df 5b 5d e9 71 21 e7 ff 81 e6 ff ff 0f 00 48 c7 
+c7 40 99 d9 9e e8 0f e5 04 00 eb a0 0f 1f 00 66 2e 0f 1f 84 00 00 00 00 
+00 <80> 7f 18 00 b8 01 00 00 00 75 11 48 8b 97 60 03 00 00 48 8b 4a 40
+[   80.606159] RSP: 0018:ffffb14f405dfd38 EFLAGS: 00000246
+[   80.606159] RAX: 0000000000000000 RBX: ffff9b0e0863b018 RCX: 
+ffff9b0e01edc000
+[   80.606159] RDX: ffff9b0e01b54c00 RSI: ffff9b0e0863b000 RDI: 
+0000000000000000
+[   80.606159] RBP: ffff9b0e01272200 R08: 0000000000000000 R09: 
+0000000000000000
+[   80.606159] R10: ffffee978004da40 R11: 0000000000000cc0 R12: 
+ffff9b0e0863b000
+[   80.606159] R13: ffff9b0e01f2cc00 R14: ffff9b0e0863b000 R15: 
+0000000000000000
+[   80.606159] FS:  00007f522ec65740(0000) GS:ffff9b0e7bc80000(0000) 
+knlGS:0000000000000000
+[   80.606159] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   80.606159] CR2: 0000000000000018 CR3: 0000000001364000 CR4: 
+00000000000006e0
+[   80.606159] Call Trace:
+[   80.606159]  bind_rdev_to_array+0x2f7/0x380
+[   80.606159]  ? cred_has_capability+0x80/0x120
+[   80.606159]  md_add_new_disk+0x204/0x630
+[   80.606159]  ? security_capable+0x33/0x50
+[   80.606159]  md_ioctl+0xee7/0x1690
+[   80.606159]  ? selinux_file_ioctl+0x143/0x200
+[   80.606159]  blkdev_ioctl+0x1ff/0x240
+[   80.606159]  block_ioctl+0x34/0x40
+[   80.606159]  __x64_sys_ioctl+0x89/0xc0
+[   80.606159]  do_syscall_64+0x33/0x40
+[   80.606159]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[   80.606159] RIP: 0033:0x7f522e564317
+[   80.606159] Code: b3 66 90 48 8b 05 71 4b 2d 00 64 c7 00 26 00 00 00 
+48 c7 c0 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 b8 10 00 00 00 0f 
+05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 41 4b 2d 00 f7 d8 64 89 01 48
+[   80.606159] RSP: 002b:00007ffc3abd96f8 EFLAGS: 00000246 ORIG_RAX: 
+0000000000000010
+[   80.606159] RAX: ffffffffffffffda RBX: 00005653ee690350 RCX: 
+00007f522e564317
+[   80.606159] RDX: 00005653ee694058 RSI: 0000000040140921 RDI: 
+0000000000000004
+[   80.606159] RBP: 00005653ee690410 R08: 00007f522e839db0 R09: 
+0000000000000000
+[   80.606159] R10: 00005653ee690010 R11: 0000000000000246 R12: 
+0000000000000000
+[   80.606159] R13: 0000000000000000 R14: 0000000000000000 R15: 
+00005653ee694010
+[   80.606159] Modules linked in:
+[   80.606159] CR2: 0000000000000018
+[   80.622996] ---[ end trace 22144b856a3c1001 ]---
+[   80.623285] RIP: 0010:bdev_read_only+0x0/0x30
+[   80.623501] Code: 89 df 5b 5d e9 71 21 e7 ff 81 e6 ff ff 0f 00 48 c7 
+c7 40 99 d9 9e e8 0f e5 04 00 eb a0 0f 1f 00 66 2e 0f 1f 84 00 00 00 00 
+00 <80> 7f 18 00 b8 01 00 00 00 75 11 48 8b 97 60 03 00 00 48 8b 4a 40
+[   80.624544] RSP: 0018:ffffb14f405dfd38 EFLAGS: 00000246
+[   80.624788] RAX: 0000000000000000 RBX: ffff9b0e0863b018 RCX: 
+ffff9b0e01edc000
+[   80.625136] RDX: ffff9b0e01b54c00 RSI: ffff9b0e0863b000 RDI: 
+0000000000000000
+[   80.625449] RBP: ffff9b0e01272200 R08: 0000000000000000 R09: 
+0000000000000000
+[   80.625761] R10: ffffee978004da40 R11: 0000000000000cc0 R12: 
+ffff9b0e0863b000
+[   80.626112] R13: ffff9b0e01f2cc00 R14: ffff9b0e0863b000 R15: 
+0000000000000000
+[   80.626429] FS:  00007f522ec65740(0000) GS:ffff9b0e7bc80000(0000) 
+knlGS:0000000000000000
+[   80.626784] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   80.627035] CR2: 0000000000000018 CR3: 0000000001364000 CR4: 
+00000000000006e0
+Killed
 
-qemu-system-x86_64 -nodefaults -nographic -cpu host -machine accel=kvm,nvdimm -m 2G,slots=8,maxmem=1T -smp 6 -kernel /home/willy/kernel/folio/.build_test_kernel-x86_64/kpgk/vmlinuz -append console=hvc0 root=/dev/sda rw log_buf_len=8M ktest.dir=/home/willy/kernel/ktest ktest.env=/tmp/build-test-kernel-nJO6QgxOmo/env quiet systemd.show_status=0 systemd.log-target=journal crashkernel=128M no_console_suspend -device virtio-serial -chardev stdio,id=console -device virtconsole,chardev=console -serial unix:/tmp/build-test-kernel-nJO6QgxOmo/vm-kgdb,server,nowait -monitor unix:/tmp/build-test-kernel-nJO6QgxOmo/vm-mon,server,nowait -gdb unix:/tmp/build-test-kernel-nJO6QgxOmo/vm-gdb,server,nowait -device virtio-rng-pci -virtfs local,path=/,mount_tag=host,security_model=none -device virtio-scsi-pci,id
- =hba -nic user,model=virtio,hostfwd=tcp:127.0.0.1:24674-:22 -drive if=none,format=raw,id=disk0,file=/var/lib/ktest/root.amd64,snapshot=on -device scsi-hd,bus=hba.0,drive=disk0 -drive if=none
- ,format=raw,id=disk1,file=/tmp/build-test-kernel-nJO6QgxOmo/dev-1,cache=unsafe -device scsi-hd,bus=hba.0,drive=disk1 -drive if=none,format=raw,id=disk2,file=/tmp/build-test-kernel-nJO6QgxOmo/dev-2,cache=unsafe -device scsi-hd,bus=hba.0,drive=disk2 -drive if=none,format=raw,id=disk3,file=/tmp/build-test-kernel-nJO6QgxOmo/dev-3,cache=unsafe -device scsi-hd,bus=hba.0,drive=disk3
+
+Thanks,
+Guoqing
