@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v1 3/4] nilfs2: Switch to use %ptTs
-Date: Mon, 10 May 2021 18:04:12 +0300
-Message-ID: <20210510150413.59356-3-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v1 4/4] usb: host: xhci-tegra: Switch to use %ptTs
+Date: Mon, 10 May 2021 18:04:13 +0300
+Message-ID: <20210510150413.59356-4-andriy.shevchenko@linux.intel.com>
 References: <20210510150413.59356-1-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -15,66 +15,38 @@ Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Sergey Sen
 Use %ptTs instead of open coded variant to print contents
 of time64_t type in human readable form.
 
-Use sysfs_emit() at the same time in the changed functions.
-
-Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Jonathan Hunter <jonathanh-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
- fs/nilfs2/sysfs.c | 19 +++----------------
- 1 file changed, 3 insertions(+), 16 deletions(-)
+ drivers/usb/host/xhci-tegra.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 
-diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 303d71430bdd..4e10423f0448 100644
---- a/fs/nilfs2/sysfs.c
-+++ b/fs/nilfs2/sysfs.c
-@@ -19,19 +19,6 @@
- /* /sys/fs/<nilfs>/ */
- static struct kset *nilfs_kset;
+diff --git a/drivers/usb/host/xhci-tegra.c b/drivers/usb/host/xhci-tegra.c
+index ce97ff054c68..937b78cba89b 100644
+--- a/drivers/usb/host/xhci-tegra.c
++++ b/drivers/usb/host/xhci-tegra.c
+@@ -890,7 +890,6 @@ static int tegra_xusb_load_firmware(struct tegra_xusb *tegra)
+ 	struct xhci_op_regs __iomem *op;
+ 	unsigned long timeout;
+ 	time64_t timestamp;
+-	struct tm time;
+ 	u64 address;
+ 	u32 value;
+ 	int err;
+@@ -987,11 +986,8 @@ static int tegra_xusb_load_firmware(struct tegra_xusb *tegra)
+ 	}
  
--#define NILFS_SHOW_TIME(time_t_val, buf) ({ \
--		struct tm res; \
--		int count = 0; \
--		time64_to_tm(time_t_val, 0, &res); \
--		res.tm_year += 1900; \
--		res.tm_mon += 1; \
--		count = scnprintf(buf, PAGE_SIZE, \
--				    "%ld-%.2d-%.2d %.2d:%.2d:%.2d\n", \
--				    res.tm_year, res.tm_mon, res.tm_mday, \
--				    res.tm_hour, res.tm_min, res.tm_sec);\
--		count; \
--})
--
- #define NILFS_DEV_INT_GROUP_OPS(name, parent_name) \
- static ssize_t nilfs_##name##_attr_show(struct kobject *kobj, \
- 					struct attribute *attr, char *buf) \
-@@ -576,7 +563,7 @@ nilfs_segctor_last_seg_write_time_show(struct nilfs_segctor_attr *attr,
- 	ctime = nilfs->ns_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
+ 	timestamp = le32_to_cpu(header->fwimg_created_time);
+-	time64_to_tm(timestamp, 0, &time);
  
--	return NILFS_SHOW_TIME(ctime, buf);
-+	return sysfs_emit(buf, "%ptTs\n", &ctime);
+-	dev_info(dev, "Firmware timestamp: %ld-%02d-%02d %02d:%02d:%02d UTC\n",
+-		 time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
+-		 time.tm_hour, time.tm_min, time.tm_sec);
++	dev_info(dev, "Firmware timestamp: %ptTs UTC\n", &timestamp);
+ 
+ 	return 0;
  }
- 
- static ssize_t
-@@ -604,7 +591,7 @@ nilfs_segctor_last_nongc_write_time_show(struct nilfs_segctor_attr *attr,
- 	nongc_ctime = nilfs->ns_nongc_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return NILFS_SHOW_TIME(nongc_ctime, buf);
-+	return sysfs_emit(buf, "%ptTs\n", &nongc_ctime);
- }
- 
- static ssize_t
-@@ -724,7 +711,7 @@ nilfs_superblock_sb_write_time_show(struct nilfs_superblock_attr *attr,
- 	sbwtime = nilfs->ns_sbwtime;
- 	up_read(&nilfs->ns_sem);
- 
--	return NILFS_SHOW_TIME(sbwtime, buf);
-+	return sysfs_emit(buf, "%ptTs\n", &sbwtime);
- }
- 
- static ssize_t
 -- 
 2.30.2
 
