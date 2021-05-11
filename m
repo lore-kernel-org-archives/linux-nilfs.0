@@ -1,82 +1,58 @@
-From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v2 3/4] nilfs2: Switch to use %ptTs
-Date: Tue, 11 May 2021 18:39:57 +0300
-Message-ID: <20210511153958.34527-3-andriy.shevchenko@linux.intel.com>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v2 2/4] kdb: Switch to use %ptTs
+Date: Tue, 11 May 2021 18:39:56 +0300
+Message-ID: <20210511153958.34527-2-andriy.shevchenko@linux.intel.com>
 References: <20210511153958.34527-1-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-tegra-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20210511153958.34527-1-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20210511153958.34527-1-andriy.shevchenko@linux.intel.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, JC Kuo <jckuo-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Sumit Garg <sumit.garg-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-tegra-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kgdb-bugreport-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Sergey Senozhatsky <senozhatsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jonathan Hunter <jonathanh-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jason Wessel <jason.wessel-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Douglas Anderson <dianders-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+To: Petr Mladek <pmladek@suse.com>, JC Kuo <jckuo@nvidia.com>, Joe Perches <joe@perches.com>, Sumit Garg <sumit.garg@linaro.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, linux-tegra@vger.kernel.org, linux-nilfs@vger.kernel.org, kgdb-bugreport@lists.sourceforge.net
+Cc: Steven Rostedt <rostedt@goodmis.org>, Sergey Senozhatsky <senozhatsky@chromium.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Jonathan Corbet <corbet@lwn.net>, Mathias Nyman <mathias.nyman@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Thierry Reding <thierry.reding@gmail.com>, Jonathan Hunter <jonathanh@nvidia.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Jason Wessel <jason.wessel@windriver.com>, Daniel Thompson <daniel.thompson@linaro.org>, Douglas Anderson <dianders@chromium.org>
 
-Use %ptTs instead of open coded variant to print contents
+Use %ptTs instead of open-coded variant to print contents
 of time64_t type in human readable form.
 
-Use sysfs_emit() at the same time in the changed functions.
-
-Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Reviewed-by: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Cc: Jason Wessel <jason.wessel@windriver.com>
+Cc: Daniel Thompson <daniel.thompson@linaro.org>
+Cc: kgdb-bugreport@lists.sourceforge.net
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Reviewed-by: Petr Mladek <pmladek@suse.com>
+Reviewed-by: Douglas Anderson <dianders@chromium.org>
 ---
 v2: collected tags
- fs/nilfs2/sysfs.c | 19 +++----------------
- 1 file changed, 3 insertions(+), 16 deletions(-)
+ kernel/debug/kdb/kdb_main.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
 
-diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 303d71430bdd..4e10423f0448 100644
---- a/fs/nilfs2/sysfs.c
-+++ b/fs/nilfs2/sysfs.c
-@@ -19,19 +19,6 @@
- /* /sys/fs/<nilfs>/ */
- static struct kset *nilfs_kset;
+diff --git a/kernel/debug/kdb/kdb_main.c b/kernel/debug/kdb/kdb_main.c
+index 1baa96a2ecb8..622410c45da1 100644
+--- a/kernel/debug/kdb/kdb_main.c
++++ b/kernel/debug/kdb/kdb_main.c
+@@ -2488,7 +2488,6 @@ static void kdb_sysinfo(struct sysinfo *val)
+ static int kdb_summary(int argc, const char **argv)
+ {
+ 	time64_t now;
+-	struct tm tm;
+ 	struct sysinfo val;
  
--#define NILFS_SHOW_TIME(time_t_val, buf) ({ \
--		struct tm res; \
--		int count = 0; \
--		time64_to_tm(time_t_val, 0, &res); \
--		res.tm_year += 1900; \
--		res.tm_mon += 1; \
--		count = scnprintf(buf, PAGE_SIZE, \
--				    "%ld-%.2d-%.2d %.2d:%.2d:%.2d\n", \
--				    res.tm_year, res.tm_mon, res.tm_mday, \
--				    res.tm_hour, res.tm_min, res.tm_sec);\
--		count; \
--})
+ 	if (argc)
+@@ -2502,13 +2501,7 @@ static int kdb_summary(int argc, const char **argv)
+ 	kdb_printf("domainname %s\n", init_uts_ns.name.domainname);
+ 
+ 	now = __ktime_get_real_seconds();
+-	time64_to_tm(now, 0, &tm);
+-	kdb_printf("date       %04ld-%02d-%02d %02d:%02d:%02d "
+-		   "tz_minuteswest %d\n",
+-		1900+tm.tm_year, tm.tm_mon+1, tm.tm_mday,
+-		tm.tm_hour, tm.tm_min, tm.tm_sec,
+-		sys_tz.tz_minuteswest);
 -
- #define NILFS_DEV_INT_GROUP_OPS(name, parent_name) \
- static ssize_t nilfs_##name##_attr_show(struct kobject *kobj, \
- 					struct attribute *attr, char *buf) \
-@@ -576,7 +563,7 @@ nilfs_segctor_last_seg_write_time_show(struct nilfs_segctor_attr *attr,
- 	ctime = nilfs->ns_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return NILFS_SHOW_TIME(ctime, buf);
-+	return sysfs_emit(buf, "%ptTs\n", &ctime);
- }
- 
- static ssize_t
-@@ -604,7 +591,7 @@ nilfs_segctor_last_nongc_write_time_show(struct nilfs_segctor_attr *attr,
- 	nongc_ctime = nilfs->ns_nongc_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return NILFS_SHOW_TIME(nongc_ctime, buf);
-+	return sysfs_emit(buf, "%ptTs\n", &nongc_ctime);
- }
- 
- static ssize_t
-@@ -724,7 +711,7 @@ nilfs_superblock_sb_write_time_show(struct nilfs_superblock_attr *attr,
- 	sbwtime = nilfs->ns_sbwtime;
- 	up_read(&nilfs->ns_sem);
- 
--	return NILFS_SHOW_TIME(sbwtime, buf);
-+	return sysfs_emit(buf, "%ptTs\n", &sbwtime);
- }
- 
- static ssize_t
++	kdb_printf("date       %ptTs tz_minuteswest %d\n", &now, sys_tz.tz_minuteswest);
+ 	kdb_sysinfo(&val);
+ 	kdb_printf("uptime     ");
+ 	if (val.uptime > (24*60*60)) {
 -- 
 2.30.2
 
