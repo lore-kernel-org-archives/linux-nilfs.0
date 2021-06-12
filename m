@@ -1,44 +1,69 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH v2 1/4] lib/vsprintf: Allow to override ISO 8601 date and
- time separator
-Date: Mon, 17 May 2021 14:42:39 +0200
-Message-ID: <YKJkv2qik314kjAB@alley>
-References: <20210511153958.34527-1-andriy.shevchenko@linux.intel.com>
- <YJzymZ7m3R1ELjGD@alley>
+From: Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: fix memory leak in nilfs_sysfs_delete_device_group
+Date: Sat, 12 Jun 2021 17:05:59 +0300
+Message-ID: <20210612140559.20022-1-paskripkin@gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1621255362; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=aiM3vKTum70TM7QOTT95hhDvPgS+x6dBjBJHzOjqx/I=;
-        b=QdHKMwN4ulSsBGSBhH8tgLkK/uK0lznYQ65rTGPzuAamhg9LRNvAXtLDtw55K3SeGMptAC
-        mLZeVf1yRsjPEaeTYwz4gl6GaUAjHL30L91sdoOGhkvtei20FOKGwFmvBzKfTXRM6/oLc0
-        jQAaOIrt5Gt3ZNxhECuaCrvSKfWTi4Q=
-Content-Disposition: inline
-In-Reply-To: <YJzymZ7m3R1ELjGD@alley>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=5JZMHW5UG5CyvDN0SOE2Y9hqb0tFNng+vhQJCVqivJ8=;
+        b=D6A/v3863n804431JpJ/EPCUtfVYDzi5Uhzhb4quMvA3+UiYYEvk1ssSEFIblDNXjC
+         fduAtA1lKSPuxgPLQ1aIklkw8rwfDwxNlOJgWtwURLw/DCPAXr4mHVcxF4wD1R/bgMx/
+         OJ3EKf41fIzJJkYiWoQu8gZ1qgV6zWqngjpvUZmSLJC2zIUaKz6JsnM+uTv42IY3f7O4
+         APCOatnS29cF08zfcyOzV0CGUbWgukwmnxsc6/GlA8V0Jkehu7zGnpF5Heg09wES22i0
+         37haeWAjqYEcrjqK6G3pI5MrbZrP+cr8TwuA3A7ubAFNxsTSlkEhYVnKnx36yKOsgSlk
+         KeRw==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: JC Kuo <jckuo-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Sumit Garg <sumit.garg-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-tegra-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kgdb-bugreport-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Sergey Senozhatsky <senozhatsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jonathan Hunter <jonathanh-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jason Wessel <jason.wessel-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Douglas Anderson <diand>
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Vyacheslav.Dubeyko-XckBA8eALwE@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On Thu 2021-05-13 11:34:18, Petr Mladek wrote:
-> On Tue 2021-05-11 18:39:55, Andy Shevchenko wrote:
-> > ISO 8601 defines 'T' as a separator between date and time. Though,
-> > some ABIs use time and date with ' ' (space) separator instead.
-> > 
-> > Add a flavour to the %pt specifier to override default separator.
-> > 
-> > Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> 
-> Reviewed-by: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-> 
-> I am going to queue the entire patchset for 5.14 via the printk tree
-> the following week unless anyone complains in the meantime.
+My local syzbot instance hit memory leak in nilfs2.
+The problem was in missing kobject_put() in
+nilfs_sysfs_delete_device_group().
 
-The patchset has been committed into print/linux.git, branch
-for-5.14-vsprintf-pts.
+kobject_del() does not call kobject_cleanup() for
+passed kobject and it leads to leaking duped
+kobject name if kobject_put() was not called.
 
-Best Regards,
-Petr
+Fail log:
+
+BUG: memory leak
+unreferenced object 0xffff8880596171e0 (size 8):
+  comm "syz-executor379", pid 8381, jiffies 4294980258 (age 21.100s)
+  hex dump (first 8 bytes):
+    6c 6f 6f 70 30 00 00 00                          loop0...
+  backtrace:
+    [<ffffffff81a2c656>] kstrdup+0x36/0x70 mm/util.c:60
+    [<ffffffff81a2c6e3>] kstrdup_const+0x53/0x80 mm/util.c:83
+    [<ffffffff83ccc698>] kvasprintf_const+0x108/0x190 lib/kasprintf.c:48
+    [<ffffffff83e99926>] kobject_set_name_vargs+0x56/0x150 lib/kobject.c:289
+    [<ffffffff83e99fd9>] kobject_add_varg lib/kobject.c:384 [inline]
+    [<ffffffff83e99fd9>] kobject_init_and_add+0xc9/0x160 lib/kobject.c:473
+    [<ffffffff8304e840>] nilfs_sysfs_create_device_group+0x150/0x800 fs/nilfs2/sysfs.c:999
+    [<ffffffff830159f6>] init_nilfs+0xe26/0x12b0 fs/nilfs2/the_nilfs.c:637
+
+Fixes: da7141fb78db ("nilfs2: add /sys/fs/nilfs2/<device> group")
+Signed-off-by: Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nilfs2/sysfs.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
+index 303d71430bdd..9c6c0e2e5880 100644
+--- a/fs/nilfs2/sysfs.c
++++ b/fs/nilfs2/sysfs.c
+@@ -1053,6 +1053,7 @@ void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
+ 	nilfs_sysfs_delete_superblock_group(nilfs);
+ 	nilfs_sysfs_delete_segctor_group(nilfs);
+ 	kobject_del(&nilfs->ns_dev_kobj);
++	kobject_put(&nilfs->ns_dev_kobj);
+ 	kfree(nilfs->ns_dev_subgroups);
+ }
+ 
+-- 
+2.32.0
+
