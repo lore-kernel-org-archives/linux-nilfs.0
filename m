@@ -1,29 +1,48 @@
 From: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 0/6] nilfs2: fix incorrect usage of kobject
-Date: Tue, 29 Jun 2021 10:25:50 +0800
-Message-ID: <20210629022556.3985106-1-sunnanyong@huawei.com>
+Subject: [PATCH 2/6] nilfs2: fix NULL pointer in nilfs_##name##_attr_release
+Date: Tue, 29 Jun 2021 10:25:52 +0800
+Message-ID: <20210629022556.3985106-3-sunnanyong@huawei.com>
+References: <20210629022556.3985106-1-sunnanyong@huawei.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20210629022556.3985106-1-sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, wangkefeng.wang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
 
-This patchset fix the memory leak problems and NULL pointer problem
-caused by incorrect usage of kobject in nilfs2 sysfs driver.
+In nilfs_##name##_attr_release, kobj->parent should not be
+referenced because it is a NULL pointer. The release() method of
+kobject is always called in kobject_put(kobj), in the implementation
+of kobject_put(), the kobj->parent will be assigned as NULL before
+call the release() method. So just use kobj to get the subgroups,
+which is more efficient and can fix a NULL pointer reference problem.
 
-Nanyong Sun (6):
-  nilfs2: fix memory leak in nilfs_sysfs_create_device_group
-  nilfs2: fix NULL pointer in nilfs_##name##_attr_release
-  nilfs2: fix memory leak in nilfs_sysfs_create_##name##_group
-  nilfs2: fix memory leak in nilfs_sysfs_delete_##name##_group
-  nilfs2: fix memory leak in nilfs_sysfs_create_snapshot_group
-  nilfs2: fix memory leak in nilfs_sysfs_delete_snapshot_group
+Signed-off-by: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+---
+ fs/nilfs2/sysfs.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
- fs/nilfs2/sysfs.c | 26 +++++++++++---------------
- 1 file changed, 11 insertions(+), 15 deletions(-)
-
+diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
+index d2d8ea89937a..ec85ac53720d 100644
+--- a/fs/nilfs2/sysfs.c
++++ b/fs/nilfs2/sysfs.c
+@@ -51,11 +51,9 @@ static const struct sysfs_ops nilfs_##name##_attr_ops = { \
+ #define NILFS_DEV_INT_GROUP_TYPE(name, parent_name) \
+ static void nilfs_##name##_attr_release(struct kobject *kobj) \
+ { \
+-	struct nilfs_sysfs_##parent_name##_subgroups *subgroups; \
+-	struct the_nilfs *nilfs = container_of(kobj->parent, \
+-						struct the_nilfs, \
+-						ns_##parent_name##_kobj); \
+-	subgroups = nilfs->ns_##parent_name##_subgroups; \
++	struct nilfs_sysfs_##parent_name##_subgroups *subgroups = container_of(kobj, \
++						struct nilfs_sysfs_##parent_name##_subgroups, \
++						sg_##name##_kobj); \
+ 	complete(&subgroups->sg_##name##_kobj_unregister); \
+ } \
+ static struct kobj_type nilfs_##name##_ktype = { \
 -- 
 2.18.0.huawei.25
 
