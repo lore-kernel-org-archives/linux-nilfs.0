@@ -1,19 +1,19 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 5/6] nilfs2: fix memory leak in nilfs_sysfs_create_snapshot_group
-Date: Wed,  7 Jul 2021 18:48:25 +0900
-Message-ID: <1625651306-10829-6-git-send-email-konishi.ryusuke@gmail.com>
+Subject: [PATCH 6/6] nilfs2: fix memory leak in nilfs_sysfs_delete_snapshot_group
+Date: Wed,  7 Jul 2021 18:48:26 +0900
+Message-ID: <1625651306-10829-7-git-send-email-konishi.ryusuke@gmail.com>
 References: <1625651306-10829-1-git-send-email-konishi.ryusuke@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=g65fz9nM8vuwTrmBSnevy9pcjESld9hrzhcHi3C3t4A=;
-        b=ikrRirSr4cUmzEpdQmmFKc3izLb2YT7TEKkwWpA/6cJD74N7eMpo5j3U53PUJo1R0q
-         CRonVthx/k2QMQG8mWc0UBQ2khL/d6GA+IxHqHfVXC/7+lSE0YM+TrqdilRXESMVh1ZH
-         pqzRavBwP/YobXByESncEa1Y6EeZaf01367AMDI1gh2p3pEiGiL9/sfnOWcW3Qklw3Ba
-         qXQwifUzvGFIDdCbZ/VZN9LJ0X7TlF3Wf/cLY08XOESlyb9Ck3IaDUG9edOp1NEieHwJ
-         NFqzqa49e/h9nXKcaQC0MG42XoFkJlq5HjRmSxBgzBa0KtCVS34V2VAoi1T0FmBedHV+
-         wFhg==
+        bh=e2xjwDG/oZGI2BDWWVUZ80C0oSrUvvIT1iby/SeB9H8=;
+        b=JhvyPBxeQDK0AX7lHIYF3EBROFvkLgtaCEPz9WylHwpHVc9kbRdh7rqGKjqL/eKDf2
+         sYk1Qj14BNzFx2wJSWs35fR5G16VsNcaAMrWL6AX8Irn/nTKm6JkH1za1WNlf5BsuA9h
+         8Iz9jAwS75U8loxeXMPhYjKTeJRBsBo/PWJDoz2Wz0YyGDPx08DZfWWFR3bsI5c01gvE
+         CHKHR15hjJXlV/laOcvLng8piA9Nswly05jShlaOJKaIQ8x5qfyqFid+Rmnt6fTycTWR
+         T8OYE25BrFYEI6HzzzDeMm4/se9UDIRt1kUPmEMFygVDM7wfGcmD05iFE+fVXkFQWj7i
+         pPAQ==
 In-Reply-To: <1625651306-10829-1-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
@@ -24,33 +24,30 @@ Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <lin
 
 From: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 
-If kobject_init_and_add returns with error, kobject_put() is needed
-here to avoid memory leak, because kobject_init_and_add may return
-error without freeing the memory associated with the kobject it allocated.
+Kobject_put() should be used to cleanup the memory associated with
+the kobject instead of kobject_del(). See the section "Kobject removal"
+of "Documentation/core-api/kobject.rst".
 
-Link: https://lkml.kernel.org/r/20210629022556.3985106-6-sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Link: https://lkml.kernel.org/r/20210629022556.3985106-7-sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
 Signed-off-by: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- fs/nilfs2/sysfs.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/nilfs2/sysfs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 34893a57a7b9..44b9ad70a564 100644
+index 44b9ad70a564..57afd06db62d 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -208,9 +208,9 @@ int nilfs_sysfs_create_snapshot_group(struct nilfs_root *root)
- 	}
- 
- 	if (err)
--		return err;
-+		kobject_put(&root->snapshot_kobj);
- 
--	return 0;
-+	return err;
- }
+@@ -215,7 +215,7 @@ int nilfs_sysfs_create_snapshot_group(struct nilfs_root *root)
  
  void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
+ {
+-	kobject_del(&root->snapshot_kobj);
++	kobject_put(&root->snapshot_kobj);
+ }
+ 
+ /************************************************************************
 -- 
 1.8.3.1
 
