@@ -1,62 +1,55 @@
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Subject: [PATCH 2/6] nilfs2: fix NULL pointer in nilfs_##name##_attr_release
-Date: Wed,  7 Jul 2021 18:48:22 +0900
-Message-ID: <1625651306-10829-3-git-send-email-konishi.ryusuke@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 3/6] nilfs2: fix memory leak in nilfs_sysfs_create_##name##_group
+Date: Wed,  7 Jul 2021 18:48:23 +0900
+Message-ID: <1625651306-10829-4-git-send-email-konishi.ryusuke@gmail.com>
 References: <1625651306-10829-1-git-send-email-konishi.ryusuke@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=nDphwP7rk7MVmmwi41RmQwruvzgJtyrk5UC8vBfmCnU=;
-        b=HAwqV7SRwg6Bmoo+IUskz5DjJH8OArmVvNbXrAsMJFs1WKQPXL4k8BMKwnvr8tsADx
-         V+Kss4NWm4EsIyxBLRXjn20jxwQac+LwPilRbQCebnzRO9fHHDPUfsOLIyd1aflsfhrY
-         eZRG9VycHCBnh9ASsKcssnV5YuYaHu7v5YQ9E0AL7uLvzx/E3KFR4DhrMCg7dAm/GuNX
-         XSFQYJF47N/D9cKiDGVJEzWca8GP3OU8YxzWzS9DKK9tR7P0gc+uvIeEXzxjB/J1O3W5
-         J7Zj9lYBjV0FGeERQcv0rBKI2/E6tv32w3NdOFSSr+kxAI7duSNB5bg/mAKgPGnfaSjh
-         LJYA==
-In-Reply-To: <1625651306-10829-1-git-send-email-konishi.ryusuke@gmail.com>
+        bh=tg8Rx1wWlkNbqejilODw641z/b4x4fF9Uuzm0P4x4D0=;
+        b=PrljIE+wuY2ULWNMaoB/MgNZV+baMZEw5jLy1StHdilD/VcS99UswWyI5DXhaoGnEc
+         AK4A0yeTJpj7bkQC1MWz2HCkCqXW1ZHPIioYLmu5prnU1wrqtg1CmDK6aMjhYzlbVL67
+         3nB+owYsvkETSfWHkXSrJ7bqkCO33K5pLz9eXGDh29BvuaxxTeFylm8m5T5rtWVI4nkz
+         garM9kmXjh8FTwyk0Tki6hAMb7fxkX0Lw3Au7we3s03pmxuFOiDkBBW9JXCS+pOvJ0BS
+         Ebu3SgcWHAGkBwNkJJOWZyc3jOVTJgaV3Y1UBdKg8y/KvqWA54wIP4HqHEtMrqcrLw9v
+         kivQ==
+In-Reply-To: <1625651306-10829-1-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-From: Nanyong Sun <sunnanyong@huawei.com>
+From: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 
-In nilfs_##name##_attr_release, kobj->parent should not be
-referenced because it is a NULL pointer. The release() method of
-kobject is always called in kobject_put(kobj), in the implementation
-of kobject_put(), the kobj->parent will be assigned as NULL before
-call the release() method. So just use kobj to get the subgroups,
-which is more efficient and can fix a NULL pointer reference problem.
+If kobject_init_and_add return with error, kobject_put() is needed
+here to avoid memory leak, because kobject_init_and_add may return
+error without freeing the memory associated with the kobject it allocated.
 
-Link: https://lkml.kernel.org/r/20210629022556.3985106-3-sunnanyong@huawei.com
-Signed-off-by: Nanyong Sun <sunnanyong@huawei.com>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Link: https://lkml.kernel.org/r/20210629022556.3985106-4-sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Signed-off-by: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- fs/nilfs2/sysfs.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ fs/nilfs2/sysfs.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index b6a48492fed2..43f660beb9b4 100644
+index 43f660beb9b4..5dc468ff5903 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -64,11 +64,9 @@
- #define NILFS_DEV_INT_GROUP_TYPE(name, parent_name) \
- static void nilfs_##name##_attr_release(struct kobject *kobj) \
- { \
--	struct nilfs_sysfs_##parent_name##_subgroups *subgroups; \
--	struct the_nilfs *nilfs = container_of(kobj->parent, \
--						struct the_nilfs, \
--						ns_##parent_name##_kobj); \
--	subgroups = nilfs->ns_##parent_name##_subgroups; \
-+	struct nilfs_sysfs_##parent_name##_subgroups *subgroups = container_of(kobj, \
-+						struct nilfs_sysfs_##parent_name##_subgroups, \
-+						sg_##name##_kobj); \
- 	complete(&subgroups->sg_##name##_kobj_unregister); \
+@@ -92,8 +92,8 @@
+ 	err = kobject_init_and_add(kobj, &nilfs_##name##_ktype, parent, \
+ 				    #name); \
+ 	if (err) \
+-		return err; \
+-	return 0; \
++		kobject_put(kobj); \
++	return err; \
  } \
- static struct kobj_type nilfs_##name##_ktype = { \
+ static void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
+ { \
 -- 
 1.8.3.1
 
