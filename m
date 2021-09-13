@@ -1,22 +1,22 @@
 From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH AUTOSEL 5.14 20/25] nilfs2: fix memory leak in nilfs_sysfs_create_device_group
-Date: Mon, 13 Sep 2021 18:33:34 -0400
-Message-ID: <20210913223339.435347-20-sashal@kernel.org>
-References: <20210913223339.435347-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.13 14/19] nilfs2: fix memory leak in nilfs_sysfs_create_device_group
+Date: Mon, 13 Sep 2021 18:34:10 -0400
+Message-ID: <20210913223415.435654-14-sashal@kernel.org>
+References: <20210913223415.435654-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1631572447;
-        bh=lM7KkQrs4oNV8GnZ78fsJW+8L54D0jYoXZgoRTyrJ5I=;
+        s=k20201202; t=1631572475;
+        bh=hujX+/AVkFDSEqUNv4FYuodgoDg05PAT3zgDqU4iPn0=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=u9TUMunu2slRM2CqPYJLyd8na+vo7KTaY7ZmULSPN6MEITa8vUdCMxzBx52Vu9Umg
-         K1AYiZe8stbuEq/W+9V6QTSm1x+gPtTh03tM+foTbclADzPA1y5/NR17PTTVyZiGuL
-         u3Z/n14ezgOXkAR6dKJd73KB1dy+u8GyfMI9rIUIpiqXX8HHgJksvZ/xY3hUOz4Rgx
-         FKAdoWCmI/+1sJMOex1W9BVNy44gDrPxAHhQaC5YvwwR2hkRvx2S9GsGeW3BX8HlNZ
-         RGmhJrHZnZP4SXTw9PNCmNRPhc8B7uax+msV7iEbvYvNMYz/kLaKXkkkIMtec55DHa
-         bo5psVXY8vmHQ==
-In-Reply-To: <20210913223339.435347-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+        b=H03L3dCvp0ulO2Wqvub/ERiwEM0rDPLxnkVFtuJwyUkAOd8/SKk7CR4l9r7LzMkww
+         eDD1CPmfHzt1FQTLtZ/8V9L9PeaIL+n0rQZPlrDAYOYPyq5ugr9esmQPWqjBPeDOx4
+         OKwNWoUR5B60HPPQ+2MMwVcOczKgn8hOiKw7YQK36npCB4TKuftXNaFqRekQoW7mVS
+         k5KR5TQ2oeiHBT6t3U64+KdvKf2M2jUkRf99E+32X9mUONsuagakxBfgbqaO3PDQoz
+         BteWHn0d5TsvnOXTNOax1NhALtLWJ74HMpP6WREZh3GM1yHEvXVtuFovaKsVI6Et+w
+         CpoZL4gBaGvRQ==
+In-Reply-To: <20210913223415.435654-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -88,10 +88,10 @@ Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
  1 file changed, 2 insertions(+), 4 deletions(-)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 68e8d61e28dd..d2d8ea89937a 100644
+index 9c6c0e2e5880..b6a48492fed2 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -986,7 +986,7 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+@@ -999,7 +999,7 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
  	err = kobject_init_and_add(&nilfs->ns_dev_kobj, &nilfs_dev_ktype, NULL,
  				    "%s", sb->s_id);
  	if (err)
@@ -100,7 +100,7 @@ index 68e8d61e28dd..d2d8ea89937a 100644
  
  	err = nilfs_sysfs_create_mounted_snapshots_group(nilfs);
  	if (err)
-@@ -1023,9 +1023,7 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+@@ -1036,9 +1036,7 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
  	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
  
  cleanup_dev_kobject:
