@@ -1,21 +1,21 @@
 From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH AUTOSEL 4.19 08/10] nilfs2: fix memory leak in nilfs_sysfs_delete_##name##_group
-Date: Mon, 13 Sep 2021 18:35:19 -0400
-Message-ID: <20210913223521.436250-8-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 09/10] nilfs2: fix memory leak in nilfs_sysfs_create_snapshot_group
+Date: Mon, 13 Sep 2021 18:35:20 -0400
+Message-ID: <20210913223521.436250-9-sashal@kernel.org>
 References: <20210913223521.436250-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1631572532;
-        bh=rvDS9N99Qxc9wO0bGphCi5YWu7ppeIKApxiFp1EOp1g=;
+        s=k20201202; t=1631572533;
+        bh=EzL9KJn4SWgGVEjHbrIl82g6//S9PtBM8R84vzpgyao=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=JGivYN0iHioqx6vxOmNrldGqadfd6RgkJ2M0i+p0E1JqnRTBN4WjHH/eBU5kDhWne
-         HnT4bDPDoVwAFjhLpceRrvH1srlXzQsvJiH1RUXSFbohmr4fjITR/LzfWmx/jdmAlz
-         KoC0YzyOElKy0cQ4m4g01i9PcwIVy5hxUdrQD4nxYm7RTYKgKAxveiqU01RU8jaMXS
-         /vBWtGTSDAV9kG6hi0Jeo3ecjSD03ATZmKFfrNwoosUKlei2M+c2niOEhOvwtufQr5
-         tCX2cHZvo1c+nRdyyqKyQSdlLbn0azCataMhNd7Ht5v9l1Okze5oNpxtH0Yw/ynZRw
-         4yuocRSgHX03w==
+        b=Br+XiIkG9F8aFYK7W7xWlIUtdlxpFvcUp/wwHoFhN8tCRvMSlo4rqNhpTDCB9LWf2
+         KO6Gs0WDjZ1630aMlAV81F63SkKloI05YtPaQVfLv5pEWGfZ5LaeJzUOcVLq4NQC1u
+         pc5OvvTjPS1/JKmz1rCiKJzAEB3QZUirJWGzpHkPisusEOo0m+Qy3qdVgztHWG0Bi3
+         b7pDTvE6X3FxzeDDY6370dypLC72pnWuBlitt0Wx3Ex0xDPIuWXsBFcE/QktOzTC9X
+         P95PFIIg9NA1gI/+EO7nzCeTuz5tQdHyNR/vhmV1smH5U8qxKFxCWLtaCsyAb6lDxI
+         JkLpfOBYWFcXw==
 In-Reply-To: <20210913223521.436250-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -24,36 +24,39 @@ Cc: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Ryusuke Ko
 
 From: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 
-[ Upstream commit a3e181259ddd61fd378390977a1e4e2316853afa ]
+[ Upstream commit b2fe39c248f3fa4bbb2a20759b4fdd83504190f7 ]
 
-The kobject_put() should be used to cleanup the memory associated with the
-kobject instead of kobject_del.  See the section "Kobject removal" of
-"Documentation/core-api/kobject.rst".
+If kobject_init_and_add returns with error, kobject_put() is needed here
+to avoid memory leak, because kobject_init_and_add may return error
+without freeing the memory associated with the kobject it allocated.
 
-Link: https://lkml.kernel.org/r/20210629022556.3985106-5-sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
-Link: https://lkml.kernel.org/r/1625651306-10829-5-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Link: https://lkml.kernel.org/r/20210629022556.3985106-6-sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Link: https://lkml.kernel.org/r/1625651306-10829-6-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Signed-off-by: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Signed-off-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- fs/nilfs2/sysfs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/nilfs2/sysfs.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 31d640a87b59..195f42192a15 100644
+index 195f42192a15..6c92ac314b06 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -97,7 +97,7 @@ static int nilfs_sysfs_create_##name##_group(struct the_nilfs *nilfs) \
- } \
- static void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
- { \
--	kobject_del(&nilfs->ns_##parent_name##_subgroups->sg_##name##_kobj); \
-+	kobject_put(&nilfs->ns_##parent_name##_subgroups->sg_##name##_kobj); \
+@@ -208,9 +208,9 @@ int nilfs_sysfs_create_snapshot_group(struct nilfs_root *root)
+ 	}
+ 
+ 	if (err)
+-		return err;
++		kobject_put(&root->snapshot_kobj);
+ 
+-	return 0;
++	return err;
  }
  
- /************************************************************************
+ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
 -- 
 2.30.2
 
