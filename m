@@ -1,68 +1,62 @@
-From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH AUTOSEL 4.14 5/9] nilfs2: fix NULL pointer in nilfs_##name##_attr_release
-Date: Mon, 13 Sep 2021 18:35:31 -0400
-Message-ID: <20210913223535.436405-5-sashal@kernel.org>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.14 8/9] nilfs2: fix memory leak in nilfs_sysfs_create_snapshot_group
+Date: Mon, 13 Sep 2021 18:35:34 -0400
+Message-ID: <20210913223535.436405-8-sashal@kernel.org>
 References: <20210913223535.436405-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <stable-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1631572543;
-        bh=fCO9R0/Qxe84dd91lwRnKAl4EqdMlH58wnSc69yN0b8=;
+        s=k20201202; t=1631572547;
+        bh=DTLkUcX8uZmbCVP4ckZc+XfsJHIBYPUK8tiOu761O4E=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ZAbpVpjiH5N7o4gxkiZo44RSv+sNpteD7eOOK5ujH9n9vu3Mk69nCpgEu3jI/pbrX
-         OHyFYGxpfqdd1jPb9IX1EzJokrOqvtXf8uJ+w8Xcd+e5bBguRTiDorP8C2iT7ooBYb
-         Aon/X1WPA5VS+PTddNBye4XoYmKRbyPozT9EveRed7AvMtxt6r/+lTqPa9Nl+hgicn
-         95d7W8HNx+DmFEHCGHEpV6aIhByNA4/WnAh93iDl3dXr5aFSY/YYJiY2z6g3CIPU3w
-         oElRfPL9LIvn7ySV5+vCNdutmyECvlsLH2nXj3V75T0yGHVGisss7HDSBnlnJKWWQV
-         CkCO3Vic2h8Ng==
-In-Reply-To: <20210913223535.436405-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+        b=HLnNJWzKv2KrcO9cjOvUWhqq3Mbf+pxWbczmvWBzObYr3s1D9zmkIIYOYzuTyodfc
+         EingDB3ZPiKyn8+Rs9FaQ3/q3GW8Wa+NBAkZq/ohqqL4hYWA/Nt2IDoDAOeaHk92oi
+         npCpvGHpbHZW5XIXKPBOvCYWUrYssxaZ9T7fAfX1CuDxwhMhI3zPMq1et0vfZb8NGj
+         ytx8GXaYGQsOJTjLgdGVtL4DXIkvzDJxnbxSMXPYv/v835ErvW1G9xiimJpas1mAlb
+         6h+xtWNqTOUjY3EzbqBCb5YuENpTsHeoNM362g30fw7S+kEH3Wss7RpodstLGC60dj
+         rJhJaf4rHfhQg==
+In-Reply-To: <20210913223535.436405-1-sashal@kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Nanyong Sun <sunnanyong@huawei.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Sasha Levin <sashal@kernel.org>, linux-nilfs@vger.kernel.org
 
-From: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+From: Nanyong Sun <sunnanyong@huawei.com>
 
-[ Upstream commit dbc6e7d44a514f231a64d9d5676e001b660b6448 ]
+[ Upstream commit b2fe39c248f3fa4bbb2a20759b4fdd83504190f7 ]
 
-In nilfs_##name##_attr_release, kobj->parent should not be referenced
-because it is a NULL pointer.  The release() method of kobject is always
-called in kobject_put(kobj), in the implementation of kobject_put(), the
-kobj->parent will be assigned as NULL before call the release() method.
-So just use kobj to get the subgroups, which is more efficient and can fix
-a NULL pointer reference problem.
+If kobject_init_and_add returns with error, kobject_put() is needed here
+to avoid memory leak, because kobject_init_and_add may return error
+without freeing the memory associated with the kobject it allocated.
 
-Link: https://lkml.kernel.org/r/20210629022556.3985106-3-sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
-Link: https://lkml.kernel.org/r/1625651306-10829-3-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Signed-off-by: Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Signed-off-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Link: https://lkml.kernel.org/r/20210629022556.3985106-6-sunnanyong@huawei.com
+Link: https://lkml.kernel.org/r/1625651306-10829-6-git-send-email-konishi.ryusuke@gmail.com
+Signed-off-by: Nanyong Sun <sunnanyong@huawei.com>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- fs/nilfs2/sysfs.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ fs/nilfs2/sysfs.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index a35978bf8395..027a50bc0765 100644
+index 31eed118d0ce..28f5572c6aae 100644
 --- a/fs/nilfs2/sysfs.c
 +++ b/fs/nilfs2/sysfs.c
-@@ -73,11 +73,9 @@ static const struct sysfs_ops nilfs_##name##_attr_ops = { \
- #define NILFS_DEV_INT_GROUP_TYPE(name, parent_name) \
- static void nilfs_##name##_attr_release(struct kobject *kobj) \
- { \
--	struct nilfs_sysfs_##parent_name##_subgroups *subgroups; \
--	struct the_nilfs *nilfs = container_of(kobj->parent, \
--						struct the_nilfs, \
--						ns_##parent_name##_kobj); \
--	subgroups = nilfs->ns_##parent_name##_subgroups; \
-+	struct nilfs_sysfs_##parent_name##_subgroups *subgroups = container_of(kobj, \
-+						struct nilfs_sysfs_##parent_name##_subgroups, \
-+						sg_##name##_kobj); \
- 	complete(&subgroups->sg_##name##_kobj_unregister); \
- } \
- static struct kobj_type nilfs_##name##_ktype = { \
+@@ -217,9 +217,9 @@ int nilfs_sysfs_create_snapshot_group(struct nilfs_root *root)
+ 	}
+ 
+ 	if (err)
+-		return err;
++		kobject_put(&root->snapshot_kobj);
+ 
+-	return 0;
++	return err;
+ }
+ 
+ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
 -- 
 2.30.2
 
