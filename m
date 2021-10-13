@@ -1,378 +1,93 @@
-From: Qing Wang <wangqing-DGpbCiVdSXo@public.gmane.org>
-Subject: [PATCH] nilfs2: replace snprintf in show functions with sysfs_emit
-Date: Tue, 12 Oct 2021 20:29:18 -0700
-Message-ID: <1634095759-4625-1-git-send-email-wangqing@vivo.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: don't use ->bd_inode to access the block device size
+Date: Wed, 13 Oct 2021 07:10:13 +0200
+Message-ID: <20211013051042.1065752-1-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo0.onmicrosoft.com;
- s=selector2-vivo0-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=EvVeZfefhh988SpyihkL6e9mm10D5Fmz8RzHMhY2EME=;
- b=FGj8KUVINytQ+gnSnCF8eJU55f+4DS7Vou9NccS/eC+rhkpcdIaYOmVJJt7lrO4BSrbbdLc9J+ISAC8RApzWsOjYGFVtxcw14WkVeV0FXY8JUWcLSEBLYX1Be8oFwBN1iNGdc0k2q4Yt8znvzzyMRgBBnmQ7hlML+VkpivL1SCk=
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
+        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+        Content-Description:In-Reply-To:References;
+        bh=ocvXC+DvSauKdmmvS3p+BxJi5u95doUk5KlK23wKtqo=; b=lKRpM4ZXjdzEAs+vZHMan9ZhwK
+        q3qA9dd5QajFA+KsuGdVyTH2p+oZZPEv/z2NSgSxTwIMMwqmktOR+s0Mrd19t1c1Y/TakGT40A9Wj
+        fXHJiNb6NQJwkxlZ/5iLycWCBNdMTLXRP1g8wuFiwK5UhTbY4DE7tpL0AHanppMBRE/m1Ine/XAEK
+        um2dw0LVt4/UjLCyOHoVNjJK0jpXEaLw+w3Q6MwnUfqPKIR8hZ7XIOjLGS/AwhJhnrAzptzhgIYv3
+        k508G2hmAkGrCbErzCtBLkTxM5WVEpuUuduXQQzcasviJArvc73oNwcMB0CSLN98PutjOV+1MzU1W
+        3RwzUyhQ==;
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Qing Wang <wangqing-DGpbCiVdSXo@public.gmane.org>
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Phillip Lougher <phillip-Y7wUz+saRi+tmTQ+vhA3Yw@public.gmane.org>, Jan Kara <jack-IBi9RG/b67k@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, target-devel-u79uwXL29TaqPxH82wqD4g@public.gmane.org
 
-coccicheck complains about the use of snprintf() in sysfs show functions.
+Hi Jens,
 
-Fix the coccicheck warning:
-WARNING: use scnprintf or sprintf.
+various drivers currently poke directy at the block device inode, which
+is a bit of a mess.  This series cleans up the places that read the
+block device size to use the proper helpers.  I have separate patches
+for many of the other bd_inode uses, but this series is already big
+enough as-is,
 
-Use sysfs_emit instead of scnprintf or sprintf makes more sense.
+I wondered about adding a helper for looking at the size in byte units
+to avoid the SECTOR_SHIFT shifts in various places.  But given that
+I could not come up with a good name and block devices fundamentally
+work in sector size granularity I decided against that.
 
-Signed-off-by: Qing Wang <wangqing-DGpbCiVdSXo@public.gmane.org>
----
- fs/nilfs2/sysfs.c | 76 +++++++++++++++++++++++++++----------------------------
- 1 file changed, 38 insertions(+), 38 deletions(-)
-
-diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 68e8d61..cdb935f 100644
---- a/fs/nilfs2/sysfs.c
-+++ b/fs/nilfs2/sysfs.c
-@@ -97,7 +97,7 @@ static ssize_t
- nilfs_snapshot_inodes_count_show(struct nilfs_snapshot_attr *attr,
- 				 struct nilfs_root *root, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)atomic64_read(&root->inodes_count));
- }
- 
-@@ -105,7 +105,7 @@ static ssize_t
- nilfs_snapshot_blocks_count_show(struct nilfs_snapshot_attr *attr,
- 				 struct nilfs_root *root, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)atomic64_read(&root->blocks_count));
- }
- 
-@@ -118,7 +118,7 @@ static ssize_t
- nilfs_snapshot_README_show(struct nilfs_snapshot_attr *attr,
- 			    struct nilfs_root *root, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, snapshot_readme_str);
-+	return sysfs_emit(buf, snapshot_readme_str);
- }
- 
- NILFS_SNAPSHOT_RO_ATTR(inodes_count);
-@@ -219,7 +219,7 @@ static ssize_t
- nilfs_mounted_snapshots_README_show(struct nilfs_mounted_snapshots_attr *attr,
- 				    struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, mounted_snapshots_readme_str);
-+	return sysfs_emit(buf, mounted_snapshots_readme_str);
- }
- 
- NILFS_MOUNTED_SNAPSHOTS_RO_ATTR(README);
-@@ -257,7 +257,7 @@ nilfs_checkpoints_checkpoints_number_show(struct nilfs_checkpoints_attr *attr,
- 
- 	ncheckpoints = cpstat.cs_ncps;
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", ncheckpoints);
-+	return sysfs_emit(buf, "%llu\n", ncheckpoints);
- }
- 
- static ssize_t
-@@ -280,7 +280,7 @@ nilfs_checkpoints_snapshots_number_show(struct nilfs_checkpoints_attr *attr,
- 
- 	nsnapshots = cpstat.cs_nsss;
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", nsnapshots);
-+	return sysfs_emit(buf, "%llu\n", nsnapshots);
- }
- 
- static ssize_t
-@@ -294,7 +294,7 @@ nilfs_checkpoints_last_seg_checkpoint_show(struct nilfs_checkpoints_attr *attr,
- 	last_cno = nilfs->ns_last_cno;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", last_cno);
-+	return sysfs_emit(buf, "%llu\n", last_cno);
- }
- 
- static ssize_t
-@@ -308,7 +308,7 @@ nilfs_checkpoints_next_checkpoint_show(struct nilfs_checkpoints_attr *attr,
- 	cno = nilfs->ns_cno;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", cno);
-+	return sysfs_emit(buf, "%llu\n", cno);
- }
- 
- static const char checkpoints_readme_str[] =
-@@ -324,7 +324,7 @@ static ssize_t
- nilfs_checkpoints_README_show(struct nilfs_checkpoints_attr *attr,
- 				struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, checkpoints_readme_str);
-+	return sysfs_emit(buf, checkpoints_readme_str);
- }
- 
- NILFS_CHECKPOINTS_RO_ATTR(checkpoints_number);
-@@ -355,7 +355,7 @@ nilfs_segments_segments_number_show(struct nilfs_segments_attr *attr,
- 				     struct the_nilfs *nilfs,
- 				     char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_nsegments);
-+	return sysfs_emit(buf, "%lu\n", nilfs->ns_nsegments);
- }
- 
- static ssize_t
-@@ -363,7 +363,7 @@ nilfs_segments_blocks_per_segment_show(struct nilfs_segments_attr *attr,
- 					struct the_nilfs *nilfs,
- 					char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_blocks_per_segment);
-+	return sysfs_emit(buf, "%lu\n", nilfs->ns_blocks_per_segment);
- }
- 
- static ssize_t
-@@ -377,7 +377,7 @@ nilfs_segments_clean_segments_show(struct nilfs_segments_attr *attr,
- 	ncleansegs = nilfs_sufile_get_ncleansegs(nilfs->ns_sufile);
- 	up_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%lu\n", ncleansegs);
-+	return sysfs_emit(buf, "%lu\n", ncleansegs);
- }
- 
- static ssize_t
-@@ -397,7 +397,7 @@ nilfs_segments_dirty_segments_show(struct nilfs_segments_attr *attr,
- 		return err;
- 	}
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", sustat.ss_ndirtysegs);
-+	return sysfs_emit(buf, "%llu\n", sustat.ss_ndirtysegs);
- }
- 
- static const char segments_readme_str[] =
-@@ -413,7 +413,7 @@ nilfs_segments_README_show(struct nilfs_segments_attr *attr,
- 			    struct the_nilfs *nilfs,
- 			    char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, segments_readme_str);
-+	return sysfs_emit(buf, segments_readme_str);
- }
- 
- NILFS_SEGMENTS_RO_ATTR(segments_number);
-@@ -450,7 +450,7 @@ nilfs_segctor_last_pseg_block_show(struct nilfs_segctor_attr *attr,
- 	last_pseg = nilfs->ns_last_pseg;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)last_pseg);
- }
- 
-@@ -465,7 +465,7 @@ nilfs_segctor_last_seg_sequence_show(struct nilfs_segctor_attr *attr,
- 	last_seq = nilfs->ns_last_seq;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", last_seq);
-+	return sysfs_emit(buf, "%llu\n", last_seq);
- }
- 
- static ssize_t
-@@ -479,7 +479,7 @@ nilfs_segctor_last_seg_checkpoint_show(struct nilfs_segctor_attr *attr,
- 	last_cno = nilfs->ns_last_cno;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", last_cno);
-+	return sysfs_emit(buf, "%llu\n", last_cno);
- }
- 
- static ssize_t
-@@ -493,7 +493,7 @@ nilfs_segctor_current_seg_sequence_show(struct nilfs_segctor_attr *attr,
- 	seg_seq = nilfs->ns_seg_seq;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", seg_seq);
-+	return sysfs_emit(buf, "%llu\n", seg_seq);
- }
- 
- static ssize_t
-@@ -507,7 +507,7 @@ nilfs_segctor_current_last_full_seg_show(struct nilfs_segctor_attr *attr,
- 	segnum = nilfs->ns_segnum;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", segnum);
-+	return sysfs_emit(buf, "%llu\n", segnum);
- }
- 
- static ssize_t
-@@ -521,7 +521,7 @@ nilfs_segctor_next_full_seg_show(struct nilfs_segctor_attr *attr,
- 	nextnum = nilfs->ns_nextnum;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", nextnum);
-+	return sysfs_emit(buf, "%llu\n", nextnum);
- }
- 
- static ssize_t
-@@ -535,7 +535,7 @@ nilfs_segctor_next_pseg_offset_show(struct nilfs_segctor_attr *attr,
- 	pseg_offset = nilfs->ns_pseg_offset;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%lu\n", pseg_offset);
-+	return sysfs_emit(buf, "%lu\n", pseg_offset);
- }
- 
- static ssize_t
-@@ -549,7 +549,7 @@ nilfs_segctor_next_checkpoint_show(struct nilfs_segctor_attr *attr,
- 	cno = nilfs->ns_cno;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", cno);
-+	return sysfs_emit(buf, "%llu\n", cno);
- }
- 
- static ssize_t
-@@ -577,7 +577,7 @@ nilfs_segctor_last_seg_write_time_secs_show(struct nilfs_segctor_attr *attr,
- 	ctime = nilfs->ns_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", ctime);
-+	return sysfs_emit(buf, "%llu\n", ctime);
- }
- 
- static ssize_t
-@@ -605,7 +605,7 @@ nilfs_segctor_last_nongc_write_time_secs_show(struct nilfs_segctor_attr *attr,
- 	nongc_ctime = nilfs->ns_nongc_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", nongc_ctime);
-+	return sysfs_emit(buf, "%llu\n", nongc_ctime);
- }
- 
- static ssize_t
-@@ -619,7 +619,7 @@ nilfs_segctor_dirty_data_blocks_count_show(struct nilfs_segctor_attr *attr,
- 	ndirtyblks = atomic_read(&nilfs->ns_ndirtyblks);
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%u\n", ndirtyblks);
-+	return sysfs_emit(buf, "%u\n", ndirtyblks);
- }
- 
- static const char segctor_readme_str[] =
-@@ -656,7 +656,7 @@ static ssize_t
- nilfs_segctor_README_show(struct nilfs_segctor_attr *attr,
- 			  struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, segctor_readme_str);
-+	return sysfs_emit(buf, segctor_readme_str);
- }
- 
- NILFS_SEGCTOR_RO_ATTR(last_pseg_block);
-@@ -725,7 +725,7 @@ nilfs_superblock_sb_write_time_secs_show(struct nilfs_superblock_attr *attr,
- 	sbwtime = nilfs->ns_sbwtime;
- 	up_read(&nilfs->ns_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", sbwtime);
-+	return sysfs_emit(buf, "%llu\n", sbwtime);
- }
- 
- static ssize_t
-@@ -739,7 +739,7 @@ nilfs_superblock_sb_write_count_show(struct nilfs_superblock_attr *attr,
- 	sbwcount = nilfs->ns_sbwcount;
- 	up_read(&nilfs->ns_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%u\n", sbwcount);
-+	return sysfs_emit(buf, "%u\n", sbwcount);
- }
- 
- static ssize_t
-@@ -753,7 +753,7 @@ nilfs_superblock_sb_update_frequency_show(struct nilfs_superblock_attr *attr,
- 	sb_update_freq = nilfs->ns_sb_update_freq;
- 	up_read(&nilfs->ns_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%u\n", sb_update_freq);
-+	return sysfs_emit(buf, "%u\n", sb_update_freq);
- }
- 
- static ssize_t
-@@ -801,7 +801,7 @@ static ssize_t
- nilfs_superblock_README_show(struct nilfs_superblock_attr *attr,
- 				struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, sb_readme_str);
-+	return sysfs_emit(buf, sb_readme_str);
- }
- 
- NILFS_SUPERBLOCK_RO_ATTR(sb_write_time);
-@@ -836,7 +836,7 @@ ssize_t nilfs_dev_revision_show(struct nilfs_dev_attr *attr,
- 	u32 major = le32_to_cpu(sbp[0]->s_rev_level);
- 	u16 minor = le16_to_cpu(sbp[0]->s_minor_rev_level);
- 
--	return snprintf(buf, PAGE_SIZE, "%d.%d\n", major, minor);
-+	return sysfs_emit(buf, "%d.%d\n", major, minor);
- }
- 
- static
-@@ -844,7 +844,7 @@ ssize_t nilfs_dev_blocksize_show(struct nilfs_dev_attr *attr,
- 				 struct the_nilfs *nilfs,
- 				 char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%u\n", nilfs->ns_blocksize);
-+	return sysfs_emit(buf, "%u\n", nilfs->ns_blocksize);
- }
- 
- static
-@@ -855,7 +855,7 @@ ssize_t nilfs_dev_device_size_show(struct nilfs_dev_attr *attr,
- 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
- 	u64 dev_size = le64_to_cpu(sbp[0]->s_dev_size);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", dev_size);
-+	return sysfs_emit(buf, "%llu\n", dev_size);
- }
- 
- static
-@@ -866,7 +866,7 @@ ssize_t nilfs_dev_free_blocks_show(struct nilfs_dev_attr *attr,
- 	sector_t free_blocks = 0;
- 
- 	nilfs_count_free_blocks(nilfs, &free_blocks);
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)free_blocks);
- }
- 
-@@ -877,7 +877,7 @@ ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
- {
- 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
- 
--	return snprintf(buf, PAGE_SIZE, "%pUb\n", sbp[0]->s_uuid);
-+	return sysfs_emit(buf, "%pUb\n", sbp[0]->s_uuid);
- }
- 
- static
-@@ -905,7 +905,7 @@ static ssize_t nilfs_dev_README_show(struct nilfs_dev_attr *attr,
- 				     struct the_nilfs *nilfs,
- 				     char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, dev_readme_str);
-+	return sysfs_emit(buf, dev_readme_str);
- }
- 
- NILFS_DEV_RO_ATTR(revision);
-@@ -1051,7 +1051,7 @@ void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
- static ssize_t nilfs_feature_revision_show(struct kobject *kobj,
- 					    struct attribute *attr, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%d.%d\n",
-+	return sysfs_emit(buf, "%d.%d\n",
- 			NILFS_CURRENT_REV, NILFS_MINOR_REV);
- }
- 
-@@ -1064,7 +1064,7 @@ static ssize_t nilfs_feature_README_show(struct kobject *kobj,
- 					 struct attribute *attr,
- 					 char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, features_readme_str);
-+	return sysfs_emit(buf, features_readme_str);
- }
- 
- NILFS_FEATURE_RO_ATTR(revision);
--- 
-2.7.4
-
+Diffstat:
+ block/fops.c                        |    2 +-
+ drivers/block/drbd/drbd_int.h       |    3 +--
+ drivers/md/bcache/super.c           |    2 +-
+ drivers/md/bcache/util.h            |    4 ----
+ drivers/md/bcache/writeback.c       |    2 +-
+ drivers/md/dm-bufio.c               |    2 +-
+ drivers/md/dm-cache-metadata.c      |    2 +-
+ drivers/md/dm-cache-target.c        |    2 +-
+ drivers/md/dm-clone-target.c        |    2 +-
+ drivers/md/dm-dust.c                |    5 ++---
+ drivers/md/dm-ebs-target.c          |    2 +-
+ drivers/md/dm-era-target.c          |    2 +-
+ drivers/md/dm-exception-store.h     |    2 +-
+ drivers/md/dm-flakey.c              |    3 +--
+ drivers/md/dm-integrity.c           |    6 +++---
+ drivers/md/dm-linear.c              |    3 +--
+ drivers/md/dm-log-writes.c          |    4 ++--
+ drivers/md/dm-log.c                 |    2 +-
+ drivers/md/dm-mpath.c               |    2 +-
+ drivers/md/dm-raid.c                |    6 +++---
+ drivers/md/dm-switch.c              |    2 +-
+ drivers/md/dm-table.c               |    3 +--
+ drivers/md/dm-thin-metadata.c       |    2 +-
+ drivers/md/dm-thin.c                |    2 +-
+ drivers/md/dm-verity-target.c       |    3 +--
+ drivers/md/dm-writecache.c          |    2 +-
+ drivers/md/dm-zoned-target.c        |    2 +-
+ drivers/md/md.c                     |   26 +++++++++++---------------
+ drivers/mtd/devices/block2mtd.c     |    5 +++--
+ drivers/nvme/target/io-cmd-bdev.c   |    4 ++--
+ drivers/target/target_core_iblock.c |    5 +++--
+ fs/affs/super.c                     |    2 +-
+ fs/btrfs/dev-replace.c              |    2 +-
+ fs/btrfs/disk-io.c                  |    3 ++-
+ fs/btrfs/ioctl.c                    |    4 ++--
+ fs/btrfs/volumes.c                  |    7 ++++---
+ fs/buffer.c                         |    4 ++--
+ fs/cramfs/inode.c                   |    2 +-
+ fs/ext4/super.c                     |    2 +-
+ fs/fat/inode.c                      |    5 +----
+ fs/hfs/mdb.c                        |    2 +-
+ fs/hfsplus/wrapper.c                |    2 +-
+ fs/jfs/resize.c                     |    5 ++---
+ fs/jfs/super.c                      |    5 ++---
+ fs/nfs/blocklayout/dev.c            |    4 ++--
+ fs/nilfs2/ioctl.c                   |    2 +-
+ fs/nilfs2/super.c                   |    2 +-
+ fs/nilfs2/the_nilfs.c               |    3 ++-
+ fs/ntfs/super.c                     |    8 +++-----
+ fs/ntfs3/super.c                    |    3 +--
+ fs/pstore/blk.c                     |    4 ++--
+ fs/reiserfs/super.c                 |    7 ++-----
+ fs/squashfs/super.c                 |    5 +++--
+ fs/udf/lowlevel.c                   |    5 ++---
+ fs/udf/super.c                      |    9 +++------
+ include/linux/genhd.h               |    6 ++++++
+ 56 files changed, 100 insertions(+), 117 deletions(-)
