@@ -1,21 +1,20 @@
 From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-Subject: Re: [PATCH 06/29] nvmet: use bdev_nr_sectors instead of open coding
- it
-Date: Wed, 13 Oct 2021 22:33:16 +0000
-Message-ID: <d061489a-af65-93e3-0e1a-5742b009ac79@nvidia.com>
+Subject: Re: [PATCH 02/29] drbd: use bdev_nr_sectors instead of open coding it
+Date: Wed, 13 Oct 2021 22:33:58 +0000
+Message-ID: <473988dd-f18a-3ca0-7b3e-f5ad34f1b045@nvidia.com>
 References: <20211013051042.1065752-1-hch@lst.de>
- <20211013051042.1065752-7-hch@lst.de>
+ <20211013051042.1065752-3-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: base64
 Return-path: <linux-ext4-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
  s=selector2;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=V9WNQaxe89gO8xkELPjDEHsY1By2K3v3YTrmazx1lBU=;
- b=GpOJhl+LAJaWxKBV1Lu0pgqBbaNRzR4vWpX9AHg7cbRd6RliVVV7f18G/yIuJ8n1yQZaotQ2qYnEeRYtq/oQZ2dbOkxDwwEk56ziBY4u5ui5jowrM33FF+N6wunLiRPk0MwRj6MxAIXnOQVMa8TR0QUhVD3laiur9XyQGsk1huuudfCXENn8bIerLX3JaXqu61E4lnwcQY/trhmzNArzxglLKCv+DwiATk1sLIRKDGLWuQhnRLvCzuVa7EUB/p/kgYZZ4oF5HjzVKXnFWA9156VxZ480AH109Os/mWmzLyqRvoJvRKlQbQOV9kGywsKhHsVynOMT2NlDWYae9/cUFQ==
-In-Reply-To: <20211013051042.1065752-7-hch@lst.de>
+ bh=864Gkq+OUjAaLhBpXJA5Ah2pBllzcjFIWDplOWzOyP4=;
+ b=SR7TM+mzsVKJ5FcwuH4OJ/G6M7CVpu9nLgJGLji70wSll0bcXNQulE85bH5e4usBWwGp/h3mkJCnwPKOp/k9obor0lqbUS5BWCdwUcwxMwNUBhJkeO4D0dsCkCzyxiHbdC6K1KbCPqDS3pJtTx08yTpJFmn9XJKPYNzeAx4y5Vlm5I5+0upcLYyIImD+56o7GpNtg7HqYVlYnz/3EWic8VabFL+ZEqU5XPZquQRczajCRVup/HMIBFwC6o7JgXHWjmztJuu1zzKNFQweOLEdd3Mbrm7NRaULyvaUGIjZbtRmocQrCXvxm6EFz7/SB60BJR8Q9pCOfCC8Xy+Nix/I4w==
+In-Reply-To: <20211013051042.1065752-3-hch@lst.de>
 Content-Language: en-US
-Content-ID: <61F41960B16F6C40AEC03242CA4F6BBB@namprd12.prod.outlook.com>
+Content-ID: <43BBE4AA93E9954CAC870DE93CD2159C@namprd12.prod.outlook.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
@@ -23,6 +22,5 @@ Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@
 
 T24gMTAvMTIvMjAyMSAxMDoxMCBQTSwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6DQo+IFVzZSB0
 aGUgcHJvcGVyIGhlbHBlciB0byByZWFkIHRoZSBibG9jayBkZXZpY2Ugc2l6ZS4NCj4gDQo+IFNp
-Z25lZC1vZmYtYnk6IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPg0KPiAtLS0NCg0KTG9v
-a3MgZ29vZC4NCg0KUmV2aWV3ZWQtYnk6IENoYWl0YW55YSBLdWxrYXJuaSA8a2NoQG52aWRpYS5j
-b20+DQo=
+Z25lZC1vZmYtYnk6IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPg0KDQpMb29rcyBnb29k
+Lg0KDQpSZXZpZXdlZC1ieTogQ2hhaXRhbnlhIEt1bGthcm5pIDxrY2hAbnZpZGlhLmNvbT4NCg==
