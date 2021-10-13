@@ -1,49 +1,91 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/29] target/iblock: use bdev_nr_sectors instead
-	of open coding it
-Date: Wed, 13 Oct 2021 07:10:20 +0200
-Message-ID: <20211013051042.1065752-8-hch@lst.de>
+From: Coly Li <colyli@suse.de>
+Subject: Re: [PATCH 01/29] bcache: remove bdev_sectors
+Date: Wed, 13 Oct 2021 13:21:22 +0800
+Message-ID: <cd1b2185-9682-1d97-9789-96f833007f62@suse.de>
 References: <20211013051042.1065752-1-hch@lst.de>
+ <20211013051042.1065752-2-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20211013051042.1065752-1-hch@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://listman.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, linux-ext4@vger.kernel.org, Kees Cook <keescook@chromium.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-ntfs-dev@lis
+Return-path: <linux-block-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1634102493; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=ILLm2pe17/wADifWsNez+bTJrwsc+lrviMwLK7kUvDI=;
+        b=bvKId0oH3n+XWRAa8k+X7S4sSfCSq6r7k6wkqvducj0gvOulmoiit7vAXJt7/Fugc4ApBB
+        +eyuMKl31qjAEJWuSCiR357fXwBwkLJzIMHJmLSrbkPgZIeBcwzOpezb3tR0358vd8V0Yu
+        v4i5Ls9qoC9uBvhPFPVe6ERT85hRkzU=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1634102493;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=ILLm2pe17/wADifWsNez+bTJrwsc+lrviMwLK7kUvDI=;
+        b=7QNd9vO2OGh2y9jVTVQKK6beKgduFwgxo0TkSLgWMuvnfJFmYXqVQMfqyW0QcEDOD1zLDp
+        Em1u+x09Gi2O+KBA==
+In-Reply-To: <20211013051042.1065752-2-hch@lst.de>
+Content-Language: en-US
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vge
 
-Use the proper helper to read the block device size.
+On 10/13/21 1:10 PM, Christoph Hellwig wrote:
+> Use the equivalent block layer helper instead.
+>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/target/target_core_iblock.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+Acked-by: Coly Li <colyli@suse.de>
 
-diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
-index 31df20abe141f..ab7f5678ebc44 100644
---- a/drivers/target/target_core_iblock.c
-+++ b/drivers/target/target_core_iblock.c
-@@ -232,8 +232,9 @@ static unsigned long long iblock_emulate_read_cap_with_block_size(
- 	struct block_device *bd,
- 	struct request_queue *q)
- {
--	unsigned long long blocks_long = (div_u64(i_size_read(bd->bd_inode),
--					bdev_logical_block_size(bd)) - 1);
-+	loff_t size = bdev_nr_sectors(bd) << SECTOR_SHIFT;
-+	unsigned long long blocks_long =
-+		div_u64(size, bdev_logical_block_size(bd)) - 1;
- 	u32 block_size = bdev_logical_block_size(bd);
- 
- 	if (block_size == dev->dev_attrib.block_size)
--- 
-2.30.2
+Thanks.
+
+Coly Li
+
+> ---
+>   drivers/md/bcache/super.c     | 2 +-
+>   drivers/md/bcache/util.h      | 4 ----
+>   drivers/md/bcache/writeback.c | 2 +-
+>   3 files changed, 2 insertions(+), 6 deletions(-)
+>
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index f2874c77ff797..4f89985abe4b7 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -1002,7 +1002,7 @@ static void calc_cached_dev_sectors(struct cache_set *c)
+>   	struct cached_dev *dc;
+>   
+>   	list_for_each_entry(dc, &c->cached_devs, list)
+> -		sectors += bdev_sectors(dc->bdev);
+> +		sectors += bdev_nr_sectors(dc->bdev);
+>   
+>   	c->cached_dev_sectors = sectors;
+>   }
+> diff --git a/drivers/md/bcache/util.h b/drivers/md/bcache/util.h
+> index b64460a762677..a7da7930a7fda 100644
+> --- a/drivers/md/bcache/util.h
+> +++ b/drivers/md/bcache/util.h
+> @@ -584,8 +584,4 @@ static inline unsigned int fract_exp_two(unsigned int x,
+>   void bch_bio_map(struct bio *bio, void *base);
+>   int bch_bio_alloc_pages(struct bio *bio, gfp_t gfp_mask);
+>   
+> -static inline sector_t bdev_sectors(struct block_device *bdev)
+> -{
+> -	return bdev->bd_inode->i_size >> 9;
+> -}
+>   #endif /* _BCACHE_UTIL_H */
+> diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+> index 8120da278161e..c7560f66dca88 100644
+> --- a/drivers/md/bcache/writeback.c
+> +++ b/drivers/md/bcache/writeback.c
+> @@ -45,7 +45,7 @@ static uint64_t __calc_target_rate(struct cached_dev *dc)
+>   	 * backing volume uses about 2% of the cache for dirty data.
+>   	 */
+>   	uint32_t bdev_share =
+> -		div64_u64(bdev_sectors(dc->bdev) << WRITEBACK_SHARE_SHIFT,
+> +		div64_u64(bdev_nr_sectors(dc->bdev) << WRITEBACK_SHARE_SHIFT,
+>   				c->cached_dev_sectors);
+>   
+>   	uint64_t cache_dirty_target =
+
