@@ -1,21 +1,21 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 14/29] hfs: use bdev_nr_sectors instead of open coding it
-Date: Wed, 13 Oct 2021 07:10:27 +0200
-Message-ID: <20211013051042.1065752-15-hch@lst.de>
+Subject: [PATCH 16/29] jfs: use bdev_nr_sectors instead of open coding it
+Date: Wed, 13 Oct 2021 07:10:29 +0200
+Message-ID: <20211013051042.1065752-17-hch@lst.de>
 References: <20211013051042.1065752-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-bcache-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=ThhwJoeorMicfGUoJpj8bDFZXXZ2Sru2bDJViO7vTu8=; b=LCiRvxWM1CTaMWKxh92Deomiwf
-        AY9T2YY1wAWxayl0vHnI1Q7mpxaX7UvIsbVjgD5F5J0/8Qm83whK+tQBPPPd8pmhB0O4eGWD4XqfT
-        c51RkGegU087jx0bEhd8pTkptR/xVbI1krXiYhhsCMIgD4nHHZeeyW9HDn7opQL1nNlHC+MWFxmZj
-        O53LeicK40qW4KmNGbDlJiMfRDGAw1iqHT+q8MOwN7FIAQVaGPNnSrsAg3Oezji+43Uw1qYjdH5Lx
-        A2knf7KchBs3lZTE5z1hpj3gY1+JYG/FFOQsWofs+2X44MCi4XFeV63rKedqfr82Gv2DcvsEarZbm
-        idOFCkQg==;
+        bh=2M1Bh6pS+W3syaNlX8bODC9HBAKOfbTmbVbcvNXHzR4=; b=nfOn9SWa/2H3XvGOhq6vyClViq
+        h0fvCEPgoATwgRVtD84QzMUYa/JQYdmm+Y7PtHszgvLGDWEsRFswyisrZXfL9gZKGcz31vTcWsrg4
+        OGFcJbFKUg8jG8nSrcA/s/A3CTfOLQq15a76d7hTZLSTPE6c/hS9SLhiM9Y9NSEvRFFmEkBIR/ax7
+        aae7T6h/4pPtlTXmYjrxWFUFoi0bN7EVeodHmFwyCA0FjT1bfh0cKpBTbyfg6hSUOC7DbPkCehU/T
+        uU+Wa8swhAzPzYecQe6K5CLM0DVKE6E2g3Py1H/dkd6WQ4Bz2n+TKcDpwOgGIgp+pA/ZOt9odqWEx
+        uLcffQYA==;
 In-Reply-To: <20211013051042.1065752-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -26,22 +26,36 @@ Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/hfs/mdb.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/jfs/resize.c | 2 +-
+ fs/jfs/super.c  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/hfs/mdb.c b/fs/hfs/mdb.c
-index cdf0edeeb2781..5beb826524354 100644
---- a/fs/hfs/mdb.c
-+++ b/fs/hfs/mdb.c
-@@ -36,7 +36,7 @@ static int hfs_get_last_session(struct super_block *sb,
+diff --git a/fs/jfs/resize.c b/fs/jfs/resize.c
+index bde787c354fcc..51a8b22e71030 100644
+--- a/fs/jfs/resize.c
++++ b/fs/jfs/resize.c
+@@ -199,7 +199,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
+ 	txQuiesce(sb);
  
- 	/* default values */
- 	*start = 0;
--	*size = i_size_read(sb->s_bdev->bd_inode) >> 9;
-+	*size = bdev_nr_sectors(sb->s_bdev);
+ 	/* Reset size of direct inode */
+-	sbi->direct_inode->i_size =  i_size_read(sb->s_bdev->bd_inode);
++	sbi->direct_inode->i_size = bdev_nr_sectors(sb->s_bdev) << SECTOR_SHIFT;
  
- 	if (HFS_SB(sb)->session >= 0) {
- 		struct cdrom_tocentry te;
+ 	if (sbi->mntflag & JFS_INLINELOG) {
+ 		/*
+diff --git a/fs/jfs/super.c b/fs/jfs/super.c
+index 9030aeaf0f886..992870160903d 100644
+--- a/fs/jfs/super.c
++++ b/fs/jfs/super.c
+@@ -551,7 +551,7 @@ static int jfs_fill_super(struct super_block *sb, void *data, int silent)
+ 		ret = -ENOMEM;
+ 		goto out_unload;
+ 	}
+-	inode->i_size = i_size_read(sb->s_bdev->bd_inode);
++	inode->i_size = bdev_nr_sectors(sb->s_bdev) << SECTOR_SHIFT;
+ 	inode->i_mapping->a_ops = &jfs_metapage_aops;
+ 	inode_fake_hash(inode);
+ 	mapping_set_gfp_mask(inode->i_mapping, GFP_NOFS);
 -- 
 2.30.2
 
