@@ -1,51 +1,75 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 22/30] reiserfs: use bdev_nr_bytes instead of open coding it
-Date: Fri, 15 Oct 2021 15:26:35 +0200
-Message-ID: <20211015132643.1621913-23-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 19/30] nilfs2: use bdev_nr_bytes instead of open coding it
+Date: Fri, 15 Oct 2021 15:26:32 +0200
+Message-ID: <20211015132643.1621913-20-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=JcbZRJdzKR6lA+XJCAc0x+lsN7pLEs6yrnMAqoaLruE=; b=E+Q7ZMC/0V9E6AqH5maJprLseN
-        EStn7YautPAcC2qSZ8EhEQlOG0sJRtoOYRk4SbbnvpwSHw6kJhuePLdWLe/I2lH711tMunxMxQeUY
-        tlLYi+8tSg+UYcNoyI4QA5lbpjZa1ZHES21GHUkBrAaAHt8kTGAUv5KeZl4YslBjuW0Fb5y+9F47L
-        upw+EfO8q8HTACBNsFEMk6UzsM+h3YOFpIYdNrXfsVSWddqlxVWqa58RB+A+hOQUO4LkjkRPg8rEU
-        409fm34c5hv9iK3FJTVztLuk0jZntwNe6sR7eANz6bxxo5SAzmBsPOjl72SSJYlTWFqMJHUCmvZtU
-        kXIJ8Qng==;
-In-Reply-To: <20211015132643.1621913-1-hch-jcswGhMUV9g@public.gmane.org>
+        bh=79IfCL0cwBZyl3TQ005uMyV6UFeBUdi+0xEOD4Xebrg=; b=484wuo5ApXYHJ1gwVkbfmaWvz0
+        Psc3ElysSbrWt3zDOEnzImuxkoRsCZi+k7KdvirlXuxk3kYtIzBGIRiCVQDNq4qFi6wH207IhosnU
+        TODkbz2vxD0rg9jjrkgDJG/zPZAV/1eGwDzlDjli6KEeRQtBCM7/pf/M/PYlq9SiRTIlbRpr9SceV
+        n2ZblPKQ0vvPIPNkfWMAToJq2ahTA8qnMUg77IxuZKyIbWw47aFK9+EZstiD6ZFb4/uqP3965SSkF
+        TOplTd77vyoEt068L0rP0zmi0mU0fQ1o+LDGesDwE7a9qSyur0k7qqt1sv1T/4uL1oSdK5oBtoxMs
+        5mLeYUiQ==;
+In-Reply-To: <20211015132643.1621913-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Cc: Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Phillip Lougher <phillip-Y7wUz+saRi+tmTQ+vhA3Yw@public.gmane.org>, Jan Kara <jack-IBi9RG/b67k@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TaqPxH82wqD4g@public.gmane.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.or
 
-Use the proper helper to read the block device size and remove two
-cargo culted checks that can't be false.
+Use the proper helper to read the block device size.
 
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/reiserfs/super.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ fs/nilfs2/ioctl.c     | 2 +-
+ fs/nilfs2/super.c     | 2 +-
+ fs/nilfs2/the_nilfs.c | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/fs/reiserfs/super.c b/fs/reiserfs/super.c
-index 58481f8d63d5b..8647a00434ea4 100644
---- a/fs/reiserfs/super.c
-+++ b/fs/reiserfs/super.c
-@@ -1986,9 +1986,7 @@ static int reiserfs_fill_super(struct super_block *s, void *data, int silent)
- 	 * smaller than the filesystem. If the check fails then abort and
- 	 * scream, because bad stuff will happen otherwise.
- 	 */
--	if (s->s_bdev && s->s_bdev->bd_inode
--	    && i_size_read(s->s_bdev->bd_inode) <
--	    sb_block_count(rs) * sb_blocksize(rs)) {
-+	if (bdev_nr_bytes(s->s_bdev) < sb_block_count(rs) * sb_blocksize(rs)) {
- 		SWARN(silent, s, "", "Filesystem cannot be "
- 		      "mounted because it is bigger than the device");
- 		SWARN(silent, s, "", "You may need to run fsck "
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 640ac8fe891e6..1d0583cfd9701 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -1107,7 +1107,7 @@ static int nilfs_ioctl_set_alloc_range(struct inode *inode, void __user *argp)
+ 		goto out;
+ 
+ 	ret = -ERANGE;
+-	if (range[1] > i_size_read(inode->i_sb->s_bdev->bd_inode))
++	if (range[1] > bdev_nr_bytes(inode->i_sb->s_bdev))
+ 		goto out;
+ 
+ 	segbytes = nilfs->ns_blocks_per_segment * nilfs->ns_blocksize;
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index f6b2d280aab5a..3134c0e42fd46 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -403,7 +403,7 @@ int nilfs_resize_fs(struct super_block *sb, __u64 newsize)
+ 	int ret;
+ 
+ 	ret = -ERANGE;
+-	devsize = i_size_read(sb->s_bdev->bd_inode);
++	devsize = bdev_nr_bytes(sb->s_bdev);
+ 	if (newsize > devsize)
+ 		goto out;
+ 
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index c8bfc01da5d71..1bfcb5d3ea480 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -489,7 +489,7 @@ static int nilfs_load_super_block(struct the_nilfs *nilfs,
+ {
+ 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+ 	struct buffer_head **sbh = nilfs->ns_sbh;
+-	u64 sb2off = NILFS_SB2_OFFSET_BYTES(nilfs->ns_bdev->bd_inode->i_size);
++	u64 sb2off = NILFS_SB2_OFFSET_BYTES(bdev_nr_bytes(nilfs->ns_bdev));
+ 	int valid[2], swp = 0;
+ 
+ 	sbp[0] = nilfs_read_super_block(sb, NILFS_SB_OFFSET_BYTES, blocksize,
 -- 
 2.30.2
 
