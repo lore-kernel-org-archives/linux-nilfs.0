@@ -1,8 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 21/30] pstore/blk: use bdev_nr_bytes instead of
+Subject: [PATCH 23/30] squashfs: use bdev_nr_bytes instead of
 	open coding it
-Date: Fri, 15 Oct 2021 15:26:34 +0200
-Message-ID: <20211015132643.1621913-22-hch@lst.de>
+Date: Fri, 15 Oct 2021 15:26:36 +0200
+Message-ID: <20211015132643.1621913-24-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,39 +25,33 @@ Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Mik
 Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Phillip Lougher <phillip@squashfs.org.uk>
 ---
- fs/pstore/blk.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ fs/squashfs/super.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/fs/pstore/blk.c b/fs/pstore/blk.c
-index 04ce58c939a0b..5d1fbaffd66a1 100644
---- a/fs/pstore/blk.c
-+++ b/fs/pstore/blk.c
-@@ -205,7 +205,6 @@ static ssize_t psblk_generic_blk_write(const char *buf, size_t bytes,
- static int __register_pstore_blk(struct pstore_device_info *dev,
- 				 const char *devpath)
- {
--	struct inode *inode;
- 	int ret = -ENODEV;
+diff --git a/fs/squashfs/super.c b/fs/squashfs/super.c
+index 60d6951915f44..bb44ff4c5cc67 100644
+--- a/fs/squashfs/super.c
++++ b/fs/squashfs/super.c
+@@ -16,6 +16,7 @@
  
- 	lockdep_assert_held(&pstore_blk_lock);
-@@ -217,14 +216,13 @@ static int __register_pstore_blk(struct pstore_device_info *dev,
- 		goto err;
- 	}
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
  
--	inode = file_inode(psblk_file);
--	if (!S_ISBLK(inode->i_mode)) {
-+	if (!S_ISBLK(file_inode(psblk_file)->i_mode)) {
- 		pr_err("'%s' is not block device!\n", devpath);
- 		goto err_fput;
- 	}
++#include <linux/blkdev.h>
+ #include <linux/fs.h>
+ #include <linux/fs_context.h>
+ #include <linux/fs_parser.h>
+@@ -179,8 +180,8 @@ static int squashfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ 	/* Check the filesystem does not extend beyond the end of the
+ 	   block device */
+ 	msblk->bytes_used = le64_to_cpu(sblk->bytes_used);
+-	if (msblk->bytes_used < 0 || msblk->bytes_used >
+-			i_size_read(sb->s_bdev->bd_inode))
++	if (msblk->bytes_used < 0 ||
++	    msblk->bytes_used > bdev_nr_bytes(sb->s_bdev))
+ 		goto failed_mount;
  
--	inode = I_BDEV(psblk_file->f_mapping->host)->bd_inode;
--	dev->zone.total_size = i_size_read(inode);
-+	dev->zone.total_size =
-+		bdev_nr_bytes(I_BDEV(psblk_file->f_mapping->host));
- 
- 	ret = __register_pstore_device(dev);
- 	if (ret)
+ 	/* Check block size for sanity */
 -- 
 2.30.2
