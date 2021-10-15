@@ -1,21 +1,21 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 15/30] hfs: use bdev_nr_sectors instead of open coding it
-Date: Fri, 15 Oct 2021 15:26:28 +0200
-Message-ID: <20211015132643.1621913-16-hch@lst.de>
+Subject: [PATCH 16/30] hfsplus: use bdev_nr_sectors instead of open coding it
+Date: Fri, 15 Oct 2021 15:26:29 +0200
+Message-ID: <20211015132643.1621913-17-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=nOP5ubv8zHIPTFPGGp4mMR4qIBoLNo6J7j7POF84hxo=; b=qKV/HQkSdb71XgYHqm/d8IlV83
-        zq9Sgh/XebiPRhWgZRsfR2hbSs2vAEpMEvHXOarf9oJpF7yQ2qvJ4Fd0FXSi7JyRlbcMB5P8CvUZl
-        dJoxasGKB/2vzhCsm1WF0QmjonOmViJ8kHtgkolya2No1zo/Mh4c+PvClUZQj0w3cjRCD/Z+fngaH
-        njezPXjDF4DYZv+/9qSpeIlcqmLTlO6g3JvfIAe9gJSAstRYZSivMPYmr5M7IV8OIuyVOFA2ZE9Mo
-        h/gv4o9IQ0Eu79uDH2vEQA+mDZ10yJGCHryClcpqJX4dp1uw6ySNJgXSxfQX76ZFxxueW0CMUjMTP
-        PNbNhViA==;
+        bh=Y/n231v6mya+HLQ5553wYpz7337dsR2Clc1g640C0Nc=; b=BB4JfGoiie1pNfsAnvXlwjZi5K
+        Fx5hb32xXP0l7YaFHEiXr4L0C4Enhgw0Lp81hJm5Fh85aut47MyZ0n/9gFFXwMVITN/ErvTeHF4X9
+        q7jknmYftG5pGWvU2/qT48pHexS5DRJuhdEcpeVE07G4jUdLr0yPE1mMbR/6t0O3yHEpIXMOdjzH3
+        hqJD3fcQNdkSob9MiAKkadZjfZoQvi1Xha7LwGsqmwkyz8PshfN26LnBkSBLlPArPP837YQoRSHEX
+        q33QvKhhu8jYW3dB8u6uLjXffxvkAeXmKdHVcNbROVc8hXVuSRMrhbGR6s738/ASu5/G7J17g1w8e
+        mYHXoq3w==;
 In-Reply-To: <20211015132643.1621913-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -27,21 +27,21 @@ Use the proper helper to read the block device size.
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- fs/hfs/mdb.c | 2 +-
+ fs/hfsplus/wrapper.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/hfs/mdb.c b/fs/hfs/mdb.c
-index cdf0edeeb2781..5beb826524354 100644
---- a/fs/hfs/mdb.c
-+++ b/fs/hfs/mdb.c
-@@ -36,7 +36,7 @@ static int hfs_get_last_session(struct super_block *sb,
+diff --git a/fs/hfsplus/wrapper.c b/fs/hfsplus/wrapper.c
+index 0350dc7821bf9..51ae6f1eb4a55 100644
+--- a/fs/hfsplus/wrapper.c
++++ b/fs/hfsplus/wrapper.c
+@@ -131,7 +131,7 @@ static int hfsplus_get_last_session(struct super_block *sb,
  
  	/* default values */
  	*start = 0;
 -	*size = i_size_read(sb->s_bdev->bd_inode) >> 9;
 +	*size = bdev_nr_sectors(sb->s_bdev);
  
- 	if (HFS_SB(sb)->session >= 0) {
+ 	if (HFSPLUS_SB(sb)->session >= 0) {
  		struct cdrom_tocentry te;
 -- 
 2.30.2
