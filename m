@@ -1,21 +1,21 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/30] fs: use bdev_nr_bytes instead of open coding it in blkdev_max_block
-Date: Fri, 15 Oct 2021 15:26:22 +0200
-Message-ID: <20211015132643.1621913-10-hch@lst.de>
+Subject: [PATCH 08/30] target/iblock: use bdev_nr_bytes instead of open coding it
+Date: Fri, 15 Oct 2021 15:26:21 +0200
+Message-ID: <20211015132643.1621913-9-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <target-devel-owner@vger.kernel.org>
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=brrNeCrpSVGZomYuK+0XdDRpBpOzq/Tfwu+Oh+282Uo=; b=IxLeKtcq5OzxV91L8hTsh+7Wn6
-        GlocDXjqZDpKZlfP0UYVJ6BEdGYan+wi1rVHDqD7apTedacgzPz/ay+ildx+shvtzPpsAEQ1PxRZu
-        F+2A+Xp7CEiJPBI1rRydwkIH3jEs5fLQZYWGW7ZpoXWC7/sqRQB4Q+yfmq/NjEBYZFGbvSIFKLP+5
-        HZ4numWQM2crsRS3Y0bBhZdCBgmIt8jZTZI3m2/tYEQs9btUPJ0nPqDcW8keyyKPd6rkEI37HdlUh
-        /Iaszs3O8OiNHbWqQ1Xfy8qE3WbJ7te1x7WzzugXIOJXRQ3cv3Gn1lYYgA5DwQWsjfPpsJA9Bqe7z
-        peZfYXaQ==;
+        bh=7Fvhf+wKhm10vM9vEVCTx/h8dtxUHLOhLGNjS8UETqk=; b=AItQqhQ2XYGJN/WD9MrBjK/cyH
+        NBfGMeNQXzuVKCKq+HEtT52BLeFO+VVtGB8MwZeRc2X2Rrqd/K+aFpvHt31ONgdCDVir4TkOxdztH
+        QvXyi6xJqZdD034tBVu/eGya417QgO2eVjLhdic2HeUfOsMgzs0OVvwLtnDbznHvGY/uXXfIGPLXd
+        y7rwERgkJXHWgBgN7zzvcKHePSeuLtWLs+Gsm/tquhDTsHwlU7JXmSwImQa7IqD0GSjNLKTQK12oc
+        TSp1daWgtYYlrTmndy1c6EBPwst5ch8mIBTMKLTxBfe67o+Z1jOJZEuK/7I20TUpVfhvhWZckt/B2
+        7e5tzDUA==;
 In-Reply-To: <20211015132643.1621913-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -25,25 +25,27 @@ Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@
 Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Jan Kara <jack@suse.cz>
 Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
 ---
- fs/buffer.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/target/target_core_iblock.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/buffer.c b/fs/buffer.c
-index c615387aedcae..156358977249f 100644
---- a/fs/buffer.c
-+++ b/fs/buffer.c
-@@ -878,7 +878,7 @@ link_dev_buffers(struct page *page, struct buffer_head *head)
- static sector_t blkdev_max_block(struct block_device *bdev, unsigned int size)
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index 31df20abe141f..b1ef041cacd81 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -232,9 +232,9 @@ static unsigned long long iblock_emulate_read_cap_with_block_size(
+ 	struct block_device *bd,
+ 	struct request_queue *q)
  {
- 	sector_t retval = ~((sector_t)0);
--	loff_t sz = i_size_read(bdev->bd_inode);
-+	loff_t sz = bdev_nr_bytes(bdev);
+-	unsigned long long blocks_long = (div_u64(i_size_read(bd->bd_inode),
+-					bdev_logical_block_size(bd)) - 1);
+ 	u32 block_size = bdev_logical_block_size(bd);
++	unsigned long long blocks_long =
++		div_u64(bdev_nr_bytes(bd), block_size) - 1;
  
- 	if (sz) {
- 		unsigned int sizebits = blksize_bits(size);
+ 	if (block_size == dev->dev_attrib.block_size)
+ 		return blocks_long;
 -- 
 2.30.2
 
