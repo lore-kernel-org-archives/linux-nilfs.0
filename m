@@ -1,21 +1,21 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/30] nvmet: use bdev_nr_bytes instead of open coding it
-Date: Fri, 15 Oct 2021 15:26:20 +0200
-Message-ID: <20211015132643.1621913-8-hch@lst.de>
+Subject: [PATCH 09/30] fs: use bdev_nr_bytes instead of open coding it in blkdev_max_block
+Date: Fri, 15 Oct 2021 15:26:22 +0200
+Message-ID: <20211015132643.1621913-10-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
+Return-path: <target-devel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=Py4SFYmeQI8OzGpoQ9LNr+7lWY6I6fBtz06nY0N1e+8=; b=CCeszTHM74/VSZRJ3pe/w3AsVv
-        d7plrag09NyTO7nPNC9+l1rBhlOiceLDvZ6SdfvTuJxc+NlS50shAoxAo3QujgQXyy9B6fjMDBuAr
-        n0MspaNPmqC4Ew6PFWc5Sc3sX91oadiqq3AnoeBrtGx5Rs6HVlUS+aP5Ay4lMOk9Yc4nGOG1LVpgm
-        5N4/4gTlNnq9HICyQCv5pXNbpVY3kf7mTGfE3gyqJ1nA/yj22vuEkikRTQFbkd+aJtdwcCN0dtvKx
-        7QuV+oiDohQI3nDgIFgYt+spe6WftX4DnRHIUbT2iaRoc89is8NVRQYRvPO8rm4gAqKtW8tG185xu
-        YKk4ul2A==;
+        bh=brrNeCrpSVGZomYuK+0XdDRpBpOzq/Tfwu+Oh+282Uo=; b=IxLeKtcq5OzxV91L8hTsh+7Wn6
+        GlocDXjqZDpKZlfP0UYVJ6BEdGYan+wi1rVHDqD7apTedacgzPz/ay+ildx+shvtzPpsAEQ1PxRZu
+        F+2A+Xp7CEiJPBI1rRydwkIH3jEs5fLQZYWGW7ZpoXWC7/sqRQB4Q+yfmq/NjEBYZFGbvSIFKLP+5
+        HZ4numWQM2crsRS3Y0bBhZdCBgmIt8jZTZI3m2/tYEQs9btUPJ0nPqDcW8keyyKPd6rkEI37HdlUh
+        /Iaszs3O8OiNHbWqQ1Xfy8qE3WbJ7te1x7WzzugXIOJXRQ3cv3Gn1lYYgA5DwQWsjfPpsJA9Bqe7z
+        peZfYXaQ==;
 In-Reply-To: <20211015132643.1621913-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -25,33 +25,25 @@ Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@
 Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Jan Kara <jack@suse.cz>
 Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
 ---
- drivers/nvme/target/io-cmd-bdev.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/buffer.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/nvme/target/io-cmd-bdev.c b/drivers/nvme/target/io-cmd-bdev.c
-index 6139e1de50a66..70ca9dfc1771a 100644
---- a/drivers/nvme/target/io-cmd-bdev.c
-+++ b/drivers/nvme/target/io-cmd-bdev.c
-@@ -87,7 +87,7 @@ int nvmet_bdev_ns_enable(struct nvmet_ns *ns)
- 		ns->bdev = NULL;
- 		return ret;
- 	}
--	ns->size = i_size_read(ns->bdev->bd_inode);
-+	ns->size = bdev_nr_bytes(ns->bdev);
- 	ns->blksize_shift = blksize_bits(bdev_logical_block_size(ns->bdev));
- 
- 	ns->pi_type = 0;
-@@ -108,7 +108,7 @@ int nvmet_bdev_ns_enable(struct nvmet_ns *ns)
- 
- void nvmet_bdev_ns_revalidate(struct nvmet_ns *ns)
+diff --git a/fs/buffer.c b/fs/buffer.c
+index c615387aedcae..156358977249f 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -878,7 +878,7 @@ link_dev_buffers(struct page *page, struct buffer_head *head)
+ static sector_t blkdev_max_block(struct block_device *bdev, unsigned int size)
  {
--	ns->size = i_size_read(ns->bdev->bd_inode);
-+	ns->size = bdev_nr_bytes(ns->bdev);
- }
+ 	sector_t retval = ~((sector_t)0);
+-	loff_t sz = i_size_read(bdev->bd_inode);
++	loff_t sz = bdev_nr_bytes(bdev);
  
- u16 blk_to_nvme_status(struct nvmet_req *req, blk_status_t blk_sts)
+ 	if (sz) {
+ 		unsigned int sizebits = blksize_bits(size);
 -- 
 2.30.2
 
