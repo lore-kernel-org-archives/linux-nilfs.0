@@ -1,72 +1,81 @@
-From: Dave Kleikamp <dave.kleikamp@oracle.com>
-Subject: Re: [PATCH 27/30] jfs: use sb_bdev_nr_blocks
-Date: Fri, 15 Oct 2021 09:16:58 -0500
-Message-ID: <2056d9b3-cf07-36fc-ad60-381e4a4e6d7b@oracle.com>
+From: Anton Altaparmakov <anton@tuxera.com>
+Subject: Re: [PATCH 28/30] ntfs: use sb_bdev_nr_blocks
+Date: Fri, 15 Oct 2021 14:35:40 +0000
+Message-ID: <7644804B-2081-4A1E-A40D-9A5C7BF72E2E@tuxera.com>
 References: <20211015132643.1621913-1-hch@lst.de>
- <20211015132643.1621913-28-hch@lst.de>
+ <20211015132643.1621913-29-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-bcache-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=message-id : date :
- subject : to : cc : references : from : in-reply-to : content-type :
- content-transfer-encoding : mime-version; s=corp-2021-07-09;
- bh=dd79Ru+92+tvwwdfde/giyArZGTbUGkHFZZOlpDPINg=;
- b=Nb9oCbiHqcNu4X0+Mm+5TnAMYUBDw7kBhpRANsDsnCrivtIo5ainQVFfk3opJwek/Dsp
- s1FTnGzRCXQ3xo1aQpTfgmAedT0vCNriREocxzx/eJyGZrVkyMOm3vQWv9flsUUWJxgo
- 0Zfoop+PJPJeD9R0m2BBRlMhulbk47da3a57+UGyRcsmzMBTvwCWUAfDv0VQ+Tqqk8cK
- /gYHGldmQC1r0L+ONi7vW8KA+kt9D4p5EOmtCDTbDdKg72VOuw4OMec0F2uabUbON89I
- KqisYO+x5SXcrL5UtPeo4xE52dA3D6S+PYvpyQA4gKVLsLPZ+5w7wpMxYIgXI16n4Kin hg== 
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=dd79Ru+92+tvwwdfde/giyArZGTbUGkHFZZOlpDPINg=;
- b=d6md9LI2Up2AzO5ehqmcnD4Ruah/2S2iYGWAyYCBky31g5GPR9WvBvdmKIS32ed2wNBkRkvwAvUkxodv+2b6Zey5rnDOJ8FgO6gOKBcdUM4yhDwOHp0pbtLDPOPDwsSt/r8klV9qIlQ1SWCRym3cEJrueh9VYWjerTMC6DjCKxE=
+In-Reply-To: <20211015132643.1621913-29-hch@lst.de>
 Content-Language: en-US
-In-Reply-To: <20211015132643.1621913-28-hch@lst.de>
+Content-ID: <3668CC17B52D274985AE4DAF6C11620E@ex13.tuxera.com>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, linux-raid@vger.kernel.org
 
-On 10/15/21 8:26AM, Christoph Hellwig wrote:
-> Use the sb_bdev_nr_blocks helper instead of open coding it.
+Hi Christoph,
+
+Looks good, thank you.
+
+Best regards,
+
+	Anton
+
+> On 15 Oct 2021, at 14:26, Christoph Hellwig <hch@lst.de> wrote:
+> 
+> Use the sb_bdev_nr_blocks helper instead of open coding it and clean up
+> ntfs_fill_super a bit by moving an assignment a little earlier that has
+> no negative side effects.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > Reviewed-by: Kees Cook <keescook@chromium.org>
 
-Acked-by: Dave Kleikamp <dave.kleikamp@oracle.com>
+Acked-by: Anton Altaparmakov <anton@tuxera.com>
 
 > ---
->   fs/jfs/resize.c | 3 +--
->   fs/jfs/super.c  | 3 +--
->   2 files changed, 2 insertions(+), 4 deletions(-)
+> fs/ntfs/super.c | 8 +++-----
+> 1 file changed, 3 insertions(+), 5 deletions(-)
 > 
-> diff --git a/fs/jfs/resize.c b/fs/jfs/resize.c
-> index a42dbb0d3d28a..8b9a72ae5efa7 100644
-> --- a/fs/jfs/resize.c
-> +++ b/fs/jfs/resize.c
-> @@ -86,8 +86,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
->   		goto out;
->   	}
->   
-> -	VolumeSize = i_size_read(sb->s_bdev->bd_inode) >> sb->s_blocksize_bits;
-> -
-> +	VolumeSize = sb_bdev_nr_blocks(sb);
->   	if (VolumeSize) {
->   		if (newLVSize > VolumeSize) {
->   			printk(KERN_WARNING "jfs_extendfs: invalid size\n");
-> diff --git a/fs/jfs/super.c b/fs/jfs/super.c
-> index 9241caa161163..24cbc9946e01c 100644
-> --- a/fs/jfs/super.c
-> +++ b/fs/jfs/super.c
-> @@ -284,8 +284,7 @@ static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
->   		}
->   		case Opt_resize_nosize:
->   		{
-> -			*newLVSize = i_size_read(sb->s_bdev->bd_inode) >>
+> diff --git a/fs/ntfs/super.c b/fs/ntfs/super.c
+> index 0d7e948cb29c9..5ae8de09b271b 100644
+> --- a/fs/ntfs/super.c
+> +++ b/fs/ntfs/super.c
+> @@ -2772,13 +2772,12 @@ static int ntfs_fill_super(struct super_block *sb, void *opt, const int silent)
+> 	ntfs_debug("Set device block size to %i bytes (block size bits %i).",
+> 			blocksize, sb->s_blocksize_bits);
+> 	/* Determine the size of the device in units of block_size bytes. */
+> -	if (!i_size_read(sb->s_bdev->bd_inode)) {
+> +	vol->nr_blocks = sb_bdev_nr_blocks(sb);
+> +	if (!vol->nr_blocks) {
+> 		if (!silent)
+> 			ntfs_error(sb, "Unable to determine device size.");
+> 		goto err_out_now;
+> 	}
+> -	vol->nr_blocks = i_size_read(sb->s_bdev->bd_inode) >>
+> -			sb->s_blocksize_bits;
+> 	/* Read the boot sector and return unlocked buffer head to it. */
+> 	if (!(bh = read_ntfs_boot_sector(sb, silent))) {
+> 		if (!silent)
+> @@ -2816,8 +2815,7 @@ static int ntfs_fill_super(struct super_block *sb, void *opt, const int silent)
+> 			goto err_out_now;
+> 		}
+> 		BUG_ON(blocksize != sb->s_blocksize);
+> -		vol->nr_blocks = i_size_read(sb->s_bdev->bd_inode) >>
 > -				sb->s_blocksize_bits;
-> +			*newLVSize = sb_bdev_nr_blocks(sb);
->   			if (*newLVSize == 0)
->   				pr_err("JFS: Cannot determine volume size\n");
->   			break;
+> +		vol->nr_blocks = sb_bdev_nr_blocks(sb);
+> 		ntfs_debug("Changed device block size to %i bytes (block size "
+> 				"bits %i) to match volume sector size.",
+> 				blocksize, sb->s_blocksize_bits);
+> -- 
+> 2.30.2
 > 
+
+
+
+-- 
+Anton Altaparmakov <anton at tuxera.com> (replace at with @)
+Lead in File System Development, Tuxera Inc., http://www.tuxera.com/
+Linux NTFS maintainer
+
