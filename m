@@ -1,42 +1,35 @@
-From: David Sterba <dsterba@suse.cz>
-Subject: Re: [PATCH 12/30] btrfs: use bdev_nr_bytes instead of open coding it
-Date: Fri, 15 Oct 2021 15:52:47 +0200
-Message-ID: <20211015135247.GD30611@suse.cz>
-References: <20211015132643.1621913-1-hch@lst.de>
- <20211015132643.1621913-13-hch@lst.de>
-Reply-To: dsterba@suse.cz
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Subject: Re: [PATCH 19/30] nilfs2: use bdev_nr_bytes instead of open coding it
+Date: Fri, 15 Oct 2021 22:54:32 +0900
+Message-ID: <CAKFNMokH0ZU-zxMe3Wm87hZwVgXPv3nRYBx2gXU98GekaeDFRw@mail.gmail.com>
+References: <20211015132643.1621913-1-hch@lst.de> <20211015132643.1621913-20-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1634305993;
-        h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-         cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=XE1Zr0WGvW2BDyQXJdIRIiNu9IGR6oole7AChDGbfow=;
-        b=FkrOYMCvwR1WV8YcSADck0o3TXEJmoIrrStNwAyJqd5gJtxOKI0CvnGjbCGyMxwd1yNCeH
-        zEBVH7sdh2t2qaGhwsLNHOqdjz5oxqFduSjyptxcsRk7M3YKn/qvXYLrh+ZrHNjtfMqSoR
-        o2Vcyhzm0y0ABVfIcRluaAPS8AtvIcI=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1634305993;
-        h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-         cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=XE1Zr0WGvW2BDyQXJdIRIiNu9IGR6oole7AChDGbfow=;
-        b=lur2cVP0ZZIUagJCcyCSi3a/9FA4e33CHIEO/wJi1ldSGsZcWVqbr1pPLn6NfTVCjleY7d
-        /71NcgdcrKDA81BA==
-Content-Disposition: inline
-In-Reply-To: <20211015132643.1621913-13-hch@lst.de>
+Return-path: <linux-bcache-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=ffV9EXIvpsxi/zzat9M/mXqT6D2BowDOkY1JbwoxMOs=;
+        b=dywwSbIGuXR+dXQSROUIhljg5+mHDSiHww9Tc5QE/0KVc6D96c2ocK9S4czPbKsPtz
+         ySNRWdT9ve7V2FStFVRj6GJtI3GsO5QLdZltms855+mPxWEcF0y64BVbP3jeqDvlTRSC
+         Q0SLO0cmgDLKr6f+MZ/VrWRqoygoePpVOM+o8yB+jCv00rDqDRMVdNenYkm3jQj9uL4k
+         E4/MHhOextdkY9W69AUB008H67vZy/HWT7fbCa67+7KfpngwPIaSC4I9QxVoGvAnEL8B
+         uHW/dfm/FieH/pIjg0HJFLHL4EoFbkdCY9X4ZyWcCPHq1gpKkT+6jn/WXPUZSeEosezu
+         YVGg==
+In-Reply-To: <20211015132643.1621913-20-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kern
+Cc: Jens Axboe <axboe@kernel.dk>, Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-f
 
-On Fri, Oct 15, 2021 at 03:26:25PM +0200, Christoph Hellwig wrote:
+On Fri, Oct 15, 2021 at 10:27 PM Christoph Hellwig <hch@lst.de> wrote:
+>
 > Use the proper helper to read the block device size.
-> 
+>
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Anand Jain <anand.jain@oracle.com>
-> Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
 
-Acked-by: David Sterba <dsterba@suse.com>
+Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+
+Thanks,
+Ryusuke Konishi
