@@ -1,8 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 24/30] block: use bdev_nr_bytes instead of open
-	coding it in blkdev_fallocate
-Date: Fri, 15 Oct 2021 15:26:37 +0200
-Message-ID: <20211015132643.1621913-25-hch@lst.de>
+Subject: [PATCH 26/30] ext4: use sb_bdev_nr_blocks
+Date: Fri, 15 Oct 2021 15:26:39 +0200
+Message-ID: <20211015132643.1621913-27-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,29 +19,30 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, linux-ext4@vger.kernel.org, Chaitanya Kulkarni <kch@nvidia.com>, Kees Cook <keescook@chromium.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tyt>
+Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, linux-ext4@vger.kernel.org, Kees Cook <keescook@chromium.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-ntfs-dev@lists.sou
 
-Use the proper helper to read the block device size.
+Use the sb_bdev_nr_blocks helper instead of open coding it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Jan Kara <jack@suse.cz>
-Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
+Acked-by: Theodore Ts'o <tytso@mit.edu>
 ---
- block/fops.c | 2 +-
+ fs/ext4/super.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/block/fops.c b/block/fops.c
-index 7bb9581a146cf..a6a4d412720cd 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -548,7 +548,7 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 		return -EOPNOTSUPP;
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index 0775950ee84e3..3dde8be5df490 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -4468,7 +4468,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+ 		goto cantfind_ext4;
  
- 	/* Don't go off the end of the device. */
--	isize = i_size_read(bdev->bd_inode);
-+	isize = bdev_nr_bytes(bdev);
- 	if (start >= isize)
- 		return -EINVAL;
- 	if (end >= isize) {
+ 	/* check blocks count against device size */
+-	blocks_count = sb->s_bdev->bd_inode->i_size >> sb->s_blocksize_bits;
++	blocks_count = sb_bdev_nr_blocks(sb);
+ 	if (blocks_count && ext4_blocks_count(es) > blocks_count) {
+ 		ext4_msg(sb, KERN_WARNING, "bad geometry: block count %llu "
+ 		       "exceeds size of device (%llu blocks)",
 -- 
 2.30.2
