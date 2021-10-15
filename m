@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 04/30] drbd: use bdev_nr_sectors instead of open coding it
-Date: Fri, 15 Oct 2021 15:26:17 +0200
-Message-ID: <20211015132643.1621913-5-hch@lst.de>
+Subject: [PATCH 07/30] nvmet: use bdev_nr_bytes instead of open coding it
+Date: Fri, 15 Oct 2021 15:26:20 +0200
+Message-ID: <20211015132643.1621913-8-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -10,12 +10,12 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=sRz3ktGyKoN3l7m+veOu47xjytoh4FxLpztSQgTc2E4=; b=2Hl1p/KJtE+43LsxTKrPI56Tp8
-        Z1u+/nKEpjLeDRsVPz1SlqoWGEAiGFveyGkqNqrDzwiS8vMbIEnifQ9GKxFW4loCtgmo6f/H29/3P
-        AK5NgH4FJfKgTpOGnPNqvOG5Jo7ina885H6Jio3wLA9OoS7K7N2U8G6RoDNn1rlPvWuSwFnf3fXYP
-        9bl6S1SU1fq17NHsCqHIPkC9ocMvzizEmjdReZFGk67McOTn5rGLXmFDzdoWna6qkYjsI/v973sMK
-        HVTm4g6kp1gKcvshrk1c7E/XrmY6kmJcG9L9srP+/nGz0DPmAWB2s2dUQVPShEk277OD1aJw9QVen
-        6LK82y4w==;
+        bh=Py4SFYmeQI8OzGpoQ9LNr+7lWY6I6fBtz06nY0N1e+8=; b=CCeszTHM74/VSZRJ3pe/w3AsVv
+        d7plrag09NyTO7nPNC9+l1rBhlOiceLDvZ6SdfvTuJxc+NlS50shAoxAo3QujgQXyy9B6fjMDBuAr
+        n0MspaNPmqC4Ew6PFWc5Sc3sX91oadiqq3AnoeBrtGx5Rs6HVlUS+aP5Ay4lMOk9Yc4nGOG1LVpgm
+        5N4/4gTlNnq9HICyQCv5pXNbpVY3kf7mTGfE3gyqJ1nA/yj22vuEkikRTQFbkd+aJtdwcCN0dtvKx
+        7QuV+oiDohQI3nDgIFgYt+spe6WftX4DnRHIUbT2iaRoc89is8NVRQYRvPO8rm4gAqKtW8tG185xu
+        YKk4ul2A==;
 In-Reply-To: <20211015132643.1621913-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -25,26 +25,33 @@ Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@
 Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
 ---
- drivers/block/drbd/drbd_int.h | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/nvme/target/io-cmd-bdev.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
-index 5d9181382ce19..75fda53eed8cf 100644
---- a/drivers/block/drbd/drbd_int.h
-+++ b/drivers/block/drbd/drbd_int.h
-@@ -1826,8 +1826,7 @@ static inline sector_t drbd_md_last_sector(struct drbd_backing_dev *bdev)
- /* Returns the number of 512 byte sectors of the device */
- static inline sector_t drbd_get_capacity(struct block_device *bdev)
+diff --git a/drivers/nvme/target/io-cmd-bdev.c b/drivers/nvme/target/io-cmd-bdev.c
+index 6139e1de50a66..70ca9dfc1771a 100644
+--- a/drivers/nvme/target/io-cmd-bdev.c
++++ b/drivers/nvme/target/io-cmd-bdev.c
+@@ -87,7 +87,7 @@ int nvmet_bdev_ns_enable(struct nvmet_ns *ns)
+ 		ns->bdev = NULL;
+ 		return ret;
+ 	}
+-	ns->size = i_size_read(ns->bdev->bd_inode);
++	ns->size = bdev_nr_bytes(ns->bdev);
+ 	ns->blksize_shift = blksize_bits(bdev_logical_block_size(ns->bdev));
+ 
+ 	ns->pi_type = 0;
+@@ -108,7 +108,7 @@ int nvmet_bdev_ns_enable(struct nvmet_ns *ns)
+ 
+ void nvmet_bdev_ns_revalidate(struct nvmet_ns *ns)
  {
--	/* return bdev ? get_capacity(bdev->bd_disk) : 0; */
--	return bdev ? i_size_read(bdev->bd_inode) >> 9 : 0;
-+	return bdev ? bdev_nr_sectors(bdev) : 0;
+-	ns->size = i_size_read(ns->bdev->bd_inode);
++	ns->size = bdev_nr_bytes(ns->bdev);
  }
  
- /**
+ u16 blk_to_nvme_status(struct nvmet_req *req, blk_status_t blk_sts)
 -- 
 2.30.2
 
