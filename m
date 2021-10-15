@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 27/30] jfs: use sb_bdev_nr_blocks
-Date: Fri, 15 Oct 2021 15:26:40 +0200
-Message-ID: <20211015132643.1621913-28-hch@lst.de>
+Subject: [PATCH 25/30] block: add a sb_bdev_nr_blocks helper
+Date: Fri, 15 Oct 2021 15:26:38 +0200
+Message-ID: <20211015132643.1621913-26-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,42 +21,32 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, linux-ext4@vger.kernel.org, Kees Cook <keescook@chromium.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-ntfs-dev@lists.sourceforge.net, Jan Kara <ja>
 
-Use the sb_bdev_nr_blocks helper instead of open coding it.
+Add a helper to return the size of sb->s_bdev in sb->s_blocksize_bits
+based unites.  Note that SECTOR_SHIFT has to be open coded due to
+include dependency issues for now, but I have a plan to sort that out
+eventually.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- fs/jfs/resize.c | 3 +--
- fs/jfs/super.c  | 3 +--
- 2 files changed, 2 insertions(+), 4 deletions(-)
+ include/linux/genhd.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/fs/jfs/resize.c b/fs/jfs/resize.c
-index a42dbb0d3d28a..8b9a72ae5efa7 100644
---- a/fs/jfs/resize.c
-+++ b/fs/jfs/resize.c
-@@ -86,8 +86,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
- 		goto out;
- 	}
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index f67db3c5a04b3..70b4ac47e693c 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -250,6 +250,12 @@ static inline sector_t get_capacity(struct gendisk *disk)
+ 	return bdev_nr_sectors(disk->part0);
+ }
  
--	VolumeSize = i_size_read(sb->s_bdev->bd_inode) >> sb->s_blocksize_bits;
--
-+	VolumeSize = sb_bdev_nr_blocks(sb);
- 	if (VolumeSize) {
- 		if (newLVSize > VolumeSize) {
- 			printk(KERN_WARNING "jfs_extendfs: invalid size\n");
-diff --git a/fs/jfs/super.c b/fs/jfs/super.c
-index 9241caa161163..24cbc9946e01c 100644
---- a/fs/jfs/super.c
-+++ b/fs/jfs/super.c
-@@ -284,8 +284,7 @@ static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
- 		}
- 		case Opt_resize_nosize:
- 		{
--			*newLVSize = i_size_read(sb->s_bdev->bd_inode) >>
--				sb->s_blocksize_bits;
-+			*newLVSize = sb_bdev_nr_blocks(sb);
- 			if (*newLVSize == 0)
- 				pr_err("JFS: Cannot determine volume size\n");
- 			break;
++static inline u64 sb_bdev_nr_blocks(struct super_block *sb)
++{
++	return bdev_nr_sectors(sb->s_bdev) >>
++		(sb->s_blocksize_bits - SECTOR_SHIFT);
++}
++
+ int bdev_disk_changed(struct gendisk *disk, bool invalidate);
+ void blk_drop_partitions(struct gendisk *disk);
+ 
 -- 
 2.30.2
