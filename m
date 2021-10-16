@@ -1,54 +1,64 @@
-From: Lee Duncan <lduncan@suse.com>
-Subject: Re: [PATCH 04/30] drbd: use bdev_nr_sectors instead of open coding it
-Date: Fri, 15 Oct 2021 11:00:57 -0700
-Message-ID: <211d2871-6232-8111-987f-077a95d92a1a@suse.com>
+From: Kari Argillander <kari.argillander@gmail.com>
+Subject: Re: [PATCH 20/30] ntfs3: use bdev_nr_bytes instead of open coding it
+Date: Sat, 16 Oct 2021 10:40:08 +0300
+Message-ID: <20211016074008.o6wl7uy3vsrz4v3b@kari-VirtualBox>
 References: <20211015132643.1621913-1-hch@lst.de>
- <20211015132643.1621913-5-hch@lst.de>
+ <20211015132643.1621913-21-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=mimecast20200619;
-        t=1634320871;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=m4dfeoXG+Sb747r1kiHnXbAbgB6Mk9qwJHpOSq1ikW0=;
-        b=O5tgNB9eq/FqK3OfR1pXKvMGODzwLmyj96mzgZGotlyHaNIXyz3Y9lkcjEOxoxRf/fRVCv
-        xoTQeLDJmsfu6d3ilXinL0Mg+JVaEahhKqsEIGVu/Lnna+HVOx6Bj/sQAOig9p2PZuKbHE
-        pTCj4hQjcW9NC2ydnuMpSy+b+3VHbzc=
-In-Reply-To: <20211015132643.1621913-5-hch@lst.de>
-Content-Language: en-US
+Return-path: <linux-ext4-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to;
+        bh=yeYbTALLt+81wu8WFfyKx0a33Kod/SnDLZRAl1Frm5U=;
+        b=cVnZ6+l+2XB64KtPGPsew2EuurYnsOpcBevvm/IVGVDWp/Lr378D4lUZAb7Ldqn1aU
+         Nechfd+nevnKJt8FFrjsUkhQRsZN4OdAe+y/4UgENJDxkcBm3bvvsqVp0+i7kz/ncskC
+         VTNCGAMRL2zXauGox8hUYH0e6cLX9YNzHMmZx68OgeqDdd/IPTSNwVgM/hhe43XfbD/A
+         Rsr2ngeAq8MwLS8wYqIQpA7q0jGrbmoIHsnPPXNshCS3yofpN7y1D6hLbuTi/3aHu8Hg
+         WHPyyYAgwzwuGQtuqb861mn1fmCGJ4Gxolg4kHeKn8eV14e/nwAYLFHNCnrx2jzkQiPm
+         sdiw==
+Content-Disposition: inline
+In-Reply-To: <20211015132643.1621913-21-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kern
 
-On 10/15/21 6:26 AM, Christoph Hellwig wrote:
+On Fri, Oct 15, 2021 at 03:26:33PM +0200, Christoph Hellwig wrote:
 > Use the proper helper to read the block device size.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Kees Cook <keescook@chromium.org>
-> Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
 > ---
->  drivers/block/drbd/drbd_int.h | 3 +--
+>  fs/ntfs3/super.c | 3 +--
 >  1 file changed, 1 insertion(+), 2 deletions(-)
 > 
-> diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
-> index 5d9181382ce19..75fda53eed8cf 100644
-> --- a/drivers/block/drbd/drbd_int.h
-> +++ b/drivers/block/drbd/drbd_int.h
-> @@ -1826,8 +1826,7 @@ static inline sector_t drbd_md_last_sector(struct drbd_backing_dev *bdev)
->  /* Returns the number of 512 byte sectors of the device */
->  static inline sector_t drbd_get_capacity(struct block_device *bdev)
->  {
-> -	/* return bdev ? get_capacity(bdev->bd_disk) : 0; */
-> -	return bdev ? i_size_read(bdev->bd_inode) >> 9 : 0;
-> +	return bdev ? bdev_nr_sectors(bdev) : 0;
->  }
+> diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+> index 55bbc9200a10e..7ed2cb5e8b1d9 100644
+> --- a/fs/ntfs3/super.c
+> +++ b/fs/ntfs3/super.c
+> @@ -918,7 +918,6 @@ static int ntfs_fill_super(struct super_block *sb, void *data, int silent)
+>  	int err;
+>  	struct ntfs_sb_info *sbi;
+>  	struct block_device *bdev = sb->s_bdev;
+> -	struct inode *bd_inode = bdev->bd_inode;
+
+Linus merged latest ntfs3 stuff and this temp variable is not anymore in
+upstream. So this patch will conflict. Just so that you know.
+
+>  	struct request_queue *rq = bdev_get_queue(bdev);
+>  	struct inode *inode = NULL;
+>  	struct ntfs_inode *ni;
+> @@ -967,7 +966,7 @@ static int ntfs_fill_super(struct super_block *sb, void *data, int silent)
 >  
->  /**
+>  	/* Parse boot. */
+>  	err = ntfs_init_from_boot(sb, rq ? queue_logical_block_size(rq) : 512,
+> -				  bd_inode->i_size);
+> +				  bdev_nr_bytes(bdev));
+>  	if (err)
+>  		goto out;
+>  
+> -- 
+> 2.30.2
 > 
-
-Reviewed-by: Lee Duncan <lduncan@suse.com>
-
+> 
