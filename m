@@ -1,122 +1,107 @@
 From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Subject: Re: don't use ->bd_inode to access the block device size
-	v3
-Date: Mon, 18 Oct 2021 11:40:51 -0600
-Message-ID: <2f5dcf79-8419-45ff-c27c-68d43242ccfe@kernel.dk>
+Subject: Re: don't use ->bd_inode to access the block device size v3
+Date: Mon, 18 Oct 2021 11:41:22 -0600
+Message-ID: <163457887855.397824.18265513445295974558.b4-ty@kernel.dk>
 References: <20211018101130.1838532-1-hch@lst.de>
-	<4a8c3a39-9cd3-5b2f-6d0f-a16e689755e6@kernel.dk>
-	<20211018171843.GA3338@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=kernel-dk.20210112.gappssmtp.com; s=20210112;
-	h=subject:to:cc:references:from:message-id:date:user-agent
-	:mime-version:in-reply-to:content-language:content-transfer-encoding;
-	bh=8eHyIh60ZUzo3JWH2PHiHe4cTmG/UJai+TUUoRo1bPo=;
-	b=FxDre2hjyoHZ64BANF3MmORptiQUy9H6AZXx6LsuyaBb3BcaZC0U/QrU21BtTujGBo
-	8pKXev+INoMpwpLRfH86fYXpprj4xYaVKSen9V7xFxUy/Adi3YagOWpZv1TCL1fYRKF4
-	KJjdISFmhkQQ0L4EmrQXCfcR5w3Zzj3aqn6DzOl13eefz8vxGa1vYg1bewxzJ9VB28da
-	3UiILqBGRheOtvSI5gJ9xtk7xHUS/Gucotz2TgqyyRfnlasGRztSAeszEgY1u2mV13ER
-	EMsST0UXfQiH71wz4IGsonA4VDgwXa5gnJGRFiHsgHIEksPy/aZTeVCzAUrIhmXl9xQs
-	p/ag==
-In-Reply-To: <20211018171843.GA3338-jcswGhMUV9g@public.gmane.org>
-Content-Language: en-US
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+        d=kernel-dk.20210112.gappssmtp.com; s=20210112;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=+qLOjd0XBTgNB6PyT/azLzYqk1pAiNcBYGjkEFHfKgY=;
+        b=ZE5P9Htq137UIuHXfQNwUAIKhDIMd9qrsf2igHVAQuchPEiM5CYAiYWAoanrP3BRK5
+         +/zJf8ePrK0Jj6aFsn7k0tzQbJ4NIDDMS4qGg/dQVgP7xeIzNbMsehSUes1emc0Oq6i/
+         b6ICW3jovK3RTwBeONavI1LGEeT5qNNyH2iVw4n2pIKcaseVQByWqsfKNZFTjpPf5UvA
+         tpNrRtk1mQcQRK3VxXa7JqUP3X1jxKk0Yj8Qmo4sy3Salsx557cd92uesoLNkG+Oovkp
+         2TGEAb9D58ouYeCPhAyavPDnIjaxSOtdxSB7Ig/cShPev5FkLkYvoHlXTljZivC8+XlA
+         UOcQ==
+In-Reply-To: <20211018101130.1838532-1-hch-jcswGhMUV9g@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
 To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jan Kara <ja>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, Jan Kara <jack-IBi9RG/b67k@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-nil
 
-On 10/18/21 11:18 AM, Christoph Hellwig wrote:
-> On Mon, Oct 18, 2021 at 11:16:08AM -0600, Jens Axboe wrote:
->> This looks good to me. Followup question, as it's related - I've got a
->> hacky patch that caches the inode size in the bdev:
->>
->> https://git.kernel.dk/cgit/linux-block/commit/?h=perf-wip&id=c754951eb7193258c35a574bd1ccccb7c4946ee4
->>
->> so we don't have to dip into the inode itself for the fast path. While
->> it's obviously not something being proposed for inclusion right now, is
->> there a world in which we can make something like that work?
+On Mon, 18 Oct 2021 12:11:00 +0200, Christoph Hellwig wrote:
+> various drivers currently poke directy at the block device inode, which
+> is a bit of a mess.  This series cleans up the places that read the
+> block device size to use the proper helpers.  I have separate patches
+> for many of the other bd_inode uses, but this series is already big
+> enough as-is,
 > 
-> There's just two places that update i_size for block devices:
-> set_capacity and bdev_set_nr_sectors.  So you just need to update
-> bd_nr_sectors there and you're done.
+> Changes since v2:
+>  - bdev_nr_bytes should return loff_t
+>  - fix a commit message typo
+>  - drop a redundant note in a commit message
+> 
+> [...]
 
-This on top of your patches should do the trick, then.
+Applied, thanks!
 
+[01/30] block: move the SECTOR_SIZE related definitions to blk_types.h
+        commit: ac076a376d4c1fa7f01bedad76bab96a981b7464
+[02/30] block: add a bdev_nr_bytes helper
+        commit: 449c780f68d9adbab2373c996d4341e61c088685
+[03/30] bcache: remove bdev_sectors
+        commit: 519070e1b8411c93b483fb50511c9d5d7932f62a
+[04/30] drbd: use bdev_nr_sectors instead of open coding it
+        commit: eee1958b9a7b912fff33319e5737d861703c3a47
+[05/30] dm: use bdev_nr_sectors and bdev_nr_bytes instead of open coding them
+        commit: 34d7526093779e26c1a281992c7e91662f3afa85
+[06/30] md: use bdev_nr_sectors instead of open coding it
+        commit: 1a70a0364bbbf29eab22c9fa4b3d71087df940a5
+[07/30] nvmet: use bdev_nr_bytes instead of open coding it
+        commit: d61ec9eeaa161c6e385f4adebc5d671bc5290687
+[08/30] target/iblock: use bdev_nr_bytes instead of open coding it
+        commit: 30de91d3df67291093736890b7496620d5025df9
+[09/30] fs: use bdev_nr_bytes instead of open coding it in blkdev_max_block
+        commit: 011bb9476ef8f9867330e2bce22cf124d034cd33
+[10/30] fs: simplify init_page_buffers
+        commit: 957c50dd8af9945fde3a3fb6c8baf5d638ef3177
+[11/30] affs: use bdev_nr_sectors instead of open coding it
+        commit: ec003894a9db3858165dd61fb4cabf9a402aabe0
+[12/30] btrfs: use bdev_nr_bytes instead of open coding it
+        commit: 167a1c754eae512e45de682e2cb4ea05f080fda5
+[13/30] cramfs: use bdev_nr_bytes instead of open coding it
+        commit: cdf881e14aa127c7602110d208b3412b1412c1ab
+[14/30] fat: use bdev_nr_sectors instead of open coding it
+        commit: 4513b8c903782c4f3963172d81414e08f48a0317
+[15/30] hfs: use bdev_nr_sectors instead of open coding it
+        commit: 311b610de54a52c199e2a129da2c26ad5953edb3
+[16/30] hfsplus: use bdev_nr_sectors instead of open coding it
+        commit: 03b67c1de5d3b085360f3d6dcf37560f44e8cb4b
+[17/30] jfs: use bdev_nr_bytes instead of open coding it
+        commit: c1e80b87c3acd52817bea278310900ad2825686c
+[18/30] nfs/blocklayout: use bdev_nr_bytes instead of open coding it
+        commit: 6b1b53cf606d70dc6dd375aaaab42558cfe7e945
+[19/30] nilfs2: use bdev_nr_bytes instead of open coding it
+        commit: a24d8bcfd590de5dc4a9e806c9e76558676c2eef
+[20/30] ntfs3: use bdev_nr_bytes instead of open coding it
+        commit: 9242c8b0b4432b6929b030c729a1edd9d9116d4c
+[21/30] pstore/blk: use bdev_nr_bytes instead of open coding it
+        commit: 989ab34bd83f075efdae2cf6026cec0507374696
+[22/30] reiserfs: use bdev_nr_bytes instead of open coding it
+        commit: 8d147b3353c7fd853313521c4f66430d38d66391
+[23/30] squashfs: use bdev_nr_bytes instead of open coding it
+        commit: 8538360bb42955166d0073ffb6dff6a4b0caa4ec
+[24/30] block: use bdev_nr_bytes instead of open coding it in blkdev_fallocate
+        commit: 7ad94c3008a3f5e0ff8af1e3ff1c7061955ccec4
+[25/30] block: add a sb_bdev_nr_blocks helper
+        commit: 5793a4ebc76566fd24d7afdbcefb3311355fd077
+[26/30] ext4: use sb_bdev_nr_blocks
+        commit: 3a10af74c8f1d390857cf87648573bc4f157e4ca
+[27/30] jfs: use sb_bdev_nr_blocks
+        commit: cd8ac55f93923c65e18204c99b08a8c4cba3d187
+[28/30] ntfs: use sb_bdev_nr_blocks
+        commit: 8e2c901e6d1c97bf862514901beaae3e248655d8
+[29/30] reiserfs: use sb_bdev_nr_blocks
+        commit: 93361ef44a8931d281583ea9c608247fe8127528
+[30/30] udf: use sb_bdev_nr_blocks
+        commit: ea8befeb35c47cf95012032850fe3f0ec80e5cde
 
-commit eebb7c5048163985fb21d6cb740ebac78cb46051
-Author: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Date:   Mon Oct 18 11:39:45 2021 -0600
-
-    block: cache inode size in bdev
-    
-    Reading the inode size brings in a new cacheline for IO submit, and
-    it's in the hot path being checked for every single IO. When doing
-    millions of IOs per core per second, this is noticeable overhead.
-    
-    Cache the nr_sectors in the bdev itself.
-    
-    Signed-off-by: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-
-diff --git a/block/genhd.c b/block/genhd.c
-index 759bc06810f8..53495e3391e3 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -58,6 +58,7 @@ void set_capacity(struct gendisk *disk, sector_t sectors)
- 
- 	spin_lock(&bdev->bd_size_lock);
- 	i_size_write(bdev->bd_inode, (loff_t)sectors << SECTOR_SHIFT);
-+	bdev->bd_nr_sectors = sectors;
- 	spin_unlock(&bdev->bd_size_lock);
- }
- EXPORT_SYMBOL(set_capacity);
-diff --git a/block/partitions/core.c b/block/partitions/core.c
-index 9dbddc355b40..66ef9bc6d6a1 100644
---- a/block/partitions/core.c
-+++ b/block/partitions/core.c
-@@ -91,6 +91,7 @@ static void bdev_set_nr_sectors(struct block_device *bdev, sector_t sectors)
- {
- 	spin_lock(&bdev->bd_size_lock);
- 	i_size_write(bdev->bd_inode, (loff_t)sectors << SECTOR_SHIFT);
-+	bdev->bd_nr_sectors = sectors;
- 	spin_unlock(&bdev->bd_size_lock);
- }
- 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 472e55e0e94f..fe065c394fff 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -39,6 +39,7 @@ struct bio_crypt_ctx;
- 
- struct block_device {
- 	sector_t		bd_start_sect;
-+	sector_t		bd_nr_sectors;
- 	struct disk_stats __percpu *bd_stats;
- 	unsigned long		bd_stamp;
- 	bool			bd_read_only;	/* read-only policy */
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 7b0326661a1e..001f617f82da 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -238,7 +238,7 @@ static inline sector_t get_start_sect(struct block_device *bdev)
- 
- static inline loff_t bdev_nr_bytes(struct block_device *bdev)
- {
--	return i_size_read(bdev->bd_inode);
-+	return bdev->bd_nr_sectors;
- }
- 
- static inline sector_t bdev_nr_sectors(struct block_device *bdev)
-
+Best regards,
 -- 
 Jens Axboe
+
+
