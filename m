@@ -1,76 +1,63 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 19/30] nilfs2: use bdev_nr_bytes instead of open
-	coding it
-Date: Mon, 18 Oct 2021 12:11:19 +0200
-Message-ID: <20211018101130.1838532-20-hch@lst.de>
+Subject: [PATCH 17/30] jfs: use bdev_nr_bytes instead of open coding it
+Date: Mon, 18 Oct 2021 12:11:17 +0200
+Message-ID: <20211018101130.1838532-18-hch@lst.de>
 References: <20211018101130.1838532-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <target-devel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+        :Reply-To:Content-Type:Content-ID:Content-Description;
+        bh=Ss3ilUyKMuPfHBXzBJ88Vs1wtib02SxYRpGnTBbPDiA=; b=oAbnRWg/YW/pvh0a/EKd2He+y8
+        nhRS61TBq4K/396NBlUVJPiq7U8gOjdM+JVuY0sA6KWIwYTIUOcl5EeE57s1AY7f06lIYlW9O/j4o
+        UMAhvrYBojy6l7jxkCXMVIhDsqhCiPdKDdRXdynprKLz3bF+wOqvzPYluC8tglrc6VSUQTwiLQCOD
+        veucZd4xDpI/b9hqSeZnZr0mHV4dXMogd8BlQMVoXYmdd/TJDxSvjMaWeO+8WO+iqmTPtMrkF6CjB
+        IMmu5I08e32bMALy0zhps5vW3RO4HSUhmaaU8lydFjNoKUiwc2Z2qyuCR8orEZbLXBcDro8LkzLsC
+        HQ2vwtRQ==;
 In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://listman.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, linux-ext4@vger.kernel.org, Kees Cook <keescook@chromium.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-ntfs-dev@lists.sourceforge.net, Jan Kara <ja>
+Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.or
 
 Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Acked-by: Dave Kleikamp <dave.kleikamp@oracle.com>
 ---
- fs/nilfs2/ioctl.c     | 2 +-
- fs/nilfs2/super.c     | 2 +-
- fs/nilfs2/the_nilfs.c | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ fs/jfs/resize.c | 2 +-
+ fs/jfs/super.c  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 640ac8fe891e6..1d0583cfd9701 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -1107,7 +1107,7 @@ static int nilfs_ioctl_set_alloc_range(struct inode *inode, void __user *argp)
- 		goto out;
+diff --git a/fs/jfs/resize.c b/fs/jfs/resize.c
+index bde787c354fcc..a42dbb0d3d28a 100644
+--- a/fs/jfs/resize.c
++++ b/fs/jfs/resize.c
+@@ -199,7 +199,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
+ 	txQuiesce(sb);
  
- 	ret = -ERANGE;
--	if (range[1] > i_size_read(inode->i_sb->s_bdev->bd_inode))
-+	if (range[1] > bdev_nr_bytes(inode->i_sb->s_bdev))
- 		goto out;
+ 	/* Reset size of direct inode */
+-	sbi->direct_inode->i_size =  i_size_read(sb->s_bdev->bd_inode);
++	sbi->direct_inode->i_size = bdev_nr_bytes(sb->s_bdev);
  
- 	segbytes = nilfs->ns_blocks_per_segment * nilfs->ns_blocksize;
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index f6b2d280aab5a..3134c0e42fd46 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -403,7 +403,7 @@ int nilfs_resize_fs(struct super_block *sb, __u64 newsize)
- 	int ret;
- 
- 	ret = -ERANGE;
--	devsize = i_size_read(sb->s_bdev->bd_inode);
-+	devsize = bdev_nr_bytes(sb->s_bdev);
- 	if (newsize > devsize)
- 		goto out;
- 
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index c8bfc01da5d71..1bfcb5d3ea480 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -489,7 +489,7 @@ static int nilfs_load_super_block(struct the_nilfs *nilfs,
- {
- 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
- 	struct buffer_head **sbh = nilfs->ns_sbh;
--	u64 sb2off = NILFS_SB2_OFFSET_BYTES(nilfs->ns_bdev->bd_inode->i_size);
-+	u64 sb2off = NILFS_SB2_OFFSET_BYTES(bdev_nr_bytes(nilfs->ns_bdev));
- 	int valid[2], swp = 0;
- 
- 	sbp[0] = nilfs_read_super_block(sb, NILFS_SB_OFFSET_BYTES, blocksize,
+ 	if (sbi->mntflag & JFS_INLINELOG) {
+ 		/*
+diff --git a/fs/jfs/super.c b/fs/jfs/super.c
+index 9030aeaf0f886..9241caa161163 100644
+--- a/fs/jfs/super.c
++++ b/fs/jfs/super.c
+@@ -551,7 +551,7 @@ static int jfs_fill_super(struct super_block *sb, void *data, int silent)
+ 		ret = -ENOMEM;
+ 		goto out_unload;
+ 	}
+-	inode->i_size = i_size_read(sb->s_bdev->bd_inode);
++	inode->i_size = bdev_nr_bytes(sb->s_bdev);
+ 	inode->i_mapping->a_ops = &jfs_metapage_aops;
+ 	inode_fake_hash(inode);
+ 	mapping_set_gfp_mask(inode->i_mapping, GFP_NOFS);
 -- 
 2.30.2
+
