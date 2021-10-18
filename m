@@ -1,111 +1,78 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: don't use ->bd_inode to access the block device size v3
-Date: Mon, 18 Oct 2021 12:11:00 +0200
-Message-ID: <20211018101130.1838532-1-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 03/30] bcache: remove bdev_sectors
+Date: Mon, 18 Oct 2021 12:11:03 +0200
+Message-ID: <20211018101130.1838532-4-hch@lst.de>
+References: <20211018101130.1838532-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-	MIME-Version:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
-	Content-ID:Content-Description:In-Reply-To:References;
-	bh=XEauwBeyle229Q9YGjw8X73gVoQGpNTHUdJ6d3ufcSY=;
-	b=OPyMmGmlhYqRTyBq1xysZRbGz+
-	4FdOau0hna6c1i4ag1CGi2DKKpsXddty9p0sFjlrqRziwmbkNyV7e7UOi9BElxioDEozNZ+pQBXP5
-	s6bIy3U2NhCphJhPcL1sYOi0up1FJ4SmKjnMiv8+6awRaPgIW6gjimONq4E2b+uLeXVG70W5jjudH
-	NEaekXB87lL4qQpQMAaXI+J7xErv1an4Is7hU4Ea34/FNhsGWy64rpszdidrWAdzhx6MJL34xcMOa
-	j6hOszoE3Evw74AMK55enAdcSU9yDd/sGcJguy6adxGflR+1TbLqRDN48cGsnBHeqR7rT5F7A3RZA
-	iorHKJlg==;
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Cc: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jan Kara <ja>
+        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+        :Reply-To:Content-Type:Content-ID:Content-Description;
+        bh=ua3x6oobbjatF9m91a/TfkciVlhvg2RT0UK88GOOPcc=; b=XVvSoKdE/JlZNBYXu3Ks8GFKiV
+        uBg2o6bTqPw8jV9jsJP/6Xo3xrXV54Voyi6107pWBLswXWKXRq5pIREuha41ZOOOccwKG65hUSxAU
+        7qBe1++VbFG4N2fuRQJMgE06VcbEEyqmXUtZCer4nKhLTfPoO+CFctkUyy/Ygd4OC5M4bAWP90mYz
+        NjOJBD/jP48NB//Iv9fCWg39CKTCiAm6HKw0iU0N+jy4zrqld2bksmjJ2B2cI9x2/CQ1g/BXmKB6h
+        icmh+FGURhCSucrRb/qUhGGftx7odANOXNfnpx2jvK35uvbIyNF/e1RVCQq4oJhEjA2UZNBsiUWak
+        XMAxmBzg==;
+In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.or
 
-Hi Jens,
+Use the equivalent block layer helper instead.
 
-various drivers currently poke directy at the block device inode, which
-is a bit of a mess.  This series cleans up the places that read the
-block device size to use the proper helpers.  I have separate patches
-for many of the other bd_inode uses, but this series is already big
-enough as-is,
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
+Acked-by: Coly Li <colyli@suse.de>
+---
+ drivers/md/bcache/super.c     | 2 +-
+ drivers/md/bcache/util.h      | 4 ----
+ drivers/md/bcache/writeback.c | 2 +-
+ 3 files changed, 2 insertions(+), 6 deletions(-)
 
-Changes since v2:
- - bdev_nr_bytes should return loff_t
- - fix a commit message typo
- - drop a redundant note in a commit message
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index f2874c77ff797..4f89985abe4b7 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -1002,7 +1002,7 @@ static void calc_cached_dev_sectors(struct cache_set *c)
+ 	struct cached_dev *dc;
+ 
+ 	list_for_each_entry(dc, &c->cached_devs, list)
+-		sectors += bdev_sectors(dc->bdev);
++		sectors += bdev_nr_sectors(dc->bdev);
+ 
+ 	c->cached_dev_sectors = sectors;
+ }
+diff --git a/drivers/md/bcache/util.h b/drivers/md/bcache/util.h
+index b64460a762677..a7da7930a7fda 100644
+--- a/drivers/md/bcache/util.h
++++ b/drivers/md/bcache/util.h
+@@ -584,8 +584,4 @@ static inline unsigned int fract_exp_two(unsigned int x,
+ void bch_bio_map(struct bio *bio, void *base);
+ int bch_bio_alloc_pages(struct bio *bio, gfp_t gfp_mask);
+ 
+-static inline sector_t bdev_sectors(struct block_device *bdev)
+-{
+-	return bdev->bd_inode->i_size >> 9;
+-}
+ #endif /* _BCACHE_UTIL_H */
+diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+index 8120da278161e..c7560f66dca88 100644
+--- a/drivers/md/bcache/writeback.c
++++ b/drivers/md/bcache/writeback.c
+@@ -45,7 +45,7 @@ static uint64_t __calc_target_rate(struct cached_dev *dc)
+ 	 * backing volume uses about 2% of the cache for dirty data.
+ 	 */
+ 	uint32_t bdev_share =
+-		div64_u64(bdev_sectors(dc->bdev) << WRITEBACK_SHARE_SHIFT,
++		div64_u64(bdev_nr_sectors(dc->bdev) << WRITEBACK_SHARE_SHIFT,
+ 				c->cached_dev_sectors);
+ 
+ 	uint64_t cache_dirty_target =
+-- 
+2.30.2
 
-Changes since v1:
- - move SECTOR_SIZE & co
- - use SECTOR_SHIFT in sb_bdev_nr_blocks
- - add a bdev_nr_bytes helper
- - reuse a variable in the SCSI target code
- - drop the block2mtd patch, a bigger rewrite for that code is pending
-
-Diffstat:
- block/fops.c                        |    2 +-
- drivers/block/drbd/drbd_int.h       |    3 +--
- drivers/md/bcache/super.c           |    2 +-
- drivers/md/bcache/util.h            |    4 ----
- drivers/md/bcache/writeback.c       |    2 +-
- drivers/md/dm-bufio.c               |    2 +-
- drivers/md/dm-cache-metadata.c      |    2 +-
- drivers/md/dm-cache-target.c        |    2 +-
- drivers/md/dm-clone-target.c        |    2 +-
- drivers/md/dm-dust.c                |    5 ++---
- drivers/md/dm-ebs-target.c          |    2 +-
- drivers/md/dm-era-target.c          |    2 +-
- drivers/md/dm-exception-store.h     |    2 +-
- drivers/md/dm-flakey.c              |    3 +--
- drivers/md/dm-integrity.c           |    6 +++---
- drivers/md/dm-linear.c              |    3 +--
- drivers/md/dm-log-writes.c          |    4 ++--
- drivers/md/dm-log.c                 |    2 +-
- drivers/md/dm-mpath.c               |    2 +-
- drivers/md/dm-raid.c                |    6 +++---
- drivers/md/dm-switch.c              |    2 +-
- drivers/md/dm-table.c               |    3 +--
- drivers/md/dm-thin-metadata.c       |    2 +-
- drivers/md/dm-thin.c                |    2 +-
- drivers/md/dm-verity-target.c       |    3 +--
- drivers/md/dm-writecache.c          |    2 +-
- drivers/md/dm-zoned-target.c        |    2 +-
- drivers/md/md.c                     |   26 +++++++++++---------------
- drivers/nvme/target/io-cmd-bdev.c   |    4 ++--
- drivers/target/target_core_iblock.c |    4 ++--
- fs/affs/super.c                     |    2 +-
- fs/btrfs/dev-replace.c              |    3 +--
- fs/btrfs/disk-io.c                  |    2 +-
- fs/btrfs/ioctl.c                    |    4 ++--
- fs/btrfs/volumes.c                  |    8 ++++----
- fs/buffer.c                         |    4 ++--
- fs/cramfs/inode.c                   |    2 +-
- fs/ext4/super.c                     |    2 +-
- fs/fat/inode.c                      |    5 +----
- fs/hfs/mdb.c                        |    2 +-
- fs/hfsplus/wrapper.c                |    2 +-
- fs/jfs/resize.c                     |    5 ++---
- fs/jfs/super.c                      |    5 ++---
- fs/nfs/blocklayout/dev.c            |    4 ++--
- fs/nilfs2/ioctl.c                   |    2 +-
- fs/nilfs2/super.c                   |    2 +-
- fs/nilfs2/the_nilfs.c               |    2 +-
- fs/ntfs/super.c                     |    8 +++-----
- fs/ntfs3/super.c                    |    3 +--
- fs/pstore/blk.c                     |    8 +++-----
- fs/reiserfs/super.c                 |    8 ++------
- fs/squashfs/super.c                 |    5 +++--
- fs/udf/lowlevel.c                   |    5 ++---
- fs/udf/super.c                      |    9 +++------
- include/linux/blk_types.h           |   17 +++++++++++++++++
- include/linux/blkdev.h              |   17 -----------------
- include/linux/genhd.h               |   13 ++++++++++++-
- 57 files changed, 118 insertions(+), 139 deletions(-)
