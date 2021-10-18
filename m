@@ -1,49 +1,59 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 26/30] ext4: use sb_bdev_nr_blocks
-Date: Mon, 18 Oct 2021 12:11:26 +0200
-Message-ID: <20211018101130.1838532-27-hch@lst.de>
+Subject: [PATCH 23/30] squashfs: use bdev_nr_bytes instead of open coding it
+Date: Mon, 18 Oct 2021 12:11:23 +0200
+Message-ID: <20211018101130.1838532-24-hch@lst.de>
 References: <20211018101130.1838532-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+        :Reply-To:Content-Type:Content-ID:Content-Description;
+        bh=2zn8NhPz2uMutIfYtKOd61bO1SYl+3hcc5qagxR0u/o=; b=sjCcMkvC9ZBTWutSeKn5Z4UcH4
+        pzoDtcmnfasKTiRVzEE0vbA15h97PrbOHUCWFYLglsQ+RW2thdZ9zshsX8iC94I44TWl6UuWwabtb
+        9U1dBCucz0CTuSUiB5z7nDPimiqZ02Nz1UJHTLHBnZZZmyaC4cLHdCbedSYKLzrPdoloT5unPv0dX
+        bfShQrXqM5h5HV/hE8k1WNjX0A4Gp+hot8NXpaul/dja1JrTdh2ayYOCWI0HhjToVJFH+wJC5CJjY
+        NZliBIkl2f8iIbx1t+YbvXQTGnD7hkDk7CABBMolFph4HQaN5fCqnrbVgBu/MM67IFIzdLPXXxv+H
+        g3JWwIfQ==;
 In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://listman.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, linux-ext4@vger.kernel.org, Chaitanya Kulkarni <kch@nvidia.com>, Kees Cook <keescook@chromium.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tyt>
+Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.or
 
-Use the sb_bdev_nr_blocks helper instead of open coding it.
+Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Jan Kara <jack@suse.cz>
-Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
-Acked-by: Theodore Ts'o <tytso@mit.edu>
+Acked-by: Phillip Lougher <phillip@squashfs.org.uk>
 ---
- fs/ext4/super.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/squashfs/super.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 0775950ee84e3..3dde8be5df490 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -4468,7 +4468,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		goto cantfind_ext4;
+diff --git a/fs/squashfs/super.c b/fs/squashfs/super.c
+index 60d6951915f44..bb44ff4c5cc67 100644
+--- a/fs/squashfs/super.c
++++ b/fs/squashfs/super.c
+@@ -16,6 +16,7 @@
  
- 	/* check blocks count against device size */
--	blocks_count = sb->s_bdev->bd_inode->i_size >> sb->s_blocksize_bits;
-+	blocks_count = sb_bdev_nr_blocks(sb);
- 	if (blocks_count && ext4_blocks_count(es) > blocks_count) {
- 		ext4_msg(sb, KERN_WARNING, "bad geometry: block count %llu "
- 		       "exceeds size of device (%llu blocks)",
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+ 
++#include <linux/blkdev.h>
+ #include <linux/fs.h>
+ #include <linux/fs_context.h>
+ #include <linux/fs_parser.h>
+@@ -179,8 +180,8 @@ static int squashfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ 	/* Check the filesystem does not extend beyond the end of the
+ 	   block device */
+ 	msblk->bytes_used = le64_to_cpu(sblk->bytes_used);
+-	if (msblk->bytes_used < 0 || msblk->bytes_used >
+-			i_size_read(sb->s_bdev->bd_inode))
++	if (msblk->bytes_used < 0 ||
++	    msblk->bytes_used > bdev_nr_bytes(sb->s_bdev))
+ 		goto failed_mount;
+ 
+ 	/* Check block size for sanity */
 -- 
 2.30.2
+
