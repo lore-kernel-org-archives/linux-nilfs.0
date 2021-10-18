@@ -1,55 +1,63 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 20/30] ntfs3: use bdev_nr_bytes instead of open coding it
-Date: Mon, 18 Oct 2021 12:11:20 +0200
-Message-ID: <20211018101130.1838532-21-hch@lst.de>
+Subject: [PATCH 27/30] jfs: use sb_bdev_nr_blocks
+Date: Mon, 18 Oct 2021 12:11:27 +0200
+Message-ID: <20211018101130.1838532-28-hch@lst.de>
 References: <20211018101130.1838532-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
-        :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=7vy0+8EI8WhVCxcCPpT3E3xZPAv/h7863mIj0HITKC4=; b=dSgrFBalcG5IC5gy8leFi0/QUI
-        8jbCvHeQvsAMp2Vc8XaJNgaFomPjUZxHYyC0Lr8ip+cEGSd3e9dOsE9BLDAOXLiIxKskzuJNVL/fJ
-        9/vz7wC6aJeWCOa866cMrDClVUyh/nPJwEgGnkT7aSULX7H/Rx0e6fz/pzjosefYz2bVFgXRlecrl
-        OK92p3ALP6pCTMlkZ3qBMnoKoRHEVAF7nq96GJlCV7bX4ForSv41tAleJNCMrpQJckjzxO/kA47Wn
-        OAc86dc6jd8RmrmIqLhJBcqnOCCDYnNAaZzrQ6Qs4EG0Do8+0MqgT7yVBLcb6ir4m1vlBzJoKJsMs
-        +PeH0mvg==;
-In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://listman.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Coly Li <colyli@suse.de>, Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>, Theodore Ts'o <tytso@mit.edu>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Kees Cook <keescook@chromium.org>, Phillip Lougher <phillip@squashfs.org.uk>, Jan Kara <jack@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-fsdevel@vger.kernel.or
+Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, linux-ext4@vger.kernel.org, Kees Cook <keescook@chromium.org>, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, Dave Kleikamp <dave.kleikamp@oracle.com>, David Sterba <dsterba@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Anton Altaparmakov <anton@tuxera.com>, linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-nt
 
-Use the proper helper to read the block device size.
+Use the sb_bdev_nr_blocks helper instead of open coding it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Acked-by: Dave Kleikamp <dave.kleikamp@oracle.com>
 ---
- fs/ntfs3/super.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ fs/jfs/resize.c | 3 +--
+ fs/jfs/super.c  | 3 +--
+ 2 files changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
-index 55bbc9200a10e..7ed2cb5e8b1d9 100644
---- a/fs/ntfs3/super.c
-+++ b/fs/ntfs3/super.c
-@@ -918,7 +918,6 @@ static int ntfs_fill_super(struct super_block *sb, void *data, int silent)
- 	int err;
- 	struct ntfs_sb_info *sbi;
- 	struct block_device *bdev = sb->s_bdev;
--	struct inode *bd_inode = bdev->bd_inode;
- 	struct request_queue *rq = bdev_get_queue(bdev);
- 	struct inode *inode = NULL;
- 	struct ntfs_inode *ni;
-@@ -967,7 +966,7 @@ static int ntfs_fill_super(struct super_block *sb, void *data, int silent)
- 
- 	/* Parse boot. */
- 	err = ntfs_init_from_boot(sb, rq ? queue_logical_block_size(rq) : 512,
--				  bd_inode->i_size);
-+				  bdev_nr_bytes(bdev));
- 	if (err)
+diff --git a/fs/jfs/resize.c b/fs/jfs/resize.c
+index a42dbb0d3d28a..8b9a72ae5efa7 100644
+--- a/fs/jfs/resize.c
++++ b/fs/jfs/resize.c
+@@ -86,8 +86,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
  		goto out;
+ 	}
  
+-	VolumeSize = i_size_read(sb->s_bdev->bd_inode) >> sb->s_blocksize_bits;
+-
++	VolumeSize = sb_bdev_nr_blocks(sb);
+ 	if (VolumeSize) {
+ 		if (newLVSize > VolumeSize) {
+ 			printk(KERN_WARNING "jfs_extendfs: invalid size\n");
+diff --git a/fs/jfs/super.c b/fs/jfs/super.c
+index 9241caa161163..24cbc9946e01c 100644
+--- a/fs/jfs/super.c
++++ b/fs/jfs/super.c
+@@ -284,8 +284,7 @@ static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
+ 		}
+ 		case Opt_resize_nosize:
+ 		{
+-			*newLVSize = i_size_read(sb->s_bdev->bd_inode) >>
+-				sb->s_blocksize_bits;
++			*newLVSize = sb_bdev_nr_blocks(sb);
+ 			if (*newLVSize == 0)
+ 				pr_err("JFS: Cannot determine volume size\n");
+ 			break;
 -- 
 2.30.2
-
