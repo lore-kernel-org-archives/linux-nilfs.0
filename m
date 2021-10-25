@@ -1,74 +1,79 @@
-From: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Subject: Re: don't use ->bd_inode to access the block device size
-	v3
-Date: Mon, 18 Oct 2021 19:04:57 -0600
-Message-ID: <81f9ad59-4c15-b265-1274-62c987ad879b@kernel.dk>
-References: <20211018101130.1838532-1-hch@lst.de>
-	<4a8c3a39-9cd3-5b2f-6d0f-a16e689755e6@kernel.dk>
-	<20211018171843.GA3338@lst.de>
-	<2f5dcf79-8419-45ff-c27c-68d43242ccfe@kernel.dk>
-	<20211018174901.GA3990@lst.de>
-	<e0784f3e-46c8-c90c-870b-60cc2ed7a2da@kernel.dk>
-	<20211019010416.vgecxu6wnvwi7fii@kari-VirtualBox>
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 0/2] nilfs2 updates
+Date: Mon, 25 Oct 2021 17:51:00 +0900
+Message-ID: <1635151862-11547-1-git-send-email-konishi.ryusuke@gmail.com>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id;
+        bh=r21X5ADW0WlJHmSicl9xy7PcAUT0+LrXxeiJShv+0ng=;
+        b=pHL+ZgfxUV119tjBOMgg1P7U3VLBbIgEZz7n0cuL4yKX61leTCTD0n6VszCTgkAbKI
+         BpxtmAhDxnn/wVhgZdnBv3z/sDOeASnPTIQOfGJMOgH/FCcbZAI8iO7AOUbVyR/l0oAy
+         ceufvvsw4YdJi3P6TZVxUsikdTsfVs3tj61ZvTihgcZfO9BuOZ2bxZ/YaTwSvALZqeII
+         ijN8GrsxOBqab61T1suYoXJcB1mp051xfLlZcGsvZ0X4MHPO2yDLNP0LXA2KC1k/CrUE
+         A+YyjsfIw8BWHYMvSSNFXJMKLfMDm8fLgGAs7trXdhIEWnjRfxU66lhG9q5uDKwEsToE
+         SUew==
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=kernel-dk.20210112.gappssmtp.com; s=20210112;
-	h=subject:to:cc:references:from:message-id:date:user-agent
-	:mime-version:in-reply-to:content-language:content-transfer-encoding;
-	bh=W5z0exFABNpBPX1hRqcH8nqG0V53/7e/1qraB3crDBc=;
-	b=vB+wFpSQtfAUhwdXcfynbmYwp0hdBEQZvbX6X9F6PNzCrR7jlF3UU0FKlXz+m74FXo
-	fYCfnp+UOHId9lQV8O9fyEh4YEI0b538At136V3n0vh4OZ/YzMev/Q7gmlb/eOGGE5cU
-	0c1i9lZ2acvXLmYa878iz+lCi3R78xqn0ZDpYtIVtZNxoFJsKdSEsj9/YVhugl90Ar3H
-	SoUxghi0wJ6VSD6JvL3P+s/JM6f3Wm0mmMYFgaEag1ojhi+wlEeYXumrYWwARkL2eroz
-	Ue9QqS/6wvsrqGxlajrxCGxhjXwobZTI+icumh8oCIQgK1Jfr75Nwh+NZuFxcTfoqOvP
-	WcvQ==
-In-Reply-To: <20211019010416.vgecxu6wnvwi7fii@kari-VirtualBox>
-Content-Language: en-US
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Kari Argillander <kari.argillander-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, OGAWA Hirofumi <hirofumi-UIVanBePwB70ZhReMnHkpc8NsWr+9BEh@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Anton Altaparmakov <anton-yrGDUoBaLx3QT0dZR+AlfA@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-ntfs-dev@li
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On 10/18/21 7:04 PM, Kari Argillander wrote:
-> On Mon, Oct 18, 2021 at 11:53:08AM -0600, Jens Axboe wrote:
-> 
-> snip..
-> 
->> diff --git a/include/linux/genhd.h b/include/linux/genhd.h
->> index 7b0326661a1e..a967b3fb3c71 100644
->> --- a/include/linux/genhd.h
->> +++ b/include/linux/genhd.h
->> @@ -236,14 +236,14 @@ static inline sector_t get_start_sect(struct block_device *bdev)
->>  	return bdev->bd_start_sect;
->>  }
->>  
->> -static inline loff_t bdev_nr_bytes(struct block_device *bdev)
->> +static inline sector_t bdev_nr_sectors(struct block_device *bdev)
->>  {
->> -	return i_size_read(bdev->bd_inode);
->> +	return bdev->bd_nr_sectors;
->>  }
->>  
->> -static inline sector_t bdev_nr_sectors(struct block_device *bdev)
->> +static inline loff_t bdev_nr_bytes(struct block_device *bdev)
->>  {
->> -	return bdev_nr_bytes(bdev) >> SECTOR_SHIFT;
->> +	return bdev_nr_setors(bdev) << SECTOR_SHIFT;
-> 
-> setors -> sectors
+Hi, Andrew
 
-Yep, did catch that prior.
+Please queue the following changes for the next merge window:
+
+Qing Wang (1):
+  nilfs2: replace snprintf in show functions with sysfs_emit
+
+Ryusuke Konishi (1):
+  nilfs2: remove filenames from file comments
+
+Thanks,
+Ryusuke Konishi
+--
+ fs/nilfs2/alloc.c     |  2 +-
+ fs/nilfs2/alloc.h     |  2 +-
+ fs/nilfs2/bmap.c      |  2 +-
+ fs/nilfs2/bmap.h      |  2 +-
+ fs/nilfs2/btnode.c    |  2 +-
+ fs/nilfs2/btnode.h    |  2 +-
+ fs/nilfs2/btree.c     |  2 +-
+ fs/nilfs2/btree.h     |  2 +-
+ fs/nilfs2/cpfile.c    |  2 +-
+ fs/nilfs2/cpfile.h    |  2 +-
+ fs/nilfs2/dat.c       |  2 +-
+ fs/nilfs2/dat.h       |  2 +-
+ fs/nilfs2/dir.c       |  2 +-
+ fs/nilfs2/direct.c    |  2 +-
+ fs/nilfs2/direct.h    |  2 +-
+ fs/nilfs2/file.c      |  2 +-
+ fs/nilfs2/gcinode.c   |  2 +-
+ fs/nilfs2/ifile.c     |  2 +-
+ fs/nilfs2/ifile.h     |  2 +-
+ fs/nilfs2/inode.c     |  2 +-
+ fs/nilfs2/ioctl.c     |  2 +-
+ fs/nilfs2/mdt.c       |  2 +-
+ fs/nilfs2/mdt.h       |  2 +-
+ fs/nilfs2/namei.c     |  2 +-
+ fs/nilfs2/nilfs.h     |  2 +-
+ fs/nilfs2/page.c      |  2 +-
+ fs/nilfs2/page.h      |  2 +-
+ fs/nilfs2/recovery.c  |  2 +-
+ fs/nilfs2/segbuf.c    |  2 +-
+ fs/nilfs2/segbuf.h    |  2 +-
+ fs/nilfs2/segment.c   |  2 +-
+ fs/nilfs2/segment.h   |  2 +-
+ fs/nilfs2/sufile.c    |  2 +-
+ fs/nilfs2/sufile.h    |  2 +-
+ fs/nilfs2/super.c     |  2 +-
+ fs/nilfs2/sysfs.c     | 78 +++++++++++++++++++++++++--------------------------
+ fs/nilfs2/sysfs.h     |  2 +-
+ fs/nilfs2/the_nilfs.c |  2 +-
+ fs/nilfs2/the_nilfs.h |  2 +-
+ 39 files changed, 77 insertions(+), 77 deletions(-)
 
 -- 
-Jens Axboe
+1.8.3.1
+
