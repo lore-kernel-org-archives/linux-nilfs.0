@@ -1,389 +1,162 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/2] nilfs2: replace snprintf in show functions with sysfs_emit
-Date: Mon, 25 Oct 2021 17:51:01 +0900
-Message-ID: <1635151862-11547-2-git-send-email-konishi.ryusuke@gmail.com>
-References: <1635151862-11547-1-git-send-email-konishi.ryusuke@gmail.com>
+From: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: kernel BUG in nilfs_mdt_destroy
+Date: Wed, 27 Oct 2021 09:38:09 +0800
+Message-ID: <CACkBjsaFTVOA-dhRuw8OLG8GWjTPy3yR9sSVXGD46as7i2-rUg@mail.gmail.com>
+Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=dPsWpmmt02MG+1s9uq2nw2TFlAnrdyGcJip4pFTiTbA=;
-        b=gOQItMuVS6x3uVc0DHUXF9CPlM/PeiB+QgNfwefytQCzbvCEZjYiy+6goXqgL5p8uQ
-         fnTzapBuSy0xq2ylpv7FfQlkyeHcrTus5nApj+UH60Xbhifu3tvCAKhOU9+0VOiikeon
-         A6wCGnqbUg6MpMOEr7Q9bN3B17lDvRWd3QPS94WSePrQQATXWmkjm/8QnnMIwgWw5wcO
-         L4yPfyMYQdSW3GHqcq/CusaqYZ7VpBzQogNMg+js9YdhcSlvbzRQkQbTG38zFqcYTkVz
-         LsJkNgmi8WRyPmPbpMk7jfsNvIMrYM7qXqi53Y+zPw2/tNHhKn4YMCaqBsiLoO1OnBbF
-         pUBw==
-In-Reply-To: <1635151862-11547-1-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+        h=mime-version:from:date:message-id:subject:to;
+        bh=oYQVmMJEoaZXJx1iKV6fcufM5Yl2qMlRosIGlfzyPlU=;
+        b=bNsqkIWVoVMFeZa1vRGFiIDhiVzMn/Id4C9vIP+rktDQwZdzeilXjcIn97SzbyZlIR
+         1V9spmKxX/OVxdtDFA2Bb0xTTY+6eb7pVchezAe/N/40duF3MtWcAINQdCbCk3NeXIo1
+         LczfMvLR29KbLHce+QmOHwLpfWGf0Rwz1h6wzoyUzBdxfw70bY2gNmO9BzEkoYapucMr
+         ZUZANyPdzPTrBWjB1cCem37hmdpl4a5xrDBaHVGwLtu5cdAgnfxfSyBoMLQpvmxYtXm5
+         ixy0adXkLWr2RiJAD0llqIFgytyDTApfolTazbz26GPIZ6PWSDYZBqxF9jyRG8SDP4/H
+         5MRQ==
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-From: Qing Wang <wangqing-DGpbCiVdSXo@public.gmane.org>
+Hello,
 
-coccicheck complains about the use of snprintf() in sysfs show functions.
+When using Healer to fuzz the latest Linux kernel, the following crash
+was triggered.
 
-Fix the coccicheck warning:
-WARNING: use scnprintf or sprintf.
+HEAD commit: 519d81956ee2 Linux 5.15-rc6
+git tree: upstream
+console output:
+https://drive.google.com/file/d/1kiBZK6oiSXPTCnvaFCepaFbsxSfO1KTC/view?usp=sharing
+kernel config: https://drive.google.com/file/d/12PUnxIM1EPBgW4ZJmI7WJBRaY1lA83an/view?usp=sharing
 
-Use sysfs_emit instead of scnprintf or sprintf makes more sense.
+Sorry, I don't have a reproducer for this crash, hope the symbolized
+report can help.
+If you fix this issue, please add the following tag to the commit:
+Reported-by: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Link: https://lkml.kernel.org/r/1634095759-4625-1-git-send-email-wangqing-DGpbCiVdSXo@public.gmane.org
-Signed-off-by: Qing Wang <wangqing-DGpbCiVdSXo@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- fs/nilfs2/sysfs.c | 76 +++++++++++++++++++++++++++----------------------------
- 1 file changed, 38 insertions(+), 38 deletions(-)
-
-diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 62f8a7ac19c8..be407072def7 100644
---- a/fs/nilfs2/sysfs.c
-+++ b/fs/nilfs2/sysfs.c
-@@ -95,7 +95,7 @@
- nilfs_snapshot_inodes_count_show(struct nilfs_snapshot_attr *attr,
- 				 struct nilfs_root *root, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)atomic64_read(&root->inodes_count));
- }
- 
-@@ -103,7 +103,7 @@
- nilfs_snapshot_blocks_count_show(struct nilfs_snapshot_attr *attr,
- 				 struct nilfs_root *root, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)atomic64_read(&root->blocks_count));
- }
- 
-@@ -116,7 +116,7 @@
- nilfs_snapshot_README_show(struct nilfs_snapshot_attr *attr,
- 			    struct nilfs_root *root, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, snapshot_readme_str);
-+	return sysfs_emit(buf, snapshot_readme_str);
- }
- 
- NILFS_SNAPSHOT_RO_ATTR(inodes_count);
-@@ -217,7 +217,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- nilfs_mounted_snapshots_README_show(struct nilfs_mounted_snapshots_attr *attr,
- 				    struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, mounted_snapshots_readme_str);
-+	return sysfs_emit(buf, mounted_snapshots_readme_str);
- }
- 
- NILFS_MOUNTED_SNAPSHOTS_RO_ATTR(README);
-@@ -255,7 +255,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 
- 	ncheckpoints = cpstat.cs_ncps;
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", ncheckpoints);
-+	return sysfs_emit(buf, "%llu\n", ncheckpoints);
- }
- 
- static ssize_t
-@@ -278,7 +278,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 
- 	nsnapshots = cpstat.cs_nsss;
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", nsnapshots);
-+	return sysfs_emit(buf, "%llu\n", nsnapshots);
- }
- 
- static ssize_t
-@@ -292,7 +292,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	last_cno = nilfs->ns_last_cno;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", last_cno);
-+	return sysfs_emit(buf, "%llu\n", last_cno);
- }
- 
- static ssize_t
-@@ -306,7 +306,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	cno = nilfs->ns_cno;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", cno);
-+	return sysfs_emit(buf, "%llu\n", cno);
- }
- 
- static const char checkpoints_readme_str[] =
-@@ -322,7 +322,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- nilfs_checkpoints_README_show(struct nilfs_checkpoints_attr *attr,
- 				struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, checkpoints_readme_str);
-+	return sysfs_emit(buf, checkpoints_readme_str);
- }
- 
- NILFS_CHECKPOINTS_RO_ATTR(checkpoints_number);
-@@ -353,7 +353,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 				     struct the_nilfs *nilfs,
- 				     char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_nsegments);
-+	return sysfs_emit(buf, "%lu\n", nilfs->ns_nsegments);
- }
- 
- static ssize_t
-@@ -361,7 +361,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 					struct the_nilfs *nilfs,
- 					char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_blocks_per_segment);
-+	return sysfs_emit(buf, "%lu\n", nilfs->ns_blocks_per_segment);
- }
- 
- static ssize_t
-@@ -375,7 +375,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	ncleansegs = nilfs_sufile_get_ncleansegs(nilfs->ns_sufile);
- 	up_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%lu\n", ncleansegs);
-+	return sysfs_emit(buf, "%lu\n", ncleansegs);
- }
- 
- static ssize_t
-@@ -395,7 +395,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 		return err;
- 	}
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", sustat.ss_ndirtysegs);
-+	return sysfs_emit(buf, "%llu\n", sustat.ss_ndirtysegs);
- }
- 
- static const char segments_readme_str[] =
-@@ -411,7 +411,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 			    struct the_nilfs *nilfs,
- 			    char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, segments_readme_str);
-+	return sysfs_emit(buf, segments_readme_str);
- }
- 
- NILFS_SEGMENTS_RO_ATTR(segments_number);
-@@ -448,7 +448,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	last_pseg = nilfs->ns_last_pseg;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)last_pseg);
- }
- 
-@@ -463,7 +463,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	last_seq = nilfs->ns_last_seq;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", last_seq);
-+	return sysfs_emit(buf, "%llu\n", last_seq);
- }
- 
- static ssize_t
-@@ -477,7 +477,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	last_cno = nilfs->ns_last_cno;
- 	spin_unlock(&nilfs->ns_last_segment_lock);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", last_cno);
-+	return sysfs_emit(buf, "%llu\n", last_cno);
- }
- 
- static ssize_t
-@@ -491,7 +491,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	seg_seq = nilfs->ns_seg_seq;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", seg_seq);
-+	return sysfs_emit(buf, "%llu\n", seg_seq);
- }
- 
- static ssize_t
-@@ -505,7 +505,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	segnum = nilfs->ns_segnum;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", segnum);
-+	return sysfs_emit(buf, "%llu\n", segnum);
- }
- 
- static ssize_t
-@@ -519,7 +519,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	nextnum = nilfs->ns_nextnum;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", nextnum);
-+	return sysfs_emit(buf, "%llu\n", nextnum);
- }
- 
- static ssize_t
-@@ -533,7 +533,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	pseg_offset = nilfs->ns_pseg_offset;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%lu\n", pseg_offset);
-+	return sysfs_emit(buf, "%lu\n", pseg_offset);
- }
- 
- static ssize_t
-@@ -547,7 +547,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	cno = nilfs->ns_cno;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", cno);
-+	return sysfs_emit(buf, "%llu\n", cno);
- }
- 
- static ssize_t
-@@ -575,7 +575,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	ctime = nilfs->ns_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", ctime);
-+	return sysfs_emit(buf, "%llu\n", ctime);
- }
- 
- static ssize_t
-@@ -603,7 +603,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	nongc_ctime = nilfs->ns_nongc_ctime;
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", nongc_ctime);
-+	return sysfs_emit(buf, "%llu\n", nongc_ctime);
- }
- 
- static ssize_t
-@@ -617,7 +617,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	ndirtyblks = atomic_read(&nilfs->ns_ndirtyblks);
- 	up_read(&nilfs->ns_segctor_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%u\n", ndirtyblks);
-+	return sysfs_emit(buf, "%u\n", ndirtyblks);
- }
- 
- static const char segctor_readme_str[] =
-@@ -654,7 +654,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- nilfs_segctor_README_show(struct nilfs_segctor_attr *attr,
- 			  struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, segctor_readme_str);
-+	return sysfs_emit(buf, segctor_readme_str);
- }
- 
- NILFS_SEGCTOR_RO_ATTR(last_pseg_block);
-@@ -723,7 +723,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	sbwtime = nilfs->ns_sbwtime;
- 	up_read(&nilfs->ns_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", sbwtime);
-+	return sysfs_emit(buf, "%llu\n", sbwtime);
- }
- 
- static ssize_t
-@@ -737,7 +737,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	sbwcount = nilfs->ns_sbwcount;
- 	up_read(&nilfs->ns_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%u\n", sbwcount);
-+	return sysfs_emit(buf, "%u\n", sbwcount);
- }
- 
- static ssize_t
-@@ -751,7 +751,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- 	sb_update_freq = nilfs->ns_sb_update_freq;
- 	up_read(&nilfs->ns_sem);
- 
--	return snprintf(buf, PAGE_SIZE, "%u\n", sb_update_freq);
-+	return sysfs_emit(buf, "%u\n", sb_update_freq);
- }
- 
- static ssize_t
-@@ -799,7 +799,7 @@ void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
- nilfs_superblock_README_show(struct nilfs_superblock_attr *attr,
- 				struct the_nilfs *nilfs, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, sb_readme_str);
-+	return sysfs_emit(buf, sb_readme_str);
- }
- 
- NILFS_SUPERBLOCK_RO_ATTR(sb_write_time);
-@@ -834,7 +834,7 @@ ssize_t nilfs_dev_revision_show(struct nilfs_dev_attr *attr,
- 	u32 major = le32_to_cpu(sbp[0]->s_rev_level);
- 	u16 minor = le16_to_cpu(sbp[0]->s_minor_rev_level);
- 
--	return snprintf(buf, PAGE_SIZE, "%d.%d\n", major, minor);
-+	return sysfs_emit(buf, "%d.%d\n", major, minor);
- }
- 
- static
-@@ -842,7 +842,7 @@ ssize_t nilfs_dev_blocksize_show(struct nilfs_dev_attr *attr,
- 				 struct the_nilfs *nilfs,
- 				 char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%u\n", nilfs->ns_blocksize);
-+	return sysfs_emit(buf, "%u\n", nilfs->ns_blocksize);
- }
- 
- static
-@@ -853,7 +853,7 @@ ssize_t nilfs_dev_device_size_show(struct nilfs_dev_attr *attr,
- 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
- 	u64 dev_size = le64_to_cpu(sbp[0]->s_dev_size);
- 
--	return snprintf(buf, PAGE_SIZE, "%llu\n", dev_size);
-+	return sysfs_emit(buf, "%llu\n", dev_size);
- }
- 
- static
-@@ -864,7 +864,7 @@ ssize_t nilfs_dev_free_blocks_show(struct nilfs_dev_attr *attr,
- 	sector_t free_blocks = 0;
- 
- 	nilfs_count_free_blocks(nilfs, &free_blocks);
--	return snprintf(buf, PAGE_SIZE, "%llu\n",
-+	return sysfs_emit(buf, "%llu\n",
- 			(unsigned long long)free_blocks);
- }
- 
-@@ -875,7 +875,7 @@ ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
- {
- 	struct nilfs_super_block **sbp = nilfs->ns_sbp;
- 
--	return snprintf(buf, PAGE_SIZE, "%pUb\n", sbp[0]->s_uuid);
-+	return sysfs_emit(buf, "%pUb\n", sbp[0]->s_uuid);
- }
- 
- static
-@@ -903,7 +903,7 @@ static ssize_t nilfs_dev_README_show(struct nilfs_dev_attr *attr,
- 				     struct the_nilfs *nilfs,
- 				     char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, dev_readme_str);
-+	return sysfs_emit(buf, dev_readme_str);
- }
- 
- NILFS_DEV_RO_ATTR(revision);
-@@ -1047,7 +1047,7 @@ void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
- static ssize_t nilfs_feature_revision_show(struct kobject *kobj,
- 					    struct attribute *attr, char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, "%d.%d\n",
-+	return sysfs_emit(buf, "%d.%d\n",
- 			NILFS_CURRENT_REV, NILFS_MINOR_REV);
- }
- 
-@@ -1060,7 +1060,7 @@ static ssize_t nilfs_feature_README_show(struct kobject *kobj,
- 					 struct attribute *attr,
- 					 char *buf)
- {
--	return snprintf(buf, PAGE_SIZE, features_readme_str);
-+	return sysfs_emit(buf, features_readme_str);
- }
- 
- NILFS_FEATURE_RO_ATTR(revision);
--- 
-1.8.3.1
-
+loop15: detected capacity change from 0 to 4081
+NILFS (loop15): broken superblock, retrying with spare superblock
+(blocksize = 1024)
+NILFS (loop15): broken superblock, retrying with spare superblock
+(blocksize = 2048)
+NILFS (loop15): mounting unchecked fs
+NILFS (loop15): recovery complete
+FAULT_INJECTION: forcing a failure.
+name failslab, interval 1, probability 0, space 0, times 0
+CPU: 0 PID: 16429 Comm: syz-executor Not tainted 5.15.0-rc6 #4
+Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
+1.13.0-1ubuntu1.1 04/01/2014
+Call Trace:
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0xcd/0x134 lib/dump_stack.c:106
+ fail_dump lib/fault-inject.c:52 [inline]
+ should_fail.cold+0x5/0xa lib/fault-inject.c:146
+ should_failslab+0x5/0x10 mm/slab_common.c:1328
+ slab_pre_alloc_hook mm/slab.h:494 [inline]
+ slab_alloc_node mm/slub.c:3120 [inline]
+ slab_alloc mm/slub.c:3214 [inline]
+ kmem_cache_alloc+0x62/0x340 mm/slub.c:3219
+ kmem_cache_zalloc include/linux/slab.h:711 [inline]
+ lsm_inode_alloc security/security.c:593 [inline]
+ security_inode_alloc+0x34/0x160 security/security.c:1018
+ inode_init_always+0x603/0xe50 fs/inode.c:170
+ alloc_inode+0x82/0x1e0 fs/inode.c:244
+ new_inode_pseudo+0x14/0xe0 fs/inode.c:938
+ new_inode+0x1b/0x40 fs/inode.c:967
+ nilfs_new_inode+0xca/0x7e0 fs/nilfs2/inode.c:333
+ nilfs_create+0xfe/0x300 fs/nilfs2/namei.c:85
+ lookup_open+0xfae/0x13a0 fs/namei.c:3282
+ open_last_lookups fs/namei.c:3352 [inline]
+ path_openat+0xa93/0x2710 fs/namei.c:3558
+ do_filp_open+0x1c1/0x290 fs/namei.c:3588
+ do_sys_openat2+0x61b/0x9a0 fs/open.c:1200
+ do_sys_open+0xc3/0x140 fs/open.c:1216
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+RIP: 0033:0x7f13bd8dcc4d
+Code: 02 b8 ff ff ff ff c3 66 0f 1f 44 00 00 f3 0f 1e fa 48 89 f8 48
+89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d
+01 f0 ff ff 73 01 c3 48 c7 c1 bc ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f13bae44c58 EFLAGS: 00000246 ORIG_RAX: 0000000000000055
+RAX: ffffffffffffffda RBX: 00007f13bda030a0 RCX: 00007f13bd8dcc4d
+RDX: 0000000000000000 RSI: 0000000000000021 RDI: 0000000020005580
+RBP: 00007f13bae44c90 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 000000000000000a
+R13: 00007ffd7026ebdf R14: 00007ffd7026ed80 R15: 00007f13bae44dc0
+page:ffffea0000053000 refcount:1 mapcount:0 mapping:0000000000000000
+index:0x0 pfn:0x14c0
+flags: 0xfff00000001000(reserved|node=0|zone=1|lastcpupid=0x7ff)
+raw: 00fff00000001000 ffffea0000053008 ffffea0000053008 0000000000000000
+raw: 0000000000000000 0000000000000000 00000001ffffffff 0000000000000000
+page dumped because: VM_BUG_ON_PAGE(!PageCompound(page))
+page_owner info is not present (never set?)
+------------[ cut here ]------------
+kernel BUG at mm/slub.c:3516!
+invalid opcode: 0000 [#1] PREEMPT SMP KASAN
+CPU: 0 PID: 16429 Comm: syz-executor Not tainted 5.15.0-rc6 #4
+Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
+1.13.0-1ubuntu1.1 04/01/2014
+RIP: 0010:free_nonslab_page mm/slub.c:3516 [inline]
+RIP: 0010:free_nonslab_page mm/slub.c:3512 [inline]
+RIP: 0010:kfree+0x6d1/0x700 mm/slub.c:4540
+Code: 5e 41 5f e9 31 f3 ff ff 0f 0b 48 c7 c6 80 6c 18 8b 4c 89 e7 e8
+20 c3 ec ff 0f 0b 48 c7 c6 58 14 1a 8b 4c 89 e7 e8 0f c3 ec ff <0f> 0b
+e8 b8 8b 75 07 e9 26 ff ff ff 8b 75 1c 48 89 df e8 48 f2 28
+RSP: 0018:ffffc90004dff680 EFLAGS: 00010246
+RAX: 0000000000040000 RBX: ffffffff814c0d90 RCX: 0000000000040000
+RDX: ffffc90001ac1000 RSI: ffff888024289c80 RDI: 0000000000000002
+RBP: ffff8881088d0200 R08: ffffffff81bd5321 R09: 0000000000000000
+R10: 0000000000000005 R11: ffffed100c7c3f53 R12: ffffea0000053000
+R13: ffff888033efd8c8 R14: ffff88801d8c2000 R15: ffff888033efd8f0
+FS:  00007f13bae45700(0000) GS:ffff888063e00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000000000400000 CR3: 0000000016eed000 CR4: 0000000000350ef0
+Call Trace:
+ nilfs_mdt_destroy+0x59/0x80 fs/nilfs2/mdt.c:486
+ nilfs_free_inode+0x3e/0x60 fs/nilfs2/super.c:167
+ i_callback+0x3f/0x70 fs/inode.c:226
+ alloc_inode+0x13e/0x1e0 fs/inode.c:251
+ new_inode_pseudo+0x14/0xe0 fs/inode.c:938
+ new_inode+0x1b/0x40 fs/inode.c:967
+ nilfs_new_inode+0xca/0x7e0 fs/nilfs2/inode.c:333
+ nilfs_create+0xfe/0x300 fs/nilfs2/namei.c:85
+ lookup_open+0xfae/0x13a0 fs/namei.c:3282
+ open_last_lookups fs/namei.c:3352 [inline]
+ path_openat+0xa93/0x2710 fs/namei.c:3558
+ do_filp_open+0x1c1/0x290 fs/namei.c:3588
+ do_sys_openat2+0x61b/0x9a0 fs/open.c:1200
+ do_sys_open+0xc3/0x140 fs/open.c:1216
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+RIP: 0033:0x7f13bd8dcc4d
+Code: 02 b8 ff ff ff ff c3 66 0f 1f 44 00 00 f3 0f 1e fa 48 89 f8 48
+89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d
+01 f0 ff ff 73 01 c3 48 c7 c1 bc ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f13bae44c58 EFLAGS: 00000246 ORIG_RAX: 0000000000000055
+RAX: ffffffffffffffda RBX: 00007f13bda030a0 RCX: 00007f13bd8dcc4d
+RDX: 0000000000000000 RSI: 0000000000000021 RDI: 0000000020005580
+RBP: 00007f13bae44c90 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 000000000000000a
+R13: 00007ffd7026ebdf R14: 00007ffd7026ed80 R15: 00007f13bae44dc0
+Modules linked in:
+Dumping ftrace buffer:
+   (ftrace buffer empty)
+---[ end trace 07725c0702aaad66 ]---
+RIP: 0010:free_nonslab_page mm/slub.c:3516 [inline]
+RIP: 0010:free_nonslab_page mm/slub.c:3512 [inline]
+RIP: 0010:kfree+0x6d1/0x700 mm/slub.c:4540
+Code: 5e 41 5f e9 31 f3 ff ff 0f 0b 48 c7 c6 80 6c 18 8b 4c 89 e7 e8
+20 c3 ec ff 0f 0b 48 c7 c6 58 14 1a 8b 4c 89 e7 e8 0f c3 ec ff <0f> 0b
+e8 b8 8b 75 07 e9 26 ff ff ff 8b 75 1c 48 89 df e8 48 f2 28
+RSP: 0018:ffffc90004dff680 EFLAGS: 00010246
+RAX: 0000000000040000 RBX: ffffffff814c0d90 RCX: 0000000000040000
+RDX: ffffc90001ac1000 RSI: ffff888024289c80 RDI: 0000000000000002
+RBP: ffff8881088d0200 R08: ffffffff81bd5321 R09: 0000000000000000
+R10: 0000000000000005 R11: ffffed100c7c3f53 R12: ffffea0000053000
+R13: ffff888033efd8c8 R14: ffff88801d8c2000 R15: ffff888033efd8f0
+FS:  00007f13bae45700(0000) GS:ffff888063e00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000000000400000 CR3: 0000000016eed000 CR4: 0000000000350ef0
