@@ -1,162 +1,109 @@
-From: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: kernel BUG in nilfs_mdt_destroy
-Date: Wed, 27 Oct 2021 09:38:09 +0800
-Message-ID: <CACkBjsaFTVOA-dhRuw8OLG8GWjTPy3yR9sSVXGD46as7i2-rUg@mail.gmail.com>
+From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [syzbot] WARNING in __folio_mark_dirty
+Date: Thu, 28 Oct 2021 18:07:08 +0100
+Message-ID: <YXrYvIo8YRnAOJCj@casper.infradead.org>
+References: <0000000000003a5b5905cf6c5ee7@google.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=oYQVmMJEoaZXJx1iKV6fcufM5Yl2qMlRosIGlfzyPlU=;
-        b=bNsqkIWVoVMFeZa1vRGFiIDhiVzMn/Id4C9vIP+rktDQwZdzeilXjcIn97SzbyZlIR
-         1V9spmKxX/OVxdtDFA2Bb0xTTY+6eb7pVchezAe/N/40duF3MtWcAINQdCbCk3NeXIo1
-         LczfMvLR29KbLHce+QmOHwLpfWGf0Rwz1h6wzoyUzBdxfw70bY2gNmO9BzEkoYapucMr
-         ZUZANyPdzPTrBWjB1cCem37hmdpl4a5xrDBaHVGwLtu5cdAgnfxfSyBoMLQpvmxYtXm5
-         ixy0adXkLWr2RiJAD0llqIFgytyDTApfolTazbz26GPIZ6PWSDYZBqxF9jyRG8SDP4/H
-         5MRQ==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=Te+w3AB3S4i1K0MuH89t3Hz7sgB8PA4EkDTK3lPuI30=; b=lQc3SDvpg49wSCb9o0IoMceN9K
+        +82iywQ4aPyvKXiFZv1F/XilI9oL8UrZCUgXt//5ZrFLWoMFQK5MS4BZXIXEEn4Qewd28l0FUStc3
+        wo3GWth8m8QPyvZtMsPQe36jTOlej/i4MnAd6UUdU7M3M1N8K2pRTv15Up1bOMFP+RWtKo785BFHm
+        BsB6wwsyz/z7nOHRv5tYDE+ou+sJtZ6m0LSRfd+Y+6R9qvpOLgEAruqtDisjLuWqXKRdUG15mR3uf
+        EtQUKUGGXqDDWf1NuTSyMvEeWDbdWAUP3W3/ubgIqxgtvnkCvI+wd9kfOAGupr9iXBozprhOOMbpU
+        69QYqVyg==;
+Content-Disposition: inline
+In-Reply-To: <0000000000003a5b5905cf6c5ee7-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: syzbot <syzbot+34ef28bb2aeb28724aa0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello,
 
-When using Healer to fuzz the latest Linux kernel, the following crash
-was triggered.
+I don't think this is something folio-related; I think it's a bug
+in nilfs which is failing to hold one of the appropriate locks:
 
-HEAD commit: 519d81956ee2 Linux 5.15-rc6
-git tree: upstream
-console output:
-https://drive.google.com/file/d/1kiBZK6oiSXPTCnvaFCepaFbsxSfO1KTC/view?usp=sharing
-kernel config: https://drive.google.com/file/d/12PUnxIM1EPBgW4ZJmI7WJBRaY1lA83an/view?usp=sharing
+        WARN_ON_ONCE(debug_locks &&
+                     (!lockdep_is_held(&inode->i_lock) &&
+                      !lockdep_is_held(&inode->i_mapping->i_pages.xa_lock) &&
+                      !lockdep_is_held(&inode->i_wb->list_lock)));
 
-Sorry, I don't have a reproducer for this crash, hope the symbolized
-report can help.
-If you fix this issue, please add the following tag to the commit:
-Reported-by: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+(or possibly it's fine for nilfs to not be holding one of those locks,
+but if so then the condition needs to be updated to explain why it's
+safe for nilfs to be not holding one of those locks)
 
-loop15: detected capacity change from 0 to 4081
-NILFS (loop15): broken superblock, retrying with spare superblock
-(blocksize = 1024)
-NILFS (loop15): broken superblock, retrying with spare superblock
-(blocksize = 2048)
-NILFS (loop15): mounting unchecked fs
-NILFS (loop15): recovery complete
-FAULT_INJECTION: forcing a failure.
-name failslab, interval 1, probability 0, space 0, times 0
-CPU: 0 PID: 16429 Comm: syz-executor Not tainted 5.15.0-rc6 #4
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
-1.13.0-1ubuntu1.1 04/01/2014
-Call Trace:
- __dump_stack lib/dump_stack.c:88 [inline]
- dump_stack_lvl+0xcd/0x134 lib/dump_stack.c:106
- fail_dump lib/fault-inject.c:52 [inline]
- should_fail.cold+0x5/0xa lib/fault-inject.c:146
- should_failslab+0x5/0x10 mm/slab_common.c:1328
- slab_pre_alloc_hook mm/slab.h:494 [inline]
- slab_alloc_node mm/slub.c:3120 [inline]
- slab_alloc mm/slub.c:3214 [inline]
- kmem_cache_alloc+0x62/0x340 mm/slub.c:3219
- kmem_cache_zalloc include/linux/slab.h:711 [inline]
- lsm_inode_alloc security/security.c:593 [inline]
- security_inode_alloc+0x34/0x160 security/security.c:1018
- inode_init_always+0x603/0xe50 fs/inode.c:170
- alloc_inode+0x82/0x1e0 fs/inode.c:244
- new_inode_pseudo+0x14/0xe0 fs/inode.c:938
- new_inode+0x1b/0x40 fs/inode.c:967
- nilfs_new_inode+0xca/0x7e0 fs/nilfs2/inode.c:333
- nilfs_create+0xfe/0x300 fs/nilfs2/namei.c:85
- lookup_open+0xfae/0x13a0 fs/namei.c:3282
- open_last_lookups fs/namei.c:3352 [inline]
- path_openat+0xa93/0x2710 fs/namei.c:3558
- do_filp_open+0x1c1/0x290 fs/namei.c:3588
- do_sys_openat2+0x61b/0x9a0 fs/open.c:1200
- do_sys_open+0xc3/0x140 fs/open.c:1216
- do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
- entry_SYSCALL_64_after_hwframe+0x44/0xae
-RIP: 0033:0x7f13bd8dcc4d
-Code: 02 b8 ff ff ff ff c3 66 0f 1f 44 00 00 f3 0f 1e fa 48 89 f8 48
-89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d
-01 f0 ff ff 73 01 c3 48 c7 c1 bc ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007f13bae44c58 EFLAGS: 00000246 ORIG_RAX: 0000000000000055
-RAX: ffffffffffffffda RBX: 00007f13bda030a0 RCX: 00007f13bd8dcc4d
-RDX: 0000000000000000 RSI: 0000000000000021 RDI: 0000000020005580
-RBP: 00007f13bae44c90 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 000000000000000a
-R13: 00007ffd7026ebdf R14: 00007ffd7026ed80 R15: 00007f13bae44dc0
-page:ffffea0000053000 refcount:1 mapcount:0 mapping:0000000000000000
-index:0x0 pfn:0x14c0
-flags: 0xfff00000001000(reserved|node=0|zone=1|lastcpupid=0x7ff)
-raw: 00fff00000001000 ffffea0000053008 ffffea0000053008 0000000000000000
-raw: 0000000000000000 0000000000000000 00000001ffffffff 0000000000000000
-page dumped because: VM_BUG_ON_PAGE(!PageCompound(page))
-page_owner info is not present (never set?)
-------------[ cut here ]------------
-kernel BUG at mm/slub.c:3516!
-invalid opcode: 0000 [#1] PREEMPT SMP KASAN
-CPU: 0 PID: 16429 Comm: syz-executor Not tainted 5.15.0-rc6 #4
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
-1.13.0-1ubuntu1.1 04/01/2014
-RIP: 0010:free_nonslab_page mm/slub.c:3516 [inline]
-RIP: 0010:free_nonslab_page mm/slub.c:3512 [inline]
-RIP: 0010:kfree+0x6d1/0x700 mm/slub.c:4540
-Code: 5e 41 5f e9 31 f3 ff ff 0f 0b 48 c7 c6 80 6c 18 8b 4c 89 e7 e8
-20 c3 ec ff 0f 0b 48 c7 c6 58 14 1a 8b 4c 89 e7 e8 0f c3 ec ff <0f> 0b
-e8 b8 8b 75 07 e9 26 ff ff ff 8b 75 1c 48 89 df e8 48 f2 28
-RSP: 0018:ffffc90004dff680 EFLAGS: 00010246
-RAX: 0000000000040000 RBX: ffffffff814c0d90 RCX: 0000000000040000
-RDX: ffffc90001ac1000 RSI: ffff888024289c80 RDI: 0000000000000002
-RBP: ffff8881088d0200 R08: ffffffff81bd5321 R09: 0000000000000000
-R10: 0000000000000005 R11: ffffed100c7c3f53 R12: ffffea0000053000
-R13: ffff888033efd8c8 R14: ffff88801d8c2000 R15: ffff888033efd8f0
-FS:  00007f13bae45700(0000) GS:ffff888063e00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000000000400000 CR3: 0000000016eed000 CR4: 0000000000350ef0
-Call Trace:
- nilfs_mdt_destroy+0x59/0x80 fs/nilfs2/mdt.c:486
- nilfs_free_inode+0x3e/0x60 fs/nilfs2/super.c:167
- i_callback+0x3f/0x70 fs/inode.c:226
- alloc_inode+0x13e/0x1e0 fs/inode.c:251
- new_inode_pseudo+0x14/0xe0 fs/inode.c:938
- new_inode+0x1b/0x40 fs/inode.c:967
- nilfs_new_inode+0xca/0x7e0 fs/nilfs2/inode.c:333
- nilfs_create+0xfe/0x300 fs/nilfs2/namei.c:85
- lookup_open+0xfae/0x13a0 fs/namei.c:3282
- open_last_lookups fs/namei.c:3352 [inline]
- path_openat+0xa93/0x2710 fs/namei.c:3558
- do_filp_open+0x1c1/0x290 fs/namei.c:3588
- do_sys_openat2+0x61b/0x9a0 fs/open.c:1200
- do_sys_open+0xc3/0x140 fs/open.c:1216
- do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
- entry_SYSCALL_64_after_hwframe+0x44/0xae
-RIP: 0033:0x7f13bd8dcc4d
-Code: 02 b8 ff ff ff ff c3 66 0f 1f 44 00 00 f3 0f 1e fa 48 89 f8 48
-89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d
-01 f0 ff ff 73 01 c3 48 c7 c1 bc ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007f13bae44c58 EFLAGS: 00000246 ORIG_RAX: 0000000000000055
-RAX: ffffffffffffffda RBX: 00007f13bda030a0 RCX: 00007f13bd8dcc4d
-RDX: 0000000000000000 RSI: 0000000000000021 RDI: 0000000020005580
-RBP: 00007f13bae44c90 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 000000000000000a
-R13: 00007ffd7026ebdf R14: 00007ffd7026ed80 R15: 00007f13bae44dc0
-Modules linked in:
-Dumping ftrace buffer:
-   (ftrace buffer empty)
----[ end trace 07725c0702aaad66 ]---
-RIP: 0010:free_nonslab_page mm/slub.c:3516 [inline]
-RIP: 0010:free_nonslab_page mm/slub.c:3512 [inline]
-RIP: 0010:kfree+0x6d1/0x700 mm/slub.c:4540
-Code: 5e 41 5f e9 31 f3 ff ff 0f 0b 48 c7 c6 80 6c 18 8b 4c 89 e7 e8
-20 c3 ec ff 0f 0b 48 c7 c6 58 14 1a 8b 4c 89 e7 e8 0f c3 ec ff <0f> 0b
-e8 b8 8b 75 07 e9 26 ff ff ff 8b 75 1c 48 89 df e8 48 f2 28
-RSP: 0018:ffffc90004dff680 EFLAGS: 00010246
-RAX: 0000000000040000 RBX: ffffffff814c0d90 RCX: 0000000000040000
-RDX: ffffc90001ac1000 RSI: ffff888024289c80 RDI: 0000000000000002
-RBP: ffff8881088d0200 R08: ffffffff81bd5321 R09: 0000000000000000
-R10: 0000000000000005 R11: ffffed100c7c3f53 R12: ffffea0000053000
-R13: ffff888033efd8c8 R14: ffff88801d8c2000 R15: ffff888033efd8f0
-FS:  00007f13bae45700(0000) GS:ffff888063e00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000000000400000 CR3: 0000000016eed000 CR4: 0000000000350ef0
+On Thu, Oct 28, 2021 at 09:40:27AM -0700, syzbot wrote:
+> Hello,
+> 
+> syzbot found the following issue on:
+> 
+> HEAD commit:    cf6c9d12750c Add linux-next specific files for 20211022
+> git tree:       linux-next
+> console output: https://syzkaller.appspot.com/x/log.txt?x=177967acb00000
+> kernel config:  https://syzkaller.appspot.com/x/.config?x=dd1cd3d631599df5
+> dashboard link: https://syzkaller.appspot.com/bug?extid=34ef28bb2aeb28724aa0
+> compiler:       gcc (Debian 10.2.1-6) 10.2.1 20210110, GNU ld (GNU Binutils for Debian) 2.35.2
+> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=10e79e9f300000
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=12231f62b00000
+> 
+> IMPORTANT: if you fix the issue, please add the following tag to the commit:
+> Reported-by: syzbot+34ef28bb2aeb28724aa0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+> 
+> NILFS (loop0): segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
+> ------------[ cut here ]------------
+> WARNING: CPU: 0 PID: 6575 at include/linux/backing-dev.h:269 inode_to_wb include/linux/backing-dev.h:269 [inline]
+> WARNING: CPU: 0 PID: 6575 at include/linux/backing-dev.h:269 folio_account_dirtied mm/page-writeback.c:2460 [inline]
+> WARNING: CPU: 0 PID: 6575 at include/linux/backing-dev.h:269 __folio_mark_dirty+0xa7c/0xe30 mm/page-writeback.c:2509
+> Modules linked in:
+> CPU: 0 PID: 6575 Comm: segctord Not tainted 5.15.0-rc6-next-20211022-syzkaller #0
+> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
+> RIP: 0010:inode_to_wb include/linux/backing-dev.h:269 [inline]
+> RIP: 0010:folio_account_dirtied mm/page-writeback.c:2460 [inline]
+> RIP: 0010:__folio_mark_dirty+0xa7c/0xe30 mm/page-writeback.c:2509
+> Code: ff ff ff 48 8d 78 70 e8 b2 77 ae 07 31 ff 89 c6 89 44 24 10 e8 45 a5 d7 ff 8b 44 24 10 85 c0 0f 85 49 fa ff ff e8 14 a3 d7 ff <0f> 0b e9 3d fa ff ff e8 08 a3 d7 ff e8 c3 78 ae 07 31 ff 41 89 c7
+> RSP: 0018:ffffc900020078b8 EFLAGS: 00010093
+> RAX: 0000000000000000 RBX: ffff88806b870378 RCX: 0000000000000000
+> RDX: ffff88801b4fba80 RSI: ffffffff819fea3c RDI: 0000000000000003
+> RBP: ffffea0001c92700 R08: 0000000000000000 R09: 0000000000000000
+> R10: ffffffff819fea2b R11: 0000000000000000 R12: 0000000000000293
+> R13: ffff88806b870138 R14: 0000000000000001 R15: 0000000000000001
+> FS:  0000000000000000(0000) GS:ffff8880b9c00000(0000) knlGS:0000000000000000
+> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> CR2: 000055d7235e1180 CR3: 000000001278d000 CR4: 00000000003506f0
+> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+> DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+> Call Trace:
+>  <TASK>
+>  __set_page_dirty include/linux/pagemap.h:834 [inline]
+>  mark_buffer_dirty+0x4e6/0x650 fs/buffer.c:1145
+>  nilfs_btree_propagate_p fs/nilfs2/btree.c:1889 [inline]
+>  nilfs_btree_propagate+0x4ae/0xea0 fs/nilfs2/btree.c:2085
+>  nilfs_bmap_propagate+0x73/0x170 fs/nilfs2/bmap.c:337
+>  nilfs_collect_dat_data+0x45/0xd0 fs/nilfs2/segment.c:625
+>  nilfs_segctor_apply_buffers+0x14a/0x470 fs/nilfs2/segment.c:1009
+>  nilfs_segctor_scan_file+0x47a/0x700 fs/nilfs2/segment.c:1048
+>  nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1224 [inline]
+>  nilfs_segctor_collect fs/nilfs2/segment.c:1494 [inline]
+>  nilfs_segctor_do_construct+0x14f3/0x6c60 fs/nilfs2/segment.c:2036
+>  nilfs_segctor_construct+0x7a7/0xb30 fs/nilfs2/segment.c:2372
+>  nilfs_segctor_thread_construct fs/nilfs2/segment.c:2480 [inline]
+>  nilfs_segctor_thread+0x3c3/0xf90 fs/nilfs2/segment.c:2563
+>  kthread+0x405/0x4f0 kernel/kthread.c:327
+>  ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:295
+>  </TASK>
+> 
+> 
+> ---
+> This report is generated by a bot. It may contain errors.
+> See https://goo.gl/tpsmEJ for more information about syzbot.
+> syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+> 
+> syzbot will keep track of this issue. See:
+> https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+> syzbot can test patches for this issue, for details see:
+> https://goo.gl/tpsmEJ#testing-patches
+> 
