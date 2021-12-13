@@ -1,58 +1,80 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+From: "NeilBrown" <neilb-l3A5Bk7waGM@public.gmane.org>
 Subject: Re: [PATCH 1/2] Remove inode_congested()
-Date: Mon, 13 Dec 2021 04:22:38 +0000
-Message-ID: <YbbKjjFzIzSBJWCn@casper.infradead.org>
-References: <163936868317.23860.5037433897004720387.stgit@noble.brown>
- <163936886725.23860.2403757518009677424.stgit@noble.brown>
+Date: Mon, 13 Dec 2021 15:59:30 +1100
+Message-ID: <163937157093.22433.10907067066589299028@noble.neil.brown.name>
+References: <163936868317.23860.5037433897004720387.stgit@noble.brown>,
+ <163936886725.23860.2403757518009677424.stgit@noble.brown>,
+ <YbbKjjFzIzSBJWCn@casper.infradead.org>
 Mime-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=5VRRrXTMpMMR1uAghzgqAdj8BzkVpuZ2ziBLrA4cdV4=; b=hHj5tkQLGXVF896zpGXpvorbmT
-        ZeNp5ygUrTrFdisSuEOLwfYTwId2s25Z+kFrAh3Bfx1sO+hUFUfSrBRebvk3bJTxx9sEBCxskN2+Y
-        YDQqZ7RRTWE9uCsWeke+790cXmml4bZs/a0LTmVF3/gQrc8iamJ0JXAvd98bK97f9gl8c8ZUKOqV+
-        UuUJxhBXa+r49x8eQpZAO5lumYIZqPGJui1b5Qo3Pbckxw/n4pKhbBDn8wLbe4UqP7zzgV48mCpul
-        0RFjFslQkUFDt8dh8faKufMuXOMHQdVNgmhtRzXG2YUbE8ntdKOakzvG6/E8tW4zczFlIyKVbaG5o
-        ZrimuKjw==;
-Content-Disposition: inline
-In-Reply-To: <163936886725.23860.2403757518009677424.stgit-KMjKAoDPBoBHWa5fdsenEw@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1639371578; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=k2gChwyl/DClB5L/ZT8aeA5y8mUKecKjBiO/0QKY6kA=;
+        b=EjXT775p7Ib4onLWPFpQRGtiEyslALZ9bZI7hc8yXChzHyJHZ9EjymDPHRmWnb3wI3EY1s
+        vo9vutxlhmeMBMdUMMeEjbGVJWUQL5hb9PSTaFMoKMbuijj8cVdgI1cBNUzMjvcavizEkv
+        dgBUeJhGUr9ykPpecP8Sbrk2A5kwuig=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1639371578;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=k2gChwyl/DClB5L/ZT8aeA5y8mUKecKjBiO/0QKY6kA=;
+        b=hqsL0TIql1g+XAQIVqyCnbaG2whzR8D/uS62k89KHb57moD27i3si5uDxcmNGIU2IL6eAM
+        U8UcCBivlGAfW0AA==
+In-reply-to: <YbbKjjFzIzSBJWCn-FZi0V3Vbi30CUdFEqe4BF2D2FQJk+8+b@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Jan Kara <jack-IBi9RG/b67k@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, Dec 13, 2021 at 03:14:27PM +1100, NeilBrown wrote:
-> diff --git a/mm/vmscan.c b/mm/vmscan.c
-> index fb9584641ac7..540aa0ea67ff 100644
-> --- a/mm/vmscan.c
-> +++ b/mm/vmscan.c
-> @@ -989,17 +989,6 @@ static inline int is_page_cache_freeable(struct page *page)
->  	return page_count(page) - page_has_private(page) == 1 + page_cache_pins;
->  }
->  
-> -static int may_write_to_inode(struct inode *inode)
-> -{
-> -	if (current->flags & PF_SWAPWRITE)
-> -		return 1;
-> -	if (!inode_write_congested(inode))
-> -		return 1;
-> -	if (inode_to_bdi(inode) == current->backing_dev_info)
-> -		return 1;
-> -	return 0;
-> -}
+On Mon, 13 Dec 2021, Matthew Wilcox wrote:
+> On Mon, Dec 13, 2021 at 03:14:27PM +1100, NeilBrown wrote:
+> > diff --git a/mm/vmscan.c b/mm/vmscan.c
+> > index fb9584641ac7..540aa0ea67ff 100644
+> > --- a/mm/vmscan.c
+> > +++ b/mm/vmscan.c
+> > @@ -989,17 +989,6 @@ static inline int is_page_cache_freeable(struct page=
+ *page)
+> >  	return page_count(page) - page_has_private(page) =3D=3D 1 + page_cache_=
+pins;
+> >  }
+> > =20
+> > -static int may_write_to_inode(struct inode *inode)
+> > -{
+> > -	if (current->flags & PF_SWAPWRITE)
+> > -		return 1;
+> > -	if (!inode_write_congested(inode))
+> > -		return 1;
+> > -	if (inode_to_bdi(inode) =3D=3D current->backing_dev_info)
+> > -		return 1;
+> > -	return 0;
+> > -}
+>=20
+> Why is it safe to get rid of the PF_SWAPWRITE and current->backing_dev_info
+> checks?
 
-Why is it safe to get rid of the PF_SWAPWRITE and current->backing_dev_info
-checks?
+Ask George Bool.
+If inode_write_congested() returns False, then may_write_to_inode() will
+always return True.
 
-> @@ -1158,8 +1147,6 @@ static pageout_t pageout(struct page *page, struct address_space *mapping)
->  	}
->  	if (mapping->a_ops->writepage == NULL)
->  		return PAGE_ACTIVATE;
-> -	if (!may_write_to_inode(mapping->host))
-> -		return PAGE_KEEP;
->  
->  	if (clear_page_dirty_for_io(page)) {
->  		int res;
+NeilBrown
+
+
+>=20
+> > @@ -1158,8 +1147,6 @@ static pageout_t pageout(struct page *page, struct =
+address_space *mapping)
+> >  	}
+> >  	if (mapping->a_ops->writepage =3D=3D NULL)
+> >  		return PAGE_ACTIVATE;
+> > -	if (!may_write_to_inode(mapping->host))
+> > -		return PAGE_KEEP;
+> > =20
+> >  	if (clear_page_dirty_for_io(page)) {
+> >  		int res;
+>=20
+>=20
