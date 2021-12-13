@@ -1,69 +1,59 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: remove redundant pointer sbufs
-Date: Mon, 13 Dec 2021 00:51:34 +0900
-Message-ID: <CAKFNMokO9CA6n2veR9JOg7CbzvgUc6rDMofOu2aiU+CDTTsjoA@mail.gmail.com>
-References: <20211211180955.550380-1-colin.i.king@gmail.com>
+From: NeilBrown <neilb@suse.de>
+Subject: [PATCH 0/2] Remove some 'congested' tests
+Date: Mon, 13 Dec 2021 15:14:27 +1100
+Message-ID: <163936868317.23860.5037433897004720387.stgit@noble.brown>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=OsLzc8H+GZEt3KOwearXOutXvaRaNgkbn2EA2Jl4464=;
-        b=KDWtFqtVrDLPXuAZeJTCfEBgi9b6C9o1WUBoeqQJPNll8R7RqeiIXYme+HYIcZwRl5
-         xuiBKE8NCR5em7CAw6IkndCTXAstCwQwDzBHnzyR2+bKkxdL3rTBO0JnyVk5OEQ8J9tj
-         GjVDBWW8opJY6wwkezB9q2uzoqh8+hPefxKDY+ZoNJ2Qk+nNWHA6krz23vfJYUGS82HD
-         8fXGkmXQeES/Y3Rei1pRGx+5AZ41Wq9p9qaomIrLfBcjyQOT6kVyigmz8mPUdvhubsRr
-         kcbM/HyNddgRUDB0ubswOMBYTHye6FBh27T3Ioe7RlstJw05zr2RXcImAnwe+39LJ+eR
-         0zug==
-In-Reply-To: <20211211180955.550380-1-colin.i.king-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+        t=1639368930; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=d3ZK4cWv8H7actTxxnZZLYOrGmIHEpiDysulN0ZGTfQ=;
+        b=Siet2ZPRSy42BsoMsDbZgZQRd2FGdZNFiGMVH1theIyEuj7H55s9fpVtsIR5Sa2Kp150xE
+        /cMi3KGN+0Zp9qqRGrwkElO53Pz0HhLVMCz6IzuAKUwu9skGrYaHkOr0rot7wp2LQsFBeY
+        vESybLOON63VU3uZuG/StzoqcmK4cMg=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+        s=susede2_ed25519; t=1639368930;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=d3ZK4cWv8H7actTxxnZZLYOrGmIHEpiDysulN0ZGTfQ=;
+        b=Pw9406nV/5BOZ4PG4ymu1QAygKL5V2x2Cdl0R8TeO7drctFhMnA/Oi2od7Lhfoq+TNkP46
+        yImyG+ssud6D30BA==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Colin Ian King <colin.i.king-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-janitors-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jan Kara <jack@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>
+Cc: linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Sun, Dec 12, 2021 at 3:09 AM Colin Ian King <colin.i.king-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->
-> Pointer sbufs is being assigned a value but it's not being used
-> later on. The pointer is redundant and can be removed. Cleans up
-> scan-build static analysis warning:
->
-> fs/nilfs2/page.c:203:8: warning: Although the value stored to 'sbufs'
-> is used in the enclosing expression, the value is never actually read
-> from 'sbufs' [deadcode.DeadStores]
->         sbh = sbufs = page_buffers(src);
->
-> Signed-off-by: Colin Ian King <colin.i.king-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+The framework for reporting congestion for "bdi"s is no longer widely
+used.  bdis for block devices don't report congestion at all.
+bdis for nfs, ceph, and fuse do, but any code which depends on that
+is not going to work for most filesystems.
 
-Looks good.
-Will apply, thank you.
+So we should remove it.
 
-Ryusuke Konishi
+These two patches remove {inode,bdi,wb}_congested() and related
+functions, and change all call site to assume the result was "false",
+which it (almost) always is.
 
-> ---
->  fs/nilfs2/page.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
->
-> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-> index bc3e2cd4117f..063dd16d75b5 100644
-> --- a/fs/nilfs2/page.c
-> +++ b/fs/nilfs2/page.c
-> @@ -195,12 +195,12 @@ void nilfs_page_bug(struct page *page)
->   */
->  static void nilfs_copy_page(struct page *dst, struct page *src, int copy_dirty)
->  {
-> -       struct buffer_head *dbh, *dbufs, *sbh, *sbufs;
-> +       struct buffer_head *dbh, *dbufs, *sbh;
->         unsigned long mask = NILFS_BUFFER_INHERENT_BITS;
->
->         BUG_ON(PageWriteback(dst));
->
-> -       sbh = sbufs = page_buffers(src);
-> +       sbh = page_buffers(src);
->         if (!page_has_buffers(dst))
->                 create_empty_buffers(dst, sbh->b_size, 0);
->
-> --
-> 2.33.1
->
+NeilBrown
+---
+
+NeilBrown (2):
+      Remove inode_congested()
+      Remove bdi_congested() and wb_congested() and related functions
+
+
+ drivers/block/drbd/drbd_int.h |  3 ---
+ drivers/block/drbd/drbd_req.c |  3 +--
+ fs/ext2/ialloc.c              |  2 --
+ fs/nilfs2/segbuf.c            | 11 -----------
+ fs/xfs/xfs_buf.c              |  3 ---
+ include/linux/backing-dev.h   | 26 --------------------------
+ mm/vmscan.c                   |  4 +---
+ 7 files changed, 2 insertions(+), 50 deletions(-)
+
+--
+Signature
+
