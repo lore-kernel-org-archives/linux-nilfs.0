@@ -1,83 +1,125 @@
-From: "NeilBrown" <neilb@suse.de>
-Subject: Re: [PATCH 2/2] Remove bdi_congested() and wb_congested() and related
- functions
-Date: Mon, 13 Dec 2021 18:04:10 +1100
-Message-ID: <163937905049.22433.10716750573737410875@noble.neil.brown.name>
-References: <163936868317.23860.5037433897004720387.stgit@noble.brown>,
- <163936886727.23860.5245364396572576756.stgit@noble.brown>,
- <20211213050736.GS449541@dread.disaster.area>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: [PATCH] nilfs2: use default_groups in kobj_type
+Date: Tue, 28 Dec 2021 15:42:52 +0100
+Message-ID: <20211228144252.390554-1-gregkh@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1639379057; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=aEqBV9gaFo2wyx1G4xG19C/0b13L1C/hoEvYE9B85GE=;
-        b=l/hLlA5w3OBwKRP+sBt/ehoVB3EoaTuRtFJa9WBwUg8DKSN0+dWtXmPaULZ5nea0glf+3i
-        /y099EP4z9wGokt1s7ezqdFqw780FOZu/+ajH8HFYxpYwantjdLh91yQrYkA6XOijRd/n1
-        sLfk1JR2eSud6NM0G4BZ3LPOJ7i0/y8=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1639379057;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=aEqBV9gaFo2wyx1G4xG19C/0b13L1C/hoEvYE9B85GE=;
-        b=fbIFNrfIGETnM5AYz2WyO2gy+fZNb61dtNZ2rejU57HQMud9rQbH2LfXezo8Za7bUX9l4C
-        gqceDp2a6mOOzNCw==
-In-reply-to: <20211213050736.GS449541@dread.disaster.area>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
+        s=korg; t=1640702576;
+        bh=relxSkFQq4Um8LOlSdAh9XgM8IqLjtm/+lkAfpCGTt4=;
+        h=From:To:Cc:Subject:Date:From;
+        b=NmAKKkje61i7pXDyPXPMQw9Hm3tklusHNVtjrT5GqqaZQ+o7X7QTqleRJNMaEiV9g
+         9c4JguVxQoYKgM88KSzB+Cm3FuEVx15AVpdEectrN21DHsJOHyEQEyvLVT2ohUurmW
+         JfGwFYceDHDOuWrsht2XyRJFhJnyaxmRcW26cPko=
+X-Developer-Signature: v=1; a=openpgp-sha256; l=3584; h=from:subject; bh=relxSkFQq4Um8LOlSdAh9XgM8IqLjtm/+lkAfpCGTt4=; b=owGbwMvMwCRo6H6F97bub03G02pJDImnlXKmC4XX5AbsdXlW8TLxaymn4P6DqbO5/bl/rvvlopj5 ymJ7RywLgyATg6yYIsuXbTxH91ccUvQytD0NM4eVCWQIAxenAEwk+BLDPBueCU5m6bwi8yS4+b7bxv 4QZTG7yTA/NWLiM97dK5+Y++7ceffrgnTefY9LAA==
+X-Developer-Key: i=gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org; a=openpgp; fpr=F4B60CC5BF78C2214A313DCB3147D40DDB2DFB29
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Dave Chinner <david@fromorbit.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jan Kara <jack@suse.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Mon, 13 Dec 2021, Dave Chinner wrote:
-> On Mon, Dec 13, 2021 at 03:14:27PM +1100, NeilBrown wrote:
-> > These functions are no longer useful as the only bdis that report
-> > congestion are in ceph, fuse, and nfs.  None of those bdis can be the
-> > target of the calls in drbd, ext2, nilfs2, or xfs.
-> > 
-> > Removing the test on bdi_write_contested() in current_may_throttle()
-> > could cause a small change in behaviour, but only when PF_LOCAL_THROTTLE
-> > is set.
-> > 
-> > So replace the calls by 'false' and simplify the code - and remove the
-> > functions.
-> > 
-> > Signed-off-by: NeilBrown <neilb@suse.de>
-> ....
-> > diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
-> > index 631c5a61d89b..22f73b3e888e 100644
-> > --- a/fs/xfs/xfs_buf.c
-> > +++ b/fs/xfs/xfs_buf.c
-> > @@ -843,9 +843,6 @@ xfs_buf_readahead_map(
-> >  {
-> >  	struct xfs_buf		*bp;
-> >  
-> > -	if (bdi_read_congested(target->bt_bdev->bd_disk->bdi))
-> > -		return;
-> 
-> Ok, but this isn't a "throttle writeback" test here - it's trying to
-> avoid having speculative readahead blocking on a full request queue
-> instead of just skipping the readahead IO. i.e. prevent readahead
-> thrashing and/or adding unnecessary read load when we already have a
-> full read queue...
-> 
-> So what is the replacement for that? We want to skip the entire
-> buffer lookup/setup/read overhead if we're likely to block on IO
-> submission - is there anything we can use to do this these days?
+There are currently 2 ways to create a set of sysfs files for a
+kobj_type, through the default_attrs field, and the default_groups
+field.  Move the nilfs2 code to use default_groups field which has been
+the preferred way since aa30f47cf666 ("kobject: Add support for default
+attribute groups to kobj_type") so that we can soon get rid of the
+obsolete default_attrs field.
 
-I don't think there is a concept of a "full read queue" any more.
-There are things that can block an IO submission though.
-There is allocation of the bio from a mempool, and there is
-rq_qos_throttle, and there are probably other places where submission
-can block.  I don't think you can tell in advance if a submission is
-likely to block.
+Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+---
+ fs/nilfs2/sysfs.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-I think the idea is that the top level of the submission stack should
-rate-limit based on the estimated throughput of the stack.  I think
-write-back does this.  I don't know about read-ahead.
+diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
+index 81f35c5b5a40..379d22e28ed6 100644
+--- a/fs/nilfs2/sysfs.c
++++ b/fs/nilfs2/sysfs.c
+@@ -57,7 +57,7 @@ static void nilfs_##name##_attr_release(struct kobject *kobj) \
+ 	complete(&subgroups->sg_##name##_kobj_unregister); \
+ } \
+ static struct kobj_type nilfs_##name##_ktype = { \
+-	.default_attrs	= nilfs_##name##_attrs, \
++	.default_groups	= nilfs_##name##_groups, \
+ 	.sysfs_ops	= &nilfs_##name##_attr_ops, \
+ 	.release	= nilfs_##name##_attr_release, \
+ }
+@@ -129,6 +129,7 @@ static struct attribute *nilfs_snapshot_attrs[] = {
+ 	NILFS_SNAPSHOT_ATTR_LIST(README),
+ 	NULL,
+ };
++ATTRIBUTE_GROUPS(nilfs_snapshot);
+ 
+ static ssize_t nilfs_snapshot_attr_show(struct kobject *kobj,
+ 					struct attribute *attr, char *buf)
+@@ -166,7 +167,7 @@ static const struct sysfs_ops nilfs_snapshot_attr_ops = {
+ };
+ 
+ static struct kobj_type nilfs_snapshot_ktype = {
+-	.default_attrs	= nilfs_snapshot_attrs,
++	.default_groups	= nilfs_snapshot_groups,
+ 	.sysfs_ops	= &nilfs_snapshot_attr_ops,
+ 	.release	= nilfs_snapshot_attr_release,
+ };
+@@ -226,6 +227,7 @@ static struct attribute *nilfs_mounted_snapshots_attrs[] = {
+ 	NILFS_MOUNTED_SNAPSHOTS_ATTR_LIST(README),
+ 	NULL,
+ };
++ATTRIBUTE_GROUPS(nilfs_mounted_snapshots);
+ 
+ NILFS_DEV_INT_GROUP_OPS(mounted_snapshots, dev);
+ NILFS_DEV_INT_GROUP_TYPE(mounted_snapshots, dev);
+@@ -339,6 +341,7 @@ static struct attribute *nilfs_checkpoints_attrs[] = {
+ 	NILFS_CHECKPOINTS_ATTR_LIST(README),
+ 	NULL,
+ };
++ATTRIBUTE_GROUPS(nilfs_checkpoints);
+ 
+ NILFS_DEV_INT_GROUP_OPS(checkpoints, dev);
+ NILFS_DEV_INT_GROUP_TYPE(checkpoints, dev);
+@@ -428,6 +431,7 @@ static struct attribute *nilfs_segments_attrs[] = {
+ 	NILFS_SEGMENTS_ATTR_LIST(README),
+ 	NULL,
+ };
++ATTRIBUTE_GROUPS(nilfs_segments);
+ 
+ NILFS_DEV_INT_GROUP_OPS(segments, dev);
+ NILFS_DEV_INT_GROUP_TYPE(segments, dev);
+@@ -689,6 +693,7 @@ static struct attribute *nilfs_segctor_attrs[] = {
+ 	NILFS_SEGCTOR_ATTR_LIST(README),
+ 	NULL,
+ };
++ATTRIBUTE_GROUPS(nilfs_segctor);
+ 
+ NILFS_DEV_INT_GROUP_OPS(segctor, dev);
+ NILFS_DEV_INT_GROUP_TYPE(segctor, dev);
+@@ -816,6 +821,7 @@ static struct attribute *nilfs_superblock_attrs[] = {
+ 	NILFS_SUPERBLOCK_ATTR_LIST(README),
+ 	NULL,
+ };
++ATTRIBUTE_GROUPS(nilfs_superblock);
+ 
+ NILFS_DEV_INT_GROUP_OPS(superblock, dev);
+ NILFS_DEV_INT_GROUP_TYPE(superblock, dev);
+@@ -924,6 +930,7 @@ static struct attribute *nilfs_dev_attrs[] = {
+ 	NILFS_DEV_ATTR_LIST(README),
+ 	NULL,
+ };
++ATTRIBUTE_GROUPS(nilfs_dev);
+ 
+ static ssize_t nilfs_dev_attr_show(struct kobject *kobj,
+ 				    struct attribute *attr, char *buf)
+@@ -961,7 +968,7 @@ static const struct sysfs_ops nilfs_dev_attr_ops = {
+ };
+ 
+ static struct kobj_type nilfs_dev_ktype = {
+-	.default_attrs	= nilfs_dev_attrs,
++	.default_groups	= nilfs_dev_groups,
+ 	.sysfs_ops	= &nilfs_dev_attr_ops,
+ 	.release	= nilfs_dev_attr_release,
+ };
+-- 
+2.34.1
 
-NeilBrown
