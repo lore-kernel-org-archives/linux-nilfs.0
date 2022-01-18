@@ -1,34 +1,29 @@
-From: Chaitanya Kulkarni <chaitanyak-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 15/19] block: pass a block_device and opf to
- bio_alloc_bioset
-Date: Tue, 18 Jan 2022 22:12:25 +0000
-Message-ID: <c4d0db2c-b487-e965-30da-507b30f29a6e@nvidia.com>
+From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
+Subject: Re: [PATCH 16/19] block: pass a block_device and opf to
+ bio_alloc_kiocb
+Date: Tue, 18 Jan 2022 22:12:57 +0000
+Message-ID: <8838ff19-5e17-1d3a-f751-6b1e21d7d799@nvidia.com>
 References: <20220118071952.1243143-1-hch@lst.de>
- <20220118071952.1243143-16-hch@lst.de>
+ <20220118071952.1243143-17-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: base64
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
  s=selector2;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=uQcGE2RD5vm8sY+bJefQtU5ebnJe2jUx0ztTnDFLA3c=;
- b=JcmykTlfYTcbTqgMj5FEPa54w1Z8qFwrH0IeEPNKrDXFeA1YFSO2fnxbvP11fmdOkeJgkztshHDES3uqwAzgTf2xwUGlenrJL0ybkjmUDq1RWNupkP8c8kcetY7FKDMuiuIb39d/TXnzKvzu6nfueR2B0DlWZ0MOiT0S4ZiAxJi2HWJaaoKvYJfV779dHnVWTGMn5aoFYMxuWBiVTtslEiMAX/J9bYKOV2RBPrxu+r2cJHVGDxoVIsWPsUrJ/PKPIJ4Nf6YHRKYHMb4K0CtUoojKceim3khQk//bTbPZgYsVeeZdQOOyfolvacKzbpk8BbvXWQp+PhK2a9g3+PlaTQ==
-In-Reply-To: <20220118071952.1243143-16-hch-jcswGhMUV9g@public.gmane.org>
+ bh=v3XTQo/k3Ao88p0VxQnnj38+oL2wFdpJ5odlYOeRklo=;
+ b=tuNHWo5YnOBhbreXH5o6kgeBTwTSKWVhKt52sB2MHhIzF3gkFxyjMZ+AzqNPva3P8nw+u7xEyebuRzaPARZhbCbx2a9Ya6xt+q0itShDJYJEcRV7UrDZrAQvaWm3rvvEaVyzGWX5eOT+FmYrC73eZO1wE6Bx18dXAh96HVcUg1hEzn0GhJ8YKSlFOkjwM7yWr8gJTjdlDPo8KXaTV1oFe5A/NteXnXOJAKnbxclGLZ+lMWPTbzeCHms+uz0NRAPD428lGqg1S7HlP5UcxXfajmvJ2XJ296Bz/I8RoeJx528gKQIfqjklzgIWttoY48LsQ6NHmmTrEQ4UEDQXGx9SUw==
+In-Reply-To: <20220118071952.1243143-17-hch@lst.de>
 Content-Language: en-US
-Content-ID: <E00E6E42D2517540A652FBBB17F3A16F-asWib9pRmPqcE4WynfumptQqCkab/8FMAL8bYrjMMd8@public.gmane.org>
+Content-ID: <2F4563EDE021F847919851EF702ECCC8@namprd12.prod.outlook.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
-Cc: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Md . Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, =?utf-8?B?Um9nZXIgUGF1IE1vbm7DqQ==?= <roger.pau-Sxgqhf6Nn4Bhl2p70BpVqQ@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org" <ntfs3@l>
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Pavel Begunkov <asml.silence@gmail.com>, Mike Snitzer <snitzer@redhat.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Andrew Morton <akpm@linux-foundation.org>, "Md . Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, =?utf-8?B?Um9nZXIgUGF1IE1vbm7DqQ==?= <roger.pau@citrix.co>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "ntfs3@lists.linux.dev" <ntfs3@l>
 
 T24gMS8xNy8yMiAxMToxOSBQTSwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6DQo+IFBhc3MgdGhl
 IGJsb2NrX2RldmljZSBhbmQgb3BlcmF0aW9uIHRoYXQgd2UgcGxhbiB0byB1c2UgdGhpcyBiaW8g
-Zm9yIHRvDQo+IGJpb19hbGxvY19iaW9zZXQgdG8gb3B0aW1pemUgdGhlIGFzc2lnbWVudC4gIE5V
-TEwvMCBjYW4gYmUgcGFzc2VkLCBib3RoDQo+IGZvciB0aGUgcGFzc3Rocm91Z2ggY2FzZSBvbiBh
-IHJhdyByZXF1ZXN0X3F1ZXVlIGFuZCB0byB0ZW1wb3JhcmlseSBhdm9pZA0KPiByZWZhY3Rvcmlu
-ZyBzb21lIG5hc3R5IGNvZGUuDQo+IA0KPiBBbHNvIG1vdmUgdGhlIGdmcF9tYXNrIGFyZ3VtZW50
-IGFmdGVyIHRoZSBucl92ZWNzIGFyZ3VtZW50IGZvciBhIG11Y2gNCj4gbW9yZSBsb2dpY2FsIGNh
-bGxpbmcgY29udmVudGlvbiBtYXRjaGluZyB3aGF0IG1vc3Qgb2YgdGhlIGtlcm5lbCBkb2VzLg0K
-PiANCj4gU2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+DQoNCg0K
-TG9va3MgZ29vZC4NCg0KUmV2aWV3ZWQtYnk6IENoYWl0YW55YSBLdWxrYXJuaSA8a2NoQG52aWRp
-YS5jb20+DQoNCg0K
+Zm9yIHRvDQo+IGJpb19hbGxvY19raW9jYiB0byBvcHRpbWl6ZSB0aGUgYXNzaWdtZW50Lg0KPiAN
+Cj4gU2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+DQo+IC0tLQ0K
+DQoNCkxvb2tzIGdvb2QuDQoNClJldmlld2VkLWJ5OiBDaGFpdGFueWEgS3Vsa2FybmkgPGtjaEBu
+dmlkaWEuY29tPg0KDQoNCg==
