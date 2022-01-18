@@ -1,189 +1,584 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 14/19] block: pass a block_device and opf to
-	blk_next_bio
-Date: Tue, 18 Jan 2022 08:19:47 +0100
-Message-ID: <20220118071952.1243143-15-hch@lst.de>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 18/19] block: pass a block_device and opf to bio_init
+Date: Tue, 18 Jan 2022 08:19:51 +0100
+Message-ID: <20220118071952.1243143-19-hch@lst.de>
 References: <20220118071952.1243143-1-hch@lst.de>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+        :Reply-To:Content-Type:Content-ID:Content-Description;
+        bh=ZHCR86dUvAsW1hFD24j5JZjygD9LIhxqOvbL3HEZ6eU=; b=tV9sWST5pnKj9x5G2GKKTJOugK
+        Pm4EGTafhFTeBb5Wlz4lMM4Hi7/iBT9zlVLvWnig3hM9GiW15a+CJKImfDRxg8hXg/PKInS/BLHIm
+        RKjCEjS87LHn0FkG1D+c01bNx80UWtkT+lIhtHWE5PsHV1RzGS4sGhV0JIk3p5qArixNbbk06UOUD
+        w+71jdOyLG0Uu/GxJaBLwpdedOMUASigACwdXouFLvlwWOig3ZQERWs9ruanDF9d6ygYVlTsshgI2
+        nxxstoOi/QzAKh2YM56YCRDZHbl0FV04LQ4eliIlQ9dU/GAhoG2oktUxkN71A5/TTM0qUJyZBDRU8
+        7c/6x+Ew==;
+In-Reply-To: <20220118071952.1243143-1-hch-jcswGhMUV9g@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20220118071952.1243143-1-hch@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://listman.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Philipp Reisner <philipp.reisner@linbit.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.co>, dm-devel@redhat.com, "Md . Haris Iqbal " <haris.iqbal@ionos.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-fsdevel@vger.kernel.org, xen-devel@lists.xenproject.org, Andrew Morton <akpm@linux-foundation.org>, ntfs3@lists.linux.dev, Jack Wang <jinpu.wang@ionos.com>, Pavel Begunkov <asml.silence@gmail.com>, drbd-dev@lists.linbit.com
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Md . Haris Iqbal " <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau-Sxgqhf6Nn4Bhl2p70BpVqQ@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 
-All callers need to set the block_device and operation, so lift that into
-the common code.
+Pass the block_device that we plan to use this bio for and the
+operation to bio_init to optimize the assigment.  A NULL block_device
+can be passed, both for the passthrough case on a raw request_queue and
+to temporarily avoid refactoring some nasty code.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- block/bio.c               |  6 +++++-
- block/blk-lib.c           | 19 +++++--------------
- block/blk-zoned.c         |  9 +++------
- block/blk.h               |  2 --
- drivers/nvme/target/zns.c |  6 +++---
- include/linux/bio.h       |  3 ++-
- 6 files changed, 18 insertions(+), 27 deletions(-)
+ block/bio.c                       | 26 +++++++++++++-------------
+ block/blk-flush.c                 |  4 +---
+ block/blk-zoned.c                 |  5 +----
+ block/fops.c                      | 18 +++++++++---------
+ drivers/block/floppy.c            |  4 +---
+ drivers/block/zram/zram_drv.c     |  5 ++---
+ drivers/md/bcache/io.c            |  3 ++-
+ drivers/md/bcache/journal.c       |  4 +---
+ drivers/md/bcache/movinggc.c      |  4 ++--
+ drivers/md/bcache/request.c       |  2 +-
+ drivers/md/bcache/super.c         |  8 +++-----
+ drivers/md/bcache/writeback.c     |  4 ++--
+ drivers/md/dm.c                   |  5 ++---
+ drivers/md/md-multipath.c         |  2 +-
+ drivers/md/md.c                   |  8 +++-----
+ drivers/md/raid5-cache.c          |  2 +-
+ drivers/md/raid5-ppl.c            |  2 +-
+ drivers/md/raid5.c                |  4 ++--
+ drivers/nvme/target/io-cmd-bdev.c | 10 ++++------
+ drivers/nvme/target/passthru.c    |  4 ++--
+ drivers/nvme/target/zns.c         |  4 ++--
+ fs/iomap/buffered-io.c            |  4 +---
+ fs/xfs/xfs_bio_io.c               |  4 +---
+ fs/xfs/xfs_log.c                  | 14 +++++++-------
+ fs/zonefs/super.c                 |  4 +---
+ include/linux/bio.h               |  4 ++--
+ 26 files changed, 68 insertions(+), 90 deletions(-)
 
 diff --git a/block/bio.c b/block/bio.c
-index 43fb28ac6b44e..52c99bfa8008d 100644
+index 5c97f56c1ee50..2480f80296eac 100644
 --- a/block/bio.c
 +++ b/block/bio.c
-@@ -344,10 +344,14 @@ void bio_chain(struct bio *bio, struct bio *parent)
- }
- EXPORT_SYMBOL(bio_chain);
- 
--struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp)
-+struct bio *blk_next_bio(struct bio *bio, struct block_device *bdev,
-+		unsigned int nr_pages, unsigned int opf, gfp_t gfp)
+@@ -249,12 +249,14 @@ static void bio_free(struct bio *bio)
+  * they must remember to pair any call to bio_init() with bio_uninit()
+  * when IO has completed, or when the bio is released.
+  */
+-void bio_init(struct bio *bio, struct bio_vec *table,
+-	      unsigned short max_vecs)
++void bio_init(struct bio *bio, struct block_device *bdev, struct bio_vec *table,
++	      unsigned short max_vecs, unsigned int opf)
  {
- 	struct bio *new = bio_alloc(gfp, nr_pages);
+ 	bio->bi_next = NULL;
+-	bio->bi_bdev = NULL;
+-	bio->bi_opf = 0;
++	bio->bi_bdev = bdev;
++	if (bdev)
++		bio_associate_blkg(bio);
++	bio->bi_opf = opf;
+ 	bio->bi_flags = 0;
+ 	bio->bi_ioprio = 0;
+ 	bio->bi_write_hint = 0;
+@@ -504,16 +506,14 @@ struct bio *bio_alloc_bioset(struct block_device *bdev, unsigned short nr_vecs,
+ 		if (unlikely(!bvl))
+ 			goto err_free;
  
-+	bio_set_dev(new, bdev);
-+	new->bi_opf = opf;
-+
- 	if (bio) {
- 		bio_chain(bio, new);
- 		submit_bio(bio);
-diff --git a/block/blk-lib.c b/block/blk-lib.c
-index 9245b300ef73e..1b8ced45e4e55 100644
---- a/block/blk-lib.c
-+++ b/block/blk-lib.c
-@@ -82,11 +82,8 @@ int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+-		bio_init(bio, bvl, nr_vecs);
++		bio_init(bio, bdev, bvl, nr_vecs, opf);
+ 	} else if (nr_vecs) {
+-		bio_init(bio, bio->bi_inline_vecs, BIO_INLINE_VECS);
++		bio_init(bio, bdev, bio->bi_inline_vecs, BIO_INLINE_VECS, opf);
+ 	} else {
+-		bio_init(bio, NULL, 0);
++		bio_init(bio, bdev, NULL, 0, opf);
+ 	}
  
- 		WARN_ON_ONCE((req_sects << 9) > UINT_MAX);
+ 	bio->bi_pool = bs;
+-	bio_set_dev(bio, bdev);
+-	bio->bi_opf = opf;
+ 	return bio;
  
--		bio = blk_next_bio(bio, 0, gfp_mask);
-+		bio = blk_next_bio(bio, bdev, 0, op, gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
+ err_free:
+@@ -541,7 +541,8 @@ struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned short nr_iovecs)
+ 	bio = kmalloc(struct_size(bio, bi_inline_vecs, nr_iovecs), gfp_mask);
+ 	if (unlikely(!bio))
+ 		return NULL;
+-	bio_init(bio, nr_iovecs ? bio->bi_inline_vecs : NULL, nr_iovecs);
++	bio_init(bio, NULL, nr_iovecs ? bio->bi_inline_vecs : NULL, nr_iovecs,
++		 0);
+ 	bio->bi_pool = NULL;
+ 	return bio;
+ }
+@@ -1754,9 +1755,8 @@ struct bio *bio_alloc_kiocb(struct kiocb *kiocb, struct block_device *bdev,
+ 		cache->free_list = bio->bi_next;
+ 		cache->nr--;
+ 		put_cpu();
+-		bio_init(bio, nr_vecs ? bio->bi_inline_vecs : NULL, nr_vecs);
 -		bio_set_dev(bio, bdev);
--		bio_set_op_attrs(bio, op, 0);
--
- 		bio->bi_iter.bi_size = req_sects << 9;
- 		sector += req_sects;
- 		nr_sects -= req_sects;
-@@ -176,14 +173,12 @@ static int __blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
- 	max_write_same_sectors = bio_allowed_max_sectors(q);
+-		bio->bi_opf = opf;
++		bio_init(bio, bdev, nr_vecs ? bio->bi_inline_vecs : NULL,
++			 nr_vecs, opf);
+ 		bio->bi_pool = bs;
+ 		bio_set_flag(bio, BIO_PERCPU_CACHE);
+ 		return bio;
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index e4df894189ced..c689687248706 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -460,9 +460,7 @@ int blkdev_issue_flush(struct block_device *bdev)
+ {
+ 	struct bio bio;
  
- 	while (nr_sects) {
--		bio = blk_next_bio(bio, 1, gfp_mask);
-+		bio = blk_next_bio(bio, bdev, 1, REQ_OP_WRITE_SAME, gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
--		bio_set_dev(bio, bdev);
- 		bio->bi_vcnt = 1;
- 		bio->bi_io_vec->bv_page = page;
- 		bio->bi_io_vec->bv_offset = 0;
- 		bio->bi_io_vec->bv_len = bdev_logical_block_size(bdev);
--		bio_set_op_attrs(bio, REQ_OP_WRITE_SAME, 0);
- 
- 		if (nr_sects > max_write_same_sectors) {
- 			bio->bi_iter.bi_size = max_write_same_sectors << 9;
-@@ -252,10 +247,8 @@ static int __blkdev_issue_write_zeroes(struct block_device *bdev,
- 		return -EOPNOTSUPP;
- 
- 	while (nr_sects) {
--		bio = blk_next_bio(bio, 0, gfp_mask);
-+		bio = blk_next_bio(bio, bdev, 0, REQ_OP_WRITE_ZEROES, gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
--		bio_set_dev(bio, bdev);
--		bio->bi_opf = REQ_OP_WRITE_ZEROES;
- 		if (flags & BLKDEV_ZERO_NOUNMAP)
- 			bio->bi_opf |= REQ_NOUNMAP;
- 
-@@ -303,11 +296,9 @@ static int __blkdev_issue_zero_pages(struct block_device *bdev,
- 		return -EPERM;
- 
- 	while (nr_sects != 0) {
--		bio = blk_next_bio(bio, __blkdev_sectors_to_bio_pages(nr_sects),
--				   gfp_mask);
-+		bio = blk_next_bio(bio, bdev, __blkdev_sectors_to_bio_pages(nr_sects),
-+				   REQ_OP_WRITE, gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
--		bio_set_dev(bio, bdev);
--		bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
- 
- 		while (nr_sects != 0) {
- 			sz = min((sector_t) PAGE_SIZE, nr_sects << 9);
+-	bio_init(&bio, NULL, 0);
+-	bio_set_dev(&bio, bdev);
+-	bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
++	bio_init(&bio, bdev, NULL, 0, REQ_OP_WRITE | REQ_PREFLUSH);
+ 	return submit_bio_wait(&bio);
+ }
+ EXPORT_SYMBOL(blkdev_issue_flush);
 diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 774ecc598bee2..5ab755d792c81 100644
+index 5ab755d792c81..602bef54c8134 100644
 --- a/block/blk-zoned.c
 +++ b/block/blk-zoned.c
-@@ -215,9 +215,8 @@ static int blkdev_zone_reset_all_emulated(struct block_device *bdev,
+@@ -238,10 +238,7 @@ static int blkdev_zone_reset_all(struct block_device *bdev, gfp_t gfp_mask)
+ {
+ 	struct bio bio;
+ 
+-	bio_init(&bio, NULL, 0);
+-	bio_set_dev(&bio, bdev);
+-	bio.bi_opf = REQ_OP_ZONE_RESET_ALL | REQ_SYNC;
+-
++	bio_init(&bio, bdev, NULL, 0, REQ_OP_ZONE_RESET_ALL | REQ_SYNC);
+ 	return submit_bio_wait(&bio);
+ }
+ 
+diff --git a/block/fops.c b/block/fops.c
+index c683596847731..3696665e586a8 100644
+--- a/block/fops.c
++++ b/block/fops.c
+@@ -75,8 +75,13 @@ static ssize_t __blkdev_direct_IO_simple(struct kiocb *iocb,
+ 			return -ENOMEM;
+ 	}
+ 
+-	bio_init(&bio, vecs, nr_pages);
+-	bio_set_dev(&bio, bdev);
++	if (iov_iter_rw(iter) == READ) {
++		bio_init(&bio, bdev, vecs, nr_pages, REQ_OP_READ);
++		if (iter_is_iovec(iter))
++			should_dirty = true;
++	} else {
++		bio_init(&bio, bdev, vecs, nr_pages, dio_bio_write_op(iocb));
++	}
+ 	bio.bi_iter.bi_sector = pos >> SECTOR_SHIFT;
+ 	bio.bi_write_hint = iocb->ki_hint;
+ 	bio.bi_private = current;
+@@ -88,14 +93,9 @@ static ssize_t __blkdev_direct_IO_simple(struct kiocb *iocb,
+ 		goto out;
+ 	ret = bio.bi_iter.bi_size;
+ 
+-	if (iov_iter_rw(iter) == READ) {
+-		bio.bi_opf = REQ_OP_READ;
+-		if (iter_is_iovec(iter))
+-			should_dirty = true;
+-	} else {
+-		bio.bi_opf = dio_bio_write_op(iocb);
++	if (iov_iter_rw(iter) == WRITE)
+ 		task_io_account_write(ret);
+-	}
++
+ 	if (iocb->ki_flags & IOCB_NOWAIT)
+ 		bio.bi_opf |= REQ_NOWAIT;
+ 	if (iocb->ki_flags & IOCB_HIPRI)
+diff --git a/drivers/block/floppy.c b/drivers/block/floppy.c
+index e611411a934ce..19c2d0327e157 100644
+--- a/drivers/block/floppy.c
++++ b/drivers/block/floppy.c
+@@ -4129,15 +4129,13 @@ static int __floppy_read_block_0(struct block_device *bdev, int drive)
+ 
+ 	cbdata.drive = drive;
+ 
+-	bio_init(&bio, &bio_vec, 1);
+-	bio_set_dev(&bio, bdev);
++	bio_init(&bio, bdev, &bio_vec, 1, REQ_OP_READ);
+ 	bio_add_page(&bio, page, block_size(bdev), 0);
+ 
+ 	bio.bi_iter.bi_sector = 0;
+ 	bio.bi_flags |= (1 << BIO_QUIET);
+ 	bio.bi_private = &cbdata;
+ 	bio.bi_end_io = floppy_rb0_cb;
+-	bio_set_op_attrs(&bio, REQ_OP_READ, 0);
+ 
+ 	init_completion(&cbdata.complete);
+ 
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index d8dc7ed1c78fc..47c966cffe690 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -744,10 +744,9 @@ static ssize_t writeback_store(struct device *dev,
  			continue;
  		}
  
--		bio = blk_next_bio(bio, 0, gfp_mask);
--		bio_set_dev(bio, bdev);
--		bio->bi_opf = REQ_OP_ZONE_RESET | REQ_SYNC;
-+		bio = blk_next_bio(bio, bdev, 0, REQ_OP_ZONE_RESET | REQ_SYNC,
-+				   gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
- 		sector += zone_sectors;
+-		bio_init(&bio, &bio_vec, 1);
+-		bio_set_dev(&bio, zram->bdev);
++		bio_init(&bio, zram->bdev, &bio_vec, 1,
++			 REQ_OP_WRITE | REQ_SYNC);
+ 		bio.bi_iter.bi_sector = blk_idx * (PAGE_SIZE >> 9);
+-		bio.bi_opf = REQ_OP_WRITE | REQ_SYNC;
  
-@@ -306,9 +305,7 @@ int blkdev_zone_mgmt(struct block_device *bdev, enum req_opf op,
+ 		bio_add_page(&bio, bvec.bv_page, bvec.bv_len,
+ 				bvec.bv_offset);
+diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
+index 9c6f9ec55b724..020712c5203fd 100644
+--- a/drivers/md/bcache/io.c
++++ b/drivers/md/bcache/io.c
+@@ -26,7 +26,8 @@ struct bio *bch_bbio_alloc(struct cache_set *c)
+ 	struct bbio *b = mempool_alloc(&c->bio_meta, GFP_NOIO);
+ 	struct bio *bio = &b->bio;
+ 
+-	bio_init(bio, bio->bi_inline_vecs, meta_bucket_pages(&c->cache->sb));
++	bio_init(bio, NULL, bio->bi_inline_vecs,
++		 meta_bucket_pages(&c->cache->sb), 0);
+ 
+ 	return bio;
+ }
+diff --git a/drivers/md/bcache/journal.c b/drivers/md/bcache/journal.c
+index 61bd79babf7ae..6d26c5b06e2b6 100644
+--- a/drivers/md/bcache/journal.c
++++ b/drivers/md/bcache/journal.c
+@@ -611,11 +611,9 @@ static void do_journal_discard(struct cache *ca)
+ 
+ 		atomic_set(&ja->discard_in_flight, DISCARD_IN_FLIGHT);
+ 
+-		bio_init(bio, bio->bi_inline_vecs, 1);
+-		bio_set_op_attrs(bio, REQ_OP_DISCARD, 0);
++		bio_init(bio, ca->bdev, bio->bi_inline_vecs, 1, REQ_OP_DISCARD);
+ 		bio->bi_iter.bi_sector	= bucket_to_sector(ca->set,
+ 						ca->sb.d[ja->discard_idx]);
+-		bio_set_dev(bio, ca->bdev);
+ 		bio->bi_iter.bi_size	= bucket_bytes(ca);
+ 		bio->bi_end_io		= journal_discard_endio;
+ 
+diff --git a/drivers/md/bcache/movinggc.c b/drivers/md/bcache/movinggc.c
+index b9c3d27ec093a..99499d1f6e666 100644
+--- a/drivers/md/bcache/movinggc.c
++++ b/drivers/md/bcache/movinggc.c
+@@ -79,8 +79,8 @@ static void moving_init(struct moving_io *io)
+ {
+ 	struct bio *bio = &io->bio.bio;
+ 
+-	bio_init(bio, bio->bi_inline_vecs,
+-		 DIV_ROUND_UP(KEY_SIZE(&io->w->key), PAGE_SECTORS));
++	bio_init(bio, NULL, bio->bi_inline_vecs,
++		 DIV_ROUND_UP(KEY_SIZE(&io->w->key), PAGE_SECTORS), 0);
+ 	bio_get(bio);
+ 	bio_set_prio(bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
+ 
+diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+index c4b7e434de8ac..d4b98ebffd948 100644
+--- a/drivers/md/bcache/request.c
++++ b/drivers/md/bcache/request.c
+@@ -685,7 +685,7 @@ static void do_bio_hook(struct search *s,
+ {
+ 	struct bio *bio = &s->bio.bio;
+ 
+-	bio_init(bio, NULL, 0);
++	bio_init(bio, NULL, NULL, 0, 0);
+ 	__bio_clone_fast(bio, orig_bio);
+ 	/*
+ 	 * bi_end_io can be set separately somewhere else, e.g. the
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index 140f35dc0c457..85577c9f971d2 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -343,8 +343,7 @@ void bch_write_bdev_super(struct cached_dev *dc, struct closure *parent)
+ 	down(&dc->sb_write_mutex);
+ 	closure_init(cl, parent);
+ 
+-	bio_init(bio, dc->sb_bv, 1);
+-	bio_set_dev(bio, dc->bdev);
++	bio_init(bio, dc->bdev, dc->sb_bv, 1, 0);
+ 	bio->bi_end_io	= write_bdev_super_endio;
+ 	bio->bi_private = dc;
+ 
+@@ -387,8 +386,7 @@ void bcache_write_super(struct cache_set *c)
+ 	if (ca->sb.version < version)
+ 		ca->sb.version = version;
+ 
+-	bio_init(bio, ca->sb_bv, 1);
+-	bio_set_dev(bio, ca->bdev);
++	bio_init(bio, ca->bdev, ca->sb_bv, 1, 0);
+ 	bio->bi_end_io	= write_super_endio;
+ 	bio->bi_private = ca;
+ 
+@@ -2240,7 +2238,7 @@ static int cache_alloc(struct cache *ca)
+ 	__module_get(THIS_MODULE);
+ 	kobject_init(&ca->kobj, &bch_cache_ktype);
+ 
+-	bio_init(&ca->journal.bio, ca->journal.bio.bi_inline_vecs, 8);
++	bio_init(&ca->journal.bio, NULL, ca->journal.bio.bi_inline_vecs, 8, 0);
+ 
+ 	/*
+ 	 * when ca->sb.njournal_buckets is not zero, journal exists,
+diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+index c7560f66dca88..d42301e6309d4 100644
+--- a/drivers/md/bcache/writeback.c
++++ b/drivers/md/bcache/writeback.c
+@@ -292,8 +292,8 @@ static void dirty_init(struct keybuf_key *w)
+ 	struct dirty_io *io = w->private;
+ 	struct bio *bio = &io->bio;
+ 
+-	bio_init(bio, bio->bi_inline_vecs,
+-		 DIV_ROUND_UP(KEY_SIZE(&w->key), PAGE_SECTORS));
++	bio_init(bio, NULL, bio->bi_inline_vecs,
++		 DIV_ROUND_UP(KEY_SIZE(&w->key), PAGE_SECTORS), 0);
+ 	if (!io->dc->writeback_percent)
+ 		bio_set_prio(bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 84f3dd58d1a16..09d9b674bd851 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1303,9 +1303,8 @@ static int __send_empty_flush(struct clone_info *ci)
+ 	 * need to reference it after submit. It's just used as
+ 	 * the basis for the clone(s).
+ 	 */
+-	bio_init(&flush_bio, NULL, 0);
+-	flush_bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
+-	bio_set_dev(&flush_bio, ci->io->md->disk->part0);
++	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0,
++		 REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC);
+ 
+ 	ci->bio = &flush_bio;
+ 	ci->sector_count = 0;
+diff --git a/drivers/md/md-multipath.c b/drivers/md/md-multipath.c
+index e7d6486f090ff..5e15940634d85 100644
+--- a/drivers/md/md-multipath.c
++++ b/drivers/md/md-multipath.c
+@@ -121,7 +121,7 @@ static bool multipath_make_request(struct mddev *mddev, struct bio * bio)
  	}
+ 	multipath = conf->multipaths + mp_bh->path;
  
- 	while (sector < end_sector) {
--		bio = blk_next_bio(bio, 0, gfp_mask);
--		bio_set_dev(bio, bdev);
--		bio->bi_opf = op | REQ_SYNC;
-+		bio = blk_next_bio(bio, bdev, 0, op | REQ_SYNC, gfp_mask);
- 		bio->bi_iter.bi_sector = sector;
- 		sector += zone_sectors;
+-	bio_init(&mp_bh->bio, NULL, 0);
++	bio_init(&mp_bh->bio, NULL, NULL, 0, 0);
+ 	__bio_clone_fast(&mp_bh->bio, bio);
  
-diff --git a/block/blk.h b/block/blk.h
-index 8bd43b3ad33d5..6b93de33e8a43 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -406,8 +406,6 @@ extern int blk_iolatency_init(struct request_queue *q);
- static inline int blk_iolatency_init(struct request_queue *q) { return 0; }
- #endif
+ 	mp_bh->bio.bi_iter.bi_sector += multipath->rdev->data_offset;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 40fc1f7e65c5d..0a89f072dae0d 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -998,13 +998,11 @@ int sync_page_io(struct md_rdev *rdev, sector_t sector, int size,
+ 	struct bio bio;
+ 	struct bio_vec bvec;
  
--struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp);
+-	bio_init(&bio, &bvec, 1);
 -
- #ifdef CONFIG_BLK_DEV_ZONED
- void blk_queue_free_zone_bitmaps(struct request_queue *q);
- void blk_queue_clear_zone_settings(struct request_queue *q);
+ 	if (metadata_op && rdev->meta_bdev)
+-		bio_set_dev(&bio, rdev->meta_bdev);
++		bio_init(&bio, rdev->meta_bdev, &bvec, 1, op | op_flags);
+ 	else
+-		bio_set_dev(&bio, rdev->bdev);
+-	bio.bi_opf = op | op_flags;
++		bio_init(&bio, rdev->bdev, &bvec, 1, op | op_flags);
++
+ 	if (metadata_op)
+ 		bio.bi_iter.bi_sector = sector + rdev->sb_start;
+ 	else if (rdev->mddev->reshape_position != MaxSector &&
+diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
+index 66313adf99875..98b9ca11c28d8 100644
+--- a/drivers/md/raid5-cache.c
++++ b/drivers/md/raid5-cache.c
+@@ -3108,7 +3108,7 @@ int r5l_init_log(struct r5conf *conf, struct md_rdev *rdev)
+ 	INIT_LIST_HEAD(&log->io_end_ios);
+ 	INIT_LIST_HEAD(&log->flushing_ios);
+ 	INIT_LIST_HEAD(&log->finished_ios);
+-	bio_init(&log->flush_bio, NULL, 0);
++	bio_init(&log->flush_bio, NULL, NULL, 0, 0);
+ 
+ 	log->io_kc = KMEM_CACHE(r5l_io_unit, 0);
+ 	if (!log->io_kc)
+diff --git a/drivers/md/raid5-ppl.c b/drivers/md/raid5-ppl.c
+index 054d3bb252d48..3446797fa0aca 100644
+--- a/drivers/md/raid5-ppl.c
++++ b/drivers/md/raid5-ppl.c
+@@ -250,7 +250,7 @@ static struct ppl_io_unit *ppl_new_iounit(struct ppl_log *log,
+ 	INIT_LIST_HEAD(&io->stripe_list);
+ 	atomic_set(&io->pending_stripes, 0);
+ 	atomic_set(&io->pending_flushes, 0);
+-	bio_init(&io->bio, io->biovec, PPL_IO_INLINE_BVECS);
++	bio_init(&io->bio, NULL, io->biovec, PPL_IO_INLINE_BVECS, 0);
+ 
+ 	pplhdr = page_address(io->header_page);
+ 	clear_page(pplhdr);
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index ffe720c73b0a5..a9dcc5bc9c329 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -2310,8 +2310,8 @@ static struct stripe_head *alloc_stripe(struct kmem_cache *sc, gfp_t gfp,
+ 		for (i = 0; i < disks; i++) {
+ 			struct r5dev *dev = &sh->dev[i];
+ 
+-			bio_init(&dev->req, &dev->vec, 1);
+-			bio_init(&dev->rreq, &dev->rvec, 1);
++			bio_init(&dev->req, NULL, &dev->vec, 1, 0);
++			bio_init(&dev->rreq, NULL, &dev->rvec, 1, 0);
+ 		}
+ 
+ 		if (raid5_has_ppl(conf)) {
+diff --git a/drivers/nvme/target/io-cmd-bdev.c b/drivers/nvme/target/io-cmd-bdev.c
+index e092af3abc710..95c2bbb0b2f5f 100644
+--- a/drivers/nvme/target/io-cmd-bdev.c
++++ b/drivers/nvme/target/io-cmd-bdev.c
+@@ -267,9 +267,8 @@ static void nvmet_bdev_execute_rw(struct nvmet_req *req)
+ 
+ 	if (nvmet_use_inline_bvec(req)) {
+ 		bio = &req->b.inline_bio;
+-		bio_init(bio, req->inline_bvec, ARRAY_SIZE(req->inline_bvec));
+-		bio_set_dev(bio, req->ns->bdev);
+-		bio->bi_opf = op;
++		bio_init(bio, req->ns->bdev, req->inline_bvec,
++			 ARRAY_SIZE(req->inline_bvec), op);
+ 	} else {
+ 		bio = bio_alloc(req->ns->bdev, bio_max_segs(sg_cnt), op,
+ 				GFP_KERNEL);
+@@ -328,11 +327,10 @@ static void nvmet_bdev_execute_flush(struct nvmet_req *req)
+ 	if (!nvmet_check_transfer_len(req, 0))
+ 		return;
+ 
+-	bio_init(bio, req->inline_bvec, ARRAY_SIZE(req->inline_bvec));
+-	bio_set_dev(bio, req->ns->bdev);
++	bio_init(bio, req->ns->bdev, req->inline_bvec,
++		 ARRAY_SIZE(req->inline_bvec), REQ_OP_WRITE | REQ_PREFLUSH);
+ 	bio->bi_private = req;
+ 	bio->bi_end_io = nvmet_bio_done;
+-	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
+ 
+ 	submit_bio(bio);
+ }
+diff --git a/drivers/nvme/target/passthru.c b/drivers/nvme/target/passthru.c
+index 38f72968c3fde..a810bf569fff8 100644
+--- a/drivers/nvme/target/passthru.c
++++ b/drivers/nvme/target/passthru.c
+@@ -206,8 +206,8 @@ static int nvmet_passthru_map_sg(struct nvmet_req *req, struct request *rq)
+ 
+ 	if (nvmet_use_inline_bvec(req)) {
+ 		bio = &req->p.inline_bio;
+-		bio_init(bio, req->inline_bvec, ARRAY_SIZE(req->inline_bvec));
+-		bio->bi_opf = req_op(rq);
++		bio_init(bio, NULL, req->inline_bvec,
++			 ARRAY_SIZE(req->inline_bvec), req_op(rq));
+ 	} else {
+ 		bio = bio_alloc(NULL, bio_max_segs(req->sg_cnt), req_op(rq),
+ 				GFP_KERNEL);
 diff --git a/drivers/nvme/target/zns.c b/drivers/nvme/target/zns.c
-index 46bc30fe85d2b..247de74247fab 100644
+index 62c53e8f26d35..3e421217a7ade 100644
 --- a/drivers/nvme/target/zns.c
 +++ b/drivers/nvme/target/zns.c
-@@ -412,10 +412,10 @@ static u16 nvmet_bdev_zone_mgmt_emulate_all(struct nvmet_req *req)
+@@ -552,8 +552,8 @@ void nvmet_bdev_execute_zone_append(struct nvmet_req *req)
  
- 	while (sector < get_capacity(bdev->bd_disk)) {
- 		if (test_bit(blk_queue_zone_no(q, sector), d.zbitmap)) {
--			bio = blk_next_bio(bio, 0, GFP_KERNEL);
--			bio->bi_opf = zsa_req_op(req->cmd->zms.zsa) | REQ_SYNC;
-+			bio = blk_next_bio(bio, bdev, 0,
-+				zsa_req_op(req->cmd->zms.zsa) | REQ_SYNC,
-+				GFP_KERNEL);
- 			bio->bi_iter.bi_sector = sector;
--			bio_set_dev(bio, bdev);
- 			/* This may take a while, so be nice to others */
- 			cond_resched();
- 		}
+ 	if (nvmet_use_inline_bvec(req)) {
+ 		bio = &req->z.inline_bio;
+-		bio_init(bio, req->inline_bvec, ARRAY_SIZE(req->inline_bvec));
+-		bio->bi_opf = op;
++		bio_init(bio, req->ns->bdev, req->inline_bvec,
++			 ARRAY_SIZE(req->inline_bvec), op);
+ 	} else {
+ 		bio = bio_alloc(req->ns->bdev, req->sg_cnt, op, GFP_KERNEL);
+ 	}
+diff --git a/fs/iomap/buffered-io.c b/fs/iomap/buffered-io.c
+index 70f3657a6ec06..491534e908615 100644
+--- a/fs/iomap/buffered-io.c
++++ b/fs/iomap/buffered-io.c
+@@ -549,10 +549,8 @@ static int iomap_read_folio_sync(loff_t block_start, struct folio *folio,
+ 	struct bio_vec bvec;
+ 	struct bio bio;
+ 
+-	bio_init(&bio, &bvec, 1);
+-	bio.bi_opf = REQ_OP_READ;
++	bio_init(&bio, iomap->bdev, &bvec, 1, REQ_OP_READ);
+ 	bio.bi_iter.bi_sector = iomap_sector(iomap, block_start);
+-	bio_set_dev(&bio, iomap->bdev);
+ 	bio_add_folio(&bio, folio, plen, poff);
+ 	return submit_bio_wait(&bio);
+ }
+diff --git a/fs/xfs/xfs_bio_io.c b/fs/xfs/xfs_bio_io.c
+index eff4a9f21dcff..32fa02945f739 100644
+--- a/fs/xfs/xfs_bio_io.c
++++ b/fs/xfs/xfs_bio_io.c
+@@ -36,9 +36,7 @@ xfs_flush_bdev_async(
+ 		return;
+ 	}
+ 
+-	bio_init(bio, NULL, 0);
+-	bio_set_dev(bio, bdev);
+-	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
++	bio_init(bio, bdev, NULL, 0, REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC);
+ 	bio->bi_private = done;
+ 	bio->bi_end_io = xfs_flush_bdev_async_endio;
+ 
+diff --git a/fs/xfs/xfs_log.c b/fs/xfs/xfs_log.c
+index 89fec9a18c349..16f9edbda4eb3 100644
+--- a/fs/xfs/xfs_log.c
++++ b/fs/xfs/xfs_log.c
+@@ -1883,19 +1883,19 @@ xlog_write_iclog(
+ 		return;
+ 	}
+ 
+-	bio_init(&iclog->ic_bio, iclog->ic_bvec, howmany(count, PAGE_SIZE));
+-	bio_set_dev(&iclog->ic_bio, log->l_targ->bt_bdev);
+-	iclog->ic_bio.bi_iter.bi_sector = log->l_logBBstart + bno;
+-	iclog->ic_bio.bi_end_io = xlog_bio_end_io;
+-	iclog->ic_bio.bi_private = iclog;
+-
+ 	/*
+ 	 * We use REQ_SYNC | REQ_IDLE here to tell the block layer the are more
+ 	 * IOs coming immediately after this one. This prevents the block layer
+ 	 * writeback throttle from throttling log writes behind background
+ 	 * metadata writeback and causing priority inversions.
+ 	 */
+-	iclog->ic_bio.bi_opf = REQ_OP_WRITE | REQ_META | REQ_SYNC | REQ_IDLE;
++	bio_init(&iclog->ic_bio, log->l_targ->bt_bdev, iclog->ic_bvec,
++		 howmany(count, PAGE_SIZE),
++		 REQ_OP_WRITE | REQ_META | REQ_SYNC | REQ_IDLE);
++	iclog->ic_bio.bi_iter.bi_sector = log->l_logBBstart + bno;
++	iclog->ic_bio.bi_end_io = xlog_bio_end_io;
++	iclog->ic_bio.bi_private = iclog;
++
+ 	if (iclog->ic_flags & XLOG_ICL_NEED_FLUSH) {
+ 		iclog->ic_bio.bi_opf |= REQ_PREFLUSH;
+ 		/*
+diff --git a/fs/zonefs/super.c b/fs/zonefs/super.c
+index c0fc2c326dcee..d331b52592a0a 100644
+--- a/fs/zonefs/super.c
++++ b/fs/zonefs/super.c
+@@ -1540,10 +1540,8 @@ static int zonefs_read_super(struct super_block *sb)
+ 	if (!page)
+ 		return -ENOMEM;
+ 
+-	bio_init(&bio, &bio_vec, 1);
++	bio_init(&bio, sb->s_bdev, &bio_vec, 1, REQ_OP_READ);
+ 	bio.bi_iter.bi_sector = 0;
+-	bio.bi_opf = REQ_OP_READ;
+-	bio_set_dev(&bio, sb->s_bdev);
+ 	bio_add_page(&bio, page, PAGE_SIZE, 0);
+ 
+ 	ret = submit_bio_wait(&bio);
 diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 117d7f248ac96..edeae54074ede 100644
+index be6ac92913d48..41bedf727f59c 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -790,6 +790,7 @@ static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
- 		bio->bi_opf |= REQ_NOWAIT;
- }
+@@ -456,8 +456,8 @@ static inline int bio_iov_vecs_to_alloc(struct iov_iter *iter, int max_segs)
+ struct request_queue;
  
--struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp);
-+struct bio *blk_next_bio(struct bio *bio, struct block_device *bdev,
-+		unsigned int nr_pages, unsigned int opf, gfp_t gfp);
- 
- #endif /* __LINUX_BIO_H */
+ extern int submit_bio_wait(struct bio *bio);
+-extern void bio_init(struct bio *bio, struct bio_vec *table,
+-		     unsigned short max_vecs);
++void bio_init(struct bio *bio, struct block_device *bdev, struct bio_vec *table,
++	      unsigned short max_vecs, unsigned int opf);
+ extern void bio_uninit(struct bio *);
+ extern void bio_reset(struct bio *);
+ void bio_chain(struct bio *, struct bio *);
 -- 
 2.30.2
+
