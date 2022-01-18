@@ -1,84 +1,79 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/19] nilfs2: remove nilfs_alloc_seg_bio
-Date: Tue, 18 Jan 2022 08:19:35 +0100
-Message-ID: <20220118071952.1243143-3-hch@lst.de>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 03/19] nfs/blocklayout: remove bl_alloc_init_bio
+Date: Tue, 18 Jan 2022 08:19:36 +0100
+Message-ID: <20220118071952.1243143-4-hch@lst.de>
 References: <20220118071952.1243143-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=7QPyuzOR2N2LqXuXA08GkKhJ7fsHc2fxZXqTeovi8aQ=; b=mwLo7/0/BOPnfEnPa3xkh1wtp3
-        15wY0VF1l5wgNEmlmFx9qahgWnFhyJl6myyHdYnnzRUVdOqVBkw7UQ2s8GiXprR+T/gsvB/2g/F5v
-        UCaXHspI+nVqVsB58mvQw0HRJkvSn89DW90IDAfE05lkscu3Lf/H7fIN1bqOWBihdD4Tp5Ut6juFU
-        WNJ1skjZ7Xkx6wUi1wozYtRk77Q0Gy2FFrBE57k2vN/cSiZKuWEEa/FwDkaLAeAptVbMHq6BGRtqX
-        s60rfzBqA3qtv2QplYalZU7PGOtQaONd/6YhcyxH1JxZ9Vqhkoc/TOJtrX45PcQTGjUSplXja4jev
-        6N8KX46Q==;
-In-Reply-To: <20220118071952.1243143-1-hch@lst.de>
+        bh=pMAOIxwEWgivE8T/8jAutxBqi67ojpc7aSJ9Dfvp1Nk=; b=kFKC1f6LHbffT6qzEiLaEuNO4Z
+        y5Wa6DZ64ihxEa532MbgjcReTwtC60BjPLQEj05bs6YuEeVI3sM977SdQzX4xmobJdlgPZVs2xWyC
+        EMJ38PRJqUFy7XNiizvMrGIgprvIHQUp93bgTey3sz0jg7eZMOPncNFBYMmaEZWsV/sf41kUB2N71
+        F5CwruEap8s8xzf4gj6k+YJ16+23/Z0Hl+DOqrPk1VXeoCpYu2IIRMb8Gs68ph2j0gtiX2+uWw4CJ
+        twPIBYTRWRfw9YLbtir6ZkrrfCdWs9qy8EIvSFTnNOFAOKv/ZGihXdRGCZZictQuPhGrpOtQoXsyI
+        Sb9DHpsQ==;
+In-Reply-To: <20220118071952.1243143-1-hch-jcswGhMUV9g@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Pavel Begunkov <asml.silence@gmail.com>, Mike Snitzer <snitzer@redhat.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Andrew Morton <akpm@linux-foundation.org>, "Md . Haris Iqbal " <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.co>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev, xen-devel@lists.xenproject.org, drbd-dev@lists.linbit.com
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Md . Haris Iqbal " <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau-Sxgqhf6Nn4Bhl2p70BpVqQ@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 
 bio_alloc will never fail when it can sleep.  Remove the now simple
-nilfs_alloc_seg_bio helper and open code it in the only caller.
+bl_alloc_init_bio helper and open code it in the only caller.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- fs/nilfs2/segbuf.c | 31 ++++---------------------------
- 1 file changed, 4 insertions(+), 27 deletions(-)
+ fs/nfs/blocklayout/blocklayout.c | 26 +++++---------------------
+ 1 file changed, 5 insertions(+), 21 deletions(-)
 
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index 43287b0d3e9b6..53b7c6d21cdd8 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -371,29 +371,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
- 	return err;
+diff --git a/fs/nfs/blocklayout/blocklayout.c b/fs/nfs/blocklayout/blocklayout.c
+index fe860c5387476..38e063af7e98a 100644
+--- a/fs/nfs/blocklayout/blocklayout.c
++++ b/fs/nfs/blocklayout/blocklayout.c
+@@ -115,23 +115,6 @@ bl_submit_bio(struct bio *bio)
+ 	return NULL;
  }
  
--/**
-- * nilfs_alloc_seg_bio - allocate a new bio for writing log
-- * @nilfs: nilfs object
-- * @start: start block number of the bio
-- * @nr_vecs: request size of page vector.
-- *
-- * Return Value: On success, pointer to the struct bio is returned.
-- * On error, NULL is returned.
-- */
--static struct bio *nilfs_alloc_seg_bio(struct the_nilfs *nilfs, sector_t start,
--				       int nr_vecs)
+-static struct bio *bl_alloc_init_bio(unsigned int npg,
+-		struct block_device *bdev, sector_t disk_sector,
+-		bio_end_io_t end_io, struct parallel_io *par)
 -{
 -	struct bio *bio;
 -
--	bio = bio_alloc(GFP_NOIO, nr_vecs);
--	if (likely(bio)) {
--		bio_set_dev(bio, nilfs->ns_bdev);
--		bio->bi_iter.bi_sector =
--			start << (nilfs->ns_blocksize_bits - 9);
+-	npg = bio_max_segs(npg);
+-	bio = bio_alloc(GFP_NOIO, npg);
+-	if (bio) {
+-		bio->bi_iter.bi_sector = disk_sector;
+-		bio_set_dev(bio, bdev);
+-		bio->bi_end_io = end_io;
+-		bio->bi_private = par;
 -	}
 -	return bio;
 -}
 -
- static void nilfs_segbuf_prepare_write(struct nilfs_segment_buffer *segbuf,
- 				       struct nilfs_write_info *wi)
+ static bool offset_in_map(u64 offset, struct pnfs_block_dev_map *map)
  {
-@@ -414,10 +391,10 @@ static int nilfs_segbuf_submit_bh(struct nilfs_segment_buffer *segbuf,
- 	BUG_ON(wi->nr_vecs <= 0);
-  repeat:
- 	if (!wi->bio) {
--		wi->bio = nilfs_alloc_seg_bio(wi->nilfs, wi->blocknr + wi->end,
--					      wi->nr_vecs);
--		if (unlikely(!wi->bio))
--			return -ENOMEM;
-+		wi->bio = bio_alloc(GFP_NOIO, wi->nr_vecs);
-+		bio_set_dev(wi->bio, wi->nilfs->ns_bdev);
-+		wi->bio->bi_iter.bi_sector = (wi->blocknr + wi->end) <<
-+			(wi->nilfs->ns_blocksize_bits - 9);
- 	}
+ 	return offset >= map->start && offset < map->start + map->len;
+@@ -171,10 +154,11 @@ do_add_page_to_bio(struct bio *bio, int npg, int rw, sector_t isect,
  
- 	len = bio_add_page(wi->bio, bh->b_page, bh->b_size, bh_offset(bh));
+ retry:
+ 	if (!bio) {
+-		bio = bl_alloc_init_bio(npg, map->bdev,
+-				disk_addr >> SECTOR_SHIFT, end_io, par);
+-		if (!bio)
+-			return ERR_PTR(-ENOMEM);
++		bio = bio_alloc(GFP_NOIO, bio_max_segs(npg));
++		bio->bi_iter.bi_sector = disk_addr >> SECTOR_SHIFT;
++		bio_set_dev(bio, map->bdev);
++		bio->bi_end_io = end_io;
++		bio->bi_private = par;
+ 		bio_set_op_attrs(bio, rw, 0);
+ 	}
+ 	if (bio_add_page(bio, page, *len, offset) < *len) {
 -- 
 2.30.2
 
