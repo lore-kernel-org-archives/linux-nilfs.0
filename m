@@ -1,50 +1,52 @@
-From: Jinpu Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 10/19] rnbd-srv: simplify bio mapping in
-	process_rdma
-Date: Thu, 20 Jan 2022 09:46:23 +0100
-Message-ID: <CAMGffE=+ENBdRfugG4k3yB_ca3rqwnaKFXC4+8=CZ=LGvggA6w@mail.gmail.com>
-References: <20220118071952.1243143-1-hch@lst.de>
-	<20220118071952.1243143-11-hch@lst.de>
-	<CAMGffEmFZB1PPE09bfxQjKw-tJhdprEkF-OWrVF4Kjsf1OwQ_g@mail.gmail.com>
-	<20220120083746.GA5622@lst.de>
+From: Dongliang Mu <dzm91@hust.edu.cn>
+Subject: [PATCH] fs: nilfs2: fix memory leak in nilfs_sysfs_create_device_group
+Date: Thu, 20 Jan 2022 21:44:14 +0800
+Message-ID: <20220120134415.57147-1-dzm91@hust.edu.cn>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ionos.com; s=google;
-	h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-	:cc; bh=cgwK+h4TcKTuzoMVgpyjaT6hqJgZPgeFi9/82jcEytw=;
-	b=bSaFa+URfbmU/MszEXVOlamjch2d/bVKLmiJuU4jZJRaWnRGqGHrY9tAQfmQRbRXiV
-	uc/9kTk3/S5l1jHMLdTRmVU57otES44XeerqdTVprmM6I9EDUZQLX+yH0h63YbxWR9mE
-	9nbGRPoufn7nse+dFWj62siY9k2GshoKLCrxbi33+uXmG5HvTOiNXAwJCNJOjjOHmaSp
-	XOP01luyWgvqHzNdBA4wIYoRQp0k9Ft6zqCX+Ra/R90oY2R7/AxbMlg/sS1PwZuWZg03
-	Z3JDZLtjXW1ZdUyTLOQOdSV8iGdn5zWa6hPXzsGCHlb9LWK1Z0CByscOqozFwyTfAd7X
-	/t3g==
-In-Reply-To: <20220120083746.GA5622-jcswGhMUV9g@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Komarov <almaz.alexandrovich-m5I1DM4ARimttCpgsWEBFlaTQe2KTcn/@public.gmane.org>, =?UTF-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau-Sxgqhf6Nn4Bhl2p70BpVqQ@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Md . Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, Pavel Begunkov <asml.silence-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Pavel Skripkin <paskripkin@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Dongliang Mu <dzm91@hust.edu.cn>, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Thu, Jan 20, 2022 at 9:37 AM Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
->
-> On Wed, Jan 19, 2022 at 01:20:54AM +0100, Jinpu Wang wrote:
-> > this changes lead to IO error all the time, because bio_add_page return len.
-> > We need  if (bio_add_page(bio, virt_to_page(data), datalen,
-> >                      offset_in_page(data)) < datalen)
->
-> Does this version look good to you?
->
-> http://git.infradead.org/users/hch/block.git/commitdiff/62adb08e765b889dd8db4227cad33a710e36d631
+The preivous commit 8fd0c1b0647a ("nilfs2: fix memory leak in
+nilfs_sysfs_delete_device_group") only handles the memory leak in the
+nilfs_sysfs_delete_device_group. However, the similar memory leak still
+occurs in the nilfs_sysfs_create_device_group.
 
-Yes, lgtm, thank you!
-Reviewed-by: Jack Wang <jinpu.wang-6tqlonuGt1TQT0dZR+AlfA@public.gmane.org>
-Tested-by: Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>
+Fix it by adding kobject_del when
+kobject_init_and_add succeeds, but one of the following calls fails.
+
+Fixes: 8fd0c1b0647a ("nilfs2: fix memory leak in nilfs_sysfs_delete_device_group")
+Signed-off-by: Dongliang Mu <dzm91@hust.edu.cn>
+---
+ fs/nilfs2/sysfs.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
+index 379d22e28ed6..0b2db2b499d5 100644
+--- a/fs/nilfs2/sysfs.c
++++ b/fs/nilfs2/sysfs.c
+@@ -995,7 +995,7 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+ 
+ 	err = nilfs_sysfs_create_mounted_snapshots_group(nilfs);
+ 	if (err)
+-		goto cleanup_dev_kobject;
++		goto delete_dev_kobject;
+ 
+ 	err = nilfs_sysfs_create_checkpoints_group(nilfs);
+ 	if (err)
+@@ -1027,6 +1027,9 @@ int nilfs_sysfs_create_device_group(struct super_block *sb)
+ delete_mounted_snapshots_group:
+ 	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
+ 
++delete_dev_kobject:
++	kobject_del(&nilfs->ns_dev_kobj);
++
+ cleanup_dev_kobject:
+ 	kobject_put(&nilfs->ns_dev_kobj);
+ 	kfree(nilfs->ns_dev_subgroups);
+-- 
+2.25.1
+
