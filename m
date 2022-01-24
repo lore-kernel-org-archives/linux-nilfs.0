@@ -1,117 +1,121 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Fw:Re: [PATCH] fs: nilfs2: fix memory leak in nilfs sysfs create
- device group
-Date: Sat, 22 Jan 2022 13:22:12 +0900
-Message-ID: <CAKFNMokdB+Zph-1OyC1-Xnyi93r+yKSusgaEaa=CkuUBttwRZA@mail.gmail.com>
-References: <3192BC90-D082-472B-B310-6E09A14A77C6@hust.edu.cn> <CAD-N9QUqfq+0UeMjQALUmGpX5xgjS6=BXvsqcXQpJRzhB6hHLw@mail.gmail.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: improve the bio allocation interface v2
+Date: Mon, 24 Jan 2022 10:10:48 +0100
+Message-ID: <20220124091107.642561-1-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=WSl0n+WwVjP76UBPGcTgsvP7+rrxq9Ric0OqJhwHSkg=;
-        b=Ifz1AWXrSg+wgkYOmdBm1iMMJyLipcIzsywwWvL28u7TFV6c2w+oQn70f5wHbm7bjy
-         8pOqbS9n8ZsaagYrjRrYi6KrjdoRuuk5auolsU7jzm67aqVLfvUIklnVXV3pr2GanjfE
-         UNBI7kxvS8znxD9CxpqcFgrSQJTjXqUAFeode9QFaEz9b2Vh/DJFs7jtQ4HOfB6nYL37
-         6ol8AtPht+nBQKwMLVjp9p3dv6sl9kkT6Pzd8OXABDtkiCveZP6d7BJwdU7ECpvtojQF
-         WPZBmNP/x6c6K9XEjUIOpJPlEV5SN3Shm3rksWd0q7Xmh7lS5WLH0/v42OWsikmV/fIs
-         41NQ==
-In-Reply-To: <CAD-N9QUqfq+0UeMjQALUmGpX5xgjS6=BXvsqcXQpJRzhB6hHLw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+        MIME-Version:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+        Content-ID:Content-Description:In-Reply-To:References;
+        bh=1yiFS3ezJsiNcQQCNo+FJNFqcIQE91ajvdAy/sKWSB4=; b=dNNxqAx0zWkEqdV7/b0emSzmAV
+        KVVvuwIWXkQFQyoYY5YDqz/URzmW+OjGlUuB44FdPtaVwG1P5GtdplXzkCndI0bH60IkUO47UPLhz
+        S2JoUcpt/7LvHhHWafiGFH0X+1iwj0YVxms2MtUklTePRVn1uenKkqD6Cg2SPrGLnop53TzV6Arcx
+        T6i0YUlPLY7zKouXXV6jM5xu0eEr7/gTFvHBrNjHv0AoD45hIui+1gO9NpOzTBe/TKD2uDehDoPiS
+        jTeEj1oSSUGDKTwEGspNcmf1o9fhjOWrT04yzhTW12m4CCWbYLYRpFkmXrRjZ+n7HrnRzdFlYOCPQ
+        x4FPDuIg==;
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, =?UTF-8?B?5oWV5Yas5Lqu?= <dzm91-6lmH0oBJgSDM1kAEIRd3EQ@public.gmane.org>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Pavel Begunkov <asml.silence@gmail.com>, Mike Snitzer <snitzer@redhat.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Andrew Morton <akpm@linux-foundation.org>, "Md . Haris Iqbal " <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.co>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev, xen-devel@lists.xenproject.org, drbd-dev@lists.linbit.com
 
-Hi Dongliang,
+Hi Jens,
 
-On Sat, Jan 22, 2022 at 9:31 AM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > (added Nanyong Sun to CC)
-> > Hi Dongliang,
-> >
-> > On Thu, Jan 20, 2022 at 11:07 PM Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> >
-> >
-> > Hi Dongliang,
-> >
-> > On 1/20/22 16:44, Dongliang Mu wrote:
-> >
-> > The preivous commit 8fd0c1b0647a ("nilfs2: fix memory leak in
-> > nilfs_sysfs_delete_device_group") only handles the memory leak in the
-> > nilfs_sysfs_delete_device_group. However, the similar memory leak still
-> > occurs in the nilfs_sysfs_create_device_group.
-> >
-> > Fix it by adding kobject_del when
-> > kobject_init_and_add succeeds, but one of the following calls fails.
-> >
-> > Fixes: 8fd0c1b0647a ("nilfs2: fix memory leak in nilfs_sysfs_delete_device_group")
-> >
-> >
-> > Why Fixes tag points to my commit? This issue was introduced before my patch
-> >
-> >
-> > As Pavel pointed out, this patch is independent of his patch.
-> > The following one ?
->
-> Hi Pavel,
->
-> This is an incorrect fixes tag. I need to dig more about `git log -p
-> fs/nilfs2/sysfs.c`.
->
-> I wonder if there are any automatic or semi-automatic ways to capture
-> this fixes tag. Or how do you guys identify the fixes tag?
+this series is posted early because it has wide-ranging changes and could use some
+early ACKs before -rc1.
 
-I guess `git blame fs/nilfs2/sysfs.c` may help you to confirm where the change
-came from.   It shows information of commits for every line of the input file.
-If you are using github, 'blame button' is available.
+It changes the interface to the bio allocators to always pass a block_device and
+the operation, which is information needed for every bio submitted through
+bio_submit.  This means the fields can be directly initialized in bio_init instead
+of first being zeroed and thus should help to micro-optimize even better than the
+__bio_set_dev that Pavel proposed while also cleaning up code.
 
-If an issue is reproducible, we use `git bisect` to identify the patch
-that caused the
-issue, however, even then, try to understand why and how it affected
-by looking at
-source code and the commit.
+I have a follow on series to also deal with the bio cloning interfaces that need
+even more love, and additional cleanups for the callers which might be material
+for the next merge window.
 
->
-> >
-> > 5f5dec07aca7 ("nilfs2: fix memory leak in nilfs_sysfs_create_device_group")
-> >
-> > Signed-off-by: Dongliang Mu <dzm91-6lmH0oBJgSDM1kAEIRd3EQ@public.gmane.org>
-> > ---
-> > fs/nilfs2/sysfs.c | 5 ++++-
-> > 1 file changed, 4 insertions(+), 1 deletion(-)
-> >
-> >
-> > Can you describe what memory leak issue does this patch actually fix ?
-> >
-> > It looks like kobject_put() can call __kobject_del() unless circular
-> > references exist.
-> >
-> > kobject_put() -> kref_put() -> kobject_release() ->
-> > kobject_cleanup() -> __kobject_del()
-> >
-> > As explained in Documentation/core-api/kobject.rst,
-> >
-> > kobject_del() can be used to drop the reference to the parent object, if
-> > circular references are constructed.
-> >
-> > But, at least, the parent object is NULL in this case.
-> > I really want to understand what the real problem is.
-> >
-> > Thanks,
-> > Ryusuke Konishi
->
-> I know where my problem is. From the disconnect function, I think the
-> kobject_del and kobject_put are both necessary without checking the
-> documentation of kobjects.
->
-> Then I think the current error handling may miss kobject_del, and this
-> patch is generated.
->
-> As a result, I think we can ignore this patch. Sorry for my false alarm.
+Changes since v1:
+ - fix bio_add_page return value handling in rnbd-srv
+ - fix bio clenup in rnbd-srv
+ - fix a few commit message typos
+ - fix a bisection hazard in rnbd
+ - fix an initialization order issue in bio_alloc_bioset/bio_init
 
-Okay, thank you for your reply.
-If you notice anything we missed on this difference, please let us know.
-
-Regards,
-Ryusuke Konishi
+Diffstat:
+ block/bio.c                         |   73 ++++++++++++++++++++++++------------
+ block/blk-flush.c                   |    4 -
+ block/blk-lib.c                     |   32 ++-------------
+ block/blk-zoned.c                   |   14 +-----
+ block/blk.h                         |    2 
+ block/bounce.c                      |    6 --
+ block/fops.c                        |   35 +++++++----------
+ drivers/block/drbd/drbd_actlog.c    |    5 --
+ drivers/block/drbd/drbd_bitmap.c    |    7 +--
+ drivers/block/drbd/drbd_receiver.c  |   32 +++------------
+ drivers/block/floppy.c              |    4 -
+ drivers/block/pktcdvd.c             |    8 ---
+ drivers/block/rnbd/rnbd-srv-dev.c   |   61 ------------------------------
+ drivers/block/rnbd/rnbd-srv-dev.h   |   18 --------
+ drivers/block/rnbd/rnbd-srv.c       |   45 ++++++++--------------
+ drivers/block/rnbd/rnbd-srv.h       |    1 
+ drivers/block/xen-blkback/blkback.c |   25 ++----------
+ drivers/block/zram/zram_drv.c       |   16 ++-----
+ drivers/md/bcache/io.c              |    3 -
+ drivers/md/bcache/journal.c         |   16 ++-----
+ drivers/md/bcache/movinggc.c        |    4 -
+ drivers/md/bcache/request.c         |   18 +++-----
+ drivers/md/bcache/super.c           |    8 +--
+ drivers/md/bcache/writeback.c       |    4 -
+ drivers/md/dm-crypt.c               |   27 ++++---------
+ drivers/md/dm-io.c                  |    5 --
+ drivers/md/dm-log-writes.c          |   39 +++----------------
+ drivers/md/dm-snap.c                |   21 ----------
+ drivers/md/dm-thin.c                |   41 +++++---------------
+ drivers/md/dm-writecache.c          |    7 +--
+ drivers/md/dm-zoned-metadata.c      |   26 ++----------
+ drivers/md/dm.c                     |   12 ++---
+ drivers/md/md-multipath.c           |    2 
+ drivers/md/md.c                     |   24 +++++------
+ drivers/md/raid1.c                  |    8 +--
+ drivers/md/raid10.c                 |   14 ++----
+ drivers/md/raid5-cache.c            |   19 +++------
+ drivers/md/raid5-ppl.c              |   13 ++----
+ drivers/md/raid5.c                  |   12 ++---
+ drivers/nvdimm/nd_virtio.c          |    6 +-
+ drivers/nvme/target/io-cmd-bdev.c   |   18 +++-----
+ drivers/nvme/target/passthru.c      |    7 +--
+ drivers/nvme/target/zns.c           |   14 +++---
+ drivers/scsi/ufs/ufshpb.c           |    4 -
+ drivers/target/target_core_iblock.c |   11 +----
+ fs/btrfs/disk-io.c                  |   10 +---
+ fs/btrfs/extent_io.c                |    2 
+ fs/buffer.c                         |   14 ++----
+ fs/crypto/bio.c                     |   13 ++----
+ fs/direct-io.c                      |    5 --
+ fs/erofs/zdata.c                    |    5 --
+ fs/ext4/page-io.c                   |    3 -
+ fs/ext4/readpage.c                  |    8 +--
+ fs/f2fs/data.c                      |    7 +--
+ fs/gfs2/lops.c                      |    8 +--
+ fs/gfs2/meta_io.c                   |    4 -
+ fs/gfs2/ops_fstype.c                |    4 -
+ fs/hfsplus/wrapper.c                |    4 -
+ fs/iomap/buffered-io.c              |   26 +++++-------
+ fs/iomap/direct-io.c                |    8 ---
+ fs/jfs/jfs_logmgr.c                 |   11 -----
+ fs/jfs/jfs_metapage.c               |    9 +---
+ fs/mpage.c                          |   34 ++--------------
+ fs/nfs/blocklayout/blocklayout.c    |   26 +-----------
+ fs/nilfs2/segbuf.c                  |   31 +--------------
+ fs/ntfs3/fsntfs.c                   |   27 -------------
+ fs/ocfs2/cluster/heartbeat.c        |    4 -
+ fs/squashfs/block.c                 |   11 ++---
+ fs/xfs/xfs_bio_io.c                 |   14 ++----
+ fs/xfs/xfs_buf.c                    |    4 -
+ fs/xfs/xfs_log.c                    |   14 +++---
+ fs/zonefs/super.c                   |    9 +---
+ include/linux/bio.h                 |   30 ++++++--------
+ kernel/power/swap.c                 |    5 --
+ mm/page_io.c                        |   10 +---
+ 75 files changed, 372 insertions(+), 759 deletions(-)
