@@ -1,90 +1,113 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 3/9] f2fs: change retry waiting for
- f2fs_write_single_data_page()
+Subject: [PATCH 4/9] f2f2: replace some congestion_wait() calls with
+ io_schedule_timeout()
 Date: Thu, 27 Jan 2022 13:46:29 +1100
-Message-ID: <164325158956.29787.7016948342209980097.stgit@noble.brown>
+Message-ID: <164325158957.29787.2116312603613564596.stgit@noble.brown>
 References: <164325106958.29787.4865219843242892726.stgit@noble.brown>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1643251668; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+        t=1643251689; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=M8NYMcBcZD8GUv0cDvsP1eePtGigG8J8np/yV6nLjQQ=;
-        b=lpTMtDdgzXu6IXlWF2Cla7JZeA4O6IZP0tjrp8fZaU7ivDos+PHoL/XQMfCABF+bEfNOP4
-        asGZxs7WKvGfhEBJWG6JTtSILEhDDfyUZDxdz3isEFlXeNYP4t4z60IMGMWtpxXKM9DXAB
-        qZWJthZJaYv1R8Swu1zG6SDpKtDJcMw=
+        bh=VLryoRKmUuPESAB8QyVLfrgvCJTCmPKkdu4P/OX5YBg=;
+        b=Qti4P3eej7SwU9djhiMhUMgJ1ckOKm8O/J1pSaUAEHDRhQb1izQ4dQZrO97++mAvn3WVVr
+        T2k2nCp5oMqLD8x4f8vee6NJClS2lg1UPexxPkHMg0zJIBN6c452+a+u50wURMgo/tIfRv
+        rD3QIr1LCF3psUh7SWng5ZjcDzYoDdQ=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1643251668;
+        s=susede2_ed25519; t=1643251689;
         h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=M8NYMcBcZD8GUv0cDvsP1eePtGigG8J8np/yV6nLjQQ=;
-        b=GajJ1CW7bGmknt+eypyqRIr6NQ5RkVudFMz7+fbL2W6FyuUKWG82yY6INCh5zJBg+nHfCU
-        1tfjV2LY/eskY2DQ==
+        bh=VLryoRKmUuPESAB8QyVLfrgvCJTCmPKkdu4P/OX5YBg=;
+        b=uJ63TZZVZJQxUDYCfYcbm2ZGgBe9Q6Vwcu+8BWf/uQNpUEqXNKCc6PHt7MlRhE+A1sBtn6
+        UgWYWcQsDNRd9WCg==
 In-Reply-To: <164325106958.29787.4865219843242892726.stgit@noble.brown>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Andrew Morton <akpm@linux-foundation.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, Jeff Layton <jlayton@kernel.org>, Ilya Dryomov <idryomov@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, Trond Myklebust <trond.myklebust@hammerspace.com>, Anna Schumaker <anna.schumaker@netapp.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Paolo Valente <paolo.valente@linaro.org>, Jens Axboe <axboe@kernel.dk>
 Cc: linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, ceph-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org
 
-f2fs_write_single_data_page() can return -EAGAIN if it cannot get
-the cp_rwsem lock - it holds a page lock and so cannot wait for it.
-
-Some code which calls f2fs_write_single_data_page() use
-congestion_wait() and then tries again.  congestion_wait() doesn't do
-anything useful as congestion is no longer tracked.  So this is just a
-simple sleep.
-
-A better approach is it wait until the cp_rwsem lock can be taken - then
-try again.  There is certainly no point trying again *before* the lock
-can be taken.
+As congestion is no longer tracked, contestion_wait() is effectively
+equivalent to io_schedule_timeout().
+It isn't clear to me what these contestion_wait() calls are waiting
+for, so I cannot change them to wait for some particular event.
+So simply change them to io_schedule_timeout(), which will have
+exactly the same behaviour.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- fs/f2fs/compress.c |    6 +++---
- fs/f2fs/data.c     |    9 ++++++---
- 2 files changed, 9 insertions(+), 6 deletions(-)
+ fs/f2fs/segment.c |   14 ++++++++------
+ fs/f2fs/super.c   |    8 ++++----
+ 2 files changed, 12 insertions(+), 10 deletions(-)
 
-diff --git a/fs/f2fs/compress.c b/fs/f2fs/compress.c
-index d0c3aeba5945..58ff7f4b296c 100644
---- a/fs/f2fs/compress.c
-+++ b/fs/f2fs/compress.c
-@@ -1505,9 +1505,9 @@ static int f2fs_write_raw_pages(struct compress_ctx *cc,
- 				if (IS_NOQUOTA(cc->inode))
- 					return 0;
- 				ret = 0;
--				cond_resched();
+diff --git a/fs/f2fs/segment.c b/fs/f2fs/segment.c
+index 1dabc8244083..78e3fbc24e77 100644
+--- a/fs/f2fs/segment.c
++++ b/fs/f2fs/segment.c
+@@ -313,8 +313,8 @@ void f2fs_drop_inmem_pages_all(struct f2fs_sb_info *sbi, bool gc_failure)
+ skip:
+ 		iput(inode);
+ 	}
+-	congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
+-	cond_resched();
++	set_current_state(TASK_UNINTERRUPTIBLE);
++	io_schedule_timeout(DEFAULT_IO_TIMEOUT);
+ 	if (gc_failure) {
+ 		if (++looped >= count)
+ 			return;
+@@ -802,9 +802,10 @@ int f2fs_flush_device_cache(struct f2fs_sb_info *sbi)
+ 
+ 		do {
+ 			ret = __submit_flush_wait(sbi, FDEV(i).bdev);
+-			if (ret)
 -				congestion_wait(BLK_RW_ASYNC,
 -						DEFAULT_IO_TIMEOUT);
-+				/* Wait until we can get the lock, then try again. */
-+				f2fs_lock_op(F2FS_I_SB(cc->inode));
-+				f2fs_unlock_op(F2FS_I_SB(cc->inode));
- 				goto retry_write;
++			if (ret) {
++				set_current_state(TASK_UNINTERRUPTIBLE);
++				io_schedule_timeout(DEFAULT_IO_TIMEOUT);
++			}
+ 		} while (ret && --count);
+ 
+ 		if (ret) {
+@@ -3133,7 +3134,8 @@ static unsigned int __issue_discard_cmd_range(struct f2fs_sb_info *sbi,
+ 			blk_finish_plug(&plug);
+ 			mutex_unlock(&dcc->cmd_lock);
+ 			trimmed += __wait_all_discard_cmd(sbi, NULL);
+-			congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
++			set_current_state(TASK_UNINTERRUPTIBLE);
++			io_schedule_timeout(DEFAULT_IO_TIMEOUT);
+ 			goto next;
+ 		}
+ skip:
+diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+index 76e6a3df9aba..ae8dcbb71596 100644
+--- a/fs/f2fs/super.c
++++ b/fs/f2fs/super.c
+@@ -2135,8 +2135,8 @@ static void f2fs_enable_checkpoint(struct f2fs_sb_info *sbi)
+ 	/* we should flush all the data to keep data consistency */
+ 	do {
+ 		sync_inodes_sb(sbi->sb);
+-		cond_resched();
+-		congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
++		set_current_state(TASK_UNINTERRUPTIBLE);
++		io_schedule_timeout(DEFAULT_IO_TIMEOUT);
+ 	} while (get_pages(sbi, F2FS_DIRTY_DATA) && retry--);
+ 
+ 	if (unlikely(retry < 0))
+@@ -2504,8 +2504,8 @@ static ssize_t f2fs_quota_write(struct super_block *sb, int type,
+ 							&page, &fsdata);
+ 		if (unlikely(err)) {
+ 			if (err == -ENOMEM) {
+-				congestion_wait(BLK_RW_ASYNC,
+-						DEFAULT_IO_TIMEOUT);
++				set_current_state(TASK_UNINTERRUPTIBLE);
++				io_schedule_timeout(DEFAULT_IO_TIMEOUT);
+ 				goto retry;
  			}
- 			return ret;
-diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-index 8c417864c66a..1d2341163e2c 100644
---- a/fs/f2fs/data.c
-+++ b/fs/f2fs/data.c
-@@ -3047,9 +3047,12 @@ static int f2fs_write_cache_pages(struct address_space *mapping,
- 				} else if (ret == -EAGAIN) {
- 					ret = 0;
- 					if (wbc->sync_mode == WB_SYNC_ALL) {
--						cond_resched();
--						congestion_wait(BLK_RW_ASYNC,
--							DEFAULT_IO_TIMEOUT);
-+						/* Wait until we can get the
-+						 * lock, then try again.
-+						 */
-+						f2fs_lock_op(F2FS_I_SB(mapping->host));
-+						f2fs_unlock_op(F2FS_I_SB(mapping->host));
-+
- 						goto retry_write;
- 					}
- 					goto next;
+ 			set_sbi_flag(F2FS_SB(sb), SBI_QUOTA_NEED_REPAIR);
 
 
