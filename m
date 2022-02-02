@@ -1,89 +1,80 @@
-From: "NeilBrown" <neilb-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH 1/9] Remove inode_congested()
-Date: Sat, 29 Jan 2022 08:36:02 +1100
-Message-ID: <164340576289.5493.5784848964540459557@noble.neil.brown.name>
-References: <164325106958.29787.4865219843242892726.stgit@noble.brown>,
-	<164325158954.29787.7856652136298668100.stgit@noble.brown>,
-	<CAJfpegt-igF8HqsDUcMzfU0jYv8WpofLy0Uv0YnXLzsfx=tkGg@mail.gmail.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: improve the bio allocation interface v2
+Date: Wed, 02 Feb 2022 07:50:30 -0700
+Message-ID: <164381343094.170143.694743005104706258.b4-ty__17581.1071925395$1643813456$gmane$org@kernel.dk>
+References: <20220124091107.642561-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1643405774;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	mime-version:mime-version:content-type:content-type:
-	content-transfer-encoding:content-transfer-encoding:
-	in-reply-to:in-reply-to:references:references;
-	bh=NLILDfYIewMcTAbJZc9mPjKMlBqDlqhTsKM2N1uM+Vw=;
-	b=taayjmIQ/dw3pRt7LXMXgV+h3N2iGR9k6iWV1POVgUTfQy7v0b53WKl6W7epBEuQeWPNId
-	2nS5W8Zz+JDvOI2H2O325FIcHt7vLtCdfAuhacvrf751M2nGilH84Y1DtEW6P5pWfmkFXk
-	3R+tAum3D39BD7myqsYNPl0uf7Iudaw=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1643405774;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	mime-version:mime-version:content-type:content-type:
-	content-transfer-encoding:content-transfer-encoding:
-	in-reply-to:in-reply-to:references:references;
-	bh=NLILDfYIewMcTAbJZc9mPjKMlBqDlqhTsKM2N1uM+Vw=;
-	b=24PK3VAQmVA51Rx99IGbDGj51tJod8UX27xeq8Emd3IiwsHonr+XB9p01yVh4lqGGFRKKK
-	qudbZz9CfGjnNuAQ==
-In-reply-to: <CAJfpegt-igF8HqsDUcMzfU0jYv8WpofLy0Uv0YnXLzsfx=tkGg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20220124091107.642561-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
-Cc: "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Paolo Valente <paolo.valente-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Trond Myklebust <trond.myklebust-F/q8l9xzQnoyLce1RVWEUA@public.gmane.org>, Ilya Dryomov <idryomov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux NFS list <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://listman.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Philipp Reisner <philipp.reisner@linbit.com>, Pavel Begunkov <asml.silence@gmail.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, =?UTF-8?Q?_Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.co>, dm-devel@redhat.com, "Md . Haris Iqbal" <haris.iqbal@ionos.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-fsdevel@vger.kernel.org, xen-devel@lists.xenproject.org, Andrew Morton <akpm@linux-foundation.org>, ntfs3@lists.linux.dev, Jack Wang <jinpu.wang@ionos.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, drbd-dev@lists.linbit.com
 
-On Fri, 28 Jan 2022, Miklos Szeredi wrote:
-> On Thu, 27 Jan 2022 at 03:47, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org> wrote:
-> >
-> > inode_congested() reports if the backing-device for the inode is
-> > congested.  Few bdi report congestion any more, only ceph, fuse, and
-> > nfs.  Having support just for those is unlikely to be useful.
-> >
-> > The places which test inode_congested() or it variants like
-> > inode_write_congested(), avoid initiating IO if congestion is present.
-> > We now have to rely on other places in the stack to back off, or abort
-> > requests - we already do for everything except these 3 filesystems.
-> >
-> > So remove inode_congested() and related functions, and remove the call
-> > sites, assuming that inode_congested() always returns 'false'.
+On Mon, 24 Jan 2022 10:10:48 +0100, Christoph Hellwig wrote:
+> this series is posted early because it has wide-ranging changes and could use some
+> early ACKs before -rc1.
 > 
-> Looks to me this is going to "break" fuse; e.g. readahead path will go
-> ahead and try to submit more requests, even if the queue is getting
-> congested.   In this case the readahead submission will eventually
-> block, which is counterproductive.
+> It changes the interface to the bio allocators to always pass a block_device and
+> the operation, which is information needed for every bio submitted through
+> bio_submit.  This means the fields can be directly initialized in bio_init instead
+> of first being zeroed and thus should help to micro-optimize even better than the
+> __bio_set_dev that Pavel proposed while also cleaning up code.
 > 
-> I think we should *first* make sure all call sites are substituted
-> with appropriate mechanisms in the affected filesystems and as a last
-> step remove the superfluous bdi congestion mechanism.
-> 
-> You are saying that all fs except these three already have such
-> mechanisms in place, right?  Can you elaborate on that?
+> [...]
 
-Not much.  I haven't looked into how other filesystems cope, I just know
-that they must because no other filesystem ever has a congested bdi
-(with one or two minor exceptions, like filesystems over drbd).
+Applied, thanks!
 
-Surely read-ahead should never block.  If it hits congestion, the
-read-ahead request should simply fail.  block-based filesystems seem to
-set REQ_RAHEAD which might get mapped to REQ_FAILFAST_MASK, though I
-don't know how that is ultimately used.
+[01/19] fs: remove mpage_alloc
+        commit: d5f68a42da7a4516e7503c281a54a58727f07dc3
+[02/19] nilfs2: remove nilfs_alloc_seg_bio
+        commit: f0d911927b3c7cf5f9edb5941d0287144a602d0d
+[03/19] nfs/blocklayout: remove bl_alloc_init_bio
+        commit: 5d2ca2132f889bc2c90d6d07fc9fc129cfee8955
+[04/19] ntfs3: remove ntfs_alloc_bio
+        commit: 39146b6f66ba5c107d5c5758a17f290846165b4d
+[05/19] dm: bio_alloc can't fail if it is allowed to sleep
+        commit: 53db984e004c7116ce69e2f4a163664453336ae1
+[06/19] dm-crypt: remove clone_init
+        commit: 3f868c09ea8f40f800c4c644c072d91c9eee0d71
+[07/19] dm-snap: use blkdev_issue_flush instead of open coding it
+        commit: eba33b8ef1b90d8996eceb0569c06a4f784ef2b5
+[08/19] dm-thin: use blkdev_issue_flush instead of open coding it
+        commit: 28d7d128aad5cd2178b158900d58365d1fd3de94
+[09/19] drbd: bio_alloc can't fail if it is allow to sleep
+        commit: 4b1dc86d1857f1007865cab759f2285280692eee
+[10/19] rnbd-srv: simplify bio mapping in process_rdma
+        commit: 1fe0640ff94feae6d21417e2f4f2829b882274b1
+[11/19] rnbd-srv: remove struct rnbd_dev_blk_io
+        commit: d7b78de2b1552e3e7ce3a069f075cc2729aa5c34
+[12/19] xen-blkback: bio_alloc can't fail if it is allow to sleep
+        commit: 7d8d0c658d48705fca35238a8ff601b7c5cbc0de
+[13/19] block: move blk_next_bio to bio.c
+        commit: 3b005bf6acf009abd700e2c652c86e5c209cf63d
+[14/19] block: pass a block_device and opf to blk_next_bio
+        commit: 0a3140ea0fae377c9eaa031b7db1670ae422ed47
+[15/19] block: pass a block_device and opf to bio_alloc_bioset
+        commit: 609be1066731fea86436f5f91022f82e592ab456
+[16/19] block: pass a block_device and opf to bio_alloc_kiocb
+        commit: b77c88c2100ce6a5ec8126c13599b5a7f6663e32
+[17/19] block: pass a block_device and opf to bio_alloc
+        commit: 07888c665b405b1cd3577ddebfeb74f4717a84c4
+[18/19] block: pass a block_device and opf to bio_init
+        commit: 49add4966d79244013fce35f95c6833fae82b8b1
+[19/19] block: pass a block_device and opf to bio_reset
+        commit: a7c50c940477bae89fb2b4f51bd969a2d95d7512
 
-Maybe fuse and others should continue to track 'congestion' and reject
-read-ahead requests when congested.
-Maybe also skip WB_SYNC_NONE writes..
+Best regards,
+-- 
+Jens Axboe
 
-Or maybe this doesn't really matter in practice...  I wonder if we can
-measure the usefulness of congestion.
-
-Thanks,
-NeilBrown
