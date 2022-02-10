@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 05/11] nfs: remove reliance on bdi congestion
+Subject: [PATCH 06/11] ceph: remove reliance on bdi congestion
 Date: Thu, 10 Feb 2022 16:37:52 +1100
-Message-ID: <164447147259.23354.17010890548107181818.stgit@noble.brown>
+Message-ID: <164447147260.23354.2337728875894445797.stgit@noble.brown>
 References: <164447124918.23354.17858831070003318849.stgit@noble.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +13,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=CRQpTl6gU6MaBAdfwSalgYu+ynBw18B3JAwgtU5P7zs=; b=cI6r0qsZzNlOJB3UVWVSD+MlA/
- LfzQvc57EOipCKXiiOYEChyPg05MH2je7rcpDam7i4bMPyf60BObQXh+iWSW0RdNArPZIwFdLXCfR
- t0xm227nHHSLi+fbukA2WAUhcSzFps3StmDgWSkvzfIIZZpcmmNqrefT8t1bf5gH1AWc=;
+ bh=eBfA0J1VAN4vDciFet8kyITCSUUXphOKJM0dbNgQDlg=; b=UW2OfZ64yQEdbjvbohP/Pp76hC
+ PXKRHhPpWVaEY7fJHe2/vCi10S7c3fQRSETynVLBy0KKxQQ0cEx555EEEeVph0GUg97ky7TzQiEle
+ F7ZPzK7VTXBJW8rgRtiuyxkANd+awKmW3Ub0xB3XJ6kHlp6tQyeqhH38E4FH6Wgz8HAk=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:Content-Type:MIME-Version:References:
@@ -23,27 +23,27 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=CRQpTl6gU6MaBAdfwSalgYu+ynBw18B3JAwgtU5P7zs=; b=VdxUCufFFRT1AHtKjFmDTEKzWV
- u/2iklBsEIBfr/ROnKuR7BCyPwFxoCIdaqDYAB32KtzxZKCupRGICeggMCgf4/jHRk8lWi3BccBJt
- +LnSCA04ndTBQNGa+MH5oZFqFSpKlGS+ZEb/D71rNc7gJDTyAWFQKt7I7vXfr7PJDyLY=;
+ bh=eBfA0J1VAN4vDciFet8kyITCSUUXphOKJM0dbNgQDlg=; b=T/mOcygpqgQxJ93ptTZiXvz+dG
+ lXt8nHAQrZdjwpS1v+Z5ovPu4H1CwarGCDVpCCT6Q3G1beNcUlqjKACxuM2Ydf7qInyfkR05l1Bw5
+ 7Alk7+hdJDkCivIxedIZYE27PedeDjFoZsvQadmuc12AjSWSg4oYHFQBUj5qUagc0YC8=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
- t=1644471582; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+ t=1644471600; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
  mime-version:mime-version:content-type:content-type:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=CRQpTl6gU6MaBAdfwSalgYu+ynBw18B3JAwgtU5P7zs=;
- b=ChcdrxYihvrPbp5PVjckJeU5yNZ5WNA9eaF6g57ACzDLD8aukwAyGJrE1Dhoh0nTjp4vt2
- nDZOwS43Pd9e6ZAdWcXKM87utZEcMZseQwKBd8oSmVwF8lztvA4i8ChJRD3pTLDlnc1Nh1
- YE2K6gLKx5L2TOpAPctUhAL+S56F5Aw=
+ bh=eBfA0J1VAN4vDciFet8kyITCSUUXphOKJM0dbNgQDlg=;
+ b=yqtSqHyxwgEcFQ7tdufVmzaUi5fzX/LrzaAkzdhIXE5cnkTbkkI3ey9uCvPzGq0EJK8rda
+ +E9mWICL33Dcuy7EPilwaTHUIuOW26UmS0BKCDRpVFIaT/aGIr40dAeK5kQwab4f7Y/7nd
+ gFlh18fk9z+J+gUjbfTujF0HzFVklpA=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
- s=susede2_ed25519; t=1644471582;
+ s=susede2_ed25519; t=1644471600;
  h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
  mime-version:mime-version:content-type:content-type:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=CRQpTl6gU6MaBAdfwSalgYu+ynBw18B3JAwgtU5P7zs=;
- b=GFA0nCwwuMbxx5Xi7mI/VTbiRQlokeaPReGyF7/os614XAwf1Ti7o9FLajEb3ztekE66ra
- kxZ9tHN6H4q9aqDQ==
+ bh=eBfA0J1VAN4vDciFet8kyITCSUUXphOKJM0dbNgQDlg=;
+ b=CLVBNBE0ot5kjIcVDwlr6NGjjMHQwRokAo5rn1m3cMUkvfX1d7EUuwl81RGB0IMKB7NGBI
+ Q3kdl10ckIPVZ6Cg==
 In-Reply-To: <164447124918.23354.17858831070003318849.stgit@noble.brown>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -59,9 +59,9 @@ Cc: linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-doc@vger.kerne
 
 The bdi congestion tracking in not widely used and will be removed.
 
-NFS is one of a small number of filesystems that uses it, setting just
-the async (write) congestion flag at what it determines are appropriate
-times.
+CEPHfs is one of a small number of filesystems that uses it, setting
+just the async (write) congestion flags at what it determines are
+appropriate times.
 
 The only remaining effect of the async flag is to cause (some)
 WB_SYNC_NONE writes to be skipped.
@@ -78,72 +78,100 @@ at writeout.  This might be a good thing.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- fs/nfs/write.c            |   14 +++++++++++---
- include/linux/nfs_fs_sb.h |    1 +
- 2 files changed, 12 insertions(+), 3 deletions(-)
+ fs/ceph/addr.c  |   22 +++++++++++++---------
+ fs/ceph/super.c |    1 +
+ fs/ceph/super.h |    1 +
+ 3 files changed, 15 insertions(+), 9 deletions(-)
 
-diff --git a/fs/nfs/write.c b/fs/nfs/write.c
-index 987a187bd39a..7c986164018e 100644
---- a/fs/nfs/write.c
-+++ b/fs/nfs/write.c
-@@ -417,7 +417,7 @@ static void nfs_set_page_writeback(struct page *page)
+diff --git a/fs/ceph/addr.c b/fs/ceph/addr.c
+index c98e5238a1b6..dc7af34640dd 100644
+--- a/fs/ceph/addr.c
++++ b/fs/ceph/addr.c
+@@ -563,7 +563,7 @@ static int writepage_nounlock(struct page *page, struct writeback_control *wbc)
  
- 	if (atomic_long_inc_return(&nfss->writeback) >
- 			NFS_CONGESTION_ON_THRESH)
+ 	if (atomic_long_inc_return(&fsc->writeback_count) >
+ 	    CONGESTION_ON_THRESH(fsc->mount_options->congestion_kb))
 -		set_bdi_congested(inode_to_bdi(inode), BLK_RW_ASYNC);
-+		nfss->write_congested = 1;
- }
++		fsc->write_congested = true;
  
- static void nfs_end_page_writeback(struct nfs_page *req)
-@@ -433,7 +433,7 @@ static void nfs_end_page_writeback(struct nfs_page *req)
+ 	req = ceph_osdc_new_request(osdc, &ci->i_layout, ceph_vino(inode), page_off, &len, 0, 1,
+ 				    CEPH_OSD_OP_WRITE, CEPH_OSD_FLAG_WRITE, snapc,
+@@ -623,7 +623,7 @@ static int writepage_nounlock(struct page *page, struct writeback_control *wbc)
  
- 	end_page_writeback(req->wb_page);
- 	if (atomic_long_dec_return(&nfss->writeback) < NFS_CONGESTION_OFF_THRESH)
+ 	if (atomic_long_dec_return(&fsc->writeback_count) <
+ 	    CONGESTION_OFF_THRESH(fsc->mount_options->congestion_kb))
 -		clear_bdi_congested(inode_to_bdi(inode), BLK_RW_ASYNC);
-+		nfss->write_congested = 0;
- }
++		fsc->write_congested = false;
  
- /*
-@@ -672,6 +672,10 @@ static int nfs_writepage_locked(struct page *page,
- 	struct inode *inode = page_file_mapping(page)->host;
- 	int err;
+ 	return err;
+ }
+@@ -635,6 +635,10 @@ static int ceph_writepage(struct page *page, struct writeback_control *wbc)
+ 	BUG_ON(!inode);
+ 	ihold(inode);
  
 +	if (wbc->sync_mode == WB_SYNC_NONE &&
-+	    NFS_SERVER(inode)->write_congested)
++	    ceph_inode_to_client(inode)->write_congested)
 +		return AOP_WRITEPAGE_ACTIVATE;
 +
- 	nfs_inc_stats(inode, NFSIOS_VFSWRITEPAGE);
- 	nfs_pageio_init_write(&pgio, inode, 0,
- 				false, &nfs_async_write_completion_ops);
-@@ -719,6 +723,10 @@ int nfs_writepages(struct address_space *mapping, struct writeback_control *wbc)
- 	int priority = 0;
- 	int err;
+ 	wait_on_page_fscache(page);
+ 
+ 	err = writepage_nounlock(page, wbc);
+@@ -707,8 +711,7 @@ static void writepages_finish(struct ceph_osd_request *req)
+ 			if (atomic_long_dec_return(&fsc->writeback_count) <
+ 			     CONGESTION_OFF_THRESH(
+ 					fsc->mount_options->congestion_kb))
+-				clear_bdi_congested(inode_to_bdi(inode),
+-						    BLK_RW_ASYNC);
++				fsc->write_congested = false;
+ 
+ 			ceph_put_snap_context(detach_page_private(page));
+ 			end_page_writeback(page);
+@@ -760,6 +763,10 @@ static int ceph_writepages_start(struct address_space *mapping,
+ 	bool done = false;
+ 	bool caching = ceph_is_cache_enabled(inode);
  
 +	if (wbc->sync_mode == WB_SYNC_NONE &&
-+	    NFS_SERVER(inode)->write_congested)
++	    fsc->write_congested)
 +		return 0;
 +
- 	nfs_inc_stats(inode, NFSIOS_VFSWRITEPAGES);
+ 	dout("writepages_start %p (mode=%s)\n", inode,
+ 	     wbc->sync_mode == WB_SYNC_NONE ? "NONE" :
+ 	     (wbc->sync_mode == WB_SYNC_ALL ? "ALL" : "HOLD"));
+@@ -954,11 +961,8 @@ static int ceph_writepages_start(struct address_space *mapping,
  
- 	if (!(mntflags & NFS_MOUNT_WRITE_EAGER) || wbc->for_kupdate ||
-@@ -1893,7 +1901,7 @@ static void nfs_commit_release_pages(struct nfs_commit_data *data)
- 	}
- 	nfss = NFS_SERVER(data->inode);
- 	if (atomic_long_read(&nfss->writeback) < NFS_CONGESTION_OFF_THRESH)
--		clear_bdi_congested(inode_to_bdi(data->inode), BLK_RW_ASYNC);
-+		nfss->write_congested = 0;
+ 			if (atomic_long_inc_return(&fsc->writeback_count) >
+ 			    CONGESTION_ON_THRESH(
+-				    fsc->mount_options->congestion_kb)) {
+-				set_bdi_congested(inode_to_bdi(inode),
+-						  BLK_RW_ASYNC);
+-			}
+-
++				    fsc->mount_options->congestion_kb))
++				fsc->write_congested = true;
  
- 	nfs_init_cinfo(&cinfo, data->inode, data->dreq);
- 	nfs_commit_end(cinfo.mds);
-diff --git a/include/linux/nfs_fs_sb.h b/include/linux/nfs_fs_sb.h
-index ca0959e51e81..6aa2a200676a 100644
---- a/include/linux/nfs_fs_sb.h
-+++ b/include/linux/nfs_fs_sb.h
-@@ -138,6 +138,7 @@ struct nfs_server {
- 	struct nlm_host		*nlm_host;	/* NLM client handle */
- 	struct nfs_iostats __percpu *io_stats;	/* I/O statistics */
- 	atomic_long_t		writeback;	/* number of writeback pages */
-+	unsigned int		write_congested;/* flag set when writeback gets too high */
- 	unsigned int		flags;		/* various flags */
+ 			pages[locked_pages++] = page;
+ 			pvec.pages[i] = NULL;
+diff --git a/fs/ceph/super.c b/fs/ceph/super.c
+index bf79f369aec6..4a3b77d049c7 100644
+--- a/fs/ceph/super.c
++++ b/fs/ceph/super.c
+@@ -802,6 +802,7 @@ static struct ceph_fs_client *create_fs_client(struct ceph_mount_options *fsopt,
+ 	fsc->have_copy_from2 = true;
  
- /* The following are for internal use only. Also see uapi/linux/nfs_mount.h */
+ 	atomic_long_set(&fsc->writeback_count, 0);
++	fsc->write_congested = false;
+ 
+ 	err = -ENOMEM;
+ 	/*
+diff --git a/fs/ceph/super.h b/fs/ceph/super.h
+index 67f145e1ae7a..0bd97aea2319 100644
+--- a/fs/ceph/super.h
++++ b/fs/ceph/super.h
+@@ -121,6 +121,7 @@ struct ceph_fs_client {
+ 	struct ceph_mds_client *mdsc;
+ 
+ 	atomic_long_t writeback_count;
++	bool write_congested;
+ 
+ 	struct workqueue_struct *inode_wq;
+ 	struct workqueue_struct *cap_wq;
