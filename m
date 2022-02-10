@@ -1,8 +1,8 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 09/11] f2fs: replace congestion_wait() calls with
- io_schedule_timeout()
+Subject: [PATCH 10/11] block/bfq-iosched.c: use "false" rather
+ than "BLK_RW_ASYNC"
 Date: Thu, 10 Feb 2022 16:37:52 +1100
-Message-ID: <164447147263.23354.4653093481289339536.stgit@noble.brown>
+Message-ID: <164447147264.23354.2763356897218946255.stgit@noble.brown>
 References: <164447124918.23354.17858831070003318849.stgit@noble.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=QxH/65m79qvzBGSCwVr/N2GJs7ZD/rte4Udz5IqpfIY=; b=AsjlHSvY8S3XyOSm3thdub7sbR
- nDLcJ9e8295cS/IbO8IYqTuWo9+PLI+Zlr/o6MqlhyHW4i23GPflJ5PqYSVlCiaLYZub/vynBLwxL
- xgTk8pXNoZE9PcZiG6CFCT8xNPrT8exmZPpc3/KiBw6/KHmKb+8fhiE718RfBh4pXarw=;
+ bh=zUXE+p4nU0NR3LK33keTKiC3MiGpqHZzDnhCV/FYFVc=; b=cNtKVLYjlYJnuS533+2zSs0kuy
+ Xpl8W2kK0to64g9QHEFHjqS9AgkiIcuiJB2R46OS1QbkhG6snxzKDf5uX7pO4bfZ8rKYpW9kqVdlR
+ p3n5TgTodiY59G/52gHT+RYo/2S0kTnYxozMzbiZfLm8XCgnRjAezYzhh/6aL8ug49Cw=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:Content-Type:MIME-Version:References:
@@ -24,27 +24,27 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=QxH/65m79qvzBGSCwVr/N2GJs7ZD/rte4Udz5IqpfIY=; b=O6hrUQoNHzpeltJNZILFny3IxR
- 7GOFconR4FaMQPVMuAi63JZb9NW8p+cLCkwcKqQZRzXUhcKOjnhlLVZLe7IPCTJ7+duxFhaOgzc1z
- xqt85VGlMOwycqcKyMN9vX19DxQT7mFBL59JIyW+FKOGe4030jetTYSdHkBgN9Jt2dag=;
+ bh=zUXE+p4nU0NR3LK33keTKiC3MiGpqHZzDnhCV/FYFVc=; b=Cd1C2L16NRMhMx8AlFQeWWBYS6
+ /c/LiYi7A/UysX9ywzOFzKjvx6GDyN+s47o9Kt7Q9fw6qhfKhdacqOzU33XNE0Ad/uAkrvwlCHAja
+ IowkcVo/lu+10TIKA/ptOGLk/dNUXwua8LyIgUg+HYDTAnIZ8ZPhmHgc5V5uqByU7SO8=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
- t=1644471685; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+ t=1644471706; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
  mime-version:mime-version:content-type:content-type:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=QxH/65m79qvzBGSCwVr/N2GJs7ZD/rte4Udz5IqpfIY=;
- b=YlngNwM4KJ2lCrfzQTHN/A+kGQDElPDMkLDocNPY7oQ5eLtEVmlsbIk/oygnihNW7FrwoJ
- OmyikymLamTwFDO2ckBNa2bT8juNRxuUtWfpjZIuevpV3ajlt5aWF4ONgPW2kwJOCPqQh4
- lyIR4s2Uvt8OOUVHuPtfhMrLcUxrb7E=
+ bh=zUXE+p4nU0NR3LK33keTKiC3MiGpqHZzDnhCV/FYFVc=;
+ b=1iOjcBu6oE+BXqXEFHtabUHK7sZNNAt+F9BXNB5uV7m3v4yti6KzGXBiLv7VLruTI3nEpR
+ RzUf48rnigX5xLwZY9cqLSfPrG7m7EbPedvqO83z8P0IJauCacL1yhTk9JKT9feAU1DqJI
+ KUpM8T9cgXJ5IztxA4OlP16a8F1IH8w=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
- s=susede2_ed25519; t=1644471685;
+ s=susede2_ed25519; t=1644471706;
  h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
  mime-version:mime-version:content-type:content-type:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=QxH/65m79qvzBGSCwVr/N2GJs7ZD/rte4Udz5IqpfIY=;
- b=6n0i9ic8w1i2aZJ9N2rX+fVNb4ZqLqNFRFiTjK1N/idKrQahO5XYfaUQ4n8fWkZ2pi7f30
- fq+mOgq70ftta4BQ==
+ bh=zUXE+p4nU0NR3LK33keTKiC3MiGpqHZzDnhCV/FYFVc=;
+ b=0ZiiWmrlykQukuniHTdmeJDPxTmHcRtiUSrL0vXadFeW3t9RQIDNXluXWa7JinzIWwJ++B
+ zkp5vHuwQfZju0DQ==
 In-Reply-To: <164447124918.23354.17858831070003318849.stgit@noble.brown>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -58,120 +58,24 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Wu Fengguang <fengguang.wu@intel.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, Jeff Layton <jlayton@kernel.org>, Ilya Dryomov <idryomov@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, Trond Myklebust <trond.myklebust@hammerspace.com>, Anna Schumaker <anna.schumaker@netapp.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Paolo Valente <paolo.valente@linaro.org>, Jens Axboe <axboe@kernel.dk>
 Cc: linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-block@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, drbd-dev@lists.linbit.com
 
-As congestion is no longer tracked, congestion_wait() is effectively
-equivalent to io_schedule_timeout().
-So introduce f2fs_io_schedule_timeout() which sets TASK_UNINTERRUPTIBLE
-and call that instead.
+bfq_get_queue() expects a "bool" for the third arg, so pass "false"
+rather than "BLK_RW_ASYNC" which will soon be removed.
 
+Acked-by: Jens Axboe <axboe@kernel.dk>
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- fs/f2fs/compress.c |    4 +---
- fs/f2fs/data.c     |    3 +--
- fs/f2fs/f2fs.h     |    6 ++++++
- fs/f2fs/segment.c  |    8 +++-----
- fs/f2fs/super.c    |    6 ++----
- 5 files changed, 13 insertions(+), 14 deletions(-)
+ block/bfq-iosched.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/f2fs/compress.c b/fs/f2fs/compress.c
-index d0c3aeba5945..2f95559025ad 100644
---- a/fs/f2fs/compress.c
-+++ b/fs/f2fs/compress.c
-@@ -1505,9 +1505,7 @@ static int f2fs_write_raw_pages(struct compress_ctx *cc,
- 				if (IS_NOQUOTA(cc->inode))
- 					return 0;
- 				ret = 0;
--				cond_resched();
--				congestion_wait(BLK_RW_ASYNC,
--						DEFAULT_IO_TIMEOUT);
-+				f2fs_io_schedule_timeout(DEFAULT_IO_TIMEOUT);
- 				goto retry_write;
- 			}
- 			return ret;
-diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-index 8c417864c66a..d428ddfd42ee 100644
---- a/fs/f2fs/data.c
-+++ b/fs/f2fs/data.c
-@@ -3047,8 +3047,7 @@ static int f2fs_write_cache_pages(struct address_space *mapping,
- 				} else if (ret == -EAGAIN) {
- 					ret = 0;
- 					if (wbc->sync_mode == WB_SYNC_ALL) {
--						cond_resched();
--						congestion_wait(BLK_RW_ASYNC,
-+						f2fs_io_schedule_timeout(
- 							DEFAULT_IO_TIMEOUT);
- 						goto retry_write;
- 					}
-diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 68b44015514f..467f5dbdc7d1 100644
---- a/fs/f2fs/f2fs.h
-+++ b/fs/f2fs/f2fs.h
-@@ -4426,6 +4426,12 @@ static inline bool f2fs_block_unit_discard(struct f2fs_sb_info *sbi)
- 	return F2FS_OPTION(sbi).discard_unit == DISCARD_UNIT_BLOCK;
- }
- 
-+static inline void f2fs_io_schedule_timeout(long timeout)
-+{
-+	set_current_state(TASK_UNINTERRUPTIBLE);
-+	io_schedule_timeout(timeout);
-+}
-+
- #define EFSBADCRC	EBADMSG		/* Bad CRC detected */
- #define EFSCORRUPTED	EUCLEAN		/* Filesystem is corrupted */
- 
-diff --git a/fs/f2fs/segment.c b/fs/f2fs/segment.c
-index 1dabc8244083..6ff20da44ad7 100644
---- a/fs/f2fs/segment.c
-+++ b/fs/f2fs/segment.c
-@@ -313,8 +313,7 @@ void f2fs_drop_inmem_pages_all(struct f2fs_sb_info *sbi, bool gc_failure)
- skip:
- 		iput(inode);
+diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
+index 0c612a911696..4e645ae1e066 100644
+--- a/block/bfq-iosched.c
++++ b/block/bfq-iosched.c
+@@ -5448,7 +5448,7 @@ static void bfq_check_ioprio_change(struct bfq_io_cq *bic, struct bio *bio)
+ 	bfqq = bic_to_bfqq(bic, false);
+ 	if (bfqq) {
+ 		bfq_release_process_ref(bfqd, bfqq);
+-		bfqq = bfq_get_queue(bfqd, bio, BLK_RW_ASYNC, bic, true);
++		bfqq = bfq_get_queue(bfqd, bio, false, bic, true);
+ 		bic_set_bfqq(bic, bfqq, false);
  	}
--	congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
--	cond_resched();
-+	f2fs_io_schedule_timeout(DEFAULT_IO_TIMEOUT);
- 	if (gc_failure) {
- 		if (++looped >= count)
- 			return;
-@@ -803,8 +802,7 @@ int f2fs_flush_device_cache(struct f2fs_sb_info *sbi)
- 		do {
- 			ret = __submit_flush_wait(sbi, FDEV(i).bdev);
- 			if (ret)
--				congestion_wait(BLK_RW_ASYNC,
--						DEFAULT_IO_TIMEOUT);
-+				f2fs_io_schedule_timeout(DEFAULT_IO_TIMEOUT);
- 		} while (ret && --count);
- 
- 		if (ret) {
-@@ -3133,7 +3131,7 @@ static unsigned int __issue_discard_cmd_range(struct f2fs_sb_info *sbi,
- 			blk_finish_plug(&plug);
- 			mutex_unlock(&dcc->cmd_lock);
- 			trimmed += __wait_all_discard_cmd(sbi, NULL);
--			congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
-+			f2fs_io_schedule_timeout(DEFAULT_IO_TIMEOUT);
- 			goto next;
- 		}
- skip:
-diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
-index baefd398ec1a..ebd32daf052c 100644
---- a/fs/f2fs/super.c
-+++ b/fs/f2fs/super.c
-@@ -2135,8 +2135,7 @@ static void f2fs_enable_checkpoint(struct f2fs_sb_info *sbi)
- 	/* we should flush all the data to keep data consistency */
- 	do {
- 		sync_inodes_sb(sbi->sb);
--		cond_resched();
--		congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
-+		f2fs_io_schedule_timeout(DEFAULT_IO_TIMEOUT);
- 	} while (get_pages(sbi, F2FS_DIRTY_DATA) && retry--);
- 
- 	if (unlikely(retry < 0))
-@@ -2504,8 +2503,7 @@ static ssize_t f2fs_quota_write(struct super_block *sb, int type,
- 							&page, &fsdata);
- 		if (unlikely(err)) {
- 			if (err == -ENOMEM) {
--				congestion_wait(BLK_RW_ASYNC,
--						DEFAULT_IO_TIMEOUT);
-+				f2fs_io_schedule_timeout(DEFAULT_IO_TIMEOUT);
- 				goto retry;
- 			}
- 			set_sbi_flag(F2FS_SB(sb), SBI_QUOTA_NEED_REPAIR);
