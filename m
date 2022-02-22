@@ -1,218 +1,112 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/3] mpage: pass the operation to bio_alloc
-Date: Tue, 22 Feb 2022 16:46:32 +0100
-Message-ID: <20220222154634.597067-2-hch@lst.de>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 3/3] nilfs2: pass the operation to bio_alloc
+Date: Tue, 22 Feb 2022 16:46:34 +0100
+Message-ID: <20220222154634.597067-4-hch@lst.de>
 References: <20220222154634.597067-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=Ov2RLCZVRno4Z3mIFajf0hVw7rWbnzE3ynn4FrQrpTw=; b=BSO5HhZLTETcxjl4Ci/A+vbblW
-        cYGpSglO78ZmHTNkL/X1cfuAnMqQNknGr+pLZai3hQLSvdNmgoD8CpS1VKlY3PWey0qKM7+0F/RmN
-        7QumfXjGZN9/mAuLzLeA3/M0G+oE7XjLfk9MDSD9/bO8d3eAgvJrKX//TwRxWp76Mm3WG0BPEewB5
-        sZlhR7hXxpVBux6NzAqwW8mqxPQj6rmZRe0zQyo9jLsko6vqPsIzlVe4+LW9KKZVzvy/jt2SdUyrP
-        n0zDvQfLpFPKIkla86nFncfujH6ox9B3wVtwKM1zdXKym+RHBalhwMHg/8VdaXpon8Iqd9rqeLcoM
-        dJowoy8Q==;
-In-Reply-To: <20220222154634.597067-1-hch@lst.de>
+        bh=+U8cxPvWKrvxpKekOCC5dqw8suy2lTzpNt0Z4iXLejo=; b=mQLRZJy2Jqv/KuVeCdT4HHJA2U
+        LzZMFpfze3cdBygMl4Y+GIuFDPE9conHrq+1Z67JdBTeJj7tbFMFHwQBw02hHjZNk2R2w+IBOjxLV
+        mDcJGmbFGfRqceK5/HLSqQEhbj07Vd3QDvMYzJcI/7hJaC6ftH6nJOQlsViYOp9x/4YdDgWEliOpw
+        z2mY5ccVq7YrV1/UHe+ZHKWRYa92h5bPSz65+tl2q49fTAEsM+VebGcYK+oP6oi9fCFvjUOKFmSuL
+        0bn4Ine/T86sqivRxd7n6ifRuO0eeMbVVn2BsO53n2b/01OqxIpBN50r5w9eOTHvyf1KA6kBYYEP0
+        mVB0lqOQ==;
+In-Reply-To: <20220222154634.597067-1-hch-jcswGhMUV9g@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>, Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-block@vger.kernel.org, linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Refactor the mpage read/write page code to pass the op to bio_alloc
-instead of setting it just before the submission.
+Refactor the segbuf write code to pass the op to bio_alloc instead of
+setting it just before the submission.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- fs/mpage.c | 50 +++++++++++++++++++++-----------------------------
- 1 file changed, 21 insertions(+), 29 deletions(-)
+ fs/nilfs2/segbuf.c | 20 +++++++++-----------
+ 1 file changed, 9 insertions(+), 11 deletions(-)
 
-diff --git a/fs/mpage.c b/fs/mpage.c
-index dbfc02e23d97f..6c4b810a21d0a 100644
---- a/fs/mpage.c
-+++ b/fs/mpage.c
-@@ -57,10 +57,9 @@ static void mpage_end_io(struct bio *bio)
- 	bio_put(bio);
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index 4f71faacd8253..a3bb0c856ec80 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -337,8 +337,7 @@ static void nilfs_end_bio_write(struct bio *bio)
  }
  
--static struct bio *mpage_bio_submit(int op, int op_flags, struct bio *bio)
-+static struct bio *mpage_bio_submit(struct bio *bio)
+ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+-				   struct nilfs_write_info *wi, int mode,
+-				   int mode_flags)
++				   struct nilfs_write_info *wi)
  {
- 	bio->bi_end_io = mpage_end_io;
--	bio_set_op_attrs(bio, op, op_flags);
- 	guard_bio_eod(bio);
+ 	struct bio *bio = wi->bio;
+ 	int err;
+@@ -356,7 +355,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+ 
+ 	bio->bi_end_io = nilfs_end_bio_write;
+ 	bio->bi_private = segbuf;
+-	bio_set_op_attrs(bio, mode, mode_flags);
  	submit_bio(bio);
- 	return NULL;
-@@ -146,16 +145,15 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 	struct block_device *bdev = NULL;
- 	int length;
- 	int fully_mapped = 1;
--	int op_flags;
-+	int op = REQ_OP_READ;
- 	unsigned nblocks;
- 	unsigned relative_block;
- 	gfp_t gfp;
+ 	segbuf->sb_nbio++;
  
- 	if (args->is_readahead) {
--		op_flags = REQ_RAHEAD;
-+		op |= REQ_RAHEAD;
- 		gfp = readahead_gfp_mask(page->mapping);
- 	} else {
--		op_flags = 0;
- 		gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
+@@ -384,15 +382,15 @@ static void nilfs_segbuf_prepare_write(struct nilfs_segment_buffer *segbuf,
+ 
+ static int nilfs_segbuf_submit_bh(struct nilfs_segment_buffer *segbuf,
+ 				  struct nilfs_write_info *wi,
+-				  struct buffer_head *bh, int mode)
++				  struct buffer_head *bh)
+ {
+ 	int len, err;
+ 
+ 	BUG_ON(wi->nr_vecs <= 0);
+  repeat:
+ 	if (!wi->bio) {
+-		wi->bio = bio_alloc(wi->nilfs->ns_bdev, wi->nr_vecs, 0,
+-				    GFP_NOIO);
++		wi->bio = bio_alloc(wi->nilfs->ns_bdev, wi->nr_vecs,
++				    REQ_OP_WRITE, GFP_NOIO);
+ 		wi->bio->bi_iter.bi_sector = (wi->blocknr + wi->end) <<
+ 			(wi->nilfs->ns_blocksize_bits - 9);
+ 	}
+@@ -403,7 +401,7 @@ static int nilfs_segbuf_submit_bh(struct nilfs_segment_buffer *segbuf,
+ 		return 0;
+ 	}
+ 	/* bio is FULL */
+-	err = nilfs_segbuf_submit_bio(segbuf, wi, mode, 0);
++	err = nilfs_segbuf_submit_bio(segbuf, wi);
+ 	/* never submit current bh */
+ 	if (likely(!err))
+ 		goto repeat;
+@@ -433,13 +431,13 @@ static int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
+ 	nilfs_segbuf_prepare_write(segbuf, &wi);
+ 
+ 	list_for_each_entry(bh, &segbuf->sb_segsum_buffers, b_assoc_buffers) {
+-		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh, REQ_OP_WRITE);
++		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh);
+ 		if (unlikely(res))
+ 			goto failed_bio;
  	}
  
-@@ -264,7 +262,7 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 	 * This page will go to BIO.  Do we need to send this BIO off first?
- 	 */
- 	if (args->bio && (args->last_block_in_bio != blocks[0] - 1))
--		args->bio = mpage_bio_submit(REQ_OP_READ, op_flags, args->bio);
-+		args->bio = mpage_bio_submit(args->bio);
- 
- alloc_new:
- 	if (args->bio == NULL) {
-@@ -273,7 +271,7 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 								page))
- 				goto out;
- 		}
--		args->bio = bio_alloc(bdev, bio_max_segs(args->nr_pages), 0,
-+		args->bio = bio_alloc(bdev, bio_max_segs(args->nr_pages), op,
- 				      gfp);
- 		if (args->bio == NULL)
- 			goto confused;
-@@ -282,7 +280,7 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 
- 	length = first_hole << blkbits;
- 	if (bio_add_page(args->bio, page, length, 0) < length) {
--		args->bio = mpage_bio_submit(REQ_OP_READ, op_flags, args->bio);
-+		args->bio = mpage_bio_submit(args->bio);
- 		goto alloc_new;
+ 	list_for_each_entry(bh, &segbuf->sb_payload_buffers, b_assoc_buffers) {
+-		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh, REQ_OP_WRITE);
++		res = nilfs_segbuf_submit_bh(segbuf, &wi, bh);
+ 		if (unlikely(res))
+ 			goto failed_bio;
+ 	}
+@@ -449,8 +447,8 @@ static int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
+ 		 * Last BIO is always sent through the following
+ 		 * submission.
+ 		 */
+-		res = nilfs_segbuf_submit_bio(segbuf, &wi, REQ_OP_WRITE,
+-					      REQ_SYNC);
++		wi.bio->bi_opf |= REQ_SYNC;
++		res = nilfs_segbuf_submit_bio(segbuf, &wi);
  	}
  
-@@ -290,7 +288,7 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 	nblocks = map_bh->b_size >> blkbits;
- 	if ((buffer_boundary(map_bh) && relative_block == nblocks) ||
- 	    (first_hole != blocks_per_page))
--		args->bio = mpage_bio_submit(REQ_OP_READ, op_flags, args->bio);
-+		args->bio = mpage_bio_submit(args->bio);
- 	else
- 		args->last_block_in_bio = blocks[blocks_per_page - 1];
- out:
-@@ -298,7 +296,7 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 
- confused:
- 	if (args->bio)
--		args->bio = mpage_bio_submit(REQ_OP_READ, op_flags, args->bio);
-+		args->bio = mpage_bio_submit(args->bio);
- 	if (!PageUptodate(page))
- 		block_read_full_page(page, args->get_block);
- 	else
-@@ -361,7 +359,7 @@ void mpage_readahead(struct readahead_control *rac, get_block_t get_block)
- 		put_page(page);
- 	}
- 	if (args.bio)
--		mpage_bio_submit(REQ_OP_READ, REQ_RAHEAD, args.bio);
-+		mpage_bio_submit(args.bio);
- }
- EXPORT_SYMBOL(mpage_readahead);
- 
-@@ -378,7 +376,7 @@ int mpage_readpage(struct page *page, get_block_t get_block)
- 
- 	args.bio = do_mpage_readpage(&args);
- 	if (args.bio)
--		mpage_bio_submit(REQ_OP_READ, 0, args.bio);
-+		mpage_bio_submit(args.bio);
- 	return 0;
- }
- EXPORT_SYMBOL(mpage_readpage);
-@@ -469,7 +467,6 @@ static int __mpage_writepage(struct page *page, struct writeback_control *wbc,
- 	struct buffer_head map_bh;
- 	loff_t i_size = i_size_read(inode);
- 	int ret = 0;
--	int op_flags = wbc_to_write_flags(wbc);
- 
- 	if (page_has_buffers(page)) {
- 		struct buffer_head *head = page_buffers(page);
-@@ -577,7 +574,7 @@ static int __mpage_writepage(struct page *page, struct writeback_control *wbc,
- 	 * This page will go to BIO.  Do we need to send this BIO off first?
- 	 */
- 	if (bio && mpd->last_block_in_bio != blocks[0] - 1)
--		bio = mpage_bio_submit(REQ_OP_WRITE, op_flags, bio);
-+		bio = mpage_bio_submit(bio);
- 
- alloc_new:
- 	if (bio == NULL) {
-@@ -586,9 +583,10 @@ static int __mpage_writepage(struct page *page, struct writeback_control *wbc,
- 								page, wbc))
- 				goto out;
- 		}
--		bio = bio_alloc(bdev, BIO_MAX_VECS, 0, GFP_NOFS);
-+		bio = bio_alloc(bdev, BIO_MAX_VECS,
-+				REQ_OP_WRITE | wbc_to_write_flags(wbc),
-+				GFP_NOFS);
- 		bio->bi_iter.bi_sector = blocks[0] << (blkbits - 9);
--
- 		wbc_init_bio(wbc, bio);
- 		bio->bi_write_hint = inode->i_write_hint;
- 	}
-@@ -601,7 +599,7 @@ static int __mpage_writepage(struct page *page, struct writeback_control *wbc,
- 	wbc_account_cgroup_owner(wbc, page, PAGE_SIZE);
- 	length = first_unmapped << blkbits;
- 	if (bio_add_page(bio, page, length, 0) < length) {
--		bio = mpage_bio_submit(REQ_OP_WRITE, op_flags, bio);
-+		bio = mpage_bio_submit(bio);
- 		goto alloc_new;
- 	}
- 
-@@ -611,7 +609,7 @@ static int __mpage_writepage(struct page *page, struct writeback_control *wbc,
- 	set_page_writeback(page);
- 	unlock_page(page);
- 	if (boundary || (first_unmapped != blocks_per_page)) {
--		bio = mpage_bio_submit(REQ_OP_WRITE, op_flags, bio);
-+		bio = mpage_bio_submit(bio);
- 		if (boundary_block) {
- 			write_boundary_block(boundary_bdev,
- 					boundary_block, 1 << blkbits);
-@@ -623,7 +621,7 @@ static int __mpage_writepage(struct page *page, struct writeback_control *wbc,
- 
- confused:
- 	if (bio)
--		bio = mpage_bio_submit(REQ_OP_WRITE, op_flags, bio);
-+		bio = mpage_bio_submit(bio);
- 
- 	if (mpd->use_writepage) {
- 		ret = mapping->a_ops->writepage(page, wbc);
-@@ -679,11 +677,8 @@ mpage_writepages(struct address_space *mapping,
- 		};
- 
- 		ret = write_cache_pages(mapping, wbc, __mpage_writepage, &mpd);
--		if (mpd.bio) {
--			int op_flags = (wbc->sync_mode == WB_SYNC_ALL ?
--				  REQ_SYNC : 0);
--			mpage_bio_submit(REQ_OP_WRITE, op_flags, mpd.bio);
--		}
-+		if (mpd.bio)
-+			mpage_bio_submit(mpd.bio);
- 	}
- 	blk_finish_plug(&plug);
- 	return ret;
-@@ -700,11 +695,8 @@ int mpage_writepage(struct page *page, get_block_t get_block,
- 		.use_writepage = 0,
- 	};
- 	int ret = __mpage_writepage(page, wbc, &mpd);
--	if (mpd.bio) {
--		int op_flags = (wbc->sync_mode == WB_SYNC_ALL ?
--			  REQ_SYNC : 0);
--		mpage_bio_submit(REQ_OP_WRITE, op_flags, mpd.bio);
--	}
-+	if (mpd.bio)
-+		mpage_bio_submit(mpd.bio);
- 	return ret;
- }
- EXPORT_SYMBOL(mpage_writepage);
+  failed_bio:
 -- 
 2.30.2
 
