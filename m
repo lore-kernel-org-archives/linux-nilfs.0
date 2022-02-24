@@ -1,186 +1,110 @@
-From: Jeff Layton <jlayton@kernel.org>
+From: "NeilBrown" <neilb-l3A5Bk7waGM@public.gmane.org>
 Subject: Re: [PATCH 06/11] ceph: remove reliance on bdi congestion
-Date: Wed, 23 Feb 2022 10:43:42 -0500
-Message-ID: <ccc81eb5c23f933137c5da8d5050540cc54e58f0.camel@kernel.org>
-References: <164549971112.9187.16871723439770288255.stgit@noble.brown>
-         <164549983739.9187.14895675781408171186.stgit@noble.brown>
+Date: Thu, 24 Feb 2022 16:41:56 +1100
+Message-ID: <164568131640.25116.884631856219777713@noble.neil.brown.name>
+References: <164549971112.9187.16871723439770288255.stgit@noble.brown>,
+	<164549983739.9187.14895675781408171186.stgit@noble.brown>,
+	<ccc81eb5c23f933137c5da8d5050540cc54e58f0.camel@kernel.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1645631025;
-        bh=GlQlJ7gTsSs+29mQwM51uU8EyiUWcBAHlmovzgZMq5A=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=ZO1F7n8icLu0SS8LTbbOz3ZX6I0UObRkMZp430mjGi8LrVJUfF2OldgHMoIAzghD1
-         At9AE3VGPsI1ocidqHDOgU8k0/e6MLECtGV+lC7G/btQp4HrkDP1F9XVJc9Yse7aUL
-         mf0cqqw5PbI7fNrGwG0UzZkZyYXVB+Ml/GZggGje4XPizTwSQvNDVGk/tnmWbsfw2l
-         lEnLltwKC4sGbZcxl2yUy66AgXuv+/maAOaFl30j3WzRX1NMcz+bNn6oSbA9LnFLzL
-         wFifgLSN3AYjBd/Ue6eziysvQHRY1lFlZ1BnUJkJQNvSyDlpcBXxF1ZkxyYDbu3pSD
-         T2gR1yrBxcBIQ==
-In-Reply-To: <164549983739.9187.14895675781408171186.stgit@noble.brown>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: NeilBrown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Wu Fengguang <fengguang.wu@intel.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, Ilya Dryomov <idryomov@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, Trond Myklebust <trond.myklebust@hammerspace.com>, Anna Schumaker <anna.schumaker@netapp.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Paolo Valente <paolo.valente@linaro.org>, Jens Axboe <axboe@kernel.dk>
-Cc: linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel.org, ceph-devel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-kernel@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1645681327;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version:content-type:content-type:
+	content-transfer-encoding:content-transfer-encoding:
+	in-reply-to:in-reply-to:references:references;
+	bh=LKmtUS8Iww56ZG9AedqwAoOu6e9VunJUN5pEfmlFqFg=;
+	b=oacCq8DpEx+HDVYUG2DsF2wuspiuS5qhOaHg1qyYd+T9C2DteAD78mmee61D0FUkZI1YLt
+	89gaqCC57biyg1VI4eWpjZIyZz5bUCc+qIzPagHkvNRbHUbMXkbpK1X9DZdFRD07Aas5HD
+	lAXZBPvJQXlq+oS7kaTZ3tDK1PH657o=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1645681327;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version:content-type:content-type:
+	content-transfer-encoding:content-transfer-encoding:
+	in-reply-to:in-reply-to:references:references;
+	bh=LKmtUS8Iww56ZG9AedqwAoOu6e9VunJUN5pEfmlFqFg=;
+	b=MEMewd7NbYPArVPBoXiNu4N+Gd4+gUbLnYQ+eJp9sW2uduqkIYyCem3t9SIAJPZbOtxf7E
+	cjDOc2g76XCgQcAw==
+In-reply-to: <ccc81eb5c23f933137c5da8d5050540cc54e58f0.camel-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, Paolo Valente <paolo.valente-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Trond Myklebust <trond.myklebust-F/q8l9xzQnoyLce1RVWEUA@public.gmane.org>, Ilya Dryomov <idryomov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Philipp Reisner <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, Wu Fengguang <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 
-On Tue, 2022-02-22 at 14:17 +1100, NeilBrown wrote:
-> The bdi congestion tracking in not widely used and will be removed.
+On Thu, 24 Feb 2022, Jeff Layton wrote:
+> On Tue, 2022-02-22 at 14:17 +1100, NeilBrown wrote:
+> > The bdi congestion tracking in not widely used and will be removed.
+> > 
+> > CEPHfs is one of a small number of filesystems that uses it, setting
+> > just the async (write) congestion flags at what it determines are
+> > appropriate times.
+> > 
+> > The only remaining effect of the async flag is to cause (some)
+> > WB_SYNC_NONE writes to be skipped.
+> > 
+> > So instead of setting the flag, set an internal flag and change:
+> >  - .writepages to do nothing if WB_SYNC_NONE and the flag is set
+> >  - .writepage to return AOP_WRITEPAGE_ACTIVATE if WB_SYNC_NONE
+> >     and the flag is set.
+> > 
+> > The writepages change causes a behavioural change in that pageout() can
+> > now return PAGE_ACTIVATE instead of PAGE_KEEP, so SetPageActive() will
+> > be called on the page which (I think) wil further delay the next attempt
+> > at writeout.  This might be a good thing.
+> > 
+> > Signed-off-by: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
 > 
-> CEPHfs is one of a small number of filesystems that uses it, setting
-> just the async (write) congestion flags at what it determines are
-> appropriate times.
+> Maybe. I have to wonder whether all of this is really useful.
 > 
-> The only remaining effect of the async flag is to cause (some)
-> WB_SYNC_NONE writes to be skipped.
+> When things are congested we'll avoid trying to issue new writeback
+> requests. Note that we don't prevent new pages from being dirtied here -
+> - only their being written back.
 > 
-> So instead of setting the flag, set an internal flag and change:
->  - .writepages to do nothing if WB_SYNC_NONE and the flag is set
->  - .writepage to return AOP_WRITEPAGE_ACTIVATE if WB_SYNC_NONE
->     and the flag is set.
-> 
-> The writepages change causes a behavioural change in that pageout() can
-> now return PAGE_ACTIVATE instead of PAGE_KEEP, so SetPageActive() will
-> be called on the page which (I think) wil further delay the next attempt
-> at writeout.  This might be a good thing.
-> 
-> Signed-off-by: NeilBrown <neilb@suse.de>
+> This also doesn't do anything in the DIO or sync_write cases, so if we
+> lose caps or are doing DIO, we'll just keep churning out "unlimited"
+> writes in those cases anyway.
 
-Maybe. I have to wonder whether all of this is really useful.
+I think the point of congestion tracking is to differentiate between
+sync and async IO.  Or maybe "required" and "optional".
+Eventually the "optional" IO will become required, but if we can delay
+it until a time when there is less "required" io, then maybe we can
+improve perceived latency.
 
-When things are congested we'll avoid trying to issue new writeback
-requests. Note that we don't prevent new pages from being dirtied here -
-- only their being written back.
+"optional" IO here is write-back and read-ahead.  If the load of
+"required" IO is bursty, and if we can shuffle that optional stuff into
+the quiet periods, we might win.
 
-This also doesn't do anything in the DIO or sync_write cases, so if we
-lose caps or are doing DIO, we'll just keep churning out "unlimited"
-writes in those cases anyway.
+Whether this is a real need is an important question that I don't have an
+answer for.  And whether it is better to leave delayed requests in the
+page cache, or in the low-level queue with sync requests able to
+over-take them - I don't know.  If you have multiple low-level queue as
+you say you can with ceph, then lower might be better.
 
-With ceph too, we're not likely to be dealing with a single server as
-well. One OSD could be struggling to keep up but others are OK. Do we
-really want to throttle writeback to the ones that are fine?
+The block layer has REQ_RAHEAD ..  maybe those request get should get a
+lower priority ... though I don't think they do.
+NFS has a 3 level priority queue, with write-back going at a lower
+priority ... I think... for NFSv3 at least.
 
-FWIW, the original patch that added this stuff was this:
+Sometimes I suspect that as all our transports have become faster, we
+have been able to ignore the extra latency caused by poor scheduling of
+optional requests.  But at other times when my recently upgraded desktop
+is struggling to view a web page while compiling a kernel ...  I wonder
+if maybe we don't have the balance right any more.
 
-commit 2baba25019ec564cd247af74013873d69a0b8190
-Author: Yehuda Sadeh <yehuda@hq.newdream.net>
-Date:   Fri Dec 18 13:51:57 2009 -0800
+So maybe you are right - maybe we can rip all this stuff out.
 
-    ceph: writeback congestion control
-    
-    Set bdi congestion bit when amount of write data in flight exceeds adjustable
-    threshold.
-    
-    Signed-off-by: Yehuda Sadeh <yehuda@hq.newdream.net>
-    Signed-off-by: Sage Weil <sage@newdream.net>
+Or maybe not.
 
-...but it's pretty scant on details.
-
-The only reason I can see to throttle writeback like this is to prevent
-you from having too much memory tied up in writeback requests, but we
-aren't limiting other requests in the same way.
-
-Maybe we would do better to just rip this stuff out?
-
-> ---
->  fs/ceph/addr.c  |   22 +++++++++++++---------
->  fs/ceph/super.c |    1 +
->  fs/ceph/super.h |    1 +
->  3 files changed, 15 insertions(+), 9 deletions(-)
-> 
-> diff --git a/fs/ceph/addr.c b/fs/ceph/addr.c
-> index c98e5238a1b6..dc7af34640dd 100644
-> --- a/fs/ceph/addr.c
-> +++ b/fs/ceph/addr.c
-> @@ -563,7 +563,7 @@ static int writepage_nounlock(struct page *page, struct writeback_control *wbc)
->  
->  	if (atomic_long_inc_return(&fsc->writeback_count) >
->  	    CONGESTION_ON_THRESH(fsc->mount_options->congestion_kb))
-> -		set_bdi_congested(inode_to_bdi(inode), BLK_RW_ASYNC);
-> +		fsc->write_congested = true;
->  
->  	req = ceph_osdc_new_request(osdc, &ci->i_layout, ceph_vino(inode), page_off, &len, 0, 1,
->  				    CEPH_OSD_OP_WRITE, CEPH_OSD_FLAG_WRITE, snapc,
-> @@ -623,7 +623,7 @@ static int writepage_nounlock(struct page *page, struct writeback_control *wbc)
->  
->  	if (atomic_long_dec_return(&fsc->writeback_count) <
->  	    CONGESTION_OFF_THRESH(fsc->mount_options->congestion_kb))
-> -		clear_bdi_congested(inode_to_bdi(inode), BLK_RW_ASYNC);
-> +		fsc->write_congested = false;
->  
->  	return err;
->  }
-> @@ -635,6 +635,10 @@ static int ceph_writepage(struct page *page, struct writeback_control *wbc)
->  	BUG_ON(!inode);
->  	ihold(inode);
->  
-> +	if (wbc->sync_mode == WB_SYNC_NONE &&
-> +	    ceph_inode_to_client(inode)->write_congested)
-> +		return AOP_WRITEPAGE_ACTIVATE;
-> +
->  	wait_on_page_fscache(page);
->  
->  	err = writepage_nounlock(page, wbc);
-> @@ -707,8 +711,7 @@ static void writepages_finish(struct ceph_osd_request *req)
->  			if (atomic_long_dec_return(&fsc->writeback_count) <
->  			     CONGESTION_OFF_THRESH(
->  					fsc->mount_options->congestion_kb))
-> -				clear_bdi_congested(inode_to_bdi(inode),
-> -						    BLK_RW_ASYNC);
-> +				fsc->write_congested = false;
->  
->  			ceph_put_snap_context(detach_page_private(page));
->  			end_page_writeback(page);
-> @@ -760,6 +763,10 @@ static int ceph_writepages_start(struct address_space *mapping,
->  	bool done = false;
->  	bool caching = ceph_is_cache_enabled(inode);
->  
-> +	if (wbc->sync_mode == WB_SYNC_NONE &&
-> +	    fsc->write_congested)
-> +		return 0;
-> +
->  	dout("writepages_start %p (mode=%s)\n", inode,
->  	     wbc->sync_mode == WB_SYNC_NONE ? "NONE" :
->  	     (wbc->sync_mode == WB_SYNC_ALL ? "ALL" : "HOLD"));
-> @@ -954,11 +961,8 @@ static int ceph_writepages_start(struct address_space *mapping,
->  
->  			if (atomic_long_inc_return(&fsc->writeback_count) >
->  			    CONGESTION_ON_THRESH(
-> -				    fsc->mount_options->congestion_kb)) {
-> -				set_bdi_congested(inode_to_bdi(inode),
-> -						  BLK_RW_ASYNC);
-> -			}
-> -
-> +				    fsc->mount_options->congestion_kb))
-> +				fsc->write_congested = true;
->  
->  			pages[locked_pages++] = page;
->  			pvec.pages[i] = NULL;
-> diff --git a/fs/ceph/super.c b/fs/ceph/super.c
-> index bf79f369aec6..4a3b77d049c7 100644
-> --- a/fs/ceph/super.c
-> +++ b/fs/ceph/super.c
-> @@ -802,6 +802,7 @@ static struct ceph_fs_client *create_fs_client(struct ceph_mount_options *fsopt,
->  	fsc->have_copy_from2 = true;
->  
->  	atomic_long_set(&fsc->writeback_count, 0);
-> +	fsc->write_congested = false;
->  
->  	err = -ENOMEM;
->  	/*
-> diff --git a/fs/ceph/super.h b/fs/ceph/super.h
-> index 67f145e1ae7a..0bd97aea2319 100644
-> --- a/fs/ceph/super.h
-> +++ b/fs/ceph/super.h
-> @@ -121,6 +121,7 @@ struct ceph_fs_client {
->  	struct ceph_mds_client *mdsc;
->  
->  	atomic_long_t writeback_count;
-> +	bool write_congested;
->  
->  	struct workqueue_struct *inode_wq;
->  	struct workqueue_struct *cap_wq;
-> 
-> 
-
--- 
-Jeff Layton <jlayton@kernel.org>
+Thanks,
+NeilBrown
