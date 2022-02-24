@@ -1,104 +1,74 @@
-From: Jeff Layton <jlayton@kernel.org>
-Subject: Re: [PATCH 06/11] ceph: remove reliance on bdi congestion
-Date: Thu, 24 Feb 2022 06:30:31 -0500
-Message-ID: <e8ec98a9c4fab9b7aa099001f09ff9b11f0c3f96.camel@kernel.org>
-References: <164549971112.9187.16871723439770288255.stgit@noble.brown>
-        , <164549983739.9187.14895675781408171186.stgit@noble.brown>
-        , <ccc81eb5c23f933137c5da8d5050540cc54e58f0.camel@kernel.org>
-         <164568131640.25116.884631856219777713@noble.neil.brown.name>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] mm/fs: Remove redundant code
+Date: Fri, 25 Feb 2022 02:30:40 +0900
+Message-ID: <CAKFNMokx2Qk4jJx6s0vzseYRbfjejZwoDY3MnPODWhT7-_1K=g@mail.gmail.com>
+References: <20220207103738.103661-1-jiapeng.chong@linux.alibaba.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1645702235;
-        bh=NEiEy8aPQXv4YCvSSvu1CrwZcw8hIl0XdkWsb+8kvdc=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=lzpWsjsxoWJp5qkJ96UqX80NBnU+UC1GaWf56BLmCibrCohLLcjWbwrFK+UFLdIgS
-         M3+IVpmCOF1k1d18hfO0Yq0UaOYTv8twIThmyrZyJtS0BaI+IBuZ8GbGCLoCA4Nfky
-         uw0HWHltyCjHAtOKREnE0y6956nBervDeobT4ihNlqBT6q1gMuJz1O6ENY8jS1nD30
-         C4oS6GqmHNV9tEmM4VTc/rfnlTTnWEqSE78JNNYFLUpVx8tkL5Lpk/To+UfIvaeCaj
-         xXDDgEeajWU/EpVj5VTsQF8+WQbltJex+TSRMA276bz7hfF54LMk8fLTqs2VgkV0uj
-         ELHbDgvjlTNSA==
-In-Reply-To: <164568131640.25116.884631856219777713@noble.neil.brown.name>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=YN3o5AHfbGVmbeaZUJjmbDqTCWv/jzMc3EILlut6Oww=;
+        b=a1WdcUy4rP1D+h2JWaW3NZ7cj7mMuh72pwuxNzL9nm3dxxunfRyAUaKgFx/ynm5sJk
+         Fb1eD1BUAyDPcJJIbAP+2TYtWC0umJJBRstjSjWNhhYYMgeLf9AwliKwI8oye4bFPRVX
+         /cERCPKOAMd8igNl35lFYoXqAeAiEv5fxAii3NUBubgd4ffDG9xJuES8SyZbJbORPbyz
+         Qu35wM6y4ILBESw64aV6Qg5yPH3fmmw3qsoMAUgp4NkVgt7qryVSYkLc7L3crqEnNA7H
+         5wi2UDdYC8vTpVkeMgL3pw1bhWDOOFOU6OTN0oYLmJPHo1cqf+lmkaDhGf5CHGp25mPa
+         avXw==
+In-Reply-To: <20220207103738.103661-1-jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: NeilBrown <neilb@suse.de>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Wu Fengguang <fengguang.wu@intel.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, Ilya Dryomov <idryomov@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, Trond Myklebust <trond.myklebust@hammerspace.com>, Anna Schumaker <anna.schumaker@netapp.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Paolo Valente <paolo.valente@linaro.org>, Jens Axboe <axboe@kernel.dk>, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-ext4@vger.kernel
+Content-Transfer-Encoding: 7bit
+To: Jiapeng Chong <jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Abaci Robot <abaci-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
 
-On Thu, 2022-02-24 at 16:41 +1100, NeilBrown wrote:
-> On Thu, 24 Feb 2022, Jeff Layton wrote:
-> > On Tue, 2022-02-22 at 14:17 +1100, NeilBrown wrote:
-> > > The bdi congestion tracking in not widely used and will be removed.
-> > > 
-> > > CEPHfs is one of a small number of filesystems that uses it, setting
-> > > just the async (write) congestion flags at what it determines are
-> > > appropriate times.
-> > > 
-> > > The only remaining effect of the async flag is to cause (some)
-> > > WB_SYNC_NONE writes to be skipped.
-> > > 
-> > > So instead of setting the flag, set an internal flag and change:
-> > >  - .writepages to do nothing if WB_SYNC_NONE and the flag is set
-> > >  - .writepage to return AOP_WRITEPAGE_ACTIVATE if WB_SYNC_NONE
-> > >     and the flag is set.
-> > > 
-> > > The writepages change causes a behavioural change in that pageout() can
-> > > now return PAGE_ACTIVATE instead of PAGE_KEEP, so SetPageActive() will
-> > > be called on the page which (I think) wil further delay the next attempt
-> > > at writeout.  This might be a good thing.
-> > > 
-> > > Signed-off-by: NeilBrown <neilb@suse.de>
-> > 
-> > Maybe. I have to wonder whether all of this is really useful.
-> > 
-> > When things are congested we'll avoid trying to issue new writeback
-> > requests. Note that we don't prevent new pages from being dirtied here -
-> > - only their being written back.
-> > 
-> > This also doesn't do anything in the DIO or sync_write cases, so if we
-> > lose caps or are doing DIO, we'll just keep churning out "unlimited"
-> > writes in those cases anyway.
-> 
-> I think the point of congestion tracking is to differentiate between
-> sync and async IO.  Or maybe "required" and "optional".
-> Eventually the "optional" IO will become required, but if we can delay
-> it until a time when there is less "required" io, then maybe we can
-> improve perceived latency.
-> 
-> "optional" IO here is write-back and read-ahead.  If the load of
-> "required" IO is bursty, and if we can shuffle that optional stuff into
-> the quiet periods, we might win.
-> 
+Hi Jiapeng,
 
-In that case, maybe we should be counting in-flight reads too and deny
-readahead when the count crosses some threshold? It seems a bit silly to
-only look at writes when it comes to "congestion".
+On Mon, Feb 7, 2022 at 7:37 PM Jiapeng Chong
+<jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org> wrote:
+>
+> Clean up the following smatch warning:
+>
+> fs/nilfs2/segbuf.c:358 nilfs_segbuf_submit_bio() warn: ignoring
+> unreachable code.
+>
+> Reported-by: Abaci Robot <abaci-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+> Signed-off-by: Jiapeng Chong <jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+> ---
+>  fs/nilfs2/segbuf.c | 4 ----
+>  1 file changed, 4 deletions(-)
+>
+> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+> index 9e5dd6324ea1..50d7e2e4daed 100644
+> --- a/fs/nilfs2/segbuf.c
+> +++ b/fs/nilfs2/segbuf.c
+> @@ -341,7 +341,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+>                                    int mode_flags)
+>  {
+>         struct bio *bio = wi->bio;
+> -       int err;
+>
+>         bio->bi_end_io = nilfs_end_bio_write;
+>         bio->bi_private = segbuf;
+> @@ -354,9 +353,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+>         wi->nr_vecs = min(wi->max_pages, wi->rest_blocks);
+>         wi->start = wi->end;
+>         return 0;
+> -
+> -       wi->bio = NULL;
+> -       return err;
+>  }
 
-> Whether this is a real need is an important question that I don't have an
-> answer for.  And whether it is better to leave delayed requests in the
-> page cache, or in the low-level queue with sync requests able to
-> over-take them - I don't know.  If you have multiple low-level queue as
-> you say you can with ceph, then lower might be better.
-> 
-> The block layer has REQ_RAHEAD ..  maybe those request get should get a
-> lower priority ... though I don't think they do.
-> NFS has a 3 level priority queue, with write-back going at a lower
-> priority ... I think... for NFSv3 at least.
-> 
-> Sometimes I suspect that as all our transports have become faster, we
-> have been able to ignore the extra latency caused by poor scheduling of
-> optional requests.  But at other times when my recently upgraded desktop
-> is struggling to view a web page while compiling a kernel ...  I wonder
-> if maybe we don't have the balance right any more.
-> 
-> So maybe you are right - maybe we can rip all this stuff out.
-> 
+Sorry for my late reply.
 
-I lean more toward just removing it. The existing implementation seems a
-bit half-baked with the gaps in what's being counted. Granted, the
-default congestion threshold is pretty high with modern memory sizes, so
-it probably doesn't come into play much in practice, but removing it
-would reduce some complexity in the client.
+I will send this to Andrew to report and fix the regression on the -mm
+patch series.
 
--- 
-Jeff Layton <jlayton@kernel.org>
+I'd like to change the patch title to something like "nilfs2: Remove
+redundant code"
+since the "mm/fs" prefix does not properly represent what it applies to.
+(this patch may be folded into the patch that is causing the warning)
+
+Regards,
+Ryusuke Konishi
