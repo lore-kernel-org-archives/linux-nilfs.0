@@ -1,74 +1,87 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Subject: Re: [PATCH] mm/fs: Remove redundant code
-Date: Fri, 25 Feb 2022 02:30:40 +0900
-Message-ID: <CAKFNMokx2Qk4jJx6s0vzseYRbfjejZwoDY3MnPODWhT7-_1K=g@mail.gmail.com>
-References: <20220207103738.103661-1-jiapeng.chong@linux.alibaba.com>
+Date: Fri, 25 Feb 2022 02:53:47 +0900
+Message-ID: <CAKFNMo=jrEwV_U4wkfKvWeMoTJ9Ojbb0xx2cMrhr1KXD2gnxeg@mail.gmail.com>
+References: <20220207103738.103661-1-jiapeng.chong@linux.alibaba.com> <CAKFNMokx2Qk4jJx6s0vzseYRbfjejZwoDY3MnPODWhT7-_1K=g@mail.gmail.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc;
-        bh=YN3o5AHfbGVmbeaZUJjmbDqTCWv/jzMc3EILlut6Oww=;
-        b=a1WdcUy4rP1D+h2JWaW3NZ7cj7mMuh72pwuxNzL9nm3dxxunfRyAUaKgFx/ynm5sJk
-         Fb1eD1BUAyDPcJJIbAP+2TYtWC0umJJBRstjSjWNhhYYMgeLf9AwliKwI8oye4bFPRVX
-         /cERCPKOAMd8igNl35lFYoXqAeAiEv5fxAii3NUBubgd4ffDG9xJuES8SyZbJbORPbyz
-         Qu35wM6y4ILBESw64aV6Qg5yPH3fmmw3qsoMAUgp4NkVgt7qryVSYkLc7L3crqEnNA7H
-         5wi2UDdYC8vTpVkeMgL3pw1bhWDOOFOU6OTN0oYLmJPHo1cqf+lmkaDhGf5CHGp25mPa
-         avXw==
-In-Reply-To: <20220207103738.103661-1-jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+        bh=eq0rhSJW/1Sw11xhooN6LOA8GL16OGqICWs9SpqOzME=;
+        b=ovlMUCBoPHm0Ng7jBHgOGMvsivibBY0eFjYSXrf3lveZO9y7J2WPN15pjxopiEooRf
+         jPMf3/Zbrl33kMLio4YHaGFu/g0gHEoxnq6wMuDCigvid5G32wBFY4FwqI6X3TqCQKq5
+         s7OhTDCOZJ4i0qXn57rbq8Ygjw6NGONXkOhHCYlCpilq99mqAILegufcLLdORRqVk9TO
+         ul4bgzurtbgclnajz6YRvaRZDtc6tgxRenOvk76+cIAjaOihY0FZq8LTCujURAMByF06
+         xwZrGcr5kT+BK+kj0pQyLbeubQwxi7aY00qKJ9mawM7Pnf1MmavxrN5t9ESMA4xU+lOL
+         Bp1g==
+In-Reply-To: <CAKFNMokx2Qk4jJx6s0vzseYRbfjejZwoDY3MnPODWhT7-_1K=g@mail.gmail.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Jiapeng Chong <jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Abaci Robot <abaci-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+To: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Abaci Robot <abaci@linux.alibaba.com>
 
-Hi Jiapeng,
+Hi,
 
-On Mon, Feb 7, 2022 at 7:37 PM Jiapeng Chong
-<jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org> wrote:
+On Fri, Feb 25, 2022 at 2:30 AM Ryusuke Konishi
+<konishi.ryusuke@gmail.com> wrote:
 >
-> Clean up the following smatch warning:
+> Hi Jiapeng,
 >
-> fs/nilfs2/segbuf.c:358 nilfs_segbuf_submit_bio() warn: ignoring
-> unreachable code.
+> On Mon, Feb 7, 2022 at 7:37 PM Jiapeng Chong
+> <jiapeng.chong@linux.alibaba.com> wrote:
+> >
+> > Clean up the following smatch warning:
+> >
+> > fs/nilfs2/segbuf.c:358 nilfs_segbuf_submit_bio() warn: ignoring
+> > unreachable code.
+> >
+> > Reported-by: Abaci Robot <abaci@linux.alibaba.com>
+> > Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+> > ---
+> >  fs/nilfs2/segbuf.c | 4 ----
+> >  1 file changed, 4 deletions(-)
+> >
+> > diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+> > index 9e5dd6324ea1..50d7e2e4daed 100644
+> > --- a/fs/nilfs2/segbuf.c
+> > +++ b/fs/nilfs2/segbuf.c
+> > @@ -341,7 +341,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+> >                                    int mode_flags)
+> >  {
+> >         struct bio *bio = wi->bio;
+> > -       int err;
+> >
+> >         bio->bi_end_io = nilfs_end_bio_write;
+> >         bio->bi_private = segbuf;
+> > @@ -354,9 +353,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+> >         wi->nr_vecs = min(wi->max_pages, wi->rest_blocks);
+> >         wi->start = wi->end;
+> >         return 0;
+> > -
+> > -       wi->bio = NULL;
+> > -       return err;
+> >  }
 >
-> Reported-by: Abaci Robot <abaci-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-> Signed-off-by: Jiapeng Chong <jiapeng.chong-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-> ---
->  fs/nilfs2/segbuf.c | 4 ----
->  1 file changed, 4 deletions(-)
+> Sorry for my late reply.
 >
-> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-> index 9e5dd6324ea1..50d7e2e4daed 100644
-> --- a/fs/nilfs2/segbuf.c
-> +++ b/fs/nilfs2/segbuf.c
-> @@ -341,7 +341,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
->                                    int mode_flags)
->  {
->         struct bio *bio = wi->bio;
-> -       int err;
+> I will send this to Andrew to report and fix the regression on the -mm
+> patch series.
 >
->         bio->bi_end_io = nilfs_end_bio_write;
->         bio->bi_private = segbuf;
-> @@ -354,9 +353,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
->         wi->nr_vecs = min(wi->max_pages, wi->rest_blocks);
->         wi->start = wi->end;
->         return 0;
-> -
-> -       wi->bio = NULL;
-> -       return err;
->  }
+> I'd like to change the patch title to something like "nilfs2: Remove
+> redundant code"
+> since the "mm/fs" prefix does not properly represent what it applies to.
+> (this patch may be folded into the patch that is causing the warning)
+>
+> Regards,
+> Ryusuke Konishi
 
-Sorry for my late reply.
+Sorry again.
 
-I will send this to Andrew to report and fix the regression on the -mm
-patch series.
+The reported issue was already corrected in NeilBrown's revised patch set, so I
+will suspend this.
 
-I'd like to change the patch title to something like "nilfs2: Remove
-redundant code"
-since the "mm/fs" prefix does not properly represent what it applies to.
-(this patch may be folded into the patch that is causing the warning)
-
-Regards,
+Thanks,
 Ryusuke Konishi
