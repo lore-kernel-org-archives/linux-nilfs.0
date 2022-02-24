@@ -1,87 +1,209 @@
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Subject: Re: [PATCH] mm/fs: Remove redundant code
-Date: Fri, 25 Feb 2022 02:53:47 +0900
-Message-ID: <CAKFNMo=jrEwV_U4wkfKvWeMoTJ9Ojbb0xx2cMrhr1KXD2gnxeg@mail.gmail.com>
-References: <20220207103738.103661-1-jiapeng.chong@linux.alibaba.com> <CAKFNMokx2Qk4jJx6s0vzseYRbfjejZwoDY3MnPODWhT7-_1K=g@mail.gmail.com>
+Subject: Re: [PATCH 08/11] Remove bdi_congested() and wb_congested() and
+ related functions
+Date: Fri, 25 Feb 2022 03:10:24 +0900
+Message-ID: <CAKFNMokgJMxfvdwc4isNj_gQHAecJF2tq3j8HRhhxW_xN5L5_Q@mail.gmail.com>
+References: <164447124918.23354.17858831070003318849.stgit@noble.brown> <164447147262.23354.13106570458589592051.stgit@noble.brown>
 Mime-Version: 1.0
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc;
-        bh=eq0rhSJW/1Sw11xhooN6LOA8GL16OGqICWs9SpqOzME=;
-        b=ovlMUCBoPHm0Ng7jBHgOGMvsivibBY0eFjYSXrf3lveZO9y7J2WPN15pjxopiEooRf
-         jPMf3/Zbrl33kMLio4YHaGFu/g0gHEoxnq6wMuDCigvid5G32wBFY4FwqI6X3TqCQKq5
-         s7OhTDCOZJ4i0qXn57rbq8Ygjw6NGONXkOhHCYlCpilq99mqAILegufcLLdORRqVk9TO
-         ul4bgzurtbgclnajz6YRvaRZDtc6tgxRenOvk76+cIAjaOihY0FZq8LTCujURAMByF06
-         xwZrGcr5kT+BK+kj0pQyLbeubQwxi7aY00qKJ9mawM7Pnf1MmavxrN5t9ESMA4xU+lOL
-         Bp1g==
-In-Reply-To: <CAKFNMokx2Qk4jJx6s0vzseYRbfjejZwoDY3MnPODWhT7-_1K=g@mail.gmail.com>
+        bh=5eZDgcxBiEahgQGqIVo4NOwq5Qo0wc2zSQHHLGRnIQM=;
+        b=hOAnqSTI/Gh9yfCHqk+7dOsYcudQiruj8mpt7dmfjM5mWHLmv0u3d04DW8ALfBIXMG
+         jo1aQNu8b37er4WOYMPhB0UKNBWuYIbVmK1S5rZBnKtE3j6emTQsT3qFtpIheorsTivo
+         5oFwymdPrzK0TL7yVgoFRt/N/qYgq59XcFETBcR/mN/BchTGsA3oSWbl70lTpcsstt5O
+         nRtu1Pud8PUcNNfPv5BadE0iVwqkk4S+ioB/E0TkrKnbVoRVJH4C91+Hcq3PdR/ymM2E
+         gaQI4Q/rQrPyeTqMR7KeZVadtXbPVvCVGUzET6Lt8AJ66Q92342VKnjcz1C6+ONF0BvN
+         RdLw==
+In-Reply-To: <164447147262.23354.13106570458589592051.stgit@noble.brown>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Abaci Robot <abaci@linux.alibaba.com>
+To: NeilBrown <neilb@suse.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Wu Fengguang <fengguang.wu@intel.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, Jeff Layton <jlayton@kernel.org>, Ilya Dryomov <idryomov@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, Trond Myklebust <trond.myklebust@hammerspace.com>, Anna Schumaker <anna.schumaker@netapp.com>, "Darrick J. Wong" <djwong@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Paolo Valente <paolo.valente@linaro.org>, Jens Axboe <axboe@kernel.dk>, linux-doc@vger.kernel.org, Linux MM <linux-mm@kvack.org>, linux-nilfs <linux-nilfs@vger.kernel.org>, linux-nfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net
 
-Hi,
+On Thu, Feb 10, 2022 at 2:41 PM NeilBrown <neilb@suse.de> wrote:
+>
+> These functions are no longer useful as no BDIs report congestions any
+> more.
+>
+> Removing the test on bdi_write_contested() in current_may_throttle()
+> could cause a small change in behaviour, but only when PF_LOCAL_THROTTLE
+> is set.
+>
+> So replace the calls by 'false' and simplify the code - and remove the
+> functions.
+>
+> Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com> (for nilfs bits)
+> Signed-off-by: NeilBrown <neilb@suse.de>
+> ---
+>  drivers/block/drbd/drbd_int.h |    3 ---
+>  drivers/block/drbd/drbd_req.c |    3 +--
+>  fs/ext2/ialloc.c              |    5 -----
+>  fs/nilfs2/segbuf.c            |   15 ---------------
+>  fs/xfs/xfs_buf.c              |    3 ---
+>  include/linux/backing-dev.h   |   26 --------------------------
+>  mm/vmscan.c                   |    4 +---
+>  7 files changed, 2 insertions(+), 57 deletions(-)
+>
+> diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
+> index f27d5b0f9a0b..f804b1bfb3e6 100644
+> --- a/drivers/block/drbd/drbd_int.h
+> +++ b/drivers/block/drbd/drbd_int.h
+> @@ -638,9 +638,6 @@ enum {
+>         STATE_SENT,             /* Do not change state/UUIDs while this is set */
+>         CALLBACK_PENDING,       /* Whether we have a call_usermodehelper(, UMH_WAIT_PROC)
+>                                  * pending, from drbd worker context.
+> -                                * If set, bdi_write_congested() returns true,
+> -                                * so shrink_page_list() would not recurse into,
+> -                                * and potentially deadlock on, this drbd worker.
+>                                  */
+>         DISCONNECT_SENT,
+>
+> diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+> index 3235532ae077..2e5fb7e442e3 100644
+> --- a/drivers/block/drbd/drbd_req.c
+> +++ b/drivers/block/drbd/drbd_req.c
+> @@ -909,8 +909,7 @@ static bool remote_due_to_read_balancing(struct drbd_device *device, sector_t se
+>
+>         switch (rbm) {
+>         case RB_CONGESTED_REMOTE:
+> -               return bdi_read_congested(
+> -                       device->ldev->backing_bdev->bd_disk->bdi);
+> +               return 0;
+>         case RB_LEAST_PENDING:
+>                 return atomic_read(&device->local_cnt) >
+>                         atomic_read(&device->ap_pending_cnt) + atomic_read(&device->rs_pending_cnt);
+> diff --git a/fs/ext2/ialloc.c b/fs/ext2/ialloc.c
+> index df14e750e9fe..998dd2ac8008 100644
+> --- a/fs/ext2/ialloc.c
+> +++ b/fs/ext2/ialloc.c
+> @@ -170,11 +170,6 @@ static void ext2_preread_inode(struct inode *inode)
+>         unsigned long offset;
+>         unsigned long block;
+>         struct ext2_group_desc * gdp;
+> -       struct backing_dev_info *bdi;
+> -
+> -       bdi = inode_to_bdi(inode);
+> -       if (bdi_rw_congested(bdi))
+> -               return;
+>
+>         block_group = (inode->i_ino - 1) / EXT2_INODES_PER_GROUP(inode->i_sb);
+>         gdp = ext2_get_group_desc(inode->i_sb, block_group, NULL);
+> diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+> index 43287b0d3e9b..c4510f79037f 100644
+> --- a/fs/nilfs2/segbuf.c
+> +++ b/fs/nilfs2/segbuf.c
+> @@ -343,17 +343,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+>         struct bio *bio = wi->bio;
+>         int err;
+>
+> -       if (segbuf->sb_nbio > 0 &&
+> -           bdi_write_congested(segbuf->sb_super->s_bdi)) {
+> -               wait_for_completion(&segbuf->sb_bio_event);
+> -               segbuf->sb_nbio--;
+> -               if (unlikely(atomic_read(&segbuf->sb_err))) {
+> -                       bio_put(bio);
+> -                       err = -EIO;
+> -                       goto failed;
+> -               }
+> -       }
+> -
+>         bio->bi_end_io = nilfs_end_bio_write;
+>         bio->bi_private = segbuf;
+>         bio_set_op_attrs(bio, mode, mode_flags);
+> @@ -365,10 +354,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
+>         wi->nr_vecs = min(wi->max_pages, wi->rest_blocks);
+>         wi->start = wi->end;
+>         return 0;
+> -
+> - failed:
+> -       wi->bio = NULL;
+> -       return err;
+>  }
 
-On Fri, Feb 25, 2022 at 2:30 AM Ryusuke Konishi
-<konishi.ryusuke@gmail.com> wrote:
->
-> Hi Jiapeng,
->
-> On Mon, Feb 7, 2022 at 7:37 PM Jiapeng Chong
-> <jiapeng.chong@linux.alibaba.com> wrote:
-> >
-> > Clean up the following smatch warning:
-> >
-> > fs/nilfs2/segbuf.c:358 nilfs_segbuf_submit_bio() warn: ignoring
-> > unreachable code.
-> >
-> > Reported-by: Abaci Robot <abaci@linux.alibaba.com>
-> > Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
-> > ---
-> >  fs/nilfs2/segbuf.c | 4 ----
-> >  1 file changed, 4 deletions(-)
-> >
-> > diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-> > index 9e5dd6324ea1..50d7e2e4daed 100644
-> > --- a/fs/nilfs2/segbuf.c
-> > +++ b/fs/nilfs2/segbuf.c
-> > @@ -341,7 +341,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
-> >                                    int mode_flags)
-> >  {
-> >         struct bio *bio = wi->bio;
-> > -       int err;
-> >
-> >         bio->bi_end_io = nilfs_end_bio_write;
-> >         bio->bi_private = segbuf;
-> > @@ -354,9 +353,6 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
-> >         wi->nr_vecs = min(wi->max_pages, wi->rest_blocks);
-> >         wi->start = wi->end;
-> >         return 0;
-> > -
-> > -       wi->bio = NULL;
-> > -       return err;
-> >  }
->
-> Sorry for my late reply.
->
-> I will send this to Andrew to report and fix the regression on the -mm
-> patch series.
->
-> I'd like to change the patch title to something like "nilfs2: Remove
-> redundant code"
-> since the "mm/fs" prefix does not properly represent what it applies to.
-> (this patch may be folded into the patch that is causing the warning)
->
-> Regards,
-> Ryusuke Konishi
+In this revised version, "int err" is no longer used, so could you
+delete it as well ?
 
-Sorry again.
-
-The reported issue was already corrected in NeilBrown's revised patch set, so I
-will suspend this.
-
-Thanks,
+Regards,
 Ryusuke Konishi
+
+>
+>  /**
+> diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
+> index b45e0d50a405..b7ebcfe6b8d3 100644
+> --- a/fs/xfs/xfs_buf.c
+> +++ b/fs/xfs/xfs_buf.c
+> @@ -843,9 +843,6 @@ xfs_buf_readahead_map(
+>  {
+>         struct xfs_buf          *bp;
+>
+> -       if (bdi_read_congested(target->bt_bdev->bd_disk->bdi))
+> -               return;
+> -
+>         xfs_buf_read_map(target, map, nmaps,
+>                      XBF_TRYLOCK | XBF_ASYNC | XBF_READ_AHEAD, &bp, ops,
+>                      __this_address);
+> diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
+> index 860b675c2929..2d764566280c 100644
+> --- a/include/linux/backing-dev.h
+> +++ b/include/linux/backing-dev.h
+> @@ -135,11 +135,6 @@ static inline bool writeback_in_progress(struct bdi_writeback *wb)
+>
+>  struct backing_dev_info *inode_to_bdi(struct inode *inode);
+>
+> -static inline int wb_congested(struct bdi_writeback *wb, int cong_bits)
+> -{
+> -       return wb->congested & cong_bits;
+> -}
+> -
+>  long congestion_wait(int sync, long timeout);
+>
+>  static inline bool mapping_can_writeback(struct address_space *mapping)
+> @@ -391,27 +386,6 @@ static inline void wb_blkcg_offline(struct blkcg *blkcg)
+>
+>  #endif /* CONFIG_CGROUP_WRITEBACK */
+>
+> -static inline int bdi_congested(struct backing_dev_info *bdi, int cong_bits)
+> -{
+> -       return wb_congested(&bdi->wb, cong_bits);
+> -}
+> -
+> -static inline int bdi_read_congested(struct backing_dev_info *bdi)
+> -{
+> -       return bdi_congested(bdi, 1 << WB_sync_congested);
+> -}
+> -
+> -static inline int bdi_write_congested(struct backing_dev_info *bdi)
+> -{
+> -       return bdi_congested(bdi, 1 << WB_async_congested);
+> -}
+> -
+> -static inline int bdi_rw_congested(struct backing_dev_info *bdi)
+> -{
+> -       return bdi_congested(bdi, (1 << WB_sync_congested) |
+> -                                 (1 << WB_async_congested));
+> -}
+> -
+>  const char *bdi_dev_name(struct backing_dev_info *bdi);
+>
+>  #endif /* _LINUX_BACKING_DEV_H */
+> diff --git a/mm/vmscan.c b/mm/vmscan.c
+> index ce8492939bd3..0b930556c4f2 100644
+> --- a/mm/vmscan.c
+> +++ b/mm/vmscan.c
+> @@ -2362,9 +2362,7 @@ static unsigned int move_pages_to_lru(struct lruvec *lruvec,
+>   */
+>  static int current_may_throttle(void)
+>  {
+> -       return !(current->flags & PF_LOCAL_THROTTLE) ||
+> -               current->backing_dev_info == NULL ||
+> -               bdi_write_congested(current->backing_dev_info);
+> +       return !(current->flags & PF_LOCAL_THROTTLE);
+>  }
+>
+>  /*
+>
+>
