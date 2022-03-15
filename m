@@ -1,8 +1,8 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Fw:Re: [PATCH] fs: nilfs2: fix memory leak in nilfs sysfs create
  device group
-Date: Tue, 15 Mar 2022 18:11:13 +0900
-Message-ID: <CAKFNMonQwnHj=QnaBGb3s-V8hL1zbxrogLU4yutPd1dMfoCBMA@mail.gmail.com>
+Date: Tue, 15 Mar 2022 17:18:02 +0800
+Message-ID: <CAD-N9QU8XfCLMNFJ54JnYD_aXb_LPSYGBLU_GNP3KBGVzkF=nA@mail.gmail.com>
 References: <3192BC90-D082-472B-B310-6E09A14A77C6@hust.edu.cn>
  <CAD-N9QUqfq+0UeMjQALUmGpX5xgjS6=BXvsqcXQpJRzhB6hHLw@mail.gmail.com>
  <CAKFNMokdB+Zph-1OyC1-Xnyi93r+yKSusgaEaa=CkuUBttwRZA@mail.gmail.com>
@@ -14,144 +14,156 @@ References: <3192BC90-D082-472B-B310-6E09A14A77C6@hust.edu.cn>
  <7da316f4-aa65-896e-9020-2dfff2bbfc09@gmail.com> <CAKFNMon7cdJ092Ppne_kU6A23pRUb+1tThCkoB2vn0HN-rWUUg@mail.gmail.com>
  <CAD-N9QXN_DEmoqTEpFdCp=Gne1O3U=+8WpwjP638wbUn1Vb6hA@mail.gmail.com>
  <CAD-N9QVcSnboZqS7tXgU_iD8zzg5a_ubB3W2qtCFequS5u6jqQ@mail.gmail.com>
- <CAKFNMo=uYDbrwDpqeehbdT5va3X1yw5uBoec1q8AoNAADtrELw@mail.gmail.com> <CAD-N9QVOPXmm3pPX+F7X2SATaVHA=s1P9zD-3W8WyJWEY1HF5w@mail.gmail.com>
+ <CAKFNMo=uYDbrwDpqeehbdT5va3X1yw5uBoec1q8AoNAADtrELw@mail.gmail.com>
+ <CAD-N9QVOPXmm3pPX+F7X2SATaVHA=s1P9zD-3W8WyJWEY1HF5w@mail.gmail.com> <CAKFNMonQwnHj=QnaBGb3s-V8hL1zbxrogLU4yutPd1dMfoCBMA@mail.gmail.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc;
-        bh=JuPnyAyMJk/3njlZ9gcwzbh+ihMGKNAAbYLpOKNzeIk=;
-        b=omeoxDtk8AhX/Dymq7tg0jOwKOnUlKYMiT5n62V9Ttl6cwMBGp9GWIHczzLZMdpFYq
-         Ha5S/bZd3QT77r8jtGOuSFUQuh0GvR1M+BdsnRAgV1EH6661k7BI/lIg29B7Rtgg7hEv
-         YfFRAaJ1VWR+jjRouRknMRL4TaH9dGp7nteFLBoKpg5h8fp2bVwkzz0/Homw+U4PU2yt
-         bvWntBzaKtgSWGYH5KHIFFgQCPLoavdVh+PX6GLkSlR5bqAPYYfCC3J3YZ+yT0iH2sdJ
-         qPJohWg95iNB1WF6o0DXjeIv6LnT0IyjS5C+2NA3Kt3+FyTn0XcQy2nr2fr+iTZ/SnYR
-         O2cA==
-In-Reply-To: <CAD-N9QVOPXmm3pPX+F7X2SATaVHA=s1P9zD-3W8WyJWEY1HF5w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        bh=EnTTr6mj6yg+cZdFX1bIbLC2oMGNkwyebsyh6QMugTk=;
+        b=RpZxAGtAsiaQq2EjtUjq0pVkzgDfzqFxUHBlQWSdv6Ha2d7hyFYGAEU/mATuq/cACP
+         IMd2WkLvGI5nZeuQpWPs7xnK4y/8MspWBiTCLMfeWz1mDtrcobxH1/ht+JqNdt5WX/kM
+         rJdItBirLkGgBX0hTboHGoXKsZhgfvFjpn/0ZYG8utbSnF/N74GO42t75N0VLWrzEf9F
+         /hGsTly9TKWjMg2x0yQwWISscGw2Pc9Mv81TBGqoKjDR4SJ47PKOlacUOj21WNXWyEt2
+         rjN9mAy16V3Td7bHslf1VcIgVqUrg2EafO9nW83HNZ7mMujrOkP11S+43sFhL3/vNm8C
+         w86Q==
+In-Reply-To: <CAKFNMonQwnHj=QnaBGb3s-V8hL1zbxrogLU4yutPd1dMfoCBMA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, =?UTF-8?B?5oWV5Yas5Lqu?= <dzm91-6lmH0oBJgSDM1kAEIRd3EQ@public.gmane.org>
 
-Hi Dongliang,
-
-On Tue, Mar 15, 2022 at 2:50 PM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+On Tue, Mar 15, 2022 at 5:11 PM Ryusuke Konishi
+<konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 >
-> On Tue, Mar 15, 2022 at 12:46 PM Ryusuke Konishi
-> <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> >
-> > On Tue, Mar 15, 2022 at 10:59 AM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > >
-> > > On Sun, Mar 13, 2022 at 9:35 PM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > >
-> > > > On Sun, Mar 13, 2022 at 12:01 AM Ryusuke Konishi
-> > > > <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > > >
-> > > > > Hi Pavel and Dongliang,
-> > > > >
-> > > > > On Sun, Mar 13, 2022 at 12:16 AM Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > > > >
-> > > > > > Hi Ryusuke,
-> > > > > >
-> > > > > > On 3/12/22 18:11, Ryusuke Konishi wrote:
-> > > > > > >> In case of nilfs_attach_log_writer() error code jumps to
-> > > > > > >> failed_checkpoint label and calls destroy_nilfs() which should call
-> > > > > > >> nilfs_sysfs_delete_device_group().
-> > > > > > >
-> > > > > > > nilfs_sysfs_delete_device_group() is called in destroy_nilfs()
-> > > > > > > if nilfs->ns_flags has THE_NILFS_INIT flag -- nilfs_init() inline
-> > > > > > > function tests this flag.
-> > > > > > >
-> > > > > > > The flag is set after init_nilfs() succeeded at the beginning of
-> > > > > > > nilfs_fill_super() because the set_nilfs_init() inline in init_nilfs() sets it.
-> > > > > > >
-> > > > > > > So,  nilfs_sysfs_delete_group() seems to be called in case of
-> > > > > > > the above failure.   Am I missing something?
-> > > > > > >
-> > > > > >
-> > > > > > Yeah, that's what I mean :) I can't see how reported issue is possible
-> > > > > > with current code.
-> > > > > >
-> > > > > >
-> > > > > > Sorry for not being clear
-> > > > >
-> > > > > Understood, thanks for the reply.
-> > > > >
-> > > > > If so,  the case where nilfs_sysfs_create_device_group() itself failed,
-> > > > > is suspicious as mentioned in the previous mail.   A possible scenario
-> > > > > I guess is :
-> > > > >
-> > > > > - nilfs_sysfs_create_device_group() on the first mount try fails and leaks
-> > > > >   due to lack of kobject_del() in the error path.
-> > > > > - Then, nilfs_sysfs_create_device_group() on the next mount try hits
-> > > > >   the leak detector at kobject_init_and_add().
-> > > > >
-> > > > > So, if the leak bug is reproducible, I'd like to ask Dongliang to
-> > > > > test the effect of the first patch.
-> > > >
-> > > > If my local syzkaller instance gets a reproducer, I will try to do this.
-> > > >
-> > > > >
-> > > > > Regards,
-> > > > > Ryusuke Konishi
-> > >
-> > > Hi Ryusuke,
-> > >
-> > > The crash still occurred in my newly set up syzkaller instance. It
-> > > appears after two days' fuzzing.
-> > >
-> > > I remember you suggested me to add kobject_del just for testing,
-> > > right? And let's see if this crash still occurs any more.
-> >
-> > You need a few days to reproduce it ?
-> > If so, I think this confirmation method is uncertain.
-> > In that case, I will try inserting an artificial error by changing
-> > nilfs_sysfs_create_device_group() a bit to confirm if the same crash occurs.
-
-I tried to change the code of nilfs_sysfs_create_device_group() so that
-an error occurs once every two times.
-As a result, the leak bug was not reproduced.
-
-In addition, by kobject debug messages, I saw that the device name
-("loop2" in your case) was properly freed through kobject_put() even in
-the erroneous case.
-
-So, my previous guess was wrong.
-Looks like there is another cause for the leak of the device name.
-It may not be a nilfs2 issue, I don't know.
-
-> I am reproducing another bug [1] recently. If you can spare some time
-> figuring out the underlying issue, that's really great. Or we can wait
-> some time for the bug to disclose more, after all, it is only a rare
-> memory leak.
+> Hi Dongliang,
 >
-> [1] https://syzkaller.appspot.com/bug?extid=045796dbe294d53147e6
+> On Tue, Mar 15, 2022 at 2:50 PM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> >
+> > On Tue, Mar 15, 2022 at 12:46 PM Ryusuke Konishi
+> > <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > >
+> > > On Tue, Mar 15, 2022 at 10:59 AM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > > >
+> > > > On Sun, Mar 13, 2022 at 9:35 PM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > > > >
+> > > > > On Sun, Mar 13, 2022 at 12:01 AM Ryusuke Konishi
+> > > > > <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > > > > >
+> > > > > > Hi Pavel and Dongliang,
+> > > > > >
+> > > > > > On Sun, Mar 13, 2022 at 12:16 AM Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > > > > > >
+> > > > > > > Hi Ryusuke,
+> > > > > > >
+> > > > > > > On 3/12/22 18:11, Ryusuke Konishi wrote:
+> > > > > > > >> In case of nilfs_attach_log_writer() error code jumps to
+> > > > > > > >> failed_checkpoint label and calls destroy_nilfs() which should call
+> > > > > > > >> nilfs_sysfs_delete_device_group().
+> > > > > > > >
+> > > > > > > > nilfs_sysfs_delete_device_group() is called in destroy_nilfs()
+> > > > > > > > if nilfs->ns_flags has THE_NILFS_INIT flag -- nilfs_init() inline
+> > > > > > > > function tests this flag.
+> > > > > > > >
+> > > > > > > > The flag is set after init_nilfs() succeeded at the beginning of
+> > > > > > > > nilfs_fill_super() because the set_nilfs_init() inline in init_nilfs() sets it.
+> > > > > > > >
+> > > > > > > > So,  nilfs_sysfs_delete_group() seems to be called in case of
+> > > > > > > > the above failure.   Am I missing something?
+> > > > > > > >
+> > > > > > >
+> > > > > > > Yeah, that's what I mean :) I can't see how reported issue is possible
+> > > > > > > with current code.
+> > > > > > >
+> > > > > > >
+> > > > > > > Sorry for not being clear
+> > > > > >
+> > > > > > Understood, thanks for the reply.
+> > > > > >
+> > > > > > If so,  the case where nilfs_sysfs_create_device_group() itself failed,
+> > > > > > is suspicious as mentioned in the previous mail.   A possible scenario
+> > > > > > I guess is :
+> > > > > >
+> > > > > > - nilfs_sysfs_create_device_group() on the first mount try fails and leaks
+> > > > > >   due to lack of kobject_del() in the error path.
+> > > > > > - Then, nilfs_sysfs_create_device_group() on the next mount try hits
+> > > > > >   the leak detector at kobject_init_and_add().
+> > > > > >
+> > > > > > So, if the leak bug is reproducible, I'd like to ask Dongliang to
+> > > > > > test the effect of the first patch.
+> > > > >
+> > > > > If my local syzkaller instance gets a reproducer, I will try to do this.
+> > > > >
+> > > > > >
+> > > > > > Regards,
+> > > > > > Ryusuke Konishi
+> > > >
+> > > > Hi Ryusuke,
+> > > >
+> > > > The crash still occurred in my newly set up syzkaller instance. It
+> > > > appears after two days' fuzzing.
+> > > >
+> > > > I remember you suggested me to add kobject_del just for testing,
+> > > > right? And let's see if this crash still occurs any more.
+> > >
+> > > You need a few days to reproduce it ?
+> > > If so, I think this confirmation method is uncertain.
+> > > In that case, I will try inserting an artificial error by changing
+> > > nilfs_sysfs_create_device_group() a bit to confirm if the same crash occurs.
+>
+> I tried to change the code of nilfs_sysfs_create_device_group() so that
+> an error occurs once every two times.
+> As a result, the leak bug was not reproduced.
+>
+> In addition, by kobject debug messages, I saw that the device name
+> ("loop2" in your case) was properly freed through kobject_put() even in
+> the erroneous case.
+>
+> So, my previous guess was wrong.
+> Looks like there is another cause for the leak of the device name.
+> It may not be a nilfs2 issue, I don't know.
+>
+> > I am reproducing another bug [1] recently. If you can spare some time
+> > figuring out the underlying issue, that's really great. Or we can wait
+> > some time for the bug to disclose more, after all, it is only a rare
+> > memory leak.
+> >
+> > [1] https://syzkaller.appspot.com/bug?extid=045796dbe294d53147e6
+>
+> According to the log, it looks like "erofs_put_super() ->
+> erofs_unregister_sysfs()" hits:
+>
+>   kobject: '(null)' (ffff88807b550190): is not initialized, yet
+> kobject_put() is being called.
+>
+> This warning is output in kobject_put() if kobj argument is not in
+> 'state_initialized':
+>
+>   void kobject_put(struct kobject *kobj)
+>   {
+>          if (kobj) {
+>                     if (!kobj->state_initialized)
+>                               WARN(1, KERN_WARNING
+>                                 "kobject: '%s' (%p): is not
+> initialized, yet kobject_put() is being called.\n",
+>                              kobject_name(kobj), kobj);
+>                     kref_put(&kobj->kref, kobject_release);
+>          }
+>   }
+>
+> How about chasing this abnormal condition ?
+> Anyway, please ask erofs maintainers and linux-erofs mailing list for this.
 
-According to the log, it looks like "erofs_put_super() ->
-erofs_unregister_sysfs()" hits:
+Thanks for your information. I have got the reproducer and sent the
+patch to the kernel mailing list this afternoon.
 
-  kobject: '(null)' (ffff88807b550190): is not initialized, yet
-kobject_put() is being called.
+I will start reproducing this case and try to fix it if reproducible.
 
-This warning is output in kobject_put() if kobj argument is not in
-'state_initialized':
+Thanks very much.
 
-  void kobject_put(struct kobject *kobj)
-  {
-         if (kobj) {
-                    if (!kobj->state_initialized)
-                              WARN(1, KERN_WARNING
-                                "kobject: '%s' (%p): is not
-initialized, yet kobject_put() is being called.\n",
-                             kobject_name(kobj), kobj);
-                    kref_put(&kobj->kref, kobject_release);
-         }
-  }
-
-How about chasing this abnormal condition ?
-Anyway, please ask erofs maintainers and linux-erofs mailing list for this.
-
-Regards,
-Ryusuke Konishi
+>
+> Regards,
+> Ryusuke Konishi
