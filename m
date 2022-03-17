@@ -1,169 +1,65 @@
-From: Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Fw:Re: [PATCH] fs: nilfs2: fix memory leak in nilfs sysfs create
- device group
-Date: Tue, 15 Mar 2022 17:18:02 +0800
-Message-ID: <CAD-N9QU8XfCLMNFJ54JnYD_aXb_LPSYGBLU_GNP3KBGVzkF=nA@mail.gmail.com>
-References: <3192BC90-D082-472B-B310-6E09A14A77C6@hust.edu.cn>
- <CAD-N9QUqfq+0UeMjQALUmGpX5xgjS6=BXvsqcXQpJRzhB6hHLw@mail.gmail.com>
- <CAKFNMokdB+Zph-1OyC1-Xnyi93r+yKSusgaEaa=CkuUBttwRZA@mail.gmail.com>
- <CAD-N9QU8-Od3G+-=RHM5K7vR2-4Af+4t=XutJJVdmkKhH7OarA@mail.gmail.com>
- <CAKFNMo=E8mMuY7Et0auH02fOzGKx04k2=LOj8mZJ6a-=J+sPzQ@mail.gmail.com>
- <CAD-N9QWt=d2Vj2bevSzOPL4AWF08_zTyq=hHOcOOROCazNY4_A@mail.gmail.com>
- <CAD-N9QWrBLygN24EC6QLRFF6uf7=PiTRdA4suKqEXJ7tk9aocA@mail.gmail.com>
- <dac7104a-21ac-24f4-6132-e51960fa0b7e@gmail.com> <CAKFNMon3=fFWtuUa1_wDyK9agpCXjbzA8b+rj=OYu=7Gs8nMqQ@mail.gmail.com>
- <7da316f4-aa65-896e-9020-2dfff2bbfc09@gmail.com> <CAKFNMon7cdJ092Ppne_kU6A23pRUb+1tThCkoB2vn0HN-rWUUg@mail.gmail.com>
- <CAD-N9QXN_DEmoqTEpFdCp=Gne1O3U=+8WpwjP638wbUn1Vb6hA@mail.gmail.com>
- <CAD-N9QVcSnboZqS7tXgU_iD8zzg5a_ubB3W2qtCFequS5u6jqQ@mail.gmail.com>
- <CAKFNMo=uYDbrwDpqeehbdT5va3X1yw5uBoec1q8AoNAADtrELw@mail.gmail.com>
- <CAD-N9QVOPXmm3pPX+F7X2SATaVHA=s1P9zD-3W8WyJWEY1HF5w@mail.gmail.com> <CAKFNMonQwnHj=QnaBGb3s-V8hL1zbxrogLU4yutPd1dMfoCBMA@mail.gmail.com>
+From: trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Subject: [PATCH] nilfs2: move initialization of nr_dirty to decl
+Date: Thu, 17 Mar 2022 10:50:43 -0700
+Message-ID: <20220317175043.1972081-1-trix@redhat.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=EnTTr6mj6yg+cZdFX1bIbLC2oMGNkwyebsyh6QMugTk=;
-        b=RpZxAGtAsiaQq2EjtUjq0pVkzgDfzqFxUHBlQWSdv6Ha2d7hyFYGAEU/mATuq/cACP
-         IMd2WkLvGI5nZeuQpWPs7xnK4y/8MspWBiTCLMfeWz1mDtrcobxH1/ht+JqNdt5WX/kM
-         rJdItBirLkGgBX0hTboHGoXKsZhgfvFjpn/0ZYG8utbSnF/N74GO42t75N0VLWrzEf9F
-         /hGsTly9TKWjMg2x0yQwWISscGw2Pc9Mv81TBGqoKjDR4SJ47PKOlacUOj21WNXWyEt2
-         rjN9mAy16V3Td7bHslf1VcIgVqUrg2EafO9nW83HNZ7mMujrOkP11S+43sFhL3/vNm8C
-         w86Q==
-In-Reply-To: <CAKFNMonQwnHj=QnaBGb3s-V8hL1zbxrogLU4yutPd1dMfoCBMA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1647539454;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=CWUmn/QvK/L7nVX8kGPV5onMGWPPEQZ85b495jUko/o=;
+        b=VDDw96qB66Qd/IGq+j3AGfY7++eYnxf9FMkO2vxm+Oaz/A9HyWTM+AbiKFcUC9cNPoGCRN
+        chb1FuRsASSY5UiTE78US0rrG7VMberxwqCC7e0sfPvpzMK5FX6hgUAKlCV3VdKEgxQGcq
+        HuhlJX2dC8lT/5w60qBQntRDjLDtGs4=
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nanyong Sun <sunnanyong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, =?UTF-8?B?5oWV5Yas5Lqu?= <dzm91-6lmH0oBJgSDM1kAEIRd3EQ@public.gmane.org>
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, nathan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ndesaulniers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, llvm-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, Tom Rix <trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-On Tue, Mar 15, 2022 at 5:11 PM Ryusuke Konishi
-<konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->
-> Hi Dongliang,
->
-> On Tue, Mar 15, 2022 at 2:50 PM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> >
-> > On Tue, Mar 15, 2022 at 12:46 PM Ryusuke Konishi
-> > <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > >
-> > > On Tue, Mar 15, 2022 at 10:59 AM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > >
-> > > > On Sun, Mar 13, 2022 at 9:35 PM Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > > >
-> > > > > On Sun, Mar 13, 2022 at 12:01 AM Ryusuke Konishi
-> > > > > <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > > > >
-> > > > > > Hi Pavel and Dongliang,
-> > > > > >
-> > > > > > On Sun, Mar 13, 2022 at 12:16 AM Pavel Skripkin <paskripkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > > > > >
-> > > > > > > Hi Ryusuke,
-> > > > > > >
-> > > > > > > On 3/12/22 18:11, Ryusuke Konishi wrote:
-> > > > > > > >> In case of nilfs_attach_log_writer() error code jumps to
-> > > > > > > >> failed_checkpoint label and calls destroy_nilfs() which should call
-> > > > > > > >> nilfs_sysfs_delete_device_group().
-> > > > > > > >
-> > > > > > > > nilfs_sysfs_delete_device_group() is called in destroy_nilfs()
-> > > > > > > > if nilfs->ns_flags has THE_NILFS_INIT flag -- nilfs_init() inline
-> > > > > > > > function tests this flag.
-> > > > > > > >
-> > > > > > > > The flag is set after init_nilfs() succeeded at the beginning of
-> > > > > > > > nilfs_fill_super() because the set_nilfs_init() inline in init_nilfs() sets it.
-> > > > > > > >
-> > > > > > > > So,  nilfs_sysfs_delete_group() seems to be called in case of
-> > > > > > > > the above failure.   Am I missing something?
-> > > > > > > >
-> > > > > > >
-> > > > > > > Yeah, that's what I mean :) I can't see how reported issue is possible
-> > > > > > > with current code.
-> > > > > > >
-> > > > > > >
-> > > > > > > Sorry for not being clear
-> > > > > >
-> > > > > > Understood, thanks for the reply.
-> > > > > >
-> > > > > > If so,  the case where nilfs_sysfs_create_device_group() itself failed,
-> > > > > > is suspicious as mentioned in the previous mail.   A possible scenario
-> > > > > > I guess is :
-> > > > > >
-> > > > > > - nilfs_sysfs_create_device_group() on the first mount try fails and leaks
-> > > > > >   due to lack of kobject_del() in the error path.
-> > > > > > - Then, nilfs_sysfs_create_device_group() on the next mount try hits
-> > > > > >   the leak detector at kobject_init_and_add().
-> > > > > >
-> > > > > > So, if the leak bug is reproducible, I'd like to ask Dongliang to
-> > > > > > test the effect of the first patch.
-> > > > >
-> > > > > If my local syzkaller instance gets a reproducer, I will try to do this.
-> > > > >
-> > > > > >
-> > > > > > Regards,
-> > > > > > Ryusuke Konishi
-> > > >
-> > > > Hi Ryusuke,
-> > > >
-> > > > The crash still occurred in my newly set up syzkaller instance. It
-> > > > appears after two days' fuzzing.
-> > > >
-> > > > I remember you suggested me to add kobject_del just for testing,
-> > > > right? And let's see if this crash still occurs any more.
-> > >
-> > > You need a few days to reproduce it ?
-> > > If so, I think this confirmation method is uncertain.
-> > > In that case, I will try inserting an artificial error by changing
-> > > nilfs_sysfs_create_device_group() a bit to confirm if the same crash occurs.
->
-> I tried to change the code of nilfs_sysfs_create_device_group() so that
-> an error occurs once every two times.
-> As a result, the leak bug was not reproduced.
->
-> In addition, by kobject debug messages, I saw that the device name
-> ("loop2" in your case) was properly freed through kobject_put() even in
-> the erroneous case.
->
-> So, my previous guess was wrong.
-> Looks like there is another cause for the leak of the device name.
-> It may not be a nilfs2 issue, I don't know.
->
-> > I am reproducing another bug [1] recently. If you can spare some time
-> > figuring out the underlying issue, that's really great. Or we can wait
-> > some time for the bug to disclose more, after all, it is only a rare
-> > memory leak.
-> >
-> > [1] https://syzkaller.appspot.com/bug?extid=045796dbe294d53147e6
->
-> According to the log, it looks like "erofs_put_super() ->
-> erofs_unregister_sysfs()" hits:
->
->   kobject: '(null)' (ffff88807b550190): is not initialized, yet
-> kobject_put() is being called.
->
-> This warning is output in kobject_put() if kobj argument is not in
-> 'state_initialized':
->
->   void kobject_put(struct kobject *kobj)
->   {
->          if (kobj) {
->                     if (!kobj->state_initialized)
->                               WARN(1, KERN_WARNING
->                                 "kobject: '%s' (%p): is not
-> initialized, yet kobject_put() is being called.\n",
->                              kobject_name(kobj), kobj);
->                     kref_put(&kobj->kref, kobject_release);
->          }
->   }
->
-> How about chasing this abnormal condition ?
-> Anyway, please ask erofs maintainers and linux-erofs mailing list for this.
+From: Tom Rix <trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-Thanks for your information. I have got the reproducer and sent the
-patch to the kernel mailing list this afternoon.
+On clang build there is this error
+inode.c:227:13: error: variable 'nr_dirty' is
+  used uninitialized whenever 'if' condition is false
+        } else if (ret) {
+                   ^~~
 
-I will start reproducing this case and try to fix it if reproducible.
+In nilfs_dirty_folio(), if the call to
+filemap_dirty_folio() fails and there
+are no buffers, nr_dirty will be uninitialized.
+Move the initialization out of the buffer
+block and to the decl.
 
-Thanks very much.
+Signed-off-by: Tom Rix <trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ fs/nilfs2/inode.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
->
-> Regards,
-> Ryusuke Konishi
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index c1219c0678a57..01e58b65c9384 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -204,7 +204,7 @@ static bool nilfs_dirty_folio(struct address_space *mapping,
+ {
+ 	struct inode *inode = mapping->host;
+ 	struct buffer_head *head;
+-	unsigned int nr_dirty;
++	unsigned int nr_dirty = 0;
+ 	bool ret = filemap_dirty_folio(mapping, folio);
+ 
+ 	/*
+@@ -214,8 +214,6 @@ static bool nilfs_dirty_folio(struct address_space *mapping,
+ 	head = folio_buffers(folio);
+ 	if (head) {
+ 		struct buffer_head *bh = head;
+-
+-		nr_dirty = 0;
+ 		do {
+ 			/* Do not mark hole blocks dirty */
+ 			if (buffer_dirty(bh) || !buffer_mapped(bh))
+-- 
+2.26.3
+
