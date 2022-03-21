@@ -1,80 +1,65 @@
-From: Nathan Chancellor <nathan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: move initialization of nr_dirty to decl
-Date: Thu, 17 Mar 2022 11:12:14 -0700
-Message-ID: <YjN5/h+0fR6Ph/5H@dev-arch.thelio-3990X>
-References: <20220317175043.1972081-1-trix@redhat.com>
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 0/3] nilfs2 lockdep warning fixes
+Date: Mon, 21 Mar 2022 21:57:04 +0900
+Message-ID: <1647867427-30498-1-git-send-email-konishi.ryusuke@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1647540741;
-        bh=ptsC5nm9G0+/HpO2r1JMC/u3+Be4YpkP+sY3ZGfaKX8=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=taDGPQeN1d7NfJA3qzPxO6Y7dfOE1qEoYvpRJv/gS/c/qiwWVW5ZEsLeIfMcIoOW/
-         laACJSlK3GfYaHQsI5R74RHg+FHV2pI2cH1yETuXuFFx8k4n/fiS+z58gzzO9+vMto
-         Sywx002tz5Cep4ec75DZ7erbXcp6afH2glZc1f88xjNJr9xlLHXINvL7RI+UD3LyTT
-         wPNqUavD77VDBF1kyMWvqaf3xaLhfIY+5Czf+ImbD/v+WELkdI1Kb3TfRzuznfModa
-         gQk63+GRKrxiQjjPux56AB0ZhEIIpEZMBBSOHBlzvCZiJdIxVt+z60dKKamVcXF3sL
-         t9TdlTKKNdy9Q==
-Content-Disposition: inline
-In-Reply-To: <20220317175043.1972081-1-trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id;
+        bh=sCS6c171oyN7Cq0gnRAYsCzijiKw228qCeDaGu15gbQ=;
+        b=kxKHOOABq7S1CRI0KHi/xF4YyJwZK6cmyIAmwClbqrsolrkKTytDk72Ruj1zQ60y+T
+         Nu8rNFZiEQIf1Y85wSPGdZnAGOotwnU4irRb20LPXBjW3zPkW8vg5i7swBTxNpr5kQV5
+         sofHwBwkj7lvrMa17ETqe0YBxjeqA2mGuyt2bAsCMEQGh2iqppvq9gr7hhy/Z4Y5izRf
+         rSgUKLtRTkM46bqRfxVYyCt8xaSxRcm1WaUgyKJhgfdBCvkpzqhdkyi37ugmo5MLzrRR
+         ckgR32huHN2VCsgpYMOPznMSjSo8U9JjG7G4k1pIN+nkF3U4MQfqcWKBXVWc9l70Fmf1
+         MQpg==
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ndesaulniers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, llvm-cunTk1MwBs/YUNznpcFYbw@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Hildenbrand <david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
 
-Hi Tom,
+Hi Andrew,
 
-On Thu, Mar 17, 2022 at 10:50:43AM -0700, trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wrote:
-> From: Tom Rix <trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> 
-> On clang build there is this error
-> inode.c:227:13: error: variable 'nr_dirty' is
->   used uninitialized whenever 'if' condition is false
->         } else if (ret) {
->                    ^~~
-> 
-> In nilfs_dirty_folio(), if the call to
-> filemap_dirty_folio() fails and there
-> are no buffers, nr_dirty will be uninitialized.
-> Move the initialization out of the buffer
-> block and to the decl.
-> 
-> Signed-off-by: Tom Rix <trix-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+please consider applying the following changes to -mm tree.
 
-This has been fixed in next-20220317:
+Ryusuke Konishi (3):
+  nilfs2: fix lockdep warnings in page operations for btree nodes
+  nilfs2: fix lockdep warnings during disk space reclamation
+  nilfs2: get rid of nilfs_mapping_init()
 
-https://git.kernel.org/next/linux-next/c/af7afdc7bbbe60cb6ce51a86b022d647e1a72717
+The first two are to resolve the lockdep warning issue, and the last
+one is the accompanying cleanup and low priority.
 
-Cheers,
-Nathan
+The merge window is already open, but this is for the reported issues,
+so I'll send it without waiting at this point when tests have passed.
 
-> ---
->  fs/nilfs2/inode.c | 4 +---
->  1 file changed, 1 insertion(+), 3 deletions(-)
-> 
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index c1219c0678a57..01e58b65c9384 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -204,7 +204,7 @@ static bool nilfs_dirty_folio(struct address_space *mapping,
->  {
->  	struct inode *inode = mapping->host;
->  	struct buffer_head *head;
-> -	unsigned int nr_dirty;
-> +	unsigned int nr_dirty = 0;
->  	bool ret = filemap_dirty_folio(mapping, folio);
->  
->  	/*
-> @@ -214,8 +214,6 @@ static bool nilfs_dirty_folio(struct address_space *mapping,
->  	head = folio_buffers(folio);
->  	if (head) {
->  		struct buffer_head *bh = head;
-> -
-> -		nr_dirty = 0;
->  		do {
->  			/* Do not mark hole blocks dirty */
->  			if (buffer_dirty(bh) || !buffer_mapped(bh))
-> -- 
-> 2.26.3
-> 
+Based on your comment, this series solves the issue by separating
+inode object as needed.  Since I was worried about the impact of the
+object composition changes, I tested the series carefully not to cause
+regressions especially for delicate functions such like disk space
+reclamation and snapshots.
+
+
+Thanks,
+Ryusuke Konishi
+--
+ fs/nilfs2/btnode.c  |  23 +++++++-
+ fs/nilfs2/btnode.h  |   1 +
+ fs/nilfs2/btree.c   |  27 ++++++---
+ fs/nilfs2/dat.c     |   4 +-
+ fs/nilfs2/gcinode.c |   7 ++-
+ fs/nilfs2/inode.c   | 159 +++++++++++++++++++++++++++++++++++++++++++++++-----
+ fs/nilfs2/mdt.c     |  43 +++++++++-----
+ fs/nilfs2/mdt.h     |   6 +-
+ fs/nilfs2/nilfs.h   |  16 +++---
+ fs/nilfs2/page.c    |  16 +-----
+ fs/nilfs2/page.h    |   1 -
+ fs/nilfs2/segment.c |   9 ++-
+ fs/nilfs2/super.c   |   5 +-
+ 13 files changed, 241 insertions(+), 76 deletions(-)
+
+-- 
+1.8.3.1
+
