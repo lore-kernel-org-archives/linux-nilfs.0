@@ -1,10 +1,10 @@
 From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [Ocfs2-devel] [PATCH 11/27] block: add a
-	bdev_write_cache helper
-Date: Wed, 06 Apr 2022 23:17:07 -0400
-Message-ID: <yq1y20hinvl.fsf@ca-mkp.ca.oracle.com>
+Subject: Re: [Ocfs2-devel] [PATCH 12/27] block: add a bdev_fua
+	helper
+Date: Wed, 06 Apr 2022 23:17:43 -0400
+Message-ID: <yq1sfqpinuh.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
-	<20220406060516.409838-12-hch@lst.de>
+	<20220406060516.409838-13-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -13,20 +13,20 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
 	h=to : cc : subject :
 	from : message-id : references : date : in-reply-to : content-type :
 	mime-version; s=corp-2021-07-09;
-	bh=tUJnubd8gZXBDmR5y0HccTdVKl0H84DH174jOcutIYM=;
-	b=MpF7s5DZ8ufwzPew/71u+lD2uIs/gd7p212hZkW2MMzH9Z0VU6qO9Yxhu3OWemD0QKv0
-	DNm3uvLZOAswhBVHwNIffo5S76DiL2YSWSi69llniRSTVN48ndZYUgtccIGRq0tpCN9D
-	YAUuhQw3Zyz7e5dWGbFKKQ2IT2Gi08Fwfu6M2zWCBOcBEwHfAk+9lqS+pi0Q1z5F2lYi
-	DsmL3LuIpZTZ6KsFTf2zoW3s3QGDy2wbNZncPR6SR/sPawh4OVJ+EaogbNB0dos6TW/9
-	fmnGmjkr8eQPdgXEKjuNCKY2pRLtk0iuwvhrKhC2sgTK8fVzZ6G4l8UcH1Aq3wCl2L1S
-	Xg== 
+	bh=hejc02oDRtTMionT7uhL/jPXdYrz1VtvS0qdI7z+BvU=;
+	b=HLmzvxJ3wBc8WfhU5whUJ9v/GbVRrJ1KEOYPwaACIASEc7I/4zkLyK82k7nAs5rpDsJB
+	q6kd2X7hclSLT04HVeb/WeLH2EsNGJd5G1GaszXPowYZa57aoRVd6nYMRWFrHgcX+Oy3
+	6s/UgHEPW8hd/T79ae2hPskB2XTA2N8/zV4yRDCZX0UN5RQ7z/QCF1YjCTOlLujGF9OP
+	NldM1Ujfxh6HZi3u2SA90HsqctoR9NphIJmfbD1hLEEnxiGlVZcyhq+ev0+0tLfbBoHQ
+	h6tE6oJm4ao9s23m5uuzHuCA/E+zRrIL1U2WQVZa/0qy6WCMsIBA592BxXV2ow2u9cqh
+	Kw== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
 	h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
-	bh=tUJnubd8gZXBDmR5y0HccTdVKl0H84DH174jOcutIYM=;
-	b=InAlEa7smslEM3yAsuBysF1ZefoXvPonEpC35nynzWKEvSwPa6RYOiS3fv3lCNV/vc/VaXOpBUUUNZzV0khNjo/1ybIvFYUgaQ8E9Rw1jwVnYcOkE7mTOSYml2Gbyr/mjKcXy724kG8i9E1OjoTLUmMPTAhImWgBcnTlZ1gZLtE=
-In-Reply-To: <20220406060516.409838-12-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig via
-	Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:00 +0200")
+	bh=hejc02oDRtTMionT7uhL/jPXdYrz1VtvS0qdI7z+BvU=;
+	b=uDTjU1wIwZaXEPamdduWjBG4hkO8iR6ZKhOZZvh798i7eCtoPpxw8Z1bGFtcrtLpimT1c/MdAECj6woyKfdvbhiavv/AIoK9NW8B2D3t+42MFH4Nj8vLV/CzJu9kgiU/6wCC9AZg13DUxlcKBhHFMSj5zu2uPaBM/3nOsSAYWEw=
+In-Reply-To: <20220406060516.409838-13-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig via
+	Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:01 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
 	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
@@ -43,8 +43,8 @@ Cc: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nvme
 
 Christoph,
 
-> Add a helper to check the write cache flag based on the block_device
-> instead of having to poke into the block layer internal request_queue.
+> Add a helper to check the FUA flag based on the block_device instead
+> of having to poke into the block layer internal request_queue.
 
 Reviewed-by: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
