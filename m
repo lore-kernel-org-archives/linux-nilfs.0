@@ -1,10 +1,10 @@
 From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [Ocfs2-devel] [PATCH 22/27] block: refactor discard
-	bio size	limiting
-Date: Wed, 06 Apr 2022 23:29:08 -0400
-Message-ID: <yq1ee29h8qx.fsf@ca-mkp.ca.oracle.com>
+Subject: Re: [Ocfs2-devel] [PATCH 24/27] block: add a
+ bdev_discard_granularity helper
+Date: Wed, 06 Apr 2022 23:32:28 -0400
+Message-ID: <yq135iph8lc.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
-	<20220406060516.409838-23-hch@lst.de>
+	<20220406060516.409838-25-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -13,20 +13,20 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
 	h=to : cc : subject :
 	from : message-id : references : date : in-reply-to : content-type :
 	mime-version; s=corp-2021-07-09;
-	bh=FspSHwF13B9BbpmnqcGUERmum6Re9oIDd5MfxvXKoCc=;
-	b=jXI1CzYEboy0GNUF6p687VbmW9R550d6ikVNLtrqzG9nquNygNVHYrP7eoa7jctskKF4
-	KeIloS+shiz5kphPTwYWc3pNDEJIw4HsW7QNmTCxbwps+wQB4YldmJn7P9mJzS23yiDV
-	fqqvbkec3PqVydLqQO+y1Wn0ajviBVE0KsO5mht5RlWI0SnUfHb1FIYWN7fRxxOxwnbg
-	RzCw2JiYddeM+gS6fA9duMVLmrj+YKLOGXTlWrqOBtXKQd/pZKAPX0igHD6aGPdWJyxD
-	YLsXGiTgCfXwNpPSTUa2L4ZwNM4ZZfuKydW/34EIQ1j6QH499OtWj8aIkGpYfH4Gpa22
-	hA== 
+	bh=rtM6WQf1X5CFX+vgnRgQOYigjQ6xnz/J1uu/PU11Tp8=;
+	b=eHUph2bNrH8sJCZpXfwCiY5eudCWKAsSl43XDtCTsBQtI2OHAoWMdLFE/AB4RtpkLDOx
+	54w0wxzP5iqXInt1LLMcTIZyUIRzDmq3kH3PPHOEpDi/nB0hBWtwGPTKA9ssEaWYXe35
+	wSXAjvgDZLbUzrtsepfTSwWU9aC/LFEXXgeLPpWTK3JGCgj/VYojCHhdB1+/qlHzr0mG
+	iCQVphtYo1YXLxBdcTSD1OIOXSqRNVlN1kE89zsLQ6Ou9zfAAehK5Xtp1i0AFX6zMvH8
+	w/71ngjIhEZLLFAUWtUf3b3GqbJ8u7Ewgenmek4KqglQ+jox2tcGAMvY2GvSbom0VN/f
+	Dg== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
 	h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
-	bh=FspSHwF13B9BbpmnqcGUERmum6Re9oIDd5MfxvXKoCc=;
-	b=CMlo+9k8exY1H/xsxYRsnGoFadfUU6ixuoH9kPQVb5bvaMk14fq11ag4UNzE8dfo10i2efWZu8mH6PhR4PU95S96Jumf9NMXyeFVDn3OS/xB4EEmujB4PNmJbIhY1FrVxwwotM8ClQY3FG8lOL9ml1kzmK1+xbdgtiSyAPYwGE4=
-In-Reply-To: <20220406060516.409838-23-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig via
-	Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:11 +0200")
+	bh=rtM6WQf1X5CFX+vgnRgQOYigjQ6xnz/J1uu/PU11Tp8=;
+	b=CFdOjRutwHI/pDkDa1Ew1ROIoVCl3Zoy5B5Hwl1I4sC03wTDKB1LDdpUfucfFi73Nkc0ypGuXVcvmYKOweC9DnSwqfiLtMKkgHTzvnumMctTA7dD0eePcu/C+QJyjnZRL2jlo+CHb4BeitpKSunjZ56jA6oJy2G8dbj909W2En4=
+In-Reply-To: <20220406060516.409838-25-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig via
+	Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:13 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
 	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
@@ -43,10 +43,8 @@ Cc: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nvme
 
 Christoph,
 
-> Move all the logic to limit the discard bio size into a common helper
-> so that it is better documented.
-
-Looks OK.
+> Abstract away implementation details from file systems by providing a
+> block_device based helper to retreive the discard granularity.
 
 Reviewed-by: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
