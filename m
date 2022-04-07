@@ -1,481 +1,643 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 24/27] block: add a bdev_discard_granularity
-	helper
-Date: Thu, 7 Apr 2022 03:26:55 +0900
-Message-ID: <CAKFNMom3wHtwHyQ0f7gTF+hSNCc716Syn5EADtzb+Sx1iSUiEA@mail.gmail.com>
-References: <20220406060516.409838-1-hch@lst.de>
-	<20220406060516.409838-25-hch@lst.de>
+From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH AUTOSEL 5.17 30/31] nilfs2: fix lockdep warnings in page operations for btree nodes
+Date: Wed,  6 Apr 2022 21:10:28 -0400
+Message-ID: <20220407011029.113321-30-sashal@kernel.org>
+References: <20220407011029.113321-1-sashal@kernel.org>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1649293897;
+        bh=EgSCp1Gibu9qAEai91h7zsHBjnf0NrQYKd1omF8KpqM=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=AMdQ9VuZ1LRXUjY+O7irRGL7sKh+CKy3c5NrJlAtQQDQH3xhUAUmTi8agkM/4rPti
+         K9DG13wrW0v8R+wb15/sjmjB3hvs56qml+jDfABGCAX+9eqajF0TU/LRxSAFnBjYue
+         ZZ1kyak6SZl99Vhky1syAtU04l7RH0pbToUzB8GPpD6IBQJQ+wzCFIA4KBVyRbPjmR
+         jz+Qvs+1/OprWqHm1h8pbi+hJ6Vc200FXPOedGPhguFWHJAK/xZFRN1pGIjQiSlADM
+         3IA82gjU47XqI6NYAzuV+mBvsyTNGUjsC4j2F5UOMoWgofBfdfAGf1z3osofM+aASp
+         OvBJ4W42Bx26g==
+In-Reply-To: <20220407011029.113321-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
-	h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-	:cc; bh=14ZeLO2m8aH+YS1qjEoT4F85qJZ7QGK39BPrvGxvzsc=;
-	b=FPNoADLl+t1rHvkAR4xL1rOVDAlhpOOGr+u25kx4PQUes2dgJf3VMVWx4RqhVzv0kX
-	5gpTEucABhvBe61J4YvVZaXJLzFCw916y+PHHhJE/Wk03gJslw060TSXfyhR1UHGywmM
-	tUGOjgO/tvv35BrogxJk0r3s4DdOfMfzpXGFBBL0VZ4D2j63zFHyR97t/y7gV0AKAs1R
-	hJGS19Gw9w9127XdxMP2Q/fLKeeUGVCZ+7PdNdPrfLy3sdigpvNPW6LqW6+cm1sSbapN
-	l5bvXsAYagi8cRbMUqlCJ8BHK39gp8H12JfHpjgHeRLKmO5URsKxvm9vLNu+PpYSBxuq
-	Nhnw==
-In-Reply-To: <20220406060516.409838-25-hch-jcswGhMUV9g@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, nbd-2H2hN8V1XRtuHlm7Suoebg@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mmc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, syzbot+0d5b462a6f07447991b3-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org, syzbot+34ef28bb2aeb28724aa0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org, Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Hildenbrand <david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, Apr 6, 2022 at 11:06 PM Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
->
-> Abstract away implementation details from file systems by providing a
-> block_device based helper to retreive the discard granularity.
->
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> ---
->  block/blk-lib.c                     |  5 ++---
->  drivers/block/drbd/drbd_nl.c        |  9 +++++----
->  drivers/block/drbd/drbd_receiver.c  |  3 +--
->  drivers/block/loop.c                |  2 +-
->  drivers/target/target_core_device.c |  3 +--
->  fs/btrfs/ioctl.c                    | 12 ++++--------
->  fs/exfat/file.c                     |  3 +--
->  fs/ext4/mballoc.c                   |  6 +++---
->  fs/f2fs/file.c                      |  3 +--
->  fs/fat/file.c                       |  3 +--
->  fs/gfs2/rgrp.c                      |  7 +++----
->  fs/jfs/ioctl.c                      |  3 +--
->  fs/nilfs2/ioctl.c                   |  4 ++--
->  fs/ntfs3/file.c                     |  4 ++--
->  fs/ntfs3/super.c                    |  6 ++----
->  fs/ocfs2/ioctl.c                    |  3 +--
->  fs/xfs/xfs_discard.c                |  4 ++--
->  include/linux/blkdev.h              |  5 +++++
->  18 files changed, 38 insertions(+), 47 deletions(-)
->
-> diff --git a/block/blk-lib.c b/block/blk-lib.c
-> index 8b4b66d3a9bfc..43aa4d7fe859f 100644
-> --- a/block/blk-lib.c
-> +++ b/block/blk-lib.c
-> @@ -12,8 +12,7 @@
->
->  static sector_t bio_discard_limit(struct block_device *bdev, sector_t sector)
->  {
-> -       unsigned int discard_granularity =
-> -               bdev_get_queue(bdev)->limits.discard_granularity;
-> +       unsigned int discard_granularity = bdev_discard_granularity(bdev);
->         sector_t granularity_aligned_sector;
->
->         if (bdev_is_partition(bdev))
-> @@ -59,7 +58,7 @@ int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
->         }
->
->         /* In case the discard granularity isn't set by buggy device driver */
-> -       if (WARN_ON_ONCE(!q->limits.discard_granularity)) {
-> +       if (WARN_ON_ONCE(!bdev_discard_granularity(bdev))) {
->                 char dev_name[BDEVNAME_SIZE];
->
->                 bdevname(bdev, dev_name);
-> diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
-> index 8e28e0a8e5e41..94ac3737723a8 100644
-> --- a/drivers/block/drbd/drbd_nl.c
-> +++ b/drivers/block/drbd/drbd_nl.c
-> @@ -1440,7 +1440,6 @@ static void sanitize_disk_conf(struct drbd_device *device, struct disk_conf *dis
->                                struct drbd_backing_dev *nbc)
->  {
->         struct block_device *bdev = nbc->backing_bdev;
-> -       struct request_queue *q = bdev->bd_disk->queue;
->
->         if (disk_conf->al_extents < DRBD_AL_EXTENTS_MIN)
->                 disk_conf->al_extents = DRBD_AL_EXTENTS_MIN;
-> @@ -1457,12 +1456,14 @@ static void sanitize_disk_conf(struct drbd_device *device, struct disk_conf *dis
->         if (disk_conf->rs_discard_granularity) {
->                 int orig_value = disk_conf->rs_discard_granularity;
->                 sector_t discard_size = bdev_max_discard_sectors(bdev) << 9;
-> +               unsigned int discard_granularity = bdev_discard_granularity(bdev);
->                 int remainder;
->
-> -               if (q->limits.discard_granularity > disk_conf->rs_discard_granularity)
-> -                       disk_conf->rs_discard_granularity = q->limits.discard_granularity;
-> +               if (discard_granularity > disk_conf->rs_discard_granularity)
-> +                       disk_conf->rs_discard_granularity = discard_granularity;
->
-> -               remainder = disk_conf->rs_discard_granularity % q->limits.discard_granularity;
-> +               remainder = disk_conf->rs_discard_granularity %
-> +                               discard_granularity;
->                 disk_conf->rs_discard_granularity += remainder;
->
->                 if (disk_conf->rs_discard_granularity > discard_size)
-> diff --git a/drivers/block/drbd/drbd_receiver.c b/drivers/block/drbd/drbd_receiver.c
-> index 8a4a47da56fe9..275c53c7b629e 100644
-> --- a/drivers/block/drbd/drbd_receiver.c
-> +++ b/drivers/block/drbd/drbd_receiver.c
-> @@ -1511,7 +1511,6 @@ void drbd_bump_write_ordering(struct drbd_resource *resource, struct drbd_backin
->  int drbd_issue_discard_or_zero_out(struct drbd_device *device, sector_t start, unsigned int nr_sectors, int flags)
->  {
->         struct block_device *bdev = device->ldev->backing_bdev;
-> -       struct request_queue *q = bdev_get_queue(bdev);
->         sector_t tmp, nr;
->         unsigned int max_discard_sectors, granularity;
->         int alignment;
-> @@ -1521,7 +1520,7 @@ int drbd_issue_discard_or_zero_out(struct drbd_device *device, sector_t start, u
->                 goto zero_out;
->
->         /* Zero-sector (unknown) and one-sector granularities are the same.  */
-> -       granularity = max(q->limits.discard_granularity >> 9, 1U);
-> +       granularity = max(bdev_discard_granularity(bdev) >> 9, 1U);
->         alignment = (bdev_discard_alignment(bdev) >> 9) % granularity;
->
->         max_discard_sectors = min(bdev_max_discard_sectors(bdev), (1U << 22));
-> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-> index 4b919b75205a7..d5499795a1fec 100644
-> --- a/drivers/block/loop.c
-> +++ b/drivers/block/loop.c
-> @@ -759,7 +759,7 @@ static void loop_config_discard(struct loop_device *lo)
->                 struct request_queue *backingq = bdev_get_queue(I_BDEV(inode));
->
->                 max_discard_sectors = backingq->limits.max_write_zeroes_sectors;
-> -               granularity = backingq->limits.discard_granularity ?:
-> +               granularity = bdev_discard_granularity(I_BDEV(inode)) ?:
->                         queue_physical_block_size(backingq);
->
->         /*
-> diff --git a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
-> index 7d510e4231713..ee93f0cca4228 100644
-> --- a/drivers/target/target_core_device.c
-> +++ b/drivers/target/target_core_device.c
-> @@ -834,7 +834,6 @@ struct se_device *target_alloc_device(struct se_hba *hba, const char *name)
->  bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
->                                        struct block_device *bdev)
->  {
-> -       struct request_queue *q = bdev_get_queue(bdev);
->         int block_size = bdev_logical_block_size(bdev);
->
->         if (!bdev_max_discard_sectors(bdev))
-> @@ -846,7 +845,7 @@ bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
->          * Currently hardcoded to 1 in Linux/SCSI code..
->          */
->         attrib->max_unmap_block_desc_count = 1;
-> -       attrib->unmap_granularity = q->limits.discard_granularity / block_size;
-> +       attrib->unmap_granularity = bdev_discard_granularity(bdev) / block_size;
->         attrib->unmap_granularity_alignment =
->                 bdev_discard_alignment(bdev) / block_size;
->         return true;
-> diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-> index fc7953755fd8b..f1a1e9519808e 100644
-> --- a/fs/btrfs/ioctl.c
-> +++ b/fs/btrfs/ioctl.c
-> @@ -468,7 +468,6 @@ static noinline int btrfs_ioctl_fitrim(struct btrfs_fs_info *fs_info,
->                                         void __user *arg)
->  {
->         struct btrfs_device *device;
-> -       struct request_queue *q;
->         struct fstrim_range range;
->         u64 minlen = ULLONG_MAX;
->         u64 num_devices = 0;
-> @@ -498,14 +497,11 @@ static noinline int btrfs_ioctl_fitrim(struct btrfs_fs_info *fs_info,
->         rcu_read_lock();
->         list_for_each_entry_rcu(device, &fs_info->fs_devices->devices,
->                                 dev_list) {
-> -               if (!device->bdev)
-> +               if (!device->bdev || !bdev_max_discard_sectors(device->bdev))
->                         continue;
-> -               q = bdev_get_queue(device->bdev);
-> -               if (bdev_max_discard_sectors(device->bdev)) {
-> -                       num_devices++;
-> -                       minlen = min_t(u64, q->limits.discard_granularity,
-> -                                    minlen);
-> -               }
-> +               num_devices++;
-> +               minlen = min_t(u64, bdev_discard_granularity(device->bdev),
-> +                                   minlen);
->         }
->         rcu_read_unlock();
->
-> diff --git a/fs/exfat/file.c b/fs/exfat/file.c
-> index 765e4f63dd18d..20d4e47f57ab2 100644
-> --- a/fs/exfat/file.c
-> +++ b/fs/exfat/file.c
-> @@ -351,7 +351,6 @@ int exfat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
->
->  static int exfat_ioctl_fitrim(struct inode *inode, unsigned long arg)
->  {
-> -       struct request_queue *q = bdev_get_queue(inode->i_sb->s_bdev);
->         struct fstrim_range range;
->         int ret = 0;
->
-> @@ -365,7 +364,7 @@ static int exfat_ioctl_fitrim(struct inode *inode, unsigned long arg)
->                 return -EFAULT;
->
->         range.minlen = max_t(unsigned int, range.minlen,
-> -                               q->limits.discard_granularity);
-> +                               bdev_discard_granularity(inode->i_sb->s_bdev));
->
->         ret = exfat_trim_fs(inode, &range);
->         if (ret < 0)
-> diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
-> index c3668c977cd99..6d1820536d88d 100644
-> --- a/fs/ext4/mballoc.c
-> +++ b/fs/ext4/mballoc.c
-> @@ -6455,7 +6455,7 @@ ext4_trim_all_free(struct super_block *sb, ext4_group_t group,
->   */
->  int ext4_trim_fs(struct super_block *sb, struct fstrim_range *range)
->  {
-> -       struct request_queue *q = bdev_get_queue(sb->s_bdev);
-> +       unsigned int discard_granularity = bdev_discard_granularity(sb->s_bdev);
->         struct ext4_group_info *grp;
->         ext4_group_t group, first_group, last_group;
->         ext4_grpblk_t cnt = 0, first_cluster, last_cluster;
-> @@ -6475,9 +6475,9 @@ int ext4_trim_fs(struct super_block *sb, struct fstrim_range *range)
->             range->len < sb->s_blocksize)
->                 return -EINVAL;
->         /* No point to try to trim less than discard granularity */
-> -       if (range->minlen < q->limits.discard_granularity) {
-> +       if (range->minlen < discard_granularity) {
->                 minlen = EXT4_NUM_B2C(EXT4_SB(sb),
-> -                       q->limits.discard_granularity >> sb->s_blocksize_bits);
-> +                               discard_granularity >> sb->s_blocksize_bits);
->                 if (minlen > EXT4_CLUSTERS_PER_GROUP(sb))
->                         goto out;
->         }
-> diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-> index 5b89af0f27f05..8053d99f3920b 100644
-> --- a/fs/f2fs/file.c
-> +++ b/fs/f2fs/file.c
-> @@ -2285,7 +2285,6 @@ static int f2fs_ioc_fitrim(struct file *filp, unsigned long arg)
->  {
->         struct inode *inode = file_inode(filp);
->         struct super_block *sb = inode->i_sb;
-> -       struct request_queue *q = bdev_get_queue(sb->s_bdev);
->         struct fstrim_range range;
->         int ret;
->
-> @@ -2304,7 +2303,7 @@ static int f2fs_ioc_fitrim(struct file *filp, unsigned long arg)
->                 return ret;
->
->         range.minlen = max((unsigned int)range.minlen,
-> -                               q->limits.discard_granularity);
-> +                          bdev_discard_granularity(sb->s_bdev));
->         ret = f2fs_trim_fs(F2FS_SB(sb), &range);
->         mnt_drop_write_file(filp);
->         if (ret < 0)
-> diff --git a/fs/fat/file.c b/fs/fat/file.c
-> index e4c7d10e80129..bf91f977debea 100644
-> --- a/fs/fat/file.c
-> +++ b/fs/fat/file.c
-> @@ -127,7 +127,6 @@ static int fat_ioctl_fitrim(struct inode *inode, unsigned long arg)
->         struct super_block *sb = inode->i_sb;
->         struct fstrim_range __user *user_range;
->         struct fstrim_range range;
-> -       struct request_queue *q = bdev_get_queue(sb->s_bdev);
->         int err;
->
->         if (!capable(CAP_SYS_ADMIN))
-> @@ -141,7 +140,7 @@ static int fat_ioctl_fitrim(struct inode *inode, unsigned long arg)
->                 return -EFAULT;
->
->         range.minlen = max_t(unsigned int, range.minlen,
-> -                            q->limits.discard_granularity);
-> +                            bdev_discard_granularity(sb->s_bdev));
->
->         err = fat_trim_fs(inode, &range);
->         if (err < 0)
-> diff --git a/fs/gfs2/rgrp.c b/fs/gfs2/rgrp.c
-> index 7f20ac9133bc6..6d26bb5254844 100644
-> --- a/fs/gfs2/rgrp.c
-> +++ b/fs/gfs2/rgrp.c
-> @@ -1386,7 +1386,7 @@ int gfs2_fitrim(struct file *filp, void __user *argp)
->  {
->         struct inode *inode = file_inode(filp);
->         struct gfs2_sbd *sdp = GFS2_SB(inode);
-> -       struct request_queue *q = bdev_get_queue(sdp->sd_vfs->s_bdev);
-> +       struct block_device *bdev = sdp->sd_vfs->s_bdev;
->         struct buffer_head *bh;
->         struct gfs2_rgrpd *rgd;
->         struct gfs2_rgrpd *rgd_end;
-> @@ -1405,7 +1405,7 @@ int gfs2_fitrim(struct file *filp, void __user *argp)
->         if (!test_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags))
->                 return -EROFS;
->
-> -       if (!bdev_max_discard_sectors(sdp->sd_vfs->s_bdev))
-> +       if (!bdev_max_discard_sectors(bdev))
->                 return -EOPNOTSUPP;
->
->         if (copy_from_user(&r, argp, sizeof(r)))
-> @@ -1418,8 +1418,7 @@ int gfs2_fitrim(struct file *filp, void __user *argp)
->         start = r.start >> bs_shift;
->         end = start + (r.len >> bs_shift);
->         minlen = max_t(u64, r.minlen, sdp->sd_sb.sb_bsize);
-> -       minlen = max_t(u64, minlen,
-> -                      q->limits.discard_granularity) >> bs_shift;
-> +       minlen = max_t(u64, minlen, bdev_discard_granularity(bdev)) >> bs_shift;
->
->         if (end <= start || minlen > sdp->sd_max_rg_data)
->                 return -EINVAL;
-> diff --git a/fs/jfs/ioctl.c b/fs/jfs/ioctl.c
-> index 357ae6e5c36ec..1e7b177ece605 100644
-> --- a/fs/jfs/ioctl.c
-> +++ b/fs/jfs/ioctl.c
-> @@ -110,7 +110,6 @@ long jfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->         case FITRIM:
->         {
->                 struct super_block *sb = inode->i_sb;
-> -               struct request_queue *q = bdev_get_queue(sb->s_bdev);
->                 struct fstrim_range range;
->                 s64 ret = 0;
->
-> @@ -127,7 +126,7 @@ long jfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->                         return -EFAULT;
->
->                 range.minlen = max_t(unsigned int, range.minlen,
-> -                       q->limits.discard_granularity);
-> +                                    bdev_discard_granularity(sb->s_bdev));
->
->                 ret = jfs_ioc_trim(inode, &range);
->                 if (ret < 0)
-> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> index 52b73f558fcb1..87e1004b606d2 100644
-> --- a/fs/nilfs2/ioctl.c
-> +++ b/fs/nilfs2/ioctl.c
-> @@ -1052,7 +1052,6 @@ static int nilfs_ioctl_resize(struct inode *inode, struct file *filp,
->  static int nilfs_ioctl_trim_fs(struct inode *inode, void __user *argp)
->  {
->         struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-> -       struct request_queue *q = bdev_get_queue(nilfs->ns_bdev);
->         struct fstrim_range range;
->         int ret;
->
-> @@ -1065,7 +1064,8 @@ static int nilfs_ioctl_trim_fs(struct inode *inode, void __user *argp)
->         if (copy_from_user(&range, argp, sizeof(range)))
->                 return -EFAULT;
->
-> -       range.minlen = max_t(u64, range.minlen, q->limits.discard_granularity);
-> +       range.minlen = max_t(u64, range.minlen,
-> +                            bdev_discard_granularity(nilfs->ns_bdev));
->
->         down_read(&nilfs->ns_segctor_sem);
->         ret = nilfs_sufile_trim_fs(nilfs->ns_sufile, &range);
-> diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
-> index e763236169331..15806eeae217a 100644
-> --- a/fs/ntfs3/file.c
-> +++ b/fs/ntfs3/file.c
-> @@ -22,7 +22,6 @@ static int ntfs_ioctl_fitrim(struct ntfs_sb_info *sbi, unsigned long arg)
->  {
->         struct fstrim_range __user *user_range;
->         struct fstrim_range range;
-> -       struct request_queue *q = bdev_get_queue(sbi->sb->s_bdev);
->         int err;
->
->         if (!capable(CAP_SYS_ADMIN))
-> @@ -35,7 +34,8 @@ static int ntfs_ioctl_fitrim(struct ntfs_sb_info *sbi, unsigned long arg)
->         if (copy_from_user(&range, user_range, sizeof(range)))
->                 return -EFAULT;
->
-> -       range.minlen = max_t(u32, range.minlen, q->limits.discard_granularity);
-> +       range.minlen = max_t(u32, range.minlen,
-> +                            bdev_discard_granularity(sbi->sb->s_bdev));
->
->         err = ntfs_trim_fs(sbi, &range);
->         if (err < 0)
-> diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
-> index c734085bcce4a..5f2e414cfa79b 100644
-> --- a/fs/ntfs3/super.c
-> +++ b/fs/ntfs3/super.c
-> @@ -882,7 +882,6 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
->         int err;
->         struct ntfs_sb_info *sbi = sb->s_fs_info;
->         struct block_device *bdev = sb->s_bdev;
-> -       struct request_queue *rq;
->         struct inode *inode;
->         struct ntfs_inode *ni;
->         size_t i, tt;
-> @@ -912,9 +911,8 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
->                 goto out;
->         }
->
-> -       rq = bdev_get_queue(bdev);
-> -       if (bdev_max_discard_sectors(bdev) && rq->limits.discard_granularity) {
-> -               sbi->discard_granularity = rq->limits.discard_granularity;
-> +       if (bdev_max_discard_sectors(bdev) && bdev_discard_granularity(bdev)) {
-> +               sbi->discard_granularity = bdev_discard_granularity(bdev);
->                 sbi->discard_granularity_mask_inv =
->                         ~(u64)(sbi->discard_granularity - 1);
->         }
-> diff --git a/fs/ocfs2/ioctl.c b/fs/ocfs2/ioctl.c
-> index 9b78ef103ada6..afd54ec661030 100644
-> --- a/fs/ocfs2/ioctl.c
-> +++ b/fs/ocfs2/ioctl.c
-> @@ -903,7 +903,6 @@ long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->         case FITRIM:
->         {
->                 struct super_block *sb = inode->i_sb;
-> -               struct request_queue *q = bdev_get_queue(sb->s_bdev);
->                 struct fstrim_range range;
->                 int ret = 0;
->
-> @@ -916,7 +915,7 @@ long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->                 if (copy_from_user(&range, argp, sizeof(range)))
->                         return -EFAULT;
->
-> -               range.minlen = max_t(u64, q->limits.discard_granularity,
-> +               range.minlen = max_t(u64, bdev_discard_granularity(sb->s_bdev),
->                                      range.minlen);
->                 ret = ocfs2_trim_fs(sb, &range);
->                 if (ret < 0)
-> diff --git a/fs/xfs/xfs_discard.c b/fs/xfs/xfs_discard.c
-> index a4e6609d616b7..e2ada115c23f9 100644
-> --- a/fs/xfs/xfs_discard.c
-> +++ b/fs/xfs/xfs_discard.c
-> @@ -152,8 +152,8 @@ xfs_ioc_trim(
->         struct xfs_mount                *mp,
->         struct fstrim_range __user      *urange)
->  {
-> -       struct request_queue    *q = bdev_get_queue(mp->m_ddev_targp->bt_bdev);
-> -       unsigned int            granularity = q->limits.discard_granularity;
-> +       unsigned int            granularity =
-> +               bdev_discard_granularity(mp->m_ddev_targp->bt_bdev);
->         struct fstrim_range     range;
->         xfs_daddr_t             start, end, minlen;
->         xfs_agnumber_t          start_agno, end_agno, agno;
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index ce16247d3afab..7b9c0cf95d2d5 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -1259,6 +1259,11 @@ static inline unsigned int bdev_max_discard_sectors(struct block_device *bdev)
->         return bdev_get_queue(bdev)->limits.max_discard_sectors;
->  }
->
-> +static inline unsigned int bdev_discard_granularity(struct block_device *bdev)
-> +{
-> +       return bdev_get_queue(bdev)->limits.discard_granularity;
-> +}
-> +
->  static inline unsigned int bdev_write_zeroes_sectors(struct block_device *bdev)
->  {
->         struct request_queue *q = bdev_get_queue(bdev);
-> --
-> 2.30.2
->
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-I got the following checkpatch warning:
+[ Upstream commit e897be17a441fa637cd166fc3de1445131e57692 ]
 
- WARNING: 'retreive' may be misspelled - perhaps 'retrieve'?
- #101:
- block_device based helper to retreive the discard granularity.
-                              ^^^^^^^^
+Patch series "nilfs2 lockdep warning fixes".
 
- total: 0 errors, 1 warnings, 294 lines checked
+The first two are to resolve the lockdep warning issue, and the last one
+is the accompanying cleanup and low priority.
 
+Based on your comment, this series solves the issue by separating inode
+object as needed.  Since I was worried about the impact of the object
+composition changes, I tested the series carefully not to cause
+regressions especially for delicate functions such like disk space
+reclamation and snapshots.
 
-The changes themselves look good.
+This patch (of 3):
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+If CONFIG_LOCKDEP is enabled, nilfs2 hits lockdep warnings at
+inode_to_wb() during page/folio operations for btree nodes:
 
-Thanks,
-Ryusuke Konishi
+  WARNING: CPU: 0 PID: 6575 at include/linux/backing-dev.h:269 inode_to_wb include/linux/backing-dev.h:269 [inline]
+  WARNING: CPU: 0 PID: 6575 at include/linux/backing-dev.h:269 folio_account_dirtied mm/page-writeback.c:2460 [inline]
+  WARNING: CPU: 0 PID: 6575 at include/linux/backing-dev.h:269 __folio_mark_dirty+0xa7c/0xe30 mm/page-writeback.c:2509
+  Modules linked in:
+  ...
+  RIP: 0010:inode_to_wb include/linux/backing-dev.h:269 [inline]
+  RIP: 0010:folio_account_dirtied mm/page-writeback.c:2460 [inline]
+  RIP: 0010:__folio_mark_dirty+0xa7c/0xe30 mm/page-writeback.c:2509
+  ...
+  Call Trace:
+    __set_page_dirty include/linux/pagemap.h:834 [inline]
+    mark_buffer_dirty+0x4e6/0x650 fs/buffer.c:1145
+    nilfs_btree_propagate_p fs/nilfs2/btree.c:1889 [inline]
+    nilfs_btree_propagate+0x4ae/0xea0 fs/nilfs2/btree.c:2085
+    nilfs_bmap_propagate+0x73/0x170 fs/nilfs2/bmap.c:337
+    nilfs_collect_dat_data+0x45/0xd0 fs/nilfs2/segment.c:625
+    nilfs_segctor_apply_buffers+0x14a/0x470 fs/nilfs2/segment.c:1009
+    nilfs_segctor_scan_file+0x47a/0x700 fs/nilfs2/segment.c:1048
+    nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1224 [inline]
+    nilfs_segctor_collect fs/nilfs2/segment.c:1494 [inline]
+    nilfs_segctor_do_construct+0x14f3/0x6c60 fs/nilfs2/segment.c:2036
+    nilfs_segctor_construct+0x7a7/0xb30 fs/nilfs2/segment.c:2372
+    nilfs_segctor_thread_construct fs/nilfs2/segment.c:2480 [inline]
+    nilfs_segctor_thread+0x3c3/0xf90 fs/nilfs2/segment.c:2563
+    kthread+0x405/0x4f0 kernel/kthread.c:327
+    ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:295
+
+This is because nilfs2 uses two page caches for each inode and
+inode->i_mapping never points to one of them, the btree node cache.
+
+This causes inode_to_wb(inode) to refer to a different page cache than
+the caller page/folio operations such like __folio_start_writeback(),
+__folio_end_writeback(), or __folio_mark_dirty() acquired the lock.
+
+This patch resolves the issue by allocating and using an additional
+inode to hold the page cache of btree nodes.  The inode is attached
+one-to-one to the traditional nilfs2 inode if it requires a block
+mapping with b-tree.  This setup change is in memory only and does not
+affect the disk format.
+
+Link: https://lkml.kernel.org/r/1647867427-30498-1-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Link: https://lkml.kernel.org/r/1647867427-30498-2-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Link: https://lore.kernel.org/r/YXrYvIo8YRnAOJCj-FZi0V3Vbi30CUdFEqe4BF2D2FQJk+8+b@public.gmane.org
+Link: https://lore.kernel.org/r/9a20b33d-b38f-b4a2-4742-c1eb5b8e4d6c-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: syzbot+0d5b462a6f07447991b3-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: syzbot+34ef28bb2aeb28724aa0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: David Hildenbrand <david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+---
+ fs/nilfs2/btnode.c  |  23 ++++++++--
+ fs/nilfs2/btnode.h  |   1 +
+ fs/nilfs2/btree.c   |  27 ++++++++----
+ fs/nilfs2/gcinode.c |   7 +--
+ fs/nilfs2/inode.c   | 104 ++++++++++++++++++++++++++++++++++++++------
+ fs/nilfs2/mdt.c     |   7 +--
+ fs/nilfs2/nilfs.h   |  14 +++---
+ fs/nilfs2/page.c    |   7 ++-
+ fs/nilfs2/segment.c |   9 ++--
+ fs/nilfs2/super.c   |   5 +--
+ 10 files changed, 154 insertions(+), 50 deletions(-)
+
+diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
+index 66bdaa2cf496..ca611ac09f7c 100644
+--- a/fs/nilfs2/btnode.c
++++ b/fs/nilfs2/btnode.c
+@@ -20,6 +20,23 @@
+ #include "page.h"
+ #include "btnode.h"
+ 
++
++/**
++ * nilfs_init_btnc_inode - initialize B-tree node cache inode
++ * @btnc_inode: inode to be initialized
++ *
++ * nilfs_init_btnc_inode() sets up an inode for B-tree node cache.
++ */
++void nilfs_init_btnc_inode(struct inode *btnc_inode)
++{
++	struct nilfs_inode_info *ii = NILFS_I(btnc_inode);
++
++	btnc_inode->i_mode = S_IFREG;
++	ii->i_flags = 0;
++	memset(&ii->i_bmap_data, 0, sizeof(struct nilfs_bmap));
++	mapping_set_gfp_mask(btnc_inode->i_mapping, GFP_NOFS);
++}
++
+ void nilfs_btnode_cache_clear(struct address_space *btnc)
+ {
+ 	invalidate_mapping_pages(btnc, 0, -1);
+@@ -29,7 +46,7 @@ void nilfs_btnode_cache_clear(struct address_space *btnc)
+ struct buffer_head *
+ nilfs_btnode_create_block(struct address_space *btnc, __u64 blocknr)
+ {
+-	struct inode *inode = NILFS_BTNC_I(btnc);
++	struct inode *inode = btnc->host;
+ 	struct buffer_head *bh;
+ 
+ 	bh = nilfs_grab_buffer(inode, btnc, blocknr, BIT(BH_NILFS_Node));
+@@ -57,7 +74,7 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
+ 			      struct buffer_head **pbh, sector_t *submit_ptr)
+ {
+ 	struct buffer_head *bh;
+-	struct inode *inode = NILFS_BTNC_I(btnc);
++	struct inode *inode = btnc->host;
+ 	struct page *page;
+ 	int err;
+ 
+@@ -157,7 +174,7 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
+ 				    struct nilfs_btnode_chkey_ctxt *ctxt)
+ {
+ 	struct buffer_head *obh, *nbh;
+-	struct inode *inode = NILFS_BTNC_I(btnc);
++	struct inode *inode = btnc->host;
+ 	__u64 oldkey = ctxt->oldkey, newkey = ctxt->newkey;
+ 	int err;
+ 
+diff --git a/fs/nilfs2/btnode.h b/fs/nilfs2/btnode.h
+index 11663650add7..bd5544e63a01 100644
+--- a/fs/nilfs2/btnode.h
++++ b/fs/nilfs2/btnode.h
+@@ -30,6 +30,7 @@ struct nilfs_btnode_chkey_ctxt {
+ 	struct buffer_head *newbh;
+ };
+ 
++void nilfs_init_btnc_inode(struct inode *btnc_inode);
+ void nilfs_btnode_cache_clear(struct address_space *);
+ struct buffer_head *nilfs_btnode_create_block(struct address_space *btnc,
+ 					      __u64 blocknr);
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index 3594eabe1419..f544c22fff78 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -58,7 +58,8 @@ static void nilfs_btree_free_path(struct nilfs_btree_path *path)
+ static int nilfs_btree_get_new_block(const struct nilfs_bmap *btree,
+ 				     __u64 ptr, struct buffer_head **bhp)
+ {
+-	struct address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
++	struct inode *btnc_inode = NILFS_BMAP_I(btree)->i_assoc_inode;
++	struct address_space *btnc = btnc_inode->i_mapping;
+ 	struct buffer_head *bh;
+ 
+ 	bh = nilfs_btnode_create_block(btnc, ptr);
+@@ -470,7 +471,8 @@ static int __nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
+ 				   struct buffer_head **bhp,
+ 				   const struct nilfs_btree_readahead_info *ra)
+ {
+-	struct address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
++	struct inode *btnc_inode = NILFS_BMAP_I(btree)->i_assoc_inode;
++	struct address_space *btnc = btnc_inode->i_mapping;
+ 	struct buffer_head *bh, *ra_bh;
+ 	sector_t submit_ptr = 0;
+ 	int ret;
+@@ -1741,6 +1743,10 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *btree, __u64 key,
+ 		dat = nilfs_bmap_get_dat(btree);
+ 	}
+ 
++	ret = nilfs_attach_btree_node_cache(&NILFS_BMAP_I(btree)->vfs_inode);
++	if (ret < 0)
++		return ret;
++
+ 	ret = nilfs_bmap_prepare_alloc_ptr(btree, dreq, dat);
+ 	if (ret < 0)
+ 		return ret;
+@@ -1913,7 +1919,7 @@ static int nilfs_btree_prepare_update_v(struct nilfs_bmap *btree,
+ 		path[level].bp_ctxt.newkey = path[level].bp_newreq.bpr_ptr;
+ 		path[level].bp_ctxt.bh = path[level].bp_bh;
+ 		ret = nilfs_btnode_prepare_change_key(
+-			&NILFS_BMAP_I(btree)->i_btnode_cache,
++			NILFS_BMAP_I(btree)->i_assoc_inode->i_mapping,
+ 			&path[level].bp_ctxt);
+ 		if (ret < 0) {
+ 			nilfs_dat_abort_update(dat,
+@@ -1939,7 +1945,7 @@ static void nilfs_btree_commit_update_v(struct nilfs_bmap *btree,
+ 
+ 	if (buffer_nilfs_node(path[level].bp_bh)) {
+ 		nilfs_btnode_commit_change_key(
+-			&NILFS_BMAP_I(btree)->i_btnode_cache,
++			NILFS_BMAP_I(btree)->i_assoc_inode->i_mapping,
+ 			&path[level].bp_ctxt);
+ 		path[level].bp_bh = path[level].bp_ctxt.bh;
+ 	}
+@@ -1958,7 +1964,7 @@ static void nilfs_btree_abort_update_v(struct nilfs_bmap *btree,
+ 			       &path[level].bp_newreq.bpr_req);
+ 	if (buffer_nilfs_node(path[level].bp_bh))
+ 		nilfs_btnode_abort_change_key(
+-			&NILFS_BMAP_I(btree)->i_btnode_cache,
++			NILFS_BMAP_I(btree)->i_assoc_inode->i_mapping,
+ 			&path[level].bp_ctxt);
+ }
+ 
+@@ -2134,7 +2140,8 @@ static void nilfs_btree_add_dirty_buffer(struct nilfs_bmap *btree,
+ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
+ 					     struct list_head *listp)
+ {
+-	struct address_space *btcache = &NILFS_BMAP_I(btree)->i_btnode_cache;
++	struct inode *btnc_inode = NILFS_BMAP_I(btree)->i_assoc_inode;
++	struct address_space *btcache = btnc_inode->i_mapping;
+ 	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
+ 	struct pagevec pvec;
+ 	struct buffer_head *bh, *head;
+@@ -2188,12 +2195,12 @@ static int nilfs_btree_assign_p(struct nilfs_bmap *btree,
+ 		path[level].bp_ctxt.newkey = blocknr;
+ 		path[level].bp_ctxt.bh = *bh;
+ 		ret = nilfs_btnode_prepare_change_key(
+-			&NILFS_BMAP_I(btree)->i_btnode_cache,
++			NILFS_BMAP_I(btree)->i_assoc_inode->i_mapping,
+ 			&path[level].bp_ctxt);
+ 		if (ret < 0)
+ 			return ret;
+ 		nilfs_btnode_commit_change_key(
+-			&NILFS_BMAP_I(btree)->i_btnode_cache,
++			NILFS_BMAP_I(btree)->i_assoc_inode->i_mapping,
+ 			&path[level].bp_ctxt);
+ 		*bh = path[level].bp_ctxt.bh;
+ 	}
+@@ -2398,6 +2405,10 @@ int nilfs_btree_init(struct nilfs_bmap *bmap)
+ 
+ 	if (nilfs_btree_root_broken(nilfs_btree_get_root(bmap), bmap->b_inode))
+ 		ret = -EIO;
++	else
++		ret = nilfs_attach_btree_node_cache(
++			&NILFS_BMAP_I(bmap)->vfs_inode);
++
+ 	return ret;
+ }
+ 
+diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
+index a8f5315f01e3..04fdd420eae7 100644
+--- a/fs/nilfs2/gcinode.c
++++ b/fs/nilfs2/gcinode.c
+@@ -126,9 +126,10 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
+ int nilfs_gccache_submit_read_node(struct inode *inode, sector_t pbn,
+ 				   __u64 vbn, struct buffer_head **out_bh)
+ {
++	struct inode *btnc_inode = NILFS_I(inode)->i_assoc_inode;
+ 	int ret;
+ 
+-	ret = nilfs_btnode_submit_block(&NILFS_I(inode)->i_btnode_cache,
++	ret = nilfs_btnode_submit_block(btnc_inode->i_mapping,
+ 					vbn ? : pbn, pbn, REQ_OP_READ, 0,
+ 					out_bh, &pbn);
+ 	if (ret == -EEXIST) /* internal code (cache hit) */
+@@ -170,7 +171,7 @@ int nilfs_init_gcinode(struct inode *inode)
+ 	ii->i_flags = 0;
+ 	nilfs_bmap_init_gc(ii->i_bmap);
+ 
+-	return 0;
++	return nilfs_attach_btree_node_cache(inode);
+ }
+ 
+ /**
+@@ -185,7 +186,7 @@ void nilfs_remove_all_gcinodes(struct the_nilfs *nilfs)
+ 		ii = list_first_entry(head, struct nilfs_inode_info, i_dirty);
+ 		list_del_init(&ii->i_dirty);
+ 		truncate_inode_pages(&ii->vfs_inode.i_data, 0);
+-		nilfs_btnode_cache_clear(&ii->i_btnode_cache);
++		nilfs_btnode_cache_clear(ii->i_assoc_inode->i_mapping);
+ 		iput(&ii->vfs_inode);
+ 	}
+ }
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index e3d807d5b83a..56b642159e25 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -29,12 +29,14 @@
+  * @cno: checkpoint number
+  * @root: pointer on NILFS root object (mounted checkpoint)
+  * @for_gc: inode for GC flag
++ * @for_btnc: inode for B-tree node cache flag
+  */
+ struct nilfs_iget_args {
+ 	u64 ino;
+ 	__u64 cno;
+ 	struct nilfs_root *root;
+-	int for_gc;
++	bool for_gc;
++	bool for_btnc;
+ };
+ 
+ static int nilfs_iget_test(struct inode *inode, void *opaque);
+@@ -314,7 +316,8 @@ static int nilfs_insert_inode_locked(struct inode *inode,
+ 				     unsigned long ino)
+ {
+ 	struct nilfs_iget_args args = {
+-		.ino = ino, .root = root, .cno = 0, .for_gc = 0
++		.ino = ino, .root = root, .cno = 0, .for_gc = false,
++		.for_btnc = false
+ 	};
+ 
+ 	return insert_inode_locked4(inode, ino, nilfs_iget_test, &args);
+@@ -527,6 +530,13 @@ static int nilfs_iget_test(struct inode *inode, void *opaque)
+ 		return 0;
+ 
+ 	ii = NILFS_I(inode);
++	if (test_bit(NILFS_I_BTNC, &ii->i_state)) {
++		if (!args->for_btnc)
++			return 0;
++	} else if (args->for_btnc) {
++		return 0;
++	}
++
+ 	if (!test_bit(NILFS_I_GCINODE, &ii->i_state))
+ 		return !args->for_gc;
+ 
+@@ -538,15 +548,15 @@ static int nilfs_iget_set(struct inode *inode, void *opaque)
+ 	struct nilfs_iget_args *args = opaque;
+ 
+ 	inode->i_ino = args->ino;
+-	if (args->for_gc) {
++	NILFS_I(inode)->i_cno = args->cno;
++	NILFS_I(inode)->i_root = args->root;
++	if (args->root && args->ino == NILFS_ROOT_INO)
++		nilfs_get_root(args->root);
++
++	if (args->for_gc)
+ 		NILFS_I(inode)->i_state = BIT(NILFS_I_GCINODE);
+-		NILFS_I(inode)->i_cno = args->cno;
+-		NILFS_I(inode)->i_root = NULL;
+-	} else {
+-		if (args->root && args->ino == NILFS_ROOT_INO)
+-			nilfs_get_root(args->root);
+-		NILFS_I(inode)->i_root = args->root;
+-	}
++	if (args->for_btnc)
++		NILFS_I(inode)->i_state |= BIT(NILFS_I_BTNC);
+ 	return 0;
+ }
+ 
+@@ -554,7 +564,8 @@ struct inode *nilfs_ilookup(struct super_block *sb, struct nilfs_root *root,
+ 			    unsigned long ino)
+ {
+ 	struct nilfs_iget_args args = {
+-		.ino = ino, .root = root, .cno = 0, .for_gc = 0
++		.ino = ino, .root = root, .cno = 0, .for_gc = false,
++		.for_btnc = false
+ 	};
+ 
+ 	return ilookup5(sb, ino, nilfs_iget_test, &args);
+@@ -564,7 +575,8 @@ struct inode *nilfs_iget_locked(struct super_block *sb, struct nilfs_root *root,
+ 				unsigned long ino)
+ {
+ 	struct nilfs_iget_args args = {
+-		.ino = ino, .root = root, .cno = 0, .for_gc = 0
++		.ino = ino, .root = root, .cno = 0, .for_gc = false,
++		.for_btnc = false
+ 	};
+ 
+ 	return iget5_locked(sb, ino, nilfs_iget_test, nilfs_iget_set, &args);
+@@ -595,7 +607,8 @@ struct inode *nilfs_iget_for_gc(struct super_block *sb, unsigned long ino,
+ 				__u64 cno)
+ {
+ 	struct nilfs_iget_args args = {
+-		.ino = ino, .root = NULL, .cno = cno, .for_gc = 1
++		.ino = ino, .root = NULL, .cno = cno, .for_gc = true,
++		.for_btnc = false
+ 	};
+ 	struct inode *inode;
+ 	int err;
+@@ -615,6 +628,68 @@ struct inode *nilfs_iget_for_gc(struct super_block *sb, unsigned long ino,
+ 	return inode;
+ }
+ 
++/**
++ * nilfs_attach_btree_node_cache - attach a B-tree node cache to the inode
++ * @inode: inode object
++ *
++ * nilfs_attach_btree_node_cache() attaches a B-tree node cache to @inode,
++ * or does nothing if the inode already has it.  This function allocates
++ * an additional inode to maintain page cache of B-tree nodes one-on-one.
++ *
++ * Return Value: On success, 0 is returned. On errors, one of the following
++ * negative error code is returned.
++ *
++ * %-ENOMEM - Insufficient memory available.
++ */
++int nilfs_attach_btree_node_cache(struct inode *inode)
++{
++	struct nilfs_inode_info *ii = NILFS_I(inode);
++	struct inode *btnc_inode;
++	struct nilfs_iget_args args;
++
++	if (ii->i_assoc_inode)
++		return 0;
++
++	args.ino = inode->i_ino;
++	args.root = ii->i_root;
++	args.cno = ii->i_cno;
++	args.for_gc = test_bit(NILFS_I_GCINODE, &ii->i_state) != 0;
++	args.for_btnc = true;
++
++	btnc_inode = iget5_locked(inode->i_sb, inode->i_ino, nilfs_iget_test,
++				  nilfs_iget_set, &args);
++	if (unlikely(!btnc_inode))
++		return -ENOMEM;
++	if (btnc_inode->i_state & I_NEW) {
++		nilfs_init_btnc_inode(btnc_inode);
++		unlock_new_inode(btnc_inode);
++	}
++	NILFS_I(btnc_inode)->i_assoc_inode = inode;
++	NILFS_I(btnc_inode)->i_bmap = ii->i_bmap;
++	ii->i_assoc_inode = btnc_inode;
++
++	return 0;
++}
++
++/**
++ * nilfs_detach_btree_node_cache - detach the B-tree node cache from the inode
++ * @inode: inode object
++ *
++ * nilfs_detach_btree_node_cache() detaches the B-tree node cache and its
++ * holder inode bound to @inode, or does nothing if @inode doesn't have it.
++ */
++void nilfs_detach_btree_node_cache(struct inode *inode)
++{
++	struct nilfs_inode_info *ii = NILFS_I(inode);
++	struct inode *btnc_inode = ii->i_assoc_inode;
++
++	if (btnc_inode) {
++		NILFS_I(btnc_inode)->i_assoc_inode = NULL;
++		ii->i_assoc_inode = NULL;
++		iput(btnc_inode);
++	}
++}
++
+ void nilfs_write_inode_common(struct inode *inode,
+ 			      struct nilfs_inode *raw_inode, int has_bmap)
+ {
+@@ -762,7 +837,8 @@ static void nilfs_clear_inode(struct inode *inode)
+ 	if (test_bit(NILFS_I_BMAP, &ii->i_state))
+ 		nilfs_bmap_clear(ii->i_bmap);
+ 
+-	nilfs_btnode_cache_clear(&ii->i_btnode_cache);
++	if (!test_bit(NILFS_I_BTNC, &ii->i_state))
++		nilfs_detach_btree_node_cache(inode);
+ 
+ 	if (ii->i_root && inode->i_ino == NILFS_ROOT_INO)
+ 		nilfs_put_root(ii->i_root);
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index 4b3d33cf0041..b26996420401 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -532,7 +532,7 @@ int nilfs_mdt_save_to_shadow_map(struct inode *inode)
+ 		goto out;
+ 
+ 	ret = nilfs_copy_dirty_pages(&shadow->frozen_btnodes,
+-				     &ii->i_btnode_cache);
++				     ii->i_assoc_inode->i_mapping);
+ 	if (ret)
+ 		goto out;
+ 
+@@ -623,8 +623,9 @@ void nilfs_mdt_restore_from_shadow_map(struct inode *inode)
+ 	nilfs_clear_dirty_pages(inode->i_mapping, true);
+ 	nilfs_copy_back_pages(inode->i_mapping, &shadow->frozen_data);
+ 
+-	nilfs_clear_dirty_pages(&ii->i_btnode_cache, true);
+-	nilfs_copy_back_pages(&ii->i_btnode_cache, &shadow->frozen_btnodes);
++	nilfs_clear_dirty_pages(ii->i_assoc_inode->i_mapping, true);
++	nilfs_copy_back_pages(ii->i_assoc_inode->i_mapping,
++			      &shadow->frozen_btnodes);
+ 
+ 	nilfs_bmap_restore(ii->i_bmap, &shadow->bmap_store);
+ 
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index a7b81755c350..36b048db00b7 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -28,7 +28,7 @@
+  * @i_xattr: <TODO>
+  * @i_dir_start_lookup: page index of last successful search
+  * @i_cno: checkpoint number for GC inode
+- * @i_btnode_cache: cached pages of b-tree nodes
++ * @i_assoc_inode: associated inode (B-tree node cache holder or back pointer)
+  * @i_dirty: list for connecting dirty files
+  * @xattr_sem: semaphore for extended attributes processing
+  * @i_bh: buffer contains disk inode
+@@ -43,7 +43,7 @@ struct nilfs_inode_info {
+ 	__u64 i_xattr;	/* sector_t ??? */
+ 	__u32 i_dir_start_lookup;
+ 	__u64 i_cno;		/* check point number for GC inode */
+-	struct address_space i_btnode_cache;
++	struct inode *i_assoc_inode;
+ 	struct list_head i_dirty;	/* List for connecting dirty files */
+ 
+ #ifdef CONFIG_NILFS_XATTR
+@@ -75,13 +75,6 @@ NILFS_BMAP_I(const struct nilfs_bmap *bmap)
+ 	return container_of(bmap, struct nilfs_inode_info, i_bmap_data);
+ }
+ 
+-static inline struct inode *NILFS_BTNC_I(struct address_space *btnc)
+-{
+-	struct nilfs_inode_info *ii =
+-		container_of(btnc, struct nilfs_inode_info, i_btnode_cache);
+-	return &ii->vfs_inode;
+-}
+-
+ /*
+  * Dynamic state flags of NILFS on-memory inode (i_state)
+  */
+@@ -98,6 +91,7 @@ enum {
+ 	NILFS_I_INODE_SYNC,		/* dsync is not allowed for inode */
+ 	NILFS_I_BMAP,			/* has bmap and btnode_cache */
+ 	NILFS_I_GCINODE,		/* inode for GC, on memory only */
++	NILFS_I_BTNC,			/* inode for btree node cache */
+ };
+ 
+ /*
+@@ -267,6 +261,8 @@ struct inode *nilfs_iget(struct super_block *sb, struct nilfs_root *root,
+ 			 unsigned long ino);
+ extern struct inode *nilfs_iget_for_gc(struct super_block *sb,
+ 				       unsigned long ino, __u64 cno);
++int nilfs_attach_btree_node_cache(struct inode *inode);
++void nilfs_detach_btree_node_cache(struct inode *inode);
+ extern void nilfs_update_inode(struct inode *, struct buffer_head *, int);
+ extern void nilfs_truncate(struct inode *);
+ extern void nilfs_evict_inode(struct inode *);
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 063dd16d75b5..45e079295008 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -448,10 +448,9 @@ void nilfs_mapping_init(struct address_space *mapping, struct inode *inode)
+ /*
+  * NILFS2 needs clear_page_dirty() in the following two cases:
+  *
+- * 1) For B-tree node pages and data pages of the dat/gcdat, NILFS2 clears
+- *    page dirty flags when it copies back pages from the shadow cache
+- *    (gcdat->{i_mapping,i_btnode_cache}) to its original cache
+- *    (dat->{i_mapping,i_btnode_cache}).
++ * 1) For B-tree node pages and data pages of DAT file, NILFS2 clears dirty
++ *    flag of pages when it copies back pages from shadow cache to the
++ *    original cache.
+  *
+  * 2) Some B-tree operations like insertion or deletion may dispose buffers
+  *    in dirty state, and this needs to cancel the dirty state of their pages.
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 85a853334771..0afe0832c754 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -733,15 +733,18 @@ static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
+ 					    struct list_head *listp)
+ {
+ 	struct nilfs_inode_info *ii = NILFS_I(inode);
+-	struct address_space *mapping = &ii->i_btnode_cache;
++	struct inode *btnc_inode = ii->i_assoc_inode;
+ 	struct pagevec pvec;
+ 	struct buffer_head *bh, *head;
+ 	unsigned int i;
+ 	pgoff_t index = 0;
+ 
++	if (!btnc_inode)
++		return;
++
+ 	pagevec_init(&pvec);
+ 
+-	while (pagevec_lookup_tag(&pvec, mapping, &index,
++	while (pagevec_lookup_tag(&pvec, btnc_inode->i_mapping, &index,
+ 					PAGECACHE_TAG_DIRTY)) {
+ 		for (i = 0; i < pagevec_count(&pvec); i++) {
+ 			bh = head = page_buffers(pvec.pages[i]);
+@@ -2410,7 +2413,7 @@ nilfs_remove_written_gcinodes(struct the_nilfs *nilfs, struct list_head *head)
+ 			continue;
+ 		list_del_init(&ii->i_dirty);
+ 		truncate_inode_pages(&ii->vfs_inode.i_data, 0);
+-		nilfs_btnode_cache_clear(&ii->i_btnode_cache);
++		nilfs_btnode_cache_clear(ii->i_assoc_inode->i_mapping);
+ 		iput(&ii->vfs_inode);
+ 	}
+ }
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 63e5fa74016c..c4c6578185d5 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -157,7 +157,8 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
+ 	ii->i_bh = NULL;
+ 	ii->i_state = 0;
+ 	ii->i_cno = 0;
+-	nilfs_mapping_init(&ii->i_btnode_cache, &ii->vfs_inode);
++	ii->i_assoc_inode = NULL;
++	ii->i_bmap = &ii->i_bmap_data;
+ 	return &ii->vfs_inode;
+ }
+ 
+@@ -1377,8 +1378,6 @@ static void nilfs_inode_init_once(void *obj)
+ #ifdef CONFIG_NILFS_XATTR
+ 	init_rwsem(&ii->xattr_sem);
+ #endif
+-	address_space_init_once(&ii->i_btnode_cache);
+-	ii->i_bmap = &ii->i_bmap_data;
+ 	inode_init_once(&ii->vfs_inode);
+ }
+ 
+-- 
+2.35.1
+
