@@ -1,10 +1,10 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [Ocfs2-devel] [PATCH 23/27] block: add a
- bdev_max_discard_sectors helper
-Date: Wed, 06 Apr 2022 23:30:51 -0400
-Message-ID: <yq18rshh8o7.fsf@ca-mkp.ca.oracle.com>
+Subject: Re: [Ocfs2-devel] [PATCH 26/27] block: uncouple REQ_OP_SECURE_ERASE
+ from REQ_OP_DISCARD
+Date: Wed, 06 Apr 2022 23:36:52 -0400
+Message-ID: <yq1r169fttr.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-24-hch@lst.de>
+ <20220406060516.409838-27-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -13,19 +13,19 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
  h=to : cc : subject :
  from : message-id : references : date : in-reply-to : content-type :
  mime-version; s=corp-2021-07-09;
- bh=mYq6byqIyiFjHV8Jr0Ype4Fjz5k3Y7rfnHXOHjRgy9A=;
- b=UoLG9f3rZI3Wt+K09rjVRxZ9B08Rhn+8Grv4X1PNpsDZE/RDxHcFxHCQUgwuEjjZ6rJq
- wNuNdlyjT8obYSvTpy3fP8BF876Zs+hqOsSrpBucEgo+EGYJuY95NOIj/xV4vE8YbjAM
- Vagf4r2oIzDGXZGT1bdnYp5qbnHGYW7ZJYGyzEiZs3s6Ry00lGPuyfSwiiKyo3rmS6Xs
- jIimKiYXYc+jcfhgOe5RxG0KhocTvE23Yl2MlbRB7vMxhf8ntKaiSqTtKKykNy2isH9t
- U+pUa7b3DleXFwYe6m9t9XKqagf5GTTGyB+OMYYemMPa9DZQE+veiYorobvoHI2Ri9I9 vg== 
+ bh=0fSH05fVrj4EsKu7GruSr6V8eDQcmEnuW15iSPtYu3U=;
+ b=iag3pmaogwT0fVNNtSBn/JoHcAOg5JTOiwAr7G+XUgGvcNjxegCBNThSYqe+F4T0NNMS
+ B/59HaBNX03xPzKp11moq8ZsFxeak9RIA3RrLouwkC4YK+71tDVE0sdTjSK6BxxCftbo
+ 0EZ+onJIUBjU/ENdCS5sy3svT9bx0UEJmXm8G3Vy6SHK2y8Xy6l3WbHoInOxD2xK3+eI
+ 6prGeQ9aYuOEK5xF9lkj3vVuts9fdh0ePfPpNw+bzbLVZ7ePbcRp8+ED14FvB3NB4vug
+ 6MW3QIbWBa8G316LrQWtBIEFgUnKlZc368HFrB7khC0iArMf4byEey+uTWpLJY8E6DL7 IA== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=mYq6byqIyiFjHV8Jr0Ype4Fjz5k3Y7rfnHXOHjRgy9A=;
- b=Eq21Wo+j1JF7OTWA82B9borMkMphwY8igrWHR4LUBmyqVvlgcx8FVIJUwbmKdh+L5EQ9Jv9PuMecfsquNzJY+mcwWkiVOlR6FgCJX0GNs3UISUzrsOhNNFWZSMcdkqsDwJX8uKCIJCU4bK3t5lY/Fsw3+RryaRh/fdY/cELhbQs=
-In-Reply-To: <20220406060516.409838-24-hch@lst.de> (Christoph Hellwig via
- Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:12 +0200")
+ bh=0fSH05fVrj4EsKu7GruSr6V8eDQcmEnuW15iSPtYu3U=;
+ b=lD2AOIVmspgZK/pwyBQri5RZA765JIpiAnX41gCyPVtP+Y0SeaHhVXkNeMjdO0jW+v8zL255prslBhs6U+n+XeYmqaxrxa75WKicpSdy1fVEeZ7x8Qf8na7UC0cNAtS20puZeuMXz7/6AAnLUVOLh00DYpJUCv3AWFnY07aff5g=
+In-Reply-To: <20220406060516.409838-27-hch@lst.de> (Christoph Hellwig via
+ Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:15 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
  <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
@@ -42,13 +42,11 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtua
 
 Christoph,
 
-> Add a helper to query the number of sectors support per each discard
-> bio based on the block device and use this helper to stop various
-> places from poking into the request_queue to see if discard is
-> supported and if so how much.  This mirrors what is done e.g. for
-> write zeroes as well.
+> Secure erase is a very different operation from discard in that it is
+> a data integrity operation vs hint.  Fully split the limits and helper
+> infrastructure to make the separation more clear.
 
-Nicer!
+Great!
 
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
