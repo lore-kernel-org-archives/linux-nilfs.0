@@ -1,9 +1,10 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [Ocfs2-devel] [PATCH 10/27] block: add a bdev_nonrot helper
-Date: Wed, 06 Apr 2022 23:16:22 -0400
-Message-ID: <yq14k35k2h9.fsf@ca-mkp.ca.oracle.com>
+Subject: Re: [Ocfs2-devel] [PATCH 15/27] block: use bdev_alignment_offset in
+ part_alignment_offset_show
+Date: Wed, 06 Apr 2022 23:19:34 -0400
+Message-ID: <yq1h775ins6.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-11-hch@lst.de>
+ <20220406060516.409838-16-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -12,19 +13,19 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
  h=to : cc : subject :
  from : message-id : references : date : in-reply-to : content-type :
  mime-version; s=corp-2021-07-09;
- bh=W1WqCICKHnvyvIEevFUyUtdGDLu7sKYBjmUGmhlgDFw=;
- b=Ijw2Hbs8JlfO85BdJ/ePlHYrF2UCKxnJLItzdWFviUalxElI3wDrwqjNlyiB7i84rddJ
- LFAlhUCGk+g1Qiv/GNS3oehC3qPVbzzWFH48CUBLJZLeqKLmA+nzGF7CFwDmAsCUR4DG
- g6JzSWOAHIDuyYwrXKfwzYmvCgQPE04R/QmdQSE5q8GaqvzJ2dfuPVDQJbClBaWJt6Uk
- 2yQut1Eh7TwRv8dlTTuLi0zBfffH50lZT5l7pAWvweJY71CPUr12IN2nu/3nLikq/61m
- UYouBqsKJVTAyLHMoePtKdZR7LZbm+/1Nb4FYlCom29laVhilgBW2d/i+YxuiSCaoVLj xA== 
+ bh=nG3sI1771Qzwkix+7woUumXPeYpDKLLcIMXUM/nZXzc=;
+ b=uCX4EVIMxM0btfDpTw5w1ew9bFLCrQilscmuwmVdRolfLJunbh9KT5j69VKpBFtOcJAq
+ ObSXwXW1pjDG1XcmTA2ht9GIUnTTPukHcg63rNhtrS2pFvtUQU30jO65uVjIMPB7TAQ6
+ M3z4ik2IbLzB7K5bswElc2TQSorNj2XqvboFkJ0QDgkOI0JlZpNXTZl+3TF/DJajXHTk
+ 8hGfsTiGys+WFrXr7iEbTTgcs7X+hTPGSqmMwHaLtKUw0KaZroaIflimn4O+OXx2aqdt
+ +19y5fxddpLswZXH4y4t3+qmqVkl+7EYZAckUFjvjawOty9JLhF6oHbEW/rqImOgBjYX wg== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=W1WqCICKHnvyvIEevFUyUtdGDLu7sKYBjmUGmhlgDFw=;
- b=d1mW83v97OXADeEhiNwno4KHtAI1Dr/+rfv/xp/Div5IkCokXN8XJgFqPMOvRx1qGArbx3W+Ih5BSOZkemvBHmMsRm9EsBi4czSxbNzQ+B6BKyEEVrC8iqfSjIX1by/wOiMQjUo4/0Ts4Bv85+SzzsC/ynTPMowE6yh3sNbq0dM=
-In-Reply-To: <20220406060516.409838-11-hch@lst.de> (Christoph Hellwig via
- Ocfs2-devel's message of "Wed, 6 Apr 2022 08:04:59 +0200")
+ bh=nG3sI1771Qzwkix+7woUumXPeYpDKLLcIMXUM/nZXzc=;
+ b=MLUZOxgb88Mde+78DEy0UZP5WVFusHEBbq/vjQIQIR8r4BS5W6s4Q8aQKGyXqKdDq+YD3vkzyihq8zM4+GZd7fMViQopAcLx4GHajrlD6Rr9AsisUc1bzBPWRbjcOU4KxtbcMR1Cp3oF+HFP8EV91//bwMu30rzG0ZlARgkOTv4=
+In-Reply-To: <20220406060516.409838-16-hch@lst.de> (Christoph Hellwig via
+ Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:04 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
  <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
@@ -41,8 +42,12 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtua
 
 Christoph,
 
-> Add a helper to check the nonrot flag based on the block_device
-> instead of having to poke into the block layer internal request_queue.
+> Replace the open coded offset calculation with the proper helper.
+> This is an ABI change in that the -1 for a misaligned partition is
+> properly propagated, which can be considered a bug fix and maches what
+> is done on the whole device.
+
+Looks good.
 
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
