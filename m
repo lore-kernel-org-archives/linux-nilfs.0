@@ -1,28 +1,28 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.16 29/30] nilfs2: fix lockdep warnings in page operations for btree nodes
-Date: Wed,  6 Apr 2022 21:11:39 -0400
-Message-ID: <20220407011140.113856-29-sashal@kernel.org>
-References: <20220407011140.113856-1-sashal@kernel.org>
+From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH AUTOSEL 5.10 24/25] nilfs2: fix lockdep warnings in page operations for btree nodes
+Date: Wed,  6 Apr 2022 21:14:12 -0400
+Message-ID: <20220407011413.114662-24-sashal@kernel.org>
+References: <20220407011413.114662-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1649293974;
-        bh=o9pDjJuw7ye081dRDCUsaH+4l69U7I7Ns81pobGKe6s=;
+        s=k20201202; t=1649294118;
+        bh=iqKoYTEhoOIJQbwusH9J7lI8rL/7AR8zeQ6hl6ErqMw=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ArsrrJ0QfypI1g+HoqXhITzEF6irLWsaay9FWh0uDn4eolZncJqo3BfpgfelvzHuF
-         955uSHuCS/9mF98e6fv9bhhdNh5NX+P6sSTzmprMpgOzq9WDWZkT2QwtqP/LBjrhbh
-         WUXx2jU09r8Rb0JHx00dvaLorQdsEA+u+dfm2HGxz9hpm+a+1VYKbMr6AgaoUlWNyE
-         3HRWHhOsSxwQ/0kfYKNBRO7q60ULvB/D2WZXJDTQURSXNI6/Nd6Gm80hSqSZNyFhZ5
-         WJKazYCkhPPPZPTBwOraLcpUB/+vmci/NehKtvLwz6Q1mvaJBvZ78CWL72qDw0Toj6
-         5nqAp7iuohOrA==
-In-Reply-To: <20220407011140.113856-1-sashal@kernel.org>
+        b=PNeQqVRUMFUyxSjm7/Y+x0/FfylL9n2/f0qS8a8PMrGFKjM9t8cpyec3jI3YoocLv
+         +tEKRSHHVlcay3bZNWrptXMvSs6384KKQQ57vdkXZi/JQ4sQHMbeEzngvz/K+0D4cd
+         YLMEqbHURq/09JdWKyqbcalYuJ/bP44iFr00diMoCI99LMdUEt4tfgGJ4ni6/vNzMn
+         qPPHRj7Xhbvy19ZLYil1sF463GjgefQ5l2LQqTZ+l+zXZVnxItbn1wTJaDBSip3b1L
+         1OPRiQKtTJbjcJiW8caMy9jtHgwiQo1symr8XlMINr/eOMIOs5O1lzFcXZq9Jd2dis
+         q+biUm4KNxV0w==
+In-Reply-To: <20220407011413.114662-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>, syzbot+0d5b462a6f07447991b3@syzkaller.appspotmail.com, syzbot+34ef28bb2aeb28724aa0@syzkaller.appspotmail.com, Hao Sun <sunhao.th@gmail.com>, David Hildenbrand <david@redhat.com>, Matthew Wilcox <willy@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Sasha Levin <sashal@kernel.org>, linux-nilfs@vger.kernel.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, syzbot+0d5b462a6f07447991b3-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org, syzbot+34ef28bb2aeb28724aa0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org, Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Hildenbrand <david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 [ Upstream commit e897be17a441fa637cd166fc3de1445131e57692 ]
 
@@ -82,20 +82,20 @@ one-to-one to the traditional nilfs2 inode if it requires a block
 mapping with b-tree.  This setup change is in memory only and does not
 affect the disk format.
 
-Link: https://lkml.kernel.org/r/1647867427-30498-1-git-send-email-konishi.ryusuke@gmail.com
-Link: https://lkml.kernel.org/r/1647867427-30498-2-git-send-email-konishi.ryusuke@gmail.com
-Link: https://lore.kernel.org/r/YXrYvIo8YRnAOJCj@casper.infradead.org
-Link: https://lore.kernel.org/r/9a20b33d-b38f-b4a2-4742-c1eb5b8e4d6c@redhat.com
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: syzbot+0d5b462a6f07447991b3@syzkaller.appspotmail.com
-Reported-by: syzbot+34ef28bb2aeb28724aa0@syzkaller.appspotmail.com
-Reported-by: Hao Sun <sunhao.th@gmail.com>
-Reported-by: David Hildenbrand <david@redhat.com>
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Matthew Wilcox <willy@infradead.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
+Link: https://lkml.kernel.org/r/1647867427-30498-1-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Link: https://lkml.kernel.org/r/1647867427-30498-2-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Link: https://lore.kernel.org/r/YXrYvIo8YRnAOJCj-FZi0V3Vbi30CUdFEqe4BF2D2FQJk+8+b@public.gmane.org
+Link: https://lore.kernel.org/r/9a20b33d-b38f-b4a2-4742-c1eb5b8e4d6c-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: syzbot+0d5b462a6f07447991b3-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: syzbot+34ef28bb2aeb28724aa0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: David Hildenbrand <david-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
  fs/nilfs2/btnode.c  |  23 ++++++++--
  fs/nilfs2/btnode.h  |   1 +
@@ -110,7 +110,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  10 files changed, 154 insertions(+), 50 deletions(-)
 
 diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 66bdaa2cf496..ca611ac09f7c 100644
+index 4391fd3abd8f..e00e184b1261 100644
 --- a/fs/nilfs2/btnode.c
 +++ b/fs/nilfs2/btnode.c
 @@ -20,6 +20,23 @@
@@ -165,7 +165,7 @@ index 66bdaa2cf496..ca611ac09f7c 100644
  	int err;
  
 diff --git a/fs/nilfs2/btnode.h b/fs/nilfs2/btnode.h
-index 11663650add7..bd5544e63a01 100644
+index 0f88dbc9bcb3..05ab64d354dc 100644
 --- a/fs/nilfs2/btnode.h
 +++ b/fs/nilfs2/btnode.h
 @@ -30,6 +30,7 @@ struct nilfs_btnode_chkey_ctxt {
@@ -177,7 +177,7 @@ index 11663650add7..bd5544e63a01 100644
  struct buffer_head *nilfs_btnode_create_block(struct address_space *btnc,
  					      __u64 blocknr);
 diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 3594eabe1419..f544c22fff78 100644
+index f42ab57201e7..77efd69213a3 100644
 --- a/fs/nilfs2/btree.c
 +++ b/fs/nilfs2/btree.c
 @@ -58,7 +58,8 @@ static void nilfs_btree_free_path(struct nilfs_btree_path *path)
@@ -200,7 +200,7 @@ index 3594eabe1419..f544c22fff78 100644
  	struct buffer_head *bh, *ra_bh;
  	sector_t submit_ptr = 0;
  	int ret;
-@@ -1741,6 +1743,10 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *btree, __u64 key,
+@@ -1742,6 +1744,10 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *btree, __u64 key,
  		dat = nilfs_bmap_get_dat(btree);
  	}
  
@@ -211,7 +211,7 @@ index 3594eabe1419..f544c22fff78 100644
  	ret = nilfs_bmap_prepare_alloc_ptr(btree, dreq, dat);
  	if (ret < 0)
  		return ret;
-@@ -1913,7 +1919,7 @@ static int nilfs_btree_prepare_update_v(struct nilfs_bmap *btree,
+@@ -1914,7 +1920,7 @@ static int nilfs_btree_prepare_update_v(struct nilfs_bmap *btree,
  		path[level].bp_ctxt.newkey = path[level].bp_newreq.bpr_ptr;
  		path[level].bp_ctxt.bh = path[level].bp_bh;
  		ret = nilfs_btnode_prepare_change_key(
@@ -220,7 +220,7 @@ index 3594eabe1419..f544c22fff78 100644
  			&path[level].bp_ctxt);
  		if (ret < 0) {
  			nilfs_dat_abort_update(dat,
-@@ -1939,7 +1945,7 @@ static void nilfs_btree_commit_update_v(struct nilfs_bmap *btree,
+@@ -1940,7 +1946,7 @@ static void nilfs_btree_commit_update_v(struct nilfs_bmap *btree,
  
  	if (buffer_nilfs_node(path[level].bp_bh)) {
  		nilfs_btnode_commit_change_key(
@@ -229,7 +229,7 @@ index 3594eabe1419..f544c22fff78 100644
  			&path[level].bp_ctxt);
  		path[level].bp_bh = path[level].bp_ctxt.bh;
  	}
-@@ -1958,7 +1964,7 @@ static void nilfs_btree_abort_update_v(struct nilfs_bmap *btree,
+@@ -1959,7 +1965,7 @@ static void nilfs_btree_abort_update_v(struct nilfs_bmap *btree,
  			       &path[level].bp_newreq.bpr_req);
  	if (buffer_nilfs_node(path[level].bp_bh))
  		nilfs_btnode_abort_change_key(
@@ -238,7 +238,7 @@ index 3594eabe1419..f544c22fff78 100644
  			&path[level].bp_ctxt);
  }
  
-@@ -2134,7 +2140,8 @@ static void nilfs_btree_add_dirty_buffer(struct nilfs_bmap *btree,
+@@ -2135,7 +2141,8 @@ static void nilfs_btree_add_dirty_buffer(struct nilfs_bmap *btree,
  static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
  					     struct list_head *listp)
  {
@@ -248,7 +248,7 @@ index 3594eabe1419..f544c22fff78 100644
  	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
  	struct pagevec pvec;
  	struct buffer_head *bh, *head;
-@@ -2188,12 +2195,12 @@ static int nilfs_btree_assign_p(struct nilfs_bmap *btree,
+@@ -2189,12 +2196,12 @@ static int nilfs_btree_assign_p(struct nilfs_bmap *btree,
  		path[level].bp_ctxt.newkey = blocknr;
  		path[level].bp_ctxt.bh = *bh;
  		ret = nilfs_btnode_prepare_change_key(
@@ -263,7 +263,7 @@ index 3594eabe1419..f544c22fff78 100644
  			&path[level].bp_ctxt);
  		*bh = path[level].bp_ctxt.bh;
  	}
-@@ -2398,6 +2405,10 @@ int nilfs_btree_init(struct nilfs_bmap *bmap)
+@@ -2399,6 +2406,10 @@ int nilfs_btree_init(struct nilfs_bmap *bmap)
  
  	if (nilfs_btree_root_broken(nilfs_btree_get_root(bmap), bmap->b_inode))
  		ret = -EIO;
@@ -275,7 +275,7 @@ index 3594eabe1419..f544c22fff78 100644
  }
  
 diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
-index a8f5315f01e3..04fdd420eae7 100644
+index 448320496856..aadea660c66c 100644
 --- a/fs/nilfs2/gcinode.c
 +++ b/fs/nilfs2/gcinode.c
 @@ -126,9 +126,10 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
@@ -309,7 +309,7 @@ index a8f5315f01e3..04fdd420eae7 100644
  	}
  }
 diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index e3d807d5b83a..56b642159e25 100644
+index 745d371d6fea..c3e4e677c679 100644
 --- a/fs/nilfs2/inode.c
 +++ b/fs/nilfs2/inode.c
 @@ -29,12 +29,14 @@
@@ -486,10 +486,10 @@ index e3d807d5b83a..56b642159e25 100644
  	if (ii->i_root && inode->i_ino == NILFS_ROOT_INO)
  		nilfs_put_root(ii->i_root);
 diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 4b3d33cf0041..b26996420401 100644
+index c0361ce45f62..d3f6cb9c32a0 100644
 --- a/fs/nilfs2/mdt.c
 +++ b/fs/nilfs2/mdt.c
-@@ -532,7 +532,7 @@ int nilfs_mdt_save_to_shadow_map(struct inode *inode)
+@@ -531,7 +531,7 @@ int nilfs_mdt_save_to_shadow_map(struct inode *inode)
  		goto out;
  
  	ret = nilfs_copy_dirty_pages(&shadow->frozen_btnodes,
@@ -498,7 +498,7 @@ index 4b3d33cf0041..b26996420401 100644
  	if (ret)
  		goto out;
  
-@@ -623,8 +623,9 @@ void nilfs_mdt_restore_from_shadow_map(struct inode *inode)
+@@ -622,8 +622,9 @@ void nilfs_mdt_restore_from_shadow_map(struct inode *inode)
  	nilfs_clear_dirty_pages(inode->i_mapping, true);
  	nilfs_copy_back_pages(inode->i_mapping, &shadow->frozen_data);
  
@@ -511,7 +511,7 @@ index 4b3d33cf0041..b26996420401 100644
  	nilfs_bmap_restore(ii->i_bmap, &shadow->bmap_store);
  
 diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index a7b81755c350..36b048db00b7 100644
+index f8450ee3fd06..635383b30d67 100644
 --- a/fs/nilfs2/nilfs.h
 +++ b/fs/nilfs2/nilfs.h
 @@ -28,7 +28,7 @@
@@ -554,7 +554,7 @@ index a7b81755c350..36b048db00b7 100644
  };
  
  /*
-@@ -267,6 +261,8 @@ struct inode *nilfs_iget(struct super_block *sb, struct nilfs_root *root,
+@@ -264,6 +258,8 @@ struct inode *nilfs_iget(struct super_block *sb, struct nilfs_root *root,
  			 unsigned long ino);
  extern struct inode *nilfs_iget_for_gc(struct super_block *sb,
  				       unsigned long ino, __u64 cno);
@@ -564,7 +564,7 @@ index a7b81755c350..36b048db00b7 100644
  extern void nilfs_truncate(struct inode *);
  extern void nilfs_evict_inode(struct inode *);
 diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index bc3e2cd4117f..50590f2bffda 100644
+index 171fb5cd427f..d1a148f0cae3 100644
 --- a/fs/nilfs2/page.c
 +++ b/fs/nilfs2/page.c
 @@ -448,10 +448,9 @@ void nilfs_mapping_init(struct address_space *mapping, struct inode *inode)
@@ -582,10 +582,10 @@ index bc3e2cd4117f..50590f2bffda 100644
   * 2) Some B-tree operations like insertion or deletion may dispose buffers
   *    in dirty state, and this needs to cancel the dirty state of their pages.
 diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 85a853334771..0afe0832c754 100644
+index e3726aca28ed..8350c2eaee75 100644
 --- a/fs/nilfs2/segment.c
 +++ b/fs/nilfs2/segment.c
-@@ -733,15 +733,18 @@ static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
+@@ -738,15 +738,18 @@ static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
  					    struct list_head *listp)
  {
  	struct nilfs_inode_info *ii = NILFS_I(inode);
@@ -606,7 +606,7 @@ index 85a853334771..0afe0832c754 100644
  					PAGECACHE_TAG_DIRTY)) {
  		for (i = 0; i < pagevec_count(&pvec); i++) {
  			bh = head = page_buffers(pvec.pages[i]);
-@@ -2410,7 +2413,7 @@ nilfs_remove_written_gcinodes(struct the_nilfs *nilfs, struct list_head *head)
+@@ -2415,7 +2418,7 @@ nilfs_remove_written_gcinodes(struct the_nilfs *nilfs, struct list_head *head)
  			continue;
  		list_del_init(&ii->i_dirty);
  		truncate_inode_pages(&ii->vfs_inode.i_data, 0);
@@ -616,7 +616,7 @@ index 85a853334771..0afe0832c754 100644
  	}
  }
 diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 63e5fa74016c..c4c6578185d5 100644
+index 4abd928b0bc8..b9d30e8c43b0 100644
 --- a/fs/nilfs2/super.c
 +++ b/fs/nilfs2/super.c
 @@ -157,7 +157,8 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
