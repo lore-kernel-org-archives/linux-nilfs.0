@@ -1,8 +1,8 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
 Subject: Re: [dm-devel] [PATCH 01/27] target: remove an incorrect unmap
  zeroes data deduction
-Date: Wed, 06 Apr 2022 23:05:13 -0400
-Message-ID: <yq1wng1k2zn.fsf@ca-mkp.ca.oracle.com>
+Date: Wed, 06 Apr 2022 23:06:16 -0400
+Message-ID: <yq1r169k2xu.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
  <20220406060516.409838-2-hch@lst.de>
 Mime-Version: 1.0
@@ -13,17 +13,17 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
  h=to : cc : subject :
  from : message-id : references : date : in-reply-to : content-type :
  mime-version; s=corp-2021-07-09;
- bh=YsLEXwzHHuhF8Y2ubKs7WB5IRORi93e0Vmn68Bi4rNA=;
- b=NfkaK2NCMW3x6JiAe6CyDENNOARvHDPb02I5fwoWxOu6QfcjwiXHY8Xrx4mcDWkinikI
- 6y4iSHee4zyBe8QJm5tGfgOkAj83SF9OykxjXn7vNSW2mJgWYrf5/fUSzDfg0XfmCs1J
- +oAbW8F3tDhDUqTy+eCamQ91BX21vJ4MJB4EGZR8HynPhZNqhlYoDA/HLfQDBP+Bo4CR
- x9rTg/eQ+/XOfhq/Ik5Mn266beB4VlXnYt6pQZmsHu7vA+BBuG6FRivVgrT/mpZl+pEH
- mlVBoOLNp7A97wLDUSOK5yHa7XAT643O9e2NZAIcfD0zc10YNOs0pYfWr7nlIIE2mlT4 XQ== 
+ bh=GpTq+EYaOf33mkP0QbI4hVWDfTMc3+BcRAeyKVHiQdA=;
+ b=0NtihXCzQ1+FQ1tCY3eP6NaSpVt4C62wBMyONHaQNDXk+Df7NABfYZ8ObxD6z0o7h0Uc
+ 4hadU2EUf9PJcm+SUs3zQ9fmikp6iPVKfKznotYPBhCxFizO3X7756CP4yBhNN4ETH+d
+ zRknrleWVirHM8J6jWMYloqaVcNB8LeCiln5KswXELm519im3zOt+dJH4qPAGniklmBH
+ bESiGf/Di83wWhWNbSjeJTOjlax0eu+rRflOqChjuyVyITKb/Ywanr4aHYF0/eba8zNN
+ 7gHxkMSTCK0+dV6aKHHStj60hOdZtNU2yzeS/UQagbF8ZY+LhFGqdP/KG8ZK+UbN7UwB hQ== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=YsLEXwzHHuhF8Y2ubKs7WB5IRORi93e0Vmn68Bi4rNA=;
- b=nQ1EV2Z2MwlvkJGlLAO7iFJYI6/mpP6qHesyCjyJNkoNah/7fILGtoubqQmqI1YcRdlyln9Kt9HjWF/h9c7R0jKk1BKfkc8enXMa4DreRin9+h1VJ4fFvcD86VOH7JoEWo+TzBXyBlfYYFG+s2hxLrvDcOlC6vYzT0JUfYneq2c=
+ bh=GpTq+EYaOf33mkP0QbI4hVWDfTMc3+BcRAeyKVHiQdA=;
+ b=gDztzgY+0MTm858J5pOD5Pd9XMYDn8b3HB9bRXThKIG3nIuA8Iz2WZr54mlYTUGmJHgrh7VZTPz1jnKsBMZHQiDBv2ZEbUfHxUS2PxyPG2xYsavbOoPW8RgKq3rHpGae6dXCiruNikqadkTSoHNxT1m65ZTORLyJX9MSlakIxUI=
 In-Reply-To: <20220406060516.409838-2-hch@lst.de> (Christoph Hellwig's message
  of "Wed, 6 Apr 2022 08:04:50 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -48,11 +48,8 @@ Christoph,
 >
 > Note that this does not affect the file backed path which uses
 > fallocate to punch holes.
->
-> Fixes: 2237498f0b5c ("target/iblock: Convert WRITE_SAME to blkdev_issue_zeroout")
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
 -- 
 Martin K. Petersen	Oracle Linux Engineering
