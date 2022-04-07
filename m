@@ -1,22 +1,22 @@
 From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH AUTOSEL 5.4 17/17] nilfs2: fix lockdep warnings during disk space reclamation
-Date: Wed,  6 Apr 2022 21:15:21 -0400
-Message-ID: <20220407011521.115014-17-sashal@kernel.org>
-References: <20220407011521.115014-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.15 27/27] nilfs2: fix lockdep warnings during disk space reclamation
+Date: Wed,  6 Apr 2022 21:12:57 -0400
+Message-ID: <20220407011257.114287-27-sashal@kernel.org>
+References: <20220407011257.114287-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1649294168;
-        bh=7AxRauhBes5Wq7dlmgGQcUfOyuDyRK5+gI93aVdZ/bE=;
+        s=k20201202; t=1649294052;
+        bh=vmFV3+jew1i1W4R7jm9slUQWqdqRJc4StEDG2Gln6PA=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=TvHSIT3deAG6k7GJAWAk/00sU0xC+yW09PDS0uvXwZ6MjcZ4shZ3W03sp4XpI0FRE
-         zMVXqiq7CeqVmk84G96irmhSCXeAip6o07zp15zY7QSYylFK3qirExkF+P/GH9ep8d
-         Ni1g7cHI0P3efjTqf/zXF5SpoxVFuxc3lTEsHWOgc/QiSXGWEdmTvEos4p6ZhcQyBY
-         LT6lKkm3Ob4MOWCAj6vuKk5fnIpak2DneKzRLRlqOCYCYFbMlzqm7XpQmwkgvo4fXF
-         cLaRW5WTxL0Wz1hqajOA455sTFyNpFXqKzg5iWsNAylGGoy54NfUCXrxOuKURaSLzU
-         0cKJsdi40Su3g==
-In-Reply-To: <20220407011521.115014-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+        b=e9CwZEQk/3VUWaT9dP9MzkKQ2mBbBjIvQExuzUa1nkwuEaKSvfQt5HhW83XqQBjet
+         S6JMXtLUn3say4J7KX+FMNQYHsZJcvzwYZ3c+XFQiKQjP7xiY00OqBRhoZI58RYfLN
+         EQE82itb/nEECGbkTzxFiMUNFvFokKN1aOI8WJfdFCouWNKQbQ/R3TebozOOrWdf5r
+         Jx38zruAd0ZStv0hrq48ABW4ap57c7zejXKXQIyG5RH2LtU9EoVbAp+/bxbnuIq16Q
+         EwRmjHmbtUh3puIsofaM86Fbnn0AxOYhS5Lg6QGv6IJEtnPP0rSWYhVH5JlQthMhsn
+         QaqGN75BZ3/Nw==
+In-Reply-To: <20220407011257.114287-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -65,7 +65,7 @@ Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
  5 files changed, 92 insertions(+), 21 deletions(-)
 
 diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 6f4066636be9..a3523a243e11 100644
+index 8bccdf1158fc..1a3d183027b9 100644
 --- a/fs/nilfs2/dat.c
 +++ b/fs/nilfs2/dat.c
 @@ -497,7 +497,9 @@ int nilfs_dat_read(struct super_block *sb, size_t entry_size,
@@ -80,10 +80,10 @@ index 6f4066636be9..a3523a243e11 100644
  	err = nilfs_read_inode_common(dat, raw_inode);
  	if (err)
 diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index b0a0822e371c..35b0bfe9324f 100644
+index 7b2bc4173313..2466f8b8be95 100644
 --- a/fs/nilfs2/inode.c
 +++ b/fs/nilfs2/inode.c
-@@ -29,6 +29,7 @@
+@@ -30,6 +30,7 @@
   * @root: pointer on NILFS root object (mounted checkpoint)
   * @for_gc: inode for GC flag
   * @for_btnc: inode for B-tree node cache flag
@@ -91,7 +91,7 @@ index b0a0822e371c..35b0bfe9324f 100644
   */
  struct nilfs_iget_args {
  	u64 ino;
-@@ -36,6 +37,7 @@ struct nilfs_iget_args {
+@@ -37,6 +38,7 @@ struct nilfs_iget_args {
  	struct nilfs_root *root;
  	bool for_gc;
  	bool for_btnc;
@@ -99,7 +99,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  };
  
  static int nilfs_iget_test(struct inode *inode, void *opaque);
-@@ -325,7 +327,7 @@ static int nilfs_insert_inode_locked(struct inode *inode,
+@@ -317,7 +319,7 @@ static int nilfs_insert_inode_locked(struct inode *inode,
  {
  	struct nilfs_iget_args args = {
  		.ino = ino, .root = root, .cno = 0, .for_gc = false,
@@ -108,7 +108,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  	};
  
  	return insert_inode_locked4(inode, ino, nilfs_iget_test, &args);
-@@ -543,6 +545,12 @@ static int nilfs_iget_test(struct inode *inode, void *opaque)
+@@ -536,6 +538,12 @@ static int nilfs_iget_test(struct inode *inode, void *opaque)
  	} else if (args->for_btnc) {
  		return 0;
  	}
@@ -121,7 +121,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  
  	if (!test_bit(NILFS_I_GCINODE, &ii->i_state))
  		return !args->for_gc;
-@@ -564,6 +572,8 @@ static int nilfs_iget_set(struct inode *inode, void *opaque)
+@@ -557,6 +565,8 @@ static int nilfs_iget_set(struct inode *inode, void *opaque)
  		NILFS_I(inode)->i_state = BIT(NILFS_I_GCINODE);
  	if (args->for_btnc)
  		NILFS_I(inode)->i_state |= BIT(NILFS_I_BTNC);
@@ -130,7 +130,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  	return 0;
  }
  
-@@ -572,7 +582,7 @@ struct inode *nilfs_ilookup(struct super_block *sb, struct nilfs_root *root,
+@@ -565,7 +575,7 @@ struct inode *nilfs_ilookup(struct super_block *sb, struct nilfs_root *root,
  {
  	struct nilfs_iget_args args = {
  		.ino = ino, .root = root, .cno = 0, .for_gc = false,
@@ -139,7 +139,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  	};
  
  	return ilookup5(sb, ino, nilfs_iget_test, &args);
-@@ -583,7 +593,7 @@ struct inode *nilfs_iget_locked(struct super_block *sb, struct nilfs_root *root,
+@@ -576,7 +586,7 @@ struct inode *nilfs_iget_locked(struct super_block *sb, struct nilfs_root *root,
  {
  	struct nilfs_iget_args args = {
  		.ino = ino, .root = root, .cno = 0, .for_gc = false,
@@ -148,7 +148,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  	};
  
  	return iget5_locked(sb, ino, nilfs_iget_test, nilfs_iget_set, &args);
-@@ -615,7 +625,7 @@ struct inode *nilfs_iget_for_gc(struct super_block *sb, unsigned long ino,
+@@ -608,7 +618,7 @@ struct inode *nilfs_iget_for_gc(struct super_block *sb, unsigned long ino,
  {
  	struct nilfs_iget_args args = {
  		.ino = ino, .root = NULL, .cno = cno, .for_gc = true,
@@ -157,7 +157,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  	};
  	struct inode *inode;
  	int err;
-@@ -662,6 +672,7 @@ int nilfs_attach_btree_node_cache(struct inode *inode)
+@@ -655,6 +665,7 @@ int nilfs_attach_btree_node_cache(struct inode *inode)
  	args.cno = ii->i_cno;
  	args.for_gc = test_bit(NILFS_I_GCINODE, &ii->i_state) != 0;
  	args.for_btnc = true;
@@ -165,7 +165,7 @@ index b0a0822e371c..35b0bfe9324f 100644
  
  	btnc_inode = iget5_locked(inode->i_sb, inode->i_ino, nilfs_iget_test,
  				  nilfs_iget_set, &args);
-@@ -697,6 +708,50 @@ void nilfs_detach_btree_node_cache(struct inode *inode)
+@@ -690,6 +701,50 @@ void nilfs_detach_btree_node_cache(struct inode *inode)
  	}
  }
  
@@ -217,10 +217,10 @@ index b0a0822e371c..35b0bfe9324f 100644
  			      struct nilfs_inode *raw_inode, int has_bmap)
  {
 diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 3a1200220b97..7c9055d767d1 100644
+index 21acd2d4b4d4..131b5add32ee 100644
 --- a/fs/nilfs2/mdt.c
 +++ b/fs/nilfs2/mdt.c
-@@ -469,9 +469,18 @@ int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz)
+@@ -470,9 +470,18 @@ int nilfs_mdt_init(struct inode *inode, gfp_t gfp_mask, size_t objsz)
  void nilfs_mdt_clear(struct inode *inode)
  {
  	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
@@ -239,7 +239,7 @@ index 3a1200220b97..7c9055d767d1 100644
  }
  
  /**
-@@ -505,12 +514,15 @@ int nilfs_mdt_setup_shadow_map(struct inode *inode,
+@@ -506,12 +515,15 @@ int nilfs_mdt_setup_shadow_map(struct inode *inode,
  			       struct nilfs_shadow_map *shadow)
  {
  	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
@@ -259,7 +259,7 @@ index 3a1200220b97..7c9055d767d1 100644
  	mi->mi_shadow = shadow;
  	return 0;
  }
-@@ -524,13 +536,14 @@ int nilfs_mdt_save_to_shadow_map(struct inode *inode)
+@@ -525,13 +537,14 @@ int nilfs_mdt_save_to_shadow_map(struct inode *inode)
  	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
  	struct nilfs_inode_info *ii = NILFS_I(inode);
  	struct nilfs_shadow_map *shadow = mi->mi_shadow;
@@ -276,7 +276,7 @@ index 3a1200220b97..7c9055d767d1 100644
  				     ii->i_assoc_inode->i_mapping);
  	if (ret)
  		goto out;
-@@ -547,7 +560,7 @@ int nilfs_mdt_freeze_buffer(struct inode *inode, struct buffer_head *bh)
+@@ -548,7 +561,7 @@ int nilfs_mdt_freeze_buffer(struct inode *inode, struct buffer_head *bh)
  	struct page *page;
  	int blkbits = inode->i_blkbits;
  
@@ -285,7 +285,7 @@ index 3a1200220b97..7c9055d767d1 100644
  	if (!page)
  		return -ENOMEM;
  
-@@ -579,7 +592,7 @@ nilfs_mdt_get_frozen_buffer(struct inode *inode, struct buffer_head *bh)
+@@ -580,7 +593,7 @@ nilfs_mdt_get_frozen_buffer(struct inode *inode, struct buffer_head *bh)
  	struct page *page;
  	int n;
  
@@ -294,7 +294,7 @@ index 3a1200220b97..7c9055d767d1 100644
  	if (page) {
  		if (page_has_buffers(page)) {
  			n = bh_offset(bh) >> inode->i_blkbits;
-@@ -620,11 +633,11 @@ void nilfs_mdt_restore_from_shadow_map(struct inode *inode)
+@@ -621,11 +634,11 @@ void nilfs_mdt_restore_from_shadow_map(struct inode *inode)
  		nilfs_palloc_clear_cache(inode);
  
  	nilfs_clear_dirty_pages(inode->i_mapping, true);
@@ -308,7 +308,7 @@ index 3a1200220b97..7c9055d767d1 100644
  
  	nilfs_bmap_restore(ii->i_bmap, &shadow->bmap_store);
  
-@@ -639,10 +652,11 @@ void nilfs_mdt_clear_shadow_map(struct inode *inode)
+@@ -640,10 +653,11 @@ void nilfs_mdt_clear_shadow_map(struct inode *inode)
  {
  	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
  	struct nilfs_shadow_map *shadow = mi->mi_shadow;
@@ -344,7 +344,7 @@ index e77aea4bb921..9d8ac0d27c16 100644
  };
  
 diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 3b646d377237..4895d978369a 100644
+index 6c5148de84ff..7dcb77d38759 100644
 --- a/fs/nilfs2/nilfs.h
 +++ b/fs/nilfs2/nilfs.h
 @@ -92,6 +92,7 @@ enum {
@@ -355,7 +355,7 @@ index 3b646d377237..4895d978369a 100644
  };
  
  /*
-@@ -260,6 +261,7 @@ extern struct inode *nilfs_iget_for_gc(struct super_block *sb,
+@@ -263,6 +264,7 @@ extern struct inode *nilfs_iget_for_gc(struct super_block *sb,
  				       unsigned long ino, __u64 cno);
  int nilfs_attach_btree_node_cache(struct inode *inode);
  void nilfs_detach_btree_node_cache(struct inode *inode);
