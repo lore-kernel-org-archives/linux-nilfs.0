@@ -1,10 +1,10 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [Ocfs2-devel] [PATCH 15/27] block: use bdev_alignment_offset in
- part_alignment_offset_show
-Date: Wed, 06 Apr 2022 23:19:34 -0400
-Message-ID: <yq1h775ins6.fsf@ca-mkp.ca.oracle.com>
+Subject: Re: [Ocfs2-devel] [PATCH 17/27] block: use bdev_alignment_offset in
+ disk_alignment_offset_show
+Date: Wed, 06 Apr 2022 23:20:22 -0400
+Message-ID: <yq1bkxdinq1.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-16-hch@lst.de>
+ <20220406060516.409838-18-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -13,19 +13,19 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
  h=to : cc : subject :
  from : message-id : references : date : in-reply-to : content-type :
  mime-version; s=corp-2021-07-09;
- bh=nG3sI1771Qzwkix+7woUumXPeYpDKLLcIMXUM/nZXzc=;
- b=uCX4EVIMxM0btfDpTw5w1ew9bFLCrQilscmuwmVdRolfLJunbh9KT5j69VKpBFtOcJAq
- ObSXwXW1pjDG1XcmTA2ht9GIUnTTPukHcg63rNhtrS2pFvtUQU30jO65uVjIMPB7TAQ6
- M3z4ik2IbLzB7K5bswElc2TQSorNj2XqvboFkJ0QDgkOI0JlZpNXTZl+3TF/DJajXHTk
- 8hGfsTiGys+WFrXr7iEbTTgcs7X+hTPGSqmMwHaLtKUw0KaZroaIflimn4O+OXx2aqdt
- +19y5fxddpLswZXH4y4t3+qmqVkl+7EYZAckUFjvjawOty9JLhF6oHbEW/rqImOgBjYX wg== 
+ bh=m/EtCka1eaYsLn4wuLA71mCTmTy3QS19BJ8BeeqSuOU=;
+ b=ZPHXH9uSshBLgJPOxwZdazVTI+3fnYybLxHdKrsDfbz5gkyocWDiaMS5jDrpJhY6dH5t
+ e3roP2aEvv+YiJGGj3Z3QpMrYYwBTf9bl4ClquniFhHPfEJr4qm2Ds/oGFYCcZW7QCdw
+ vQNumMDNVOrEzJbwGs4lvvr1Ud3XtzCYD36ZWDl8nKE3T0bnZudKB6NDXQ2OkGYiGJ/r
+ DBND1X6o67sgshKOphRvOHMKUI7ve5ERUZzP10He02rnpHiV9o6r9EN38BXG5yjXwQQz
+ Y28XuFlAWl8LJodhIZpPSjsQxEVlq9XeTW3ytrox3m87QG2hyIs+lG1EQs5JwJqYG3i/ SQ== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=nG3sI1771Qzwkix+7woUumXPeYpDKLLcIMXUM/nZXzc=;
- b=MLUZOxgb88Mde+78DEy0UZP5WVFusHEBbq/vjQIQIR8r4BS5W6s4Q8aQKGyXqKdDq+YD3vkzyihq8zM4+GZd7fMViQopAcLx4GHajrlD6Rr9AsisUc1bzBPWRbjcOU4KxtbcMR1Cp3oF+HFP8EV91//bwMu30rzG0ZlARgkOTv4=
-In-Reply-To: <20220406060516.409838-16-hch@lst.de> (Christoph Hellwig via
- Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:04 +0200")
+ bh=m/EtCka1eaYsLn4wuLA71mCTmTy3QS19BJ8BeeqSuOU=;
+ b=lOBRSf50M7+euaHqSQJt/7bPr18Dmc+z+Fqe83qmUYBLJJ/bEGizprCo/oEl8XGt6mapacdyPV+3KGVKaLZ8is3TCEoJBoJgCZfZbSxXHItPhMnaVteE3B4spY8AJHFfSKMwrv0MJPLGFcP+6oYuxKa0fqqZkuzccC+75hZgJGM=
+In-Reply-To: <20220406060516.409838-18-hch@lst.de> (Christoph Hellwig via
+ Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:06 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
  <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
@@ -42,12 +42,10 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtua
 
 Christoph,
 
-> Replace the open coded offset calculation with the proper helper.
-> This is an ABI change in that the -1 for a misaligned partition is
-> properly propagated, which can be considered a bug fix and maches what
-> is done on the whole device.
+> This does the same as the open coded variant except for an extra
+> branch, and allows to remove queue_alignment_offset entirely.
 
-Looks good.
+Also fine.
 
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
