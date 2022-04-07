@@ -1,55 +1,54 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [Ocfs2-devel] [PATCH 21/27] block: move {bdev,
- queue_limit}_discard_alignment out of line
-Date: Wed, 06 Apr 2022 23:27:40 -0400
-Message-ID: <yq1k0c1h8w3.fsf@ca-mkp.ca.oracle.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [Ocfs2-devel] [PATCH 22/27] block: refactor discard
+	bio size	limiting
+Date: Wed, 06 Apr 2022 23:29:08 -0400
+Message-ID: <yq1ee29h8qx.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-22-hch@lst.de>
+	<20220406060516.409838-23-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
- h=to : cc : subject :
- from : message-id : references : date : in-reply-to : content-type :
- mime-version; s=corp-2021-07-09;
- bh=jtZFiukrDrNaKwudMOYgmK4y6ZDoL7W+5uSf9uS4Pw4=;
- b=syOONMklItTPSXz7KtfaCFVFE5ivjGKYsK8owDdJX+p3veRe56GBeWrYdskEry8eGz2Z
- c9zdGKmBs2gZ2XoUbepmD7qQNBxG6tQ5j2ZUx60TtC8+OdqTmLjVFPsmu3BiSk4h2g9t
- iWHcR7KAWHZCsLBwzDWPwabAUA3V8+/vKC252bPJ1HkIMYaLe74IPGnWTpuUh6GI0b2P
- Tje7hyIT9B3Go36b+Kc8u8F/RbQoq1L2rEe93W5y0GZpNb9PLi1p1XDiIvz+wyNt01yZ
- eONd83VdVCQnI483aopIRy7FIm9GO4/Z/SyF64TYHe5SJpXrPVZUZw5fskMd8zi7M+Az RA== 
+	h=to : cc : subject :
+	from : message-id : references : date : in-reply-to : content-type :
+	mime-version; s=corp-2021-07-09;
+	bh=FspSHwF13B9BbpmnqcGUERmum6Re9oIDd5MfxvXKoCc=;
+	b=jXI1CzYEboy0GNUF6p687VbmW9R550d6ikVNLtrqzG9nquNygNVHYrP7eoa7jctskKF4
+	KeIloS+shiz5kphPTwYWc3pNDEJIw4HsW7QNmTCxbwps+wQB4YldmJn7P9mJzS23yiDV
+	fqqvbkec3PqVydLqQO+y1Wn0ajviBVE0KsO5mht5RlWI0SnUfHb1FIYWN7fRxxOxwnbg
+	RzCw2JiYddeM+gS6fA9duMVLmrj+YKLOGXTlWrqOBtXKQd/pZKAPX0igHD6aGPdWJyxD
+	YLsXGiTgCfXwNpPSTUa2L4ZwNM4ZZfuKydW/34EIQ1j6QH499OtWj8aIkGpYfH4Gpa22
+	hA== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=jtZFiukrDrNaKwudMOYgmK4y6ZDoL7W+5uSf9uS4Pw4=;
- b=vuBysj3Y0/+eXCH5ZS/chYtrN3+muZXWmhOCpB/xsf7NoXSCf/3vEpQMNch5Ur9r6rsK34Pi20wMCNJ29aTdL6uEEu7WI0Vqq9dVOFtbU00VQcA24EjTcgcb42dwOk/rwLYGr0OH620LYgGh1VqJ8BpFXmGir4EOIwE5J6IregM=
-In-Reply-To: <20220406060516.409838-22-hch@lst.de> (Christoph Hellwig via
- Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:10 +0200")
+	d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+	h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+	bh=FspSHwF13B9BbpmnqcGUERmum6Re9oIDd5MfxvXKoCc=;
+	b=CMlo+9k8exY1H/xsxYRsnGoFadfUU6ixuoH9kPQVb5bvaMk14fq11ag4UNzE8dfo10i2efWZu8mH6PhR4PU95S96Jumf9NMXyeFVDn3OS/xB4EEmujB4PNmJbIhY1FrVxwwotM8ClQY3FG8lOL9ml1kzmK1+xbdgtiSyAPYwGE4=
+In-Reply-To: <20220406060516.409838-23-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig via
+	Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:11 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-Sender: "Virtualization" <virtualization-bounces@lists.linux-foundation.org>
-To: Christoph Hellwig via Ocfs2-devel <ocfs2-devel@oss.oracle.com>
-Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, Christoph Hellwig <hch@lst.de>, drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, cluster-devel@redhat.com, xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, ceph-devel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-mmc@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig via Ocfs2-devel <ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org>
+Cc: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, nbd-2H2hN8V1XRtuHlm7Suoebg@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mmc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
 
 Christoph,
 
-> No need to inline these fairly larger helpers.  Also fix the return
-> value to be unsigned, just like the field in struct queue_limits.
+> Move all the logic to limit the discard bio size into a common helper
+> so that it is better documented.
 
-I believe the original reason for the signed int here was to be able to
-express -1 for sysfs. I am not sure why I didn't just use the misaligned
-flag.
+Looks OK.
 
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+Reviewed-by: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
 -- 
 Martin K. Petersen	Oracle Linux Engineering
