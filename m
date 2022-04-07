@@ -1,10 +1,10 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [Ocfs2-devel] [PATCH 20/27] block: use bdev_discard_alignment
- in part_discard_alignment_show
-Date: Wed, 06 Apr 2022 23:22:13 -0400
-Message-ID: <yq1tub5h92g.fsf@ca-mkp.ca.oracle.com>
+Subject: Re: [Ocfs2-devel] [PATCH 21/27] block: move {bdev,
+ queue_limit}_discard_alignment out of line
+Date: Wed, 06 Apr 2022 23:27:40 -0400
+Message-ID: <yq1k0c1h8w3.fsf@ca-mkp.ca.oracle.com>
 References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-21-hch@lst.de>
+ <20220406060516.409838-22-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -13,19 +13,19 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
  h=to : cc : subject :
  from : message-id : references : date : in-reply-to : content-type :
  mime-version; s=corp-2021-07-09;
- bh=tAPmbbaCkvVZPvRGbdErqYJrUZb0QsK/3MVtxkvtM78=;
- b=U4YAcWA4jAisZZK//5B1Q0Bz/XRLUueeIrA8QtDqWbfRoJFt6ww6ZmEUob2Y/jy1sDg3
- VEi5fCC9yWTf3nvupLHm/YIzJPr7h7ZwuiJ+JTcuJZCb5CbP7NmlaLnAERPFAnOYbOYE
- +h9ql0/JQJboCoKu9y6jxoiL5yjQj1LOXIcN8Hk7tIedSgevMXYjg6UChMxtQr1PKZzU
- NtBFsW+j6C9r8V7FhFq+QTNg0BBhAXzF86OpyuXQw+KKI1flFf3QrS7/jbrHoGmM1fXm
- GO9VW1PZsX4FHp5zwhKsd0faRseJ8aBOcK7adMvInz51QRy6VmWGQG1Ss3Z2TSDrpSxd ZA== 
+ bh=jtZFiukrDrNaKwudMOYgmK4y6ZDoL7W+5uSf9uS4Pw4=;
+ b=syOONMklItTPSXz7KtfaCFVFE5ivjGKYsK8owDdJX+p3veRe56GBeWrYdskEry8eGz2Z
+ c9zdGKmBs2gZ2XoUbepmD7qQNBxG6tQ5j2ZUx60TtC8+OdqTmLjVFPsmu3BiSk4h2g9t
+ iWHcR7KAWHZCsLBwzDWPwabAUA3V8+/vKC252bPJ1HkIMYaLe74IPGnWTpuUh6GI0b2P
+ Tje7hyIT9B3Go36b+Kc8u8F/RbQoq1L2rEe93W5y0GZpNb9PLi1p1XDiIvz+wyNt01yZ
+ eONd83VdVCQnI483aopIRy7FIm9GO4/Z/SyF64TYHe5SJpXrPVZUZw5fskMd8zi7M+Az RA== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=tAPmbbaCkvVZPvRGbdErqYJrUZb0QsK/3MVtxkvtM78=;
- b=MRrjdMSLg06qPTU3S1SGeGQnPR2zAejXn14jAWS/xhEBAkGh8Oc9hT6qEzuPeQitZqKnTnE8YfcgmlrYrC06UJGXooPq++fgLAPl20rNvALQPvprAiZvRAXk1/H4MNoVbfWPC+3bcuo+ndYbontOUqr7e/eHqBypLrudSwOC5Vw=
-In-Reply-To: <20220406060516.409838-21-hch@lst.de> (Christoph Hellwig via
- Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:09 +0200")
+ bh=jtZFiukrDrNaKwudMOYgmK4y6ZDoL7W+5uSf9uS4Pw4=;
+ b=vuBysj3Y0/+eXCH5ZS/chYtrN3+muZXWmhOCpB/xsf7NoXSCf/3vEpQMNch5Ur9r6rsK34Pi20wMCNJ29aTdL6uEEu7WI0Vqq9dVOFtbU00VQcA24EjTcgcb42dwOk/rwLYGr0OH620LYgGh1VqJ8BpFXmGir4EOIwE5J6IregM=
+In-Reply-To: <20220406060516.409838-22-hch@lst.de> (Christoph Hellwig via
+ Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:10 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
  <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
@@ -42,7 +42,12 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtua
 
 Christoph,
 
-> Use the bdev based alignment helper instead of open coding it.
+> No need to inline these fairly larger helpers.  Also fix the return
+> value to be unsigned, just like the field in struct queue_limits.
+
+I believe the original reason for the signed int here was to be able to
+express -1 for sysfs. I am not sure why I didn't just use the misaligned
+flag.
 
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
