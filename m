@@ -1,54 +1,171 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [Ocfs2-devel] [PATCH 26/27] block: uncouple REQ_OP_SECURE_ERASE
- from REQ_OP_DISCARD
-Date: Wed, 06 Apr 2022 23:36:52 -0400
-Message-ID: <yq1r169fttr.fsf@ca-mkp.ca.oracle.com>
+From: Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>
+Subject: Re: [PATCH 23/27] block: add a bdev_max_discard_sectors
+	helper
+Date: Thu, 7 Apr 2022 13:16:12 +0800
+Message-ID: <2aee78dd-d5b6-5444-da28-34ab2631b264@suse.de>
 References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-27-hch@lst.de>
+	<20220406060516.409838-24-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com;
- h=to : cc : subject :
- from : message-id : references : date : in-reply-to : content-type :
- mime-version; s=corp-2021-07-09;
- bh=0fSH05fVrj4EsKu7GruSr6V8eDQcmEnuW15iSPtYu3U=;
- b=iag3pmaogwT0fVNNtSBn/JoHcAOg5JTOiwAr7G+XUgGvcNjxegCBNThSYqe+F4T0NNMS
- B/59HaBNX03xPzKp11moq8ZsFxeak9RIA3RrLouwkC4YK+71tDVE0sdTjSK6BxxCftbo
- 0EZ+onJIUBjU/ENdCS5sy3svT9bx0UEJmXm8G3Vy6SHK2y8Xy6l3WbHoInOxD2xK3+eI
- 6prGeQ9aYuOEK5xF9lkj3vVuts9fdh0ePfPpNw+bzbLVZ7ePbcRp8+ED14FvB3NB4vug
- 6MW3QIbWBa8G316LrQWtBIEFgUnKlZc368HFrB7khC0iArMf4byEey+uTWpLJY8E6DL7 IA== 
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=0fSH05fVrj4EsKu7GruSr6V8eDQcmEnuW15iSPtYu3U=;
- b=lD2AOIVmspgZK/pwyBQri5RZA765JIpiAnX41gCyPVtP+Y0SeaHhVXkNeMjdO0jW+v8zL255prslBhs6U+n+XeYmqaxrxa75WKicpSdy1fVEeZ7x8Qf8na7UC0cNAtS20puZeuMXz7/6AAnLUVOLh00DYpJUCv3AWFnY07aff5g=
-In-Reply-To: <20220406060516.409838-27-hch@lst.de> (Christoph Hellwig via
- Ocfs2-devel's message of "Wed, 6 Apr 2022 08:05:15 +0200")
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1649308580;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version:content-type:content-type:
+	content-transfer-encoding:content-transfer-encoding:
+	in-reply-to:in-reply-to:references:references;
+	bh=3mSljOe/NcqR0nJ5LYJS1IexMd+XWdNrUUnY7u8p4ss=;
+	b=S8u6tT4MOmjtYxCqeb3qmZNn/bHZfqArgo8fnUTx30csmaC8EzqkNzsFCobTftsYYuUnLo
+	j2CEECTylf45En922p7zGMdDliHlOB0W/p8IrTqMAAnrwN0MZYWeSbIR9ZZAecmXn6aNZm
+	pYWtnVOXe4neFTwM3RVsKoYuaP4pLxY=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1649308580;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version:content-type:content-type:
+	content-transfer-encoding:content-transfer-encoding:
+	in-reply-to:in-reply-to:references:references;
+	bh=3mSljOe/NcqR0nJ5LYJS1IexMd+XWdNrUUnY7u8p4ss=;
+	b=8wVCLmcmG2fqohkxPiOTT+zNzsZDHS4xqLNwNHKElc9o7Ynzusas5Vi1t3zyX0xdAJFT8y
+	NypPr2uWld7TnxBQ==
+Content-Language: en-US
+In-Reply-To: <20220406060516.409838-24-hch-jcswGhMUV9g@public.gmane.org>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-Sender: "Virtualization" <virtualization-bounces@lists.linux-foundation.org>
-To: Christoph Hellwig via Ocfs2-devel <ocfs2-devel@oss.oracle.com>
-Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, Christoph Hellwig <hch@lst.de>, drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, cluster-devel@redhat.com, xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org, linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, ceph-devel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-mmc@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, nbd-2H2hN8V1XRtuHlm7Suoebg@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mmc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+On 4/6/22 2:05 PM, Christoph Hellwig wrote:
+> Add a helper to query the number of sectors support per each discard bio
+> based on the block device and use this helper to stop various places from
+> poking into the request_queue to see if discard is supported and if so how
+> much.  This mirrors what is done e.g. for write zeroes as well.
+>
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 
 
-Christoph,
+For the bcache part,
 
-> Secure erase is a very different operation from discard in that it is
-> a data integrity operation vs hint.  Fully split the limits and helper
-> infrastructure to make the separation more clear.
+Acked-by: Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>
 
-Great!
 
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+Thanks.
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+
+Coly Li
+
+
+
+> ---
+>   block/blk-core.c                    |  2 +-
+>   block/blk-lib.c                     |  2 +-
+>   block/ioctl.c                       |  3 +--
+>   drivers/block/drbd/drbd_main.c      |  2 +-
+>   drivers/block/drbd/drbd_nl.c        | 12 +++++++-----
+>   drivers/block/drbd/drbd_receiver.c  |  5 ++---
+>   drivers/block/loop.c                |  9 +++------
+>   drivers/block/rnbd/rnbd-srv-dev.h   |  6 +-----
+>   drivers/block/xen-blkback/xenbus.c  |  2 +-
+>   drivers/md/bcache/request.c         |  4 ++--
+>   drivers/md/bcache/super.c           |  2 +-
+>   drivers/md/bcache/sysfs.c           |  2 +-
+>   drivers/md/dm-cache-target.c        |  9 +--------
+>   drivers/md/dm-clone-target.c        |  9 +--------
+>   drivers/md/dm-io.c                  |  2 +-
+>   drivers/md/dm-log-writes.c          |  3 +--
+>   drivers/md/dm-raid.c                |  9 ++-------
+>   drivers/md/dm-table.c               |  4 +---
+>   drivers/md/dm-thin.c                |  9 +--------
+>   drivers/md/dm.c                     |  2 +-
+>   drivers/md/md-linear.c              |  4 ++--
+>   drivers/md/raid0.c                  |  2 +-
+>   drivers/md/raid1.c                  |  6 +++---
+>   drivers/md/raid10.c                 |  8 ++++----
+>   drivers/md/raid5-cache.c            |  2 +-
+>   drivers/target/target_core_device.c |  8 +++-----
+>   fs/btrfs/extent-tree.c              |  4 ++--
+>   fs/btrfs/ioctl.c                    |  2 +-
+>   fs/exfat/file.c                     |  2 +-
+>   fs/exfat/super.c                    | 10 +++-------
+>   fs/ext4/ioctl.c                     | 10 +++-------
+>   fs/ext4/super.c                     | 10 +++-------
+>   fs/f2fs/f2fs.h                      |  3 +--
+>   fs/f2fs/segment.c                   |  6 ++----
+>   fs/fat/file.c                       |  2 +-
+>   fs/fat/inode.c                      | 10 +++-------
+>   fs/gfs2/rgrp.c                      |  2 +-
+>   fs/jbd2/journal.c                   |  7 ++-----
+>   fs/jfs/ioctl.c                      |  2 +-
+>   fs/jfs/super.c                      |  8 ++------
+>   fs/nilfs2/ioctl.c                   |  2 +-
+>   fs/ntfs3/file.c                     |  2 +-
+>   fs/ntfs3/super.c                    |  2 +-
+>   fs/ocfs2/ioctl.c                    |  2 +-
+>   fs/xfs/xfs_discard.c                |  2 +-
+>   fs/xfs/xfs_super.c                  | 12 ++++--------
+>   include/linux/blkdev.h              |  5 +++++
+>   mm/swapfile.c                       | 17 ++---------------
+>   48 files changed, 87 insertions(+), 163 deletions(-)
+
+[snipped]
+
+
+> diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+> index fdd0194f84dd0..e27f67f06a428 100644
+> --- a/drivers/md/bcache/request.c
+> +++ b/drivers/md/bcache/request.c
+> @@ -1005,7 +1005,7 @@ static void cached_dev_write(struct cached_dev *dc, struct search *s)
+>   		bio_get(s->iop.bio);
+>   
+>   		if (bio_op(bio) == REQ_OP_DISCARD &&
+> -		    !blk_queue_discard(bdev_get_queue(dc->bdev)))
+> +		    !bdev_max_discard_sectors(dc->bdev))
+>   			goto insert_data;
+>   
+>   		/* I/O request sent to backing device */
+> @@ -1115,7 +1115,7 @@ static void detached_dev_do_request(struct bcache_device *d, struct bio *bio,
+>   	bio->bi_private = ddip;
+>   
+>   	if ((bio_op(bio) == REQ_OP_DISCARD) &&
+> -	    !blk_queue_discard(bdev_get_queue(dc->bdev)))
+> +	    !bdev_max_discard_sectors(dc->bdev))
+>   		bio->bi_end_io(bio);
+>   	else
+>   		submit_bio_noacct(bio);
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index bf3de149d3c9f..296f200b2e208 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -2350,7 +2350,7 @@ static int register_cache(struct cache_sb *sb, struct cache_sb_disk *sb_disk,
+>   	ca->bdev->bd_holder = ca;
+>   	ca->sb_disk = sb_disk;
+>   
+> -	if (blk_queue_discard(bdev_get_queue(bdev)))
+> +	if (bdev_max_discard_sectors((bdev)))
+>   		ca->discard = CACHE_DISCARD(&ca->sb);
+>   
+>   	ret = cache_alloc(ca);
+> diff --git a/drivers/md/bcache/sysfs.c b/drivers/md/bcache/sysfs.c
+> index d1029d71ff3bc..c6f677059214d 100644
+> --- a/drivers/md/bcache/sysfs.c
+> +++ b/drivers/md/bcache/sysfs.c
+> @@ -1151,7 +1151,7 @@ STORE(__bch_cache)
+>   	if (attr == &sysfs_discard) {
+>   		bool v = strtoul_or_return(buf);
+>   
+> -		if (blk_queue_discard(bdev_get_queue(ca->bdev)))
+> +		if (bdev_max_discard_sectors(ca->bdev))
+>   			ca->discard = v;
+>   
+>   		if (v != CACHE_DISCARD(&ca->sb)) {
+
+
+[snipped]
