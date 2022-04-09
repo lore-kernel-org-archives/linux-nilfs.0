@@ -1,334 +1,1484 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 25/27] block: add a bdev_discard_granularity helper
-Date: Sat,  9 Apr 2022 06:50:41 +0200
-Message-ID: <20220409045043.23593-26-hch@lst.de>
+Subject: [PATCH 24/27] block: remove QUEUE_FLAG_DISCARD
+Date: Sat,  9 Apr 2022 06:50:40 +0200
+Message-ID: <20220409045043.23593-25-hch@lst.de>
 References: <20220409045043.23593-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: base64
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
- Content-Type:MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:
- To:From:Sender:Reply-To:Content-ID:Content-Description;
- bh=pVDwXB6PltgVZkC3rRdiaCUdLly1SPIvqpMIXjtbaqw=; b=jqUA+AmRXIWodbokKUQJY0RX0L
- 3iRxTxojZgoAr0BJQ1ponT4HGyJF9P/dLKgG3mgDVBzT9ZC3GJ4VXksCd7CI4pp2deGOMuRnO4dJZ
- tYjvlBna5K+2SqqA4cHi6bHT3o1vwsbWhi8IrSk8cEbLbPYhU9Q1bHhBT4/6s3jRpSUTvMY8j6m9y
- ZXrNmSY5/qE17M860l2JtYPEp4Qs2IucObE64GZleGfFuLyLOimXHvRbrt+CUdmhLio0qwks9xvBt
- Vg5wC+6v6SCxOh06XmFFo2NPgfa5H4+lhNehhWJUBtAxZ5KuAcLte2n3q/5mzTUIyBnf71eMj2a2Y
- UapUGRFw==;
+Content-Transfer-Encoding: quoted-printable
+Return-path: <cluster-devel-bounces@redhat.com>
 In-Reply-To: <20220409045043.23593-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-Sender: "Virtualization" <virtualization-bounces@lists.linux-foundation.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
 Content-Type: text/plain; charset="iso-8859-1"
 To: Jens Axboe <axboe@kernel.dk>
-Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, cluster-devel@redhat.com, xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, ceph-devel@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-raid@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-mmc@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, =?UTF-8?q?Christoph=20B=C3=B6hmwalder?= <christoph.boehmwalder@linbit.com>, oc
+Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, cluster-devel@redhat.com, xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, ceph-devel@vger.kernel.org, Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-mmc@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, =?UTF-8?q?Christoph=20B=C3=B6hmwalder?= <christoph.boehmwalder@linbit.com>, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.
 
-QWJzdHJhY3QgYXdheSBpbXBsZW1lbnRhdGlvbiBkZXRhaWxzIGZyb20gZmlsZSBzeXN0ZW1zIGJ5
-IHByb3ZpZGluZyBhCmJsb2NrX2RldmljZSBiYXNlZCBoZWxwZXIgdG8gcmV0cmlldmUgdGhlIGRp
-c2NhcmQgZ3JhbnVsYXJpdHkuCgpTaWduZWQtb2ZmLWJ5OiBDaHJpc3RvcGggSGVsbHdpZyA8aGNo
-QGxzdC5kZT4KUmV2aWV3ZWQtYnk6IE1hcnRpbiBLLiBQZXRlcnNlbiA8bWFydGluLnBldGVyc2Vu
-QG9yYWNsZS5jb20+CkFja2VkLWJ5OiBDaHJpc3RvcGggQsO2aG13YWxkZXIgPGNocmlzdG9waC5i
-b2VobXdhbGRlckBsaW5iaXQuY29tPiBbYnRyZnNdCkFja2VkLWJ5OiBSeXVzdWtlIEtvbmlzaGkg
-PGtvbmlzaGkucnl1c3VrZUBnbWFpbC5jb20+CkFja2VkLWJ5OiBEYXZpZCBTdGVyYmEgPGRzdGVy
-YmFAc3VzZS5jb20+IFtidHJmc10KLS0tCiBibG9jay9ibGstbGliLmMgICAgICAgICAgICAgICAg
-ICAgICB8ICA1ICsrLS0tCiBkcml2ZXJzL2Jsb2NrL2RyYmQvZHJiZF9ubC5jICAgICAgICB8ICA5
-ICsrKysrLS0tLQogZHJpdmVycy9ibG9jay9kcmJkL2RyYmRfcmVjZWl2ZXIuYyAgfCAgMyArLS0K
-IGRyaXZlcnMvYmxvY2svbG9vcC5jICAgICAgICAgICAgICAgIHwgIDIgKy0KIGRyaXZlcnMvdGFy
-Z2V0L3RhcmdldF9jb3JlX2RldmljZS5jIHwgIDMgKy0tCiBmcy9idHJmcy9pb2N0bC5jICAgICAg
-ICAgICAgICAgICAgICB8IDEyICsrKystLS0tLS0tLQogZnMvZXhmYXQvZmlsZS5jICAgICAgICAg
-ICAgICAgICAgICAgfCAgMyArLS0KIGZzL2V4dDQvbWJhbGxvYy5jICAgICAgICAgICAgICAgICAg
-IHwgIDYgKysrLS0tCiBmcy9mMmZzL2ZpbGUuYyAgICAgICAgICAgICAgICAgICAgICB8ICAzICst
-LQogZnMvZmF0L2ZpbGUuYyAgICAgICAgICAgICAgICAgICAgICAgfCAgMyArLS0KIGZzL2dmczIv
-cmdycC5jICAgICAgICAgICAgICAgICAgICAgIHwgIDcgKysrLS0tLQogZnMvamZzL2lvY3RsLmMg
-ICAgICAgICAgICAgICAgICAgICAgfCAgMyArLS0KIGZzL25pbGZzMi9pb2N0bC5jICAgICAgICAg
-ICAgICAgICAgIHwgIDQgKystLQogZnMvbnRmczMvZmlsZS5jICAgICAgICAgICAgICAgICAgICAg
-fCAgNCArKy0tCiBmcy9udGZzMy9zdXBlci5jICAgICAgICAgICAgICAgICAgICB8ICA2ICsrLS0t
-LQogZnMvb2NmczIvaW9jdGwuYyAgICAgICAgICAgICAgICAgICAgfCAgMyArLS0KIGZzL3hmcy94
-ZnNfZGlzY2FyZC5jICAgICAgICAgICAgICAgIHwgIDQgKystLQogaW5jbHVkZS9saW51eC9ibGtk
-ZXYuaCAgICAgICAgICAgICAgfCAgNSArKysrKwogMTggZmlsZXMgY2hhbmdlZCwgMzggaW5zZXJ0
-aW9ucygrKSwgNDcgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvYmxvY2svYmxrLWxpYi5jIGIv
-YmxvY2svYmxrLWxpYi5jCmluZGV4IDhiNGI2NmQzYTliZmMuLjQzYWE0ZDdmZTg1OWYgMTAwNjQ0
-Ci0tLSBhL2Jsb2NrL2Jsay1saWIuYworKysgYi9ibG9jay9ibGstbGliLmMKQEAgLTEyLDggKzEy
-LDcgQEAKIAogc3RhdGljIHNlY3Rvcl90IGJpb19kaXNjYXJkX2xpbWl0KHN0cnVjdCBibG9ja19k
-ZXZpY2UgKmJkZXYsIHNlY3Rvcl90IHNlY3RvcikKIHsKLQl1bnNpZ25lZCBpbnQgZGlzY2FyZF9n
-cmFudWxhcml0eSA9Ci0JCWJkZXZfZ2V0X3F1ZXVlKGJkZXYpLT5saW1pdHMuZGlzY2FyZF9ncmFu
-dWxhcml0eTsKKwl1bnNpZ25lZCBpbnQgZGlzY2FyZF9ncmFudWxhcml0eSA9IGJkZXZfZGlzY2Fy
-ZF9ncmFudWxhcml0eShiZGV2KTsKIAlzZWN0b3JfdCBncmFudWxhcml0eV9hbGlnbmVkX3NlY3Rv
-cjsKIAogCWlmIChiZGV2X2lzX3BhcnRpdGlvbihiZGV2KSkKQEAgLTU5LDcgKzU4LDcgQEAgaW50
-IF9fYmxrZGV2X2lzc3VlX2Rpc2NhcmQoc3RydWN0IGJsb2NrX2RldmljZSAqYmRldiwgc2VjdG9y
-X3Qgc2VjdG9yLAogCX0KIAogCS8qIEluIGNhc2UgdGhlIGRpc2NhcmQgZ3JhbnVsYXJpdHkgaXNu
-J3Qgc2V0IGJ5IGJ1Z2d5IGRldmljZSBkcml2ZXIgKi8KLQlpZiAoV0FSTl9PTl9PTkNFKCFxLT5s
-aW1pdHMuZGlzY2FyZF9ncmFudWxhcml0eSkpIHsKKwlpZiAoV0FSTl9PTl9PTkNFKCFiZGV2X2Rp
-c2NhcmRfZ3JhbnVsYXJpdHkoYmRldikpKSB7CiAJCWNoYXIgZGV2X25hbWVbQkRFVk5BTUVfU0la
-RV07CiAKIAkJYmRldm5hbWUoYmRldiwgZGV2X25hbWUpOwpkaWZmIC0tZ2l0IGEvZHJpdmVycy9i
-bG9jay9kcmJkL2RyYmRfbmwuYyBiL2RyaXZlcnMvYmxvY2svZHJiZC9kcmJkX25sLmMKaW5kZXgg
-YjU1ZTVmY2MyMWUxZi4uMGIzZTQzYmU2NDE0ZCAxMDA2NDQKLS0tIGEvZHJpdmVycy9ibG9jay9k
-cmJkL2RyYmRfbmwuYworKysgYi9kcml2ZXJzL2Jsb2NrL2RyYmQvZHJiZF9ubC5jCkBAIC0xNDI1
-LDcgKzE0MjUsNiBAQCBzdGF0aWMgdm9pZCBzYW5pdGl6ZV9kaXNrX2NvbmYoc3RydWN0IGRyYmRf
-ZGV2aWNlICpkZXZpY2UsIHN0cnVjdCBkaXNrX2NvbmYgKmRpcwogCQkJICAgICAgIHN0cnVjdCBk
-cmJkX2JhY2tpbmdfZGV2ICpuYmMpCiB7CiAJc3RydWN0IGJsb2NrX2RldmljZSAqYmRldiA9IG5i
-Yy0+YmFja2luZ19iZGV2OwotCXN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxID0gYmRldi0+YmRfZGlz
-ay0+cXVldWU7CiAKIAlpZiAoZGlza19jb25mLT5hbF9leHRlbnRzIDwgRFJCRF9BTF9FWFRFTlRT
-X01JTikKIAkJZGlza19jb25mLT5hbF9leHRlbnRzID0gRFJCRF9BTF9FWFRFTlRTX01JTjsKQEAg
-LTE0NDIsMTIgKzE0NDEsMTQgQEAgc3RhdGljIHZvaWQgc2FuaXRpemVfZGlza19jb25mKHN0cnVj
-dCBkcmJkX2RldmljZSAqZGV2aWNlLCBzdHJ1Y3QgZGlza19jb25mICpkaXMKIAlpZiAoZGlza19j
-b25mLT5yc19kaXNjYXJkX2dyYW51bGFyaXR5KSB7CiAJCWludCBvcmlnX3ZhbHVlID0gZGlza19j
-b25mLT5yc19kaXNjYXJkX2dyYW51bGFyaXR5OwogCQlzZWN0b3JfdCBkaXNjYXJkX3NpemUgPSBi
-ZGV2X21heF9kaXNjYXJkX3NlY3RvcnMoYmRldikgPDwgOTsKKwkJdW5zaWduZWQgaW50IGRpc2Nh
-cmRfZ3JhbnVsYXJpdHkgPSBiZGV2X2Rpc2NhcmRfZ3JhbnVsYXJpdHkoYmRldik7CiAJCWludCBy
-ZW1haW5kZXI7CiAKLQkJaWYgKHEtPmxpbWl0cy5kaXNjYXJkX2dyYW51bGFyaXR5ID4gZGlza19j
-b25mLT5yc19kaXNjYXJkX2dyYW51bGFyaXR5KQotCQkJZGlza19jb25mLT5yc19kaXNjYXJkX2dy
-YW51bGFyaXR5ID0gcS0+bGltaXRzLmRpc2NhcmRfZ3JhbnVsYXJpdHk7CisJCWlmIChkaXNjYXJk
-X2dyYW51bGFyaXR5ID4gZGlza19jb25mLT5yc19kaXNjYXJkX2dyYW51bGFyaXR5KQorCQkJZGlz
-a19jb25mLT5yc19kaXNjYXJkX2dyYW51bGFyaXR5ID0gZGlzY2FyZF9ncmFudWxhcml0eTsKIAot
-CQlyZW1haW5kZXIgPSBkaXNrX2NvbmYtPnJzX2Rpc2NhcmRfZ3JhbnVsYXJpdHkgJSBxLT5saW1p
-dHMuZGlzY2FyZF9ncmFudWxhcml0eTsKKwkJcmVtYWluZGVyID0gZGlza19jb25mLT5yc19kaXNj
-YXJkX2dyYW51bGFyaXR5ICUKKwkJCQlkaXNjYXJkX2dyYW51bGFyaXR5OwogCQlkaXNrX2NvbmYt
-PnJzX2Rpc2NhcmRfZ3JhbnVsYXJpdHkgKz0gcmVtYWluZGVyOwogCiAJCWlmIChkaXNrX2NvbmYt
-PnJzX2Rpc2NhcmRfZ3JhbnVsYXJpdHkgPiBkaXNjYXJkX3NpemUpCmRpZmYgLS1naXQgYS9kcml2
-ZXJzL2Jsb2NrL2RyYmQvZHJiZF9yZWNlaXZlci5jIGIvZHJpdmVycy9ibG9jay9kcmJkL2RyYmRf
-cmVjZWl2ZXIuYwppbmRleCA4YTRhNDdkYTU2ZmU5Li4yNzVjNTNjN2I2MjllIDEwMDY0NAotLS0g
-YS9kcml2ZXJzL2Jsb2NrL2RyYmQvZHJiZF9yZWNlaXZlci5jCisrKyBiL2RyaXZlcnMvYmxvY2sv
-ZHJiZC9kcmJkX3JlY2VpdmVyLmMKQEAgLTE1MTEsNyArMTUxMSw2IEBAIHZvaWQgZHJiZF9idW1w
-X3dyaXRlX29yZGVyaW5nKHN0cnVjdCBkcmJkX3Jlc291cmNlICpyZXNvdXJjZSwgc3RydWN0IGRy
-YmRfYmFja2luCiBpbnQgZHJiZF9pc3N1ZV9kaXNjYXJkX29yX3plcm9fb3V0KHN0cnVjdCBkcmJk
-X2RldmljZSAqZGV2aWNlLCBzZWN0b3JfdCBzdGFydCwgdW5zaWduZWQgaW50IG5yX3NlY3RvcnMs
-IGludCBmbGFncykKIHsKIAlzdHJ1Y3QgYmxvY2tfZGV2aWNlICpiZGV2ID0gZGV2aWNlLT5sZGV2
-LT5iYWNraW5nX2JkZXY7Ci0Jc3RydWN0IHJlcXVlc3RfcXVldWUgKnEgPSBiZGV2X2dldF9xdWV1
-ZShiZGV2KTsKIAlzZWN0b3JfdCB0bXAsIG5yOwogCXVuc2lnbmVkIGludCBtYXhfZGlzY2FyZF9z
-ZWN0b3JzLCBncmFudWxhcml0eTsKIAlpbnQgYWxpZ25tZW50OwpAQCAtMTUyMSw3ICsxNTIwLDcg
-QEAgaW50IGRyYmRfaXNzdWVfZGlzY2FyZF9vcl96ZXJvX291dChzdHJ1Y3QgZHJiZF9kZXZpY2Ug
-KmRldmljZSwgc2VjdG9yX3Qgc3RhcnQsIHUKIAkJZ290byB6ZXJvX291dDsKIAogCS8qIFplcm8t
-c2VjdG9yICh1bmtub3duKSBhbmQgb25lLXNlY3RvciBncmFudWxhcml0aWVzIGFyZSB0aGUgc2Ft
-ZS4gICovCi0JZ3JhbnVsYXJpdHkgPSBtYXgocS0+bGltaXRzLmRpc2NhcmRfZ3JhbnVsYXJpdHkg
-Pj4gOSwgMVUpOworCWdyYW51bGFyaXR5ID0gbWF4KGJkZXZfZGlzY2FyZF9ncmFudWxhcml0eShi
-ZGV2KSA+PiA5LCAxVSk7CiAJYWxpZ25tZW50ID0gKGJkZXZfZGlzY2FyZF9hbGlnbm1lbnQoYmRl
-dikgPj4gOSkgJSBncmFudWxhcml0eTsKIAogCW1heF9kaXNjYXJkX3NlY3RvcnMgPSBtaW4oYmRl
-dl9tYXhfZGlzY2FyZF9zZWN0b3JzKGJkZXYpLCAoMVUgPDwgMjIpKTsKZGlmZiAtLWdpdCBhL2Ry
-aXZlcnMvYmxvY2svbG9vcC5jIGIvZHJpdmVycy9ibG9jay9sb29wLmMKaW5kZXggMGUwNjFjOTg5
-NmVmZi4uOTc2Y2Y5ODdiMzkyMCAxMDA2NDQKLS0tIGEvZHJpdmVycy9ibG9jay9sb29wLmMKKysr
-IGIvZHJpdmVycy9ibG9jay9sb29wLmMKQEAgLTc1OSw3ICs3NTksNyBAQCBzdGF0aWMgdm9pZCBs
-b29wX2NvbmZpZ19kaXNjYXJkKHN0cnVjdCBsb29wX2RldmljZSAqbG8pCiAJCXN0cnVjdCByZXF1
-ZXN0X3F1ZXVlICpiYWNraW5ncSA9IGJkZXZfZ2V0X3F1ZXVlKElfQkRFVihpbm9kZSkpOwogCiAJ
-CW1heF9kaXNjYXJkX3NlY3RvcnMgPSBiYWNraW5ncS0+bGltaXRzLm1heF93cml0ZV96ZXJvZXNf
-c2VjdG9yczsKLQkJZ3JhbnVsYXJpdHkgPSBiYWNraW5ncS0+bGltaXRzLmRpc2NhcmRfZ3JhbnVs
-YXJpdHkgPzoKKwkJZ3JhbnVsYXJpdHkgPSBiZGV2X2Rpc2NhcmRfZ3JhbnVsYXJpdHkoSV9CREVW
-KGlub2RlKSkgPzoKIAkJCXF1ZXVlX3BoeXNpY2FsX2Jsb2NrX3NpemUoYmFja2luZ3EpOwogCiAJ
-LyoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvdGFyZ2V0L3RhcmdldF9jb3JlX2RldmljZS5jIGIvZHJp
-dmVycy90YXJnZXQvdGFyZ2V0X2NvcmVfZGV2aWNlLmMKaW5kZXggNmNiOWY4Nzg0MzI3OC4uMjVm
-MzNlYjI1MzM3YyAxMDA2NDQKLS0tIGEvZHJpdmVycy90YXJnZXQvdGFyZ2V0X2NvcmVfZGV2aWNl
-LmMKKysrIGIvZHJpdmVycy90YXJnZXQvdGFyZ2V0X2NvcmVfZGV2aWNlLmMKQEAgLTgzNSw3ICs4
-MzUsNiBAQCBzdHJ1Y3Qgc2VfZGV2aWNlICp0YXJnZXRfYWxsb2NfZGV2aWNlKHN0cnVjdCBzZV9o
-YmEgKmhiYSwgY29uc3QgY2hhciAqbmFtZSkKIGJvb2wgdGFyZ2V0X2NvbmZpZ3VyZV91bm1hcF9m
-cm9tX3F1ZXVlKHN0cnVjdCBzZV9kZXZfYXR0cmliICphdHRyaWIsCiAJCQkJICAgICAgIHN0cnVj
-dCBibG9ja19kZXZpY2UgKmJkZXYpCiB7Ci0Jc3RydWN0IHJlcXVlc3RfcXVldWUgKnEgPSBiZGV2
-X2dldF9xdWV1ZShiZGV2KTsKIAlpbnQgYmxvY2tfc2l6ZSA9IGJkZXZfbG9naWNhbF9ibG9ja19z
-aXplKGJkZXYpOwogCiAJaWYgKCFiZGV2X21heF9kaXNjYXJkX3NlY3RvcnMoYmRldikpCkBAIC04
-NDcsNyArODQ2LDcgQEAgYm9vbCB0YXJnZXRfY29uZmlndXJlX3VubWFwX2Zyb21fcXVldWUoc3Ry
-dWN0IHNlX2Rldl9hdHRyaWIgKmF0dHJpYiwKIAkgKiBDdXJyZW50bHkgaGFyZGNvZGVkIHRvIDEg
-aW4gTGludXgvU0NTSSBjb2RlLi4KIAkgKi8KIAlhdHRyaWItPm1heF91bm1hcF9ibG9ja19kZXNj
-X2NvdW50ID0gMTsKLQlhdHRyaWItPnVubWFwX2dyYW51bGFyaXR5ID0gcS0+bGltaXRzLmRpc2Nh
-cmRfZ3JhbnVsYXJpdHkgLyBibG9ja19zaXplOworCWF0dHJpYi0+dW5tYXBfZ3JhbnVsYXJpdHkg
-PSBiZGV2X2Rpc2NhcmRfZ3JhbnVsYXJpdHkoYmRldikgLyBibG9ja19zaXplOwogCWF0dHJpYi0+
-dW5tYXBfZ3JhbnVsYXJpdHlfYWxpZ25tZW50ID0KIAkJYmRldl9kaXNjYXJkX2FsaWdubWVudChi
-ZGV2KSAvIGJsb2NrX3NpemU7CiAJcmV0dXJuIHRydWU7CmRpZmYgLS1naXQgYS9mcy9idHJmcy9p
-b2N0bC5jIGIvZnMvYnRyZnMvaW9jdGwuYwppbmRleCAwOTZiYjBkYTAzZjFjLi43MDc2NWQ1OTYx
-NmE1IDEwMDY0NAotLS0gYS9mcy9idHJmcy9pb2N0bC5jCisrKyBiL2ZzL2J0cmZzL2lvY3RsLmMK
-QEAgLTQ2OCw3ICs0NjgsNiBAQCBzdGF0aWMgbm9pbmxpbmUgaW50IGJ0cmZzX2lvY3RsX2ZpdHJp
-bShzdHJ1Y3QgYnRyZnNfZnNfaW5mbyAqZnNfaW5mbywKIAkJCQkJdm9pZCBfX3VzZXIgKmFyZykK
-IHsKIAlzdHJ1Y3QgYnRyZnNfZGV2aWNlICpkZXZpY2U7Ci0Jc3RydWN0IHJlcXVlc3RfcXVldWUg
-KnE7CiAJc3RydWN0IGZzdHJpbV9yYW5nZSByYW5nZTsKIAl1NjQgbWlubGVuID0gVUxMT05HX01B
-WDsKIAl1NjQgbnVtX2RldmljZXMgPSAwOwpAQCAtNDk4LDE0ICs0OTcsMTEgQEAgc3RhdGljIG5v
-aW5saW5lIGludCBidHJmc19pb2N0bF9maXRyaW0oc3RydWN0IGJ0cmZzX2ZzX2luZm8gKmZzX2lu
-Zm8sCiAJcmN1X3JlYWRfbG9jaygpOwogCWxpc3RfZm9yX2VhY2hfZW50cnlfcmN1KGRldmljZSwg
-JmZzX2luZm8tPmZzX2RldmljZXMtPmRldmljZXMsCiAJCQkJZGV2X2xpc3QpIHsKLQkJaWYgKCFk
-ZXZpY2UtPmJkZXYpCisJCWlmICghZGV2aWNlLT5iZGV2IHx8ICFiZGV2X21heF9kaXNjYXJkX3Nl
-Y3RvcnMoZGV2aWNlLT5iZGV2KSkKIAkJCWNvbnRpbnVlOwotCQlxID0gYmRldl9nZXRfcXVldWUo
-ZGV2aWNlLT5iZGV2KTsKLQkJaWYgKGJkZXZfbWF4X2Rpc2NhcmRfc2VjdG9ycyhkZXZpY2UtPmJk
-ZXYpKSB7Ci0JCQludW1fZGV2aWNlcysrOwotCQkJbWlubGVuID0gbWluX3QodTY0LCBxLT5saW1p
-dHMuZGlzY2FyZF9ncmFudWxhcml0eSwKLQkJCQkgICAgIG1pbmxlbik7Ci0JCX0KKwkJbnVtX2Rl
-dmljZXMrKzsKKwkJbWlubGVuID0gbWluX3QodTY0LCBiZGV2X2Rpc2NhcmRfZ3JhbnVsYXJpdHko
-ZGV2aWNlLT5iZGV2KSwKKwkJCQkgICAgbWlubGVuKTsKIAl9CiAJcmN1X3JlYWRfdW5sb2NrKCk7
-CiAKZGlmZiAtLWdpdCBhL2ZzL2V4ZmF0L2ZpbGUuYyBiL2ZzL2V4ZmF0L2ZpbGUuYwppbmRleCA3
-NjVlNGY2M2RkMThkLi4yMGQ0ZTQ3ZjU3YWIyIDEwMDY0NAotLS0gYS9mcy9leGZhdC9maWxlLmMK
-KysrIGIvZnMvZXhmYXQvZmlsZS5jCkBAIC0zNTEsNyArMzUxLDYgQEAgaW50IGV4ZmF0X3NldGF0
-dHIoc3RydWN0IHVzZXJfbmFtZXNwYWNlICptbnRfdXNlcm5zLCBzdHJ1Y3QgZGVudHJ5ICpkZW50
-cnksCiAKIHN0YXRpYyBpbnQgZXhmYXRfaW9jdGxfZml0cmltKHN0cnVjdCBpbm9kZSAqaW5vZGUs
-IHVuc2lnbmVkIGxvbmcgYXJnKQogewotCXN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxID0gYmRldl9n
-ZXRfcXVldWUoaW5vZGUtPmlfc2ItPnNfYmRldik7CiAJc3RydWN0IGZzdHJpbV9yYW5nZSByYW5n
-ZTsKIAlpbnQgcmV0ID0gMDsKIApAQCAtMzY1LDcgKzM2NCw3IEBAIHN0YXRpYyBpbnQgZXhmYXRf
-aW9jdGxfZml0cmltKHN0cnVjdCBpbm9kZSAqaW5vZGUsIHVuc2lnbmVkIGxvbmcgYXJnKQogCQly
-ZXR1cm4gLUVGQVVMVDsKIAogCXJhbmdlLm1pbmxlbiA9IG1heF90KHVuc2lnbmVkIGludCwgcmFu
-Z2UubWlubGVuLAotCQkJCXEtPmxpbWl0cy5kaXNjYXJkX2dyYW51bGFyaXR5KTsKKwkJCQliZGV2
-X2Rpc2NhcmRfZ3JhbnVsYXJpdHkoaW5vZGUtPmlfc2ItPnNfYmRldikpOwogCiAJcmV0ID0gZXhm
-YXRfdHJpbV9mcyhpbm9kZSwgJnJhbmdlKTsKIAlpZiAocmV0IDwgMCkKZGlmZiAtLWdpdCBhL2Zz
-L2V4dDQvbWJhbGxvYy5jIGIvZnMvZXh0NC9tYmFsbG9jLmMKaW5kZXggYzM2NjhjOTc3Y2Q5OS4u
-NmQxODIwNTM2ZDg4ZCAxMDA2NDQKLS0tIGEvZnMvZXh0NC9tYmFsbG9jLmMKKysrIGIvZnMvZXh0
-NC9tYmFsbG9jLmMKQEAgLTY0NTUsNyArNjQ1NSw3IEBAIGV4dDRfdHJpbV9hbGxfZnJlZShzdHJ1
-Y3Qgc3VwZXJfYmxvY2sgKnNiLCBleHQ0X2dyb3VwX3QgZ3JvdXAsCiAgKi8KIGludCBleHQ0X3Ry
-aW1fZnMoc3RydWN0IHN1cGVyX2Jsb2NrICpzYiwgc3RydWN0IGZzdHJpbV9yYW5nZSAqcmFuZ2Up
-CiB7Ci0Jc3RydWN0IHJlcXVlc3RfcXVldWUgKnEgPSBiZGV2X2dldF9xdWV1ZShzYi0+c19iZGV2
-KTsKKwl1bnNpZ25lZCBpbnQgZGlzY2FyZF9ncmFudWxhcml0eSA9IGJkZXZfZGlzY2FyZF9ncmFu
-dWxhcml0eShzYi0+c19iZGV2KTsKIAlzdHJ1Y3QgZXh0NF9ncm91cF9pbmZvICpncnA7CiAJZXh0
-NF9ncm91cF90IGdyb3VwLCBmaXJzdF9ncm91cCwgbGFzdF9ncm91cDsKIAlleHQ0X2dycGJsa190
-IGNudCA9IDAsIGZpcnN0X2NsdXN0ZXIsIGxhc3RfY2x1c3RlcjsKQEAgLTY0NzUsOSArNjQ3NSw5
-IEBAIGludCBleHQ0X3RyaW1fZnMoc3RydWN0IHN1cGVyX2Jsb2NrICpzYiwgc3RydWN0IGZzdHJp
-bV9yYW5nZSAqcmFuZ2UpCiAJICAgIHJhbmdlLT5sZW4gPCBzYi0+c19ibG9ja3NpemUpCiAJCXJl
-dHVybiAtRUlOVkFMOwogCS8qIE5vIHBvaW50IHRvIHRyeSB0byB0cmltIGxlc3MgdGhhbiBkaXNj
-YXJkIGdyYW51bGFyaXR5ICovCi0JaWYgKHJhbmdlLT5taW5sZW4gPCBxLT5saW1pdHMuZGlzY2Fy
-ZF9ncmFudWxhcml0eSkgeworCWlmIChyYW5nZS0+bWlubGVuIDwgZGlzY2FyZF9ncmFudWxhcml0
-eSkgewogCQltaW5sZW4gPSBFWFQ0X05VTV9CMkMoRVhUNF9TQihzYiksCi0JCQlxLT5saW1pdHMu
-ZGlzY2FyZF9ncmFudWxhcml0eSA+PiBzYi0+c19ibG9ja3NpemVfYml0cyk7CisJCQkJZGlzY2Fy
-ZF9ncmFudWxhcml0eSA+PiBzYi0+c19ibG9ja3NpemVfYml0cyk7CiAJCWlmIChtaW5sZW4gPiBF
-WFQ0X0NMVVNURVJTX1BFUl9HUk9VUChzYikpCiAJCQlnb3RvIG91dDsKIAl9CmRpZmYgLS1naXQg
-YS9mcy9mMmZzL2ZpbGUuYyBiL2ZzL2YyZnMvZmlsZS5jCmluZGV4IDViODlhZjBmMjdmMDUuLjgw
-NTNkOTlmMzkyMGIgMTAwNjQ0Ci0tLSBhL2ZzL2YyZnMvZmlsZS5jCisrKyBiL2ZzL2YyZnMvZmls
-ZS5jCkBAIC0yMjg1LDcgKzIyODUsNiBAQCBzdGF0aWMgaW50IGYyZnNfaW9jX2ZpdHJpbShzdHJ1
-Y3QgZmlsZSAqZmlscCwgdW5zaWduZWQgbG9uZyBhcmcpCiB7CiAJc3RydWN0IGlub2RlICppbm9k
-ZSA9IGZpbGVfaW5vZGUoZmlscCk7CiAJc3RydWN0IHN1cGVyX2Jsb2NrICpzYiA9IGlub2RlLT5p
-X3NiOwotCXN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxID0gYmRldl9nZXRfcXVldWUoc2ItPnNfYmRl
-dik7CiAJc3RydWN0IGZzdHJpbV9yYW5nZSByYW5nZTsKIAlpbnQgcmV0OwogCkBAIC0yMzA0LDcg
-KzIzMDMsNyBAQCBzdGF0aWMgaW50IGYyZnNfaW9jX2ZpdHJpbShzdHJ1Y3QgZmlsZSAqZmlscCwg
-dW5zaWduZWQgbG9uZyBhcmcpCiAJCXJldHVybiByZXQ7CiAKIAlyYW5nZS5taW5sZW4gPSBtYXgo
-KHVuc2lnbmVkIGludClyYW5nZS5taW5sZW4sCi0JCQkJcS0+bGltaXRzLmRpc2NhcmRfZ3JhbnVs
-YXJpdHkpOworCQkJICAgYmRldl9kaXNjYXJkX2dyYW51bGFyaXR5KHNiLT5zX2JkZXYpKTsKIAly
-ZXQgPSBmMmZzX3RyaW1fZnMoRjJGU19TQihzYiksICZyYW5nZSk7CiAJbW50X2Ryb3Bfd3JpdGVf
-ZmlsZShmaWxwKTsKIAlpZiAocmV0IDwgMCkKZGlmZiAtLWdpdCBhL2ZzL2ZhdC9maWxlLmMgYi9m
-cy9mYXQvZmlsZS5jCmluZGV4IGU0YzdkMTBlODAxMjkuLmJmOTFmOTc3ZGViZWEgMTAwNjQ0Ci0t
-LSBhL2ZzL2ZhdC9maWxlLmMKKysrIGIvZnMvZmF0L2ZpbGUuYwpAQCAtMTI3LDcgKzEyNyw2IEBA
-IHN0YXRpYyBpbnQgZmF0X2lvY3RsX2ZpdHJpbShzdHJ1Y3QgaW5vZGUgKmlub2RlLCB1bnNpZ25l
-ZCBsb25nIGFyZykKIAlzdHJ1Y3Qgc3VwZXJfYmxvY2sgKnNiID0gaW5vZGUtPmlfc2I7CiAJc3Ry
-dWN0IGZzdHJpbV9yYW5nZSBfX3VzZXIgKnVzZXJfcmFuZ2U7CiAJc3RydWN0IGZzdHJpbV9yYW5n
-ZSByYW5nZTsKLQlzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSA9IGJkZXZfZ2V0X3F1ZXVlKHNiLT5z
-X2JkZXYpOwogCWludCBlcnI7CiAKIAlpZiAoIWNhcGFibGUoQ0FQX1NZU19BRE1JTikpCkBAIC0x
-NDEsNyArMTQwLDcgQEAgc3RhdGljIGludCBmYXRfaW9jdGxfZml0cmltKHN0cnVjdCBpbm9kZSAq
-aW5vZGUsIHVuc2lnbmVkIGxvbmcgYXJnKQogCQlyZXR1cm4gLUVGQVVMVDsKIAogCXJhbmdlLm1p
-bmxlbiA9IG1heF90KHVuc2lnbmVkIGludCwgcmFuZ2UubWlubGVuLAotCQkJICAgICBxLT5saW1p
-dHMuZGlzY2FyZF9ncmFudWxhcml0eSk7CisJCQkgICAgIGJkZXZfZGlzY2FyZF9ncmFudWxhcml0
-eShzYi0+c19iZGV2KSk7CiAKIAllcnIgPSBmYXRfdHJpbV9mcyhpbm9kZSwgJnJhbmdlKTsKIAlp
-ZiAoZXJyIDwgMCkKZGlmZiAtLWdpdCBhL2ZzL2dmczIvcmdycC5jIGIvZnMvZ2ZzMi9yZ3JwLmMK
-aW5kZXggN2YyMGFjOTEzM2JjNi4uNmQyNmJiNTI1NDg0NCAxMDA2NDQKLS0tIGEvZnMvZ2ZzMi9y
-Z3JwLmMKKysrIGIvZnMvZ2ZzMi9yZ3JwLmMKQEAgLTEzODYsNyArMTM4Niw3IEBAIGludCBnZnMy
-X2ZpdHJpbShzdHJ1Y3QgZmlsZSAqZmlscCwgdm9pZCBfX3VzZXIgKmFyZ3ApCiB7CiAJc3RydWN0
-IGlub2RlICppbm9kZSA9IGZpbGVfaW5vZGUoZmlscCk7CiAJc3RydWN0IGdmczJfc2JkICpzZHAg
-PSBHRlMyX1NCKGlub2RlKTsKLQlzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSA9IGJkZXZfZ2V0X3F1
-ZXVlKHNkcC0+c2RfdmZzLT5zX2JkZXYpOworCXN0cnVjdCBibG9ja19kZXZpY2UgKmJkZXYgPSBz
-ZHAtPnNkX3Zmcy0+c19iZGV2OwogCXN0cnVjdCBidWZmZXJfaGVhZCAqYmg7CiAJc3RydWN0IGdm
-czJfcmdycGQgKnJnZDsKIAlzdHJ1Y3QgZ2ZzMl9yZ3JwZCAqcmdkX2VuZDsKQEAgLTE0MDUsNyAr
-MTQwNSw3IEBAIGludCBnZnMyX2ZpdHJpbShzdHJ1Y3QgZmlsZSAqZmlscCwgdm9pZCBfX3VzZXIg
-KmFyZ3ApCiAJaWYgKCF0ZXN0X2JpdChTREZfSk9VUk5BTF9MSVZFLCAmc2RwLT5zZF9mbGFncykp
-CiAJCXJldHVybiAtRVJPRlM7CiAKLQlpZiAoIWJkZXZfbWF4X2Rpc2NhcmRfc2VjdG9ycyhzZHAt
-PnNkX3Zmcy0+c19iZGV2KSkKKwlpZiAoIWJkZXZfbWF4X2Rpc2NhcmRfc2VjdG9ycyhiZGV2KSkK
-IAkJcmV0dXJuIC1FT1BOT1RTVVBQOwogCiAJaWYgKGNvcHlfZnJvbV91c2VyKCZyLCBhcmdwLCBz
-aXplb2YocikpKQpAQCAtMTQxOCw4ICsxNDE4LDcgQEAgaW50IGdmczJfZml0cmltKHN0cnVjdCBm
-aWxlICpmaWxwLCB2b2lkIF9fdXNlciAqYXJncCkKIAlzdGFydCA9IHIuc3RhcnQgPj4gYnNfc2hp
-ZnQ7CiAJZW5kID0gc3RhcnQgKyAoci5sZW4gPj4gYnNfc2hpZnQpOwogCW1pbmxlbiA9IG1heF90
-KHU2NCwgci5taW5sZW4sIHNkcC0+c2Rfc2Iuc2JfYnNpemUpOwotCW1pbmxlbiA9IG1heF90KHU2
-NCwgbWlubGVuLAotCQkgICAgICAgcS0+bGltaXRzLmRpc2NhcmRfZ3JhbnVsYXJpdHkpID4+IGJz
-X3NoaWZ0OworCW1pbmxlbiA9IG1heF90KHU2NCwgbWlubGVuLCBiZGV2X2Rpc2NhcmRfZ3JhbnVs
-YXJpdHkoYmRldikpID4+IGJzX3NoaWZ0OwogCiAJaWYgKGVuZCA8PSBzdGFydCB8fCBtaW5sZW4g
-PiBzZHAtPnNkX21heF9yZ19kYXRhKQogCQlyZXR1cm4gLUVJTlZBTDsKZGlmZiAtLWdpdCBhL2Zz
-L2pmcy9pb2N0bC5jIGIvZnMvamZzL2lvY3RsLmMKaW5kZXggMzU3YWU2ZTVjMzZlYy4uMWU3YjE3
-N2VjZTYwNSAxMDA2NDQKLS0tIGEvZnMvamZzL2lvY3RsLmMKKysrIGIvZnMvamZzL2lvY3RsLmMK
-QEAgLTExMCw3ICsxMTAsNiBAQCBsb25nIGpmc19pb2N0bChzdHJ1Y3QgZmlsZSAqZmlscCwgdW5z
-aWduZWQgaW50IGNtZCwgdW5zaWduZWQgbG9uZyBhcmcpCiAJY2FzZSBGSVRSSU06CiAJewogCQlz
-dHJ1Y3Qgc3VwZXJfYmxvY2sgKnNiID0gaW5vZGUtPmlfc2I7Ci0JCXN0cnVjdCByZXF1ZXN0X3F1
-ZXVlICpxID0gYmRldl9nZXRfcXVldWUoc2ItPnNfYmRldik7CiAJCXN0cnVjdCBmc3RyaW1fcmFu
-Z2UgcmFuZ2U7CiAJCXM2NCByZXQgPSAwOwogCkBAIC0xMjcsNyArMTI2LDcgQEAgbG9uZyBqZnNf
-aW9jdGwoc3RydWN0IGZpbGUgKmZpbHAsIHVuc2lnbmVkIGludCBjbWQsIHVuc2lnbmVkIGxvbmcg
-YXJnKQogCQkJcmV0dXJuIC1FRkFVTFQ7CiAKIAkJcmFuZ2UubWlubGVuID0gbWF4X3QodW5zaWdu
-ZWQgaW50LCByYW5nZS5taW5sZW4sCi0JCQlxLT5saW1pdHMuZGlzY2FyZF9ncmFudWxhcml0eSk7
-CisJCQkJICAgICBiZGV2X2Rpc2NhcmRfZ3JhbnVsYXJpdHkoc2ItPnNfYmRldikpOwogCiAJCXJl
-dCA9IGpmc19pb2NfdHJpbShpbm9kZSwgJnJhbmdlKTsKIAkJaWYgKHJldCA8IDApCmRpZmYgLS1n
-aXQgYS9mcy9uaWxmczIvaW9jdGwuYyBiL2ZzL25pbGZzMi9pb2N0bC5jCmluZGV4IDUyYjczZjU1
-OGZjYjEuLjg3ZTEwMDRiNjA2ZDIgMTAwNjQ0Ci0tLSBhL2ZzL25pbGZzMi9pb2N0bC5jCisrKyBi
-L2ZzL25pbGZzMi9pb2N0bC5jCkBAIC0xMDUyLDcgKzEwNTIsNiBAQCBzdGF0aWMgaW50IG5pbGZz
-X2lvY3RsX3Jlc2l6ZShzdHJ1Y3QgaW5vZGUgKmlub2RlLCBzdHJ1Y3QgZmlsZSAqZmlscCwKIHN0
-YXRpYyBpbnQgbmlsZnNfaW9jdGxfdHJpbV9mcyhzdHJ1Y3QgaW5vZGUgKmlub2RlLCB2b2lkIF9f
-dXNlciAqYXJncCkKIHsKIAlzdHJ1Y3QgdGhlX25pbGZzICpuaWxmcyA9IGlub2RlLT5pX3NiLT5z
-X2ZzX2luZm87Ci0Jc3RydWN0IHJlcXVlc3RfcXVldWUgKnEgPSBiZGV2X2dldF9xdWV1ZShuaWxm
-cy0+bnNfYmRldik7CiAJc3RydWN0IGZzdHJpbV9yYW5nZSByYW5nZTsKIAlpbnQgcmV0OwogCkBA
-IC0xMDY1LDcgKzEwNjQsOCBAQCBzdGF0aWMgaW50IG5pbGZzX2lvY3RsX3RyaW1fZnMoc3RydWN0
-IGlub2RlICppbm9kZSwgdm9pZCBfX3VzZXIgKmFyZ3ApCiAJaWYgKGNvcHlfZnJvbV91c2VyKCZy
-YW5nZSwgYXJncCwgc2l6ZW9mKHJhbmdlKSkpCiAJCXJldHVybiAtRUZBVUxUOwogCi0JcmFuZ2Uu
-bWlubGVuID0gbWF4X3QodTY0LCByYW5nZS5taW5sZW4sIHEtPmxpbWl0cy5kaXNjYXJkX2dyYW51
-bGFyaXR5KTsKKwlyYW5nZS5taW5sZW4gPSBtYXhfdCh1NjQsIHJhbmdlLm1pbmxlbiwKKwkJCSAg
-ICAgYmRldl9kaXNjYXJkX2dyYW51bGFyaXR5KG5pbGZzLT5uc19iZGV2KSk7CiAKIAlkb3duX3Jl
-YWQoJm5pbGZzLT5uc19zZWdjdG9yX3NlbSk7CiAJcmV0ID0gbmlsZnNfc3VmaWxlX3RyaW1fZnMo
-bmlsZnMtPm5zX3N1ZmlsZSwgJnJhbmdlKTsKZGlmZiAtLWdpdCBhL2ZzL250ZnMzL2ZpbGUuYyBi
-L2ZzL250ZnMzL2ZpbGUuYwppbmRleCBlNzYzMjM2MTY5MzMxLi4xNTgwNmVlYWUyMTdhIDEwMDY0
-NAotLS0gYS9mcy9udGZzMy9maWxlLmMKKysrIGIvZnMvbnRmczMvZmlsZS5jCkBAIC0yMiw3ICsy
-Miw2IEBAIHN0YXRpYyBpbnQgbnRmc19pb2N0bF9maXRyaW0oc3RydWN0IG50ZnNfc2JfaW5mbyAq
-c2JpLCB1bnNpZ25lZCBsb25nIGFyZykKIHsKIAlzdHJ1Y3QgZnN0cmltX3JhbmdlIF9fdXNlciAq
-dXNlcl9yYW5nZTsKIAlzdHJ1Y3QgZnN0cmltX3JhbmdlIHJhbmdlOwotCXN0cnVjdCByZXF1ZXN0
-X3F1ZXVlICpxID0gYmRldl9nZXRfcXVldWUoc2JpLT5zYi0+c19iZGV2KTsKIAlpbnQgZXJyOwog
-CiAJaWYgKCFjYXBhYmxlKENBUF9TWVNfQURNSU4pKQpAQCAtMzUsNyArMzQsOCBAQCBzdGF0aWMg
-aW50IG50ZnNfaW9jdGxfZml0cmltKHN0cnVjdCBudGZzX3NiX2luZm8gKnNiaSwgdW5zaWduZWQg
-bG9uZyBhcmcpCiAJaWYgKGNvcHlfZnJvbV91c2VyKCZyYW5nZSwgdXNlcl9yYW5nZSwgc2l6ZW9m
-KHJhbmdlKSkpCiAJCXJldHVybiAtRUZBVUxUOwogCi0JcmFuZ2UubWlubGVuID0gbWF4X3QodTMy
-LCByYW5nZS5taW5sZW4sIHEtPmxpbWl0cy5kaXNjYXJkX2dyYW51bGFyaXR5KTsKKwlyYW5nZS5t
-aW5sZW4gPSBtYXhfdCh1MzIsIHJhbmdlLm1pbmxlbiwKKwkJCSAgICAgYmRldl9kaXNjYXJkX2dy
-YW51bGFyaXR5KHNiaS0+c2ItPnNfYmRldikpOwogCiAJZXJyID0gbnRmc190cmltX2ZzKHNiaSwg
-JnJhbmdlKTsKIAlpZiAoZXJyIDwgMCkKZGlmZiAtLWdpdCBhL2ZzL250ZnMzL3N1cGVyLmMgYi9m
-cy9udGZzMy9zdXBlci5jCmluZGV4IGM3MzQwODViY2NlNGEuLjVmMmU0MTRjZmE3OWIgMTAwNjQ0
-Ci0tLSBhL2ZzL250ZnMzL3N1cGVyLmMKKysrIGIvZnMvbnRmczMvc3VwZXIuYwpAQCAtODgyLDcg
-Kzg4Miw2IEBAIHN0YXRpYyBpbnQgbnRmc19maWxsX3N1cGVyKHN0cnVjdCBzdXBlcl9ibG9jayAq
-c2IsIHN0cnVjdCBmc19jb250ZXh0ICpmYykKIAlpbnQgZXJyOwogCXN0cnVjdCBudGZzX3NiX2lu
-Zm8gKnNiaSA9IHNiLT5zX2ZzX2luZm87CiAJc3RydWN0IGJsb2NrX2RldmljZSAqYmRldiA9IHNi
-LT5zX2JkZXY7Ci0Jc3RydWN0IHJlcXVlc3RfcXVldWUgKnJxOwogCXN0cnVjdCBpbm9kZSAqaW5v
-ZGU7CiAJc3RydWN0IG50ZnNfaW5vZGUgKm5pOwogCXNpemVfdCBpLCB0dDsKQEAgLTkxMiw5ICs5
-MTEsOCBAQCBzdGF0aWMgaW50IG50ZnNfZmlsbF9zdXBlcihzdHJ1Y3Qgc3VwZXJfYmxvY2sgKnNi
-LCBzdHJ1Y3QgZnNfY29udGV4dCAqZmMpCiAJCWdvdG8gb3V0OwogCX0KIAotCXJxID0gYmRldl9n
-ZXRfcXVldWUoYmRldik7Ci0JaWYgKGJkZXZfbWF4X2Rpc2NhcmRfc2VjdG9ycyhiZGV2KSAmJiBy
-cS0+bGltaXRzLmRpc2NhcmRfZ3JhbnVsYXJpdHkpIHsKLQkJc2JpLT5kaXNjYXJkX2dyYW51bGFy
-aXR5ID0gcnEtPmxpbWl0cy5kaXNjYXJkX2dyYW51bGFyaXR5OworCWlmIChiZGV2X21heF9kaXNj
-YXJkX3NlY3RvcnMoYmRldikgJiYgYmRldl9kaXNjYXJkX2dyYW51bGFyaXR5KGJkZXYpKSB7CisJ
-CXNiaS0+ZGlzY2FyZF9ncmFudWxhcml0eSA9IGJkZXZfZGlzY2FyZF9ncmFudWxhcml0eShiZGV2
-KTsKIAkJc2JpLT5kaXNjYXJkX2dyYW51bGFyaXR5X21hc2tfaW52ID0KIAkJCX4odTY0KShzYmkt
-PmRpc2NhcmRfZ3JhbnVsYXJpdHkgLSAxKTsKIAl9CmRpZmYgLS1naXQgYS9mcy9vY2ZzMi9pb2N0
-bC5jIGIvZnMvb2NmczIvaW9jdGwuYwppbmRleCA5Yjc4ZWYxMDNhZGE2Li5hZmQ1NGVjNjYxMDMw
-IDEwMDY0NAotLS0gYS9mcy9vY2ZzMi9pb2N0bC5jCisrKyBiL2ZzL29jZnMyL2lvY3RsLmMKQEAg
-LTkwMyw3ICs5MDMsNiBAQCBsb25nIG9jZnMyX2lvY3RsKHN0cnVjdCBmaWxlICpmaWxwLCB1bnNp
-Z25lZCBpbnQgY21kLCB1bnNpZ25lZCBsb25nIGFyZykKIAljYXNlIEZJVFJJTToKIAl7CiAJCXN0
-cnVjdCBzdXBlcl9ibG9jayAqc2IgPSBpbm9kZS0+aV9zYjsKLQkJc3RydWN0IHJlcXVlc3RfcXVl
-dWUgKnEgPSBiZGV2X2dldF9xdWV1ZShzYi0+c19iZGV2KTsKIAkJc3RydWN0IGZzdHJpbV9yYW5n
-ZSByYW5nZTsKIAkJaW50IHJldCA9IDA7CiAKQEAgLTkxNiw3ICs5MTUsNyBAQCBsb25nIG9jZnMy
-X2lvY3RsKHN0cnVjdCBmaWxlICpmaWxwLCB1bnNpZ25lZCBpbnQgY21kLCB1bnNpZ25lZCBsb25n
-IGFyZykKIAkJaWYgKGNvcHlfZnJvbV91c2VyKCZyYW5nZSwgYXJncCwgc2l6ZW9mKHJhbmdlKSkp
-CiAJCQlyZXR1cm4gLUVGQVVMVDsKIAotCQlyYW5nZS5taW5sZW4gPSBtYXhfdCh1NjQsIHEtPmxp
-bWl0cy5kaXNjYXJkX2dyYW51bGFyaXR5LAorCQlyYW5nZS5taW5sZW4gPSBtYXhfdCh1NjQsIGJk
-ZXZfZGlzY2FyZF9ncmFudWxhcml0eShzYi0+c19iZGV2KSwKIAkJCQkgICAgIHJhbmdlLm1pbmxl
-bik7CiAJCXJldCA9IG9jZnMyX3RyaW1fZnMoc2IsICZyYW5nZSk7CiAJCWlmIChyZXQgPCAwKQpk
-aWZmIC0tZ2l0IGEvZnMveGZzL3hmc19kaXNjYXJkLmMgYi9mcy94ZnMveGZzX2Rpc2NhcmQuYwpp
-bmRleCBhNGU2NjA5ZDYxNmI3Li5lMmFkYTExNWMyM2Y5IDEwMDY0NAotLS0gYS9mcy94ZnMveGZz
-X2Rpc2NhcmQuYworKysgYi9mcy94ZnMveGZzX2Rpc2NhcmQuYwpAQCAtMTUyLDggKzE1Miw4IEBA
-IHhmc19pb2NfdHJpbSgKIAlzdHJ1Y3QgeGZzX21vdW50CQkqbXAsCiAJc3RydWN0IGZzdHJpbV9y
-YW5nZSBfX3VzZXIJKnVyYW5nZSkKIHsKLQlzdHJ1Y3QgcmVxdWVzdF9xdWV1ZQkqcSA9IGJkZXZf
-Z2V0X3F1ZXVlKG1wLT5tX2RkZXZfdGFyZ3AtPmJ0X2JkZXYpOwotCXVuc2lnbmVkIGludAkJZ3Jh
-bnVsYXJpdHkgPSBxLT5saW1pdHMuZGlzY2FyZF9ncmFudWxhcml0eTsKKwl1bnNpZ25lZCBpbnQJ
-CWdyYW51bGFyaXR5ID0KKwkJYmRldl9kaXNjYXJkX2dyYW51bGFyaXR5KG1wLT5tX2RkZXZfdGFy
-Z3AtPmJ0X2JkZXYpOwogCXN0cnVjdCBmc3RyaW1fcmFuZ2UJcmFuZ2U7CiAJeGZzX2RhZGRyX3QJ
-CXN0YXJ0LCBlbmQsIG1pbmxlbjsKIAl4ZnNfYWdudW1iZXJfdAkJc3RhcnRfYWdubywgZW5kX2Fn
-bm8sIGFnbm87CmRpZmYgLS1naXQgYS9pbmNsdWRlL2xpbnV4L2Jsa2Rldi5oIGIvaW5jbHVkZS9s
-aW51eC9ibGtkZXYuaAppbmRleCA3NjdhYjIyZTEwNTJhLi5mMWNmNTU3ZWEyMGVmIDEwMDY0NAot
-LS0gYS9pbmNsdWRlL2xpbnV4L2Jsa2Rldi5oCisrKyBiL2luY2x1ZGUvbGludXgvYmxrZGV2LmgK
-QEAgLTEyNTcsNiArMTI1NywxMSBAQCBzdGF0aWMgaW5saW5lIHVuc2lnbmVkIGludCBiZGV2X21h
-eF9kaXNjYXJkX3NlY3RvcnMoc3RydWN0IGJsb2NrX2RldmljZSAqYmRldikKIAlyZXR1cm4gYmRl
-dl9nZXRfcXVldWUoYmRldiktPmxpbWl0cy5tYXhfZGlzY2FyZF9zZWN0b3JzOwogfQogCitzdGF0
-aWMgaW5saW5lIHVuc2lnbmVkIGludCBiZGV2X2Rpc2NhcmRfZ3JhbnVsYXJpdHkoc3RydWN0IGJs
-b2NrX2RldmljZSAqYmRldikKK3sKKwlyZXR1cm4gYmRldl9nZXRfcXVldWUoYmRldiktPmxpbWl0
-cy5kaXNjYXJkX2dyYW51bGFyaXR5OworfQorCiBzdGF0aWMgaW5saW5lIHVuc2lnbmVkIGludCBi
-ZGV2X3dyaXRlX3plcm9lc19zZWN0b3JzKHN0cnVjdCBibG9ja19kZXZpY2UgKmJkZXYpCiB7CiAJ
-c3RydWN0IHJlcXVlc3RfcXVldWUgKnEgPSBiZGV2X2dldF9xdWV1ZShiZGV2KTsKLS0gCjIuMzAu
-MgoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KVmlydHVh
-bGl6YXRpb24gbWFpbGluZyBsaXN0ClZpcnR1YWxpemF0aW9uQGxpc3RzLmxpbnV4LWZvdW5kYXRp
-b24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZv
-L3ZpcnR1YWxpemF0aW9u
+Just use a non-zero max_discard_sectors as an indicator for discard
+support, similar to what is done for write zeroes.
+
+The only places where needs special attention is the RAID5 driver,
+which must clear discard support for security reasons by default,
+even if the default stacking rules would allow for it.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+Acked-by: Christoph B=C3=B6hmwalder <christoph.boehmwalder@linbit.com> [btr=
+fs]
+Acked-by: Coly Li <colyli@suse.de> [bcache]
+---
+ arch/um/drivers/ubd_kern.c          |  2 --
+ block/blk-core.c                    |  2 +-
+ block/blk-lib.c                     |  2 +-
+ block/blk-mq-debugfs.c              |  1 -
+ block/ioctl.c                       |  3 +--
+ drivers/block/drbd/drbd_main.c      |  2 +-
+ drivers/block/drbd/drbd_nl.c        | 19 ++-----------------
+ drivers/block/drbd/drbd_receiver.c  |  3 +--
+ drivers/block/loop.c                | 11 +++--------
+ drivers/block/nbd.c                 |  5 +----
+ drivers/block/null_blk/main.c       |  1 -
+ drivers/block/rbd.c                 |  1 -
+ drivers/block/rnbd/rnbd-clt.c       |  2 --
+ drivers/block/rnbd/rnbd-srv-dev.h   |  3 ---
+ drivers/block/virtio_blk.c          |  2 --
+ drivers/block/xen-blkback/xenbus.c  |  2 +-
+ drivers/block/xen-blkfront.c        |  2 --
+ drivers/block/zram/zram_drv.c       |  1 -
+ drivers/md/bcache/request.c         |  4 ++--
+ drivers/md/bcache/super.c           |  3 +--
+ drivers/md/bcache/sysfs.c           |  2 +-
+ drivers/md/dm-cache-target.c        |  9 +--------
+ drivers/md/dm-clone-target.c        |  9 +--------
+ drivers/md/dm-log-writes.c          |  3 +--
+ drivers/md/dm-raid.c                |  9 ++-------
+ drivers/md/dm-table.c               |  9 ++-------
+ drivers/md/dm-thin.c                | 11 +----------
+ drivers/md/dm.c                     |  3 +--
+ drivers/md/md-linear.c              | 11 +----------
+ drivers/md/raid0.c                  |  7 -------
+ drivers/md/raid1.c                  | 16 +---------------
+ drivers/md/raid10.c                 | 18 ++----------------
+ drivers/md/raid5-cache.c            |  2 +-
+ drivers/md/raid5.c                  | 12 ++++--------
+ drivers/mmc/core/queue.c            |  1 -
+ drivers/mtd/mtd_blkdevs.c           |  1 -
+ drivers/nvme/host/core.c            |  6 ++----
+ drivers/s390/block/dasd_fba.c       |  1 -
+ drivers/scsi/sd.c                   |  2 --
+ drivers/target/target_core_device.c |  2 +-
+ fs/btrfs/extent-tree.c              |  4 ++--
+ fs/btrfs/ioctl.c                    |  2 +-
+ fs/exfat/file.c                     |  2 +-
+ fs/exfat/super.c                    | 10 +++-------
+ fs/ext4/ioctl.c                     | 10 +++-------
+ fs/ext4/super.c                     | 10 +++-------
+ fs/f2fs/f2fs.h                      |  3 +--
+ fs/fat/file.c                       |  2 +-
+ fs/fat/inode.c                      | 10 +++-------
+ fs/gfs2/rgrp.c                      |  2 +-
+ fs/jbd2/journal.c                   |  7 ++-----
+ fs/jfs/ioctl.c                      |  2 +-
+ fs/jfs/super.c                      |  8 ++------
+ fs/nilfs2/ioctl.c                   |  2 +-
+ fs/ntfs3/file.c                     |  2 +-
+ fs/ntfs3/super.c                    |  2 +-
+ fs/ocfs2/ioctl.c                    |  2 +-
+ fs/xfs/xfs_discard.c                |  2 +-
+ fs/xfs/xfs_super.c                  | 12 ++++--------
+ include/linux/blkdev.h              |  2 --
+ mm/swapfile.c                       | 17 ++---------------
+ 61 files changed, 72 insertions(+), 246 deletions(-)
+
+diff --git a/arch/um/drivers/ubd_kern.c b/arch/um/drivers/ubd_kern.c
+index b03269faef714..085ffdf98e57e 100644
+--- a/arch/um/drivers/ubd_kern.c
++++ b/arch/um/drivers/ubd_kern.c
+@@ -483,7 +483,6 @@ static void ubd_handler(void)
+ 			if ((io_req->error =3D=3D BLK_STS_NOTSUPP) && (req_op(io_req->req) =3D=
+=3D REQ_OP_DISCARD)) {
+ 				blk_queue_max_discard_sectors(io_req->req->q, 0);
+ 				blk_queue_max_write_zeroes_sectors(io_req->req->q, 0);
+-				blk_queue_flag_clear(QUEUE_FLAG_DISCARD, io_req->req->q);
+ 			}
+ 			blk_mq_end_request(io_req->req, io_req->error);
+ 			kfree(io_req);
+@@ -803,7 +802,6 @@ static int ubd_open_dev(struct ubd *ubd_dev)
+ 		ubd_dev->queue->limits.discard_alignment =3D SECTOR_SIZE;
+ 		blk_queue_max_discard_sectors(ubd_dev->queue, UBD_MAX_REQUEST);
+ 		blk_queue_max_write_zeroes_sectors(ubd_dev->queue, UBD_MAX_REQUEST);
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, ubd_dev->queue);
+ 	}
+ 	blk_queue_flag_set(QUEUE_FLAG_NONROT, ubd_dev->queue);
+ 	return 0;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 937bb6b863317..b5c3a8049134c 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -820,7 +820,7 @@ void submit_bio_noacct(struct bio *bio)
+=20
+ 	switch (bio_op(bio)) {
+ 	case REQ_OP_DISCARD:
+-		if (!blk_queue_discard(q))
++		if (!bdev_max_discard_sectors(bdev))
+ 			goto not_supported;
+ 		break;
+ 	case REQ_OP_SECURE_ERASE:
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 2ae32a722851c..8b4b66d3a9bfc 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -53,7 +53,7 @@ int __blkdev_issue_discard(struct block_device *bdev, sec=
+tor_t sector,
+ 			return -EOPNOTSUPP;
+ 		op =3D REQ_OP_SECURE_ERASE;
+ 	} else {
+-		if (!blk_queue_discard(q))
++		if (!bdev_max_discard_sectors(bdev))
+ 			return -EOPNOTSUPP;
+ 		op =3D REQ_OP_DISCARD;
+ 	}
+diff --git a/block/blk-mq-debugfs.c b/block/blk-mq-debugfs.c
+index aa0349e9f083b..fd111c5001256 100644
+--- a/block/blk-mq-debugfs.c
++++ b/block/blk-mq-debugfs.c
+@@ -113,7 +113,6 @@ static const char *const blk_queue_flag_name[] =3D {
+ 	QUEUE_FLAG_NAME(FAIL_IO),
+ 	QUEUE_FLAG_NAME(NONROT),
+ 	QUEUE_FLAG_NAME(IO_STAT),
+-	QUEUE_FLAG_NAME(DISCARD),
+ 	QUEUE_FLAG_NAME(NOXMERGES),
+ 	QUEUE_FLAG_NAME(ADD_RANDOM),
+ 	QUEUE_FLAG_NAME(SECERASE),
+diff --git a/block/ioctl.c b/block/ioctl.c
+index ad3771b268b81..c2cd3ba5290ce 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -87,14 +87,13 @@ static int blk_ioctl_discard(struct block_device *bdev,=
+ fmode_t mode,
+ {
+ 	uint64_t range[2];
+ 	uint64_t start, len;
+-	struct request_queue *q =3D bdev_get_queue(bdev);
+ 	struct inode *inode =3D bdev->bd_inode;
+ 	int err;
+=20
+ 	if (!(mode & FMODE_WRITE))
+ 		return -EBADF;
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(bdev))
+ 		return -EOPNOTSUPP;
+=20
+ 	if (copy_from_user(range, (void __user *)arg, sizeof(range)))
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index eae629c4f6eaf..a69475e592822 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -942,7 +942,7 @@ int drbd_send_sizes(struct drbd_peer_device *peer_devic=
+e, int trigger_reply, enu
+ 			cpu_to_be32(bdev_alignment_offset(bdev));
+ 		p->qlim->io_min =3D cpu_to_be32(bdev_io_min(bdev));
+ 		p->qlim->io_opt =3D cpu_to_be32(bdev_io_opt(bdev));
+-		p->qlim->discard_enabled =3D blk_queue_discard(q);
++		p->qlim->discard_enabled =3D !!bdev_max_discard_sectors(bdev);
+ 		put_ldev(device);
+ 	} else {
+ 		struct request_queue *q =3D device->rq_queue;
+diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
+index d4dacc329ac2e..b55e5fcc21e1f 100644
+--- a/drivers/block/drbd/drbd_nl.c
++++ b/drivers/block/drbd/drbd_nl.c
+@@ -1210,7 +1210,7 @@ static void decide_on_discard_support(struct drbd_dev=
+ice *device,
+ 		first_peer_device(device)->connection;
+ 	struct request_queue *q =3D device->rq_queue;
+=20
+-	if (bdev && !blk_queue_discard(bdev->backing_bdev->bd_disk->queue))
++	if (bdev && !bdev_max_discard_sectors(bdev->backing_bdev))
+ 		goto not_supported;
+=20
+ 	if (connection->cstate >=3D C_CONNECTED &&
+@@ -1230,30 +1230,16 @@ static void decide_on_discard_support(struct drbd_d=
+evice *device,
+ 	 */
+ 	blk_queue_discard_granularity(q, 512);
+ 	q->limits.max_discard_sectors =3D drbd_max_discard_sectors(connection);
+-	blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ 	q->limits.max_write_zeroes_sectors =3D
+ 		drbd_max_discard_sectors(connection);
+ 	return;
+=20
+ not_supported:
+-	blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
+ 	blk_queue_discard_granularity(q, 0);
+ 	q->limits.max_discard_sectors =3D 0;
+ 	q->limits.max_write_zeroes_sectors =3D 0;
+ }
+=20
+-static void fixup_discard_if_not_supported(struct request_queue *q)
+-{
+-	/* To avoid confusion, if this queue does not support discard, clear
+-	 * max_discard_sectors, which is what lsblk -D reports to the user.
+-	 * Older kernels got this wrong in "stack limits".
+-	 * */
+-	if (!blk_queue_discard(q)) {
+-		blk_queue_max_discard_sectors(q, 0);
+-		blk_queue_discard_granularity(q, 0);
+-	}
+-}
+-
+ static void fixup_write_zeroes(struct drbd_device *device, struct request_=
+queue *q)
+ {
+ 	/* Fixup max_write_zeroes_sectors after blk_stack_limits():
+@@ -1300,7 +1286,6 @@ static void drbd_setup_queue_param(struct drbd_device=
+ *device, struct drbd_backi
+ 		blk_stack_limits(&q->limits, &b->limits, 0);
+ 		disk_update_readahead(device->vdisk);
+ 	}
+-	fixup_discard_if_not_supported(q);
+ 	fixup_write_zeroes(device, q);
+ }
+=20
+@@ -1447,7 +1432,7 @@ static void sanitize_disk_conf(struct drbd_device *de=
+vice, struct disk_conf *dis
+ 	if (disk_conf->al_extents > drbd_al_extents_max(nbc))
+ 		disk_conf->al_extents =3D drbd_al_extents_max(nbc);
+=20
+-	if (!blk_queue_discard(q)) {
++	if (!bdev_max_discard_sectors(bdev)) {
+ 		if (disk_conf->rs_discard_granularity) {
+ 			disk_conf->rs_discard_granularity =3D 0; /* disable feature */
+ 			drbd_info(device, "rs_discard_granularity feature disabled\n");
+diff --git a/drivers/block/drbd/drbd_receiver.c b/drivers/block/drbd/drbd_r=
+eceiver.c
+index 0b4c7de463989..8a4a47da56fe9 100644
+--- a/drivers/block/drbd/drbd_receiver.c
++++ b/drivers/block/drbd/drbd_receiver.c
+@@ -1575,11 +1575,10 @@ int drbd_issue_discard_or_zero_out(struct drbd_devi=
+ce *device, sector_t start, u
+=20
+ static bool can_do_reliable_discards(struct drbd_device *device)
+ {
+-	struct request_queue *q =3D bdev_get_queue(device->ldev->backing_bdev);
+ 	struct disk_conf *dc;
+ 	bool can_do;
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(device->ldev->backing_bdev))
+ 		return false;
+=20
+ 	rcu_read_lock();
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 8d800d46e4985..0e061c9896eff 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -314,15 +314,12 @@ static int lo_fallocate(struct loop_device *lo, struc=
+t request *rq, loff_t pos,
+=20
+ 	mode |=3D FALLOC_FL_KEEP_SIZE;
+=20
+-	if (!blk_queue_discard(lo->lo_queue)) {
+-		ret =3D -EOPNOTSUPP;
+-		goto out;
+-	}
++	if (!bdev_max_discard_sectors(lo->lo_device))
++		return -EOPNOTSUPP;
+=20
+ 	ret =3D file->f_op->fallocate(file, mode, pos, blk_rq_bytes(rq));
+ 	if (unlikely(ret && ret !=3D -EINVAL && ret !=3D -EOPNOTSUPP))
+-		ret =3D -EIO;
+- out:
++		return -EIO;
+ 	return ret;
+ }
+=20
+@@ -787,12 +784,10 @@ static void loop_config_discard(struct loop_device *l=
+o)
+ 		q->limits.discard_granularity =3D granularity;
+ 		blk_queue_max_discard_sectors(q, max_discard_sectors);
+ 		blk_queue_max_write_zeroes_sectors(q, max_discard_sectors);
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ 	} else {
+ 		q->limits.discard_granularity =3D 0;
+ 		blk_queue_max_discard_sectors(q, 0);
+ 		blk_queue_max_write_zeroes_sectors(q, 0);
+-		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
+ 	}
+ 	q->limits.discard_alignment =3D 0;
+ }
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index 5a1f98494dddf..4729aef8c6462 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -1231,8 +1231,6 @@ static void nbd_parse_flags(struct nbd_device *nbd)
+ 		set_disk_ro(nbd->disk, true);
+ 	else
+ 		set_disk_ro(nbd->disk, false);
+-	if (config->flags & NBD_FLAG_SEND_TRIM)
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, nbd->disk->queue);
+ 	if (config->flags & NBD_FLAG_SEND_FLUSH) {
+ 		if (config->flags & NBD_FLAG_SEND_FUA)
+ 			blk_queue_write_cache(nbd->disk->queue, true, true);
+@@ -1319,8 +1317,7 @@ static void nbd_config_put(struct nbd_device *nbd)
+ 		nbd->tag_set.timeout =3D 0;
+ 		nbd->disk->queue->limits.discard_granularity =3D 0;
+ 		nbd->disk->queue->limits.discard_alignment =3D 0;
+-		blk_queue_max_discard_sectors(nbd->disk->queue, UINT_MAX);
+-		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, nbd->disk->queue);
++		blk_queue_max_discard_sectors(nbd->disk->queue, 0);
+=20
+ 		mutex_unlock(&nbd->config_lock);
+ 		nbd_put(nbd);
+diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
+index 05b1120e66234..f6493a9e85ed3 100644
+--- a/drivers/block/null_blk/main.c
++++ b/drivers/block/null_blk/main.c
+@@ -1767,7 +1767,6 @@ static void null_config_discard(struct nullb *nullb)
+ 	nullb->q->limits.discard_granularity =3D nullb->dev->blocksize;
+ 	nullb->q->limits.discard_alignment =3D nullb->dev->blocksize;
+ 	blk_queue_max_discard_sectors(nullb->q, UINT_MAX >> 9);
+-	blk_queue_flag_set(QUEUE_FLAG_DISCARD, nullb->q);
+ }
+=20
+ static const struct block_device_operations null_bio_ops =3D {
+diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+index b844432bad20b..2b21f717cce1a 100644
+--- a/drivers/block/rbd.c
++++ b/drivers/block/rbd.c
+@@ -4942,7 +4942,6 @@ static int rbd_init_disk(struct rbd_device *rbd_dev)
+ 	blk_queue_io_opt(q, rbd_dev->opts->alloc_size);
+=20
+ 	if (rbd_dev->opts->trim) {
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ 		q->limits.discard_granularity =3D rbd_dev->opts->alloc_size;
+ 		blk_queue_max_discard_sectors(q, objset_bytes >> SECTOR_SHIFT);
+ 		blk_queue_max_write_zeroes_sectors(q, objset_bytes >> SECTOR_SHIFT);
+diff --git a/drivers/block/rnbd/rnbd-clt.c b/drivers/block/rnbd/rnbd-clt.c
+index b66e8840b94b8..efa99a3884507 100644
+--- a/drivers/block/rnbd/rnbd-clt.c
++++ b/drivers/block/rnbd/rnbd-clt.c
+@@ -1364,8 +1364,6 @@ static void setup_request_queue(struct rnbd_clt_dev *=
+dev)
+ 	blk_queue_max_discard_sectors(dev->queue, dev->max_discard_sectors);
+ 	dev->queue->limits.discard_granularity	=3D dev->discard_granularity;
+ 	dev->queue->limits.discard_alignment	=3D dev->discard_alignment;
+-	if (dev->max_discard_sectors)
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, dev->queue);
+ 	if (dev->secure_discard)
+ 		blk_queue_flag_set(QUEUE_FLAG_SECERASE, dev->queue);
+=20
+diff --git a/drivers/block/rnbd/rnbd-srv-dev.h b/drivers/block/rnbd/rnbd-sr=
+v-dev.h
+index f82fbb4bbda8e..1f7e1c8fd4d9b 100644
+--- a/drivers/block/rnbd/rnbd-srv-dev.h
++++ b/drivers/block/rnbd/rnbd-srv-dev.h
+@@ -49,9 +49,6 @@ static inline int rnbd_dev_get_secure_discard(const struc=
+t rnbd_dev *dev)
+=20
+ static inline int rnbd_dev_get_max_discard_sects(const struct rnbd_dev *de=
+v)
+ {
+-	if (!blk_queue_discard(bdev_get_queue(dev->bdev)))
+-		return 0;
+-
+ 	return bdev_max_discard_sectors(dev->bdev);
+ }
+=20
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index a8bcf3f664af1..6ccf15253dee1 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -888,8 +888,6 @@ static int virtblk_probe(struct virtio_device *vdev)
+ 			v =3D sg_elems;
+ 		blk_queue_max_discard_segments(q,
+ 					       min(v, MAX_DISCARD_SEGMENTS));
+-
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ 	}
+=20
+ 	if (virtio_has_feature(vdev, VIRTIO_BLK_F_WRITE_ZEROES)) {
+diff --git a/drivers/block/xen-blkback/xenbus.c b/drivers/block/xen-blkback=
+/xenbus.c
+index 8b691fe50475f..83cd08041e6b3 100644
+--- a/drivers/block/xen-blkback/xenbus.c
++++ b/drivers/block/xen-blkback/xenbus.c
+@@ -583,7 +583,7 @@ static void xen_blkbk_discard(struct xenbus_transaction=
+ xbt, struct backend_info
+ 	if (!xenbus_read_unsigned(dev->nodename, "discard-enable", 1))
+ 		return;
+=20
+-	if (blk_queue_discard(q)) {
++	if (bdev_max_discard_sectors(bdev)) {
+ 		err =3D xenbus_printf(xbt, dev->nodename,
+ 			"discard-granularity", "%u",
+ 			q->limits.discard_granularity);
+diff --git a/drivers/block/xen-blkfront.c b/drivers/block/xen-blkfront.c
+index 003056d4f7f5f..253bf835aca1f 100644
+--- a/drivers/block/xen-blkfront.c
++++ b/drivers/block/xen-blkfront.c
+@@ -944,7 +944,6 @@ static void blkif_set_queue_limits(struct blkfront_info=
+ *info)
+ 	blk_queue_flag_set(QUEUE_FLAG_VIRT, rq);
+=20
+ 	if (info->feature_discard) {
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, rq);
+ 		blk_queue_max_discard_sectors(rq, get_capacity(gd));
+ 		rq->limits.discard_granularity =3D info->discard_granularity ?:
+ 						 info->physical_sector_size;
+@@ -1606,7 +1605,6 @@ static irqreturn_t blkif_interrupt(int irq, void *dev=
+_id)
+ 				blkif_req(req)->error =3D BLK_STS_NOTSUPP;
+ 				info->feature_discard =3D 0;
+ 				info->feature_secdiscard =3D 0;
+-				blk_queue_flag_clear(QUEUE_FLAG_DISCARD, rq);
+ 				blk_queue_flag_clear(QUEUE_FLAG_SECERASE, rq);
+ 			}
+ 			break;
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index e9474b02012de..59ff444bf6c76 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -1952,7 +1952,6 @@ static int zram_add(void)
+ 	blk_queue_io_opt(zram->disk->queue, PAGE_SIZE);
+ 	zram->disk->queue->limits.discard_granularity =3D PAGE_SIZE;
+ 	blk_queue_max_discard_sectors(zram->disk->queue, UINT_MAX);
+-	blk_queue_flag_set(QUEUE_FLAG_DISCARD, zram->disk->queue);
+=20
+ 	/*
+ 	 * zram_bio_discard() will clear all logical blocks if logical block
+diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+index fdd0194f84dd0..e27f67f06a428 100644
+--- a/drivers/md/bcache/request.c
++++ b/drivers/md/bcache/request.c
+@@ -1005,7 +1005,7 @@ static void cached_dev_write(struct cached_dev *dc, s=
+truct search *s)
+ 		bio_get(s->iop.bio);
+=20
+ 		if (bio_op(bio) =3D=3D REQ_OP_DISCARD &&
+-		    !blk_queue_discard(bdev_get_queue(dc->bdev)))
++		    !bdev_max_discard_sectors(dc->bdev))
+ 			goto insert_data;
+=20
+ 		/* I/O request sent to backing device */
+@@ -1115,7 +1115,7 @@ static void detached_dev_do_request(struct bcache_dev=
+ice *d, struct bio *bio,
+ 	bio->bi_private =3D ddip;
+=20
+ 	if ((bio_op(bio) =3D=3D REQ_OP_DISCARD) &&
+-	    !blk_queue_discard(bdev_get_queue(dc->bdev)))
++	    !bdev_max_discard_sectors(dc->bdev))
+ 		bio->bi_end_io(bio);
+ 	else
+ 		submit_bio_noacct(bio);
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index bf3de149d3c9f..2f49e31142f62 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -973,7 +973,6 @@ static int bcache_device_init(struct bcache_device *d, =
+unsigned int block_size,
+=20
+ 	blk_queue_flag_set(QUEUE_FLAG_NONROT, d->disk->queue);
+ 	blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, d->disk->queue);
+-	blk_queue_flag_set(QUEUE_FLAG_DISCARD, d->disk->queue);
+=20
+ 	blk_queue_write_cache(q, true, true);
+=20
+@@ -2350,7 +2349,7 @@ static int register_cache(struct cache_sb *sb, struct=
+ cache_sb_disk *sb_disk,
+ 	ca->bdev->bd_holder =3D ca;
+ 	ca->sb_disk =3D sb_disk;
+=20
+-	if (blk_queue_discard(bdev_get_queue(bdev)))
++	if (bdev_max_discard_sectors((bdev)))
+ 		ca->discard =3D CACHE_DISCARD(&ca->sb);
+=20
+ 	ret =3D cache_alloc(ca);
+diff --git a/drivers/md/bcache/sysfs.c b/drivers/md/bcache/sysfs.c
+index d1029d71ff3bc..c6f677059214d 100644
+--- a/drivers/md/bcache/sysfs.c
++++ b/drivers/md/bcache/sysfs.c
+@@ -1151,7 +1151,7 @@ STORE(__bch_cache)
+ 	if (attr =3D=3D &sysfs_discard) {
+ 		bool v =3D strtoul_or_return(buf);
+=20
+-		if (blk_queue_discard(bdev_get_queue(ca->bdev)))
++		if (bdev_max_discard_sectors(ca->bdev))
+ 			ca->discard =3D v;
+=20
+ 		if (v !=3D CACHE_DISCARD(&ca->sb)) {
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 780a61bc6cc03..28c5de8eca4a0 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -3329,13 +3329,6 @@ static int cache_iterate_devices(struct dm_target *t=
+i,
+ 	return r;
+ }
+=20
+-static bool origin_dev_supports_discard(struct block_device *origin_bdev)
+-{
+-	struct request_queue *q =3D bdev_get_queue(origin_bdev);
+-
+-	return blk_queue_discard(q);
+-}
+-
+ /*
+  * If discard_passdown was enabled verify that the origin device
+  * supports discards.  Disable discard_passdown if not.
+@@ -3349,7 +3342,7 @@ static void disable_passdown_if_not_supported(struct =
+cache *cache)
+ 	if (!cache->features.discard_passdown)
+ 		return;
+=20
+-	if (!origin_dev_supports_discard(origin_bdev))
++	if (!bdev_max_discard_sectors(origin_bdev))
+ 		reason =3D "discard unsupported";
+=20
+ 	else if (origin_limits->max_discard_sectors < cache->sectors_per_block)
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index 128316a73d016..811b0a5379d03 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -2016,13 +2016,6 @@ static void clone_resume(struct dm_target *ti)
+ 	do_waker(&clone->waker.work);
+ }
+=20
+-static bool bdev_supports_discards(struct block_device *bdev)
+-{
+-	struct request_queue *q =3D bdev_get_queue(bdev);
+-
+-	return (q && blk_queue_discard(q));
+-}
+-
+ /*
+  * If discard_passdown was enabled verify that the destination device supp=
+orts
+  * discards. Disable discard_passdown if not.
+@@ -2036,7 +2029,7 @@ static void disable_passdown_if_not_supported(struct =
+clone *clone)
+ 	if (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags))
+ 		return;
+=20
+-	if (!bdev_supports_discards(dest_dev))
++	if (!bdev_max_discard_sectors(dest_dev))
+ 		reason =3D "discard unsupported";
+ 	else if (dest_limits->max_discard_sectors < clone->region_size)
+ 		reason =3D "max discard sectors smaller than a region";
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index c9d036d6bb2ee..e194226c89e54 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -866,9 +866,8 @@ static int log_writes_message(struct dm_target *ti, uns=
+igned argc, char **argv,
+ static void log_writes_io_hints(struct dm_target *ti, struct queue_limits =
+*limits)
+ {
+ 	struct log_writes_c *lc =3D ti->private;
+-	struct request_queue *q =3D bdev_get_queue(lc->dev->bdev);
+=20
+-	if (!q || !blk_queue_discard(q)) {
++	if (!bdev_max_discard_sectors(lc->dev->bdev)) {
+ 		lc->device_supports_discard =3D false;
+ 		limits->discard_granularity =3D lc->sectorsize;
+ 		limits->max_discard_sectors =3D (UINT_MAX >> SECTOR_SHIFT);
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 2b26435a6946e..9526ccbedafba 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2963,13 +2963,8 @@ static void configure_discard_support(struct raid_se=
+t *rs)
+ 	raid456 =3D rs_is_raid456(rs);
+=20
+ 	for (i =3D 0; i < rs->raid_disks; i++) {
+-		struct request_queue *q;
+-
+-		if (!rs->dev[i].rdev.bdev)
+-			continue;
+-
+-		q =3D bdev_get_queue(rs->dev[i].rdev.bdev);
+-		if (!q || !blk_queue_discard(q))
++		if (!rs->dev[i].rdev.bdev ||
++		    !bdev_max_discard_sectors(rs->dev[i].rdev.bdev))
+ 			return;
+=20
+ 		if (raid456) {
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index d46839faa0ca5..0dff6907fd00d 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1888,9 +1888,7 @@ static bool dm_table_supports_nowait(struct dm_table =
+*t)
+ static int device_not_discard_capable(struct dm_target *ti, struct dm_dev =
+*dev,
+ 				      sector_t start, sector_t len, void *data)
+ {
+-	struct request_queue *q =3D bdev_get_queue(dev->bdev);
+-
+-	return !blk_queue_discard(q);
++	return !bdev_max_discard_sectors(dev->bdev);
+ }
+=20
+ static bool dm_table_supports_discards(struct dm_table *t)
+@@ -1970,15 +1968,12 @@ int dm_table_set_restrictions(struct dm_table *t, s=
+truct request_queue *q,
+ 		blk_queue_flag_clear(QUEUE_FLAG_NOWAIT, q);
+=20
+ 	if (!dm_table_supports_discards(t)) {
+-		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
+-		/* Must also clear discard limits... */
+ 		q->limits.max_discard_sectors =3D 0;
+ 		q->limits.max_hw_discard_sectors =3D 0;
+ 		q->limits.discard_granularity =3D 0;
+ 		q->limits.discard_alignment =3D 0;
+ 		q->limits.discard_misaligned =3D 0;
+-	} else
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
++	}
+=20
+ 	if (dm_table_supports_secure_erase(t))
+ 		blk_queue_flag_set(QUEUE_FLAG_SECERASE, q);
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 4d25d0e270313..eded4bcc4545f 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -2802,13 +2802,6 @@ static void requeue_bios(struct pool *pool)
+ /*----------------------------------------------------------------
+  * Binding of control targets to a pool object
+  *--------------------------------------------------------------*/
+-static bool data_dev_supports_discard(struct pool_c *pt)
+-{
+-	struct request_queue *q =3D bdev_get_queue(pt->data_dev->bdev);
+-
+-	return blk_queue_discard(q);
+-}
+-
+ static bool is_factor(sector_t block_size, uint32_t n)
+ {
+ 	return !sector_div(block_size, n);
+@@ -2828,7 +2821,7 @@ static void disable_passdown_if_not_supported(struct =
+pool_c *pt)
+ 	if (!pt->adjusted_pf.discard_passdown)
+ 		return;
+=20
+-	if (!data_dev_supports_discard(pt))
++	if (!bdev_max_discard_sectors(pt->data_dev->bdev))
+ 		reason =3D "discard unsupported";
+=20
+ 	else if (data_limits->max_discard_sectors < pool->sectors_per_block)
+@@ -4057,8 +4050,6 @@ static void pool_io_hints(struct dm_target *ti, struc=
+t queue_limits *limits)
+ 		/*
+ 		 * Must explicitly disallow stacking discard limits otherwise the
+ 		 * block layer will stack them if pool's data device has support.
+-		 * QUEUE_FLAG_DISCARD wouldn't be set but there is no way for the
+-		 * user to see that, so make sure to set all discard limits to 0.
+ 		 */
+ 		limits->discard_granularity =3D 0;
+ 		return;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 3c5fad7c4ee68..dbbf64ce7e927 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -955,7 +955,6 @@ void disable_discard(struct mapped_device *md)
+=20
+ 	/* device doesn't really support DISCARD, disable it */
+ 	limits->max_discard_sectors =3D 0;
+-	blk_queue_flag_clear(QUEUE_FLAG_DISCARD, md->queue);
+ }
+=20
+ void disable_write_zeroes(struct mapped_device *md)
+@@ -982,7 +981,7 @@ static void clone_endio(struct bio *bio)
+=20
+ 	if (unlikely(error =3D=3D BLK_STS_TARGET)) {
+ 		if (bio_op(bio) =3D=3D REQ_OP_DISCARD &&
+-		    !q->limits.max_discard_sectors)
++		    !bdev_max_discard_sectors(bio->bi_bdev))
+ 			disable_discard(md);
+ 		else if (bio_op(bio) =3D=3D REQ_OP_WRITE_ZEROES &&
+ 			 !q->limits.max_write_zeroes_sectors)
+diff --git a/drivers/md/md-linear.c b/drivers/md/md-linear.c
+index 0f55b079371b1..138a3b25c5c82 100644
+--- a/drivers/md/md-linear.c
++++ b/drivers/md/md-linear.c
+@@ -64,7 +64,6 @@ static struct linear_conf *linear_conf(struct mddev *mdde=
+v, int raid_disks)
+ 	struct linear_conf *conf;
+ 	struct md_rdev *rdev;
+ 	int i, cnt;
+-	bool discard_supported =3D false;
+=20
+ 	conf =3D kzalloc(struct_size(conf, disks, raid_disks), GFP_KERNEL);
+ 	if (!conf)
+@@ -96,9 +95,6 @@ static struct linear_conf *linear_conf(struct mddev *mdde=
+v, int raid_disks)
+=20
+ 		conf->array_sectors +=3D rdev->sectors;
+ 		cnt++;
+-
+-		if (blk_queue_discard(bdev_get_queue(rdev->bdev)))
+-			discard_supported =3D true;
+ 	}
+ 	if (cnt !=3D raid_disks) {
+ 		pr_warn("md/linear:%s: not enough drives present. Aborting!\n",
+@@ -106,11 +102,6 @@ static struct linear_conf *linear_conf(struct mddev *m=
+ddev, int raid_disks)
+ 		goto out;
+ 	}
+=20
+-	if (!discard_supported)
+-		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, mddev->queue);
+-	else
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, mddev->queue);
+-
+ 	/*
+ 	 * Here we calculate the device offsets.
+ 	 */
+@@ -252,7 +243,7 @@ static bool linear_make_request(struct mddev *mddev, st=
+ruct bio *bio)
+ 		start_sector + data_offset;
+=20
+ 	if (unlikely((bio_op(bio) =3D=3D REQ_OP_DISCARD) &&
+-		     !blk_queue_discard(bio->bi_bdev->bd_disk->queue))) {
++		     !bdev_max_discard_sectors(bio->bi_bdev))) {
+ 		/* Just ignore it */
+ 		bio_endio(bio);
+ 	} else {
+diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+index b21e101183f44..7231f5e1eaa73 100644
+--- a/drivers/md/raid0.c
++++ b/drivers/md/raid0.c
+@@ -399,7 +399,6 @@ static int raid0_run(struct mddev *mddev)
+ 	conf =3D mddev->private;
+ 	if (mddev->queue) {
+ 		struct md_rdev *rdev;
+-		bool discard_supported =3D false;
+=20
+ 		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
+ 		blk_queue_max_write_zeroes_sectors(mddev->queue, mddev->chunk_sectors);
+@@ -412,13 +411,7 @@ static int raid0_run(struct mddev *mddev)
+ 		rdev_for_each(rdev, mddev) {
+ 			disk_stack_limits(mddev->gendisk, rdev->bdev,
+ 					  rdev->data_offset << 9);
+-			if (blk_queue_discard(bdev_get_queue(rdev->bdev)))
+-				discard_supported =3D true;
+ 		}
+-		if (!discard_supported)
+-			blk_queue_flag_clear(QUEUE_FLAG_DISCARD, mddev->queue);
+-		else
+-			blk_queue_flag_set(QUEUE_FLAG_DISCARD, mddev->queue);
+ 	}
+=20
+ 	/* calculate array device size */
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index d81b896855f9f..3da749d150a17 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -802,7 +802,7 @@ static void flush_bio_list(struct r1conf *conf, struct =
+bio *bio)
+ 		if (test_bit(Faulty, &rdev->flags)) {
+ 			bio_io_error(bio);
+ 		} else if (unlikely((bio_op(bio) =3D=3D REQ_OP_DISCARD) &&
+-				    !blk_queue_discard(bio->bi_bdev->bd_disk->queue)))
++				    !bdev_max_discard_sectors(bio->bi_bdev)))
+ 			/* Just ignore it */
+ 			bio_endio(bio);
+ 		else
+@@ -1826,8 +1826,6 @@ static int raid1_add_disk(struct mddev *mddev, struct=
+ md_rdev *rdev)
+ 			break;
+ 		}
+ 	}
+-	if (mddev->queue && blk_queue_discard(bdev_get_queue(rdev->bdev)))
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, mddev->queue);
+ 	print_conf(conf);
+ 	return err;
+ }
+@@ -3106,7 +3104,6 @@ static int raid1_run(struct mddev *mddev)
+ 	int i;
+ 	struct md_rdev *rdev;
+ 	int ret;
+-	bool discard_supported =3D false;
+=20
+ 	if (mddev->level !=3D 1) {
+ 		pr_warn("md/raid1:%s: raid level not set to mirroring (%d)\n",
+@@ -3141,8 +3138,6 @@ static int raid1_run(struct mddev *mddev)
+ 			continue;
+ 		disk_stack_limits(mddev->gendisk, rdev->bdev,
+ 				  rdev->data_offset << 9);
+-		if (blk_queue_discard(bdev_get_queue(rdev->bdev)))
+-			discard_supported =3D true;
+ 	}
+=20
+ 	mddev->degraded =3D 0;
+@@ -3179,15 +3174,6 @@ static int raid1_run(struct mddev *mddev)
+=20
+ 	md_set_array_sectors(mddev, raid1_size(mddev, 0, 0));
+=20
+-	if (mddev->queue) {
+-		if (discard_supported)
+-			blk_queue_flag_set(QUEUE_FLAG_DISCARD,
+-						mddev->queue);
+-		else
+-			blk_queue_flag_clear(QUEUE_FLAG_DISCARD,
+-						  mddev->queue);
+-	}
+-
+ 	ret =3D md_integrity_register(mddev);
+ 	if (ret) {
+ 		md_unregister_thread(&mddev->thread);
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 7816c8b2e8087..36a460015cf58 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -888,7 +888,7 @@ static void flush_pending_writes(struct r10conf *conf)
+ 			if (test_bit(Faulty, &rdev->flags)) {
+ 				bio_io_error(bio);
+ 			} else if (unlikely((bio_op(bio) =3D=3D  REQ_OP_DISCARD) &&
+-					    !blk_queue_discard(bio->bi_bdev->bd_disk->queue)))
++					    !bdev_max_discard_sectors(bio->bi_bdev)))
+ 				/* Just ignore it */
+ 				bio_endio(bio);
+ 			else
+@@ -1083,7 +1083,7 @@ static void raid10_unplug(struct blk_plug_cb *cb, boo=
+l from_schedule)
+ 		if (test_bit(Faulty, &rdev->flags)) {
+ 			bio_io_error(bio);
+ 		} else if (unlikely((bio_op(bio) =3D=3D  REQ_OP_DISCARD) &&
+-				    !blk_queue_discard(bio->bi_bdev->bd_disk->queue)))
++				    !bdev_max_discard_sectors(bio->bi_bdev)))
+ 			/* Just ignore it */
+ 			bio_endio(bio);
+ 		else
+@@ -2144,8 +2144,6 @@ static int raid10_add_disk(struct mddev *mddev, struc=
+t md_rdev *rdev)
+ 		rcu_assign_pointer(p->rdev, rdev);
+ 		break;
+ 	}
+-	if (mddev->queue && blk_queue_discard(bdev_get_queue(rdev->bdev)))
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, mddev->queue);
+=20
+ 	print_conf(conf);
+ 	return err;
+@@ -4069,7 +4067,6 @@ static int raid10_run(struct mddev *mddev)
+ 	sector_t size;
+ 	sector_t min_offset_diff =3D 0;
+ 	int first =3D 1;
+-	bool discard_supported =3D false;
+=20
+ 	if (mddev_init_writes_pending(mddev) < 0)
+ 		return -ENOMEM;
+@@ -4140,20 +4137,9 @@ static int raid10_run(struct mddev *mddev)
+ 					  rdev->data_offset << 9);
+=20
+ 		disk->head_position =3D 0;
+-
+-		if (blk_queue_discard(bdev_get_queue(rdev->bdev)))
+-			discard_supported =3D true;
+ 		first =3D 0;
+ 	}
+=20
+-	if (mddev->queue) {
+-		if (discard_supported)
+-			blk_queue_flag_set(QUEUE_FLAG_DISCARD,
+-						mddev->queue);
+-		else
+-			blk_queue_flag_clear(QUEUE_FLAG_DISCARD,
+-						  mddev->queue);
+-	}
+ 	/* need to check that every block has at least one working mirror */
+ 	if (!enough(conf, -1)) {
+ 		pr_err("md/raid10:%s: not enough operational mirrors.\n",
+diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
+index a7d50ff9020a8..c3cbf9a574a39 100644
+--- a/drivers/md/raid5-cache.c
++++ b/drivers/md/raid5-cache.c
+@@ -1318,7 +1318,7 @@ static void r5l_write_super_and_discard_space(struct =
+r5l_log *log,
+=20
+ 	r5l_write_super(log, end);
+=20
+-	if (!blk_queue_discard(bdev_get_queue(bdev)))
++	if (!bdev_max_discard_sectors(bdev))
+ 		return;
+=20
+ 	mddev =3D log->rdev->mddev;
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 0bbae0e638666..59f91e392a2ae 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -7776,14 +7776,10 @@ static int raid5_run(struct mddev *mddev)
+ 		 * A better idea might be to turn DISCARD into WRITE_ZEROES
+ 		 * requests, as that is required to be safe.
+ 		 */
+-		if (devices_handle_discard_safely &&
+-		    mddev->queue->limits.max_discard_sectors >=3D (stripe >> 9) &&
+-		    mddev->queue->limits.discard_granularity >=3D stripe)
+-			blk_queue_flag_set(QUEUE_FLAG_DISCARD,
+-						mddev->queue);
+-		else
+-			blk_queue_flag_clear(QUEUE_FLAG_DISCARD,
+-						mddev->queue);
++		if (!devices_handle_discard_safely ||
++		    mddev->queue->limits.max_discard_sectors < (stripe >> 9) ||
++		    mddev->queue->limits.discard_granularity < stripe)
++			blk_queue_max_discard_sectors(mddev->queue, 0);
+=20
+ 		blk_queue_max_hw_sectors(mddev->queue, UINT_MAX);
+ 	}
+diff --git a/drivers/mmc/core/queue.c b/drivers/mmc/core/queue.c
+index c69b2d9df6f16..cac6315010a3d 100644
+--- a/drivers/mmc/core/queue.c
++++ b/drivers/mmc/core/queue.c
+@@ -183,7 +183,6 @@ static void mmc_queue_setup_discard(struct request_queu=
+e *q,
+ 	if (!max_discard)
+ 		return;
+=20
+-	blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ 	blk_queue_max_discard_sectors(q, max_discard);
+ 	q->limits.discard_granularity =3D card->pref_erase << 9;
+ 	/* granularity must not be greater than max. discard */
+diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
+index 64d2b093f114b..f731721114655 100644
+--- a/drivers/mtd/mtd_blkdevs.c
++++ b/drivers/mtd/mtd_blkdevs.c
+@@ -377,7 +377,6 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
+ 	blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, new->rq);
+=20
+ 	if (tr->discard) {
+-		blk_queue_flag_set(QUEUE_FLAG_DISCARD, new->rq);
+ 		blk_queue_max_discard_sectors(new->rq, UINT_MAX);
+ 		new->rq->limits.discard_granularity =3D tr->blksize;
+ 	}
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index efb85c6d8e2d5..7e07dd69262a7 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -1607,10 +1607,8 @@ static void nvme_config_discard(struct gendisk *disk=
+, struct nvme_ns *ns)
+ 	struct request_queue *queue =3D disk->queue;
+ 	u32 size =3D queue_logical_block_size(queue);
+=20
+-	if (ctrl->max_discard_sectors =3D=3D 0) {
+-		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, queue);
++	if (ctrl->max_discard_sectors =3D=3D 0)
+ 		return;
+-	}
+=20
+ 	BUILD_BUG_ON(PAGE_SIZE / sizeof(struct nvme_dsm_range) <
+ 			NVME_DSM_MAX_RANGES);
+@@ -1619,7 +1617,7 @@ static void nvme_config_discard(struct gendisk *disk,=
+ struct nvme_ns *ns)
+ 	queue->limits.discard_granularity =3D size;
+=20
+ 	/* If discard is already enabled, don't reset queue limits */
+-	if (blk_queue_flag_test_and_set(QUEUE_FLAG_DISCARD, queue))
++	if (queue->limits.max_discard_sectors)
+ 		return;
+=20
+ 	blk_queue_max_discard_sectors(queue, ctrl->max_discard_sectors);
+diff --git a/drivers/s390/block/dasd_fba.c b/drivers/s390/block/dasd_fba.c
+index e084f4deddddd..8bd5665db9198 100644
+--- a/drivers/s390/block/dasd_fba.c
++++ b/drivers/s390/block/dasd_fba.c
+@@ -791,7 +791,6 @@ static void dasd_fba_setup_blk_queue(struct dasd_block =
+*block)
+=20
+ 	blk_queue_max_discard_sectors(q, max_discard_sectors);
+ 	blk_queue_max_write_zeroes_sectors(q, max_discard_sectors);
+-	blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ }
+=20
+ static int dasd_fba_pe_handler(struct dasd_device *device,
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index a390679cf4584..444479657b7fd 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -797,7 +797,6 @@ static void sd_config_discard(struct scsi_disk *sdkp, u=
+nsigned int mode)
+ 	case SD_LBP_FULL:
+ 	case SD_LBP_DISABLE:
+ 		blk_queue_max_discard_sectors(q, 0);
+-		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
+ 		return;
+=20
+ 	case SD_LBP_UNMAP:
+@@ -830,7 +829,6 @@ static void sd_config_discard(struct scsi_disk *sdkp, u=
+nsigned int mode)
+ 	}
+=20
+ 	blk_queue_max_discard_sectors(q, max_blocks * (logical_block_size >> 9));
+-	blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ }
+=20
+ static blk_status_t sd_setup_unmap_cmnd(struct scsi_cmnd *cmd)
+diff --git a/drivers/target/target_core_device.c b/drivers/target/target_co=
+re_device.c
+index c3e25bac90d59..6cb9f87843278 100644
+--- a/drivers/target/target_core_device.c
++++ b/drivers/target/target_core_device.c
+@@ -838,7 +838,7 @@ bool target_configure_unmap_from_queue(struct se_dev_at=
+trib *attrib,
+ 	struct request_queue *q =3D bdev_get_queue(bdev);
+ 	int block_size =3D bdev_logical_block_size(bdev);
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(bdev))
+ 		return false;
+=20
+ 	attrib->max_unmap_lba_count =3D
+diff --git a/fs/btrfs/extent-tree.c b/fs/btrfs/extent-tree.c
+index f477035a2ac23..efd8deb3ab7e8 100644
+--- a/fs/btrfs/extent-tree.c
++++ b/fs/btrfs/extent-tree.c
+@@ -1291,7 +1291,7 @@ static int do_discard_extent(struct btrfs_io_stripe *=
+stripe, u64 *bytes)
+ 		ret =3D btrfs_reset_device_zone(dev_replace->tgtdev, phys, len,
+ 					      &discarded);
+ 		discarded +=3D src_disc;
+-	} else if (blk_queue_discard(bdev_get_queue(stripe->dev->bdev))) {
++	} else if (bdev_max_discard_sectors(stripe->dev->bdev)) {
+ 		ret =3D btrfs_issue_discard(dev->bdev, phys, len, &discarded);
+ 	} else {
+ 		ret =3D 0;
+@@ -5987,7 +5987,7 @@ static int btrfs_trim_free_extents(struct btrfs_devic=
+e *device, u64 *trimmed)
+ 	*trimmed =3D 0;
+=20
+ 	/* Discard not supported =3D nothing to do. */
+-	if (!blk_queue_discard(bdev_get_queue(device->bdev)))
++	if (!bdev_max_discard_sectors(device->bdev))
+ 		return 0;
+=20
+ 	/* Not writable =3D nothing to do. */
+diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
+index f46e71061942d..096bb0da03f1c 100644
+--- a/fs/btrfs/ioctl.c
++++ b/fs/btrfs/ioctl.c
+@@ -501,7 +501,7 @@ static noinline int btrfs_ioctl_fitrim(struct btrfs_fs_=
+info *fs_info,
+ 		if (!device->bdev)
+ 			continue;
+ 		q =3D bdev_get_queue(device->bdev);
+-		if (blk_queue_discard(q)) {
++		if (bdev_max_discard_sectors(device->bdev)) {
+ 			num_devices++;
+ 			minlen =3D min_t(u64, q->limits.discard_granularity,
+ 				     minlen);
+diff --git a/fs/exfat/file.c b/fs/exfat/file.c
+index 2f51300592366..765e4f63dd18d 100644
+--- a/fs/exfat/file.c
++++ b/fs/exfat/file.c
+@@ -358,7 +358,7 @@ static int exfat_ioctl_fitrim(struct inode *inode, unsi=
+gned long arg)
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(inode->i_sb->s_bdev))
+ 		return -EOPNOTSUPP;
+=20
+ 	if (copy_from_user(&range, (struct fstrim_range __user *)arg, sizeof(rang=
+e)))
+diff --git a/fs/exfat/super.c b/fs/exfat/super.c
+index 8ca21e7917d16..be0788ecaf20e 100644
+--- a/fs/exfat/super.c
++++ b/fs/exfat/super.c
+@@ -627,13 +627,9 @@ static int exfat_fill_super(struct super_block *sb, st=
+ruct fs_context *fc)
+ 	if (opts->allow_utime =3D=3D (unsigned short)-1)
+ 		opts->allow_utime =3D ~opts->fs_dmask & 0022;
+=20
+-	if (opts->discard) {
+-		struct request_queue *q =3D bdev_get_queue(sb->s_bdev);
+-
+-		if (!blk_queue_discard(q)) {
+-			exfat_warn(sb, "mounting with \"discard\" option, but the device does n=
+ot support discard");
+-			opts->discard =3D 0;
+-		}
++	if (opts->discard && !bdev_max_discard_sectors(sb->s_bdev)) {
++		exfat_warn(sb, "mounting with \"discard\" option, but the device does no=
+t support discard");
++		opts->discard =3D 0;
+ 	}
+=20
+ 	sb->s_flags |=3D SB_NODIRATIME;
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index 992229ca2d830..6e3b9eea126f4 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -1044,7 +1044,6 @@ static int ext4_ioctl_checkpoint(struct file *filp, u=
+nsigned long arg)
+ 	__u32 flags =3D 0;
+ 	unsigned int flush_flags =3D 0;
+ 	struct super_block *sb =3D file_inode(filp)->i_sb;
+-	struct request_queue *q;
+=20
+ 	if (copy_from_user(&flags, (__u32 __user *)arg,
+ 				sizeof(__u32)))
+@@ -1065,10 +1064,8 @@ static int ext4_ioctl_checkpoint(struct file *filp, =
+unsigned long arg)
+ 	if (flags & ~EXT4_IOC_CHECKPOINT_FLAG_VALID)
+ 		return -EINVAL;
+=20
+-	q =3D bdev_get_queue(EXT4_SB(sb)->s_journal->j_dev);
+-	if (!q)
+-		return -ENXIO;
+-	if ((flags & JBD2_JOURNAL_FLUSH_DISCARD) && !blk_queue_discard(q))
++	if ((flags & JBD2_JOURNAL_FLUSH_DISCARD) &&
++	    !bdev_max_discard_sectors(EXT4_SB(sb)->s_journal->j_dev))
+ 		return -EOPNOTSUPP;
+=20
+ 	if (flags & EXT4_IOC_CHECKPOINT_FLAG_DRY_RUN)
+@@ -1393,14 +1390,13 @@ static long __ext4_ioctl(struct file *filp, unsigne=
+d int cmd, unsigned long arg)
+=20
+ 	case FITRIM:
+ 	{
+-		struct request_queue *q =3D bdev_get_queue(sb->s_bdev);
+ 		struct fstrim_range range;
+ 		int ret =3D 0;
+=20
+ 		if (!capable(CAP_SYS_ADMIN))
+ 			return -EPERM;
+=20
+-		if (!blk_queue_discard(q))
++		if (!bdev_max_discard_sectors(sb->s_bdev))
+ 			return -EOPNOTSUPP;
+=20
+ 		/*
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index 81749eaddf4c1..93f4e4e9e2631 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -5458,13 +5458,9 @@ static int __ext4_fill_super(struct fs_context *fc, =
+struct super_block *sb)
+ 			goto failed_mount9;
+ 	}
+=20
+-	if (test_opt(sb, DISCARD)) {
+-		struct request_queue *q =3D bdev_get_queue(sb->s_bdev);
+-		if (!blk_queue_discard(q))
+-			ext4_msg(sb, KERN_WARNING,
+-				 "mounting with \"discard\" option, but "
+-				 "the device does not support discard");
+-	}
++	if (test_opt(sb, DISCARD) && !bdev_max_discard_sectors(sb->s_bdev))
++		ext4_msg(sb, KERN_WARNING,
++			 "mounting with \"discard\" option, but the device does not support dis=
+card");
+=20
+ 	if (es->s_error_count)
+ 		mod_timer(&sbi->s_err_report, jiffies + 300*HZ); /* 5 minutes */
+diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
+index cd1e65bcf0b04..0ea9a5fa7c1dd 100644
+--- a/fs/f2fs/f2fs.h
++++ b/fs/f2fs/f2fs.h
+@@ -4381,8 +4381,7 @@ static inline bool f2fs_hw_should_discard(struct f2fs=
+_sb_info *sbi)
+=20
+ static inline bool f2fs_bdev_support_discard(struct block_device *bdev)
+ {
+-	return blk_queue_discard(bdev_get_queue(bdev)) ||
+-	       bdev_is_zoned(bdev);
++	return bdev_max_discard_sectors(bdev) || bdev_is_zoned(bdev);
+ }
+=20
+ static inline bool f2fs_hw_support_discard(struct f2fs_sb_info *sbi)
+diff --git a/fs/fat/file.c b/fs/fat/file.c
+index a5a309fcc7faf..e4c7d10e80129 100644
+--- a/fs/fat/file.c
++++ b/fs/fat/file.c
+@@ -133,7 +133,7 @@ static int fat_ioctl_fitrim(struct inode *inode, unsign=
+ed long arg)
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(sb->s_bdev))
+ 		return -EOPNOTSUPP;
+=20
+ 	user_range =3D (struct fstrim_range __user *)arg;
+diff --git a/fs/fat/inode.c b/fs/fat/inode.c
+index bf6051bdf1d1d..3d1afb95a925a 100644
+--- a/fs/fat/inode.c
++++ b/fs/fat/inode.c
+@@ -1872,13 +1872,9 @@ int fat_fill_super(struct super_block *sb, void *dat=
+a, int silent, int isvfat,
+ 		goto out_fail;
+ 	}
+=20
+-	if (sbi->options.discard) {
+-		struct request_queue *q =3D bdev_get_queue(sb->s_bdev);
+-		if (!blk_queue_discard(q))
+-			fat_msg(sb, KERN_WARNING,
+-					"mounting with \"discard\" option, but "
+-					"the device does not support discard");
+-	}
++	if (sbi->options.discard && !bdev_max_discard_sectors(sb->s_bdev))
++		fat_msg(sb, KERN_WARNING,
++			"mounting with \"discard\" option, but the device does not support disc=
+ard");
+=20
+ 	fat_set_state(sb, 1, 0);
+ 	return 0;
+diff --git a/fs/gfs2/rgrp.c b/fs/gfs2/rgrp.c
+index 801ad9f4f2bef..7f20ac9133bc6 100644
+--- a/fs/gfs2/rgrp.c
++++ b/fs/gfs2/rgrp.c
+@@ -1405,7 +1405,7 @@ int gfs2_fitrim(struct file *filp, void __user *argp)
+ 	if (!test_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags))
+ 		return -EROFS;
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(sdp->sd_vfs->s_bdev))
+ 		return -EOPNOTSUPP;
+=20
+ 	if (copy_from_user(&r, argp, sizeof(r)))
+diff --git a/fs/jbd2/journal.c b/fs/jbd2/journal.c
+index fcacafa4510d1..19d226cd4ff4d 100644
+--- a/fs/jbd2/journal.c
++++ b/fs/jbd2/journal.c
+@@ -1762,7 +1762,6 @@ static int __jbd2_journal_erase(journal_t *journal, u=
+nsigned int flags)
+ 	unsigned long block, log_offset; /* logical */
+ 	unsigned long long phys_block, block_start, block_stop; /* physical */
+ 	loff_t byte_start, byte_stop, byte_count;
+-	struct request_queue *q =3D bdev_get_queue(journal->j_dev);
+=20
+ 	/* flags must be set to either discard or zeroout */
+ 	if ((flags & ~JBD2_JOURNAL_FLUSH_VALID) || !flags ||
+@@ -1770,10 +1769,8 @@ static int __jbd2_journal_erase(journal_t *journal, =
+unsigned int flags)
+ 			(flags & JBD2_JOURNAL_FLUSH_ZEROOUT)))
+ 		return -EINVAL;
+=20
+-	if (!q)
+-		return -ENXIO;
+-
+-	if ((flags & JBD2_JOURNAL_FLUSH_DISCARD) && !blk_queue_discard(q))
++	if ((flags & JBD2_JOURNAL_FLUSH_DISCARD) &&
++	    !bdev_max_discard_sectors(journal->j_dev))
+ 		return -EOPNOTSUPP;
+=20
+ 	/*
+diff --git a/fs/jfs/ioctl.c b/fs/jfs/ioctl.c
+index 03a845ab4f009..357ae6e5c36ec 100644
+--- a/fs/jfs/ioctl.c
++++ b/fs/jfs/ioctl.c
+@@ -117,7 +117,7 @@ long jfs_ioctl(struct file *filp, unsigned int cmd, uns=
+igned long arg)
+ 		if (!capable(CAP_SYS_ADMIN))
+ 			return -EPERM;
+=20
+-		if (!blk_queue_discard(q)) {
++		if (!bdev_max_discard_sectors(sb->s_bdev)) {
+ 			jfs_warn("FITRIM not supported on device");
+ 			return -EOPNOTSUPP;
+ 		}
+diff --git a/fs/jfs/super.c b/fs/jfs/super.c
+index f1a13a74cddf3..85d4f44f2ac4d 100644
+--- a/fs/jfs/super.c
++++ b/fs/jfs/super.c
+@@ -372,19 +372,16 @@ static int parse_options(char *options, struct super_=
+block *sb, s64 *newLVSize,
+ 		}
+=20
+ 		case Opt_discard:
+-		{
+-			struct request_queue *q =3D bdev_get_queue(sb->s_bdev);
+ 			/* if set to 1, even copying files will cause
+ 			 * trimming :O
+ 			 * -> user has more control over the online trimming
+ 			 */
+ 			sbi->minblks_trim =3D 64;
+-			if (blk_queue_discard(q))
++			if (bdev_max_discard_sectors(sb->s_bdev))
+ 				*flag |=3D JFS_DISCARD;
+ 			else
+ 				pr_err("JFS: discard option not supported on device\n");
+ 			break;
+-		}
+=20
+ 		case Opt_nodiscard:
+ 			*flag &=3D ~JFS_DISCARD;
+@@ -392,10 +389,9 @@ static int parse_options(char *options, struct super_b=
+lock *sb, s64 *newLVSize,
+=20
+ 		case Opt_discard_minblk:
+ 		{
+-			struct request_queue *q =3D bdev_get_queue(sb->s_bdev);
+ 			char *minblks_trim =3D args[0].from;
+ 			int rc;
+-			if (blk_queue_discard(q)) {
++			if (bdev_max_discard_sectors(sb->s_bdev)) {
+ 				*flag |=3D JFS_DISCARD;
+ 				rc =3D kstrtouint(minblks_trim, 0,
+ 						&sbi->minblks_trim);
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index fec194a666f4b..52b73f558fcb1 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -1059,7 +1059,7 @@ static int nilfs_ioctl_trim_fs(struct inode *inode, v=
+oid __user *argp)
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(nilfs->ns_bdev))
+ 		return -EOPNOTSUPP;
+=20
+ 	if (copy_from_user(&range, argp, sizeof(range)))
+diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
+index 787b53b984ee1..e763236169331 100644
+--- a/fs/ntfs3/file.c
++++ b/fs/ntfs3/file.c
+@@ -28,7 +28,7 @@ static int ntfs_ioctl_fitrim(struct ntfs_sb_info *sbi, un=
+signed long arg)
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+=20
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(sbi->sb->s_bdev))
+ 		return -EOPNOTSUPP;
+=20
+ 	user_range =3D (struct fstrim_range __user *)arg;
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index cd30e81abbce0..c734085bcce4a 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -913,7 +913,7 @@ static int ntfs_fill_super(struct super_block *sb, stru=
+ct fs_context *fc)
+ 	}
+=20
+ 	rq =3D bdev_get_queue(bdev);
+-	if (blk_queue_discard(rq) && rq->limits.discard_granularity) {
++	if (bdev_max_discard_sectors(bdev) && rq->limits.discard_granularity) {
+ 		sbi->discard_granularity =3D rq->limits.discard_granularity;
+ 		sbi->discard_granularity_mask_inv =3D
+ 			~(u64)(sbi->discard_granularity - 1);
+diff --git a/fs/ocfs2/ioctl.c b/fs/ocfs2/ioctl.c
+index f59461d85da45..9b78ef103ada6 100644
+--- a/fs/ocfs2/ioctl.c
++++ b/fs/ocfs2/ioctl.c
+@@ -910,7 +910,7 @@ long ocfs2_ioctl(struct file *filp, unsigned int cmd, u=
+nsigned long arg)
+ 		if (!capable(CAP_SYS_ADMIN))
+ 			return -EPERM;
+=20
+-		if (!blk_queue_discard(q))
++		if (!bdev_max_discard_sectors(sb->s_bdev))
+ 			return -EOPNOTSUPP;
+=20
+ 		if (copy_from_user(&range, argp, sizeof(range)))
+diff --git a/fs/xfs/xfs_discard.c b/fs/xfs/xfs_discard.c
+index 0191de8ce9ced..a4e6609d616b7 100644
+--- a/fs/xfs/xfs_discard.c
++++ b/fs/xfs/xfs_discard.c
+@@ -162,7 +162,7 @@ xfs_ioc_trim(
+=20
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+-	if (!blk_queue_discard(q))
++	if (!bdev_max_discard_sectors(mp->m_ddev_targp->bt_bdev))
+ 		return -EOPNOTSUPP;
+=20
+ 	/*
+diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
+index 54be9d64093ed..a276b8111f636 100644
+--- a/fs/xfs/xfs_super.c
++++ b/fs/xfs/xfs_super.c
+@@ -1608,14 +1608,10 @@ xfs_fs_fill_super(
+ 			goto out_filestream_unmount;
+ 	}
+=20
+-	if (xfs_has_discard(mp)) {
+-		struct request_queue *q =3D bdev_get_queue(sb->s_bdev);
+-
+-		if (!blk_queue_discard(q)) {
+-			xfs_warn(mp, "mounting with \"discard\" option, but "
+-					"the device does not support discard");
+-			mp->m_features &=3D ~XFS_FEAT_DISCARD;
+-		}
++	if (xfs_has_discard(mp) && !bdev_max_discard_sectors(sb->s_bdev)) {
++		xfs_warn(mp,
++	"mounting with \"discard\" option, but the device does not support discar=
+d");
++		mp->m_features &=3D ~XFS_FEAT_DISCARD;
+ 	}
+=20
+ 	if (xfs_has_reflink(mp)) {
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index ce16247d3afab..767ab22e1052a 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -540,7 +540,6 @@ struct request_queue {
+ #define QUEUE_FLAG_NONROT	6	/* non-rotational device (SSD) */
+ #define QUEUE_FLAG_VIRT		QUEUE_FLAG_NONROT /* paravirt device */
+ #define QUEUE_FLAG_IO_STAT	7	/* do disk/partitions IO accounting */
+-#define QUEUE_FLAG_DISCARD	8	/* supports DISCARD */
+ #define QUEUE_FLAG_NOXMERGES	9	/* No extended merges */
+ #define QUEUE_FLAG_ADD_RANDOM	10	/* Contributes to random pool */
+ #define QUEUE_FLAG_SECERASE	11	/* supports secure erase */
+@@ -582,7 +581,6 @@ bool blk_queue_flag_test_and_set(unsigned int flag, str=
+uct request_queue *q);
+ 	test_bit(QUEUE_FLAG_STABLE_WRITES, &(q)->queue_flags)
+ #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flag=
+s)
+ #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queu=
+e_flags)
+-#define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flag=
+s)
+ #define blk_queue_zone_resetall(q)	\
+ 	test_bit(QUEUE_FLAG_ZONE_RESETALL, &(q)->queue_flags)
+ #define blk_queue_secure_erase(q) \
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 4069f17a82c8e..5d9cedf9e7b84 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -2957,20 +2957,6 @@ static int setup_swap_map_and_extents(struct swap_in=
+fo_struct *p,
+ 	return nr_extents;
+ }
+=20
+-/*
+- * Helper to sys_swapon determining if a given swap
+- * backing device queue supports DISCARD operations.
+- */
+-static bool swap_discardable(struct swap_info_struct *si)
+-{
+-	struct request_queue *q =3D bdev_get_queue(si->bdev);
+-
+-	if (!blk_queue_discard(q))
+-		return false;
+-
+-	return true;
+-}
+-
+ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
+ {
+ 	struct swap_info_struct *p;
+@@ -3132,7 +3118,8 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialf=
+ile, int, swap_flags)
+ 					 sizeof(long),
+ 					 GFP_KERNEL);
+=20
+-	if (p->bdev && (swap_flags & SWAP_FLAG_DISCARD) && swap_discardable(p)) {
++	if ((swap_flags & SWAP_FLAG_DISCARD) &&
++	    p->bdev && bdev_max_discard_sectors(p->bdev)) {
+ 		/*
+ 		 * When discard is enabled for swap with no particular
+ 		 * policy flagged, we set all swap discard flags here in
+--=20
+2.30.2
+
