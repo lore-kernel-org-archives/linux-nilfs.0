@@ -1,131 +1,64 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 12/27] block: add a bdev_write_cache helper
-Date: Fri, 15 Apr 2022 06:52:43 +0200
-Message-ID: <20220415045258.199825-13-hch@lst.de>
+Subject: [PATCH 08/27] btrfs: use bdev_max_active_zones instead of open coding it
+Date: Fri, 15 Apr 2022 06:52:39 +0200
+Message-ID: <20220415045258.199825-9-hch@lst.de>
 References: <20220415045258.199825-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
- MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
- :Reply-To:Content-Type:Content-ID:Content-Description;
- bh=fsm4eQJmjNs7mthWl6aQ0QoznH4mW7xZq3krP8KP9Uc=; b=Kc0kFPKNrBsztP51rQrb436EpC
- clkRG1c+RWauytSxyP1VZHzZm0k/n/bJiQF9offdgxlhFL9TpCe41mL4yiFXHZXG7NN3dZBqQWTyh
- VS32YFvooKg6jmcfwAv8iLy6ibtMV7kgdq4kptYmhPm0Z6NWmVX2oFVQWm6WbZ6ctUwWMEvyxnK3Y
- b9ovdNw4IiS4Q9grCcaQcJlT12XLY6ANDPyUjFzxFxy5R6sXbufEUiOBD2A9POWjPp9fJgc5BHmlx
- btpCR9+B/FjoYWNox5ht1MfT6qlsZJ4E91t9jc1UTJI5F9kZQSgKF9QlK5aIdPlC3AU3hlr6Kf/BQ
- 9t86XlyA==;
-In-Reply-To: <20220415045258.199825-1-hch@lst.de>
+Content-Transfer-Encoding: 8bit
+Return-path: <xen-devel-bounces@lists.xenproject.org>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>, 
- <mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-Sender: "Virtualization" <virtualization-bounces@lists.linux-foundation.org>
+List-Unsubscribe: <https://lists.xenproject.org/mailman/options/xen-devel>,
+ <mailto:xen-devel-request@lists.xenproject.org?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xenproject.org>
+List-Help: <mailto:xen-devel-request@lists.xenproject.org?subject=help>
+List-Subscribe: <https://lists.xenproject.org/mailman/listinfo/xen-devel>,
+ <mailto:xen-devel-request@lists.xenproject.org?subject=subscribe>
+Errors-To: xen-devel-bounces@lists.xenproject.org
+Sender: "Xen-devel" <xen-devel-bounces@lists.xenproject.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+	:Reply-To:Content-Type:Content-ID:Content-Description;
+	bh=3FWZlAG92h1RMyWa34xIeRgUUqbPb180tFAKbgq0RAE=; b=vLBRGmYA6jBMZDlzC6PXWv+Ksh
+	9na0CpZ5vQifHyF0I8hMiOODlZP67Q2wDV/bHkW9tDW3iYlbHmeg8cbzKsYytJTpwvlcHhRbVfqcX
+	u3Kb/T1hJpTRApCefLOPvQW0mKpxDcNm47SF5wKvwDYKsM4SjV65VWQFHoZN4xC3iqhdpTgH60xyD
+	3FkocDRpHF7/kXuVb8jwQtLL3ZBVVz+fa7PIdADFNqNFERroneG/Wkz00hQMCvFOcmh7+ThP9CfhC
+	oK97r2DvOPV2WXipkXhu1yEAGyGeER9Ori1+uKdJHNOs14UTWNR2qEKSdnT4Cxh5GrNg5oiq3V6Rp
+	ycclGS7g==;
+In-Reply-To: <20220415045258.199825-1-hch@lst.de>
+Content-Type: text/plain; charset="us-ascii"
 To: Jens Axboe <axboe@kernel.dk>
-Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, cluster-devel@redhat.com, xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, ceph-devel@vger.kernel.org, linux-raid@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-mmc@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
-
-Add a helper to check the write cache flag based on the block_device
-instead of having to poke into the block layer internal request_queue.
+Cc: dm-devel@redhat.com, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-um@lists.infradead.org, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, nbd@other.debian.org, ceph-devel@vger.kernel.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev, ocfs2-devel@oss.oracle.com, linux-mm@kvack.org, Johannes Thumshirn <johannes.thumshirn@wdc.com>, David Sterba <dsterba@suse.com>
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-Acked-by: David Sterba <dsterba@suse.com> [btrfs]
+Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+Acked-by: David Sterba <dsterba@suse.com>
 ---
- drivers/block/rnbd/rnbd-srv.c       | 2 +-
- drivers/block/xen-blkback/xenbus.c  | 2 +-
- drivers/target/target_core_iblock.c | 8 ++------
- fs/btrfs/disk-io.c                  | 3 +--
- include/linux/blkdev.h              | 5 +++++
- 5 files changed, 10 insertions(+), 10 deletions(-)
+ fs/btrfs/zoned.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
-index f04df6294650b..f8cc3c5fecb4b 100644
---- a/drivers/block/rnbd/rnbd-srv.c
-+++ b/drivers/block/rnbd/rnbd-srv.c
-@@ -558,7 +558,7 @@ static void rnbd_srv_fill_msg_open_rsp(struct rnbd_msg_open_rsp *rsp,
- 	rsp->secure_discard =
- 		cpu_to_le16(rnbd_dev_get_secure_discard(rnbd_dev));
- 	rsp->cache_policy = 0;
--	if (test_bit(QUEUE_FLAG_WC, &q->queue_flags))
-+	if (bdev_write_cache(rnbd_dev->bdev))
- 		rsp->cache_policy |= RNBD_WRITEBACK;
- 	if (blk_queue_fua(q))
- 		rsp->cache_policy |= RNBD_FUA;
-diff --git a/drivers/block/xen-blkback/xenbus.c b/drivers/block/xen-blkback/xenbus.c
-index f09040435e2e5..8b691fe50475f 100644
---- a/drivers/block/xen-blkback/xenbus.c
-+++ b/drivers/block/xen-blkback/xenbus.c
-@@ -517,7 +517,7 @@ static int xen_vbd_create(struct xen_blkif *blkif, blkif_vdev_t handle,
- 		vbd->type |= VDISK_REMOVABLE;
+diff --git a/fs/btrfs/zoned.c b/fs/btrfs/zoned.c
+index 1b1b310c3c510..f72cad7391a11 100644
+--- a/fs/btrfs/zoned.c
++++ b/fs/btrfs/zoned.c
+@@ -350,7 +350,6 @@ int btrfs_get_dev_zone_info(struct btrfs_device *device, bool populate_cache)
+ 	struct btrfs_fs_info *fs_info = device->fs_info;
+ 	struct btrfs_zoned_device_info *zone_info = NULL;
+ 	struct block_device *bdev = device->bdev;
+-	struct request_queue *queue = bdev_get_queue(bdev);
+ 	unsigned int max_active_zones;
+ 	unsigned int nactive;
+ 	sector_t nr_sectors;
+@@ -410,7 +409,7 @@ int btrfs_get_dev_zone_info(struct btrfs_device *device, bool populate_cache)
+ 	if (!IS_ALIGNED(nr_sectors, zone_sectors))
+ 		zone_info->nr_zones++;
  
- 	q = bdev_get_queue(bdev);
--	if (q && test_bit(QUEUE_FLAG_WC, &q->queue_flags))
-+	if (bdev_write_cache(bdev))
- 		vbd->flush_support = true;
- 
- 	if (q && blk_queue_secure_erase(q))
-diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
-index b41ee5c3b5b82..03013e85ffc03 100644
---- a/drivers/target/target_core_iblock.c
-+++ b/drivers/target/target_core_iblock.c
-@@ -737,7 +737,7 @@ iblock_execute_rw(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
- 		if (test_bit(QUEUE_FLAG_FUA, &q->queue_flags)) {
- 			if (cmd->se_cmd_flags & SCF_FUA)
- 				opf |= REQ_FUA;
--			else if (!test_bit(QUEUE_FLAG_WC, &q->queue_flags))
-+			else if (!bdev_write_cache(ib_dev->ibd_bd))
- 				opf |= REQ_FUA;
- 		}
- 	} else {
-@@ -886,11 +886,7 @@ iblock_parse_cdb(struct se_cmd *cmd)
- 
- static bool iblock_get_write_cache(struct se_device *dev)
- {
--	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
--	struct block_device *bd = ib_dev->ibd_bd;
--	struct request_queue *q = bdev_get_queue(bd);
--
--	return test_bit(QUEUE_FLAG_WC, &q->queue_flags);
-+	return bdev_write_cache(IBLOCK_DEV(dev)->ibd_bd);
- }
- 
- static const struct target_backend_ops iblock_ops = {
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index b30309f187cf0..092e986b8e8ed 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -4247,8 +4247,7 @@ static void write_dev_flush(struct btrfs_device *device)
- 	 * of simplicity, since this is a debug tool and not meant for use in
- 	 * non-debug builds.
- 	 */
--	struct request_queue *q = bdev_get_queue(device->bdev);
--	if (!test_bit(QUEUE_FLAG_WC, &q->queue_flags))
-+	if (!bdev_write_cache(device->bdev))
- 		return;
- #endif
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 3a9578e14a6b0..807a49aa5a27a 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1331,6 +1331,11 @@ static inline bool bdev_nonrot(struct block_device *bdev)
- 	return blk_queue_nonrot(bdev_get_queue(bdev));
- }
- 
-+static inline bool bdev_write_cache(struct block_device *bdev)
-+{
-+	return test_bit(QUEUE_FLAG_WC, &bdev_get_queue(bdev)->queue_flags);
-+}
-+
- static inline enum blk_zoned_model bdev_zoned_model(struct block_device *bdev)
- {
- 	struct request_queue *q = bdev_get_queue(bdev);
+-	max_active_zones = queue_max_active_zones(queue);
++	max_active_zones = bdev_max_active_zones(bdev);
+ 	if (max_active_zones && max_active_zones < BTRFS_MIN_ACTIVE_ZONES) {
+ 		btrfs_err_in_rcu(fs_info,
+ "zoned: %s: max active zones %u is too small, need at least %u active zones",
 -- 
 2.30.2
+
+
