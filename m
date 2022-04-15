@@ -1,147 +1,258 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/27] drbd: cleanup decide_on_discard_support
-Date: Fri, 15 Apr 2022 06:52:38 +0200
-Message-ID: <20220415045258.199825-8-hch@lst.de>
+Subject: [PATCH 11/27] block: add a bdev_nonrot helper
+Date: Fri, 15 Apr 2022 06:52:42 +0200
+Message-ID: <20220415045258.199825-12-hch@lst.de>
 References: <20220415045258.199825-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <target-devel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-        Content-Type:MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:
-        To:From:Sender:Reply-To:Content-ID:Content-Description;
-        bh=9tUaZULhEmteAuYmNe/S5K85i8mY+zpV/R7NWj8li0M=; b=AjCBuPx/UHSGTakXv8HXmgNw4N
-        Iyofq9wNNzfgjbG93scprq/gUs5OOhFUGL0tKjcj2IWWkpHNBkXqusk5CV5Uj/P/70TymjB6Unzdu
-        VnxSzUtQb3ldimIkXALq/IfCXSo1TL1NzeISVmz+Ea7q6xFf02zHvxp+FndxH2zbBXHBFRTOnXe4c
-        nAXrXpjx27cFTMs0mjOzvEq3gOjLOY6hKIcglkznMntAYg+vXORRN23xzGalvjS8R6ccxTXJWj8QW
-        sdXJMYerLCI2QfFcDPA/f8tI4pucu7JSpv7rjXlKJh5WSo2NBa1UXNlyVf9emnFeALezPoiPRp2d8
-        jaVM4Jaw==;
+ d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+ MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+ :Reply-To:Content-Type:Content-ID:Content-Description;
+ bh=HrgNfnZXHjI7+oEfFDB5J5Uuocj6xy8pedsh1Yy5WG4=; b=R0lBPRibOGoSZmsdT2BBTTPD3x
+ NwCzRpJB/bxli2xONupKhhJNx7Tq1nA6hg5urvI8CevCDma1aSHOvltCxPQVBkCYYIAazdu94JhOg
+ jUc9C0uB0ZcqdXuo3tqllo7RFWblcuoKttRRtshPAOTk9xPWXo9L51Jx+MBLxWuevzEN6ePJqPM9o
+ O/Kgk+1vrPJJ/tXWxgEWAoGzr7Z1pW3yunSGYLN41shEprbTPauLr7ZDX+uOWX/sBmVGFEWkzS8iP
+ pSkYNyZUK+8w0sI6r2DBAifGctVRL3GCvrebz8RO5GOBvOX0W6zq/yOSLOkXbitIIxFW4u3HYF7ZU
+ 82QTqcrQ==;
 In-Reply-To: <20220415045258.199825-1-hch@lst.de>
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="iso-8859-1"
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>, 
+ <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>, 
+ <mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+Sender: "Virtualization" <virtualization-bounces@lists.linux-foundation.org>
 To: Jens Axboe <axboe@kernel.dk>
-Cc: dm-devel@redhat.com, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-um@lists.infradead.org, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, nbd@other.debian.org, ceph-devel@vger.kernel.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev, ocfs2-devel@oss.oracle.com, linux-mm@kvack.org
+Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, cluster-devel@redhat.com, xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>, ceph-devel@vger.kernel.org, linux-raid@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-mmc@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
 
-Sanitize the calling conventions and use a goto label to cleanup the
-code flow.
+Add a helper to check the nonrot flag based on the block_device instead
+of having to poke into the block layer internal request_queue.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Christoph B=C3=B6hmwalder <christoph.boehmwalder@linbit.com>
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+Acked-by: David Sterba <dsterba@suse.com> [btrfs]
 ---
- drivers/block/drbd/drbd_nl.c | 68 +++++++++++++++++++-----------------
- 1 file changed, 35 insertions(+), 33 deletions(-)
+ block/ioctl.c                       | 2 +-
+ drivers/block/loop.c                | 2 +-
+ drivers/md/dm-table.c               | 4 +---
+ drivers/md/md.c                     | 3 +--
+ drivers/md/raid1.c                  | 2 +-
+ drivers/md/raid10.c                 | 2 +-
+ drivers/md/raid5.c                  | 2 +-
+ drivers/target/target_core_file.c   | 3 +--
+ drivers/target/target_core_iblock.c | 2 +-
+ fs/btrfs/volumes.c                  | 4 ++--
+ fs/ext4/mballoc.c                   | 2 +-
+ include/linux/blkdev.h              | 5 +++++
+ mm/swapfile.c                       | 4 ++--
+ 13 files changed, 19 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
-index b7216c186ba4d..4d00986d6f588 100644
---- a/drivers/block/drbd/drbd_nl.c
-+++ b/drivers/block/drbd/drbd_nl.c
-@@ -1204,38 +1204,42 @@ static unsigned int drbd_max_discard_sectors(struct=
- drbd_connection *connection)
- }
-=20
- static void decide_on_discard_support(struct drbd_device *device,
--			struct request_queue *q,
--			struct request_queue *b,
--			bool discard_zeroes_if_aligned)
-+		struct drbd_backing_dev *bdev)
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 4a86340133e46..ad3771b268b81 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -489,7 +489,7 @@ static int blkdev_common_ioctl(struct block_device *bdev, fmode_t mode,
+ 				    queue_max_sectors(bdev_get_queue(bdev)));
+ 		return put_ushort(argp, max_sectors);
+ 	case BLKROTATIONAL:
+-		return put_ushort(argp, !blk_queue_nonrot(bdev_get_queue(bdev)));
++		return put_ushort(argp, !bdev_nonrot(bdev));
+ 	case BLKRASET:
+ 	case BLKFRASET:
+ 		if(!capable(CAP_SYS_ADMIN))
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index a58595f5ee2c8..8d800d46e4985 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -903,7 +903,7 @@ static void loop_update_rotational(struct loop_device *lo)
+ 
+ 	/* not all filesystems (e.g. tmpfs) have a sb->s_bdev */
+ 	if (file_bdev)
+-		nonrot = blk_queue_nonrot(bdev_get_queue(file_bdev));
++		nonrot = bdev_nonrot(file_bdev);
+ 
+ 	if (nonrot)
+ 		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 03541cfc2317c..5e38d0dd009d5 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1820,9 +1820,7 @@ static int device_dax_write_cache_enabled(struct dm_target *ti,
+ static int device_is_rotational(struct dm_target *ti, struct dm_dev *dev,
+ 				sector_t start, sector_t len, void *data)
  {
--	/* q =3D drbd device queue (device->rq_queue)
--	 * b =3D backing device queue (device->ldev->backing_bdev->bd_disk->queue=
-),
--	 *     or NULL if diskless
--	 */
--	struct drbd_connection *connection =3D first_peer_device(device)->connect=
-ion;
--	bool can_do =3D b ? blk_queue_discard(b) : true;
+-	struct request_queue *q = bdev_get_queue(dev->bdev);
 -
--	if (can_do && connection->cstate >=3D C_CONNECTED && !(connection->agreed=
-_features & DRBD_FF_TRIM)) {
--		can_do =3D false;
--		drbd_info(connection, "peer DRBD too old, does not support TRIM: disabli=
-ng discards\n");
--	}
--	if (can_do) {
--		/* We don't care for the granularity, really.
--		 * Stacking limits below should fix it for the local
--		 * device.  Whether or not it is a suitable granularity
--		 * on the remote device is not our problem, really. If
--		 * you care, you need to use devices with similar
--		 * topology on all peers. */
--		blk_queue_discard_granularity(q, 512);
--		q->limits.max_discard_sectors =3D drbd_max_discard_sectors(connection);
--		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
--		q->limits.max_write_zeroes_sectors =3D drbd_max_discard_sectors(connecti=
-on);
--	} else {
--		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
--		blk_queue_discard_granularity(q, 0);
--		q->limits.max_discard_sectors =3D 0;
--		q->limits.max_write_zeroes_sectors =3D 0;
-+	struct drbd_connection *connection =3D
-+		first_peer_device(device)->connection;
-+	struct request_queue *q =3D device->rq_queue;
-+
-+	if (bdev && !blk_queue_discard(bdev->backing_bdev->bd_disk->queue))
-+		goto not_supported;
-+
-+	if (connection->cstate >=3D C_CONNECTED &&
-+	    !(connection->agreed_features & DRBD_FF_TRIM)) {
-+		drbd_info(connection,
-+			"peer DRBD too old, does not support TRIM: disabling discards\n");
-+		goto not_supported;
- 	}
-+
-+	/*
-+	 * We don't care for the granularity, really.
-+	 *
-+	 * Stacking limits below should fix it for the local device.  Whether or
-+	 * not it is a suitable granularity on the remote device is not our
-+	 * problem, really. If you care, you need to use devices with similar
-+	 * topology on all peers.
-+	 */
-+	blk_queue_discard_granularity(q, 512);
-+	q->limits.max_discard_sectors =3D drbd_max_discard_sectors(connection);
-+	blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
-+	q->limits.max_write_zeroes_sectors =3D
-+		drbd_max_discard_sectors(connection);
-+	return;
-+
-+not_supported:
-+	blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
-+	blk_queue_discard_granularity(q, 0);
-+	q->limits.max_discard_sectors =3D 0;
-+	q->limits.max_write_zeroes_sectors =3D 0;
+-	return !blk_queue_nonrot(q);
++	return !bdev_nonrot(dev->bdev);
  }
-=20
- static void fixup_discard_if_not_supported(struct request_queue *q)
-@@ -1273,7 +1277,6 @@ static void drbd_setup_queue_param(struct drbd_device=
- *device, struct drbd_backi
- 	unsigned int max_segments =3D 0;
- 	struct request_queue *b =3D NULL;
- 	struct disk_conf *dc;
--	bool discard_zeroes_if_aligned =3D true;
-=20
- 	if (bdev) {
- 		b =3D bdev->backing_bdev->bd_disk->queue;
-@@ -1282,7 +1285,6 @@ static void drbd_setup_queue_param(struct drbd_device=
- *device, struct drbd_backi
- 		rcu_read_lock();
- 		dc =3D rcu_dereference(device->ldev->disk_conf);
- 		max_segments =3D dc->max_bio_bvecs;
--		discard_zeroes_if_aligned =3D dc->discard_zeroes_if_aligned;
- 		rcu_read_unlock();
-=20
- 		blk_set_stacking_limits(&q->limits);
-@@ -1292,7 +1294,7 @@ static void drbd_setup_queue_param(struct drbd_device=
- *device, struct drbd_backi
- 	/* This is the workaround for "bio would need to, but cannot, be split" */
- 	blk_queue_max_segments(q, max_segments ? max_segments : BLK_MAX_SEGMENTS);
- 	blk_queue_segment_boundary(q, PAGE_SIZE-1);
--	decide_on_discard_support(device, q, b, discard_zeroes_if_aligned);
-+	decide_on_discard_support(device, bdev);
-=20
- 	if (b) {
- 		blk_stack_limits(&q->limits, &b->limits, 0);
---=20
+ 
+ static int device_is_not_random(struct dm_target *ti, struct dm_dev *dev,
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 309b3af906ad3..19636c2f2cda4 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -5991,8 +5991,7 @@ int md_run(struct mddev *mddev)
+ 		bool nonrot = true;
+ 
+ 		rdev_for_each(rdev, mddev) {
+-			if (rdev->raid_disk >= 0 &&
+-			    !blk_queue_nonrot(bdev_get_queue(rdev->bdev))) {
++			if (rdev->raid_disk >= 0 && !bdev_nonrot(rdev->bdev)) {
+ 				nonrot = false;
+ 				break;
+ 			}
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 99d5464a51f81..d81b896855f9f 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -704,7 +704,7 @@ static int read_balance(struct r1conf *conf, struct r1bio *r1_bio, int *max_sect
+ 			/* At least two disks to choose from so failfast is OK */
+ 			set_bit(R1BIO_FailFast, &r1_bio->state);
+ 
+-		nonrot = blk_queue_nonrot(bdev_get_queue(rdev->bdev));
++		nonrot = bdev_nonrot(rdev->bdev);
+ 		has_nonrot_disk |= nonrot;
+ 		pending = atomic_read(&rdev->nr_pending);
+ 		dist = abs(this_sector - conf->mirrors[disk].head_position);
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index dfe7d62d3fbdd..7816c8b2e8087 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -796,7 +796,7 @@ static struct md_rdev *read_balance(struct r10conf *conf,
+ 		if (!do_balance)
+ 			break;
+ 
+-		nonrot = blk_queue_nonrot(bdev_get_queue(rdev->bdev));
++		nonrot = bdev_nonrot(rdev->bdev);
+ 		has_nonrot_disk |= nonrot;
+ 		pending = atomic_read(&rdev->nr_pending);
+ 		if (min_pending > pending && nonrot) {
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 351d341a1ffa4..0bbae0e638666 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -7242,7 +7242,7 @@ static struct r5conf *setup_conf(struct mddev *mddev)
+ 	rdev_for_each(rdev, mddev) {
+ 		if (test_bit(Journal, &rdev->flags))
+ 			continue;
+-		if (blk_queue_nonrot(bdev_get_queue(rdev->bdev))) {
++		if (bdev_nonrot(rdev->bdev)) {
+ 			conf->batch_bio_dispatch = false;
+ 			break;
+ 		}
+diff --git a/drivers/target/target_core_file.c b/drivers/target/target_core_file.c
+index 8d191fdc33217..b6ba582b06775 100644
+--- a/drivers/target/target_core_file.c
++++ b/drivers/target/target_core_file.c
+@@ -135,7 +135,6 @@ static int fd_configure_device(struct se_device *dev)
+ 	inode = file->f_mapping->host;
+ 	if (S_ISBLK(inode->i_mode)) {
+ 		struct block_device *bdev = I_BDEV(inode);
+-		struct request_queue *q = bdev_get_queue(bdev);
+ 		unsigned long long dev_size;
+ 
+ 		fd_dev->fd_block_size = bdev_logical_block_size(bdev);
+@@ -160,7 +159,7 @@ static int fd_configure_device(struct se_device *dev)
+ 		 */
+ 		dev->dev_attrib.max_write_same_len = 0xFFFF;
+ 
+-		if (blk_queue_nonrot(q))
++		if (bdev_nonrot(bdev))
+ 			dev->dev_attrib.is_nonrot = 1;
+ 	} else {
+ 		if (!(fd_dev->fbd_flags & FBDF_HAS_SIZE)) {
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index b886ce1770bfd..b41ee5c3b5b82 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -133,7 +133,7 @@ static int iblock_configure_device(struct se_device *dev)
+ 	else
+ 		dev->dev_attrib.max_write_same_len = 0xFFFF;
+ 
+-	if (blk_queue_nonrot(q))
++	if (bdev_nonrot(bd))
+ 		dev->dev_attrib.is_nonrot = 1;
+ 
+ 	bi = bdev_get_integrity(bd);
+diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+index 2cfbc74a3b4ee..77f1a5696842b 100644
+--- a/fs/btrfs/volumes.c
++++ b/fs/btrfs/volumes.c
+@@ -643,7 +643,7 @@ static int btrfs_open_one_device(struct btrfs_fs_devices *fs_devices,
+ 			set_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
+ 	}
+ 
+-	if (!blk_queue_nonrot(bdev_get_queue(bdev)))
++	if (!bdev_nonrot(bdev))
+ 		fs_devices->rotating = true;
+ 
+ 	device->bdev = bdev;
+@@ -2706,7 +2706,7 @@ int btrfs_init_new_device(struct btrfs_fs_info *fs_info, const char *device_path
+ 
+ 	atomic64_add(device->total_bytes, &fs_info->free_chunk_space);
+ 
+-	if (!blk_queue_nonrot(bdev_get_queue(bdev)))
++	if (!bdev_nonrot(bdev))
+ 		fs_devices->rotating = true;
+ 
+ 	orig_super_total_bytes = btrfs_super_total_bytes(fs_info->super_copy);
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 252c168454c7f..c3668c977cd99 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -3498,7 +3498,7 @@ int ext4_mb_init(struct super_block *sb)
+ 		spin_lock_init(&lg->lg_prealloc_lock);
+ 	}
+ 
+-	if (blk_queue_nonrot(bdev_get_queue(sb->s_bdev)))
++	if (bdev_nonrot(sb->s_bdev))
+ 		sbi->s_mb_max_linear_groups = 0;
+ 	else
+ 		sbi->s_mb_max_linear_groups = MB_DEFAULT_LINEAR_LIMIT;
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 60d0161389971..3a9578e14a6b0 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1326,6 +1326,11 @@ static inline unsigned int bdev_write_zeroes_sectors(struct block_device *bdev)
+ 	return 0;
+ }
+ 
++static inline bool bdev_nonrot(struct block_device *bdev)
++{
++	return blk_queue_nonrot(bdev_get_queue(bdev));
++}
++
+ static inline enum blk_zoned_model bdev_zoned_model(struct block_device *bdev)
+ {
+ 	struct request_queue *q = bdev_get_queue(bdev);
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 4c7537162af5e..d5ab7ec4d92ca 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -2466,7 +2466,7 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
+ 	if (p->flags & SWP_CONTINUED)
+ 		free_swap_count_continuations(p);
+ 
+-	if (!p->bdev || !blk_queue_nonrot(bdev_get_queue(p->bdev)))
++	if (!p->bdev || !bdev_nonrot(p->bdev))
+ 		atomic_dec(&nr_rotate_swap);
+ 
+ 	mutex_lock(&swapon_mutex);
+@@ -3071,7 +3071,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
+ 	if (p->bdev && p->bdev->bd_disk->fops->rw_page)
+ 		p->flags |= SWP_SYNCHRONOUS_IO;
+ 
+-	if (p->bdev && blk_queue_nonrot(bdev_get_queue(p->bdev))) {
++	if (p->bdev && bdev_nonrot(p->bdev)) {
+ 		int cpu;
+ 		unsigned long ci, nr_cluster;
+ 
+-- 
 2.30.2
-
