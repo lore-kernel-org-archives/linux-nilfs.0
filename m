@@ -1,32 +1,29 @@
 From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-Subject: Re: [PATCH 16/27] block: use bdev_alignment_offset in
- part_alignment_offset_show
-Date: Fri, 15 Apr 2022 05:43:53 +0000
-Message-ID: <d4d70cec-aaef-27bd-4d29-7382a740f192@nvidia.com>
+Subject: Re: [PATCH 22/27] block: refactor discard bio size limiting
+Date: Fri, 15 Apr 2022 05:46:32 +0000
+Message-ID: <d3f73a4f-0d45-6627-7878-9b5acd47842f@nvidia.com>
 References: <20220415045258.199825-1-hch@lst.de>
- <20220415045258.199825-17-hch@lst.de>
+ <20220415045258.199825-23-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: base64
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
  s=selector2;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=rBkQBjRSn9XGMGFyMCBwAEJr7XdtAp3lo0AoSBJHgvo=;
- b=TD25AIYRb8iwCA9fahL99Olp9+/Hgztmyc7Cke/aNxVFMkYqgPmEKIa0h9K26Lizf8FQtbpJ6ZrI43SRYXUa/IEilbPb/yWrsMWKkvVMTb5eGrmKtloM/HeeGoLG/okNV7PxpECiAiiYRo9oQlbfjDmkiuiTM6mgxRU4PVVmr6RXqlPoiVfxAOLCq44bzbjr04GIsU+i+wkYwmXqFd8z069t2I0ex/3qnxQewZ5y7zNzeShvVEPpwZo9kcCoprtQzOE532RcrC4q5AQc5fs0lnzBrqkQUccvapN4PmMnK+mDecb7Qq3G0+gQfrs7UHiuHRUHtlqVG0C/W5DVaZuTUQ==
-In-Reply-To: <20220415045258.199825-17-hch@lst.de>
+ bh=ll6nOnUsFN4t09CavEjEFdgdIftb6EE+wpAq2T7XWI8=;
+ b=ppRLTkwLk6uegRJ2kfkGhWth1BBuonhTnRrzZ9Un7tjuB0GULPSRiaczQgUkJsyzpYnevIx+ZFRiDRhQIR/udWanzMKbOuvh6xNUzIgKfw2LeV3XTqYPKNm9KrNPUr/EqJ+v8Vu8lBWcpvEWCKdFTiZu8/Y/bpycbLdnGnMpP74amXzuPEo6m2kAo+rfWauBp/tVU7gLcfg+1KAVsP7A4GLeLtKoyI2G+ClrLlQuWeRfEigiQd6QWBHxQYpzbWto1yEQT43IV17ysfDx3I713iJzzSIELWtCGagp+9269anNe6S76f29QxYfpaZYBOBHZk6za0WIxP/ECbVELFUhpg==
+In-Reply-To: <20220415045258.199825-23-hch@lst.de>
 Content-Language: en-US
-Content-ID: <082F7C538FC35349BB8BF71526006F64@namprd12.prod.outlook.com>
+Content-ID: <5C40943C50889249AD34D58B6AD3A631@namprd12.prod.outlook.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-um@lists.infradead.org" <linux-um@lists.infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "nbd@other.debian.org" <nbd@other.debian.org>, "ceph-devel@vger.kernel.org" <ceph-devel@vger.kernel.org>, "virtualization@lists.linux-foundation.org" <virtualization@lists.linux-foundation.org>, "xen-devel@lists.xenproject.org" <xen-devel@lists.xenproject.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-mmc@vger.kernel.org" <linux-mmc@vger.kernel.org>
 
-T24gNC8xNC8yMiAyMTo1MiwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6DQo+IFJlcGxhY2UgdGhl
-IG9wZW4gY29kZWQgb2Zmc2V0IGNhbGN1bGF0aW9uIHdpdGggdGhlIHByb3BlciBoZWxwZXIuDQo+
-IFRoaXMgaXMgYW4gQUJJIGNoYW5nZSBpbiB0aGF0IHRoZSAtMSBmb3IgYSBtaXNhbGlnbmVkIHBh
-cnRpdGlvbiBpcw0KPiBwcm9wZXJseSBwcm9wYWdhdGVkLCB3aGljaCBjYW4gYmUgY29uc2lkZXJl
-ZCBhIGJ1ZyBmaXggYW5kIG1hdGNoZXMNCj4gd2hhdCBpcyBkb25lIG9uIHRoZSB3aG9sZSBkZXZp
-Y2UuDQo+IA0KPiBTaWduZWQtb2ZmLWJ5OiBDaHJpc3RvcGggSGVsbHdpZyA8aGNoQGxzdC5kZT4N
-Cj4gUmV2aWV3ZWQtYnk6IE1hcnRpbiBLLiBQZXRlcnNlbiA8bWFydGluLnBldGVyc2VuQG9yYWNs
-ZS5jb20+DQo+IC0tLQ0KDQpOZWF0IQ0KDQpMb29rcyBnb29kLg0KDQpSZXZpZXdlZC1ieTogQ2hh
-aXRhbnlhIEt1bGthcm5pIDxrY2hAbnZpZGlhLmNvbT4NCg0KLWNrDQoNCg==
+T24gNC8xNC8yMiAyMTo1MiwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6DQo+IE1vdmUgYWxsIHRo
+ZSBsb2dpYyB0byBsaW1pdCB0aGUgZGlzY2FyZCBiaW8gc2l6ZSBpbnRvIGEgY29tbW9uIGhlbHBl
+cg0KPiBzbyB0aGF0IGl0IGlzIGJldHRlciBkb2N1bWVudGVkLg0KPiANCj4gU2lnbmVkLW9mZi1i
+eTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+DQo+IFJldmlld2VkLWJ5OiBNYXJ0aW4g
+Sy4gUGV0ZXJzZW4gPG1hcnRpbi5wZXRlcnNlbkBvcmFjbGUuY29tPg0KPiBBY2tlZC1ieTogQ29s
+eSBMaSA8Y29seWxpQHN1c2UuZGU+DQo+IC0tLQ0KDQpMb29rcyBnb29kLg0KDQpSZXZpZXdlZC1i
+eTogQ2hhaXRhbnlhIEt1bGthcm5pIDxrY2hAbnZpZGlhLmNvbT4NCg0KLWNrDQoNCg==
