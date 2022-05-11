@@ -1,63 +1,96 @@
-From: David Sterba <dsterba-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 27/27] direct-io: remove random prefetches
-Date: Tue, 19 Apr 2022 14:55:17 +0200
-Message-ID: <20220419125517.GB2348@twin.jikos.cz>
-References: <20220415045258.199825-1-hch@lst.de>
-	<20220415045258.199825-28-hch@lst.de>
-Reply-To: dsterba-AlSwsSmVLrQ@public.gmane.org
-Mime-Version: 1.0
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: Fix some kernel-doc comments
+Date: Wed, 11 May 2022 22:38:36 +0900
+Message-ID: <1652276316-7791-1-git-send-email-konishi.ryusuke@gmail.com>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=from:to:cc:subject:date:message-id;
+        bh=jsRV8EvMOtUfJsgLKEp/CDjMrcTGRjbK7SqrPRT4roE=;
+        b=hqvlJxq9PAR5+noe0CxheCXcFPfVtVGDqaiEGYE94YokujbrehQTT7oHQ74ftn3YaA
+         7yHJwGUtm76af2ozPbSrExtHWwQXisy2UFTIGtQ3yn6PmKZ/yUWONEt8YZz6FFevGwf0
+         AI3+I1mE51loi5LF4VH2qJxFHmz1ZiI+YgrQTmqPOEoJxTje7cC54RLotlocuQoi95C8
+         vxchaX4SaqvDP5cuB6MKfCR8HCu82At6+MEBYocGMUAXMePgdPPBF7oYmR/XNQCAIQDn
+         SCpVc7epYS8pZhvVKlw/dBDiMcqkzUGqv4L+ae/+E6hqqZ1WU3/CdJVMPnotLAN9OqM7
+         ZUXQ==
+List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1650373160;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	cc:cc:mime-version:mime-version:content-type:content-type:
-	in-reply-to:in-reply-to:references:references;
-	bh=VfBYsPW8LdFmKxr65w1hdhdV60yv3YMcCbpJWSrqKvk=;
-	b=NvUNYJ0aijygZaycEKANEzrLj5OpFXGbpMkv75nQ6FnXKgRf9EXcV4+9POedJBZkOwU5S7
-	5pILnN4Shqgf3JhLxLgoR5OWcJL0pDDsuxwB46NB53CVYSYKQtDfU6ZcMenkfu3sqHVTkW
-	IM2WCbvx+MAK2WLHjSdOm9gfT/yomU4=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1650373160;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	cc:cc:mime-version:mime-version:content-type:content-type:
-	in-reply-to:in-reply-to:references:references;
-	bh=VfBYsPW8LdFmKxr65w1hdhdV60yv3YMcCbpJWSrqKvk=;
-	b=R3XLspmIJ8AmIyyP6ZGhyQkfkNAvIfydJiDrLZbCwnLmc9AnAFEIt/H4vRE7D3uxeV/uH+
-	hd0WY76/Imja80AA==
-Content-Disposition: inline
-In-Reply-To: <20220415045258.199825-28-hch-jcswGhMUV9g@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, nbd-2H2hN8V1XRtuHlm7Suoebg@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mmc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Fri, Apr 15, 2022 at 06:52:58AM +0200, Christoph Hellwig wrote:
-> Randomly poking into block device internals for manual prefetches isn't
-> exactly a very maintainable thing to do.  And none of the performance
-> criticil direct I/O implementations still use this library function
-> anyway, so just drop it.
-> 
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+From: Yang Li <yang.lee-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
 
-That the direct io function needed a valid bdev just for the prefetch
-but nothing else was one of the reasons we had to keep the latest_bdev
-in btrfs, so good riddance.
+The description of @flags in nilfs_dirty_inode() kernel-doc
+comment is missing, and some functions had kernel-doc that
+used a hash instead of a colon to separate the parameter
+name from the one line description.
 
-You may want to add the reference to the patch that added the prefetch,
-65dd2aa90aa1 ("dio: optimize cache misses in the submission path") and
-also remove #include <linux/prefetch.h> as there are no more uses of
-prefetch in the file.
+Fix them to remove some warnings found by running scripts/kernel-doc,
+which is caused by using 'make W=1'.
 
-With that
+fs/nilfs2/inode.c:73: warning: Function parameter or member 'inode' not
+described in 'nilfs_get_block'
+fs/nilfs2/inode.c:73: warning: Function parameter or member 'blkoff' not
+described in 'nilfs_get_block'
+fs/nilfs2/inode.c:73: warning: Function parameter or member 'bh_result'
+not described in 'nilfs_get_block'
+fs/nilfs2/inode.c:73: warning: Function parameter or member 'create' not
+described in 'nilfs_get_block'
+fs/nilfs2/inode.c:145: warning: Function parameter or member 'file' not
+described in 'nilfs_readpage'
+fs/nilfs2/inode.c:145: warning: Function parameter or member 'page' not
+described in 'nilfs_readpage'
+fs/nilfs2/inode.c:968: warning: Function parameter or member 'flags' not
+described in 'nilfs_dirty_inode'
 
-Reviewed-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
+Link: https://lkml.kernel.org/r/20220324024215.63479-1-yang.lee-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org
+Reported-by: Abaci Robot <abaci-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+Signed-off-by: Yang Li <yang.lee-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nilfs2/inode.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 6045cea21f52..6a00cf324cbd 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -63,10 +63,10 @@ void nilfs_inode_sub_blocks(struct inode *inode, int n)
+ 
+ /**
+  * nilfs_get_block() - get a file block on the filesystem (callback function)
+- * @inode - inode struct of the target file
+- * @blkoff - file block number
+- * @bh_result - buffer head to be mapped on
+- * @create - indicate whether allocating the block or not when it has not
++ * @inode: inode struct of the target file
++ * @blkoff: file block number
++ * @bh_result: buffer head to be mapped on
++ * @create: indicate whether allocating the block or not when it has not
+  *      been allocated yet.
+  *
+  * This function does not issue actual read request of the specified data
+@@ -142,8 +142,8 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
+ /**
+  * nilfs_readpage() - implement readpage() method of nilfs_aops {}
+  * address_space_operations.
+- * @file - file struct of the file to be read
+- * @page - the page to be read
++ * @file: file struct of the file to be read
++ * @page: the page to be read
+  */
+ static int nilfs_readpage(struct file *file, struct page *page)
+ {
+@@ -1088,6 +1088,7 @@ int __nilfs_mark_inode_dirty(struct inode *inode, int flags)
+ /**
+  * nilfs_dirty_inode - reflect changes on given inode to an inode block.
+  * @inode: inode of the file to be registered.
++ * @flags: flags to determine the dirty state of the inode
+  *
+  * nilfs_dirty_inode() loads a inode block containing the specified
+  * @inode and copies data from a nilfs_inode to a corresponding inode
+-- 
+1.8.3.1
+
