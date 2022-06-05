@@ -1,85 +1,126 @@
-From: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH 03/10] ext4: Convert mpage_release_unused_pages() to use filemap_get_folios()
-Date: Sun,  5 Jun 2022 20:38:47 +0100
-Message-ID: <20220605193854.2371230-4-willy@infradead.org>
+From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Subject: [PATCH 07/10] nilfs2: Convert nilfs_copy_back_pages() to use filemap_get_folios()
+Date: Sun,  5 Jun 2022 20:38:51 +0100
+Message-ID: <20220605193854.2371230-8-willy@infradead.org>
 References: <20220605193854.2371230-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=7zHJFf7s+ZSx87nHg6Bs72jjNt/zTHbg4PZc0KhFNBI=; b=EYXV63i9/CEOzD0nHMe1OQHYDc
-        mVCuEz0iq05DzWOTfwUUXon7lLclyJcGJZDFVFf36KaefdWNV0pHzAWE/juTBOh3LmOa6/GHAbwsA
-        j9SKPw7wOEy++DynzZkxdw6cKJT5aOgxtQMtWaAQNIKZNtcW6JUvraw6AebVxfjYl0uWLN4Tnkrf1
-        g5r1qFvxh5lUydZ/EqFXJtmm4X6GU4Pvr6z+zZzlpoy3rKdSu3dVWHKmxHNTzyLs4u7zgx7YRImNZ
-        s12tQFfwrO2lznSTczeoD//K1wj12QguV4NYS7DRw7Y1XFPPUFJTnVvqq+s0OPozePCioZdM8Nwv2
-        JJEs8DoA==;
-In-Reply-To: <20220605193854.2371230-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+        bh=eM6uKV+5ElE/ut/Cuc850ZV6AcTLZYIP033Wzko7MpA=; b=jw54R9vR5RZy9/he5CXHQlyFzw
+        WYLQMbziLOy2S6/zd4nVgc2UPNgndelLoDnOz9B0h2hq2awUcQeux+YLGTLUOy6yY88ojJb4VqImT
+        BdJhOFHQIHogBZx79rFympvKsdcS00RpUDNLrO41Q1KgQnJ3iFBBK9/ycC49M6c9x0ilXYsgzTFjq
+        4M2AynY09RE7pLDC7wNMqh6uUkgDO0cK8SU9nOwxTGqhdbe51uxm7r4dsSqEZYp+pFoAmUhNlFnfR
+        XUA+CO9svYVg4sD4a0sRDrWreBBx8ExZjOsvyFZpDcKYT7mvMK0NVRy7GTxV1W17OgLNV7TCmPpzI
+        BHlN4vrQ==;
+In-Reply-To: <20220605193854.2371230-1-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel@vger.kernel.org
+Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-nilfs@vger.kernel.org
 
-If the folio is large, it may overlap the beginning or end of the
-unused range.  If it does, we need to avoid invalidating it.
+Use folios throughout.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- fs/ext4/inode.c | 21 ++++++++++++---------
- 1 file changed, 12 insertions(+), 9 deletions(-)
+ fs/nilfs2/page.c | 60 ++++++++++++++++++++++++------------------------
+ 1 file changed, 30 insertions(+), 30 deletions(-)
 
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 3dce7d058985..32a7f5e024d6 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -1554,9 +1554,9 @@ struct mpage_da_data {
- static void mpage_release_unused_pages(struct mpage_da_data *mpd,
- 				       bool invalidate)
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index a8e88cc38e16..3267e96c256c 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -294,57 +294,57 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
+ void nilfs_copy_back_pages(struct address_space *dmap,
+ 			   struct address_space *smap)
  {
--	int nr_pages, i;
-+	unsigned nr, i;
- 	pgoff_t index, end;
 -	struct pagevec pvec;
 +	struct folio_batch fbatch;
- 	struct inode *inode = mpd->inode;
- 	struct address_space *mapping = inode->i_mapping;
- 
-@@ -1574,15 +1574,18 @@ static void mpage_release_unused_pages(struct mpage_da_data *mpd,
- 		ext4_es_remove_extent(inode, start, last - start + 1);
- 	}
+ 	unsigned int i, n;
+-	pgoff_t index = 0;
++	pgoff_t start = 0;
  
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
- 	while (index <= end) {
--		nr_pages = pagevec_lookup_range(&pvec, mapping, &index, end);
--		if (nr_pages == 0)
-+		nr = filemap_get_folios(mapping, &index, end, &fbatch);
-+		if (nr == 0)
- 			break;
--		for (i = 0; i < nr_pages; i++) {
--			struct page *page = pvec.pages[i];
--			struct folio *folio = page_folio(page);
-+		for (i = 0; i < nr; i++) {
-+			struct folio *folio = fbatch.folios[i];
+ repeat:
+-	n = pagevec_lookup(&pvec, smap, &index);
++	n = filemap_get_folios(smap, &start, ~0UL, &fbatch);
+ 	if (!n)
+ 		return;
  
-+			if (folio->index < mpd->first_page)
-+				continue;
-+			if (folio->index + folio_nr_pages(folio) - 1 > end)
-+				continue;
- 			BUG_ON(!folio_test_locked(folio));
- 			BUG_ON(folio_test_writeback(folio));
- 			if (invalidate) {
-@@ -1594,7 +1597,7 @@ static void mpage_release_unused_pages(struct mpage_da_data *mpd,
+-	for (i = 0; i < pagevec_count(&pvec); i++) {
+-		struct page *page = pvec.pages[i], *dpage;
+-		pgoff_t offset = page->index;
+-
+-		lock_page(page);
+-		dpage = find_lock_page(dmap, offset);
+-		if (dpage) {
+-			/* overwrite existing page in the destination cache */
+-			WARN_ON(PageDirty(dpage));
+-			nilfs_copy_page(dpage, page, 0);
+-			unlock_page(dpage);
+-			put_page(dpage);
+-			/* Do we not need to remove page from smap here? */
++	for (i = 0; i < folio_batch_count(&fbatch); i++) {
++		struct folio *folio = fbatch.folios[i], *dfolio;
++		pgoff_t index = folio->index;
++
++		folio_lock(folio);
++		dfolio = filemap_lock_folio(dmap, index);
++		if (dfolio) {
++			/* overwrite existing folio in the destination cache */
++			WARN_ON(folio_test_dirty(dfolio));
++			nilfs_copy_page(&dfolio->page, &folio->page, 0);
++			folio_unlock(dfolio);
++			folio_put(dfolio);
++			/* Do we not need to remove folio from smap here? */
+ 		} else {
+-			struct page *p;
++			struct folio *f;
+ 
+-			/* move the page to the destination cache */
++			/* move the folio to the destination cache */
+ 			xa_lock_irq(&smap->i_pages);
+-			p = __xa_erase(&smap->i_pages, offset);
+-			WARN_ON(page != p);
++			f = __xa_erase(&smap->i_pages, index);
++			WARN_ON(folio != f);
+ 			smap->nrpages--;
+ 			xa_unlock_irq(&smap->i_pages);
+ 
+ 			xa_lock_irq(&dmap->i_pages);
+-			p = __xa_store(&dmap->i_pages, offset, page, GFP_NOFS);
+-			if (unlikely(p)) {
++			f = __xa_store(&dmap->i_pages, index, folio, GFP_NOFS);
++			if (unlikely(f)) {
+ 				/* Probably -ENOMEM */
+-				page->mapping = NULL;
+-				put_page(page);
++				folio->mapping = NULL;
++				folio_put(folio);
+ 			} else {
+-				page->mapping = dmap;
++				folio->mapping = dmap;
+ 				dmap->nrpages++;
+-				if (PageDirty(page))
+-					__xa_set_mark(&dmap->i_pages, offset,
++				if (folio_test_dirty(folio))
++					__xa_set_mark(&dmap->i_pages, index,
+ 							PAGECACHE_TAG_DIRTY);
  			}
- 			folio_unlock(folio);
+ 			xa_unlock_irq(&dmap->i_pages);
  		}
--		pagevec_release(&pvec);
-+		folio_batch_release(&fbatch);
+-		unlock_page(page);
++		folio_unlock(folio);
  	}
- }
+-	pagevec_release(&pvec);
++	folio_batch_release(&fbatch);
+ 	cond_resched();
  
+ 	goto repeat;
 -- 
 2.35.1
 
