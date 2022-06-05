@@ -1,7 +1,7 @@
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 07/10] nilfs2: Convert nilfs_copy_back_pages() to use filemap_get_folios()
-Date: Sun,  5 Jun 2022 20:38:51 +0100
-Message-ID: <20220605193854.2371230-8-willy@infradead.org>
+Subject: [PATCH 01/10] filemap: Add filemap_get_folios()
+Date: Sun,  5 Jun 2022 20:38:45 +0100
+Message-ID: <20220605193854.2371230-2-willy@infradead.org>
 References: <20220605193854.2371230-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -10,117 +10,106 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=eM6uKV+5ElE/ut/Cuc850ZV6AcTLZYIP033Wzko7MpA=; b=jw54R9vR5RZy9/he5CXHQlyFzw
-        WYLQMbziLOy2S6/zd4nVgc2UPNgndelLoDnOz9B0h2hq2awUcQeux+YLGTLUOy6yY88ojJb4VqImT
-        BdJhOFHQIHogBZx79rFympvKsdcS00RpUDNLrO41Q1KgQnJ3iFBBK9/ycC49M6c9x0ilXYsgzTFjq
-        4M2AynY09RE7pLDC7wNMqh6uUkgDO0cK8SU9nOwxTGqhdbe51uxm7r4dsSqEZYp+pFoAmUhNlFnfR
-        XUA+CO9svYVg4sD4a0sRDrWreBBx8ExZjOsvyFZpDcKYT7mvMK0NVRy7GTxV1W17OgLNV7TCmPpzI
-        BHlN4vrQ==;
+        bh=6g09y1A9jVwuZlJR1irGeBqDpd31Ui3pSGWrlaz4nb0=; b=pg4gnoTyTVQMZkuLsLjufELZOm
+        zdlkyM6Epz9Y5ls6kjBxq58ihNIUrb2VqIKn1nUlONRVxbp4g7dlQzMHo9JPUvh1cyx4cdcigWDI1
+        slwAgDoI7SkWyyzH+j97LCItJ0qSvavcuPnYPdS5zdoFT4aZpCiGwaGGj7aUofkedaHvtjKzyVrNI
+        42u9ldindn05Wm1yrBmLckPHwYi8R4I2j0QnGjrpg23633uwpEOoaC3S55ItOiGyvCgkUjK/1UElz
+        ks1lQWAPi22UiL9YIdwqGaBwOialRfaScxUmJwyto5dh3WMxU2Ag123Wygqx+r/Kt4P8V7BgYZyFl
+        43sDr6cA==;
 In-Reply-To: <20220605193854.2371230-1-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-fsdevel@vger.kernel.org
 Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-nilfs@vger.kernel.org
 
-Use folios throughout.
+This is the equivalent of find_get_pages() but fills a folio_batch
+instead of an array of pages.
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- fs/nilfs2/page.c | 60 ++++++++++++++++++++++++------------------------
- 1 file changed, 30 insertions(+), 30 deletions(-)
+ include/linux/pagemap.h |  2 ++
+ mm/filemap.c            | 55 +++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 57 insertions(+)
 
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index a8e88cc38e16..3267e96c256c 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -294,57 +294,57 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
- void nilfs_copy_back_pages(struct address_space *dmap,
- 			   struct address_space *smap)
- {
--	struct pagevec pvec;
-+	struct folio_batch fbatch;
- 	unsigned int i, n;
--	pgoff_t index = 0;
-+	pgoff_t start = 0;
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index 5555689ea809..50e57b2d845f 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -718,6 +718,8 @@ static inline struct page *find_subpage(struct page *head, pgoff_t index)
+ 	return head + (index & (thp_nr_pages(head) - 1));
+ }
  
--	pagevec_init(&pvec);
-+	folio_batch_init(&fbatch);
- repeat:
--	n = pagevec_lookup(&pvec, smap, &index);
-+	n = filemap_get_folios(smap, &start, ~0UL, &fbatch);
- 	if (!n)
- 		return;
++unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
++		pgoff_t end, struct folio_batch *fbatch);
+ unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
+ 			pgoff_t end, unsigned int nr_pages,
+ 			struct page **pages);
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 1e66eea98a7e..ea4145b7a84c 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2127,6 +2127,61 @@ unsigned find_lock_entries(struct address_space *mapping, pgoff_t start,
+ 	return folio_batch_count(fbatch);
+ }
  
--	for (i = 0; i < pagevec_count(&pvec); i++) {
--		struct page *page = pvec.pages[i], *dpage;
--		pgoff_t offset = page->index;
--
--		lock_page(page);
--		dpage = find_lock_page(dmap, offset);
--		if (dpage) {
--			/* overwrite existing page in the destination cache */
--			WARN_ON(PageDirty(dpage));
--			nilfs_copy_page(dpage, page, 0);
--			unlock_page(dpage);
--			put_page(dpage);
--			/* Do we not need to remove page from smap here? */
-+	for (i = 0; i < folio_batch_count(&fbatch); i++) {
-+		struct folio *folio = fbatch.folios[i], *dfolio;
-+		pgoff_t index = folio->index;
++/**
++ * filemap_get_folios - Get a batch of folios
++ * @mapping:	The address_space to search
++ * @start:	The starting page index
++ * @end:	The final page index (inclusive)
++ * @fbatch:	The batch to fill.
++ *
++ * Search for and return a batch of folios in the mapping starting at
++ * index @start and up to index @end (inclusive).  The folios are returned
++ * in @fbatch with an elevated reference count.
++ *
++ * The first folio may start before @start; if it does, it will contain
++ * @start.  The final folio may extend beyond @end; if it does, it will
++ * contain @end.  The folios have ascending indices.  There may be gaps
++ * between the folios if there are indices which have no folio in the
++ * page cache.  If folios are added to or removed from the page cache
++ * while this is running, they may or may not be found by this call.
++ *
++ * Return: The number of folios which were found.
++ * We also update @start to index the next folio for the traversal.
++ */
++unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
++		pgoff_t end, struct folio_batch *fbatch)
++{
++	XA_STATE(xas, &mapping->i_pages, *start);
++	struct folio *folio;
 +
-+		folio_lock(folio);
-+		dfolio = filemap_lock_folio(dmap, index);
-+		if (dfolio) {
-+			/* overwrite existing folio in the destination cache */
-+			WARN_ON(folio_test_dirty(dfolio));
-+			nilfs_copy_page(&dfolio->page, &folio->page, 0);
-+			folio_unlock(dfolio);
-+			folio_put(dfolio);
-+			/* Do we not need to remove folio from smap here? */
- 		} else {
--			struct page *p;
-+			struct folio *f;
- 
--			/* move the page to the destination cache */
-+			/* move the folio to the destination cache */
- 			xa_lock_irq(&smap->i_pages);
--			p = __xa_erase(&smap->i_pages, offset);
--			WARN_ON(page != p);
-+			f = __xa_erase(&smap->i_pages, index);
-+			WARN_ON(folio != f);
- 			smap->nrpages--;
- 			xa_unlock_irq(&smap->i_pages);
- 
- 			xa_lock_irq(&dmap->i_pages);
--			p = __xa_store(&dmap->i_pages, offset, page, GFP_NOFS);
--			if (unlikely(p)) {
-+			f = __xa_store(&dmap->i_pages, index, folio, GFP_NOFS);
-+			if (unlikely(f)) {
- 				/* Probably -ENOMEM */
--				page->mapping = NULL;
--				put_page(page);
-+				folio->mapping = NULL;
-+				folio_put(folio);
- 			} else {
--				page->mapping = dmap;
-+				folio->mapping = dmap;
- 				dmap->nrpages++;
--				if (PageDirty(page))
--					__xa_set_mark(&dmap->i_pages, offset,
-+				if (folio_test_dirty(folio))
-+					__xa_set_mark(&dmap->i_pages, index,
- 							PAGECACHE_TAG_DIRTY);
- 			}
- 			xa_unlock_irq(&dmap->i_pages);
- 		}
--		unlock_page(page);
-+		folio_unlock(folio);
- 	}
--	pagevec_release(&pvec);
-+	folio_batch_release(&fbatch);
- 	cond_resched();
- 
- 	goto repeat;
++	rcu_read_lock();
++	while ((folio = find_get_entry(&xas, end, XA_PRESENT)) != NULL) {
++		/* Skip over shadow, swap and DAX entries */
++		if (xa_is_value(folio))
++			continue;
++		if (!folio_batch_add(fbatch, folio)) {
++			*start = folio->index + folio_nr_pages(folio);
++			goto out;
++		}
++	}
++
++	/*
++	 * We come here when there is no page beyond @end. We take care to not
++	 * overflow the index @start as it confuses some of the callers. This
++	 * breaks the iteration when there is a page at index -1 but that is
++	 * already broken anyway.
++	 */
++	if (end == (pgoff_t)-1)
++		*start = (pgoff_t)-1;
++	else
++		*start = end + 1;
++out:
++	rcu_read_unlock();
++
++	return folio_batch_count(fbatch);
++}
++EXPORT_SYMBOL(filemap_get_folios);
++
+ static inline
+ bool folio_more_pages(struct folio *folio, pgoff_t index, pgoff_t max)
+ {
 -- 
 2.35.1
 
