@@ -1,96 +1,85 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] nilfs2: Fix some kernel-doc comments
-Date: Wed, 11 May 2022 22:38:36 +0900
-Message-ID: <1652276316-7791-1-git-send-email-konishi.ryusuke@gmail.com>
+From: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: [PATCH 03/10] ext4: Convert mpage_release_unused_pages() to use filemap_get_folios()
+Date: Sun,  5 Jun 2022 20:38:47 +0100
+Message-ID: <20220605193854.2371230-4-willy@infradead.org>
+References: <20220605193854.2371230-1-willy@infradead.org>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=from:to:cc:subject:date:message-id;
-        bh=jsRV8EvMOtUfJsgLKEp/CDjMrcTGRjbK7SqrPRT4roE=;
-        b=hqvlJxq9PAR5+noe0CxheCXcFPfVtVGDqaiEGYE94YokujbrehQTT7oHQ74ftn3YaA
-         7yHJwGUtm76af2ozPbSrExtHWwQXisy2UFTIGtQ3yn6PmKZ/yUWONEt8YZz6FFevGwf0
-         AI3+I1mE51loi5LF4VH2qJxFHmz1ZiI+YgrQTmqPOEoJxTje7cC54RLotlocuQoi95C8
-         vxchaX4SaqvDP5cuB6MKfCR8HCu82At6+MEBYocGMUAXMePgdPPBF7oYmR/XNQCAIQDn
-         SCpVc7epYS8pZhvVKlw/dBDiMcqkzUGqv4L+ae/+E6hqqZ1WU3/CdJVMPnotLAN9OqM7
-         ZUXQ==
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=7zHJFf7s+ZSx87nHg6Bs72jjNt/zTHbg4PZc0KhFNBI=; b=EYXV63i9/CEOzD0nHMe1OQHYDc
+        mVCuEz0iq05DzWOTfwUUXon7lLclyJcGJZDFVFf36KaefdWNV0pHzAWE/juTBOh3LmOa6/GHAbwsA
+        j9SKPw7wOEy++DynzZkxdw6cKJT5aOgxtQMtWaAQNIKZNtcW6JUvraw6AebVxfjYl0uWLN4Tnkrf1
+        g5r1qFvxh5lUydZ/EqFXJtmm4X6GU4Pvr6z+zZzlpoy3rKdSu3dVWHKmxHNTzyLs4u7zgx7YRImNZ
+        s12tQFfwrO2lznSTczeoD//K1wj12QguV4NYS7DRw7Y1XFPPUFJTnVvqq+s0OPozePCioZdM8Nwv2
+        JJEs8DoA==;
+In-Reply-To: <20220605193854.2371230-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
-MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Yang Li <yang.lee-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+If the folio is large, it may overlap the beginning or end of the
+unused range.  If it does, we need to avoid invalidating it.
 
-The description of @flags in nilfs_dirty_inode() kernel-doc
-comment is missing, and some functions had kernel-doc that
-used a hash instead of a colon to separate the parameter
-name from the one line description.
-
-Fix them to remove some warnings found by running scripts/kernel-doc,
-which is caused by using 'make W=1'.
-
-fs/nilfs2/inode.c:73: warning: Function parameter or member 'inode' not
-described in 'nilfs_get_block'
-fs/nilfs2/inode.c:73: warning: Function parameter or member 'blkoff' not
-described in 'nilfs_get_block'
-fs/nilfs2/inode.c:73: warning: Function parameter or member 'bh_result'
-not described in 'nilfs_get_block'
-fs/nilfs2/inode.c:73: warning: Function parameter or member 'create' not
-described in 'nilfs_get_block'
-fs/nilfs2/inode.c:145: warning: Function parameter or member 'file' not
-described in 'nilfs_readpage'
-fs/nilfs2/inode.c:145: warning: Function parameter or member 'page' not
-described in 'nilfs_readpage'
-fs/nilfs2/inode.c:968: warning: Function parameter or member 'flags' not
-described in 'nilfs_dirty_inode'
-
-Link: https://lkml.kernel.org/r/20220324024215.63479-1-yang.lee-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org
-Reported-by: Abaci Robot <abaci-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-Signed-off-by: Yang Li <yang.lee-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 ---
- fs/nilfs2/inode.c | 13 +++++++------
- 1 file changed, 7 insertions(+), 6 deletions(-)
+ fs/ext4/inode.c | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 6045cea21f52..6a00cf324cbd 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -63,10 +63,10 @@ void nilfs_inode_sub_blocks(struct inode *inode, int n)
- 
- /**
-  * nilfs_get_block() - get a file block on the filesystem (callback function)
-- * @inode - inode struct of the target file
-- * @blkoff - file block number
-- * @bh_result - buffer head to be mapped on
-- * @create - indicate whether allocating the block or not when it has not
-+ * @inode: inode struct of the target file
-+ * @blkoff: file block number
-+ * @bh_result: buffer head to be mapped on
-+ * @create: indicate whether allocating the block or not when it has not
-  *      been allocated yet.
-  *
-  * This function does not issue actual read request of the specified data
-@@ -142,8 +142,8 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
- /**
-  * nilfs_readpage() - implement readpage() method of nilfs_aops {}
-  * address_space_operations.
-- * @file - file struct of the file to be read
-- * @page - the page to be read
-+ * @file: file struct of the file to be read
-+ * @page: the page to be read
-  */
- static int nilfs_readpage(struct file *file, struct page *page)
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 3dce7d058985..32a7f5e024d6 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -1554,9 +1554,9 @@ struct mpage_da_data {
+ static void mpage_release_unused_pages(struct mpage_da_data *mpd,
+ 				       bool invalidate)
  {
-@@ -1088,6 +1088,7 @@ int __nilfs_mark_inode_dirty(struct inode *inode, int flags)
- /**
-  * nilfs_dirty_inode - reflect changes on given inode to an inode block.
-  * @inode: inode of the file to be registered.
-+ * @flags: flags to determine the dirty state of the inode
-  *
-  * nilfs_dirty_inode() loads a inode block containing the specified
-  * @inode and copies data from a nilfs_inode to a corresponding inode
+-	int nr_pages, i;
++	unsigned nr, i;
+ 	pgoff_t index, end;
+-	struct pagevec pvec;
++	struct folio_batch fbatch;
+ 	struct inode *inode = mpd->inode;
+ 	struct address_space *mapping = inode->i_mapping;
+ 
+@@ -1574,15 +1574,18 @@ static void mpage_release_unused_pages(struct mpage_da_data *mpd,
+ 		ext4_es_remove_extent(inode, start, last - start + 1);
+ 	}
+ 
+-	pagevec_init(&pvec);
++	folio_batch_init(&fbatch);
+ 	while (index <= end) {
+-		nr_pages = pagevec_lookup_range(&pvec, mapping, &index, end);
+-		if (nr_pages == 0)
++		nr = filemap_get_folios(mapping, &index, end, &fbatch);
++		if (nr == 0)
+ 			break;
+-		for (i = 0; i < nr_pages; i++) {
+-			struct page *page = pvec.pages[i];
+-			struct folio *folio = page_folio(page);
++		for (i = 0; i < nr; i++) {
++			struct folio *folio = fbatch.folios[i];
+ 
++			if (folio->index < mpd->first_page)
++				continue;
++			if (folio->index + folio_nr_pages(folio) - 1 > end)
++				continue;
+ 			BUG_ON(!folio_test_locked(folio));
+ 			BUG_ON(folio_test_writeback(folio));
+ 			if (invalidate) {
+@@ -1594,7 +1597,7 @@ static void mpage_release_unused_pages(struct mpage_da_data *mpd,
+ 			}
+ 			folio_unlock(folio);
+ 		}
+-		pagevec_release(&pvec);
++		folio_batch_release(&fbatch);
+ 	}
+ }
+ 
 -- 
-1.8.3.1
+2.35.1
 
