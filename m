@@ -1,7 +1,7 @@
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 10/10] filemap: Remove find_get_pages_range() and associated functions
-Date: Sun,  5 Jun 2022 20:38:54 +0100
-Message-ID: <20220605193854.2371230-11-willy@infradead.org>
+Subject: [PATCH 02/10] buffer: Convert clean_bdev_aliases() to use filemap_get_folios()
+Date: Sun,  5 Jun 2022 20:38:46 +0100
+Message-ID: <20220605193854.2371230-3-willy@infradead.org>
 References: <20220605193854.2371230-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -10,175 +10,85 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=kW7acvpugaZzYgKpNVxP3YXlqqo8ej9HniApAt9C7Wk=; b=GayB5dkNyETT1aj143hZpJ9xJr
-        2W3PmmqCmdsuLmQY9SEJ2F5XCz/p7+bPpCYBl4Z5FqoKlX63+mesk72QIxc8GbTFN6Vj7N693OPSz
-        EAzmfYVOvCExzpQVT6Eo/3ppcpw0dDWOCBIJT0J9+VT3SAskMmWebD7iZwtwga09wxGXdZq+DsWH5
-        zr7rRtR8Ot38QThbkmEFP5sH8mKV2McSI3M5hohoBkIJ5y1yhfwz8O//gZN4YDvKQv5lqJ1I98SFm
-        mt+aJZdCZBveBW7dWweDqSqXxJAfQ3m2/dVOOj384TYkN3SRcXmxaAndo0qADxxP6/AoDc9ozluPC
-        6SRvx5Ow==;
+        bh=qbG5jYA5/B/9NK52X0Zwpy+RVhS8Khdm3bEIuVIcSSs=; b=dOOkwE/qwu6ai6SUG6KU2Tcj1b
+        tYf86pT1eVKho3dRG7hvwfX/ICj+XRb4tRZDY8EXwKCl7ilsNUd9anX0RT70ecMt1/vbB4uTsJa03
+        6G9046ewtZLLSDSY86dJSRTdn3qjPyrzchTDI7Vi8EL0DNHGZ/8j/SWIP6c9Huez/h5GoE/7d8YU3
+        sKyP6kBMp9MY/fjj7QQgCy9/z7ux3TGP37ac4Purw7SgOVkW3wBetmcl1SZADajRYm/kr0rUaF6vt
+        VdvVDgkAGQvgMjThr4db/KHBEvWcsMQrBgqzAprcRIAtIkegr3AoYkWgpMhBM6RcwtgML5fjs8gL0
+        j/U8tA5A==;
 In-Reply-To: <20220605193854.2371230-1-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-fsdevel@vger.kernel.org
 Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-nilfs@vger.kernel.org
 
-All callers of find_get_pages_range(), pagevec_lookup_range() and
-pagevec_lookup() have now been removed.
+Use a folio throughout this function.
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- include/linux/pagemap.h |  3 --
- include/linux/pagevec.h | 10 ------
- mm/filemap.c            | 67 -----------------------------------------
- mm/swap.c               | 29 ------------------
- 4 files changed, 109 deletions(-)
+ fs/buffer.c | 26 +++++++++++++-------------
+ 1 file changed, 13 insertions(+), 13 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 50e57b2d845f..1caccb9f99aa 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -720,9 +720,6 @@ static inline struct page *find_subpage(struct page *head, pgoff_t index)
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 898c7f301b1b..276769d3715a 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -1604,7 +1604,7 @@ void clean_bdev_aliases(struct block_device *bdev, sector_t block, sector_t len)
+ {
+ 	struct inode *bd_inode = bdev->bd_inode;
+ 	struct address_space *bd_mapping = bd_inode->i_mapping;
+-	struct pagevec pvec;
++	struct folio_batch fbatch;
+ 	pgoff_t index = block >> (PAGE_SHIFT - bd_inode->i_blkbits);
+ 	pgoff_t end;
+ 	int i, count;
+@@ -1612,24 +1612,24 @@ void clean_bdev_aliases(struct block_device *bdev, sector_t block, sector_t len)
+ 	struct buffer_head *head;
  
- unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
- 		pgoff_t end, struct folio_batch *fbatch);
--unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
--			pgoff_t end, unsigned int nr_pages,
--			struct page **pages);
- unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
- 			       unsigned int nr_pages, struct page **pages);
- unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
-diff --git a/include/linux/pagevec.h b/include/linux/pagevec.h
-index 67b1246f136b..6649154a2115 100644
---- a/include/linux/pagevec.h
-+++ b/include/linux/pagevec.h
-@@ -27,16 +27,6 @@ struct pagevec {
+ 	end = (block + len - 1) >> (PAGE_SHIFT - bd_inode->i_blkbits);
+-	pagevec_init(&pvec);
+-	while (pagevec_lookup_range(&pvec, bd_mapping, &index, end)) {
+-		count = pagevec_count(&pvec);
++	folio_batch_init(&fbatch);
++	while (filemap_get_folios(bd_mapping, &index, end, &fbatch)) {
++		count = folio_batch_count(&fbatch);
+ 		for (i = 0; i < count; i++) {
+-			struct page *page = pvec.pages[i];
++			struct folio *folio = fbatch.folios[i];
  
- void __pagevec_release(struct pagevec *pvec);
- void __pagevec_lru_add(struct pagevec *pvec);
--unsigned pagevec_lookup_range(struct pagevec *pvec,
--			      struct address_space *mapping,
--			      pgoff_t *start, pgoff_t end);
--static inline unsigned pagevec_lookup(struct pagevec *pvec,
--				      struct address_space *mapping,
--				      pgoff_t *start)
--{
--	return pagevec_lookup_range(pvec, mapping, start, (pgoff_t)-1);
--}
--
- unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
- 		struct address_space *mapping, pgoff_t *index, pgoff_t end,
- 		xa_mark_t tag);
-diff --git a/mm/filemap.c b/mm/filemap.c
-index ea4145b7a84c..340ccb37f6b6 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2192,73 +2192,6 @@ bool folio_more_pages(struct folio *folio, pgoff_t index, pgoff_t max)
- 	return index < folio->index + folio_nr_pages(folio) - 1;
- }
- 
--/**
-- * find_get_pages_range - gang pagecache lookup
-- * @mapping:	The address_space to search
-- * @start:	The starting page index
-- * @end:	The final page index (inclusive)
-- * @nr_pages:	The maximum number of pages
-- * @pages:	Where the resulting pages are placed
-- *
-- * find_get_pages_range() will search for and return a group of up to @nr_pages
-- * pages in the mapping starting at index @start and up to index @end
-- * (inclusive).  The pages are placed at @pages.  find_get_pages_range() takes
-- * a reference against the returned pages.
-- *
-- * The search returns a group of mapping-contiguous pages with ascending
-- * indexes.  There may be holes in the indices due to not-present pages.
-- * We also update @start to index the next page for the traversal.
-- *
-- * Return: the number of pages which were found. If this number is
-- * smaller than @nr_pages, the end of specified range has been
-- * reached.
-- */
--unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
--			      pgoff_t end, unsigned int nr_pages,
--			      struct page **pages)
--{
--	XA_STATE(xas, &mapping->i_pages, *start);
--	struct folio *folio;
--	unsigned ret = 0;
--
--	if (unlikely(!nr_pages))
--		return 0;
--
--	rcu_read_lock();
--	while ((folio = find_get_entry(&xas, end, XA_PRESENT))) {
--		/* Skip over shadow, swap and DAX entries */
--		if (xa_is_value(folio))
--			continue;
--
--again:
--		pages[ret] = folio_file_page(folio, xas.xa_index);
--		if (++ret == nr_pages) {
--			*start = xas.xa_index + 1;
--			goto out;
--		}
--		if (folio_more_pages(folio, xas.xa_index, end)) {
--			xas.xa_index++;
--			folio_ref_inc(folio);
--			goto again;
--		}
--	}
--
--	/*
--	 * We come here when there is no page beyond @end. We take care to not
--	 * overflow the index @start as it confuses some of the callers. This
--	 * breaks the iteration when there is a page at index -1 but that is
--	 * already broken anyway.
--	 */
--	if (end == (pgoff_t)-1)
--		*start = (pgoff_t)-1;
--	else
--		*start = end + 1;
--out:
--	rcu_read_unlock();
--
--	return ret;
--}
--
- /**
-  * find_get_pages_contig - gang contiguous pagecache lookup
-  * @mapping:	The address_space to search
-diff --git a/mm/swap.c b/mm/swap.c
-index f3922a96b2e9..f65e284247b2 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -1086,35 +1086,6 @@ void folio_batch_remove_exceptionals(struct folio_batch *fbatch)
- 	fbatch->nr = j;
- }
- 
--/**
-- * pagevec_lookup_range - gang pagecache lookup
-- * @pvec:	Where the resulting pages are placed
-- * @mapping:	The address_space to search
-- * @start:	The starting page index
-- * @end:	The final page index
-- *
-- * pagevec_lookup_range() will search for & return a group of up to PAGEVEC_SIZE
-- * pages in the mapping starting from index @start and upto index @end
-- * (inclusive).  The pages are placed in @pvec.  pagevec_lookup() takes a
-- * reference against the pages in @pvec.
-- *
-- * The search returns a group of mapping-contiguous pages with ascending
-- * indexes.  There may be holes in the indices due to not-present pages. We
-- * also update @start to index the next page for the traversal.
-- *
-- * pagevec_lookup_range() returns the number of pages which were found. If this
-- * number is smaller than PAGEVEC_SIZE, the end of specified range has been
-- * reached.
-- */
--unsigned pagevec_lookup_range(struct pagevec *pvec,
--		struct address_space *mapping, pgoff_t *start, pgoff_t end)
--{
--	pvec->nr = find_get_pages_range(mapping, start, end, PAGEVEC_SIZE,
--					pvec->pages);
--	return pagevec_count(pvec);
--}
--EXPORT_SYMBOL(pagevec_lookup_range);
+-			if (!page_has_buffers(page))
++			if (!folio_buffers(folio))
+ 				continue;
+ 			/*
+-			 * We use page lock instead of bd_mapping->private_lock
++			 * We use folio lock instead of bd_mapping->private_lock
+ 			 * to pin buffers here since we can afford to sleep and
+ 			 * it scales better than a global spinlock lock.
+ 			 */
+-			lock_page(page);
+-			/* Recheck when the page is locked which pins bhs */
+-			if (!page_has_buffers(page))
++			folio_lock(folio);
++			/* Recheck when the folio is locked which pins bhs */
++			head = folio_buffers(folio);
++			if (!head)
+ 				goto unlock_page;
+-			head = page_buffers(page);
+ 			bh = head;
+ 			do {
+ 				if (!buffer_mapped(bh) || (bh->b_blocknr < block))
+@@ -1643,9 +1643,9 @@ void clean_bdev_aliases(struct block_device *bdev, sector_t block, sector_t len)
+ 				bh = bh->b_this_page;
+ 			} while (bh != head);
+ unlock_page:
+-			unlock_page(page);
++			folio_unlock(folio);
+ 		}
+-		pagevec_release(&pvec);
++		folio_batch_release(&fbatch);
+ 		cond_resched();
+ 		/* End of range already reached? */
+ 		if (index > end || !index)
+-- 
+2.35.1
+
