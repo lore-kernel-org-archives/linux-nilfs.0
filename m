@@ -1,43 +1,40 @@
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 05/10] f2fs: Convert
- f2fs_invalidate_compress_pages() to use filemap_get_folios()
-Date: Sun,  5 Jun 2022 20:38:49 +0100
-Message-ID: <20220605193854.2371230-6-willy@infradead.org>
-References: <20220605193854.2371230-1-willy@infradead.org>
+Subject: [PATCH 00/10] Convert to filemap_get_folios()
+Date: Sun,  5 Jun 2022 20:38:44 +0100
+Message-ID: <20220605193854.2371230-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:References:
- In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=4+VTXobun92H06BwkM9sboSswxKOXWma+MeYkEepBgA=; b=bpRTQRgt1bj+yWok8AnwA/my+8
- oThKV6RN+O+M/y8vveTJR7d0e2/RYBxaZ8l8KD3yRe0SUfjyYQxxTQ/0MJWQR3Cw/i9Mccha5TiGC
- wu6VJEkJRhBrBLjQyS6jIlUwWFA77nb6y9bvkGzr3yCfGtHyUqM1LOW30OgJP48F2Q6w=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:Message-Id:
  Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=4+VTXobun92H06BwkM9sboSswxKOXWma+MeYkEepBgA=; b=SjX9l6aM9NH6n+smcCa9JYEZf7
- ojR0CGoMkdkOz2SrhhOuFMecgH2a3LrXrRxqLy5pVwFaR1n2Cf//sS8C+cd9hiqETPvR0vDE0EBJ3
- PPctQQ5BinOIwO1/cdkMgXUuTqu9ijnDAyt/5xg2+HiLEKs5Z1FqgvI0whRAkSkWHp4c=;
+ :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=pFaDJUkNgKV/oU+nKufi51KbavXmhswow0vSfNYzKrI=; b=muGIKy79Yxd6GBgw0gztDFQ/yS
+ eE6DzXTQlEMfF20rELDBFA1RKrLX9oOXGbeDf8W/n3YdPYF0fARj9Jr2tCNW30H0uZSQncqCb4NfL
+ F1vEkSuqO6TtVdcY340P9n2DdKnzQ1uWMmWwLi7LJox7oR3KJKk+53yuQ6xP4wWGlQdc=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:MIME-Version:Message-Id:Date:Subject:Cc:To:From
+ :Sender:Reply-To:Content-Type:Content-ID:Content-Description:Resent-Date:
+ Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:
+ References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:
+ List-Owner:List-Archive; bh=pFaDJUkNgKV/oU+nKufi51KbavXmhswow0vSfNYzKrI=; b=T
+ Xe/VyYEj72m2eh79ZFv3+ZZCBr1Xj8RofKeYrNrdUndiovmQFKWZjZH0jeXMWL+Ccz67lpB44Eu4G
+ vlfErOYaCNaIy/gSaAW96w3c4q4uTypN8+GV1SBctyAeHy/yyyJPuwdPcHih3zI+lxZ1Nz47VJkBG
+ YLitxxhvAXumNHqM=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
- References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
- Content-Type:Content-ID:Content-Description;
- bh=4+VTXobun92H06BwkM9sboSswxKOXWma+MeYkEepBgA=; b=RQCVcbFFYG/IwPkZ92IOtlvbMm
- az7RIzZuEXd7sNL2U7G8LPCRngD4SynAZcKmm6Z95io0HrbGL0vnB7fjGo7Cxu4ZBw1ODBrU0UG2e
- HxKcshRvctwxq6I6s6/MK32FsYRAC2G0u/Hip2HcdGDzdI618anISANI/MA2khqP9eLitiytzdMDB
- ct6KPLFs4aDjPFKc8Pkgohr+9RyESHl2CJp7vIumKABXwMvMmL913gy1dYEy+Y+5rn3L6A6SydWN3
- 3u72ARdSAix5xot7Gj5q+zC981acWBZoknB7PiY9jRjVbOJiq7giOgLEaPV78mOWST9iLtfFjKdrU
- TBXjCXKw==;
-In-Reply-To: <20220605193854.2371230-1-willy@infradead.org>
+ Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+ Content-Description:In-Reply-To:References;
+ bh=pFaDJUkNgKV/oU+nKufi51KbavXmhswow0vSfNYzKrI=; b=IQQ3chWAAqod3iNOvZPz+sg3JL
+ Hk+ApUMeqh7NT3g6IWWJNzgueSDKfvvNhBx6utIRkRDW0gX3AiQfvMXnwsyaJ/64KiwRfHwjSy/dv
+ 8J6uezBFHQnTUj8EMV7+h4tSlGa2WN04lIzx/EyXL84mDYJOn+khSbti+8XKflhn9L4r/WhR6xbM7
+ +MZ9IYhStDA3yihxRhpkHHC+OXeBpvNCGWk5fEeGTb1H9CRJG5lEjoY1+jSkJw8hVgtSw7cxw6GvV
+ KZogb0QToLdgR6kEf13Hcr4syZG2xfRXsnqeCO+zpSb6FDBtT5Fx6Rp6rYpWkgGY3OjWTTkHnJk29
+ kJYadcSQ==;
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -50,77 +47,39 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-ext4@vger.kernel.org
 
-Convert this function to use folios throughout.
+This patch series removes find_get_pages_range(), pagevec_lookup()
+and pagevec_lookup_range(), converting all callers to use the new
+filemap_get_folios().  I've only run xfstests over ext4 ... some other
+testing might be appropriate.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
----
- fs/f2fs/compress.c | 35 +++++++++++++++--------------------
- 1 file changed, 15 insertions(+), 20 deletions(-)
+Matthew Wilcox (Oracle) (10):
+  filemap: Add filemap_get_folios()
+  buffer: Convert clean_bdev_aliases() to use filemap_get_folios()
+  ext4: Convert mpage_release_unused_pages() to use filemap_get_folios()
+  ext4: Convert mpage_map_and_submit_buffers() to use
+    filemap_get_folios()
+  f2fs: Convert f2fs_invalidate_compress_pages() to use
+    filemap_get_folios()
+  hugetlbfs: Convert remove_inode_hugepages() to use
+    filemap_get_folios()
+  nilfs2: Convert nilfs_copy_back_pages() to use filemap_get_folios()
+  vmscan: Add check_move_unevictable_folios()
+  shmem: Convert shmem_unlock_mapping() to use filemap_get_folios()
+  filemap: Remove find_get_pages_range() and associated functions
 
-diff --git a/fs/f2fs/compress.c b/fs/f2fs/compress.c
-index 24824cd96f36..009e6c519e98 100644
---- a/fs/f2fs/compress.c
-+++ b/fs/f2fs/compress.c
-@@ -1832,45 +1832,40 @@ bool f2fs_load_compressed_page(struct f2fs_sb_info *sbi, struct page *page,
- void f2fs_invalidate_compress_pages(struct f2fs_sb_info *sbi, nid_t ino)
- {
- 	struct address_space *mapping = sbi->compress_inode->i_mapping;
--	struct pagevec pvec;
-+	struct folio_batch fbatch;
- 	pgoff_t index = 0;
- 	pgoff_t end = MAX_BLKADDR(sbi);
- 
- 	if (!mapping->nrpages)
- 		return;
- 
--	pagevec_init(&pvec);
-+	folio_batch_init(&fbatch);
- 
- 	do {
--		unsigned int nr_pages;
--		int i;
-+		unsigned int nr, i;
- 
--		nr_pages = pagevec_lookup_range(&pvec, mapping,
--						&index, end - 1);
--		if (!nr_pages)
-+		nr = filemap_get_folios(mapping, &index, end - 1, &fbatch);
-+		if (!nr)
- 			break;
- 
--		for (i = 0; i < nr_pages; i++) {
--			struct page *page = pvec.pages[i];
--
--			if (page->index > end)
--				break;
-+		for (i = 0; i < nr; i++) {
-+			struct folio *folio = fbatch.folios[i];
- 
--			lock_page(page);
--			if (page->mapping != mapping) {
--				unlock_page(page);
-+			folio_lock(folio);
-+			if (folio->mapping != mapping) {
-+				folio_unlock(folio);
- 				continue;
- 			}
- 
--			if (ino != get_page_private_data(page)) {
--				unlock_page(page);
-+			if (ino != get_page_private_data(&folio->page)) {
-+				folio_unlock(folio);
- 				continue;
- 			}
- 
--			generic_error_remove_page(mapping, page);
--			unlock_page(page);
-+			generic_error_remove_page(mapping, &folio->page);
-+			folio_unlock(folio);
- 		}
--		pagevec_release(&pvec);
-+		folio_batch_release(&fbatch);
- 		cond_resched();
- 	} while (index < end);
- }
+ fs/buffer.c             | 26 +++++++--------
+ fs/ext4/inode.c         | 40 ++++++++++++-----------
+ fs/f2fs/compress.c      | 35 +++++++++-----------
+ fs/hugetlbfs/inode.c    | 44 ++++++++-----------------
+ fs/nilfs2/page.c        | 60 +++++++++++++++++-----------------
+ include/linux/pagemap.h |  5 ++-
+ include/linux/pagevec.h | 10 ------
+ include/linux/swap.h    |  3 +-
+ mm/filemap.c            | 72 +++++++++++++++++------------------------
+ mm/shmem.c              | 13 ++++----
+ mm/swap.c               | 29 -----------------
+ mm/vmscan.c             | 55 ++++++++++++++++++-------------
+ 12 files changed, 166 insertions(+), 226 deletions(-)
+
 -- 
 2.35.1
