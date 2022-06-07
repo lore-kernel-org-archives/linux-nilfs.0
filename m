@@ -1,62 +1,39 @@
-From: Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 00/10] Convert to filemap_get_folios()
-Date: Tue, 7 Jun 2022 13:37:16 +0200
-Message-ID: <20220607113716.aec2o7onzu3re2o4@wittgenstein>
-References: <20220605193854.2371230-1-willy@infradead.org>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Subject: Re: [PATCH 07/10] nilfs2: Convert nilfs_copy_back_pages() to use filemap_get_folios()
+Date: Wed, 8 Jun 2022 01:10:53 +0900
+Message-ID: <CAKFNMonLF+nEs7xi0t=Wy4tf7fttLZCL4v+AZGjDWvSYqmZiaw@mail.gmail.com>
+References: <20220605193854.2371230-1-willy@infradead.org> <20220605193854.2371230-8-willy@infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1654601841;
-        bh=8ssLmPCQc0kBEOnMpM83QxMMmjw3G4wZmE/Q52LHRZ0=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=ulrnZ3VWWAYqxXyKMLlRANtahVN2YqNjS+95EKiyA31F59Kxv56ZxZvJeFNL2v8u2
-         HARW/OKmP9vrlxSdZNnaH3ij+7H8UlnfzOCQ1oxjz9vjsiisWeP8YGHgOUWaKE3RXJ
-         0Qgq8LuNiEDX/vIkZ2FV2oYFDoYmwavNlOFsB8uPO+joCcntqxsuAWdrO2LcLkXq03
-         5jcBhpDEojRYyn7qDO7vem729Q325Cpl+yLlRoju9/CWrk0f33UnA9Hak8u2vJNDYY
-         93upScTvvcZE6v6bgLLYedRNMRE70uLsyv1JUV94v403BBEPVF5OmKnH6DlbYWYvUg
-         /f4lOE8iShQ3Q==
-Content-Disposition: inline
-In-Reply-To: <20220605193854.2371230-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=2Gf/LMdzQibmA3CQFIu++5apIgfZQUBK5B+qLCJdcj4=;
+        b=UlIOhhRMP5WcJQ/zc/OiuB+lJTkLdYOOC2sp32tUMTA/O3i/rkc1ZAr+Jnb1VYWskV
+         u05p+kDGel0dChhHcNMQJ3nWK9QM/AusSmrLoilAGAMq8P1Cg/bOJoeexeiBsy2GTk2F
+         xVz0A6K871QbrFfNY0huAGfUWcdkRyXdofetnbhEzKFP4IxOMyQ0BEUlVV/2c2qB5QcA
+         555PBTn0EZRhixi/yvufl6vbsxbyCY9hXpoiDGn8etsqPoI/JAhbz7JMw04rLSzr9ZHj
+         Urd+yKShZEUZEf3WOAkzCDqqZ597u7goZccNJETiU8vkNdpHhHzGB9Qr5r5SMSwm00qh
+         DfTg==
+In-Reply-To: <20220605193854.2371230-8-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, Linux MM <linux-mm@kvack.org>, linux-nilfs <linux-nilfs@vger.kernel.org>
 
-On Sun, Jun 05, 2022 at 08:38:44PM +0100, Matthew Wilcox wrote:
-> This patch series removes find_get_pages_range(), pagevec_lookup()
-> and pagevec_lookup_range(), converting all callers to use the new
-> filemap_get_folios().  I've only run xfstests over ext4 ... some other
-> testing might be appropriate.
-> 
-> Matthew Wilcox (Oracle) (10):
->   filemap: Add filemap_get_folios()
->   buffer: Convert clean_bdev_aliases() to use filemap_get_folios()
->   ext4: Convert mpage_release_unused_pages() to use filemap_get_folios()
->   ext4: Convert mpage_map_and_submit_buffers() to use
->     filemap_get_folios()
->   f2fs: Convert f2fs_invalidate_compress_pages() to use
->     filemap_get_folios()
->   hugetlbfs: Convert remove_inode_hugepages() to use
->     filemap_get_folios()
->   nilfs2: Convert nilfs_copy_back_pages() to use filemap_get_folios()
->   vmscan: Add check_move_unevictable_folios()
->   shmem: Convert shmem_unlock_mapping() to use filemap_get_folios()
->   filemap: Remove find_get_pages_range() and associated functions
-> 
->  fs/buffer.c             | 26 +++++++--------
->  fs/ext4/inode.c         | 40 ++++++++++++-----------
->  fs/f2fs/compress.c      | 35 +++++++++-----------
->  fs/hugetlbfs/inode.c    | 44 ++++++++-----------------
->  fs/nilfs2/page.c        | 60 +++++++++++++++++-----------------
->  include/linux/pagemap.h |  5 ++-
->  include/linux/pagevec.h | 10 ------
->  include/linux/swap.h    |  3 +-
->  mm/filemap.c            | 72 +++++++++++++++++------------------------
->  mm/shmem.c              | 13 ++++----
->  mm/swap.c               | 29 -----------------
->  mm/vmscan.c             | 55 ++++++++++++++++++-------------
->  12 files changed, 166 insertions(+), 226 deletions(-)
+On Mon, Jun 6, 2022 at 1:00 PM Matthew Wilcox (Oracle) wrote:
+>
+> Use folios throughout.
+>
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> ---
+>  fs/nilfs2/page.c | 60 ++++++++++++++++++++++++------------------------
+>  1 file changed, 30 insertions(+), 30 deletions(-)
 
-The conversion seems fairly straightforward, so looks good to me.
-Acked-by: Christian Brauner (Microsoft) <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Throughout, looks good to me.   Thank you so much for your great work.
+
+Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+
+Ryusuke Konishi
