@@ -1,10 +1,10 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 08/10] vmscan: Add
- check_move_unevictable_folios()
-Date: Wed, 8 Jun 2022 01:07:32 -0700
-Message-ID: <YqBYxNPu3tLiN5kI@infradead.org>
+Subject: Re: [PATCH 09/10] shmem: Convert shmem_unlock_mapping()
+ to use filemap_get_folios()
+Date: Wed, 8 Jun 2022 01:08:33 -0700
+Message-ID: <YqBZAfkVrhnYDPsK@infradead.org>
 References: <20220605193854.2371230-1-willy@infradead.org>
- <20220605193854.2371230-9-willy@infradead.org>
+ <20220605193854.2371230-10-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,9 +15,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=FHe9QWtfqKLPf3liBV9b4YYysNdz6TJZPv2RlJSFNxo=; b=kHQpC9LElVWi9Vpa8O0DcuU42X
- PsvpYPabFvS26rp1R0NzBV3HliAfbTL3uD1MrHrQio0MHdzXcKFyRMfx9Qx33qu32b6b0U4YLsHte
- TM0sfh4unjvGshvL8mRQXEvOa0wTwRpveTKPDzqIhG1BDI/apXLiP2fCvr7tKneI2NYo=;
+ bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=MNnqrCn8HtMrUfTQA7U9Htr3pW
+ 07tu9vuXI8mp45ac5mw6laOD7JmiHzxydlN+oJQ9ZGZ+NWVG/0VPf4Rf15E0caNgLb9DEBpV/F9MF
+ HnDVkdZEh9QowvumhcnHtjFQ3ILtF/SHjgUOYXFXaj6n8CLuEwQUTXUT7heG8K+irqjU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
@@ -25,21 +25,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=FHe9QWtfqKLPf3liBV9b4YYysNdz6TJZPv2RlJSFNxo=; b=e64ymClBN6QBYl3HP+Fc/LI+lb
- dKg5dJOVDy0CTEodcM6c215j4httbKyYquVnmRnpgzqMJDHnE/JpOqWiG9x6p9qp0fiLnOpoqIxwi
- +5H4Ar7LfUdIhOuQyjH+2zZkAiwMt4j0zNAO/StEHcTcvq+nfemwlM4AWdCzeliF5TSQ=;
+ bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=RQKWo0ERPuLDfwzGIpKVNH+G+A
+ llbZk2N4xbtJHwRj5J3Us1fI2w1M57aFTFj8NQRhbDLwa5X7UNBM2YSUH0bw6OVDXH4Ko8hdai+1T
+ fE6YbQyZsPkw6fP1UHs8rO9IRk8Myh6WPg2Z0JMrPNVo+jLQpeG2DjcfpYkvOEcxJi+s=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
  :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
  Content-Transfer-Encoding:Content-ID:Content-Description;
- bh=FHe9QWtfqKLPf3liBV9b4YYysNdz6TJZPv2RlJSFNxo=; b=rE8eAy8BnhO/uz/cOPnx8UhjAN
- oMvGKU56FernoImgpfLlk3BQh/CFcJRA4pawK69Hf0XfMgy7iNdxfJX1EO/aZC0ILffliqDfLrcv1
- mK9DeJH7OGatXD2YCTu+PsPPGT0W70LT5ii/RbRa1Jdfc1XZU8eOfnFRyejMASzpxhKqQnWsphP9b
- T+QQZKswmqu4Y84dTJy0wevs5sCY40Lii8Swq45uCU+6S053j8cyNLCKL3jVIYDAQThxi54ACP5g+
- ft1Jg5kECbmCdG40aX933ZgsA1UwamOP4geUlHX/USfvpuQaaqivpAgnSN89ea/zPtqMOGHXjCFx6
- OVoTk0Lg==;
+ bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=3cnx77aEV9ed1U61xp/G5ppYoC
+ GQdV19NA5Zjh94mlg39m8oYleQd3p92aWhRHUC787oYI83C10dsGBkQTqFYQWSRoU0jo0nLi/eLGO
+ vc57FWTqxLrP5xWC4eqVu2tcHejLq3rjTqLMB76difj/XFxT2vRLMmoJDzwIBMI0idzEe5CNfbct3
+ FoqeyFA/A6/UM5gI+Ucvh28xIdnWHD/ASL0NNeqV1f5YEeUarH2yfExavYt0iKNs/04JLZI1GhuuU
+ fvaRqMrliicgJ2QrHEokN/B8W3mNReB0m6foXDCuqodWwDTMKkyDAcrXahHQJsfyHJoqLqUvRKoie
+ U7WEme4Q==;
 Content-Disposition: inline
-In-Reply-To: <20220605193854.2371230-9-willy@infradead.org>
+In-Reply-To: <20220605193854.2371230-10-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -52,9 +52,6 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 
-On Sun, Jun 05, 2022 at 08:38:52PM +0100, Matthew Wilcox (Oracle) wrote:
-> Change the guts of check_move_unevictable_pages() over to use folios
-> and add check_move_unevictable_pages() as a wrapper.
+Looks good:
 
-The changes here look fine, but please also add patches for converting
-the two callers (which looks mostly trivial to me).
+Reviewed-by: Christoph Hellwig <hch@lst.de>
