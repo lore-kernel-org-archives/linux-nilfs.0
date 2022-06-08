@@ -1,10 +1,10 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 03/10] ext4: Convert
- mpage_release_unused_pages() to use filemap_get_folios()
-Date: Wed, 8 Jun 2022 01:02:22 -0700
-Message-ID: <YqBXjjkRZsP8K8fO@infradead.org>
+Subject: Re: [PATCH 04/10] ext4: Convert
+ mpage_map_and_submit_buffers() to use filemap_get_folios()
+Date: Wed, 8 Jun 2022 01:03:07 -0700
+Message-ID: <YqBXux0cF90xV80C@infradead.org>
 References: <20220605193854.2371230-1-willy@infradead.org>
- <20220605193854.2371230-4-willy@infradead.org>
+ <20220605193854.2371230-5-willy@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,9 +15,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=SX9n5EnTUOKOzk0atnH01/6aCdLXi/kHksLRZ+/slrg=; b=Bb4UwXowKA3xbvKhip0bsToXdD
- S5/H5eYpcfn0V+FlnEFgVOcsyoIHiN/esWpjLEsd9epxo7AfJ9mMIszI6umXbi5dQy0ZvZ9T1sTXH
- 1J0QOlh3BdcNbW9q/HpFajFhTJAr98kxr2F6NMcLj7k6ckTiB48IcPlQ1uwGka3vpoYI=;
+ bh=Lmlll0xHee/vEiVot8MaIaDnFq94X7SQmNxMGuo2kIg=; b=KKO/nM/KcbiN0Rs5MKO54sVOqG
+ 42GUPuuqF1l+/i3Kh63KbQiuAYdcGuXyChOB4L5U/6AQgd0jbNEOqEm0uxHYkFI9Z2/BH+8UVn4ZV
+ 70kmegFUCtGJjoqByPd+n45e/pPGd1Dul4UvN5s/TR6DQYy/PHUkH0OP8Y5fDIDUcq9A=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
@@ -25,21 +25,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=SX9n5EnTUOKOzk0atnH01/6aCdLXi/kHksLRZ+/slrg=; b=FABiMhGi3hntPlS3gKb+da0zJu
- mm2ntVkG77SeMbyAPIhfDZHfI351O4rCDTdpTDsSzzIvEKbU/0hOXWWDcYGHih+aQe342Crdik8lb
- /2MrZlEbJtM97kxqEYLUhzuiwYghQy2hMmObknc2PX4vP8IptAxmtrcLo1g1iSw3h6w8=;
+ bh=Lmlll0xHee/vEiVot8MaIaDnFq94X7SQmNxMGuo2kIg=; b=Sj2x/wkEvWdZt3H1yW8Icdagca
+ w5U6yWxVHUVkszl3WlPxCpuMjOIifxsvk0MvKnNOKbuppl0Jv4c0f8jwh8+O1w2fULRcSrwNZpRkE
+ VcouldmzErN7SZoRx6ujdWQfA2q2hn6Hfv/yrT2fYDTaxSzfVShXsAcjZF/08ytXzaMo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
  :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
  Content-Transfer-Encoding:Content-ID:Content-Description;
- bh=SX9n5EnTUOKOzk0atnH01/6aCdLXi/kHksLRZ+/slrg=; b=jysUfxHITvm5qME5kby7gEknda
- NniSqrjlYB/5FZ0sOB9SGdPN609Xc7Tio/met/HczsNX9IUlMHrvgiUDv4mHlaFTvBucMZTcxWuFM
- aGqA9GeGAxtC3R6lF2w/B87y6Wk6GgZNyLeH3AxjbiUcPe9vcD+G8iLkjHXT78FVtD6XmTe1cYmlt
- ngowBhuCCZ4lWWbh04Jl3QN6dGjrZt3zoJA55lgwd6zmbPrMu2DmXkzmdU0CAIYcq9FAdHR+U6sjS
- kvj5dDbrm/lmbPQZoKx97x7Y9QNcHlDLf2o8pDHQXCZgt2fdrKxTBoK/16KCB/EAF4EZ/7y1pxpfD
- Fds+rOEQ==;
+ bh=Lmlll0xHee/vEiVot8MaIaDnFq94X7SQmNxMGuo2kIg=; b=K99MhL27rbGpyk6oZoCQHDJStN
+ ATHqNPOPl7fmyyQofTDK54G9VDdXR1JVCTiKCNsyr/ha1NjCveZwfyr+ElXb6XTm4WzMWeGZrNqoP
+ 5YXYRBZ/7Jh9lheCch0n+4CO+bhipsSd9uBl3meB+fpXyr3N/vuS+NureIBbTXMUob/JPzY9Ita3n
+ rPGXBOz7FEXZ8SjNR69uDCDib2RwXZNJiLNaSJtWaPlbu5qnHUXq3m6OFZVDMKd1O9sq9xB+VDKM5
+ Dm2DLmp0am4A0lVr3uXzeX8+FPn7RkWsYdGC0GKaalaGr3v/k6XOaJBNnhuKawVGhybCgpknzNBKc
+ BwrsYkgw==;
 Content-Disposition: inline
-In-Reply-To: <20220605193854.2371230-4-willy@infradead.org>
+In-Reply-To: <20220605193854.2371230-5-willy@infradead.org>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -52,11 +52,9 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 
-On Sun, Jun 05, 2022 at 08:38:47PM +0100, Matthew Wilcox (Oracle) wrote:
-> If the folio is large, it may overlap the beginning or end of the
-> unused range.  If it does, we need to avoid invalidating it.
+On Sun, Jun 05, 2022 at 08:38:48PM +0100, Matthew Wilcox (Oracle) wrote:
+> The called functions all use pages, so just convert back to a page.
 
-It's never going to be larger for ext4, is it?  But either way,
-those precautions looks fine.
+Looks good:
 
 Reviewed-by: Christoph Hellwig <hch@lst.de>
