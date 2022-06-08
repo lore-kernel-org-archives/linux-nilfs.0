@@ -1,39 +1,56 @@
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Subject: Re: [PATCH 07/10] nilfs2: Convert nilfs_copy_back_pages() to use filemap_get_folios()
-Date: Wed, 8 Jun 2022 01:10:53 +0900
-Message-ID: <CAKFNMonLF+nEs7xi0t=Wy4tf7fttLZCL4v+AZGjDWvSYqmZiaw@mail.gmail.com>
-References: <20220605193854.2371230-1-willy@infradead.org> <20220605193854.2371230-8-willy@infradead.org>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 01/10] filemap: Add filemap_get_folios()
+Date: Wed, 8 Jun 2022 01:00:17 -0700
+Message-ID: <YqBXEXvP+5XFPy5N@infradead.org>
+References: <20220605193854.2371230-1-willy@infradead.org>
+ <20220605193854.2371230-2-willy@infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=2Gf/LMdzQibmA3CQFIu++5apIgfZQUBK5B+qLCJdcj4=;
-        b=UlIOhhRMP5WcJQ/zc/OiuB+lJTkLdYOOC2sp32tUMTA/O3i/rkc1ZAr+Jnb1VYWskV
-         u05p+kDGel0dChhHcNMQJ3nWK9QM/AusSmrLoilAGAMq8P1Cg/bOJoeexeiBsy2GTk2F
-         xVz0A6K871QbrFfNY0huAGfUWcdkRyXdofetnbhEzKFP4IxOMyQ0BEUlVV/2c2qB5QcA
-         555PBTn0EZRhixi/yvufl6vbsxbyCY9hXpoiDGn8etsqPoI/JAhbz7JMw04rLSzr9ZHj
-         Urd+yKShZEUZEf3WOAkzCDqqZ597u7goZccNJETiU8vkNdpHhHzGB9Qr5r5SMSwm00qh
-         DfTg==
-In-Reply-To: <20220605193854.2371230-8-willy@infradead.org>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
+ Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=d+p+Fuu7nVu5NyJcP4AQbk6iQA
+ ttJhQc52o6gzuoMMcvzID+pPyYzWbsVwH/tdVEV8627ZJWHM5Huf7DCsYghkgiTUlbvzXgWk/7nbM
+ JKADt0T1zL4UYMwn5CYpZtdoiXo0LMPQEBFyE+kKEOk7jV49qy7avTGXnGT4/JKTyX9E=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
+ :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=UkiWjwmDcLr0yJqzZEsnZrJ/51
+ qOQln6o/Ec/DsuTvuof0XArZeCdoCYo0CJxMjJIVxCr3HtJXJZbD0Wx2Y9RbTHrlwmWIZLR7llnFo
+ G1cHMX2BLGKRH9iS57kBIBo2mi8gW8cwiR5hpO7rlbR4ztcwHoFum7UtFX1ZD4cf/ASc=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+ :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+ Content-Transfer-Encoding:Content-ID:Content-Description;
+ bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=hvz+Evx80lG9r40i9z+oGRLp4W
+ 8d5QtiXjK1Wi5K+rAgs5e9RWwuXib+CjTRQLa9+wd6dJFQHF15dPr8MYUaI+K3MV7s3tE7vT32Wzw
+ UQdPD4SRqMbDh2G76OnXuvYxofMGiFAHa0FY/OVG3WCOXOO7V8XG874agdDWEblJNmm5Ra4Af7wx9
+ ZEtcZH66LWhitPEIzTRNFl8emrHMf+l0FVLUWULpRIALdxuHLyZSiZ2xUsu20KC73dmSxAdJj8sUB
+ FYqcG+9BHK0cs4yL6n3RQsMK2t5/GNRWM8eWV6+hF0fWuUbRybEsChi/qZrCxkDxZqo9ZriIRfJe5
+ n+RteQnQ==;
+Content-Disposition: inline
+In-Reply-To: <20220605193854.2371230-2-willy@infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, Linux MM <linux-mm@kvack.org>, linux-nilfs <linux-nilfs@vger.kernel.org>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 
-On Mon, Jun 6, 2022 at 1:00 PM Matthew Wilcox (Oracle) wrote:
->
-> Use folios throughout.
->
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-> ---
->  fs/nilfs2/page.c | 60 ++++++++++++++++++++++++------------------------
->  1 file changed, 30 insertions(+), 30 deletions(-)
+Looks good:
 
-Throughout, looks good to me.   Thank you so much for your great work.
-
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-
-Ryusuke Konishi
+Reviewed-by: Christoph Hellwig <hch@lst.de>
