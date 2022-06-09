@@ -1,66 +1,45 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH 08/10] vmscan: Add
- check_move_unevictable_folios()
-Date: Wed, 8 Jun 2022 17:32:34 +0100
-Message-ID: <YqDPIv5IgNHK/pJT@casper.infradead.org>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 03/10] ext4: Convert mpage_release_unused_pages() to use
+ filemap_get_folios()
+Date: Wed, 8 Jun 2022 20:55:06 -0700
+Message-ID: <YqFvGgKTyGPxStkx@infradead.org>
 References: <20220605193854.2371230-1-willy@infradead.org>
- <20220605193854.2371230-9-willy@infradead.org>
- <YqBYxNPu3tLiN5kI@infradead.org>
+ <20220605193854.2371230-4-willy@infradead.org>
+ <YqBXjjkRZsP8K8fO@infradead.org>
+ <YqDIIH2d7iu1o7D0@casper.infradead.org>
 Mime-Version: 1.0
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=0YPt1S1jhSTaWf/8ZoCL0bFChcDXSklVsTmgZM2rLiI=; b=Dl8JGvKpB6vphg8GJGusCTANit
+        1GxyGnn679NvRWS0MV6dl/ia8FXbFkazmnr+IDjn5zzr3og7XZfjMLZjWL06OF3evRoMrBFjxFrsx
+        Htg+vfwV+x7T9mmYPRX8P6cJKrK8y0bBndusBU0lXk/KdOK8xByq3REx/zxGsoZUuF/x5DHkNPje8
+        NDEHhrWuv4dfciQdbKDCDBmbUI7HxHBS2K/veQeFd3r7wooBpR0eTx87J+TG8yrH1ANVnPBJkU+b9
+        h1sAP8J3H9vbFRWHN3eOBnx3OSPTyjl+SZp0lSY+nu4GUzBF+V4Qw/fg17+wG32FZfTnYTo9p6g96
+        gaHUWy6g==;
+Content-Disposition: inline
+In-Reply-To: <YqDIIH2d7iu1o7D0-FZi0V3Vbi30CUdFEqe4BF2D2FQJk+8+b@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=yuOErhko23VBUcg027gdjVhvOvMdHidC/agADdmeN/Y=; b=KdxXy8N/Vv1xYBo21zUoTWk4T3
- VMc7ixczls1Yfx5ol19Fb6s11RHfg0b+CzVRAtKUBe/MAVIlvDIp8wuyBZrJfKPYnVYp5HWsJpvpU
- XPKTmvrD3th3W8Jh3eGFJjiTYmDUgTaw2V0KhOyjQ1JjVdIgF6JZpMs5exyv9VczGmpc=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=yuOErhko23VBUcg027gdjVhvOvMdHidC/agADdmeN/Y=; b=KqMEP8axwE5QErqh5v9PA3mtbc
- I1wc5KEAJTYToEhrAe8X3Py4+r9KWYt4ES4iHeH3hEAP7aA7cstO22UTlyldpI6NzeKQKHoyyz1It
- nCn/1GZr+Cjontl3pfQOmeNNV1hPpHPCddYmBymeiK9IMUhaWtZkbB+dmghiQgcoGmWs=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
- References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
- Content-Transfer-Encoding:Content-ID:Content-Description;
- bh=yuOErhko23VBUcg027gdjVhvOvMdHidC/agADdmeN/Y=; b=nK+QsAgyGVY4TqcqJIoqZb6pH6
- YH1l2lYZf2/HITuH4w313bKJpwgqgeL/Ajc+m5rAf7pnUDHd5+MIIqK9hox1IXUCjje8LUpumKfOs
- QEjG/a+V60NeULTByNwEGajh4NfgcD085VL6n+uTDiZlJ4QoXsBzw1tu8Uz6cY8dMROHVuLQLYmqG
- qmgcxmIS8DTwPbCCgU89ftwLODb+/P6u3LKC47leSNnpJ713XKmla3pD/TAZxU/Z/KXlxhXOgy684
- zB+mPggGwK2XDitwHO4afJMsYTpIn0LQ8rEaDkJNUysQjD3kPC6FQJOHcCHCSsAkws+g1Sq8TP2wI
- T8qDvWvw==;
-Content-Disposition: inline
-In-Reply-To: <YqBYxNPu3tLiN5kI@infradead.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, Jun 08, 2022 at 01:07:32AM -0700, Christoph Hellwig wrote:
-> On Sun, Jun 05, 2022 at 08:38:52PM +0100, Matthew Wilcox (Oracle) wrote:
-> > Change the guts of check_move_unevictable_pages() over to use folios
-> > and add check_move_unevictable_pages() as a wrapper.
+On Wed, Jun 08, 2022 at 05:02:40PM +0100, Matthew Wilcox wrote:
+> On Wed, Jun 08, 2022 at 01:02:22AM -0700, Christoph Hellwig wrote:
+> > On Sun, Jun 05, 2022 at 08:38:47PM +0100, Matthew Wilcox (Oracle) wrote:
+> > > If the folio is large, it may overlap the beginning or end of the
+> > > unused range.  If it does, we need to avoid invalidating it.
+> > 
+> > It's never going to be larger for ext4, is it?  But either way,
+> > those precautions looks fine.
 > 
-> The changes here look fine, but please also add patches for converting
-> the two callers (which looks mostly trivial to me).
+> I don't want to say "never".  Today, it's not, but if ext4 ever does
+> gain support for large folios, then this is a precaution it will need
+> to take.  I'm trying not to leave traps when I do conversions.
 
-I do want to get rid of pagevecs entirely, but that conversion isn't
-going to happen in time for the next merge window.  for_each_sgt_page()
-is a little intimidating.
+FYI, this wasn't an objection to the patch, just a hint that the commit
+log could spell this out a bit better.
+
