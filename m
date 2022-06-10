@@ -1,43 +1,44 @@
-From: Sumanth Korikkar <sumanthk@linux.ibm.com>
+From: Gerald Schaefer <gerald.schaefer@linux.ibm.com>
 Subject: Re: [PATCH 06/10] hugetlbfs: Convert
  remove_inode_hugepages() to use filemap_get_folios()
-Date: Fri, 10 Jun 2022 17:52:05 +0200
-Message-ID: <20220610155205.3111213-1-sumanthk@linux.ibm.com>
+Date: Fri, 10 Jun 2022 20:35:30 +0200
+Message-ID: <20220610203530.7f84bbc0@thinkpad>
 References: <20220605193854.2371230-7-willy@infradead.org>
+ <20220610155205.3111213-1-sumanthk@linux.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:References:
- In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:MIME-Version
+ :References:In-Reply-To:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=bSQ+sIz8zcajCK1UfAvvK/UqwylTlJURCq9fnVzR47Y=; b=JU8tuwUrqmGVTTuG4XcrZ5Bx9F
- Ob1YhjFn+OlJ3Sdwvf5jC8oVHfH+NRyYkIk4cwCCN+eNsDy/Upay/p9fUB73psDD6IxKIegt42PEt
- CQvP3Lo/b8lD8D45844VMsYJ9vAY90sNx7DRuqxFetOon+tVsKp13iBwAqIIkDYWjcNc=;
+ bh=Ff3S4Dmkc/EDKyt1tbsvQyIpd2d1S9VM2W5+qZ2nG3s=; b=NaSmkCrLoLwnGflUJAIrqTC2JU
+ 3SWV0FLckcBSxJWDlhtP9fbHkkGtLZp+XJncp9XGuUwPPEMrlpoz+CnohSJTCe5Ix7OzgHBaH906O
+ ohALk9nJNW7n8wBbFhsqZmfB1XI4nxyAwa3V77WrL/Hh/sKcT6XAJ6iShhC+lNyaFmYo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
- h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+ h=Content-Transfer-Encoding:Content-Type:MIME-Version:References:
+ In-Reply-To:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-ID:
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=bSQ+sIz8zcajCK1UfAvvK/UqwylTlJURCq9fnVzR47Y=; b=EdJR+EpACtw3ira0qeL2jpEhrO
- fgBRr4I0D/ktSFSqIVuyFkXwMKhbnfsVHs370umqCl9pZhy0go9pqV6vb2oF5Yp26Bc5/nPmov3To
- 8hfHsIYmFS3cIqUrnqr2+Wlp8i+xGopsBLNtTTbWyu5Xid8v5V+/g2UNjSKlJqKgnPGU=;
+ bh=Ff3S4Dmkc/EDKyt1tbsvQyIpd2d1S9VM2W5+qZ2nG3s=; b=Lt7Zf0x0F5VCzkTn6VIHNUtqMD
+ 8jvICKPkfq2SzCUy2Yd8IMcZv6RtnmpIKAKZZxVufCqch7DcwAnUWOqXK6JWjRcGRlXwc+5M2nE+0
+ DXoK0+dFxsWSkuwjW4dGLYdb0+PCv7oIoExswqtpEZawOyKtlKjFXGEDebRKwjziPQ5s=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com;
- h=from : to : cc : subject
- : date : message-id : in-reply-to : references : mime-version :
- content-transfer-encoding; s=pp1;
- bh=bSQ+sIz8zcajCK1UfAvvK/UqwylTlJURCq9fnVzR47Y=;
- b=MQwrrzF3bP3vo/h1XqCmKSGgf0E4rXpXkovKys9LUB9VO+gB9iefL84hIUL6LRo2nRmJ
- DRrJuFf+ECQfNZqn9Wt6Mo/uiLK0jQ2h7dDREu/ipMR+uMlYihu1IXGmbd1kFpwazTsP
- kJRZ5kOb9rJqgA0wklYm91kaCNn8ibJzQuvCQYxL9naRKFhGyFtA5Cguf2E8I+GGN9nm
- 4/4aYK64kDNI+LQYWLMGQcEYlfy7kSa5eca79a/vqV7PiVdi5PFwXE9xJQ1wYLWHFJ5s
- hPDUEqIvuGpIwXz4yF8YfGbpsrs+vY8oEUW/OylN/TxfiliDdGS07kNt/BRMA+lc2RGx ng== 
-In-Reply-To: <20220605193854.2371230-7-willy@infradead.org>
+ h=date : from : to : cc :
+ subject : message-id : in-reply-to : references : mime-version :
+ content-type : content-transfer-encoding; s=pp1;
+ bh=Ff3S4Dmkc/EDKyt1tbsvQyIpd2d1S9VM2W5+qZ2nG3s=;
+ b=SCN1AstLfBC3fODuKUXKBY6WrlZrz3fThbU1wCedwFT0CaFQD5jJxGOYZdT/ajeMEL/u
+ uANcjk+7qt9eYyJ18VOhHCJV6Df7HaLGzno0nD2f85JtoJBClfxRMcZ+0TT0qn3p8KRZ
+ 7b/8XKkUc83HWO4UeeTgz9FJ7DcRoIi8yuTEHGrN9AKAbC/jeAwZ2+DaIshwH8XCfvpN
+ eOr3ay+BYBuGwNhUvP8p+dn7HgW2witLegMJ1wVQCilvjGKmx1pL3G5i73v9Tb/cXZAK
+ yZKr3reZ12SDFAq1E2OfXbjlgGKDTOmPfnQChktV0nDHmoJ5aBjo3otDWzZNFzIGAHpN Fw== 
+In-Reply-To: <20220610155205.3111213-1-sumanthk@linux.ibm.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -48,102 +49,46 @@ List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: willy@infradead.org
-Cc: linux-nilfs@vger.kernel.org, gor@linux.ibm.com, Sumanth Korikkar <sumanthk@linux.ibm.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, gerald.schaefer@linux.ibm.com, linux-ext4@vger.kernel.org, agordeev@linux.ibm.com
+Cc: linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, gor@linux.ibm.com, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Sumanth Korikkar <sumanthk@linux.ibm.com>, linux-ext4@vger.kernel.org, agordeev@linux.ibm.com
 
-Hi,
+On Fri, 10 Jun 2022 17:52:05 +0200
+Sumanth Korikkar <sumanthk@linux.ibm.com> wrote:
 
-The kernel crashes with the following backtrace on linux-next:
+[...]
+> 
+> * Bisected the crash to this commit.
+> 
+> To reproduce:
+> * clone libhugetlbfs:
+> * Execute, PATH=$PATH:"obj64/" LD_LIBRARY_PATH=../obj64/ alloc-instantiate-race shared
+>  
+> Crashes on both s390 and x86. 
 
-[  203.304451] kernel BUG at fs/inode.c:612!
-[  203.304466] invalid opcode: 0000 [#1] PREEMPT SMP PTI
-[  203.305215] CPU: 0 PID: 868 Comm: alloc-instantia Not tainted 5.19.0-rc1-next-20220609 #256
-[  203.305563] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-6.fc35 04/01/2014
-[  203.305922] RIP: 0010:clear_inode+0x6e/0x80
-[  203.306139] Code: 00 a8 20 74 29 a8 40 75 27 48 8b 93 18 01 00 00 48 8d 83 18 01 00 00 48 39 c2 75 16 48 c7 83 98 00 00 00 60 00 00 00 5b 5d c3 <0f> 0b 0f 0b 0f 0b 0f 0b 0f 0b 0f 1f 84 00 00 00 00 00 0f 1f 44 00
-[  203.306827] RSP: 0018:ffffa49dc07cbde8 EFLAGS: 00010002
-[  203.307074] RAX: 0000000000000000 RBX: ffff8bf4cecc4010 RCX: 0000000000069600
-[  203.307380] RDX: 0000000000000001 RSI: ffffffff929b5b2b RDI: 0000000000000000
-[  203.307715] RBP: ffff8bf4cecc4180 R08: 000003fffffffffe R09: ffffffffffffffc0
-[  203.307988] R10: ffff8bf4ca515ec8 R11: ffffa49dc07cbc68 R12: ffff8bf4cecc4118
-[  203.308256] R13: ffff8bf4cf029a80 R14: ffff8bf4cb2ce900 R15: ffff8bf4c79b8848
-[  203.308591] FS:  0000000000000000(0000) GS:ffff8bf533000000(0000) knlGS:0000000000000000
-[  203.309033] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[  203.309327] CR2: 00007fadbf5d3838 CR3: 000000016520c000 CR4: 00000000000006f0
-[  203.309661] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[  203.309997] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-[  203.310330] Call Trace:
-[  203.310534]  <TASK>
-[  203.310733]  evict+0xc3/0x1c0
-[  203.310956]  __dentry_kill+0xd6/0x170
-[  203.311196]  dput+0x144/0x2e0
-[  203.311416]  __fput+0xdb/0x240
-[  203.311634]  task_work_run+0x5c/0x90
-[  203.311876]  do_exit+0x317/0xa80
-[  203.312104]  do_group_exit+0x2d/0x90
-[  203.312337]  __x64_sys_exit_group+0x14/0x20
-[  203.312599]  do_syscall_64+0x3b/0x90
-[  203.312816]  entry_SYSCALL_64_after_hwframe+0x46/0xb0
-[  203.313064] RIP: 0033:0x7fadbf4f2711
-[  203.313275] Code: Unable to access opcode bytes at RIP 0x7fadbf4f26e7.
-[  203.313559] RSP: 002b:00007fff6b0e0458 EFLAGS: 00000246 ORIG_RAX: 00000000000000e7
-[  203.313932] RAX: ffffffffffffffda RBX: 00007fadbf5cf9e0 RCX: 00007fadbf4f2711
-[  203.314228] RDX: 000000000000003c RSI: 00000000000000e7 RDI: 0000000000000000
-[  203.314523] RBP: 0000000000000000 R08: ffffffffffffff80 R09: 0000000000000000
-[  203.314821] R10: 00007fadbf3dffa8 R11: 0000000000000246 R12: 00007fadbf5cf9e0
-[  203.315120] R13: 0000000000000000 R14: 00007fadbf5d4ee8 R15: 00007fadbf5d4f00
-[  203.315431]  </TASK>
-[  203.315606] Modules linked in: zram zsmalloc xfs libcrc32c
-[  203.315875] ---[ end trace 0000000000000000 ]---
-[  203.315876] RIP: 0010:clear_inode+0x6e/0x80
-[  203.315878] Code: 00 a8 20 74 29 a8 40 75 27 48 8b 93 18 01 00 00 48 8d 83 18 01 00 00 48 39 c2 75 16 48 c7 83 98 00 00 00 60 00 00 00 5b 5d c3 <0f> 0b 0f 0b 0f 0b 0f 0b 0f 0b 0f 1f 84 00 00 00 00 00 0f 1f 44 00
-[  203.315879] RSP: 0018:ffffa49dc07cbde8 EFLAGS: 00010002
-[  203.315880] RAX: 0000000000000000 RBX: ffff8bf4cecc4010 RCX: 0000000000069600
-[  203.315881] RDX: 0000000000000001 RSI: ffffffff929b5b2b RDI: 0000000000000000
-[  203.315881] RBP: ffff8bf4cecc4180 R08: 000003fffffffffe R09: ffffffffffffffc0
-[  203.315882] R10: ffff8bf4ca515ec8 R11: ffffa49dc07cbc68 R12: ffff8bf4cecc4118
-[  203.315883] R13: ffff8bf4cf029a80 R14: ffff8bf4cb2ce900 R15: ffff8bf4c79b8848
-[  203.315884] FS:  0000000000000000(0000) GS:ffff8bf533000000(0000) knlGS:0000000000000000
-[  203.315886] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[  203.315887] CR2: 00007fadbf5d3838 CR3: 000000016520c000 CR4: 00000000000006f0
-[  203.315887] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[  203.315888] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-[  203.315889] note: alloc-instantia[868] exited with preempt_count 1
-[  203.315890] Fixing recursive fault but reboot is needed!
-[  203.315892] BUG: scheduling while atomic: alloc-instantia/868/0x00000000
-[  203.315893] Modules linked in: zram zsmalloc xfs libcrc32c
-[  203.315894] Preemption disabled at:
-[  203.315895] [<0000000000000000>] 0x0
-[  203.315896] CPU: 0 PID: 868 Comm: alloc-instantia Tainted: G      D           5.19.0-rc1-next-20220609 #256
-[  203.315898] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-6.fc35 04/01/2014
-[  203.315898] Call Trace:
-[  203.315900]  <TASK>
-[  203.315901]  dump_stack_lvl+0x34/0x44
-[  203.315905]  __schedule_bug.cold+0x7d/0x8b
-[  203.315907]  __schedule+0x624/0x700
-[  203.315908]  ? _printk+0x58/0x6f
-[  203.315911]  do_task_dead+0x3f/0x50
-[  203.315913]  make_task_dead.cold+0x51/0xab
-[  203.315914]  rewind_stack_and_make_dead+0x17/0x17
-[  203.315917] RIP: 0033:0x7fadbf4f2711
-[  203.315918] Code: Unable to access opcode bytes at RIP 0x7fadbf4f26e7.
-[  203.315918] RSP: 002b:00007fff6b0e0458 EFLAGS: 00000246 ORIG_RAX: 00000000000000e7
-[  203.315919] RAX: ffffffffffffffda RBX: 00007fadbf5cf9e0 RCX: 00007fadbf4f2711
-[  203.315920] RDX: 000000000000003c RSI: 00000000000000e7 RDI: 0000000000000000
-[  203.315921] RBP: 0000000000000000 R08: ffffffffffffff80 R09: 0000000000000000
-[  203.315921] R10: 00007fadbf3dffa8 R11: 0000000000000246 R12: 00007fadbf5cf9e0
-[  203.315922] R13: 0000000000000000 R14: 00007fadbf5d4ee8 R15: 00007fadbf5d4f00
-[  203.315924]  </TASK>
+FWIW, not really able to understand the code changes, so I added some
+printks to track the state of inode->i_data.nrpages during
+remove_inode_hugepages().
 
+Before this commit, we enter with nrpages = 99, and leave with nrpages = 0.
+With this commit we enter with nrpages = 99, and leave with nrpages = 84
+(i.e. 99 - PAGEVEC_SIZE), resulting in the BUG later in fs/inode.c:612.
 
-* Bisected the crash to this commit.
+The difference seems to be that with this commit, the outer
+while(filemap_get_folios) loop is only traversed once, while before
+the corresponding while(pagevec_lookup_range) loop was repeated until
+nrpages reached 0 (in steps of 15 == PAGEVEC_SIZE for the inner loop).
 
-To reproduce:
-* clone libhugetlbfs:
-* Execute, PATH=$PATH:"obj64/" LD_LIBRARY_PATH=../obj64/ alloc-instantiate-race shared
- 
-Crashes on both s390 and x86. 
- 
-Thanks
+Both before and after the commit, the pagevec_count / folio_batch_count
+for the inner loop starts with 15, but before the pagevec_lookup_range()
+also increased &next in steps of 15, while now the filemap_get_folios()
+moved &next from 0 to 270 in one step, while still only returning
+15 as folio_batch_count for the inner loop. I assume the next index
+of 270 is then too big to find any other folios, so it stops after the
+first iteration, even though only 15 pages have been processed yet with
+remove_huge_page(&folio->page).
 
---
-Sumanth 
+I guess it is either wrong to return 15 as folio_batch_count (although
+it seems that would be the maximum possible value), or it is wrong to
+advance &next by 270 instead of 15.
+
+Hope that makes any sense, and might be of help for debugging, to someone
+more familiar with this code.
