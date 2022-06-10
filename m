@@ -1,46 +1,149 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH 08/10] vmscan: Add check_move_unevictable_folios()
-Date: Wed, 8 Jun 2022 20:56:16 -0700
-Message-ID: <YqFvYAlGGWW7ohTZ@infradead.org>
-References: <20220605193854.2371230-1-willy@infradead.org>
- <20220605193854.2371230-9-willy@infradead.org>
- <YqBYxNPu3tLiN5kI@infradead.org>
- <YqDPIv5IgNHK/pJT@casper.infradead.org>
+From: Sumanth Korikkar <sumanthk@linux.ibm.com>
+Subject: Re: [PATCH 06/10] hugetlbfs: Convert
+ remove_inode_hugepages() to use filemap_get_folios()
+Date: Fri, 10 Jun 2022 17:52:05 +0200
+Message-ID: <20220610155205.3111213-1-sumanthk@linux.ibm.com>
+References: <20220605193854.2371230-7-willy@infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=k5NOE2/mOchRWcRvMdsOMX23IRbR4XjJRm5kjerQYfs=; b=UMDExU/q7tF8/mqWoSgLYxhOpC
-        FkB/nDKRBlAlwMswJxYlpwOD+T9b3fHuzs5Xk9HKsw1RzKM18Nvzmz2zvtMnyPCsG0qy2kU/WHu9X
-        mVccNPi9V87DFgmPksbjSq32mvZYh7FU9kikejkUfrcbqMujPYOK4OsnGEYmxwRBuH+8cz929MoC+
-        J1L5P254VCbTHcr/3B4+pgfRdz1mWvdV10u33rtAMJjWsHP0HN5sU7QukTrtM4bSJeT0tiNaLZ0sf
-        okORJ39zhtNOHmkrX4y3W5zWBlbmRyPPS8qKqjL4e2oY+q3FEDzI+tyRYIGUkaqgz1VdTJg+hKLV8
-        s6Jccx+g==;
-Content-Disposition: inline
-In-Reply-To: <YqDPIv5IgNHK/pJT-FZi0V3Vbi30CUdFEqe4BF2D2FQJk+8+b@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:References:
+ In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=bSQ+sIz8zcajCK1UfAvvK/UqwylTlJURCq9fnVzR47Y=; b=JU8tuwUrqmGVTTuG4XcrZ5Bx9F
+ Ob1YhjFn+OlJ3Sdwvf5jC8oVHfH+NRyYkIk4cwCCN+eNsDy/Upay/p9fUB73psDD6IxKIegt42PEt
+ CQvP3Lo/b8lD8D45844VMsYJ9vAY90sNx7DRuqxFetOon+tVsKp13iBwAqIIkDYWjcNc=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=bSQ+sIz8zcajCK1UfAvvK/UqwylTlJURCq9fnVzR47Y=; b=EdJR+EpACtw3ira0qeL2jpEhrO
+ fgBRr4I0D/ktSFSqIVuyFkXwMKhbnfsVHs370umqCl9pZhy0go9pqV6vb2oF5Yp26Bc5/nPmov3To
+ 8hfHsIYmFS3cIqUrnqr2+Wlp8i+xGopsBLNtTTbWyu5Xid8v5V+/g2UNjSKlJqKgnPGU=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com;
+ h=from : to : cc : subject
+ : date : message-id : in-reply-to : references : mime-version :
+ content-transfer-encoding; s=pp1;
+ bh=bSQ+sIz8zcajCK1UfAvvK/UqwylTlJURCq9fnVzR47Y=;
+ b=MQwrrzF3bP3vo/h1XqCmKSGgf0E4rXpXkovKys9LUB9VO+gB9iefL84hIUL6LRo2nRmJ
+ DRrJuFf+ECQfNZqn9Wt6Mo/uiLK0jQ2h7dDREu/ipMR+uMlYihu1IXGmbd1kFpwazTsP
+ kJRZ5kOb9rJqgA0wklYm91kaCNn8ibJzQuvCQYxL9naRKFhGyFtA5Cguf2E8I+GGN9nm
+ 4/4aYK64kDNI+LQYWLMGQcEYlfy7kSa5eca79a/vqV7PiVdi5PFwXE9xJQ1wYLWHFJ5s
+ hPDUEqIvuGpIwXz4yF8YfGbpsrs+vY8oEUW/OylN/TxfiliDdGS07kNt/BRMA+lc2RGx ng== 
+In-Reply-To: <20220605193854.2371230-7-willy@infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: willy@infradead.org
+Cc: linux-nilfs@vger.kernel.org, gor@linux.ibm.com, Sumanth Korikkar <sumanthk@linux.ibm.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, gerald.schaefer@linux.ibm.com, linux-ext4@vger.kernel.org, agordeev@linux.ibm.com
 
-On Wed, Jun 08, 2022 at 05:32:34PM +0100, Matthew Wilcox wrote:
-> On Wed, Jun 08, 2022 at 01:07:32AM -0700, Christoph Hellwig wrote:
-> > On Sun, Jun 05, 2022 at 08:38:52PM +0100, Matthew Wilcox (Oracle) wrote:
-> > > Change the guts of check_move_unevictable_pages() over to use folios
-> > > and add check_move_unevictable_pages() as a wrapper.
-> > 
-> > The changes here look fine, but please also add patches for converting
-> > the two callers (which looks mostly trivial to me).
-> 
-> I do want to get rid of pagevecs entirely, but that conversion isn't
-> going to happen in time for the next merge window.  for_each_sgt_page()
-> is a little intimidating.
+Hi,
 
-for_each_sgt_page, just like other creative scatterlist abuse in the gpu
-code is a beast.  But, instead of doing a for_each_sgt_page to add
-pages to the pagevec and then do a loop over the pagevec to add to
-the folio batch it should be pretty trivial to just cut out the
-middle man.
+The kernel crashes with the following backtrace on linux-next:
+
+[  203.304451] kernel BUG at fs/inode.c:612!
+[  203.304466] invalid opcode: 0000 [#1] PREEMPT SMP PTI
+[  203.305215] CPU: 0 PID: 868 Comm: alloc-instantia Not tainted 5.19.0-rc1-next-20220609 #256
+[  203.305563] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-6.fc35 04/01/2014
+[  203.305922] RIP: 0010:clear_inode+0x6e/0x80
+[  203.306139] Code: 00 a8 20 74 29 a8 40 75 27 48 8b 93 18 01 00 00 48 8d 83 18 01 00 00 48 39 c2 75 16 48 c7 83 98 00 00 00 60 00 00 00 5b 5d c3 <0f> 0b 0f 0b 0f 0b 0f 0b 0f 0b 0f 1f 84 00 00 00 00 00 0f 1f 44 00
+[  203.306827] RSP: 0018:ffffa49dc07cbde8 EFLAGS: 00010002
+[  203.307074] RAX: 0000000000000000 RBX: ffff8bf4cecc4010 RCX: 0000000000069600
+[  203.307380] RDX: 0000000000000001 RSI: ffffffff929b5b2b RDI: 0000000000000000
+[  203.307715] RBP: ffff8bf4cecc4180 R08: 000003fffffffffe R09: ffffffffffffffc0
+[  203.307988] R10: ffff8bf4ca515ec8 R11: ffffa49dc07cbc68 R12: ffff8bf4cecc4118
+[  203.308256] R13: ffff8bf4cf029a80 R14: ffff8bf4cb2ce900 R15: ffff8bf4c79b8848
+[  203.308591] FS:  0000000000000000(0000) GS:ffff8bf533000000(0000) knlGS:0000000000000000
+[  203.309033] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  203.309327] CR2: 00007fadbf5d3838 CR3: 000000016520c000 CR4: 00000000000006f0
+[  203.309661] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[  203.309997] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+[  203.310330] Call Trace:
+[  203.310534]  <TASK>
+[  203.310733]  evict+0xc3/0x1c0
+[  203.310956]  __dentry_kill+0xd6/0x170
+[  203.311196]  dput+0x144/0x2e0
+[  203.311416]  __fput+0xdb/0x240
+[  203.311634]  task_work_run+0x5c/0x90
+[  203.311876]  do_exit+0x317/0xa80
+[  203.312104]  do_group_exit+0x2d/0x90
+[  203.312337]  __x64_sys_exit_group+0x14/0x20
+[  203.312599]  do_syscall_64+0x3b/0x90
+[  203.312816]  entry_SYSCALL_64_after_hwframe+0x46/0xb0
+[  203.313064] RIP: 0033:0x7fadbf4f2711
+[  203.313275] Code: Unable to access opcode bytes at RIP 0x7fadbf4f26e7.
+[  203.313559] RSP: 002b:00007fff6b0e0458 EFLAGS: 00000246 ORIG_RAX: 00000000000000e7
+[  203.313932] RAX: ffffffffffffffda RBX: 00007fadbf5cf9e0 RCX: 00007fadbf4f2711
+[  203.314228] RDX: 000000000000003c RSI: 00000000000000e7 RDI: 0000000000000000
+[  203.314523] RBP: 0000000000000000 R08: ffffffffffffff80 R09: 0000000000000000
+[  203.314821] R10: 00007fadbf3dffa8 R11: 0000000000000246 R12: 00007fadbf5cf9e0
+[  203.315120] R13: 0000000000000000 R14: 00007fadbf5d4ee8 R15: 00007fadbf5d4f00
+[  203.315431]  </TASK>
+[  203.315606] Modules linked in: zram zsmalloc xfs libcrc32c
+[  203.315875] ---[ end trace 0000000000000000 ]---
+[  203.315876] RIP: 0010:clear_inode+0x6e/0x80
+[  203.315878] Code: 00 a8 20 74 29 a8 40 75 27 48 8b 93 18 01 00 00 48 8d 83 18 01 00 00 48 39 c2 75 16 48 c7 83 98 00 00 00 60 00 00 00 5b 5d c3 <0f> 0b 0f 0b 0f 0b 0f 0b 0f 0b 0f 1f 84 00 00 00 00 00 0f 1f 44 00
+[  203.315879] RSP: 0018:ffffa49dc07cbde8 EFLAGS: 00010002
+[  203.315880] RAX: 0000000000000000 RBX: ffff8bf4cecc4010 RCX: 0000000000069600
+[  203.315881] RDX: 0000000000000001 RSI: ffffffff929b5b2b RDI: 0000000000000000
+[  203.315881] RBP: ffff8bf4cecc4180 R08: 000003fffffffffe R09: ffffffffffffffc0
+[  203.315882] R10: ffff8bf4ca515ec8 R11: ffffa49dc07cbc68 R12: ffff8bf4cecc4118
+[  203.315883] R13: ffff8bf4cf029a80 R14: ffff8bf4cb2ce900 R15: ffff8bf4c79b8848
+[  203.315884] FS:  0000000000000000(0000) GS:ffff8bf533000000(0000) knlGS:0000000000000000
+[  203.315886] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  203.315887] CR2: 00007fadbf5d3838 CR3: 000000016520c000 CR4: 00000000000006f0
+[  203.315887] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[  203.315888] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+[  203.315889] note: alloc-instantia[868] exited with preempt_count 1
+[  203.315890] Fixing recursive fault but reboot is needed!
+[  203.315892] BUG: scheduling while atomic: alloc-instantia/868/0x00000000
+[  203.315893] Modules linked in: zram zsmalloc xfs libcrc32c
+[  203.315894] Preemption disabled at:
+[  203.315895] [<0000000000000000>] 0x0
+[  203.315896] CPU: 0 PID: 868 Comm: alloc-instantia Tainted: G      D           5.19.0-rc1-next-20220609 #256
+[  203.315898] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-6.fc35 04/01/2014
+[  203.315898] Call Trace:
+[  203.315900]  <TASK>
+[  203.315901]  dump_stack_lvl+0x34/0x44
+[  203.315905]  __schedule_bug.cold+0x7d/0x8b
+[  203.315907]  __schedule+0x624/0x700
+[  203.315908]  ? _printk+0x58/0x6f
+[  203.315911]  do_task_dead+0x3f/0x50
+[  203.315913]  make_task_dead.cold+0x51/0xab
+[  203.315914]  rewind_stack_and_make_dead+0x17/0x17
+[  203.315917] RIP: 0033:0x7fadbf4f2711
+[  203.315918] Code: Unable to access opcode bytes at RIP 0x7fadbf4f26e7.
+[  203.315918] RSP: 002b:00007fff6b0e0458 EFLAGS: 00000246 ORIG_RAX: 00000000000000e7
+[  203.315919] RAX: ffffffffffffffda RBX: 00007fadbf5cf9e0 RCX: 00007fadbf4f2711
+[  203.315920] RDX: 000000000000003c RSI: 00000000000000e7 RDI: 0000000000000000
+[  203.315921] RBP: 0000000000000000 R08: ffffffffffffff80 R09: 0000000000000000
+[  203.315921] R10: 00007fadbf3dffa8 R11: 0000000000000246 R12: 00007fadbf5cf9e0
+[  203.315922] R13: 0000000000000000 R14: 00007fadbf5d4ee8 R15: 00007fadbf5d4f00
+[  203.315924]  </TASK>
+
+
+* Bisected the crash to this commit.
+
+To reproduce:
+* clone libhugetlbfs:
+* Execute, PATH=$PATH:"obj64/" LD_LIBRARY_PATH=../obj64/ alloc-instantiate-race shared
+ 
+Crashes on both s390 and x86. 
+ 
+Thanks
+
+--
+Sumanth 
