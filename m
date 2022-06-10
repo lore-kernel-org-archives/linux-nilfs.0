@@ -1,55 +1,68 @@
-From: Matthew Wilcox <willy@infradead.org>
+From: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 06/10] hugetlbfs: Convert remove_inode_hugepages() to use
  filemap_get_folios()
-Date: Fri, 10 Jun 2022 22:17:36 +0100
-Message-ID: <YqO08Dsq8ZcAcWDQ@casper.infradead.org>
+Date: Fri, 10 Jun 2022 14:56:05 -0700
+Message-ID: <6fc6e9de-39c2-3244-ef92-a1de0d390889@oracle.com>
 References: <20220605193854.2371230-7-willy@infradead.org>
  <20220610155205.3111213-1-sumanthk@linux.ibm.com>
+ <YqO08Dsq8ZcAcWDQ@casper.infradead.org>
 Mime-Version: 1.0
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=dPCOWM5CyDEIdIuBSxjePp4f8SSu/SKCJnmsXTUdDp0=; b=H/uguj+Wl5DQo9Vix4WTb9P9Qz
-        L3+C24pFO0kvbIu1KKcP4oVLAW0MPkjH36cSK+5oKXA61lH8Ik4WuTBYal6HxocDDl+IvIKG4CCwL
-        qMYlFEtD8mXy6yOt5Sgb3+UVlhpMqyWoPpvjDn3H3qAjkbV7cG6coeM3c8vmcNboFD8Xoap0GQfCH
-        198oRccDnDnojUeQZLgFD8CTZuFsqMSEqnlQmY48fZ9D/l9Bs8bop7G9eLDZqxL2TbtpRPL1eiwtg
-        Fc6e9lthrSLvnei2DS7h37o1aENF/y3X0CXCwJvu6vkLxR7ewRCMntvOhjp1rS4ybHxIfs6En+aMm
-        PTXk3bZQ==;
-Content-Disposition: inline
-In-Reply-To: <20220610155205.3111213-1-sumanthk@linux.ibm.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=message-id : date :
+ subject : to : cc : references : from : in-reply-to : content-type :
+ content-transfer-encoding : mime-version; s=corp-2021-07-09;
+ bh=cig8b+8Fcts7tPleLoHcBBCVvhjVSl8maOTJHh2wqmM=;
+ b=rtue346rIjgYL8zwsPFXQ/v/JyxBkXc7lyalPS/zw2F6ZcTNDBE8g/NGov4dcMgjEW7L
+ qL1ryvK+1cvjGjwMhL7vLlSaNqxjROiIcrL+NgLlWlSWfn/MGpDNc9K5V48AigSVCCPy
+ KhO1w+RCiCgXoiQ3TEOt50uYVvhbwa3URUro8F6wVGuvAAo87JX8oJ4IvJPKkUJQ6bLI
+ Wnnvzh2gZNKh4ydWq0fbM0iuzEN1lDkhelSHX9GwzyUMKtu2PN4SxTg3bwUEeKNFGNSX
+ ke/pIXbLVe9Rm2E3j6534CfN6YjUE3sfXxabzgKSaIzfswmjCHB8200GZ7DCXPOm3a9u 1g== 
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=cig8b+8Fcts7tPleLoHcBBCVvhjVSl8maOTJHh2wqmM=;
+ b=T8CH7oX/j0AaYvjDSqCgciSkT6W5MunMYiX31kg/2DRYpAvhYS+cnOUuevh+ArAIsVpgSFA4gBB/xN3AK5elY3Yd7wyEPoIPPAduCfE8zVoOEXIFf1jZxcOy1cK5anmOL0DJvb6rJs4A6x57pT1UoX8+jumFvVtIXlzJM6QOFW4=
+Content-Language: en-US
+In-Reply-To: <YqO08Dsq8ZcAcWDQ-FZi0V3Vbi30CUdFEqe4BF2D2FQJk+8+b@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Sumanth Korikkar <sumanthk@linux.ibm.com>
-Cc: linux-ext4@vger.kernel.org, gerald.schaefer@linux.ibm.com, gor@linux.ibm.com, agordeev@linux.ibm.com, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org
+To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Sumanth Korikkar <sumanthk-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>
+Cc: linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gerald.schaefer-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, gor-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, agordeev-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, Jun 10, 2022 at 05:52:05PM +0200, Sumanth Korikkar wrote:
-> To reproduce:
-> * clone libhugetlbfs:
-> * Execute, PATH=$PATH:"obj64/" LD_LIBRARY_PATH=../obj64/ alloc-instantiate-race shared
+On 6/10/22 14:17, Matthew Wilcox wrote:
+> On Fri, Jun 10, 2022 at 05:52:05PM +0200, Sumanth Korikkar wrote:
+>> To reproduce:
+>> * clone libhugetlbfs:
+>> * Execute, PATH=$PATH:"obj64/" LD_LIBRARY_PATH=../obj64/ alloc-instantiate-race shared
+> 
+> ... it's a lot harder to set up hugetlb than that ...
+> 
+> anyway, i figured it out without being able to run the reproducer.
+> 
+> Can you try this?
 
-... it's a lot harder to set up hugetlb than that ...
+I can confirm that libhugetlbfs tests do not trigger the BUG with the
+below change.
+-- 
+Mike Kravetz
 
-anyway, i figured it out without being able to run the reproducer.
-
-Can you try this?
-
-diff --git a/mm/filemap.c b/mm/filemap.c
-index a30587f2e598..8ef861297ffb 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2160,7 +2160,11 @@ unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
- 		if (xa_is_value(folio))
- 			continue;
- 		if (!folio_batch_add(fbatch, folio)) {
--			*start = folio->index + folio_nr_pages(folio);
-+			unsigned long nr = folio_nr_pages(folio);
-+
-+			if (folio_test_hugetlb(folio))
-+				nr = 1;
-+			*start = folio->index + nr;
- 			goto out;
- 		}
- 	}
+> 
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index a30587f2e598..8ef861297ffb 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -2160,7 +2160,11 @@ unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
+>  		if (xa_is_value(folio))
+>  			continue;
+>  		if (!folio_batch_add(fbatch, folio)) {
+> -			*start = folio->index + folio_nr_pages(folio);
+> +			unsigned long nr = folio_nr_pages(folio);
+> +
+> +			if (folio_test_hugetlb(folio))
+> +				nr = 1;
+> +			*start = folio->index + nr;
+>  			goto out;
+>  		}
+>  	}
+> 
