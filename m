@@ -1,32 +1,18 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Keith <kperry-SsverHGN8JZ0+Iju73vM4UEOCMrvLtNR@public.gmane.org>
 Subject: Re: Is NILFS2 suitable for long term archival storage?
-Date: Wed, 22 Jun 2022 00:02:40 +0900
-Message-ID: <CAKFNMo=nn1hu==S6xB5sWGuN_KpCuoHjmQb76WjrHg1875T_Vg@mail.gmail.com>
+Date: Tue, 21 Jun 2022 12:03:33 -0400
+Message-ID: <bbaf111e-34c8-02d8-da52-a95d474b7210@daotechnologies.com>
 References: <CA+Tk8fzpXneoDAyvdoJFdFjX7Cx-cJ7GO0uNXjGrYDk23FyekA@mail.gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=jcpCAoNbc0xzuhPIvpEKg132Fwj9YR6uxrslS8Yon4w=;
-        b=LfJGetRuZLXbjGFrkh7yyhkks7KQUVRfLsHto2sq2vIp537o2c6/Fm+A+UkVP00zF+
-         TrHWROxYVB3UwZypHIPd7uCXwElZBjE9DP2YuQQ4c5xjNGzemJJMP1+u3/CLYPVSl6Du
-         KDudgtTxCiZzktxlxIfjP/OPUAqWn1wjAYCS0aZh2wERSxZPlmv+cY8zhRZxZPywSfpw
-         8kQCz4DDWayU/C1vvmkELqvIabAaW8eIhEIdv8sBw9oxKHHdMrqsiUSsyRscerQ4fnJ+
-         2si/+oDN25xa+b1BJcn5aepl/b0h8Mp5DIQWO/l9P9icLe/7l6t9XFCQkxZagIfFcVRc
-         Ww7A==
+Content-Language: en-US
 In-Reply-To: <CA+Tk8fzpXneoDAyvdoJFdFjX7Cx-cJ7GO0uNXjGrYDk23FyekA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"; format="flowed"
+To: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hi Ciprian,
-
-On Tue, Jun 21, 2022 at 6:42 PM Ciprian Craciun wrote:
->
+On 6/21/22 05:40, Ciprian Craciun wrote:
 > [I'm not subscribed to the mailing list, thus please keep me in CC.]
 >
 >
@@ -44,68 +30,53 @@ On Tue, Jun 21, 2022 at 6:42 PM Ciprian Craciun wrote:
 > So I was wondering the following:
 > * is NILFS2 suitable for such a use-case?  (my assumption is yes, at
 > least based on the features and promises;)
-
-The suitability for storage media such as CMR and SMR is uncertain in
-actual use, so I think you should actually evaluate that pattern with some
-file systems.
-
-Writing with NILFS2 has the characteristic of being sequential, including
-updating file system metadata and concurrent writes.  However, reading
-causes random access, which will be a trade-off with the effect of caching.
-
-In addition, NILFS2 periodically updates the superblocks at the beginning
-and end of the partition alternately, so writes are not completely sequential.
-These properties can work in both the good and the bad.
-
-For sudden removal, NILFS2 will be robust as the result of checkpointing,
-but that assumption, in the first place, sounds physically not good for
-disk media unless the device has a battery-backed safety guarantee.
-On the other hand, most modern file systems these days are also robust
-enough for unusual disconnections.
-
-The use case where NILFS2 is most useful is that the latest data can be
-recovered even if the data is overwritten or deleted by human error or an
-application bug.
-However, this does not seem to be utilized in the above archive storage
-applications.
-
 > * how reliable is the current version (as upstreamed in the kernel) of
 > NILFS2?  data-loss of previously written (and `fsync`-ed) files is of
 > paramount importance (especially for files that have been written say
 > days ago);
 > * are there instances of NILFS2 used in production (for any use-case)?
-
-I believe NILFS2 in the upstream kernel is still reliable enough, but I
-think you should refer to other users' opinions on this.
-
-As far as I know, NILFS2 once operated as a document storage server
-in a company for about 5 years and had no failure.   The server really
-helped to rescue office documents that the staff accidentally overwritten
-and erased.  But this is more than eight years ago.   I don't  know about
-application examples for commercial device products.
-
+I use nilfs2 in similar ways and have been for well over 10 years now.  
+I use it in a mostly as part of a data replication solution (single or 
+multi-stage).  I would mostly recommend it for windowed backup and 
+archival solutions (i.e. we're going to keep X amount of data for Y 
+amount of time and purge every Z interval).
 > I've tried searching on the internet and the email archives, but I
 > couldn't find anything "current" enough.  Moreover at least OpenSUSE
 > (and SUSE) have dropped the NILFS2 kernel module from the standard
 > packages (granted JFS was also dropped).
 >
 > Also I'm concerned due to the fact that there isn't any `fsck` for NILFS2 yet.
-
-This is true.
-NILFS2 guarantees reliability with a checkpoint write method, so if a bug
-in the file system itself corrupts the data or metadata, there is no way to
-remedy it yet.
-
+>
+This is why I don't 100% recommend it.  I have had no more than 4 major 
+issues in 10 years where I could not purge old data. Specifically what 
+that means is I had a snapshot that changed back to a checkpoint so that 
+it could be purged the next time garbage collection ran.  As a result, I 
+eventually had to reformat which meant giving up the current data (which 
+could span several years). I sometimes use an nilfs2 fs in a loop 
+mounted system on top of a large parallel / distributed filesystem and 
+that combination could be the issue but it makes no sense to me why 
+there is no way to get around a problem like that.  The lack of tools to 
+analyze and fix that condition or to be able to efficiently copy or 
+migrate data to another system continues to be an issue.  That said, I 
+have NEVER lost data in snapshot and have been able to access data from 
+years prior even when I can't purge.  The benefits of nilfs2 continue to 
+outweigh this issue for me and if I really want all the data in a 
+filesystem that can't be purged I could rebuild it manually somewhere 
+else on the data lake.  That would be a p.i.t.a. but at least it is an 
+option.
 > Related to this, could the community recommend an alternative
 > file-system that would fit the bill?  (Ext4 and JFS are the only
 > file-systems I have heavily used and relied upon.)
+>
+Nothing else comes to mind for me as an all-in-one-solution.  I think 
+you're going to have to continue to build a solution from the best 
+offerings you find.
 
-Again, this depends on the opinions of everyone else.
+-- 
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+Keith C. Perry, MS E.E.
+Managing Member, DAO Technologies LLC
+(O) +1.215.525.4165 x2033
+(M) +1.215.432.5167
+www.daotechnologies.com
 
-To mention just one thing, when it comes to large archive storage,
-I guess there is a perspective of resistance to the bit rot issue.
-From this perspective, btrfs or zfs would be your choice unless
-you combine an FS with other solutions like dm-integrity.
-
-Regards,
-Ryusuke Konishi
