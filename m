@@ -1,82 +1,59 @@
-From: Keith <kperry-SsverHGN8JZ0+Iju73vM4UEOCMrvLtNR@public.gmane.org>
+From: Tommy Pettersson <ptp-SamgB31n2u5IcsJQ0EH25Q@public.gmane.org>
 Subject: Re: Is NILFS2 suitable for long term archival storage?
-Date: Tue, 21 Jun 2022 12:03:33 -0400
-Message-ID: <bbaf111e-34c8-02d8-da52-a95d474b7210@daotechnologies.com>
+Date: Wed, 22 Jun 2022 14:12:21 +0200
+Message-ID: <YrMHJYobUpjv+KRj@kelsos>
 References: <CA+Tk8fzpXneoDAyvdoJFdFjX7Cx-cJ7GO0uNXjGrYDk23FyekA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
 In-Reply-To: <CA+Tk8fzpXneoDAyvdoJFdFjX7Cx-cJ7GO0uNXjGrYDk23FyekA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-To: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On 6/21/22 05:40, Ciprian Craciun wrote:
-> [I'm not subscribed to the mailing list, thus please keep me in CC.]
->
->
-> I was looking at NILFS2 as a potential solution for a file-system for
-> long-term archival (as in backups or append-only store).  In this
-> use-case I would use large CMR or SMR rotational disks (say 4+ TB, WD
-> or Seagate) without any RAID or disk-encryption, connected via USB
-> (thus sudden disconnects are to be expected), used with `restic`, or
-> `rdiff-backup` and `rsync`-like if `restic` doesn't work.  As such,
-> the IO pattern during backup would be mostly creating new files, a
-> couple MiB each in case of `restic`, and random reads during `restic`
-> checks.  In both cases there is quite some concurrency (proportional
-> to the number of cores).
->
-> So I was wondering the following:
-> * is NILFS2 suitable for such a use-case?  (my assumption is yes, at
-> least based on the features and promises;)
-> * how reliable is the current version (as upstreamed in the kernel) of
-> NILFS2?  data-loss of previously written (and `fsync`-ed) files is of
-> paramount importance (especially for files that have been written say
-> days ago);
-> * are there instances of NILFS2 used in production (for any use-case)?
-I use nilfs2 in similar ways and have been for well over 10 years now.  
-I use it in a mostly as part of a data replication solution (single or 
-multi-stage).  I would mostly recommend it for windowed backup and 
-archival solutions (i.e. we're going to keep X amount of data for Y 
-amount of time and purge every Z interval).
-> I've tried searching on the internet and the email archives, but I
-> couldn't find anything "current" enough.  Moreover at least OpenSUSE
-> (and SUSE) have dropped the NILFS2 kernel module from the standard
-> packages (granted JFS was also dropped).
->
-> Also I'm concerned due to the fact that there isn't any `fsck` for NILFS2 yet.
->
-This is why I don't 100% recommend it.  I have had no more than 4 major 
-issues in 10 years where I could not purge old data. Specifically what 
-that means is I had a snapshot that changed back to a checkpoint so that 
-it could be purged the next time garbage collection ran.  As a result, I 
-eventually had to reformat which meant giving up the current data (which 
-could span several years). I sometimes use an nilfs2 fs in a loop 
-mounted system on top of a large parallel / distributed filesystem and 
-that combination could be the issue but it makes no sense to me why 
-there is no way to get around a problem like that.  The lack of tools to 
-analyze and fix that condition or to be able to efficiently copy or 
-migrate data to another system continues to be an issue.  That said, I 
-have NEVER lost data in snapshot and have been able to access data from 
-years prior even when I can't purge.  The benefits of nilfs2 continue to 
-outweigh this issue for me and if I really want all the data in a 
-filesystem that can't be purged I could rebuild it manually somewhere 
-else on the data lake.  That would be a p.i.t.a. but at least it is an 
-option.
-> Related to this, could the community recommend an alternative
-> file-system that would fit the bill?  (Ext4 and JFS are the only
-> file-systems I have heavily used and relied upon.)
->
-Nothing else comes to mind for me as an all-in-one-solution.  I think 
-you're going to have to continue to build a solution from the best 
-offerings you find.
+Hi Ciprian,
 
--- 
-~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-Keith C. Perry, MS E.E.
-Managing Member, DAO Technologies LLC
-(O) +1.215.525.4165 x2033
-(M) +1.215.432.5167
-www.daotechnologies.com
+I am using nilfs2 daily at work since 5 years. During this
+time I have had a handful of "bad btree node" corruptions.
+They don't destroy the current data, but causes weird
+problems with snapshots, and I have re-created the
+filesystem on these occasions. This is of course not
+supposed to happen, and may eventually be fixed if someone
+future version.
 
+But the main reason I would not recommend nilfs2 for
+long-term backup is, like Ryusuke has mentioned, that nilfs2
+does not have checksums and a corresponding scrub mechanism
+to validate that no bits on the disk have accidentally
+flipped or become unreadable. For safe long-term storage you
+will need checksums and scrubbing to detect corrupted data,
+and redundancy (raid, mirror) to correct the corruption and
+get a notice to replace the failing disk.
+
+Even if safety is not a priority, there is little benefit
+from using nilfs2 for backups, since you will probably make
+a manual snapshots after a backup anyway, and not have any
+use for all the automatic checkpoints that will be created
+during the backup.
+
+Another thing that could be an issue is that nilfs2 does not
+support xattr, if that is needed for the backup.
+
+Yet another curiosity I have had to deal with is symlink
+properties. The standard says that rwx properties of
+symlinks may be set to anything but should be ignored. All
+filesystems I have used sets them to 777, except for nilfs2,
+which honors the current umask value. Now, rsync, which is
+probably to blame here, tries to update the properties on
+symlinks, and if it reads from nilfs2, and gets something
+other than 777, it can not set this other value if the
+target is not also nilfs2, and will think it has failed. The
+only workaround I have come up with is to find all symlinks
+on nilfs2 and update their permission to 777.
+
+That said, I could go on and on about how much I love nilfs2
+for its user error protection. I use it as a "working area"
+where I can experiment fearlessly, because I can backtrack
+to any point in time.
