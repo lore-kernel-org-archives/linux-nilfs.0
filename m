@@ -1,66 +1,47 @@
-From: syzbot <syzbot+7381dc4ad60658ca4c05-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] memory leak in kobject_set_name_vargs (5)
-Date: Wed, 22 Jun 2022 16:13:19 -0700
-Message-ID: <00000000000098972c05e2117b39@google.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Is NILFS2 suitable for long term archival storage?
+Date: Thu, 23 Jun 2022 12:46:48 +0900
+Message-ID: <CAKFNMokCAegqoej8o2EK4QFVFeXoob1b1Zug+Lx+2jM8PeCe5Q@mail.gmail.com>
+References: <CA+Tk8fzpXneoDAyvdoJFdFjX7Cx-cJ7GO0uNXjGrYDk23FyekA@mail.gmail.com>
+ <YrMHJYobUpjv+KRj@kelsos> <CA+Tk8fywv3sL1wLcZioWACCBfMPpDCqrKEXnvuzH0q6GP9FCWA@mail.gmail.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=UHWe+AqQbXL1+Nmqri62sq/R0WS4/yHfHIvfHlvtoQA=;
+        b=g0IEjL5wDRtNuTH559JoYvQy1yzpIX2+0e6zYC1NdtRVGcstYUB0GfBAgJfBZ1FAf8
+         QkFZRgLk+RSHendi6Su8/HJT9gUZsivfWpjNLy8YlQUFUxNpmbUxuD4DMFgMS44uqC1C
+         l264BPpp+7RON0ygyIoZqxVo5yTK3DeHOXVjTLs+a96I30ANb3fislxZNfzzVhwNnYh7
+         z6hh/9I4uzdluj1KLbj3YjYsdT5nw7ERMocGWdiB240+wYfXrbEvLgY+euloMbNTb2Ea
+         s4/igW3PP2ory4JIcJinzjsDFgBeprfWdUKkysCOjAIeY7bdFXxKscYefU7hQerqs0FY
+         KDbA==
+In-Reply-To: <CA+Tk8fywv3sL1wLcZioWACCBfMPpDCqrKEXnvuzH0q6GP9FCWA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tommy Pettersson <ptp-SamgB31n2u5IcsJQ0EH25Q@public.gmane.org>
 
-Hello,
+On Wed, Jun 22, 2022 at 11:39 PM Ciprian Craciun wrote:
+> On 6/22/22 15:12, Tommy Pettersson wrote:
+> > Yet another curiosity I have had to deal with is symlink
+> > properties. The standard says that rwx properties of
+> > symlinks may be set to anything but should be ignored. All
+> > filesystems I have used sets them to 777, except for nilfs2,
+> > which honors the current umask value. Now, rsync, which is
+> > probably to blame here, tries to update the properties on
+> > symlinks, and if it reads from nilfs2, and gets something
+> > other than 777, it can not set this other value if the
+> > target is not also nilfs2, and will think it has failed. The
+> > only workaround I have come up with is to find all symlinks
+> > on nilfs2 and update their permission to 777.
+>
+>
+> I've seen this weird behaviour and doesn't bother me.
 
-syzbot found the following issue on:
+Ugh, this looks like a bug (or regression).
+I will look into what's happening.
 
-HEAD commit:    4b35035bcf80 Merge tag 'nfs-for-5.19-2' of git://git.linux..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=16db143ff00000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=3136c902c03fdd37
-dashboard link: https://syzkaller.appspot.com/bug?extid=7381dc4ad60658ca4c05
-compiler:       gcc (Debian 10.2.1-6) 10.2.1 20210110, GNU ld (GNU Binutils for Debian) 2.35.2
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=111c8c1ff00000
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+7381dc4ad60658ca4c05-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-
-BUG: memory leak
-unreferenced object 0xffff88811943b700 (size 32):
-  comm "syz-executor.7", pid 3953, jiffies 4294958653 (age 15.830s)
-  hex dump (first 32 bytes):
-    6c 6f 6f 70 37 00 00 00 00 00 00 00 00 00 00 00  loop7...........
-    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-  backtrace:
-    [<ffffffff814b7106>] kstrdup+0x36/0x70 mm/util.c:61
-    [<ffffffff814b7193>] kstrdup_const+0x53/0x80 mm/util.c:84
-    [<ffffffff8239acd2>] kvasprintf_const+0xc2/0x110 lib/kasprintf.c:48
-    [<ffffffff8249179b>] kobject_set_name_vargs+0x3b/0xe0 lib/kobject.c:257
-    [<ffffffff82491c1d>] kobject_add_varg lib/kobject.c:352 [inline]
-    [<ffffffff82491c1d>] kobject_init_and_add+0x6d/0xc0 lib/kobject.c:441
-    [<ffffffff81e2c07a>] nilfs_sysfs_create_device_group+0x9a/0x3d0 fs/nilfs2/sysfs.c:991
-    [<ffffffff81e1482c>] init_nilfs+0x51c/0x680 fs/nilfs2/the_nilfs.c:637
-    [<ffffffff81e004db>] nilfs_fill_super fs/nilfs2/super.c:1047 [inline]
-    [<ffffffff81e004db>] nilfs_mount+0x51b/0x890 fs/nilfs2/super.c:1317
-    [<ffffffff8163fb5b>] legacy_get_tree+0x2b/0x90 fs/fs_context.c:610
-    [<ffffffff815d95c8>] vfs_get_tree+0x28/0x100 fs/super.c:1497
-    [<ffffffff8161d097>] do_new_mount fs/namespace.c:3040 [inline]
-    [<ffffffff8161d097>] path_mount+0xc37/0x1120 fs/namespace.c:3370
-    [<ffffffff8161dcce>] do_mount fs/namespace.c:3383 [inline]
-    [<ffffffff8161dcce>] __do_sys_mount fs/namespace.c:3591 [inline]
-    [<ffffffff8161dcce>] __se_sys_mount fs/namespace.c:3568 [inline]
-    [<ffffffff8161dcce>] __x64_sys_mount+0x18e/0x1d0 fs/namespace.c:3568
-    [<ffffffff845a9cb5>] do_syscall_x64 arch/x86/entry/common.c:50 [inline]
-    [<ffffffff845a9cb5>] do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
-    [<ffffffff8460006a>] entry_SYSCALL_64_after_hwframe+0x46/0xb0
-
-
-
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
-
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
-syzbot can test patches for this issue, for details see:
-https://goo.gl/tpsmEJ#testing-patches
+Ryusuke Konishi
