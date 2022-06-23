@@ -1,47 +1,60 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Is NILFS2 suitable for long term archival storage?
-Date: Thu, 23 Jun 2022 12:46:48 +0900
-Message-ID: <CAKFNMokCAegqoej8o2EK4QFVFeXoob1b1Zug+Lx+2jM8PeCe5Q@mail.gmail.com>
-References: <CA+Tk8fzpXneoDAyvdoJFdFjX7Cx-cJ7GO0uNXjGrYDk23FyekA@mail.gmail.com>
- <YrMHJYobUpjv+KRj@kelsos> <CA+Tk8fywv3sL1wLcZioWACCBfMPpDCqrKEXnvuzH0q6GP9FCWA@mail.gmail.com>
-Mime-Version: 1.0
+Subject: [PATCH] nilfs2: fix incorrect masking of permission flags for symlinks
+Date: Thu, 23 Jun 2022 17:54:01 +0900
+Message-ID: <1655974441-5612-1-git-send-email-konishi.ryusuke@gmail.com>
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=UHWe+AqQbXL1+Nmqri62sq/R0WS4/yHfHIvfHlvtoQA=;
-        b=g0IEjL5wDRtNuTH559JoYvQy1yzpIX2+0e6zYC1NdtRVGcstYUB0GfBAgJfBZ1FAf8
-         QkFZRgLk+RSHendi6Su8/HJT9gUZsivfWpjNLy8YlQUFUxNpmbUxuD4DMFgMS44uqC1C
-         l264BPpp+7RON0ygyIoZqxVo5yTK3DeHOXVjTLs+a96I30ANb3fislxZNfzzVhwNnYh7
-         z6hh/9I4uzdluj1KLbj3YjYsdT5nw7ERMocGWdiB240+wYfXrbEvLgY+euloMbNTb2Ea
-         s4/igW3PP2ory4JIcJinzjsDFgBeprfWdUKkysCOjAIeY7bdFXxKscYefU7hQerqs0FY
-         KDbA==
-In-Reply-To: <CA+Tk8fywv3sL1wLcZioWACCBfMPpDCqrKEXnvuzH0q6GP9FCWA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        h=from:to:cc:subject:date:message-id;
+        bh=CgKFu42pVNbutALOPAyFG9CSppEVlH9cLVPLNYXxSDc=;
+        b=TgWNIU0sVyugoVfuKJctmkNZR5g0jvh0wU5ej56Yfj8LnJBA9GMeWdwdhUSMYSgoXs
+         vQDKVqw/SQcLjxA6/cIeb94CZs1VsmNQ6GwJB6IJv0D225ciqF3j0ah5Dwf5EqDSVesa
+         CtyH9WAqCOdvoJk/R+N1Skk10gECKlAb6cb3lXNW1C/t3+kk7Y+WxD7UhsX5Rg34YvAD
+         ka98Ju44pZ9q5Uyu484L4Bu1HrO6aFYSqCJ4MbLOeuNZRKcysCfXRBVL6aNmIBRT68eB
+         ofV6E8LNIUBAeYDxaouMz9r1DAJmdqTBJA/as3Zg5s1BJrN41K9F11mCIQGtkPe6QYno
+         lVDQ==
 List-ID: <linux-nilfs.vger.kernel.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tommy Pettersson <ptp-SamgB31n2u5IcsJQ0EH25Q@public.gmane.org>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Wed, Jun 22, 2022 at 11:39 PM Ciprian Craciun wrote:
-> On 6/22/22 15:12, Tommy Pettersson wrote:
-> > Yet another curiosity I have had to deal with is symlink
-> > properties. The standard says that rwx properties of
-> > symlinks may be set to anything but should be ignored. All
-> > filesystems I have used sets them to 777, except for nilfs2,
-> > which honors the current umask value. Now, rsync, which is
-> > probably to blame here, tries to update the properties on
-> > symlinks, and if it reads from nilfs2, and gets something
-> > other than 777, it can not set this other value if the
-> > target is not also nilfs2, and will think it has failed. The
-> > only workaround I have come up with is to find all symlinks
-> > on nilfs2 and update their permission to 777.
->
->
-> I've seen this weird behaviour and doesn't bother me.
+The permission flags of newly created symlinks are wrongly dropped on
+nilfs2 with the current umask value even though symlinks should have
+777 (rwxrwxrwx) permissions:
 
-Ugh, this looks like a bug (or regression).
-I will look into what's happening.
+ $ umask
+ 0022
+ $ touch file && ln -s file symlink; ls -l file symlink
+ -rw-r--r--. 1 root root 0 Jun 23 16:29 file
+ lrwxr-xr-x. 1 root root 4 Jun 23 16:29 symlink -> file
 
-Ryusuke Konishi
+This fixes the bug by inserting a missing check that excludes
+symlinks.
+
+Reported-by: Tommy Pettersson <ptp-SamgB31n2u5IcsJQ0EH25Q@public.gmane.org>
+Reported-by: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nilfs2/nilfs.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 1344f7d475d3..aecda4fc95f5 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -198,6 +198,9 @@ static inline int nilfs_acl_chmod(struct inode *inode)
+ 
+ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
+ {
++	if (S_ISLNK(inode->i_mode))
++		return 0;
++
+ 	inode->i_mode &= ~current_umask();
+ 	return 0;
+ }
+-- 
+1.8.3.1
+
