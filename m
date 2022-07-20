@@ -1,22 +1,22 @@
 From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH AUTOSEL 5.15 27/42] nilfs2: fix incorrect masking of permission flags for symlinks
-Date: Tue, 19 Jul 2022 21:13:35 -0400
-Message-ID: <20220720011350.1024134-27-sashal@kernel.org>
-References: <20220720011350.1024134-1-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.18 33/54] nilfs2: fix incorrect masking of permission flags for symlinks
+Date: Tue, 19 Jul 2022 21:10:10 -0400
+Message-ID: <20220720011031.1023305-33-sashal@kernel.org>
+References: <20220720011031.1023305-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1658279738;
-        bh=akwrV7qxX0ywEQUTgrCf6sEdocT6IoiF+KtS6DPvags=;
+        s=k20201202; t=1658279562;
+        bh=QHWe2S8lwDPE8S3hDWLi4CUyziW6FUFYG7Yw541+8o0=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=jXQKxeBRYxUaf+OAzHdlFWr8nrf3Z+GnsWENAOCe0PxHcjMXviHkCY8JJ1TZsDm+L
-         0dCCRSAT2pM7TgCWeVgc6O4Pwz67apm05hSXiVodZ9WdMonDuzwimPJn35DuYUUujY
-         aE2MS83qrbs08vfqhrWKojEDRiovkrlltkZdy2vzmYnYlSBIerf2XubqrsODuNJ1o8
-         /MW6X1UbXen1yDJjCdMeorrOXuFDegxBc5lspEiZA3EMtVnLLxmJG2Vr4zkqN2dnFI
-         pJEDw//ZWsMQ3Yh/6Az7fvxnEKMQoGQE/GIzVUEtW2PvKxRtCdgSqWf/B3z36YcsAd
-         RoXwl/CmxLXww==
-In-Reply-To: <20220720011350.1024134-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+        b=lPzNBoIn5EvzUnH8AzUBGdbvw9zgqG32PhHzCL6TqoACUk72KGVJt8V0bTYkWQoxg
+         sHZvbKQ152RIj7RX5FzITuPyTLoH25tsJ8aOIbpnoQA6VsEJhQ4U3A90nAE07KetOY
+         EgirztPaB9ubIEDMI6fSAnFt7cD9h1hPWqMHflNIG2SHawZ4Wbtpdk7huhyURCYLvP
+         qNQkDbPke8rnYOT+RJvfZzy8rGHaB2XajyOENNEPr27GLR2XtzCYJ4+efonAksFQ7U
+         Snz66E6g5HKm5e8+uSjYyfNz3wnFTMrUGFVF33kkycZFXHbuqccbVygO0ESLNwwNhK
+         mwhOUmL37g15Q==
+In-Reply-To: <20220720011031.1023305-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -51,7 +51,7 @@ Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
  1 file changed, 3 insertions(+)
 
 diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 7dcb77d38759..aceb8aadca14 100644
+index 1344f7d475d3..aecda4fc95f5 100644
 --- a/fs/nilfs2/nilfs.h
 +++ b/fs/nilfs2/nilfs.h
 @@ -198,6 +198,9 @@ static inline int nilfs_acl_chmod(struct inode *inode)
