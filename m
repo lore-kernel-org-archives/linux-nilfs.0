@@ -1,28 +1,28 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 4.19 5/8] nilfs2: fix incorrect masking of permission flags for symlinks
-Date: Tue, 19 Jul 2022 21:18:07 -0400
-Message-ID: <20220720011810.1025308-5-sashal@kernel.org>
-References: <20220720011810.1025308-1-sashal@kernel.org>
+From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH AUTOSEL 4.9 4/6] nilfs2: fix incorrect masking of permission flags for symlinks
+Date: Tue, 19 Jul 2022 21:18:55 -0400
+Message-ID: <20220720011858.1025523-4-sashal@kernel.org>
+References: <20220720011858.1025523-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1658279910;
-        bh=yvYYLK8GTpvd0DLQXvYV+6tSNlBZQRy5OKk9R12S89Q=;
+        s=k20201202; t=1658279957;
+        bh=2EAe9d/15fb9EvQLyRctfq8yKMy23iuGqG2W9wu1BFA=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=noxgCKL2mllNuRxMoCis/H7toQ0RwSU/YGfJdPabFMYmTfX4sWLAdU71ROrGz5Njs
-         3n7qCx1NfYprtCcfaJjAJNyooH0GXHAgCUFxbVibUWUzdzjHzKzPd1FCTkfLk12kdB
-         IJhTxPZ1jEg9l0LY16Cs3vyE0idP0Sh+zb9ACuJMOLDNBuwmqqj4/UtGhDCRZrgPiJ
-         J2VqErt4mrgck6s6zTcj2r9MVG6sK+ZdPjDqeDBMFnsE/x+O+tcMXdjTUw7AOsA51Y
-         fv9M6PGc+ZPZu4Hj2nkbUkNF0Zqvwxx18swrEIP6mD/0LT5kmwzV4bv1fXVnOuWSe3
-         lUhNF9PHlHsXg==
-In-Reply-To: <20220720011810.1025308-1-sashal@kernel.org>
+        b=uk9EoO5MDa4c8jWPkFM8Hae5bSLUkoF9+gxPTgbax9SAmTAx9ph3QL3h+ay3KygRj
+         YXEqR6XPyrq0/xYC14H4lOkEZMI7B9kAd/VzdXYCp7RUIfnTXjrnqsF7FlHaUfeMlz
+         iMtf3eUGOxvSsoGFwABOYkcTIUUK19dskunwDTmPKcMnx+Q+phD0AE4A/3VBc22uBm
+         xhgVSw8N2ww14S2OFm+VurucDtvvSR/JMXJHXndItcFQGLxqsrpHxYUYCRGZAjq4sw
+         wop1Npka485lFfRGnpZXIB6BIVZ5he5t8fgW4deWocSQabI3xAksNyvdZ5+S+lrOiJ
+         V/oixs6Bqe4Xg==
+In-Reply-To: <20220720011858.1025523-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Tommy Pettersson <ptp@lysator.liu.se>, Ciprian Craciun <ciprian.craciun@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sashal@kernel.org>, linux-nilfs@vger.kernel.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tommy Pettersson <ptp-SamgB31n2u5IcsJQ0EH25Q@public.gmane.org>, Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 [ Upstream commit 5924e6ec1585445f251ea92713eb15beb732622a ]
 
@@ -39,22 +39,22 @@ nilfs2 with the current umask value even though symlinks should have 777
 This fixes the bug by inserting a missing check that excludes
 symlinks.
 
-Link: https://lkml.kernel.org/r/1655974441-5612-1-git-send-email-konishi.ryusuke@gmail.com
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: Tommy Pettersson <ptp@lysator.liu.se>
-Reported-by: Ciprian Craciun <ciprian.craciun@gmail.com>
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
+Link: https://lkml.kernel.org/r/1655974441-5612-1-git-send-email-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: Tommy Pettersson <ptp-SamgB31n2u5IcsJQ0EH25Q@public.gmane.org>
+Reported-by: Ciprian Craciun <ciprian.craciun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
  fs/nilfs2/nilfs.h | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 8699bdc9e391..cca30f0f965c 100644
+index 33f8c8fc96e8..a89704271428 100644
 --- a/fs/nilfs2/nilfs.h
 +++ b/fs/nilfs2/nilfs.h
-@@ -198,6 +198,9 @@ static inline int nilfs_acl_chmod(struct inode *inode)
+@@ -212,6 +212,9 @@ static inline int nilfs_acl_chmod(struct inode *inode)
  
  static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
  {
