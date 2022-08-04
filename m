@@ -1,69 +1,220 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 4.14 4/6] nilfs2: fix incorrect masking of permission flags for symlinks
-Date: Tue, 19 Jul 2022 21:18:34 -0400
-Message-ID: <20220720011836.1025430-4-sashal@kernel.org>
-References: <20220720011836.1025430-1-sashal@kernel.org>
+From: syzbot <syzbot+7381dc4ad60658ca4c05-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: Re: [syzbot] memory leak in kobject_set_name_vargs (5)
+Date: Thu, 04 Aug 2022 15:00:29 -0700
+Message-ID: <0000000000005022af05e5717ac8@google.com>
+References: <00000000000098972c05e2117b39@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1658279934;
-        bh=2EAe9d/15fb9EvQLyRctfq8yKMy23iuGqG2W9wu1BFA=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=OM5NzPSyKMLLKbRDTYtuFpQHJ81tIiV90bJavaQyqsYCtBNiB1RoI3ShATGu/sny9
-         jSSpLKhrVg4DZzoFShkd9JZkWx4VolJNaopcVe/UTPYULL8XA6TxOOfwbQKGELsBxc
-         ZJRaQQmTcBt23By2wMdUwjUWWeaKt5+atrGsxJxvZb1X/bXcIjdGtwdMf+hrFIC81m
-         buHeswDwT7Ktl3Gz+tNJ16F6T+TXYxfRNvNUgH/zx5ZVpHI8B3V8sGgkzvxxQzhL86
-         MYO+eSvGaKedsF6xKP8wOBRbRkqgiFc35+wCRaBeQRZVcPJ+7gM4l5MrFm8LA1pDo2
-         C/C2QEs7c7nQQ==
-In-Reply-To: <20220720011836.1025430-1-sashal@kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <00000000000098972c05e2117b39-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Tommy Pettersson <ptp@lysator.liu.se>, Ciprian Craciun <ciprian.craciun@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sashal@kernel.org>, linux-nilfs@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+syzbot has found a reproducer for the following issue on:
 
-[ Upstream commit 5924e6ec1585445f251ea92713eb15beb732622a ]
+HEAD commit:    b44f2fd87919 Merge tag 'drm-next-2022-08-03' of git://anon..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=105fdbca080000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=358668a360d9b702
+dashboard link: https://syzkaller.appspot.com/bug?extid=7381dc4ad60658ca4c05
+compiler:       gcc (Debian 10.2.1-6) 10.2.1 20210110, GNU ld (GNU Binutils for Debian) 2.35.2
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=11c685ca080000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=120a0fe2080000
 
-The permission flags of newly created symlinks are wrongly dropped on
-nilfs2 with the current umask value even though symlinks should have 777
-(rwxrwxrwx) permissions:
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+7381dc4ad60658ca4c05-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
- $ umask
- 0022
- $ touch file && ln -s file symlink; ls -l file symlink
- -rw-r--r--. 1 root root 0 Jun 23 16:29 file
- lrwxr-xr-x. 1 root root 4 Jun 23 16:29 symlink -> file
+BUG: memory leak
+unreferenced object 0xffff88810c35db80 (size 32):
+  comm "syz-executor261", pid 3645, jiffies 4294950822 (age 25.990s)
+  hex dump (first 32 bytes):
+    6c 6f 6f 70 37 00 00 00 00 00 00 00 00 00 00 00  loop7...........
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<ffffffff814bf836>] kstrdup+0x36/0x70 mm/util.c:61
+    [<ffffffff814bf8c3>] kstrdup_const+0x53/0x80 mm/util.c:84
+    [<ffffffff8239c002>] kvasprintf_const+0xc2/0x110 lib/kasprintf.c:48
+    [<ffffffff82492b6b>] kobject_set_name_vargs+0x3b/0xe0 lib/kobject.c:257
+    [<ffffffff82492fed>] kobject_add_varg lib/kobject.c:352 [inline]
+    [<ffffffff82492fed>] kobject_init_and_add+0x6d/0xc0 lib/kobject.c:441
+    [<ffffffff81e10e8a>] nilfs_sysfs_create_device_group+0x9a/0x3d0 fs/nilfs2/sysfs.c:991
+    [<ffffffff81df964c>] init_nilfs+0x51c/0x680 fs/nilfs2/the_nilfs.c:637
+    [<ffffffff81de57ab>] nilfs_fill_super fs/nilfs2/super.c:1047 [inline]
+    [<ffffffff81de57ab>] nilfs_mount+0x51b/0x890 fs/nilfs2/super.c:1317
+    [<ffffffff8164981b>] legacy_get_tree+0x2b/0x90 fs/fs_context.c:610
+    [<ffffffff815e2c68>] vfs_get_tree+0x28/0x100 fs/super.c:1497
+    [<ffffffff81626e27>] do_new_mount fs/namespace.c:3040 [inline]
+    [<ffffffff81626e27>] path_mount+0xc37/0x1120 fs/namespace.c:3370
+    [<ffffffff81627a5e>] do_mount fs/namespace.c:3383 [inline]
+    [<ffffffff81627a5e>] __do_sys_mount fs/namespace.c:3591 [inline]
+    [<ffffffff81627a5e>] __se_sys_mount fs/namespace.c:3568 [inline]
+    [<ffffffff81627a5e>] __x64_sys_mount+0x18e/0x1d0 fs/namespace.c:3568
+    [<ffffffff845cad15>] do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+    [<ffffffff845cad15>] do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+    [<ffffffff84600087>] entry_SYSCALL_64_after_hwframe+0x63/0xcd
 
-This fixes the bug by inserting a missing check that excludes
-symlinks.
+BUG: memory leak
+unreferenced object 0xffff88810c35db80 (size 32):
+  comm "syz-executor261", pid 3645, jiffies 4294950822 (age 27.260s)
+  hex dump (first 32 bytes):
+    6c 6f 6f 70 37 00 00 00 00 00 00 00 00 00 00 00  loop7...........
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<ffffffff814bf836>] kstrdup+0x36/0x70 mm/util.c:61
+    [<ffffffff814bf8c3>] kstrdup_const+0x53/0x80 mm/util.c:84
+    [<ffffffff8239c002>] kvasprintf_const+0xc2/0x110 lib/kasprintf.c:48
+    [<ffffffff82492b6b>] kobject_set_name_vargs+0x3b/0xe0 lib/kobject.c:257
+    [<ffffffff82492fed>] kobject_add_varg lib/kobject.c:352 [inline]
+    [<ffffffff82492fed>] kobject_init_and_add+0x6d/0xc0 lib/kobject.c:441
+    [<ffffffff81e10e8a>] nilfs_sysfs_create_device_group+0x9a/0x3d0 fs/nilfs2/sysfs.c:991
+    [<ffffffff81df964c>] init_nilfs+0x51c/0x680 fs/nilfs2/the_nilfs.c:637
+    [<ffffffff81de57ab>] nilfs_fill_super fs/nilfs2/super.c:1047 [inline]
+    [<ffffffff81de57ab>] nilfs_mount+0x51b/0x890 fs/nilfs2/super.c:1317
+    [<ffffffff8164981b>] legacy_get_tree+0x2b/0x90 fs/fs_context.c:610
+    [<ffffffff815e2c68>] vfs_get_tree+0x28/0x100 fs/super.c:1497
+    [<ffffffff81626e27>] do_new_mount fs/namespace.c:3040 [inline]
+    [<ffffffff81626e27>] path_mount+0xc37/0x1120 fs/namespace.c:3370
+    [<ffffffff81627a5e>] do_mount fs/namespace.c:3383 [inline]
+    [<ffffffff81627a5e>] __do_sys_mount fs/namespace.c:3591 [inline]
+    [<ffffffff81627a5e>] __se_sys_mount fs/namespace.c:3568 [inline]
+    [<ffffffff81627a5e>] __x64_sys_mount+0x18e/0x1d0 fs/namespace.c:3568
+    [<ffffffff845cad15>] do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+    [<ffffffff845cad15>] do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+    [<ffffffff84600087>] entry_SYSCALL_64_after_hwframe+0x63/0xcd
 
-Link: https://lkml.kernel.org/r/1655974441-5612-1-git-send-email-konishi.ryusuke@gmail.com
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: Tommy Pettersson <ptp@lysator.liu.se>
-Reported-by: Ciprian Craciun <ciprian.craciun@gmail.com>
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- fs/nilfs2/nilfs.h | 3 +++
- 1 file changed, 3 insertions(+)
+BUG: memory leak
+unreferenced object 0xffff88810c35db80 (size 32):
+  comm "syz-executor261", pid 3645, jiffies 4294950822 (age 28.520s)
+  hex dump (first 32 bytes):
+    6c 6f 6f 70 37 00 00 00 00 00 00 00 00 00 00 00  loop7...........
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<ffffffff814bf836>] kstrdup+0x36/0x70 mm/util.c:61
+    [<ffffffff814bf8c3>] kstrdup_const+0x53/0x80 mm/util.c:84
+    [<ffffffff8239c002>] kvasprintf_const+0xc2/0x110 lib/kasprintf.c:48
+    [<ffffffff82492b6b>] kobject_set_name_vargs+0x3b/0xe0 lib/kobject.c:257
+    [<ffffffff82492fed>] kobject_add_varg lib/kobject.c:352 [inline]
+    [<ffffffff82492fed>] kobject_init_and_add+0x6d/0xc0 lib/kobject.c:441
+    [<ffffffff81e10e8a>] nilfs_sysfs_create_device_group+0x9a/0x3d0 fs/nilfs2/sysfs.c:991
+    [<ffffffff81df964c>] init_nilfs+0x51c/0x680 fs/nilfs2/the_nilfs.c:637
+    [<ffffffff81de57ab>] nilfs_fill_super fs/nilfs2/super.c:1047 [inline]
+    [<ffffffff81de57ab>] nilfs_mount+0x51b/0x890 fs/nilfs2/super.c:1317
+    [<ffffffff8164981b>] legacy_get_tree+0x2b/0x90 fs/fs_context.c:610
+    [<ffffffff815e2c68>] vfs_get_tree+0x28/0x100 fs/super.c:1497
+    [<ffffffff81626e27>] do_new_mount fs/namespace.c:3040 [inline]
+    [<ffffffff81626e27>] path_mount+0xc37/0x1120 fs/namespace.c:3370
+    [<ffffffff81627a5e>] do_mount fs/namespace.c:3383 [inline]
+    [<ffffffff81627a5e>] __do_sys_mount fs/namespace.c:3591 [inline]
+    [<ffffffff81627a5e>] __se_sys_mount fs/namespace.c:3568 [inline]
+    [<ffffffff81627a5e>] __x64_sys_mount+0x18e/0x1d0 fs/namespace.c:3568
+    [<ffffffff845cad15>] do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+    [<ffffffff845cad15>] do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+    [<ffffffff84600087>] entry_SYSCALL_64_after_hwframe+0x63/0xcd
 
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 33f8c8fc96e8..a89704271428 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -212,6 +212,9 @@ static inline int nilfs_acl_chmod(struct inode *inode)
- 
- static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
- {
-+	if (S_ISLNK(inode->i_mode))
-+		return 0;
-+
- 	inode->i_mode &= ~current_umask();
- 	return 0;
- }
--- 
-2.35.1
+BUG: memory leak
+unreferenced object 0xffff88810c35db80 (size 32):
+  comm "syz-executor261", pid 3645, jiffies 4294950822 (age 31.000s)
+  hex dump (first 32 bytes):
+    6c 6f 6f 70 37 00 00 00 00 00 00 00 00 00 00 00  loop7...........
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<ffffffff814bf836>] kstrdup+0x36/0x70 mm/util.c:61
+    [<ffffffff814bf8c3>] kstrdup_const+0x53/0x80 mm/util.c:84
+    [<ffffffff8239c002>] kvasprintf_const+0xc2/0x110 lib/kasprintf.c:48
+    [<ffffffff82492b6b>] kobject_set_name_vargs+0x3b/0xe0 lib/kobject.c:257
+    [<ffffffff82492fed>] kobject_add_varg lib/kobject.c:352 [inline]
+    [<ffffffff82492fed>] kobject_init_and_add+0x6d/0xc0 lib/kobject.c:441
+    [<ffffffff81e10e8a>] nilfs_sysfs_create_device_group+0x9a/0x3d0 fs/nilfs2/sysfs.c:991
+    [<ffffffff81df964c>] init_nilfs+0x51c/0x680 fs/nilfs2/the_nilfs.c:637
+    [<ffffffff81de57ab>] nilfs_fill_super fs/nilfs2/super.c:1047 [inline]
+    [<ffffffff81de57ab>] nilfs_mount+0x51b/0x890 fs/nilfs2/super.c:1317
+    [<ffffffff8164981b>] legacy_get_tree+0x2b/0x90 fs/fs_context.c:610
+    [<ffffffff815e2c68>] vfs_get_tree+0x28/0x100 fs/super.c:1497
+    [<ffffffff81626e27>] do_new_mount fs/namespace.c:3040 [inline]
+    [<ffffffff81626e27>] path_mount+0xc37/0x1120 fs/namespace.c:3370
+    [<ffffffff81627a5e>] do_mount fs/namespace.c:3383 [inline]
+    [<ffffffff81627a5e>] __do_sys_mount fs/namespace.c:3591 [inline]
+    [<ffffffff81627a5e>] __se_sys_mount fs/namespace.c:3568 [inline]
+    [<ffffffff81627a5e>] __x64_sys_mount+0x18e/0x1d0 fs/namespace.c:3568
+    [<ffffffff845cad15>] do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+    [<ffffffff845cad15>] do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+    [<ffffffff84600087>] entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+BUG: memory leak
+unreferenced object 0xffff88810c35db80 (size 32):
+  comm "syz-executor261", pid 3645, jiffies 4294950822 (age 31.040s)
+  hex dump (first 32 bytes):
+    6c 6f 6f 70 37 00 00 00 00 00 00 00 00 00 00 00  loop7...........
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<ffffffff814bf836>] kstrdup+0x36/0x70 mm/util.c:61
+    [<ffffffff814bf8c3>] kstrdup_const+0x53/0x80 mm/util.c:84
+    [<ffffffff8239c002>] kvasprintf_const+0xc2/0x110 lib/kasprintf.c:48
+    [<ffffffff82492b6b>] kobject_set_name_vargs+0x3b/0xe0 lib/kobject.c:257
+    [<ffffffff82492fed>] kobject_add_varg lib/kobject.c:352 [inline]
+    [<ffffffff82492fed>] kobject_init_and_add+0x6d/0xc0 lib/kobject.c:441
+    [<ffffffff81e10e8a>] nilfs_sysfs_create_device_group+0x9a/0x3d0 fs/nilfs2/sysfs.c:991
+    [<ffffffff81df964c>] init_nilfs+0x51c/0x680 fs/nilfs2/the_nilfs.c:637
+    [<ffffffff81de57ab>] nilfs_fill_super fs/nilfs2/super.c:1047 [inline]
+    [<ffffffff81de57ab>] nilfs_mount+0x51b/0x890 fs/nilfs2/super.c:1317
+    [<ffffffff8164981b>] legacy_get_tree+0x2b/0x90 fs/fs_context.c:610
+    [<ffffffff815e2c68>] vfs_get_tree+0x28/0x100 fs/super.c:1497
+    [<ffffffff81626e27>] do_new_mount fs/namespace.c:3040 [inline]
+    [<ffffffff81626e27>] path_mount+0xc37/0x1120 fs/namespace.c:3370
+    [<ffffffff81627a5e>] do_mount fs/namespace.c:3383 [inline]
+    [<ffffffff81627a5e>] __do_sys_mount fs/namespace.c:3591 [inline]
+    [<ffffffff81627a5e>] __se_sys_mount fs/namespace.c:3568 [inline]
+    [<ffffffff81627a5e>] __x64_sys_mount+0x18e/0x1d0 fs/namespace.c:3568
+    [<ffffffff845cad15>] do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+    [<ffffffff845cad15>] do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+    [<ffffffff84600087>] entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+BUG: memory leak
+unreferenced object 0xffff88810c35db80 (size 32):
+  comm "syz-executor261", pid 3645, jiffies 4294950822 (age 31.080s)
+  hex dump (first 32 bytes):
+    6c 6f 6f 70 37 00 00 00 00 00 00 00 00 00 00 00  loop7...........
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<ffffffff814bf836>] kstrdup+0x36/0x70 mm/util.c:61
+    [<ffffffff814bf8c3>] kstrdup_const+0x53/0x80 mm/util.c:84
+    [<ffffffff8239c002>] kvasprintf_const+0xc2/0x110 lib/kasprintf.c:48
+    [<ffffffff82492b6b>] kobject_set_name_vargs+0x3b/0xe0 lib/kobject.c:257
+    [<ffffffff82492fed>] kobject_add_varg lib/kobject.c:352 [inline]
+    [<ffffffff82492fed>] kobject_init_and_add+0x6d/0xc0 lib/kobject.c:441
+    [<ffffffff81e10e8a>] nilfs_sysfs_create_device_group+0x9a/0x3d0 fs/nilfs2/sysfs.c:991
+    [<ffffffff81df964c>] init_nilfs+0x51c/0x680 fs/nilfs2/the_nilfs.c:637
+    [<ffffffff81de57ab>] nilfs_fill_super fs/nilfs2/super.c:1047 [inline]
+    [<ffffffff81de57ab>] nilfs_mount+0x51b/0x890 fs/nilfs2/super.c:1317
+    [<ffffffff8164981b>] legacy_get_tree+0x2b/0x90 fs/fs_context.c:610
+    [<ffffffff815e2c68>] vfs_get_tree+0x28/0x100 fs/super.c:1497
+    [<ffffffff81626e27>] do_new_mount fs/namespace.c:3040 [inline]
+    [<ffffffff81626e27>] path_mount+0xc37/0x1120 fs/namespace.c:3370
+    [<ffffffff81627a5e>] do_mount fs/namespace.c:3383 [inline]
+    [<ffffffff81627a5e>] __do_sys_mount fs/namespace.c:3591 [inline]
+    [<ffffffff81627a5e>] __se_sys_mount fs/namespace.c:3568 [inline]
+    [<ffffffff81627a5e>] __x64_sys_mount+0x18e/0x1d0 fs/namespace.c:3568
+    [<ffffffff845cad15>] do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+    [<ffffffff845cad15>] do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
+    [<ffffffff84600087>] entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
+executing program
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
+executing program
+write to /proc/sys/kernel/hung_task_check_interval_secs failed: No such file or directory
+write to /proc/sys/kernel/softlockup_all_cpu_backtrace failed: No such file or directory
 
