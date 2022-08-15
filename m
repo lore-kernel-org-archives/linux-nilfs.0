@@ -1,85 +1,58 @@
-From: John Haxby <john.haxby-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [vs-plain] KASAN: use-after-free in nilfs_mdt_destroy
-Date: Mon, 15 Aug 2022 15:09:05 +0000
-Message-ID: <8C0C088A-11A4-4D0E-93B9-CA70F0040341@oracle.com>
-References: <34e8df4a.848e1.182a1264256.Coremail.stitch@zju.edu.cn>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: fix use-after-free bug in nilfs_mdt_destroy()
+Date: Tue, 16 Aug 2022 02:51:14 +0900
+Message-ID: <20220815175114.23576-1-konishi.ryusuke@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-        boundary="Apple-Mail=_1F410261-EFD2-4EED-B98D-AF6A4C46935E";
-        protocol="application/pgp-signature";
-        micalg=pgp-sha256
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : cc :
- subject : date : message-id : references : in-reply-to : content-type :
- mime-version; s=corp-2022-7-12;
- bh=NB4wxJFHXGSD3l6NCcipCQ2XF1sJcWRCBanSROT8VKE=;
- b=q4d8FO67JBCYNK2F5LvK4s+mJp5/HBWXpcSZVxIb9P/5upZvD4ZFP83QNBSAh9G+wUpm
- UhcbqbP76nZuE1Y0tcGqaxbg5TJSC0o8Vf0gwRJw/mQohs65SqtJ9EZ4r0Vt9OhATU88
- GKijZ/uTYOuq6XZuZyKJA/8MDK2XQnMA6n60Cz/h4rcocPOqbQ8Zwhx2RR+kPJLC3CC5
- ZGUyO2J6xRa+UIkASbZkW5aUTCT9SBdo8CZz3jmt6ah9WyOlha6z95Ub4SVqt1UsSly1
- 8cFfcxDIauHGI3KC+iitipJR/5UIqX4i31SZoUQdqhYtR98XAqnepk3yqS8QpIwWc9dI Vw== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=NB4wxJFHXGSD3l6NCcipCQ2XF1sJcWRCBanSROT8VKE=;
- b=HiE0TTcoJ/SWiLSmXpBEobI+mD5gNI51xstDXIAKPbX///VoQq2E7zk9eDCjRDP3UxMimTZrkuM25ayAARuDNgti2U+/+uzFF2iD64CvBm5xnlXCdWF8z038pF4ICrnflQGtEKJ/BtaCHrQda1qxhFZOMfPpioxC5eWQ6Mn9+4w=
-In-Reply-To: <34e8df4a.848e1.182a1264256.Coremail.stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>
-Content-Language: en-US
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc;
+        bh=yFM5NAH4FbqVZAUN+RpSLe1Fb5MJe458XF5fgVWxzb8=;
+        b=CK0iyepL58aRSd9LzU3quaQk58TnfOXRzthLNyTjGfWMiRTJsrmdiF/ja9RaaNW2c7
+         +fHU/9iCI9PjCnXTg49kGl/pME6keQJQVdyeA1Q/TAR30FKQYG7X4gWMyXdlUKQE+T5x
+         gi6wRafz2djcfvrN/EgRyKfGR06izb63WYF/zQa1pSgccwk9SttjFfIC7Y7uvne6ytQj
+         BedEFLdHTBW+qMFCmXwtM53T6JqvB0nkw/iCOf5vgRRaZ6SgXdh63pIWmq/cBvj+7X6f
+         jkKx7Qd02UV422TUXwxuJeFA4edIw4BqNEbUHPSGU5tfExwX8XRDDauCo7t5KsYuEPGU
+         IeCA==
 List-ID: <linux-nilfs.vger.kernel.org>
-To: =?utf-8?B?6K645ZiJ6K+a?= <stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>
-Cc: "security-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <security-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-distros-DYwG1KUNWo0m4/wLoHy/Wg@public.gmane.org" <linux-distros-DYwG1KUNWo0m4/wLoHy/Wg@public.gmane.org>, "konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org" <syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>, "linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jiacheng Xu <stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>, Mudong Liang <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
---Apple-Mail=_1F410261-EFD2-4EED-B98D-AF6A4C46935E
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=utf-8
+In alloc_inode(), inode_init_always() could return -ENOMEM if
+security_inode_alloc() fails.  If this happens for nilfs2,
+nilfs_free_inode() is called without initializing inode->i_private and
+nilfs_free_inode() wrongly calls nilfs_mdt_destroy(), which frees
+uninitialized inode->i_private and can trigger a crash.
 
+Fix this bug by initializing inode->i_private in nilfs_alloc_inode().
 
+Link: https://lkml.kernel.org/r/CAFcO6XOcf1Jj2SeGt=jJV59wmhESeSKpfR0omdFRq+J9nD1vfQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
+Link: https://lkml.kernel.org/r/20211011030956.2459172-1-mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Reported-by: butt3rflyh4ck <butterflyhuangxx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: Jiacheng Xu <stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>
+Reported-by: Mudong Liang <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+---
+ fs/nilfs2/super.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-> On 15 Aug 2022, at 11:56, =E8=AE=B8=E5=98=89=E8=AF=9A =
-<stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org> wrote:
->=20
-> Hi developers,
->=20
-> We may found a flaw in the fs module which can lead to UAF write or =
-DoS.
-> We would appreciate a CVE ID if this is a security issue.
->=20
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index ba108f915391..aca5614f1b44 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -159,6 +159,7 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
+ 	ii->i_cno = 0;
+ 	ii->i_assoc_inode = NULL;
+ 	ii->i_bmap = &ii->i_bmap_data;
++	ii->vfs_inode.i_private = NULL;
+ 	return &ii->vfs_inode;
+ }
+ 
+-- 
+2.34.1
 
-Confirming that your message made it through to linux-distros, but you =
-haven't mentioned a date when this would be made public.  However,
-
-> Someone found the similar problem: =
-https://groups.google.com/g/syzkaller-bugs/c/z2WroC3_BSw.
->=20
-> Fix this bug by moving the assignment of inode->i_private before =
-security_inode_alloc.
-
-There's already a public discussion about that and if, indeed, that's =
-the same bug then you should take this to oss-security as simply a =
-rediscovery of an existing bug.
-
-I'll leave it to Red Hat to decide whether to allocate a CVE number for =
-this issue. It needs significant privileges to exploit it; the only real =
-question is whether you could use those privileges to crash the machine =
-anyway.
-
-jch
-
---Apple-Mail=_1F410261-EFD2-4EED-B98D-AF6A4C46935E
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP
-
------BEGIN PGP SIGNATURE-----
-
-iHUEAREIAB0WIQT+pxvb11CFWUkNSOVFC7t+lC+jyAUCYvphkAAKCRBFC7t+lC+j
-yLtZAQCp6LrHUxK+9ACDzogU9XE3HogPasFVmXwOqFgmyRehDwD+ONv3fT8yq6g7
-ZyYQ/AZxxv3bfpDsyogZea4GJtWDgvw=
-=/9pF
------END PGP SIGNATURE-----
-
---Apple-Mail=_1F410261-EFD2-4EED-B98D-AF6A4C46935E--
