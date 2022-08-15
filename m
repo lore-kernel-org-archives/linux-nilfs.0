@@ -1,7 +1,7 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH 6/7] ramfs: Convert ramfs_nommu_get_unmapped_area() to use filemap_get_folios_contig()
-Date: Mon, 15 Aug 2022 11:54:51 -0700
-Message-ID: <20220815185452.37447-7-vishal.moola@gmail.com>
+Subject: [PATCH 5/7] nilfs2: Convert nilfs_find_uncommited_extent() to use filemap_get_folios_contig()
+Date: Mon, 15 Aug 2022 11:54:50 -0700
+Message-ID: <20220815185452.37447-6-vishal.moola@gmail.com>
 References: <20220815185452.37447-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -10,111 +10,112 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc;
-        bh=JxYlL9B7PcenLE4u6mpHNMIpwNwBfeAtvgsgZnBC2EQ=;
-        b=Ia1O+/fmqiUDytIZqSmA1V3vSbkX1zepYr8UWJ1xOY+Au2TuQsU1CjaK+zT0PLsmd/
-         E+O3yzfMaR5NdY5ImhVrdZFqgG8IY6GLyAkAuZAxXNJ7g1frwjv+xObysOMw9ZQj9N38
-         V4kBxNRZzYBXVht6J1C8aUFPM4q7f2/Mr6FKOhM86huxwwIsCgF7Ec+Fkmx2Imxe112s
-         8rZyF/n/+Pg4xSWae5jHMVbRnTduCkxC52xGgOOsHGt0tWEXwod/MCwauyzBrtSeu3v4
-         sUXY2yNRl9HIjovNajfVtO2mLmyLZtZShw82f7ZwxsdOEL4uwXFqQMMX21AafPCChnds
-         jq0w==
+        bh=EVNfKk5ZAzp2gPep1Yofo/UzU1m6EYLq8voCf56STj8=;
+        b=M8IZIk7Jp8250xvZqGSMpvSUeZ3dvuFn3bLOlwIQycHml+YrzlnYk0wuRdVtsm8HzU
+         bvV65mni8k2mo/XT9hYMsHRILCfrChluFWNGS/L4GOgJ3HhjZGjaAydrW7Z+ztq40Egv
+         3wDl0SMEYJ2Fy/s4RzU0l1aGaYxJMmiBfcHn4FhsVr4s7NJVUw6ov8jHJZrpyd8vArg0
+         c7Ko09i20UU7E/MjJRaWpiaq4u0vVa0I+rSEomiRhlwa/sFcyD/BE093QgNiriTA2ki7
+         vz5yVxU4u1BU6qGKeJnATjpNPSjpB+ezcTUrbIiPkqD4tjBgq9e+1Ui3xXrJ+vmpSBN6
+         LlKg==
 In-Reply-To: <20220815185452.37447-1-vishal.moola@gmail.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-btrfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
 
-Converted to use folios throughout. This is in preparation for the
-removal for find_get_pages_contig(). Now also supports large folios.
+Converted function to use folios throughout. This is in preparation for
+the removal of find_get_pages_contig(). Now also supports large folios.
 
-The initial version of this function set the page_address to be returned
-after finishing all the checks. Since folio_batches have a maximum of 15
-folios, the function had to be modified to support getting and checking up
-to lpages, 15 pages at a time while still returning the initial page address.
-Now the function sets ret as soon as the first batch arrives, and updates it
-only if a check fails.
-
-The physical adjacency check utilizes the page frame numbers. The page frame
-number of each folio must be nr_pages away from the first folio.
+Also cleaned up an unnecessary if statement - pvec.pages[0]->index > index
+will always evaluate to false, and filemap_get_folios_contig() returns 0 if
+there is no folio found at index.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- fs/ramfs/file-nommu.c | 50 +++++++++++++++++++++++++------------------
- 1 file changed, 29 insertions(+), 21 deletions(-)
+ fs/nilfs2/page.c | 38 +++++++++++++++++---------------------
+ 1 file changed, 17 insertions(+), 21 deletions(-)
 
-diff --git a/fs/ramfs/file-nommu.c b/fs/ramfs/file-nommu.c
-index ba3525ccc27e..81817f301e17 100644
---- a/fs/ramfs/file-nommu.c
-+++ b/fs/ramfs/file-nommu.c
-@@ -203,9 +203,9 @@ static unsigned long ramfs_nommu_get_unmapped_area(struct file *file,
- 					    unsigned long addr, unsigned long len,
- 					    unsigned long pgoff, unsigned long flags)
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 3267e96c256c..40cc8eb0bc8e 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -480,13 +480,13 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+ 					    sector_t start_blk,
+ 					    sector_t *blkoff)
  {
--	unsigned long maxpages, lpages, nr, loop, ret;
-+	unsigned long maxpages, lpages, nr, loop, ret, nr_pages, pfn;
- 	struct inode *inode = file_inode(file);
--	struct page **pages = NULL, **ptr, *page;
+-	unsigned int i;
++	unsigned int i, nr;
+ 	pgoff_t index;
+ 	unsigned int nblocks_in_page;
+ 	unsigned long length = 0;
+ 	sector_t b;
+-	struct pagevec pvec;
+-	struct page *page;
 +	struct folio_batch fbatch;
- 	loff_t isize;
++	struct folio *folio;
  
- 	/* the mapping mustn't extend beyond the EOF */
-@@ -221,31 +221,39 @@ static unsigned long ramfs_nommu_get_unmapped_area(struct file *file,
- 		goto out;
+ 	if (inode->i_mapping->nrpages == 0)
+ 		return 0;
+@@ -494,27 +494,24 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+ 	index = start_blk >> (PAGE_SHIFT - inode->i_blkbits);
+ 	nblocks_in_page = 1U << (PAGE_SHIFT - inode->i_blkbits);
  
- 	/* gang-find the pages */
--	pages = kcalloc(lpages, sizeof(struct page *), GFP_KERNEL);
--	if (!pages)
--		goto out_free;
--
--	nr = find_get_pages_contig(inode->i_mapping, pgoff, lpages, pages);
--	if (nr != lpages)
--		goto out_free_pages; /* leave if some pages were missing */
+-	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
-+	nr_pages = 0;
-+repeat:
-+	nr = filemap_get_folios_contig(inode->i_mapping, &pgoff,
-+			ULONG_MAX, &fbatch);
-+	if (!nr) {
-+		ret = -ENOSYS;
-+		return ret;
-+	}
  
-+	if (ret == -ENOSYS) {
-+		ret = (unsigned long) folio_address(fbatch.folios[0]);
-+		pfn = folio_pfn(fbatch.folios[0]);
-+	}
- 	/* check the pages for physical adjacency */
--	ptr = pages;
--	page = *ptr++;
--	page++;
--	for (loop = lpages; loop > 1; loop--)
--		if (*ptr++ != page++)
--			goto out_free_pages;
-+	for (loop = 0; loop < nr; loop++) {
-+		if (pfn + nr_pages != folio_pfn(fbatch.folios[loop])) {
-+			ret = -ENOSYS;
-+			goto out_free; /* leave if not physical adjacent */
-+		}
-+		nr_pages += folio_nr_pages(fbatch.folios[loop]);
-+		if (nr_pages >= lpages)
-+			goto out_free; /* successfully found desired pages*/
-+	}
+ repeat:
+-	pvec.nr = find_get_pages_contig(inode->i_mapping, index, PAGEVEC_SIZE,
+-					pvec.pages);
+-	if (pvec.nr == 0)
++	nr = filemap_get_folios_contig(inode->i_mapping, &index, ULONG_MAX,
++			&fbatch);
++	if (nr == 0)
+ 		return length;
  
-+	if (nr_pages < lpages) {
-+		folio_batch_release(&fbatch);
-+		goto repeat; /* loop if pages are missing */
-+	}
- 	/* okay - all conditions fulfilled */
--	ret = (unsigned long) page_address(pages[0]);
+-	if (length > 0 && pvec.pages[0]->index > index)
+-		goto out;
+-
+-	b = pvec.pages[0]->index << (PAGE_SHIFT - inode->i_blkbits);
++	b = fbatch.folios[0]->index << (PAGE_SHIFT - inode->i_blkbits);
+ 	i = 0;
+ 	do {
+-		page = pvec.pages[i];
++		folio = fbatch.folios[i];
  
--out_free_pages:
--	ptr = pages;
--	for (loop = nr; loop > 0; loop--)
--		put_page(*ptr++);
- out_free:
--	kfree(pages);
+-		lock_page(page);
+-		if (page_has_buffers(page)) {
++		folio_lock(folio);
++		if (folio_buffers(folio)) {
+ 			struct buffer_head *bh, *head;
+ 
+-			bh = head = page_buffers(page);
++			bh = head = folio_buffers(folio);
+ 			do {
+ 				if (b < start_blk)
+ 					continue;
+@@ -532,18 +529,17 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+ 
+ 			b += nblocks_in_page;
+ 		}
+-		unlock_page(page);
++		folio_unlock(folio);
+ 
+-	} while (++i < pagevec_count(&pvec));
++	} while (++i < nr);
+ 
+-	index = page->index + 1;
+-	pagevec_release(&pvec);
 +	folio_batch_release(&fbatch);
+ 	cond_resched();
+ 	goto repeat;
+ 
+ out_locked:
+-	unlock_page(page);
++	folio_unlock(folio);
  out:
- 	return ret;
+-	pagevec_release(&pvec);
++	folio_batch_release(&fbatch);
+ 	return length;
  }
 -- 
 2.36.1
