@@ -1,63 +1,53 @@
-From: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix use-after-free bug in nilfs_mdt_destroy()
-Date: Mon, 15 Aug 2022 19:27:09 +0100
-Message-ID: <YvqP/f2P2YgIIO9U@ZenIV>
-References: <20220815175114.23576-1-konishi.ryusuke@gmail.com>
+From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+Subject: [PATCH 0/7] Convert to filemap_get_folios_contig()
+Date: Mon, 15 Aug 2022 11:54:45 -0700
+Message-ID: <20220815185452.37447-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=linux.org.uk; s=zeniv-20220401; h=Sender:In-Reply-To:Content-Type:
-        MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=pQgnV2W+m6IHyd1sfXNyPuGcZpvyoD3dq7ndy9+1QWY=; b=nOms3/1Uq5YOF1bwlhQz39B/xq
-        lhJn4Xz+bgO4S+tzCDXYpLB8VrlkUqBdIrbUt95mBrUHdr683sUAqzaa2EL8z+RDmYP2StzlwdOJ2
-        dlu4xtB6GtZ7UapVk2WD/TlGptwIfUv0tciWlGulljYY9+Fcpo2ICJpMpb0BJvuXzzX0zDUpw9zyU
-        KyGPgpkB3lZyjCE3mM8iw+OX+wUW/BWlIlrIvAWaQoFKHxiKHBkFWxJrLM4RNSV+3QMORX/AlleaD
-        vpDR4/Jp7QyIvjl5gi8PPa6yPcN0ObjLRunLjv/8GqjUnNkTYLzal4MQ7zci7VkeymEdMAPpsPy07
-        le8oCyVA==;
-Content-Disposition: inline
-In-Reply-To: <20220815175114.23576-1-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: Al Viro <viro-rfM+Q5joDG/XmaaqVzeoHQ@public.gmane.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc;
+        bh=TcoNVDdeHBjRL/cgwoXp3ksLrjGTv3LMhMhYdWqOUwk=;
+        b=ip3lNnuRVCkKTJpyHRzp+iY1wE94DuhoDhEvhy2tFyM0MQL201v5SEkPA+UV8sh9TQ
+         I/tYbxzs13zwkDghMIwYShD0PlhCUsKMKVL5HQh/tKqD1rzj6EXWyH4zVwPgOk6w3wVX
+         d1npJ3/rrsl3qskZgl40Wpt/2Nkm7uDW95Zk6B+dz0gFLJFm2YDbhm8yXhWV0A0Vvgdd
+         AcJDbbzRGabl/HUPXwY2vCQZXK/yEKeSFf8Ybwqvh8uOq9MzANixeh/dAAq4xoM4mtd9
+         rpKgcJBOcGdyevdujOPAEJ+NpMWqCUndMIfJHFsDlXjT5sympvogVbr+jDBb4R8o+u5g
+         OPsQ==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jiacheng Xu <stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>, Mudong Liang <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: linux-fsdevel@vger.kernel.org
+Cc: linux-btrfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
 
-On Tue, Aug 16, 2022 at 02:51:14AM +0900, Ryusuke Konishi wrote:
-> In alloc_inode(), inode_init_always() could return -ENOMEM if
-> security_inode_alloc() fails.  If this happens for nilfs2,
-> nilfs_free_inode() is called without initializing inode->i_private and
-> nilfs_free_inode() wrongly calls nilfs_mdt_destroy(), which frees
-> uninitialized inode->i_private and can trigger a crash.
-> 
-> Fix this bug by initializing inode->i_private in nilfs_alloc_inode().
-> 
-> Link: https://lkml.kernel.org/r/CAFcO6XOcf1Jj2SeGt=jJV59wmhESeSKpfR0omdFRq+J9nD1vfQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
-> Link: https://lkml.kernel.org/r/20211011030956.2459172-1-mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-> Reported-by: butt3rflyh4ck <butterflyhuangxx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Reported-by: Hao Sun <sunhao.th-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Reported-by: Jiacheng Xu <stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>
-> Reported-by: Mudong Liang <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-> ---
->  fs/nilfs2/super.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index ba108f915391..aca5614f1b44 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -159,6 +159,7 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
->  	ii->i_cno = 0;
->  	ii->i_assoc_inode = NULL;
->  	ii->i_bmap = &ii->i_bmap_data;
-> +	ii->vfs_inode.i_private = NULL;
->  	return &ii->vfs_inode;
->  }
+This patch series replaces find_get_pages_contig() with
+filemap_get_folios_contig(). I've run xfstests on btrfs. I've also
+tested the ramfs changes. I ran some xfstests on nilfs2, and its
+seemingly fine although more testing may be beneficial.
 
-FWIW, I think it's better to deal with that in inode_init_always(), but
-not just moving ->i_private initialization up - we ought to move
-security_inode_alloc() to the very end.  No sense playing whack-a-mole
-with further possible bugs of that sort...
+Vishal Moola (Oracle) (7):
+  filemap: Add filemap_get_folios_contig()
+  btrfs: Convert __process_pages_contig() to use
+    filemap_get_folios_contig()
+  btrfs: Convert end_compressed_writeback() to use filemap_get_folios()
+  btrfs: Convert process_page_range() to use filemap_get_folios_contig()
+  nilfs2: Convert nilfs_find_uncommited_extent() to use
+    filemap_get_folios_contig()
+  ramfs: Convert ramfs_nommu_get_unmapped_area() to use
+    filemap_get_folios_contig()
+  filemap: Remove find_get_pages_contig()
+
+ fs/btrfs/compression.c           | 26 ++++++------
+ fs/btrfs/extent_io.c             | 33 +++++++--------
+ fs/btrfs/subpage.c               |  2 +-
+ fs/btrfs/tests/extent-io-tests.c | 31 +++++++-------
+ fs/nilfs2/page.c                 | 38 ++++++++---------
+ fs/ramfs/file-nommu.c            | 50 ++++++++++++----------
+ include/linux/pagemap.h          |  4 +-
+ mm/filemap.c                     | 71 +++++++++++++++++++-------------
+ 8 files changed, 134 insertions(+), 121 deletions(-)
+
+-- 
+2.36.1
+
