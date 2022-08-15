@@ -1,7 +1,7 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH 1/7] filemap: Add filemap_get_folios_contig()
-Date: Mon, 15 Aug 2022 11:54:46 -0700
-Message-ID: <20220815185452.37447-2-vishal.moola@gmail.com>
+Subject: [PATCH 6/7] ramfs: Convert ramfs_nommu_get_unmapped_area() to use filemap_get_folios_contig()
+Date: Mon, 15 Aug 2022 11:54:51 -0700
+Message-ID: <20220815185452.37447-7-vishal.moola@gmail.com>
 References: <20220815185452.37447-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -10,131 +10,112 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc;
-        bh=DC0lDtuVz6yFca92GBSK6djBgAZXj0wHc7OOD2pjghE=;
-        b=QWwJlBuMd3BZgQulNy3FF7Q8pHPEfKIeqgRJRGAHI5ml30UD5XY5UUb29NmNZ8GBjD
-         GxKLYh8ECcsSkfb8EV5IztKhRaUL+Onv2MfPhcIiNquRk71zD8RiLLFXvt/rviGRyCIk
-         8Y4upNBC2pPja+wNdchcY0q5S40PIsZtaqTiOA9sRc5a2o5UyIANJhCZaX0QOfz/9BVr
-         GEtb3lgFajKMMwzsCGpuGJ5UlCPBFGxy93H79eQF8kL1tcdvqUpqF3vDpp8wcQvlX07b
-         aXwTAzF6n1dZNb0C6hPPmmlC4TUj3CmYGpvXa+ZGc7hQxiNrXl1vl+Y7ZpGVOO5I7umb
-         rtCg==
+        bh=JxYlL9B7PcenLE4u6mpHNMIpwNwBfeAtvgsgZnBC2EQ=;
+        b=Ia1O+/fmqiUDytIZqSmA1V3vSbkX1zepYr8UWJ1xOY+Au2TuQsU1CjaK+zT0PLsmd/
+         E+O3yzfMaR5NdY5ImhVrdZFqgG8IY6GLyAkAuZAxXNJ7g1frwjv+xObysOMw9ZQj9N38
+         V4kBxNRZzYBXVht6J1C8aUFPM4q7f2/Mr6FKOhM86huxwwIsCgF7Ec+Fkmx2Imxe112s
+         8rZyF/n/+Pg4xSWae5jHMVbRnTduCkxC52xGgOOsHGt0tWEXwod/MCwauyzBrtSeu3v4
+         sUXY2yNRl9HIjovNajfVtO2mLmyLZtZShw82f7ZwxsdOEL4uwXFqQMMX21AafPCChnds
+         jq0w==
 In-Reply-To: <20220815185452.37447-1-vishal.moola@gmail.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-btrfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
 
-This function is meant to replace find_get_pages_contig().
+Converted to use folios throughout. This is in preparation for the
+removal for find_get_pages_contig(). Now also supports large folios.
 
-Unlike find_get_pages_contig(), filemap_get_folios_contig() no
-longer takes in a target number of pages to find - It returns up to 15
-contiguous folios.
+The initial version of this function set the page_address to be returned
+after finishing all the checks. Since folio_batches have a maximum of 15
+folios, the function had to be modified to support getting and checking up
+to lpages, 15 pages at a time while still returning the initial page address.
+Now the function sets ret as soon as the first batch arrives, and updates it
+only if a check fails.
 
-To be more consistent with filemap_get_folios(), filemap_get_folios_contig()
-now also updates the start index passed in, and takes an end index.
+The physical adjacency check utilizes the page frame numbers. The page frame
+number of each folio must be nr_pages away from the first folio.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- include/linux/pagemap.h |  2 ++
- mm/filemap.c            | 73 +++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 75 insertions(+)
+ fs/ramfs/file-nommu.c | 50 +++++++++++++++++++++++++------------------
+ 1 file changed, 29 insertions(+), 21 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 0178b2040ea3..8689c32d628b 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -718,6 +718,8 @@ static inline struct page *find_subpage(struct page *head, pgoff_t index)
+diff --git a/fs/ramfs/file-nommu.c b/fs/ramfs/file-nommu.c
+index ba3525ccc27e..81817f301e17 100644
+--- a/fs/ramfs/file-nommu.c
++++ b/fs/ramfs/file-nommu.c
+@@ -203,9 +203,9 @@ static unsigned long ramfs_nommu_get_unmapped_area(struct file *file,
+ 					    unsigned long addr, unsigned long len,
+ 					    unsigned long pgoff, unsigned long flags)
+ {
+-	unsigned long maxpages, lpages, nr, loop, ret;
++	unsigned long maxpages, lpages, nr, loop, ret, nr_pages, pfn;
+ 	struct inode *inode = file_inode(file);
+-	struct page **pages = NULL, **ptr, *page;
++	struct folio_batch fbatch;
+ 	loff_t isize;
  
- unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
- 		pgoff_t end, struct folio_batch *fbatch);
-+unsigned filemap_get_folios_contig(struct address_space *mapping,
-+		pgoff_t *start, pgoff_t end, struct folio_batch *fbatch);
- unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
- 			       unsigned int nr_pages, struct page **pages);
- unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 15800334147b..3a497e178fde 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2194,6 +2194,79 @@ bool folio_more_pages(struct folio *folio, pgoff_t index, pgoff_t max)
- 	return index < folio->index + folio_nr_pages(folio) - 1;
- }
+ 	/* the mapping mustn't extend beyond the EOF */
+@@ -221,31 +221,39 @@ static unsigned long ramfs_nommu_get_unmapped_area(struct file *file,
+ 		goto out;
  
-+/**
-+ * filemap_get_folios_contig - Get a batch of contiguous folios
-+ * @mapping:	The address_space to search
-+ * @start:	The starting page index
-+ * @end:	The final page index (inclusive)
-+ * @fbatch:	The batch to fill
-+ *
-+ * filemap_get_folios_contig() works exactly like filemap_get_folios(),
-+ * except the returned folios are guaranteed to be contiguous. This may
-+ * not return all contiguous folios if the batch gets filled up.
-+ *
-+ * Return: The number of folios found.
-+ * Also update @start to be positioned for traversal of the next folio.
-+ */
-+
-+unsigned filemap_get_folios_contig(struct address_space *mapping,
-+		pgoff_t *start, pgoff_t end, struct folio_batch *fbatch)
-+{
-+	XA_STATE(xas, &mapping->i_pages, *start);
-+	unsigned long nr;
-+	struct folio *folio;
-+
-+	rcu_read_lock();
-+
-+	for (folio = xas_load(&xas); folio && xas.xa_index <= end;
-+			folio = xas_next(&xas)) {
-+		if (xas_retry(&xas, folio))
-+			continue;
-+		/*
-+		 * If the entry has been swapped out, we can stop looking.
-+		 * No current caller is looking for DAX entries.
-+		 */
-+		if (xa_is_value(folio))
-+			goto update_start;
-+
-+		if (!folio_try_get_rcu(folio))
-+			goto retry;
-+
-+		if (unlikely(folio != xas_reload(&xas)))
-+			goto put_folio;
-+
-+		if (!folio_batch_add(fbatch, folio)) {
-+			nr = folio_nr_pages(folio);
-+
-+			if (folio_test_hugetlb(folio))
-+				nr = 1;
-+			*start = folio->index + nr;
-+			goto out;
+ 	/* gang-find the pages */
+-	pages = kcalloc(lpages, sizeof(struct page *), GFP_KERNEL);
+-	if (!pages)
+-		goto out_free;
+-
+-	nr = find_get_pages_contig(inode->i_mapping, pgoff, lpages, pages);
+-	if (nr != lpages)
+-		goto out_free_pages; /* leave if some pages were missing */
++	folio_batch_init(&fbatch);
++	nr_pages = 0;
++repeat:
++	nr = filemap_get_folios_contig(inode->i_mapping, &pgoff,
++			ULONG_MAX, &fbatch);
++	if (!nr) {
++		ret = -ENOSYS;
++		return ret;
++	}
+ 
++	if (ret == -ENOSYS) {
++		ret = (unsigned long) folio_address(fbatch.folios[0]);
++		pfn = folio_pfn(fbatch.folios[0]);
++	}
+ 	/* check the pages for physical adjacency */
+-	ptr = pages;
+-	page = *ptr++;
+-	page++;
+-	for (loop = lpages; loop > 1; loop--)
+-		if (*ptr++ != page++)
+-			goto out_free_pages;
++	for (loop = 0; loop < nr; loop++) {
++		if (pfn + nr_pages != folio_pfn(fbatch.folios[loop])) {
++			ret = -ENOSYS;
++			goto out_free; /* leave if not physical adjacent */
 +		}
-+		continue;
-+put_folio:
-+		folio_put(folio);
-+
-+retry:
-+		xas_reset(&xas);
++		nr_pages += folio_nr_pages(fbatch.folios[loop]);
++		if (nr_pages >= lpages)
++			goto out_free; /* successfully found desired pages*/
 +	}
-+
-+update_start:
-+	nr = folio_batch_count(fbatch);
-+
-+	if (nr) {
-+		folio = fbatch->folios[nr - 1];
-+		if (folio_test_hugetlb(folio))
-+			*start = folio->index + 1;
-+		else
-+			*start = folio->index + folio_nr_pages(folio);
+ 
++	if (nr_pages < lpages) {
++		folio_batch_release(&fbatch);
++		goto repeat; /* loop if pages are missing */
 +	}
-+out:
-+	rcu_read_unlock();
-+	return folio_batch_count(fbatch);
-+}
-+EXPORT_SYMBOL(filemap_get_folios_contig);
-+
- /**
-  * find_get_pages_contig - gang contiguous pagecache lookup
-  * @mapping:	The address_space to search
+ 	/* okay - all conditions fulfilled */
+-	ret = (unsigned long) page_address(pages[0]);
+ 
+-out_free_pages:
+-	ptr = pages;
+-	for (loop = nr; loop > 0; loop--)
+-		put_page(*ptr++);
+ out_free:
+-	kfree(pages);
++	folio_batch_release(&fbatch);
+ out:
+ 	return ret;
+ }
 -- 
 2.36.1
 
