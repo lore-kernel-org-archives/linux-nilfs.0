@@ -1,67 +1,151 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix use-after-free bug in nilfs_mdt_destroy()
-Date: Tue, 16 Aug 2022 12:11:35 +0900
-Message-ID: <CAKFNMoniwM5x0w03cezGTFDWt=apNmGWpur83+vjghg3zcawpQ@mail.gmail.com>
-References: <20220815175114.23576-1-konishi.ryusuke@gmail.com>
- <YvqP/f2P2YgIIO9U@ZenIV> <CAKFNMomyjXpsz-=BtG+G3q1J7CFUBMEfP13FfxwhWB==9qb++w@mail.gmail.com>
- <YvrQ8xO9Lx7rdKq8@ZenIV>
+From: kernel test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 5/7] nilfs2: Convert nilfs_find_uncommited_extent() to
+ use filemap_get_folios_contig()
+Date: Tue, 16 Aug 2022 10:47:51 +0800
+Message-ID: <202208161010.5ZmABhnS-lkp@intel.com>
+References: <20220815185452.37447-6-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc;
-        bh=Zh9L3GMyN0bAgm1VZ5joh7GoecxvY4X4P34K9smg9ao=;
-        b=DCJaZHlRDaLYCQnt5L/NE3PWbEAGjyuvd10TuFktBd16TZV17FdCS9hgDC0ppYunaP
-         q9E5NpecMnY4E4AFkxNe/0Fg5Rpb0+9bBEr/d/CBE7bGj2b9z9Pn1ehRMS2UkLwThYTg
-         p0lh1UNazF8H2Kjpui8hPnrP6QPIPbwE03vMS4l8Rwi9ShypZKI5ROv6WBckPQQrSZhR
-         maWp0FjTDz61asqVWcvIDUXlWmZOLTQwSbeJVZNDaSR3V3nC/6imXUiNaemBXyYUV+Xo
-         TpKZnIQgdPV+bx3JAuU5MZ3brQ40b6mDdnyBbCSpGVb8oMAbtD8Uta1aQ6cBRtlM5Okf
-         /YbA==
-In-Reply-To: <YvrQ8xO9Lx7rdKq8@ZenIV>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1660618126; x=1692154126;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=GIjwoEKzbUGoid2QJqu4OXAdDf1iMot8Evrfq8fVeZA=;
+  b=XzJ33B2KZbWj2XJcxSWE+8Pt1f9yHs0Mckh41bjb4Mn4fspE9/6ggns6
+   MroOe5djBK0+9gJbO1x7ujyG3y2Ah2QgCgd3/FoU/TfiT72l84iqawMDK
+   ELbgt8EM0sgKoNA9LshPqqe2F6vYX5D8VewAiVWwFTTS+ogrs3J0Zx3wS
+   xNgB+1sY+tM742pRW9bUXu4lFyyDkhbqUFLnGJsd8lTWTrAx6QgWkWQkR
+   sSEbp+JXLlQ3Mq5BJunZ3fW4Gasfx33SKllntQawv3dR/xQpa6/Eeh1u8
+   F9OJztQisy3ZvaIk30WZijhnUakWJ2i9ZgOXiWw4H9r1M7XAg1xgs5LsL
+   g==;
+Content-Disposition: inline
+In-Reply-To: <20220815185452.37447-6-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Mudong Liang <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jiacheng Xu <stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>
+To: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: llvm-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, kbuild-all-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On Tue, Aug 16, 2022 at 8:04 AM Al Viro wrote:
->
-> On Tue, Aug 16, 2022 at 05:34:12AM +0900, Ryusuke Konishi wrote:
->
-> > Yes, I agree it's better if security_inode_alloc() is moved to the end as
-> > possible in the sense of avoiding similar issues.
-> > But, would that vfs change be safe to backport to stable trees?
->
-> Yes.
->
-> > It looks like the error handling for security_inode_alloc()  is in the
-> > middle of inode_init_always() for a very long time..
->
-> Look at the initializations done after it.  The only thing with effects
-> outside of inode itself is (since 2010) an increment of nr_inodes.
->
-> > If you want to see the impact of the vfs change, I think it's one way
-> > to apply this one in advance.  Or if you want to fix it in one step,
-> > I think it's good too.  How do you feel about this ?
->
-> IMO that should go into inode_init_always(), with Cc:stable.  If you
-> (or Dongliang Mu, or anybody else) would post such variant with
-> reasonable commit message, I'll pick it into vfs.git and feed to Linus
-> in the next window.  E.g. into #work.inode, with that branch being
-> made never-rebased, so that you could pull it into your development
-> branch as soon as it's there...
+Hi "Vishal,
 
-I agree with your thoughts on the course of action.
-Andrew, I withdraw this patch.
+Thank you for the patch! Perhaps something to improve:
 
-Dongliang (or Jiacheng?), would it be possible for you to post a revised patch
-against inode_init_always() that moves the call of security_inode_alloc()
-instead of i_private initialization (as Al Viro said in a nearby thread [1]) ?
-If you have time, I would like to leave it to you since you wrote the
-original patch for inode_init_always().
+[auto build test WARNING on linus/master]
+[also build test WARNING on v6.0-rc1 next-20220815]
+[cannot apply to kdave/for-next konis-nilfs2/upstream]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch#_base_tree_information]
 
-[1] https://lkml.kernel.org/r/CAO4S-mficMz1mQW06EuCF+o11+mRDiCpufqVfoHkcRbQbs8kVw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
+url:    https://github.com/intel-lab-lkp/linux/commits/Vishal-Moola-Oracle/Convert-to-filemap_get_folios_contig/20220816-025830
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git 568035b01cfb107af8d2e4bd2fb9aea22cf5b868
+config: s390-randconfig-r044-20220815 (https://download.01.org/0day-ci/archive/20220816/202208161010.5ZmABhnS-lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org/config)
+compiler: clang version 16.0.0 (https://github.com/llvm/llvm-project 6afcc4a459ead8809a0d6d9b4bf7b64bcc13582b)
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # install s390 cross compiling tool for clang build
+        # apt-get install binutils-s390x-linux-gnu
+        # https://github.com/intel-lab-lkp/linux/commit/ce1966344933bbe10010035cd25f23ec7dd76914
+        git remote add linux-review https://github.com/intel-lab-lkp/linux
+        git fetch --no-tags linux-review Vishal-Moola-Oracle/Convert-to-filemap_get_folios_contig/20220816-025830
+        git checkout ce1966344933bbe10010035cd25f23ec7dd76914
+        # save the config file
+        mkdir build_dir && cp config build_dir/.config
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=s390 SHELL=/bin/bash
 
-Thanks,
-Ryusuke Konishi
+If you fix the issue, kindly add following tag where applicable
+Reported-by: kernel test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+
+All warnings (new ones prefixed by >>):
+
+>> fs/nilfs2/page.c:542:1: warning: unused label 'out' [-Wunused-label]
+   out:
+   ^~~~
+   1 warning generated.
+
+
+vim +/out +542 fs/nilfs2/page.c
+
+622daaff0a8975 Ryusuke Konishi       2010-12-26  466  
+622daaff0a8975 Ryusuke Konishi       2010-12-26  467  /**
+622daaff0a8975 Ryusuke Konishi       2010-12-26  468   * nilfs_find_uncommitted_extent - find extent of uncommitted data
+622daaff0a8975 Ryusuke Konishi       2010-12-26  469   * @inode: inode
+622daaff0a8975 Ryusuke Konishi       2010-12-26  470   * @start_blk: start block offset (in)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  471   * @blkoff: start offset of the found extent (out)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  472   *
+622daaff0a8975 Ryusuke Konishi       2010-12-26  473   * This function searches an extent of buffers marked "delayed" which
+622daaff0a8975 Ryusuke Konishi       2010-12-26  474   * starts from a block offset equal to or larger than @start_blk.  If
+622daaff0a8975 Ryusuke Konishi       2010-12-26  475   * such an extent was found, this will store the start offset in
+622daaff0a8975 Ryusuke Konishi       2010-12-26  476   * @blkoff and return its length in blocks.  Otherwise, zero is
+622daaff0a8975 Ryusuke Konishi       2010-12-26  477   * returned.
+622daaff0a8975 Ryusuke Konishi       2010-12-26  478   */
+622daaff0a8975 Ryusuke Konishi       2010-12-26  479  unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+622daaff0a8975 Ryusuke Konishi       2010-12-26  480  					    sector_t start_blk,
+622daaff0a8975 Ryusuke Konishi       2010-12-26  481  					    sector_t *blkoff)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  482  {
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  483) 	unsigned int i, nr;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  484  	pgoff_t index;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  485  	unsigned int nblocks_in_page;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  486  	unsigned long length = 0;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  487  	sector_t b;
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  488) 	struct folio_batch fbatch;
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  489) 	struct folio *folio;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  490  
+622daaff0a8975 Ryusuke Konishi       2010-12-26  491  	if (inode->i_mapping->nrpages == 0)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  492  		return 0;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  493  
+09cbfeaf1a5a67 Kirill A. Shutemov    2016-04-01  494  	index = start_blk >> (PAGE_SHIFT - inode->i_blkbits);
+09cbfeaf1a5a67 Kirill A. Shutemov    2016-04-01  495  	nblocks_in_page = 1U << (PAGE_SHIFT - inode->i_blkbits);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  496  
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  497) 	folio_batch_init(&fbatch);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  498  
+622daaff0a8975 Ryusuke Konishi       2010-12-26  499  repeat:
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  500) 	nr = filemap_get_folios_contig(inode->i_mapping, &index, ULONG_MAX,
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  501) 			&fbatch);
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  502) 	if (nr == 0)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  503  		return length;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  504  
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  505) 	b = fbatch.folios[0]->index << (PAGE_SHIFT - inode->i_blkbits);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  506  	i = 0;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  507  	do {
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  508) 		folio = fbatch.folios[i];
+622daaff0a8975 Ryusuke Konishi       2010-12-26  509  
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  510) 		folio_lock(folio);
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  511) 		if (folio_buffers(folio)) {
+622daaff0a8975 Ryusuke Konishi       2010-12-26  512  			struct buffer_head *bh, *head;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  513  
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  514) 			bh = head = folio_buffers(folio);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  515  			do {
+622daaff0a8975 Ryusuke Konishi       2010-12-26  516  				if (b < start_blk)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  517  					continue;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  518  				if (buffer_delay(bh)) {
+622daaff0a8975 Ryusuke Konishi       2010-12-26  519  					if (length == 0)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  520  						*blkoff = b;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  521  					length++;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  522  				} else if (length > 0) {
+622daaff0a8975 Ryusuke Konishi       2010-12-26  523  					goto out_locked;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  524  				}
+622daaff0a8975 Ryusuke Konishi       2010-12-26  525  			} while (++b, bh = bh->b_this_page, bh != head);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  526  		} else {
+622daaff0a8975 Ryusuke Konishi       2010-12-26  527  			if (length > 0)
+622daaff0a8975 Ryusuke Konishi       2010-12-26  528  				goto out_locked;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  529  
+622daaff0a8975 Ryusuke Konishi       2010-12-26  530  			b += nblocks_in_page;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  531  		}
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  532) 		folio_unlock(folio);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  533  
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  534) 	} while (++i < nr);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  535  
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  536) 	folio_batch_release(&fbatch);
+622daaff0a8975 Ryusuke Konishi       2010-12-26  537  	cond_resched();
+622daaff0a8975 Ryusuke Konishi       2010-12-26  538  	goto repeat;
+622daaff0a8975 Ryusuke Konishi       2010-12-26  539  
+622daaff0a8975 Ryusuke Konishi       2010-12-26  540  out_locked:
+ce1966344933bb Vishal Moola (Oracle  2022-08-15  541) 	folio_unlock(folio);
+622daaff0a8975 Ryusuke Konishi       2010-12-26 @542  out:
+
+-- 
+0-DAY CI Kernel Test Service
+https://01.org/lkp
