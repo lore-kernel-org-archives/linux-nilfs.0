@@ -1,22 +1,22 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v2 4/7] btrfs: Convert process_page_range() to use filemap_get_folios_contig()
-Date: Tue, 16 Aug 2022 10:52:43 -0700
-Message-ID: <20220816175246.42401-5-vishal.moola@gmail.com>
+Subject: [PATCH v2 5/7] nilfs2: Convert nilfs_find_uncommited_extent() to use filemap_get_folios_contig()
+Date: Tue, 16 Aug 2022 10:52:44 -0700
+Message-ID: <20220816175246.42401-6-vishal.moola@gmail.com>
 References: <20220816175246.42401-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc;
-        bh=zEWA5Mz5qgiKRAyUDs57laoSTQi4JTinbk89K1VeDTg=;
-        b=Q0jTOXo0r8co2kNY7avhSUyp1min9bEFsIm1c2a5izPGeJQJyrPEAdD/n+GuHi8PWd
-         WDStj6ozmxAN2tU8n0OKp1MPPxLW30a+rTvbx7Em+x0pgSFHhDJIWxTzr8OhJrSdE1iQ
-         J/cZAICwfQm78pCbo4YRcdifiMgACJZJJeJfKQ90aQHcbOLTrcfKeLde4inZkvLukGdo
-         fsrPaibUyeZTQcqDwhOMT3JDJ+Niv+a0cdWCMmdyIVFOUoqIraeDZhAU0Lz0n0wHdAni
-         CbdZ22zpnt5sFgJAo2zIgwtwYFfiaDOqSKqpG+qLfvUloduCa5fc3Mk2m1FjVMPb80Bj
-         gjBQ==
+        bh=ktZvpNBWMB4uHfnE+rUfz2bXCBfYO0lBC7J3R+2mvIE=;
+        b=Y8K6b0s6QKd7PDmeOTTWB0yaZC7vPIgwGzzFCr33S2koD2Hntvrnq7u4FuXXo/HcZq
+         zOJXP7WABOm0/F8JoOxu3w5O28BiUfityQCQTOu48talUjvZ2uzLwzaLYlBZqfgCpuXb
+         W48GTG76KuSrbXXSXAfZbviUi/yGPkLG2XT/lxnE4MpmaQzUgrUZiCPeXJwZntfFt/oL
+         mkCmUofDKpauaS6XjX85u7K/o4bgJ0p8jxy1t4ohenGfwj881gRdEIXCjZYSV/zNX9J8
+         43ndegoWjsacmVhWmeqxVCmQ7sY6A0TCms37AMmiyzer/lp6Tv/Shc9FvTA28/UL5C9w
+         dm6Q==
 In-Reply-To: <20220816175246.42401-1-vishal.moola@gmail.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -26,98 +26,102 @@ Cc: linux-btrfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org
 Converted function to use folios throughout. This is in preparation for
 the removal of find_get_pages_contig(). Now also supports large folios.
 
-Since we may receive more than nr_pages pages, nr_pages may underflow.
-Since nr_pages > 0 is equivalent to index <= end_index, we replaced it
-with this check instead.
-
-Also minor comment renaming for consistency in subpage.
+Also cleaned up an unnecessary if statement - pvec.pages[0]->index > index
+will always evaluate to false, and filemap_get_folios_contig() returns 0 if
+there is no folio found at index.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- fs/btrfs/subpage.c               |  2 +-
- fs/btrfs/tests/extent-io-tests.c | 31 ++++++++++++++++---------------
- 2 files changed, 17 insertions(+), 16 deletions(-)
 
-diff --git a/fs/btrfs/subpage.c b/fs/btrfs/subpage.c
-index a105b291444f..6418c38c4b30 100644
---- a/fs/btrfs/subpage.c
-+++ b/fs/btrfs/subpage.c
-@@ -337,7 +337,7 @@ bool btrfs_subpage_end_and_test_writer(const struct btrfs_fs_info *fs_info,
-  *
-  * Even with 0 returned, the page still need extra check to make sure
-  * it's really the correct page, as the caller is using
-- * find_get_pages_contig(), which can race with page invalidating.
-+ * filemap_get_folios_contig(), which can race with page invalidating.
-  */
- int btrfs_page_start_writer_lock(const struct btrfs_fs_info *fs_info,
- 		struct page *page, u64 start, u32 len)
-diff --git a/fs/btrfs/tests/extent-io-tests.c b/fs/btrfs/tests/extent-io-tests.c
-index a232b15b8021..530073868916 100644
---- a/fs/btrfs/tests/extent-io-tests.c
-+++ b/fs/btrfs/tests/extent-io-tests.c
-@@ -4,6 +4,7 @@
-  */
- 
- #include <linux/pagemap.h>
-+#include <linux/pagevec.h>
- #include <linux/sched.h>
- #include <linux/slab.h>
- #include <linux/sizes.h>
-@@ -20,39 +21,39 @@ static noinline int process_page_range(struct inode *inode, u64 start, u64 end,
- 				       unsigned long flags)
+v2:
+  - Fixed a warning regarding a now unused label "out"
+  - Reported-by: kernel test robot <lkp@intel.com>
+---
+ fs/nilfs2/page.c | 39 +++++++++++++++++----------------------
+ 1 file changed, 17 insertions(+), 22 deletions(-)
+
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 3267e96c256c..14629e03d0da 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -480,13 +480,13 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+ 					    sector_t start_blk,
+ 					    sector_t *blkoff)
  {
- 	int ret;
--	struct page *pages[16];
+-	unsigned int i;
++	unsigned int i, nr;
+ 	pgoff_t index;
+ 	unsigned int nblocks_in_page;
+ 	unsigned long length = 0;
+ 	sector_t b;
+-	struct pagevec pvec;
+-	struct page *page;
 +	struct folio_batch fbatch;
- 	unsigned long index = start >> PAGE_SHIFT;
- 	unsigned long end_index = end >> PAGE_SHIFT;
--	unsigned long nr_pages = end_index - index + 1;
- 	int i;
- 	int count = 0;
- 	int loops = 0;
++	struct folio *folio;
  
--	while (nr_pages > 0) {
--		ret = find_get_pages_contig(inode->i_mapping, index,
--				     min_t(unsigned long, nr_pages,
--				     ARRAY_SIZE(pages)), pages);
+ 	if (inode->i_mapping->nrpages == 0)
+ 		return 0;
+@@ -494,27 +494,24 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+ 	index = start_blk >> (PAGE_SHIFT - inode->i_blkbits);
+ 	nblocks_in_page = 1U << (PAGE_SHIFT - inode->i_blkbits);
+ 
+-	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
-+
-+	while (index <= end_index) {
-+		ret = filemap_get_folios_contig(inode->i_mapping, &index,
-+				end_index, &fbatch);
- 		for (i = 0; i < ret; i++) {
-+			struct folio *folio = fbatch.folios[i];
- 			if (flags & PROCESS_TEST_LOCKED &&
--			    !PageLocked(pages[i]))
-+			    !folio_test_locked(folio))
- 				count++;
--			if (flags & PROCESS_UNLOCK && PageLocked(pages[i]))
--				unlock_page(pages[i]);
--			put_page(pages[i]);
-+			if (flags & PROCESS_UNLOCK && folio_test_locked(folio))
-+				folio_unlock(folio);
- 			if (flags & PROCESS_RELEASE)
--				put_page(pages[i]);
-+				folio_put(folio);
- 		}
--		nr_pages -= ret;
--		index += ret;
-+		folio_batch_release(&fbatch);
- 		cond_resched();
- 		loops++;
- 		if (loops > 100000) {
- 			printk(KERN_ERR
--		"stuck in a loop, start %llu, end %llu, nr_pages %lu, ret %d\n",
--				start, end, nr_pages, ret);
-+		"stuck in a loop, start %llu, end %llu, ret %d\n",
-+				start, end, ret);
- 			break;
- 		}
- 	}
-+
- 	return count;
- }
  
+ repeat:
+-	pvec.nr = find_get_pages_contig(inode->i_mapping, index, PAGEVEC_SIZE,
+-					pvec.pages);
+-	if (pvec.nr == 0)
++	nr = filemap_get_folios_contig(inode->i_mapping, &index, ULONG_MAX,
++			&fbatch);
++	if (nr == 0)
+ 		return length;
+ 
+-	if (length > 0 && pvec.pages[0]->index > index)
+-		goto out;
+-
+-	b = pvec.pages[0]->index << (PAGE_SHIFT - inode->i_blkbits);
++	b = fbatch.folios[0]->index << (PAGE_SHIFT - inode->i_blkbits);
+ 	i = 0;
+ 	do {
+-		page = pvec.pages[i];
++		folio = fbatch.folios[i];
+ 
+-		lock_page(page);
+-		if (page_has_buffers(page)) {
++		folio_lock(folio);
++		if (folio_buffers(folio)) {
+ 			struct buffer_head *bh, *head;
+ 
+-			bh = head = page_buffers(page);
++			bh = head = folio_buffers(folio);
+ 			do {
+ 				if (b < start_blk)
+ 					continue;
+@@ -532,18 +529,16 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+ 
+ 			b += nblocks_in_page;
+ 		}
+-		unlock_page(page);
++		folio_unlock(folio);
+ 
+-	} while (++i < pagevec_count(&pvec));
++	} while (++i < nr);
+ 
+-	index = page->index + 1;
+-	pagevec_release(&pvec);
++	folio_batch_release(&fbatch);
+ 	cond_resched();
+ 	goto repeat;
+ 
+ out_locked:
+-	unlock_page(page);
+-out:
+-	pagevec_release(&pvec);
++	folio_unlock(folio);
++	folio_batch_release(&fbatch);
+ 	return length;
+ }
 -- 
 2.36.1
 
