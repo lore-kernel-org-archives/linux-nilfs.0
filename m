@@ -1,52 +1,57 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix use-after-free bug in nilfs_mdt_destroy()
-Date: Tue, 16 Aug 2022 18:18:18 +0900
-Message-ID: <CAKFNMonVb6s3Cey5riXFwd+C3wy87fHbMUtnq3SXooXgsSD5yA@mail.gmail.com>
-References: <20220815175114.23576-1-konishi.ryusuke@gmail.com>
- <YvqP/f2P2YgIIO9U@ZenIV> <CAKFNMomyjXpsz-=BtG+G3q1J7CFUBMEfP13FfxwhWB==9qb++w@mail.gmail.com>
- <YvrQ8xO9Lx7rdKq8@ZenIV> <CAKFNMoniwM5x0w03cezGTFDWt=apNmGWpur83+vjghg3zcawpQ@mail.gmail.com>
- <CAD-N9QW5-kVR85t1canTqrF9RMkOjC1Z2q8BSQKxLwaay97Mgg@mail.gmail.com>
+From: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2 0/7] Convert to filemap_get_folios_contig()
+Date: Tue, 16 Aug 2022 10:52:39 -0700
+Message-ID: <20220816175246.42401-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc;
-        bh=Kk2g2IEl/Ua+BBCBiaozArRy7OGG11VduF5q3BhTDG0=;
-        b=KcBiWrctfetchJMsY/eFWVoCsx3SblR9qr6NI6BPQ60NgilShdjZlJUj4AiV5t0Yz1
-         QLi+cwFAww1Sh0xZjHgdFm2wXeNc1qu+yYPcoCpbHeauU5+BHlq8vB3ETrA+3wNlMNAq
-         YfbF3VYWZjWcHbXYEqnmKbHbidsO/eQQGJjM3gLluTqbtBegGjkkFls9VZZOLZYpzsB/
-         kt2bO+DyeinL1VidVfznhy9aVsAasdL03No67OrGbIRpxJ9O733KT4e2UUBk18Sg6RIE
-         BvRr9ja784eIHZZDWo5KueuM0LZCwwgjFh7PRZkYjhHV500L74V1q7n0lwlIANYOoPvV
-         fvBQ==
-In-Reply-To: <CAD-N9QW5-kVR85t1canTqrF9RMkOjC1Z2q8BSQKxLwaay97Mgg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc;
+        bh=vqWu9nIMNs2OYllxNa/lgOV5pa8uiLhr0uktPZgpEhc=;
+        b=JJCfNmBZtK7Rg0LXuekIXzocFyEbiUou4havkGQOMvUoSdfxVx8XppTLKJTOFqUZx5
+         hta/gDv8tA7m2h/EMpdDQjY/WBac8uFD2WO8SklWF4kOI0kf2SQCzx7txtv3r2gE83u9
+         r324iX+CFT0tepJ2GssUIre+HbXMmMh5tO6NODLP4obrp9z7fdBzbpA6465pvcUBO5DC
+         ByknkvBBsLQh4zIdTwXT0OEHCt9ZiQ2srmS8ChuKTITaTBE/jBiXatN+/xfGvnEVOl+q
+         uC40CwHcJ2i7TBvHjRD+vMrN1gNxcFfEJX0Mh8wFWqgJJn6xvbeN0VnyzqxL4qx0tnVV
+         pI9w==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Dongliang Mu <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jiacheng Xu <stitch-Y5EWUtBUdg4nDS1+zs4M5A@public.gmane.org>
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On Tue, Aug 16, 2022 at 12:25 PM Dongliang Mu wrote:
-> > Dongliang (or Jiacheng?), would it be possible for you to post a revised patch
-> > against inode_init_always() that moves the call of security_inode_alloc()
-> > instead of i_private initialization (as Al Viro said in a nearby thread [1]) ?
-> > If you have time, I would like to leave it to you since you wrote the
-> > original patch for inode_init_always().
->
-> Sure, I will post a v2 patch that moves security_inode_alloc to the
-> location just prior to
->         this_cpu_inc(nr_inodes);
-> with proper commit message.
->
+This patch series replaces find_get_pages_contig() with
+filemap_get_folios_contig(). I've run xfstests on btrfs. I've also
+tested the ramfs changes. I ran some xfstests on nilfs2, and its
+seemingly fine although more testing may be beneficial.
+---
 
-I saw you already sent the v2 patch on linux-fsdevel, etc.
-Just thank you for your quick follow.
+v2:
+  - Removed an unused label in nilfs2
 
-Regards,
-Ryusuke Konishi
+Vishal Moola (Oracle) (7):
+  filemap: Add filemap_get_folios_contig()
+  btrfs: Convert __process_pages_contig() to use
+    filemap_get_folios_contig()
+  btrfs: Convert end_compressed_writeback() to use filemap_get_folios()
+  btrfs: Convert process_page_range() to use filemap_get_folios_contig()
+  nilfs2: Convert nilfs_find_uncommited_extent() to use
+    filemap_get_folios_contig()
+  ramfs: Convert ramfs_nommu_get_unmapped_area() to use
+    filemap_get_folios_contig()
+  filemap: Remove find_get_pages_contig()
 
-> >
-> > [1] https://lkml.kernel.org/r/CAO4S-mficMz1mQW06EuCF+o11+mRDiCpufqVfoHkcRbQbs8kVw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
-> >
-> > Thanks,
-> > Ryusuke Konishi
+ fs/btrfs/compression.c           | 26 ++++++------
+ fs/btrfs/extent_io.c             | 33 +++++++--------
+ fs/btrfs/subpage.c               |  2 +-
+ fs/btrfs/tests/extent-io-tests.c | 31 +++++++-------
+ fs/nilfs2/page.c                 | 39 ++++++++----------
+ fs/ramfs/file-nommu.c            | 50 ++++++++++++----------
+ include/linux/pagemap.h          |  4 +-
+ mm/filemap.c                     | 71 +++++++++++++++++++-------------
+ 8 files changed, 134 insertions(+), 122 deletions(-)
+
+-- 
+2.36.1
+
