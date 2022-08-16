@@ -1,22 +1,22 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v2 3/7] btrfs: Convert end_compressed_writeback() to use filemap_get_folios()
-Date: Tue, 16 Aug 2022 10:52:42 -0700
-Message-ID: <20220816175246.42401-4-vishal.moola@gmail.com>
+Subject: [PATCH v2 4/7] btrfs: Convert process_page_range() to use filemap_get_folios_contig()
+Date: Tue, 16 Aug 2022 10:52:43 -0700
+Message-ID: <20220816175246.42401-5-vishal.moola@gmail.com>
 References: <20220816175246.42401-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc;
-        bh=seovf7hiIocC7KrgUovFX1N/tGF31/3t5G8CMyD0zNk=;
-        b=A0QG8rMJwgPAuWRxPlxnmh0emyQWQHjQkk9hr6ZxAF1b/UlBzE2vwG6yDS6Onat/T1
-         nRdTln1m+yYp5YakV3snbMptSKhwuNZzSDdp+NESr/ni9xiSwgMDPWEEifb5m0ZosUSV
-         9sHCH+S1LknyJ/6Tl+mQPkMXI351gqUZSkqiEPyrq0vLFwuzTIVb8cRw4rdotfCRibYp
-         RnT8Uco4OInEnU/NOs8Bxepr+KJ5ngBTyRUVkb2BB3TNyBoiNHJ22I2XvB3SLeWnaXDA
-         Tp3f6UUxkmtH/JSg8yZtpECHMchQJlJVuq9dRAuUXMqoOgIXk5bosl31og54wQVNkTFS
-         l2UA==
+        bh=zEWA5Mz5qgiKRAyUDs57laoSTQi4JTinbk89K1VeDTg=;
+        b=Q0jTOXo0r8co2kNY7avhSUyp1min9bEFsIm1c2a5izPGeJQJyrPEAdD/n+GuHi8PWd
+         WDStj6ozmxAN2tU8n0OKp1MPPxLW30a+rTvbx7Em+x0pgSFHhDJIWxTzr8OhJrSdE1iQ
+         J/cZAICwfQm78pCbo4YRcdifiMgACJZJJeJfKQ90aQHcbOLTrcfKeLde4inZkvLukGdo
+         fsrPaibUyeZTQcqDwhOMT3JDJ+Niv+a0cdWCMmdyIVFOUoqIraeDZhAU0Lz0n0wHdAni
+         CbdZ22zpnt5sFgJAo2zIgwtwYFfiaDOqSKqpG+qLfvUloduCa5fc3Mk2m1FjVMPb80Bj
+         gjBQ==
 In-Reply-To: <20220816175246.42401-1-vishal.moola@gmail.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
@@ -30,71 +30,94 @@ Since we may receive more than nr_pages pages, nr_pages may underflow.
 Since nr_pages > 0 is equivalent to index <= end_index, we replaced it
 with this check instead.
 
-Also this function does not care about the pages being contiguous so we
-can just use filemap_get_folios() to be more efficient.
+Also minor comment renaming for consistency in subpage.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- fs/btrfs/compression.c | 26 ++++++++++++--------------
- 1 file changed, 12 insertions(+), 14 deletions(-)
+ fs/btrfs/subpage.c               |  2 +-
+ fs/btrfs/tests/extent-io-tests.c | 31 ++++++++++++++++---------------
+ 2 files changed, 17 insertions(+), 16 deletions(-)
 
-diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
-index f4564f32f6d9..3dcd5006cfb4 100644
---- a/fs/btrfs/compression.c
-+++ b/fs/btrfs/compression.c
-@@ -8,6 +8,7 @@
- #include <linux/file.h>
- #include <linux/fs.h>
+diff --git a/fs/btrfs/subpage.c b/fs/btrfs/subpage.c
+index a105b291444f..6418c38c4b30 100644
+--- a/fs/btrfs/subpage.c
++++ b/fs/btrfs/subpage.c
+@@ -337,7 +337,7 @@ bool btrfs_subpage_end_and_test_writer(const struct btrfs_fs_info *fs_info,
+  *
+  * Even with 0 returned, the page still need extra check to make sure
+  * it's really the correct page, as the caller is using
+- * find_get_pages_contig(), which can race with page invalidating.
++ * filemap_get_folios_contig(), which can race with page invalidating.
+  */
+ int btrfs_page_start_writer_lock(const struct btrfs_fs_info *fs_info,
+ 		struct page *page, u64 start, u32 len)
+diff --git a/fs/btrfs/tests/extent-io-tests.c b/fs/btrfs/tests/extent-io-tests.c
+index a232b15b8021..530073868916 100644
+--- a/fs/btrfs/tests/extent-io-tests.c
++++ b/fs/btrfs/tests/extent-io-tests.c
+@@ -4,6 +4,7 @@
+  */
+ 
  #include <linux/pagemap.h>
 +#include <linux/pagevec.h>
- #include <linux/highmem.h>
- #include <linux/kthread.h>
- #include <linux/time.h>
-@@ -339,8 +340,7 @@ static noinline void end_compressed_writeback(struct inode *inode,
- 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
- 	unsigned long index = cb->start >> PAGE_SHIFT;
- 	unsigned long end_index = (cb->start + cb->len - 1) >> PAGE_SHIFT;
--	struct page *pages[16];
--	unsigned long nr_pages = end_index - index + 1;
-+	struct folio_batch fbatch;
- 	const int errno = blk_status_to_errno(cb->status);
- 	int i;
+ #include <linux/sched.h>
+ #include <linux/slab.h>
+ #include <linux/sizes.h>
+@@ -20,39 +21,39 @@ static noinline int process_page_range(struct inode *inode, u64 start, u64 end,
+ 				       unsigned long flags)
+ {
  	int ret;
-@@ -348,24 +348,22 @@ static noinline void end_compressed_writeback(struct inode *inode,
- 	if (errno)
- 		mapping_set_error(inode->i_mapping, errno);
+-	struct page *pages[16];
++	struct folio_batch fbatch;
+ 	unsigned long index = start >> PAGE_SHIFT;
+ 	unsigned long end_index = end >> PAGE_SHIFT;
+-	unsigned long nr_pages = end_index - index + 1;
+ 	int i;
+ 	int count = 0;
+ 	int loops = 0;
  
 -	while (nr_pages > 0) {
 -		ret = find_get_pages_contig(inode->i_mapping, index,
--				     min_t(unsigned long,
--				     nr_pages, ARRAY_SIZE(pages)), pages);
+-				     min_t(unsigned long, nr_pages,
+-				     ARRAY_SIZE(pages)), pages);
 +	folio_batch_init(&fbatch);
-+	while (index <= end_index) {
-+		ret = filemap_get_folios(inode->i_mapping, &index, end_index,
-+				&fbatch);
 +
- 		if (ret == 0) {
--			nr_pages -= 1;
--			index += 1;
--			continue;
-+			return;
- 		}
++	while (index <= end_index) {
++		ret = filemap_get_folios_contig(inode->i_mapping, &index,
++				end_index, &fbatch);
  		for (i = 0; i < ret; i++) {
 +			struct folio *folio = fbatch.folios[i];
- 			if (errno)
--				SetPageError(pages[i]);
--			btrfs_page_clamp_clear_writeback(fs_info, pages[i],
-+				folio_set_error(folio);
-+			btrfs_page_clamp_clear_writeback(fs_info, &folio->page,
- 							 cb->start, cb->len);
+ 			if (flags & PROCESS_TEST_LOCKED &&
+-			    !PageLocked(pages[i]))
++			    !folio_test_locked(folio))
+ 				count++;
+-			if (flags & PROCESS_UNLOCK && PageLocked(pages[i]))
+-				unlock_page(pages[i]);
 -			put_page(pages[i]);
++			if (flags & PROCESS_UNLOCK && folio_test_locked(folio))
++				folio_unlock(folio);
+ 			if (flags & PROCESS_RELEASE)
+-				put_page(pages[i]);
++				folio_put(folio);
  		}
 -		nr_pages -= ret;
 -		index += ret;
 +		folio_batch_release(&fbatch);
+ 		cond_resched();
+ 		loops++;
+ 		if (loops > 100000) {
+ 			printk(KERN_ERR
+-		"stuck in a loop, start %llu, end %llu, nr_pages %lu, ret %d\n",
+-				start, end, nr_pages, ret);
++		"stuck in a loop, start %llu, end %llu, ret %d\n",
++				start, end, ret);
+ 			break;
+ 		}
  	}
- 	/* the inode may be gone now */
++
+ 	return count;
  }
+ 
 -- 
 2.36.1
 
