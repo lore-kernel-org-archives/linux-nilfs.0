@@ -1,140 +1,110 @@
-From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v2 1/7] filemap: Add filemap_get_folios_contig()
-Date: Tue, 16 Aug 2022 10:52:40 -0700
-Message-ID: <20220816175246.42401-2-vishal.moola@gmail.com>
+From: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2 2/7] btrfs: Convert __process_pages_contig() to use filemap_get_folios_contig()
+Date: Tue, 16 Aug 2022 10:52:41 -0700
+Message-ID: <20220816175246.42401-3-vishal.moola@gmail.com>
 References: <20220816175246.42401-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc;
-        bh=roEOVbMBkZrS+KI85Bv7B/f0yshSydvUYCZY5utraVI=;
-        b=ActwK8Jt7K27jbZ1SDooaQBHFc3mnygMHje2PjXbo9ZNsrwCXn6G0xUASvSNkzD+0y
-         AyrgUxkLsem6YNeJWCOpIkU9+FKbKit2PtMC1X7yLU2njQc5/9LmJY0jRsWpZys5v+64
-         QChiPuqoPa2KA/eNJN1WLHS9y/DWnByD1K5nUAMlLlh5aLH36skgBCbSvl8ULnW0DHRY
-         JUVCK/1kL+F2ub7VBdWH+Eb9bmID7kmFepbMBG9fkMqxZ3UAokQBCSPCZ0FbI3GfgZq9
-         5BM0nLr4PP5Mm7iTE2zCy82fW9yhHLip/dCtTDvVrFIg0otieB7a8guaOQT3WQnSYtD9
-         abSA==
-In-Reply-To: <20220816175246.42401-1-vishal.moola@gmail.com>
+        bh=jx5etBacOfgeXw8OAxR7RH5xH7gasMcsy/7VBjftCKo=;
+        b=H4w5e03AG8w22x3dkX4OcAQ/fXJPEqBuxomQqu935pHvx9qnv6UXB89C7TehiRczmJ
+         +FQpqijjHerlPV7QgbLD9Svk01RL23Cq8zB1agtQdTKICezXQlLztKbYqQG1U9PrYB3F
+         zyWqZ6RrPzRD3dLiMvI5ykjFnKfybBoCI8pBmmEXw98ZnWN2weK8bBLgA5U9I2Z+eIUM
+         QKiR22gp7i+ANjq/+XdN02Ns7oj11Mwz8KxmhJOAHV0Heca0OEqx2IZI7t82b/W2MAFn
+         2iMRbdUPNsHr/ID8+Wt6iBOyBWHr7BuWOnifm62JTx2pKAaCJskWB35TDHj4rVoHTHoq
+         ts3Q==
+In-Reply-To: <20220816175246.42401-1-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-btrfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-This function is meant to replace find_get_pages_contig().
+Convert to use folios throughout. This is in preparation for the removal of
+find_get_pages_contig(). Now also supports large folios.
 
-Unlike find_get_pages_contig(), filemap_get_folios_contig() no
-longer takes in a target number of pages to find - It returns up to 15
-contiguous folios.
+Since we may receive more than nr_pages pages, nr_pages may underflow.
+Since nr_pages > 0 is equivalent to index <= end_index, we replaced it
+with this check instead.
 
-To be more consistent with filemap_get_folios(), filemap_get_folios_contig()
-now also updates the start index passed in, and takes an end index.
-
-Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
+Signed-off-by: Vishal Moola (Oracle) <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- include/linux/pagemap.h |  2 ++
- mm/filemap.c            | 73 +++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 75 insertions(+)
+ fs/btrfs/extent_io.c | 33 +++++++++++++++------------------
+ 1 file changed, 15 insertions(+), 18 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index cc9adbaddb59..951936a2be1d 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -720,6 +720,8 @@ static inline struct page *find_subpage(struct page *head, pgoff_t index)
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index 8f6b544ae616..f16929bc531b 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -1882,9 +1882,8 @@ static int __process_pages_contig(struct address_space *mapping,
+ 	pgoff_t start_index = start >> PAGE_SHIFT;
+ 	pgoff_t end_index = end >> PAGE_SHIFT;
+ 	pgoff_t index = start_index;
+-	unsigned long nr_pages = end_index - start_index + 1;
+ 	unsigned long pages_processed = 0;
+-	struct page *pages[16];
++	struct folio_batch fbatch;
+ 	int err = 0;
+ 	int i;
  
- unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
- 		pgoff_t end, struct folio_batch *fbatch);
-+unsigned filemap_get_folios_contig(struct address_space *mapping,
-+		pgoff_t *start, pgoff_t end, struct folio_batch *fbatch);
- unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
- 			       unsigned int nr_pages, struct page **pages);
- unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 8ccb868c3d95..8167bcc96e37 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2196,6 +2196,79 @@ bool folio_more_pages(struct folio *folio, pgoff_t index, pgoff_t max)
- 	return index < folio->index + folio_nr_pages(folio) - 1;
- }
+@@ -1893,16 +1892,17 @@ static int __process_pages_contig(struct address_space *mapping,
+ 		ASSERT(processed_end && *processed_end == start);
+ 	}
  
-+/**
-+ * filemap_get_folios_contig - Get a batch of contiguous folios
-+ * @mapping:	The address_space to search
-+ * @start:	The starting page index
-+ * @end:	The final page index (inclusive)
-+ * @fbatch:	The batch to fill
-+ *
-+ * filemap_get_folios_contig() works exactly like filemap_get_folios(),
-+ * except the returned folios are guaranteed to be contiguous. This may
-+ * not return all contiguous folios if the batch gets filled up.
-+ *
-+ * Return: The number of folios found.
-+ * Also update @start to be positioned for traversal of the next folio.
-+ */
+-	if ((page_ops & PAGE_SET_ERROR) && nr_pages > 0)
++	if ((page_ops & PAGE_SET_ERROR) && start_index <= end_index)
+ 		mapping_set_error(mapping, -EIO);
+ 
+-	while (nr_pages > 0) {
+-		int found_pages;
++	folio_batch_init(&fbatch);
++	while (index <= end_index) {
++		int found_folios;
 +
-+unsigned filemap_get_folios_contig(struct address_space *mapping,
-+		pgoff_t *start, pgoff_t end, struct folio_batch *fbatch)
-+{
-+	XA_STATE(xas, &mapping->i_pages, *start);
-+	unsigned long nr;
-+	struct folio *folio;
-+
-+	rcu_read_lock();
-+
-+	for (folio = xas_load(&xas); folio && xas.xa_index <= end;
-+			folio = xas_next(&xas)) {
-+		if (xas_retry(&xas, folio))
-+			continue;
-+		/*
-+		 * If the entry has been swapped out, we can stop looking.
-+		 * No current caller is looking for DAX entries.
-+		 */
-+		if (xa_is_value(folio))
-+			goto update_start;
-+
-+		if (!folio_try_get_rcu(folio))
-+			goto retry;
-+
-+		if (unlikely(folio != xas_reload(&xas)))
-+			goto put_folio;
-+
-+		if (!folio_batch_add(fbatch, folio)) {
-+			nr = folio_nr_pages(folio);
-+
-+			if (folio_test_hugetlb(folio))
-+				nr = 1;
-+			*start = folio->index + nr;
-+			goto out;
-+		}
-+		continue;
-+put_folio:
-+		folio_put(folio);
-+
-+retry:
-+		xas_reset(&xas);
-+	}
-+
-+update_start:
-+	nr = folio_batch_count(fbatch);
-+
-+	if (nr) {
-+		folio = fbatch->folios[nr - 1];
-+		if (folio_test_hugetlb(folio))
-+			*start = folio->index + 1;
-+		else
-+			*start = folio->index + folio_nr_pages(folio);
-+	}
-+out:
-+	rcu_read_unlock();
-+	return folio_batch_count(fbatch);
-+}
-+EXPORT_SYMBOL(filemap_get_folios_contig);
-+
- /**
-  * find_get_pages_contig - gang contiguous pagecache lookup
-  * @mapping:	The address_space to search
++		found_folios = filemap_get_folios_contig(mapping, &index,
++				end_index, &fbatch);
+ 
+-		found_pages = find_get_pages_contig(mapping, index,
+-				     min_t(unsigned long,
+-				     nr_pages, ARRAY_SIZE(pages)), pages);
+-		if (found_pages == 0) {
++		if (found_folios == 0) {
+ 			/*
+ 			 * Only if we're going to lock these pages, we can find
+ 			 * nothing at @index.
+@@ -1912,23 +1912,20 @@ static int __process_pages_contig(struct address_space *mapping,
+ 			goto out;
+ 		}
+ 
+-		for (i = 0; i < found_pages; i++) {
++		for (i = 0; i < found_folios; i++) {
+ 			int process_ret;
+-
++			struct folio *folio = fbatch.folios[i];
+ 			process_ret = process_one_page(fs_info, mapping,
+-					pages[i], locked_page, page_ops,
++					&folio->page, locked_page, page_ops,
+ 					start, end);
+ 			if (process_ret < 0) {
+-				for (; i < found_pages; i++)
+-					put_page(pages[i]);
+ 				err = -EAGAIN;
++				folio_batch_release(&fbatch);
+ 				goto out;
+ 			}
+-			put_page(pages[i]);
+-			pages_processed++;
++			pages_processed += folio_nr_pages(folio);
+ 		}
+-		nr_pages -= found_pages;
+-		index += found_pages;
++		folio_batch_release(&fbatch);
+ 		cond_resched();
+ 	}
+ out:
 -- 
 2.36.1
 
