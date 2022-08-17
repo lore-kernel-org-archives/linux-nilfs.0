@@ -1,121 +1,160 @@
-From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v2 7/7] filemap: Remove find_get_pages_contig()
-Date: Tue, 16 Aug 2022 10:52:46 -0700
-Message-ID: <20220816175246.42401-8-vishal.moola@gmail.com>
-References: <20220816175246.42401-1-vishal.moola@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 5/7] nilfs2: Convert nilfs_find_uncommited_extent() to
+ use filemap_get_folios_contig()
+Date: Wed, 17 Aug 2022 13:33:27 +0900
+Message-ID: <CAKFNMome2DoupJxiNT4YtuMDLUgUD1aevHSExd+M+Q+ghXwaEw@mail.gmail.com>
+References: <20220816175246.42401-1-vishal.moola@gmail.com> <20220816175246.42401-6-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc;
-        bh=/CfNnOMJk6G65551bZckVmJ3kjJ/k4Yc+qvoAg65GHU=;
-        b=kqIejtorBX4FPW47cUeP/ByJWQrYcj2ywHGo1YwUpKu3wlfgwOtH92PDuSGWsSr0nC
-         SyaGY3GrNkDx25FDJPPQWuoQGGYTz+T/RQ/YGQokcrzuV/lGrTyIu2XsSjU0eLIkyu8R
-         wA915ZmTNXVqBC13s6yt6NusLaeqy3Ri6jn5WxqH9mt0LbtYnY/4Auiks7IDIfTzjAw6
-         jMkAarr30hWP/fHq03/hXSuZBHRSKOkjOkBqXz12EehkRA4uZ4TqOdDFQ8KUeg7LMgi1
-         ZeH8HR8m4hK7VBBRkXiakq+KH0S1fV8B96ZdcNh9yDU/3Nn3++VacUTVJveG+6hPMoL5
-         rVJQ==
-In-Reply-To: <20220816175246.42401-1-vishal.moola@gmail.com>
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc;
+        bh=nOdb6n13ohDqgquF5+hz9jSYLtO6Hr9UX14Xr/YTGlM=;
+        b=dMkCJ8QcXk8CCKs+JMzTMBHDLD4h16lKjhPfa818z1aMbkmqmpn4lSJ/hn0QuEWAWS
+         OdymGqhTo4Pn/bNpk8llqrNNi6dl8VAXbfkDlgq0LGsfqFbAcRfU/QkVvvQTJ7XjPdlo
+         G+V2u884J/ZowvVBoBep11BxqGF+P30pLFDrYUsxDKLvHcyrL3YTPIhXXvypH5+ZedHM
+         Q6nLlNLv4ELt/1W812op/++Q7j7T/KiIOBtNGNFaXYckan6OxeLrFHGSmGqS9Sv/ONIM
+         vOholq/pwx6EFwcprMgfhLQiGkgA1WhOigSaEZYsgkNRN8sM2DbUANkpN8czCaKsVb/N
+         LnWg==
+In-Reply-To: <20220816175246.42401-6-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-btrfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+Content-Transfer-Encoding: 7bit
+To: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-All callers of find_get_pages_contig() have been removed, so it is no
-longer needed.
+On Wed, Aug 17, 2022 at 2:54 AM Vishal Moola (Oracle)  wrote:
+>
+> Converted function to use folios throughout. This is in preparation for
+> the removal of find_get_pages_contig(). Now also supports large folios.
+>
+> Also cleaned up an unnecessary if statement - pvec.pages[0]->index > index
+> will always evaluate to false, and filemap_get_folios_contig() returns 0 if
+> there is no folio found at index.
+>
+> Signed-off-by: Vishal Moola (Oracle) <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+>
+> v2:
+>   - Fixed a warning regarding a now unused label "out"
+>   - Reported-by: kernel test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+>  fs/nilfs2/page.c | 39 +++++++++++++++++----------------------
+>  1 file changed, 17 insertions(+), 22 deletions(-)
+>
+> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+> index 3267e96c256c..14629e03d0da 100644
+> --- a/fs/nilfs2/page.c
+> +++ b/fs/nilfs2/page.c
+> @@ -480,13 +480,13 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+>                                             sector_t start_blk,
+>                                             sector_t *blkoff)
+>  {
+> -       unsigned int i;
+> +       unsigned int i, nr;
+>         pgoff_t index;
+>         unsigned int nblocks_in_page;
+>         unsigned long length = 0;
+>         sector_t b;
+> -       struct pagevec pvec;
+> -       struct page *page;
+> +       struct folio_batch fbatch;
+> +       struct folio *folio;
+>
+>         if (inode->i_mapping->nrpages == 0)
+>                 return 0;
+> @@ -494,27 +494,24 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+>         index = start_blk >> (PAGE_SHIFT - inode->i_blkbits);
+>         nblocks_in_page = 1U << (PAGE_SHIFT - inode->i_blkbits);
+>
+> -       pagevec_init(&pvec);
+> +       folio_batch_init(&fbatch);
+>
+>  repeat:
+> -       pvec.nr = find_get_pages_contig(inode->i_mapping, index, PAGEVEC_SIZE,
+> -                                       pvec.pages);
+> -       if (pvec.nr == 0)
+> +       nr = filemap_get_folios_contig(inode->i_mapping, &index, ULONG_MAX,
+> +                       &fbatch);
+> +       if (nr == 0)
+>                 return length;
+>
+> -       if (length > 0 && pvec.pages[0]->index > index)
+> -               goto out;
+> -
+> -       b = pvec.pages[0]->index << (PAGE_SHIFT - inode->i_blkbits);
+> +       b = fbatch.folios[0]->index << (PAGE_SHIFT - inode->i_blkbits);
+>         i = 0;
+>         do {
+> -               page = pvec.pages[i];
+> +               folio = fbatch.folios[i];
+>
+> -               lock_page(page);
+> -               if (page_has_buffers(page)) {
+> +               folio_lock(folio);
+> +               if (folio_buffers(folio)) {
+>                         struct buffer_head *bh, *head;
+>
+> -                       bh = head = page_buffers(page);
+> +                       bh = head = folio_buffers(folio);
+>                         do {
+>                                 if (b < start_blk)
+>                                         continue;
+> @@ -532,18 +529,16 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+>
 
-Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
----
- include/linux/pagemap.h |  2 --
- mm/filemap.c            | 60 -----------------------------------------
- 2 files changed, 62 deletions(-)
+>                         b += nblocks_in_page;
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 951936a2be1d..a04a645b64e9 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -722,8 +722,6 @@ unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
- 		pgoff_t end, struct folio_batch *fbatch);
- unsigned filemap_get_folios_contig(struct address_space *mapping,
- 		pgoff_t *start, pgoff_t end, struct folio_batch *fbatch);
--unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
--			       unsigned int nr_pages, struct page **pages);
- unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
- 			pgoff_t end, xa_mark_t tag, unsigned int nr_pages,
- 			struct page **pages);
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 8167bcc96e37..af5a4b5f866d 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2269,66 +2269,6 @@ unsigned filemap_get_folios_contig(struct address_space *mapping,
- }
- EXPORT_SYMBOL(filemap_get_folios_contig);
- 
--/**
-- * find_get_pages_contig - gang contiguous pagecache lookup
-- * @mapping:	The address_space to search
-- * @index:	The starting page index
-- * @nr_pages:	The maximum number of pages
-- * @pages:	Where the resulting pages are placed
-- *
-- * find_get_pages_contig() works exactly like find_get_pages_range(),
-- * except that the returned number of pages are guaranteed to be
-- * contiguous.
-- *
-- * Return: the number of pages which were found.
-- */
--unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t index,
--			       unsigned int nr_pages, struct page **pages)
--{
--	XA_STATE(xas, &mapping->i_pages, index);
--	struct folio *folio;
--	unsigned int ret = 0;
--
--	if (unlikely(!nr_pages))
--		return 0;
--
--	rcu_read_lock();
--	for (folio = xas_load(&xas); folio; folio = xas_next(&xas)) {
--		if (xas_retry(&xas, folio))
--			continue;
--		/*
--		 * If the entry has been swapped out, we can stop looking.
--		 * No current caller is looking for DAX entries.
--		 */
--		if (xa_is_value(folio))
--			break;
--
--		if (!folio_try_get_rcu(folio))
--			goto retry;
--
--		if (unlikely(folio != xas_reload(&xas)))
--			goto put_page;
--
--again:
--		pages[ret] = folio_file_page(folio, xas.xa_index);
--		if (++ret == nr_pages)
--			break;
--		if (folio_more_pages(folio, xas.xa_index, ULONG_MAX)) {
--			xas.xa_index++;
--			folio_ref_inc(folio);
--			goto again;
--		}
--		continue;
--put_page:
--		folio_put(folio);
--retry:
--		xas_reset(&xas);
--	}
--	rcu_read_unlock();
--	return ret;
--}
--EXPORT_SYMBOL(find_get_pages_contig);
--
- /**
-  * find_get_pages_range_tag - Find and return head pages matching @tag.
-  * @mapping:	the address_space to search
--- 
-2.36.1
+Here, It looks like the block index "b" should be updated with the
+number of blocks in the
+folio because the loop is now per folio, not per page.
 
+Instead of replacing it with a calculation that uses folio_size(folio)
+or folio_shift(folio),
+I think it would be better to move the calculation of "b" inside the
+branch where the folio
+has buffers as follows:
+
+                if (folio_buffers(folio)) {
+                        struct buffer_head *bh, *head;
+                        sector_t b;
+
+                        b = folio->index << (PAGE_SHIFT - inode->i_blkbits);
+                        bh = head = folio_buffers(folio);
+                        ...
+               } else if (length > 0) {
+                       goto out_locked;
+               }
+
+This way, we can remove calculations for the block index "b" outside
+the above part
+and the variable "nblocks_in_page" as well.
+
+Thanks,
+Ryusuke Konishi
+
+>                 }
+> -               unlock_page(page);
+> +               folio_unlock(folio);
+>
+> -       } while (++i < pagevec_count(&pvec));
+> +       } while (++i < nr);
+>
+> -       index = page->index + 1;
+> -       pagevec_release(&pvec);
+> +       folio_batch_release(&fbatch);
+>         cond_resched();
+>         goto repeat;
+>
+>  out_locked:
+> -       unlock_page(page);
+> -out:
+> -       pagevec_release(&pvec);
+> +       folio_unlock(folio);
+> +       folio_batch_release(&fbatch);
+>         return length;
+>  }
+> --
+> 2.36.1
+>
