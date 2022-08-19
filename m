@@ -1,168 +1,61 @@
-From: Vishal Moola <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 5/7] nilfs2: Convert nilfs_find_uncommited_extent() to
- use filemap_get_folios_contig()
-Date: Wed, 17 Aug 2022 13:35:01 -0700
-Message-ID: <CAOzc2pyDFVVBF3rmUK3_nWS=8rw4FieD40ivf904AfM8o_GWvQ@mail.gmail.com>
-References: <20220816175246.42401-1-vishal.moola@gmail.com>
- <20220816175246.42401-6-vishal.moola@gmail.com> <CAKFNMome2DoupJxiNT4YtuMDLUgUD1aevHSExd+M+Q+ghXwaEw@mail.gmail.com>
+From: cgel.zte-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Subject: [PATCH] nilfs2: delete unnecessary checks before brelse()
+Date: Fri, 19 Aug 2022 08:17:00 +0000
+Message-ID: <20220819081700.96279-1-chi.minghao@zte.com.cn>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc;
-        bh=gxYbz4vgkJrv2ZDG6l+fEiYODdiBDS379CnGFFAEQCA=;
-        b=Uf8/JMbJrj//7ezxkLb/aOXHNfyJLkuRC5MHSWStBXI5zX+Ljl+T4G26MZfdmT1tUi
-         +oeuYc/4J7ElSoHOITcjQmHHNZ0zB4Iy7OwLx+YyLIQweEfcsND7lCCAZSmi8i5C8vw9
-         po0DE79mAnRSmOOjCV/ixl2HQZc3Da7CEuVmlR5GKJkGwdDuqqbBeIkO4KfOLKyJzPFp
-         je0dwtAPPYsg2UrjWkl3DIcBtXtC5rcJWvqu+HZVhlySw6WuSgH+WiMZuKots3a/6eFH
-         5rFUFIxXVlm+aeJTzYiKktnFYJqoaji+uf+n35Annv4EB6aCJBWzj7nFMo9tHnzOHvLT
-         V9wg==
-In-Reply-To: <CAKFNMome2DoupJxiNT4YtuMDLUgUD1aevHSExd+M+Q+ghXwaEw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc;
+        bh=sWp63BpVW8U7jAJS0MU5jHAUsPkleFN5R+CfvsKi3C8=;
+        b=C6E1jDISCgMWDW9pnZhE7J0+TOlfLs/SL0BvEnbhBl1cOaLOXPUkG0PsMKXga8lGMf
+         S2wHURTITV1Rq9JkhGaTwKlby/7FSHfRAIPScHpHSMT3YjsBMELwfC8ipcrB464GrD9h
+         ZnJjlI6vdcoh0J+8Cyay7v86g01ubH4NdCXSZqylVbyit+YHsruhkTAkIT62SuJ09kiX
+         hwh+ogQuE+SpWKDkY7qLQNHDWxp287xo5wQ7QCtE/P9sEfHcRkIJGifHtkQfRbJUcGHY
+         RNGtxDVImZlWR/qzbM2CWJPwn243C+fiGciyO9ooeAdtPheFINVJaw6zGFirPIHpyXvj
+         1oSg==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Minghao Chi <chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>, Zeal Robot <zealci-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
 
-On Tue, Aug 16, 2022 at 9:33 PM Ryusuke Konishi
-<konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->
-> On Wed, Aug 17, 2022 at 2:54 AM Vishal Moola (Oracle)  wrote:
-> >
-> > Converted function to use folios throughout. This is in preparation for
-> > the removal of find_get_pages_contig(). Now also supports large folios.
-> >
-> > Also cleaned up an unnecessary if statement - pvec.pages[0]->index > index
-> > will always evaluate to false, and filemap_get_folios_contig() returns 0 if
-> > there is no folio found at index.
-> >
-> > Signed-off-by: Vishal Moola (Oracle) <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> > ---
-> >
-> > v2:
-> >   - Fixed a warning regarding a now unused label "out"
-> >   - Reported-by: kernel test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > ---
-> >  fs/nilfs2/page.c | 39 +++++++++++++++++----------------------
-> >  1 file changed, 17 insertions(+), 22 deletions(-)
-> >
-> > diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-> > index 3267e96c256c..14629e03d0da 100644
-> > --- a/fs/nilfs2/page.c
-> > +++ b/fs/nilfs2/page.c
-> > @@ -480,13 +480,13 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
-> >                                             sector_t start_blk,
-> >                                             sector_t *blkoff)
-> >  {
-> > -       unsigned int i;
-> > +       unsigned int i, nr;
-> >         pgoff_t index;
-> >         unsigned int nblocks_in_page;
-> >         unsigned long length = 0;
-> >         sector_t b;
-> > -       struct pagevec pvec;
-> > -       struct page *page;
-> > +       struct folio_batch fbatch;
-> > +       struct folio *folio;
-> >
-> >         if (inode->i_mapping->nrpages == 0)
-> >                 return 0;
-> > @@ -494,27 +494,24 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
-> >         index = start_blk >> (PAGE_SHIFT - inode->i_blkbits);
-> >         nblocks_in_page = 1U << (PAGE_SHIFT - inode->i_blkbits);
-> >
-> > -       pagevec_init(&pvec);
-> > +       folio_batch_init(&fbatch);
-> >
-> >  repeat:
-> > -       pvec.nr = find_get_pages_contig(inode->i_mapping, index, PAGEVEC_SIZE,
-> > -                                       pvec.pages);
-> > -       if (pvec.nr == 0)
-> > +       nr = filemap_get_folios_contig(inode->i_mapping, &index, ULONG_MAX,
-> > +                       &fbatch);
-> > +       if (nr == 0)
-> >                 return length;
-> >
-> > -       if (length > 0 && pvec.pages[0]->index > index)
-> > -               goto out;
-> > -
-> > -       b = pvec.pages[0]->index << (PAGE_SHIFT - inode->i_blkbits);
-> > +       b = fbatch.folios[0]->index << (PAGE_SHIFT - inode->i_blkbits);
-> >         i = 0;
-> >         do {
-> > -               page = pvec.pages[i];
-> > +               folio = fbatch.folios[i];
-> >
-> > -               lock_page(page);
-> > -               if (page_has_buffers(page)) {
-> > +               folio_lock(folio);
-> > +               if (folio_buffers(folio)) {
-> >                         struct buffer_head *bh, *head;
-> >
-> > -                       bh = head = page_buffers(page);
-> > +                       bh = head = folio_buffers(folio);
-> >                         do {
-> >                                 if (b < start_blk)
-> >                                         continue;
-> > @@ -532,18 +529,16 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
-> >
->
-> >                         b += nblocks_in_page;
->
-> Here, It looks like the block index "b" should be updated with the
-> number of blocks in the
-> folio because the loop is now per folio, not per page.
+From: Minghao Chi <chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
 
-Yup, thanks for catching that.
+The brelse() function tests whether its argument is NULL
+and then returns immediately.
+Thus remove the tests which are not needed around the shown calls.
 
-> Instead of replacing it with a calculation that uses folio_size(folio)
-> or folio_shift(folio),
-> I think it would be better to move the calculation of "b" inside the
-> branch where the folio
-> has buffers as follows:
->
->                 if (folio_buffers(folio)) {
->                         struct buffer_head *bh, *head;
->                         sector_t b;
->
->                         b = folio->index << (PAGE_SHIFT - inode->i_blkbits);
->                         bh = head = folio_buffers(folio);
->                         ...
->                } else if (length > 0) {
->                        goto out_locked;
->                }
->
-> This way, we can remove calculations for the block index "b" outside
-> the above part
-> and the variable "nblocks_in_page" as well.
+Reported-by: Zeal Robot <zealci-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
+Signed-off-by: Minghao Chi <chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
+---
+ fs/nilfs2/btree.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-Sounds good, I'll do that.
-
-> Thanks,
-> Ryusuke Konishi
->
-> >                 }
-> > -               unlock_page(page);
-> > +               folio_unlock(folio);
-> >
-> > -       } while (++i < pagevec_count(&pvec));
-> > +       } while (++i < nr);
-> >
-> > -       index = page->index + 1;
-> > -       pagevec_release(&pvec);
-> > +       folio_batch_release(&fbatch);
-> >         cond_resched();
-> >         goto repeat;
-> >
-> >  out_locked:
-> > -       unlock_page(page);
-> > -out:
-> > -       pagevec_release(&pvec);
-> > +       folio_unlock(folio);
-> > +       folio_batch_release(&fbatch);
-> >         return length;
-> >  }
-> > --
-> > 2.36.1
-> >
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index f544c22fff78..b3b5a46488c2 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -1668,8 +1668,7 @@ static int nilfs_btree_check_delete(struct nilfs_bmap *btree, __u64 key)
+ 	maxkey = nilfs_btree_node_get_key(node, nchildren - 1);
+ 	nextmaxkey = (nchildren > 1) ?
+ 		nilfs_btree_node_get_key(node, nchildren - 2) : 0;
+-	if (bh != NULL)
+-		brelse(bh);
++	brelse(bh);
+ 
+ 	return (maxkey == key) && (nextmaxkey < NILFS_BMAP_LARGE_LOW);
+ }
+@@ -1717,8 +1716,7 @@ static int nilfs_btree_gather_data(struct nilfs_bmap *btree,
+ 		ptrs[i] = le64_to_cpu(dptrs[i]);
+ 	}
+ 
+-	if (bh != NULL)
+-		brelse(bh);
++	brelse(bh);
+ 
+ 	return nitems;
+ }
+-- 
+2.25.1
