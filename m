@@ -1,121 +1,46 @@
-From: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v3 7/7] filemap: Remove find_get_pages_contig()
-Date: Tue, 23 Aug 2022 17:40:23 -0700
-Message-ID: <20220824004023.77310-8-vishal.moola@gmail.com>
-References: <20220824004023.77310-1-vishal.moola@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 5/7] nilfs2: Convert nilfs_find_uncommited_extent() to
+ use filemap_get_folios_contig()
+Date: Wed, 24 Aug 2022 13:11:17 +0900
+Message-ID: <CAKFNMomaxii8r_B3XA4KdkvcD+9Crm=S=0KE-nDa4+qs78E4dQ@mail.gmail.com>
+References: <20220824004023.77310-1-vishal.moola@gmail.com> <20220824004023.77310-6-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc;
-        bh=/CfNnOMJk6G65551bZckVmJ3kjJ/k4Yc+qvoAg65GHU=;
-        b=G8TXZ41ypzXH2ZGDemwUIRnrhlgVru1aOFOrt11RUGeOxYD2OEbjqjcKoGK6qHOJi9
-         MbtYizKOZFfhZwL8kE8b9i9Vda56q1LheWpsm8zBqVGawexnK256o4cNnjDR2yR0RNj1
-         jWmHonngeuWnuopR3tvKa2pkmlrs5Pvf+FehXXpbrFYiVp5TramRl4P9BVFicecGfqZH
-         7P5r07WqQCaO+01g7WRirRh4lfh0/bgOArCv3maqdBcWCfoaSptp5Y2zL01c+FWlMUrG
-         VMAMO5V/XsqnEjfd4gfoDT7FqrQQU9iEiOVlcQ7iQkIuLOAklkrQAyE4dm4arHMjJXHc
-         ptNA==
-In-Reply-To: <20220824004023.77310-1-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc;
+        bh=1SWmPxwQyH5LYZrwY6U9XBorttydo0GXweh3dw5/QKE=;
+        b=aB5Gk0PGmxav71TxeXANmr1pPDPghLTSfQ29XJ8LQy6WvkEb8HPfBSqN5qkhPDpuUS
+         7RXfKn4IOpvkyiAGIGpUlc8/7FaY0Z2NXa1XkOs9/zXwUfvDusGj+ct52/rKAulJ6Chf
+         lONMykmHKfe4ukqG1F/WMOfl3oqYGykOX1fErzqYsP/7D5TU7VkHGULWyaiGY8oKLumW
+         mliTpyuj5LrIBwrR10LcRQMn2zqdmDjcqi2PVcDmmBgJghBAwztDCODbjgnpxCS4XT19
+         GW9hWN6b5BneomBEXiE7nAjgVSOuT8gq6lIVEeutl71hFIevTTlSS1BwjFdshjZtW/+L
+         dL0A==
+In-Reply-To: <20220824004023.77310-6-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-All callers of find_get_pages_contig() have been removed, so it is no
-longer needed.
+On Wed, Aug 24, 2022 at 9:43 AM Vishal Moola (Oracle)  wrote:
+>
+> Converted function to use folios throughout. This is in preparation for
+> the removal of find_get_pages_contig(). Now also supports large folios.
+>
+> Also cleaned up an unnecessary if statement - pvec.pages[0]->index > index
+> will always evaluate to false, and filemap_get_folios_contig() returns 0 if
+> there is no folio found at index.
+>
+> Signed-off-by: Vishal Moola (Oracle) <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+>  fs/nilfs2/page.c | 45 ++++++++++++++++++---------------------------
+>  1 file changed, 18 insertions(+), 27 deletions(-)
 
-Signed-off-by: Vishal Moola (Oracle) <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- include/linux/pagemap.h |  2 --
- mm/filemap.c            | 60 -----------------------------------------
- 2 files changed, 62 deletions(-)
+Acked-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 951936a2be1d..a04a645b64e9 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -722,8 +722,6 @@ unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
- 		pgoff_t end, struct folio_batch *fbatch);
- unsigned filemap_get_folios_contig(struct address_space *mapping,
- 		pgoff_t *start, pgoff_t end, struct folio_batch *fbatch);
--unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
--			       unsigned int nr_pages, struct page **pages);
- unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
- 			pgoff_t end, xa_mark_t tag, unsigned int nr_pages,
- 			struct page **pages);
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 8167bcc96e37..af5a4b5f866d 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2269,66 +2269,6 @@ unsigned filemap_get_folios_contig(struct address_space *mapping,
- }
- EXPORT_SYMBOL(filemap_get_folios_contig);
- 
--/**
-- * find_get_pages_contig - gang contiguous pagecache lookup
-- * @mapping:	The address_space to search
-- * @index:	The starting page index
-- * @nr_pages:	The maximum number of pages
-- * @pages:	Where the resulting pages are placed
-- *
-- * find_get_pages_contig() works exactly like find_get_pages_range(),
-- * except that the returned number of pages are guaranteed to be
-- * contiguous.
-- *
-- * Return: the number of pages which were found.
-- */
--unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t index,
--			       unsigned int nr_pages, struct page **pages)
--{
--	XA_STATE(xas, &mapping->i_pages, index);
--	struct folio *folio;
--	unsigned int ret = 0;
--
--	if (unlikely(!nr_pages))
--		return 0;
--
--	rcu_read_lock();
--	for (folio = xas_load(&xas); folio; folio = xas_next(&xas)) {
--		if (xas_retry(&xas, folio))
--			continue;
--		/*
--		 * If the entry has been swapped out, we can stop looking.
--		 * No current caller is looking for DAX entries.
--		 */
--		if (xa_is_value(folio))
--			break;
--
--		if (!folio_try_get_rcu(folio))
--			goto retry;
--
--		if (unlikely(folio != xas_reload(&xas)))
--			goto put_page;
--
--again:
--		pages[ret] = folio_file_page(folio, xas.xa_index);
--		if (++ret == nr_pages)
--			break;
--		if (folio_more_pages(folio, xas.xa_index, ULONG_MAX)) {
--			xas.xa_index++;
--			folio_ref_inc(folio);
--			goto again;
--		}
--		continue;
--put_page:
--		folio_put(folio);
--retry:
--		xas_reset(&xas);
--	}
--	rcu_read_unlock();
--	return ret;
--}
--EXPORT_SYMBOL(find_get_pages_contig);
--
- /**
-  * find_get_pages_range_tag - Find and return head pages matching @tag.
-  * @mapping:	the address_space to search
--- 
-2.36.1
+Looks good, thank you!
 
+
+Ryusuke Konishi
