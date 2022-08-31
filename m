@@ -1,46 +1,58 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 5/7] nilfs2: Convert nilfs_find_uncommited_extent() to
- use filemap_get_folios_contig()
-Date: Wed, 24 Aug 2022 13:11:17 +0900
-Message-ID: <CAKFNMomaxii8r_B3XA4KdkvcD+9Crm=S=0KE-nDa4+qs78E4dQ@mail.gmail.com>
-References: <20220824004023.77310-1-vishal.moola@gmail.com> <20220824004023.77310-6-vishal.moola@gmail.com>
+From: cgel.zte-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Subject: [PATCH linux-next] nilfs2: Remove the unneeded result variable
+Date: Wed, 31 Aug 2022 03:34:03 +0000
+Message-ID: <20220831033403.302184-1-ye.xingchen@zte.com.cn>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc;
-        bh=1SWmPxwQyH5LYZrwY6U9XBorttydo0GXweh3dw5/QKE=;
-        b=aB5Gk0PGmxav71TxeXANmr1pPDPghLTSfQ29XJ8LQy6WvkEb8HPfBSqN5qkhPDpuUS
-         7RXfKn4IOpvkyiAGIGpUlc8/7FaY0Z2NXa1XkOs9/zXwUfvDusGj+ct52/rKAulJ6Chf
-         lONMykmHKfe4ukqG1F/WMOfl3oqYGykOX1fErzqYsP/7D5TU7VkHGULWyaiGY8oKLumW
-         mliTpyuj5LrIBwrR10LcRQMn2zqdmDjcqi2PVcDmmBgJghBAwztDCODbjgnpxCS4XT19
-         GW9hWN6b5BneomBEXiE7nAjgVSOuT8gq6lIVEeutl71hFIevTTlSS1BwjFdshjZtW/+L
-         dL0A==
-In-Reply-To: <20220824004023.77310-6-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc;
+        bh=OA6ZBoW6tn54/FgmsdfdLrU3vD7MdBVPqn+LErflnVQ=;
+        b=e2g6MN3EJpfYl45WC5dxQGRvivXW81wOQIEYjU2qfv81vB9FTvz/6upDepxVuhuya2
+         +taNNFrBbvjxC0fp6LyH1SlxXlM7R9EdVnO4jiQBNyzy0VGa/K137Be/VPm01AAqK9ei
+         BVS0Xmjz4NPcoXiVrqLfTYIIkMds9cXJ/vJ0MFTgY7qoJOB8P405Tr21LZZ2/g9NzUad
+         aOvG4/eNUpqTTXMvH3nevgv/yJxX0U0ip3VEX2lRBrAj6A9SIqwdwwuYMHIn9Yp4lRGQ
+         D6n7gLjN0v8+T8FbOOD4eCT73U385gPmdiYufueATdy7BPaxisevTC8NOrQUZavGhCib
+         u6uw==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ye xingchen <ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>, Zeal Robot <zealci-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
 
-On Wed, Aug 24, 2022 at 9:43 AM Vishal Moola (Oracle)  wrote:
->
-> Converted function to use folios throughout. This is in preparation for
-> the removal of find_get_pages_contig(). Now also supports large folios.
->
-> Also cleaned up an unnecessary if statement - pvec.pages[0]->index > index
-> will always evaluate to false, and filemap_get_folios_contig() returns 0 if
-> there is no folio found at index.
->
-> Signed-off-by: Vishal Moola (Oracle) <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  fs/nilfs2/page.c | 45 ++++++++++++++++++---------------------------
->  1 file changed, 18 insertions(+), 27 deletions(-)
+From: ye xingchen <ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return the value nilfs_segctor_sync() directly instead of storing it in
+another redundant variable.
 
-Looks good, thank you!
+Reported-by: Zeal Robot <zealci-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
+Signed-off-by: ye xingchen <ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
+---
+ fs/nilfs2/segment.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-
-Ryusuke Konishi
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 0afe0832c754..9abae2c9120e 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2235,7 +2235,6 @@ int nilfs_construct_segment(struct super_block *sb)
+ 	struct the_nilfs *nilfs = sb->s_fs_info;
+ 	struct nilfs_sc_info *sci = nilfs->ns_writer;
+ 	struct nilfs_transaction_info *ti;
+-	int err;
+ 
+ 	if (!sci)
+ 		return -EROFS;
+@@ -2243,8 +2242,7 @@ int nilfs_construct_segment(struct super_block *sb)
+ 	/* A call inside transactions causes a deadlock. */
+ 	BUG_ON((ti = current->journal_info) && ti->ti_magic == NILFS_TI_MAGIC);
+ 
+-	err = nilfs_segctor_sync(sci);
+-	return err;
++	return nilfs_segctor_sync(sci);
+ }
+ 
+ /**
+-- 
+2.25.1
