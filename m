@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH 10/23] ext4: Convert
- mpage_prepare_extent_to_map() to use filemap_get_folios_tag()
-Date: Thu,  1 Sep 2022 15:01:25 -0700
-Message-ID: <20220901220138.182896-11-vishal.moola@gmail.com>
+Subject: [PATCH 09/23] cifs: Convert wdata_alloc_and_fillpages()
+ to use filemap_get_folios_tag()
+Date: Thu,  1 Sep 2022 15:01:24 -0700
+Message-ID: <20220901220138.182896-10-vishal.moola@gmail.com>
 References: <20220901220138.182896-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=6NcBwR4ABkPySjWunvka2slqDQWJiFAlVbuCNfsPT4M=; b=T6tjMewNn23Wp6v+OnA1N9cKDR
- GmoUNgtLWxjQ0J8YJ9GP/xWQuxpxbWqA3Xv0n+pn/63+T6U2GMgtPr3ktAnwK75eZXzfiNIYNWCQ6
- BMTXIaJlVt1TDLgysvAh9DDECzhVdzIr0jBYTqHZSEFSRobvMDrIH3GUC5drz5kPhl6g=;
+ bh=YET10ng1nR0ea8GMjh+/irz/Zcx26qfqc4LRuHlkdsg=; b=db04a/JTdhdYR+rUzrNwvIqf2Q
+ shdYr0/H78hZkME8phvJ7UQMDb0OHSndZv+ddjySo7TfJw/XZsSgiU2ETpud357Frfxeekdza3Dc9
+ EsDU9kFdZGskMKFEDJsp/sCcbcuu1C6r7WCVNr7duFvzVHI+wUEdqsO06Cq7wAnXyneo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=6NcBwR4ABkPySjWunvka2slqDQWJiFAlVbuCNfsPT4M=; b=iqcFXVK0Yb0YKdkQ32xvdpZnjo
- CWke03ANLvGeJ2dnHGM8viqBkKAyVoWDP9UyNRG6qfwod4s5n1heANgn+Hz1LPnBbUg9PB5Kcu9R4
- bs903FBWNPSrlAB8lTJOO/TbYF+znuf9RWQ0w4ROPoHCp0Zw4Nl2Ye0qTRk35GVkDLrw=;
+ bh=YET10ng1nR0ea8GMjh+/irz/Zcx26qfqc4LRuHlkdsg=; b=EoJrrhsy7PzcN/00nDBgdrsWxP
+ 4A8gH0kWbFFALHicD64Bjh5cj9DJDYbQTfBS+7TjnuRzGXK1nGNOZ+yAxyHK4I9xRNf61QbngtSWD
+ 17Q95f2POq7PEb2hEsl3JGvfVVm0TXvJj+Xr3D4RFXmEvapkEQcHijTTJyVo3ueEjHKw=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date;
- bh=6NcBwR4ABkPySjWunvka2slqDQWJiFAlVbuCNfsPT4M=;
- b=EMgPqv/dW9ejZPEHc8h0Is509X4km9zwyRiEeD2t+4Yx6XUuh0YXvkpHP71hc59gcH
- WHXYVRkSAnQTt2Q5KImgRXXH0n5e1nRRcwFpn1jn9Z0qBu3Za0+kSR5U3Y+oisvno0xB
- qHbF4h+rY+S22MLF5ap3CosoN1i6JX9EICc4nBvjMUeE9f6QqYdAhhzuln06qzJfz57w
- oLHRFjF+s5/WSklK4JMa6+VrW4gduwUK1e6UTZXB5QCl9rMvRAKM4RtoT15Wjcl4IJNW
- /hiN/u5HgTeRKgbPyvHTCdJvfSuKWwkMOiDMOAsJ6ZTq4D1ND7jjeTpG1Ks55/3UbdBy
- cXcA==
+ bh=YET10ng1nR0ea8GMjh+/irz/Zcx26qfqc4LRuHlkdsg=;
+ b=GtrGYdGLszgBq1fvi5V2PSfoLOXh1TNyiK0ofvUFGiVvwdQ6PkaGy3Ns4qJwLgF4b3
+ aIYdrsYMX+clX1Y+yOXcuDls8w+WiavI/64KPDiJmDgxyBZ4dAulShvhPc4ENInwd3Br
+ cmukOGKll48ywyFlU3xTzvvA/EhYiy85fvbJiJhltWdFBrenWV2xIc1tgrmQTV6xVFrr
+ kPWQoFcSoXWz75f58hl6lYhesgfwr3gasm4nlqUw3/vIqwimOmHoTKvTQsLxit2YTq1H
+ EGgbgkZ8lcymg9dX7HeYXgo7ygr9E+FPEd+ZGk8VSDrPOWMvOyx7zdOCyAyIqsvEGW5B
+ 7Vuw==
 In-Reply-To: <20220901220138.182896-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -50,134 +50,69 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Converted the function to use folios throughout. This is in preparation
-for the removal of find_get_pages_range_tag(). Now supports large
+Convert function to use folios. This is in preparation for the removal
+of find_get_pages_range_tag(). Now also supports the use of large
 folios.
+
+Since tofind might be larger than the max number of folios in a
+folio_batch (15), we loop through filling in wdata->pages pulling more
+batches until we either reach tofind pages or run out of folios.
+
+This function may not return all pages in the last found folio before
+tofind pages are reached.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- fs/ext4/inode.c | 55 ++++++++++++++++++++++++-------------------------
- 1 file changed, 27 insertions(+), 28 deletions(-)
+ fs/cifs/file.c | 33 ++++++++++++++++++++++++++++++---
+ 1 file changed, 30 insertions(+), 3 deletions(-)
 
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 601214453c3a..fbd876e10a85 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -2565,8 +2565,8 @@ static int ext4_da_writepages_trans_blocks(struct inode *inode)
- static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
+diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+index fa738adc031f..c4da53b57369 100644
+--- a/fs/cifs/file.c
++++ b/fs/cifs/file.c
+@@ -2517,14 +2517,41 @@ wdata_alloc_and_fillpages(pgoff_t tofind, struct address_space *mapping,
+ 			  unsigned int *found_pages)
  {
- 	struct address_space *mapping = mpd->inode->i_mapping;
--	struct pagevec pvec;
--	unsigned int nr_pages;
-+	struct folio_batch fbatch;
-+	unsigned int nr_folios;
- 	long left = mpd->wbc->nr_to_write;
- 	pgoff_t index = mpd->first_page;
- 	pgoff_t end = mpd->last_page;
-@@ -2580,18 +2580,17 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
- 		tag = PAGECACHE_TAG_TOWRITE;
- 	else
- 		tag = PAGECACHE_TAG_DIRTY;
+ 	struct cifs_writedata *wdata;
 -
--	pagevec_init(&pvec);
++	struct folio_batch fbatch;
++	unsigned int i, idx, p, nr;
+ 	wdata = cifs_writedata_alloc((unsigned int)tofind,
+ 				     cifs_writev_complete);
+ 	if (!wdata)
+ 		return NULL;
+ 
+-	*found_pages = find_get_pages_range_tag(mapping, index, end,
+-				PAGECACHE_TAG_DIRTY, tofind, wdata->pages);
 +	folio_batch_init(&fbatch);
- 	mpd->map.m_len = 0;
- 	mpd->next_page = index;
- 	while (index <= end) {
--		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
--				tag);
--		if (nr_pages == 0)
-+		nr_folios = filemap_get_folios_tag(mapping, &index, end,
-+				tag, &fbatch);
-+		if (nr_folios == 0)
- 			break;
- 
--		for (i = 0; i < nr_pages; i++) {
--			struct page *page = pvec.pages[i];
-+		for (i = 0; i < nr_folios; i++) {
-+			struct folio *folio = fbatch.folios[i];
- 
- 			/*
- 			 * Accumulated enough dirty pages? This doesn't apply
-@@ -2605,10 +2604,10 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
- 				goto out;
- 
- 			/* If we can't merge this page, we are done. */
--			if (mpd->map.m_len > 0 && mpd->next_page != page->index)
-+			if (mpd->map.m_len > 0 && mpd->next_page != folio->index)
- 				goto out;
- 
--			lock_page(page);
-+			folio_lock(folio);
- 			/*
- 			 * If the page is no longer dirty, or its mapping no
- 			 * longer corresponds to inode we are writing (which
-@@ -2616,16 +2615,16 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
- 			 * page is already under writeback and we are not doing
- 			 * a data integrity writeback, skip the page
- 			 */
--			if (!PageDirty(page) ||
--			    (PageWriteback(page) &&
-+			if (!folio_test_dirty(folio) ||
-+			    (folio_test_writeback(folio) &&
- 			     (mpd->wbc->sync_mode == WB_SYNC_NONE)) ||
--			    unlikely(page->mapping != mapping)) {
--				unlock_page(page);
-+			    unlikely(folio->mapping != mapping)) {
-+				folio_unlock(folio);
- 				continue;
- 			}
- 
--			wait_on_page_writeback(page);
--			BUG_ON(PageWriteback(page));
-+			folio_wait_writeback(folio);
-+			BUG_ON(folio_test_writeback(folio));
- 
- 			/*
- 			 * Should never happen but for buggy code in
-@@ -2636,33 +2635,33 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
- 			 *
- 			 * [1] https://lore.kernel.org/linux-mm/20180103100430.GE4911@quack2.suse.cz
- 			 */
--			if (!page_has_buffers(page)) {
--				ext4_warning_inode(mpd->inode, "page %lu does not have buffers attached", page->index);
--				ClearPageDirty(page);
--				unlock_page(page);
-+			if (!folio_buffers(folio)) {
-+				ext4_warning_inode(mpd->inode, "page %lu does not have buffers attached", folio->index);
-+				folio_clear_dirty(folio);
-+				folio_unlock(folio);
- 				continue;
- 			}
- 
- 			if (mpd->map.m_len == 0)
--				mpd->first_page = page->index;
--			mpd->next_page = page->index + 1;
-+				mpd->first_page = folio->index;
-+			mpd->next_page = folio->index + folio_nr_pages(folio);
- 			/* Add all dirty buffers to mpd */
--			lblk = ((ext4_lblk_t)page->index) <<
-+			lblk = ((ext4_lblk_t)folio->index) <<
- 				(PAGE_SHIFT - blkbits);
--			head = page_buffers(page);
-+			head = folio_buffers(folio);
- 			err = mpage_process_page_bufs(mpd, head, head, lblk);
- 			if (err <= 0)
- 				goto out;
- 			err = 0;
--			left--;
-+			left -= folio_nr_pages(folio);
- 		}
--		pagevec_release(&pvec);
-+		folio_batch_release(&fbatch);
- 		cond_resched();
- 	}
- 	mpd->scanned_until_end = 1;
- 	return 0;
- out:
--	pagevec_release(&pvec);
++	*found_pages = 0;
++
++again:
++	nr = filemap_get_folios_tag(mapping, index, end,
++				PAGECACHE_TAG_DIRTY, &fbatch);
++	if (!nr)
++		goto out; /* No dirty pages left in the range */
++
++	for (i = 0; i < nr; i++) {
++		struct folio *folio = fbatch.folios[i];
++
++		idx = 0;
++		p = folio_nr_pages(folio);
++add_more:
++		wdata->pages[*found_pages] = folio_page(folio, idx);
++		if (++*found_pages == tofind) {
++			folio_batch_release(&fbatch);
++			goto out;
++		}
++		if (++idx < p) {
++			folio_ref_inc(folio);
++			goto add_more;
++		}
++	}
 +	folio_batch_release(&fbatch);
- 	return err;
++	goto again;
++out:
+ 	return wdata;
  }
  
 -- 
