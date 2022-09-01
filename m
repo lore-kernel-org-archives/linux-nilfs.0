@@ -1,7 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH 23/23] filemap: Remove find_get_pages_range_tag()
-Date: Thu,  1 Sep 2022 15:01:38 -0700
-Message-ID: <20220901220138.182896-24-vishal.moola@gmail.com>
+Subject: [PATCH 16/23] f2fs: Convert f2fs_sync_meta_pages() to
+ use filemap_get_folios_tag()
+Date: Thu,  1 Sep 2022 15:01:31 -0700
+Message-ID: <20220901220138.182896-17-vishal.moola@gmail.com>
 References: <20220901220138.182896-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=HQUrfRdnfiMPUlTfezXhcqX7GV4m5M0rlOnnNapCheA=; b=gcOfP1xwU0MTjwdrmOc+gdNXpw
- H4v5STaMfZLsKlepCIIa9vsuGZB8vtTYfIRfLHyCBPrOo7ISc267bFLNyxbJL1axGTEGLyzagyV8s
- Li1KXTTuWDZe5yI5mLTRCviawMupAoO0sozOn3FCSbPIEBFMoKFwJcNfY1Y8kIoD+/8U=;
+ bh=vLd5VxDvs/Hufc5GkPRPWmylC7gs4hvMBc2dqzKoD6A=; b=ZbaMs52KfKX6wQwid+AbX2sg3U
+ Z+ZHDXKLFfzmpYYxkW7ZsDT+DhjHXd+QdwHLcC3kCHkWgpMS1o/1VDkTcbLxrVXF/iU33AqdxxoqI
+ jupk5LNf6u8P/mo2tBGHp/WxTNXCIgZtNNqR7u0SLy01Hh4uyZxAnTCYf8g19NHPxFT4=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -23,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=HQUrfRdnfiMPUlTfezXhcqX7GV4m5M0rlOnnNapCheA=; b=L1pKFXCFs3zD/TYxCdRuasUs34
- 8V5zwRiHFxlpCvr/NTsJr5WlEv9z7hSPZPw7i9Ze4cD6wzTfbxZV/KWVRl9Bg5tGR58KIfYlVdJfQ
- a0NNBlKFWfPGqc9BQ82ESsG29fuT47MlCaSx7wJP5YNoFGEic+lc9NfZPJS+p9uMfBMw=;
+ bh=vLd5VxDvs/Hufc5GkPRPWmylC7gs4hvMBc2dqzKoD6A=; b=cgpWKBaKBaUKBLRxr3Y2k8jIDj
+ SsGAKH0TZ510tMoHggSZbPyhJW8HdL7SNQcdVhIwtbbtLU6HrkcwBPZDHVgcal5Q5j2uTd6RdH6rb
+ tazwVFj6q2Oj1wvm5uj+0VG//bkDCu9d3wT6sFkPO+HIRHlPdfTntC25JrAwN0uGfCU8=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date;
- bh=HQUrfRdnfiMPUlTfezXhcqX7GV4m5M0rlOnnNapCheA=;
- b=AZ1Gh+wOtBhSiXkUQoUoHrl/CllEH0S/F6SZN+G8cU8utWIxzXrnoFihXwwy0eoaqG
- ZtZ6nYtih0NHVOG/x9bUxgLJC0EeQZankUp2pEA7g6KYwaTJf9CocEAG7w7ibYh1DFhx
- 2HQQyt2JiKisIfFxLEcRmhLgtYoadDjglGDJ/UnVuA3tBxC76X4AHHv5Kq+Ie9VJwofJ
- AspbI9B41dZhIaTKwUcp4Vr/pjxO1RO2X+wSsB0xbuIWNYtsF5wtGAA1UbZGQNpu9lWz
- 7b8hoU1c9a8OqeUDqCd00/2NCsmjk5Y7NtnPYtn8ybzFuBSqIhxSE2lBKoRWqNV7Eixi
- EGTA==
+ bh=vLd5VxDvs/Hufc5GkPRPWmylC7gs4hvMBc2dqzKoD6A=;
+ b=p+JLiL+0TTGlTunPHVFUf8hhPxVUM5krHr3xZ/nRtJsCNup/c9/1/FoZkcqQlbTuqR
+ 7yIQkEI22HWTHAw3e/uBkXqiAtCxV72rvCMVQDK2rhTKLvByKuPPHpK3PCQQNtMmUlsZ
+ x6ryoAy3iv+hjbY7odiJzZWYPcNHrRagmhRM0AsEu+7Rf7kbkLslvL/Ovm8ovRJNa83a
+ fCdcJzV6GQj/13aqFF2TaCcDLkESTf7VN0HdaG6gurPXivZxibbBjD2PdNa+QzjUnHs8
+ ZSaXOBn0t7311FPL7y8pLBASVORDuHdIUh5dZBe944rGxmavfQqKXZbN9HU3xa8g1J3R
+ pIuw==
 In-Reply-To: <20220901220138.182896-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -49,148 +50,123 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-All callers to find_get_pages_range_tag(), find_get_pages_tag(),
-pagevec_lookup_range_tag(), and pagevec_lookup_tag() have been removed.
+Convert function to use folios. This is in preparation for the removal
+of find_get_pages_range_tag().
+
+Initially the function was checking if the previous page index is truly the
+previous page i.e. 1 index behind the current page. To convert to folios and
+maintain this check we need to make the check
+folio->index != prev + folio_nr_pages(previous folio) since we don't know
+how many pages are in a folio.
+
+At index i == 0 the check is guaranteed to succeed, so to workaround indexing
+bounds we can simply ignore the check for that specific index. This makes the
+initial assignment of prev trivial, so I removed that as well.
+
+Also modified a comment in commit_checkpoint for consistency.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- include/linux/pagemap.h | 10 -------
- include/linux/pagevec.h |  8 ------
- mm/filemap.c            | 60 -----------------------------------------
- mm/swap.c               | 10 -------
- 4 files changed, 88 deletions(-)
+ fs/f2fs/checkpoint.c | 49 +++++++++++++++++++++++---------------------
+ 1 file changed, 26 insertions(+), 23 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 85cc96c82c2c..b8ea33751a66 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -742,16 +742,6 @@ unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
- 			       unsigned int nr_pages, struct page **pages);
- unsigned filemap_get_folios_tag(struct address_space *mapping, pgoff_t *start,
- 		pgoff_t end, xa_mark_t tag, struct folio_batch *fbatch);
--unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
--			pgoff_t end, xa_mark_t tag, unsigned int nr_pages,
--			struct page **pages);
--static inline unsigned find_get_pages_tag(struct address_space *mapping,
--			pgoff_t *index, xa_mark_t tag, unsigned int nr_pages,
--			struct page **pages)
--{
--	return find_get_pages_range_tag(mapping, index, (pgoff_t)-1, tag,
--					nr_pages, pages);
--}
- 
- struct page *grab_cache_page_write_begin(struct address_space *mapping,
- 			pgoff_t index);
-diff --git a/include/linux/pagevec.h b/include/linux/pagevec.h
-index 215eb6c3bdc9..a520632297ac 100644
---- a/include/linux/pagevec.h
-+++ b/include/linux/pagevec.h
-@@ -26,14 +26,6 @@ struct pagevec {
- };
- 
- void __pagevec_release(struct pagevec *pvec);
--unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
--		struct address_space *mapping, pgoff_t *index, pgoff_t end,
--		xa_mark_t tag);
--static inline unsigned pagevec_lookup_tag(struct pagevec *pvec,
--		struct address_space *mapping, pgoff_t *index, xa_mark_t tag)
--{
--	return pagevec_lookup_range_tag(pvec, mapping, index, (pgoff_t)-1, tag);
--}
- 
- static inline void pagevec_init(struct pagevec *pvec)
+diff --git a/fs/f2fs/checkpoint.c b/fs/f2fs/checkpoint.c
+index 8259e0fa97e1..9f6694f7d723 100644
+--- a/fs/f2fs/checkpoint.c
++++ b/fs/f2fs/checkpoint.c
+@@ -377,59 +377,62 @@ long f2fs_sync_meta_pages(struct f2fs_sb_info *sbi, enum page_type type,
  {
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 435fc53b3f2f..b986f246a6ae 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2309,66 +2309,6 @@ unsigned filemap_get_folios_tag(struct address_space *mapping, pgoff_t *start,
- }
- EXPORT_SYMBOL(filemap_get_folios_tag);
+ 	struct address_space *mapping = META_MAPPING(sbi);
+ 	pgoff_t index = 0, prev = ULONG_MAX;
+-	struct pagevec pvec;
++	struct folio_batch fbatch;
+ 	long nwritten = 0;
+-	int nr_pages;
++	int nr_folios;
+ 	struct writeback_control wbc = {
+ 		.for_reclaim = 0,
+ 	};
+ 	struct blk_plug plug;
  
--/**
-- * find_get_pages_range_tag - Find and return head pages matching @tag.
-- * @mapping:	the address_space to search
-- * @index:	the starting page index
-- * @end:	The final page index (inclusive)
-- * @tag:	the tag index
-- * @nr_pages:	the maximum number of pages
-- * @pages:	where the resulting pages are placed
-- *
-- * Like find_get_pages_range(), except we only return head pages which are
-- * tagged with @tag.  @index is updated to the index immediately after the
-- * last page we return, ready for the next iteration.
-- *
-- * Return: the number of pages which were found.
-- */
--unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
--			pgoff_t end, xa_mark_t tag, unsigned int nr_pages,
--			struct page **pages)
--{
--	XA_STATE(xas, &mapping->i_pages, *index);
--	struct folio *folio;
--	unsigned ret = 0;
--
--	if (unlikely(!nr_pages))
--		return 0;
--
--	rcu_read_lock();
--	while ((folio = find_get_entry(&xas, end, tag))) {
--		/*
--		 * Shadow entries should never be tagged, but this iteration
--		 * is lockless so there is a window for page reclaim to evict
--		 * a page we saw tagged.  Skip over it.
--		 */
--		if (xa_is_value(folio))
--			continue;
--
--		pages[ret] = &folio->page;
--		if (++ret == nr_pages) {
--			*index = folio->index + folio_nr_pages(folio);
--			goto out;
--		}
--	}
--
--	/*
--	 * We come here when we got to @end. We take care to not overflow the
--	 * index @index as it confuses some of the callers. This breaks the
--	 * iteration when there is a page at index -1 but that is already
--	 * broken anyway.
--	 */
--	if (end == (pgoff_t)-1)
--		*index = (pgoff_t)-1;
--	else
--		*index = end + 1;
--out:
--	rcu_read_unlock();
--
--	return ret;
--}
--EXPORT_SYMBOL(find_get_pages_range_tag);
--
- /*
-  * CD/DVDs are error prone. When a medium error occurs, the driver may fail
-  * a _large_ part of the i/o request. Imagine the worst scenario:
-diff --git a/mm/swap.c b/mm/swap.c
-index 9cee7f6a3809..7b8c1c8024a1 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -1055,16 +1055,6 @@ void folio_batch_remove_exceptionals(struct folio_batch *fbatch)
- 	fbatch->nr = j;
- }
+-	pagevec_init(&pvec);
++	folio_batch_init(&fbatch);
  
--unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
--		struct address_space *mapping, pgoff_t *index, pgoff_t end,
--		xa_mark_t tag)
--{
--	pvec->nr = find_get_pages_range_tag(mapping, index, end, tag,
--					PAGEVEC_SIZE, pvec->pages);
--	return pagevec_count(pvec);
--}
--EXPORT_SYMBOL(pagevec_lookup_range_tag);
--
- /*
-  * Perform any setup for the swap system
-  */
+ 	blk_start_plug(&plug);
+ 
+-	while ((nr_pages = pagevec_lookup_tag(&pvec, mapping, &index,
+-				PAGECACHE_TAG_DIRTY))) {
++	while ((nr_folios = filemap_get_folios_tag(mapping, &index,
++					(pgoff_t)-1,
++					PAGECACHE_TAG_DIRTY, &fbatch))) {
+ 		int i;
+ 
+-		for (i = 0; i < nr_pages; i++) {
+-			struct page *page = pvec.pages[i];
++		for (i = 0; i < nr_folios; i++) {
++			struct folio *folio = fbatch.folios[i];
+ 
+-			if (prev == ULONG_MAX)
+-				prev = page->index - 1;
+-			if (nr_to_write != LONG_MAX && page->index != prev + 1) {
+-				pagevec_release(&pvec);
++			if (nr_to_write != LONG_MAX && i != 0 &&
++					folio->index != prev +
++					folio_nr_pages(fbatch.folios[i-1])) {
++				folio_batch_release(&fbatch);
+ 				goto stop;
+ 			}
+ 
+-			lock_page(page);
++			folio_lock(folio);
+ 
+-			if (unlikely(page->mapping != mapping)) {
++			if (unlikely(folio->mapping != mapping)) {
+ continue_unlock:
+-				unlock_page(page);
++				folio_unlock(folio);
+ 				continue;
+ 			}
+-			if (!PageDirty(page)) {
++			if (!folio_test_dirty(folio)) {
+ 				/* someone wrote it for us */
+ 				goto continue_unlock;
+ 			}
+ 
+-			f2fs_wait_on_page_writeback(page, META, true, true);
++			f2fs_wait_on_page_writeback(&folio->page, META,
++					true, true);
+ 
+-			if (!clear_page_dirty_for_io(page))
++			if (!folio_clear_dirty_for_io(folio))
+ 				goto continue_unlock;
+ 
+-			if (__f2fs_write_meta_page(page, &wbc, io_type)) {
+-				unlock_page(page);
++			if (__f2fs_write_meta_page(&folio->page, &wbc,
++						io_type)) {
++				folio_unlock(folio);
+ 				break;
+ 			}
+-			nwritten++;
+-			prev = page->index;
++			nwritten += folio_nr_pages(folio);
++			prev = folio->index;
+ 			if (unlikely(nwritten >= nr_to_write))
+ 				break;
+ 		}
+-		pagevec_release(&pvec);
++		folio_batch_release(&fbatch);
+ 		cond_resched();
+ 	}
+ stop:
+@@ -1381,7 +1384,7 @@ static void commit_checkpoint(struct f2fs_sb_info *sbi,
+ 	};
+ 
+ 	/*
+-	 * pagevec_lookup_tag and lock_page again will take
++	 * filemap_get_folios_tag and lock_page again will take
+ 	 * some extra time. Therefore, f2fs_update_meta_pages and
+ 	 * f2fs_sync_meta_pages are combined in this function.
+ 	 */
 -- 
 2.36.1
