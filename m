@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH 03/23] filemap: Convert
- __filemap_fdatawait_range() to use filemap_get_folios_tag()
-Date: Thu,  1 Sep 2022 15:01:18 -0700
-Message-ID: <20220901220138.182896-4-vishal.moola@gmail.com>
+Subject: [PATCH 12/23] f2fs: Convert f2fs_flush_inline_data() to
+ use filemap_get_folios_tag()
+Date: Thu,  1 Sep 2022 15:01:27 -0700
+Message-ID: <20220901220138.182896-13-vishal.moola@gmail.com>
 References: <20220901220138.182896-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=e1eM0qi5kNEXaBuV4o8U+3ZrhdfXdzoi+l/ai4waThY=; b=XaVlvirCX7uqMqaK1jJHDcdHIl
- 65D2PJjw3e//oJj2BoWdU+jNGzlFg7RcF5flAeEUb/FW0d+z+LoQv6d5zewnh3pzXBzhaWzlyCak4
- DAeR28rveT3lbzmHsCE7YLev1N9MmbrfwWrsKVYZ/ycf5jEb4lowqemMRO4g6Z+BEPEU=;
+ bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=; b=boEAOzxQ+NvcC+MkPZ70l8rLt8
+ NZTKhSXSjs8RaBDwVVVs6AuHPKg7r+83wpH8YH0opqrDlpJli2uKWeoWco8t5NBf0gC9Mwq/95MqI
+ gCI/ZGm/fktuFUsj8vosM3a7aiy+b4oDVGjp6RBAj9hxn1QVj7v0l+0o55TpIW9q+/AI=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=e1eM0qi5kNEXaBuV4o8U+3ZrhdfXdzoi+l/ai4waThY=; b=NCH3KbcVzGgMu68RJUZdrzZ0Oa
- qPDTo320Ye+5WmSLNBllmE5wH96ljdcF8SoVcqkO5CsDO1c1l++NfVBtrs5fwy8+7+ZjPbz2oU7hk
- wwklwYOgZVJdZElYVRVx4Zo3PYuzjL7+JbAMyVLk/NRrAyeJk5+vWy5rK3+4YbMUiTw4=;
+ bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=; b=BKWcwpqBGQfmXSm0GYjUJSZB/A
+ R8fJgRHJJ34QZPl5aWpMEcK8SFgzCkKIwYEkioz7hA3mwzNq3bkmdIeQA8VNuoVSfIFyDPHTY/I1C
+ zXxWVDBkK1g/n01QeJbwJNoo6MOMmaILYwx/Ns9RCibQa7yU7FLHEyGNJk4Tl6Fg/lRE=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date;
- bh=e1eM0qi5kNEXaBuV4o8U+3ZrhdfXdzoi+l/ai4waThY=;
- b=gNJXwxFuFke6eYj0nz2/PiDYXJ6uuw/+y6pvA6QnWq7eouNcHBf6+EJm5Gq193Grgh
- QKheBVVmh8HekBMRDB/fVleY8+effRW479vEXXGHLR3S87K//Jhw2e5O+6agt21yf265
- 3kAUpqXavBcWDTvapyzBiis+xac8n0OHDWu3AZnWr0Wr+BK3whUep7JGlwqONOkwM7N0
- +1XX1ffonfhplIVIfU/utkDEIIZZiHHrp7IYcKrC4ceg3Zt1nHegjtwcFABUPSqNEdnl
- 4EwYzeXkwp7J8eKW59Rb1lKWQlyJ5HTmd9bz7AQHe6l+E5Qrn3Xr5kUs3+qXtBgSUL9M
- Ozqw==
+ bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=;
+ b=b1/QSkbA0KE2xUlFrUXQEVG0tKpol73bVxgD0JU9l+NoBY6qShuSjNB+kmeBlOMRM5
+ JTyIWvr9pHHuB5iH3YW16+gbFOwJPd0guEmk3lwDKP1rofaLlcFIYJW7KLMyPaqSsnUL
+ 3ANonRcxOaEgEr3fjaSMK6EhvpBNrqrC9y5jO3YalIG74gceZr+XlLuEMojU3DQOF2YT
+ ZNnm8VG78RQtVu2G6CZxxzpbZ3oGLbUw/rcEMpsLZCHgtIqvQM56vT9Mo84bDHjBrKPR
+ idwfoeW+VWrVke2zu158oVXXH2A5l7M+GBuTmwchmOVovptMyXXZZra4FRtAg/MbnMB0
+ QMFg==
 In-Reply-To: <20220901220138.182896-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -50,54 +50,47 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Converted function to use folios. This is in preparation for the removal
-of find_get_pages_range_tag().
+Convert function to use folios. This is in preparation for the removal
+of find_get_pages_tag(). Does NOT support large folios.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- mm/filemap.c | 24 +++++++++++++-----------
- 1 file changed, 13 insertions(+), 11 deletions(-)
+ fs/f2fs/node.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 3ded72a65668..435fc53b3f2f 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -503,28 +503,30 @@ static void __filemap_fdatawait_range(struct address_space *mapping,
+diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
+index a3c5eedfcf64..c2b54c58392a 100644
+--- a/fs/f2fs/node.c
++++ b/fs/f2fs/node.c
+@@ -1885,17 +1885,18 @@ static bool flush_dirty_inode(struct page *page)
+ void f2fs_flush_inline_data(struct f2fs_sb_info *sbi)
  {
- 	pgoff_t index = start_byte >> PAGE_SHIFT;
- 	pgoff_t end = end_byte >> PAGE_SHIFT;
+ 	pgoff_t index = 0;
 -	struct pagevec pvec;
 -	int nr_pages;
 +	struct folio_batch fbatch;
-+	unsigned nr_folios;
- 
- 	if (end_byte < start_byte)
- 		return;
++	int nr_folios;
  
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
-+
- 	while (index <= end) {
- 		unsigned i;
  
--		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index,
--				end, PAGECACHE_TAG_WRITEBACK);
--		if (!nr_pages)
-+		nr_folios = filemap_get_folios_tag(mapping, &index, end,
-+				PAGECACHE_TAG_WRITEBACK, &fbatch);
-+
-+		if (!nr_folios)
- 			break;
+-	while ((nr_pages = pagevec_lookup_tag(&pvec,
+-			NODE_MAPPING(sbi), &index, PAGECACHE_TAG_DIRTY))) {
++	while ((nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi), &index,
++					(pgoff_t)-1, PAGECACHE_TAG_DIRTY,
++					&fbatch))) {
+ 		int i;
  
 -		for (i = 0; i < nr_pages; i++) {
 -			struct page *page = pvec.pages[i];
 +		for (i = 0; i < nr_folios; i++) {
-+			struct folio *folio = fbatch.folios[i];
++			struct page *page = &fbatch.folios[i]->page;
  
--			wait_on_page_writeback(page);
--			ClearPageError(page);
-+			folio_wait_writeback(folio);
-+			folio_clear_error(folio);
+ 			if (!IS_DNODE(page))
+ 				continue;
+@@ -1922,7 +1923,7 @@ void f2fs_flush_inline_data(struct f2fs_sb_info *sbi)
+ 			}
+ 			unlock_page(page);
  		}
 -		pagevec_release(&pvec);
 +		folio_batch_release(&fbatch);
