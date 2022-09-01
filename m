@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH 12/23] f2fs: Convert f2fs_flush_inline_data() to
- use filemap_get_folios_tag()
-Date: Thu,  1 Sep 2022 15:01:27 -0700
-Message-ID: <20220901220138.182896-13-vishal.moola@gmail.com>
+Subject: [PATCH 06/23] btrfs: Convert btree_write_cache_pages()
+ to use filemap_get_folio_tag()
+Date: Thu,  1 Sep 2022 15:01:21 -0700
+Message-ID: <20220901220138.182896-7-vishal.moola@gmail.com>
 References: <20220901220138.182896-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=; b=boEAOzxQ+NvcC+MkPZ70l8rLt8
- NZTKhSXSjs8RaBDwVVVs6AuHPKg7r+83wpH8YH0opqrDlpJli2uKWeoWco8t5NBf0gC9Mwq/95MqI
- gCI/ZGm/fktuFUsj8vosM3a7aiy+b4oDVGjp6RBAj9hxn1QVj7v0l+0o55TpIW9q+/AI=;
+ bh=3W8eVECYUWOXPq8AmB0uwIDBTXoxHTg96669VXu7Qys=; b=HdzAXZi4R2ypoyI7lte1RTI90c
+ zS2btyvVX4whgMngTOtPbXB+scDQzPUkMONM9yGP3ZUynfQun2ieA1yQ0nVdw6BKFSR4L88SFnbL5
+ oC1qeD6tgz3S8/AokfvZOxo9b8OMm24mZqMjXgZ2lohVeRzbKYGJTGFmJg0tot+SCShA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=; b=BKWcwpqBGQfmXSm0GYjUJSZB/A
- R8fJgRHJJ34QZPl5aWpMEcK8SFgzCkKIwYEkioz7hA3mwzNq3bkmdIeQA8VNuoVSfIFyDPHTY/I1C
- zXxWVDBkK1g/n01QeJbwJNoo6MOMmaILYwx/Ns9RCibQa7yU7FLHEyGNJk4Tl6Fg/lRE=;
+ bh=3W8eVECYUWOXPq8AmB0uwIDBTXoxHTg96669VXu7Qys=; b=dbcLv2MxyccGdMykCnfOhIG5dv
+ mflCAGCS6X9MJURu/0SZ0ga7MRZ2JbMoGb/h+aiWiWTe8ItS4nY9QRqOCVBRdh0p/ZTKRbxxpdiW7
+ 5ME7LzJuFtTLWwRKkkQXiZBABnOjjBY5g0kE89xf4ns6ZOp/L0Z6v1UsCkra3xZCrWeI=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date;
- bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=;
- b=b1/QSkbA0KE2xUlFrUXQEVG0tKpol73bVxgD0JU9l+NoBY6qShuSjNB+kmeBlOMRM5
- JTyIWvr9pHHuB5iH3YW16+gbFOwJPd0guEmk3lwDKP1rofaLlcFIYJW7KLMyPaqSsnUL
- 3ANonRcxOaEgEr3fjaSMK6EhvpBNrqrC9y5jO3YalIG74gceZr+XlLuEMojU3DQOF2YT
- ZNnm8VG78RQtVu2G6CZxxzpbZ3oGLbUw/rcEMpsLZCHgtIqvQM56vT9Mo84bDHjBrKPR
- idwfoeW+VWrVke2zu158oVXXH2A5l7M+GBuTmwchmOVovptMyXXZZra4FRtAg/MbnMB0
- QMFg==
+ bh=3W8eVECYUWOXPq8AmB0uwIDBTXoxHTg96669VXu7Qys=;
+ b=T7nuCbAZMiTAbV5HIjQpWH+eZ9bQTc6PCgtrgl1hET8edirsolRjeqzxxDLlpylo6O
+ o4mNGjl/sRdPAL9cyBLo7pPSX2/e8rdulZr4fxc4F/cQ5AhRiqY99FCf8SxmFrrEWzLG
+ GwmBlyr64nECHNcSvLGGDgU9jwM9uICGm9ENuaBnbkPPhW9pSHYWvTqQUY01jHfEu8iA
+ 8qTU4vBK0tC6E/aFkaadbV0SSS1NROThuuOvdZR7ns9gnx2zbMOLC86SVrchIF9MO4NL
+ JVoqN7FZ2hPAYogb7KAItYOxx1SfAaxkg+Ce70dXU0IvySIkg7JupZsJgatOwfXFf7eS
+ c2hA==
 In-Reply-To: <20220901220138.182896-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -50,52 +50,65 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Convert function to use folios. This is in preparation for the removal
-of find_get_pages_tag(). Does NOT support large folios.
+Converted function to use folios throughout. This is in preparation for
+the removal of find_get_pages_range_tag().
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- fs/f2fs/node.c | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
+ fs/btrfs/extent_io.c | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
 
-diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index a3c5eedfcf64..c2b54c58392a 100644
---- a/fs/f2fs/node.c
-+++ b/fs/f2fs/node.c
-@@ -1885,17 +1885,18 @@ static bool flush_dirty_inode(struct page *page)
- void f2fs_flush_inline_data(struct f2fs_sb_info *sbi)
- {
- 	pgoff_t index = 0;
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index cf4f19e80e2f..d1fa072bfdd0 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -4844,14 +4844,14 @@ int btree_write_cache_pages(struct address_space *mapping,
+ 	int ret = 0;
+ 	int done = 0;
+ 	int nr_to_write_done = 0;
 -	struct pagevec pvec;
 -	int nr_pages;
 +	struct folio_batch fbatch;
-+	int nr_folios;
++	unsigned int nr_folios;
+ 	pgoff_t index;
+ 	pgoff_t end;		/* Inclusive */
+ 	int scanned = 0;
+ 	xa_mark_t tag;
  
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
- 
--	while ((nr_pages = pagevec_lookup_tag(&pvec,
--			NODE_MAPPING(sbi), &index, PAGECACHE_TAG_DIRTY))) {
-+	while ((nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi), &index,
-+					(pgoff_t)-1, PAGECACHE_TAG_DIRTY,
-+					&fbatch))) {
- 		int i;
+ 	if (wbc->range_cyclic) {
+ 		index = mapping->writeback_index; /* Start from prev offset */
+ 		end = -1;
+@@ -4874,14 +4874,15 @@ int btree_write_cache_pages(struct address_space *mapping,
+ 	if (wbc->sync_mode == WB_SYNC_ALL)
+ 		tag_pages_for_writeback(mapping, index, end);
+ 	while (!done && !nr_to_write_done && (index <= end) &&
+-	       (nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
+-			tag))) {
++	       (nr_folios = filemap_get_folios_tag(mapping, &index, end,
++					    tag, &fbatch))) {
+ 		unsigned i;
  
 -		for (i = 0; i < nr_pages; i++) {
 -			struct page *page = pvec.pages[i];
 +		for (i = 0; i < nr_folios; i++) {
-+			struct page *page = &fbatch.folios[i]->page;
++			struct folio *folio = fbatch.folios[i];
  
- 			if (!IS_DNODE(page))
+-			ret = submit_eb_page(page, wbc, &epd, &eb_context);
++			ret = submit_eb_page(&folio->page, wbc, &epd,
++					&eb_context);
+ 			if (ret == 0)
  				continue;
-@@ -1922,7 +1923,7 @@ void f2fs_flush_inline_data(struct f2fs_sb_info *sbi)
- 			}
- 			unlock_page(page);
+ 			if (ret < 0) {
+@@ -4896,7 +4897,7 @@ int btree_write_cache_pages(struct address_space *mapping,
+ 			 */
+ 			nr_to_write_done = wbc->nr_to_write <= 0;
  		}
 -		pagevec_release(&pvec);
 +		folio_batch_release(&fbatch);
  		cond_resched();
  	}
- }
+ 	if (!scanned && !done) {
 -- 
 2.36.1
