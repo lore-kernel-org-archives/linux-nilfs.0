@@ -1,57 +1,31 @@
 From: kernel test robot <lkp@intel.com>
-Subject: Re: [PATCH 14/23] f2fs: Convert f2fs_write_cache_pages()
- to use filemap_get_folios_tag()
-Date: Sat, 3 Sep 2022 03:57:42 +0800
-Message-ID: <202209030346.t02z8VfY-lkp@intel.com>
+Subject: Re: [PATCH 14/23] f2fs: Convert f2fs_write_cache_pages() to use
+ filemap_get_folios_tag()
+Date: Sat, 3 Sep 2022 05:39:26 +0800
+Message-ID: <202209030512.9yAy8edt-lkp@intel.com>
 References: <20220901220138.182896-15-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=DTiD0UDAHCowanUgvvoQMaLfSVgWjAaJf25jpBUdDhk=; b=N9iv4zaGZooPrQpAcBCm1cqzEK
- 3QSVDCQwcwQWSFA+4NEuvbF6oYYxvYIASfGlL4rxMAS/SCo8sOp/xep+KfrIyDOAS1njqmLd2s5i+
- D9ZFXwFDu/mrYL6+N1iz+wt5xCUaO9ZpZqoJvDCFMampw0tL86Xd11ucAbaw1ehpCSRU=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=DTiD0UDAHCowanUgvvoQMaLfSVgWjAaJf25jpBUdDhk=; b=bOkNgXJqY6C/mv2bLoOayIM5TQ
- mz7PXXNg+hHl7H5gi6ZYesed6eI6y0Y+L5l1dvobbp0bp2JsfkD8X2HnP2Y1lxKZrPEvwfzyUrawN
- YAyid4GUSGfkmbUtwR5vpjMNIKC9Dgbx26SsT1ETMV3NPdSg6mQ5ZSm5dNyj+kSxCJXs=;
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
- d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
- t=1662148716; x=1693684716;
- h=date:from:to:cc:subject:message-id:references:
- mime-version:in-reply-to;
- bh=G1QyHL0Y+ZESOJ/0sIvIcNrwO+n+VamVBy4zwBJD12w=;
- b=RxjPBeL5FnkdE+BJS37R0eIfCSIhNWQNm+TKqOqRaNrusHdjmq9llZpp
- QTQo/fEmCWtUpiAr/5hN5Wwv6RNOLOD3JGnS5loZ7H2VbMXYjOwoB4UXk
- nI45xg12BxjjhSF39Uz3cpaDdORM5GqF9RsG3gi4VLhEKMvpFLG7J8Eay
- ngO4LzuxcO4YcEKkFfoJo9SkzRW8mvSLYibIgsLCBtzNAWdNCmG3Uuvih
- gOO+s4eDER1Uec8e55ZlCoaBzyu2C6CIXROdXojn2xkwb3OrbL+bJncHe
- pEHPaDxp+5jUzo7TtU2m1qNApfvnbMITZGC8NSj7HspeP74vzjT84dL7Q w==;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1662154830; x=1693690830;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=HksWenRhyuRs7h/PR6mpnNs+GL/O4/v36GNHyfdYvWA=;
+  b=StX3EJ+XPsGgWj3yMm7TgouTBuiP4XerK8I3J8LGEebS0h6csfo/BZY5
+   5KBhyREVh745qzYXVPAl59DlyIUU6LoB+DSjFClPqR45fQakHy9XK6qdA
+   uhvFzv5kA0L9CiRRKvpaU0lofIZoAIDFGbI58VUrTXwHZB1c4Ozp5DR8P
+   9rgWhxNS+EhqW9OaoDoqamuKxBJuSdvFXyJ5I4jlXFNl2UTVsgHsEJCxw
+   gEH1Rqci11wHPFJmBW+tpqHqkoSxn6nIOXXPzyESHSspxa+4fXNYW+u8Z
+   PnhK2W9bUY8QhjPCgj/XPNTCZlomqoqc9AHztFBYXZHwFwNvwKDR3Wv9w
+   A==;
 Content-Disposition: inline
 In-Reply-To: <20220901220138.182896-15-vishal.moola@gmail.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, kbuild-all@lists.01.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, llvm@lists.linux.dev, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Cc: kbuild-all@lists.01.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
 
 Hi "Vishal,
 
@@ -66,8 +40,8 @@ https://git-scm.com/docs/git-format-patch#_base_tree_information]
 
 url:    https://github.com/intel-lab-lkp/linux/commits/Vishal-Moola-Oracle/Convert-to-filemap_get_folios_tag/20220902-060430
 base:   https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs.git dev-test
-config: hexagon-randconfig-r045-20220901 (https://download.01.org/0day-ci/archive/20220903/202209030346.t02z8VfY-lkp@intel.com/config)
-compiler: clang version 16.0.0 (https://github.com/llvm/llvm-project c55b41d5199d2394dd6cdb8f52180d8b81d809d4)
+config: arc-randconfig-r043-20220901 (https://download.01.org/0day-ci/archive/20220903/202209030512.9yAy8edt-lkp@intel.com/config)
+compiler: arc-elf-gcc (GCC) 12.1.0
 reproduce (this is a W=1 build):
         wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
         chmod +x ~/bin/make.cross
@@ -77,24 +51,22 @@ reproduce (this is a W=1 build):
         git checkout 6c74320953cd3749db95f9f09c1fc7d044933635
         # save the config file
         mkdir build_dir && cp config build_dir/.config
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=hexagon SHELL=/bin/bash fs/f2fs/
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=arc SHELL=/bin/bash fs/
 
 If you fix the issue, kindly add following tag where applicable
 Reported-by: kernel test robot <lkp@intel.com>
 
 All errors (new ones prefixed by >>):
 
->> fs/f2fs/data.c:3016:18: error: use of undeclared identifier 'nr_pages'; did you mean 'dir_pages'?
-                                           &fbatch, i, nr_pages, true))
-                                                       ^~~~~~~~
-                                                       dir_pages
-   include/linux/pagemap.h:1404:29: note: 'dir_pages' declared here
-   static inline unsigned long dir_pages(struct inode *inode)
-                               ^
->> fs/f2fs/data.c:3017:11: error: use of undeclared label 'lock_page'
-                                           goto lock_page;
-                                                ^
-   2 errors generated.
+   fs/f2fs/data.c: In function 'f2fs_write_cache_pages':
+>> fs/f2fs/data.c:3016:53: error: 'nr_pages' undeclared (first use in this function); did you mean 'dir_pages'?
+    3016 |                                         &fbatch, i, nr_pages, true))
+         |                                                     ^~~~~~~~
+         |                                                     dir_pages
+   fs/f2fs/data.c:3016:53: note: each undeclared identifier is reported only once for each function it appears in
+>> fs/f2fs/data.c:3017:41: error: label 'lock_page' used but not defined
+    3017 |                                         goto lock_page;
+         |                                         ^~~~
 
 
 vim +3016 fs/f2fs/data.c
