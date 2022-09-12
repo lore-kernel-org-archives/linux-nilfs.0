@@ -1,24 +1,24 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v2 02/23] filemap: Added
- filemap_get_folios_tag()
-Date: Mon, 12 Sep 2022 11:22:03 -0700
-Message-ID: <20220912182224.514561-3-vishal.moola@gmail.com>
+Subject: [PATCH v2 03/23] filemap: Convert
+ __filemap_fdatawait_range() to use filemap_get_folios_tag()
+Date: Mon, 12 Sep 2022 11:22:04 -0700
+Message-ID: <20220912182224.514561-4-vishal.moola@gmail.com>
 References: <20220912182224.514561-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <cluster-devel-bounces@redhat.com>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663007131;
+	s=mimecast20190719; t=1663007137;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=CVjZRQRXjU7sjBLr6rHvAQKfUIl2rAWam+cMUVwdi8E=;
-	b=apoWtpTfQ6FxnKR5zlupYrVe2yUR3vFslziGxu2reOh+cCRYdZEa5JvFBNt2nrjP+O5yz1
-	KFUOEtZsCORwO/+4JVOl4172TCPcoIDbCmBBiazzXheQDh6L9W1iTiKUmowP7ywIh7ww4v
-	amj7oygJVCAs+0aFKfweZ+St/8bKMmc=
+	bh=e1eM0qi5kNEXaBuV4o8U+3ZrhdfXdzoi+l/ai4waThY=;
+	b=VtOp1Wph4dVypNg6H9EJE+NriPZOV/ZyA24dggv5gx6MdW69vfU4rxZNAT3DnkYg3uIqNy
+	3/HNHmYe0jumArb2LxUeHoZIwwHwiNnEa4i9Rp8O+x/Y2EubWDye1Pv4/djM6n+cGAm5re
+	Rd2QrClI71Lvrz5K5zxUVBZw6QZUjIw=
 In-Reply-To: <20220912182224.514561-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
@@ -34,99 +34,60 @@ Content-Type: text/plain; charset="us-ascii"; x-default="true"
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-This is the equivalent of find_get_pages_range_tag(), except for folios
-instead of pages.
-
-One noteable difference is filemap_get_folios_tag() does not take in a
-maximum pages argument. It instead tries to fill a folio batch and stops
-either once full (15 folios) or reaching the end of the search range.
-
-The new function supports large folios, the initial function did not
-since all callers don't use large folios.
+Converted function to use folios. This is in preparation for the removal
+of find_get_pages_range_tag().
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- include/linux/pagemap.h |  2 ++
- mm/filemap.c            | 53 +++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 55 insertions(+)
+ mm/filemap.c | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 4d3092d6b2c0..85cc96c82c2c 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -740,6 +740,8 @@ unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
- 		pgoff_t end, struct folio_batch *fbatch);
- unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t start,
- 			       unsigned int nr_pages, struct page **pages);
-+unsigned filemap_get_folios_tag(struct address_space *mapping, pgoff_t *start,
-+		pgoff_t end, xa_mark_t tag, struct folio_batch *fbatch);
- unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
- 			pgoff_t end, xa_mark_t tag, unsigned int nr_pages,
- 			struct page **pages);
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 15800334147b..3ded72a65668 100644
+index 3ded72a65668..435fc53b3f2f 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
-@@ -2254,6 +2254,59 @@ unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t index,
- }
- EXPORT_SYMBOL(find_get_pages_contig);
+@@ -503,28 +503,30 @@ static void __filemap_fdatawait_range(struct address_space *mapping,
+ {
+ 	pgoff_t index = start_byte >> PAGE_SHIFT;
+ 	pgoff_t end = end_byte >> PAGE_SHIFT;
+-	struct pagevec pvec;
+-	int nr_pages;
++	struct folio_batch fbatch;
++	unsigned nr_folios;
  
-+/**
-+ * filemap_get_folios_tag - Get a batch of folios matching @tag.
-+ * @mapping:    The address_space to search
-+ * @start:      The starting page index
-+ * @end:        The final page index (inclusive)
-+ * @tag:        The tag index
-+ * @fbatch:     The batch to fill
-+ *
-+ * Same as filemap_get_folios, but only returning folios tagged with @tag
-+ *
-+ * Return: The number of folios found
-+ * Also update @start to index the next folio for traversal
-+ */
-+unsigned filemap_get_folios_tag(struct address_space *mapping, pgoff_t *start,
-+			pgoff_t end, xa_mark_t tag, struct folio_batch *fbatch)
-+{
-+	XA_STATE(xas, &mapping->i_pages, *start);
-+	struct folio *folio;
+ 	if (end_byte < start_byte)
+ 		return;
+ 
+-	pagevec_init(&pvec);
++	folio_batch_init(&fbatch);
 +
-+	rcu_read_lock();
-+	while ((folio = find_get_entry(&xas, end, tag)) != NULL) {
-+		/* Shadow entries should never be tagged, but this iteration
-+		 * is lockless so there is a window for page reclaim to evict
-+		 * a page we saw tagged. Skip over it.
-+		 */
-+		if (xa_is_value(folio))
-+			continue;
-+		if (!folio_batch_add(fbatch, folio)) {
-+			unsigned long nr = folio_nr_pages(folio);
+ 	while (index <= end) {
+ 		unsigned i;
+ 
+-		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index,
+-				end, PAGECACHE_TAG_WRITEBACK);
+-		if (!nr_pages)
++		nr_folios = filemap_get_folios_tag(mapping, &index, end,
++				PAGECACHE_TAG_WRITEBACK, &fbatch);
 +
-+			if (folio_test_hugetlb(folio))
-+				nr = 1;
-+			*start = folio->index + nr;
-+			goto out;
-+		}
-+	}
-+	/*
-+	 * We come here when there is no page beyond @end. We take care to not
-+	 * overflow the index @start as it confuses some of the callers. This
-+	 * breaks the iteration when there is a page at index -1 but that is
-+	 * already broke anyway.
-+	 */
-+	if (end == (pgoff_t)-1)
-+		*start = (pgoff_t)-1;
-+	else
-+		*start = end + 1;
-+out:
-+	rcu_read_unlock();
-+
-+	return folio_batch_count(fbatch);
-+}
-+EXPORT_SYMBOL(filemap_get_folios_tag);
-+
- /**
-  * find_get_pages_range_tag - Find and return head pages matching @tag.
-  * @mapping:	the address_space to search
++		if (!nr_folios)
+ 			break;
+ 
+-		for (i = 0; i < nr_pages; i++) {
+-			struct page *page = pvec.pages[i];
++		for (i = 0; i < nr_folios; i++) {
++			struct folio *folio = fbatch.folios[i];
+ 
+-			wait_on_page_writeback(page);
+-			ClearPageError(page);
++			folio_wait_writeback(folio);
++			folio_clear_error(folio);
+ 		}
+-		pagevec_release(&pvec);
++		folio_batch_release(&fbatch);
+ 		cond_resched();
+ 	}
+ }
 -- 
 2.36.1
 
