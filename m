@@ -1,57 +1,41 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v2 12/23] f2fs: Convert f2fs_flush_inline_data()
- to use filemap_get_folios_tag()
-Date: Mon, 12 Sep 2022 11:22:13 -0700
-Message-ID: <20220912182224.514561-13-vishal.moola@gmail.com>
+Subject: [PATCH v2 13/23] f2fs: Convert
+ f2fs_sync_node_pages() to use filemap_get_folios_tag()
+Date: Mon, 12 Sep 2022 11:22:14 -0700
+Message-ID: <20220912182224.514561-14-vishal.moola@gmail.com>
 References: <20220912182224.514561-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:References:
- In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=; b=idc5u7byAs+F9UXH76ZoGFTX20
- 1QmRXq1/op4THFFmfYIAWGaTUuHyYxO7YKcdmeQGvRAj+2p21a7EXgSVIc07c98Fb4DdjShubT2Ew
- l3PSIttuJhdIRgN+h5eXPHNkg3DC3I8XQm4cQgEWkM81ppwb+ZQg24zxcqL7Sd8IERRc=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=; b=Wq+v5kvnt9ma/GVjeB8sJEe4gm
- QrAULO4I91HkV3t7UXui2YLbpVB7MIwhJnHGwp5shXX/DUIQHA81KMqXLlEe7yj5chLvaZYsYn3Io
- yKMOC2YQ9/iZGQ6UMxQkh6vRNbeeJ+5zlVANlmBLlqOIfGbyoQi4sj652rqgHGLZ9E18=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:from:to:cc:subject:date;
- bh=VVDEDDCx2d1u9kTxOO3+HYn0Qu0jVDr1kjF69+koZKM=;
- b=mWsacKaljX8MUV8CQf+x9uPNXb4nwg1rqOzW988jKdDxldx2xBwpPizg4HUE3CpOyS
- CZXKfwZl7d7TRsEdibF4COy3CHTtCs9fDbuwKy/fifVJ1Wgwc7dTVk3A2qlzYF1+YqrM
- 8u30URko72IeT67j4F37ylnRUZD/Skd/5ByQpr+0jX44vN/bWC2IRka7MCfENYbM9JYD
- 72jwWqsS26F/r5BLgNzt2vuVnEfeh6py/P+5GlgXdd1rz/SFRFcCTDhHk5S6n46zAnHH
- K7NUMpASIWQTy8dJGAcYZr2Qd5aoXAfuyQB26U7wlP0wc30bz0T/it+tBSb7KpRupXtm
- b44g==
+Content-Transfer-Encoding: 8bit
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1663007153;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=pWqS4ooFUTFHzhqRBDvFvbwutPU6GCzkgDePLKh0xDE=;
+	b=WSLdQ6XCOzOxZKAE7Xy5wLLwKlZnX71Tt438OmCuq4P1+RzXyekKO+TVJptcDQRHLesDJL
+	5UH/oYuXKAb8jgL8hQ1EhDk98YCW5bUwrtTxTZbdXokqBhwFs9v7mRg3C7CwJ5SwM+ClUy
+	SEJyyIfGCcSNarb3n4RzTmvnjk9nHWI=
 In-Reply-To: <20220912182224.514561-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; x-default="true"
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
 Convert function to use folios. This is in preparation for the removal
-of find_get_pages_tag(). Does NOT support large folios.
+of find_get_pages_range_tag(). Does NOT support large folios.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
@@ -59,43 +43,50 @@ Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
  1 file changed, 9 insertions(+), 8 deletions(-)
 
 diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index a3c5eedfcf64..c2b54c58392a 100644
+index c2b54c58392a..cf8665f04c0d 100644
 --- a/fs/f2fs/node.c
 +++ b/fs/f2fs/node.c
-@@ -1885,17 +1885,18 @@ static bool flush_dirty_inode(struct page *page)
- void f2fs_flush_inline_data(struct f2fs_sb_info *sbi)
+@@ -1933,23 +1933,24 @@ int f2fs_sync_node_pages(struct f2fs_sb_info *sbi,
+ 				bool do_balance, enum iostat_type io_type)
  {
- 	pgoff_t index = 0;
+ 	pgoff_t index;
 -	struct pagevec pvec;
--	int nr_pages;
 +	struct folio_batch fbatch;
-+	int nr_folios;
+ 	int step = 0;
+ 	int nwritten = 0;
+ 	int ret = 0;
+-	int nr_pages, done = 0;
++	int nr_folios, done = 0;
  
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
  
--	while ((nr_pages = pagevec_lookup_tag(&pvec,
+ next_step:
+ 	index = 0;
+ 
+-	while (!done && (nr_pages = pagevec_lookup_tag(&pvec,
 -			NODE_MAPPING(sbi), &index, PAGECACHE_TAG_DIRTY))) {
-+	while ((nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi), &index,
-+					(pgoff_t)-1, PAGECACHE_TAG_DIRTY,
-+					&fbatch))) {
++	while (!done && (nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi),
++				&index, (pgoff_t)-1, PAGECACHE_TAG_DIRTY,
++				&fbatch))) {
  		int i;
  
 -		for (i = 0; i < nr_pages; i++) {
 -			struct page *page = pvec.pages[i];
 +		for (i = 0; i < nr_folios; i++) {
 +			struct page *page = &fbatch.folios[i]->page;
+ 			bool submitted = false;
  
- 			if (!IS_DNODE(page))
- 				continue;
-@@ -1922,7 +1923,7 @@ void f2fs_flush_inline_data(struct f2fs_sb_info *sbi)
- 			}
- 			unlock_page(page);
+ 			/* give a priority to WB_SYNC threads */
+@@ -2024,7 +2025,7 @@ int f2fs_sync_node_pages(struct f2fs_sb_info *sbi,
+ 			if (--wbc->nr_to_write == 0)
+ 				break;
  		}
 -		pagevec_release(&pvec);
 +		folio_batch_release(&fbatch);
  		cond_resched();
- 	}
- }
+ 
+ 		if (wbc->nr_to_write == 0) {
 -- 
 2.36.1
+
