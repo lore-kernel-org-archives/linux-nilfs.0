@@ -1,107 +1,104 @@
-From: syzbot <syzbot+19d51a2ee09e1cb9ba06-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] BUG: unable to handle kernel paging request in alloc_nilfs
-Date: Sun, 11 Sep 2022 00:00:28 -0700
-Message-ID: <000000000000922a2105e8615576@google.com>
+From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+Subject: [PATCH v2 00/23] Convert to filemap_get_folios_tag()
+Date: Mon, 12 Sep 2022 11:22:01 -0700
+Message-ID: <20220912182224.514561-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-ext4-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date;
+        bh=jinrTf2dRXCM8P7beDGhcdymXhWilSgCNRAiFQeNJHI=;
+        b=mLMtjbzG1Kl+0NHJzKAxbllsuBufduMNF2LO9iIaeSIwdabQAHzY6k1ExlrHjBbQ3b
+         5Ek8x+gOY9qsai4wca5CayyELpfftgvEGk6LfP6oka3EzZll/EmV533QU3P7IFXouFCf
+         cJeJKlEzBYjyYGcPOEHfG0y3Jv1EYtZx06IidZtpY/PqdJm61eR+KtWvr0pNEQezNvEu
+         pFzkoOMvpUyHjk+sBH0Tjhr2kErcS9rXwIAF4/QuotmYMkJOC+XpiPqyqRRB177xZq4d
+         caSw8M6mKHirkEV6wHnYvUKeI8Qc2RnoK7f9RHWvkM+Feqcfmz5JThhG20mxA0JX18zd
+         681Q==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: linux-fsdevel@vger.kernel.org
+Cc: linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
 
-Hello,
+This patch series replaces find_get_pages_range_tag() with
+filemap_get_folios_tag(). This also allows the removal of multiple
+calls to compound_head() throughout.
+It also makes a good chunk of the straightforward conversions to folios,
+and takes the opportunity to introduce a function that grabs a folio
+from the pagecache.
 
-syzbot found the following issue on:
+F2fs and Ceph have quite alot of work to be done regarding folios, so
+for now those patches only have the changes necessary for the removal of
+find_get_pages_range_tag(), and only support folios of size 1 (which is
+all they use right now anyways).
 
-HEAD commit:    25050c56fa3c Merge branch 'for-next/fixes' into for-kernelci
-git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
-console output: https://syzkaller.appspot.com/x/log.txt?x=176f0273080000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=db8b30b83a444315
-dashboard link: https://syzkaller.appspot.com/bug?extid=19d51a2ee09e1cb9ba06
-compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
-userspace arch: arm64
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=152b3417080000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=13ded8f5080000
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+19d51a2ee09e1cb9ba06-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-
-loop0: detected capacity change from 0 to 200
-Unable to handle kernel paging request at virtual address dead4ead00000400
-Mem abort info:
-  ESR = 0x0000000096000004
-  EC = 0x25: DABT (current EL), IL = 32 bits
-  SET = 0, FnV = 0
-  EA = 0, S1PTW = 0
-  FSC = 0x04: level 0 translation fault
-Data abort info:
-  ISV = 0, ISS = 0x00000004
-  CM = 0, WnR = 0
-[dead4ead00000400] address between user and kernel address ranges
-Internal error: Oops: 96000004 [#1] PREEMPT SMP
-Modules linked in:
-CPU: 0 PID: 3066 Comm: syz-executor208 Not tainted 6.0.0-rc4-syzkaller-17186-g25050c56fa3c #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 07/22/2022
-pstate: 40400005 (nZcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
-pc : slab_alloc mm/slub.c:3251 [inline]
-pc : kmem_cache_alloc_trace+0x184/0x324 mm/slub.c:3282
-lr : slab_pre_alloc_hook mm/slab.h:702 [inline]
-lr : slab_alloc_node mm/slub.c:3157 [inline]
-lr : slab_alloc mm/slub.c:3251 [inline]
-lr : kmem_cache_alloc_trace+0x8c/0x324 mm/slub.c:3282
-sp : ffff8000127f3a80
-x29: ffff8000127f3a90 x28: ffff0000c58c0000 x27: ffff80000d379000
-x26: ffff80000cdb4419 x25: 0000000000000083 x24: dead4ead00000000
-x23: 0000000000000000 x22: ffff800008f7bda0 x21: ffff0000c0001600
-x20: 00000000000004d0 x19: 0000000000000dc0 x18: 0000000000000000
-x17: 0000000000000000 x16: ffff80000dbb8658 x15: ffff0000c58c0000
-x14: 0000000000000010 x13: 0000000000000000 x12: ffff0000c58c0000
-x11: 0000000000000001 x10: 0000000000000000 x9 : 0000000000000400
-x8 : 0000000000001ec8 x7 : ffff8000084b7800 x6 : 0000000000000000
-x5 : 0000000000000000 x4 : 0000000000000001 x3 : 0000000000001ed0
-x2 : 0000000000000000 x1 : 0000000000000800 x0 : 0000000000000000
-Call trace:
- next_tid mm/slub.c:2311 [inline]
- slab_alloc_node mm/slub.c:3227 [inline]
- slab_alloc mm/slub.c:3251 [inline]
- kmem_cache_alloc_trace+0x184/0x324 mm/slub.c:3282
- kmalloc include/linux/slab.h:600 [inline]
- kzalloc include/linux/slab.h:733 [inline]
- alloc_nilfs+0x2c/0x13c fs/nilfs2/the_nilfs.c:59
- nilfs_fill_super+0x40/0x2e8 fs/nilfs2/super.c:1041
- nilfs_mount+0x370/0x52c fs/nilfs2/super.c:1317
- legacy_get_tree+0x30/0x74 fs/fs_context.c:610
- vfs_get_tree+0x40/0x140 fs/super.c:1530
- do_new_mount+0x1dc/0x4e4 fs/namespace.c:3040
- path_mount+0x358/0x914 fs/namespace.c:3370
- do_mount fs/namespace.c:3383 [inline]
- __do_sys_mount fs/namespace.c:3591 [inline]
- __se_sys_mount fs/namespace.c:3568 [inline]
- __arm64_sys_mount+0x2f8/0x408 fs/namespace.c:3568
- __invoke_syscall arch/arm64/kernel/syscall.c:38 [inline]
- invoke_syscall arch/arm64/kernel/syscall.c:52 [inline]
- el0_svc_common+0x138/0x220 arch/arm64/kernel/syscall.c:142
- do_el0_svc+0x48/0x154 arch/arm64/kernel/syscall.c:206
- el0_svc+0x58/0x150 arch/arm64/kernel/entry-common.c:624
- el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:642
- el0t_64_sync+0x18c/0x190
-Code: 54000d41 34000d4b b9402aa9 91002103 (f8696b19) 
----[ end trace 0000000000000000 ]---
-----------------
-Code disassembly (best guess):
-   0:	54000d41 	b.ne	0x1a8  // b.any
-   4:	34000d4b 	cbz	w11, 0x1ac
-   8:	b9402aa9 	ldr	w9, [x21, #40]
-   c:	91002103 	add	x3, x8, #0x8
-* 10:	f8696b19 	ldr	x25, [x24, x9] <-- trapping instruction
-
-
+I've run xfstests on btrfs, ext4, f2fs, and nilfs2, but more testing may be
+beneficial. The page-writeback and filemap changes implicitly work. Testing
+and review of the other changes (afs, ceph, cifs, gfs2) would be appreciated.
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+v2:
+  Got Acked-By tags for nilfs and btrfs changes
+  Fixed an error arising in f2fs
+  - Reported-by: kernel test robot <lkp@intel.com>
+   
+Vishal Moola (Oracle) (23):
+  pagemap: Add filemap_grab_folio()
+  filemap: Added filemap_get_folios_tag()
+  filemap: Convert __filemap_fdatawait_range() to use
+    filemap_get_folios_tag()
+  page-writeback: Convert write_cache_pages() to use
+    filemap_get_folios_tag()
+  afs: Convert afs_writepages_region() to use filemap_get_folios_tag()
+  btrfs: Convert btree_write_cache_pages() to use
+    filemap_get_folio_tag()
+  btrfs: Convert extent_write_cache_pages() to use
+    filemap_get_folios_tag()
+  ceph: Convert ceph_writepages_start() to use filemap_get_folios_tag()
+  cifs: Convert wdata_alloc_and_fillpages() to use
+    filemap_get_folios_tag()
+  ext4: Convert mpage_prepare_extent_to_map() to use
+    filemap_get_folios_tag()
+  f2fs: Convert f2fs_fsync_node_pages() to use filemap_get_folios_tag()
+  f2fs: Convert f2fs_flush_inline_data() to use filemap_get_folios_tag()
+  f2fs: Convert f2fs_sync_node_pages() to use filemap_get_folios_tag()
+  f2fs: Convert f2fs_write_cache_pages() to use filemap_get_folios_tag()
+  f2fs: Convert last_fsync_dnode() to use filemap_get_folios_tag()
+  f2fs: Convert f2fs_sync_meta_pages() to use filemap_get_folios_tag()
+  gfs2: Convert gfs2_write_cache_jdata() to use filemap_get_folios_tag()
+  nilfs2: Convert nilfs_lookup_dirty_data_buffers() to use
+    filemap_get_folios_tag()
+  nilfs2: Convert nilfs_lookup_dirty_node_buffers() to use
+    filemap_get_folios_tag()
+  nilfs2: Convert nilfs_btree_lookup_dirty_buffers() to use
+    filemap_get_folios_tag()
+  nilfs2: Convert nilfs_copy_dirty_pages() to use
+    filemap_get_folios_tag()
+  nilfs2: Convert nilfs_clear_dirty_pages() to use
+    filemap_get_folios_tag()
+  filemap: Remove find_get_pages_range_tag()
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
-syzbot can test patches for this issue, for details see:
-https://goo.gl/tpsmEJ#testing-patches
+ fs/afs/write.c          | 114 +++++++++++++++++----------------
+ fs/btrfs/extent_io.c    |  57 +++++++++--------
+ fs/ceph/addr.c          | 138 ++++++++++++++++++++--------------------
+ fs/cifs/file.c          |  33 +++++++++-
+ fs/ext4/inode.c         |  55 ++++++++--------
+ fs/f2fs/checkpoint.c    |  49 +++++++-------
+ fs/f2fs/compress.c      |  13 ++--
+ fs/f2fs/data.c          |  69 ++++++++++----------
+ fs/f2fs/f2fs.h          |   5 +-
+ fs/f2fs/node.c          |  72 +++++++++++----------
+ fs/gfs2/aops.c          |  64 ++++++++++---------
+ fs/nilfs2/btree.c       |  14 ++--
+ fs/nilfs2/page.c        |  59 ++++++++---------
+ fs/nilfs2/segment.c     |  44 +++++++------
+ include/linux/pagemap.h |  32 +++++++---
+ include/linux/pagevec.h |   8 ---
+ mm/filemap.c            |  87 ++++++++++++-------------
+ mm/page-writeback.c     |  44 +++++++------
+ mm/swap.c               |  10 ---
+ 19 files changed, 507 insertions(+), 460 deletions(-)
+
+-- 
+2.36.1
+
