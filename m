@@ -1,25 +1,23 @@
-From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v2 22/23] nilfs2: Convert
- nilfs_clear_dirty_pages() to use filemap_get_folios_tag()
-Date: Mon, 12 Sep 2022 11:22:23 -0700
-Message-ID: <20220912182224.514561-23-vishal.moola@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Subject: Re: [PATCH v2 18/23] nilfs2: Convert
+ nilfs_lookup_dirty_data_buffers() to use filemap_get_folios_tag()
+Date: Tue, 13 Sep 2022 10:09:08 +0900
+Message-ID: <CAKFNMokZ02Ax9J3Ns_Q2PO8oeg+G7kgqQS7kMJMxSiX92_Vwzg@mail.gmail.com>
 References: <20220912182224.514561-1-vishal.moola@gmail.com>
+ <20220912182224.514561-19-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
 Return-path: <cluster-devel-bounces@redhat.com>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663007167;
+	s=mimecast20190719; t=1663031374;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=lkGrgC7rGv3gNtROZri1LZJW+W1eletv7YqP1zeCUhw=;
-	b=QqeMYQxk11cEvzeU2lnKftNM9QDvM22khtgWyd4JDh3k4xJPea6q4UtkjcHaV5mLkAH6Ka
-	s7QqSnTYWueW+Lf8MtYNhuqeeudRHBI9HR+lbD+FlnznKqAZ8s0ItHmpCMDCGCHFjI1/Ef
-	oUerMRXO9Vt2cCURHSsuu1IPJmLQT3s=
-In-Reply-To: <20220912182224.514561-1-vishal.moola@gmail.com>
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=/XsoyqrT3QB1JAOnynnNk+cD1xAIdvUlxSJ4ed6XIdU=;
+	b=AVZrYwJ5nb0tjFZV6OPzSfGIVX8lbpDDhykVWvWViShkxIn5dwUYS/seK5uFwdPYOnoLDy
+	fUaZMm+HRWGXvbAPv452Gi3nIG6WoBwifRCPQqulb+fVnHQGX1QtCXHpRzXWaTVKEzHU16
+	2l8SRGjitn8NXw2ChubFAHrH1nSHxA8=
+In-Reply-To: <20220912182224.514561-19-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
  <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
@@ -30,56 +28,24 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
  <mailto:cluster-devel-request@redhat.com?subject=subscribe>
 Errors-To: cluster-devel-bounces@redhat.com
 Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Type: text/plain; charset="us-ascii"; x-default="true"
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Convert function to use folios throughout. This is in preparation for
-the removal of find_get_pages_range_tag().
+On Tue, Sep 13, 2022 at 3:30 AM Vishal Moola (Oracle) wrote:
+>
+> Convert function to use folios throughout. This is in preparation for
+> the removal of find_get_pages_range_tag().
+>
+> Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
+> ---
+>  fs/nilfs2/segment.c | 29 ++++++++++++++++-------------
+>  1 file changed, 16 insertions(+), 13 deletions(-)
 
-Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- fs/nilfs2/page.c | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 5c96084e829f..b66f4e988016 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -358,22 +358,22 @@ void nilfs_copy_back_pages(struct address_space *dmap,
-  */
- void nilfs_clear_dirty_pages(struct address_space *mapping, bool silent)
- {
--	struct pagevec pvec;
-+	struct folio_batch fbatch;
- 	unsigned int i;
- 	pgoff_t index = 0;
- 
--	pagevec_init(&pvec);
-+	folio_batch_init(&fbatch);
- 
--	while (pagevec_lookup_tag(&pvec, mapping, &index,
--					PAGECACHE_TAG_DIRTY)) {
--		for (i = 0; i < pagevec_count(&pvec); i++) {
--			struct page *page = pvec.pages[i];
-+	while (filemap_get_folios_tag(mapping, &index, (pgoff_t)-1,
-+				PAGECACHE_TAG_DIRTY, &fbatch)) {
-+		for (i = 0; i < folio_batch_count(&fbatch); i++) {
-+			struct folio *folio = fbatch.folios[i];
- 
--			lock_page(page);
--			nilfs_clear_dirty_page(page, silent);
--			unlock_page(page);
-+			folio_lock(folio);
-+			nilfs_clear_dirty_page(&folio->page, silent);
-+			folio_unlock(folio);
- 		}
--		pagevec_release(&pvec);
-+		folio_batch_release(&fbatch);
- 		cond_resched();
- 	}
- }
--- 
-2.36.1
+Looks good.   Thank you for reflecting the previous comment.
+
+Ryusuke Konishi
 
