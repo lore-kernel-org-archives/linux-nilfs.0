@@ -1,51 +1,45 @@
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Subject: Re: [PATCH v2 18/23] nilfs2: Convert
- nilfs_lookup_dirty_data_buffers() to use filemap_get_folios_tag()
-Date: Tue, 13 Sep 2022 10:09:08 +0900
-Message-ID: <CAKFNMokZ02Ax9J3Ns_Q2PO8oeg+G7kgqQS7kMJMxSiX92_Vwzg@mail.gmail.com>
-References: <20220912182224.514561-1-vishal.moola@gmail.com>
- <20220912182224.514561-19-vishal.moola@gmail.com>
+From: Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>
+Subject: Re: [syzbot] BUG: unable to handle kernel paging request in
+ kernfs_put_active
+Date: Sun, 18 Sep 2022 00:50:49 +0900
+Message-ID: <de81bf82-3ddf-4875-381d-e52949046b25@I-love.SAKURA.ne.jp>
+References: <00000000000095339805e8d6958e@google.com>
 Mime-Version: 1.0
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663031374;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=/XsoyqrT3QB1JAOnynnNk+cD1xAIdvUlxSJ4ed6XIdU=;
-	b=AVZrYwJ5nb0tjFZV6OPzSfGIVX8lbpDDhykVWvWViShkxIn5dwUYS/seK5uFwdPYOnoLDy
-	fUaZMm+HRWGXvbAPv452Gi3nIG6WoBwifRCPQqulb+fVnHQGX1QtCXHpRzXWaTVKEzHU16
-	2l8SRGjitn8NXw2ChubFAHrH1nSHxA8=
-In-Reply-To: <20220912182224.514561-19-vishal.moola@gmail.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Language: en-US
+In-Reply-To: <00000000000095339805e8d6958e-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: syzbot <syzbot+258ad6d2cb6685e145bc-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-On Tue, Sep 13, 2022 at 3:30 AM Vishal Moola (Oracle) wrote:
->
-> Convert function to use folios throughout. This is in preparation for
-> the removal of find_get_pages_range_tag().
->
-> Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-> ---
->  fs/nilfs2/segment.c | 29 ++++++++++++++++-------------
->  1 file changed, 16 insertions(+), 13 deletions(-)
+I don't know whether crafted filesystem image is used is relevant to this problem.
+But I think a bug is inside NILFS2 filesystem code.
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+When inode allocation fails due to security_inode_alloc() returning -ENOMEM, some
+inconsistent state happens. It seems to me that destruction of partially initialized
+inode corrupts kernel memory (and causes various oops depending on timings).
 
-Looks good.   Thank you for reflecting the previous comment.
-
-Ryusuke Konishi
+On 2022/09/17 11:53, syzbot wrote:
+> Hello,
+> 
+> syzbot found the following issue on:
+> 
+> HEAD commit:    a6b443748715 Merge branch 'for-next/core', remote-tracking..
+> git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
+> console output: https://syzkaller.appspot.com/x/log.txt?x=17025144880000
+> kernel config:  https://syzkaller.appspot.com/x/.config?x=14bf9ec0df433b27
+> dashboard link: https://syzkaller.appspot.com/bug?extid=258ad6d2cb6685e145bc
+> compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
+> userspace arch: arm64
+> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=106b8164880000
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1040a75d080000
+> 
+> Downloadable assets:
+> disk image: https://storage.googleapis.com/81b491dd5861/disk-a6b44374.raw.xz
+> vmlinux: https://storage.googleapis.com/69c979cdc99a/vmlinux-a6b44374.xz
+> 
+> IMPORTANT: if you fix the issue, please add the following tag to the commit:
+> Reported-by: syzbot+258ad6d2cb6685e145bc-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
