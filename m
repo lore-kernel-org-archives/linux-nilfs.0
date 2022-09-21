@@ -1,7 +1,7 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/2] nilfs2: delete unnecessary checks before brelse()
-Date: Wed, 21 Sep 2022 12:48:02 +0900
-Message-ID: <20220921034803.2476-2-konishi.ryusuke@gmail.com>
+Subject: [PATCH 2/2] nilfs2: Remove the unneeded result variable
+Date: Wed, 21 Sep 2022 12:48:03 +0900
+Message-ID: <20220921034803.2476-3-konishi.ryusuke@gmail.com>
 References: <20220921034803.2476-1-konishi.ryusuke@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -10,57 +10,54 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date;
-        bh=zuUTrKEQfr4sTAkgNNcxkQQm8I/DlTKY/sYvpN04CR0=;
-        b=UQ0NYQxyERDLPcyJTHUVOAlubjXits94UXZaEE8wQN5td+CsnsaZPwiMBon6QtK4YI
-         lmpzLrH2r3Xg6zlv36JgVKynEauD/hPI8QWUwSLVpQ5CXDaBF9pHK2Beqat0ZPYKLPCx
-         2l09Fcrr3//pD6/aV6YFZ7Qad5NT5XfGnSQntyYOV//0qNGbvSEI2Ds54km2Abrc07pX
-         VkisyPGoXZHLRWNaripFL1ZMNVDAzjJVnqvsSCgdADYfau4TySmIkX1O1LRx73WNXNrC
-         w6UWGb4Ri4u8xJQUMSbd/EnQO85UBjyhFgaGDy+TLPrrBtPKmvh3K34AH8oKZMqtQWiR
-         9b1A==
+        bh=X35vTpMjT4JUzdTpTOGe0YDg/vRzJ/72gtqZZF6EwZw=;
+        b=TIchTrk6LcgzDDQ8AFqJ4xvF0DQy/GH1PrTcZsl47HPjIW4N9bAhmZr0cKJSQP0mIe
+         dcTPofMbsqgq+n23YaQjaNdyGt01wOU08IYY877KynrlWkBD3WO/dAsRdKNUjKbrk91t
+         LJsSBb0hxLB16WK8K1jYGJ8jJKbi4gDSaYTCNHG/wUe08Zll//maFZxZm6S4TF+gUm5R
+         dpDlOVt5JRDxyfvV+wvgMrm8DPVENKMZyJAJpnNgC+Fisz2bYebzUG9AwVRKlOkRex6B
+         0qSSV7ZyImEP9PdIWV6W5zVk7P/2XdVwgwdyojTKLRxu/dllobkB98ZbUiYU4TVb9Ur3
+         fKSg==
 In-Reply-To: <20220921034803.2476-1-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-From: Minghao Chi <chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
+From: ye xingchen <ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
 
-The brelse() inline function tests whether its argument is NULL
-and then returns immediately.
-Thus remove the tests which are not needed around the shown calls.
+Return the value nilfs_segctor_sync() directly instead of storing it in
+another redundant variable.
 
-Link: https://lkml.kernel.org/r/20220819081700.96279-1-chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org
+Link: https://lkml.kernel.org/r/20220831033403.302184-1-ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org
 Reported-by: Zeal Robot <zealci-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
-Signed-off-by: Minghao Chi <chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
+Signed-off-by: ye xingchen <ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org>
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- fs/nilfs2/btree.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ fs/nilfs2/segment.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 9f4d9432d38a..b9d15c3df3cc 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -1668,8 +1668,7 @@ static int nilfs_btree_check_delete(struct nilfs_bmap *btree, __u64 key)
- 	maxkey = nilfs_btree_node_get_key(node, nchildren - 1);
- 	nextmaxkey = (nchildren > 1) ?
- 		nilfs_btree_node_get_key(node, nchildren - 2) : 0;
--	if (bh != NULL)
--		brelse(bh);
-+	brelse(bh);
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 0afe0832c754..9abae2c9120e 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2235,7 +2235,6 @@ int nilfs_construct_segment(struct super_block *sb)
+ 	struct the_nilfs *nilfs = sb->s_fs_info;
+ 	struct nilfs_sc_info *sci = nilfs->ns_writer;
+ 	struct nilfs_transaction_info *ti;
+-	int err;
  
- 	return (maxkey == key) && (nextmaxkey < NILFS_BMAP_LARGE_LOW);
+ 	if (!sci)
+ 		return -EROFS;
+@@ -2243,8 +2242,7 @@ int nilfs_construct_segment(struct super_block *sb)
+ 	/* A call inside transactions causes a deadlock. */
+ 	BUG_ON((ti = current->journal_info) && ti->ti_magic == NILFS_TI_MAGIC);
+ 
+-	err = nilfs_segctor_sync(sci);
+-	return err;
++	return nilfs_segctor_sync(sci);
  }
-@@ -1717,8 +1716,7 @@ static int nilfs_btree_gather_data(struct nilfs_bmap *btree,
- 		ptrs[i] = le64_to_cpu(dptrs[i]);
- 	}
  
--	if (bh != NULL)
--		brelse(bh);
-+	brelse(bh);
- 
- 	return nitems;
- }
+ /**
 -- 
 2.34.1
 
