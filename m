@@ -1,172 +1,76 @@
-From: syzbot <syzbot+79cb3895126af21042fa-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] WARNING: locking bug in nilfs_find_or_create_root
-Date: Wed, 28 Sep 2022 10:26:48 -0700
-Message-ID: <000000000000cdf4e105e9c0108f@google.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: replace WARN_ONs by nilfs_error for checkpoint acquisition failure
+Date: Thu, 29 Sep 2022 21:33:30 +0900
+Message-ID: <20220929123330.19658-1-konishi.ryusuke@gmail.com>
+References: <0000000000001a6b6705e9b3533d@google.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date;
+        bh=2J8dEhSi4LoVFaaTjvQBUI0DFYA9A2JG/Zfec+eIbxg=;
+        b=bKErUGltahBAoxoud23nWtqed2bGUwNz4MKypA7BMv/noAxOXYQQeV6vkmMSwI5TDW
+         XYCs64b6Swl4ARcHgtCb38nZ8e6UGSpwfqZCsaV40h9MWaFVJ6CT/sFSGtbri2ry2oOC
+         Qschv+0chd6XnFFtyqCVlS/wfllaKWp72zAmD8/O8pf4HnDRCsOAQg4Px7ZKsusZ9ObE
+         wVvvLXFrIY2WyrnOomyXmYynnqOfyjaNlamIstOdvju5NA8QbAkcm59znDusT6JJfNkE
+         xuQzYRFnvfp846BkJ/jOXSWiRfwEi1PrF/4bzA1vqjdzz9brvAywLKMXVeGoHKjTXDU+
+         X+aw==
+In-Reply-To: <0000000000001a6b6705e9b3533d-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, syzbot <syzbot+fbb3e0b24e8dae5a16ee-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-Hello,
+If creation or finalization of a checkpoint fails due to anomalies
+in the checkpoint metadata on disk, a kernel warning is generated.
 
-syzbot found the following issue on:
+This patch replaces the WARN_ONs by nilfs_error, so that a kernel,
+booted with panic_on_warn, does not panic.  A nilfs_error is
+appropriate here to handle the abnormal filesystem condition.
 
-HEAD commit:    c194837ebb57 Merge branch 'for-next/core', remote-tracking..
-git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
-console output: https://syzkaller.appspot.com/x/log.txt?x=1135c4ff080000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=15a770deac0c935a
-dashboard link: https://syzkaller.appspot.com/bug?extid=79cb3895126af21042fa
-compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
-userspace arch: arm64
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1649fcdf080000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=10f24cff080000
+This also replaces the detected error codes with an I/O error so that
+neither of the internal error codes is returned to callers.
 
-Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/8d8ae425e7fa/disk-c194837e.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/c540d501ebe7/vmlinux-c194837e.xz
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+79cb3895126af21042fa-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-
-NILFS (loop0): broken superblock, retrying with spare superblock (blocksize = 1024)
-------------[ cut here ]------------
-DEBUG_LOCKS_WARN_ON(1)
-WARNING: CPU: 0 PID: 3052 at kernel/locking/lockdep.c:231 check_wait_context kernel/locking/lockdep.c:4727 [inline]
-WARNING: CPU: 0 PID: 3052 at kernel/locking/lockdep.c:231 __lock_acquire+0x2b0/0x30a4 kernel/locking/lockdep.c:5003
-Modules linked in:
-CPU: 0 PID: 3052 Comm: syz-executor334 Not tainted 6.0.0-rc6-syzkaller-17742-gc194837ebb57 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/26/2022
-pstate: 604000c5 (nZCv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
-pc : check_wait_context kernel/locking/lockdep.c:4727 [inline]
-pc : __lock_acquire+0x2b0/0x30a4 kernel/locking/lockdep.c:5003
-lr : hlock_class kernel/locking/lockdep.c:231 [inline]
-lr : check_wait_context kernel/locking/lockdep.c:4727 [inline]
-lr : __lock_acquire+0x298/0x30a4 kernel/locking/lockdep.c:5003
-sp : ffff800012763850
-x29: ffff800012763930 x28: 0000000000000001 x27: ffff0000c70a3528
-x26: ffff0000cb0b4300 x25: ffff0000c70a3f58 x24: 0000000000000000
-x23: 0000000000000000 x22: 0000000000000001 x21: 0000000000000000
-x20: 0000000000000000 x19: 5555560001430f3e x18: 00000000000000c0
-x17: ffff80000dd0b198 x16: ffff80000db49158 x15: ffff0000c70a3500
-x14: 0000000000000000 x13: 0000000000000012 x12: ffff80000d5ef920
-x11: ff808000081c1630 x10: ffff80000dd0b198 x9 : 4ab275c465431000
-x8 : 0000000000000000 x7 : 4e5241575f534b43 x6 : ffff800008195d30
-x5 : 0000000000000000 x4 : 0000000000000001 x3 : 0000000000000000
-x2 : 0000000000000000 x1 : 0000000100000001 x0 : 0000000000000016
-Call trace:
- check_wait_context kernel/locking/lockdep.c:4727 [inline]
- __lock_acquire+0x2b0/0x30a4 kernel/locking/lockdep.c:5003
- lock_acquire+0x100/0x1f8 kernel/locking/lockdep.c:5666
- __raw_spin_lock include/linux/spinlock_api_smp.h:133 [inline]
- _raw_spin_lock+0x54/0x6c kernel/locking/spinlock.c:154
- spin_lock include/linux/spinlock.h:349 [inline]
- nilfs_lookup_root fs/nilfs2/the_nilfs.c:716 [inline]
- nilfs_find_or_create_root+0x34/0x310 fs/nilfs2/the_nilfs.c:743
- nilfs_attach_checkpoint+0x64/0x1c8 fs/nilfs2/super.c:519
- nilfs_fill_super+0x154/0x2f8 fs/nilfs2/super.c:1064
- nilfs_mount+0x370/0x52c fs/nilfs2/super.c:1317
- legacy_get_tree+0x30/0x74 fs/fs_context.c:610
- vfs_get_tree+0x40/0x140 fs/super.c:1530
- do_new_mount+0x1dc/0x4e4 fs/namespace.c:3040
- path_mount+0x358/0x914 fs/namespace.c:3370
- do_mount fs/namespace.c:3383 [inline]
- __do_sys_mount fs/namespace.c:3591 [inline]
- __se_sys_mount fs/namespace.c:3568 [inline]
- __arm64_sys_mount+0x2c4/0x3c4 fs/namespace.c:3568
- __invoke_syscall arch/arm64/kernel/syscall.c:38 [inline]
- invoke_syscall arch/arm64/kernel/syscall.c:52 [inline]
- el0_svc_common+0x138/0x220 arch/arm64/kernel/syscall.c:142
- do_el0_svc+0x48/0x164 arch/arm64/kernel/syscall.c:206
- el0_svc+0x58/0x150 arch/arm64/kernel/entry-common.c:636
- el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
- el0t_64_sync+0x18c/0x190
-irq event stamp: 2725
-hardirqs last  enabled at (2725): [<ffff800008162680>] raw_spin_rq_unlock_irq kernel/sched/sched.h:1367 [inline]
-hardirqs last  enabled at (2725): [<ffff800008162680>] finish_lock_switch+0x94/0xe8 kernel/sched/core.c:4942
-hardirqs last disabled at (2724): [<ffff80000bfc3cdc>] __schedule+0x84/0x5a0 kernel/sched/core.c:6393
-softirqs last  enabled at (2540): [<ffff8000080102e4>] _stext+0x2e4/0x37c
-softirqs last disabled at (2523): [<ffff800008017c14>] ____do_softirq+0x14/0x20 arch/arm64/kernel/irq.c:79
----[ end trace 0000000000000000 ]---
-Unable to handle kernel NULL pointer dereference at virtual address 00000000000000b8
-Mem abort info:
-  ESR = 0x0000000096000006
-  EC = 0x25: DABT (current EL), IL = 32 bits
-  SET = 0, FnV = 0
-  EA = 0, S1PTW = 0
-  FSC = 0x06: level 2 translation fault
-Data abort info:
-  ISV = 0, ISS = 0x00000006
-  CM = 0, WnR = 0
-user pgtable: 4k pages, 48-bit VAs, pgdp=0000000107187000
-[00000000000000b8] pgd=08000001097ad003, p4d=08000001097ad003, pud=080000010b0a7003, pmd=0000000000000000
-Internal error: Oops: 0000000096000006 [#1] PREEMPT SMP
-Modules linked in:
-CPU: 0 PID: 3052 Comm: syz-executor334 Tainted: G        W          6.0.0-rc6-syzkaller-17742-gc194837ebb57 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/26/2022
-pstate: 604000c5 (nZCv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
-pc : check_wait_context kernel/locking/lockdep.c:4727 [inline]
-pc : __lock_acquire+0x2d0/0x30a4 kernel/locking/lockdep.c:5003
-lr : hlock_class kernel/locking/lockdep.c:231 [inline]
-lr : check_wait_context kernel/locking/lockdep.c:4727 [inline]
-lr : __lock_acquire+0x298/0x30a4 kernel/locking/lockdep.c:5003
-sp : ffff800012763850
-x29: ffff800012763930 x28: 0000000000000001 x27: ffff0000c70a3528
-x26: ffff0000cb0b4300 x25: ffff0000c70a3f58 x24: 0000000000000000
-x23: 0000000000000000 x22: 0000000000000001 x21: 0000000000000000
-x20: 0000000000000000 x19: 5555560001430f3e x18: 00000000000000c0
-x17: ffff80000dd0b198 x16: ffff80000db49158 x15: ffff0000c70a3500
-x14: 0000000000000000 x13: 0000000000000012 x12: ffff80000d5ef920
-x11: ff808000081c1630 x10: ffff80000dd0b198 x9 : 0000000000040f3e
-x8 : 0000000000000000 x7 : 4e5241575f534b43 x6 : ffff800008195d30
-x5 : 0000000000000000 x4 : 0000000000000001 x3 : 0000000000000000
-x2 : 0000000000000000 x1 : 0000000100000001 x0 : 0000000000000016
-Call trace:
- hlock_class kernel/locking/lockdep.c:222 [inline]
- check_wait_context kernel/locking/lockdep.c:4728 [inline]
- __lock_acquire+0x2d0/0x30a4 kernel/locking/lockdep.c:5003
- lock_acquire+0x100/0x1f8 kernel/locking/lockdep.c:5666
- __raw_spin_lock include/linux/spinlock_api_smp.h:133 [inline]
- _raw_spin_lock+0x54/0x6c kernel/locking/spinlock.c:154
- spin_lock include/linux/spinlock.h:349 [inline]
- nilfs_lookup_root fs/nilfs2/the_nilfs.c:716 [inline]
- nilfs_find_or_create_root+0x34/0x310 fs/nilfs2/the_nilfs.c:743
- nilfs_attach_checkpoint+0x64/0x1c8 fs/nilfs2/super.c:519
- nilfs_fill_super+0x154/0x2f8 fs/nilfs2/super.c:1064
- nilfs_mount+0x370/0x52c fs/nilfs2/super.c:1317
- legacy_get_tree+0x30/0x74 fs/fs_context.c:610
- vfs_get_tree+0x40/0x140 fs/super.c:1530
- do_new_mount+0x1dc/0x4e4 fs/namespace.c:3040
- path_mount+0x358/0x914 fs/namespace.c:3370
- do_mount fs/namespace.c:3383 [inline]
- __do_sys_mount fs/namespace.c:3591 [inline]
- __se_sys_mount fs/namespace.c:3568 [inline]
- __arm64_sys_mount+0x2c4/0x3c4 fs/namespace.c:3568
- __invoke_syscall arch/arm64/kernel/syscall.c:38 [inline]
- invoke_syscall arch/arm64/kernel/syscall.c:52 [inline]
- el0_svc_common+0x138/0x220 arch/arm64/kernel/syscall.c:142
- do_el0_svc+0x48/0x164 arch/arm64/kernel/syscall.c:206
- el0_svc+0x58/0x150 arch/arm64/kernel/entry-common.c:636
- el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
- el0t_64_sync+0x18c/0x190
-Code: 9002db8a 91056210 9106614a b9400329 (3942e114) 
----[ end trace 0000000000000000 ]---
-----------------
-Code disassembly (best guess):
-   0:	9002db8a 	adrp	x10, 0x5b70000
-   4:	91056210 	add	x16, x16, #0x158
-   8:	9106614a 	add	x10, x10, #0x198
-   c:	b9400329 	ldr	w9, [x25]
-* 10:	3942e114 	ldrb	w20, [x8, #184] <-- trapping instruction
-
-
+Reported-by: syzbot+fbb3e0b24e8dae5a16ee-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+ fs/nilfs2/segment.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
-syzbot can test patches for this issue, for details see:
-https://goo.gl/tpsmEJ#testing-patches
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 0afe0832c754..25c56ea779ea 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -875,9 +875,11 @@ static int nilfs_segctor_create_checkpoint(struct nilfs_sc_info *sci)
+ 		nilfs_mdt_mark_dirty(nilfs->ns_cpfile);
+ 		nilfs_cpfile_put_checkpoint(
+ 			nilfs->ns_cpfile, nilfs->ns_cno, bh_cp);
+-	} else
+-		WARN_ON(err == -EINVAL || err == -ENOENT);
+-
++	} else if (err == -EINVAL || err == -ENOENT) {
++		nilfs_error(sci->sc_super,
++			    "checkpoint creation failed due to metadata corruption.");
++		err = -EIO;
++	}
+ 	return err;
+ }
+ 
+@@ -891,7 +893,11 @@ static int nilfs_segctor_fill_in_checkpoint(struct nilfs_sc_info *sci)
+ 	err = nilfs_cpfile_get_checkpoint(nilfs->ns_cpfile, nilfs->ns_cno, 0,
+ 					  &raw_cp, &bh_cp);
+ 	if (unlikely(err)) {
+-		WARN_ON(err == -EINVAL || err == -ENOENT);
++		if (err == -EINVAL || err == -ENOENT) {
++			nilfs_error(sci->sc_super,
++				    "checkpoint finalization failed due to metadata corruption.");
++			err = -EIO;
++		}
+ 		goto failed_ibh;
+ 	}
+ 	raw_cp->cp_snapshot_list.ssl_next = 0;
+-- 
+2.34.1
+
