@@ -1,171 +1,360 @@
-From: syzbot <syzbot+2b32eb36c1a825b7a74c-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] INFO: trying to register non-static key in nilfs_bmap_lookup_at_level
-Date: Thu, 29 Sep 2022 13:40:39 -0700
-Message-ID: <000000000000eb0ba805e9d6e30e@google.com>
+From: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 08/23] ceph: Convert ceph_writepages_start() to use
+ filemap_get_folios_tag()
+Date: Fri, 30 Sep 2022 12:25:15 -0400
+Message-ID: <35d965bbc3d27e43d6743fc3a5cb042503a1b7bf.camel@kernel.org>
+References: <20220912182224.514561-1-vishal.moola@gmail.com>
+         <20220912182224.514561-9-vishal.moola@gmail.com>
 Mime-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1664555118;
+        bh=HfryIVQEi40xvQXwrJl8CfAncvkl+ZvfmZlPGLHKmOU=;
+        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
+        b=Ajy82hxgkWKU0fCRPn3LOIG+V5rH+e4Z6H3uknEhh8LJEy4lvQqxSdAIfIlRPaJrX
+         Yf2Z/DegQRUs7ZvVlFfIkSCOEprURa1Hop+5qtvR8OUYsecLi+H8XzdYrFaxyXtWZI
+         6dDx8mKJnzbf7RPEu7N4rHIH6ou7SIHy/V7xRAiCxuDOm9YWip6i0KXXfDLk/cL8Rh
+         psuylMR2Kec/kCUMG1k76eUB/oV9B06OHKlaCfVrM1PFNNL8mincNUwD3AZC6UryBC
+         DMV7+ZKSX30eew9qRXZUQxtreztqRd/7ZHOYDTp9hk9EWNyD9bCJ6gbxu5E6E3mbEI
+         TRd55hCTbqpkQ==
+In-Reply-To: <20220912182224.514561-9-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 
-Hello,
+On Mon, 2022-09-12 at 11:22 -0700, Vishal Moola (Oracle) wrote:
+> Convert function to use folios throughout. This is in preparation for
+> the removal of find_get_pages_range_tag().
+>=20
+> This change does NOT support large folios. This shouldn't be an issue as
+> of now since ceph only utilizes folios of size 1 anyways, and there is a
+> lot of work to be done on ceph conversions to folios for later patches
+> at some point.
+>=20
+> Also some minor renaming for consistency.
+>=20
+> Signed-off-by: Vishal Moola (Oracle) <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+>  fs/ceph/addr.c | 138 +++++++++++++++++++++++++------------------------
+>  1 file changed, 70 insertions(+), 68 deletions(-)
+>=20
+> diff --git a/fs/ceph/addr.c b/fs/ceph/addr.c
+> index dcf701b05cc1..33dbe55b08be 100644
+> --- a/fs/ceph/addr.c
+> +++ b/fs/ceph/addr.c
+> @@ -792,7 +792,7 @@ static int ceph_writepages_start(struct address_space=
+ *mapping,
+>  	struct ceph_vino vino =3D ceph_vino(inode);
+>  	pgoff_t index, start_index, end =3D -1;
+>  	struct ceph_snap_context *snapc =3D NULL, *last_snapc =3D NULL, *pgsnap=
+c;
+> -	struct pagevec pvec;
+> +	struct folio_batch fbatch;
+>  	int rc =3D 0;
+>  	unsigned int wsize =3D i_blocksize(inode);
+>  	struct ceph_osd_request *req =3D NULL;
+> @@ -821,7 +821,7 @@ static int ceph_writepages_start(struct address_space=
+ *mapping,
+>  	if (fsc->mount_options->wsize < wsize)
+>  		wsize =3D fsc->mount_options->wsize;
+> =20
+> -	pagevec_init(&pvec);
+> +	folio_batch_init(&fbatch);
+> =20
+>  	start_index =3D wbc->range_cyclic ? mapping->writeback_index : 0;
+>  	index =3D start_index;
+> @@ -869,9 +869,9 @@ static int ceph_writepages_start(struct address_space=
+ *mapping,
+> =20
+>  	while (!done && index <=3D end) {
+>  		int num_ops =3D 0, op_idx;
+> -		unsigned i, pvec_pages, max_pages, locked_pages =3D 0;
+> +		unsigned i, nr_folios, max_pages, locked_pages =3D 0;
+>  		struct page **pages =3D NULL, **data_pages;
+> -		struct page *page;
+> +		struct folio *folio;
+>  		pgoff_t strip_unit_end =3D 0;
+>  		u64 offset =3D 0, len =3D 0;
+>  		bool from_pool =3D false;
+> @@ -879,28 +879,28 @@ static int ceph_writepages_start(struct address_spa=
+ce *mapping,
+>  		max_pages =3D wsize >> PAGE_SHIFT;
+> =20
+>  get_more_pages:
+> -		pvec_pages =3D pagevec_lookup_range_tag(&pvec, mapping, &index,
+> -						end, PAGECACHE_TAG_DIRTY);
+> -		dout("pagevec_lookup_range_tag got %d\n", pvec_pages);
+> -		if (!pvec_pages && !locked_pages)
+> +		nr_folios =3D filemap_get_folios_tag(mapping, &index,
+> +				end, PAGECACHE_TAG_DIRTY, &fbatch);
+> +		dout("filemap_get_folios_tag got %d\n", nr_folios);
+> +		if (!nr_folios && !locked_pages)
+>  			break;
+> -		for (i =3D 0; i < pvec_pages && locked_pages < max_pages; i++) {
+> -			page =3D pvec.pages[i];
+> -			dout("? %p idx %lu\n", page, page->index);
+> +		for (i =3D 0; i < nr_folios && locked_pages < max_pages; i++) {
+> +			folio =3D fbatch.folios[i];
+> +			dout("? %p idx %lu\n", folio, folio->index);
+>  			if (locked_pages =3D=3D 0)
+> -				lock_page(page);  /* first page */
+> -			else if (!trylock_page(page))
+> +				folio_lock(folio); /* first folio */
+> +			else if (!folio_trylock(folio))
+>  				break;
+> =20
+>  			/* only dirty pages, or our accounting breaks */
+> -			if (unlikely(!PageDirty(page)) ||
+> -			    unlikely(page->mapping !=3D mapping)) {
+> -				dout("!dirty or !mapping %p\n", page);
+> -				unlock_page(page);
+> +			if (unlikely(!folio_test_dirty(folio)) ||
+> +			    unlikely(folio->mapping !=3D mapping)) {
+> +				dout("!dirty or !mapping %p\n", folio);
+> +				folio_unlock(folio);
+>  				continue;
+>  			}
+>  			/* only if matching snap context */
+> -			pgsnapc =3D page_snap_context(page);
+> +			pgsnapc =3D page_snap_context(&folio->page);
+>  			if (pgsnapc !=3D snapc) {
+>  				dout("page snapc %p %lld !=3D oldest %p %lld\n",
+>  				     pgsnapc, pgsnapc->seq, snapc, snapc->seq);
+> @@ -908,11 +908,10 @@ static int ceph_writepages_start(struct address_spa=
+ce *mapping,
+>  				    !ceph_wbc.head_snapc &&
+>  				    wbc->sync_mode !=3D WB_SYNC_NONE)
+>  					should_loop =3D true;
+> -				unlock_page(page);
+> +				folio_unlock(folio);
+>  				continue;
+>  			}
+> -			if (page_offset(page) >=3D ceph_wbc.i_size) {
+> -				struct folio *folio =3D page_folio(page);
+> +			if (folio_pos(folio) >=3D ceph_wbc.i_size) {
+> =20
+>  				dout("folio at %lu beyond eof %llu\n",
+>  				     folio->index, ceph_wbc.i_size);
+> @@ -924,25 +923,26 @@ static int ceph_writepages_start(struct address_spa=
+ce *mapping,
+>  				folio_unlock(folio);
+>  				continue;
+>  			}
+> -			if (strip_unit_end && (page->index > strip_unit_end)) {
+> -				dout("end of strip unit %p\n", page);
+> -				unlock_page(page);
+> +			if (strip_unit_end && (folio->index > strip_unit_end)) {
+> +				dout("end of strip unit %p\n", folio);
+> +				folio_unlock(folio);
+>  				break;
+>  			}
+> -			if (PageWriteback(page) || PageFsCache(page)) {
+> +			if (folio_test_writeback(folio) ||
+> +					folio_test_fscache(folio)) {
+>  				if (wbc->sync_mode =3D=3D WB_SYNC_NONE) {
+> -					dout("%p under writeback\n", page);
+> -					unlock_page(page);
+> +					dout("%p under writeback\n", folio);
+> +					folio_unlock(folio);
+>  					continue;
+>  				}
+> -				dout("waiting on writeback %p\n", page);
+> -				wait_on_page_writeback(page);
+> -				wait_on_page_fscache(page);
+> +				dout("waiting on writeback %p\n", folio);
+> +				folio_wait_writeback(folio);
+> +				folio_wait_fscache(folio);
+>  			}
+> =20
+> -			if (!clear_page_dirty_for_io(page)) {
+> -				dout("%p !clear_page_dirty_for_io\n", page);
+> -				unlock_page(page);
+> +			if (!folio_clear_dirty_for_io(folio)) {
+> +				dout("%p !clear_page_dirty_for_io\n", folio);
+> +				folio_unlock(folio);
+>  				continue;
+>  			}
+> =20
+> @@ -958,7 +958,7 @@ static int ceph_writepages_start(struct address_space=
+ *mapping,
+>  				u32 xlen;
+> =20
+>  				/* prepare async write request */
+> -				offset =3D (u64)page_offset(page);
+> +				offset =3D (u64)folio_pos(folio);
+>  				ceph_calc_file_object_mapping(&ci->i_layout,
+>  							      offset, wsize,
+>  							      &objnum, &objoff,
+> @@ -966,7 +966,7 @@ static int ceph_writepages_start(struct address_space=
+ *mapping,
+>  				len =3D xlen;
+> =20
+>  				num_ops =3D 1;
+> -				strip_unit_end =3D page->index +
+> +				strip_unit_end =3D folio->index +
+>  					((len - 1) >> PAGE_SHIFT);
+> =20
+>  				BUG_ON(pages);
+> @@ -981,54 +981,53 @@ static int ceph_writepages_start(struct address_spa=
+ce *mapping,
+>  				}
+> =20
+>  				len =3D 0;
+> -			} else if (page->index !=3D
+> +			} else if (folio->index !=3D
+>  				   (offset + len) >> PAGE_SHIFT) {
+>  				if (num_ops >=3D (from_pool ?  CEPH_OSD_SLAB_OPS :
+>  							     CEPH_OSD_MAX_OPS)) {
+> -					redirty_page_for_writepage(wbc, page);
+> -					unlock_page(page);
+> +					folio_redirty_for_writepage(wbc, folio);
+> +					folio_unlock(folio);
+>  					break;
+>  				}
+> =20
+>  				num_ops++;
+> -				offset =3D (u64)page_offset(page);
+> +				offset =3D (u64)folio_pos(folio);
+>  				len =3D 0;
+>  			}
+> =20
+> -			/* note position of first page in pvec */
+> +			/* note position of first page in fbatch */
+>  			dout("%p will write page %p idx %lu\n",
+> -			     inode, page, page->index);
+> +			     inode, folio, folio->index);
+> =20
+>  			if (atomic_long_inc_return(&fsc->writeback_count) >
+>  			    CONGESTION_ON_THRESH(
+>  				    fsc->mount_options->congestion_kb))
+>  				fsc->write_congested =3D true;
+> =20
+> -			pages[locked_pages++] =3D page;
+> -			pvec.pages[i] =3D NULL;
+> +			pages[locked_pages++] =3D &folio->page;
+> +			fbatch.folios[i] =3D NULL;
+> =20
+> -			len +=3D thp_size(page);
+> +			len +=3D folio_size(folio);
+>  		}
+> =20
+>  		/* did we get anything? */
+>  		if (!locked_pages)
+> -			goto release_pvec_pages;
+> +			goto release_folio_batches;
+>  		if (i) {
+>  			unsigned j, n =3D 0;
+> -			/* shift unused page to beginning of pvec */
+> -			for (j =3D 0; j < pvec_pages; j++) {
+> -				if (!pvec.pages[j])
+> +			/* shift unused folio to the beginning of fbatch */
+> +			for (j =3D 0; j < nr_folios; j++) {
+> +				if (!fbatch.folios[j])
+>  					continue;
+>  				if (n < j)
+> -					pvec.pages[n] =3D pvec.pages[j];
+> +					fbatch.folios[n] =3D fbatch.folios[j];
+>  				n++;
+>  			}
+> -			pvec.nr =3D n;
+> -
+> -			if (pvec_pages && i =3D=3D pvec_pages &&
+> +			fbatch.nr =3D n;
+> +			if (nr_folios && i =3D=3D nr_folios &&
+>  			    locked_pages < max_pages) {
+> -				dout("reached end pvec, trying for more\n");
+> -				pagevec_release(&pvec);
+> +				dout("reached end of fbatch, trying for more\n");
+> +				folio_batch_release(&fbatch);
+>  				goto get_more_pages;
+>  			}
+>  		}
+> @@ -1056,7 +1055,7 @@ static int ceph_writepages_start(struct address_spa=
+ce *mapping,
+>  			BUG_ON(IS_ERR(req));
+>  		}
+>  		BUG_ON(len < page_offset(pages[locked_pages - 1]) +
+> -			     thp_size(page) - offset);
+> +			     folio_size(folio) - offset);
+> =20
+>  		req->r_callback =3D writepages_finish;
+>  		req->r_inode =3D inode;
+> @@ -1098,7 +1097,7 @@ static int ceph_writepages_start(struct address_spa=
+ce *mapping,
+>  			set_page_writeback(pages[i]);
+>  			if (caching)
+>  				ceph_set_page_fscache(pages[i]);
+> -			len +=3D thp_size(page);
+> +			len +=3D folio_size(folio);
+>  		}
+>  		ceph_fscache_write_to_cache(inode, offset, len, caching);
+> =20
+> @@ -1108,7 +1107,7 @@ static int ceph_writepages_start(struct address_spa=
+ce *mapping,
+>  			/* writepages_finish() clears writeback pages
+>  			 * according to the data length, so make sure
+>  			 * data length covers all locked pages */
+> -			u64 min_len =3D len + 1 - thp_size(page);
+> +			u64 min_len =3D len + 1 - folio_size(folio);
+>  			len =3D get_writepages_data_length(inode, pages[i - 1],
+>  							 offset);
+>  			len =3D max(len, min_len);
+> @@ -1164,10 +1163,10 @@ static int ceph_writepages_start(struct address_s=
+pace *mapping,
+>  		if (wbc->nr_to_write <=3D 0 && wbc->sync_mode =3D=3D WB_SYNC_NONE)
+>  			done =3D true;
+> =20
+> -release_pvec_pages:
+> -		dout("pagevec_release on %d pages (%p)\n", (int)pvec.nr,
+> -		     pvec.nr ? pvec.pages[0] : NULL);
+> -		pagevec_release(&pvec);
+> +release_folio_batches:
+> +		dout("folio_batch_release on %d batches (%p)", (int) fbatch.nr,
+> +				fbatch.nr ? fbatch.folios[0] : NULL);
+> +		folio_batch_release(&fbatch);
+>  	}
+> =20
+>  	if (should_loop && !done) {
+> @@ -1180,19 +1179,22 @@ static int ceph_writepages_start(struct address_s=
+pace *mapping,
+>  		if (wbc->sync_mode !=3D WB_SYNC_NONE &&
+>  		    start_index =3D=3D 0 && /* all dirty pages were checked */
+>  		    !ceph_wbc.head_snapc) {
+> -			struct page *page;
+> +			struct folio *folio;
+>  			unsigned i, nr;
+>  			index =3D 0;
+>  			while ((index <=3D end) &&
+> -			       (nr =3D pagevec_lookup_tag(&pvec, mapping, &index,
+> -						PAGECACHE_TAG_WRITEBACK))) {
+> +				(nr =3D filemap_get_folios_tag(mapping, &index,
+> +						(pgoff_t)-1,
+> +						PAGECACHE_TAG_WRITEBACK,
+> +						&fbatch))) {
+>  				for (i =3D 0; i < nr; i++) {
+> -					page =3D pvec.pages[i];
+> -					if (page_snap_context(page) !=3D snapc)
+> +					folio =3D fbatch.folios[i];
+> +					if (page_snap_context(&folio->page) !=3D
+> +							snapc)
+>  						continue;
+> -					wait_on_page_writeback(page);
+> +					folio_wait_writeback(folio);
+>  				}
+> -				pagevec_release(&pvec);
+> +				folio_batch_release(&fbatch);
+>  				cond_resched();
+>  			}
+>  		}
 
-syzbot found the following issue on:
 
-HEAD commit:    3800a713b607 Merge tag 'mm-hotfixes-stable-2022-09-26' of ..
-git tree:       upstream
-console+strace: https://syzkaller.appspot.com/x/log.txt?x=12704b40880000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=ba0d23aa7e1ffaf5
-dashboard link: https://syzkaller.appspot.com/bug?extid=2b32eb36c1a825b7a74c
-compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=14e930c0880000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=157ce604880000
+We have some work in progress to add write helpers to netfslib. Once we
+get those in place, we plan to convert ceph to use them. At that point
+ceph_writepages just goes away.
 
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+2b32eb36c1a825b7a74c-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-
-loop0: detected capacity change from 0 to 264192
-NILFS (loop0): broken superblock, retrying with spare superblock (blocksize = 1024)
-INFO: trying to register non-static key.
-The code is fine but needs lockdep annotation, or maybe
-you didn't initialize this object before use?
-turning off the locking correctness validator.
-CPU: 0 PID: 3614 Comm: syz-executor231 Not tainted 6.0.0-rc7-syzkaller-00029-g3800a713b607 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/26/2022
-Call Trace:
- <TASK>
- __dump_stack lib/dump_stack.c:88 [inline]
- dump_stack_lvl+0x1b1/0x28e lib/dump_stack.c:106
- assign_lock_key+0x212/0x220 kernel/locking/lockdep.c:979
- register_lock_class+0x18d/0x930 kernel/locking/lockdep.c:1292
- __lock_acquire+0xe4/0x1f60 kernel/locking/lockdep.c:4932
- lock_acquire+0x182/0x3c0 kernel/locking/lockdep.c:5666
- down_read+0x39/0x50 kernel/locking/rwsem.c:1499
- nilfs_bmap_lookup_at_level+0x88/0x350 fs/nilfs2/bmap.c:68
- nilfs_bmap_lookup fs/nilfs2/bmap.h:170 [inline]
- nilfs_mdt_submit_block+0x23d/0x520 fs/nilfs2/mdt.c:142
- nilfs_mdt_read_block+0xa3/0x460 fs/nilfs2/mdt.c:176
- nilfs_mdt_get_block+0x104/0x820 fs/nilfs2/mdt.c:251
- nilfs_palloc_get_block+0x142/0x240 fs/nilfs2/alloc.c:216
- nilfs_palloc_get_entry_block+0x1e8/0x2e0 fs/nilfs2/alloc.c:318
- nilfs_ifile_get_inode_block+0xf0/0x1a0 fs/nilfs2/ifile.c:143
- __nilfs_read_inode fs/nilfs2/inode.c:477 [inline]
- nilfs_iget+0x253/0x8b0 fs/nilfs2/inode.c:603
- nilfs_get_root_dentry+0x28/0x230 fs/nilfs2/super.c:904
- nilfs_fill_super+0x3dd/0x5d0 fs/nilfs2/super.c:1078
- nilfs_mount+0x613/0x9b0 fs/nilfs2/super.c:1317
- legacy_get_tree+0xea/0x180 fs/fs_context.c:610
- vfs_get_tree+0x88/0x270 fs/super.c:1530
- do_new_mount+0x289/0xad0 fs/namespace.c:3040
- do_mount fs/namespace.c:3383 [inline]
- __do_sys_mount fs/namespace.c:3591 [inline]
- __se_sys_mount+0x2d3/0x3c0 fs/namespace.c:3568
- do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
- entry_SYSCALL_64_after_hwframe+0x63/0xcd
-RIP: 0033:0x7efd97e9462a
-Code: 83 c4 08 5b 5d c3 66 2e 0f 1f 84 00 00 00 00 00 c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 49 89 ca b8 a5 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007ffc213b3aa8 EFLAGS: 00000286 ORIG_RAX: 00000000000000a5
-RAX: ffffffffffffffda RBX: 00007ffc213b3b00 RCX: 00007efd97e9462a
-RDX: 0000000020000000 RSI: 0000000020000100 RDI: 00007ffc213b3ac0
-RBP: 00007ffc213b3ac0 R08: 00007ffc213b3b00 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000286 R12: 0000000020000788
-R13: 0000000000000003 R14: 0000000000000004 R15: 000000000000003b
- </TASK>
-general protection fault, probably for non-canonical address 0xdffffc0000000000: 0000 [#1] PREEMPT SMP KASAN
-KASAN: null-ptr-deref in range [0x0000000000000000-0x0000000000000007]
-CPU: 1 PID: 3614 Comm: syz-executor231 Not tainted 6.0.0-rc7-syzkaller-00029-g3800a713b607 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/26/2022
-RIP: 0010:nilfs_bmap_lookup_at_level+0xb9/0x350 fs/nilfs2/bmap.c:69
-Code: 48 89 d8 48 c1 e8 03 42 80 3c 30 00 74 08 48 89 df e8 4b 9b 94 fe 4c 8b 33 4c 89 f0 48 c1 e8 03 48 b9 00 00 00 00 00 fc ff df <80> 3c 08 00 74 08 4c 89 f7 e8 29 9b 94 fe 4c 89 ff 4c 89 ee 44 89
-RSP: 0018:ffffc9000385f440 EFLAGS: 00010246
-RAX: 0000000000000000 RBX: ffff888074ff2760 RCX: dffffc0000000000
-RDX: 0000000000000001 RSI: 0000000000000008 RDI: ffff888074ff26c8
-RBP: ffffc9000385f4f0 R08: dffffc0000000000 R09: ffffed100e9fe4da
-R10: ffffed100e9fe4da R11: 1ffff1100e9fe4d9 R12: 0000000000000001
-R13: 0000000000000002 R14: 0000000000000000 R15: ffff888074ff2688
-FS:  0000555555be2300(0000) GS:ffff8880b9b00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007ffc213b4000 CR3: 00000000725e8000 CR4: 00000000003506e0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-Call Trace:
- <TASK>
- nilfs_bmap_lookup fs/nilfs2/bmap.h:170 [inline]
- nilfs_mdt_submit_block+0x23d/0x520 fs/nilfs2/mdt.c:142
- nilfs_mdt_read_block+0xa3/0x460 fs/nilfs2/mdt.c:176
- nilfs_mdt_get_block+0x104/0x820 fs/nilfs2/mdt.c:251
- nilfs_palloc_get_block+0x142/0x240 fs/nilfs2/alloc.c:216
- nilfs_palloc_get_entry_block+0x1e8/0x2e0 fs/nilfs2/alloc.c:318
- nilfs_ifile_get_inode_block+0xf0/0x1a0 fs/nilfs2/ifile.c:143
- __nilfs_read_inode fs/nilfs2/inode.c:477 [inline]
- nilfs_iget+0x253/0x8b0 fs/nilfs2/inode.c:603
- nilfs_get_root_dentry+0x28/0x230 fs/nilfs2/super.c:904
- nilfs_fill_super+0x3dd/0x5d0 fs/nilfs2/super.c:1078
- nilfs_mount+0x613/0x9b0 fs/nilfs2/super.c:1317
- legacy_get_tree+0xea/0x180 fs/fs_context.c:610
- vfs_get_tree+0x88/0x270 fs/super.c:1530
- do_new_mount+0x289/0xad0 fs/namespace.c:3040
- do_mount fs/namespace.c:3383 [inline]
- __do_sys_mount fs/namespace.c:3591 [inline]
- __se_sys_mount+0x2d3/0x3c0 fs/namespace.c:3568
- do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
- entry_SYSCALL_64_after_hwframe+0x63/0xcd
-RIP: 0033:0x7efd97e9462a
-Code: 83 c4 08 5b 5d c3 66 2e 0f 1f 84 00 00 00 00 00 c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 49 89 ca b8 a5 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007ffc213b3aa8 EFLAGS: 00000286 ORIG_RAX: 00000000000000a5
-RAX: ffffffffffffffda RBX: 00007ffc213b3b00 RCX: 00007efd97e9462a
-RDX: 0000000020000000 RSI: 0000000020000100 RDI: 00007ffc213b3ac0
-RBP: 00007ffc213b3ac0 R08: 00007ffc213b3b00 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000286 R12: 0000000020000788
-R13: 0000000000000003 R14: 0000000000000004 R15: 000000000000003b
- </TASK>
-Modules linked in:
----[ end trace 0000000000000000 ]---
-RIP: 0010:nilfs_bmap_lookup_at_level+0xb9/0x350 fs/nilfs2/bmap.c:69
-Code: 48 89 d8 48 c1 e8 03 42 80 3c 30 00 74 08 48 89 df e8 4b 9b 94 fe 4c 8b 33 4c 89 f0 48 c1 e8 03 48 b9 00 00 00 00 00 fc ff df <80> 3c 08 00 74 08 4c 89 f7 e8 29 9b 94 fe 4c 89 ff 4c 89 ee 44 89
-RSP: 0018:ffffc9000385f440 EFLAGS: 00010246
-RAX: 0000000000000000 RBX: ffff888074ff2760 RCX: dffffc0000000000
-RDX: 0000000000000001 RSI: 0000000000000008 RDI: ffff888074ff26c8
-RBP: ffffc9000385f4f0 R08: dffffc0000000000 R09: ffffed100e9fe4da
-R10: ffffed100e9fe4da R11: 1ffff1100e9fe4d9 R12: 0000000000000001
-R13: 0000000000000002 R14: 0000000000000000 R15: ffff888074ff2688
-FS:  0000555555be2300(0000) GS:ffff8880b9a00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000560cba9be408 CR3: 00000000725e8000 CR4: 00000000003506f0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-----------------
-Code disassembly (best guess):
-   0:	48 89 d8             	mov    %rbx,%rax
-   3:	48 c1 e8 03          	shr    $0x3,%rax
-   7:	42 80 3c 30 00       	cmpb   $0x0,(%rax,%r14,1)
-   c:	74 08                	je     0x16
-   e:	48 89 df             	mov    %rbx,%rdi
-  11:	e8 4b 9b 94 fe       	callq  0xfe949b61
-  16:	4c 8b 33             	mov    (%rbx),%r14
-  19:	4c 89 f0             	mov    %r14,%rax
-  1c:	48 c1 e8 03          	shr    $0x3,%rax
-  20:	48 b9 00 00 00 00 00 	movabs $0xdffffc0000000000,%rcx
-  27:	fc ff df
-* 2a:	80 3c 08 00          	cmpb   $0x0,(%rax,%rcx,1) <-- trapping instruction
-  2e:	74 08                	je     0x38
-  30:	4c 89 f7             	mov    %r14,%rdi
-  33:	e8 29 9b 94 fe       	callq  0xfe949b61
-  38:	4c 89 ff             	mov    %r15,%rdi
-  3b:	4c 89 ee             	mov    %r13,%rsi
-  3e:	44                   	rex.R
-  3f:	89                   	.byte 0x89
-
-
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
-
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
-syzbot can test patches for this issue, for details see:
-https://goo.gl/tpsmEJ#testing-patches
+I think it'd be best to just wait for that and to just ensure that
+netfslib uses filemap_get_folios_tag and the like where appropriate.
+--=20
+Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
