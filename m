@@ -1,7 +1,7 @@
-From: syzbot <syzbot+2ff4a42302a8dd97efc6-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] KASAN: use-after-free Read in nilfs_test_metadata_dirty
-Date: Sat, 01 Oct 2022 06:47:41 -0700
-Message-ID: <000000000000b1fdd605e9f95a77@google.com>
+From: syzbot <syzbot+b8c672b0e22615c80fe0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] KASAN: use-after-free Read in nilfs_segctor_confirm
+Date: Sat, 01 Oct 2022 06:48:38 -0700
+Message-ID: <000000000000219dcd05e9f95ed9@google.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -13,162 +13,172 @@ Hello,
 
 syzbot found the following issue on:
 
-HEAD commit:    70575e77839f Merge tag 'for_linus' of git://git.kernel.org..
-git tree:       upstream
-console+strace: https://syzkaller.appspot.com/x/log.txt?x=15ea1fa8880000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=ba0d23aa7e1ffaf5
-dashboard link: https://syzkaller.appspot.com/bug?extid=2ff4a42302a8dd97efc6
-compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=15b897ef080000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=131b8598880000
+HEAD commit:    aaa11ce2ffc8 Add linux-next specific files for 20220923
+git tree:       linux-next
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=17db205c880000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=186d1ff305f10294
+dashboard link: https://syzkaller.appspot.com/bug?extid=b8c672b0e22615c80fe0
+compiler:       gcc (Debian 10.2.1-6) 10.2.1 20210110, GNU ld (GNU Binutils for Debian) 2.35.2
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=178843ef080000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=16ba96c0880000
 
 Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/d99310e4b1b7/disk-70575e77.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/ef3a5647354c/vmlinux-70575e77.xz
+disk image: https://storage.googleapis.com/syzbot-assets/95c7bf83c07e/disk-aaa11ce2.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/b161cd56a7a3/vmlinux-aaa11ce2.xz
 
 IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+2ff4a42302a8dd97efc6-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: syzbot+b8c672b0e22615c80fe0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
 loop0: detected capacity change from 0 to 2048
 ==================================================================
-BUG: KASAN: use-after-free in nilfs_test_metadata_dirty+0x39/0x210 fs/nilfs2/segment.c:813
-Read of size 8 at addr ffff88814012ae30 by task syz-executor314/3615
+BUG: KASAN: use-after-free in nilfs_segctor_confirm+0x175/0x190 fs/nilfs2/segment.c:837
+Read of size 8 at addr ffff88801274fc30 by task syz-executor290/3609
 
-CPU: 0 PID: 3615 Comm: syz-executor314 Not tainted 6.0.0-rc7-syzkaller-00180-g70575e77839f #0
+CPU: 0 PID: 3609 Comm: syz-executor290 Not tainted 6.0.0-rc6-next-20220923-syzkaller #0
 Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/22/2022
 Call Trace:
  <TASK>
  __dump_stack lib/dump_stack.c:88 [inline]
- dump_stack_lvl+0x1b1/0x28e lib/dump_stack.c:106
- print_address_description+0x65/0x4b0 mm/kasan/report.c:317
- print_report+0x108/0x1f0 mm/kasan/report.c:433
- kasan_report+0xc3/0xf0 mm/kasan/report.c:495
- nilfs_test_metadata_dirty+0x39/0x210 fs/nilfs2/segment.c:813
- nilfs_segctor_confirm+0x78/0x2d0 fs/nilfs2/segment.c:837
- nilfs_segctor_destroy fs/nilfs2/segment.c:2729 [inline]
- nilfs_detach_log_writer+0x4c1/0xbd0 fs/nilfs2/segment.c:2810
- nilfs_put_super+0x4b/0x150 fs/nilfs2/super.c:468
- generic_shutdown_super+0x128/0x300 fs/super.c:491
- kill_block_super+0x79/0xd0 fs/super.c:1427
- deactivate_locked_super+0xa7/0xf0 fs/super.c:332
- cleanup_mnt+0x4ce/0x560 fs/namespace.c:1186
- task_work_run+0x146/0x1c0 kernel/task_work.c:177
+ dump_stack_lvl+0xcd/0x134 lib/dump_stack.c:106
+ print_address_description mm/kasan/report.c:284 [inline]
+ print_report+0x15e/0x45d mm/kasan/report.c:395
+ kasan_report+0xbb/0x1f0 mm/kasan/report.c:495
+ nilfs_segctor_confirm+0x175/0x190 fs/nilfs2/segment.c:837
+ nilfs_segctor_destroy fs/nilfs2/segment.c:2727 [inline]
+ nilfs_detach_log_writer+0x856/0x9f0 fs/nilfs2/segment.c:2808
+ nilfs_put_super+0x3f/0x1a0 fs/nilfs2/super.c:468
+ generic_shutdown_super+0x154/0x410 fs/super.c:491
+ kill_block_super+0x97/0xf0 fs/super.c:1427
+ deactivate_locked_super+0x94/0x160 fs/super.c:331
+ deactivate_super+0xad/0xd0 fs/super.c:362
+ cleanup_mnt+0x2ae/0x3d0 fs/namespace.c:1186
+ task_work_run+0x16b/0x270 kernel/task_work.c:179
  exit_task_work include/linux/task_work.h:38 [inline]
- do_exit+0x55e/0x20a0 kernel/exit.c:795
- do_group_exit+0x23b/0x2f0 kernel/exit.c:925
- __do_sys_exit_group kernel/exit.c:936 [inline]
- __se_sys_exit_group kernel/exit.c:934 [inline]
- __x64_sys_exit_group+0x3b/0x40 kernel/exit.c:934
+ do_exit+0xb35/0x2a20 kernel/exit.c:820
+ do_group_exit+0xd0/0x2a0 kernel/exit.c:950
+ __do_sys_exit_group kernel/exit.c:961 [inline]
+ __se_sys_exit_group kernel/exit.c:959 [inline]
+ __x64_sys_exit_group+0x3a/0x50 kernel/exit.c:959
  do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
+ do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
  entry_SYSCALL_64_after_hwframe+0x63/0xcd
-RIP: 0033:0x7f7c0b111689
-Code: Unable to access opcode bytes at RIP 0x7f7c0b11165f.
-RSP: 002b:00007ffc6dfe57a8 EFLAGS: 00000246 ORIG_RAX: 00000000000000e7
-RAX: ffffffffffffffda RBX: 00007f7c0b18c3f0 RCX: 00007f7c0b111689
+RIP: 0033:0x7f7f96472ba9
+Code: Unable to access opcode bytes at 0x7f7f96472b7f.
+RSP: 002b:00007fff812c4e88 EFLAGS: 00000246 ORIG_RAX: 00000000000000e7
+RAX: ffffffffffffffda RBX: 00007f7f964ea330 RCX: 00007f7f96472ba9
 RDX: 000000000000003c RSI: 00000000000000e7 RDI: 0000000000000001
-RBP: 0000000000000001 R08: ffffffffffffffc0 R09: bb1414ac6dfe5827
-R10: 0000000000000000 R11: 0000000000000246 R12: 00007f7c0b18c3f0
+RBP: 0000000000000001 R08: ffffffffffffffc0 R09: 00007f7f964e4e40
+R10: 00007f7f964e4e40 R11: 0000000000000246 R12: 00007f7f964ea330
 R13: 0000000000000001 R14: 0000000000000000 R15: 0000000000000001
  </TASK>
 
-Allocated by task 3615:
- kasan_save_stack mm/kasan/common.c:38 [inline]
- kasan_set_track mm/kasan/common.c:45 [inline]
- set_alloc_info mm/kasan/common.c:437 [inline]
- ____kasan_kmalloc+0xcd/0x100 mm/kasan/common.c:516
- kasan_kmalloc include/linux/kasan.h:234 [inline]
- kmem_cache_alloc_trace+0x97/0x310 mm/slub.c:3289
- kmalloc include/linux/slab.h:600 [inline]
- kzalloc include/linux/slab.h:733 [inline]
- nilfs_find_or_create_root+0x142/0x4f0 fs/nilfs2/the_nilfs.c:747
- nilfs_attach_checkpoint+0xcd/0x4a0 fs/nilfs2/super.c:519
- nilfs_fill_super+0x2e8/0x5d0 fs/nilfs2/super.c:1064
- nilfs_mount+0x613/0x9b0 fs/nilfs2/super.c:1317
- legacy_get_tree+0xea/0x180 fs/fs_context.c:610
- vfs_get_tree+0x88/0x270 fs/super.c:1530
- do_new_mount+0x289/0xad0 fs/namespace.c:3040
+Allocated by task 3609:
+ kasan_save_stack+0x1e/0x40 mm/kasan/common.c:45
+ kasan_set_track+0x21/0x30 mm/kasan/common.c:52
+ ____kasan_kmalloc mm/kasan/common.c:371 [inline]
+ ____kasan_kmalloc mm/kasan/common.c:330 [inline]
+ __kasan_kmalloc+0xa1/0xb0 mm/kasan/common.c:380
+ kmalloc include/linux/slab.h:559 [inline]
+ kzalloc include/linux/slab.h:695 [inline]
+ nilfs_find_or_create_root+0x84/0x4d0 fs/nilfs2/the_nilfs.c:747
+ nilfs_attach_checkpoint+0xc1/0x4b0 fs/nilfs2/super.c:519
+ nilfs_fill_super fs/nilfs2/super.c:1064 [inline]
+ nilfs_mount+0xb12/0xfb0 fs/nilfs2/super.c:1317
+ legacy_get_tree+0x105/0x220 fs/fs_context.c:610
+ vfs_get_tree+0x89/0x2f0 fs/super.c:1530
+ do_new_mount fs/namespace.c:3040 [inline]
+ path_mount+0x1326/0x1e20 fs/namespace.c:3370
  do_mount fs/namespace.c:3383 [inline]
  __do_sys_mount fs/namespace.c:3591 [inline]
- __se_sys_mount+0x2d3/0x3c0 fs/namespace.c:3568
+ __se_sys_mount fs/namespace.c:3568 [inline]
+ __x64_sys_mount+0x27f/0x300 fs/namespace.c:3568
  do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
+ do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
  entry_SYSCALL_64_after_hwframe+0x63/0xcd
 
-Freed by task 3615:
- kasan_save_stack mm/kasan/common.c:38 [inline]
- kasan_set_track+0x3d/0x60 mm/kasan/common.c:45
- kasan_set_free_info+0x1f/0x40 mm/kasan/generic.c:370
- ____kasan_slab_free+0xd8/0x120 mm/kasan/common.c:367
- kasan_slab_free include/linux/kasan.h:200 [inline]
- slab_free_hook mm/slub.c:1759 [inline]
- slab_free_freelist_hook+0x12e/0x1a0 mm/slub.c:1785
- slab_free mm/slub.c:3539 [inline]
- kfree+0xda/0x210 mm/slub.c:4567
- nilfs_evict_inode+0xe5/0x3d0 fs/nilfs2/inode.c:908
- evict+0x2a4/0x620 fs/inode.c:665
- dispose_list fs/inode.c:698 [inline]
- evict_inodes+0x658/0x700 fs/inode.c:748
- generic_shutdown_super+0x94/0x300 fs/super.c:480
- kill_block_super+0x79/0xd0 fs/super.c:1427
- deactivate_locked_super+0xa7/0xf0 fs/super.c:332
- cleanup_mnt+0x4ce/0x560 fs/namespace.c:1186
- task_work_run+0x146/0x1c0 kernel/task_work.c:177
+Freed by task 3609:
+ kasan_save_stack+0x1e/0x40 mm/kasan/common.c:45
+ kasan_set_track+0x21/0x30 mm/kasan/common.c:52
+ kasan_save_free_info+0x2a/0x40 mm/kasan/generic.c:511
+ ____kasan_slab_free mm/kasan/common.c:236 [inline]
+ ____kasan_slab_free+0x160/0x1c0 mm/kasan/common.c:200
+ kasan_slab_free include/linux/kasan.h:177 [inline]
+ slab_free_hook mm/slub.c:1669 [inline]
+ slab_free_freelist_hook+0x8b/0x1c0 mm/slub.c:1695
+ slab_free mm/slub.c:3599 [inline]
+ __kmem_cache_free+0xab/0x3b0 mm/slub.c:3612
+ nilfs_put_root+0xb1/0xd0 fs/nilfs2/the_nilfs.c:804
+ nilfs_clear_inode+0x29a/0x330 fs/nilfs2/inode.c:895
+ nilfs_evict_inode+0x318/0x440 fs/nilfs2/inode.c:908
+ evict+0x2ed/0x6b0 fs/inode.c:664
+ dispose_list+0x117/0x1e0 fs/inode.c:697
+ evict_inodes+0x352/0x450 fs/inode.c:747
+ generic_shutdown_super+0xab/0x410 fs/super.c:479
+ kill_block_super+0x97/0xf0 fs/super.c:1427
+ deactivate_locked_super+0x94/0x160 fs/super.c:331
+ deactivate_super+0xad/0xd0 fs/super.c:362
+ cleanup_mnt+0x2ae/0x3d0 fs/namespace.c:1186
+ task_work_run+0x16b/0x270 kernel/task_work.c:179
  exit_task_work include/linux/task_work.h:38 [inline]
- do_exit+0x55e/0x20a0 kernel/exit.c:795
- do_group_exit+0x23b/0x2f0 kernel/exit.c:925
- __do_sys_exit_group kernel/exit.c:936 [inline]
- __se_sys_exit_group kernel/exit.c:934 [inline]
- __x64_sys_exit_group+0x3b/0x40 kernel/exit.c:934
+ do_exit+0xb35/0x2a20 kernel/exit.c:820
+ do_group_exit+0xd0/0x2a0 kernel/exit.c:950
+ __do_sys_exit_group kernel/exit.c:961 [inline]
+ __se_sys_exit_group kernel/exit.c:959 [inline]
+ __x64_sys_exit_group+0x3a/0x50 kernel/exit.c:959
  do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
+ do_syscall_64+0x35/0xb0 arch/x86/entry/common.c:80
  entry_SYSCALL_64_after_hwframe+0x63/0xcd
 
-The buggy address belongs to the object at ffff88814012ae00
+The buggy address belongs to the object at ffff88801274fc00
  which belongs to the cache kmalloc-256 of size 256
 The buggy address is located 48 bytes inside of
- 256-byte region [ffff88814012ae00, ffff88814012af00)
+ 256-byte region [ffff88801274fc00, ffff88801274fd00)
 
 The buggy address belongs to the physical page:
-page:ffffea0005004a80 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x14012a
-head:ffffea0005004a80 order:1 compound_mapcount:0 compound_pincount:0
-flags: 0x57ff00000010200(slab|head|node=1|zone=2|lastcpupid=0x7ff)
-raw: 057ff00000010200 ffffea0005004a00 dead000000000003 ffff888012041b40
-raw: 0000000000000000 0000000000100010 00000001ffffffff 0000000000000000
+page:ffffea000049d380 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x1274e
+head:ffffea000049d380 order:1 compound_mapcount:0 compound_pincount:0
+flags: 0xfff00000010200(slab|head|node=0|zone=1|lastcpupid=0x7ff)
+raw: 00fff00000010200 ffff888011841b40 dead000080100010 0000000000000000
+raw: 0000000000000000 dead000000000001 00000001ffffffff 0000000000000000
 page dumped because: kasan: bad access detected
 page_owner tracks the page as allocated
-page last allocated via order 1, migratetype Unmovable, gfp_mask 0xd20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 1, tgid 1 (swapper/0), ts 6972671988, free_ts 0
- prep_new_page mm/page_alloc.c:2532 [inline]
- get_page_from_freelist+0x742/0x7c0 mm/page_alloc.c:4283
- __alloc_pages+0x259/0x560 mm/page_alloc.c:5549
- alloc_page_interleave+0x22/0x1c0 mm/mempolicy.c:2103
- alloc_slab_page+0x70/0xf0 mm/slub.c:1829
- allocate_slab+0x5e/0x520 mm/slub.c:1974
- new_slab mm/slub.c:2034 [inline]
- ___slab_alloc+0x3ee/0xc40 mm/slub.c:3036
- __slab_alloc mm/slub.c:3123 [inline]
- slab_alloc_node mm/slub.c:3214 [inline]
- slab_alloc mm/slub.c:3256 [inline]
- kmem_cache_alloc_trace+0x25f/0x310 mm/slub.c:3287
- kmalloc include/linux/slab.h:600 [inline]
- kzalloc include/linux/slab.h:733 [inline]
- bus_add_driver+0xde/0x600 drivers/base/bus.c:602
- driver_register+0x2e9/0x3e0 drivers/base/driver.c:246
- do_one_initcall+0x1b9/0x3e0 init/main.c:1296
- do_initcall_level+0x168/0x218 init/main.c:1369
- do_initcalls+0x4b/0x8c init/main.c:1385
- kernel_init_freeable+0x3f1/0x57b init/main.c:1623
- kernel_init+0x19/0x2b0 init/main.c:1512
+page last allocated via order 1, migratetype Unmovable, gfp_mask 0xd20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 1, tgid 1 (swapper/0), ts 2053424585, free_ts 0
+ prep_new_page mm/page_alloc.c:2538 [inline]
+ get_page_from_freelist+0x1092/0x2d20 mm/page_alloc.c:4287
+ __alloc_pages+0x1c7/0x5a0 mm/page_alloc.c:5546
+ alloc_page_interleave+0x1e/0x200 mm/mempolicy.c:2113
+ alloc_pages+0x22f/0x270 mm/mempolicy.c:2275
+ alloc_slab_page mm/slub.c:1739 [inline]
+ allocate_slab+0x213/0x300 mm/slub.c:1884
+ new_slab mm/slub.c:1937 [inline]
+ ___slab_alloc+0xac1/0x1430 mm/slub.c:3119
+ __slab_alloc.constprop.0+0x4d/0xa0 mm/slub.c:3217
+ slab_alloc_node mm/slub.c:3302 [inline]
+ __kmem_cache_alloc_node+0x18a/0x3d0 mm/slub.c:3375
+ __do_kmalloc_node mm/slab_common.c:933 [inline]
+ __kmalloc_node_track_caller+0x45/0xc0 mm/slab_common.c:954
+ __do_krealloc mm/slab_common.c:1318 [inline]
+ krealloc+0x8c/0xf0 mm/slab_common.c:1351
+ add_sysfs_param+0xca/0x960 kernel/params.c:651
+ kernel_add_sysfs_param kernel/params.c:812 [inline]
+ param_sysfs_builtin kernel/params.c:851 [inline]
+ param_sysfs_init+0x301/0x43b kernel/params.c:970
+ do_one_initcall+0x13d/0x780 init/main.c:1307
+ do_initcall_level init/main.c:1382 [inline]
+ do_initcalls init/main.c:1398 [inline]
+ do_basic_setup init/main.c:1417 [inline]
+ kernel_init_freeable+0x6ff/0x788 init/main.c:1637
+ kernel_init+0x1a/0x1d0 init/main.c:1525
  ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:306
 page_owner free stack trace missing
 
 Memory state around the buggy address:
- ffff88814012ad00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
- ffff88814012ad80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
->ffff88814012ae00: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff88801274fb00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff88801274fb80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+>ffff88801274fc00: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
                                      ^
- ffff88814012ae80: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
- ffff88814012af00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff88801274fc80: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff88801274fd00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
 ==================================================================
 
 
