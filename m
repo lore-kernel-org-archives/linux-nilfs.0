@@ -1,37 +1,92 @@
-From: Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>
-Subject: Re: [PATCH] nilfs: check filetype/uid/gid at
- nilfs_read_inode_common()
-Date: Sat, 1 Oct 2022 21:41:05 +0900
-Message-ID: <4ac809f9-a414-e936-0da1-f943e0551ef2@I-love.SAKURA.ne.jp>
-References: <000000000000eb0ba805e9d6e30e@google.com>
- <f1438f46-a52d-707b-4ef9-ab29525f1c98@I-love.SAKURA.ne.jp>
+From: syzbot <syzbot+430e395e8c74123e1918-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] BUG: corrupted list in kobject_cleanup
+Date: Sat, 01 Oct 2022 06:42:39 -0700
+Message-ID: <000000000000ba699305e9f94839@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-US
-In-Reply-To: <f1438f46-a52d-707b-4ef9-ab29525f1c98-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: syzbot+2b32eb36c1a825b7a74c-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org, syzkaller-bugs <syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-On 2022/10/01 20:24, Tetsuo Handa wrote:
-> syzbot is reporting lockdep warning followed by NULL pointer dereference
-> at nilfs_bmap_lookup_at_level() [1], for a crafted filesystem which
-> contains raw_inode->i_mode == 0 is poisoning checkpoint inode at
-> nilfs_read_inode_common() from nilfs_ifile_read() from
-> nilfs_attach_checkpoint() from nilfs_fill_super() from nilfs_mount().
-> Check that filetype/uid/gid are valid as well as i_nlink is valid.
-> 
-> Link: https://syzkaller.appspot.com/bug?extid=2b32eb36c1a825b7a74c [1]
-> Reported-by: syzot <syzbot+2b32eb36c1a825b7a74c-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-> Signed-off-by: Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>
-> ---
-> This patch solves crash but I don't know whether this patch is correct.
+Hello,
 
-Hmm, since bmap->b_sem and bmap->b_ops are initialized by nilfs_bmap_read(),
-and nilfs_bmap_read() is called from nilfs_read_inode_common() only if
-S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) || S_ISLNK(inode->i_mode)
-is true, I guess that the caller needs to verify that the returned inode is
-a regular file? But where to add that check?
+syzbot found the following issue on:
 
+HEAD commit:    c194837ebb57 Merge branch 'for-next/core', remote-tracking..
+git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
+console output: https://syzkaller.appspot.com/x/log.txt?x=16ee7ddf080000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=15a770deac0c935a
+dashboard link: https://syzkaller.appspot.com/bug?extid=430e395e8c74123e1918
+compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
+userspace arch: arm64
+
+Unfortunately, I don't have any reproducer for this issue yet.
+
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/8d8ae425e7fa/disk-c194837e.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/c540d501ebe7/vmlinux-c194837e.xz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+430e395e8c74123e1918-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+
+list_del corruption. next->prev should be ffff00010248a8a0, but was dead4ead00000000. (next=ffff0000f3429438)
+------------[ cut here ]------------
+kernel BUG at lib/list_debug.c:64!
+Internal error: Oops - BUG: 00000000f2000800 [#1] PREEMPT SMP
+Modules linked in:
+CPU: 0 PID: 3061 Comm: syz-executor.3 Not tainted 6.0.0-rc6-syzkaller-17742-gc194837ebb57 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/26/2022
+pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+pc : __list_del_entry_valid+0xcc/0xd0 lib/list_debug.c:62
+lr : __list_del_entry_valid+0xcc/0xd0 lib/list_debug.c:62
+sp : ffff80001281bb90
+x29: ffff80001281bb90 x28: ffff0000c8b4b500 x27: 0000000000000000
+x26: ffff80000d30cf28 x25: ffff80000d309000 x24: 0000000000000008
+x23: 0000000000000003 x22: ffff80000d56ad28 x21: 0000000000000000
+x20: ffff00010248a8a0 x19: ffff00010248a898 x18: 00000000000000c0
+x17: 20747562202c3061 x16: ffff80000db49158 x15: ffff0000c8b4b500
+x14: 0000000000000000 x13: 00000000ffffffff x12: ffff0000c8b4b500
+x11: ff808000081c1630 x10: 0000000000000000 x9 : bf3d65c85afff700
+x8 : bf3d65c85afff700 x7 : ffff800008195d30 x6 : 0000000000000000
+x5 : 0000000000000080 x4 : 0000000000000001 x3 : 0000000000000000
+x2 : ffff0001fefbecd0 x1 : 0000000000000001 x0 : 000000000000006d
+Call trace:
+ __list_del_entry_valid+0xcc/0xd0 lib/list_debug.c:62
+ __list_del_entry include/linux/list.h:134 [inline]
+ list_del_init include/linux/list.h:206 [inline]
+ kobj_kset_leave lib/kobject.c:175 [inline]
+ __kobject_del+0xa8/0x1f8 lib/kobject.c:592
+ kobject_cleanup+0xfc/0x280 lib/kobject.c:664
+ kobject_release lib/kobject.c:704 [inline]
+ kref_put include/linux/kref.h:65 [inline]
+ kobject_put+0x94/0xf8 lib/kobject.c:721
+ nilfs_sysfs_delete_segctor_group fs/nilfs2/sysfs.c:700 [inline]
+ nilfs_sysfs_delete_device_group+0x50/0x7c fs/nilfs2/sysfs.c:1044
+ destroy_nilfs+0x4c/0xa0 fs/nilfs2/the_nilfs.c:89
+ nilfs_put_super+0x84/0x9c fs/nilfs2/super.c:480
+ generic_shutdown_super+0x8c/0x190 fs/super.c:491
+ kill_block_super+0x30/0x78 fs/super.c:1427
+ deactivate_locked_super+0x70/0xe8 fs/super.c:332
+ deactivate_super+0xd0/0xd4 fs/super.c:363
+ cleanup_mnt+0x1f8/0x234 fs/namespace.c:1186
+ __cleanup_mnt+0x20/0x30 fs/namespace.c:1193
+ task_work_run+0xc4/0x14c kernel/task_work.c:177
+ resume_user_mode_work include/linux/resume_user_mode.h:49 [inline]
+ do_notify_resume+0x174/0x1f0 arch/arm64/kernel/signal.c:1127
+ prepare_exit_to_user_mode arch/arm64/kernel/entry-common.c:137 [inline]
+ exit_to_user_mode arch/arm64/kernel/entry-common.c:142 [inline]
+ el0_svc+0x9c/0x150 arch/arm64/kernel/entry-common.c:637
+ el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
+ el0t_64_sync+0x18c/0x190
+Code: d4210000 9001b460 912e4800 94a768fa (d4210000) 
+---[ end trace 0000000000000000 ]---
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
