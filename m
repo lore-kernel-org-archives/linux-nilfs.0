@@ -1,79 +1,48 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] MAINTAINERS: git://github -> https://github.com for konis
-Date: Fri, 14 Oct 2022 13:18:18 +0900
-Message-ID: <CAKFNMomKQg+NyA2zgYFNGjtZ6eGYj2buhmWxPP7RaczT5H6dKw@mail.gmail.com>
-References: <CAKFNMonU3aVqwRdxyFefBJMg0-XC9j8bE-qYZ-9xx-4--NdkGg@mail.gmail.com>
- <mhng-1ec448c6-70ad-4964-9dd0-032892bfb2ef@palmer-ri-x1c9a>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 05/23] afs: Convert
+ afs_writepages_region() to use filemap_get_folios_tag()
+Date: Fri, 14 Oct 2022 14:59:34 +0100
+Message-ID: <1569540.1665755974@warthog.procyon.org.uk>
+References: <20220901220138.182896-6-vishal.moola@gmail.com>
+ <20220901220138.182896-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=a2TDlZ5xXQ65iqd5QWMtMPYq2MPwQ3qfXtGkGk9qg+8=;
-        b=ZiyS5aMQZjQH/Evp2092kpbFea0MIVMSy7YVXIhJHRtLrvv09wfefJ//9ztDxwq1+u
-         at4g7SW3NYq1gx73DR/LQPoPwMTrYNC1KX9u0J0eKq7lw+VuqJrGRPBv8UJ02ejqpCUD
-         fiTkwORFjLAGHCMBJ9p0/HSN/n1Ygo4K+p+2FvNtphfjHsi5RfS9PbEpcL76/0EwClaI
-         o6waarUVDn+9/g7WSHfk96Z6WdZZbvJ4UP8dDxTjsn1af/ez8UHAqyUopvX4mQXNrAaw
-         cYw77Jz+oaarBUpr7SXccxVpfM+sB/WVkt5HomT1hpZQMzSafDL4SmgUzbzJxCKulSis
-         zyag==
-In-Reply-To: <mhng-1ec448c6-70ad-4964-9dd0-032892bfb2ef@palmer-ri-x1c9a>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1665755984;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=k8qQltuyjmygy+O43yanVxeFaxBvrjiQoX3IXlPZtGE=;
+	b=Mh6rKiUNWxpiBi5AY9mN+s2je8QY4V/mzuD++2S1jb/qbdqtzHhebjciovYAmh8jtMT8qz
+	15/1PREQUedj6UbTrv07bZQlh0Ianrfb9T9FJnz7/IsNZ1+nFiA0lEci1sDICJDmn9uo7W
+	2X8es5W1NzhX8pLL1QEjmHEA3dB2N9k=
+In-Reply-To: <20220901220138.182896-6-vishal.moola@gmail.com>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
+Content-ID: <1569539.1665755974.1@warthog.procyon.org.uk>
 Content-Transfer-Encoding: 7bit
-To: Palmer Dabbelt <palmer-bl1M7uvjFoxWk0Htik3J/w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Conor Dooley <conor.dooley-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
+To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+Cc: linux-cifs@vger.kernel.org, cluster-devel@redhat.com, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, dhowells@redhat.com, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-On Fri, Oct 14, 2022 at 12:51 PM Palmer Dabbelt wrote:
->
-> On Thu, 13 Oct 2022 16:06:43 PDT (-0700), konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
-> > On Fri, Oct 14, 2022 at 6:49 AM Palmer Dabbelt wrote:
-> >>
-> >> Github deprecated the git:// links about a year ago, so let's move to
-> >> the https:// URLs instead.
-> >>
-> >> Reported-by: Conor Dooley <conor.dooley-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
-> >> Link: https://github.blog/2021-09-01-improving-git-protocol-security-github/
-> >> Signed-off-by: Palmer Dabbelt <palmer-bl1M7uvjFoxWk0Htik3J/w@public.gmane.org>
-> >> ---
-> >> I've split these up by github username so folks can take them
-> >> independently, as some of these repos have been renamed at github and
-> >> thus need more than just a sed to fix them.
-> >> ---
-> >>  MAINTAINERS | 2 +-
-> >>  1 file changed, 1 insertion(+), 1 deletion(-)
-> >>
-> >> diff --git a/MAINTAINERS b/MAINTAINERS
-> >> index d118acdce8b8..c9c396e2d8a0 100644
-> >> --- a/MAINTAINERS
-> >> +++ b/MAINTAINERS
-> >> @@ -14363,7 +14363,7 @@ L:      linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> >>  S:     Supported
-> >>  W:     https://nilfs.sourceforge.io/
-> >>  W:     https://nilfs.osdn.jp/
-> >> -T:     git git://github.com/konis/nilfs2.git
-> >> +T:     git https://github.com/konis/nilfs2.git
-> >>  F:     Documentation/filesystems/nilfs2.rst
-> >>  F:     fs/nilfs2/
-> >>  F:     include/trace/events/nilfs2.h
-> >> --
-> >> 2.38.0
-> >>
-> >
-> > Ah, that's right, it needs to be fixed.
-> >
-> > I'll pick this up unless it's decided to apply similar fixes all at once.
-> > Thank you.
->
-> It's easier on my end if you just pick it up.  Just note the
-> "git://github -> https://github.com" typo.  I can send a v2 if you want,
-> but IMO it's trival enough to just fix up.
->
-> Thanks!
->
-> >
-> > Ryusuke Konishi
+Vishal Moola (Oracle) <vishal.moola@gmail.com> wrote:
 
-Ah, thanks.   I will fix that typo (the omission of ''.com") myself.
+> Convert to use folios throughout. This function is in preparation to
+> remove find_get_pages_range_tag().
+> 
+> Also modified this function to write the whole batch one at a time,
+> rather than calling for a new set every single write.
+> 
+> Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 
-Ryusuke Konishi
+Tested-by: David Howells <dhowells@redhat.com>
+
