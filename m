@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v3 21/23] nilfs2: Convert
- nilfs_copy_dirty_pages() to use filemap_get_folios_tag()
-Date: Mon, 17 Oct 2022 13:24:49 -0700
-Message-ID: <20221017202451.4951-22-vishal.moola@gmail.com>
+Subject: [PATCH v3 22/23] nilfs2: Convert
+ nilfs_clear_dirty_pages() to use filemap_get_folios_tag()
+Date: Mon, 17 Oct 2022 13:24:50 -0700
+Message-ID: <20221017202451.4951-23-vishal.moola@gmail.com>
 References: <20221017202451.4951-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=E33K4tt62trvRpPvq+30izBLUL0IuVPL5OXIZrHr8HE=; b=U8Eg6F9yFCc7tFjHtmaBbxER6N
- Sk/+OzuxJUKoHEl/rlCm4SnyCXigvZPhA7gp1l+X67oBFmLOGqZ7kixR/q6Q1hYKlRlDhjgyg1zbo
- ks+x31YPnK9XVuoVaZZ2MS2VF8G9UkaNOXQQS3T1zu+mTZ5ea2IL8b5dH0t58xPFJRIk=;
+ bh=vEJiD15A68fC6SKwYs5XNRqfHJAp+vmoTIHZ0Wq7X1E=; b=dVnRxyAcMLaUy+636kugVoqCuw
+ s+f1GePxsqyooCMnc1LVPtK8M2zgdVJxzEnWK10NaRl1+K9+lvHvLFqND+ypLIq3VS00pJ0zLyIvS
+ I4CRzgG3Jo12OgBGgY37Kz1pqX7fAhETgiqM0bZLTNjB/02BEHtcD/Jc7JHKkPNfBLTo=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,20 +24,20 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=E33K4tt62trvRpPvq+30izBLUL0IuVPL5OXIZrHr8HE=; b=iR7X25ERFSqfTeIxx6blEvMzgt
- UlxDHZ2PxWA69+UYgw0rxmBN7N/ml0G3KeWh/aVC7EsmBerp5AzifwzoKK9CKN689Gh6H94pSotRS
- 2eK3cXnpHG3L8vjoDqhfTxWnYLR0zTcH8LzQZcMjpUqAof42os/R4/p9sqlJjaRVV0Js=;
+ bh=vEJiD15A68fC6SKwYs5XNRqfHJAp+vmoTIHZ0Wq7X1E=; b=RnH1/phCNfGpcH0s9xF7OYkCNK
+ QNMEta9QzsfVZU9M2AlyGoPBWCOXIukzmIAy4Kx4ekrIMzvXDOoHplpu1t9zdiQxkMJfr0XQgiFM0
+ xQUMUFp7Y592q02KDgKlxC3gi9NZDiV58qXTfIzxxJUAHC2yEPv4qHQ2hKG4vu3liHt8=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date
  :message-id:reply-to;
- bh=E33K4tt62trvRpPvq+30izBLUL0IuVPL5OXIZrHr8HE=;
- b=cl1Xi/1e0WoTPVgLswyDuFR7lxs/43LEKKD7Bo9Uw9kac9ra7cvb01UWyMEi5xxewT
- hyL1BtZ+mvM34/0A7+CMLc6hilzxun99rEMpx9xjsykG1vTPGkIhB0QBQ69a8Au+JrCf
- AfOyDw8pkWku9S+gAdDsIMskLeX96aYNe6IMl5AUvy5q7T1Ssku0uduQ+1wzM3YP9ppY
- 7I0Y8VcM5OTQAhlJHbjcqxwUUfDUbj/f/tlW+sAL897w74AqpJQalJRfI1m2YFF1Lzb9
- r7eQ9gDkU5KFgK435GKStDS+BPmOYqtl3hyxC8hNrnbgmF0V6L78/uFd3xZV3vd3SDtq
- /rgw==
+ bh=vEJiD15A68fC6SKwYs5XNRqfHJAp+vmoTIHZ0Wq7X1E=;
+ b=HuFrfcPO7PV53ayIMggGbnfzpHoeRQFhEFVQOHPc6PzciA7uBE16kgNsOTzTc1N9dJ
+ 2hSJwfj31GhqB57Dr9/JR3txjsKxYKd0DISzk5VV/d3E3Vvva9/OdBLRndwoGjHrDXuK
+ 3qY8DRPEAXcVMt/sdZ/bgfMCfvzda7cDqa8pI+Md0v4rCay9b1P1aDFJ+wuv/xkwhjDh
+ 0KtsJUtybAp1KLL3S4A3UmyZmXQ8CTdDX6Bkp+k+AXUIgWAtr3eIZaG4Vz97JDWv8G7t
+ DfxB/Jkfg4jPAEaUIknmd3fhww6CnCHqRF/goZ5vhsIyCSXiY5Ug+9SlNiOQCIqmtJWg
+ 3FVg==
 In-Reply-To: <20221017202451.4951-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -57,75 +57,45 @@ the removal of find_get_pages_range_tag().
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/nilfs2/page.c | 39 ++++++++++++++++++++-------------------
- 1 file changed, 20 insertions(+), 19 deletions(-)
+ fs/nilfs2/page.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 
 diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 39b7eea2642a..d921542a9593 100644
+index d921542a9593..41ccd43cd979 100644
 --- a/fs/nilfs2/page.c
 +++ b/fs/nilfs2/page.c
-@@ -240,42 +240,43 @@ static void nilfs_copy_page(struct page *dst, struct page *src, int copy_dirty)
- int nilfs_copy_dirty_pages(struct address_space *dmap,
- 			   struct address_space *smap)
+@@ -358,22 +358,22 @@ void nilfs_copy_back_pages(struct address_space *dmap,
+  */
+ void nilfs_clear_dirty_pages(struct address_space *mapping, bool silent)
  {
 -	struct pagevec pvec;
 +	struct folio_batch fbatch;
  	unsigned int i;
  	pgoff_t index = 0;
- 	int err = 0;
  
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
- repeat:
--	if (!pagevec_lookup_tag(&pvec, smap, &index, PAGECACHE_TAG_DIRTY))
-+	if (!filemap_get_folios_tag(smap, &index, (pgoff_t)-1,
-+				PAGECACHE_TAG_DIRTY, &fbatch))
- 		return 0;
  
--	for (i = 0; i < pagevec_count(&pvec); i++) {
--		struct page *page = pvec.pages[i], *dpage;
-+	for (i = 0; i < folio_batch_count(&fbatch); i++) {
-+		struct folio *folio = fbatch.folios[i], *dfolio;
+-	while (pagevec_lookup_tag(&pvec, mapping, &index,
+-					PAGECACHE_TAG_DIRTY)) {
+-		for (i = 0; i < pagevec_count(&pvec); i++) {
+-			struct page *page = pvec.pages[i];
++	while (filemap_get_folios_tag(mapping, &index, (pgoff_t)-1,
++				PAGECACHE_TAG_DIRTY, &fbatch)) {
++		for (i = 0; i < folio_batch_count(&fbatch); i++) {
++			struct folio *folio = fbatch.folios[i];
  
--		lock_page(page);
--		if (unlikely(!PageDirty(page)))
--			NILFS_PAGE_BUG(page, "inconsistent dirty state");
-+		folio_lock(folio);
-+		if (unlikely(!folio_test_dirty(folio)))
-+			NILFS_PAGE_BUG(&folio->page, "inconsistent dirty state");
- 
--		dpage = grab_cache_page(dmap, page->index);
--		if (unlikely(!dpage)) {
-+		dfolio = filemap_grab_folio(dmap, folio->index);
-+		if (unlikely(!dfolio)) {
- 			/* No empty page is added to the page cache */
- 			err = -ENOMEM;
+-			lock_page(page);
+-			nilfs_clear_dirty_page(page, silent);
 -			unlock_page(page);
++			folio_lock(folio);
++			nilfs_clear_dirty_page(&folio->page, silent);
 +			folio_unlock(folio);
- 			break;
  		}
--		if (unlikely(!page_has_buffers(page)))
--			NILFS_PAGE_BUG(page,
-+		if (unlikely(!folio_buffers(folio)))
-+			NILFS_PAGE_BUG(&folio->page,
- 				       "found empty page in dat page cache");
- 
--		nilfs_copy_page(dpage, page, 1);
--		__set_page_dirty_nobuffers(dpage);
-+		nilfs_copy_page(&dfolio->page, &folio->page, 1);
-+		filemap_dirty_folio(folio_mapping(dfolio), dfolio);
- 
--		unlock_page(dpage);
--		put_page(dpage);
--		unlock_page(page);
-+		folio_unlock(dfolio);
-+		folio_put(dfolio);
-+		folio_unlock(folio);
+-		pagevec_release(&pvec);
++		folio_batch_release(&fbatch);
+ 		cond_resched();
  	}
--	pagevec_release(&pvec);
-+	folio_batch_release(&fbatch);
- 	cond_resched();
- 
- 	if (likely(!err))
+ }
 -- 
 2.36.1
