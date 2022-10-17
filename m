@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v3 04/23] page-writeback: Convert
- write_cache_pages() to use filemap_get_folios_tag()
-Date: Mon, 17 Oct 2022 13:24:32 -0700
-Message-ID: <20221017202451.4951-5-vishal.moola@gmail.com>
+Subject: [PATCH v3 02/23] filemap: Added
+ filemap_get_folios_tag()
+Date: Mon, 17 Oct 2022 13:24:30 -0700
+Message-ID: <20221017202451.4951-3-vishal.moola@gmail.com>
 References: <20221017202451.4951-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -15,10 +15,10 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Djg16035gM5p4sGWRwaRPAJ04PvNuws/dBsvoNLi870=;
-	b=i+SRBoBwlUsvcnRSQ7l4Oa9W1Hj1oRsvYDlYFIkx45ywRgiONa42jhUO/fZCxpPMHZsIMj
-	jnmjMheCt4EuvVeGIrK+6nnqsH65MpKKs7KHS2CpF6piBA36mvlFiWgf9/Kcyv0VsCMXTp
-	Icu/7jzVPUolcDmfJroPiGGThkwTr2M=
+	bh=iL1dJ1+HlDDjTxTgJeEvA/bk0AVphIHMY13JSDpQpPE=;
+	b=gLq0nrFgbgRAtILDpwed3dD3etinjAGMfljuysmXOOC4q8AWwOGpq8Vmy10P8ENHfd7TwU
+	ZOJ5Vz6Y2qvfT7z8RV+nxP7S9VPr9YxCHuc29PtxK+521lkt56tlwlpav8MvBIb+7AhNkt
+	o7WNcJt7lZsFfwYyFGO0hSR4nHLXtbM=
 In-Reply-To: <20221017202451.4951-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
@@ -34,126 +34,99 @@ Content-Type: text/plain; charset="us-ascii"; x-default="true"
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Converted function to use folios throughout. This is in preparation for
-the removal of find_get_pages_range_tag().
+This is the equivalent of find_get_pages_range_tag(), except for folios
+instead of pages.
+
+One noteable difference is filemap_get_folios_tag() does not take in a
+maximum pages argument. It instead tries to fill a folio batch and stops
+either once full (15 folios) or reaching the end of the search range.
+
+The new function supports large folios, the initial function did not
+since all callers don't use large folios.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 ---
- mm/page-writeback.c | 44 +++++++++++++++++++++++---------------------
- 1 file changed, 23 insertions(+), 21 deletions(-)
+ include/linux/pagemap.h |  2 ++
+ mm/filemap.c            | 53 +++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 55 insertions(+)
 
-diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 7e9d8d857ecc..aeec8b196232 100644
---- a/mm/page-writeback.c
-+++ b/mm/page-writeback.c
-@@ -2286,15 +2286,15 @@ int write_cache_pages(struct address_space *mapping,
- 	int ret = 0;
- 	int done = 0;
- 	int error;
--	struct pagevec pvec;
--	int nr_pages;
-+	struct folio_batch fbatch;
-+	int nr_folios;
- 	pgoff_t index;
- 	pgoff_t end;		/* Inclusive */
- 	pgoff_t done_index;
- 	int range_whole = 0;
- 	xa_mark_t tag;
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index 74d87e37a142..28275eecb949 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -740,6 +740,8 @@ unsigned filemap_get_folios(struct address_space *mapping, pgoff_t *start,
+ 		pgoff_t end, struct folio_batch *fbatch);
+ unsigned filemap_get_folios_contig(struct address_space *mapping,
+ 		pgoff_t *start, pgoff_t end, struct folio_batch *fbatch);
++unsigned filemap_get_folios_tag(struct address_space *mapping, pgoff_t *start,
++		pgoff_t end, xa_mark_t tag, struct folio_batch *fbatch);
+ unsigned find_get_pages_range_tag(struct address_space *mapping, pgoff_t *index,
+ 			pgoff_t end, xa_mark_t tag, unsigned int nr_pages,
+ 			struct page **pages);
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 08341616ae7a..aa6e90ab0551 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2262,6 +2262,59 @@ unsigned filemap_get_folios_contig(struct address_space *mapping,
+ }
+ EXPORT_SYMBOL(filemap_get_folios_contig);
  
--	pagevec_init(&pvec);
-+	folio_batch_init(&fbatch);
- 	if (wbc->range_cyclic) {
- 		index = mapping->writeback_index; /* prev offset */
- 		end = -1;
-@@ -2314,17 +2314,18 @@ int write_cache_pages(struct address_space *mapping,
- 	while (!done && (index <= end)) {
- 		int i;
- 
--		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
--				tag);
--		if (nr_pages == 0)
-+		nr_folios = filemap_get_folios_tag(mapping, &index, end,
-+				tag, &fbatch);
++/**
++ * filemap_get_folios_tag - Get a batch of folios matching @tag.
++ * @mapping:    The address_space to search
++ * @start:      The starting page index
++ * @end:        The final page index (inclusive)
++ * @tag:        The tag index
++ * @fbatch:     The batch to fill
++ *
++ * Same as filemap_get_folios, but only returning folios tagged with @tag
++ *
++ * Return: The number of folios found
++ * Also update @start to index the next folio for traversal
++ */
++unsigned filemap_get_folios_tag(struct address_space *mapping, pgoff_t *start,
++			pgoff_t end, xa_mark_t tag, struct folio_batch *fbatch)
++{
++	XA_STATE(xas, &mapping->i_pages, *start);
++	struct folio *folio;
 +
-+		if (nr_folios == 0)
- 			break;
- 
--		for (i = 0; i < nr_pages; i++) {
--			struct page *page = pvec.pages[i];
-+		for (i = 0; i < nr_folios; i++) {
-+			struct folio *folio = fbatch.folios[i];
- 
--			done_index = page->index;
-+			done_index = folio->index;
- 
--			lock_page(page);
-+			folio_lock(folio);
- 
- 			/*
- 			 * Page truncated or invalidated. We can freely skip it
-@@ -2334,30 +2335,30 @@ int write_cache_pages(struct address_space *mapping,
- 			 * even if there is now a new, dirty page at the same
- 			 * pagecache address.
- 			 */
--			if (unlikely(page->mapping != mapping)) {
-+			if (unlikely(folio->mapping != mapping)) {
- continue_unlock:
--				unlock_page(page);
-+				folio_unlock(folio);
- 				continue;
- 			}
- 
--			if (!PageDirty(page)) {
-+			if (!folio_test_dirty(folio)) {
- 				/* someone wrote it for us */
- 				goto continue_unlock;
- 			}
- 
--			if (PageWriteback(page)) {
-+			if (folio_test_writeback(folio)) {
- 				if (wbc->sync_mode != WB_SYNC_NONE)
--					wait_on_page_writeback(page);
-+					folio_wait_writeback(folio);
- 				else
- 					goto continue_unlock;
- 			}
- 
--			BUG_ON(PageWriteback(page));
--			if (!clear_page_dirty_for_io(page))
-+			BUG_ON(folio_test_writeback(folio));
-+			if (!folio_clear_dirty_for_io(folio))
- 				goto continue_unlock;
- 
- 			trace_wbc_writepage(wbc, inode_to_bdi(mapping->host));
--			error = (*writepage)(page, wbc, data);
-+			error = writepage(&folio->page, wbc, data);
- 			if (unlikely(error)) {
- 				/*
- 				 * Handle errors according to the type of
-@@ -2372,11 +2373,12 @@ int write_cache_pages(struct address_space *mapping,
- 				 * the first error.
- 				 */
- 				if (error == AOP_WRITEPAGE_ACTIVATE) {
--					unlock_page(page);
-+					folio_unlock(folio);
- 					error = 0;
- 				} else if (wbc->sync_mode != WB_SYNC_ALL) {
- 					ret = error;
--					done_index = page->index + 1;
-+					done_index = folio->index +
-+						folio_nr_pages(folio);
- 					done = 1;
- 					break;
- 				}
-@@ -2396,7 +2398,7 @@ int write_cache_pages(struct address_space *mapping,
- 				break;
- 			}
- 		}
--		pagevec_release(&pvec);
-+		folio_batch_release(&fbatch);
- 		cond_resched();
- 	}
- 
++	rcu_read_lock();
++	while ((folio = find_get_entry(&xas, end, tag)) != NULL) {
++		/* Shadow entries should never be tagged, but this iteration
++		 * is lockless so there is a window for page reclaim to evict
++		 * a page we saw tagged. Skip over it.
++		 */
++		if (xa_is_value(folio))
++			continue;
++		if (!folio_batch_add(fbatch, folio)) {
++			unsigned long nr = folio_nr_pages(folio);
++
++			if (folio_test_hugetlb(folio))
++				nr = 1;
++			*start = folio->index + nr;
++			goto out;
++		}
++	}
++	/*
++	 * We come here when there is no page beyond @end. We take care to not
++	 * overflow the index @start as it confuses some of the callers. This
++	 * breaks the iteration when there is a page at index -1 but that is
++	 * already broke anyway.
++	 */
++	if (end == (pgoff_t)-1)
++		*start = (pgoff_t)-1;
++	else
++		*start = end + 1;
++out:
++	rcu_read_unlock();
++
++	return folio_batch_count(fbatch);
++}
++EXPORT_SYMBOL(filemap_get_folios_tag);
++
+ /**
+  * find_get_pages_range_tag - Find and return head pages matching @tag.
+  * @mapping:	the address_space to search
 -- 
 2.36.1
 
