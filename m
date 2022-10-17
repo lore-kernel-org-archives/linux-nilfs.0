@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v3 22/23] nilfs2: Convert
- nilfs_clear_dirty_pages() to use filemap_get_folios_tag()
-Date: Mon, 17 Oct 2022 13:24:50 -0700
-Message-ID: <20221017202451.4951-23-vishal.moola@gmail.com>
+Subject: [PATCH v3 20/23] nilfs2: Convert
+ nilfs_btree_lookup_dirty_buffers() to use filemap_get_folios_tag()
+Date: Mon, 17 Oct 2022 13:24:48 -0700
+Message-ID: <20221017202451.4951-21-vishal.moola@gmail.com>
 References: <20221017202451.4951-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=vEJiD15A68fC6SKwYs5XNRqfHJAp+vmoTIHZ0Wq7X1E=; b=dVnRxyAcMLaUy+636kugVoqCuw
- s+f1GePxsqyooCMnc1LVPtK8M2zgdVJxzEnWK10NaRl1+K9+lvHvLFqND+ypLIq3VS00pJ0zLyIvS
- I4CRzgG3Jo12OgBGgY37Kz1pqX7fAhETgiqM0bZLTNjB/02BEHtcD/Jc7JHKkPNfBLTo=;
+ bh=BQteUz3c9SmxpbrkCwFkAif0aIJ90TCQG7A+tAmDyzA=; b=XN6bZmp5F8MTRPrbQ0ZP0/CvpP
+ UeJC3F+hPWNfwuvDOI43OJJKKlp6Tjr3OOS8vfohp7UgKhyMTCZ+U3rzPdAD3yjcpUsmB7uYgMtFb
+ /U+L0E4q1wK/rweXh2ueEsqeLqdNLV7WXoaF8fII+aB6B+FD0Z/gzlizOSSvxIfboLPA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,20 +24,20 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=vEJiD15A68fC6SKwYs5XNRqfHJAp+vmoTIHZ0Wq7X1E=; b=RnH1/phCNfGpcH0s9xF7OYkCNK
- QNMEta9QzsfVZU9M2AlyGoPBWCOXIukzmIAy4Kx4ekrIMzvXDOoHplpu1t9zdiQxkMJfr0XQgiFM0
- xQUMUFp7Y592q02KDgKlxC3gi9NZDiV58qXTfIzxxJUAHC2yEPv4qHQ2hKG4vu3liHt8=;
+ bh=BQteUz3c9SmxpbrkCwFkAif0aIJ90TCQG7A+tAmDyzA=; b=OWy0D/AnjUiCDisyoS41rqLUWm
+ DM670EWLCkBR7jvgL3lND+9pkMKAnVyhCqVkbNwV99vOjGM3+LqmPdP72POBGLHZABJHi91Iqoone
+ dhFgzKC41NJJt041wtoHSBwaaxk1ZwVhFtQHuTsT0JpAAtoAGxhez9Yo1SfuNUrIvPqE=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date
  :message-id:reply-to;
- bh=vEJiD15A68fC6SKwYs5XNRqfHJAp+vmoTIHZ0Wq7X1E=;
- b=HuFrfcPO7PV53ayIMggGbnfzpHoeRQFhEFVQOHPc6PzciA7uBE16kgNsOTzTc1N9dJ
- 2hSJwfj31GhqB57Dr9/JR3txjsKxYKd0DISzk5VV/d3E3Vvva9/OdBLRndwoGjHrDXuK
- 3qY8DRPEAXcVMt/sdZ/bgfMCfvzda7cDqa8pI+Md0v4rCay9b1P1aDFJ+wuv/xkwhjDh
- 0KtsJUtybAp1KLL3S4A3UmyZmXQ8CTdDX6Bkp+k+AXUIgWAtr3eIZaG4Vz97JDWv8G7t
- DfxB/Jkfg4jPAEaUIknmd3fhww6CnCHqRF/goZ5vhsIyCSXiY5Ug+9SlNiOQCIqmtJWg
- 3FVg==
+ bh=BQteUz3c9SmxpbrkCwFkAif0aIJ90TCQG7A+tAmDyzA=;
+ b=Fjdsm+Pk28Zc97Y3NfxZL728h8TE5RyApTDow3aidnlAK3LTkxWjYLDilgvIsLE/vY
+ DG2gnD/1V7xSRF9OsJCuy+QagbO7ftNrkZXcC/buneGyVqq9VL7AeRJOtRVYGhe2g3EB
+ a/blG4d7UpkK2Y2MOZagl8fy+aFT9x6oOzcS45P8bK45kIEfwM/C09l7FqmJaWnoZXwX
+ gFZ3AcnGYu59H2kxWRp0XYa5xE9P9qVWQYQvuOmeTw7vv99Hq0namT7cuf+rd9Gkq85p
+ 7ZTnLCbq+RCD+NDxRapqFx6sJOCTXTzxUuQk7bLK0jIgrjjyBfZ8t57LhzVtWkrgsAPJ
+ 0NWQ==
 In-Reply-To: <20221017202451.4951-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -57,45 +57,47 @@ the removal of find_get_pages_range_tag().
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/nilfs2/page.c | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ fs/nilfs2/btree.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index d921542a9593..41ccd43cd979 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -358,22 +358,22 @@ void nilfs_copy_back_pages(struct address_space *dmap,
-  */
- void nilfs_clear_dirty_pages(struct address_space *mapping, bool silent)
- {
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index b9d15c3df3cc..da6a19eede9a 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -2141,7 +2141,7 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
+ 	struct inode *btnc_inode = NILFS_BMAP_I(btree)->i_assoc_inode;
+ 	struct address_space *btcache = btnc_inode->i_mapping;
+ 	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
 -	struct pagevec pvec;
 +	struct folio_batch fbatch;
- 	unsigned int i;
+ 	struct buffer_head *bh, *head;
  	pgoff_t index = 0;
+ 	int level, i;
+@@ -2151,19 +2151,19 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
+ 	     level++)
+ 		INIT_LIST_HEAD(&lists[level]);
  
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
  
--	while (pagevec_lookup_tag(&pvec, mapping, &index,
+-	while (pagevec_lookup_tag(&pvec, btcache, &index,
 -					PAGECACHE_TAG_DIRTY)) {
 -		for (i = 0; i < pagevec_count(&pvec); i++) {
--			struct page *page = pvec.pages[i];
-+	while (filemap_get_folios_tag(mapping, &index, (pgoff_t)-1,
+-			bh = head = page_buffers(pvec.pages[i]);
++	while (filemap_get_folios_tag(btcache, &index, (pgoff_t)-1,
 +				PAGECACHE_TAG_DIRTY, &fbatch)) {
 +		for (i = 0; i < folio_batch_count(&fbatch); i++) {
-+			struct folio *folio = fbatch.folios[i];
- 
--			lock_page(page);
--			nilfs_clear_dirty_page(page, silent);
--			unlock_page(page);
-+			folio_lock(folio);
-+			nilfs_clear_dirty_page(&folio->page, silent);
-+			folio_unlock(folio);
++			bh = head = folio_buffers(fbatch.folios[i]);
+ 			do {
+ 				if (buffer_dirty(bh))
+ 					nilfs_btree_add_dirty_buffer(btree,
+ 								     lists, bh);
+ 			} while ((bh = bh->b_this_page) != head);
  		}
 -		pagevec_release(&pvec);
 +		folio_batch_release(&fbatch);
  		cond_resched();
  	}
- }
+ 
 -- 
 2.36.1
