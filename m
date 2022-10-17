@@ -1,53 +1,36 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v3 20/23] nilfs2: Convert
- nilfs_btree_lookup_dirty_buffers() to use filemap_get_folios_tag()
-Date: Mon, 17 Oct 2022 13:24:48 -0700
-Message-ID: <20221017202451.4951-21-vishal.moola@gmail.com>
+Subject: [PATCH v3 18/23] nilfs2: Convert
+ nilfs_lookup_dirty_data_buffers() to use filemap_get_folios_tag()
+Date: Mon, 17 Oct 2022 13:24:46 -0700
+Message-ID: <20221017202451.4951-19-vishal.moola@gmail.com>
 References: <20221017202451.4951-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:References:
- In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=BQteUz3c9SmxpbrkCwFkAif0aIJ90TCQG7A+tAmDyzA=; b=XN6bZmp5F8MTRPrbQ0ZP0/CvpP
- UeJC3F+hPWNfwuvDOI43OJJKKlp6Tjr3OOS8vfohp7UgKhyMTCZ+U3rzPdAD3yjcpUsmB7uYgMtFb
- /U+L0E4q1wK/rweXh2ueEsqeLqdNLV7WXoaF8fII+aB6B+FD0Z/gzlizOSSvxIfboLPA=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=BQteUz3c9SmxpbrkCwFkAif0aIJ90TCQG7A+tAmDyzA=; b=OWy0D/AnjUiCDisyoS41rqLUWm
- DM670EWLCkBR7jvgL3lND+9pkMKAnVyhCqVkbNwV99vOjGM3+LqmPdP72POBGLHZABJHi91Iqoone
- dhFgzKC41NJJt041wtoHSBwaaxk1ZwVhFtQHuTsT0JpAAtoAGxhez9Yo1SfuNUrIvPqE=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:from:to:cc:subject:date
- :message-id:reply-to;
- bh=BQteUz3c9SmxpbrkCwFkAif0aIJ90TCQG7A+tAmDyzA=;
- b=Fjdsm+Pk28Zc97Y3NfxZL728h8TE5RyApTDow3aidnlAK3LTkxWjYLDilgvIsLE/vY
- DG2gnD/1V7xSRF9OsJCuy+QagbO7ftNrkZXcC/buneGyVqq9VL7AeRJOtRVYGhe2g3EB
- a/blG4d7UpkK2Y2MOZagl8fy+aFT9x6oOzcS45P8bK45kIEfwM/C09l7FqmJaWnoZXwX
- gFZ3AcnGYu59H2kxWRp0XYa5xE9P9qVWQYQvuOmeTw7vv99Hq0namT7cuf+rd9Gkq85p
- 7ZTnLCbq+RCD+NDxRapqFx6sJOCTXTzxUuQk7bLK0jIgrjjyBfZ8t57LhzVtWkrgsAPJ
- 0NWQ==
+Content-Transfer-Encoding: 8bit
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1666038320;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=HDAaQjWw9mFQrxjxUUwcIUCSC2HAIvgNCPk+fwsNTgA=;
+	b=a6xio6nIhe8hKuiwJzQzw8o0TbfNReM7tAHLPnwE7L5j5K6InY+SjoYY2GRgP6NiXm+J0H
+	kc/uct9qHxe7jn6iG6FYveo5Cq+ebzoAQR9E6WGCWuD4P9CuTFimFGtQ5xZT+W3RTrDSJP
+	gW8e20dmDlauVP0d6o6JISB1ZEDQ/5o=
 In-Reply-To: <20221017202451.4951-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; x-default="true"
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
@@ -57,47 +40,75 @@ the removal of find_get_pages_range_tag().
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/nilfs2/btree.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ fs/nilfs2/segment.c | 29 ++++++++++++++++-------------
+ 1 file changed, 16 insertions(+), 13 deletions(-)
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index b9d15c3df3cc..da6a19eede9a 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -2141,7 +2141,7 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
- 	struct inode *btnc_inode = NILFS_BMAP_I(btree)->i_assoc_inode;
- 	struct address_space *btcache = btnc_inode->i_mapping;
- 	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index b4cebad21b48..2183e1698f8e 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -680,7 +680,7 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
+ 					      loff_t start, loff_t end)
+ {
+ 	struct address_space *mapping = inode->i_mapping;
 -	struct pagevec pvec;
 +	struct folio_batch fbatch;
- 	struct buffer_head *bh, *head;
- 	pgoff_t index = 0;
- 	int level, i;
-@@ -2151,19 +2151,19 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
- 	     level++)
- 		INIT_LIST_HEAD(&lists[level]);
- 
+ 	pgoff_t index = 0, last = ULONG_MAX;
+ 	size_t ndirties = 0;
+ 	int i;
+@@ -694,23 +694,26 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
+ 		index = start >> PAGE_SHIFT;
+ 		last = end >> PAGE_SHIFT;
+ 	}
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
+  repeat:
+ 	if (unlikely(index > last) ||
+-	    !pagevec_lookup_range_tag(&pvec, mapping, &index, last,
+-				PAGECACHE_TAG_DIRTY))
++	      !filemap_get_folios_tag(mapping, &index, last,
++		      PAGECACHE_TAG_DIRTY, &fbatch))
+ 		return ndirties;
  
--	while (pagevec_lookup_tag(&pvec, btcache, &index,
--					PAGECACHE_TAG_DIRTY)) {
--		for (i = 0; i < pagevec_count(&pvec); i++) {
--			bh = head = page_buffers(pvec.pages[i]);
-+	while (filemap_get_folios_tag(btcache, &index, (pgoff_t)-1,
-+				PAGECACHE_TAG_DIRTY, &fbatch)) {
-+		for (i = 0; i < folio_batch_count(&fbatch); i++) {
-+			bh = head = folio_buffers(fbatch.folios[i]);
- 			do {
- 				if (buffer_dirty(bh))
- 					nilfs_btree_add_dirty_buffer(btree,
- 								     lists, bh);
- 			} while ((bh = bh->b_this_page) != head);
- 		}
--		pagevec_release(&pvec);
-+		folio_batch_release(&fbatch);
- 		cond_resched();
+-	for (i = 0; i < pagevec_count(&pvec); i++) {
++	for (i = 0; i < folio_batch_count(&fbatch); i++) {
+ 		struct buffer_head *bh, *head;
+-		struct page *page = pvec.pages[i];
++		struct folio *folio = fbatch.folios[i];
+ 
+-		lock_page(page);
+-		if (!page_has_buffers(page))
+-			create_empty_buffers(page, i_blocksize(inode), 0);
+-		unlock_page(page);
++		folio_lock(folio);
++		head = folio_buffers(folio);
++		if (!head) {
++			create_empty_buffers(&folio->page, i_blocksize(inode), 0);
++			head = folio_buffers(folio);
++		}
++		folio_unlock(folio);
+ 
+-		bh = head = page_buffers(page);
++		bh = head;
+ 		do {
+ 			if (!buffer_dirty(bh) || buffer_async_write(bh))
+ 				continue;
+@@ -718,13 +721,13 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
+ 			list_add_tail(&bh->b_assoc_buffers, listp);
+ 			ndirties++;
+ 			if (unlikely(ndirties >= nlimit)) {
+-				pagevec_release(&pvec);
++				folio_batch_release(&fbatch);
+ 				cond_resched();
+ 				return ndirties;
+ 			}
+ 		} while (bh = bh->b_this_page, bh != head);
  	}
- 
+-	pagevec_release(&pvec);
++	folio_batch_release(&fbatch);
+ 	cond_resched();
+ 	goto repeat;
+ }
 -- 
 2.36.1
+
