@@ -1,7 +1,7 @@
-From: syzbot <syzbot+45d6ce7b7ad7ef455d03-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] possible deadlock in nilfs_count_free_blocks
+From: syzbot <syzbot+5f89bb8d098de14e095a-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] BUG: spinlock bad magic in nilfs_palloc_destroy_cache
 Date: Mon, 17 Oct 2022 00:53:38 -0700
-Message-ID: <000000000000fbf46f05eb3645d0@google.com>
+Message-ID: <000000000000028a3c05eb364667@google.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -15,107 +15,25 @@ syzbot found the following issue on:
 
 HEAD commit:    bbed346d5a96 Merge branch 'for-next/core' into for-kernelci
 git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
-console output: https://syzkaller.appspot.com/x/log.txt?x=16341694880000
+console output: https://syzkaller.appspot.com/x/log.txt?x=14b7bfa4880000
 kernel config:  https://syzkaller.appspot.com/x/.config?x=3a4a45d2d827c1e
-dashboard link: https://syzkaller.appspot.com/bug?extid=45d6ce7b7ad7ef455d03
+dashboard link: https://syzkaller.appspot.com/bug?extid=5f89bb8d098de14e095a
 compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
 userspace arch: arm64
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=15bf870c880000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=16b91e9a880000
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=16dbead6880000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=105d329a880000
 
 Downloadable assets:
 disk image: https://storage.googleapis.com/syzbot-assets/e8e91bc79312/disk-bbed346d.raw.xz
 vmlinux: https://storage.googleapis.com/syzbot-assets/c1cb3fb3b77e/vmlinux-bbed346d.xz
-mounted in repro: https://storage.googleapis.com/syzbot-assets/db0807eded60/mount_0.gz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/79de466a501c/mount_0.gz
 
 IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+45d6ce7b7ad7ef455d03-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: syzbot+5f89bb8d098de14e095a-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
-======================================================
-WARNING: possible circular locking dependency detected
-6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0 Not tainted
-------------------------------------------------------
-syz-executor408/3031 is trying to acquire lock:
-ffff0000c0c18070 (&dat_lock_key){.+.+}-{3:3}, at: nilfs_count_free_blocks+0x2c/0x6c fs/nilfs2/the_nilfs.c:693
-
-but task is already holding lock:
-ffff0000cabc9890 (&nilfs->ns_sem){++++}-{3:3}, at: nilfs_put_super+0x4c/0x9c fs/nilfs2/super.c:471
-
-which lock already depends on the new lock.
-
-
-the existing dependency chain (in reverse order) is:
-
--> #1 (&nilfs->ns_sem){++++}-{3:3}:
-       down_write+0x5c/0xcc kernel/locking/rwsem.c:1552
-       nilfs_set_error fs/nilfs2/super.c:92 [inline]
-       __nilfs_error+0xb4/0x284 fs/nilfs2/super.c:137
-       nilfs_bmap_convert_error fs/nilfs2/bmap.c:35 [inline]
-       nilfs_bmap_lookup_contig+0x98/0xc0 fs/nilfs2/bmap.c:95
-       nilfs_get_block+0x7c/0x364 fs/nilfs2/inode.c:85
-       block_truncate_page+0x1b4/0xab4 fs/buffer.c:2583
-       nilfs_truncate+0xb8/0x178 fs/nilfs2/inode.c:857
-       nilfs_setattr+0xf8/0x164 fs/nilfs2/inode.c:955
-       notify_change+0x758/0x7f0 fs/attr.c:420
-       do_truncate+0x108/0x150 fs/open.c:65
-       vfs_truncate+0x1dc/0x24c fs/open.c:111
-       do_sys_truncate+0x94/0x140 fs/open.c:134
-       __do_sys_truncate fs/open.c:146 [inline]
-       __se_sys_truncate fs/open.c:144 [inline]
-       __arm64_sys_truncate+0x20/0x30 fs/open.c:144
-       __invoke_syscall arch/arm64/kernel/syscall.c:38 [inline]
-       invoke_syscall arch/arm64/kernel/syscall.c:52 [inline]
-       el0_svc_common+0x138/0x220 arch/arm64/kernel/syscall.c:142
-       do_el0_svc+0x48/0x164 arch/arm64/kernel/syscall.c:206
-       el0_svc+0x58/0x150 arch/arm64/kernel/entry-common.c:636
-       el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
-       el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
-
--> #0 (&dat_lock_key){.+.+}-{3:3}:
-       check_prev_add kernel/locking/lockdep.c:3095 [inline]
-       check_prevs_add kernel/locking/lockdep.c:3214 [inline]
-       validate_chain kernel/locking/lockdep.c:3829 [inline]
-       __lock_acquire+0x1530/0x30a4 kernel/locking/lockdep.c:5053
-       lock_acquire+0x100/0x1f8 kernel/locking/lockdep.c:5666
-       down_read+0x5c/0x78 kernel/locking/rwsem.c:1499
-       nilfs_count_free_blocks+0x2c/0x6c fs/nilfs2/the_nilfs.c:693
-       nilfs_set_log_cursor fs/nilfs2/super.c:236 [inline]
-       nilfs_cleanup_super+0x118/0x1f0 fs/nilfs2/super.c:318
-       nilfs_put_super+0x54/0x9c fs/nilfs2/super.c:472
-       generic_shutdown_super+0x8c/0x190 fs/super.c:491
-       kill_block_super+0x30/0x78 fs/super.c:1427
-       deactivate_locked_super+0x70/0xe8 fs/super.c:332
-       deactivate_super+0xd0/0xd4 fs/super.c:363
-       cleanup_mnt+0x1f8/0x234 fs/namespace.c:1186
-       __cleanup_mnt+0x20/0x30 fs/namespace.c:1193
-       task_work_run+0xc4/0x14c kernel/task_work.c:177
-       resume_user_mode_work include/linux/resume_user_mode.h:49 [inline]
-       do_notify_resume+0x174/0x1f0 arch/arm64/kernel/signal.c:1127
-       prepare_exit_to_user_mode arch/arm64/kernel/entry-common.c:137 [inline]
-       exit_to_user_mode arch/arm64/kernel/entry-common.c:142 [inline]
-       el0_svc+0x9c/0x150 arch/arm64/kernel/entry-common.c:637
-       el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
-       el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
-
-other info that might help us debug this:
-
- Possible unsafe locking scenario:
-
-       CPU0                    CPU1
-       ----                    ----
-  lock(&nilfs->ns_sem);
-                               lock(&dat_lock_key);
-                               lock(&nilfs->ns_sem);
-  lock(&dat_lock_key);
-
- *** DEADLOCK ***
-
-2 locks held by syz-executor408/3031:
- #0: ffff0000c902f0e0 (&type->s_umount_key#41){+.+.}-{3:3}, at: deactivate_super+0xc8/0xd4 fs/super.c:362
- #1: ffff0000cabc9890 (&nilfs->ns_sem){++++}-{3:3}, at: nilfs_put_super+0x4c/0x9c fs/nilfs2/super.c:471
-
-stack backtrace:
-CPU: 0 PID: 3031 Comm: syz-executor408 Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
+BUG: spinlock bad magic on CPU#1, syz-executor283/3079
+ lock: lock_classes+0x4aac0/0x180000, .magic: ffff8000, .owner: /235063856, .owner_cpu: 242347152
+CPU: 1 PID: 3079 Comm: syz-executor283 Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
 Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
 Call trace:
  dump_backtrace+0x1c4/0x1f0 arch/arm64/kernel/stacktrace.c:156
@@ -123,18 +41,22 @@ Call trace:
  __dump_stack lib/dump_stack.c:88 [inline]
  dump_stack_lvl+0x104/0x16c lib/dump_stack.c:106
  dump_stack+0x1c/0x58 lib/dump_stack.c:113
- print_circular_bug+0x2c4/0x2c8 kernel/locking/lockdep.c:2053
- check_noncircular+0x14c/0x154 kernel/locking/lockdep.c:2175
- check_prev_add kernel/locking/lockdep.c:3095 [inline]
- check_prevs_add kernel/locking/lockdep.c:3214 [inline]
- validate_chain kernel/locking/lockdep.c:3829 [inline]
- __lock_acquire+0x1530/0x30a4 kernel/locking/lockdep.c:5053
- lock_acquire+0x100/0x1f8 kernel/locking/lockdep.c:5666
- down_read+0x5c/0x78 kernel/locking/rwsem.c:1499
- nilfs_count_free_blocks+0x2c/0x6c fs/nilfs2/the_nilfs.c:693
- nilfs_set_log_cursor fs/nilfs2/super.c:236 [inline]
- nilfs_cleanup_super+0x118/0x1f0 fs/nilfs2/super.c:318
- nilfs_put_super+0x54/0x9c fs/nilfs2/super.c:472
+ spin_dump kernel/locking/spinlock_debug.c:69 [inline]
+ spin_bug+0xa8/0xec kernel/locking/spinlock_debug.c:77
+ debug_spin_lock_before kernel/locking/spinlock_debug.c:85 [inline]
+ do_raw_spin_lock+0xb0/0x110 kernel/locking/spinlock_debug.c:114
+ __raw_spin_lock include/linux/spinlock_api_smp.h:134 [inline]
+ _raw_spin_lock+0x5c/0x6c kernel/locking/spinlock.c:154
+ spin_lock include/linux/spinlock.h:349 [inline]
+ nilfs_palloc_clear_cache fs/nilfs2/alloc.c:848 [inline]
+ nilfs_palloc_destroy_cache+0x2c/0xb8 fs/nilfs2/alloc.c:860
+ nilfs_mdt_clear+0x34/0x70 fs/nilfs2/mdt.c:478
+ nilfs_clear_inode+0x64/0x140 fs/nilfs2/inode.c:886
+ nilfs_evict_inode+0x68/0x1cc fs/nilfs2/inode.c:908
+ evict+0xec/0x334 fs/inode.c:665
+ iput_final fs/inode.c:1748 [inline]
+ iput+0x2c4/0x324 fs/inode.c:1774
+ nilfs_put_super+0x6c/0x9c fs/nilfs2/super.c:476
  generic_shutdown_super+0x8c/0x190 fs/super.c:491
  kill_block_super+0x30/0x78 fs/super.c:1427
  deactivate_locked_super+0x70/0xe8 fs/super.c:332
@@ -149,6 +71,76 @@ Call trace:
  el0_svc+0x9c/0x150 arch/arm64/kernel/entry-common.c:637
  el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
  el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
+Unable to handle kernel paging request at virtual address ffff80000d272a70
+Mem abort info:
+  ESR = 0x0000000096000047
+  EC = 0x25: DABT (current EL), IL = 32 bits
+  SET = 0, FnV = 0
+  EA = 0, S1PTW = 0
+  FSC = 0x07: level 3 translation fault
+Data abort info:
+  ISV = 0, ISS = 0x00000047
+  CM = 0, WnR = 1
+swapper pgtable: 4k pages, 48-bit VAs, pgdp=00000001c566b000
+[ffff80000d272a70] pgd=100000023ffff003, p4d=100000023ffff003, pud=100000023fffe003, pmd=100000023fffa003, pte=0000000000000000
+Internal error: Oops: 0000000096000047 [#1] PREEMPT SMP
+Modules linked in:
+CPU: 1 PID: 3079 Comm: syz-executor283 Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
+pstate: 00400005 (nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+pc : queued_spin_lock_slowpath+0x198/0x380 kernel/locking/qspinlock.c:474
+lr : queued_spin_lock_slowpath+0x114/0x380 kernel/locking/qspinlock.c:405
+sp : ffff800010fe3a70
+x29: ffff800010fe3a70 x28: ffff0000c02f4f80 x27: 0000000000000000
+x26: ffff80000d30cf28 x25: 0000000000000000 x24: ffff0001fefefa40
+x23: 0000000000000000 x22: ffff80000d30cf28 x21: ffff80000d272a40
+x20: 0000000000000001 x19: ffff80000db93c18 x18: 0000000000000260
+x17: 6e69676e45206574 x16: 0000000000000002 x15: 0000000000000000
+x14: 0000000000000000 x13: 0000000000000db7 x12: 0000000000000000
+x11: ffff80000d272a70 x10: 0000000000080000 x9 : ffff0001fefefa48
+x8 : ffff0001fefefa40 x7 : 205b5d3838383531 x6 : ffff80000819545c
+x5 : 0000000000000000 x4 : 0000000000000001 x3 : 0000000000000000
+x2 : 0000000000000001 x1 : ffff80000ce26a9f x0 : 0000000000000001
+Call trace:
+ decode_tail kernel/locking/qspinlock.c:131 [inline]
+ queued_spin_lock_slowpath+0x198/0x380 kernel/locking/qspinlock.c:471
+ queued_spin_lock include/asm-generic/qspinlock.h:114 [inline]
+ do_raw_spin_lock+0x10c/0x110 kernel/locking/spinlock_debug.c:115
+ __raw_spin_lock include/linux/spinlock_api_smp.h:134 [inline]
+ _raw_spin_lock+0x5c/0x6c kernel/locking/spinlock.c:154
+ spin_lock include/linux/spinlock.h:349 [inline]
+ nilfs_palloc_clear_cache fs/nilfs2/alloc.c:848 [inline]
+ nilfs_palloc_destroy_cache+0x2c/0xb8 fs/nilfs2/alloc.c:860
+ nilfs_mdt_clear+0x34/0x70 fs/nilfs2/mdt.c:478
+ nilfs_clear_inode+0x64/0x140 fs/nilfs2/inode.c:886
+ nilfs_evict_inode+0x68/0x1cc fs/nilfs2/inode.c:908
+ evict+0xec/0x334 fs/inode.c:665
+ iput_final fs/inode.c:1748 [inline]
+ iput+0x2c4/0x324 fs/inode.c:1774
+ nilfs_put_super+0x6c/0x9c fs/nilfs2/super.c:476
+ generic_shutdown_super+0x8c/0x190 fs/super.c:491
+ kill_block_super+0x30/0x78 fs/super.c:1427
+ deactivate_locked_super+0x70/0xe8 fs/super.c:332
+ deactivate_super+0xd0/0xd4 fs/super.c:363
+ cleanup_mnt+0x1f8/0x234 fs/namespace.c:1186
+ __cleanup_mnt+0x20/0x30 fs/namespace.c:1193
+ task_work_run+0xc4/0x14c kernel/task_work.c:177
+ resume_user_mode_work include/linux/resume_user_mode.h:49 [inline]
+ do_notify_resume+0x174/0x1f0 arch/arm64/kernel/signal.c:1127
+ prepare_exit_to_user_mode arch/arm64/kernel/entry-common.c:137 [inline]
+ exit_to_user_mode arch/arm64/kernel/entry-common.c:142 [inline]
+ el0_svc+0x9c/0x150 arch/arm64/kernel/entry-common.c:637
+ el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
+ el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
+Code: 8b2c4ecc f85f818c 1200056b 8b2b52ab (f82b6988) 
+---[ end trace 0000000000000000 ]---
+----------------
+Code disassembly (best guess):
+   0:	8b2c4ecc 	add	x12, x22, w12, uxtw #3
+   4:	f85f818c 	ldur	x12, [x12, #-8]
+   8:	1200056b 	and	w11, w11, #0x3
+   c:	8b2b52ab 	add	x11, x21, w11, uxtw #4
+* 10:	f82b6988 	str	x8, [x12, x11] <-- trapping instruction
 
 
 ---
