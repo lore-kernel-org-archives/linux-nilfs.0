@@ -1,29 +1,29 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [syzbot] KASAN: use-after-free Read in nilfs_iget
-Date: Tue, 18 Oct 2022 08:26:30 +0900
-Message-ID: <CAKFNMo=2NxnBy-zfMwMCerVSoFpErX_JNnEUJeiqp6SrN7grcQ@mail.gmail.com>
-References: <00000000000067a90805eb42107d@google.com>
+Subject: Re: [syzbot] KASAN: use-after-free Read in nilfs_update_inode
+Date: Tue, 18 Oct 2022 09:16:52 +0900
+Message-ID: <CAKFNMonGi18JhrRxTP2rEFgpjCaqAgJRV5rw7BBk5Gi_TYeJwQ@mail.gmail.com>
+References: <000000000000ff8d3505eb3645de@google.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=EIvvchg8vQ3wKwBxcxBM55ra0tDqIX56dzE5hrwWMag=;
-        b=kT6a2oYd/9MbF2UnjIAF4yyqD6YWdM9JO49UOiHwxnlSwdwAsltxvv0xevjPE5wWoO
-         89nOiNlKuwN4IsjOL2g4PpuMQWr7J34ztdvXP4U/gHaRK/y/P8z0HBKsB+fbw0ZN4qq6
-         3B5U9FSlbi80l3RK+8AjAg6RTgRE75c/cn/+1wTWG68RvAAUKCs5Z7TjCP+kZ444D7yu
-         /CnesHuCmhZFUiTdMxDGYp5/j3P17sF9IiBK+lDmlwKS3t1Rx1Pzdo8OLra1lIHBrWCL
-         HUrX1z7IcdDAQx49Ol3M/dE/uzgySg7kdkwQ5XnLe2PNaVZzev+mW75DUEHAJ8C5w0lc
-         hfSA==
-In-Reply-To: <00000000000067a90805eb42107d-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+        bh=D3MWEkQfeydukJjl+giuEoPzizUgXD2ubknINzkbqAo=;
+        b=gfL7iLgWe6/53aJA4Y6pUs2fcfr5dZLQu+4wVpljWY8KKeaCWese6HITNbydvufEy0
+         +yK5QTZSnB/JWWS2Q+GF9YSoYRDOm5bZtvRi3b7JyDUJBK0ecGCnQEf29TCtUDDAWe+B
+         2nyNiKfs8SBzgq6NKoqJMWuT5tw/MXIlvtrf8XkselYm1TrKcmT7FE0TN7bu6xujJ4W3
+         lulISPkPhjsGBF/2+wytoZwEku5R9O5UEHSQWStQpgBNv+bs9CIIMz8hP+FS2VJp/e/n
+         1OpjmpW+5eN40ToP/yKJ/+1/o4knjntDeLI8mN6Udmc2/KMpH3lBaOcEvHoeWsDY0y3N
+         xecQ==
+In-Reply-To: <000000000000ff8d3505eb3645de-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: syzbot <syzbot+e7b15dcc1051f8b99e58-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+To: syzbot <syzbot+ddb45ee60a8ea1b7a21f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-On Tue, Oct 18, 2022 at 6:57 AM syzbot wrote:
+On Mon, Oct 17, 2022 at 4:53 PM syzbot wrote:
 >
 > Hello,
 >
@@ -31,27 +31,30 @@ On Tue, Oct 18, 2022 at 6:57 AM syzbot wrote:
 >
 > HEAD commit:    493ffd6605b2 Merge tag 'ucount-rlimits-cleanups-for-v5.19'..
 > git tree:       upstream
-> console output: https://syzkaller.appspot.com/x/log.txt?x=1368e0aa880000
+> console+strace: https://syzkaller.appspot.com/x/log.txt?x=1241e73a880000
 > kernel config:  https://syzkaller.appspot.com/x/.config?x=d19f5d16783f901
-> dashboard link: https://syzkaller.appspot.com/bug?extid=e7b15dcc1051f8b99e58
+> dashboard link: https://syzkaller.appspot.com/bug?extid=ddb45ee60a8ea1b7a21f
 > compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
->
-> Unfortunately, I don't have any reproducer for this issue yet.
+> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=11cd6daa880000
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=16594b8a880000
 >
 > Downloadable assets:
 > disk image: https://storage.googleapis.com/syzbot-assets/f1ff6481e26f/disk-493ffd66.raw.xz
 > vmlinux: https://storage.googleapis.com/syzbot-assets/101bd3c7ae47/vmlinux-493ffd66.xz
+> mounted in repro: https://storage.googleapis.com/syzbot-assets/9097ed9eaf36/mount_0.gz
 >
 > IMPORTANT: if you fix the issue, please add the following tag to the commit:
-> Reported-by: syzbot+e7b15dcc1051f8b99e58-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+> Reported-by: syzbot+ddb45ee60a8ea1b7a21f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 >
-> loop5: detected capacity change from 0 to 2048
+> syz-executor141: attempt to access beyond end of device
+> loop0: rw=0, sector=15744656570680999970, nr_sectors = 2 limit=2048
+> syz-executor141: attempt to access beyond end of device
+> loop0: rw=0, sector=15744656570680999970, nr_sectors = 2 limit=2048
 > ==================================================================
-> BUG: KASAN: use-after-free in __nilfs_read_inode fs/nilfs2/inode.c:477 [inline]
-> BUG: KASAN: use-after-free in nilfs_iget+0x242/0x8b0 fs/nilfs2/inode.c:603
-> Read of size 8 at addr ffff8880201cba30 by task syz-executor.5/22617
+> BUG: KASAN: use-after-free in nilfs_update_inode+0x72/0x1c0 fs/nilfs2/inode.c:788
+> Read of size 8 at addr ffff88801f816230 by task syz-executor141/3606
 >
-> CPU: 1 PID: 22617 Comm: syz-executor.5 Not tainted 6.0.0-syzkaller-09423-g493ffd6605b2 #0
+> CPU: 1 PID: 3606 Comm: syz-executor141 Not tainted 6.0.0-syzkaller-09423-g493ffd6605b2 #0
 > Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/22/2022
 > Call Trace:
 >  <TASK>
@@ -60,32 +63,29 @@ On Tue, Oct 18, 2022 at 6:57 AM syzbot wrote:
 >  print_address_description+0x65/0x4b0 mm/kasan/report.c:317
 >  print_report+0x108/0x1f0 mm/kasan/report.c:433
 >  kasan_report+0xc3/0xf0 mm/kasan/report.c:495
->  __nilfs_read_inode fs/nilfs2/inode.c:477 [inline]
->  nilfs_iget+0x242/0x8b0 fs/nilfs2/inode.c:603
->  nilfs_lookup+0xca/0x110 fs/nilfs2/namei.c:63
->  lookup_open fs/namei.c:3391 [inline]
->  open_last_lookups fs/namei.c:3481 [inline]
->  path_openat+0x10e6/0x2df0 fs/namei.c:3688
->  do_filp_open+0x264/0x4f0 fs/namei.c:3718
->  do_sys_openat2+0x124/0x4e0 fs/open.c:1310
->  do_sys_open fs/open.c:1326 [inline]
->  __do_sys_openat fs/open.c:1342 [inline]
->  __se_sys_openat fs/open.c:1337 [inline]
->  __x64_sys_openat+0x243/0x290 fs/open.c:1337
+>  nilfs_update_inode+0x72/0x1c0 fs/nilfs2/inode.c:788
+>  __nilfs_mark_inode_dirty+0xc2/0x250 fs/nilfs2/inode.c:1079
+>  nilfs_mark_inode_dirty fs/nilfs2/nilfs.h:288 [inline]
+>  nilfs_mkdir+0x24e/0x320 fs/nilfs2/namei.c:255
+>  vfs_mkdir+0x3b3/0x590 fs/namei.c:4013
+>  do_mkdirat+0x279/0x550 fs/namei.c:4038
+>  __do_sys_mkdirat fs/namei.c:4053 [inline]
+>  __se_sys_mkdirat fs/namei.c:4051 [inline]
+>  __x64_sys_mkdirat+0x85/0x90 fs/namei.c:4051
 >  do_syscall_x64 arch/x86/entry/common.c:50 [inline]
 >  do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
 >  entry_SYSCALL_64_after_hwframe+0x63/0xcd
-> RIP: 0033:0x7f7bb388b5a9
-> Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
-> RSP: 002b:00007f7bb4a20168 EFLAGS: 00000246 ORIG_RAX: 0000000000000101
-> RAX: ffffffffffffffda RBX: 00007f7bb39abf80 RCX: 00007f7bb388b5a9
-> RDX: 0000000000010000 RSI: 0000000020000080 RDI: ffffffffffffff9c
-> RBP: 00007f7bb38e6580 R08: 0000000000000000 R09: 0000000000000000
-> R10: 0000000000000082 R11: 0000000000000246 R12: 0000000000000000
-> R13: 00007ffc185e581f R14: 00007f7bb4a20300 R15: 0000000000022000
+> RIP: 0033:0x7f5c14d482e9
+> Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48
+> RSP: 002b:00007ffdc679fd08 EFLAGS: 00000246 ORIG_RAX: 0000000000000102
+> RAX: ffffffffffffffda RBX: 000000000000001e RCX: 00007f5c14d482e9
+> RDX: 0000000000000000 RSI: 0000000020000000 RDI: 0000000000000003
+> RBP: 00007f5c14d07ab0 R08: 0000000000000000 R09: 0000000000000000
+> R10: 0000000000000000 R11: 0000000000000246 R12: 00007f5c14d07b40
+> R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
 >  </TASK>
 >
-> Allocated by task 22617:
+> Allocated by task 3606:
 >  kasan_save_stack mm/kasan/common.c:38 [inline]
 >  kasan_set_track mm/kasan/common.c:45 [inline]
 >  set_alloc_info mm/kasan/common.c:437 [inline]
@@ -108,7 +108,7 @@ On Tue, Oct 18, 2022 at 6:57 AM syzbot wrote:
 >  do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
 >  entry_SYSCALL_64_after_hwframe+0x63/0xcd
 >
-> Freed by task 22617:
+> Freed by task 3606:
 >  kasan_save_stack mm/kasan/common.c:38 [inline]
 >  kasan_set_track+0x3d/0x60 mm/kasan/common.c:45
 >  kasan_set_free_info+0x1f/0x40 mm/kasan/generic.c:370
@@ -121,68 +121,30 @@ On Tue, Oct 18, 2022 at 6:57 AM syzbot wrote:
 >  nilfs_evict_inode+0x253/0x3d0 fs/nilfs2/inode.c:924
 >  evict+0x2a4/0x620 fs/inode.c:664
 >  nilfs_new_inode+0x6b8/0x8a0
->  nilfs_create+0xdc/0x2d0 fs/nilfs2/namei.c:85
->  lookup_open fs/namei.c:3413 [inline]
->  open_last_lookups fs/namei.c:3481 [inline]
->  path_openat+0x12d0/0x2df0 fs/namei.c:3688
->  do_filp_open+0x264/0x4f0 fs/namei.c:3718
->  do_sys_openat2+0x124/0x4e0 fs/open.c:1310
->  do_sys_open fs/open.c:1326 [inline]
->  __do_sys_creat fs/open.c:1402 [inline]
->  __se_sys_creat fs/open.c:1396 [inline]
->  __x64_sys_creat+0x11f/0x160 fs/open.c:1396
+>  nilfs_mkdir+0xfc/0x320 fs/nilfs2/namei.c:218
+>  vfs_mkdir+0x3b3/0x590 fs/namei.c:4013
+>  do_mkdirat+0x279/0x550 fs/namei.c:4038
+>  __do_sys_mkdirat fs/namei.c:4053 [inline]
+>  __se_sys_mkdirat fs/namei.c:4051 [inline]
+>  __x64_sys_mkdirat+0x85/0x90 fs/namei.c:4051
 >  do_syscall_x64 arch/x86/entry/common.c:50 [inline]
 >  do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
 >  entry_SYSCALL_64_after_hwframe+0x63/0xcd
 >
-> Last potentially related work creation:
->  kasan_save_stack+0x2b/0x50 mm/kasan/common.c:38
->  __kasan_record_aux_stack+0xaf/0xc0 mm/kasan/generic.c:348
->  kvfree_call_rcu+0x112/0x880 kernel/rcu/tree.c:3341
->  drop_sysctl_table+0x307/0x480 fs/proc/proc_sysctl.c:1716
->  drop_sysctl_table+0x319/0x480 fs/proc/proc_sysctl.c:1719
->  unregister_sysctl_table+0x87/0x140 fs/proc/proc_sysctl.c:1754
->  neigh_sysctl_unregister+0x74/0x90 net/core/neighbour.c:3871
->  devinet_sysctl_unregister net/ipv4/devinet.c:2638 [inline]
->  inetdev_event+0xe25/0x14a0 net/ipv4/devinet.c:1610
->  notifier_call_chain kernel/notifier.c:87 [inline]
->  raw_notifier_call_chain+0xe7/0x170 kernel/notifier.c:455
->  call_netdevice_notifiers_info net/core/dev.c:1945 [inline]
->  call_netdevice_notifiers_extack net/core/dev.c:1983 [inline]
->  call_netdevice_notifiers net/core/dev.c:1997 [inline]
->  dev_change_name+0x695/0x990 net/core/dev.c:1226
->  do_setlink+0xa73/0x3d40 net/core/rtnetlink.c:2761
->  __rtnl_newlink net/core/rtnetlink.c:3547 [inline]
->  rtnl_newlink+0x1748/0x1fa0 net/core/rtnetlink.c:3594
->  rtnetlink_rcv_msg+0x772/0xe60 net/core/rtnetlink.c:6091
->  netlink_rcv_skb+0x1f0/0x460 net/netlink/af_netlink.c:2540
->  netlink_unicast_kernel net/netlink/af_netlink.c:1319 [inline]
->  netlink_unicast+0x7e7/0x9c0 net/netlink/af_netlink.c:1345
->  netlink_sendmsg+0x9b3/0xcd0 net/netlink/af_netlink.c:1921
->  sock_sendmsg_nosec net/socket.c:714 [inline]
->  sock_sendmsg net/socket.c:734 [inline]
->  __sys_sendto+0x46e/0x5f0 net/socket.c:2117
->  __do_sys_sendto net/socket.c:2129 [inline]
->  __se_sys_sendto net/socket.c:2125 [inline]
->  __x64_sys_sendto+0xda/0xf0 net/socket.c:2125
->  do_syscall_x64 arch/x86/entry/common.c:50 [inline]
->  do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
->  entry_SYSCALL_64_after_hwframe+0x63/0xcd
->
-> The buggy address belongs to the object at ffff8880201cba00
+> The buggy address belongs to the object at ffff88801f816200
 >  which belongs to the cache kmalloc-256 of size 256
 > The buggy address is located 48 bytes inside of
->  256-byte region [ffff8880201cba00, ffff8880201cbb00)
+>  256-byte region [ffff88801f816200, ffff88801f816300)
 >
 > The buggy address belongs to the physical page:
-> page:ffffea0000807280 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x201ca
-> head:ffffea0000807280 order:1 compound_mapcount:0 compound_pincount:0
+> page:ffffea00007e0580 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x1f816
+> head:ffffea00007e0580 order:1 compound_mapcount:0 compound_pincount:0
 > flags: 0xfff00000010200(slab|head|node=0|zone=1|lastcpupid=0x7ff)
-> raw: 00fff00000010200 ffffea00011eb480 dead000000000005 ffff888012041b40
-> raw: 0000000000000000 0000000080100010 00000001ffffffff 0000000000000000
+> raw: 00fff00000010200 ffffea00004b9200 dead000000000004 ffff888012041b40
+> raw: 0000000000000000 0000000000100010 00000001ffffffff 0000000000000000
 > page dumped because: kasan: bad access detected
 > page_owner tracks the page as allocated
-> page last allocated via order 1, migratetype Unmovable, gfp_mask 0xd20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 3644, tgid 3644 (syz-executor.5), ts 137885168909, free_ts 135490844091
+> page last allocated via order 1, migratetype Unmovable, gfp_mask 0xd20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 2, tgid 2 (kthreadd), ts 6665465857, free_ts 0
 >  prep_new_page mm/page_alloc.c:2532 [inline]
 >  get_page_from_freelist+0x742/0x7c0 mm/page_alloc.c:4283
 >  __alloc_pages+0x259/0x560 mm/page_alloc.c:5549
@@ -193,61 +155,25 @@ On Tue, Oct 18, 2022 at 6:57 AM syzbot wrote:
 >  __slab_alloc mm/slub.c:3123 [inline]
 >  slab_alloc_node mm/slub.c:3214 [inline]
 >  slab_alloc mm/slub.c:3256 [inline]
->  __kmalloc+0x2bd/0x370 mm/slub.c:4425
->  kmalloc include/linux/slab.h:605 [inline]
->  kzalloc include/linux/slab.h:733 [inline]
->  new_dir fs/proc/proc_sysctl.c:978 [inline]
->  get_subdir fs/proc/proc_sysctl.c:1022 [inline]
->  __register_sysctl_table+0xb63/0x11e0 fs/proc/proc_sysctl.c:1373
->  __addrconf_sysctl_register+0x25e/0x3b0 net/ipv6/addrconf.c:7083
->  addrconf_sysctl_register+0x128/0x180 net/ipv6/addrconf.c:7130
->  ipv6_add_dev+0xc44/0x1200 net/ipv6/addrconf.c:450
->  ipv6_find_idev+0xa3/0x1b0 net/ipv6/addrconf.c:488
->  inet6_rtm_newaddr+0x634/0x2080 net/ipv6/addrconf.c:4908
->  rtnetlink_rcv_msg+0x772/0xe60 net/core/rtnetlink.c:6091
->  netlink_rcv_skb+0x1f0/0x460 net/netlink/af_netlink.c:2540
->  netlink_unicast_kernel net/netlink/af_netlink.c:1319 [inline]
->  netlink_unicast+0x7e7/0x9c0 net/netlink/af_netlink.c:1345
->  netlink_sendmsg+0x9b3/0xcd0 net/netlink/af_netlink.c:1921
-> page last free stack trace:
->  reset_page_owner include/linux/page_owner.h:24 [inline]
->  free_pages_prepare mm/page_alloc.c:1449 [inline]
->  free_pcp_prepare+0x812/0x900 mm/page_alloc.c:1499
->  free_unref_page_prepare mm/page_alloc.c:3380 [inline]
->  free_unref_page+0x7d/0x5f0 mm/page_alloc.c:3476
->  free_slab mm/slub.c:2073 [inline]
->  discard_slab mm/slub.c:2079 [inline]
->  __unfreeze_partials+0x1ab/0x200 mm/slub.c:2553
->  put_cpu_partial+0x106/0x170 mm/slub.c:2629
->  qlist_free_all+0x2b/0x70 mm/kasan/quarantine.c:187
->  kasan_quarantine_reduce+0x169/0x180 mm/kasan/quarantine.c:294
->  __kasan_slab_alloc+0x2f/0xd0 mm/kasan/common.c:447
->  kasan_slab_alloc include/linux/kasan.h:224 [inline]
->  slab_post_alloc_hook mm/slab.h:727 [inline]
->  slab_alloc_node mm/slub.c:3248 [inline]
->  slab_alloc mm/slub.c:3256 [inline]
->  kmem_cache_alloc_trace+0x1de/0x310 mm/slub.c:3287
+>  kmem_cache_alloc_trace+0x25f/0x310 mm/slub.c:3287
 >  kmalloc include/linux/slab.h:600 [inline]
 >  kzalloc include/linux/slab.h:733 [inline]
->  tomoyo_dump_page+0xdb/0x440 security/tomoyo/domain.c:906
->  tomoyo_scan_bprm security/tomoyo/condition.c:130 [inline]
->  tomoyo_condition+0x1cd8/0x2b70 security/tomoyo/condition.c:1120
->  tomoyo_check_acl+0x17a/0x410 security/tomoyo/domain.c:177
->  tomoyo_execute_permission+0x134/0x410 security/tomoyo/file.c:615
->  tomoyo_find_next_domain+0x41a/0x1d80 security/tomoyo/domain.c:752
->  tomoyo_bprm_check_security+0xe3/0x130 security/tomoyo/tomoyo.c:101
->  security_bprm_check+0x50/0xb0 security/security.c:869
->  search_binary_handler fs/exec.c:1713 [inline]
->  exec_binprm fs/exec.c:1766 [inline]
->  bprm_execve+0x817/0x1590 fs/exec.c:1835
+>  set_kthread_struct+0xb1/0x1f0 kernel/kthread.c:117
+>  copy_process+0x134a/0x4000 kernel/fork.c:2182
+>  kernel_clone+0x21f/0x790 kernel/fork.c:2673
+>  kernel_thread+0x150/0x1d0 kernel/fork.c:2726
+>  create_kthread kernel/kthread.c:399 [inline]
+>  kthreadd+0x57c/0x750 kernel/kthread.c:746
+>  ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:306
+> page_owner free stack trace missing
 >
 > Memory state around the buggy address:
->  ffff8880201cb900: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
->  ffff8880201cb980: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
-> >ffff8880201cba00: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>  ffff88801f816100: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+>  ffff88801f816180: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+> >ffff88801f816200: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
 >                                      ^
->  ffff8880201cba80: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
->  ffff8880201cbb00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+>  ffff88801f816280: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>  ffff88801f816300: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
 > ==================================================================
 >
 >
@@ -258,13 +184,17 @@ On Tue, Oct 18, 2022 at 6:57 AM syzbot wrote:
 >
 > syzbot will keep track of this issue. See:
 > https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+> syzbot can test patches for this issue, for details see:
+> https://goo.gl/tpsmEJ#testing-patches
 
-Looks like the same UAF bug as below according to the stack trace:
+This is the same UAF bug as below:
 
 #syz dup: KASAN: use-after-free Read in nilfs_segctor_confirm
 
 The bugfix for this is the patch titled "nilfs2: fix use-after-free
 bug of struct nilfs_root", which was merged in the mainline after the
 tested commit.
+
+I confirmed this patch fixes the UAF bug with the reproducer.
 
 Ryusuke Konishi
