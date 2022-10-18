@@ -1,127 +1,80 @@
 From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH 04/23] page-writeback: Convert write_cache_pages() to use
+Subject: Re: [PATCH 00/23] Convert to
  filemap_get_folios_tag()
-Date: Wed, 19 Oct 2022 08:01:52 +1100
-Message-ID: <20221018210152.GH2703033@dread.disaster.area>
+Date: Wed, 19 Oct 2022 08:45:44 +1100
+Message-ID: <20221018214544.GI2703033@dread.disaster.area>
 References: <20220901220138.182896-1-vishal.moola@gmail.com>
- <20220901220138.182896-5-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1666129561;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=rdhpXUGCkMu8VcqIxNAyDKuYCRrF5O3PB114YzTZo88=;
+	b=Ctm7+ZVHsZtY7JYwxOOsMHy/XHYPWjq/P0lCsdjeru8VrMRUaT+0GYaeQD5ROhawa4l82s
+	KY2MCkpdhMUF06SVsuZ0ItuoYOfkz0LlzDHpDv7+T7gKfcU7+H+UXNRP4oEd3mrEcEFNjJ
+	q0XSrQx1rzUfPYxLuDVotItTI9FsgbY=
+In-Reply-To: <20220901220138.182896-1-vishal.moola@gmail.com>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20220901220138.182896-5-vishal.moola@gmail.com>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-On Thu, Sep 01, 2022 at 03:01:19PM -0700, Vishal Moola (Oracle) wrote:
-> Converted function to use folios throughout. This is in preparation for
-> the removal of find_get_pages_range_tag().
+On Thu, Sep 01, 2022 at 03:01:15PM -0700, Vishal Moola (Oracle) wrote:
+> This patch series replaces find_get_pages_range_tag() with
+> filemap_get_folios_tag(). This also allows the removal of multiple
+> calls to compound_head() throughout.
+> It also makes a good chunk of the straightforward conversions to folios,
+> and takes the opportunity to introduce a function that grabs a folio
+> from the pagecache.
 > 
-> Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-> ---
->  mm/page-writeback.c | 44 +++++++++++++++++++++++---------------------
->  1 file changed, 23 insertions(+), 21 deletions(-)
+> F2fs and Ceph have quite alot of work to be done regarding folios, so
+> for now those patches only have the changes necessary for the removal of
+> find_get_pages_range_tag(), and only support folios of size 1 (which is
+> all they use right now anyways).
 > 
-> diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-> index 032a7bf8d259..087165357a5a 100644
-> --- a/mm/page-writeback.c
-> +++ b/mm/page-writeback.c
-> @@ -2285,15 +2285,15 @@ int write_cache_pages(struct address_space *mapping,
->  	int ret = 0;
->  	int done = 0;
->  	int error;
-> -	struct pagevec pvec;
-> -	int nr_pages;
-> +	struct folio_batch fbatch;
-> +	int nr_folios;
->  	pgoff_t index;
->  	pgoff_t end;		/* Inclusive */
->  	pgoff_t done_index;
->  	int range_whole = 0;
->  	xa_mark_t tag;
->  
-> -	pagevec_init(&pvec);
-> +	folio_batch_init(&fbatch);
->  	if (wbc->range_cyclic) {
->  		index = mapping->writeback_index; /* prev offset */
->  		end = -1;
-> @@ -2313,17 +2313,18 @@ int write_cache_pages(struct address_space *mapping,
->  	while (!done && (index <= end)) {
->  		int i;
->  
-> -		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
-> -				tag);
-> -		if (nr_pages == 0)
-> +		nr_folios = filemap_get_folios_tag(mapping, &index, end,
-> +				tag, &fbatch);
+> I've run xfstests on btrfs, ext4, f2fs, and nilfs2, but more testing may be
+> beneficial.
 
-This can find and return dirty multi-page folios if the filesystem
-enables them in the mapping at instantiation time, right?
+Well, that answers my question about how filesystems that enable
+multi-page folios were tested: they weren't. 
 
-> +
-> +		if (nr_folios == 0)
->  			break;
->  
-> -		for (i = 0; i < nr_pages; i++) {
-> -			struct page *page = pvec.pages[i];
-> +		for (i = 0; i < nr_folios; i++) {
-> +			struct folio *folio = fbatch.folios[i];
->  
-> -			done_index = page->index;
-> +			done_index = folio->index;
->  
-> -			lock_page(page);
-> +			folio_lock(folio);
->  
->  			/*
->  			 * Page truncated or invalidated. We can freely skip it
-> @@ -2333,30 +2334,30 @@ int write_cache_pages(struct address_space *mapping,
->  			 * even if there is now a new, dirty page at the same
->  			 * pagecache address.
->  			 */
-> -			if (unlikely(page->mapping != mapping)) {
-> +			if (unlikely(folio->mapping != mapping)) {
->  continue_unlock:
-> -				unlock_page(page);
-> +				folio_unlock(folio);
->  				continue;
->  			}
->  
-> -			if (!PageDirty(page)) {
-> +			if (!folio_test_dirty(folio)) {
->  				/* someone wrote it for us */
->  				goto continue_unlock;
->  			}
->  
-> -			if (PageWriteback(page)) {
-> +			if (folio_test_writeback(folio)) {
->  				if (wbc->sync_mode != WB_SYNC_NONE)
-> -					wait_on_page_writeback(page);
-> +					folio_wait_writeback(folio);
->  				else
->  					goto continue_unlock;
->  			}
->  
-> -			BUG_ON(PageWriteback(page));
-> -			if (!clear_page_dirty_for_io(page))
-> +			BUG_ON(folio_test_writeback(folio));
-> +			if (!folio_clear_dirty_for_io(folio))
->  				goto continue_unlock;
->  
->  			trace_wbc_writepage(wbc, inode_to_bdi(mapping->host));
-> -			error = (*writepage)(page, wbc, data);
-> +			error = writepage(&folio->page, wbc, data);
+I'd suggest that anyone working on further extending the
+filemap/folio infrastructure really needs to be testing XFS as a
+first priority, and then other filesystems as a secondary concern.
 
-Yet, IIUC, this treats all folios as if they are single page folios.
-i.e. it passes the head page of a multi-page folio to a callback
-that will treat it as a single PAGE_SIZE page, because that's all
-the writepage callbacks are currently expected to be passed...
+That's because XFS (via the fs/iomap infrastructure) is one of only
+3 filesystems in the kernel (AFS and tmpfs are the others) that
+interact with the page cache and page cache "pages" solely via folio
+interfaces. As such they are able to support multi-page folios in
+the page cache. All of the tested filesystems still use the fixed
+PAGE_SIZE page interfaces to interact with the page cache, so they
+don't actually exercise interactions with multi-page folios at all.
 
-So won't this break writeback of dirty multipage folios?
+Hence if you are converting generic infrastructure that looks up
+pages in the page cache to look up folios in the page cache, the
+code that processes the returned folios also needs to be updated and
+validated to ensure that it correctly handles multi-page folios. And
+the only way you can do that fully at this point in time is via
+testing XFS or AFS...
 
--Dave.
+Cheers,
+
+Dave.
 -- 
 Dave Chinner
 david@fromorbit.com
+
