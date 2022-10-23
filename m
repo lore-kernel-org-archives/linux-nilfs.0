@@ -1,7 +1,7 @@
-From: syzbot <syzbot+ebe05ee8e98f755f61d0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] general protection fault in nilfs_palloc_commit_free_entry
-Date: Sun, 23 Oct 2022 00:29:45 -0700
-Message-ID: <00000000000097c20205ebaea3d6@google.com>
+From: syzbot <syzbot+e567d760e00a7a29512b-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] WARNING: locking bug in nilfs_cpfile_get_checkpoint
+Date: Sun, 23 Oct 2022 00:29:44 -0700
+Message-ID: <000000000000931cf305ebaea35d@google.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -13,97 +13,198 @@ Hello,
 
 syzbot found the following issue on:
 
-HEAD commit:    440b7895c990 Merge tag 'mm-hotfixes-stable-2022-10-20' of ..
-git tree:       upstream
-console+strace: https://syzkaller.appspot.com/x/log.txt?x=17d3b33c880000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=afc317c0f52ce670
-dashboard link: https://syzkaller.appspot.com/bug?extid=ebe05ee8e98f755f61d0
+HEAD commit:    bbed346d5a96 Merge branch 'for-next/core' into for-kernelci
+git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
+console output: https://syzkaller.appspot.com/x/log.txt?x=10581572880000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=3a4a45d2d827c1e
+dashboard link: https://syzkaller.appspot.com/bug?extid=e567d760e00a7a29512b
 compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=15d81572880000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=162b0a36880000
+userspace arch: arm64
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=16e8d05a880000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=114a1022880000
 
 Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/105038975fc9/disk-440b7895.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/edd7302c8fc8/vmlinux-440b7895.xz
-mounted in repro: https://storage.googleapis.com/syzbot-assets/6a01cad872ec/mount_0.gz
+disk image: https://storage.googleapis.com/syzbot-assets/e8e91bc79312/disk-bbed346d.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/c1cb3fb3b77e/vmlinux-bbed346d.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/e10e77b79957/mount_0.gz
 
 IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+ebe05ee8e98f755f61d0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: syzbot+e567d760e00a7a29512b-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
-NILFS (loop0): segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
-general protection fault, probably for non-canonical address 0xdffffc0000000002: 0000 [#1] PREEMPT SMP KASAN
-KASAN: null-ptr-deref in range [0x0000000000000010-0x0000000000000017]
-CPU: 1 PID: 3613 Comm: segctord Not tainted 6.1.0-rc1-syzkaller-00158-g440b7895c990 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/11/2022
-RIP: 0010:nilfs_palloc_commit_free_entry+0xd2/0x570 fs/nilfs2/alloc.c:608
-Code: 08 4c 89 f8 48 c1 e8 03 48 89 44 24 18 42 80 3c 20 00 74 08 4c 89 ff e8 4c 36 8b fe 49 8b 2f 48 83 c5 10 48 89 e8 48 c1 e8 03 <42> 80 3c 20 00 74 08 48 89 ef e8 2f 36 8b fe 48 8b 45 00 48 89 44
-RSP: 0018:ffffc90003d8f280 EFLAGS: 00010202
-RAX: 0000000000000002 RBX: 1ffff1100e5b4044 RCX: 0000000000002000
-RDX: 0000000000001801 RSI: 000000000000000a RDI: 000000000000003d
-RBP: 0000000000000010 R08: ffffffff835085a5 R09: ffffed100e093a2a
-R10: ffffed100e093a2a R11: 1ffff1100e093a29 R12: dffffc0000000000
-R13: 0000000000002000 R14: ffff888072da0222 R15: ffff88802435cba0
-FS:  0000000000000000(0000) GS:ffff8880b9b00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007fa887c6b1d0 CR3: 000000000c88e000 CR4: 00000000003506e0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-Call Trace:
- <TASK>
- nilfs_dat_commit_update+0x25/0x40 fs/nilfs2/dat.c:236
- nilfs_btree_commit_update_v+0x91/0x420 fs/nilfs2/btree.c:1940
- nilfs_btree_commit_propagate_v fs/nilfs2/btree.c:2016 [inline]
- nilfs_btree_propagate_v fs/nilfs2/btree.c:2046 [inline]
- nilfs_btree_propagate+0x972/0xe10 fs/nilfs2/btree.c:2088
- nilfs_bmap_propagate+0x6d/0x120 fs/nilfs2/bmap.c:337
- nilfs_collect_file_data+0x49/0xc0 fs/nilfs2/segment.c:568
- nilfs_segctor_apply_buffers+0x192/0x380 fs/nilfs2/segment.c:1018
- nilfs_segctor_scan_file+0x842/0xaf0 fs/nilfs2/segment.c:1067
- nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1197 [inline]
- nilfs_segctor_collect fs/nilfs2/segment.c:1503 [inline]
- nilfs_segctor_do_construct+0x1d2c/0x6f80 fs/nilfs2/segment.c:2045
- nilfs_segctor_construct+0x143/0x8d0 fs/nilfs2/segment.c:2379
- nilfs_segctor_thread_construct fs/nilfs2/segment.c:2487 [inline]
- nilfs_segctor_thread+0x59e/0x11c0 fs/nilfs2/segment.c:2570
- kthread+0x266/0x300 kernel/kthread.c:376
- ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:306
- </TASK>
+loop0: detected capacity change from 0 to 2048
+------------[ cut here ]------------
+DEBUG_LOCKS_WARN_ON(1)
+WARNING: CPU: 0 PID: 4135 at kernel/locking/lockdep.c:231 check_wait_context kernel/locking/lockdep.c:4727 [inline]
+WARNING: CPU: 0 PID: 4135 at kernel/locking/lockdep.c:231 __lock_acquire+0x2b0/0x30a4 kernel/locking/lockdep.c:5003
 Modules linked in:
+CPU: 0 PID: 4135 Comm: syz-executor168 Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
+pstate: 604000c5 (nZCv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+pc : check_wait_context kernel/locking/lockdep.c:4727 [inline]
+pc : __lock_acquire+0x2b0/0x30a4 kernel/locking/lockdep.c:5003
+lr : hlock_class kernel/locking/lockdep.c:231 [inline]
+lr : check_wait_context kernel/locking/lockdep.c:4727 [inline]
+lr : __lock_acquire+0x298/0x30a4 kernel/locking/lockdep.c:5003
+sp : ffff800012d9b820
+x29: ffff800012d9b900 x28: 0000000000000002 x27: ffff0000c1f14fd0
+x26: ffff0000c954eb70 x25: ffff0000c1f15a00 x24: 0000000000000000
+x23: 0000000000000000 x22: 0000000000000001 x21: 0000000000000000
+x20: 0000000000000000 x19: ffffff555651563c x18: 0000000000000026
+x17: ffff80000bffd6bc x16: ffff80000db49158 x15: ffff0000c1f14f80
+x14: 0000000000000000 x13: 0000000000000012 x12: ffff80000d5ef920
+x11: ff808000081c0d5c x10: ffff80000dd0b198 x9 : 1e098b7dd4c21b00
+x8 : 0000000000000000 x7 : 4e5241575f534b43 x6 : ffff80000819545c
+x5 : 0000000000000000 x4 : 0000000000000001 x3 : 0000000000000000
+x2 : 0000000000000000 x1 : 0000000100000000 x0 : 0000000000000016
+Call trace:
+ check_wait_context kernel/locking/lockdep.c:4727 [inline]
+ __lock_acquire+0x2b0/0x30a4 kernel/locking/lockdep.c:5003
+ lock_acquire+0x100/0x1f8 kernel/locking/lockdep.c:5666
+ down_write+0x5c/0xcc kernel/locking/rwsem.c:1552
+ nilfs_cpfile_get_checkpoint+0xa8/0x404 fs/nilfs2/cpfile.c:230
+ nilfs_attach_checkpoint+0xb8/0x1c8 fs/nilfs2/super.c:528
+ nilfs_fill_super+0x154/0x2f8 fs/nilfs2/super.c:1064
+ nilfs_mount+0x370/0x52c fs/nilfs2/super.c:1317
+ legacy_get_tree+0x30/0x74 fs/fs_context.c:610
+ vfs_get_tree+0x40/0x140 fs/super.c:1530
+ do_new_mount+0x1dc/0x4e4 fs/namespace.c:3040
+ path_mount+0x358/0x914 fs/namespace.c:3370
+ do_mount fs/namespace.c:3383 [inline]
+ __do_sys_mount fs/namespace.c:3591 [inline]
+ __se_sys_mount fs/namespace.c:3568 [inline]
+ __arm64_sys_mount+0x2c4/0x3c4 fs/namespace.c:3568
+ __invoke_syscall arch/arm64/kernel/syscall.c:38 [inline]
+ invoke_syscall arch/arm64/kernel/syscall.c:52 [inline]
+ el0_svc_common+0x138/0x220 arch/arm64/kernel/syscall.c:142
+ do_el0_svc+0x48/0x164 arch/arm64/kernel/syscall.c:206
+ el0_svc+0x58/0x150 arch/arm64/kernel/entry-common.c:636
+ el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
+ el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
+irq event stamp: 2345
+hardirqs last  enabled at (2345): [<ffff800008161dac>] raw_spin_rq_unlock_irq kernel/sched/sched.h:1367 [inline]
+hardirqs last  enabled at (2345): [<ffff800008161dac>] finish_lock_switch+0x94/0xe8 kernel/sched/core.c:4942
+hardirqs last disabled at (2344): [<ffff80000bfc0a34>] __schedule+0x84/0x5a0 kernel/sched/core.c:6393
+softirqs last  enabled at (1180): [<ffff80000801c33c>] local_bh_enable+0x10/0x34 include/linux/bottom_half.h:32
+softirqs last disabled at (1178): [<ffff80000801c308>] local_bh_disable+0x10/0x34 include/linux/bottom_half.h:19
 ---[ end trace 0000000000000000 ]---
-RIP: 0010:nilfs_palloc_commit_free_entry+0xd2/0x570 fs/nilfs2/alloc.c:608
-Code: 08 4c 89 f8 48 c1 e8 03 48 89 44 24 18 42 80 3c 20 00 74 08 4c 89 ff e8 4c 36 8b fe 49 8b 2f 48 83 c5 10 48 89 e8 48 c1 e8 03 <42> 80 3c 20 00 74 08 48 89 ef e8 2f 36 8b fe 48 8b 45 00 48 89 44
-RSP: 0018:ffffc90003d8f280 EFLAGS: 00010202
-RAX: 0000000000000002 RBX: 1ffff1100e5b4044 RCX: 0000000000002000
-RDX: 0000000000001801 RSI: 000000000000000a RDI: 000000000000003d
-RBP: 0000000000000010 R08: ffffffff835085a5 R09: ffffed100e093a2a
-R10: ffffed100e093a2a R11: 1ffff1100e093a29 R12: dffffc0000000000
-R13: 0000000000002000 R14: ffff888072da0222 R15: ffff88802435cba0
-FS:  0000000000000000(0000) GS:ffff8880b9b00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007fa887c6b1d0 CR3: 000000000c88e000 CR4: 00000000003506e0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+BUG: sleeping function called from invalid context at arch/arm64/mm/fault.c:593
+in_atomic(): 0, irqs_disabled(): 128, non_block: 0, pid: 4135, name: syz-executor168
+preempt_count: 0, expected: 0
+RCU nest depth: 0, expected: 0
+INFO: lockdep is turned off.
+irq event stamp: 2345
+hardirqs last  enabled at (2345): [<ffff800008161dac>] raw_spin_rq_unlock_irq kernel/sched/sched.h:1367 [inline]
+hardirqs last  enabled at (2345): [<ffff800008161dac>] finish_lock_switch+0x94/0xe8 kernel/sched/core.c:4942
+hardirqs last disabled at (2344): [<ffff80000bfc0a34>] __schedule+0x84/0x5a0 kernel/sched/core.c:6393
+softirqs last  enabled at (1180): [<ffff80000801c33c>] local_bh_enable+0x10/0x34 include/linux/bottom_half.h:32
+softirqs last disabled at (1178): [<ffff80000801c308>] local_bh_disable+0x10/0x34 include/linux/bottom_half.h:19
+CPU: 0 PID: 4135 Comm: syz-executor168 Tainted: G        W          6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
+Call trace:
+ dump_backtrace+0x1c4/0x1f0 arch/arm64/kernel/stacktrace.c:156
+ show_stack+0x2c/0x54 arch/arm64/kernel/stacktrace.c:163
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x104/0x16c lib/dump_stack.c:106
+ dump_stack+0x1c/0x58 lib/dump_stack.c:113
+ __might_resched+0x208/0x218 kernel/sched/core.c:9892
+ __might_sleep+0x48/0x78 kernel/sched/core.c:9821
+ do_page_fault+0x214/0x79c arch/arm64/mm/fault.c:593
+ do_translation_fault+0x78/0x194 arch/arm64/mm/fault.c:685
+ do_mem_abort+0x54/0x130 arch/arm64/mm/fault.c:821
+ el1_abort+0x3c/0x5c arch/arm64/kernel/entry-common.c:366
+ el1h_64_sync_handler+0x60/0xac arch/arm64/kernel/entry-common.c:426
+ el1h_64_sync+0x64/0x68 arch/arm64/kernel/entry.S:576
+ hlock_class kernel/locking/lockdep.c:222 [inline]
+ check_wait_context kernel/locking/lockdep.c:4728 [inline]
+ __lock_acquire+0x2d0/0x30a4 kernel/locking/lockdep.c:5003
+ lock_acquire+0x100/0x1f8 kernel/locking/lockdep.c:5666
+ down_write+0x5c/0xcc kernel/locking/rwsem.c:1552
+ nilfs_cpfile_get_checkpoint+0xa8/0x404 fs/nilfs2/cpfile.c:230
+ nilfs_attach_checkpoint+0xb8/0x1c8 fs/nilfs2/super.c:528
+ nilfs_fill_super+0x154/0x2f8 fs/nilfs2/super.c:1064
+ nilfs_mount+0x370/0x52c fs/nilfs2/super.c:1317
+ legacy_get_tree+0x30/0x74 fs/fs_context.c:610
+ vfs_get_tree+0x40/0x140 fs/super.c:1530
+ do_new_mount+0x1dc/0x4e4 fs/namespace.c:3040
+ path_mount+0x358/0x914 fs/namespace.c:3370
+ do_mount fs/namespace.c:3383 [inline]
+ __do_sys_mount fs/namespace.c:3591 [inline]
+ __se_sys_mount fs/namespace.c:3568 [inline]
+ __arm64_sys_mount+0x2c4/0x3c4 fs/namespace.c:3568
+ __invoke_syscall arch/arm64/kernel/syscall.c:38 [inline]
+ invoke_syscall arch/arm64/kernel/syscall.c:52 [inline]
+ el0_svc_common+0x138/0x220 arch/arm64/kernel/syscall.c:142
+ do_el0_svc+0x48/0x164 arch/arm64/kernel/syscall.c:206
+ el0_svc+0x58/0x150 arch/arm64/kernel/entry-common.c:636
+ el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
+ el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
+Unable to handle kernel NULL pointer dereference at virtual address 00000000000000b8
+Mem abort info:
+  ESR = 0x0000000096000006
+  EC = 0x25: DABT (current EL), IL = 32 bits
+  SET = 0, FnV = 0
+  EA = 0, S1PTW = 0
+  FSC = 0x06: level 2 translation fault
+Data abort info:
+  ISV = 0, ISS = 0x00000006
+  CM = 0, WnR = 0
+user pgtable: 4k pages, 48-bit VAs, pgdp=00000001071a6000
+[00000000000000b8] pgd=0800000107366003, p4d=0800000107366003, pud=080000010ab71003, pmd=0000000000000000
+Internal error: Oops: 0000000096000006 [#1] PREEMPT SMP
+Modules linked in:
+CPU: 0 PID: 4135 Comm: syz-executor168 Tainted: G        W          6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
+pstate: 604000c5 (nZCv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+pc : check_wait_context kernel/locking/lockdep.c:4727 [inline]
+pc : __lock_acquire+0x2d0/0x30a4 kernel/locking/lockdep.c:5003
+lr : hlock_class kernel/locking/lockdep.c:231 [inline]
+lr : check_wait_context kernel/locking/lockdep.c:4727 [inline]
+lr : __lock_acquire+0x298/0x30a4 kernel/locking/lockdep.c:5003
+sp : ffff800012d9b820
+x29: ffff800012d9b900 x28: 0000000000000002 x27: ffff0000c1f14fd0
+x26: ffff0000c954eb70 x25: ffff0000c1f15a00 x24: 0000000000000000
+x23: 0000000000000000 x22: 0000000000000001 x21: 0000000000000000
+x20: 0000000000000000 x19: ffffff555651563c x18: 0000000000000026
+x17: ffff80000bffd6bc x16: ffff80000db49158 x15: ffff0000c1f14f80
+x14: 0000000000000000 x13: 0000000000000012 x12: ffff80000d5ef920
+x11: ff808000081c0d5c x10: ffff80000dd0b198 x9 : 000000000004163c
+x8 : 0000000000000000 x7 : 4e5241575f534b43 x6 : ffff80000819545c
+x5 : 0000000000000000 x4 : 0000000000000001 x3 : 0000000000000000
+x2 : 0000000000000000 x1 : 0000000100000000 x0 : 0000000000000016
+Call trace:
+ hlock_class kernel/locking/lockdep.c:222 [inline]
+ check_wait_context kernel/locking/lockdep.c:4728 [inline]
+ __lock_acquire+0x2d0/0x30a4 kernel/locking/lockdep.c:5003
+ lock_acquire+0x100/0x1f8 kernel/locking/lockdep.c:5666
+ down_write+0x5c/0xcc kernel/locking/rwsem.c:1552
+ nilfs_cpfile_get_checkpoint+0xa8/0x404 fs/nilfs2/cpfile.c:230
+ nilfs_attach_checkpoint+0xb8/0x1c8 fs/nilfs2/super.c:528
+ nilfs_fill_super+0x154/0x2f8 fs/nilfs2/super.c:1064
+ nilfs_mount+0x370/0x52c fs/nilfs2/super.c:1317
+ legacy_get_tree+0x30/0x74 fs/fs_context.c:610
+ vfs_get_tree+0x40/0x140 fs/super.c:1530
+ do_new_mount+0x1dc/0x4e4 fs/namespace.c:3040
+ path_mount+0x358/0x914 fs/namespace.c:3370
+ do_mount fs/namespace.c:3383 [inline]
+ __do_sys_mount fs/namespace.c:3591 [inline]
+ __se_sys_mount fs/namespace.c:3568 [inline]
+ __arm64_sys_mount+0x2c4/0x3c4 fs/namespace.c:3568
+ __invoke_syscall arch/arm64/kernel/syscall.c:38 [inline]
+ invoke_syscall arch/arm64/kernel/syscall.c:52 [inline]
+ el0_svc_common+0x138/0x220 arch/arm64/kernel/syscall.c:142
+ do_el0_svc+0x48/0x164 arch/arm64/kernel/syscall.c:206
+ el0_svc+0x58/0x150 arch/arm64/kernel/entry-common.c:636
+ el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
+ el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
+Code: b002db8a 91056210 9106614a b9400329 (3942e114) 
+---[ end trace 0000000000000000 ]---
 ----------------
 Code disassembly (best guess):
-   0:	08 4c 89 f8          	or     %cl,-0x8(%rcx,%rcx,4)
-   4:	48 c1 e8 03          	shr    $0x3,%rax
-   8:	48 89 44 24 18       	mov    %rax,0x18(%rsp)
-   d:	42 80 3c 20 00       	cmpb   $0x0,(%rax,%r12,1)
-  12:	74 08                	je     0x1c
-  14:	4c 89 ff             	mov    %r15,%rdi
-  17:	e8 4c 36 8b fe       	callq  0xfe8b3668
-  1c:	49 8b 2f             	mov    (%r15),%rbp
-  1f:	48 83 c5 10          	add    $0x10,%rbp
-  23:	48 89 e8             	mov    %rbp,%rax
-  26:	48 c1 e8 03          	shr    $0x3,%rax
-* 2a:	42 80 3c 20 00       	cmpb   $0x0,(%rax,%r12,1) <-- trapping instruction
-  2f:	74 08                	je     0x39
-  31:	48 89 ef             	mov    %rbp,%rdi
-  34:	e8 2f 36 8b fe       	callq  0xfe8b3668
-  39:	48 8b 45 00          	mov    0x0(%rbp),%rax
-  3d:	48                   	rex.W
-  3e:	89                   	.byte 0x89
-  3f:	44                   	rex.R
+   0:	b002db8a 	adrp	x10, 0x5b71000
+   4:	91056210 	add	x16, x16, #0x158
+   8:	9106614a 	add	x10, x10, #0x198
+   c:	b9400329 	ldr	w9, [x25]
+* 10:	3942e114 	ldrb	w20, [x8, #184] <-- trapping instruction
 
 
 ---
