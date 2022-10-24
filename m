@@ -1,109 +1,102 @@
 From: Vishal Moola <vishal.moola@gmail.com>
-Subject: Re: [PATCH v3 11/23] f2fs: Convert
- f2fs_fsync_node_pages() to use filemap_get_folios_tag()
-Date: Mon, 24 Oct 2022 12:31:10 -0700
-Message-ID: <CAOzc2pwKoyy4i4zBKhvoKmN8cezUxjDhjYZnK9GLcJniQVPoGA@mail.gmail.com>
+Subject: Re: [PATCH v3 01/23] pagemap: Add filemap_grab_folio()
+Date: Mon, 24 Oct 2022 12:36:10 -0700
+Message-ID: <CAOzc2py2E_zFukvSv-BcDm+mJis44Zp0fksd49mudMkU52HpZA@mail.gmail.com>
 References: <20221017202451.4951-1-vishal.moola@gmail.com>
- <20221017202451.4951-12-vishal.moola@gmail.com>
+ <20221017202451.4951-2-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1666639890;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=ewURVtEZDzlu0i+gVIVlIwdo2AKdKjYywGZcJK82PeY=;
-	b=hOKTKEAQhuXdPw7W1FGz9m+WSimVBAqubkJuo9E11/eXEEkQmQ133bTXS7UILXzMqg9TQ6
-	Ty1iDFRK75d/7XKi9SidTiwZlzCVS7zCdnISLYwjtaDNVW9Hkye2gNZWeMMez4Oql6cH6K
-	CX9ZFfmVVrqhDWDr+4/AbMuMcWPhWz8=
-In-Reply-To: <20221017202451.4951-12-vishal.moola@gmail.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Type:Cc:To:Subject:Message-ID:Date:From:
+ In-Reply-To:References:MIME-Version:Sender:Reply-To:Content-Transfer-Encoding
+ :Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=OhQpzoeVGEwmo14h6MNRUCVjD46EBvZeUnXF6FjYKqc=; b=UO1SAEpLeLCeTEYskhlOCzN1go
+ wmQbS0xXYQ2omjesnr+JHE4Fz6J4wlIxCmOggdH1GXLjPdgStGkTyWLTUZYMzEqXXE/heqHk5S9RP
+ pttn622/aNeRqh0iQ/B5S+4vk+o8m5gZyDss4jblto9mpp0K48jZ5Zqvu2vBvujF9UDA=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Type:Cc:To:Subject:Message-ID:Date:From:In-Reply-To:References:
+ MIME-Version:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=OhQpzoeVGEwmo14h6MNRUCVjD46EBvZeUnXF6FjYKqc=; b=j1+S4fgd33YRE/wPJnbjj321wA
+ KQAwqnsgknmA+JccqhrExw8zTZsH8NDV+xKEBzvsVo0g2CgSZZmjdESRmR2y2qm69XJgOos7xPBKS
+ T5OxL/vMKs9n3Xr6TVszGdGEQK/9uvYegf0/JhVWeBxR4ymP3AmewC/QZbFBW53FSAM0=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:from:to:cc:subject:date:message-id:reply-to;
+ bh=OhQpzoeVGEwmo14h6MNRUCVjD46EBvZeUnXF6FjYKqc=;
+ b=LWqs5CgYoI2G7bwSrxm509BXkoJoj4h1+NAumrnw8GvlsTUUX0V7puTaejDjA+a+Se
+ JZxLEhr98Isu6X1gDcr7CkjpAxT8QlsxaP3cMesu5io+uJ/hiaxizHNPmkvonW4ZrSM3
+ 9FJelnA+mhjpIKDB4wzNLTg8Yl25Bz2AgN5mLB8NjrqH3r4M0xDO+raYYo0KOsCBYSik
+ v9TQ8VEWW7hntj+Pu46z7CX8Gt3ApfbvP2i70kguAt+Ou14BtRsnM5RXks+7xrvrVctd
+ Sdn2UK8OpZrhDItYKOmqTRxqsyQ+eocL2ZMu5oL7CUQlM4vOpL4lrxfytXhVZRRPAgrU
+ MCiQ==
+In-Reply-To: <20221017202451.4951-2-vishal.moola@gmail.com>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, chao@kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, jaegeuk@kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-On Mon, Oct 17, 2022 at 1:25 PM Vishal Moola (Oracle)
+On Mon, Oct 17, 2022 at 1:24 PM Vishal Moola (Oracle)
 <vishal.moola@gmail.com> wrote:
 >
-> Convert function to use a folio_batch instead of pagevec. This is in
-> preparation for the removal of find_get_pages_range_tag().
+> Add function filemap_grab_folio() to grab a folio from the page cache.
+> This function is meant to serve as a folio replacement for
+> grab_cache_page, and is used to facilitate the removal of
+> find_get_pages_range_tag().
 >
 > Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 > ---
->  fs/f2fs/node.c | 19 ++++++++++---------
->  1 file changed, 10 insertions(+), 9 deletions(-)
+>  include/linux/pagemap.h | 20 ++++++++++++++++++++
+>  1 file changed, 20 insertions(+)
 >
-> diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-> index 983572f23896..e8b72336c096 100644
-> --- a/fs/f2fs/node.c
-> +++ b/fs/f2fs/node.c
-> @@ -1728,12 +1728,12 @@ int f2fs_fsync_node_pages(struct f2fs_sb_info *sbi, struct inode *inode,
->                         unsigned int *seq_id)
->  {
->         pgoff_t index;
-> -       struct pagevec pvec;
-> +       struct folio_batch fbatch;
->         int ret = 0;
->         struct page *last_page = NULL;
->         bool marked = false;
->         nid_t ino = inode->i_ino;
-> -       int nr_pages;
-> +       int nr_folios;
->         int nwritten = 0;
+> diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+> index bbccb4044222..74d87e37a142 100644
+> --- a/include/linux/pagemap.h
+> +++ b/include/linux/pagemap.h
+> @@ -547,6 +547,26 @@ static inline struct folio *filemap_lock_folio(struct address_space *mapping,
+>         return __filemap_get_folio(mapping, index, FGP_LOCK, 0);
+>  }
 >
->         if (atomic) {
-> @@ -1742,20 +1742,21 @@ int f2fs_fsync_node_pages(struct f2fs_sb_info *sbi, struct inode *inode,
->                         return PTR_ERR_OR_ZERO(last_page);
->         }
->  retry:
-> -       pagevec_init(&pvec);
-> +       folio_batch_init(&fbatch);
->         index = 0;
->
-> -       while ((nr_pages = pagevec_lookup_tag(&pvec, NODE_MAPPING(sbi), &index,
-> -                               PAGECACHE_TAG_DIRTY))) {
-> +       while ((nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi), &index,
-> +                                       (pgoff_t)-1, PAGECACHE_TAG_DIRTY,
-> +                                       &fbatch))) {
->                 int i;
->
-> -               for (i = 0; i < nr_pages; i++) {
-> -                       struct page *page = pvec.pages[i];
-> +               for (i = 0; i < nr_folios; i++) {
-> +                       struct page *page = &fbatch.folios[i]->page;
->                         bool submitted = false;
->
->                         if (unlikely(f2fs_cp_error(sbi))) {
->                                 f2fs_put_page(last_page, 0);
-> -                               pagevec_release(&pvec);
-> +                               folio_batch_release(&fbatch);
->                                 ret = -EIO;
->                                 goto out;
->                         }
-> @@ -1821,7 +1822,7 @@ int f2fs_fsync_node_pages(struct f2fs_sb_info *sbi, struct inode *inode,
->                                 break;
->                         }
->                 }
-> -               pagevec_release(&pvec);
-> +               folio_batch_release(&fbatch);
->                 cond_resched();
->
->                 if (ret || marked)
+> +/**
+> + * filemap_grab_folio - grab a folio from the page cache
+> + * @mapping: The address space to search
+> + * @index: The page index
+> + *
+> + * Looks up the page cache entry at @mapping & @index. If no folio is found,
+> + * a new folio is created. The folio is locked, marked as accessed, and
+> + * returned.
+> + *
+> + * Return: A found or created folio. NULL if no folio is found and failed to
+> + * create a folio.
+> + */
+> +static inline struct folio *filemap_grab_folio(struct address_space *mapping,
+> +                                       pgoff_t index)
+> +{
+> +       return __filemap_get_folio(mapping, index,
+> +                       FGP_LOCK | FGP_ACCESSED | FGP_CREAT,
+> +                       mapping_gfp_mask(mapping));
+> +}
+> +
+>  /**
+>   * find_get_page - find and get a page reference
+>   * @mapping: the address_space to search
 > --
 > 2.36.1
 >
 
-Following up on these f2fs patches (11/23, 12/23, 13/23, 14/23, 15/23,
-16/23). Does anyone have time to review them this week?
-
+Following up on the filemap-related patches (01/23, 02/23, 03/23, 04/23),
+does anyone have time to review them this week?
