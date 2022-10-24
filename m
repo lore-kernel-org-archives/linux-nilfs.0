@@ -1,10 +1,10 @@
 From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH v3 03/23] filemap: Convert
- __filemap_fdatawait_range() to use filemap_get_folios_tag()
-Date: Mon, 24 Oct 2022 21:06:57 +0100
-Message-ID: <Y1bwYd7tz76/fb5n@casper.infradead.org>
+Subject: Re: [PATCH v3 04/23] page-writeback: Convert
+ write_cache_pages() to use filemap_get_folios_tag()
+Date: Mon, 24 Oct 2022 21:12:02 +0100
+Message-ID: <Y1bxktICFzdSl09W@casper.infradead.org>
 References: <20221017202451.4951-1-vishal.moola@gmail.com>
- <20221017202451.4951-4-vishal.moola@gmail.com>
+ <20221017202451.4951-5-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,9 +15,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=7MsR0R1NbSyB2Djzw/hFUhA/+5S6z5HyXDOZO3eVnQg=; b=XK2ubwvSo6T8ocK+x68/leqDnJ
- YZWMOBwFZixcYajQ+SKQT4w8Q7zZCGC21P+qwBoaHV49MpAwwKndkw7JikwtU1zlbDNI+fD2r7U8C
- 7y1muWaVQrM9OmYEzjekFhcCjoQEzbEKwtMqCN8JShqpZqGUrtXVoGOrJ1jUbSm60yFo=;
+ bh=zfO+51g+SbzjZHZNrypaeeN+vqvnYBv2zA15JUzr234=; b=IR42H7PVgQLeAUelwicRB05u3d
+ UxaxwBI0a6Gok+SM7Pnj9VCfczBGold0sRyS3mN+x5+PHqmahSIrvTtALbrBIC7iJs/LdKw0M4QzO
+ och3TfPOVrQtHyTgZBHyRY88djPicjTLIJcRIC8XnYm7x5pXjceI9S/bDG2qFSbTkfDc=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
@@ -25,21 +25,21 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=7MsR0R1NbSyB2Djzw/hFUhA/+5S6z5HyXDOZO3eVnQg=; b=M52vbdgN1S8DCzzzxr5iz3ZV7l
- 8UebY/ugSXICW8fIJvCitU+KXve+D8XG93i6kgWfRQ/VghPRYIrWJyBGAbGrMkAvVst+tBUgKwenr
- wilQx+ZFEndS+RpPCwXx6cvC9KwINzjo4n95A+CLlLU1LIQnx67+qJXv93JG52YDVkYo=;
+ bh=zfO+51g+SbzjZHZNrypaeeN+vqvnYBv2zA15JUzr234=; b=OuR5ZJdAzLSjgzYgm9rSxmTKKs
+ 0SqPAbM6Fp59MY2kaRKVPTt3Gm4xKa6WTjn+osQ/oIpaaRFt2brxOBNPgtavK2JZ0tc5je8UNN8BL
+ jw87xVgpNQbcVcKv7MjiB8KULyw4CnUuI+/7LihLiiVqEQwrUNK49V6JtTqHIxM55kEA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
  References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
  Content-Transfer-Encoding:Content-ID:Content-Description;
- bh=7MsR0R1NbSyB2Djzw/hFUhA/+5S6z5HyXDOZO3eVnQg=; b=Sz5j+RyAMJMG8UN49CI/nYQsRM
- 4uctA+lYIXec8+kZbgkhU9sfzm2Y04hWo+tPCEQTJyx3zRaNr9Wd20f0mK3a2nGhmAnFPqvsQD/k1
- 7mQnl5ZhzhFRoUDkH0U9c9iTvIWHP7suVXqBsD5AMkabioENS46bynM5C22QMostYhwbZ03GBCt64
- C6ho4ykMx3e35M96kmpJGQH3OjDWH4lKrS9MHkdnK3z0AT1XCBM64Ux2LafoYepJsAbGzL+W6zQpV
- iWZYCZcRkajtC2dbalkjT9RGPcA20dSCql/hbVwpp6dr8//HsLsLv88DwGLSugrvIDPH/UYXKAClR
- wLAo/S/g==;
+ bh=zfO+51g+SbzjZHZNrypaeeN+vqvnYBv2zA15JUzr234=; b=RaqCnNQ9CnKiZqVCmkN+ZH26es
+ kLhgdeh0QnjBCfJ9xLm3bfufPC+onpDpuX7yC57WcUgCWboa1sRqIpUQkaEy4rcWg0deJJkTrG9u+
+ xXp6DPSVRNIdNXEj0v1zthipBMUcrfkJ57SL1LP2AxnvL9I5+1qg9irKUKJ3zBt+VEEu7V2Qj1xHx
+ iSoekSSnChWmNwUEq/ZKwqlzS25sZPdvz/dljAvXqfrWGncDV78lZcLCIWkfBrIqe9bJfcs12ezDH
+ xxm0RAaFJN7/Pg5LrccD+kzmwLerXwWzlEb5vczrVE1CH+jszY4G6TIyzPH1GguKPCCgf/96pexJS
+ Z5w3nhPg==;
 Content-Disposition: inline
-In-Reply-To: <20221017202451.4951-4-vishal.moola@gmail.com>
+In-Reply-To: <20221017202451.4951-5-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -52,23 +52,12 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
 Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-On Mon, Oct 17, 2022 at 01:24:31PM -0700, Vishal Moola (Oracle) wrote:
-> Converted function to use folios. This is in preparation for the removal
-> of find_get_pages_range_tag().
+On Mon, Oct 17, 2022 at 01:24:32PM -0700, Vishal Moola (Oracle) wrote:
+> Converted function to use folios throughout. This is in preparation for
+> the removal of find_get_pages_range_tag().
 
-Yes, it is, but this patch also has some nice advantages of its own:
-
- - Removes a call to wait_on_page_writeback(), which removes a call
-   to compound_head()
- - Removes a call to ClearPageError(), which removes another call
-   to compound_head()
- - Removes a call to pagevec_release(), which will eventually
-   remove a third call to compound_head() (it doesn't today, but
-   one day ...)
-
-So you can definitely say that it removes 50 bytes of text and two
-calls to compound_head().  And that way, this patch justifies its
-existance by itself ;-)
+And removes eight calls to compound_head(), saving 296 bytes of kernel
+text (!)  It also adds support for large folios to this function.
 
 > Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 
