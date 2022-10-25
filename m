@@ -1,144 +1,79 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [syzbot] BUG: unable to handle kernel NULL pointer dereference in filemap_free_folio
-Date: Tue, 25 Oct 2022 15:59:55 +0900
-Message-ID: <CAKFNMo=Xfzxz=+aTEQQKSu7uQyJWTyKL05P24FSbOLrCrbvKVg@mail.gmail.com>
-References: <0000000000008e8b8505ebca6cc7@google.com> <Y1bCA416yQ9ZVHVQ@casper.infradead.org>
+From: syzbot <syzbot+e91619dd4c11c4960706-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] UBSAN: shift-out-of-bounds in nilfs_load_super_block
+Date: Tue, 25 Oct 2022 10:54:39 -0700
+Message-ID: <000000000000226f6d05ebdf9ab7@google.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=t4PC8LZQfuGWUdG/bF4mkCkIWlp4XaI+wmkoFjwUG0g=;
-        b=LjHVq5PhU9jc1rmNouVl2+48a6CrNyl3VZnBmjyS2Id99ZYhzsK4cQjdER0ORRmn4l
-         U8G3iF4eCf4CMXBznP/u06eWUIg8aFWSz3eTgfM76HdilsKtBh//bvFHVSqwXenaHQxg
-         0E/EWZ+xc+17GtDM0c8wwXJ5jFvWT0YS7LpbzL3L/wc/GC2ORKox97TwaGGP0hoKl4uV
-         4ZZW9jqxBLTguGqdsMX+OiBSW4sQc//icSlCTuwLYZCv6NRFJbGtPi5GslZX7xyHXGTA
-         TOBwv6aisPhsA0i63Z/2oJXLBrBxkTBaajF2C+Ui80rcHy51jdmKDXB6i5SAbUA+oF3k
-         iF4Q==
-In-Reply-To: <Y1bCA416yQ9ZVHVQ-FZi0V3Vbi30CUdFEqe4BF2D2FQJk+8+b@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: syzbot <syzbot+f1eb7f33bbf683a5e1e1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-On Tue, Oct 25, 2022 at 1:49 AM Matthew Wilcox wrote:
->
-> Adding the nilfs maintainers ...
->
-> On Mon, Oct 24, 2022 at 09:38:40AM -0700, syzbot wrote:
-> > Hello,
-> >
-> > syzbot found the following issue on:
-> >
-> > HEAD commit:    bbed346d5a96 Merge branch 'for-next/core' into for-kernelci
-> > git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
-> > console output: https://syzkaller.appspot.com/x/log.txt?x=15788ec2880000
-> > kernel config:  https://syzkaller.appspot.com/x/.config?x=3a4a45d2d827c1e
-> > dashboard link: https://syzkaller.appspot.com/bug?extid=f1eb7f33bbf683a5e1e1
-> > compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
-> > userspace arch: arm64
-> >
-> > Unfortunately, I don't have any reproducer for this issue yet.
-> >
-> > Downloadable assets:
-> > disk image: https://storage.googleapis.com/syzbot-assets/e8e91bc79312/disk-bbed346d.raw.xz
-> > vmlinux: https://storage.googleapis.com/syzbot-assets/c1cb3fb3b77e/vmlinux-bbed346d.xz
-> >
-> > IMPORTANT: if you fix the issue, please add the following tag to the commit:
-> > Reported-by: syzbot+f1eb7f33bbf683a5e1e1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-> >
-> > Unable to handle kernel NULL pointer dereference at virtual address 0000000000000050
-> > Mem abort info:
-> >   ESR = 0x0000000096000005
-> >   EC = 0x25: DABT (current EL), IL = 32 bits
-> >   SET = 0, FnV = 0
-> >   EA = 0, S1PTW = 0
-> >   FSC = 0x05: level 1 translation fault
-> > Data abort info:
-> >   ISV = 0, ISS = 0x00000005
-> >   CM = 0, WnR = 0
-> > user pgtable: 4k pages, 48-bit VAs, pgdp=000000014a8d0000
-> > [0000000000000050] pgd=08000001532c9003, p4d=08000001532c9003, pud=0000000000000000
-> > Internal error: Oops: 0000000096000005 [#1] PREEMPT SMP
-> > Modules linked in:
-> > CPU: 0 PID: 3066 Comm: syz-executor.3 Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
-> > Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
-> > pstate: 80400005 (Nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
-> > pc : filemap_free_folio+0x20/0x288 mm/filemap.c:231
-> > lr : filemap_free_folio+0x1c/0x288 mm/filemap.c:227
-> > sp : ffff80001280b990
-> > x29: ffff80001280b990 x28: ffff000117b4ea00 x27: 0000000000000000
-> > x26: 0000000000000001 x25: ffff80000cb6fd9e x24: fffffffffffffffe
-> > x23: 0000000000000000 x22: fffffc0004cfa8c0 x21: 0000000000000001
-> > x20: ffff0001127af450 x19: fffffc0004cfa8c0 x18: 00000000000003b8
-> > x17: ffff80000bffd6bc x16: 0000000000000002 x15: 0000000000000000
-> > x14: 0000000000000000 x13: 0000000000000003 x12: ffff80000d5f02b0
-> > x11: ff808000083c31e8 x10: 0000000000000000 x9 : ffff8000083c31e8
-> > x8 : 0000000000000000 x7 : ffff80000856806c x6 : 0000000000000000
-> > x5 : 0000000000000080 x4 : 0000000000000000 x3 : 0000000000000000
-> > x2 : 0000000000000006 x1 : fffffc0004cfa8c0 x0 : ffff0001127af450
-> > Call trace:
-> >  filemap_free_folio+0x20/0x288 mm/filemap.c:231
-> >  delete_from_page_cache_batch+0x148/0x184 mm/filemap.c:341
-> >  truncate_inode_pages_range+0x174/0xb94 mm/truncate.c:370
-> >  truncate_inode_pages mm/truncate.c:452 [inline]
-> >  truncate_inode_pages_final+0x8c/0x9c mm/truncate.c:487
-> >  nilfs_evict_inode+0x58/0x1cc fs/nilfs2/inode.c:906
-> >  evict+0xec/0x334 fs/inode.c:665
-> >  dispose_list fs/inode.c:698 [inline]
-> >  evict_inodes+0x2e0/0x354 fs/inode.c:748
-> >  generic_shutdown_super+0x50/0x190 fs/super.c:480
-> >  kill_block_super+0x30/0x78 fs/super.c:1427
-> >  deactivate_locked_super+0x70/0xe8 fs/super.c:332
-> >  deactivate_super+0xd0/0xd4 fs/super.c:363
-> >  cleanup_mnt+0x1f8/0x234 fs/namespace.c:1186
-> >  __cleanup_mnt+0x20/0x30 fs/namespace.c:1193
-> >  task_work_run+0xc4/0x14c kernel/task_work.c:177
-> >  resume_user_mode_work include/linux/resume_user_mode.h:49 [inline]
-> >  do_notify_resume+0x174/0x1f0 arch/arm64/kernel/signal.c:1127
-> >  prepare_exit_to_user_mode arch/arm64/kernel/entry-common.c:137 [inline]
-> >  exit_to_user_mode arch/arm64/kernel/entry-common.c:142 [inline]
-> >  el0_svc+0x9c/0x150 arch/arm64/kernel/entry-common.c:637
-> >  el0t_64_sync_handler+0x84/0xf0 arch/arm64/kernel/entry-common.c:654
-> >  el0t_64_sync+0x18c/0x190 arch/arm64/kernel/entry.S:581
-> > Code: aa0103f3 aa0003f4 97fb728c f940de88 (f9402914)
-> > ---[ end trace 0000000000000000 ]---
-> > ----------------
-> > Code disassembly (best guess):
-> >    0: aa0103f3        mov     x19, x1
-> >    4: aa0003f4        mov     x20, x0
-> >    8: 97fb728c        bl      0xffffffffffedca38
-> >    c: f940de88        ldr     x8, [x20, #440]
-> > * 10: f9402914        ldr     x20, [x8, #80] <-- trapping instruction
->
-> As far as I can tell, this is:
->
->         free_folio = mapping->a_ops->free_folio;
->
-> and the first dereference (mapping->a_ops) is offset 440 from mapping,
-> which works fine, but is NULL.  So loading aops->free_folio is the
-> NULL pointer dereference.
->
-> So does nilfs have an address_space with a NULL a_ops?  That doesn't
-> seem to be allowed; at least I don't see any checks of a_ops for
-> being NULL in the rest of the VFS or MM.
+Hello,
 
-There is no place where a NULL is set to a_ops in NILFS.
-All inodes used by NILFS are allocated by either iget5_locked() or
-new_inode(), and both of them at least initialize a_ops to &empty_aops
-with inode_init_always().  So, I suspect this is caused by UAF or,
-less likely, a memory corruption on inode->i_data.
+syzbot found the following issue on:
 
-I'm tracking these possibilities, but haven't been able to identify the cause.
-One possibility is that this is a variant of the report bug [1], which
-can cause an inode UAF:
+HEAD commit:    337a0a0b63f1 Merge tag 'net-6.1-rc3-1' of git://git.kernel..
+git tree:       upstream
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=1002c326880000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=1d3548a4365ba17d
+dashboard link: https://syzkaller.appspot.com/bug?extid=e91619dd4c11c4960706
+compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1141be22880000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=114e6a22880000
 
-[1] https://syzkaller.appspot.com/bug?extid=b8c672b0e22615c80fe0
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/c011f7e4e764/disk-337a0a0b.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/d019c4ed2ed2/vmlinux-337a0a0b.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/c3f2dcdec39e/mount_0.gz
 
-If so, this is fixed in 6.1-rc1, but not enough evidence yet if it's
-the same bug.
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+e91619dd4c11c4960706-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
-Regards,
-Ryusuke Konishi
+loop0: detected capacity change from 0 to 4192
+================================================================================
+UBSAN: shift-out-of-bounds in fs/nilfs2/the_nilfs.c:449:46
+shift exponent 38983 is too large for 64-bit type 'unsigned long long'
+CPU: 0 PID: 3611 Comm: syz-executor485 Not tainted 6.1.0-rc2-syzkaller-00061-g337a0a0b63f1 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/11/2022
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x1b1/0x28e lib/dump_stack.c:106
+ ubsan_epilogue lib/ubsan.c:151 [inline]
+ __ubsan_handle_shift_out_of_bounds+0x33d/0x3b0 lib/ubsan.c:322
+ nilfs_sb2_bad_offset fs/nilfs2/the_nilfs.c:449 [inline]
+ nilfs_load_super_block+0xdf5/0xe00 fs/nilfs2/the_nilfs.c:523
+ init_nilfs+0xb7/0x7d0 fs/nilfs2/the_nilfs.c:577
+ nilfs_fill_super+0xb1/0x5d0 fs/nilfs2/super.c:1047
+ nilfs_mount+0x613/0x9b0 fs/nilfs2/super.c:1317
+ legacy_get_tree+0xea/0x180 fs/fs_context.c:610
+ vfs_get_tree+0x88/0x270 fs/super.c:1530
+ do_new_mount+0x289/0xad0 fs/namespace.c:3040
+ do_mount fs/namespace.c:3383 [inline]
+ __do_sys_mount fs/namespace.c:3591 [inline]
+ __se_sys_mount+0x2d3/0x3c0 fs/namespace.c:3568
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x3d/0xb0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+RIP: 0033:0x7f6d8986065a
+Code: 83 c4 08 5b 5d c3 66 2e 0f 1f 84 00 00 00 00 00 c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 49 89 ca b8 a5 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fff429054d8 EFLAGS: 00000286 ORIG_RAX: 00000000000000a5
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00007f6d8986065a
+RDX: 00000000200000c0 RSI: 0000000020000100 RDI: 00007fff429054f0
+RBP: 00007fff429054f0 R08: 00007fff42905530 R09: 00005555561872c0
+R10: 0000000000010400 R11: 0000000000000286 R12: 0000000000000004
+R13: 00007fff42905530 R14: 000000000000003a R15: 0000000020000770
+ </TASK>
+================================================================================
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+syzbot can test patches for this issue, for details see:
+https://goo.gl/tpsmEJ#testing-patches
