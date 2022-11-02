@@ -1,24 +1,24 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v4 13/23] f2fs: Convert
- f2fs_sync_node_pages() to use filemap_get_folios_tag()
-Date: Wed,  2 Nov 2022 09:10:21 -0700
-Message-ID: <20221102161031.5820-14-vishal.moola@gmail.com>
+Subject: [PATCH v4 15/23] f2fs: Convert last_fsync_dnode()
+ to use filemap_get_folios_tag()
+Date: Wed,  2 Nov 2022 09:10:23 -0700
+Message-ID: <20221102161031.5820-16-vishal.moola@gmail.com>
 References: <20221102161031.5820-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <cluster-devel-bounces@redhat.com>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667405496;
+	s=mimecast20190719; t=1667405499;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=FlCTXZScWdlX0aVFB5ZBh3WOEeZ8Gy5thYVDo4sECVo=;
-	b=Kr2wNcj88pKvBqm9gG0G5Qi8BmJhssrsOfNgydSRDO0bhiuPpcf9xbkJ7/sBOH83Xg8vdV
-	znx3IJKOXbtECLfe0wQh3iORNKTRdaauXKMsy2HnA8LPWqeHJYyA8NAyf4BvUFXqqGbb9G
-	PrYCrcMxVLfnPlanLW9goyKn6rmUoMI=
+	bh=UZvXQK7eydj6IBrzU3IQ20y8xajH5CKQhE5ttfKWvGg=;
+	b=PLmZBitcZjYxuuVZJyZI4yq1iplsW1r0Iv4liJsXpH+6an4q7XUbphVEvzBpaDP3Wkxc4B
+	RGQBviR1s8XO/MkfH47wl+O90O6Zy4tm+R1Jy18x9qbS3IOc5vvibqBllTny/oLlmzNIzP
+	KKa4fdwCqByIRRdxJNvJ5vZsLGyXt/s=
 In-Reply-To: <20221102161031.5820-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
@@ -32,62 +32,62 @@ Errors-To: cluster-devel-bounces@redhat.com
 Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
 Content-Type: text/plain; charset="us-ascii"; x-default="true"
 To: linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, Chao Yu <chao@kernel.org>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Convert function to use a folio_batch instead of pagevec. This is in
-preparation for the removal of find_get_pages_range_tag().
+Convert to use a folio_batch instead of pagevec. This is in preparation for
+the removal of find_get_pages_range_tag().
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-Acked-by: Chao Yu <chao@kernel.org>
 ---
- fs/f2fs/node.c | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
+ fs/f2fs/node.c | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
 
 diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index a2f477cc48c7..38f32b4d61dc 100644
+index 38f32b4d61dc..3e1764960a96 100644
 --- a/fs/f2fs/node.c
 +++ b/fs/f2fs/node.c
-@@ -1935,23 +1935,24 @@ int f2fs_sync_node_pages(struct f2fs_sb_info *sbi,
- 				bool do_balance, enum iostat_type io_type)
+@@ -1515,23 +1515,24 @@ static void flush_inline_data(struct f2fs_sb_info *sbi, nid_t ino)
+ static struct page *last_fsync_dnode(struct f2fs_sb_info *sbi, nid_t ino)
  {
  	pgoff_t index;
 -	struct pagevec pvec;
 +	struct folio_batch fbatch;
- 	int step = 0;
- 	int nwritten = 0;
- 	int ret = 0;
--	int nr_pages, done = 0;
-+	int nr_folios, done = 0;
+ 	struct page *last_page = NULL;
+-	int nr_pages;
++	int nr_folios;
  
 -	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
- 
- next_step:
  	index = 0;
  
--	while (!done && (nr_pages = pagevec_lookup_tag(&pvec,
--			NODE_MAPPING(sbi), &index, PAGECACHE_TAG_DIRTY))) {
-+	while (!done && (nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi),
-+				&index, (pgoff_t)-1, PAGECACHE_TAG_DIRTY,
-+				&fbatch))) {
+-	while ((nr_pages = pagevec_lookup_tag(&pvec, NODE_MAPPING(sbi), &index,
+-				PAGECACHE_TAG_DIRTY))) {
++	while ((nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi), &index,
++					(pgoff_t)-1, PAGECACHE_TAG_DIRTY,
++					&fbatch))) {
  		int i;
  
 -		for (i = 0; i < nr_pages; i++) {
 -			struct page *page = pvec.pages[i];
 +		for (i = 0; i < nr_folios; i++) {
 +			struct page *page = &fbatch.folios[i]->page;
- 			bool submitted = false;
  
- 			/* give a priority to WB_SYNC threads */
-@@ -2026,7 +2027,7 @@ int f2fs_sync_node_pages(struct f2fs_sb_info *sbi,
- 			if (--wbc->nr_to_write == 0)
- 				break;
+ 			if (unlikely(f2fs_cp_error(sbi))) {
+ 				f2fs_put_page(last_page, 0);
+-				pagevec_release(&pvec);
++				folio_batch_release(&fbatch);
+ 				return ERR_PTR(-EIO);
+ 			}
+ 
+@@ -1562,7 +1563,7 @@ static struct page *last_fsync_dnode(struct f2fs_sb_info *sbi, nid_t ino)
+ 			last_page = page;
+ 			unlock_page(page);
  		}
 -		pagevec_release(&pvec);
 +		folio_batch_release(&fbatch);
  		cond_resched();
- 
- 		if (wbc->nr_to_write == 0) {
+ 	}
+ 	return last_page;
 -- 
 2.38.1
 
