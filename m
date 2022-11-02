@@ -1,24 +1,24 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v4 09/23] cifs: Convert
- wdata_alloc_and_fillpages() to use filemap_get_folios_tag()
-Date: Wed,  2 Nov 2022 09:10:17 -0700
-Message-ID: <20221102161031.5820-10-vishal.moola@gmail.com>
+Subject: [PATCH v4 18/23] nilfs2: Convert
+ nilfs_lookup_dirty_data_buffers() to use filemap_get_folios_tag()
+Date: Wed,  2 Nov 2022 09:10:26 -0700
+Message-ID: <20221102161031.5820-19-vishal.moola@gmail.com>
 References: <20221102161031.5820-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <cluster-devel-bounces@redhat.com>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667405494;
+	s=mimecast20190719; t=1667405503;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=K9oQGBma55+7a0HBQARXA8wNbnmnkmU7HtFBuB0SMcU=;
-	b=EH8ZYPeQWYCE2lAzhu1fyoSNKtd+2BGYlhlEmSeJX+mt9rW45c/uBS5ekbYH8vuKAKHbpz
-	dg5XrysEvPi7HI9uqJezr+BWulE3lyXbkeIjn0UmSSUlQS8SSlFV+Q/ZuyuTl6TQJY8hLA
-	nH689lE6qkYAWOhyQwuA5LFpi+zi9So=
+	bh=M6ro/4uwbCPgnPQoXYfWSXb0BSYdAvQsNHB7i1qmjGk=;
+	b=V0MZDWdrEO1HIEM99NS+5F6MtOoKl1zC8hhEy6t7yfkBjyOnJwDz83WrMyOib/GITDg/RE
+	lWsy292xvPeMcL921ahV7uEPbPIzawhWlUrSeC90jn+3qdAcKJtZIeNyR3M+uXwynPOGEV
+	Xd0e2blt3QGq+52QeJOH1kMLbygTV54=
 In-Reply-To: <20221102161031.5820-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
@@ -32,71 +32,84 @@ Errors-To: cluster-devel-bounces@redhat.com
 Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
 Content-Type: text/plain; charset="us-ascii"; x-default="true"
 To: linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-This is in preparation for the removal of find_get_pages_range_tag(). Now also
-supports the use of large folios.
-
-Since tofind might be larger than the max number of folios in a
-folio_batch (15), we loop through filling in wdata->pages pulling more
-batches until we either reach tofind pages or run out of folios.
-
-This function may not return all pages in the last found folio before
-tofind pages are reached.
+Convert function to use folios throughout. This is in preparation for
+the removal of find_get_pages_range_tag(). This change removes 4 calls
+to compound_head().
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
+Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/cifs/file.c | 32 +++++++++++++++++++++++++++++---
- 1 file changed, 29 insertions(+), 3 deletions(-)
+ fs/nilfs2/segment.c | 29 ++++++++++++++++-------------
+ 1 file changed, 16 insertions(+), 13 deletions(-)
 
-diff --git a/fs/cifs/file.c b/fs/cifs/file.c
-index f6ffee514c34..789fd0397cb4 100644
---- a/fs/cifs/file.c
-+++ b/fs/cifs/file.c
-@@ -2520,14 +2520,40 @@ wdata_alloc_and_fillpages(pgoff_t tofind, struct address_space *mapping,
- 			  unsigned int *found_pages)
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index b4cebad21b48..2183e1698f8e 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -680,7 +680,7 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
+ 					      loff_t start, loff_t end)
  {
- 	struct cifs_writedata *wdata;
--
+ 	struct address_space *mapping = inode->i_mapping;
+-	struct pagevec pvec;
 +	struct folio_batch fbatch;
-+	unsigned int i, idx, p, nr;
- 	wdata = cifs_writedata_alloc((unsigned int)tofind,
- 				     cifs_writev_complete);
- 	if (!wdata)
- 		return NULL;
- 
--	*found_pages = find_get_pages_range_tag(mapping, index, end,
--				PAGECACHE_TAG_DIRTY, tofind, wdata->pages);
+ 	pgoff_t index = 0, last = ULONG_MAX;
+ 	size_t ndirties = 0;
+ 	int i;
+@@ -694,23 +694,26 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
+ 		index = start >> PAGE_SHIFT;
+ 		last = end >> PAGE_SHIFT;
+ 	}
+-	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
-+	*found_pages = 0;
-+
-+again:
-+	nr = filemap_get_folios_tag(mapping, index, end,
-+				PAGECACHE_TAG_DIRTY, &fbatch);
-+	if (!nr)
-+		goto out; /* No dirty pages left in the range */
-+
-+	for (i = 0; i < nr; i++) {
-+		struct folio *folio = fbatch.folios[i];
-+
-+		idx = 0;
-+		p = folio_nr_pages(folio);
-+add_more:
-+		wdata->pages[*found_pages] = folio_page(folio, idx);
-+		folio_ref_inc(folio);
-+		if (++*found_pages == tofind) {
-+			folio_batch_release(&fbatch);
-+			goto out;
-+		}
-+		if (++idx < p)
-+			goto add_more;
-+	}
-+	folio_batch_release(&fbatch);
-+	goto again;
-+out:
- 	return wdata;
- }
+  repeat:
+ 	if (unlikely(index > last) ||
+-	    !pagevec_lookup_range_tag(&pvec, mapping, &index, last,
+-				PAGECACHE_TAG_DIRTY))
++	      !filemap_get_folios_tag(mapping, &index, last,
++		      PAGECACHE_TAG_DIRTY, &fbatch))
+ 		return ndirties;
  
+-	for (i = 0; i < pagevec_count(&pvec); i++) {
++	for (i = 0; i < folio_batch_count(&fbatch); i++) {
+ 		struct buffer_head *bh, *head;
+-		struct page *page = pvec.pages[i];
++		struct folio *folio = fbatch.folios[i];
+ 
+-		lock_page(page);
+-		if (!page_has_buffers(page))
+-			create_empty_buffers(page, i_blocksize(inode), 0);
+-		unlock_page(page);
++		folio_lock(folio);
++		head = folio_buffers(folio);
++		if (!head) {
++			create_empty_buffers(&folio->page, i_blocksize(inode), 0);
++			head = folio_buffers(folio);
++		}
++		folio_unlock(folio);
+ 
+-		bh = head = page_buffers(page);
++		bh = head;
+ 		do {
+ 			if (!buffer_dirty(bh) || buffer_async_write(bh))
+ 				continue;
+@@ -718,13 +721,13 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
+ 			list_add_tail(&bh->b_assoc_buffers, listp);
+ 			ndirties++;
+ 			if (unlikely(ndirties >= nlimit)) {
+-				pagevec_release(&pvec);
++				folio_batch_release(&fbatch);
+ 				cond_resched();
+ 				return ndirties;
+ 			}
+ 		} while (bh = bh->b_this_page, bh != head);
+ 	}
+-	pagevec_release(&pvec);
++	folio_batch_release(&fbatch);
+ 	cond_resched();
+ 	goto repeat;
+ }
 -- 
 2.38.1
 
