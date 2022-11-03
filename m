@@ -1,70 +1,68 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH v4 00/23] Convert to filemap_get_folios_tag()
-Date: Fri, 4 Nov 2022 07:47:19 +1100
-Message-ID: <20221103204719.GY2703033@dread.disaster.area>
-References: <20221102161031.5820-1-vishal.moola@gmail.com>
- <20221103070807.GX2703033@dread.disaster.area>
- <CAOzc2pzFMU-XiGZ9bsp40JkpYVSzQuxs2VXgfw_p9abkj4GrFw@mail.gmail.com>
+From: Vishal Moola <vishal.moola@gmail.com>
+Subject: Re: [PATCH 00/23] Convert to filemap_get_folios_tag()
+Date: Thu, 3 Nov 2022 14:59:54 -0700
+Message-ID: <Y2Q52uQGoqGM4o9m@fedora>
+References: <20220901220138.182896-1-vishal.moola@gmail.com>
+ <20221018214544.GI2703033@dread.disaster.area>
 Mime-Version: 1.0
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=fromorbit-com.20210112.gappssmtp.com; s=20210112;
+        d=gmail.com; s=20210112;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=MxS/4UcS9QV06TA42jz+n7cPJ0B1Da1lpvr3ubjc6GY=;
-        b=cuP5UtrVPLmPkgDyIU7nXUWip6wPNwEQX83eaiYzuSaa/NwaBOHxdiCCYvHyd3mrWb
-         UX4IYw78zXIF0mMu0R7qDreIqrr7PvviOTacDCidW9f3UUssGYk9RosDNLvY+hm88Tz8
-         hEooCKFouHczA6F3wBjXPLYrpYIszUEwnYnlDxkOvhuNi8oE//fz5w1SOEhhUUoWt77E
-         pAHn5L/ZZzWw3HkpcasZr6hnf6O/XMcGhjxvLwJ33vohngsJ1KBKVvIfn+XAYIa1YRVX
-         Vkpw4CNDgLSlpQfjW7+15/HKqs/xOt8+2WdHOo1jGBPReCKhIlOzYbvvyYROh/eydkAD
-         rc0Q==
+        bh=BXMtoJhRlFWaQLcxjEM+qd1+6PF53F0Hz+I5xM4y+wc=;
+        b=LSzE9TH+osvipk73Jg9gpor1ZQe37FTuPrWQ5VUxQIsLQ//7XAFuJQM1KyFIXYAxqx
+         BE4yzuk+xifeQgNpMYonk3DPgvpHS7XYbgoNdLomm2aKEkQCHaH0Bc7mrZFzL+9j5ZSy
+         b9DDF8m1+3bfZ9iV0lucJ1MqhbByVhp5MZXMvkd4dpduipcwth1ZiKn90EGRhJ8R9r+m
+         EJ4boWxUG+nQ4ooKm3DZioH6mkJd/Le4V3cgspEcIdaCLQDHg98SssmSluKeW2l4jPay
+         g1Az1Lvo9oZjC2k1yTkOvtryQxynTaEzmqQoj8oo4NJhMXBQYq056FnhoGgEMPlBjEct
+         OTAA==
 Content-Disposition: inline
-In-Reply-To: <CAOzc2pzFMU-XiGZ9bsp40JkpYVSzQuxs2VXgfw_p9abkj4GrFw@mail.gmail.com>
+In-Reply-To: <20221018214544.GI2703033@dread.disaster.area>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Vishal Moola <vishal.moola@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, David Howells <dhowells@redhat.com>
 
-On Thu, Nov 03, 2022 at 09:38:48AM -0700, Vishal Moola wrote:
-> On Thu, Nov 3, 2022 at 12:08 AM Dave Chinner <david@fromorbit.com> wrote:
-> >
-> > On Wed, Nov 02, 2022 at 09:10:08AM -0700, Vishal Moola (Oracle) wrote:
-> > > This patch series replaces find_get_pages_range_tag() with
-> > > filemap_get_folios_tag(). This also allows the removal of multiple
-> > > calls to compound_head() throughout.
-> > > It also makes a good chunk of the straightforward conversions to folios,
-> > > and takes the opportunity to introduce a function that grabs a folio
-> > > from the pagecache.
-> > >
-> > > F2fs and Ceph have quite a lot of work to be done regarding folios, so
-> > > for now those patches only have the changes necessary for the removal of
-> > > find_get_pages_range_tag(), and only support folios of size 1 (which is
-> > > all they use right now anyways).
-> > >
-> > > I've run xfstests on btrfs, ext4, f2fs, and nilfs2, but more testing may be
-> > > beneficial. The page-writeback and filemap changes implicitly work. Testing
-> > > and review of the other changes (afs, ceph, cifs, gfs2) would be appreciated.
-> >
-> > Same question as last time: have you tested this with multipage
-> > folios enabled? If you haven't tested XFS, then I'm guessing the
-> > answer is no, and you haven't fixed the bug I pointed out in
-> > the write_cache_pages() implementation....
-> >
+On Wed, Oct 19, 2022 at 08:45:44AM +1100, Dave Chinner wrote:
+> On Thu, Sep 01, 2022 at 03:01:15PM -0700, Vishal Moola (Oracle) wrote:
+> > This patch series replaces find_get_pages_range_tag() with
+> > filemap_get_folios_tag(). This also allows the removal of multiple
+> > calls to compound_head() throughout.
+> > It also makes a good chunk of the straightforward conversions to folios,
+> > and takes the opportunity to introduce a function that grabs a folio
+> > from the pagecache.
+> > 
+> > F2fs and Ceph have quite alot of work to be done regarding folios, so
+> > for now those patches only have the changes necessary for the removal of
+> > find_get_pages_range_tag(), and only support folios of size 1 (which is
+> > all they use right now anyways).
+> > 
+> > I've run xfstests on btrfs, ext4, f2fs, and nilfs2, but more testing may be
+> > beneficial.
 > 
-> I haven't tested the series with multipage folios or XFS.
+> Well, that answers my question about how filesystems that enable
+> multi-page folios were tested: they weren't. 
 > 
-> I don't seem to have gotten your earlier comments, and I
-> can't seem to find them on the mailing lists. Could you
-> please send them again so I can take a look?
+> I'd suggest that anyone working on further extending the
+> filemap/folio infrastructure really needs to be testing XFS as a
+> first priority, and then other filesystems as a secondary concern.
+> 
+> That's because XFS (via the fs/iomap infrastructure) is one of only
+> 3 filesystems in the kernel (AFS and tmpfs are the others) that
+> interact with the page cache and page cache "pages" solely via folio
+> interfaces. As such they are able to support multi-page folios in
+> the page cache. All of the tested filesystems still use the fixed
+> PAGE_SIZE page interfaces to interact with the page cache, so they
+> don't actually exercise interactions with multi-page folios at all.
+> 
 
-They are in the lore -fsdevel archive - no idea why you couldn't
-find them....
+Thanks for the explanation! That makes perfect sense. I wholeheartedly
+agree, and I'll be sure to test any future changes on XFS to try to
+ensure multi-page folio functionality. 
 
-https://lore.kernel.org/linux-fsdevel/20221018210152.GH2703033@dread.disaster.area/
-https://lore.kernel.org/linux-fsdevel/20221018214544.GI2703033@dread.disaster.area/
-
--Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+I know David ran tests on AFS, so hopefully those hit multipage folios
+well enough. But I'm not sure whether it was just for the AFS patch or
+with the whole series applied. Regardless I'll run my own set of tests
+on XFS and see if I run into any issues as well.
