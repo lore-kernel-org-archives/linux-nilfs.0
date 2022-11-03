@@ -1,66 +1,116 @@
-From: Vishal Moola <vishal.moola@gmail.com>
-Subject: Re: [PATCH v4 00/23] Convert to
- filemap_get_folios_tag()
-Date: Thu, 3 Nov 2022 09:38:48 -0700
-Message-ID: <CAOzc2pzFMU-XiGZ9bsp40JkpYVSzQuxs2VXgfw_p9abkj4GrFw@mail.gmail.com>
-References: <20221102161031.5820-1-vishal.moola@gmail.com>
- <20221103070807.GX2703033@dread.disaster.area>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] nilfs: Avoid use-after-free caused by nilfs->ns_writer
+Date: Fri, 4 Nov 2022 03:56:19 +0900
+Message-ID: <CAKFNMonawKi4b4G1d3CfJ6-+NLFOqVkHzNOO_5DocAJxGnkz7A@mail.gmail.com>
+References: <20221103141759.1836312-1-syoshida@redhat.com>
 Mime-Version: 1.0
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667493550;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=Kh3PemVjLOMzD+zXkDJxoTeXa2tk+grc1up9htYz3yQ=;
-	b=gypOwzOWHSduWhyOXMq1NhaBjACAZ3yflokA37vzTq+oejH+ScTQv96oMTKuHb6k016mMu
-	LPoa29047uWhbujIgtrMdlYyOTXOqhJGl20LpIIJd4uZ2jmZd2JvVpKDFGtzSNfEMvTCQ1
-	gbTAKYlFP3lIgMN7g6zX3lIaf4kG9fk=
-In-Reply-To: <20221103070807.GX2703033@dread.disaster.area>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=M8ZxHqehtSCexx7BuFI+vfJrqxKMqvMHNZW3sS2W088=;
+        b=hzVuz5H1Uuyy09qJnT5S06m90RimROo1ozi4238CG0WyXBBA2ahhB0DALa4dpmelRB
+         48BZQzxH3RpCyvXiIL9Bo3KXdgY1hiK2SSS2j//wwyJ1Tc90BZgXsg7Slqi00T6efCAs
+         5mgn/lU1S1wkmZ8993YnKF2QbGB54EiwUUXKuKnQAdWVTFqMDhKVKWGAKVzXjMGyASto
+         kKJC9470nqwB0l3e5TAmZUI+rMZ0yUIL8ML2Upaobi+xrb1W8AzEZM/LOtpJS7JnSwyI
+         xZB5VQGZLRxijAeedTSvRPw9lwiqwVzNujzDTE44+HuNCxTSOK+Jgq0gDwUeCLZc+miY
+         6ETA==
+In-Reply-To: <20221103141759.1836312-1-syoshida-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Dave Chinner <david@fromorbit.com>
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+To: Shigeru Yoshida <syoshida-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, syzbot+f816fa82f8783f7a02bb-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
-On Thu, Nov 3, 2022 at 12:08 AM Dave Chinner <david@fromorbit.com> wrote:
+On Thu, Nov 3, 2022 at 11:18 PM Shigeru Yoshida wrote:
 >
-> On Wed, Nov 02, 2022 at 09:10:08AM -0700, Vishal Moola (Oracle) wrote:
-> > This patch series replaces find_get_pages_range_tag() with
-> > filemap_get_folios_tag(). This also allows the removal of multiple
-> > calls to compound_head() throughout.
-> > It also makes a good chunk of the straightforward conversions to folios,
-> > and takes the opportunity to introduce a function that grabs a folio
-> > from the pagecache.
-> >
-> > F2fs and Ceph have quite a lot of work to be done regarding folios, so
-> > for now those patches only have the changes necessary for the removal of
-> > find_get_pages_range_tag(), and only support folios of size 1 (which is
-> > all they use right now anyways).
-> >
-> > I've run xfstests on btrfs, ext4, f2fs, and nilfs2, but more testing may be
-> > beneficial. The page-writeback and filemap changes implicitly work. Testing
-> > and review of the other changes (afs, ceph, cifs, gfs2) would be appreciated.
+> syzbot reported use-after-free in nilfs_segctor_sync() [1].
 >
-> Same question as last time: have you tested this with multipage
-> folios enabled? If you haven't tested XFS, then I'm guessing the
-> answer is no, and you haven't fixed the bug I pointed out in
-> the write_cache_pages() implementation....
+> The use-after-free occurs with nilfs->ns_writer.  The scenario for the
+> issue is as follows:
+>
+> Task1                                   Task2
+> ----------------------------------------------------------------------
+> nilfs_construct_segment
+>   nilfs_segctor_sync
+>     init_wait
+>     init_waitqueue_entry
+>     add_wait_queue
+>     schedule
+>                                         nilfs_detach_log_writer
+>                                           nilfs_segctor_destroy
+>                                             kfree
+>     finish_wait
+>       _raw_spin_lock_irqsave
+>         __raw_spin_lock_irqsave
+>           do_raw_spin_lock
+>             debug_spin_lock_before  <-- use-after-free
+>
+> While Task1 is sleeping, nilfs->ns_writer is freed by Task2.  After
+> Task1 waked up, Task1 accesses nilfs->ns_writer which is already
+> freed.
+>
+> This patch fixes the issue by taking nilfs->ns_segctor_sem in
+> nilfs_construct_segment() so that nilfs->ns_segctor_sem cannot be
+> freed while nilfs_segctor_sync() is sleeping.
+>
+> Link: https://syzkaller.appspot.com/bug?id=79a4c002e960419ca173d55e863bd09e8112df8b [1]
+> Reported-by: syzbot+f816fa82f8783f7a02bb-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+> Signed-off-by: Shigeru Yoshida <syoshida-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/nilfs2/segment.c | 14 +++++++++++---
+>  1 file changed, 11 insertions(+), 3 deletions(-)
+>
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index b4cebad21b48..d4f10d82664d 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -2239,16 +2239,24 @@ static void nilfs_segctor_wakeup(struct nilfs_sc_info *sci, int err)
+>  int nilfs_construct_segment(struct super_block *sb)
+>  {
+>         struct the_nilfs *nilfs = sb->s_fs_info;
+> -       struct nilfs_sc_info *sci = nilfs->ns_writer;
+> +       struct nilfs_sc_info *sci;
+>         struct nilfs_transaction_info *ti;
+> +       int ret;
+>
+> -       if (!sci)
+> +       down_write(&nilfs->ns_segctor_sem);
+> +       sci = nilfs->ns_writer;
+> +       if (!sci) {
+> +               up_write(&nilfs->ns_segctor_sem);
+>                 return -EROFS;
+> +       }
+>
+>         /* A call inside transactions causes a deadlock. */
+>         BUG_ON((ti = current->journal_info) && ti->ti_magic == NILFS_TI_MAGIC);
+>
+> -       return nilfs_segctor_sync(sci);
+> +       ret = nilfs_segctor_sync(sci);
+> +       up_write(&nilfs->ns_segctor_sem);
+> +
+> +       return ret;
+>  }
+>
+>  /**
+> --
+> 2.37.3
 >
 
-I haven't tested the series with multipage folios or XFS.
+Thank you for your help Yoshida-san.
 
-I don't seem to have gotten your earlier comments, and I
-can't seem to find them on the mailing lists. Could you
-please send them again so I can take a look?
+Your analysis of the bug cause is quite correct.
 
+However, this patch caused deadlock for tests with fsync() or mkcp
+command (i.e. nilfs_ioctl_sync).
+They both call nilfs_construct_segment().
+The approach implemented in this patch may not avoid the deadlock regression.
+
+I'd like to consider other approaches.
+My current thoughts are either to stop detaching ns_writer on remount
+which is the root cause of the UAF races, or to introduce a refcount
+on struct nilfs_sc_info.
+
+Regards,
+Ryusuke Konishi
