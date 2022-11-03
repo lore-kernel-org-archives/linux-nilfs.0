@@ -1,88 +1,52 @@
-From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v4 20/23] nilfs2: Convert
- nilfs_btree_lookup_dirty_buffers() to use filemap_get_folios_tag()
-Date: Wed,  2 Nov 2022 09:10:28 -0700
-Message-ID: <20221102161031.5820-21-vishal.moola@gmail.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH v4 00/23] Convert to filemap_get_folios_tag()
+Date: Thu, 3 Nov 2022 18:08:07 +1100
+Message-ID: <20221103070807.GX2703033@dread.disaster.area>
 References: <20221102161031.5820-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667405507;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=BlC7rcv7uN/Ok17R0azuMVwGkvRCqLRr8I16XJ1l0Zg=;
-	b=C4xAG472Dm8Jq0ruPpe+C8PhwtHFQBETribH4EDvUUWvFNBLzQ7pBtv/d6Vf0s7nLER0zj
-	D83OYQ8mfAqp3DEL9dZB4so8sDUbINok8RBDBG6wivB4FbpDwYGhIbZ0eluKm3wHiC5m7T
-	ZoUXTnKTFTZ6yWL1pRuJvbHjRP4JELg=
-In-Reply-To: <20221102161031.5820-1-vishal.moola@gmail.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Type: text/plain; charset="us-ascii"; x-default="true"
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=fromorbit-com.20210112.gappssmtp.com; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=UCGx+I//h802HOEchXeQ4l9Uif7TwqahE8c/QVCmorA=;
+        b=Qo0pCYgx3Qq1H7gtsjTo9ahtaWGAPbAqpUUP7w83R+hioFcvnb/Vum4t6njrIqmCbQ
+         9oglIFHFznb8HWDOhJ8VqGBZno5DvMa/i9rWqzvIS3F1Qe6lSOVMpDruWh58G2ZJDVRR
+         +irGuRxsC3szEMLHnbBdSVWy+8gAtIi3/dsdlKShS4dWGsFcwevGYm9bbQNs76cqEy+l
+         a7aTzEEQgFxLLhP1XqsxI1o93xRoLeyOkLszg3jyihUg4tqsI4qRKCp463KDJruVxcER
+         uahSco4O56I/ia+N+pdnGxKbS5y4Jn6JIOipSvnU+FLMXl5F+IFO/pgiKOzrTt8rdoYE
+         jcgA==
+Content-Disposition: inline
+In-Reply-To: <20221102161031.5820-1-vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: "Vishal Moola (Oracle)" <vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ceph-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 
-Convert function to use folios throughout. This is in preparation for
-the removal of find_get_pages_range_tag(). This change removes 1 call to
-compound_head().
+On Wed, Nov 02, 2022 at 09:10:08AM -0700, Vishal Moola (Oracle) wrote:
+> This patch series replaces find_get_pages_range_tag() with
+> filemap_get_folios_tag(). This also allows the removal of multiple
+> calls to compound_head() throughout.
+> It also makes a good chunk of the straightforward conversions to folios,
+> and takes the opportunity to introduce a function that grabs a folio
+> from the pagecache.
+> 
+> F2fs and Ceph have quite a lot of work to be done regarding folios, so
+> for now those patches only have the changes necessary for the removal of
+> find_get_pages_range_tag(), and only support folios of size 1 (which is
+> all they use right now anyways).
+> 
+> I've run xfstests on btrfs, ext4, f2fs, and nilfs2, but more testing may be
+> beneficial. The page-writeback and filemap changes implicitly work. Testing
+> and review of the other changes (afs, ceph, cifs, gfs2) would be appreciated.
 
-Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- fs/nilfs2/btree.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+Same question as last time: have you tested this with multipage
+folios enabled? If you haven't tested XFS, then I'm guessing the
+answer is no, and you haven't fixed the bug I pointed out in
+the write_cache_pages() implementation....
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index b9d15c3df3cc..da6a19eede9a 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -2141,7 +2141,7 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
- 	struct inode *btnc_inode = NILFS_BMAP_I(btree)->i_assoc_inode;
- 	struct address_space *btcache = btnc_inode->i_mapping;
- 	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
--	struct pagevec pvec;
-+	struct folio_batch fbatch;
- 	struct buffer_head *bh, *head;
- 	pgoff_t index = 0;
- 	int level, i;
-@@ -2151,19 +2151,19 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
- 	     level++)
- 		INIT_LIST_HEAD(&lists[level]);
- 
--	pagevec_init(&pvec);
-+	folio_batch_init(&fbatch);
- 
--	while (pagevec_lookup_tag(&pvec, btcache, &index,
--					PAGECACHE_TAG_DIRTY)) {
--		for (i = 0; i < pagevec_count(&pvec); i++) {
--			bh = head = page_buffers(pvec.pages[i]);
-+	while (filemap_get_folios_tag(btcache, &index, (pgoff_t)-1,
-+				PAGECACHE_TAG_DIRTY, &fbatch)) {
-+		for (i = 0; i < folio_batch_count(&fbatch); i++) {
-+			bh = head = folio_buffers(fbatch.folios[i]);
- 			do {
- 				if (buffer_dirty(bh))
- 					nilfs_btree_add_dirty_buffer(btree,
- 								     lists, bh);
- 			} while ((bh = bh->b_this_page) != head);
- 		}
--		pagevec_release(&pvec);
-+		folio_batch_release(&fbatch);
- 		cond_resched();
- 	}
- 
+-Dave.
 -- 
-2.38.1
-
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
