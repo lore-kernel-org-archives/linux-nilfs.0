@@ -1,61 +1,61 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [RFC][PATCH v3 00/33] timers: Use timer_shutdown*()
- before freeing timers
-Date: Fri, 4 Nov 2022 10:00:03 -0700
-Message-ID: <CAHk-=whKE5UL+AuCC2wK8oq8D_ueSO_T7-9Acx4POouqVi8ZHg@mail.gmail.com>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Subject: Re: [RFC][PATCH v3 28/33] timers: fs/nilfs2: Use
+ timer_shutdown_sync() before freeing timer
+Date: Fri, 4 Nov 2022 14:54:50 -0400
+Message-ID: <20221104145450.7944d825@rorschach.local.home>
 References: <20221104054053.431922658@goodmis.org>
+        <20221104054917.009383303@goodmis.org>
+        <CAKFNMomoVn3Zj5xaH6hjXHO+KXj983yZEue5Jx4wH+_m5NiJjA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=linux-foundation.org; s=google;
-	h=cc:to:subject:message-id:date:from:in-reply-to:references
-	:mime-version:from:to:cc:subject:date:message-id:reply-to;
-	bh=/jNIi3NLp/0QE0eLEgGhnlZnXslRxZtVSsauwMnJ52A=;
-	b=TyCMiI4ARMPxd18RVlEv+qm2LWR7zC104Hlivn40qb5lZJslIeDFuCNMNvjneFE/Nj
-	LFwCX5vAwmEX/R8qjGO9x9K9/hgdwoRd2q59WUqMzWoiDvISQjer+tTT1jJ7UfSLA8Vn
-	fR3VeAjk206NeR5DC2lSXJH82ZME8JVM9jplc=
-In-Reply-To: <20221104054053.431922658-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-staging-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-leds-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-atm-general-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, lvs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tipc-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bridge-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, rcu-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Anna-Maria Gleixner <anna-mar>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKFNMomoVn3Zj5xaH6hjXHO+KXj983yZEue5Jx4wH+_m5NiJjA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Stephen Boyd <sboyd-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Anna-Maria Gleixner <anna-maria-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Thu, Nov 3, 2022 at 10:48 PM Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> wrote:
+On Fri, 4 Nov 2022 15:57:04 +0900
+Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+
+> On Fri, Nov 4, 2022 at 2:48 PM Steven Rostedt wrote:
+> >
+> > From: "Steven Rostedt (Google)" <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+> >
+> > Before a timer is freed, timer_shutdown_sync() must be called.
+> >
+> > Link: https://lore.kernel.org/all/20220407161745.7d6754b3-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org/
+> >
+> > Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> > Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > Signed-off-by: Steven Rostedt (Google) <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+> > ---
+> >  fs/nilfs2/segment.c | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >
+> > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> > index b4cebad21b48..c50dc377da26 100644
+> > --- a/fs/nilfs2/segment.c
+> > +++ b/fs/nilfs2/segment.c
+> > @@ -2752,7 +2752,7 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
+> >
+> >         down_write(&nilfs->ns_segctor_sem);
+> >
+> > -       del_timer_sync(&sci->sc_timer);
+> > +       timer_shutdown_sync(&sci->sc_timer);
+> >         kfree(sci);
+> >  }
+> >
+> > --
+> > 2.35.1  
+> 
+> Acked-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> 
+> This is the second time, but my Ack is not tagged, so I'll reply again
+> just in case.
 >
-> Ideally, I would have the first patch go into this rc cycle, which is mostly
-> non functional as it will allow the other patches to come in via the respective
-> subsystems in the next merge window.
 
-Ack.
+Thanks. I might have missed it, but I also changed the name, and wanted
+to make sure everyone saw that ;-)
 
-I also wonder if we could do the completely trivially correct
-conversions immediately.
-
-I'm talking about the scripted ones where it's currently a
-"del_timer_sync()", and the very next action is freeing whatever data
-structure the timer is in (possibly with something like free_irq() in
-between - my point is that there's an unconditional free that is very
-clear and unambiguous), so that there is absolutely no question about
-whether they should use "timer_shutdown_sync()" or not.
-
-IOW, things like patches 03, 17 and 31, and at least parts others in
-this series.
-
-This series clearly has several much more complex cases that need
-actual real code review, and I think it would help to have the
-completely unambiguous cases out of the way, just to get rid of noise.
-
-So I'd take that first patch, and a scripted set of "this cannot
-change any semantics" patches early.
-
-                Linus
+-- Steve
