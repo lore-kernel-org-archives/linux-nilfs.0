@@ -1,43 +1,45 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [RFC][PATCH v3 00/33] timers: Use timer_shutdown*()
- before freeing timers
-Date: Fri, 4 Nov 2022 12:50:42 -0700
-Message-ID: <CAHk-=wge9uWV2i9PR6x7va4ZbPdX5+rg7Ep1UNH_nYdd9rD-uw@mail.gmail.com>
-References: <20221104054053.431922658@goodmis.org>
-	<20221104192232.GA2520396@roeck-us.net>
-	<20221104154209.21b26782@rorschach.local.home>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH 04/23] page-writeback: Convert write_cache_pages() to use
+ filemap_get_folios_tag()
+Date: Fri, 4 Nov 2022 20:06:49 +0000
+Message-ID: <Y2Vw2UBkti7MeG5U@casper.infradead.org>
+References: <20220901220138.182896-1-vishal.moola@gmail.com>
+ <20220901220138.182896-5-vishal.moola@gmail.com>
+ <20221018210152.GH2703033@dread.disaster.area>
+ <Y2RAdUtJrOJmYU4L@fedora>
+ <20221104003235.GZ2703033@dread.disaster.area>
 Mime-Version: 1.0
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=s2O/qvDFRXf6wsYKSZLjcNGb+D8yn522RgYWCb7F9IA=; b=GtnDjMYQ5z4Z0YK9fPQqghVAUu
+        S1NnClGtXQ3weaDOyQ9V0+0Pia32moBZqAjUYqkInOBGfZeixA7s3fZHLaEqsaXw7xHFxvuj7Bk2D
+        NGp2vaLcYpNUIXvducZ7V1dGW0tYCtdUikNkvwwd0nwwxQ2w6UAsvh2cvrULg6KAH8QmFp7WA2c2t
+        AZc9EHn3KODznyd/NQ3mZ8pYJ2EjOwTOoAkuCzZ9oZmGEy5PBpIJLR/l0lQMr9fYyRC55QvSOvYxC
+        AH/s8bS6XlEJM43lfJ6ozC36C89WNlhsRSaVoZT4F4UNLptNZsF/H6SfN7ucyrFXy4U6Q8jCS/It+
+        hkGNj1Ng==;
+Content-Disposition: inline
+In-Reply-To: <20221104003235.GZ2703033@dread.disaster.area>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=linux-foundation.org; s=google;
-	h=cc:to:subject:message-id:date:from:in-reply-to:references
-	:mime-version:from:to:cc:subject:date:message-id:reply-to;
-	bh=x16jINQR4q6R4H/0ehn+NSarZW0ZiXtTfCfHHiaRLp4=;
-	b=bIdKEWgR5UZIy0TJaruQujMahMwynr4PVMnDcU4kBitHBNo7q073JbrYzG65FbHP7Y
-	mbM9hFjlLlwQAouSAl9oSuR5cXI0K/JQyyZwmKs1co0JGtwjHN72PIS9n6MKeTRWxT7Z
-	cCPuFkDzNQGR2KqOHNVW0/FBQA0CMharaPptg=
-In-Reply-To: <20221104154209.21b26782-tvvo3QnZDcrq6bvjpv6Lkf3PFXHtQ0wO@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-staging-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-leds-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-atm-general-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, lvs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tipc-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bridge-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, rcu-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Anna-Maria Gleixner <anna-mar>
+To: Dave Chinner <david@fromorbit.com>
+Cc: Vishal Moola <vishal.moola@gmail.com>, linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org
 
-On Fri, Nov 4, 2022 at 12:42 PM Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> wrote:
->
-> Linus, should I also add any patches that has already been acked by the
-> respective maintainer?
+On Fri, Nov 04, 2022 at 11:32:35AM +1100, Dave Chinner wrote:
+> At minimum, it needs to be documented, though I'd much prefer that
+> we explicitly duplicate write_cache_pages() as write_cache_folios()
+> with a callback that takes a folio and change the code to be fully
+> multi-page folio safe. Then filesystems that support folios (and
+> large folios) natively can be passed folios without going through
+> this crappy "folio->page, page->folio" dance because the writepage
+> APIs are unaware of multi-page folio constructs.
 
-No, I'd prefer to keep only the ones that are 100% unambiguously not
-changing any semantics.
-
-              Linus
+There are a lot of places which go through the folio->page->folio
+dance, and this one wasn't even close to the top of my list.  That
+said, it has a fairly small number of callers -- ext4, fuse, iomap,
+mpage, nfs, orangefs.  So Vishal, this seems like a good project for you
+to take on next -- convert write_cache_pages() to write_cache_folios()
+and writepage_t to write_folio_t.
