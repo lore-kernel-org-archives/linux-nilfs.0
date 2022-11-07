@@ -1,47 +1,89 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [GIT PULL] treewide: timers: Use timer_shutdown*() before
- freeing timers
-Date: Mon, 07 Nov 2022 11:47:04 +0100
-Message-ID: <87pmdzvy6v.ffs@tglx>
-References: <20221106223256.4bbdb018@rorschach.local.home>
+From: syzbot <syzbot+b107db66f49c5e2a911f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] BUG: unable to handle kernel paging request in nilfs_mdt_fetch_dirty
+Date: Mon, 07 Nov 2022 11:18:47 -0800
+Message-ID: <000000000000f4619905ece64a41@google.com>
 Mime-Version: 1.0
-Return-path: <linux-acpi-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1667818024;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=qnhu/C4/dTNGh+9YxTAUPF0AHXOgpdZiA4TofS1TDao=;
-        b=m8gFAB2FYV5B4BIkkbSCrPl5kngI1vwmC89wOqBJ/q73+RRLDUvN8153YBd0ancpYaUudU
-        +fTzmJoLwRrrXw9ulhVtc41yRIMLNrOmB9kVLUOAn2xwOs861TQYPTmwfVqoXOpGOLsPn5
-        hNBacxD9XN6Mi6tXS/NIbwjqzso2C6oqm6/L/mt2cpmfqfHELnCL8o8Pn38Ir7+eD8OVqk
-        Lj3kRr5Ls1MIF7+wsJc3Ym/BQIZf8UhWrd8aE7FpoY/qhjIfIvELeoa8/ZXUqY5eKhjinO
-        ZF4FT08X0F8jeyihKYji9kBCreFY8X9nEznXEcECfWmIcYVRm4zXH9JmYOmiiQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1667818024;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=qnhu/C4/dTNGh+9YxTAUPF0AHXOgpdZiA4TofS1TDao=;
-        b=bzVvnuX1mysTSSrkmkIGsLumN3FZV+biUwiIDeLZdScudMhEXojJ3c4U7ytkUdHNPdLCjD
-        NbhAMzPLE4OU4lBA==
-In-Reply-To: <20221106223256.4bbdb018@rorschach.local.home>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Stephen Boyd <sboyd@kernel.org>, Guenter Roeck <linux@roeck-us.net>, Anna-Maria Gleixner <anna-maria@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Julia Lawall <Julia.Lawall@inria.fr>, linux-sh@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-block@vger.kernel.org, linux-acpi@vger.kernel.org, linux-atm-general@lists.sourceforge.net, netdev@vger.kernel.org, drbd-dev@lists.linbit.com, linux-bluetooth@vger.kernel.org, intel-gfx@lists.freedesktop.org, dri-devel@lists.freedesktop.org, linux-input@vger.kernel.org, linux-leds@vger.kernel.org, linux-media@vger.kernel.org, intel-wired-lan@lists.osuosl.org, linux-usb@vger.kernel.org, linux-wireless@vger.kernel.org, linux-scsi@vger.kernel.org, linux-staging
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-Linus,
+Hello,
 
-On Sun, Nov 06 2022 at 22:32, Steven Rostedt wrote:
-> As discussed here:
->
->   https://lore.kernel.org/all/20221106212427.739928660@goodmis.org/
+syzbot found the following issue on:
 
-Please hold off. It's only nits, but tip has documented rules and random
-pull requests are not making them go away.
+HEAD commit:    bbed346d5a96 Merge branch 'for-next/core' into for-kernelci
+git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
+console output: https://syzkaller.appspot.com/x/log.txt?x=106158fe880000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=3a4a45d2d827c1e
+dashboard link: https://syzkaller.appspot.com/bug?extid=b107db66f49c5e2a911f
+compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
+userspace arch: arm64
 
-Thanks,
+Unfortunately, I don't have any reproducer for this issue yet.
 
-        tglx
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/e8e91bc79312/disk-bbed346d.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/c1cb3fb3b77e/vmlinux-bbed346d.xz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+b107db66f49c5e2a911f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+
+Unable to handle kernel paging request at virtual address fffffffffffffeb8
+Mem abort info:
+  ESR = 0x0000000096000004
+  EC = 0x25: DABT (current EL), IL = 32 bits
+  SET = 0, FnV = 0
+  EA = 0, S1PTW = 0
+  FSC = 0x04: level 0 translation fault
+Data abort info:
+  ISV = 0, ISS = 0x00000004
+  CM = 0, WnR = 0
+swapper pgtable: 4k pages, 48-bit VAs, pgdp=00000001c566b000
+[fffffffffffffeb8] pgd=0000000000000000, p4d=0000000000000000
+Internal error: Oops: 0000000096000004 [#1] PREEMPT SMP
+Modules linked in:
+CPU: 0 PID: 7614 Comm: segctord Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
+pstate: 80400005 (Nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+pc : nilfs_mdt_fetch_dirty+0x1c/0x94 fs/nilfs2/mdt.c:394
+lr : nilfs_mdt_fetch_dirty+0x18/0x94 fs/nilfs2/mdt.c:391
+sp : ffff80001f553cc0
+x29: ffff80001f553cc0 x28: 0000000000000000 x27: 0000000000000000
+x26: 0000000000000001 x25: ffff00011b0cc800 x24: ffff00011b0cc800
+x23: 0000000000000001 x22: 0000000000000001 x21: ffff00011b0cc800
+x20: ffff00011b198900 x19: 0000000000000000 x18: 0000000000000107
+x17: ffff80000bffd6bc x16: ffff80000db49158 x15: ffff00012640cf80
+x14: 0000000000000008 x13: 00000000ffffffff x12: ffff00012640cf80
+x11: ff80800008f55b48 x10: 0000000000000000 x9 : ffff800008f55b48
+x8 : fffffffffffffeb8 x7 : ffff8000082160c0 x6 : 0000000000000000
+x5 : 0000000000000080 x4 : 0000000000000001 x3 : 0000000000000000
+x2 : 0000000000000006 x1 : ffff00011b198900 x0 : 0000000000000000
+Call trace:
+ nilfs_mdt_fetch_dirty+0x1c/0x94 fs/nilfs2/mdt.c:394
+ nilfs_test_metadata_dirty+0x2c/0x148 fs/nilfs2/segment.c:813
+ nilfs_segctor_confirm+0x30/0x1a8 fs/nilfs2/segment.c:837
+ nilfs_segctor_construct+0x78/0x380 fs/nilfs2/segment.c:2374
+ nilfs_segctor_thread_construct fs/nilfs2/segment.c:2483 [inline]
+ nilfs_segctor_thread+0x180/0x660 fs/nilfs2/segment.c:2566
+ kthread+0x12c/0x158 kernel/kthread.c:376
+ ret_from_fork+0x10/0x20 arch/arm64/kernel/entry.S:860
+Code: 910003fd aa0003f3 97cd2834 d1052268 (f9400100) 
+---[ end trace 0000000000000000 ]---
+----------------
+Code disassembly (best guess):
+   0:	910003fd 	mov	x29, sp
+   4:	aa0003f3 	mov	x19, x0
+   8:	97cd2834 	bl	0xffffffffff34a0d8
+   c:	d1052268 	sub	x8, x19, #0x148
+* 10:	f9400100 	ldr	x0, [x8] <-- trapping instruction
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
