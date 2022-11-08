@@ -1,122 +1,148 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [syzbot] BUG: unable to handle kernel paging request in nilfs_mdt_fetch_dirty
-Date: Tue, 8 Nov 2022 10:59:09 +0900
-Message-ID: <CAKFNMo=_FBBxWebFKjhBoZ0f_3OxiAdfFrVr0188XUJ2jpd-Ng@mail.gmail.com>
-References: <000000000000f4619905ece64a41@google.com>
+Subject: Re: [PATCH] nilfs2: fix NULL pointer dereference in nilfs_segctor_prepare_write()
+Date: Tue, 8 Nov 2022 13:41:14 +0900
+Message-ID: <CAKFNMo=n8_NkHzvxOBuiU4XahdRnWNbwmZKu4pw0KZ7bfWuVhg@mail.gmail.com>
+References: <20221108022928.497746-1-liushixin2@huawei.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=532CIFIkh46SKQPK1lhh3C9mnAHViQsajj+cGVkxhcI=;
-        b=ForAbyRL45nS2PNkcTgtoJXQPWSjcrToqFAm9zjxpH+Tynt6CyZgrwrLlPLX6ITtPy
-         pdfkQAY3mG7hd4QYBIcvZRTq5zbF/r90BL/wZoq9XAWWLEukRFyWm7FAd3YVlPcM2reW
-         bIjpL9Anyfx40XJM4NGS8JxA/aKly3ONACXwu4Z/EfCIAZifN7bKEyMUqdyHlSQTRGth
-         fArlWTHWpqCcTijaF/2gNDP+MmnQ9gDCC76b9+QmOZGw6dw7U/n5fUFK2w6IswcFQdT2
-         TICTFXmvkE00Dg/5AG8avRoQSkBOvSw9Vt+N7xbk9ud+iWl7US05EORT65IvorKNwaXm
-         JDFw==
-In-Reply-To: <000000000000f4619905ece64a41-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+        bh=5DF+eo8vHxkLcv2TZAsJVW4xlIzpVTsq6ipC2fKxo/g=;
+        b=hGWaXAOEs7NxfrdovXQ9ZAmpJfgjFguCgHF19l0cJ3K09K1CnSHjpymmYdLNNSRf9y
+         ifr/HKGnFDv/0klPYSag1AGZ6IZ1dd75j4hqM12587g6VnogBUIrCFlMJTXSuFqI7NiR
+         wr5KQySobrWRzgid+qAR1NcnvF9D4S6XSM4xfGDF/XNRsFHCOnyb5fObT3WkTx6KQWdo
+         IMi8F/0JWTst72ceDbxpIKPXaj0MeXQz0zcXH3N87qL3tOUs6oGdYvLzd861CXzEE2O+
+         4CRlHzarxndgFb+szuR16I56r+X8jR8TPQ4AtaJggYLug1ifADMGnIVva84hUWOHdE7l
+         7bpA==
+In-Reply-To: <20221108022928.497746-1-liushixin2-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: syzbot <syzbot+b107db66f49c5e2a911f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: Liu Shixin <liushixin2-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, Nov 8, 2022 at 4:18 AM syzbot wrote:
+Hi Liu Shixin,
+
+On Tue, Nov 8, 2022 at 10:41 AM Liu Shixin wrote:
 >
-> Hello,
+> Syzbot reported a NULL pointer dereference:
 >
-> syzbot found the following issue on:
+>  Unable to handle kernel NULL pointer dereference at virtual address 0000000000000168
+>  Mem abort info:
+>    ESR = 0x0000000096000004
+>    EC = 0x25: DABT (current EL), IL = 32 bits
+>    SET = 0, FnV = 0
+>    EA = 0, S1PTW = 0
+>    FSC = 0x04: level 0 translation fault
+>  Data abort info:
+>    ISV = 0, ISS = 0x00000004
+>    CM = 0, WnR = 0
+>  user pgtable: 4k pages, 48-bit VAs, pgdp=0000000108bcf000
+>  [0000000000000168] pgd=0000000000000000, p4d=0000000000000000
+>  Internal error: Oops: 0000000096000004 [#1] PREEMPT SMP
+>  Modules linked in:
+>  CPU: 1 PID: 3032 Comm: segctord Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
+>  Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
+>  pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+>  pc : _compound_head include/linux/page-flags.h:253 [inline]
+>  pc : lock_page+0x28/0x1e0 include/linux/pagemap.h:958
+>  lr : lock_page+0x28/0x1e0 include/linux/pagemap.h:956
+>  sp : ffff80001290bc00
+>  x29: ffff80001290bc00 x28: ffff80001290bde0 x27: 000000000000001b
+>  x26: fffffc000330d7c0 x25: ffff0000caa56d68 x24: ffff0000ca9fb1c0
+>  x23: 0000000000000080 x22: ffff0000ca9fb130 x21: 0000000000000160
+>  x20: ffff0000c91e10b8 x19: 0000000000000160 x18: 00000000000000c0
+>  x17: ffff80000dd0b198 x16: ffff80000db49158 x15: ffff0000c3e63500
+>  x14: 0000000000000000 x13: 00000000ffffffff x12: ffff0000c3e63500
+>  x11: ff808000095d1a0c x10: 0000000000000000 x9 : 0000000000000000
+>  x8 : 0000000000000000 x7 : ffff80000856806c x6 : 0000000000000000
+>  x5 : 0000000000000080 x4 : 0000000000000000 x3 : 0000000000000000
+>  x2 : 0000000000000000 x1 : ffff80000cb431b1 x0 : 0000000000000000
+>  Call trace:
+>   lock_page+0x28/0x1e0 include/linux/pagemap.h:956
+>   nilfs_segctor_prepare_write+0x6c/0x21c fs/nilfs2/segment.c:1658
+>   nilfs_segctor_do_construct+0x9f4/0xee8 fs/nilfs2/segment.c:2068
+>   nilfs_segctor_construct+0xa0/0x380 fs/nilfs2/segment.c:2375
+>   nilfs_segctor_thread_construct fs/nilfs2/segment.c:2483 [inline]
+>   nilfs_segctor_thread+0x180/0x660 fs/nilfs2/segment.c:2566
+>   kthread+0x12c/0x158 kernel/kthread.c:376
+>   ret_from_fork+0x10/0x20 arch/arm64/kernel/entry.S:860
 >
-> HEAD commit:    bbed346d5a96 Merge branch 'for-next/core' into for-kernelci
-> git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
-> console output: https://syzkaller.appspot.com/x/log.txt?x=106158fe880000
-> kernel config:  https://syzkaller.appspot.com/x/.config?x=3a4a45d2d827c1e
-> dashboard link: https://syzkaller.appspot.com/bug?extid=b107db66f49c5e2a911f
-> compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
-> userspace arch: arm64
+> If didn't call nilfs_sufile_alloc() in nilfs_segctor_begin_construction(),
+> nilfs_sufile_header's sh_last_alloc is not updated. In such case, we will
+> add a bh in two segbuf->sb_segsum_buffers. And finally cause list error.
 >
-> Unfortunately, I don't have any reproducer for this issue yet.
->
-> Downloadable assets:
-> disk image: https://storage.googleapis.com/syzbot-assets/e8e91bc79312/disk-bbed346d.raw.xz
-> vmlinux: https://storage.googleapis.com/syzbot-assets/c1cb3fb3b77e/vmlinux-bbed346d.xz
->
-> IMPORTANT: if you fix the issue, please add the following tag to the commit:
-> Reported-by: syzbot+b107db66f49c5e2a911f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
->
-> Unable to handle kernel paging request at virtual address fffffffffffffeb8
-> Mem abort info:
->   ESR = 0x0000000096000004
->   EC = 0x25: DABT (current EL), IL = 32 bits
->   SET = 0, FnV = 0
->   EA = 0, S1PTW = 0
->   FSC = 0x04: level 0 translation fault
-> Data abort info:
->   ISV = 0, ISS = 0x00000004
->   CM = 0, WnR = 0
-> swapper pgtable: 4k pages, 48-bit VAs, pgdp=00000001c566b000
-> [fffffffffffffeb8] pgd=0000000000000000, p4d=0000000000000000
-> Internal error: Oops: 0000000096000004 [#1] PREEMPT SMP
-> Modules linked in:
-> CPU: 0 PID: 7614 Comm: segctord Not tainted 6.0.0-rc7-syzkaller-18095-gbbed346d5a96 #0
-> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/30/2022
-> pstate: 80400005 (Nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
-> pc : nilfs_mdt_fetch_dirty+0x1c/0x94 fs/nilfs2/mdt.c:394
-> lr : nilfs_mdt_fetch_dirty+0x18/0x94 fs/nilfs2/mdt.c:391
-> sp : ffff80001f553cc0
-> x29: ffff80001f553cc0 x28: 0000000000000000 x27: 0000000000000000
-> x26: 0000000000000001 x25: ffff00011b0cc800 x24: ffff00011b0cc800
-> x23: 0000000000000001 x22: 0000000000000001 x21: ffff00011b0cc800
-> x20: ffff00011b198900 x19: 0000000000000000 x18: 0000000000000107
-> x17: ffff80000bffd6bc x16: ffff80000db49158 x15: ffff00012640cf80
-> x14: 0000000000000008 x13: 00000000ffffffff x12: ffff00012640cf80
-> x11: ff80800008f55b48 x10: 0000000000000000 x9 : ffff800008f55b48
-> x8 : fffffffffffffeb8 x7 : ffff8000082160c0 x6 : 0000000000000000
-> x5 : 0000000000000080 x4 : 0000000000000001 x3 : 0000000000000000
-> x2 : 0000000000000006 x1 : ffff00011b198900 x0 : 0000000000000000
-> Call trace:
->  nilfs_mdt_fetch_dirty+0x1c/0x94 fs/nilfs2/mdt.c:394
->  nilfs_test_metadata_dirty+0x2c/0x148 fs/nilfs2/segment.c:813
->  nilfs_segctor_confirm+0x30/0x1a8 fs/nilfs2/segment.c:837
->  nilfs_segctor_construct+0x78/0x380 fs/nilfs2/segment.c:2374
->  nilfs_segctor_thread_construct fs/nilfs2/segment.c:2483 [inline]
->  nilfs_segctor_thread+0x180/0x660 fs/nilfs2/segment.c:2566
->  kthread+0x12c/0x158 kernel/kthread.c:376
->  ret_from_fork+0x10/0x20 arch/arm64/kernel/entry.S:860
-> Code: 910003fd aa0003f3 97cd2834 d1052268 (f9400100)
-> ---[ end trace 0000000000000000 ]---
-> ----------------
-> Code disassembly (best guess):
->    0:   910003fd        mov     x29, sp
->    4:   aa0003f3        mov     x19, x0
->    8:   97cd2834        bl      0xffffffffff34a0d8
->    c:   d1052268        sub     x8, x19, #0x148
-> * 10:   f9400100        ldr     x0, [x8] <-- trapping instruction
->
->
+> Reported-by: syzbot+77e4f005cb899d4268d1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+> Fixes: 9ff05123e3bf ("nilfs2: segment constructor")
+> Signed-off-by: Liu Shixin <liushixin2-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 > ---
-> This report is generated by a bot. It may contain errors.
-> See https://goo.gl/tpsmEJ for more information about syzbot.
-> syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+>  fs/nilfs2/segment.c | 1 +
+>  fs/nilfs2/sufile.c  | 2 +-
+>  2 files changed, 2 insertions(+), 1 deletion(-)
 >
-> syzbot will keep track of this issue. See:
-> https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index b4cebad21b48..7be632c15f91 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -1371,6 +1371,7 @@ static int nilfs_segctor_extend_segments(struct nilfs_sc_info *sci,
+>                 sci->sc_segbuf_nblocks += segbuf->sb_rest_blocks;
+>
+>                 /* allocate the next next full segment */
+> +               nextnextnum = segbuf->sb_segnum;
+>                 err = nilfs_sufile_alloc(sufile, &nextnextnum);
+>                 if (unlikely(err))
+>                         goto failed_segbuf;
+> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+> index 77ff8e95421f..853a8212114f 100644
+> --- a/fs/nilfs2/sufile.c
+> +++ b/fs/nilfs2/sufile.c
+> @@ -317,7 +317,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
+>                 goto out_sem;
+>         kaddr = kmap_atomic(header_bh->b_page);
+>         header = kaddr + bh_offset(header_bh);
+> -       last_alloc = le64_to_cpu(header->sh_last_alloc);
+> +       last_alloc = max(le64_to_cpu(header->sh_last_alloc), *segnump);
+>         kunmap_atomic(kaddr);
+>
+>         nsegments = nilfs_sufile_get_nsegments(sufile);
+> --
+> 2.25.1
 
-According to the stack trace, this looks like the same UAF bug as below:
+Thank you for your help.   I have a few questions, so I'll ask them below.
 
-#syz dup: KASAN: use-after-free Read in nilfs_segctor_confirm
+> If didn't call nilfs_sufile_alloc() in nilfs_segctor_begin_construction(),
+> nilfs_sufile_header's sh_last_alloc is not updated. In such case, we will
+> add a bh in two segbuf->sb_segsum_buffers.
 
-The cause of the oops is that a corrupted inode pointer was passed to
-nilfs_mdt_fetch_dirty().
-That inode pointer is the pointer held in the nilfs_root structure
-according to the stack trace.
-So, it seems that a UAF read was done on an already freed nilfs_root,
-which extracted the corrupted inode pointer and caused the oops.
+If nilfs_sufile_alloc() succeeds to allocate a segment, sh_last_alloc
+is updated.
+all segment allocation must be done through nilfs_sufile_alloc().
+And, the allocated segment is marked dirty on the sufile not to be
+reallocated until it's freed.
 
-The bugfix for this is the patch titled "nilfs2: fix use-after-free
-bug of struct nilfs_root", which was merged in the mainline after the
-tested commit.
+So, why is it happening that the same segment is allocated twice in a log ?
+Is it hard to fix the problem by correcting the calling sequence of
+nilfs_sufile_alloc()/free()/etc without touching nilfs_sufile_alloc()
+?
 
+I haven't looked closely at this patch yet, but I'm concerned about
+the impact on other places as well.
+nilfs_sufile_alloc() is also used in
+nilfs_segctor_begin_construction() and
+nilfs_prepare_segment_for_recovery().  Are there any side effects?
+
+This patch turns an output-only argument into both input and output,
+and that input value is always used in the calculation of
+"last_alloc".
+So, this change requires all callers to pass a meaningful initial
+value (at least a valid value) to *segnump.
+
+Another question, will this work near the end of the segments ?
+Since segments are used cyclically, wouldn't comparison with the max
+function break down there?
+(I mean it seems that sh_last_alloc may be chosen unintentionally at the end.)
+
+Regards,
 Ryusuke Konishi
