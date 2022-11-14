@@ -1,105 +1,131 @@
-From: Vishal Moola <vishal.moola@gmail.com>
-Subject: Re: [PATCH v3 11/23] f2fs: Convert f2fs_fsync_node_pages() to use filemap_get_folios_tag()
-Date: Thu, 10 Nov 2022 10:51:50 -0800
-Message-ID: <CAOzc2pwuUZRK-qMFBhPEENUid-NBSfa9YyJ_FCcFHgwFf4mOuQ@mail.gmail.com>
-References: <20221017202451.4951-1-vishal.moola@gmail.com> <20221017202451.4951-12-vishal.moola@gmail.com>
- <CAOzc2pwKoyy4i4zBKhvoKmN8cezUxjDhjYZnK9GLcJniQVPoGA@mail.gmail.com>
+From: Peng Zhang <zhangpeng362-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] nilfs2: fix NULL pointer dereference in nilfs_palloc_commit_free_entry()
+Date: Mon, 14 Nov 2022 04:04:41 +0000
+Message-ID: <20221114040441.1649940-1-zhangpeng362@huawei.com>
 Mime-Version: 1.0
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=ahiLR+0HYqx9Hj3q85kkyLXkS2RfP6cywR4r1/bj6Ic=;
-        b=BuLNNyZA6RGJSro1aFTVvKQfJXFXyp5VR6864NrwvkzbzqRoktCJVw6N/Doca5qBcu
-         30j7oqGhfYMC/2wwo+CnxYyRIcfIpMO1i3CANPIDzCZ/35eph3JNnXqbXZVpyVeE6nwC
-         2rgiZ/WGg8qdiA9Wx3EmD01ybzYII1H7SmMVjyiHJ0HXfk4CMj8BCtPoDkfwrzn3wjsG
-         tMQ34M0n3gr3bNTVHM2h6CnhVhIFHKJD1ZCvcWbyUbhDpvhP6XUbvTgwPEhVyNT1WYj4
-         2KOVt0eemsENinf1T7NLvlf2zR8Rak8qZXX3U/QTi6IKzLl/llUNyWZD4jBYY5o/Cbo9
-         gdkA==
-In-Reply-To: <CAOzc2pwKoyy4i4zBKhvoKmN8cezUxjDhjYZnK9GLcJniQVPoGA@mail.gmail.com>
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org, jaegeuk@kernel.org, chao@kernel.org
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org, chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org, vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ZhangPeng <zhangpeng362-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, syzbot+ebe05ee8e98f755f61d0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
-On Mon, Oct 24, 2022 at 12:31 PM Vishal Moola <vishal.moola@gmail.com> wrote:
->
-> On Mon, Oct 17, 2022 at 1:25 PM Vishal Moola (Oracle)
-> <vishal.moola@gmail.com> wrote:
-> >
-> > Convert function to use a folio_batch instead of pagevec. This is in
-> > preparation for the removal of find_get_pages_range_tag().
-> >
-> > Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-> > ---
-> >  fs/f2fs/node.c | 19 ++++++++++---------
-> >  1 file changed, 10 insertions(+), 9 deletions(-)
-> >
-> > diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-> > index 983572f23896..e8b72336c096 100644
-> > --- a/fs/f2fs/node.c
-> > +++ b/fs/f2fs/node.c
-> > @@ -1728,12 +1728,12 @@ int f2fs_fsync_node_pages(struct f2fs_sb_info *sbi, struct inode *inode,
-> >                         unsigned int *seq_id)
-> >  {
-> >         pgoff_t index;
-> > -       struct pagevec pvec;
-> > +       struct folio_batch fbatch;
-> >         int ret = 0;
-> >         struct page *last_page = NULL;
-> >         bool marked = false;
-> >         nid_t ino = inode->i_ino;
-> > -       int nr_pages;
-> > +       int nr_folios;
-> >         int nwritten = 0;
-> >
-> >         if (atomic) {
-> > @@ -1742,20 +1742,21 @@ int f2fs_fsync_node_pages(struct f2fs_sb_info *sbi, struct inode *inode,
-> >                         return PTR_ERR_OR_ZERO(last_page);
-> >         }
-> >  retry:
-> > -       pagevec_init(&pvec);
-> > +       folio_batch_init(&fbatch);
-> >         index = 0;
-> >
-> > -       while ((nr_pages = pagevec_lookup_tag(&pvec, NODE_MAPPING(sbi), &index,
-> > -                               PAGECACHE_TAG_DIRTY))) {
-> > +       while ((nr_folios = filemap_get_folios_tag(NODE_MAPPING(sbi), &index,
-> > +                                       (pgoff_t)-1, PAGECACHE_TAG_DIRTY,
-> > +                                       &fbatch))) {
-> >                 int i;
-> >
-> > -               for (i = 0; i < nr_pages; i++) {
-> > -                       struct page *page = pvec.pages[i];
-> > +               for (i = 0; i < nr_folios; i++) {
-> > +                       struct page *page = &fbatch.folios[i]->page;
-> >                         bool submitted = false;
-> >
-> >                         if (unlikely(f2fs_cp_error(sbi))) {
-> >                                 f2fs_put_page(last_page, 0);
-> > -                               pagevec_release(&pvec);
-> > +                               folio_batch_release(&fbatch);
-> >                                 ret = -EIO;
-> >                                 goto out;
-> >                         }
-> > @@ -1821,7 +1822,7 @@ int f2fs_fsync_node_pages(struct f2fs_sb_info *sbi, struct inode *inode,
-> >                                 break;
-> >                         }
-> >                 }
-> > -               pagevec_release(&pvec);
-> > +               folio_batch_release(&fbatch);
-> >                 cond_resched();
-> >
-> >                 if (ret || marked)
-> > --
-> > 2.36.1
-> >
->
-> Following up on these f2fs patches (11/23, 12/23, 13/23, 14/23, 15/23,
-> 16/23). Does anyone have time to review them this week?
+From: ZhangPeng <zhangpeng362-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 
-Chao, thank you for taking a look at some of these patches!
-If you have time to look over the remaining patches (14, 15, 16)
-feedback on those would be appreciated as well.
+Syzbot reported a null-ptr-deref bug:
+
+NILFS (loop0): segctord starting. Construction interval = 5 seconds, CP
+frequency < 30 seconds
+general protection fault, probably for non-canonical address
+0xdffffc0000000002: 0000 [#1] PREEMPT SMP KASAN
+KASAN: null-ptr-deref in range [0x0000000000000010-0x0000000000000017]
+CPU: 1 PID: 3603 Comm: segctord Not tainted
+6.1.0-rc2-syzkaller-00105-gb229b6ca5abb #0
+Hardware name: Google Compute Engine/Google Compute Engine, BIOS Google
+10/11/2022
+RIP: 0010:nilfs_palloc_commit_free_entry+0xe5/0x6b0
+fs/nilfs2/alloc.c:608
+Code: 00 00 00 00 fc ff df 80 3c 02 00 0f 85 cd 05 00 00 48 b8 00 00 00
+00 00 fc ff df 4c 8b 73 08 49 8d 7e 10 48 89 fa 48 c1 ea 03 <80> 3c 02
+00 0f 85 26 05 00 00 49 8b 46 10 be a6 00 00 00 48 c7 c7
+RSP: 0018:ffffc90003dff830 EFLAGS: 00010212
+RAX: dffffc0000000000 RBX: ffff88802594e218 RCX: 000000000000000d
+RDX: 0000000000000002 RSI: 0000000000002000 RDI: 0000000000000010
+RBP: ffff888071880222 R08: 0000000000000005 R09: 000000000000003f
+R10: 000000000000000d R11: 0000000000000000 R12: ffff888071880158
+R13: ffff88802594e220 R14: 0000000000000000 R15: 0000000000000004
+FS:  0000000000000000(0000) GS:ffff8880b9b00000(0000)
+knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fb1c08316a8 CR3: 0000000018560000 CR4: 0000000000350ee0
+Call Trace:
+ <TASK>
+ nilfs_dat_commit_free fs/nilfs2/dat.c:114 [inline]
+ nilfs_dat_commit_end+0x464/0x5f0 fs/nilfs2/dat.c:193
+ nilfs_dat_commit_update+0x26/0x40 fs/nilfs2/dat.c:236
+ nilfs_btree_commit_update_v+0x87/0x4a0 fs/nilfs2/btree.c:1940
+ nilfs_btree_commit_propagate_v fs/nilfs2/btree.c:2016 [inline]
+ nilfs_btree_propagate_v fs/nilfs2/btree.c:2046 [inline]
+ nilfs_btree_propagate+0xa00/0xd60 fs/nilfs2/btree.c:2088
+ nilfs_bmap_propagate+0x73/0x170 fs/nilfs2/bmap.c:337
+ nilfs_collect_file_data+0x45/0xd0 fs/nilfs2/segment.c:568
+ nilfs_segctor_apply_buffers+0x14a/0x470 fs/nilfs2/segment.c:1018
+ nilfs_segctor_scan_file+0x3f4/0x6f0 fs/nilfs2/segment.c:1067
+ nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1197 [inline]
+ nilfs_segctor_collect fs/nilfs2/segment.c:1503 [inline]
+ nilfs_segctor_do_construct+0x12fc/0x6af0 fs/nilfs2/segment.c:2045
+ nilfs_segctor_construct+0x8e3/0xb30 fs/nilfs2/segment.c:2379
+ nilfs_segctor_thread_construct fs/nilfs2/segment.c:2487 [inline]
+ nilfs_segctor_thread+0x3c3/0xf30 fs/nilfs2/segment.c:2570
+ kthread+0x2e4/0x3a0 kernel/kthread.c:376
+ ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:306
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:nilfs_palloc_commit_free_entry+0xe5/0x6b0
+fs/nilfs2/alloc.c:608
+Code: 00 00 00 00 fc ff df 80 3c 02 00 0f 85 cd 05 00 00 48 b8 00 00 00
+00 00 fc ff df 4c 8b 73 08 49 8d 7e 10 48 89 fa 48 c1 ea 03 <80> 3c 02
+00 0f 85 26 05 00 00 49 8b 46 10 be a6 00 00 00 48 c7 c7
+RSP: 0018:ffffc90003dff830 EFLAGS: 00010212
+RAX: dffffc0000000000 RBX: ffff88802594e218 RCX: 000000000000000d
+RDX: 0000000000000002 RSI: 0000000000002000 RDI: 0000000000000010
+RBP: ffff888071880222 R08: 0000000000000005 R09: 000000000000003f
+R10: 000000000000000d R11: 0000000000000000 R12: ffff888071880158
+R13: ffff88802594e220 R14: 0000000000000000 R15: 0000000000000004
+FS:  0000000000000000(0000) GS:ffff8880b9b00000(0000)
+knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fb1c08316a8 CR3: 0000000018560000 CR4: 0000000000350ee0
+----------------
+Code disassembly (best guess), 7 bytes skipped:
+   0:	80 3c 02 00          	cmpb   $0x0,(%rdx,%rax,1)
+   4:	0f 85 cd 05 00 00    	jne    0x5d7
+   a:	48 b8 00 00 00 00 00 	movabs $0xdffffc0000000000,%rax
+  11:	fc ff df
+  14:	4c 8b 73 08          	mov    0x8(%rbx),%r14
+  18:	49 8d 7e 10          	lea    0x10(%r14),%rdi
+  1c:	48 89 fa             	mov    %rdi,%rdx
+  1f:	48 c1 ea 03          	shr    $0x3,%rdx
+* 23:	80 3c 02 00          	cmpb   $0x0,(%rdx,%rax,1) <-- trapping
+instruction
+  27:	0f 85 26 05 00 00    	jne    0x553
+  2d:	49 8b 46 10          	mov    0x10(%r14),%rax
+  31:	be a6 00 00 00       	mov    $0xa6,%esi
+  36:	48                   	rex.W
+  37:	c7                   	.byte 0xc7
+  38:	c7                   	.byte 0xc7
+
+When maxlevelp is 1, there is a case where req->pr_desc_bh is NULL and
+blocknr is 0, because nilfs_dat_commit_alloc() will modify the blocknr
+of oldreq at one level higher to 0. And we don't have a NULL check on
+req->pr_desc_bh and req->pr_bitmap_bh in
+nilfs_palloc_commit_free_entry() function, so when req->pr_desc_bh is
+NULL and kmap() dereferences a NULL pointer, it leads to above crash.
+Fix this by adding a NULL check on req->pr_desc_bh and req->pr_bitmap_bh
+before nilfs_palloc_commit_free_entry() in nilfs_dat_commit_free().
+
+Reported-by: syzbot+ebe05ee8e98f755f61d0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Fixes: bd8169efae8b ("nilfs2: add update functions of virtual block address to dat")
+Signed-off-by: ZhangPeng <zhangpeng362-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+---
+ fs/nilfs2/dat.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+index 3b55e239705f..84ce050a8fa3 100644
+--- a/fs/nilfs2/dat.c
++++ b/fs/nilfs2/dat.c
+@@ -111,6 +111,9 @@ static void nilfs_dat_commit_free(struct inode *dat,
+ 	kunmap_atomic(kaddr);
+ 
+ 	nilfs_dat_commit_entry(dat, req);
++
++	if (req->pr_desc_bh == NULL || req->pr_bitmap_bh == NULL)
++		return;
+ 	nilfs_palloc_commit_free_entry(dat, req);
+ }
+ 
+-- 
+2.25.1
+
