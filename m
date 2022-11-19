@@ -1,65 +1,141 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix NULL pointer dereference in nilfs_palloc_commit_free_entry()
-Date: Sat, 19 Nov 2022 16:24:43 +0900
-Message-ID: <CAKFNMokh1fQNyqVCMWoQVnRnXf65j__Op9p+a3Prz_qk-YnoVQ@mail.gmail.com>
-References: <20221114040441.1649940-1-zhangpeng362@huawei.com>
- <CAKFNMomu3Sf4_QHOm=zXM-QiLaVxASpMqpjek0F3SQnXwje4KA@mail.gmail.com>
- <CAKFNMonXdyMw9mrQeGe_KtSfMDPSC_jNai8FZGceVyV9Nxw8AQ@mail.gmail.com> <422d9c54-a119-b2a2-f381-11f83af3d9ea@huawei.com>
+Subject: Re: [PATCH] nilfs2: Fix nilfs_sufile_mark_dirty() not set segment
+ usage as dirty
+Date: Sat, 19 Nov 2022 16:51:39 +0900
+Message-ID: <CAKFNMon7TSEgTBHJ9YA26X2eqf39qG9h_ANYjyQ6s1EQs8B76Q@mail.gmail.com>
+References: <20221118063304.140187-1-chenzhongjin@huawei.com>
+ <20221118141138.c091445bdda36b78f6277c1f@linux-foundation.org>
+ <0e693d41-0bb5-b4a9-19b7-1c71e90e06bf@huawei.com> <55553de4-04c3-09f3-b075-f0112d2298cb@huawei.com>
+ <CAKFNMom=vjGrXJoc02ut8GocQ6hMmHrkcdReEvk-ykcE4p0b-w@mail.gmail.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=pBdMJNbSH8U8r3sDotTSzBIJa9GdWBR9o8sXjNY/x8I=;
-        b=QneZXLTu/TV8Zrw0Vs8fqN62kXxM0ofhET0pwOh3uIjPAu02hOdd4dXZXR2towYCV7
-         VWNyqv8eRp/XSY5b26St/+ch2z/LJ7oxVk7pFbGvfmYe6TezAR/MUe1VhuAMk0gAJxZN
-         KwtyG82Gj4zGut9f9xbX6YbI/EOYgG+3AqYvA1BpOLTYJzu+colIarHQKCJIPD3rfLT1
-         qf1eEujz2HsYv43WdEJxsQJ/dbPjPGstEgPMxKJkS84D7inypvpN5D/104wNMaVzLxS4
-         olGLbsCpb7a1L9cuCAaNIc/zlJp2TPc9orOCQUp0sWHpA0ppRQLPxJxTE90LslVyC+XM
-         EW5g==
-In-Reply-To: <422d9c54-a119-b2a2-f381-11f83af3d9ea-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+        bh=A6vdOEVAcD2AZ27aVOd1nSfHkg1RH4opt/DvlE3Mfq4=;
+        b=iIZHwweMUcLVO5AndwXT/ROt80RSWCgUcj9w2CjXhnIRwMf5Gt8QtzbQ1aJnBxqlUG
+         Zz+7gUq5XYUJIjHwyy5ebQ98mtlQr2p7zacU85h8TQwMLx+ZYL/BZirh9s8+S3L/kZlr
+         v6qNE6tKQnmUwCDv+SNkUCRfaAAHLcY7gHPr4HaLUJP6mDGDxz4sNg4or18wR0kbBf9E
+         Nz6zRDYUZ0EG7uv69sWchDASNClFrxShEi1ockIArfAyvMxk/O6qIPgpuZWF+ROZEnRU
+         rSUVa+6Td2b/UpxqKQwWuwrJ5sdBCRZabWqRl222Bj1bSQUtmCgYKG3fIbrCXm7MGKfA
+         Qxug==
+In-Reply-To: <CAKFNMom=vjGrXJoc02ut8GocQ6hMmHrkcdReEvk-ykcE4p0b-w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: "zhangpeng (AS)" <zhangpeng362-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org, chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org, vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot+ebe05ee8e98f755f61d0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+To: Chen Zhongjin <chenzhongjin-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sat, Nov 19, 2022 at 3:38 PM zhangpeng (AS)  wrote:
+On Sat, Nov 19, 2022 at 4:17 PM Ryusuke Konishi wrote:
 >
-> Hi, ZhangPeng,
+> Hi Chen Zhongjin,
 >
-> On Tue, Nov 15, 2022 at 3:39 AM Ryusuke Konishi  wrote:
-> As for the current outlook, it seems difficult to eliminate
-> duplication of the virtual block number, so I think we will call
-> nilfs_error() as follows:
+> On Sat, Nov 19, 2022 at 2:29 PM Chen Zhongjin wrote:
+> >
+> >
+> > On 2022/11/19 13:24, Chen Zhongjin wrote:
+> > > On 2022/11/19 6:11, Andrew Morton wrote:
+> > >> On Fri, 18 Nov 2022 14:33:04 +0800 Chen Zhongjin
+> > >> <chenzhongjin-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
+> > >>
+> > >>> In nilfs_sufile_mark_dirty(), the buffer and inode are set dirty, but
+> > >>> nilfs_segment_usage is not set dirty, which makes it can be found by
+> > >>> nilfs_sufile_alloc() because it checks nilfs_segment_usage_clean(su).
+> > >>>
+> > >>> This will cause the problem reported by syzkaller:
+> > >>> https://syzkaller.appspot.com/bug?id=c7c4748e11ffcc367cef04f76e02e931833cbd24
+> > >>>
+> > >>>
+> > >>> It's because the case starts with segbuf1.segnum = 3, nextnum = 4, and
+> > >>> nilfs_sufile_alloc() not called to allocate a new segment.
+> > >>>
+> > >>> The first time nilfs_segctor_extend_segments() allocated segment
+> > >>> segbuf2.segnum = segbuf1.nextnum = 4, then nilfs_sufile_alloc() found
+> > >>> nextnextnum = 4 segment because its su is not set dirty.
+> > >>> So segbuf2.nextnum = 4, which causes next segbuf3.segnum = 4.
+> > >>>
+> > >>> sb_getblk() will get same bh for segbuf2 and segbuf3, and this bh is
+> > >>> added to both buffer lists of two segbuf.
+> > >>> It makes the list head of second list linked to the first one. When
+> > >>> iterating the first one, it will access and deref the head of second,
+> > >>> which causes NULL pointer dereference.
+> > >>>
+> > >>> Fixes: 9ff05123e3bf ("nilfs2: segment constructor")
+> > >> Merged in 2009!
+> > >
+> > > Yes, seems it is introduced at the beginning of this file and the
+> > > function called nilfs_touch_segusage().
+> > >
 >
->         nilfs_dat_commit_entry(dat, req);
-> +        if (unlikely(req->pr_desc_bh == NULL || req->pr_bitmap_bh == NULL)) {
-> +                nilfs_error(dat->i_sb,
-> +                            "state inconsistency due to duplicate use
-> of vblocknr = %llu",
-> +                            (unsigned long long)req->pr_entry_nr);
-> +                return;
-> +       }
->         nilfs_palloc_commit_free_entry(dat, req);
+> Could you please resubmit the patch reflecting the following comments ?
 >
-> In that case, I would like to modify your patch and send it upstream
-> as your patch.  Is that OK ?
-> Or do you want to fix it more by yourself ?
+> After I replied to Andrew, I noticed them.
+> Also, When reposting, it would be helpful if you could add all the
+> tags I asked for Andrew in advance.
+>
+> Comments:
+> 1) Please change nilfs_sufile_mark_dirty() so that it protects the
+> segusage modification
+> with &NILFS_MDT(sufile)->mi_sem:
+>
+> > --- a/fs/nilfs2/sufile.c
+> > +++ b/fs/nilfs2/sufile.c
+> > @@ -495,12 +495,18 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+> >  int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
+> >  {
+> >       struct buffer_head *bh;
+> > +     void *kaddr;
+> > +     struct nilfs_segment_usage *su;
+> >       int ret;
+> >
+
+> >       ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
+>
+> +       down_write(&NILFS_MDT(sufile)->mi_sem);
+
+Sorry, the location of this down_write() was wrong in this email.
+In my tested change, I put it before
+nilfs_sufile_get_segment_usage_block() like others.
+
+> +       down_write(&NILFS_MDT(sufile)->mi_sem);
+> >       ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
+> >       if (!ret) {
+> >               mark_buffer_dirty(bh);
+> >               nilfs_mdt_mark_dirty(sufile);
+> > +             kaddr = kmap_atomic(bh->b_page);
+> > +             su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
+> > +             nilfs_segment_usage_set_dirty(su);
+> > +             kunmap_atomic(kaddr);
+> >               brelse(bh);
+> >       }
+> +       up_write(&NILFS_MDT(sufile)->mi_sem);
+> >       return ret;
+>
+> All functions that modify metadata on the sufile need protection with
+> this R/W semaphore.
+> You may not see this protection for some sufile functions as is, but
+> in that case, the wrapper function that uses them acquires this R/W
+> semaphore instead.
+
+
+Regards,
+Ryusuke Konishi
+
+
+>
+> Since I retested for this change as well, you don't have to drop my
+> "Tested-by" tag.
+>
+> 2) Please use the following complete email address for the
+> "Reported-by" tag of syzbot.
+>
+> Reported-by: syzbot+77e4f005cb899d4268d1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+>
+> Your tag is partially abbreviated.  I don't know that abbreviation is
+> valid, but there are very few examples of such.
+> And even if it's valid for syzbot, I don't think that omission is
+> desirable as some tools may not support it.
 >
 > Thanks,
 > Ryusuke Konishi
->
-> Thanks for your advice.
->
-> Please modify my patch and send it upstream.
->
-> That is really a complicated problem. Duplication of the virtual block
-> number is not easy to fix. It is necessary to prevent further operations
->  of the filesystem when the filesystem has a fatal flaw. I will continue
->  to follow up.
-
-All right, thanks!
-
-Ryusuke Konishi
