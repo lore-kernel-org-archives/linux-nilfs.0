@@ -1,50 +1,113 @@
 From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix NULL pointer dereference in nilfs_palloc_commit_free_entry()
-Date: Sat, 19 Nov 2022 10:02:05 +0900
-Message-ID: <CAKFNMomd9j3o1iQN6kyUoDcEKGwh34CqAjAWeF5g_s8eSEVX5Q@mail.gmail.com>
-References: <20221114040441.1649940-1-zhangpeng362@huawei.com>
- <CAKFNMomu3Sf4_QHOm=zXM-QiLaVxASpMqpjek0F3SQnXwje4KA@mail.gmail.com> <CAKFNMonXdyMw9mrQeGe_KtSfMDPSC_jNai8FZGceVyV9Nxw8AQ@mail.gmail.com>
+Subject: Re: [PATCH] nilfs2: Fix nilfs_sufile_mark_dirty() not set segment
+ usage as dirty
+Date: Sat, 19 Nov 2022 13:11:05 +0900
+Message-ID: <CAKFNMonaKuOrCt0dKxN5t3gPKOq--z=Q+LZ8iczqN30kQEdhkQ@mail.gmail.com>
+References: <20221118063304.140187-1-chenzhongjin@huawei.com> <20221118141138.c091445bdda36b78f6277c1f@linux-foundation.org>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=rlT2eva1Dr7TgqfsYlKAOHQYOBdy4szmlJCNqoMCyFQ=;
-        b=VOjf5eujWq+PJS0lBZYTm6+xd/PIrorMDmkkZd2vnoRpD7bMImm+QxBfUzg8df58CD
-         HdiUNCD6Wv/nT0Up7oyVv+btfKbd3xEfTbOVRtkaT/2Mc3DdA0SEXH/WCHlsIDCtxyN6
-         MvOmXtid5yJLdTuqSinNPUl0bjCSuF6es+Spu2SzrlN541I5MtRLjPAY23Apc1p0yLo2
-         otd6nc+6j7/B9CAZS0DOz+EQVLKQjF9/hbSpgJoBwsm5fy1cuoRl3Ui+U/3TCyFLQFfL
-         ZtGGdfe63mM+vVZA8ft0AV108A5JaXI58VpooQCtPAzLkAbMHxy61Iz3H8wNpIPFLsYP
-         Ml8w==
-In-Reply-To: <CAKFNMonXdyMw9mrQeGe_KtSfMDPSC_jNai8FZGceVyV9Nxw8AQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        bh=uFTErpkyzUkKz4ZMbc5fuZ/BIhGwsKOPVm98ZEN6Gw0=;
+        b=dwc1huwFF6jYZdqDS9arWDVXnvg6wO3C13GYEqmpH9hPak4zNhpMGPlUPgcJx7J//u
+         HEiPB5L1L5ixQEy6PW5eyc9NbNSBzlsmANoEDd+iARirivsjs4zBBUZciJzwqsdM8ARK
+         knqo3wS7+kIPT+U5EYi0PDAld+vb9GyLqcQf75PY9tMk6F035cIj2kNjp8eVUFrHlBY9
+         p0Of/4Y9+xd20KvYuMnQeAx/XMnKSspnk19Dgg8T25Kh1X9bfhbparyLGKiuXQiP0XPk
+         gnT3fjVzYvqih9oKVVBpOAtNyBw9yxhuX5UbOr7NbtJFtAVNKzBeYIEfMaNIcGYu7Bfy
+         3FWA==
+In-Reply-To: <20221118141138.c091445bdda36b78f6277c1f-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Peng Zhang <zhangpeng362-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: ye.xingchen-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org, chi.minghao-Th6q7B73Y6EnDS1+zs4M5A@public.gmane.org, vishal.moola-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot+ebe05ee8e98f755f61d0-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Chen Zhongjin <chenzhongjin-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sat, Nov 19, 2022 at 9:38 AM Ryusuke Konishi wrote:
-> On Tue, Nov 15, 2022 at 3:39 AM Ryusuke Konishi  wrote:
-> > On Mon, Nov 14, 2022 at 12:39 PM Peng Zhang wrote:
-> What was happening here was complicated.
-> There were two state inconsistencies in DAT:
-> 1) A virtual block number (vblocknr == 6145) in the report, was used
-> twice in a btree.
->     Because of this, nilfs_dat_commit_end() on that address was called twice.
-> 2) For the virtual block number (vblocknr == 6145), the DAT bitmap
-> status was free (second anomaly), and nilfs_dat_commit_alloc() was
-> performed at the same time as the second nilfs_dat_commit_end() above.
+Hi Andrew,
+
+On Sat, Nov 19, 2022 at 7:11 AM Andrew Morton wrote:
 >
-> As I mentioned, when nilfs_dat_commit_end() frees a virtual block
-> number in the bitmap of DAT, nilfs_dat_prepare_end() usually allocates
-> buffer heads of the bitmap block and the descriptor block, and sets
-> them to the request struct.  But, the above two anomalies overlap, as
+> On Fri, 18 Nov 2022 14:33:04 +0800 Chen Zhongjin wrote:
+>
+> > In nilfs_sufile_mark_dirty(), the buffer and inode are set dirty, but
+> > nilfs_segment_usage is not set dirty, which makes it can be found by
+> > nilfs_sufile_alloc() because it checks nilfs_segment_usage_clean(su).
+> >
+> > This will cause the problem reported by syzkaller:
+> > https://syzkaller.appspot.com/bug?id=c7c4748e11ffcc367cef04f76e02e931833cbd24
+> >
+> > It's because the case starts with segbuf1.segnum = 3, nextnum = 4, and
+> > nilfs_sufile_alloc() not called to allocate a new segment.
+> >
+> > The first time nilfs_segctor_extend_segments() allocated segment
+> > segbuf2.segnum = segbuf1.nextnum = 4, then nilfs_sufile_alloc() found
+> > nextnextnum = 4 segment because its su is not set dirty.
+> > So segbuf2.nextnum = 4, which causes next segbuf3.segnum = 4.
+> >
+> > sb_getblk() will get same bh for segbuf2 and segbuf3, and this bh is
+> > added to both buffer lists of two segbuf.
+> > It makes the list head of second list linked to the first one. When
+> > iterating the first one, it will access and deref the head of second,
+> > which causes NULL pointer dereference.
 
-> you pointed out, de_block is initialized to 0 by
-> nilfs_dat_prepare_alloc() in the middle of "prepare" and "commit", and
+Acked-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-I wrote it wrong, this should be ".., de_blocknr is initialized to 0
-by nilfs_dat_commit_alloc() ..".
+This is a simple and side-effect-free nice patch for this problem,
+even though the functionality of nilfs_sufile_mark_dirty() has changed
+from what it is supposed to do.
 
+Making the segment usage dirty was the responsibility of another
+function, nilfs_sufile_alloc().
+However, it turns out that the current implementation is insufficient
+for corrupted disk images like those created by syzbot. This patch
+complements that.
+
+If you don't mind, please add the following tag as well:
+
+Reported-by: Liu Shixin <liushixin2-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+
+He initially tried to fix this issue [1]:
+
+[1] https://lkml.kernel.org/r/20221108022928.497746-1-liushixin2-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+
+> >
+> > Fixes: 9ff05123e3bf ("nilfs2: segment constructor")
+>
+> Merged in 2009!
+
+This is not wrong.  Sorry for the long term bug.
+Because mkfs.nilfs2 and the nilfs2 module don't create broken metadata
+that would require this patch, so we never encountered this bug until
+syzbot reported it.
+
+>
+> > --- a/fs/nilfs2/sufile.c
+> > +++ b/fs/nilfs2/sufile.c
+> > @@ -495,12 +495,18 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+> >  int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
+> >  {
+> >       struct buffer_head *bh;
+> > +     void *kaddr;
+> > +     struct nilfs_segment_usage *su;
+> >       int ret;
+> >
+> >       ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
+> >       if (!ret) {
+> >               mark_buffer_dirty(bh);
+> >               nilfs_mdt_mark_dirty(sufile);
+> > +             kaddr = kmap_atomic(bh->b_page);
+> > +             su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
+> > +             nilfs_segment_usage_set_dirty(su);
+> > +             kunmap_atomic(kaddr);
+> >               brelse(bh);
+> >       }
+> >       return ret;
+>
+> Do we feel that this fix should be backported into -stable kernels?
+
+Yes, it should be. Please do so.
+
+Thanks,
 Ryusuke Konishi
