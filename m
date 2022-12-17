@@ -1,28 +1,28 @@
-From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH AUTOSEL 4.19 6/8] nilfs2: fix shift-out-of-bounds/overflow in nilfs_sb2_bad_offset()
-Date: Sat, 17 Dec 2022 10:30:08 -0500
-Message-ID: <20221217153012.99273-6-sashal@kernel.org>
-References: <20221217153012.99273-1-sashal@kernel.org>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.14 6/8] nilfs2: fix shift-out-of-bounds/overflow in nilfs_sb2_bad_offset()
+Date: Sat, 17 Dec 2022 10:30:29 -0500
+Message-ID: <20221217153033.99394-6-sashal@kernel.org>
+References: <20221217153033.99394-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <stable-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1671291024;
-        bh=YZgSeHYj5jxf+uya8RhJZ5L4+aUfdAFox38v7ee+lek=;
+        s=k20201202; t=1671291045;
+        bh=cTfjFVSCHGBhgWRs2pMpUyF8rh9no/cs6e/vHVsG0ZI=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=fnWdNgqH3JW3j7tUkm6iGwYcWQVg8Tai976iNiUa25Q9y28VIH8z+dpq697RDiHOr
-         blPEISGjBY4kSbJsQM+C6yIuA1Kflr7waQ6KJ0z2S1BdvMotCKeugOdq/ws5qOxGRe
-         QjwXBYk3TmgdoXiXbdgBsQ3L4iU7T+I5ehvIfVPs4wYz1ZvP+uwXy2COSwPBW8oRjd
-         mcMri0U92tPuMzpH6/8yt1B6DLsG+P0RphXZ7TwKNz6mk2yQBuqDluh7e6gXOxkE6u
-         TGjlez5x9N2GP7wi8Zs9qWr4O4KR6Ia2SenzfkVLnEc9/JW5qA/Lzr5zNiZrrc7FWg
-         myxYNcLiflqng==
-In-Reply-To: <20221217153012.99273-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+        b=j6HkukD/1Lhv/EnAJu4EKB/U1QzCeJWJVIQz0eeK1igo/iH9MK9ORW+4ftEm1uGPB
+         yG7hGENqnS2ogJM6q381U1eovudlvgfWVnJH+A/vzfpfu88yB2pLwubBt3BGo2BYI0
+         J7Z2JRun9u31Cp80OAcW/GMALpRmxUJKXCg60AYsQWp7yhF2OW5HZFqalrYvbPWTLY
+         AnkrE/5AY4pg//5PXvghYvkOhs+rSilRLNXivw06+ajLAvHG++xPpBkyUGrN/GfynE
+         ZTs7P+8GMVG5Hj6Y/aEQNqqFyzasn533kYLWIrPsbn4stDcNL6aSpv3MByzDxCQ8md
+         0zFMe/d0RaO9w==
+In-Reply-To: <20221217153033.99394-1-sashal@kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, syzbot+e91619dd4c11c4960706-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>, syzbot+e91619dd4c11c4960706@syzkaller.appspotmail.com, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sashal@kernel.org>, linux-nilfs@vger.kernel.org
 
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 
 [ Upstream commit 610a2a3d7d8be3537458a378ec69396a76c385b6 ]
 
@@ -67,22 +67,22 @@ parameters and by converting the comparison from one involving
 multiplication and left bit-shifting to one using division and right
 bit-shifting.
 
-Link: https://lkml.kernel.org/r/20221027044306.42774-1-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Link: https://lkml.kernel.org/r/20221027044306.42774-2-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Reported-by: syzbot+e91619dd4c11c4960706-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Link: https://lkml.kernel.org/r/20221027044306.42774-1-konishi.ryusuke@gmail.com
+Link: https://lkml.kernel.org/r/20221027044306.42774-2-konishi.ryusuke@gmail.com
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Reported-by: syzbot+e91619dd4c11c4960706@syzkaller.appspotmail.com
+Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
  fs/nilfs2/the_nilfs.c | 31 +++++++++++++++++++++++++++----
  1 file changed, 27 insertions(+), 4 deletions(-)
 
 diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index fb61c33c6004..74ef3d313686 100644
+index 9bbdd152c296..3e143c2da06d 100644
 --- a/fs/nilfs2/the_nilfs.c
 +++ b/fs/nilfs2/the_nilfs.c
-@@ -13,6 +13,7 @@
+@@ -22,6 +22,7 @@
  #include <linux/blkdev.h>
  #include <linux/backing-dev.h>
  #include <linux/random.h>
@@ -90,7 +90,7 @@ index fb61c33c6004..74ef3d313686 100644
  #include <linux/crc32.h>
  #include "nilfs.h"
  #include "segment.h"
-@@ -448,11 +449,33 @@ static int nilfs_valid_sb(struct nilfs_super_block *sbp)
+@@ -457,11 +458,33 @@ static int nilfs_valid_sb(struct nilfs_super_block *sbp)
  	return crc == le32_to_cpu(sbp->s_sum);
  }
  
