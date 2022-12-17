@@ -1,28 +1,28 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.4 6/9] nilfs2: fix shift-out-of-bounds/overflow in nilfs_sb2_bad_offset()
-Date: Sat, 17 Dec 2022 10:29:44 -0500
-Message-ID: <20221217152949.99146-6-sashal@kernel.org>
-References: <20221217152949.99146-1-sashal@kernel.org>
+From: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH AUTOSEL 4.19 6/8] nilfs2: fix shift-out-of-bounds/overflow in nilfs_sb2_bad_offset()
+Date: Sat, 17 Dec 2022 10:30:08 -0500
+Message-ID: <20221217153012.99273-6-sashal@kernel.org>
+References: <20221217153012.99273-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1671291001;
+        s=k20201202; t=1671291024;
         bh=YZgSeHYj5jxf+uya8RhJZ5L4+aUfdAFox38v7ee+lek=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=FUuuUwNFcFDDc9lddjWFKCtmYz1y3IqAMyPIUt+xP9mv4XzABeydW3sLpsGnm+tkC
-         kJCIePPwtS8H6KdM2OS1JoIfJsvAatwA2FVGbOIW6ATDb7Gx16uK4AzUw8HW+HT0Yc
-         mQjP9Aec7js07Bta6QDb97sn4QkmnnYF1Tlvj9Jb2AQkxJTQjjnFLyJJcCxVnrjjIk
-         QfqfzrESKamam1R84tVzEpf7DM/KNogP6u+P407qFiSdakjJOvQX1LKxmXv6v7D1wT
-         dHW7pkSyxfP84FbM5YtRdahch5D/4wajmUNsC5jYzbPX+85/wcxOTViDmKluNhgp7f
-         IMXH1TAklc5cA==
-In-Reply-To: <20221217152949.99146-1-sashal@kernel.org>
+        b=fnWdNgqH3JW3j7tUkm6iGwYcWQVg8Tai976iNiUa25Q9y28VIH8z+dpq697RDiHOr
+         blPEISGjBY4kSbJsQM+C6yIuA1Kflr7waQ6KJ0z2S1BdvMotCKeugOdq/ws5qOxGRe
+         QjwXBYk3TmgdoXiXbdgBsQ3L4iU7T+I5ehvIfVPs4wYz1ZvP+uwXy2COSwPBW8oRjd
+         mcMri0U92tPuMzpH6/8yt1B6DLsG+P0RphXZ7TwKNz6mk2yQBuqDluh7e6gXOxkE6u
+         TGjlez5x9N2GP7wi8Zs9qWr4O4KR6Ia2SenzfkVLnEc9/JW5qA/Lzr5zNiZrrc7FWg
+         myxYNcLiflqng==
+In-Reply-To: <20221217153012.99273-1-sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>, syzbot+e91619dd4c11c4960706@syzkaller.appspotmail.com, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sashal@kernel.org>, linux-nilfs@vger.kernel.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, syzbot+e91619dd4c11c4960706-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 [ Upstream commit 610a2a3d7d8be3537458a378ec69396a76c385b6 ]
 
@@ -67,13 +67,13 @@ parameters and by converting the comparison from one involving
 multiplication and left bit-shifting to one using division and right
 bit-shifting.
 
-Link: https://lkml.kernel.org/r/20221027044306.42774-1-konishi.ryusuke@gmail.com
-Link: https://lkml.kernel.org/r/20221027044306.42774-2-konishi.ryusuke@gmail.com
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: syzbot+e91619dd4c11c4960706@syzkaller.appspotmail.com
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
+Link: https://lkml.kernel.org/r/20221027044306.42774-1-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Link: https://lkml.kernel.org/r/20221027044306.42774-2-konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: syzbot+e91619dd4c11c4960706-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Sasha Levin <sashal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
  fs/nilfs2/the_nilfs.c | 31 +++++++++++++++++++++++++++----
  1 file changed, 27 insertions(+), 4 deletions(-)
