@@ -1,47 +1,91 @@
-From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH] treewide: Convert del_timer*() to
-	timer_shutdown*()
-Date: Fri, 23 Dec 2022 10:41:13 -0500
-Message-ID: <20221223104113.0bc8d37f@gandalf.local.home>
-References: <20221220134519.3dd1318b@gandalf.local.home>
+From: syzbot <syzbot+7e5cf1d80677ec185e63-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] [nilfs2?] kernel BUG in folio_end_writeback
+Date: Mon, 26 Dec 2022 19:42:34 -0800
+Message-ID: <000000000000dc83d605f0c70a11@google.com>
 Mime-Version: 1.0
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-In-Reply-To: <20221220134519.3dd1318b-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-staging-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, SHA-cyfmac-dev-list-d0qZbvYSIPpWk0Htik3J/w@public.gmane.org, linux-leds-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, lvs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-atm-general-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Julia Lawall <Julia.Lawall-MZpvjPyXg2s@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tipc-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bridge-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anna-Maria Gleixner <anna-maria-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, brcm80211-dev-list.pdl-dY08KVG/lbpWk0Htik3J/w@public.gmane.org, Stephen Boyd <sboyd-DgEjT+Ai2yhQFI55V6+gNQ@public.gmane.org>
+To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 
-On Tue, 20 Dec 2022 13:45:19 -0500
-Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> wrote:
+Hello,
 
-> [
->   Linus,
-> 
->     I ran the script against your latest master branch:
->     commit b6bb9676f2165d518b35ba3bea5f1fcfc0d969bf
-> 
->     As the timer_shutdown*() code is now in your tree, I figured
->     we can start doing the conversions. At least add the trivial ones
->     now as Thomas suggested that this gets applied at the end of the
->     merge window, to avoid conflicts with linux-next during the
->     development cycle. I can wait to Friday to run it again, and
->     resubmit.
-> 
->     What is the best way to handle this?
-> ]
+syzbot found the following issue on:
 
-Note, I just did a git remote update, checked out the latest, re-ran the
-script, and this patch hasn't changed.
+HEAD commit:    0a924817d2ed Merge tag '6.2-rc-smb3-client-fixes-part2' of..
+git tree:       upstream
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=16228274480000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=4e2d7bfa2d6d5a76
+dashboard link: https://syzkaller.appspot.com/bug?extid=7e5cf1d80677ec185e63
+compiler:       Debian clang version 13.0.1-++20220126092033+75e33f71c2da-1~exp1~20220126212112.63, GNU ld (GNU Binutils for Debian) 2.35.2
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=14494888480000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=11c189f8480000
 
--- Steve
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/b0959a409a79/disk-0a924817.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/388daa76797b/vmlinux-0a924817.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/b9d2d406c075/bzImage-0a924817.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/166e13821ab4/mount_0.gz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+7e5cf1d80677ec185e63-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+
+------------[ cut here ]------------
+kernel BUG at mm/filemap.c:1615!
+invalid opcode: 0000 [#1] PREEMPT SMP KASAN
+CPU: 0 PID: 15 Comm: ksoftirqd/0 Not tainted 6.1.0-syzkaller-14321-g0a924817d2ed #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/26/2022
+RIP: 0010:folio_end_writeback+0x34d/0x530 mm/filemap.c:1615
+Code: 84 87 00 00 00 e8 13 5a d2 ff e9 36 fd ff ff e8 09 5a d2 ff 4c 89 f7 48 c7 c6 20 84 f8 8a e8 ca 3a 10 00 0f 0b e8 f3 59 d2 ff <0f> 0b e8 ec 59 d2 ff 4c 89 f7 48 c7 c6 60 86 f8 8a e8 ad 3a 10 00
+RSP: 0018:ffffc90000147b88 EFLAGS: 00010246
+RAX: ffffffff81b9813d RBX: 0000000000000082 RCX: ffff88813fefba80
+RDX: 0000000080000100 RSI: ffffffff8aedcc60 RDI: ffffffff8b4bbfe0
+RBP: 1ffffd40000ed426 R08: dffffc0000000000 R09: fffffbfff1d2cabe
+R10: fffffbfff1d2cabe R11: 1ffffffff1d2cabd R12: ffffea000076a134
+R13: dffffc0000000000 R14: ffffea000076a100 R15: 1ffffd40000ed420
+FS:  0000000000000000(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ff727105718 CR3: 00000000291ab000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ end_bio_bh_io_sync+0xb1/0x110 fs/buffer.c:2655
+ req_bio_endio block/blk-mq.c:794 [inline]
+ blk_update_request+0x51c/0x1040 block/blk-mq.c:926
+ blk_mq_end_request+0x39/0x70 block/blk-mq.c:1053
+ blk_complete_reqs block/blk-mq.c:1131 [inline]
+ blk_done_softirq+0x119/0x160 block/blk-mq.c:1136
+ __do_softirq+0x277/0x738 kernel/softirq.c:571
+ run_ksoftirqd+0xa2/0x100 kernel/softirq.c:934
+ smpboot_thread_fn+0x533/0xa10 kernel/smpboot.c:164
+ kthread+0x266/0x300 kernel/kthread.c:376
+ ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:folio_end_writeback+0x34d/0x530 mm/filemap.c:1615
+Code: 84 87 00 00 00 e8 13 5a d2 ff e9 36 fd ff ff e8 09 5a d2 ff 4c 89 f7 48 c7 c6 20 84 f8 8a e8 ca 3a 10 00 0f 0b e8 f3 59 d2 ff <0f> 0b e8 ec 59 d2 ff 4c 89 f7 48 c7 c6 60 86 f8 8a e8 ad 3a 10 00
+RSP: 0018:ffffc90000147b88 EFLAGS: 00010246
+RAX: ffffffff81b9813d RBX: 0000000000000082 RCX: ffff88813fefba80
+RDX: 0000000080000100 RSI: ffffffff8aedcc60 RDI: ffffffff8b4bbfe0
+RBP: 1ffffd40000ed426 R08: dffffc0000000000 R09: fffffbfff1d2cabe
+R10: fffffbfff1d2cabe R11: 1ffffffff1d2cabd R12: ffffea000076a134
+R13: dffffc0000000000 R14: ffffea000076a100 R15: 1ffffd40000ed420
+FS:  0000000000000000(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ff727105718 CR3: 00000000291ab000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+syzbot can test patches for this issue, for details see:
+https://goo.gl/tpsmEJ#testing-patches
