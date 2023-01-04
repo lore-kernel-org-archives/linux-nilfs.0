@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v5 20/23] nilfs2: Convert
- nilfs_btree_lookup_dirty_buffers() to use filemap_get_folios_tag()
-Date: Wed,  4 Jan 2023 13:14:45 -0800
-Message-ID: <20230104211448.4804-21-vishal.moola@gmail.com>
+Subject: [PATCH v5 19/23] nilfs2: Convert
+ nilfs_lookup_dirty_node_buffers() to use filemap_get_folios_tag()
+Date: Wed,  4 Jan 2023 13:14:44 -0800
+Message-ID: <20230104211448.4804-20-vishal.moola@gmail.com>
 References: <20230104211448.4804-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=BlC7rcv7uN/Ok17R0azuMVwGkvRCqLRr8I16XJ1l0Zg=; b=OGnuhGkuri2BSjeKjeCQc9gHxO
- 6j1bj4xi9TdW1RMwmdpfQ9qkgyZF60CbK3V78kcJzxLQKM8YNbvKp9Ccpk+cwMUeVgQ+dgR1LLTu7
- 76ItHfHTQ9qzCYCLbHv/Ou/lCMTknXRwpIhO4JfvFE43zYoj/Ydqhslm0WcVkb59FLsY=;
+ bh=wLGgwLr/csaNeBIMYfbH9zx9j3AdiWGm09ROWOa5iAY=; b=QqRtaxYm5jLLEevi8ihJIgWsXw
+ SgFo7LDh74Kwxnt90BRWY8wW6oRwwZCnmhDIHXH7WuLazBwgFeQ65efc9VVcSISQmQd11uJi3TzAr
+ aGpvZYrjV4IU9Q8+xE3mSEbQnN1r6GyvZHOx1BE/kwZIjwCF6QltWfYeJtAwj/Z2xSy8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,20 +24,20 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=BlC7rcv7uN/Ok17R0azuMVwGkvRCqLRr8I16XJ1l0Zg=; b=AMjTUq1BapNZStJHcZ9qxhT3Vf
- KdSuWQ6K3veH2YbDUNqPpqcs+1YKBve7RShJhSmb43xEdq8A7pzh7lO6AioCI0pqIvB1hS49SdZVQ
- ykZwLNf05bx+ILzN8fD+rUtM/czjRmn0mWBWyB21JCpq2E2LpOvEOOuB4gzhdxnzva7c=;
+ bh=wLGgwLr/csaNeBIMYfbH9zx9j3AdiWGm09ROWOa5iAY=; b=K3tiPS6gcMj5QbiPpI4Kpb+Eli
+ sD/UbvrVjpBf+/nWhBogyRX0gy2mpXIp8sOo7WvYi28CmNvG76x8OwFxlhsuQyiqybAjEghmDnqI7
+ JZ48vdTWjeoz5kr5X8us2jXNXoHRMNm5ZbhZwne88o2b4mrdFVQfcMGttVD4exSnnz8A=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date
  :message-id:reply-to;
- bh=BlC7rcv7uN/Ok17R0azuMVwGkvRCqLRr8I16XJ1l0Zg=;
- b=l0t6NL5SCvyD8kdyfFc7nOlzhreLq5VCcEZoAPCjS9SYlOOIdyy01o8enEBrI/r1kI
- ge7wlbNG0U5OHLin8Sv0DJ9D+P9p9F9nvhdVsVzqSo2MjhW1QMKBlTmQftWK0E3Sq3mX
- s5i3P5LahXYCAZDxiD7TON2xAC7xlyma9HMVO7+C60fEOzvSJBRZE+ygGDT49ocIptx1
- ZqodBy1UQufx3eUsdyctWHg9lneTCyK6t6QfTsYnGyQ1gnGKfPEGcEh9fBK7H9Fo86Cv
- 0aWOKjYHhKUcF745lohZ9dh0iABWPhdJYkbVa6/m4X3OwsSxOaXcOBpLjiswo+OAnLFc
- jYVA==
+ bh=wLGgwLr/csaNeBIMYfbH9zx9j3AdiWGm09ROWOa5iAY=;
+ b=JiIf52J13fF3RZdd/gu8czce51QuNDKyRmp/RhQBZpiZeU3XEs1WalfwDAIkQP3i1h
+ 7oaEZjWzR8v45uiToP37QSjLBQ6hFoKkzsu//TvxJBpZZTHSu/Ti+0DB14c/uViJpKft
+ LemnBJAU1yNQKcrmO0+Bqi75NqwYHFoh6HrWlcKcA9N4lX0TdQaGXSiQJygzjTysgH/H
+ Ppdlz/iLT+f5FltAthrg93ciA4z+S+CmoY6IExMFrN5abl65NskD8ykG3req494jeVOI
+ SIJLZug6nx7VJLjV0ukQMkHOfmOMT4MrYPY4bGDi0laktjz8hyQhgyGhNDvAUwE+FMju
+ 93bg==
 In-Reply-To: <20230104211448.4804-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -58,47 +58,48 @@ compound_head().
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
 Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/nilfs2/btree.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ fs/nilfs2/segment.c | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index b9d15c3df3cc..da6a19eede9a 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -2141,7 +2141,7 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
- 	struct inode *btnc_inode = NILFS_BMAP_I(btree)->i_assoc_inode;
- 	struct address_space *btcache = btnc_inode->i_mapping;
- 	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 8866af742a49..da56a9221277 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -737,20 +737,19 @@ static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
+ {
+ 	struct nilfs_inode_info *ii = NILFS_I(inode);
+ 	struct inode *btnc_inode = ii->i_assoc_inode;
 -	struct pagevec pvec;
 +	struct folio_batch fbatch;
  	struct buffer_head *bh, *head;
+ 	unsigned int i;
  	pgoff_t index = 0;
- 	int level, i;
-@@ -2151,19 +2151,19 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
- 	     level++)
- 		INIT_LIST_HEAD(&lists[level]);
  
--	pagevec_init(&pvec);
+ 	if (!btnc_inode)
+ 		return;
 +	folio_batch_init(&fbatch);
  
--	while (pagevec_lookup_tag(&pvec, btcache, &index,
+-	pagevec_init(&pvec);
+-
+-	while (pagevec_lookup_tag(&pvec, btnc_inode->i_mapping, &index,
 -					PAGECACHE_TAG_DIRTY)) {
 -		for (i = 0; i < pagevec_count(&pvec); i++) {
 -			bh = head = page_buffers(pvec.pages[i]);
-+	while (filemap_get_folios_tag(btcache, &index, (pgoff_t)-1,
-+				PAGECACHE_TAG_DIRTY, &fbatch)) {
++	while (filemap_get_folios_tag(btnc_inode->i_mapping, &index,
++				(pgoff_t)-1, PAGECACHE_TAG_DIRTY, &fbatch)) {
 +		for (i = 0; i < folio_batch_count(&fbatch); i++) {
 +			bh = head = folio_buffers(fbatch.folios[i]);
  			do {
- 				if (buffer_dirty(bh))
- 					nilfs_btree_add_dirty_buffer(btree,
- 								     lists, bh);
- 			} while ((bh = bh->b_this_page) != head);
+ 				if (buffer_dirty(bh) &&
+ 						!buffer_async_write(bh)) {
+@@ -761,7 +760,7 @@ static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
+ 				bh = bh->b_this_page;
+ 			} while (bh != head);
  		}
 -		pagevec_release(&pvec);
 +		folio_batch_release(&fbatch);
  		cond_resched();
  	}
- 
+ }
 -- 
 2.38.1
