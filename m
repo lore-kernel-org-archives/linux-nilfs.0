@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v5 05/23] afs: Convert afs_writepages_region() to
- use filemap_get_folios_tag()
-Date: Wed,  4 Jan 2023 13:14:30 -0800
-Message-ID: <20230104211448.4804-6-vishal.moola@gmail.com>
+Subject: [PATCH v5 04/23] page-writeback: Convert
+ write_cache_pages() to use filemap_get_folios_tag()
+Date: Wed,  4 Jan 2023 13:14:29 -0800
+Message-ID: <20230104211448.4804-5-vishal.moola@gmail.com>
 References: <20230104211448.4804-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=V2mmRSbNA08/uL5X+kgeGS/ZlgopWrLZQOgB2XOAgyQ=; b=g4Gx4mz1dXkGG8OVjGrWetZIIp
- Pgf3E0xzw47i9g0ktRxCiQVgSvY08dHPdO03s6b1R3bWFRDicEUaRk2dPe236oMuj+f8ONStC/2fd
- ntUgcT0KI67fnpvKRFwuJbUmhxMakcQgt9/h2zcDpRjBJQ0O5rwtKyYtJzx0RT7DFu3E=;
+ bh=uFWiZotH2hHO/dqZz3ekRRXvMmeZ6crkehTB/0Ti1xA=; b=StFxyuH33GBjEJFckCgoex7IU1
+ WRqoqzY2dovdGcBijb2KeusbRFP602Q7xAaCJokaZx8VZ3YPWvdojg02+r5svOuR86WBWNSi48oSN
+ QlrF9QKkuUcTcCQP9himXO+F2Dp9KmTrui8qAkq4MV768z/fNy+7qCtZGJLCZyBytDWw=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,20 +24,20 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=V2mmRSbNA08/uL5X+kgeGS/ZlgopWrLZQOgB2XOAgyQ=; b=eC8Y5Ym+n7Xo/2ti/eerR/rYKr
- u093yzaCroecqYy5MZo0B5IcmRp+79iw3oDEyIUmWHfrqlaSYaMDaRrXF7DfBZj0Z41pQWPjNiEss
- Jrk91sOlFgG1C74yLdk5t0GbVOsPnse24S1HvgoDPaLQIysWSu4kd13eXUPF26GYJmLE=;
+ bh=uFWiZotH2hHO/dqZz3ekRRXvMmeZ6crkehTB/0Ti1xA=; b=Akyr2+e4RDhSKRLCcFjVj9zPDe
+ Jj3zvX7e8axHLjEfiTy9buZt8/Zsrmw13HRbNeBBFE2qvKMtKoqiyNskN8Nhq10XBlOyFxnTLlzEC
+ BaFlDVFPkz+HMU11BfWOPi3/LXnKk7hR1Bl66NwoSL7qHjg32qSFG8gSvn6G135fGPog=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date
  :message-id:reply-to;
- bh=V2mmRSbNA08/uL5X+kgeGS/ZlgopWrLZQOgB2XOAgyQ=;
- b=FtYpbP6QDTs+0lZleCDk5ZEuYILk9YbbUBPUPSrk3Ld9sQDe/AXWgt1NFFEtyzVwVd
- 27XIJK2uMXpNSENtPUU9mTolqKYBkyqWBRgiNaPPr+6HKOkzRrfFG7vh51FRnD5XfrPm
- d3yU7xjojsyNe4TVkT6sdDculOxDV3WAY5LGCcI0ZY86e981vkbE2Keq4xL4jQlm+JDy
- 0+d7ZCBTlVPh+hBTPdMLgdJw4vZmFBuuPBlkVC18R54ZYLTjgjJSPd6APtzi8XuZocdm
- Vq+WqxTzB5n+aGbr09OvMJrslxbC/mLCAMYTELt30+n+Q7WR+zOqoKkaC27cWNkSuDUT
- 61uA==
+ bh=uFWiZotH2hHO/dqZz3ekRRXvMmeZ6crkehTB/0Ti1xA=;
+ b=PJJR7HrEap3tSH1Krm3xKRqYuv2+ZnILQzCAZ4FvA6g7y0di41mF1AmB7b4LucnLPW
+ 9SnkknLaQi9JPN7HiqQursF5IJIh8x4Go7xxIzVvYbBtPjzAmZtsns33bPkPsrt+hy50
+ mCiKeevBosZyzcK2IMA4wvhDdxllKMI0cCC9SxOGeZRrOeURvnO4TDKbleugnCd9p6Lb
+ 743pneGz2xpnNZHO7fCMj35WHO1f/RGQIweETnZKQ8XOTIemf3fMpTvzMTMPSOgKVRuz
+ JEcncOEIDLTioi5zOdKBwUNvJ1hrNSt/h0sKN3+bcLYhECKpZRcloIieHM2fofEPAV8A
+ w3mg==
 In-Reply-To: <20230104211448.4804-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -49,168 +49,129 @@ List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, David Howells <dhowells@redhat.com>, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, Matthew Wilcow <willy@infradead.org>, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Convert to use folios throughout. This function is in preparation to
-remove find_get_pages_range_tag().
-
-Also modified this function to write the whole batch one at a time,
-rather than calling for a new set every single write.
+Converted function to use folios throughout. This is in preparation for
+the removal of find_get_pages_range_tag(). This change removes 8 calls
+to compound_head(), and the function now supports large folios.
 
 Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-Tested-by: David Howells <dhowells@redhat.com>
+Reviewed-by: Matthew Wilcow (Oracle) <willy@infradead.org>
 ---
- fs/afs/write.c | 116 +++++++++++++++++++++++++------------------------
- 1 file changed, 59 insertions(+), 57 deletions(-)
+ mm/page-writeback.c | 44 +++++++++++++++++++++++---------------------
+ 1 file changed, 23 insertions(+), 21 deletions(-)
 
-diff --git a/fs/afs/write.c b/fs/afs/write.c
-index 19df10d63323..2d3b08b7406c 100644
---- a/fs/afs/write.c
-+++ b/fs/afs/write.c
-@@ -704,85 +704,87 @@ static int afs_writepages_region(struct address_space *mapping,
- 				 bool max_one_loop)
- {
- 	struct folio *folio;
--	struct page *head_page;
+diff --git a/mm/page-writeback.c b/mm/page-writeback.c
+index ad608ef2a243..5d61fa9eecc0 100644
+--- a/mm/page-writeback.c
++++ b/mm/page-writeback.c
+@@ -2398,15 +2398,15 @@ int write_cache_pages(struct address_space *mapping,
+ 	int ret = 0;
+ 	int done = 0;
+ 	int error;
+-	struct pagevec pvec;
+-	int nr_pages;
 +	struct folio_batch fbatch;
- 	ssize_t ret;
-+	unsigned int i;
- 	int n, skips = 0;
++	int nr_folios;
+ 	pgoff_t index;
+ 	pgoff_t end;		/* Inclusive */
+ 	pgoff_t done_index;
+ 	int range_whole = 0;
+ 	xa_mark_t tag;
  
- 	_enter("%llx,%llx,", start, end);
+-	pagevec_init(&pvec);
 +	folio_batch_init(&fbatch);
+ 	if (wbc->range_cyclic) {
+ 		index = mapping->writeback_index; /* prev offset */
+ 		end = -1;
+@@ -2426,17 +2426,18 @@ int write_cache_pages(struct address_space *mapping,
+ 	while (!done && (index <= end)) {
+ 		int i;
  
- 	do {
- 		pgoff_t index = start / PAGE_SIZE;
- 
--		n = find_get_pages_range_tag(mapping, &index, end / PAGE_SIZE,
--					     PAGECACHE_TAG_DIRTY, 1, &head_page);
-+		n = filemap_get_folios_tag(mapping, &index, end / PAGE_SIZE,
-+					PAGECACHE_TAG_DIRTY, &fbatch);
+-		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
+-				tag);
+-		if (nr_pages == 0)
++		nr_folios = filemap_get_folios_tag(mapping, &index, end,
++				tag, &fbatch);
 +
- 		if (!n)
++		if (nr_folios == 0)
  			break;
-+		for (i = 0; i < n; i++) {
-+			folio = fbatch.folios[i];
-+			start = folio_pos(folio); /* May regress with THPs */
  
--		folio = page_folio(head_page);
--		start = folio_pos(folio); /* May regress with THPs */
--
--		_debug("wback %lx", folio_index(folio));
-+			_debug("wback %lx", folio_index(folio));
+-		for (i = 0; i < nr_pages; i++) {
+-			struct page *page = pvec.pages[i];
++		for (i = 0; i < nr_folios; i++) {
++			struct folio *folio = fbatch.folios[i];
  
--		/* At this point we hold neither the i_pages lock nor the
--		 * page lock: the page may be truncated or invalidated
--		 * (changing page->mapping to NULL), or even swizzled
--		 * back from swapper_space to tmpfs file mapping
--		 */
--		if (wbc->sync_mode != WB_SYNC_NONE) {
--			ret = folio_lock_killable(folio);
--			if (ret < 0) {
--				folio_put(folio);
--				return ret;
--			}
--		} else {
--			if (!folio_trylock(folio)) {
--				folio_put(folio);
--				return 0;
-+			/* At this point we hold neither the i_pages lock nor the
-+			 * page lock: the page may be truncated or invalidated
-+			 * (changing page->mapping to NULL), or even swizzled
-+			 * back from swapper_space to tmpfs file mapping
-+			 */
-+			if (wbc->sync_mode != WB_SYNC_NONE) {
-+				ret = folio_lock_killable(folio);
-+				if (ret < 0) {
-+					folio_batch_release(&fbatch);
-+					return ret;
-+				}
-+			} else {
-+				if (!folio_trylock(folio))
-+					continue;
+-			done_index = page->index;
++			done_index = folio->index;
+ 
+-			lock_page(page);
++			folio_lock(folio);
+ 
+ 			/*
+ 			 * Page truncated or invalidated. We can freely skip it
+@@ -2446,30 +2447,30 @@ int write_cache_pages(struct address_space *mapping,
+ 			 * even if there is now a new, dirty page at the same
+ 			 * pagecache address.
+ 			 */
+-			if (unlikely(page->mapping != mapping)) {
++			if (unlikely(folio->mapping != mapping)) {
+ continue_unlock:
+-				unlock_page(page);
++				folio_unlock(folio);
+ 				continue;
  			}
--		}
  
--		if (folio_mapping(folio) != mapping ||
--		    !folio_test_dirty(folio)) {
--			start += folio_size(folio);
--			folio_unlock(folio);
--			folio_put(folio);
--			continue;
--		}
-+			if (folio->mapping != mapping ||
-+			    !folio_test_dirty(folio)) {
-+				start += folio_size(folio);
-+				folio_unlock(folio);
-+				continue;
-+			}
+-			if (!PageDirty(page)) {
++			if (!folio_test_dirty(folio)) {
+ 				/* someone wrote it for us */
+ 				goto continue_unlock;
+ 			}
  
--		if (folio_test_writeback(folio) ||
--		    folio_test_fscache(folio)) {
--			folio_unlock(folio);
--			if (wbc->sync_mode != WB_SYNC_NONE) {
--				folio_wait_writeback(folio);
-+			if (folio_test_writeback(folio) ||
-+			    folio_test_fscache(folio)) {
-+				folio_unlock(folio);
-+				if (wbc->sync_mode != WB_SYNC_NONE) {
+-			if (PageWriteback(page)) {
++			if (folio_test_writeback(folio)) {
+ 				if (wbc->sync_mode != WB_SYNC_NONE)
+-					wait_on_page_writeback(page);
 +					folio_wait_writeback(folio);
- #ifdef CONFIG_AFS_FSCACHE
--				folio_wait_fscache(folio);
-+					folio_wait_fscache(folio);
- #endif
--			} else {
--				start += folio_size(folio);
-+				} else {
-+					start += folio_size(folio);
-+				}
-+				if (wbc->sync_mode == WB_SYNC_NONE) {
-+					if (skips >= 5 || need_resched()) {
-+						*_next = start;
-+						_leave(" = 0 [%llx]", *_next);
-+						return 0;
-+					}
-+					skips++;
-+				}
-+				continue;
+ 				else
+ 					goto continue_unlock;
  			}
--			folio_put(folio);
--			if (wbc->sync_mode == WB_SYNC_NONE) {
--				if (skips >= 5 || need_resched())
--					break;
--				skips++;
-+
+ 
+-			BUG_ON(PageWriteback(page));
+-			if (!clear_page_dirty_for_io(page))
++			BUG_ON(folio_test_writeback(folio));
 +			if (!folio_clear_dirty_for_io(folio))
-+				BUG();
-+			ret = afs_write_back_from_locked_folio(mapping, wbc,
-+					folio, start, end);
-+			if (ret < 0) {
-+				_leave(" = %zd", ret);
-+				folio_batch_release(&fbatch);
-+				return ret;
+ 				goto continue_unlock;
+ 
+ 			trace_wbc_writepage(wbc, inode_to_bdi(mapping->host));
+-			error = (*writepage)(page, wbc, data);
++			error = writepage(&folio->page, wbc, data);
+ 			if (unlikely(error)) {
+ 				/*
+ 				 * Handle errors according to the type of
+@@ -2484,11 +2485,12 @@ int write_cache_pages(struct address_space *mapping,
+ 				 * the first error.
+ 				 */
+ 				if (error == AOP_WRITEPAGE_ACTIVATE) {
+-					unlock_page(page);
++					folio_unlock(folio);
+ 					error = 0;
+ 				} else if (wbc->sync_mode != WB_SYNC_ALL) {
+ 					ret = error;
+-					done_index = page->index + 1;
++					done_index = folio->index +
++						folio_nr_pages(folio);
+ 					done = 1;
+ 					break;
+ 				}
+@@ -2508,7 +2510,7 @@ int write_cache_pages(struct address_space *mapping,
+ 				break;
  			}
--			continue;
--		}
- 
--		if (!folio_clear_dirty_for_io(folio))
--			BUG();
--		ret = afs_write_back_from_locked_folio(mapping, wbc, folio, start, end);
--		folio_put(folio);
--		if (ret < 0) {
--			_leave(" = %zd", ret);
--			return ret;
-+			start += ret;
  		}
- 
--		start += ret;
--
--		if (max_one_loop)
--			break;
--
+-		pagevec_release(&pvec);
 +		folio_batch_release(&fbatch);
  		cond_resched();
- 	} while (wbc->nr_to_write > 0);
+ 	}
  
 -- 
 2.38.1
