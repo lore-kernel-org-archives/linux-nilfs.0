@@ -1,8 +1,8 @@
 From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-Subject: [PATCH v5 18/23] nilfs2: Convert
- nilfs_lookup_dirty_data_buffers() to use filemap_get_folios_tag()
-Date: Wed,  4 Jan 2023 13:14:43 -0800
-Message-ID: <20230104211448.4804-19-vishal.moola@gmail.com>
+Subject: [PATCH v5 17/23] gfs2: Convert gfs2_write_cache_jdata()
+ to use filemap_get_folios_tag()
+Date: Wed,  4 Jan 2023 13:14:42 -0800
+Message-ID: <20230104211448.4804-18-vishal.moola@gmail.com>
 References: <20230104211448.4804-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=L90Su4X0B6ZDbXSVecEDf/ou5Q5FXQ0WnoUVcaVOv6Y=; b=YgvcIdb9b6MdNjYUPfibYeUktk
- b5fFEYc+TK2nNvcrB7dOEfrR5h+Zz9/m2xG8UJFuVbT9AoiWFQ1v8dLNjv0ux6KWfo2XLhh/rVxqj
- 4iLuEMePFPb1rwL5G/dKWtr8wYOczkZYuJ/mfS9en9aTcxBZzhu/kR1uWlvb8NwA9bfg=;
+ bh=+xmszoMF+zXuajEbDNQtanZkcgOmS+CJpLcEGks1cJg=; b=kBEJl26/d7rrp9j604mD5PnoYc
+ qimi2Lw5ptE9zAMeN2YA2SRbWLam3SejTijfwpegju19sUGDDYo0P1sAkVXbhrEnJDbpAYLVQrKvn
+ 9dmHW6/8fCEtGdzBNtbyCMAl030e84ITxZXc/14MAEPqSUWzNHZAIwhxnkz0AjuWkb7o=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,20 +24,20 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=L90Su4X0B6ZDbXSVecEDf/ou5Q5FXQ0WnoUVcaVOv6Y=; b=h+LNHN8hBgQTBM56tLZ3cAgV48
- MnOs8duaGwoYHB9/uyMPXt4eCVaSvxMxkH+ubWFOZFhWW0wG6ieVyqVfhovj6qJgio40ikorJrC2R
- wUgzdhzL+N80p5BZuK404XlUo9UZCmnoHOGIk6wkKXAGMj+OREveGE08BOPVUEAoKtxk=;
+ bh=+xmszoMF+zXuajEbDNQtanZkcgOmS+CJpLcEGks1cJg=; b=GLtMj1DoXc5c7atpE67SXcHf3P
+ AC63WLdvrInjbPHWrmNTascEQhgUgY+zvWtEa3AWuq6gzhZB+Z1VEojs7nBokjLwSLF7u15gzu12X
+ 9UnSJknLcEstbElfSg7yh1AUzGqhfFKEDFBQJ1iwZxGban4Fxkdpe/K5pZYeS32lVVtE=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:from:to:cc:subject:date
  :message-id:reply-to;
- bh=L90Su4X0B6ZDbXSVecEDf/ou5Q5FXQ0WnoUVcaVOv6Y=;
- b=IJQ2lGSLIhJxuzMRKK4freJEwBJhCzBUrph/WLRQ43Sy4Xeacbh1o7/sSt5j3pOh8Z
- LL8WHQC/7wF5bp73Ob+g8tBBd0notcEteRMybn5RyZfu96sHRm/Pwe8Ls04wVXfjMg20
- 8FMDvGDJgsLK1C7YpCx3k79sPNIbPSWeB8cC6hxkdsp0thSpN2GQNQUGqoi3GcaDthu/
- w+Bbr2ES9OtWsORlXKrzLdZc6TBzxjM1qEpazgTeIQ7mhN7PD2UYDA1xUnKMGnkHAoYQ
- iN/0O7yxoY8ZPHeBYXpu6QcmywT4JFhGiJUbmS68g6J79g5xBmH4zGz9QdwEO8z0grET
- Xf/g==
+ bh=+xmszoMF+zXuajEbDNQtanZkcgOmS+CJpLcEGks1cJg=;
+ b=OncBz9F5gBo7cV1EReOGwL58RLiuGeHUNG9zdhd9I0bXKATJ5Zhy+0GmzcSRHZkGqe
+ GWyLzbZvdJd/L2NfcZcScrFyPQDUeVa3ZPsrKxfcBXxNsTmcxuJGYX6Si9XAN/vN44PO
+ JWIeuxKk4kEu/XBQv7tTuvTs0ONLCiFiszBqZ22kD1lrenj6LzRTGJaJ35L4UabDI4X9
+ oDH4s+R9oGwf42PnMqbTSeqPtDYmsw6Hy03fA74G24fm2HmtysF71GUVxhIByHu1D1Re
+ mLiVQ//u9upm+YXU62JZZsO92EKHd72eQkKl2tPz+jR9e+206/W8Bdj6AulQvLoDfNUZ
+ B5/A==
 In-Reply-To: <20230104211448.4804-1-vishal.moola@gmail.com>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -49,83 +49,170 @@ List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Convert function to use folios throughout. This is in preparation for
-the removal of find_get_pages_range_tag(). This change removes 4 calls
+Converted function to use folios throughout. This is in preparation for
+the removal of find_get_pgaes_range_tag(). This change removes 8 calls
 to compound_head().
 
-Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- fs/nilfs2/segment.c | 29 ++++++++++++++++-------------
- 1 file changed, 16 insertions(+), 13 deletions(-)
+Also had to modify and rename gfs2_write_jdata_pagevec() to take in
+and utilize folio_batch rather than pagevec and use folios rather
+than pages. gfs2_write_jdata_batch() now supports large folios.
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 76c3bd88b858..8866af742a49 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -680,7 +680,7 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
- 					      loff_t start, loff_t end)
- {
- 	struct address_space *mapping = inode->i_mapping;
--	struct pagevec pvec;
-+	struct folio_batch fbatch;
- 	pgoff_t index = 0, last = ULONG_MAX;
- 	size_t ndirties = 0;
- 	int i;
-@@ -694,23 +694,26 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
- 		index = start >> PAGE_SHIFT;
- 		last = end >> PAGE_SHIFT;
- 	}
--	pagevec_init(&pvec);
-+	folio_batch_init(&fbatch);
-  repeat:
- 	if (unlikely(index > last) ||
--	    !pagevec_lookup_range_tag(&pvec, mapping, &index, last,
--				PAGECACHE_TAG_DIRTY))
-+	      !filemap_get_folios_tag(mapping, &index, last,
-+		      PAGECACHE_TAG_DIRTY, &fbatch))
- 		return ndirties;
+Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
+---
+ fs/gfs2/aops.c | 64 +++++++++++++++++++++++++++-----------------------
+ 1 file changed, 35 insertions(+), 29 deletions(-)
+
+diff --git a/fs/gfs2/aops.c b/fs/gfs2/aops.c
+index e782b4f1d104..0a47068f9acc 100644
+--- a/fs/gfs2/aops.c
++++ b/fs/gfs2/aops.c
+@@ -195,67 +195,71 @@ static int gfs2_writepages(struct address_space *mapping,
+ }
  
--	for (i = 0; i < pagevec_count(&pvec); i++) {
-+	for (i = 0; i < folio_batch_count(&fbatch); i++) {
- 		struct buffer_head *bh, *head;
--		struct page *page = pvec.pages[i];
-+		struct folio *folio = fbatch.folios[i];
+ /**
+- * gfs2_write_jdata_pagevec - Write back a pagevec's worth of pages
++ * gfs2_write_jdata_batch - Write back a folio batch's worth of folios
+  * @mapping: The mapping
+  * @wbc: The writeback control
+- * @pvec: The vector of pages
+- * @nr_pages: The number of pages to write
++ * @fbatch: The batch of folios
+  * @done_index: Page index
+  *
+  * Returns: non-zero if loop should terminate, zero otherwise
+  */
+ 
+-static int gfs2_write_jdata_pagevec(struct address_space *mapping,
++static int gfs2_write_jdata_batch(struct address_space *mapping,
+ 				    struct writeback_control *wbc,
+-				    struct pagevec *pvec,
+-				    int nr_pages,
++				    struct folio_batch *fbatch,
+ 				    pgoff_t *done_index)
+ {
+ 	struct inode *inode = mapping->host;
+ 	struct gfs2_sbd *sdp = GFS2_SB(inode);
+-	unsigned nrblocks = nr_pages * (PAGE_SIZE >> inode->i_blkbits);
++	unsigned nrblocks;
+ 	int i;
+ 	int ret;
++	int nr_pages = 0;
++	int nr_folios = folio_batch_count(fbatch);
++
++	for (i = 0; i < nr_folios; i++)
++		nr_pages += folio_nr_pages(fbatch->folios[i]);
++	nrblocks = nr_pages * (PAGE_SIZE >> inode->i_blkbits);
+ 
+ 	ret = gfs2_trans_begin(sdp, nrblocks, nrblocks);
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	for(i = 0; i < nr_pages; i++) {
+-		struct page *page = pvec->pages[i];
++	for (i = 0; i < nr_folios; i++) {
++		struct folio *folio = fbatch->folios[i];
+ 
+-		*done_index = page->index;
++		*done_index = folio->index;
  
 -		lock_page(page);
--		if (!page_has_buffers(page))
--			create_empty_buffers(page, i_blocksize(inode), 0);
--		unlock_page(page);
 +		folio_lock(folio);
-+		head = folio_buffers(folio);
-+		if (!head) {
-+			create_empty_buffers(&folio->page, i_blocksize(inode), 0);
-+			head = folio_buffers(folio);
-+		}
-+		folio_unlock(folio);
  
--		bh = head = page_buffers(page);
-+		bh = head;
- 		do {
- 			if (!buffer_dirty(bh) || buffer_async_write(bh))
- 				continue;
-@@ -718,13 +721,13 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
- 			list_add_tail(&bh->b_assoc_buffers, listp);
- 			ndirties++;
- 			if (unlikely(ndirties >= nlimit)) {
--				pagevec_release(&pvec);
-+				folio_batch_release(&fbatch);
- 				cond_resched();
- 				return ndirties;
+-		if (unlikely(page->mapping != mapping)) {
++		if (unlikely(folio->mapping != mapping)) {
+ continue_unlock:
+-			unlock_page(page);
++			folio_unlock(folio);
+ 			continue;
+ 		}
+ 
+-		if (!PageDirty(page)) {
++		if (!folio_test_dirty(folio)) {
+ 			/* someone wrote it for us */
+ 			goto continue_unlock;
+ 		}
+ 
+-		if (PageWriteback(page)) {
++		if (folio_test_writeback(folio)) {
+ 			if (wbc->sync_mode != WB_SYNC_NONE)
+-				wait_on_page_writeback(page);
++				folio_wait_writeback(folio);
+ 			else
+ 				goto continue_unlock;
+ 		}
+ 
+-		BUG_ON(PageWriteback(page));
+-		if (!clear_page_dirty_for_io(page))
++		BUG_ON(folio_test_writeback(folio));
++		if (!folio_clear_dirty_for_io(folio))
+ 			goto continue_unlock;
+ 
+ 		trace_wbc_writepage(wbc, inode_to_bdi(inode));
+ 
+-		ret = __gfs2_jdata_writepage(page, wbc);
++		ret = __gfs2_jdata_writepage(&folio->page, wbc);
+ 		if (unlikely(ret)) {
+ 			if (ret == AOP_WRITEPAGE_ACTIVATE) {
+-				unlock_page(page);
++				folio_unlock(folio);
+ 				ret = 0;
+ 			} else {
+ 
+@@ -268,7 +272,8 @@ static int gfs2_write_jdata_pagevec(struct address_space *mapping,
+ 				 * not be suitable for data integrity
+ 				 * writeout).
+ 				 */
+-				*done_index = page->index + 1;
++				*done_index = folio->index +
++					folio_nr_pages(folio);
+ 				ret = 1;
+ 				break;
  			}
- 		} while (bh = bh->b_this_page, bh != head);
+@@ -305,8 +310,8 @@ static int gfs2_write_cache_jdata(struct address_space *mapping,
+ {
+ 	int ret = 0;
+ 	int done = 0;
+-	struct pagevec pvec;
+-	int nr_pages;
++	struct folio_batch fbatch;
++	int nr_folios;
+ 	pgoff_t writeback_index;
+ 	pgoff_t index;
+ 	pgoff_t end;
+@@ -315,7 +320,7 @@ static int gfs2_write_cache_jdata(struct address_space *mapping,
+ 	int range_whole = 0;
+ 	xa_mark_t tag;
+ 
+-	pagevec_init(&pvec);
++	folio_batch_init(&fbatch);
+ 	if (wbc->range_cyclic) {
+ 		writeback_index = mapping->writeback_index; /* prev offset */
+ 		index = writeback_index;
+@@ -341,17 +346,18 @@ static int gfs2_write_cache_jdata(struct address_space *mapping,
+ 		tag_pages_for_writeback(mapping, index, end);
+ 	done_index = index;
+ 	while (!done && (index <= end)) {
+-		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
+-				tag);
+-		if (nr_pages == 0)
++		nr_folios = filemap_get_folios_tag(mapping, &index, end,
++				tag, &fbatch);
++		if (nr_folios == 0)
+ 			break;
+ 
+-		ret = gfs2_write_jdata_pagevec(mapping, wbc, &pvec, nr_pages, &done_index);
++		ret = gfs2_write_jdata_batch(mapping, wbc, &fbatch,
++				&done_index);
+ 		if (ret)
+ 			done = 1;
+ 		if (ret > 0)
+ 			ret = 0;
+-		pagevec_release(&pvec);
++		folio_batch_release(&fbatch);
+ 		cond_resched();
  	}
--	pagevec_release(&pvec);
-+	folio_batch_release(&fbatch);
- 	cond_resched();
- 	goto repeat;
- }
+ 
 -- 
 2.38.1
