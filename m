@@ -1,76 +1,117 @@
-From: Paulo Alcantara via Linux-f2fs-devel
- <linux-f2fs-devel@lists.sourceforge.net>
-Subject: Re: [PATCH v5 09/23] cifs: Convert
- wdata_alloc_and_fillpages() to use filemap_get_folios_tag()
-Date: Thu, 12 Jan 2023 16:23:54 -0300
-Message-ID: <87ilhb36b9.fsf@cjr.nz>
+From: Tom Talpey <tom@talpey.com>
+Subject: Re: [PATCH v5 09/23] cifs: Convert wdata_alloc_and_fillpages() to use
+ filemap_get_folios_tag()
+Date: Thu, 12 Jan 2023 22:03:27 -0500
+Message-ID: <c2b5b3b4-d5d0-bf35-d659-b2328689073a@talpey.com>
 References: <20230104211448.4804-1-vishal.moola@gmail.com>
  <20230104211448.4804-10-vishal.moola@gmail.com>
-Reply-To: Paulo Alcantara <pc@cjr.nz>
+ <CAOzc2pw9WCgHyA2epbz5=HEWN4bFzD4C7zL2452J_egv7iSLrw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Type:MIME-Version:Message-ID:Date:
- References:In-Reply-To:Subject:Cc:To:From:Sender:Reply-To:
- Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:
- Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:
- List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=I2YK0KStoZilkvt5Gd+Z0QXSKrgiOl1UdETNcSgpEpE=; b=B8Cq94+8kjGUgXhRCuxQG7wj2c
- sKcvmeyIGfU4GpZK7dZ875lh88msWgRCrTRl6hqEn2EbMCGwP1Vz3n+SH1j/99bR+NqgH7RWdkpu8
- ld4vEYEt5c5a3Dff2yAF6M8NMxIJEjnnP9NhWnPCcP4gLPT6k6CCvGvXUsDC/tRwVMYw=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Type:MIME-Version:Message-ID:Date:References:In-Reply-To:Subject:
- Cc:To:From:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=I2YK0KStoZilkvt5Gd+Z0QXSKrgiOl1UdETNcSgpEpE=; b=QSv6x9SZG+tJDIogemDI8HXdOu
- fDOy0iBVJew/c2GUKljYytvCIO4rI4JhrCs01j4HpPwkmEaIbGDgiWSMVl2lWf5PD6fazqmAVN8+L
- 8XVpM160Q28XOJHzl63kyGUeVHkw3nyJzKgi2lbuUnfcnESZYkTk3tN3M6RKhn8o4Tb4=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cjr.nz; s=dkim;
- t=1673551439;
- h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
- to:to:cc:cc:mime-version:mime-version:content-type:content-type:
- in-reply-to:in-reply-to:references:references;
- bh=I2YK0KStoZilkvt5Gd+Z0QXSKrgiOl1UdETNcSgpEpE=;
- b=i+65F8jlt9SrxFye0Gw20zt6UKpTEaqiZQ5hMVqSu0k7iplUUCLaWGe7MPjLIcUXvR2Ze2
- EPZvayy3ujt17G7U6k4N9U3mDmbAViZrJRkdIjJ30e2YmzNFL9kFY3KN4OmLssXkKylqmj
- E8tOKo4JSk3JfhG8aJ26Wc/wDEh7vUicPsX8QXZqm+7WwOK9nS0qxN7D/+flVsxas11Fth
- oU/iflnYw8+Gm87I9cBkOHMwnYst1u7763QKPIvahJlVCd3cUAf31rG9cwxkdB+Sbii/p1
- NDe89irKrvEmsmtdfYfdlUgHuTnNrT2Ps2o/IkqPzfauQjAjCU8/6VVNF8HXCA==
-In-Reply-To: <20230104211448.4804-10-vishal.moola@gmail.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-fsdevel@vger.kernel.org
-Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, "Vishal Moola (Oracle)" <vishal.moola@gmail.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Language: en-US
+In-Reply-To: <CAOzc2pw9WCgHyA2epbz5=HEWN4bFzD4C7zL2452J_egv7iSLrw@mail.gmail.com>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Vishal Moola <vishal.moola@gmail.com>, linux-fsdevel@vger.kernel.org, pc@cjr.nz
+Cc: linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, linux-cifs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, linux-mm@kvack.org
 
-"Vishal Moola (Oracle)" <vishal.moola@gmail.com> writes:
+This code would be a lot more readable if it had fewer goto's.
+The goto out's are ok but the again and add_more are easily
+eliminated.
 
-> This is in preparation for the removal of find_get_pages_range_tag(). Now also
-> supports the use of large folios.
->
-> Since tofind might be larger than the max number of folios in a
-> folio_batch (15), we loop through filling in wdata->pages pulling more
-> batches until we either reach tofind pages or run out of folios.
->
-> This function may not return all pages in the last found folio before
-> tofind pages are reached.
->
-> Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
-> ---
->  fs/cifs/file.c | 32 +++++++++++++++++++++++++++++---
->  1 file changed, 29 insertions(+), 3 deletions(-)
+Two possibilities...
 
-Looks good.
+On 1/12/2023 12:19 PM, Vishal Moola wrote:
+> On Wed, Jan 4, 2023 at 1:15 PM Vishal Moola (Oracle)
+> <vishal.moola@gmail.com> wrote:
+>>
+>> This is in preparation for the removal of find_get_pages_range_tag(). Now also
+>> supports the use of large folios.
+>>
+>> Since tofind might be larger than the max number of folios in a
+>> folio_batch (15), we loop through filling in wdata->pages pulling more
+>> batches until we either reach tofind pages or run out of folios.
+>>
+>> This function may not return all pages in the last found folio before
+>> tofind pages are reached.
+>>
+>> Signed-off-by: Vishal Moola (Oracle) <vishal.moola@gmail.com>
+>> ---
+>>   fs/cifs/file.c | 32 +++++++++++++++++++++++++++++---
+>>   1 file changed, 29 insertions(+), 3 deletions(-)
+>>
+>> diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+>> index 22dfc1f8b4f1..8cdd2f67af24 100644
+>> --- a/fs/cifs/file.c
+>> +++ b/fs/cifs/file.c
+>> @@ -2527,14 +2527,40 @@ wdata_alloc_and_fillpages(pgoff_t tofind, struct address_space *mapping,
+>>                            unsigned int *found_pages)
+>>   {
+>>          struct cifs_writedata *wdata;
+>> -
+>> +       struct folio_batch fbatch;
+>> +       unsigned int i, idx, p, nr;
+>>          wdata = cifs_writedata_alloc((unsigned int)tofind,
+>>                                       cifs_writev_complete);
+>>          if (!wdata)
+>>                  return NULL;
+>>
+>> -       *found_pages = find_get_pages_range_tag(mapping, index, end,
+>> -                               PAGECACHE_TAG_DIRTY, tofind, wdata->pages);
+>> +       folio_batch_init(&fbatch);
+>> +       *found_pages = 0;
+>> +
 
-Acked-by: Paulo Alcantara (SUSE) <pc@cjr.nz>
+
+This is really just the top of a while loop:
+
+   while (nr = filemap_get_folios_tag(...)) {
+
+>> +again:
+>> +       nr = filemap_get_folios_tag(mapping, index, end,
+>> +                               PAGECACHE_TAG_DIRTY, &fbatch);
+>> +       if (!nr)
+>> +               goto out; /* No dirty pages left in the range */
+>> +
+>> +       for (i = 0; i < nr; i++) {
+>> +               struct folio *folio = fbatch.folios[i];
+>> +
+>> +               idx = 0;
+>> +               p = folio_nr_pages(folio);
+
+And this is a "do {"
+
+>> +add_more:
+>> +               wdata->pages[*found_pages] = folio_page(folio, idx);
+>> +               folio_get(folio);
+>> +               if (++*found_pages == tofind) {
+>> +                       folio_batch_release(&fbatch);
+>> +                       goto out;
+>> +               }
+>> +               if (++idx < p)
+>> +                       goto add_more;
+
+To here "} while (++idx < p);"
+
+>> +       }
+>> +       folio_batch_release(&fbatch);
+>> +       goto again;
+
+End while "}"
+
+>> +out:
+>>          return wdata;
+>>   }
+>>
+>> --
+>> 2.38.1
+>>
+> 
+> Could someone review this cifs patch, please? This is one of the
+> 2 remaining patches that need to be looked at in the series.
+
+It's otherwise ok.
+
+Tom.
+> 
