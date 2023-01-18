@@ -1,23 +1,23 @@
-From: Brian Foster <bfoster@redhat.com>
-Subject: Re: [PATCH 4/9] shmem: remove
- shmem_get_partial_folio
-Date: Wed, 18 Jan 2023 08:57:05 -0500
-Message-ID: <Y8f6sShghKuFim5E@bfoster>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH 7/9] gfs2: handle a NULL folio in
+ gfs2_jhead_process_page
+Date: Wed, 18 Jan 2023 16:00:33 +0000
+Message-ID: <Y8gXodKIUneO+XQb@casper.infradead.org>
 References: <20230118094329.9553-1-hch@lst.de>
- <20230118094329.9553-5-hch@lst.de>
+ <20230118094329.9553-8-hch@lst.de>
 Mime-Version: 1.0
 Return-path: <cluster-devel-bounces@redhat.com>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1674050175;
+	s=mimecast20190719; t=1674057653;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:in-reply-to:in-reply-to:
 	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=mFihkpDInrgSgklnLUMioicNGhqhAH1TgcOQOASzKX8=;
-	b=gvLqO7uWT7YpQhvfPKNIqr15wU/uxUBl6v8pKqiQBhvbnwHq0Ob6m1veZ1GEERmND2kLYQ
-	Y3ZcqayKkZllmhkkN5liotcMJcmDMMtdOgGYuZmVl1vPIq7YToE9L9a3O2ZKYHVS6/4KUj
-	tUfvEDcpaGuelJEHfuUDVYXYu4/ISX0=
-In-Reply-To: <20230118094329.9553-5-hch@lst.de>
+	 list-subscribe:list-post; bh=GSOq94AXmVvB2t/Hu5/HVPL9U2Xr3S2Gs4mgbP3Jze4=;
+	b=dxLnax5C7VJoRAi2utyOmhrf0egsXDWQQSBaAl6ki09HE4JaMenkXHmUWv3v8Tcwl14vAE
+	kuKjkmKUp90PFEqIOpv6jczTGjVGCAvw4WO/5hDoqx8lv25yBWr9xKBX4JBOBm/CKvkuny
+	Q15cufmloCdVQivEe/kTzV0pIUOyE2E=
+In-Reply-To: <20230118094329.9553-8-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
  <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
@@ -32,130 +32,40 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Christoph Hellwig <hch@lst.de>
-Cc: linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Hugh Dickins <hughd@google.com>, Matthew Wilcox <willy@infradead.org>, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+Cc: linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Hugh Dickins <hughd@google.com>, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-On Wed, Jan 18, 2023 at 10:43:24AM +0100, Christoph Hellwig wrote:
-> Add a new SGP_FIND mode for shmem_get_partial_folio that works like
-> SGP_READ, but does not check i_size.  Use that instead of open coding
-> the page cache lookup in shmem_get_partial_folio.  Note that this is
-> a behavior change in that it reads in swap cache entries for offsets
-> outside i_size, possibly causing a little bit of extra work.
-> 
+On Wed, Jan 18, 2023 at 10:43:27AM +0100, Christoph Hellwig wrote:
+> filemap_get_folio can return NULL, so exit early for that case.
+
+I'm not sure it can return NULL in this specific case.  As I understand
+this code, we're scanning the journal looking for the log head.  We've
+just submitted the bio to read this page.  I suppose memory pressure
+could theoretically push the page out, but if it does, we're doing the
+wrong thing by just returning here; we need to retry reading the page.
+
+Assuming we're not willing to do the work to add that case, I think I'd
+rather see the crash in folio_wait_locked() than get data corruption
+from failing to find the head of the log.
+
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  include/linux/shmem_fs.h |  1 +
->  mm/shmem.c               | 46 ++++++++++++----------------------------
->  2 files changed, 15 insertions(+), 32 deletions(-)
+>  fs/gfs2/lops.c | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
-> diff --git a/include/linux/shmem_fs.h b/include/linux/shmem_fs.h
-> index d09d54be4ffd99..7ba160ac066e5e 100644
-> --- a/include/linux/shmem_fs.h
-> +++ b/include/linux/shmem_fs.h
-> @@ -105,6 +105,7 @@ enum sgp_type {
->  	SGP_CACHE,	/* don't exceed i_size, may allocate page */
->  	SGP_WRITE,	/* may exceed i_size, may allocate !Uptodate page */
->  	SGP_FALLOC,	/* like SGP_WRITE, but make existing page Uptodate */
-> +	SGP_FIND,	/* like SGP_READ, but also read outside i_size */
->  };
+> diff --git a/fs/gfs2/lops.c b/fs/gfs2/lops.c
+> index 1902413d5d123e..51d4b610127cdb 100644
+> --- a/fs/gfs2/lops.c
+> +++ b/fs/gfs2/lops.c
+> @@ -472,6 +472,8 @@ static void gfs2_jhead_process_page(struct gfs2_jdesc *jd, unsigned long index,
+>  	struct folio *folio;
 >  
->  int shmem_get_folio(struct inode *inode, pgoff_t index, struct folio **foliop,
-> diff --git a/mm/shmem.c b/mm/shmem.c
-> index 9e1015cbad29f9..e9500fea43a8dc 100644
-> --- a/mm/shmem.c
-> +++ b/mm/shmem.c
-> @@ -877,27 +877,6 @@ void shmem_unlock_mapping(struct address_space *mapping)
->  	}
->  }
+>  	folio = filemap_get_folio(jd->jd_inode->i_mapping, index);
+> +	if (!folio)
+> +		return;
 >  
-> -static struct folio *shmem_get_partial_folio(struct inode *inode, pgoff_t index)
-> -{
-> -	struct folio *folio;
-> -
-> -	/*
-> -	 * At first avoid shmem_get_folio(,,,SGP_READ): that fails
-> -	 * beyond i_size, and reports fallocated pages as holes.
-> -	 */
-> -	folio = __filemap_get_folio(inode->i_mapping, index,
-> -					FGP_ENTRY | FGP_LOCK, 0);
-
-This all seems reasonable to me at a glance, FWIW, but I am a little
-curious why this wouldn't split up into two changes. I.e., switch this
-over to filemap_get_entry() to minimally remove the FGP_ENTRY dependency
-without a behavior change, then (perhaps after the next patch) introduce
-SGP_FIND in a separate patch. That makes it easier to review and
-potentially undo if it happens to pose a problem in the future. Hm?
-
-Brian
-
-> -	if (!xa_is_value(folio))
-> -		return folio;
-> -	/*
-> -	 * But read a page back from swap if any of it is within i_size
-> -	 * (although in some cases this is just a waste of time).
-> -	 */
-> -	folio = NULL;
-> -	shmem_get_folio(inode, index, &folio, SGP_READ);
-> -	return folio;
-> -}
-> -
->  /*
->   * Remove range of pages and swap entries from page cache, and free them.
->   * If !unfalloc, truncate or punch hole; if unfalloc, undo failed fallocate.
-> @@ -957,7 +936,8 @@ static void shmem_undo_range(struct inode *inode, loff_t lstart, loff_t lend,
->  		goto whole_folios;
->  
->  	same_folio = (lstart >> PAGE_SHIFT) == (lend >> PAGE_SHIFT);
-> -	folio = shmem_get_partial_folio(inode, lstart >> PAGE_SHIFT);
-> +	folio = NULL;
-> +	shmem_get_folio(inode, lstart >> PAGE_SHIFT, &folio, SGP_FIND);
->  	if (folio) {
->  		same_folio = lend < folio_pos(folio) + folio_size(folio);
->  		folio_mark_dirty(folio);
-> @@ -971,14 +951,16 @@ static void shmem_undo_range(struct inode *inode, loff_t lstart, loff_t lend,
->  		folio = NULL;
->  	}
->  
-> -	if (!same_folio)
-> -		folio = shmem_get_partial_folio(inode, lend >> PAGE_SHIFT);
-> -	if (folio) {
-> -		folio_mark_dirty(folio);
-> -		if (!truncate_inode_partial_folio(folio, lstart, lend))
-> -			end = folio->index;
-> -		folio_unlock(folio);
-> -		folio_put(folio);
-> +	if (!same_folio) {
-> +		folio = NULL;
-> +		shmem_get_folio(inode, lend >> PAGE_SHIFT, &folio, SGP_FIND);
-> +		if (folio) {
-> +			folio_mark_dirty(folio);
-> +			if (!truncate_inode_partial_folio(folio, lstart, lend))
-> +				end = folio->index;
-> +			folio_unlock(folio);
-> +			folio_put(folio);
-> +		}
->  	}
->  
->  whole_folios:
-> @@ -1900,7 +1882,7 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
->  		if (folio_test_uptodate(folio))
->  			goto out;
->  		/* fallocated folio */
-> -		if (sgp != SGP_READ)
-> +		if (sgp != SGP_READ && sgp != SGP_FIND)
->  			goto clear;
->  		folio_unlock(folio);
->  		folio_put(folio);
-> @@ -1911,7 +1893,7 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
->  	 * SGP_NOALLOC: fail on hole, with NULL folio, letting caller fail.
->  	 */
->  	*foliop = NULL;
-> -	if (sgp == SGP_READ)
-> +	if (sgp == SGP_READ || sgp == SGP_FIND)
->  		return 0;
->  	if (sgp == SGP_NOALLOC)
->  		return -ENOENT;
+>  	folio_wait_locked(folio);
+>  	if (folio_test_error(folio))
 > -- 
 > 2.39.0
-> 
 > 
 
