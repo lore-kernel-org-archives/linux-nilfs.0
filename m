@@ -1,50 +1,136 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 3/7] mm: use filemap_get_entry in filemap_get_incore_folio
-Date: Sat, 21 Jan 2023 07:57:51 +0100
-Message-ID: <20230121065755.1140136-4-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 4/7] shmem: remove shmem_get_partial_folio
+Date: Sat, 21 Jan 2023 07:57:52 +0100
+Message-ID: <20230121065755.1140136-5-hch@lst.de>
 References: <20230121065755.1140136-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=g004efh7mFIQFWAsl+3c2q8E/FcH/R7MUAbwiN542N0=; b=EFQReJCGAHigmumIVdPSAnGEMd
-        0BEyWnOTe6MMfLiZZZWSDU+kxTtOtBdnWxlmMO4ZVIhfVXKjivQaQoR24A6MscZ8gbOXsIN1QbDFY
-        YQiGUX4r74o04uv+ms2CIVnYZd/hAbX2FbOT9TN0Sq045YI7N30YhMyQz/kHHKPeZ5O0O5DABSOTj
-        o815QuZz+UAg2PTh9fDIUapX3xSlFSHFfpu2Y+3GS5lPoUXtvTXVIOWGw3Y0HjO4mgvlsIMl6Bv1E
-        sQkL6QPK80o820hufzXGWywa5Xslcbu0/FrdUhfoLA4GaPF9TiVQhE7w6/kHBSsT8UG4o36gVQpWT
-        HBvPxLxA==;
-In-Reply-To: <20230121065755.1140136-1-hch-jcswGhMUV9g@public.gmane.org>
+        bh=YYpS3Y5p5Tks64mwSZy8Ca3HveuDUE7eUAUp6nFbmxA=; b=i34OoNOiuOAMqsVR5goGoV7AAN
+        68Fu9N8d4Dw7F1z2fIjIM+x1l580f1YXaquY4Wcl9zjTXWB6O/JrNkq55Pe95jE7djhGlJa6sDDvk
+        CAUzPFbOqqw6RhDYLJUEnFXlj6vPwYQWaLCHnfMcnwurzh6cv9vB+okzKJoHtlY3dHYFk2Sjh8ZJ2
+        AvAENi9Ag/pAooPiFgszDIENS+ujLdYXF5Ajyjr46LHZ9X+EojW2hDgdnAyu1mF8ueZvkO+J2isnX
+        y07MeXsZtQ4PV15Zxm2OTXsFJhWD28Muv18kQZKaxIVXaCsqF5IKhlIatUTuFgyOGZcDXns7qhVXX
+        huf1HbyA==;
+In-Reply-To: <20230121065755.1140136-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Hugh Dickins <hughd@google.com>
+Cc: linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
 
-filemap_get_incore_folio wants to look at the details of xa_is_value
-entries, but doesn't need any of the other logic in filemap_get_folio.
-Switch it to use the lower-level filemap_get_entry interface.
+Add a new SGP_FIND mode for shmem_get_partial_folio that works like
+SGP_READ, but does not check i_size.  Use that instead of open coding
+the page cache lookup in shmem_get_partial_folio.  Note that this is
+a behavior change in that it reads in swap cache entries for offsets
+outside i_size, possibly causing a little bit of extra work.
 
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Reviewed-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- mm/swap_state.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/shmem_fs.h |  1 +
+ mm/shmem.c               | 46 ++++++++++++----------------------------
+ 2 files changed, 15 insertions(+), 32 deletions(-)
 
-diff --git a/mm/swap_state.c b/mm/swap_state.c
-index 7a003d8abb37bc..92234f4b51d29a 100644
---- a/mm/swap_state.c
-+++ b/mm/swap_state.c
-@@ -386,7 +386,7 @@ struct folio *filemap_get_incore_folio(struct address_space *mapping,
- {
- 	swp_entry_t swp;
- 	struct swap_info_struct *si;
--	struct folio *folio = __filemap_get_folio(mapping, index, FGP_ENTRY, 0);
-+	struct folio *folio = filemap_get_entry(mapping, index);
+diff --git a/include/linux/shmem_fs.h b/include/linux/shmem_fs.h
+index d09d54be4ffd99..7ba160ac066e5e 100644
+--- a/include/linux/shmem_fs.h
++++ b/include/linux/shmem_fs.h
+@@ -105,6 +105,7 @@ enum sgp_type {
+ 	SGP_CACHE,	/* don't exceed i_size, may allocate page */
+ 	SGP_WRITE,	/* may exceed i_size, may allocate !Uptodate page */
+ 	SGP_FALLOC,	/* like SGP_WRITE, but make existing page Uptodate */
++	SGP_FIND,	/* like SGP_READ, but also read outside i_size */
+ };
  
- 	if (!xa_is_value(folio))
- 		goto out;
+ int shmem_get_folio(struct inode *inode, pgoff_t index, struct folio **foliop,
+diff --git a/mm/shmem.c b/mm/shmem.c
+index de6fa3980c7d6b..a8371ffeeee54a 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -877,27 +877,6 @@ void shmem_unlock_mapping(struct address_space *mapping)
+ 	}
+ }
+ 
+-static struct folio *shmem_get_partial_folio(struct inode *inode, pgoff_t index)
+-{
+-	struct folio *folio;
+-
+-	/*
+-	 * At first avoid shmem_get_folio(,,,SGP_READ): that fails
+-	 * beyond i_size, and reports fallocated pages as holes.
+-	 */
+-	folio = __filemap_get_folio(inode->i_mapping, index,
+-					FGP_ENTRY | FGP_LOCK, 0);
+-	if (!xa_is_value(folio))
+-		return folio;
+-	/*
+-	 * But read a page back from swap if any of it is within i_size
+-	 * (although in some cases this is just a waste of time).
+-	 */
+-	folio = NULL;
+-	shmem_get_folio(inode, index, &folio, SGP_READ);
+-	return folio;
+-}
+-
+ /*
+  * Remove range of pages and swap entries from page cache, and free them.
+  * If !unfalloc, truncate or punch hole; if unfalloc, undo failed fallocate.
+@@ -957,7 +936,8 @@ static void shmem_undo_range(struct inode *inode, loff_t lstart, loff_t lend,
+ 		goto whole_folios;
+ 
+ 	same_folio = (lstart >> PAGE_SHIFT) == (lend >> PAGE_SHIFT);
+-	folio = shmem_get_partial_folio(inode, lstart >> PAGE_SHIFT);
++	folio = NULL;
++	shmem_get_folio(inode, lstart >> PAGE_SHIFT, &folio, SGP_FIND);
+ 	if (folio) {
+ 		same_folio = lend < folio_pos(folio) + folio_size(folio);
+ 		folio_mark_dirty(folio);
+@@ -971,14 +951,16 @@ static void shmem_undo_range(struct inode *inode, loff_t lstart, loff_t lend,
+ 		folio = NULL;
+ 	}
+ 
+-	if (!same_folio)
+-		folio = shmem_get_partial_folio(inode, lend >> PAGE_SHIFT);
+-	if (folio) {
+-		folio_mark_dirty(folio);
+-		if (!truncate_inode_partial_folio(folio, lstart, lend))
+-			end = folio->index;
+-		folio_unlock(folio);
+-		folio_put(folio);
++	if (!same_folio) {
++		folio = NULL;
++		shmem_get_folio(inode, lend >> PAGE_SHIFT, &folio, SGP_FIND);
++		if (folio) {
++			folio_mark_dirty(folio);
++			if (!truncate_inode_partial_folio(folio, lstart, lend))
++				end = folio->index;
++			folio_unlock(folio);
++			folio_put(folio);
++		}
+ 	}
+ 
+ whole_folios:
+@@ -1900,7 +1882,7 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
+ 		if (folio_test_uptodate(folio))
+ 			goto out;
+ 		/* fallocated folio */
+-		if (sgp != SGP_READ)
++		if (sgp != SGP_READ && sgp != SGP_FIND)
+ 			goto clear;
+ 		folio_unlock(folio);
+ 		folio_put(folio);
+@@ -1911,7 +1893,7 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
+ 	 * SGP_NOALLOC: fail on hole, with NULL folio, letting caller fail.
+ 	 */
+ 	*foliop = NULL;
+-	if (sgp == SGP_READ)
++	if (sgp == SGP_READ || sgp == SGP_FIND)
+ 		return 0;
+ 	if (sgp == SGP_NOALLOC)
+ 		return -ENOENT;
 -- 
 2.39.0
 
