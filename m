@@ -1,58 +1,54 @@
-From: Brian Foster <bfoster@redhat.com>
-Subject: Re: [PATCH 4/9] shmem: remove
- shmem_get_partial_folio
-Date: Wed, 18 Jan 2023 11:50:26 -0500
-Message-ID: <Y8gjUhcRYkRuxLDq@bfoster>
-References: <20230118094329.9553-1-hch@lst.de>
- <20230118094329.9553-5-hch@lst.de> <Y8f6sShghKuFim5E@bfoster>
- <20230118164358.GD7584@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 1/7] mm: don't look at xarray value entries in split_huge_pages_in_file
+Date: Sat, 21 Jan 2023 07:57:49 +0100
+Message-ID: <20230121065755.1140136-2-hch@lst.de>
+References: <20230121065755.1140136-1-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1674060574;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=lgwAP3iZLubX4jJpj4ZhHlVnjkE2V1abu7VwSCjHn5c=;
-	b=FD1xLtOXmHZSokAwxatm7C/hWIrtx94FD2e39/oQmgJmzLdCOEkgVRpbmaFmDJag88+CBm
-	Lqgh0Hw6/vvpCaW6NM5R+Q1cNl4XcZt4TFMTdbVGMeXPLfeEcMjqKCS9vM+0V/J34SsZU9
-	VvtYfi8gctLRznywFRS0VK0+DRdZiMg=
-In-Reply-To: <20230118164358.GD7584@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+        :Reply-To:Content-Type:Content-ID:Content-Description;
+        bh=B8D0bWeotdFdx7oIYHTSXz6cye3hjLZS5m2/hvamHXo=; b=SDkUBU1WsXxnF7FBjrDRJ4xZZ8
+        TP3/Mu5FLI87eWKaj4CbwLn/sCwMzyOAC/rrj97FZ/LQomNPWkqgUgmWd/7kDho1tK5yhdhyfsyRQ
+        bIT6z4zRDSoyIta29wHgJFACKI7JJfa2HvSBLOuGiYOCdn0yoQrEQ/qMjGro/wX78HdLrvaIa+sn4
+        1340LweDytR9Qfhq4madCwpHeJ2oRGbLCDV5eEv/JIHKlFKiqC1gpvhXYQ6PrfYFg4gBpcUMsT9Tr
+        UJLgfO+msrUhr9nmvs+j0mVysX5SCFr897BNqOhJ+cYqiRwv4bOlm3DNEF20F9fUO/dtZoZFLisPN
+        TxKzpxzA==;
+In-Reply-To: <20230121065755.1140136-1-hch@lst.de>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Hugh Dickins <hughd@google.com>, Matthew Wilcox <willy@infradead.org>, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Hugh Dickins <hughd@google.com>
+Cc: linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
 
-On Wed, Jan 18, 2023 at 05:43:58PM +0100, Christoph Hellwig wrote:
-> On Wed, Jan 18, 2023 at 08:57:05AM -0500, Brian Foster wrote:
-> > This all seems reasonable to me at a glance, FWIW, but I am a little
-> > curious why this wouldn't split up into two changes. I.e., switch this
-> > over to filemap_get_entry() to minimally remove the FGP_ENTRY dependency
-> > without a behavior change, then (perhaps after the next patch) introduce
-> > SGP_FIND in a separate patch. That makes it easier to review and
-> > potentially undo if it happens to pose a problem in the future. Hm?
-> 
-> The minimal change to filemap_get_entry would require to add the
-> lock, check mapping and retry loop and thus add a fair amount of
-> code.  So I looked for ways to avoid that and came up with this
-> version.  But if there is a strong preference to first open code
-> the logic and then later consolidate it I could do that.
-> 
+split_huge_pages_in_file never wants to do anything with the special
+value enties.  Switch to using filemap_get_folio to not even see them.
 
-Ok. Not a strong preference from me. I don't think it's worth
-complicating that much just to split up.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+---
+ mm/huge_memory.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-Brian
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 1d6977dc6b31ba..a2830019aaa017 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -3100,11 +3100,10 @@ static int split_huge_pages_in_file(const char *file_path, pgoff_t off_start,
+ 	mapping = candidate->f_mapping;
+ 
+ 	for (index = off_start; index < off_end; index += nr_pages) {
+-		struct folio *folio = __filemap_get_folio(mapping, index,
+-						FGP_ENTRY, 0);
++		struct folio *folio = filemap_get_folio(mapping, index);
+ 
+ 		nr_pages = 1;
+-		if (xa_is_value(folio) || !folio)
++		if (!folio)
+ 			continue;
+ 
+ 		if (!folio_test_large(folio))
+-- 
+2.39.0
 
