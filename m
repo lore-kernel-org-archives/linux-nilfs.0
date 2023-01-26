@@ -1,55 +1,107 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: return an ERR_PTR from __filemap_get_folio v2
-Date: Mon, 23 Jan 2023 20:18:13 +0100
-Message-ID: <20230123191813.GA16510@lst.de>
-References: <20230121065755.1140136-1-hch@lst.de>
- <20230121170641.121f4224a0e8304765bb4738@linux-foundation.org>
- <20230122072006.GA3654@lst.de>
- <20230123105945.958075d46b0a05ffd545e276@linux-foundation.org>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: replace WARN_ONs for invalid DAT metadata block requests
+Date: Fri, 27 Jan 2023 01:41:14 +0900
+Message-ID: <20230126164114.6911-1-konishi.ryusuke@gmail.com>
+References: <0000000000005cc3d205ea23ddcf@google.com>
 Mime-Version: 1.0
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1674501505;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=LB+L+utv/cDjzWqbemZ5ANVNCUgUpSnHnn1bZRYaO6g=;
-	b=Kd3m376PF0fEv4nhWEHsPAbdReSM6bDOfXZ0++gD4r6HkZm8X43KVO6EKqNgGhsjME7Zla
-	Ko4haS2uEFNTPoT4e1eznhT/xFVlp1Y+n1HaGmhPY3AlwPzpkbuUpaoJWvDeJlPXGv3Ues
-	BgLtd/2t+9ADXBK2LuhhskRYVgpO8us=
-In-Reply-To: <20230123105945.958075d46b0a05ffd545e276@linux-foundation.org>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=oMxWKmQ/i8aPoVTgMwXRe3wWNfCPGmN2wVMhtok6GV8=;
+        b=oSSqVGhtKAiNc1G4eRnYzKX2qSngVoikWgtvsP35LOPVpDms2+p9FYnNNn79s8suej
+         Cm3clzjflQjmKypAFrfwLXL4Rlik6QsGF60G6yghCEaxm0UbRSV+iO3f2lIsvmuGK0L6
+         oq66SJJkMnOght6aRWB5hUVV6cGr3MhwiBvaury4YZ7FiFAINythTTwYygl5/fPhw9rs
+         /PwPfKamx55t/3o9nnMYmteEaiq5vzPD+dLDK84b9W2GDisNLEoUcVCifVxN3VhLgeyO
+         JdNNKGVHdWWDfXeRuWKqiNmZnEfgVOIMxxAXw3Vvdz1l4ay+2xGpbd0f5EJWqudYoFv1
+         n/ug==
+In-Reply-To: <0000000000005cc3d205ea23ddcf-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Hugh Dickins <hughd@google.com>, Matthew Wilcox <willy@infradead.org>, linux-afs@lists.infradead.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-btrfs@vger.kernel.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, syzbot <syzbot+5d5d25f90f195a3cfcb4-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 
-On Mon, Jan 23, 2023 at 10:59:45AM -0800, Andrew Morton wrote:
-> On Sun, 22 Jan 2023 08:20:06 +0100 Christoph Hellwig <hch@lst.de> wrote:
-> 
-> > On Sat, Jan 21, 2023 at 05:06:41PM -0800, Andrew Morton wrote:
-> > > This patchset doesn't apply to fs/btrfs/ because linux-next contains
-> > > this 6+ month-old commit:
-> > 
-> > Hmm.  It was literally written against linux-next as of last morning,
-> > which does not have that commit.
-> 
-> Confused.  According to 
-> https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/btrfs/disk-io.c#n4023
-> 
-> it's there today.  wait_dev_supers() has been foliofied.
+If DAT metadata file block access fails due to corruption of the DAT file
+or abnormal virtual block numbers held by b-trees or inodes, a kernel
+warning is generated.
 
-Yes, it's there now.  But I'm pretty sure it wasn't there when
-I did the last rebase.  Weird.
+This replaces the WARN_ONs by error output, so that a kernel, booted with
+panic_on_warn, does not panic.  This patch also replaces the detected
+return code -ENOENT with another internal code -EINVAL to notify the bmap
+layer of metadata corruption.  When the bmap layer sees -EINVAL, it
+handles the abnormal situation with nilfs_bmap_convert_error() and
+finally returns code -EIO as it should.
+
+Link: https://lkml.kernel.org/r/0000000000005cc3d205ea23ddcf-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: syzbot+5d5d25f90f195a3cfcb4-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+Hi Andrew, please queue this.  This fixes a few potential WARN_ONs
+for corrupted disk images like the one syzbot produced.
+
+Thanks,
+Ryusuke Konishi
+
+fs/nilfs2/dat.c | 27 +++++++++++++++++----------
+ 1 file changed, 17 insertions(+), 10 deletions(-)
+
+diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+index 9930fa901039..1e7f653c1df7 100644
+--- a/fs/nilfs2/dat.c
++++ b/fs/nilfs2/dat.c
+@@ -40,8 +40,21 @@ static inline struct nilfs_dat_info *NILFS_DAT_I(struct inode *dat)
+ static int nilfs_dat_prepare_entry(struct inode *dat,
+ 				   struct nilfs_palloc_req *req, int create)
+ {
+-	return nilfs_palloc_get_entry_block(dat, req->pr_entry_nr,
+-					    create, &req->pr_entry_bh);
++	int ret;
++
++	ret = nilfs_palloc_get_entry_block(dat, req->pr_entry_nr,
++					   create, &req->pr_entry_bh);
++	if (unlikely(ret == -ENOENT)) {
++		nilfs_err(dat->i_sb,
++			  "DAT doesn't have a block to manage vblocknr = %llu",
++			  (unsigned long long)req->pr_entry_nr);
++		/*
++		 * Return internal code -EINVAL to notify bmap layer of
++		 * metadata corruption.
++		 */
++		ret = -EINVAL;
++	}
++	return ret;
+ }
+ 
+ static void nilfs_dat_commit_entry(struct inode *dat,
+@@ -123,11 +136,7 @@ static void nilfs_dat_commit_free(struct inode *dat,
+ 
+ int nilfs_dat_prepare_start(struct inode *dat, struct nilfs_palloc_req *req)
+ {
+-	int ret;
+-
+-	ret = nilfs_dat_prepare_entry(dat, req, 0);
+-	WARN_ON(ret == -ENOENT);
+-	return ret;
++	return nilfs_dat_prepare_entry(dat, req, 0);
+ }
+ 
+ void nilfs_dat_commit_start(struct inode *dat, struct nilfs_palloc_req *req,
+@@ -154,10 +163,8 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_palloc_req *req)
+ 	int ret;
+ 
+ 	ret = nilfs_dat_prepare_entry(dat, req, 0);
+-	if (ret < 0) {
+-		WARN_ON(ret == -ENOENT);
++	if (ret < 0)
+ 		return ret;
+-	}
+ 
+ 	kaddr = kmap_atomic(req->pr_entry_bh->b_page);
+ 	entry = nilfs_palloc_block_get_entry(dat, req->pr_entry_nr,
+-- 
+2.34.1
 
