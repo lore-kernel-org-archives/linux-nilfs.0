@@ -1,34 +1,29 @@
-From: Dipanjan Das <mail.dipanjan.das-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: KMSAN: uninit-value in nilfs_add_checksums_on_logs
-Date: Wed, 15 Feb 2023 19:04:35 -0800
-Message-ID: <CANX2M5bQ5EOfC+oYXS5Ni8CrSW65zUfLaz_yfAPiLezvVmR1FA@mail.gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: KMSAN: uninit-value in nilfs_add_checksums_on_logs
+Date: Fri, 17 Feb 2023 01:16:54 +0900
+Message-ID: <CAKFNMon+3JGp9MZ6gugkkDFUqbWgXKEO9JecjEhuUMoeXYQnqw@mail.gmail.com>
 References: <CANX2M5bVbzRi6zH3PTcNE_31TzerstOXUa9Bay4E6y6dX23_pg@mail.gmail.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
+        d=gmail.com; s=20210112; t=1676564231;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=f3Wjhm4RPWvkAIoti+3MMiCzf2Q2MiltcHtrp7wN3Vs=;
-        b=AKsDdulgWNEtYmivZQ/g+yujbksF29oXeK2dGqGOsT70eZb4W3R9APR0q2W//Sqrob
-         m2k21hF4D3TlapTU3y9xzLSfZZXCF6pu5XqoFSbtLEFCWR/inDn0jhB6+rbvI5SQlaa0
-         JfZ8LN3kZtCiWhIlLqKgpP5b4FvCLYiEBGD1qoAup+8NTcvNABk20dvANhfDUfrsZwNZ
-         JgOIa66WkQJAkosh2JvLWsEPRtP2SH64WNVPnVxLtfGtvypr8KGZj02y644AOfYa8kp/
-         FGnHLgkzodYdcXqZsfv4GLoLyndLpJyINrHrg4lAUGgKF3pI4/0uJqplbB96Z9U1X3FM
-         GVMA==
+        bh=/nRuukX08ooHaD9kcBdoVIqsSqGmd8gj/NaEMnVWHCM=;
+        b=SSrBKFK7rrcMzE2pEHvb6IRq25yF8ha+gqrQL65qEBNAt1aqKpT74vnv7jBHiMbSxe
+         PNsOMYoXiD9sXeVVjP5MnLs9yXlf9eA92Mhtk12KWYNfFY9F/zUTI2Zoy1cC3K6IC1CD
+         Z6qhcxtcYjOQbgz7P6Qz5XAzemR6WbM9rw0cWkGBhyQOQ1gvh+89Vaby8DIPIjTKQLXf
+         +QeyYLMwmWp8/5wU71pKZdTCMdwTgEqMXZal2AfpoRhmoM2JH6flzS9tI+AoYUuEA/1r
+         tSctQcYxiW3x+5iXs+Doim6i7cat48DkMgtLyZHIEjUcToWa6UFJBr5g0BNNJcciCDSH
+         Wp/Q==
 In-Reply-To: <CANX2M5bVbzRi6zH3PTcNE_31TzerstOXUa9Bay4E6y6dX23_pg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Marius Fleischer <fleischermarius-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Priyanka Bose <its.priyanka.bose-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Dipanjan Das <mail.dipanjan.das-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, syzkaller <syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>, Marius Fleischer <fleischermarius-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Priyanka Bose <its.priyanka.bose-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Reporting this bug without the reproducer attached as it hits the
-character limit and the report bounces. The reproducer is available on
-request.
-
-On Wed, Feb 15, 2023 at 6:43 PM Dipanjan Das
-<mail.dipanjan.das-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+On Thu, Feb 16, 2023 at 11:43 AM Dipanjan Das wrote:
 >
 > Hi,
 >
@@ -98,9 +93,12 @@ On Wed, Feb 15, 2023 at 6:43 PM Dipanjan Das
 >
 > Dipanjan
 
+Thank you for reporting.
 
+I haven't been able to reproduce this yet, but was able to get the reproducer.
+According to the log, it looks like the memory for the segment header
+buffer passed to crc32_le() is not initialized.
+I'll take a closer look using the reproducer.
 
--- 
-Thanks and Regards,
-
-Dipanjan
+Thanks,
+Ryusuke Konishi
