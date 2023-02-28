@@ -1,104 +1,117 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: KMSAN: uninit-value in nilfs_add_checksums_on_logs
-Date: Fri, 17 Feb 2023 01:16:54 +0900
-Message-ID: <CAKFNMon+3JGp9MZ6gugkkDFUqbWgXKEO9JecjEhuUMoeXYQnqw@mail.gmail.com>
-References: <CANX2M5bVbzRi6zH3PTcNE_31TzerstOXUa9Bay4E6y6dX23_pg@mail.gmail.com>
+From: patchwork-bot+f2fs@kernel.org
+Subject: Re: [PATCH v5 00/23] Convert to filemap_get_folios_tag()
+Date: Tue, 28 Feb 2023 01:01:54 +0000
+Message-ID: <167754611496.27916.17463541946406622753.git-patchwork-notify@kernel.org>
+References: <20230104211448.4804-1-vishal.moola@gmail.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112; t=1676564231;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=/nRuukX08ooHaD9kcBdoVIqsSqGmd8gj/NaEMnVWHCM=;
-        b=SSrBKFK7rrcMzE2pEHvb6IRq25yF8ha+gqrQL65qEBNAt1aqKpT74vnv7jBHiMbSxe
-         PNsOMYoXiD9sXeVVjP5MnLs9yXlf9eA92Mhtk12KWYNfFY9F/zUTI2Zoy1cC3K6IC1CD
-         Z6qhcxtcYjOQbgz7P6Qz5XAzemR6WbM9rw0cWkGBhyQOQ1gvh+89Vaby8DIPIjTKQLXf
-         +QeyYLMwmWp8/5wU71pKZdTCMdwTgEqMXZal2AfpoRhmoM2JH6flzS9tI+AoYUuEA/1r
-         tSctQcYxiW3x+5iXs+Doim6i7cat48DkMgtLyZHIEjUcToWa6UFJBr5g0BNNJcciCDSH
-         Wp/Q==
-In-Reply-To: <CANX2M5bVbzRi6zH3PTcNE_31TzerstOXUa9Bay4E6y6dX23_pg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Dipanjan Das <mail.dipanjan.das-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, syzkaller <syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>, Marius Fleischer <fleischermarius-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Priyanka Bose <its.priyanka.bose-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Cc:To:In-Reply-To:References:Date:Message-Id:From:
+ Subject:Content-Transfer-Encoding:MIME-Version:Content-Type:Sender:Reply-To:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=vrLI1OKBNmboNRUOX2OhbzztFX8n7e+C5REp5D6UcSw=; b=TBUVPpY7OJMSTMY4BmxOxCZgDK
+ QXvFxSXlboiHNEfV3JM+WS3Rx+RizZ7IPwiQQUCZXEHuneUc4n7ZLKnbzxxdG4lSk/Q3kEl9hsIEa
+ rZndv6ruWo6PwxOg9dLqJlt3Fp7tL7lO6UUNwrF8g1froRt+TbpqFf6esxZRA9CWOcc0=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ; h=Cc:To:In-Reply-To:References:Date:Message-Id:From:Subject:
+ Content-Transfer-Encoding:MIME-Version:Content-Type:Sender:Reply-To:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=vrLI1OKBNmboNRUOX2OhbzztFX8n7e+C5REp5D6UcSw=; b=camHzfYncsJ05oD31OHzcNUHNn
+ +igx/K6NH5mgf4JxFyAkwHzDe88N9RFu0tZjpmETPZ9Lhumc+7XRUkLqnM/Jbi9cTQRr6TSB9f+X5
+ 3fo78vBlwvdsfeynLMUaitYwIVd5ZUlU3672ggLdw5FHtJ10tpabmqycgUmyOp8wvsAM=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+ s=k20201202; t=1677546115;
+ bh=0MyrhP8zxv6k33rgc7qfdjiKkOYxKugd6Y5yIm+G+iw=;
+ h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+ b=TrpxKXLHDJRZmtxPellg2R2e0LwhTmG2M11tD4m4F8F5sKa+ry/nGM6/NDBChHoSD
+ j+YaN0hFzU38PKpe17cqCZbGiwewOAiZERVYOj+LVc+zb+jt+6wDtD4bw9ZY6ZPna5
+ 065r5y/ntPdrttGXnI3ygAbmSEG2s9nsuyYdZPPvc3oEf0eJPU9GIxZ27JxeQH239M
+ eIP+6uHS95fWDDm7rwjzBKHQryPRBHRS4JkIq4xsHici3XYcI9wSHemkzlMeag11Ao
+ CyNrHEzQkd0ZOa/GCfBP9ibpQQKBD4VlH0bx1VPvcM/70InEGg8VvhrbOZQC5RFlmL
+ wAFn4/77eBcag==
+In-Reply-To: <20230104211448.4804-1-vishal.moola@gmail.com>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+Cc: linux-cifs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, ceph-devel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-On Thu, Feb 16, 2023 at 11:43 AM Dipanjan Das wrote:
->
-> Hi,
->
-> We would like to report the following bug which has been found by our
-> modified version of syzkaller.
->
-> ======================================================
-> description: KMSAN: uninit-value in nilfs_add_checksums_on_logs
-> affected file: fs/nilfs2/segbuf.c
-> kernel version: 6.2.0-rc5
-> kernel commit: 41c66f47061608dc1fd493eebce198f0e74cc2d7
-> git tree: kmsan
-> kernel config: https://syzkaller.appspot.com/text?tag=KernelConfig&x=a9a22da1efde3af6
-> crash reproducer: attached
-> ======================================================
-> Crash log:
-> ======================================================
-> NILFS (loop4): segctord starting. Construction interval = 5 seconds,
-> CP frequency < 30 seconds
-> =====================================================
-> BUG: KMSAN: uninit-value in crc32_body lib/crc32.c:112 [inline]
-> BUG: KMSAN: uninit-value in crc32_le_generic lib/crc32.c:179 [inline]
-> BUG: KMSAN: uninit-value in crc32_le_base+0x3b7/0xc30 lib/crc32.c:197
->  crc32_body lib/crc32.c:112 [inline]
->  crc32_le_generic lib/crc32.c:179 [inline]
->  crc32_le_base+0x3b7/0xc30 lib/crc32.c:197
->  nilfs_segbuf_fill_in_data_crc fs/nilfs2/segbuf.c:208 [inline]
->  nilfs_add_checksums_on_logs+0x6ec/0xea0 fs/nilfs2/segbuf.c:321
->  nilfs_segctor_do_construct+0xa636/0xe870 fs/nilfs2/segment.c:2076
->  nilfs_segctor_construct+0x222/0xe10 fs/nilfs2/segment.c:2379
->  nilfs_segctor_thread_construct fs/nilfs2/segment.c:2487 [inline]
->  nilfs_segctor_thread+0xc19/0x11c0 fs/nilfs2/segment.c:2570
->  kthread+0x30b/0x420 kernel/kthread.c:376
->  ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
->
-> Uninit was created at:
->  __alloc_pages+0x767/0xee0 mm/page_alloc.c:5572
->  alloc_pages+0xa9a/0xd90 mm/mempolicy.c:2286
->  folio_alloc+0x41/0x100 mm/mempolicy.c:2296
->  filemap_alloc_folio+0xa5/0x450 mm/filemap.c:972
->  __filemap_get_folio+0xe7c/0x1960 mm/filemap.c:1966
->  pagecache_get_page+0x46/0x270 mm/folio-compat.c:98
->  find_or_create_page include/linux/pagemap.h:612 [inline]
->  grow_dev_page fs/buffer.c:946 [inline]
->  grow_buffers fs/buffer.c:1011 [inline]
->  __getblk_slow fs/buffer.c:1038 [inline]
->  __getblk_gfp+0x365/0x1750 fs/buffer.c:1333
->  sb_getblk include/linux/buffer_head.h:356 [inline]
->  nilfs_segbuf_extend_segsum fs/nilfs2/segbuf.c:99 [inline]
->  nilfs_segbuf_reset+0xfd/0x520 fs/nilfs2/segbuf.c:129
->  nilfs_segctor_reset_segment_buffer fs/nilfs2/segment.c:421 [inline]
->  nilfs_segctor_collect fs/nilfs2/segment.c:1499 [inline]
->  nilfs_segctor_do_construct+0x20c6/0xe870 fs/nilfs2/segment.c:2045
->  nilfs_segctor_construct+0x222/0xe10 fs/nilfs2/segment.c:2379
->  nilfs_segctor_thread_construct fs/nilfs2/segment.c:2487 [inline]
->  nilfs_segctor_thread+0xc19/0x11c0 fs/nilfs2/segment.c:2570
->  kthread+0x30b/0x420 kernel/kthread.c:376
->  ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
->
-> CPU: 1 PID: 11600 Comm: segctord Not tainted 6.2.0-rc5-00010-g41c66f470616 #8
-> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
-> 1.13.0-1ubuntu1.1 04/01/2014
-> =====================================================
->
-> --
-> Thanks and Regards,
->
-> Dipanjan
+Hello:
 
-Thank you for reporting.
+This series was applied to jaegeuk/f2fs.git (dev)
+by Andrew Morton <akpm@linux-foundation.org>:
 
-I haven't been able to reproduce this yet, but was able to get the reproducer.
-According to the log, it looks like the memory for the segment header
-buffer passed to crc32_le() is not initialized.
-I'll take a closer look using the reproducer.
+On Wed,  4 Jan 2023 13:14:25 -0800 you wrote:
+> This patch series replaces find_get_pages_range_tag() with
+> filemap_get_folios_tag(). This also allows the removal of multiple
+> calls to compound_head() throughout.
+> It also makes a good chunk of the straightforward conversions to folios,
+> and takes the opportunity to introduce a function that grabs a folio
+> from the pagecache.
+> 
+> [...]
 
-Thanks,
-Ryusuke Konishi
+Here is the summary with links:
+  - [f2fs-dev,v5,01/23] pagemap: Add filemap_grab_folio()
+    https://git.kernel.org/jaegeuk/f2fs/c/ee7a5906ff08
+  - [f2fs-dev,v5,02/23] filemap: Added filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/247f9e1feef4
+  - [f2fs-dev,v5,03/23] filemap: Convert __filemap_fdatawait_range() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/6817ef514e1a
+  - [f2fs-dev,v5,04/23] page-writeback: Convert write_cache_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/0fff435f060c
+  - [f2fs-dev,v5,05/23] afs: Convert afs_writepages_region() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/acc8d8588cb7
+  - [f2fs-dev,v5,06/23] btrfs: Convert btree_write_cache_pages() to use filemap_get_folio_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/51c5cd3bafe5
+  - [f2fs-dev,v5,07/23] btrfs: Convert extent_write_cache_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/9f50fd2e92e3
+  - [f2fs-dev,v5,08/23] ceph: Convert ceph_writepages_start() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/590a2b5f0a9b
+  - [f2fs-dev,v5,09/23] cifs: Convert wdata_alloc_and_fillpages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/4cda80f3a7a5
+  - [f2fs-dev,v5,10/23] ext4: Convert mpage_prepare_extent_to_map() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/50ead2537441
+  - [f2fs-dev,v5,11/23] f2fs: Convert f2fs_fsync_node_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/e6e46e1eb7ce
+  - [f2fs-dev,v5,12/23] f2fs: Convert f2fs_flush_inline_data() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/a40a4ad1186a
+  - [f2fs-dev,v5,13/23] f2fs: Convert f2fs_sync_node_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/7525486affa5
+  - [f2fs-dev,v5,14/23] f2fs: Convert f2fs_write_cache_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/1cd98ee747cf
+  - [f2fs-dev,v5,15/23] f2fs: Convert last_fsync_dnode() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/4f4a4f0febe6
+  - [f2fs-dev,v5,16/23] f2fs: Convert f2fs_sync_meta_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/580e7a492608
+  - [f2fs-dev,v5,17/23] gfs2: Convert gfs2_write_cache_jdata() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/87ed37e66dfd
+  - [f2fs-dev,v5,18/23] nilfs2: Convert nilfs_lookup_dirty_data_buffers() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/5ee4b25cb730
+  - [f2fs-dev,v5,19/23] nilfs2: Convert nilfs_lookup_dirty_node_buffers() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/a24586583169
+  - [f2fs-dev,v5,20/23] nilfs2: Convert nilfs_btree_lookup_dirty_buffers() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/41f3f3b5373e
+  - [f2fs-dev,v5,21/23] nilfs2: Convert nilfs_copy_dirty_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/d4a16d31334e
+  - [f2fs-dev,v5,22/23] nilfs2: Convert nilfs_clear_dirty_pages() to use filemap_get_folios_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/243c5ea4f783
+  - [f2fs-dev,v5,23/23] filemap: Remove find_get_pages_range_tag()
+    https://git.kernel.org/jaegeuk/f2fs/c/c5792d938411
+
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
