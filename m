@@ -1,7 +1,7 @@
-From: syzbot <syzbot+5b7d542076d9bddc3c6a-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] [nilfs?] possible deadlock in nilfs_evict_inode
-Date: Thu, 02 Mar 2023 16:48:39 -0800
-Message-ID: <0000000000006ac86605f5f44eb9@google.com>
+From: syzbot <syzbot+527641d191abe35993c1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] [nilfs?] WARNING in nilfs_btree_propagate
+Date: Fri, 03 Mar 2023 01:23:44 -0800
+Message-ID: <00000000000078153305f5fb8030@google.com>
 Mime-Version: 1.0
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -13,190 +13,74 @@ Hello,
 
 syzbot found the following issue on:
 
-HEAD commit:    2fcd07b7ccd5 mm/mprotect: Fix successful vma_merge() of ne..
+HEAD commit:    f3a2439f20d9 Merge tag 'rproc-v6.3' of git://git.kernel.or..
 git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=149da9f7480000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=56eb47529ec6fdbe
-dashboard link: https://syzkaller.appspot.com/bug?extid=5b7d542076d9bddc3c6a
-compiler:       gcc (Debian 10.2.1-6) 10.2.1 20210110, GNU ld (GNU Binutils for Debian) 2.35.2
+console output: https://syzkaller.appspot.com/x/log.txt?x=17228a74c80000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=dd442ddf29eaca0c
+dashboard link: https://syzkaller.appspot.com/bug?extid=527641d191abe35993c1
+compiler:       Debian clang version 15.0.7, GNU ld (GNU Binutils for Debian) 2.35.2
 
 Unfortunately, I don't have any reproducer for this issue yet.
 
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/9dbed9360199/disk-f3a2439f.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/d9708601442a/vmlinux-f3a2439f.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/177fdbdbd4ea/bzImage-f3a2439f.xz
+
 IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+5b7d542076d9bddc3c6a-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: syzbot+527641d191abe35993c1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
 
-======================================================
-WARNING: possible circular locking dependency detected
-6.2.0-syzkaller-12018-g2fcd07b7ccd5 #0 Not tainted
-------------------------------------------------------
-kswapd0/101 is trying to acquire lock:
-ffff88802a8dc650 (sb_internal#2){.+.+}-{0:0}, at: nilfs_evict_inode+0x13b/0x440 fs/nilfs2/inode.c:928
-
-but task is already holding lock:
-ffffffff8c8e29e0 (fs_reclaim){+.+.}-{0:0}, at: set_task_reclaim_state mm/vmscan.c:200 [inline]
-ffffffff8c8e29e0 (fs_reclaim){+.+.}-{0:0}, at: balance_pgdat+0x170/0x1ac0 mm/vmscan.c:7338
-
-which lock already depends on the new lock.
-
-
-the existing dependency chain (in reverse order) is:
-
--> #3 (fs_reclaim){+.+.}-{0:0}:
-       __fs_reclaim_acquire mm/page_alloc.c:4716 [inline]
-       fs_reclaim_acquire+0x11d/0x160 mm/page_alloc.c:4730
-       might_alloc include/linux/sched/mm.h:271 [inline]
-       slab_pre_alloc_hook mm/slab.h:728 [inline]
-       slab_alloc_node mm/slab.c:3241 [inline]
-       __kmem_cache_alloc_node+0x3b/0x3f0 mm/slab.c:3541
-       kmalloc_trace+0x26/0x60 mm/slab_common.c:1061
-       kmalloc include/linux/slab.h:580 [inline]
-       kzalloc include/linux/slab.h:720 [inline]
-       nilfs_sysfs_create_device_group+0x81/0x850 fs/nilfs2/sysfs.c:982
-       init_nilfs+0xdc0/0x12f0 fs/nilfs2/the_nilfs.c:700
-       nilfs_fill_super fs/nilfs2/super.c:1056 [inline]
-       nilfs_mount+0x921/0x1150 fs/nilfs2/super.c:1324
-       legacy_get_tree+0x109/0x220 fs/fs_context.c:610
-       vfs_get_tree+0x8d/0x350 fs/super.c:1501
-       do_new_mount fs/namespace.c:3042 [inline]
-       path_mount+0x1342/0x1e40 fs/namespace.c:3372
-       do_mount fs/namespace.c:3385 [inline]
-       __do_sys_mount fs/namespace.c:3594 [inline]
-       __se_sys_mount fs/namespace.c:3571 [inline]
-       __x64_sys_mount+0x283/0x300 fs/namespace.c:3571
-       do_syscall_x64 arch/x86/entry/common.c:50 [inline]
-       do_syscall_64+0x39/0xb0 arch/x86/entry/common.c:80
-       entry_SYSCALL_64_after_hwframe+0x63/0xcd
-
--> #2 (&nilfs->ns_sem){++++}-{3:3}:
-       down_write+0x92/0x200 kernel/locking/rwsem.c:1573
-       nilfs_set_error fs/nilfs2/super.c:92 [inline]
-       __nilfs_error+0x21f/0x4d0 fs/nilfs2/super.c:137
-       nilfs_check_page fs/nilfs2/dir.c:156 [inline]
-       nilfs_get_page.isra.0+0x9b9/0xc90 fs/nilfs2/dir.c:197
-       nilfs_empty_dir+0xc9/0x420 fs/nilfs2/dir.c:630
-       nilfs_rmdir+0x11d/0x240 fs/nilfs2/namei.c:325
-       vfs_rmdir.part.0+0x1b0/0x5a0 fs/namei.c:4121
-       vfs_rmdir fs/namei.c:4106 [inline]
-       do_rmdir+0x3a8/0x420 fs/namei.c:4180
-       __do_sys_rmdir fs/namei.c:4199 [inline]
-       __se_sys_rmdir fs/namei.c:4197 [inline]
-       __x64_sys_rmdir+0xca/0x110 fs/namei.c:4197
-       do_syscall_x64 arch/x86/entry/common.c:50 [inline]
-       do_syscall_64+0x39/0xb0 arch/x86/entry/common.c:80
-       entry_SYSCALL_64_after_hwframe+0x63/0xcd
-
--> #1 (&nilfs->ns_segctor_sem){++++}-{3:3}:
-       down_read+0x3d/0x50 kernel/locking/rwsem.c:1520
-       nilfs_transaction_begin+0x31a/0xa20 fs/nilfs2/segment.c:223
-       nilfs_rmdir+0xb9/0x240 fs/nilfs2/namei.c:320
-       vfs_rmdir.part.0+0x1b0/0x5a0 fs/namei.c:4121
-       vfs_rmdir fs/namei.c:4106 [inline]
-       do_rmdir+0x3a8/0x420 fs/namei.c:4180
-       __do_sys_rmdir fs/namei.c:4199 [inline]
-       __se_sys_rmdir fs/namei.c:4197 [inline]
-       __x64_sys_rmdir+0xca/0x110 fs/namei.c:4197
-       do_syscall_x64 arch/x86/entry/common.c:50 [inline]
-       do_syscall_64+0x39/0xb0 arch/x86/entry/common.c:80
-       entry_SYSCALL_64_after_hwframe+0x63/0xcd
-
--> #0 (sb_internal#2){.+.+}-{0:0}:
-       check_prev_add kernel/locking/lockdep.c:3098 [inline]
-       check_prevs_add kernel/locking/lockdep.c:3217 [inline]
-       validate_chain kernel/locking/lockdep.c:3832 [inline]
-       __lock_acquire+0x2ec7/0x5d40 kernel/locking/lockdep.c:5056
-       lock_acquire kernel/locking/lockdep.c:5669 [inline]
-       lock_acquire+0x1e3/0x670 kernel/locking/lockdep.c:5634
-       percpu_down_read include/linux/percpu-rwsem.h:51 [inline]
-       __sb_start_write include/linux/fs.h:1477 [inline]
-       sb_start_intwrite include/linux/fs.h:1599 [inline]
-       nilfs_transaction_begin+0x21e/0xa20 fs/nilfs2/segment.c:220
-       nilfs_evict_inode+0x13b/0x440 fs/nilfs2/inode.c:928
-       evict+0x2ed/0x6b0 fs/inode.c:665
-       iput_final fs/inode.c:1748 [inline]
-       iput.part.0+0x59b/0x8a0 fs/inode.c:1774
-       iput+0x5c/0x80 fs/inode.c:1764
-       dentry_unlink_inode+0x2b1/0x460 fs/dcache.c:401
-       __dentry_kill+0x3c0/0x640 fs/dcache.c:607
-       shrink_dentry_list+0x12c/0x4f0 fs/dcache.c:1201
-       prune_dcache_sb+0xeb/0x150 fs/dcache.c:1282
-       super_cache_scan+0x33a/0x590 fs/super.c:104
-       do_shrink_slab+0x464/0xd20 mm/vmscan.c:853
-       shrink_slab_memcg mm/vmscan.c:922 [inline]
-       shrink_slab+0x388/0x660 mm/vmscan.c:1001
-       shrink_one+0x502/0x810 mm/vmscan.c:5343
-       shrink_many mm/vmscan.c:5394 [inline]
-       lru_gen_shrink_node mm/vmscan.c:5511 [inline]
-       shrink_node+0x2064/0x35f0 mm/vmscan.c:6459
-       kswapd_shrink_node mm/vmscan.c:7262 [inline]
-       balance_pgdat+0xa02/0x1ac0 mm/vmscan.c:7452
-       kswapd+0x70b/0x1000 mm/vmscan.c:7712
-       kthread+0x2e8/0x3a0 kernel/kthread.c:376
-       ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
-
-other info that might help us debug this:
-
-Chain exists of:
-  sb_internal#2 --> &nilfs->ns_sem --> fs_reclaim
-
- Possible unsafe locking scenario:
-
-       CPU0                    CPU1
-       ----                    ----
-  lock(fs_reclaim);
-                               lock(&nilfs->ns_sem);
-                               lock(fs_reclaim);
-  lock(sb_internal#2);
-
- *** DEADLOCK ***
-
-3 locks held by kswapd0/101:
- #0: ffffffff8c8e29e0 (fs_reclaim){+.+.}-{0:0}, at: set_task_reclaim_state mm/vmscan.c:200 [inline]
- #0: ffffffff8c8e29e0 (fs_reclaim){+.+.}-{0:0}, at: balance_pgdat+0x170/0x1ac0 mm/vmscan.c:7338
- #1: ffffffff8c8995d0 (shrinker_rwsem){++++}-{3:3}, at: shrink_slab_memcg mm/vmscan.c:895 [inline]
- #1: ffffffff8c8995d0 (shrinker_rwsem){++++}-{3:3}, at: shrink_slab+0x2a0/0x660 mm/vmscan.c:1001
- #2: ffff88802a8dc0e0 (&type->s_umount_key#65){++++}-{3:3}, at: trylock_super fs/super.c:414 [inline]
- #2: ffff88802a8dc0e0 (&type->s_umount_key#65){++++}-{3:3}, at: super_cache_scan+0x70/0x590 fs/super.c:79
-
-stack backtrace:
-CPU: 0 PID: 101 Comm: kswapd0 Not tainted 6.2.0-syzkaller-12018-g2fcd07b7ccd5 #0
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-2 04/01/2014
+------------[ cut here ]------------
+WARNING: CPU: 1 PID: 6839 at fs/nilfs2/btree.c:2071 nilfs_btree_propagate+0xc72/0xde0
+Modules linked in:
+CPU: 1 PID: 6839 Comm: syz-executor.4 Not tainted 6.2.0-syzkaller-12485-gf3a2439f20d9 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 02/16/2023
+RIP: 0010:nilfs_btree_propagate+0xc72/0xde0 fs/nilfs2/btree.c:2071
+Code: 00 48 8b 44 24 08 49 8d 74 05 58 e8 c8 64 ff ff 48 8b 6c 24 10 43 80 3c 27 00 0f 85 1a fe ff ff e9 1d fe ff ff e8 3e 6c 39 fe <0f> 0b e9 f2 f3 ff ff e8 32 6c 39 fe 48 8b 1c 24 48 81 c3 d0 00 00
+RSP: 0018:ffffc90006196ea0 EFLAGS: 00010283
+RAX: ffffffff83537a82 RBX: 0000000000000000 RCX: 0000000000040000
+RDX: ffffc90005929000 RSI: 000000000001e5d4 RDI: 000000000001e5d5
+RBP: ffffffff8b4581a8 R08: ffffffff83536e6c R09: ffffed100e936523
+R10: 0000000000000000 R11: dffffc0000000001 R12: dffffc0000000000
+R13: 1ffff1100e93652b R14: 1ffff1100e936522 R15: ffff8880749b2910
+FS:  00007f851cc6a700(0000) GS:ffff8880b9900000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000001b31f2b000 CR3: 0000000028470000 CR4: 00000000003506e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
 Call Trace:
  <TASK>
- __dump_stack lib/dump_stack.c:88 [inline]
- dump_stack_lvl+0xd9/0x150 lib/dump_stack.c:106
- check_noncircular+0x25f/0x2e0 kernel/locking/lockdep.c:2178
- check_prev_add kernel/locking/lockdep.c:3098 [inline]
- check_prevs_add kernel/locking/lockdep.c:3217 [inline]
- validate_chain kernel/locking/lockdep.c:3832 [inline]
- __lock_acquire+0x2ec7/0x5d40 kernel/locking/lockdep.c:5056
- lock_acquire kernel/locking/lockdep.c:5669 [inline]
- lock_acquire+0x1e3/0x670 kernel/locking/lockdep.c:5634
- percpu_down_read include/linux/percpu-rwsem.h:51 [inline]
- __sb_start_write include/linux/fs.h:1477 [inline]
- sb_start_intwrite include/linux/fs.h:1599 [inline]
- nilfs_transaction_begin+0x21e/0xa20 fs/nilfs2/segment.c:220
- nilfs_evict_inode+0x13b/0x440 fs/nilfs2/inode.c:928
- evict+0x2ed/0x6b0 fs/inode.c:665
- iput_final fs/inode.c:1748 [inline]
- iput.part.0+0x59b/0x8a0 fs/inode.c:1774
- iput+0x5c/0x80 fs/inode.c:1764
- dentry_unlink_inode+0x2b1/0x460 fs/dcache.c:401
- __dentry_kill+0x3c0/0x640 fs/dcache.c:607
- shrink_dentry_list+0x12c/0x4f0 fs/dcache.c:1201
- prune_dcache_sb+0xeb/0x150 fs/dcache.c:1282
- super_cache_scan+0x33a/0x590 fs/super.c:104
- do_shrink_slab+0x464/0xd20 mm/vmscan.c:853
- shrink_slab_memcg mm/vmscan.c:922 [inline]
- shrink_slab+0x388/0x660 mm/vmscan.c:1001
- shrink_one+0x502/0x810 mm/vmscan.c:5343
- shrink_many mm/vmscan.c:5394 [inline]
- lru_gen_shrink_node mm/vmscan.c:5511 [inline]
- shrink_node+0x2064/0x35f0 mm/vmscan.c:6459
- kswapd_shrink_node mm/vmscan.c:7262 [inline]
- balance_pgdat+0xa02/0x1ac0 mm/vmscan.c:7452
- kswapd+0x70b/0x1000 mm/vmscan.c:7712
- kthread+0x2e8/0x3a0 kernel/kthread.c:376
- ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
+ nilfs_bmap_propagate+0x71/0x120 fs/nilfs2/bmap.c:337
+ nilfs_collect_file_data+0x4d/0xc0 fs/nilfs2/segment.c:568
+ nilfs_segctor_apply_buffers+0x180/0x330 fs/nilfs2/segment.c:1020
+ nilfs_segctor_scan_file_dsync fs/nilfs2/segment.c:1109 [inline]
+ nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1263 [inline]
+ nilfs_segctor_collect fs/nilfs2/segment.c:1505 [inline]
+ nilfs_segctor_do_construct+0x175e/0x6f70 fs/nilfs2/segment.c:2047
+ nilfs_construct_dsync_segment+0x5c4/0x6c0 fs/nilfs2/segment.c:2312
+ nilfs_sync_file+0xbc/0x260 fs/nilfs2/file.c:32
+ generic_write_sync include/linux/fs.h:2452 [inline]
+ generic_file_write_iter+0x2a1/0x310 mm/filemap.c:4090
+ do_iter_write+0x6ea/0xc50 fs/read_write.c:861
+ iter_file_splice_write+0x843/0xfe0 fs/splice.c:778
+ do_splice_from fs/splice.c:856 [inline]
+ direct_splice_actor+0xe7/0x1c0 fs/splice.c:1023
+ splice_direct_to_actor+0x4c4/0xbd0 fs/splice.c:978
+ do_splice_direct+0x283/0x3d0 fs/splice.c:1066
+ do_sendfile+0x620/0xff0 fs/read_write.c:1255
+ __do_sys_sendfile64 fs/read_write.c:1323 [inline]
+ __se_sys_sendfile64+0x17c/0x1e0 fs/read_write.c:1309
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x41/0xc0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+RIP: 0033:0x7f851be8c0f9
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 f1 19 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f851cc6a168 EFLAGS: 00000246 ORIG_RAX: 0000000000000028
+RAX: ffffffffffffffda RBX: 00007f851bfac050 RCX: 00007f851be8c0f9
+RDX: 0000000000000000 RSI: 0000000000000007 RDI: 0000000000000006
+RBP: 00007f851bee7ae9 R08: 0000000000000000 R09: 0000000000000000
+R10: 00000000f03b2400 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007ffdf954162f R14: 00007f851cc6a300 R15: 0000000000022000
  </TASK>
 
 
