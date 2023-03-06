@@ -1,66 +1,66 @@
-From: syzbot <syzbot+527641d191abe35993c1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] [nilfs?] WARNING in nilfs_btree_propagate
-Date: Fri, 03 Mar 2023 01:23:44 -0800
-Message-ID: <00000000000078153305f5fb8030@google.com>
+From: syzbot <syzbot+84266b9546515bac1d92@syzkaller.appspotmail.com>
+Subject: [syzbot] [nilfs?] general protection fault in nilfs_flush_segment
+Date: Mon, 06 Mar 2023 09:50:48 -0800
+Message-ID: <00000000000067da6205f63eefd8@google.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
 
 Hello,
 
 syzbot found the following issue on:
 
-HEAD commit:    f3a2439f20d9 Merge tag 'rproc-v6.3' of git://git.kernel.or..
+HEAD commit:    b01fe98d34f3 Merge tag 'i2c-for-6.3-rc1-part2' of git://gi..
 git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=17228a74c80000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=dd442ddf29eaca0c
-dashboard link: https://syzkaller.appspot.com/bug?extid=527641d191abe35993c1
+console output: https://syzkaller.appspot.com/x/log.txt?x=12e50d22c80000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=dc0f7cfe5b32efe2
+dashboard link: https://syzkaller.appspot.com/bug?extid=84266b9546515bac1d92
 compiler:       Debian clang version 15.0.7, GNU ld (GNU Binutils for Debian) 2.35.2
 
 Unfortunately, I don't have any reproducer for this issue yet.
 
 Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/9dbed9360199/disk-f3a2439f.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/d9708601442a/vmlinux-f3a2439f.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/177fdbdbd4ea/bzImage-f3a2439f.xz
+disk image: https://storage.googleapis.com/syzbot-assets/a1d37240ef5e/disk-b01fe98d.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/3727e84b1762/vmlinux-b01fe98d.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/0d45494f57a4/bzImage-b01fe98d.xz
 
 IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+527641d191abe35993c1-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Reported-by: syzbot+84266b9546515bac1d92@syzkaller.appspotmail.com
 
-------------[ cut here ]------------
-WARNING: CPU: 1 PID: 6839 at fs/nilfs2/btree.c:2071 nilfs_btree_propagate+0xc72/0xde0
-Modules linked in:
-CPU: 1 PID: 6839 Comm: syz-executor.4 Not tainted 6.2.0-syzkaller-12485-gf3a2439f20d9 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 02/16/2023
-RIP: 0010:nilfs_btree_propagate+0xc72/0xde0 fs/nilfs2/btree.c:2071
-Code: 00 48 8b 44 24 08 49 8d 74 05 58 e8 c8 64 ff ff 48 8b 6c 24 10 43 80 3c 27 00 0f 85 1a fe ff ff e9 1d fe ff ff e8 3e 6c 39 fe <0f> 0b e9 f2 f3 ff ff e8 32 6c 39 fe 48 8b 1c 24 48 81 c3 d0 00 00
-RSP: 0018:ffffc90006196ea0 EFLAGS: 00010283
-RAX: ffffffff83537a82 RBX: 0000000000000000 RCX: 0000000000040000
-RDX: ffffc90005929000 RSI: 000000000001e5d4 RDI: 000000000001e5d5
-RBP: ffffffff8b4581a8 R08: ffffffff83536e6c R09: ffffed100e936523
-R10: 0000000000000000 R11: dffffc0000000001 R12: dffffc0000000000
-R13: 1ffff1100e93652b R14: 1ffff1100e936522 R15: ffff8880749b2910
-FS:  00007f851cc6a700(0000) GS:ffff8880b9900000(0000) knlGS:0000000000000000
+general protection fault, probably for non-canonical address 0xdffffc0000000045: 0000 [#1] PREEMPT SMP KASAN
+KASAN: null-ptr-deref in range [0x0000000000000228-0x000000000000022f]
+CPU: 0 PID: 16242 Comm: syz-executor.5 Not tainted 6.2.0-syzkaller-13534-gb01fe98d34f3 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 03/02/2023
+RIP: 0010:nilfs_flush_segment+0x55/0x3d0 fs/nilfs2/segment.c:2155
+Code: 06 00 00 48 89 d8 48 c1 e8 03 42 80 3c 28 00 74 08 48 89 df e8 5c 85 8d fe 4c 8b 3b 49 8d af 28 02 00 00 48 89 e8 48 c1 e8 03 <42> 80 3c 28 00 74 08 48 89 ef e8 3c 85 8d fe 4c 8b 75 00 4d 85 f6
+RSP: 0018:ffffc90012a06ad8 EFLAGS: 00010202
+RAX: 0000000000000045 RBX: ffff88807ce40678 RCX: 0000000000040000
+RDX: ffffc9000bc59000 RSI: 000000000003ffff RDI: 0000000000040000
+RBP: 0000000000000228 R08: ffffffff8350bbe7 R09: fffffbfff209e04c
+R10: 0000000000000000 R11: dffffc0000000001 R12: 0000000000000002
+R13: dffffc0000000000 R14: ffff888042ba34c0 R15: 0000000000000000
+FS:  00007f153c7b4700(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
 CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000001b31f2b000 CR3: 0000000028470000 CR4: 00000000003506e0
+CR2: 0000555555b70888 CR3: 00000000229d8000 CR4: 00000000003506f0
 DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
 DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
 Call Trace:
  <TASK>
- nilfs_bmap_propagate+0x71/0x120 fs/nilfs2/bmap.c:337
- nilfs_collect_file_data+0x4d/0xc0 fs/nilfs2/segment.c:568
- nilfs_segctor_apply_buffers+0x180/0x330 fs/nilfs2/segment.c:1020
- nilfs_segctor_scan_file_dsync fs/nilfs2/segment.c:1109 [inline]
- nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1263 [inline]
- nilfs_segctor_collect fs/nilfs2/segment.c:1505 [inline]
- nilfs_segctor_do_construct+0x175e/0x6f70 fs/nilfs2/segment.c:2047
- nilfs_construct_dsync_segment+0x5c4/0x6c0 fs/nilfs2/segment.c:2312
- nilfs_sync_file+0xbc/0x260 fs/nilfs2/file.c:32
- generic_write_sync include/linux/fs.h:2452 [inline]
- generic_file_write_iter+0x2a1/0x310 mm/filemap.c:4090
+ nilfs_writepage+0x1c5/0x220 fs/nilfs2/inode.c:201
+ writeout mm/migrate.c:907 [inline]
+ fallback_migrate_folio mm/migrate.c:931 [inline]
+ move_to_new_folio+0x7a1/0x14d0 mm/migrate.c:981
+ migrate_folio_move mm/migrate.c:1295 [inline]
+ migrate_pages_batch mm/migrate.c:1827 [inline]
+ migrate_pages+0x4c0b/0x6670 mm/migrate.c:1979
+ compact_zone+0x2bc9/0x45a0 mm/compaction.c:2420
+ compact_node+0x216/0x420 mm/compaction.c:2717
+ compact_nodes mm/compaction.c:2730 [inline]
+ sysctl_compaction_handler+0xab/0x150 mm/compaction.c:2774
+ proc_sys_call_handler+0x545/0x8a0 fs/proc/proc_sysctl.c:604
  do_iter_write+0x6ea/0xc50 fs/read_write.c:861
  iter_file_splice_write+0x843/0xfe0 fs/splice.c:778
  do_splice_from fs/splice.c:856 [inline]
@@ -73,21 +73,55 @@ Call Trace:
  do_syscall_x64 arch/x86/entry/common.c:50 [inline]
  do_syscall_64+0x41/0xc0 arch/x86/entry/common.c:80
  entry_SYSCALL_64_after_hwframe+0x63/0xcd
-RIP: 0033:0x7f851be8c0f9
+RIP: 0033:0x7f153ba8c0f9
 Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 f1 19 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007f851cc6a168 EFLAGS: 00000246 ORIG_RAX: 0000000000000028
-RAX: ffffffffffffffda RBX: 00007f851bfac050 RCX: 00007f851be8c0f9
-RDX: 0000000000000000 RSI: 0000000000000007 RDI: 0000000000000006
-RBP: 00007f851bee7ae9 R08: 0000000000000000 R09: 0000000000000000
-R10: 00000000f03b2400 R11: 0000000000000246 R12: 0000000000000000
-R13: 00007ffdf954162f R14: 00007f851cc6a300 R15: 0000000000022000
+RSP: 002b:00007f153c7b4168 EFLAGS: 00000246 ORIG_RAX: 0000000000000028
+RAX: ffffffffffffffda RBX: 00007f153bbac050 RCX: 00007f153ba8c0f9
+RDX: 0000000000000000 RSI: 0000000000000008 RDI: 0000000000000009
+RBP: 00007f153bae7ae9 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000264 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007ffd8b8813cf R14: 00007f153c7b4300 R15: 0000000000022000
  </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:nilfs_flush_segment+0x55/0x3d0 fs/nilfs2/segment.c:2155
+Code: 06 00 00 48 89 d8 48 c1 e8 03 42 80 3c 28 00 74 08 48 89 df e8 5c 85 8d fe 4c 8b 3b 49 8d af 28 02 00 00 48 89 e8 48 c1 e8 03 <42> 80 3c 28 00 74 08 48 89 ef e8 3c 85 8d fe 4c 8b 75 00 4d 85 f6
+RSP: 0018:ffffc90012a06ad8 EFLAGS: 00010202
+RAX: 0000000000000045 RBX: ffff88807ce40678 RCX: 0000000000040000
+RDX: ffffc9000bc59000 RSI: 000000000003ffff RDI: 0000000000040000
+RBP: 0000000000000228 R08: ffffffff8350bbe7 R09: fffffbfff209e04c
+R10: 0000000000000000 R11: dffffc0000000001 R12: 0000000000000002
+R13: dffffc0000000000 R14: ffff888042ba34c0 R15: 0000000000000000
+FS:  00007f153c7b4700(0000) GS:ffff8880b9900000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000000002081e000 CR3: 00000000229d8000 CR4: 00000000003506e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+----------------
+Code disassembly (best guess), 1 bytes skipped:
+   0:	00 00                	add    %al,(%rax)
+   2:	48 89 d8             	mov    %rbx,%rax
+   5:	48 c1 e8 03          	shr    $0x3,%rax
+   9:	42 80 3c 28 00       	cmpb   $0x0,(%rax,%r13,1)
+   e:	74 08                	je     0x18
+  10:	48 89 df             	mov    %rbx,%rdi
+  13:	e8 5c 85 8d fe       	callq  0xfe8d8574
+  18:	4c 8b 3b             	mov    (%rbx),%r15
+  1b:	49 8d af 28 02 00 00 	lea    0x228(%r15),%rbp
+  22:	48 89 e8             	mov    %rbp,%rax
+  25:	48 c1 e8 03          	shr    $0x3,%rax
+* 29:	42 80 3c 28 00       	cmpb   $0x0,(%rax,%r13,1) <-- trapping instruction
+  2e:	74 08                	je     0x38
+  30:	48 89 ef             	mov    %rbp,%rdi
+  33:	e8 3c 85 8d fe       	callq  0xfe8d8574
+  38:	4c 8b 75 00          	mov    0x0(%rbp),%r14
+  3c:	4d 85 f6             	test   %r14,%r14
 
 
 ---
 This report is generated by a bot. It may contain errors.
 See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
 syzbot will keep track of this issue. See:
 https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
