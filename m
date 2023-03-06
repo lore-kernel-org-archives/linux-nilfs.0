@@ -1,7 +1,7 @@
-From: syzbot <syzbot+048585f3f4227bb2b49b@syzkaller.appspotmail.com>
-Subject: [syzbot] [nilfs?] KMSAN: uninit-value in nilfs_add_checksums_on_logs
-Date: Mon, 06 Mar 2023 09:55:44 -0800
-Message-ID: <0000000000000d710705f63f014c@google.com>
+From: syzbot <syzbot+132fdd2f1e1805fdc591@syzkaller.appspotmail.com>
+Subject: [syzbot] [nilfs?] KMSAN: kernel-infoleak in nilfs_ioctl_wrap_copy
+Date: Mon, 06 Mar 2023 09:56:44 -0800
+Message-ID: <000000000000a5bd2d05f63f04ae@google.com>
 Mime-Version: 1.0
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
@@ -13,58 +13,66 @@ Hello,
 
 syzbot found the following issue on:
 
-HEAD commit:    54b4a7d3d6c6 kmsan: add memsetXX tests
+HEAD commit:    97e36f4aa06f Revert "sched/core: kmsan: do not instrument ..
 git tree:       https://github.com/google/kmsan.git master
-console output: https://syzkaller.appspot.com/x/log.txt?x=143f81e4c80000
+console output: https://syzkaller.appspot.com/x/log.txt?x=106829a8c80000
 kernel config:  https://syzkaller.appspot.com/x/.config?x=46c642641b9ef616
-dashboard link: https://syzkaller.appspot.com/bug?extid=048585f3f4227bb2b49b
+dashboard link: https://syzkaller.appspot.com/bug?extid=132fdd2f1e1805fdc591
 compiler:       Debian clang version 15.0.7, GNU ld (GNU Binutils for Debian) 2.35.2
 userspace arch: i386
 
 Unfortunately, I don't have any reproducer for this issue yet.
 
 Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/b2a457fb4580/disk-54b4a7d3.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/1acddc397ddb/vmlinux-54b4a7d3.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/eceee3367163/bzImage-54b4a7d3.xz
+disk image: https://storage.googleapis.com/syzbot-assets/9931a9627dc6/disk-97e36f4a.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/1aafdb2fd6dc/vmlinux-97e36f4a.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/90df5872c7ff/bzImage-97e36f4a.xz
 
 IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+048585f3f4227bb2b49b@syzkaller.appspotmail.com
+Reported-by: syzbot+132fdd2f1e1805fdc591@syzkaller.appspotmail.com
 
 =====================================================
-BUG: KMSAN: uninit-value in crc32_body lib/crc32.c:110 [inline]
-BUG: KMSAN: uninit-value in crc32_le_generic lib/crc32.c:179 [inline]
-BUG: KMSAN: uninit-value in crc32_le_base+0x446/0xd80 lib/crc32.c:197
- crc32_body lib/crc32.c:110 [inline]
- crc32_le_generic lib/crc32.c:179 [inline]
- crc32_le_base+0x446/0xd80 lib/crc32.c:197
- nilfs_segbuf_fill_in_segsum_crc fs/nilfs2/segbuf.c:182 [inline]
- nilfs_add_checksums_on_logs+0x2ce/0xe30 fs/nilfs2/segbuf.c:320
- nilfs_segctor_do_construct+0xa553/0xe900 fs/nilfs2/segment.c:2076
- nilfs_segctor_construct+0x1eb/0xe30 fs/nilfs2/segment.c:2379
- nilfs_segctor_thread_construct fs/nilfs2/segment.c:2487 [inline]
- nilfs_segctor_thread+0xc76/0x1240 fs/nilfs2/segment.c:2570
- kthread+0x31f/0x430 kernel/kthread.c:376
- ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
+BUG: KMSAN: kernel-infoleak in instrument_copy_to_user include/linux/instrumented.h:121 [inline]
+BUG: KMSAN: kernel-infoleak in _copy_to_user+0xc0/0x100 lib/usercopy.c:33
+ instrument_copy_to_user include/linux/instrumented.h:121 [inline]
+ _copy_to_user+0xc0/0x100 lib/usercopy.c:33
+ copy_to_user include/linux/uaccess.h:169 [inline]
+ nilfs_ioctl_wrap_copy+0x6fa/0xc10 fs/nilfs2/ioctl.c:99
+ nilfs_ioctl_get_info fs/nilfs2/ioctl.c:1173 [inline]
+ nilfs_ioctl+0x2402/0x4450 fs/nilfs2/ioctl.c:1290
+ nilfs_compat_ioctl+0x1b8/0x200 fs/nilfs2/ioctl.c:1343
+ __do_compat_sys_ioctl fs/ioctl.c:968 [inline]
+ __se_compat_sys_ioctl+0x7dd/0x1000 fs/ioctl.c:910
+ __ia32_compat_sys_ioctl+0x93/0xd0 fs/ioctl.c:910
+ do_syscall_32_irqs_on arch/x86/entry/common.c:112 [inline]
+ __do_fast_syscall_32+0xa2/0x100 arch/x86/entry/common.c:178
+ do_fast_syscall_32+0x37/0x80 arch/x86/entry/common.c:203
+ do_SYSENTER_32+0x1f/0x30 arch/x86/entry/common.c:246
+ entry_SYSENTER_compat_after_hwframe+0x70/0x82
 
-Uninit was stored to memory at:
- nilfs_write_dat_node_binfo+0x12c/0x280 fs/nilfs2/segment.c:658
- nilfs_segctor_assign fs/nilfs2/segment.c:1629 [inline]
- nilfs_segctor_do_construct+0x753c/0xe900 fs/nilfs2/segment.c:2056
- nilfs_segctor_construct+0x1eb/0xe30 fs/nilfs2/segment.c:2379
- nilfs_segctor_thread_construct fs/nilfs2/segment.c:2487 [inline]
- nilfs_segctor_thread+0xc76/0x1240 fs/nilfs2/segment.c:2570
- kthread+0x31f/0x430 kernel/kthread.c:376
- ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
+Uninit was created at:
+ __alloc_pages+0x9f6/0xe90 mm/page_alloc.c:5572
+ alloc_pages+0xab0/0xd80 mm/mempolicy.c:2287
+ __get_free_pages+0x34/0xc0 mm/page_alloc.c:5599
+ nilfs_ioctl_wrap_copy+0x223/0xc10 fs/nilfs2/ioctl.c:74
+ nilfs_ioctl_get_info fs/nilfs2/ioctl.c:1173 [inline]
+ nilfs_ioctl+0x2402/0x4450 fs/nilfs2/ioctl.c:1290
+ nilfs_compat_ioctl+0x1b8/0x200 fs/nilfs2/ioctl.c:1343
+ __do_compat_sys_ioctl fs/ioctl.c:968 [inline]
+ __se_compat_sys_ioctl+0x7dd/0x1000 fs/ioctl.c:910
+ __ia32_compat_sys_ioctl+0x93/0xd0 fs/ioctl.c:910
+ do_syscall_32_irqs_on arch/x86/entry/common.c:112 [inline]
+ __do_fast_syscall_32+0xa2/0x100 arch/x86/entry/common.c:178
+ do_fast_syscall_32+0x37/0x80 arch/x86/entry/common.c:203
+ do_SYSENTER_32+0x1f/0x30 arch/x86/entry/common.c:246
+ entry_SYSENTER_compat_after_hwframe+0x70/0x82
 
-Local variable binfo.i.i created at:
- nilfs_segctor_update_payload_blocknr fs/nilfs2/segment.c:1562 [inline]
- nilfs_segctor_assign fs/nilfs2/segment.c:1629 [inline]
- nilfs_segctor_do_construct+0x6ac9/0xe900 fs/nilfs2/segment.c:2056
- nilfs_segctor_construct+0x1eb/0xe30 fs/nilfs2/segment.c:2379
+Bytes 16-127 of 3968 are uninitialized
+Memory access of size 3968 starts at ffff888014534000
+Data copied to user address 000000002000002f
 
-CPU: 1 PID: 28393 Comm: segctord Not tainted 6.2.0-syzkaller-81157-g54b4a7d3d6c6 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 03/02/2023
+CPU: 0 PID: 18968 Comm: syz-executor.0 Not tainted 6.2.0-syzkaller-81152-g97e36f4aa06f #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 02/16/2023
 =====================================================
 
 
