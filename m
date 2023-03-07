@@ -1,75 +1,49 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 5/7] shmem: open code the page cache lookup in shmem_get_folio_gfp
-Date: Tue,  7 Mar 2023 15:34:08 +0100
-Message-ID: <20230307143410.28031-6-hch@lst.de>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: return an ERR_PTR from __filemap_get_folio v3
+Date: Tue, 7 Mar 2023 16:23:50 +0100
+Message-ID: <CAHc6FU4G5S+5S+1OdatY3apQvmDcvzOQSPPPQdQZTwMNjSq5tw@mail.gmail.com>
 References: <20230307143410.28031-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
-        :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=J8Wv/S8hZkGarl/vdU2yd/Mb7/z5z/afVPXh/Kxsm98=; b=H2ObeCoc8auj571tf6mE3PvlmW
-        v7uz73zg80LebWXfbeT9jKI8uO4ZQk1c4nZSObeX4GMQXRAW3FIpO72F09zQcUyW9Gu/2P1tdR+93
-        1ESO4LKLuRhumNB1tdml7A9Nnd6uEgRxdBI/hG8RiWADv0eU5nGp1VbWcLp6oTNnvpbxT4mVH3iFp
-        Vu595d8mCCTWXMGmmbZSMKqXizM5d2t1yV7AbxlbetK8PLWqpk1IXX4tDAaPIaXksi91tbkhJDk2o
-        37ihKioXLopdZ7z4w4ynbc2Hxi+aX5ZhXuesV+yV9p0Y8XOV7y5NhsvKVCLkkYlfDjbFgNm+L1+eP
-        SLSenIbA==;
+Content-Transfer-Encoding: quoted-printable
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1678202847;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=49sjefw2FKulo5Vz5tQGPSxZQZKzbcJ05HQTQwuGmNA=;
+	b=jLeRHPeHke0slPpc+64YqKo7nWYShDFUWGR9hmSxmyvLh5o+TVEwX39B8iPy0Ff+VPF8CK
+	Db/c99noTgy3DrVgjoIpyLLiNCyHRV4r9/buwsK1FGhKY5zUEZ62DlNLu0fVA2liNtSYnN
+	B1cJ8kv+O8Y5zTe8V3IcJFeMKP+c7i0=
 In-Reply-To: <20230307143410.28031-1-hch@lst.de>
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Hugh Dickins <hughd@google.com>
-Cc: linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
+Content-Type: text/plain; charset="windows-1252"
+To: Christoph Hellwig <hch@lst.de>
+Cc: cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, Hugh Dickins <hughd@google.com>, Matthew Wilcox <willy@infradead.org>, linux-xfs@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org
 
-Use the very low level filemap_get_entry helper to look up the
-entry in the xarray, and then:
+On Tue, Mar 7, 2023 at 4:07=E2=80=AFPM Christoph Hellwig <hch@lst.de> wrote=
+:
+> __filemap_get_folio and its wrappers can return NULL for three different
+> conditions, which in some cases requires the caller to reverse engineer
+> the decision making.  This is fixed by returning an ERR_PTR instead of
+> NULL and thus transporting the reason for the failure.  But to make
+> that work we first need to ensure that no xa_value special case is
+> returned and thus return the FGP_ENTRY flag.  It turns out that flag
+> is barely used and can usually be deal with in a better way.
 
- - don't bother locking the folio if only doing a userfault notification
- - open code locking the page and checking for truncation in a related
-   code block
+Thanks for working on this cleanup; looking good at a first glance.
 
-This will allow to eventually remove the FGP_ENTRY flag.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- mm/shmem.c | 14 ++++++++++----
- 1 file changed, 10 insertions(+), 4 deletions(-)
-
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 3705437c5757ba..714ff3fb02a938 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1856,12 +1856,10 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
- 	sbinfo = SHMEM_SB(inode->i_sb);
- 	charge_mm = vma ? vma->vm_mm : NULL;
- 
--	folio = __filemap_get_folio(mapping, index, FGP_ENTRY | FGP_LOCK, 0);
-+	folio = filemap_get_entry(mapping, index);
- 	if (folio && vma && userfaultfd_minor(vma)) {
--		if (!xa_is_value(folio)) {
--			folio_unlock(folio);
-+		if (!xa_is_value(folio))
- 			folio_put(folio);
--		}
- 		*fault_type = handle_userfault(vmf, VM_UFFD_MINOR);
- 		return 0;
- 	}
-@@ -1877,6 +1875,14 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
- 	}
- 
- 	if (folio) {
-+		folio_lock(folio);
-+
-+		/* Has the page been truncated? */
-+		if (unlikely(folio->mapping != mapping)) {
-+			folio_unlock(folio);
-+			folio_put(folio);
-+			goto repeat;
-+		}
- 		if (sgp == SGP_WRITE)
- 			folio_mark_accessed(folio);
- 		if (folio_test_uptodate(folio))
--- 
-2.39.1
+Andreas
 
