@@ -1,85 +1,105 @@
-From: syzbot <syzbot+132fdd2f1e1805fdc591@syzkaller.appspotmail.com>
-Subject: [syzbot] [nilfs?] KMSAN: kernel-infoleak in nilfs_ioctl_wrap_copy
-Date: Mon, 06 Mar 2023 09:56:44 -0800
-Message-ID: <000000000000a5bd2d05f63f04ae@google.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: fix kernel-infoleak in nilfs_ioctl_wrap_copy()
+Date: Tue,  7 Mar 2023 17:55:48 +0900
+Message-ID: <20230307085548.6290-1-konishi.ryusuke@gmail.com>
+References: <000000000000a5bd2d05f63f04ae@google.com>
 Mime-Version: 1.0
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112; t=1678179349;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=ImZIUnjHmWZ61AUl7EQPcyNMNKjjE5EWwslBdnmGov0=;
+        b=SgtCPQOkavqX+SBvioxmaURb4Km1AY2R8AW5U4vSda+AC/SpuW1VlTHGyP70Ytx+dK
+         Ayqg7je+tRBqJgKKk3xbtLurdcXlYw7hY3sBDSNIsbqQaTaWlTIUJTIYgsMbE1qBnKWg
+         /hROrhlTfzg3xPNGrquDfsSGiwb0TXzQaLrdv6qEZpVcvM7b1WzNHXSgRk3aFnEGnlOS
+         pWwK1QeBx+FxcTN4I5U3/9k5Yj3rpU8Ih3evW7wRHjji5kdcAhxLf3NbbaUegC1gepj2
+         7a5RjDaKtVujCChtlIFUvuthDcTm7IdCxR8tO87EfAs7qwzDXDhuaRoejK8v9buentv2
+         88iA==
+In-Reply-To: <000000000000a5bd2d05f63f04ae-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: glider@google.com, konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot <syzbot+132fdd2f1e1805fdc591-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
 
-Hello,
+The ioctl helper function nilfs_ioctl_wrap_copy, which exchanges a
+metadata array to/from user space, may copy uninitialized buffer regions
+to user space memory for read-only ioctl commands NILFS_IOCTL_GET_SUINFO
+and NILFS_IOCTL_GET_CPINFO.
 
-syzbot found the following issue on:
+This can occur when the element size of the user space metadata given
+by the v_size member of the argument nilfs_argv structure is larger than
+the size of the metadata element (nilfs_suinfo structure or nilfs_cpinfo
+structure) on the file system side.
 
-HEAD commit:    97e36f4aa06f Revert "sched/core: kmsan: do not instrument ..
-git tree:       https://github.com/google/kmsan.git master
-console output: https://syzkaller.appspot.com/x/log.txt?x=106829a8c80000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=46c642641b9ef616
-dashboard link: https://syzkaller.appspot.com/bug?extid=132fdd2f1e1805fdc591
-compiler:       Debian clang version 15.0.7, GNU ld (GNU Binutils for Debian) 2.35.2
-userspace arch: i386
+KMSAN-enabled kernels detect this issue as follows:
 
-Unfortunately, I don't have any reproducer for this issue yet.
+ BUG: KMSAN: kernel-infoleak in instrument_copy_to_user
+ include/linux/instrumented.h:121 [inline]
+ BUG: KMSAN: kernel-infoleak in _copy_to_user+0xc0/0x100 lib/usercopy.c:33
+  instrument_copy_to_user include/linux/instrumented.h:121 [inline]
+  _copy_to_user+0xc0/0x100 lib/usercopy.c:33
+  copy_to_user include/linux/uaccess.h:169 [inline]
+  nilfs_ioctl_wrap_copy+0x6fa/0xc10 fs/nilfs2/ioctl.c:99
+  nilfs_ioctl_get_info fs/nilfs2/ioctl.c:1173 [inline]
+  nilfs_ioctl+0x2402/0x4450 fs/nilfs2/ioctl.c:1290
+  nilfs_compat_ioctl+0x1b8/0x200 fs/nilfs2/ioctl.c:1343
+  __do_compat_sys_ioctl fs/ioctl.c:968 [inline]
+  __se_compat_sys_ioctl+0x7dd/0x1000 fs/ioctl.c:910
+  __ia32_compat_sys_ioctl+0x93/0xd0 fs/ioctl.c:910
+  do_syscall_32_irqs_on arch/x86/entry/common.c:112 [inline]
+  __do_fast_syscall_32+0xa2/0x100 arch/x86/entry/common.c:178
+  do_fast_syscall_32+0x37/0x80 arch/x86/entry/common.c:203
+  do_SYSENTER_32+0x1f/0x30 arch/x86/entry/common.c:246
+  entry_SYSENTER_compat_after_hwframe+0x70/0x82
 
-Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/9931a9627dc6/disk-97e36f4a.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/1aafdb2fd6dc/vmlinux-97e36f4a.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/90df5872c7ff/bzImage-97e36f4a.xz
+ Uninit was created at:
+  __alloc_pages+0x9f6/0xe90 mm/page_alloc.c:5572
+  alloc_pages+0xab0/0xd80 mm/mempolicy.c:2287
+  __get_free_pages+0x34/0xc0 mm/page_alloc.c:5599
+  nilfs_ioctl_wrap_copy+0x223/0xc10 fs/nilfs2/ioctl.c:74
+  nilfs_ioctl_get_info fs/nilfs2/ioctl.c:1173 [inline]
+  nilfs_ioctl+0x2402/0x4450 fs/nilfs2/ioctl.c:1290
+  nilfs_compat_ioctl+0x1b8/0x200 fs/nilfs2/ioctl.c:1343
+  __do_compat_sys_ioctl fs/ioctl.c:968 [inline]
+  __se_compat_sys_ioctl+0x7dd/0x1000 fs/ioctl.c:910
+  __ia32_compat_sys_ioctl+0x93/0xd0 fs/ioctl.c:910
+  do_syscall_32_irqs_on arch/x86/entry/common.c:112 [inline]
+  __do_fast_syscall_32+0xa2/0x100 arch/x86/entry/common.c:178
+  do_fast_syscall_32+0x37/0x80 arch/x86/entry/common.c:203
+  do_SYSENTER_32+0x1f/0x30 arch/x86/entry/common.c:246
+  entry_SYSENTER_compat_after_hwframe+0x70/0x82
 
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+132fdd2f1e1805fdc591@syzkaller.appspotmail.com
+ Bytes 16-127 of 3968 are uninitialized
+ ...
 
-=====================================================
-BUG: KMSAN: kernel-infoleak in instrument_copy_to_user include/linux/instrumented.h:121 [inline]
-BUG: KMSAN: kernel-infoleak in _copy_to_user+0xc0/0x100 lib/usercopy.c:33
- instrument_copy_to_user include/linux/instrumented.h:121 [inline]
- _copy_to_user+0xc0/0x100 lib/usercopy.c:33
- copy_to_user include/linux/uaccess.h:169 [inline]
- nilfs_ioctl_wrap_copy+0x6fa/0xc10 fs/nilfs2/ioctl.c:99
- nilfs_ioctl_get_info fs/nilfs2/ioctl.c:1173 [inline]
- nilfs_ioctl+0x2402/0x4450 fs/nilfs2/ioctl.c:1290
- nilfs_compat_ioctl+0x1b8/0x200 fs/nilfs2/ioctl.c:1343
- __do_compat_sys_ioctl fs/ioctl.c:968 [inline]
- __se_compat_sys_ioctl+0x7dd/0x1000 fs/ioctl.c:910
- __ia32_compat_sys_ioctl+0x93/0xd0 fs/ioctl.c:910
- do_syscall_32_irqs_on arch/x86/entry/common.c:112 [inline]
- __do_fast_syscall_32+0xa2/0x100 arch/x86/entry/common.c:178
- do_fast_syscall_32+0x37/0x80 arch/x86/entry/common.c:203
- do_SYSENTER_32+0x1f/0x30 arch/x86/entry/common.c:246
- entry_SYSENTER_compat_after_hwframe+0x70/0x82
+This eliminates the leak issue by initializing the page allocated as
+buffer using get_zeroed_page().
 
-Uninit was created at:
- __alloc_pages+0x9f6/0xe90 mm/page_alloc.c:5572
- alloc_pages+0xab0/0xd80 mm/mempolicy.c:2287
- __get_free_pages+0x34/0xc0 mm/page_alloc.c:5599
- nilfs_ioctl_wrap_copy+0x223/0xc10 fs/nilfs2/ioctl.c:74
- nilfs_ioctl_get_info fs/nilfs2/ioctl.c:1173 [inline]
- nilfs_ioctl+0x2402/0x4450 fs/nilfs2/ioctl.c:1290
- nilfs_compat_ioctl+0x1b8/0x200 fs/nilfs2/ioctl.c:1343
- __do_compat_sys_ioctl fs/ioctl.c:968 [inline]
- __se_compat_sys_ioctl+0x7dd/0x1000 fs/ioctl.c:910
- __ia32_compat_sys_ioctl+0x93/0xd0 fs/ioctl.c:910
- do_syscall_32_irqs_on arch/x86/entry/common.c:112 [inline]
- __do_fast_syscall_32+0xa2/0x100 arch/x86/entry/common.c:178
- do_fast_syscall_32+0x37/0x80 arch/x86/entry/common.c:203
- do_SYSENTER_32+0x1f/0x30 arch/x86/entry/common.c:246
- entry_SYSENTER_compat_after_hwframe+0x70/0x82
-
-Bytes 16-127 of 3968 are uninitialized
-Memory access of size 3968 starts at ffff888014534000
-Data copied to user address 000000002000002f
-
-CPU: 0 PID: 18968 Comm: syz-executor.0 Not tainted 6.2.0-syzkaller-81152-g97e36f4aa06f #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 02/16/2023
-=====================================================
-
-
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: syzbot+132fdd2f1e1805fdc591-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Link: https://lkml.kernel.org/r/000000000000a5bd2d05f63f04ae-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+ fs/nilfs2/ioctl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 5ccc638ae92f..1dfbc0c34513 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -71,7 +71,7 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
+ 	if (argv->v_index > ~(__u64)0 - argv->v_nmembs)
+ 		return -EINVAL;
+ 
+-	buf = (void *)__get_free_pages(GFP_NOFS, 0);
++	buf = (void *)get_zeroed_page(GFP_NOFS);
+ 	if (unlikely(!buf))
+ 		return -ENOMEM;
+ 	maxmembs = PAGE_SIZE / argv->v_size;
+-- 
+2.34.1
+
