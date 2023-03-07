@@ -1,91 +1,75 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 6/7] mm: remove FGP_ENTRY
-Date: Tue,  7 Mar 2023 15:34:09 +0100
-Message-ID: <20230307143410.28031-7-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 5/7] shmem: open code the page cache lookup in shmem_get_folio_gfp
+Date: Tue,  7 Mar 2023 15:34:08 +0100
+Message-ID: <20230307143410.28031-6-hch@lst.de>
 References: <20230307143410.28031-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
         MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
         :Reply-To:Content-Type:Content-ID:Content-Description;
-        bh=yN9ixkV3NznsRlBy0kp+q6qHDsT4J/oNljnLwxgZrSs=; b=NpXuPrYFHdSkJ54q+wSNdSWmWY
-        rh2C5TRAhXKffYnBaE6Stluy0Le6qJKDEMmaawrmQYtTeMGpWRvkWX9TZjDh8LBLKnebx2IjjRUBP
-        zTe3XVNkYfrO/MF0K7QqO5gnSJG0IO3y812s2zyh5tPqSPlMfXUOKScv8fiw1R7pDa0OI4B14fvRL
-        VUf+XNK+e4BR0qYgp78fUFrJka3S8GmMoa9vVoxvQQQstM6LV4p7DR0c94soKIP2EZciXQL6S3hTr
-        aO4nnlBji5oZR5k+xrYmlsDbzE3w0jBkloL1Wdv9RIss3YSsa3jr5u1AtiMiVYbIfF7gd7lHY7fkC
-        HKsexgMg==;
-In-Reply-To: <20230307143410.28031-1-hch-jcswGhMUV9g@public.gmane.org>
+        bh=J8Wv/S8hZkGarl/vdU2yd/Mb7/z5z/afVPXh/Kxsm98=; b=H2ObeCoc8auj571tf6mE3PvlmW
+        v7uz73zg80LebWXfbeT9jKI8uO4ZQk1c4nZSObeX4GMQXRAW3FIpO72F09zQcUyW9Gu/2P1tdR+93
+        1ESO4LKLuRhumNB1tdml7A9Nnd6uEgRxdBI/hG8RiWADv0eU5nGp1VbWcLp6oTNnvpbxT4mVH3iFp
+        Vu595d8mCCTWXMGmmbZSMKqXizM5d2t1yV7AbxlbetK8PLWqpk1IXX4tDAaPIaXksi91tbkhJDk2o
+        37ihKioXLopdZ7z4w4ynbc2Hxi+aX5ZhXuesV+yV9p0Y8XOV7y5NhsvKVCLkkYlfDjbFgNm+L1+eP
+        SLSenIbA==;
+In-Reply-To: <20230307143410.28031-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Hugh Dickins <hughd@google.com>
+Cc: linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
 
-FGP_ENTRY is unused now, so remove it.
+Use the very low level filemap_get_entry helper to look up the
+entry in the xarray, and then:
 
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+ - don't bother locking the folio if only doing a userfault notification
+ - open code locking the page and checking for truncation in a related
+   code block
+
+This will allow to eventually remove the FGP_ENTRY flag.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/pagemap.h | 3 +--
- mm/filemap.c            | 7 +------
- mm/folio-compat.c       | 4 ++--
- 3 files changed, 4 insertions(+), 10 deletions(-)
+ mm/shmem.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 5d9b51d3854220..bb60e0209b7e3b 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -504,8 +504,7 @@ pgoff_t page_cache_prev_miss(struct address_space *mapping,
- #define FGP_NOFS		0x00000010
- #define FGP_NOWAIT		0x00000020
- #define FGP_FOR_MMAP		0x00000040
--#define FGP_ENTRY		0x00000080
--#define FGP_STABLE		0x00000100
-+#define FGP_STABLE		0x00000080
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 3705437c5757ba..714ff3fb02a938 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -1856,12 +1856,10 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
+ 	sbinfo = SHMEM_SB(inode->i_sb);
+ 	charge_mm = vma ? vma->vm_mm : NULL;
  
- void *filemap_get_entry(struct address_space *mapping, pgoff_t index);
- struct folio *__filemap_get_folio(struct address_space *mapping, pgoff_t index,
-diff --git a/mm/filemap.c b/mm/filemap.c
-index a674108a4d524b..ac161b50f5bc17 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -1891,8 +1891,6 @@ void *filemap_get_entry(struct address_space *mapping, pgoff_t index)
-  *
-  * * %FGP_ACCESSED - The folio will be marked accessed.
-  * * %FGP_LOCK - The folio is returned locked.
-- * * %FGP_ENTRY - If there is a shadow / swap / DAX entry, return it
-- *   instead of allocating a new folio to replace it.
-  * * %FGP_CREAT - If no page is present then a new page is allocated using
-  *   @gfp and added to the page cache and the VM's LRU list.
-  *   The page is returned locked and with an increased refcount.
-@@ -1918,11 +1916,8 @@ struct folio *__filemap_get_folio(struct address_space *mapping, pgoff_t index,
+-	folio = __filemap_get_folio(mapping, index, FGP_ENTRY | FGP_LOCK, 0);
++	folio = filemap_get_entry(mapping, index);
+ 	if (folio && vma && userfaultfd_minor(vma)) {
+-		if (!xa_is_value(folio)) {
+-			folio_unlock(folio);
++		if (!xa_is_value(folio))
+ 			folio_put(folio);
+-		}
+ 		*fault_type = handle_userfault(vmf, VM_UFFD_MINOR);
+ 		return 0;
+ 	}
+@@ -1877,6 +1875,14 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
+ 	}
  
- repeat:
- 	folio = filemap_get_entry(mapping, index);
--	if (xa_is_value(folio)) {
--		if (fgp_flags & FGP_ENTRY)
--			return folio;
-+	if (xa_is_value(folio))
- 		folio = NULL;
--	}
- 	if (!folio)
- 		goto no_page;
- 
-diff --git a/mm/folio-compat.c b/mm/folio-compat.c
-index cabcd1de9ecbb2..1754daa85d35c2 100644
---- a/mm/folio-compat.c
-+++ b/mm/folio-compat.c
-@@ -97,8 +97,8 @@ struct page *pagecache_get_page(struct address_space *mapping, pgoff_t index,
- 	struct folio *folio;
- 
- 	folio = __filemap_get_folio(mapping, index, fgp_flags, gfp);
--	if (!folio || xa_is_value(folio))
--		return &folio->page;
-+	if (!folio)
-+		return NULL;
- 	return folio_file_page(folio, index);
- }
- EXPORT_SYMBOL(pagecache_get_page);
+ 	if (folio) {
++		folio_lock(folio);
++
++		/* Has the page been truncated? */
++		if (unlikely(folio->mapping != mapping)) {
++			folio_unlock(folio);
++			folio_put(folio);
++			goto repeat;
++		}
+ 		if (sgp == SGP_WRITE)
+ 			folio_mark_accessed(folio);
+ 		if (folio_test_uptodate(folio))
 -- 
 2.39.1
 
