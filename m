@@ -1,70 +1,106 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 4/7] shmem: remove
- shmem_get_partial_folio
-Date: Mon, 20 Mar 2023 14:58:38 +0100
-Message-ID: <20230320135838.GA16060@lst.de>
-References: <20230307143410.28031-1-hch@lst.de>
- <20230307143410.28031-5-hch@lst.de>
- <9d1aaa4-1337-fb81-6f37-74ebc96f9ef@google.com>
+From: Yangtao Li via Linux-f2fs-devel <linux-f2fs-devel@lists.sourceforge.net>
+Subject: [RESEND,
+ PATCH v2 01/10] kobject: introduce kobject_del_and_put()
+Date: Tue, 21 Mar 2023 02:46:56 +0800
+Message-ID: <20230320184657.56198-1-frank.li@vivo.com>
+Reply-To: Yangtao Li <frank.li@vivo.com>
 Mime-Version: 1.0
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679320730;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=9JxuoOXrvBv5R9PUz9wzS/XDpwFhofIR6FWa7Esn6zM=;
-	b=Bdmi2I3RYNV83dQy4Q1Um3VCRimEpYAzH5GRQQMMLr1fXMiE4rRHVf4gh3dObWaebTggJs
-	XQvmor+Er2hYxjxSNdCMLmgiGcoVm4KtuvG8XUH03TJxfR7nxabKbOaQ2sQRs6eyt+mjGi
-	utf52fOi6xRMxpYPx+zvCoHr21UYt8M=
-In-Reply-To: <9d1aaa4-1337-fb81-6f37-74ebc96f9ef@google.com>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Hugh Dickins <hughd@google.com>
-Cc: linux-xfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, linux-afs@lists.infradead.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-btrfs@vger.kernel.org
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=MIME-Version:Content-Type:Content-Transfer-Encoding
+ :Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=2f6n1UCEAAcz+QTfKGhjodobaG8npGp7MDh8Bm+DuiM=; b=YHzXxDARGFJn8aZG5sWkq23r5D
+ N9R0sJ7bZS3/2lmb4W9js8AuKXx4Sea+7X4Vq9eq90ohatFyNBZaXicNLLx60TNflLXsDc3jzOJyt
+ Zeu7+sF8IgH4vaxJ+U2cYTMMWIAXRzfH8epSmrCLDH1FeMz1giwwmkoWIOsbK4naxJhs=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Date:
+ Subject:Cc:To:From:Sender:Reply-To:Content-ID:Content-Description:Resent-Date
+ :Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:
+ References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:
+ List-Owner:List-Archive; bh=2f6n1UCEAAcz+QTfKGhjodobaG8npGp7MDh8Bm+DuiM=; b=V
+ cOz/o8odZKCe4Co5cw1yukICcp9F3GNvR5vSrXXQpNQaA08+Qpqqb9JlhayyGVSXxWPrJLvV22hzE
+ 22fdYcfmFBqbIuyMQWGl7+nStYrIjSDVY/r+wX4TWsyyi32c6bpk8MQpD/2bNdc50XAoDwth0rlC5
+ RzUBdKOp6JcCSH5s=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2; 
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=2f6n1UCEAAcz+QTfKGhjodobaG8npGp7MDh8Bm+DuiM=;
+ b=avahy9j67MbUgEV5UHkvAGGIawSEz4La41fbV8o1DV1X8t1tKXHX+WCCRf1CyV/VRvVL8ZALS7+2R+5KWC8MzPVQfyoobHz9Znm8DOjKgbBv7pRzOVt35BycfRATHt43DUXPW3+802qVMMPweVVPpJzuC/pWKzMjSWCD9mrgpRL9Bu/wn8CDDB23RS13T2fH39QxZP+PE9sM+zzpAOMWnJr/GUs7PpOjG2OP+Kk6pJ2aAeZFPTmXaysjGvXv2oge77GXCWoMNGiwUKxPYkhRjCV4k/9hZDd6pKM/J+rjATqQ1HAYwmBHiTLWU/STr6IgEAYoRXp5Tnb38Y/Sg4eeuw==
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: clm@fb.com, josef@toxicpanda.com, dsterba@suse.com, xiang@kernel.org, chao@kernel.org, huyue2@coolpad.com, jefflexu@linux.alibaba.com, jaegeuk@kernel.org, trond.myklebust@hammerspace.com, anna@kernel.org, konishi.ryusuke@gmail.com, mark@fasheh.com, jlbec@evilplan.org, joseph.qi@linux.alibaba.com, richard@nod.at, djwong@kernel.org, damien.lemoal@opensource.wdc.com, naohiro.aota@wdc.com, jth@kernel.org, gregkh@linuxfoundation.org, rafael@kernel.org
+Cc: linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, Yangtao Li <frank.li@vivo.com>, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-mtd@lists.infradead.org, ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org, linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 
-On Sun, Mar 19, 2023 at 10:19:21PM -0700, Hugh Dickins wrote:
-> I thought this was fine at first, and of course it's good for all the
-> usual cases; but not for shmem_get_partial_folio()'s awkward cases.
-> 
-> Two issues with it.
-> 
-> One, as you highlight above, the possibility of reading more swap
-> unnecessarily.  I do not mind if partial truncation entails reading
-> a little unnecessary swap; but I don't like the common case of
-> truncation to 0 to entail that; even less eviction; even less
-> unmounting, when eviction of all risks reading lots of swap.
-> The old code behaved well at i_size 0, the new code not so much.
+There are plenty of using kobject_del() and kobject_put() together
+in the kernel tree. This patch wraps these two calls in a single helper.
 
-True.  We could restore that by doing the i_size check for SGP_FIND,
-though.
+Signed-off-by: Yangtao Li <frank.li@vivo.com>
+---
+v2:
+-add kobject_del_and_put() users
+resend patchset to gregkh, Rafael and Damien
+ include/linux/kobject.h |  1 +
+ lib/kobject.c           | 17 +++++++++++++++--
+ 2 files changed, 16 insertions(+), 2 deletions(-)
 
-> Replacing shmem_get_partial_folio() by SGP_FIND was a good direction
-> to try, but it hasn't worked out.  I tried to get SGPs to work right
-> for it before, when shmem_get_partial_page() was introduced; but I
-> did not manage to do so.  I think we have to go back to how this was.
-
-Hmm, would be sad to lose this entirely.  One thing I though about
-but didn't manage to do, is to rework how the SGP_* flags works.
-Right now they are used as en enum, and we actually do numerical
-comparisms on them, which is highly confusing.  To be it seems like
-having actual flags that can be combined and have useful names
-would seem much better.  But I did run out patience for finding good
-names and figuring out what would be granular enough behavior
-for such flags.
-
-e.g. one would be for limiting to i_size, one for allocating new
-folios if none was found, etc.
-
+diff --git a/include/linux/kobject.h b/include/linux/kobject.h
+index bdab370a24f4..782d4bd119f8 100644
+--- a/include/linux/kobject.h
++++ b/include/linux/kobject.h
+@@ -111,6 +111,7 @@ extern struct kobject *kobject_get(struct kobject *kobj);
+ extern struct kobject * __must_check kobject_get_unless_zero(
+ 						struct kobject *kobj);
+ extern void kobject_put(struct kobject *kobj);
++extern void kobject_del_and_put(struct kobject *kobj);
+ 
+ extern const void *kobject_namespace(const struct kobject *kobj);
+ extern void kobject_get_ownership(const struct kobject *kobj,
+diff --git a/lib/kobject.c b/lib/kobject.c
+index 6e2f0bee3560..8c0293e37214 100644
+--- a/lib/kobject.c
++++ b/lib/kobject.c
+@@ -731,6 +731,20 @@ void kobject_put(struct kobject *kobj)
+ }
+ EXPORT_SYMBOL(kobject_put);
+ 
++/**
++ * kobject_del_and_put() - Delete kobject.
++ * @kobj: object.
++ *
++ * Unlink kobject from hierarchy and decrement the refcount.
++ * If refcount is 0, call kobject_cleanup().
++ */
++void kobject_del_and_put(struct kobject *kobj)
++{
++	kobject_del(kobj);
++	kobject_put(kobj);
++}
++EXPORT_SYMBOL_GPL(kobject_del_and_put);
++
+ static void dynamic_kobj_release(struct kobject *kobj)
+ {
+ 	pr_debug("kobject: (%p): %s\n", kobj, __func__);
+@@ -874,8 +888,7 @@ void kset_unregister(struct kset *k)
+ {
+ 	if (!k)
+ 		return;
+-	kobject_del(&k->kobj);
+-	kobject_put(&k->kobj);
++	kobject_del_and_put(&k->kobj);
+ }
+ EXPORT_SYMBOL(kset_unregister);
+ 
+-- 
+2.35.1
