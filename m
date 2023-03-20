@@ -1,27 +1,60 @@
-From: Yangtao Li <frank.li-DGpbCiVdSXo@public.gmane.org>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Subject: Re: [PATCH v2, RESEND 01/10] kobject: introduce kobject_del_and_put()
-Date: Mon, 20 Mar 2023 11:34:36 +0800
-Message-ID: <20230320033436.71982-1-frank.li@vivo.com>
+Date: Mon, 20 Mar 2023 13:08:43 +0900
+Message-ID: <e4b8012d-32df-e054-4a2a-772fda228a6a@opensource.wdc.com>
+References: <20230320033436.71982-1-frank.li@vivo.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=ZcSocjSGVTF5aPxsLKaFBjySrnM82IY/w/dRKgIVLtQ=;
- b=AJe7Jj4ygTrfHsWmTT4gnppAGvUAtxhf60mNZ9snE2grxP1YAVIKUBTbJ/FhJ5/07pv8NeiaL6A0EZa+g5rqelTm3a0QrRsAiby1xgmZIMDm2bFMzFic3A4Ap5WaN/3eXitQCTaKrI5A+3QSsXTbt2M68c4+uZktefL9Z3fLqeW6/lu+5gysxjGPeHLC9oRgqOFrQBpJs4tJfyf6Rq2xGn1cu82nJjuy1FyxVvwVKYWDfDDhttvFoqM+VaHI1Wg1Z76w3xT8mXwPlMgZYh/Mo3P96N+cvuT2fYhTrbVfImLo75Husxpwqnv7+ngdcX8cHu+TQp/EiAT08AePZWmV1Q==
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
+  d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
+  t=1679285337; x=1710821337;
+  h=message-id:date:mime-version:subject:to:cc:references:
+   from:in-reply-to:content-transfer-encoding;
+  bh=f0RzrlZk36B8QlnIxOLMByV1TWNDOIMn6+7Rb8kJGp8=;
+  b=nrxkh5QuMkBIeNyPGj152fgL0jPzr8hWcWECPgN05dS+ZQ5N9lpA4vWU
+   fotQtzhi4nGp3G0nTbrQE+rejuoh4lWKWDKI5w7wbYeaPAFzkqF3ZRIA3
+   7KW8hwPXLtqg6Y5J3v8ma2ue4dEKi/NWvPY3v+jEGpgB7LwrfLpHI7rrn
+   7dFAN11f+YjBfv1T7hcwIWR/wB0iZy6ACrJmnG6U4gWiT65i3ttLRRJNh
+   Du8RGx+4aS1+382KyLzEkTqt/NFhnM1whrUSx4mmViepuWaTvfQW9o7hS
+   wS5xYOwBLXtVjxT21VCZCVM8zXI5/cDjMw/A6tH2T+zVrb/LezX7n/aQv
+   g==;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=
+        opensource.wdc.com; h=content-transfer-encoding:content-type
+        :in-reply-to:organization:from:references:to:content-language
+        :subject:user-agent:mime-version:date:message-id; s=dkim; t=
+        1679285331; x=1681877332; bh=f0RzrlZk36B8QlnIxOLMByV1TWNDOIMn6+7
+        Rb8kJGp8=; b=esT6TiIT+uoup3kWnY3xrSB3cYopIRmWLNhiVbZ6b5Myup6B95z
+        p61YIXMydR7cv+BOtazS96fyHYNv37OnHrWVo6KCl4jC5ieFCwmxLpn12eg4/ysM
+        pS91jjTlyfK5IAAj0Q5zaqAOyizcA9mGTXR4Q9eq3vYIamyUJ8etCo+vOy9sjk7l
+        p6COnj+QZSprV+wuLiGHG6enDxDehZbJdOfQd1HClGCeQ2lGXZdLd/Qb+7pT/ebA
+        Y3GEWaET42Y/8pV3BDj2JZueEuXtNYDsemmR9wfaJ23SwWvVQpUoQVjpDABRoBk6
+        y7rjMU3wwH/4BD2261pJ4P51bH/Uqaj+DNg==
+Content-Language: en-US
+In-Reply-To: <20230320033436.71982-1-frank.li@vivo.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: clm-b10kYP2dOMg@public.gmane.org, josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org, dsterba-IBi9RG/b67k@public.gmane.org, xiang-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, huyue2-taVy4J1WPRFBDgjK7y7TUQ@public.gmane.org, jefflexu-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org, jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, trond.myklebust-F/q8l9xzQnoyLce1RVWEUA@public.gmane.org, anna-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark-qFb/fKtWg+rQT0dZR+AlfA@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org, joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org, richard-/L3Ra7n9ekc@public.gmane.org, djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, damien.lemoal-yzvPICuk2AC/Fx7ZUtofftBPR1lH4CV8@public.gmane.org, naohiro.aota-Sjgp3cTcYWE@public.gmane.org, jth-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-erofs-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yangtao Li <frank.li@vivo.com>, clm@fb.com, josef@toxicpanda.com, dsterba@suse.com, xiang@kernel.org, chao@kernel.org, huyue2@coolpad.com, jefflexu@linux.alibaba.com, jaegeuk@kernel.org, trond.myklebust@hammerspace.com, anna@kernel.org, konishi.ryusuke@gmail.com, mark@fasheh.com, jlbec@evilplan.org, joseph.qi@linux.alibaba.com, richard@nod.at, djwong@kernel.org, naohiro.aota@wdc.com, jth@kernel.org, gregkh@linuxfoundation.org, rafael@kernel.org
+Cc: linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-erofs@lists.ozlabs.org, linux-f2fs-devel@lists.sourceforge.net, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
 
-Hi all,
+On 3/20/23 12:34, Yangtao Li wrote:
+> Hi all,
+> 
+> Out of consideration for minimizing disruption, I did not send the
+> patchset to everyone. However, it seems that my consideration was
+> unnecessary, so I CC'd everyone on the first patch. If you would
+> like to see the entire patchset, you can access it at this address.
+> 
+> https://lore.kernel.org/lkml/20230319092641.41917-1-frank.li@vivo.com/
 
-Out of consideration for minimizing disruption, I did not send the
-patchset to everyone. However, it seems that my consideration was
-unnecessary, so I CC'd everyone on the first patch. If you would
-like to see the entire patchset, you can access it at this address.
+Hard to comment on patches with this. It is only 10 patches. So send everything
+please.
 
-https://lore.kernel.org/lkml/20230319092641.41917-1-frank.li-DGpbCiVdSXo@public.gmane.org/
+> 
+> Thx,
+> Yangtao
 
-Thx,
-Yangtao
+-- 
+Damien Le Moal
+Western Digital Research
+
