@@ -1,64 +1,27 @@
-From: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 5/7] shmem: open code the page cache lookup in
- shmem_get_folio_gfp
-Date: Sun, 19 Mar 2023 22:23:36 -0700 (PDT)
-Message-ID: <af178ebb-1076-a38c-1dc1-2a37ccce4a3@google.com>
-References: <20230307143410.28031-1-hch@lst.de> <20230307143410.28031-6-hch@lst.de>
+From: Yangtao Li <frank.li-DGpbCiVdSXo@public.gmane.org>
+Subject: Re: [PATCH v2, RESEND 01/10] kobject: introduce kobject_del_and_put()
+Date: Mon, 20 Mar 2023 15:11:40 +0800
+Message-ID: <20230320071140.44748-1-frank.li@vivo.com>
+References: <e4b8012d-32df-e054-4a2a-772fda228a6a@opensource.wdc.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20210112; t=1679289819;
-        h=mime-version:references:message-id:in-reply-to:subject:cc:to:from
-         :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=AAg/di4awCbENQSDHCw3uwPaVCnYn/JqQu0b5lYNlhA=;
-        b=p9Y2XtE4tcxGUhH+2fluWD0s4npx8Ylcmiofp0dtrqwoGanjdCTVnqg/qMO9B2Eqee
-         kJXhUMep3Gz11MElDyCICekSrou5OCXn0KcsjLzta/7S4NXBQ0kAPCCVyubft88a3Elh
-         nqu9KKJuvvc4mgDntldKav+//BdLjpY+W1y9F+/oC6RLQag0ajP/d8mSihCI0LQHTscN
-         iw4DDucZAA8uSQduK5FuwKdRjql9QLvxP/TP1GhC2AgZJo7kkKfwT7aIEbKJ45sCYU3I
-         WQfFiYo6WhPxnQFuL1eZb84t4CXllzGE4KX05JrDvIh2ChxlBcEN4ACNkRgNjlZBwVgk
-         gQ5A==
-In-Reply-To: <20230307143410.28031-6-hch-jcswGhMUV9g@public.gmane.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=KzjxnsJbJDnjGik/CxYLa2sqgyThkXSxTjJWJGKdsro=;
+ b=NVgS6ISxsXSX+v87J+SfF9KPotarq2icOckIsyABALk7Wy8+QewHEoZtAAoqvpHH3+s68XkUl7LOHbtNueev0cHNtfneMNVJJB4BA90Iib1r716fwuK4Nb8IQMH85ALYcDyzkv0pVMKK59CA4W+r6zobl0YEg+57SzYCduvfsCiYcVRzN8uXNRhcxy8twqxdusEqi/PYLI8Ps8XQyBooOZHH0r61sFkmNAF+pRGVCofq0Q94fFc3YdCsRVscl+aZmlIdj+n5Ixpy+ofPJ8711kU5Iadhl1vNF2yUjZZt9ye33hfqMCl0YwBNAZ3g8EGDrCNtANPABpuSYvV/sfv4Dw==
+In-Reply-To: <e4b8012d-32df-e054-4a2a-772fda228a6a-yzvPICuk2AC/Fx7ZUtofftBPR1lH4CV8@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: clm-b10kYP2dOMg@public.gmane.org, josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org, dsterba-IBi9RG/b67k@public.gmane.org, xiang-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, huyue2-taVy4J1WPRFBDgjK7y7TUQ@public.gmane.org, jefflexu-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org, jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, trond.myklebust-F/q8l9xzQnoyLce1RVWEUA@public.gmane.org, anna-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark-qFb/fKtWg+rQT0dZR+AlfA@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org, joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org, richard-/L3Ra7n9ekc@public.gmane.org, djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, damien.lemoal-yzvPICuk2AC/Fx7ZUtofftBPR1lH4CV8@public.gmane.org, naohiro.aota-Sjgp3cTcYWE@public.gmane.org, jth-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Cc: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-erofs-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Tue, 7 Mar 2023, Christoph Hellwig wrote:
+Hi filesystem maintainers,
 
-> Use the very low level filemap_get_entry helper to look up the
-> entry in the xarray, and then:
-> 
->  - don't bother locking the folio if only doing a userfault notification
->  - open code locking the page and checking for truncation in a related
->    code block
-> 
-> This will allow to eventually remove the FGP_ENTRY flag.
-> 
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> Hard to comment on patches with this. It is only 10 patches. So send everything please.
 
-Acked-by: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+If you are interested in the entire patchset besides Damien,
+please let me know. I'll resend the email later to cc more people.
 
-but Andrew, please fold in this small improvement to its comment:
-
-[PATCH] shmem: open code the page cache lookup in shmem_get_folio_gfp fix
-
-Adjust the new comment line: shmem folio may have been swapped out.
-
-Signed-off-by: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
-
- mm/shmem.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1905,7 +1905,7 @@ static int shmem_get_folio_gfp(struct inode *inode, pgoff_t index,
- 	if (folio) {
- 		folio_lock(folio);
- 
--		/* Has the page been truncated? */
-+		/* Has the folio been truncated or swapped out? */
- 		if (unlikely(folio->mapping != mapping)) {
- 			folio_unlock(folio);
- 			folio_put(folio);
+Thx,
+Yangtao
