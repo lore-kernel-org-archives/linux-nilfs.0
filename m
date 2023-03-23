@@ -1,8 +1,8 @@
-From: Ming Lei <ming.lei@redhat.com>
+From: Greg KH <gregkh@linuxfoundation.org>
 Subject: Re: [PATCH v3 01/10] kobject: introduce
  kobject_del_and_put()
-Date: Thu, 23 Mar 2023 13:16:20 +0800
-Message-ID: <ZBvgpBzEuFuyOD/c@ovpn-8-16.pek2.redhat.com>
+Date: Thu, 23 Mar 2023 13:26:03 +0100
+Message-ID: <ZBxFW5Yi0rwLvTsx@kroah.com>
 References: <20230322165830.55071-1-frank.li@vivo.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=HoUzTMO8R5MhPq7S8OoMssryl9/6eR6zluDti49MEro=; b=ksJwEn04P0AFim9batU1ReBLtB
- +Edt7LuLU1GHjbc4k4aXBE3vKCGtDkMJi/Y8IXBOWpZqHYJFOEiPkI6jLs9sD2lpwmcmaNVPHu6pn
- mz9mtF+TTEK/oUfkMLZoZPB7QjeRi9yq3MWM1xkwJboPLW9fdkfkq9aKU32GwtAKPCKs=;
+ bh=3zqr2ujDGXPyzvoqMXpb+X1fxpUGMP0v9VVGQXbd3H0=; b=kXVXUCCUXB7ruQdO8b36vJ41tG
+ eyssvshi1gM71yfT+4iUcZx6UJfwu7Lh3T/OL9uQiH+SrGrGfyKsx0pmYUYaZRsLiXqeX9GdoMm3N
+ TZOGPIqKzh0oFZ0zK4J3mRtN5r5NqdF4jrAxFc/rMsDmfhq2kN1bPYxFyUNE+h2FnS00=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
@@ -24,18 +24,16 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=HoUzTMO8R5MhPq7S8OoMssryl9/6eR6zluDti49MEro=; b=UEj9/Iz4oslweW9JWLntHLh5y0
- 6JbG6KpoMyRf+8JynJx83cDDTsjTvuzeB11y+jtMjbDBC7/xJc6rycA872b+jHK62yNKGF1aGOh7j
- yIofsoR6lWSv5gAyTHzHjSLDHzb4+ZUFI/mhKCGK+oCSqOvVBy8kIUNBe+/UXS2RzeMw=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
- s=mimecast20190719; t=1679548609;
- h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
- to:to:cc:cc:mime-version:mime-version:content-type:content-type:
- in-reply-to:in-reply-to:references:references;
- bh=HoUzTMO8R5MhPq7S8OoMssryl9/6eR6zluDti49MEro=;
- b=C96ibbiIuzN3zlyh6zyQ8Fswhj48p5IeO4UJvpUfhLHTHmPNbleUia9lT07XxvEa/+V+ul
- QR/9MGJy2B5pbNLGBdLVZfxlyWj528TB+X8tjDaHPxybajNXKBd5TFMLn176WfPkydQZK4
- /v71z2/MFv13R9PdHMp7qvSOAmEpfCg=
+ bh=3zqr2ujDGXPyzvoqMXpb+X1fxpUGMP0v9VVGQXbd3H0=; b=Nw+uznn94MD9f7n+wZUqo9E4h7
+ j5c2ycwBoFe7cPKhJyVjQ24KycB1wKZ+Nz3ly7DaAUWqHDygsQ+YyxvZ5mzJlXXEJ9n67uFe9QLdf
+ 0xLYv5Gq5+y05jRAGnm50mk7V+3mpl4URZScYPm5GagPeyLAq6QgIHe1Desmfa41ZXdY=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
+ s=korg; t=1679574366;
+ bh=hSIUlO1HxyEpsf7qIxo9KBJ0VL8excdKGJYYFukRPL4=;
+ h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+ b=m6MeQSnsMeVy2O0Vk8RTY0vHNrmj2AIgXtab/TGNOFfzWTZud+JQGikV8JyH/6bL2
+ HXj5AQv7PGMyWu5gO4aQNckaFR7jMxyPlxC/GN/SkGd9UjEckISINsL0GjCLdhE22C
+ 5zuGNqdawoE4Z0VJ+MBNSEjFCrSN9mJPfzKZRDpc=
 Content-Disposition: inline
 In-Reply-To: <20230322165830.55071-1-frank.li@vivo.com>
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -48,7 +46,7 @@ List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
 Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Yangtao Li <frank.li@vivo.com>
-Cc: rafael@kernel.org, djwong@kernel.org, joseph.qi@linux.alibaba.com, linux-mtd@lists.infradead.org, naohiro.aota@wdc.com, linux-nilfs@vger.kernel.org, richard@nod.at, mark@fasheh.com, trond.myklebust@hammerspace.com, xiang@kernel.org, josef@toxicpanda.com, ming.lei@redhat.com, huyue2@coolpad.com, dsterba@suse.com, jlbec@evilplan.org, jefflexu@linux.alibaba.com, jaegeuk@kernel.org, konishi.ryusuke@gmail.com, linux-nfs@vger.kernel.org, clm@fb.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, anna@kernel.org, linux-fsdevel@vger.kernel.org, jth@kernel.org, linux-erofs@lists.ozlabs.org, damien.lemoal@opensource.wdc.com, linux-btrfs@vger.kernel.org
+Cc: rafael@kernel.org, djwong@kernel.org, joseph.qi@linux.alibaba.com, linux-mtd@lists.infradead.org, naohiro.aota@wdc.com, linux-nilfs@vger.kernel.org, richard@nod.at, mark@fasheh.com, trond.myklebust@hammerspace.com, xiang@kernel.org, josef@toxicpanda.com, huyue2@coolpad.com, dsterba@suse.com, jlbec@evilplan.org, jefflexu@linux.alibaba.com, jaegeuk@kernel.org, konishi.ryusuke@gmail.com, linux-nfs@vger.kernel.org, clm@fb.com, linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, ocfs2-devel@oss.oracle.com, anna@kernel.org, linux-fsdevel@vger.kernel.org, jth@kernel.org, linux-erofs@lists.ozlabs.org, damien.lemoal@opensource.wdc.com, linux-btrfs@vger.kernel.org
 
 On Thu, Mar 23, 2023 at 12:58:30AM +0800, Yangtao Li wrote:
 > There are plenty of using kobject_del() and kobject_put() together
@@ -63,32 +61,18 @@ On Thu, Mar 23, 2023 at 12:58:30AM +0800, Yangtao Li wrote:
 >  include/linux/kobject.h | 13 +++++++++++++
 >  lib/kobject.c           |  3 +--
 >  2 files changed, 14 insertions(+), 2 deletions(-)
-> 
-> diff --git a/include/linux/kobject.h b/include/linux/kobject.h
-> index bdab370a24f4..e21b7c22e355 100644
-> --- a/include/linux/kobject.h
-> +++ b/include/linux/kobject.h
-> @@ -112,6 +112,19 @@ extern struct kobject * __must_check kobject_get_unless_zero(
->  						struct kobject *kobj);
->  extern void kobject_put(struct kobject *kobj);
->  
-> +/**
-> + * kobject_del_and_put() - Delete kobject.
-> + * @kobj: object.
-> + *
-> + * Unlink kobject from hierarchy and decrement the refcount.
-> + * If refcount is 0, call kobject_cleanup().
-> + */
-> +static inline void kobject_del_and_put(struct kobject *kobj)
-> +{
-> +	kobject_del(kobj);
-> +	kobject_put(kobj);
-> +}
 
-kobject_put() actually covers kobject removal automatically, which is
-single stage removal. So if you see the two called together, it is
-safe to kill kobject_del() directly.
+Meta-comment, something is wrong with this email as it is not linked to
+the rest of the series.
 
+You can see that by looking at this message in lore.kernel.org:
+	https://lore.kernel.org/r/20230322165830.55071-1-frank.li@vivo.com
+
+No 2-10 patches linked there (they show up as a separate series.)
+
+So even if I wanted to take this series now, we can't as our tools can't
+find them...
 
 thanks,
-Ming
+
+greg k-h
