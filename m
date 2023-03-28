@@ -1,73 +1,39 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] nilfs2: fix potential UAF of struct nilfs_sc_info in nilfs_segctor_thread()
-Date: Tue, 28 Mar 2023 02:53:18 +0900
-Message-ID: <20230327175318.8060-1-konishi.ryusuke@gmail.com>
-References: <00000000000000660d05f7dfa877@google.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: return an ERR_PTR from __filemap_get_folio v2
+Date: Tue, 28 Mar 2023 16:04:33 -0700
+Message-ID: <20230328160433.4f3dc32b480239bce9e2f9ef@linux-foundation.org>
+References: <20230121065755.1140136-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112; t=1679939742;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=hTZpI//Tzxb69PVqP+6KSGMc/N99I4Rh6kzXUg6Qf3c=;
-        b=KzJQ4Zoyh25lshRcEk9Mk4u3QKPhuPrEVuIW6/OcqBI/6jeJ6kxr+KuXjsy6ElQBo0
-         sMReFt0dNEHFIOMCmqK27UbaRXW327gZ2dar1/V1mFTk8BzQU9RHt1bRCt2KKcJW1gK7
-         qVmN28OHzRK2QsEL31t13tsKl0B11hgz8ioqV/f527m9KQMVd6EOsiCWtH3UTrGzqHRA
-         YwsSsBZ7PeW+SWilcpZ/7A+nXAQHU0DZzBQe6LxcD7+fO+sgL0D75D0gbHeAqCwJUX51
-         T0tHdj9igY/VgQP2ikyA5+uGafrY1Op2gxA6rP0rD+XA34AoHj+EVI8E0+KMeGgP/tJ8
-         nZ9A==
-In-Reply-To: <00000000000000660d05f7dfa877-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-ext4-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+        s=korg; t=1680044674;
+        bh=TwGyF4PkvxDzlLA402hHK1eLtIEBIL4SI/0qxIqDczQ=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=zfFnOoP5liF9W0eIaPQY3fWY/x2c3YWeGxGG9Z+XtwTt6PdxvwTaVSJPl/wX9oHFa
+         TN2zANmUIncV7Rx4/qsCq0LcMp4Wfg+6vxHO5Wt5VS0mnQryEzrkXU+ZLmL5qTwZbk
+         NlIZmoUl864XszmR/3+xPQzAT+mE9qlCDRlYe16A=
+In-Reply-To: <20230121065755.1140136-1-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot <syzbot+b08ebcc22f8f3e6be43a-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Matthew Wilcox <willy@infradead.org>, Hugh Dickins <hughd@google.com>, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
 
-The finalization of nilfs_segctor_thread() can race with
-nilfs_segctor_kill_thread() which terminates that thread, potentially
-causing a use-after-free BUG as KASAN detected.
+On Sat, 21 Jan 2023 07:57:48 +0100 Christoph Hellwig <hch@lst.de> wrote:
 
-At the end of nilfs_segctor_thread(), it assigns NULL to "sc_task" member
-of "struct nilfs_sc_info" to indicate the thread has finished, and then
-notifies nilfs_segctor_kill_thread() of this using waitqueue
-"sc_wait_task" on the struct nilfs_sc_info.
+> __filemap_get_folio and its wrappers can return NULL for three different
+> conditions, which in some cases requires the caller to reverse engineer
+> the decision making.  This is fixed by returning an ERR_PTR instead of
+> NULL and thus transporting the reason for the failure.  But to make
+> that work we first need to ensure that no xa_value special case is
+> returned and thus return the FGP_ENTRY flag.  It turns out that flag
+> is barely used and can usually be deal with in a better way.
+> 
+> Note that the shmem patches in here are non-trivial and need some
+> careful review and testing.
 
-However, here, immediately after the NULL assignment to "sc_task",
-it is possible that nilfs_segctor_kill_thread() will detect it and return
-to continue the deallocation, freeing the nilfs_sc_info structure before
-the thread does the notification.
+How are we going with the review and testing.  I assume that
+we're now OK on the runtime testing front, but do you feel that
+review has been adequate?
 
-This fixes the issue by protecting the NULL assignment to "sc_task" and
-its notification, with spinlock "sc_state_lock" of the struct
-nilfs_sc_info.  Since nilfs_segctor_kill_thread() does a final check to
-see if "sc_task" is NULL with "sc_state_lock" locked, this can eliminate
-the race.
-
-Reported-by: syzbot+b08ebcc22f8f3e6be43a-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-Link: https://lkml.kernel.org/r/00000000000000660d05f7dfa877-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- fs/nilfs2/segment.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 19446a8243d7..6ad41390fa74 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -2609,11 +2609,10 @@ static int nilfs_segctor_thread(void *arg)
- 	goto loop;
- 
-  end_thread:
--	spin_unlock(&sci->sc_state_lock);
--
- 	/* end sync. */
- 	sci->sc_task = NULL;
- 	wake_up(&sci->sc_wait_task); /* for nilfs_segctor_kill_thread() */
-+	spin_unlock(&sci->sc_state_lock);
- 	return 0;
- }
- 
--- 
-2.34.1
-
+Thanks.
