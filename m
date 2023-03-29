@@ -1,39 +1,27 @@
-From: Andrew Morton <akpm@linux-foundation.org>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Subject: Re: return an ERR_PTR from __filemap_get_folio v2
-Date: Tue, 28 Mar 2023 16:04:33 -0700
-Message-ID: <20230328160433.4f3dc32b480239bce9e2f9ef@linux-foundation.org>
-References: <20230121065755.1140136-1-hch@lst.de>
+Date: Thu, 30 Mar 2023 01:56:15 +0200
+Message-ID: <20230329235615.GA2012@lst.de>
+References: <20230121065755.1140136-1-hch@lst.de> <20230328160433.4f3dc32b480239bce9e2f9ef@linux-foundation.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
-        s=korg; t=1680044674;
-        bh=TwGyF4PkvxDzlLA402hHK1eLtIEBIL4SI/0qxIqDczQ=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=zfFnOoP5liF9W0eIaPQY3fWY/x2c3YWeGxGG9Z+XtwTt6PdxvwTaVSJPl/wX9oHFa
-         TN2zANmUIncV7Rx4/qsCq0LcMp4Wfg+6vxHO5Wt5VS0mnQryEzrkXU+ZLmL5qTwZbk
-         NlIZmoUl864XszmR/3+xPQzAT+mE9qlCDRlYe16A=
-In-Reply-To: <20230121065755.1140136-1-hch@lst.de>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20230328160433.4f3dc32b480239bce9e2f9ef-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Christoph Hellwig <hch@lst.de>
-Cc: Matthew Wilcox <willy@infradead.org>, Hugh Dickins <hughd@google.com>, linux-afs@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, cluster-devel@redhat.com, linux-mm@kvack.org, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cluster-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Sat, 21 Jan 2023 07:57:48 +0100 Christoph Hellwig <hch@lst.de> wrote:
-
-> __filemap_get_folio and its wrappers can return NULL for three different
-> conditions, which in some cases requires the caller to reverse engineer
-> the decision making.  This is fixed by returning an ERR_PTR instead of
-> NULL and thus transporting the reason for the failure.  But to make
-> that work we first need to ensure that no xa_value special case is
-> returned and thus return the FGP_ENTRY flag.  It turns out that flag
-> is barely used and can usually be deal with in a better way.
+On Tue, Mar 28, 2023 at 04:04:33PM -0700, Andrew Morton wrote:
+> > Note that the shmem patches in here are non-trivial and need some
+> > careful review and testing.
 > 
-> Note that the shmem patches in here are non-trivial and need some
-> careful review and testing.
+> How are we going with the review and testing.  I assume that
+> we're now OK on the runtime testing front, but do you feel that
+> review has been adequate?
 
-How are we going with the review and testing.  I assume that
-we're now OK on the runtime testing front, but do you feel that
-review has been adequate?
-
-Thanks.
+Yes, I think we're fine, mostly due to Hugh.  I'm a little sad about
+the simplification / descoping from him, but at least we get the main
+objective done.  Maybe at some point we can do another pass at
+cleaning up the shmem page finding/reading mess.
