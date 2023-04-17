@@ -1,27 +1,98 @@
-From: Yangtao Li <frank.li@vivo.com>
-Subject: Re: [PATCH v3 01/10] kobject: introduce kobject_del_and_put()
-Date: Tue,  4 Apr 2023 21:30:37 +0800
-Message-ID: <20230404133037.66927-1-frank.li@vivo.com>
-References: <ZBvgpBzEuFuyOD/c@ovpn-8-16.pek2.redhat.com>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: initialize unused bytes in segment summary blocks
+Date: Tue, 18 Apr 2023 02:35:13 +0900
+Message-ID: <20230417173513.12598-1-konishi.ryusuke@gmail.com>
+References: <0000000000000d710705f63f014c@google.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=o9gRzrJioyaXd7x2Nt5LwWdJliejgTOkFIZ6yPNQB8M=;
- b=i+boe1mrB9bH8RQ0WUqR4nlBCrj/YrH90RKuJZq77MVzmLBSKbWu08HJbppLWYB6gKXGPViFAJx5O4VU2dtpo9m5vwIURruNRIehpcgtlA5Iuz6O2R6fIqxkQa3iNaUZNXQ5bzvVPKIVvjR3wd2bA+32D79iBlYrjHYSKxWCni3Vc8gEoPZqw3M6LtPtXd2oM1ir0Me7v8KWk9xenS+7Qxlbeg+RaduepbeuB9apDuNv2tkwNIYDXDi+54OxQgxi0kcfU5Buzb1n/dqsc+94K4KSVzlILDL7iz+PhG6lFxoEV84WYiX5/TmAr5DC126aBad+T/S6Rf221yr0+G7vIg==
-In-Reply-To: <ZBvgpBzEuFuyOD/c@ovpn-8-16.pek2.redhat.com>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20221208; t=1681752919; x=1684344919;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=kKBqkldHay2ydjs9ABXeuxtcdI+nj2fd1RyBmIcAqMg=;
+        b=HTyK6NDe5chPRopsL3ZuFt853JC1dQzM9r/S4i6agc4qQxedDGKHNQ7pfSeFHPuNRn
+         9fUr56G76/laVqXz/FxXlMpC3P7hdee4wokzwRSUp9XcnH77vIrKa/He5dgkmMzUHoqX
+         j5o6vspV6stz26v0WPLzA5KzMjSlRosGBeVbpwARY+jdb/zEvOo3u9EM4cxaHQSlkrFj
+         TtKwQuT/zeuZ8BrglkO25FFlSwryfmMxwZ9Qp0bJR/ONRQ0c3zJCm1QGvwe1nHbe9/3G
+         YnxnAbziCZ6sI+wlCY3Me/NYkn/Bvq0tq444lrkjikG/Pv0pfEC5OiOFXkcf3+KJe6Pe
+         CMFA==
+In-Reply-To: <0000000000000d710705f63f014c-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: ming.lei@redhat.com
-Cc: anna@kernel.org, chao@kernel.org, clm@fb.com, damien.lemoal@opensource.wdc.com, djwong@kernel.org, dsterba@suse.com, frank.li@vivo.com, gregkh@linuxfoundation.org, huyue2@coolpad.com, jaegeuk@kernel.org, jefflexu@linux.alibaba.com, jlbec@evilplan.org, josef@toxicpanda.com, joseph.qi@linux.alibaba.com, jth@kernel.org, konishi.ryusuke@gmail.com, linux-btrfs@vger.kernel.org, linux-erofs@lists.ozlabs.org, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-xfs@vger.kernel.org, mark@fasheh.com, naohiro.aota@wdc.com, ocfs2-devel@oss.oracle.com, rafael@kernel.org, richard@nod.at, trond.myklebust@hammerspace.com, xiang@kernel.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot <syzbot+048585f3f4227bb2b49b-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, glider-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
 
-> kobject_put() actually covers kobject removal automatically, which is
-> single stage removal. So if you see the two called together, it is
-> safe to kill kobject_del() directly.
+Syzbot still reports uninit-value in nilfs_add_checksums_on_logs() for
+KMSAN enabled kernels after applying commit 7397031622e0 ("nilfs2:
+initialize "struct nilfs_binfo_dat"->bi_pad field").
 
-If the reference count is not abnormal, kobject_put() does contain
-what kobject_del() does.
+This is because the unused bytes at the end of each block in segment
+summaries are not initialized.  So this fixes the issue by padding the
+unused bytes with null bytes.
 
-Thx,
-Yangtao
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: syzbot+048585f3f4227bb2b49b-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Link: https://syzkaller.appspot.com/bug?extid=048585f3f4227bb2b49b
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ fs/nilfs2/segment.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 6ad41390fa74..228659612c0d 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -430,6 +430,23 @@ static int nilfs_segctor_reset_segment_buffer(struct nilfs_sc_info *sci)
+ 	return 0;
+ }
+ 
++/**
++ * nilfs_segctor_zeropad_segsum - zero pad the rest of the segment summary area
++ * @sci: segment constructor object
++ *
++ * nilfs_segctor_zeropad_segsum() zero-fills unallocated space at the end of
++ * the current segment summary block.
++ */
++static void nilfs_segctor_zeropad_segsum(struct nilfs_sc_info *sci)
++{
++	struct nilfs_segsum_pointer *ssp;
++
++	ssp = sci->sc_blk_cnt > 0 ? &sci->sc_binfo_ptr : &sci->sc_finfo_ptr;
++	if (ssp->offset < ssp->bh->b_size)
++		memset(ssp->bh->b_data + ssp->offset, 0,
++		       ssp->bh->b_size - ssp->offset);
++}
++
+ static int nilfs_segctor_feed_segment(struct nilfs_sc_info *sci)
+ {
+ 	sci->sc_nblk_this_inc += sci->sc_curseg->sb_sum.nblocks;
+@@ -438,6 +455,7 @@ static int nilfs_segctor_feed_segment(struct nilfs_sc_info *sci)
+ 				* The current segment is filled up
+ 				* (internal code)
+ 				*/
++	nilfs_segctor_zeropad_segsum(sci);
+ 	sci->sc_curseg = NILFS_NEXT_SEGBUF(sci->sc_curseg);
+ 	return nilfs_segctor_reset_segment_buffer(sci);
+ }
+@@ -542,6 +560,7 @@ static int nilfs_segctor_add_file_block(struct nilfs_sc_info *sci,
+ 		goto retry;
+ 	}
+ 	if (unlikely(required)) {
++		nilfs_segctor_zeropad_segsum(sci);
+ 		err = nilfs_segbuf_extend_segsum(segbuf);
+ 		if (unlikely(err))
+ 			goto failed;
+@@ -1533,6 +1552,7 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
+ 		nadd = min_t(int, nadd << 1, SC_MAX_SEGDELTA);
+ 		sci->sc_stage = prev_stage;
+ 	}
++	nilfs_segctor_zeropad_segsum(sci);
+ 	nilfs_segctor_truncate_segments(sci, sci->sc_curseg, nilfs->ns_sufile);
+ 	return 0;
+ 
+-- 
+2.34.1
+
