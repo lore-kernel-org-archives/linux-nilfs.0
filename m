@@ -1,77 +1,56 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] nilfs2: do not write dirty data after degenerating to read-only
-Date: Thu, 27 Apr 2023 10:15:26 +0900
-Message-ID: <20230427011526.13457-1-konishi.ryusuke@gmail.com>
+From: syzbot <syzbot+listf919ad9f1f609cd7cf5d-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] Monthly nilfs report (Apr 2023)
+Date: Thu, 27 Apr 2023 03:39:38 -0700
+Message-ID: <00000000000032c8c505fa4ef9cc@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1682558131; x=1685150131;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=zrhaHXbwFsAd0/GaXjow7H0L4+tY0cPhGmnifdoJQXg=;
-        b=UHPmzD/Jv7A/n5d3rtYTtbcJMUMUlwDvrekWM3+ffCgmlYi440mf723O21x1cz+6bJ
-         LMpmg4Nq7ivKgB6odqiW+Rp+s+PQy9DVqNpI0Lq4EHtDlgsyL2HGRyDH6GiF8Cd1xFSQ
-         DuwwoJSBJz9pzwZFv1Oc7IR34uUZqEvT/WD1Y0UErcaAFXc9ojvtvOuxExoxJeB61UIt
-         ySp5r5U2/F26BAQLK1xavfLN23IoEepEuXqxeuMNKXRVWjR2KhKAHmNnqfaJ76dCTCL+
-         10qSEQmxSsvPC7T7dx1ddWXHR/vwVS5Hr++krWyiyDC33myHP+pGCcg/5IDZtzglHt14
-         UXIQ==
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, syzbot <syzbot+2af3bc9585be7f23f290-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-According to syzbot's report, mark_buffer_dirty() called from
-nilfs_segctor_do_construct() outputs a warning with some patterns after
-nilfs2 detects metadata corruption and degrades to read-only mode.
+Hello nilfs maintainers/developers,
 
-After such read-only degeneration, page cache data may be cleared
-through nilfs_clear_dirty_page() which may also clear the uptodate
-flag for their buffer heads.  However, even after the degeneration,
-log writes are still performed by unmount processing etc., which
-causes mark_buffer_dirty() to be called for buffer heads without the
-"uptodate" flag and causes the warning.
+This is a 31-day syzbot report for the nilfs subsystem.
+All related reports/information can be found at:
+https://syzkaller.appspot.com/upstream/s/nilfs
 
-Since any writes should not be done to a read-only file system in the
-first place, this fixes the warning in mark_buffer_dirty() by letting
-nilfs_segctor_do_construct() abort early if in read-only mode.
+During the period, 1 new issues were detected and 3 were fixed.
+In total, 17 issues are still open and 24 have been fixed so far.
 
-This also changes the retry check of nilfs_segctor_write_out() to
-avoid unnecessary log write retries if it detects -EROFS that
-nilfs_segctor_do_construct() returned.
+Some of the still happening issues:
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Reported-by: syzbot+2af3bc9585be7f23f290-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-Link: https://syzkaller.appspot.com/bug?extid=2af3bc9585be7f23f290
-Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Ref  Crashes Repro Title
+<1>  1238    Yes   INFO: task hung in lock_mount
+                   https://syzkaller.appspot.com/bug?extid=221d75710bde87fa0e97
+<2>  605     Yes   WARNING in nilfs_btree_assign
+                   https://syzkaller.appspot.com/bug?extid=31837fe952932efc8fb9
+<3>  321     Yes   WARNING in nilfs_sufile_set_segment_usage
+                   https://syzkaller.appspot.com/bug?extid=14e9f834f6ddecece094
+<4>  241     Yes   INFO: task hung in sync_inodes_sb (4)
+                   https://syzkaller.appspot.com/bug?extid=7d50f1e54a12ba3aeae2
+<5>  195     No    INFO: task hung in path_openat (7)
+                   https://syzkaller.appspot.com/bug?extid=950a0cdaa2fdd14f5bdc
+<6>  55      Yes   INFO: task hung in nilfs_detach_log_writer
+                   https://syzkaller.appspot.com/bug?extid=e3973c409251e136fdd0
+<7>  28      Yes   kernel BUG in folio_end_writeback
+                   https://syzkaller.appspot.com/bug?extid=7e5cf1d80677ec185e63
+<8>  21      No    KASAN: slab-out-of-bounds Read in nilfs_iget_test
+                   https://syzkaller.appspot.com/bug?extid=cac676135771fc8f1eb2
+<9>  6       No    BUG: unable to handle kernel NULL pointer dereference in nilfs_segctor_do_construct
+                   https://syzkaller.appspot.com/bug?extid=5afc832d6dbb2fd17538
+<10> 3       No    WARNING in nilfs_btree_propagate
+                   https://syzkaller.appspot.com/bug?extid=527641d191abe35993c1
+
 ---
- fs/nilfs2/segment.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 228659612c0d..ac949fd7603f 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -2041,6 +2041,9 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
- 	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
- 	int err;
- 
-+	if (sb_rdonly(sci->sc_super))
-+		return -EROFS;
-+
- 	nilfs_sc_cstage_set(sci, NILFS_ST_INIT);
- 	sci->sc_cno = nilfs->ns_cno;
- 
-@@ -2724,7 +2727,7 @@ static void nilfs_segctor_write_out(struct nilfs_sc_info *sci)
- 
- 		flush_work(&sci->sc_iput_work);
- 
--	} while (ret && retrycount-- > 0);
-+	} while (ret && ret != -EROFS && retrycount-- > 0);
- }
- 
- /**
--- 
-2.34.1
+To disable reminders for individual bugs, reply with the following command:
+#syz set <Ref> no-reminders
 
+To change bug's subsystems, reply with:
+#syz set <Ref> subsystems: new-subsystem
+
+You may send multiple commands in a single email message.
