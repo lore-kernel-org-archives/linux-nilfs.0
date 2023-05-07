@@ -1,90 +1,203 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] nilfs2: fix infinite loop in nilfs_mdt_get_block()
-Date: Mon,  1 May 2023 04:30:46 +0900
-Message-ID: <20230430193046.6769-1-konishi.ryusuke@gmail.com>
-References: <CAKFNMonK2VcZx=KEG8cz61bhwMvChEJ=T+FecxpGg1QiRCcZhA@mail.gmail.com>
+From: syzbot <syzbot+78d4495558999f55d1da-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] [nilfs?] KASAN: slab-use-after-free Read in nilfs_load_inode_block
+Date: Sun, 07 May 2023 08:32:41 -0700
+Message-ID: <00000000000099e5ac05fb1c3b85@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1682883067; x=1685475067;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=GlsJcu/owJRrewoN2aRAwgzKM6GWcL4oq43DrBBCLyg=;
-        b=e1gXWRJ+lF5vAfKGBUYK74U9MMM91eT1I3BSLNVRvuY7BZ7sy26hFR6sMBUv1L6e7i
-         WfP8oDcKCy/zq/kGN9idkc7TmQT8cYCkppBirtSAaNEvzUen6OsI3Tu8RUd2nVkHllpC
-         PGbfj10Lti5yebEYTXfHrbcjSD0olULKbRWPhIDXUUGHadgzKFAjvQ9/8/J/fMTBnZR5
-         P/UqnTOcGV/4caKKKQtSQ2efnZqrDTYdA9Ruvvi1LzkVWVKysDMYJXI+D3SOqUL4Zw8f
-         LRmPz28XUE3Wmddr7DoPYsg9slogv4PGBnC0OowyQFMZmADMX6NEUQeut3hBpvoMovdr
-         gRcw==
-In-Reply-To: <CAKFNMonK2VcZx=KEG8cz61bhwMvChEJ=T+FecxpGg1QiRCcZhA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs <linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, syzbot <syzbot+221d75710bde87fa0e97-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 
-If the disk image that nilfs2 mounts is corrupted and a virtual block
-address obtained by block lookup for a metadata file is invalid,
-nilfs_bmap_lookup_at_level() may return the same internal return code
-as -ENOENT, meaning the block does not exist in the metadata file.
+Hello,
 
-This duplication of return codes confuses nilfs_mdt_get_block(), causing
-it to read and create a metadata block indefinitely.
+syzbot found the following issue on:
 
-In particular, if this happens to the inode metadata file, ifile,
-semaphore i_rwsem can be left held, causing task hangs in lock_mount.
+HEAD commit:    fc4354c6e5c2 Merge tag 'mm-stable-2023-05-06-10-49' of git..
+git tree:       upstream
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=16be474a280000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=73a06f6ef2d5b492
+dashboard link: https://syzkaller.appspot.com/bug?extid=78d4495558999f55d1da
+compiler:       Debian clang version 15.0.7, GNU ld (GNU Binutils for Debian) 2.35.2
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=16cd28ea280000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1273a95c280000
 
-Fix this issue by making nilfs_bmap_lookup_at_level() treat virtual
-block address translation failures with -ENOENT as metadata corruption
-instead of returning the error code.
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/5f4adc5d40b0/disk-fc4354c6.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/0e06af6b6985/vmlinux-fc4354c6.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/7d99bbab1361/bzImage-fc4354c6.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/dd743241f9e7/mount_0.gz
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Reported-by: syzbot+221d75710bde87fa0e97-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-Link: https://syzkaller.appspot.com/bug?extid=221d75710bde87fa0e97
-Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+78d4495558999f55d1da-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+
+NILFS (loop2): error -5 truncating bmap (ino=15)
+==================================================================
+BUG: KASAN: slab-use-after-free in nilfs_load_inode_block+0x11e/0x280 fs/nilfs2/inode.c:1012
+Read of size 8 at addr ffff88801f47f430 by task syz-executor323/4999
+
+CPU: 0 PID: 4999 Comm: syz-executor323 Not tainted 6.3.0-syzkaller-13466-gfc4354c6e5c2 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 04/14/2023
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x1e7/0x2d0 lib/dump_stack.c:106
+ print_address_description mm/kasan/report.c:351 [inline]
+ print_report+0x163/0x540 mm/kasan/report.c:462
+ kasan_report+0x176/0x1b0 mm/kasan/report.c:572
+ nilfs_load_inode_block+0x11e/0x280 fs/nilfs2/inode.c:1012
+ __nilfs_mark_inode_dirty+0xa5/0x280 fs/nilfs2/inode.c:1089
+ nilfs_mark_inode_dirty fs/nilfs2/nilfs.h:288 [inline]
+ nilfs_evict_inode+0x189/0x420 fs/nilfs2/inode.c:934
+ evict+0x2a4/0x620 fs/inode.c:665
+ nilfs_dispose_list+0x51d/0x5c0 fs/nilfs2/segment.c:816
+ nilfs_detach_log_writer+0xaf1/0xbb0 fs/nilfs2/segment.c:2852
+ nilfs_put_super+0x4d/0x160 fs/nilfs2/super.c:477
+ generic_shutdown_super+0x134/0x340 fs/super.c:500
+ kill_block_super+0x84/0xf0 fs/super.c:1407
+ deactivate_locked_super+0xa4/0x110 fs/super.c:331
+ cleanup_mnt+0x426/0x4c0 fs/namespace.c:1177
+ task_work_run+0x24a/0x300 kernel/task_work.c:179
+ ptrace_notify+0x2cd/0x380 kernel/signal.c:2369
+ ptrace_report_syscall include/linux/ptrace.h:411 [inline]
+ ptrace_report_syscall_exit include/linux/ptrace.h:473 [inline]
+ syscall_exit_work kernel/entry/common.c:252 [inline]
+ syscall_exit_to_user_mode_prepare kernel/entry/common.c:279 [inline]
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:284 [inline]
+ syscall_exit_to_user_mode+0x157/0x280 kernel/entry/common.c:297
+ do_syscall_64+0x4d/0xc0 arch/x86/entry/common.c:86
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+RIP: 0033:0x7f0b39ccba87
+Code: ff d0 48 89 c7 b8 3c 00 00 00 0f 05 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48 83 c8 ff c3 66 0f 1f 44 00 00 b8 a6 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffcfc3da598 EFLAGS: 00000202 ORIG_RAX: 00000000000000a6
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: 00007f0b39ccba87
+RDX: 00007ffcfc3da659 RSI: 000000000000000a RDI: 00007ffcfc3da650
+RBP: 00007ffcfc3da650 R08: 00000000ffffffff R09: 00007ffcfc3da430
+R10: 00005555563da683 R11: 0000000000000202 R12: 00007ffcfc3db710
+R13: 00005555563da5f0 R14: 00007ffcfc3da5c0 R15: 00007ffcfc3db730
+ </TASK>
+
+Allocated by task 5216:
+ kasan_save_stack mm/kasan/common.c:45 [inline]
+ kasan_set_track+0x4f/0x70 mm/kasan/common.c:52
+ ____kasan_kmalloc mm/kasan/common.c:374 [inline]
+ __kasan_kmalloc+0x98/0xb0 mm/kasan/common.c:383
+ kmalloc include/linux/slab.h:559 [inline]
+ kzalloc include/linux/slab.h:680 [inline]
+ nilfs_find_or_create_root+0x137/0x4e0 fs/nilfs2/the_nilfs.c:810
+ nilfs_attach_checkpoint+0x123/0x4d0 fs/nilfs2/super.c:529
+ nilfs_fill_super+0x321/0x600 fs/nilfs2/super.c:1074
+ nilfs_mount+0x67d/0x9a0 fs/nilfs2/super.c:1326
+ legacy_get_tree+0xef/0x190 fs/fs_context.c:610
+ vfs_get_tree+0x8c/0x270 fs/super.c:1510
+ do_new_mount+0x28f/0xae0 fs/namespace.c:3039
+ do_mount fs/namespace.c:3382 [inline]
+ __do_sys_mount fs/namespace.c:3591 [inline]
+ __se_sys_mount+0x2d9/0x3c0 fs/namespace.c:3568
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x41/0xc0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+Freed by task 4999:
+ kasan_save_stack mm/kasan/common.c:45 [inline]
+ kasan_set_track+0x4f/0x70 mm/kasan/common.c:52
+ kasan_save_free_info+0x2b/0x40 mm/kasan/generic.c:521
+ ____kasan_slab_free+0xd6/0x120 mm/kasan/common.c:236
+ kasan_slab_free include/linux/kasan.h:162 [inline]
+ slab_free_hook mm/slub.c:1781 [inline]
+ slab_free_freelist_hook mm/slub.c:1807 [inline]
+ slab_free mm/slub.c:3786 [inline]
+ __kmem_cache_free+0x264/0x3c0 mm/slub.c:3799
+ nilfs_segctor_destroy fs/nilfs2/segment.c:2775 [inline]
+ nilfs_detach_log_writer+0x8c1/0xbb0 fs/nilfs2/segment.c:2838
+ nilfs_put_super+0x4d/0x160 fs/nilfs2/super.c:477
+ generic_shutdown_super+0x134/0x340 fs/super.c:500
+ kill_block_super+0x84/0xf0 fs/super.c:1407
+ deactivate_locked_super+0xa4/0x110 fs/super.c:331
+ cleanup_mnt+0x426/0x4c0 fs/namespace.c:1177
+ task_work_run+0x24a/0x300 kernel/task_work.c:179
+ ptrace_notify+0x2cd/0x380 kernel/signal.c:2369
+ ptrace_report_syscall include/linux/ptrace.h:411 [inline]
+ ptrace_report_syscall_exit include/linux/ptrace.h:473 [inline]
+ syscall_exit_work kernel/entry/common.c:252 [inline]
+ syscall_exit_to_user_mode_prepare kernel/entry/common.c:279 [inline]
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:284 [inline]
+ syscall_exit_to_user_mode+0x157/0x280 kernel/entry/common.c:297
+ do_syscall_64+0x4d/0xc0 arch/x86/entry/common.c:86
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+The buggy address belongs to the object at ffff88801f47f400
+ which belongs to the cache kmalloc-256 of size 256
+The buggy address is located 48 bytes inside of
+ freed 256-byte region [ffff88801f47f400, ffff88801f47f500)
+
+The buggy address belongs to the physical page:
+page:ffffea00007d1f80 refcount:1 mapcount:0 mapping:0000000000000000 index:0xffff88801f47f600 pfn:0x1f47e
+head:ffffea00007d1f80 order:1 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+flags: 0xfff00000010200(slab|head|node=0|zone=1|lastcpupid=0x7ff)
+page_type: 0xffffffff()
+raw: 00fff00000010200 ffff888012441b40 ffffea00008ccc90 ffffea00007a7510
+raw: ffff88801f47f600 000000000010000e 00000001ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 1, migratetype Unmovable, gfp_mask 0xd20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 1, tgid 1 (swapper/0), ts 9284804112, free_ts 0
+ set_page_owner include/linux/page_owner.h:31 [inline]
+ post_alloc_hook+0x1e6/0x210 mm/page_alloc.c:1731
+ prep_new_page mm/page_alloc.c:1738 [inline]
+ get_page_from_freelist+0x321c/0x33a0 mm/page_alloc.c:3502
+ __alloc_pages+0x255/0x670 mm/page_alloc.c:4768
+ alloc_page_interleave+0x22/0x1d0 mm/mempolicy.c:2112
+ alloc_slab_page+0x6a/0x160 mm/slub.c:1851
+ allocate_slab mm/slub.c:1998 [inline]
+ new_slab+0x84/0x2f0 mm/slub.c:2051
+ ___slab_alloc+0xa85/0x10a0 mm/slub.c:3192
+ __slab_alloc mm/slub.c:3291 [inline]
+ __slab_alloc_node mm/slub.c:3344 [inline]
+ slab_alloc_node mm/slub.c:3441 [inline]
+ __kmem_cache_alloc_node+0x1b8/0x290 mm/slub.c:3490
+ kmalloc_trace+0x2a/0xe0 mm/slab_common.c:1057
+ kmalloc include/linux/slab.h:559 [inline]
+ kzalloc include/linux/slab.h:680 [inline]
+ bus_add_driver+0x163/0x620 drivers/base/bus.c:657
+ driver_register+0x23a/0x320 drivers/base/driver.c:246
+ do_one_initcall+0x23d/0x7d0 init/main.c:1246
+ do_initcall_level+0x157/0x210 init/main.c:1319
+ do_initcalls+0x3f/0x80 init/main.c:1335
+ kernel_init_freeable+0x43b/0x5d0 init/main.c:1571
+ kernel_init+0x1d/0x2a0 init/main.c:1462
+page_owner free stack trace missing
+
+Memory state around the buggy address:
+ ffff88801f47f300: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff88801f47f380: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+>ffff88801f47f400: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                                     ^
+ ffff88801f47f480: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff88801f47f500: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+==================================================================
+
+
 ---
- fs/nilfs2/bmap.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 798a2c1b38c6..7a8f166f2c8d 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -67,20 +67,28 @@ int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap, __u64 key, int level,
- 
- 	down_read(&bmap->b_sem);
- 	ret = bmap->b_ops->bop_lookup(bmap, key, level, ptrp);
--	if (ret < 0) {
--		ret = nilfs_bmap_convert_error(bmap, __func__, ret);
-+	if (ret < 0)
- 		goto out;
--	}
-+
- 	if (NILFS_BMAP_USE_VBN(bmap)) {
- 		ret = nilfs_dat_translate(nilfs_bmap_get_dat(bmap), *ptrp,
- 					  &blocknr);
- 		if (!ret)
- 			*ptrp = blocknr;
-+		else if (ret == -ENOENT) {
-+			/*
-+			 * If there was no valid entry in DAT for the block
-+			 * address obtained by b_ops->bop_lookup, then pass
-+			 * internal code -EINVAL to nilfs_bmap_convert_error
-+			 * to treat it as metadata corruption.
-+			 */
-+			ret = -EINVAL;
-+		}
- 	}
- 
-  out:
- 	up_read(&bmap->b_sem);
--	return ret;
-+	return nilfs_bmap_convert_error(bmap, __func__, ret);
- }
- 
- int nilfs_bmap_lookup_contig(struct nilfs_bmap *bmap, __u64 key, __u64 *ptrp,
--- 
-2.34.1
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
+If the bug is already fixed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to change bug's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the bug is a duplicate of another bug, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
