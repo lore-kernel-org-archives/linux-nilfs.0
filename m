@@ -1,51 +1,72 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH] nilfs2: fix use-after-free bug of nilfs_root in
- nilfs_evict_inode()
-Date: Fri, 12 May 2023 16:46:27 -0700
-Message-ID: <20230512164627.0cd2a6f5d6a61bf736715c32@linux-foundation.org>
-References: <00000000000099e5ac05fb1c3b85@google.com>
-        <20230509152956.8313-1-konishi.ryusuke@gmail.com>
-        <20230512164424.865d7929600ed070824764e6@linux-foundation.org>
+From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] nilfs2: fix incomplete buffer cleanup in nilfs_btnode_abort_change_key()
+Date: Sat, 13 May 2023 19:24:28 +0900
+Message-ID: <20230513102428.10223-1-konishi.ryusuke@gmail.com>
+References: <000000000000d1d6c205ebc4d512@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
-        s=korg; t=1683935188;
-        bh=5ZiYRU6RWKYZUiTi+ixrCoeaVHLHcmBFcrn2mNYPdjc=;
-        h=Date:From:To:Subject:In-Reply-To:References:From;
-        b=bFXkBwBzLTlPAyCh35B7yXPVZ5CnuzzDdJ1NRfmUkuL0GcRhteQYwcgchaXhSduOq
-         AKfHxVDb2EU5nty2WE5n15DCOpJT9Ls9EvlFmLUJgb62FvvqCqG+LMw9p0/4AHOCLD
-         8xuN/AhUJI6aOobid4J0af6+L/ug6LFP6y1CqTYI=
-In-Reply-To: <20230512164424.865d7929600ed070824764e6-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20221208; t=1683973455; x=1686565455;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=tdWliSyw9Vs0a4+Mx5Ea0mS03ZFAZO0XAn6m7qo+Pro=;
+        b=TYUf0yciahwHAoINMlmasYHsNIj0mB0vwA8sRRG+HcY+oJopfvY6iqibdm5kAMp8xZ
+         VAOmON3bpEOSXqaTShgAQEZ1330E/h/aJbAWTNo6qwReBwPbhMIBPBJp6hxxVm413onX
+         zeQoRP6rUV7uzyU53vXr2GkhozaGfQ3aqBMfCwdfCubhDJis+A0ZiNjN8+Iv1gc7BabQ
+         wSE1o0qu9P96h1khnyfGgq2sa2EWxfHlmm9sru/jczengeor+hZXj0Ddtl5kjiPYxNVa
+         UMpgGBpOTi7S3UDhk7DLOm40xPPECl2+QAfOisqQ4tSTyAKRU0aeles6EApESs/xhbW+
+         S5Pw==
+In-Reply-To: <000000000000d1d6c205ebc4d512-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot <syzbot+78d4495558999f55d1da-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot <syzbot+b0a35a5c1f7e846d3b09-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Fri, 12 May 2023 16:44:24 -0700 Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+A syzbot fault injection test reported that nilfs_btnode_create_block,
+a helper function that allocates a new node block for b-trees, causes a
+kernel BUG for disk images where the file system block size is smaller
+than the page size.
 
-> On Wed, 10 May 2023 00:29:56 +0900 Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> 
-> > During unmount process of nilfs2, nothing holds nilfs_root structure after
-> > nilfs2 detaches its writer in nilfs_detach_log_writer().  However, since
-> > nilfs_evict_inode() uses nilfs_root for some cleanup operations, it may
-> > cause use-after-free read if inodes are left in "garbage_list" and
-> > released by nilfs_dispose_list() at the end of nilfs_detach_log_writer().
-> > 
-> > Fix this issue by modifying nilfs_evict_inode() to only clear inode
-> > without additional metadata changes that use nilfs_root if the file system
-> > is degraded to read-only or the writer is detached.
-> > 
-> > ...
-> >
-> > --- a/fs/nilfs2/inode.c
-> > +++ b/fs/nilfs2/inode.c
-> > @@ -917,6 +917,7 @@ void nilfs_evict_inode(struct inode *inode)
-> >  	struct nilfs_transaction_info ti;
-> >  	struct super_block *sb = inode->i_sb;
-> >  	struct nilfs_inode_info *ii = NILFS_I(inode);
-> > +	struct the_nilfs *nilfs;
-> >  	int ret;
-> 
-> `the_nilfs' is unused - I'll zap it.
+This was due to unexpected flags on the newly allocated buffer head, and
+it turned out to be because the buffer flags were not cleared by
+nilfs_btnode_abort_change_key() after an error occurred during a b-tree
+update operation and the buffer was later reused in that state.
 
-argh, sorry, brainfart.
+Fix this issue by using nilfs_btnode_delete() to abandon the unused
+preallocated buffer in nilfs_btnode_abort_change_key().
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: syzbot+b0a35a5c1f7e846d3b09-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+Closes: https://lkml.kernel.org/r/000000000000d1d6c205ebc4d512-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ fs/nilfs2/btnode.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
+index e956f886a1a1..5710833ac1cc 100644
+--- a/fs/nilfs2/btnode.c
++++ b/fs/nilfs2/btnode.c
+@@ -285,6 +285,14 @@ void nilfs_btnode_abort_change_key(struct address_space *btnc,
+ 	if (nbh == NULL) {	/* blocksize == pagesize */
+ 		xa_erase_irq(&btnc->i_pages, newkey);
+ 		unlock_page(ctxt->bh->b_page);
+-	} else
+-		brelse(nbh);
++	} else {
++		/*
++		 * When canceling a buffer that a prepare operation has
++		 * allocated to copy a node block to another location, use
++		 * nilfs_btnode_delete() to initialize and release the buffer
++		 * so that the buffer flags will not be in an inconsistent
++		 * state when it is reallocated.
++		 */
++		nilfs_btnode_delete(nbh);
++	}
+ }
+-- 
+2.34.1
+
