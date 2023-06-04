@@ -1,48 +1,105 @@
-From: syzbot <syzbot+list49de8182d696bb4d450d@syzkaller.appspotmail.com>
-Subject: [syzbot] Monthly nilfs report (May 2023)
-Date: Mon, 29 May 2023 01:50:46 -0700
-Message-ID: <000000000000c358c205fcd12e02@google.com>
+From: syzbot <syzbot+5c04210f7c7f897c1e7f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+Subject: [syzbot] [nilfs?] kernel BUG in end_buffer_async_write
+Date: Sat, 03 Jun 2023 17:35:55 -0700
+Message-ID: <00000000000019a97c05fd42f8c8@google.com>
 Mime-Version: 1.0
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+To: brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
 
-Hello nilfs maintainers/developers,
+Hello,
 
-This is a 31-day syzbot report for the nilfs subsystem.
-All related reports/information can be found at:
-https://syzkaller.appspot.com/upstream/s/nilfs
+syzbot found the following issue on:
 
-During the period, 1 new issues were detected and 3 were fixed.
-In total, 14 issues are still open and 29 have been fixed so far.
+HEAD commit:    51f269a6ecc7 Merge tag 'probes-fixes-6.4-rc4' of git://git..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=15ed0e7d280000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=3da6c5d3e0a6c932
+dashboard link: https://syzkaller.appspot.com/bug?extid=5c04210f7c7f897c1e7f
+compiler:       gcc (Debian 10.2.1-6) 10.2.1 20210110, GNU ld (GNU Binutils for Debian) 2.35.2
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1336c6b5280000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=12c0a5a5280000
 
-Some of the still happening issues:
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/8a8c8e41a6b0/disk-51f269a6.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/ffc3737b4233/vmlinux-51f269a6.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/d49888e5beb1/bzImage-51f269a6.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/99d35f050c12/mount_0.gz
 
-Ref Crashes Repro Title
-<1> 718     Yes   WARNING in nilfs_btree_assign
-                  https://syzkaller.appspot.com/bug?extid=31837fe952932efc8fb9
-<2> 324     Yes   WARNING in nilfs_sufile_set_segment_usage
-                  https://syzkaller.appspot.com/bug?extid=14e9f834f6ddecece094
-<3> 203     No    INFO: task hung in path_openat (7)
-                  https://syzkaller.appspot.com/bug?extid=950a0cdaa2fdd14f5bdc
-<4> 60      Yes   INFO: task hung in nilfs_detach_log_writer
-                  https://syzkaller.appspot.com/bug?extid=e3973c409251e136fdd0
-<5> 31      Yes   kernel BUG in folio_end_writeback
-                  https://syzkaller.appspot.com/bug?extid=7e5cf1d80677ec185e63
-<6> 3       Yes   general protection fault in folio_create_empty_buffers
-                  https://syzkaller.appspot.com/bug?extid=0ad741797f4565e7e2d2
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+5c04210f7c7f897c1e7f-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
+
+------------[ cut here ]------------
+kernel BUG at fs/buffer.c:391!
+invalid opcode: 0000 [#1] PREEMPT SMP KASAN
+CPU: 0 PID: 15 Comm: ksoftirqd/0 Not tainted 6.4.0-rc4-syzkaller-00268-g51f269a6ecc7 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 05/25/2023
+RIP: 0010:end_buffer_async_write+0x2db/0x340 fs/buffer.c:391
+Code: 65 00 fe 4c 89 ff e8 d4 a3 ff ff be 08 00 00 00 48 89 c7 48 89 c3 e8 b4 31 e0 ff f0 80 4b 01 01 e9 07 fe ff ff e8 45 62 8d ff <0f> 0b e8 3e 62 8d ff 0f 0b 48 89 df e8 34 2b e0 ff e9 d9 fe ff ff
+RSP: 0018:ffffc90000147c98 EFLAGS: 00010246
+
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000100
+RDX: ffff88801664bb80 RSI: ffffffff81f6e3fb RDI: 0000000000000001
+RBP: ffff88806fbde570 R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000001
+R13: ffffffff81f6e120 R14: ffff88801e24ee00 R15: ffff88802a45a788
+FS:  0000000000000000(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f42b45b0000 CR3: 000000007b04a000 CR4: 0000000000350ef0
+Call Trace:
+ <TASK>
+ end_bio_bh_io_sync+0xde/0x130 fs/buffer.c:2730
+ bio_endio+0x5af/0x6c0 block/bio.c:1608
+ req_bio_endio block/blk-mq.c:761 [inline]
+ blk_update_request+0x5c5/0x1620 block/blk-mq.c:906
+ blk_mq_end_request+0x59/0x4c0 block/blk-mq.c:1023
+ lo_complete_rq+0x1c6/0x280 drivers/block/loop.c:370
+ blk_complete_reqs+0xad/0xe0 block/blk-mq.c:1101
+ __do_softirq+0x1d4/0x905 kernel/softirq.c:571
+ run_ksoftirqd kernel/softirq.c:939 [inline]
+ run_ksoftirqd+0x31/0x60 kernel/softirq.c:931
+ smpboot_thread_fn+0x659/0x9e0 kernel/smpboot.c:164
+ kthread+0x344/0x440 kernel/kthread.c:379
+ ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:308
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:end_buffer_async_write+0x2db/0x340 fs/buffer.c:391
+Code: 65 00 fe 4c 89 ff e8 d4 a3 ff ff be 08 00 00 00 48 89 c7 48 89 c3 e8 b4 31 e0 ff f0 80 4b 01 01 e9 07 fe ff ff e8 45 62 8d ff <0f> 0b e8 3e 62 8d ff 0f 0b 48 89 df e8 34 2b e0 ff e9 d9 fe ff ff
+RSP: 0018:ffffc90000147c98 EFLAGS: 00010246
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000100
+RDX: ffff88801664bb80 RSI: ffffffff81f6e3fb RDI: 0000000000000001
+RBP: ffff88806fbde570 R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000001
+R13: ffffffff81f6e120 R14: ffff88801e24ee00 R15: ffff88802a45a788
+FS:  0000000000000000(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f42b45b0000 CR3: 000000007b04a000 CR4: 0000000000350ef0
+
 
 ---
 This report is generated by a bot. It may contain errors.
 See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
 
-To disable reminders for individual bugs, reply with the following command:
-#syz set <Ref> no-reminders
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
-To change bug's subsystems, reply with:
-#syz set <Ref> subsystems: new-subsystem
+If the bug is already fixed, let syzbot know by replying with:
+#syz fix: exact-commit-title
 
-You may send multiple commands in a single email message.
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to change bug's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the bug is a duplicate of another bug, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
