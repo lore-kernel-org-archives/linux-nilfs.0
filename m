@@ -1,8 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 24/31] rnbd-srv: replace sess->open_flags with a
- "bool readonly"
-Date: Tue,  6 Jun 2023 09:39:43 +0200
-Message-ID: <20230606073950.225178-25-hch@lst.de>
+Subject: [PATCH 26/31] block: move a few internal definitions out
+ of blkdev.h
+Date: Tue,  6 Jun 2023 09:39:45 +0200
+Message-ID: <20230606073950.225178-27-hch@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=vLDKGJIN4sUAMcx+ss63SchZIFVZL96BaI3AvIUMzr4=; b=UzkNUgRLoqVyKb528DDjD/mj1v
- xz+oys2LsbqrYllnYOqxGJb+G1cWsCFE5uTYg6gM4H/BRTEHwog3V4V4vuNy5jgakjUfewZTLW5no
- dvuSXDQqZrUwCmownwwr7FFntTl8Szc24yxp1Usmfj/6VFQUGjrubt/4FKYahoXnUi8g=;
+ bh=ipA6E6PjFwn9EQKQAyZEVl0PLPdTLG96IzNuBLnYaLI=; b=mom0hdFmsJlDXvd81cR8n2Kmun
+ /gozELJhJZlJgHP/5vwW+yoG8ACHkbInnZJNddSYV4LUKDqoT3hf8vbl3zBPJf6bDnvE3JzHGd4Qf
+ t1knuETg3OMPaePmio1yfyJboeJijeLbB6FOfLySVoCUMKVV5hx0oI0UxHYfezC6/UCw=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=vLDKGJIN4sUAMcx+ss63SchZIFVZL96BaI3AvIUMzr4=; b=EMQMrMTOoOjIwNmoveFgIKMlY1
- NYPiMWcH9T7kHN6j1XrG3Ehbab3O78kSx+/3Mr/zihmDtngaRjHpKzQqXOBVfL9OSFH8rUrPKCgtl
- iWSlIT2c8fMDRqhnR3FZQsihboDHUnCVKsrLHmAmDxcdVWVmXPToIzuwBd3xkJYX/kKs=;
+ bh=ipA6E6PjFwn9EQKQAyZEVl0PLPdTLG96IzNuBLnYaLI=; b=bFaoR3ONukAItMib0DF+qLwR34
+ nUFXOdVeI9h+bd2aIpThIwspmnfWuLnB/btML0Z4qV0SiiykP65sNyVUGw5TAAmYQVhOcYfpMCVuE
+ q48EK8J+wfTLXOOhxSQaUH3FyWie7UPQfO55aDAKGOeq5MG2dxr2wpdgGDg9NVJQQHNA=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
  MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
  :Reply-To:Content-Type:Content-ID:Content-Description;
- bh=vLDKGJIN4sUAMcx+ss63SchZIFVZL96BaI3AvIUMzr4=; b=Kqz67xYl70ncmp7C+TTho2ZAwh
- yxMVvfTUe4ptMIvjyzv5W3/oGptcu3lODz1GZfs1Dzmfa07wbMjg2x6XNkhPoXVVT8TeEzZ5+vZ85
- v1qggGnWqxY2bsFKIizZ6LsxrrrPNciu1JwJMH/tySvoqXcRfyJlv85UdaK+gMvOpcMhP0h4rkSzj
- dd9SWrGeDfCkJGWmtE8+Nh6i9voVwKacayAFzTn1gmxkmc1YJhF7r0Oan23F9ssgVCUQ9Cg3Op4+o
- gDpWg+ZYjjYuzSCNiQl39lt4KnyhQ9DBoM37xAlqu7P4qY4UvMmUgGNWibsjTk/rgEvj+LqaFZPLH
- vE5IjFEw==;
+ bh=ipA6E6PjFwn9EQKQAyZEVl0PLPdTLG96IzNuBLnYaLI=; b=Mz26LqLtxMwuSjhlwz27X/9eMb
+ L0Br/ZqAKPO4imnbeirvoBJPYYAMyDJNknsHiL4UFZJPQRsMh+WZN2F3Ne1P3lNOfZiFN6P6gq8LJ
+ bYIWhNJfcWgGoVJJPVFOgq+HLsWUx9WOYZBlWNrT/Z/pkUhQqr7w0ap4SNjXzba1ela+ejYmGkqSD
+ 3yR/4wXCh4CBqqhO1mtDf9LisGEjNdzwP37TpjAeu2ofgDWEhUT5nT4e7a0dIH1RFr4F6jdmNxeP2
+ YQKbpbUs33CbKPfXlwABUpCruoGh4XcDkam0H7mPJXa4VYofyUC5PMYdlMwCHRTO4EKYN8ixN67bo
+ kXAstIoA==;
 In-Reply-To: <20230606073950.225178-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -50,101 +50,115 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org, Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>, Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org, linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Christian Brauner <brauner@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.
 
-Stop passing the fmode_t around and just use a simple bool to track if
-an export is read-only.
+All these helpers are only used in core block code, so move them out of
+the public header.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/rnbd/rnbd-srv-sysfs.c |  3 +--
- drivers/block/rnbd/rnbd-srv.c       | 15 +++++++--------
- drivers/block/rnbd/rnbd-srv.h       |  2 +-
- 3 files changed, 9 insertions(+), 11 deletions(-)
+ block/blk.h            | 23 +++++++++++++++++++++--
+ include/linux/blkdev.h | 27 ---------------------------
+ 2 files changed, 21 insertions(+), 29 deletions(-)
 
-diff --git a/drivers/block/rnbd/rnbd-srv-sysfs.c b/drivers/block/rnbd/rnbd-srv-sysfs.c
-index d5d9267e1fa5e4..ebd95771c85ec7 100644
---- a/drivers/block/rnbd/rnbd-srv-sysfs.c
-+++ b/drivers/block/rnbd/rnbd-srv-sysfs.c
-@@ -88,8 +88,7 @@ static ssize_t read_only_show(struct kobject *kobj, struct kobj_attribute *attr,
+diff --git a/block/blk.h b/block/blk.h
+index 9582fcd0df4123..6910220aa030f1 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -394,10 +394,27 @@ static inline struct bio *blk_queue_bounce(struct bio *bio,
+ #ifdef CONFIG_BLK_DEV_ZONED
+ void disk_free_zone_bitmaps(struct gendisk *disk);
+ void disk_clear_zone_settings(struct gendisk *disk);
+-#else
++int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
++		unsigned int cmd, unsigned long arg);
++int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
++		unsigned int cmd, unsigned long arg);
++#else /* CONFIG_BLK_DEV_ZONED */
+ static inline void disk_free_zone_bitmaps(struct gendisk *disk) {}
+ static inline void disk_clear_zone_settings(struct gendisk *disk) {}
+-#endif
++static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
++		fmode_t mode, unsigned int cmd, unsigned long arg)
++{
++	return -ENOTTY;
++}
++static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
++		fmode_t mode, unsigned int cmd, unsigned long arg)
++{
++	return -ENOTTY;
++}
++#endif /* CONFIG_BLK_DEV_ZONED */
++
++struct block_device *bdev_alloc(struct gendisk *disk, u8 partno);
++void bdev_add(struct block_device *bdev, dev_t dev);
  
- 	sess_dev = container_of(kobj, struct rnbd_srv_sess_dev, kobj);
+ int blk_alloc_ext_minor(void);
+ void blk_free_ext_minor(unsigned int minor);
+@@ -449,6 +466,8 @@ extern struct device_attribute dev_attr_events_poll_msecs;
  
--	return sysfs_emit(page, "%d\n",
--			  !(sess_dev->open_flags & FMODE_WRITE));
-+	return sysfs_emit(page, "%d\n", sess_dev->readonly);
- }
+ extern struct attribute_group blk_trace_attr_group;
  
- static struct kobj_attribute rnbd_srv_dev_session_ro_attr =
-diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
-index 29d560472d05ba..b680071342b898 100644
---- a/drivers/block/rnbd/rnbd-srv.c
-+++ b/drivers/block/rnbd/rnbd-srv.c
-@@ -222,7 +222,7 @@ void rnbd_destroy_sess_dev(struct rnbd_srv_sess_dev *sess_dev, bool keep_id)
- 	blkdev_put(sess_dev->bdev, NULL);
- 	mutex_lock(&sess_dev->dev->lock);
- 	list_del(&sess_dev->dev_list);
--	if (sess_dev->open_flags & FMODE_WRITE)
-+	if (!sess_dev->readonly)
- 		sess_dev->dev->open_write_cnt--;
- 	mutex_unlock(&sess_dev->dev->lock);
++int truncate_bdev_range(struct block_device *bdev, fmode_t mode, loff_t lstart,
++		loff_t lend);
+ long blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
+ long compat_blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
  
-@@ -561,7 +561,7 @@ static void rnbd_srv_fill_msg_open_rsp(struct rnbd_msg_open_rsp *rsp,
- static struct rnbd_srv_sess_dev *
- rnbd_srv_create_set_sess_dev(struct rnbd_srv_session *srv_sess,
- 			      const struct rnbd_msg_open *open_msg,
--			      struct block_device *bdev, fmode_t open_flags,
-+			      struct block_device *bdev, bool readonly,
- 			      struct rnbd_srv_dev *srv_dev)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 97803603902076..6b65623e447c02 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -318,7 +318,6 @@ typedef int (*report_zones_cb)(struct blk_zone *zone, unsigned int idx,
+ void disk_set_zoned(struct gendisk *disk, enum blk_zoned_model model);
+ 
+ #ifdef CONFIG_BLK_DEV_ZONED
+-
+ #define BLK_ALL_ZONES  ((unsigned int)-1)
+ int blkdev_report_zones(struct block_device *bdev, sector_t sector,
+ 			unsigned int nr_zones, report_zones_cb cb, void *data);
+@@ -328,33 +327,11 @@ extern int blkdev_zone_mgmt(struct block_device *bdev, enum req_op op,
+ 			    gfp_t gfp_mask);
+ int blk_revalidate_disk_zones(struct gendisk *disk,
+ 			      void (*update_driver_data)(struct gendisk *disk));
+-
+-extern int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
+-				     unsigned int cmd, unsigned long arg);
+-extern int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
+-				  unsigned int cmd, unsigned long arg);
+-
+ #else /* CONFIG_BLK_DEV_ZONED */
+-
+ static inline unsigned int bdev_nr_zones(struct block_device *bdev)
  {
- 	struct rnbd_srv_sess_dev *sdev = rnbd_sess_dev_alloc(srv_sess);
-@@ -576,7 +576,7 @@ rnbd_srv_create_set_sess_dev(struct rnbd_srv_session *srv_sess,
- 	sdev->bdev		= bdev;
- 	sdev->sess		= srv_sess;
- 	sdev->dev		= srv_dev;
--	sdev->open_flags	= open_flags;
-+	sdev->readonly		= readonly;
- 	sdev->access_mode	= open_msg->access_mode;
+ 	return 0;
+ }
+-
+-static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
+-					    fmode_t mode, unsigned int cmd,
+-					    unsigned long arg)
+-{
+-	return -ENOTTY;
+-}
+-
+-static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
+-					 fmode_t mode, unsigned int cmd,
+-					 unsigned long arg)
+-{
+-	return -ENOTTY;
+-}
+-
+ #endif /* CONFIG_BLK_DEV_ZONED */
  
- 	return sdev;
-@@ -681,13 +681,12 @@ static int process_msg_open(struct rnbd_srv_session *srv_sess,
- 	struct rnbd_srv_sess_dev *srv_sess_dev;
- 	const struct rnbd_msg_open *open_msg = msg;
- 	struct block_device *bdev;
--	fmode_t open_flags;
-+	fmode_t open_flags = FMODE_READ;
- 	char *full_path;
- 	struct rnbd_msg_open_rsp *rsp = data;
+ /*
+@@ -1493,11 +1470,7 @@ void blkdev_put(struct block_device *bdev, void *holder);
+ struct block_device *blkdev_get_no_open(dev_t dev);
+ void blkdev_put_no_open(struct block_device *bdev);
  
- 	trace_process_msg_open(srv_sess, open_msg);
+-struct block_device *bdev_alloc(struct gendisk *disk, u8 partno);
+-void bdev_add(struct block_device *bdev, dev_t dev);
+ struct block_device *I_BDEV(struct inode *inode);
+-int truncate_bdev_range(struct block_device *bdev, fmode_t mode, loff_t lstart,
+-		loff_t lend);
  
--	open_flags = FMODE_READ;
- 	if (open_msg->access_mode != RNBD_ACCESS_RO)
- 		open_flags |= FMODE_WRITE;
- 
-@@ -736,9 +735,9 @@ static int process_msg_open(struct rnbd_srv_session *srv_sess,
- 		goto blkdev_put;
- 	}
- 
--	srv_sess_dev = rnbd_srv_create_set_sess_dev(srv_sess, open_msg,
--						     bdev, open_flags,
--						     srv_dev);
-+	srv_sess_dev = rnbd_srv_create_set_sess_dev(srv_sess, open_msg, bdev,
-+				open_msg->access_mode == RNBD_ACCESS_RO,
-+				srv_dev);
- 	if (IS_ERR(srv_sess_dev)) {
- 		pr_err("Opening device '%s' on session %s failed, creating sess_dev failed, err: %ld\n",
- 		       full_path, srv_sess->sessname, PTR_ERR(srv_sess_dev));
-diff --git a/drivers/block/rnbd/rnbd-srv.h b/drivers/block/rnbd/rnbd-srv.h
-index f5962fd31d62e4..76077a9db3dd55 100644
---- a/drivers/block/rnbd/rnbd-srv.h
-+++ b/drivers/block/rnbd/rnbd-srv.h
-@@ -52,7 +52,7 @@ struct rnbd_srv_sess_dev {
- 	struct kobject                  kobj;
- 	u32                             device_id;
- 	bool				keep_id;
--	fmode_t                         open_flags;
-+	bool				readonly;
- 	struct kref			kref;
- 	struct completion               *destroy_comp;
- 	char				pathname[NAME_MAX];
+ #ifdef CONFIG_BLOCK
+ void invalidate_bdev(struct block_device *bdev);
 -- 
 2.39.2
