@@ -1,61 +1,122 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: decouple block open flags from fmode_t
-Date: Tue, 6 Jun 2023 10:40:42 +0200
-Message-ID: <20230606084042.GA30379@lst.de>
+From: Phillip Potter <phil@philpotter.co.uk>
+Subject: Re: [PATCH 02/31] cdrom: remove the unused bdev argument to
+ cdrom_open
+Date: Tue, 6 Jun 2023 23:50:43 +0100
+Message-ID: <ZH+4QyeJ2WCOaPGO@equinox>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606-raumtemperatur-languste-045c5472f6a0@brauner>
+ <20230606073950.225178-3-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Return-path: <linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=WcRxDdb3Mc4cvqAtyQu/VMBqgakZKB2/wbXVOO8uQ1A=; b=GpDzlyTgcaz1L1/EWx0b+qPBJ4
- a7BpqMfpWR1BpJOLtp4v2wTnVFTUwr/S8L9IUawy2HZV8uEN1hhi37btdBPIwl5kFXN0RtDp0cGIa
- b5QvuQXnaEo9u9ijMNjuwZW/Guh/yqx19dNkNoeuYgydFiR5XLrx3DMXajGrd63gv9Ds=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=WcRxDdb3Mc4cvqAtyQu/VMBqgakZKB2/wbXVOO8uQ1A=; b=fF69NIZwHKiVtx6W+KI2B8srjD
- fjVO/8zMl1um2vwQcq8fIVE2HWwNUcvO0zlsrGV1nm5YZvBJwImpFwh5JLELg+L24QcF84wqvLZ4C
- xcTB+gTNsZ/ERi+VGRiqr8pdWb/sPQaDeR5uSvcJCJOx+o0DlANpDG4mofVkDv23pwpk=;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
+	Message-ID:Subject:Cc:To:From:Date:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=+5p4OVPssCKpgWSw+CRQtDHxk8LFju7kXWe4mTz7TW0=; b=mzs+gPgtQy7Tp/
+	OdxA9JlKXChTaTve9gjZS0xZvO2CxrgmHs2PKC1jfSscRr5HmG1C92FXby5qgCdUGiz4wC9feJ2xI
+	HSfa/VAvppw2MKR5vXgS7JpxcxbOaPALHD+A9yJOE4rQHYyIk9lK1nKo3Ylu5697N43wU9OUNgk2E
+	szLX5wZulQsRlfoErZL3DEQwnekBbxXeO6mPcxXWteBgCKtwgKuGZ4txJsaWAZJDVcLGMmK2S3JxA
+	Y1Z1zPfixaumAhi0KQd1uQzDCEtvqjNPG5qz0M5gSzZEI/JM8DCXJkSU4p0J+9iKwZcu4xq8KKoGP
+	qk/qlUZC9rk4ui8huxEg==;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=philpotter-co-uk.20221208.gappssmtp.com; s=20221208; t=1686091846; x=1688683846;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=ZsgUvAUYrCnrR/1XiT9juxzkogVY5Vs72GapwMni78s=;
+        b=VmbPZldWPYAwRsYyMwk8A03rXJyrpTvXOEYSvwFSEfXYGQ9f0DibZgbOcZv9ahaGKf
+         PI5+OxAdMYvbZGfbUvFF/CsIWyPYoUJBv4adaCgbsLoKZ4qUcAWsIa6Ri3jpTK/bHQrT
+         Ohep93vPQ7ryyJQWAyfDBFxol1ij/mZJMW0A0iwqiwl36LvAZOLX1aeY9L0SpoZCLnJz
+         wVbN864mtnWORoS661vBrZSXNRIiY6AXoBUlqUh/rkIvLh2gwYqiK+WaVFKW8of/Br1s
+         OKeXsZtVkiiCWR6CHlkqhjfmhnyDAQPTMoZhbcUNAf6eh7p56c8hqiOZ1oxWgdRViFlH
+         o2mg==
 Content-Disposition: inline
-In-Reply-To: <20230606-raumtemperatur-languste-045c5472f6a0@brauner>
+In-Reply-To: <20230606073950.225178-3-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Christian Brauner <brauner@kernel.org>
-Cc: Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org, Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>, Jack Wang <jinpu.wang@ionos.com>, Christoph Hellwig <hch@lst.de>, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org, linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linu
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-um/>
+List-Post: <mailto:linux-um@lists.infradead.org>
+List-Help: <mailto:linux-um-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-um" <linux-um-bounces@lists.infradead.org>
+Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.ke
 
-On Tue, Jun 06, 2023 at 10:27:14AM +0200, Christian Brauner wrote:
-> On Tue, Jun 06, 2023 at 09:39:19AM +0200, Christoph Hellwig wrote:
-> > Hi all,
-> > 
-> > this series adds a new blk_mode_t for block open flags instead of abusing
+On Tue, Jun 06, 2023 at 09:39:21AM +0200, Christoph Hellwig wrote:
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  drivers/cdrom/cdrom.c | 3 +--
+>  drivers/cdrom/gdrom.c | 2 +-
+>  drivers/scsi/sr.c     | 2 +-
+>  include/linux/cdrom.h | 3 +--
+>  4 files changed, 4 insertions(+), 6 deletions(-)
 > 
-> Trying to look at this series applied but doesn't apply cleanly for
-> anything v6.4-rc* related. What tree is this on?
+> diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
+> index 416f723a2dbb33..e3eab319cb0474 100644
+> --- a/drivers/cdrom/cdrom.c
+> +++ b/drivers/cdrom/cdrom.c
+> @@ -1155,8 +1155,7 @@ int open_for_data(struct cdrom_device_info *cdi)
+>   * is in their own interest: device control becomes a lot easier
+>   * this way.
+>   */
+> -int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
+> -	       fmode_t mode)
+> +int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode)
+>  {
+>  	int ret;
+>  
+> diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
+> index ceded5772aac6d..eaa2d5a90bc82f 100644
+> --- a/drivers/cdrom/gdrom.c
+> +++ b/drivers/cdrom/gdrom.c
+> @@ -481,7 +481,7 @@ static int gdrom_bdops_open(struct block_device *bdev, fmode_t mode)
+>  	bdev_check_media_change(bdev);
+>  
+>  	mutex_lock(&gdrom_mutex);
+> -	ret = cdrom_open(gd.cd_info, bdev, mode);
+> +	ret = cdrom_open(gd.cd_info, mode);
+>  	mutex_unlock(&gdrom_mutex);
+>  	return ret;
+>  }
+> diff --git a/drivers/scsi/sr.c b/drivers/scsi/sr.c
+> index 12869e6d4ebda8..61b83880e395a4 100644
+> --- a/drivers/scsi/sr.c
+> +++ b/drivers/scsi/sr.c
+> @@ -498,7 +498,7 @@ static int sr_block_open(struct block_device *bdev, fmode_t mode)
+>  		sr_revalidate_disk(cd);
+>  
+>  	mutex_lock(&cd->lock);
+> -	ret = cdrom_open(&cd->cdi, bdev, mode);
+> +	ret = cdrom_open(&cd->cdi, mode);
+>  	mutex_unlock(&cd->lock);
+>  
+>  	scsi_autopm_put_device(sdev);
+> diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
+> index 67caa909e3e615..cc5717cb0fa8a8 100644
+> --- a/include/linux/cdrom.h
+> +++ b/include/linux/cdrom.h
+> @@ -101,8 +101,7 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
+>  		struct cdrom_tocentry *entry);
+>  
+>  /* the general block_device operations structure: */
+> -extern int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
+> -			fmode_t mode);
+> +int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
+>  extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
+>  extern int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
+>  		       fmode_t mode, unsigned int cmd, unsigned long arg);
+> -- 
+> 2.39.2
+> 
 
-Jens' for-6.5/block tree.
+Thanks for the patch, looks good to me.
 
-I also have a git tree here:
+Signed-off-by: Phillip Potter <phil@philpotter.co.uk>
 
-    git://git.infradead.org/users/hch/block.git blk-open-release
-
-Gitweb:
-
-    http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/blk-open-release
+Regards,
+Phil
