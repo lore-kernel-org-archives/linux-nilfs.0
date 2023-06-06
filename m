@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 06/31] cdrom: remove the unused mode argument to cdrom_release
-Date: Tue,  6 Jun 2023 09:39:25 +0200
-Message-ID: <20230606073950.225178-7-hch@lst.de>
+Subject: [PATCH 08/31] block: share code between disk_check_media_change and disk_force_media_change
+Date: Tue,  6 Jun 2023 09:39:27 +0200
+Message-ID: <20230606073950.225178-9-hch@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,12 +13,12 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	List-Archive:List-Unsubscribe:List-Id:MIME-Version:References:In-Reply-To:
 	Message-Id:Date:Subject:Cc:To:From:Reply-To:Content-ID:Content-Description:
 	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=zjXFCCJeAKvhtGSQYjWDO4ba3TNcD55zWX9SsvvL+8U=; b=NhIO6PufhBEk0u
-	Gom4j129AM57mGdSRfXUnH1HrtfLtviTBGb2mcrAvgqpUu+iaMUVdoIIKG/eqF9fvyQUv9CX61acA
-	5pNDTK9/gf+DcrfJCBgIiw5OPb436nxhf1Xhr7rNcEtq8uPgQr44Jez0k0DU7MgYD/z/vpOX7hENQ
-	mSHptWqVNNY7fU+J/pcTELhXIwHg38tcgZVuuiN1SVVkqXRDdaZzF+gWLgVh64i5lG4Xm1wgWrccZ
-	TZWd3ZquExyYVdgUIypx4Hq4cmA1V/149XKbNp6CueYYpY/oRKoac8RAemO1zqp2JLiZFlUegpqQI
-	X/xrJvNVbKo5VkobcQRw==;
+	List-Owner; bh=80EyAAaAjaGfreHVVNV4HjolLuYiprTROi7PrrWnadk=; b=cBGc/YWgurK6F7
+	ZbzvT80Gy1719tH2401bwTuo87nlabdCBWwEIyqhY2kS2voRRWQJewGg1UXDcJWZTr4fyU9gHeqTm
+	Yjt9vOAybd2ml3ZMD7+hMPBmW1XMpkbbC9s3WCNqoe3h3IDY9CWh/sGZskvyGE7D5Q4sFa3BmUN3C
+	OJyC0pzZ33Wuk+6gOPNslZsj4WpGmUG0cN8K/xdLC/UhVeG48hBEgSF7JCwWDwroyipqu8dDkGOgn
+	BuBB5qnIBqCBjAbG+f+OVmdUygXFoPjELjS1Rv6AjcTzIaEibE4hsY15fRCgvCjrajBLRfL7sJJMf
+	aeD6k5jzlQQeOo6/Zp8w==;
 In-Reply-To: <20230606073950.225178-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
@@ -33,65 +33,75 @@ Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infr
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdeve
 
+Factor the common logic between disk_check_media_change and
+disk_force_media_change into a helper.
+
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/cdrom/cdrom.c | 2 +-
- drivers/cdrom/gdrom.c | 2 +-
- drivers/scsi/sr.c     | 2 +-
- include/linux/cdrom.h | 2 +-
- 4 files changed, 4 insertions(+), 4 deletions(-)
+ block/disk-events.c | 37 ++++++++++++++++---------------------
+ 1 file changed, 16 insertions(+), 21 deletions(-)
 
-diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
-index adebac1bd210d9..998b03fe976e22 100644
---- a/drivers/cdrom/cdrom.c
-+++ b/drivers/cdrom/cdrom.c
-@@ -1250,7 +1250,7 @@ static int check_for_audio_disc(struct cdrom_device_info *cdi,
- 	return 0;
+diff --git a/block/disk-events.c b/block/disk-events.c
+index 8b1b63225738f8..06f325662b3494 100644
+--- a/block/disk-events.c
++++ b/block/disk-events.c
+@@ -262,6 +262,18 @@ static unsigned int disk_clear_events(struct gendisk *disk, unsigned int mask)
+ 	return pending;
  }
  
--void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
-+void cdrom_release(struct cdrom_device_info *cdi)
++static bool __disk_check_media_change(struct gendisk *disk, unsigned int events)
++{
++	if (!(events & DISK_EVENT_MEDIA_CHANGE))
++		return false;
++
++	if (__invalidate_device(disk->part0, true))
++		pr_warn("VFS: busy inodes on changed media %s\n",
++			disk->disk_name);
++	set_bit(GD_NEED_PART_SCAN, &disk->state);
++	return true;
++}
++
+ /**
+  * disk_check_media_change - check if a removable media has been changed
+  * @disk: gendisk to check
+@@ -274,18 +286,9 @@ static unsigned int disk_clear_events(struct gendisk *disk, unsigned int mask)
+  */
+ bool disk_check_media_change(struct gendisk *disk)
  {
- 	const struct cdrom_device_ops *cdo = cdi->ops;
- 
-diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
-index 14922403983e9e..a401dc4218a998 100644
---- a/drivers/cdrom/gdrom.c
-+++ b/drivers/cdrom/gdrom.c
-@@ -481,7 +481,7 @@ static int gdrom_bdops_open(struct block_device *bdev, fmode_t mode)
- 	bdev_check_media_change(bdev);
- 
- 	mutex_lock(&gdrom_mutex);
--	ret = cdrom_open(gd.cd_info, mode);
-+	ret = cdrom_open(gd.cd_info);
- 	mutex_unlock(&gdrom_mutex);
- 	return ret;
+-	unsigned int events;
+-
+-	events = disk_clear_events(disk, DISK_EVENT_MEDIA_CHANGE |
+-				   DISK_EVENT_EJECT_REQUEST);
+-	if (!(events & DISK_EVENT_MEDIA_CHANGE))
+-		return false;
+-
+-	if (__invalidate_device(disk->part0, true))
+-		pr_warn("VFS: busy inodes on changed media %s\n",
+-			disk->disk_name);
+-	set_bit(GD_NEED_PART_SCAN, &disk->state);
+-	return true;
++	return __disk_check_media_change(disk,
++			disk_clear_events(disk, DISK_EVENT_MEDIA_CHANGE |
++						DISK_EVENT_EJECT_REQUEST));
  }
-diff --git a/drivers/scsi/sr.c b/drivers/scsi/sr.c
-index 444c7efc14cba7..6d33120ee5ba85 100644
---- a/drivers/scsi/sr.c
-+++ b/drivers/scsi/sr.c
-@@ -512,7 +512,7 @@ static void sr_block_release(struct gendisk *disk, fmode_t mode)
- 	struct scsi_cd *cd = scsi_cd(disk);
+ EXPORT_SYMBOL(disk_check_media_change);
  
- 	mutex_lock(&cd->lock);
--	cdrom_release(&cd->cdi, mode);
-+	cdrom_release(&cd->cdi);
- 	mutex_unlock(&cd->lock);
+@@ -303,15 +306,7 @@ EXPORT_SYMBOL(disk_check_media_change);
+ bool disk_force_media_change(struct gendisk *disk, unsigned int events)
+ {
+ 	disk_event_uevent(disk, events);
+-
+-	if (!(events & DISK_EVENT_MEDIA_CHANGE))
+-		return false;
+-
+-	if (__invalidate_device(disk->part0, true))
+-		pr_warn("VFS: busy inodes on changed media %s\n",
+-			disk->disk_name);
+-	set_bit(GD_NEED_PART_SCAN, &disk->state);
+-	return true;
++	return __disk_check_media_change(disk, events);
+ }
+ EXPORT_SYMBOL_GPL(disk_force_media_change);
  
- 	scsi_device_put(cd->device);
-diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
-index 385e94732b2cf1..3f23d5239de254 100644
---- a/include/linux/cdrom.h
-+++ b/include/linux/cdrom.h
-@@ -102,7 +102,7 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
- 
- /* the general block_device operations structure: */
- int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
--extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
-+void cdrom_release(struct cdrom_device_info *cdi);
- int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
- 		unsigned int cmd, unsigned long arg);
- extern unsigned int cdrom_check_events(struct cdrom_device_info *cdi,
 -- 
 2.39.2
