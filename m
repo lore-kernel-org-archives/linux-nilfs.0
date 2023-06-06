@@ -1,122 +1,99 @@
-From: Phillip Potter <phil@philpotter.co.uk>
-Subject: Re: [PATCH 05/31] cdrom: track if a cdrom_device_info was opened for
- data
-Date: Tue, 6 Jun 2023 23:59:27 +0100
-Message-ID: <ZH+6T/ibWkjSrWdt@equinox>
+From: Phillip Potter <phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org>
+Subject: Re: [PATCH 06/31] cdrom: remove the unused mode argument to
+ cdrom_release
+Date: Wed, 7 Jun 2023 00:00:57 +0100
+Message-ID: <ZH+6qd1W75G49P7p@equinox>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-6-hch@lst.de>
+ <20230606073950.225178-7-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
-	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
-	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
-	Message-ID:Subject:Cc:To:From:Date:Reply-To:Content-ID:Content-Description:
-	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=1U5fgALsVtOfkeMReRyqJ4JdoKWMeowW5osGAPX+50w=; b=fkQ6ZIdH9sqyn5
-	/iK+hoy3bnpfqAJCCSGkeiKNcY429nQtZxo9GqQ1uUmwe3ZycyHBXvTdtFT+Uos+EDOoj3bhCkxCE
-	Joyp/hL7LLyeVPuvikR2TJDh389YEnFnkmIGrQIMK10ydunWswVoROH7MA6cW8K+WPea3cA9vzGw5
-	eMS68pIXln1VeSoqjWtNK5z4dmp+1MaY8pqJoOMSXiik6I0IPUoVsYwAJx51eZ0+HGVYxh2nxshU2
-	PLIefyFMg4NZ166aU6k3JOJgCaG4rYUgc81PW+9V/6jFZMbfZBh8Pvyei+t0AnMf4e7KckffDZolX
-	rM4tH2VoNrW+q9X0PqLA==;
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=philpotter-co-uk.20221208.gappssmtp.com; s=20221208; t=1686092369; x=1688684369;
+        d=philpotter-co-uk.20221208.gappssmtp.com; s=20221208; t=1686092460; x=1688684460;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=xzrxvHE7NOsDG+KS0tlYsM4OII1tBEP7fRMkD9ta1LM=;
-        b=dPBbqXFS82u/OyXTZWp6fXeJmGza5q6dVa5qz3VIcZuY3ttrTYxwiWgluNlWkTlMHS
-         nr1NagSevnp3gcPfL+kiCiB3WIarpN0pgeCvHxSkBKjcjt+hu5N1Ft+/6M9I8wrHDoyn
-         9ycgq/Rw7NnFSNhYqDYV0c86KZdoApl9s6kWkF+s0hGgLYcofhqvB8kmW/BZ+LKMR//A
-         gwuJ0w+LXlMxibiExmvI39ydW+5R96o5Dj5hVb4IzQeS/zsCQmqqjO7QkeXRJL2RSe4t
-         6PrHCQqgVj8mU9U37sOH8TIm5TIb7ksdihwA/BJR/rIS7FZXiO40utLCY94h1/n/iUKk
-         stqw==
+        bh=4AyxSeVCWLu668XQQXcZmNRbTvqm+XfWnbYRI3bfM+o=;
+        b=ap+1NYchKGrYc446kRWRnQbhMV1pl6YsP5OToBbRr7yqxWuwivol/KLqvKwbFREzDt
+         leVawKb5LA6xL6S30/x70zQDywvhkHn7+JCGlKA0lozFIJqWnjRJTp5YJHpex7lWnnUv
+         dJkg9spKjZLznLO62AffDpdqoqWcUVXi8VRvJ792SrSPG5RfZag3TIQLuMV3b7gUNrfh
+         oTcGuFKfS4159jodmD3xpY5/Ko+Rh5RiDBfrQUvcEy89mqnn+LVVNO5Iw2N5Qiu+JIlB
+         FJKkwHEgGck4KgrxHNc30tLse+VJntfkb30BZScrTrWOpflbR4XFpuj885jYKqOuXNkW
+         SBWg==
 Content-Disposition: inline
-In-Reply-To: <20230606073950.225178-6-hch@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
- <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-um/>
-List-Post: <mailto:linux-um@lists.infradead.org>
-List-Help: <mailto:linux-um-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-um>,
- <mailto:linux-um-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-um" <linux-um-bounces@lists.infradead.org>
-Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.ke
+In-Reply-To: <20230606073950.225178-7-hch-jcswGhMUV9g@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, "Md. Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Phillip Potter <phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Miquel Raynal <miquel.raynal-LDxbnhwyfcJBDgjK7y7TUQ@public.gmane.org>, Vignesh Raghavendra <vigneshr-l0cyMroinI0@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nvm
 
-On Tue, Jun 06, 2023 at 09:39:24AM +0200, Christoph Hellwig wrote:
-> Set a flag when a cdrom_device_info is opened for writing, instead of
-> trying to figure out this at release time.  This will allow to eventually
-> remove the mode argument to the ->release block_device_operation as
-> nothing but the CDROM drivers uses that argument.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+On Tue, Jun 06, 2023 at 09:39:25AM +0200, Christoph Hellwig wrote:
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 > ---
->  drivers/cdrom/cdrom.c | 12 +++++-------
->  include/linux/cdrom.h |  1 +
->  2 files changed, 6 insertions(+), 7 deletions(-)
+>  drivers/cdrom/cdrom.c | 2 +-
+>  drivers/cdrom/gdrom.c | 2 +-
+>  drivers/scsi/sr.c     | 2 +-
+>  include/linux/cdrom.h | 2 +-
+>  4 files changed, 4 insertions(+), 4 deletions(-)
 > 
 > diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
-> index 08abf1ffede002..adebac1bd210d9 100644
+> index adebac1bd210d9..998b03fe976e22 100644
 > --- a/drivers/cdrom/cdrom.c
 > +++ b/drivers/cdrom/cdrom.c
-> @@ -1172,6 +1172,7 @@ int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode)
->  			ret = 0;
->  			cdi->media_written = 0;
->  		}
-> +		cdi->opened_for_data = true;
->  	}
+> @@ -1250,7 +1250,7 @@ static int check_for_audio_disc(struct cdrom_device_info *cdi,
+>  	return 0;
+>  }
 >  
->  	if (ret)
-> @@ -1252,7 +1253,6 @@ static int check_for_audio_disc(struct cdrom_device_info *cdi,
->  void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
+> -void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
+> +void cdrom_release(struct cdrom_device_info *cdi)
 >  {
 >  	const struct cdrom_device_ops *cdo = cdi->ops;
-> -	int opened_for_data;
 >  
->  	cd_dbg(CD_CLOSE, "entering cdrom_release\n");
+> diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
+> index 14922403983e9e..a401dc4218a998 100644
+> --- a/drivers/cdrom/gdrom.c
+> +++ b/drivers/cdrom/gdrom.c
+> @@ -481,7 +481,7 @@ static int gdrom_bdops_open(struct block_device *bdev, fmode_t mode)
+>  	bdev_check_media_change(bdev);
 >  
-> @@ -1270,14 +1270,12 @@ void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
->  		}
->  	}
->  
-> -	opened_for_data = !(cdi->options & CDO_USE_FFLAGS) ||
-> -		!(mode & FMODE_NDELAY);
-> -
->  	cdo->release(cdi);
-> -	if (cdi->use_count == 0) {      /* last process that closes dev*/
-> -		if (opened_for_data &&
-> -		    cdi->options & CDO_AUTO_EJECT && CDROM_CAN(CDC_OPEN_TRAY))
-> +
-> +	if (cdi->use_count == 0 && cdi->opened_for_data) {
-> +		if (cdi->options & CDO_AUTO_EJECT && CDROM_CAN(CDC_OPEN_TRAY))
->  			cdo->tray_move(cdi, 1);
-> +		cdi->opened_for_data = false;
->  	}
+>  	mutex_lock(&gdrom_mutex);
+> -	ret = cdrom_open(gd.cd_info, mode);
+> +	ret = cdrom_open(gd.cd_info);
+>  	mutex_unlock(&gdrom_mutex);
+>  	return ret;
 >  }
->  EXPORT_SYMBOL(cdrom_release);
+> diff --git a/drivers/scsi/sr.c b/drivers/scsi/sr.c
+> index 444c7efc14cba7..6d33120ee5ba85 100644
+> --- a/drivers/scsi/sr.c
+> +++ b/drivers/scsi/sr.c
+> @@ -512,7 +512,7 @@ static void sr_block_release(struct gendisk *disk, fmode_t mode)
+>  	struct scsi_cd *cd = scsi_cd(disk);
+>  
+>  	mutex_lock(&cd->lock);
+> -	cdrom_release(&cd->cdi, mode);
+> +	cdrom_release(&cd->cdi);
+>  	mutex_unlock(&cd->lock);
+>  
+>  	scsi_device_put(cd->device);
 > diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
-> index 0a5db0b0c958a1..385e94732b2cf1 100644
+> index 385e94732b2cf1..3f23d5239de254 100644
 > --- a/include/linux/cdrom.h
 > +++ b/include/linux/cdrom.h
-> @@ -64,6 +64,7 @@ struct cdrom_device_info {
->  	int (*exit)(struct cdrom_device_info *);
->  	int mrw_mode_page;
->  	__s64 last_media_change_ms;
-> +	bool opened_for_data;
->  };
+> @@ -102,7 +102,7 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
 >  
->  struct cdrom_device_ops {
+>  /* the general block_device operations structure: */
+>  int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
+> -extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
+> +void cdrom_release(struct cdrom_device_info *cdi);
+>  int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
+>  		unsigned int cmd, unsigned long arg);
+>  extern unsigned int cdrom_check_events(struct cdrom_device_info *cdi,
 > -- 
 > 2.39.2
 > 
 
 Looks good, thanks.
 
-Signed-off-by: Phillip Potter <phil@philpotter.co.uk>
+Signed-off-by: Phillip Potter <phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org>
 
 Regards,
 Phil
