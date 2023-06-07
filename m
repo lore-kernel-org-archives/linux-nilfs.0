@@ -1,59 +1,72 @@
-From: Jinpu Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 28/31] block: replace fmode_t with a block-specific type
- for block open flags
-Date: Wed, 7 Jun 2023 11:45:39 +0200
-Message-ID: <CAMGffEk2LB0CDqR6DJczhejkkyK1Q5Ybu-wJ_fr99O0fXa-pew@mail.gmail.com>
-References: <20230606073950.225178-1-hch@lst.de> <20230606073950.225178-29-hch@lst.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 01/31] block: also call ->open for incremental partition
+ opens
+Date: Wed, 7 Jun 2023 14:10:27 +0200
+Message-ID: <1b1e8640-7bc8-a213-9b6c-2eb0b843ece6@suse.de>
+References: <20230606073950.225178-1-hch@lst.de>
+ <20230606073950.225178-2-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ionos.com; s=google; t=1686131150; x=1688723150;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=79vzDiF+tHrnH1dRnmQpod9DfGlW5ryqo0lz5n79FPI=;
-        b=FJamJYdT3if+5bC5MiBpMp+FFu/lOoO4qwlYSJv9n0/h/OCDUjBN+06Y5+uXbPlxGg
-         WzF23UIBA7vCWADd8Vks7i2cG2U4opcA9P/78wHN/K4fj8HGhf6KnCl8YjjpgJJVnvlB
-         hiZSt/O06mq6yVTGbe1Xbm78hWMDypBHvsUI14YH2ldWO/fNP5glJNykhF7/3t13XEm8
-         J+PFP/ZVX+XFyUteBqBkDLqr81iNO7g4hjhPuN5y9T9TIVwh6rNLUX/Nk3vsBKiV6F+x
-         GXhYFeACevO08CL9xeeLqMtmWxMOgxDUBpFi70eYskDjDqEfgVaRrrjyxsUtCDN7+EvU
-         utwQ==
-In-Reply-To: <20230606073950.225178-29-hch-jcswGhMUV9g@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, "Md. Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Phillip Potter <phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Miquel Raynal <miquel.raynal-LDxbnhwyfcJBDgjK7y7TUQ@public.gmane.org>, Vignesh Raghavendra <vigneshr-l0cyMroinI0@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-btrfs
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:Content-Type:
+	Content-Transfer-Encoding:List-Subscribe:List-Help:List-Post:List-Archive:
+	List-Unsubscribe:List-Id:In-Reply-To:From:References:Cc:To:Subject:
+	MIME-Version:Date:Message-ID:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=26DD1JNriB3BllT89heIQseAjvU6ADgNs3dbfBkHYXQ=; b=vToDxCn/Jag1Px
+	UMm8aa/P9Q0UDXb2MMNNdvjp0pMfdY1yPxRol5u3E9XmVmfI4GHwAfCe8QmfRtaljRdoQfLMzj0vW
+	QkYlU349ItjTdbFaFXi9zs57gyTxuFRVLsh7YUXqZ69nHZVvTp6QshiMChA4lGJGMGMI0ut4FbBV4
+	mgLHfC24+3GeWS6T8naMyeuVKsB9q19bcBOMV1hMsxTL/jE7YTXLkYhsnHcaU9B5dWoRz0qGOUVt1
+	nbVi+OHiHQ/Mi+Knf5+hzdFv1vEuQ+Ed+jU1+ExEzYUoYHbND01CfoB4ElrhKhYUPwYfKCYhjGXTu
+	4wmd3ebzN7T/ctO8SYLg==;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1686139831; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=VqcjXu0CZTTpOZmrsxN0Wk6sBEC02dewC7QyNvd2soI=;
+	b=IHfmh7S/uiagddCbXIRJmosPllrO40PYEOdRWLxIJcakAcNIU++BrgHVQz0wc7LcQAKKzC
+	PPRnjWo+UKOWnOBcyWCCyUZkDBITx9Cp6jogvlX5nqnl/7EZ1E52mDDTaguTf4aV9jJ4YH
+	Y0E8fz71thAZEe372iOj6DPRk6Att+g=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1686139831;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=VqcjXu0CZTTpOZmrsxN0Wk6sBEC02dewC7QyNvd2soI=;
+	b=MkcUMKJtjBchJhTKblNCrLqdAmaj8HslDTq0hIfVSuBi5J7Ox9FYzyAcm0vHDIQaJJ1iFw
+	8q1qSbcsmckQBWBA==
+Content-Language: en-US
+In-Reply-To: <20230606073950.225178-2-hch@lst.de>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-um/>
+List-Post: <mailto:linux-um@lists.infradead.org>
+List-Help: <mailto:linux-um-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-um" <linux-um-bounces@lists.infradead.org>
+Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kerne
 
-On Tue, Jun 6, 2023 at 9:41=E2=80=AFAM Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote=
-:
->
-> The only overlap between the block open flags mapped into the fmode_t and
-> other uses of fmode_t are FMODE_READ and FMODE_WRITE.  Define a new
-> blk_mode_t instead for use in blkdev_get_by_*, ->open and ->ioctl and
-> stop abusing fmode_t.
->
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+On 6/6/23 09:39, Christoph Hellwig wrote:
+> For whole devices ->open is called for each open, but for partitions it
+> is only called on the first open of a partition.  This is problematic
+> as various block drivers look at open flags and might not do all setup
+> for ioctl only or NDELAY opens.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  arch/um/drivers/ubd_kern.c          |  8 +++---
->  arch/xtensa/platforms/iss/simdisk.c |  2 +-
->  block/bdev.c                        | 32 +++++++++++-----------
->  block/blk-zoned.c                   |  8 +++---
->  block/blk.h                         | 11 ++++----
->  block/fops.c                        | 26 +++++++++++++-----
->  block/genhd.c                       |  8 +++---
->  block/ioctl.c                       | 42 +++++++++--------------------
->  drivers/block/amiflop.c             | 12 ++++-----
->  drivers/block/aoe/aoeblk.c          |  4 +--
->  drivers/block/ataflop.c             | 25 +++++++++--------
->  drivers/block/drbd/drbd_main.c      |  7 ++---
->  drivers/block/drbd/drbd_nl.c        |  2 +-
->  drivers/block/floppy.c              | 28 +++++++++----------
->  drivers/block/loop.c                | 22 +++++++--------
->  drivers/block/mtip32xx/mtip32xx.c   |  4 +--
->  drivers/block/nbd.c                 |  4 +--
->  drivers/block/pktcdvd.c             | 17 ++++++------
->  drivers/block/rbd.c                 |  2 +-
->  drivers/block/rnbd/rnbd-clt.c       |  4 +--
->  drivers/block/rnbd/rnbd-srv.c       |  4 +--
-Acked-by: Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org> # for rnbd.
+>   block/bdev.c | 18 ++++++++----------
+>   1 file changed, 8 insertions(+), 10 deletions(-)
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+
+Cheers,
+
+Hannes
