@@ -1,65 +1,53 @@
 From: Christian Brauner <brauner@kernel.org>
-Subject: Re: [PATCH 16/31] block: use the holder as indication
- for exclusive opens
-Date: Wed, 7 Jun 2023 10:49:55 +0200
-Message-ID: <20230607-umtriebe-absicht-0b2232e4f212@brauner>
+Subject: Re: [PATCH 17/31] block: add a sb_open_mode helper
+Date: Wed, 7 Jun 2023 10:55:20 +0200
+Message-ID: <20230607-ballverlust-notstand-c4f9b36c6af4@brauner>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-17-hch@lst.de>
+ <20230606073950.225178-18-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Return-path: <linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=+DwSgaof5Ff9Diex7RS3TTV47dYszHEJKASYIHN3t9U=; b=S11Hix1EMFF+x4kzTQsWNrJB/B
- mCAiFK1F9Bo6ml9O4sPUTNTryTuvZVp2Tc4f9ZP53SX/Yl5W/Ucw0HF4uQJ21yVpUcxaU09VaOtPs
- zPr29+RvUxKC1l3C2SADIxLtvNSRmrL7A1u9Cp3qmjj971enm0cQOpipfmxndqtkDvzg=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=+DwSgaof5Ff9Diex7RS3TTV47dYszHEJKASYIHN3t9U=; b=iGjNSBZCI/NpNQDjWmhxgl/VSL
- f7THhh/+6SIX8uuEqDdttfsLB2SW2dSG0KYIHQ5swBAi2SK3ygG3V0rhLpjHjyP0QaE7kaQo6waHS
- FBSLIi/oNj3NXukOty8Ypegp3qB5dqiJY7mEp0SmJhNhE/i/yXq6oIQj9YZNpWrgNOqM=;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
+	Message-ID:Subject:Cc:To:From:Date:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=auHhI++f8n6VmcbTJS5muz+J2IZKATQG9Q3Y2NgiWmk=; b=uJbEG0F0PlR6bV
+	+vFaJCw+mc70qtsNFncSjVvWX66Q6sV+kDheQ9QXTKbdXkNbtXh/qTCr1y0QSdaVfZzU6ouxrZ/D0
+	Y7M5x5eFIX/VlwmugXUjL8KVGIAuB+fGmxi3Z9+qIhHU5p7SfAGpuI1/eJYn709wtKDFyJ1RxpT3F
+	qpn9nrY79XsDl5OmYRdM04QrZZjhCPK8SUWOB5IVJQ25Qi9clgRZ9ZHbbzFkoRhRX5DW8tHAhmEw+
+	5+GDphqQMsNoyhqX+j8R3i/JeJTtwTThmjPXn4Ur/+8ejmrBZy2hSR49Xplvjg5OZNDEz8bg1RLa4
+	fR+dl2BdlRtL89ekkVVg==;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
- s=k20201202; t=1686127803;
- bh=PZjCdaHviY+RVqpZkaQVixpnvUVrPR62Zf8+mzHD1uk=;
- h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
- b=psgkq590ELlnR3YewhzuAje3f6nLqAdxD2ks0a0ex7l9AURvWbDqzYkAaTTfQ3LRh
- lbjVPemFfDSDVxbPW+yVAYbVlRK2mYcGkDU+s9QomicwFqaBsiwabN/y6C+B9XbF7a
- TUp8gIDqcrYKdDf1/ALLYLXJICKJabskE/hFOC/X2WxRVUqsCWuBbuBtyCKTR3JcP5
- UshWyePpXwuCBpPQlRL5oU0JjL5XQDDGrzAY9Q4EpVcVDZmW/DwUYrjmVOzW63Jixr
- ioDpPQD0ktu/OZfW3TlmJmEpP8gCBlQwrZ8iPtiqN0Aky+ak3ORBZqrV1HDSve4xiN
- ZX/3XM7Ql6s/w==
+	s=k20201202; t=1686128128;
+	bh=FoyjSRZZap6QVtk4PUjAg/56aVYmk7Q/bKSVf+qsCpE=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=lbLPSEzx5CHmJxbGbMCZtSL+WOgA+Ir+19+KzebHBOcStdriYooqRFCT5Z85L5SBQ
+	 26HQ8bhocu6wvemqw13N0fGcVjMBRXTDOwCQLDmfzOEmX7ULrDVKcbEwQ6RgCJokv1
+	 LwwrPIPH7Dy4Dqq3Z1/wJFPI+nCdq9XhVYQv9lER7EKMRobBVVmCazkd0VI6FPwQYd
+	 0aqANlbYbCCg4IAbUW/09Y1bmFZmnmzbyNy0/ajwIsz0dA7ufP/Yer8+FEBJ0alkmD
+	 C7h1CsWGU6uOFwKET7Igjn6D9mKWpSspjotrIzNqf/5Wvwq23wfp2KPy2h5RhLAsAf
+	 pjxzISbJRmiew==
 Content-Disposition: inline
-In-Reply-To: <20230606073950.225178-17-hch@lst.de>
+In-Reply-To: <20230606073950.225178-18-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-um/>
+List-Post: <mailto:linux-um@lists.infradead.org>
+List-Help: <mailto:linux-um-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-um" <linux-um-bounces@lists.infradead.org>
+Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org
 To: Christoph Hellwig <hch@lst.de>
-Cc: Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org, Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>, Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org, linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, linux
+Cc: Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
 
-On Tue, Jun 06, 2023 at 09:39:35AM +0200, Christoph Hellwig wrote:
-> The current interface for exclusive opens is rather confusing as it
-> requires both the FMODE_EXCL flag and a holder.  Remove the need to pass
-> FMODE_EXCL and just key off the exclusive open off a non-NULL holder.
-> 
-> For blkdev_put this requires adding the holder argument, which provides
-> better debug checking that only the holder actually releases the hold,
-> but at the same time allows removing the now superfluous mode argument.
+On Tue, Jun 06, 2023 at 09:39:36AM +0200, Christoph Hellwig wrote:
+> Add a helper to return the open flags for blkdev_get_by* for passed in
+> super block flags instead of open coding the logic in many places.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
