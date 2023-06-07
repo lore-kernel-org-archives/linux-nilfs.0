@@ -1,72 +1,32 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 28/31] block: replace fmode_t with a block-specific
- type for block open flags
-Date: Wed, 7 Jun 2023 14:16:58 +0200
-Message-ID: <20230607121658.GA13632@lst.de>
-References: <20230606073950.225178-1-hch@lst.de> <20230606073950.225178-29-hch@lst.de> <20230607-kocht-kornfeld-a249c6740e38@brauner>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH 30/31] block: store the holder in file->private_data
+Date: Wed, 7 Jun 2023 14:18:50 +0200
+Message-ID: <20230607121850.GA14396@lst.de>
+References: <20230606073950.225178-1-hch@lst.de> <20230606073950.225178-31-hch@lst.de> <20230607-verjagen-weise-4fb3d76a6313@brauner>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-bcache-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20230607-kocht-kornfeld-a249c6740e38@brauner>
+In-Reply-To: <20230607-verjagen-weise-4fb3d76a6313@brauner>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: Christian Brauner <brauner@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, "Md. Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Phillip Potter <phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Miquel Raynal <miquel.raynal-LDxbnhwyfcJBDgjK7y7TUQ@public.gmane.org>, Vignesh Raghavendra <vigneshr-l0cyMroinI0@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nvme@lists.
 
-On Wed, Jun 07, 2023 at 11:21:14AM +0200, Christian Brauner wrote:
-> On Tue, Jun 06, 2023 at 09:39:47AM +0200, Christoph Hellwig wrote:
-> > The only overlap between the block open flags mapped into the fmode_t a=
-nd
-> > other uses of fmode_t are FMODE_READ and FMODE_WRITE.  Define a new
->=20
-> and FMODE_EXCL afaict
+On Wed, Jun 07, 2023 at 11:24:55AM +0200, Christian Brauner wrote:
+> On Tue, Jun 06, 2023 at 09:39:49AM +0200, Christoph Hellwig wrote:
+> > Store the file struct used as the holder in file->private_data as an
+> > indicator that this file descriptor was opened exclusively to  remove
+> > the last use of FMODE_EXCL.
+> > 
+> > Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> > ---
+> 
+> Feels a bit odd to store the object itself but anyway,
+> Acked-by: Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
-FMODE_EXCL isn't used outside the block layer and removed in the last
-patch.
+We could literally store anything we want.  The only reason I picked the
+file is because: a) we have it around and b) that allows passing it
+to blkdev_put without a branch in blkdev_release.
 
-> > +blk_mode_t file_to_blk_mode(struct file *file)
-> > +{
-> > +	blk_mode_t mode =3D 0;
-> > +
-> > +	if (file->f_mode & FMODE_READ)
-> > +		mode |=3D BLK_OPEN_READ;
-> > +	if (file->f_mode & FMODE_WRITE)
-> > +		mode |=3D BLK_OPEN_WRITE;
-> > +	if (file->f_mode & FMODE_EXCL)
-> > +		mode |=3D BLK_OPEN_EXCL;
-> > +	if ((file->f_flags & O_ACCMODE) =3D=3D 3)
->=20
-> I really don't like magic numbers like this.
-
-I don't like them either, but this is just moved around and not new.
-
-> Groan, O_RDONLY being defined as 0 strikes again...
-> Becuase of this quirk we internally map
->=20
-> O_RDONLY(0) -> FMODE_READ(1)
-> O_WRONLY(1) -> FMODE_WRITE(2)
-> O_RDWR(3)   -> (FMODE_READ | FMODE_WRITE)
-
-O_RDWR is 2.
-
-> so checking for the raw 3 here is confusing in addition to being a magic
-> number as it could give the impression that what's checked here is
-> (O_WRONLY | O_RDWR) which doesn't make sense...
-
-Well, that is exactly what we check for.  This is a 30-ish year old
-quirk only used in the floppy driver.
-
-> So my perference would be in descending order of preference:
->=20
-> (file->f_flags & O_ACCMODE) =3D=3D (FMODE_READ | FMODE_WRITE)
->=20
-> or while a little less clear but informative enough for people familiar
-> with the O_RDONLY quirk:
->=20
-> if ((file->f_flags & O_ACCMODE) =3D=3D O_ACCMODE)
-
-I don't understand this part.  Especially the above doesn't make
-any sense as FMODE_READ and FMODE_WRITE are in a completely different
-symbol space to O_*, and not a UAP=D0=86 but a kernel internal thing that
-could be renumbered any time.
+If you prefer something else I can change it.
