@@ -1,61 +1,46 @@
-From: Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH 08/31] block: share code between disk_check_media_change
- and disk_force_media_change
-Date: Wed, 7 Jun 2023 15:18:48 +0200
-Message-ID: <82a4143b-f800-09b9-98f2-6cda791877da@suse.de>
+From: David Sterba <dsterba@suse.cz>
+Subject: Re: [PATCH 15/31] btrfs: don't pass a holder for non-exclusive
+ blkdev_get_by_path
+Date: Wed, 7 Jun 2023 15:32:53 +0200
+Message-ID: <20230607133253.GO25292@twin.jikos.cz>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-9-hch@lst.de>
- <30183892-dce6-6946-2f7a-1bc693a657a2@suse.de>
- <20230607122131.GB14579@lst.de>
+ <20230606073950.225178-16-hch@lst.de>
+Reply-To: dsterba@suse.cz
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-        t=1686143929; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+Return-path: <linux-bcache-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1686145149;
+        h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+         cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Udh/Vtqb23Sw8g+BkC8HMo4Q973SRGdJCkPyY7KWLNs=;
-        b=AG50lh6cNYbwFkDgaT6ESY/6kXvuXC7sDHKKcw8pqjJuajtZFb5iJMjU+bUHLK8tmhUW/e
-        3ggaoVJAuSiXjFOzMcU4WcpaNZCGv6jm+/3d19A6Snff4yAvXS0PckIuYdEhm38+y+iNCH
-        we5Xow+88Kal0HjgD/hcxHzey97Vt2s=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-        s=susede2_ed25519; t=1686143929;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
+        bh=kvX+K1GPLsIpoFmWJX2s5gmxPQdlBYXQkV75nn7bEZM=;
+        b=QMstqGgedcYgY/d/rSGDFDlChRste65gtAtzSH+mlxXl5vEtulOq2TI/sCACizK7l4xAIA
+        Zug8XKFA7SpEs+Tfusy0dW9TRY25HOfO+RBfFn6tbKVwi3s66msfhIUZOO9bDHcakuZnvK
+        aOdFM2BAbO6jcrNhKt6b1QqrvqZHki4=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1686145149;
+        h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+         cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Udh/Vtqb23Sw8g+BkC8HMo4Q973SRGdJCkPyY7KWLNs=;
-        b=yrTu3ioEdQb/jvgg+opgbJOkJi/9oj9MdczoHd3QPBmppQ7hl9wTr/b/RUlZdWJ4DBVXYd
-        uqhxaF5C7dZDCxAA==
-Content-Language: en-US
-In-Reply-To: <20230607122131.GB14579-jcswGhMUV9g@public.gmane.org>
+        bh=kvX+K1GPLsIpoFmWJX2s5gmxPQdlBYXQkV75nn7bEZM=;
+        b=wiFEvVZJSCbh6tVWyAuV/c0zFOWqBvdMPHB2HTHPCfNySm7jDxfJJMoNpYlbzC7zNnQARu
+        aZxg6KqpACFRuUAg==
+Content-Disposition: inline
+In-Reply-To: <20230606073950.225178-16-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"; format="flowed"
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, "Md. Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Phillip Potter <phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Miquel Raynal <miquel.raynal-LDxbnhwyfcJBDgjK7y7TUQ@public.gmane.org>, Vignesh Raghavendra <vigneshr-l0cyMroinI0@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nvm
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvm
 
-On 6/7/23 14:21, Christoph Hellwig wrote:
-> On Wed, Jun 07, 2023 at 02:19:00PM +0200, Hannes Reinecke wrote:
->>> -	return true;
->>> +	return __disk_check_media_change(disk,
->>> +			disk_clear_events(disk, DISK_EVENT_MEDIA_CHANGE |
->>> +						DISK_EVENT_EJECT_REQUEST));
->>
->> Can you move the call to disk_clear_events() out of the call to
->> __disk_check_media_change()?
->> I find this pattern hard to read.
-> 
-> I suspect you've not done enough functional programming in your youth :)
+On Tue, Jun 06, 2023 at 09:39:34AM +0200, Christoph Hellwig wrote:
+> Passing a holder to blkdev_get_by_path when FMODE_EXCL isn't set doesn't
+> make sense, so pass NULL instead and remove the holder argument from the
+> call chains the only end up in non-FMODE_EXCL blkdev_get_by_path calls.
 
-That's why I said 'I find'; purely personal preference.
-If you're happy with:
+Please add
 
-Reviewed-by: Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
+"Exclusive mode for device scanning is not used since 50d281fc434c
+ ("btrfs: scan device in non-exclusive mode")."
 
-Cheers,
-
-Hannes
-(In my youth? One is tempted to quote Falco: "If you remember the '90s 
-you haven't experienced them...")
-
+Acked-by: David Sterba <dsterba@suse.com>
