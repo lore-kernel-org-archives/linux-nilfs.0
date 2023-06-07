@@ -1,9 +1,10 @@
 From: Christian Brauner <brauner@kernel.org>
-Subject: Re: [PATCH 18/31] fs: remove sb->s_mode
-Date: Wed, 7 Jun 2023 10:56:29 +0200
-Message-ID: <20230607-fliehen-abwurf-56e4abb8cc2a@brauner>
+Subject: Re: [PATCH 19/31] scsi: replace the fmode_t argument to
+ scsi_cmd_allowed with a simple bool
+Date: Wed, 7 Jun 2023 10:57:57 +0200
+Message-ID: <20230607-lider-beilegen-479e8cf3bf53@brauner>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-19-hch@lst.de>
+ <20230606073950.225178-20-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -14,24 +15,24 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
 	Message-ID:Subject:Cc:To:From:Date:Reply-To:Content-ID:Content-Description:
 	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=lbQ+kdVdX0BDaXL/E7ThhUXOvEQSgyIV4j0D1FH1cr4=; b=KUyDFUTT97De5S
-	pwGP1YDU5EyT0BBCOnrXZdM7BS/v3ef2Z3JQ3rzWiyc+TvE06Os3O6yRNmE8xtQa2OrHFxqcrLutt
-	kcnRAbrBhP0SDySZhm9D9T1Wv0GHlT+3dSQEV2ztHYGC+q60R5KclUD4BVaTYPd0B8N/2Gc6iKVSi
-	0JBj6bFLPa1XuEvarD5hNHIprDeIxBwdHWxWQI1W3VEPfQN9g1WFLxfT0/YecwAWg7CR/vwP1o7k1
-	+PLvpp/cbJt8tO15dQIdwrR6+l+KIxPyDDk/gdFUlxYfcOIZE9Ps8RjZIcFZPSwjMyVzNtU9d0aOr
-	hFIGKbuv10CAW5+vaO2Q==;
+	List-Owner; bh=Wa/rV+545v9HFF8PvH5yJhpSoplAyqKdtSoVGh5bUWk=; b=CuudFJ5kP2SE+3
+	XKDb1t5i1ayi8vwg+1t2zH5TNmioQTqAnEUx/UeTF5gLnT7tCJczSpviOx4rPzVvXw7KFhryV8utK
+	S5GLRCjcsnPPO3zQkMUEQwkJfBwHG2qN5xJLxaMcNuxTYNaia7Zt+AD7tbm64n2eWPY4RomyscvCB
+	zxeH8fgmuVowsLAcKbz3g5z/VxC8ipuY9iZVtLMrXbOxRmIu5f9nZiHBKBVFZexA8MXk4/CdBCLL7
+	6nUdi6inW6RWk3RVe1umC0VJiQYrd+UWF5EIxzof0Xj5s9yuU4yXq9qQEuzaVdiHyIaXMQlCJQoSr
+	hTFhowuPBqJVkUJySZng==;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1686128198;
-	bh=XuHwZ7uaJVjyv+iO/vUQkX77q29hjzoGO5w56uvjEOo=;
+	s=k20201202; t=1686128285;
+	bh=SIZ+eCgOkog+Q4s3tUge5LH3sx300bb23Eun6BFPrew=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=DeEXqe9gjxY57lITqd/lXcoE1Ca1KQPvngcywi2EuF55EYz48E3pBAh+rBHch2qBA
-	 ypy5YdNuEogegS0vPCR+mV99Mk5TjM1rLBF97+R9HX9ukYW6ykKDq2gqNInuZMB6Ay
-	 XHzbm7kvaBLnWy14BEPIjrerESWXdSFPaBlrm0swncJDI/92I5eylBFX/moeEz7CG1
-	 vaPZG0fzC0csi3IKOuDwjj7N745wxtG3agr3NgG0FuEl8trHhZ//gdGhKV06s6qy39
-	 mpg9F8OAP6YYyEg/4+2k3U5GSd1wxRxtUnh4mR7ZFx9c5gnEAxwjVBNp5aPITn0SFx
-	 tka8Sp1jBTEXw==
+	b=LYAEqX6oV7TKK7FpSkgUsEVya9xhUy/JPhJiRGLYoOYHWT1I2ULOK7XHs64TXfoFn
+	 mK0rDwRkYd2/GYZAlZLwNyS+CJKOhsomUkO8JCiKie8dl/BRiOTeonBmS4PvPu6ieF
+	 sVIi5srBClDyYqHINc4pZYt7suQ3BTKRABwS7pHU3VKKSKaLzQS0g/VYlh9aDEEczz
+	 eubVSLgoReF59GWwxGcQxODeBBcSFZ44sZs5+J+yLbcDPSbVuucJrs8YJ3B1hEkc9m
+	 wEFyAXRiqWDpxiHtJcXt54WBqY8AcSWZsAoORertZk2ph2t6aW4EyYiUKsHKNUhrA8
+	 yd5W3CUGhJ54A==
 Content-Disposition: inline
-In-Reply-To: <20230606073950.225178-19-hch@lst.de>
+In-Reply-To: <20230606073950.225178-20-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
  <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
@@ -45,9 +46,9 @@ Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infr
 To: Christoph Hellwig <hch@lst.de>
 Cc: Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
 
-On Tue, Jun 06, 2023 at 09:39:37AM +0200, Christoph Hellwig wrote:
-> There is no real need to store the open mode in the super_block now.
-> It is only used by f2fs, which can easily recalculate it.
+On Tue, Jun 06, 2023 at 09:39:38AM +0200, Christoph Hellwig wrote:
+> Instead of passing a fmode_t and only checking it for FMODE_WRITE, pass
+> a bool open_for_write to prepare for callers that won't have the fmode_t.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
