@@ -1,24 +1,25 @@
 From: Jinpu Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 24/31] rnbd-srv: replace sess->open_flags with a "bool readonly"
-Date: Wed, 7 Jun 2023 11:43:28 +0200
-Message-ID: <CAMGffEnM-XmQWjBu8EmXxFPouH9uQX45gL2PFW5vQJu5OaaYjA@mail.gmail.com>
-References: <20230606073950.225178-1-hch@lst.de> <20230606073950.225178-25-hch@lst.de>
+Subject: Re: [PATCH 28/31] block: replace fmode_t with a block-specific type
+ for block open flags
+Date: Wed, 7 Jun 2023 11:45:39 +0200
+Message-ID: <CAMGffEk2LB0CDqR6DJczhejkkyK1Q5Ybu-wJ_fr99O0fXa-pew@mail.gmail.com>
+References: <20230606073950.225178-1-hch@lst.de> <20230606073950.225178-29-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ionos.com; s=google; t=1686131019; x=1688723019;
+        d=ionos.com; s=google; t=1686131150; x=1688723150;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=h7De2dV56C4HlWldqRhiqrthNBSi3YmqE+PsGIwemH4=;
-        b=Fxs73X18plukFoRmWCEATURAToiPof++AhV2rd1/T2MKXGmjDCPWn+q8ZXibWIJoCl
-         fHfu9DBj0R01NVvwasXQiY0lKT1FhoYR2X+c5jE2FnzXFR9NQ6iXute09sA4dYi5/gck
-         psOWHas6uKWqFB5zNcQ7IrWLWew12mqmJwAS2YNr2ADMxS+LziF4JcFGcR/G6Q7NeZ7C
-         gnc9umHxHhpwxSNb/FTgvTAZTX6T0jxAAcpIFEs4lHfCZdM6nb4VJD4c8dc11CL9vYmB
-         PP/GUtutiKFcuL2dMJlAWegEn3D5UBxmkW546B+kzx0X64ETqnOp9+wz6iaKHcNDX6z+
-         mItQ==
-In-Reply-To: <20230606073950.225178-25-hch-jcswGhMUV9g@public.gmane.org>
+        bh=79vzDiF+tHrnH1dRnmQpod9DfGlW5ryqo0lz5n79FPI=;
+        b=FJamJYdT3if+5bC5MiBpMp+FFu/lOoO4qwlYSJv9n0/h/OCDUjBN+06Y5+uXbPlxGg
+         WzF23UIBA7vCWADd8Vks7i2cG2U4opcA9P/78wHN/K4fj8HGhf6KnCl8YjjpgJJVnvlB
+         hiZSt/O06mq6yVTGbe1Xbm78hWMDypBHvsUI14YH2ldWO/fNP5glJNykhF7/3t13XEm8
+         J+PFP/ZVX+XFyUteBqBkDLqr81iNO7g4hjhPuN5y9T9TIVwh6rNLUX/Nk3vsBKiV6F+x
+         GXhYFeACevO08CL9xeeLqMtmWxMOgxDUBpFi70eYskDjDqEfgVaRrrjyxsUtCDN7+EvU
+         utwQ==
+In-Reply-To: <20230606073950.225178-29-hch-jcswGhMUV9g@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="windows-1252"
 To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
@@ -27,117 +28,32 @@ Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Richard Weinberg
 On Tue, Jun 6, 2023 at 9:41=E2=80=AFAM Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote=
 :
 >
-> Stop passing the fmode_t around and just use a simple bool to track if
-> an export is read-only.
+> The only overlap between the block open flags mapped into the fmode_t and
+> other uses of fmode_t are FMODE_READ and FMODE_WRITE.  Define a new
+> blk_mode_t instead for use in blkdev_get_by_*, ->open and ->ioctl and
+> stop abusing fmode_t.
 >
 > Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Acked-by: Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>
 > ---
->  drivers/block/rnbd/rnbd-srv-sysfs.c |  3 +--
->  drivers/block/rnbd/rnbd-srv.c       | 15 +++++++--------
->  drivers/block/rnbd/rnbd-srv.h       |  2 +-
->  3 files changed, 9 insertions(+), 11 deletions(-)
->
-> diff --git a/drivers/block/rnbd/rnbd-srv-sysfs.c b/drivers/block/rnbd/rnb=
-d-srv-sysfs.c
-> index d5d9267e1fa5e4..ebd95771c85ec7 100644
-> --- a/drivers/block/rnbd/rnbd-srv-sysfs.c
-> +++ b/drivers/block/rnbd/rnbd-srv-sysfs.c
-> @@ -88,8 +88,7 @@ static ssize_t read_only_show(struct kobject *kobj, str=
-uct kobj_attribute *attr,
->
->         sess_dev =3D container_of(kobj, struct rnbd_srv_sess_dev, kobj);
->
-> -       return sysfs_emit(page, "%d\n",
-> -                         !(sess_dev->open_flags & FMODE_WRITE));
-> +       return sysfs_emit(page, "%d\n", sess_dev->readonly);
->  }
->
->  static struct kobj_attribute rnbd_srv_dev_session_ro_attr =3D
-> diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.=
-c
-> index 29d560472d05ba..b680071342b898 100644
-> --- a/drivers/block/rnbd/rnbd-srv.c
-> +++ b/drivers/block/rnbd/rnbd-srv.c
-> @@ -222,7 +222,7 @@ void rnbd_destroy_sess_dev(struct rnbd_srv_sess_dev *=
-sess_dev, bool keep_id)
->         blkdev_put(sess_dev->bdev, NULL);
->         mutex_lock(&sess_dev->dev->lock);
->         list_del(&sess_dev->dev_list);
-> -       if (sess_dev->open_flags & FMODE_WRITE)
-> +       if (!sess_dev->readonly)
->                 sess_dev->dev->open_write_cnt--;
->         mutex_unlock(&sess_dev->dev->lock);
->
-> @@ -561,7 +561,7 @@ static void rnbd_srv_fill_msg_open_rsp(struct rnbd_ms=
-g_open_rsp *rsp,
->  static struct rnbd_srv_sess_dev *
->  rnbd_srv_create_set_sess_dev(struct rnbd_srv_session *srv_sess,
->                               const struct rnbd_msg_open *open_msg,
-> -                             struct block_device *bdev, fmode_t open_fla=
-gs,
-> +                             struct block_device *bdev, bool readonly,
->                               struct rnbd_srv_dev *srv_dev)
->  {
->         struct rnbd_srv_sess_dev *sdev =3D rnbd_sess_dev_alloc(srv_sess);
-> @@ -576,7 +576,7 @@ rnbd_srv_create_set_sess_dev(struct rnbd_srv_session =
-*srv_sess,
->         sdev->bdev              =3D bdev;
->         sdev->sess              =3D srv_sess;
->         sdev->dev               =3D srv_dev;
-> -       sdev->open_flags        =3D open_flags;
-> +       sdev->readonly          =3D readonly;
->         sdev->access_mode       =3D open_msg->access_mode;
->
->         return sdev;
-> @@ -681,13 +681,12 @@ static int process_msg_open(struct rnbd_srv_session=
- *srv_sess,
->         struct rnbd_srv_sess_dev *srv_sess_dev;
->         const struct rnbd_msg_open *open_msg =3D msg;
->         struct block_device *bdev;
-> -       fmode_t open_flags;
-> +       fmode_t open_flags =3D FMODE_READ;
->         char *full_path;
->         struct rnbd_msg_open_rsp *rsp =3D data;
->
->         trace_process_msg_open(srv_sess, open_msg);
->
-> -       open_flags =3D FMODE_READ;
->         if (open_msg->access_mode !=3D RNBD_ACCESS_RO)
->                 open_flags |=3D FMODE_WRITE;
->
-> @@ -736,9 +735,9 @@ static int process_msg_open(struct rnbd_srv_session *=
-srv_sess,
->                 goto blkdev_put;
->         }
->
-> -       srv_sess_dev =3D rnbd_srv_create_set_sess_dev(srv_sess, open_msg,
-> -                                                    bdev, open_flags,
-> -                                                    srv_dev);
-> +       srv_sess_dev =3D rnbd_srv_create_set_sess_dev(srv_sess, open_msg,=
- bdev,
-> +                               open_msg->access_mode =3D=3D RNBD_ACCESS_=
-RO,
-> +                               srv_dev);
->         if (IS_ERR(srv_sess_dev)) {
->                 pr_err("Opening device '%s' on session %s failed, creatin=
-g sess_dev failed, err: %ld\n",
->                        full_path, srv_sess->sessname, PTR_ERR(srv_sess_de=
-v));
-> diff --git a/drivers/block/rnbd/rnbd-srv.h b/drivers/block/rnbd/rnbd-srv.=
-h
-> index f5962fd31d62e4..76077a9db3dd55 100644
-> --- a/drivers/block/rnbd/rnbd-srv.h
-> +++ b/drivers/block/rnbd/rnbd-srv.h
-> @@ -52,7 +52,7 @@ struct rnbd_srv_sess_dev {
->         struct kobject                  kobj;
->         u32                             device_id;
->         bool                            keep_id;
-> -       fmode_t                         open_flags;
-> +       bool                            readonly;
->         struct kref                     kref;
->         struct completion               *destroy_comp;
->         char                            pathname[NAME_MAX];
-> --
-> 2.39.2
->
+>  arch/um/drivers/ubd_kern.c          |  8 +++---
+>  arch/xtensa/platforms/iss/simdisk.c |  2 +-
+>  block/bdev.c                        | 32 +++++++++++-----------
+>  block/blk-zoned.c                   |  8 +++---
+>  block/blk.h                         | 11 ++++----
+>  block/fops.c                        | 26 +++++++++++++-----
+>  block/genhd.c                       |  8 +++---
+>  block/ioctl.c                       | 42 +++++++++--------------------
+>  drivers/block/amiflop.c             | 12 ++++-----
+>  drivers/block/aoe/aoeblk.c          |  4 +--
+>  drivers/block/ataflop.c             | 25 +++++++++--------
+>  drivers/block/drbd/drbd_main.c      |  7 ++---
+>  drivers/block/drbd/drbd_nl.c        |  2 +-
+>  drivers/block/floppy.c              | 28 +++++++++----------
+>  drivers/block/loop.c                | 22 +++++++--------
+>  drivers/block/mtip32xx/mtip32xx.c   |  4 +--
+>  drivers/block/nbd.c                 |  4 +--
+>  drivers/block/pktcdvd.c             | 17 ++++++------
+>  drivers/block/rbd.c                 |  2 +-
+>  drivers/block/rnbd/rnbd-clt.c       |  4 +--
+>  drivers/block/rnbd/rnbd-srv.c       |  4 +--
+Acked-by: Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org> # for rnbd.
