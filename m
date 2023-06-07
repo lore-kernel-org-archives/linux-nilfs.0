@@ -1,61 +1,98 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 05/31] cdrom: track if a cdrom_device_info
- was opened for data
-Date: Wed, 7 Jun 2023 14:20:41 +0200
-Message-ID: <20230607122041.GA14579@lst.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 10/31] block: remove the unused mode argument to ->release
+Date: Wed, 7 Jun 2023 14:20:50 +0200
+Message-ID: <bb59f7f1-0d12-ed28-9754-7027959ada0b@suse.de>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-6-hch@lst.de>
- <a7524776-f4c3-147a-cfa5-da92d2f877bb@suse.de>
+ <20230606073950.225178-11-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Return-path: <linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=RJ1GSjR2F6lCrABgtv3NbFxnpIDYWRxGJMlZdi7mqNA=; b=MLamoVFeKVdk83FvdYDhMp6DL5
- CZSPz9u/RlkqLNHlli+y9/7gjo/VkzXd0fnpocq7Zy/Ufyyo/+xxhOdYg9/P/uQ+OQ1wOWui3G+sZ
- Xo0jDTEMucNpwVtUJVBFRXqFjyhSdyiKX7zJPZT/cFP6zUdDCbMiA5xGm54DNUAY1r/c=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=RJ1GSjR2F6lCrABgtv3NbFxnpIDYWRxGJMlZdi7mqNA=; b=h9lSxbpbR/pDx3qt1NZswbVF+r
- QMyyne4moWSk4MGfRlAaRywd2xgknU5+/IDWfljy+lK9ubwV0nS4zyVcQnatYEPxvcKwqWuJbOwdh
- QxeMuR3VTyxdxIqt2cJpqs8nzV725QTk0Cw/ZB5bpVxScRs0+Y/Ckdopq6XbyfC1xlWQ=;
-Content-Disposition: inline
-In-Reply-To: <a7524776-f4c3-147a-cfa5-da92d2f877bb@suse.de>
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:Content-Type:
+	Content-Transfer-Encoding:List-Subscribe:List-Help:List-Post:List-Archive:
+	List-Unsubscribe:List-Id:In-Reply-To:From:References:Cc:To:Subject:
+	MIME-Version:Date:Message-ID:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=pZf/k7i2e1PfqP1u6ky3YLMcMeR3hHUcovmqktZtuDY=; b=oOvG8APflLVAqV
+	XyTPIapkE9alWHR4zB48d16YYjl7zM1OqStXP7unWQz45dxQFekQ2qnxKQW5UcnJRrOPUcCEtv+hU
+	DDyzHdw+hiPOE843Do3Swyj4RcjPf6oMmLLfUqUw0vGeH5oZFBnC1W4ZaDPDqCK7krDxeoewyzAG1
+	PCNUeDlpTgHXhFEFceQ6nrgrdt7x6y/Qt2vNqcbGh+UlkTr79I/tdfWzw13yy7k/UNHHjYkfLMKkk
+	FV2xN3gWEXG8eDdMGebOiYZK+ghDbTDVOj21H/wf8CfBAZykpk3OsSqKdXGZuVXpuNmHwoDlbncyN
+	T6tdeCEnO6u6Nofl4GMw==;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1686140450; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=W1Rl1qGqvM4Z5x8Xq+CyMv3eUpGokjis8a1uEGHT2oM=;
+	b=NtfJezGisqgVMGMlpHu5h7lKBliQJSnIU40FJjYFHclq1pJ2yccwB2gCrQVYr/XEAgBe//
+	SwWqpD3W1ozsd6dyaotuzbIDg6Oacufyt0jV/rrLR+MxmjDwaQJv56xVitpaNX1eUWndRD
+	n4xYwVUPyj+t5hxm3UfoFljrLDNuTx4=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1686140450;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=W1Rl1qGqvM4Z5x8Xq+CyMv3eUpGokjis8a1uEGHT2oM=;
+	b=zQ5xWW4Z2foG7bGxNOdFosbyzeVEHPlunA2KDXAT7USZKkViaz3OAfkcgfavN420ThY0SP
+	Jl33OjNpQS/R7bCg==
+Content-Language: en-US
+In-Reply-To: <20230606073950.225178-11-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Hannes Reinecke <hare@suse.de>
-Cc: Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org, Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>, Jack Wang <jinpu.wang@ionos.com>, Christoph Hellwig <hch@lst.de>, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org, linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-f2fs-devel@lists.sourceforge.
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-um/>
+List-Post: <mailto:linux-um@lists.infradead.org>
+List-Help: <mailto:linux-um-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-um" <linux-um-bounces@lists.infradead.org>
+Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kerne
 
-On Wed, Jun 07, 2023 at 02:13:33PM +0200, Hannes Reinecke wrote:
->> +++ b/include/linux/cdrom.h
->> @@ -64,6 +64,7 @@ struct cdrom_device_info {
->>   	int (*exit)(struct cdrom_device_info *);
->>   	int mrw_mode_page;
->>   	__s64 last_media_change_ms;
->> +	bool opened_for_data;
->>   };
->>     struct cdrom_device_ops {
->
-> Do we care about alignment here?
-> integer followed by a 64 bit value followed by a bool seems
-> like an automatic padding to me ...
+On 6/6/23 09:39, Christoph Hellwig wrote:
+> The mode argument to the ->release block_device_operation is never used,
+> so remove it.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>   arch/um/drivers/ubd_kern.c          |  4 ++--
+>   arch/xtensa/platforms/iss/simdisk.c |  2 +-
+>   block/bdev.c                        | 14 +++++++-------
+>   drivers/block/amiflop.c             |  2 +-
+>   drivers/block/aoe/aoeblk.c          |  2 +-
+>   drivers/block/ataflop.c             |  4 ++--
+>   drivers/block/drbd/drbd_main.c      |  4 ++--
+>   drivers/block/floppy.c              |  2 +-
+>   drivers/block/loop.c                |  2 +-
+>   drivers/block/nbd.c                 |  2 +-
+>   drivers/block/pktcdvd.c             |  4 ++--
+>   drivers/block/rbd.c                 |  2 +-
+>   drivers/block/rnbd/rnbd-clt.c       |  2 +-
+>   drivers/block/swim.c                |  2 +-
+>   drivers/block/swim3.c               |  3 +--
+>   drivers/block/z2ram.c               |  2 +-
+>   drivers/cdrom/gdrom.c               |  2 +-
+>   drivers/md/bcache/super.c           |  2 +-
+>   drivers/md/dm.c                     |  2 +-
+>   drivers/md/md.c                     |  2 +-
+>   drivers/mmc/core/block.c            |  2 +-
+>   drivers/mtd/mtd_blkdevs.c           |  2 +-
+>   drivers/mtd/ubi/block.c             |  2 +-
+>   drivers/nvme/host/core.c            |  2 +-
+>   drivers/nvme/host/multipath.c       |  2 +-
+>   drivers/s390/block/dasd.c           |  2 +-
+>   drivers/s390/block/dcssblk.c        |  4 ++--
+>   drivers/scsi/sd.c                   |  3 +--
+>   drivers/scsi/sr.c                   |  2 +-
+>   include/linux/blkdev.h              |  2 +-
+>   30 files changed, 41 insertions(+), 43 deletions(-)
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
-I don't think the structure matter much here, but placing it before
-last_media_change_ms still seems better.  I'll change it.
+Cheers,
+
+Hannes
