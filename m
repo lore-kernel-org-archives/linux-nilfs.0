@@ -1,10 +1,10 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH 20/31] scsi: replace the fmode_t argument to scsi_ioctl
- with a simple bool
-Date: Wed, 07 Jun 2023 21:17:42 -0400
-Message-ID: <yq1cz264us2.fsf@ca-mkp.ca.oracle.com>
+Subject: Re: [PATCH 19/31] scsi: replace the fmode_t argument to
+ scsi_cmd_allowed with a simple bool
+Date: Wed, 07 Jun 2023 21:18:12 -0400
+Message-ID: <yq17cse4ur8.fsf@ca-mkp.ca.oracle.com>
 References: <20230606073950.225178-1-hch@lst.de>
-	<20230606073950.225178-21-hch@lst.de>
+	<20230606073950.225178-20-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,28 +16,28 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	References:Message-ID:From:Subject:Cc:To:Reply-To:Content-ID:
 	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
 	:Resent-Message-ID:List-Owner;
-	bh=BevKBuNxLWDyhUiYjt2zlqjEp1Yibc1syhKB7CiDipA=; b=lKdMIDUlcNC4wViEN2ZVYEhkVs
-	zL3BSVp05xqQTN8NfwMk+6h01KkXeERjA/5UZ4OebTrUZZprKO66X8intqKtxYWVuQ/1f64pQ7YdI
-	fEDLDonMCt4CmWEi2lieVjB3KXMdX9/HwakASY+hZJjWZzCsRtUF/2ruczNltt4HO1Y5e0LAjWcWq
-	qy2D5hccF5EBEo9DD0jGk5ctNWGQKcJdNHi2jAa4j6G7KoOVcKrUE/EaTz/9bnW3aeHjOwje+8V+P
-	qRV/EgWIyoxE3xrOZGfljkKbv1cv20/97JT+OL1zajVwpiwVvlt0T/LfNNgYPqVlUi2bHyxWZ2k/V
-	yFs02QZA==;
+	bh=BevKBuNxLWDyhUiYjt2zlqjEp1Yibc1syhKB7CiDipA=; b=dOUkTyMUOF8sy7/pk72f1SdsL9
+	nr1ZRwFJK61EGtAF7kBn4gmy0kf6xKMfltOx3IEMfhANonJNMsES42pUKvYfd5oHEcnqs4XNs8/KZ
+	qAIV5EeUxx401+VgRIoE3SS6ZpDjuIDn4iLr+KwAqYrkMTS2J5U81r3WIIZxNMEyr6Y1/Z7wFZUMs
+	hVsmmyLOSOZV7Vn9fTJHi18z9DjqFSaEluUwTjeMN9hS7oopvvSCub+PP2DGJYuWWVBJIAw4/yMTo
+	GSUYFIyQdTKV4+jrDUUl+SI6sS63Cg2kGrhUq0KekKghMk3WbEaL1HijtcdLUyztZ51FS6YAuZago
+	4nqfbBxA==;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=to : cc : subject :
  from : message-id : references : date : in-reply-to : content-type :
  mime-version; s=corp-2023-03-30;
  bh=ZeTayBQmXEfkeiVK5cec74SvX2/0lEMAt3GDAZktehA=;
- b=v4/CXlJ/iBy22vMpAp7g20FImsP9uXza8CjxceCn+7u8u1SZeK+aS/1jsQFbvJQgTx23
- 8cJmTZky/ScfZHWmcj5hOAnoEsN/Q1PyxPSPsl+entrheXNxcaXwnjzAQo4jKZOQp4bh
- phUnMCBmuc2LNvabK0cjYJoTEoDIfMpYtkiEMpt40pyggrFxsQhwWoC8ohhvoQLPp+SF
- FSBxFDCHr1v+sHSGp7O6+XJcdtfwuSg8BvDx/2vj6V8r7OrqwHQdzBaSnrlNfK2YRvaN
- zuoDWXwqKSHoEEWa8qt+Nocv72u4ID3DNB/6FEhii8OWE7Tli/dUZB9DJI/o9IRFey2z Hg== 
+ b=2/uambdYLh5UaQ/Mck1BA8lVwwZTMC2kA7TtLCfsuAdSeI6e4jXRwsSJjWjRCiCFITDg
+ CrCH+bCm/wEawp2TWgvQjlYpgKUFwWqV4blwFYgGyXP5++mJITY4AqfnWDjZQPd5DkXy
+ 6YnPx7exqr9dcbL1khWZZ+x+FTBcS9HND4ohPKHzTNWTUqkqk6isE7DRx1idn52neLbA
+ UJpXaI/uN/mt0mTi+J7yMid+thNDoGLC68J2BR1Ui+57AYkQUSGUg6pDtHUAw8dDJPbo
+ 874Nco73hsfKV2WzCx+Sc0dDEMscMAESlWlgtkl+FIyZsg4IZplQlgidKrnIWs/aNL9l rQ== 
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
  bh=ZeTayBQmXEfkeiVK5cec74SvX2/0lEMAt3GDAZktehA=;
- b=XnamG+cZow3vCiLBE47Klt7Bl8LKFa0t2auFId2oMR53kybnv4W9qaIix2fHyxfOLp2HzdKXUxJIiTZC35n1fN7D1HK4ZRCNrecpNAPRNLaMqDpAmWUcbqKAIHbXmShhJ+88xB78hWaiyicnEL7IfOsc78YrYGS8D3xNvpgEYrM=
-In-Reply-To: <20230606073950.225178-21-hch@lst.de> (Christoph Hellwig's
-	message of "Tue, 6 Jun 2023 09:39:39 +0200")
+ b=AzaepLL2qbJiwzkeasEtbeSPn+GJaGPIGx1jejbnx7BfYjDm+cSvlEHu12SZFYACf3SfXCSj+dax4EG4RNVhos7x5xNP+mh+p35fbSftUl50VVdGC5SgJ7Wc5GonA3pBUvykZb8PyiuKOOpGyXzOZzN6ZhWDLs9sRaJI0GpIjGU=
+In-Reply-To: <20230606073950.225178-20-hch@lst.de> (Christoph Hellwig's
+	message of "Tue, 6 Jun 2023 09:39:38 +0200")
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
  <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
