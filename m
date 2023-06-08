@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 04/30] cdrom: remove the unused cdrom_close_write release code
-Date: Thu,  8 Jun 2023 13:02:32 +0200
-Message-ID: <20230608110258.189493-5-hch@lst.de>
+Subject: [PATCH 05/30] cdrom: track if a cdrom_device_info was opened for data
+Date: Thu,  8 Jun 2023 13:02:33 +0200
+Message-ID: <20230608110258.189493-6-hch@lst.de>
 References: <20230608110258.189493-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,12 +13,12 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	List-Archive:List-Unsubscribe:List-Id:MIME-Version:References:In-Reply-To:
 	Message-Id:Date:Subject:Cc:To:From:Reply-To:Content-ID:Content-Description:
 	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=ac+a18GQwY5NrY5C53CS7EnFHnxKNuxfsoHfKC/unyY=; b=ehwEi/mANGKWXb
-	Y5Yc7PkwOVQoy1Lqb94iVLAuQ8QQKPHhAMHq70MYoY767hiktnylg0K2jgoeSsUG0yzlaxR/1tPjI
-	ZQYgTQYfFsyHvfjyEJbeHI6RD8pUeWrwFReDm4vbOGisDYD7Py2fs3L91di6wr4RzBIws1kwhnSN+
-	64V/eNF+T/+YZ5Qm0xlFjrOUWxmiQ0xgnrtfGXxv8wqVQrzmU6hmgnlyW24/QV08rwh44NLLjjFT8
-	15RNWG8jWXMGYwwUPMsuNedSbt1BlU/pRNNyn8L5yPs3VeRvPWIUiJQM3vt6cdtQWBQ/Gk66IosHt
-	ojkxp1ghmT0pmDTN7COQ==;
+	List-Owner; bh=qH8jP8yixztpi1keol6asLxQpt60QPsLdk9O+rQvO/0=; b=e9th9R+BkkolJy
+	L5aUC+y/s2TMnFa/fwm4hl1fyTtLmpUY4iiUiP2ZAQeYn8BMivLi9V3lCWcAtxhl65dcqPOboEUHH
+	uPnD2DWatupNyArFT9xOq+hxwc5u4qwXWFWhvcCWxhCv7ehb9B+aw/v0/puRaLZn0orla3q4b/Ohw
+	EeQEdMLAjxXRNTAS6LqQ5VOrdSKKY67hdL3VyJf0YCkpKgy7GED1B0gS7/5qk0g8W/aLLZvTKrMoA
+	nWU8nb74q5jjgrnuOtcc4np6Ni4PTBp0tIqDDhnHdgMJNoyhqxqLAdqKFSRFEpbd+wBp3z+sMmv+e
+	D1l6ri6ppK1FnUctjENA==;
 In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
@@ -33,62 +33,69 @@ Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infr
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdeve
 
-cdrom_close_write is empty, and the for_data flag it is keyed off is
-never set.  Remove all this clutter.
+Set a flag when a cdrom_device_info is opened for writing, instead of
+trying to figure out this at release time.  This will allow to eventually
+remove the mode argument to the ->release block_device_operation as
+nothing but the CDROM drivers uses that argument.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Phillip Potter <phil@philpotter.co.uk>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
 Acked-by: Christian Brauner <brauner@kernel.org>
 ---
- drivers/cdrom/cdrom.c | 15 ---------------
- include/linux/cdrom.h |  1 -
- 2 files changed, 16 deletions(-)
+ drivers/cdrom/cdrom.c | 12 +++++-------
+ include/linux/cdrom.h |  1 +
+ 2 files changed, 6 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
-index 245e5bbb05d41c..08abf1ffede002 100644
+index 08abf1ffede002..adebac1bd210d9 100644
 --- a/drivers/cdrom/cdrom.c
 +++ b/drivers/cdrom/cdrom.c
-@@ -978,15 +978,6 @@ static void cdrom_dvd_rw_close_write(struct cdrom_device_info *cdi)
- 	cdi->media_written = 0;
- }
+@@ -1172,6 +1172,7 @@ int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode)
+ 			ret = 0;
+ 			cdi->media_written = 0;
+ 		}
++		cdi->opened_for_data = true;
+ 	}
  
--static int cdrom_close_write(struct cdrom_device_info *cdi)
--{
--#if 0
--	return cdrom_flush_cache(cdi);
--#else
--	return 0;
--#endif
--}
--
- /* badly broken, I know. Is due for a fixup anytime. */
- static void cdrom_count_tracks(struct cdrom_device_info *cdi, tracktype *tracks)
+ 	if (ret)
+@@ -1252,7 +1253,6 @@ static int check_for_audio_disc(struct cdrom_device_info *cdi,
+ void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
  {
-@@ -1282,12 +1273,6 @@ void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
- 	opened_for_data = !(cdi->options & CDO_USE_FFLAGS) ||
- 		!(mode & FMODE_NDELAY);
+ 	const struct cdrom_device_ops *cdo = cdi->ops;
+-	int opened_for_data;
  
--	/*
--	 * flush cache on last write release
--	 */
--	if (CDROM_CAN(CDC_RAM) && !cdi->use_count && cdi->for_data)
--		cdrom_close_write(cdi);
+ 	cd_dbg(CD_CLOSE, "entering cdrom_release\n");
+ 
+@@ -1270,14 +1270,12 @@ void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
+ 		}
+ 	}
+ 
+-	opened_for_data = !(cdi->options & CDO_USE_FFLAGS) ||
+-		!(mode & FMODE_NDELAY);
 -
  	cdo->release(cdi);
- 	if (cdi->use_count == 0) {      /* last process that closes dev*/
- 		if (opened_for_data &&
+-	if (cdi->use_count == 0) {      /* last process that closes dev*/
+-		if (opened_for_data &&
+-		    cdi->options & CDO_AUTO_EJECT && CDROM_CAN(CDC_OPEN_TRAY))
++
++	if (cdi->use_count == 0 && cdi->opened_for_data) {
++		if (cdi->options & CDO_AUTO_EJECT && CDROM_CAN(CDC_OPEN_TRAY))
+ 			cdo->tray_move(cdi, 1);
++		cdi->opened_for_data = false;
+ 	}
+ }
+ EXPORT_SYMBOL(cdrom_release);
 diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
-index 4aea8c82d16971..0a5db0b0c958a1 100644
+index 0a5db0b0c958a1..adcc9f2beb2653 100644
 --- a/include/linux/cdrom.h
 +++ b/include/linux/cdrom.h
-@@ -61,7 +61,6 @@ struct cdrom_device_info {
- 	__u8 last_sense;
- 	__u8 media_written;		/* dirty flag, DVD+RW bookkeeping */
+@@ -63,6 +63,7 @@ struct cdrom_device_info {
  	unsigned short mmc3_profile;	/* current MMC3 profile */
--	int for_data;
  	int (*exit)(struct cdrom_device_info *);
  	int mrw_mode_page;
++	bool opened_for_data;
  	__s64 last_media_change_ms;
+ };
+ 
 -- 
 2.39.2
