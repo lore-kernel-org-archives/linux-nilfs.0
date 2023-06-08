@@ -1,14 +1,8 @@
-From: Phillip Potter <phil@philpotter.co.uk>
-Subject: Re: [PATCH 06/31] cdrom: remove the unused mode argument to
- cdrom_release
-Date: Thu, 8 Jun 2023 10:44:20 +0100
-Message-ID: <ZIGi9GMGeKruSrrW@equinox>
-References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-7-hch@lst.de>
- <ZH+6qd1W75G49P7p@equinox>
- <20230608084129.GA14689@lst.de>
- <ZIGVn9E9ME26V0Gn@equinox>
- <20230608090444.GA15075@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 01/30] block: also call ->open for incremental partition opens
+Date: Thu,  8 Jun 2023 13:02:29 +0200
+Message-ID: <20230608110258.189493-2-hch@lst.de>
+References: <20230608110258.189493-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,28 +10,16 @@ Return-path: <linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.i
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
 	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
-	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
-	Message-ID:Subject:Cc:To:From:Date:Reply-To:Content-ID:Content-Description:
+	List-Archive:List-Unsubscribe:List-Id:MIME-Version:References:In-Reply-To:
+	Message-Id:Date:Subject:Cc:To:From:Reply-To:Content-ID:Content-Description:
 	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=UML8h5O2z3O+JsvV9eYFHHAW8xW5xKd47xLX2aGhag4=; b=txX+XHuWjGxbWY
-	CdKeIjfF5B7faiOk9A/BJ3/6I0/SXlKIN/vYG5fJAesh3WRyU/vQEjKV++TJIxUHVP4s+b5Us/H2v
-	bbA+9Q2lfnWrvYPWrE1Ree69WNDUqQo196J4kAAvht6pQFleOZsfSXL8mdnevH3Ls63Xp/KVCkHFd
-	cHpQSrfqYNMv0Ewvgf1ESvhnBQY2qcn3qmTtkta60XiiDwfxPzhs/Lo5rr9lm4a+prvlDSAuSX7U0
-	1Ouph1ffznqDGViDcZSqS6TmdyH3KEf1OSiMEoYCW4Ywd9e3tUAFZxjtN8aCtIq8wqYS4dtNt2CJj
-	PRB8b5gdDIa9vIjYGMrQ==;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=philpotter-co-uk.20221208.gappssmtp.com; s=20221208; t=1686217463; x=1688809463;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=7UW1P1+u4z8C1yYHhcCc7D6z205h5xRpA4Pis0U9UMY=;
-        b=yaY1SeETpr1491wAArwoEz9AJZvZ5z5Oelfq8FTwZjv5Pt/tYo5/JbhJmlnsdXccgT
-         rV+izm1qoxfwqsvCOevTNpa9AXiPp34leL/teWpFI8DnWj2gT9oTkJf5RM1JedYJsqOR
-         dOTz2gvKJANj4eEOoND3rs/e3YQmKzzRMznHOfQHFfxuyaer9zt098pnWbKtUtWgrjpL
-         rngkJTI/oyNl1h5w6WjYslic/vZHxQYsDYNvUly4Suef2mFO3KaGuI4pOX3o87LWbC1v
-         fP5qRuJh7sd0u5OqO4m/B3exo8izpU2YK4CbQWdtPhbZm6I3/7vshaMygPH9B4aEMU3h
-         0vHQ==
-Content-Disposition: inline
-In-Reply-To: <20230608090444.GA15075@lst.de>
+	List-Owner; bh=RwNHxzELo4vRnD3mPPMAP9aqnflUcwKweZKrgAd+JmY=; b=WIqUFZ5p19Tqor
+	zxKpcVnkuVD7b5FiHeLRE+9ukdTPcuxqbf4nj/W1F5vOzQw168tcHK2VvFGJAqXTg1X74TSEigIm3
+	TjUSsRkGXOY3+ZoIbjVLFBA9Hff52JJ8mCBM3X3gvWGnAzi0/xpD7ncXpw2sFrxrE1R5tGR4hS2ci
+	4Gr/wroGKndPyiDmNgrTr26lEZFnTkn/LRx20Yzk8txQ1Bhnk7ZI/iBeBL5hLa2nnbA1AZdODUcqp
+	pG11v4iZJ4NZbtnrJZannIPQ274+sRo0PYPMeGXJBqCKBQDl9HD2aAVhR775M5XckkCgDsPSLEoRo
+	rLHdUJYKRpDuIoVXS+vQ==;
+In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
  <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
@@ -48,25 +30,78 @@ List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-um>,
  <mailto:linux-um-request@lists.infradead.org?subject=subscribe>
 Sender: "linux-um" <linux-um-bounces@lists.infradead.org>
 Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdeve
 
-On Thu, Jun 08, 2023 at 11:04:44AM +0200, Christoph Hellwig wrote:
-> On Thu, Jun 08, 2023 at 09:47:27AM +0100, Phillip Potter wrote:
-> > Yes indeed - I was under the impression it was appropriate for a
-> > maintainer to signal their approval of a patch to maintained code using
-> > a Signed-off-by tag due to their involvement in the submission process?
-> > Apologies if I've got this wrong, happy to send Reviewed-bys by all
-> > means.
-> 
-> Signed-off-by is for the chain that the patches pass through.  You add
-> it when you apply or forward the patch.  Just give me a Reviewed-by
-> tag and say it shold apply to patches 1 to 6 and I'll add it.
+For whole devices ->open is called for each open, but for partitions it
+is only called on the first open of a partition, e.g.:
 
-Thanks for the guidance. Please apply the following to the block patch
-(1) and the CD-ROM patches (2-6) of your series, all looks good to me:
+  open("/dev/vdb", ...)
+  open("/dev/vdb", ...)
+    - 2 call to ->open
 
+  open("/dev/vdb1", ...)
+  open("/dev/vdb", ...)
+    - 2 call to ->open
+
+  open("/dev/vdb", ...)
+  open("/dev/vdb", ...)
+    - just open call to ->open
+
+This is problematic as various block drivers look at open flags and
+might not do all the required setup if the earlier open was with an
+odd flag like O_NDELAY or the magic 3 ioctl-only open mode.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Phillip Potter <phil@philpotter.co.uk>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+Acked-by: Christian Brauner <brauner@kernel.org>
+---
+ block/bdev.c | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
 
-Regards,
-Phil
+diff --git a/block/bdev.c b/block/bdev.c
+index 5c46ff10770638..981f6135795138 100644
+--- a/block/bdev.c
++++ b/block/bdev.c
+@@ -683,9 +683,6 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
+ 	struct gendisk *disk = part->bd_disk;
+ 	int ret;
+ 
+-	if (atomic_read(&part->bd_openers))
+-		goto done;
+-
+ 	ret = blkdev_get_whole(bdev_whole(part), mode);
+ 	if (ret)
+ 		return ret;
+@@ -694,9 +691,10 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
+ 	if (!bdev_nr_sectors(part))
+ 		goto out_blkdev_put;
+ 
+-	disk->open_partitions++;
+-	set_init_blocksize(part);
+-done:
++	if (!atomic_read(&part->bd_openers)) {
++		disk->open_partitions++;
++		set_init_blocksize(part);
++	}
+ 	atomic_inc(&part->bd_openers);
+ 	return 0;
+ 
+@@ -709,10 +707,10 @@ static void blkdev_put_part(struct block_device *part, fmode_t mode)
+ {
+ 	struct block_device *whole = bdev_whole(part);
+ 
+-	if (!atomic_dec_and_test(&part->bd_openers))
+-		return;
+-	blkdev_flush_mapping(part);
+-	whole->bd_disk->open_partitions--;
++	if (atomic_dec_and_test(&part->bd_openers)) {
++		blkdev_flush_mapping(part);
++		whole->bd_disk->open_partitions--;
++	}
+ 	blkdev_put_whole(whole, mode);
+ }
+ 
+-- 
+2.39.2
