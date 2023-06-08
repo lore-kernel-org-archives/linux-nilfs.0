@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/30] cdrom: remove the unused bdev argument to cdrom_open
-Date: Thu,  8 Jun 2023 13:02:30 +0200
-Message-ID: <20230608110258.189493-3-hch@lst.de>
+Subject: [PATCH 03/30] cdrom: remove the unused mode argument to cdrom_ioctl
+Date: Thu,  8 Jun 2023 13:02:31 +0200
+Message-ID: <20230608110258.189493-4-hch@lst.de>
 References: <20230608110258.189493-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,12 +13,12 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	List-Archive:List-Unsubscribe:List-Id:MIME-Version:References:In-Reply-To:
 	Message-Id:Date:Subject:Cc:To:From:Reply-To:Content-ID:Content-Description:
 	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Owner; bh=mlR+a7iMlnBv+pJMqvw7TsVVqGYKlMLVXBrnAI7wMJc=; b=JAktwMrqr/DZHz
-	r84D9EA1jhRHYgpC8COTA2BfiCSn2pLLX+VDgByDLoRNZx3ICzjWk2tRyjuzxXOjPgO3NKLLmtrOn
-	RMcjHYEOnzM/89fe45gRppTAU5pJjKYr0gnhe2QsVxz4v1l6flkpZtqCKK6bYmbVw+monhdR8k71g
-	gQA2Bewb48wGvlZLK3RsJrk8HzMoPNFR+0iCtR5bLhue+kNWQ9sKOkUjFWhhstIhmZVYyZ1cL+8ro
-	McZHvO5SMFALW/mH6wgeL/CeJA2ULHAFNJD4wr8dmgSRoxMXNIubIll0rDtz3kG3Zsp4q66UOyPz1
-	93zbIy4HWj/Y0XssW/+g==;
+	List-Owner; bh=UUtXDStT68+l0YmDBfibVrnl93SWwBSOnyIDPw9/GK0=; b=cl+PVWiXkWZ9JI
+	EEBw7ZFJlh9tTuHWoNjzTDxq/JKTq3rGHoFUUb5wV09XWG0a/wFwUvHcDoIYcwc7hs0JnW/L2c/mB
+	CZ8tNgFftc24eYb1pMgzBJBDwtJS3pdzSU26BsltYWRi48SSGuc1hKgrIcnIvjFSQavCFFfOrp6oY
+	Bo29fvntLnOk1sJRh0k60gIeVaxdiGs2U7JZUsUWXsWYat4pzWSEfomnWYE0Oh3y3tKGE01p9JpKV
+	3ZnSOblsp+E4BAhpwqUi1BEpOVMNXp9Hh7jdY4jAe6hNqsT6qp6KDPLXZOBz8TK5oJ1irkrDqStIO
+	k8JgFFAIBnZXwrDDv8tA==;
 In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
@@ -38,65 +38,65 @@ Reviewed-by: Phillip Potter <phil@philpotter.co.uk>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 Acked-by: Christian Brauner <brauner@kernel.org>
 ---
- drivers/cdrom/cdrom.c | 3 +--
+ drivers/cdrom/cdrom.c | 2 +-
  drivers/cdrom/gdrom.c | 2 +-
  drivers/scsi/sr.c     | 2 +-
- include/linux/cdrom.h | 3 +--
- 4 files changed, 4 insertions(+), 6 deletions(-)
+ include/linux/cdrom.h | 4 ++--
+ 4 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
-index 416f723a2dbb33..e3eab319cb0474 100644
+index e3eab319cb0474..245e5bbb05d41c 100644
 --- a/drivers/cdrom/cdrom.c
 +++ b/drivers/cdrom/cdrom.c
-@@ -1155,8 +1155,7 @@ int open_for_data(struct cdrom_device_info *cdi)
-  * is in their own interest: device control becomes a lot easier
-  * this way.
+@@ -3336,7 +3336,7 @@ static int mmc_ioctl(struct cdrom_device_info *cdi, unsigned int cmd,
+  * ATAPI / SCSI specific code now mainly resides in mmc_ioctl().
   */
--int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
--	       fmode_t mode)
-+int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode)
+ int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
+-		fmode_t mode, unsigned int cmd, unsigned long arg)
++		unsigned int cmd, unsigned long arg)
  {
+ 	void __user *argp = (void __user *)arg;
  	int ret;
- 
 diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
-index ceded5772aac6d..eaa2d5a90bc82f 100644
+index eaa2d5a90bc82f..14922403983e9e 100644
 --- a/drivers/cdrom/gdrom.c
 +++ b/drivers/cdrom/gdrom.c
-@@ -481,7 +481,7 @@ static int gdrom_bdops_open(struct block_device *bdev, fmode_t mode)
- 	bdev_check_media_change(bdev);
+@@ -505,7 +505,7 @@ static int gdrom_bdops_ioctl(struct block_device *bdev, fmode_t mode,
+ 	int ret;
  
  	mutex_lock(&gdrom_mutex);
--	ret = cdrom_open(gd.cd_info, bdev, mode);
-+	ret = cdrom_open(gd.cd_info, mode);
+-	ret = cdrom_ioctl(gd.cd_info, bdev, mode, cmd, arg);
++	ret = cdrom_ioctl(gd.cd_info, bdev, cmd, arg);
  	mutex_unlock(&gdrom_mutex);
+ 
  	return ret;
- }
 diff --git a/drivers/scsi/sr.c b/drivers/scsi/sr.c
-index 12869e6d4ebda8..61b83880e395a4 100644
+index 61b83880e395a4..444c7efc14cba7 100644
 --- a/drivers/scsi/sr.c
 +++ b/drivers/scsi/sr.c
-@@ -498,7 +498,7 @@ static int sr_block_open(struct block_device *bdev, fmode_t mode)
- 		sr_revalidate_disk(cd);
+@@ -539,7 +539,7 @@ static int sr_block_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+ 	scsi_autopm_get_device(sdev);
  
- 	mutex_lock(&cd->lock);
--	ret = cdrom_open(&cd->cdi, bdev, mode);
-+	ret = cdrom_open(&cd->cdi, mode);
- 	mutex_unlock(&cd->lock);
- 
- 	scsi_autopm_put_device(sdev);
+ 	if (cmd != CDROMCLOSETRAY && cmd != CDROMEJECT) {
+-		ret = cdrom_ioctl(&cd->cdi, bdev, mode, cmd, arg);
++		ret = cdrom_ioctl(&cd->cdi, bdev, cmd, arg);
+ 		if (ret != -ENOSYS)
+ 			goto put;
+ 	}
 diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
-index 67caa909e3e615..cc5717cb0fa8a8 100644
+index cc5717cb0fa8a8..4aea8c82d16971 100644
 --- a/include/linux/cdrom.h
 +++ b/include/linux/cdrom.h
-@@ -101,8 +101,7 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
- 		struct cdrom_tocentry *entry);
- 
+@@ -103,8 +103,8 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
  /* the general block_device operations structure: */
--extern int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
--			fmode_t mode);
-+int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
+ int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
  extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
- extern int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
- 		       fmode_t mode, unsigned int cmd, unsigned long arg);
+-extern int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
+-		       fmode_t mode, unsigned int cmd, unsigned long arg);
++int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
++		unsigned int cmd, unsigned long arg);
+ extern unsigned int cdrom_check_events(struct cdrom_device_info *cdi,
+ 				       unsigned int clearing);
+ 
 -- 
 2.39.2
