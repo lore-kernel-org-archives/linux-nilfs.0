@@ -1,8 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 13/30] rnbd-srv: don't pass a holder for
- non-exclusive blkdev_get_by_path
-Date: Thu,  8 Jun 2023 13:02:41 +0200
-Message-ID: <20230608110258.189493-14-hch@lst.de>
+Subject: [PATCH 11/30] swsusp: don't pass a stack address to
+ blkdev_get_by_path
+Date: Thu,  8 Jun 2023 13:02:39 +0200
+Message-ID: <20230608110258.189493-12-hch@lst.de>
 References: <20230608110258.189493-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=nJeSn0dFzLtBpdoOGAwm1AbS6z27iKT17susz8z4QGc=; b=M3bokbcNMv8xjx8V2xkAtwxJe0
- WlLjeZzAt4Hpgctmp8tkdZDdq7kaVWitU2Ub5QIEfmXK5OCX6TfwtOsQ7UeuOeA7FyI7pUW7qHmbM
- ce2vZzZWv2FyKkTkfU0f+F4QsjgMeGHGSsN2I5or5j8Sn6tBsprWf+DlPMWl3o7vy6lQ=;
+ bh=BWc5z9HT4dUA9mjQNGkIg08JFiqviKFgFc2kwBdnmvA=; b=LvJv/A6yU6ExdrZ6m1FDlDxTFB
+ TG0QpAdJ7TO8Pq+KZvQ4eDD7ebZQj2tXXqET/1gNJbfuS4z7WeJcweuvmpowoD2D2sFmN5XK1on5L
+ ncQ4lD+3V9Pkfj+yqpiH4xbxlr/Nsocw6BPMkHq2vutGS5m4HeBRj5xrDKYxYh+rIHAM=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=nJeSn0dFzLtBpdoOGAwm1AbS6z27iKT17susz8z4QGc=; b=gsu88IoYX+kodMMjmDTNfD4FBP
- qe+7jf92TmoL+jytr/IyBq9dh4LE+/BsKkFO9pu2LSF+dMZHV8m+k6f9Q0IUoR4ty3bKyvBnjLt2Z
- LgQkyAQ+QHLrylB41utxpxzgU3r0/ZRZtHfWOSIIg+cGK+WJl4rJOIpfS8qv4WUtzjnk=;
+ bh=BWc5z9HT4dUA9mjQNGkIg08JFiqviKFgFc2kwBdnmvA=; b=GwsI8zzZRjUNyQ33Uva7xAddNy
+ rbYMYSmfRDxbPB2nNdPMNzGuOXI9NISJExjBDIyDYuvRzq/Smd901IcmK61sMpxDGY64vexQ4mLZr
+ J4Pg7QBdA7ukbcryvb68BvDT0441GMto306r97mv4HuUuphI+arAp4TxiKmWcvdkRvdU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
  MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
  :Reply-To:Content-Type:Content-ID:Content-Description;
- bh=nJeSn0dFzLtBpdoOGAwm1AbS6z27iKT17susz8z4QGc=; b=Kw+UMqKsqyvSoRcI0wGu9Alw90
- yF53v2YX7XlxzU3gMTpcNSzOu9QvUK70WVK7xoQIOagb6InysGmJXcX5tN2CK0mkBJEo+FYI4dyFw
- TQj9f316RjcJmadGi2+bguisL3FSMURmwxplaAwTFwDwYaeW5joP2OJjuwCWM1iciBnW3+Muz2Hwv
- bH6+8T8ogy1SOp89QAPtfqQY/NIEPhy4jA19KlYViYlQU2dADULPnIdd3xxlTtjFpSuPdhr5adIm/
- eZNp5kLhbYiKo593l7n8K4e11/hH2tyYbz5vqmR1h/gUcpsy5RcR8LQT6aK8zN9tE1c4GyD3KvZkI
- OorxxX0Q==;
+ bh=BWc5z9HT4dUA9mjQNGkIg08JFiqviKFgFc2kwBdnmvA=; b=DSaSxe/TisXuiNZhOR1TgSi7tx
+ 33lAtkUXPMOr9WQm9Z+HhNKEJGoeKJSluj7uhXRCmimH7VoHS0E0fvUNcZ7UiWxsb/tBtz6fXhZlr
+ GE9jtxC+Q8FoQSEQz+4vk9nOOH8BTAjfrUuFLcHba2SvPuPGZNkEv8QjVxkATSDkihbdNi6umKqVB
+ 7p2NEvk5EAeqwWcAKAwVWRbUBkG4tyEy/NutpgRnWrvU0mWTHAqNh1aG3veS9lJl/Zm3XwnRRN4uy
+ kPNwBnK5dcXc2ETiMnCmg0liMCPKVYmWiFEJ6OPE/jhf6OnfgqyBEoO+PrWwml+/G7QKTlQlKNK+/
+ sLCUxnmg==;
 In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -50,29 +50,43 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org, Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>, Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org, linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Christian Brauner <brauner@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.
 
-Passing a holder to blkdev_get_by_path when FMODE_EXCL isn't set doesn't
-make sense, so pass NULL instead.
+holder is just an on-stack pointer that can easily be reused by other calls,
+replace it with a static variable that doesn't change.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
-Acked-by: Christian Brauner <brauner@kernel.org>
-Acked-by: Jack Wang <jinpu.wang@ionos.com>
 ---
- drivers/block/rnbd/rnbd-srv.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/power/swap.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
-index cec22bbae2f9a5..ce505e552f4d50 100644
---- a/drivers/block/rnbd/rnbd-srv.c
-+++ b/drivers/block/rnbd/rnbd-srv.c
-@@ -719,7 +719,7 @@ static int process_msg_open(struct rnbd_srv_session *srv_sess,
- 		goto reject;
- 	}
+diff --git a/kernel/power/swap.c b/kernel/power/swap.c
+index 81aec3b2c60510..b03ff1a33c7f68 100644
+--- a/kernel/power/swap.c
++++ b/kernel/power/swap.c
+@@ -1510,6 +1510,8 @@ int swsusp_read(unsigned int *flags_p)
+ 	return error;
+ }
  
--	bdev = blkdev_get_by_path(full_path, open_flags, THIS_MODULE, NULL);
-+	bdev = blkdev_get_by_path(full_path, open_flags, NULL, NULL);
- 	if (IS_ERR(bdev)) {
- 		ret = PTR_ERR(bdev);
- 		pr_err("Opening device '%s' on session %s failed, failed to open the block device, err: %d\n",
++static void *swsusp_holder;
++
+ /**
+  *      swsusp_check - Check for swsusp signature in the resume device
+  */
+@@ -1517,14 +1519,13 @@ int swsusp_read(unsigned int *flags_p)
+ int swsusp_check(bool snapshot_test)
+ {
+ 	int error;
+-	void *holder;
+ 	fmode_t mode = FMODE_READ;
+ 
+ 	if (snapshot_test)
+ 		mode |= FMODE_EXCL;
+ 
+ 	hib_resume_bdev = blkdev_get_by_dev(swsusp_resume_device,
+-					    mode, &holder, NULL);
++					    mode, &swsusp_holder, NULL);
+ 	if (!IS_ERR(hib_resume_bdev)) {
+ 		set_blocksize(hib_resume_bdev, PAGE_SIZE);
+ 		clear_page(swsusp_header);
 -- 
 2.39.2
