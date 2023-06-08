@@ -1,135 +1,105 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 26/30] block: remove unused fmode_t arguments
- from ioctl handlers
-Date: Thu,  8 Jun 2023 13:02:54 +0200
-Message-ID: <20230608110258.189493-27-hch@lst.de>
+Subject: [PATCH 29/30] block: store the holder in
+ file->private_data
+Date: Thu,  8 Jun 2023 13:02:57 +0200
+Message-ID: <20230608110258.189493-30-hch@lst.de>
 References: <20230608110258.189493-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686222295;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=FQ6kKiSI/5nNTpSfCFgsZk6TQMqvjEm9vGduMd5MDg8=;
-	b=JF2hHRDKv8J4T/oCxE8nJTCXM5o3DhgBSC7V8cIrpb+dgPQfE4WwIEy4drZylinjFhirKR
-	Yq6qU+Y6byxmiA5eAm74pBvgHXPc7XWyrNcwx1qJBoVZCUZtj17zxqrzAwX2hwVFVkj2EN
-	8y4Z4i4J0CLphkajPLJqqVbOw4WecQ8=
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:References:
+ In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=cT8NDVtiIsZNzV7dqaCyqaAv6UgEz/7VfiIdR+IkQQM=; b=cv9/3L4cT2beHZXlxN477UVPcg
+ SKB5bOmnuqOuS8fAaUluJC2yIgrQL0MGchyhdG6kN0LVZVTGyImXHBz0RHZFT9VRP97HcS9Je8Ym9
+ 1MltHN7flNJ5QIUh6T2ByFToUap0QaaOHULG+T/Ir3uHQRxc5sCJtY8HEgktKwjiz+IQ=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
+ Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=cT8NDVtiIsZNzV7dqaCyqaAv6UgEz/7VfiIdR+IkQQM=; b=j7XFJ9kbGD1B7ZT0pQy46PtTsk
+ DHLALHj+RQbL1WXU2yT530y2nAQRXUkEa8cxdpocCikBZD6v+pbFZ8T8FHlH4kdRy9Yhw3n7GHMP4
+ 5U1j0xhfYUAB1aHeGpdzhszCkPMvqM/TFVJzUf7awQiZ9yGqVRU1g+Ynbn3FqrJN5HRg=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+ MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+ :Reply-To:Content-Type:Content-ID:Content-Description;
+ bh=cT8NDVtiIsZNzV7dqaCyqaAv6UgEz/7VfiIdR+IkQQM=; b=kiJFIQ1nAL+TXJv9FL1MxdQxRn
+ MjE37b6TUrn3o2T+X8RTjzxc9dFoJwc13B1cxCTfAgHHieEEThz+nOulB+CXAbbC1Y0y85FoWFx1G
+ VraKXIbJAMCy3hW0e3Z3ki4QwJEvq9BK9L16/RF4/o2PenRIOj00eETs5fBt1PFSS9iM3+erOXzTk
+ Zaq0wNsryRPVn+c0ll3/+zPoyHsu/DIq1VB+b/aXjSerkeOYW0iTLL8nU8Au3EkY8EtDDZIBLMWmS
+ WhjQhMLxjLCE3gWrcxXeubo/4FAPO6sinlscv6PM4NW47r2uUyAy4fyteW4jDGY1V2cNPUKALpg8d
+ C5CDVyMw==;
 In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
- <mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/dm-devel/>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
- <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Errors-To: dm-devel-bounces@redhat.com
-Sender: "dm-devel" <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Jens Axboe <axboe@kernel.dk>
 Cc: Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org, Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>, Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org, linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Christian Brauner <brauner@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.
 
-A few ioctl handlers have fmode_t arguments that are entirely unused,
-remove them.
+Store the file struct used as the holder in file->private_data as an
+indicator that this file descriptor was opened exclusively to  remove
+the last use of FMODE_EXCL.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Christian Brauner <brauner@kernel.org>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- block/blk-zoned.c |  4 ++--
- block/blk.h       |  6 +++---
- block/ioctl.c     | 14 +++++++-------
- 3 files changed, 12 insertions(+), 12 deletions(-)
+ block/fops.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 096b6b47561f83..02cc2c629ac9be 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -323,8 +323,8 @@ static int blkdev_copy_zone_to_user(struct blk_zone *zone, unsigned int idx,
-  * BLKREPORTZONE ioctl processing.
-  * Called from blkdev_ioctl.
-  */
--int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
--			      unsigned int cmd, unsigned long arg)
-+int blkdev_report_zones_ioctl(struct block_device *bdev, unsigned int cmd,
-+		unsigned long arg)
- {
- 	void __user *argp = (void __user *)arg;
- 	struct zone_report_args args;
-diff --git a/block/blk.h b/block/blk.h
-index 6910220aa030f1..e28d5d67d31a28 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -394,15 +394,15 @@ static inline struct bio *blk_queue_bounce(struct bio *bio,
- #ifdef CONFIG_BLK_DEV_ZONED
- void disk_free_zone_bitmaps(struct gendisk *disk);
- void disk_clear_zone_settings(struct gendisk *disk);
--int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
--		unsigned int cmd, unsigned long arg);
-+int blkdev_report_zones_ioctl(struct block_device *bdev, unsigned int cmd,
-+		unsigned long arg);
- int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
- 		unsigned int cmd, unsigned long arg);
- #else /* CONFIG_BLK_DEV_ZONED */
- static inline void disk_free_zone_bitmaps(struct gendisk *disk) {}
- static inline void disk_clear_zone_settings(struct gendisk *disk) {}
- static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
--		fmode_t mode, unsigned int cmd, unsigned long arg)
-+		unsigned int cmd, unsigned long arg)
- {
- 	return -ENOTTY;
- }
-diff --git a/block/ioctl.c b/block/ioctl.c
-index b39bd5b41ee492..3a10c34b8ef6d3 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -344,8 +344,8 @@ static int blkdev_pr_clear(struct block_device *bdev,
- 	return ops->pr_clear(bdev, c.key);
- }
+diff --git a/block/fops.c b/block/fops.c
+index 0d714d050a462c..9871bd6052b416 100644
+--- a/block/fops.c
++++ b/block/fops.c
+@@ -478,7 +478,7 @@ blk_mode_t file_to_blk_mode(struct file *file)
+ 		mode |= BLK_OPEN_READ;
+ 	if (file->f_mode & FMODE_WRITE)
+ 		mode |= BLK_OPEN_WRITE;
+-	if (file->f_mode & FMODE_EXCL)
++	if (file->private_data)
+ 		mode |= BLK_OPEN_EXCL;
+ 	if (file->f_flags & O_NDELAY)
+ 		mode |= BLK_OPEN_NDELAY;
+@@ -507,12 +507,15 @@ static int blkdev_open(struct inode *inode, struct file *filp)
+ 	filp->f_flags |= O_LARGEFILE;
+ 	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
  
--static int blkdev_flushbuf(struct block_device *bdev, fmode_t mode,
--		unsigned cmd, unsigned long arg)
-+static int blkdev_flushbuf(struct block_device *bdev, unsigned cmd,
-+		unsigned long arg)
++	/*
++	 * Use the file private data to store the holder for exclusive openes.
++	 * file_to_blk_mode relies on it being present to set BLK_OPEN_EXCL.
++	 */
+ 	if (filp->f_flags & O_EXCL)
+-		filp->f_mode |= FMODE_EXCL;
++		filp->private_data = filp;
+ 
+ 	bdev = blkdev_get_by_dev(inode->i_rdev, file_to_blk_mode(filp),
+-				 (filp->f_mode & FMODE_EXCL) ? filp : NULL,
+-				 NULL);
++				 filp->private_data, NULL);
+ 	if (IS_ERR(bdev))
+ 		return PTR_ERR(bdev);
+ 
+@@ -523,8 +526,7 @@ static int blkdev_open(struct inode *inode, struct file *filp)
+ 
+ static int blkdev_release(struct inode *inode, struct file *filp)
  {
- 	if (!capable(CAP_SYS_ADMIN))
- 		return -EACCES;
-@@ -354,8 +354,8 @@ static int blkdev_flushbuf(struct block_device *bdev, fmode_t mode,
+-	blkdev_put(I_BDEV(filp->f_mapping->host),
+-		   (filp->f_mode & FMODE_EXCL) ? filp : NULL);
++	blkdev_put(I_BDEV(filp->f_mapping->host), filp->private_data);
  	return 0;
  }
  
--static int blkdev_roset(struct block_device *bdev, fmode_t mode,
--		unsigned cmd, unsigned long arg)
-+static int blkdev_roset(struct block_device *bdev, unsigned cmd,
-+		unsigned long arg)
- {
- 	int ret, n;
- 
-@@ -475,9 +475,9 @@ static int blkdev_common_ioctl(struct block_device *bdev, fmode_t mode,
- 
- 	switch (cmd) {
- 	case BLKFLSBUF:
--		return blkdev_flushbuf(bdev, mode, cmd, arg);
-+		return blkdev_flushbuf(bdev, cmd, arg);
- 	case BLKROSET:
--		return blkdev_roset(bdev, mode, cmd, arg);
-+		return blkdev_roset(bdev, cmd, arg);
- 	case BLKDISCARD:
- 		return blk_ioctl_discard(bdev, mode, arg);
- 	case BLKSECDISCARD:
-@@ -487,7 +487,7 @@ static int blkdev_common_ioctl(struct block_device *bdev, fmode_t mode,
- 	case BLKGETDISKSEQ:
- 		return put_u64(argp, bdev->bd_disk->diskseq);
- 	case BLKREPORTZONE:
--		return blkdev_report_zones_ioctl(bdev, mode, cmd, arg);
-+		return blkdev_report_zones_ioctl(bdev, cmd, arg);
- 	case BLKRESETZONE:
- 	case BLKOPENZONE:
- 	case BLKCLOSEZONE:
 -- 
 2.39.2
