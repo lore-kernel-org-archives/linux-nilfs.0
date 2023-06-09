@@ -1,170 +1,58 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] nilfs2: fix buffer corruption due to concurrent device reads
-Date: Fri,  9 Jun 2023 12:57:32 +0900
-Message-ID: <20230609035732.20426-1-konishi.ryusuke@gmail.com>
-References: <00000000000030000a05e981f475@google.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 05/30] cdrom: track if a cdrom_device_info
+ was opened for data
+Date: Fri, 9 Jun 2023 08:37:38 +0200
+Message-ID: <f398627e-f69f-de42-d55d-2d497d208ae5@suse.de>
+References: <20230608110258.189493-1-hch@lst.de>
+ <20230608110258.189493-6-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1686283057; x=1688875057;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=wtN6duKs1KJ2B8qXC/7XMIuK5xURdPo4J+o/SZkSGvQ=;
-        b=fZUw+EPiQ2R0G+gCm0cxoVriifd4/xuGxLCggMamGX65pqyVDELjNmp9QNow8zbd9h
-         F17d/07jWUNUTeAL4FvyO+LLLAOes/5y/KgoGUz4G26xe5Th6KAK/igYwDUoacBUVTR+
-         tj78nrdaZlm3J40XfL98beUx43bgkW+lB37jYP9vWLbrZfAmeALLMAm8cFTrWt4zWsBt
-         6pc/X3oRIL6TaGohQb3VW6rDqgYx292MjsCP8UojJ1FlICB2F3WDf2ibreLs6Wkjl9Pf
-         psJzvNClJGtqagp9XyQ5O8zfvODLaJQiZmfoi+BPSj2foO35PFAhHnqYpWGytthI3MRE
-         zUuA==
-In-Reply-To: <00000000000030000a05e981f475-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzbot <syzbot+31837fe952932efc8fb9-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1686292673;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=3tiQLrUQaD6qaZz9Qj/U8SyopOtKSSxx/RaRZl9zl54=;
+	b=N16hqFxZ7eIgWuDAp6fxyIQYr799lRQnXkmS2NPbRPspcjzcOfZVQW9JDojwJ7mPTEckxJ
+	ryR8UKo2KIG/aSzHKwK1P/ia2FVwvyCGxzBQm0lgrAdEVWj+Jh2Hj2kL/5LNHADz4yiAw7
+	9+TqTRBm2yX3Q1/eO5ELrM2wtosB0PM=
+In-Reply-To: <20230608110258.189493-6-hch@lst.de>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/dm-devel/>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Errors-To: dm-devel-bounces@redhat.com
+Sender: "dm-devel" <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+Content-Type: text/plain; charset="euc-kr"; format="flowed"
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org, Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>, dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>, Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org, linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Christian Brauner <brauner@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.
 
-As a result of analysis of a syzbot report, it turned out that in three
-cases where nilfs2 allocates block device buffers directly via sb_getblk,
-concurrent reads to the device can corrupt the allocated buffers.
-
-Nilfs2 uses sb_getblk for segment summary blocks, that make up a log
-header, and the super root block, that is the trailer, and when moving and
-writing the second super block after fs resize.
-
-In any of these, since the uptodate flag is not set when storing metadata
-to be written in the allocated buffers, the stored metadata will be
-overwritten if a device read of the same block occurs concurrently before
-the write.  This causes metadata corruption and misbehavior in the log
-write itself, causing warnings in nilfs_btree_assign() as reported.
-
-Fix these issues by setting an uptodate flag on the buffer head on the
-first or before modifying each buffer obtained with sb_getblk, and
-clearing the flag on failure.
-
-When setting the uptodate flag, the lock_buffer/unlock_buffer pair is
-used to perform necessary exclusive control, and the buffer is filled to
-ensure that uninitialized bytes are not mixed into the data read from
-others.  As for buffers for segment summary blocks, they are filled
-incrementally, so if the uptodate flag was unset on their allocation, set
-the flag and zero fill the buffer once at that point.
-
-Also, regarding the superblock move routine, the starting point of the
-memset call to zerofill the block is incorrectly specified, which can
-cause a buffer overflow on file systems with block sizes greater than
-4KiB.  In addition, if the superblock is moved within a large block, it
-is necessary to assume the possibility that the data in the superblock
-will be destroyed by zero-filling before copying.  So fix these potential
-issues as well.
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Reported-by: syzbot+31837fe952932efc8fb9-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-Closes: https://lkml.kernel.org/r/00000000000030000a05e981f475-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
-Tested-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
----
- fs/nilfs2/segbuf.c  |  6 ++++++
- fs/nilfs2/segment.c |  7 +++++++
- fs/nilfs2/super.c   | 23 ++++++++++++++++++++++-
- 3 files changed, 35 insertions(+), 1 deletion(-)
-
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index 1362ccb64ec7..6e59dc19a732 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -101,6 +101,12 @@ int nilfs_segbuf_extend_segsum(struct nilfs_segment_buffer *segbuf)
- 	if (unlikely(!bh))
- 		return -ENOMEM;
- 
-+	lock_buffer(bh);
-+	if (!buffer_uptodate(bh)) {
-+		memset(bh->b_data, 0, bh->b_size);
-+		set_buffer_uptodate(bh);
-+	}
-+	unlock_buffer(bh);
- 	nilfs_segbuf_add_segsum_buffer(segbuf, bh);
- 	return 0;
- }
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index ac949fd7603f..c2553024bd25 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -981,10 +981,13 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
- 	unsigned int isz, srsz;
- 
- 	bh_sr = NILFS_LAST_SEGBUF(&sci->sc_segbufs)->sb_super_root;
-+
-+	lock_buffer(bh_sr);
- 	raw_sr = (struct nilfs_super_root *)bh_sr->b_data;
- 	isz = nilfs->ns_inode_size;
- 	srsz = NILFS_SR_BYTES(isz);
- 
-+	raw_sr->sr_sum = 0;  /* Ensure initialization within this update */
- 	raw_sr->sr_bytes = cpu_to_le16(srsz);
- 	raw_sr->sr_nongc_ctime
- 		= cpu_to_le64(nilfs_doing_gc() ?
-@@ -998,6 +1001,8 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
- 	nilfs_write_inode_common(nilfs->ns_sufile, (void *)raw_sr +
- 				 NILFS_SR_SUFILE_OFFSET(isz), 1);
- 	memset((void *)raw_sr + srsz, 0, nilfs->ns_blocksize - srsz);
-+	set_buffer_uptodate(bh_sr);
-+	unlock_buffer(bh_sr);
- }
- 
- static void nilfs_redirty_inodes(struct list_head *head)
-@@ -1780,6 +1785,7 @@ static void nilfs_abort_logs(struct list_head *logs, int err)
- 	list_for_each_entry(segbuf, logs, sb_list) {
- 		list_for_each_entry(bh, &segbuf->sb_segsum_buffers,
- 				    b_assoc_buffers) {
-+			clear_buffer_uptodate(bh);
- 			if (bh->b_page != bd_page) {
- 				if (bd_page)
- 					end_page_writeback(bd_page);
-@@ -1791,6 +1797,7 @@ static void nilfs_abort_logs(struct list_head *logs, int err)
- 				    b_assoc_buffers) {
- 			clear_buffer_async_write(bh);
- 			if (bh == segbuf->sb_super_root) {
-+				clear_buffer_uptodate(bh);
- 				if (bh->b_page != bd_page) {
- 					end_page_writeback(bd_page);
- 					bd_page = bh->b_page;
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 77f1e5778d1c..9ba4933087af 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -372,10 +372,31 @@ static int nilfs_move_2nd_super(struct super_block *sb, loff_t sb2off)
- 		goto out;
- 	}
- 	nsbp = (void *)nsbh->b_data + offset;
--	memset(nsbp, 0, nilfs->ns_blocksize);
- 
-+	lock_buffer(nsbh);
- 	if (sb2i >= 0) {
-+		/*
-+		 * The position of the second superblock only changes by 4KiB,
-+		 * which is larger than the maximum superblock data size
-+		 * (= 1KiB), so there is no need to use memmove() to allow
-+		 * overlap between source and destination.
-+		 */
- 		memcpy(nsbp, nilfs->ns_sbp[sb2i], nilfs->ns_sbsize);
-+
-+		/*
-+		 * Zero fill after copy to avoid overwriting in case of move
-+		 * within the same block.
-+		 */
-+		memset(nsbh->b_data, 0, offset);
-+		memset((void *)nsbp + nilfs->ns_sbsize, 0,
-+		       nsbh->b_size - offset - nilfs->ns_sbsize);
-+	} else {
-+		memset(nsbh->b_data, 0, nsbh->b_size);
-+	}
-+	set_buffer_uptodate(nsbh);
-+	unlock_buffer(nsbh);
-+
-+	if (sb2i >= 0) {
- 		brelse(nilfs->ns_sbh[sb2i]);
- 		nilfs->ns_sbh[sb2i] = nsbh;
- 		nilfs->ns_sbp[sb2i] = nsbp;
--- 
-2.34.1
+T24gNi84LzIzIDEzOjAyLCBDaHJpc3RvcGggSGVsbHdpZyB3cm90ZToKPiBTZXQgYSBmbGFnIHdo
+ZW4gYSBjZHJvbV9kZXZpY2VfaW5mbyBpcyBvcGVuZWQgZm9yIHdyaXRpbmcsIGluc3RlYWQgb2YK
+PiB0cnlpbmcgdG8gZmlndXJlIG91dCB0aGlzIGF0IHJlbGVhc2UgdGltZS4gIFRoaXMgd2lsbCBh
+bGxvdyB0byBldmVudHVhbGx5Cj4gcmVtb3ZlIHRoZSBtb2RlIGFyZ3VtZW50IHRvIHRoZSAtPnJl
+bGVhc2UgYmxvY2tfZGV2aWNlX29wZXJhdGlvbiBhcwo+IG5vdGhpbmcgYnV0IHRoZSBDRFJPTSBk
+cml2ZXJzIHVzZXMgdGhhdCBhcmd1bWVudC4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBDaHJpc3RvcGgg
+SGVsbHdpZyA8aGNoQGxzdC5kZT4KPiBSZXZpZXdlZC1ieTogUGhpbGxpcCBQb3R0ZXIgPHBoaWxA
+cGhpbHBvdHRlci5jby51az4KPiBBY2tlZC1ieTogQ2hyaXN0aWFuIEJyYXVuZXIgPGJyYXVuZXJA
+a2VybmVsLm9yZz4KPiAtLS0KPiAgIGRyaXZlcnMvY2Ryb20vY2Ryb20uYyB8IDEyICsrKysrLS0t
+LS0tLQo+ICAgaW5jbHVkZS9saW51eC9jZHJvbS5oIHwgIDEgKwo+ICAgMiBmaWxlcyBjaGFuZ2Vk
+LCA2IGluc2VydGlvbnMoKyksIDcgZGVsZXRpb25zKC0pCj4gClJldmlld2VkLWJ5OiBIYW5uZXMg
+UmVpbmVja2UgPGhhcmVAc3VzZS5kZT4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBS
+ZWluZWNrZSAgICAgICAgICAgICAgICBLZXJuZWwgU3RvcmFnZSBBcmNoaXRlY3QKaGFyZUBzdXNl
+LmRlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBT
+b2Z0d2FyZSBTb2x1dGlvbnMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhS
+QiAzNjgwOSAoQUcgTsO8cm5iZXJnKSwgR2VzY2jDpGZ0c2bDvGhyZXI6IEl2byBUb3RldiwgQW5k
+cmV3Ck15ZXJzLCBBbmRyZXcgTWNEb25hbGQsIE1hcnRqZSBCb3VkaWVuIE1vZXJtYW4KCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
 
