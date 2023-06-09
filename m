@@ -1,30 +1,61 @@
-From: Keith Busch <kbusch-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 21/30] nvme: replace the fmode_t argument to the nvme
- ioctl handlers with a simple bool
-Date: Fri, 9 Jun 2023 09:49:53 -0600
-Message-ID: <ZINKIQbBc0MB9wRz@kbusch-mbp>
-References: <20230608110258.189493-1-hch@lst.de>
- <20230608110258.189493-22-hch@lst.de>
+From: "Rafael J. Wysocki" <rafael@kernel.org>
+Subject: Re: [PATCH 11/30] swsusp: don't pass a stack address to blkdev_get_by_path
+Date: Fri, 9 Jun 2023 20:13:23 +0200
+Message-ID: <CAJZ5v0h61q6=JxjeUjjMz5k05HuRGWVKp_rK+9N8rug58kU_VQ@mail.gmail.com>
+References: <20230608110258.189493-1-hch@lst.de> <20230608110258.189493-12-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1686325797;
-        bh=0OnG4BzavkIkRsoSKPQtFcsTzHVmQDZ4N5dtwuYHgN0=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=NHtOuYp0TmsS9C41zBB8bRnNowLvmEqTLajK40KrGYXbNtm+pGnwaZIgRwj7VkfF6
-         ToT8ZkmVhHIYZITuzZR8dQwIKnvzyfbSqu3MTnPYi2yHHrCzSD4+fIyFK5IRer3XSE
-         XP1/X6pcw/4xghZaL8LBbcBoazv3n/axO9Egj4JkEQopsHm5F28FzihGpJtB/yUnWf
-         u498nYtGJPusyoaO38WDi7BxJhU0L9Jzdyc15SGKMxUEIq6a91z46ZPKQW9cNiYeTw
-         fctvLRTOSN3cJGWM77Zf1OWNHYkAvGdXMKCYo1D/Qj6F/3niSHHWcYC4L/fFNtQiR2
-         L5jLwoeehBLHg==
-Content-Disposition: inline
-In-Reply-To: <20230608110258.189493-22-hch-jcswGhMUV9g@public.gmane.org>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <20230608110258.189493-12-hch@lst.de>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, "Md. Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Phillip Potter <phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Miquel Raynal <miquel.raynal-LDxbnhwyfcJBDgjK7y7TUQ@public.gmane.org>, Vignesh Raghavendra <vigneshr-l0cyMroinI0@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-nvm
+Content-Type: text/plain; charset="windows-1252"
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvm
 
-Looks good.
+On Thu, Jun 8, 2023 at 1:03=E2=80=AFPM Christoph Hellwig <hch@lst.de> wrote:
+>
+> holder is just an on-stack pointer that can easily be reused by other cal=
+ls,
+> replace it with a static variable that doesn't change.
+>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Hannes Reinecke <hare@suse.de>
 
-Reviewed-by: Keith Busch <kbusch-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Acked-by: Rafael J. Wysocki <rafael@kernel.org>
+
+> ---
+>  kernel/power/swap.c | 5 +++--
+>  1 file changed, 3 insertions(+), 2 deletions(-)
+>
+> diff --git a/kernel/power/swap.c b/kernel/power/swap.c
+> index 81aec3b2c60510..b03ff1a33c7f68 100644
+> --- a/kernel/power/swap.c
+> +++ b/kernel/power/swap.c
+> @@ -1510,6 +1510,8 @@ int swsusp_read(unsigned int *flags_p)
+>         return error;
+>  }
+>
+> +static void *swsusp_holder;
+> +
+>  /**
+>   *      swsusp_check - Check for swsusp signature in the resume device
+>   */
+> @@ -1517,14 +1519,13 @@ int swsusp_read(unsigned int *flags_p)
+>  int swsusp_check(bool snapshot_test)
+>  {
+>         int error;
+> -       void *holder;
+>         fmode_t mode =3D FMODE_READ;
+>
+>         if (snapshot_test)
+>                 mode |=3D FMODE_EXCL;
+>
+>         hib_resume_bdev =3D blkdev_get_by_dev(swsusp_resume_device,
+> -                                           mode, &holder, NULL);
+> +                                           mode, &swsusp_holder, NULL);
+>         if (!IS_ERR(hib_resume_bdev)) {
+>                 set_blocksize(hib_resume_bdev, PAGE_SIZE);
+>                 clear_page(swsusp_header);
+> --
+> 2.39.2
+>
