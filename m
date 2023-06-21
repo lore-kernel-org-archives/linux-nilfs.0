@@ -1,105 +1,171 @@
-From: syzbot <syzbot+cdfcae656bac88ba0e2d-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] [nilfs?] WARNING in mark_buffer_dirty (5)
-Date: Mon, 12 Jun 2023 08:01:11 -0700
-Message-ID: <0000000000003da75f05fdeffd12@google.com>
+From: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH 47/79] nilfs2: switch to new ctime accessors
+Date: Wed, 21 Jun 2023 10:46:00 -0400
+Message-ID: <20230621144735.55953-46-jlayton@kernel.org>
+References: <20230621144507.55591-1-jlayton@kernel.org>
+ <20230621144735.55953-1-jlayton@kernel.org>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1687358937;
+        bh=YI0ekcjuxgrtvDegmv/g98VNDJqmIL3E+j0N+sr4RfA=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=ph+klMpFn0NnfmWDST8YV5l2WD5+GGXP+55Ibv5XHUI/SRE5Rr/QHhu2wb8qKDC9Q
+         SWDk5P/k+cbkLXA+CwywekH6U6HMgeFh0407se6Rlngxd2yKsV+T9TmYO+W1WER6Vf
+         371BWyAvTsp711mSR+V11XY/nphXVkkbyY+0NrHnVBhTP5STIpc9vy6nNdmB3WxOin
+         PzZRehXRlOMo4BMoFb/m/jq6As/dcZS3VWvNQKw4o3NOvpngL7Dwett3bMy+ug6n4C
+         wdVzRonhZu7dlbfp8YkNt/uJydCOnjOoNzsGbV9AWYaxWEVeqs2sy44KWlWxQe6q7p
+         nsYTR01hDaY9w==
+In-Reply-To: <20230621144735.55953-1-jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Hello,
+In later patches, we're going to change how the ctime.tv_nsec field is
+utilized. Switch to using accessor functions instead of raw accesses of
+inode->i_ctime.
 
-syzbot found the following issue on:
-
-HEAD commit:    5f63595ebd82 Merge tag 'input-for-v6.4-rc5' of git://git.k..
-git tree:       upstream
-console+strace: https://syzkaller.appspot.com/x/log.txt?x=1095a51b280000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=7474de833c217bf4
-dashboard link: https://syzkaller.appspot.com/bug?extid=cdfcae656bac88ba0e2d
-compiler:       Debian clang version 15.0.7, GNU ld (GNU Binutils for Debian) 2.35.2
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=17a18595280000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=141c5463280000
-
-Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/d12b9e46ffe8/disk-5f63595e.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/c9044ded7edd/vmlinux-5f63595e.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/09f0fd3926e8/bzImage-5f63595e.xz
-mounted in repro: https://storage.googleapis.com/syzbot-assets/1f3799cb13b4/mount_0.gz
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+cdfcae656bac88ba0e2d-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-
-------------[ cut here ]------------
-WARNING: CPU: 1 PID: 5085 at fs/buffer.c:1130 mark_buffer_dirty+0x2dd/0x500
-Modules linked in:
-CPU: 1 PID: 5085 Comm: syz-executor134 Not tainted 6.4.0-rc5-syzkaller-00024-g5f63595ebd82 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 05/25/2023
-RIP: 0010:mark_buffer_dirty+0x2dd/0x500 fs/buffer.c:1130
-Code: df e8 57 0e e0 ff 48 8b 3b be 04 00 00 00 5b 41 5c 41 5e 41 5f 5d e9 22 69 fc ff e8 3d 39 88 ff e9 71 ff ff ff e8 33 39 88 ff <0f> 0b e9 6d fd ff ff e8 27 39 88 ff 0f 0b e9 96 fd ff ff e8 1b 39
-RSP: 0018:ffffc90003f5f810 EFLAGS: 00010293
-
-RAX: ffffffff820345fd RBX: ffff8880775fbb01 RCX: ffff888015f30000
-RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
-RBP: 0000000000000000 R08: ffffffff82034364 R09: ffffed100eeb48af
-R10: 0000000000000000 R11: dffffc0000000001 R12: ffff8880775a4570
-R13: dffffc0000000000 R14: ffffc90003f5f880 R15: 1ffff920007ebf10
-FS:  0000555556a02300(0000) GS:ffff8880b9900000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000000000000000 CR3: 000000002ba98000 CR4: 00000000003506e0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-Call Trace:
- <TASK>
- __nilfs_mark_inode_dirty+0x105/0x280 fs/nilfs2/inode.c:1115
- nilfs_dirty_inode+0x164/0x200 fs/nilfs2/inode.c:1148
- __mark_inode_dirty+0x305/0xd90 fs/fs-writeback.c:2424
- mark_inode_dirty include/linux/fs.h:2144 [inline]
- generic_write_end+0x184/0x1e0 fs/buffer.c:2257
- nilfs_write_end+0x85/0xf0 fs/nilfs2/inode.c:280
- generic_perform_write+0x3ed/0x5e0 mm/filemap.c:3934
- __generic_file_write_iter+0x29b/0x400 mm/filemap.c:4019
- generic_file_write_iter+0xaf/0x310 mm/filemap.c:4083
- call_write_iter include/linux/fs.h:1868 [inline]
- new_sync_write fs/read_write.c:491 [inline]
- vfs_write+0x790/0xb20 fs/read_write.c:584
- ksys_write+0x1a0/0x2c0 fs/read_write.c:637
- do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x41/0xc0 arch/x86/entry/common.c:80
- entry_SYSCALL_64_after_hwframe+0x63/0xcd
-RIP: 0033:0x7f417000db39
-Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 11 15 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007ffd6c282ed8 EFLAGS: 00000246 ORIG_RAX: 0000000000000001
-RAX: ffffffffffffffda RBX: 0032656c69662f2e RCX: 00007f417000db39
-RDX: 0000000000000018 RSI: 00000000200001c0 RDI: 0000000000000004
-RBP: 0000000000000000 R08: 00007ffd6c282f00 R09: 00007ffd6c282f00
-R10: 00007ffd6c282f00 R11: 0000000000000246 R12: 00007ffd6c282efc
-R13: 00007ffd6c282f30 R14: 00007ffd6c282f10 R15: 0000000000000006
- </TASK>
-
-
+Signed-off-by: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
+ fs/nilfs2/dir.c   |  6 +++---
+ fs/nilfs2/inode.c | 12 ++++++------
+ fs/nilfs2/ioctl.c |  2 +-
+ fs/nilfs2/namei.c |  8 ++++----
+ 4 files changed, 14 insertions(+), 14 deletions(-)
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+index decd6471300b..a51d13a95651 100644
+--- a/fs/nilfs2/dir.c
++++ b/fs/nilfs2/dir.c
+@@ -429,7 +429,7 @@ void nilfs_set_link(struct inode *dir, struct nilfs_dir_entry *de,
+ 	nilfs_set_de_type(de, inode);
+ 	nilfs_commit_chunk(page, mapping, from, to);
+ 	nilfs_put_page(page);
+-	dir->i_mtime = dir->i_ctime = current_time(dir);
++	dir->i_mtime = inode_ctime_set_current(dir);
+ }
+ 
+ /*
+@@ -519,7 +519,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
+ 	de->inode = cpu_to_le64(inode->i_ino);
+ 	nilfs_set_de_type(de, inode);
+ 	nilfs_commit_chunk(page, page->mapping, from, to);
+-	dir->i_mtime = dir->i_ctime = current_time(dir);
++	dir->i_mtime = inode_ctime_set_current(dir);
+ 	nilfs_mark_inode_dirty(dir);
+ 	/* OFFSET_CACHE */
+ out_put:
+@@ -567,7 +567,7 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
+ 		pde->rec_len = nilfs_rec_len_to_disk(to - from);
+ 	dir->inode = 0;
+ 	nilfs_commit_chunk(page, mapping, from, to);
+-	inode->i_ctime = inode->i_mtime = current_time(inode);
++	inode->i_mtime = inode_ctime_set_current(inode);
+ out:
+ 	nilfs_put_page(page);
+ 	return err;
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index a8ce522ac747..dee831f7426f 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -366,7 +366,7 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
+ 	atomic64_inc(&root->inodes_count);
+ 	inode_init_owner(&nop_mnt_idmap, inode, dir, mode);
+ 	inode->i_ino = ino;
+-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
++	inode->i_mtime = inode->i_atime = inode_ctime_set_current(inode);
+ 
+ 	if (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)) {
+ 		err = nilfs_bmap_read(ii->i_bmap, NULL);
+@@ -450,10 +450,10 @@ int nilfs_read_inode_common(struct inode *inode,
+ 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
+ 	inode->i_size = le64_to_cpu(raw_inode->i_size);
+ 	inode->i_atime.tv_sec = le64_to_cpu(raw_inode->i_mtime);
+-	inode->i_ctime.tv_sec = le64_to_cpu(raw_inode->i_ctime);
++	inode_ctime_set_sec(inode, le64_to_cpu(raw_inode->i_ctime));
+ 	inode->i_mtime.tv_sec = le64_to_cpu(raw_inode->i_mtime);
+ 	inode->i_atime.tv_nsec = le32_to_cpu(raw_inode->i_mtime_nsec);
+-	inode->i_ctime.tv_nsec = le32_to_cpu(raw_inode->i_ctime_nsec);
++	inode_ctime_set_nsec(inode, le32_to_cpu(raw_inode->i_ctime_nsec));
+ 	inode->i_mtime.tv_nsec = le32_to_cpu(raw_inode->i_mtime_nsec);
+ 	if (nilfs_is_metadata_file_inode(inode) && !S_ISREG(inode->i_mode))
+ 		return -EIO; /* this inode is for metadata and corrupted */
+@@ -768,9 +768,9 @@ void nilfs_write_inode_common(struct inode *inode,
+ 	raw_inode->i_gid = cpu_to_le32(i_gid_read(inode));
+ 	raw_inode->i_links_count = cpu_to_le16(inode->i_nlink);
+ 	raw_inode->i_size = cpu_to_le64(inode->i_size);
+-	raw_inode->i_ctime = cpu_to_le64(inode->i_ctime.tv_sec);
++	raw_inode->i_ctime = cpu_to_le64(inode_ctime_peek(inode).tv_sec);
+ 	raw_inode->i_mtime = cpu_to_le64(inode->i_mtime.tv_sec);
+-	raw_inode->i_ctime_nsec = cpu_to_le32(inode->i_ctime.tv_nsec);
++	raw_inode->i_ctime_nsec = cpu_to_le32(inode_ctime_peek(inode).tv_nsec);
+ 	raw_inode->i_mtime_nsec = cpu_to_le32(inode->i_mtime.tv_nsec);
+ 	raw_inode->i_blocks = cpu_to_le64(inode->i_blocks);
+ 
+@@ -875,7 +875,7 @@ void nilfs_truncate(struct inode *inode)
+ 
+ 	nilfs_truncate_bmap(ii, blkoff);
+ 
+-	inode->i_mtime = inode->i_ctime = current_time(inode);
++	inode->i_mtime = inode_ctime_set_current(inode);
+ 	if (IS_SYNC(inode))
+ 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
+ 
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 1dfbc0c34513..811fab46e277 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -149,7 +149,7 @@ int nilfs_fileattr_set(struct mnt_idmap *idmap,
+ 	NILFS_I(inode)->i_flags = oldflags | (flags & FS_FL_USER_MODIFIABLE);
+ 
+ 	nilfs_set_inode_flags(inode);
+-	inode->i_ctime = current_time(inode);
++	inode_ctime_set_current(inode);
+ 	if (IS_SYNC(inode))
+ 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
+ 
+diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+index c7024da8f1e2..251f6021c3db 100644
+--- a/fs/nilfs2/namei.c
++++ b/fs/nilfs2/namei.c
+@@ -185,7 +185,7 @@ static int nilfs_link(struct dentry *old_dentry, struct inode *dir,
+ 	if (err)
+ 		return err;
+ 
+-	inode->i_ctime = current_time(inode);
++	inode_ctime_set_current(inode);
+ 	inode_inc_link_count(inode);
+ 	ihold(inode);
+ 
+@@ -283,7 +283,7 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
+ 	if (err)
+ 		goto out;
+ 
+-	inode->i_ctime = dir->i_ctime;
++	inode_ctime_set(inode, inode_ctime_peek(dir));
+ 	drop_nlink(inode);
+ 	err = 0;
+ out:
+@@ -387,7 +387,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
+ 			goto out_dir;
+ 		nilfs_set_link(new_dir, new_de, new_page, old_inode);
+ 		nilfs_mark_inode_dirty(new_dir);
+-		new_inode->i_ctime = current_time(new_inode);
++		inode_ctime_set_current(new_inode);
+ 		if (dir_de)
+ 			drop_nlink(new_inode);
+ 		drop_nlink(new_inode);
+@@ -406,7 +406,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
+ 	 * Like most other Unix systems, set the ctime for inodes on a
+ 	 * rename.
+ 	 */
+-	old_inode->i_ctime = current_time(old_inode);
++	inode_ctime_set_current(old_inode);
+ 
+ 	nilfs_delete_entry(old_de, old_page);
+ 
+-- 
+2.41.0
 
-If the bug is already fixed, let syzbot know by replying with:
-#syz fix: exact-commit-title
-
-If you want syzbot to run the reproducer, reply with:
-#syz test: git://repo/address.git branch-or-commit-hash
-If you attach or paste a git patch, syzbot will apply it before testing.
-
-If you want to change bug's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
-
-If the bug is a duplicate of another bug, reply with:
-#syz dup: exact-subject-of-another-report
-
-If you want to undo deduplication, reply with:
-#syz undup
