@@ -1,171 +1,156 @@
-From: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 47/79] nilfs2: switch to new ctime accessors
-Date: Wed, 21 Jun 2023 10:46:00 -0400
-Message-ID: <20230621144735.55953-46-jlayton@kernel.org>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH 01/79] fs: add ctime accessors
+ infrastructure
+Date: Wed, 21 Jun 2023 18:34:06 +0200
+Message-ID: <20230621163406.udwkxl6tteg6nlcn@quack3>
 References: <20230621144507.55591-1-jlayton@kernel.org>
- <20230621144735.55953-1-jlayton@kernel.org>
+ <20230621144507.55591-2-jlayton@kernel.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1687358937;
-        bh=YI0ekcjuxgrtvDegmv/g98VNDJqmIL3E+j0N+sr4RfA=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ph+klMpFn0NnfmWDST8YV5l2WD5+GGXP+55Ibv5XHUI/SRE5Rr/QHhu2wb8qKDC9Q
-         SWDk5P/k+cbkLXA+CwywekH6U6HMgeFh0407se6Rlngxd2yKsV+T9TmYO+W1WER6Vf
-         371BWyAvTsp711mSR+V11XY/nphXVkkbyY+0NrHnVBhTP5STIpc9vy6nNdmB3WxOin
-         PzZRehXRlOMo4BMoFb/m/jq6As/dcZS3VWvNQKw4o3NOvpngL7Dwett3bMy+ug6n4C
-         wdVzRonhZu7dlbfp8YkNt/uJydCOnjOoNzsGbV9AWYaxWEVeqs2sy44KWlWxQe6q7p
-         nsYTR01hDaY9w==
-In-Reply-To: <20230621144735.55953-1-jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1687365259;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=83XiFVWYz/09+oGN/3WNfR8rOmdHj8dhtkMP8AULWnA=;
+	b=ffer2imyyy0aKFxKumz2/+snTgsw/9X41CHK//FhVjVKedJ0eK0FBJlSsVIR5V7ob6/iSE
+	YvsiwCptj8ixKT884hZR7z5AMw/5DwdF8QfeawVgKcr/VLw9zwTXe7B+ALgJK5F1FvV0SR
+	FobXaPLpE7lrvMGDFr+oMGv0cjm1UxA=
+In-Reply-To: <20230621144507.55591-2-jlayton@kernel.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
-To: Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+To: Jeff Layton <jlayton@kernel.org>
+Cc: Latchesar Ionkov <lucho@ionkov.net>, "Rafael J. Wysocki" <rafael@kernel.org>, "Darrick J. Wong" <djwong@kernel.org>, Anders Larsen <al@alarsen.net>, Carlos Llamas <cmllamas@google.com>, Andrii Nakryiko <andrii@kernel.org>, Hugh Dickins <hughd@google.com>, John Johansen <john.johansen@canonical.com>, Seth Forshee <sforshee@digitalocean.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christoph Hellwig <hch@lst.de>, Mike Marshall <hubcap@omnibond.com>, Paulo Alcantara <pc@manguebit.com>, linux-xfs@vger.kernel.org, Bart Van Assche <bvanassche@acm.org>, Michael Ellerman <mpe@ellerman.id.au>, John Keeping <john@keeping.me.uk>, Zhang Yi <yi.zhang@huawei.com>, James Morris <jmorris@namei.org>, Christophe Leroy <christophe.leroy@csgroup.eu>, Tyler Hicks <code@tyhicks.com>, Alan Stern <stern@rowland.harvard.edu>, Christian Borntraeger <borntraeger@linux.ibm.com>, devel@lists.ora
 
-In later patches, we're going to change how the ctime.tv_nsec field is
-utilized. Switch to using accessor functions instead of raw accesses of
-inode->i_ctime.
+On Wed 21-06-23 10:45:06, Jeff Layton wrote:
+> struct timespec64 has unused bits in the tv_nsec field that can be used
+> for other purposes. In future patches, we're going to change how the
+> inode->i_ctime is accessed in certain inodes in order to make use of
+> them. In order to do that safely though, we'll need to eradicate raw
+> accesses of the inode->i_ctime field from the kernel.
+> 
+> Add new accessor functions for the ctime that we can use to replace them.
+> 
+> Signed-off-by: Jeff Layton <jlayton@kernel.org>
 
-Signed-off-by: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
----
- fs/nilfs2/dir.c   |  6 +++---
- fs/nilfs2/inode.c | 12 ++++++------
- fs/nilfs2/ioctl.c |  2 +-
- fs/nilfs2/namei.c |  8 ++++----
- 4 files changed, 14 insertions(+), 14 deletions(-)
+Looks good to me. Feel free to add:
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index decd6471300b..a51d13a95651 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -429,7 +429,7 @@ void nilfs_set_link(struct inode *dir, struct nilfs_dir_entry *de,
- 	nilfs_set_de_type(de, inode);
- 	nilfs_commit_chunk(page, mapping, from, to);
- 	nilfs_put_page(page);
--	dir->i_mtime = dir->i_ctime = current_time(dir);
-+	dir->i_mtime = inode_ctime_set_current(dir);
- }
- 
- /*
-@@ -519,7 +519,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
- 	de->inode = cpu_to_le64(inode->i_ino);
- 	nilfs_set_de_type(de, inode);
- 	nilfs_commit_chunk(page, page->mapping, from, to);
--	dir->i_mtime = dir->i_ctime = current_time(dir);
-+	dir->i_mtime = inode_ctime_set_current(dir);
- 	nilfs_mark_inode_dirty(dir);
- 	/* OFFSET_CACHE */
- out_put:
-@@ -567,7 +567,7 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
- 		pde->rec_len = nilfs_rec_len_to_disk(to - from);
- 	dir->inode = 0;
- 	nilfs_commit_chunk(page, mapping, from, to);
--	inode->i_ctime = inode->i_mtime = current_time(inode);
-+	inode->i_mtime = inode_ctime_set_current(inode);
- out:
- 	nilfs_put_page(page);
- 	return err;
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index a8ce522ac747..dee831f7426f 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -366,7 +366,7 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
- 	atomic64_inc(&root->inodes_count);
- 	inode_init_owner(&nop_mnt_idmap, inode, dir, mode);
- 	inode->i_ino = ino;
--	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
-+	inode->i_mtime = inode->i_atime = inode_ctime_set_current(inode);
- 
- 	if (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)) {
- 		err = nilfs_bmap_read(ii->i_bmap, NULL);
-@@ -450,10 +450,10 @@ int nilfs_read_inode_common(struct inode *inode,
- 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
- 	inode->i_size = le64_to_cpu(raw_inode->i_size);
- 	inode->i_atime.tv_sec = le64_to_cpu(raw_inode->i_mtime);
--	inode->i_ctime.tv_sec = le64_to_cpu(raw_inode->i_ctime);
-+	inode_ctime_set_sec(inode, le64_to_cpu(raw_inode->i_ctime));
- 	inode->i_mtime.tv_sec = le64_to_cpu(raw_inode->i_mtime);
- 	inode->i_atime.tv_nsec = le32_to_cpu(raw_inode->i_mtime_nsec);
--	inode->i_ctime.tv_nsec = le32_to_cpu(raw_inode->i_ctime_nsec);
-+	inode_ctime_set_nsec(inode, le32_to_cpu(raw_inode->i_ctime_nsec));
- 	inode->i_mtime.tv_nsec = le32_to_cpu(raw_inode->i_mtime_nsec);
- 	if (nilfs_is_metadata_file_inode(inode) && !S_ISREG(inode->i_mode))
- 		return -EIO; /* this inode is for metadata and corrupted */
-@@ -768,9 +768,9 @@ void nilfs_write_inode_common(struct inode *inode,
- 	raw_inode->i_gid = cpu_to_le32(i_gid_read(inode));
- 	raw_inode->i_links_count = cpu_to_le16(inode->i_nlink);
- 	raw_inode->i_size = cpu_to_le64(inode->i_size);
--	raw_inode->i_ctime = cpu_to_le64(inode->i_ctime.tv_sec);
-+	raw_inode->i_ctime = cpu_to_le64(inode_ctime_peek(inode).tv_sec);
- 	raw_inode->i_mtime = cpu_to_le64(inode->i_mtime.tv_sec);
--	raw_inode->i_ctime_nsec = cpu_to_le32(inode->i_ctime.tv_nsec);
-+	raw_inode->i_ctime_nsec = cpu_to_le32(inode_ctime_peek(inode).tv_nsec);
- 	raw_inode->i_mtime_nsec = cpu_to_le32(inode->i_mtime.tv_nsec);
- 	raw_inode->i_blocks = cpu_to_le64(inode->i_blocks);
- 
-@@ -875,7 +875,7 @@ void nilfs_truncate(struct inode *inode)
- 
- 	nilfs_truncate_bmap(ii, blkoff);
- 
--	inode->i_mtime = inode->i_ctime = current_time(inode);
-+	inode->i_mtime = inode_ctime_set_current(inode);
- 	if (IS_SYNC(inode))
- 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
- 
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index 1dfbc0c34513..811fab46e277 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -149,7 +149,7 @@ int nilfs_fileattr_set(struct mnt_idmap *idmap,
- 	NILFS_I(inode)->i_flags = oldflags | (flags & FS_FL_USER_MODIFIABLE);
- 
- 	nilfs_set_inode_flags(inode);
--	inode->i_ctime = current_time(inode);
-+	inode_ctime_set_current(inode);
- 	if (IS_SYNC(inode))
- 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
- 
-diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index c7024da8f1e2..251f6021c3db 100644
---- a/fs/nilfs2/namei.c
-+++ b/fs/nilfs2/namei.c
-@@ -185,7 +185,7 @@ static int nilfs_link(struct dentry *old_dentry, struct inode *dir,
- 	if (err)
- 		return err;
- 
--	inode->i_ctime = current_time(inode);
-+	inode_ctime_set_current(inode);
- 	inode_inc_link_count(inode);
- 	ihold(inode);
- 
-@@ -283,7 +283,7 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
- 	if (err)
- 		goto out;
- 
--	inode->i_ctime = dir->i_ctime;
-+	inode_ctime_set(inode, inode_ctime_peek(dir));
- 	drop_nlink(inode);
- 	err = 0;
- out:
-@@ -387,7 +387,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 			goto out_dir;
- 		nilfs_set_link(new_dir, new_de, new_page, old_inode);
- 		nilfs_mark_inode_dirty(new_dir);
--		new_inode->i_ctime = current_time(new_inode);
-+		inode_ctime_set_current(new_inode);
- 		if (dir_de)
- 			drop_nlink(new_inode);
- 		drop_nlink(new_inode);
-@@ -406,7 +406,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 	 * Like most other Unix systems, set the ctime for inodes on a
- 	 * rename.
- 	 */
--	old_inode->i_ctime = current_time(old_inode);
-+	inode_ctime_set_current(old_inode);
- 
- 	nilfs_delete_entry(old_de, old_page);
- 
+Reviewed-by: Jan Kara <jack@suse.cz>
+
+								Honza
+
+> ---
+>  fs/inode.c         | 16 ++++++++++++++
+>  include/linux/fs.h | 53 +++++++++++++++++++++++++++++++++++++++++++++-
+>  2 files changed, 68 insertions(+), 1 deletion(-)
+> 
+> diff --git a/fs/inode.c b/fs/inode.c
+> index d37fad91c8da..c005e7328fbb 100644
+> --- a/fs/inode.c
+> +++ b/fs/inode.c
+> @@ -2499,6 +2499,22 @@ struct timespec64 current_time(struct inode *inode)
+>  }
+>  EXPORT_SYMBOL(current_time);
+>  
+> +/**
+> + * inode_ctime_set_current - set the ctime to current_time
+> + * @inode: inode
+> + *
+> + * Set the inode->i_ctime to the current value for the inode. Returns
+> + * the current value that was assigned to i_ctime.
+> + */
+> +struct timespec64 inode_ctime_set_current(struct inode *inode)
+> +{
+> +	struct timespec64 now = current_time(inode);
+> +
+> +	inode_set_ctime(inode, now);
+> +	return now;
+> +}
+> +EXPORT_SYMBOL(inode_ctime_set_current);
+> +
+>  /**
+>   * in_group_or_capable - check whether caller is CAP_FSETID privileged
+>   * @idmap:	idmap of the mount @inode was found from
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 6867512907d6..9afb30606373 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1474,7 +1474,58 @@ static inline bool fsuidgid_has_mapping(struct super_block *sb,
+>  	       kgid_has_mapping(fs_userns, kgid);
+>  }
+>  
+> -extern struct timespec64 current_time(struct inode *inode);
+> +struct timespec64 current_time(struct inode *inode);
+> +struct timespec64 inode_ctime_set_current(struct inode *inode);
+> +
+> +/**
+> + * inode_ctime_peek - fetch the current ctime from the inode
+> + * @inode: inode from which to fetch ctime
+> + *
+> + * Grab the current ctime from the inode and return it.
+> + */
+> +static inline struct timespec64 inode_ctime_peek(const struct inode *inode)
+> +{
+> +	return inode->i_ctime;
+> +}
+> +
+> +/**
+> + * inode_ctime_set - set the ctime in the inode to the given value
+> + * @inode: inode in which to set the ctime
+> + * @ts: timespec value to set the ctime
+> + *
+> + * Set the ctime in @inode to @ts.
+> + */
+> +static inline struct timespec64 inode_ctime_set(struct inode *inode, struct timespec64 ts)
+> +{
+> +	inode->i_ctime = ts;
+> +	return ts;
+> +}
+> +
+> +/**
+> + * inode_ctime_set_sec - set only the tv_sec field in the inode ctime
+> + * @inode: inode in which to set the ctime
+> + * @sec:  value to set the tv_sec field
+> + *
+> + * Set the sec field in the ctime. Returns @sec.
+> + */
+> +static inline time64_t inode_ctime_set_sec(struct inode *inode, time64_t sec)
+> +{
+> +	inode->i_ctime.tv_sec = sec;
+> +	return sec;
+> +}
+> +
+> +/**
+> + * inode_ctime_set_nsec - set only the tv_nsec field in the inode ctime
+> + * @inode: inode in which to set the ctime
+> + * @nsec:  value to set the tv_nsec field
+> + *
+> + * Set the nsec field in the ctime. Returns @nsec.
+> + */
+> +static inline long inode_ctime_set_nsec(struct inode *inode, long nsec)
+> +{
+> +	inode->i_ctime.tv_nsec = nsec;
+> +	return nsec;
+> +}
+>  
+>  /*
+>   * Snapshotting support.
+> -- 
+> 2.41.0
+> 
 -- 
-2.41.0
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
 
