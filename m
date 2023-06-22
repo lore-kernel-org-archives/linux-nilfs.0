@@ -1,106 +1,69 @@
-From: Jeff Layton <jlayton@kernel.org>
-Subject: Re: [PATCH 00/79] fs: new accessors for
- inode->i_ctime
-Date: Wed, 21 Jun 2023 15:52:27 -0400
-Message-ID: <2a5a069572b46b59dd16fe8d54e549a9b5bbb6eb.camel@kernel.org>
+From: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 01/79] fs: add ctime accessors infrastructure
+Date: Thu, 22 Jun 2023 06:14:30 -0400
+Message-ID: <ad4bfb630128709588164db6f1fd2ef39c31d2a5.camel__9120.83277232654$1687428912$gmane$org@kernel.org>
 References: <20230621144507.55591-1-jlayton@kernel.org>
- <20230621152141.5961cf5f@gandalf.local.home>
+         <20230621144507.55591-2-jlayton@kernel.org>
+         <99b3c749-23d9-6f09-fb75-6a84f3d1b066@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687377179;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=vTL4Y8a8sFEsX3Xqt4OIZCRU2/7UfNvPDdjp0N/3dJE=;
-	b=LxzT5GoZ2+dfsXMsc3a2bX7LUG0C1S0BEZIjm3BMhmRH+OWz9zlR2MTAUE5PDWcZkt4GG2
-	ovJWpXlL+jzqZLKPi4XYgYpFsT01eKbbTZ5D9kNbb86M4GPM0kezDk/rHc3qhIxqI9RzmL
-	jGfBgtly1lgehRI7MnBLdzwE+eX1Pig=
-In-Reply-To: <20230621152141.5961cf5f@gandalf.local.home>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Type: text/plain; charset="iso-8859-1"
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Latchesar Ionkov <lucho@ionkov.net>, "Rafael
- J. Wysocki" <rafael@kernel.org>, "Darrick J. Wong" <djwong@kernel.org>, Anders Larsen <al@alarsen.net>, Carlos Llamas <cmllamas@google.com>, Andrii Nakryiko <andrii@kernel.org>, Hugh Dickins <hughd@google.com>, John Johansen <john.johansen@canonical.com>, Seth Forshee <sforshee@digitalocean.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christoph Hellwig <hch@lst.de>, Mike Marshall <hubcap@omnibond.com>, Paulo Alcantara <pc@manguebit.com>, linux-xfs@vger.kernel.org, Bart Van Assche <bvanassche@acm.org>, Michael Ellerman <mpe@ellerman.id.au>, John Keeping <john@keeping.me.uk>, Zhang Yi <yi.zhang@huawei.com>, James Morris <jmorris@namei.org>, Christophe Leroy <christophe.leroy@csgroup.eu>, Tyler Hicks <code@tyhicks.com>, Alan Stern <stern@rowland.harvard.edu>, Christian Borntraeger <borntraeger@linux.ibm.com>, devel@lists.ora
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1687428888;
+        bh=7+cabg86v1cYpPv8vDJOW5RfunjhlSEWXfJLwIkmtqs=;
+        h=Subject:From:To:Date:In-Reply-To:References:From;
+        b=bash4qEoN8ysoF4HTnLUBoIb4R/VvEf+WW/D9VIwZ7IkIbfsRZHAuo5DrHgU3mESQ
+         YV3L6vJlJ5RLoTi5/71VkN5rQAydrP7yy38zcSGGfwasNdQxjqfQEDJO2KhRfaS72P
+         L3pOkZCMNStmacczTh8Bxts4KstAt3iUVQoAzfNq5O0qEkTp/AQ/ZxnvFiOtuM8Rrh
+         hGFigQvIDdzAyY8j4H2gTF58blmQ8XCJxFBrtJ8bp21DHjiO/HINP7f4QOOgCaaZnm
+         wPOh/3PFD9MITyv48Pm3mcErp57QuFgfhsUJhmJROqlUtadgwIZDzlw31/avwVXFpE
+         VwFt0TPP5toFA==
+In-Reply-To: <99b3c749-23d9-6f09-fb75-6a84f3d1b066-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: Damien Le Moal <dlemoal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeremy Kerr <jk-mnsaURCQ41sdnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Nicholas Piggin <npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christophe Leroy <christophe.leroy-2tlSp11Fh4xulxpn9UvDqw@public.gmane.org>, Heiko Carstens <hca-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Vasily Gorbik <gor-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Alexander Gordeev <agordeev-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Christian Borntraeger <borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Sven Schnelle <svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arve =?ISO-8859-1?Q?Hj=F8nnev=E5g?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Todd Kjos <tkjos-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Martijn Coenen <maco-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Joel Fernandes <joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Carlos Llamas <cmllamas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-On Wed, 2023-06-21 at 15:21 -0400, Steven Rostedt wrote:
-> On Wed, 21 Jun 2023 10:45:05 -0400
-> Jeff Layton <jlayton@kernel.org> wrote:
+On Thu, 2023-06-22 at 09:46 +0900, Damien Le Moal wrote:
+> On 6/21/23 23:45, Jeff Layton wrote:
+> > struct timespec64 has unused bits in the tv_nsec field that can be used
+> > for other purposes. In future patches, we're going to change how the
+> > inode->i_ctime is accessed in certain inodes in order to make use of
+> > them. In order to do that safely though, we'll need to eradicate raw
+> > accesses of the inode->i_ctime field from the kernel.
+> >=20
+> > Add new accessor functions for the ctime that we can use to replace the=
+m.
+> >=20
+> > Signed-off-by: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 >=20
-> > Most of this conversion was done via coccinelle, with a few of the more
-> > non-standard accesses done by hand. There should be no behavioral
-> > changes with this set. That will come later, as we convert individual
-> > filesystems to use multigrain timestamps.
+> [...]
 >=20
-> BTW, Linus has suggested to me that whenever a conccinelle script is used=
-,
-> it should be included in the change log.
+> > +/**
+> > + * inode_ctime_peek - fetch the current ctime from the inode
+> > + * @inode: inode from which to fetch ctime
+> > + *
+> > + * Grab the current ctime from the inode and return it.
+> > + */
+> > +static inline struct timespec64 inode_ctime_peek(const struct inode *i=
+node)
+>=20
+> To be consistent with inode_ctime_set(), why not call this one inode_ctim=
+e_get()
+
+In later patches fetching the ctime for presentation may have side
+effects on certain filesystems. Using "peek" here is a hint that we want
+to avoid those side effects in these calls.
+
+> ? Also, inode_set_ctime() & inode_get_ctime() may be a little more natura=
+l. But
+> no strong opinion about that though.
 >=20
 
-Ok, here's what I have. I note again that my usage of coccinelle is
-pretty primitive, so I ended up doing a fair bit of by-hand fixing after
-applying these.
+I like the consistency of the inode_ctime_* prefix. It makes it simpler
+to find these calls when grepping, etc.
 
-Given the way that this change is broken up into 77 patches by
-subsystem, to which changelogs should I add it? I could add it to the
-"infrastructure" patch, but that's the one where I _didn't_ use it.=A0
-
-Maybe to patch #79 (the one that renames i_ctime)?
-
-
-------------------------8<------------------------------
-@@
-expression inode;
-@@
-
-- inode->i_ctime =3D current_time(inode)
-+ inode_set_current_ctime(inode)
-
-@@
-expression inode;
-@@
-
-- inode->i_ctime =3D inode->i_mtime =3D current_time(inode)
-+ inode->i_mtime =3D inode_set_current_ctime(inode)
-
-@@
-struct inode *inode;
-expression value;
-@@
-
-- inode->i_ctime =3D value;
-+ inode_set_ctime(inode, value);
-
-@@
-struct inode *inode;
-expression val;
-@@
-- inode->i_ctime.tv_sec =3D val
-+ inode_set_ctime_sec(inode, val)
-
-@@
-struct inode *inode;
-expression val;
-@@
-- inode->i_ctime.tv_nsec =3D val
-+ inode_set_ctime_nsec(inode, val)
-
-@@
-struct inode *inode;
-@@
-- inode->i_ctime
-+ inode_ctime_peek(inode)
-
+That said, my opinions on naming are pretty loosely-held, so if the
+consensus is that the names should as you suggest, I'll go along with
+it.
+--=20
+Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
