@@ -1,50 +1,48 @@
-From: syzbot <syzbot+list40acfa5dfd27772fa378-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: [syzbot] Monthly nilfs report (Jun 2023)
-Date: Thu, 29 Jun 2023 01:55:48 -0700
-Message-ID: <000000000000d6218f05ff40dd65@google.com>
+From: Luis Chamberlain <mcgrof@kernel.org>
+Subject: Re: [PATCH 00/79] fs: new accessors for inode->i_ctime
+Date: Fri, 30 Jun 2023 15:11:42 -0700
+Message-ID: <ZJ9THiUlOUmm0xpD@bombadil.infradead.org>
+References: <20230621144507.55591-1-jlayton@kernel.org>
+ <20230621152141.5961cf5f@gandalf.local.home>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <ecryptfs-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20210309; h=Sender:In-Reply-To:Content-Type:
+        MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=mmrCw93FsSgGVqkQGx3tY+c3DxJ3ErMGqt6cuZmQDk4=; b=3Xi9NJjkd4QPELIEMLqHm1+oJy
+        QNIOVPA8HW3kXP6XuZluim3h/1Z/sfwrG9QOzNRHgYq+vOXcblPYVWq7qnircmbeiJPJDVgOjWyzo
+        LbnhyHqo5AegY+fER/tKQShp8dh+Z/+/bv4xI3KoQiSpmxUAYDgP6p5vAe2pi77qFUU0ycsQEmV7V
+        4gCVdOf3P+PueFWMrnvROKMoMz+u7SsILxSnayKbZrj37v0X+NhKaX7iej/SD3IFAsLN2XayGDdUC
+        G3y/vRbujnR04W/Op5jRENlRX4f86+/5+pwYqxdiQMmhYNN5AwTPrNqa/XDugttEtOweLL0X0YqO/
+        pQ84xrwQ==;
+Content-Disposition: inline
+In-Reply-To: <20230621152141.5961cf5f@gandalf.local.home>
+Sender: Luis Chamberlain <mcgrof@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+To: Steven Rostedt <rostedt@goodmis.org>, Julia Lawall <julia.lawall@inria.fr>, Takashi Iwai <tiwai@suse.de>
+Cc: Jeff Layton <jlayton@kernel.org>, Jeremy Kerr <jk@ozlabs.org>, Arnd Bergmann <arnd@arndb.de>, Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, Todd Kjos <tkjos@android.com>, Martijn Coenen <maco@android.com>, Joel Fernandes <joel@joelfernandes.org>, Christian Brauner <brauner@kernel.org>, Carlos Llamas <cmllamas@google.com>, Suren Baghdasaryan <surenb@google.com>, Den
 
-Hello nilfs maintainers/developers,
+On Wed, Jun 21, 2023 at 03:21:41PM -0400, Steven Rostedt wrote:
+> On Wed, 21 Jun 2023 10:45:05 -0400
+> Jeff Layton <jlayton@kernel.org> wrote:
+> 
+> > Most of this conversion was done via coccinelle, with a few of the more
+> > non-standard accesses done by hand. There should be no behavioral
+> > changes with this set. That will come later, as we convert individual
+> > filesystems to use multigrain timestamps.
+> 
+> BTW, Linus has suggested to me that whenever a conccinelle script is used,
+> it should be included in the change log.
 
-This is a 31-day syzbot report for the nilfs subsystem.
-All related reports/information can be found at:
-https://syzkaller.appspot.com/upstream/s/nilfs
+Sometimes people like the coccinelle included in the commit, sometimes
+people don't [0], it really ends up being up to a subjective maintainer
+preference. A compromise could be to use git notes as these are
+optional, however if we want to go down that path we should try to make
+a general consensus on it so we can send a consistent message.
 
-During the period, 2 new issues were detected and 2 were fixed.
-In total, 13 issues are still open and 33 have been fixed so far.
+[0] https://lore.kernel.org/all/20230512073100.GC32559@twin.jikos.cz/
 
-Some of the still happening issues:
-
-Ref Crashes Repro Title
-<1> 328     Yes   WARNING in nilfs_sufile_set_segment_usage
-                  https://syzkaller.appspot.com/bug?extid=14e9f834f6ddecece094
-<2> 258     Yes   kernel BUG at fs/buffer.c:LINE!
-                  https://syzkaller.appspot.com/bug?extid=cfed5b56649bddf80d6e
-<3> 71      Yes   INFO: task hung in nilfs_detach_log_writer
-                  https://syzkaller.appspot.com/bug?extid=e3973c409251e136fdd0
-<4> 58      Yes   WARNING in mark_buffer_dirty (5)
-                  https://syzkaller.appspot.com/bug?extid=cdfcae656bac88ba0e2d
-<5> 39      Yes   kernel BUG in folio_end_writeback
-                  https://syzkaller.appspot.com/bug?extid=7e5cf1d80677ec185e63
-<6> 11      No    BUG: unable to handle kernel NULL pointer dereference in nilfs_segctor_do_construct
-                  https://syzkaller.appspot.com/bug?extid=5afc832d6dbb2fd17538
-<7> 3       Yes   general protection fault in folio_create_empty_buffers
-                  https://syzkaller.appspot.com/bug?extid=0ad741797f4565e7e2d2
-
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller-/JYPxA39Uh5TLH3MbocFF+G/Ez6ZCGd0@public.gmane.org
-
-To disable reminders for individual bugs, reply with the following command:
-#syz set <Ref> no-reminders
-
-To change bug's subsystems, reply with:
-#syz set <Ref> subsystems: new-subsystem
-
-You may send multiple commands in a single email message.
+  Luis
