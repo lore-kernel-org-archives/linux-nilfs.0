@@ -1,195 +1,117 @@
-From: Jan Kara <jack@suse.cz>
-Subject: [PATCH 01/32] block: Provide blkdev_get_handle_* functions
-Date: Tue,  4 Jul 2023 14:21:28 +0200
-Message-ID: <20230704122224.16257-1-jack@suse.cz>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH 27/32] nilfs2: Convert to use blkdev_get_handle_by_path()
+Date: Tue,  4 Jul 2023 14:21:54 +0200
+Message-ID: <20230704122224.16257-27-jack@suse.cz>
 References: <20230629165206.383-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1688473345; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+        t=1688473346; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=Y5Z0PpLwK7LWiMwHAJV3g58wt4Pu7/r/oCMflfsspxI=;
-        b=Yfx9ztWkVatt0fVfNPxdamFDjV837Nu56ImHpS3yWvwdcdXXyeJ1ONnOd+6RA+xJckyxi2
-        Fr1h4BOlDMHKk2yJxxmlop9vtybjvkzPRI8sOxjaR75gWlVSNQjeXkVo/sHlsqPbUV+LJG
-        uG3Fi84JhxR4KPvRm9XoLJxwd0lLAD0=
+        bh=IQwr5UuHNfhTbPltKjuSdQnPV1mAcWzpyJqrIN8BW0I=;
+        b=nOacVS8tJH8o+KaEeK8T7qQ2qZYGpNHZrHdl+D2d/5NBZt18W9D0GubEG33ybqDnC+6s4b
+        woJwgxkqsTmLNCBW6yzXws0T/lFkAzjqGC/Yy8oLTY1XTT79XS0OVHlS+Az39XvC4Fhvf/
+        fTQKQqeL1Cagw+Jr9qukz7p0SJj9fXc=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1688473345;
+        s=susede2_ed25519; t=1688473346;
         h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=Y5Z0PpLwK7LWiMwHAJV3g58wt4Pu7/r/oCMflfsspxI=;
-        b=vF6CF3OlMOzmEcsCihpnKLEsv6y6u4duYbSxFgbJ4TrA9OaJnML/9G2T1z6YHtiVQ3zwq6
-        zVCIM6qtTQOYAOBg==
-In-Reply-To: <20230629165206.383-1-jack@suse.cz>
-X-Developer-Signature: v=1; a=openpgp-sha256; l=5599; i=jack@suse.cz; h=from:subject; bh=repJSb0/C5PfG8Cx5q/n/kNJZOabhc2tYWxiICNNTtg=; b=owGbwMvMwME4Z+4qdvsUh5uMp9WSGFKW8J3uuK2gorZt+knOzhX81snTGX/57phWXzfXM3w+50Xl rfb7OxmNWRgYORhkxRRZVkde1L42z6hra6iGDMwgViaQKQxcnAIwERsLDobphetsJoi99quKYIut26 wgv/K+lUS+secym02t85epsOp8rtu3acJMN1WFRiX1irKCnSu+LXh+rVyp65RAEGttl+XcP32mOR0n ZJYFm7orF8YFnhVftYzZjm2Rva3I0oqXdap/bUJr8qNjVVfHnBRiFEv0Ocgpck1jlTHfEWUu71NrKu 8EXrbnsfD7wm1qKHDqnnnD21y1n9OFHn8/7qJz4O19panPLvMxrOrNn970IcH6rnhQsq0ZS1v6JUfN RS5ah5XMXNI/c14+vVlVkPVI9n2HQNZlEfdsO13VFx17Z7f0vKnN9UZZ3Zii6WbsWS81/qefFs1Ljl +dK1sZIpSRdXfx+jksz9T4il4AAA==
-X-Developer-Key: i=jack@suse.cz; a=openpgp; fpr=93C6099A142276A28BBE35D815BC833443038D8C
+        bh=IQwr5UuHNfhTbPltKjuSdQnPV1mAcWzpyJqrIN8BW0I=;
+        b=VGVnKUg83uI2bRH7vJbEMJqY/TZfXogwFhtgNjI67oPxV8qlVbBcLGITDC+i2IDdUDpfZL
+        i2qifN45iJK9VYAQ==
+In-Reply-To: <20230629165206.383-1-jack-AlSwsSmVLrQ@public.gmane.org>
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2354; i=jack-AlSwsSmVLrQ@public.gmane.org; h=from:subject; bh=DtdezkZSK/EN7RM1qSQYRSnndqPmr+l0kbPMp17XFJg=; b=owEBbQGS/pANAwAIAZydqgc/ZEDZAcsmYgBkpA7iDlB6QtnlTTlGdMJScOFDAX2JZEdaLV5wnQzq wfPr4T+JATMEAAEIAB0WIQSrWdEr1p4yirVVKBycnaoHP2RA2QUCZKQO4gAKCRCcnaoHP2RA2WRuB/ 93sM8/9dGNutmxHoGEwtGYIIHvJjLz0OrPGr/rt39+sF5c9+WtfclsNZKrDE94oblL8T2o3nX5R/LN wiAFHzzgZYgg/12m8Za2axys3zh+uos763PGHIk2KfJ+6Fo+mFYKKZKIRKiviewfu6XgdJv4Qo0+Sb psBZY1rOU3m/HWCVvqcfugnu4hJN3rdUqYbpGcLYB6UEM1PEg+oSPR4kf30dV8D3q48lMGy+1vNmj1 5IRRSUYNFyHdzvBXDpA+Hsis5vX0vfXijjPcmhb2D2Km2OntPST3pnilGdLVKp2XkkBuTbXx29A01B iSQmxGUB40YvRnmZFjGSZXIVogEbjT
+X-Developer-Key: i=jack-AlSwsSmVLrQ@public.gmane.org; a=openpgp; fpr=93C6099A142276A28BBE35D815BC833443038D8C
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: linux-block@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Jan Kara <jack@suse.cz>, Alasdair Kergon <agk@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Anna Schumaker <anna@kernel.org>, Chao Yu <chao@kernel.org>, Christian Borntraeger <borntraeger@linux.ibm.com>, "Darrick J. Wong" <djwong@kernel.org>, Dave Kleikamp <shaggy@kernel.org>, David Sterba <dsterba@suse.com>, dm-devel@redhat.com, drbd-dev@lists.linbit.com, Gao Xiang <xiang@kernel.org>, Jack Wang <jinpu.wang@ionos.com>, Jaegeuk Kim <jaegeuk@kernel.org>, jfs-discussion@lists.sourceforge.net, Joern Engel <joern@lazybastard.org>, Joseph Qi <joseph.qi@linux.alibaba.com>, Kent Overstreet <kent.overstreet@gmail.com>, linux-bcache@vger.kernel.org, linux-bt
+To: linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Create struct bdev_handle that contains all parameters that need to be
-passed to blkdev_put() and provide blkdev_get_handle_* functions that
-return this structure instead of plain bdev pointer. This will
-eventually allow us to pass one more argument to blkdev_put() without
-too much hassle.
+Convert nilfs2 to use blkdev_get_handle_by_path() and initialize the
+superblock with the handle.
 
-CC: Alasdair Kergon <agk@redhat.com>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Anna Schumaker <anna@kernel.org>
-CC: Chao Yu <chao@kernel.org>
-CC: Christian Borntraeger <borntraeger@linux.ibm.com>
-CC: Coly Li <colyli@suse.de
-CC: "Darrick J. Wong" <djwong@kernel.org>
-CC: Dave Kleikamp <shaggy@kernel.org>
-CC: David Sterba <dsterba@suse.com>
-CC: dm-devel@redhat.com
-CC: drbd-dev@lists.linbit.com
-CC: Gao Xiang <xiang@kernel.org>
-CC: Jack Wang <jinpu.wang@ionos.com>
-CC: Jaegeuk Kim <jaegeuk@kernel.org>
-CC: jfs-discussion@lists.sourceforge.net
-CC: Joern Engel <joern@lazybastard.org>
-CC: Joseph Qi <joseph.qi@linux.alibaba.com>
-CC: Kent Overstreet <kent.overstreet@gmail.com>
-CC: linux-bcache@vger.kernel.org
-CC: linux-btrfs@vger.kernel.org
-CC: linux-erofs@lists.ozlabs.org
-CC: <linux-ext4@vger.kernel.org>
-CC: linux-f2fs-devel@lists.sourceforge.net
-CC: linux-mm@kvack.org
-CC: linux-mtd@lists.infradead.org
-CC: linux-nfs@vger.kernel.org
-CC: linux-nilfs@vger.kernel.org
-CC: linux-nvme@lists.infradead.org
-CC: linux-pm@vger.kernel.org
-CC: linux-raid@vger.kernel.org
-CC: linux-s390@vger.kernel.org
-CC: linux-scsi@vger.kernel.org
-CC: linux-xfs@vger.kernel.org
-CC: "Md. Haris Iqbal" <haris.iqbal@ionos.com>
-CC: Mike Snitzer <snitzer@kernel.org>
-CC: Minchan Kim <minchan@kernel.org>
-CC: ocfs2-devel@oss.oracle.com
-CC: reiserfs-devel@vger.kernel.org
-CC: Sergey Senozhatsky <senozhatsky@chromium.org>
-CC: Song Liu <song@kernel.org>
-CC: Sven Schnelle <svens@linux.ibm.com>
-CC: target-devel@vger.kernel.org
-CC: Ted Tso <tytso@mit.edu>
-CC: Trond Myklebust <trond.myklebust@hammerspace.com>
-CC: xen-devel@lists.xenproject.org
-Signed-off-by: Jan Kara <jack@suse.cz>
+CC: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- block/bdev.c           | 47 ++++++++++++++++++++++++++++++++++++++++++
- include/linux/blkdev.h | 10 +++++++++
- 2 files changed, 57 insertions(+)
+ fs/nilfs2/super.c | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
 
-diff --git a/block/bdev.c b/block/bdev.c
-index 979e28a46b98..c75de5cac2bc 100644
---- a/block/bdev.c
-+++ b/block/bdev.c
-@@ -846,6 +846,24 @@ struct block_device *blkdev_get_by_dev(dev_t dev, blk_mode_t mode, void *holder,
- }
- EXPORT_SYMBOL(blkdev_get_by_dev);
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 0ef8c71bde8e..0aba0daa06d2 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -1283,14 +1283,15 @@ static int nilfs_identify(char *data, struct nilfs_super_data *sd)
  
-+struct bdev_handle *blkdev_get_handle_by_dev(dev_t dev, blk_mode_t mode,
-+		void *holder, const struct blk_holder_ops *hops)
-+{
-+	struct bdev_handle *handle = kmalloc(sizeof(struct bdev_handle),
-+					     GFP_KERNEL);
-+	struct block_device *bdev;
-+
-+	if (!handle)
-+		return ERR_PTR(-ENOMEM);
-+	bdev = blkdev_get_by_dev(dev, mode, holder, hops);
-+	if (IS_ERR(bdev))
-+		return ERR_CAST(bdev);
-+	handle->bdev = bdev;
-+	handle->holder = holder;
-+	return handle;
-+}
-+EXPORT_SYMBOL(blkdev_get_handle_by_dev);
-+
- /**
-  * blkdev_get_by_path - open a block device by name
-  * @path: path to the block device to open
-@@ -884,6 +902,28 @@ struct block_device *blkdev_get_by_path(const char *path, blk_mode_t mode,
- }
- EXPORT_SYMBOL(blkdev_get_by_path);
- 
-+struct bdev_handle *blkdev_get_handle_by_path(const char *path, blk_mode_t mode,
-+		void *holder, const struct blk_holder_ops *hops)
-+{
-+	struct bdev_handle *handle;
-+	dev_t dev;
-+	int error;
-+
-+	error = lookup_bdev(path, &dev);
-+	if (error)
-+		return ERR_PTR(error);
-+
-+	handle = blkdev_get_handle_by_dev(dev, mode, holder, hops);
-+	if (!IS_ERR(handle) && (mode & BLK_OPEN_WRITE) &&
-+	    bdev_read_only(handle->bdev)) {
-+		blkdev_handle_put(handle);
-+		return ERR_PTR(-EACCES);
-+	}
-+
-+	return handle;
-+}
-+EXPORT_SYMBOL(blkdev_get_handle_by_path);
-+
- void blkdev_put(struct block_device *bdev, void *holder)
+ static int nilfs_set_bdev_super(struct super_block *s, void *data)
  {
- 	struct gendisk *disk = bdev->bd_disk;
-@@ -920,6 +960,13 @@ void blkdev_put(struct block_device *bdev, void *holder)
+-	s->s_bdev = data;
++	s->s_bdev_handle = data;
++	s->s_bdev = s->s_bdev_handle->bdev;
+ 	s->s_dev = s->s_bdev->bd_dev;
+ 	return 0;
  }
- EXPORT_SYMBOL(blkdev_put);
  
-+void blkdev_handle_put(struct bdev_handle *handle)
-+{
-+	blkdev_put(handle->bdev, handle->holder);
-+	kfree(handle);
-+}
-+EXPORT_SYMBOL(blkdev_handle_put);
-+
- /**
-  * lookup_bdev() - Look up a struct block_device by name.
-  * @pathname: Name of the block device in the filesystem.
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index ed44a997f629..a910e9997ddd 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1471,14 +1471,24 @@ struct blk_holder_ops {
- #define sb_open_mode(flags) \
- 	(BLK_OPEN_READ | (((flags) & SB_RDONLY) ? 0 : BLK_OPEN_WRITE))
+ static int nilfs_test_bdev_super(struct super_block *s, void *data)
+ {
+-	return (void *)s->s_bdev == data;
++	return s->s_bdev == ((struct bdev_handle *)data)->bdev;
+ }
  
-+struct bdev_handle {
-+	struct block_device *bdev;
-+	void *holder;
-+};
-+
- struct block_device *blkdev_get_by_dev(dev_t dev, blk_mode_t mode, void *holder,
- 		const struct blk_holder_ops *hops);
- struct block_device *blkdev_get_by_path(const char *path, blk_mode_t mode,
- 		void *holder, const struct blk_holder_ops *hops);
-+struct bdev_handle *blkdev_get_handle_by_dev(dev_t dev, blk_mode_t mode,
-+		void *holder, const struct blk_holder_ops *hops);
-+struct bdev_handle *blkdev_get_handle_by_path(const char *path, blk_mode_t mode,
-+		void *holder, const struct blk_holder_ops *hops);
- int bd_prepare_to_claim(struct block_device *bdev, void *holder,
- 		const struct blk_holder_ops *hops);
- void bd_abort_claiming(struct block_device *bdev, void *holder);
- void blkdev_put(struct block_device *bdev, void *holder);
-+void blkdev_handle_put(struct bdev_handle *handle);
+ static struct dentry *
+@@ -1298,15 +1299,17 @@ nilfs_mount(struct file_system_type *fs_type, int flags,
+ 	     const char *dev_name, void *data)
+ {
+ 	struct nilfs_super_data sd;
++	struct bdev_handle *bdev_handle;
+ 	struct super_block *s;
+ 	struct dentry *root_dentry;
+ 	int err, s_new = false;
  
- /* just for blk-cgroup, don't use elsewhere */
- struct block_device *blkdev_get_no_open(dev_t dev);
+-	sd.bdev = blkdev_get_by_path(dev_name, sb_open_mode(flags), fs_type,
+-				     NULL);
+-	if (IS_ERR(sd.bdev))
+-		return ERR_CAST(sd.bdev);
++	bdev_handle = blkdev_get_handle_by_path(dev_name, sb_open_mode(flags),
++				fs_type, NULL);
++	if (IS_ERR(bdev_handle))
++		return ERR_CAST(bdev_handle);
+ 
++	sd.bdev = bdev_handle->bdev;
+ 	sd.cno = 0;
+ 	sd.flags = flags;
+ 	if (nilfs_identify((char *)data, &sd)) {
+@@ -1326,7 +1329,7 @@ nilfs_mount(struct file_system_type *fs_type, int flags,
+ 		goto failed;
+ 	}
+ 	s = sget(fs_type, nilfs_test_bdev_super, nilfs_set_bdev_super, flags,
+-		 sd.bdev);
++		 bdev_handle);
+ 	mutex_unlock(&sd.bdev->bd_fsfreeze_mutex);
+ 	if (IS_ERR(s)) {
+ 		err = PTR_ERR(s);
+@@ -1374,7 +1377,7 @@ nilfs_mount(struct file_system_type *fs_type, int flags,
+ 	}
+ 
+ 	if (!s_new)
+-		blkdev_put(sd.bdev, fs_type);
++		blkdev_handle_put(bdev_handle);
+ 
+ 	return root_dentry;
+ 
+@@ -1383,7 +1386,7 @@ nilfs_mount(struct file_system_type *fs_type, int flags,
+ 
+  failed:
+ 	if (!s_new)
+-		blkdev_put(sd.bdev, fs_type);
++		blkdev_handle_put(bdev_handle);
+ 	return ERR_PTR(err);
+ }
+ 
 -- 
 2.35.3
 
