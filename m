@@ -1,134 +1,188 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v2 08/92] fs: new helper: simple_rename_timestamp
-Date: Thu, 6 Jul 2023 12:27:06 +0200
-Message-ID: <20230706102706.w7udmbmuwp7hhcry@quack3>
-References: <20230705185812.579118-1-jlayton@kernel.org>
- <20230705185812.579118-3-jlayton@kernel.org>
+Subject: Re: [PATCH v2 59/92] nilfs2: convert to ctime accessor functions
+Date: Thu, 6 Jul 2023 15:35:50 +0200
+Message-ID: <20230706133550.fqb6zyhntkglbcmf@quack3>
+References: <20230705185755.579053-1-jlayton@kernel.org>
+ <20230705190309.579783-1-jlayton@kernel.org>
+ <20230705190309.579783-57-jlayton@kernel.org>
 Mime-Version: 1.0
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1688639226; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+        t=1688650551; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=bA8lspzVCI0QkBBZSOZ2NaXyU+WIcRfNoOGE3kPhpJ0=;
-        b=cwJXVYMxjabgJAc1WiPXwEoX0OTfi47rAf4OBX1TAQ+OGmO9dcjviKfq9JaMZbP2e77Zft
-        ZFGj4L7K2Mk/xcezt5kjd+qP2pHojrW25RMENmZ0z2yxrjNTco/s31l/aUs5F51DaCvlcK
-        y6kdxWpKryRTZKsAyjQoNnmkqAh2mzg=
+        bh=ceqPWf0NI1hE49lDCpnOfgQpg2XL9BBah4pOqFXBF+M=;
+        b=JqWfHr6bVxmmXe7kNkh9dORylPaxZDDASjAuPSV84s05jr4n9D/fjtv4Es92RE8VRLP0cS
+        yURstx+4xfiCfPCIFzbn/OuQnbLDdS5jawngj7K8sQfkd8Ij07FGN75MTv4j3g3xx52beW
+        OMptSKq+ZLZHZdf2Lv8lv0Wl13YqA/Q=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1688639226;
+        s=susede2_ed25519; t=1688650551;
         h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
          mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=bA8lspzVCI0QkBBZSOZ2NaXyU+WIcRfNoOGE3kPhpJ0=;
-        b=NZCT2CDl1JUNY6ijIJLjHssrtsmLEPFUK3ppAhWe46d1TfukNG5xi7VbWtXEv0lhKCq/xt
-        xNVG4YexDp28AbCA==
+        bh=ceqPWf0NI1hE49lDCpnOfgQpg2XL9BBah4pOqFXBF+M=;
+        b=0e2qd+macsMH2eFzFQtisE7NDdIL/ra31fyU3boRcogwVMVSkGuEFrsYDTe9mJyIHrUIw7
+        71NZacXZ065cOKAw==
 Content-Disposition: inline
-In-Reply-To: <20230705185812.579118-3-jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <20230705190309.579783-57-jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: jk-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, christophe.leroy-2tlSp11Fh4xulxpn9UvDqw@public.gmane.org, hca-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, gor-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, agordeev-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, tkjos-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, maco-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org, brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cmllamas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dennis.dalessandro-ntyVByD3zXaTtA8H5PvdGFaTQe2KTcn/@public.gmane.org, jgg-uk2M96/98Pc@public.gmane.org, leon-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bwarrum-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, rituagar-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, ericvh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lucho-OnYtXJJ0/fesTnJN9+BGXg@public.gmane.org, asmadeus-9aU+PIKW3UvdtAWm4Da02A@public.gmane.org, linux_oss-kKOvUW9iAPtl57MIdRCFDg@public.gmane.org, dsterba-IBi9RG/b67k@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, marc.dionne-hRzEac23uH1Wk0Htik3J/w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, raven-PKsaG3nR2I+sTnJN9+BGXg@public.gmane.org, luisbg-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, salah.triki-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, aivazian.tigran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, kees
+Cc: Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed 05-07-23 14:58:11, Jeff Layton wrote:
-> A rename potentially involves updating 4 different inode timestamps. Add
-> a function that handles the details sanely, and convert the libfs.c
-> callers to use it.
+On Wed 05-07-23 15:01:24, Jeff Layton wrote:
+> In later patches, we're going to change how the inode's ctime field is
+> used. Switch to using accessor functions instead of raw accesses of
+> inode->i_ctime.
 > 
+> Acked-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 > Signed-off-by: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
-Looks good to me. Feel free to add:
+Looks good. Feel free to add:
 
 Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 
 								Honza
 
 > ---
->  fs/libfs.c         | 36 +++++++++++++++++++++++++++---------
->  include/linux/fs.h |  2 ++
->  2 files changed, 29 insertions(+), 9 deletions(-)
+>  fs/nilfs2/dir.c   |  6 +++---
+>  fs/nilfs2/inode.c | 12 ++++++------
+>  fs/nilfs2/ioctl.c |  2 +-
+>  fs/nilfs2/namei.c |  8 ++++----
+>  4 files changed, 14 insertions(+), 14 deletions(-)
 > 
-> diff --git a/fs/libfs.c b/fs/libfs.c
-> index a7e56baf8bbd..9ee79668c909 100644
-> --- a/fs/libfs.c
-> +++ b/fs/libfs.c
-> @@ -692,6 +692,31 @@ int simple_rmdir(struct inode *dir, struct dentry *dentry)
+> diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+> index decd6471300b..bce734b68f08 100644
+> --- a/fs/nilfs2/dir.c
+> +++ b/fs/nilfs2/dir.c
+> @@ -429,7 +429,7 @@ void nilfs_set_link(struct inode *dir, struct nilfs_dir_entry *de,
+>  	nilfs_set_de_type(de, inode);
+>  	nilfs_commit_chunk(page, mapping, from, to);
+>  	nilfs_put_page(page);
+> -	dir->i_mtime = dir->i_ctime = current_time(dir);
+> +	dir->i_mtime = inode_set_ctime_current(dir);
 >  }
->  EXPORT_SYMBOL(simple_rmdir);
 >  
-> +/**
-> + * simple_rename_timestamp - update the various inode timestamps for rename
-> + * @old_dir: old parent directory
-> + * @old_dentry: dentry that is being renamed
-> + * @new_dir: new parent directory
-> + * @new_dentry: target for rename
-> + *
-> + * POSIX mandates that the old and new parent directories have their ctime and
-> + * mtime updated, and that inodes of @old_dentry and @new_dentry (if any), have
-> + * their ctime updated.
-> + */
-> +void simple_rename_timestamp(struct inode *old_dir, struct dentry *old_dentry,
-> +			     struct inode *new_dir, struct dentry *new_dentry)
-> +{
-> +	struct inode *newino = d_inode(new_dentry);
-> +
-> +	old_dir->i_mtime = inode_set_ctime_current(old_dir);
-> +	if (new_dir != old_dir)
-> +		new_dir->i_mtime = inode_set_ctime_current(new_dir);
-> +	inode_set_ctime_current(d_inode(old_dentry));
-> +	if (newino)
-> +		inode_set_ctime_current(newino);
-> +}
-> +EXPORT_SYMBOL_GPL(simple_rename_timestamp);
-> +
->  int simple_rename_exchange(struct inode *old_dir, struct dentry *old_dentry,
->  			   struct inode *new_dir, struct dentry *new_dentry)
->  {
-> @@ -707,11 +732,7 @@ int simple_rename_exchange(struct inode *old_dir, struct dentry *old_dentry,
->  			inc_nlink(old_dir);
->  		}
->  	}
-> -	old_dir->i_ctime = old_dir->i_mtime =
-> -	new_dir->i_ctime = new_dir->i_mtime =
-> -	d_inode(old_dentry)->i_ctime =
-> -	d_inode(new_dentry)->i_ctime = current_time(old_dir);
-> -
-> +	simple_rename_timestamp(old_dir, old_dentry, new_dir, new_dentry);
->  	return 0;
->  }
->  EXPORT_SYMBOL_GPL(simple_rename_exchange);
-> @@ -720,7 +741,6 @@ int simple_rename(struct mnt_idmap *idmap, struct inode *old_dir,
->  		  struct dentry *old_dentry, struct inode *new_dir,
->  		  struct dentry *new_dentry, unsigned int flags)
->  {
-> -	struct inode *inode = d_inode(old_dentry);
->  	int they_are_dirs = d_is_dir(old_dentry);
+>  /*
+> @@ -519,7 +519,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
+>  	de->inode = cpu_to_le64(inode->i_ino);
+>  	nilfs_set_de_type(de, inode);
+>  	nilfs_commit_chunk(page, page->mapping, from, to);
+> -	dir->i_mtime = dir->i_ctime = current_time(dir);
+> +	dir->i_mtime = inode_set_ctime_current(dir);
+>  	nilfs_mark_inode_dirty(dir);
+>  	/* OFFSET_CACHE */
+>  out_put:
+> @@ -567,7 +567,7 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
+>  		pde->rec_len = nilfs_rec_len_to_disk(to - from);
+>  	dir->inode = 0;
+>  	nilfs_commit_chunk(page, mapping, from, to);
+> -	inode->i_ctime = inode->i_mtime = current_time(inode);
+> +	inode->i_mtime = inode_set_ctime_current(inode);
+>  out:
+>  	nilfs_put_page(page);
+>  	return err;
+> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+> index a8ce522ac747..5259b94ca1dc 100644
+> --- a/fs/nilfs2/inode.c
+> +++ b/fs/nilfs2/inode.c
+> @@ -366,7 +366,7 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
+>  	atomic64_inc(&root->inodes_count);
+>  	inode_init_owner(&nop_mnt_idmap, inode, dir, mode);
+>  	inode->i_ino = ino;
+> -	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+> +	inode->i_mtime = inode->i_atime = inode_set_ctime_current(inode);
 >  
->  	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE))
-> @@ -743,9 +763,7 @@ int simple_rename(struct mnt_idmap *idmap, struct inode *old_dir,
->  		inc_nlink(new_dir);
->  	}
+>  	if (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)) {
+>  		err = nilfs_bmap_read(ii->i_bmap, NULL);
+> @@ -450,10 +450,10 @@ int nilfs_read_inode_common(struct inode *inode,
+>  	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
+>  	inode->i_size = le64_to_cpu(raw_inode->i_size);
+>  	inode->i_atime.tv_sec = le64_to_cpu(raw_inode->i_mtime);
+> -	inode->i_ctime.tv_sec = le64_to_cpu(raw_inode->i_ctime);
+> +	inode_set_ctime(inode, le64_to_cpu(raw_inode->i_ctime),
+> +			le32_to_cpu(raw_inode->i_ctime_nsec));
+>  	inode->i_mtime.tv_sec = le64_to_cpu(raw_inode->i_mtime);
+>  	inode->i_atime.tv_nsec = le32_to_cpu(raw_inode->i_mtime_nsec);
+> -	inode->i_ctime.tv_nsec = le32_to_cpu(raw_inode->i_ctime_nsec);
+>  	inode->i_mtime.tv_nsec = le32_to_cpu(raw_inode->i_mtime_nsec);
+>  	if (nilfs_is_metadata_file_inode(inode) && !S_ISREG(inode->i_mode))
+>  		return -EIO; /* this inode is for metadata and corrupted */
+> @@ -768,9 +768,9 @@ void nilfs_write_inode_common(struct inode *inode,
+>  	raw_inode->i_gid = cpu_to_le32(i_gid_read(inode));
+>  	raw_inode->i_links_count = cpu_to_le16(inode->i_nlink);
+>  	raw_inode->i_size = cpu_to_le64(inode->i_size);
+> -	raw_inode->i_ctime = cpu_to_le64(inode->i_ctime.tv_sec);
+> +	raw_inode->i_ctime = cpu_to_le64(inode_get_ctime(inode).tv_sec);
+>  	raw_inode->i_mtime = cpu_to_le64(inode->i_mtime.tv_sec);
+> -	raw_inode->i_ctime_nsec = cpu_to_le32(inode->i_ctime.tv_nsec);
+> +	raw_inode->i_ctime_nsec = cpu_to_le32(inode_get_ctime(inode).tv_nsec);
+>  	raw_inode->i_mtime_nsec = cpu_to_le32(inode->i_mtime.tv_nsec);
+>  	raw_inode->i_blocks = cpu_to_le64(inode->i_blocks);
 >  
-> -	old_dir->i_ctime = old_dir->i_mtime = new_dir->i_ctime =
-> -		new_dir->i_mtime = inode->i_ctime = current_time(old_dir);
-> -
-> +	simple_rename_timestamp(old_dir, old_dentry, new_dir, new_dentry);
->  	return 0;
->  }
->  EXPORT_SYMBOL(simple_rename);
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index bdfbd11a5811..14e38bd900f1 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -2979,6 +2979,8 @@ extern int simple_open(struct inode *inode, struct file *file);
->  extern int simple_link(struct dentry *, struct inode *, struct dentry *);
->  extern int simple_unlink(struct inode *, struct dentry *);
->  extern int simple_rmdir(struct inode *, struct dentry *);
-> +void simple_rename_timestamp(struct inode *old_dir, struct dentry *old_dentry,
-> +			     struct inode *new_dir, struct dentry *new_dentry);
->  extern int simple_rename_exchange(struct inode *old_dir, struct dentry *old_dentry,
->  				  struct inode *new_dir, struct dentry *new_dentry);
->  extern int simple_rename(struct mnt_idmap *, struct inode *,
+> @@ -875,7 +875,7 @@ void nilfs_truncate(struct inode *inode)
+>  
+>  	nilfs_truncate_bmap(ii, blkoff);
+>  
+> -	inode->i_mtime = inode->i_ctime = current_time(inode);
+> +	inode->i_mtime = inode_set_ctime_current(inode);
+>  	if (IS_SYNC(inode))
+>  		nilfs_set_transaction_flag(NILFS_TI_SYNC);
+>  
+> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+> index 1dfbc0c34513..40ffade49f38 100644
+> --- a/fs/nilfs2/ioctl.c
+> +++ b/fs/nilfs2/ioctl.c
+> @@ -149,7 +149,7 @@ int nilfs_fileattr_set(struct mnt_idmap *idmap,
+>  	NILFS_I(inode)->i_flags = oldflags | (flags & FS_FL_USER_MODIFIABLE);
+>  
+>  	nilfs_set_inode_flags(inode);
+> -	inode->i_ctime = current_time(inode);
+> +	inode_set_ctime_current(inode);
+>  	if (IS_SYNC(inode))
+>  		nilfs_set_transaction_flag(NILFS_TI_SYNC);
+>  
+> diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+> index c7024da8f1e2..2a4e7f4a8102 100644
+> --- a/fs/nilfs2/namei.c
+> +++ b/fs/nilfs2/namei.c
+> @@ -185,7 +185,7 @@ static int nilfs_link(struct dentry *old_dentry, struct inode *dir,
+>  	if (err)
+>  		return err;
+>  
+> -	inode->i_ctime = current_time(inode);
+> +	inode_set_ctime_current(inode);
+>  	inode_inc_link_count(inode);
+>  	ihold(inode);
+>  
+> @@ -283,7 +283,7 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
+>  	if (err)
+>  		goto out;
+>  
+> -	inode->i_ctime = dir->i_ctime;
+> +	inode_set_ctime_to_ts(inode, inode_get_ctime(dir));
+>  	drop_nlink(inode);
+>  	err = 0;
+>  out:
+> @@ -387,7 +387,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
+>  			goto out_dir;
+>  		nilfs_set_link(new_dir, new_de, new_page, old_inode);
+>  		nilfs_mark_inode_dirty(new_dir);
+> -		new_inode->i_ctime = current_time(new_inode);
+> +		inode_set_ctime_current(new_inode);
+>  		if (dir_de)
+>  			drop_nlink(new_inode);
+>  		drop_nlink(new_inode);
+> @@ -406,7 +406,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
+>  	 * Like most other Unix systems, set the ctime for inodes on a
+>  	 * rename.
+>  	 */
+> -	old_inode->i_ctime = current_time(old_inode);
+> +	inode_set_ctime_current(old_inode);
+>  
+>  	nilfs_delete_entry(old_de, old_page);
+>  
 > -- 
 > 2.41.0
 > 
