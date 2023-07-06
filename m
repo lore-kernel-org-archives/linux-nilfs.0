@@ -1,177 +1,108 @@
-From: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 08/92] fs: new helper: simple_rename_timestamp
-Date: Wed, 05 Jul 2023 20:04:41 -0400
-Message-ID: <7c783969641b67d6ffdfb10e509f382d083c5291.camel__26962.892564346$1688601921$gmane$org@kernel.org>
-References: <20230705185812.579118-1-jlayton@kernel.org>
-         <20230705185812.579118-3-jlayton@kernel.org>
-         <3b403ef1-22e6-0220-6c9c-435e3444b4d3@kernel.org>
+From: patchwork-bot+f2fs-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Subject: Re: [f2fs-dev] [PATCH 01/30] block: also call ->open for incremental
+ partition opens
+Date: Thu, 06 Jul 2023 00:18:14 +0000
+Message-ID: <168860269464.29151.2364164271547941172.git-patchwork-notify@kernel.org>
+References: <20230608110258.189493-2-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1688601900;
-        bh=GKAf3Connag2H1A96+MWJO2m2+AGoi4e2L0TCmV0twI=;
-        h=Subject:From:To:Date:In-Reply-To:References:From;
-        b=nET3i8K9cAN9JzAYu5D5DtIfnZyBNqxFT5kCHd94dYOZfZeH8zavR0WF9u4ITY0NE
-         D66ZLzqp4+stDYQ/wxgM6SsxM/mS2+y3IUBNv7xe18KIH1uVzQrdLce3r3dWIKwzol
-         tzsq2RPKrA+bg24p5zLD3xKS/7A/1zvUDDnXMEpHEaKwvlUXOn9bI/FS6RRj0UTu+c
-         vTGpq6dtXG1Xauh+ol1hFuB35FDh/rjrnsJWBkr2MVf6wx5gZoGZefJEl0qBVioA6j
-         WnKwlad8ofPwwEPXaYXs/neOdGw/YH9YOfEVdEl8lvP9rCQ6lvqx2NeiiLr9bjccc4
-         eOxUKsWaspoTQ==
-In-Reply-To: <3b403ef1-22e6-0220-6c9c-435e3444b4d3-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+        s=k20201202; t=1688602694;
+        bh=UCIqkh07H9RodI2FiYHSloPcTyNTNSp1TtLBvzeAlzY=;
+        h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+        b=XD5s9qgQk+bezWq3JBvoy9wmXJ5ZRyDVTHkpXWgLVO3OxVcBH0YyZg8Gz6rb+KfwN
+         /A+CNNvgWQMrDzOs56n2cEhwU0PkBRXiccPcVu64Aq1yBYBPWYZC4FuTB8N5QK1KQ+
+         MdmDcn18RW7d50qJnG0uAgWsSoPksgnrlWtl7DDURyh0pmkik5uADq73uLJFx1EI+5
+         TxJjuarqz28vf+B0YnRKEqs2EnBb9P4N1MwtPeCMbPEFDapDEj1dai8Lh/Uv6asayt
+         1cEnsHDnrwJGGhdMLNNVih3y+j4HdKbkLcado1IWcst06dccj5qYciZqXhBkSg0rUM
+         /tfAjpbujjdzA==
+In-Reply-To: <20230608110258.189493-2-hch-jcswGhMUV9g@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Damien Le Moal <dlemoal-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jk-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, npiggin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, christophe.leroy-2tlSp11Fh4xulxpn9UvDqw@public.gmane.org, hca-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, gor-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, agordeev-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, tkjos-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, maco-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, joel-QYYGw3jwrUn5owFQY34kdNi2O/JbrIOy@public.gmane.org, brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cmllamas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dennis.dalessandro-ntyVByD3zXaTtA8H5PvdGFaTQe2KTcn/@public.gmane.org, jgg-uk2M96/98Pc@public.gmane.org, leon-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bwarrum-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, rituagar-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org, ericvh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, lucho-OnYtXJJ0/fesTnJN9+BGXg@public.gmane.org, asmadeus-9aU+PIKW3UvdtAWm4Da02A@public.gmane.org, linux_oss-kKOvUW9iAPtl57MIdRCFDg@public.gmane.org, dsterba-IBi9RG/b67k@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, marc.dionne-hRzEac23uH1Wk0Htik3J/w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, raven-PKsaG3nR2I+sTnJN9+BGXg@public.gmane.org, luisbg-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, salah.triki-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, aivazian.tigran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, vigneshr-l0cyMroinI0@public.gmane.org, rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, phil-j1cSt2lHDeZzjhtm8Ag3mw@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org, pavel-+ZI9xUNit7I@public.gmane.org, miquel.raynal-LDxbnhwyfcJBDgjK7y7TUQ@public.gmane.org, jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, richard-/L3Ra7n9ekc@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org, colyli-l3A5Bk7waGM@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, dsterba-IBi9RG/b67k@public.gmane.org, brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hare-l3A5Bk7waGM@public.gmane.org
 
-On Thu, 2023-07-06 at 08:19 +0900, Damien Le Moal wrote:
-> On 7/6/23 03:58, Jeff Layton wrote:
-> > A rename potentially involves updating 4 different inode timestamps. Ad=
-d
-> > a function that handles the details sanely, and convert the libfs.c
-> > callers to use it.
-> >=20
-> > Signed-off-by: Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> > ---
-> >  fs/libfs.c         | 36 +++++++++++++++++++++++++++---------
-> >  include/linux/fs.h |  2 ++
-> >  2 files changed, 29 insertions(+), 9 deletions(-)
-> >=20
-> > diff --git a/fs/libfs.c b/fs/libfs.c
-> > index a7e56baf8bbd..9ee79668c909 100644
-> > --- a/fs/libfs.c
-> > +++ b/fs/libfs.c
-> > @@ -692,6 +692,31 @@ int simple_rmdir(struct inode *dir, struct dentry =
-*dentry)
-> >  }
-> >  EXPORT_SYMBOL(simple_rmdir);
-> > =20
-> > +/**
-> > + * simple_rename_timestamp - update the various inode timestamps for r=
-ename
-> > + * @old_dir: old parent directory
-> > + * @old_dentry: dentry that is being renamed
-> > + * @new_dir: new parent directory
-> > + * @new_dentry: target for rename
-> > + *
-> > + * POSIX mandates that the old and new parent directories have their c=
-time and
-> > + * mtime updated, and that inodes of @old_dentry and @new_dentry (if a=
-ny), have
-> > + * their ctime updated.
-> > + */
-> > +void simple_rename_timestamp(struct inode *old_dir, struct dentry *old=
-_dentry,
-> > +			     struct inode *new_dir, struct dentry *new_dentry)
-> > +{
-> > +	struct inode *newino =3D d_inode(new_dentry);
-> > +
-> > +	old_dir->i_mtime =3D inode_set_ctime_current(old_dir);
-> > +	if (new_dir !=3D old_dir)
-> > +		new_dir->i_mtime =3D inode_set_ctime_current(new_dir);
-> > +	inode_set_ctime_current(d_inode(old_dentry));
-> > +	if (newino)
-> > +		inode_set_ctime_current(newino);
-> > +}
-> > +EXPORT_SYMBOL_GPL(simple_rename_timestamp);
-> > +
-> >  int simple_rename_exchange(struct inode *old_dir, struct dentry *old_d=
-entry,
-> >  			   struct inode *new_dir, struct dentry *new_dentry)
-> >  {
-> > @@ -707,11 +732,7 @@ int simple_rename_exchange(struct inode *old_dir, =
-struct dentry *old_dentry,
-> >  			inc_nlink(old_dir);
-> >  		}
-> >  	}
-> > -	old_dir->i_ctime =3D old_dir->i_mtime =3D
-> > -	new_dir->i_ctime =3D new_dir->i_mtime =3D
-> > -	d_inode(old_dentry)->i_ctime =3D
-> > -	d_inode(new_dentry)->i_ctime =3D current_time(old_dir);
-> > -
-> > +	simple_rename_timestamp(old_dir, old_dentry, new_dir, new_dentry);
->=20
-> This is somewhat changing the current behavior: before the patch, the mti=
-me and
-> ctime of old_dir, new_dir and the inodes associated with the dentries are=
- always
-> equal. But given that simple_rename_timestamp() calls inode_set_ctime_cur=
-rent()
-> 4 times, the times could potentially be different.
->=20
-> I am not sure if that is an issue, but it seems that calling
-> inode_set_ctime_current() once, recording the "now" time it sets and usin=
-g that
-> value to set all times may be more efficient and preserve the existing be=
-havior.
->=20
+Hello:
 
-I don't believe it's an issue. I've seen nothing in the POSIX spec that
-mandates that timestamp updates to different inodes involved in an
-operation be set to the _same_ value. It just says they must be updated.
+This series was applied to jaegeuk/f2fs.git (dev)
+by Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>:
 
-It's also hard to believe that any software would depend on this either,
-given that it's very inconsistent across filesystems today. AFAICT, this
-was mostly done in the past just as a matter of convenience.
+On Thu,  8 Jun 2023 13:02:29 +0200 you wrote:
+> For whole devices ->open is called for each open, but for partitions it
+> is only called on the first open of a partition, e.g.:
+> 
+>   open("/dev/vdb", ...)
+>   open("/dev/vdb", ...)
+>     - 2 call to ->open
+> 
+> [...]
 
-The other problem with doing it that way is that it assumes that
-current_time(inode) should always return the same value when given
-different inodes. Is it really correct to do this?
+Here is the summary with links:
+  - [f2fs-dev,01/30] block: also call ->open for incremental partition opens
+    https://git.kernel.org/jaegeuk/f2fs/c/9d1c92872e70
+  - [f2fs-dev,02/30] cdrom: remove the unused bdev argument to cdrom_open
+    https://git.kernel.org/jaegeuk/f2fs/c/764b83100b9a
+  - [f2fs-dev,03/30] cdrom: remove the unused mode argument to cdrom_ioctl
+    https://git.kernel.org/jaegeuk/f2fs/c/473399b50de1
+  - [f2fs-dev,04/30] cdrom: remove the unused cdrom_close_write release code
+    https://git.kernel.org/jaegeuk/f2fs/c/a4cec8bc14c0
+  - [f2fs-dev,05/30] cdrom: track if a cdrom_device_info was opened for data
+    https://git.kernel.org/jaegeuk/f2fs/c/8cdf433e2b8e
+  - [f2fs-dev,06/30] cdrom: remove the unused mode argument to cdrom_release
+    https://git.kernel.org/jaegeuk/f2fs/c/7ae24fcee992
+  - [f2fs-dev,07/30] block: pass a gendisk on bdev_check_media_change
+    https://git.kernel.org/jaegeuk/f2fs/c/444aa2c58cb3
+  - [f2fs-dev,08/30] block: pass a gendisk to ->open
+    https://git.kernel.org/jaegeuk/f2fs/c/d32e2bf83791
+  - [f2fs-dev,09/30] block: remove the unused mode argument to ->release
+    https://git.kernel.org/jaegeuk/f2fs/c/ae220766d87c
+  - [f2fs-dev,10/30] block: rename blkdev_close to blkdev_release
+    https://git.kernel.org/jaegeuk/f2fs/c/7ee34cbc291a
+  - [f2fs-dev,11/30] swsusp: don't pass a stack address to blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/c889d0793d9d
+  - [f2fs-dev,12/30] bcache: don't pass a stack address to blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/29499ab060fe
+  - [f2fs-dev,13/30] rnbd-srv: don't pass a holder for non-exclusive blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/5ee607675deb
+  - [f2fs-dev,14/30] btrfs: don't pass a holder for non-exclusive blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/2ef789288afd
+  - [f2fs-dev,15/30] block: use the holder as indication for exclusive opens
+    https://git.kernel.org/jaegeuk/f2fs/c/2736e8eeb0cc
+  - [f2fs-dev,16/30] block: add a sb_open_mode helper
+    https://git.kernel.org/jaegeuk/f2fs/c/3f0b3e785e8b
+  - [f2fs-dev,17/30] fs: remove sb->s_mode
+    https://git.kernel.org/jaegeuk/f2fs/c/81b1fb7d17c0
+  - [f2fs-dev,18/30] scsi: replace the fmode_t argument to scsi_cmd_allowed with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/5f4eb9d5413f
+  - [f2fs-dev,19/30] scsi: replace the fmode_t argument to scsi_ioctl with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/2e80089c1824
+  - [f2fs-dev,20/30] scsi: replace the fmode_t argument to ->sg_io_fn with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/1991299e49fa
+  - [f2fs-dev,21/30] nvme: replace the fmode_t argument to the nvme ioctl handlers with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/7d9d7d59d44b
+  - [f2fs-dev,22/30] mtd: block: use a simple bool to track open for write
+    https://git.kernel.org/jaegeuk/f2fs/c/658afed19cee
+  - [f2fs-dev,23/30] rnbd-srv: replace sess->open_flags with a "bool readonly"
+    https://git.kernel.org/jaegeuk/f2fs/c/99b07780814e
+  - [f2fs-dev,24/30] ubd: remove commented out code in ubd_open
+    https://git.kernel.org/jaegeuk/f2fs/c/bd6abfc8e789
+  - [f2fs-dev,25/30] block: move a few internal definitions out of blkdev.h
+    https://git.kernel.org/jaegeuk/f2fs/c/cfb425761c79
+  - [f2fs-dev,26/30] block: remove unused fmode_t arguments from ioctl handlers
+    https://git.kernel.org/jaegeuk/f2fs/c/5e4ea834676e
+  - [f2fs-dev,27/30] block: replace fmode_t with a block-specific type for block open flags
+    https://git.kernel.org/jaegeuk/f2fs/c/05bdb9965305
+  - [f2fs-dev,28/30] block: always use I_BDEV on file->f_mapping->host to find the bdev
+    https://git.kernel.org/jaegeuk/f2fs/c/4e762d862344
+  - [f2fs-dev,29/30] block: store the holder in file->private_data
+    https://git.kernel.org/jaegeuk/f2fs/c/ee3249a8ce78
+  - [f2fs-dev,30/30] fs: remove the now unused FMODE_* flags
+    https://git.kernel.org/jaegeuk/f2fs/c/0733ad800291
 
-	inode_set_ctime(dir, inode_set_ctime_current(inode));
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
 
-"dir" and "inode" are different inodes, after all, and you're setting
-dir's timestamp to "inode"'s value. It's not a big deal today since
-they're always on the same sb, but the ultimate goal of these changes is
-to implement multigrain timestamps. That will mean that fetching a fine-
-grained timestamp for an update when the existing mtime or ctime value
-has been queried via getattr.
 
-With that change, I think it's best that we treat updates to different
-inodes individually, as some of them may require updating with a fine-
-grained timestamp and some may not.
-
-> >  	return 0;
-> >  }
-> >  EXPORT_SYMBOL_GPL(simple_rename_exchange);
-> > @@ -720,7 +741,6 @@ int simple_rename(struct mnt_idmap *idmap, struct i=
-node *old_dir,
-> >  		  struct dentry *old_dentry, struct inode *new_dir,
-> >  		  struct dentry *new_dentry, unsigned int flags)
-> >  {
-> > -	struct inode *inode =3D d_inode(old_dentry);
-> >  	int they_are_dirs =3D d_is_dir(old_dentry);
-> > =20
-> >  	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE))
-> > @@ -743,9 +763,7 @@ int simple_rename(struct mnt_idmap *idmap, struct i=
-node *old_dir,
-> >  		inc_nlink(new_dir);
-> >  	}
-> > =20
-> > -	old_dir->i_ctime =3D old_dir->i_mtime =3D new_dir->i_ctime =3D
-> > -		new_dir->i_mtime =3D inode->i_ctime =3D current_time(old_dir);
-> > -
-> > +	simple_rename_timestamp(old_dir, old_dentry, new_dir, new_dentry);
-> >  	return 0;
-> >  }
-> >  EXPORT_SYMBOL(simple_rename);
-> > diff --git a/include/linux/fs.h b/include/linux/fs.h
-> > index bdfbd11a5811..14e38bd900f1 100644
-> > --- a/include/linux/fs.h
-> > +++ b/include/linux/fs.h
-> > @@ -2979,6 +2979,8 @@ extern int simple_open(struct inode *inode, struc=
-t file *file);
-> >  extern int simple_link(struct dentry *, struct inode *, struct dentry =
-*);
-> >  extern int simple_unlink(struct inode *, struct dentry *);
-> >  extern int simple_rmdir(struct inode *, struct dentry *);
-> > +void simple_rename_timestamp(struct inode *old_dir, struct dentry *old=
-_dentry,
-> > +			     struct inode *new_dir, struct dentry *new_dentry);
-> >  extern int simple_rename_exchange(struct inode *old_dir, struct dentry=
- *old_dentry,
-> >  				  struct inode *new_dir, struct dentry *new_dentry);
-> >  extern int simple_rename(struct mnt_idmap *, struct inode *,
->=20
-
---=20
-Jeff Layton <jlayton-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
