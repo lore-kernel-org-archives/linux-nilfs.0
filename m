@@ -1,132 +1,221 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 27/32] nilfs2: Convert to use blkdev_get_handle_by_path()
-Date: Fri, 21 Jul 2023 14:22:00 +0900
-Message-ID: <CAKFNMok9dE4MBB6J9_OLQMxJ=BC+kroFRZF5yCxaO3Njxr8eGw@mail.gmail.com>
-References: <20230629165206.383-1-jack@suse.cz> <20230704122224.16257-27-jack@suse.cz>
+From: syzbot <syzbot+74db8b3087f293d3a13a@syzkaller.appspotmail.com>
+Subject: [syzbot] [nilfs?] KASAN: slab-use-after-free Read in
+ nilfs_load_inode_block (2)
+Date: Sat, 22 Jul 2023 07:13:52 -0700
+Message-ID: <000000000000b4e906060113fd63@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1689916938; x=1690521738;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=PUgA0BOBLvUnQGO4XUDe/mEntZbMH9oPKtQD8XsVYi8=;
-        b=d8+XppcJafCOqVH33NrgT96K09WpKE2KW+PJCO9efl25W9oHVQgfYItaNLBEMkw7KT
-         7mNZbyku3RGxhglXsCBnG3zQqKMNjRgWZMBGq5l/Yh0++2WQLTnC9U6Ua+iYuKfUGTDn
-         c0Bw4c0MYdGX35YUtHc8cyEwVDtMIugmzr+fmEPXZhDsiW8mtn/lbc5LAH+RCP8BHS1m
-         skWXKfdV6Ha5Eqdal5OnDNkCEy68JN2r6EPCp77aGn3PTJjdLVueEnsMxsuE3v9Eqhee
-         SSNhz6lfsVo3rjeeud3YwCHmHcO+P8VroFe8Kz/hJJhdC5MidNes1b/jsIk8eXvIcfOM
-         7jBQ==
-In-Reply-To: <20230704122224.16257-27-jack-AlSwsSmVLrQ@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
 
-On Tue, Jul 4, 2023 at 9:24=E2=80=AFPM Jan Kara wrote:
->
-> Convert nilfs2 to use blkdev_get_handle_by_path() and initialize the
-> superblock with the handle.
->
-> CC: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-> ---
->  fs/nilfs2/super.c | 21 ++++++++++++---------
->  1 file changed, 12 insertions(+), 9 deletions(-)
+Hello,
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+syzbot found the following issue on:
 
-You may revise this patch to reflect comments on the patch 1/32, but
-the changes here look fine, and I have no objection to rewriting to
-use bdev_handle.
+HEAD commit:    fdf0eaf11452 Linux 6.5-rc2
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=11354edca80000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=a4507c291b5ab5d4
+dashboard link: https://syzkaller.appspot.com/bug?extid=74db8b3087f293d3a13a
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
 
-Thanks,
-Ryusuke Konishi
+Unfortunately, I don't have any reproducer for this issue yet.
+
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/227b5c9aa7b3/disk-fdf0eaf1.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/aedc7f03bef6/vmlinux-fdf0eaf1.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/ec543f1fd878/bzImage-fdf0eaf1.xz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+74db8b3087f293d3a13a@syzkaller.appspotmail.com
+
+==================================================================
+BUG: KASAN: slab-use-after-free in nilfs_load_inode_block+0x11e/0x280 fs/nilfs2/inode.c:1030
+Read of size 8 at addr ffff888023e50230 by task syz-executor.2/5056
+
+CPU: 1 PID: 5056 Comm: syz-executor.2 Not tainted 6.5.0-rc2-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 07/03/2023
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x1e7/0x2d0 lib/dump_stack.c:106
+ print_address_description mm/kasan/report.c:364 [inline]
+ print_report+0x163/0x540 mm/kasan/report.c:475
+ kasan_report+0x175/0x1b0 mm/kasan/report.c:588
+ nilfs_load_inode_block+0x11e/0x280 fs/nilfs2/inode.c:1030
+ __nilfs_mark_inode_dirty+0xa5/0x280 fs/nilfs2/inode.c:1107
+ nilfs_dirty_inode+0x164/0x200 fs/nilfs2/inode.c:1148
+ __mark_inode_dirty+0x305/0xd90 fs/fs-writeback.c:2430
+ mark_inode_dirty_sync include/linux/fs.h:2153 [inline]
+ iput+0x1f2/0x8f0 fs/inode.c:1814
+ nilfs_dispose_list+0x51d/0x5c0 fs/nilfs2/segment.c:816
+ nilfs_detach_log_writer+0xaf1/0xbb0 fs/nilfs2/segment.c:2859
+ nilfs_put_super+0x4d/0x160 fs/nilfs2/super.c:498
+ generic_shutdown_super+0x134/0x340 fs/super.c:499
+ kill_block_super+0x68/0xa0 fs/super.c:1417
+ deactivate_locked_super+0xa4/0x110 fs/super.c:330
+ cleanup_mnt+0x426/0x4c0 fs/namespace.c:1254
+ task_work_run+0x24a/0x300 kernel/task_work.c:179
+ resume_user_mode_work include/linux/resume_user_mode.h:49 [inline]
+ exit_to_user_mode_loop+0xd9/0x100 kernel/entry/common.c:171
+ exit_to_user_mode_prepare+0xb1/0x140 kernel/entry/common.c:204
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:286 [inline]
+ syscall_exit_to_user_mode+0x64/0x280 kernel/entry/common.c:297
+ do_syscall_64+0x4d/0xc0 arch/x86/entry/common.c:86
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+RIP: 0033:0x7f723027de57
+Code: b0 ff ff ff f7 d8 64 89 01 48 83 c8 ff c3 0f 1f 44 00 00 31 f6 e9 09 00 00 00 66 0f 1f 84 00 00 00 00 00 b8 a6 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 01 c3 48 c7 c2 b0 ff ff ff f7 d8 64 89 02 b8
+RSP: 002b:00007ffe73394f58 EFLAGS: 00000246 ORIG_RAX: 00000000000000a6
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: 00007f723027de57
+RDX: 0000000000000000 RSI: 000000000000000a RDI: 00007ffe73395010
+RBP: 00007ffe73395010 R08: 0000000000000000 R09: 0000000000000000
+R10: 00000000ffffffff R11: 0000000000000246 R12: 00007ffe733960d0
+R13: 00007f72302c73b9 R14: 0000000000032737 R15: 000000000000000c
+ </TASK>
+
+Allocated by task 5412:
+ kasan_save_stack mm/kasan/common.c:45 [inline]
+ kasan_set_track+0x4f/0x70 mm/kasan/common.c:52
+ ____kasan_kmalloc mm/kasan/common.c:374 [inline]
+ __kasan_kmalloc+0x98/0xb0 mm/kasan/common.c:383
+ kmalloc include/linux/slab.h:582 [inline]
+ kzalloc include/linux/slab.h:703 [inline]
+ nilfs_find_or_create_root+0x137/0x4e0 fs/nilfs2/the_nilfs.c:851
+ nilfs_attach_checkpoint+0x123/0x4d0 fs/nilfs2/super.c:550
+ nilfs_fill_super+0x321/0x600 fs/nilfs2/super.c:1095
+ nilfs_mount+0x637/0x950 fs/nilfs2/super.c:1343
+ legacy_get_tree+0xef/0x190 fs/fs_context.c:611
+ vfs_get_tree+0x8c/0x270 fs/super.c:1519
+ do_new_mount+0x28f/0xae0 fs/namespace.c:3335
+ do_mount fs/namespace.c:3675 [inline]
+ __do_sys_mount fs/namespace.c:3884 [inline]
+ __se_sys_mount+0x2d9/0x3c0 fs/namespace.c:3861
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x41/0xc0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+Freed by task 5056:
+ kasan_save_stack mm/kasan/common.c:45 [inline]
+ kasan_set_track+0x4f/0x70 mm/kasan/common.c:52
+ kasan_save_free_info+0x28/0x40 mm/kasan/generic.c:522
+ ____kasan_slab_free+0xd6/0x120 mm/kasan/common.c:236
+ kasan_slab_free include/linux/kasan.h:162 [inline]
+ slab_free_hook mm/slub.c:1792 [inline]
+ slab_free_freelist_hook mm/slub.c:1818 [inline]
+ slab_free mm/slub.c:3801 [inline]
+ __kmem_cache_free+0x25f/0x3b0 mm/slub.c:3814
+ nilfs_segctor_destroy fs/nilfs2/segment.c:2782 [inline]
+ nilfs_detach_log_writer+0x8c1/0xbb0 fs/nilfs2/segment.c:2845
+ nilfs_put_super+0x4d/0x160 fs/nilfs2/super.c:498
+ generic_shutdown_super+0x134/0x340 fs/super.c:499
+ kill_block_super+0x68/0xa0 fs/super.c:1417
+ deactivate_locked_super+0xa4/0x110 fs/super.c:330
+ cleanup_mnt+0x426/0x4c0 fs/namespace.c:1254
+ task_work_run+0x24a/0x300 kernel/task_work.c:179
+ resume_user_mode_work include/linux/resume_user_mode.h:49 [inline]
+ exit_to_user_mode_loop+0xd9/0x100 kernel/entry/common.c:171
+ exit_to_user_mode_prepare+0xb1/0x140 kernel/entry/common.c:204
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:286 [inline]
+ syscall_exit_to_user_mode+0x64/0x280 kernel/entry/common.c:297
+ do_syscall_64+0x4d/0xc0 arch/x86/entry/common.c:86
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+The buggy address belongs to the object at ffff888023e50200
+ which belongs to the cache kmalloc-256 of size 256
+The buggy address is located 48 bytes inside of
+ freed 256-byte region [ffff888023e50200, ffff888023e50300)
+
+The buggy address belongs to the physical page:
+page:ffffea00008f9400 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x23e50
+head:ffffea00008f9400 order:1 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+flags: 0xfff00000010200(slab|head|node=0|zone=1|lastcpupid=0x7ff)
+page_type: 0xffffffff()
+raw: 00fff00000010200 ffff888012841b40 dead000000000100 dead000000000122
+raw: 0000000000000000 0000000000100010 00000001ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 1, migratetype Unmovable, gfp_mask 0x1d2040(__GFP_IO|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC|__GFP_HARDWALL), pid 5181, tgid 5181 (syz-executor.2), ts 197741582486, free_ts 196828318372
+ set_page_owner include/linux/page_owner.h:31 [inline]
+ post_alloc_hook+0x1e6/0x210 mm/page_alloc.c:1570
+ prep_new_page mm/page_alloc.c:1577 [inline]
+ get_page_from_freelist+0x31e8/0x3370 mm/page_alloc.c:3221
+ __alloc_pages+0x255/0x670 mm/page_alloc.c:4477
+ alloc_slab_page+0x6a/0x160 mm/slub.c:1862
+ allocate_slab mm/slub.c:2009 [inline]
+ new_slab+0x84/0x2f0 mm/slub.c:2062
+ ___slab_alloc+0xade/0x1100 mm/slub.c:3215
+ __slab_alloc mm/slub.c:3314 [inline]
+ __slab_alloc_node mm/slub.c:3367 [inline]
+ slab_alloc_node mm/slub.c:3460 [inline]
+ __kmem_cache_alloc_node+0x1af/0x270 mm/slub.c:3509
+ kmalloc_trace+0x2a/0xe0 mm/slab_common.c:1076
+ kmalloc include/linux/slab.h:582 [inline]
+ kzalloc include/linux/slab.h:703 [inline]
+ smk_fetch+0x92/0x140 security/smack/smack_lsm.c:291
+ smack_d_instantiate+0x868/0xb40 security/smack/smack_lsm.c:3541
+ security_d_instantiate+0x9b/0xf0 security/security.c:3760
+ d_instantiate_new+0x65/0x120 fs/dcache.c:2053
+ ext4_add_nondir+0x22d/0x290 fs/ext4/namei.c:2797
+ ext4_symlink+0x908/0xb30 fs/ext4/namei.c:3431
+ vfs_symlink+0x12f/0x2a0 fs/namei.c:4477
+ do_symlinkat+0x201/0x610 fs/namei.c:4503
+page last free stack trace:
+ reset_page_owner include/linux/page_owner.h:24 [inline]
+ free_pages_prepare mm/page_alloc.c:1161 [inline]
+ free_unref_page_prepare+0x903/0xa30 mm/page_alloc.c:2348
+ free_unref_page+0x37/0x3f0 mm/page_alloc.c:2443
+ discard_slab mm/slub.c:2108 [inline]
+ __unfreeze_partials+0x1dc/0x220 mm/slub.c:2647
+ put_cpu_partial+0x116/0x180 mm/slub.c:2723
+ __slab_free+0x2b6/0x390 mm/slub.c:3671
+ qlist_free_all+0x22/0x60 mm/kasan/quarantine.c:185
+ kasan_quarantine_reduce+0x14b/0x160 mm/kasan/quarantine.c:292
+ __kasan_slab_alloc+0x23/0x70 mm/kasan/common.c:305
+ kasan_slab_alloc include/linux/kasan.h:186 [inline]
+ slab_post_alloc_hook+0x6c/0x3b0 mm/slab.h:762
+ slab_alloc_node mm/slub.c:3470 [inline]
+ __kmem_cache_alloc_node+0x141/0x270 mm/slub.c:3509
+ kmalloc_trace+0x2a/0xe0 mm/slab_common.c:1076
+ kmalloc include/linux/slab.h:582 [inline]
+ kzalloc include/linux/slab.h:703 [inline]
+ mca_alloc net/ipv6/mcast.c:880 [inline]
+ __ipv6_dev_mc_inc+0x426/0xa80 net/ipv6/mcast.c:936
+ addrconf_join_solict net/ipv6/addrconf.c:2179 [inline]
+ addrconf_dad_begin net/ipv6/addrconf.c:3995 [inline]
+ addrconf_dad_work+0x424/0x16b0 net/ipv6/addrconf.c:4120
+ process_one_work+0x92c/0x12c0 kernel/workqueue.c:2597
+ worker_thread+0xa63/0x1210 kernel/workqueue.c:2748
+ kthread+0x2b8/0x350 kernel/kthread.c:389
+
+Memory state around the buggy address:
+ ffff888023e50100: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff888023e50180: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+>ffff888023e50200: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                                     ^
+ ffff888023e50280: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff888023e50300: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+==================================================================
 
 
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
->
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index 0ef8c71bde8e..0aba0daa06d2 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -1283,14 +1283,15 @@ static int nilfs_identify(char *data, struct nilf=
-s_super_data *sd)
->
->  static int nilfs_set_bdev_super(struct super_block *s, void *data)
->  {
-> -       s->s_bdev =3D data;
-> +       s->s_bdev_handle =3D data;
-> +       s->s_bdev =3D s->s_bdev_handle->bdev;
->         s->s_dev =3D s->s_bdev->bd_dev;
->         return 0;
->  }
->
->  static int nilfs_test_bdev_super(struct super_block *s, void *data)
->  {
-> -       return (void *)s->s_bdev =3D=3D data;
-> +       return s->s_bdev =3D=3D ((struct bdev_handle *)data)->bdev;
->  }
->
->  static struct dentry *
-> @@ -1298,15 +1299,17 @@ nilfs_mount(struct file_system_type *fs_type, int=
- flags,
->              const char *dev_name, void *data)
->  {
->         struct nilfs_super_data sd;
-> +       struct bdev_handle *bdev_handle;
->         struct super_block *s;
->         struct dentry *root_dentry;
->         int err, s_new =3D false;
->
-> -       sd.bdev =3D blkdev_get_by_path(dev_name, sb_open_mode(flags), fs_=
-type,
-> -                                    NULL);
-> -       if (IS_ERR(sd.bdev))
-> -               return ERR_CAST(sd.bdev);
-> +       bdev_handle =3D blkdev_get_handle_by_path(dev_name, sb_open_mode(=
-flags),
-> +                               fs_type, NULL);
-> +       if (IS_ERR(bdev_handle))
-> +               return ERR_CAST(bdev_handle);
->
-> +       sd.bdev =3D bdev_handle->bdev;
->         sd.cno =3D 0;
->         sd.flags =3D flags;
->         if (nilfs_identify((char *)data, &sd)) {
-> @@ -1326,7 +1329,7 @@ nilfs_mount(struct file_system_type *fs_type, int f=
-lags,
->                 goto failed;
->         }
->         s =3D sget(fs_type, nilfs_test_bdev_super, nilfs_set_bdev_super, =
-flags,
-> -                sd.bdev);
-> +                bdev_handle);
->         mutex_unlock(&sd.bdev->bd_fsfreeze_mutex);
->         if (IS_ERR(s)) {
->                 err =3D PTR_ERR(s);
-> @@ -1374,7 +1377,7 @@ nilfs_mount(struct file_system_type *fs_type, int f=
-lags,
->         }
->
->         if (!s_new)
-> -               blkdev_put(sd.bdev, fs_type);
-> +               blkdev_handle_put(bdev_handle);
->
->         return root_dentry;
->
-> @@ -1383,7 +1386,7 @@ nilfs_mount(struct file_system_type *fs_type, int f=
-lags,
->
->   failed:
->         if (!s_new)
-> -               blkdev_put(sd.bdev, fs_type);
-> +               blkdev_handle_put(bdev_handle);
->         return ERR_PTR(err);
->  }
->
-> --
-> 2.35.3
->
+If the bug is already fixed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want to change bug's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the bug is a duplicate of another bug, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
