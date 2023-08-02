@@ -1,174 +1,168 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 03/12] btrfs: always open the device read-only in
- btrfs_scan_one_device
-Date: Wed,  2 Aug 2023 17:41:22 +0200
-Message-ID: <20230802154131.2221419-4-hch@lst.de>
+Subject: [PATCH 04/12] btrfs: open block devices after superblock creation
+Date: Wed,  2 Aug 2023 17:41:23 +0200
+Message-ID: <20230802154131.2221419-5-hch@lst.de>
 References: <20230802154131.2221419-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=Content-Transfer-Encoding:MIME-Version:References:
- In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=r6gDfPhaoM7J2iRzTUUAmIosaWN5Ed601e9pLnuJfEs=; b=VsaI6siV+3gBfWRIy58fPqmCnU
- +BRPF5bWuCYfn1kws9d1fWkI+XjK3Xj1R5yoplldbpyI6kSTRG55dyUEHViGSkT3ivYMnVQECaGJA
- NsHPKzrtKmWej5Stc5qNZa6uJ25lU8zJaR3MbHvmggzJNhPLgoT6CX2kN1LUOID8zUGM=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
- Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=r6gDfPhaoM7J2iRzTUUAmIosaWN5Ed601e9pLnuJfEs=; b=epaeiRGckCcirN3YiQP9l8/rO+
- hVQD7ooQwXzP58eLKyflvdDyG6hoBs+3GpuwHE22z1lLShLuC8a+7FMXBVC276nJ/SshSzlLURGCj
- 5MU+a0Huhoq9vmlrojnJaqBj3PkX4FnGo+mwy1M5VtQrXI+/xzk2qas/3fkIMKJbsXaw=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
- MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
- :Reply-To:Content-Type:Content-ID:Content-Description;
- bh=r6gDfPhaoM7J2iRzTUUAmIosaWN5Ed601e9pLnuJfEs=; b=c/d4bWxOI508Va9wIGXRyHKdMA
- IlxE8CEKVR0mcLbU3734JNpP0RMsj7Qu2YdutSwnxlB50zjF92HsUKdY0bgEvUK4yP9MNpSqJZ8na
- GoQBql1OU4+D49Do/OsTLEuL3PUc8/gdGa7t4r0dYzY6jPDsDOwBeT8ZR7YNcbf688sHQ7vpgT6fw
- LVPeh/Ns9PqLrZtZ9T8O0RTAhKsFlOrpBjIsYwNcRcO2d0y14NWF6CmZ6t3suWbSPcwnPC6XuRkit
- 8FOLfmqVbY3oNlQfdxdqx3DIV+pQVghfqtD6vATCpB+iS6JDlkjRqxAyu8Af+23wKnqAQFUBTNV/K
- SU+E7PIQ==;
+        d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+        MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
+        :Reply-To:Content-Type:Content-ID:Content-Description;
+        bh=t+hutzNu+OLKs7hwR5oQScZRP7h/WIsttBs8nagY2hw=; b=MfqT8apVrXwKetoTs/uxlt7j0i
+        F/hdDE9Szgwzy89HXkA2LaUSRquS53mI7cSS5sNi2T+7nVXkXcwAUpiTMNP2N9BUQzVtxjNbyk/V+
+        qCBQeB2jWHyLGb9su722CpdyYmQflH0nge+RxWa/9QyBGSzuoZc82mvpQI/HsRPkkYBzgHu8k5itH
+        I7+ZnGg1fmJX0esEcvXm687uZ0D6tg3KVz8hVG+2M/YO7ONoljrafnhwMRZz+5DIsDtvInnEt0dKc
+        uhlmNE+HbPUosHqoiBEc789L7N+kHRFooos+y6ZmJd4JNk/BCKWXPcJIKPM+Rgb0VWyHQRMGW4EdW
+        SAC0HevA==;
 In-Reply-To: <20230802154131.2221419-1-hch@lst.de>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+List-ID: <linux-nilfs.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
 To: Al Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org, "Darrick J. Wong" <djwong@kernel.org>, Josef Bacik <josef@toxicpanda.com>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, David Sterba <dsterba@suse.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-btrfs@vger.kernel.org
+Cc: Jan Kara <jack@suse.cz>, Chris Mason <clm@fb.com>, Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>, Jens Axboe <axboe@kernel.dk>, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-block@vger.kernel.org
 
-btrfs_scan_one_device opens the block device only to read the super
-block.  Instead of passing a blk_mode_t argument to sometimes open
-it for writing, just hard code BLK_OPEN_READ as it will never write
-to the device or hand the block_device out to someone else.
+Currently btrfs_mount_root opens the block devices before committing to
+allocating a super block. That creates problems for restricting the
+number of writers to a device, and also leads to a unusual and not very
+helpful holder (the fs_type).
+
+Reorganize the code to first look whether the superblock for a
+particular fsid does already exist and open the block devices only if it
+doesn't, mirror the recent changes to the VFS mount helpers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/btrfs/super.c   | 15 +++++++--------
+ fs/btrfs/super.c   | 51 ++++++++++++++++++++++------------------------
  fs/btrfs/volumes.c |  4 ++--
- fs/btrfs/volumes.h |  2 +-
- 3 files changed, 10 insertions(+), 11 deletions(-)
+ 2 files changed, 26 insertions(+), 29 deletions(-)
 
 diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
-index f1dd172d8d5bd7..b318bddefd5236 100644
+index b318bddefd5236..5980b5dcc6b163 100644
 --- a/fs/btrfs/super.c
 +++ b/fs/btrfs/super.c
-@@ -849,7 +849,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
-  * All other options will be parsed on much later in the mount process and
-  * only when we need to allocate a new super block.
-  */
--static int btrfs_parse_device_options(const char *options, blk_mode_t flags)
-+static int btrfs_parse_device_options(const char *options)
+@@ -1434,10 +1434,8 @@ static struct dentry *mount_subvol(const char *subvol_name, u64 subvol_objectid,
+ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
+ 		int flags, const char *device_name, void *data)
  {
- 	substring_t args[MAX_OPT_ARGS];
- 	char *device_name, *opts, *orig, *p;
-@@ -883,7 +883,7 @@ static int btrfs_parse_device_options(const char *options, blk_mode_t flags)
- 				error = -ENOMEM;
- 				goto out;
- 			}
--			device = btrfs_scan_one_device(device_name, flags);
-+			device = btrfs_scan_one_device(device_name);
- 			kfree(device_name);
- 			if (IS_ERR(device)) {
- 				error = PTR_ERR(device);
-@@ -1440,7 +1440,6 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
- 	struct btrfs_fs_devices *fs_devices = NULL;
+-	struct block_device *bdev = NULL;
+ 	struct super_block *s;
+ 	struct btrfs_device *device = NULL;
+-	struct btrfs_fs_devices *fs_devices = NULL;
  	struct btrfs_fs_info *fs_info = NULL;
  	void *new_sec_opts = NULL;
--	blk_mode_t mode = sb_open_mode(flags);
  	int error = 0;
- 
- 	if (data) {
-@@ -1472,13 +1471,13 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
- 	}
- 
- 	mutex_lock(&uuid_mutex);
--	error = btrfs_parse_device_options(data, mode);
-+	error = btrfs_parse_device_options(data);
- 	if (error) {
- 		mutex_unlock(&uuid_mutex);
- 		goto error_fs_info;
- 	}
- 
--	device = btrfs_scan_one_device(device_name, mode);
-+	device = btrfs_scan_one_device(device_name);
- 	if (IS_ERR(device)) {
- 		mutex_unlock(&uuid_mutex);
+@@ -1483,35 +1481,36 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
  		error = PTR_ERR(device);
-@@ -1488,7 +1487,7 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
- 	fs_devices = device->fs_devices;
- 	fs_info->fs_devices = fs_devices;
- 
--	error = btrfs_open_devices(fs_devices, mode, fs_type);
-+	error = btrfs_open_devices(fs_devices, sb_open_mode(flags), fs_type);
- 	mutex_unlock(&uuid_mutex);
- 	if (error)
  		goto error_fs_info;
-@@ -2190,7 +2189,7 @@ static long btrfs_control_ioctl(struct file *file, unsigned int cmd,
- 	switch (cmd) {
- 	case BTRFS_IOC_SCAN_DEV:
- 		mutex_lock(&uuid_mutex);
--		device = btrfs_scan_one_device(vol->name, BLK_OPEN_READ);
-+		device = btrfs_scan_one_device(vol->name);
- 		ret = PTR_ERR_OR_ZERO(device);
- 		mutex_unlock(&uuid_mutex);
- 		break;
-@@ -2204,7 +2203,7 @@ static long btrfs_control_ioctl(struct file *file, unsigned int cmd,
- 		break;
- 	case BTRFS_IOC_DEVICES_READY:
- 		mutex_lock(&uuid_mutex);
--		device = btrfs_scan_one_device(vol->name, BLK_OPEN_READ);
-+		device = btrfs_scan_one_device(vol->name);
- 		if (IS_ERR(device)) {
- 			mutex_unlock(&uuid_mutex);
- 			ret = PTR_ERR(device);
+ 	}
+-
+-	fs_devices = device->fs_devices;
+-	fs_info->fs_devices = fs_devices;
+-
+-	error = btrfs_open_devices(fs_devices, sb_open_mode(flags), fs_type);
++	fs_info->fs_devices = device->fs_devices;
+ 	mutex_unlock(&uuid_mutex);
+-	if (error)
+-		goto error_fs_info;
+-
+-	if (!(flags & SB_RDONLY) && fs_devices->rw_devices == 0) {
+-		error = -EACCES;
+-		goto error_close_devices;
+-	}
+ 
+-	bdev = fs_devices->latest_dev->bdev;
+ 	s = sget(fs_type, btrfs_test_super, btrfs_set_super, flags | SB_NOSEC,
+ 		 fs_info);
+ 	if (IS_ERR(s)) {
+ 		error = PTR_ERR(s);
+-		goto error_close_devices;
++		goto error_fs_info;
+ 	}
+ 
+ 	if (s->s_root) {
+-		btrfs_close_devices(fs_devices);
+ 		btrfs_free_fs_info(fs_info);
+ 		if ((flags ^ s->s_flags) & SB_RDONLY)
+ 			error = -EBUSY;
+ 	} else {
+-		snprintf(s->s_id, sizeof(s->s_id), "%pg", bdev);
++		struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
++
++		error = btrfs_open_devices(fs_devices, sb_open_mode(flags),
++					   fs_type);
++		if (error)
++			goto out_deactivate;
++
++		if (!(flags & SB_RDONLY) && fs_devices->rw_devices == 0) {
++			error = -EACCES;
++			btrfs_close_devices(fs_info->fs_devices);
++			goto out_deactivate;
++		}
++
++		snprintf(s->s_id, sizeof(s->s_id), "%pg",
++			 fs_devices->latest_dev->bdev);
+ 		shrinker_debugfs_rename(&s->s_shrink, "sb-%s:%s", fs_type->name,
+ 					s->s_id);
+ 		btrfs_sb(s)->bdev_holder = fs_type;
+@@ -1519,21 +1518,19 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
+ 	}
+ 	if (!error)
+ 		error = security_sb_set_mnt_opts(s, new_sec_opts, 0, NULL);
++	if (error)
++		goto out_deactivate;
+ 	security_free_mnt_opts(&new_sec_opts);
+-	if (error) {
+-		deactivate_locked_super(s);
+-		return ERR_PTR(error);
+-	}
+-
+ 	return dget(s->s_root);
+ 
+-error_close_devices:
+-	btrfs_close_devices(fs_devices);
+-error_fs_info:
+-	btrfs_free_fs_info(fs_info);
++out_deactivate:
++	deactivate_locked_super(s);
+ error_sec_opts:
+ 	security_free_mnt_opts(&new_sec_opts);
+ 	return ERR_PTR(error);
++error_fs_info:
++	btrfs_free_fs_info(fs_info);
++	goto error_sec_opts;
+ }
+ 
+ /*
 diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 73f9ea7672dbda..8246578c70f55b 100644
+index 8246578c70f55b..88e9daae5e74ed 100644
 --- a/fs/btrfs/volumes.c
 +++ b/fs/btrfs/volumes.c
-@@ -1356,7 +1356,7 @@ int btrfs_forget_devices(dev_t devt)
-  * and we are not allowed to call set_blocksize during the scan. The superblock
-  * is read via pagecache
-  */
--struct btrfs_device *btrfs_scan_one_device(const char *path, blk_mode_t flags)
-+struct btrfs_device *btrfs_scan_one_device(const char *path)
+@@ -1269,7 +1269,6 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
  {
- 	struct btrfs_super_block *disk_super;
- 	bool new_device_added = false;
-@@ -1384,7 +1384,7 @@ struct btrfs_device *btrfs_scan_one_device(const char *path, blk_mode_t flags)
- 	 * values temporarily, as the device paths of the fsid are the only
- 	 * required information for assembling the volume.
- 	 */
--	bdev = blkdev_get_by_path(path, flags, NULL, NULL);
-+	bdev = blkdev_get_by_path(path, BLK_OPEN_READ, NULL, NULL);
- 	if (IS_ERR(bdev))
- 		return ERR_CAST(bdev);
+ 	int ret;
  
-diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
-index b8c51f16ba867f..824161c6dd063e 100644
---- a/fs/btrfs/volumes.h
-+++ b/fs/btrfs/volumes.h
-@@ -611,7 +611,7 @@ struct btrfs_block_group *btrfs_create_chunk(struct btrfs_trans_handle *trans,
- void btrfs_mapping_tree_free(struct extent_map_tree *tree);
- int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
- 		       blk_mode_t flags, void *holder);
--struct btrfs_device *btrfs_scan_one_device(const char *path, blk_mode_t flags);
-+struct btrfs_device *btrfs_scan_one_device(const char *path);
- int btrfs_forget_devices(dev_t devt);
- void btrfs_close_devices(struct btrfs_fs_devices *fs_devices);
- void btrfs_free_extra_devids(struct btrfs_fs_devices *fs_devices);
+-	lockdep_assert_held(&uuid_mutex);
+ 	/*
+ 	 * The device_list_mutex cannot be taken here in case opening the
+ 	 * underlying device takes further locks like open_mutex.
+@@ -1277,7 +1276,7 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
+ 	 * We also don't need the lock here as this is called during mount and
+ 	 * exclusion is provided by uuid_mutex
+ 	 */
+-
++	mutex_lock(&uuid_mutex);
+ 	if (fs_devices->opened) {
+ 		fs_devices->opened++;
+ 		ret = 0;
+@@ -1285,6 +1284,7 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
+ 		list_sort(NULL, &fs_devices->devices, devid_cmp);
+ 		ret = open_fs_devices(fs_devices, flags, holder);
+ 	}
++	mutex_unlock(&uuid_mutex);
+ 
+ 	return ret;
+ }
 -- 
 2.39.2
+
