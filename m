@@ -1,8 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 11/12] xfs: drop s_umount over opening the log
- and RT devices
-Date: Wed,  2 Aug 2023 17:41:30 +0200
-Message-ID: <20230802154131.2221419-12-hch@lst.de>
+Subject: [PATCH 12/12] xfs use fs_holder_ops for the log and RT
+ devices
+Date: Wed,  2 Aug 2023 17:41:31 +0200
+Message-ID: <20230802154131.2221419-13-hch@lst.de>
 References: <20230802154131.2221419-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=XMPneISqjawu91NBggI2WgeuEkyhCfHxDeU0xyhMo0U=; b=co0kcfFiO5C6ZYVa8unWD/I4oN
- qzmX+iZbLTam+WC5ZRXzJeXClghafe6xvTvHcmzwhgDnIkFrjGKdomMqdJYag6JdrMU8AfGctlUw2
- KZJcv0sYRgsKLx3enmhluGXgvRMbkkb+pSugmIhkwkT+YLEkYnTaqMqajthnK6pG2AQo=;
+ bh=i4RVxh7cqcfhStKnrFuIVUqPlurNIlyMZ1NDN212nv0=; b=HBxqRc1RqMJkhP0vcZ5O+b2Sme
+ 5lCPfyEJKHOt1VYQtlH+1qCc+N3UoB4riOgsPCyUKwHYdGg3xNsj0HsKiRT/4IxxQitOVejudamzQ
+ TI+VkNJUaSLcZ2xux5ZSCXLEqDrF4AvRuUKsAAVIye6UWOb9afBZH0yCJmgxJm/hrVL8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=XMPneISqjawu91NBggI2WgeuEkyhCfHxDeU0xyhMo0U=; b=V/h95Q7a2/3mRjoptJYBHmzol+
- i4aU9m/siomMsG9Xs3MCq/oEV423+qEFhT51VLt5hvRxs7bhmjBUQsfBm9+xgZ4SNKA+gTFAiWQpC
- Scw9XFgP1vL9ibtFr4/q01ijfzIbGg6QyRi3LlNTpp1M2DBDfmKkbtEBqIrkMzCe9J/M=;
+ bh=i4RVxh7cqcfhStKnrFuIVUqPlurNIlyMZ1NDN212nv0=; b=F4qNfwCFrI4Zdo+hUCR4x7JKOQ
+ AVOaYkWy6yld2HgFhRnzpKmIxTTKvpz9DeO7n85Dc5hjB3aKBHg7ssO7WGP7VlAHhpzYLtux5uNXS
+ TcNOzhe+fdGP6TxIOI756Fbw1Efc3YF6IMgibkniYO51k09KyjE3czT+qKZnl2ZS0NlU=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
  MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
  :Reply-To:Content-Type:Content-ID:Content-Description;
- bh=XMPneISqjawu91NBggI2WgeuEkyhCfHxDeU0xyhMo0U=; b=wnYWuPX2W/dInPzieM+5Nh7pFL
- yIbFDEQk+eNqVEdJoQhGrQssG8MD2wHclg6aOXifn09aXcAq8V27JW/r7ja+SWV6mZhkDFDa0CDRn
- 6gYzRyFjyjcdl+b9xxl1DXwN+YXWYNIQ1Jue9GjQ+XQ1GW1Fro1lrksi5uq0Ntp7kJQibSu59UXTh
- cIzojbnQjsVpPhFzkvrfICDJvZcqUbq5GMec/iIkf5Pd/l1XbuXi10+P9uSEM1S7AEGp5h9z1D9p7
- MXW0mFULgs9ZUOsSMjkKYYaYpalbMkrjOrK9FxENDFgakDcsjltK7IL0c3TwE6zk0MvlZ3bec+4bi
- Z0cMSQtg==;
+ bh=i4RVxh7cqcfhStKnrFuIVUqPlurNIlyMZ1NDN212nv0=; b=m9OaeC94Czmbb5hPBahN8SXBqI
+ HNi7Mt4xq8QD0KfNROKtIz4cWo24dWSBz7X8e50X0RB4sQ5tkio4jz+r4r8ZXafkW2ww175yxfozT
+ NCUZO2qzsSFjl3BFFlIRN3Wfa2mzIAi3PGZkD8Cd957ycv8VcxS6B+Gl86ETq6tCRKfhACSRqvwK7
+ ZdYNXIQB/XHcCPAEwZsU/ppTsd8l/Kd7bPks6ODFCghe5WMh0L9iLVh6NfcG8q01AnZzhLKiyX/4B
+ 4MY4Wr/7eVJVJE1UTa4EMeC4cbXZti0JxzrFZGHMr43Ix5mWyHHev/cZbWwF9pp4HCsk18N+iH6el
+ wjXcrqPw==;
 In-Reply-To: <20230802154131.2221419-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -50,67 +50,55 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Al Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org, "Darrick J. Wong" <djwong@kernel.org>, Josef Bacik <josef@toxicpanda.com>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, David Sterba <dsterba@suse.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-btrfs@vger.kernel.org
 
-Just like get_tree_bdev needs to drop s_umount when opening the main
-device, we need to do the same for the xfs log and RT devices to avoid a
-potential lock order reversal with s_unmount for the mark_dead path.
-
-It might be preferable to just drop s_umount over ->fill_super entirely,
-but that will require a fairly massive audit first, so we'll do the easy
-version here first.
+Use the generic fs_holder_ops to shut down the file system when the
+log or RT device goes away instead of duplicating the logic.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/xfs/xfs_super.c | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
+ fs/xfs/xfs_super.c | 17 +++--------------
+ 1 file changed, 3 insertions(+), 14 deletions(-)
 
 diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-index 8185102431301d..d5042419ed9997 100644
+index d5042419ed9997..338eba71ff8667 100644
 --- a/fs/xfs/xfs_super.c
 +++ b/fs/xfs/xfs_super.c
-@@ -448,17 +448,21 @@ STATIC int
- xfs_open_devices(
- 	struct xfs_mount	*mp)
- {
--	struct block_device	*ddev = mp->m_super->s_bdev;
-+	struct super_block	*sb = mp->m_super;
-+	struct block_device	*ddev = sb->s_bdev;
- 	struct block_device	*logdev = NULL, *rtdev = NULL;
- 	int			error;
- 
-+	/* see get_tree_bdev why this is needed and safe */
-+	up_write(&sb->s_umount);
-+
- 	/*
- 	 * Open real time and log devices - order is important.
- 	 */
- 	if (mp->m_logname) {
- 		error = xfs_blkdev_get(mp, mp->m_logname, &logdev);
- 		if (error)
--			return error;
-+			goto out_unlock;
- 	}
- 
- 	if (mp->m_rtname) {
-@@ -496,7 +500,10 @@ xfs_open_devices(
- 		mp->m_logdev_targp = mp->m_ddev_targp;
- 	}
- 
--	return 0;
-+	error = 0;
-+out_unlock:
-+	down_write(&sb->s_umount);
-+	return error;
- 
-  out_free_rtdev_targ:
- 	if (mp->m_rtdev_targp)
-@@ -508,7 +515,7 @@ xfs_open_devices(
-  out_close_logdev:
- 	if (logdev && logdev != ddev)
- 		xfs_blkdev_put(mp, logdev);
--	return error;
-+	goto out_unlock;
+@@ -377,17 +377,6 @@ xfs_setup_dax_always(
+ 	return 0;
  }
  
- /*
+-static void
+-xfs_bdev_mark_dead(
+-	struct block_device	*bdev)
+-{
+-	xfs_force_shutdown(bdev->bd_holder, SHUTDOWN_DEVICE_REMOVED);
+-}
+-
+-static const struct blk_holder_ops xfs_holder_ops = {
+-	.mark_dead		= xfs_bdev_mark_dead,
+-};
+-
+ STATIC int
+ xfs_blkdev_get(
+ 	xfs_mount_t		*mp,
+@@ -396,8 +385,8 @@ xfs_blkdev_get(
+ {
+ 	int			error = 0;
+ 
+-	*bdevp = blkdev_get_by_path(name, BLK_OPEN_READ | BLK_OPEN_WRITE, mp,
+-				    &xfs_holder_ops);
++	*bdevp = blkdev_get_by_path(name, BLK_OPEN_READ | BLK_OPEN_WRITE,
++				    mp->m_super, &fs_holder_ops);
+ 	if (IS_ERR(*bdevp)) {
+ 		error = PTR_ERR(*bdevp);
+ 		xfs_warn(mp, "Invalid device [%s], error=%d", name, error);
+@@ -412,7 +401,7 @@ xfs_blkdev_put(
+ 	struct block_device	*bdev)
+ {
+ 	if (bdev)
+-		blkdev_put(bdev, mp);
++		blkdev_put(bdev, mp->m_super);
+ }
+ 
+ STATIC void
 -- 
 2.39.2
