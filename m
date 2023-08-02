@@ -1,7 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/12] fs: stop using get_super in fs_mark_dead
-Date: Wed,  2 Aug 2023 17:41:26 +0200
-Message-ID: <20230802154131.2221419-8-hch@lst.de>
+Subject: [PATCH 09/12] ext4: drop s_umount over opening the log
+ device
+Date: Wed,  2 Aug 2023 17:41:28 +0200
+Message-ID: <20230802154131.2221419-10-hch@lst.de>
 References: <20230802154131.2221419-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=H3MTtQkLFkLtQvQuadZGreptlnpEa/QPHhaLm59CLeo=; b=SllETIZ2eOPlmdKwUnKHFnOEgl
- dCUUXZD8I//p6++SrBFbyFkQVN0AKCghcGZ6jSuFzFxo6oTWYoiH6G0GIBVkyqc3cQkeFFTruh9zl
- A+9fGQNqE3HT6xufiMDZodcKGlOaiLSi2I8c/e4ufx2LDjYVJCbsPnKnVdmEXjhbjis0=;
+ bh=9z6iRUB0HpEH9yVJZ8SKsjwqR2QNW5zkViH5X/SDjhI=; b=jcrNyCaZSW9dN8GoB6PD7zdMKk
+ MLmnPMGvOQcVMBxuVfN+0KzKd126rGoVh0Vwoa3KdiqN8JqIfDJHnfwF9O+MvcIxK61q7/yHnbXcB
+ aNEi4/MBcugwOFFkXbZfw5LGnX/0BKQibgc5ZL/MfgJdC0PfsMxIn1Vii5+vfapDYWj8=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -23,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=H3MTtQkLFkLtQvQuadZGreptlnpEa/QPHhaLm59CLeo=; b=U5S8XlAndMpyn0WzdMhFl0tu0v
- eDna6SeeHtUBGcNO6Ry5p+m/GGhhRL3/7xZUNvd5v2QVlzRuLEOTIa+9BfW8HOqG3s9EGzeEqE2/P
- OaEY7Ww3DSg1i3n9aC6XZyuFIbIAg0jrE0KS7Wa1vYINa3EHNS9ETHjeMikgWvE3zFys=;
+ bh=9z6iRUB0HpEH9yVJZ8SKsjwqR2QNW5zkViH5X/SDjhI=; b=CyKmG06GVRxSLZOHD0STatK6f0
+ YGWdHHczM9E3ZRh+Ml6B9etjhm+zNwZ2U3hTnU3U9aogl0SewBxGwS8xhwtbInI8nawNRSSiPd9SD
+ ssIgcXcIF+hqWIjpkj0xa999K+H2PEEYNaGcyzGLA/s5aiQsicxXIfcDL6oAbpftCFwg=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
  MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
  :Reply-To:Content-Type:Content-ID:Content-Description;
- bh=H3MTtQkLFkLtQvQuadZGreptlnpEa/QPHhaLm59CLeo=; b=3JXg/prj0HfTjXvS5Acr1C9TH8
- tBCdwieLU44WmKkY3yg459RwXOD3Ksk/8LYtSODjqVxZt/pb+SwDXBOYev1CR9j0Gzt6WBv9+Yb9n
- 0d6Gg7s326FEZsZfpcNZDOIYGoDpH0mESnTfRIiZI3w8I2NMPDqxnxJLbxNPkqle4gMEcQKYp1EgX
- 7CEBSecV3ExtqrQHb8ny4H4fzi1LfiImJPIEpcVxedd+2YDNFXNgP5/iHFTm9wdAgHoWSi4D7/T4A
- qQP6+/T+EtbyBae5S1gS5DirSjkxKBoWa/sIWZn8/4j/f/cAkgIIVu/nkTbTc3SB4lzPFWqQHZ5An
- LLzbtv3w==;
+ bh=9z6iRUB0HpEH9yVJZ8SKsjwqR2QNW5zkViH5X/SDjhI=; b=i+HYYGUwVQd0cBogaXIV5vo/pL
+ zWblj0H6yG//E5OamCxdVKjjA+loZfVwsPHotijZMYyONUsXn+hTKEPyxDUrHsRUHCyDEzKsicFlq
+ duF5vCrFzEbsPWaI2grnR07yMIRV3pbVI/44jrUI4J6B4XHIeW+91ZQBEGfYVI9o+NZeD/XBGRQP6
+ o03BDUtDrFgof5bL0lrd7JoHdf7A7vgTEDPlp/C4wUx9XWGAuylz3IICKc7G/ZBWEMNj+Ucoc47ZZ
+ BcPdWnYJZX9Eb6u3srXrOnd8/GtwLWAbFSXxE0MVQIBm2dAmvbZaDYkJWjeg771VMhLIIxgUqbssB
+ Om0i9bfQ==;
 In-Reply-To: <20230802154131.2221419-1-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -49,67 +50,33 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Al Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org, "Darrick J. Wong" <djwong@kernel.org>, Josef Bacik <josef@toxicpanda.com>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, David Sterba <dsterba@suse.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-btrfs@vger.kernel.org
 
-fs_mark_dead currently uses get_super to find the superblock for the
-block device that is going away.  This means it is limited to the
-main device stored in sb->s_dev, leading to a lot of code duplication
-for file systems that can use multiple block devices.
+Just like get_tree_bdev needs to drop s_umount when opening the main
+device, we need to do the same for the ext4 log device to avoid a
+potential lock order reversal with s_unmount for the mark_dead path.
 
-Now that the holder for all block devices used by file systems is set
-to the super_block, we can instead look at that holder and then check
-if the file system is born and active, so do that instead.
+It might be preferable to just drop s_umount over ->fill_super entirely,
+but that will require a fairly massive audit first, so we'll do the easy
+version here first.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/super.c | 30 ++++++++++++++++++++++++++----
- 1 file changed, 26 insertions(+), 4 deletions(-)
+ fs/ext4/super.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/fs/super.c b/fs/super.c
-index 09b65ee1a8b737..0cda4af0a7e16c 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -1209,17 +1209,39 @@ int get_tree_keyed(struct fs_context *fc,
- EXPORT_SYMBOL(get_tree_keyed);
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index 193d665813b611..2ccb19d345c6dd 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -5854,7 +5854,10 @@ static journal_t *ext4_get_dev_journal(struct super_block *sb,
+ 	if (WARN_ON_ONCE(!ext4_has_feature_journal(sb)))
+ 		return NULL;
  
- #ifdef CONFIG_BLOCK
-+/*
-+ * Lock a super block that the callers holds a reference to.
-+ *
-+ * The caller needs to ensure that the super_block isn't being freed while
-+ * calling this function, e.g. by holding a lock over the call to this function
-+ * and the place that clears the pointer to the superblock used by this function
-+ * before freeing the superblock.
-+ */
-+static bool lock_active_super(struct super_block *sb)
-+{
-+	down_read(&sb->s_umount);
-+	if (!sb->s_root ||
-+	    (sb->s_flags & (SB_ACTIVE | SB_BORN)) != (SB_ACTIVE | SB_BORN)) {
-+		up_read(&sb->s_umount);
-+		return false;
-+	}
-+	return true;
-+}
-+
- static void fs_mark_dead(struct block_device *bdev)
- {
--	struct super_block *sb;
-+	struct super_block *sb = bdev->bd_holder;
++	/* see get_tree_bdev why this is needed and safe */
++	up_write(&sb->s_umount);
+ 	bdev = ext4_blkdev_get(j_dev, sb);
++	down_write(&sb->s_umount);
+ 	if (bdev == NULL)
+ 		return NULL;
  
--	sb = get_super(bdev);
--	if (!sb)
-+	/* bd_holder_lock ensures that the sb isn't freed */
-+	lockdep_assert_held(&bdev->bd_holder_lock);
-+
-+	if (!lock_active_super(sb))
- 		return;
- 
- 	if (sb->s_op->shutdown)
- 		sb->s_op->shutdown(sb);
--	drop_super(sb);
-+
-+	up_read(&sb->s_umount);
- }
- 
- static const struct blk_holder_ops fs_holder_ops = {
 -- 
 2.39.2
