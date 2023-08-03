@@ -1,86 +1,78 @@
-From: "Darrick J. Wong" <djwong@kernel.org>
-Subject: Re: [PATCH 12/12] xfs use fs_holder_ops for the log and RT devices
-Date: Wed, 2 Aug 2023 09:33:20 -0700
-Message-ID: <20230802163320.GX11352@frogsfrogsfrogs>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 05/12] ext4: make the IS_EXT2_SB/IS_EXT3_SB checks more
+ robust
+Date: Thu, 3 Aug 2023 13:21:10 +0200
+Message-ID: <20230803112110.7qybhrgn2rwaguu2@quack3>
 References: <20230802154131.2221419-1-hch@lst.de>
- <20230802154131.2221419-13-hch@lst.de>
+ <20230802154131.2221419-6-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1690994000;
-        bh=U5pXU2c37LOZ29omq1nYjOha2+PkFnv5cZZI28wk6xI=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=VbhXgLKwgsrsAQ9lKMSn42pa4Ylk6IKQnzpDE7eTo6XWu8QXA8ASoiiWUp5vePHa4
-         rqKYL37JGUX9BYkCAq6Qa8f7fGtfFLzcMqz+eu6fI8dgYR1AAcKZIwk67k6sSHEK5a
-         Njz82jH8Ug+YQ2Q1h4sDTGfhQcEv4iGu0G/SVUWQa2Pt/MuSQ64lm77P0GczVG9m1Q
-         DKM8m4hoED2p4UVsLydshoE+nAb2SHTV3Q+EDW0nZpH+Ge1CA1glHR2oD3mFU2ZrFO
-         Onx7JmBXl+uQCY9uDiWr6KaBHqsgZYWYOWiRpEIGfLcVhIwvH7UOPO/1IFtwzm3fow
-         kufdy4/TMWpFw==
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+        t=1691061671; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=/oqdnU2hVSvQjG7zr7ybcm4vgtUzeJvEjdOgZyr5MDo=;
+        b=SshCa3at/QVqc2HIIpLg9LhDhKTreRaL2cZGX45vYwIeK3cx7PttlNBGYy6OudlZNlY9ra
+        MOv4rt6y4ZaVGS2gQBky7dhvCX5sAuEwxT7t0AG/xr4WPg3HrvCw3+qX5Fp1tt3Cecc/DQ
+        xnTqKiRxO3ni8MzYtqEIGMQIwjC94ag=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+        s=susede2_ed25519; t=1691061671;
+        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=/oqdnU2hVSvQjG7zr7ybcm4vgtUzeJvEjdOgZyr5MDo=;
+        b=H+MFCeAyi3R3yXuvvMJFuzNpnCx698yyaUcPgHxx1B/25fIvZ6HmN/YfD5MBWOxvwIKJn3
+        LdjGjluOtzdqOXCQ==
 Content-Disposition: inline
-In-Reply-To: <20230802154131.2221419-13-hch@lst.de>
+In-Reply-To: <20230802154131.2221419-6-hch-jcswGhMUV9g@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Christoph Hellwig <hch@lst.de>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, Chris Mason <clm@fb.com>, Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, Jens Axboe <axboe@kernel.dk>, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-block@vger.kernel.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-On Wed, Aug 02, 2023 at 05:41:31PM +0200, Christoph Hellwig wrote:
-> Use the generic fs_holder_ops to shut down the file system when the
-> log or RT device goes away instead of duplicating the logic.
+On Wed 02-08-23 17:41:24, Christoph Hellwig wrote:
+> Check for sb->s_type which is the right place to look at the file system
+> type, not the holder, which is just an implementation detail in the VFS
+> helpers.
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 
-Nice cleanup,
-Reviewed-by: Darrick J. Wong <djwong@kernel.org>
+Looks good. Feel free to add:
 
---D
+Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+
+								Honza
 
 > ---
->  fs/xfs/xfs_super.c | 17 +++--------------
->  1 file changed, 3 insertions(+), 14 deletions(-)
+>  fs/ext4/super.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
-> diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-> index d5042419ed9997..338eba71ff8667 100644
-> --- a/fs/xfs/xfs_super.c
-> +++ b/fs/xfs/xfs_super.c
-> @@ -377,17 +377,6 @@ xfs_setup_dax_always(
->  	return 0;
->  }
+> diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+> index c94ebf704616e5..193d665813b611 100644
+> --- a/fs/ext4/super.c
+> +++ b/fs/ext4/super.c
+> @@ -140,7 +140,7 @@ static struct file_system_type ext2_fs_type = {
+>  };
+>  MODULE_ALIAS_FS("ext2");
+>  MODULE_ALIAS("ext2");
+> -#define IS_EXT2_SB(sb) ((sb)->s_bdev->bd_holder == &ext2_fs_type)
+> +#define IS_EXT2_SB(sb) ((sb)->s_type == &ext2_fs_type)
+>  #else
+>  #define IS_EXT2_SB(sb) (0)
+>  #endif
+> @@ -156,7 +156,7 @@ static struct file_system_type ext3_fs_type = {
+>  };
+>  MODULE_ALIAS_FS("ext3");
+>  MODULE_ALIAS("ext3");
+> -#define IS_EXT3_SB(sb) ((sb)->s_bdev->bd_holder == &ext3_fs_type)
+> +#define IS_EXT3_SB(sb) ((sb)->s_type == &ext3_fs_type)
 >  
-> -static void
-> -xfs_bdev_mark_dead(
-> -	struct block_device	*bdev)
-> -{
-> -	xfs_force_shutdown(bdev->bd_holder, SHUTDOWN_DEVICE_REMOVED);
-> -}
-> -
-> -static const struct blk_holder_ops xfs_holder_ops = {
-> -	.mark_dead		= xfs_bdev_mark_dead,
-> -};
-> -
->  STATIC int
->  xfs_blkdev_get(
->  	xfs_mount_t		*mp,
-> @@ -396,8 +385,8 @@ xfs_blkdev_get(
->  {
->  	int			error = 0;
 >  
-> -	*bdevp = blkdev_get_by_path(name, BLK_OPEN_READ | BLK_OPEN_WRITE, mp,
-> -				    &xfs_holder_ops);
-> +	*bdevp = blkdev_get_by_path(name, BLK_OPEN_READ | BLK_OPEN_WRITE,
-> +				    mp->m_super, &fs_holder_ops);
->  	if (IS_ERR(*bdevp)) {
->  		error = PTR_ERR(*bdevp);
->  		xfs_warn(mp, "Invalid device [%s], error=%d", name, error);
-> @@ -412,7 +401,7 @@ xfs_blkdev_put(
->  	struct block_device	*bdev)
->  {
->  	if (bdev)
-> -		blkdev_put(bdev, mp);
-> +		blkdev_put(bdev, mp->m_super);
->  }
->  
->  STATIC void
+>  static inline void __ext4_read_bh(struct buffer_head *bh, blk_opf_t op_flags,
 > -- 
 > 2.39.2
 > 
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
