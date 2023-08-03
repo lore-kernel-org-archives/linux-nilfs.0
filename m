@@ -1,9 +1,10 @@
 From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 08/12] fs: export fs_holder_ops
-Date: Thu, 3 Aug 2023 15:16:39 +0200
-Message-ID: <20230803131639.eq6i7hq7mo4nvinr@quack3>
+Subject: Re: [PATCH 09/12] ext4: drop s_umount over opening the
+ log device
+Date: Thu, 3 Aug 2023 15:25:49 +0200
+Message-ID: <20230803132549.s3rz4au5adagwdtf@quack3>
 References: <20230802154131.2221419-1-hch@lst.de>
- <20230802154131.2221419-9-hch@lst.de>
+ <20230802154131.2221419-10-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -14,9 +15,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=u354+D6fXMwflzIguDkXJwfsSkO6vRI2JZd9gBpk1w8=; b=TzP3KvYs7yhz1z2EgDViSM6BwI
- NiwA2Svv/fppkFCjAavWSqymyTCx1i0Fe1mJGaX9+mFQvV2c9djC7K1u9Eu+vzMCbZRpdmycyuds7
- iWis/32U/N7Z7jPOO/iJMEWf7/vvXdsrMlFOQtDokoAH1hM8kPIbyAOUC/jEPy/fDKTI=;
+ bh=UDPtnYSNM4hfZ7dEGKrwZaeKN847Hc2R5Tx9DTRoPVo=; b=OdcGnSXrbyVeC1JZ/bK4uiGmgK
+ hxdrAgZGxJ0yJpQj2qNAKQ0d6Po+pUly4AUyw0sIviPs5KosVxXVFpQgKw8D/ZJWIU9k1vaSP/Pyk
+ DgUEFQm89UMCyX9KQ9WlPiUqY7f9qV5xbE+dOyKbqbimXKeLODF/itxAb60lyc/c5LuQ=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
@@ -24,27 +25,27 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=u354+D6fXMwflzIguDkXJwfsSkO6vRI2JZd9gBpk1w8=; b=ACpvFHyPyKWnw70Zoi4IpA36to
- r9k8yCsOYMgC3F65TKorb8xAkwjqiZMAkjWN+aFKtPBLTEd3TmfM/EpEfuA763j+fk3bEtkHvSYGD
- jJtRXkDgGz37f+Q/twIkl2siIVoQB/wK6j2oNuuxLy1KU0Si14zCPEjDx4mKMT0pJa5U=;
+ bh=UDPtnYSNM4hfZ7dEGKrwZaeKN847Hc2R5Tx9DTRoPVo=; b=Hx8hnkLZj0Y0goG5oGPneoLU08
+ SdbIaAXZu+t17TOi1aeOo7w2eJXIi7nRZYJlWNO16fPaeyhVjaNic8gQDfgLJcgNfNqjYNqptu4sq
+ BQBlCfI25A+fXmDfC45qfKnvc8qi+WaOZerMkRgdzsnR2sQEJ64V7VQUJ9ancjeuKm58=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
- t=1691068600; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+ t=1691069150; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
  mime-version:mime-version:content-type:content-type:
  in-reply-to:in-reply-to:references:references;
- bh=u354+D6fXMwflzIguDkXJwfsSkO6vRI2JZd9gBpk1w8=;
- b=OInI+ey5VB7bzlioGeMTFK6cIMQcbmPzuBjm1cod6P5t4UnAeQVLtUmUu1ow9TDDPGWiPS
- atDqYLDfOQiSeLf9a8Mxe+jzJt4kWnT5rRiebmQjJeWOqxCO++WGDUVBxHjKk+yd1qbRDm
- s/39yG0lPvvzKys6HDoWqHVcWWAMeF8=
+ bh=UDPtnYSNM4hfZ7dEGKrwZaeKN847Hc2R5Tx9DTRoPVo=;
+ b=E7UZ1iiufRd6HQ+34iZcMYVFaaRe8SvsUrT0SQQvYAiV7H0ow4HMtpOSs0XFfDLsK6mofq
+ m8IW+7BHidAqacwvDXpUtYQ/stwlGUq8qmHod1q3RRCoVv9jmLoSr02udJ08ZthhcQ8goZ
+ YrmN6xC5D8mhbxcLHkRP7y9BvhATuBE=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
- s=susede2_ed25519; t=1691068600;
+ s=susede2_ed25519; t=1691069150;
  h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
  mime-version:mime-version:content-type:content-type:
  in-reply-to:in-reply-to:references:references;
- bh=u354+D6fXMwflzIguDkXJwfsSkO6vRI2JZd9gBpk1w8=;
- b=SmreZ91bm3h8DRDbHSeo79QkJcwnmaQYt9hiZl0HQQG8+NzwgUM1M7+nZhg4RER1VLY2aq
- a6c0libI9aZYmsBQ==
+ bh=UDPtnYSNM4hfZ7dEGKrwZaeKN847Hc2R5Tx9DTRoPVo=;
+ b=B5xphLHA7/FHGZBWy7OlEj6b7ZdzMhzyW2fcwI1Lqy4kV7PED0c6lIhQPKoGPMxCPtcEYu
+ 4Ivy0DuFbz5vzjCw==
 Content-Disposition: inline
-In-Reply-To: <20230802154131.2221419-9-hch@lst.de>
+In-Reply-To: <20230802154131.2221419-10-hch@lst.de>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
@@ -57,9 +58,14 @@ Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Christoph Hellwig <hch@lst.de>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christian Brauner <brauner@kernel.org>, linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org, "Darrick J. Wong" <djwong@kernel.org>, Josef Bacik <josef@toxicpanda.com>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Al Viro <viro@zeniv.linux.org.uk>, Jaegeuk Kim <jaegeuk@kernel.org>, David Sterba <dsterba@suse.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-btrfs@vger.kernel.org
 
-On Wed 02-08-23 17:41:27, Christoph Hellwig wrote:
-> Export fs_holder_ops so that file systems that open additional block
-> devices can use it as well.
+On Wed 02-08-23 17:41:28, Christoph Hellwig wrote:
+> Just like get_tree_bdev needs to drop s_umount when opening the main
+> device, we need to do the same for the ext4 log device to avoid a
+> potential lock order reversal with s_unmount for the mark_dead path.
+> 
+> It might be preferable to just drop s_umount over ->fill_super entirely,
+> but that will require a fairly massive audit first, so we'll do the easy
+> version here first.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 
@@ -70,39 +76,24 @@ Reviewed-by: Jan Kara <jack@suse.cz>
 								Honza
 
 > ---
->  fs/super.c             | 3 ++-
->  include/linux/blkdev.h | 2 ++
->  2 files changed, 4 insertions(+), 1 deletion(-)
+>  fs/ext4/super.c | 3 +++
+>  1 file changed, 3 insertions(+)
 > 
-> diff --git a/fs/super.c b/fs/super.c
-> index 0cda4af0a7e16c..dac05f96ab9ac8 100644
-> --- a/fs/super.c
-> +++ b/fs/super.c
-> @@ -1244,9 +1244,10 @@ static void fs_mark_dead(struct block_device *bdev)
->  	up_read(&sb->s_umount);
->  }
+> diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+> index 193d665813b611..2ccb19d345c6dd 100644
+> --- a/fs/ext4/super.c
+> +++ b/fs/ext4/super.c
+> @@ -5854,7 +5854,10 @@ static journal_t *ext4_get_dev_journal(struct super_block *sb,
+>  	if (WARN_ON_ONCE(!ext4_has_feature_journal(sb)))
+>  		return NULL;
 >  
-> -static const struct blk_holder_ops fs_holder_ops = {
-> +const struct blk_holder_ops fs_holder_ops = {
->  	.mark_dead		= fs_mark_dead,
->  };
-> +EXPORT_SYMBOL_GPL(fs_holder_ops);
+> +	/* see get_tree_bdev why this is needed and safe */
+> +	up_write(&sb->s_umount);
+>  	bdev = ext4_blkdev_get(j_dev, sb);
+> +	down_write(&sb->s_umount);
+>  	if (bdev == NULL)
+>  		return NULL;
 >  
->  static int set_bdev_super(struct super_block *s, void *data)
->  {
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index ed44a997f629f5..83262702eea71a 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -1464,6 +1464,8 @@ struct blk_holder_ops {
->  	void (*mark_dead)(struct block_device *bdev);
->  };
->  
-> +extern const struct blk_holder_ops fs_holder_ops;
-> +
->  /*
->   * Return the correct open flags for blkdev_get_by_* for super block flags
->   * as stored in sb->s_flags.
 > -- 
 > 2.39.2
 > 
