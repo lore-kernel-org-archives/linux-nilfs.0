@@ -1,122 +1,71 @@
-From: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 02/12] nilfs2: use setup_bdev_super to de-duplicate the
- mount code
-Date: Fri, 4 Aug 2023 11:01:39 +0900
-Message-ID: <CAKFNMomzHg33SHnp6xGMEZY=+k6Y4t7dvBvgBDbO9H3ujzNDCw@mail.gmail.com>
-References: <20230802154131.2221419-1-hch@lst.de> <20230802154131.2221419-3-hch@lst.de>
- <20230803114651.ihtqqgthbdjjgxev@quack3>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Subject: Re: [PATCH 02/12] nilfs2: use setup_bdev_super to
+ de-duplicate the mount code
+Date: Fri, 4 Aug 2023 14:04:21 +0900
+Message-ID: <CAKFNMok5+MeOWcRg6o8W0tKjW=dTupXdwyqivou+RydZP423fw@mail.gmail.com>
+References: <20230802154131.2221419-1-hch@lst.de>
+ <20230802154131.2221419-3-hch@lst.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: base64
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:Cc:To:
+ Subject:Message-ID:Date:From:In-Reply-To:References:MIME-Version:Sender:
+ Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender
+ :Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=gvHhQK58HED/Jid4BEU/8KSn5E/19+2WUDX2YX8J0Ko=; b=TB4dTl6VrcvD2xIAs/gtphIse+
+ vcrwuR/E2DdqwGp+pheG8La953TS+ZxhRpwk1V7Cute1Lwi10v+DJwidVTqo3Q3xdBjmWvGVO7BE9
+ mM/gHxqIoaAOThiz2BqwDR51z1U1VKOgoLVa37dR75by5ulV9leilneNR9b9PiXB90bQ=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:Content-Type:Cc:To:Subject:Message-ID:Date:From
+ :In-Reply-To:References:MIME-Version:Sender:Reply-To:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=gvHhQK58HED/Jid4BEU/8KSn5E/19+2WUDX2YX8J0Ko=; b=OKTZiA8Sz2d6fME19IPSRbIM3S
+ BPOnWdo9udYi/HuNpclSp/V+6eSyMwp7B/dtRcLDSptKJEkdJvuTqaYxZ31+eQhalR3raTu58yGVj
+ FCajmCIoqwV26dyxFQqb1drNk1hNdHiADJKAJxekRmxMB/AOPvly9h6QGEW1mfCI3UjA=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1691114516; x=1691719316;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Li4Rr3SDbAWbMC9vqUARkDUxqa5LNmgwNWmtZCQPN7c=;
-        b=MoVB1XjmMagsHZzn9G8ftY6HWJZOUd3UQbdoUZGHvxiTrJtRhQmKpY5hMXxXdiDzuq
-         zQBrBD4AM2yCz+AjuuOypK1qRVFL8If5W+fTO+cw9XBWSGuM7Hrx2k1cmlpjp62wiDDF
-         xmsVPYq08ScKsEB2acJFU2fLVkjAs3OQk4kUojzHHGQtCjQau8BO/IfSPhWz7s7RoG+F
-         ObfsdVyd9J6qFm5iu3TH8pCH6XZy+vWbCGwACVvcWshSg7B1v3rxfId451mLVIpY2bVi
-         GasCyfXQI0s3z46olnWXSpFmLflSUgwZZScpT/KeG4Ra5OVORJFyNsdv2rD2oRuBkEtE
-         dKlA==
-In-Reply-To: <20230803114651.ihtqqgthbdjjgxev@quack3>
-List-ID: <linux-nilfs.vger.kernel.org>
+ d=gmail.com; s=20221208; t=1691125478; x=1691730278;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=gvHhQK58HED/Jid4BEU/8KSn5E/19+2WUDX2YX8J0Ko=;
+ b=o9IkCnlJqf9fY5gy5fVwkiUJZ8iZ9Aas2C2/zh0DiHTx4LpNqcMZlkdMxITlOzTPD8
+ 2aRncGgbqPq91v/0LtcDvDi9gSK5UqbQjqaSIuz68NJB/TywdgsRaiusrFpo5ZDNJvM3
+ 5Q2bxAOzGs+xNKN49s1hCYbX+xnxEd8ZbVc1Jez05IsR8AxvQmPIBU6pIgVMqeIS/Olq
+ ejkIH4vD76wZSX62Gg4NUPpx7pu+YIgWaArL5J1SZywhq143O42TygZ+nNZqRNUpyLEu
+ qJ2IGSXe3NrAMJVgKZOHexBd+lqWhCoMuA0va/s2sFUTqGuRkjyQQthZd2zAjAwqTyny
+ EDLg==
+In-Reply-To: <20230802154131.2221419-3-hch@lst.de>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 Content-Type: text/plain; charset="windows-1252"
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christian Brauner <brauner@kernel.org>, linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org, "Darrick J. Wong" <djwong@kernel.org>, Josef Bacik <josef@toxicpanda.com>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Al Viro <viro@zeniv.linux.org.uk>, Jaegeuk Kim <jaegeuk@kernel.org>, David Sterba <dsterba@suse.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
 
-On Thu, Aug 3, 2023 at 8:46=E2=80=AFPM Jan Kara wrote:
->
-> On Wed 02-08-23 17:41:21, Christoph Hellwig wrote:
-> > Use the generic setup_bdev_super helper to open the main block device
-> > and do various bits of superblock setup instead of duplicating the
-> > logic.  This includes moving to the new scheme implemented in common
-> > code that only opens the block device after the superblock has allocate=
-d.
-> >
-> > It does not yet convert nilfs2 to the new mount API, but doing so will
-> > become a bit simpler after this first step.
-> >
-> > Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
->
-> AFAICS nilfs2 could *almost* use mount_bdev() directly and then just do i=
-ts
-
-> snapshot thing after mount_bdev() returns. But it has this weird logic
-> that: "if the superblock is already mounted but we can shrink the whole
-> dcache, then do remount instead of ignoring mount options". Firstly, this
-> looks racy - what prevents someone from say opening a file on the sb just
-> after nilfs_tree_is_busy() shrinks dcache? Secondly, it is inconsistent
-> with any other filesystem so it's going to surprise sysadmins not
-> intimately knowing nilfs2. Thirdly, from userspace you cannot tell what
-> your mount call is going to do. Last but not least, what is it really goo=
-d
-> for? Ryusuke, can you explain please?
->
->                                                                 Honza
-
-I think you are referring to the following part:
-
->        if (!s->s_root) {
-...
->        } else if (!sd.cno) {
->                if (nilfs_tree_is_busy(s->s_root)) {
->                        if ((flags ^ s->s_flags) & SB_RDONLY) {
->                                nilfs_err(s,
->                                          "the device already has a %s mou=
-nt.",
->                                          sb_rdonly(s) ? "read-only" : "re=
-ad/write");
->                                err =3D -EBUSY;
->                                goto failed_super;
->                        }
->                } else {
->                        /*
->                         * Try remount to setup mount states if the curren=
-t
->                         * tree is not mounted and only snapshots use this=
- sb.
->                         */
->                        err =3D nilfs_remount(s, &flags, data);
->                        if (err)
->                                goto failed_super;
->                }
->        }
-
-What this logic is trying to do is, if there is already a nilfs2 mount
-instance for the device, and are trying to mounting the current tree
-(sd.cno is 0, so this is not a snapshot mount), then will switch
-depending on whether the current tree has a mount:
-
-- If the current tree is mounted, it's just like a normal filesystem.
-(A read-only mount and a read/write mount can't coexist, so check
-that, and reuse the instance if possible)
-- Otherwise, i.e. for snapshot mounts only, do whatever is necessary
-to add a new current mount, such as starting a log writer.
-   Since it does the same thing that nilfs_remount does, so
-nilfs_remount() is used there.
-
-Whether or not there is a current tree mount can be determined by
-d_count(s->s_root) > 1 as nilfs_tree_is_busy() does.
-Where s->s_root is always the root dentry of the current tree, not
-that of the mounted snapshot.
-
-I remember that calling shrink_dcache_parent() before this test was to
-do the test correctly if there was garbage left in the dcache from the
-past current mount.
-
-If the current tree isn't mounted, it just cleans up the garbage, and
-the reference count wouldn't have incremented in parallel.
-
-If the current tree is mounted, d_count(s->s_root) will not decrease
-to 1, so it's not a problem.
-However, this will cause unexpected dcache shrinkage for the in-use
-tree, so it's not a good idea, as you pointed out.  If there is
-another way of judging without this side effect, it should be
-replaced.
-
-I will reply here once.
-
-Regards,
-Ryusuke Konishi
+T24gVGh1LCBBdWcgMywgMjAyMyBhdCAxMjo0MeKAr0FNIENocmlzdG9waCBIZWxsd2lnIHdyb3Rl
+Ogo+Cj4gVXNlIHRoZSBnZW5lcmljIHNldHVwX2JkZXZfc3VwZXIgaGVscGVyIHRvIG9wZW4gdGhl
+IG1haW4gYmxvY2sgZGV2aWNlCj4gYW5kIGRvIHZhcmlvdXMgYml0cyBvZiBzdXBlcmJsb2NrIHNl
+dHVwIGluc3RlYWQgb2YgZHVwbGljYXRpbmcgdGhlCj4gbG9naWMuICBUaGlzIGluY2x1ZGVzIG1v
+dmluZyB0byB0aGUgbmV3IHNjaGVtZSBpbXBsZW1lbnRlZCBpbiBjb21tb24KPiBjb2RlIHRoYXQg
+b25seSBvcGVucyB0aGUgYmxvY2sgZGV2aWNlIGFmdGVyIHRoZSBzdXBlcmJsb2NrIGhhcyBhbGxv
+Y2F0ZWQuCj4KPiBJdCBkb2VzIG5vdCB5ZXQgY29udmVydCBuaWxmczIgdG8gdGhlIG5ldyBtb3Vu
+dCBBUEksIGJ1dCBkb2luZyBzbyB3aWxsCj4gYmVjb21lIGEgYml0IHNpbXBsZXIgYWZ0ZXIgdGhp
+cyBmaXJzdCBzdGVwLgo+Cj4gU2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBs
+c3QuZGU+CgpBY2tlZC1ieTogUnl1c3VrZSBLb25pc2hpIDxrb25pc2hpLnJ5dXN1a2VAZ21haWwu
+Y29tPgoKVGhpcyBwYXRjaCBpdHNlbGYgbG9va3MgdG8gcHJvcGVybHkgY29udmVydCBuaWxmc19t
+b3VudCBldGMuICBUaGFuayB5b3Ugc28gbXVjaC4KClJlZ2FyZHMsClJ5dXN1a2UgS29uaXNoaQoK
+Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkxpbnV4LWYy
+ZnMtZGV2ZWwgbWFpbGluZyBsaXN0CkxpbnV4LWYyZnMtZGV2ZWxAbGlzdHMuc291cmNlZm9yZ2Uu
+bmV0Cmh0dHBzOi8vbGlzdHMuc291cmNlZm9yZ2UubmV0L2xpc3RzL2xpc3RpbmZvL2xpbnV4LWYy
+ZnMtZGV2ZWwK
