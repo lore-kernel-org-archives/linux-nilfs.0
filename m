@@ -1,112 +1,61 @@
-From: syzbot <syzbot+0ad741797f4565e7e2d2-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
-Subject: Re: [syzbot] [nilfs?] general protection fault in folio_create_empty_buffers
-Date: Fri, 04 Aug 2023 08:41:04 -0700
-Message-ID: <0000000000007f094106021ab951@google.com>
-References: <0000000000002930a705fc32b231@google.com>
+From: "Theodore Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH 05/12] ext4: make the IS_EXT2_SB/IS_EXT3_SB
+ checks more robust
+Date: Fri, 4 Aug 2023 16:34:23 -0400
+Message-ID: <20230804203423.GC903325@mit.edu>
+References: <20230802154131.2221419-1-hch@lst.de>
+ <20230802154131.2221419-6-hch@lst.de>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <0000000000002930a705fc32b231-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
+ Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=i+Cv8ZO3I5bUEr/K4+xoZ/gjA4JFPErOdbDf0LaFzCo=; b=fnm6XLYJb0F6ccBnncQVN9wqoP
+ 0VAT4ZlHmxB3YFhW2s3Z1whKQjqNgkKqRJ4fntiVB0+CF6UPBhN6i/zxJ6PVNtOeKvYKxt44symE/
+ zvX7iJjV2hMWjAmV0tv6VRh8vFmJUyjP++GmdZhRDvkugOi/buT2w8E5Itgxge5i2jXk=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
+ :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=i+Cv8ZO3I5bUEr/K4+xoZ/gjA4JFPErOdbDf0LaFzCo=; b=MAz/FHfP8PseclmvphjOULpBi2
+ 6i8biTZM3qwNVk48EQbaGULZV96ZEWgh1URUEahq3TLubcYvFhod0Mck4ALGkd7AhzTC3dPEsq6Dm
+ ybvJ1HNkZuH/K045jNQDMjZvsRo11u5wgYgaFkfQwstG+XGuyv/G7equr0V3Ay1hJTho=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mit.edu; s=outgoing;
+ t=1691181272; bh=i+Cv8ZO3I5bUEr/K4+xoZ/gjA4JFPErOdbDf0LaFzCo=;
+ h=Date:From:Subject:Message-ID:MIME-Version:Content-Type;
+ b=LhpVy8vBk/XSt8GuwK8JeXWAhbhaGHwiCvogm7byiRopRon8u+Fy2XpuWbDJ/DJqp
+ 1MMHjMZrvP/bsYQt+4oPnfh3oX7+RXyu/JpuSynvYo8OM1HCFI//PZ6OtV7t48eW1k
+ NczmO7BbNuqBpq+Z1Q/3jmfHsAXJRjU74h7ISZ3IYJA5kgGBxhqB59mAzguEkGCU4Q
+ Bwd2anIeqw6Ugk0Z9GGvE76JN2snxvF4uJsmny2lVz8LKkRpZ1vWGxJrBJy7Lvy0+7
+ VCsPzXGzk5tcsNFAq0U09qFE0XG9yw9L2KHuZ/yc1old2bUvgfhBiWegJLllkThH6J
+ DmzoegwwJSRQg==
+Content-Disposition: inline
+In-Reply-To: <20230802154131.2221419-6-hch@lst.de>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christian Brauner <brauner@kernel.org>, linux-nilfs@vger.kernel.org, Jan Kara <jack@suse.cz>, linux-fsdevel@vger.kernel.org, "Darrick J. Wong" <djwong@kernel.org>, Josef Bacik <josef@toxicpanda.com>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Chris Mason <clm@fb.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Al Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org, Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-btrfs@vger.kernel.org
 
-syzbot has found a reproducer for the following issue on:
+On Wed, Aug 02, 2023 at 05:41:24PM +0200, Christoph Hellwig wrote:
+> Check for sb->s_type which is the right place to look at the file system
+> type, not the holder, which is just an implementation detail in the VFS
+> helpers.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-HEAD commit:    bdffb18b5dd8 Add linux-next specific files for 20230804
-git tree:       linux-next
-console output: https://syzkaller.appspot.com/x/log.txt?x=1625c47da80000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=4edf5fc5e1e5446f
-dashboard link: https://syzkaller.appspot.com/bug?extid=0ad741797f4565e7e2d2
-compiler:       gcc (Debian 12.2.0-14) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=14b893bea80000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=16764a71a80000
-
-Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/9d65b99a07c2/disk-bdffb18b.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/8b9623d8bd2e/vmlinux-bdffb18b.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/3e6c96c97edb/bzImage-bdffb18b.xz
-mounted in repro: https://storage.googleapis.com/syzbot-assets/17c4ca724160/mount_0.gz
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+0ad741797f4565e7e2d2-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org
-
-general protection fault, probably for non-canonical address 0xdffffc000000003a: 0000 [#1] PREEMPT SMP KASAN
-KASAN: null-ptr-deref in range [0x00000000000001d0-0x00000000000001d7]
-CPU: 0 PID: 5323 Comm: segctord Not tainted 6.5.0-rc4-next-20230804-syzkaller #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 07/12/2023
-RIP: 0010:debug_spin_lock_before kernel/locking/spinlock_debug.c:85 [inline]
-RIP: 0010:do_raw_spin_lock+0x6e/0x2b0 kernel/locking/spinlock_debug.c:114
-Code: 81 48 8d 54 05 00 c7 02 f1 f1 f1 f1 c7 42 04 04 f3 f3 f3 65 48 8b 14 25 28 00 00 00 48 89 54 24 60 31 d2 48 89 fa 48 c1 ea 03 <0f> b6 14 02 48 89 f8 83 e0 07 83 c0 03 38 d0 7c 08 84 d2 0f 85 e3
-RSP: 0018:ffffc9000507f6e8 EFLAGS: 00010207
-RAX: dffffc0000000000 RBX: 00000000000001d0 RCX: 0000000000000000
-RDX: 000000000000003a RSI: ffffffff8ac889a0 RDI: 00000000000001d4
-RBP: 1ffff92000a0fede R08: 0000000000000000 R09: fffffbfff1d598ca
-R10: ffffffff8eacc657 R11: 000000000000004e R12: 0000000000000000
-R13: ffffea0001ca6bc0 R14: ffff888072088d98 R15: ffffea0001ca6bd8
-FS:  0000000000000000(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000000020000480 CR3: 0000000027f80000 CR4: 00000000003506f0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-Call Trace:
- <TASK>
- spin_lock include/linux/spinlock.h:351 [inline]
- folio_create_empty_buffers+0xb0/0x470 fs/buffer.c:1657
- nilfs_lookup_dirty_data_buffers+0x5a1/0x720 fs/nilfs2/segment.c:730
- nilfs_segctor_scan_file+0x1b1/0x6f0 fs/nilfs2/segment.c:1080
- nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1202 [inline]
- nilfs_segctor_collect fs/nilfs2/segment.c:1529 [inline]
- nilfs_segctor_do_construct+0x2f11/0x8bf0 fs/nilfs2/segment.c:2077
- nilfs_segctor_construct+0x924/0xb50 fs/nilfs2/segment.c:2411
- nilfs_segctor_thread_construct fs/nilfs2/segment.c:2519 [inline]
- nilfs_segctor_thread+0x38f/0xe90 fs/nilfs2/segment.c:2602
- kthread+0x33a/0x430 kernel/kthread.c:389
- ret_from_fork+0x2c/0x70 arch/x86/kernel/process.c:145
- ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:304
- </TASK>
-Modules linked in:
----[ end trace 0000000000000000 ]---
-RIP: 0010:debug_spin_lock_before kernel/locking/spinlock_debug.c:85 [inline]
-RIP: 0010:do_raw_spin_lock+0x6e/0x2b0 kernel/locking/spinlock_debug.c:114
-Code: 81 48 8d 54 05 00 c7 02 f1 f1 f1 f1 c7 42 04 04 f3 f3 f3 65 48 8b 14 25 28 00 00 00 48 89 54 24 60 31 d2 48 89 fa 48 c1 ea 03 <0f> b6 14 02 48 89 f8 83 e0 07 83 c0 03 38 d0 7c 08 84 d2 0f 85 e3
-RSP: 0018:ffffc9000507f6e8 EFLAGS: 00010207
-RAX: dffffc0000000000 RBX: 00000000000001d0 RCX: 0000000000000000
-RDX: 000000000000003a RSI: ffffffff8ac889a0 RDI: 00000000000001d4
-RBP: 1ffff92000a0fede R08: 0000000000000000 R09: fffffbfff1d598ca
-R10: ffffffff8eacc657 R11: 000000000000004e R12: 0000000000000000
-R13: ffffea0001ca6bc0 R14: ffff888072088d98 R15: ffffea0001ca6bd8
-FS:  0000000000000000(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000000020000480 CR3: 0000000027f80000 CR4: 00000000003506f0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-----------------
-Code disassembly (best guess):
-   0:	81 48 8d 54 05 00 c7 	orl    $0xc7000554,-0x73(%rax)
-   7:	02 f1                	add    %cl,%dh
-   9:	f1                   	int1
-   a:	f1                   	int1
-   b:	f1                   	int1
-   c:	c7 42 04 04 f3 f3 f3 	movl   $0xf3f3f304,0x4(%rdx)
-  13:	65 48 8b 14 25 28 00 	mov    %gs:0x28,%rdx
-  1a:	00 00
-  1c:	48 89 54 24 60       	mov    %rdx,0x60(%rsp)
-  21:	31 d2                	xor    %edx,%edx
-  23:	48 89 fa             	mov    %rdi,%rdx
-  26:	48 c1 ea 03          	shr    $0x3,%rdx
-* 2a:	0f b6 14 02          	movzbl (%rdx,%rax,1),%edx <-- trapping instruction
-  2e:	48 89 f8             	mov    %rdi,%rax
-  31:	83 e0 07             	and    $0x7,%eax
-  34:	83 c0 03             	add    $0x3,%eax
-  37:	38 d0                	cmp    %dl,%al
-  39:	7c 08                	jl     0x43
-  3b:	84 d2                	test   %dl,%dl
-  3d:	0f                   	.byte 0xf
-  3e:	85 e3                	test   %esp,%ebx
-
-
----
-If you want syzbot to run the reproducer, reply with:
-#syz test: git://repo/address.git branch-or-commit-hash
-If you attach or paste a git patch, syzbot will apply it before testing.
+Acked-by: Theodore Ts'o <tytso@mit.edu>
