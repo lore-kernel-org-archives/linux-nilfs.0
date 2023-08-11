@@ -1,156 +1,129 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 02/12] nilfs2: use setup_bdev_super to de-duplicate the
- mount code
-Date: Thu, 10 Aug 2023 20:14:23 +0200
-Message-ID: <20230810181423.dfz3lrezwvutls2w@quack3>
-References: <20230802154131.2221419-1-hch@lst.de>
- <20230802154131.2221419-3-hch@lst.de>
- <20230803114651.ihtqqgthbdjjgxev@quack3>
- <CAKFNMomzHg33SHnp6xGMEZY=+k6Y4t7dvBvgBDbO9H3ujzNDCw@mail.gmail.com>
- <20230810110547.ks62g2flysgwpgru@quack3>
- <CAKFNMon_3A7dC+k1q_RjEnoXXNtxBJAUQud_FD4s4VrHZdCVzg@mail.gmail.com>
+Subject: [PATCH v2 0/29] block: Make blkdev_get_by_*() return
+	handle
+Date: Fri, 11 Aug 2023 13:04:31 +0200
+Message-ID: <20230810171429.31759-1-jack@suse.cz>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1691691263; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=EtACbPUf2jciroUOwqpt2N6vNFZggLTp4OAzqG/4taE=;
-        b=y0bjlm1WNB3Ygc3dgC3Kv8bc5ZJyIxCe9ta+2EwqzpPoGdBb6TSGISmCiwJa3S+0U7Q35G
-        +4djJF18Qc6Z1325CwpU9HDJU/IBkfJZfzExHWfm0GZE8wxvxQXYKjn8MGr08DUX4RI9m+
-        jxkKrBwNHD6TBJZX6w5lOET4v8eOeCM=
+	t=1691751905;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version: content-transfer-encoding:content-transfer-encoding;
+	bh=5tRGa7YNpy5azfO2DILJGaxnHQqIrHRIuX4HPJpenrQ=;
+	b=nS0o04Ko2eofWDhOvWx6o3T36EV25HqbUFvkN9WMKumyZo3DU5IiWgMskXfjyH4OXEiKYl
+	IITYxvL5Q8pMKkFc8O6biwC3K3TxmcmnzVR3W1NQhsfgztirbY49kzZoor0HytOQKCBlyL
+	GV3cB78+BIPaD5P0M4y2xB0Q495MkAo=
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1691691263;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=EtACbPUf2jciroUOwqpt2N6vNFZggLTp4OAzqG/4taE=;
-        b=7PjYFUIKEw1GXEov7YN9IhoFXZPsyn4524+pgBxoltMvENURUdC4NVCBm+H0l+iWNYGZT1
-        L46pv46dVdE2PXBA==
-Content-Disposition: inline
-In-Reply-To: <CAKFNMon_3A7dC+k1q_RjEnoXXNtxBJAUQud_FD4s4VrHZdCVzg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="utf-8"
-To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Josef Bacik <josef-DigfWCa+lFGyeJad7bwFQA@public.gmane.org>, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+	s=susede2_ed25519; t=1691751905;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version: content-transfer-encoding:content-transfer-encoding;
+	bh=5tRGa7YNpy5azfO2DILJGaxnHQqIrHRIuX4HPJpenrQ=;
+	b=PRu3LFGsOROMaty7jNH51X1wMClD6ZMlY5AdbxYnc0QwtMHxNWZ8s/wVfL1uImLDOQT/Rl
+	cDHfO/YvLXNV1tAw==
+X-Developer-Signature: v=1; a=openpgp-sha256; l=3218; i=jack-AlSwsSmVLrQ@public.gmane.org;
+	h=from:subject:message-id;
+	bh=8um6o7br1koHMcykRc7ml18Y2BSCm69vwpPmgjRXxkk=;
+	b=owEBbQGS/pANAwAIAZydqgc/ZEDZAcsmYgBk1hW86qklK68Z0G139b8b61UzO/oV2Y6qvJg1uvDC
+	+JKlEZuJATMEAAEIAB0WIQSrWdEr1p4yirVVKBycnaoHP2RA2QUCZNYVvAAKCRCcnaoHP2RA2epoB/
+	9Sgdf//aomv8tBKGEg1kRzItWS+CXbN/cjy5B6uL3IUWhEY6vxFg7DsN+znMmPFPOp7X1w/e2PExiA
+	dGNvKiX2BNUyl6ZLFstCZUiXyzlig8pnDHrmrN4lbx3SIS3BHdNJ8igPArMWVDYXlZuosexzFn3fIW
+	ELsTpVpNLZdp6BAxZg4925E1qscyN11eFDJecvW+IrpMA1nHR12Y/AX4zqXWcBT8MPUEiJD1Cnfxfa
+	Leji+h3vOG0k2IQAyfN6R1cj/0POs0zJWvSVK9bZM8IYFIOHr+jpYHi0KEVh62q6NLoQxbMBVEzn9K
+	JsmkBplP7UobjvtEWvfH0EwVENii9z
+X-Developer-Key: i=jack-AlSwsSmVLrQ@public.gmane.org; a=openpgp;
+	fpr=93C6099A142276A28BBE35D815BC833443038D8C
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Joseph Qi <joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sergey Senozhatsky <senozhatsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Gao Xiang <xiang-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christian Borntraeger <borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sven Schnelle <svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joern Engel <joern-o6zPIXG8fmPj4SYmN/TMmA@public.gmane.org>, re
 
-On Fri 11-08-23 01:39:10, Ryusuke Konishi wrote:
-> On Thu, Aug 10, 2023 at 8:05 PM Jan Kara wrote:
-> >
-> > On Fri 04-08-23 11:01:39, Ryusuke Konishi wrote:
-> > > On Thu, Aug 3, 2023 at 8:46 PM Jan Kara wrote:
-> > > >
-> > > > On Wed 02-08-23 17:41:21, Christoph Hellwig wrote:
-> > > > > Use the generic setup_bdev_super helper to open the main block device
-> > > > > and do various bits of superblock setup instead of duplicating the
-> > > > > logic.  This includes moving to the new scheme implemented in common
-> > > > > code that only opens the block device after the superblock has allocated.
-> > > > >
-> > > > > It does not yet convert nilfs2 to the new mount API, but doing so will
-> > > > > become a bit simpler after this first step.
-> > > > >
-> > > > > Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> > > >
-> > > > AFAICS nilfs2 could *almost* use mount_bdev() directly and then just do its
-> > >
-> > > > snapshot thing after mount_bdev() returns. But it has this weird logic
-> > > > that: "if the superblock is already mounted but we can shrink the whole
-> > > > dcache, then do remount instead of ignoring mount options". Firstly, this
-> > > > looks racy - what prevents someone from say opening a file on the sb just
-> > > > after nilfs_tree_is_busy() shrinks dcache? Secondly, it is inconsistent
-> > > > with any other filesystem so it's going to surprise sysadmins not
-> > > > intimately knowing nilfs2. Thirdly, from userspace you cannot tell what
-> > > > your mount call is going to do. Last but not least, what is it really good
-> > > > for? Ryusuke, can you explain please?
-> > > >
-> > > >                                                                 Honza
-> > >
-> > > I think you are referring to the following part:
-> > >
-> > > >        if (!s->s_root) {
-> > > ...
-> > > >        } else if (!sd.cno) {
-> > > >                if (nilfs_tree_is_busy(s->s_root)) {
-> > > >                        if ((flags ^ s->s_flags) & SB_RDONLY) {
-> > > >                                nilfs_err(s,
-> > > >                                          "the device already has a %s mount.",
-> > > >                                          sb_rdonly(s) ? "read-only" : "read/write");
-> > > >                                err = -EBUSY;
-> > > >                                goto failed_super;
-> > > >                        }
-> > > >                } else {
-> > > >                        /*
-> > > >                         * Try remount to setup mount states if the current
-> > > >                         * tree is not mounted and only snapshots use this sb.
-> > > >                         */
-> > > >                        err = nilfs_remount(s, &flags, data);
-> > > >                        if (err)
-> > > >                                goto failed_super;
-> > > >                }
-> > > >        }
-> > >
-> > > What this logic is trying to do is, if there is already a nilfs2 mount
-> > > instance for the device, and are trying to mounting the current tree
-> > > (sd.cno is 0, so this is not a snapshot mount), then will switch
-> > > depending on whether the current tree has a mount:
-> > >
-> > > - If the current tree is mounted, it's just like a normal filesystem.
-> > > (A read-only mount and a read/write mount can't coexist, so check
-> > > that, and reuse the instance if possible)
-> > > - Otherwise, i.e. for snapshot mounts only, do whatever is necessary
-> > > to add a new current mount, such as starting a log writer.
-> > >    Since it does the same thing that nilfs_remount does, so
-> > > nilfs_remount() is used there.
-> > >
-> > > Whether or not there is a current tree mount can be determined by
-> > > d_count(s->s_root) > 1 as nilfs_tree_is_busy() does.
-> > > Where s->s_root is always the root dentry of the current tree, not
-> > > that of the mounted snapshot.
-> >
-> > I see now, thanks for explanation! But one thing still is not clear to me.
-> > If you say have a snapshot mounted read-write and then you mount the
-> > current snapshot (cno == 0) read-only, you'll switch the whole superblock
-> > to read-only state. So also the mounted snapshot is suddently read-only
-> > which is unexpected and actually supposedly breaks things because you can
-> > still have file handles open for writing on the snapshot etc.. So how do
-> > you solve that?
-> >
-> >                                                                 Honza
-> 
-> One thing I have to tell you as a premise is that nilfs2's snapshot
-> mounts (cno != 0) are read-only.
-> 
-> The read-only option is mandatory for nilfs2 snapshot mounts, so
-> remounting to read/write mode will result in an error.
-> This constraint is checked in nilfs_parse_snapshot_option() which is
-> called from nilfs_identify().
-> 
-> In fact, any write mode file/inode operations on a snapshot mount will
-> result in an EROFS error, regardless of whether the coexisting current
-> tree mount is read-only or read/write (i.e. regardless of the
-> read-only flag of the superblock instance).
-> 
-> This is mostly (and possibly entirely) accomplished at the vfs layer
-> by checking the MNT_READONLY flag in mnt_flags of the vfsmount
-> structure, and even on the nilfs2 side,  iops->permission
-> (=nilfs_permission) rejects write operations on snapshot mounts.
-> 
-> Therefore, the problem you pointed out shouldn't occur in the first
-> place since the situation where a snapshot with a handle in write mode
-> suddenly becomes read-only doesn't happen.   Unless I'm missing
-> something..
+Hello,
 
-No, I think you are correct. This particular case should be safe because
-MNT_READONLY flags on the mounts used by snapshots will still keep them
-read-only even if you remount the superblock to read-write mode for the
-current snapshot. So I see why this is useful and I agree this isn't easy
-to implement using mount_bdev() so no special code reduction here ;).
-Thanks for patient explanation!
+this is a v2 of the patch series which implements the idea of blkdev_get_by_*()
+calls returning bdev_handle which is then passed to blkdev_put() [1]. This
+makes the get and put calls for bdevs more obviously matching and allows us to
+propagate context from get to put without having to modify all the users
+(again!).  In particular I need to propagate used open flags to blkdev_put() to
+be able count writeable opens and add support for blocking writes to mounted
+block devices. I'll send that series separately.
+
+The series is based on Christian's vfs tree as of yesterday as there is quite
+some overlap. Patches have passed some reasonable testing - I've tested block
+changes, md, dm, bcache, xfs, btrfs, ext4, swap. This obviously doesn't cover
+everything so I'd like to ask respective maintainers to review / test their
+changes. Thanks! I've pushed out the full branch to:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdev_handle
+
+to ease review / testing.
+
+Changes since v1:
+* Rebased on top of current vfs tree
+* Renamed final functions to bdev_open_by_*() and bdev_release()
+* Fixed detection of exclusive open in blkdev_ioctl() and blkdev_fallocate()
+* Fixed swap conversion to properly reinitialize swap_info->bdev_handle
+* Fixed xfs conversion to not oops with rtdev without logdev
+* Couple other minor fixups
 
 								Honza
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+
+[1] https://lore.kernel.org/all/ZJGNsVDhZx0Xgs2H-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+
+CC: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: Anna Schumaker <anna-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Christian Borntraeger <borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>
+CC: Coly Li <colyli-l3A5Bk7waGM@public.gmane.org
+CC: "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
+CC: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+CC: drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+CC: Gao Xiang <xiang-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>
+CC: Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+CC: Joern Engel <joern-o6zPIXG8fmPj4SYmN/TMmA@public.gmane.org>
+CC: Joseph Qi <joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+CC: Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-erofs-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
+CC: <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+CC: linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+CC: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+CC: linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+CC: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+CC: linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: "Md. Haris Iqbal" <haris.iqbal-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>
+CC: Mike Snitzer <snitzer-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: ocfs2-devel-N0ozoZBvEnrZJqsBc5GL+g@public.gmane.org
+CC: reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Sergey Senozhatsky <senozhatsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+CC: Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Sven Schnelle <svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>
+CC: target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Ted Tso <tytso-3s7WtUTddSA@public.gmane.org>
+CC: Trond Myklebust <trond.myklebust-F/q8l9xzQnoyLce1RVWEUA@public.gmane.org>
+CC: xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org
+
+Previous versions:
+Link: http://lore.kernel.org/r/20230629165206.383-1-jack-AlSwsSmVLrQ@public.gmane.org # v1
