@@ -1,35 +1,47 @@
-From: syzbot <syzbot+cdfcae656bac88ba0e2d@syzkaller.appspotmail.com>
-Subject: Re: [syzbot] [nilfs?] WARNING in mark_buffer_dirty (5)
-Date: Thu, 17 Aug 2023 17:58:23 -0700
-Message-ID: <0000000000009095e80603280632@google.com>
-References: <0000000000003da75f05fdeffd12@google.com>
+From: Ferry Meng <mengferry-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
+Subject: [PATCH] nilfs2: fix dereferencing freed memory
+Date: Fri, 18 Aug 2023 17:20:22 +0800
+Message-ID: <20230818092022.111054-1-mengferry@linux.alibaba.com>
 Mime-Version: 1.0
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <0000000000003da75f05fdeffd12@google.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: akpm@linux-foundation.org, konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+To: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ferry Meng <mengferry-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
 
-syzbot has bisected this issue to:
+Fix smatch warning:
 
-commit 28a65b49eb53e172d23567005465019658bfdb4d
-Author: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date:   Thu Apr 27 01:15:26 2023 +0000
+fs/nilfs2/gcinode.c:103 nilfs_gccache_submit_read_data() error:
+dereferencing freed memory 'bh'
 
-    nilfs2: do not write dirty data after degenerating to read-only
+Signed-off-by: Ferry Meng <mengferry-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>
 
-bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=11c5be4ba80000
-start commit:   6eaae1980760 Linux 6.5-rc3
-git tree:       upstream
-final oops:     https://syzkaller.appspot.com/x/report.txt?x=13c5be4ba80000
-console output: https://syzkaller.appspot.com/x/log.txt?x=15c5be4ba80000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=5d10d93e1ae1f229
-dashboard link: https://syzkaller.appspot.com/bug?extid=cdfcae656bac88ba0e2d
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=127ac14ea80000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1693a06ea80000
+diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
+index 48fe71d309cb..6319e825f317 100644
+--- a/fs/nilfs2/gcinode.c
++++ b/fs/nilfs2/gcinode.c
+@@ -73,10 +73,8 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
+ 		struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
+ 
+ 		err = nilfs_dat_translate(nilfs->ns_dat, vbn, &pbn);
+-		if (unlikely(err)) { /* -EIO, -ENOMEM, -ENOENT */
+-			brelse(bh);
++		if (unlikely(err)) /* -EIO, -ENOMEM, -ENOENT */
+ 			goto failed;
+-		}
+ 	}
+ 
+ 	lock_buffer(bh);
+@@ -102,6 +100,8 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
+  failed:
+ 	unlock_page(bh->b_page);
+ 	put_page(bh->b_page);
++	if (err)
++		brelse(bh);
+ 	return err;
+ }
+ 
+-- 
+2.19.1.6.gb485710b
 
-Reported-by: syzbot+cdfcae656bac88ba0e2d@syzkaller.appspotmail.com
-Fixes: 28a65b49eb53 ("nilfs2: do not write dirty data after degenerating to read-only")
-
-For information about bisection process see: https://goo.gl/tpsmEJ#bisection
