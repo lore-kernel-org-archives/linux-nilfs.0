@@ -1,34 +1,66 @@
-From: syzbot <syzbot+7e5cf1d80677ec185e63-Pl5Pbv+GP7P466ipTTIvnc23WoclnBCfAL8bYrjMMd8@public.gmane.org>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Subject: Re: [syzbot] [nilfs?] kernel BUG in folio_end_writeback
-Date: Sun, 20 Aug 2023 11:41:23 -0700
-Message-ID: <000000000000d299b406035f1bbd@google.com>
-References: <000000000000dc83d605f0c70a11@google.com>
+Date: Tue, 22 Aug 2023 01:47:38 +0900
+Message-ID: <CAKFNMo=XRe5UZeOEumfTJYRndDb0YrxhO=9261jq4aRNaPqXYg@mail.gmail.com>
+References: <000000000000dc83d605f0c70a11@google.com> <000000000000d299b406035f1bbd@google.com>
 Mime-Version: 1.0
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <000000000000dc83d605f0c70a11-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20221208; t=1692636474; x=1693241274;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=hjQRVQRH0MvBIBCqexCP9I4hxh2GB6Sga648A3l5Ff4=;
+        b=Trc+Nuk70hE9cFyGdyaBBS4Hvt2YDyB60rzHz7DgQQFP5q9OEqhFIYNGJSaJ5srF1f
+         9o2mxJJPBRG7/O5t/1hejqthljOjJAimAKmmabgQiEiBF5/d9AWiKizhLFSk1hUkLetP
+         H4wQPKCeUVWddoizlXW/sjf1IzpUvEHgDRYrrN97XyjBkWzohkvw6VvoEarrc3AZ0/zo
+         fDaiqvvW/ILiucOmBxVOQhnenIDs5NwPAWatx6z+YqrcnAEUCPL31bOZmr8A6XuB+62q
+         976VsBd4opwBtNKfGUudUczDC2J3tg5uCG2EFGWCyTone6v6xrNxigoTuU8k5QD3fTP2
+         zeIw==
+In-Reply-To: <000000000000d299b406035f1bbd@google.com>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, syzkaller-bugs-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Content-Type: text/plain; charset="windows-1252"
+To: syzbot <syzbot+7e5cf1d80677ec185e63@syzkaller.appspotmail.com>
+Cc: akpm@linux-foundation.org, brauner@kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com, viro@zeniv.linux.org.uk, willy@infradead.org
 
-syzbot suspects this issue was fixed by commit:
+On Mon, Aug 21, 2023 at 3:41=E2=80=AFAM syzbot
+<syzbot+7e5cf1d80677ec185e63@syzkaller.appspotmail.com> wrote:
+>
+> syzbot suspects this issue was fixed by commit:
+>
+> commit 92c5d1b860e9581d64baca76779576c0ab0d943d
+> Author: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+> Date:   Fri May 26 02:13:32 2023 +0000
+>
+>     nilfs2: reject devices with insufficient block count
+>
+> bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=3D170c6337a8=
+0000
+> start commit:   929ed21dfdb6 Merge tag '6.4-rc4-smb3-client-fixes' of git=
+:..
+> git tree:       upstream
+> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D3da6c5d3e0a6c=
+932
+> dashboard link: https://syzkaller.appspot.com/bug?extid=3D7e5cf1d80677ec1=
+85e63
+> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D16cb3b69280=
+000
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D10f3420128000=
+0
+>
+> If the result looks correct, please mark the issue as fixed by replying w=
+ith:
+>
+> #syz fix: nilfs2: reject devices with insufficient block count
+>
+> For information about bisection process see: https://goo.gl/tpsmEJ#bisect=
+ion
 
-commit 92c5d1b860e9581d64baca76779576c0ab0d943d
-Author: Ryusuke Konishi <konishi.ryusuke-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Date:   Fri May 26 02:13:32 2023 +0000
+I have confirmed that one of the five registered reproducers emits the
+error message that is output when the above commit takes effect.
+However, the remaining four did not.
+So, I think it's premature to conclude that the issue has been fixed
+by this commit at this time.
 
-    nilfs2: reject devices with insufficient block count
-
-bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=170c6337a80000
-start commit:   929ed21dfdb6 Merge tag '6.4-rc4-smb3-client-fixes' of git:..
-git tree:       upstream
-kernel config:  https://syzkaller.appspot.com/x/.config?x=3da6c5d3e0a6c932
-dashboard link: https://syzkaller.appspot.com/bug?extid=7e5cf1d80677ec185e63
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=16cb3b69280000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=10f34201280000
-
-If the result looks correct, please mark the issue as fixed by replying with:
-
-#syz fix: nilfs2: reject devices with insufficient block count
-
-For information about bisection process see: https://goo.gl/tpsmEJ#bisection
+Ryusuke Konishi
