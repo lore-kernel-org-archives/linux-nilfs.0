@@ -1,8 +1,8 @@
 From: Hao Xu <hao.xu@linux.dev>
-Subject: [PATCH 17/29] xfs: make xfs_trans_ijoin() error out
- -EAGAIN
-Date: Fri, 25 Aug 2023 21:54:19 +0800
-Message-ID: <20230825135431.1317785-18-hao.xu@linux.dev>
+Subject: [PATCH 18/29] xfs: set XBF_NOWAIT for xfs_buf_read_map
+ if necessary
+Date: Fri, 25 Aug 2023 21:54:20 +0800
+Message-ID: <20230825135431.1317785-19-hao.xu@linux.dev>
 References: <20230825135431.1317785-1-hao.xu@linux.dev>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=3IHqyAGVDJ58osMbe/1AdWvJDmRup4/lFC37whRevKc=; b=C7yXHhXyBCEKuvpc7a9sWSfVIh
- nghToDwH0vBTf02pquYEVeRJ1/eZzJE5eztZ6CmuuLN4+v+A1juCuWWl59uTGwkjFvymWLkVtmecq
- r1N9QwBktngTenchsApA4NiVdL4scOSlj0+GnGJl0BzfRt7mY28ADSN7Q9V0+S0FjYGA=;
+ bh=qTb/druvnHmAZS3W1u50TERu+WCPGmDec9gQaqemBTg=; b=FKl5ThvG2Ey5oxslwgPtROr3Sf
+ YuNRm7IBm6S3vE1EQUcOFZngOOMq4ScOQQfhWBB6QQTbMzFN/uMx2wlVTC3OtxET110U/OoXjVO9F
+ X5gfdgyE4AflOMq/nRafxa+Fh+/7hnHksRgV6k0H0uXMk8WcsE++dwhjSWk4UKU90vu0=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=3IHqyAGVDJ58osMbe/1AdWvJDmRup4/lFC37whRevKc=; b=Xda3LNrHEMqHrmIf76ndXhtkNo
- tWEfVCH/H8sok0C6wqATUPRhr4WN7RPJAntTzKnl8wktLwln30tlYYGM3M/1udZlD8cn+Rukil4yR
- 5KBnpo57pRa6/LWufgWzAFrMaIiwzOGagG6dejge8/9AR2v/WqorXfj3wxD6t9zib+Pk=;
+ bh=qTb/druvnHmAZS3W1u50TERu+WCPGmDec9gQaqemBTg=; b=Z9B3K61YgMXfRKWvnOqEpnJ1g/
+ hLQFY2m0HchY/spHAh26PPyvb/sM9/NMXrleVA8YHeXCz/QtSI91NxxtqJrMs4SpXtrQtsYwlMtjS
+ hxVTDSNjkIMU7tyagp+83dKVhyHpZp/IrIakT62KIxChtv3v6HZYq9sIUV3wfltY5qnE=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
- t=1692972160;
+ t=1692972185;
  h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
  to:to:cc:cc:mime-version:mime-version:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=3IHqyAGVDJ58osMbe/1AdWvJDmRup4/lFC37whRevKc=;
- b=Eb4iAdgTR0TpdbPqUzDwHbHxPEh5V68LsiBX5YVrmluxRTdzMTEqMqKrZvLhm9MDpgg3K/
- D2eTyYZZZ+bfvHLihjIIZJ2OKJ2cQ07lnUU3TLxQlV7ixmfK6NG3WLuhhK+cGvea8pFBoo
- CGGtOLVSVaB7g8RjjJfuG0O31ub2h9Y=
+ bh=qTb/druvnHmAZS3W1u50TERu+WCPGmDec9gQaqemBTg=;
+ b=F3s/OJUcPEY5Zlidje3R3yeS51LSjhWu/qJIZQ5RlOJtYZFuPHsEDcjE4qLEmmAUjn6Noq
+ 1FuuA0oBiaR8ILzLTnrrBydu7XR0r/KR3HJXB7nZmLWLG0jXn8HNnNNNLFYiSbQJ1kLBWH
+ sWlvtA/UHWBfhR+BdKG+F5ETxQfMgq0=
 In-Reply-To: <20230825135431.1317785-1-hao.xu@linux.dev>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,80 +52,25 @@ Cc: Wanpeng Li <wanpengli@tencent.com>, "Darrick J . Wong" <djwong@kernel.org>, 
 
 From: Hao Xu <howeyxu@tencent.com>
 
-Change return value of xfs_trans_ijoin() to error out -EAGAIN.
+Set XBF_NOWAIT for xfs_buf_read_map() if necessary.
 
 Signed-off-by: Hao Xu <howeyxu@tencent.com>
 ---
- fs/xfs/libxfs/xfs_trans_inode.c | 13 +++++++++----
- fs/xfs/xfs_iops.c               |  4 +++-
- fs/xfs/xfs_trans.h              |  2 +-
- 3 files changed, 13 insertions(+), 6 deletions(-)
+ fs/xfs/xfs_trans_buf.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/fs/xfs/libxfs/xfs_trans_inode.c b/fs/xfs/libxfs/xfs_trans_inode.c
-index e7a8f63c8975..7bda62bad90a 100644
---- a/fs/xfs/libxfs/xfs_trans_inode.c
-+++ b/fs/xfs/libxfs/xfs_trans_inode.c
-@@ -23,7 +23,7 @@
-  * The inode must be locked, and it cannot be associated with any transaction.
-  * If lock_flags is non-zero the inode will be unlocked on transaction commit.
-  */
--void
-+int
- xfs_trans_ijoin(
- 	struct xfs_trans	*tp,
- 	struct xfs_inode	*ip,
-@@ -32,9 +32,12 @@ xfs_trans_ijoin(
- 	struct xfs_inode_log_item *iip;
+diff --git a/fs/xfs/xfs_trans_buf.c b/fs/xfs/xfs_trans_buf.c
+index 6549e50d852c..016371f58f26 100644
+--- a/fs/xfs/xfs_trans_buf.c
++++ b/fs/xfs/xfs_trans_buf.c
+@@ -286,6 +286,8 @@ xfs_trans_read_buf_map(
+ 		return 0;
+ 	}
  
- 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
--	if (ip->i_itemp == NULL)
--		xfs_inode_item_init(ip, ip->i_mount,
--				    tp->t_flags & XFS_TRANS_NOWAIT);
-+	if (ip->i_itemp == NULL) {
-+		int ret = xfs_inode_item_init(ip, ip->i_mount,
-+					      tp->t_flags & XFS_TRANS_NOWAIT);
-+		if (ret == -EAGAIN)
-+			return ret;
-+	}
- 	iip = ip->i_itemp;
- 
- 	ASSERT(iip->ili_lock_flags == 0);
-@@ -44,6 +47,8 @@ xfs_trans_ijoin(
- 	/* Reset the per-tx dirty context and add the item to the tx. */
- 	iip->ili_dirty_flags = 0;
- 	xfs_trans_add_item(tp, &iip->ili_item);
-+
-+	return 0;
- }
- 
- /*
-diff --git a/fs/xfs/xfs_iops.c b/fs/xfs/xfs_iops.c
-index 47b4fd5f8f5c..034a8fea1f8e 100644
---- a/fs/xfs/xfs_iops.c
-+++ b/fs/xfs/xfs_iops.c
-@@ -1075,7 +1075,9 @@ xfs_vn_update_time(
- 	if (flags & S_ATIME)
- 		inode->i_atime = *now;
- 
--	xfs_trans_ijoin(tp, ip, XFS_ILOCK_EXCL);
-+	error = xfs_trans_ijoin(tp, ip, XFS_ILOCK_EXCL);
-+	if (error)
-+		goto out;
- 	xfs_trans_log_inode(tp, ip, log_flags);
- 	error = xfs_trans_commit(tp);
- 
-diff --git a/fs/xfs/xfs_trans.h b/fs/xfs/xfs_trans.h
-index 6e3646d524ce..f2c05884c4b6 100644
---- a/fs/xfs/xfs_trans.h
-+++ b/fs/xfs/xfs_trans.h
-@@ -226,7 +226,7 @@ bool		xfs_trans_ordered_buf(xfs_trans_t *, struct xfs_buf *);
- void		xfs_trans_dquot_buf(xfs_trans_t *, struct xfs_buf *, uint);
- void		xfs_trans_inode_alloc_buf(xfs_trans_t *, struct xfs_buf *);
- void		xfs_trans_ichgtime(struct xfs_trans *, struct xfs_inode *, int);
--void		xfs_trans_ijoin(struct xfs_trans *, struct xfs_inode *, uint);
-+int		xfs_trans_ijoin(struct xfs_trans *, struct xfs_inode *, uint);
- void		xfs_trans_log_buf(struct xfs_trans *, struct xfs_buf *, uint,
- 				  uint);
- void		xfs_trans_dirty_buf(struct xfs_trans *, struct xfs_buf *);
++	if (tp && (tp->t_flags & XFS_TRANS_NOWAIT))
++		flags |= XBF_NOWAIT;
+ 	error = xfs_buf_read_map(target, map, nmaps, flags, &bp, ops,
+ 			__return_address);
+ 	switch (error) {
 -- 
 2.25.1
