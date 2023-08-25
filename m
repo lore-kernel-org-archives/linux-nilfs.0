@@ -1,8 +1,8 @@
 From: Hao Xu <hao.xu@linux.dev>
-Subject: [PATCH 21/29] xfs: return -EAGAIN when bulk memory
- allocation fails in nowait case
-Date: Fri, 25 Aug 2023 21:54:23 +0800
-Message-ID: <20230825135431.1317785-22-hao.xu@linux.dev>
+Subject: [PATCH 22/29] xfs: comment page allocation for nowait
+ case in xfs_buf_find_insert()
+Date: Fri, 25 Aug 2023 21:54:24 +0800
+Message-ID: <20230825135431.1317785-23-hao.xu@linux.dev>
 References: <20230825135431.1317785-1-hao.xu@linux.dev>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=k/4ZXSLCSyhuRHiUlNViF+vdvrXezEQu+Nm95mQGfD4=; b=NT50RMw+ubHCjF+hmC/4/4qjZA
- aX+VQuoyx4BAt/sCykkvjYcnc7F1VE0iy5PZ1fceZ5gu/341on9/D/Zw8Tz3/8RWxAK+7SkMnfXvs
- KK+pNAfbuH6zaAaWUbOVszEX+uk4J4YA6NExOebZ3oLONSm2EHQ8JE09ameUGa0IXwcc=;
+ bh=ZAHRQkTlH3B9Ayy3ByDVW6IFO8x4JKviNIiMKvNnRxw=; b=Hy4xaP4RBgwXCe1LEvolm6vBRP
+ 8AFoKpXRmgkT2sCxZFE3JjItoTuKIzHzEimc6rKRXACZuddiHDg1MKraP8JRW6q93RclbZ5RbSaqG
+ Pt3qsaSxdvRsKuZuQVpnjRO38lsRQLTgv0ZrIF9D5a1SdOEFsvt26dCsrIgLHMux6PEs=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=k/4ZXSLCSyhuRHiUlNViF+vdvrXezEQu+Nm95mQGfD4=; b=juDuDxKdacVLDj9l0B3crDoXcI
- 3nswYppIXhDttdgwqdkUmKQuiRZS8GBUWLaNKhzlFLfMNNgawdSG6MuvpozeGhoWZEtuJfY/P+y1T
- nPBKl6xJ3o93e76fpISc3GKEeheFmWbTWAgb8EfrH+TqjHKqzzLv5z83Ld4T9qbTf1lA=;
+ bh=ZAHRQkTlH3B9Ayy3ByDVW6IFO8x4JKviNIiMKvNnRxw=; b=W3XZ4wZ0DAhS8LIA4MaSI//V85
+ DzRZR6tozUhDOzLFKshR5SoqsHmqgasy77sLJ3RD7WxX1UqHNfFVcVcuvrpHOkQHvsQ7+aGugYTDH
+ ZpMt8b13WMMKWJ9wtevcJUZ1IFi4r4lbq4E5dXLMohEizQRortPe79baqYCCHnwjIxHs=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
- t=1692972229;
+ t=1692972248;
  h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
  to:to:cc:cc:mime-version:mime-version:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=k/4ZXSLCSyhuRHiUlNViF+vdvrXezEQu+Nm95mQGfD4=;
- b=XN4VKQ0vJWdKOqygAoO6O9s0mfT9sbRl6WKC6PlM4YizrHDbuoZWPHymJ4boioTyhTPsXz
- mzB7w7XoqaVp3khAiC/KVcJAYhLbwQjG/YZ+xeSDe8Sd8K9S+AePqNUb6KBAAuKlTSuaCl
- kFQBsj5S1c42QHrr1w1CZcr0QQo5mJc=
+ bh=ZAHRQkTlH3B9Ayy3ByDVW6IFO8x4JKviNIiMKvNnRxw=;
+ b=rqq9t63T1b93nHdvHPb4iPnifbVgNhCPhaGA0/+lVUtdq72oLevGN3oePkSOWgj4tFeMJO
+ 883BuPqR+igY5LuYYZDHjdap5mSmKgc54EL0giqHkQRTPmks0t1/1oKfHQU1t1pMyd2ThX
+ 7baCMPgFPzeqpA42kG/A+w1RFMlPw/c=
 In-Reply-To: <20230825135431.1317785-1-hao.xu@linux.dev>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,29 +52,25 @@ Cc: Wanpeng Li <wanpengli@tencent.com>, "Darrick J . Wong" <djwong@kernel.org>, 
 
 From: Hao Xu <howeyxu@tencent.com>
 
-Rather than wait for a moment and retry, we return -EAGAIN when we fail
-to allocate bulk memory in xfs_buf_alloc_pages() in nowait case.
+Add comments for page allocation in nowait case in xfs_buf_find_insert()
 
 Signed-off-by: Hao Xu <howeyxu@tencent.com>
 ---
- fs/xfs/xfs_buf.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ fs/xfs/xfs_buf.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
-index a6e6e64ff940..eb3cd7702545 100644
+index eb3cd7702545..57bdc4c5dde1 100644
 --- a/fs/xfs/xfs_buf.c
 +++ b/fs/xfs/xfs_buf.c
-@@ -404,6 +404,11 @@ xfs_buf_alloc_pages(
- 		if (filled != last)
- 			continue;
- 
-+		if (nowait) {
-+			xfs_buf_free_pages(bp);
-+			return -EAGAIN;
-+		}
-+
- 		if (flags & XBF_READ_AHEAD) {
- 			xfs_buf_free_pages(bp);
- 			return -ENOMEM;
+@@ -633,6 +633,8 @@ xfs_buf_find_insert(
+ 	 * allocate the memory from the heap to minimise memory usage. If we
+ 	 * can't get heap memory for these small buffers, we fall back to using
+ 	 * the page allocator.
++	 * xfs_buf_alloc_kmem may return -EAGAIN, let's not return it but turn
++	 * to page allocator as well.
+ 	 */
+ 	if (BBTOB(new_bp->b_length) >= PAGE_SIZE ||
+ 	    xfs_buf_alloc_kmem(new_bp, flags) < 0) {
 -- 
 2.25.1
