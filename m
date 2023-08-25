@@ -1,248 +1,177 @@
-From: "Darrick J. Wong" <djwong@kernel.org>
-Subject: Re: [PATCH RFC v5 00/29] io_uring getdents
-Date: Fri, 25 Aug 2023 08:11:15 -0700
-Message-ID: <20230825151115.GB17891@frogsfrogsfrogs>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH 02/29] xfs: rename XBF_TRYLOCK to
+ XBF_NOWAIT
+Date: Sat, 26 Aug 2023 07:39:12 +1000
+Message-ID: <ZOkfgBlWKVmGN84i@dread.disaster.area>
 References: <20230825135431.1317785-1-hao.xu@linux.dev>
+ <20230825135431.1317785-3-hao.xu@linux.dev>
 Mime-Version: 1.0
-Return-path: <cluster-devel-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1692976285;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=RZbkUY9e8Wi7Z5FQEWEttp+LseNlXBERK1HYThFqoFg=;
-	b=H6xfnM7/C/AzZZfXdjbT8tYRVkU5j6FoCuv64bPkQ17LJH5n1Vz0P847TX18iCHLFdkASv
-	S5WXdzK8b/I3VNUFLSZC9W5zwTutLC0nh9gkRIWyZUbPWYtLZz/nBNhHQyKKAfnjgUZNIv
-	b7KlSXqFaFKUV4bo9C5tM3c/yzPUnhY=
-In-Reply-To: <20230825135431.1317785-1-hao.xu@linux.dev>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
- <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
-List-Post: <mailto:cluster-devel@redhat.com>
-List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
- <mailto:cluster-devel-request@redhat.com?subject=subscribe>
-Errors-To: cluster-devel-bounces@redhat.com
-Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-cachefs-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1692999565;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=YlIwbTf4NFY+lBfWPhxSy9OXMCBOn9GCMNXv5B0g+oU=;
+	b=gtcTct1J8oAkyUEWVedJUWNNGgW3SI6moY+2h9y0QKi2glEGuKuIdZvvP9zN4Py5AY4FSb
+	0mjCB5EhMAyaYlyeKmgCmpZqAynTLcXLCzVqq5NLTbN3XL7RTg+DyqlnTOIJQbmWvifs7+
+	IgZWi4/nhxkn5vE/w6rkT3dlp3W3bZ4=
+In-Reply-To: <20230825135431.1317785-3-hao.xu@linux.dev>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/linux-cachefs>, 
+ <mailto:linux-cachefs-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/linux-cachefs/>
+List-Post: <mailto:linux-cachefs@redhat.com>
+List-Help: <mailto:linux-cachefs-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/linux-cachefs>,
+ <mailto:linux-cachefs-request@redhat.com?subject=subscribe>
+Errors-To: linux-cachefs-bounces@redhat.com
+Sender: "Linux-cachefs" <linux-cachefs-bounces@redhat.com>
+Content-Disposition: inline
 To: Hao Xu <hao.xu@linux.dev>
-Cc: Wanpeng Li <wanpengli@tencent.com>, Dominique Martinet <asmadeus@codewreck.org>, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, codalist@coda.cs.cmu.edu, cluster-devel@redhat.com, linux-cachefs@redhat.com, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, linux-cifs@vger.kernel.org, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-block@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>, netdev@vger.kernel.org, samba-technical@lists.samba.org, linux-unionfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, b
+Cc: Wanpeng Li <wanpengli@tencent.com>, "Darrick J . Wong" <djwong@kernel.org>, Dominique Martinet <asmadeus@codewreck.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, codalist@coda.cs.cmu.edu, cluster-devel@redhat.com, linux-cachefs@redhat.com, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, linux-cifs@vger.kernel.org, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-block@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>, netdev@vger.kernel.org, samba-technical@lists.samba.org, linux-unionfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org
 
-On Fri, Aug 25, 2023 at 09:54:02PM +0800, Hao Xu wrote:
+On Fri, Aug 25, 2023 at 09:54:04PM +0800, Hao Xu wrote:
 > From: Hao Xu <howeyxu@tencent.com>
 > 
-> This series introduce getdents64 to io_uring, the code logic is similar
-> with the snychronized version's. It first try nowait issue, and offload
-> it to io-wq threads if the first try fails.
+> XBF_TRYLOCK means we need lock but don't block on it,
 
-NAK on the entire series until Jens actually writes down what NOWAIT
-does, so that we can check that the *existing* nowait code branches
-actually behave how he says it should.
+Yes.
 
-https://lore.kernel.org/all/e2d8e5f1-f794-38eb-cecf-ed30c571206b@kernel.dk/
 
---D
+> we can use it to
+> stand for not waiting for memory allcation. Rename XBF_TRYLOCK to
+> XBF_NOWAIT, which is more generic.
 
-> 
-> Patch1 and Patch2 are some preparation
-> Patch3 supports nowait for xfs getdents code
-> Patch4-11 are vfs change, include adding helpers and trylock for locks
-> Patch12-29 supports nowait for involved xfs journal stuff
-> note, Patch24 and 27 are actually two questions, might be removed later.
-> an xfs test may come later.
-> 
-> Tests I've done:
-> a liburing test case for functional test:
-> https://github.com/HowHsu/liburing/commit/39dc9a8e19c06a8cebf8c2301b85320eb45c061e?diff=unified
-> 
-> xfstests:
->     test/generic: 1 fails and 171 not run
->     test/xfs: 72 fails and 156 not run
-> run the code before without this patchset, same result.
-> I'll try to make the environment more right to run more tests here.
-> 
-> 
-> Tested it with a liburing performance test:
-> https://github.com/HowHsu/liburing/blob/getdents/test/getdents2.c
-> 
-> The test is controlled by the below script[2] which runs getdents2.t 100
-> times and calulate the avg.
-> The result show that io_uring version is about 2.6% faster:
-> 
-> note:
-> [1] the number of getdents call/request in io_uring and normal sync version
-> are made sure to be same beforehand.
-> 
-> [2] run_getdents.py
-> 
-> ```python3
-> 
-> import subprocess
-> 
-> N = 100
-> sum = 0.0
-> args = ["/data/home/howeyxu/tmpdir", "sync"]
-> 
-> for i in range(N):
->     output = subprocess.check_output(["./liburing/test/getdents2.t"] + args)
->     sum += float(output)
-> 
-> average = sum / N
-> print("Average of sync:", average)
-> 
-> sum = 0.0
-> args = ["/data/home/howeyxu/tmpdir", "iouring"]
-> 
-> for i in range(N):
->     output = subprocess.check_output(["./liburing/test/getdents2.t"] + args)
->     sum += float(output)
-> 
-> average = sum / N
-> print("Average of iouring:", average)
-> 
-> ```
-> 
-> v4->v5:
->  - move atime update to the beginning of getdents operation
->  - trylock for i_rwsem
->  - nowait semantics for involved xfs journal stuff
-> 
-> v3->v4:
->  - add Dave's xfs nowait code and fix a deadlock problem, with some code
->    style tweak.
->  - disable fixed file to avoid a race problem for now
->  - add a test program.
-> 
-> v2->v3:
->  - removed the kernfs patches
->  - add f_pos_lock logic
->  - remove the "reduce last EOF getdents try" optimization since
->    Dominique reports that doesn't make difference
->  - remove the rewind logic, I think the right way is to introduce lseek
->    to io_uring not to patch this logic to getdents.
->  - add Singed-off-by of Stefan Roesch for patch 1 since checkpatch
->    complained that Co-developed-by someone should be accompanied with
->    Signed-off-by same person, I can remove them if Stefan thinks that's
->    not proper.
-> 
-> 
-> Dominique Martinet (1):
->   fs: split off vfs_getdents function of getdents64 syscall
-> 
-> Hao Xu (28):
->   xfs: rename XBF_TRYLOCK to XBF_NOWAIT
->   xfs: add NOWAIT semantics for readdir
->   vfs: add nowait flag for struct dir_context
->   vfs: add a vfs helper for io_uring file pos lock
->   vfs: add file_pos_unlock() for io_uring usage
->   vfs: add a nowait parameter for touch_atime()
->   vfs: add nowait parameter for file_accessed()
->   vfs: move file_accessed() to the beginning of iterate_dir()
->   vfs: add S_NOWAIT for nowait time update
->   vfs: trylock inode->i_rwsem in iterate_dir() to support nowait
->   xfs: enforce GFP_NOIO implicitly during nowait time update
->   xfs: make xfs_trans_alloc() support nowait semantics
->   xfs: support nowait for xfs_log_reserve()
->   xfs: don't wait for free space in xlog_grant_head_check() in nowait
->     case
->   xfs: add nowait parameter for xfs_inode_item_init()
->   xfs: make xfs_trans_ijoin() error out -EAGAIN
->   xfs: set XBF_NOWAIT for xfs_buf_read_map if necessary
->   xfs: support nowait memory allocation in _xfs_buf_alloc()
->   xfs: distinguish error type of memory allocation failure for nowait
->     case
->   xfs: return -EAGAIN when bulk memory allocation fails in nowait case
->   xfs: comment page allocation for nowait case in xfs_buf_find_insert()
->   xfs: don't print warn info for -EAGAIN error in  xfs_buf_get_map()
->   xfs: support nowait for xfs_buf_read_map()
->   xfs: support nowait for xfs_buf_item_init()
->   xfs: return -EAGAIN when nowait meets sync in transaction commit
->   xfs: add a comment for xlog_kvmalloc()
->   xfs: support nowait semantics for xc_ctx_lock in xlog_cil_commit()
->   io_uring: add support for getdents
-> 
->  arch/s390/hypfs/inode.c         |  2 +-
->  block/fops.c                    |  2 +-
->  fs/btrfs/file.c                 |  2 +-
->  fs/btrfs/inode.c                |  2 +-
->  fs/cachefiles/namei.c           |  2 +-
->  fs/coda/dir.c                   |  4 +--
->  fs/ecryptfs/file.c              |  4 +--
->  fs/ext2/file.c                  |  4 +--
->  fs/ext4/file.c                  |  6 ++--
->  fs/f2fs/file.c                  |  4 +--
->  fs/file.c                       | 13 +++++++
->  fs/fuse/dax.c                   |  2 +-
->  fs/fuse/file.c                  |  4 +--
->  fs/gfs2/file.c                  |  2 +-
->  fs/hugetlbfs/inode.c            |  2 +-
->  fs/inode.c                      | 10 +++---
->  fs/internal.h                   |  8 +++++
->  fs/namei.c                      |  4 +--
->  fs/nfsd/vfs.c                   |  2 +-
->  fs/nilfs2/file.c                |  2 +-
->  fs/orangefs/file.c              |  2 +-
->  fs/orangefs/inode.c             |  2 +-
->  fs/overlayfs/file.c             |  2 +-
->  fs/overlayfs/inode.c            |  2 +-
->  fs/pipe.c                       |  2 +-
->  fs/ramfs/file-nommu.c           |  2 +-
->  fs/readdir.c                    | 61 +++++++++++++++++++++++++--------
->  fs/smb/client/cifsfs.c          |  2 +-
->  fs/splice.c                     |  2 +-
->  fs/stat.c                       |  2 +-
->  fs/ubifs/file.c                 |  2 +-
->  fs/udf/file.c                   |  2 +-
->  fs/xfs/libxfs/xfs_alloc.c       |  2 +-
->  fs/xfs/libxfs/xfs_attr_remote.c |  2 +-
->  fs/xfs/libxfs/xfs_btree.c       |  2 +-
->  fs/xfs/libxfs/xfs_da_btree.c    | 16 +++++++++
->  fs/xfs/libxfs/xfs_da_btree.h    |  1 +
->  fs/xfs/libxfs/xfs_dir2_block.c  |  7 ++--
->  fs/xfs/libxfs/xfs_dir2_priv.h   |  2 +-
->  fs/xfs/libxfs/xfs_shared.h      |  2 ++
->  fs/xfs/libxfs/xfs_trans_inode.c | 12 +++++--
->  fs/xfs/scrub/dir.c              |  2 +-
->  fs/xfs/scrub/readdir.c          |  2 +-
->  fs/xfs/scrub/repair.c           |  2 +-
->  fs/xfs/xfs_buf.c                | 43 +++++++++++++++++------
->  fs/xfs/xfs_buf.h                |  4 +--
->  fs/xfs/xfs_buf_item.c           |  9 +++--
->  fs/xfs/xfs_buf_item.h           |  2 +-
->  fs/xfs/xfs_buf_item_recover.c   |  2 +-
->  fs/xfs/xfs_dir2_readdir.c       | 49 ++++++++++++++++++++------
->  fs/xfs/xfs_dquot.c              |  2 +-
->  fs/xfs/xfs_file.c               |  6 ++--
->  fs/xfs/xfs_inode.c              | 27 +++++++++++++++
->  fs/xfs/xfs_inode.h              | 17 +++++----
->  fs/xfs/xfs_inode_item.c         | 12 ++++---
->  fs/xfs/xfs_inode_item.h         |  3 +-
->  fs/xfs/xfs_iops.c               | 31 ++++++++++++++---
->  fs/xfs/xfs_log.c                | 33 ++++++++++++------
->  fs/xfs/xfs_log.h                |  5 +--
->  fs/xfs/xfs_log_cil.c            | 17 +++++++--
->  fs/xfs/xfs_log_priv.h           |  4 +--
->  fs/xfs/xfs_trans.c              | 44 ++++++++++++++++++++----
->  fs/xfs/xfs_trans.h              |  2 +-
->  fs/xfs/xfs_trans_buf.c          | 18 ++++++++--
->  fs/zonefs/file.c                |  4 +--
->  include/linux/file.h            |  7 ++++
->  include/linux/fs.h              | 16 +++++++--
->  include/uapi/linux/io_uring.h   |  1 +
->  io_uring/fs.c                   | 53 ++++++++++++++++++++++++++++
->  io_uring/fs.h                   |  3 ++
->  io_uring/opdef.c                |  8 +++++
->  kernel/bpf/inode.c              |  4 +--
->  mm/filemap.c                    |  8 ++---
->  mm/shmem.c                      |  6 ++--
->  net/unix/af_unix.c              |  4 +--
->  75 files changed, 499 insertions(+), 161 deletions(-)
-> 
-> -- 
-> 2.25.1
-> 
+No.
 
+Not only can XBF_TRYLOCK require memory allocation, it can require
+IO to be issued. We use TRYLOCK for -readahead- and so we *must* be
+able to allocate memory and issue IO under TRYLOCK caller
+conditions.
+
+[...]
+
+> diff --git a/fs/xfs/libxfs/xfs_attr_remote.c b/fs/xfs/libxfs/xfs_attr_remote.c
+> index d440393b40eb..2ccb0867824c 100644
+> --- a/fs/xfs/libxfs/xfs_attr_remote.c
+> +++ b/fs/xfs/libxfs/xfs_attr_remote.c
+> @@ -661,7 +661,7 @@ xfs_attr_rmtval_invalidate(
+>  			return error;
+>  		if (XFS_IS_CORRUPT(args->dp->i_mount, nmap != 1))
+>  			return -EFSCORRUPTED;
+> -		error = xfs_attr_rmtval_stale(args->dp, &map, XBF_TRYLOCK);
+> +		error = xfs_attr_rmtval_stale(args->dp, &map, XBF_NOWAIT);
+>  		if (error)
+>  			return error;
+
+XBF_INCORE | XBF_NOWAIT makes no real sense. I mean, XBF_INCORE is
+exactly "find a cached buffer or fail" - it's not going to do any
+memory allocation or IO so NOWAIT smeantics don't make any sense
+here. It's the buffer lock that this lookup is explicitly
+avoiding, and so TRYLOCK describes exactly the semantics we want
+from this incore lookup.
+
+Indeed, this is a deadlock avoidance mechanism as the transaction
+may already have the buffer locked and so we don't want the
+xfs_buf_incore() lookup to try to lock the buffer again. TRYLOCK
+documents this pretty clearly - NOWAIT loses that context....
+
+> diff --git a/fs/xfs/libxfs/xfs_btree.c b/fs/xfs/libxfs/xfs_btree.c
+> index 6a6503ab0cd7..77c4f1d83475 100644
+> --- a/fs/xfs/libxfs/xfs_btree.c
+> +++ b/fs/xfs/libxfs/xfs_btree.c
+> @@ -1343,7 +1343,7 @@ xfs_btree_read_buf_block(
+>  	int			error;
+>  
+>  	/* need to sort out how callers deal with failures first */
+> -	ASSERT(!(flags & XBF_TRYLOCK));
+> +	ASSERT(!(flags & XBF_NOWAIT));
+>  
+>  	error = xfs_btree_ptr_to_daddr(cur, ptr, &d);
+>  	if (error)
+> diff --git a/fs/xfs/scrub/repair.c b/fs/xfs/scrub/repair.c
+> index ac6d8803e660..9312cf3b20e2 100644
+> --- a/fs/xfs/scrub/repair.c
+> +++ b/fs/xfs/scrub/repair.c
+> @@ -460,7 +460,7 @@ xrep_invalidate_block(
+>  
+>  	error = xfs_buf_incore(sc->mp->m_ddev_targp,
+>  			XFS_FSB_TO_DADDR(sc->mp, fsbno),
+> -			XFS_FSB_TO_BB(sc->mp, 1), XBF_TRYLOCK, &bp);
+> +			XFS_FSB_TO_BB(sc->mp, 1), XBF_NOWAIT, &bp);
+
+My point exactly.
+
+xfs_buf_incore() is simply a lookup with XBF_INCORE set. (XBF_INCORE
+| XBF_TRYLOCK) has the exactly semantics of "return the buffer only
+if it is cached and we can lock it without blocking.
+
+It will not instantiate a new buffer (i.e. do memory allocation) or
+do IO because the if it is under IO the buffer lock will be held.
+
+So, essentially, this "NOWAIT" semantic you want is already supplied
+by (XBF_INCORE | XBF_TRYLOCK) buffer lookups.
+
+>  	if (error)
+>  		return 0;
+>  
+> diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
+> index 15d1e5a7c2d3..9f84bc3b802c 100644
+> --- a/fs/xfs/xfs_buf.c
+> +++ b/fs/xfs/xfs_buf.c
+> @@ -228,7 +228,7 @@ _xfs_buf_alloc(
+>  	 * We don't want certain flags to appear in b_flags unless they are
+>  	 * specifically set by later operations on the buffer.
+>  	 */
+> -	flags &= ~(XBF_UNMAPPED | XBF_TRYLOCK | XBF_ASYNC | XBF_READ_AHEAD);
+> +	flags &= ~(XBF_UNMAPPED | XBF_NOWAIT | XBF_ASYNC | XBF_READ_AHEAD);
+>  
+>  	atomic_set(&bp->b_hold, 1);
+>  	atomic_set(&bp->b_lru_ref, 1);
+> @@ -543,7 +543,7 @@ xfs_buf_find_lock(
+>  	struct xfs_buf          *bp,
+>  	xfs_buf_flags_t		flags)
+>  {
+> -	if (flags & XBF_TRYLOCK) {
+> +	if (flags & XBF_NOWAIT) {
+>  		if (!xfs_buf_trylock(bp)) {
+>  			XFS_STATS_INC(bp->b_mount, xb_busy_locked);
+>  			return -EAGAIN;
+> @@ -886,7 +886,7 @@ xfs_buf_readahead_map(
+>  	struct xfs_buf		*bp;
+>  
+>  	xfs_buf_read_map(target, map, nmaps,
+> -		     XBF_TRYLOCK | XBF_ASYNC | XBF_READ_AHEAD, &bp, ops,
+> +		     XBF_NOWAIT | XBF_ASYNC | XBF_READ_AHEAD, &bp, ops,
+>  		     __this_address);
+
+That will break readahead (which we use extensively in getdents
+operations) if we can't allocate buffers and issue IO under NOWAIT
+conditions.
+
+>  }
+>  
+> diff --git a/fs/xfs/xfs_buf.h b/fs/xfs/xfs_buf.h
+> index 549c60942208..8cd307626939 100644
+> --- a/fs/xfs/xfs_buf.h
+> +++ b/fs/xfs/xfs_buf.h
+> @@ -45,7 +45,7 @@ struct xfs_buf;
+>  
+>  /* flags used only as arguments to access routines */
+>  #define XBF_INCORE	 (1u << 29)/* lookup only, return if found in cache */
+> -#define XBF_TRYLOCK	 (1u << 30)/* lock requested, but do not wait */
+> +#define XBF_NOWAIT	 (1u << 30)/* mem/lock requested, but do not wait */
+
+That's now a really poor comment. It doesn't describe the semantics
+or constraints that NOWAIT might imply.
+
+-Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
