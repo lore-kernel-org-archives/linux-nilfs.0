@@ -1,79 +1,101 @@
-From: Christian Brauner <brauner@kernel.org>
-Subject: Re: [PATCH v3 0/29] block: Make blkdev_get_by_*() return
- handle
-Date: Fri, 25 Aug 2023 15:32:47 +0200
-Message-ID: <20230825-hubraum-gedreht-8c5c4db9330a@brauner>
-References: <20230818123232.2269-1-jack@suse.cz>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2 0/29] block: Make blkdev_get_by_*() return
+	handle
+Date: Fri, 25 Aug 2023 15:47:56 +0200
+Message-ID: <20230825134756.o3wpq6bogndukn53@quack3>
+References: <20230810171429.31759-1-jack@suse.cz>
+	<20230825015843.GB95084@ZenIV>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- d=sourceforge.net; s=x; h=In-Reply-To:Content-Type:MIME-Version:References:
- Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
- Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
- Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
- List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=X1l9n2w2msxg9FKnzsUG71D//GbSOHzJh48SLsQSHc4=; b=HaeTgtvivHY5OaeIKK2XpHCFKD
- gc8qTe552BQ5/VXJt2CVprqdGMsqyWwZ7VXbo8LoEiRfV5jSDvVm1mYPx/nrL5VUiX4DKxHeTmZ1B
- 6RGyE317hByuMlHoSByWLDO/NZk+QS0hXqAq57EYyl8Iv1grbdH8Pi5Qx0/3ifApP+PY=;
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
- ;
- h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To
- :From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
- Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
- :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
- List-Post:List-Owner:List-Archive;
- bh=X1l9n2w2msxg9FKnzsUG71D//GbSOHzJh48SLsQSHc4=; b=ISWkOXhMv3w58DYMwUYJ+GlVZv
- jcqdJ8t8MiCl+iynN0KIXeXXplBTtx6AcmEOBiHkl5RcsHA1etzrAVatx7l1xmxFzjhRBWFtB2xyC
- 6HzxaTArZBWrRp9/Juadapy4FBp6w5dMsH1it3adz20a4lF7tjhppIkuyc2pJrnIsfRw=;
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
- s=k20201202; t=1692970379;
- bh=T3WCgKJR+2I3SNciRzSe5NGE9AO6KZcdR6qXwGAgd9M=;
- h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
- b=BOzM2QQ1MZDAriB3IMOamPdHV+2S3m2FC6tyT1pwI/9DF+WhlbPxDXE6fFDwe1gQn
- nTHB+ewwdyxJVq1cwfq3lRDi07qJcCHvh+nPPtQwtyRFhMG1ktBk1+a5CxpNbFHlMo
- Es+8l14bPK+nfmT+9Vs7IvZUfkPWFzk8wOkU0sT7FJdKR3BT4c1FwZN9woHNBuu5tc
- jHLMCNsuGW/YHncoWpwLVgQ93zfRJ93+ghRIza8tLelTozCObl43Fv+mmuqvzrkB+C
- SdJZ6/x4IFa4j6NBHHUKQ0uLY4RqtzEgYesuRGMfUi0q6xmwPRpi/3TpKuwt6YF2IT
- 8BYUF/YAoocgw==
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1692971277;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version:content-type:content-type:
+	in-reply-to:in-reply-to:references:references;
+	bh=BpzfsfMiRxmg30OdFnKzv1mOgTevyt5wkPNcyneGwG0=;
+	b=uohLnKnqtpENx2vCia+CF25VunAvqKNxW8Gl/JZPjm2522sG0QzHP89CKm9gvg5uhIQmJN
+	WBEcUX07tygEsfRFeW0MDCmmX2lneinhEWFdq+jYTgqP+tDCYKowqEsMW88igvW28lrojs
+	hfcd/30g2Ie/qrM4mt7e3dhBm3c9V28=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1692971277;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	mime-version:mime-version:content-type:content-type:
+	in-reply-to:in-reply-to:references:references;
+	bh=BpzfsfMiRxmg30OdFnKzv1mOgTevyt5wkPNcyneGwG0=;
+	b=avw/hNX+TPhBa6q/Pyjq6dsHiVTX81moNODEW9+kRWtkr4cKF/cxPXXUPquXV79uoK0IL4
+	nSbq/d/haJGtPRAQ==
 Content-Disposition: inline
-In-Reply-To: <20230818123232.2269-1-jack@suse.cz>
+In-Reply-To: <20230825015843.GB95084@ZenIV>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Jan Kara <jack@suse.cz>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net, "Darrick J. Wong" <djwong@kernel.org>, linux-nvme@lists.infradead.org, Joseph Qi <joseph.qi@linux.alibaba.com>, dm-devel@redhat.com, target-devel@vger.kernel.org, linux-mtd@lists.infradead.org, Jack Wang <jinpu.wang@ionos.com>, Alasdair Kergon <agk@redhat.com>, drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, Sergey Senozhatsky <senozhatsky@chromium.org>, Christoph Hellwig <hch@infradead.org>, xen-devel@lists.xenproject.org, Gao Xiang <xiang@kernel.org>, Christian Borntraeger <borntraeger@linux.ibm.com>, Kent Overstreet <kent.overstreet@gmail.com>, Sven Schnelle <svens@linux.ibm.com>, linux-pm@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>, Joern Engel <joern@lazybastard.org>, reiserfs-devel@vger.kernel.org, linux-block@vger.kernel.
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Joseph Qi <joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sergey Senozhatsky <senozhatsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Gao Xiang <xiang-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christian Borntraeger <borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sven Schnelle <svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joern Engel <joern-o6zPIXG8fmPj4SYmN/TMmA@public.gmane.org>, re
 
-On Wed, Aug 23, 2023 at 12:48:11PM +0200, Jan Kara wrote:
-> Hello,
+On Fri 25-08-23 02:58:43, Al Viro wrote:
+> On Fri, Aug 11, 2023 at 01:04:31PM +0200, Jan Kara wrote:
+> > Hello,
+> > 
+> > this is a v2 of the patch series which implements the idea of blkdev_get_by_*()
+> > calls returning bdev_handle which is then passed to blkdev_put() [1]. This
+> > makes the get and put calls for bdevs more obviously matching and allows us to
+> > propagate context from get to put without having to modify all the users
+> > (again!).  In particular I need to propagate used open flags to blkdev_put() to
+> > be able count writeable opens and add support for blocking writes to mounted
+> > block devices. I'll send that series separately.
+> > 
+> > The series is based on Christian's vfs tree as of yesterday as there is quite
+> > some overlap. Patches have passed some reasonable testing - I've tested block
+> > changes, md, dm, bcache, xfs, btrfs, ext4, swap. This obviously doesn't cover
+> > everything so I'd like to ask respective maintainers to review / test their
+> > changes. Thanks! I've pushed out the full branch to:
+> > 
+> > git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdev_handle
+> > 
+> > to ease review / testing.
 > 
-> this is a v3 of the patch series which implements the idea of blkdev_get_by_*()
-> calls returning bdev_handle which is then passed to blkdev_put() [1]. This
-> makes the get and put calls for bdevs more obviously matching and allows us to
-> propagate context from get to put without having to modify all the users
-> (again!). In particular I need to propagate used open flags to blkdev_put() to
-> be able count writeable opens and add support for blocking writes to mounted
-> block devices. I'll send that series separately.
+> Hmm...  Completely Insane Idea(tm): how about turning that thing inside out and
+> having your bdev_open_by... return an actual opened struct file?
 > 
-> The series is based on Christian's vfs tree as of today as there is quite
-> some overlap. Patches have passed some reasonable testing - I've tested block
-> changes, md, dm, bcache, xfs, btrfs, ext4, swap. More testing or review is
-> always welcome. Thanks! I've pushed out the full branch to:
+> After all, we do that for sockets and pipes just fine and that's a whole lot
+> hotter area.
 > 
-> git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdev_handle
+> Suppose we leave blkdev_open()/blkdev_release() as-is.  No need to mess with
+> what we have for normal opened files for block devices.  And have block_open_by_dev()
+> that would find bdev, etc., same yours does and shove it into anon file.
 > 
-> to ease review / testing. Since there were not many comments for v2 and
-> Christoph has acked the series I think we should start discussing how to merge
-> the series. Most collisions with this series seem to happen in the filesystems
-> area so VFS tree would seem as the least painful way to merge this. Jens,
+> Paired with plain fput() - no need to bother with new primitives for closing.
+> With a helper returning I_BDEV(bdev_file_inode(file)) to get from those to bdev.
+> 
+> NOTE: I'm not suggesting replacing ->s_bdev with struct file * if we do that -
+> we want that value cached, obviously.  Just store both...
+> 
+> Not saying it's a good idea, but... might be interesting to look into.
+> Comments?
 
-I really do like this series especially struct bdev_handle and moving
-the mode bits in there. I'll happily take this. So far there have only
-been minor things that can easily be fixed.
+I can see the appeal of not having to introduce the new bdev_handle type
+and just using struct file which unifies in-kernel and userspace block
+device opens. But I can see downsides too - the last fput() happening from
+task work makes me a bit nervous whether it will not break something
+somewhere with exclusive bdev opens. Getting from struct file to bdev is
+somewhat harder but I guess a helper like F_BDEV() would solve that just
+fine.
+
+So besides my last fput() worry about I think this could work and would be
+probably a bit nicer than what I have. But before going and redoing the whole
+series let me gather some more feedback so that we don't go back and forth.
+Christoph, Christian, Jens, any opinion?
+
+								Honza
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
