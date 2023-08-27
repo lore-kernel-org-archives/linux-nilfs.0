@@ -1,8 +1,8 @@
 From: Hao Xu <hao.xu@linux.dev>
-Subject: [PATCH 09/11] vfs: error out -EAGAIN if atime needs to
- be updated
-Date: Sun, 27 Aug 2023 21:28:33 +0800
-Message-ID: <20230827132835.1373581-10-hao.xu@linux.dev>
+Subject: [PATCH 10/11] vfs: trylock inode->i_rwsem in
+ iterate_dir() to support nowait
+Date: Sun, 27 Aug 2023 21:28:34 +0800
+Message-ID: <20230827132835.1373581-11-hao.xu@linux.dev>
 References: <20230827132835.1373581-1-hao.xu@linux.dev>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -14,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=y42FYySYNsis5G3mORomW/nSivl81IaFtk7YSUfz0Jg=; b=HuAEOxXqX67LnBCbKz9mMz1VXr
- OQP/zSOZ5thHvSxt9FwK908YGFxSNtahLQulgIxVx6hJYH5yDgRCxVN4e8yiexic/GcY7fu+EHXOE
- epkvDP02seye+i+vbAApwMuPeRNYHGEqPbXse16wn7Wzlw2E4VAaBSisce47EVgVuXE0=;
+ bh=CL8wzJoAbQ75iZcN0EHSqoGXIWt+IFMvEgcKIhs6zqE=; b=DXhsO6G87tZhi1H0fY3PZSs8iG
+ fdB8DWd21C0cxcuJK9ttaDi/2wGOuar4CCEvvuFOygxPjIiQqYyhiF7eJ80KhrH3RTmnFFDFyCidk
+ yXb8mvOAtp3kWxFswtj/gABlcP8E06KsxctI/alnMyAHfq5HLE7JP8AGKIXe5IX/Bz/Y=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -24,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=y42FYySYNsis5G3mORomW/nSivl81IaFtk7YSUfz0Jg=; b=aZx88lppqmW3SX7dcZnKqa9yUL
- 88kJqpYlK/6FVNeNFEGY4x/4+zi+p5Hd/AzpAl3Z45Loc0iY3g4ucw6UdIbuFjx0pvYCxkDQIrBlF
- ThKdwXJAxLLir7TouEb8ubMLFnv8qDQ0B+6/BPua4tImoFko6msbyKWQWlRXs0PPmb38=;
+ bh=CL8wzJoAbQ75iZcN0EHSqoGXIWt+IFMvEgcKIhs6zqE=; b=ijwK5cvRthSRpRvhU8KiRYJVw3
+ e/d6REnar5TDn8jqgb9PbrwAgIvLdeYAZEAj+S2ieC28ggxt5z8maJPLP1iFQBWMmsKJYsTlkCt5A
+ P8xHaPpxPQJPljLz94xA0eu3LOJEM1lhrG0sIRUx8Vm2kyqzUV2HGig7dZQQgAJ9GFJE=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
- t=1693143308;
+ t=1693143333;
  h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
  to:to:cc:cc:mime-version:mime-version:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=y42FYySYNsis5G3mORomW/nSivl81IaFtk7YSUfz0Jg=;
- b=S4P5Lis+5UgxAXsbIFEQ0bJcfwW5bp3gD+5EV25w4Odl6XRzUJpaJGVaokRckJ9Hpyff0y
- QCMWQ876jzpmtvZlXQ4fdJDhdeygghENaAwk2aokCERTn3SKcsNlbNr+KPD/7nkWidZUEs
- LZ/LAlKjzWeA2HQHZTdX8ZHXdvIJ060=
+ bh=CL8wzJoAbQ75iZcN0EHSqoGXIWt+IFMvEgcKIhs6zqE=;
+ b=BRJIOv0sJCNWH9arCNNuOEeHNgvBAsJDXsD/9ROslY/E3EvWdOi7NTa+04JucH099rNnul
+ 4aa7v7DjXCaaQfzVNr38jK1tfhfTVUIcRN9rZkXC1mcdwty8x7yMXlzmlXd+zl6Ur2HPps
+ a6OaK6jfFgLdJwLH2JKSlhPncqJxHqY=
 In-Reply-To: <20230827132835.1373581-1-hao.xu@linux.dev>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -52,27 +52,55 @@ Cc: Wanpeng Li <wanpengli@tencent.com>, "Darrick J . Wong" <djwong@kernel.org>, 
 
 From: Hao Xu <howeyxu@tencent.com>
 
-To enforce nowait semantics, error out -EAGAIN if atime needs to be
-updated.
+Trylock inode->i_rwsem in iterate_dir() to support nowait semantics and
+error out -EAGAIN when there is contention.
 
 Signed-off-by: Hao Xu <howeyxu@tencent.com>
 ---
- fs/inode.c | 3 +++
- 1 file changed, 3 insertions(+)
+ fs/readdir.c | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
 
-diff --git a/fs/inode.c b/fs/inode.c
-index e83b836f2d09..32d81be65cf9 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -1970,6 +1970,9 @@ int touch_atime(const struct path *path, bool nowait)
- 	if (!atime_needs_update(path, inode))
- 		return 0;
- 
-+	if (nowait)
-+		return -EAGAIN;
+diff --git a/fs/readdir.c b/fs/readdir.c
+index 6469f076ba6e..664ecd9665a1 100644
+--- a/fs/readdir.c
++++ b/fs/readdir.c
+@@ -43,6 +43,8 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
+ 	struct inode *inode = file_inode(file);
+ 	bool shared = false;
+ 	int res = -ENOTDIR;
++	bool nowait;
 +
- 	if (!sb_start_write_trylock(inode->i_sb))
- 		return 0;
+ 	if (file->f_op->iterate_shared)
+ 		shared = true;
+ 	else if (!file->f_op->iterate)
+@@ -52,16 +54,22 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
+ 	if (res)
+ 		goto out;
+ 
+-	if (shared)
+-		res = down_read_killable(&inode->i_rwsem);
+-	else
+-		res = down_write_killable(&inode->i_rwsem);
+-	if (res)
++	nowait = ctx->flags & DIR_CONTEXT_F_NOWAIT;
++	if (nowait) {
++		res = shared ? down_read_trylock(&inode->i_rwsem) :
++			       down_write_trylock(&inode->i_rwsem);
++		if (!res)
++			res = -EAGAIN;
++	} else {
++		res = shared ? down_read_killable(&inode->i_rwsem) :
++			       down_write_killable(&inode->i_rwsem);
++	}
++	if (res < 0)
+ 		goto out;
+ 
+ 	res = -ENOENT;
+ 	if (!IS_DEADDIR(inode)) {
+-		res = file_accessed(file, ctx->flags & DIR_CONTEXT_F_NOWAIT);
++		res = file_accessed(file, nowait);
+ 		if (res == -EAGAIN)
+ 			goto out_unlock;
  
 -- 
 2.25.1
