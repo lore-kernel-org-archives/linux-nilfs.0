@@ -1,7 +1,8 @@
 From: Hao Xu <hao.xu@linux.dev>
-Subject: [PATCH 03/11] vfs: add nowait flag for struct dir_context
-Date: Sun, 27 Aug 2023 21:28:27 +0800
-Message-ID: <20230827132835.1373581-4-hao.xu@linux.dev>
+Subject: [PATCH 04/11] vfs: add a vfs helper for io_uring file
+ pos lock
+Date: Sun, 27 Aug 2023 21:28:28 +0800
+Message-ID: <20230827132835.1373581-5-hao.xu@linux.dev>
 References: <20230827132835.1373581-1-hao.xu@linux.dev>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,9 +14,9 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
  Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
  Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
  List-Subscribe:List-Post:List-Owner:List-Archive;
- bh=e5tdpTadoLYdZJB8cQ8K1ymkQcAcLx9XJrtCjJGJaVs=; b=czwhmG34/jpEmgEcljJhQ6GVEM
- sWM0K4NU8f7S0ujYVcV9fnUcfE0fb2aaxqYJFMgv7H3vfe/IA4oVIegkdxG+05FpeXH/DBn8xzZlI
- g83nch7SDWAtxsR6AqN7pzyoInBWYaqzzCmQSGkZAqxb1XQAjT4ZeojNEZpzuEOutcx0=;
+ bh=W04QOWrrBuMFm18D/+g+MI2uZNnKBIsbwxq2wO1dKKw=; b=ffpwhn0FqZqO6YBgHLI2KFS6H4
+ 13elcb7yk3sypQS0bKjZPTot2hjgGD6knz+QBkgI+8fb+3ZT4sFyGQWqqXGpk9mmhKIA06hfRR7/W
+ c3qvDpk3XMtgRIVNRT1cUz/PfTEnztqyWCh7efFjX959L1Wjiddc+Y8V3NM26s61pjcQ=;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  ;
  h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:Message-Id:
@@ -23,19 +24,19 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
  Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
  :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
  List-Post:List-Owner:List-Archive;
- bh=e5tdpTadoLYdZJB8cQ8K1ymkQcAcLx9XJrtCjJGJaVs=; b=b/+SvS9FpFxw09jFYhBsc8BLAE
- Fizb6Zpr4Fg5OegNfaCsFdye1UhSgXGv0/eNR/pF9IS1thY+IKdXJdomdQcs1GKfkenk4LWQh1Hua
- Xv8tpDgOyL2SYFNRD9Yn/FycfnM4ZAckLtwgvbdakY6w26uX1rQQzCGJuiuLHJmWoR5E=;
+ bh=W04QOWrrBuMFm18D/+g+MI2uZNnKBIsbwxq2wO1dKKw=; b=EBZwca2jEMHSL3/qYt6RTeChJQ
+ wdD4c1xo1/tDdrNseUfJPJU2WSOeVrgi9qV6cjcgyj2eoB4Ai7Pa10GgMDWmBX2TosZOcZpAs1AJ/
+ C7S3J4mfTbxGJXio5uRnzyh71a9N1JxIaPTBtcrCjmB5UmIiXHPc0U0D37kcN1sY37jc=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
- t=1693143134;
+ t=1693143164;
  h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
  to:to:cc:cc:mime-version:mime-version:
  content-transfer-encoding:content-transfer-encoding:
  in-reply-to:in-reply-to:references:references;
- bh=e5tdpTadoLYdZJB8cQ8K1ymkQcAcLx9XJrtCjJGJaVs=;
- b=w2Ynrlkl0lrPBgOEZvZgZsAroI/SroVLk9P1ruoBqvhkruN+yY2MpcktHEbfNgoWJ1BBu4
- 4ubUBExoqQaaP8jDC6A2V4vWqXAbneLZ+BhAJSfP0lzTzlCZEFFPuxh0PF54TbtDSMupEM
- g0UMdnFp1J3UGmAIMamiGdfpc/ghYvs=
+ bh=W04QOWrrBuMFm18D/+g+MI2uZNnKBIsbwxq2wO1dKKw=;
+ b=Yw+5XvRr3vDIU02wPbTBy+P7Vb3r5vANDo9ahLXEToHmV4GE1+GjTI2/FiGvzS/72CcLGE
+ wNMghjMXDTPCiQyUzrxQFpeftIBQyMH0jGDsayXuE4xMGusaZd0pBKhpckAeDFF1jY1yin
+ IKCCEyk0xEU76DQXzGM7PUWjnMG6kt0=
 In-Reply-To: <20230827132835.1373581-1-hao.xu@linux.dev>
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
@@ -51,85 +52,52 @@ Cc: Wanpeng Li <wanpengli@tencent.com>, "Darrick J . Wong" <djwong@kernel.org>, 
 
 From: Hao Xu <howeyxu@tencent.com>
 
-The flags will allow passing DIR_CONTEXT_F_NOWAIT to iterate()
-implementations that support it (as signaled through FMODE_NWAIT
-in file->f_mode)
+Add a vfs helper file_pos_lock_nowait() for io_uring usage. The function
+have conditional nowait logic, i.e. if nowait is needed, return -EAGAIN
+when trylock fails.
 
-Notes:
-- considered using IOCB_NOWAIT but if we add more flags later it
-would be confusing to keep track of which values are valid, use
-dedicated flags
-- might want to check ctx.flags & DIR_CONTEXT_F_NOWAIT is only set
-when file->f_mode & FMODE_NOWAIT in iterate_dir() as e.g. WARN_ONCE?
-
-Co-developed-by: Dominique Martinet <asmadeus@codewreck.org>
-Signed-off-by: Dominique Martinet <asmadeus@codewreck.org>
 Signed-off-by: Hao Xu <howeyxu@tencent.com>
 ---
- fs/internal.h      | 2 +-
- fs/readdir.c       | 6 ++++--
- include/linux/fs.h | 8 ++++++++
- 3 files changed, 13 insertions(+), 3 deletions(-)
+ fs/file.c            | 13 +++++++++++++
+ include/linux/file.h |  2 ++
+ 2 files changed, 15 insertions(+)
 
-diff --git a/fs/internal.h b/fs/internal.h
-index b1f66e52d61b..7508d485c655 100644
---- a/fs/internal.h
-+++ b/fs/internal.h
-@@ -311,4 +311,4 @@ void mnt_idmap_put(struct mnt_idmap *idmap);
- struct linux_dirent64;
+diff --git a/fs/file.c b/fs/file.c
+index 35c62b54c9d6..8e5c38f5db52 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -1053,6 +1053,19 @@ void __f_unlock_pos(struct file *f)
+ 	mutex_unlock(&f->f_pos_lock);
+ }
  
- int vfs_getdents(struct file *file, struct linux_dirent64 __user *dirent,
--		 unsigned int count);
-+		 unsigned int count, unsigned long flags);
-diff --git a/fs/readdir.c b/fs/readdir.c
-index 9592259b7e7f..b80caf4c9321 100644
---- a/fs/readdir.c
-+++ b/fs/readdir.c
-@@ -358,12 +358,14 @@ static bool filldir64(struct dir_context *ctx, const char *name, int namlen,
-  * @file    : pointer to file struct of directory
-  * @dirent  : pointer to user directory structure
-  * @count   : size of buffer
-+ * @flags   : additional dir_context flags
-  */
- int vfs_getdents(struct file *file, struct linux_dirent64 __user *dirent,
--		 unsigned int count)
-+		 unsigned int count, unsigned long flags)
- {
- 	struct getdents_callback64 buf = {
- 		.ctx.actor = filldir64,
-+		.ctx.flags = flags,
- 		.count = count,
- 		.current_dir = dirent
- 	};
-@@ -395,7 +397,7 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
- 	if (!f.file)
- 		return -EBADF;
- 
--	error = vfs_getdents(f.file, dirent, count);
-+	error = vfs_getdents(f.file, dirent, count, 0);
- 
- 	fdput_pos(f);
- 	return error;
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 6867512907d6..f3e315e8efdd 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1719,8 +1719,16 @@ typedef bool (*filldir_t)(struct dir_context *, const char *, int, loff_t, u64,
- struct dir_context {
- 	filldir_t actor;
- 	loff_t pos;
-+	unsigned long flags;
- };
- 
-+/*
-+ * flags for dir_context flags
-+ * DIR_CONTEXT_F_NOWAIT: Request non-blocking iterate
-+ *                       (requires file->f_mode & FMODE_NOWAIT)
-+ */
-+#define DIR_CONTEXT_F_NOWAIT	(1 << 0)
++int file_pos_lock_nowait(struct file *file, bool nowait)
++{
++	if (!(file->f_mode & FMODE_ATOMIC_POS))
++		return 0;
++
++	if (!nowait)
++		mutex_lock(&file->f_pos_lock);
++	else if (!mutex_trylock(&file->f_pos_lock))
++		return -EAGAIN;
++
++	return 1;
++}
 +
  /*
-  * These flags let !MMU mmap() govern direct device mapping vs immediate
-  * copying more easily for MAP_PRIVATE, especially for ROM filesystems.
+  * We only lock f_pos if we have threads or if the file might be
+  * shared with another process. In both cases we'll have an elevated
+diff --git a/include/linux/file.h b/include/linux/file.h
+index 6e9099d29343..bcc6ba0aec50 100644
+--- a/include/linux/file.h
++++ b/include/linux/file.h
+@@ -81,6 +81,8 @@ static inline void fdput_pos(struct fd f)
+ 	fdput(f);
+ }
+ 
++extern int file_pos_lock_nowait(struct file *file, bool nowait);
++
+ DEFINE_CLASS(fd, struct fd, fdput(_T), fdget(fd), int fd)
+ 
+ extern int f_dupfd(unsigned int from, struct file *file, unsigned flags);
 -- 
 2.25.1
