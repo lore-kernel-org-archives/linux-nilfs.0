@@ -1,111 +1,179 @@
-From: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [PATCH v2 0/29] block: Make blkdev_get_by_*() return
-	handle
-Date: Sat, 26 Aug 2023 03:28:52 +0100
-Message-ID: <20230826022852.GO3390869@ZenIV>
-References: <20230810171429.31759-1-jack@suse.cz>
-	<20230825015843.GB95084@ZenIV>
-	<20230825134756.o3wpq6bogndukn53@quack3>
+From: Hao Xu <hao.xu@linux.dev>
+Subject: [PATCH v6 00/11] io_uring getdents
+Date: Sun, 27 Aug 2023 21:28:24 +0800
+Message-ID: <20230827132835.1373581-1-hao.xu@linux.dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=linux.org.uk; s=zeniv-20220401; h=Sender:In-Reply-To:Content-Type:
-	MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=kRz17k12DLtH5ptlx3fiiancvtShyoQwDvuAAOUED4Y=;
-	b=mPm/qZCa7MWW4zdrpIjhXYeIS6
-	8cbIgOvCf/9Y6gIxhhuc7MbOClbX1o3H4gTlXLJmOpOyil1pufLmdD8oxm6VhlxB4x6C/OQmKz1OC
-	9Sg7eN60e8HGn0pn/DtWEZ2zi7uHlJyyQNolWeGdXQEgqn78/62UYsbUB8gsUgOw68YkPTd36+fo0
-	kPzizyM3mKJ55bukbV99w6F1Yx4exn0ELF0EHA2mn4TEClpd2hjjcTiwEbEGv+vsWkEq4IC7ejHjR
-	rO8uE9/3ipL5VpLJjGdd7WJssIdQ5Tj/z+j2E3fQDWI0Qb9TMLDhfRhfBXk5sw2QK4rJI42xn3tDe
-	SBJa1VHw==;
-Content-Disposition: inline
-In-Reply-To: <20230825134756.o3wpq6bogndukn53@quack3>
+Content-Transfer-Encoding: 8bit
+Return-path: <bpf+bounces-8778-glkb-bpf=m.gmane-mx.org@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1693143008;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=hH9Z1s3VyDbNI+o0MhVSnq4vtAmGphAu/NP9Lh4Iqho=;
+	b=D4glas+PskglEfull56Ie/EaUGDVyzdgOX1ZIuTOt4hIdaNgYSKi8HuTaE82KbnTe8VrVg
+	RYQOGm2sDsmgjyTzfYWA88b8swvCAy1S+AvUnlRILYK1CLtNBRiYb+57DIqLl/tE9VNEa0
+	45zeea98vHJXfwWbVyE91LWfpk5toEg=
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Joseph Qi <joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sergey Senozhatsky <senozhatsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Gao Xiang <xiang-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christian Borntraeger <borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sven Schnelle <svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joern Engel <joern-o6zPIXG8fmPj4SYmN/TMmA@public.gmane.org>, reiserfs-devel-u79uwXL29TbrhsbdSgBK9A@public.gmane.org
+List-Subscribe: <mailto:bpf+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:bpf+unsubscribe@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+To: io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+Cc: Dominique Martinet <asmadeus@codewreck.org>, Pavel Begunkov <asml.silence@gmail.com>, Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, Dave Chinner <david@fromorbit.com>, "Darrick J . Wong" <djwong@kernel.org>, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cachefs@redhat.com, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-unionfs@vger.kernel.org, bpf@vger.kernel.org, netdev@vger.kernel.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, codalist@coda.cs.cmu.edu, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, devel@lists.orangefs.org, linux-cifs@vger.kernel.org, samba-techni
 
-On Fri, Aug 25, 2023 at 03:47:56PM +0200, Jan Kara wrote:
+From: Hao Xu <howeyxu@tencent.com>
 
-> I can see the appeal of not having to introduce the new bdev_handle type
-> and just using struct file which unifies in-kernel and userspace block
-> device opens. But I can see downsides too - the last fput() happening from
-> task work makes me a bit nervous whether it will not break something
-> somewhere with exclusive bdev opens. Getting from struct file to bdev is
-> somewhat harder but I guess a helper like F_BDEV() would solve that just
-> fine.
-> 
-> So besides my last fput() worry about I think this could work and would be
-> probably a bit nicer than what I have. But before going and redoing the whole
-> series let me gather some more feedback so that we don't go back and forth.
-> Christoph, Christian, Jens, any opinion?
+This series introduce getdents64 to io_uring, the code logic is similar
+with the snychronized version's. It first try nowait issue, and offload
+it to io-wq threads if the first try fails.
 
-Redoing is not an issue - it can be done on top of your series just
-as well.  Async behaviour of fput() might be, but...  need to look
-through the actual users; for a lot of them it's perfectly fine.
+Patch1 and Patch2 are some preparation
+Patch3 supports nowait for xfs getdents code
+Patch4-11 are vfs change, include adding helpers and trylock for locks
 
-FWIW, from a cursory look there appears to be a missing primitive: take
-an opened bdev (or bdev_handle, with your variant, or opened file if we
-go that way eventually) and claim it.
+Tests I've done:
+A liburing test case for functional test:
+https://github.com/HowHsu/liburing/commit/39dc9a8e19c06a8cebf8c2301b85320eb45c061e?diff=unified
 
-I mean, look at claim_swapfile() for example:
-                p->bdev = blkdev_get_by_dev(inode->i_rdev,
-                                   FMODE_READ | FMODE_WRITE | FMODE_EXCL, p);
-                if (IS_ERR(p->bdev)) {
-                        error = PTR_ERR(p->bdev);
-                        p->bdev = NULL;
-                        return error;
-                }
-                p->old_block_size = block_size(p->bdev);
-                error = set_blocksize(p->bdev, PAGE_SIZE);
-                if (error < 0)
-                        return error;
-we already have the file opened, and we keep it opened all the way until
-the swapoff(2); here we have noticed that it's a block device and we
-	* open the fucker again (by device number), this time claiming
-it with our swap_info_struct as holder, to be closed at swapoff(2) time
-(just before we close the file)
-	* flip the block size to PAGE_SIZE, to be reverted at swapoff(2)
-time That really looks like it ought to be
-	* take the opened file, see that it's a block device
-	* try to claim it with that holder
-	* on success, flip the block size
-with close_filp() in the swapoff(2) (or failure exit path in swapon(2))
-doing what it would've done for an O_EXCL opened block device.
-The only difference from O_EXCL userland open is that here we would
-end up with holder pointing not to struct file in question, but to our
-swap_info_struct.  It will do the right thing.
+Tested it with a liburing performance test:
+https://github.com/HowHsu/liburing/blob/getdents/test/getdents2.c
 
-This extra open is entirely due to "well, we need to claim it and the
-primitive that does that happens to be tied to opening"; feels rather
-counter-intuitive.
+The test is controlled by the below script[2] which runs getdents2.t 100
+times and calulate the avg.
+The result show that io_uring version is about 2.6% faster:
 
-For that matter, we could add an explicit "unclaim" primitive - might
-be easier to follow.  That would add another example where that could
-be used - in blkdev_bszset() we have an opened block device (it's an
-ioctl, after all), we want to change block size and we *really* don't
-want to have that happen under a mounted filesystem.  So if it's not
-opened exclusive, we do a temporary exclusive open of own and act on
-that instead.   Might as well go for a temporary claim...
+note:
+[1] the number of getdents call/request in io_uring and normal sync version
+are made sure to be same beforehand.
 
-BTW, what happens if two threads call ioctl(fd, BLKBSZSET, &n)
-for the same descriptor that happens to have been opened O_EXCL?
-Without O_EXCL they would've been unable to claim the sucker at the same
-time - the holder we are using is the address of a function argument,
-i.e. something that points to kernel stack of the caller.  Those would
-conflict and we either get set_blocksize() calls fully serialized, or
-one of the callers would eat -EBUSY.  Not so in "opened with O_EXCL"
-case - they can very well overlap and IIRC set_blocksize() does *not*
-expect that kind of crap...  It's all under CAP_SYS_ADMIN, so it's not
-as if it was a meaningful security hole anyway, but it does look fishy.
+[2] run_getdents.py
+
+```python3
+
+import subprocess
+
+N = 100
+sum = 0.0
+args = ["/data/home/howeyxu/tmpdir", "sync"]
+
+for i in range(N):
+    output = subprocess.check_output(["./liburing/test/getdents2.t"] + args)
+    sum += float(output)
+
+average = sum / N
+print("Average of sync:", average)
+
+sum = 0.0
+args = ["/data/home/howeyxu/tmpdir", "iouring"]
+
+for i in range(N):
+    output = subprocess.check_output(["./liburing/test/getdents2.t"] + args)
+    sum += float(output)
+
+average = sum / N
+print("Average of iouring:", average)
+
+```
+
+v5->v6:
+ - remove xfs journal stuff since there are fundamental issues in the
+   design.
+
+v4->v5:
+ - move atime update to the beginning of getdents operation
+ - trylock for i_rwsem
+ - nowait semantics for involved xfs journal stuff
+
+v3->v4:
+ - add Dave's xfs nowait code and fix a deadlock problem, with some code
+   style tweak.
+ - disable fixed file to avoid a race problem for now
+ - add a test program.
+
+v2->v3:
+ - removed the kernfs patches
+ - add f_pos_lock logic
+ - remove the "reduce last EOF getdents try" optimization since
+   Dominique reports that doesn't make difference
+ - remove the rewind logic, I think the right way is to introduce lseek
+   to io_uring not to patch this logic to getdents.
+ - add Singed-off-by of Stefan Roesch for patch 1 since checkpatch
+   complained that Co-developed-by someone should be accompanied with
+   Signed-off-by same person, I can remove them if Stefan thinks that's
+   not proper.
+
+
+Dominique Martinet (1):
+  fs: split off vfs_getdents function of getdents64 syscall
+
+Hao Xu (10):
+  xfs: add NOWAIT semantics for readdir
+  vfs: add nowait flag for struct dir_context
+  vfs: add a vfs helper for io_uring file pos lock
+  vfs: add file_pos_unlock() for io_uring usage
+  vfs: add a nowait parameter for touch_atime()
+  vfs: add nowait parameter for file_accessed()
+  vfs: move file_accessed() to the beginning of iterate_dir()
+  vfs: error out -EAGAIN if atime needs to be updated
+  vfs: trylock inode->i_rwsem in iterate_dir() to support nowait
+  io_uring: add support for getdents
+
+ arch/s390/hypfs/inode.c        |  2 +-
+ block/fops.c                   |  2 +-
+ fs/btrfs/file.c                |  2 +-
+ fs/btrfs/inode.c               |  2 +-
+ fs/cachefiles/namei.c          |  2 +-
+ fs/coda/dir.c                  |  4 +--
+ fs/ecryptfs/file.c             |  4 +--
+ fs/ext2/file.c                 |  4 +--
+ fs/ext4/file.c                 |  6 ++--
+ fs/f2fs/file.c                 |  4 +--
+ fs/file.c                      | 13 ++++++++
+ fs/fuse/dax.c                  |  2 +-
+ fs/fuse/file.c                 |  4 +--
+ fs/gfs2/file.c                 |  2 +-
+ fs/hugetlbfs/inode.c           |  2 +-
+ fs/inode.c                     | 10 ++++--
+ fs/internal.h                  |  8 +++++
+ fs/namei.c                     |  4 +--
+ fs/nfsd/vfs.c                  |  2 +-
+ fs/nilfs2/file.c               |  2 +-
+ fs/orangefs/file.c             |  2 +-
+ fs/orangefs/inode.c            |  2 +-
+ fs/overlayfs/file.c            |  2 +-
+ fs/overlayfs/inode.c           |  2 +-
+ fs/pipe.c                      |  2 +-
+ fs/ramfs/file-nommu.c          |  2 +-
+ fs/readdir.c                   | 61 ++++++++++++++++++++++++++--------
+ fs/smb/client/cifsfs.c         |  2 +-
+ fs/splice.c                    |  2 +-
+ fs/stat.c                      |  2 +-
+ fs/ubifs/file.c                |  2 +-
+ fs/udf/file.c                  |  2 +-
+ fs/xfs/libxfs/xfs_da_btree.c   | 16 +++++++++
+ fs/xfs/libxfs/xfs_da_btree.h   |  1 +
+ fs/xfs/libxfs/xfs_dir2_block.c |  7 ++--
+ fs/xfs/libxfs/xfs_dir2_priv.h  |  2 +-
+ fs/xfs/scrub/dir.c             |  2 +-
+ fs/xfs/scrub/readdir.c         |  2 +-
+ fs/xfs/xfs_dir2_readdir.c      | 49 +++++++++++++++++++++------
+ fs/xfs/xfs_file.c              |  6 ++--
+ fs/xfs/xfs_inode.c             | 27 +++++++++++++++
+ fs/xfs/xfs_inode.h             | 17 ++++++----
+ fs/zonefs/file.c               |  4 +--
+ include/linux/file.h           |  7 ++++
+ include/linux/fs.h             | 15 +++++++--
+ include/uapi/linux/io_uring.h  |  1 +
+ io_uring/fs.c                  | 53 +++++++++++++++++++++++++++++
+ io_uring/fs.h                  |  3 ++
+ io_uring/opdef.c               |  8 +++++
+ kernel/bpf/inode.c             |  4 +--
+ mm/filemap.c                   |  8 ++---
+ mm/shmem.c                     |  6 ++--
+ net/unix/af_unix.c             |  4 +--
+ 53 files changed, 310 insertions(+), 96 deletions(-)
+
+-- 
+2.25.1
+
+
