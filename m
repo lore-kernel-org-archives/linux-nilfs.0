@@ -1,66 +1,53 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH 07/11] vfs: add nowait parameter for file_accessed()
-Date: Sun, 27 Aug 2023 22:32:20 +0100
-Message-ID: <ZOvA5DJDZN0FRymp@casper.infradead.org>
-References: <20230827132835.1373581-1-hao.xu@linux.dev>
- <20230827132835.1373581-8-hao.xu@linux.dev>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 01/30] block: also call ->open for incremental
+ partition opens
+Date: Mon, 28 Aug 2023 14:09:40 +0200
+Message-ID: <20230828120940.GB10552@lst.de>
+References: <20230608110258.189493-1-hch@lst.de> <20230608110258.189493-2-hch@lst.de> <20230825024457.GD95084@ZenIV>
 Mime-Version: 1.0
-Return-path: <bpf+bounces-8814-glkb-bpf=m.gmane-mx.org@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=/6hpsLsV03ieW4vELbhOk4pxiCIUuyn6Bpw1V8QuWjA=; b=vTYL9F6nmyMC1z4vgUQ57UMuze
-	c8bgt9vFOKWzPspRsbeTFLgLHz/hKRnLtd9UWTyKshqJF7eN4C3F+EMjcufK9pmtU6JnMc8dQv1Vt
-	5InC4HIkUznFa/hnNRczUUX7xHbrfZD4svYR9Kg0wslB46dSko8l2iAdkLRH/H5iWuiyt8iN5XazN
-	QityxWl2yb3p6DSle3T84m2jiGMPG15FtuhdmZtjHlUbcKD8n1NBcGDOexBbj8JBeLDTA1BEKmInL
-	888FPoRnfrZ00U1GiFcxw/e4IZGsn0ijlmA9d45AXC5VifFlQ9hZQtQ/XxGEdq6/5qdn+lFw1Ut3Y
-	+YmC6jBQ==;
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Subscribe: <mailto:bpf+subscribe@vger.kernel.org>
-List-Unsubscribe: <mailto:bpf+unsubscribe@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20230827132835.1373581-8-hao.xu@linux.dev>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Hao Xu <hao.xu@linux.dev>
-Cc: io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Dominique Martinet <asmadeus@codewreck.org>, Pavel Begunkov <asml.silence@gmail.com>, Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, Dave Chinner <david@fromorbit.com>, "Darrick J . Wong" <djwong@kernel.org>, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cachefs@redhat.com, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-unionfs@vger.kernel.org, bpf@vger.kernel.org, netdev@vger.kernel.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, codalist@coda.cs.cmu.edu, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, devel@lists.orangefs.
+Return-path: <linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:In-Reply-To:MIME-Version:References:
+	Message-ID:Subject:Cc:To:From:Date:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=zPTpIdXfaVdwmiCVg4v8U9XdCPc/NV9nuRnAhZUD6XY=; b=dS+Kze7b8oO7Ti
+	NENi8uNxKfNMR4SV3G8cDyjmg9b7nKsr2g84SyCxqslfTu+5E1vNKw3birtg6OJRUiQWQkL7o2zFi
+	RsXMHCLIbn2hMuvFQo3Nxrd1hcpMeBbV3jgHuYXas8Phn+J02yJ4InLmyiYAM2ANdMHNcXwJZIlVT
+	9NYsQFyZHwJYBbf/DBBSxFTVTcITohVP47C1OKTFQjroHaRLMjIBfn8GVv/KiTd0yx3fzrxLEf6PY
+	5YIzlhuKCkW7Lq1rlzb0S16ajDo2rDrTaHYfg+SLAVTJmy4qquHdlF+yF1Y/iXGUvJ31yfjDMvZfe
+	z3k/rCyKfnZBxoQ30xDA==;
+Content-Disposition: inline
+In-Reply-To: <20230825024457.GD95084@ZenIV>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-um/>
+List-Post: <mailto:linux-um@lists.infradead.org>
+List-Help: <mailto:linux-um-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-um>,
+ <mailto:linux-um-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-um" <linux-um-bounces@lists.infradead.org>
+Errors-To: linux-um-bounces+glud-user-mode-linux-devel=m.gmane-mx.org@lists.infradead.org
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Richard Weinberger <richard@nod.at>, Josef Bacik <josef@toxicpanda.com>, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Phillip Potter <phil@philpotter.co.uk>, Coly Li <colyli@suse.de>, Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, Christian Brauner <brauner@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@ucw.cz>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-um@lists.infradead.org, linux-scsi@vger.kernel.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-nilfs@vger.kernel.org
 
-On Sun, Aug 27, 2023 at 09:28:31PM +0800, Hao Xu wrote:
-> From: Hao Xu <howeyxu@tencent.com>
+On Fri, Aug 25, 2023 at 03:44:57AM +0100, Al Viro wrote:
+> That got me curious about the ->bd_openers - do we need it atomic?
+> Most of the users (and all places that do modifications) are
+> under ->open_mutex; the only exceptions are
+> 	* early sync logics in blkdev_put(); it's explicitly racy -
+> see the comment there.
+> 	* callers of disk_openers() in loop and nbd (the ones in
+> zram are under ->open_mutex).  There's driver-private exclusion
+> around those, but in any case - READ_ONCE() is no worse than
+> atomic_read() in those cases.
 > 
-> Add a boolean parameter for file_accessed() to support nowait semantics.
-> Currently it is true only with io_uring as its initial caller.
+> Is there something subtle I'm missing here?
 
-So why do we need to do this as part of this series?  Apparently it
-hasn't caused any problems for filemap_read().
-
-> +++ b/mm/filemap.c
-> @@ -2723,7 +2723,7 @@ ssize_t filemap_read(struct kiocb *iocb, struct iov_iter *iter,
->  		folio_batch_init(&fbatch);
->  	} while (iov_iter_count(iter) && iocb->ki_pos < isize && !error);
->  
-> -	file_accessed(filp);
-> +	file_accessed(filp, false);
->  
->  	return already_read ? already_read : error;
->  }
-> @@ -2809,7 +2809,7 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
->  		retval = kiocb_write_and_wait(iocb, count);
->  		if (retval < 0)
->  			return retval;
-> -		file_accessed(file);
-> +		file_accessed(file, false);
->  
->  		retval = mapping->a_ops->direct_IO(iocb, iter);
->  		if (retval >= 0) {
-> @@ -2978,7 +2978,7 @@ ssize_t filemap_splice_read(struct file *in, loff_t *ppos,
->  
->  out:
->  	folio_batch_release(&fbatch);
-> -	file_accessed(in);
-> +	file_accessed(in, false);
->  
->  	return total_spliced ? total_spliced : error;
->  }
-
+No.  When I had to add unlocked readers I did the READ_ONCE initially,
+but reviewers though the atomic_t would be better.  I didn't really feel
+like arguing so went with this version.
