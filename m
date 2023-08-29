@@ -1,135 +1,68 @@
 From: Hao Xu <hao.xu@linux.dev>
-Subject: Re: [PATCH 02/11] xfs: add NOWAIT semantics for readdir
-Date: Tue, 29 Aug 2023 15:41:43 +0800
-Message-ID: <ca10040f-b7fa-7c43-1c89-6706d13b2747@linux.dev>
+Subject: Re: [PATCH 07/11] vfs: add nowait parameter for
+ file_accessed()
+Date: Tue, 29 Aug 2023 15:46:13 +0800
+Message-ID: <c728bf3f-d9db-4865-8473-058b26c11c06@linux.dev>
 References: <20230827132835.1373581-1-hao.xu@linux.dev>
- <20230827132835.1373581-3-hao.xu@linux.dev>
- <ZOu1xYS6LRmPgEiV@casper.infradead.org>
+ <20230827132835.1373581-8-hao.xu@linux.dev>
+ <ZOvA5DJDZN0FRymp@casper.infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev+bounces-31157-gl-netdev-2=m.gmane-mx.org@vger.kernel.org>
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ d=sourceforge.net; s=x; h=Content-Transfer-Encoding:Content-Type:In-Reply-To:
+ From:References:Cc:To:Subject:MIME-Version:Date:Message-ID:Sender:Reply-To:
+ Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+ Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+ List-Subscribe:List-Post:List-Owner:List-Archive;
+ bh=WP3nN15JcnIGn7wEIePFcf6LVOuPCzTP32Hu73YPviw=; b=lELz5V2UNXZkNPuo1PMrIwKlW8
+ r9XKoWafG17zyTHCYLa7HpqdNB0ZiTVlrYBe9mxFpGtrhHLyHkloDWIbU3J+zYpu00L0PjUGchO/g
+ irhhkbb3fHOxMH4ZHDJafTY6OZlxi9Cp9LKi2j8ng8NtTJpfP9aiAnO+e3plqPbW/4f0=;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=sf.net; s=x
+ ;
+ h=Content-Transfer-Encoding:Content-Type:In-Reply-To:From:References:Cc:To:
+ Subject:MIME-Version:Date:Message-ID:Sender:Reply-To:Content-ID:
+ Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+ :Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+ List-Post:List-Owner:List-Archive;
+ bh=WP3nN15JcnIGn7wEIePFcf6LVOuPCzTP32Hu73YPviw=; b=YxhIpuXzp1IXjPGUdAfE3W6NI4
+ ii4spTNXg+3/ast9wf3tDJ8ZZBGjd/aDtze4B+7tsYKLUqYsZJMERaT6fjXUr6zAo6ok+qfYE09gF
+ DwpkxrorSXcITrgEo59q5dQ3bSqoBhjSwBJXI1fEs3KGpjjFH507/CaXnMVC+uu+xkH0=;
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1693294923;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kzCYK+m1dXoYq1GdX9wRq/xLcjMjzBwHZbogX1zaiXI=;
-	b=wx9qXfUOb6FlguPiqwy6R82+yQxWta9+fR66YAQ2/1ZdnqJnQPp1kHU4jR8nRlngim3iOe
-	HThmnzNEUSaEuQwHiVi+WxF88JyUG2K+H0WcvTm70cW04LSIUXyP6AZ74VPb7aBxP9rojs
-	L1LrBvpa76A1LVLwfY5LHU6MjnCVZUs=
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Subscribe: <mailto:netdev+subscribe@vger.kernel.org>
-List-Unsubscribe: <mailto:netdev+unsubscribe@vger.kernel.org>
+ t=1693295192;
+ h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+ to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+ content-transfer-encoding:content-transfer-encoding:
+ in-reply-to:in-reply-to:references:references;
+ bh=WP3nN15JcnIGn7wEIePFcf6LVOuPCzTP32Hu73YPviw=;
+ b=ngCnTfY2JVdB7UbTvhBxaE99SXYf68v1UOzv1oD4Q4J5vfDrhRAI+RinhUow/HJ/SENsM3
+ ljkpELTTwPgx4fdS1Wsi0U6qZJzH3KEWBSpgNNnZhZo9Ah7qcNPQhnBWxHwyd9Ba5JlzW/
+ R7n89/DPeOOyD3xIKShExED+0gXsmv8=
 Content-Language: en-US
-In-Reply-To: <ZOu1xYS6LRmPgEiV@casper.infradead.org>
+In-Reply-To: <ZOvA5DJDZN0FRymp@casper.infradead.org>
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>, 
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 Content-Type: text/plain; charset="us-ascii"; format="flowed"
 To: Matthew Wilcox <willy@infradead.org>
-Cc: io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Dominique Martinet <asmadeus@codewreck.org>, Pavel Begunkov <asml.silence@gmail.com>, Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, Dave Chinner <david@fromorbit.com>, "Darrick J . Wong" <djwong@kernel.org>, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cachefs@redhat.com, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-unionfs@vger.kernel.org, bpf@vger.kernel.org, netdev@vger.kernel.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, codalist@coda.cs.cmu.edu, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, devel@lists.orangefs.org
+Cc: Wanpeng Li <wanpengli@tencent.com>, "Darrick J . Wong" <djwong@kernel.org>, Dominique Martinet <asmadeus@codewreck.org>, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, codalist@coda.cs.cmu.edu, cluster-devel@redhat.com, linux-cachefs@redhat.com, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, linux-cifs@vger.kernel.org, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-block@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>, netdev@vger.kernel.org, samba-technical@lists.samba.org, linux-unionfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kerne
 
-On 8/28/23 04:44, Matthew Wilcox wrote:
-> On Sun, Aug 27, 2023 at 09:28:26PM +0800, Hao Xu wrote:
->> +++ b/fs/xfs/libxfs/xfs_da_btree.c
->> @@ -2643,16 +2643,32 @@ xfs_da_read_buf(
->>   	struct xfs_buf_map	map, *mapp = &map;
->>   	int			nmap = 1;
->>   	int			error;
->> +	int			buf_flags = 0;
->>   
->>   	*bpp = NULL;
->>   	error = xfs_dabuf_map(dp, bno, flags, whichfork, &mapp, &nmap);
->>   	if (error || !nmap)
->>   		goto out_free;
->>   
->> +	/*
->> +	 * NOWAIT semantics mean we don't wait on the buffer lock nor do we
->> +	 * issue IO for this buffer if it is not already in memory. Caller will
->> +	 * retry. This will return -EAGAIN if the buffer is in memory and cannot
->> +	 * be locked, and no buffer and no error if it isn't in memory.  We
->> +	 * translate both of those into a return state of -EAGAIN and *bpp =
->> +	 * NULL.
->> +	 */
+On 8/28/23 05:32, Matthew Wilcox wrote:
+> On Sun, Aug 27, 2023 at 09:28:31PM +0800, Hao Xu wrote:
+>> From: Hao Xu <howeyxu@tencent.com>
+>>
+>> Add a boolean parameter for file_accessed() to support nowait semantics.
+>> Currently it is true only with io_uring as its initial caller.
 > 
-> I would not include this comment.
-
-No strong comment here, since this patch is mostly from Dave, it's
-better if Dave can ack this.
-
-> 
->> +	if (flags & XFS_DABUF_NOWAIT)
->> +		buf_flags |= XBF_TRYLOCK | XBF_INCORE;
->>   	error = xfs_trans_read_buf_map(mp, tp, mp->m_ddev_targp, mapp, nmap, 0,
->>   			&bp, ops);
-> 
-> what tsting did you do with this?  Because you don't actually _use_
-> buf_flags anywhere in this patch (presumably they should be the
-> sixth argument to xfs_trans_read_buf_map() instead of 0).  So I can only
-> conclude that either you didn't test, or your testing was inadequate.
+> So why do we need to do this as part of this series?  Apparently it
+> hasn't caused any problems for filemap_read().
 > 
 
-
-The tests I've done are listed in the cover-letter, this one is missed, 
-the tricky place is it's hard to get this kind of mistake since it runs
-well without nowait logic...I'll fix it in next version.
-
->>   	if (error)
->>   		goto out_free;
->> +	if (!bp) {
->> +		ASSERT(flags & XFS_DABUF_NOWAIT);
-> 
-> I don't think this ASSERT is appropriate.
-> 
->> @@ -391,10 +401,17 @@ xfs_dir2_leaf_getdents(
->>   				bp = NULL;
->>   			}
->>   
->> -			if (*lock_mode == 0)
->> -				*lock_mode = xfs_ilock_data_map_shared(dp);
->> +			if (*lock_mode == 0) {
->> +				*lock_mode =
->> +					xfs_ilock_data_map_shared_generic(dp,
->> +					ctx->flags & DIR_CONTEXT_F_NOWAIT);
->> +				if (!*lock_mode) {
->> +					error = -EAGAIN;
->> +					break;
->> +				}
->> +			}
-> 
-> 'generic' doesn't seem like a great suffix to mean 'takes nowait flag'.
-> And this is far too far indented.
-> 
-> 			xfs_dir2_lock(dp, ctx, lock_mode);
-> 
-> with:
-> 
-> STATIC void xfs_dir2_lock(struct xfs_inode *dp, struct dir_context *ctx,
-> 		unsigned int lock_mode)
-> {
-> 	if (*lock_mode)
-> 		return;
-> 	if (ctx->flags & DIR_CONTEXT_F_NOWAIT)
-> 		return xfs_ilock_data_map_shared_nowait(dp);
-> 	return xfs_ilock_data_map_shared(dp);
-> }
-> 
-> ... which I think you can use elsewhere in this patch (reformat it to
-> XFS coding style, of course).  And then you don't need
-> xfs_ilock_data_map_shared_generic().
-> 
-
-How about rename xfs_ilock_data_map_shared() to 
-xfs_ilock_data_map_block() and rename 
-xfs_ilock_data_map_shared_generic() to xfs_ilock_data_map_shared()?
-
-STATIC void xfs_ilock_data_map_shared(struct xfs_inode *dp, struct 
-dir_context *ctx, unsigned int lock_mode)
-{
-  	if (*lock_mode)
-  		return;
-  	if (ctx->flags & DIR_CONTEXT_F_NOWAIT)
-  		return xfs_ilock_data_map_shared_nowait(dp);
-  	return xfs_ilock_data_map_shared_block(dp);
-}
-
-
-
+We need this parameter to indicate if nowait semantics should be 
+enforced in touch_atime(), There are locks and maybe IOs in it.
