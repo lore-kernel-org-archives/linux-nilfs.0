@@ -1,82 +1,135 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v3 0/29] block: Make blkdev_get_by_*() return
-	handle
-Date: Mon, 28 Aug 2023 19:07:44 +0200
-Message-ID: <20230828170744.iifdmaw732cfiauf@quack3>
-References: <20230818123232.2269-1-jack@suse.cz>
-	<20230825-hubraum-gedreht-8c5c4db9330a@brauner>
+From: Hao Xu <hao.xu@linux.dev>
+Subject: Re: [PATCH 02/11] xfs: add NOWAIT semantics for readdir
+Date: Tue, 29 Aug 2023 15:41:43 +0800
+Message-ID: <ca10040f-b7fa-7c43-1c89-6706d13b2747@linux.dev>
+References: <20230827132835.1373581-1-hao.xu@linux.dev>
+ <20230827132835.1373581-3-hao.xu@linux.dev>
+ <ZOu1xYS6LRmPgEiV@casper.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1693242465;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	mime-version:mime-version:content-type:content-type:
-	in-reply-to:in-reply-to:references:references;
-	bh=gY+yGRa61TK2BR8Nw1XPStAseZID7tr6EzNodmZtwGI=;
-	b=qVtknFwaytxobpauxbbKFuuIVi6tPH4Iq6U6De70imbcWuGOxhftHNb/4FbPSlc5GK5oK7
-	GshsV6S1hXqpxSKPutaEa7H9BjX/0wslT8a/D4qnl6I13zhL54OxmZm3biLLUgjj3B0284
-	RPao+ZPH1kv8DfDq9EfFHRPOBMpXacI=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1693242465;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	mime-version:mime-version:content-type:content-type:
-	in-reply-to:in-reply-to:references:references;
-	bh=gY+yGRa61TK2BR8Nw1XPStAseZID7tr6EzNodmZtwGI=;
-	b=R3UkEJ5CJtN+ADS2q+nxkKoBRTSfFifpdVN9hgBj3Kx2evg21jSoeC6uq7LeWXoMGsRfiN
-	pZDyCc1pRe5jtEDQ==
-Content-Disposition: inline
-In-Reply-To: <20230825-hubraum-gedreht-8c5c4db9330a@brauner>
+Return-path: <netdev+bounces-31157-gl-netdev-2=m.gmane-mx.org@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1693294923;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=kzCYK+m1dXoYq1GdX9wRq/xLcjMjzBwHZbogX1zaiXI=;
+	b=wx9qXfUOb6FlguPiqwy6R82+yQxWta9+fR66YAQ2/1ZdnqJnQPp1kHU4jR8nRlngim3iOe
+	HThmnzNEUSaEuQwHiVi+WxF88JyUG2K+H0WcvTm70cW04LSIUXyP6AZ74VPb7aBxP9rojs
+	L1LrBvpa76A1LVLwfY5LHU6MjnCVZUs=
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Christian Brauner <brauner-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Dave Kleikamp <shaggy-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jfs-discussion-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <djwong-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Joseph Qi <joseph.qi-KPsoFbNs7GizrGE5bRqYAgC/G2K4zDHf@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Jack Wang <jinpu.wang-vEVw2sk9H7kAvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sergey Senozhatsky <senozhatsky-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Gao Xiang <xiang-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christian Borntraeger <borntraeger-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sven Schnelle <svens-tEXmvtCZX7AybS5Ee8rs3A@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chao Yu <chao-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joern Engel <joern-o6zPIXG8fmPj4SYmN/TMmA@public.gmane.org>, re
+List-Subscribe: <mailto:netdev+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:netdev+unsubscribe@vger.kernel.org>
+Content-Language: en-US
+In-Reply-To: <ZOu1xYS6LRmPgEiV@casper.infradead.org>
+Content-Type: text/plain; charset="us-ascii"; format="flowed"
+To: Matthew Wilcox <willy@infradead.org>
+Cc: io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Dominique Martinet <asmadeus@codewreck.org>, Pavel Begunkov <asml.silence@gmail.com>, Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, Dave Chinner <david@fromorbit.com>, "Darrick J . Wong" <djwong@kernel.org>, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cachefs@redhat.com, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-unionfs@vger.kernel.org, bpf@vger.kernel.org, netdev@vger.kernel.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, codalist@coda.cs.cmu.edu, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, devel@lists.orangefs.org
 
-On Fri 25-08-23 15:32:47, Christian Brauner wrote:
-> On Wed, Aug 23, 2023 at 12:48:11PM +0200, Jan Kara wrote:
-> > Hello,
-> > 
-> > this is a v3 of the patch series which implements the idea of blkdev_get_by_*()
-> > calls returning bdev_handle which is then passed to blkdev_put() [1]. This
-> > makes the get and put calls for bdevs more obviously matching and allows us to
-> > propagate context from get to put without having to modify all the users
-> > (again!). In particular I need to propagate used open flags to blkdev_put() to
-> > be able count writeable opens and add support for blocking writes to mounted
-> > block devices. I'll send that series separately.
-> > 
-> > The series is based on Christian's vfs tree as of today as there is quite
-> > some overlap. Patches have passed some reasonable testing - I've tested block
-> > changes, md, dm, bcache, xfs, btrfs, ext4, swap. More testing or review is
-> > always welcome. Thanks! I've pushed out the full branch to:
-> > 
-> > git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdev_handle
-> > 
-> > to ease review / testing. Since there were not many comments for v2 and
-> > Christoph has acked the series I think we should start discussing how to merge
-> > the series. Most collisions with this series seem to happen in the filesystems
-> > area so VFS tree would seem as the least painful way to merge this. Jens,
+On 8/28/23 04:44, Matthew Wilcox wrote:
+> On Sun, Aug 27, 2023 at 09:28:26PM +0800, Hao Xu wrote:
+>> +++ b/fs/xfs/libxfs/xfs_da_btree.c
+>> @@ -2643,16 +2643,32 @@ xfs_da_read_buf(
+>>   	struct xfs_buf_map	map, *mapp = &map;
+>>   	int			nmap = 1;
+>>   	int			error;
+>> +	int			buf_flags = 0;
+>>   
+>>   	*bpp = NULL;
+>>   	error = xfs_dabuf_map(dp, bno, flags, whichfork, &mapp, &nmap);
+>>   	if (error || !nmap)
+>>   		goto out_free;
+>>   
+>> +	/*
+>> +	 * NOWAIT semantics mean we don't wait on the buffer lock nor do we
+>> +	 * issue IO for this buffer if it is not already in memory. Caller will
+>> +	 * retry. This will return -EAGAIN if the buffer is in memory and cannot
+>> +	 * be locked, and no buffer and no error if it isn't in memory.  We
+>> +	 * translate both of those into a return state of -EAGAIN and *bpp =
+>> +	 * NULL.
+>> +	 */
 > 
-> I really do like this series especially struct bdev_handle and moving
-> the mode bits in there. I'll happily take this. So far there have only
-> been minor things that can easily be fixed.
+> I would not include this comment.
 
-Thanks. Since Al is fine with just doing a potential conversion to 'struct
-file' as a handle on top of this series (it will be dumb Coccinelle
-replacement) I think we can go ahead with the series as is. As you said
-there will be some conflicts in btrfs and I've learned about f2fs conflicts
-as well so I can rebase & repost the series on top of rc1 to make life
-easier for you.
+No strong comment here, since this patch is mostly from Dave, it's
+better if Dave can ack this.
 
-								Honza
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+> 
+>> +	if (flags & XFS_DABUF_NOWAIT)
+>> +		buf_flags |= XBF_TRYLOCK | XBF_INCORE;
+>>   	error = xfs_trans_read_buf_map(mp, tp, mp->m_ddev_targp, mapp, nmap, 0,
+>>   			&bp, ops);
+> 
+> what tsting did you do with this?  Because you don't actually _use_
+> buf_flags anywhere in this patch (presumably they should be the
+> sixth argument to xfs_trans_read_buf_map() instead of 0).  So I can only
+> conclude that either you didn't test, or your testing was inadequate.
+> 
+
+
+The tests I've done are listed in the cover-letter, this one is missed, 
+the tricky place is it's hard to get this kind of mistake since it runs
+well without nowait logic...I'll fix it in next version.
+
+>>   	if (error)
+>>   		goto out_free;
+>> +	if (!bp) {
+>> +		ASSERT(flags & XFS_DABUF_NOWAIT);
+> 
+> I don't think this ASSERT is appropriate.
+> 
+>> @@ -391,10 +401,17 @@ xfs_dir2_leaf_getdents(
+>>   				bp = NULL;
+>>   			}
+>>   
+>> -			if (*lock_mode == 0)
+>> -				*lock_mode = xfs_ilock_data_map_shared(dp);
+>> +			if (*lock_mode == 0) {
+>> +				*lock_mode =
+>> +					xfs_ilock_data_map_shared_generic(dp,
+>> +					ctx->flags & DIR_CONTEXT_F_NOWAIT);
+>> +				if (!*lock_mode) {
+>> +					error = -EAGAIN;
+>> +					break;
+>> +				}
+>> +			}
+> 
+> 'generic' doesn't seem like a great suffix to mean 'takes nowait flag'.
+> And this is far too far indented.
+> 
+> 			xfs_dir2_lock(dp, ctx, lock_mode);
+> 
+> with:
+> 
+> STATIC void xfs_dir2_lock(struct xfs_inode *dp, struct dir_context *ctx,
+> 		unsigned int lock_mode)
+> {
+> 	if (*lock_mode)
+> 		return;
+> 	if (ctx->flags & DIR_CONTEXT_F_NOWAIT)
+> 		return xfs_ilock_data_map_shared_nowait(dp);
+> 	return xfs_ilock_data_map_shared(dp);
+> }
+> 
+> ... which I think you can use elsewhere in this patch (reformat it to
+> XFS coding style, of course).  And then you don't need
+> xfs_ilock_data_map_shared_generic().
+> 
+
+How about rename xfs_ilock_data_map_shared() to 
+xfs_ilock_data_map_block() and rename 
+xfs_ilock_data_map_shared_generic() to xfs_ilock_data_map_shared()?
+
+STATIC void xfs_ilock_data_map_shared(struct xfs_inode *dp, struct 
+dir_context *ctx, unsigned int lock_mode)
+{
+  	if (*lock_mode)
+  		return;
+  	if (ctx->flags & DIR_CONTEXT_F_NOWAIT)
+  		return xfs_ilock_data_map_shared_nowait(dp);
+  	return xfs_ilock_data_map_shared_block(dp);
+}
+
+
+
