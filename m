@@ -1,86 +1,52 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH 02/11] xfs: add NOWAIT semantics for readdir
-Date: Tue, 29 Aug 2023 14:05:10 +0100
-Message-ID: <ZO3tBqJLtRwSYrEr@casper.infradead.org>
-References: <20230827132835.1373581-1-hao.xu@linux.dev>
- <20230827132835.1373581-3-hao.xu@linux.dev>
- <ZOu1xYS6LRmPgEiV@casper.infradead.org>
- <ca10040f-b7fa-7c43-1c89-6706d13b2747@linux.dev>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH v2 08/92] fs: new helper:
+ simple_rename_timestamp
+Date: Wed, 30 Aug 2023 01:19:17 +0100
+Message-ID: <20230830001917.GC461907@ZenIV>
+References: <20230705185812.579118-1-jlayton@kernel.org>
+ <20230705185812.579118-3-jlayton@kernel.org>
 Mime-Version: 1.0
-Return-path: <bpf+bounces-8916-glkb-bpf=m.gmane-mx.org@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=RchKoATVAdQvPJfSjQ7igQ4w+5FVPwMefhSLf5vYpSI=; b=Q3QmRgXTehCOZCVueX+FS2Az5N
-	PVqmWnEC5SOyltZJNMDkbuPj3BuxIKobdTkUGJdkwt9An23qab7RWIeUTJvkRcM5ZQw7A9VajHpfv
-	K7r2l3ZZ2pGC+tetoYQU12TmTvlZI3sm3ayVKtCD8x7/yd2j9SuUz7gnHbMb8LXGAJC6qfT96aNHD
-	/+KAN9szQKpq1/b+zh8evtWeBszURne3cpQtIIZ5DUWss+rP/RkNTx5Y/tCCASZPZaSLUEyAkYJWx
-	0SrCGJoWwn5s3UmnWTZbObVE6DrneAPDreiurlPZ6M22SpYEkwQtVmJFqXgm29PIZAfXouLOFvP7I
-	44OUuuBQ==;
+Return-path: <cluster-devel-bounces@redhat.com>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1693354838;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=zZxZUyqerb7julFXQ03Jti/01WDk420m8vSi4C3S7Zg=;
+	b=WiuPyaT2ShS6GFlA9rYyQhd6IKjJqwQbO3IF3l3DORTbsgtWqiKzRrzD7KInSnm6W4VvPB
+	xpfVub4Dxv4sXbEbUmY9A7FoCgL1q5MQZivH6+Q7eYYS4/P+UAtiFzE3CLQr1WN1S9auYg
+	oWqteg9jwomQha86GivhrksPylL39cs=
+In-Reply-To: <20230705185812.579118-3-jlayton@kernel.org>
 List-Id: <linux-nilfs.vger.kernel.org>
-List-Subscribe: <mailto:bpf+subscribe@vger.kernel.org>
-List-Unsubscribe: <mailto:bpf+unsubscribe@vger.kernel.org>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/cluster-devel>, 
+ <mailto:cluster-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/cluster-devel/>
+List-Post: <mailto:cluster-devel@redhat.com>
+List-Help: <mailto:cluster-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/cluster-devel>,
+ <mailto:cluster-devel-request@redhat.com?subject=subscribe>
+Errors-To: cluster-devel-bounces@redhat.com
+Sender: "Cluster-devel" <cluster-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <ca10040f-b7fa-7c43-1c89-6706d13b2747@linux.dev>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Hao Xu <hao.xu@linux.dev>
-Cc: io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Dominique Martinet <asmadeus@codewreck.org>, Pavel Begunkov <asml.silence@gmail.com>, Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, Dave Chinner <david@fromorbit.com>, "Darrick J . Wong" <djwong@kernel.org>, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cachefs@redhat.com, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-unionfs@vger.kernel.org, bpf@vger.kernel.org, netdev@vger.kernel.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, codalist@coda.cs.cmu.edu, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-mm@kvack.org, linux-nilfs@vger.kernel.org, devel@lists.orangefs.
+To: Jeff Layton <jlayton@kernel.org>
+Cc: lucho@ionkov.net, rafael@kernel.org, djwong@kernel.org, al@alarsen.net, cmllamas@google.com, andrii@kernel.org, hughd@google.com, john.johansen@canonical.com, agordeev@linux.ibm.com, hch@lst.de, hubcap@omnibond.com, pc@manguebit.com, linux-xfs@vger.kernel.org, bvanassche@acm.org, jeffxu@chromium.org, mpe@ellerman.id.au, john@keeping.me.uk, yi.zhang@huawei.com, jmorris@namei.org, christophe.leroy@csgroup.eu, code@tyhicks.com, stern@rowland.harvard.edu, borntraeger@linux.ibm.com, devel@lists.orangefs.org, mirimmad17@gmail.com, sprasad@microsoft.com, jaharkes@cs.cmu.edu, linux-um@lists.infradead.org, npiggin@gmail.com, jlbec@evilplan.org, ericvh@kernel.org, surenb@google.com, trond.myklebust@hammerspace.com, anton@tuxera.com, brauner@kernel.org, wsa+renesas@sang-engineering.com, gregkh@linuxfoundation.org, stephen.smalley.work@gmail.com, linux-usb@vger.kernel.org, linux-ker
 
-On Tue, Aug 29, 2023 at 03:41:43PM +0800, Hao Xu wrote:
-> On 8/28/23 04:44, Matthew Wilcox wrote:
-> > > @@ -391,10 +401,17 @@ xfs_dir2_leaf_getdents(
-> > >   				bp = NULL;
-> > >   			}
-> > > -			if (*lock_mode == 0)
-> > > -				*lock_mode = xfs_ilock_data_map_shared(dp);
-> > > +			if (*lock_mode == 0) {
-> > > +				*lock_mode =
-> > > +					xfs_ilock_data_map_shared_generic(dp,
-> > > +					ctx->flags & DIR_CONTEXT_F_NOWAIT);
-> > > +				if (!*lock_mode) {
-> > > +					error = -EAGAIN;
-> > > +					break;
-> > > +				}
-> > > +			}
-> > 
-> > 'generic' doesn't seem like a great suffix to mean 'takes nowait flag'.
-> > And this is far too far indented.
-> > 
-> > 			xfs_dir2_lock(dp, ctx, lock_mode);
-> > 
-> > with:
-> > 
-> > STATIC void xfs_dir2_lock(struct xfs_inode *dp, struct dir_context *ctx,
-> > 		unsigned int lock_mode)
-> > {
-> > 	if (*lock_mode)
-> > 		return;
-> > 	if (ctx->flags & DIR_CONTEXT_F_NOWAIT)
-> > 		return xfs_ilock_data_map_shared_nowait(dp);
-> > 	return xfs_ilock_data_map_shared(dp);
-> > }
-> > 
-> > ... which I think you can use elsewhere in this patch (reformat it to
-> > XFS coding style, of course).  And then you don't need
-> > xfs_ilock_data_map_shared_generic().
-> 
-> How about rename xfs_ilock_data_map_shared() to xfs_ilock_data_map_block()
-> and rename xfs_ilock_data_map_shared_generic() to
-> xfs_ilock_data_map_shared()?
-> 
-> STATIC void xfs_ilock_data_map_shared(struct xfs_inode *dp, struct
-> dir_context *ctx, unsigned int lock_mode)
-> {
->  	if (*lock_mode)
->  		return;
->  	if (ctx->flags & DIR_CONTEXT_F_NOWAIT)
->  		return xfs_ilock_data_map_shared_nowait(dp);
->  	return xfs_ilock_data_map_shared_block(dp);
-> }
+On Wed, Jul 05, 2023 at 02:58:11PM -0400, Jeff Layton wrote:
 
-xfs_ilock_data_map_shared() is used for a lot of things which are not
-directories.  I think a new function name is appropriate, and that
-function name should include the word 'dir' in it somewhere.
+> + * POSIX mandates that the old and new parent directories have their ctime and
+> + * mtime updated, and that inodes of @old_dentry and @new_dentry (if any), have
+> + * their ctime updated.
+
+APPLICATION USAGE
+Some implementations mark for update the last file status change timestamp
+of renamed files and some do not. Applications which make use of the
+last file status change timestamp may behave differently with respect
+to renamed files unless they are designed to allow for either behavior.
+
+So for children POSIX permits rather than mandates.  Doesn't really matter;
+Linux behaviour had been to touch ctime on children since way back, if
+not since the very beginning.
 
