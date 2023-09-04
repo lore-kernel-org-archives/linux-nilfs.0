@@ -1,45 +1,70 @@
-From: Christian Brauner <brauner@kernel.org>
-Subject: Re: [PATCH v6 00/11] io_uring getdents
-Date: Mon, 4 Sep 2023 11:57:30 +0200
-Message-ID: <20230904-butterbrot-aufraffen-db483c53eab5@brauner>
-References: <20230827132835.1373581-1-hao.xu@linux.dev>
+From: patchwork-bot+f2fs@kernel.org
+Subject: Re: [f2fs-dev] [PATCH 01/12] fs: export setup_bdev_super
+Date: Mon, 04 Sep 2023 18:11:09 +0000
+Message-ID: <169385106908.19669.10487789391922478483.git-patchwork-notify@kernel.org>
+References: <20230802154131.2221419-2-hch@lst.de>
 Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1693851069;
+        bh=IbVZF2DzXUAo2USMUCstH3jPxauU/LW0IcO2K6LFI4c=;
+        h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+        b=ia58bjh4p1fO0/CGw8J5Rs1Vo1j5XfRVWItHIwgeFn8rfWurveiBV3yEbnmuuMJ6P
+         0dX1mVg7Y6gTEzMa5Whxk59KrCLCTfB/PrZ0B0WolmEq4yaon1/tV+WLLLtJWG/xY0
+         dy6lOtzzaLf+Z8WVNjmVninPcHYRo12hw6zL2O/c4cmCpp6u16HlD9D5vcqdrB2v+e
+         G6QjlvbFoe94sLMMbEFQYkCueLzwZr9JAP+5uBddOS46Vz5NEj71bugNLgoSMI1ZvJ
+         oNh6Ld267EMxOtUHbtgOPq4KvFjwoTafZWVGD0Gm74c6TV4c+RltqlDafHZDDmUn00
+         hWR7BwYjNDGYg==
+In-Reply-To: <20230802154131.2221419-2-hch@lst.de>
+List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-cachefs-bounces@redhat.com>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1693821468;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=VnABkwF+s5o3g4Avbih8nHLo+kUbv2Y7SokewzXf+5I=;
-	b=dZPYZ2vLDkFU7A4sGX6rBmaodyShWOOqYskZ6TLQ6ViLYbD3C09tbHX5adDTgFErtLazM7
-	SRYwJvWYUMAiforATsESmkrQY/PC7ydJ5TZL8hDjeASR0yiX83puzPhrsBjqdvjhCH9Zot
-	M8eKShFv/rsDBkldiuriKF9MmIdP6zw=
-In-Reply-To: <20230827132835.1373581-1-hao.xu@linux.dev>
-List-Id: <linux-nilfs.vger.kernel.org>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/linux-cachefs>, 
- <mailto:linux-cachefs-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/linux-cachefs/>
-List-Post: <mailto:linux-cachefs@redhat.com>
-List-Help: <mailto:linux-cachefs-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/linux-cachefs>,
- <mailto:linux-cachefs-request@redhat.com?subject=subscribe>
-Errors-To: linux-cachefs-bounces@redhat.com
-Sender: "Linux-cachefs" <linux-cachefs-bounces@redhat.com>
-Content-Disposition: inline
-To: Hao Xu <hao.xu@linux.dev>
-Cc: Wanpeng Li <wanpengli@tencent.com>, "Darrick J . Wong" <djwong@kernel.org>, Dominique Martinet <asmadeus@codewreck.org>, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org, codalist@coda.cs.cmu.edu, cluster-devel@redhat.com, linux-cachefs@redhat.com, linux-ext4@vger.kernel.org, devel@lists.orangefs.org, linux-cifs@vger.kernel.org, ecryptfs@vger.kernel.org, linux-block@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-nfs@vger.kernel.org, netdev@vger.kernel.org, samba-technical@lists.samba.org, linux-unionfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, b
+To: Christoph Hellwig <hch@lst.de>
+Cc: viro@zeniv.linux.org.uk, brauner@kernel.org, axboe@kernel.dk, linux-block@vger.kernel.org, linux-nilfs@vger.kernel.org, jack@suse.cz, linux-fsdevel@vger.kernel.org, djwong@kernel.org, josef@toxicpanda.com, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, clm@fb.com, adilger.kernel@dilger.ca, jaegeuk@kernel.org, dsterba@suse.com, tytso@mit.edu, linux-ext4@vger.kernel.org, konishi.ryusuke@gmail.com, linux-btrfs@vger.kernel.org
 
-On Sun, Aug 27, 2023 at 09:28:24PM +0800, Hao Xu wrote:
+Hello:
 
-For the future it would be helpful to hold of on sending larger series
-that like this until a stable tag is out.
+This series was applied to jaegeuk/f2fs.git (dev)
+by Christian Brauner <brauner@kernel.org>:
 
-Right now this series is generating a bunch of merge conflicts because
-of all the changes to relevant codepaths that got merged. So either we
-have to resolve them to see whether things still make sense within the
-context of all the changed code or risk that stuff we comment is outdated.
+On Wed,  2 Aug 2023 17:41:20 +0200 you wrote:
+> We'll want to use setup_bdev_super instead of duplicating it in nilfs2.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  fs/super.c                 | 3 ++-
+>  include/linux/fs_context.h | 2 ++
+>  2 files changed, 4 insertions(+), 1 deletion(-)
+
+Here is the summary with links:
+  - [f2fs-dev,01/12] fs: export setup_bdev_super
+    https://git.kernel.org/jaegeuk/f2fs/c/cf6da236c27a
+  - [f2fs-dev,02/12] nilfs2: use setup_bdev_super to de-duplicate the mount code
+    https://git.kernel.org/jaegeuk/f2fs/c/c1e012ea9e83
+  - [f2fs-dev,03/12] btrfs: always open the device read-only in btrfs_scan_one_device
+    (no matching commit)
+  - [f2fs-dev,04/12] btrfs: open block devices after superblock creation
+    (no matching commit)
+  - [f2fs-dev,05/12] ext4: make the IS_EXT2_SB/IS_EXT3_SB checks more robust
+    https://git.kernel.org/jaegeuk/f2fs/c/4b41828be268
+  - [f2fs-dev,06/12] fs: use the super_block as holder when mounting file systems
+    (no matching commit)
+  - [f2fs-dev,07/12] fs: stop using get_super in fs_mark_dead
+    https://git.kernel.org/jaegeuk/f2fs/c/9c09a7cf6220
+  - [f2fs-dev,08/12] fs: export fs_holder_ops
+    https://git.kernel.org/jaegeuk/f2fs/c/7ecd0b6f5100
+  - [f2fs-dev,09/12] ext4: drop s_umount over opening the log device
+    https://git.kernel.org/jaegeuk/f2fs/c/6f5fc7de9885
+  - [f2fs-dev,10/12] ext4: use fs_holder_ops for the log device
+    https://git.kernel.org/jaegeuk/f2fs/c/8bed1783751f
+  - [f2fs-dev,11/12] xfs: drop s_umount over opening the log and RT devices
+    (no matching commit)
+  - [f2fs-dev,12/12] xfs use fs_holder_ops for the log and RT devices
+    (no matching commit)
+
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
+
