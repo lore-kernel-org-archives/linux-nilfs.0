@@ -1,66 +1,55 @@
 From: patchwork-bot+f2fs@kernel.org
-Subject: Re: [f2fs-dev] [PATCH 01/12] fs: export setup_bdev_super
-Date: Mon, 04 Sep 2023 18:11:09 +0000
-Message-ID: <169385106908.19669.10487789391922478483.git-patchwork-notify@kernel.org>
-References: <20230802154131.2221419-2-hch@lst.de>
+Subject: Re: [f2fs-dev] [PATCH v2 00/89] fs: new accessors for inode->i_ctime
+Date: Mon, 04 Sep 2023 18:11:08 +0000
+Message-ID: <169385106881.19669.3510550425397118597.git-patchwork-notify@kernel.org>
+References: <20230705185812.579118-1-jlayton@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <ecryptfs-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
         s=k20201202; t=1693851069;
-        bh=IbVZF2DzXUAo2USMUCstH3jPxauU/LW0IcO2K6LFI4c=;
+        bh=XLoa47KxRcps38wwidPhLGQHNoTClCg5nlSU2UvnxSI=;
         h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-        b=ia58bjh4p1fO0/CGw8J5Rs1Vo1j5XfRVWItHIwgeFn8rfWurveiBV3yEbnmuuMJ6P
-         0dX1mVg7Y6gTEzMa5Whxk59KrCLCTfB/PrZ0B0WolmEq4yaon1/tV+WLLLtJWG/xY0
-         dy6lOtzzaLf+Z8WVNjmVninPcHYRo12hw6zL2O/c4cmCpp6u16HlD9D5vcqdrB2v+e
-         G6QjlvbFoe94sLMMbEFQYkCueLzwZr9JAP+5uBddOS46Vz5NEj71bugNLgoSMI1ZvJ
-         oNh6Ld267EMxOtUHbtgOPq4KvFjwoTafZWVGD0Gm74c6TV4c+RltqlDafHZDDmUn00
-         hWR7BwYjNDGYg==
-In-Reply-To: <20230802154131.2221419-2-hch@lst.de>
+        b=XZUD/xT7QAeS9CwkDxlRqT/gRWQx0TmxhnpK0eSpl5TdmWje1tq2yvGH+3vZ2+BCT
+         jCeZ3PliMwtj4PI/YG14pbxznaZzZiLpm9dwOITxs9QimCVLsdgcY+tXdL8VHHo6Xo
+         yN1Gfw9YZmIyD8m43UuRL17+XTyHWk7a5WXn6oF5ggWXw6RS9S101xrDjQsPd+ZkCx
+         1CnWWAtQSCxTFtksNwHsJ+bzmvgeWVNV2ZHBFMah4WlUviOzbSHDkb9JT06sfaty1l
+         sU4YI09Bt9xI2xASG0RHXL6Mglihp9xk051QekITKNbwSi+f4qbVFzWkXoKrsHAJfp
+         TL/wsjYXrOQBg==
+In-Reply-To: <20230705185812.579118-1-jlayton@kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Christoph Hellwig <hch@lst.de>
-Cc: viro@zeniv.linux.org.uk, brauner@kernel.org, axboe@kernel.dk, linux-block@vger.kernel.org, linux-nilfs@vger.kernel.org, jack@suse.cz, linux-fsdevel@vger.kernel.org, djwong@kernel.org, josef@toxicpanda.com, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, clm@fb.com, adilger.kernel@dilger.ca, jaegeuk@kernel.org, dsterba@suse.com, tytso@mit.edu, linux-ext4@vger.kernel.org, konishi.ryusuke@gmail.com, linux-btrfs@vger.kernel.org
+To: Jeff Layton <jlayton@kernel.org>
+Cc: jk@ozlabs.org, arnd@arndb.de, mpe@ellerman.id.au, npiggin@gmail.com, christophe.leroy@csgroup.eu, hca@linux.ibm.com, gor@linux.ibm.com, agordeev@linux.ibm.com, borntraeger@linux.ibm.com, svens@linux.ibm.com, gregkh@linuxfoundation.org, arve@android.com, tkjos@android.com, maco@android.com, joel@joelfernandes.org, brauner@kernel.org, cmllamas@google.com, surenb@google.com, dennis.dalessandro@cornelisnetworks.com, jgg@ziepe.ca, leon@kernel.org, bwarrum@linux.ibm.com, rituagar@linux.ibm.com, ericvh@kernel.org, lucho@ionkov.net, asmadeus@codewreck.org, linux_oss@crudebyte.com, dsterba@suse.com, dhowells@redhat.com, marc.dionne@auristor.com, viro@zeniv.linux.org.uk, raven@themaw.net, luisbg@kernel.org, salah.triki@gmail.com, aivazian.tigran@gmail.com, ebiederm@xmission.com, kees
 
 Hello:
 
 This series was applied to jaegeuk/f2fs.git (dev)
 by Christian Brauner <brauner@kernel.org>:
 
-On Wed,  2 Aug 2023 17:41:20 +0200 you wrote:
-> We'll want to use setup_bdev_super instead of duplicating it in nilfs2.
+On Wed,  5 Jul 2023 14:58:09 -0400 you wrote:
+> v2:
+> - prepend patches to add missing ctime updates
+> - add simple_rename_timestamp helper function
+> - rename ctime accessor functions as inode_get_ctime/inode_set_ctime_*
+> - drop individual inode_ctime_set_{sec,nsec} helpers
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  fs/super.c                 | 3 ++-
->  include/linux/fs_context.h | 2 ++
->  2 files changed, 4 insertions(+), 1 deletion(-)
+> I've been working on a patchset to change how the inode->i_ctime is
+> accessed in order to give us conditional, high-res timestamps for the
+> ctime and mtime. struct timespec64 has unused bits in it that we can use
+> to implement this. In order to do that however, we need to wrap all
+> accesses of inode->i_ctime to ensure that bits used as flags are
+> appropriately handled.
+> 
+> [...]
 
 Here is the summary with links:
-  - [f2fs-dev,01/12] fs: export setup_bdev_super
-    https://git.kernel.org/jaegeuk/f2fs/c/cf6da236c27a
-  - [f2fs-dev,02/12] nilfs2: use setup_bdev_super to de-duplicate the mount code
-    https://git.kernel.org/jaegeuk/f2fs/c/c1e012ea9e83
-  - [f2fs-dev,03/12] btrfs: always open the device read-only in btrfs_scan_one_device
-    (no matching commit)
-  - [f2fs-dev,04/12] btrfs: open block devices after superblock creation
-    (no matching commit)
-  - [f2fs-dev,05/12] ext4: make the IS_EXT2_SB/IS_EXT3_SB checks more robust
-    https://git.kernel.org/jaegeuk/f2fs/c/4b41828be268
-  - [f2fs-dev,06/12] fs: use the super_block as holder when mounting file systems
-    (no matching commit)
-  - [f2fs-dev,07/12] fs: stop using get_super in fs_mark_dead
-    https://git.kernel.org/jaegeuk/f2fs/c/9c09a7cf6220
-  - [f2fs-dev,08/12] fs: export fs_holder_ops
-    https://git.kernel.org/jaegeuk/f2fs/c/7ecd0b6f5100
-  - [f2fs-dev,09/12] ext4: drop s_umount over opening the log device
-    https://git.kernel.org/jaegeuk/f2fs/c/6f5fc7de9885
-  - [f2fs-dev,10/12] ext4: use fs_holder_ops for the log device
-    https://git.kernel.org/jaegeuk/f2fs/c/8bed1783751f
-  - [f2fs-dev,11/12] xfs: drop s_umount over opening the log and RT devices
-    (no matching commit)
-  - [f2fs-dev,12/12] xfs use fs_holder_ops for the log and RT devices
-    (no matching commit)
+  - [f2fs-dev,v2,07/92] fs: add ctime accessors infrastructure
+    https://git.kernel.org/jaegeuk/f2fs/c/9b6304c1d537
+  - [f2fs-dev,v2,08/92] fs: new helper: simple_rename_timestamp
+    https://git.kernel.org/jaegeuk/f2fs/c/0c4767923ed6
+  - [f2fs-dev,v2,92/92] fs: rename i_ctime field to __i_ctime
+    https://git.kernel.org/jaegeuk/f2fs/c/13bc24457850
 
 You are awesome, thank you!
 -- 
