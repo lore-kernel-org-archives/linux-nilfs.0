@@ -1,105 +1,101 @@
-From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 03/26] ext4: Convert to folio_create_empty_buffers
-Date: Tue, 19 Sep 2023 05:51:12 +0100
-Message-ID: <20230919045135.3635437-4-willy@infradead.org>
+From: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: [PATCH 06/26] gfs2: Convert gfs2_getbuf() to folios
+Date: Tue, 19 Sep 2023 05:51:15 +0100
+Message-ID: <20230919045135.3635437-7-willy@infradead.org>
 References: <20230919045135.3635437-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=2AizBRSvoAwMQss5U4Q6NQxeqUYZOASj4Ibiz5oNoKg=; b=V2znE11QCzbIBsv3LQLxDWkQUk
-        BVxYADbK8OVLuf3nE1HOQqQse9s2EvFGORQoD/7LhWbIX2cSA77t3Xbl9ctOdtZxfybufcDiRWt1r
-        wDKrQx2nxuWEuoGZxd2kg+z3WXHcEIm9dOvaQtPP/lGgLhjKRt1AM+V4c1WriiJTkHwoWguEQJdbS
-        pj4ycdFA4+K/yxTHLUNzBfw9PV7DrBmLorm45J/jqnu52fctRy3XQ/TXsNgT/+0+ENSEfad0GDs9w
-        tCMk9cEJOyPK5sl0Yria+Idg6hFCFnRZFNpa4B6JFw7QfKMoy8hG9+MiNZlHLzHNOAR+fwcfIAAhD
-        HEaW+hFw==;
-In-Reply-To: <20230919045135.3635437-1-willy@infradead.org>
+        bh=Ep+lGsUKoAhhoh5nGmL8xgZABVJF/mpZxcy36ZruWb4=; b=vO2K2Tuq7037t/0SesH2/eziLu
+        uGH3UQu9Fsa0K4dMxv47uzoehSSSinC5hHRPGn+VDixAIjWRl7cGFUZwQyqJ0vU0j7uyl8x/5e+7d
+        HTnxD3dLkPXF4HOflRIvlUWmcokgH+8dyPLQNdjk8Cl5+/M/yowY8QNR6iTF3x5QifEEoj1NEak2c
+        fW/XqatqLhBbMt0z6EAtOlTX+Z84OqHdI0w1fZteN1M6ef0ieY5VxQ0OQxJZDrtY+lurvOz29QP+D
+        nhrlu1hlV4oGDhpa2RLzPVGI2JLoB913W/Dv1lR39wR1vhJ3++10FdRa3hEWuSym2k7XLX2xdwMxP
+        iqgFku+A==;
+In-Reply-To: <20230919045135.3635437-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, Pankaj Raghav <p.raghav@samsung.com>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gfs2-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, ocfs2-devel-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pankaj Raghav <p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
-Remove an unnecessary folio->page->folio conversion and take advantage
-of the new return value from folio_create_empty_buffers().
+Remove several folio->page->folio conversions.  Also use __GFP_NOFAIL
+instead of calling yield() and the new get_nth_bh().
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+Signed-off-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 ---
- fs/ext4/inode.c       | 14 +++++---------
- fs/ext4/move_extent.c | 11 +++++------
- 2 files changed, 10 insertions(+), 15 deletions(-)
+ fs/gfs2/meta_io.c | 39 +++++++++++++++++----------------------
+ 1 file changed, 17 insertions(+), 22 deletions(-)
 
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 4ce35f1c8b0a..8e431ff2fd95 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -1020,10 +1020,8 @@ static int ext4_block_write_begin(struct folio *folio, loff_t pos, unsigned len,
- 	BUG_ON(from > to);
+diff --git a/fs/gfs2/meta_io.c b/fs/gfs2/meta_io.c
+index 924361fa510b..f1fac1b45059 100644
+--- a/fs/gfs2/meta_io.c
++++ b/fs/gfs2/meta_io.c
+@@ -115,7 +115,7 @@ struct buffer_head *gfs2_getbuf(struct gfs2_glock *gl, u64 blkno, int create)
+ {
+ 	struct address_space *mapping = gfs2_glock2aspace(gl);
+ 	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+-	struct page *page;
++	struct folio *folio;
+ 	struct buffer_head *bh;
+ 	unsigned int shift;
+ 	unsigned long index;
+@@ -129,36 +129,31 @@ struct buffer_head *gfs2_getbuf(struct gfs2_glock *gl, u64 blkno, int create)
+ 	bufnum = blkno - (index << shift);  /* block buf index within page */
  
- 	head = folio_buffers(folio);
--	if (!head) {
--		create_empty_buffers(&folio->page, blocksize, 0);
--		head = folio_buffers(folio);
--	}
-+	if (!head)
-+		head = folio_create_empty_buffers(folio, blocksize, 0);
- 	bbits = ilog2(blocksize);
- 	block = (sector_t)folio->index << (PAGE_SHIFT - bbits);
- 
-@@ -1153,7 +1151,7 @@ static int ext4_write_begin(struct file *file, struct address_space *mapping,
- 	 * starting the handle.
- 	 */
- 	if (!folio_buffers(folio))
--		create_empty_buffers(&folio->page, inode->i_sb->s_blocksize, 0);
-+		folio_create_empty_buffers(folio, inode->i_sb->s_blocksize, 0);
- 
- 	folio_unlock(folio);
- 
-@@ -3643,10 +3641,8 @@ static int __ext4_block_zero_page_range(handle_t *handle,
- 	iblock = index << (PAGE_SHIFT - inode->i_sb->s_blocksize_bits);
- 
- 	bh = folio_buffers(folio);
--	if (!bh) {
--		create_empty_buffers(&folio->page, blocksize, 0);
--		bh = folio_buffers(folio);
--	}
-+	if (!bh)
-+		bh = folio_create_empty_buffers(folio, blocksize, 0);
- 
- 	/* Find the buffer that contains "offset" */
- 	pos = blocksize;
-diff --git a/fs/ext4/move_extent.c b/fs/ext4/move_extent.c
-index 18a9e7c47975..7fe448fb948b 100644
---- a/fs/ext4/move_extent.c
-+++ b/fs/ext4/move_extent.c
-@@ -183,10 +183,8 @@ mext_page_mkuptodate(struct folio *folio, unsigned from, unsigned to)
- 
- 	blocksize = i_blocksize(inode);
- 	head = folio_buffers(folio);
--	if (!head) {
--		create_empty_buffers(&folio->page, blocksize, 0);
--		head = folio_buffers(folio);
--	}
-+	if (!head)
-+		head = folio_create_empty_buffers(folio, blocksize, 0);
- 
- 	block = (sector_t)folio->index << (PAGE_SHIFT - inode->i_blkbits);
- 	for (bh = head, block_start = 0; bh != head || !block_start;
-@@ -380,9 +378,10 @@ move_extent_per_page(struct file *o_filp, struct inode *donor_inode,
+ 	if (create) {
+-		for (;;) {
+-			page = grab_cache_page(mapping, index);
+-			if (page)
+-				break;
+-			yield();
+-		}
+-		if (!page_has_buffers(page))
+-			create_empty_buffers(page, sdp->sd_sb.sb_bsize, 0);
++		folio = __filemap_get_folio(mapping, index,
++				FGP_LOCK | FGP_ACCESSED | FGP_CREAT,
++				mapping_gfp_mask(mapping) | __GFP_NOFAIL);
++		bh = folio_buffers(folio);
++		if (!bh)
++			bh = folio_create_empty_buffers(folio,
++				sdp->sd_sb.sb_bsize, 0);
+ 	} else {
+-		page = find_get_page_flags(mapping, index,
+-						FGP_LOCK|FGP_ACCESSED);
+-		if (!page)
++		folio = __filemap_get_folio(mapping, index,
++				FGP_LOCK | FGP_ACCESSED, 0);
++		if (IS_ERR(folio))
+ 			return NULL;
+-		if (!page_has_buffers(page)) {
+-			bh = NULL;
+-			goto out_unlock;
+-		}
++		bh = folio_buffers(folio);
  	}
- 	/* Perform all necessary steps similar write_begin()/write_end()
- 	 * but keeping in mind that i_size will not change */
--	if (!folio_buffers(folio[0]))
--		create_empty_buffers(&folio[0]->page, 1 << orig_inode->i_blkbits, 0);
- 	bh = folio_buffers(folio[0]);
+ 
+-	/* Locate header for our buffer within our page */
+-	for (bh = page_buffers(page); bufnum--; bh = bh->b_this_page)
+-		/* Do nothing */;
+-	get_bh(bh);
 +	if (!bh)
-+		bh = folio_create_empty_buffers(folio[0],
-+				1 << orig_inode->i_blkbits, 0);
- 	for (i = 0; i < data_offset_in_page; i++)
- 		bh = bh->b_this_page;
- 	for (i = 0; i < block_len_in_page; i++) {
++		goto out_unlock;
+ 
++	bh = get_nth_bh(bh, bufnum);
+ 	if (!buffer_mapped(bh))
+ 		map_bh(bh, sdp->sd_vfs, blkno);
+ 
+ out_unlock:
+-	unlock_page(page);
+-	put_page(page);
++	folio_unlock(folio);
++	folio_put(folio);
+ 
+ 	return bh;
+ }
 -- 
 2.40.1
 
