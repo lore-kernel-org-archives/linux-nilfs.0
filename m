@@ -1,99 +1,109 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH 07/11] vfs: add nowait parameter for file_accessed()
-Date: Mon, 11 Sep 2023 08:01:24 +1000
-Message-ID: <ZP48tAg2iS0UzKQf@dread.disaster.area>
-References: <20230827132835.1373581-1-hao.xu@linux.dev>
- <20230827132835.1373581-8-hao.xu@linux.dev>
- <ZOvA5DJDZN0FRymp@casper.infradead.org>
- <c728bf3f-d9db-4865-8473-058b26c11c06@linux.dev>
- <ZO3cI+DkotHQo3md@casper.infradead.org>
- <642de4e6-801d-fcad-a7ce-bfc6dec3b6e5@linux.dev>
- <ZPUJHAKzxvXiEDYA@dread.disaster.area>
- <6489b8cb-7d54-1e29-f192-a3449ed87fa1@gmail.com>
+From: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: [PATCH 08/26] gfs2: Convert gfs2_write_buf_to_page() to use a folio
+Date: Tue, 19 Sep 2023 05:51:17 +0100
+Message-ID: <20230919045135.3635437-9-willy@infradead.org>
+References: <20230919045135.3635437-1-willy@infradead.org>
 Mime-Version: 1.0
-Return-path: <ecryptfs-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=fromorbit-com.20230601.gappssmtp.com; s=20230601; t=1694383288; x=1694988088; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=EyybjuBSw2AsBAibBPVqGccWs6P0JtTeGBB0Kwx90Dw=;
-        b=b1Q+Djrc6DRgK0lSMIXf6OVmm1S98Rb1dJdV/4AjeMobXYoqxa/k4Xb7XAYcmCuvbB
-         T8pFPhiJHk/Ig8CcU4is+jZGfReesXQjqK7ULjc+VZz110Uqhy1NjrWTu4Ej2kgb1UEn
-         ZHgnS7dDfuM0nrDuRkgBy+D/YOBtPecXxWCyUh6h/0/NlsJyyOwKHQwSKYYxfVY7xjkS
-         7I+QxdaDiDVRMV8qekGuV48jZlbOlbc6skR8a29kp5hS8zsrhWfeCv9XIJ/gwMURSkPX
-         Ncgzq9d3+KaDgvRq3XsvmeqBjcqt9Lc7ewxeY00IZtUnccPI4WIduUYqP2aDlo+H2VFl
-         7yRw==
-Content-Disposition: inline
-In-Reply-To: <6489b8cb-7d54-1e29-f192-a3449ed87fa1@gmail.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=3+ygHFl8VBE//i+jIFbzwz27nrHn7+CKZunR4nMah8o=; b=a0R1TMwjL7kTjAJn7QXnrOIurK
+        Jk/KsvVgMWmyNgxqWN5vSm+fsVeErc+p2SA6/+JKtl/gEKJ+0QYncbcX+TH5IXWFm1kSYWvPuG2ip
+        OajcUmwdb2Q1jdRy96OBqSI9A3X6nYI2Gne1jBNmqMZ6G5e8vDS82vesYeCBU0BKkKmDnaXSuLJHc
+        F7rpZc3aYOtL9zGBN5ZI0SUwLCUcCJ640FT9Vttt57wR7CXyJ/CsYUcOsChqRuHWhIJUulzwRwF2F
+        onoE1mEjpIOAFxCaBkVNUPExG2E40+aJJmfa3dlcBJgvTjZj82jejSKPCVarzwlrbvnhwKs75NSoo
+        nKz21X2g==;
+In-Reply-To: <20230919045135.3635437-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Pavel Begunkov <asml.silence@gmail.com>
-Cc: Hao Xu <hao.xu@linux.dev>, Matthew Wilcox <willy@infradead.org>, io-uring@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Dominique Martinet <asmadeus@codewreck.org>, Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Stefan Roesch <shr@fb.com>, Clay Harris <bugs@claycon.org>, "Darrick J . Wong" <djwong@kernel.org>, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-cachefs@redhat.com, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-unionfs@vger.kernel.org, bpf@vger.kernel.org, netdev@vger.kernel.org, linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, codalist@coda.cs.cmu.edu, linux-f2fs-devel@lists.sourceforge.net, cluster-devel
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gfs2-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, ocfs2-devel-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pankaj Raghav <p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
-On Fri, Sep 08, 2023 at 01:29:55AM +0100, Pavel Begunkov wrote:
-> On 9/3/23 23:30, Dave Chinner wrote:
-> > On Wed, Aug 30, 2023 at 02:11:31PM +0800, Hao Xu wrote:
-> > > On 8/29/23 19:53, Matthew Wilcox wrote:
-> > > > On Tue, Aug 29, 2023 at 03:46:13PM +0800, Hao Xu wrote:
-> > > > > On 8/28/23 05:32, Matthew Wilcox wrote:
-> > > > > > On Sun, Aug 27, 2023 at 09:28:31PM +0800, Hao Xu wrote:
-> > > > > > > From: Hao Xu <howeyxu@tencent.com>
-> > > > > > > 
-> > > > > > > Add a boolean parameter for file_accessed() to support nowait semantics.
-> > > > > > > Currently it is true only with io_uring as its initial caller.
-> > > > > > 
-> > > > > > So why do we need to do this as part of this series?  Apparently it
-> > > > > > hasn't caused any problems for filemap_read().
-> > > > > > 
-> > > > > 
-> > > > > We need this parameter to indicate if nowait semantics should be enforced in
-> > > > > touch_atime(), There are locks and maybe IOs in it.
-> > > > 
-> > > > That's not my point.  We currently call file_accessed() and
-> > > > touch_atime() for nowait reads and nowait writes.  You haven't done
-> > > > anything to fix those.
-> > > > 
-> > > > I suspect you can trim this patchset down significantly by avoiding
-> > > > fixing the file_accessed() problem.  And then come back with a later
-> > > > patchset that fixes it for all nowait i/o.  Or do a separate prep series
-> > > 
-> > > I'm ok to do that.
-> > > 
-> > > > first that fixes it for the existing nowait users, and then a second
-> > > > series to do all the directory stuff.
-> > > > 
-> > > > I'd do the first thing.  Just ignore the problem.  Directory atime
-> > > > updates cause I/O so rarely that you can afford to ignore it.  Almost
-> > > > everyone uses relatime or nodiratime.
-> > > 
-> > > Hi Matthew,
-> > > The previous discussion shows this does cause issues in real
-> > > producations: https://lore.kernel.org/io-uring/2785f009-2ebb-028d-8250-d5f3a30510f0@gmail.com/#:~:text=fwiw%2C%20we%27ve%20just%20recently%20had%20similar%20problems%20with%20io_uring%20read/write
-> > > 
-> > 
-> > Then separate it out into it's own patch set so we can have a
-> > discussion on the merits of requiring using noatime, relatime or
-> > lazytime for really latency sensitive IO applications. Changing code
-> > is not always the right solution...
-> 
-> Separation sounds reasonable, but it can hardly be said that only
-> latency sensitive apps would care about >1s nowait/async submission
-> delays. Presumably, btrfs can improve on that, but it still looks
-> like it's perfectly legit for filesystems do heavy stuff in
-> timestamping like waiting for IO. Right?
+Remove several folio->page->folio conversions.
 
-Yes, it is, no-one is denying that. And some filesystems are worse
-than others, but none of that means it has to be fixed so getdents
-can be converted to NOWAIT semantics.
+Signed-off-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+---
+ fs/gfs2/quota.c | 37 +++++++++++++++++++------------------
+ 1 file changed, 19 insertions(+), 18 deletions(-)
 
-ie. this patchset is about the getdents NOWAIT machinery, and
-fiddling around with timestamps has much, much wider scope than just
-NOWAIT getdents machinery. We'll have this discussion about NOWAIT
-timestamp updates when a RFC is proposed to address the wider
-problem of how timestamp updates should behave in NOWAIT context.
-
--Dave.
+diff --git a/fs/gfs2/quota.c b/fs/gfs2/quota.c
+index 171b2713d2e5..0ee4865ebdca 100644
+--- a/fs/gfs2/quota.c
++++ b/fs/gfs2/quota.c
+@@ -736,7 +736,7 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
+ 	struct gfs2_inode *ip = GFS2_I(sdp->sd_quota_inode);
+ 	struct inode *inode = &ip->i_inode;
+ 	struct address_space *mapping = inode->i_mapping;
+-	struct page *page;
++	struct folio *folio;
+ 	struct buffer_head *bh;
+ 	u64 blk;
+ 	unsigned bsize = sdp->sd_sb.sb_bsize, bnum = 0, boff = 0;
+@@ -745,15 +745,15 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
+ 	blk = index << (PAGE_SHIFT - sdp->sd_sb.sb_bsize_shift);
+ 	boff = off % bsize;
+ 
+-	page = grab_cache_page(mapping, index);
+-	if (!page)
+-		return -ENOMEM;
+-	if (!page_has_buffers(page))
+-		create_empty_buffers(page, bsize, 0);
++	folio = filemap_grab_folio(mapping, index);
++	if (IS_ERR(folio))
++		return PTR_ERR(folio);
++	bh = folio_buffers(folio);
++	if (!bh)
++		bh = folio_create_empty_buffers(folio, bsize, 0);
+ 
+-	bh = page_buffers(page);
+-	for(;;) {
+-		/* Find the beginning block within the page */
++	for (;;) {
++		/* Find the beginning block within the folio */
+ 		if (pg_off >= ((bnum * bsize) + bsize)) {
+ 			bh = bh->b_this_page;
+ 			bnum++;
+@@ -766,9 +766,10 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
+ 				goto unlock_out;
+ 			/* If it's a newly allocated disk block, zero it */
+ 			if (buffer_new(bh))
+-				zero_user(page, bnum * bsize, bh->b_size);
++				folio_zero_range(folio, bnum * bsize,
++						bh->b_size);
+ 		}
+-		if (PageUptodate(page))
++		if (folio_test_uptodate(folio))
+ 			set_buffer_uptodate(bh);
+ 		if (bh_read(bh, REQ_META | REQ_PRIO) < 0)
+ 			goto unlock_out;
+@@ -784,17 +785,17 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
+ 		break;
+ 	}
+ 
+-	/* Write to the page, now that we have setup the buffer(s) */
+-	memcpy_to_page(page, off, buf, bytes);
+-	flush_dcache_page(page);
+-	unlock_page(page);
+-	put_page(page);
++	/* Write to the folio, now that we have setup the buffer(s) */
++	memcpy_to_folio(folio, off, buf, bytes);
++	flush_dcache_folio(folio);
++	folio_unlock(folio);
++	folio_put(folio);
+ 
+ 	return 0;
+ 
+ unlock_out:
+-	unlock_page(page);
+-	put_page(page);
++	folio_unlock(folio);
++	folio_put(folio);
+ 	return -EIO;
+ }
+ 
 -- 
-Dave Chinner
-david@fromorbit.com
+2.40.1
+
