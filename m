@@ -1,53 +1,129 @@
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 15/26] nilfs2: Convert nilfs_lookup_dirty_data_buffers to use folio_create_empty_buffers
-Date: Tue, 19 Sep 2023 05:51:24 +0100
-Message-ID: <20230919045135.3635437-16-willy@infradead.org>
+Subject: [PATCH 11/26] nilfs2: Convert nilfs_copy_page() to nilfs_copy_folio()
+Date: Tue, 19 Sep 2023 05:51:20 +0100
+Message-ID: <20230919045135.3635437-12-willy@infradead.org>
 References: <20230919045135.3635437-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=oqmyw7VJeqHD8iPpgh4YPr5AogAt6MQN9sHGZpQ6Xjk=; b=E4YYIjUp3IuVjZH5MCxn9/nKpu
-        Hh21HO1FgQ5l0yFuR8lBrzTKjwN77QtvHgH7HsY6/hwMfJWDY0UAh02WnRXPPElykkpAlqZmBWeIV
-        eNkuj2Gp/o8PjVKAYe0nJcDm29dA61si/jGvCAX6vVu9nX7clOZR5ZJasF8aWG3RXxcK70KOAmQiS
-        V/o8WI5+8jOwXUceYUQVhHOFWdoUK9g3uIL+Auum/J8H+YJYEL2+b0lOqxTCaKY/nooLebuqCi4G5
-        4dUpHT0k3B87XotVNZH1TIicqqawgo16ESNqdHcj6iQv7Mn5fdND8PoDTTmUqSP6m1861PlUDEO9e
-        yKKdIwGg==;
+        bh=+YBw7XPXspc4BRLBjqz7GsBiioMj9hvjismckYKmXec=; b=ppqszN0mwK3zh8tqbJY6MTDvp5
+        1CXrtZ4Q5igFYGx08wqB2yE98fW3BmAfa/tahG6/6/qv9PAL2aa1qXz11Q9wixYhw6OxTnNX+fHvx
+        ByRhoZvIe7OJqxH05vG0XbFwaGiIPhGEuPNuSDZF/76Ymv3o5RIHS6WaKbEHyAu3Y68KPLr25svdz
+        1Yo/gYYlS00JhJNZX8N+9jcTanYB+r+TAN6/bm4YfQneF/p5g45HTNdCMB1Qp0rdr9Pv8dm1xOG76
+        kOJUy7xcIIenqEGYDUjfx2QfJGRFEmU0j8CaZb9v3TQa4rLAjp5NuBDiDXpipKitTDq81NA45aTIg
+        AKVLYGeQ==;
 In-Reply-To: <20230919045135.3635437-1-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, Pankaj Raghav <p.raghav@samsung.com>
 
-This function was already using a folio, so this update to the new API
-removes a single folio->page->folio conversion.
+Both callers already have a folio, so pass it in and use it directly.
+Removes a lot of hidden calls to compound_head().
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- fs/nilfs2/segment.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ fs/nilfs2/page.c | 50 +++++++++++++++++++++++++-----------------------
+ 1 file changed, 26 insertions(+), 24 deletions(-)
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 7ec16879756e..94388fe83cf8 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -731,10 +731,9 @@ static size_t nilfs_lookup_dirty_data_buffers(struct inode *inode,
- 			continue;
- 		}
- 		head = folio_buffers(folio);
--		if (!head) {
--			create_empty_buffers(&folio->page, i_blocksize(inode), 0);
--			head = folio_buffers(folio);
--		}
-+		if (!head)
-+			head = folio_create_empty_buffers(folio,
-+					i_blocksize(inode), 0);
- 		folio_unlock(folio);
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 1c075bd906c9..696215d899bf 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -184,30 +184,32 @@ void nilfs_page_bug(struct page *page)
+ }
  
- 		bh = head;
+ /**
+- * nilfs_copy_page -- copy the page with buffers
+- * @dst: destination page
+- * @src: source page
+- * @copy_dirty: flag whether to copy dirty states on the page's buffer heads.
++ * nilfs_copy_folio -- copy the folio with buffers
++ * @dst: destination folio
++ * @src: source folio
++ * @copy_dirty: flag whether to copy dirty states on the folio's buffer heads.
+  *
+- * This function is for both data pages and btnode pages.  The dirty flag
+- * should be treated by caller.  The page must not be under i/o.
+- * Both src and dst page must be locked
++ * This function is for both data folios and btnode folios.  The dirty flag
++ * should be treated by caller.  The folio must not be under i/o.
++ * Both src and dst folio must be locked
+  */
+-static void nilfs_copy_page(struct page *dst, struct page *src, int copy_dirty)
++static void nilfs_copy_folio(struct folio *dst, struct folio *src,
++		bool copy_dirty)
+ {
+ 	struct buffer_head *dbh, *dbufs, *sbh;
+ 	unsigned long mask = NILFS_BUFFER_INHERENT_BITS;
+ 
+-	BUG_ON(PageWriteback(dst));
++	BUG_ON(folio_test_writeback(dst));
+ 
+-	sbh = page_buffers(src);
+-	if (!page_has_buffers(dst))
+-		create_empty_buffers(dst, sbh->b_size, 0);
++	sbh = folio_buffers(src);
++	dbh = folio_buffers(dst);
++	if (!dbh)
++		dbh = folio_create_empty_buffers(dst, sbh->b_size, 0);
+ 
+ 	if (copy_dirty)
+ 		mask |= BIT(BH_Dirty);
+ 
+-	dbh = dbufs = page_buffers(dst);
++	dbufs = dbh;
+ 	do {
+ 		lock_buffer(sbh);
+ 		lock_buffer(dbh);
+@@ -218,16 +220,16 @@ static void nilfs_copy_page(struct page *dst, struct page *src, int copy_dirty)
+ 		dbh = dbh->b_this_page;
+ 	} while (dbh != dbufs);
+ 
+-	copy_highpage(dst, src);
++	folio_copy(dst, src);
+ 
+-	if (PageUptodate(src) && !PageUptodate(dst))
+-		SetPageUptodate(dst);
+-	else if (!PageUptodate(src) && PageUptodate(dst))
+-		ClearPageUptodate(dst);
+-	if (PageMappedToDisk(src) && !PageMappedToDisk(dst))
+-		SetPageMappedToDisk(dst);
+-	else if (!PageMappedToDisk(src) && PageMappedToDisk(dst))
+-		ClearPageMappedToDisk(dst);
++	if (folio_test_uptodate(src) && !folio_test_uptodate(dst))
++		folio_mark_uptodate(dst);
++	else if (!folio_test_uptodate(src) && folio_test_uptodate(dst))
++		folio_clear_uptodate(dst);
++	if (folio_test_mappedtodisk(src) && !folio_test_mappedtodisk(dst))
++		folio_set_mappedtodisk(dst);
++	else if (!folio_test_mappedtodisk(src) && folio_test_mappedtodisk(dst))
++		folio_clear_mappedtodisk(dst);
+ 
+ 	do {
+ 		unlock_buffer(sbh);
+@@ -269,7 +271,7 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
+ 			NILFS_PAGE_BUG(&folio->page,
+ 				       "found empty page in dat page cache");
+ 
+-		nilfs_copy_page(&dfolio->page, &folio->page, 1);
++		nilfs_copy_folio(dfolio, folio, true);
+ 		filemap_dirty_folio(folio_mapping(dfolio), dfolio);
+ 
+ 		folio_unlock(dfolio);
+@@ -314,7 +316,7 @@ void nilfs_copy_back_pages(struct address_space *dmap,
+ 		if (!IS_ERR(dfolio)) {
+ 			/* overwrite existing folio in the destination cache */
+ 			WARN_ON(folio_test_dirty(dfolio));
+-			nilfs_copy_page(&dfolio->page, &folio->page, 0);
++			nilfs_copy_folio(dfolio, folio, false);
+ 			folio_unlock(dfolio);
+ 			folio_put(dfolio);
+ 			/* Do we not need to remove folio from smap here? */
 -- 
 2.40.1
 
