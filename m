@@ -1,109 +1,91 @@
-From: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH 08/26] gfs2: Convert gfs2_write_buf_to_page() to use a folio
-Date: Tue, 19 Sep 2023 05:51:17 +0100
-Message-ID: <20230919045135.3635437-9-willy@infradead.org>
-References: <20230919045135.3635437-1-willy@infradead.org>
+From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Subject: [PATCH 00/26] Finish the create_empty_buffers() transition
+Date: Tue, 19 Sep 2023 05:51:09 +0100
+Message-ID: <20230919045135.3635437-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
-        Content-Type:Content-ID:Content-Description;
-        bh=3+ygHFl8VBE//i+jIFbzwz27nrHn7+CKZunR4nMah8o=; b=a0R1TMwjL7kTjAJn7QXnrOIurK
-        Jk/KsvVgMWmyNgxqWN5vSm+fsVeErc+p2SA6/+JKtl/gEKJ+0QYncbcX+TH5IXWFm1kSYWvPuG2ip
-        OajcUmwdb2Q1jdRy96OBqSI9A3X6nYI2Gne1jBNmqMZ6G5e8vDS82vesYeCBU0BKkKmDnaXSuLJHc
-        F7rpZc3aYOtL9zGBN5ZI0SUwLCUcCJ640FT9Vttt57wR7CXyJ/CsYUcOsChqRuHWhIJUulzwRwF2F
-        onoE1mEjpIOAFxCaBkVNUPExG2E40+aJJmfa3dlcBJgvTjZj82jejSKPCVarzwlrbvnhwKs75NSoo
-        nKz21X2g==;
-In-Reply-To: <20230919045135.3635437-1-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+        Content-Description:In-Reply-To:References;
+        bh=awyfojKMhU8AzVa7YcEsBxlpTOVclzCuTyUo6TQYiIY=; b=Cw5LiD0vn95PKN2IeCDFvMkRoz
+        nIpR3aa2vwbEJhByXcLQUey3cSZoM0mbiK6C+/GUbOFLQ+E3zUMIvi2DG5x6byLlj0amRrNqfwcCn
+        LtMopE0Vn0VS9LVDPKOgfrGBkn29dQ9iOGK93n8Ir7Tt5XPeJl2z3mVUSITyJQ6jfKGH/LDc1qOOC
+        wDjdKBiaRCirlxe/g8scAyXXtJosfVIDgPKczCCQ5grKrjYrChyEcCzmVJhyAF33sTewGexLVVGwO
+        NbHItyH31kAC+tgaegnX0uitTTong1uJkS11wM2b20JpvHaggRs1KVl1ADobtfqliNwoOibJInErH
+        gpxaWVJQ==;
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gfs2-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, ocfs2-devel-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pankaj Raghav <p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, Pankaj Raghav <p.raghav@samsung.com>
 
-Remove several folio->page->folio conversions.
+Pankaj recently added folio_create_empty_buffers() as the folio
+equivalent to create_empty_buffers().  This patch set finishes
+the conversion by first converting all remaining filesystems
+to call folio_create_empty_buffers(), then renaming it back
+to create_empty_buffers().  I took the opportunity to make a few
+simplifications like making folio_create_empty_buffers() return the head
+buffer and extracting get_nth_bh() from nilfs2.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
----
- fs/gfs2/quota.c | 37 +++++++++++++++++++------------------
- 1 file changed, 19 insertions(+), 18 deletions(-)
+A few of the patches in this series aren't directly related to
+create_empty_buffers(), but I saw them while I was working on this and
+thought they'd be easy enough to add to this series.  Compile-tested only,
+other than ext4.
 
-diff --git a/fs/gfs2/quota.c b/fs/gfs2/quota.c
-index 171b2713d2e5..0ee4865ebdca 100644
---- a/fs/gfs2/quota.c
-+++ b/fs/gfs2/quota.c
-@@ -736,7 +736,7 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
- 	struct gfs2_inode *ip = GFS2_I(sdp->sd_quota_inode);
- 	struct inode *inode = &ip->i_inode;
- 	struct address_space *mapping = inode->i_mapping;
--	struct page *page;
-+	struct folio *folio;
- 	struct buffer_head *bh;
- 	u64 blk;
- 	unsigned bsize = sdp->sd_sb.sb_bsize, bnum = 0, boff = 0;
-@@ -745,15 +745,15 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
- 	blk = index << (PAGE_SHIFT - sdp->sd_sb.sb_bsize_shift);
- 	boff = off % bsize;
- 
--	page = grab_cache_page(mapping, index);
--	if (!page)
--		return -ENOMEM;
--	if (!page_has_buffers(page))
--		create_empty_buffers(page, bsize, 0);
-+	folio = filemap_grab_folio(mapping, index);
-+	if (IS_ERR(folio))
-+		return PTR_ERR(folio);
-+	bh = folio_buffers(folio);
-+	if (!bh)
-+		bh = folio_create_empty_buffers(folio, bsize, 0);
- 
--	bh = page_buffers(page);
--	for(;;) {
--		/* Find the beginning block within the page */
-+	for (;;) {
-+		/* Find the beginning block within the folio */
- 		if (pg_off >= ((bnum * bsize) + bsize)) {
- 			bh = bh->b_this_page;
- 			bnum++;
-@@ -766,9 +766,10 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
- 				goto unlock_out;
- 			/* If it's a newly allocated disk block, zero it */
- 			if (buffer_new(bh))
--				zero_user(page, bnum * bsize, bh->b_size);
-+				folio_zero_range(folio, bnum * bsize,
-+						bh->b_size);
- 		}
--		if (PageUptodate(page))
-+		if (folio_test_uptodate(folio))
- 			set_buffer_uptodate(bh);
- 		if (bh_read(bh, REQ_META | REQ_PRIO) < 0)
- 			goto unlock_out;
-@@ -784,17 +785,17 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sdp, unsigned long index,
- 		break;
- 	}
- 
--	/* Write to the page, now that we have setup the buffer(s) */
--	memcpy_to_page(page, off, buf, bytes);
--	flush_dcache_page(page);
--	unlock_page(page);
--	put_page(page);
-+	/* Write to the folio, now that we have setup the buffer(s) */
-+	memcpy_to_folio(folio, off, buf, bytes);
-+	flush_dcache_folio(folio);
-+	folio_unlock(folio);
-+	folio_put(folio);
- 
- 	return 0;
- 
- unlock_out:
--	unlock_page(page);
--	put_page(page);
-+	folio_unlock(folio);
-+	folio_put(folio);
- 	return -EIO;
- }
- 
+Matthew Wilcox (Oracle) (26):
+  buffer: Make folio_create_empty_buffers() return a buffer_head
+  mpage: Convert map_buffer_to_folio() to folio_create_empty_buffers()
+  ext4: Convert to folio_create_empty_buffers
+  buffer: Add get_nth_bh()
+  gfs2: Convert inode unstuffing to use a folio
+  gfs2: Convert gfs2_getbuf() to folios
+  gfs2; Convert gfs2_getjdatabuf to use a folio
+  gfs2: Convert gfs2_write_buf_to_page() to use a folio
+  nilfs2: Convert nilfs_mdt_freeze_buffer to use a folio
+  nilfs2: Convert nilfs_grab_buffer() to use a folio
+  nilfs2: Convert nilfs_copy_page() to nilfs_copy_folio()
+  nilfs2: Convert nilfs_mdt_forget_block() to use a folio
+  nilfs2: Convert nilfs_mdt_get_frozen_buffer to use a folio
+  nilfs2: Remove nilfs_page_get_nth_block
+  nilfs2: Convert nilfs_lookup_dirty_data_buffers to use
+    folio_create_empty_buffers
+  ntfs: Convert ntfs_read_block() to use a folio
+  ntfs: Convert ntfs_writepage to use a folio
+  ntfs: Convert ntfs_prepare_pages_for_non_resident_write() to folios
+  ntfs3: Convert ntfs_zero_range() to use a folio
+  ocfs2: Convert ocfs2_map_page_blocks to use a folio
+  reiserfs: Convert writepage to use a folio
+  ufs: Add ufs_get_locked_folio and ufs_put_locked_folio
+  ufs: Use ufs_get_locked_folio() in ufs_alloc_lastblock()
+  ufs; Convert ufs_change_blocknr() to use folios
+  ufs: Remove ufs_get_locked_page()
+  buffer: Remove folio_create_empty_buffers()
+
+ fs/buffer.c                 |  29 ++--
+ fs/ext4/inode.c             |  14 +-
+ fs/ext4/move_extent.c       |  11 +-
+ fs/gfs2/aops.c              |   2 +-
+ fs/gfs2/bmap.c              |  48 ++++---
+ fs/gfs2/meta_io.c           |  61 ++++-----
+ fs/gfs2/quota.c             |  37 +++---
+ fs/mpage.c                  |   3 +-
+ fs/nilfs2/mdt.c             |  66 +++++-----
+ fs/nilfs2/page.c            |  76 +++++------
+ fs/nilfs2/page.h            |  11 --
+ fs/nilfs2/segment.c         |   7 +-
+ fs/ntfs/aops.c              | 255 +++++++++++++++++-------------------
+ fs/ntfs/file.c              |  89 ++++++-------
+ fs/ntfs3/file.c             |  31 ++---
+ fs/ocfs2/aops.c             |  19 +--
+ fs/reiserfs/inode.c         |  80 +++++------
+ fs/ufs/balloc.c             |  20 ++-
+ fs/ufs/inode.c              |  25 ++--
+ fs/ufs/util.c               |  34 +++--
+ fs/ufs/util.h               |  10 +-
+ include/linux/buffer_head.h |  28 +++-
+ 22 files changed, 458 insertions(+), 498 deletions(-)
+
 -- 
 2.40.1
 
