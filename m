@@ -1,122 +1,113 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 08/26] gfs2: Convert gfs2_write_buf_to_page() to use a folio
-Date: Wed, 20 Sep 2023 00:32:12 +0200
-Message-ID: <CAHc6FU5XnHsqXunoT5oVdupFE_NVuW_uyitZPLqgEzfUkr=V0g@mail.gmail.com>
-References: <20230919045135.3635437-1-willy@infradead.org> <20230919045135.3635437-9-willy@infradead.org>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: [PATCH 06/26] gfs2: Convert gfs2_getbuf() to folios
+Date: Wed, 20 Sep 2023 00:34:41 +0200
+Message-ID: <CAHc6FU6JasO3-8VaOm3MieLEn599OTKPnZC5BwkNUMqNoJ+meA@mail.gmail.com>
+References: <20230919045135.3635437-1-willy@infradead.org> <20230919045135.3635437-7-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1695162747;
+        s=mimecast20190719; t=1695162895;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=0x5XQwTZHDcZyZxqW3gmQpgHS2gIGGzK97rIzkAXl3Q=;
-        b=feAAS7O1g6lGUrDRMBJUFVi4qbugbyNyRFrzIlOg9OIfjWicBCWg6eAL9KgD4DOskL1Ajf
-        6+PsCQTwpQyd6WAKR8eyPvPMUhrVou6KNz5rj8bAtR3ohO9n1uRJebzUuSu6arXCCQMeg3
-        4r9aPEw1co6HvKjIyhx96JOeUe488/k=
-In-Reply-To: <20230919045135.3635437-9-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+        bh=eQus7xN9bGIDtrSXQ5yUpeC9VO6X9bRJrGYUnimnUlQ=;
+        b=QERE7Qs0UVnfmtfFPWir107Hqwo0Z5Ln9+k4YvxkViI8bbDSjylQDLOkN26BOTbWBHM7lV
+        +3JB+YzlaSBIlC564udIA9HaG4QF0D4z6391jlqxhnhx8gLL9Fb9JASe0WsLOx+K6Mz8uC
+        8MnhdXTVLbC15VRqFhbBNPUDWIUjyXk=
+In-Reply-To: <20230919045135.3635437-7-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="windows-1252"
-To: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gfs2-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, ocfs2-devel-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pankaj Raghav <p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, Pankaj Raghav <p.raghav@samsung.com>
 
 On Tue, Sep 19, 2023 at 7:00=E2=80=AFAM Matthew Wilcox (Oracle)
-<willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> Remove several folio->page->folio conversions.
+<willy@infradead.org> wrote:
+> Remove several folio->page->folio conversions.  Also use __GFP_NOFAIL
+> instead of calling yield() and the new get_nth_bh().
 >
-> Signed-off-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 > ---
->  fs/gfs2/quota.c | 37 +++++++++++++++++++------------------
->  1 file changed, 19 insertions(+), 18 deletions(-)
+>  fs/gfs2/meta_io.c | 39 +++++++++++++++++----------------------
+>  1 file changed, 17 insertions(+), 22 deletions(-)
 >
-> diff --git a/fs/gfs2/quota.c b/fs/gfs2/quota.c
-> index 171b2713d2e5..0ee4865ebdca 100644
-> --- a/fs/gfs2/quota.c
-> +++ b/fs/gfs2/quota.c
-> @@ -736,7 +736,7 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *sd=
-p, unsigned long index,
->         struct gfs2_inode *ip =3D GFS2_I(sdp->sd_quota_inode);
->         struct inode *inode =3D &ip->i_inode;
->         struct address_space *mapping =3D inode->i_mapping;
+> diff --git a/fs/gfs2/meta_io.c b/fs/gfs2/meta_io.c
+> index 924361fa510b..f1fac1b45059 100644
+> --- a/fs/gfs2/meta_io.c
+> +++ b/fs/gfs2/meta_io.c
+> @@ -115,7 +115,7 @@ struct buffer_head *gfs2_getbuf(struct gfs2_glock *gl=
+, u64 blkno, int create)
+>  {
+>         struct address_space *mapping =3D gfs2_glock2aspace(gl);
+>         struct gfs2_sbd *sdp =3D gl->gl_name.ln_sbd;
 > -       struct page *page;
 > +       struct folio *folio;
 >         struct buffer_head *bh;
->         u64 blk;
->         unsigned bsize =3D sdp->sd_sb.sb_bsize, bnum =3D 0, boff =3D 0;
-> @@ -745,15 +745,15 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *=
-sdp, unsigned long index,
->         blk =3D index << (PAGE_SHIFT - sdp->sd_sb.sb_bsize_shift);
->         boff =3D off % bsize;
+>         unsigned int shift;
+>         unsigned long index;
+> @@ -129,36 +129,31 @@ struct buffer_head *gfs2_getbuf(struct gfs2_glock *=
+gl, u64 blkno, int create)
+>         bufnum =3D blkno - (index << shift);  /* block buf index within p=
+age */
 >
-> -       page =3D grab_cache_page(mapping, index);
-> -       if (!page)
-> -               return -ENOMEM;
-> -       if (!page_has_buffers(page))
-> -               create_empty_buffers(page, bsize, 0);
-> +       folio =3D filemap_grab_folio(mapping, index);
-> +       if (IS_ERR(folio))
-> +               return PTR_ERR(folio);
-> +       bh =3D folio_buffers(folio);
-> +       if (!bh)
-> +               bh =3D folio_create_empty_buffers(folio, bsize, 0);
->
-> -       bh =3D page_buffers(page);
-> -       for(;;) {
-> -               /* Find the beginning block within the page */
-> +       for (;;) {
-> +               /* Find the beginning block within the folio */
->                 if (pg_off >=3D ((bnum * bsize) + bsize)) {
->                         bh =3D bh->b_this_page;
->                         bnum++;
-> @@ -766,9 +766,10 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *s=
-dp, unsigned long index,
->                                 goto unlock_out;
->                         /* If it's a newly allocated disk block, zero it =
-*/
->                         if (buffer_new(bh))
-> -                               zero_user(page, bnum * bsize, bh->b_size)=
+>         if (create) {
+> -               for (;;) {
+> -                       page =3D grab_cache_page(mapping, index);
+> -                       if (page)
+> -                               break;
+> -                       yield();
+> -               }
+> -               if (!page_has_buffers(page))
+> -                       create_empty_buffers(page, sdp->sd_sb.sb_bsize, 0=
+);
+> +               folio =3D __filemap_get_folio(mapping, index,
+> +                               FGP_LOCK | FGP_ACCESSED | FGP_CREAT,
+> +                               mapping_gfp_mask(mapping) | __GFP_NOFAIL)=
 ;
-> +                               folio_zero_range(folio, bnum * bsize,
-> +                                               bh->b_size);
->                 }
-> -               if (PageUptodate(page))
-> +               if (folio_test_uptodate(folio))
->                         set_buffer_uptodate(bh);
->                 if (bh_read(bh, REQ_META | REQ_PRIO) < 0)
->                         goto unlock_out;
-> @@ -784,17 +785,17 @@ static int gfs2_write_buf_to_page(struct gfs2_sbd *=
-sdp, unsigned long index,
->                 break;
+> +               bh =3D folio_buffers(folio);
+> +               if (!bh)
+> +                       bh =3D folio_create_empty_buffers(folio,
+> +                               sdp->sd_sb.sb_bsize, 0);
+>         } else {
+> -               page =3D find_get_page_flags(mapping, index,
+> -                                               FGP_LOCK|FGP_ACCESSED);
+> -               if (!page)
+> +               folio =3D __filemap_get_folio(mapping, index,
+> +                               FGP_LOCK | FGP_ACCESSED, 0);
+> +               if (IS_ERR(folio))
+>                         return NULL;
+> -               if (!page_has_buffers(page)) {
+> -                       bh =3D NULL;
+> -                       goto out_unlock;
+> -               }
+> +               bh =3D folio_buffers(folio);
 >         }
 >
-> -       /* Write to the page, now that we have setup the buffer(s) */
-> -       memcpy_to_page(page, off, buf, bytes);
-> -       flush_dcache_page(page);
+> -       /* Locate header for our buffer within our page */
+> -       for (bh =3D page_buffers(page); bufnum--; bh =3D bh->b_this_page)
+> -               /* Do nothing */;
+> -       get_bh(bh);
+> +       if (!bh)
+> +               goto out_unlock;
+>
+> +       bh =3D get_nth_bh(bh, bufnum);
+>         if (!buffer_mapped(bh))
+>                 map_bh(bh, sdp->sd_vfs, blkno);
+>
+>  out_unlock:
 > -       unlock_page(page);
 > -       put_page(page);
-> +       /* Write to the folio, now that we have setup the buffer(s) */
-> +       memcpy_to_folio(folio, off, buf, bytes);
-> +       flush_dcache_folio(folio);
 > +       folio_unlock(folio);
 > +       folio_put(folio);
 >
->         return 0;
->
->  unlock_out:
-> -       unlock_page(page);
-> -       put_page(page);
-> +       folio_unlock(folio);
-> +       folio_put(folio);
->         return -EIO;
+>         return bh;
 >  }
->
 > --
 > 2.40.1
 >
 
-Reviewed-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Andreas Gruenbacher <agruenba@redhat.com>
 
 Thanks,
 Andreas
