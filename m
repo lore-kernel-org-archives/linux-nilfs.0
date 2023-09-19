@@ -1,105 +1,83 @@
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: [PATCH 19/26] ntfs3: Convert ntfs_zero_range() to use a folio
-Date: Tue, 19 Sep 2023 05:51:28 +0100
-Message-ID: <20230919045135.3635437-20-willy@infradead.org>
+Subject: [PATCH 12/26] nilfs2: Convert nilfs_mdt_forget_block() to use a folio
+Date: Tue, 19 Sep 2023 05:51:21 +0100
+Message-ID: <20230919045135.3635437-13-willy@infradead.org>
 References: <20230919045135.3635437-1-willy@infradead.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=ls5QcLT4iw9HwtdteFtFIYm/lsPpx02xEwWSdEB7w9A=; b=v/s0YAYridL5AWm2wYWPZkGzsB
-        K9clHYJMlcJOaX+NmKb7HW9F2eDrR9hnEfFhe6YOq/YMCptTWYV3mUL+G2wUZGCpLuLp0qpTeuzgI
-        tfpqOXserkhg/kyyX467Dysruzd3eSm3vC0glEAeMMY65rYuin/KFRuS0Lsm8EzJZCmpYoky31QWW
-        yeFE0mR+6iFAOMdA38W8yDlIG1gMZUZEaZpturMo+/2erCJzbJ4Un6ZNsjv4H8NyPK4ef/kgPaHCh
-        mbJX2zDqicJe9xcLmKePQpOVdc2efB17nrycatRVsH+bWRoVmcgvJ+9lCUkxoi7Ky4qPa1vl5H4DH
-        AFTza2Gg==;
+        bh=kMS4yLjT+MvyIpz+8c4RceJl7Cq4cP3Nn5r0TL01AkM=; b=Gna+Nrs1iPcm3EFwmrZCisgDxF
+        l/i6DX/38hzEhDl9on1LFmpXrAhYPkJ5V68yiyuA6l9UXILvc1gxtibKrQVGRHVjtcJ7wlOPBIjF/
+        RB863lpp0nbBCdecrYesQv5ZVNHxIbcU4YA93VliccoRmRKwHiwSVU/2W7GWOwSnoUv87Wf/Fu+QB
+        0Pazbp+1rvyhhansi50qiEWNHRJjK+BlvES+cklfcW7GFI2NZrJn3ltjIvvYHY48plSGJXXuCfbc1
+        WvU6ahflCYXK976m0N50npcMtfyQ9uXq7UW4cKM2QBUoxvrPS9TW3v+mLG7WppG4FIu6/uwVYWiQL
+        CJe5pF5g==;
 In-Reply-To: <20230919045135.3635437-1-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>, linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, Pankaj Raghav <p.raghav@samsung.com>
 
-Use the folio API throughout, saving six hidden calls to compound_head().
+Remove a number of folio->page->folio conversions.
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- fs/ntfs3/file.c | 31 ++++++++++++++++---------------
- 1 file changed, 16 insertions(+), 15 deletions(-)
+ fs/nilfs2/mdt.c | 30 ++++++++++++++----------------
+ 1 file changed, 14 insertions(+), 16 deletions(-)
 
-diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
-index 962f12ce6c0a..a003a69091a2 100644
---- a/fs/ntfs3/file.c
-+++ b/fs/ntfs3/file.c
-@@ -187,7 +187,7 @@ static int ntfs_zero_range(struct inode *inode, u64 vbo, u64 vbo_to)
- 	struct buffer_head *head, *bh;
- 	u32 bh_next, bh_off, to;
- 	sector_t iblock;
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index db2260d6e44d..11b7cf4acc92 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -356,30 +356,28 @@ int nilfs_mdt_delete_block(struct inode *inode, unsigned long block)
+  */
+ int nilfs_mdt_forget_block(struct inode *inode, unsigned long block)
+ {
+-	pgoff_t index = (pgoff_t)block >>
+-		(PAGE_SHIFT - inode->i_blkbits);
 -	struct page *page;
+-	unsigned long first_block;
++	pgoff_t index = block >> (PAGE_SHIFT - inode->i_blkbits);
 +	struct folio *folio;
++	struct buffer_head *bh;
+ 	int ret = 0;
+ 	int still_dirty;
  
- 	for (; idx < idx_end; idx += 1, from = 0) {
- 		page_off = (loff_t)idx << PAGE_SHIFT;
-@@ -195,16 +195,17 @@ static int ntfs_zero_range(struct inode *inode, u64 vbo, u64 vbo_to)
- 						       PAGE_SIZE;
- 		iblock = page_off >> inode->i_blkbits;
+-	page = find_lock_page(inode->i_mapping, index);
+-	if (!page)
++	folio = filemap_lock_folio(inode->i_mapping, index);
++	if (IS_ERR(folio))
+ 		return -ENOENT;
  
--		page = find_or_create_page(mapping, idx,
--					   mapping_gfp_constraint(mapping,
--								  ~__GFP_FS));
--		if (!page)
--			return -ENOMEM;
-+		folio = __filemap_get_folio(mapping, idx,
-+				FGP_LOCK | FGP_ACCESSED | FGP_CREAT,
-+				mapping_gfp_constraint(mapping, ~__GFP_FS));
-+		if (IS_ERR(folio))
-+			return PTR_ERR(folio);
+-	wait_on_page_writeback(page);
++	folio_wait_writeback(folio);
  
--		if (!page_has_buffers(page))
--			create_empty_buffers(page, blocksize, 0);
-+		head = folio_buffers(folio);
-+		if (!head)
-+			head = folio_create_empty_buffers(folio, blocksize, 0);
- 
--		bh = head = page_buffers(page);
-+		bh = head;
- 		bh_off = 0;
- 		do {
- 			bh_next = bh_off + blocksize;
-@@ -220,14 +221,14 @@ static int ntfs_zero_range(struct inode *inode, u64 vbo, u64 vbo_to)
- 			}
- 
- 			/* Ok, it's mapped. Make sure it's up-to-date. */
--			if (PageUptodate(page))
-+			if (folio_test_uptodate(folio))
- 				set_buffer_uptodate(bh);
- 
- 			if (!buffer_uptodate(bh)) {
- 				err = bh_read(bh, 0);
- 				if (err < 0) {
--					unlock_page(page);
--					put_page(page);
-+					folio_unlock(folio);
-+					folio_put(folio);
- 					goto out;
- 				}
- 			}
-@@ -237,10 +238,10 @@ static int ntfs_zero_range(struct inode *inode, u64 vbo, u64 vbo_to)
- 		} while (bh_off = bh_next, iblock += 1,
- 			 head != (bh = bh->b_this_page));
- 
--		zero_user_segment(page, from, to);
-+		folio_zero_segment(folio, from, to);
- 
--		unlock_page(page);
--		put_page(page);
-+		folio_unlock(folio);
-+		folio_put(folio);
- 		cond_resched();
+-	first_block = (unsigned long)index <<
+-		(PAGE_SHIFT - inode->i_blkbits);
+-	if (page_has_buffers(page)) {
+-		struct buffer_head *bh;
+-
+-		bh = nilfs_page_get_nth_block(page, block - first_block);
++	bh = folio_buffers(folio);
++	if (bh) {
++		unsigned long first_block = index <<
++				(PAGE_SHIFT - inode->i_blkbits);
++		bh = get_nth_bh(bh, block - first_block);
+ 		nilfs_forget_buffer(bh);
  	}
- out:
+-	still_dirty = PageDirty(page);
+-	unlock_page(page);
+-	put_page(page);
++	still_dirty = folio_test_dirty(folio);
++	folio_unlock(folio);
++	folio_put(folio);
+ 
+ 	if (still_dirty ||
+ 	    invalidate_inode_pages2_range(inode->i_mapping, index, index) != 0)
 -- 
 2.40.1
 
