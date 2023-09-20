@@ -1,35 +1,40 @@
-From: Pankaj Raghav <p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH 02/26] mpage: Convert map_buffer_to_folio() to
- folio_create_empty_buffers()
-Date: Wed, 20 Sep 2023 11:54:45 +0200
-Message-ID: <20230920095428.kxlv7gplxyy7wqpb@localhost>
+From: Pankaj Raghav <p.raghav@samsung.com>
+Subject: Re: [PATCH 03/26] ext4: Convert to folio_create_empty_buffers
+Date: Wed, 20 Sep 2023 12:00:11 +0200
+Message-ID: <20230920100011.zpzagd35gjpn5gzu@localhost>
 References: <20230919045135.3635437-1-willy@infradead.org>
-        <20230919045135.3635437-3-willy@infradead.org>
-        <CGME20230920095447eucas1p2fee0541ad835331ff6b4c5143122c341@eucas1p2.samsung.com>
+        <20230919045135.3635437-4-willy@infradead.org>
+        <CGME20230920100012eucas1p1f44530cfdd1ff8ed668bfe0c088d31ce@eucas1p1.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com 20230920095448euoutp028dcd062e5ad186acb590747c722ca1c9~GksXXQtYH1388913889euoutp02l
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.w1.samsung.com 20230920100013euoutp019e35a00542dd22671143d96bfd6e2103~GkxGDa8iJ0504805048euoutp01C
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-        s=mail20170921; t=1695203688;
-        bh=FdSyQmvYuBWOq4bw3GT24G1UfEtiREjPwKS1idfELH8=;
+        s=mail20170921; t=1695204013;
+        bh=JtBYsHN8h541EBRzlr1y0mzkDzP9gFTfHIXNRWvnYrs=;
         h=Date:From:To:CC:Subject:In-Reply-To:References:From;
-        b=Ec8Eu9Iotlyy+vzC6ecrgZzOSbmNawykSDCZ2cEBLkYqnG552ZivaqgvQmFroqojZ
-         0apmrP10brCQuzJWbLuDqQ/m/OCs03Y9oTFH+rTTz7yeywA47UT5brzZRjGEVW2c2j
-         kJ2e6On5KmXgwTHbwVh+Jh+mUcosu6Z+XJ+n2OoA=
+        b=a0rXS9PnsBLdcAai9TRqkGdfrEGllNHbHgiYLk7bd3A6pTWFBb8gx+laef0ZRAuGV
+         9dbFEh1ZcT2rUKoh2c8kXxM/FJYs5OBNT1v9UmYQtDDfxaV9tmE7J0lVkL3Y67rf+L
+         idzp0179QVhAN7/4t5jzIBZqyesURL/TSgQ1CM44=
 Content-Disposition: inline
-In-Reply-To: <20230919045135.3635437-3-willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+In-Reply-To: <20230919045135.3635437-4-willy@infradead.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Transfer-Encoding: 7bit
-To: "Matthew Wilcox (Oracle)" <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gfs2-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, ocfs2-devel-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, p.raghav@samsung.com
 
-On Tue, Sep 19, 2023 at 05:51:11AM +0100, Matthew Wilcox (Oracle) wrote:
-> Saves a folio->page->folio conversion.
+On Tue, Sep 19, 2023 at 05:51:12AM +0100, Matthew Wilcox (Oracle) wrote:
+> Remove an unnecessary folio->page->folio conversion and take advantage
+> of the new return value from folio_create_empty_buffers().
 > 
-> Signed-off-by: Matthew Wilcox (Oracle) <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 > ---
->  fs/mpage.c | 3 +--
->  1 file changed, 1 insertion(+), 2 deletions(-)
+>  fs/ext4/inode.c       | 14 +++++---------
+>  fs/ext4/move_extent.c | 11 +++++------
+>  2 files changed, 10 insertions(+), 15 deletions(-)
+> 
+I had a similar cleanup that I sent a while ago:
+https://lore.kernel.org/linux-ext4/20230512125243.73696-1-p.raghav@samsung.com/
+
 Looks good,
-Reviewed-by: Pankaj Raghav <p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Reviewed-by: Pankaj Raghav <p.raghav@samsung.com>
