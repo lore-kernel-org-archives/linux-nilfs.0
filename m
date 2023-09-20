@@ -1,114 +1,64 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: Re: [PATCH 06/26] gfs2: Convert gfs2_getbuf() to folios
-Date: Wed, 20 Sep 2023 00:34:41 +0200
-Message-ID: <CAHc6FU6JasO3-8VaOm3MieLEn599OTKPnZC5BwkNUMqNoJ+meA@mail.gmail.com>
-References: <20230919045135.3635437-1-willy@infradead.org> <20230919045135.3635437-7-willy@infradead.org>
+From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 07/26] gfs2; Convert gfs2_getjdatabuf to use a folio
+Date: Wed, 20 Sep 2023 04:11:11 +0100
+Message-ID: <ZQpizwzZ/J+2CUfj@casper.infradead.org>
+References: <20230919045135.3635437-1-willy@infradead.org>
+ <20230919045135.3635437-8-willy@infradead.org>
+ <CAHc6FU4-RSAsc-LWw2OuLDecofapd30OZhxyjVKLXzJNwh-ZoA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-ext4-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1695162895;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=eQus7xN9bGIDtrSXQ5yUpeC9VO6X9bRJrGYUnimnUlQ=;
-        b=QERE7Qs0UVnfmtfFPWir107Hqwo0Z5Ln9+k4YvxkViI8bbDSjylQDLOkN26BOTbWBHM7lV
-        +3JB+YzlaSBIlC564udIA9HaG4QF0D4z6391jlqxhnhx8gLL9Fb9JASe0WsLOx+K6Mz8uC
-        8MnhdXTVLbC15VRqFhbBNPUDWIUjyXk=
-In-Reply-To: <20230919045135.3635437-7-willy@infradead.org>
+Return-path: <linux-nilfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=uE+UAnC9YgmNAUhKoTWIdxRk/FdOddBgLymLwlPaqnk=; b=ekNfgmFwoHu8gIoYFOjAVApvtB
+        3IXO/kDTQVK7eWR0y6nYylINvIk4NtmEm3kQODEPrUFwrj5dXTYcXamT6rwoq/2nvLl5fEGFiXvrd
+        qGejySTQ2pAFXZBOhqsyHwndRN62Ily6nVv64jjObtM6K2L7dmD/rDOmehFEm5JknDqooHYchnJLb
+        YI/tCYH/CrK1gcaARvorBnRcZOqw+jUnC5gKxqrYuQkFKyzuOj4PSUCgORs7pW00BJ/+8vty/M8I/
+        5YP4CSRdEi8Ax4LZNa3piEYfC9C6VrjU/6PZSNvOYis9wkJzK92YeqJ4CXWiya1PLUT44i/m0R7WO
+        mKrrt6Uw==;
+Content-Disposition: inline
+In-Reply-To: <CAHc6FU4-RSAsc-LWw2OuLDecofapd30OZhxyjVKLXzJNwh-ZoA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-ID: <linux-nilfs.vger.kernel.org>
-Content-Type: text/plain; charset="windows-1252"
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net, ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev, reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org, Pankaj Raghav <p.raghav@samsung.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gfs2-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ntfs-dev-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, ntfs3-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, ocfs2-devel-cunTk1MwBs/YUNznpcFYbw@public.gmane.org, reiserfs-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pankaj Raghav <p.raghav-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
-On Tue, Sep 19, 2023 at 7:00=E2=80=AFAM Matthew Wilcox (Oracle)
-<willy@infradead.org> wrote:
-> Remove several folio->page->folio conversions.  Also use __GFP_NOFAIL
-> instead of calling yield() and the new get_nth_bh().
->
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-> ---
->  fs/gfs2/meta_io.c | 39 +++++++++++++++++----------------------
->  1 file changed, 17 insertions(+), 22 deletions(-)
->
-> diff --git a/fs/gfs2/meta_io.c b/fs/gfs2/meta_io.c
-> index 924361fa510b..f1fac1b45059 100644
-> --- a/fs/gfs2/meta_io.c
-> +++ b/fs/gfs2/meta_io.c
-> @@ -115,7 +115,7 @@ struct buffer_head *gfs2_getbuf(struct gfs2_glock *gl=
-, u64 blkno, int create)
->  {
->         struct address_space *mapping =3D gfs2_glock2aspace(gl);
->         struct gfs2_sbd *sdp =3D gl->gl_name.ln_sbd;
-> -       struct page *page;
-> +       struct folio *folio;
->         struct buffer_head *bh;
->         unsigned int shift;
->         unsigned long index;
-> @@ -129,36 +129,31 @@ struct buffer_head *gfs2_getbuf(struct gfs2_glock *=
-gl, u64 blkno, int create)
->         bufnum =3D blkno - (index << shift);  /* block buf index within p=
-age */
->
->         if (create) {
-> -               for (;;) {
-> -                       page =3D grab_cache_page(mapping, index);
-> -                       if (page)
-> -                               break;
-> -                       yield();
-> -               }
-> -               if (!page_has_buffers(page))
-> -                       create_empty_buffers(page, sdp->sd_sb.sb_bsize, 0=
-);
-> +               folio =3D __filemap_get_folio(mapping, index,
-> +                               FGP_LOCK | FGP_ACCESSED | FGP_CREAT,
-> +                               mapping_gfp_mask(mapping) | __GFP_NOFAIL)=
-;
-> +               bh =3D folio_buffers(folio);
-> +               if (!bh)
-> +                       bh =3D folio_create_empty_buffers(folio,
-> +                               sdp->sd_sb.sb_bsize, 0);
->         } else {
-> -               page =3D find_get_page_flags(mapping, index,
-> -                                               FGP_LOCK|FGP_ACCESSED);
-> -               if (!page)
-> +               folio =3D __filemap_get_folio(mapping, index,
-> +                               FGP_LOCK | FGP_ACCESSED, 0);
-> +               if (IS_ERR(folio))
->                         return NULL;
-> -               if (!page_has_buffers(page)) {
-> -                       bh =3D NULL;
-> -                       goto out_unlock;
-> -               }
-> +               bh =3D folio_buffers(folio);
->         }
->
-> -       /* Locate header for our buffer within our page */
-> -       for (bh =3D page_buffers(page); bufnum--; bh =3D bh->b_this_page)
-> -               /* Do nothing */;
-> -       get_bh(bh);
-> +       if (!bh)
-> +               goto out_unlock;
->
-> +       bh =3D get_nth_bh(bh, bufnum);
->         if (!buffer_mapped(bh))
->                 map_bh(bh, sdp->sd_vfs, blkno);
->
->  out_unlock:
-> -       unlock_page(page);
-> -       put_page(page);
-> +       folio_unlock(folio);
-> +       folio_put(folio);
->
->         return bh;
->  }
-> --
-> 2.40.1
->
+On Wed, Sep 20, 2023 at 12:27:08AM +0200, Andreas Gruenbacher wrote:
+> Thanks,
+> 
+> but this patch has an unwanted semicolon in the subject.
 
-Reviewed-by: Andreas Gruenbacher <agruenba@redhat.com>
+Thanks.  My laptop has a dodgy shift key, so this sometimes happens.
+The build quality on HP Spectre laptops has gone downhill in the last
+few years.
 
-Thanks,
-Andreas
+> > -       page = find_get_page_flags(mapping, index, FGP_LOCK|FGP_ACCESSED);
+> > -       if (!page)
+> > -               return NULL;
+> > -       if (!page_has_buffers(page)) {
+> > -               unlock_page(page);
+> > -               put_page(page);
+> > +       folio = __filemap_get_folio(mapping, index, FGP_LOCK | FGP_ACCESSED, 0);
+> > +       if (IS_ERR(folio))
+> >                 return NULL;
+> > -       }
+> > -       /* Locate header for our buffer within our page */
+> > -       for (bh = page_buffers(page); bufnum--; bh = bh->b_this_page)
+> > -               /* Do nothing */;
+> > -       get_bh(bh);
+> > -       unlock_page(page);
+> > -       put_page(page);
+> > +       bh = folio_buffers(folio);
+> > +       if (bh)
+> > +               get_nth_bh(bh, bufnum);
+> 
+> And we need this here:
+> 
+>     bh = get_nth_bh(bh, bufnum);
 
+Oof.  I should make that __must_check so the compiler tells me I'm being
+an idiot.
+
+Thanks!
