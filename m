@@ -1,7 +1,8 @@
-From: "Arnd Bergmann" <arnd@arndb.de>
-Subject: Re: [PATCH 86/87] fs: switch timespec64 fields in inode to discrete integers
-Date: Thu, 28 Sep 2023 16:21:12 -0400
-Message-ID: <ded0ef74-bdad-42f2-b0a7-5d867e446c19@app.fastmail.com>
+From: "Theodore Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH 86/87] fs: switch timespec64 fields in inode to discrete
+ integers
+Date: Thu, 28 Sep 2023 17:26:56 -0400
+Message-ID: <20230928212656.GC189345@mit.edu>
 References: <20230928110554.34758-1-jlayton@kernel.org>
  <20230928110554.34758-2-jlayton@kernel.org>
  <6020d6e7-b187-4abb-bf38-dc09d8bd0f6d@app.fastmail.com>
@@ -9,75 +10,55 @@ References: <20230928110554.34758-1-jlayton@kernel.org>
  <20230928171943.GK11439@frogsfrogsfrogs>
  <6a6f37d16b55a3003af3f3dbb7778a367f68cd8d.camel@kernel.org>
 Mime-Version: 1.0
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=arndb.de; h=cc
-        :cc:content-type:content-type:date:date:from:from:in-reply-to
-        :in-reply-to:message-id:mime-version:references:reply-to:sender
-        :subject:subject:to:to; s=fm1; t=1695932496; x=1696018896; bh=35
-        hGd5DtemMMIKF1Zr0cZ5jy7ToQQid1yaZKtlkxNu4=; b=kYePS9tb7iX4DfdsrP
-        KSG5kIGZHZ6II373RLg/R6yievFf5ZYxGwh2bHABIynK2hkA52tpJp3Oqt6Z3WOr
-        EqKj++ONhEZxtgYMqLWXCzvXzNYTY67C+FNTS8BO7KmsYa1dEu2LxNvTTGge5dTC
-        98J8ERH0LgbaCs96bDreSwTyXJA52oIcXMJdWw5N86IHuBkNDy0oNr/0YRW4bAe/
-        0M4666MlVq40oMzm+hOyKlTRfSVgmNV/d/3Ff0cJaJ0SNIaaJnTv2IECtjx7okcZ
-        2oTzttml5wZkULDWHm+AqgNYcCGYK4B55B9Z6uwZLoNIrGvBjakjMQdqnYhny59X
-        c+DA==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-        messagingengine.com; h=cc:cc:content-type:content-type:date:date
-        :feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
-        :message-id:mime-version:references:reply-to:sender:subject
-        :subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
-        :x-sasl-enc; s=fm2; t=1695932496; x=1696018896; bh=35hGd5DtemMMI
-        KF1Zr0cZ5jy7ToQQid1yaZKtlkxNu4=; b=Mi38mWEo6Tol35uWyjeJmmWCT6PhB
-        HqHdQW8+/vTI7Qw8Bqjnf4yascDSnQ3TwDDgcbk0sbZbyRT57QkzfpVhTvQ8tyG/
-        LToaN9PzpBS9QrAj9YMndKxYandOQbuYzjXUqBNmiENTlTffglDnwu2iuDr2TsU+
-        /NNGLhQAXePxiL0pEdoLHMSXcoqi6N/AkRauYrgRvDxZcWexBs/kQpWi1R5l+oVf
-        it+YrCNEgaozEQG8vQeVMxdjNU22qXU18zXjjUwBmzzgDSvsRTJJPv6DyBI9Pzys
-        O8qdOCiu0Uk7vB8Y73BLyFXAFOIxbyg1bikunx6mKyaqpJQGWudajkQ0A==
+Return-path: <ceph-devel-owner@vger.kernel.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mit.edu; s=outgoing;
+        t=1695936425; bh=w4hql40FuyyfsTNK9D530X9ExV2y5b7TU7/1a0HHsnU=;
+        h=Date:From:Subject:Message-ID:MIME-Version:Content-Type;
+        b=NGPOVv6aP7Wgx4/k9ruqGjDYWmjUQVAfEL5fppG6yE2RNxUM6uiyoWrXBZfGmZyL2
+         gb1zEZjWcSSCFd+NWg1/BYhZ5jeEptXNin1ZAM6seg38Angccj8YOPtyzxOx/hDFrb
+         Q+ePr/t98/fHq2BcSzJCThnFTNb50fVmlIrGfb3oMvB11ToZpH+p8R2mhaDk4/44dl
+         uEHGVh6Q6Ih5iyFuN8+PasXijpXT1PXJm+5Rkla8PX5Glna1OAsFe3wre6CQl62oa4
+         RAr1Z2b44rKF067M11yaRPI56z2wMDur4vLyEnjrhgmaYzW5D9XQ8I+PJlbP887wDq
+         NXSNNWLPWiTbQ==
+Content-Disposition: inline
 In-Reply-To: <6a6f37d16b55a3003af3f3dbb7778a367f68cd8d.camel@kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Jeff Layton <jlayton@kernel.org>, "Darrick J. Wong" <djwong@kernel.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, David Sterba <dsterba@suse.cz>, Amir Goldstein <amir73il@gmail.com>, Theodore Ts'o <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Jeremy Kerr <jk@ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, =?UTF-8?Q?A
+To: Jeff Layton <jlayton@kernel.org>
+Cc: "Darrick J. Wong" <djwong@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, David Sterba <dsterba@suse.cz>, Amir Goldstein <amir73il@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Jeremy Kerr <jk@ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
-On Thu, Sep 28, 2023, at 13:40, Jeff Layton wrote:
-> On Thu, 2023-09-28 at 10:19 -0700, Darrick J. Wong wrote:
->>
->> > I remember seeing those patches go by. I don't remember that change
->> > being NaK'ed, but I wasn't paying close attention at the time 
->> > 
->> > Looking at it objectively now, I think it's worth it to recover 8 bytes
->> > per inode and open a 4 byte hole that Amir can use to grow the
->> > i_fsnotify_mask. We might even able to shave off another 12 bytes
->> > eventually if we can move to a single 64-bit word per timestamp. 
->> 
->> I don't think you can, since btrfs timestamps utilize s64 seconds
->> counting in both directions from the Unix epoch.  They also support ns
->> resolution:
->> 
->> 	struct btrfs_timespec {
->> 		__le64 sec;
->> 		__le32 nsec;
->> 	} __attribute__ ((__packed__));
->> 
->
+On Thu, Sep 28, 2023 at 01:40:55PM -0400, Jeff Layton wrote:
+> 
 > Correct. We'd lose some fidelity in currently stored timestamps, but as
 > Linus and Ted pointed out, anything below ~100ns granularity is
 > effectively just noise, as that's the floor overhead for calling into
 > the kernel. It's hard to argue that any application needs that sort of
 > timestamp resolution, at least with contemporary hardware. 
+> 
+> Doing that would mean that tests that store specific values in the
+> atime/mtime and expect to be able to fetch exactly that value back would
+> break though, so we'd have to be OK with that if we want to try it. The
+> good news is that it's relatively easy to experiment with new ways to
+> store timestamps with these wrappers in place.
 
-There are probably applications that have come up with creative
-ways to use the timestamp fields of file systems that 94 bits
-of data, with both the MSB of the seconds and the LSB of the
-nanoseconds carrying information that they expect to be preserved.
+The reason why we store 1ns granularity in ext4's on-disk format (and
+accept that we only support times only a couple of centuries into the
+future, as opposed shooting for an on-disk format good for several
+millennia :-), was in case there was userspace that might try to store
+a very fine-grained timestamp and want to be able to get it back
+bit-for-bit identical.
 
-Dropping any information in the nanoseconds other than the top two
-bits would trivially change the 'ls -t' output when two files have
-the same timestamp in one kernel but slightly different timestamps
-in another one. For large values of 'tv_sec', there are fewer
-obvious things that break, but if current kernels are able to
-retrieve arbitrary times that were stored with utimensat(), then we
-should probably make sure future kernels can see the same.
+For example, what if someone was trying to implement some kind of
+steganographic scheme where they going store a secret message (or more
+likely, a 256-bit AES key) in the nanosecond fields of the file's
+{c,m,a,cr}time timestamps, "hiding in plain sight".  Not that I think
+that we have to support something like that, since the field is for
+*timestamps* not cryptographic bits, so if we break someone who is
+doing that, do we care?
 
-        Arnd
+I don't think anyone will complain about breaking the userspace API
+--- especially since if, say, the CIA was using this for their spies'
+drop boxes, they probably wouldn't want to admit it.  :-)
+
+       	    	     	      	      	    - Ted
