@@ -1,53 +1,50 @@
 From: Christian Brauner <brauner@kernel.org>
-Subject: Re: [PATCH 87/87] fs: move i_blocks up a few places in struct inode
-Date: Fri, 29 Sep 2023 11:32:49 +0200
-Message-ID: <20230929-keimt-umspannen-bfd12d2c2033@brauner>
+Subject: Re: [PATCH 86/87] fs: switch timespec64 fields in inode to discrete
+ integers
+Date: Fri, 29 Sep 2023 11:44:15 +0200
+Message-ID: <20230929-yuppie-unzweifelhaft-434bf13bc964@brauner>
 References: <20230928110554.34758-1-jlayton@kernel.org>
- <20230928110554.34758-3-jlayton@kernel.org>
- <CAHk-=wij_42Q9WHY898r-gugmT5c-1JJKRh3C+nTUd1hc1aeqQ@mail.gmail.com>
+ <20230928110554.34758-2-jlayton@kernel.org>
+ <6020d6e7-b187-4abb-bf38-dc09d8bd0f6d@app.fastmail.com>
+ <af047e4a1c6947c59d4a13d4ae221c784a5386b4.camel@kernel.org>
 Mime-Version: 1.0
-Return-path: <linux-unionfs-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1695980011;
-        bh=5rEQjJQmUmhQcZE/S/zbC0z+O4aP1HcivNZvR+uMTdw=;
+        s=k20201202; t=1695980717;
+        bh=oQTvAmCkCsoaLNjfsaMUmlY4D/qoWr90XSuheIQAYtc=;
         h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=j3Z7MPGXgH3qxJhUlGKswKaevoMz5lRlYfLKv517rB572Uft036HOzVnh6y+Fta2y
-         IoP7pRk6lJWa27fv+jFujIlmXsGfS+YQww12NsbvPCYDl6f8XCPE+CtURkcHaeicsG
-         yrkS/+0BXoBXAhDuBIWkGS4iWyGcgZc4uj5K1I6XTsFJQGfVSUCd06bbdxYUiSeitY
-         kWvaORdHP4IXSdIX2Ck5PihMbYV+j7YqPan4YQc6tbETcfSrUPTc518VDuKuEt3jeG
-         gYpsCzcJzJ2TfBOID0I9Ah10OPTMXVGJPcaLChcuIuOHlJVeXlo8F4Hi+JnhGg6W4h
-         6HAwcZKgDftHQ==
+        b=WlV6Iok6t6x6wqtPDr2u2AsUWg4hMLM7cqaWPUDEeTpPDmS0JTVgMZlUl0HPmoBuT
+         /MtXZyL5oovwNZMVTtYCnXU5O+6UqBVLwaqKXfjDA7Gi3QJjfoFg0kuMJ76nbuwBFl
+         FM+QH0bvVjfmuBVMp9s5CgN9psq1cDgIpp1TcndUbm+j24otqfdnexR7nd6Jf+tuT9
+         QFRyk1BHauhj4nL9X9E976w/vvMYaEWzc8Ucm1v15cgYx/ItXrPfVSX9rwflr20Upl
+         1p24LfpWvr++mxmy87xjKVxbcTxjBWdURGxp63tvXsg372LYC0Zasv3SIGFC2AHpa8
+         8VA1Ctle4jMgQ==
 Content-Disposition: inline
-In-Reply-To: <CAHk-=wij_42Q9WHY898r-gugmT5c-1JJKRh3C+nTUd1hc1aeqQ@mail.gmail.com>
+In-Reply-To: <af047e4a1c6947c59d4a13d4ae221c784a5386b4.camel@kernel.org>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jeff Layton <jlayton@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.cz>, Amir Goldstein <amir73il@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Eric Biederman <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Jeremy Kerr <jk@ozlabs.org>, Arnd Bergmann <arnd@arndb.de>, Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arve =?utf-8?B?SGrDuG5uZXbDpWc=?= <arve@android.com>, Todd Kjos <>
+To: Jeff Layton <jlayton@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Alexander Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, David Sterba <dsterba@suse.cz>, Amir Goldstein <amir73il@gmail.com>, Theodore Ts'o <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Jeremy Kerr <jk@ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arve =?utf-8?B?SGrDuG5uZXbDpWc=?= <arve@android.com>
 
-On Thu, Sep 28, 2023 at 10:41:34AM -0700, Linus Torvalds wrote:
-> On Thu, 28 Sept 2023 at 04:06, Jeff Layton <jlayton@kernel.org> wrote:
-> >
-> > Move i_blocks up above the i_lock, which moves the new 4 byte hole to
-> > just after the timestamps, without changing the size of the structure.
-> 
-> I'm sure others have mentioned this, but 'struct inode' is marked with
-> __randomize_layout, so the actual layout may end up being very
-> different.
-> 
-> I'm personally not convinced the whole structure randomization is
-> worth it - it's easy enough to figure out for any distro kernel since
-> the seed has to be the same across machines for modules to work, so
-> even if the seed isn't "public", any layout is bound to be fairly
-> easily discoverable.
-> 
-> So the whole randomization only really works for private kernel
-> builds, and it adds this kind of pain where "optimizing" the structure
-> layout is kind of pointless depending on various options.
-> 
-> I certainly *hope* no distro enables that pointless thing, but it's a worry.
+> It is a lot of churn though.
 
-They don't last we checked. Just last cycle we moved stuff in struct
-file around to optimize things and we explicitly said we don't give a
-damn about struct randomization. Anyone who enables this will bleed
-performance pretty badly, I would reckon.
+I think that i_{a,c,m}time shouldn't be accessed directly by
+filesystems same as no filesystem should really access i_{g,u}id which
+we also provide i_{g,u}id_{read,write}() accessors for. The mode is
+another example where really most often should use helpers because of all
+the set*id stripping that we need to do (and the bugs that we had
+because of this...).
+
+The interdependency between ctime and mtime is enough to hide this in
+accessors. The other big advantage is simply grepability. So really I
+would like to see this change even without the type switch.
+
+In other words, there's no need to lump the two changes together. Do the
+conversion part and we can argue about the switch to discrete integers
+separately.
+
+The other adavantage is that we have a cycle to see any possible
+regression from the conversion.
+
+Thoughts anyone?
