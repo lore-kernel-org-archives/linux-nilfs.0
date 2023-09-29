@@ -1,88 +1,75 @@
 From: Amir Goldstein <amir73il@gmail.com>
 Subject: Re: [PATCH 86/87] fs: switch timespec64 fields in inode to discrete integers
-Date: Fri, 29 Sep 2023 06:27:57 +0300
-Message-ID: <CAOQ4uxjTpPPUa3VXW+DWKy72JABOZBCXD6pjNk-FhJZWnqvNPA@mail.gmail.com>
+Date: Fri, 29 Sep 2023 06:50:13 +0300
+Message-ID: <CAOQ4uxg5ctY9yCjLOjN1nETAcEuNb2UERnYuDv7PoErdxX=WUw@mail.gmail.com>
 References: <20230928110554.34758-1-jlayton@kernel.org> <20230928110554.34758-2-jlayton@kernel.org>
  <6020d6e7-b187-4abb-bf38-dc09d8bd0f6d@app.fastmail.com> <af047e4a1c6947c59d4a13d4ae221c784a5386b4.camel@kernel.org>
- <20230928171943.GK11439@frogsfrogsfrogs>
+ <20230928171943.GK11439@frogsfrogsfrogs> <6a6f37d16b55a3003af3f3dbb7778a367f68cd8d.camel@kernel.org>
+ <20230928212656.GC189345@mit.edu> <CAHk-=wjTynK9BdGbi+8eShU77nkPvipFwRxEd1TSBrw2+LiuDg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-unionfs-owner@vger.kernel.org>
+Return-path: <ceph-devel-owner@vger.kernel.org>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1695958089; x=1696562889; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1695959425; x=1696564225; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=IiAb/i1gc98L6SazD4d4ItKm7HOWY4Sc1dUvsARnIt8=;
-        b=Zj6wu2hbBXtbYyTQuFA71C53wbF8PuIPcek7IRZ5p5evtCnhM4RHLS1ciB8ceh/nam
-         AazrV5vm/uC2lXnN6Oi09ElGY7GqmeLgUPi7gERFik0UB2dcHZPMxLEzaAHc0KizeCcJ
-         jy+iCmTdIuJvAx4iVchMJciykIgMZGLaLtji5QTDBg1zO8WyQ1X70ZdoW5ZcjlhgAimF
-         GneNVj6PBDgt5LT0ZFaMAwwHlIojzeBSnC7YTWSSWAn5ilhjP8I4llftBM2mLboWhMvN
-         pu7fLkxmrB+0/olPBxMkkiJXYp0il+Anbp5cqKpOpjUe8ZE97A9IJQU+ZRU+ZOMzZvKI
-         3aUA==
-In-Reply-To: <20230928171943.GK11439@frogsfrogsfrogs>
+        bh=LYYbHmRBUQu7YjfKhJdocL7dPfjriCkGg2JwzJsWdwM=;
+        b=OgS0+rHVheAoiR5EnChiZq2pVgkTwoqklKOc2O2TXqKHvKq8kU2A7Wz5bYw1kGtFqI
+         aqXIefdua592BhK8tIohJ8bNNn5WQlaegSE0cLv9wCLeW1C5R2pivJS8Z81dN5avSQK9
+         yKR0a7PRt86/Rm3KerAawe/6QQQGfdflrGMJa7sjwn7MHNR5TJUAtSZZ/g9f6fkQMvgW
+         vD/sMK5JqyNJXDSKWVkoZpNdpzIHMdlCjB7daouB4b+BgkZry7wqQ+lKghcMaG5hqDFI
+         7VZcrZAQA4w2SNB7X9tmCU5+W0cs6a5SecHwc4O1krlgRjWDQkpk++JkqMD3Fah7hKTL
+         W1Ww==
+In-Reply-To: <CAHk-=wjTynK9BdGbi+8eShU77nkPvipFwRxEd1TSBrw2+LiuDg@mail.gmail.com>
 List-ID: <linux-nilfs.vger.kernel.org>
 Content-Type: text/plain; charset="windows-1252"
-To: "Darrick J. Wong" <djwong@kernel.org>
-Cc: Jeff Layton <jlayton@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, David Sterba <dsterba@suse.cz>, Theodore Ts'o <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Jeremy Kerr <jk@ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, =?UTF-8?B?QXJ2Z
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Theodore Ts'o <tytso@mit.edu>, Jeff Layton <jlayton@kernel.org>, "Darrick J. Wong" <djwong@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, David Sterba <dsterba@suse.cz>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Jeremy Kerr <jk@ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, =?UTF-8?B?QXJ2ZSBIasO4bm
 
-On Thu, Sep 28, 2023 at 8:19=E2=80=AFPM Darrick J. Wong <djwong@kernel.org>=
- wrote:
+On Fri, Sep 29, 2023 at 3:19=E2=80=AFAM Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
+...
+> So yes, real programs to cache stat information, and it matters for perfo=
+rmance.
 >
-> On Thu, Sep 28, 2023 at 01:06:03PM -0400, Jeff Layton wrote:
-> > On Thu, 2023-09-28 at 11:48 -0400, Arnd Bergmann wrote:
-> > > On Thu, Sep 28, 2023, at 07:05, Jeff Layton wrote:
-> > > > This shaves 8 bytes off struct inode, according to pahole.
-> > > >
-> > > > Signed-off-by: Jeff Layton <jlayton@kernel.org>
-> > >
-> > > FWIW, this is similar to the approach that Deepa suggested
-> > > back in 2016:
-> > >
-> > > https://lore.kernel.org/lkml/1452144972-15802-3-git-send-email-deepa.=
-kernel@gmail.com/
-> > >
-> > > It was NaKed at the time because of the added complexity,
-> > > though it would have been much easier to do it then,
-> > > as we had to touch all the timespec references anyway.
-> > >
-> > > The approach still seems ok to me, but I'm not sure it's worth
-> > > doing it now if we didn't do it then.
-> > >
-> >
-> > I remember seeing those patches go by. I don't remember that change
-> > being NaK'ed, but I wasn't paying close attention at the time
-> >
-> > Looking at it objectively now, I think it's worth it to recover 8 bytes
-> > per inode and open a 4 byte hole that Amir can use to grow the
-> > i_fsnotify_mask. We might even able to shave off another 12 bytes
-> > eventually if we can move to a single 64-bit word per timestamp.
+> But I don't think any actual reasonable program will have
+> *correctness* issues, though -
+
+I beg to disagree.
+
+> because there are certainly filesystems
+> out there that don't do nanosecond resolution (and other operations
+> like copying trees around will obviously also change times).
 >
-> I don't think you can, since btrfs timestamps utilize s64 seconds
-> counting in both directions from the Unix epoch.  They also support ns
-> resolution:
->
->         struct btrfs_timespec {
->                 __le64 sec;
->                 __le32 nsec;
->         } __attribute__ ((__packed__));
->
-> --D
+> Anybody doing steganography in the timestamps is already not going to
+> have a great time, really.
 >
 
-Sure we can.
-That's what btrfs_inode is for.
-vfs inode also does not store i_otime (birth time) and there is even a
-precedent of vfs/btrfs variable size mismatch:
+Your thesis implies that all applications are portable across different
+filesystems and all applications are expected to cope with copying
+trees around.
 
-        /* full 64 bit generation number, struct vfs_inode doesn't have a b=
-ig
-         * enough field for this.
-         */
-        u64 generation;
+There are applications that work on specific filesystems and those
+applications are very much within sanity if they expect that past
+observed values of nsec will not to change if the file was not changed.
 
-If we decide that vfs should use "bigtime", btrfs pre-historic
-timestamps are not a show stopper.
+But even if we agree that will "only" hurt performance, your example of
+performance hit (10s of git diff) is nowhere close to the performance
+hit of invalidating the mtime cache of billions of files at once (i.e. afte=
+r
+kernel upgrade), which means that rsync-like programs need to
+re-read all the data from remote locations.
+
+I am not saying that filesystems cannot decide to *stop storing nsec
+granularity* from this day forth, but like btrfs pre-historic timestamps,
+those fs have an obligation to preserve existing metadata, unless
+users opted to throw it away.
+
+OTOH, it is perfectly fine if the vfs wants to stop providing sub 100ns
+services to filesystems. It's just going to be the fs problem and the
+preserved pre-historic/fine-grained time on existing files would only
+need to be provided in getattr(). It does not need to be in __i_mtime.
 
 Thanks,
 Amir.
