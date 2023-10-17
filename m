@@ -2,73 +2,212 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A47DC46CA1
-	for <linux-nilfs@archiver.kernel.org>; Mon, 16 Oct 2023 20:12:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1CDACDB474
+	for <linux-nilfs@archiver.kernel.org>; Tue, 17 Oct 2023 19:42:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234257AbjJPUMe (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Mon, 16 Oct 2023 16:12:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44386 "EHLO
+        id S235040AbjJQTmF (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Tue, 17 Oct 2023 15:42:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48722 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234256AbjJPULo (ORCPT
+        with ESMTP id S234998AbjJQTmF (ORCPT
         <rfc822;linux-nilfs@vger.kernel.org>);
-        Mon, 16 Oct 2023 16:11:44 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EDD9AF7;
-        Mon, 16 Oct 2023 13:11:33 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
-        Content-Type:Content-ID:Content-Description;
-        bh=fi8Eq6tU4+7e9/mXSea+NKjhkEdSISChyP52Lf5yEEA=; b=AtFTdGQ4o7OhxTEzHtog4nTY2s
-        Czbj4V3RFqns4xEx2QtWuyeAPYvlbrv2EkTmoe+YqvgbHn7bkTxc9Dlu3UepTZ0fhwMKh5IAPpEBU
-        eenTAv9RPASKjXekhb65QbKhjEfcGTIIGd9BsXSOyZOImKZY8GbaFxWj784tnAeC/9fzDTKUV5bq/
-        /T+7/2eNdv7bS7256cWCmIOja+6QXmkQJR03TkzwwSpq5PJB0P8SWRwYG5Mmpn6GCmv62sYKNhGWq
-        sbbiLNEdiVMVnJxQvoM6Cb9t54mQuF8YhRDyQlhDEsRG9CVSxNYfB/JRj8xEqscF41zFU9EMYO4Ib
-        UPxlizag==;
-Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1qsTvo-0085aW-Rw; Mon, 16 Oct 2023 20:11:16 +0000
-From:   "Matthew Wilcox (Oracle)" <willy@infradead.org>
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     "Matthew Wilcox (Oracle)" <willy@infradead.org>,
+        Tue, 17 Oct 2023 15:42:05 -0400
+Received: from mail-ua1-x92d.google.com (mail-ua1-x92d.google.com [IPv6:2607:f8b0:4864:20::92d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C96CC4;
+        Tue, 17 Oct 2023 12:42:02 -0700 (PDT)
+Received: by mail-ua1-x92d.google.com with SMTP id a1e0cc1a2514c-7afc13d58c6so2188539241.1;
+        Tue, 17 Oct 2023 12:42:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1697571721; x=1698176521; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=nEdPLPUGt3bDYuqJR132GTKL4Kbaz2ZIt3XjP65gcfI=;
+        b=hMjN3M0BH2qzrgCGv+VdOlp7XAakeGq9svdxmwXXv3lSsvN2eMn9uorhDv5hT+R9zw
+         s4Da3ttGyp13jNEbuMmCWRn6kZ/uPLDmA9rQJRCPncGshU8O86qJ5E9bIMWLRROaapLr
+         ygfKCNKcx18CRUnpF3qHSfqrYOxYzK36gcd4hhvAidBt050TPwsB/Utv3AQK67JjIDQ3
+         xP1AvzHraXbbJEBDfMNlT0z41ZJa4GKN/pI6E9cby4X9ZSFJBoGoiuBc+jM9lG/kbg1/
+         5YF7i1XZ1VA1lTX7nVaUzuc/2siWnhmKvildlTnlsxhLKmczQn1dKEXvztHblQAjFimP
+         CJrw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1697571721; x=1698176521;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=nEdPLPUGt3bDYuqJR132GTKL4Kbaz2ZIt3XjP65gcfI=;
+        b=idq1sF08LV6nFBWZMUPR/Aq4o8sh2yfFZenmpGAVvFDYDrDbDYMrlCiQQ+6qyYswg6
+         n+Q8TCluvjRfM5Ng4kKDJwkWTTmdfsKZtt8TECajRl9JUdqlGFCk7UBfucq/p39nYuQI
+         t4j/sKLdgF7vv26C6YAOMwkh1bARQlXQpl4E9iBmRd7Hb8n0sVcn+H8qfHwnHyHY+Ppo
+         Wpq21Gu2U99c1Cijg2o25FUDD0kub67JEWQU89czY2yLnh/KLWTsu0up31u9n/ZFyPzV
+         FeEKCm1ya47jfLYhVtu70TKiiMAldBYsi3yJpbE29nKeCSAmKADPBnhMAGdHZlN7hA+N
+         2XHQ==
+X-Gm-Message-State: AOJu0YxvR7UPYPcbwt8VSntFC2qZ3zo0ydRDpt792CKXXSh2opStoFi1
+        2KXuCBvDUiefPefEnpMYfyA/3geVhooUeyOzRC0=
+X-Google-Smtp-Source: AGHT+IEGVouf3g52zAQZKqogAWOdoqW2ayEa2oclPTWNKWf5D8raecPXGS+4xiqVaAbbP8NV0hXO6xERMf3T6Nmer6s=
+X-Received: by 2002:a67:c186:0:b0:457:dd92:f913 with SMTP id
+ h6-20020a67c186000000b00457dd92f913mr3741772vsj.14.1697571721243; Tue, 17 Oct
+ 2023 12:42:01 -0700 (PDT)
+MIME-Version: 1.0
+References: <20231016201114.1928083-1-willy@infradead.org> <20231016201114.1928083-2-willy@infradead.org>
+In-Reply-To: <20231016201114.1928083-2-willy@infradead.org>
+From:   Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date:   Wed, 18 Oct 2023 04:41:44 +0900
+Message-ID: <CAKFNMonj9XQe1PdeCny7N8MFAHwQVQNDf6A2S4g-gxX4iJLvZQ@mail.gmail.com>
+Subject: Re: [PATCH v2 01/27] buffer: Return bool from grow_dev_folio()
+To:     "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
         linux-fsdevel@vger.kernel.org, gfs2@lists.linux.dev,
         linux-nilfs@vger.kernel.org, linux-ntfs-dev@lists.sourceforge.net,
         ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev,
         reiserfs-devel@vger.kernel.org, linux-ext4@vger.kernel.org,
         Pankaj Raghav <p.raghav@samsung.com>
-Subject: [PATCH v2 03/27] mpage: Convert map_buffer_to_folio() to folio_create_empty_buffers()
-Date:   Mon, 16 Oct 2023 21:10:50 +0100
-Message-Id: <20231016201114.1928083-4-willy@infradead.org>
-X-Mailer: git-send-email 2.37.1
-In-Reply-To: <20231016201114.1928083-1-willy@infradead.org>
-References: <20231016201114.1928083-1-willy@infradead.org>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-Saves a folio->page->folio conversion.
+On Tue, Oct 17, 2023 at 5:11=E2=80=AFAM Matthew Wilcox (Oracle) wrote:
+>
+> Rename grow_dev_page() to grow_dev_folio() and make it return a bool.
+> Document what that bool means; it's more subtle than it first appears.
+> Also rename the 'failed' label to 'unlock' beacuse it's not exactly
+> 'failed'.  It just hasn't succeeded.
+>
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> ---
+>  fs/buffer.c | 39 ++++++++++++++++++++++-----------------
+>  1 file changed, 22 insertions(+), 17 deletions(-)
+>
+> diff --git a/fs/buffer.c b/fs/buffer.c
+> index b33cc74e9649..dec41d84044b 100644
+> --- a/fs/buffer.c
+> +++ b/fs/buffer.c
+> @@ -1024,24 +1024,26 @@ static sector_t folio_init_buffers(struct folio *=
+folio,
+>  }
+>
+>  /*
+> - * Create the page-cache page that contains the requested block.
+> + * Create the page-cache folio that contains the requested block.
+>   *
+>   * This is used purely for blockdev mappings.
+> + *
+> + * Returns false if we have a 'permanent' failure.  Returns true if
+> + * we succeeded, or the caller should retry.
+>   */
+> -static int
+> -grow_dev_page(struct block_device *bdev, sector_t block,
+> +static bool grow_dev_folio(struct block_device *bdev, sector_t block,
+>               pgoff_t index, int size, int sizebits, gfp_t gfp)
+>  {
+>         struct inode *inode =3D bdev->bd_inode;
+>         struct folio *folio;
+>         struct buffer_head *bh;
+>         sector_t end_block;
+> -       int ret =3D 0;
+> +       bool ret;
+>
+>         folio =3D __filemap_get_folio(inode->i_mapping, index,
+>                         FGP_LOCK | FGP_ACCESSED | FGP_CREAT, gfp);
+>         if (IS_ERR(folio))
+> -               return PTR_ERR(folio);
+> +               return false;
+>
+>         bh =3D folio_buffers(folio);
+>         if (bh) {
+> @@ -1050,14 +1052,17 @@ grow_dev_page(struct block_device *bdev, sector_t=
+ block,
+>                                         (sector_t)index << sizebits, size=
+);
+>                         goto done;
+>                 }
+> +
+> +               /* Caller should retry if this call fails */
+> +               ret =3D true;
+>                 if (!try_to_free_buffers(folio))
+> -                       goto failed;
+> +                       goto unlock;
+>         }
+>
+> -       ret =3D -ENOMEM;
+> +       ret =3D false;
+>         bh =3D folio_alloc_buffers(folio, size, gfp | __GFP_ACCOUNT);
+>         if (!bh)
+> -               goto failed;
+> +               goto unlock;
+>
+>         /*
+>          * Link the folio to the buffers and initialise them.  Take the
+> @@ -1070,19 +1075,19 @@ grow_dev_page(struct block_device *bdev, sector_t=
+ block,
+>                         (sector_t)index << sizebits, size);
+>         spin_unlock(&inode->i_mapping->private_lock);
+>  done:
+> -       ret =3D (block < end_block) ? 1 : -ENXIO;
+> -failed:
+> +       ret =3D block < end_block;
+> +unlock:
+>         folio_unlock(folio);
+>         folio_put(folio);
+>         return ret;
+>  }
+>
+>  /*
+> - * Create buffers for the specified block device block's page.  If
+> - * that page was dirty, the buffers are set dirty also.
+> + * Create buffers for the specified block device block's folio.  If
+> + * that folio was dirty, the buffers are set dirty also.
+>   */
+> -static int
+> -grow_buffers(struct block_device *bdev, sector_t block, int size, gfp_t =
+gfp)
+> +static bool grow_buffers(struct block_device *bdev, sector_t block,
+> +               int size, gfp_t gfp)
+>  {
+>         pgoff_t index;
+>         int sizebits;
+> @@ -1099,11 +1104,11 @@ grow_buffers(struct block_device *bdev, sector_t =
+block, int size, gfp_t gfp)
+>                         "device %pg\n",
+>                         __func__, (unsigned long long)block,
+>                         bdev);
+> -               return -EIO;
+> +               return false;
+>         }
+>
+> -       /* Create a page with the proper size buffers.. */
+> -       return grow_dev_page(bdev, block, index, size, sizebits, gfp);
+> +       /* Create a folio with the proper size buffers.. */
+> +       return grow_dev_folio(bdev, block, index, size, sizebits, gfp);
+>  }
+>
+>  static struct buffer_head *
+> --
+> 2.40.1
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-Reviewed-by: Pankaj Raghav <p.raghav@samsung.com>
----
- fs/mpage.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+This changes the return type of grow_buffers() from "int"  to "bool".
+But, it seems that the caller, __getblk_slow(), has not changed the
+type of the variable "ret" that receives its return value:
 
-diff --git a/fs/mpage.c b/fs/mpage.c
-index 242e213ee064..964a6efe594d 100644
---- a/fs/mpage.c
-+++ b/fs/mpage.c
-@@ -119,8 +119,7 @@ static void map_buffer_to_folio(struct folio *folio, struct buffer_head *bh,
- 			folio_mark_uptodate(folio);
- 			return;
- 		}
--		create_empty_buffers(&folio->page, i_blocksize(inode), 0);
--		head = folio_buffers(folio);
-+		head = folio_create_empty_buffers(folio, i_blocksize(inode), 0);
- 	}
- 
- 	page_bh = head;
--- 
-2.40.1
+        for (;;) {
+                struct buffer_head *bh;
+                int ret;
 
+                bh =3D __find_get_block(bdev, block, size);
+                if (bh)
+                        return bh;
+
+                ret =3D grow_buffers(bdev, block, size, gfp);
+                if (ret < 0)
+                        return NULL;
+        }
+
+So, it looks like the error check immediately after calling
+grow_buffers() will not branch like before.
+Is this okay ?   Or, am I missing some other changes?
+
+Also, there is a typo in the changelog: "beacuse" -> "because".
+
+Regards,
+Ryusuke Konishi
