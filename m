@@ -2,115 +2,76 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D063FC4332F
-	for <linux-nilfs@archiver.kernel.org>; Thu,  2 Nov 2023 10:27:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A6CDC4332F
+	for <linux-nilfs@archiver.kernel.org>; Thu,  2 Nov 2023 11:10:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1346371AbjKBK1w (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Thu, 2 Nov 2023 06:27:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51690 "EHLO
+        id S1347276AbjKBLKj (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Thu, 2 Nov 2023 07:10:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49548 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1345942AbjKBK1v (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>); Thu, 2 Nov 2023 06:27:51 -0400
-Received: from mail-ua1-x933.google.com (mail-ua1-x933.google.com [IPv6:2607:f8b0:4864:20::933])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8C7DC189;
-        Thu,  2 Nov 2023 03:27:47 -0700 (PDT)
-Received: by mail-ua1-x933.google.com with SMTP id a1e0cc1a2514c-7ba962d534eso335714241.3;
-        Thu, 02 Nov 2023 03:27:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1698920866; x=1699525666; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=1sT5XHbj1Zpwf41XiMIHE+g9/5pteqhB4IA+ksFC5ZY=;
-        b=TTcFdT6DFvX6uIKFKovf8kp+Y0hJs7FDoYMnw2emiG2NwHujXNeSazqd/OcO8ngoLL
-         4gpswp+tjwI4lX+kkTqz32MQuy7uijTU40qK5nSPE5TXnvm0oeUPXZd6GyL2WhdtRB/n
-         nXmRpfPA3EosHJytEEfxThytLytLd7CQH/ZaCCH5+9gBizgYmyfqV9d8V5wuVNfbiXnn
-         eqEH5Er1oVjTrYXNgXlfFTIokJgH1gukNvvcd0LmNdeltmxuXmTzgMsmT1af5jPsolMg
-         VaU+XKHpjcZ6bSgv3E5XVq426qr2xNRIwFjiSu19uIxG9yBpBYL3v8P6SnpABKGcH5zN
-         wNOg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698920866; x=1699525666;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=1sT5XHbj1Zpwf41XiMIHE+g9/5pteqhB4IA+ksFC5ZY=;
-        b=g80A8XUftaJKSQwCz8RtMyKXP+5eLb7K7hi0V8ktc6yejtjYMYp5bSNVgm/+Efc9Sn
-         Lc5aGYmiTTtWKm2K+D/J4Sh70FJQ6W3+HqReqsYE0OSrOIGCDtdE7ZcPAZpVpbwMkyZr
-         1LcOoyygeaNLEg7mnQSTSEqHgiLK7eoqDnfk7LCDotVLlPQIJqP9qfcAKHxmPM0F/V+9
-         rY+zAd+vFm2RacfdJJPd9IjZ6I90X2//YNmEYa272/G2NYWQ//TzP6wt2Q+W1QrdFAaX
-         LG9KdCcH+xMc/4HhaVdrlqycytNTF0sDY5lFsnsX/BsSsfr2rksSO7yVQT5cygezxqZO
-         hgeA==
-X-Gm-Message-State: AOJu0YxjKzfhbFJHIV8kCbSA1sWbBcTx5Ekphl7svEdddAHAu4W3A5zO
-        7K4vslDGlSotTF62jgWFrD8ZDGW5LD51ODhSCuU=
-X-Google-Smtp-Source: AGHT+IGfhSMAQnAmwLC2LwBFtVyVHvMCGpPNJUXypOgmT+sfq1Rq7XG4jJWEep4XIQIVbnNp/nkwE7SSwRchWTlQQRg=
-X-Received: by 2002:a67:e047:0:b0:457:c415:a495 with SMTP id
- n7-20020a67e047000000b00457c415a495mr15388078vsl.10.1698920866565; Thu, 02
- Nov 2023 03:27:46 -0700 (PDT)
-MIME-Version: 1.0
-References: <20231101172739.8676-1-jack@suse.cz>
-In-Reply-To: <20231101172739.8676-1-jack@suse.cz>
-From:   Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date:   Thu, 2 Nov 2023 19:27:30 +0900
-Message-ID: <CAKFNMokAS4VoJ6tUbK0fP+zr4taBxCRLgP_Q2g-VQpNbeXTg-A@mail.gmail.com>
+        with ESMTP id S1347433AbjKBLKi (ORCPT
+        <rfc822;linux-nilfs@vger.kernel.org>); Thu, 2 Nov 2023 07:10:38 -0400
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D6BAD132
+        for <linux-nilfs@vger.kernel.org>; Thu,  2 Nov 2023 04:10:35 -0700 (PDT)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E1174C433C7;
+        Thu,  2 Nov 2023 11:10:33 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1698923435;
+        bh=Lld2/QQulB4Yn2BcKv8FAqMH+Gc+z+gXEqeqig3i8Uk=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=p58rEyCwgwUL7d0IYhAze1TP2WcUQJmL9vaaFurwM3U+BikZTaez9KI8fDUdZVexj
+         btTtlXsr/lnOvpuiiHzXC2RwbHhiIJyc2fUcPYAg0e6abhKSz8AP3FctqHJA7X6ulu
+         XjA73zjKvlWclFe8AQ/GUDf+xN1QzfWfy/u7x3nCHRlryoDuKYjd2rBPkXo3gQ9rgZ
+         fotDaDtjIWNMNvXCjW5pBoLhC1wGhhSBb+qWLvRWldOd1wp3qpK/6N4vnrcZx540cr
+         8u6aZjSaF/3E9v3Hs2AnCRSS1CrpPKwj20ffujpYWMkHib9UHUspKhqfbm3X4zIalh
+         1MyQ2LhRZeOoA==
+From:   Christian Brauner <brauner@kernel.org>
+To:     Jan Kara <jack@suse.cz>
+Cc:     Christian Brauner <brauner@kernel.org>,
+        linux-fsdevel@vger.kernel.org,
+        Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+        linux-nilfs@vger.kernel.org
 Subject: Re: [PATCH] nilfs2: simplify device handling
-To:     Jan Kara <jack@suse.cz>, Christian Brauner <brauner@kernel.org>
-Cc:     linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Date:   Thu,  2 Nov 2023 12:10:27 +0100
+Message-Id: <20231102-hochnehmen-zerrt-3d37601f7dd6@brauner>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20231101172739.8676-1-jack@suse.cz>
+References: <20231101172739.8676-1-jack@suse.cz>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1061; i=brauner@kernel.org; h=from:subject:message-id; bh=Lld2/QQulB4Yn2BcKv8FAqMH+Gc+z+gXEqeqig3i8Uk=; b=owGbwMvMwCU28Zj0gdSKO4sYT6slMaQ6N8/fsFJn49SXm3kTfB9anLP2sj8yuydUtETswHouRuOf MzMCO0pZGMS4GGTFFFkc2k3C5ZbzVGw2ytSAmcPKBDKEgYtTACaS956R4V5Rk6kO23SvWM1XBTeLTl zeGq4jp1O3i/PRJ3HvTTI5Fgx/hQ7ezBOpi1v3fEEH+3Vm0cll3lKHG7RueE4tDxab5ujFCAA=
+X-Developer-Key: i=brauner@kernel.org; a=openpgp; fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-On Thu, Nov 2, 2023 at 2:27=E2=80=AFAM Jan Kara wrote:
->
+On Wed, 01 Nov 2023 18:27:39 +0100, Jan Kara wrote:
 > We removed all codepaths where s_umount is taken beneath open_mutex and
 > bd_holder_lock so don't make things more complicated than they need to
 > be and hold s_umount over block device opening.
->
-> CC: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> CC: linux-nilfs@vger.kernel.org
-> Signed-off-by: Jan Kara <jack@suse.cz>
-> ---
->  fs/nilfs2/super.c | 8 --------
->  1 file changed, 8 deletions(-)
+> 
+> 
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Ah, thank you, Jan. I missed nilfs indeed!
 
-I had missed that cleanup patch set.  Thank you!
+---
 
->
-> Hi Christian, I think you've missed this simplification in your cleanup
-> patches. Can you merge it please?
+Applied to the vfs.super branch of the vfs/vfs.git tree.
+Patches in the vfs.super branch should appear in linux-next soon.
 
-Thank you in advance, Christian.
+Please report any outstanding bugs that were missed during review in a
+new review to the original patch series allowing us to drop it.
 
-Ryusuke Konishi
+It's encouraged to provide Acked-bys and Reviewed-bys even though the
+patch has now been applied. If possible patch trailers will be updated.
 
->
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index a5d1fa4e7552..df8674173b22 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -1314,15 +1314,7 @@ nilfs_mount(struct file_system_type *fs_type, int =
-flags,
->                 return ERR_CAST(s);
->
->         if (!s->s_root) {
-> -               /*
-> -                * We drop s_umount here because we need to open the bdev=
- and
-> -                * bdev->open_mutex ranks above s_umount (blkdev_put() ->
-> -                * __invalidate_device()). It is safe because we have act=
-ive sb
-> -                * reference and SB_BORN is not set yet.
-> -                */
-> -               up_write(&s->s_umount);
->                 err =3D setup_bdev_super(s, flags, NULL);
-> -               down_write(&s->s_umount);
->                 if (!err)
->                         err =3D nilfs_fill_super(s, data,
->                                                flags & SB_SILENT ? 1 : 0)=
-;
-> --
-> 2.35.3
->
+Note that commit hashes shown below are subject to change due to rebase,
+trailer updates or similar. If in doubt, please check the listed branch.
+
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
+branch: vfs.super
+
+[1/1] nilfs2: simplify device handling
+      https://git.kernel.org/vfs/vfs/c/c6a4738de282
