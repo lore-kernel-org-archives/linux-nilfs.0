@@ -2,76 +2,106 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A6CDC4332F
-	for <linux-nilfs@archiver.kernel.org>; Thu,  2 Nov 2023 11:10:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 516C6C4332F
+	for <linux-nilfs@archiver.kernel.org>; Thu,  2 Nov 2023 18:38:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1347276AbjKBLKj (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Thu, 2 Nov 2023 07:10:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49548 "EHLO
+        id S1377211AbjKBSjA (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Thu, 2 Nov 2023 14:39:00 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52532 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1347433AbjKBLKi (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>); Thu, 2 Nov 2023 07:10:38 -0400
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D6BAD132
-        for <linux-nilfs@vger.kernel.org>; Thu,  2 Nov 2023 04:10:35 -0700 (PDT)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E1174C433C7;
-        Thu,  2 Nov 2023 11:10:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1698923435;
-        bh=Lld2/QQulB4Yn2BcKv8FAqMH+Gc+z+gXEqeqig3i8Uk=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=p58rEyCwgwUL7d0IYhAze1TP2WcUQJmL9vaaFurwM3U+BikZTaez9KI8fDUdZVexj
-         btTtlXsr/lnOvpuiiHzXC2RwbHhiIJyc2fUcPYAg0e6abhKSz8AP3FctqHJA7X6ulu
-         XjA73zjKvlWclFe8AQ/GUDf+xN1QzfWfy/u7x3nCHRlryoDuKYjd2rBPkXo3gQ9rgZ
-         fotDaDtjIWNMNvXCjW5pBoLhC1wGhhSBb+qWLvRWldOd1wp3qpK/6N4vnrcZx540cr
-         8u6aZjSaF/3E9v3Hs2AnCRSS1CrpPKwj20ffujpYWMkHib9UHUspKhqfbm3X4zIalh
-         1MyQ2LhRZeOoA==
-From:   Christian Brauner <brauner@kernel.org>
-To:     Jan Kara <jack@suse.cz>
-Cc:     Christian Brauner <brauner@kernel.org>,
-        linux-fsdevel@vger.kernel.org,
-        Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-        linux-nilfs@vger.kernel.org
-Subject: Re: [PATCH] nilfs2: simplify device handling
-Date:   Thu,  2 Nov 2023 12:10:27 +0100
-Message-Id: <20231102-hochnehmen-zerrt-3d37601f7dd6@brauner>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20231101172739.8676-1-jack@suse.cz>
-References: <20231101172739.8676-1-jack@suse.cz>
+        with ESMTP id S1377235AbjKBSi7 (ORCPT
+        <rfc822;linux-nilfs@vger.kernel.org>); Thu, 2 Nov 2023 14:38:59 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B4FDF186
+        for <linux-nilfs@vger.kernel.org>; Thu,  2 Nov 2023 11:38:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1698950291;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=4TMeJ+np4weC9A1EJ0nwAbg03A0sROonQrm4coY6tYI=;
+        b=UCGnL2+VJP4vnUmAqNIpvUwfhKQAmqiNC+dNTw++dk5bB6yTP7dPG7xEKaw4NXrpeARbES
+        a01ae19YLuTFyYrjYJuduhA9EIlGNFtnARCE0AO385hPYHMmV+zEyWFOvZ5fEGgKPp2An8
+        nH1fkjK9OItP7KyfjJ+DVThpGaCbjjo=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-460-vhub9pGPOKWqOkLuplnt4g-1; Thu, 02 Nov 2023 14:38:09 -0400
+X-MC-Unique: vhub9pGPOKWqOkLuplnt4g-1
+Received: by mail-wm1-f69.google.com with SMTP id 5b1f17b1804b1-4084b6f4515so2601905e9.1
+        for <linux-nilfs@vger.kernel.org>; Thu, 02 Nov 2023 11:38:08 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1698950287; x=1699555087;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=4TMeJ+np4weC9A1EJ0nwAbg03A0sROonQrm4coY6tYI=;
+        b=nup5V8fIW21xON+79NJreR1FCX3TsRzYPCmmbOYpb6mjyJ/fhig53M0VeCr2whf/Ru
+         o+HHN2R2XE2GGUtskDknI7Ldj8sdLE0owD/DCLeGK+G1NIleBTgvIqyYwEv/qmJESNrZ
+         8ccwAUXbEYoIMub8w1UnwxwfYjymkgnZlFRuuCj17ZAXX9ROVYD2unJ84DsaR/BplwE6
+         hQIoWSqDpq7uGwen3lD6OdBm4XiFv/iNUmsmx8JUNyHx/dWKaT0C7DraIBz9XtY1gXS4
+         2xnxabJkUX59fPCGf7IBy9tAVBE8abh8JbIAIHX13WHXuftMLYoSko9Q+xIN1TXY9QTD
+         ja8Q==
+X-Gm-Message-State: AOJu0Yw/XusPjb6IzxTz2eHJqNYaE5A3A4QVCKOKWN+hg+bTTF98VZpn
+        vAEtS8wQ4HmSJNl8bcvX4ohUa8x9x4wsrjDUqVnm+hb9Z0rienc/dHx/zcYHRbmqyf1lTtHWihW
+        Bz/kp82GcLd+PK1cV+45Odpq0J24NAkg=
+X-Received: by 2002:a05:600c:35d6:b0:3fe:21a6:a18 with SMTP id r22-20020a05600c35d600b003fe21a60a18mr15734357wmq.3.1698950287732;
+        Thu, 02 Nov 2023 11:38:07 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IG2LMtKNka+8H7xT/HXHVzvSunLZOLL2dRHM5nf8ghfToyNM+Y4NcP0YwDWUwqyeLZhv+q0aA==
+X-Received: by 2002:a05:600c:35d6:b0:3fe:21a6:a18 with SMTP id r22-20020a05600c35d600b003fe21a60a18mr15734346wmq.3.1698950287375;
+        Thu, 02 Nov 2023 11:38:07 -0700 (PDT)
+Received: from pstanner-thinkpadt14sgen1.remote.csb ([2001:9e8:32c5:d600:227b:d2ff:fe26:2a7a])
+        by smtp.gmail.com with ESMTPSA id k15-20020a05600c0b4f00b004094e565e71sm306179wmr.23.2023.11.02.11.38.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 02 Nov 2023 11:38:06 -0700 (PDT)
+From:   Philipp Stanner <pstanner@redhat.com>
+To:     Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc:     linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Philipp Stanner <pstanner@redhat.com>,
+        Dave Airlie <airlied@redhat.com>
+Subject: [PATCH] fs/nilfs2: copy userspace-array safely
+Date:   Thu,  2 Nov 2023 19:37:51 +0100
+Message-ID: <20231102183751.47413-1-pstanner@redhat.com>
+X-Mailer: git-send-email 2.41.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1061; i=brauner@kernel.org; h=from:subject:message-id; bh=Lld2/QQulB4Yn2BcKv8FAqMH+Gc+z+gXEqeqig3i8Uk=; b=owGbwMvMwCU28Zj0gdSKO4sYT6slMaQ6N8/fsFJn49SXm3kTfB9anLP2sj8yuydUtETswHouRuOf MzMCO0pZGMS4GGTFFFkc2k3C5ZbzVGw2ytSAmcPKBDKEgYtTACaS956R4V5Rk6kO23SvWM1XBTeLTl zeGq4jp1O3i/PRJ3HvTTI5Fgx/hQ7ezBOpi1v3fEEH+3Vm0cll3lKHG7RueE4tDxab5ujFCAA=
-X-Developer-Key: i=brauner@kernel.org; a=openpgp; fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-On Wed, 01 Nov 2023 18:27:39 +0100, Jan Kara wrote:
-> We removed all codepaths where s_umount is taken beneath open_mutex and
-> bd_holder_lock so don't make things more complicated than they need to
-> be and hold s_umount over block device opening.
-> 
-> 
+ioctl.c utilizes memdup_user() to copy a userspace array. This is done
+without an overflow-check.
 
-Ah, thank you, Jan. I missed nilfs indeed!
+Use the new wrapper memdup_array_user() to copy the array more safely.
 
+Suggested-by: Dave Airlie <airlied@redhat.com>
+Signed-off-by: Philipp Stanner <pstanner@redhat.com>
 ---
+Linus recently merged this new wrapper for Kernel v6.7
+---
+ fs/nilfs2/ioctl.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-Applied to the vfs.super branch of the vfs/vfs.git tree.
-Patches in the vfs.super branch should appear in linux-next soon.
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 40ffade49f38..6a9dceebb18d 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -877,11 +877,11 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
+ 
+ 	/*
+ 	 * argv[4] points to segment numbers this ioctl cleans.  We
+-	 * use kmalloc() for its buffer because memory used for the
+-	 * segment numbers is enough small.
++	 * use kmalloc() for its buffer because the memory used for the
++	 * segment numbers is small enough.
+ 	 */
+-	kbufs[4] = memdup_user((void __user *)(unsigned long)argv[4].v_base,
+-			       nsegs * sizeof(__u64));
++	kbufs[4] = memdup_array_user((void __user *)(unsigned long)argv[4].v_base,
++				     nsegs, sizeof(__u64));
+ 	if (IS_ERR(kbufs[4])) {
+ 		ret = PTR_ERR(kbufs[4]);
+ 		goto out;
+-- 
+2.41.0
 
-Please report any outstanding bugs that were missed during review in a
-new review to the original patch series allowing us to drop it.
-
-It's encouraged to provide Acked-bys and Reviewed-bys even though the
-patch has now been applied. If possible patch trailers will be updated.
-
-Note that commit hashes shown below are subject to change due to rebase,
-trailer updates or similar. If in doubt, please check the listed branch.
-
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
-branch: vfs.super
-
-[1/1] nilfs2: simplify device handling
-      https://git.kernel.org/vfs/vfs/c/c6a4738de282
