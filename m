@@ -2,127 +2,124 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 35229C4167B
-	for <linux-nilfs@archiver.kernel.org>; Fri,  3 Nov 2023 18:09:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4412AC4332F
+	for <linux-nilfs@archiver.kernel.org>; Fri,  3 Nov 2023 18:50:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230219AbjKCSJJ (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Fri, 3 Nov 2023 14:09:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56320 "EHLO
+        id S234284AbjKCSuM (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Fri, 3 Nov 2023 14:50:12 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45116 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230197AbjKCSJI (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>); Fri, 3 Nov 2023 14:09:08 -0400
-Received: from mail-vs1-xe30.google.com (mail-vs1-xe30.google.com [IPv6:2607:f8b0:4864:20::e30])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E8CE2CF;
-        Fri,  3 Nov 2023 11:09:05 -0700 (PDT)
-Received: by mail-vs1-xe30.google.com with SMTP id ada2fe7eead31-45d955fcabdso354071137.0;
-        Fri, 03 Nov 2023 11:09:05 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1699034945; x=1699639745; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=eGLlL5spY81cqVy4x7DOzEYruuO1Kblfx9KL9KmbIWg=;
-        b=mUuv2rnkPwN5bKYLpkLIuxvyFK+hqTJoO+McpKmzCw5gD4fLls7P6LXUN0WC9hwyMk
-         UGTtm3c4Ua7tL0g1f2+XsobRQ61F9FtiC9Tfbk6rVbOqFCag+0wngCRYsHXeZK9lvoq0
-         Z+IFxdZJQ+ieZW0TwYN+wZ2exCL/64/+E+czBWgqV9qbHVQ+9aFNLFc+lMRJ8tSHKJYX
-         qteUPHjRqhoKc/2618EF3SihxOYXml6uwUK78QweWX/bI+4sY479G5Un9OS5HLeqBTGs
-         jschS34WFR1/ozsyr9lrm07okp2jBzp7JICbB9SaaSEo01vTVJ4BOFWbRcVxbZjMN3XG
-         rlQw==
+        with ESMTP id S230513AbjKCSuL (ORCPT
+        <rfc822;linux-nilfs@vger.kernel.org>); Fri, 3 Nov 2023 14:50:11 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3F632D52
+        for <linux-nilfs@vger.kernel.org>; Fri,  3 Nov 2023 11:49:23 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1699037362;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=RpbYT9SzTc/xmcrawP8dennNWLPo+v9u/X8zga55vvs=;
+        b=CSyApGAPZOReeFC1deLqn0wybNy7BQ7xHyFSTXMMGyJtq4Ugw7zfF4eZSzh8U4fss7cPtU
+        ilQw5ZEyVfVA1V2Z+epREjoXpHFRMN7nbbCmLN5BKWqlus5ndL4CfM3UfEWHCgT3EuYJFw
+        3IMrOyiB3TSR6vWC8mUj2ognN53Nnb0=
+Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
+ [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-456-LSBF0bC1N5GBX9ZC9yM17Q-1; Fri, 03 Nov 2023 14:49:19 -0400
+X-MC-Unique: LSBF0bC1N5GBX9ZC9yM17Q-1
+Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-9dd4e40349bso14860066b.0
+        for <linux-nilfs@vger.kernel.org>; Fri, 03 Nov 2023 11:49:19 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1699034945; x=1699639745;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=eGLlL5spY81cqVy4x7DOzEYruuO1Kblfx9KL9KmbIWg=;
-        b=QMw/+J5F1SIcMLX1352RRL9cBIZ7wa4Hs2paputBl5vg632tSjM44oLhuqLgSa5uFo
-         i9m5EN0VR7KoqtK1FAVHn8IUaL3RhPclGas8GUHJi58MwC1RNLlERpY0iVbBP+ewA91Y
-         WDdgmvBa0nehHETpPFAkp5/+jR1RogaRaP8b2I7jL6R2jiCOB5wes6Z5Y4txRYeedmeD
-         tMwpoW+ApmWT1kev+OZicXE3UCvUPBdLuoSSZVZQAtRjJEgvHVS4pIvPGUzAPjrtK3DY
-         f660kFAQwKAF5hN/g7uhQ+k68DjVBZEEEuPkalX1AlL5UqNcVQ7kAgyRMrsNT+g6M+R1
-         Lkvg==
-X-Gm-Message-State: AOJu0YzqdVMUHUtREGxN8QsRPBEKpB7pZoUn1Y1myuxsr9al6EqSCjEL
-        uo9imq4wzcI6VyBc5KSeIKJ4sF/TAD6fCPN+z64=
-X-Google-Smtp-Source: AGHT+IEoycj2jgmlH4pfGN5KGdT9fnWYQSgwREN1B2qQZAp3bnWMzm9iYhm1g5s9NikHt5f/kIRc0NksBf1xS8NnN5s=
-X-Received: by 2002:a67:a248:0:b0:45d:6d96:62f1 with SMTP id
- t8-20020a67a248000000b0045d6d9662f1mr4729949vsh.9.1699034944808; Fri, 03 Nov
- 2023 11:09:04 -0700 (PDT)
-MIME-Version: 1.0
-References: <20231102183751.47413-1-pstanner@redhat.com> <CAKFNMok9WTV5uX3BBfr8eYiuJXvUY6TuYW=tQYvBzdCUYsxcwA@mail.gmail.com>
- <437ec6fa34af1ccfadee2d62770e52d99ebf75c3.camel@redhat.com>
-In-Reply-To: <437ec6fa34af1ccfadee2d62770e52d99ebf75c3.camel@redhat.com>
-From:   Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date:   Sat, 4 Nov 2023 03:08:48 +0900
-Message-ID: <CAKFNMokwjSwzT3T6vQZ_-6evPNUqNUuk+D=LGA5cuOm3-xx0aw@mail.gmail.com>
-Subject: Re: [PATCH] fs/nilfs2: copy userspace-array safely
-To:     Philipp Stanner <pstanner@redhat.com>
+        d=1e100.net; s=20230601; t=1699037358; x=1699642158;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=RpbYT9SzTc/xmcrawP8dennNWLPo+v9u/X8zga55vvs=;
+        b=spjipIAgVjZlPwvF7Up5Y/y4CZeZ/vBHVqAgKeeID8lF412XmPF8zgx1fMcAbVRoMQ
+         vPuUpj7FaRAz/5r8uWKnl5/hc6WLVhg/QW6Agxl/iy1dEhR3R70QE8Zayklt8/O+dYGM
+         udEmeqXVFB47T9/0rih0OWJsIZ7AJ5k2tYuCvcEGT+Zosup2v5M+WaQ1iPsY54wxT1mb
+         pqFkyaKJwANaAiHNgFriJIT1rMtzMwIedBLCvjSZkS9Z0SWSGEeBYvRSQBsbOMvCNvCf
+         9kTkGA7lYsJGStkw7m/rQG8giCPWOv1u++T1o9ZV3hUp67UhXjQnL1hia5T1BdDxqFTt
+         WQoA==
+X-Gm-Message-State: AOJu0YwcWOnp8QL5BMfwVEfdlMk3wlVWVjRSUk/drOdvtX+vEfAP/sSi
+        xELfpJ6Vf6l30YARmNV/gNOYbuo199CXsArDoZtcWZCHYgmIex8/gdAvbpCrubto4gapVDPq+Wc
+        H1okve+gcZq6BfrP6yI8ZgOqotI/HVSwjRg==
+X-Received: by 2002:a17:907:7e92:b0:9b2:bf2d:6b65 with SMTP id qb18-20020a1709077e9200b009b2bf2d6b65mr17287372ejc.4.1699037357976;
+        Fri, 03 Nov 2023 11:49:17 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGr56jYMAaIdUBHapGDiUsxpOD0wl3SxAYzOKNd70AAZbwIT8wq1IAkOYVVvUoqEPOzb+kzSQ==
+X-Received: by 2002:a17:907:7e92:b0:9b2:bf2d:6b65 with SMTP id qb18-20020a1709077e9200b009b2bf2d6b65mr17287358ejc.4.1699037357636;
+        Fri, 03 Nov 2023 11:49:17 -0700 (PDT)
+Received: from pstanner-thinkpadt14sgen1.fritz.box ([2001:9e8:32d1:5200:227b:d2ff:fe26:2a7a])
+        by smtp.gmail.com with ESMTPSA id o5-20020a17090608c500b009b29553b648sm1163679eje.206.2023.11.03.11.49.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 03 Nov 2023 11:49:17 -0700 (PDT)
+From:   Philipp Stanner <pstanner@redhat.com>
+To:     Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc:     linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Philipp Stanner <pstanner@redhat.com>,
         Dave Airlie <airlied@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Subject: [PATCH v2] fs/nilfs2: use standard array-copy-function
+Date:   Fri,  3 Nov 2023 19:48:32 +0100
+Message-ID: <20231103184831.99406-2-pstanner@redhat.com>
+X-Mailer: git-send-email 2.41.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-On Sat, Nov 4, 2023 at 2:56=E2=80=AFAM Philipp Stanner wrote:
->
-> On Sat, 2023-11-04 at 02:44 +0900, Ryusuke Konishi wrote:
-> > On Fri, Nov 3, 2023 at 3:38=E2=80=AFAM Philipp Stanner wrote:
-> > >
-> > > ioctl.c utilizes memdup_user() to copy a userspace array. This is
-> > > done
-> > > without an overflow-check.
-> > >
-> > > Use the new wrapper memdup_array_user() to copy the array more
-> > > safely.
-> > >
-> > > Suggested-by: Dave Airlie <airlied@redhat.com>
-> > > Signed-off-by: Philipp Stanner <pstanner@redhat.com>
-> > > ---
-> > > Linus recently merged this new wrapper for Kernel v6.7
-> >
-> > The following overflow check is performed just before the usage of
-> > memdup_user():
-> >
-> >         if (nsegs > UINT_MAX / sizeof(__u64))
-> >                 goto out;
-> >
-> > This was introduced by commit 1ecd3c7ea76488 ("nilfs2: avoid
-> > overflowing segment numbers in nilfs_ioctl_clean_segments()") to
-> > avoid
-> > overflowing nsegs * sizeof(__u64) in the subsequent call to
-> > memdup_user().
-> >
-> > I learned about memdup_array_user() this time, and it seems to check
-> > for overflow when multiplying two size_t arguments (i.e. the number
-> > of
-> > elements and size of the array to be copied).
-> >
-> > Since size_t is 32-bit or 64-bit depending on the architecture, I
-> > think the overflow check that memdup_array_user() does
-> > is included in the above upper limit check by UINT_MAX.
-> >
-> > So, for security reasons, I don't think this change is necessary.
-> > (Am
-> > I missing something?)
->
-> No, I think you are right. My commit message was very generic =E2=80=93 i=
-t's
-> more about unifying array-duplication.
-> I should rephrase it.
->
-> >
-> > In terms of cleanup, I think the clarification this patch brings is
-> > good, but in that case, I'm concerned about the duplication of
-> > overflow checks.
->
-> Alright, so would you prefer a patch that uses memdup_array_user() and,
-> consequently, removes the preceding check?
->
-> Regards,
-> P.
+ioctl.c utilizes memdup_user() to copy a userspace array. An overflow
+check is performed manually before the function's invocation.
 
-Yeah.  If you could revise it as a cleanup patch, I would like to
-adopt it for the next cycle.
+The new function memdup_array_user() standardizes copying userspace
+arrays, thus, improving readability by making it more clear that an
+array is being copied. Additionally, it also performs an overflow check.
 
-Regards,
-Ryusuke Konishi
+Remove the (now redundant) manual overflow-check and replace
+memdup_user() with memdup_array_user().
+
+In addition, improve the grammar of the comment above
+memdup_array_user().
+
+Suggested-by: Dave Airlie <airlied@redhat.com>
+Signed-off-by: Philipp Stanner <pstanner@redhat.com>
+---
+Changes in v2:
+- Rename + rephrase commit so that it's clear that this is a
+  cleanup-patch.
+- Mention the grammar improvement of the comment in the commit message.
+- Remove the preceding manual overflow-check, since that is now
+  redundant.
+---
+ fs/nilfs2/ioctl.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 40ffade49f38..cfb6aca5ec38 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -872,16 +872,14 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
+ 	nsegs = argv[4].v_nmembs;
+ 	if (argv[4].v_size != argsz[4])
+ 		goto out;
+-	if (nsegs > UINT_MAX / sizeof(__u64))
+-		goto out;
+ 
+ 	/*
+ 	 * argv[4] points to segment numbers this ioctl cleans.  We
+-	 * use kmalloc() for its buffer because memory used for the
+-	 * segment numbers is enough small.
++	 * use kmalloc() for its buffer because the memory used for the
++	 * segment numbers is small enough.
+ 	 */
+-	kbufs[4] = memdup_user((void __user *)(unsigned long)argv[4].v_base,
+-			       nsegs * sizeof(__u64));
++	kbufs[4] = memdup_array_user((void __user *)(unsigned long)argv[4].v_base,
++				     nsegs, sizeof(__u64));
+ 	if (IS_ERR(kbufs[4])) {
+ 		ret = PTR_ERR(kbufs[4]);
+ 		goto out;
+-- 
+2.41.0
+
