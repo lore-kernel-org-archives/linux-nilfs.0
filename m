@@ -2,155 +2,110 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F4BDC0018A
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CD27EC001B5
 	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 17:39:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232173AbjKFRjn (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        id S231949AbjKFRjn (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
         Mon, 6 Nov 2023 12:39:43 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59178 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59308 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232883AbjKFRjW (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 12:39:22 -0500
+        with ESMTP id S232601AbjKFRj0 (ORCPT
+        <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 12:39:26 -0500
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74B7B171C;
-        Mon,  6 Nov 2023 09:39:14 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E7F26D6D;
+        Mon,  6 Nov 2023 09:39:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
-        Content-Type:Content-ID:Content-Description;
-        bh=ie7WsUDR1yLQZBGXEbEvfA+topeFIvEQy56tv9SnL9M=; b=gy3NKUMsQa1ZSOKuTyzxefZC1i
-        LxXLQ5ZTVH20hrEbzNInFGAhs6jxB4JkdOdUmgYz4fXoOr1ScLEZUpVVTZdtGPHIVXlnp+4luNbxZ
-        1LuK3q5aznQHYMNeHCgOPT9pRnLPh99XfYFsOw4pOacpUcgrGNuaX1ELrLdHUuL9DE6dYuLO+QLjE
-        A9SJPebB3ZN7bduRpLp6AeKSC37S9FuSQUvin/jmIfXEPYAE4ibPBQfhpoPE/PcApwZGiGua6ThRu
-        vTPSDsYy0e5zz5ZyW6EhX+eYCjp0RP72MU95M+sG1IWXpo9p2xjrV+Tf22KhayXLv0Ny7IbNOov03
-        PG+ah0XQ==;
+        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
+        Content-Description:In-Reply-To:References;
+        bh=AYLrLzMd96wdOm5CVv6L+hQ8+shGbfBweIymmP++Mr0=; b=ErdbLEVDt8UZxb8B7ua3XL+A4Z
+        iUS1uRA/PHLPwEe0y0szLOVP6s50ka8w+tc15CRjMtuH0thktSpvRrhWLnMO23ZTpJ5dHilDj0g7p
+        yw1oaI7SdqUIb4IbDDlS1rIrv5kUbPsa/7apRh3byFRcQTpc1ZX/xst1JbtWfAAaWbQvXS8lvPfFN
+        t7cdnN75S1I7oDfi1J8EOFhh4oTiP0FNLrc1HTJWdyl03uIrJ3fkiH4QdCVk/B6hgpX0xqSC0fgYO
+        +nOejuMxpk0xtjMnYr/bvF+seHLfg8Cpa84bHj1N3C+9SP8hZNG0HxTpyMJP0yMAcGgjHd36/Ls7O
+        8S6ClGIw==;
 Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1r03Z4-007H7z-3l; Mon, 06 Nov 2023 17:39:06 +0000
+        id 1r03Z3-007H7n-O6; Mon, 06 Nov 2023 17:39:05 +0000
 From:   "Matthew Wilcox (Oracle)" <willy@infradead.org>
 To:     Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc:     "Matthew Wilcox (Oracle)" <willy@infradead.org>,
         linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Subject: [PATCH 03/35] nilfs2: Convert nilfs_segctor_complete_write to use folios
-Date:   Mon,  6 Nov 2023 17:38:31 +0000
-Message-Id: <20231106173903.1734114-4-willy@infradead.org>
+Subject: [PATCH 00/35] nilfs2: Folio conversions
+Date:   Mon,  6 Nov 2023 17:38:28 +0000
+Message-Id: <20231106173903.1734114-1-willy@infradead.org>
 X-Mailer: git-send-email 2.37.1
-In-Reply-To: <20231106173903.1734114-1-willy@infradead.org>
-References: <20231106173903.1734114-1-willy@infradead.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-Use the new folio APIs, saving five calls to compound_head().
-This includes the last callers of nilfs_end_page_io(), so
-remove that too.
+This patch series does most of the page->folio conversions needed in
+nilfs2.  I haven't done the work to support large folios in nilfs2;
+I don't know if that conversion will be worth the effort.  There are
+still a few page uses left, but the infrastructure isn't quite there to
+get rid of them yet.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
----
- fs/nilfs2/segment.c | 49 +++++++++++++++++++--------------------------
- 1 file changed, 21 insertions(+), 28 deletions(-)
+Arguably, this is two separate series; the first takes care of the file
+paths and the second takes care of directories.  I've tried my best to
+include large folio support in the directory code because it'll be needed
+for large block size devices.  It also tries to stay as close as possible
+to the current ext2 code (so it also includes kmap_local support).
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 730062e79bfc..2a058aad5c2d 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1778,13 +1778,6 @@ static void nilfs_end_folio_io(struct folio *folio, int err)
- 	folio_end_writeback(folio);
- }
- 
--static void nilfs_end_page_io(struct page *page, int err)
--{
--	if (!page)
--		return;
--	nilfs_end_folio_io(page_folio(page), err);
--}
--
- static void nilfs_abort_logs(struct list_head *logs, int err)
- {
- 	struct nilfs_segment_buffer *segbuf;
-@@ -1867,7 +1860,7 @@ static void nilfs_set_next_segment(struct the_nilfs *nilfs,
- static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
- {
- 	struct nilfs_segment_buffer *segbuf;
--	struct page *bd_page = NULL, *fs_page = NULL;
-+	struct folio *bd_folio = NULL, *fs_folio = NULL;
- 	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
- 	int update_sr = false;
- 
-@@ -1878,21 +1871,21 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
- 				    b_assoc_buffers) {
- 			set_buffer_uptodate(bh);
- 			clear_buffer_dirty(bh);
--			if (bh->b_page != bd_page) {
--				if (bd_page)
--					end_page_writeback(bd_page);
--				bd_page = bh->b_page;
-+			if (bh->b_folio != bd_folio) {
-+				if (bd_folio)
-+					folio_end_writeback(bd_folio);
-+				bd_folio = bh->b_folio;
- 			}
- 		}
- 		/*
--		 * We assume that the buffers which belong to the same page
-+		 * We assume that the buffers which belong to the same folio
- 		 * continue over the buffer list.
--		 * Under this assumption, the last BHs of pages is
--		 * identifiable by the discontinuity of bh->b_page
--		 * (page != fs_page).
-+		 * Under this assumption, the last BHs of folios is
-+		 * identifiable by the discontinuity of bh->b_folio
-+		 * (folio != fs_folio).
- 		 *
- 		 * For B-tree node blocks, however, this assumption is not
--		 * guaranteed.  The cleanup code of B-tree node pages needs
-+		 * guaranteed.  The cleanup code of B-tree node folios needs
- 		 * special care.
- 		 */
- 		list_for_each_entry(bh, &segbuf->sb_payload_buffers,
-@@ -1905,16 +1898,16 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
- 
- 			set_mask_bits(&bh->b_state, clear_bits, set_bits);
- 			if (bh == segbuf->sb_super_root) {
--				if (bh->b_page != bd_page) {
--					end_page_writeback(bd_page);
--					bd_page = bh->b_page;
-+				if (bh->b_folio != bd_folio) {
-+					folio_end_writeback(bd_folio);
-+					bd_folio = bh->b_folio;
- 				}
- 				update_sr = true;
- 				break;
- 			}
--			if (bh->b_page != fs_page) {
--				nilfs_end_page_io(fs_page, 0);
--				fs_page = bh->b_page;
-+			if (bh->b_folio != fs_folio) {
-+				nilfs_end_folio_io(fs_folio, 0);
-+				fs_folio = bh->b_folio;
- 			}
- 		}
- 
-@@ -1928,13 +1921,13 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
- 		}
- 	}
- 	/*
--	 * Since pages may continue over multiple segment buffers,
--	 * end of the last page must be checked outside of the loop.
-+	 * Since folios may continue over multiple segment buffers,
-+	 * end of the last folio must be checked outside of the loop.
- 	 */
--	if (bd_page)
--		end_page_writeback(bd_page);
-+	if (bd_folio)
-+		folio_end_writeback(bd_folio);
- 
--	nilfs_end_page_io(fs_page, 0);
-+	nilfs_end_folio_io(fs_folio, 0);
- 
- 	nilfs_drop_collected_inodes(&sci->sc_dirty_files);
- 
+These patches are only compile-tested.  xfstests doesn't seem to know
+about nilfs2.
+
+Matthew Wilcox (Oracle) (35):
+  nilfs2: Add nilfs_end_folio_io()
+  nilfs2: Convert nilfs_abort_logs to use folios
+  nilfs2: Convert nilfs_segctor_complete_write to use folios
+  nilfs2: Convert nilfs_forget_buffer to use a folio
+  nilfs2: Convert to nilfs_folio_buffers_clean()
+  nilfs2: Convert nilfs_writepage() to use a folio
+  nilfs2: Convert nilfs_mdt_write_page() to use a folio
+  nilfs2: Convert to nilfs_clear_folio_dirty()
+  nilfs2: Convert to __nilfs_clear_folio_dirty()
+  nilfs2: Convert nilfs_segctor_prepare_write to use folios
+  nilfs2: Convert nilfs_page_mkwrite() to use a folio
+  nilfs2: Convert nilfs_mdt_create_block to use a folio
+  nilfs2: Convert nilfs_mdt_submit_block to use a folio
+  nilfs2: Convert nilfs_gccache_submit_read_data to use a folio
+  nilfs2: Convert nilfs_btnode_create_block to use a folio
+  nilfs2: Convert nilfs_btnode_submit_block to use a folio
+  nilfs2: Convert nilfs_btnode_delete to use a folio
+  nilfs2: Convert nilfs_btnode_prepare_change_key to use a folio
+  nilfs2: Convert nilfs_btnode_commit_change_key to use a folio
+  nilfs2: Convert nilfs_btnode_abort_change_key to use a folio
+  nilfs2: Remove page_address() from nilfs_set_link
+  nilfs2: Remove page_address() from nilfs_add_link
+  nilfs2: Remove page_address() from nilfs_delete_entry
+  nilfs2: Return the mapped address from nilfs_get_page()
+  nilfs2: Pass the mapped address to nilfs_check_page()
+  nilfs2: Switch to kmap_local for directory handling
+  nilfs2: Add nilfs_get_folio()
+  nilfs2: Convert nilfs_readdir to use a folio
+  nilfs2: Convert nilfs_find_entry to use a folio
+  nilfs2: Convert nilfs_rename() to use folios
+  nilfs2: Convert nilfs_add_link() to use a folio
+  nilfs2: Convert nilfs_empty_dir() to use a folio
+  nilfs2: Convert nilfs_make_empty() to use a folio
+  nilfs2: Convert nilfs_prepare_chunk() and nilfs_commit_chunk() to
+    folios
+  nilfs2: Convert nilfs_page_bug() to nilfs_folio_bug()
+
+ fs/nilfs2/btnode.c  |  62 +++++------
+ fs/nilfs2/dir.c     | 248 ++++++++++++++++++++------------------------
+ fs/nilfs2/file.c    |  28 ++---
+ fs/nilfs2/gcinode.c |   4 +-
+ fs/nilfs2/inode.c   |  11 +-
+ fs/nilfs2/mdt.c     |  23 ++--
+ fs/nilfs2/namei.c   |  33 +++---
+ fs/nilfs2/nilfs.h   |  20 ++--
+ fs/nilfs2/page.c    |  93 +++++++++--------
+ fs/nilfs2/page.h    |  12 +--
+ fs/nilfs2/segment.c | 157 ++++++++++++++--------------
+ 11 files changed, 338 insertions(+), 353 deletions(-)
+
 -- 
 2.42.0
 
