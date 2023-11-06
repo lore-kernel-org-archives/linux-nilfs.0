@@ -2,37 +2,37 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87CC5C4332F
-	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 17:39:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4CB36C4167D
+	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 17:39:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232011AbjKFRjT (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        id S232269AbjKFRjT (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
         Mon, 6 Nov 2023 12:39:19 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36086 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36094 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232064AbjKFRjS (ORCPT
+        with ESMTP id S232025AbjKFRjS (ORCPT
         <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 12:39:18 -0500
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4264BD7F;
-        Mon,  6 Nov 2023 09:39:09 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 26CDAD6D;
+        Mon,  6 Nov 2023 09:39:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=F4G+iHL8t8+cwmBR3NRbeBWt2xI2c3RvXRM3QO5MLTw=; b=VqY+B6Y2nO/TvkEt1F/bHt0/gn
-        mimQzV76d7uCC9OHwtbBH8n7UCrVw9bp3wcqTnvVZGQqvmkzAb6roneZBcHJx5ZQfRHJCXAmN0xKW
-        j20AsU93UH8Hsb5PoUT1AS8G3Rf5w8oTj3Iz89Hn1eFtC6qJcVFQ6QoiJ+Q5hVS/+z7XVec3FvyO+
-        4rHa3uG3LOjXtqfObpHSllTzEinGqAeukpMCwD/+1yzWT76uYe9jpKFZSTpAgBMoYyHOY/N3tw6wF
-        iBmaRKAvCMfT+U7p7m3D0xtjUxEX86qolpLJChlOi2tgGJx3cntHZlUi1FTYQDsvUsQX9bIDTvHc/
-        Oltb3jbQ==;
+        bh=hR2d3wLXiqfslGTGihlfM0yCkgESgafqHrMpePJor1M=; b=WCRc7XCsz0go2ez/i3GAq93DKA
+        sU+DWdB0IPK8U8yeZ7o9lgLw3CVy/9CiRBR5+WLpBt24X6sUCN8SemBSqn71fJiBfY83AtVjpChEE
+        +LxvZwXg7fGNVd6STxkE5/onHbA28nbyxm7XEeOs6gqyYiA0bKkz9Al/as3+ashFqtHwO4W/s7M+O
+        i5D/r0K3qnAqnxZY+XL+N2Lxb8vqJXV3rBNqNs9i3DYUZCL7vL7nII7Bk3CJLtdDqQCQiouRCu2qH
+        3v8EpMMjByutbuLESPBen7zSANIG/fTyybHOIQ3Mhm78PBzEgAUAUPSE2BAWXi9n7NKqxtIoHvU3k
+        0gIoZTlQ==;
 Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1r03Z5-007H8j-2d; Mon, 06 Nov 2023 17:39:07 +0000
+        id 1r03Z4-007H8D-Eq; Mon, 06 Nov 2023 17:39:06 +0000
 From:   "Matthew Wilcox (Oracle)" <willy@infradead.org>
 To:     Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc:     "Matthew Wilcox (Oracle)" <willy@infradead.org>,
         linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Subject: [PATCH 11/35] nilfs2: Convert nilfs_page_mkwrite() to use a folio
-Date:   Mon,  6 Nov 2023 17:38:39 +0000
-Message-Id: <20231106173903.1734114-12-willy@infradead.org>
+Subject: [PATCH 06/35] nilfs2: Convert nilfs_writepage() to use a folio
+Date:   Mon,  6 Nov 2023 17:38:34 +0000
+Message-Id: <20231106173903.1734114-7-willy@infradead.org>
 X-Mailer: git-send-email 2.37.1
 In-Reply-To: <20231106173903.1734114-1-willy@infradead.org>
 References: <20231106173903.1734114-1-willy@infradead.org>
@@ -42,87 +42,44 @@ Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-Using the new folio APIs saves seven hidden calls to compound_head().
+Convert the incoming page to a folio.  Replaces three calls to
+compound_head() with one.
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- fs/nilfs2/file.c | 28 +++++++++++++++-------------
- 1 file changed, 15 insertions(+), 13 deletions(-)
+ fs/nilfs2/inode.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-index 740ce26d1e76..bec33b89a075 100644
---- a/fs/nilfs2/file.c
-+++ b/fs/nilfs2/file.c
-@@ -45,34 +45,36 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
- static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index f861f3a0bf5c..c7ec56358a79 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -175,7 +175,8 @@ static int nilfs_writepages(struct address_space *mapping,
+ 
+ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
  {
- 	struct vm_area_struct *vma = vmf->vma;
--	struct page *page = vmf->page;
-+	struct folio *folio = page_folio(vmf->page);
- 	struct inode *inode = file_inode(vma->vm_file);
- 	struct nilfs_transaction_info ti;
-+	struct buffer_head *bh, *head;
- 	int ret = 0;
+-	struct inode *inode = page->mapping->host;
++	struct folio *folio = page_folio(page);
++	struct inode *inode = folio->mapping->host;
+ 	int err;
  
- 	if (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
- 		return VM_FAULT_SIGBUS; /* -ENOSPC */
- 
- 	sb_start_pagefault(inode->i_sb);
--	lock_page(page);
--	if (page->mapping != inode->i_mapping ||
--	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
+ 	if (sb_rdonly(inode->i_sb)) {
+@@ -186,12 +187,12 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
+ 		 * So, here we simply discard this dirty page.
+ 		 */
+ 		nilfs_clear_dirty_page(page, false);
 -		unlock_page(page);
-+	folio_lock(folio);
-+	if (folio->mapping != inode->i_mapping ||
-+	    folio_pos(folio) >= i_size_read(inode) ||
-+	    !folio_test_uptodate(folio)) {
 +		folio_unlock(folio);
- 		ret = -EFAULT;	/* make the VM retry the fault */
- 		goto out;
+ 		return -EROFS;
  	}
  
- 	/*
--	 * check to see if the page is mapped already (no holes)
-+	 * check to see if the folio is mapped already (no holes)
- 	 */
--	if (PageMappedToDisk(page))
-+	if (folio_test_mappedtodisk(folio))
- 		goto mapped;
- 
--	if (page_has_buffers(page)) {
--		struct buffer_head *bh, *head;
-+	head = folio_buffers(folio);
-+	if (head) {
- 		int fully_mapped = 1;
- 
--		bh = head = page_buffers(page);
-+		bh = head;
- 		do {
- 			if (!buffer_mapped(bh)) {
- 				fully_mapped = 0;
-@@ -81,11 +83,11 @@ static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
- 		} while (bh = bh->b_this_page, bh != head);
- 
- 		if (fully_mapped) {
--			SetPageMappedToDisk(page);
-+			folio_set_mappedtodisk(folio);
- 			goto mapped;
- 		}
- 	}
+-	redirty_page_for_writepage(wbc, page);
 -	unlock_page(page);
++	folio_redirty_for_writepage(wbc, folio);
 +	folio_unlock(folio);
  
- 	/*
- 	 * fill hole blocks
-@@ -105,7 +107,7 @@ static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
- 	nilfs_transaction_commit(inode->i_sb);
- 
-  mapped:
--	wait_for_stable_page(page);
-+	folio_wait_stable(folio);
-  out:
- 	sb_end_pagefault(inode->i_sb);
- 	return vmf_fs_error(ret);
+ 	if (wbc->sync_mode == WB_SYNC_ALL) {
+ 		err = nilfs_construct_segment(inode->i_sb);
 -- 
 2.42.0
 
