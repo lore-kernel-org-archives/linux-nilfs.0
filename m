@@ -2,128 +2,127 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28F0FC4332F
-	for <linux-nilfs@archiver.kernel.org>; Sat,  4 Nov 2023 03:57:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87CC5C4332F
+	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 17:39:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229509AbjKDD5t (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Fri, 3 Nov 2023 23:57:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56764 "EHLO
+        id S232011AbjKFRjT (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Mon, 6 Nov 2023 12:39:19 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36086 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235082AbjKDD5r (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>); Fri, 3 Nov 2023 23:57:47 -0400
-Received: from mail-qk1-x72f.google.com (mail-qk1-x72f.google.com [IPv6:2607:f8b0:4864:20::72f])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B9607D71;
-        Fri,  3 Nov 2023 20:57:41 -0700 (PDT)
-Received: by mail-qk1-x72f.google.com with SMTP id af79cd13be357-777719639adso164778185a.3;
-        Fri, 03 Nov 2023 20:57:41 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1699070261; x=1699675061; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=pWhGUunWhxUTuSWanhab2prz9GQ9mAMBfZZdeTV0d7A=;
-        b=kUf9bz6d/iq6dHSRF5SFuX8ftL/4abrNh6TZRAO7/MiciaYjB5EwBglbGIIz4ptcx2
-         GLauZMZaU36OCTb4KSwBsyZFrPBh5Wzz3dkwAryGGF2CuVKq6qj0fzmCZxy+vL8q+E7D
-         n0RwR12bQHimUUfZKqG5+Zy2wHSYvVYu5IkIj5qq89WMmoroqNp/etMLhzyF7VxKQmjk
-         bn0xODDstmvA3xxPKKQNyzwjCosc41Ddoo2h3q3SWsLlXCwKldadttEUXW5i4GjZADRb
-         +PAJP7V2HkGcilBS9kkm0QT/hoGgmaxDCdPCZET1j7CVN2MX6Wg+4j/x8Crux4sY2VgP
-         UJJA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1699070261; x=1699675061;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=pWhGUunWhxUTuSWanhab2prz9GQ9mAMBfZZdeTV0d7A=;
-        b=qHZhKgMrh/oyaWafodrxdLxlRDW/Dfej9KeTyNxUIKPKGGUu1CU4Pk8LwXAQrGEQwQ
-         X03M5cQ4GgMH9mwOmxoalDrJXsqBeemv3aQQ3ZRrPbTmo9FEHZt7ij2MTiUuLOjHD7Cc
-         SmXU0Sua/IoCufAWiTRzUosFNZScaG4sz3ObVKYvAfZo/fb21XKW9QUuq+uxx3f+gCvk
-         8o3p9Tfju/+drqgp5WWKh49AtTG0E1+V/lg2ZEOdoYLto7CPt5NdCAEqD3VYCPOe9ACF
-         lHdeg+ICtLa6ULlpcRiNu7SasRR/MXFqSz1dH9o9ESVPJEqcmKGUPiX4YEC8kLnLJ4py
-         G5jQ==
-X-Gm-Message-State: AOJu0YwxeppJhyZq0v92b7xk0tH0XMNCxtApsy9CX5rMGDkSS8UPSobI
-        ppF4oDCmdPmRmjqooSUqN+iz0N+eFzbN7AOxE7/B4QwHnp4=
-X-Google-Smtp-Source: AGHT+IEJWbO5SCDFS/PmNlgjmH1yPMZE3KW5hdhtf9cMHoNaO6Oca6hJVwNtOOAtjenVe1f5dVO1DfH9bsLcbbY8I/Q=
-X-Received: by 2002:a05:620a:45a3:b0:774:3235:4e6d with SMTP id
- bp35-20020a05620a45a300b0077432354e6dmr28193713qkb.21.1699070260685; Fri, 03
- Nov 2023 20:57:40 -0700 (PDT)
+        with ESMTP id S232064AbjKFRjS (ORCPT
+        <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 12:39:18 -0500
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4264BD7F;
+        Mon,  6 Nov 2023 09:39:09 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
+        References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
+        Content-Type:Content-ID:Content-Description;
+        bh=F4G+iHL8t8+cwmBR3NRbeBWt2xI2c3RvXRM3QO5MLTw=; b=VqY+B6Y2nO/TvkEt1F/bHt0/gn
+        mimQzV76d7uCC9OHwtbBH8n7UCrVw9bp3wcqTnvVZGQqvmkzAb6roneZBcHJx5ZQfRHJCXAmN0xKW
+        j20AsU93UH8Hsb5PoUT1AS8G3Rf5w8oTj3Iz89Hn1eFtC6qJcVFQ6QoiJ+Q5hVS/+z7XVec3FvyO+
+        4rHa3uG3LOjXtqfObpHSllTzEinGqAeukpMCwD/+1yzWT76uYe9jpKFZSTpAgBMoYyHOY/N3tw6wF
+        iBmaRKAvCMfT+U7p7m3D0xtjUxEX86qolpLJChlOi2tgGJx3cntHZlUi1FTYQDsvUsQX9bIDTvHc/
+        Oltb3jbQ==;
+Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1r03Z5-007H8j-2d; Mon, 06 Nov 2023 17:39:07 +0000
+From:   "Matthew Wilcox (Oracle)" <willy@infradead.org>
+To:     Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc:     "Matthew Wilcox (Oracle)" <willy@infradead.org>,
+        linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Subject: [PATCH 11/35] nilfs2: Convert nilfs_page_mkwrite() to use a folio
+Date:   Mon,  6 Nov 2023 17:38:39 +0000
+Message-Id: <20231106173903.1734114-12-willy@infradead.org>
+X-Mailer: git-send-email 2.37.1
+In-Reply-To: <20231106173903.1734114-1-willy@infradead.org>
+References: <20231106173903.1734114-1-willy@infradead.org>
 MIME-Version: 1.0
-References: <20231103184831.99406-2-pstanner@redhat.com>
-In-Reply-To: <20231103184831.99406-2-pstanner@redhat.com>
-From:   Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date:   Sat, 4 Nov 2023 12:57:24 +0900
-Message-ID: <CAKFNMona2dYnMpEoQMPatEJrPW2qkkdCnnsRzvNcwsxrakyPOQ@mail.gmail.com>
-Subject: Re: [PATCH v2] fs/nilfs2: use standard array-copy-function
-To:     Philipp Stanner <pstanner@redhat.com>
-Cc:     linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Dave Airlie <airlied@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-On Sat, Nov 4, 2023 at 3:49=E2=80=AFAM Philipp Stanner wrote:
->
-> ioctl.c utilizes memdup_user() to copy a userspace array. An overflow
-> check is performed manually before the function's invocation.
->
-> The new function memdup_array_user() standardizes copying userspace
-> arrays, thus, improving readability by making it more clear that an
-> array is being copied. Additionally, it also performs an overflow check.
->
-> Remove the (now redundant) manual overflow-check and replace
-> memdup_user() with memdup_array_user().
->
-> In addition, improve the grammar of the comment above
-> memdup_array_user().
->
-> Suggested-by: Dave Airlie <airlied@redhat.com>
-> Signed-off-by: Philipp Stanner <pstanner@redhat.com>
-> ---
-> Changes in v2:
-> - Rename + rephrase commit so that it's clear that this is a
->   cleanup-patch.
-> - Mention the grammar improvement of the comment in the commit message.
-> - Remove the preceding manual overflow-check, since that is now
->   redundant.
-> ---
->  fs/nilfs2/ioctl.c | 10 ++++------
->  1 file changed, 4 insertions(+), 6 deletions(-)
->
-> diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> index 40ffade49f38..cfb6aca5ec38 100644
-> --- a/fs/nilfs2/ioctl.c
-> +++ b/fs/nilfs2/ioctl.c
-> @@ -872,16 +872,14 @@ static int nilfs_ioctl_clean_segments(struct inode =
-*inode, struct file *filp,
->         nsegs =3D argv[4].v_nmembs;
->         if (argv[4].v_size !=3D argsz[4])
->                 goto out;
-> -       if (nsegs > UINT_MAX / sizeof(__u64))
-> -               goto out;
->
->         /*
->          * argv[4] points to segment numbers this ioctl cleans.  We
-> -        * use kmalloc() for its buffer because memory used for the
-> -        * segment numbers is enough small.
-> +        * use kmalloc() for its buffer because the memory used for the
-> +        * segment numbers is small enough.
->          */
-> -       kbufs[4] =3D memdup_user((void __user *)(unsigned long)argv[4].v_=
-base,
-> -                              nsegs * sizeof(__u64));
-> +       kbufs[4] =3D memdup_array_user((void __user *)(unsigned long)argv=
-[4].v_base,
-> +                                    nsegs, sizeof(__u64));
->         if (IS_ERR(kbufs[4])) {
->                 ret =3D PTR_ERR(kbufs[4]);
->                 goto out;
-> --
-> 2.41.0
->
+Using the new folio APIs saves seven hidden calls to compound_head().
 
-Looks good.  Also, thank you for your detailed changelog.
-As mentioned earlier, I will handle this for the next cycle.
+Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+---
+ fs/nilfs2/file.c | 28 +++++++++++++++-------------
+ 1 file changed, 15 insertions(+), 13 deletions(-)
 
-Thanks,
-Ryusuke Konishi
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index 740ce26d1e76..bec33b89a075 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -45,34 +45,36 @@ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+ static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
+ {
+ 	struct vm_area_struct *vma = vmf->vma;
+-	struct page *page = vmf->page;
++	struct folio *folio = page_folio(vmf->page);
+ 	struct inode *inode = file_inode(vma->vm_file);
+ 	struct nilfs_transaction_info ti;
++	struct buffer_head *bh, *head;
+ 	int ret = 0;
+ 
+ 	if (unlikely(nilfs_near_disk_full(inode->i_sb->s_fs_info)))
+ 		return VM_FAULT_SIGBUS; /* -ENOSPC */
+ 
+ 	sb_start_pagefault(inode->i_sb);
+-	lock_page(page);
+-	if (page->mapping != inode->i_mapping ||
+-	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
+-		unlock_page(page);
++	folio_lock(folio);
++	if (folio->mapping != inode->i_mapping ||
++	    folio_pos(folio) >= i_size_read(inode) ||
++	    !folio_test_uptodate(folio)) {
++		folio_unlock(folio);
+ 		ret = -EFAULT;	/* make the VM retry the fault */
+ 		goto out;
+ 	}
+ 
+ 	/*
+-	 * check to see if the page is mapped already (no holes)
++	 * check to see if the folio is mapped already (no holes)
+ 	 */
+-	if (PageMappedToDisk(page))
++	if (folio_test_mappedtodisk(folio))
+ 		goto mapped;
+ 
+-	if (page_has_buffers(page)) {
+-		struct buffer_head *bh, *head;
++	head = folio_buffers(folio);
++	if (head) {
+ 		int fully_mapped = 1;
+ 
+-		bh = head = page_buffers(page);
++		bh = head;
+ 		do {
+ 			if (!buffer_mapped(bh)) {
+ 				fully_mapped = 0;
+@@ -81,11 +83,11 @@ static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
+ 		} while (bh = bh->b_this_page, bh != head);
+ 
+ 		if (fully_mapped) {
+-			SetPageMappedToDisk(page);
++			folio_set_mappedtodisk(folio);
+ 			goto mapped;
+ 		}
+ 	}
+-	unlock_page(page);
++	folio_unlock(folio);
+ 
+ 	/*
+ 	 * fill hole blocks
+@@ -105,7 +107,7 @@ static vm_fault_t nilfs_page_mkwrite(struct vm_fault *vmf)
+ 	nilfs_transaction_commit(inode->i_sb);
+ 
+  mapped:
+-	wait_for_stable_page(page);
++	folio_wait_stable(folio);
+  out:
+ 	sb_end_pagefault(inode->i_sb);
+ 	return vmf_fs_error(ret);
+-- 
+2.42.0
+
