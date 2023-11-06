@@ -2,110 +2,123 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD27EC001B5
-	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 17:39:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A240C4332F
+	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 22:44:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231949AbjKFRjn (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Mon, 6 Nov 2023 12:39:43 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59308 "EHLO
+        id S233350AbjKFWob (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Mon, 6 Nov 2023 17:44:31 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54546 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232601AbjKFRj0 (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 12:39:26 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E7F26D6D;
-        Mon,  6 Nov 2023 09:39:16 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-        Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-        Content-Description:In-Reply-To:References;
-        bh=AYLrLzMd96wdOm5CVv6L+hQ8+shGbfBweIymmP++Mr0=; b=ErdbLEVDt8UZxb8B7ua3XL+A4Z
-        iUS1uRA/PHLPwEe0y0szLOVP6s50ka8w+tc15CRjMtuH0thktSpvRrhWLnMO23ZTpJ5dHilDj0g7p
-        yw1oaI7SdqUIb4IbDDlS1rIrv5kUbPsa/7apRh3byFRcQTpc1ZX/xst1JbtWfAAaWbQvXS8lvPfFN
-        t7cdnN75S1I7oDfi1J8EOFhh4oTiP0FNLrc1HTJWdyl03uIrJ3fkiH4QdCVk/B6hgpX0xqSC0fgYO
-        +nOejuMxpk0xtjMnYr/bvF+seHLfg8Cpa84bHj1N3C+9SP8hZNG0HxTpyMJP0yMAcGgjHd36/Ls7O
-        8S6ClGIw==;
-Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1r03Z3-007H7n-O6; Mon, 06 Nov 2023 17:39:05 +0000
-From:   "Matthew Wilcox (Oracle)" <willy@infradead.org>
-To:     Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc:     "Matthew Wilcox (Oracle)" <willy@infradead.org>,
-        linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Subject: [PATCH 00/35] nilfs2: Folio conversions
-Date:   Mon,  6 Nov 2023 17:38:28 +0000
-Message-Id: <20231106173903.1734114-1-willy@infradead.org>
-X-Mailer: git-send-email 2.37.1
+        with ESMTP id S233316AbjKFWoY (ORCPT
+        <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 17:44:24 -0500
+Received: from mail-pf1-x42b.google.com (mail-pf1-x42b.google.com [IPv6:2607:f8b0:4864:20::42b])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0D9E1D51;
+        Mon,  6 Nov 2023 14:44:22 -0800 (PST)
+Received: by mail-pf1-x42b.google.com with SMTP id d2e1a72fcca58-6bf03b98b9bso4608268b3a.1;
+        Mon, 06 Nov 2023 14:44:22 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1699310661; x=1699915461; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=3veDMgMfom/Ebt8NzFsbnB5XbU+H8vB/5Wx02VWqWU4=;
+        b=gYh1Z5leu1kHh83t/Wb7+ZHV3GYzJpbWoGTywKpmJwLVjV+1m26aYz9PlXDihL+hwF
+         e2O1gGkK8I4oRh0ZTnWm/wSV1B2+h5Il9c84LETPYN+MNmhxtVn3gonIMnk2EuKZgUZ7
+         o32nm0w1u83QMoe/3g+AEb+nxxErjFiHDm+BCFjpO5fhZGrLeVpsqIbGyGEO0OsXlHMi
+         FyTzYoWyHk1YmqrYhGwlGGlMTYcyELqoIJC5QC/k/lHRrAxK4KVY4mBal3JCIE01+tJd
+         YY4D0jDTY+3CE5WzK42mXncXa9CmZfy1iERd99/PpyITEdF8VYu4ntgOZ8JwVQykXxA/
+         KAHQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1699310661; x=1699915461;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=3veDMgMfom/Ebt8NzFsbnB5XbU+H8vB/5Wx02VWqWU4=;
+        b=aezak5SWOK8YM3tSB0/fhTYE0zvBtYBgIG64pczKhV1NWYClVU4uVmt9ZE6iqcpC74
+         r4URD4RwuNjRXFGCm8OKJ1pc3/vWqmGxcebpFnJAkd0kgTNJvb3cuevsbRqzo0uq0WLA
+         sWQ3eayecJsZMseKq+pdrsB2pWtF1EwNi2LEutfNcybxbnCclQcXaFDrZPQ6EEH5MuRm
+         UST6HIubpS+r9tDTiRKXzN+e0/28cfz9pMc4w2kMW/NmFQrW6HfY8ts8+jdUvSm2vcYZ
+         nAD0qRxpn2kr2eeyilzxTOZEJAm3bCHpXXtA0WtqFSsaq5/5b07xj6eFXhTKkCbJ9wiy
+         3WRg==
+X-Gm-Message-State: AOJu0YyHLeudC9m1l8pZ0r1EMlprGn/dW7XYfEWlmOlQHXlnX8yYdbha
+        FEX1OzwRdysmub6aHE+ieZ2zl5uX160=
+X-Google-Smtp-Source: AGHT+IG910yIVuNPbYnL+Ho6/bAy8i5TALbGKlXbrDhidWlcgAJ/PFck0c2FCgB+94f5t7fuspcFMw==
+X-Received: by 2002:a05:6a20:a11c:b0:17b:62ae:a8bf with SMTP id q28-20020a056a20a11c00b0017b62aea8bfmr1008086pzk.30.1699310661370;
+        Mon, 06 Nov 2023 14:44:21 -0800 (PST)
+Received: from carrot.. (i223-218-131-225.s42.a014.ap.plala.or.jp. [223.218.131.225])
+        by smtp.gmail.com with ESMTPSA id du8-20020a056a002b4800b0069346777241sm6216292pfb.97.2023.11.06.14.44.19
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 06 Nov 2023 14:44:20 -0800 (PST)
+From:   Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To:     Andrew Morton <akpm@linux-foundation.org>
+Cc:     linux-nilfs@vger.kernel.org, Philipp Stanner <pstanner@redhat.com>,
+        linux-kernel@vger.kernel.org
+Subject: [PATCH] fs/nilfs2: use standard array-copy-function
+Date:   Tue,  7 Nov 2023 07:44:16 +0900
+Message-Id: <20231106224416.3055-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-This patch series does most of the page->folio conversions needed in
-nilfs2.  I haven't done the work to support large folios in nilfs2;
-I don't know if that conversion will be worth the effort.  There are
-still a few page uses left, but the infrastructure isn't quite there to
-get rid of them yet.
+From: Philipp Stanner <pstanner@redhat.com>
 
-Arguably, this is two separate series; the first takes care of the file
-paths and the second takes care of directories.  I've tried my best to
-include large folio support in the directory code because it'll be needed
-for large block size devices.  It also tries to stay as close as possible
-to the current ext2 code (so it also includes kmap_local support).
+ioctl.c utilizes memdup_user() to copy a userspace array. An overflow
+check is performed manually before the function's invocation.
 
-These patches are only compile-tested.  xfstests doesn't seem to know
-about nilfs2.
+The new function memdup_array_user() standardizes copying userspace
+arrays, thus, improving readability by making it more clear that an
+array is being copied. Additionally, it also performs an overflow check.
 
-Matthew Wilcox (Oracle) (35):
-  nilfs2: Add nilfs_end_folio_io()
-  nilfs2: Convert nilfs_abort_logs to use folios
-  nilfs2: Convert nilfs_segctor_complete_write to use folios
-  nilfs2: Convert nilfs_forget_buffer to use a folio
-  nilfs2: Convert to nilfs_folio_buffers_clean()
-  nilfs2: Convert nilfs_writepage() to use a folio
-  nilfs2: Convert nilfs_mdt_write_page() to use a folio
-  nilfs2: Convert to nilfs_clear_folio_dirty()
-  nilfs2: Convert to __nilfs_clear_folio_dirty()
-  nilfs2: Convert nilfs_segctor_prepare_write to use folios
-  nilfs2: Convert nilfs_page_mkwrite() to use a folio
-  nilfs2: Convert nilfs_mdt_create_block to use a folio
-  nilfs2: Convert nilfs_mdt_submit_block to use a folio
-  nilfs2: Convert nilfs_gccache_submit_read_data to use a folio
-  nilfs2: Convert nilfs_btnode_create_block to use a folio
-  nilfs2: Convert nilfs_btnode_submit_block to use a folio
-  nilfs2: Convert nilfs_btnode_delete to use a folio
-  nilfs2: Convert nilfs_btnode_prepare_change_key to use a folio
-  nilfs2: Convert nilfs_btnode_commit_change_key to use a folio
-  nilfs2: Convert nilfs_btnode_abort_change_key to use a folio
-  nilfs2: Remove page_address() from nilfs_set_link
-  nilfs2: Remove page_address() from nilfs_add_link
-  nilfs2: Remove page_address() from nilfs_delete_entry
-  nilfs2: Return the mapped address from nilfs_get_page()
-  nilfs2: Pass the mapped address to nilfs_check_page()
-  nilfs2: Switch to kmap_local for directory handling
-  nilfs2: Add nilfs_get_folio()
-  nilfs2: Convert nilfs_readdir to use a folio
-  nilfs2: Convert nilfs_find_entry to use a folio
-  nilfs2: Convert nilfs_rename() to use folios
-  nilfs2: Convert nilfs_add_link() to use a folio
-  nilfs2: Convert nilfs_empty_dir() to use a folio
-  nilfs2: Convert nilfs_make_empty() to use a folio
-  nilfs2: Convert nilfs_prepare_chunk() and nilfs_commit_chunk() to
-    folios
-  nilfs2: Convert nilfs_page_bug() to nilfs_folio_bug()
+Remove the (now redundant) manual overflow-check and replace
+memdup_user() with memdup_array_user().
 
- fs/nilfs2/btnode.c  |  62 +++++------
- fs/nilfs2/dir.c     | 248 ++++++++++++++++++++------------------------
- fs/nilfs2/file.c    |  28 ++---
- fs/nilfs2/gcinode.c |   4 +-
- fs/nilfs2/inode.c   |  11 +-
- fs/nilfs2/mdt.c     |  23 ++--
- fs/nilfs2/namei.c   |  33 +++---
- fs/nilfs2/nilfs.h   |  20 ++--
- fs/nilfs2/page.c    |  93 +++++++++--------
- fs/nilfs2/page.h    |  12 +--
- fs/nilfs2/segment.c | 157 ++++++++++++++--------------
- 11 files changed, 338 insertions(+), 353 deletions(-)
+In addition, improve the grammar of the comment above
+memdup_array_user().
 
+Suggested-by: Dave Airlie <airlied@redhat.com>
+Signed-off-by: Philipp Stanner <pstanner@redhat.com>
+Link: https://lkml.kernel.org/r/20231103184831.99406-2-pstanner@redhat.com
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Andrew, please queue this cleanup patch for the next merge window.
+
+It's a little early as the current merge window isn't over yet, but I
+haven't had any problems with it and I feel it's better to focus on other
+series, so I'll send this now.
+
+Thanks,
+Ryusuke Konishi
+
+fs/nilfs2/ioctl.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 40ffade49f38..cfb6aca5ec38 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -872,16 +872,14 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
+ 	nsegs = argv[4].v_nmembs;
+ 	if (argv[4].v_size != argsz[4])
+ 		goto out;
+-	if (nsegs > UINT_MAX / sizeof(__u64))
+-		goto out;
+ 
+ 	/*
+ 	 * argv[4] points to segment numbers this ioctl cleans.  We
+-	 * use kmalloc() for its buffer because memory used for the
+-	 * segment numbers is enough small.
++	 * use kmalloc() for its buffer because the memory used for the
++	 * segment numbers is small enough.
+ 	 */
+-	kbufs[4] = memdup_user((void __user *)(unsigned long)argv[4].v_base,
+-			       nsegs * sizeof(__u64));
++	kbufs[4] = memdup_array_user((void __user *)(unsigned long)argv[4].v_base,
++				     nsegs, sizeof(__u64));
+ 	if (IS_ERR(kbufs[4])) {
+ 		ret = PTR_ERR(kbufs[4]);
+ 		goto out;
 -- 
-2.42.0
+2.34.1
 
