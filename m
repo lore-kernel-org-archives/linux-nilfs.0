@@ -2,37 +2,37 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 34D31C4167D
-	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 17:39:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F4BDC0018A
+	for <linux-nilfs@archiver.kernel.org>; Mon,  6 Nov 2023 17:39:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232005AbjKFRjl (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Mon, 6 Nov 2023 12:39:41 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58964 "EHLO
+        id S232173AbjKFRjn (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Mon, 6 Nov 2023 12:39:43 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59178 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232477AbjKFRjV (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 12:39:21 -0500
+        with ESMTP id S232883AbjKFRjW (ORCPT
+        <rfc822;linux-nilfs@vger.kernel.org>); Mon, 6 Nov 2023 12:39:22 -0500
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1206110FD;
-        Mon,  6 Nov 2023 09:39:12 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74B7B171C;
+        Mon,  6 Nov 2023 09:39:14 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
         References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:
         Content-Type:Content-ID:Content-Description;
-        bh=1cG286y5GAw2GB25GESmvS8q26knZkjNHGUK8msdP0Y=; b=ZxVcI+0PnEjAtuAatbGZ13Fhaj
-        o+qJ6K6evkwbSXkUrxlbfU++s3HsQwM3ezdlF9O1SmyF3SL6lOTGxSZUO71xclcKie5YsCRp4bycD
-        +3Adt5cyYi2/osQdNHoPxaZ2rr6E44iNT9E1emgqWMmPjTX91k6sx+ycsclynzjRQnz1HSSpt/TbB
-        tlz7aQMbZehpZ05sdcz5bSDDcPRDgfg2Ae7MCsEs6mIZefdWAVVE7wFXEdepyaeqzOhtHi4bGzPwi
-        dcAEbacWuYz1UPWOqMDnonDShC5vzK4Z4E1PkaSQLDYGNkrV4vI3op+fGh7Jsl74DYF0vIXVjydLS
-        e/Slt9tQ==;
+        bh=ie7WsUDR1yLQZBGXEbEvfA+topeFIvEQy56tv9SnL9M=; b=gy3NKUMsQa1ZSOKuTyzxefZC1i
+        LxXLQ5ZTVH20hrEbzNInFGAhs6jxB4JkdOdUmgYz4fXoOr1ScLEZUpVVTZdtGPHIVXlnp+4luNbxZ
+        1LuK3q5aznQHYMNeHCgOPT9pRnLPh99XfYFsOw4pOacpUcgrGNuaX1ELrLdHUuL9DE6dYuLO+QLjE
+        A9SJPebB3ZN7bduRpLp6AeKSC37S9FuSQUvin/jmIfXEPYAE4ibPBQfhpoPE/PcApwZGiGua6ThRu
+        vTPSDsYy0e5zz5ZyW6EhX+eYCjp0RP72MU95M+sG1IWXpo9p2xjrV+Tf22KhayXLv0Ny7IbNOov03
+        PG+ah0XQ==;
 Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1r03Z7-007HB9-MH; Mon, 06 Nov 2023 17:39:09 +0000
+        id 1r03Z4-007H7z-3l; Mon, 06 Nov 2023 17:39:06 +0000
 From:   "Matthew Wilcox (Oracle)" <willy@infradead.org>
 To:     Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc:     "Matthew Wilcox (Oracle)" <willy@infradead.org>,
         linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Subject: [PATCH 30/35] nilfs2: Convert nilfs_rename() to use folios
-Date:   Mon,  6 Nov 2023 17:38:58 +0000
-Message-Id: <20231106173903.1734114-31-willy@infradead.org>
+Subject: [PATCH 03/35] nilfs2: Convert nilfs_segctor_complete_write to use folios
+Date:   Mon,  6 Nov 2023 17:38:31 +0000
+Message-Id: <20231106173903.1734114-4-willy@infradead.org>
 X-Mailer: git-send-email 2.37.1
 In-Reply-To: <20231106173903.1734114-1-willy@infradead.org>
 References: <20231106173903.1734114-1-willy@infradead.org>
@@ -42,321 +42,115 @@ Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-This involves converting nilfs_find_entry(), nilfs_dotdot(),
-nilfs_set_link(), nilfs_delete_entry() and nilfs_do_unlink()
-to use folios as well.
+Use the new folio APIs, saving five calls to compound_head().
+This includes the last callers of nilfs_end_page_io(), so
+remove that too.
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- fs/nilfs2/dir.c   | 74 ++++++++++++++++++++++-------------------------
- fs/nilfs2/namei.c | 28 +++++++++---------
- fs/nilfs2/nilfs.h | 20 ++++++-------
- 3 files changed, 59 insertions(+), 63 deletions(-)
+ fs/nilfs2/segment.c | 49 +++++++++++++++++++--------------------------
+ 1 file changed, 21 insertions(+), 28 deletions(-)
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index 9f2a02b71ddc..25a468dda0f3 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -323,38 +323,35 @@ static int nilfs_readdir(struct file *file, struct dir_context *ctx)
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 730062e79bfc..2a058aad5c2d 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1778,13 +1778,6 @@ static void nilfs_end_folio_io(struct folio *folio, int err)
+ 	folio_end_writeback(folio);
  }
  
- /*
-- *	nilfs_find_entry()
-+ * nilfs_find_entry()
-  *
-- * finds an entry in the specified directory with the wanted name. It
-- * returns the page in which the entry was found, and the entry itself
-- * (as a parameter - res_dir). Page is returned mapped and unlocked.
-- * Entry is guaranteed to be valid.
-+ * Finds an entry in the specified directory with the wanted name. It
-+ * returns the folio in which the entry was found, and the entry itself.
-+ * The folio is mapped and unlocked.  When the caller is finished with
-+ * the entry, it should call folio_release_kmap().
-+ *
-+ * On failure, returns NULL and the caller should ignore foliop.
-  */
--struct nilfs_dir_entry *
--nilfs_find_entry(struct inode *dir, const struct qstr *qstr,
--		 struct page **res_page)
-+struct nilfs_dir_entry *nilfs_find_entry(struct inode *dir,
-+		const struct qstr *qstr, struct folio **foliop)
- {
- 	const unsigned char *name = qstr->name;
- 	int namelen = qstr->len;
- 	unsigned int reclen = NILFS_DIR_REC_LEN(namelen);
- 	unsigned long start, n;
- 	unsigned long npages = dir_pages(dir);
--	struct folio *folio = NULL;
- 	struct nilfs_inode_info *ei = NILFS_I(dir);
- 	struct nilfs_dir_entry *de;
- 
- 	if (npages == 0)
- 		goto out;
- 
--	/* OFFSET_CACHE */
--	*res_page = NULL;
+-static void nilfs_end_page_io(struct page *page, int err)
+-{
+-	if (!page)
+-		return;
+-	nilfs_end_folio_io(page_folio(page), err);
+-}
 -
- 	start = ei->i_dir_start_lookup;
- 	if (start >= npages)
- 		start = 0;
- 	n = start;
- 	do {
--		char *kaddr = nilfs_get_folio(dir, n, &folio);
-+		char *kaddr = nilfs_get_folio(dir, n, foliop);
- 		if (!IS_ERR(kaddr)) {
- 			de = (struct nilfs_dir_entry *)kaddr;
- 			kaddr += nilfs_last_byte(dir, n) - reclen;
-@@ -362,14 +359,14 @@ nilfs_find_entry(struct inode *dir, const struct qstr *qstr,
- 				if (de->rec_len == 0) {
- 					nilfs_error(dir->i_sb,
- 						"zero-length directory entry");
--					folio_release_kmap(folio, kaddr);
-+					folio_release_kmap(*foliop, kaddr);
- 					goto out;
- 				}
- 				if (nilfs_match(namelen, name, de))
- 					goto found;
- 				de = nilfs_next_entry(de);
+ static void nilfs_abort_logs(struct list_head *logs, int err)
+ {
+ 	struct nilfs_segment_buffer *segbuf;
+@@ -1867,7 +1860,7 @@ static void nilfs_set_next_segment(struct the_nilfs *nilfs,
+ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+ {
+ 	struct nilfs_segment_buffer *segbuf;
+-	struct page *bd_page = NULL, *fs_page = NULL;
++	struct folio *bd_folio = NULL, *fs_folio = NULL;
+ 	struct the_nilfs *nilfs = sci->sc_super->s_fs_info;
+ 	int update_sr = false;
+ 
+@@ -1878,21 +1871,21 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+ 				    b_assoc_buffers) {
+ 			set_buffer_uptodate(bh);
+ 			clear_buffer_dirty(bh);
+-			if (bh->b_page != bd_page) {
+-				if (bd_page)
+-					end_page_writeback(bd_page);
+-				bd_page = bh->b_page;
++			if (bh->b_folio != bd_folio) {
++				if (bd_folio)
++					folio_end_writeback(bd_folio);
++				bd_folio = bh->b_folio;
  			}
--			folio_release_kmap(folio, kaddr);
-+			folio_release_kmap(*foliop, kaddr);
  		}
- 		if (++n >= npages)
- 			n = 0;
-@@ -386,14 +383,13 @@ nilfs_find_entry(struct inode *dir, const struct qstr *qstr,
- 	return NULL;
+ 		/*
+-		 * We assume that the buffers which belong to the same page
++		 * We assume that the buffers which belong to the same folio
+ 		 * continue over the buffer list.
+-		 * Under this assumption, the last BHs of pages is
+-		 * identifiable by the discontinuity of bh->b_page
+-		 * (page != fs_page).
++		 * Under this assumption, the last BHs of folios is
++		 * identifiable by the discontinuity of bh->b_folio
++		 * (folio != fs_folio).
+ 		 *
+ 		 * For B-tree node blocks, however, this assumption is not
+-		 * guaranteed.  The cleanup code of B-tree node pages needs
++		 * guaranteed.  The cleanup code of B-tree node folios needs
+ 		 * special care.
+ 		 */
+ 		list_for_each_entry(bh, &segbuf->sb_payload_buffers,
+@@ -1905,16 +1898,16 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
  
- found:
--	*res_page = &folio->page;
- 	ei->i_dir_start_lookup = n;
- 	return de;
- }
+ 			set_mask_bits(&bh->b_state, clear_bits, set_bits);
+ 			if (bh == segbuf->sb_super_root) {
+-				if (bh->b_page != bd_page) {
+-					end_page_writeback(bd_page);
+-					bd_page = bh->b_page;
++				if (bh->b_folio != bd_folio) {
++					folio_end_writeback(bd_folio);
++					bd_folio = bh->b_folio;
+ 				}
+ 				update_sr = true;
+ 				break;
+ 			}
+-			if (bh->b_page != fs_page) {
+-				nilfs_end_page_io(fs_page, 0);
+-				fs_page = bh->b_page;
++			if (bh->b_folio != fs_folio) {
++				nilfs_end_folio_io(fs_folio, 0);
++				fs_folio = bh->b_folio;
+ 			}
+ 		}
  
--struct nilfs_dir_entry *nilfs_dotdot(struct inode *dir, struct page **p)
-+struct nilfs_dir_entry *nilfs_dotdot(struct inode *dir, struct folio **foliop)
- {
--	struct nilfs_dir_entry *de = nilfs_get_page(dir, 0, p);
-+	struct nilfs_dir_entry *de = nilfs_get_folio(dir, 0, foliop);
- 
- 	if (IS_ERR(de))
- 		return NULL;
-@@ -404,32 +400,32 @@ ino_t nilfs_inode_by_name(struct inode *dir, const struct qstr *qstr)
- {
- 	ino_t res = 0;
- 	struct nilfs_dir_entry *de;
--	struct page *page;
-+	struct folio *folio;
- 
--	de = nilfs_find_entry(dir, qstr, &page);
-+	de = nilfs_find_entry(dir, qstr, &folio);
- 	if (de) {
- 		res = le64_to_cpu(de->inode);
--		unmap_and_put_page(page, de);
-+		folio_release_kmap(folio, de);
+@@ -1928,13 +1921,13 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
+ 		}
  	}
- 	return res;
- }
- 
--/* Releases the page */
-+/* Releases the folio */
- void nilfs_set_link(struct inode *dir, struct nilfs_dir_entry *de,
--		    struct page *page, struct inode *inode)
-+		    struct folio *folio, struct inode *inode)
- {
--	unsigned int from = offset_in_page(de);
--	unsigned int to = from + nilfs_rec_len_from_disk(de->rec_len);
--	struct address_space *mapping = page->mapping;
-+	size_t from = offset_in_folio(folio, de);
-+	size_t to = from + nilfs_rec_len_from_disk(de->rec_len);
-+	struct address_space *mapping = folio->mapping;
- 	int err;
- 
--	lock_page(page);
--	err = nilfs_prepare_chunk(page, from, to);
-+	folio_lock(folio);
-+	err = nilfs_prepare_chunk(&folio->page, from, to);
- 	BUG_ON(err);
- 	de->inode = cpu_to_le64(inode->i_ino);
- 	nilfs_set_de_type(de, inode);
--	nilfs_commit_chunk(page, mapping, from, to);
--	unmap_and_put_page(page, de);
-+	nilfs_commit_chunk(&folio->page, mapping, from, to);
-+	folio_release_kmap(folio, de);
- 	inode_set_mtime_to_ts(dir, inode_set_ctime_current(dir));
- }
- 
-@@ -533,14 +529,14 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
- 
- /*
-  * nilfs_delete_entry deletes a directory entry by merging it with the
-- * previous entry. Page is up-to-date. Releases the page.
-+ * previous entry. Folio is up-to-date. Releases the folio.
-  */
--int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
-+int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct folio *folio)
- {
--	struct address_space *mapping = page->mapping;
-+	struct address_space *mapping = folio->mapping;
- 	struct inode *inode = mapping->host;
--	char *kaddr = (char *)((unsigned long)dir & PAGE_MASK);
--	unsigned int from, to;
-+	char *kaddr = (char *)((unsigned long)dir & ~(folio_size(folio) - 1));
-+	size_t from, to;
- 	struct nilfs_dir_entry *de, *pde = NULL;
- 	int err;
- 
-@@ -560,16 +556,16 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
- 	}
- 	if (pde)
- 		from = (char *)pde - kaddr;
--	lock_page(page);
--	err = nilfs_prepare_chunk(page, from, to);
-+	folio_lock(folio);
-+	err = nilfs_prepare_chunk(&folio->page, from, to);
- 	BUG_ON(err);
- 	if (pde)
- 		pde->rec_len = nilfs_rec_len_to_disk(to - from);
- 	dir->inode = 0;
--	nilfs_commit_chunk(page, mapping, from, to);
-+	nilfs_commit_chunk(&folio->page, mapping, from, to);
- 	inode_set_mtime_to_ts(inode, inode_set_ctime_current(inode));
- out:
--	unmap_and_put_page(page, kaddr);
-+	folio_release_kmap(folio, kaddr);
- 	return err;
- }
- 
-diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index 8eebd8a464d8..d9d23f3cc4d7 100644
---- a/fs/nilfs2/namei.c
-+++ b/fs/nilfs2/namei.c
-@@ -260,11 +260,11 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
- {
- 	struct inode *inode;
- 	struct nilfs_dir_entry *de;
--	struct page *page;
-+	struct folio *folio;
- 	int err;
- 
- 	err = -ENOENT;
--	de = nilfs_find_entry(dir, &dentry->d_name, &page);
-+	de = nilfs_find_entry(dir, &dentry->d_name, &folio);
- 	if (!de)
- 		goto out;
- 
-@@ -279,7 +279,7 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
- 			   inode->i_ino, inode->i_nlink);
- 		set_nlink(inode, 1);
- 	}
--	err = nilfs_delete_entry(de, page);
-+	err = nilfs_delete_entry(de, folio);
- 	if (err)
- 		goto out;
- 
-@@ -347,9 +347,9 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- {
- 	struct inode *old_inode = d_inode(old_dentry);
- 	struct inode *new_inode = d_inode(new_dentry);
--	struct page *dir_page = NULL;
-+	struct folio *dir_folio = NULL;
- 	struct nilfs_dir_entry *dir_de = NULL;
--	struct page *old_page;
-+	struct folio *old_folio;
- 	struct nilfs_dir_entry *old_de;
- 	struct nilfs_transaction_info ti;
- 	int err;
-@@ -362,19 +362,19 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 		return err;
- 
- 	err = -ENOENT;
--	old_de = nilfs_find_entry(old_dir, &old_dentry->d_name, &old_page);
-+	old_de = nilfs_find_entry(old_dir, &old_dentry->d_name, &old_folio);
- 	if (!old_de)
- 		goto out;
- 
- 	if (S_ISDIR(old_inode->i_mode)) {
- 		err = -EIO;
--		dir_de = nilfs_dotdot(old_inode, &dir_page);
-+		dir_de = nilfs_dotdot(old_inode, &dir_folio);
- 		if (!dir_de)
- 			goto out_old;
- 	}
- 
- 	if (new_inode) {
--		struct page *new_page;
-+		struct folio *new_folio;
- 		struct nilfs_dir_entry *new_de;
- 
- 		err = -ENOTEMPTY;
-@@ -382,10 +382,10 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 			goto out_dir;
- 
- 		err = -ENOENT;
--		new_de = nilfs_find_entry(new_dir, &new_dentry->d_name, &new_page);
-+		new_de = nilfs_find_entry(new_dir, &new_dentry->d_name, &new_folio);
- 		if (!new_de)
- 			goto out_dir;
--		nilfs_set_link(new_dir, new_de, new_page, old_inode);
-+		nilfs_set_link(new_dir, new_de, new_folio, old_inode);
- 		nilfs_mark_inode_dirty(new_dir);
- 		inode_set_ctime_current(new_inode);
- 		if (dir_de)
-@@ -408,10 +408,10 @@ static int nilfs_rename(struct mnt_idmap *idmap,
+ 	/*
+-	 * Since pages may continue over multiple segment buffers,
+-	 * end of the last page must be checked outside of the loop.
++	 * Since folios may continue over multiple segment buffers,
++	 * end of the last folio must be checked outside of the loop.
  	 */
- 	inode_set_ctime_current(old_inode);
+-	if (bd_page)
+-		end_page_writeback(bd_page);
++	if (bd_folio)
++		folio_end_writeback(bd_folio);
  
--	nilfs_delete_entry(old_de, old_page);
-+	nilfs_delete_entry(old_de, old_folio);
+-	nilfs_end_page_io(fs_page, 0);
++	nilfs_end_folio_io(fs_folio, 0);
  
- 	if (dir_de) {
--		nilfs_set_link(old_inode, dir_de, dir_page, new_dir);
-+		nilfs_set_link(old_inode, dir_de, dir_folio, new_dir);
- 		drop_nlink(old_dir);
- 	}
- 	nilfs_mark_inode_dirty(old_dir);
-@@ -422,9 +422,9 @@ static int nilfs_rename(struct mnt_idmap *idmap,
+ 	nilfs_drop_collected_inodes(&sci->sc_dirty_files);
  
- out_dir:
- 	if (dir_de)
--		unmap_and_put_page(dir_page, dir_de);
-+		folio_release_kmap(dir_folio, dir_de);
- out_old:
--	unmap_and_put_page(old_page, old_de);
-+	folio_release_kmap(old_folio, old_de);
- out:
- 	nilfs_transaction_abort(old_dir->i_sb);
- 	return err;
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 8046490cd7fe..98cffaf0ac12 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -226,16 +226,16 @@ static inline __u32 nilfs_mask_flags(umode_t mode, __u32 flags)
- }
- 
- /* dir.c */
--extern int nilfs_add_link(struct dentry *, struct inode *);
--extern ino_t nilfs_inode_by_name(struct inode *, const struct qstr *);
--extern int nilfs_make_empty(struct inode *, struct inode *);
--extern struct nilfs_dir_entry *
--nilfs_find_entry(struct inode *, const struct qstr *, struct page **);
--extern int nilfs_delete_entry(struct nilfs_dir_entry *, struct page *);
--extern int nilfs_empty_dir(struct inode *);
--extern struct nilfs_dir_entry *nilfs_dotdot(struct inode *, struct page **);
--extern void nilfs_set_link(struct inode *, struct nilfs_dir_entry *,
--			   struct page *, struct inode *);
-+int nilfs_add_link(struct dentry *, struct inode *);
-+ino_t nilfs_inode_by_name(struct inode *, const struct qstr *);
-+int nilfs_make_empty(struct inode *, struct inode *);
-+struct nilfs_dir_entry *nilfs_find_entry(struct inode *, const struct qstr *,
-+		struct folio **);
-+int nilfs_delete_entry(struct nilfs_dir_entry *, struct folio *);
-+int nilfs_empty_dir(struct inode *);
-+struct nilfs_dir_entry *nilfs_dotdot(struct inode *, struct folio **);
-+void nilfs_set_link(struct inode *, struct nilfs_dir_entry *,
-+			   struct folio *, struct inode *);
- 
- /* file.c */
- extern int nilfs_sync_file(struct file *, loff_t, loff_t, int);
 -- 
 2.42.0
 
