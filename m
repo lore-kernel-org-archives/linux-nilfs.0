@@ -2,125 +2,140 @@ Return-Path: <linux-nilfs-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1FF84C4332F
-	for <linux-nilfs@archiver.kernel.org>; Tue, 14 Nov 2023 08:45:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F1F5DC4332F
+	for <linux-nilfs@archiver.kernel.org>; Tue, 14 Nov 2023 08:45:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232230AbjKNIpg (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Tue, 14 Nov 2023 03:45:36 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49386 "EHLO
+        id S232420AbjKNIpn (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
+        Tue, 14 Nov 2023 03:45:43 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49404 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232168AbjKNIpg (ORCPT
+        with ESMTP id S232394AbjKNIpk (ORCPT
         <rfc822;linux-nilfs@vger.kernel.org>);
-        Tue, 14 Nov 2023 03:45:36 -0500
-Received: from mail-ot1-x32c.google.com (mail-ot1-x32c.google.com [IPv6:2607:f8b0:4864:20::32c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DB19E1A8;
-        Tue, 14 Nov 2023 00:45:32 -0800 (PST)
-Received: by mail-ot1-x32c.google.com with SMTP id 46e09a7af769-6d2de704f53so3306647a34.2;
-        Tue, 14 Nov 2023 00:45:32 -0800 (PST)
+        Tue, 14 Nov 2023 03:45:40 -0500
+Received: from mail-oa1-x35.google.com (mail-oa1-x35.google.com [IPv6:2001:4860:4864:20::35])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 932621AA;
+        Tue, 14 Nov 2023 00:45:36 -0800 (PST)
+Received: by mail-oa1-x35.google.com with SMTP id 586e51a60fabf-1f0f94943d9so2586057fac.2;
+        Tue, 14 Nov 2023 00:45:36 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1699951532; x=1700556332; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=HmPI87GXXhzcCcyXWnBkmBBMe8gHKSUCEC5PcL6O7N8=;
-        b=lzKdzWJRsXS28TbHKF/sIMU5GeCVUo+lFWon+9ABQ3YPFcz4aFCYS9JIKz3o/JBM1F
-         wdUZeqPoc7GWjCJyyR6cDOBBCbjQ1/czoJl7XucKxpXkyaUfxV9ecx3ZJ1zZJzXFRvp0
-         jX4og2x8O62qE9yc6hAKnNdNJJ1fLKNhEFmJu4htGr2PSwgx98KoL+dy29rcxfooV/jz
-         0IOMT0y88ybRCXQMzHRR6TFrFkDeOvqJPDbX5D8xJhhFzb8fJlgYeSIQKJG8oBraKORI
-         RBtlgiMSJnuKVxU69Lg0n1mbchLf3NXV4lpGk1/yntowE+49Jupl7DWyubu7M2iL1yX1
-         UwCQ==
+        d=gmail.com; s=20230601; t=1699951536; x=1700556336; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=yWvfE7i+Wd531m2SA+EEUbQTk1YRMjmDg9WKu9uNV+I=;
+        b=ZcZ009AiJgpxRqcxcMEfaPhOlJV0MCqCrRPP0QfluVr3EkRyDN1zFwpKHh3c2xNYl8
+         AAg8wrdIZYrBtMBMMs/d1FFoGTNCCkAEhBQa/kY4g50h5C24v58hepmmziRLJkxk59yz
+         XeEVbbba6fSDetEK7ain4lcOT6oMrHBKqyEzrkCt3boL9OHHYhx3cSxplJqbmFcv7Sdf
+         FHZaFbuz0HQliOKa09WLJdz7U/nO09099u+9uNRVj0EguBVgpzT/WcT467704YauVbjL
+         Pnaw8UnoaGaAHLlqc0zrqZCNRpgdl6Wr69MGIWbVaFdh/ofQ07CyLJBaxYgwwpShsbBd
+         lAWQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1699951532; x=1700556332;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=HmPI87GXXhzcCcyXWnBkmBBMe8gHKSUCEC5PcL6O7N8=;
-        b=Ywva3E3PFiaCv1dwTjIg5l5zsiMGp2tE6mBU9KsThz0dl5DRSwbWO2d5BfzNdg9bGA
-         A45cUZZgkdBGtf/cCTIdCsPNTWbl0a9EoDxrHcI3/l67modkFjL0ebU28M90MTj2gEkq
-         DKAu7SKvFsErQ3sOed13Rz3PuBZIpbPL9a4L1aIY6lJDSLSZgPrek6n3Q0wMExY9H+sB
-         wT4Bho6RI/2PWHeJnD81q1ebLF0c/trv7kt1vBoQ3o20aE1A0GvmABPT+79Bm6+bgHSd
-         Hi6FLwMLxdg62z9zL01EBUW5qPskLFcKkSFAjtN/lup0wos9wfi0l2A1sd5OSL9KQ8ap
-         sPsw==
-X-Gm-Message-State: AOJu0Yzi+BxYqwW2nkieNcTDQIc4m6oUteYXPYNK4hmxuwRfhjbLExoZ
-        ouQHFZJRAKO6WkqMAExj+B8kGbEjWK8=
-X-Google-Smtp-Source: AGHT+IEX7RjXev2XQltkrJXPfVRcuBRK0VCen1Onv2L8UNWzex6MaDtzPKTDE4jw6g5Fj8QP4FZ4jA==
-X-Received: by 2002:a05:6870:7886:b0:1e9:896a:8055 with SMTP id hc6-20020a056870788600b001e9896a8055mr12703000oab.25.1699951532104;
-        Tue, 14 Nov 2023 00:45:32 -0800 (PST)
+        d=1e100.net; s=20230601; t=1699951536; x=1700556336;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=yWvfE7i+Wd531m2SA+EEUbQTk1YRMjmDg9WKu9uNV+I=;
+        b=oS3jVLA/u0cL3pGNOVoeCrHVyMxnmVuMSEankOPnZrT7xh5O1LiBtOa302UqAP4x2m
+         N5iVbndN++ufS1rFUE58QJlL1Ht5nHLsCncRKSvadgMe3FyvWWKMZ8iUl64blEBjlImZ
+         X009s5iH5As7oRSCqtIjMEX5UKkoMv2bKg2uboUvJIlHDEjqTsGsZtWjYtBQvtsJAdhA
+         ZLvscumrzXqT026mei6hZ5ooCWvJR4rMztog2sULacKLvdb+Lk0dBUebKd+X8qZo4nkP
+         HeXJxTWh2sr5ApzdLY+/1WgVI/fZ5aF02TC6y9e55/GqUxfByWVjPlTwZeQuR4Bn/AJ4
+         yvDQ==
+X-Gm-Message-State: AOJu0YyHc/6sml8aiBXXUyIDWvU+kqkWcCmbYtQn6kAS4xjZWZfrscW7
+        +E1iuzx3E/HpM+oNATzddqPSu695rz8=
+X-Google-Smtp-Source: AGHT+IGmFz6ZefiBoSRP2wkdhVdW9RaUeRwHNSD7WB7NGAVstoQ0BYpCQNvMLK1A5dLk79uh8yDumg==
+X-Received: by 2002:a05:6871:5a8f:b0:1f0:630b:c84e with SMTP id oo15-20020a0568715a8f00b001f0630bc84emr9199228oac.57.1699951535866;
+        Tue, 14 Nov 2023 00:45:35 -0800 (PST)
 Received: from carrot.. (i223-218-133-131.s42.a014.ap.plala.or.jp. [223.218.133.131])
-        by smtp.gmail.com with ESMTPSA id u17-20020a056a00159100b006c4d2479c1asm748083pfk.219.2023.11.14.00.45.30
+        by smtp.gmail.com with ESMTPSA id u17-20020a056a00159100b006c4d2479c1asm748083pfk.219.2023.11.14.00.45.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Nov 2023 00:45:31 -0800 (PST)
+        Tue, 14 Nov 2023 00:45:35 -0800 (PST)
 From:   Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To:     Andrew Morton <akpm@linux-foundation.org>
 Cc:     linux-nilfs@vger.kernel.org, Matthew Wilcox <willy@infradead.org>,
         linux-kernel@vger.kernel.org
-Subject: [PATCH 00/20] nilfs2: Folio conversions for file paths
-Date:   Tue, 14 Nov 2023 17:44:16 +0900
-Message-Id: <20231114084436.2755-1-konishi.ryusuke@gmail.com>
+Subject: [PATCH 02/20] nilfs2: Convert nilfs_abort_logs to use folios
+Date:   Tue, 14 Nov 2023 17:44:18 +0900
+Message-Id: <20231114084436.2755-3-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20231114084436.2755-1-konishi.ryusuke@gmail.com>
+References: <20231114084436.2755-1-konishi.ryusuke@gmail.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 
-Hi Andrew, please queue this series for the next merge window.
+From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 
-This series advances page->folio conversions for a wide range of
-nilfs2, including its file operations, block routines, and the log
-writer's writeback routines.  It doesn't cover large folios support,
-but it saves a lot of hidden compound_head() calls while preserving
-the existing support range behavior.
+Use the new folio APIs, saving five hidden calls to compound_head().
 
-The original series in post [1] also covered directory-related
-page->folio conversions, but that was put on hold because a regression
-was found in testing, so this is an excerpt from the first half of the
-original post.
+Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+ fs/nilfs2/segment.c | 28 ++++++++++++++--------------
+ 1 file changed, 14 insertions(+), 14 deletions(-)
 
-[1] https://lkml.kernel.org/r/20231106173903.1734114-1-willy@infradead.org
-
-I tested this series in both 32-bit and 64-bit environments, switching
-between normal and small block sizes.  I also reviewed all changes in
-all patches to ensure they do not break existing behavior.
-
-There were no problems, so I'm sending this part first because I would
-like you to keep it in the -mm tree at an early stage.
-
-Thanks,
-Ryusuke Konishi
-
-
-Matthew Wilcox (Oracle) (20):
-  nilfs2: Add nilfs_end_folio_io()
-  nilfs2: Convert nilfs_abort_logs to use folios
-  nilfs2: Convert nilfs_segctor_complete_write to use folios
-  nilfs2: Convert nilfs_forget_buffer to use a folio
-  nilfs2: Convert to nilfs_folio_buffers_clean()
-  nilfs2: Convert nilfs_writepage() to use a folio
-  nilfs2: Convert nilfs_mdt_write_page() to use a folio
-  nilfs2: Convert to nilfs_clear_folio_dirty()
-  nilfs2: Convert to __nilfs_clear_folio_dirty()
-  nilfs2: Convert nilfs_segctor_prepare_write to use folios
-  nilfs2: Convert nilfs_page_mkwrite() to use a folio
-  nilfs2: Convert nilfs_mdt_create_block to use a folio
-  nilfs2: Convert nilfs_mdt_submit_block to use a folio
-  nilfs2: Convert nilfs_gccache_submit_read_data to use a folio
-  nilfs2: Convert nilfs_btnode_create_block to use a folio
-  nilfs2: Convert nilfs_btnode_submit_block to use a folio
-  nilfs2: Convert nilfs_btnode_delete to use a folio
-  nilfs2: Convert nilfs_btnode_prepare_change_key to use a folio
-  nilfs2: Convert nilfs_btnode_commit_change_key to use a folio
-  nilfs2: Convert nilfs_btnode_abort_change_key to use a folio
-
- fs/nilfs2/btnode.c  |  62 ++++++++---------
- fs/nilfs2/file.c    |  28 ++++----
- fs/nilfs2/gcinode.c |   4 +-
- fs/nilfs2/inode.c   |  11 ++--
- fs/nilfs2/mdt.c     |  23 +++----
- fs/nilfs2/page.c    |  68 +++++++++----------
- fs/nilfs2/page.h    |   6 +-
- fs/nilfs2/segment.c | 157 ++++++++++++++++++++++----------------------
- 8 files changed, 183 insertions(+), 176 deletions(-)
-
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 1df03d0895be..730062e79bfc 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1788,7 +1788,7 @@ static void nilfs_end_page_io(struct page *page, int err)
+ static void nilfs_abort_logs(struct list_head *logs, int err)
+ {
+ 	struct nilfs_segment_buffer *segbuf;
+-	struct page *bd_page = NULL, *fs_page = NULL;
++	struct folio *bd_folio = NULL, *fs_folio = NULL;
+ 	struct buffer_head *bh;
+ 
+ 	if (list_empty(logs))
+@@ -1798,10 +1798,10 @@ static void nilfs_abort_logs(struct list_head *logs, int err)
+ 		list_for_each_entry(bh, &segbuf->sb_segsum_buffers,
+ 				    b_assoc_buffers) {
+ 			clear_buffer_uptodate(bh);
+-			if (bh->b_page != bd_page) {
+-				if (bd_page)
+-					end_page_writeback(bd_page);
+-				bd_page = bh->b_page;
++			if (bh->b_folio != bd_folio) {
++				if (bd_folio)
++					folio_end_writeback(bd_folio);
++				bd_folio = bh->b_folio;
+ 			}
+ 		}
+ 
+@@ -1810,22 +1810,22 @@ static void nilfs_abort_logs(struct list_head *logs, int err)
+ 			clear_buffer_async_write(bh);
+ 			if (bh == segbuf->sb_super_root) {
+ 				clear_buffer_uptodate(bh);
+-				if (bh->b_page != bd_page) {
+-					end_page_writeback(bd_page);
+-					bd_page = bh->b_page;
++				if (bh->b_folio != bd_folio) {
++					folio_end_writeback(bd_folio);
++					bd_folio = bh->b_folio;
+ 				}
+ 				break;
+ 			}
+-			if (bh->b_page != fs_page) {
+-				nilfs_end_page_io(fs_page, err);
+-				fs_page = bh->b_page;
++			if (bh->b_folio != fs_folio) {
++				nilfs_end_folio_io(fs_folio, err);
++				fs_folio = bh->b_folio;
+ 			}
+ 		}
+ 	}
+-	if (bd_page)
+-		end_page_writeback(bd_page);
++	if (bd_folio)
++		folio_end_writeback(bd_folio);
+ 
+-	nilfs_end_page_io(fs_page, err);
++	nilfs_end_folio_io(fs_folio, err);
+ }
+ 
+ static void nilfs_segctor_abort_construction(struct nilfs_sc_info *sci,
 -- 
 2.34.1
 
