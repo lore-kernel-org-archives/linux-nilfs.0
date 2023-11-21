@@ -1,94 +1,43 @@
-Return-Path: <linux-nilfs-owner@vger.kernel.org>
-X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
-	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EECCAC41535
-	for <linux-nilfs@archiver.kernel.org>; Tue, 14 Nov 2023 08:47:15 +0000 (UTC)
-Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232665AbjKNIrR (ORCPT <rfc822;linux-nilfs@archiver.kernel.org>);
-        Tue, 14 Nov 2023 03:47:17 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47336 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232672AbjKNIqd (ORCPT
-        <rfc822;linux-nilfs@vger.kernel.org>);
-        Tue, 14 Nov 2023 03:46:33 -0500
-Received: from mail-pf1-x42a.google.com (mail-pf1-x42a.google.com [IPv6:2607:f8b0:4864:20::42a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D10E1BC6;
-        Tue, 14 Nov 2023 00:46:11 -0800 (PST)
-Received: by mail-pf1-x42a.google.com with SMTP id d2e1a72fcca58-6c320a821c4so4572396b3a.2;
-        Tue, 14 Nov 2023 00:46:11 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1699951570; x=1700556370; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=cYy3qj/vutDt+D3+abE3OR1PaLNKfT9k3Yx/seQi4CM=;
-        b=eseC46oWq92951qfMVbWpumE3BsQ7VPqmRlMHOIssSdgBVMOK12OFTH9omCxYSNh2G
-         NSzd7b1MNxLC4f2a6A7p3cb/S/oQB+c7R6bOTtGSfGRP+35Zqj8VSExp5oYCZau/WdtO
-         1tKlscof0R9uHb3SuJg2yFkZdYK09l6nUwyUBhdt1o4W0644W3VQeaLiUhcwtYihcQOu
-         yusFsXn723WdqzBlixD8bNWkT4v8xs+cw1bLawUYRJZ/388OW/wNgLfg3/nDqbS35fGG
-         Vc8ODGIauiXWctNi5+Vg5v7y+L3R9DpLIZy2AgEUV+EZerwHVrcKAFhbHxXwpTOZL1zu
-         6MZg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1699951570; x=1700556370;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=cYy3qj/vutDt+D3+abE3OR1PaLNKfT9k3Yx/seQi4CM=;
-        b=jZ8qKtEZWBqdiSJEy42nvLR8ylNxygO0h9ezbvkmRC5BLnl2IJAQL/5cuXAun6cYi8
-         0DxK6KOvZZJjz1/EysiRVlT5Hl0cjH+IA417y8C4Lop2NnaEXcGOvVwS22h8uvV7YZ36
-         tcL7X4xfamBiVh3q38E1L3ccxdCAdYz1rBJ6osy5j5m+04ebDW/EZfMndfZJsKm/QCus
-         Przq9DCQIDebXEli0itm7IYa4kCQCUFB3iOPG2dsrBVSBfwJFe9QwAOGhd2jmCe3TWPl
-         luNx4ozqjnwdXPZrW1mlI63GdpMVnNJfgIXLUCAzjOzAlaep1+LAucJfokynyDyKsrlE
-         vT8g==
-X-Gm-Message-State: AOJu0YwEiwkPxWvf5slyITGl7UBUQsfvjKEFdDdmPNFraRgV8Odqk4oi
-        kj1BDiA2axh8ViI+BBPY2TFYCEbkg50=
-X-Google-Smtp-Source: AGHT+IGoNFWQTBdRQ8lFIohacw/5UPQ+Mex4ArUkR7byM9Apbrjb6Iw0AXUEpKyrNtWOzX2IprESKA==
-X-Received: by 2002:a05:6a00:4388:b0:6c0:642c:274b with SMTP id bt8-20020a056a00438800b006c0642c274bmr7557613pfb.9.1699951570453;
-        Tue, 14 Nov 2023 00:46:10 -0800 (PST)
-Received: from carrot.. (i223-218-133-131.s42.a014.ap.plala.or.jp. [223.218.133.131])
-        by smtp.gmail.com with ESMTPSA id u17-20020a056a00159100b006c4d2479c1asm748083pfk.219.2023.11.14.00.46.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Nov 2023 00:46:09 -0800 (PST)
-From:   Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To:     Andrew Morton <akpm@linux-foundation.org>
-Cc:     linux-nilfs@vger.kernel.org, Matthew Wilcox <willy@infradead.org>,
-        linux-kernel@vger.kernel.org
-Subject: [PATCH 20/20] nilfs2: Convert nilfs_btnode_abort_change_key to use a folio
-Date:   Tue, 14 Nov 2023 17:44:36 +0900
-Message-Id: <20231114084436.2755-21-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20231114084436.2755-1-konishi.ryusuke@gmail.com>
-References: <20231114084436.2755-1-konishi.ryusuke@gmail.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAF7315AB
+	for <linux-nilfs@vger.kernel.org>; Tue, 21 Nov 2023 00:47:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="rpcV8e36"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 74E21C433C8;
+	Tue, 21 Nov 2023 00:47:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
+	s=korg; t=1700527629;
+	bh=WydedWHI5hgSzmjYaAgFcEvQrWisnvd0Tah1sl3VwoE=;
+	h=Date:From:To:Subject:From;
+	b=rpcV8e36TlLZ8cIzYXrb4DYO9MDwKI7m9qfsXrnSh3U2RxNUHCAhw5SYs4dwhZmEp
+	 z38rkNYZOBqWUI6GzOevePdKeGmu52K0aSnSizoOMJNcjZ9cUQZw4ntkr1LGn6AaE8
+	 nzhpCkmPxJE3J+QmObsxNXDz9DPML+Ya7MUVTTxM=
+Date: Mon, 20 Nov 2023 19:47:08 -0500
+From: Konstantin Ryabitsev <konstantin@linuxfoundation.org>
+To: linux-nilfs@vger.kernel.org
+Subject: PSA: this list has moved to new vger infra (no action required)
+Message-ID: <20231120-sexy-fiery-millipede-c6c5ef@nitro>
 Precedence: bulk
-List-ID: <linux-nilfs.vger.kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
+List-Id: <linux-nilfs.vger.kernel.org>
+List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Hello, all:
 
-Saves one call to compound_head().
+This list has been migrated to new vger infrastructure. No action is required
+on your part and there should be no change in how you interact with this list.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- fs/nilfs2/btnode.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+This message acts as a verification test that the archives are properly
+updating.
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index fb1638765d54..1204dd06ead8 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -284,7 +284,7 @@ void nilfs_btnode_abort_change_key(struct address_space *btnc,
- 
- 	if (nbh == NULL) {	/* blocksize == pagesize */
- 		xa_erase_irq(&btnc->i_pages, newkey);
--		unlock_page(ctxt->bh->b_page);
-+		folio_unlock(ctxt->bh->b_folio);
- 	} else {
- 		/*
- 		 * When canceling a buffer that a prepare operation has
--- 
-2.34.1
+If something isn't working or looking right, please reach out to
+helpdesk@kernel.org.
 
+Best regards,
+-K
