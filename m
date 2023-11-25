@@ -1,250 +1,911 @@
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fTHKPD2M"
-Received: from mail-oo1-xc2f.google.com (mail-oo1-xc2f.google.com [IPv6:2607:f8b0:4864:20::c2f])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EC0BD18C;
-	Tue, 21 Nov 2023 09:43:57 -0800 (PST)
-Received: by mail-oo1-xc2f.google.com with SMTP id 006d021491bc7-58ce6824bfcso595526eaf.0;
-        Tue, 21 Nov 2023 09:43:57 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1700588637; x=1701193437; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=QWyXOXKr9RHMq2zMZZYEmL2+ypZpINmcZ9+zDeBrSng=;
-        b=fTHKPD2MPMj03ca1HW/Z4xrqwGAlZ2PONeoYBtunu/MRueCF3Yp/k7TiuMBq60TOsw
-         m+aTme4fRg2xR2NbubbkjuR7fBgNFGqI7d+p178cv3Y+02CKjQp0KN3hH5sKTXg/ti1j
-         djqzVMhwuaWCZY1qw3ahxfZ8NBkBqEsBvepnxZjXdzw2gMvv+birn2f3u4fYWI0FPmvf
-         gLdRJXj/3rhRTwQSJkGuLUapx5uo1lzbb73lm2GiTTUFMcoArBVL1hHp08HcGhh7IFSP
-         dAx4DwHgSYdP6nvjrO+HObPepCgaymvmzMAEd3bGP0DpCGEdAFZsTCd7oKqbTKJDBgTL
-         Cmjw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1700588637; x=1701193437;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=QWyXOXKr9RHMq2zMZZYEmL2+ypZpINmcZ9+zDeBrSng=;
-        b=v7z+mhKh2SGJ6f+J7qjHm+06rqz0MVdm2kbvokHfecu7/bRp6EZQ63guoLmcSJgF9a
-         AHcEFYMLq2DPM/MfJtFnBuSqs3etKsPcOzxZz1FGwsgEGTR+G9hGW8HwsxVGfPWLnvYH
-         i5G9hEPvX4VjebMj5O1cor31lDnKu86At4juBLTnvLKGStoclDB6/5bHH3arxY9YKpHo
-         JMxdr6xvtKQ4WbWOsIiA5qN+laI2iGo8ZxytX67dBMutYYwk2mduZ1cgcTyyZDh9SL1u
-         xCZQfPtaqspLWUV57YrcWKAH4EJeMfHXTnk1+XSHeKRw1gsn9Z4i1yK5BYbeb8LHvSap
-         N8WQ==
-X-Gm-Message-State: AOJu0YwVjMeDhU8fPM+jmHVU198xVpW1FwxioilY8V620fZzZxWpsBfN
-	abWL65MQkeMHBlMvYZAzdoFFa8g9gCsTMiUNGP0m50YvFu8=
-X-Google-Smtp-Source: AGHT+IG0BEE+1COFkEY1Cas0V3XR58noBAX+GVLnBtT+dpIvup9iQpGveteTqLMXA3+SnM/Fox+62EV61fsgPFul0ew=
-X-Received: by 2002:a05:6358:7057:b0:16d:bd39:46a with SMTP id
- 23-20020a056358705700b0016dbd39046amr8584253rwp.14.1700588637056; Tue, 21 Nov
- 2023 09:43:57 -0800 (PST)
+Authentication-Results: smtp.subspace.kernel.org; dkim=none
+Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A449C10D2;
+	Sat, 25 Nov 2023 01:39:47 -0800 (PST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Scmz21B18z4f3lwR;
+	Sat, 25 Nov 2023 17:39:42 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id DB8B71A0391;
+	Sat, 25 Nov 2023 17:39:43 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP1 (Coremail) with SMTP id cCh0CgA3iA7bwGFldwaOBw--.23278S4;
+	Sat, 25 Nov 2023 17:39:43 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: hch@infradead.org,
+	ming.lei@redhat.com,
+	axboe@kernel.dk,
+	roger.pau@citrix.com,
+	colyli@suse.de,
+	kent.overstreet@gmail.com,
+	joern@lazybastard.org,
+	miquel.raynal@bootlin.com,
+	richard@nod.at,
+	vigneshr@ti.com,
+	sth@linux.ibm.com,
+	hoeppner@linux.ibm.com,
+	hca@linux.ibm.com,
+	gor@linux.ibm.com,
+	agordeev@linux.ibm.com,
+	jejb@linux.ibm.com,
+	martin.petersen@oracle.com,
+	clm@fb.com,
+	josef@toxicpanda.com,
+	dsterba@suse.com,
+	viro@zeniv.linux.org.uk,
+	brauner@kernel.org,
+	nico@fluxnic.net,
+	xiang@kernel.org,
+	chao@kernel.org,
+	tytso@mit.edu,
+	adilger.kernel@dilger.ca,
+	agruenba@redhat.com,
+	jack@suse.com,
+	konishi.ryusuke@gmail.com,
+	dchinner@redhat.com,
+	linux@weissschuh.net,
+	gregkh@linuxfoundation.org,
+	min15.li@samsung.com,
+	dlemoal@kernel.org,
+	willy@infradead.org,
+	akpm@linux-foundation.org,
+	p.raghav@samsung.com,
+	hare@suse.de
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	xen-devel@lists.xenproject.org,
+	linux-bcache@vger.kernel.org,
+	linux-mtd@lists.infradead.org,
+	linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org,
+	linux-bcachefs@vger.kernel.org,
+	linux-btrfs@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-erofs@lists.ozlabs.org,
+	linux-ext4@vger.kernel.org,
+	gfs2@lists.linux.dev,
+	linux-nilfs@vger.kernel.org,
+	yukuai3@huawei.com,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH -next] block: remove field 'bd_inode' from block_device
+Date: Sat, 25 Nov 2023 17:39:12 +0800
+Message-Id: <20231125093912.141486-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20231106173903.1734114-1-willy@infradead.org> <CAKFNMomPu2r-KCrKgM0PTfPA3xWm+BaJc3oi-_kZeGG3fMr=_A@mail.gmail.com>
- <CAKFNMomk6CcuaU5CbArbS0tMncz1LGNz=vLeOEx4xpmENfGWFQ@mail.gmail.com>
-In-Reply-To: <CAKFNMomk6CcuaU5CbArbS0tMncz1LGNz=vLeOEx4xpmENfGWFQ@mail.gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 22 Nov 2023 02:43:40 +0900
-Message-ID: <CAKFNMo=5jjwHZgyUF26pvQM=7e6+ADK7s_BKULMT123C_1YXug@mail.gmail.com>
-Subject: Re: [PATCH 00/35] nilfs2: Folio conversions
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgA3iA7bwGFldwaOBw--.23278S4
+X-Coremail-Antispam: 1UD129KBjvAXoWfurWDGr4kuw47KryDKr4kJFb_yoW5Cr1fZo
+	W3Jr13Wr1kJry3J397G3s2ya4UX39rCws3CFs8CFn0va4F9w1jk347Ga15AF1fuw1rKF1f
+	A34xAa1rXFWUAayrn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
+	AaLaJ3UjIYCTnIWjp_UUUYI7AC8VAFwI0_Wr0E3s1l1xkIjI8I6I8E6xAIw20EY4v20xva
+	j40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxSw2
+	x7M28EF7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxVW8
+	Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26r
+	xl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj
+	6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr
+	0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E
+	8cxan2IY04v7MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
+	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWrXVW8
+	Jr1lIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7
+	CjxVAFwI0_Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE
+	14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr1j6F4UJbIYCTnIWIevJa73UjIFyT
+	uYvjfUojjgUUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Sun, Nov 12, 2023 at 9:10=E2=80=AFAM Ryusuke Konishi wrote:
->
-> On Tue, Nov 7, 2023 at 10:49=E2=80=AFAM Ryusuke Konishi wrote:
-> >
-> > On Tue, Nov 7, 2023 at 2:39=E2=80=AFAM Matthew Wilcox (Oracle) wrote:
-> > >
-> > > This patch series does most of the page->folio conversions needed in
-> > > nilfs2.  I haven't done the work to support large folios in nilfs2;
-> > > I don't know if that conversion will be worth the effort.  There are
-> > > still a few page uses left, but the infrastructure isn't quite there =
-to
-> > > get rid of them yet.
-> > >
-> > > Arguably, this is two separate series; the first takes care of the fi=
-le
-> > > paths and the second takes care of directories.  I've tried my best t=
-o
-> > > include large folio support in the directory code because it'll be ne=
-eded
-> > > for large block size devices.  It also tries to stay as close as poss=
-ible
-> > > to the current ext2 code (so it also includes kmap_local support).
-> > >
-> > > These patches are only compile-tested.  xfstests doesn't seem to know
-> > > about nilfs2.
-> > >
-> > > Matthew Wilcox (Oracle) (35):
-> > >   nilfs2: Add nilfs_end_folio_io()
-> > >   nilfs2: Convert nilfs_abort_logs to use folios
-> > >   nilfs2: Convert nilfs_segctor_complete_write to use folios
-> > >   nilfs2: Convert nilfs_forget_buffer to use a folio
-> > >   nilfs2: Convert to nilfs_folio_buffers_clean()
-> > >   nilfs2: Convert nilfs_writepage() to use a folio
-> > >   nilfs2: Convert nilfs_mdt_write_page() to use a folio
-> > >   nilfs2: Convert to nilfs_clear_folio_dirty()
-> > >   nilfs2: Convert to __nilfs_clear_folio_dirty()
-> > >   nilfs2: Convert nilfs_segctor_prepare_write to use folios
-> > >   nilfs2: Convert nilfs_page_mkwrite() to use a folio
-> > >   nilfs2: Convert nilfs_mdt_create_block to use a folio
-> > >   nilfs2: Convert nilfs_mdt_submit_block to use a folio
-> > >   nilfs2: Convert nilfs_gccache_submit_read_data to use a folio
-> > >   nilfs2: Convert nilfs_btnode_create_block to use a folio
-> > >   nilfs2: Convert nilfs_btnode_submit_block to use a folio
-> > >   nilfs2: Convert nilfs_btnode_delete to use a folio
-> > >   nilfs2: Convert nilfs_btnode_prepare_change_key to use a folio
-> > >   nilfs2: Convert nilfs_btnode_commit_change_key to use a folio
-> > >   nilfs2: Convert nilfs_btnode_abort_change_key to use a folio
-> > >   nilfs2: Remove page_address() from nilfs_set_link
-> > >   nilfs2: Remove page_address() from nilfs_add_link
-> > >   nilfs2: Remove page_address() from nilfs_delete_entry
-> > >   nilfs2: Return the mapped address from nilfs_get_page()
-> > >   nilfs2: Pass the mapped address to nilfs_check_page()
-> > >   nilfs2: Switch to kmap_local for directory handling
-> > >   nilfs2: Add nilfs_get_folio()
-> > >   nilfs2: Convert nilfs_readdir to use a folio
-> > >   nilfs2: Convert nilfs_find_entry to use a folio
-> > >   nilfs2: Convert nilfs_rename() to use folios
-> > >   nilfs2: Convert nilfs_add_link() to use a folio
-> > >   nilfs2: Convert nilfs_empty_dir() to use a folio
-> > >   nilfs2: Convert nilfs_make_empty() to use a folio
-> > >   nilfs2: Convert nilfs_prepare_chunk() and nilfs_commit_chunk() to
-> > >     folios
-> > >   nilfs2: Convert nilfs_page_bug() to nilfs_folio_bug()
-> > >
-> > >  fs/nilfs2/btnode.c  |  62 +++++------
-> > >  fs/nilfs2/dir.c     | 248 ++++++++++++++++++++----------------------=
---
-> > >  fs/nilfs2/file.c    |  28 ++---
-> > >  fs/nilfs2/gcinode.c |   4 +-
-> > >  fs/nilfs2/inode.c   |  11 +-
-> > >  fs/nilfs2/mdt.c     |  23 ++--
-> > >  fs/nilfs2/namei.c   |  33 +++---
-> > >  fs/nilfs2/nilfs.h   |  20 ++--
-> > >  fs/nilfs2/page.c    |  93 +++++++++--------
-> > >  fs/nilfs2/page.h    |  12 +--
-> > >  fs/nilfs2/segment.c | 157 ++++++++++++++--------------
-> > >  11 files changed, 338 insertions(+), 353 deletions(-)
-> > >
-> > > --
-> > > 2.42.0
-> > >
-> >
-> > Matthew, thank you so much for this hard work.
-> > Even if full support for large folios cannot be achieved at this time
-> > due to limitations in the nilfs2 implementation, I appreciate that you
-> > are moving forward with the conversion work that should be done.
-> >
-> > I haven't reviewed each patch yet, but at least this series can be
-> > built without problems in my environment too, and so far it is working
-> > fine including GC and stress tests.
-> >
-> > I will review all the patches, but since there are so many, I will not
-> > add LGTM replies to each one, but will only reply to those that have
-> > comments (if any).
-> >
-> > Many thanks,
-> > Ryusuke Konishi
->
-> The following WARNING was detected during stress testing on a 32-bit VM:
->
-> [  270.894814][ T5828] ------------[ cut here ]------------
-> [  270.895409][ T5828] WARNING: CPU: 1 PID: 5828 at mm/highmem.c:611
-> kunmap_local_indexed+0xd4/0xfc
-> <snip>
-> [  270.904260][ T5828] EIP: kunmap_local_indexed+0xd4/0xfc
-> [  270.904940][ T5828] Code: 00 02 8b 80 5c 0e 00 00 85 c0 78 26 b8 01
-> 00 00 00 e8 80 22 df ff 64 a1 84 29 33 c2 85 c0 74 1a e8 75 f4 df ff
-> 5b 5e 5d c3 90 <0f> 0b eb 95 8d 74 26 00 0f 0b 8d b6 00 00 00 00 e8 13
-> 8a 80 00 eb
-> [  270.907264][ T5828] EAX: 00000024 EBX: fff99000 ECX: 00068000 EDX: fff=
-97000
-> [  270.908140][ T5828] ESI: 00000003 EDI: f6cc76c0 EBP: e353fda8 ESP: e35=
-3fda0
-> [  270.909020][ T5828] DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
-> EFLAGS: 00010206
-> [  270.910043][ T5828] CR0: 80050033 CR2: b145b49c CR3: 23570000 CR4: 003=
-50ed0
-> [  270.910927][ T5828] DR0: 00000000 DR1: 00000000 DR2: 00000000 DR3: 000=
-00000
-> [  270.911799][ T5828] DR6: fffe0ff0 DR7: 00000400
-> [  270.912369][ T5828] Call Trace:
-> [  270.912771][ T5828]  ? show_regs+0x50/0x58
-> [  270.913287][ T5828]  ? kunmap_local_indexed+0xd4/0xfc
-> [  270.913908][ T5828]  ? __warn+0x6f/0x184
-> [  270.914420][ T5828]  ? kunmap_local_indexed+0xd4/0xfc
-> [  270.915063][ T5828]  ? report_bug+0x1b2/0x22c
-> [  270.915610][ T5828]  ? timers_dead_cpu+0x12b/0x268
-> [  270.916249][ T5828]  ? exc_overflow+0x38/0x38
-> [  270.916826][ T5828]  ? handle_bug+0x2a/0x48
-> [  270.917353][ T5828]  ? exc_invalid_op+0x1b/0x58
-> [  270.917929][ T5828]  ? handle_exception+0x130/0x130
-> [  270.918513][ T5828]  ? shrink_dentry_list+0x73/0x2bc
-> [  270.919121][ T5828]  ? exc_overflow+0x38/0x38
-> [  270.919728][ T5828]  ? kunmap_local_indexed+0xd4/0xfc
-> [  270.920369][ T5828]  ? exc_overflow+0x38/0x38
-> [  270.920913][ T5828]  ? kunmap_local_indexed+0xd4/0xfc
-> [  270.921545][ T5828]  nilfs_delete_entry+0xa7/0x1ec [nilfs2]
-> [  270.922255][ T5828]  nilfs_rename+0x359/0x374 [nilfs2]
-> [  270.922899][ T5828]  ? find_held_lock+0x24/0x70
-> [  270.923457][ T5828]  ? down_write_nested+0x6d/0xd0
-> [  270.924043][ T5828]  vfs_rename+0x525/0xaa8
-> [  270.924572][ T5828]  ? vfs_rename+0x525/0xaa8
-> [  270.925156][ T5828]  ? security_path_rename+0x54/0x7c
-> [  270.925794][ T5828]  do_renameat2+0x496/0x504
-> [  270.926380][ T5828]  __ia32_sys_rename+0x34/0x3c
-> [  270.926973][ T5828]  __do_fast_syscall_32+0x56/0xc8
-> [  270.927598][ T5828]  do_fast_syscall_32+0x29/0x58
-> [  270.928257][ T5828]  do_SYSENTER_32+0x15/0x18
-> [  270.928871][ T5828]  entry_SYSENTER_32+0x98/0xf1
-> [  270.929582][ T5828] EIP: 0xb146f579
-> [  270.930064][ T5828] Code: b8 01 10 06 03 74 b4 01 10 07 03 74 b0 01
-> 10 08 03 74 d8 01 00 00 00 00 00 00 00 00 00 00 00 00 00 51 52 55 89
-> e5 0f 34 cd 80 <5d> 5a 59 c3 90 90 90 90 8d 76 00 58 b8 77 00 00 00 cd
-> 80 90 8d 76
-> [  270.932584][ T5828] EAX: ffffffda EBX: 03ac7650 ECX: 03ac76f0 EDX: b14=
-56ff4
-> [  270.933446][ T5828] ESI: 02aae2c3 EDI: b14a4b80 EBP: bffd8638 ESP: bff=
-d7de8
-> [  270.934311][ T5828] DS: 007b ES: 007b FS: 0000 GS: 0033 SS: 007b
-> EFLAGS: 00000292
-> [  270.935245][ T5828] Kernel panic - not syncing: kernel: panic_on_warn =
-set ...
->
-> This issue is reproducible and the result of bisect was the following pat=
-ch:
->
-> > >   nilfs2: Switch to kmap_local for directory handling
->
-> It seems that the problem was introduced in the conversion of
-> "nilfs_rename() -> nilfs_delete_entry()" to kmap_local.
->
-> For the first part of this series  (PATH 01/35 - 20/35), my review is
-> already finished, and I believe nothing breaks existing behavior.
-> So I'm thinking of sending that part to the -mm tree first (on Monday
-> or Tuesday), but if you have any opinions, please let me know.
->
-> For the rest, I would like to continue problem analysis and review.
->
-> Thanks,
-> Ryusuke Konishi
+From: Yu Kuai <yukuai3@huawei.com>
 
-The cause of this issue was that in the current implementation of the
-rename function, there was a hidden part where the use of kmap-kunmap
-pairs for two pages was not nested.
+block_devcie is allocated from bdev_alloc() by bdev_alloc_inode(), and
+currently block_device contains a pointer that point to the address of
+inode, while such inode is allocated together:
 
-Other than that, there were no problems with the second half of the
-patchset in the review, so I would like to insert a preparation patch
-to resolve the order reversal of kunmap (more precisely,
-nilfs_put_page) calls, so that they can be converted directly to
-unmap_and_put_page (and then to folio_release_kmap) calls, and send
-the remaining patches together to the mm tree with only minor
-adjustments.
+bdev_alloc
+ inode = new_inode()
+  // inode is &bdev_inode->vfs_inode
+ bdev = I_BDEV(inode)
+  // bdev is &bdev_inode->bdev
+ bdev->inode = inode
 
-Regards,
-Ryusuke Konishi
+Add a new helper to get address of inode from bdev by add operation
+instead of memory access, which is more efficiency. Also prepare to
+add a new field 'bd_flags' in the first cacheline(64 bytes).
+
+Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+---
+ block/bdev.c                       | 39 +++++++++++++++++-------------
+ block/blk-zoned.c                  |  4 +--
+ block/fops.c                       |  4 +--
+ block/genhd.c                      |  8 +++---
+ block/ioctl.c                      |  8 +++---
+ block/partitions/core.c            |  9 ++++---
+ drivers/block/xen-blkback/xenbus.c |  2 +-
+ drivers/md/bcache/super.c          |  2 +-
+ drivers/mtd/devices/block2mtd.c    | 12 ++++-----
+ drivers/s390/block/dasd_ioctl.c    |  2 +-
+ drivers/scsi/scsicam.c             |  2 +-
+ fs/bcachefs/util.h                 |  2 +-
+ fs/btrfs/disk-io.c                 |  6 ++---
+ fs/btrfs/volumes.c                 |  4 +--
+ fs/btrfs/zoned.c                   |  2 +-
+ fs/buffer.c                        |  8 +++---
+ fs/cramfs/inode.c                  |  2 +-
+ fs/erofs/data.c                    |  2 +-
+ fs/ext4/dir.c                      |  2 +-
+ fs/ext4/ext4_jbd2.c                |  2 +-
+ fs/ext4/super.c                    |  8 +++---
+ fs/gfs2/glock.c                    |  2 +-
+ fs/gfs2/ops_fstype.c               |  2 +-
+ fs/jbd2/journal.c                  |  3 ++-
+ fs/jbd2/recovery.c                 |  2 +-
+ fs/nilfs2/segment.c                |  2 +-
+ include/linux/blk_types.h          | 10 ++++++--
+ include/linux/blkdev.h             |  4 +--
+ include/linux/buffer_head.h        |  4 +--
+ 29 files changed, 86 insertions(+), 73 deletions(-)
+
+diff --git a/block/bdev.c b/block/bdev.c
+index e4cfb7adb645..f27eb5588332 100644
+--- a/block/bdev.c
++++ b/block/bdev.c
+@@ -48,7 +48,7 @@ EXPORT_SYMBOL(I_BDEV);
+ 
+ static void bdev_write_inode(struct block_device *bdev)
+ {
+-	struct inode *inode = bdev->bd_inode;
++	struct inode *inode = bdev_inode(bdev);
+ 	int ret;
+ 
+ 	spin_lock(&inode->i_lock);
+@@ -67,7 +67,7 @@ static void bdev_write_inode(struct block_device *bdev)
+ /* Kill _all_ buffers and pagecache , dirty or not.. */
+ static void kill_bdev(struct block_device *bdev)
+ {
+-	struct address_space *mapping = bdev->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_inode(bdev)->i_mapping;
+ 
+ 	if (mapping_empty(mapping))
+ 		return;
+@@ -79,7 +79,7 @@ static void kill_bdev(struct block_device *bdev)
+ /* Invalidate clean unused buffers and pagecache. */
+ void invalidate_bdev(struct block_device *bdev)
+ {
+-	struct address_space *mapping = bdev->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_inode(bdev)->i_mapping;
+ 
+ 	if (mapping->nrpages) {
+ 		invalidate_bh_lrus();
+@@ -107,7 +107,7 @@ int truncate_bdev_range(struct block_device *bdev, blk_mode_t mode,
+ 			goto invalidate;
+ 	}
+ 
+-	truncate_inode_pages_range(bdev->bd_inode->i_mapping, lstart, lend);
++	truncate_inode_pages_range(bdev_inode(bdev)->i_mapping, lstart, lend);
+ 	if (!(mode & BLK_OPEN_EXCL))
+ 		bd_abort_claiming(bdev, truncate_bdev_range);
+ 	return 0;
+@@ -117,7 +117,7 @@ int truncate_bdev_range(struct block_device *bdev, blk_mode_t mode,
+ 	 * Someone else has handle exclusively open. Try invalidating instead.
+ 	 * The 'end' argument is inclusive so the rounding is safe.
+ 	 */
+-	return invalidate_inode_pages2_range(bdev->bd_inode->i_mapping,
++	return invalidate_inode_pages2_range(bdev_inode(bdev)->i_mapping,
+ 					     lstart >> PAGE_SHIFT,
+ 					     lend >> PAGE_SHIFT);
+ }
+@@ -125,18 +125,21 @@ int truncate_bdev_range(struct block_device *bdev, blk_mode_t mode,
+ static void set_init_blocksize(struct block_device *bdev)
+ {
+ 	unsigned int bsize = bdev_logical_block_size(bdev);
+-	loff_t size = i_size_read(bdev->bd_inode);
++	struct inode *inode = bdev_inode(bdev);
++	loff_t size = i_size_read(inode);
+ 
+ 	while (bsize < PAGE_SIZE) {
+ 		if (size & bsize)
+ 			break;
+ 		bsize <<= 1;
+ 	}
+-	bdev->bd_inode->i_blkbits = blksize_bits(bsize);
++	inode->i_blkbits = blksize_bits(bsize);
+ }
+ 
+ int set_blocksize(struct block_device *bdev, int size)
+ {
++	struct inode *inode;
++
+ 	/* Size must be a power of two, and between 512 and PAGE_SIZE */
+ 	if (size > PAGE_SIZE || size < 512 || !is_power_of_2(size))
+ 		return -EINVAL;
+@@ -146,9 +149,10 @@ int set_blocksize(struct block_device *bdev, int size)
+ 		return -EINVAL;
+ 
+ 	/* Don't change the size if it is same as current */
+-	if (bdev->bd_inode->i_blkbits != blksize_bits(size)) {
++	inode = bdev_inode(bdev);
++	if (inode->i_blkbits != blksize_bits(size)) {
+ 		sync_blockdev(bdev);
+-		bdev->bd_inode->i_blkbits = blksize_bits(size);
++		inode->i_blkbits = blksize_bits(size);
+ 		kill_bdev(bdev);
+ 	}
+ 	return 0;
+@@ -183,7 +187,7 @@ int sync_blockdev_nowait(struct block_device *bdev)
+ {
+ 	if (!bdev)
+ 		return 0;
+-	return filemap_flush(bdev->bd_inode->i_mapping);
++	return filemap_flush(bdev_inode(bdev)->i_mapping);
+ }
+ EXPORT_SYMBOL_GPL(sync_blockdev_nowait);
+ 
+@@ -195,13 +199,13 @@ int sync_blockdev(struct block_device *bdev)
+ {
+ 	if (!bdev)
+ 		return 0;
+-	return filemap_write_and_wait(bdev->bd_inode->i_mapping);
++	return filemap_write_and_wait(bdev_inode(bdev)->i_mapping);
+ }
+ EXPORT_SYMBOL(sync_blockdev);
+ 
+ int sync_blockdev_range(struct block_device *bdev, loff_t lstart, loff_t lend)
+ {
+-	return filemap_write_and_wait_range(bdev->bd_inode->i_mapping,
++	return filemap_write_and_wait_range(bdev_inode(bdev)->i_mapping,
+ 			lstart, lend);
+ }
+ EXPORT_SYMBOL(sync_blockdev_range);
+@@ -400,7 +404,6 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
+ 	spin_lock_init(&bdev->bd_size_lock);
+ 	mutex_init(&bdev->bd_holder_lock);
+ 	bdev->bd_partno = partno;
+-	bdev->bd_inode = inode;
+ 	bdev->bd_queue = disk->queue;
+ 	if (partno)
+ 		bdev->bd_has_submit_bio = disk->part0->bd_has_submit_bio;
+@@ -418,17 +421,19 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
+ void bdev_set_nr_sectors(struct block_device *bdev, sector_t sectors)
+ {
+ 	spin_lock(&bdev->bd_size_lock);
+-	i_size_write(bdev->bd_inode, (loff_t)sectors << SECTOR_SHIFT);
++	i_size_write(bdev_inode(bdev), (loff_t)sectors << SECTOR_SHIFT);
+ 	bdev->bd_nr_sectors = sectors;
+ 	spin_unlock(&bdev->bd_size_lock);
+ }
+ 
+ void bdev_add(struct block_device *bdev, dev_t dev)
+ {
++	struct inode *inode = bdev_inode(bdev);
++
+ 	bdev->bd_dev = dev;
+-	bdev->bd_inode->i_rdev = dev;
+-	bdev->bd_inode->i_ino = dev;
+-	insert_inode_hash(bdev->bd_inode);
++	inode->i_rdev = dev;
++	inode->i_ino = dev;
++	insert_inode_hash(inode);
+ }
+ 
+ long nr_blockdev_pages(void)
+diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+index 619ee41a51cc..6b91f6d45590 100644
+--- a/block/blk-zoned.c
++++ b/block/blk-zoned.c
+@@ -401,7 +401,7 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
+ 		op = REQ_OP_ZONE_RESET;
+ 
+ 		/* Invalidate the page cache, including dirty pages. */
+-		filemap_invalidate_lock(bdev->bd_inode->i_mapping);
++		filemap_invalidate_lock(bdev_inode(bdev)->i_mapping);
+ 		ret = blkdev_truncate_zone_range(bdev, mode, &zrange);
+ 		if (ret)
+ 			goto fail;
+@@ -424,7 +424,7 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
+ 
+ fail:
+ 	if (cmd == BLKRESETZONE)
+-		filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
++		filemap_invalidate_unlock(bdev_inode(bdev)->i_mapping);
+ 
+ 	return ret;
+ }
+diff --git a/block/fops.c b/block/fops.c
+index 0abaac705daf..45ee180448ed 100644
+--- a/block/fops.c
++++ b/block/fops.c
+@@ -605,7 +605,7 @@ static int blkdev_open(struct inode *inode, struct file *filp)
+ 	if (bdev_nowait(handle->bdev))
+ 		filp->f_mode |= FMODE_NOWAIT;
+ 
+-	filp->f_mapping = handle->bdev->bd_inode->i_mapping;
++	filp->f_mapping = bdev_inode(handle->bdev)->i_mapping;
+ 	filp->f_wb_err = filemap_sample_wb_err(filp->f_mapping);
+ 	filp->private_data = handle;
+ 	return 0;
+@@ -657,7 +657,7 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ {
+ 	struct file *file = iocb->ki_filp;
+ 	struct block_device *bdev = I_BDEV(file->f_mapping->host);
+-	struct inode *bd_inode = bdev->bd_inode;
++	struct inode *bd_inode = bdev_inode(bdev);
+ 	loff_t size = bdev_nr_bytes(bdev);
+ 	size_t shorted = 0;
+ 	ssize_t ret;
+diff --git a/block/genhd.c b/block/genhd.c
+index c9d06f72c587..643936a47547 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -653,7 +653,7 @@ void del_gendisk(struct gendisk *disk)
+ 	 */
+ 	mutex_lock(&disk->open_mutex);
+ 	xa_for_each(&disk->part_tbl, idx, part)
+-		remove_inode_hash(part->bd_inode);
++		remove_inode_hash(bdev_inode(part));
+ 	mutex_unlock(&disk->open_mutex);
+ 
+ 	/*
+@@ -742,7 +742,7 @@ void invalidate_disk(struct gendisk *disk)
+ 	struct block_device *bdev = disk->part0;
+ 
+ 	invalidate_bdev(bdev);
+-	bdev->bd_inode->i_mapping->wb_err = 0;
++	bdev_inode(bdev)->i_mapping->wb_err = 0;
+ 	set_capacity(disk, 0);
+ }
+ EXPORT_SYMBOL(invalidate_disk);
+@@ -1188,7 +1188,7 @@ static void disk_release(struct device *dev)
+ 	if (test_bit(GD_ADDED, &disk->state) && disk->fops->free_disk)
+ 		disk->fops->free_disk(disk);
+ 
+-	iput(disk->part0->bd_inode);	/* frees the disk */
++	iput(bdev_inode(disk->part0));	/* frees the disk */
+ }
+ 
+ static int block_uevent(const struct device *dev, struct kobj_uevent_env *env)
+@@ -1378,7 +1378,7 @@ struct gendisk *__alloc_disk_node(struct request_queue *q, int node_id,
+ out_destroy_part_tbl:
+ 	xa_destroy(&disk->part_tbl);
+ 	disk->part0->bd_disk = NULL;
+-	iput(disk->part0->bd_inode);
++	iput(bdev_inode(disk->part0));
+ out_free_bdi:
+ 	bdi_put(disk->bdi);
+ out_free_bioset:
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 4160f4e6bd5b..185336f3d4f2 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -89,7 +89,7 @@ static int blk_ioctl_discard(struct block_device *bdev, blk_mode_t mode,
+ {
+ 	uint64_t range[2];
+ 	uint64_t start, len;
+-	struct inode *inode = bdev->bd_inode;
++	struct inode *inode = bdev_inode(bdev);
+ 	int err;
+ 
+ 	if (!(mode & BLK_OPEN_WRITE))
+@@ -143,12 +143,12 @@ static int blk_ioctl_secure_erase(struct block_device *bdev, blk_mode_t mode,
+ 	if (start + len > bdev_nr_bytes(bdev))
+ 		return -EINVAL;
+ 
+-	filemap_invalidate_lock(bdev->bd_inode->i_mapping);
++	filemap_invalidate_lock(bdev_inode(bdev)->i_mapping);
+ 	err = truncate_bdev_range(bdev, mode, start, start + len - 1);
+ 	if (!err)
+ 		err = blkdev_issue_secure_erase(bdev, start >> 9, len >> 9,
+ 						GFP_KERNEL);
+-	filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
++	filemap_invalidate_unlock(bdev_inode(bdev)->i_mapping);
+ 	return err;
+ }
+ 
+@@ -158,7 +158,7 @@ static int blk_ioctl_zeroout(struct block_device *bdev, blk_mode_t mode,
+ {
+ 	uint64_t range[2];
+ 	uint64_t start, end, len;
+-	struct inode *inode = bdev->bd_inode;
++	struct inode *inode = bdev_inode(bdev);
+ 	int err;
+ 
+ 	if (!(mode & BLK_OPEN_WRITE))
+diff --git a/block/partitions/core.c b/block/partitions/core.c
+index f47ffcfdfcec..ac678c340e19 100644
+--- a/block/partitions/core.c
++++ b/block/partitions/core.c
+@@ -243,7 +243,7 @@ static const struct attribute_group *part_attr_groups[] = {
+ static void part_release(struct device *dev)
+ {
+ 	put_disk(dev_to_bdev(dev)->bd_disk);
+-	iput(dev_to_bdev(dev)->bd_inode);
++	iput(bdev_inode(dev_to_bdev(dev)));
+ }
+ 
+ static int part_uevent(const struct device *dev, struct kobj_uevent_env *env)
+@@ -483,7 +483,7 @@ int bdev_del_partition(struct gendisk *disk, int partno)
+ 	 * Just delete the partition and invalidate it.
+ 	 */
+ 
+-	remove_inode_hash(part->bd_inode);
++	remove_inode_hash(bdev_inode(part));
+ 	invalidate_bdev(part);
+ 	drop_partition(part);
+ 	ret = 0;
+@@ -669,7 +669,7 @@ int bdev_disk_changed(struct gendisk *disk, bool invalidate)
+ 		 * it cannot be looked up any more even when openers
+ 		 * still hold references.
+ 		 */
+-		remove_inode_hash(part->bd_inode);
++		remove_inode_hash(bdev_inode(part));
+ 
+ 		/*
+ 		 * If @disk->open_partitions isn't elevated but there's
+@@ -718,7 +718,8 @@ EXPORT_SYMBOL_GPL(bdev_disk_changed);
+ 
+ void *read_part_sector(struct parsed_partitions *state, sector_t n, Sector *p)
+ {
+-	struct address_space *mapping = state->disk->part0->bd_inode->i_mapping;
++	struct address_space *mapping =
++			bdev_inode(state->disk->part0)->i_mapping;
+ 	struct folio *folio;
+ 
+ 	if (n >= get_capacity(state->disk)) {
+diff --git a/drivers/block/xen-blkback/xenbus.c b/drivers/block/xen-blkback/xenbus.c
+index e34219ea2b05..e11f8123d213 100644
+--- a/drivers/block/xen-blkback/xenbus.c
++++ b/drivers/block/xen-blkback/xenbus.c
+@@ -105,7 +105,7 @@ static void xen_update_blkif_status(struct xen_blkif *blkif)
+ 		return;
+ 	}
+ 	invalidate_inode_pages2(
+-			blkif->vbd.bdev_handle->bdev->bd_inode->i_mapping);
++			bdev_inode(blkif->vbd.bdev_handle->bdev)->i_mapping);
+ 
+ 	for (i = 0; i < blkif->nr_rings; i++) {
+ 		ring = &blkif->rings[i];
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index bfe1685dbae5..3ab8bae049ee 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -171,7 +171,7 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
+ 	struct page *page;
+ 	unsigned int i;
+ 
+-	page = read_cache_page_gfp(bdev->bd_inode->i_mapping,
++	page = read_cache_page_gfp(bdev_inode(bdev)->i_mapping,
+ 				   SB_OFFSET >> PAGE_SHIFT, GFP_KERNEL);
+ 	if (IS_ERR(page))
+ 		return "IO error";
+diff --git a/drivers/mtd/devices/block2mtd.c b/drivers/mtd/devices/block2mtd.c
+index aa44a23ec045..d4f7a4339a70 100644
+--- a/drivers/mtd/devices/block2mtd.c
++++ b/drivers/mtd/devices/block2mtd.c
+@@ -56,7 +56,7 @@ static struct page *page_read(struct address_space *mapping, pgoff_t index)
+ static int _block2mtd_erase(struct block2mtd_dev *dev, loff_t to, size_t len)
+ {
+ 	struct address_space *mapping =
+-				dev->bdev_handle->bdev->bd_inode->i_mapping;
++				bdev_inode(dev->bdev_handle->bdev)->i_mapping;
+ 	struct page *page;
+ 	pgoff_t index = to >> PAGE_SHIFT;	// page index
+ 	int pages = len >> PAGE_SHIFT;
+@@ -107,7 +107,7 @@ static int block2mtd_read(struct mtd_info *mtd, loff_t from, size_t len,
+ {
+ 	struct block2mtd_dev *dev = mtd->priv;
+ 	struct address_space *mapping =
+-				dev->bdev_handle->bdev->bd_inode->i_mapping;
++				bdev_inode(dev->bdev_handle->bdev)->i_mapping;
+ 	struct page *page;
+ 	pgoff_t index = from >> PAGE_SHIFT;
+ 	int offset = from & (PAGE_SIZE-1);
+@@ -143,7 +143,7 @@ static int _block2mtd_write(struct block2mtd_dev *dev, const u_char *buf,
+ {
+ 	struct page *page;
+ 	struct address_space *mapping =
+-				dev->bdev_handle->bdev->bd_inode->i_mapping;
++				bdev_inode(dev->bdev_handle->bdev)->i_mapping;
+ 	pgoff_t index = to >> PAGE_SHIFT;	// page index
+ 	int offset = to & ~PAGE_MASK;	// page offset
+ 	int cpylen;
+@@ -212,7 +212,7 @@ static void block2mtd_free_device(struct block2mtd_dev *dev)
+ 
+ 	if (dev->bdev_handle) {
+ 		invalidate_mapping_pages(
+-			dev->bdev_handle->bdev->bd_inode->i_mapping, 0, -1);
++			bdev_inode(dev->bdev_handle->bdev)->i_mapping, 0, -1);
+ 		bdev_release(dev->bdev_handle);
+ 	}
+ 
+@@ -295,7 +295,7 @@ static struct block2mtd_dev *add_device(char *devname, int erase_size,
+ 		goto err_free_block2mtd;
+ 	}
+ 
+-	if ((long)bdev->bd_inode->i_size % erase_size) {
++	if ((long)bdev_inode(bdev)->i_size % erase_size) {
+ 		pr_err("erasesize must be a divisor of device size\n");
+ 		goto err_free_block2mtd;
+ 	}
+@@ -313,7 +313,7 @@ static struct block2mtd_dev *add_device(char *devname, int erase_size,
+ 
+ 	dev->mtd.name = name;
+ 
+-	dev->mtd.size = bdev->bd_inode->i_size & PAGE_MASK;
++	dev->mtd.size = bdev_inode(bdev)->i_size & PAGE_MASK;
+ 	dev->mtd.erasesize = erase_size;
+ 	dev->mtd.writesize = 1;
+ 	dev->mtd.writebufsize = PAGE_SIZE;
+diff --git a/drivers/s390/block/dasd_ioctl.c b/drivers/s390/block/dasd_ioctl.c
+index 61b9675e2a67..a34554ace310 100644
+--- a/drivers/s390/block/dasd_ioctl.c
++++ b/drivers/s390/block/dasd_ioctl.c
+@@ -221,7 +221,7 @@ dasd_format(struct dasd_block *block, struct format_data_t *fdata)
+ 	 * enabling the device later.
+ 	 */
+ 	if (fdata->start_unit == 0) {
+-		block->gdp->part0->bd_inode->i_blkbits =
++		bdev_inode(block->gdp->part0)->i_blkbits =
+ 			blksize_bits(fdata->blksize);
+ 	}
+ 
+diff --git a/drivers/scsi/scsicam.c b/drivers/scsi/scsicam.c
+index e2c7d8ef205f..de40a5ef7d96 100644
+--- a/drivers/scsi/scsicam.c
++++ b/drivers/scsi/scsicam.c
+@@ -32,7 +32,7 @@
+  */
+ unsigned char *scsi_bios_ptable(struct block_device *dev)
+ {
+-	struct address_space *mapping = bdev_whole(dev)->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_inode(bdev_whole(dev))->i_mapping;
+ 	unsigned char *res = NULL;
+ 	struct folio *folio;
+ 
+diff --git a/fs/bcachefs/util.h b/fs/bcachefs/util.h
+index 2984b57b2958..fe7ccb3a3517 100644
+--- a/fs/bcachefs/util.h
++++ b/fs/bcachefs/util.h
+@@ -518,7 +518,7 @@ int bch2_bio_alloc_pages(struct bio *, size_t, gfp_t);
+ 
+ static inline sector_t bdev_sectors(struct block_device *bdev)
+ {
+-	return bdev->bd_inode->i_size >> 9;
++	return bdev_inode(bdev)->i_size >> 9;
+ }
+ 
+ #define closure_bio_submit(bio, cl)					\
+diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
+index 401ea09ae4b8..88b20cd4d046 100644
+--- a/fs/btrfs/disk-io.c
++++ b/fs/btrfs/disk-io.c
+@@ -3653,7 +3653,7 @@ struct btrfs_super_block *btrfs_read_dev_one_super(struct block_device *bdev,
+ 	struct btrfs_super_block *super;
+ 	struct page *page;
+ 	u64 bytenr, bytenr_orig;
+-	struct address_space *mapping = bdev->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_inode(bdev)->i_mapping;
+ 	int ret;
+ 
+ 	bytenr_orig = btrfs_sb_offset(copy_num);
+@@ -3740,7 +3740,7 @@ static int write_dev_supers(struct btrfs_device *device,
+ 			    struct btrfs_super_block *sb, int max_mirrors)
+ {
+ 	struct btrfs_fs_info *fs_info = device->fs_info;
+-	struct address_space *mapping = device->bdev->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_inode(device->bdev)->i_mapping;
+ 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
+ 	int i;
+ 	int errors = 0;
+@@ -3857,7 +3857,7 @@ static int wait_dev_supers(struct btrfs_device *device, int max_mirrors)
+ 		    device->commit_total_bytes)
+ 			break;
+ 
+-		page = find_get_page(device->bdev->bd_inode->i_mapping,
++		page = find_get_page(bdev_inode(device->bdev)->i_mapping,
+ 				     bytenr >> PAGE_SHIFT);
+ 		if (!page) {
+ 			errors++;
+diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+index c6f16625af51..bbf157cedab7 100644
+--- a/fs/btrfs/volumes.c
++++ b/fs/btrfs/volumes.c
+@@ -1257,8 +1257,8 @@ static struct btrfs_super_block *btrfs_read_disk_super(struct block_device *bdev
+ 		return ERR_PTR(-EINVAL);
+ 
+ 	/* pull in the page with our super */
+-	page = read_cache_page_gfp(bdev->bd_inode->i_mapping, index, GFP_KERNEL);
+-
++	page = read_cache_page_gfp(bdev_inode(bdev)->i_mapping, index,
++				   GFP_KERNEL);
+ 	if (IS_ERR(page))
+ 		return ERR_CAST(page);
+ 
+diff --git a/fs/btrfs/zoned.c b/fs/btrfs/zoned.c
+index 188378ca19c7..a5f7f1458edf 100644
+--- a/fs/btrfs/zoned.c
++++ b/fs/btrfs/zoned.c
+@@ -120,7 +120,7 @@ static int sb_write_pointer(struct block_device *bdev, struct blk_zone *zones,
+ 		return -ENOENT;
+ 	} else if (full[0] && full[1]) {
+ 		/* Compare two super blocks */
+-		struct address_space *mapping = bdev->bd_inode->i_mapping;
++		struct address_space *mapping = bdev_inode(bdev)->i_mapping;
+ 		struct page *page[BTRFS_NR_SB_LOG_ZONES];
+ 		struct btrfs_super_block *super[BTRFS_NR_SB_LOG_ZONES];
+ 		int i;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 967f34b70aa8..bf993198f881 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -189,7 +189,7 @@ EXPORT_SYMBOL(end_buffer_write_sync);
+ static struct buffer_head *
+ __find_get_block_slow(struct block_device *bdev, sector_t block)
+ {
+-	struct inode *bd_inode = bdev->bd_inode;
++	struct inode *bd_inode = bdev_inode(bdev);
+ 	struct address_space *bd_mapping = bd_inode->i_mapping;
+ 	struct buffer_head *ret = NULL;
+ 	pgoff_t index;
+@@ -1032,7 +1032,7 @@ static int
+ grow_dev_page(struct block_device *bdev, sector_t block,
+ 	      pgoff_t index, int size, int sizebits, gfp_t gfp)
+ {
+-	struct inode *inode = bdev->bd_inode;
++	struct inode *inode = bdev_inode(bdev);
+ 	struct folio *folio;
+ 	struct buffer_head *bh;
+ 	sector_t end_block;
+@@ -1463,7 +1463,7 @@ __bread_gfp(struct block_device *bdev, sector_t block,
+ {
+ 	struct buffer_head *bh;
+ 
+-	gfp |= mapping_gfp_constraint(bdev->bd_inode->i_mapping, ~__GFP_FS);
++	gfp |= mapping_gfp_constraint(bdev_inode(bdev)->i_mapping, ~__GFP_FS);
+ 
+ 	/*
+ 	 * Prefer looping in the allocator rather than here, at least that
+@@ -1696,7 +1696,7 @@ EXPORT_SYMBOL(create_empty_buffers);
+  */
+ void clean_bdev_aliases(struct block_device *bdev, sector_t block, sector_t len)
+ {
+-	struct inode *bd_inode = bdev->bd_inode;
++	struct inode *bd_inode = bdev_inode(bdev);
+ 	struct address_space *bd_mapping = bd_inode->i_mapping;
+ 	struct folio_batch fbatch;
+ 	pgoff_t index = block >> (PAGE_SHIFT - bd_inode->i_blkbits);
+diff --git a/fs/cramfs/inode.c b/fs/cramfs/inode.c
+index 60dbfa0f8805..e9ed1e24c9e4 100644
+--- a/fs/cramfs/inode.c
++++ b/fs/cramfs/inode.c
+@@ -183,7 +183,7 @@ static int next_buffer;
+ static void *cramfs_blkdev_read(struct super_block *sb, unsigned int offset,
+ 				unsigned int len)
+ {
+-	struct address_space *mapping = sb->s_bdev->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_inode(sb->s_bdev)->i_mapping;
+ 	struct file_ra_state ra = {};
+ 	struct page *pages[BLKS_PER_BUF];
+ 	unsigned i, blocknr, buffer;
+diff --git a/fs/erofs/data.c b/fs/erofs/data.c
+index 029c761670bf..85d490b3b53d 100644
+--- a/fs/erofs/data.c
++++ b/fs/erofs/data.c
+@@ -70,7 +70,7 @@ void erofs_init_metabuf(struct erofs_buf *buf, struct super_block *sb)
+ 	if (erofs_is_fscache_mode(sb))
+ 		buf->inode = EROFS_SB(sb)->s_fscache->inode;
+ 	else
+-		buf->inode = sb->s_bdev->bd_inode;
++		buf->inode = bdev_inode(sb->s_bdev);
+ }
+ 
+ void *erofs_read_metabuf(struct erofs_buf *buf, struct super_block *sb,
+diff --git a/fs/ext4/dir.c b/fs/ext4/dir.c
+index 3985f8c33f95..6e9fe408642b 100644
+--- a/fs/ext4/dir.c
++++ b/fs/ext4/dir.c
+@@ -192,7 +192,7 @@ static int ext4_readdir(struct file *file, struct dir_context *ctx)
+ 					(PAGE_SHIFT - inode->i_blkbits);
+ 			if (!ra_has_index(&file->f_ra, index))
+ 				page_cache_sync_readahead(
+-					sb->s_bdev->bd_inode->i_mapping,
++					bdev_inode(sb->s_bdev)->i_mapping,
+ 					&file->f_ra, file,
+ 					index, 1);
+ 			file->f_ra.prev_pos = (loff_t)index << PAGE_SHIFT;
+diff --git a/fs/ext4/ext4_jbd2.c b/fs/ext4/ext4_jbd2.c
+index d1a2e6624401..e0e7f71d022d 100644
+--- a/fs/ext4/ext4_jbd2.c
++++ b/fs/ext4/ext4_jbd2.c
+@@ -206,7 +206,7 @@ static void ext4_journal_abort_handle(const char *caller, unsigned int line,
+ 
+ static void ext4_check_bdev_write_error(struct super_block *sb)
+ {
+-	struct address_space *mapping = sb->s_bdev->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_inode(sb->s_bdev)->i_mapping;
+ 	struct ext4_sb_info *sbi = EXT4_SB(sb);
+ 	int err;
+ 
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index c5fcf377ab1f..da6af2205e55 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -244,7 +244,7 @@ static struct buffer_head *__ext4_sb_bread_gfp(struct super_block *sb,
+ struct buffer_head *ext4_sb_bread(struct super_block *sb, sector_t block,
+ 				   blk_opf_t op_flags)
+ {
+-	gfp_t gfp = mapping_gfp_constraint(sb->s_bdev->bd_inode->i_mapping,
++	gfp_t gfp = mapping_gfp_constraint(bdev_inode(sb->s_bdev)->i_mapping,
+ 			~__GFP_FS) | __GFP_MOVABLE;
+ 
+ 	return __ext4_sb_bread_gfp(sb, block, op_flags, gfp);
+@@ -253,7 +253,7 @@ struct buffer_head *ext4_sb_bread(struct super_block *sb, sector_t block,
+ struct buffer_head *ext4_sb_bread_unmovable(struct super_block *sb,
+ 					    sector_t block)
+ {
+-	gfp_t gfp = mapping_gfp_constraint(sb->s_bdev->bd_inode->i_mapping,
++	gfp_t gfp = mapping_gfp_constraint(bdev_inode(sb->s_bdev)->i_mapping,
+ 			~__GFP_FS);
+ 
+ 	return __ext4_sb_bread_gfp(sb, block, 0, gfp);
+@@ -502,7 +502,7 @@ static void ext4_maybe_update_superblock(struct super_block *sb)
+  */
+ static int block_device_ejected(struct super_block *sb)
+ {
+-	struct inode *bd_inode = sb->s_bdev->bd_inode;
++	struct inode *bd_inode = bdev_inode(sb->s_bdev);
+ 	struct backing_dev_info *bdi = inode_to_bdi(bd_inode);
+ 
+ 	return bdi->dev == NULL;
+@@ -5585,7 +5585,7 @@ static int __ext4_fill_super(struct fs_context *fc, struct super_block *sb)
+ 	 * used to detect the metadata async write error.
+ 	 */
+ 	spin_lock_init(&sbi->s_bdev_wb_lock);
+-	errseq_check_and_advance(&sb->s_bdev->bd_inode->i_mapping->wb_err,
++	errseq_check_and_advance(&bdev_inode(sb->s_bdev)->i_mapping->wb_err,
+ 				 &sbi->s_bdev_wb_err);
+ 	EXT4_SB(sb)->s_mount_state |= EXT4_ORPHAN_FS;
+ 	ext4_orphan_cleanup(sb, es);
+diff --git a/fs/gfs2/glock.c b/fs/gfs2/glock.c
+index d6bf1f8c25dc..ec6394544ebb 100644
+--- a/fs/gfs2/glock.c
++++ b/fs/gfs2/glock.c
+@@ -1210,7 +1210,7 @@ int gfs2_glock_get(struct gfs2_sbd *sdp, u64 number,
+ 	mapping = gfs2_glock2aspace(gl);
+ 	if (mapping) {
+                 mapping->a_ops = &gfs2_meta_aops;
+-		mapping->host = s->s_bdev->bd_inode;
++		mapping->host = bdev_inode(s->s_bdev);
+ 		mapping->flags = 0;
+ 		mapping_set_gfp_mask(mapping, GFP_NOFS);
+ 		mapping->private_data = NULL;
+diff --git a/fs/gfs2/ops_fstype.c b/fs/gfs2/ops_fstype.c
+index b108c5d26839..dfc4735cfd54 100644
+--- a/fs/gfs2/ops_fstype.c
++++ b/fs/gfs2/ops_fstype.c
+@@ -114,7 +114,7 @@ static struct gfs2_sbd *init_sbd(struct super_block *sb)
+ 
+ 	address_space_init_once(mapping);
+ 	mapping->a_ops = &gfs2_rgrp_aops;
+-	mapping->host = sb->s_bdev->bd_inode;
++	mapping->host = bdev_inode(sb->s_bdev);
+ 	mapping->flags = 0;
+ 	mapping_set_gfp_mask(mapping, GFP_NOFS);
+ 	mapping->private_data = NULL;
+diff --git a/fs/jbd2/journal.c b/fs/jbd2/journal.c
+index ed53188472f9..e2d034cc9dc0 100644
+--- a/fs/jbd2/journal.c
++++ b/fs/jbd2/journal.c
+@@ -2003,7 +2003,8 @@ static int __jbd2_journal_erase(journal_t *journal, unsigned int flags)
+ 		byte_count = (block_stop - block_start + 1) *
+ 				journal->j_blocksize;
+ 
+-		truncate_inode_pages_range(journal->j_dev->bd_inode->i_mapping,
++		truncate_inode_pages_range(
++				bdev_inode(journal->j_dev)->i_mapping,
+ 				byte_start, byte_stop);
+ 
+ 		if (flags & JBD2_JOURNAL_FLUSH_DISCARD) {
+diff --git a/fs/jbd2/recovery.c b/fs/jbd2/recovery.c
+index 01f744cb97a4..7774efe872e8 100644
+--- a/fs/jbd2/recovery.c
++++ b/fs/jbd2/recovery.c
+@@ -309,7 +309,7 @@ int jbd2_journal_recover(journal_t *journal)
+ 	}
+ 
+ 	wb_err = 0;
+-	mapping = journal->j_fs_dev->bd_inode->i_mapping;
++	mapping = bdev_inode(journal->j_fs_dev)->i_mapping;
+ 	errseq_check_and_advance(&mapping->wb_err, &wb_err);
+ 	err = do_one_pass(journal, &info, PASS_SCAN);
+ 	if (!err)
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 55e31cc903d1..d346f5c1aad7 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2823,7 +2823,7 @@ int nilfs_attach_log_writer(struct super_block *sb, struct nilfs_root *root)
+ 	if (!nilfs->ns_writer)
+ 		return -ENOMEM;
+ 
+-	inode_attach_wb(nilfs->ns_bdev->bd_inode, NULL);
++	inode_attach_wb(bdev_inode(nilfs->ns_bdev), NULL);
+ 
+ 	err = nilfs_segctor_start_thread(nilfs->ns_writer);
+ 	if (unlikely(err))
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index d5c5e59ddbd2..db7c2b2179c7 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -50,8 +50,7 @@ struct block_device {
+ 	bool			bd_has_submit_bio;
+ 	dev_t			bd_dev;
+ 	atomic_t		bd_openers;
+-	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
+-	struct inode *		bd_inode;	/* will die */
++	spinlock_t		bd_size_lock; /* for inode i_size updates */
+ 	void *			bd_claiming;
+ 	void *			bd_holder;
+ 	const struct blk_holder_ops *bd_holder_ops;
+@@ -85,6 +84,13 @@ struct block_device {
+ #define bdev_kobj(_bdev) \
+ 	(&((_bdev)->bd_device.kobj))
+ 
++static inline struct inode *bdev_inode(struct block_device *bdev)
++{
++	void *inode = bdev + 1;
++
++	return inode;
++}
++
+ /*
+  * Block error status values.  See block/blk-core:blk_errors for the details.
+  * Alpha cannot write a byte atomically, so we need to use 32-bit value.
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 51fa7ffdee83..ef625ebefc7d 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -211,7 +211,7 @@ struct gendisk {
+ 
+ static inline bool disk_live(struct gendisk *disk)
+ {
+-	return !inode_unhashed(disk->part0->bd_inode);
++	return !inode_unhashed(bdev_inode(disk->part0));
+ }
+ 
+ /**
+@@ -1339,7 +1339,7 @@ static inline unsigned int blksize_bits(unsigned int size)
+ 
+ static inline unsigned int block_size(struct block_device *bdev)
+ {
+-	return 1 << bdev->bd_inode->i_blkbits;
++	return 1 << bdev_inode(bdev)->i_blkbits;
+ }
+ 
+ int kblockd_schedule_work(struct work_struct *work);
+diff --git a/include/linux/buffer_head.h b/include/linux/buffer_head.h
+index 5f23ee599889..da9ee62e3aa9 100644
+--- a/include/linux/buffer_head.h
++++ b/include/linux/buffer_head.h
+@@ -341,7 +341,7 @@ static inline struct buffer_head *getblk_unmovable(struct block_device *bdev,
+ {
+ 	gfp_t gfp;
+ 
+-	gfp = mapping_gfp_constraint(bdev->bd_inode->i_mapping, ~__GFP_FS);
++	gfp = mapping_gfp_constraint(bdev_inode(bdev)->i_mapping, ~__GFP_FS);
+ 	gfp |= __GFP_NOFAIL;
+ 
+ 	return bdev_getblk(bdev, block, size, gfp);
+@@ -352,7 +352,7 @@ static inline struct buffer_head *__getblk(struct block_device *bdev,
+ {
+ 	gfp_t gfp;
+ 
+-	gfp = mapping_gfp_constraint(bdev->bd_inode->i_mapping, ~__GFP_FS);
++	gfp = mapping_gfp_constraint(bdev_inode(bdev)->i_mapping, ~__GFP_FS);
+ 	gfp |= __GFP_MOVABLE | __GFP_NOFAIL;
+ 
+ 	return bdev_getblk(bdev, block, size, gfp);
+-- 
+2.39.2
+
