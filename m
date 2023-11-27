@@ -1,182 +1,88 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ji9j8nAx"
-Received: from mail-pl1-x62b.google.com (mail-pl1-x62b.google.com [IPv6:2607:f8b0:4864:20::62b])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B5F53D41;
-	Mon, 27 Nov 2023 06:31:32 -0800 (PST)
-Received: by mail-pl1-x62b.google.com with SMTP id d9443c01a7336-1cfaaa79766so21655055ad.3;
-        Mon, 27 Nov 2023 06:31:32 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1701095492; x=1701700292; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=YzhEI8PX9uWduVePnYqK/AxUKd745WWyGgZ0XvSFp+U=;
-        b=ji9j8nAxQqzvOX147sKXHx8lju59AiZvFm2DRBZy5RZt+0E3kSqwVWewBIRsgq8ZMT
-         kiTG+8c7oKmYUlCsjSgLp3wuAgmCwW0XYnrR/oH/XDE6IkKhtBB9HiE+KEn8jAyqBa8M
-         4I4uYsLhWln4bLTz7GSXZhWJ1oAmAwBNv5Pcl5rdL/NVGVZfaYYCOQlCrjeC2AwfYxWG
-         mopkjg0D/30Rs+9TLz76fa4ny+3tta/NPKSS6uZv+yUTlzszvD68M2Tlg/JgKheBfj8c
-         enEt0gGRUfLMQnHwqDonU2W2337qnpng2obHbzej3vZ/h9vTcUMzQODk8lBSJ3W/Sz5T
-         vD2A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1701095492; x=1701700292;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=YzhEI8PX9uWduVePnYqK/AxUKd745WWyGgZ0XvSFp+U=;
-        b=RQjQcbVayqGyAjrHsdM5phnE5j+cs4g6rdkJn7sfoqZ+Oxp1Kc4ATBRQlfpj/Vf4zi
-         vK00Q5TekXL9F2qTEzNcFDngvYOoDVZmkMlkJnXCG/ge6fTEc6OZVkMUa+6OFzVAB13Y
-         yYE1HGHPkdyo58gPWRStpoj0MLEfkbbt+ZBnQubvTMmppQCeWaGxDX2tRCD45F+2Ez27
-         FDi976WAdo4P+Q1ub4yjgNeqER7iHQGhLnq9uZsxoBZgFJy1LlNXKTiyxhM26MnBCDDq
-         bZbAWK1US8duVNX1+E3T5g97WgE4AwR3rknBg1nhkAdqinE4w+1/pM1uhZ/Mrakz9M1s
-         HrlA==
-X-Gm-Message-State: AOJu0YxVZ1SqzNolxGkToyrEttziZaeq2YM1U5FN3tbC8NVCeTEe0N06
-	jAskTaDxA2iTfaYV+F0hgMU=
-X-Google-Smtp-Source: AGHT+IFSnoQkHprY5znYQP1Yyq2eAnrGNVx2gV7UFL5mKqSq8bKNzLTdIL+Y3iv/zkWHLVYX8l1KgQ==
-X-Received: by 2002:a17:902:ced0:b0:1cc:ae1a:b0b8 with SMTP id d16-20020a170902ced000b001ccae1ab0b8mr15658483plg.44.1701095492166;
-        Mon, 27 Nov 2023 06:31:32 -0800 (PST)
-Received: from carrot.. (i60-34-119-11.s42.a014.ap.plala.or.jp. [60.34.119.11])
-        by smtp.gmail.com with ESMTPSA id a5-20020a170902ee8500b001cf51972586sm8302784pld.292.2023.11.27.06.31.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 27 Nov 2023 06:31:31 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	Matthew Wilcox <willy@infradead.org>,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH 17/17] nilfs2: Convert nilfs_page_bug() to nilfs_folio_bug()
-Date: Mon, 27 Nov 2023 23:30:36 +0900
-Message-Id: <20231127143036.2425-18-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20231127143036.2425-1-konishi.ryusuke@gmail.com>
-References: <20231127143036.2425-1-konishi.ryusuke@gmail.com>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="3w8bJekj"
+Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80128D4B;
+	Mon, 27 Nov 2023 08:33:23 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=N2zDXv8N842SdWeP1QfvmzEvIcEsyQplx8msSV1RBzc=; b=3w8bJekjauD14xkhiSXsSeP1yp
+	9N3b2DKZZPdBt27xj1DIEE7RXLXZrvHxDKR2sRYD21pNAAIJ3vl1ZCKZ4NFvv5G6xjzqey6N1n0KK
+	ZrI0nakNUBsMEbW2Q4e4j1NRh5OeO1tyxIFUhlV8EaqwcQbah9MgH17+QPadh0DqL/pm4sqZ5f/vV
+	IH1EMWIP6up9ybGx4dw0MvcLdLRClPIEOMfWizJpOcO8WEMAVnlOuY5kgUVe2HK2Xt75AhDq2qkmf
+	jzAFQBFfr3qP/5tAASIdgOPBH9JmPj2A8s0x9fJ50RYVccYl2K4OsZZ71u82sMqjEZ1B5f5BIa6y8
+	Lia9qiAg==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.96 #2 (Red Hat Linux))
+	id 1r7eXO-0030D4-22;
+	Mon, 27 Nov 2023 16:32:46 +0000
+Date: Mon, 27 Nov 2023 08:32:46 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Christoph Hellwig <hch@infradead.org>, ming.lei@redhat.com,
+	axboe@kernel.dk, roger.pau@citrix.com, colyli@suse.de,
+	kent.overstreet@gmail.com, joern@lazybastard.org,
+	miquel.raynal@bootlin.com, richard@nod.at, vigneshr@ti.com,
+	sth@linux.ibm.com, hoeppner@linux.ibm.com, hca@linux.ibm.com,
+	gor@linux.ibm.com, agordeev@linux.ibm.com, jejb@linux.ibm.com,
+	martin.petersen@oracle.com, clm@fb.com, josef@toxicpanda.com,
+	dsterba@suse.com, viro@zeniv.linux.org.uk, brauner@kernel.org,
+	nico@fluxnic.net, xiang@kernel.org, chao@kernel.org, tytso@mit.edu,
+	adilger.kernel@dilger.ca, agruenba@redhat.com, jack@suse.com,
+	konishi.ryusuke@gmail.com, dchinner@redhat.com,
+	linux@weissschuh.net, min15.li@samsung.com, dlemoal@kernel.org,
+	willy@infradead.org, akpm@linux-foundation.org, hare@suse.de,
+	p.raghav@samsung.com, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org, xen-devel@lists.xenproject.org,
+	linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org,
+	linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org,
+	linux-bcachefs@vger.kernel.org, linux-btrfs@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, linux-erofs@lists.ozlabs.org,
+	linux-ext4@vger.kernel.org, gfs2@lists.linux.dev,
+	linux-nilfs@vger.kernel.org, yi.zhang@huawei.com,
+	yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: [PATCH block/for-next v2 01/16] block: add a new helper to get
+ inode from block_device
+Message-ID: <ZWTErvnMf7HiO1Wj@infradead.org>
+References: <20231127062116.2355129-1-yukuai1@huaweicloud.com>
+ <20231127062116.2355129-2-yukuai1@huaweicloud.com>
+ <ZWRDeQ4K8BiYnV+X@infradead.org>
+ <6acdeece-7163-3219-95e2-827e54eadd0c@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <6acdeece-7163-3219-95e2-827e54eadd0c@huaweicloud.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+On Mon, Nov 27, 2023 at 09:07:22PM +0800, Yu Kuai wrote:
+> 1) Is't okay to add a new helper to pass in bdev for following apis?
 
-All callers have a folio now, so convert it.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- fs/nilfs2/btnode.c |  4 ++--
- fs/nilfs2/page.c   | 25 +++++++++++++------------
- fs/nilfs2/page.h   |  6 +++---
- 3 files changed, 18 insertions(+), 17 deletions(-)
+For some we already have them (e.g. bdev_nr_bytes to read the bdev)
+size, for some we need to add them.  The big thing that seems to
+stick out is page cache API, and I think that is where we need to
+define maintainable APIs for file systems and others to use the
+block device page cache.  Probably only in folio versions and not
+pages once if we're touching the code anyay
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 1204dd06ead8..0131d83b912d 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -190,7 +190,7 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
- retry:
- 		/* BUG_ON(oldkey != obh->b_folio->index); */
- 		if (unlikely(oldkey != ofolio->index))
--			NILFS_PAGE_BUG(&ofolio->page,
-+			NILFS_FOLIO_BUG(ofolio,
- 				       "invalid oldkey %lld (newkey=%lld)",
- 				       (unsigned long long)oldkey,
- 				       (unsigned long long)newkey);
-@@ -246,7 +246,7 @@ void nilfs_btnode_commit_change_key(struct address_space *btnc,
- 	if (nbh == NULL) {	/* blocksize == pagesize */
- 		ofolio = obh->b_folio;
- 		if (unlikely(oldkey != ofolio->index))
--			NILFS_PAGE_BUG(&ofolio->page,
-+			NILFS_FOLIO_BUG(ofolio,
- 				       "invalid oldkey %lld (newkey=%lld)",
- 				       (unsigned long long)oldkey,
- 				       (unsigned long long)newkey);
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 94e11bcee05b..5c2eba1987bd 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -150,29 +150,30 @@ bool nilfs_folio_buffers_clean(struct folio *folio)
- 	return true;
- }
- 
--void nilfs_page_bug(struct page *page)
-+void nilfs_folio_bug(struct folio *folio)
- {
-+	struct buffer_head *bh, *head;
- 	struct address_space *m;
- 	unsigned long ino;
- 
--	if (unlikely(!page)) {
--		printk(KERN_CRIT "NILFS_PAGE_BUG(NULL)\n");
-+	if (unlikely(!folio)) {
-+		printk(KERN_CRIT "NILFS_FOLIO_BUG(NULL)\n");
- 		return;
- 	}
- 
--	m = page->mapping;
-+	m = folio->mapping;
- 	ino = m ? m->host->i_ino : 0;
- 
--	printk(KERN_CRIT "NILFS_PAGE_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
-+	printk(KERN_CRIT "NILFS_FOLIO_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
- 	       "mapping=%p ino=%lu\n",
--	       page, page_ref_count(page),
--	       (unsigned long long)page->index, page->flags, m, ino);
-+	       folio, folio_ref_count(folio),
-+	       (unsigned long long)folio->index, folio->flags, m, ino);
- 
--	if (page_has_buffers(page)) {
--		struct buffer_head *bh, *head;
-+	head = folio_buffers(folio);
-+	if (head) {
- 		int i = 0;
- 
--		bh = head = page_buffers(page);
-+		bh = head;
- 		do {
- 			printk(KERN_CRIT
- 			       " BH[%d] %p: cnt=%d block#=%llu state=0x%lx\n",
-@@ -258,7 +259,7 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
- 
- 		folio_lock(folio);
- 		if (unlikely(!folio_test_dirty(folio)))
--			NILFS_PAGE_BUG(&folio->page, "inconsistent dirty state");
-+			NILFS_FOLIO_BUG(folio, "inconsistent dirty state");
- 
- 		dfolio = filemap_grab_folio(dmap, folio->index);
- 		if (unlikely(IS_ERR(dfolio))) {
-@@ -268,7 +269,7 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
- 			break;
- 		}
- 		if (unlikely(!folio_buffers(folio)))
--			NILFS_PAGE_BUG(&folio->page,
-+			NILFS_FOLIO_BUG(folio,
- 				       "found empty page in dat page cache");
- 
- 		nilfs_copy_folio(dfolio, folio, true);
-diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
-index 968b311d265b..7e1a2c455a10 100644
---- a/fs/nilfs2/page.h
-+++ b/fs/nilfs2/page.h
-@@ -37,7 +37,7 @@ struct buffer_head *nilfs_grab_buffer(struct inode *, struct address_space *,
- void nilfs_forget_buffer(struct buffer_head *);
- void nilfs_copy_buffer(struct buffer_head *, struct buffer_head *);
- bool nilfs_folio_buffers_clean(struct folio *);
--void nilfs_page_bug(struct page *);
-+void nilfs_folio_bug(struct folio *);
- 
- int nilfs_copy_dirty_pages(struct address_space *, struct address_space *);
- void nilfs_copy_back_pages(struct address_space *, struct address_space *);
-@@ -49,7 +49,7 @@ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
- 					    sector_t start_blk,
- 					    sector_t *blkoff);
- 
--#define NILFS_PAGE_BUG(page, m, a...) \
--	do { nilfs_page_bug(page); BUG(); } while (0)
-+#define NILFS_FOLIO_BUG(folio, m, a...) \
-+	do { nilfs_folio_bug(folio); BUG(); } while (0)
- 
- #endif /* _NILFS_PAGE_H */
--- 
-2.34.1
+> 2) For the file fs/buffer.c, there are some special usage like
+> following that I don't think it's good to add a helper:
+> 
+> spin_lock(&bd_inode->i_mapping->private_lock);
+> 
+> Is't okay to move following apis from fs/buffer.c directly to
+> block/bdev.c?
+> 
+> __find_get_block
+> bdev_getblk
+
+I'm not sure moving is a good idea, but we might end up the
+some kind of low-level access from buffer.c, be that special
+helpers, a separate header or something else.  Let's sort out
+the rest of the kernel first.
 
