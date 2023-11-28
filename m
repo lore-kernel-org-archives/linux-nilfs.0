@@ -1,59 +1,121 @@
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="bh1p6YKU"
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 131661B5;
-	Mon, 27 Nov 2023 09:09:01 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=P99EmKb4CapbHLKU/m7jH61AXQCv185cerJCelU8Tkc=; b=bh1p6YKUVaMZU1UXxX75PJ5pJd
-	Kpt4PCHwleFCJKWQvMAJnka35xkf8igrqA7udG64iX5akAd7ewYwNVf8DIa46ttmKkubyREJEEqsa
-	APaHcb1jLHmtSoBgNafcfPrA5tKj0xujCw7C5k8lYJvkLnnqxRacT0rHL1LWEpWhKyeacOpxjCjlv
-	Gbri0WJTkS92HNMGbEview6G8gs+nbJILS3r3BqxSbOskP57tCdPTJY0wi7KO2Sc1NUCRcPuw9sQn
-	Ht+PqBy2Xo/mXg7vwW+TwWYAz1EDrYlhCugbdQVAn+AcE/KRcKlgR5ZfxSl4ZZCXPlH6R5EXOQ+Wb
-	5JWsZefA==;
-Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1r7f6Q-00Ba0a-QH; Mon, 27 Nov 2023 17:08:58 +0000
-Date: Mon, 27 Nov 2023 17:08:58 +0000
-From: Matthew Wilcox <willy@infradead.org>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 02/17] nilfs2: eliminate staggered calls to kunmap in
- nilfs_rename
-Message-ID: <ZWTNKhFukc+ZxRJA@casper.infradead.org>
-References: <20231127143036.2425-1-konishi.ryusuke@gmail.com>
- <20231127143036.2425-3-konishi.ryusuke@gmail.com>
+Authentication-Results: smtp.subspace.kernel.org; dkim=none
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5D5231B8;
+	Mon, 27 Nov 2023 17:36:04 -0800 (PST)
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4SfQ5T4M2kz4f3k64;
+	Tue, 28 Nov 2023 09:35:57 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 671EC1A0AA3;
+	Tue, 28 Nov 2023 09:36:00 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgDn6hD8Q2VlfLiHCA--.59632S3;
+	Tue, 28 Nov 2023 09:35:59 +0800 (CST)
+Subject: Re: [PATCH block/for-next v2 01/16] block: add a new helper to get
+ inode from block_device
+To: Christoph Hellwig <hch@infradead.org>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: ming.lei@redhat.com, axboe@kernel.dk, roger.pau@citrix.com,
+ colyli@suse.de, kent.overstreet@gmail.com, joern@lazybastard.org,
+ miquel.raynal@bootlin.com, richard@nod.at, vigneshr@ti.com,
+ sth@linux.ibm.com, hoeppner@linux.ibm.com, hca@linux.ibm.com,
+ gor@linux.ibm.com, agordeev@linux.ibm.com, jejb@linux.ibm.com,
+ martin.petersen@oracle.com, clm@fb.com, josef@toxicpanda.com,
+ dsterba@suse.com, viro@zeniv.linux.org.uk, brauner@kernel.org,
+ nico@fluxnic.net, xiang@kernel.org, chao@kernel.org, tytso@mit.edu,
+ adilger.kernel@dilger.ca, agruenba@redhat.com, jack@suse.com,
+ konishi.ryusuke@gmail.com, dchinner@redhat.com, linux@weissschuh.net,
+ min15.li@samsung.com, dlemoal@kernel.org, willy@infradead.org,
+ akpm@linux-foundation.org, hare@suse.de, p.raghav@samsung.com,
+ linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
+ linux-mtd@lists.infradead.org, linux-s390@vger.kernel.org,
+ linux-scsi@vger.kernel.org, linux-bcachefs@vger.kernel.org,
+ linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ linux-erofs@lists.ozlabs.org, linux-ext4@vger.kernel.org,
+ gfs2@lists.linux.dev, linux-nilfs@vger.kernel.org, yi.zhang@huawei.com,
+ yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
+References: <20231127062116.2355129-1-yukuai1@huaweicloud.com>
+ <20231127062116.2355129-2-yukuai1@huaweicloud.com>
+ <ZWRDeQ4K8BiYnV+X@infradead.org>
+ <6acdeece-7163-3219-95e2-827e54eadd0c@huaweicloud.com>
+ <ZWTErvnMf7HiO1Wj@infradead.org>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <bc64da80-e9bd-84cb-f173-876623303131@huaweicloud.com>
+Date: Tue, 28 Nov 2023 09:35:56 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20231127143036.2425-3-konishi.ryusuke@gmail.com>
+In-Reply-To: <ZWTErvnMf7HiO1Wj@infradead.org>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgDn6hD8Q2VlfLiHCA--.59632S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7KF1rGFWkXF1DXFy3WF45ZFb_yoW8Wry7pF
+	Wjkan8GF1DAFnrur4kWa1xK3yFy3sFkrW7GFy8CryxA3y5WF9FgFyfKw4UJFyDGr4DJr4q
+	qa10vFy3Xa48WaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9I14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_Wrv_Gr1UMIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
+	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26F4j6r4UJwCI42IY6xAIw20EY4v20xvaj40_WFyU
+	JVCq3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJb
+	IYCTnIWIevJa73UjIFyTuYvjfUojjgUUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Mon, Nov 27, 2023 at 11:30:21PM +0900, Ryusuke Konishi wrote:
-> In nilfs_rename(), calls to nilfs_put_page() to release pages obtained
-> with nilfs_find_entry() or nilfs_dotdot() are alternated in the normal
-> path.
-> 
-> When replacing the kernel memory mapping method from kmap to
-> kmap_local_{page,folio}, this violates the constraint on the calling
-> order of kunmap_local().
-> 
-> Swap the order of nilfs_put_page calls where the kmap sections of
-> multiple pages overlap so that they are nested, allowing direct
-> replacement of nilfs_put_page() -> unmap_and_put_page().
-> 
-> Without this reordering, that replacement will cause a kernel WARNING
-> in kunmap_local_indexed() on architectures with high memory mapping.
-> 
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Cc: Matthew Wilcox (Oracle) <willy@infradead.org>
+Hi,
 
-Thanks for catching this!
+ÔÚ 2023/11/28 0:32, Christoph Hellwig Ð´µÀ:
+> On Mon, Nov 27, 2023 at 09:07:22PM +0800, Yu Kuai wrote:
+>> 1) Is't okay to add a new helper to pass in bdev for following apis?
+> 
+> 
+> For some we already have them (e.g. bdev_nr_bytes to read the bdev)
+> size, for some we need to add them.  The big thing that seems to
+> stick out is page cache API, and I think that is where we need to
+> define maintainable APIs for file systems and others to use the
+> block device page cache.  Probably only in folio versions and not
+> pages once if we're touching the code anyay
 
-Reviewed-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+Thanks for the advice! In case I'm understanding correctly, do you mean
+that all other fs/drivers that is using pages versions can safely switch
+to folio versions now?
+
+By the way, my orginal idea was trying to add a new field 'bd_flags'
+in block_devcie, and then add a new bit so that bio_check_ro() will
+only warn once for each partition. Now that this patchset will be quite
+complex, I'll add a new bool field 'bd_ro_warned' to fix the above
+problem first, and then add 'bd_flags' once this patchset is done.
+
+Thanks,
+Kuai
+
+> 
+>> 2) For the file fs/buffer.c, there are some special usage like
+>> following that I don't think it's good to add a helper:
+>>
+>> spin_lock(&bd_inode->i_mapping->private_lock);
+>>
+>> Is't okay to move following apis from fs/buffer.c directly to
+>> block/bdev.c?
+>>
+>> __find_get_block
+>> bdev_getblk
+> 
+> I'm not sure moving is a good idea, but we might end up the
+> some kind of low-level access from buffer.c, be that special
+> helpers, a separate header or something else.  Let's sort out
+> the rest of the kernel first.
+> 
+> .
+> 
+
