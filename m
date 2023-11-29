@@ -1,88 +1,131 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=citrix.com header.i=@citrix.com header.b="ajmIPgE3"
-Received: from mail-wr1-x42a.google.com (mail-wr1-x42a.google.com [IPv6:2a00:1450:4864:20::42a])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1828DDD
-	for <linux-nilfs@vger.kernel.org>; Tue, 28 Nov 2023 02:05:33 -0800 (PST)
-Received: by mail-wr1-x42a.google.com with SMTP id ffacd0b85a97d-32fdc5be26dso3247149f8f.2
-        for <linux-nilfs@vger.kernel.org>; Tue, 28 Nov 2023 02:05:33 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CCgUwRvB"
+Received: from mail-pf1-x42e.google.com (mail-pf1-x42e.google.com [IPv6:2607:f8b0:4864:20::42e])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 795DDB6;
+	Wed, 29 Nov 2023 06:15:52 -0800 (PST)
+Received: by mail-pf1-x42e.google.com with SMTP id d2e1a72fcca58-6cde104293fso24144b3a.0;
+        Wed, 29 Nov 2023 06:15:52 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=citrix.com; s=google; t=1701165931; x=1701770731; darn=vger.kernel.org;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :mime-version:references:message-id:subject:cc:to:from:date:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=ZKJsy/O9sQNKnNFyRJVuTOt01SElG6aFkPQ2+Lfq3iI=;
-        b=ajmIPgE3cf4/VQcKecwZurNFwBZ7fhShFWpQSsfDV0gtymPBLKvL5H3127D9k1L6dp
-         hX+TAPJ6uHosbFCDtux+M7ll0rT1Bey3JLg8DNYEpumCySiJ7nd6xroxIcltB8532kPn
-         gu41KkYYBNQIm56IEzzrBy+Y2oWQCUj/A3o20=
+        d=gmail.com; s=20230601; t=1701267352; x=1701872152; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=vb8g66mfFbIMjCeR2wNWdnqsBfEhhzuBJzKufy7dmOQ=;
+        b=CCgUwRvBggVg4HBwL79t3m6++bXrI68b1/s6ZMdrj09SYfTdfiv6py1dxwvcq9pkdC
+         gXLDIDRJlP2VTOAMnAltDmGljqHwtIXDc9FuSbFHJlwzg3xykDVPHedYkZka1VsykAOj
+         2x/Kam/5kDAuqqEOfNaXrTNdtfxk/8elx8MdW7sx8SX2mGk4rm03pHNNVseUX4DH2+MM
+         4/0XuS009RS9ubt/i1zOUZ/C4SkwFqa4QgRLRmh8O7waU6SeiaooUhHOm/10Ntd5KARa
+         G3DfXZT/h6GaX7T8M0MW1xplmmfMJ9RHBWKU4ibSQ0/6a2JWwegXVLE10SEoTw7CVlb7
+         NsPw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1701165931; x=1701770731;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :mime-version:references:message-id:subject:cc:to:from:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ZKJsy/O9sQNKnNFyRJVuTOt01SElG6aFkPQ2+Lfq3iI=;
-        b=qvWq+wRC1T60LLWuctS6oaIvdAHx+umR98+niSoN1KOfxPoA8KBm6rQYRCbN8nh73s
-         CqpMmOmc/iEWVvYU/u3/Fz9SFnulFqQ8oMiBp1wxBuPbnoKneNYU1Mxa4eJpK2+f/LSY
-         3VzjInXyEEThLARLb0fXC0rC85matgOKubYBizfXvbxfWwVnkJDpr+Qtgs+q+QQxA6ik
-         Q9o1eqCRNp31VFajyeIl7AgsI3DYJYvzfiNDD3T8Zxu4eb6CXuMZlpP/qy/E2veZ8c8k
-         msq4FUsQUV6TMiiZcvifajt1y3m0wCc/5L9M05Gu6xAhH2r54DDUEQ309/aCx9i6poOZ
-         wYfw==
-X-Gm-Message-State: AOJu0YwVjVv2PPjuxJDdWqzN1FyALsDvY99Ls2VUv6p0u54Nm0Ieut8e
-	Ptnt3Tpr6ZpAjCpUoIdKbCp1/w==
-X-Google-Smtp-Source: AGHT+IHso67qiRejATVe+y4q8GA8WkjBME6ZXNG2nx2AvipjQBf9Fe7u/GIhGV/RuBTAoKaGDDxyQg==
-X-Received: by 2002:a5d:4bcf:0:b0:332:f81d:8dac with SMTP id l15-20020a5d4bcf000000b00332f81d8dacmr6833150wrt.67.1701165931581;
-        Tue, 28 Nov 2023 02:05:31 -0800 (PST)
-Received: from localhost ([213.195.113.99])
-        by smtp.gmail.com with ESMTPSA id l10-20020a5d674a000000b00332eef1ca7asm9779426wrw.80.2023.11.28.02.05.31
+        d=1e100.net; s=20230601; t=1701267352; x=1701872152;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=vb8g66mfFbIMjCeR2wNWdnqsBfEhhzuBJzKufy7dmOQ=;
+        b=BFbK9ai5LKjBDCLVLnhkHh0h4LcGWDN4g9L/3mi3Snk42sddEITZosMeude1Up1PcA
+         FjAW9BsjfY4TgVndC/oXpRAXe8vXc70cgaZz7tGowc+DQuM8AzZnDbMcxeySbUignjhs
+         3VtTB+uD1GCLo+H7UxDqTRGtfRBz4ZIiGNlRXjurLfrM0WIZtYozn0yck88bOtW9rEzz
+         yIePsUAcLWaj/jApjganLPcSf9kRv52KRgOmmc6UVMrJgiOFEIm89ut8Z8j0QRSOegFG
+         mwjedE0CtSgoXfk7ZXAwCb093Tz4aXLvvgWShkIH0i3S4+L1FfSgFssiUMwp5EFHCBwc
+         9Dtg==
+X-Gm-Message-State: AOJu0Yy+8oW4P9XyKh/hXaaMQiTK9rTeH+2uHYsNw01d+XO6VL4J0bCM
+	DJaspNPTZsgm3HkoAthXjHphaVYjhm0=
+X-Google-Smtp-Source: AGHT+IEhwSJndRMe5XgIgpVlPbAoYpAql6MLLqo4z72b5wYkM/HeCrkAA1F7etxiYGN5p1wfQj4FXw==
+X-Received: by 2002:a05:6a00:f8a:b0:690:d620:7801 with SMTP id ct10-20020a056a000f8a00b00690d6207801mr18137408pfb.11.1701267351701;
+        Wed, 29 Nov 2023 06:15:51 -0800 (PST)
+Received: from carrot.. (i60-34-119-11.s42.a014.ap.plala.or.jp. [60.34.119.11])
+        by smtp.gmail.com with ESMTPSA id u26-20020a62ed1a000000b006cbcd08ed56sm10753018pfh.56.2023.11.29.06.15.50
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Nov 2023 02:05:31 -0800 (PST)
-Date: Tue, 28 Nov 2023 11:05:30 +0100
-From: Roger Pau =?utf-8?B?TW9ubsOp?= <roger.pau@citrix.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: hch@infradead.org, ming.lei@redhat.com, axboe@kernel.dk, colyli@suse.de,
-	kent.overstreet@gmail.com, joern@lazybastard.org,
-	miquel.raynal@bootlin.com, richard@nod.at, vigneshr@ti.com,
-	sth@linux.ibm.com, hoeppner@linux.ibm.com, hca@linux.ibm.com,
-	gor@linux.ibm.com, agordeev@linux.ibm.com, jejb@linux.ibm.com,
-	martin.petersen@oracle.com, clm@fb.com, josef@toxicpanda.com,
-	dsterba@suse.com, viro@zeniv.linux.org.uk, brauner@kernel.org,
-	nico@fluxnic.net, xiang@kernel.org, chao@kernel.org, tytso@mit.edu,
-	adilger.kernel@dilger.ca, agruenba@redhat.com, jack@suse.com,
-	konishi.ryusuke@gmail.com, dchinner@redhat.com,
-	linux@weissschuh.net, min15.li@samsung.com, yukuai3@huawei.com,
-	dlemoal@kernel.org, willy@infradead.org, akpm@linux-foundation.org,
-	hare@suse.de, p.raghav@samsung.com, linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org, xen-devel@lists.xenproject.org,
-	linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org,
-	linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org,
-	linux-bcachefs@vger.kernel.org, linux-btrfs@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-erofs@lists.ozlabs.org,
-	linux-ext4@vger.kernel.org, gfs2@lists.linux.dev,
-	linux-nilfs@vger.kernel.org, yi.zhang@huawei.com,
-	yangerkun@huawei.com
-Subject: Re: [PATCH block/for-next v2 02/16] xen/blkback: use new helper to
- get inode from block_device
-Message-ID: <ZWW7ag6vIhc_Skh5@macbook>
-References: <20231127062116.2355129-1-yukuai1@huaweicloud.com>
- <20231127062116.2355129-3-yukuai1@huaweicloud.com>
+        Wed, 29 Nov 2023 06:15:51 -0800 (PST)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH] nilfs2: fix missing error check for sb_set_blocksize call
+Date: Wed, 29 Nov 2023 23:15:47 +0900
+Message-Id: <20231129141547.4726-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20231127062116.2355129-3-yukuai1@huaweicloud.com>
 
-On Mon, Nov 27, 2023 at 02:21:02PM +0800, Yu Kuai wrote:
-> From: Yu Kuai <yukuai3@huawei.com>
-> 
-> Which is more efficiency, and also prepare to remove the field
-> 'bd_inode' from block_device.
-> 
-> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+When mounting a filesystem image with a block size larger than the
+page size, nilfs2 repeatedly outputs long error messages with stack
+traces to the kernel log, such as the following:
 
-Acked-by: Roger Pau Monné <roger.pau@citrix.com>
+ getblk(): invalid block size 8192 requested
+ logical block size: 512
+ ...
+ Call Trace:
+  dump_stack_lvl+0x92/0xd4
+  dump_stack+0xd/0x10
+  bdev_getblk+0x33a/0x354
+  __breadahead+0x11/0x80
+  nilfs_search_super_root+0xe2/0x704 [nilfs2]
+  load_nilfs+0x72/0x504 [nilfs2]
+  nilfs_mount+0x30f/0x518 [nilfs2]
+  legacy_get_tree+0x1b/0x40
+  vfs_get_tree+0x18/0xc4
+  path_mount+0x786/0xa88
+  __ia32_sys_mount+0x147/0x1a8
+  __do_fast_syscall_32+0x56/0xc8
+  do_fast_syscall_32+0x29/0x58
+  do_SYSENTER_32+0x15/0x18
+  entry_SYSENTER_32+0x98/0xf1
+ ...
 
-Thanks, Roger.
+This overloads the system logger.  And to make matters worse, it
+sometimes crashes the kernel with a memory access violation.
+
+This is because the return value of the sb_set_blocksize() call, which
+should be checked for errors, is not checked.
+
+The latter issue is due to out-of-buffer memory being accessed based
+on a large block size that caused sb_set_blocksize() to fail for
+buffers read with the initial minimum block size that remained
+unupdated in the super_block structure.
+
+Since nilfs2 mkfs tool does not accept block sizes larger than the
+system page size, this has been overlooked.  However, it is possible
+to create this situation by intentionally modifying the tool or by
+passing a filesystem image created on a system with a large page size
+to a system with a smaller page size and mounting it.
+
+Fix this issue by inserting the expected error handling for the call
+to sb_set_blocksize().
+
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: stable@vger.kernel.org
+---
+Andrew, please apply this as a bugfix.  This fixes a memory access
+violation and flood of log output when trying to mount a filesystem
+image with a block size larger than the page size.
+
+fs/nilfs2/the_nilfs.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index 0f0667957c81..71400496ed36 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -716,7 +716,11 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
+ 			goto failed_sbh;
+ 		}
+ 		nilfs_release_super_block(nilfs);
+-		sb_set_blocksize(sb, blocksize);
++		if (!sb_set_blocksize(sb, blocksize)) {
++			nilfs_err(sb, "bad blocksize %d", blocksize);
++			err = -EINVAL;
++			goto out;
++		}
+ 
+ 		err = nilfs_load_super_block(nilfs, sb, blocksize, &sbp);
+ 		if (err)
+-- 
+2.34.1
+
