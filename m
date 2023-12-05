@@ -1,55 +1,67 @@
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Qw7pvuXA"
-Received: from mail-pl1-x636.google.com (mail-pl1-x636.google.com [IPv6:2607:f8b0:4864:20::636])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4EFF8C9;
-	Tue,  5 Dec 2023 00:59:52 -0800 (PST)
-Received: by mail-pl1-x636.google.com with SMTP id d9443c01a7336-1cfabcbda7bso27899985ad.0;
-        Tue, 05 Dec 2023 00:59:52 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1701766792; x=1702371592; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=P3+mFRpZBneT3Lzm/oQTHjAQSUO9ZeAPYRer7xUZcck=;
-        b=Qw7pvuXAS1exWzA8Cxc7MufbVVYp7orJOTgUMlU5OqSBNpiKy9w67l7R6B38pO1ZbU
-         1vjtJptDCEgdF5sCSacPSdL9qavKiti0lsIGJ8PPNzmo1EJ/SyRvRkrXTCCtiPC9ESLL
-         TKQEQhx9iWDWyl0c2emWoHzO3bcVi87wlfn64rcLwZKYfCAPcJhm3iBUlXTpes7cUFvz
-         kDs3cuBzOh77iyUlznOWsxPmhP/36kOkY18b5HES/YHJf+BuyZzcn4QAVkn3GQ7xdPNR
-         MlF8oB7vrbr69/BnRejT+zOpgDL9wuwWWYv30OCfFtjYmsUxPEIXDcJL2hjVFgK6JAld
-         gVKQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1701766792; x=1702371592;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=P3+mFRpZBneT3Lzm/oQTHjAQSUO9ZeAPYRer7xUZcck=;
-        b=dnHi1R7G44upwGhxEJS7FrHsXzJLa3VkpxB3PZ6yngbNZywSJCjs3x6LjjDAUMziYw
-         QJdaqXbkWDGBGyWqe382C/Ra0m4f6KA7k37Y11mgnJebqMG0f7k6553eGL7s4TI10e/i
-         jyqckXOxdts4eVIgl/uU/9Xzt+5dYfLfzW/QwS0UWplTz0UYZmkRzyqsa/FiqyNZ98mK
-         CicefwRDm+VMitMR6WalJ4pFCJB+643nQTMMgrNhmHwFjEzXNxnB3lC4xyaqmvwpHqrM
-         kUL56KNkzNVLb2SfxbcwvdAQUQzxkmt84y40pD5tdwiQQ93Xd3UTZC0wluwNIRIW0oDt
-         +vxg==
-X-Gm-Message-State: AOJu0YxVVfLNaYSJ4bg1S8AJnw1v5+2DFPr2LudGgHnGEK4Tq7p6ekvZ
-	boG2/Dghchaqw0eI2kcjk6A=
-X-Google-Smtp-Source: AGHT+IHYkm4fqLTnSn4A2JsFqtLCcQ6IxeEEk76DwRdCLsqbR5/tk+X1/ZLWF5Z6bvbqwOiMFvkd1A==
-X-Received: by 2002:a17:90b:4a4b:b0:286:8abc:e66 with SMTP id lb11-20020a17090b4a4b00b002868abc0e66mr984275pjb.42.1701766791613;
-        Tue, 05 Dec 2023 00:59:51 -0800 (PST)
-Received: from carrot.. (i60-34-119-11.s42.a014.ap.plala.or.jp. [60.34.119.11])
-        by smtp.gmail.com with ESMTPSA id l17-20020a170902eb1100b001d060d6cde0sm7068783plb.162.2023.12.05.00.59.49
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 05 Dec 2023 00:59:51 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	syzbot <syzbot+14e9f834f6ddecece094@syzkaller.appspotmail.com>,
-	syzkaller-bugs@googlegroups.com,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] nilfs2: prevent WARNING in nilfs_sufile_set_segment_usage()
-Date: Tue,  5 Dec 2023 17:59:47 +0900
-Message-Id: <20231205085947.4431-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <0000000000002052a505e9ec7d41@google.com>
-References: <0000000000002052a505e9ec7d41@google.com>
+Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 35002C6;
+	Tue,  5 Dec 2023 04:38:37 -0800 (PST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Sl0Sk6Q5Lz4f3jrm;
+	Tue,  5 Dec 2023 20:38:30 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 0FC731A0902;
+	Tue,  5 Dec 2023 20:38:33 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP1 (Coremail) with SMTP id cCh0CgDnNw7GGW9lr8E8Cw--.35507S4;
+	Tue, 05 Dec 2023 20:38:32 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: axboe@kernel.dk,
+	roger.pau@citrix.com,
+	colyli@suse.de,
+	kent.overstreet@gmail.com,
+	joern@lazybastard.org,
+	miquel.raynal@bootlin.com,
+	richard@nod.at,
+	vigneshr@ti.com,
+	sth@linux.ibm.com,
+	hoeppner@linux.ibm.com,
+	hca@linux.ibm.com,
+	gor@linux.ibm.com,
+	agordeev@linux.ibm.com,
+	jejb@linux.ibm.com,
+	martin.petersen@oracle.com,
+	clm@fb.com,
+	josef@toxicpanda.com,
+	dsterba@suse.com,
+	nico@fluxnic.net,
+	xiang@kernel.org,
+	chao@kernel.org,
+	tytso@mit.edu,
+	adilger.kernel@dilger.ca,
+	agruenba@redhat.com,
+	jack@suse.com,
+	konishi.ryusuke@gmail.com,
+	willy@infradead.org,
+	akpm@linux-foundation.org,
+	hare@suse.de,
+	p.raghav@samsung.com
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	xen-devel@lists.xenproject.org,
+	linux-bcache@vger.kernel.org,
+	linux-mtd@lists.infradead.org,
+	linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org,
+	linux-bcachefs@vger.kernel.org,
+	linux-btrfs@vger.kernel.org,
+	linux-erofs@lists.ozlabs.org,
+	linux-ext4@vger.kernel.org,
+	gfs2@lists.linux.dev,
+	linux-nilfs@vger.kernel.org,
+	yukuai3@huawei.com,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH -next RFC 00/14] block: don't access bd_inode directly from other modules
+Date: Tue,  5 Dec 2023 20:37:14 +0800
+Message-Id: <20231205123728.1866699-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -57,112 +69,74 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgDnNw7GGW9lr8E8Cw--.35507S4
+X-Coremail-Antispam: 1UD129KBjvJXoW7Kw4Utry8XFW7Zr18Jr43Wrg_yoW8WF1kpr
+	y3KF1fGr1Uu347Zaya9an7tryrJw4kGay7GF17t34rZr13JryfAr4ktrW8Ja48Jr9rXr4k
+	Xw1DtryFgr10gaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvF14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jrv_JF1lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
+	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26rWY6r4U
+	JwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
+	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq3wCI42IY6I8E87Iv67AK
+	xVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvj
+	fUoL0eDUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-If nilfs2 reads a disk image with corrupted segment usage metadata,
-and its segment usage information is marked as an error for the segment
-at the write location, nilfs_sufile_set_segment_usage() can trigger
-WARN_ONs during log writing.
+From: Yu Kuai <yukuai3@huawei.com>
 
-Segments newly allocated for writing with nilfs_sufile_alloc() will not
-have this error flag set, but this unexpected situation will occur if
-the segment indexed by either nilfs->ns_segnum or nilfs->ns_nextnum
-(active segment) was marked in error.
+Patch 1 add some bdev apis, then follow up patches will use these apis
+to avoid access bd_inode directly, and hopefully the field bd_inode can
+be removed eventually(after figure out a way for fs/buffer.c).
 
-Fix this issue by inserting a sanity check to treat it as a file system
-corruption.
+Yu Kuai (14):
+  block: add some bdev apis
+  xen/blkback: use bdev api in xen_update_blkif_status()
+  bcache: use bdev api in read_super()
+  mtd: block2mtd: use bdev apis
+  s390/dasd: use bdev api in dasd_format()
+  scsicam: use bdev api in scsi_bios_ptable()
+  bcachefs: remove dead function bdev_sectors()
+  btrfs: use bdev apis
+  cramfs: use bdev apis in cramfs_blkdev_read()
+  erofs: use bdev api
+  ext4: use bdev apis
+  jbd2: use bdev apis
+  gfs2: use bdev api
+  nilfs2: use bdev api in nilfs_attach_log_writer()
 
-Since error returns are not allowed during the execution phase where
-nilfs_sufile_set_segment_usage() is used, this inserts the sanity check
-into nilfs_sufile_mark_dirty() which pre-reads the buffer containing the
-segment usage record to be updated and sets it up in a dirty state for
-writing.
+ block/bdev.c                       | 116 +++++++++++++++++++++++++++++
+ block/bio.c                        |   1 +
+ block/blk.h                        |   2 -
+ drivers/block/xen-blkback/xenbus.c |   3 +-
+ drivers/md/bcache/super.c          |  11 ++-
+ drivers/mtd/devices/block2mtd.c    |  80 +++++++++-----------
+ drivers/s390/block/dasd_ioctl.c    |   5 +-
+ drivers/scsi/scsicam.c             |   3 +-
+ fs/bcachefs/util.h                 |   5 --
+ fs/btrfs/disk-io.c                 |  68 ++++++++---------
+ fs/btrfs/volumes.c                 |  17 ++---
+ fs/btrfs/zoned.c                   |  12 ++-
+ fs/cramfs/inode.c                  |  35 +++------
+ fs/erofs/data.c                    |  17 +++--
+ fs/erofs/internal.h                |   1 +
+ fs/ext4/dir.c                      |   6 +-
+ fs/ext4/ext4_jbd2.c                |   6 +-
+ fs/ext4/super.c                    |  27 +------
+ fs/gfs2/glock.c                    |   2 +-
+ fs/gfs2/ops_fstype.c               |   2 +-
+ fs/jbd2/journal.c                  |   3 +-
+ fs/jbd2/recovery.c                 |   6 +-
+ fs/nilfs2/segment.c                |   2 +-
+ include/linux/blkdev.h             |  27 +++++++
+ include/linux/buffer_head.h        |   5 +-
+ 25 files changed, 273 insertions(+), 189 deletions(-)
 
-In addition, nilfs_sufile_set_segment_usage() is also called when
-canceling log writing and undoing segment usage update, so in order to
-avoid issuing the same kernel warning in that case, in case of
-cancellation, avoid checking the error flag in
-nilfs_sufile_set_segment_usage().
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: syzbot+14e9f834f6ddecece094@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=14e9f834f6ddecece094
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: <stable@vger.kernel.org>
----
-Andrew, please apply this patch.  This resolves one unexpected kernel
-WARNING issue reported by syzbot.
-
-Thanks,
-Ryusuke Konishi
-
-fs/nilfs2/sufile.c | 42 +++++++++++++++++++++++++++++++++++-------
- 1 file changed, 35 insertions(+), 7 deletions(-)
-
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 2c6078a6b8ec..58ca7c936393 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -501,15 +501,38 @@ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
- 
- 	down_write(&NILFS_MDT(sufile)->mi_sem);
- 	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
--	if (!ret) {
--		mark_buffer_dirty(bh);
--		nilfs_mdt_mark_dirty(sufile);
--		kaddr = kmap_atomic(bh->b_page);
--		su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
-+	if (ret)
-+		goto out_sem;
-+
-+	kaddr = kmap_atomic(bh->b_page);
-+	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
-+	if (unlikely(nilfs_segment_usage_error(su))) {
-+		struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-+
-+		kunmap_atomic(kaddr);
-+		brelse(bh);
-+		if (nilfs_segment_is_active(nilfs, segnum)) {
-+			nilfs_error(sufile->i_sb,
-+				    "active segment %llu is erroneous",
-+				    (unsigned long long)segnum);
-+		} else {
-+			/*
-+			 * Segments marked erroneous are never allocated by
-+			 * nilfs_sufile_alloc(); only active segments, ie,
-+			 * the segments indexed by ns_segnum or ns_nextnum,
-+			 * can be erroneous here.
-+			 */
-+			WARN_ON_ONCE(1);
-+		}
-+		ret = -EIO;
-+	} else {
- 		nilfs_segment_usage_set_dirty(su);
- 		kunmap_atomic(kaddr);
-+		mark_buffer_dirty(bh);
-+		nilfs_mdt_mark_dirty(sufile);
- 		brelse(bh);
- 	}
-+out_sem:
- 	up_write(&NILFS_MDT(sufile)->mi_sem);
- 	return ret;
- }
-@@ -536,9 +559,14 @@ int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
- 
- 	kaddr = kmap_atomic(bh->b_page);
- 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
--	WARN_ON(nilfs_segment_usage_error(su));
--	if (modtime)
-+	if (modtime) {
-+		/*
-+		 * Check segusage error and set su_lastmod only when updating
-+		 * this entry with a valid timestamp, not for cancellation.
-+		 */
-+		WARN_ON_ONCE(nilfs_segment_usage_error(su));
- 		su->su_lastmod = cpu_to_le64(modtime);
-+	}
- 	su->su_nblocks = cpu_to_le32(nblocks);
- 	kunmap_atomic(kaddr);
- 
 -- 
-2.34.1
+2.39.2
 
