@@ -1,157 +1,102 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 79DF1D72;
-	Wed,  6 Dec 2023 18:45:20 -0800 (PST)
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4SlzCJ2k7mz4f3kKx;
-	Thu,  7 Dec 2023 10:45:16 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 697281A0E26;
-	Thu,  7 Dec 2023 10:45:17 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgCnqxG5MXFllH3QCw--.13955S3;
-	Thu, 07 Dec 2023 10:45:16 +0800 (CST)
-Subject: Re: [PATCH -next RFC 01/14] block: add some bdev apis
-To: Matthew Wilcox <willy@infradead.org>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: axboe@kernel.dk, roger.pau@citrix.com, colyli@suse.de,
- kent.overstreet@gmail.com, joern@lazybastard.org, miquel.raynal@bootlin.com,
- richard@nod.at, vigneshr@ti.com, sth@linux.ibm.com, hoeppner@linux.ibm.com,
- hca@linux.ibm.com, gor@linux.ibm.com, agordeev@linux.ibm.com,
- jejb@linux.ibm.com, martin.petersen@oracle.com, clm@fb.com,
- josef@toxicpanda.com, dsterba@suse.com, nico@fluxnic.net, xiang@kernel.org,
- chao@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca,
- agruenba@redhat.com, jack@suse.com, konishi.ryusuke@gmail.com,
- akpm@linux-foundation.org, hare@suse.de, p.raghav@samsung.com,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
- linux-mtd@lists.infradead.org, linux-s390@vger.kernel.org,
- linux-scsi@vger.kernel.org, linux-bcachefs@vger.kernel.org,
- linux-btrfs@vger.kernel.org, linux-erofs@lists.ozlabs.org,
- linux-ext4@vger.kernel.org, gfs2@lists.linux.dev,
- linux-nilfs@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20231205123728.1866699-1-yukuai1@huaweicloud.com>
- <20231205123728.1866699-2-yukuai1@huaweicloud.com>
- <ZXCMJ9skAAgPm4z3@casper.infradead.org>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <d195aba8-7b89-698f-b7a0-06b87ae01c21@huaweicloud.com>
-Date: Thu, 7 Dec 2023 10:45:13 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eVxZy36E"
+Received: from mail-oi1-x22e.google.com (mail-oi1-x22e.google.com [IPv6:2607:f8b0:4864:20::22e])
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3570DA4;
+	Wed,  6 Dec 2023 20:57:43 -0800 (PST)
+Received: by mail-oi1-x22e.google.com with SMTP id 5614622812f47-3b9b5bff21dso386704b6e.2;
+        Wed, 06 Dec 2023 20:57:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1701925062; x=1702529862; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=+EKLqq52GK0jw4IGuqvKFvJcNTKuZLtYbF3vm1onl74=;
+        b=eVxZy36EKu6joJtHiG/3TnX9lSS4VJNRKtmepZm+2oqHGSMjg2in3NF17ZJ1o4OEC3
+         +JbnJcn20suENlR68itbfiQGKv/8fLV9AOBHUBM0BlaL3MeBQT4+yCsqKwqa1PydntLk
+         GIdxm55Rtz5q6KT/SgiZzALNPS9KX6QWPn4W3fgeanSCYogqamZJ7b0UP6IvNyP4hcGa
+         UPKduM9iTZtoXbeR8fH7b4xDnvLGBOqfr5E1lsepOazN/9bvYvbqauvcUA1j2Csi8qu+
+         Xds/9fYGZW4csFodK3+X8lnC9h6/lgCwZrEWNBTEZGPaMSx7J4oh7WL1P5v3dofDNyMO
+         kSGw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1701925062; x=1702529862;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=+EKLqq52GK0jw4IGuqvKFvJcNTKuZLtYbF3vm1onl74=;
+        b=rD6phoUFMRvTm3Xyah5F93yhN3Zc6K1qJBuqni0EvrHXydkYZKofVzrFRRyUmKOIr9
+         DRj4D6IgeOmkGBKD95LUjjQGqmnjmIj2LHP92hTNnrlkU3fS/GbATUeRQZh1Q/Kn1j+i
+         iGGI9QC4YPi1+9iDEDyIFw5biEy3uyYjO0pm4nmr/Zz3sFpkAO6tufj2u6v4weqeKVD/
+         eBHyRjJb8y/RLIGTOMUbJYDS40eaFOR5K7g9XNYBhNMRvy2K5AUg/hd5tGorQ+PZu6G1
+         0WQnvJUd+4yE0Z2/xb4lc1S6OAX7w+p91AX7+Eb6mTAtn07/6ihh9Eclte59+0hnP7wH
+         tmFw==
+X-Gm-Message-State: AOJu0Yys/FDp9kSUXd9EMXuoh5eE1PZb6ti0zBsfDosmZteGw2MdcMOB
+	7XYdBD0liC74NsgXtIfx7ucnyxDqS0Q=
+X-Google-Smtp-Source: AGHT+IFFwcQCP2Uq8DUz9dgEMkn5l06vlu6eWg3jQI0UzHfv4+DoZy0zbGKdCpQjTOTlhjtHdb1KEw==
+X-Received: by 2002:a05:6808:289:b0:3b9:e119:270d with SMTP id z9-20020a056808028900b003b9e119270dmr64614oic.4.1701925062397;
+        Wed, 06 Dec 2023 20:57:42 -0800 (PST)
+Received: from carrot.. (i223-218-132-246.s42.a014.ap.plala.or.jp. [223.218.132.246])
+        by smtp.gmail.com with ESMTPSA id y20-20020a056a00191400b006ce458995f8sm373594pfi.173.2023.12.06.20.57.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 06 Dec 2023 20:57:41 -0800 (PST)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH] nilfs2: switch WARN_ONs to warning output in nilfs_sufile_do_free()
+Date: Thu,  7 Dec 2023 13:57:30 +0900
+Message-Id: <20231207045730.5205-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <ZXCMJ9skAAgPm4z3@casper.infradead.org>
-Content-Type: text/plain; charset=gbk; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgCnqxG5MXFllH3QCw--.13955S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxuF4Dury5Kr13Aw47Gr4Uurg_yoW5Ar4DpF
-	W8KFZ8JrW8Gr18ursrJa15Z3WFg34UJFW5ZrWxG343C3s0yr9akFWYgws0kayIv3yUJFs7
-	ZFWjvrW8WF1j9FJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9I14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_Wrv_Gr1UMIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
-	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWrJr0_
-	WFyUJwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJb
-	IYCTnIWIevJa73UjIFyTuYvjfUojjgUUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Hi,
+nilfs_sufile_do_free(), which is called when log write fails or during
+GC, uses WARN_ONs to check for abnormal status of metadata.  In the
+former case, these WARN_ONs will not be fired, but in the latter case
+they don't "never-happen".  It is possible to trigger these by
+intentionally modifying the userland GC library to release segments
+that are not in the expected state.
 
-ÔÚ 2023/12/06 22:58, Matthew Wilcox Ð´µÀ:
-> On Tue, Dec 05, 2023 at 08:37:15PM +0800, Yu Kuai wrote:
->> +struct folio *bdev_read_folio(struct block_device *bdev, pgoff_t index)
->> +{
->> +	return read_mapping_folio(bdev->bd_inode->i_mapping, index, NULL);
->> +}
->> +EXPORT_SYMBOL_GPL(bdev_read_folio);
-> 
-> I'm coming to the opinion that 'index' is the wrong parameter here.
-> Looking through all the callers of bdev_read_folio() in this patchset,
-> they all have a position in bytes, and they all convert it to
-> index for this call.  The API should probably be:
-> 
-> struct folio *bdev_read_folio(struct block_device *bdev, loff_t pos)
-> {
-> 	return read_mapping_folio(bdev->bd_inode->i_mapping,
-> 			pos / PAGE_SIZE, NULL);
-> }
+So, replace them with warning output using the dedicated macro
+nilfs_warn().
 
-Thanks for reviewing this patchset! Okay, I'll convert to pass in "pos"
-in v2.
-> 
-> ... and at some point, we'll get round to converting read_mapping_folio()
-> to take its argument in loff_t.
-> 
-> Similiarly for these two APIs:
-> 
->> +struct folio *bdev_read_folio_gfp(struct block_device *bdev, pgoff_t index,
->> +				  gfp_t gfp)
->> +struct folio *bdev_get_folio(struct block_device *bdev, pgoff_t index)
-> 
->> +struct folio *bdev_find_or_create_folio(struct block_device *bdev,
->> +					pgoff_t index, gfp_t gfp)
->> +{
->> +	return __filemap_get_folio(bdev->bd_inode->i_mapping, index,
->> +				   FGP_LOCK | FGP_ACCESSED | FGP_CREAT, gfp);
->> +}
->> +EXPORT_SYMBOL_GPL(bdev_find_or_create_folio);
-> 
-> This one probably shouldn't exist.  I've been converting callers of
-> find_or_create_page() to call __filemap_get_folio; I suspect we
-> should expose a __bdev_get_folio and have the callers use the FGP
-> arguments directly, but I'm open to other opinions here.
-
-If nobody against this, I will expose single __bdev_get_folio() to use
-in v2.
-> 
->> +void bdev_sync_readahead(struct block_device *bdev, struct file_ra_state *ra,
->> +			 struct file *file, pgoff_t index,
->> +			 unsigned long req_count)
->> +{
->> +	struct file_ra_state tmp_ra = {};
->> +
->> +	if (!ra) {
->> +		ra = &tmp_ra;
->> +		file_ra_state_init(ra, bdev->bd_inode->i_mapping);
->> +	}
->> +	page_cache_sync_readahead(bdev->bd_inode->i_mapping, ra, file, index,
->> +				  req_count);
->> +}
-> 
-> I think the caller should always be passing in a valid file_ra_state.
-> It's only cramfs that doesn't have one, and it really should!
-> Not entirely sure about the arguments here; part of me says "bytes",
-> but this is weird enough to maybe take arguments in pages.
-
-In fact, bdev_sync_readahead() is only called for cramfs and ext4.
-
-For ext4 it's used in ext4_readdir() so there is valid file_ra_state.
-
-Hoever, for cramfs it's used in cramfs_read(), and cramfs_read() is used
-for:
-
-1) cramfs_read_folio
-2) cramfs_readdir
-3) cramfs_lookup
-4) cramfs_read_super
-
-Looks like it's easy to pass in valid file_ra_state() for 1) and 2),
-however, I don't see an easy way to do this for 3) and 4).
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Andrew, please add this to the queue for the next merge window.  This
+replaces two potentially triggered WARN_ONs with ones that use a warning
+output macro.
 
 Thanks,
-Kuai
+Ryusuke Konishi
 
-> 
-> .
-> 
+fs/nilfs2/sufile.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+index 58ca7c936393..0a8119456c21 100644
+--- a/fs/nilfs2/sufile.c
++++ b/fs/nilfs2/sufile.c
+@@ -471,10 +471,15 @@ void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+ 		kunmap_atomic(kaddr);
+ 		return;
+ 	}
+-	WARN_ON(nilfs_segment_usage_error(su));
+-	WARN_ON(!nilfs_segment_usage_dirty(su));
++	if (unlikely(nilfs_segment_usage_error(su)))
++		nilfs_warn(sufile->i_sb, "free segment %llu marked in error",
++			   (unsigned long long)segnum);
+ 
+ 	sudirty = nilfs_segment_usage_dirty(su);
++	if (unlikely(!sudirty))
++		nilfs_warn(sufile->i_sb, "free unallocated segment %llu",
++			   (unsigned long long)segnum);
++
+ 	nilfs_segment_usage_set_clean(su);
+ 	kunmap_atomic(kaddr);
+ 	mark_buffer_dirty(su_bh);
+-- 
+2.34.1
 
