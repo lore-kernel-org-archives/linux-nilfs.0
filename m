@@ -1,93 +1,102 @@
-Received: from mail-oi1-f174.google.com (mail-oi1-f174.google.com [209.85.167.174])
+Received: from mail-pg1-f172.google.com (mail-pg1-f172.google.com [209.85.215.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E22844369
-	for <linux-nilfs@vger.kernel.org>; Sun, 17 Dec 2023 15:50:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A573134AE;
+	Tue, 19 Dec 2023 09:09:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l1B2YTWj"
-Received: by mail-oi1-f174.google.com with SMTP id 5614622812f47-3ba3cf9aa13so1669178b6e.2
-        for <linux-nilfs@vger.kernel.org>; Sun, 17 Dec 2023 07:50:15 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FLkJqo/t"
+Received: by mail-pg1-f172.google.com with SMTP id 41be03b00d2f7-5cdc159034eso49209a12.0;
+        Tue, 19 Dec 2023 01:09:31 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1702828215; x=1703433015; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=dHcfv8YdTqbMLgYUwmvYG6+EnhMbu8ou47ebve5llYg=;
-        b=l1B2YTWj1XuXz1LQJXel6Ub6XGgw2NE04J5YSzhtbYWHeiaygvUJ5l6Gj1m2AbFWko
-         mkHN4/fmLqoT9gDdJGQapxcrgYGbAPgWkOBw9gHAOri/3tQVsB954Nc9+5n2BNkUABKz
-         NYlYvFfFWoPr9sT1SPtUEif6iIdKSXSv/OroOzXfjXwRMShWWDhFbaqs66WtrbwWxRdJ
-         u4ktU2AZLCw8O/vwvVK7TNVb1TL8MKImROGjcmYbVqn8bcujxLl3uK3Oztg2ozV2Ncyl
-         iVRKA8mdf6S+X8WZQJ8IoyOv9DhwLuAbEsO6MgzpfrILpCh+4s0QyiAuh7q66ypEItoc
-         LqtA==
+        d=gmail.com; s=20230601; t=1702976971; x=1703581771; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=MUeSDdZw8uPeQ2XORpdHymUrGMNnnZoNXCwu3+iQlGc=;
+        b=FLkJqo/tLRRlWROKKRTlberWFPlEgdWloTW35BBfcTju/p8a0vGDc00UREKarUCnwM
+         m3SFtVQj7N69L1zhEfMLUiVrJvY3asatdVD77bKnKaVxiruOc09mTwq3S5HY0R/9UqZq
+         xrs9MNKhq7uzaQwTriVnKThBGtCj19sPwqWGdqu3HSo+zoFIxSn/puL0IcdrntpKNBEM
+         WK6qzMi1S9JtXlMOnWZ3eWV1DwednpWODtfV4gHRvwGk51RsqaPbE8/SE/V9a65azOWv
+         4Jmlxi8FeHtr0UGlgZnb+TQY8qpanCLi7lJbRYkhe2FN+pYT2ylH0zBcfyyrPJI9B/zZ
+         JihA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702828215; x=1703433015;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=dHcfv8YdTqbMLgYUwmvYG6+EnhMbu8ou47ebve5llYg=;
-        b=m+aFn9tt1fe6cdXQeqCZJziGDZvLWjV+2Oy5vRNa5sUHRAl0FB7J6w+jbz2bq6LdsU
-         5HyoWgN+Y3Ug7Xxy4llK0QVzy/QsGX3Goft4B5uej6S6Czz5F6pkjj/dhZfRH+fJaLuW
-         fMIjJ4+oSaOsJq6arohsn8W/Vsebyy4/D9VTRdztP2qmICUx/bCCOaFCh4GeSrrkj/o0
-         jacw4tr3uwRKgG1oy4Hra2gumXPyHTXFZ82El6rLlX3mmx5Tip1HLIQKDuHdcM8rQ4op
-         ZwTsEeKob3IK+x5IJoTgttGnM4GR0FuvltCCvkiHC9j3gK0SDoLx8Nh9iX4cTOZLubDQ
-         sV/w==
-X-Gm-Message-State: AOJu0YzYplRLDw9bmlfQ/Ruf64NprWiQhrjeisbZQ1BJcxAF0+FMXW/A
-	ZbngsAkPw6XbwNQBXl6WdyeN8xxPLk9z2W0tTzq2zi84n/I=
-X-Google-Smtp-Source: AGHT+IEoY7MtWl2zz1XQFfE4OZFHpMz5DOqnGCJCAXDxDIPrI0K3ELuaxF+c/kFhYqaXvFsPkXoTUVYpnKlq2AACiOQ=
-X-Received: by 2002:a05:6808:6544:b0:3ba:d5d:2086 with SMTP id
- fn4-20020a056808654400b003ba0d5d2086mr13980078oib.63.1702828215055; Sun, 17
- Dec 2023 07:50:15 -0800 (PST)
+        d=1e100.net; s=20230601; t=1702976971; x=1703581771;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=MUeSDdZw8uPeQ2XORpdHymUrGMNnnZoNXCwu3+iQlGc=;
+        b=bRuxrgOP/HTOHGnKfLysWzMGgg9RSi3Qa2URCnjIv4Ld+A9/3nBPckOzjus03OM7N7
+         0AIxZ91XFcMFUp9qZjefxsX9+yj2Ae8GW9sCFuA7X2ks1icouYehLJMjDEOtFs3ya93H
+         Ugb/L/ADlCJo6dLoz1+ZK35T7FrtiYLFM2RSwUw9SohFnZVwZIovmGIFcfu3LwjqDMBB
+         YgxEjfsOYX1DjeC1Q/iGRo3x/5DviPPT2JRWmfe5LI4hI9DlE6PQG131ZIGZTFI2JYdj
+         L5Iyqyv4Ku4KcbdsqDvxOMtFj4ctvhhj1oTcOcCxgTNLSEo8n+6bC59kH+fabThJUzKY
+         CRdA==
+X-Gm-Message-State: AOJu0YwivWhthAql3SvzF6TQJBf1e3dzdjMu4CZGFmpqCAOkh9GXgAPg
+	dNSQk2sy/jDClQUqCLhlyj4vqq8A/Ww=
+X-Google-Smtp-Source: AGHT+IG2yOOGtRSe+pLzQg4kdVa4susxKnGV96oGSYuCCkD6NA3l78QmqUTqm9Qo5bGXhE1eZzpI7w==
+X-Received: by 2002:a05:6a20:7d9c:b0:190:31c1:31aa with SMTP id v28-20020a056a207d9c00b0019031c131aamr10212260pzj.49.1702976970716;
+        Tue, 19 Dec 2023 01:09:30 -0800 (PST)
+Received: from carrot.. (i118-19-13-241.s42.a014.ap.plala.or.jp. [118.19.13.241])
+        by smtp.gmail.com with ESMTPSA id h10-20020a170902704a00b001d35223d0besm7435399plt.251.2023.12.19.01.09.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 19 Dec 2023 01:09:29 -0800 (PST)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH] nilfs2: Add missing set_freezable() for freezable kthread
+Date: Tue, 19 Dec 2023 18:09:18 +0900
+Message-Id: <20231219090918.2329-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20231217135024.3116955-1-haokexin@gmail.com>
-In-Reply-To: <20231217135024.3116955-1-haokexin@gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Mon, 18 Dec 2023 00:49:58 +0900
-Message-ID: <CAKFNMonsfd1wm2EtWJAQi0o5deBB_2U3US=yVOZVU9oMXH0ixA@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: Add missing set_freezable() for freezable kthread
-To: Kevin Hao <haokexin@gmail.com>
-Cc: linux-nilfs@vger.kernel.org, "Rafael J. Wysocki" <rafael@kernel.org>, 
-	Pavel Machek <pavel@ucw.cz>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Sun, Dec 17, 2023 at 10:50=E2=80=AFPM Kevin Hao wrote:
->
-> The kernel thread function nilfs_segctor_thread() invokes
-> the try_to_freeze() in its loop. But all the kernel threads are
-> non-freezable by default. So if we want to make a kernel thread to be
-> freezable, we have to invoke set_freezable() explicitly.
->
-> Signed-off-by: Kevin Hao <haokexin@gmail.com>
-> ---
->  fs/nilfs2/segment.c | 1 +
->  1 file changed, 1 insertion(+)
+From: Kevin Hao <haokexin@gmail.com>
 
-Thank you!
-I'll grab this and send it upstream.
+The kernel thread function nilfs_segctor_thread() invokes
+the try_to_freeze() in its loop. But all the kernel threads are
+non-freezable by default. So if we want to make a kernel thread to be
+freezable, we have to invoke set_freezable() explicitly.
 
+Signed-off-by: Kevin Hao <haokexin@gmail.com>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Andrew, please add this to the queue for the next merge window (if
+it's still ok).  This fixes an issue where the log writer thread was
+not calling try_to_freeze() as intended when starting suspend or
+hibernation.
+
+I haven't run into any problems with or without this change in various
+suspend/hibernation tests so far, so I haven't added a Cc tag to the
+stable team.
+
+If any suspend failures are reported due to the lack of this setup,
+I will separately request the stable team to backport this.
+
+Thanks,
 Ryusuke Konishi
 
->
-> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> index 52995838f2de..2590a0860eab 100644
-> --- a/fs/nilfs2/segment.c
-> +++ b/fs/nilfs2/segment.c
-> @@ -2588,6 +2588,7 @@ static int nilfs_segctor_thread(void *arg)
->                    "segctord starting. Construction interval =3D %lu seco=
-nds, CP frequency < %lu seconds",
->                    sci->sc_interval / HZ, sci->sc_mjcp_freq / HZ);
->
-> +       set_freezable();
->         spin_lock(&sci->sc_state_lock);
->   loop:
->         for (;;) {
-> --
-> 2.39.2
->
+fs/nilfs2/segment.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 52995838f2de..2590a0860eab 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2588,6 +2588,7 @@ static int nilfs_segctor_thread(void *arg)
+ 		   "segctord starting. Construction interval = %lu seconds, CP frequency < %lu seconds",
+ 		   sci->sc_interval / HZ, sci->sc_mjcp_freq / HZ);
+ 
++	set_freezable();
+ 	spin_lock(&sci->sc_state_lock);
+  loop:
+ 	for (;;) {
+-- 
+2.34.1
+
