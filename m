@@ -1,54 +1,35 @@
-Received: from mail-pg1-f172.google.com (mail-pg1-f172.google.com [209.85.215.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A573134AE;
-	Tue, 19 Dec 2023 09:09:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9C63168A9;
+	Wed, 20 Dec 2023 06:59:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FLkJqo/t"
-Received: by mail-pg1-f172.google.com with SMTP id 41be03b00d2f7-5cdc159034eso49209a12.0;
-        Tue, 19 Dec 2023 01:09:31 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1702976971; x=1703581771; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=MUeSDdZw8uPeQ2XORpdHymUrGMNnnZoNXCwu3+iQlGc=;
-        b=FLkJqo/tLRRlWROKKRTlberWFPlEgdWloTW35BBfcTju/p8a0vGDc00UREKarUCnwM
-         m3SFtVQj7N69L1zhEfMLUiVrJvY3asatdVD77bKnKaVxiruOc09mTwq3S5HY0R/9UqZq
-         xrs9MNKhq7uzaQwTriVnKThBGtCj19sPwqWGdqu3HSo+zoFIxSn/puL0IcdrntpKNBEM
-         WK6qzMi1S9JtXlMOnWZ3eWV1DwednpWODtfV4gHRvwGk51RsqaPbE8/SE/V9a65azOWv
-         4Jmlxi8FeHtr0UGlgZnb+TQY8qpanCLi7lJbRYkhe2FN+pYT2ylH0zBcfyyrPJI9B/zZ
-         JihA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702976971; x=1703581771;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=MUeSDdZw8uPeQ2XORpdHymUrGMNnnZoNXCwu3+iQlGc=;
-        b=bRuxrgOP/HTOHGnKfLysWzMGgg9RSi3Qa2URCnjIv4Ld+A9/3nBPckOzjus03OM7N7
-         0AIxZ91XFcMFUp9qZjefxsX9+yj2Ae8GW9sCFuA7X2ks1icouYehLJMjDEOtFs3ya93H
-         Ugb/L/ADlCJo6dLoz1+ZK35T7FrtiYLFM2RSwUw9SohFnZVwZIovmGIFcfu3LwjqDMBB
-         YgxEjfsOYX1DjeC1Q/iGRo3x/5DviPPT2JRWmfe5LI4hI9DlE6PQG131ZIGZTFI2JYdj
-         L5Iyqyv4Ku4KcbdsqDvxOMtFj4ctvhhj1oTcOcCxgTNLSEo8n+6bC59kH+fabThJUzKY
-         CRdA==
-X-Gm-Message-State: AOJu0YwivWhthAql3SvzF6TQJBf1e3dzdjMu4CZGFmpqCAOkh9GXgAPg
-	dNSQk2sy/jDClQUqCLhlyj4vqq8A/Ww=
-X-Google-Smtp-Source: AGHT+IG2yOOGtRSe+pLzQg4kdVa4susxKnGV96oGSYuCCkD6NA3l78QmqUTqm9Qo5bGXhE1eZzpI7w==
-X-Received: by 2002:a05:6a20:7d9c:b0:190:31c1:31aa with SMTP id v28-20020a056a207d9c00b0019031c131aamr10212260pzj.49.1702976970716;
-        Tue, 19 Dec 2023 01:09:30 -0800 (PST)
-Received: from carrot.. (i118-19-13-241.s42.a014.ap.plala.or.jp. [118.19.13.241])
-        by smtp.gmail.com with ESMTPSA id h10-20020a170902704a00b001d35223d0besm7435399plt.251.2023.12.19.01.09.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Dec 2023 01:09:29 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] nilfs2: Add missing set_freezable() for freezable kthread
-Date: Tue, 19 Dec 2023 18:09:18 +0900
-Message-Id: <20231219090918.2329-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="2INhNg9s"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=wiefhyyxdQ6+cVyIEandstncmSheKVNzQxTEt7IW79g=; b=2INhNg9suwi5GAzp9swSRhVD6R
+	Mv9OiTfgp1DZKHL2ulgMJGFP4LQux5BoIzvOezYx0DtA1ZSphHQxK61kgbSfHMwPP4dGhEf4CMnvs
+	jsSuLp26Jc7g6GM2AlHJSfliw8EaNrowDJlHGR9QqOoegkjzGq7pOi6TY3a9UhvRXzvHloDtymjYT
+	RzPtxPrWG3KhccMBA5XFg8LjTrSMsU3wOYgXU2ZeB6IsiiM90g2IQoqBUlTSBIIbzNOhUVb6A8X09
+	izq8WIYlUCbsNN/5QiZDUJVd1js53FOXWLVY2TemjLpjtnvmu77riy8P4QS4qglHgo65mjRxnIfwL
+	30JDwsrQ==;
+Received: from [50.53.46.231] (helo=bombadil.infradead.org)
+	by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
+	id 1rFqYG-00GLf7-1W;
+	Wed, 20 Dec 2023 06:59:32 +0000
+From: Randy Dunlap <rdunlap@infradead.org>
+To: linux-kernel@vger.kernel.org
+Cc: Randy Dunlap <rdunlap@infradead.org>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org
+Subject: [PATCH] nilfs2: cpfile: fix some kernel-doc warnings
+Date: Tue, 19 Dec 2023 22:59:31 -0800
+Message-ID: <20231220065931.2372-1-rdunlap@infradead.org>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -57,46 +38,38 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Kevin Hao <haokexin@gmail.com>
+Correct the function parameter names for nilfs_cpfile_get_info():
 
-The kernel thread function nilfs_segctor_thread() invokes
-the try_to_freeze() in its loop. But all the kernel threads are
-non-freezable by default. So if we want to make a kernel thread to be
-freezable, we have to invoke set_freezable() explicitly.
+cpfile.c:564: warning: Function parameter or member 'cnop' not described in 'nilfs_cpfile_get_cpinfo'
+cpfile.c:564: warning: Function parameter or member 'mode' not described in 'nilfs_cpfile_get_cpinfo'
+cpfile.c:564: warning: Function parameter or member 'buf' not described in 'nilfs_cpfile_get_cpinfo'
+cpfile.c:564: warning: Function parameter or member 'cisz' not described in 'nilfs_cpfile_get_cpinfo'
+cpfile.c:564: warning: Excess function parameter 'cno' description in 'nilfs_cpfile_get_cpinfo'
+cpfile.c:564: warning: Excess function parameter 'ci' description in 'nilfs_cpfile_get_cpinfo'
 
-Signed-off-by: Kevin Hao <haokexin@gmail.com>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+This still leaves a few kernel-doc warnings.
+Also, the function parameters should have descriptions after them.
+
+Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
 ---
-Andrew, please add this to the queue for the next merge window (if
-it's still ok).  This fixes an issue where the log writer thread was
-not calling try_to_freeze() as intended when starting suspend or
-hibernation.
+ fs/nilfs2/cpfile.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-I haven't run into any problems with or without this change in various
-suspend/hibernation tests so far, so I haven't added a Cc tag to the
-stable team.
-
-If any suspend failures are reported due to the lack of this setup,
-I will separately request the stable team to backport this.
-
-Thanks,
-Ryusuke Konishi
-
-fs/nilfs2/segment.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 52995838f2de..2590a0860eab 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -2588,6 +2588,7 @@ static int nilfs_segctor_thread(void *arg)
- 		   "segctord starting. Construction interval = %lu seconds, CP frequency < %lu seconds",
- 		   sci->sc_interval / HZ, sci->sc_mjcp_freq / HZ);
+diff -- a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -554,8 +554,10 @@ static ssize_t nilfs_cpfile_do_get_ssinf
+ /**
+  * nilfs_cpfile_get_cpinfo -
+  * @cpfile:
+- * @cno:
+- * @ci:
++ * @cnop:
++ * @mode:
++ * @buf:
++ * @cisz:
+  * @nci:
+  */
  
-+	set_freezable();
- 	spin_lock(&sci->sc_state_lock);
-  loop:
- 	for (;;) {
--- 
-2.34.1
-
