@@ -1,55 +1,72 @@
-Received: from mail-oi1-f170.google.com (mail-oi1-f170.google.com [209.85.167.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 131234A985;
-	Wed, 20 Dec 2023 22:14:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kFCGVhh1"
-Received: by mail-oi1-f170.google.com with SMTP id 5614622812f47-3ba46a19689so82131b6e.3;
-        Wed, 20 Dec 2023 14:14:09 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1703110449; x=1703715249; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=kk68MJUdWFrLkN8+ARexO/EfWP5dvoGb3D27iCAOWr8=;
-        b=kFCGVhh101rDXnLajuUiaoGETy7pNmHKopbeIIFjJXmSpPMPR+HDsUO9KZabjDga/R
-         dVlmPOS1oTJg9ZMaeDV/RbZ05bBGXrU8FK0TyJNWYxOLkyCPbgh9Xxl/2dNCUw0jS5Cq
-         Jha9CTLLVTgAVXRNlKUxYpFTCC2epK22s0itCmmv2jwjzNyl8eHajzO6DLc0jx/1Ri0/
-         lglLThYIvnCDxed74A8U1V1+JxG7PTpK4FWT8XM+sR2GFw7TYmTbmX4e9XBkElohdua1
-         MCaa6aEi/TeZaunjTQqF2p3kJLzhaI/i1hSySXk3dFXDEV8MLfX/l69DGwyUhuOLCzgG
-         8KWA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1703110449; x=1703715249;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=kk68MJUdWFrLkN8+ARexO/EfWP5dvoGb3D27iCAOWr8=;
-        b=RpPkqMKyYJsHnZXhHi7CrrFUTTl2E5R3EhLoq7uuijYKu1/a6bLXoX8974CebfkyU3
-         EEpYh/LFhsH7wsRHLa9xxDRcK4ySDa/S3PkoUB57TTFIWLfEVaVk8sZiuqTninTpz3Ge
-         2HlWgjxbiHe1+8Uc8hct6kqgaA+JCKb8agMPlIS2PXOlf7p2fhLydAaLzFzp+Zt+aQNb
-         lLFGZfvdmHDCgCB7gtyKQwGGeYbozH+Td/+t6RD23vWMffm3sOqfD7OQwlqLrK5mdOz4
-         o9gwuMXBLtY7RA0ZBIDKXbeXsMHiuVyNUb8wA2L/oUCo//54DVGjgyfsNhfgfBcUsTQu
-         hSoA==
-X-Gm-Message-State: AOJu0Yxf66PpgiLs/FLKWo7Q38PM6/xa8UP3J890H/PgOcytJDRQo8ow
-	pUDhk1pRtNPcLxL1udRKelA=
-X-Google-Smtp-Source: AGHT+IHPVF/CltiidkEBH1Hk8/49Sachf7OnNAPjx00SvUJPiTsm+RKPxUpVRQij7wjUWaFQWuR9Zw==
-X-Received: by 2002:aca:2205:0:b0:3b9:e859:53b9 with SMTP id b5-20020aca2205000000b003b9e85953b9mr20912473oic.118.1703110448893;
-        Wed, 20 Dec 2023 14:14:08 -0800 (PST)
-Received: from carrot.. (i118-19-12-122.s42.a014.ap.plala.or.jp. [118.19.12.122])
-        by smtp.gmail.com with ESMTPSA id v124-20020a626182000000b006d96d753ca0sm165631pfb.38.2023.12.20.14.14.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 20 Dec 2023 14:14:08 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	Randy Dunlap <rdunlap@infradead.org>,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] nilfs2: cpfile: fix some kernel-doc warnings
-Date: Thu, 21 Dec 2023 07:13:42 +0900
-Message-Id: <20231220221342.11505-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D43E52031F;
+	Thu, 21 Dec 2023 08:59:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4SwkrH5QHmz4f3k5w;
+	Thu, 21 Dec 2023 16:59:11 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 1B9E81A086D;
+	Thu, 21 Dec 2023 16:59:13 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP1 (Coremail) with SMTP id cCh0CgDnNw5d_oNlEQPvEA--.24929S4;
+	Thu, 21 Dec 2023 16:59:12 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: axboe@kernel.dk,
+	roger.pau@citrix.com,
+	colyli@suse.de,
+	kent.overstreet@gmail.com,
+	joern@lazybastard.org,
+	miquel.raynal@bootlin.com,
+	richard@nod.at,
+	vigneshr@ti.com,
+	sth@linux.ibm.com,
+	hoeppner@linux.ibm.com,
+	hca@linux.ibm.com,
+	gor@linux.ibm.com,
+	agordeev@linux.ibm.com,
+	jejb@linux.ibm.com,
+	martin.petersen@oracle.com,
+	clm@fb.com,
+	josef@toxicpanda.com,
+	dsterba@suse.com,
+	viro@zeniv.linux.org.uk,
+	brauner@kernel.org,
+	nico@fluxnic.net,
+	xiang@kernel.org,
+	chao@kernel.org,
+	tytso@mit.edu,
+	adilger.kernel@dilger.ca,
+	jack@suse.com,
+	konishi.ryusuke@gmail.com,
+	willy@infradead.org,
+	akpm@linux-foundation.org,
+	hare@suse.de,
+	p.raghav@samsung.com
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	xen-devel@lists.xenproject.org,
+	linux-bcache@vger.kernel.org,
+	linux-mtd@lists.infradead.org,
+	linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org,
+	linux-bcachefs@vger.kernel.org,
+	linux-btrfs@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-erofs@lists.ozlabs.org,
+	linux-ext4@vger.kernel.org,
+	linux-nilfs@vger.kernel.org,
+	yukuai3@huawei.com,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH RFC v3 for-6.8/block 00/17] block: don't access bd_inode directly from other modules
+Date: Thu, 21 Dec 2023 16:56:55 +0800
+Message-Id: <20231221085712.1766333-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -57,74 +74,95 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgDnNw5d_oNlEQPvEA--.24929S4
+X-Coremail-Antispam: 1UD129KBjvJXoW7Aw18WF43ur1kJF1xJFW8WFg_yoW5Jr4rpr
+	nxKF4fGr48u34xuayS9a17t34rJa1kGayUW3W2y345ZFWrZFyfZrWktF1rJFykJrZ7Xr4k
+	Xr1jyryrKr1I9aDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
+	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26rWY6r4U
+	JwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
+	0267AKxVWxJVW8Jr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWrZr1UMIIF0xvEx4A2jsIE
+	14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf
+	9x0JUd8n5UUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-From: Randy Dunlap <rdunlap@infradead.org>
+From: Yu Kuai <yukuai3@huawei.com>
 
-Correct the function parameter names for nilfs_cpfile_get_info():
+Changes in v3:
+ - remove bdev_associated_mapping() and patch 12 from v1;
+ - add kerneldoc comments for new bdev apis;
+ - rename __bdev_get_folio() to bdev_get_folio;
+ - fix a problem in erofs that erofs_init_metabuf() is not always
+ called.
+ - add reviewed-by tag for patch 15-17;
+Changes in v2:
+ - remove some bdev apis that is not necessary;
+ - pass in offset for bdev_read_folio() and __bdev_get_folio();
+ - remove bdev_gfp_constraint() and add a new helper in fs/buffer.c to
+ prevent access bd_indoe() directly from mapping_gfp_constraint() in
+ ext4.(patch 15, 16);
+ - remove block_device_ejected() from ext4.
 
-cpfile.c:564: warning: Function parameter or member 'cnop' not described in 'nilfs_cpfile_get_cpinfo'
-cpfile.c:564: warning: Function parameter or member 'mode' not described in 'nilfs_cpfile_get_cpinfo'
-cpfile.c:564: warning: Function parameter or member 'buf' not described in 'nilfs_cpfile_get_cpinfo'
-cpfile.c:564: warning: Function parameter or member 'cisz' not described in 'nilfs_cpfile_get_cpinfo'
-cpfile.c:564: warning: Excess function parameter 'cno' description in 'nilfs_cpfile_get_cpinfo'
-cpfile.c:564: warning: Excess function parameter 'ci' description in 'nilfs_cpfile_get_cpinfo'
 
-Also add missing descriptions of the function's specification.
+Patch 1 add some bdev apis, then follow up patches will use these apis
+to avoid access bd_inode directly, and hopefully the field bd_inode can
+be removed eventually(after figure out a way for fs/buffer.c).
 
-[ konishi.ryusuke@gmail.com: filled in missing descriptions ]
+Yu Kuai (17):
+  block: add some bdev apis
+  xen/blkback: use bdev api in xen_update_blkif_status()
+  bcache: use bdev api in read_super()
+  mtd: block2mtd: use bdev apis
+  s390/dasd: use bdev api in dasd_format()
+  scsicam: use bdev api in scsi_bios_ptable()
+  bcachefs: remove dead function bdev_sectors()
+  bio: export bio_add_folio_nofail()
+  btrfs: use bdev apis
+  cramfs: use bdev apis in cramfs_blkdev_read()
+  erofs: use bdev api
+  nilfs2: use bdev api in nilfs_attach_log_writer()
+  jbd2: use bdev apis
+  buffer: add a new helper to read sb block
+  ext4: use new helper to read sb block
+  ext4: remove block_device_ejected()
+  ext4: use bdev apis
 
-Link: https://lkml.kernel.org/r/20231220065931.2372-1-rdunlap@infradead.org
-Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
-Andrew, please add this to the queue for the next merge window.
-This fixes noticeable kernel-doc warnings for fs/nilfs2/cpfile.c.
+ block/bdev.c                       | 148 +++++++++++++++++++++++++++++
+ block/bio.c                        |   1 +
+ block/blk.h                        |   2 -
+ drivers/block/xen-blkback/xenbus.c |   3 +-
+ drivers/md/bcache/super.c          |  11 +--
+ drivers/mtd/devices/block2mtd.c    |  81 +++++++---------
+ drivers/s390/block/dasd_ioctl.c    |   5 +-
+ drivers/scsi/scsicam.c             |   4 +-
+ fs/bcachefs/util.h                 |   5 -
+ fs/btrfs/disk-io.c                 |  71 +++++++-------
+ fs/btrfs/volumes.c                 |  17 ++--
+ fs/btrfs/zoned.c                   |  15 +--
+ fs/buffer.c                        |  68 +++++++++----
+ fs/cramfs/inode.c                  |  36 +++----
+ fs/erofs/data.c                    |  18 ++--
+ fs/erofs/internal.h                |   2 +
+ fs/ext4/dir.c                      |   6 +-
+ fs/ext4/ext4.h                     |  13 ---
+ fs/ext4/ext4_jbd2.c                |   6 +-
+ fs/ext4/inode.c                    |   8 +-
+ fs/ext4/super.c                    |  66 +++----------
+ fs/ext4/symlink.c                  |   2 +-
+ fs/jbd2/journal.c                  |   3 +-
+ fs/jbd2/recovery.c                 |   6 +-
+ fs/nilfs2/segment.c                |   2 +-
+ include/linux/blkdev.h             |  17 ++++
+ include/linux/buffer_head.h        |  18 +++-
+ 27 files changed, 377 insertions(+), 257 deletions(-)
 
-Thanks,
-Ryusuke Konishi
-
- fs/nilfs2/cpfile.c | 28 +++++++++++++++++++++++-----
- 1 file changed, 23 insertions(+), 5 deletions(-)
-
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index 9ebefb3acb0e..39136637f715 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -552,11 +552,29 @@ static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 *cnop,
- }
- 
- /**
-- * nilfs_cpfile_get_cpinfo -
-- * @cpfile:
-- * @cno:
-- * @ci:
-- * @nci:
-+ * nilfs_cpfile_get_cpinfo - get information on checkpoints
-+ * @cpfile: checkpoint file inode
-+ * @cnop:   place to pass a starting checkpoint number and receive a
-+ *          checkpoint number to continue the search
-+ * @mode:   mode of checkpoints that the caller wants to retrieve
-+ * @buf:    buffer for storing checkpoints' information
-+ * @cisz:   byte size of one checkpoint info item in array
-+ * @nci:    number of checkpoint info items to retrieve
-+ *
-+ * nilfs_cpfile_get_cpinfo() searches for checkpoints in @mode state
-+ * starting from the checkpoint number stored in @cnop, and stores
-+ * information about found checkpoints in @buf.
-+ * The buffer pointed to by @buf must be large enough to store information
-+ * for @nci checkpoints.  If at least one checkpoint information is
-+ * successfully retrieved, @cnop is updated to point to the checkpoint
-+ * number to continue searching.
-+ *
-+ * Return: Count of checkpoint info items stored in the output buffer on
-+ * success, or the following negative error code on failure.
-+ * * %-EINVAL	- Invalid checkpoint mode.
-+ * * %-ENOMEM	- Insufficient memory available.
-+ * * %-EIO	- I/O error (including metadata corruption).
-+ * * %-ENOENT	- Invalid checkpoint number specified.
-  */
- 
- ssize_t nilfs_cpfile_get_cpinfo(struct inode *cpfile, __u64 *cnop, int mode,
 -- 
-2.34.1
+2.39.2
 
