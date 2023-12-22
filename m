@@ -1,108 +1,241 @@
-Received: from mail-vs1-f42.google.com (mail-vs1-f42.google.com [209.85.217.42])
+Received: from mail-io1-f71.google.com (mail-io1-f71.google.com [209.85.166.71])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68FA36D6D7;
-	Thu, 21 Dec 2023 14:54:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fr/DFr0B"
-Received: by mail-vs1-f42.google.com with SMTP id ada2fe7eead31-4669068a20bso188487137.1;
-        Thu, 21 Dec 2023 06:54:48 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1703170487; x=1703775287; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=pURYtu0NLCnQlpjaLQBb3A9CXAcN65Ivjf7L8viYZIQ=;
-        b=fr/DFr0B2e2D5pVAdRa8efpUmsqmuL2g3QPZBhjlG3AKquL6JIi+P/pwiOurUM+Krp
-         E8jOaHtXIoPU+ASnXxD/WU+K/VNMfFPqrfUx6VQ0rRmT8Mr0p+L2bMgQ33KT1YBpanT5
-         7LW+1EkG89UMJ78nqCi0fjvxIugayr3H6l25dY2AWUI32pOCJnGtRXNP8lRmto9u4Cqs
-         aciB5LcgZsEoAN9oMA78JVOUCDvrhJIDbtKIQMEHh50OdbB0R7f2UVJMOOy5PqhCQzsS
-         xE2krxIQmkhbo+7kOqMqYuqO3ztnTdxpCUnTfodfTsslG18eVAluCR+r1lIebDLR/j+b
-         B7PA==
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A7BC42573
+	for <linux-nilfs@vger.kernel.org>; Fri, 22 Dec 2023 00:59:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-io1-f71.google.com with SMTP id ca18e2360f4ac-7b71b4b179aso85611439f.1
+        for <linux-nilfs@vger.kernel.org>; Thu, 21 Dec 2023 16:59:23 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1703170487; x=1703775287;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=pURYtu0NLCnQlpjaLQBb3A9CXAcN65Ivjf7L8viYZIQ=;
-        b=lMJq6webPomHaUSuC44KN+Y6mKw9tcqg9I7AXceK4Vfz31mvR/pofNbotUqLArlpJe
-         WSu45gjs9Apoy+Wrnz6g7k5yX93fLOjeAn8ZltZzmHsUG74N+l/q1z7IFVETso8YouHt
-         6Pg45PvHga0trHcwR6fb40c/uPoS/z5VNKUofjaUG8doHHYxriNCqtX+w6eISyhEk4qC
-         6HGl/PYDWD5jvLKUs9nLHf9hJVwTLv1OpJ05StG5XIzt0biLqlDGAtaRFQOmebLWnXS3
-         IpvGlxPQaHgZFNWK0SoJyCuGEFX50Lr44sSIqOph7QLFFytxw910U/L5DjX/Yoq47NuF
-         1Pog==
-X-Gm-Message-State: AOJu0YycRWFzlvy6n8Q6oniyXgpBkR93BXMRVhZsEh/zJqYpttIKdbKn
-	J6XmrZk/cIVA96ISUxyt1zxfHzcAuwXdM2XyVDc=
-X-Google-Smtp-Source: AGHT+IFN1NuYgs8WiPh35+AiECRKwSlqz0ZEDe3FqBLZ5rzeC9cKopqWDVql1xxie4BTiSGNKZ2Qkn8RU8vM8AW8lKI=
-X-Received: by 2002:a05:6102:2c19:b0:466:a0dd:4b2 with SMTP id
- ie25-20020a0561022c1900b00466a0dd04b2mr1276429vsb.51.1703170487175; Thu, 21
- Dec 2023 06:54:47 -0800 (PST)
+        d=1e100.net; s=20230601; t=1703206763; x=1703811563;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=rCgJHboiS9j0tbid535+fkMH29D8a78hCvLmshto5cE=;
+        b=vwgzWrm2MvQE6g+zXxul+4FK8/ddmJexbaVO4R3De+zGg8h+mMXmGf7/vlnxGVESbW
+         VZ9l1adxrEONr69NvWOb5YcepULCVZgbpH6BgXNNLj7kglgz7BHVTe+Ifn//WVzjMuzN
+         a1+41O2L6io8XXFQeDiA3rNpNPXPw2+U7DCEG4++QuPsbMJi2WgcTPzPf5aIGNjnVtln
+         hW0mg/PfqoVff1cBcbKV+5t/HWl2OvfYwWdkN6IUzctzlc7gPRJybpFYK8apJGltsGLl
+         uQIAPVj2D4aRbvo1SOCKYBTnnEKqZaLuHUC9jMvVR0c2aDi2nZNYVtSjvYzz7qzo2Pin
+         SKvA==
+X-Gm-Message-State: AOJu0YzTswQAn0KgOLq61ViHLYjt9RY5/5MzqhApmssws3zemYyEiYO9
+	bRzF0Phh8udPUkINISiXyWcLxHBXoSRbRXKsfE+3Eq2YGdaY
+X-Google-Smtp-Source: AGHT+IEsKZGM+gdh3bOV7ipRSlILSScvnym2zk9Pdjg6PvWsdaC/J/4cJgPKYxPydQbYFgDhXgFREw2KaoodTE/s1yYA3W9ng19g
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20231221085712.1766333-1-yukuai1@huaweicloud.com> <20231221085839.1768763-1-yukuai1@huaweicloud.com>
-In-Reply-To: <20231221085839.1768763-1-yukuai1@huaweicloud.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 21 Dec 2023 23:54:30 +0900
-Message-ID: <CAKFNMo=TuhzyEs_NEOdYgJz+UVizU6Ojx4ZKXowDaux3kKddUQ@mail.gmail.com>
-Subject: Re: [PATCH RFC v3 for-6.8/block 12/17] nilfs2: use bdev api in nilfs_attach_log_writer()
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: axboe@kernel.dk, roger.pau@citrix.com, colyli@suse.de, 
-	kent.overstreet@gmail.com, joern@lazybastard.org, miquel.raynal@bootlin.com, 
-	richard@nod.at, vigneshr@ti.com, sth@linux.ibm.com, hoeppner@linux.ibm.com, 
-	hca@linux.ibm.com, gor@linux.ibm.com, agordeev@linux.ibm.com, 
-	jejb@linux.ibm.com, martin.petersen@oracle.com, clm@fb.com, 
-	josef@toxicpanda.com, dsterba@suse.com, viro@zeniv.linux.org.uk, 
-	brauner@kernel.org, nico@fluxnic.net, xiang@kernel.org, chao@kernel.org, 
-	tytso@mit.edu, adilger.kernel@dilger.ca, jack@suse.com, willy@infradead.org, 
-	akpm@linux-foundation.org, hare@suse.de, p.raghav@samsung.com, 
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org, 
-	linux-mtd@lists.infradead.org, linux-s390@vger.kernel.org, 
-	linux-scsi@vger.kernel.org, linux-bcachefs@vger.kernel.org, 
-	linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	linux-erofs@lists.ozlabs.org, linux-ext4@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, yukuai3@huawei.com, yi.zhang@huawei.com, 
-	yangerkun@huawei.com
+X-Received: by 2002:a05:6638:3888:b0:43c:ebeb:a152 with SMTP id
+ b8-20020a056638388800b0043cebeba152mr60272jav.2.1703206762951; Thu, 21 Dec
+ 2023 16:59:22 -0800 (PST)
+Date: Thu, 21 Dec 2023 16:59:22 -0800
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <00000000000015f553060d0eba97@google.com>
+Subject: [syzbot] [nilfs?] possible deadlock in nilfs_dirty_inode (2)
+From: syzbot <syzbot+903350d47ddb4cbb7f6f@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
+	syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, Dec 21, 2023 at 6:00=E2=80=AFPM Yu Kuai wrote:
->
-> From: Yu Kuai <yukuai3@huawei.com>
->
-> Avoid to access bd_inode directly, prepare to remove bd_inode from
-> block_device.
->
-> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-> ---
->  fs/nilfs2/segment.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> index 55e31cc903d1..a1130e384937 100644
-> --- a/fs/nilfs2/segment.c
-> +++ b/fs/nilfs2/segment.c
-> @@ -2823,7 +2823,7 @@ int nilfs_attach_log_writer(struct super_block *sb,=
- struct nilfs_root *root)
->         if (!nilfs->ns_writer)
->                 return -ENOMEM;
->
-> -       inode_attach_wb(nilfs->ns_bdev->bd_inode, NULL);
-> +       bdev_attach_wb(nilfs->ns_bdev);
->
->         err =3D nilfs_segctor_start_thread(nilfs->ns_writer);
->         if (unlikely(err))
-> --
-> 2.39.2
->
+Hello,
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+syzbot found the following issue on:
 
-Thanks,
-Ryusuke Konishi
+HEAD commit:    55cb5f43689d Merge tag 'trace-v6.7-rc6' of git://git.kerne..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=1167b176e80000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=314e9ad033a7d3a7
+dashboard link: https://syzkaller.appspot.com/bug?extid=903350d47ddb4cbb7f6f
+compiler:       gcc (Debian 12.2.0-14) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40
+userspace arch: i386
+
+Unfortunately, I don't have any reproducer for this issue yet.
+
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-55cb5f43.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/ba0e1e5966ee/vmlinux-55cb5f43.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/4212fc08c5ac/bzImage-55cb5f43.xz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+903350d47ddb4cbb7f6f@syzkaller.appspotmail.com
+
+======================================================
+WARNING: possible circular locking dependency detected
+6.7.0-rc6-syzkaller-00022-g55cb5f43689d #0 Not tainted
+------------------------------------------------------
+kswapd0/108 is trying to acquire lock:
+ffff888079954608 (sb_internal#4){.+.+}-{0:0}, at: nilfs_dirty_inode+0x1a0/0x270 fs/nilfs2/inode.c:1158
+
+but task is already holding lock:
+ffffffff8d11c740 (fs_reclaim){+.+.}-{0:0}, at: balance_pgdat+0x160/0x1a90 mm/vmscan.c:6746
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-> #2 (fs_reclaim){+.+.}-{0:0}:
+       __fs_reclaim_acquire mm/page_alloc.c:3693 [inline]
+       fs_reclaim_acquire+0x100/0x150 mm/page_alloc.c:3707
+       might_alloc include/linux/sched/mm.h:303 [inline]
+       prepare_alloc_pages.constprop.0+0x155/0x550 mm/page_alloc.c:4339
+       __alloc_pages+0x193/0x2420 mm/page_alloc.c:4557
+       alloc_pages_mpol+0x258/0x5f0 mm/mempolicy.c:2133
+       folio_alloc+0x1e/0xe0 mm/mempolicy.c:2211
+       filemap_alloc_folio+0x3bb/0x490 mm/filemap.c:974
+       __filemap_get_folio+0x54c/0xaa0 mm/filemap.c:1918
+       pagecache_get_page+0x2c/0x250 mm/folio-compat.c:99
+       block_write_begin+0x38/0x490 fs/buffer.c:2223
+       nilfs_write_begin+0x9f/0x1a0 fs/nilfs2/inode.c:261
+       page_symlink+0x391/0x490 fs/namei.c:5187
+       nilfs_symlink+0x24f/0x3e0 fs/nilfs2/namei.c:153
+       vfs_symlink fs/namei.c:4464 [inline]
+       vfs_symlink+0x3e4/0x620 fs/namei.c:4448
+       do_symlinkat+0x25f/0x310 fs/namei.c:4490
+       __do_sys_symlinkat fs/namei.c:4506 [inline]
+       __se_sys_symlinkat fs/namei.c:4503 [inline]
+       __ia32_sys_symlinkat+0x97/0xc0 fs/namei.c:4503
+       do_syscall_32_irqs_on arch/x86/entry/common.c:165 [inline]
+       __do_fast_syscall_32+0x62/0xe0 arch/x86/entry/common.c:321
+       do_fast_syscall_32+0x33/0x70 arch/x86/entry/common.c:346
+       entry_SYSENTER_compat_after_hwframe+0x70/0x7a
+
+-> #1 (&nilfs->ns_segctor_sem){++++}-{3:3}:
+       down_read+0x9a/0x330 kernel/locking/rwsem.c:1526
+       nilfs_transaction_begin+0x329/0xa40 fs/nilfs2/segment.c:223
+       nilfs_symlink+0x130/0x3e0 fs/nilfs2/namei.c:140
+       vfs_symlink fs/namei.c:4464 [inline]
+       vfs_symlink+0x3e4/0x620 fs/namei.c:4448
+       do_symlinkat+0x25f/0x310 fs/namei.c:4490
+       __do_sys_symlinkat fs/namei.c:4506 [inline]
+       __se_sys_symlinkat fs/namei.c:4503 [inline]
+       __ia32_sys_symlinkat+0x97/0xc0 fs/namei.c:4503
+       do_syscall_32_irqs_on arch/x86/entry/common.c:165 [inline]
+       __do_fast_syscall_32+0x62/0xe0 arch/x86/entry/common.c:321
+       do_fast_syscall_32+0x33/0x70 arch/x86/entry/common.c:346
+       entry_SYSENTER_compat_after_hwframe+0x70/0x7a
+
+-> #0 (sb_internal#4){.+.+}-{0:0}:
+       check_prev_add kernel/locking/lockdep.c:3134 [inline]
+       check_prevs_add kernel/locking/lockdep.c:3253 [inline]
+       validate_chain kernel/locking/lockdep.c:3869 [inline]
+       __lock_acquire+0x2433/0x3b20 kernel/locking/lockdep.c:5137
+       lock_acquire kernel/locking/lockdep.c:5754 [inline]
+       lock_acquire+0x1ae/0x520 kernel/locking/lockdep.c:5719
+       percpu_down_read include/linux/percpu-rwsem.h:51 [inline]
+       __sb_start_write include/linux/fs.h:1635 [inline]
+       sb_start_intwrite include/linux/fs.h:1757 [inline]
+       nilfs_transaction_begin+0x21e/0xa40 fs/nilfs2/segment.c:220
+       nilfs_dirty_inode+0x1a0/0x270 fs/nilfs2/inode.c:1158
+       __mark_inode_dirty+0x1e0/0xd60 fs/fs-writeback.c:2452
+       mark_inode_dirty_sync include/linux/fs.h:2311 [inline]
+       iput.part.0+0x5b/0x7b0 fs/inode.c:1800
+       iput+0x5c/0x80 fs/inode.c:1793
+       dentry_unlink_inode+0x292/0x430 fs/dcache.c:401
+       __dentry_kill+0x3b8/0x640 fs/dcache.c:607
+       shrink_dentry_list+0x11e/0x4a0 fs/dcache.c:1201
+       prune_dcache_sb+0xeb/0x150 fs/dcache.c:1282
+       super_cache_scan+0x327/0x540 fs/super.c:228
+       do_shrink_slab+0x428/0x1120 mm/shrinker.c:435
+       shrink_slab_memcg mm/shrinker.c:548 [inline]
+       shrink_slab+0xa83/0x1310 mm/shrinker.c:626
+       shrink_one+0x47d/0x7a0 mm/vmscan.c:4745
+       shrink_many mm/vmscan.c:4808 [inline]
+       lru_gen_shrink_node mm/vmscan.c:4923 [inline]
+       shrink_node+0x211c/0x3710 mm/vmscan.c:5863
+       kswapd_shrink_node mm/vmscan.c:6668 [inline]
+       balance_pgdat+0x9d2/0x1a90 mm/vmscan.c:6858
+       kswapd+0x5be/0xbf0 mm/vmscan.c:7118
+       kthread+0x2c6/0x3a0 kernel/kthread.c:388
+       ret_from_fork+0x45/0x80 arch/x86/kernel/process.c:147
+       ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:242
+
+other info that might help us debug this:
+
+Chain exists of:
+  sb_internal#4 --> &nilfs->ns_segctor_sem --> fs_reclaim
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(fs_reclaim);
+                               lock(&nilfs->ns_segctor_sem);
+                               lock(fs_reclaim);
+  rlock(sb_internal#4);
+
+ *** DEADLOCK ***
+
+2 locks held by kswapd0/108:
+ #0: ffffffff8d11c740 (fs_reclaim){+.+.}-{0:0}, at: balance_pgdat+0x160/0x1a90 mm/vmscan.c:6746
+ #1: ffff8880799540e0 (&type->s_umount_key#68){++++}-{3:3}, at: super_trylock_shared fs/super.c:610 [inline]
+ #1: ffff8880799540e0 (&type->s_umount_key#68){++++}-{3:3}, at: super_cache_scan+0x96/0x540 fs/super.c:203
+
+stack backtrace:
+CPU: 2 PID: 108 Comm: kswapd0 Not tainted 6.7.0-rc6-syzkaller-00022-g55cb5f43689d #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0xd9/0x1b0 lib/dump_stack.c:106
+ check_noncircular+0x317/0x400 kernel/locking/lockdep.c:2187
+ check_prev_add kernel/locking/lockdep.c:3134 [inline]
+ check_prevs_add kernel/locking/lockdep.c:3253 [inline]
+ validate_chain kernel/locking/lockdep.c:3869 [inline]
+ __lock_acquire+0x2433/0x3b20 kernel/locking/lockdep.c:5137
+ lock_acquire kernel/locking/lockdep.c:5754 [inline]
+ lock_acquire+0x1ae/0x520 kernel/locking/lockdep.c:5719
+ percpu_down_read include/linux/percpu-rwsem.h:51 [inline]
+ __sb_start_write include/linux/fs.h:1635 [inline]
+ sb_start_intwrite include/linux/fs.h:1757 [inline]
+ nilfs_transaction_begin+0x21e/0xa40 fs/nilfs2/segment.c:220
+ nilfs_dirty_inode+0x1a0/0x270 fs/nilfs2/inode.c:1158
+ __mark_inode_dirty+0x1e0/0xd60 fs/fs-writeback.c:2452
+ mark_inode_dirty_sync include/linux/fs.h:2311 [inline]
+ iput.part.0+0x5b/0x7b0 fs/inode.c:1800
+ iput+0x5c/0x80 fs/inode.c:1793
+ dentry_unlink_inode+0x292/0x430 fs/dcache.c:401
+ __dentry_kill+0x3b8/0x640 fs/dcache.c:607
+ shrink_dentry_list+0x11e/0x4a0 fs/dcache.c:1201
+ prune_dcache_sb+0xeb/0x150 fs/dcache.c:1282
+ super_cache_scan+0x327/0x540 fs/super.c:228
+ do_shrink_slab+0x428/0x1120 mm/shrinker.c:435
+ shrink_slab_memcg mm/shrinker.c:548 [inline]
+ shrink_slab+0xa83/0x1310 mm/shrinker.c:626
+ shrink_one+0x47d/0x7a0 mm/vmscan.c:4745
+ shrink_many mm/vmscan.c:4808 [inline]
+ lru_gen_shrink_node mm/vmscan.c:4923 [inline]
+ shrink_node+0x211c/0x3710 mm/vmscan.c:5863
+ kswapd_shrink_node mm/vmscan.c:6668 [inline]
+ balance_pgdat+0x9d2/0x1a90 mm/vmscan.c:6858
+ kswapd+0x5be/0xbf0 mm/vmscan.c:7118
+ kthread+0x2c6/0x3a0 kernel/kthread.c:388
+ ret_from_fork+0x45/0x80 arch/x86/kernel/process.c:147
+ ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:242
+ </TASK>
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
