@@ -1,134 +1,76 @@
-Received: from mail-il1-f197.google.com (mail-il1-f197.google.com [209.85.166.197])
+Received: from mail-io1-f70.google.com (mail-io1-f70.google.com [209.85.166.70])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77AA0D515
-	for <linux-nilfs@vger.kernel.org>; Tue,  2 Jan 2024 10:48:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58ECEFBF5
+	for <linux-nilfs@vger.kernel.org>; Tue,  2 Jan 2024 13:35:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-il1-f197.google.com with SMTP id e9e14a558f8ab-35fd46fe86aso112005085ab.1
-        for <linux-nilfs@vger.kernel.org>; Tue, 02 Jan 2024 02:48:28 -0800 (PST)
+Received: by mail-io1-f70.google.com with SMTP id ca18e2360f4ac-7b7fac89006so1202884839f.1
+        for <linux-nilfs@vger.kernel.org>; Tue, 02 Jan 2024 05:35:17 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1704192507; x=1704797307;
+        d=1e100.net; s=20230601; t=1704202516; x=1704807316;
         h=to:from:subject:message-id:date:mime-version:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=S4CtPSwPat2z45nJUvAmqy/UgHsZXuHsoz6P7tj1Uj0=;
-        b=w9mC3vQwT6geHIglq4aTrU12tmM6AmtEO6Jzg7hXDjZ4vbxF47CfuhGiDlj2rIEwHY
-         NOgnml3GG6LFUXxeRqegMPQwxy7AWbdV0NrwRzTB/lT+M6ZH6IRhfcyWGz8IMJPl9sbz
-         Md1o5k2QZTKQlcnHctdCQXCCbwcUzQWw/ZX9W3gn1EFuQNdMtoA0UejwDrjsvlB9lgN3
-         7fJNEf4ih8iQEWtQ2CUPZ8J9CoxxYABR8fy02C4iGuksNgZLpDVHOHy4sfI5MY1gDXFs
-         SLfs6d2yHMBfKgOaFl67qL6IYr1KVBdb0ORjxhBCxe0dPZIDbC5pDTB5Ohq89Y4PntAm
-         7caQ==
-X-Gm-Message-State: AOJu0YzCwNnhlAsZyz0X4fI3EwgMMt277jW0aEDi645+PHEkuhffoB9Q
-	YEXTgyP2xaHmZsJdeBSIh69zb79oPVVs4lPvobVHmqq7iOHi
-X-Google-Smtp-Source: AGHT+IH/0Jj8MdFM6JkhOV64hzFB7quujrB1hcBHgbHM/+P853wj8JGYB+Rdq8kK+Yyxr6Ekb4C0JK7XGHgdyMwyvMrCbfbCj/0R
+        bh=hEPAjr2Ytd+XVdWmKta/TmOX+0CoWkrwQ31hsDPS7O8=;
+        b=FUV4wi/vnkXmCs9KkEs4gJKO8vvQkYog9+FhW3pHn/j47GAtnjUqAJaC0kdoxfSc0f
+         oaRhmzUfc1pYDOuPSkee4B9Fd+p2y1TabgVhrhHaykC/kHrbQzBpx2imLHO4NsWWXWzn
+         GAiJsmaUwPNLKLtklkJFq6vC5IZNzRgB0aW9cxbH5jrg30nXGFN6Xi4a1nMICeZUqSk5
+         iIt9UGon8MNydSUkcI6uPJjUnEBWp6eujnInGS7Hj8SF5PutmFyOKyl21Q4CwSC+WGpj
+         mE3Yqj4Lf/+ixRTHnwK2q6pPWmOj5Ei2ZtBaTt7BpJMqnQyXv3eJUgiGMJ7BY6qwNxvK
+         7dJg==
+X-Gm-Message-State: AOJu0YwfwzDf1obieYKBEoyoqJ2u0hkj4H68VfSgRtidfrmWwZ6WiFgM
+	yqTkbRKIH2NfdJAJtetbltiCzCTgQUeNdC9MF+eJayb2TFWt
+X-Google-Smtp-Source: AGHT+IFgPKX0w7t+hcn0UpaleoH/hrZqqyklAqoisSpD6EBcrA4ukjJOBHKHPP89RSoNw8w3udtMT7TB3j5Fp5qCRLlrkr6yMx0U
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6e02:b4c:b0:35f:f683:fa1c with SMTP id
- f12-20020a056e020b4c00b0035ff683fa1cmr1862047ilu.5.1704192507723; Tue, 02 Jan
- 2024 02:48:27 -0800 (PST)
-Date: Tue, 02 Jan 2024 02:48:27 -0800
+X-Received: by 2002:a05:6602:2a44:b0:7ba:9c66:6d11 with SMTP id
+ k4-20020a0566022a4400b007ba9c666d11mr734766iov.1.1704202516630; Tue, 02 Jan
+ 2024 05:35:16 -0800 (PST)
+Date: Tue, 02 Jan 2024 05:35:16 -0800
 X-Google-Appengine-App-Id: s~syzkaller
 X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <0000000000000d480b060df43de5@google.com>
-Subject: [syzbot] [nilfs?] KMSAN: uninit-value in nilfs_add_checksums_on_logs (2)
-From: syzbot <syzbot+47a017c46edb25eff048@syzkaller.appspotmail.com>
+Message-ID: <000000000000a11763060df691a7@google.com>
+Subject: [syzbot] Monthly nilfs report (Jan 2024)
+From: syzbot <syzbot+list18d7edf8faff313be6b2@syzkaller.appspotmail.com>
 To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, 
 	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
 	syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
 
-Hello,
+Hello nilfs maintainers/developers,
 
-syzbot found the following issue on:
+This is a 31-day syzbot report for the nilfs subsystem.
+All related reports/information can be found at:
+https://syzkaller.appspot.com/upstream/s/nilfs
 
-HEAD commit:    fbafc3e621c3 Merge tag 'for_linus' of git://git.kernel.org..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=16e43009e80000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=e0c7078a6b901aa3
-dashboard link: https://syzkaller.appspot.com/bug?extid=47a017c46edb25eff048
-compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+During the period, 1 new issues were detected and 1 were fixed.
+In total, 7 issues are still open and 37 have been fixed so far.
 
-Unfortunately, I don't have any reproducer for this issue yet.
+Some of the still happening issues:
 
-Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/1520f7b6daa4/disk-fbafc3e6.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/8b490af009d5/vmlinux-fbafc3e6.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/202ca200f4a4/bzImage-fbafc3e6.xz
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+47a017c46edb25eff048@syzkaller.appspotmail.com
-
-=====================================================
-BUG: KMSAN: uninit-value in crc32_body lib/crc32.c:110 [inline]
-BUG: KMSAN: uninit-value in crc32_le_generic lib/crc32.c:179 [inline]
-BUG: KMSAN: uninit-value in crc32_le_base+0x43c/0xd80 lib/crc32.c:197
- crc32_body lib/crc32.c:110 [inline]
- crc32_le_generic lib/crc32.c:179 [inline]
- crc32_le_base+0x43c/0xd80 lib/crc32.c:197
- nilfs_segbuf_fill_in_data_crc fs/nilfs2/segbuf.c:224 [inline]
- nilfs_add_checksums_on_logs+0xbe4/0xf60 fs/nilfs2/segbuf.c:327
- nilfs_segctor_do_construct+0x9eff/0xe050 fs/nilfs2/segment.c:2112
- nilfs_segctor_construct+0x1eb/0xe30 fs/nilfs2/segment.c:2415
- nilfs_segctor_thread_construct fs/nilfs2/segment.c:2523 [inline]
- nilfs_segctor_thread+0xc3f/0x11d0 fs/nilfs2/segment.c:2606
- kthread+0x3ed/0x540 kernel/kthread.c:388
- ret_from_fork+0x66/0x80 arch/x86/kernel/process.c:147
- ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:242
-
-Uninit was created at:
- __alloc_pages+0x9a4/0xe00 mm/page_alloc.c:4591
- alloc_pages_mpol+0x62b/0x9d0 mm/mempolicy.c:2133
- alloc_pages mm/mempolicy.c:2204 [inline]
- folio_alloc+0x1da/0x380 mm/mempolicy.c:2211
- filemap_alloc_folio+0xa5/0x430 mm/filemap.c:974
- __filemap_get_folio+0xa5a/0x1760 mm/filemap.c:1918
- pagecache_get_page+0x4a/0x1a0 mm/folio-compat.c:99
- grab_cache_page_write_begin+0x55/0x70 mm/folio-compat.c:109
- block_write_begin+0x4f/0x450 fs/buffer.c:2223
- nilfs_write_begin+0xfc/0x200 fs/nilfs2/inode.c:261
- generic_perform_write+0x3f5/0xc40 mm/filemap.c:3918
- __generic_file_write_iter+0x20a/0x460 mm/filemap.c:4013
- generic_file_write_iter+0x103/0x5b0 mm/filemap.c:4039
- __kernel_write_iter+0x329/0x930 fs/read_write.c:517
- dump_emit_page fs/coredump.c:888 [inline]
- dump_user_range+0x593/0xcd0 fs/coredump.c:915
- elf_core_dump+0x528d/0x5a40 fs/binfmt_elf.c:2077
- do_coredump+0x32c9/0x4920 fs/coredump.c:764
- get_signal+0x2185/0x2d10 kernel/signal.c:2890
- arch_do_signal_or_restart+0x53/0xca0 arch/x86/kernel/signal.c:309
- exit_to_user_mode_loop+0xe8/0x320 kernel/entry/common.c:168
- exit_to_user_mode_prepare+0x163/0x220 kernel/entry/common.c:204
- irqentry_exit_to_user_mode+0xd/0x30 kernel/entry/common.c:309
- irqentry_exit+0x16/0x40 kernel/entry/common.c:412
- exc_page_fault+0x246/0x6f0 arch/x86/mm/fault.c:1564
- asm_exc_page_fault+0x2b/0x30 arch/x86/include/asm/idtentry.h:570
-
-CPU: 1 PID: 5307 Comm: segctord Not tainted 6.7.0-rc7-syzkaller-00003-gfbafc3e621c3 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 11/17/2023
-=====================================================
-
+Ref Crashes Repro Title
+<1> 444     Yes   kernel BUG at fs/buffer.c:LINE!
+                  https://syzkaller.appspot.com/bug?extid=cfed5b56649bddf80d6e
+<2> 15      No    KMSAN: uninit-value in nilfs_add_checksums_on_logs (2)
+                  https://syzkaller.appspot.com/bug?extid=47a017c46edb25eff048
+<3> 6       Yes   kernel BUG in end_buffer_async_write
+                  https://syzkaller.appspot.com/bug?extid=5c04210f7c7f897c1e7f
+<4> 1       No    possible deadlock in nilfs_dirty_inode (2)
+                  https://syzkaller.appspot.com/bug?extid=903350d47ddb4cbb7f6f
 
 ---
 This report is generated by a bot. It may contain errors.
 See https://goo.gl/tpsmEJ for more information about syzbot.
 syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+To disable reminders for individual bugs, reply with the following command:
+#syz set <Ref> no-reminders
 
-If the report is already addressed, let syzbot know by replying with:
-#syz fix: exact-commit-title
+To change bug's subsystems, reply with:
+#syz set <Ref> subsystems: new-subsystem
 
-If you want to overwrite report's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
-
-If the report is a duplicate of another one, reply with:
-#syz dup: exact-subject-of-another-report
-
-If you want to undo deduplication, reply with:
-#syz undup
+You may send multiple commands in a single email message.
