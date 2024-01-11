@@ -1,97 +1,188 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f69.google.com (mail-io1-f69.google.com [209.85.166.69])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27C35250EB;
-	Fri,  5 Jan 2024 10:32:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4T60BJ2M2vz4f3lWH;
-	Fri,  5 Jan 2024 18:31:52 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 063191A0817;
-	Fri,  5 Jan 2024 18:31:58 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgDX2xGZ2pdlGeddFg--.44050S3;
-	Fri, 05 Jan 2024 18:31:56 +0800 (CST)
-Subject: Re: [PATCH RFC v3 for-6.8/block 04/17] mtd: block2mtd: use bdev apis
-To: Christoph Hellwig <hch@infradead.org>, Jan Kara <jack@suse.cz>
-Cc: Yu Kuai <yukuai1@huaweicloud.com>, axboe@kernel.dk, roger.pau@citrix.com,
- colyli@suse.de, kent.overstreet@gmail.com, joern@lazybastard.org,
- miquel.raynal@bootlin.com, richard@nod.at, vigneshr@ti.com,
- sth@linux.ibm.com, hoeppner@linux.ibm.com, hca@linux.ibm.com,
- gor@linux.ibm.com, agordeev@linux.ibm.com, jejb@linux.ibm.com,
- martin.petersen@oracle.com, clm@fb.com, josef@toxicpanda.com,
- dsterba@suse.com, viro@zeniv.linux.org.uk, brauner@kernel.org,
- nico@fluxnic.net, xiang@kernel.org, chao@kernel.org, tytso@mit.edu,
- adilger.kernel@dilger.ca, jack@suse.com, konishi.ryusuke@gmail.com,
- willy@infradead.org, akpm@linux-foundation.org, hare@suse.de,
- p.raghav@samsung.com, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, xen-devel@lists.xenproject.org,
- linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org,
- linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org,
- linux-bcachefs@vger.kernel.org, linux-btrfs@vger.kernel.org,
- linux-fsdevel@vger.kernel.org, linux-erofs@lists.ozlabs.org,
- linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-References: <20231221085712.1766333-1-yukuai1@huaweicloud.com>
- <20231221085712.1766333-5-yukuai1@huaweicloud.com>
- <20240104112855.uci45hhqaiitmsir@quack3> <ZZedSYAedA05Oex2@infradead.org>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <28237ec3-c3c1-1f0c-5250-04a88845d4a6@huaweicloud.com>
-Date: Fri, 5 Jan 2024 18:31:53 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE16556759
+	for <linux-nilfs@vger.kernel.org>; Thu, 11 Jan 2024 20:06:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-io1-f69.google.com with SMTP id ca18e2360f4ac-7bec4b24a34so500941539f.3
+        for <linux-nilfs@vger.kernel.org>; Thu, 11 Jan 2024 12:06:28 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1705003588; x=1705608388;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=znm2gwyWocE0SyT1+yWxpHNmQurOYh5H30hbOrF7BmA=;
+        b=EFiIkoXsOgdKjAyxQcnTx+P2a+upii+/KRIkNoed5Ab4ivFoIWmeQu5rEnfwPaZoas
+         pIuJPOghGzM561CZDBe+ykmUOJYqMO0V2/3OoUgbczKVyHG1T6KL35jPx1tfsXY3e0Ww
+         oUXxyacqxKHW8aQE66beGQz5Etf2B5T+s39KAfaxqzF7UkdiUdOmlr8nyMDcnm7YUROx
+         bz2FTouupIdP9oCxpJ8DTxZopAWIy1ymVbwG16Xt/O2FSLh8eVLNnULDTefJM7TA8o89
+         xRFB07cnw9ySN5CcLyu1Gb/BPGrl63gYeF+y43pOJATimMeq+NYGmtX5zprGn2m0M3U+
+         5+2w==
+X-Gm-Message-State: AOJu0YwmpN81mGUESMKKFhrUh9TQeby5qupqrP8Lm6M9zO8oA8Anqkmj
+	+09fwqMkIAdjvn1nTk/8ZJSbQfBt1haom6jyzA7PhN3X3Y8K
+X-Google-Smtp-Source: AGHT+IHzE9vzoBADqva8JxjZp7itZuusRaJWFoFt7QqVkfmX39escRu2Y0MTvIxglW4mhRCelpDAp934jjToIAFkZADK60/BbCcY
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <ZZedSYAedA05Oex2@infradead.org>
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgDX2xGZ2pdlGeddFg--.44050S3
-X-Coremail-Antispam: 1UD129KBjvdXoW7XryUXFWDtw1fXr4DKF17Jrb_yoWxuFgEgF
-	yvkFZrKa13JrZ2vFsxKw15tFZ2ya47Zry8JrW0qay7W3s5Xa9rG3WkGr13XF1qqan7WFnI
-	9r9FqayrKay2qjkaLaAFLSUrUUUUUb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
-	9fnUUIcSsGvfJTRUUUbaxFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k26cxKx2IYs7xG
-	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8w
-	A2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j
-	6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
-	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
-	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
-	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
-	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
-	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
-	17CEb7AF67AKxVWrXVW8Jr1lIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWr
-	Zr1UMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYx
-	BIdaVFxhVjvjDU0xZFpf9x0JUd8n5UUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-Received: by 2002:a05:6638:3782:b0:46e:50ab:6a35 with SMTP id
+ w2-20020a056638378200b0046e50ab6a35mr8933jal.3.1705003588212; Thu, 11 Jan
+ 2024 12:06:28 -0800 (PST)
+Date: Thu, 11 Jan 2024 12:06:28 -0800
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <000000000000375f00060eb11585@google.com>
+Subject: [syzbot] [nilfs?] KASAN: use-after-free Read in nilfs_set_link
+From: syzbot <syzbot+4936b06b07f365af31cc@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Hi,
+Hello,
 
-ÔÚ 2024/01/05 14:10, Christoph Hellwig Ð´µÀ:
-> On Thu, Jan 04, 2024 at 12:28:55PM +0100, Jan Kara wrote:
->> What do you think? Because when we are working with the folios it is rather
->> natural to use their mapping for dirty balancing?
-> 
-> The real problem is that block2mtd pokes way to deep into block
-> internals.
-> 
-> I think the saviour here is Christians series to replace the bdev handle
-> with a struct file, which will allow to use the normal file write path
-> here and get rid of the entire layering volation.
+syzbot found the following issue on:
 
-Yes, looks like lots of patches from this set is not needed anymore.
-I'll stop sending v4 and just send some patches that is not related to
-'bd_inode' separately.
+HEAD commit:    52b1853b080a Merge tag 'i2c-for-6.7-final' of git://git.ke..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=10027331e80000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=655f8abe9fe69b3b
+dashboard link: https://syzkaller.appspot.com/bug?extid=4936b06b07f365af31cc
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=11d62025e80000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=13c38055e80000
 
-Thanks,
-Kuai
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/bf8c17cb6cda/disk-52b1853b.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/7aa7b6d00e92/vmlinux-52b1853b.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/dbc54614504d/bzImage-52b1853b.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/25a961b83aac/mount_0.gz
 
-> 
-> .
-> 
+Bisection is inconclusive: the issue happens on the oldest tested release.
 
+bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=172c038de80000
+final oops:     https://syzkaller.appspot.com/x/report.txt?x=14ac038de80000
+console output: https://syzkaller.appspot.com/x/log.txt?x=10ac038de80000
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+4936b06b07f365af31cc@syzkaller.appspotmail.com
+
+loop0: detected capacity change from 0 to 4096
+==================================================================
+BUG: KASAN: out-of-bounds in nilfs_set_link+0x24d/0x2e0 fs/nilfs2/dir.c:421
+Read of size 2 at addr ffff888078f08008 by task syz-executor397/5051
+
+CPU: 1 PID: 5051 Comm: syz-executor397 Not tainted 6.7.0-rc8-syzkaller-00177-g52b1853b080a #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 11/17/2023
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x1e7/0x2d0 lib/dump_stack.c:106
+ print_address_description mm/kasan/report.c:364 [inline]
+ print_report+0x163/0x540 mm/kasan/report.c:475
+ kasan_report+0x142/0x170 mm/kasan/report.c:588
+ nilfs_set_link+0x24d/0x2e0 fs/nilfs2/dir.c:421
+ nilfs_rename+0x5d8/0x6b0 fs/nilfs2/namei.c:414
+ vfs_rename+0xaba/0xde0 fs/namei.c:4844
+ do_renameat2+0xd5a/0x1390 fs/namei.c:4996
+ __do_sys_rename fs/namei.c:5042 [inline]
+ __se_sys_rename fs/namei.c:5040 [inline]
+ __x64_sys_rename+0x86/0x90 fs/namei.c:5040
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0x45/0x110 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x63/0x6b
+RIP: 0033:0x7fb7b8290669
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 21 18 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fffd4bb0238 EFLAGS: 00000246 ORIG_RAX: 0000000000000052
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00007fb7b8290669
+RDX: 00007fb7b8290669 RSI: 0000000020000040 RDI: 0000000020000180
+RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000f69 R11: 0000000000000246 R12: 0000000000000000
+R13: 0000000000000000 R14: 431bde82d7b634db R15: 00007fffd4bb02a0
+ </TASK>
+
+The buggy address belongs to the physical page:
+page:ffffea0001e3c200 refcount:1 mapcount:1 mapping:0000000000000000 index:0x55b79e908 pfn:0x78f08
+memcg:ffff888141652000
+anon flags: 0xfff000000a0028(uptodate|lru|mappedtodisk|swapbacked|node=0|zone=1|lastcpupid=0x7ff)
+page_type: 0x0()
+raw: 00fff000000a0028 ffffea0001391e88 ffffea00013f1b48 ffff888029cbb001
+raw: 000000055b79e908 0000000000000000 0000000100000000 ffff888141652000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Movable, gfp_mask 0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), pid 5052, tgid 5052 (udevd), ts 58139256944, free_ts 52307690585
+ set_page_owner include/linux/page_owner.h:31 [inline]
+ post_alloc_hook+0x1e6/0x210 mm/page_alloc.c:1537
+ prep_new_page mm/page_alloc.c:1544 [inline]
+ get_page_from_freelist+0x33ea/0x3570 mm/page_alloc.c:3312
+ __alloc_pages+0x255/0x680 mm/page_alloc.c:4568
+ alloc_pages_mpol+0x3de/0x640 mm/mempolicy.c:2133
+ vma_alloc_folio+0xf3/0x3f0 mm/mempolicy.c:2172
+ wp_page_copy mm/memory.c:3120 [inline]
+ do_wp_page+0x125e/0x4d40 mm/memory.c:3511
+ handle_pte_fault mm/memory.c:5055 [inline]
+ __handle_mm_fault mm/memory.c:5180 [inline]
+ handle_mm_fault+0x1b1c/0x6680 mm/memory.c:5345
+ do_user_addr_fault arch/x86/mm/fault.c:1364 [inline]
+ handle_page_fault arch/x86/mm/fault.c:1507 [inline]
+ exc_page_fault+0x456/0x870 arch/x86/mm/fault.c:1563
+ asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:570
+page last free stack trace:
+ reset_page_owner include/linux/page_owner.h:24 [inline]
+ free_pages_prepare mm/page_alloc.c:1137 [inline]
+ free_unref_page_prepare+0x931/0xa60 mm/page_alloc.c:2347
+ free_unref_page_list+0x5a0/0x840 mm/page_alloc.c:2533
+ release_pages+0x2117/0x2400 mm/swap.c:1042
+ tlb_batch_pages_flush mm/mmu_gather.c:98 [inline]
+ tlb_flush_mmu_free mm/mmu_gather.c:293 [inline]
+ tlb_flush_mmu+0x34c/0x4e0 mm/mmu_gather.c:300
+ tlb_finish_mmu+0xd4/0x1f0 mm/mmu_gather.c:392
+ exit_mmap+0x4d3/0xc60 mm/mmap.c:3324
+ __mmput+0x115/0x3c0 kernel/fork.c:1349
+ exit_mm+0x21f/0x300 kernel/exit.c:567
+ do_exit+0x9af/0x2740 kernel/exit.c:856
+ do_group_exit+0x206/0x2c0 kernel/exit.c:1018
+ __do_sys_exit_group kernel/exit.c:1029 [inline]
+ __se_sys_exit_group kernel/exit.c:1027 [inline]
+ __x64_sys_exit_group+0x3f/0x40 kernel/exit.c:1027
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0x45/0x110 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x63/0x6b
+
+Memory state around the buggy address:
+ ffff888078f07f00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffff888078f07f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+>ffff888078f08000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                         ^
+ ffff888078f08080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffff888078f08100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+==================================================================
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+For information about bisection process see: https://goo.gl/tpsmEJ#bisection
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
