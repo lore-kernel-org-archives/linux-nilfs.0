@@ -1,64 +1,34 @@
-Received: from mail-oo1-f51.google.com (mail-oo1-f51.google.com [209.85.161.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx01.omp.ru (mx01.omp.ru [90.154.21.10])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC6F36BB2F;
-	Thu,  8 Feb 2024 09:30:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65E9378B75;
+	Thu,  8 Feb 2024 14:42:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.154.21.10
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707384626; cv=none; b=U3bEeecU97PrpEY8gTFhPj7cNDGWHYI8MzJTXdQvHwcut638eflnVQAJLOJr2C6L46yCQ2w8UsvXLMRsiE2HNeDMl61ybnFa7umhvppuKQ8IWJLGNEIU+WeiUogOOGxWs93RnDkzUolTu+Zdj5o07g7qwLgXSWDBCLZGKAU2KKw=
+	t=1707403370; cv=none; b=q54TBzPCVA3BFD7wIwv3MHsNfTeXqxbRNDdogPlpOrM+pPbEhPg0dWNaIGZox/+kRgYNjCMQ1JAROCTj/pk+mgSa8OSsO6DSsCb/xoq8ToAaD0GJKHkzFJddxZ7GmxMoIAXgAuJhcWbSJImRL38CitZjiwFXLvQHwcbJgmR4LCc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707384626; c=relaxed/simple;
-	bh=BsuNr2wFRiqg7Q6CcRh1Y6ZuSkW7Duy0dfvM1Fr5JHo=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=bGikHE6LPy6RBw6KXcFhwUjMur2IjsY4KhuFBLtJhX8csY6l+t9XTFWxiLENriWBKz5HnKnJj4aQH1ycuYWCLqkxPMpA3/7OQAgzzKTn1GZ9W4GAihy7dxzY9B1ncQdcuETTowRiu763vjt4grrV9HtEt55ANpds/tCJIoZCjfI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VGf3VaCN; arc=none smtp.client-ip=209.85.161.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VGf3VaCN"
-Received: by mail-oo1-f51.google.com with SMTP id 006d021491bc7-59cf4872e1dso646130eaf.1;
-        Thu, 08 Feb 2024 01:30:24 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1707384624; x=1707989424; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=KsvJHYcs+h3JDFjBbpRPK2hAfd5iS8YGtIvMyf/vT6A=;
-        b=VGf3VaCNss0iVVhCUMdbTGduA3C7c6l+ssd67/EgzXh+778gRSWp2niyhb4hrT32p0
-         Asq8B4KNna2rJoBJK2tnIGsYEn8JMzXLx0d39sFbXlmhn6dWw6cBZCWgxbeP1ByPvJOI
-         7ynmPqVp8ypVeGLgZl0fls34gcuDB8mQRpYCo/CEZridrQ/zXC4vDwZ3JmnznbTQqeEY
-         GKV4VDX5qTv2AYFR5QjH73UJKAsMElmtd2vDL9ZlCvL5iz3hNu4s9RA4dr7PHFWl7605
-         fPtzwcZoATJYfKAMmmWYn0Eix+y8/Sbh3Z+D6mS9iH8I9esCGmJW5r1AZGvL4hNW1O2k
-         oINQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707384624; x=1707989424;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=KsvJHYcs+h3JDFjBbpRPK2hAfd5iS8YGtIvMyf/vT6A=;
-        b=Ipv2XYoAKzwcNoOpdWMAYlcHA8TXOTud4DejyU4IK+HIF56e0AR3UeB4r+qMfY7jc0
-         3zW89ppIC7VdJjbRrv/sY9kFB9EZNQ2kFa1QJ3uwoSui7Tu4X6gP4jM0+EIioAB56OoN
-         x/yHJKyJ6FyfRzo/ddkivguvKIOIy5ALbqXNaEE8w1n1otDsc335XNrj+ye1RWCbfkW/
-         nF0niwBRH4hvLJ4U8Ds50JI2fJ6aiDfNveKUJVXX0/uZf5jTf5lTgb5Enw9sd47uRW0h
-         N0Ls7z1Cw7qMpYepM1SqbRZQUJRtSJmkgSkqvtikBju/HunR7yNX3ugUmZ7pB7PlYgdl
-         JhWQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXj3dRf5CkbrvQr1woeuawZfaiHYWVGlVnSL7CiXGRmP4TA3s1w/ufb2i8KiVCfnWgQtyF63uJLJQaTjJ+lORtulvZ0Np64GcmPo4qJ
-X-Gm-Message-State: AOJu0YxslUTqnDHesNu1+3FHsiwyd6jIywgZetwkc4uJpfrheJWZ7Mut
-	AsXMCceMCJeqhzzL0gUuVPTgCuFkCyAW7GTQN8+KM2zrrF5xgLkAOOdXQ+uf
-X-Google-Smtp-Source: AGHT+IHs//tQP76kYjYVEbhOiaNgpCzPHJjRNIfqmpE1/l2iMUgLwEHjA4sNpOOI27nRwXdb1BOzSw==
-X-Received: by 2002:a05:6358:2241:b0:178:72b5:cf41 with SMTP id i1-20020a056358224100b0017872b5cf41mr6045085rwc.7.1707384623404;
-        Thu, 08 Feb 2024 01:30:23 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCWnDm6QIxRCfQHDlEv/mp9oVKM2WeAYoYvqhEp0GJpXvzP67BfWEygA57mFgGsAbYXbQG16Xpb8BJJ3qH67bj52XUDu2Qx5biKDtw12
-Received: from carrot.. (i60-34-120-122.s42.a014.ap.plala.or.jp. [60.34.120.122])
-        by smtp.gmail.com with ESMTPSA id h4-20020aa786c4000000b006e05cb7fd1fsm3189690pfo.164.2024.02.08.01.30.20
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 08 Feb 2024 01:30:21 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH] nilfs2: MAINTAINERS: drop unreachable project mirror site
-Date: Thu,  8 Feb 2024 18:30:18 +0900
-Message-Id: <20240208093018.6334-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+	s=arc-20240116; t=1707403370; c=relaxed/simple;
+	bh=jTC7Yl8CGI3zJJ9sjNzV4WysyTmtlbJK/KOW6mryqbA=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=PcRThTjdpU+mq0rDmDbRPDcQmz9D6GVIdHDe/reLr/4TwIqcrJKvDZp6JoqRTQ28vC7BCZbQG0igxSGnvHYnn3u1ByXFkkvTvPHIQjyoMFxI5bETBc0jZHPdLq58QHzZr1/ppALbRNQmMMAf8hOEmj2v+j0WOF81D9tQd1jjOVE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru; spf=pass smtp.mailfrom=omp.ru; arc=none smtp.client-ip=90.154.21.10
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=omp.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=omp.ru
+Received: from r.smirnovsmtp.omp.ru (10.189.215.22) by msexch01.omp.ru
+ (10.188.4.12) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id 15.2.1258.12; Thu, 8 Feb
+ 2024 17:42:41 +0300
+From: Roman Smirnov <r.smirnov@omp.ru>
+To: <stable@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+CC: Roman Smirnov <r.smirnov@omp.ru>, Ryusuke Konishi
+	<konishi.ryusuke@gmail.com>, <linux-nilfs@vger.kernel.org>,
+	<linux-kernel@vger.kernel.org>, Alexey Khoroshilov <khoroshilov@ispras.ru>,
+	<lvc-project@linuxtesting.org>, Sergey Shtylyov <s.shtylyov@omp.ru>, Karina
+ Yankevich <k.yankevich@omp.ru>, Andrey Rusalin <a.rusalin@omp.ru>, Sergey
+ Yudin <s.yudin@omp.ru>, Valentin Perevozchikov <v.perevozchikov@omp.ru>
+Subject: [PATCH 5.10/5.15/6.1 0/1] nilfs2: fix WARNING in nilfs_dat_prepare_end()
+Date: Thu, 8 Feb 2024 14:42:23 +0000
+Message-ID: <20240208144224.438146-1-r.smirnov@omp.ru>
+X-Mailer: git-send-email 2.25.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -66,28 +36,55 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: msexch02.omp.ru (10.188.4.13) To msexch01.omp.ru
+ (10.188.4.12)
+X-KSE-ServerInfo: msexch01.omp.ru, 9
+X-KSE-AntiSpam-Interceptor-Info: scan successful
+X-KSE-AntiSpam-Version: 6.1.0, Database issued on: 02/08/2024 14:27:39
+X-KSE-AntiSpam-Status: KAS_STATUS_NOT_DETECTED
+X-KSE-AntiSpam-Method: none
+X-KSE-AntiSpam-Rate: 0
+X-KSE-AntiSpam-Info: Lua profiles 183298 [Feb 08 2024]
+X-KSE-AntiSpam-Info: Version: 6.1.0.3
+X-KSE-AntiSpam-Info: Envelope from: r.smirnov@omp.ru
+X-KSE-AntiSpam-Info: LuaCore: 7 0.3.7 6d6bf5bd8eea7373134f756a2fd73e9456bb7d1a
+X-KSE-AntiSpam-Info: {Tracking_uf_ne_domains}
+X-KSE-AntiSpam-Info: {Tracking_from_domain_doesnt_match_to}
+X-KSE-AntiSpam-Info:
+	syzkaller.appspot.com:5.0.1,7.1.1;r.smirnovsmtp.omp.ru:7.1.1;d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;127.0.0.199:7.1.2;omp.ru:7.1.1
+X-KSE-AntiSpam-Info: FromAlignment: s
+X-KSE-AntiSpam-Info: Rate: 0
+X-KSE-AntiSpam-Info: Status: not_detected
+X-KSE-AntiSpam-Info: Method: none
+X-KSE-AntiSpam-Info: Auth:dkim=none
+X-KSE-Antiphishing-Info: Clean
+X-KSE-Antiphishing-ScanningType: Heuristic
+X-KSE-Antiphishing-Method: None
+X-KSE-Antiphishing-Bases: 02/08/2024 14:32:00
+X-KSE-Antivirus-Interceptor-Info: scan successful
+X-KSE-Antivirus-Info: Clean, bases: 2/8/2024 12:48:00 PM
+X-KSE-Attachment-Filter-Triggered-Rules: Clean
+X-KSE-Attachment-Filter-Triggered-Filters: Clean
+X-KSE-BulkMessagesFiltering-Scan-Result: InTheLimit
 
-The hosting site where the nilfs project had a mirror site continues
-to be in trouble, so we have decided not to use that site.  This will
-reflect it in the MAINTAINERS file.
+Syzkaller reports WARNING in nilfs_dat_prepare_end() in 5.10, 5.15 and 6.1
+stable releases. The problem has been fixed in upstream:
+https://syzkaller.appspot.com/bug?extid=5d5d25f90f195a3cfcb4
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- MAINTAINERS | 1 -
- 1 file changed, 1 deletion(-)
+The problem can also be fixed in versions 5.10, 5.15 and 6.1 by the
+following patch.
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 960512bec428..d3202a7c3c83 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -15431,7 +15431,6 @@ M:	Ryusuke Konishi <konishi.ryusuke@gmail.com>
- L:	linux-nilfs@vger.kernel.org
- S:	Supported
- W:	https://nilfs.sourceforge.io/
--W:	https://nilfs.osdn.jp/
- T:	git https://github.com/konis/nilfs2.git
- F:	Documentation/filesystems/nilfs2.rst
- F:	fs/nilfs2/
+Found by Linux Verification Center (linuxtesting.org) with Syzkaller.
+
+Link: https://syzkaller.appspot.com/bug?extid=325e6b0a1e7cf9035cc0
+Link: https://syzkaller.appspot.com/bug?extid=bebf30d67ea2569f0fd3
+
+Ryusuke Konishi (1):
+  nilfs2: replace WARN_ONs for invalid DAT metadata block requests
+
+ fs/nilfs2/dat.c | 27 +++++++++++++++++----------
+ 1 file changed, 17 insertions(+), 10 deletions(-)
+
 -- 
 2.34.1
-
