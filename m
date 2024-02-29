@@ -1,56 +1,56 @@
-Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
+Received: from mail-ej1-f49.google.com (mail-ej1-f49.google.com [209.85.218.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D5EF13442D
-	for <linux-nilfs@vger.kernel.org>; Thu, 29 Feb 2024 19:41:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 736F113E7D9
+	for <linux-nilfs@vger.kernel.org>; Thu, 29 Feb 2024 20:40:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709235707; cv=none; b=ifxc1B7t9AFa8qhX1BBMBzbXRe+0Cd3iGXIZ53CoPbNppfs2dUgq2WAul16rPvZ5XqKJyNMcovbjcFV/3Y0UvbrQYoDY5LkkFQ3E80GHR7mb1JJp8BUzrAEnnXeG4riyumsx+UfrtCsmPttHw3hB9xE1p5nNRJ1R4xtqBeC+pfQ=
+	t=1709239237; cv=none; b=B0oS+nFsYl6IGj5xVLlxuqSelQrmk2vPnITsnTc2/5lK36a9MPOuhGHMxrDCCSAi/kfxv26oxdL6O84H2Cvn2DdF8j1P+a71KarXu7hAA3tNe+pFq/uj0zFksCuzKWsb/B3Af8T5mlb1ldlTb6WMvFnySvvR5XE9P1/GqTiBEOo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709235707; c=relaxed/simple;
-	bh=1WeRi85DTX5lSTK6mlOcymKvnVy6AoW4RjHw5tld64Q=;
+	s=arc-20240116; t=1709239237; c=relaxed/simple;
+	bh=BbgG5w7yu+QX5FfjrTF2VmLEo++5O/1fX3vCzvCmwjs=;
 	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=BBYxu482MdoZa/HX/KeiSWaPOICRWrz1bJaIc2cKpcDL36dFBexuJHtvGM9EcBFaGNalIb6lO5fnwL2PPKHVXpEPmH6RkLGcftT0tIRT4QpyFxP1liYnkPqBVqMQNYQrMFT2YTuwmJ6g+NmsFaY4Pu10cg87uJ3dO0+X74g/Xrc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toblux.com; spf=none smtp.mailfrom=toblux.com; dkim=pass (2048-bit key) header.d=toblux-com.20230601.gappssmtp.com header.i=@toblux-com.20230601.gappssmtp.com header.b=G4Yg9EHh; arc=none smtp.client-ip=209.85.218.54
+	 Message-Id:References:To; b=Chf9polt+Wx2HRxvZ4iI0BhdnMkfyOoyPqek/BGBogRfb64UrKgEMdtKmQOsLhv0xPvNMy0YiylMHzZ8alMQ9V9Ss5k3YOz+oW2So9n5nlppC4qmjVFSsiVjXeIrwMA/P1MhFL9okGu1cSi6y+Pm1Vp2n9GKO/Q4FXiQXpqPO7U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toblux.com; spf=none smtp.mailfrom=toblux.com; dkim=pass (2048-bit key) header.d=toblux-com.20230601.gappssmtp.com header.i=@toblux-com.20230601.gappssmtp.com header.b=dj1ocBUj; arc=none smtp.client-ip=209.85.218.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toblux.com
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=toblux.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=toblux-com.20230601.gappssmtp.com header.i=@toblux-com.20230601.gappssmtp.com header.b="G4Yg9EHh"
-Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-a3ed9cae56fso469953966b.1
-        for <linux-nilfs@vger.kernel.org>; Thu, 29 Feb 2024 11:41:45 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=toblux-com.20230601.gappssmtp.com header.i=@toblux-com.20230601.gappssmtp.com header.b="dj1ocBUj"
+Received: by mail-ej1-f49.google.com with SMTP id a640c23a62f3a-a3f3d0d2787so210804466b.3
+        for <linux-nilfs@vger.kernel.org>; Thu, 29 Feb 2024 12:40:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=toblux-com.20230601.gappssmtp.com; s=20230601; t=1709235704; x=1709840504; darn=vger.kernel.org;
+        d=toblux-com.20230601.gappssmtp.com; s=20230601; t=1709239234; x=1709844034; darn=vger.kernel.org;
         h=to:references:message-id:content-transfer-encoding:cc:date
          :in-reply-to:from:subject:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=1WeRi85DTX5lSTK6mlOcymKvnVy6AoW4RjHw5tld64Q=;
-        b=G4Yg9EHhQaMtTfrL2N4vtrib1wEkvhZiBq3QLw/DBR3fCyzaQYGikMN5C7nDEtrMli
-         ZjSgqEaecxu+AS4NymYOnIYHSN/DU04wQGB55cwLb1YrpaRXt5iwz32PtD2Y/G1bNt3U
-         VXFm4cBy0heTcLmv+P9Ka28sw7uHNHw0F150sbgv1iexcWNKTM10yvsHvMH82EiIh1pz
-         IAaI9+lW5iBmx/zknPpHtgidYQEguk1CVbgYts9deGZ5xOgg59wQgvMkwIbhv5BUK07x
-         sb3y6loJdXv2Z41oxUVz+aqAwJqFnpPghbP3XgQFGZ3HS7wi6BeHAuSA7PE1S7HSjRhE
-         4NqQ==
+        bh=BbgG5w7yu+QX5FfjrTF2VmLEo++5O/1fX3vCzvCmwjs=;
+        b=dj1ocBUjYxX3wEF4+Tezmioygx9UC2PReUf8BLuKZ/Vba4woFBgd5wavj3GMWlIbcQ
+         On/POQiAYmB9irzQRJDahx2RsnBnJph/8/HGg0WdcwD9bITCJJ9Mxl1rgmJ0eC28fxdr
+         lk/szNMOAvtB8wM1MnRoxZrmYW6LUJsnodaz6cb2BxeQjLsFKN+GMrV/QbEm/E9qOzkS
+         bMBuKuBFQfo6dDwRHpHyCAqdOv9L97LERKPEd+IWhN+MDmdU5Sjr5eH0eSshTjbtQ7t6
+         0Wabmqakkl1RFJtqe/5UltzA2wXPBFINymCun5DeUZ3aR3+rMmJ62eqoKQBnjatulOhr
+         TWqA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709235704; x=1709840504;
+        d=1e100.net; s=20230601; t=1709239234; x=1709844034;
         h=to:references:message-id:content-transfer-encoding:cc:date
          :in-reply-to:from:subject:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=1WeRi85DTX5lSTK6mlOcymKvnVy6AoW4RjHw5tld64Q=;
-        b=mPuwIPH5IDwK63msDfx0H2Cj9cbjWWyw/WLRsUp9ObXed/AWOvPhjYq/NdjoaJNnmh
-         zkpn+pgp2kgiZbmnUYDPhCYu1WILZQsLASBxuIFyeYVvdDMJyLYDFk6RxcNXerbfOsGB
-         TiGP8LJGREatLL8TO+unGgktEdH+SeEeoAu/RzAcvFwan6ay3ybubjHs/RmJPFr0+YXO
-         Uyv2PE1eDXB82kquDOX1D230GjrzQ69UDmVGfulOjx9gq50K79XjKDRnjIsfotVdwSkB
-         C+Tm61igyi8EcYtIhL5yfRYilxvP+AeZLqIBNJ02HzV6o/LGgr/KdWg48NisKeG0kCL1
-         /QBg==
-X-Gm-Message-State: AOJu0Yy72hr75nyzPPji05avSUwWaK/cpGg55aMFbKFSeC/I51l8a3mN
-	DaX5BfuzqHNrMyHm1b01YIgaTr70g6t0OCPTB4B3Vh59D2gdfMwJmdr9mRKnVwQ=
-X-Google-Smtp-Source: AGHT+IGa8cHSa2YssKkjMsxGZwqzI4YU3LhHoWTI53iNfFzF2CIuO8B+o/NL/Td0ZrJKNRmMt6XnzQ==
-X-Received: by 2002:a17:906:ce28:b0:a44:591:a3d8 with SMTP id sd8-20020a170906ce2800b00a440591a3d8mr2030486ejb.31.1709235703096;
-        Thu, 29 Feb 2024 11:41:43 -0800 (PST)
+        bh=BbgG5w7yu+QX5FfjrTF2VmLEo++5O/1fX3vCzvCmwjs=;
+        b=FTZVJl99STfpyGaK/jjtQYIMQ1LpD+KINjcnOT90S+rpOIpP1D2f8i/fcK6TIyGBSG
+         RN35YIQ0YEbMdmsUo8Lr1Fd1bQ45vBV+s2pTaog6oTdR8XxnAgQGBxbP4+exJK2Nh927
+         GFXtdOP0XJZNe23MElNqnH+cEDdLTQc9IvOT+112K2qMIwTjWhn7VFmZGKbrwVEAxekW
+         /uVegijFlyJW/upmkNTRkKn62bRlcXlsHG9q+dc+n/ygO0bxP8OKbTQanKx6UFqMOXDS
+         Al9KwktFpcCW6UIUO5D44NfYjj5NrTTVD9grA0TSHEp4ylpmDTKQH+72xZ7kBoftrq6B
+         q29A==
+X-Gm-Message-State: AOJu0YyHatAX/Y1Jwjk5v7fxxkf7rCrRWi/K9k7pEUjoXfcnRh9pzcqs
+	jFF2vllkSuUndLc1ecIfVu4e29gI5sVAZObD9RNxQtN1A5KhUNC8vBS2REmKA9c=
+X-Google-Smtp-Source: AGHT+IGv5uEYgl89DteoWDxb6zYSseqqzqDjr0ESVcRHsq9OxAzM6rSLUoUkrjTp7IKh8Si+k+ojHQ==
+X-Received: by 2002:a17:906:5a94:b0:a3d:b6c2:fc58 with SMTP id l20-20020a1709065a9400b00a3db6c2fc58mr56249ejq.2.1709239233697;
+        Thu, 29 Feb 2024 12:40:33 -0800 (PST)
 Received: from smtpclient.apple ([2001:a61:1069:f701:6c1a:d05d:ad7c:b80d])
-        by smtp.gmail.com with ESMTPSA id tj7-20020a170907c24700b00a413d1eda4bsm976623ejc.87.2024.02.29.11.41.42
+        by smtp.gmail.com with ESMTPSA id f26-20020a170906139a00b00a4417c46efbsm1013526ejc.82.2024.02.29.12.40.32
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Thu, 29 Feb 2024 11:41:42 -0800 (PST)
+        Thu, 29 Feb 2024 12:40:33 -0800 (PST)
 Content-Type: text/plain;
 	charset=us-ascii
 Precedence: bulk
@@ -61,36 +61,36 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3774.400.31\))
 Subject: Re: [PATCH] nilfs2: Use div64_ul() instead of do_div()
 From: Thorsten Blum <thorsten.blum@toblux.com>
-In-Reply-To: <CAKFNMomtp7ZwB0gmxoemp_ums4rqOSbfF2BMS6kX+LwtKYtvCg@mail.gmail.com>
-Date: Thu, 29 Feb 2024 20:41:31 +0100
+In-Reply-To: <19910196-DFF3-4F94-B6D3-B9BF722DF8B8@toblux.com>
+Date: Thu, 29 Feb 2024 21:40:22 +0100
 Cc: linux-nilfs@vger.kernel.org,
  linux-kernel@vger.kernel.org
 Content-Transfer-Encoding: quoted-printable
-Message-Id: <19910196-DFF3-4F94-B6D3-B9BF722DF8B8@toblux.com>
+Message-Id: <BFEA2A31-3147-49EF-A9BE-592C90E783DD@toblux.com>
 References: <20240229121650.33983-1-thorsten.blum@toblux.com>
  <CAKFNMomtp7ZwB0gmxoemp_ums4rqOSbfF2BMS6kX+LwtKYtvCg@mail.gmail.com>
+ <19910196-DFF3-4F94-B6D3-B9BF722DF8B8@toblux.com>
 To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 X-Mailer: Apple Mail (2.3774.400.31)
 
 
-> On Feb 29, 2024, at 19:45, Ryusuke Konishi <konishi.ryusuke@gmail.com> =
+> On Feb 29, 2024, at 20:41, Thorsten Blum <thorsten.blum@toblux.com> =
 wrote:
 >=20
-> All of the fixes in this patch seem to be correct, but this doesn't
-> cover nilfs_resize_fs(), nilfs_max_segment_count(), and
-> nilfs_sb2_bad_offset(), which also have do_div() that doesn't use the
-> return value.
+>> On Feb 29, 2024, at 19:45, Ryusuke Konishi =
+<konishi.ryusuke@gmail.com> wrote:
+>>=20
+>> All of the fixes in this patch seem to be correct, but this doesn't
+>> cover nilfs_resize_fs(), nilfs_max_segment_count(), and
+>> nilfs_sb2_bad_offset(), which also have do_div() that doesn't use the
+>> return value.
+>=20
+> For nilfs_sb2_bad_offset(), where the dividend is u64 and the divisor =
+is u32, we
+> would need a dedicated function like div64_u32() that doesn't =
+calculate the
+> remainder, which doesn't seem to exist. What do you think?
 
-I just tested this, and Coccinelle didn't report nilfs_resize_fs() or
-nilfs_max_segment_count() because both divisors are fields of a struct. =
-I will
-refactor this and submit a v2.
+Never mind, there is div_u64(u64, u32). I'll submit a v2 shortly.
 
-For nilfs_sb2_bad_offset(), where the dividend is u64 and the divisor is =
-u32, we
-would need a dedicated function like div64_u32() that doesn't calculate =
-the
-remainder, which doesn't seem to exist. What do you think?
-
-Thanks,
 Thorsten=
