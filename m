@@ -1,110 +1,184 @@
-Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
+Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com [209.85.208.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7DAB12FB31;
-	Wed,  6 Mar 2024 14:46:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8348D133402;
+	Wed,  6 Mar 2024 15:03:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709736368; cv=none; b=UZmlK42dY8bALi6VE3kQ1BN1fVpjfJzkhffk6FMuLwRtFbyPcvYwprQM0QRQMsdexx4dndlexBRaJLa+kUVPZAjZrL0PU+Mlmdvc2miG3iaQB8As2dgg28CzOjLWKRw/R0q3JUorFKJYAfbFLHoP5jFlwEir4Zx4se4+Fse+S0c=
+	t=1709737420; cv=none; b=L5+p8wMlhhcItbUtcxTTHc7WNAu2UK5NAAUm3BNxhb3Fcy4yWG9sT1drUrp/+5N5rvJ72+eRWjoaP+Fsxxs15a29rGgJPpJ5goEAzY6lHN4cxPgjGSZIo1OoaRLMln1OcsKnUW55xN2/giDnKPMX9LSqzrXkFoWBaHgC8jqIUy4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709736368; c=relaxed/simple;
-	bh=COl5M+rVP9u4QPQOiCzll/KMvAZ7JBerPGfF56CFrZ8=;
+	s=arc-20240116; t=1709737420; c=relaxed/simple;
+	bh=Vmpa/qr22uEjdXQqzFUUaPtJdIje6Z7IfI92Npf8qXA=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=PkOYi5cqGeKQ/WSoh34/YIVmtykKbQlDB84uQmI36CB6TaIFeZq7+kZER/DUhaVmUjC2LIbUr6zym14CPJwtE0zUdJCPqEgL1IrgwI4Gj/HXdW/vzN3DETRGhvRh2AQsNq/ltQ7pW0y5KiVqkCJHtg2VgFp5quGv15NMpROI4YI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kgjC564m; arc=none smtp.client-ip=209.85.208.179
+	 To:Cc:Content-Type; b=lVEkgXSIGk9NMoLQmJjchuX7V0CcneRFtiaJF8YYaDYQQmmkLZPmYfMv0vZ1qrXW9vyXtvwk7sU89sBqWgOGBNjgE/aYeYEx/G3Ix/dFam0eHaQfLjweR5h55hFMtneKpltC/khv83cy9FH6TkhyssBAWu05TG+fcGCEdUYawks=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j5LZlQPT; arc=none smtp.client-ip=209.85.208.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kgjC564m"
-Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-2d3fb16f1a9so9612631fa.0;
-        Wed, 06 Mar 2024 06:46:06 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j5LZlQPT"
+Received: by mail-lj1-f172.google.com with SMTP id 38308e7fff4ca-2d2fad80eacso85925541fa.2;
+        Wed, 06 Mar 2024 07:03:38 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1709736365; x=1710341165; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1709737416; x=1710342216; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=COl5M+rVP9u4QPQOiCzll/KMvAZ7JBerPGfF56CFrZ8=;
-        b=kgjC564mlM5R6C3IKYzFwglVzCbeQzLQmePg79e2hBVPBFcu+nwQSIpJrH+ATnxqyl
-         t/P1kbUZ8kQCRUs8Qfkq5HbdBqAg+u6WvcHmUSP2Q5aIp70KQ9yWC2DNUVr0FvJxcdgK
-         PvCr0TBn9cYPIIedwILQAGp1fYBTGCzWjDPuhaB7Ihwcyp/q3eGD/MefI4Ne4A4WqMbT
-         IExIz3rRfdqAZTTy6/a7qpHMQJVmuKwmwIJiKj2BetHVpf2BmSWUhWxuZ6meo5d3seoO
-         VXkmQ9Sc53Mmd6xakkhEFuyNIrJPFYxwXXTuIRe8G8wnoMFrzmUGeTVHQ8RLo0kvZGEp
-         kjFQ==
+        bh=qLRhOa/VEHrwVicHu75uCn3tRw6+UafQ6T3s8RssrHA=;
+        b=j5LZlQPTk++HUyk5KrDWRU1pQkjMF5636LmDs8Op6XWl1ZQ1U58er1DRP8T2nOgUns
+         lMNqHCkng3fiOPKPhsOP3ewI4NDSUJGcQUvlV/06LbhIneoXlV8cp8Nbf3ShbHM5GEn6
+         qx5/nGy+g/veGPShNnX/S48oqbs7SuOJ7wADev7ksmPyaxV0SAALCnBDiuUg1mHfG7rD
+         WHRYlfpKAeLTdY6Fmt6/oSL0IyhhwIIixB+XX/V+KNowwTVfaAV8RXyA9lB2jlBiblBp
+         3/9zU29Pth6B4ZdwvA7viu62DSJ1etkxltAsOSYdrEDjMSk5GOUgm7nF3VhHxwP7XxDV
+         38Vg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709736365; x=1710341165;
+        d=1e100.net; s=20230601; t=1709737416; x=1710342216;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=COl5M+rVP9u4QPQOiCzll/KMvAZ7JBerPGfF56CFrZ8=;
-        b=SLxsRttaWNBgj7nhl2pk+m3lGwFABvyHuo5F3Lqd5xF8vkduhAfIybvhdLd9PjWubS
-         iKlUgnzU5CqO53HyfXNQChH/L74NtImuScr9DlFDZ+eojfJlg9Cp+H83znTsAQLN5mZM
-         mdIPaWqEjo/iW9gp+Sd2qDaGp0/oB3p7bc+YKqwD1ccVIe7GoLMibI8vSMo8DzGP1iOJ
-         1nVN9XXl+B4Xrz5Prpy59NELvUEN3VQwgQ00QgyPqxZiZmkgEUBpyq7OVjYWyOzR+LTI
-         qeT0/dSBDqmMJxng//wFg42w+cvtXkelL3O+9s4OFeALTPTPfxJ0HyaFUfIiwWmrgaML
-         ib5Q==
-X-Forwarded-Encrypted: i=1; AJvYcCVbCUxMESeSnWkpPi9aUjdomGCzGaMTexpPPZQf8uOwZ+2LaKHVJ2bu0CRr7cGjKtHnbbicrTgsbAXy5yzxZtsn1j4k6pEc1MS3uN47
-X-Gm-Message-State: AOJu0YwuhiXMmrCyvgMlAXnbxe0IAFefTARciK8dkzwPGUpHXzEyTdgs
-	LOBX9lxEET2Rmgh4grCXd/+5QsHCBEFjHGzXuSTDYfEdLhV2iJlPBJxDQ2zRKzm8VQ9ygrJ1rvQ
-	O5kv7YCCEQRsW7zvgB5zuHd/7lp4HK5z6w4k=
-X-Google-Smtp-Source: AGHT+IFgFUrYp4bK4A6/E0QlupuiFelUo2EwC+ZLBLZi5Gow4kzuwrMAmmTkLmxbq3oqhSo67tp7MORcJgvdFFIK1Z4=
-X-Received: by 2002:a2e:7006:0:b0:2d2:4477:6359 with SMTP id
- l6-20020a2e7006000000b002d244776359mr1755152ljc.7.1709736364621; Wed, 06 Mar
- 2024 06:46:04 -0800 (PST)
+        bh=qLRhOa/VEHrwVicHu75uCn3tRw6+UafQ6T3s8RssrHA=;
+        b=OB/UZFaI7fJXFwOCP5PoLf56bO1ZFcrs5H3ZMUiv5ANMIh52II6g74aWqXy9eSfkCY
+         /XaEN/AKMlp/ho9iIbrn3OJMOxxVzfK/VHlyxCEO40wMh+hhs0c8maO3/3tIh4gJgR0d
+         IazSsKuz7nswp0nn+R90VI4bQ++7nR4OhV4SRvgIlBY3D8O9aozqR3/OnafFsQXBOMpe
+         iVM4pREJpc7P0L4slGbqR5e6ucXfWD/Y1mGJ1pnacqrgAP8IQzW/j7LiRCkaEhXbyxMF
+         OTaKBXVIr7FqdOVlE5ZEbkZwQHrXzn0sRZ8EUv+enIxkGDt1uCXqTwrQJvNz474oedZs
+         SAdA==
+X-Forwarded-Encrypted: i=1; AJvYcCWdGFvAaE1mxU6rklLL/JitrQgfu7P+nUK7HLjscz2mJxkw0n1J7sNO/RhxdldnGr/Pu1rFqyX6+oEHO6uqAhVHsxc3+yJGhhI31UNwCNHwHTzZqfuv0kF10mZb6POUHFz5xCF3K5hUsITMGbz+YFP+Ps5Fo/+nX6m64U/Pyc9E1A9SInWm/YMS
+X-Gm-Message-State: AOJu0YzdGxH0dAC21d8FQf35hsv664WYL37D7VPH1S1iz7qN25XsGoQ3
+	MP/vofdtjaI7UTmh6CrF06h65G31j5BkM6QCuSHS+jvVhWvglgdqr97ljc5SLxwQKGrmi8W+IJy
+	kBLiqoD+krHsuJ39UxCWRKMyIXCs=
+X-Google-Smtp-Source: AGHT+IGUstqb46rDRskzavCFfceGJ4GNfCXdrMwaRfZeZhq56pJS9/mVX2h9/y3coq1WgQfYZxWuTcKXS1Ko4BzHDRA=
+X-Received: by 2002:a05:651c:620:b0:2d3:469b:3dca with SMTP id
+ k32-20020a05651c062000b002d3469b3dcamr2947914lje.50.1709737416193; Wed, 06
+ Mar 2024 07:03:36 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240229121650.33983-1-thorsten.blum@toblux.com>
- <CAKFNMomtp7ZwB0gmxoemp_ums4rqOSbfF2BMS6kX+LwtKYtvCg@mail.gmail.com>
- <19910196-DFF3-4F94-B6D3-B9BF722DF8B8@toblux.com> <BFEA2A31-3147-49EF-A9BE-592C90E783DD@toblux.com>
- <215C3176-D6E5-47CF-BC48-7A75CF75CE3F@toblux.com>
-In-Reply-To: <215C3176-D6E5-47CF-BC48-7A75CF75CE3F@toblux.com>
+References: <CABOYnLz8V-CMiZK0Gzz=eXf2G3E-psemp2pMZwZ_XJG53GawgA@mail.gmail.com>
+ <CAKFNMomdU5RHVMt2CCXYMAb5oyjDwOVRitNM+XGGC65TQs1ECQ@mail.gmail.com>
+ <CABOYnLxE86iTqTA3BOMLPHX5SeB--46S_4nec7H18H7B4oEi3w@mail.gmail.com> <CAKFNMomM0i1mOwkFsBta4rO+gDB1_LjSF_mENkB=PGF6a-tW-A@mail.gmail.com>
+In-Reply-To: <CAKFNMomM0i1mOwkFsBta4rO+gDB1_LjSF_mENkB=PGF6a-tW-A@mail.gmail.com>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 6 Mar 2024 23:45:48 +0900
-Message-ID: <CAKFNMo=324Wq9NHPKNXf07w9tpGrE8bp=Rf-AiHqnM7VqbTZPg@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: Use div64_ul() instead of do_div()
-To: Thorsten Blum <thorsten.blum@toblux.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Date: Thu, 7 Mar 2024 00:03:19 +0900
+Message-ID: <CAKFNMom7z+XG4J1sRC2aJ25aJZNzkUkrUtDnHa1LKDY-+0sbfQ@mail.gmail.com>
+Subject: Re: [syzbot] [nilfs?] KMSAN: uninit-value in nilfs_add_checksums_on_logs
+ (2)
+To: xingwei lee <xrivendell7@gmail.com>
+Cc: syzbot+47a017c46edb25eff048@syzkaller.appspotmail.com, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Mar 1, 2024 at 6:15=E2=80=AFAM Thorsten Blum wrote:
+On Wed, Mar 6, 2024 at 4:20=E2=80=AFPM Ryusuke Konishi wrote:
 >
->
-> > On Feb 29, 2024, at 21:40, Thorsten Blum <thorsten.blum@toblux.com> wro=
-te:
-> >
-> >> On Feb 29, 2024, at 20:41, Thorsten Blum <thorsten.blum@toblux.com> wr=
+> On Wed, Mar 6, 2024 at 4:07=E2=80=AFPM xingwei lee wrote:
+> > On 3 Mar 2024, at 20:45, Ryusuke Konishi <konishi.ryusuke@gmail.com> wr=
 ote:
-> >>
-> >>> On Feb 29, 2024, at 19:45, Ryusuke Konishi <konishi.ryusuke@gmail.com=
-> wrote:
-> >>>
-> >>> All of the fixes in this patch seem to be correct, but this doesn't
-> >>> cover nilfs_resize_fs(), nilfs_max_segment_count(), and
-> >>> nilfs_sb2_bad_offset(), which also have do_div() that doesn't use the
-> >>> return value.
-> >>
-> >> For nilfs_sb2_bad_offset(), where the dividend is u64 and the divisor =
-is u32, we
-> >> would need a dedicated function like div64_u32() that doesn't calculat=
-e the
-> >> remainder, which doesn't seem to exist. What do you think?
 > >
-> > Never mind, there is div_u64(u64, u32). I'll submit a v2 shortly.
+> > Hi, sorry for the delayed response.
+> >
+> > I test my reproducer in the linux 6.8-rc4 with KMSAN kernel config for =
+one hours, it doesn=E2=80=99t trigger any crash or report as follows:
+> >
+> > [  315.607028][   T37] audit: type=3D1804 audit(1709708422.469:31293): =
+pid=3D86478 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  315.608038][T86480] 884-0[86480]: segfault at 5c7ade ip 00000000005c=
+7ade sp 00000000200001f8 error 14 likely on CPU 2 (core 2, socke)
+> > [  315.611270][T86480] Code: Unable to access opcode bytes at 0x5c7ab4.
+> > [  320.575680][   T37] kauditd_printk_skb: 1253 callbacks suppressed
+> > [  320.575689][   T37] audit: type=3D1804 audit(1709708427.439:32130): =
+pid=3D88573 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  320.576419][T88575] 884-0[88575]: segfault at 5c7ade ip 00000000005c=
+7ade sp 00000000200001f8 error 14
+> > [  320.576695][   T37] audit: type=3D1804 audit(1709708427.439:32131): =
+pid=3D88574 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  320.579042][T88575]  likely on CPU 0 (core 0, socket 0)
+> > [  320.584184][T88575] Code: Unable to access opcode bytes at 0x5c7ab4.
+> > [  320.593832][   T37] audit: type=3D1804 audit(1709708427.459:32132): =
+pid=3D88578 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  320.594549][T88580] 884-0[88580]: segfault at 5c7ade ip 00000000005c=
+7ade sp 00000000200001f8 error 14 likely on CPU 1 (core 1, socke)
+> > [  320.596256][   T37] audit: type=3D1804 audit(1709708427.459:32133): =
+pid=3D88579 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  320.597901][T88580] Code: Unable to access opcode bytes at 0x5c7ab4.
+> > [  320.610954][   T37] audit: type=3D1804 audit(1709708427.479:32134): =
+pid=3D88583 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  320.611700][T88585] 884-0[88585]: segfault at 5c7ade ip 00000000005c=
+7ade sp 00000000200001f8 error 14 likely on CPU 2 (core 2, socke)
+> > [  320.613455][   T37] audit: type=3D1804 audit(1709708427.479:32135): =
+pid=3D88584 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  320.615959][T88585] Code: Unable to access opcode bytes at 0x5c7ab4.
+> > [  320.628571][   T37] audit: type=3D1804 audit(1709708427.489:32136): =
+pid=3D88588 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  325.582663][   T37] kauditd_printk_skb: 1280 callbacks suppressed
+> > [  325.582673][   T37] audit: type=3D1804 audit(1709708432.449:32990): =
+pid=3D90727 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  325.583320][T90729] 884-0[90729]: segfault at 5c7ade ip 00000000005c=
+7ade sp 00000000200001f8 error 14
+> > [  325.583460][   T37] audit: type=3D1804 audit(1709708432.449:32991): =
+pid=3D90728 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  325.585838][T90729]  likely on CPU 1 (core 1, socket 0)
+> > [  325.590985][T90729] Code: Unable to access opcode bytes at 0x5c7ab4.
+> > [  325.599620][   T37] audit: type=3D1804 audit(1709708432.459:32992): =
+pid=3D90732 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  325.601818][T90734] 884-0[90734]: segfault at 5c7ade ip 00000000005c=
+7ade sp 00000000200001f8 error 14
+> > [  325.601827][   T37] audit: type=3D1804 audit(1709708432.459:32993): =
+pid=3D90733 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  325.603945][T90734]  likely on CPU 2 (core 2, socket 0)
+> > [  325.607037][T90734] Code: Unable to access opcode bytes at 0x5c7ab4.
+> > [  325.617928][   T37] audit: type=3D1804 audit(1709708432.479:32994): =
+pid=3D90737 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  325.618862][T90739] 884-0[90739]: segfault at 5c7ade ip 00000000005c=
+7ade sp 00000000200001f8 error 14
+> > [  325.620190][   T37] audit: type=3D1804 audit(1709708432.479:32995): =
+pid=3D90738 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> > [  325.623238][T90739]  likely on CPU 0 (core 0, socket 0)
+> > [  325.623803][T90739] Code: Unable to access opcode bytes at 0x5c7ab4.
+> > [  325.632693][   T37] audit: type=3D1804 audit(1709708432.499:32996): =
+pid=3D90742 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
+se=3D0
+> >
+> > It=E2=80=99s seems this issue have been fixed.
+> >
+> > I'd like to isolate that the issue is still not fixed with the latest
+> > fixes, but I need to do some trial and error to reestablish a testable
+> > (bootable) KMSAN-enabled kernel config.
+> >
+> > Thanks,
+> > Ryusuke Konishi
+> >
+> >
+> > I hope it helps.
+> > Best regards
+> > xingwei Lee
 >
-> I left nilfs_sb2_bad_offset() unchanged in v2 because div_u64() still cal=
-culates
-> the remainder.
+> Thank you!
+> That helps a lot.
 >
-> Thorsten
+> Regards,
+> Ryusuke Konishi
 
-I got it.
+Ahh.  Looking at the February 28th syzbot crash, it appears that this
+issue still exists in recent -rc releases.
+So I'm going to investigate without closing it.
 
-I reviewed and tested the v2 patch and it was fine, so I sent it to
-the -mm tree.
-
-Thanks,
+Regards,
 Ryusuke Konishi
