@@ -1,186 +1,110 @@
-Received: from mail-pf1-f175.google.com (mail-pf1-f175.google.com [209.85.210.175])
+Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FF1460895;
-	Wed,  6 Mar 2024 14:25:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7DAB12FB31;
+	Wed,  6 Mar 2024 14:46:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709735154; cv=none; b=E8o22rEm2aDYgt+Am4kaaBSYMYVilDQSw3Km6NRcf8DI1jf0YzmZKUhtqzIFSCc1n4NrGEjzAF2cOG0MYRzcXAKx2rY6hKiqcOHKx5zpWD7ZHhumvVMhqi2yll9KO1SxE+zFWCjlm1jwxkVNFF1ox6w8z3yAV04muBydg/870is=
+	t=1709736368; cv=none; b=UZmlK42dY8bALi6VE3kQ1BN1fVpjfJzkhffk6FMuLwRtFbyPcvYwprQM0QRQMsdexx4dndlexBRaJLa+kUVPZAjZrL0PU+Mlmdvc2miG3iaQB8As2dgg28CzOjLWKRw/R0q3JUorFKJYAfbFLHoP5jFlwEir4Zx4se4+Fse+S0c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709735154; c=relaxed/simple;
-	bh=sCb5JbyJ/gY7JIM826empmjtqduKbdWZ8F83jb93tPs=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=d/uOSizfUccWr7XyL9D3GFkBEfSAJU/S7/myQbu7sri+STPkTzKVYdlR0i1albxZNx45EX6+btWiRM+wqGci0sPly7LaAMsBKXdnqogbft0DGqarv1oUfyM3SdJpUH3xw1UZTwBB/GQ+p3giYXpsOaZtH2LlhFQR7HPrscJksms=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=P74mGS1s; arc=none smtp.client-ip=209.85.210.175
+	s=arc-20240116; t=1709736368; c=relaxed/simple;
+	bh=COl5M+rVP9u4QPQOiCzll/KMvAZ7JBerPGfF56CFrZ8=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=PkOYi5cqGeKQ/WSoh34/YIVmtykKbQlDB84uQmI36CB6TaIFeZq7+kZER/DUhaVmUjC2LIbUr6zym14CPJwtE0zUdJCPqEgL1IrgwI4Gj/HXdW/vzN3DETRGhvRh2AQsNq/ltQ7pW0y5KiVqkCJHtg2VgFp5quGv15NMpROI4YI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kgjC564m; arc=none smtp.client-ip=209.85.208.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="P74mGS1s"
-Received: by mail-pf1-f175.google.com with SMTP id d2e1a72fcca58-6e655a12c81so26503b3a.1;
-        Wed, 06 Mar 2024 06:25:52 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kgjC564m"
+Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-2d3fb16f1a9so9612631fa.0;
+        Wed, 06 Mar 2024 06:46:06 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1709735152; x=1710339952; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=divIJxXpF6Kid14aoXB1EYkP0PShY5l++WV1hOmnXrQ=;
-        b=P74mGS1sG/NZGNOX0Gfpj2e+sYTeAWKPjYt672U8kIz2cJ7w5iFwrznUBKHUZYbxkw
-         1k8VwZVDK/yo7JdqtjIqdWEBJnlMFLgZbw09HqrfQXP+dM7Xk+B02nkRV9JNBHxAG7vL
-         IfKGW1C/d7t0QNatHzkvSb+c6x2zaMRvWqBla6Xcjpx1AqHPwkHSmOs3pCrIixt74i/m
-         bvpbzdqAs3qgP0IT8BeRzmYN8MGb9rTLyiTA9a3UNe26k0ddgtxnF+AcpUi2dSC7DBKY
-         TafPYsYu8Ml9kaLczlQHr6OHeI56eMUFse5uBFRsTkSyJ+ihYFiZyR0yv63j+lLA0mgq
-         C/7A==
+        d=gmail.com; s=20230601; t=1709736365; x=1710341165; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=COl5M+rVP9u4QPQOiCzll/KMvAZ7JBerPGfF56CFrZ8=;
+        b=kgjC564mlM5R6C3IKYzFwglVzCbeQzLQmePg79e2hBVPBFcu+nwQSIpJrH+ATnxqyl
+         t/P1kbUZ8kQCRUs8Qfkq5HbdBqAg+u6WvcHmUSP2Q5aIp70KQ9yWC2DNUVr0FvJxcdgK
+         PvCr0TBn9cYPIIedwILQAGp1fYBTGCzWjDPuhaB7Ihwcyp/q3eGD/MefI4Ne4A4WqMbT
+         IExIz3rRfdqAZTTy6/a7qpHMQJVmuKwmwIJiKj2BetHVpf2BmSWUhWxuZ6meo5d3seoO
+         VXkmQ9Sc53Mmd6xakkhEFuyNIrJPFYxwXXTuIRe8G8wnoMFrzmUGeTVHQ8RLo0kvZGEp
+         kjFQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709735152; x=1710339952;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=divIJxXpF6Kid14aoXB1EYkP0PShY5l++WV1hOmnXrQ=;
-        b=DgczGAb85iX3M1849e0SuSg0XIMDPs1KaGKkKAPtq0FpfbJA5XKhlxvv7esa1yPbGP
-         +0esOmMyXSu3xamvEbRnVbmeUzJeXFX72+76im/R+nCiXCjwzw/WHSxbwIUv6yuIPCiU
-         tA1Bo/Jvl+nBQavp3izj8Ag4gI+4OARkw0KdzF5OsGmVtyqvjj6oxBpvcA3aPq9gquJx
-         DWaneSKS3sGmIblxi+RBlVz5nKZ97PO0AMLyNp+TzMTIFNla5bvbJRWF9MsXi05hXEjH
-         KpxmrKq2asdzk5162QTvstywUkcXpuXiUGI47ytCt9aYgKUL2wwK8PZwdcyoZCXGGtMk
-         +ZCQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXNyTEmNBE3zoV4silMMib8o3pK7l3tCq5em8ODXjehiMz53GKNk+UJi9Ex9lp7xI4ir87ag6J2awuB4kvgG2mnTm8R7/bO9oO4QW9+
-X-Gm-Message-State: AOJu0Yw+EW+Xj3dDcwVrLoavC3oVDBKfB/E6zc1jJFoWnNQF6cLQ2UQb
-	4MWmaIuAu3UU5jK0NRvtEbS+FhVC47VVoip1Zi2w7AGFr/boq92mPOya+8Sj
-X-Google-Smtp-Source: AGHT+IFfDqY0nX6iJgir7qlBpUMzd5vDoMJX2JA3WL0pRGQ8CY4i5as8kXqceJlanehnTl9GwkgQlA==
-X-Received: by 2002:a05:6a20:3954:b0:1a1:4aea:c665 with SMTP id r20-20020a056a20395400b001a14aeac665mr313660pzg.19.1709735152309;
-        Wed, 06 Mar 2024 06:25:52 -0800 (PST)
-Received: from carrot.. (i60-34-119-103.s42.a014.ap.plala.or.jp. [60.34.119.103])
-        by smtp.gmail.com with ESMTPSA id b4-20020aa78704000000b006e5969aa281sm10751433pfo.169.2024.03.06.06.25.50
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 06 Mar 2024 06:25:51 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] nilfs2: Use div64_ul() instead of do_div()
-Date: Wed,  6 Mar 2024 23:25:47 +0900
-Message-Id: <20240306142547.4612-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+        d=1e100.net; s=20230601; t=1709736365; x=1710341165;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=COl5M+rVP9u4QPQOiCzll/KMvAZ7JBerPGfF56CFrZ8=;
+        b=SLxsRttaWNBgj7nhl2pk+m3lGwFABvyHuo5F3Lqd5xF8vkduhAfIybvhdLd9PjWubS
+         iKlUgnzU5CqO53HyfXNQChH/L74NtImuScr9DlFDZ+eojfJlg9Cp+H83znTsAQLN5mZM
+         mdIPaWqEjo/iW9gp+Sd2qDaGp0/oB3p7bc+YKqwD1ccVIe7GoLMibI8vSMo8DzGP1iOJ
+         1nVN9XXl+B4Xrz5Prpy59NELvUEN3VQwgQ00QgyPqxZiZmkgEUBpyq7OVjYWyOzR+LTI
+         qeT0/dSBDqmMJxng//wFg42w+cvtXkelL3O+9s4OFeALTPTPfxJ0HyaFUfIiwWmrgaML
+         ib5Q==
+X-Forwarded-Encrypted: i=1; AJvYcCVbCUxMESeSnWkpPi9aUjdomGCzGaMTexpPPZQf8uOwZ+2LaKHVJ2bu0CRr7cGjKtHnbbicrTgsbAXy5yzxZtsn1j4k6pEc1MS3uN47
+X-Gm-Message-State: AOJu0YwuhiXMmrCyvgMlAXnbxe0IAFefTARciK8dkzwPGUpHXzEyTdgs
+	LOBX9lxEET2Rmgh4grCXd/+5QsHCBEFjHGzXuSTDYfEdLhV2iJlPBJxDQ2zRKzm8VQ9ygrJ1rvQ
+	O5kv7YCCEQRsW7zvgB5zuHd/7lp4HK5z6w4k=
+X-Google-Smtp-Source: AGHT+IFgFUrYp4bK4A6/E0QlupuiFelUo2EwC+ZLBLZi5Gow4kzuwrMAmmTkLmxbq3oqhSo67tp7MORcJgvdFFIK1Z4=
+X-Received: by 2002:a2e:7006:0:b0:2d2:4477:6359 with SMTP id
+ l6-20020a2e7006000000b002d244776359mr1755152ljc.7.1709736364621; Wed, 06 Mar
+ 2024 06:46:04 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240229121650.33983-1-thorsten.blum@toblux.com>
+ <CAKFNMomtp7ZwB0gmxoemp_ums4rqOSbfF2BMS6kX+LwtKYtvCg@mail.gmail.com>
+ <19910196-DFF3-4F94-B6D3-B9BF722DF8B8@toblux.com> <BFEA2A31-3147-49EF-A9BE-592C90E783DD@toblux.com>
+ <215C3176-D6E5-47CF-BC48-7A75CF75CE3F@toblux.com>
+In-Reply-To: <215C3176-D6E5-47CF-BC48-7A75CF75CE3F@toblux.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Wed, 6 Mar 2024 23:45:48 +0900
+Message-ID: <CAKFNMo=324Wq9NHPKNXf07w9tpGrE8bp=Rf-AiHqnM7VqbTZPg@mail.gmail.com>
+Subject: Re: [PATCH] nilfs2: Use div64_ul() instead of do_div()
+To: Thorsten Blum <thorsten.blum@toblux.com>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-From: Thorsten Blum <thorsten.blum@toblux.com>
+On Fri, Mar 1, 2024 at 6:15=E2=80=AFAM Thorsten Blum wrote:
+>
+>
+> > On Feb 29, 2024, at 21:40, Thorsten Blum <thorsten.blum@toblux.com> wro=
+te:
+> >
+> >> On Feb 29, 2024, at 20:41, Thorsten Blum <thorsten.blum@toblux.com> wr=
+ote:
+> >>
+> >>> On Feb 29, 2024, at 19:45, Ryusuke Konishi <konishi.ryusuke@gmail.com=
+> wrote:
+> >>>
+> >>> All of the fixes in this patch seem to be correct, but this doesn't
+> >>> cover nilfs_resize_fs(), nilfs_max_segment_count(), and
+> >>> nilfs_sb2_bad_offset(), which also have do_div() that doesn't use the
+> >>> return value.
+> >>
+> >> For nilfs_sb2_bad_offset(), where the dividend is u64 and the divisor =
+is u32, we
+> >> would need a dedicated function like div64_u32() that doesn't calculat=
+e the
+> >> remainder, which doesn't seem to exist. What do you think?
+> >
+> > Never mind, there is div_u64(u64, u32). I'll submit a v2 shortly.
+>
+> I left nilfs_sb2_bad_offset() unchanged in v2 because div_u64() still cal=
+culates
+> the remainder.
+>
+> Thorsten
 
-Fixes Coccinelle/coccicheck warnings reported by do_div.cocci.
+I got it.
 
-Compared to do_div(), div64_ul() does not implicitly cast the divisor and
-does not unnecessarily calculate the remainder.
-
-Link: https://lkml.kernel.org/r/20240229210456.63234-2-thorsten.blum@toblux.com
-Signed-off-by: Thorsten Blum <thorsten.blum@toblux.com>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
-Hi Andrew,
-
-Could you please add this to the queue for the merge window?
-It's a little late addition, so if this doesn't make it to the
-upcoming merge window, please queue it for the next one.
+I reviewed and tested the v2 patch and it was fine, so I sent it to
+the -mm tree.
 
 Thanks,
 Ryusuke Konishi
-
- fs/nilfs2/cpfile.c    | 2 +-
- fs/nilfs2/dat.c       | 2 +-
- fs/nilfs2/ioctl.c     | 4 ++--
- fs/nilfs2/sufile.c    | 2 +-
- fs/nilfs2/super.c     | 2 +-
- fs/nilfs2/the_nilfs.c | 2 +-
- 6 files changed, 7 insertions(+), 7 deletions(-)
-
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index 2c57132584de..69a5cced1e84 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -28,7 +28,7 @@ nilfs_cpfile_get_blkoff(const struct inode *cpfile, __u64 cno)
- {
- 	__u64 tcno = cno + NILFS_MDT(cpfile)->mi_first_entry_offset - 1;
- 
--	do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
-+	tcno = div64_ul(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
- 	return (unsigned long)tcno;
- }
- 
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index 8f71f8b0e218..180fc8d36213 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -460,7 +460,7 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat, void *buf, unsigned int visz,
- 		kaddr = kmap_local_page(entry_bh->b_page);
- 		/* last virtual block number in this block */
- 		first = vinfo->vi_vblocknr;
--		do_div(first, entries_per_block);
-+		first = div64_ul(first, entries_per_block);
- 		first *= entries_per_block;
- 		last = first + entries_per_block - 1;
- 		for (j = i, n = 0;
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index cfb6aca5ec38..f1a01c191cf5 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -1111,7 +1111,7 @@ static int nilfs_ioctl_set_alloc_range(struct inode *inode, void __user *argp)
- 	segbytes = nilfs->ns_blocks_per_segment * nilfs->ns_blocksize;
- 
- 	minseg = range[0] + segbytes - 1;
--	do_div(minseg, segbytes);
-+	minseg = div64_ul(minseg, segbytes);
- 
- 	if (range[1] < 4096)
- 		goto out;
-@@ -1120,7 +1120,7 @@ static int nilfs_ioctl_set_alloc_range(struct inode *inode, void __user *argp)
- 	if (maxseg < segbytes)
- 		goto out;
- 
--	do_div(maxseg, segbytes);
-+	maxseg = div64_ul(maxseg, segbytes);
- 	maxseg--;
- 
- 	ret = nilfs_sufile_set_alloc_range(nilfs->ns_sufile, minseg, maxseg);
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index abf05dc5750c..6748218be7c5 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -48,7 +48,7 @@ nilfs_sufile_get_blkoff(const struct inode *sufile, __u64 segnum)
- {
- 	__u64 t = segnum + NILFS_MDT(sufile)->mi_first_entry_offset;
- 
--	do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
-+	t = div64_ul(t, nilfs_sufile_segment_usages_per_block(sufile));
- 	return (unsigned long)t;
- }
- 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 5e630c179a1e..ac24ed109ce9 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -448,7 +448,7 @@ int nilfs_resize_fs(struct super_block *sb, __u64 newsize)
- 
- 	sb2off = NILFS_SB2_OFFSET_BYTES(newsize);
- 	newnsegs = sb2off >> nilfs->ns_blocksize_bits;
--	do_div(newnsegs, nilfs->ns_blocks_per_segment);
-+	newnsegs = div64_ul(newnsegs, nilfs->ns_blocks_per_segment);
- 
- 	ret = nilfs_sufile_resize(nilfs->ns_sufile, newnsegs);
- 	up_write(&nilfs->ns_segctor_sem);
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 71400496ed36..2ae2c1bbf6d1 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -413,7 +413,7 @@ static u64 nilfs_max_segment_count(struct the_nilfs *nilfs)
- {
- 	u64 max_count = U64_MAX;
- 
--	do_div(max_count, nilfs->ns_blocks_per_segment);
-+	max_count = div64_ul(max_count, nilfs->ns_blocks_per_segment);
- 	return min_t(u64, max_count, ULONG_MAX);
- }
- 
--- 
-2.34.1
-
