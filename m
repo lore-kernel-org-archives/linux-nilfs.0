@@ -1,184 +1,104 @@
-Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com [209.85.208.172])
+Received: from mail-oo1-f45.google.com (mail-oo1-f45.google.com [209.85.161.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8348D133402;
-	Wed,  6 Mar 2024 15:03:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED3923D548;
+	Wed, 13 Mar 2024 10:58:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709737420; cv=none; b=L5+p8wMlhhcItbUtcxTTHc7WNAu2UK5NAAUm3BNxhb3Fcy4yWG9sT1drUrp/+5N5rvJ72+eRWjoaP+Fsxxs15a29rGgJPpJ5goEAzY6lHN4cxPgjGSZIo1OoaRLMln1OcsKnUW55xN2/giDnKPMX9LSqzrXkFoWBaHgC8jqIUy4=
+	t=1710327514; cv=none; b=Ikbad56SqCUZdH9ZG0d6R4fJtajkEztfPUUDsjLqTeh+iBTdetnSPvHTwwh245MCYxYUpys8sb20Kx8EumhSj5SqmibmXDYr115n9lXHD1D6KKY71crgTDRbDVG8radbYJFaDIVeqKrmIyJjA0QVQuVCPP+lNr99qYVzaxRAGkc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709737420; c=relaxed/simple;
-	bh=Vmpa/qr22uEjdXQqzFUUaPtJdIje6Z7IfI92Npf8qXA=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=lVEkgXSIGk9NMoLQmJjchuX7V0CcneRFtiaJF8YYaDYQQmmkLZPmYfMv0vZ1qrXW9vyXtvwk7sU89sBqWgOGBNjgE/aYeYEx/G3Ix/dFam0eHaQfLjweR5h55hFMtneKpltC/khv83cy9FH6TkhyssBAWu05TG+fcGCEdUYawks=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j5LZlQPT; arc=none smtp.client-ip=209.85.208.172
+	s=arc-20240116; t=1710327514; c=relaxed/simple;
+	bh=Atdyd4iRcOIB6SximA+lOzbaGWSLdUjyiRBUswIGW18=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=tb7k+gWYlBa3LbRPRVTAxggxthjc9RW9hpygYnckP6AHd8GjAnWEznJ5lizIndKFLvhnTdlYqtjNKBUVAPc+/REELEijMUqa/xV0cl9KPuj6SXo/f2Jh3/f2VokWquo+2a+Aj1kEmCskXwQASMV4UlbPt16waIk9DfDQLvby4BQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lMg2o1dH; arc=none smtp.client-ip=209.85.161.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j5LZlQPT"
-Received: by mail-lj1-f172.google.com with SMTP id 38308e7fff4ca-2d2fad80eacso85925541fa.2;
-        Wed, 06 Mar 2024 07:03:38 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lMg2o1dH"
+Received: by mail-oo1-f45.google.com with SMTP id 006d021491bc7-5a19de33898so493188eaf.0;
+        Wed, 13 Mar 2024 03:58:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1709737416; x=1710342216; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1710327512; x=1710932312; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=qLRhOa/VEHrwVicHu75uCn3tRw6+UafQ6T3s8RssrHA=;
-        b=j5LZlQPTk++HUyk5KrDWRU1pQkjMF5636LmDs8Op6XWl1ZQ1U58er1DRP8T2nOgUns
-         lMNqHCkng3fiOPKPhsOP3ewI4NDSUJGcQUvlV/06LbhIneoXlV8cp8Nbf3ShbHM5GEn6
-         qx5/nGy+g/veGPShNnX/S48oqbs7SuOJ7wADev7ksmPyaxV0SAALCnBDiuUg1mHfG7rD
-         WHRYlfpKAeLTdY6Fmt6/oSL0IyhhwIIixB+XX/V+KNowwTVfaAV8RXyA9lB2jlBiblBp
-         3/9zU29Pth6B4ZdwvA7viu62DSJ1etkxltAsOSYdrEDjMSk5GOUgm7nF3VhHxwP7XxDV
-         38Vg==
+        bh=/rE4lzNuJ8QYXgQLqej+lU+X5DW/HUYj7GofK0E/I2I=;
+        b=lMg2o1dHXRvYMCYlP5RJhi1N4VrwiO0n1N5eFRKXbVwRXsvHJRqKq2uji7IE7VKlnb
+         r2qRrnwnIU6nSufdBmfjTvyGc8YLXUWaCiN4FPegJHo4zaAawOSf+mdFYFY3oTwieob0
+         ixesIu4B2o1UivF03myTLWOAk3BmJc35DMSh72bj5dPelzNStcR733JhAPVuRgYRihcv
+         YCOWaO4dXH+iOuQdM6zviO1qwesnWvuklL0rICh79tnH6ivPrM4/6DLfLDBCrOrSfmYZ
+         yGsR4013c6qi4xOKNqkqD9vzuAMppwV6xZcfrXlTKZ2vxG2dmKCKXrAAJsSZNLow0qiy
+         imXQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709737416; x=1710342216;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1710327512; x=1710932312;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=qLRhOa/VEHrwVicHu75uCn3tRw6+UafQ6T3s8RssrHA=;
-        b=OB/UZFaI7fJXFwOCP5PoLf56bO1ZFcrs5H3ZMUiv5ANMIh52II6g74aWqXy9eSfkCY
-         /XaEN/AKMlp/ho9iIbrn3OJMOxxVzfK/VHlyxCEO40wMh+hhs0c8maO3/3tIh4gJgR0d
-         IazSsKuz7nswp0nn+R90VI4bQ++7nR4OhV4SRvgIlBY3D8O9aozqR3/OnafFsQXBOMpe
-         iVM4pREJpc7P0L4slGbqR5e6ucXfWD/Y1mGJ1pnacqrgAP8IQzW/j7LiRCkaEhXbyxMF
-         OTaKBXVIr7FqdOVlE5ZEbkZwQHrXzn0sRZ8EUv+enIxkGDt1uCXqTwrQJvNz474oedZs
-         SAdA==
-X-Forwarded-Encrypted: i=1; AJvYcCWdGFvAaE1mxU6rklLL/JitrQgfu7P+nUK7HLjscz2mJxkw0n1J7sNO/RhxdldnGr/Pu1rFqyX6+oEHO6uqAhVHsxc3+yJGhhI31UNwCNHwHTzZqfuv0kF10mZb6POUHFz5xCF3K5hUsITMGbz+YFP+Ps5Fo/+nX6m64U/Pyc9E1A9SInWm/YMS
-X-Gm-Message-State: AOJu0YzdGxH0dAC21d8FQf35hsv664WYL37D7VPH1S1iz7qN25XsGoQ3
-	MP/vofdtjaI7UTmh6CrF06h65G31j5BkM6QCuSHS+jvVhWvglgdqr97ljc5SLxwQKGrmi8W+IJy
-	kBLiqoD+krHsuJ39UxCWRKMyIXCs=
-X-Google-Smtp-Source: AGHT+IGUstqb46rDRskzavCFfceGJ4GNfCXdrMwaRfZeZhq56pJS9/mVX2h9/y3coq1WgQfYZxWuTcKXS1Ko4BzHDRA=
-X-Received: by 2002:a05:651c:620:b0:2d3:469b:3dca with SMTP id
- k32-20020a05651c062000b002d3469b3dcamr2947914lje.50.1709737416193; Wed, 06
- Mar 2024 07:03:36 -0800 (PST)
+        bh=/rE4lzNuJ8QYXgQLqej+lU+X5DW/HUYj7GofK0E/I2I=;
+        b=bVi25yDVbFvTS2sc1KtP1eQL1GoAt4qne8aggSrO1t4VZPa55Nc8RnmWB333n8Bdg5
+         c2/BPsVdCW+TvVSpq6xsNgxUA9IXO+nWqE1SUrTH159UYe2oZIC/POBo7Rt3YbOvsPr6
+         27CEEuEVZyPKdKIzdxKKG9/7JYOQvJd51Z4yl3FwrlDW3t3vnulU1Gtokv6cVua6sP+e
+         XQMoSV3EzkOdXYefntTsbALsX1jNPKXuIS1eSHqe2LRaKllAnXcDYajUgw7Pjm6Ebg03
+         DsRBVAvysH8Y39/3phKkiN0/c7Mwmcswr249ww4x7HWMoHQOZ2b4GHG7lyZMXO4T39Jn
+         vvZg==
+X-Forwarded-Encrypted: i=1; AJvYcCVY4i0LJc8fS3XzPolIn0Y/hPegz3RQhyt4/HlOeMsfuIxtovyLBgDmWl7zxptZnyODOMg161r/idtR/q2ci42Ug2Xoq9qT6J+5Zh2qFNhMZSF4zIMwnjTC9PcA/5tCm05Lmak0Cm/xH2E=
+X-Gm-Message-State: AOJu0Yz5UEKFm6fsnpdAggw5Lr8Oj1Xthd3qKjAm34aQ1qpP+t4Vc2jm
+	zLQhDy9fN9jLBtMSWJ6yF3WE66bwiJ7fUizfI27QiQFkZuMxBhjL
+X-Google-Smtp-Source: AGHT+IGd+sB9zJ9kHVMgMm/DrhiN5KWMeYMgh43NYWG3ZMMfZTh4G7PFD0ZEvbTwceT0Y/5SZTpa1g==
+X-Received: by 2002:a05:6870:3050:b0:222:d78:14ce with SMTP id u16-20020a056870305000b002220d7814cemr6220699oau.48.1710327511794;
+        Wed, 13 Mar 2024 03:58:31 -0700 (PDT)
+Received: from carrot.. (i223-217-148-4.s42.a014.ap.plala.or.jp. [223.217.148.4])
+        by smtp.gmail.com with ESMTPSA id m5-20020aa78a05000000b006e6ab7cb10esm2338844pfa.186.2024.03.13.03.58.29
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 13 Mar 2024 03:58:31 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: syzbot <syzbot+cfed5b56649bddf80d6e@syzkaller.appspotmail.com>,
+	syzkaller-bugs@googlegroups.com,
+	linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 0/2] nilfs2: fix kernel bug at submit_bh_wbc()
+Date: Wed, 13 Mar 2024 19:58:25 +0900
+Message-Id: <20240313105827.5296-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <0000000000002df264056a35b16b@google.com>
+References: <0000000000002df264056a35b16b@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CABOYnLz8V-CMiZK0Gzz=eXf2G3E-psemp2pMZwZ_XJG53GawgA@mail.gmail.com>
- <CAKFNMomdU5RHVMt2CCXYMAb5oyjDwOVRitNM+XGGC65TQs1ECQ@mail.gmail.com>
- <CABOYnLxE86iTqTA3BOMLPHX5SeB--46S_4nec7H18H7B4oEi3w@mail.gmail.com> <CAKFNMomM0i1mOwkFsBta4rO+gDB1_LjSF_mENkB=PGF6a-tW-A@mail.gmail.com>
-In-Reply-To: <CAKFNMomM0i1mOwkFsBta4rO+gDB1_LjSF_mENkB=PGF6a-tW-A@mail.gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 7 Mar 2024 00:03:19 +0900
-Message-ID: <CAKFNMom7z+XG4J1sRC2aJ25aJZNzkUkrUtDnHa1LKDY-+0sbfQ@mail.gmail.com>
-Subject: Re: [syzbot] [nilfs?] KMSAN: uninit-value in nilfs_add_checksums_on_logs
- (2)
-To: xingwei lee <xrivendell7@gmail.com>
-Cc: syzbot+47a017c46edb25eff048@syzkaller.appspotmail.com, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Wed, Mar 6, 2024 at 4:20=E2=80=AFPM Ryusuke Konishi wrote:
->
-> On Wed, Mar 6, 2024 at 4:07=E2=80=AFPM xingwei lee wrote:
-> > On 3 Mar 2024, at 20:45, Ryusuke Konishi <konishi.ryusuke@gmail.com> wr=
-ote:
-> >
-> > Hi, sorry for the delayed response.
-> >
-> > I test my reproducer in the linux 6.8-rc4 with KMSAN kernel config for =
-one hours, it doesn=E2=80=99t trigger any crash or report as follows:
-> >
-> > [  315.607028][   T37] audit: type=3D1804 audit(1709708422.469:31293): =
-pid=3D86478 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  315.608038][T86480] 884-0[86480]: segfault at 5c7ade ip 00000000005c=
-7ade sp 00000000200001f8 error 14 likely on CPU 2 (core 2, socke)
-> > [  315.611270][T86480] Code: Unable to access opcode bytes at 0x5c7ab4.
-> > [  320.575680][   T37] kauditd_printk_skb: 1253 callbacks suppressed
-> > [  320.575689][   T37] audit: type=3D1804 audit(1709708427.439:32130): =
-pid=3D88573 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  320.576419][T88575] 884-0[88575]: segfault at 5c7ade ip 00000000005c=
-7ade sp 00000000200001f8 error 14
-> > [  320.576695][   T37] audit: type=3D1804 audit(1709708427.439:32131): =
-pid=3D88574 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  320.579042][T88575]  likely on CPU 0 (core 0, socket 0)
-> > [  320.584184][T88575] Code: Unable to access opcode bytes at 0x5c7ab4.
-> > [  320.593832][   T37] audit: type=3D1804 audit(1709708427.459:32132): =
-pid=3D88578 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  320.594549][T88580] 884-0[88580]: segfault at 5c7ade ip 00000000005c=
-7ade sp 00000000200001f8 error 14 likely on CPU 1 (core 1, socke)
-> > [  320.596256][   T37] audit: type=3D1804 audit(1709708427.459:32133): =
-pid=3D88579 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  320.597901][T88580] Code: Unable to access opcode bytes at 0x5c7ab4.
-> > [  320.610954][   T37] audit: type=3D1804 audit(1709708427.479:32134): =
-pid=3D88583 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  320.611700][T88585] 884-0[88585]: segfault at 5c7ade ip 00000000005c=
-7ade sp 00000000200001f8 error 14 likely on CPU 2 (core 2, socke)
-> > [  320.613455][   T37] audit: type=3D1804 audit(1709708427.479:32135): =
-pid=3D88584 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  320.615959][T88585] Code: Unable to access opcode bytes at 0x5c7ab4.
-> > [  320.628571][   T37] audit: type=3D1804 audit(1709708427.489:32136): =
-pid=3D88588 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  325.582663][   T37] kauditd_printk_skb: 1280 callbacks suppressed
-> > [  325.582673][   T37] audit: type=3D1804 audit(1709708432.449:32990): =
-pid=3D90727 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  325.583320][T90729] 884-0[90729]: segfault at 5c7ade ip 00000000005c=
-7ade sp 00000000200001f8 error 14
-> > [  325.583460][   T37] audit: type=3D1804 audit(1709708432.449:32991): =
-pid=3D90728 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  325.585838][T90729]  likely on CPU 1 (core 1, socket 0)
-> > [  325.590985][T90729] Code: Unable to access opcode bytes at 0x5c7ab4.
-> > [  325.599620][   T37] audit: type=3D1804 audit(1709708432.459:32992): =
-pid=3D90732 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  325.601818][T90734] 884-0[90734]: segfault at 5c7ade ip 00000000005c=
-7ade sp 00000000200001f8 error 14
-> > [  325.601827][   T37] audit: type=3D1804 audit(1709708432.459:32993): =
-pid=3D90733 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  325.603945][T90734]  likely on CPU 2 (core 2, socket 0)
-> > [  325.607037][T90734] Code: Unable to access opcode bytes at 0x5c7ab4.
-> > [  325.617928][   T37] audit: type=3D1804 audit(1709708432.479:32994): =
-pid=3D90737 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  325.618862][T90739] 884-0[90739]: segfault at 5c7ade ip 00000000005c=
-7ade sp 00000000200001f8 error 14
-> > [  325.620190][   T37] audit: type=3D1804 audit(1709708432.479:32995): =
-pid=3D90738 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> > [  325.623238][T90739]  likely on CPU 0 (core 0, socket 0)
-> > [  325.623803][T90739] Code: Unable to access opcode bytes at 0x5c7ab4.
-> > [  325.632693][   T37] audit: type=3D1804 audit(1709708432.499:32996): =
-pid=3D90742 uid=3D0 auid=3D0 ses=3D1 subj=3Dunconfined op=3Dinvalid_pcr cau=
-se=3D0
-> >
-> > It=E2=80=99s seems this issue have been fixed.
-> >
-> > I'd like to isolate that the issue is still not fixed with the latest
-> > fixes, but I need to do some trial and error to reestablish a testable
-> > (bootable) KMSAN-enabled kernel config.
-> >
-> > Thanks,
-> > Ryusuke Konishi
-> >
-> >
-> > I hope it helps.
-> > Best regards
-> > xingwei Lee
->
-> Thank you!
-> That helps a lot.
->
-> Regards,
-> Ryusuke Konishi
+Hi Andrew,
 
-Ahh.  Looking at the February 28th syzbot crash, it appears that this
-issue still exists in recent -rc releases.
-So I'm going to investigate without closing it.
+please apply this series as a bug fix.
 
-Regards,
+This resolves a kernel BUG reported by syzbot.  Since there are two
+flaws involved, I've made each one a separate patch.
+
+The first patch alone resolves the syzbot-reported bug, but I think
+both fixes should be sent to stable, so I've tagged them as such.
+
+This series does not conflict with the currently queued conversion
+to kmap_local series, etc and can be applied independently.
+
+Thanks,
 Ryusuke Konishi
+
+
+Ryusuke Konishi (2):
+  nilfs2: fix failure to detect DAT corruption in btree and direct
+    mappings
+  nilfs2: prevent kernel bug at submit_bh_wbc()
+
+ fs/nilfs2/btree.c  | 9 +++++++--
+ fs/nilfs2/direct.c | 9 +++++++--
+ fs/nilfs2/inode.c  | 2 +-
+ 3 files changed, 15 insertions(+), 5 deletions(-)
+
+-- 
+2.34.1
+
