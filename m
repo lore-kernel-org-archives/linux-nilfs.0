@@ -1,126 +1,157 @@
-Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4A7918D898;
-	Mon, 25 Mar 2024 08:19:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10F081879;
+	Thu, 28 Mar 2024 14:31:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711354792; cv=none; b=g6eb0Sj4S07C87VpqepsyAVoyyR0BUWvAGrZFa4BUej4CR6YIwi7nDSkLUkSQXtSOcJBeH5y0z38/TUzdx7cocDXkdYQ40QjwTWp5SprSqQxgaJfTkoW1ZnVyO0k09NfSqnMUy6eDL/01DHgHts4Ngg1Ex1wNEla1CROAaSi9AA=
+	t=1711636265; cv=none; b=TsaSuZaa+mOPb4gMTrYw6L6GZvvkXyWSJl1F6oLiN/d9cyei/sqjeLivDoKuLEArbftgkr8kn/4RC8rMN9pSq8Gslumnb5ALq7gqV9IAkh6ac+f9ubVSGA5egeD7c36qrt3LE6ob/nVFyIDbCG9PrsXhJb8Ue7u7TlApyLr1VNI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711354792; c=relaxed/simple;
-	bh=lIpUYQJtPvS3BxEqA7zTq9KBEkYJ5PSk/erw1/XkCf4=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=dTkDwm5dheZsp+spExsWtZqYmO8gKkZm53Xtd+0ORmG3lJq56mKQNI2rWW2dKbXVsZRZLAIv2BejGUjIjKHdlS1py7Q6RV8mVv14ZDNVw0Cqo/eKakDwU0HXUFMZQnPTAOAR0766XQOGUdJSo6GD7Pm3bt2nS4VZwUrYVmAhrA8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HBkduOB3; arc=none smtp.client-ip=209.85.208.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1711636265; c=relaxed/simple;
+	bh=zN2hzijZlAwA7dSIUuqXqTXuAGGw3rihlUXROhzown4=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=XSfHzXv59ixjGGMOCuKiEcRfQH5Wz0iPodm6syal3cKs1ibOcBB8VQ6aE2+tAAVPsfPQQBTyRyb/qoda2KTCVttB0xw3cB816Y4UGNxWeP4Km2wwe+2WJvcSsEZOcPsQad/YfFPQWfacVFhDbYmSmLNrUyj97Cy6uzU917PbO2M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eWM+Qp30; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HBkduOB3"
-Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-2d4a901e284so80715921fa.1;
-        Mon, 25 Mar 2024 01:19:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1711354789; x=1711959589; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=zyaog/ojigT48JKNMU9i5w4rtbwucwfAGNUHLnrxdoA=;
-        b=HBkduOB3ndsNh8nfO3+gLVUtX2QPdXU2AypbHIJsWdmeO7R6UlSLw/C90CDFWF8IYv
-         nAP2gEbqDc4Hp7JbdAU5HYY8OSKywqEG0K9RDVqX3mh2edPQ28s3ilj0rb2kr2l/FxiW
-         bGxDpee69beInRLjC9V100QhNRHGklhcEDsfawVCHIXBj/gsdAgBqejoBdWYYhnNW9FN
-         cHbH1Z4W/Fe4SbUodGN8r7FKZ43NMHuUM30NlB71dDVbnN0doNFf2QscZ5DpnDBzNVjK
-         lqdUZkNtPI8x9fZG+TxslN26h2IheoJaTh0RDDVik8zsiQdOl27/HpqrBD9vMaGgI4hi
-         /O/g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711354789; x=1711959589;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=zyaog/ojigT48JKNMU9i5w4rtbwucwfAGNUHLnrxdoA=;
-        b=h5pjVDGS7a3pshpTnJ5dZYrI14qcFR6zo/gCj9GiikOXry/5kDo2oZYUBDa/TFdjHu
-         uVI/W3ckdGwLWdMz4vDq0QAimj+HbxYXGZxUjZ7XZV8W2qgMo352oyKyIkv3I+5cZgwO
-         DFMz89BKwRt2lY5KQzBApJXrQt1hk+JKFgoNFYCpE7eUHqEJnp01Lq/9m0WyjCC1tMjZ
-         k48gxo9vYuHg2aRR+KwVjUjwhTwzTkaZEbUCDHjsBzCsZ2nwArtbflW6vq9zDeMEUIuQ
-         JZcDbAo9xomr1OM4M49pXn7zREMC76DOZwmjRLGU3fcmpSEJVwwuTOwffnrKPnhlpW0l
-         8kcA==
-X-Forwarded-Encrypted: i=1; AJvYcCVpLHyp+Gu8SgQIXUBrINAXyfj4c9q9i450Jpl59ph4zjArfgb3SnpisAMWU7O8gjbdnwXOxoPmgkbmenXKdYLNgasL2ZyGbiJ7qIxK
-X-Gm-Message-State: AOJu0YyaP/PnRn6W3nVg8owOC6FiSYglKbrq7LxyHvnw/D+rfSMUFC2o
-	jp/qvK+sS1+LDDHXcUYXOBQCHDLB3dXoSTpJIJJ45YNTPJ2YSAL3XCQ2iTT8PSObNrqczy+SRIp
-	pz9BEw5/sQRsHSyLMHJ9qaJS0KjQJl/Tlfr4=
-X-Google-Smtp-Source: AGHT+IERKZc9n0PabjTyQJRPIveAjnM6cvGj82VJT164+gkS1jNiwYxhEiYn3QgUTnfemm4WlRTNSptza4XrgKro6II=
-X-Received: by 2002:a2e:9048:0:b0:2d4:6cde:fbe3 with SMTP id
- n8-20020a2e9048000000b002d46cdefbe3mr4579558ljg.24.1711354788449; Mon, 25 Mar
- 2024 01:19:48 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eWM+Qp30"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D7141C433C7;
+	Thu, 28 Mar 2024 14:30:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1711636264;
+	bh=zN2hzijZlAwA7dSIUuqXqTXuAGGw3rihlUXROhzown4=;
+	h=From:To:Cc:Subject:Date:From;
+	b=eWM+Qp30VXj9Cmh0LnGCxoeRKFCdiRG/+7cYiw3/d1A2+4+cFEwZTeR0JCmdB7dCq
+	 BJ9rIQbF9IBEI+soObC424HP7laoiCA3/oi1O9qP9rBITnPfxuSYeV5KRvg9hYcRab
+	 e/dCX3l7xvE+Crt9nLuvyn+RK8JuQn+i+0gl/X6RqKrS31M7lA4cVVAcZLH+2tD70I
+	 3HfxG2oBSEgx+79CZh8PlNRuEJmIOG2T+nm5DpqItFA2gaY6b7ltr3jg7UjRUmiCnX
+	 fBIiKt6tGKRHDPmTgbO18UpcTP5WlsP5+HLng5MSKm27q042WFMvRohaMfXHDUBt2+
+	 CV0uOkwqjgK7A==
+From: Arnd Bergmann <arnd@kernel.org>
+To: linux-kernel@vger.kernel.org
+Cc: Arnd Bergmann <arnd@arndb.de>,
+	Ilya Dryomov <idryomov@gmail.com>,
+	Dongsheng Yang <dongsheng.yang@easystack.cn>,
+	Jens Axboe <axboe@kernel.dk>,
+	Jason Gunthorpe <jgg@ziepe.ca>,
+	Leon Romanovsky <leon@kernel.org>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	Saeed Mahameed <saeedm@nvidia.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Xiubo Li <xiubli@redhat.com>,
+	Jeff Layton <jlayton@kernel.org>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	Dmitry Vyukov <dvyukov@google.com>,
+	Andrey Konovalov <andreyknvl@gmail.com>,
+	David Ahern <dsahern@kernel.org>,
+	Masahiro Yamada <masahiroy@kernel.org>,
+	Nathan Chancellor <nathan@kernel.org>,
+	Nicolas Schier <nicolas@fjasle.eu>,
+	Nick Desaulniers <ndesaulniers@google.com>,
+	Bill Wendling <morbo@google.com>,
+	Justin Stitt <justinstitt@google.com>,
+	Kees Cook <keescook@chromium.org>,
+	"Gustavo A. R. Silva" <gustavoars@kernel.org>,
+	Tariq Toukan <tariqt@nvidia.com>,
+	ceph-devel@vger.kernel.org,
+	linux-block@vger.kernel.org,
+	linux-rdma@vger.kernel.org,
+	netdev@vger.kernel.org,
+	linux-nilfs@vger.kernel.org,
+	kasan-dev@googlegroups.com,
+	linux-kbuild@vger.kernel.org,
+	llvm@lists.linux.dev
+Subject: [PATCH 0/9] address remaining -Wtautological-constant-out-of-range-compare
+Date: Thu, 28 Mar 2024 15:30:38 +0100
+Message-Id: <20240328143051.1069575-1-arnd@kernel.org>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240325024628.101296-1-yang.lee@linux.alibaba.com>
-In-Reply-To: <20240325024628.101296-1-yang.lee@linux.alibaba.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Mon, 25 Mar 2024 17:19:31 +0900
-Message-ID: <CAKFNMon5w_AfJmdey-XY+wWK+yCqj9PuHVeJf4qa2TMNv_iPsg@mail.gmail.com>
-Subject: Re: [PATCH -next 2/3 v2] fs: Add kernel-doc comments to nilfs_btree_convert_and_insert()
-To: Yang Li <yang.lee@linux.alibaba.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Mon, Mar 25, 2024 at 11:46=E2=80=AFAM Yang Li wrote:
->
-> This commit adds kernel-doc style comments with complete parameter
-> descriptions for the function nilfs_btree_convert_and_insert.
->
-> Signed-off-by: Yang Li <yang.lee@linux.alibaba.com>
-> ---
->  fs/nilfs2/btree.c | 22 +++++++++++++++-------
->  1 file changed, 15 insertions(+), 7 deletions(-)
->
-> diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-> index 65659fa0372e..de38012fd87c 100644
-> --- a/fs/nilfs2/btree.c
-> +++ b/fs/nilfs2/btree.c
-> @@ -1857,13 +1857,21 @@ nilfs_btree_commit_convert_and_insert(struct nilf=
-s_bmap *btree,
->  }
->
->  /**
-> - * nilfs_btree_convert_and_insert -
-> - * @bmap:
-> - * @key:
-> - * @ptr:
-> - * @keys:
-> - * @ptrs:
-> - * @n:
-> + * nilfs_btree_convert_and_insert - Convert and insert entries into a B-=
-tree
-> + * @btree: NILFS B-tree structure
-> + * @key: Key of the new entry to be inserted
-> + * @ptr: Pointer (block number) associated with the key to be inserted
-> + * @keys: Array of keys to be inserted in addition to @key
-> + * @ptrs: Array of pointers associated with @keys
-> + * @n: Number of keys and pointers in @keys and @ptrs
-> + *
-> + * This function is used to insert a new entry specified by @key and @pt=
-r, along
-> + * with additional entries specified by @keys and @ptrs arrays, into a N=
-ILFS B-tree.
-> + * It prepares the necessary changes by allocating the required blocks a=
-nd any
-> + * necessary intermediate nodes. It converts configurations from other f=
-orms of block
-> + * mapping (the one that currently exists is direct mapping) to a B-tree=
-.
-> + *
-> + * Return: 0 on success or a negative error code on failure.
->   */
->  int nilfs_btree_convert_and_insert(struct nilfs_bmap *btree,
->                                    __u64 key, __u64 ptr,
-> --
-> 2.20.1.7.g153144c
->
+From: Arnd Bergmann <arnd@arndb.de>
 
-Thank you for the revised version.  I'll take this one.
+The warning option was introduced a few years ago but left disabled
+by default. All of the actual bugs that this has found have been
+fixed in the meantime, and this series should address the remaining
+false-positives, as tested on arm/arm64/x86 randconfigs as well as
+allmodconfig builds for all architectures supported by clang.
 
-Ryusuke Konishi
+Please apply the patches individually to subsystem maintainer trees.
+
+      Arnd
+
+Arnd Bergmann (9):
+  dm integrity: fix out-of-range warning
+  libceph: avoid clang out-of-range warning
+  rbd: avoid out-of-range warning
+  kcov: avoid clang out-of-range warning
+  ipv4: tcp_output: avoid warning about NET_ADD_STATS
+  nilfs2: fix out-of-range warning
+  infiniband: uverbs: avoid out-of-range warnings
+  mlx5: stop warning for 64KB pages
+  kbuild: enable tautological-constant-out-of-range-compare
+
+ drivers/block/rbd.c                                    | 2 +-
+ drivers/infiniband/core/uverbs_ioctl.c                 | 4 ++--
+ drivers/md/dm-integrity.c                              | 2 +-
+ drivers/net/ethernet/mellanox/mlx5/core/en/xsk/setup.c | 6 ++++--
+ fs/ceph/snap.c                                         | 2 +-
+ fs/nilfs2/ioctl.c                                      | 2 +-
+ kernel/kcov.c                                          | 3 ++-
+ net/ceph/osdmap.c                                      | 4 ++--
+ net/ipv4/tcp_output.c                                  | 2 +-
+ scripts/Makefile.extrawarn                             | 1 -
+ 10 files changed, 15 insertions(+), 13 deletions(-)
+
+-- 
+2.39.2
+
+Cc: Ilya Dryomov <idryomov@gmail.com>
+Cc: Dongsheng Yang <dongsheng.yang@easystack.cn>
+Cc: Jens Axboe <axboe@kernel.dk>
+Cc: Jason Gunthorpe <jgg@ziepe.ca>
+Cc: Leon Romanovsky <leon@kernel.org>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev
+Cc: Saeed Mahameed <saeedm@nvidia.com>
+Cc: "David S. Miller" <davem@davemloft.net>
+Cc: Eric Dumazet <edumazet@google.com>
+Cc: Jakub Kicinski <kuba@kernel.org>
+Cc: Paolo Abeni <pabeni@redhat.com>
+Cc: Xiubo Li <xiubli@redhat.com>
+Cc: Jeff Layton <jlayton@kernel.org>
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: Dmitry Vyukov <dvyukov@google.com>
+Cc: Andrey Konovalov <andreyknvl@gmail.com>
+Cc: David Ahern <dsahern@kernel.org>
+Cc: Masahiro Yamada <masahiroy@kernel.org>
+Cc: Nathan Chancellor <nathan@kernel.org>
+Cc: Nicolas Schier <nicolas@fjasle.eu>
+Cc: Nick Desaulniers <ndesaulniers@google.com>
+Cc: Bill Wendling <morbo@google.com>
+Cc: Justin Stitt <justinstitt@google.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: "Gustavo A. R. Silva" <gustavoars@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Tariq Toukan <tariqt@nvidia.com>
+Cc: ceph-devel@vger.kernel.org
+Cc: linux-block@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-rdma@vger.kernel.org
+Cc: netdev@vger.kernel.org
+Cc: linux-nilfs@vger.kernel.org
+Cc: kasan-dev@googlegroups.com
+Cc: linux-kbuild@vger.kernel.org
+Cc: llvm@lists.linux.dev
+
