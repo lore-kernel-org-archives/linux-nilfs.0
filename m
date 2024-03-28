@@ -1,74 +1,52 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10F081879;
-	Thu, 28 Mar 2024 14:31:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8A62130E45;
+	Thu, 28 Mar 2024 14:32:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711636265; cv=none; b=TsaSuZaa+mOPb4gMTrYw6L6GZvvkXyWSJl1F6oLiN/d9cyei/sqjeLivDoKuLEArbftgkr8kn/4RC8rMN9pSq8Gslumnb5ALq7gqV9IAkh6ac+f9ubVSGA5egeD7c36qrt3LE6ob/nVFyIDbCG9PrsXhJb8Ue7u7TlApyLr1VNI=
+	t=1711636320; cv=none; b=D+dT1TUN4HfcfLaedb4L3Hm0NXxqJkZyC69qaF01gV1/JaMi+Pd1abMZDe5qy7tlK+cfKxLQmxDLkaWwMXLYWQ9FmHKTgE7V1MdpZ5j547Ty1aC5tTKeeQlS0zyJ277jJIBjWolGkifOaRsHKgmGrS/m1h32dB07BrH5WVeidm8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711636265; c=relaxed/simple;
-	bh=zN2hzijZlAwA7dSIUuqXqTXuAGGw3rihlUXROhzown4=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=XSfHzXv59ixjGGMOCuKiEcRfQH5Wz0iPodm6syal3cKs1ibOcBB8VQ6aE2+tAAVPsfPQQBTyRyb/qoda2KTCVttB0xw3cB816Y4UGNxWeP4Km2wwe+2WJvcSsEZOcPsQad/YfFPQWfacVFhDbYmSmLNrUyj97Cy6uzU917PbO2M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eWM+Qp30; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711636320; c=relaxed/simple;
+	bh=bQir+LnXysAhPZ396iMcqboZJXRv11Qwf6prsi0Igo8=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=tNOUi/TzKrMCQ7w9BMx05VwdgguSWHpqbnUPnrbRFB5DhPvXLiR3oAjwrku8qvYw88DxxoqF4xbBdhHDZhGx4w4yCn6bjOkNTsETH4G7oLgVx4epKzEA98f1g2D5a1Qp0eL4u7jP7iiV2ZT2eg4D3fS5MpZTq/8mpbGyPh7Ggl8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=liAm5gps; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eWM+Qp30"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D7141C433C7;
-	Thu, 28 Mar 2024 14:30:56 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="liAm5gps"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4A30DC433F1;
+	Thu, 28 Mar 2024 14:31:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711636264;
-	bh=zN2hzijZlAwA7dSIUuqXqTXuAGGw3rihlUXROhzown4=;
-	h=From:To:Cc:Subject:Date:From;
-	b=eWM+Qp30VXj9Cmh0LnGCxoeRKFCdiRG/+7cYiw3/d1A2+4+cFEwZTeR0JCmdB7dCq
-	 BJ9rIQbF9IBEI+soObC424HP7laoiCA3/oi1O9qP9rBITnPfxuSYeV5KRvg9hYcRab
-	 e/dCX3l7xvE+Crt9nLuvyn+RK8JuQn+i+0gl/X6RqKrS31M7lA4cVVAcZLH+2tD70I
-	 3HfxG2oBSEgx+79CZh8PlNRuEJmIOG2T+nm5DpqItFA2gaY6b7ltr3jg7UjRUmiCnX
-	 fBIiKt6tGKRHDPmTgbO18UpcTP5WlsP5+HLng5MSKm27q042WFMvRohaMfXHDUBt2+
-	 CV0uOkwqjgK7A==
+	s=k20201202; t=1711636320;
+	bh=bQir+LnXysAhPZ396iMcqboZJXRv11Qwf6prsi0Igo8=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=liAm5gpsUU3TfhVsQ0ds/wY4LTN/URRYHe8wfWIMPMwve7nP8Tx0ppkFakNHWeFoG
+	 G9zUo7Xb9xSrzVNuWGM6AmS9LJ2h7SA/YK890UR7pm3ZCL3iHJ5ytr2vILOXZc6Pvy
+	 IvTi01GNrvQjFvVdEa+BmDvmrxSqIPitR/WoSyv5ZC9JVGWvwDMm8EhrwbnA+2esr4
+	 8l0MIBo6tv0tvEFirVLddDTLvk+QRRamCltTRizGF5UEIXY7QpWF4mIpjgP2DEun7P
+	 zHwDYRs3rRoeSuUOXdxp4i5a2hYw29lh/0tbRmGPW4DyLFW/PfoBf8fsaSzyZRi+S7
+	 jHCOTMtOeo9kQ==
 From: Arnd Bergmann <arnd@kernel.org>
-To: linux-kernel@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>,
-	Ilya Dryomov <idryomov@gmail.com>,
-	Dongsheng Yang <dongsheng.yang@easystack.cn>,
-	Jens Axboe <axboe@kernel.dk>,
-	Jason Gunthorpe <jgg@ziepe.ca>,
-	Leon Romanovsky <leon@kernel.org>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev,
-	Saeed Mahameed <saeedm@nvidia.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>,
-	Paolo Abeni <pabeni@redhat.com>,
-	Xiubo Li <xiubli@redhat.com>,
-	Jeff Layton <jlayton@kernel.org>,
+To: linux-kernel@vger.kernel.org,
 	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	Dmitry Vyukov <dvyukov@google.com>,
-	Andrey Konovalov <andreyknvl@gmail.com>,
-	David Ahern <dsahern@kernel.org>,
-	Masahiro Yamada <masahiroy@kernel.org>,
-	Nathan Chancellor <nathan@kernel.org>,
-	Nicolas Schier <nicolas@fjasle.eu>,
+	Nathan Chancellor <nathan@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>,
 	Nick Desaulniers <ndesaulniers@google.com>,
 	Bill Wendling <morbo@google.com>,
 	Justin Stitt <justinstitt@google.com>,
-	Kees Cook <keescook@chromium.org>,
-	"Gustavo A. R. Silva" <gustavoars@kernel.org>,
-	Tariq Toukan <tariqt@nvidia.com>,
-	ceph-devel@vger.kernel.org,
-	linux-block@vger.kernel.org,
-	linux-rdma@vger.kernel.org,
-	netdev@vger.kernel.org,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Philipp Stanner <pstanner@redhat.com>,
+	Christian Brauner <brauner@kernel.org>,
+	Jeff Layton <jlayton@kernel.org>,
+	Thorsten Blum <thorsten.blum@toblux.com>,
 	linux-nilfs@vger.kernel.org,
-	kasan-dev@googlegroups.com,
-	linux-kbuild@vger.kernel.org,
 	llvm@lists.linux.dev
-Subject: [PATCH 0/9] address remaining -Wtautological-constant-out-of-range-compare
-Date: Thu, 28 Mar 2024 15:30:38 +0100
-Message-Id: <20240328143051.1069575-1-arnd@kernel.org>
+Subject: [PATCH 6/9] nilfs2: fix out-of-range warning
+Date: Thu, 28 Mar 2024 15:30:44 +0100
+Message-Id: <20240328143051.1069575-7-arnd@kernel.org>
 X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20240328143051.1069575-1-arnd@kernel.org>
+References: <20240328143051.1069575-1-arnd@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -79,79 +57,33 @@ Content-Transfer-Encoding: 8bit
 
 From: Arnd Bergmann <arnd@arndb.de>
 
-The warning option was introduced a few years ago but left disabled
-by default. All of the actual bugs that this has found have been
-fixed in the meantime, and this series should address the remaining
-false-positives, as tested on arm/arm64/x86 randconfigs as well as
-allmodconfig builds for all architectures supported by clang.
+clang-14 points out that v_size is always smaller than a 64KB
+page size if that is configured by the CPU architecture:
 
-Please apply the patches individually to subsystem maintainer trees.
+fs/nilfs2/ioctl.c:63:19: error: result of comparison of constant 65536 with expression of type '__u16' (aka 'unsigned short') is always false [-Werror,-Wtautological-constant-out-of-range-compare]
+        if (argv->v_size > PAGE_SIZE)
+            ~~~~~~~~~~~~ ^ ~~~~~~~~~
 
-      Arnd
+This is ok, so just shut up that warning with a cast.
 
-Arnd Bergmann (9):
-  dm integrity: fix out-of-range warning
-  libceph: avoid clang out-of-range warning
-  rbd: avoid out-of-range warning
-  kcov: avoid clang out-of-range warning
-  ipv4: tcp_output: avoid warning about NET_ADD_STATS
-  nilfs2: fix out-of-range warning
-  infiniband: uverbs: avoid out-of-range warnings
-  mlx5: stop warning for 64KB pages
-  kbuild: enable tautological-constant-out-of-range-compare
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ fs/nilfs2/ioctl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
- drivers/block/rbd.c                                    | 2 +-
- drivers/infiniband/core/uverbs_ioctl.c                 | 4 ++--
- drivers/md/dm-integrity.c                              | 2 +-
- drivers/net/ethernet/mellanox/mlx5/core/en/xsk/setup.c | 6 ++++--
- fs/ceph/snap.c                                         | 2 +-
- fs/nilfs2/ioctl.c                                      | 2 +-
- kernel/kcov.c                                          | 3 ++-
- net/ceph/osdmap.c                                      | 4 ++--
- net/ipv4/tcp_output.c                                  | 2 +-
- scripts/Makefile.extrawarn                             | 1 -
- 10 files changed, 15 insertions(+), 13 deletions(-)
-
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index f1a01c191cf5..8be471ce4f19 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -60,7 +60,7 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
+ 	if (argv->v_nmembs == 0)
+ 		return 0;
+ 
+-	if (argv->v_size > PAGE_SIZE)
++	if ((size_t)argv->v_size > PAGE_SIZE)
+ 		return -EINVAL;
+ 
+ 	/*
 -- 
 2.39.2
-
-Cc: Ilya Dryomov <idryomov@gmail.com>
-Cc: Dongsheng Yang <dongsheng.yang@easystack.cn>
-Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Jason Gunthorpe <jgg@ziepe.ca>
-Cc: Leon Romanovsky <leon@kernel.org>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Cc: Saeed Mahameed <saeedm@nvidia.com>
-Cc: "David S. Miller" <davem@davemloft.net>
-Cc: Eric Dumazet <edumazet@google.com>
-Cc: Jakub Kicinski <kuba@kernel.org>
-Cc: Paolo Abeni <pabeni@redhat.com>
-Cc: Xiubo Li <xiubli@redhat.com>
-Cc: Jeff Layton <jlayton@kernel.org>
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Dmitry Vyukov <dvyukov@google.com>
-Cc: Andrey Konovalov <andreyknvl@gmail.com>
-Cc: David Ahern <dsahern@kernel.org>
-Cc: Masahiro Yamada <masahiroy@kernel.org>
-Cc: Nathan Chancellor <nathan@kernel.org>
-Cc: Nicolas Schier <nicolas@fjasle.eu>
-Cc: Nick Desaulniers <ndesaulniers@google.com>
-Cc: Bill Wendling <morbo@google.com>
-Cc: Justin Stitt <justinstitt@google.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: "Gustavo A. R. Silva" <gustavoars@kernel.org>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: Tariq Toukan <tariqt@nvidia.com>
-Cc: ceph-devel@vger.kernel.org
-Cc: linux-block@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-rdma@vger.kernel.org
-Cc: netdev@vger.kernel.org
-Cc: linux-nilfs@vger.kernel.org
-Cc: kasan-dev@googlegroups.com
-Cc: linux-kbuild@vger.kernel.org
-Cc: llvm@lists.linux.dev
 
