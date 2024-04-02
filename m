@@ -1,93 +1,119 @@
-Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com [209.85.167.46])
+Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F2F460264;
-	Tue,  2 Apr 2024 18:00:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DFC015E1FF;
+	Tue,  2 Apr 2024 20:55:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712080834; cv=none; b=OXTJp8PAWi/lGcWcWhtfTTEBbo2+UX0giF7sqdqbF6E+hFO5wClnMDlDKBux2vkeXD0FZ6NAltzy015CsnjpHPlVbnPp+jiC3FQ7KUtdq+/fZjB9ZiXY0OU8v2y09+4/DqJO3voSt+qxVIu03Q+AN0nX+P+RU54J3cjro0uhCsI=
+	t=1712091351; cv=none; b=QuJATyKN0ptoCSbUjGHJU1SBcG3zf8LpDmY5hKShpRk99sUjQYbzWpyJALt5Zgr+ze8Q0/tIJeRXHwNVqXIvPY8GEYN1vBN6/PX5zAz6d1PH3YsR8RLab7GCoxDAvjoBKTMCuyXr3t8YFyRubz9xDEoMUAY6vLoCGdLabrA7Xnc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712080834; c=relaxed/simple;
-	bh=8GF0ENkY5ZCtjpuTg3KDVuBsWEOU9hvUOtz5sSYs9Ik=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=e3o5wckCUsIGQlyiTK95kjizZzfVMY0tMi3aDF5EH0xk2lx8EOX2vj7ZnU/08nezBkAbrE6KByhFFKTwCqHPaOkGboRRwGC8G2KVCDmiHTDxBWSjOKcQJ1f5on98PFeMA6s0P4dGXq9QqZn4mOkcOiYO/nLKnuO3WHDvbnusg5o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ah7+ujC5; arc=none smtp.client-ip=209.85.167.46
+	s=arc-20240116; t=1712091351; c=relaxed/simple;
+	bh=7ObDvNjkkkCUWg4QCMGkVodcfexYwJXHcVpDdMBE3sU=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=py8pGfTfeLwbRgJra06EdxL9dZcVelrkeUU1pXWU1ieM2t+p5lypDdmhMpVKzxnq1+k7KIDeYBaytdUBUJPwixQgG0QMvdyHFEej8ybe3ZA45oGMeBLgVk6NDOJI7QZhvxw0DVgR4PH/1sNcLaI21CjF2VBA4wmTiVlXe6n/dRw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MD/r6cqs; arc=none smtp.client-ip=209.85.167.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ah7+ujC5"
-Received: by mail-lf1-f46.google.com with SMTP id 2adb3069b0e04-515b3077d09so5981541e87.1;
-        Tue, 02 Apr 2024 11:00:33 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MD/r6cqs"
+Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-515a68d45faso6399992e87.3;
+        Tue, 02 Apr 2024 13:55:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712080831; x=1712685631; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=kC/tyAjbAbIar7KEkkctKB5iNjP6k0DBswYBrdTUsao=;
-        b=Ah7+ujC5bCRxuLyyGhtcDl/YzY/4P/pnMM5rl1Ah5k6k8LAurhKnxMCKDpbh1chmzm
-         /g7sjEbWHCMV3Mw+UlfWRtlvwXZh2WILpKwPyvFdmS7niS6hM+MSwLgtVMv3bdRQpmva
-         dgkxeHTQmpCIov3oWxWuOHv0D4iP9B4ZjJb0rt4z81E2Hi60qDbfGVEBOwwmWZa7NVPI
-         /ywfgpquXQzXAoa6NYJUj1rvpGthNYCkTMpHpqIjZNaB3ECPnCUqIE8VcFUjNWU/e8uG
-         0GswWL7jxTD+1F3axruXcHnCSmQuFi65z8S02ebnBYL4R8qpVk3591TOxRKWy4fQzQtR
-         BS6Q==
+        d=gmail.com; s=20230601; t=1712091348; x=1712696148; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=TA/naT4hpiqj8NJalm6Mzoq648QnqC+NHjrjlPJzIoY=;
+        b=MD/r6cqsMMTtj96vwxPkSTc1GcRX9+ltvvtA0Tq+g3VxiCUDsNsLv4+Bap3UWS3JGT
+         87jBvudIVgtyWm9/QaqdZtjFU5nyZNeQ3x7HFGfl66MWLjOmJU6o1/VJvNOFMDnzYjSV
+         1IkZP3lbOZE9gr0O1dnPyEhZv4ju5Ayk/uGCpSBAdUpWvkkyXJB76iaYcnPe0eFC+A7M
+         65cMPOdG+ExgRc7OHC2ZdXcVib18fcAnbfHh2lkuXFKWPSDt22Fb6/ICtqd19OauW7Qz
+         OwUlwR6IiEdp2FE9Z2pKSK0miTFpawXZVD4isArURGkOefB7b/JRZgeb07Q2X9FTxv+n
+         KSGA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712080831; x=1712685631;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=kC/tyAjbAbIar7KEkkctKB5iNjP6k0DBswYBrdTUsao=;
-        b=XUt6r8azPXfaEREfHulnr+d/aFfQVkCJjhmOUL7FloqThoC1sljrcnWJ6J4++GgNzi
-         4z9trBuOdL4KSvIz80cq9ybT1q5AbyJmaqe6e4XksSQF8kQ4OBvCa7QPUVDjCmRqhyog
-         HjA39VY4RuyAEUUvXGz6M+H7dqU4RAT6QcroxOI32Swn0dDpKrcEi/CTin7z8XBdbacS
-         KKD9YO5ka2+Bi63TCCL1j+lcETh1l6HPj4JLLoKiUxcDQ0M1PBDkv18q4iZMdDLy0Gs2
-         a50eHGJ+W9nti7z/a04dH6zAZbAq6venq/PxPq7UaMzOxagZ1SnnMgmBO171FKetSiP6
-         SeiA==
-X-Forwarded-Encrypted: i=1; AJvYcCWKymqffDCk/M+4xbByJEufHo+xzlj313B3mzG5kUgLe3I55wGlA31WQmob/1IlQwSizGFqz3+cvmkS0hF+88r3s/P3VK9pcK4xsVQ=
-X-Gm-Message-State: AOJu0YyomJLoX5D0g7C1u7/O7ntU/ZfMwzeh9mQZHEPa2COibCt8fKka
-	ZjJ0OJx1v3n3U8hIEZY4w5aDkHpGoE7b+AM2jnAYQjFJWJVU86BZ609mzMwEkkU=
-X-Google-Smtp-Source: AGHT+IE65VnKYRUjD3G723qbU/8f4Hcu6bMWxVdbVDmX8hUENYaEwIQi2cwWVGzzlC1SZ7CQ+WID1w==
-X-Received: by 2002:a05:6512:36c2:b0:513:a833:cda2 with SMTP id e2-20020a05651236c200b00513a833cda2mr8663470lfs.53.1712080831146;
-        Tue, 02 Apr 2024 11:00:31 -0700 (PDT)
-Received: from localhost.localdomain ([178.90.83.102])
-        by smtp.googlemail.com with ESMTPSA id f1-20020a056512360100b00515be976594sm1792217lfs.178.2024.04.02.11.00.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 02 Apr 2024 11:00:30 -0700 (PDT)
-From: Sabyrzhan Tasbolatov <snovitoll@gmail.com>
-To: konishi.ryusuke@gmail.com,
-	linux-nilfs@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org,
-	snovitoll@gmail.com
-Subject: [PATCH] fs/nilfs2: prevent int overflow in btree binary search
-Date: Tue,  2 Apr 2024 23:00:26 +0500
-Message-Id: <20240402180026.2469459-1-snovitoll@gmail.com>
-X-Mailer: git-send-email 2.34.1
+        d=1e100.net; s=20230601; t=1712091348; x=1712696148;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=TA/naT4hpiqj8NJalm6Mzoq648QnqC+NHjrjlPJzIoY=;
+        b=pCAPH3I4L5tZ3VUBWeifLj3a5sO0W0S3iFNsL/44d2pT4r2fqkIGv6/F46c0SWyIkC
+         P7Y2p8ivWjDDaUQzPTlg+Ntio38AYW9F2PHi0wsbHapGQyvtifsi5N7xX738K+X1W5yH
+         Cc43kBjorhsLIT5XzEOfQksVXJTpmd59P+AF090Y/AOpHiQV7j8Z3EgHlRHEVtk4xxFg
+         g1g7v7d77CHvTKr0/q2fsbLHTCkashrJaw/ylVNNb4V7RCawoQ4EhaCxIeHHnt5XhKqH
+         hzLIxUAJsQrD29mccEY3XZiDUHz7R8WgDXgAbSdlW/jrjaqkwI21NsefZZmcJnf9JdST
+         dxEw==
+X-Forwarded-Encrypted: i=1; AJvYcCVAquzxxijGqJVMbGmlPozTlbJCYmj726eW+Bs7xADurz/lK9UmHHP58djEU+JCSzOjnvRFRH1KwSyJ1tTUmDq84zeucYbPA7suD8ML
+X-Gm-Message-State: AOJu0YybakBT2OkYSlfxzexh7rRuVJaJeo9u3dTJcgwnqSVOTnUpY5W6
+	elc/ss0kuiUxYjqRFjv3H9566SXM/GaxFqXtg7gJT48/OCH0/y3CDNlt98THvglWAYrVdzy+l5F
+	sKhfccIfa06XUlPKouCQJ+iv74ZnINqo0WMU=
+X-Google-Smtp-Source: AGHT+IHePyy0Iwz6NRd2VpYIPHCPEprWOmgr9YX6IUoP5FMSSjlPKybWCJnM4OYdE6DTOekg+ozdK85HD02KaI8At/c=
+X-Received: by 2002:a05:6512:15d:b0:515:8d1c:bf09 with SMTP id
+ m29-20020a056512015d00b005158d1cbf09mr8839032lfo.16.1712091347303; Tue, 02
+ Apr 2024 13:55:47 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240402180026.2469459-1-snovitoll@gmail.com>
+In-Reply-To: <20240402180026.2469459-1-snovitoll@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Wed, 3 Apr 2024 05:55:30 +0900
+Message-ID: <CAKFNMonDO_diEo+_JXKgHMTmOPv5T30TALb-ZvsOprcwSJCtFQ@mail.gmail.com>
+Subject: Re: [PATCH] fs/nilfs2: prevent int overflow in btree binary search
+To: Sabyrzhan Tasbolatov <snovitoll@gmail.com>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Should prevent int overflow if low + high > INT_MAX in big btree with
-nchildren in nilfs_btree_node_lookup() binary search.
+On Wed, Apr 3, 2024 at 3:00=E2=80=AFAM Sabyrzhan Tasbolatov wrote:
+>
+> Should prevent int overflow if low + high > INT_MAX in big btree with
+> nchildren in nilfs_btree_node_lookup() binary search.
+>
+> Signed-off-by: Sabyrzhan Tasbolatov <snovitoll@gmail.com>
+> ---
+>  fs/nilfs2/btree.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+> index 65659fa03..39ee4fe11 100644
+> --- a/fs/nilfs2/btree.c
+> +++ b/fs/nilfs2/btree.c
+> @@ -300,7 +300,7 @@ static int nilfs_btree_node_lookup(const struct nilfs=
+_btree_node *node,
+>         index =3D 0;
+>         s =3D 0;
+>         while (low <=3D high) {
+> -               index =3D (low + high) / 2;
+> +               index =3D low + (high - low) / 2;
+>                 nkey =3D nilfs_btree_node_get_key(node, index);
+>                 if (nkey =3D=3D key) {
+>                         s =3D 0;
+> --
+> 2.34.1
+>
 
-Signed-off-by: Sabyrzhan Tasbolatov <snovitoll@gmail.com>
----
- fs/nilfs2/btree.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Sabyrzhan,
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 65659fa03..39ee4fe11 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -300,7 +300,7 @@ static int nilfs_btree_node_lookup(const struct nilfs_btree_node *node,
- 	index = 0;
- 	s = 0;
- 	while (low <= high) {
--		index = (low + high) / 2;
-+		index = low + (high - low) / 2;
- 		nkey = nilfs_btree_node_get_key(node, index);
- 		if (nkey == key) {
- 			s = 0;
--- 
-2.34.1
+Thank you for your interesting patch.
 
+In this function, the value of the variable "high" is initialized with
+"nilfs_btree_node_get_nchildren() - 1", and "low" is initialized with
+0.
+
+nilfs_btree_node_get_nchildren() returns a value read from a 16-bit
+wide field, so it will never exceed U16_MAX.
+
+These index calculations narrow the range between "low" and "high", so
+as long as INT_MAX is 32-bit or more, it seems that the calculation of
+this intermediate value will not overflow.
+
+So while it's a good overflow avoidance technique, it doesn't seem to
+happen in practice.
+
+Am I missing something?
+
+Regards,
+Ryusuke Konishi
