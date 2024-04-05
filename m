@@ -1,150 +1,250 @@
-Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 31C39748A
-	for <linux-nilfs@vger.kernel.org>; Fri,  5 Apr 2024 10:34:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 42BFF16C42D;
+	Fri,  5 Apr 2024 11:06:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712313248; cv=none; b=p6hZ8rc5qjO6mfC2+0E2yqDjxH3issIZTWKB/YNLXTq+bkG1jnF3UOQqeyYDqJ9sk4VsCZhdcWixMrj3O9pj6BdSOgVxRgFqEDPmDf3pqUI6Ny+rb80IZZ5RKbJXbR6gg2ZJYMwbI6HEgRWnmFdWOdg+48pXIGFbioItFzrXr4s=
+	t=1712315166; cv=none; b=qNuYH98u7x3jePX18psmaaJQM3y+oQZ89ZYDkhiuz9sH8J6RMe9daOaRVpfO7f54607gd8b92rmCVy9Zej0Iey52e4sKz1I97wyNxwOiJRWq2E5GAR52mAoqMOK4ah60bVkryBla96Y1ws13SRRKDWFVjbafJRwX1nn8C8cwtOg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712313248; c=relaxed/simple;
-	bh=KOcUrt6jrqayLkSoLxpFJYBebs3OShFmc005YgVWR54=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=I+X6gfN9xxaBK+X1SP33mohUidH3fFiTW2xbh449M+QR+rXW5bVhdQd3/n7yA3man/csOdHQ00aTWSkxTx4y9wp2r45i+zTvRu/T6kKfHuncA192monfT9PwI3XYLEo3dHCT4yIF835GXztN4zzkwOEF8yc6hKsQrZnTuZZpJTU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LLYqWGRW; arc=none smtp.client-ip=209.85.167.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1712315166; c=relaxed/simple;
+	bh=S8tJp9tlrFrniCs2F68u2zvpKyZISH6tFt+bDbVN8hU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=PnqraPhLCXAT93RDYnbskfaRh4bfY8EDH1RAfur6dqMVuj8H9JYsjMhXPwbBgbQ29Rd15NCg7TkNffXk7ZwlvKOWeGKAS0E/fSwuDpLYwcvk5hIP6b9eGiFbKxQLn3cdyJzSgkLhQNjPr5z9/ZuzSwoAgS7E/onVMuKJ8gnWk9s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UE+Va/cP; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LLYqWGRW"
-Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-516d6898bebso240399e87.3
-        for <linux-nilfs@vger.kernel.org>; Fri, 05 Apr 2024 03:34:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712313245; x=1712918045; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ULs8ay7K5pu95JvZHBflm9rOZZ3htaMVjrbi3kdEbig=;
-        b=LLYqWGRW0yVFS2/kaUH8ikeaQXj/B2g5NlIrnzE4g1/WK7SQVYWP6oasbYuYdOhcHX
-         UpD2umPNpGQgfzVbhI8hYVYBev3Jqa9Vx7kKCitJ5LshvMXhBTprWo3Q86v8BsLfZfFE
-         rglV+EyViV9mmS5RsbOJIdIxxumFgWyveJWmtRhmt8ZKRKEvbWCaJXcdZukG4CC/j5Is
-         9+Oz8GfhxWdmmrs8zXrVOWXuTj8zQARO0WghaOkA6l/JovmQ7aX2qlSk6nTVyafWofmx
-         ssqcoBYaB8hbRiy+k9GvkHXU2tERjdk9FlMOGiPZlq7v4LrLpK5zgMevoyy7yl4e7wld
-         lTkg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712313245; x=1712918045;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ULs8ay7K5pu95JvZHBflm9rOZZ3htaMVjrbi3kdEbig=;
-        b=YCP1erGrAyjW4nNPhLy8hpW14hxJ+kXq94nQAnZTWUtIqN3t+rbSZASmNSLUPIah/K
-         kbdL1+W5XsH7Vmv27Luaexg/0qqY6R5ZyX6UVS0nE+oqeIPm7BR9x8de6TVQKqeQsj7r
-         6Dif1v7XairFUeJnf+FJsmsmNUu09QhPdsSee+cFUAa5L2A28tP0VfLz6JY8HXFhdlfl
-         kOExqHg9AQ3bPDyP5hYpBvHJhiRmYhPVIIdC4wGjUDzqJxK6Xi9PuIABq49oZF75mpeP
-         1za2hzRGV2js6Rf67FwUgQmObvYGhnNHl/DiNZ8G5lcVj2QYQGBvPuKeMx60Xb/+FdOs
-         wndg==
-X-Gm-Message-State: AOJu0YwvTtsZ9enXUgbVuxVhocStk6GlT9GTqawCD5UC5VQBqZ4QyBnt
-	o3slAbRphENiJiVfA9ovADv3gbRUfi9Gj702nCKPXOwmnzlQxPpS6utgrg0neLT9L8L7VKKYa+8
-	MnJmfmHOdyqe2eDpDy1jCIXMrSHc=
-X-Google-Smtp-Source: AGHT+IEqLgn5J1/xUwtwqX9QAgEetrZEUIBjFbDyfdsqx1MfZZB/nMNL0hZRUqtvph+KlSN5Zs9/zt2ve7rDFmf9l2Y=
-X-Received: by 2002:a05:6512:3c8e:b0:516:d15e:88a4 with SMTP id
- h14-20020a0565123c8e00b00516d15e88a4mr899079lfv.49.1712313245086; Fri, 05 Apr
- 2024 03:34:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UE+Va/cP"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 85C53C43390;
+	Fri,  5 Apr 2024 11:06:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1712315165;
+	bh=S8tJp9tlrFrniCs2F68u2zvpKyZISH6tFt+bDbVN8hU=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=UE+Va/cPmg/8gSlj/HbF6tCZHY5b5oYJ8nlvAqXk7stNJeGHPY/GGbQsRVDXOqSgm
+	 cM2/tWVi/BrUwO85C5B5SaPfPqiayXkHiEzVy0iB6rWBmV7lGiFPfDorJ0Lu+ig+6y
+	 A62+ETPUXMCqjDkDVE6dnXj839ESQ3DRA/xBFkrG19nd9mUtcxj1uMU/Z+f920FJwh
+	 JR90VgC4W7VkOQqt3MuH+aNFRTdz9vERhRN1WoctQ6SqH++Kp9Ge2oldQYrJpGI3eh
+	 op0zs0pMcs0ok2k/zIQYa6Y74gEb2Gug+yrflyJelCzzwZXV4GOZ0nnS+Rzgs9sa5D
+	 +1uW+re1V0p8Q==
+Date: Fri, 5 Apr 2024 13:05:59 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: Jan Kara <jack@suse.cz>
+Cc: Kemeng Shi <shikemeng@huaweicloud.com>, gregkh@linuxfoundation.org, 
+	konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com, tj@kernel.org, 
+	viro@zeniv.linux.org.uk
+Subject: Re: [syzbot] [nilfs?] KASAN: slab-out-of-bounds Read in wb_writeback
+Message-ID: <20240405-heilbad-eisbrecher-cd0cbc27f36f@brauner>
+References: <000000000000fd0f2a061506cc93@google.com>
+ <00000000000003b8c406151e0fd1@google.com>
+ <20240403094717.zex45tc2kpkfelny@quack3>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <e282e150-2bc1-4b6a-8aa1-0417371c2671@redhat.com>
- <CAKFNMo=bbdBsW2xvTMiZcrD37n8MWmDfhH7V2jKZ14=odduRXg@mail.gmail.com>
- <f99b0c44-c5b4-4e0b-892b-dd9793a80f9a@redhat.com> <CAKFNMokYkO-WsvrcZh=-FpR=LtCQnsyxET3ZjSzx-o5zXcMU9g@mail.gmail.com>
- <2fd47dc7-e130-4c67-b39a-b1c38aa1c500@redhat.com> <0d26ef52-91bd-4108-bf09-5d92fa58cd28@redhat.com>
- <1ba497be-64cb-4a4d-99a8-16707da32cc4@redhat.com>
-In-Reply-To: <1ba497be-64cb-4a4d-99a8-16707da32cc4@redhat.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Fri, 5 Apr 2024 19:33:47 +0900
-Message-ID: <CAKFNMo=zu38X+SYDgyP=g4aD9E1ee209C7FqvF9_cj1vxZgjuQ@mail.gmail.com>
-Subject: Re: [PATCH V2] nilfs2: convert to use the new mount API
-To: Eric Sandeen <sandeen@redhat.com>
-Cc: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20240403094717.zex45tc2kpkfelny@quack3>
 
-On Fri, Apr 5, 2024 at 12:00=E2=80=AFPM Eric Sandeen wrote:
->
-> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
-> ---
->
-> V2: Fix call to nilfs2_reconfigure() in nilfs_mount() to ensure
-> fc->root is set.
->
-> Clean up some extraneous comments and whitespace
->
-> This one passes your current test script.
->
-> Thanks,
-> -Eric
+On Wed, Apr 03, 2024 at 11:47:17AM +0200, Jan Kara wrote:
+> On Tue 02-04-24 07:38:25, syzbot wrote:
+> > syzbot has found a reproducer for the following issue on:
+> > 
+> > HEAD commit:    c0b832517f62 Add linux-next specific files for 20240402
+> > git tree:       linux-next
+> > console+strace: https://syzkaller.appspot.com/x/log.txt?x=14af7dd9180000
+> > kernel config:  https://syzkaller.appspot.com/x/.config?x=afcaf46d374cec8c
+> > dashboard link: https://syzkaller.appspot.com/bug?extid=7b219b86935220db6dd8
+> > compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+> > syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1729f003180000
+> > C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=17fa4341180000
+> > 
+> > Downloadable assets:
+> > disk image: https://storage.googleapis.com/syzbot-assets/0d36ec76edc7/disk-c0b83251.raw.xz
+> > vmlinux: https://storage.googleapis.com/syzbot-assets/6f9bb4e37dd0/vmlinux-c0b83251.xz
+> > kernel image: https://storage.googleapis.com/syzbot-assets/2349287b14b7/bzImage-c0b83251.xz
+> > mounted in repro: https://storage.googleapis.com/syzbot-assets/9760c52a227c/mount_0.gz
+> > 
+> > IMPORTANT: if you fix the issue, please add the following tag to the commit:
+> > Reported-by: syzbot+7b219b86935220db6dd8@syzkaller.appspotmail.com
+> > 
+> > ==================================================================
+> > BUG: KASAN: slab-out-of-bounds in __lock_acquire+0x78/0x1fd0 kernel/locking/lockdep.c:5005
+> > Read of size 8 at addr ffff888020485fa8 by task kworker/u8:2/35
+> 
+> Looks like the writeback cleanups are causing some use-after-free issues.
+> The code KASAN is complaining about is:
+> 
+> 		/*
+> 		 * Nothing written. Wait for some inode to
+> 		 * become available for writeback. Otherwise
+> 		 * we'll just busyloop.
+> 		 */
+> 		trace_writeback_wait(wb, work);
+> 		inode = wb_inode(wb->b_more_io.prev);
+> >>>>>		spin_lock(&inode->i_lock); <<<<<<
+> 		spin_unlock(&wb->list_lock);
+> 		/* This function drops i_lock... */
+> 		inode_sleep_on_writeback(inode);
+> 
+> in wb_writeback(). Now looking at the changes indeed the commit
+> 167d6693deb ("fs/writeback: bail out if there is no more inodes for IO and
+> queued once") is buggy because it will result in trying to fetch 'inode'
+> from empty b_more_io list and thus we'll corrupt memory. I think instead of
+> modifying the condition:
+> 
+> 		if (list_empty(&wb->b_more_io)) {
+> 
+> we should do:
+> 
+> -		if (progress) {
+> +		if (progress || !queued) {
+>                         spin_unlock(&wb->list_lock);
+>                         continue;
+>                 }
+> 
+> Kemeng?
 
-Yeah, this v2 patch resolved the panic issue.  It passed the test
-script in multiple environments, as well as my manual checks for mount
-options with and without using the constant table.  Seems to be
-working perfectly so far.
+Fwiw, I observed this on xfstest too the last few days and tracked it
+down to this series. Here's the splat I got in case it helps:
 
-I'll get started on the full review, but I'd like to provide feedback
-on style warnings detected by the checkpatch script at this point.
-
----
-WARNING: Missing commit description - Add an appropriate one
-
-WARNING: function definition argument 'struct super_block *' should
-also have an identifier name
-#146: FILE: fs/nilfs2/nilfs.h:338:
-+extern int nilfs_store_magic(struct super_block *,
-
-WARNING: function definition argument 'struct nilfs_super_block *'
-should also have an identifier name
-#146: FILE: fs/nilfs2/nilfs.h:338:
-+extern int nilfs_store_magic(struct super_block *,
-
-WARNING: space prohibited between function name and open parenthesis '('
-#220: FILE: fs/nilfs2/super.c:721:
-+ fsparam_enum ("errors", Opt_err, nilfs_param_err),
-
-WARNING: space prohibited between function name and open parenthesis '('
-#221: FILE: fs/nilfs2/super.c:722:
-+ fsparam_flag_no ("barrier", Opt_barrier),
-
-WARNING: space prohibited between function name and open parenthesis '('
-#223: FILE: fs/nilfs2/super.c:724:
-+ fsparam_string ("order", Opt_order),
-
-WARNING: space prohibited between function name and open parenthesis '('
-#224: FILE: fs/nilfs2/super.c:725:
-+ fsparam_flag ("norecovery", Opt_norecovery),
-
-WARNING: space prohibited between function name and open parenthesis '('
-#225: FILE: fs/nilfs2/super.c:726:
-+ fsparam_flag_no ("discard", Opt_discard),
-
-WARNING: Missing a blank line after declarations
-#317: FILE: fs/nilfs2/super.c:770:
-+ struct super_block *sb =3D fc->root->d_sb;
-+ nilfs_err(sb,
-
-WARNING: quoted string split across lines
-#576: FILE: fs/nilfs2/super.c:1193:
-+ nilfs_err(s, "invalid option \"cn=3D%llu\", "
-+ "read-only option is not specified",
-
-total: 0 errors, 10 warnings, 563 lines checked
----
-
-Of these, the warning for the function declaration of
-nilfs_store_magic() is an existing issue, so it can be left as is.
-
-Also, I feel like the warnings for fsparam_{enum,flag,flag_no,string}
-can be ignored for the sake of appearance.  (I will not omit them here
-so as not to make any preconceptions).
-
-Thanks,
-Ryusuke Konishi
+Apr 05 00:33:06 localhost kernel: ==================================================================
+Apr 05 00:33:06 localhost kernel: BUG: KASAN: slab-out-of-bounds in __lock_acquire.isra.0+0x1075/0x1280
+Apr 05 00:33:06 localhost kernel: Read of size 8 at addr ffff88810ed40f48 by task kworker/u128:2/305560
+Apr 05 00:33:06 localhost kernel:
+Apr 05 00:33:06 localhost kernel: CPU: 5 PID: 305560 Comm: kworker/u128:2 Not tainted 99.9.0-rc2-gdebeafad51e2 #262
+Apr 05 00:33:06 localhost kernel: Hardware name: QEMU Standard PC (Q35 + ICH9, 2009)/Incus, BIOS unknown 2/2/2022
+Apr 05 00:33:06 localhost kernel: Workqueue: writeback wb_workfn (flush-259:0)
+Apr 05 00:33:06 localhost kernel: Call Trace:
+Apr 05 00:33:06 localhost kernel:  <TASK>
+Apr 05 00:33:06 localhost kernel:  dump_stack_lvl+0x5a/0x90
+Apr 05 00:33:06 localhost kernel:  print_report+0xce/0x650
+Apr 05 00:33:06 localhost kernel:  ? __virt_addr_valid+0x217/0x320
+Apr 05 00:33:06 localhost kernel:  kasan_report+0xd7/0x110
+Apr 05 00:33:06 localhost kernel:  ? __lock_acquire.isra.0+0x1075/0x1280
+Apr 05 00:33:06 localhost kernel:  ? __lock_acquire.isra.0+0x1075/0x1280
+Apr 05 00:33:06 localhost kernel:  __lock_acquire.isra.0+0x1075/0x1280
+Apr 05 00:33:06 localhost kernel:  lock_acquire+0x136/0x330
+Apr 05 00:33:06 localhost kernel:  ? wb_writeback+0x255/0x870
+Apr 05 00:33:06 localhost kernel:  _raw_spin_lock+0x33/0x40
+Apr 05 00:33:06 localhost kernel:  ? wb_writeback+0x255/0x870
+Apr 05 00:33:06 localhost kernel:  wb_writeback+0x255/0x870
+Apr 05 00:33:06 localhost kernel:  ? __pfx_wb_writeback+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ? __pfx_lock_release+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  wb_workfn+0x221/0xc80
+Apr 05 00:33:06 localhost kernel:  ? __pfx_wb_workfn+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ? lock_acquire+0x136/0x330
+Apr 05 00:33:06 localhost kernel:  process_one_work+0x82d/0x1790
+Apr 05 00:33:06 localhost kernel:  ? __pfx_process_one_work+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ? assign_work+0x16c/0x240
+Apr 05 00:33:06 localhost kernel:  worker_thread+0x724/0x1300
+Apr 05 00:33:06 localhost kernel:  ? __kthread_parkme+0xba/0x1f0
+Apr 05 00:33:06 localhost kernel:  ? __pfx_worker_thread+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  kthread+0x2ed/0x3d0
+Apr 05 00:33:06 localhost kernel:  ? __pfx_kthread+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ret_from_fork+0x31/0x70
+Apr 05 00:33:06 localhost kernel:  ? __pfx_kthread+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ret_from_fork_asm+0x1a/0x30
+Apr 05 00:33:06 localhost kernel:  </TASK>
+Apr 05 00:33:06 localhost kernel:
+Apr 05 00:33:06 localhost kernel: Allocated by task 1:
+Apr 05 00:33:06 localhost kernel:  kasan_save_stack+0x33/0x60
+Apr 05 00:33:06 localhost kernel:  kasan_save_track+0x14/0x30
+Apr 05 00:33:06 localhost kernel:  __kasan_kmalloc+0xaa/0xb0
+Apr 05 00:33:06 localhost kernel:  psi_cgroup_alloc+0x57/0x2b0
+Apr 05 00:33:06 localhost kernel:  cgroup_mkdir+0x4f8/0xfb0
+Apr 05 00:33:06 localhost kernel:  kernfs_iop_mkdir+0x133/0x1c0
+Apr 05 00:33:06 localhost kernel:  vfs_mkdir+0x3b9/0x610
+Apr 05 00:33:06 localhost kernel:  do_mkdirat+0x27e/0x300
+Apr 05 00:33:06 localhost kernel:  __x64_sys_mkdir+0x65/0x80
+Apr 05 00:33:06 localhost kernel:  do_syscall_64+0x64/0x190
+Apr 05 00:33:06 localhost kernel:  entry_SYSCALL_64_after_hwframe+0x71/0x79
+Apr 05 00:33:06 localhost kernel:
+Apr 05 00:33:06 localhost kernel: Last potentially related work creation:
+Apr 05 00:33:06 localhost kernel:  kasan_save_stack+0x33/0x60
+Apr 05 00:33:06 localhost kernel:  __kasan_record_aux_stack+0xad/0xc0
+Apr 05 00:33:06 localhost kernel:  insert_work+0x32/0x1f0
+Apr 05 00:33:06 localhost kernel:  __queue_work+0x5cb/0xcb0
+Apr 05 00:33:06 localhost kernel:  call_timer_fn+0x16d/0x490
+Apr 05 00:33:06 localhost kernel:  __run_timers+0x488/0x980
+Apr 05 00:33:06 localhost kernel:  run_timer_base+0xfb/0x170
+Apr 05 00:33:06 localhost kernel:  run_timer_softirq+0x1a/0x30
+Apr 05 00:33:06 localhost kernel:  __do_softirq+0x26a/0x7d2
+Apr 05 00:33:06 localhost kernel:
+Apr 05 00:33:06 localhost kernel: Second to last potentially related work creation:
+Apr 05 00:33:06 localhost kernel:  kasan_save_stack+0x33/0x60
+Apr 05 00:33:06 localhost kernel:  __kasan_record_aux_stack+0xad/0xc0
+Apr 05 00:33:06 localhost kernel:  insert_work+0x32/0x1f0
+Apr 05 00:33:06 localhost kernel:  __queue_work+0x5cb/0xcb0
+Apr 05 00:33:06 localhost kernel:  call_timer_fn+0x16d/0x490
+Apr 05 00:33:06 localhost kernel:  __run_timers+0x488/0x980
+Apr 05 00:33:06 localhost kernel:  timer_expire_remote+0xe6/0x150
+Apr 05 00:33:06 localhost kernel:  tmigr_handle_remote+0x6e2/0xe00
+Apr 05 00:33:06 localhost kernel:  __do_softirq+0x26a/0x7d2
+Apr 05 00:33:06 localhost kernel:
+Apr 05 00:33:06 localhost kernel: The buggy address belongs to the object at ffff88810ed40000
+                                   which belongs to the cache kmalloc-2k of size 2048
+Apr 05 00:33:06 localhost kernel: The buggy address is located 2792 bytes to the right of
+                                   allocated 1120-byte region [ffff88810ed40000, ffff88810ed40460)
+Apr 05 00:33:06 localhost kernel:
+Apr 05 00:33:06 localhost kernel: The buggy address belongs to the physical page:
+Apr 05 00:33:06 localhost kernel: page: refcount:1 mapcount:0 mapping:0000000000000000 index:0xffff88810ed45000 pfn:0x10ed40
+Apr 05 00:33:06 localhost kernel: head: order:3 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+Apr 05 00:33:06 localhost kernel: flags: 0x200000000000840(slab|head|node=0|zone=2)
+Apr 05 00:33:06 localhost kernel: page_type: 0xffffffff()
+Apr 05 00:33:06 localhost kernel: raw: 0200000000000840 ffff888100042f00 ffffea00040f1a00 dead000000000002
+Apr 05 00:33:06 localhost kernel: raw: ffff88810ed45000 0000000080080006 00000001ffffffff 0000000000000000
+Apr 05 00:33:06 localhost kernel: head: 0200000000000840 ffff888100042f00 ffffea00040f1a00 dead000000000002
+Apr 05 00:33:06 localhost kernel: head: ffff88810ed45000 0000000080080006 00000001ffffffff 0000000000000000
+Apr 05 00:33:06 localhost kernel: head: 0200000000000003 ffffea00043b5001 dead000000000122 00000000ffffffff
+Apr 05 00:33:06 localhost kernel: head: 0000000800000000 0000000000000000 00000000ffffffff 0000000000000000
+Apr 05 00:33:06 localhost kernel: page dumped because: kasan: bad access detected
+Apr 05 00:33:06 localhost kernel:
+Apr 05 00:33:06 localhost kernel: Memory state around the buggy address:
+Apr 05 00:33:06 localhost kernel:  ffff88810ed40e00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+Apr 05 00:33:06 localhost kernel:  ffff88810ed40e80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+Apr 05 00:33:06 localhost kernel: >ffff88810ed40f00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+Apr 05 00:33:06 localhost kernel:                                               ^
+Apr 05 00:33:06 localhost kernel:  ffff88810ed40f80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+Apr 05 00:33:06 localhost kernel:  ffff88810ed41000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Apr 05 00:33:06 localhost kernel: ==================================================================
+Apr 05 00:33:06 localhost kernel: Disabling lock debugging due to kernel taint
+Apr 05 00:33:06 localhost kernel: INFO: trying to register non-static key.
+Apr 05 00:33:06 localhost kernel: The code is fine but needs lockdep annotation, or maybe
+Apr 05 00:33:06 localhost kernel: you didn't initialize this object before use?
+Apr 05 00:33:06 localhost kernel: turning off the locking correctness validator.
+Apr 05 00:33:06 localhost kernel: CPU: 5 PID: 305560 Comm: kworker/u128:2 Tainted: G    B              99.9.0-rc2-gdebeafad51e2 #262
+Apr 05 00:33:06 localhost kernel: Hardware name: QEMU Standard PC (Q35 + ICH9, 2009)/Incus, BIOS unknown 2/2/2022
+Apr 05 00:33:06 localhost kernel: Workqueue: writeback wb_workfn (flush-259:0)
+Apr 05 00:33:06 localhost kernel: Call Trace:
+Apr 05 00:33:06 localhost kernel:  <TASK>
+Apr 05 00:33:06 localhost kernel:  dump_stack_lvl+0x5a/0x90
+Apr 05 00:33:06 localhost kernel:  register_lock_class+0x11dd/0x1860
+Apr 05 00:33:06 localhost kernel:  ? add_taint+0x2a/0x90
+Apr 05 00:33:06 localhost kernel:  ? end_report+0x85/0x180
+Apr 05 00:33:06 localhost kernel:  ? __pfx_register_lock_class+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  __lock_acquire.isra.0+0x7f/0x1280
+Apr 05 00:33:06 localhost kernel:  lock_acquire+0x136/0x330
+Apr 05 00:33:06 localhost kernel:  ? wb_writeback+0x255/0x870
+Apr 05 00:33:06 localhost kernel:  _raw_spin_lock+0x33/0x40
+Apr 05 00:33:06 localhost kernel:  ? wb_writeback+0x255/0x870
+Apr 05 00:33:06 localhost kernel:  wb_writeback+0x255/0x870
+Apr 05 00:33:06 localhost kernel:  ? __pfx_wb_writeback+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ? __pfx_lock_release+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  wb_workfn+0x221/0xc80
+Apr 05 00:33:06 localhost kernel:  ? __pfx_wb_workfn+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ? lock_acquire+0x136/0x330
+Apr 05 00:33:06 localhost kernel:  process_one_work+0x82d/0x1790
+Apr 05 00:33:06 localhost kernel:  ? __pfx_process_one_work+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ? assign_work+0x16c/0x240
+Apr 05 00:33:06 localhost kernel:  worker_thread+0x724/0x1300
+Apr 05 00:33:06 localhost kernel:  ? __kthread_parkme+0xba/0x1f0
+Apr 05 00:33:06 localhost kernel:  ? __pfx_worker_thread+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  kthread+0x2ed/0x3d0
+Apr 05 00:33:06 localhost kernel:  ? __pfx_kthread+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ret_from_fork+0x31/0x70
+Apr 05 00:33:06 localhost kernel:  ? __pfx_kthread+0x10/0x10
+Apr 05 00:33:06 localhost kernel:  ret_from_fork_asm+0x1a/0x30
+Apr 05 00:33:06 localhost kernel:  </TASK>
