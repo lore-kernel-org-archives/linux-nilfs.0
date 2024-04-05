@@ -1,64 +1,64 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14E05A2A
-	for <linux-nilfs@vger.kernel.org>; Fri,  5 Apr 2024 01:21:25 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94079568A
+	for <linux-nilfs@vger.kernel.org>; Fri,  5 Apr 2024 01:46:26 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712280087; cv=none; b=p3650r16pEYlOUNepnAqWQswrho0Zh5yE6Szfe/vR7yUqFw3rDW0Rxx0ihQXwFbglO74Z7RN8rEJqEv8iWHDWwWvqv2PysY07EQCm/2xpJLSCdEJx0ylsFyIzrZ9UoxD3zpO0jDZJvSZfjW90e1VgyNY4UXuhEPxXNaU9KeMq5Y=
+	t=1712281588; cv=none; b=il/Ug/CVWc2wkExd3/zkuJ60lTcnT/2PZDzHx+60+xThx0foXORdgT/X+GbVyShY6HlJDETCvlD0rnSOqW4936bmq5tBNLgOKl/1qSX8VrwbaRDp3fMazcHFbXGkAh5QnfIkZx1Ay3h/79zxT7FZr5SQPvkEJ38vEall936cMqA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712280087; c=relaxed/simple;
-	bh=iEo8xNKGfswNkFapjaZByhAJnnpEXs4pGIa1203ToYU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=GLsQyuus/LeioiKr3ZuAVp4JQvCcdeIO/XlN5+IWEyES7bQGSWN8Y+P/+V637LDFvV3njqsH3cw0oaTuZgLx3rii5K8jzJaMpW0OZAuaa0yiOa9XgHYkd0ldHRJrzUtCAMmkHyAjxqVAg5oVp7MOkP0DikX2d2GIp/EB/6O39b8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ip80WtYt; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1712281588; c=relaxed/simple;
+	bh=b75+1oRVOOp+DftZBWWaXo4bgK7Ibsu+SLgZi+FP9jE=;
+	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
+	 In-Reply-To:Content-Type; b=nN0FAvUjXVa+ql7aHpqdtJ/2V7mxNg75f2I7ZDEG4YGzZP3aK3QooPyHzIkaghK1u0gDS7KO9Jka4IhaTQ5UBmbxrMiM9F/RwD32C6pECCXj6dVQRoNa9ff6LVT6pmHisTS6FjE9yb9ZEA9cV7af2az5Mmu/oJJacQtlxtLQphg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gWEK2HEp; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ip80WtYt"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gWEK2HEp"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712280084;
+	s=mimecast20190719; t=1712281585;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=3UXUPEUPW+emrph0LU2twk8APOF78TzQaw+ZM0Wb32w=;
-	b=Ip80WtYtOrZmSq7V+hsnvJtLRJVLj6mlcRHL8vIUljbZkHoS1spsRPsDqwO7etTq3831N5
-	zEdO45BmhQFGoPTBxbuNu7huJ87pk4TSNtPeJ+DrMcbM28EwbdWS1Du8ZLKPTQDSWYvOwf
-	gqaUbnZM/g4yEZGDOJlxZ1OKAlTRMc8=
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=2sXQb5f0RBC9j41zCX2OUp4zW722lM9+s8HDUwTTOXs=;
+	b=gWEK2HEp8rhOQxgo7hVrRMXzepKIMj0JHf9to2uCM39HEfdOdn0jFN5OQm8QmJbLwjWoUm
+	sq+KA4ZQFhq8gkGIGq6cvW2dSVZhxZLLlPBp7hMwlcIgJY0/2jUgLqDd5+Hp30p0W+FW12
+	8iv3y3YpMjmFN7W+YS/vhiebSnDwkis=
+Received: from mail-oi1-f198.google.com (mail-oi1-f198.google.com
+ [209.85.167.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-551-uhb3YJO-NwerGaDCNIKeWQ-1; Thu, 04 Apr 2024 21:21:23 -0400
-X-MC-Unique: uhb3YJO-NwerGaDCNIKeWQ-1
-Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-78bd232b170so159839785a.1
-        for <linux-nilfs@vger.kernel.org>; Thu, 04 Apr 2024 18:21:23 -0700 (PDT)
+ us-mta-217-gsauSYcVNT-hSMVUL7RdlA-1; Thu, 04 Apr 2024 21:46:24 -0400
+X-MC-Unique: gsauSYcVNT-hSMVUL7RdlA-1
+Received: by mail-oi1-f198.google.com with SMTP id 5614622812f47-3c3cbe8055bso1785220b6e.0
+        for <linux-nilfs@vger.kernel.org>; Thu, 04 Apr 2024 18:46:23 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712280082; x=1712884882;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
+        d=1e100.net; s=20230601; t=1712281583; x=1712886383;
+        h=content-transfer-encoding:in-reply-to:content-language:references
+         :cc:to:from:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=3UXUPEUPW+emrph0LU2twk8APOF78TzQaw+ZM0Wb32w=;
-        b=j2MsIRinAOBdbugr/2oYY15B1Ft57pp4lzBRH+QBwtf9KTuC8EHRfeCpccGiZpKs6C
-         47zn35flIhabvHkDVmqg+RD+Inr0g3lDUXT6JYkeJopDNPeBDhQI8R08Fe+ss2I3YNnI
-         lIEmRxBWPZf3i0hf6yzfKhO71XkfypMSUkof/pomwpWgWU99JYqh1zmTN3VnMFVmr7LM
-         fRtsyUrXSJcyWdNz6CVgUCOnTJfqZQOcQry7l+kVlhR/WIvC7TQedzWws+pEa4YT/xYH
-         nlDPUCks+HmMfFppUL88UBlz0Oe9+BQ8+tv8kQCf6JbA6iW3g35tqaAo0bzQYw7cwK54
-         bMjg==
-X-Gm-Message-State: AOJu0YwXmNeMLmV8cZrLw9T3dYy7YDi+uf63RdYbFwOEGq7yC8M03INS
-	Zw6XVsZHrSfrb3TUAcXroJMj4AnlfGJPrvv0190kj8dtiWpxlooYNvFlNx+UVNgmNhZZXjKUzHB
-	0ELG4303pL3IwhQRhZ4tzusJab/m5PKoXCqVyyZQAKVtltR5jm2u57GVCesl1N7TgKHng
-X-Received: by 2002:a05:620a:4155:b0:78d:477f:55ed with SMTP id k21-20020a05620a415500b0078d477f55edmr155397qko.0.1712280082176;
-        Thu, 04 Apr 2024 18:21:22 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFXm9LF33LBTD7iVesgQsQoNu54Nb5MaMG2+aAgIwHgvCjPbRLUbty8Irlr2rOj1IcP6vOK9A==
-X-Received: by 2002:a05:620a:4155:b0:78d:477f:55ed with SMTP id k21-20020a05620a415500b0078d477f55edmr155381qko.0.1712280081898;
-        Thu, 04 Apr 2024 18:21:21 -0700 (PDT)
+        bh=2sXQb5f0RBC9j41zCX2OUp4zW722lM9+s8HDUwTTOXs=;
+        b=bQMtjYnwIItRQfwpOahA4eAjoo5d1p2xlMORgK3coohIa0bN7/YP5kt61Y6FNebMhC
+         UO/iiIIdtzcJ4lLZcxQ+uQRBxmzXEc+dig2xpD/xn7039gEuE3bExHMB7Gsip2Obwoix
+         t3aGHB+5H1TwclVvLVNHICBtNHyYDt7Ps2dD8IVzju6QtDxwRc1LOMFCJLHyJ9LK+5L5
+         ClAzzvRRQVoF0enKOcBfUbjfcShNHxtLZ1ktU3QW7QtVURaeZz4yjyR1f8HC0+QKOGrZ
+         4fhlaO94oJDj80orpMHY+w0AAVYd8xOr6V8WBUieYO3zMoa8F1F3L8295rMVoLkQpRIv
+         1qUw==
+X-Gm-Message-State: AOJu0YwvlItbM45uM5+RI8Co5ypP7mx0T0C6sEX6bLn3D4CRHpmB4k6x
+	5R8CsxIrB+9I8JH9BF2V6ZFOfYw3LOOeVw4g2ref0ljZ0xTGNmW3jhbv6dFs4p8Yje42RuWxhpS
+	pZ4mqf1e57mTR75mZAilx4nLRVy9/siq8MHGt6u6kp0tIl+lSF5PlbVUyt9LWuKxjPzDe
+X-Received: by 2002:a05:6808:ce:b0:3c3:da4e:fb77 with SMTP id t14-20020a05680800ce00b003c3da4efb77mr106829oic.46.1712281583033;
+        Thu, 04 Apr 2024 18:46:23 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHzlZNpR8H6+MbodEW2Pc5ljBRHjkeBf1e/EV9wyUV90rXiCw+yhtf7nh9U5zunho07a57n9g==
+X-Received: by 2002:a05:6808:ce:b0:3c3:da4e:fb77 with SMTP id t14-20020a05680800ce00b003c3da4efb77mr106822oic.46.1712281582800;
+        Thu, 04 Apr 2024 18:46:22 -0700 (PDT)
 Received: from ?IPV6:2601:447:cd81:ac10:24d6:b45a:a529:a73f? ([2601:447:cd81:ac10:24d6:b45a:a529:a73f])
-        by smtp.gmail.com with ESMTPSA id pi34-20020a05620a37a200b0078bdce0acecsm233116qkn.80.2024.04.04.18.21.21
+        by smtp.gmail.com with ESMTPSA id k14-20020a05620a0b8e00b00789e72b27fbsm245282qkh.120.2024.04.04.18.46.21
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 04 Apr 2024 18:21:21 -0700 (PDT)
-Message-ID: <2fd47dc7-e130-4c67-b39a-b1c38aa1c500@redhat.com>
-Date: Thu, 4 Apr 2024 20:21:19 -0500
+        Thu, 04 Apr 2024 18:46:22 -0700 (PDT)
+Message-ID: <0d26ef52-91bd-4108-bf09-5d92fa58cd28@redhat.com>
+Date: Thu, 4 Apr 2024 20:46:21 -0500
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -67,125 +67,52 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
 Subject: Re: [PATCH] nilfs2: convert to use the new mount API
+From: Eric Sandeen <sandeen@redhat.com>
 To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc: linux-nilfs@vger.kernel.org
 References: <e282e150-2bc1-4b6a-8aa1-0417371c2671@redhat.com>
  <CAKFNMo=bbdBsW2xvTMiZcrD37n8MWmDfhH7V2jKZ14=odduRXg@mail.gmail.com>
  <f99b0c44-c5b4-4e0b-892b-dd9793a80f9a@redhat.com>
  <CAKFNMokYkO-WsvrcZh=-FpR=LtCQnsyxET3ZjSzx-o5zXcMU9g@mail.gmail.com>
+ <2fd47dc7-e130-4c67-b39a-b1c38aa1c500@redhat.com>
 Content-Language: en-US
-From: Eric Sandeen <sandeen@redhat.com>
-In-Reply-To: <CAKFNMokYkO-WsvrcZh=-FpR=LtCQnsyxET3ZjSzx-o5zXcMU9g@mail.gmail.com>
+In-Reply-To: <2fd47dc7-e130-4c67-b39a-b1c38aa1c500@redhat.com>
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 
-On 4/4/24 5:33 PM, Ryusuke Konishi wrote:
-> On Fri, Apr 5, 2024 at 5:35 AM Eric Sandeen wrote:
->>
->> On 4/4/24 3:11 PM, Ryusuke Konishi wrote:
->>> On Thu, Apr 4, 2024 at 7:12 AM Eric Sandeen wrote:
->>>>
->>>> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
->>>> ---
->>>>
->>>> Note: This one was relatively more complex than others, so I would
->>>> appreciate review and testing. Basic checks of mounts, various mount
->>>> options, and snapshot mounts do seem to work. I may well have missed
->>>> something though, as I am not very familiar with nilfs.
->>>>
->>>> You may want to look closely at the handling of case Opt_err: which
->>>> no longer uses nilfs_write_opt() and open-codes the flag change, so
->>>> that I can use the enum. If you'd prefer to make 3 independent
->>>> Opt_err_XXXZ cases, that would be possible.
->>>>
->>>> If any of the other changes here are unclear, or problematic, please
->>>> let me know.
->>>>
->>>> Thanks!
->>>> -Eric
->>>
->>> Hi Eric,
->>>
->>> Thank you!  This is one of the modernizations that I thought I had to
->>> do with nilfs2.
->>>
->>> I'm planning on doing a full review later, but when I ran a mount
->>> pattern test, the kernel restarted without any messages (probably
->>> caused a panic), so I'll give you some quick feedback.
->>>
->>> The mount pattern that caused the kernel to restart was a simultaneous
->>> mount of the current tree and a snapshot, which occurred when the
->>> snapshot was mounted and then the current tree was mounted.  Something
->>> like below:
->>>
->>> $ sudo losetup /dev/loop0 ./nilfs.iso
->>> $ sudo mount -t nilfs2 -o ro,cp=38866 /dev/loop0 /mnt/snapshot
->>> $ sudo mount -t nilfs2 /dev/loop0 /mnt/test
->>> --> panic
->>>
->>> Here, 38866 is the snapshot number that can be created with the
->>> nilfs-utils "mkcp -s" command or "chcp" command, and the number can be
->>> checked with "lscp -s".
->>>
->>> I have placed the mount test script I used in the following location:
->>>
->>>  https://github.com/konis/nilfs-test-tools/blob/main/test-nilfs-mount.sh
->>>
->>> The panic occurred in test #17 of that script.
->>>
->>> I'll also try to track what's going on.
->>
->> Thanks, I'll look - I was hoping/expecting that you had better tests for
->> mount options than I did! ;)
->>
->> Feel free to debug if you like, but it must be a bug in my patch so
->> I'll take ownership of trying to track down the problem and get it to
->> pass your test script.
+On 4/4/24 8:21 PM, Eric Sandeen wrote:
+
+> So the oops you hit is when a snapshot is mounted first, then the main
+> fs is mounted.
 > 
-> Got it!
+> My patch does this:
 > 
-> So I'll try to understand the patch first.
-
-Sorry that it's not really possible to break it down into smaller changes.
-
-> This test script focuses on reproducing NILFS-specific mount sequences
-> (such as mounting a snapshot and current tree simultaneously) and
-> checking the state of user space such as the GC process and utab.
-> And, is not exhaustive for mount options.
+>                         /*
+>                          * Try remount to setup mount states if the current
+>                          * tree is not mounted and only snapshots use this sb.
+>                          */
+>                         err = nilfs_reconfigure(fc);
 > 
-> Looking at the patch, if I come up with test patterns that would be
-> better to add, I will enhance the test script.
+> (in place of nilfs_remount()), and nilfs_reconfigure expects to have
+> fc->root set, which is normally only set up for an actual remount.
+> 
+> fc->root is NULL, so that's the oops. I'll see what I can work out.
 
-Sounds good.
+Not sure if this is a terrible hack, but your test script passes with
+this change on top of my original patch:
 
-So the oops you hit is when a snapshot is mounted first, then the main
-fs is mounted.
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 1cdc38db2612..4a9a8924068e 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -1232,6 +1232,7 @@ nilfs_get_tree(struct fs_context *fc)
+ 			 * Try remount to setup mount states if the current
+ 			 * tree is not mounted and only snapshots use this sb.
+ 			 */
++			fc->root = s->s_root;
+ 			err = nilfs_reconfigure(fc);
+ 			if (err)
+ 				goto failed_super;
 
-My patch does this:
-
-                        /*
-                         * Try remount to setup mount states if the current
-                         * tree is not mounted and only snapshots use this sb.
-                         */
-                        err = nilfs_reconfigure(fc);
-
-(in place of nilfs_remount()), and nilfs_reconfigure expects to have
-fc->root set, which is normally only set up for an actual remount.
-
-fc->root is NULL, so that's the oops. I'll see what I can work out.
-
-Thanks,
 -Eric
-
-
-> Thanks,
-> Ryusuke Konishi
-> 
->>
->> -Eric
->>
->>> Thanks,
->>> Ryusuke Konishi
->>
-> 
 
