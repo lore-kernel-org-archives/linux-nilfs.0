@@ -1,152 +1,183 @@
-Received: from mail-lf1-f42.google.com (mail-lf1-f42.google.com [209.85.167.42])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B00F815920D
-	for <linux-nilfs@vger.kernel.org>; Wed, 10 Apr 2024 12:48:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12ED11779B4;
+	Wed, 10 Apr 2024 17:36:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712753288; cv=none; b=gQWicv0ZUwaURP2dvN9z2bsmL0XpYzJh91XYAHKQJtKQCrk7wuHarzrS28uyP8WQFatBg+OMkj8X7E2oj4FyCCUz8pn0Y2S1BjwDIWLSZFWQxhLqsg8Ok2M5eFWCY0gim048/pV7ig41YcaOuJbIfIFP3jC0fMmYCGS/93gWeXg=
+	t=1712770571; cv=none; b=ufmzr/kxYKt4NTP9Vv/eyTUSMaAz2nDiGNT+ZRYVTmMm1G/mQsE14HMOrFdWgvhHIM5FJDKArOnrFEXbSj0bgtL4EKpga4XvUrbH1K7UQLRwes1vtQswpNIqRC9ztZKUYjB7XbjU8znidFZTGR/kkgr3JHiRrWt6kt9tmREXylg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712753288; c=relaxed/simple;
-	bh=hQjzVLEF7LZEsGLbGGinzxO7xtiNIQZKctKxi5STK40=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=jXmQKrajv633hvIEesemEuiWgMqbhN4RFRTCdDQan+hziW/JETyJuZ8GMuXQXtTUvL8P21Thh7W6FvIvP4fmu8jwwxz073Z9jXaCgCKvXqIs7b0azROXL9ysHlxuEvHe6xXN7mmtOMdzTndoHr0HvReJITrcc+8+wlUg9iVe8tE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UQQnGt3J; arc=none smtp.client-ip=209.85.167.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1712770571; c=relaxed/simple;
+	bh=s7AlPHnjW1gFs3weqR//JnIAW3hG+/Mp+aTuvYmxgTU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=p2+x3X32CoKrZ801XtkYFNGmkdaDWfFjB3IA9loQOFj+haLX+43yX/Qrqx0UVHKz2mKYkJhVdUEuz67bSAPtr4mMpb+FH5h03XTzcdKa4Z0aPLJ98l6kBSsGYiWHwwnMnpqbGgQrgr1WO8tVj0ye7KrJMr1S9CA6R6ITlRItAw4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Wo/su6ux; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=pwQ8usD0; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Wo/su6ux; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=pwQ8usD0; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UQQnGt3J"
-Received: by mail-lf1-f42.google.com with SMTP id 2adb3069b0e04-516d264d0e4so5438342e87.0
-        for <linux-nilfs@vger.kernel.org>; Wed, 10 Apr 2024 05:48:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712753285; x=1713358085; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=hydvzTwL7ePB4dUVs/9Axe4Vj3LIUX1et3RIHQc6siI=;
-        b=UQQnGt3Jpn2zc7MOfePN+kKBztoOQGsxMKK39wiza3nc4T/x5nC8CAMJTFigjvlwIM
-         flu4GHiQgOqV2zuz/sxwkT+m07D3awI235TeThyF66yv7UsMk1W+4R3fsHU8Px3xxMca
-         HlsqDwYn+2HA2l/zfh1rT3E6ZbvQrv8JXWnjbmAWYnfPHmd3EV07KBBCcoN67BCqptYp
-         znI4rHNbnf90rGLvHVihbNIJ8juJ/2bpbpv41hOiGBwajwWV0MkHKB6rkWK9Kb1xzvWi
-         HjY+GOcsWHq1OiYUVa8tr6jN2Q5cyOiJSMCJfW6wD0YPorvMvhBavcQ0SQvMt8W4WeBB
-         2ntg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712753285; x=1713358085;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=hydvzTwL7ePB4dUVs/9Axe4Vj3LIUX1et3RIHQc6siI=;
-        b=IEZKKzd9BXqWZPbWm9irYGl419cb1vcc3kUrlA631wlV1foDmDlTF4qphFh0G+RPzt
-         Wnft7KhfrHrZhBpLKacmwzjgvfZuHe+6R5ChV1nLCPZ37cHFU+9jjBXGd/NipzutFqgP
-         9IInj0aOGaPuUzQlInsy+6bjdLwnSMINs1RoQCoaQKxCnwg0/26D2RnjCjAi9b7a55XR
-         tWKMDr6nfECJ/B+040QxzDqxWK1+PUz8oM+/JBZ8BSZ8pwXhxy1EoQn+tSnsZqRzC1i2
-         bu6clRCPS/fKBcgzWFdV+YpoOTRMP6tVrs2yg9AB9Xhmmvt6MW/M0/MNk18pU4AY8Lm4
-         Lp0w==
-X-Gm-Message-State: AOJu0Yw0Aqq5WKH/+Ut6w/SONqt9VVO5Ch4tcjBLk0vW5AmYezLGZMfq
-	l/uW8y1iWrKYPsqLfC4WEFzCv/E0zj8KF8nuvo+D920MZBPhLBMZgbuRAqWim/U96DE5zs3qN2C
-	mU98qrarfayaoTVHNhFJP5f+quy+MhnmZvs8=
-X-Google-Smtp-Source: AGHT+IGBQ5qLvkyCRBI5fd2jMa+64SVFDCvMU2M43sPZiq3vps3UPguka0AW6pi0wp/us93JKcvvpZlgU1j0ZUTLu/Y=
-X-Received: by 2002:a19:e047:0:b0:513:e677:790a with SMTP id
- g7-20020a19e047000000b00513e677790amr898616lfj.6.1712753284554; Wed, 10 Apr
- 2024 05:48:04 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Wo/su6ux";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="pwQ8usD0";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Wo/su6ux";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="pwQ8usD0"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 3395033A89;
+	Wed, 10 Apr 2024 17:36:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1712770567;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=0ZHHE5aOwQ1Ezn/ab1buAuDtcCLPcpIIchKLIUxoBbM=;
+	b=Wo/su6uxAz3KDCet7sG1IMbLmZNu/s492NxBN+stUG6oo2qYtuABn+4iFfLZA7KwEty81H
+	IdrOqxowTjwdMcGmvVJuVhd3KhUwlHGwlvUKUWet7620GxVeKx3CiehY9/HodlAMarXBGu
+	QKA3ILsUtN07gfz8aoS5W8ffx3zw7mU=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1712770567;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=0ZHHE5aOwQ1Ezn/ab1buAuDtcCLPcpIIchKLIUxoBbM=;
+	b=pwQ8usD0NAyGD6U1k6UXV+bVfsviAAMcwHC0rXMTXFxYTDSQht5I5OMD0LYFtofyWnG5ZB
+	JIolcEC5hlnuCvCg==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1712770567;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=0ZHHE5aOwQ1Ezn/ab1buAuDtcCLPcpIIchKLIUxoBbM=;
+	b=Wo/su6uxAz3KDCet7sG1IMbLmZNu/s492NxBN+stUG6oo2qYtuABn+4iFfLZA7KwEty81H
+	IdrOqxowTjwdMcGmvVJuVhd3KhUwlHGwlvUKUWet7620GxVeKx3CiehY9/HodlAMarXBGu
+	QKA3ILsUtN07gfz8aoS5W8ffx3zw7mU=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1712770567;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=0ZHHE5aOwQ1Ezn/ab1buAuDtcCLPcpIIchKLIUxoBbM=;
+	b=pwQ8usD0NAyGD6U1k6UXV+bVfsviAAMcwHC0rXMTXFxYTDSQht5I5OMD0LYFtofyWnG5ZB
+	JIolcEC5hlnuCvCg==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id EFAAD13691;
+	Wed, 10 Apr 2024 17:36:06 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 20hgOgbOFmZrWQAAD6G6ig
+	(envelope-from <dsterba@suse.cz>); Wed, 10 Apr 2024 17:36:06 +0000
+Date: Wed, 10 Apr 2024 19:28:37 +0200
+From: David Sterba <dsterba@suse.cz>
+To: Jan Kara <jack@suse.cz>
+Cc: Matthew Wilcox <willy@infradead.org>, Yu Kuai <yukuai1@huaweicloud.com>,
+	axboe@kernel.dk, roger.pau@citrix.com, colyli@suse.de,
+	kent.overstreet@gmail.com, joern@lazybastard.org,
+	miquel.raynal@bootlin.com, richard@nod.at, vigneshr@ti.com,
+	sth@linux.ibm.com, hoeppner@linux.ibm.com, hca@linux.ibm.com,
+	gor@linux.ibm.com, agordeev@linux.ibm.com, jejb@linux.ibm.com,
+	martin.petersen@oracle.com, clm@fb.com, josef@toxicpanda.com,
+	dsterba@suse.com, viro@zeniv.linux.org.uk, brauner@kernel.org,
+	nico@fluxnic.net, xiang@kernel.org, chao@kernel.org, tytso@mit.edu,
+	adilger.kernel@dilger.ca, jack@suse.com, konishi.ryusuke@gmail.com,
+	akpm@linux-foundation.org, hare@suse.de, p.raghav@samsung.com,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
+	linux-mtd@lists.infradead.org, linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org, linux-bcachefs@vger.kernel.org,
+	linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	linux-erofs@lists.ozlabs.org, linux-ext4@vger.kernel.org,
+	linux-nilfs@vger.kernel.org, yukuai3@huawei.com,
+	yi.zhang@huawei.com, yangerkun@huawei.com
+Subject: Re: [PATCH RFC v3 for-6.8/block 09/17] btrfs: use bdev apis
+Message-ID: <20240410172837.GO3492@suse.cz>
+Reply-To: dsterba@suse.cz
+References: <20231221085712.1766333-1-yukuai1@huaweicloud.com>
+ <20231221085712.1766333-10-yukuai1@huaweicloud.com>
+ <ZYcZi5YYvt5QHrG9@casper.infradead.org>
+ <20240104114958.f3cit5q7syp3tn3a@quack3>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <e282e150-2bc1-4b6a-8aa1-0417371c2671@redhat.com>
- <CAKFNMo=bbdBsW2xvTMiZcrD37n8MWmDfhH7V2jKZ14=odduRXg@mail.gmail.com>
- <f99b0c44-c5b4-4e0b-892b-dd9793a80f9a@redhat.com> <CAKFNMokYkO-WsvrcZh=-FpR=LtCQnsyxET3ZjSzx-o5zXcMU9g@mail.gmail.com>
- <2fd47dc7-e130-4c67-b39a-b1c38aa1c500@redhat.com> <0d26ef52-91bd-4108-bf09-5d92fa58cd28@redhat.com>
- <1ba497be-64cb-4a4d-99a8-16707da32cc4@redhat.com> <CAKFNMonx-qZPUn6-qCFGbiFd06K-3bjsHyaw+rw_uq3YU_m=9w@mail.gmail.com>
- <55663cac-42e0-4be6-9f3a-e3f9f3d1ab50@redhat.com>
-In-Reply-To: <55663cac-42e0-4be6-9f3a-e3f9f3d1ab50@redhat.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 10 Apr 2024 21:47:47 +0900
-Message-ID: <CAKFNMo=4NP_3-YebtVO-OcxzxCNvjSNAW_PY-Uv-7wvdgvxp9w@mail.gmail.com>
-Subject: Re: [PATCH V2] nilfs2: convert to use the new mount API
-To: Eric Sandeen <sandeen@redhat.com>
-Cc: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240104114958.f3cit5q7syp3tn3a@quack3>
+User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
+X-Spam-Flag: NO
+X-Spam-Score: -2.50
+X-Spam-Level: 
+X-Spamd-Result: default: False [-2.50 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	HAS_REPLYTO(0.30)[dsterba@suse.cz];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_TWELVE(0.00)[49];
+	TO_DN_SOME(0.00)[];
+	ARC_NA(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	RCVD_TLS_ALL(0.00)[];
+	R_RATELIMIT(0.00)[to_ip_from(RLtpaten8pmzgjg419jubxqoa7)];
+	REPLYTO_ADDR_EQ_FROM(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_CC(0.00)[infradead.org,huaweicloud.com,kernel.dk,citrix.com,suse.de,gmail.com,lazybastard.org,bootlin.com,nod.at,ti.com,linux.ibm.com,oracle.com,fb.com,toxicpanda.com,suse.com,zeniv.linux.org.uk,kernel.org,fluxnic.net,mit.edu,dilger.ca,linux-foundation.org,samsung.com,vger.kernel.org,lists.xenproject.org,lists.infradead.org,lists.ozlabs.org,huawei.com];
+	RCVD_COUNT_TWO(0.00)[2];
+	TAGGED_RCPT(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
 
-On Wed, Apr 10, 2024 at 4:54=E2=80=AFAM Eric Sandeen wrote:
->
-> On 4/9/24 2:13 PM, Ryusuke Konishi wrote:
-> > Thank you for waiting.  I've finished the full review.
-> >
-> > I'll comment below, inline.
-> > First let me say that this patch is great and I don't see any points
-> > that need major rewrites.
->
-> Thanks!
-...
-> >> @@ -1180,130 +1163,57 @@ static int nilfs_remount(struct super_block *=
-sb, int *flags, char *data)
-> >>                 root =3D NILFS_I(d_inode(sb->s_root))->i_root;
-> >
-> >>                 err =3D nilfs_attach_log_writer(sb, root);
-> >>                 if (err)
-> >> -                       goto restore_opts;
-> >> +                       goto ignore_opts;
-> >
-> > Here, if nilfs_attach_log_writer() fails, it will return via
-> > "ignore_opts" without restoring the SB_RDONLY flag in sb->s_flags.
-> > I think it is necessary to repair the flag only for this error path,
-> > what do you think?
->
-> Again, I think you are right, although maybe if the above flags copy is
-> moved to the end, it won't be a problem? I'll look more closely.
+On Thu, Jan 04, 2024 at 12:49:58PM +0100, Jan Kara wrote:
+> On Sat 23-12-23 17:31:55, Matthew Wilcox wrote:
+> > On Thu, Dec 21, 2023 at 04:57:04PM +0800, Yu Kuai wrote:
+> > > @@ -3674,16 +3670,17 @@ struct btrfs_super_block *btrfs_read_dev_one_super(struct block_device *bdev,
+> > >  		 * Drop the page of the primary superblock, so later read will
+> > >  		 * always read from the device.
+> > >  		 */
+> > > -		invalidate_inode_pages2_range(mapping,
+> > > -				bytenr >> PAGE_SHIFT,
+> > > +		invalidate_bdev_range(bdev, bytenr >> PAGE_SHIFT,
+> > >  				(bytenr + BTRFS_SUPER_INFO_SIZE) >> PAGE_SHIFT);
+> > >  	}
+> > >  
+> > > -	page = read_cache_page_gfp(mapping, bytenr >> PAGE_SHIFT, GFP_NOFS);
+> > > -	if (IS_ERR(page))
+> > > -		return ERR_CAST(page);
+> > > +	nofs_flag = memalloc_nofs_save();
+> > > +	folio = bdev_read_folio(bdev, bytenr);
+> > > +	memalloc_nofs_restore(nofs_flag);
+> > 
+> > This is the wrong way to use memalloc_nofs_save/restore.  They should be
+> > used at the point that the filesystem takes/releases whatever lock is
+> > also used during reclaim.  I don't know btrfs well enough to suggest
+> > what lock is missing these annotations.
+> 
+> In principle I agree with you but in this particular case I agree the ask
+> is just too big. I suspect it is one of btrfs btree locks or maybe
+> chunk_mutex but I doubt even btrfs developers know and maybe it is just a
+> cargo cult. And it is not like this would be the first occurence of this
+> anti-pattern in btrfs - see e.g. device_list_add(), add_missing_dev(),
+> btrfs_destroy_delalloc_inodes() (here the wrapping around
+> invalidate_inode_pages2() looks really weird), and many others...
 
-I also dug into the code to see if we could move the flag manipulation
-backwards.
-
-nilfs_attach_log_writer() is responsible for starting the log writer
-thread, and this itself can be executed without being affected by the
-SB_RDONLY flag.
-In fact, when I tested it with such a change, the read-write remount
-completed without any problems.
-
-However, since the behavior of the log writer thread is affected by
-the SB_RDONLY flag, there is a risk of introducing potential
-regressions.
-
-In conclusion, it's probably okay (unless you want to avoid even the
-slightest risk).
-
-Below are the details.
-
-The first possible side effect is that log writing may start for some
-reason before the SB_RDONLY flag is unset, and it will fail due to the
-SB_RDONLY flag.  The call path for this is as follows.
-
-nilfs_segctor_thread()
-  nilfs_segctor_thread_construct()
-    nilfs_segctor_construct()
-      nilfs_segctor_do_construct()  --> sb_rdonly() check fails and
-returns -EROFS
-
-The log writer thread ignores the error and does not output any
-messages, and the write request (if any) will fail, but this is
-expected behavior at this stage before the transition to read/write
-mode is complete, so it seems ok.
-
-The second possible side effect is that the log writer thread calls
-iput(), which in turn calls nilfs_evict() through iput_final(), which
-causes inode metadata removal to be incomplete due to the detection of
-the SB_RDONLY flag.
-
-This should not normally occur since inode->i_nlink does not fall to 0
-in the read-only state, and even if it does occur, it can be
-interpreted as the intended behavior since the transition to
-read/write mode has not yet been completed.
-
-Even if there is a problem, only syzbot will probably be able to detect it.
-And If that concern turns out to be true, I can deal with it.
-
-Sorry for being roundabout, but the bottom line is that the change you
-think is OK.
-
-Thanks,
-Ryusuke Konishi
+The pattern is intentional and a temporary solution before we could
+implement the scoped NOFS. Functions calling allocations get converted
+from GFP_NOFS to GFP_KERNEL but in case they're called from a context
+that either holds big locks or can recursively enter the filesystem then
+it's protected by the memalloc calls. This should not be surprising.
+What may not be obvious is which locks or kmalloc calling functions it
+could be, this depends on the analysis of the function call chain and
+usually there's enough evidence why it's needed.
