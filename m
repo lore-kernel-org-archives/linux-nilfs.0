@@ -1,93 +1,177 @@
-Received: from out-179.mta1.migadu.com (out-179.mta1.migadu.com [95.215.58.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f71.google.com (mail-io1-f71.google.com [209.85.166.71])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E040913698F
-	for <linux-nilfs@vger.kernel.org>; Thu, 11 Apr 2024 17:49:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C00636B
+	for <linux-nilfs@vger.kernel.org>; Mon, 15 Apr 2024 00:11:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.71
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712857774; cv=none; b=DDQn+LLVlyqv5d4d4UorxpR36kCcOYVxkSATuivwLdSY4EqFv/xrO4Oah5FYp00jWyR1//o8bML03ciBrUwuLna//5RdFUMtkP/awCieLfSCjvAinSBsc0506sx4tep1Pq0XlSaiM8Pv9nEF3qTRBOe+9ia2abyRA0yeSUwwUE8=
+	t=1713139881; cv=none; b=RstfG2AZ9TiVVGEuNopn0BygEvhWWjWSwBQyiWDhOu3QLo9NveErkBTnn2ceNGv/hWnPdmu8vhc6pSp3DpWoNlb1GDnsPiQQFLoMPhWnU6UgV+oBnzCMcp5hfNSBCTZbWJZmvH7RTq4Ao6xv7KHUbb5Cx9oUT8zqawyl9r1npSw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712857774; c=relaxed/simple;
-	bh=JMTdAGD8MD/pbkdj+J+tnzBU2KPanJ0Go33kBW0D9C0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=LRuOeTEZFBa/gzZ518NkRCatcoLe4zVR0w38YgcG4wEScdWN+NGOiDssKBZc9sD90V24FvYo7mMqdGE5p5BbNzdHqQKrk/e5FuAsf9E6SGxfY+WRd/2rEPg9z9kiUU2eWu8Z21g2aZ3omHCpoBXCcL2EoWVIYFh9XI9q03aN9/Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=aI/Km0ji; arc=none smtp.client-ip=95.215.58.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="aI/Km0ji"
-Date: Thu, 11 Apr 2024 13:49:21 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1712857769;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=V/TZdE1FK3O4qkESTbUB1nUL6z8CdzrLZmjris90VHw=;
-	b=aI/Km0jiSMVL4A1tCs8hlsrV66vbuWxJKZ+EgkonCW2LmuJAGBaIivtgu4+3HhSKhbSBh3
-	uS3+3l/YqK0GsHToDiJSOy8jQgouByPKNokiyLYxRwngjkex1lryU/nDL4TDH7+GmcHLtc
-	35AcbG0Y+MpEd8VLadpzkGxeP5lZ1Bo=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: axboe@kernel.dk, roger.pau@citrix.com, colyli@suse.de, 
-	kent.overstreet@gmail.com, joern@lazybastard.org, miquel.raynal@bootlin.com, richard@nod.at, 
-	vigneshr@ti.com, sth@linux.ibm.com, hoeppner@linux.ibm.com, hca@linux.ibm.com, 
-	gor@linux.ibm.com, agordeev@linux.ibm.com, jejb@linux.ibm.com, 
-	martin.petersen@oracle.com, clm@fb.com, josef@toxicpanda.com, dsterba@suse.com, 
-	viro@zeniv.linux.org.uk, brauner@kernel.org, nico@fluxnic.net, xiang@kernel.org, 
-	chao@kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, jack@suse.com, 
-	konishi.ryusuke@gmail.com, willy@infradead.org, akpm@linux-foundation.org, hare@suse.de, 
-	p.raghav@samsung.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org, linux-mtd@lists.infradead.org, 
-	linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, linux-bcachefs@vger.kernel.org, 
-	linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-erofs@lists.ozlabs.org, 
-	linux-ext4@vger.kernel.org, linux-nilfs@vger.kernel.org, yukuai3@huawei.com, 
-	yi.zhang@huawei.com, yangerkun@huawei.com
-Subject: Re: [PATCH RFC v3 for-6.8/block 07/17] bcachefs: remove dead
- function bdev_sectors()
-Message-ID: <2pat6ombemqnq5wjl6eb4lbip2pfgg5tkubmbwqphvcvpdc6cu@poiexziaa2q4>
-References: <20231221085712.1766333-1-yukuai1@huaweicloud.com>
- <20231221085712.1766333-8-yukuai1@huaweicloud.com>
+	s=arc-20240116; t=1713139881; c=relaxed/simple;
+	bh=C/Iu6C+EcnfYBh/f7HXhOOXESwUAXBibk9rsEmyREWw=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=kbaqcuXWiHA/D+/4urWpqCh3KQoZGwAEYF5yEWCQj9EubOT/ylGrW5nQfvicydrnql33RXYDAAGmc/+pBdbbtkcqq2j1J5C7SpDj23jEqGAxlKjRizX7AaJrsC4G2koO76SqqlpzD4DqhiEorhTyXb5WNARHh8u6eLiGEXQI1gE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.71
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-io1-f71.google.com with SMTP id ca18e2360f4ac-7d5e487d194so196883039f.0
+        for <linux-nilfs@vger.kernel.org>; Sun, 14 Apr 2024 17:11:19 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713139879; x=1713744679;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=EU0hVL6DfpMlcjjVDEdakS6ZSrs74/GbIpJ9Y08C8GI=;
+        b=V1JYRS0t5D2iDK9reEubVMTjJo+IkafO6ZyUkJa4h83hs7saNpRbNsjSARPkxwHEDI
+         udFTzI0PEQqvfO8Dh/Kh1W4NJXEBU2EhcaltF2HRDygMZFgijr5dL++9OFQte/lR8oeI
+         J28V6aRZ9g362gVuKfpcxhpmnIyzUbqqqNho+o07Bh4VA6Xj0uuFsBO06/1fK76p1MZT
+         fyq6gxuBhp7+WfwmEVZ2ed3tysJ936feirnIZiugEnQqpd9HkKKd3zT71r38XWQd3FiZ
+         qV70iZ4OGQgGpq5Bm9VPVpWqmtrpPZGBBJOmH+QyLK23fkgH7Gha4IL6sHATNe649Siv
+         9RwQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWzRU0tIghTdpUwcyfIMcqy1fTYxCLIcbONl+SbvoBRlVuVaACoZiNgBevPMe0cgtlEcLie5hW/rBOuozisXjsOOCV/fwSH1TsXfKs=
+X-Gm-Message-State: AOJu0Yz1BEXmnyODKAX+JHRnT3S80VxdVzXXLkhcB87vUttvNlHpSCHm
+	CkYZYUDNXqPALWFsaGrUze3ssVuU0TjMM3byNT8+jKG2e5Ky5Msoo2pOXvKuWlXBfMjZj9usU4b
+	q2Uabv5M4fEWLgANWnDWzzTuHUcpxBCIQhr5Ug+TApJvVdiup0aG/NPA=
+X-Google-Smtp-Source: AGHT+IEUm1UkcYM/sIzxXDzHrbNcEpR3pcZf4v+sdN5pTv9AT4AiMUbEOpRb9EeYJuCnjMrfVj551rccxhb3hSmgI4DyUrvieT8s
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20231221085712.1766333-8-yukuai1@huaweicloud.com>
-X-Migadu-Flow: FLOW_OUT
+X-Received: by 2002:a05:6638:8504:b0:482:ead5:4f5d with SMTP id
+ is4-20020a056638850400b00482ead54f5dmr321024jab.1.1713139878632; Sun, 14 Apr
+ 2024 17:11:18 -0700 (PDT)
+Date: Sun, 14 Apr 2024 17:11:18 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <000000000000eab13906161775e8@google.com>
+Subject: [syzbot] [nilfs?] kernel BUG in submit_bh_wbc
+From: syzbot <syzbot+3a841e887ad90c07541a@syzkaller.appspotmail.com>
+To: akpm@linux-foundation.org, konishi.ryusuke@gmail.com, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-On Thu, Dec 21, 2023 at 04:57:02PM +0800, Yu Kuai wrote:
-> From: Yu Kuai <yukuai3@huawei.com>
-> 
-> bdev_sectors() is not used hence remove it.
-> 
-> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+Hello,
 
-Acked-by: Kent Overstreet <kent.overstreet@linux.dev>
+syzbot found the following issue on:
 
-> ---
->  fs/bcachefs/util.h | 5 -----
->  1 file changed, 5 deletions(-)
-> 
-> diff --git a/fs/bcachefs/util.h b/fs/bcachefs/util.h
-> index 2984b57b2958..22a0acc1704f 100644
-> --- a/fs/bcachefs/util.h
-> +++ b/fs/bcachefs/util.h
-> @@ -516,11 +516,6 @@ static inline unsigned fract_exp_two(unsigned x, unsigned fract_bits)
->  void bch2_bio_map(struct bio *bio, void *base, size_t);
->  int bch2_bio_alloc_pages(struct bio *, size_t, gfp_t);
->  
-> -static inline sector_t bdev_sectors(struct block_device *bdev)
-> -{
-> -	return bdev->bd_inode->i_size >> 9;
-> -}
-> -
->  #define closure_bio_submit(bio, cl)					\
->  do {									\
->  	closure_get(cl);						\
-> -- 
-> 2.39.2
-> 
+HEAD commit:    fe46a7dd189e Merge tag 'sound-6.9-rc1' of git://git.kernel..
+git tree:       upstream
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=13f8135b180000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=4d90a36f0cab495a
+dashboard link: https://syzkaller.appspot.com/bug?extid=3a841e887ad90c07541a
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=11a7a983180000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=16c5a29d180000
+
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/72ab73815344/disk-fe46a7dd.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/2d6d6b0d7071/vmlinux-fe46a7dd.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/48e275e5478b/bzImage-fe46a7dd.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/12d8fad50ce0/mount_0.gz
+
+The issue was bisected to:
+
+commit 602ce7b8e1343b19c0cf93a3dd1926838ac5a1cc
+Author: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date:   Fri Jan 27 13:22:02 2023 +0000
+
+    nilfs2: prevent WARNING in nilfs_dat_commit_end()
+
+bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=128df913180000
+final oops:     https://syzkaller.appspot.com/x/report.txt?x=118df913180000
+console output: https://syzkaller.appspot.com/x/log.txt?x=168df913180000
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+3a841e887ad90c07541a@syzkaller.appspotmail.com
+Fixes: 602ce7b8e134 ("nilfs2: prevent WARNING in nilfs_dat_commit_end()")
+
+NILFS (loop0): discard dirty block: blocknr=18446744073709551615, size=1024
+NILFS (loop0): nilfs_get_block (ino=18): a race condition while inserting a data block at offset=0
+------------[ cut here ]------------
+kernel BUG at fs/buffer.c:2768!
+invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
+CPU: 0 PID: 5056 Comm: syz-executor429 Not tainted 6.8.0-syzkaller-08951-gfe46a7dd189e #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 03/27/2024
+RIP: 0010:submit_bh_wbc+0x543/0x560 fs/buffer.c:2768
+Code: 07 7d ff be 00 10 00 00 48 c7 c7 80 f8 26 8e 4c 89 fa e8 f0 cd be 02 e9 98 fe ff ff e8 86 07 7d ff 90 0f 0b e8 7e 07 7d ff 90 <0f> 0b e8 76 07 7d ff 90 0f 0b e8 6e 07 7d ff 90 0f 0b e8 66 07 7d
+RSP: 0018:ffffc9000399f838 EFLAGS: 00010293
+RAX: ffffffff8217ecd2 RBX: 0000000000000000 RCX: ffff88807cfe3c00
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: 0000000000000000 R08: ffffffff8217e833 R09: 1ffff1100f095cae
+R10: dffffc0000000000 R11: ffffed100f095caf R12: 0000000000000000
+R13: ffff8880784ae570 R14: 0000000000000000 R15: 1ffff1100f095cae
+FS:  00005555917ee380(0000) GS:ffff8880b9400000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000000000066c7e0 CR3: 000000007f430000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ submit_bh fs/buffer.c:2809 [inline]
+ __bh_read fs/buffer.c:3074 [inline]
+ bh_read_nowait include/linux/buffer_head.h:417 [inline]
+ __block_write_begin_int+0x12d0/0x1a70 fs/buffer.c:2134
+ __block_write_begin fs/buffer.c:2154 [inline]
+ block_write_begin+0x9b/0x1e0 fs/buffer.c:2213
+ nilfs_write_begin+0xa0/0x110 fs/nilfs2/inode.c:262
+ generic_perform_write+0x322/0x640 mm/filemap.c:3930
+ __generic_file_write_iter+0x1b8/0x230 mm/filemap.c:4022
+ generic_file_write_iter+0xaf/0x310 mm/filemap.c:4051
+ call_write_iter include/linux/fs.h:2108 [inline]
+ new_sync_write fs/read_write.c:497 [inline]
+ vfs_write+0xa84/0xcb0 fs/read_write.c:590
+ ksys_write+0x1a0/0x2c0 fs/read_write.c:643
+ do_syscall_64+0xfb/0x240
+ entry_SYSCALL_64_after_hwframe+0x6d/0x75
+RIP: 0033:0x7f3d6ccdd9f9
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 61 17 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffc74baec58 EFLAGS: 00000246 ORIG_RAX: 0000000000000001
+RAX: ffffffffffffffda RBX: 0073746e6576652e RCX: 00007f3d6ccdd9f9
+RDX: 0000000000000020 RSI: 0000000020000140 RDI: 0000000000000005
+RBP: 652e79726f6d656d R08: 00000000000b15f8 R09: 00000000000b15f8
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000001
+R13: 00007ffc74baee28 R14: 0000000000000001 R15: 0000000000000001
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:submit_bh_wbc+0x543/0x560 fs/buffer.c:2768
+Code: 07 7d ff be 00 10 00 00 48 c7 c7 80 f8 26 8e 4c 89 fa e8 f0 cd be 02 e9 98 fe ff ff e8 86 07 7d ff 90 0f 0b e8 7e 07 7d ff 90 <0f> 0b e8 76 07 7d ff 90 0f 0b e8 6e 07 7d ff 90 0f 0b e8 66 07 7d
+RSP: 0018:ffffc9000399f838 EFLAGS: 00010293
+RAX: ffffffff8217ecd2 RBX: 0000000000000000 RCX: ffff88807cfe3c00
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: 0000000000000000 R08: ffffffff8217e833 R09: 1ffff1100f095cae
+R10: dffffc0000000000 R11: ffffed100f095caf R12: 0000000000000000
+R13: ffff8880784ae570 R14: 0000000000000000 R15: 1ffff1100f095cae
+FS:  00005555917ee380(0000) GS:ffff8880b9400000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000000000066c7e0 CR3: 000000007f430000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+For information about bisection process see: https://goo.gl/tpsmEJ#bisection
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
