@@ -1,119 +1,75 @@
-Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com [209.85.210.173])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C75815252D;
-	Wed, 17 Apr 2024 16:09:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B86E1422B9;
+	Wed, 17 Apr 2024 16:14:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713370188; cv=none; b=BCRted07gp2eU6fH3pC6yJOmCNWA5s6DkGq54NdN7erLOiQnaVmjt857xWD9GKPt6vbfR5MqFO1PEF/y7uBZjuiJxLnIovQpzbSnZLOf5Ry9nQJiDIUeyRZZLO4pUS9qSAWhcDCjtlQln4Pn0/dAmo6mSvSrk2xUmfDYcdTznhk=
+	t=1713370468; cv=none; b=UqUFvflO/3Hx8Np/w8w15r65AXjvfcVWmYsbwnOhgxi5snr4Wrrdqx1P9xZ7cb/dv1NAZDsw2e8hZLnzyfGj+R3r5UtCOtA/1+7uaZ7fPzMPecJnKsWFRuJvrjUvaSrvMAoJSKQsEutLvJca+Q7b9h8qEONApc0IPZoB/VH+te8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713370188; c=relaxed/simple;
-	bh=CGj+WNrIUV3l61RyE0q4VlcKcvdYqAZ7eo8PGn+yS3o=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Hd0HtJGdwuuAQHFah2BtoycuopMwyHkcrY/jpZn7E0VWVItpd1ghULB6KbjUv6TdPOob5O0ysSEDVue1FALUrrGt5PcVicWjTspldsM6T1T9ImY1WM35CfwPEmrr2QJV5g8c+szkFn6MB5qSRaFRaZyclxKNBYIGV1wxrgmA85g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=B0lTodGu; arc=none smtp.client-ip=209.85.210.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1713370468; c=relaxed/simple;
+	bh=oJHmBwancnmpq+7dNBJ8AHQD4Vg9FUd2fiFyKoboRfM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=BG3m8VFN+pOovesY0dNAbAO+tf33f6qQSstFjDAOgfW+pnAFXroS7FVkt1LqeeeVFyKEJxG8dHZor6ZlX+dp9pvGCd3Iq54dBpoS0Kdz1EepmliDzhV/lJa8Ih4JhRs61Q5xyt2c5xiw8VHhSneZPgbrj0cE+i6A/fwa/FkBf+A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=cygt0x9f; arc=none smtp.client-ip=90.155.50.34
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="B0lTodGu"
-Received: by mail-pf1-f173.google.com with SMTP id d2e1a72fcca58-6ecf406551aso4776285b3a.2;
-        Wed, 17 Apr 2024 09:09:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713370187; x=1713974987; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:reply-to:references
-         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=EKBCpzMJJOybw3E+mN0Qu57krGqjseTa24mZvlKHSk4=;
-        b=B0lTodGucJ5UnljoLMZJ6r8QsKpHWUvZTtaIL9NZ52ZDvK5DVYxfzwgiAUyNHcMfsY
-         iHjL3AH2T9SXosi9aiQmiXv7QnW7lRR0iYTQGjN6/ERo8GmrDF8bEUHTXJNbgCuVgGeI
-         5ykzPvqlwvuFOgU/DA2vwtBL5qUILsw53Zj0U/VxlCL86sr100pF7zNrgi06Vx23fAyY
-         IXaaX+M34nMIhAhV/sJ11FHXbaAaGD5BNODV53uvtv1UBrKpvBis7m3T4pmEmQ4nFyhS
-         e43ZY/Ti+WP6+qQyDTYEf9AleVfedKrASKycPcSA6j6pzHHbzbkq/lqHRl8LzHXC9nXj
-         ITNQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713370187; x=1713974987;
-        h=content-transfer-encoding:mime-version:reply-to:references
-         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=EKBCpzMJJOybw3E+mN0Qu57krGqjseTa24mZvlKHSk4=;
-        b=C2233+fFGN1LF0ZNQBDPZm41ELsb6Vl5IeDBezhZJPz+MyZSqyXL2fjwRKKjyapKRh
-         UQzhvmVN2kOpgAM3wXrFp9lbGxb9kNIGmzEX7DYEj1vVecX2jCUU4uUlm0gP5pzuleI5
-         lNzx9eF2+ysBkV+xf0Vooalf96d6lXysiyS1arUkEe56UGh0yXtIOQ76CA3dv0B6W0ML
-         dqXmUVZL68bIatEZBBjKQ1dQyThe5U+wljNWtq9u12GZ7x2qzstbNAgtodUQGaRQCVao
-         l4xwbHvJPHxYUn8bkFDXozemuW32sYZD7F8VbhFQ4PNDkPCSkzfb/YD6lqRENAWNvnaf
-         +OqQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVQX8JuMIOQKUjS9+EhdQ8B5rfvLs41f0LkBSUyyCc0aK21xoNhr4NKRXMh4w6xSqUqLM9aZ5ypdQU4EqeSLK26Iq6hDtehfqOvCoA7RGTBN0E91Ko3xlLA48aak5gWt/NULHOJhpxgUVk5xcl/zhaHN0ZISwGC1lXJCowkR4JQzDYJvQgGmOdz
-X-Gm-Message-State: AOJu0YzTV9kZ1zMBoSi9WgQ67SIiBShmPz1rZ909XQeF9qxvWFGFg8mp
-	y2dWAXtaododZSOrTtckepTclZZvwKefglbQgIGMmyprG2Y1CS7u
-X-Google-Smtp-Source: AGHT+IEUIsD2UfwALUBzZ9zgNwZkhBtp79KdHPB59HWhpiWeEDWZ5TAduyfuawXCnxiRfUFyeMAZ7g==
-X-Received: by 2002:a05:6a20:1042:b0:1a7:a21b:66f9 with SMTP id gt2-20020a056a20104200b001a7a21b66f9mr48906pzc.43.1713370186696;
-        Wed, 17 Apr 2024 09:09:46 -0700 (PDT)
-Received: from KASONG-MB2.tencent.com ([115.171.40.106])
-        by smtp.gmail.com with ESMTPSA id h189-20020a6383c6000000b005f75cf4db92sm5708366pge.82.2024.04.17.09.09.42
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 17 Apr 2024 09:09:46 -0700 (PDT)
-From: Kairui Song <ryncsn@gmail.com>
-To: linux-mm@kvack.org
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	"Huang, Ying" <ying.huang@intel.com>,
-	Matthew Wilcox <willy@infradead.org>,
-	Chris Li <chrisl@kernel.org>,
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="cygt0x9f"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=zLXbEHaPuRTXl8YXU9P1QgIbiqadkPO+DuLjekRXSPI=; b=cygt0x9fgIzCrMhVZMNKpXHHel
+	7pCa+WLpZxMgmqPhQg58IxvWWGRDRTOaMbRJpHd5nCts5Zon3Vi2rLCq9xXzNDvZpOidlCo9EPac0
+	N1k0Ipi3ls5TIEDhd/T4x8RCzsf/sazVkPSnQaHH3PbWJeYoVfTlYf719WSG4RUHNFcshWiMb2aSB
+	L1ucvLHQb9CGuhREtnCKebK0TcM2HLw8lPf6Te1ktugbGikmTvcK6QxMaR+BXoAZXMR4xdk+/i/Ag
+	W2l5A6dwEB1G6Z2o5Sqyw0DKXEX8U0zycA4o1b4vlObdJ1A05G4486c1BHjKdc5Loji6qh03j+p5/
+	SeJLDaCA==;
+Received: from willy by casper.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rx7vB-00000003GV2-1ZBN;
+	Wed, 17 Apr 2024 16:14:05 +0000
+Date: Wed, 17 Apr 2024 17:14:05 +0100
+From: Matthew Wilcox <willy@infradead.org>
+To: Kairui Song <kasong@tencent.com>
+Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
+	"Huang, Ying" <ying.huang@intel.com>, Chris Li <chrisl@kernel.org>,
 	Barry Song <v-songbaohua@oppo.com>,
-	Ryan Roberts <ryan.roberts@arm.com>,
-	Neil Brown <neilb@suse.de>,
-	Minchan Kim <minchan@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
+	Ryan Roberts <ryan.roberts@arm.com>, Neil Brown <neilb@suse.de>,
+	Minchan Kim <minchan@kernel.org>, Hugh Dickins <hughd@google.com>,
 	David Hildenbrand <david@redhat.com>,
-	Yosry Ahmed <yosryahmed@google.com>,
-	linux-fsdevel@vger.kernel.org,
+	Yosry Ahmed <yosryahmed@google.com>, linux-fsdevel@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
-	Kairui Song <kasong@tencent.com>,
 	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
 	linux-nilfs@vger.kernel.org
-Subject: [PATCH 2/8] nilfs2: drop usage of page_index
-Date: Thu, 18 Apr 2024 00:08:36 +0800
-Message-ID: <20240417160842.76665-3-ryncsn@gmail.com>
-X-Mailer: git-send-email 2.44.0
-In-Reply-To: <20240417160842.76665-1-ryncsn@gmail.com>
+Subject: Re: [PATCH 2/8] nilfs2: drop usage of page_index
+Message-ID: <Zh_1TdrwJcBeALIG@casper.infradead.org>
 References: <20240417160842.76665-1-ryncsn@gmail.com>
-Reply-To: Kairui Song <kasong@tencent.com>
+ <20240417160842.76665-3-ryncsn@gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240417160842.76665-3-ryncsn@gmail.com>
 
-From: Kairui Song <kasong@tencent.com>
+On Thu, Apr 18, 2024 at 12:08:36AM +0800, Kairui Song wrote:
+> +++ b/fs/nilfs2/bmap.c
+> @@ -453,8 +453,7 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+>  	struct buffer_head *pbh;
+>  	__u64 key;
+>  
+> -	key = page_index(bh->b_page) << (PAGE_SHIFT -
+> -					 bmap->b_inode->i_blkbits);
+> +	key = bh->b_page->index << (PAGE_SHIFT - bmap->b_inode->i_blkbits);
 
-page_index is only for mixed usage of page cache and swap cache, for
-pure page cache usage, the caller can just use page->index instead.
+I'd prefer this were
 
-It can't be a swap cache page here (being part of buffer head),
-so just drop it.
+	key = bh->b_folio->index << (PAGE_SHIFT - bmap->b_inode->i_blkbits);
 
-Signed-off-by: Kairui Song <kasong@tencent.com>
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: linux-nilfs@vger.kernel.org
----
- fs/nilfs2/bmap.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 383f0afa2cea..4594a4459862 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -453,8 +453,7 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
- 	struct buffer_head *pbh;
- 	__u64 key;
- 
--	key = page_index(bh->b_page) << (PAGE_SHIFT -
--					 bmap->b_inode->i_blkbits);
-+	key = bh->b_page->index << (PAGE_SHIFT - bmap->b_inode->i_blkbits);
- 	for (pbh = page_buffers(bh->b_page); pbh != bh; pbh = pbh->b_this_page)
- 		key++;
- 
--- 
-2.44.0
+(pages only have a ->index field for historical reasons; I'm trying to
+get rid of it)
 
