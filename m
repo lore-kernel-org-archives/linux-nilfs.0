@@ -1,158 +1,162 @@
-Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com [209.85.208.169])
+Received: from mail-lj1-f180.google.com (mail-lj1-f180.google.com [209.85.208.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76AE912F580
-	for <linux-nilfs@vger.kernel.org>; Fri, 19 Apr 2024 17:41:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 120AE137778
+	for <linux-nilfs@vger.kernel.org>; Fri, 19 Apr 2024 20:12:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713548498; cv=none; b=fOJop424DP72XWDFb6li0rlkzYDU2OuNpcWTnY33Ig2li5ESzRKK83qWdZdg/GT8EpJ4ZqaHEiHtT7robt/ne1kHdGC5AibkBKWFuXqJZKCHg+02HzGoqbbLGE5MKBgPL9hJS2YJGOwOKGQkmCycxi+IJkewG5mmkEkLPGQCbhc=
+	t=1713557551; cv=none; b=N8Or5hw8aXLbb6QjYnPtihxvqa7k7VodRIEkP2F7uId5B340BY/6vMur5kMdRzBqDxaAaJ5EzpEBihw/kr3452JXkiCBc+sZZh2Ac0vzjmddvNZuXyvKHSOEJGm0iTi5xp804gSoEpgPInMpqaHXv/il8sCx4ubcXQVNcnneD1M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713548498; c=relaxed/simple;
-	bh=meayex/aRSC67w0W6jE3TeAWwLLOjYxVi9T1ynyRsZ8=;
+	s=arc-20240116; t=1713557551; c=relaxed/simple;
+	bh=WsYrRhz+9JGf//9kdBri1E6sa3wRf4CMpbZqE812vug=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=RO/c6+MHDjMs6SdVQY17CeZvGRMfukf/sM6PQ/J6CmPLXy2n2zHP0WDYNoEm/hDiZgUQiacmmtHho+AIuggseGXlV5mr8skcH5uD9E0H0OgodiLKMgnYIqSIqN4QxNLOZ18PJzH498ML9jLMrAOsaucio6KWziD101BtLyetrjA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aYDgNqma; arc=none smtp.client-ip=209.85.208.169
+	 To:Cc:Content-Type; b=ElAftmxPmnoc2++45l54Ap1zaBV2/wUqfjUUH+D3zNyLsNu3zSjpyyb9YyOZqUi7u8/rbJTfZubuQLRtWWw8kfuDu+/9Gg2SJInSCHflKOb28MhdANLZ6ZC5y0tAaQH2fhFaxO/fxWudPQiL3Pge9KpE98rEh/Loj+3/cgsmzHo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QX0cD1BY; arc=none smtp.client-ip=209.85.208.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aYDgNqma"
-Received: by mail-lj1-f169.google.com with SMTP id 38308e7fff4ca-2d895138ce6so34086831fa.0
-        for <linux-nilfs@vger.kernel.org>; Fri, 19 Apr 2024 10:41:36 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QX0cD1BY"
+Received: by mail-lj1-f180.google.com with SMTP id 38308e7fff4ca-2d8b194341eso24432081fa.3
+        for <linux-nilfs@vger.kernel.org>; Fri, 19 Apr 2024 13:12:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713548494; x=1714153294; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1713557548; x=1714162348; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=vYHYMEkbNQ+pcIZZQCVmIkUdJUkeyeWFZ7IRUDBiagc=;
-        b=aYDgNqmaW4UWqIz/sBasZCC7B98t0g/rd6m/rSgpo1ray+twXfLOAq7qOJOdd6uegg
-         iVYTEf5I1OofASyE7Oej5/oHlisFUJrqOuBXuupess3jzSasJVDhlknz2fBEBqjPqcnB
-         yF9pJbSjMYLaOjYaKfo8qB6+AQ4WtJSiKajjWHtptydW+It/bJBlkq2Vh9XwOv7wchOd
-         FnvEVcS2Pz1PEmozfRcQhAybGfRGEH+v1oPV3dd+3JwaSdLeUpW+1redYiY6ce2qr/or
-         kob/WtMz1Bu79Bzv7S+W1lXKUM91JbfNVHFEIWTl14e69GGZp6sK2ONiwbgCl5O4uElV
-         foPw==
+        bh=GXvDY0Ew6gbeK1kUnroAmfTLmyF0eAff9c9ykjDLam4=;
+        b=QX0cD1BYHsmhW69WHwlHtm/4NlvgOXX5Lgkw6WMxfajp1ohstCasBgHFHiaXbKkQqf
+         OVWQksqiMpg2muSfnN5i0bl9KrGlk3cPXXcyW2HCXylZushuLz2SJTICrCUySrJCBdPQ
+         DhMJ5pC8hf2Cv+JEzqy0JaIYCIHnDSn2Up18XZNYiBNj0FCMBG3wjMn6SamDWGBzPpL4
+         /eaiszGtTTzEOATzfeBP+KLoOL6Q58yCWEsU3ed7EBfg/ZomXZxBj/n+pekpNU/Mtnl1
+         oP8KEf0lxN+G1sSfF10bcTU9shCvnT0k/4e7xxKkkNQaJ/frOKjUjprjuQ76Q2/EWYMz
+         MiLQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713548495; x=1714153295;
+        d=1e100.net; s=20230601; t=1713557548; x=1714162348;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=vYHYMEkbNQ+pcIZZQCVmIkUdJUkeyeWFZ7IRUDBiagc=;
-        b=gOuMp6RVFWm73cJGo0sJJaxxVmcUus4O3mE2StN9zkIPMlJ2Hed90ZWJuqdtxSOn9z
-         BkOzPN5+EXhoDlhLMtpgUhcroKPDCu3emcpKHWGlUJD5QSOB5aUfHDTSEqgRzhO9GZ5E
-         pxsEkHwRHso6Ct+F3rGaZCMG3X+EqBOIVNHUCbr2pC0EVqo9aL/Qhm3feQ8NZse4HDRF
-         aAAOEDYlUA7IP4WU0BfEDJEjGU6XLn2J86KI1AcdG+Yjc3UlhHcIETy9F74/b4lR6ZS5
-         l40qsSG6Pl3gLfs30jqCf5h8Oh+2pLJ8Rl8PJqfHEgLOsDToNn0uUk6Px7WAgsvuiZE9
-         73tA==
-X-Gm-Message-State: AOJu0YwC290gvXubgYa6X39VDsEM6kn5z371rUX5u4ipll5UdLnf7aFT
-	1VtTGHwAo2M/aixchg7fQX9tUMkz5PqQ9l1Jmbo3FnBpGOXL/D5tZNi+Ws9obziPPRP8kgKUJOo
-	1Q0qGDK3Ak/0aTd6C3njyM6+oO+aVZi7C
-X-Google-Smtp-Source: AGHT+IGJFgVGvRng35yFsLhzoCRxt1DSG+klLLffoXS/9dK3j2Pa8johlWMl2AIQNnL2qZ6hmRB0EW7gKeSsDERRoxs=
-X-Received: by 2002:a2e:b947:0:b0:2dc:ae40:db95 with SMTP id
- 7-20020a2eb947000000b002dcae40db95mr1569363ljs.52.1713548494325; Fri, 19 Apr
- 2024 10:41:34 -0700 (PDT)
+        bh=GXvDY0Ew6gbeK1kUnroAmfTLmyF0eAff9c9ykjDLam4=;
+        b=M8x2uUaN3quCy83v0ysi6Vai3QJrFRry4MgIHnPH2760SyA03cFkTIg6z3kBA2GP95
+         S7ZYJ4azcWa2EVmGiHEGghKOyE5hYPPY6ZpkQXjxYXdtkjFNrNFFf6NP1QT+2Exx1L5O
+         sZ8AgJRuME9EnEpA35ZCO31RWYD+TTnl9/GFsReTnYRSn2Ue2JS3mb9UQebRtap/uKe6
+         xM3EX0zti2DDGeAmlYxCVLUQ4LDnUvNvtj3sUbDijy13G5HCLZfErsDS2EVrM/QgYG6S
+         /0mm7vgIQMrMF1gT0n66FojDlqQ8WjK1BYF0m6N/MJREBUSFpXJmNDiK9NT6n8LaTkbB
+         x8MA==
+X-Gm-Message-State: AOJu0YxlNK6bqChDBrClP5itpBVQNk/a12Kog5MYwXFESffZ/VnhmUKx
+	Z9mEmrbQN4mx+rLdfyhCpT/93jwFBradamGqhQDR0DxH64Eh8SfGcH0dFlmdVtnf//YXIls/owp
+	4dQsXKHTmzcieAxMX1KSuOQb+p/0=
+X-Google-Smtp-Source: AGHT+IGckSMnjNEzS6reiSuj7r+yfCvm+iU5O72B9jSbi8cFRUoiXvXxoG15FSZjjEQnFoIt8aCuJVARl2SZbmeQ7tE=
+X-Received: by 2002:a05:651c:1039:b0:2dc:b04b:b3c0 with SMTP id
+ w25-20020a05651c103900b002dcb04bb3c0mr1812177ljm.6.1713557547854; Fri, 19 Apr
+ 2024 13:12:27 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <bbac8195-cf8d-1685-9038-9d45cb9865d7@inetstar.ru>
-In-Reply-To: <bbac8195-cf8d-1685-9038-9d45cb9865d7@inetstar.ru>
+References: <33d078a7-9072-4d8e-a3a9-dec23d4191da@redhat.com>
+In-Reply-To: <33d078a7-9072-4d8e-a3a9-dec23d4191da@redhat.com>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 20 Apr 2024 02:41:17 +0900
-Message-ID: <CAKFNMokqsbO1wfCiiWB=7gXrHoscS=Hz4c6GhFB8VGOeHSYxzQ@mail.gmail.com>
-Subject: Re: I'm trying NILFS2 in kernels 6.6.12, 6.7.12, 6.8.4
-To: Veter Kamenev <nilfs19@inetstar.ru>
+Date: Sat, 20 Apr 2024 05:12:11 +0900
+Message-ID: <CAKFNMokRBcoP8z8Y6m60bYb=Se9SSn3N459hE0KWAnN7tEop=g@mail.gmail.com>
+Subject: Re: [PATCH V3] nilfs2: convert to use the new mount API
+To: Eric Sandeen <sandeen@redhat.com>
 Cc: linux-nilfs@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, Apr 20, 2024 at 1:08=E2=80=AFAM Veter Kamenev wrote:
+On Fri, Apr 19, 2024 at 1:45=E2=80=AFAM Eric Sandeen wrote:
 >
-> Hi folks!
+> Convert nilfs2 to use the new mount API.
 >
-> I learned about Nilfs2 many years ago and was impressed by its capabiliti=
-es. The idea is brilliant!
+> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+> ---
 >
-> But due to glitches, I returned back to reiserfs3, which works like a cha=
-rm, although it will be removed from the kernel in 2025.
+> Sorry for the delay on resend, other work got in the way...
+> This all paged out a bit but I think I addressed all of the review
+> items. Thanks!
 >
-> Now, after several years, I decided to return to Nilfs2, hoping that the =
-bugs have been corrected.
+> V3:
+> - Add identifiers to nilfs_store_magic() prototype
+> - switch Opt_snapshot to use fsparam_u64 vs. fsparam_u32
+> - add error message for invalid cp=3D0 case
+> - remove early sb->s_flags change in nilfs2_reconfigure()
+> - un-split error message string in nilfs_get_tree()
 >
-> To my greatest regret, I received errors in all kernels and the system we=
-nt into read-only state.
-> Luckily I didn't lose any data.
+
+Thank you for the revised patch!
+
+...
+> +       case Opt_snapshot:
+> +               if (is_remount) {
+> +                       struct super_block *sb =3D fc->root->d_sb;
+> +
+> +                       nilfs_err(sb,
+> +                                 "\"%s\" option is invalid for remount",
+> +                                 param->key);
+> +                       return -EINVAL;
+> +               }
+> +               if (result.uint_64 =3D=3D 0) {
+> +                       nilfs_err(NULL,
+> +                                 "invalid option \"cp=3D0\": invalid che=
+ckpoint number 0");
+> +                       return -EINVAL;
+
+At first glance, I wondered why the nilfs_err() super_block instance
+argument was NULL here, but I see, it can only be used by remount..
+
+...
+> @@ -1172,7 +1157,7 @@ static int nilfs_remount(struct super_block *sb, in=
+t *flags, char *data)
+>                                    "couldn't remount RDWR because of unsu=
+pported optional features (%llx)",
+>                                    (unsigned long long)features);
+>                         err =3D -EROFS;
+> -                       goto restore_opts;
+> +                       goto ignore_opts;
+>                 }
 >
-> The texts of the errors will be below in the letter. In this regard, I ha=
-ve 2 questions:
+>                 sb->s_flags &=3D ~SB_RDONLY;
+> @@ -1180,130 +1165,56 @@ static int nilfs_remount(struct super_block *sb,=
+ int *flags, char *data)
+>                 root =3D NILFS_I(d_inode(sb->s_root))->i_root;
+>                 err =3D nilfs_attach_log_writer(sb, root);
+>                 if (err)
+> -                       goto restore_opts;
+> +                       goto ignore_opts;
 >
-> 1. What is the reason that after so many years, Nilfs2 still cannot work =
-stably?
+>                 down_write(&nilfs->ns_sem);
+>                 nilfs_setup_super(sb, true);
+>                 up_write(&nilfs->ns_sem);
+>         }
 
-Hi Veter,
+There is still an issue where the SB_RDONLY flag on sb->s_flags is not
+repaired in the error path of nilfs_attach_log_writer().
 
-I've been fixing bugs reported by Google's automatic fuzzing tool
-called "syzbot" (particularly intensively over the last several
-years), so I believe the current version is pretty stable.
+This seems to be the only essential issue remaining, so I can add the
+following fix (safer one - drop the SB_RDONLY flag for
+nilfs_attach_log_writer, call it, and repair the flag if it fails),
+and send it upstream.
+Is this okay?  Please let me know if you have any opinions.
 
-However, since this activity is still ongoing, it is not possible to
-say that there are no bugs.  Fortunately or unfortunately, a few major
-bugs have been recently been fixed.
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index a54fa43331f5..a8f03c860e87 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -1164,8 +1164,10 @@ static int nilfs_reconfigure(struct fs_context *fc)
 
-> 2. Are the errors I sent corrected? If fixed, then starting with what ver=
-sion of the kernel?
+                root =3D NILFS_I(d_inode(sb->s_root))->i_root;
+                err =3D nilfs_attach_log_writer(sb, root);
+-               if (err)
++               if (err) {
++                       sb->s_flags |=3D SB_RDONLY;
+                        goto ignore_opts;
++               }
 
-I can't say for sure due to lack of information, but the logs you
-reported appear to be symptoms of a high impact mmap regression that
-was fixed within the last three months.
-
-Assuming the problem occurred in v6.6.12 of subject, the following
-important fixes have not yet been backported to this version,
-including the mmap regression fix.   Regarding stable-6.6.y, versions
-below v6.6.24 (latest) do not include all important fixes.
-
-$ git shortlog v6.6.12..v6.6.24 fs/nilfs2
-
-Ryusuke Konishi (5):
-      nilfs2: fix data corruption in dsync block recovery for small block s=
-izes
-      nilfs2: fix hang in nilfs_lookup_dirty_data_buffers()
-      nilfs2: fix potential bug in end_buffer_async_write
-      nilfs2: fix failure to detect DAT corruption in btree and direct mapp=
-ings
-      nilfs2: prevent kernel bug at submit_bh_wbc()
-
-On the other hand, v6.7.12 (latest) and v6.8.4 (not latest) included
-all of these important fixes.
-
-As for the logs, all messages in the logs are warning and are harmless
-in themselves.  However, they are often produced due to the influence
-of other problems, so you need to be careful in that sense.
-
-> Apr 14 15:10:10 MainPC kernel: NILFS (dm-5): discard dirty page: offset=
-=3D2579136512, ino=3D3
-
-This message indicates that there were changes that could not be
-written to disk and were discarded during unmounting, and is likely to
-occur when the file system is degraded to read-only.
-
-> Apr 14 15:10:24 MainPC kernel: NILFS (dm-5): nilfs_get_block (ino=3D55694=
-): a race condition while inserting a data block at offset=3D0
-
-This message indicates that an unexpected race occurred when writing,
-but the bug that outputs this message has been recently fixed, so it
-may be that.  Of the patches listed above that have not been applied
-to v6.6.12, these are the the following two:
-
-      nilfs2: fix potential bug in end_buffer_async_write
-      nilfs2: fix failure to detect DAT corruption in btree and direct mapp=
-ings
+                down_write(&nilfs->ns_sem);
+                nilfs_setup_super(sb, true);
 
 
-If the environment in which these messages were output is v6.7.12 or
-v6.8.4 and you think this is not the cause, it would be helpful if you
-could report the situation in more detail.
-
-
-Regards,
+Thanks,
 Ryusuke Konishi
