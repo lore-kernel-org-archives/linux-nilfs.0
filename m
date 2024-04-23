@@ -1,130 +1,119 @@
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
+Received: from mail-pf1-f182.google.com (mail-pf1-f182.google.com [209.85.210.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F2321C2A1;
-	Tue, 23 Apr 2024 16:37:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8825F13E057;
+	Tue, 23 Apr 2024 17:04:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713890233; cv=none; b=AX/HZGYu5YWUqMMw+0/l7M5vVDp7O8G8uZARP4Gr41QzH/w35UAinZKf18WDYn6verG50RR8RYnTIao7WGtOjP41TEgnsyLyxRZlrkmsQY/kjMwJSpOpWc5hzVtCyeuNX7mIb8+Lvun/CNgM/GwvjCsIUIU2UR4EdmqqPJcgvH4=
+	t=1713891841; cv=none; b=PXGqUV3dEX3GEkvSAFNKI25HcpvEU2LN1C7Zy0G00kl0aU0bIXtQBIinZnk3KDWAI/gzc5ixV2Af8wJXTSNNswz3xMFPsJf4xj/ep6OMK055VAZQD6otvLh7kqjXMx4W0aY/nDEl/qVMDtE0rcQI2NIFPgUPd+3sW81h+ODyX1s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713890233; c=relaxed/simple;
-	bh=CmjlAmsHarxIiEWsFge6NmJfEnkNPYRMvN2/N4GbwAE=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=vEGGnigBFcef21dY0t5rafl9wu4ko/XVbJPW8E8X1p3hH0xqfWxAJyvD5Mk2Ts5yuh/PkoInrl8An4+s1POeiCAvNLSJiDRHi9k7Vm8970iUsoP9CE28POADCcaNgbe4GrzGBgh7LvM+za+bwLjty+nZ91vU0We9leA3CaxgU8U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TiX2VGaF; arc=none smtp.client-ip=209.85.167.49
+	s=arc-20240116; t=1713891841; c=relaxed/simple;
+	bh=Uyce+dc3t6E+2F7Kun0sqcdJkKyU2ngW6vMHcIsFCvQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Tct6ryTyJMpb4orilm0cwG47EVe8FeE896aBKpVn1NOpt+ppLUbPG2q/wiyFg25obXXjXaDheS3QYSm9G4XoUfP+eOksxU64Fc6sM64WXK/iY90d01whzwJCxRMbMaCGBDs14jauUhKm5VZv09K2IZCWohY0iqmNYmpaHXkZUOw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OCFP2ODN; arc=none smtp.client-ip=209.85.210.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TiX2VGaF"
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-51acb95b892so5042353e87.2;
-        Tue, 23 Apr 2024 09:37:11 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OCFP2ODN"
+Received: by mail-pf1-f182.google.com with SMTP id d2e1a72fcca58-6ee0642f718so56017b3a.0;
+        Tue, 23 Apr 2024 10:04:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713890230; x=1714495030; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=LatJzjJ2Zy5Z/X3OvFMvzgLag5wvzypiR/T5sSxVxjo=;
-        b=TiX2VGaFrQseGaRZS28pA7MYexjbpdIvUALR6cq+MuijHacP5FE+nIWNJMfEo6uVjh
-         B/GtH2G4relVMBwZUq91luyL3bgWXT+O517H1dAB8FFyH/ezp0cjuVYODWjOtz5333Ar
-         z8xasJd0TM11By/TWdRyOI21DBpu2C2ZdsjNed4sPfd0qzoVDDImxtUhU4VVzW2jPgn3
-         4vvzuW0xmbk8ZtEmJ3OetOYrAsP6ayzwober/rPHQEp1tCbb6KwQOg5+M7sTUiaB6khH
-         IrOIYchXne4dLBY8qmvOaQPGYUu3u5DXkXHBcMaUJq+0f4VQaM/+CsZ4VfPOnClFHbb1
-         LS4A==
+        d=gmail.com; s=20230601; t=1713891840; x=1714496640; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=YfpxwnN8CfoAe7aR3YgTjEdl37ZW9GmobE0CddHnTJA=;
+        b=OCFP2ODN36AyfHCRosaPabwYhrhVdgjZi9lQb/qWno2ZbQ5JXjGHPEA1UQPTHNcvcN
+         A62jdVQCEk7JA+LyZlLwLpU3ZVc4apy0WJcBTquV5seDzcgUjcQ/K/M/rwMfXGuypfP9
+         9nv04vQZ2lEN+95Bg05sBOk7lakWcdEiCnHN0t+jOP1b36kpetnd59MqCHJw4Tdqd/kx
+         gPdKrlIZZ7Ex33o0dvO5DHd/a3AGO1ZNUJDdIZFvED2q7nwP0kPdhrsK5kujSTizZYry
+         x6jNG0WNyF+1pS9c3/nCVjHWbsazdk1z2FurhTSyH0gNjnV7YUpTD0T1mPYzBp5SJnn6
+         6soA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713890230; x=1714495030;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=LatJzjJ2Zy5Z/X3OvFMvzgLag5wvzypiR/T5sSxVxjo=;
-        b=nrU5R8yVLFSXrflmNNGEZyuIgV6QtGpjoAsr8PtHSnqVoMOvC1//ltQsPTKSq3V53j
-         AeszXcjDfblsnBr9RiSBSaDlhWYnshwOViZntxqsmqVGn0ePlLs9BvBKrahTdy1ZTdk5
-         RPaZOMwgdnmx4OQSd9LDtCyPdFAetofw/Y+nqaWPkxneEf3I2N99XgHHdCM85pZ2Tsh6
-         XHuH8S2EHXqMSetwrHnFja1Kg54jJvLa31en4+T6mEOagovmAs/KwD8NSXbUn6WkAl8/
-         O+BWkgU4cJFlTcehW+aUeH2r6rYIyy2GteHn17A30no1nJp1rUdKn3Nyw4iBK5RFytwf
-         MCxA==
-X-Forwarded-Encrypted: i=1; AJvYcCWy8aDjc7w1vEAguYe1BJ54Bejt56KTqRNrJbzF2xJlNis5S7IXtdPVMckEXsAee4ciKNXCWcYuyoRb7410AEReG2EJJJHQUxC8umQ=
-X-Gm-Message-State: AOJu0Yzs2sB+XPTKsMXPzz7zmfujO0QG3j60DFf+bviS090rllGuVQS0
-	XkcWMOewwKXDYE1MWUfLSWw62XjPLkVR8YpaLHLetBg7kNKhZ149tS9JYCYrdoNCfss/YFDSDxo
-	Nyuvq8KEapcvAfY0gkuV1+H2HDjw=
-X-Google-Smtp-Source: AGHT+IHB32d5HQUMjxh+boA4ZJabUJ97cmEHPP8K61DSDNei9+vJBnDVh0KxxtFoHavvoZI5JNvzBGlv/82u/olm0Ec=
-X-Received: by 2002:ac2:491e:0:b0:517:870b:a13d with SMTP id
- n30-20020ac2491e000000b00517870ba13dmr65612lfi.37.1713890229463; Tue, 23 Apr
- 2024 09:37:09 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1713891840; x=1714496640;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=YfpxwnN8CfoAe7aR3YgTjEdl37ZW9GmobE0CddHnTJA=;
+        b=XkxUIRUFIEaxaaeP1EcGeGS3CndOUGCLV/wOJQceuIZX+Y/+LH8Z6mXEWqa+gmh45P
+         mYDnPa27ymTlsNzwy/odx9oN49KKbY76oayI8NBSsUZVlXXNgAANuLIpa7d6mHu9/FRm
+         mowF9WkHQ/eLhuYHJSHvItRuQlWVQe/F32l7g9/u+JmILLLyMlkhhuYjAhLmueQyHTkL
+         IumMukUu4eOB5A5SjQQcxon3DQFBge3FGLPgqshKaGFdns5RJRtZkxWKc+PuWPjIcsZm
+         B++gMO/w3Tl3mZKcvkxP+oA/zoqFme5gHUAzqCSJyeglwh++oH9bsIiPy2gJKsUQNuSB
+         +atw==
+X-Forwarded-Encrypted: i=1; AJvYcCVesD5poqBCes0urYixToMHi8rQz8xfgYu7txzyjNAZsFY0EfTdxlmiBdevULHgQuAkxqTDB1O0Fv+fiITUIq6Lm8jQTNERtxBkoURxV6tjGoKkKOjWYsl/GvROSATHcSaqjujrq+QIOkqn5Q/3QcZOBHGSohXHoAek4ZejCzYRHXqMnC3e6OK6
+X-Gm-Message-State: AOJu0YzIUajgjT1oDe/EPC+E3iRLmnW3OEJ6oDYh5JFfGfblu1bhhfPD
+	VbgUutACNUb+o+K0hVm8H50T5EfNz8YXxKDzaa1Tz3cLlVOO61Tq
+X-Google-Smtp-Source: AGHT+IEWWHhF19ksGF0RHc9H2/SNsHmOpvGzFHUqvC8eQ1hIjSvMBjQypYUZq4AUNd9PZKflJXxjrw==
+X-Received: by 2002:a17:90b:815:b0:2a7:8674:a0c8 with SMTP id bk21-20020a17090b081500b002a78674a0c8mr4130992pjb.1.1713891839853;
+        Tue, 23 Apr 2024 10:03:59 -0700 (PDT)
+Received: from KASONG-MB2.tencent.com ([1.203.116.31])
+        by smtp.gmail.com with ESMTPSA id s19-20020a17090a881300b002a5d684a6a7sm9641148pjn.10.2024.04.23.10.03.55
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Tue, 23 Apr 2024 10:03:59 -0700 (PDT)
+From: Kairui Song <ryncsn@gmail.com>
+To: linux-mm@kvack.org
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	"Huang, Ying" <ying.huang@intel.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Chris Li <chrisl@kernel.org>,
+	Barry Song <v-songbaohua@oppo.com>,
+	Ryan Roberts <ryan.roberts@arm.com>,
+	Neil Brown <neilb@suse.de>,
+	Minchan Kim <minchan@kernel.org>,
+	Hugh Dickins <hughd@google.com>,
+	David Hildenbrand <david@redhat.com>,
+	Yosry Ahmed <yosryahmed@google.com>,
+	linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Kairui Song <kasong@tencent.com>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org
+Subject: [PATCH v2 2/8] nilfs2: drop usage of page_index
+Date: Wed, 24 Apr 2024 01:03:33 +0800
+Message-ID: <20240423170339.54131-3-ryncsn@gmail.com>
+X-Mailer: git-send-email 2.44.0
+In-Reply-To: <20240423170339.54131-1-ryncsn@gmail.com>
+References: <20240423170339.54131-1-ryncsn@gmail.com>
+Reply-To: Kairui Song <kasong@tencent.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240420025029.2166544-1-willy@infradead.org> <20240420025029.2166544-17-willy@infradead.org>
-In-Reply-To: <20240420025029.2166544-17-willy@infradead.org>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 24 Apr 2024 01:36:52 +0900
-Message-ID: <CAKFNMonpNymFnG=YkmsStHdJXdrQOaEgPdkr8231DunXDiOyvQ@mail.gmail.com>
-Subject: Re: [PATCH 16/30] nilfs2: Remove calls to folio_set_error() and folio_clear_error()
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Sat, Apr 20, 2024 at 11:50=E2=80=AFAM Matthew Wilcox (Oracle) wrote:
->
-> Nobody checks this flag on nilfs2 folios, stop setting and clearing it.
-> That lets us simplify nilfs_end_folio_io() slightly.
->
-> Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Cc: linux-nilfs@vger.kernel.org
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+From: Kairui Song <kasong@tencent.com>
 
-Looks good to me.  Feel free to send this for merging along with other
-PG_error removal patches:
+page_index is only for mixed usage of page cache and swap cache, for
+pure page cache usage, the caller can just use page->index instead.
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+It can't be a swap cache page here (being part of buffer head),
+so just drop it, also convert it to use folio.
 
-Or if you would like me to pick it up independently (e.g. to gradually
-reduce the changes required for removal), I will do so.
+Signed-off-by: Kairui Song <kasong@tencent.com>
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
+---
+ fs/nilfs2/bmap.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-Thanks,
-Ryusuke Konishi
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 383f0afa2cea..9f561afe864f 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -453,8 +453,7 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+ 	struct buffer_head *pbh;
+ 	__u64 key;
+ 
+-	key = page_index(bh->b_page) << (PAGE_SHIFT -
+-					 bmap->b_inode->i_blkbits);
++	key = bh->b_folio->index << (PAGE_SHIFT - bmap->b_inode->i_blkbits);
+ 	for (pbh = page_buffers(bh->b_page); pbh != bh; pbh = pbh->b_this_page)
+ 		key++;
+ 
+-- 
+2.44.0
 
-> ---
->  fs/nilfs2/dir.c     | 1 -
->  fs/nilfs2/segment.c | 8 +-------
->  2 files changed, 1 insertion(+), 8 deletions(-)
->
-> diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-> index aee40db7a036..a002a44ff161 100644
-> --- a/fs/nilfs2/dir.c
-> +++ b/fs/nilfs2/dir.c
-> @@ -174,7 +174,6 @@ static bool nilfs_check_folio(struct folio *folio, ch=
-ar *kaddr)
->                     dir->i_ino, (folio->index << PAGE_SHIFT) + offs,
->                     (unsigned long)le64_to_cpu(p->inode));
->  fail:
-> -       folio_set_error(folio);
->         return false;
->  }
->
-> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> index aa5290cb7467..8654ab8ad534 100644
-> --- a/fs/nilfs2/segment.c
-> +++ b/fs/nilfs2/segment.c
-> @@ -1725,14 +1725,8 @@ static void nilfs_end_folio_io(struct folio *folio=
-, int err)
->                 return;
->         }
->
-> -       if (!err) {
-> -               if (!nilfs_folio_buffers_clean(folio))
-> -                       filemap_dirty_folio(folio->mapping, folio);
-> -               folio_clear_error(folio);
-> -       } else {
-> +       if (err || !nilfs_folio_buffers_clean(folio))
->                 filemap_dirty_folio(folio->mapping, folio);
-> -               folio_set_error(folio);
-> -       }
->
->         folio_end_writeback(folio);
->  }
-> --
-> 2.43.0
