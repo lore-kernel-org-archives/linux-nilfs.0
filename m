@@ -1,170 +1,130 @@
-Received: from mail-lj1-f171.google.com (mail-lj1-f171.google.com [209.85.208.171])
+Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06FC38C10
-	for <linux-nilfs@vger.kernel.org>; Sat, 20 Apr 2024 13:57:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F2321C2A1;
+	Tue, 23 Apr 2024 16:37:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713621477; cv=none; b=Cw/1SWQr9CiLqL4OfWcaF0ZloEMSXcOd1KUEWgklmwWCnSDAq2dO6UzRuWC/Q/qXEgpE+xu60sXpJLJK3VqAnCJnX4z/PJCLMfcZ83Vw12zeMtDEMhlyBiM4L+5PlvF3Qj5RXEjRdLVcQ0QQaWYvtiyO9wGJCMHR2nCB4V/qhNQ=
+	t=1713890233; cv=none; b=AX/HZGYu5YWUqMMw+0/l7M5vVDp7O8G8uZARP4Gr41QzH/w35UAinZKf18WDYn6verG50RR8RYnTIao7WGtOjP41TEgnsyLyxRZlrkmsQY/kjMwJSpOpWc5hzVtCyeuNX7mIb8+Lvun/CNgM/GwvjCsIUIU2UR4EdmqqPJcgvH4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713621477; c=relaxed/simple;
-	bh=YxZXrHf8XQA0FSBVDv/MLFisuG63AA6vaAxOKpkXGt8=;
+	s=arc-20240116; t=1713890233; c=relaxed/simple;
+	bh=CmjlAmsHarxIiEWsFge6NmJfEnkNPYRMvN2/N4GbwAE=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=AL9A0pqozJ2iXQd1mkSI6qeENuSVKN+rYBR1Ex7asrchxVC5E8IWiQf2729JavGOTlEJXl8EzrTbNujAWFdJbrDhKaj6qUaaZ4tXKT2dFbfKLqdU44/g9vxCOKe+XsGb+XLbEAJ3BjpLPufF6cBImT2pny/zu6hcbDEvVknRw7s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Exiis7Nq; arc=none smtp.client-ip=209.85.208.171
+	 To:Cc:Content-Type; b=vEGGnigBFcef21dY0t5rafl9wu4ko/XVbJPW8E8X1p3hH0xqfWxAJyvD5Mk2Ts5yuh/PkoInrl8An4+s1POeiCAvNLSJiDRHi9k7Vm8970iUsoP9CE28POADCcaNgbe4GrzGBgh7LvM+za+bwLjty+nZ91vU0We9leA3CaxgU8U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TiX2VGaF; arc=none smtp.client-ip=209.85.167.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Exiis7Nq"
-Received: by mail-lj1-f171.google.com with SMTP id 38308e7fff4ca-2db2f6cb312so53394661fa.2
-        for <linux-nilfs@vger.kernel.org>; Sat, 20 Apr 2024 06:57:55 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TiX2VGaF"
+Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-51acb95b892so5042353e87.2;
+        Tue, 23 Apr 2024 09:37:11 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713621474; x=1714226274; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1713890230; x=1714495030; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=mrM3k1ZQl399RIKXNLLTsm+QDVaWerIS9+Rgs9ZVEWo=;
-        b=Exiis7NqDysOCmqd1zq5a3Bti3/EEVZTv+jUXhWPn7JfDCHcnfro070ke4OS5pzjbn
-         1U+gB90ZB7QAdxBvk1tkrPuV6AJ6OOxR7HPvsEAvKsZIAByI7FgcgFnc5IQZ+umuWfYt
-         scKpk51rLpMpSIcgbOGZO4dyvNcgHvHyKPgHZRo0cJ6yhqWFAGklNtlo/RW8yICHDnwF
-         3tpmVNd5Qf90xTn+/fW7K2is9+gw6f9Vgn+pnGVp3O/gzh+Li6OlfNAvDApKo5ipoX7a
-         3ZA3gN3N26lpYgYc2jfE2i+7fnwLS46U0wXMvaZp7q8zIzg5l+Ql3qZEpiDwkS4h59v8
-         vnmw==
+        bh=LatJzjJ2Zy5Z/X3OvFMvzgLag5wvzypiR/T5sSxVxjo=;
+        b=TiX2VGaFrQseGaRZS28pA7MYexjbpdIvUALR6cq+MuijHacP5FE+nIWNJMfEo6uVjh
+         B/GtH2G4relVMBwZUq91luyL3bgWXT+O517H1dAB8FFyH/ezp0cjuVYODWjOtz5333Ar
+         z8xasJd0TM11By/TWdRyOI21DBpu2C2ZdsjNed4sPfd0qzoVDDImxtUhU4VVzW2jPgn3
+         4vvzuW0xmbk8ZtEmJ3OetOYrAsP6ayzwober/rPHQEp1tCbb6KwQOg5+M7sTUiaB6khH
+         IrOIYchXne4dLBY8qmvOaQPGYUu3u5DXkXHBcMaUJq+0f4VQaM/+CsZ4VfPOnClFHbb1
+         LS4A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713621474; x=1714226274;
+        d=1e100.net; s=20230601; t=1713890230; x=1714495030;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=mrM3k1ZQl399RIKXNLLTsm+QDVaWerIS9+Rgs9ZVEWo=;
-        b=lyLrlXN6w+yxcgbl97K9bwdh7CENtBFhz3Yaq2IpdlFJzC1Z4fsQo4+RPhMFU0ixZ1
-         rdGLZuOGGGc3Tg/h+nWqeW/KVuamT1rodagfN4mSnVIqEqSkl2uMBhBEYtLcmEhOXHQ0
-         lBibbYclffeFCofUVxZnBcvbnUNXNCnACcXnyTUw+rUi20BTLmERA1p87fKx94PcuZKR
-         6QJ6Gu5HthkGJO7yJ23xVTANU+dh8NSyB6mgH+lnAssuTnTdNnbgnAzbIhQXVDkm83J1
-         kTz/oZDpxk7Fz9EVRuoY/WHjLLvWd7UMJ7dmFhPUv//mLZ5kiN6u/RHd1paWerG6Xkct
-         A1mw==
-X-Gm-Message-State: AOJu0Yydjc4yoQmj20Ha5cBdoq11S0SLJPTQcCwy3N4hN4doLOUr53gI
-	CSF8ip8aLgd73ohYDnzOkDot0WZ9/h19XN/mv0TmWMSpdMmuBuky0K4utdIqE9BF650OzfV60L5
-	sSN7E17npj+dNpz0G7KzhDVUUVNA=
-X-Google-Smtp-Source: AGHT+IGOnpLqjuZGl1ZVsiMUqZMK6qdg3wNRy4bOWRv5AW+5grMDM6tEh2XKZFzn8VmwnaYlCkGmbk7ZQCwvlW8gbek=
-X-Received: by 2002:a2e:b059:0:b0:2d8:6a04:3bcd with SMTP id
- d25-20020a2eb059000000b002d86a043bcdmr3522786ljl.3.1713621473742; Sat, 20 Apr
- 2024 06:57:53 -0700 (PDT)
+        bh=LatJzjJ2Zy5Z/X3OvFMvzgLag5wvzypiR/T5sSxVxjo=;
+        b=nrU5R8yVLFSXrflmNNGEZyuIgV6QtGpjoAsr8PtHSnqVoMOvC1//ltQsPTKSq3V53j
+         AeszXcjDfblsnBr9RiSBSaDlhWYnshwOViZntxqsmqVGn0ePlLs9BvBKrahTdy1ZTdk5
+         RPaZOMwgdnmx4OQSd9LDtCyPdFAetofw/Y+nqaWPkxneEf3I2N99XgHHdCM85pZ2Tsh6
+         XHuH8S2EHXqMSetwrHnFja1Kg54jJvLa31en4+T6mEOagovmAs/KwD8NSXbUn6WkAl8/
+         O+BWkgU4cJFlTcehW+aUeH2r6rYIyy2GteHn17A30no1nJp1rUdKn3Nyw4iBK5RFytwf
+         MCxA==
+X-Forwarded-Encrypted: i=1; AJvYcCWy8aDjc7w1vEAguYe1BJ54Bejt56KTqRNrJbzF2xJlNis5S7IXtdPVMckEXsAee4ciKNXCWcYuyoRb7410AEReG2EJJJHQUxC8umQ=
+X-Gm-Message-State: AOJu0Yzs2sB+XPTKsMXPzz7zmfujO0QG3j60DFf+bviS090rllGuVQS0
+	XkcWMOewwKXDYE1MWUfLSWw62XjPLkVR8YpaLHLetBg7kNKhZ149tS9JYCYrdoNCfss/YFDSDxo
+	Nyuvq8KEapcvAfY0gkuV1+H2HDjw=
+X-Google-Smtp-Source: AGHT+IHB32d5HQUMjxh+boA4ZJabUJ97cmEHPP8K61DSDNei9+vJBnDVh0KxxtFoHavvoZI5JNvzBGlv/82u/olm0Ec=
+X-Received: by 2002:ac2:491e:0:b0:517:870b:a13d with SMTP id
+ n30-20020ac2491e000000b00517870ba13dmr65612lfi.37.1713890229463; Tue, 23 Apr
+ 2024 09:37:09 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <33d078a7-9072-4d8e-a3a9-dec23d4191da@redhat.com>
- <CAKFNMokRBcoP8z8Y6m60bYb=Se9SSn3N459hE0KWAnN7tEop=g@mail.gmail.com> <98da70e0-8a2d-43d3-863d-edc37b56ece4@redhat.com>
-In-Reply-To: <98da70e0-8a2d-43d3-863d-edc37b56ece4@redhat.com>
+References: <20240420025029.2166544-1-willy@infradead.org> <20240420025029.2166544-17-willy@infradead.org>
+In-Reply-To: <20240420025029.2166544-17-willy@infradead.org>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 20 Apr 2024 22:57:36 +0900
-Message-ID: <CAKFNMomMKfqBMFeJa7Ct4zR7MWiwN72D1ccTMQEhUEygXyhgew@mail.gmail.com>
-Subject: Re: [PATCH V3] nilfs2: convert to use the new mount API
-To: Eric Sandeen <sandeen@redhat.com>
-Cc: linux-nilfs@vger.kernel.org
+Date: Wed, 24 Apr 2024 01:36:52 +0900
+Message-ID: <CAKFNMonpNymFnG=YkmsStHdJXdrQOaEgPdkr8231DunXDiOyvQ@mail.gmail.com>
+Subject: Re: [PATCH 16/30] nilfs2: Remove calls to folio_set_error() and folio_clear_error()
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, Apr 20, 2024 at 7:06=E2=80=AFAM Eric Sandeen wrote:
+On Sat, Apr 20, 2024 at 11:50=E2=80=AFAM Matthew Wilcox (Oracle) wrote:
 >
-> On 4/19/24 3:12 PM, Ryusuke Konishi wrote:
-> > On Fri, Apr 19, 2024 at 1:45=E2=80=AFAM Eric Sandeen wrote:
-> >>
-> >> Convert nilfs2 to use the new mount API.
-> >>
-> >> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+> Nobody checks this flag on nilfs2 folios, stop setting and clearing it.
+> That lets us simplify nilfs_end_folio_io() slightly.
 >
->
-> >> +               if (result.uint_64 =3D=3D 0) {
-> >> +                       nilfs_err(NULL,
-> >> +                                 "invalid option \"cp=3D0\": invalid =
-checkpoint number 0");
-> >> +                       return -EINVAL;
-> >
-> > At first glance, I wondered why the nilfs_err() super_block instance
-> > argument was NULL here, but I see, it can only be used by remount..
->
-> Yup that's right, no sb yet on initial parsing. Hopefully the message
-> is ok this way. There is also an option to emit mount option errors throu=
-gh
-> the API, but nothing is listening for that yet.
+> Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+> Cc: linux-nilfs@vger.kernel.org
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 
-The above implementation is fine (the original
-nilfs_parse_snapshot_option() also does not output the device name, so
-nothing is lost).  I just found it interesting.
+Looks good to me.  Feel free to send this for merging along with other
+PG_error removal patches:
 
->
-> > ...
-> >> @@ -1172,7 +1157,7 @@ static int nilfs_remount(struct super_block *sb,=
- int *flags, char *data)
-> >>                                    "couldn't remount RDWR because of u=
-nsupported optional features (%llx)",
-> >>                                    (unsigned long long)features);
-> >>                         err =3D -EROFS;
-> >> -                       goto restore_opts;
-> >> +                       goto ignore_opts;
-> >>                 }
-> >>
-> >>                 sb->s_flags &=3D ~SB_RDONLY;
-> >> @@ -1180,130 +1165,56 @@ static int nilfs_remount(struct super_block *=
-sb, int *flags, char *data)
-> >>                 root =3D NILFS_I(d_inode(sb->s_root))->i_root;
-> >>                 err =3D nilfs_attach_log_writer(sb, root);
-> >>                 if (err)
-> >> -                       goto restore_opts;
-> >> +                       goto ignore_opts;
-> >>
-> >>                 down_write(&nilfs->ns_sem);
-> >>                 nilfs_setup_super(sb, true);
-> >>                 up_write(&nilfs->ns_sem);
-> >>         }
-> >
-> > There is still an issue where the SB_RDONLY flag on sb->s_flags is not
-> > repaired in the error path of nilfs_attach_log_writer().
-> >
-> > This seems to be the only essential issue remaining, so I can add the
-> > following fix (safer one - drop the SB_RDONLY flag for
-> > nilfs_attach_log_writer, call it, and repair the flag if it fails),
-> > and send it upstream.
-> > Is this okay?  Please let me know if you have any opinions.
-> >
-> > diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> > index a54fa43331f5..a8f03c860e87 100644
-> > --- a/fs/nilfs2/super.c
-> > +++ b/fs/nilfs2/super.c
-> > @@ -1164,8 +1164,10 @@ static int nilfs_reconfigure(struct fs_context *=
-fc)
-> >
-> >                 root =3D NILFS_I(d_inode(sb->s_root))->i_root;
-> >                 err =3D nilfs_attach_log_writer(sb, root);
-> > -               if (err)
-> > +               if (err) {
-> > +                       sb->s_flags |=3D SB_RDONLY;
-> >                         goto ignore_opts;
-> > +               }
-> >
-> >                 down_write(&nilfs->ns_sem);
-> >                 nilfs_setup_super(sb, true);
->
-> Oh, I'm sorry I missed that :( Yes, I think that looks fine. Thank you.
->
-> -Eric
+Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 
-Good.
+Or if you would like me to pick it up independently (e.g. to gradually
+reduce the changes required for removal), I will do so.
 
-Well, I'll continue testing, so I'll keep this patch for now and let
-you know if anything happens.
-I would like to send it to the -mm tree as soon as possible.
-
-Thank you!
-
+Thanks,
 Ryusuke Konishi
 
+> ---
+>  fs/nilfs2/dir.c     | 1 -
+>  fs/nilfs2/segment.c | 8 +-------
+>  2 files changed, 1 insertion(+), 8 deletions(-)
 >
-> >
-> > Thanks,
-> > Ryusuke Konishi
-> >
+> diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+> index aee40db7a036..a002a44ff161 100644
+> --- a/fs/nilfs2/dir.c
+> +++ b/fs/nilfs2/dir.c
+> @@ -174,7 +174,6 @@ static bool nilfs_check_folio(struct folio *folio, ch=
+ar *kaddr)
+>                     dir->i_ino, (folio->index << PAGE_SHIFT) + offs,
+>                     (unsigned long)le64_to_cpu(p->inode));
+>  fail:
+> -       folio_set_error(folio);
+>         return false;
+>  }
 >
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index aa5290cb7467..8654ab8ad534 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -1725,14 +1725,8 @@ static void nilfs_end_folio_io(struct folio *folio=
+, int err)
+>                 return;
+>         }
+>
+> -       if (!err) {
+> -               if (!nilfs_folio_buffers_clean(folio))
+> -                       filemap_dirty_folio(folio->mapping, folio);
+> -               folio_clear_error(folio);
+> -       } else {
+> +       if (err || !nilfs_folio_buffers_clean(folio))
+>                 filemap_dirty_folio(folio->mapping, folio);
+> -               folio_set_error(folio);
+> -       }
+>
+>         folio_end_writeback(folio);
+>  }
+> --
+> 2.43.0
