@@ -1,700 +1,207 @@
-Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com [209.85.210.176])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.15])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 350EE16E88D;
-	Wed, 24 Apr 2024 18:27:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.176
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713983245; cv=none; b=WvKzZBY44ygNSJzVQqOSNSd+vwHwnLwRU9I9FojbIJfuHQvMC+N96J5KmnADBP6NxZLaZF3+qAUQiwjRdYaKJbqaoLgu5sVMJ/5HVA3qGy+h8YjuNuIphv0NCSv0eE2+XfATp1t4LB+DItSPSeCJwaij0drv71zu76GmpWTIstE=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713983245; c=relaxed/simple;
-	bh=Icat3W7wsXivUho2TNiHdiOd0vRaNw09lXS4cPFxcB4=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=kbcs8RyUmn0WoVHcERPLjWJbyKYYC+8s5SgzQgpKSpUUEMEmfMz6VC0RZ6t46Qjp3sDkH4xEdRvMmGSgfdXk9+Vfjnp8iKjVgWTigekddBMLCKDghLCEU2rdDhofswYqJFN2RVLzylv8uQ+Y1Yj5gKwNOIn6dtDwymWcO/Alw0Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=J1l7dwRF; arc=none smtp.client-ip=209.85.210.176
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 792A441C76
+	for <linux-nilfs@vger.kernel.org>; Thu, 25 Apr 2024 06:48:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=198.175.65.15
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1714027737; cv=fail; b=A5mY1dyhQA2iP3FC7oAWYUPqdoiGGCpf9x1vjXc5coiVhpFKohJKHNICtLSCetBzL0xWBMu+W6Uy3iRaz5sTrfiplBcunWAKnkyJBgQpNuGMT5xy0oPS5j3TlN8I/ZjBf5e/KHHvr+DWaPlWA1pRVIW/yAU3nRpDU1U5BmgS1to=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1714027737; c=relaxed/simple;
+	bh=iexp0AR+ZTqZy5uhQlFJJPgLClgijVhu3MUaMkKuzkk=;
+	h=Date:From:To:CC:Subject:Message-ID:Content-Type:
+	 Content-Disposition:MIME-Version; b=cqd7fox5WZESQeufg5/wAYfDB352TzoKLsrFlm+b/5n55/U9ebLwEmCWc2qt3qFyVGpFGA1xQwvliUfQFbqviKNoDXKyAY9vnuJiT7Pj+MKgRiBMEMFPlfBckdTgWgE1x0/DFAimAqySsHY/oKydldRwba9TfOtibfXREmBFe1Q=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=cV7IJyav; arc=fail smtp.client-ip=198.175.65.15
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="J1l7dwRF"
-Received: by mail-pf1-f176.google.com with SMTP id d2e1a72fcca58-6ed0e9ccca1so243488b3a.0;
-        Wed, 24 Apr 2024 11:27:23 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713983242; x=1714588042; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=gllD3V+9UonJLQlKKZQX9a1vPvnXC9F7uFXx0nrGAwo=;
-        b=J1l7dwRFPKPZHMj8LnU5ixIckku5dyvvVxWMo+2t5+JF4+8grTDfGc+3kMk4iuBWm3
-         MfeKaZNo8phTNYjlj0/yTHUDCe+2IlAuXmHkH9rWAyQbx3Gg2FSKHrDEDH7nGuLpyQ/H
-         ohxulR5c0xcpA72pbdzSpWw8IM0VF7L3BSsmBywVLYtmwzzkRquqka+Xp6fgydgGeVJw
-         FMdVTQVBmwOXh1SXyVQFq+DG5Lt7k3r8dHsXEO2zwSJ6BktEqeVC1pjNBFAY49UTGFco
-         zZNUejJ4PoqZSCm7WG85phU1bM/uic39Q63fm1F2tNPxMcmA+TNiBU1dAgDIi6DUIhO2
-         131w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713983242; x=1714588042;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=gllD3V+9UonJLQlKKZQX9a1vPvnXC9F7uFXx0nrGAwo=;
-        b=jdZvw+QCwExCT7GXeEMpIhkirOJ88P0/N8hGF2tfDjAvRx1ZVR31pRupYYx/4M83WS
-         96ji1osFwUu/wU/KYMagSYWaoKcUKpzDNtvslKXSrqrRD6/zhCApOklIMogqkoTyI38l
-         zzBOsF0ZQe2wDfzFnTAiEcNBTWKN/CQSrvxG7PovgQ0kpKN5We+h7y0iP3OfLDijmP8u
-         PvaIGc6ZfEdBUHk9ciJvtS7BfFdvsmF0Ygs3BYRPr150CIk2CDDVlPQ8zl6Zr2RjUYTo
-         yWy7fxh17lwieV+nweI3PcFajd15P78ZPm32L1zVLEbhhR5Wtg+jFd0wdngNt9ptDr+k
-         3HEA==
-X-Forwarded-Encrypted: i=1; AJvYcCWBTqxFXOHIgli0LYSIPiXZYdlWrZ6/xMRPhJqZyM+gZAzWks4f76n1JnYLH8YbImPWh5+6193hwrrIi69TgfqVjgqcNoEZUM0d4e2d5L6EvvUlu6o1tW/7FHw6X0w9IH9/d+diekbWVYNwmQ==
-X-Gm-Message-State: AOJu0YyrigjdKQqFOysJCjLaEHfr50/E4ZAYGYF/X6JOMbyK+5iw9/jd
-	oq2GlgV5leJDyCAvkBtuYVhBgPDaVcpV7iyxbOMuRxTdPUKrdcnjLIXhOiD1
-X-Google-Smtp-Source: AGHT+IGM64+wK/U1/kGzEYF21QZbH4l2q/tDZG7KAlOD0Pqy2J3QlGaM3AqHhakH91hRO+fCMzW/Tg==
-X-Received: by 2002:a05:6a20:2e16:b0:1ad:e38:5472 with SMTP id be22-20020a056a202e1600b001ad0e385472mr2772094pzb.35.1713983242304;
-        Wed, 24 Apr 2024 11:27:22 -0700 (PDT)
-Received: from carrot.. (i223-218-108-246.s42.a014.ap.plala.or.jp. [223.218.108.246])
-        by smtp.gmail.com with ESMTPSA id fi33-20020a056a0039a100b006e65d66bb3csm11746376pfb.21.2024.04.24.11.27.19
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 24 Apr 2024 11:27:21 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org,
-	Eric Sandeen <sandeen@redhat.com>
-Subject: [PATCH] nilfs2: convert to use the new mount API
-Date: Thu, 25 Apr 2024 03:27:16 +0900
-Message-Id: <20240424182716.6024-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="cV7IJyav"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1714027735; x=1745563735;
+  h=date:from:to:cc:subject:message-id:mime-version;
+  bh=iexp0AR+ZTqZy5uhQlFJJPgLClgijVhu3MUaMkKuzkk=;
+  b=cV7IJyavtAyKQ3qIbnYYeB+SgpSRW9G9jq7pOoncULXBS3rB4Q9qzJmT
+   wHRG4TByFYZBIUXltypeDutNY0r/OzQNb+LFBtyQVS1iK5vCalPnzA7eZ
+   REn6NF+KYc+ZHNA31WurfVV2BPju8EBhd2BKjiO1T1KZ0CUd0tCVtdR7F
+   eS0ZPP6kMqgvIVzXbSENDT6VYxTWrXxUIaJIC3I8yN+tdpGEVNXjmcKzc
+   axvoD7w/FjHX9TttJFDo7KgDLTnbi5Kdtg8sBBXl4XfL5P3KhwH1jOhPd
+   eVAWHPpZ0t1OnEH5QUKxO41ULXSA8//NljUX3DIHcp1E0JTdASY3CMzRH
+   w==;
+X-CSE-ConnectionGUID: tUlDWjQQTyqeJbAY5evKMg==
+X-CSE-MsgGUID: K2X1RQfFQZKEtBda6leTfw==
+X-IronPort-AV: E=McAfee;i="6600,9927,11054"; a="13477911"
+X-IronPort-AV: E=Sophos;i="6.07,228,1708416000"; 
+   d="scan'208";a="13477911"
+Received: from orviesa008.jf.intel.com ([10.64.159.148])
+  by orvoesa107.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Apr 2024 23:48:54 -0700
+X-CSE-ConnectionGUID: k+UdfOE3RzKzjeHg+EtR6w==
+X-CSE-MsgGUID: WQKnix/nS9i+7j9s3jxsbg==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.07,228,1708416000"; 
+   d="scan'208";a="25587053"
+Received: from orsmsx601.amr.corp.intel.com ([10.22.229.14])
+  by orviesa008.jf.intel.com with ESMTP/TLS/AES256-GCM-SHA384; 24 Apr 2024 23:48:54 -0700
+Received: from orsmsx611.amr.corp.intel.com (10.22.229.24) by
+ ORSMSX601.amr.corp.intel.com (10.22.229.14) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.35; Wed, 24 Apr 2024 23:48:53 -0700
+Received: from ORSEDG601.ED.cps.intel.com (10.7.248.6) by
+ orsmsx611.amr.corp.intel.com (10.22.229.24) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.35 via Frontend Transport; Wed, 24 Apr 2024 23:48:53 -0700
+Received: from NAM11-CO1-obe.outbound.protection.outlook.com (104.47.56.168)
+ by edgegateway.intel.com (134.134.137.102) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.1.2507.35; Wed, 24 Apr 2024 23:48:53 -0700
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=AOUgojITxhE4zbahprQhr7UnHw2ZhQf6UhrNciUxL/ybAVTnbcjlpzgE3+OikYhRmGpk9okUgrn7yDeYDQVppBZsedztEzlPT2p73Fhd9HXj3QX+nvEAx5gjcoCP5c/BIYcuo5B7fWO5HuyjT+QcFHoW9Z5dgHJXacj0nQ9SFDL0Jy3Ar+0PFrMPsm+0/MkWVb4DrpJ28kLDKzkNCEhBGHGgY2GdE1OE/bg8atmF9Gssi/K+Cq3qhBgAw7aPlgUZbimWkqjo8V/JB9HEGIjRBlFeHfSbSl6RLmn0XFVJB0n0RlLmYLmPTU6hIGXisoe+o0K3aS1uRNguISS9bxi1DQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=nlz8hVE6l+niWtE3iPC6Li+IZunsro5F5UYMcKiltB8=;
+ b=SXi8CYXxMWQE+R10kTHQ6CZi+hgPQCMwSniOwlLngd4H00z6SSnZGZ9Fvi5uK1JePeHFJp1IPUohAbYlY//jiT+xO1I5HCXjKSEv7kjEFPXizp8/a0EBj0eZagUtJLdPf83KgtF2xv0X6SbgX7zZXmmsNdcfbsT6lcacv23JSS6Wv2dKOS39W9xSH2dXMIKIZIlFKH2crJKyevKC4N5Qo0NcpO27TlWjCKlhAiLZEoZK55q/mVcqZ+8KptVp+rrmCmsWQBww+9rbMrMy8Rg9biqBtFN8gcKbcH7MwIvWYhqMRiEztf5wXv9l7xitmdgMiSuCs8gedLqDcfe9U4kU6g==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=intel.com; dmarc=pass action=none header.from=intel.com;
+ dkim=pass header.d=intel.com; arc=none
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=intel.com;
+Received: from SA1PR11MB8393.namprd11.prod.outlook.com (2603:10b6:806:373::21)
+ by MW4PR11MB6935.namprd11.prod.outlook.com (2603:10b6:303:228::15) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7409.24; Thu, 25 Apr
+ 2024 06:48:52 +0000
+Received: from SA1PR11MB8393.namprd11.prod.outlook.com
+ ([fe80::c0cf:689c:129c:4bcd]) by SA1PR11MB8393.namprd11.prod.outlook.com
+ ([fe80::c0cf:689c:129c:4bcd%6]) with mapi id 15.20.7519.021; Thu, 25 Apr 2024
+ 06:48:52 +0000
+Date: Thu, 25 Apr 2024 14:42:19 +0800
+From: kernel test robot <yujie.liu@intel.com>
+To: Eric Sandeen <sandeen@redhat.com>
+CC: <oe-kbuild-all@lists.linux.dev>, <linux-nilfs@vger.kernel.org>, "Ryusuke
+ Konishi" <konishi.ryusuke@gmail.com>
+Subject: [konis-nilfs2:for-akpm 4/4] fs/nilfs2/super.c: linux/fs_context.h is
+ included more than once.
+Message-ID: <202404251450.rttcxC1o-lkp@intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+X-ClientProxiedBy: SI2PR02CA0035.apcprd02.prod.outlook.com
+ (2603:1096:4:195::22) To SA1PR11MB8393.namprd11.prod.outlook.com
+ (2603:10b6:806:373::21)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SA1PR11MB8393:EE_|MW4PR11MB6935:EE_
+X-MS-Office365-Filtering-Correlation-Id: 46c92117-eb6e-4535-53d6-08dc64f3c4b7
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: =?us-ascii?Q?dIZRuUgBFsmF5kD102EuEVdTj5CbKE7gkbrnrFhNhqYRqV6G482SGUHqy32/?=
+ =?us-ascii?Q?K8MYvSnKg0sfJAuCouYvowGXDkUxhHfYI+DFJxK6GDbZrWA8vFJn9OLeqcMV?=
+ =?us-ascii?Q?qqpVHydcPIXmfHpmjkFzlgHzQHRWbZWv/QTAHEFo8EeDoSnm4WGk9AoFmpZ0?=
+ =?us-ascii?Q?VfpzwKp8c87S5VMz7QZNm8HXXm3OPkMT3T8St59KY2mzD11cWR+xWamzXQ+Y?=
+ =?us-ascii?Q?/IIa9EB/zg9EPco8Zmj+hAfAigtWUIH+RjyUi9pQ1vsWg4EKHr3G+gYmMj/R?=
+ =?us-ascii?Q?xNpcR+Hd7adKH0u2PUQlFN2dd+1qobmeuF5JHFlG9gn9jEX46CoXF5XUD7so?=
+ =?us-ascii?Q?acDeCnCMNzugWD1FFRud0+Myo7g5SOSpQSO4aUjiM9llDH4RRWILINUSO6FP?=
+ =?us-ascii?Q?kIyFZegmLDsYUupFg75u4p8WMJZL16y0FuK7M3aM2ZdzCOi73iItdMESkDei?=
+ =?us-ascii?Q?ZcJX/3jcXu0YdVmfv3/weZ73Fd6elUvSjY9Sqp5+pIV5agTLwrm/BuN0vasw?=
+ =?us-ascii?Q?PAzfy8sR1PEDRuXSprGscYJAGptfWP88QqqXoLKyNmdvfuGymyHFNUCImRrl?=
+ =?us-ascii?Q?t1CtIKEBF5liV13arp+FRodh3zaCPh6OcyULkK/VY0iUQl0VvoDVO+0WWi8E?=
+ =?us-ascii?Q?1mWCCg7LBSxh6HT1r/viFvto+GWaQmhIbIDGavRFfdf6Y1MpElbJjBH+QHZK?=
+ =?us-ascii?Q?H30gR2eF1I0srh4Fb1KJpbWWy8JM6tIkgpESOeAX2waAJoX1Wze3RMAOU4OU?=
+ =?us-ascii?Q?oArVSCdydX7DVOtJn1EeVEieajwcPHsknkYhTlCola4bZrveUQ0KGXm09gvz?=
+ =?us-ascii?Q?v2M1RKGJuRn/h5F+2OilbrzYsafFBRfxRcMSEXrwyv6AL2n2dyUKTnwqZmht?=
+ =?us-ascii?Q?NiLdWwtHQncNn/Zywy40v/e9Y1L4SFrfczhxlNPueg/WxDSd0diLs+WqLRZh?=
+ =?us-ascii?Q?vhuC1rHtMrTZwi7OBIn7eMps7iddWkORFPBNEACAHDM/LaW3UcJC83T0AM/2?=
+ =?us-ascii?Q?AAU9+rq/jxIvVXyx0aXhYxuQZbD5/3LepyQvuW6wfsomdlnOxlbKAjy5hbwe?=
+ =?us-ascii?Q?qw/+3i1IEZHauSBwyaHUxaaZcn2jDWZhsfvaqINr9BFfTwZhy8oytocVdNDx?=
+ =?us-ascii?Q?WjWZS09dCz1EdobKGfq/Bpu/rPZDZ3ikyRn7OklR/lQJDKjAdyr0+b1BPh7H?=
+ =?us-ascii?Q?p6zJZQkAmMUhtDHFOvcSAhHuUN6+RpwlcJDXizMxTrja9N7kVYx35g8zIzc?=
+ =?us-ascii?Q?=3D?=
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SA1PR11MB8393.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376005)(1800799015)(366007);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?Z7gpRgdP32f9SRKvu8oUNz6VevinpJr2bZ6HVN+/AYNZG7UEsgNGf6EKDroG?=
+ =?us-ascii?Q?YjGynSef57H858kJA4PBcbHqR+ptz4bk61hlJMmqHi5r1k/Dk5cmQqJKNu6N?=
+ =?us-ascii?Q?SfA/+HToXmpYsaHJNoZiGsnxOpRWUO5M2D5cPhkG67oWsSwZrcn4PUU7ngGV?=
+ =?us-ascii?Q?9d06FE9V+/2KuDhbFIKQQRttfq1gm8kpJMoffG3VS2nF+3fe3MneDzPj6XKm?=
+ =?us-ascii?Q?KEtn1p7X0s8iWsX3xV9iqNG75LkO/TkxNG/ZIje2tOi7KphO9GfoiE0j+5LW?=
+ =?us-ascii?Q?YyPsGezU8N6K+0BfHo+qHbRGFdH6E0xqzKI7GTbo5I5Bb/Ogltkt0qEs88Ca?=
+ =?us-ascii?Q?QaDYxhCpRfLgkBAFWl3u8cqJKw5RmlYEiw9Q0BZw2fDDBcPYJLU7JMKSIMK7?=
+ =?us-ascii?Q?NdjC5ztFwZW8EbYwessjg/aKQ6T2FtJBkcJblqoS+/JrKDlUxDbJ2BCB8HYK?=
+ =?us-ascii?Q?gTJK/wpZwTBALOeKq6QSWpScH5YPmcBexvPCnsu4NsBvjYJMIUGsqavZIUEd?=
+ =?us-ascii?Q?dZPp4O5nsgWnrsmyT5PmHowwxKdEar5bAIM339oWVqOyL2OULvCajBpGOq5V?=
+ =?us-ascii?Q?DzT+pJL8WUwX/GVeyjpMN3dxuJtF3jRYns1I4CvG9nuwSenfucp3vzzdY4CC?=
+ =?us-ascii?Q?g3MIebWFbR+9qsFBxbw4nchuCpLGSaaYvBqMHMts2jZZWW8vnNGws9U8rck/?=
+ =?us-ascii?Q?Yj9JAL9j2D0wR4J70ZJXRB/0P+U/oKMuh+BhHSIjiWtxbfQshT6OoJicukSB?=
+ =?us-ascii?Q?+1Qr4eHdfJnBglqDNTDQdVbgLYB5FuJ9aUf4aKain80IIG58w/q2xdBnHShS?=
+ =?us-ascii?Q?avqmehJJ7mI0eeMHOYtq8zlEUeu939hYxBoMDBq/kBAfsAxOw6RHHw19bVLX?=
+ =?us-ascii?Q?bn/U78uu8DkfRuuTOrSUbtpXfl9UL1qAME2fh31sI54SdzhDyWyrIfXqI0iq?=
+ =?us-ascii?Q?NOdiQceTkupQvPL38nIewt7veNV1jzEoonk/OZ6HqmAqIpjPCziaOAqBgU2F?=
+ =?us-ascii?Q?1r0quMPZ1yvSGTHapsL8kneE73bGKJeJC8UpdBjJUR8iXsrobJyAfS1+lUlm?=
+ =?us-ascii?Q?xounN3HgfKMzHiaQI46VLGSKMDbhpIeKjt4CP5Kcv8eBjHCbtI0bl/05/zv2?=
+ =?us-ascii?Q?poEVIz0UrtChUZVcpGTcRy1yWzStgKzgVeUyJVul6FTwdtr0uWD9VOg3/1+y?=
+ =?us-ascii?Q?RT25cV1gt/SGb8ITPhIXulPasOee7shK2bB3aNyJMmUIiQDSHZ6LPau6O9jf?=
+ =?us-ascii?Q?BDZdOWXFRd8xFdobIuOpTrgQCp/ef694yRVohZu0j6SaAp68IbfTLcHrdHR9?=
+ =?us-ascii?Q?WUTC7vrCgsNEqu/aX8LFJCjNwUqQud4dgStBHnCK0zBY2nmuiDf0GZEffSyk?=
+ =?us-ascii?Q?I1Kp6gjgIVeqUWbzJ4qClUR5lEpU/AicoY1EAPZjLtTJvfatqm5TxQ1dUcd1?=
+ =?us-ascii?Q?DsVgT9kZu9NfrHQlUqG/kpGRXqa7q6B2QRz2WIYYg/90qI1dw+56Z7e9Aarb?=
+ =?us-ascii?Q?EmTLSH6dEbX1hcizjHdis9q86iOik500nDKd0VwFJYgVh5YnR4Dyi0I0GTTo?=
+ =?us-ascii?Q?pWS1CCA2EgSdCfgE1F07IsbxV4hlinXyDpjU+TVC?=
+X-MS-Exchange-CrossTenant-Network-Message-Id: 46c92117-eb6e-4535-53d6-08dc64f3c4b7
+X-MS-Exchange-CrossTenant-AuthSource: SA1PR11MB8393.namprd11.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Apr 2024 06:48:52.0589
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 46c98d88-e344-4ed4-8496-4ed7712e255d
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: BuXqcDrzrywmSGyJwvviNdKLrzS2BggEjLWdFbXmQSkLgwzjLnG4FfgIuchDh3yOZ34XrZ1CwKGNE/9X19T9Yg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MW4PR11MB6935
+X-OriginatorOrg: intel.com
 
-From: Eric Sandeen <sandeen@redhat.com>
+tree:   https://github.com/konis/nilfs2 for-akpm
+head:   69812977939c7895ede256e122284c19d4d83aef
+commit: 69812977939c7895ede256e122284c19d4d83aef [4/4] nilfs2: convert to use the new mount API
+compiler: clang version 17.0.6 (https://github.com/llvm/llvm-project 6009708b4367171ccdbf4b5905cb6a803753fe18)
 
-Convert nilfs2 to use the new mount API.
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <yujie.liu@intel.com>
+| Closes: https://lore.kernel.org/r/202404251450.rttcxC1o-lkp@intel.com/
 
-[konishi.ryusuke: fixed missing SB_RDONLY flag repair in nilfs_reconfigure]
-Link: https://lkml.kernel.org/r/33d078a7-9072-4d8e-a3a9-dec23d4191da@redhat.com
-Signed-off-by: Eric Sandeen <sandeen@redhat.com>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
-Hi Andrew, please add this to the queue for the next merge window.
+includecheck warnings: (new ones prefixed by >>)
+>> fs/nilfs2/super.c: linux/fs_context.h is included more than once.
 
-As the title suggests, this patch transforms the implementation around
-nilfs2 mount/remount, so I reviewed all changes and tested all mount
-options and nilfs2-specific mount patterns (such as simultaneous
-mounting of snapshots and current tree).  This one passed those checks.
+vim +32 fs/nilfs2/super.c
 
-Thanks,
-Ryusuke Konishi
+  > 32	#include <linux/fs_context.h>
+    33	#include <linux/fs_parser.h>
+    34	#include <linux/crc32.h>
+    35	#include <linux/vfs.h>
+    36	#include <linux/writeback.h>
+    37	#include <linux/seq_file.h>
+    38	#include <linux/mount.h>
+  > 39	#include <linux/fs_context.h>
+    40	#include "nilfs.h"
+    41	#include "export.h"
+    42	#include "mdt.h"
+    43	#include "alloc.h"
+    44	#include "btree.h"
+    45	#include "btnode.h"
+    46	#include "page.h"
+    47	#include "cpfile.h"
+    48	#include "sufile.h" /* nilfs_sufile_resize(), nilfs_sufile_set_alloc_range() */
+    49	#include "ifile.h"
+    50	#include "dat.h"
+    51	#include "segment.h"
+    52	#include "segbuf.h"
+    53	
 
- fs/nilfs2/nilfs.h     |   4 +-
- fs/nilfs2/super.c     | 374 ++++++++++++++++++------------------------
- fs/nilfs2/the_nilfs.c |   4 +-
- fs/nilfs2/the_nilfs.h |   6 +-
- 4 files changed, 164 insertions(+), 224 deletions(-)
-
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 2e29b98ba8ba..728e90be3570 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -335,8 +335,8 @@ void __nilfs_error(struct super_block *sb, const char *function,
- 
- extern struct nilfs_super_block *
- nilfs_read_super_block(struct super_block *, u64, int, struct buffer_head **);
--extern int nilfs_store_magic_and_option(struct super_block *,
--					struct nilfs_super_block *, char *);
-+extern int nilfs_store_magic(struct super_block *sb,
-+			     struct nilfs_super_block *sbp);
- extern int nilfs_check_feature_compatibility(struct super_block *,
- 					     struct nilfs_super_block *);
- extern void nilfs_set_log_cursor(struct nilfs_super_block *,
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index ac24ed109ce9..55667ab6706d 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -29,7 +29,8 @@
- #include <linux/slab.h>
- #include <linux/init.h>
- #include <linux/blkdev.h>
--#include <linux/parser.h>
-+#include <linux/fs_context.h>
-+#include <linux/fs_parser.h>
- #include <linux/crc32.h>
- #include <linux/vfs.h>
- #include <linux/writeback.h>
-@@ -61,7 +62,6 @@ struct kmem_cache *nilfs_segbuf_cachep;
- struct kmem_cache *nilfs_btree_path_cache;
- 
- static int nilfs_setup_super(struct super_block *sb, int is_mount);
--static int nilfs_remount(struct super_block *sb, int *flags, char *data);
- 
- void __nilfs_msg(struct super_block *sb, const char *fmt, ...)
- {
-@@ -702,105 +702,98 @@ static const struct super_operations nilfs_sops = {
- 	.freeze_fs	= nilfs_freeze,
- 	.unfreeze_fs	= nilfs_unfreeze,
- 	.statfs         = nilfs_statfs,
--	.remount_fs     = nilfs_remount,
- 	.show_options = nilfs_show_options
- };
- 
- enum {
--	Opt_err_cont, Opt_err_panic, Opt_err_ro,
--	Opt_barrier, Opt_nobarrier, Opt_snapshot, Opt_order, Opt_norecovery,
--	Opt_discard, Opt_nodiscard, Opt_err,
-+	Opt_err, Opt_barrier, Opt_snapshot, Opt_order, Opt_norecovery,
-+	Opt_discard,
- };
- 
--static match_table_t tokens = {
--	{Opt_err_cont, "errors=continue"},
--	{Opt_err_panic, "errors=panic"},
--	{Opt_err_ro, "errors=remount-ro"},
--	{Opt_barrier, "barrier"},
--	{Opt_nobarrier, "nobarrier"},
--	{Opt_snapshot, "cp=%u"},
--	{Opt_order, "order=%s"},
--	{Opt_norecovery, "norecovery"},
--	{Opt_discard, "discard"},
--	{Opt_nodiscard, "nodiscard"},
--	{Opt_err, NULL}
-+static const struct constant_table nilfs_param_err[] = {
-+	{"continue",	NILFS_MOUNT_ERRORS_CONT},
-+	{"panic",	NILFS_MOUNT_ERRORS_PANIC},
-+	{"remount-ro",	NILFS_MOUNT_ERRORS_RO},
-+	{}
- };
- 
--static int parse_options(char *options, struct super_block *sb, int is_remount)
--{
--	struct the_nilfs *nilfs = sb->s_fs_info;
--	char *p;
--	substring_t args[MAX_OPT_ARGS];
--
--	if (!options)
--		return 1;
--
--	while ((p = strsep(&options, ",")) != NULL) {
--		int token;
-+static const struct fs_parameter_spec nilfs_param_spec[] = {
-+	fsparam_enum	("errors", Opt_err, nilfs_param_err),
-+	fsparam_flag_no	("barrier", Opt_barrier),
-+	fsparam_u64	("cp", Opt_snapshot),
-+	fsparam_string	("order", Opt_order),
-+	fsparam_flag	("norecovery", Opt_norecovery),
-+	fsparam_flag_no	("discard", Opt_discard),
-+	{}
-+};
- 
--		if (!*p)
--			continue;
-+struct nilfs_fs_context {
-+	unsigned long ns_mount_opt;
-+	__u64 cno;
-+};
- 
--		token = match_token(p, tokens, args);
--		switch (token) {
--		case Opt_barrier:
--			nilfs_set_opt(nilfs, BARRIER);
--			break;
--		case Opt_nobarrier:
-+static int nilfs_parse_param(struct fs_context *fc, struct fs_parameter *param)
-+{
-+	struct nilfs_fs_context *nilfs = fc->fs_private;
-+	int is_remount = fc->purpose == FS_CONTEXT_FOR_RECONFIGURE;
-+	struct fs_parse_result result;
-+	int opt;
-+
-+	opt = fs_parse(fc, nilfs_param_spec, param, &result);
-+	if (opt < 0)
-+		return opt;
-+
-+	switch (opt) {
-+	case Opt_barrier:
-+		if (result.negated)
- 			nilfs_clear_opt(nilfs, BARRIER);
--			break;
--		case Opt_order:
--			if (strcmp(args[0].from, "relaxed") == 0)
--				/* Ordered data semantics */
--				nilfs_clear_opt(nilfs, STRICT_ORDER);
--			else if (strcmp(args[0].from, "strict") == 0)
--				/* Strict in-order semantics */
--				nilfs_set_opt(nilfs, STRICT_ORDER);
--			else
--				return 0;
--			break;
--		case Opt_err_panic:
--			nilfs_write_opt(nilfs, ERROR_MODE, ERRORS_PANIC);
--			break;
--		case Opt_err_ro:
--			nilfs_write_opt(nilfs, ERROR_MODE, ERRORS_RO);
--			break;
--		case Opt_err_cont:
--			nilfs_write_opt(nilfs, ERROR_MODE, ERRORS_CONT);
--			break;
--		case Opt_snapshot:
--			if (is_remount) {
--				nilfs_err(sb,
--					  "\"%s\" option is invalid for remount",
--					  p);
--				return 0;
--			}
--			break;
--		case Opt_norecovery:
--			nilfs_set_opt(nilfs, NORECOVERY);
--			break;
--		case Opt_discard:
--			nilfs_set_opt(nilfs, DISCARD);
--			break;
--		case Opt_nodiscard:
--			nilfs_clear_opt(nilfs, DISCARD);
--			break;
--		default:
--			nilfs_err(sb, "unrecognized mount option \"%s\"", p);
--			return 0;
-+		else
-+			nilfs_set_opt(nilfs, BARRIER);
-+		break;
-+	case Opt_order:
-+		if (strcmp(param->string, "relaxed") == 0)
-+			/* Ordered data semantics */
-+			nilfs_clear_opt(nilfs, STRICT_ORDER);
-+		else if (strcmp(param->string, "strict") == 0)
-+			/* Strict in-order semantics */
-+			nilfs_set_opt(nilfs, STRICT_ORDER);
-+		else
-+			return -EINVAL;
-+		break;
-+	case Opt_err:
-+		nilfs->ns_mount_opt &= ~NILFS_MOUNT_ERROR_MODE;
-+		nilfs->ns_mount_opt |= result.uint_32;
-+		break;
-+	case Opt_snapshot:
-+		if (is_remount) {
-+			struct super_block *sb = fc->root->d_sb;
-+
-+			nilfs_err(sb,
-+				  "\"%s\" option is invalid for remount",
-+				  param->key);
-+			return -EINVAL;
-+		}
-+		if (result.uint_64 == 0) {
-+			nilfs_err(NULL,
-+				  "invalid option \"cp=0\": invalid checkpoint number 0");
-+			return -EINVAL;
- 		}
-+		nilfs->cno = result.uint_64;
-+		break;
-+	case Opt_norecovery:
-+		nilfs_set_opt(nilfs, NORECOVERY);
-+		break;
-+	case Opt_discard:
-+		if (result.negated)
-+			nilfs_clear_opt(nilfs, DISCARD);
-+		else
-+			nilfs_set_opt(nilfs, DISCARD);
-+		break;
-+	default:
-+		return -EINVAL;
- 	}
--	return 1;
--}
- 
--static inline void
--nilfs_set_default_options(struct super_block *sb,
--			  struct nilfs_super_block *sbp)
--{
--	struct the_nilfs *nilfs = sb->s_fs_info;
--
--	nilfs->ns_mount_opt =
--		NILFS_MOUNT_ERRORS_RO | NILFS_MOUNT_BARRIER;
-+	return 0;
- }
- 
- static int nilfs_setup_super(struct super_block *sb, int is_mount)
-@@ -857,9 +850,8 @@ struct nilfs_super_block *nilfs_read_super_block(struct super_block *sb,
- 	return (struct nilfs_super_block *)((char *)(*pbh)->b_data + offset);
- }
- 
--int nilfs_store_magic_and_option(struct super_block *sb,
--				 struct nilfs_super_block *sbp,
--				 char *data)
-+int nilfs_store_magic(struct super_block *sb,
-+		      struct nilfs_super_block *sbp)
- {
- 	struct the_nilfs *nilfs = sb->s_fs_info;
- 
-@@ -870,14 +862,12 @@ int nilfs_store_magic_and_option(struct super_block *sb,
- 	sb->s_flags |= SB_NOATIME;
- #endif
- 
--	nilfs_set_default_options(sb, sbp);
--
- 	nilfs->ns_resuid = le16_to_cpu(sbp->s_def_resuid);
- 	nilfs->ns_resgid = le16_to_cpu(sbp->s_def_resgid);
- 	nilfs->ns_interval = le32_to_cpu(sbp->s_c_interval);
- 	nilfs->ns_watermark = le32_to_cpu(sbp->s_c_block_max);
- 
--	return !parse_options(data, sb, 0) ? -EINVAL : 0;
-+	return 0;
- }
- 
- int nilfs_check_feature_compatibility(struct super_block *sb,
-@@ -1042,10 +1032,11 @@ int nilfs_checkpoint_is_mounted(struct super_block *sb, __u64 cno)
-  * So, the recovery process is protected from other simultaneous mounts.
-  */
- static int
--nilfs_fill_super(struct super_block *sb, void *data, int silent)
-+nilfs_fill_super(struct super_block *sb, struct fs_context *fc)
- {
- 	struct the_nilfs *nilfs;
- 	struct nilfs_root *fsroot;
-+	struct nilfs_fs_context *ctx = fc->fs_private;
- 	__u64 cno;
- 	int err;
- 
-@@ -1055,10 +1046,13 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
- 
- 	sb->s_fs_info = nilfs;
- 
--	err = init_nilfs(nilfs, sb, (char *)data);
-+	err = init_nilfs(nilfs, sb);
- 	if (err)
- 		goto failed_nilfs;
- 
-+	/* Copy in parsed mount options */
-+	nilfs->ns_mount_opt = ctx->ns_mount_opt;
-+
- 	sb->s_op = &nilfs_sops;
- 	sb->s_export_op = &nilfs_export_ops;
- 	sb->s_root = NULL;
-@@ -1117,34 +1111,25 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent)
- 	return err;
- }
- 
--static int nilfs_remount(struct super_block *sb, int *flags, char *data)
-+static int nilfs_reconfigure(struct fs_context *fc)
- {
-+	struct nilfs_fs_context *ctx = fc->fs_private;
-+	struct super_block *sb = fc->root->d_sb;
- 	struct the_nilfs *nilfs = sb->s_fs_info;
--	unsigned long old_sb_flags;
--	unsigned long old_mount_opt;
- 	int err;
- 
- 	sync_filesystem(sb);
--	old_sb_flags = sb->s_flags;
--	old_mount_opt = nilfs->ns_mount_opt;
--
--	if (!parse_options(data, sb, 1)) {
--		err = -EINVAL;
--		goto restore_opts;
--	}
--	sb->s_flags = (sb->s_flags & ~SB_POSIXACL);
- 
- 	err = -EINVAL;
- 
- 	if (!nilfs_valid_fs(nilfs)) {
- 		nilfs_warn(sb,
- 			   "couldn't remount because the filesystem is in an incomplete recovery state");
--		goto restore_opts;
-+		goto ignore_opts;
- 	}
--
--	if ((bool)(*flags & SB_RDONLY) == sb_rdonly(sb))
-+	if ((bool)(fc->sb_flags & SB_RDONLY) == sb_rdonly(sb))
- 		goto out;
--	if (*flags & SB_RDONLY) {
-+	if (fc->sb_flags & SB_RDONLY) {
- 		sb->s_flags |= SB_RDONLY;
- 
- 		/*
-@@ -1172,138 +1157,66 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
- 				   "couldn't remount RDWR because of unsupported optional features (%llx)",
- 				   (unsigned long long)features);
- 			err = -EROFS;
--			goto restore_opts;
-+			goto ignore_opts;
- 		}
- 
- 		sb->s_flags &= ~SB_RDONLY;
- 
- 		root = NILFS_I(d_inode(sb->s_root))->i_root;
- 		err = nilfs_attach_log_writer(sb, root);
--		if (err)
--			goto restore_opts;
-+		if (err) {
-+			sb->s_flags |= SB_RDONLY;
-+			goto ignore_opts;
-+		}
- 
- 		down_write(&nilfs->ns_sem);
- 		nilfs_setup_super(sb, true);
- 		up_write(&nilfs->ns_sem);
- 	}
-  out:
--	return 0;
--
-- restore_opts:
--	sb->s_flags = old_sb_flags;
--	nilfs->ns_mount_opt = old_mount_opt;
--	return err;
--}
--
--struct nilfs_super_data {
--	__u64 cno;
--	int flags;
--};
--
--static int nilfs_parse_snapshot_option(const char *option,
--				       const substring_t *arg,
--				       struct nilfs_super_data *sd)
--{
--	unsigned long long val;
--	const char *msg = NULL;
--	int err;
--
--	if (!(sd->flags & SB_RDONLY)) {
--		msg = "read-only option is not specified";
--		goto parse_error;
--	}
--
--	err = kstrtoull(arg->from, 0, &val);
--	if (err) {
--		if (err == -ERANGE)
--			msg = "too large checkpoint number";
--		else
--			msg = "malformed argument";
--		goto parse_error;
--	} else if (val == 0) {
--		msg = "invalid checkpoint number 0";
--		goto parse_error;
--	}
--	sd->cno = val;
--	return 0;
--
--parse_error:
--	nilfs_err(NULL, "invalid option \"%s\": %s", option, msg);
--	return 1;
--}
--
--/**
-- * nilfs_identify - pre-read mount options needed to identify mount instance
-- * @data: mount options
-- * @sd: nilfs_super_data
-- */
--static int nilfs_identify(char *data, struct nilfs_super_data *sd)
--{
--	char *p, *options = data;
--	substring_t args[MAX_OPT_ARGS];
--	int token;
--	int ret = 0;
--
--	do {
--		p = strsep(&options, ",");
--		if (p != NULL && *p) {
--			token = match_token(p, tokens, args);
--			if (token == Opt_snapshot)
--				ret = nilfs_parse_snapshot_option(p, &args[0],
--								  sd);
--		}
--		if (!options)
--			break;
--		BUG_ON(options == data);
--		*(options - 1) = ',';
--	} while (!ret);
--	return ret;
--}
-+	sb->s_flags = (sb->s_flags & ~SB_POSIXACL);
-+	/* Copy over parsed remount options */
-+	nilfs->ns_mount_opt = ctx->ns_mount_opt;
- 
--static int nilfs_set_bdev_super(struct super_block *s, void *data)
--{
--	s->s_dev = *(dev_t *)data;
- 	return 0;
--}
- 
--static int nilfs_test_bdev_super(struct super_block *s, void *data)
--{
--	return !(s->s_iflags & SB_I_RETIRED) && s->s_dev == *(dev_t *)data;
-+ ignore_opts:
-+	return err;
- }
- 
--static struct dentry *
--nilfs_mount(struct file_system_type *fs_type, int flags,
--	     const char *dev_name, void *data)
-+static int
-+nilfs_get_tree(struct fs_context *fc)
- {
--	struct nilfs_super_data sd = { .flags = flags };
-+	struct nilfs_fs_context *ctx = fc->fs_private;
- 	struct super_block *s;
- 	dev_t dev;
- 	int err;
- 
--	if (nilfs_identify(data, &sd))
--		return ERR_PTR(-EINVAL);
-+	if (ctx->cno && !(fc->sb_flags & SB_RDONLY)) {
-+		nilfs_err(s, "invalid option \"cp=%llu\": read-only option is not specified",
-+			ctx->cno);
-+		return -EINVAL;
-+	}
- 
--	err = lookup_bdev(dev_name, &dev);
-+	err = lookup_bdev(fc->source, &dev);
- 	if (err)
--		return ERR_PTR(err);
-+		return err;
- 
--	s = sget(fs_type, nilfs_test_bdev_super, nilfs_set_bdev_super, flags,
--		 &dev);
-+	s = sget_dev(fc, dev);
- 	if (IS_ERR(s))
--		return ERR_CAST(s);
-+		return PTR_ERR(s);
- 
- 	if (!s->s_root) {
--		err = setup_bdev_super(s, flags, NULL);
-+		err = setup_bdev_super(s, fc->sb_flags, fc);
- 		if (!err)
--			err = nilfs_fill_super(s, data,
--					       flags & SB_SILENT ? 1 : 0);
-+			err = nilfs_fill_super(s, fc);
- 		if (err)
- 			goto failed_super;
- 
- 		s->s_flags |= SB_ACTIVE;
--	} else if (!sd.cno) {
-+	} else if (!ctx->cno) {
- 		if (nilfs_tree_is_busy(s->s_root)) {
--			if ((flags ^ s->s_flags) & SB_RDONLY) {
-+			if ((fc->sb_flags ^ s->s_flags) & SB_RDONLY) {
- 				nilfs_err(s,
- 					  "the device already has a %s mount.",
- 					  sb_rdonly(s) ? "read-only" : "read/write");
-@@ -1315,34 +1228,65 @@ nilfs_mount(struct file_system_type *fs_type, int flags,
- 			 * Try remount to setup mount states if the current
- 			 * tree is not mounted and only snapshots use this sb.
- 			 */
--			err = nilfs_remount(s, &flags, data);
-+			fc->root = s->s_root;
-+			err = nilfs_reconfigure(fc);
- 			if (err)
- 				goto failed_super;
- 		}
- 	}
- 
--	if (sd.cno) {
-+	if (ctx->cno) {
- 		struct dentry *root_dentry;
- 
--		err = nilfs_attach_snapshot(s, sd.cno, &root_dentry);
-+		err = nilfs_attach_snapshot(s, ctx->cno, &root_dentry);
- 		if (err)
- 			goto failed_super;
--		return root_dentry;
-+		fc->root = root_dentry;
-+		return 0;
- 	}
- 
--	return dget(s->s_root);
-+	fc->root = dget(s->s_root);
-+	return 0;
- 
-  failed_super:
- 	deactivate_locked_super(s);
--	return ERR_PTR(err);
-+	return err;
-+}
-+
-+static void nilfs_free_fc(struct fs_context *fc)
-+{
-+	kfree(fc->fs_private);
-+}
-+
-+static const struct fs_context_operations nilfs_context_ops = {
-+	.parse_param	= nilfs_parse_param,
-+	.get_tree	= nilfs_get_tree,
-+	.reconfigure	= nilfs_reconfigure,
-+	.free		= nilfs_free_fc,
-+};
-+
-+static int nilfs_init_fs_context(struct fs_context *fc)
-+{
-+	struct nilfs_fs_context *ctx;
-+
-+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-+	if (!ctx)
-+		return -ENOMEM;
-+
-+	ctx->ns_mount_opt = NILFS_MOUNT_ERRORS_RO | NILFS_MOUNT_BARRIER;
-+	fc->fs_private = ctx;
-+	fc->ops = &nilfs_context_ops;
-+
-+	return 0;
- }
- 
- struct file_system_type nilfs_fs_type = {
- 	.owner    = THIS_MODULE,
- 	.name     = "nilfs2",
--	.mount    = nilfs_mount,
- 	.kill_sb  = kill_block_super,
- 	.fs_flags = FS_REQUIRES_DEV,
-+	.init_fs_context = nilfs_init_fs_context,
-+	.parameters = nilfs_param_spec,
- };
- MODULE_ALIAS_FS("nilfs2");
- 
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 2ae2c1bbf6d1..77fce1f509d1 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -668,7 +668,7 @@ static int nilfs_load_super_block(struct the_nilfs *nilfs,
-  * Return Value: On success, 0 is returned. On error, a negative error
-  * code is returned.
-  */
--int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
-+int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb)
- {
- 	struct nilfs_super_block *sbp;
- 	int blocksize;
-@@ -686,7 +686,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
- 	if (err)
- 		goto out;
- 
--	err = nilfs_store_magic_and_option(sb, sbp, data);
-+	err = nilfs_store_magic(sb, sbp);
- 	if (err)
- 		goto failed_sbh;
- 
-diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-index cd4ae1b8ae16..85da0629415d 100644
---- a/fs/nilfs2/the_nilfs.h
-+++ b/fs/nilfs2/the_nilfs.h
-@@ -219,10 +219,6 @@ THE_NILFS_FNS(PURGING, purging)
- #define nilfs_set_opt(nilfs, opt)  \
- 	((nilfs)->ns_mount_opt |= NILFS_MOUNT_##opt)
- #define nilfs_test_opt(nilfs, opt) ((nilfs)->ns_mount_opt & NILFS_MOUNT_##opt)
--#define nilfs_write_opt(nilfs, mask, opt)				\
--	((nilfs)->ns_mount_opt =					\
--		(((nilfs)->ns_mount_opt & ~NILFS_MOUNT_##mask) |	\
--		 NILFS_MOUNT_##opt))					\
- 
- /**
-  * struct nilfs_root - nilfs root object
-@@ -276,7 +272,7 @@ static inline int nilfs_sb_will_flip(struct the_nilfs *nilfs)
- void nilfs_set_last_segment(struct the_nilfs *, sector_t, u64, __u64);
- struct the_nilfs *alloc_nilfs(struct super_block *sb);
- void destroy_nilfs(struct the_nilfs *nilfs);
--int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data);
-+int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb);
- int load_nilfs(struct the_nilfs *nilfs, struct super_block *sb);
- unsigned long nilfs_nrsvsegs(struct the_nilfs *nilfs, unsigned long nsegs);
- void nilfs_set_nsegments(struct the_nilfs *nilfs, unsigned long nsegs);
 -- 
-2.34.1
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
 
