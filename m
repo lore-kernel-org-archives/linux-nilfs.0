@@ -1,199 +1,121 @@
-Received: from mail-yb1-f178.google.com (mail-yb1-f178.google.com [209.85.219.178])
+Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com [209.85.214.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B379D71727;
-	Mon, 29 Apr 2024 18:12:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8D5813AA51;
+	Mon, 29 Apr 2024 19:06:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714414339; cv=none; b=OZNYZ96+tRg/ZVQgqwJ6ilVONHSWM2MxZbJD8sYFUJZBkaDvr5k/1IuG0zpWfWHZnkH+zE5RArxq33uTCf0x5iVb+Px4nVEnTiHZJI7UT8Xd6kI8phSNmYshKOsZYEX/uwdxV87xVnA+Q9h0DgFlzkpk90czdT4fHubO+a3P+so=
+	t=1714417617; cv=none; b=Ln/fZ9iiSNf4qFPP1IqBNbe+Nj9VKoV2st8zGa4hv0xLdEjfytIRjmO4O2Z4pTB7Au0YJGF0hCI3/d3WAbjuCCl0ISupHArdYR/VAB/JQWgEoe1KByxTaKN86O0rxKn1f7wcLcxal+39Pq6D0HWM0BiP/uPSrqpy+Ko53+ode2I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714414339; c=relaxed/simple;
-	bh=BW0i6c46YpvFeDpm64F5A3mTWwxarhkD/Lp52q/xz8E=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=h32Xozjupz+YNtRGxII0dM6LGCeXFN9jr4IFCdrkeBrwDq5fyu6HshdYcRd5pU/yjOY7cJmuQ1ujcIExv7LVy5lj2bSSN3u7VA7Ps375GaG7vB3Vo4xtvVr1OrVesj5+bCB0mCzbljt9dSVaO0cH5tC3kuYcYxb/GoRNnI4fejs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YR1o4cnH; arc=none smtp.client-ip=209.85.219.178
+	s=arc-20240116; t=1714417617; c=relaxed/simple;
+	bh=YRby+TlApMR2BfFDBOTWsaAzBHBVctrqTpy56VI6Quo=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=q4idNbygMGet3nkg0W8F0WIGCriKnHWVxWM3UfEB9PiscGLwIu1YzkdoOQ+Xvr8XVq1SedtcrpxltfU3bNgkqJo3COTIOC8SRT8GhiCIaeSf8BRx6UAMu4ab30qLnhCWGsAT7M2jayJRg87Dum08mRoeRdamLdq/e9mO73lw6FA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=m4b46PBx; arc=none smtp.client-ip=209.85.214.178
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YR1o4cnH"
-Received: by mail-yb1-f178.google.com with SMTP id 3f1490d57ef6-dcd7c526cc0so5250777276.1;
-        Mon, 29 Apr 2024 11:12:17 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="m4b46PBx"
+Received: by mail-pl1-f178.google.com with SMTP id d9443c01a7336-1e3ca546d40so41080465ad.3;
+        Mon, 29 Apr 2024 12:06:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714414337; x=1715019137; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Idt4073Hn+28gETqqRqIRV0SGXzVPtybMzDfU+l919o=;
-        b=YR1o4cnHxLCGhWF0s5tqSHfCcemCVwUrJEUxkAr6xFiOSgebMBsCaIH37WjWRJCYOc
-         4xt2N2zE+FLMuj9NvDoWEhjBCOHH5DacjxgGnn/CAE8nGg9myJFw9TE2dIWuTRJvnvVJ
-         jRpW35HWLf70kUeIv2w5AkAng5q6MrDkjp9Y75VkWt0e4qYeyNtH8GABp0Q38ze8a1bm
-         OZUdMP7utezw4IicsjFxKDZtqwJyQFGGCh2QFmBJieVmZwk5ZCJYgkXTHTK3rA9ODys6
-         luU9ETDek5xiw7iKywYil45XSU4AiMIh6KTT9+mTq6Ni5bdWaHpBKa8V8qMWOq/BDjwb
-         iKgg==
+        d=gmail.com; s=20230601; t=1714417616; x=1715022416; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=yfRM+qHBl7JEmbJr1xydN14sHfEFiHH0LtWIzSVr96Y=;
+        b=m4b46PBxZIX3ey/S43hGI5HwXVFKEzP7J+VSxWxeajq3sB8vaBotkrA8yl9sEmGc+L
+         dEdOy3e0NYDka9Vpi7dd+SWhYY2uvDzdsjnG0jD8LXMc4NYMnP7Yi7bOsHoSTQ6V2/nw
+         76yfGl4lDpsYAye9T0qepd73z3yMCazp29I+6o1Ekfs0plPgxrIX0W42dIroF7AJu4Po
+         ucU/7d531oIam8qUdT97QleLIHnFIpqdtLTLNOL6p5y8fJI5T5WZjG3j0wP8R0Go3ZX1
+         f/BwmTHq6IWzszZG2xg3GXHkbAo0Eo7jSeVO+6l+B2q+yxTcCC4nrFC/dXoBiT8Ec/00
+         bcrw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714414337; x=1715019137;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=Idt4073Hn+28gETqqRqIRV0SGXzVPtybMzDfU+l919o=;
-        b=tJ55Jyxlf294hzPMwXffDhQUSeNSKlB9hLbOMTaauwOuISfdODOzwJkFIVuIjfpzxB
-         gU8MG4uQxSVF1WPS54hlcRpRY768FsQ7IQn17gZYiIUwlvw/0Fb0+TAkxWG6/ojWw/k0
-         a78KwmE9gBuG06/EceWKa6z0XEFqdhLa2Wsz/6eV/qMEntAprIc6ZZ66FOSeSZMXOUA1
-         OsVEJLvLGniW4WTWuKqkWq+J59ETMPPjwkRQ51kUBRAp8JLwLYcJAhIpvrhcgLdbNBIv
-         4fLv6YKqoexkKypDJlSoRNsN6UjD5B09161tVH0gZEnvdN8LGwt5dV+8EWtOoYvmVWvw
-         gOww==
-X-Forwarded-Encrypted: i=1; AJvYcCVBW8s/GvLJ+FXqxyuEoUm4QfVke8E0n2UC97i7c1/RUIz7dtprLmLS/hB+fGCfEXib2ZyrwIAzOR45NmKew0S4wVsdJIzhZ8JbuEY58pUBuX5FSqdCIl8gFnlJ3tQA15ZAr7+xw4+oxUsFip6PI1jZ7Hyv54y15iZXmYOgmNjtenXwwLi6nglf
-X-Gm-Message-State: AOJu0YwGLKugIDxJQWnSeq0/BbQTAxIupten6r8vtt9IRsCS8oXDwtxK
-	9YlJxvhOGXy0qhbX6lPrr6yT6fbnv+asFnLkguaufi2TipBEMZSiIPQGlRLGimr6c1rdnMuYbCG
-	XERM/taSI06V6roYJ7Q0H0/8Fty5m9ZK3
-X-Google-Smtp-Source: AGHT+IEmebc4BnOVSnISOrIXN52NV/yW1/G+sh2i8EGQdYxz972K4e8bicqprIx6+cAXhOKoZy+m+P3tcgc1Y9VzlZA=
-X-Received: by 2002:a25:5505:0:b0:de5:53ed:bce9 with SMTP id
- j5-20020a255505000000b00de553edbce9mr10462713ybb.46.1714414336606; Mon, 29
- Apr 2024 11:12:16 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1714417616; x=1715022416;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=yfRM+qHBl7JEmbJr1xydN14sHfEFiHH0LtWIzSVr96Y=;
+        b=TPGx7wtAUDL+BpvfZk2eyofWQqBKEXpbTLT7JlJa/XVuOeWdC0xS3F5Wk6D6wOYyCI
+         dqkyyhHaeRuA9/m9jpXQJ5kHq+l4al84uXDMi92HspCPxRgPuwcdDyDv8IuGlojhZ6Iq
+         0EgLa/vr0f+nMlTaq3AXt0hpaHZQ16/VeEaFq3xqSpk646154jbrlaZpl3Fcu9NLegIx
+         ncvhHJrUJG90RB7XX0K/l0NSmlFi4Dy9h8SFFpc9ubFl/jx4edGv3SjoebBfahB1E78R
+         aTwMM+4rl8Cf2jLwqWsx7IsTrEUoSrSSe6+9MBWPFHlm61J2NAwI3f4PBFddpBKlf9Le
+         vf9g==
+X-Forwarded-Encrypted: i=1; AJvYcCUKtoxNmnoO9OWNB6U2BeOmXmHeqkAVFMrZppFg4sWvlqAf05suwJIykckOkH8tRQpNcmTkgC/KRMZyolVC8p29rzRHw/tW2zDx/LCcbfQGrmNoNGW9JZaZTC6RF8FukKc1yvB2w6HaZkNKVdP1cVJkgDagwnTZv49gm8UYW7251apOC2iN7hiA
+X-Gm-Message-State: AOJu0YwTT5gj3JHw7TZnnt15xeaydJTWzpWF2mdXGByc3jdX7VvcAitw
+	Vy1MLGKF6TlG4h6+A0iJjp+iRR5OKcgV5buFXJIsK45HTMoYhZMu
+X-Google-Smtp-Source: AGHT+IG6o6kI/bGN72Zio9V9EuR0QrMbdLin8hBig6iTqFcceqUVveJSWOkf2WaT/c9J9vt33sFWsA==
+X-Received: by 2002:a17:902:f681:b0:1e9:4f9:8478 with SMTP id l1-20020a170902f68100b001e904f98478mr524594plg.42.1714417615896;
+        Mon, 29 Apr 2024 12:06:55 -0700 (PDT)
+Received: from KASONG-MB2.tencent.com ([1.203.116.31])
+        by smtp.gmail.com with ESMTPSA id y4-20020a170902864400b001e49428f313sm20619356plt.261.2024.04.29.12.06.51
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Mon, 29 Apr 2024 12:06:55 -0700 (PDT)
+From: Kairui Song <ryncsn@gmail.com>
+To: linux-mm@kvack.org
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	"Huang, Ying" <ying.huang@intel.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Chris Li <chrisl@kernel.org>,
+	Barry Song <v-songbaohua@oppo.com>,
+	Ryan Roberts <ryan.roberts@arm.com>,
+	Neil Brown <neilb@suse.de>,
+	Minchan Kim <minchan@kernel.org>,
+	Hugh Dickins <hughd@google.com>,
+	David Hildenbrand <david@redhat.com>,
+	Yosry Ahmed <yosryahmed@google.com>,
+	linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Kairui Song <kasong@tencent.com>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org
+Subject: [PATCH v3 02/12] nilfs2: drop usage of page_index
+Date: Tue, 30 Apr 2024 03:04:50 +0800
+Message-ID: <20240429190500.30979-3-ryncsn@gmail.com>
+X-Mailer: git-send-email 2.44.0
+In-Reply-To: <20240429190500.30979-1-ryncsn@gmail.com>
+References: <20240429190500.30979-1-ryncsn@gmail.com>
+Reply-To: Kairui Song <kasong@tencent.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <000000000000ff44c506173c1642@google.com>
-In-Reply-To: <000000000000ff44c506173c1642@google.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Tue, 30 Apr 2024 03:11:58 +0900
-Message-ID: <CAKFNMomcZcWO8xBNEcxnCJBTZBqTbGcsKn469=J667bKh2srag@mail.gmail.com>
-Subject: Re: [syzbot] [nilfs?] kernel BUG in nilfs_delete_entry
-To: syzbot <syzbot+32c3706ebf5d95046ea1@syzkaller.appspotmail.com>
-Cc: akpm@linux-foundation.org, linux-fsdevel@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Mon, Apr 29, 2024 at 10:18=E2=80=AFPM syzbot wrote:
->
-> Hello,
->
-> syzbot found the following issue on:
->
-> HEAD commit:    5eb4573ea63d Merge tag 'soc-fixes-6.9-2' of git://git.ker=
-n..
-> git tree:       upstream
-> console output: https://syzkaller.appspot.com/x/log.txt?x=3D1591a5e898000=
-0
-> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D3d46aa9d7a44f=
-40d
-> dashboard link: https://syzkaller.appspot.com/bug?extid=3D32c3706ebf5d950=
-46ea1
-> compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Deb=
-ian) 2.40
-> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D1213956b180=
-000
-> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D13ac32ef18000=
-0
->
-> Downloadable assets:
-> disk image: https://storage.googleapis.com/syzbot-assets/7e4c1378cbb1/dis=
-k-5eb4573e.raw.xz
-> vmlinux: https://storage.googleapis.com/syzbot-assets/8e4487ecdd86/vmlinu=
-x-5eb4573e.xz
-> kernel image: https://storage.googleapis.com/syzbot-assets/d84518ee028f/b=
-zImage-5eb4573e.xz
-> mounted in repro #1: https://storage.googleapis.com/syzbot-assets/350446b=
-af90d/mount_0.gz
-> mounted in repro #2: https://storage.googleapis.com/syzbot-assets/e66542e=
-7352f/mount_2.gz
->
-> The issue was bisected to:
->
-> commit 602ce7b8e1343b19c0cf93a3dd1926838ac5a1cc
-> Author: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Date:   Fri Jan 27 13:22:02 2023 +0000
->
->     nilfs2: prevent WARNING in nilfs_dat_commit_end()
->
-> bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=3D15d757d898=
-0000
-> final oops:     https://syzkaller.appspot.com/x/report.txt?x=3D17d757d898=
-0000
-> console output: https://syzkaller.appspot.com/x/log.txt?x=3D13d757d898000=
-0
->
-> IMPORTANT: if you fix the issue, please add the following tag to the comm=
-it:
-> Reported-by: syzbot+32c3706ebf5d95046ea1@syzkaller.appspotmail.com
-> Fixes: 602ce7b8e134 ("nilfs2: prevent WARNING in nilfs_dat_commit_end()")
->
-> ------------[ cut here ]------------
-> kernel BUG at fs/nilfs2/dir.c:545!
-> invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
-> CPU: 1 PID: 5115 Comm: syz-executor410 Not tainted 6.9.0-rc5-syzkaller-00=
-296-g5eb4573ea63d #0
-> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS G=
-oogle 03/27/2024
-> RIP: 0010:nilfs_delete_entry+0x349/0x350 fs/nilfs2/dir.c:545
-> Code: 8d fe e9 de fd ff ff 44 89 f9 80 e1 07 fe c1 38 c1 0f 8c 20 ff ff f=
-f 4c 89 ff e8 f2 a6 8d fe e9 13 ff ff ff e8 68 56 2c fe 90 <0f> 0b 0f 1f 44=
- 00 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
-> RSP: 0018:ffffc900036078b8 EFLAGS: 00010293
-> RAX: ffffffff8369aa08 RBX: 0000000000000050 RCX: ffff888018339e00
-> RDX: 0000000000000000 RSI: 00000000fffffffb RDI: 0000000000000000
-> RBP: 00000000fffffffb R08: ffffffff8369a8de R09: 1ffff1100806d722
-> R10: dffffc0000000000 R11: ffffed100806d723 R12: ffffea00010fed80
-> R13: ffff888043fb6038 R14: 0000000000000020 R15: ffff888043fb6020
-> FS:  00007fa2992ee6c0(0000) GS:ffff8880b9500000(0000) knlGS:0000000000000=
-000
-> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> CR2: 00007ffd3dbd8b98 CR3: 0000000024b86000 CR4: 00000000003506f0
-> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-> Call Trace:
->  <TASK>
->  nilfs_rename+0x57d/0xaf0 fs/nilfs2/namei.c:413
->  vfs_rename+0xbdb/0xf00 fs/namei.c:4880
->  do_renameat2+0xd94/0x13f0 fs/namei.c:5037
->  __do_sys_renameat2 fs/namei.c:5071 [inline]
->  __se_sys_renameat2 fs/namei.c:5068 [inline]
->  __x64_sys_renameat2+0xd2/0xf0 fs/namei.c:5068
->  do_syscall_x64 arch/x86/entry/common.c:52 [inline]
->  do_syscall_64+0xf5/0x240 arch/x86/entry/common.c:83
->  entry_SYSCALL_64_after_hwframe+0x77/0x7f
-> RIP: 0033:0x7fa299358f49
-> Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 b1 18 00 00 90 48 89 f8 48 89 f=
-7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff=
- ff 73 01 c3 48 c7 c1 b0 ff ff ff f7 d8 64 89 01 48
-> RSP: 002b:00007fa2992ee218 EFLAGS: 00000246 ORIG_RAX: 000000000000013c
-> RAX: ffffffffffffffda RBX: 00007fa2993e16d8 RCX: 00007fa299358f49
-> RDX: 0000000000000006 RSI: 0000000020000100 RDI: 0000000000000005
-> RBP: 00007fa2993e16d0 R08: 0000000000000000 R09: 0000000000000000
-> R10: 0000000020000580 R11: 0000000000000246 R12: 00007fa2993ade20
-> R13: 00007fa2993adb68 R14: 0030656c69662f2e R15: 3e2efc42dc31fca1
->  </TASK>
-> Modules linked in:
-> ---[ end trace 0000000000000000 ]---
-> RIP: 0010:nilfs_delete_entry+0x349/0x350 fs/nilfs2/dir.c:545
-> Code: 8d fe e9 de fd ff ff 44 89 f9 80 e1 07 fe c1 38 c1 0f 8c 20 ff ff f=
-f 4c 89 ff e8 f2 a6 8d fe e9 13 ff ff ff e8 68 56 2c fe 90 <0f> 0b 0f 1f 44=
- 00 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
-> RSP: 0018:ffffc900036078b8 EFLAGS: 00010293
->
-> RAX: ffffffff8369aa08 RBX: 0000000000000050 RCX: ffff888018339e00
-> RDX: 0000000000000000 RSI: 00000000fffffffb RDI: 0000000000000000
-> RBP: 00000000fffffffb R08: ffffffff8369a8de R09: 1ffff1100806d722
-> R10: dffffc0000000000 R11: ffffed100806d723 R12: ffffea00010fed80
-> R13: ffff888043fb6038 R14: 0000000000000020 R15: ffff888043fb6020
-> FS:  00007fa2992ee6c0(0000) GS:ffff8880b9400000(0000) knlGS:0000000000000=
-000
-> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> CR2: 00007fa2993149f0 CR3: 0000000024b86000 CR4: 00000000003506f0
-> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+From: Kairui Song <kasong@tencent.com>
 
-According to the stack trace, syzbot was hitting a legacy part that
-uses BUG_ON() instead of returning errors in the directory code, so I
-would like to fix it to cover this.
+page_index is only for mixed usage of page cache and swap cache, for
+pure page cache usage, the caller can just use page->index instead.
 
-The bisected commit itself detects metadata corruption generated by
-syzbot and handles it as an error, so it doesn't seem to be a problem.
-  I'm guessing that the commit just affected reproducibility.
+It can't be a swap cache page here (being part of buffer head),
+so just drop it, also convert it to use folio.
 
-Ryusuke Konishi
+Signed-off-by: Kairui Song <kasong@tencent.com>
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
+---
+ fs/nilfs2/bmap.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 383f0afa2cea..f4e5df0cd720 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -453,9 +453,8 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+ 	struct buffer_head *pbh;
+ 	__u64 key;
+ 
+-	key = page_index(bh->b_page) << (PAGE_SHIFT -
+-					 bmap->b_inode->i_blkbits);
+-	for (pbh = page_buffers(bh->b_page); pbh != bh; pbh = pbh->b_this_page)
++	key = bh->b_folio->index << (PAGE_SHIFT - bmap->b_inode->i_blkbits);
++	for (pbh = folio_buffers(bh->b_folio); pbh != bh; pbh = pbh->b_this_page)
+ 		key++;
+ 
+ 	return key;
+-- 
+2.44.0
+
