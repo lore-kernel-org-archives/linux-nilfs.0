@@ -1,77 +1,105 @@
-Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f54.google.com (mail-lf1-f54.google.com [209.85.167.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EEE2012E6A;
-	Wed,  1 May 2024 14:42:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1292B13172B;
+	Wed,  1 May 2024 15:31:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714574570; cv=none; b=UEtTIi/VCG9OtiGxa5Ij33R8YFq/6aOBnJNhB7qJFKL5Yy1fk/vbwXl+5bCpnG5O0jk66V7rWMWqTAeb4gijQeQNVGnajJ13u//l4K75WL+5NdW1h6PHGCkmMb/EwYpejHBXx0Pj+x9JLshzQeP3SB9n1HSyPFRdwNzpw23oSBg=
+	t=1714577472; cv=none; b=pLRJ5xpLkRmPq15Ur5yXaz1Q8NGWm4EiuQMy51zhyHhWipEEfcAvRxBxytCrYTwsmgVWeKZ0hdhg1XE1ugKxuGFBxMvaZPrX5FnfAxUUwkhNjFmZZ2qnP/QjehBncFdLFYkjgMCpd96rotbOccA8GTZrBmN5Q7MSLpByfzDhV9k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714574570; c=relaxed/simple;
-	bh=98uGFp/bAZhq4W2SfO2HB6U8NdV4ByxSy8YBzRNg37k=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=mpqYM5V/9u7KPRh9+Fr7FPek2uTnV2Tp9LY1IL8j1KQtitC/+nAZn3K19l6NooEi7Keczd1zkmNA7awMBHeSP6Cx8juuQy8LMsIGAuSFj4DfPz/OhcE1l98pApy75GFNqP+ohsh05jwaqZ4OuTMbY8XAOcF37B0KEnT/nyRocoM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=WL1gquhr; arc=none smtp.client-ip=199.89.1.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1714577472; c=relaxed/simple;
+	bh=5EQCAGJWi1gNMQ9VlfMCPs3pDIh0UsuBaU2aKjFSw3k=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=ubd6mSpk3zZksTthSGOxPgfYiPQer6NZtg6F+Q6F62M8SIRUxjAh1fNyk15Cg+gjmlQ1oCXSb2Zkph4AhR0DO6o1fn2VhkB1KtQ7sn8UH7Jw93Ig6WmAyFwhSix3pIMS6MYOZnDW4ngvBStuiaIA8p6vAY34FuOsNJ20A5/7YVM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DJ26PfHW; arc=none smtp.client-ip=209.85.167.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="WL1gquhr"
-Received: from localhost (localhost [127.0.0.1])
-	by 008.lax.mailroute.net (Postfix) with ESMTP id 4VV0Ck12YVz6Cnk94;
-	Wed,  1 May 2024 14:42:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1714574560; x=1717166561; bh=5gQX5q/13dAIh1NaKUWEnN6b
-	Qh3K8BCraobwTeKxiF8=; b=WL1gquhrd3V7dzjyqVVT4yMbtPOOS+OUBF8YB1Ft
-	+JbqyXxsJu+fNbAdE64LL2quRTZ5szJbH1VYPdnLaqPiXyXAZfkqY/z3ea0TjPtu
-	cbH9QX5mna97fXZTsq/Ms7Zny9Gx9U7Fm7HazZGKwcdfPuUM8M7VUJGtWU2nqlL8
-	6CqH36aiQ/h60kSqlb2wmlDIWPr4kMP5HjffmqXFBk6EenguZCa9glzzXtTj+ojr
-	Ytx6J4keSZFz21vhJJ4SG+DkWgkOIfUqOT+neKj27DVaS4EdX9om+WqXPrFKCP5K
-	9qMKykZtdBQ13MUz9JscNBfAqBP25uNpui8shY6J4I2CIA==
-X-Virus-Scanned: by MailRoute
-Received: from 008.lax.mailroute.net ([127.0.0.1])
- by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id 0pmqkY6_0gab; Wed,  1 May 2024 14:42:40 +0000 (UTC)
-Received: from [192.168.50.14] (178-117-55-239.access.telenet.be [178.117.55.239])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4VV0Cf55prz6Cnk90;
-	Wed,  1 May 2024 14:42:38 +0000 (UTC)
-Message-ID: <650ed9f6-fa50-4a3b-939d-633f9e389137@acm.org>
-Date: Wed, 1 May 2024 16:42:35 +0200
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DJ26PfHW"
+Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-51ef64d04b3so277045e87.3;
+        Wed, 01 May 2024 08:31:10 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1714577469; x=1715182269; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=twOO39IK0y3RTrpJCuNRz/HORbt2EjU/IQkWuJv9K7g=;
+        b=DJ26PfHWT1fy6zIb7Rf1YS8mWMVEJTw4q3TXroIFn8sONDstDyuSU+6vBaSb7A6hsk
+         j4YvktrO4Cwr61k5V/C86JdJi95H8CZL/5fELnXYcbe1+DW/wBWB26316PPa9Th3X3Ts
+         qPC22QagKo0SM+PrH1f6JGnLMfnyBBQthy2Yb5sdSlBQvO4VMuPhMNyOcYkQOZ8m+Q+H
+         fed1EGpOBLarCgFeHb1/qC6O4b09tYwlEQapjYlPtRRXy5rJh6Mim/IaOz5Uc7LaJrXG
+         wQWu+syXyCfVl47y8rZmcbM1k0yVtebL/ZLggwSCLSDRvhGqs2f1kbNcUcjUacLfhHSA
+         Ucyg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714577469; x=1715182269;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=twOO39IK0y3RTrpJCuNRz/HORbt2EjU/IQkWuJv9K7g=;
+        b=CQL/SqhmAdpbPalZr5mln2Gmue5b2Bc0w5DTnSCO/bSJ1CV22DSVWWE1AjtGZX/ucY
+         5CfN1wZojJDTCKA12UBtIYy0hCCO7Bk/9ViKdn16+vH3t53k/Hr6BVQbISkLd/GqDDHF
+         QyzhRGSY3KgjE6lGDXfDc+ryl1yueyATNipIGBi4JB1aKdz6B9jOmWKpPHq6D/7le4+t
+         qPO4oYr9pfMgGsfhJ1G0mbl2Ctdy02IEwgHCmzooGd2buMj3/1ZhGVCDZWVqSjyKT3p1
+         hlDOsYxxZUcGFYI7GacDDGIBj5pZ31k1JClFuE1DxZbjJsyIU6Yr6yg+THC//l1DMQ31
+         bAHw==
+X-Forwarded-Encrypted: i=1; AJvYcCUgMl4nabC3PDTpgd+A4BuXOmYrcMcGT17FTcTbB0nzE6oJ/PxvClfjYHi823WuQ9d7+x6VMEJfpb8i4kmvU3FFk9bvZoM3Xs6rbc3E2MtYSWMs3RPLIWDO9XZruVjvjFQ1CFb7yrs60us=
+X-Gm-Message-State: AOJu0YwM4jJwxWLlZgPN5kC15uj3OHLwLrQEOJl5CjvTU8qQEodY9ugK
+	2RIeOl+KXMnLUXMCdKgNU0NwdYrUJ/d5STozNMjeY5pFLxf9yZ16B6/PCWCFEaiR7TBJXUCwyV0
+	Q6RuDx9gBEFGOOCtaY448UOCVYjs=
+X-Google-Smtp-Source: AGHT+IFii37kJAoGxHEuKDgZh7zDvrHm3VfWjLZHCEx4n6ylXkiOwcCkIxsj5cdcuRCM6DmkrSIEd7CW2IVMvBK7TB0=
+X-Received: by 2002:a05:6512:398a:b0:51e:3932:fbff with SMTP id
+ j10-20020a056512398a00b0051e3932fbffmr3119308lfu.43.1714577468852; Wed, 01
+ May 2024 08:31:08 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
+References: <20240430080019.4242-1-konishi.ryusuke@gmail.com>
+ <20240430080019.4242-2-konishi.ryusuke@gmail.com> <650ed9f6-fa50-4a3b-939d-633f9e389137@acm.org>
+In-Reply-To: <650ed9f6-fa50-4a3b-939d-633f9e389137@acm.org>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Thu, 2 May 2024 00:30:52 +0900
+Message-ID: <CAKFNMomCzNMU0tjLkEchr=GQwSVW1zr1GAq7vUToeOvX-M3eVg@mail.gmail.com>
 Subject: Re: [PATCH -mm 1/2] nilfs2: use integer type instead of enum req_op
  for event tracing header
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>,
- Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>
-References: <20240430080019.4242-1-konishi.ryusuke@gmail.com>
- <20240430080019.4242-2-konishi.ryusuke@gmail.com>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240430080019.4242-2-konishi.ryusuke@gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-nilfs@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 4/30/24 10:00, Ryusuke Konishi wrote:
->   	trace_nilfs2_mdt_submit_block(inode, inode->i_ino, blkoff,
-> -				      opf & REQ_OP_MASK);
-> +				      (__force int)(opf & REQ_OP_MASK));
+On Wed, May 1, 2024 at 11:42=E2=80=AFPM Bart Van Assche wrote:
+>
+> On 4/30/24 10:00, Ryusuke Konishi wrote:
+> >       trace_nilfs2_mdt_submit_block(inode, inode->i_ino, blkoff,
+> > -                                   opf & REQ_OP_MASK);
+> > +                                   (__force int)(opf & REQ_OP_MASK));
+>
+> Please keep the enum req_op type instead of casting that type away with
+> "__force int".
+>
+> Thanks,
+>
+> Bart.
 
-Please keep the enum req_op type instead of casting that type away with
-"__force int".
+Hi Bart,
 
-Thanks,
+No, this type cast is necessary to prevent the following sparse warning:
 
-Bart.
+  CC [M]  fs/nilfs2/mdt.o
+  CHECK   fs/nilfs2/mdt.c
+fs/nilfs2/mdt.c:155:43: warning: incorrect type in argument 4
+(different base types)
+fs/nilfs2/mdt.c:155:43:    expected int mode
+fs/nilfs2/mdt.c:155:43:    got restricted blk_opf_t
+
+What we're doing here is just changing the event tracing type back to
+int, and keeping blk_opf_t and enum req_op in the rest of the code.
+
+I understand if you have enough reason to ignore the warnings, but
+Why do you have to keep enum req_op type instead of int for event tracing?
+
+Regards,
+Ryusuke Konishi
