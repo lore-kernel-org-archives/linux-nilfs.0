@@ -1,130 +1,133 @@
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com [209.85.210.169])
+Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com [209.85.208.169])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C86C53814;
-	Thu,  2 May 2024 08:47:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 681605FEF2;
+	Thu,  2 May 2024 11:09:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714639642; cv=none; b=oubLweWrMQ+HQtyRMYgFVbnqt8fkEuul3TDMQcmhbBSDoXeEKEHBHpUSSJbtZTFHZyKL7pL4qhHBkVfQ2YOAyw+N18tHQwDUqvFwSAXYozq3cnJBh0Y+J2vb9gSVOhs/nHXXaQ7vgl7kDtyTrukD7jKwt9NezBjdmX7cHGw/1TM=
+	t=1714648153; cv=none; b=LmHEfCYy9olkLoTlreJ+rDuv6mfsCulOjjWEpRUaiwRpyDfy9MMVZP/Fgi3Tf+ZnehHZRWCM+0X8F1Oj52BEekqpCX1892qfFk/PSs3pljGGco5VbKeRQseUdw4f1sbE2hRtz+UVIvvr+1I+Ngak0YdhOQAhnAbpMZZj4MyDldM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714639642; c=relaxed/simple;
-	bh=out7TTbYJtYzFrjWSVWEYtQyDDZ86WVDSmk+A+q/jqc=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Plg7H4liYSfEE/ZynhJm/gCpbBigGBLWt+wzZiXGDkPfY7ZsUITcNslXnZCg5uhjWfnlZ0+5WT0gJ85LWe5IdtWNWgLgoo/sOuEuP2MQkKBzK8BdjtPe9D04Qk1lXqclVSltzztgXoTfOnBT7OBPge3J+LnLwz1U7C6y/4gtCVo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Xzfq58w1; arc=none smtp.client-ip=209.85.210.169
+	s=arc-20240116; t=1714648153; c=relaxed/simple;
+	bh=+IRrrwOe4QgFdY3yImZdYa8atZq/92Cz6xNWsXzEkvI=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=o3QwT9WERssXWxelQSCre3Wby417kFYabjAcCXR1w6Mg48KKNnr21+6MofT2Ch8jvNeBR7kynsTvmToVgtfc+TTx44GknN32R9/87ZAMPpgoJWx0mazzlFUFwC5RVUoBg7iObEZIt18BDoWDTwnxZ32rizJ+/HhFVnz0FBSLUEQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ggPUlGS5; arc=none smtp.client-ip=209.85.208.169
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Xzfq58w1"
-Received: by mail-pf1-f169.google.com with SMTP id d2e1a72fcca58-6eff9dc1821so7070384b3a.3;
-        Thu, 02 May 2024 01:47:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ggPUlGS5"
+Received: by mail-lj1-f169.google.com with SMTP id 38308e7fff4ca-2e1d6166521so4879911fa.1;
+        Thu, 02 May 2024 04:09:11 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714639641; x=1715244441; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:reply-to:references
-         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=dKeW621Yklmzy6NXiq7Wct3/1VaKARCv12uVKwULRiw=;
-        b=Xzfq58w1uIEfCN/UuIzsy1Mnn/LZOhAP8+Tw0cATRiPH/RqkXNnz+UUglmzJpUgtvI
-         Jm2INLgOFtENgLeSAp1aJsMfl2hvrqArAddFXnBZq8RbOyOGVQkiHadpLzLh10ZZjM6t
-         fryh8buznJtSqfh7meV6OAl6GyapL40oajwC8i7TU4pTh0uOx++pMvyPlNcF3r4MSApj
-         TSJz8oXA909V5vOtaH3Ualm5JCek7SHyr7wRja/6+oMGwbSlcxfD8RDUNBWU14UFhODX
-         uBZeQWt064P0rR10c9ATSIvR4nu0HMPEo0MQZLhsJ799HfFaYP3B5b/h3kbO9q3zQmBB
-         7wKg==
+        d=gmail.com; s=20230601; t=1714648149; x=1715252949; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=fhA8VLambKpb9wjap82p3kDvxUZ8xK7ATrERgvWkdSA=;
+        b=ggPUlGS5z05O3QoSuiVve3uYom6UXE347AiX8VQeMyUgySzci4qPNWoIAcidqwwDfN
+         mhIK2tymRXwSR99tsoSSXEoTe3dikZLue9Mhuz2glLNC8nIg/crkiuY4agw4mtXeMjNq
+         z7PBUf4dfGnjz+SlbtKQiuZfRBMIOw2ZyQqEU4tYUu/ARMyB/iwWodH7ewffAUDrZdJm
+         fq3GJe8AdDqEWkVWtMuYUul0fHW6nklEwSOgezXsmqLiWAgqfPdkXLWSyKYf11WQNest
+         YvMwWhmpxKGO9Da49nW+fJAc0pttP+IiIIYPXRyq/1a0bgpsjqw9n2AJi79Ta3WaMosF
+         xGOQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714639641; x=1715244441;
-        h=content-transfer-encoding:mime-version:reply-to:references
-         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=dKeW621Yklmzy6NXiq7Wct3/1VaKARCv12uVKwULRiw=;
-        b=C7t6Tgo1ltiF0u7H/KE/Li6UQ/iQkPXDwHODA5878VDVs32pczY3rFBHfrBFrbnZ1T
-         fwiP7nnX4iU6WJJJBOclmORlRAYXuk/LVML2oy4Pf/jQlirTjShyzoErJmauGoQfH7Gp
-         cwJPSt7hWLE0Qz4oAQ84cPUX3o5db/rfp6o84O9Mu+RhyXdPj9uBPe+RJQOEdNlORCqH
-         y2o0DlISN9oVuaLZO7wcmw0cCnWZrZ0TWp+b1ULc/Gh2yF/Uet+Gnzfn2eWJzPKdcttq
-         TqSZyHX9ok1oCwZTgOeskInIDKJN3LnMKyjV7XwnlRSze4pciXNJIM2ORFnz8THFQXjO
-         1l1g==
-X-Forwarded-Encrypted: i=1; AJvYcCUmVw485CHmnrOiuDKXm61VIbiaKapnq+YhdRMNHYWN35LiZPjr/R6ln3bc495nsgKHkfYxkusIjFfvpmkFFuZO2l8TXRdiQ1wTnrGQsN6wvFTwvoItrAbog3DDqiPArZa3RlUiaoPKl7cWe38KguQfE0ksNPjHVxwktMp1/9Yq1v8x2NnV3YSK
-X-Gm-Message-State: AOJu0YydtxW//GmefM8Kix4vZ9m6oyPWN2Ga8JSh7wQK4qG/PpIOF6kk
-	P5on7xNFDi823+3nhnQa61ixVDnuTYnCsaADK0oLAfBq6RErl8gs
-X-Google-Smtp-Source: AGHT+IFw7DPiHNZRifdJPZ097xuBBnwfxycsF06NxKzZyaEaRqiuEdjNax8xBn+KkdLO8zdGBCA7rg==
-X-Received: by 2002:a05:6a21:338f:b0:1af:66aa:f968 with SMTP id yy15-20020a056a21338f00b001af66aaf968mr6570426pzb.20.1714639640628;
-        Thu, 02 May 2024 01:47:20 -0700 (PDT)
-Received: from KASONG-MB2.tencent.com ([1.203.116.31])
-        by smtp.gmail.com with ESMTPSA id q6-20020a17090a938600b002b273cbbdf1sm686805pjo.49.2024.05.02.01.47.16
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Thu, 02 May 2024 01:47:20 -0700 (PDT)
-From: Kairui Song <ryncsn@gmail.com>
-To: linux-mm@kvack.org
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	"Huang, Ying" <ying.huang@intel.com>,
-	Matthew Wilcox <willy@infradead.org>,
-	Chris Li <chrisl@kernel.org>,
-	Barry Song <v-songbaohua@oppo.com>,
-	Ryan Roberts <ryan.roberts@arm.com>,
-	Neil Brown <neilb@suse.de>,
-	Minchan Kim <minchan@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
-	David Hildenbrand <david@redhat.com>,
-	Yosry Ahmed <yosryahmed@google.com>,
-	linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Kairui Song <kasong@tencent.com>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	linux-nilfs@vger.kernel.org
-Subject: [PATCH v4 02/12] nilfs2: drop usage of page_index
-Date: Thu,  2 May 2024 16:45:59 +0800
-Message-ID: <20240502084609.28376-3-ryncsn@gmail.com>
-X-Mailer: git-send-email 2.44.0
-In-Reply-To: <20240502084609.28376-1-ryncsn@gmail.com>
-References: <20240502084609.28376-1-ryncsn@gmail.com>
-Reply-To: Kairui Song <kasong@tencent.com>
+        d=1e100.net; s=20230601; t=1714648149; x=1715252949;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=fhA8VLambKpb9wjap82p3kDvxUZ8xK7ATrERgvWkdSA=;
+        b=dYgmHo2aa24Q0ZEAxpgbpToburxR8vzh+J+ZqWsq9CRj8FZ7V17fxl0PyyhpbqClvJ
+         b+ZaaOFzKbBem7vhztNWrL4eHFTcRyLgNhB0ySCAXAXc2h7zTpqLEHQUbGwkJvgpKBrr
+         RpKGeB+StcCsuF+lybUVvcNhzpeiQVthpgmTDZhTVpBzVrUX3jRFVIMTlucOOoHKg7CX
+         TXzJs0HaBN0SavPNZ8GqbwOUOUqsc6MC4ighmJb1F+YdidlM17dA/BVqcOXIEdTzWsA6
+         gOshUJHy3z3vYwToV2ebdlEbf69ejHvYUvRu1UluAk+ecD/RGAmvafR1HmnJ2LozWBn1
+         XztQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUGZWi39E9wzNJ+C9ghnw+jnRnXiasmM1Tyr8GPWN8Diz5EULn4PdxpTD7Y6AtPhNBZRdjHW6v10w+rN9V2qMouF4jUmcJuFsd6zF0aeYOcC16rUR6N5lJNaqIv7Tao8B5AuTEUWrBmJQe68T6ZDA5YhOpTluSKh0FEdRjk7MMLLgoZCDeQ+3OP
+X-Gm-Message-State: AOJu0YyzkRd0GGc1D5NEKLuzOBpeqHo+UIRdxnHjKGO0hksCulsx1UX0
+	QVOU/OSVwKgK8ypYpES19EHW3ESApp9sUMcunYKtfBBhCGFa4H75sw+1kjJUnHlqH+0byc0VmoR
+	f2xiNMq+5RdxUp2h777UbmUxmIMk=
+X-Google-Smtp-Source: AGHT+IEMqK/WlDTzQp+B69oJEqZmK62x8gnRdcu9h34/zfAEjG64PWrWjN5DkS+XDB04HBNlIAxP40Qo4poXOKyiDtA=
+X-Received: by 2002:a2e:9cd3:0:b0:2e0:298d:6605 with SMTP id
+ g19-20020a2e9cd3000000b002e0298d6605mr606951ljj.4.1714648149273; Thu, 02 May
+ 2024 04:09:09 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240502084609.28376-1-ryncsn@gmail.com> <20240502084609.28376-3-ryncsn@gmail.com>
+In-Reply-To: <20240502084609.28376-3-ryncsn@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Thu, 2 May 2024 20:08:52 +0900
+Message-ID: <CAKFNMom8pX4J3EzgOzpJuU1Q9r6eHLNY4Dn3TOnya4K_2XWK_w@mail.gmail.com>
+Subject: Re: [PATCH v4 02/12] nilfs2: drop usage of page_index
+To: Kairui Song <kasong@tencent.com>
+Cc: Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, 
+	Andrew Morton <akpm@linux-foundation.org>, "Huang, Ying" <ying.huang@intel.com>, 
+	Chris Li <chrisl@kernel.org>, Barry Song <v-songbaohua@oppo.com>, 
+	Ryan Roberts <ryan.roberts@arm.com>, Neil Brown <neilb@suse.de>, Minchan Kim <minchan@kernel.org>, 
+	Hugh Dickins <hughd@google.com>, David Hildenbrand <david@redhat.com>, Yosry Ahmed <yosryahmed@google.com>, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-From: Kairui Song <kasong@tencent.com>
+On Thu, May 2, 2024 at 5:47=E2=80=AFPM Kairui Song wrote:
+>
+> From: Kairui Song <kasong@tencent.com>
+>
+> page_index is only for mixed usage of page cache and swap cache, for
+> pure page cache usage, the caller can just use page->index instead.
+>
+> It can't be a swap cache page here (being part of buffer head),
+> so just drop it. And while we are at it, optimize the code by retrieving
+> the offset of the buffer head within the folio directly using bh_offset,
+> and get rid of the loop and usage of page helpers.
+>
+> Suggested-by: Matthew Wilcox <willy@infradead.org>
+> Signed-off-by: Kairui Song <kasong@tencent.com>
+> Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+> Cc: linux-nilfs@vger.kernel.org
+> ---
+>  fs/nilfs2/bmap.c | 10 ++--------
+>  1 file changed, 2 insertions(+), 8 deletions(-)
+>
+> diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+> index 383f0afa2cea..cd14ea25968c 100644
+> --- a/fs/nilfs2/bmap.c
+> +++ b/fs/nilfs2/bmap.c
+> @@ -450,15 +450,9 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bma=
+p *bmap)
+>  __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+>                               const struct buffer_head *bh)
+>  {
+> -       struct buffer_head *pbh;
+> -       __u64 key;
+> +       loff_t pos =3D folio_pos(bh->b_folio) + bh_offset(bh);
+>
+> -       key =3D page_index(bh->b_page) << (PAGE_SHIFT -
+> -                                        bmap->b_inode->i_blkbits);
+> -       for (pbh =3D page_buffers(bh->b_page); pbh !=3D bh; pbh =3D pbh->=
+b_this_page)
+> -               key++;
+> -
+> -       return key;
+> +       return pos >> bmap->b_inode->i_blkbits;
+>  }
+>
+>  __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 ke=
+y)
+> --
+> 2.44.0
 
-page_index is only for mixed usage of page cache and swap cache, for
-pure page cache usage, the caller can just use page->index instead.
+Looks good.  Feel free to add:
 
-It can't be a swap cache page here (being part of buffer head),
-so just drop it. And while we are at it, optimize the code by retrieving
-the offset of the buffer head within the folio directly using bh_offset,
-and get rid of the loop and usage of page helpers.
+Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 
-Suggested-by: Matthew Wilcox <willy@infradead.org>
-Signed-off-by: Kairui Song <kasong@tencent.com>
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: linux-nilfs@vger.kernel.org
----
- fs/nilfs2/bmap.c | 10 ++--------
- 1 file changed, 2 insertions(+), 8 deletions(-)
+Just to be sure, I also tested this change in different environments,
+including 4k (page size) and smaller block sizes.  And of course it's
+working as expected and so far hasn't broken anything.
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 383f0afa2cea..cd14ea25968c 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -450,15 +450,9 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
- __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
- 			      const struct buffer_head *bh)
- {
--	struct buffer_head *pbh;
--	__u64 key;
-+	loff_t pos = folio_pos(bh->b_folio) + bh_offset(bh);
- 
--	key = page_index(bh->b_page) << (PAGE_SHIFT -
--					 bmap->b_inode->i_blkbits);
--	for (pbh = page_buffers(bh->b_page); pbh != bh; pbh = pbh->b_this_page)
--		key++;
--
--	return key;
-+	return pos >> bmap->b_inode->i_blkbits;
- }
- 
- __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 key)
--- 
-2.44.0
-
+Thanks,
+Ryusuke Konishi
