@@ -1,105 +1,130 @@
-Received: from mail-lf1-f54.google.com (mail-lf1-f54.google.com [209.85.167.54])
+Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com [209.85.210.169])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1292B13172B;
-	Wed,  1 May 2024 15:31:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C86C53814;
+	Thu,  2 May 2024 08:47:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714577472; cv=none; b=pLRJ5xpLkRmPq15Ur5yXaz1Q8NGWm4EiuQMy51zhyHhWipEEfcAvRxBxytCrYTwsmgVWeKZ0hdhg1XE1ugKxuGFBxMvaZPrX5FnfAxUUwkhNjFmZZ2qnP/QjehBncFdLFYkjgMCpd96rotbOccA8GTZrBmN5Q7MSLpByfzDhV9k=
+	t=1714639642; cv=none; b=oubLweWrMQ+HQtyRMYgFVbnqt8fkEuul3TDMQcmhbBSDoXeEKEHBHpUSSJbtZTFHZyKL7pL4qhHBkVfQ2YOAyw+N18tHQwDUqvFwSAXYozq3cnJBh0Y+J2vb9gSVOhs/nHXXaQ7vgl7kDtyTrukD7jKwt9NezBjdmX7cHGw/1TM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714577472; c=relaxed/simple;
-	bh=5EQCAGJWi1gNMQ9VlfMCPs3pDIh0UsuBaU2aKjFSw3k=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ubd6mSpk3zZksTthSGOxPgfYiPQer6NZtg6F+Q6F62M8SIRUxjAh1fNyk15Cg+gjmlQ1oCXSb2Zkph4AhR0DO6o1fn2VhkB1KtQ7sn8UH7Jw93Ig6WmAyFwhSix3pIMS6MYOZnDW4ngvBStuiaIA8p6vAY34FuOsNJ20A5/7YVM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DJ26PfHW; arc=none smtp.client-ip=209.85.167.54
+	s=arc-20240116; t=1714639642; c=relaxed/simple;
+	bh=out7TTbYJtYzFrjWSVWEYtQyDDZ86WVDSmk+A+q/jqc=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Plg7H4liYSfEE/ZynhJm/gCpbBigGBLWt+wzZiXGDkPfY7ZsUITcNslXnZCg5uhjWfnlZ0+5WT0gJ85LWe5IdtWNWgLgoo/sOuEuP2MQkKBzK8BdjtPe9D04Qk1lXqclVSltzztgXoTfOnBT7OBPge3J+LnLwz1U7C6y/4gtCVo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Xzfq58w1; arc=none smtp.client-ip=209.85.210.169
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DJ26PfHW"
-Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-51ef64d04b3so277045e87.3;
-        Wed, 01 May 2024 08:31:10 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Xzfq58w1"
+Received: by mail-pf1-f169.google.com with SMTP id d2e1a72fcca58-6eff9dc1821so7070384b3a.3;
+        Thu, 02 May 2024 01:47:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714577469; x=1715182269; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=twOO39IK0y3RTrpJCuNRz/HORbt2EjU/IQkWuJv9K7g=;
-        b=DJ26PfHWT1fy6zIb7Rf1YS8mWMVEJTw4q3TXroIFn8sONDstDyuSU+6vBaSb7A6hsk
-         j4YvktrO4Cwr61k5V/C86JdJi95H8CZL/5fELnXYcbe1+DW/wBWB26316PPa9Th3X3Ts
-         qPC22QagKo0SM+PrH1f6JGnLMfnyBBQthy2Yb5sdSlBQvO4VMuPhMNyOcYkQOZ8m+Q+H
-         fed1EGpOBLarCgFeHb1/qC6O4b09tYwlEQapjYlPtRRXy5rJh6Mim/IaOz5Uc7LaJrXG
-         wQWu+syXyCfVl47y8rZmcbM1k0yVtebL/ZLggwSCLSDRvhGqs2f1kbNcUcjUacLfhHSA
-         Ucyg==
+        d=gmail.com; s=20230601; t=1714639641; x=1715244441; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=dKeW621Yklmzy6NXiq7Wct3/1VaKARCv12uVKwULRiw=;
+        b=Xzfq58w1uIEfCN/UuIzsy1Mnn/LZOhAP8+Tw0cATRiPH/RqkXNnz+UUglmzJpUgtvI
+         Jm2INLgOFtENgLeSAp1aJsMfl2hvrqArAddFXnBZq8RbOyOGVQkiHadpLzLh10ZZjM6t
+         fryh8buznJtSqfh7meV6OAl6GyapL40oajwC8i7TU4pTh0uOx++pMvyPlNcF3r4MSApj
+         TSJz8oXA909V5vOtaH3Ualm5JCek7SHyr7wRja/6+oMGwbSlcxfD8RDUNBWU14UFhODX
+         uBZeQWt064P0rR10c9ATSIvR4nu0HMPEo0MQZLhsJ799HfFaYP3B5b/h3kbO9q3zQmBB
+         7wKg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714577469; x=1715182269;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=twOO39IK0y3RTrpJCuNRz/HORbt2EjU/IQkWuJv9K7g=;
-        b=CQL/SqhmAdpbPalZr5mln2Gmue5b2Bc0w5DTnSCO/bSJ1CV22DSVWWE1AjtGZX/ucY
-         5CfN1wZojJDTCKA12UBtIYy0hCCO7Bk/9ViKdn16+vH3t53k/Hr6BVQbISkLd/GqDDHF
-         QyzhRGSY3KgjE6lGDXfDc+ryl1yueyATNipIGBi4JB1aKdz6B9jOmWKpPHq6D/7le4+t
-         qPO4oYr9pfMgGsfhJ1G0mbl2Ctdy02IEwgHCmzooGd2buMj3/1ZhGVCDZWVqSjyKT3p1
-         hlDOsYxxZUcGFYI7GacDDGIBj5pZ31k1JClFuE1DxZbjJsyIU6Yr6yg+THC//l1DMQ31
-         bAHw==
-X-Forwarded-Encrypted: i=1; AJvYcCUgMl4nabC3PDTpgd+A4BuXOmYrcMcGT17FTcTbB0nzE6oJ/PxvClfjYHi823WuQ9d7+x6VMEJfpb8i4kmvU3FFk9bvZoM3Xs6rbc3E2MtYSWMs3RPLIWDO9XZruVjvjFQ1CFb7yrs60us=
-X-Gm-Message-State: AOJu0YwM4jJwxWLlZgPN5kC15uj3OHLwLrQEOJl5CjvTU8qQEodY9ugK
-	2RIeOl+KXMnLUXMCdKgNU0NwdYrUJ/d5STozNMjeY5pFLxf9yZ16B6/PCWCFEaiR7TBJXUCwyV0
-	Q6RuDx9gBEFGOOCtaY448UOCVYjs=
-X-Google-Smtp-Source: AGHT+IFii37kJAoGxHEuKDgZh7zDvrHm3VfWjLZHCEx4n6ylXkiOwcCkIxsj5cdcuRCM6DmkrSIEd7CW2IVMvBK7TB0=
-X-Received: by 2002:a05:6512:398a:b0:51e:3932:fbff with SMTP id
- j10-20020a056512398a00b0051e3932fbffmr3119308lfu.43.1714577468852; Wed, 01
- May 2024 08:31:08 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1714639641; x=1715244441;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=dKeW621Yklmzy6NXiq7Wct3/1VaKARCv12uVKwULRiw=;
+        b=C7t6Tgo1ltiF0u7H/KE/Li6UQ/iQkPXDwHODA5878VDVs32pczY3rFBHfrBFrbnZ1T
+         fwiP7nnX4iU6WJJJBOclmORlRAYXuk/LVML2oy4Pf/jQlirTjShyzoErJmauGoQfH7Gp
+         cwJPSt7hWLE0Qz4oAQ84cPUX3o5db/rfp6o84O9Mu+RhyXdPj9uBPe+RJQOEdNlORCqH
+         y2o0DlISN9oVuaLZO7wcmw0cCnWZrZ0TWp+b1ULc/Gh2yF/Uet+Gnzfn2eWJzPKdcttq
+         TqSZyHX9ok1oCwZTgOeskInIDKJN3LnMKyjV7XwnlRSze4pciXNJIM2ORFnz8THFQXjO
+         1l1g==
+X-Forwarded-Encrypted: i=1; AJvYcCUmVw485CHmnrOiuDKXm61VIbiaKapnq+YhdRMNHYWN35LiZPjr/R6ln3bc495nsgKHkfYxkusIjFfvpmkFFuZO2l8TXRdiQ1wTnrGQsN6wvFTwvoItrAbog3DDqiPArZa3RlUiaoPKl7cWe38KguQfE0ksNPjHVxwktMp1/9Yq1v8x2NnV3YSK
+X-Gm-Message-State: AOJu0YydtxW//GmefM8Kix4vZ9m6oyPWN2Ga8JSh7wQK4qG/PpIOF6kk
+	P5on7xNFDi823+3nhnQa61ixVDnuTYnCsaADK0oLAfBq6RErl8gs
+X-Google-Smtp-Source: AGHT+IFw7DPiHNZRifdJPZ097xuBBnwfxycsF06NxKzZyaEaRqiuEdjNax8xBn+KkdLO8zdGBCA7rg==
+X-Received: by 2002:a05:6a21:338f:b0:1af:66aa:f968 with SMTP id yy15-20020a056a21338f00b001af66aaf968mr6570426pzb.20.1714639640628;
+        Thu, 02 May 2024 01:47:20 -0700 (PDT)
+Received: from KASONG-MB2.tencent.com ([1.203.116.31])
+        by smtp.gmail.com with ESMTPSA id q6-20020a17090a938600b002b273cbbdf1sm686805pjo.49.2024.05.02.01.47.16
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Thu, 02 May 2024 01:47:20 -0700 (PDT)
+From: Kairui Song <ryncsn@gmail.com>
+To: linux-mm@kvack.org
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	"Huang, Ying" <ying.huang@intel.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Chris Li <chrisl@kernel.org>,
+	Barry Song <v-songbaohua@oppo.com>,
+	Ryan Roberts <ryan.roberts@arm.com>,
+	Neil Brown <neilb@suse.de>,
+	Minchan Kim <minchan@kernel.org>,
+	Hugh Dickins <hughd@google.com>,
+	David Hildenbrand <david@redhat.com>,
+	Yosry Ahmed <yosryahmed@google.com>,
+	linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Kairui Song <kasong@tencent.com>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org
+Subject: [PATCH v4 02/12] nilfs2: drop usage of page_index
+Date: Thu,  2 May 2024 16:45:59 +0800
+Message-ID: <20240502084609.28376-3-ryncsn@gmail.com>
+X-Mailer: git-send-email 2.44.0
+In-Reply-To: <20240502084609.28376-1-ryncsn@gmail.com>
+References: <20240502084609.28376-1-ryncsn@gmail.com>
+Reply-To: Kairui Song <kasong@tencent.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240430080019.4242-1-konishi.ryusuke@gmail.com>
- <20240430080019.4242-2-konishi.ryusuke@gmail.com> <650ed9f6-fa50-4a3b-939d-633f9e389137@acm.org>
-In-Reply-To: <650ed9f6-fa50-4a3b-939d-633f9e389137@acm.org>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 2 May 2024 00:30:52 +0900
-Message-ID: <CAKFNMomCzNMU0tjLkEchr=GQwSVW1zr1GAq7vUToeOvX-M3eVg@mail.gmail.com>
-Subject: Re: [PATCH -mm 1/2] nilfs2: use integer type instead of enum req_op
- for event tracing header
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Wed, May 1, 2024 at 11:42=E2=80=AFPM Bart Van Assche wrote:
->
-> On 4/30/24 10:00, Ryusuke Konishi wrote:
-> >       trace_nilfs2_mdt_submit_block(inode, inode->i_ino, blkoff,
-> > -                                   opf & REQ_OP_MASK);
-> > +                                   (__force int)(opf & REQ_OP_MASK));
->
-> Please keep the enum req_op type instead of casting that type away with
-> "__force int".
->
-> Thanks,
->
-> Bart.
+From: Kairui Song <kasong@tencent.com>
 
-Hi Bart,
+page_index is only for mixed usage of page cache and swap cache, for
+pure page cache usage, the caller can just use page->index instead.
 
-No, this type cast is necessary to prevent the following sparse warning:
+It can't be a swap cache page here (being part of buffer head),
+so just drop it. And while we are at it, optimize the code by retrieving
+the offset of the buffer head within the folio directly using bh_offset,
+and get rid of the loop and usage of page helpers.
 
-  CC [M]  fs/nilfs2/mdt.o
-  CHECK   fs/nilfs2/mdt.c
-fs/nilfs2/mdt.c:155:43: warning: incorrect type in argument 4
-(different base types)
-fs/nilfs2/mdt.c:155:43:    expected int mode
-fs/nilfs2/mdt.c:155:43:    got restricted blk_opf_t
+Suggested-by: Matthew Wilcox <willy@infradead.org>
+Signed-off-by: Kairui Song <kasong@tencent.com>
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
+---
+ fs/nilfs2/bmap.c | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
 
-What we're doing here is just changing the event tracing type back to
-int, and keeping blk_opf_t and enum req_op in the rest of the code.
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 383f0afa2cea..cd14ea25968c 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -450,15 +450,9 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
+ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+ 			      const struct buffer_head *bh)
+ {
+-	struct buffer_head *pbh;
+-	__u64 key;
++	loff_t pos = folio_pos(bh->b_folio) + bh_offset(bh);
+ 
+-	key = page_index(bh->b_page) << (PAGE_SHIFT -
+-					 bmap->b_inode->i_blkbits);
+-	for (pbh = page_buffers(bh->b_page); pbh != bh; pbh = pbh->b_this_page)
+-		key++;
+-
+-	return key;
++	return pos >> bmap->b_inode->i_blkbits;
+ }
+ 
+ __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 key)
+-- 
+2.44.0
 
-I understand if you have enough reason to ignore the warnings, but
-Why do you have to keep enum req_op type instead of int for event tracing?
-
-Regards,
-Ryusuke Konishi
