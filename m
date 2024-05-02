@@ -1,133 +1,123 @@
-Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com [209.85.208.169])
+Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 681605FEF2;
-	Thu,  2 May 2024 11:09:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D4625F874;
+	Thu,  2 May 2024 19:01:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714648153; cv=none; b=LmHEfCYy9olkLoTlreJ+rDuv6mfsCulOjjWEpRUaiwRpyDfy9MMVZP/Fgi3Tf+ZnehHZRWCM+0X8F1Oj52BEekqpCX1892qfFk/PSs3pljGGco5VbKeRQseUdw4f1sbE2hRtz+UVIvvr+1I+Ngak0YdhOQAhnAbpMZZj4MyDldM=
+	t=1714676497; cv=none; b=X1Ao8sJ0rHNu+1BVLZH7x5iOHR8MKYJGhxnvqy3cQh5v2jYlzRuxGQdlwbCczfwQCsxjPXiED06WkadZQOcYSShc4YVJObwLRJxb85H7MPmN28hDBeTQkfgfUp0qeTOTR3X1mbR8uTv7HoPWc+txeo4PiiJ3ELU1wwS9LdP6nLQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714648153; c=relaxed/simple;
-	bh=+IRrrwOe4QgFdY3yImZdYa8atZq/92Cz6xNWsXzEkvI=;
+	s=arc-20240116; t=1714676497; c=relaxed/simple;
+	bh=mu8rfKXOAdKbFd++Ire3kxBFhX7hIRUh9vpX9hFf9wU=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=o3QwT9WERssXWxelQSCre3Wby417kFYabjAcCXR1w6Mg48KKNnr21+6MofT2Ch8jvNeBR7kynsTvmToVgtfc+TTx44GknN32R9/87ZAMPpgoJWx0mazzlFUFwC5RVUoBg7iObEZIt18BDoWDTwnxZ32rizJ+/HhFVnz0FBSLUEQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ggPUlGS5; arc=none smtp.client-ip=209.85.208.169
+	 To:Cc:Content-Type; b=UFseJhbc1k6GQUqkbf7YP/TSnNiwctsXZTWNwyccIfzdS5qGLcOco4fvW06su+gmfb7/2moBsOE6GUAeqFwfQThWglygOkCvH5mmuqP+d1zyiJ5TeLM7it1S1fuFencqEZVqiX1ptQLNjMvSkPmqQzoEWVz/c0q5n2xHPBoy+SA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=G1Q7Ifr4; arc=none smtp.client-ip=209.85.167.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ggPUlGS5"
-Received: by mail-lj1-f169.google.com with SMTP id 38308e7fff4ca-2e1d6166521so4879911fa.1;
-        Thu, 02 May 2024 04:09:11 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="G1Q7Ifr4"
+Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-51f1bf83f06so1316089e87.1;
+        Thu, 02 May 2024 12:01:35 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714648149; x=1715252949; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1714676494; x=1715281294; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=fhA8VLambKpb9wjap82p3kDvxUZ8xK7ATrERgvWkdSA=;
-        b=ggPUlGS5z05O3QoSuiVve3uYom6UXE347AiX8VQeMyUgySzci4qPNWoIAcidqwwDfN
-         mhIK2tymRXwSR99tsoSSXEoTe3dikZLue9Mhuz2glLNC8nIg/crkiuY4agw4mtXeMjNq
-         z7PBUf4dfGnjz+SlbtKQiuZfRBMIOw2ZyQqEU4tYUu/ARMyB/iwWodH7ewffAUDrZdJm
-         fq3GJe8AdDqEWkVWtMuYUul0fHW6nklEwSOgezXsmqLiWAgqfPdkXLWSyKYf11WQNest
-         YvMwWhmpxKGO9Da49nW+fJAc0pttP+IiIIYPXRyq/1a0bgpsjqw9n2AJi79Ta3WaMosF
-         xGOQ==
+        bh=nh35CEGjyQd/KulzELdyVZbVY0fU4Acs6q0cwM1JL4g=;
+        b=G1Q7Ifr4bQw98VGvFijQU/llKeSTHwbc7S44+ItGOZ5h2Nw6i34ziFggzplplcUaDq
+         BE70owmo3/C1JR/XlUQ+96auNhlCjSrq81WvZrh8+Eun1DnfLohWhiPK6IB4Ni7jpVND
+         FKQm1C9lf1A8XdM1zEVAkHU2izqLqritb4ItioOC+ETojYj8lB0t3ifbUaG+Uo5M3drD
+         Dyg9d75Y/jU9O8T7YAaK9U5joL/GL5iV9LPcWDJkTvWKysPQPMyPVZaq2xM63YlxfgI1
+         yWKEjF8vbnQL8FoPRK6fU/uND6rjHE0aTeaRlG5eAQnJwCp/Fg6PEFhWHHnsJygVhtlp
+         0usA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714648149; x=1715252949;
+        d=1e100.net; s=20230601; t=1714676494; x=1715281294;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=fhA8VLambKpb9wjap82p3kDvxUZ8xK7ATrERgvWkdSA=;
-        b=dYgmHo2aa24Q0ZEAxpgbpToburxR8vzh+J+ZqWsq9CRj8FZ7V17fxl0PyyhpbqClvJ
-         b+ZaaOFzKbBem7vhztNWrL4eHFTcRyLgNhB0ySCAXAXc2h7zTpqLEHQUbGwkJvgpKBrr
-         RpKGeB+StcCsuF+lybUVvcNhzpeiQVthpgmTDZhTVpBzVrUX3jRFVIMTlucOOoHKg7CX
-         TXzJs0HaBN0SavPNZ8GqbwOUOUqsc6MC4ighmJb1F+YdidlM17dA/BVqcOXIEdTzWsA6
-         gOshUJHy3z3vYwToV2ebdlEbf69ejHvYUvRu1UluAk+ecD/RGAmvafR1HmnJ2LozWBn1
-         XztQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUGZWi39E9wzNJ+C9ghnw+jnRnXiasmM1Tyr8GPWN8Diz5EULn4PdxpTD7Y6AtPhNBZRdjHW6v10w+rN9V2qMouF4jUmcJuFsd6zF0aeYOcC16rUR6N5lJNaqIv7Tao8B5AuTEUWrBmJQe68T6ZDA5YhOpTluSKh0FEdRjk7MMLLgoZCDeQ+3OP
-X-Gm-Message-State: AOJu0YyzkRd0GGc1D5NEKLuzOBpeqHo+UIRdxnHjKGO0hksCulsx1UX0
-	QVOU/OSVwKgK8ypYpES19EHW3ESApp9sUMcunYKtfBBhCGFa4H75sw+1kjJUnHlqH+0byc0VmoR
-	f2xiNMq+5RdxUp2h777UbmUxmIMk=
-X-Google-Smtp-Source: AGHT+IEMqK/WlDTzQp+B69oJEqZmK62x8gnRdcu9h34/zfAEjG64PWrWjN5DkS+XDB04HBNlIAxP40Qo4poXOKyiDtA=
-X-Received: by 2002:a2e:9cd3:0:b0:2e0:298d:6605 with SMTP id
- g19-20020a2e9cd3000000b002e0298d6605mr606951ljj.4.1714648149273; Thu, 02 May
- 2024 04:09:09 -0700 (PDT)
+        bh=nh35CEGjyQd/KulzELdyVZbVY0fU4Acs6q0cwM1JL4g=;
+        b=vIqXTYeZz9w+ndjSvZzWB6DMAy7UMK8q258GjLy0XngFsyLG6mMfo6aWz2GYTGtpF/
+         0CPBFP08Z00W8vKN//7TbfWjN5G7eJiJ7a4hW12jdSKZ2OKyK30SqXsS7rZ8fnBWftBy
+         lbUrpYH8huCdZ59XkzV2VfgtDsqZshB09oOLeaq7uCllsft/dNN89inTR9s2dz2Ga3cK
+         N66J3F9Hk6m/iXXWRKWvRuTjW5Ewfb38sURxS6w92HTpc32zf5ibkPrxKum9nnw+/IlG
+         YZGyGT33tBmvAdi3pVGtzaNax/gzwxcSmB/v8+U4NIdHHNyk9rdOtV5iEvYysxs0sAux
+         1D5g==
+X-Forwarded-Encrypted: i=1; AJvYcCWd1Yt4HvGX44Fxh+BlvP/gzuFSpgeI58PGgyLNrsrlGCDu/yv0BuO/wcz1RM0SF4yjJHSP00WkwNM6Y4EkaUWiRrjFGTGejQmXLrHSSluGIvq8TKemd6j2DLLCAk6ZrqdoA1c+ABvNmg0=
+X-Gm-Message-State: AOJu0Yx/4oN/monWdWhegwkRLfX2JA0d512QDVnaWYosYLIfXFZWfYju
+	9RWXZBfh1XzUdIROYueLwZihAI96/pOO1qLPAHicgbe8r3dRUPw+ptpFTDcXTo6hW6RhktgJOzn
+	EGG5P1iVxrzkiQ/J8tgY5y7kAWdM=
+X-Google-Smtp-Source: AGHT+IFtdKlZWuM1wsaGzBv6v0w3MPzrm4tdeztfDeMWx9KsDau87uqaZLeguIyMdvA7lu+3GnzFmJ0hvz3cCht3hGs=
+X-Received: by 2002:ac2:5dd3:0:b0:51e:ef7f:4e89 with SMTP id
+ x19-20020ac25dd3000000b0051eef7f4e89mr457732lfq.6.1714676493797; Thu, 02 May
+ 2024 12:01:33 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240502084609.28376-1-ryncsn@gmail.com> <20240502084609.28376-3-ryncsn@gmail.com>
-In-Reply-To: <20240502084609.28376-3-ryncsn@gmail.com>
+References: <20240430080019.4242-1-konishi.ryusuke@gmail.com>
+ <20240430080019.4242-2-konishi.ryusuke@gmail.com> <650ed9f6-fa50-4a3b-939d-633f9e389137@acm.org>
+ <CAKFNMomCzNMU0tjLkEchr=GQwSVW1zr1GAq7vUToeOvX-M3eVg@mail.gmail.com>
+In-Reply-To: <CAKFNMomCzNMU0tjLkEchr=GQwSVW1zr1GAq7vUToeOvX-M3eVg@mail.gmail.com>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 2 May 2024 20:08:52 +0900
-Message-ID: <CAKFNMom8pX4J3EzgOzpJuU1Q9r6eHLNY4Dn3TOnya4K_2XWK_w@mail.gmail.com>
-Subject: Re: [PATCH v4 02/12] nilfs2: drop usage of page_index
-To: Kairui Song <kasong@tencent.com>
-Cc: Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, 
-	Andrew Morton <akpm@linux-foundation.org>, "Huang, Ying" <ying.huang@intel.com>, 
-	Chris Li <chrisl@kernel.org>, Barry Song <v-songbaohua@oppo.com>, 
-	Ryan Roberts <ryan.roberts@arm.com>, Neil Brown <neilb@suse.de>, Minchan Kim <minchan@kernel.org>, 
-	Hugh Dickins <hughd@google.com>, David Hildenbrand <david@redhat.com>, Yosry Ahmed <yosryahmed@google.com>, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org
+Date: Fri, 3 May 2024 04:01:17 +0900
+Message-ID: <CAKFNMo=rkHF6urydfDbcvTbGzUEHmsTudVMm517pTE32vzqiwA@mail.gmail.com>
+Subject: Re: [PATCH -mm 1/2] nilfs2: use integer type instead of enum req_op
+ for event tracing header
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-nilfs@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, May 2, 2024 at 5:47=E2=80=AFPM Kairui Song wrote:
+On Thu, May 2, 2024 at 12:30=E2=80=AFAM Ryusuke Konishi wrote:
 >
-> From: Kairui Song <kasong@tencent.com>
+> On Wed, May 1, 2024 at 11:42=E2=80=AFPM Bart Van Assche wrote:
+> >
+> > On 4/30/24 10:00, Ryusuke Konishi wrote:
+> > >       trace_nilfs2_mdt_submit_block(inode, inode->i_ino, blkoff,
+> > > -                                   opf & REQ_OP_MASK);
+> > > +                                   (__force int)(opf & REQ_OP_MASK))=
+;
+> >
+> > Please keep the enum req_op type instead of casting that type away with
+> > "__force int".
+> >
+> > Thanks,
+> >
+> > Bart.
 >
-> page_index is only for mixed usage of page cache and swap cache, for
-> pure page cache usage, the caller can just use page->index instead.
+> Hi Bart,
 >
-> It can't be a swap cache page here (being part of buffer head),
-> so just drop it. And while we are at it, optimize the code by retrieving
-> the offset of the buffer head within the folio directly using bh_offset,
-> and get rid of the loop and usage of page helpers.
+> No, this type cast is necessary to prevent the following sparse warning:
 >
-> Suggested-by: Matthew Wilcox <willy@infradead.org>
-> Signed-off-by: Kairui Song <kasong@tencent.com>
-> Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Cc: linux-nilfs@vger.kernel.org
-> ---
->  fs/nilfs2/bmap.c | 10 ++--------
->  1 file changed, 2 insertions(+), 8 deletions(-)
+>   CC [M]  fs/nilfs2/mdt.o
+>   CHECK   fs/nilfs2/mdt.c
+> fs/nilfs2/mdt.c:155:43: warning: incorrect type in argument 4
+> (different base types)
+> fs/nilfs2/mdt.c:155:43:    expected int mode
+> fs/nilfs2/mdt.c:155:43:    got restricted blk_opf_t
 >
-> diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-> index 383f0afa2cea..cd14ea25968c 100644
-> --- a/fs/nilfs2/bmap.c
-> +++ b/fs/nilfs2/bmap.c
-> @@ -450,15 +450,9 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bma=
-p *bmap)
->  __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
->                               const struct buffer_head *bh)
->  {
-> -       struct buffer_head *pbh;
-> -       __u64 key;
-> +       loff_t pos =3D folio_pos(bh->b_folio) + bh_offset(bh);
+> What we're doing here is just changing the event tracing type back to
+> int, and keeping blk_opf_t and enum req_op in the rest of the code.
 >
-> -       key =3D page_index(bh->b_page) << (PAGE_SHIFT -
-> -                                        bmap->b_inode->i_blkbits);
-> -       for (pbh =3D page_buffers(bh->b_page); pbh !=3D bh; pbh =3D pbh->=
-b_this_page)
-> -               key++;
-> -
-> -       return key;
-> +       return pos >> bmap->b_inode->i_blkbits;
->  }
+> I understand if you have enough reason to ignore the warnings, but
+> Why do you have to keep enum req_op type instead of int for event tracing=
+?
 >
->  __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 ke=
-y)
-> --
-> 2.44.0
+> Regards,
+> Ryusuke Konishi
 
-Looks good.  Feel free to add:
+Hi Bart,
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Sorry, I didn't realize you were digging into the issue and talking
+with the sparse and kbuild teams to resolve the issue.
 
-Just to be sure, I also tested this change in different environments,
-including 4k (page size) and smaller block sizes.  And of course it's
-working as expected and so far hasn't broken anything.
+Is there any hope for a solution?
+
+If you haven't given up yet on solving the underlying problem, I would
+like to withdraw this patch.
 
 Thanks,
 Ryusuke Konishi
