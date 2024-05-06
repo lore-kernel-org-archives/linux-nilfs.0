@@ -1,124 +1,84 @@
-Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com [209.85.208.169])
+Received: from mail-io1-f69.google.com (mail-io1-f69.google.com [209.85.166.69])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77B4A2D60A;
-	Sun,  5 May 2024 19:05:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E760F763F0
+	for <linux-nilfs@vger.kernel.org>; Mon,  6 May 2024 13:18:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.69
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714935919; cv=none; b=asAX3MadYgz07HdzOiMXqfGPOhXPHkL2kB0bFjGzKMwkJDsfEItW64caoe7WIPTsY3lHQRkhdfT8jWfsPI+w93nTCfoW5BLiQ57VzPvSTTIaidlX+u8dEoCkvJa9QaoviFxF2j3f2OOs+yZOuXezVvj5NvJKkmcBhTZhf5s2GRA=
+	t=1715001515; cv=none; b=gartACD8KXPH2IZoX6Gw5yA9Xpkcra0aSnX8KYsTsoJ5OZs0DIwswlrK1V2F7jb7UaY7CE+CfGKtitxRpVEyS0JTX94OVKQcLcli4nKAMmRpLlLDZ5pYIOx05SYOy8XKn4zNjh+iO0QjnYbP/NqqViTBt8FeTwsYmqL17rzI9PY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714935919; c=relaxed/simple;
-	bh=l4a0ArGONDNzKNTIOsu12f4Y+6X95zHt+Leq4K2WG6c=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=HYbPDeWNF8vF8RYQoTL1LnNxtQyG55gQ3C5m3xy1yn68j9euzpeY5MYpryLcZ2igDxVxPuFLtJ24Sbbh2/KkiIXrtGz8sxXRPlSSwQthhRko5y/4Vuludw//8AlJ+Q7Fcuv7KUn4+S8+HTGp2Qq6askkwPdLlz8qI2c1jBzUFa4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jDU9M3h6; arc=none smtp.client-ip=209.85.208.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jDU9M3h6"
-Received: by mail-lj1-f169.google.com with SMTP id 38308e7fff4ca-2e0b2ddc5d1so15837541fa.3;
-        Sun, 05 May 2024 12:05:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714935915; x=1715540715; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Wad+9JCJl3oXkEa3SET7EwhW1F0CMBi3uJ0HqvgbGl8=;
-        b=jDU9M3h6KZx1n8RoViB/syh+uBulL8EQdEmU35WmCJueHcb49xWodtMqS6JBxqxNDA
-         l3vz3nJJjf+tlDnHELBidMbBRgN+Duhu5Hncw7/Ir9aqX8slilDETf5B3Yw3DZQpyTl6
-         QWA5Kupq9tmYujdB0cFHZ8+GJQlN5dich/hFDCRVG7XVAJUPhifasLXvLkEEHMJuqTey
-         4xsEu41pbnzaBknZG1GjrGHEdCK0Nlg+cIN6gHNMOXQ8lsHmxa7QM9WRfLO5TKQhfkth
-         ju2NoouVXr2qXsle6PvndxCv139m2ubEiBF0bkk2vFqSDO6KPVgduCIseGHNGd4eoMC0
-         cFgg==
+	s=arc-20240116; t=1715001515; c=relaxed/simple;
+	bh=xMKAHgLWffPEg/68jPEYeY/o4qLcUtR75HNtHwrSP5s=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=U59h+S9HhBwZYRVCT3Xn9E8QkoLMSaLnTJ3wkEUDARegQNo+ckMvML+2uB3IMmTyRrdxBfC/ZmJGLBrlZu5LqFM1aSrUtxGH2VYsVtT47knVkPTYMNBUh6wUyNLUHi5p4+1D17YLoR+P4OeWi6it33AS3ySUAbBMo0WjGbmWddY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.69
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-io1-f69.google.com with SMTP id ca18e2360f4ac-7ded1e919d2so140393539f.1
+        for <linux-nilfs@vger.kernel.org>; Mon, 06 May 2024 06:18:33 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714935915; x=1715540715;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=Wad+9JCJl3oXkEa3SET7EwhW1F0CMBi3uJ0HqvgbGl8=;
-        b=KPCs6LRzJGUdThqLU0hpFIDOLLH1+7O1aEeEObHFfIOnPz5MHy9PQSOAQxnqmZLJVq
-         Lv9wpTn4WNK1rE/pEQvsKl+RxvUkhDOoMJxnzA0egkaq4Im723Dft6Z2eze4uYW8n9ex
-         IJoK2l80nRLEWH6eDbHTR9jTEejrYR6uThrZ1Y3YAL1PNYCdMgCnLKDTzNOb8Op5YRQl
-         eVYI/a9dnbGvm+q5QVMTB9zjGzvCE9a6I3g1f5tsEosNK+KCF1sbKtMMdomJJLP/J35o
-         1LBORrmQS0xiwCx+GtP6uN7aTMajKDUe+adYvTm5qhOdF8GwB3zppbCHYDfjEfsKPq2/
-         w3WA==
-X-Forwarded-Encrypted: i=1; AJvYcCVacH7FIEf8fCyVjCehL7eNGzTWLytaWus08y6zW865UBKheePyIiCsNFU9HL7w2bg64S8t+1zd+8azeyNPXHicWUGkKwlJyKePsHwlsAeCDtQuUMQMzOM+s7vcMsrblOBn4+AXH7TtnFY=
-X-Gm-Message-State: AOJu0YwKCkCo+Qnvh5NwCsdqVPw4chXZcqkGWx4r0B+MdQWmmJpvgvt4
-	UOvHuLfGewDszzmIFO1vYCeIhaWto0zPZjWo5TONWKJEC5oI9bVqITzGNg0u0rjlrVi2dBGBqSD
-	irViTrjdZMh/2kL4MCfZeMg29epw=
-X-Google-Smtp-Source: AGHT+IHQGAH9I3d2xpvxt1OWJ5+/3R+Ok5+gszUhaQAR42Sc2pt/klNvVUHtO+OLHlwZ9WDp/4ixRmmmQ7JuEPr1Bbs=
-X-Received: by 2002:ac2:5322:0:b0:51a:f362:ab30 with SMTP id
- f2-20020ac25322000000b0051af362ab30mr4989779lfh.7.1714935915272; Sun, 05 May
- 2024 12:05:15 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1715001513; x=1715606313;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=9TxmHB0vl67W1+zyEJ27WmnVys+63ysAGw/jZhHVYa4=;
+        b=TtYzk6gfxsWgd/Fwoyo3Ial3T38UR1Aoefs+C6WZ5wsGsSu4eKWX4V4azq/AqF6468
+         xosvYDTr1le9tOUcnDBObgTi6t2r9a1GiElkpK/DoEoWWZjifbdB5X9W3pRVZQh3vlLo
+         3DCOQtDgSV2mxGjmID4x6p7htLA4KCcOpDWehATn9kucY1p8uINqMm1KkOhQ2ziJYZuA
+         ZXKM7gsFF3e2c8fmVZ/2A9IT3cFTVsN0os7MYa4H4wPdJCYr9ZZHv66UdtCv9OnY6r+t
+         zS2J6pBMKRZuLBctrCiQEzMVyvosIcJxuSeZMszfphRsveZiukkdGpIBDOfEXBVviSZi
+         3xkg==
+X-Forwarded-Encrypted: i=1; AJvYcCUsrK+fLBZflhJytklAvjIYKfxLFGXoX+xtvFDmhkthV5Lkc/JSMrM2RgqU0ucS7ZXXHQ+02KVYobLnXjez1/PV7szE9ymo2aprcUk=
+X-Gm-Message-State: AOJu0YwGMfz4kNb4yd4dLtdvYGtzKa4leA3I5Gqj6rHWIiIU4mUOGm/m
+	Yn9SizI8dfK/PE4OrmCMpD3CAQHk1SSAV4GpNqaS9d9qqdNtFwMnAMkYm1nOT6mZ/0q8MSwHz5r
+	3lFOzHy92C+gtYX2fqz5vZh+SO7BU/zEpMLy7qw9uWfh/va/ZMCGXQys=
+X-Google-Smtp-Source: AGHT+IHGkWCaHpJLl9dzq0QN3kR9qdOorczrF9G3kwxMgooiBGozHiWJRAmpHqOhax011rNPJQiAoVBofoiRpuhW7X96ozD4h239
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240430080019.4242-1-konishi.ryusuke@gmail.com>
- <20240430080019.4242-2-konishi.ryusuke@gmail.com> <650ed9f6-fa50-4a3b-939d-633f9e389137@acm.org>
- <CAKFNMomCzNMU0tjLkEchr=GQwSVW1zr1GAq7vUToeOvX-M3eVg@mail.gmail.com>
- <CAKFNMo=rkHF6urydfDbcvTbGzUEHmsTudVMm517pTE32vzqiwA@mail.gmail.com> <32e6621b-cbd9-42be-8626-49c12c25f139@acm.org>
-In-Reply-To: <32e6621b-cbd9-42be-8626-49c12c25f139@acm.org>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Mon, 6 May 2024 04:04:58 +0900
-Message-ID: <CAKFNMokSLHrB8jyGuNH-HBqcrAmJ5-SFwu-sTgt30X2j+=KykA@mail.gmail.com>
-Subject: Re: [PATCH -mm 1/2] nilfs2: use integer type instead of enum req_op
- for event tracing header
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+X-Received: by 2002:a05:6638:8516:b0:488:8715:313 with SMTP id
+ is22-20020a056638851600b0048887150313mr249593jab.0.1715001513193; Mon, 06 May
+ 2024 06:18:33 -0700 (PDT)
+Date: Mon, 06 May 2024 06:18:33 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <000000000000fbc4600617c8e744@google.com>
+Subject: [syzbot] Monthly nilfs report (May 2024)
+From: syzbot <syzbot+listf1bffba7342098843795@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
+	syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Sun, May 5, 2024 at 9:47=E2=80=AFPM Bart Van Assche wrote:
->
-> On 5/2/24 12:01 PM, Ryusuke Konishi wrote:
-> > If you haven't given up yet on solving the underlying problem, I would
-> > like to withdraw this patch.
->
-> Has this untested change been considered?
->
-> diff --git a/include/trace/events/nilfs2.h b/include/trace/events/nilfs2.=
-h
-> index 8efc6236f57c..67fd2e002ca7 100644
-> --- a/include/trace/events/nilfs2.h
-> +++ b/include/trace/events/nilfs2.h
-> @@ -214,7 +214,7 @@ TRACE_EVENT(nilfs2_mdt_submit_block,
->                       __entry->inode,
->                       __entry->ino,
->                       __entry->blkoff,
-> -                     __entry->mode)
-> +                     (__force u32)__entry->mode)
->   );
->
->   #endif /* _TRACE_NILFS2_H */
+Hello nilfs maintainers/developers,
 
-No, I didn't think of that.  There was no warning in TP_printk()
-declaration of the nilfs2_mdt_submit_block trace point.
+This is a 31-day syzbot report for the nilfs subsystem.
+All related reports/information can be found at:
+https://syzkaller.appspot.com/upstream/s/nilfs
 
-If you suggested this as an alternative idea, unfortunately the
-following warnings are still output:
+During the period, 3 new issues were detected and 1 were fixed.
+In total, 7 issues are still open and 42 have been fixed so far.
 
-  CC [M]  fs/nilfs2/segment.o
-  CHECK   fs/nilfs2/segment.c
-fs/nilfs2/segment.c: note: in included file (through
-include/trace/trace_events.h, include/trace/define_trace.h,
-include/trace/events/nilfs2.h):
-./include/trace/events/nilfs2.h:191:1: warning: cast to restricted blk_opf_=
-t
-./include/trace/events/nilfs2.h:191:1: warning: restricted blk_opf_t
-degrades to integer
-./include/trace/events/nilfs2.h:191:1: warning: restricted blk_opf_t
-degrades to integer
+Some of the still happening issues:
 
-I also tried typecasting on the declaration header side of event
-tracing, but so far, the sparse warnings don't go away except for the
-patch I first proposed.
+Ref Crashes Repro Title
+<1> 127     Yes   KMSAN: uninit-value in nilfs_add_checksums_on_logs (2)
+                  https://syzkaller.appspot.com/bug?extid=47a017c46edb25eff048
+<2> 3       No    INFO: task hung in nilfs_segctor_thread (2)
+                  https://syzkaller.appspot.com/bug?extid=c8166c541d3971bf6c87
+<3> 1       No    possible deadlock in nilfs_dirty_inode (3)
+                  https://syzkaller.appspot.com/bug?extid=ca73f5a22aec76875d85
 
-But, better suggestions or solutions to the underlying problem are welcome.
-(Again, should we put the patch on hold?)
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-Regards,
-Ryusuke Konishi
+To disable reminders for individual bugs, reply with the following command:
+#syz set <Ref> no-reminders
+
+To change bug's subsystems, reply with:
+#syz set <Ref> subsystems: new-subsystem
+
+You may send multiple commands in a single email message.
