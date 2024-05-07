@@ -1,144 +1,135 @@
-Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F2E8187353;
-	Tue,  7 May 2024 21:05:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5ADCE71B3B;
+	Tue,  7 May 2024 22:20:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715115959; cv=none; b=XJCCbEzyphFQMWWh7Pny5VOAMEAS+xl7Xs6vA7fvN/tuJt5eACKANLjfHOGYtNwKvZpf1v96F46wY32LPtRgtuEJe3pN9JwhnL/A299nuBH8xQnZ4TYAyKuvtnqDB0zTaELnazZpgYqrRTe1Z9jXgn2cfmeGgq3y9fvqmkBhu3s=
+	t=1715120460; cv=none; b=rTTgKRu9G4wAjFGvGooZ6pvhWMe43uAcMsn29K4RS/mstnusQ1GK9Il+NAe9/p0MfoXR2FQAX/nxnxXFItiMzgyux+/Kwad0VAhU3GnFrkqfGyNle87Yd9F/hO+qffEoSNCFUVSmemTzzD3rDSALGLuroi44hEn6yQGj+rDnwjA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715115959; c=relaxed/simple;
-	bh=eETH8qyLZaEqH0jAscPRS9ATGH9bfwR8HhG7OFw2pEw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=iULKKoCpSjARI6az3xDQCyoNUnQRPmUUQdUmzXvh99Q731yHE6KCWRBsyDCXprliBhPdL+8Ts2UnozBsdPrtKuiealLYxpF7rKOvqDCSCIsGCkb9hZ5wbAgfbgz2JCiTTZrKMhCuvCS7xI3q3JhaRuX2fhtkZwZoMAYLHq6JXQg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=fkmyOVhS; arc=none smtp.client-ip=209.85.208.179
+	s=arc-20240116; t=1715120460; c=relaxed/simple;
+	bh=HF/6ZRvBDsf27X3eJOND8Urh1pLKofHMissu9BvMcWw=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=pTr5pt878MYa2gSUYInTVA1ahNhTNGCM6gu2D4xT/ymobgdWQfl3+pc8pAmTaveP4pqWL4bTM9e+MI55UlHWM10zPNTpQYkZOSg7m0cjPYnxtvCZ7j6t1fJlomQrNlVewzsidNLyUe3GSPQkobdWybGwmt+QnBBOpO2BcALAQfE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=knpRnSRQ; arc=none smtp.client-ip=209.85.214.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fkmyOVhS"
-Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-2e22a1bed91so47999291fa.0;
-        Tue, 07 May 2024 14:05:57 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="knpRnSRQ"
+Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-1ecd9a81966so1909505ad.0;
+        Tue, 07 May 2024 15:20:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1715115956; x=1715720756; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=2ef/OTw1FTNHv7I5hPzJjnHJ7ssdwk8G3HA7pFWiHOs=;
-        b=fkmyOVhSpq30fxaVZF35CHYrIdhVf63/OzaOys7u8nGP/uva+8JtHlJqTMsK9xCg/A
-         VJgFeltcOczLES/TQdJoZlhdDIn+eb05NV2XqmEpnAeDucPzoqE1FVMPRDyZvPWeW6W/
-         dt20Qfz8/nORVQSivqR9nEsYVyGzHkuUPTkgJwqXSTi5trS8TzaUyKn+xDQ2eOqf61SN
-         1Z1asqXbUpC5obCvrLVVxkP16JQdvALaIEPRK0OIdJZTcQi9ocb2oxZ913F5TVDF2DT5
-         7TDvM2evGc0QCKUKvK5nJhJr71srsg5N8GUIITxXI9UpSRMc/UvV8etwXfQE48LB797A
-         5XWg==
+        d=gmail.com; s=20230601; t=1715120458; x=1715725258; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=sEVwJv44zaVqMvBXpLTR8+D9zvixnfOEIX/GYYRWRRA=;
+        b=knpRnSRQtmX6L999Pirikw4Fsfr6rmAkyl/bY3SBEnqLPGdM579nS69GixDMml+g32
+         mvyLM3VlTY4vMqNyzbl4Z63ICXLIqe42QPDYdNp0hAZIRps15OGcb3YuXpOFTGwBupF8
+         GhWbDxOtPgHzmPSH1Gnay+aXAmDiWTaCIToZHSEEQ9bMaVzcir9MUi+++OW68FSvvGEM
+         4oUbyuUtOHU57Ich7ZVs+7JeNPIyQJPQYG2Q6Nhw4LO/E6ZUGfYIxXorLPq6C8PwyZp9
+         irMIXWM+M8HfuX0dzPO4fHr7fh64Ub8Y9syvQc0KhIe4GUErB+MODcnhJBKWpG8OjkVI
+         Tpdw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715115956; x=1715720756;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=2ef/OTw1FTNHv7I5hPzJjnHJ7ssdwk8G3HA7pFWiHOs=;
-        b=r2OWQIm7bCy3LOF+KxyXNZPCdXNcYOhUheQogYyClUvQYK6T0QifwrgrAm6mdjFQpb
-         +ZPHSr+FC+bysW8BK1ltwp3UzWwEJJc2+r8iu9QPmFT43EmlFqWjpjPMyunsU4GvlsOp
-         TF9bBETXCgxDrSMfNtYt2M7E+1V6H9jsBAWlStybwT6eukgyJVUyxKrzUDe5IpppzYLz
-         bFqVadozXk5mCoP6H9MWJ0Qdo48mjF9GPFWBJDZVvuOQuLw6eeeODeypL323zR7gz88a
-         z44KJ0eYfFMKF4ECdxYsM4bqgO2q53bAS7E9ytQqKPVccsgXTCpeFrYD+15kVX+1bgVP
-         xdEg==
-X-Forwarded-Encrypted: i=1; AJvYcCUZ4gAN6kSnJFA8uJ0UTnhNiDCmymG3XPKFEDnCWbxytMwP5Fq2bCD/rhMriSNgP6XKyW5RIdp+XaKezif/Vv9qg2A4NjkUR6u0q9eedb+E8s4sTCM0E1HvSW90zbIeHskkwKph/XaaE+E=
-X-Gm-Message-State: AOJu0YwF18jv86VGjSbcQQGjJsp4ZGNO7CmGeGL88TmfjMewxcYa70PL
-	FEi+dyHQfplDc/UdTzuVOS6k5OJzey/RcBcElSmYwftznBEHOIab773Cde4sOCCwWyXkYn0KO67
-	HDarWHBhZApSbySWVi7eKN6eL1wY=
-X-Google-Smtp-Source: AGHT+IEIPqLuIXqUPlxdyHE8emQsQqvKcbB68EsssulBsPpJLcFAWFAY6+qF2e0EvPA5ZpCevCys7JBbmezZOATtWNk=
-X-Received: by 2002:ac2:520b:0:b0:51d:4472:c3f8 with SMTP id
- 2adb3069b0e04-5217c667418mr362253e87.35.1715115955829; Tue, 07 May 2024
- 14:05:55 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1715120458; x=1715725258;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=sEVwJv44zaVqMvBXpLTR8+D9zvixnfOEIX/GYYRWRRA=;
+        b=O3ODsIQBg538DHT5sENpeIRzxEWTkVo3spcimOAUh3vRnlA3ee0YPeJAtmfpu9kfPl
+         s23g6cMt97P6os1ZIYZb296/HQRT/xdM8QQJppXyLJZFc6jcy9G6ogx+yKQNmarvCJiS
+         nxgBDQA/FxaexHuKfMUbI9m7JVr91Mk4neqkFXf1ymULFt0OwChs28z0uE4ttgSKZMz2
+         RZ6zZjnOM/VHgqJIOpi3uMEA/m3sUe5PzM+rxYfQZ79n6Dh/mbz5AaJgVMEJB4BnxOgw
+         G0UfOmcIKmylQ9tOaNxDoyjH0LEpsociuQdCd3OkGqbyN/vdQbnnwwc2R5Fw3vqU8W4h
+         CN5Q==
+X-Forwarded-Encrypted: i=1; AJvYcCVFV5ZOg+KqBXgzwwL0jDEdENKKWLKziHX8JnAan/irSf8QOOxejLAh4S/vURxQ2OHJBpAiSmsuqIjdLpG4cFLtBM6KUjy5x9cCCKK8
+X-Gm-Message-State: AOJu0YxF86s6R30lO3Twlc1x1sfnltELQMZHWUm75YMuzjK7S9jV55mq
+	rRaxX+Q7erss/5J6vevw5BuJAdazYYQgUf/GSWmn0AE9rX+aTA1n4+rljA==
+X-Google-Smtp-Source: AGHT+IGBOak3Io8zzYPbf5kuvE5Ud0zN1yRHO6LH8LXSlmJHssF0uuEwQOKxjp4sO+84bDEW2tYTUg==
+X-Received: by 2002:a17:902:d2d1:b0:1e2:a1a8:5f49 with SMTP id d9443c01a7336-1eeabea21bcmr16203835ad.24.1715120458539;
+        Tue, 07 May 2024 15:20:58 -0700 (PDT)
+Received: from carrot.. (i222-151-5-6.s42.a014.ap.plala.or.jp. [222.151.5.6])
+        by smtp.gmail.com with ESMTPSA id q3-20020a170902dac300b001e512537a5fsm10545132plx.9.2024.05.07.15.20.56
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 07 May 2024 15:20:57 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Bart Van Assche <bvanassche@acm.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Subject: [PATCH -mm v2] nilfs2: Use __field_struct() for a bitwise field
+Date: Wed,  8 May 2024 07:20:41 +0900
+Message-Id: <20240507222041.4876-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240507142454.3344-1-konishi.ryusuke@gmail.com> <CAHk-=wgogPoSdCYw9jhc2Zm=BaE19nXYwFn_F9SwD2C-DyrmCw@mail.gmail.com>
-In-Reply-To: <CAHk-=wgogPoSdCYw9jhc2Zm=BaE19nXYwFn_F9SwD2C-DyrmCw@mail.gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 8 May 2024 06:05:39 +0900
-Message-ID: <CAKFNMonSDOWt20nq6UngSO1_7L-DLRMiAbcKXmquF04qbfC55Q@mail.gmail.com>
-Subject: Re: [PATCH -mm] nilfs2: Use __field_struct() for a bitwise field
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Bart Van Assche <bvanassche@acm.org>, 
-	linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Wed, May 8, 2024 at 1:25=E2=80=AFAM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> On Tue, 7 May 2024 at 07:25, Ryusuke Konishi <konishi.ryusuke@gmail.com> =
-wrote:
-> >
-> >    Despite that change, sparse complains when
-> > passing a bitwise type to is_signed_type(). It is not clear to me why.
->
-> Bah. The reason is this:
->
->    #define is_signed_type(type) (((type)(-1)) < (__force type)1)
->
-> Basically, the way "is_signed_type()" works is that it casts a
-> negative integer to the type, and checks to see if the value has now
-> become a large value.
->
-> Now, it looks odd, because only one of those casts has a "__force" on
-> it, but the reason for that is that casting all-ones and all-zeroes is
-> ok for bitwise types (think of bitwise types as being a "collection of
-> bits" - so all bits set or all bits clear are sane concepts regardless
-> of any other semantics).
->
-> So it's not the casts themselves that are problematic: that part works fi=
-ne.
->
-> But you cannot compare a random collection of bits for greater than or
-> lesser than.
->
-> Think of things like byte orders: you can compare two values for
-> _equality_ even if they are in the wrong byte order, but you can't
-> compare them for "larger than" unless you turn them into the right CPU
-> byte order.
->
-> Basically, a "collection of bits" doesn't have an ordering in itself,
-> even if equality comparisons are ok.
->
-> So yeah, is_signed_type() doesn't work for bitwise types.
->
-> And I don't see a sane way to make "is_signed_type()" to work for
-> bitwise types - the whole concept of signedness of "bunch of bits" is
-> kind of nonsensical - so I suspect your workaround is the best we can
-> do (alternatively, tracing would have to figure out a different way to
-> test for signedness).
->
->                  Linus
+From: Bart Van Assche <bvanassche@acm.org>
 
-Linus, thank you very much for your detailed explanation.
+As one can see in include/trace/stages/stage4_event_fields.h, the
+implementation of __field() uses the is_signed_type() macro. As one can see
+in commit dcf8e5633e2e ("tracing: Define the is_signed_type() macro once"),
+there has been an attempt to not make is_signed_type() trigger sparse
+warnings for bitwise types.
 
-I would like to edit the quoted part of his commit message
+Despite that change, sparse complains when passing a bitwise type to
+is_signed_type(). The reason is that in its definition below, an inequality
+comparison will be made against bitwise types, which are random collections
+of bits (the casts to bitwise types themselves are semantically valid and
+not problematic):
 
-> >    Despite that change, sparse complains when
-> > passing a bitwise type to is_signed_type(). It is not clear to me why.
+ #define is_signed_type(type) (((type)(-1)) < (__force type)1)
 
-as follows:
+So, as a workaround, follow the example of <trace/events/initcall.h> and
+suppress the following sparse warnings by changing __field() into
+__field_struct() that doesn't use is_signed_type():
 
- Despite that change, sparse complains when passing a bitwise type
- to is_signed_type().  The reason is that in its definition below, a
- comparison will be made against bitwise types, which are
- random collections of bits (the casts to bitwise types themselves
- are semantically valid and are not problematic):
+ fs/nilfs2/segment.c: note: in included file (through
+   include/trace/trace_events.h, include/trace/define_trace.h,
+   include/trace/events/nilfs2.h):
+ ./include/trace/events/nilfs2.h:191:1: warning: cast to restricted
+   blk_opf_t
+ ./include/trace/events/nilfs2.h:191:1: warning: restricted blk_opf_t
+   degrades to integer
+ ./include/trace/events/nilfs2.h:191:1: warning: restricted blk_opf_t
+   degrades to integer
 
-  #define is_signed_type(type) (((type)(-1)) < (__force type)1)
+[konishi.ryusuke: described the reason for the warnings based on Linus'
+ explanation]
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Reported-by: kernel test robot <lkp@intel.com>
+Closes: https://lore.kernel.org/oe-kbuild-all/202401092241.I4mm9OWl-lkp@intel.com/
+Reported-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Closes: https://lore.kernel.org/all/20240430080019.4242-2-konishi.ryusuke@gmail.com/
+Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+ include/trace/events/nilfs2.h | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
- So, as a workaround, fix the warnings by using __field_struct() macro
- that doesn't use is_signed_type() instead of __field().
- ...
+diff --git a/include/trace/events/nilfs2.h b/include/trace/events/nilfs2.h
+index 8efc6236f57c..8880c11733dd 100644
+--- a/include/trace/events/nilfs2.h
++++ b/include/trace/events/nilfs2.h
+@@ -200,7 +200,11 @@ TRACE_EVENT(nilfs2_mdt_submit_block,
+ 		    __field(struct inode *, inode)
+ 		    __field(unsigned long, ino)
+ 		    __field(unsigned long, blkoff)
+-		    __field(enum req_op, mode)
++		    /*
++		     * Use field_struct() to avoid is_signed_type() on the
++		     * bitwise type enum req_op.
++		     */
++		    __field_struct(enum req_op, mode)
+ 	    ),
+ 
+ 	    TP_fast_assign(
+-- 
+2.34.1
 
-I will try to resend the patch later unless there's a misunderstanding or
-I'm missing too many points.
-
-Thanks,
-Ryusuke Konishi
