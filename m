@@ -1,106 +1,117 @@
-Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14FFA71B3B;
-	Tue,  7 May 2024 22:23:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E4A178C76;
+	Tue,  7 May 2024 22:45:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715120621; cv=none; b=d4wKQHBV75y1BPoWzxmV8bW0sxmj8uiphpUj0G5ugmJHpaF4cQqo7omhzeVAAFznSWsXoPOwZrQzXu5sJOmwOyIPPafPYTjSe6+ISLI2i6Cew4pYFlKdcm7wzlskINRF7J1LeI02pX0+n0LT/VBcEtfNS/OW3RQtiMeowJWgXls=
+	t=1715121923; cv=none; b=QzSv10iTAE5YTKKFmt9MF9ZggyvIfVoNMem0jonhfRlB+J0NG5IF1Jh/KDs7nDcXG4wnyoi5dTEj9LLMqXDu7D2+74EjiJup/ZWOD6YTVzhgivGlEvoysHzUSQI5pY3Jz48h/lHwmQgj21s5wG0jT6LSgD0JYdB9GxsrntSb+Xk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715120621; c=relaxed/simple;
-	bh=P4brHrrgJ2mTiTC1ckZrdUGU9DeItluptwKQtPpGElE=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-ID:To:CC; b=qWr3cTiC05xtW8ekl+Z8If4CASgTMlCaKIuuxD3S1e4+Rq7zzbllY2gcUn7DoX7ipu9+Q52e5ipO61B+4TAdN4o2oaOuqQMO8aSBBMCAtzOz88cURVS5p12UWlHpL2sJ+3F1h0rIKFvqw3aQ/wEHf3gHibBTN13KjXdI2mBCpyE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=T/s6UHog; arc=none smtp.client-ip=205.220.168.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
+	s=arc-20240116; t=1715121923; c=relaxed/simple;
+	bh=M6riJ2RRhLGhU3DFdXzMp1Z3chjKGRnYMD/q5uAIeMk=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=h/buw4qUUPC+uIHgm+rLhq0XU3ht3eMQUyM84IRcvzs/wzDVYxPq4c26S6TuwZoRys/DvnH84iTd4OT0Yg3KBwnm8cJtB3UGkwBOwPLGx2i7NscmONrqmhRjkX4plMeKrbyA85f2TRCM4Sqw19TzPewUl865gdtiJKbAM9UJRyQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=haC7J+wa; arc=none smtp.client-ip=209.85.167.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="T/s6UHog"
-Received: from pps.filterd (m0279864.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 447KWo8i022725;
-	Tue, 7 May 2024 22:23:38 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
-	from:date:subject:mime-version:content-type
-	:content-transfer-encoding:message-id:to:cc; s=qcppdkim1; bh=XfS
-	Hw2hvPwpopsQU0foCtoE5ITn09j8z/DnzkIhGvs0=; b=T/s6UHogHjZzF2Mxez9
-	MopXM7w53onpzj5R3wcWtXRLvIFMP3UKodnw7Maq3RzxsBAOpvoBppLpdKfNunXR
-	qgn+2X5QOMDCfeiqyp9QwdBMKwhj1DA8ojaQCHZen1laaRA75TV4khBYCzeML0Wt
-	xsbyByxnhgufoQwmlJBfs/HF2yakezuIsxZiyUREDicxulFjJeUIPal5hqhTfS+z
-	FzuqksgCEB8wQ0+I7IEP+Ae8Ardd7Ly30CZEQt2vfWwNJaHeMJTmyMi4H8rHNCEb
-	p/patcRcIBvnYHxAjDnEXULOyWxxRJS5hTVJUqYb0V7t26r7kimQgvgp8IvW5G+H
-	hqw==
-Received: from nalasppmta01.qualcomm.com (Global_NAT1.qualcomm.com [129.46.96.20])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 3xysgc8e3c-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 07 May 2024 22:23:38 +0000 (GMT)
-Received: from nalasex01a.na.qualcomm.com (nalasex01a.na.qualcomm.com [10.47.209.196])
-	by NALASPPMTA01.qualcomm.com (8.17.1.5/8.17.1.5) with ESMTPS id 447MNbwp012618
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 7 May 2024 22:23:37 GMT
-Received: from [169.254.0.1] (10.49.16.6) by nalasex01a.na.qualcomm.com
- (10.47.209.196) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Tue, 7 May 2024
- 15:23:37 -0700
-From: Jeff Johnson <quic_jjohnson@quicinc.com>
-Date: Tue, 7 May 2024 15:23:36 -0700
-Subject: [PATCH] nilfs2: fix nilfs_btree_commit_convert_and_insert()
- kernel-doc
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="haC7J+wa"
+Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-51f1e8eaee5so207960e87.1;
+        Tue, 07 May 2024 15:45:21 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1715121920; x=1715726720; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=nDN/+D4jbee8PODvmNc8vVasbCqf3e+IVaTnWie3dK4=;
+        b=haC7J+waqTiA5WISMiu+Z04DbxGrIkBb5nu4GbEezJBAvnzVGwvYHJqW0xCy4R0qN5
+         5M9yj4Aoyy55VxeCrIZviMGvKE+Dszt14TPxw8qFqFQbVZQrsAEtCNl6BBJAJD9dmA64
+         NoukIZn7HbVayG8Ed8lXYjRJP4T3zlvEmD1KJDev2bPszZZI4ByXqtEDVFYiZL37v1/L
+         rm9pKnIiWtsaLb7oTE6qSIE/t/BPxYbPfL3S34DHD74Jzk050H50FuIHBnN2claILGv2
+         r/eIGs+v4tEZW2s0YD7ipx/ghtko1dD1s7AC0x3JFbooCrhYG9Rr0vYpezD2yBbvw1Ug
+         n8aw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1715121920; x=1715726720;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=nDN/+D4jbee8PODvmNc8vVasbCqf3e+IVaTnWie3dK4=;
+        b=S4o/hVSFlbAqBkHJSNgXAl6mBJyymEWOCCvaN6icGRu289VnrkAPfwKoplSkrmyH6x
+         J1FlarT/UHqzJ97Z+tHLpj/KDS2VVDymOJgnBKGgtLVDKnZ1bm8oqyZQIgRUN/jn6jib
+         egBIWN3SCdZ8S1fHKTrW5nnI1WwQyUwXcMUD9WTb798wbcqCRQCZnVJ17KhbqPc0Ul8o
+         0hMahgiTFRSQb2VDcB3XmDBWwXS0v7XY0Xb2hiCTdIO/6j0JqEouhJxX+AEYsQIk8mhS
+         FSA2MBMuRxAwiYiMsokxLeal+iqQ9gVrZ03TAGRwvo1jYaA6X7zs3FtI8Pw32OzDD30Q
+         oFlQ==
+X-Forwarded-Encrypted: i=1; AJvYcCURjOWmKxw5onlLX6QbOOguQiqNlwaO/N+eJx4rgLO3vcrBcrkCKEVG1YjtE0hOd8+Y/iKpR5oQSiZ6dtzcGrNxEzeAw63wfIRS+/ne
+X-Gm-Message-State: AOJu0YzgIuUx48lGUYQuPp20kUF1bailNVDGGYJQJ17tHtdS9YiogOU2
+	Fh5vVYQXp5vOR6IGL8Q5VnSCzd8ks1rfK7Qn3xuryhGDJEwJGfGFoVnWvd/AVXW7mp41GIGvz1/
+	qFuA/IzgviIfH9jb5sP8TZhlSWbc=
+X-Google-Smtp-Source: AGHT+IEl/j9hZBClES3NvfVHBWJUZPsWsAWfCAB4XPxGVeEHl6mWKApGMuYq3CW7CTtLoBAHB9593NeNhdLbenEgIas=
+X-Received: by 2002:ac2:4c85:0:b0:520:19de:c6f4 with SMTP id
+ 2adb3069b0e04-5217581943amr267325e87.19.1715121919362; Tue, 07 May 2024
+ 15:45:19 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-ID: <20240507-nilfs_btree_convert_and_insert-kdoc-v1-1-bab3514eb753@quicinc.com>
-X-B4-Tracking: v=1; b=H4sIAOepOmYC/x3NTQrCMBBA4auUWRuI/THgVURCkk7tYJ3ITCyF0
- rsbXb7N93ZQFEKFa7OD4EpKmWucTw2kOfADDY21obVtbwfrDNMyqY9FEH3KvKIUH3j0xFUq5jn
- mZJwbutSHC7rUQZXeghNt/8vtXjsGRRMlcJp/9kL82cwraEGB4/gCLfFn4ZQAAAA=
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-CC: <linux-nilfs@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-        "Jeff
- Johnson" <quic_jjohnson@quicinc.com>
-X-Mailer: b4 0.13.0
-X-ClientProxiedBy: nalasex01a.na.qualcomm.com (10.47.209.196) To
- nalasex01a.na.qualcomm.com (10.47.209.196)
-X-QCInternal: smtphost
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-GUID: e8juo70W4WKON-K6wU8jOuA34Lm2N7on
-X-Proofpoint-ORIG-GUID: e8juo70W4WKON-K6wU8jOuA34Lm2N7on
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.650,FMLib:17.11.176.26
- definitions=2024-05-07_14,2024-05-06_02,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 phishscore=0
- priorityscore=1501 impostorscore=0 adultscore=0 bulkscore=0 suspectscore=0
- spamscore=0 mlxlogscore=941 mlxscore=0 lowpriorityscore=0 malwarescore=0
- clxscore=1011 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2405010000 definitions=main-2405070157
+References: <20240507-nilfs_btree_convert_and_insert-kdoc-v1-1-bab3514eb753@quicinc.com>
+In-Reply-To: <20240507-nilfs_btree_convert_and_insert-kdoc-v1-1-bab3514eb753@quicinc.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Wed, 8 May 2024 07:45:03 +0900
+Message-ID: <CAKFNMomG+GuKJ53WmdWFONtimhbanKU-B_ZTdt5sEFxcuYxJ3w@mail.gmail.com>
+Subject: Re: [PATCH] nilfs2: fix nilfs_btree_commit_convert_and_insert() kernel-doc
+To: Jeff Johnson <quic_jjohnson@quicinc.com>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Fix the following reported by make W=1:
+On Wed, May 8, 2024 at 7:23=E2=80=AFAM Jeff Johnson wrote:
+>
+> Fix the following reported by make W=3D1:
+>
+> fs/nilfs2/btree.c:1871: warning: Function parameter or struct member 'btr=
+ee' not described in 'nilfs_btree_convert_and_insert'
+> fs/nilfs2/btree.c:1871: warning: Excess function parameter 'bmap' descrip=
+tion in 'nilfs_btree_convert_and_insert'
+>
+> Signed-off-by: Jeff Johnson <quic_jjohnson@quicinc.com>
+> ---
+>  fs/nilfs2/btree.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+> index 65659fa0372e..8299839b5129 100644
+> --- a/fs/nilfs2/btree.c
+> +++ b/fs/nilfs2/btree.c
+> @@ -1858,7 +1858,7 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_=
+bmap *btree,
+>
+>  /**
+>   * nilfs_btree_convert_and_insert -
+> - * @bmap:
+> + * @btree: bmap struct of btree
+>   * @key:
+>   * @ptr:
+>   * @keys:
+>
+> ---
+> base-commit: dd5a440a31fae6e459c0d6271dddd62825505361
+> change-id: 20240507-nilfs_btree_convert_and_insert-kdoc-7753c4a6e7c3
+>
 
-fs/nilfs2/btree.c:1871: warning: Function parameter or struct member 'btree' not described in 'nilfs_btree_convert_and_insert'
-fs/nilfs2/btree.c:1871: warning: Excess function parameter 'bmap' description in 'nilfs_btree_convert_and_insert'
+Hi Jeff, thank you for posting.
 
-Signed-off-by: Jeff Johnson <quic_jjohnson@quicinc.com>
----
- fs/nilfs2/btree.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+However, a fix for this kernel-doc warnings is already queued in the
+mm tree (to be merged in the next merge window).
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 65659fa0372e..8299839b5129 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -1858,7 +1858,7 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *btree,
- 
- /**
-  * nilfs_btree_convert_and_insert -
-- * @bmap:
-+ * @btree: bmap struct of btree
-  * @key:
-  * @ptr:
-  * @keys:
+Please refer to the patch below:
 
----
-base-commit: dd5a440a31fae6e459c0d6271dddd62825505361
-change-id: 20240507-nilfs_btree_convert_and_insert-kdoc-7753c4a6e7c3
+https://lkml.kernel.org/r/20240410075629.3441-3-konishi.ryusuke@gmail.com
+https://git.kernel.org/pub/scm/linux/kernel/git/akpm/mm.git/commit/?h=3Dmm-=
+nonmm-stable&id=3D3da9b9650acc3a2a0c3d3f4542b93d4abe9da1de
 
+
+Thanks,
+Ryusuke Konishi
