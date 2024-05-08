@@ -1,129 +1,105 @@
-Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com [209.85.210.176])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 817AE374D9;
-	Tue,  7 May 2024 22:54:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D5621E89A;
+	Wed,  8 May 2024 22:15:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715122459; cv=none; b=lvymKOJAxXi0hEn0vEJBbqCBLmZU4LXxdR2Xg4+9gxtKAcUgkyaBKCyBAzkiNVWBP6JyrjbaL/wol34wtqZnH4EAGLZ3x3JziuhmcR9yGWKHcDIFu7geZABLu6ZO1hwbDNFRgjkm9gqYwVxpvYeD8p9f8QkKEiTcvK2AmL2gs9I=
+	t=1715206532; cv=none; b=KU2iZpiZy3P0+Pp70YJsM7M7hwOsD5TsVFXhgaFIkGm+hOm23L7VFOBbrkSLfb6IAmvyhRFQC0lmT/n6qnlWID0q/b28SR6Qqb9BGka7OW9Pv1ioyXWk5lSHnW5hCwwWdjOamPKq5HHgUVeJwMI36ogKWGrPBPNyaf3i2ODCQeM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715122459; c=relaxed/simple;
-	bh=weDT3AULG+DpymysMWig04MbDKwtN3q1YtaWP79mB3A=;
-	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
-	 In-Reply-To:Content-Type; b=tSTYxRY/cw+exUcphe2kFhrVtITPmMzKmD1l1wB+56eV+ia2kLQPzbZnvW3m0gqo6/PIEJeiTyvXHs1jZIkti/wF8VW2SS9HUmTv5u6ng8/gEMmEakLHu5D8h/voGSs48NdVELDInInRUtytgL6o+PR8EveF/ccqKCmxw3Ck1Q4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=a2SyUCMt; arc=none smtp.client-ip=205.220.180.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
+	s=arc-20240116; t=1715206532; c=relaxed/simple;
+	bh=zYvmqBYytu5lrRG063ZNZe74anNEulI5cB5MgQaGA1o=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=XY/BgaqUVx4bT0rH981tRf5lOsMiVMy8yuDCVd+JICa8tJ4AHGm+SbuPIrpbvqC9bufosrEDEwtxQyifbVfJ9zfMSsE5owtDq2aUdxZTK+4hS6+8wHsG5/eT+RrNh9bMlLQ2Fizk1VSDyIko52hIAM8VfxgSujGbfO+L06xiz2A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eXKI4NuU; arc=none smtp.client-ip=209.85.210.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="a2SyUCMt"
-Received: from pps.filterd (m0279870.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 447LY5jb023828;
-	Tue, 7 May 2024 22:54:15 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
-	message-id:date:mime-version:subject:to:cc:references:from
-	:in-reply-to:content-type:content-transfer-encoding; s=
-	qcppdkim1; bh=jyuABFncq0D2svYrB9Ea/MoDwXfjAhm3n9NkBI3OXIw=; b=a2
-	SyUCMtTYFraD8tzVLCCGUHVZSPGFMwgyyvnASA1hD32xvty9cvnbE2UVC8BMp371
-	VQ5RlXZrrLyhCRwTBDTK2EgejXo5vNFrsLh9qOxrmh0yB5OVul+znT0vupw34Ue6
-	jqjMis4rj14aGI3XQVUjilxjX4nTSS/wa17zKxnB8E/sMdMADBPMKM1dtopbEEOt
-	MHoQB/ixERhmRddUHvVtned4H3VSKYZ0XhbpJk/8tHcEVCK0J7Uw410bAhW7cIfz
-	tz6cs6NpVAd5IEnJF4nvC+porV2/pT0s/+UpAvuAreeUgKbVtgdUPw7ACX6iU6an
-	bv/5y70JCrEmqs4o5VYA==
-Received: from nalasppmta05.qualcomm.com (Global_NAT1.qualcomm.com [129.46.96.20])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 3xyspggebj-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 07 May 2024 22:54:15 +0000 (GMT)
-Received: from nalasex01a.na.qualcomm.com (nalasex01a.na.qualcomm.com [10.47.209.196])
-	by NALASPPMTA05.qualcomm.com (8.17.1.5/8.17.1.5) with ESMTPS id 447MsDEd021810
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 7 May 2024 22:54:13 GMT
-Received: from [10.110.84.74] (10.80.80.8) by nalasex01a.na.qualcomm.com
- (10.47.209.196) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Tue, 7 May 2024
- 15:54:07 -0700
-Message-ID: <9d9c2912-e965-435d-b0d9-7e6071c24ab3@quicinc.com>
-Date: Tue, 7 May 2024 15:54:06 -0700
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eXKI4NuU"
+Received: by mail-pf1-f176.google.com with SMTP id d2e1a72fcca58-6f4521ad6c0so279129b3a.0;
+        Wed, 08 May 2024 15:15:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1715206530; x=1715811330; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=OvRrvqgNHBwilgARP9eErTNvt8papjTXT1DLOpLacEo=;
+        b=eXKI4NuU2kYWfCrlw+SUgqMyyKcDvV4/vEn/xp0zO24fncLFa7F5H5nqZBjPPj9FNY
+         WHaBNQSeiGWf1kWRkKsM31zKOho484tUKumKMPugcR9+B2up97INpY653XrRwEl3PJZt
+         c2W2/k17HK9F88GghtZoh6jNBzb05sMTMG/Nps9yft+/8M2GtYBuabsfX8rq8ZZFzGcF
+         tRaZ6bs0FeA0Yz6civPPWmHZdvT0j87+y/FxwcHmacytG3G7myRDTVIS2OxK7990nD23
+         qmz3ORv6JHuoRfsoyE6z5QWqxnW7cMU+xyvstaOEH+bZUr1R39WNryt16fxZhmrRbX5j
+         /hnQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1715206530; x=1715811330;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=OvRrvqgNHBwilgARP9eErTNvt8papjTXT1DLOpLacEo=;
+        b=dDAkwHfl9K5o6ygqWS1EWEmI3hdiVK1obd4iQT/AtWgkpkCoM02N1WQdGyvyD5pph4
+         3ZIMaL+FWAhWTJEAPgFRzLK3v4tc2IrXDopvxY0f6vFmzkPmeEaRa8/YF26uTG4VLMy6
+         VSXPazJXlPz/5feY/wGt2+GR43kjvGuohvp5rje2gsmOgr1O7533d1CjkuPZwl6Gp/F1
+         9bfA5wDQ3q7vMdN5ZoobpDyg6FOXmfF3/sqQWbesdTQJknvr6GouXU1Hp+EYQXUkvXyC
+         OL7T64Las6HRIO5IZrkVux3/J+XO6xyoDc2+NsJaF3RyqTpzppK+EWJtcj9ic4IQ3+6y
+         TtzA==
+X-Forwarded-Encrypted: i=1; AJvYcCViWvLCKUKV7739NO09V5Hbw8+zwFY7NRQgXMkRLZONr85av1c3Ljiz3BaDHjkhsWPpeSILINowbX/Gl1pyAVb8wDjZCZgsdGizy9Hl
+X-Gm-Message-State: AOJu0YxWHYNj4M6Olh1QIKeSstjH+hputr/L6Huqt5E45pNsjYiZWf0D
+	TTP3pCM3coBxsq59fTcwZaH+xD2r5yVxfCHSL6N8C9NtFjsLN9tECYesmg==
+X-Google-Smtp-Source: AGHT+IEh1dwN0KLko66GVhIrfD96Ti3gBfpmYP1Ad9GyHui8JFYBG+1nQSIf8iu9Qm2dUhba/y/aBw==
+X-Received: by 2002:a05:6a20:9494:b0:1af:c0f9:b155 with SMTP id adf61e73a8af0-1afc8d8eb58mr4085639637.38.1715206530400;
+        Wed, 08 May 2024 15:15:30 -0700 (PDT)
+Received: from carrot.. (i223-218-106-142.s42.a014.ap.plala.or.jp. [223.218.106.142])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2b628ea59absm1938826a91.47.2024.05.08.15.15.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 08 May 2024 15:15:29 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH -mm] nilfs2: convert BUG_ON() in nilfs_finish_roll_forward() to WARN_ON()
+Date: Thu,  9 May 2024 07:14:29 +0900
+Message-Id: <20240508221429.7559-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] nilfs2: fix nilfs_btree_commit_convert_and_insert()
- kernel-doc
-Content-Language: en-US
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-CC: <linux-nilfs@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-References: <20240507-nilfs_btree_convert_and_insert-kdoc-v1-1-bab3514eb753@quicinc.com>
- <CAKFNMomG+GuKJ53WmdWFONtimhbanKU-B_ZTdt5sEFxcuYxJ3w@mail.gmail.com>
-From: Jeff Johnson <quic_jjohnson@quicinc.com>
-In-Reply-To: <CAKFNMomG+GuKJ53WmdWFONtimhbanKU-B_ZTdt5sEFxcuYxJ3w@mail.gmail.com>
-Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
- nalasex01a.na.qualcomm.com (10.47.209.196)
-X-QCInternal: smtphost
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-GUID: W7eNOJR1f83XcDyEtKRY46EpQEVwCOd6
-X-Proofpoint-ORIG-GUID: W7eNOJR1f83XcDyEtKRY46EpQEVwCOd6
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.650,FMLib:17.11.176.26
- definitions=2024-05-07_14,2024-05-06_02,2023-05-22_02
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxscore=0 lowpriorityscore=0
- phishscore=0 suspectscore=0 clxscore=1015 bulkscore=0 mlxlogscore=999
- adultscore=0 spamscore=0 priorityscore=1501 impostorscore=0 malwarescore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2405010000
- definitions=main-2405070160
 
-On 5/7/2024 3:45 PM, Ryusuke Konishi wrote:
-> On Wed, May 8, 2024 at 7:23 AM Jeff Johnson wrote:
->>
->> Fix the following reported by make W=1:
->>
->> fs/nilfs2/btree.c:1871: warning: Function parameter or struct member 'btree' not described in 'nilfs_btree_convert_and_insert'
->> fs/nilfs2/btree.c:1871: warning: Excess function parameter 'bmap' description in 'nilfs_btree_convert_and_insert'
->>
->> Signed-off-by: Jeff Johnson <quic_jjohnson@quicinc.com>
->> ---
->>  fs/nilfs2/btree.c | 2 +-
->>  1 file changed, 1 insertion(+), 1 deletion(-)
->>
->> diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
->> index 65659fa0372e..8299839b5129 100644
->> --- a/fs/nilfs2/btree.c
->> +++ b/fs/nilfs2/btree.c
->> @@ -1858,7 +1858,7 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *btree,
->>
->>  /**
->>   * nilfs_btree_convert_and_insert -
->> - * @bmap:
->> + * @btree: bmap struct of btree
->>   * @key:
->>   * @ptr:
->>   * @keys:
->>
->> ---
->> base-commit: dd5a440a31fae6e459c0d6271dddd62825505361
->> change-id: 20240507-nilfs_btree_convert_and_insert-kdoc-7753c4a6e7c3
->>
-> 
-> Hi Jeff, thank you for posting.
-> 
-> However, a fix for this kernel-doc warnings is already queued in the
-> mm tree (to be merged in the next merge window).
-> 
-> Please refer to the patch below:
-> 
-> https://lkml.kernel.org/r/20240410075629.3441-3-konishi.ryusuke@gmail.com
-> https://git.kernel.org/pub/scm/linux/kernel/git/akpm/mm.git/commit/?h=mm-nonmm-stable&id=3da9b9650acc3a2a0c3d3f4542b93d4abe9da1de
-> 
-> 
-> Thanks,
-> Ryusuke Konishi
+The BUG_ON check performed on the return value of __getblk() in
+nilfs_finish_roll_forward() assumes that a buffer that has been
+successfully read once is retrieved with the same parameters and does
+not fail (__getblk() does not return an error due to memory allocation
+failure).  Also, nilfs_finish_roll_forward() is called at most once
+during mount.
 
-Awesome that others are helping to clean these :)
+Taking these into consideration, rewrite the check to use WARN_ON() to
+avoid using BUG_ON().
 
-Guess I should check lore before fixing so that I don't replicate work!
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Andrew, please add this to the queue for the next cycle (if it's not late).
 
-/jeff
+This is a change to reduce BUG_ONs in legacy usage.
+
+ fs/nilfs2/recovery.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
+index e48372618ac4..020f304c600e 100644
+--- a/fs/nilfs2/recovery.c
++++ b/fs/nilfs2/recovery.c
+@@ -699,7 +699,9 @@ static void nilfs_finish_roll_forward(struct the_nilfs *nilfs,
+ 		return;
+ 
+ 	bh = __getblk(nilfs->ns_bdev, ri->ri_lsegs_start, nilfs->ns_blocksize);
+-	BUG_ON(!bh);
++	if (WARN_ON(!bh))
++		return;  /* should never happen */
++
+ 	memset(bh->b_data, 0, bh->b_size);
+ 	set_buffer_dirty(bh);
+ 	err = sync_dirty_buffer(bh);
+-- 
+2.34.1
+
