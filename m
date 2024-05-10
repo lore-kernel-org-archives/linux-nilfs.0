@@ -1,63 +1,82 @@
-Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com [209.85.210.176])
+Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com [209.85.214.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D5621E89A;
-	Wed,  8 May 2024 22:15:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DE0C16F911;
+	Fri, 10 May 2024 11:49:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715206532; cv=none; b=KU2iZpiZy3P0+Pp70YJsM7M7hwOsD5TsVFXhgaFIkGm+hOm23L7VFOBbrkSLfb6IAmvyhRFQC0lmT/n6qnlWID0q/b28SR6Qqb9BGka7OW9Pv1ioyXWk5lSHnW5hCwwWdjOamPKq5HHgUVeJwMI36ogKWGrPBPNyaf3i2ODCQeM=
+	t=1715341800; cv=none; b=M/odq1Jyn78iUcRodU/Bd9eTAJslMcOFMEey9ihmhcQXTWJmd7vcRWBM6yaAKdmw3IZABi75Xnd9Nuur75sxH7cx21G3b/ayiJi8ygCQk9IRY03NRN25Nh4KaGV0F/HGALrbo0cD7svuIB14ATiijxaO0dZZ9wfmWS92FzTHsmI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715206532; c=relaxed/simple;
-	bh=zYvmqBYytu5lrRG063ZNZe74anNEulI5cB5MgQaGA1o=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=XY/BgaqUVx4bT0rH981tRf5lOsMiVMy8yuDCVd+JICa8tJ4AHGm+SbuPIrpbvqC9bufosrEDEwtxQyifbVfJ9zfMSsE5owtDq2aUdxZTK+4hS6+8wHsG5/eT+RrNh9bMlLQ2Fizk1VSDyIko52hIAM8VfxgSujGbfO+L06xiz2A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eXKI4NuU; arc=none smtp.client-ip=209.85.210.176
+	s=arc-20240116; t=1715341800; c=relaxed/simple;
+	bh=J7ZhPE4n1TNebqti4ceg9RBUgnFcG5UzDJV9uxEpxbQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Pd3fYv2MjIKB/OHQflgFo2enKyQBW66a1OyZxvwXVl+H0P84bXXBuuOlfJLmTLoJ04m6v2hpH/WxvLggIt3uUlNmAgw9qhN5/a8qpKNBoDDaqHeQENBkRlzT/rkfcXBXA4YUxzfdb+2x3ttRRXLGGajUaHIGH7429dJLSWONFNw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RdHmK+eE; arc=none smtp.client-ip=209.85.214.178
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eXKI4NuU"
-Received: by mail-pf1-f176.google.com with SMTP id d2e1a72fcca58-6f4521ad6c0so279129b3a.0;
-        Wed, 08 May 2024 15:15:30 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RdHmK+eE"
+Received: by mail-pl1-f178.google.com with SMTP id d9443c01a7336-1e651a9f3ffso12281415ad.1;
+        Fri, 10 May 2024 04:49:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1715206530; x=1715811330; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=OvRrvqgNHBwilgARP9eErTNvt8papjTXT1DLOpLacEo=;
-        b=eXKI4NuU2kYWfCrlw+SUgqMyyKcDvV4/vEn/xp0zO24fncLFa7F5H5nqZBjPPj9FNY
-         WHaBNQSeiGWf1kWRkKsM31zKOho484tUKumKMPugcR9+B2up97INpY653XrRwEl3PJZt
-         c2W2/k17HK9F88GghtZoh6jNBzb05sMTMG/Nps9yft+/8M2GtYBuabsfX8rq8ZZFzGcF
-         tRaZ6bs0FeA0Yz6civPPWmHZdvT0j87+y/FxwcHmacytG3G7myRDTVIS2OxK7990nD23
-         qmz3ORv6JHuoRfsoyE6z5QWqxnW7cMU+xyvstaOEH+bZUr1R39WNryt16fxZhmrRbX5j
-         /hnQ==
+        d=gmail.com; s=20230601; t=1715341798; x=1715946598; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=AlJsO7PWN4Jf79ghcMCVByM1+QjN19p/5hJE9J581cg=;
+        b=RdHmK+eE22GvcFOO0YWliqxAvHM43g5E6LQC6iQlCPMGtXUQ137SyuLxaV03W0oc/n
+         BXt9GUZUYciREyd2xPDPQ/dCSbYsODtFnqtnO9s0Ie5uILn1vbq9CgqNJkm7PNib84L4
+         COwR3CAwt8XtbKFJdrUwwIHoSAf1SibeIVG0uXW1vS6NvWozE6KehvzREf+ArvjJMt4g
+         hZUIfPHZkZpqmbUMVB7s8R1xpJrciJQr01HL9aSHkhaW4aZkqECo1axgoBZMCMbmEtvC
+         W0aUyfSKqLf2W/xQlkcTWvD5wExDnj3vlUrAQaDWqrbXqPT7w4wYX8Mdn5NHOvRSIUXc
+         ctmA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715206530; x=1715811330;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=OvRrvqgNHBwilgARP9eErTNvt8papjTXT1DLOpLacEo=;
-        b=dDAkwHfl9K5o6ygqWS1EWEmI3hdiVK1obd4iQT/AtWgkpkCoM02N1WQdGyvyD5pph4
-         3ZIMaL+FWAhWTJEAPgFRzLK3v4tc2IrXDopvxY0f6vFmzkPmeEaRa8/YF26uTG4VLMy6
-         VSXPazJXlPz/5feY/wGt2+GR43kjvGuohvp5rje2gsmOgr1O7533d1CjkuPZwl6Gp/F1
-         9bfA5wDQ3q7vMdN5ZoobpDyg6FOXmfF3/sqQWbesdTQJknvr6GouXU1Hp+EYQXUkvXyC
-         OL7T64Las6HRIO5IZrkVux3/J+XO6xyoDc2+NsJaF3RyqTpzppK+EWJtcj9ic4IQ3+6y
-         TtzA==
-X-Forwarded-Encrypted: i=1; AJvYcCViWvLCKUKV7739NO09V5Hbw8+zwFY7NRQgXMkRLZONr85av1c3Ljiz3BaDHjkhsWPpeSILINowbX/Gl1pyAVb8wDjZCZgsdGizy9Hl
-X-Gm-Message-State: AOJu0YxWHYNj4M6Olh1QIKeSstjH+hputr/L6Huqt5E45pNsjYiZWf0D
-	TTP3pCM3coBxsq59fTcwZaH+xD2r5yVxfCHSL6N8C9NtFjsLN9tECYesmg==
-X-Google-Smtp-Source: AGHT+IEh1dwN0KLko66GVhIrfD96Ti3gBfpmYP1Ad9GyHui8JFYBG+1nQSIf8iu9Qm2dUhba/y/aBw==
-X-Received: by 2002:a05:6a20:9494:b0:1af:c0f9:b155 with SMTP id adf61e73a8af0-1afc8d8eb58mr4085639637.38.1715206530400;
-        Wed, 08 May 2024 15:15:30 -0700 (PDT)
-Received: from carrot.. (i223-218-106-142.s42.a014.ap.plala.or.jp. [223.218.106.142])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2b628ea59absm1938826a91.47.2024.05.08.15.15.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 08 May 2024 15:15:29 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH -mm] nilfs2: convert BUG_ON() in nilfs_finish_roll_forward() to WARN_ON()
-Date: Thu,  9 May 2024 07:14:29 +0900
-Message-Id: <20240508221429.7559-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+        d=1e100.net; s=20230601; t=1715341798; x=1715946598;
+        h=content-transfer-encoding:mime-version:reply-to:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=AlJsO7PWN4Jf79ghcMCVByM1+QjN19p/5hJE9J581cg=;
+        b=igzcJ/UOQvP9z3vz/So8P+YINBmPu8JOYccP/eOG/Gmitoasz/xSL28pY9J2qDlaNg
+         2MowrSX+13f3A7vM29nlbRSHQP4+7SdNusVGvA0SQ7SHG5omq+oEwLp7I5gLsW3lwnOv
+         NqSDUvw9x/Y/qnoduAAioWXk9lW1Ao1C5Pa+ot2DbYNpduPHhwYBu74sKYz6K1Xdtqh9
+         JtaOeH/kxo9Qw0MKiSfUfnhC2Yh17mqVKyuFHTm2f9meOuc04BSD8k/gf+OUA6jotxGc
+         1/dC56C/JIYKooMMX3usRR/vWNPUBAKXaTub2tVxZqag/2y3tmuN3l7Q2KTPzPmsUkHF
+         d42w==
+X-Forwarded-Encrypted: i=1; AJvYcCUqAGISDLzKpWMZY/Fg43sWUSRaQ5PjNokVBe+6Y0JJFEjh5owouDpyhwy5ETM6ZTd2QgpMAbdiznnrcA4weBrIdkoAAkn2uxGyH8rTZiivBGxDbMzk/oBx5p534zllv2WeCVeWd1tw0ErgX99PEdqubqh5GpCcgcE6YCI3dCxoc9mJbTqFlcnB
+X-Gm-Message-State: AOJu0YzfwAtHPUOSA8EbjipTLLc+7fb7/MYFKVgZADFaan7Rq3Fu/TFE
+	5vhH8qOirp5QQquvajTxdrjbeNQvHnnn3zp58icFaLYne8GpCbsf
+X-Google-Smtp-Source: AGHT+IEgC/5PItwGLdBO3mEfXM0RAVpswT1aq1A3QBfgABXJzBC0a91j/oU3l3ssnynmf+QFhY0xNQ==
+X-Received: by 2002:a17:902:c145:b0:1ec:659c:95fb with SMTP id d9443c01a7336-1ef43e25e5cmr22881935ad.32.1715341798221;
+        Fri, 10 May 2024 04:49:58 -0700 (PDT)
+Received: from KASONG-MC4.tencent.com ([43.132.141.20])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1ef0c134155sm30183825ad.231.2024.05.10.04.49.54
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Fri, 10 May 2024 04:49:57 -0700 (PDT)
+From: Kairui Song <ryncsn@gmail.com>
+To: linux-mm@kvack.org
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	"Huang, Ying" <ying.huang@intel.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Chris Li <chrisl@kernel.org>,
+	Barry Song <v-songbaohua@oppo.com>,
+	Ryan Roberts <ryan.roberts@arm.com>,
+	Neil Brown <neilb@suse.de>,
+	Minchan Kim <minchan@kernel.org>,
+	David Hildenbrand <david@redhat.com>,
+	Hugh Dickins <hughd@google.com>,
+	Yosry Ahmed <yosryahmed@google.com>,
+	linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Kairui Song <kasong@tencent.com>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org
+Subject: [PATCH v5 02/12] nilfs2: drop usage of page_index
+Date: Fri, 10 May 2024 19:47:37 +0800
+Message-ID: <20240510114747.21548-3-ryncsn@gmail.com>
+X-Mailer: git-send-email 2.45.0
+In-Reply-To: <20240510114747.21548-1-ryncsn@gmail.com>
+References: <20240510114747.21548-1-ryncsn@gmail.com>
+Reply-To: Kairui Song <kasong@tencent.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -66,40 +85,47 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The BUG_ON check performed on the return value of __getblk() in
-nilfs_finish_roll_forward() assumes that a buffer that has been
-successfully read once is retrieved with the same parameters and does
-not fail (__getblk() does not return an error due to memory allocation
-failure).  Also, nilfs_finish_roll_forward() is called at most once
-during mount.
+From: Kairui Song <kasong@tencent.com>
 
-Taking these into consideration, rewrite the check to use WARN_ON() to
-avoid using BUG_ON().
+page_index is only for mixed usage of page cache and swap cache, for
+pure page cache usage, the caller can just use page->index instead.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+It can't be a swap cache page here (being part of buffer head),
+so just drop it. And while we are at it, optimize the code by retrieving
+the offset of the buffer head within the folio directly using bh_offset,
+and get rid of the loop and usage of page helpers.
+
+Suggested-by: Matthew Wilcox <willy@infradead.org>
+Signed-off-by: Kairui Song <kasong@tencent.com>
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
+Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
-Andrew, please add this to the queue for the next cycle (if it's not late).
+ fs/nilfs2/bmap.c | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
 
-This is a change to reduce BUG_ONs in legacy usage.
-
- fs/nilfs2/recovery.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
-
-diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-index e48372618ac4..020f304c600e 100644
---- a/fs/nilfs2/recovery.c
-+++ b/fs/nilfs2/recovery.c
-@@ -699,7 +699,9 @@ static void nilfs_finish_roll_forward(struct the_nilfs *nilfs,
- 		return;
+diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+index 383f0afa2cea..cd14ea25968c 100644
+--- a/fs/nilfs2/bmap.c
++++ b/fs/nilfs2/bmap.c
+@@ -450,15 +450,9 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
+ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+ 			      const struct buffer_head *bh)
+ {
+-	struct buffer_head *pbh;
+-	__u64 key;
++	loff_t pos = folio_pos(bh->b_folio) + bh_offset(bh);
  
- 	bh = __getblk(nilfs->ns_bdev, ri->ri_lsegs_start, nilfs->ns_blocksize);
--	BUG_ON(!bh);
-+	if (WARN_ON(!bh))
-+		return;  /* should never happen */
-+
- 	memset(bh->b_data, 0, bh->b_size);
- 	set_buffer_dirty(bh);
- 	err = sync_dirty_buffer(bh);
+-	key = page_index(bh->b_page) << (PAGE_SHIFT -
+-					 bmap->b_inode->i_blkbits);
+-	for (pbh = page_buffers(bh->b_page); pbh != bh; pbh = pbh->b_this_page)
+-		key++;
+-
+-	return key;
++	return pos >> bmap->b_inode->i_blkbits;
+ }
+ 
+ __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 key)
 -- 
-2.34.1
+2.45.0
 
