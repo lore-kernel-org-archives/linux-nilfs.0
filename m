@@ -1,125 +1,287 @@
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
+Received: from mail-io1-f79.google.com (mail-io1-f79.google.com [209.85.166.79])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A741812F591
-	for <linux-nilfs@vger.kernel.org>; Fri, 17 May 2024 15:52:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7B08374FB
+	for <linux-nilfs@vger.kernel.org>; Sat, 18 May 2024 12:29:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.79
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715961176; cv=none; b=MVfZMXh1807qoDnOu9zMRKEpHKa6hKNEBVB+6tyWfSWjDQlHT4HamTlPv8lhY7a5yZj6w1qTwKMK8bqJwiNxj8wZzzxXvhWMf883j0kUZEXSWqDu+igYEcYQ/AmEMMHjUGohu1oWYXPht/gH+H7/VvhtNP+2q1HCPvPhERSHyN8=
+	t=1716035375; cv=none; b=G/NKKZtd6bkzFLah0oeA16bwl/d1foDFtpih6ofuvoYiGrX6CDwPW7nzPiJhYixvWtlWY2atmErCiJ5HpLVivbW7IY4wB3Jk9XnK34ek/8+J73YooSlHDWmADXopYdZSyk8D9aFOMceBcXte+dkHwf+AMvhEHtekZqVzhOxOvls=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715961176; c=relaxed/simple;
-	bh=+KKefjoffKvfiWlHtyzARSgF6pa3VRijHQBIea8/azU=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=af4va/TIZyLpp5PRWdhi5QVWFy7rz3SWkwQoh7Ig9wpSrtm7Wv2BX2jl0YTZyEYud16RjU/95s/A3GXM+lbhKIcOaly5I0jqULi3wz82VnsbzMNtXAyqA+1lh4/S5TanH7DW2cPf52bxzlgWFqzoRA2sghapOTXYfBfnJhWXUKA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=MO0aDXb6; arc=none smtp.client-ip=209.85.167.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="MO0aDXb6"
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-51f45104ef0so1003775e87.3
-        for <linux-nilfs@vger.kernel.org>; Fri, 17 May 2024 08:52:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google; t=1715961172; x=1716565972; darn=vger.kernel.org;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=5F6odILlMEMye+qyQ7yUkE31zWxXmW2HU+hKWzkF4IM=;
-        b=MO0aDXb6HCenYM/AGTjirE4vWqWKA14voA4LzjrBk9TWpWsioQ7oUavLVYM0FwRki+
-         gDbIrZBn3MRI4iE98hzu6UZ7lwmnczPMebYJpBtGWpDgQ0uFbA+kmz3A/SNu+CbihnKl
-         hge0fkEqQnncnckVPpHy8v26nk1cxouJ7rUkg=
+	s=arc-20240116; t=1716035375; c=relaxed/simple;
+	bh=FL19ndtJVT1jEoramjVP0De/6i7Va1NeaPMgBx4MzAE=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=MkjZu2bjao/z53dZGCSCCv71hW/P6LGogiOxGkzAS6qgIAiPMofTAThQpGWYkzee5NEpAta5dYNfkf4WTpscAVr3BN4OwaU8Zkj5bp4uEM9tPDpOHPEG2fiObM2M7oTBU4CaMQU84oEdwiIR5MFEZopyBslndnDL0XcytxxZSAs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.79
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-io1-f79.google.com with SMTP id ca18e2360f4ac-7e1db7e5386so861533139f.3
+        for <linux-nilfs@vger.kernel.org>; Sat, 18 May 2024 05:29:33 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715961172; x=1716565972;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=5F6odILlMEMye+qyQ7yUkE31zWxXmW2HU+hKWzkF4IM=;
-        b=LcVT+JY/kYMaJr3oJ/dyhv5LOvVw8yAXLCtvB4SMluVqsIzysenzD7UpUfllyPQTjM
-         klpTW7AVrjHL1NW9dXeD/ClMgMRARtGG7gXGu9mJIInydkViCbJGkt5TYkT6hb0wBUgD
-         AUeGudsptyPONfPqlcEnEfOx+t+ASw3g46yxmU1n9LDnjLmjEy8oj0d4JSXAU8qVuow3
-         DzN4FFVDnhTcogoGxXgbgR5QY+DgeSEUSh+W2r4iw0nrGS2FR4XDRpDH3+hrrHGQFngI
-         VlKOhPOu43r56ENYoRMPHjrVsD5bka7btaZ/7EgT0ZI6L0VFon6ikIgVXt2Vb2dQCyjY
-         Yd5g==
-X-Forwarded-Encrypted: i=1; AJvYcCUsdqVURwWaiZ0A5rlH2mVVgrrqNid+IXr4TPImHoczWSyGiIPGO6eRNO5jARqNujDaJOVlzJ07yuyX57Z4TH6mbdFbeO5J5Z8BPY0=
-X-Gm-Message-State: AOJu0YyiVixH2SGnS7OidzusNePwfHE/nR6wSm+ehyFyrl4oTkuGGCJq
-	1wf0rzsX2iBZAUDSJxOyIUhAb2Sv+skSU0oUZgHCWpUbhyGHTRuFrul0+LO8sSDEFCK0ubggkie
-	Byz2YGg==
-X-Google-Smtp-Source: AGHT+IFlTK8ub5c1yi/r5xQSqnqJ0QCaqvyz3m10i0uN61r75wezTqRGgpwH1EblVL2uDMyta8rbVQ==
-X-Received: by 2002:a05:6512:310f:b0:51d:6660:e43 with SMTP id 2adb3069b0e04-5220ff746c8mr13635386e87.59.1715961172551;
-        Fri, 17 May 2024 08:52:52 -0700 (PDT)
-Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com. [209.85.167.48])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-521f38d36d3sm3316347e87.169.2024.05.17.08.52.51
-        for <linux-nilfs@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 17 May 2024 08:52:51 -0700 (PDT)
-Received: by mail-lf1-f48.google.com with SMTP id 2adb3069b0e04-51f57713684so2887338e87.1
-        for <linux-nilfs@vger.kernel.org>; Fri, 17 May 2024 08:52:51 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AJvYcCWL0wQlsx4NfI1fvwZx+hpWYZmvhmOvBeT86xm4zd3iwjpw5T3NBoi4LYnDmaOCcjAddy3rBnTqoOIItvQY9gC75JU1ehlMGQ8+5bw=
-X-Received: by 2002:a05:6512:15a8:b0:51f:b781:7297 with SMTP id
- 2adb3069b0e04-5220fa7180amr17902407e87.8.1715961171112; Fri, 17 May 2024
- 08:52:51 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1716035373; x=1716640173;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=fEAA6+enGti/b+5UaS6moDffnbXFlCLvFfjgXueob98=;
+        b=oBlOUobKGOf2A1jB6atVPyqAc8yZIQK2wLWUoM6T0+FyrsPSZlEaXBp0ptU2boGUoF
+         FxCheBTU1r0nOKg4BBHvFzaoXZ67PAnUnAG0TBcSPUEyvgocK97LFnuK+Bf3FPA2h/SH
+         qoGmpsFt8WR8ixgQIFmyJsJjVzQcFNoJpFPVbfkFa8ivfn9soLey5ECdJ1WF5TR8L9vU
+         ju0wIl7f719gdcM2YEwkBP80PhuWXTFld6by7lm6z/DkHlEQB+PBjgsW5dJ5puIYJXv4
+         FgEk5qpuGCaa7tmFMk/w6Soek8qLjw/cOOvtgndt9tvdDQKnFR0ofDiXFSqPMgRkbeCh
+         Gw3A==
+X-Forwarded-Encrypted: i=1; AJvYcCV2MnP3knKHR8DyYuITTrZQJU54y1GcSiI0DQp7mTCRYRI2AoF/RdRlqh6QbIprIct7yVpM0mXnM8tI9oNpeIclGR0B5tq9EuSVulI=
+X-Gm-Message-State: AOJu0YzVLArYlxTq9ua6q/oSFYwAWju1ZiPG2B3TtpH5JuJ6Z48fLja9
+	B0B5RgO9yNy5nhzVGfHCO4cAqz5ZEWIgLNAi99Ahj6TLG6/s7z7Cpw0ujh6zf1656j3BHbv73ni
+	hsU7FEQR7ywgq2DbgZuiqNcljGspID3ZDQssfNpYwkhWGH2q3WnzUxGU=
+X-Google-Smtp-Source: AGHT+IEln7iHdvMc7d6tmFuEi2Z+hR3rxLiU3ZXOD91BYH/nkLanmyGwkEyDCaoTB7f+GMymPm7APjZR6XvyGBpy8WMHKDWPEmkY
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240507142454.3344-1-konishi.ryusuke@gmail.com>
- <CAHk-=wgogPoSdCYw9jhc2Zm=BaE19nXYwFn_F9SwD2C-DyrmCw@mail.gmail.com> <4a5cf233-a4e6-48ce-b9ba-f1014f452892@acm.org>
-In-Reply-To: <4a5cf233-a4e6-48ce-b9ba-f1014f452892@acm.org>
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Date: Fri, 17 May 2024 08:52:34 -0700
-X-Gmail-Original-Message-ID: <CAHk-=wh9cwmRUzqskD=qV2oCpyS8GBWWAv1sSrN8YOPR3fd70w@mail.gmail.com>
-Message-ID: <CAHk-=wh9cwmRUzqskD=qV2oCpyS8GBWWAv1sSrN8YOPR3fd70w@mail.gmail.com>
-Subject: Re: [PATCH -mm] nilfs2: Use __field_struct() for a bitwise field
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, 
-	Steven Rostedt <rostedt@goodmis.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>
+X-Received: by 2002:a05:6638:3793:b0:48a:37e1:a543 with SMTP id
+ 8926c6da1cb9f-48a37e1a688mr770748173.6.1716035373022; Sat, 18 May 2024
+ 05:29:33 -0700 (PDT)
+Date: Sat, 18 May 2024 05:29:33 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <000000000000d4cc840618b99e23@google.com>
+Subject: [syzbot] [nilfs?] possible deadlock in nilfs_transaction_begin
+From: syzbot <syzbot+77c39f023a0cb2e4c149@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
 
-On Thu, 16 May 2024 at 14:52, Bart Van Assche <bvanassche@acm.org> wrote:
->
-> It seems like sparse verifies the types of all expressions in a
-> _Generic() argument list instead of only the expression for which the
-> type matches.
+Hello,
 
-Yes.
+syzbot found the following issue on:
 
->    Could this indicate a bug in sparse? On
-> https://en.cppreference.com/w/c/language/generic I found the
-> following (I'm not sure whether that website is a good reference):
->
-> "The controlling-expression and the expressions of the selections that
-> are not chosen are never evaluated."
+HEAD commit:    a5131c3fdf26 Merge tag 'x86-shstk-2024-05-13' of git://git..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=144c6e04980000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=fdb182f40cdd66f7
+dashboard link: https://syzkaller.appspot.com/bug?extid=77c39f023a0cb2e4c149
+compiler:       gcc (Debian 12.2.0-14) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40
+userspace arch: i386
 
-Not really a bug, because "never evaluated" in the above context means
-that they don't generate code. The expressions are still obviously
-parsed for syntax and validity.
+Unfortunately, I don't have any reproducer for this issue yet.
 
-It definitely might be seen as a misfeature, though - the "degrades to
-integer" warning is done before code reachability has been determined.
-So it's done even for code that is never executed.
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-a5131c3f.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/6d23116dab9c/vmlinux-a5131c3f.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/dd8b9de9af4f/bzImage-a5131c3f.xz
 
-So you'd get it even if you had something like
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+77c39f023a0cb2e4c149@syzkaller.appspotmail.com
 
-        if (0) .. some bad bitwise expression ...
+NILFS (loop2): inode bitmap is inconsistent for reserved inodes
+NILFS (loop2): repaired inode bitmap for reserved inodes
+======================================================
+WARNING: possible circular locking dependency detected
+6.9.0-syzkaller-01768-ga5131c3fdf26 #0 Not tainted
+------------------------------------------------------
+syz-executor.2/23478 is trying to acquire lock:
+ffffffff8d938460 (fs_reclaim){+.+.}-{0:0}, at: might_alloc include/linux/sched/mm.h:312 [inline]
+ffffffff8d938460 (fs_reclaim){+.+.}-{0:0}, at: prepare_alloc_pages.constprop.0+0x155/0x560 mm/page_alloc.c:4346
 
-Sadly, that's fairly deeply ingrained in how sparse deals with the
-bitwise types: they degrade to their regular base type as part of the
-type evaluation, which happens fairly early on the syntax tree, long
-before it has been converted to SSA form and reachability analysis.
+but task is already holding lock:
+ffff888026c5c2a0 (&nilfs->ns_segctor_sem){++++}-{3:3}, at: nilfs_transaction_begin+0x326/0xa40 fs/nilfs2/segment.c:223
 
-It's *fixable* - instead of warning when evaluating the types of the
-expression, sparse could leave in a "warning node" into the tree,
-linearize it to a "warning instruction" in the SSA form, and only
-actually output a warning if that instruction still exists after dead
-code elimination etc.
+which lock already depends on the new lock.
 
-But that kind of fix would be a pretty big change, we don't have that
-kind of thing right now at all. So "fixable in theory" is probably not
-"practical with the current lack of sparse development".
 
-What would be much easier is probably to hack together a couple of
-builtins for type checking: a "__builtin_signed_p()" should not be
-hard.
+the existing dependency chain (in reverse order) is:
 
-                  Linus
+-> #2 (&nilfs->ns_segctor_sem){++++}-{3:3}:
+       down_read+0x9a/0x330 kernel/locking/rwsem.c:1526
+       nilfs_transaction_begin+0x326/0xa40 fs/nilfs2/segment.c:223
+       nilfs_create+0xb7/0x320 fs/nilfs2/namei.c:82
+       lookup_open.isra.0+0x10a1/0x13c0 fs/namei.c:3505
+       open_last_lookups fs/namei.c:3574 [inline]
+       path_openat+0x92f/0x2990 fs/namei.c:3804
+       do_filp_open+0x1dc/0x430 fs/namei.c:3834
+       do_sys_openat2+0x17a/0x1e0 fs/open.c:1406
+       do_sys_open fs/open.c:1421 [inline]
+       __do_compat_sys_openat fs/open.c:1481 [inline]
+       __se_compat_sys_openat fs/open.c:1479 [inline]
+       __ia32_compat_sys_openat+0x16e/0x210 fs/open.c:1479
+       do_syscall_32_irqs_on arch/x86/entry/common.c:165 [inline]
+       __do_fast_syscall_32+0x75/0x120 arch/x86/entry/common.c:386
+       do_fast_syscall_32+0x32/0x80 arch/x86/entry/common.c:411
+       entry_SYSENTER_compat_after_hwframe+0x84/0x8e
+
+-> #1 (sb_internal#5){.+.+}-{0:0}:
+       percpu_down_read include/linux/percpu-rwsem.h:51 [inline]
+       __sb_start_write include/linux/fs.h:1661 [inline]
+       sb_start_intwrite include/linux/fs.h:1844 [inline]
+       nilfs_transaction_begin+0x21b/0xa40 fs/nilfs2/segment.c:220
+       nilfs_dirty_inode+0x1a4/0x270 fs/nilfs2/inode.c:1153
+       __mark_inode_dirty+0x1f0/0xe70 fs/fs-writeback.c:2486
+       mark_inode_dirty_sync include/linux/fs.h:2426 [inline]
+       iput.part.0+0x5b/0x7f0 fs/inode.c:1764
+       iput+0x5c/0x80 fs/inode.c:1757
+       dentry_unlink_inode+0x295/0x440 fs/dcache.c:400
+       __dentry_kill+0x1d0/0x600 fs/dcache.c:603
+       shrink_kill fs/dcache.c:1048 [inline]
+       shrink_dentry_list+0x140/0x5d0 fs/dcache.c:1075
+       prune_dcache_sb+0xeb/0x150 fs/dcache.c:1156
+       super_cache_scan+0x32a/0x550 fs/super.c:221
+       do_shrink_slab+0x44f/0x11c0 mm/shrinker.c:435
+       shrink_slab_memcg mm/shrinker.c:548 [inline]
+       shrink_slab+0xa87/0x1310 mm/shrinker.c:626
+       shrink_one+0x493/0x7c0 mm/vmscan.c:4774
+       shrink_many mm/vmscan.c:4835 [inline]
+       lru_gen_shrink_node+0x89f/0x1750 mm/vmscan.c:4935
+       shrink_node mm/vmscan.c:5894 [inline]
+       kswapd_shrink_node mm/vmscan.c:6704 [inline]
+       balance_pgdat+0x10d1/0x1a10 mm/vmscan.c:6895
+       kswapd+0x5ea/0xbf0 mm/vmscan.c:7164
+       kthread+0x2c1/0x3a0 kernel/kthread.c:388
+       ret_from_fork+0x45/0x80 arch/x86/kernel/process.c:147
+       ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:244
+
+-> #0 (fs_reclaim){+.+.}-{0:0}:
+       check_prev_add kernel/locking/lockdep.c:3134 [inline]
+       check_prevs_add kernel/locking/lockdep.c:3253 [inline]
+       validate_chain kernel/locking/lockdep.c:3869 [inline]
+       __lock_acquire+0x2478/0x3b30 kernel/locking/lockdep.c:5137
+       lock_acquire kernel/locking/lockdep.c:5754 [inline]
+       lock_acquire+0x1b1/0x560 kernel/locking/lockdep.c:5719
+       __fs_reclaim_acquire mm/page_alloc.c:3698 [inline]
+       fs_reclaim_acquire+0x102/0x160 mm/page_alloc.c:3712
+       might_alloc include/linux/sched/mm.h:312 [inline]
+       prepare_alloc_pages.constprop.0+0x155/0x560 mm/page_alloc.c:4346
+       __alloc_pages+0x194/0x2460 mm/page_alloc.c:4564
+       alloc_pages_mpol+0x275/0x610 mm/mempolicy.c:2264
+       folio_alloc+0x1e/0x40 mm/mempolicy.c:2342
+       filemap_alloc_folio+0x3ba/0x490 mm/filemap.c:984
+       __filemap_get_folio+0x527/0xa90 mm/filemap.c:1926
+       pagecache_get_page+0x2c/0x260 mm/folio-compat.c:93
+       block_write_begin+0x38/0x4a0 fs/buffer.c:2209
+       nilfs_write_begin+0x9f/0x1a0 fs/nilfs2/inode.c:262
+       page_symlink+0x356/0x450 fs/namei.c:5236
+       nilfs_symlink+0x23c/0x3c0 fs/nilfs2/namei.c:153
+       vfs_symlink fs/namei.c:4489 [inline]
+       vfs_symlink+0x3e8/0x630 fs/namei.c:4473
+       do_symlinkat+0x263/0x310 fs/namei.c:4515
+       __do_sys_symlink fs/namei.c:4536 [inline]
+       __se_sys_symlink fs/namei.c:4534 [inline]
+       __ia32_sys_symlink+0x78/0xa0 fs/namei.c:4534
+       do_syscall_32_irqs_on arch/x86/entry/common.c:165 [inline]
+       __do_fast_syscall_32+0x75/0x120 arch/x86/entry/common.c:386
+       do_fast_syscall_32+0x32/0x80 arch/x86/entry/common.c:411
+       entry_SYSENTER_compat_after_hwframe+0x84/0x8e
+
+other info that might help us debug this:
+
+Chain exists of:
+  fs_reclaim --> sb_internal#5 --> &nilfs->ns_segctor_sem
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  rlock(&nilfs->ns_segctor_sem);
+                               lock(sb_internal#5);
+                               lock(&nilfs->ns_segctor_sem);
+  lock(fs_reclaim);
+
+ *** DEADLOCK ***
+
+4 locks held by syz-executor.2/23478:
+ #0: ffff888000c0c420 (sb_writers#32){.+.+}-{0:0}, at: filename_create+0x10d/0x530 fs/namei.c:3893
+ #1: ffff88804b284f88 (&type->i_mutex_dir_key#23/1){+.+.}-{3:3}, at: inode_lock_nested include/linux/fs.h:826 [inline]
+ #1: ffff88804b284f88 (&type->i_mutex_dir_key#23/1){+.+.}-{3:3}, at: filename_create+0x1c2/0x530 fs/namei.c:3900
+ #2: ffff888000c0c610 (sb_internal#5){.+.+}-{0:0}, at: nilfs_symlink+0x114/0x3c0 fs/nilfs2/namei.c:140
+ #3: ffff888026c5c2a0 (&nilfs->ns_segctor_sem){++++}-{3:3}, at: nilfs_transaction_begin+0x326/0xa40 fs/nilfs2/segment.c:223
+
+stack backtrace:
+CPU: 2 PID: 23478 Comm: syz-executor.2 Not tainted 6.9.0-syzkaller-01768-ga5131c3fdf26 #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x116/0x1f0 lib/dump_stack.c:114
+ check_noncircular+0x31a/0x400 kernel/locking/lockdep.c:2187
+ check_prev_add kernel/locking/lockdep.c:3134 [inline]
+ check_prevs_add kernel/locking/lockdep.c:3253 [inline]
+ validate_chain kernel/locking/lockdep.c:3869 [inline]
+ __lock_acquire+0x2478/0x3b30 kernel/locking/lockdep.c:5137
+ lock_acquire kernel/locking/lockdep.c:5754 [inline]
+ lock_acquire+0x1b1/0x560 kernel/locking/lockdep.c:5719
+ __fs_reclaim_acquire mm/page_alloc.c:3698 [inline]
+ fs_reclaim_acquire+0x102/0x160 mm/page_alloc.c:3712
+ might_alloc include/linux/sched/mm.h:312 [inline]
+ prepare_alloc_pages.constprop.0+0x155/0x560 mm/page_alloc.c:4346
+ __alloc_pages+0x194/0x2460 mm/page_alloc.c:4564
+ alloc_pages_mpol+0x275/0x610 mm/mempolicy.c:2264
+ folio_alloc+0x1e/0x40 mm/mempolicy.c:2342
+ filemap_alloc_folio+0x3ba/0x490 mm/filemap.c:984
+ __filemap_get_folio+0x527/0xa90 mm/filemap.c:1926
+ pagecache_get_page+0x2c/0x260 mm/folio-compat.c:93
+ block_write_begin+0x38/0x4a0 fs/buffer.c:2209
+ nilfs_write_begin+0x9f/0x1a0 fs/nilfs2/inode.c:262
+ page_symlink+0x356/0x450 fs/namei.c:5236
+ nilfs_symlink+0x23c/0x3c0 fs/nilfs2/namei.c:153
+ vfs_symlink fs/namei.c:4489 [inline]
+ vfs_symlink+0x3e8/0x630 fs/namei.c:4473
+ do_symlinkat+0x263/0x310 fs/namei.c:4515
+ __do_sys_symlink fs/namei.c:4536 [inline]
+ __se_sys_symlink fs/namei.c:4534 [inline]
+ __ia32_sys_symlink+0x78/0xa0 fs/namei.c:4534
+ do_syscall_32_irqs_on arch/x86/entry/common.c:165 [inline]
+ __do_fast_syscall_32+0x75/0x120 arch/x86/entry/common.c:386
+ do_fast_syscall_32+0x32/0x80 arch/x86/entry/common.c:411
+ entry_SYSENTER_compat_after_hwframe+0x84/0x8e
+RIP: 0023:0xf734f579
+Code: b8 01 10 06 03 74 b4 01 10 07 03 74 b0 01 10 08 03 74 d8 01 00 00 00 00 00 00 00 00 00 00 00 00 00 51 52 55 89 e5 0f 34 cd 80 <5d> 5a 59 c3 90 90 90 90 8d b4 26 00 00 00 00 8d b4 26 00 00 00 00
+RSP: 002b:00000000f5f415ac EFLAGS: 00000292 ORIG_RAX: 0000000000000053
+RAX: ffffffffffffffda RBX: 0000000020000340 RCX: 0000000020000100
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000292 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+ </TASK>
+----------------
+Code disassembly (best guess), 2 bytes skipped:
+   0:	10 06                	adc    %al,(%rsi)
+   2:	03 74 b4 01          	add    0x1(%rsp,%rsi,4),%esi
+   6:	10 07                	adc    %al,(%rdi)
+   8:	03 74 b0 01          	add    0x1(%rax,%rsi,4),%esi
+   c:	10 08                	adc    %cl,(%rax)
+   e:	03 74 d8 01          	add    0x1(%rax,%rbx,8),%esi
+  1e:	00 51 52             	add    %dl,0x52(%rcx)
+  21:	55                   	push   %rbp
+  22:	89 e5                	mov    %esp,%ebp
+  24:	0f 34                	sysenter
+  26:	cd 80                	int    $0x80
+* 28:	5d                   	pop    %rbp <-- trapping instruction
+  29:	5a                   	pop    %rdx
+  2a:	59                   	pop    %rcx
+  2b:	c3                   	ret
+  2c:	90                   	nop
+  2d:	90                   	nop
+  2e:	90                   	nop
+  2f:	90                   	nop
+  30:	8d b4 26 00 00 00 00 	lea    0x0(%rsi,%riz,1),%esi
+  37:	8d b4 26 00 00 00 00 	lea    0x0(%rsi,%riz,1),%esi
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
