@@ -1,131 +1,153 @@
-Received: from mail-pl1-f173.google.com (mail-pl1-f173.google.com [209.85.214.173])
+Received: from mail-io1-f80.google.com (mail-io1-f80.google.com [209.85.166.80])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2F50149015;
-	Tue, 21 May 2024 17:59:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFD131E4A2
+	for <linux-nilfs@vger.kernel.org>; Wed, 22 May 2024 02:55:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.80
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716314352; cv=none; b=W6XwCj/RD0S2eFJlWlXijNQPjs59HqLDxCtUXtHojYPBb6j51l+KF3g3y2MwDC0LlCElXDma/Rogo/REbSxktx3V+tM507avYa+oAiD4gbUrp4C23W98o6ZmKPlfd7LSm+QjmfSyXEqRpkH+rBTK66V6RlvZbcV2tWlqB7/HqdA=
+	t=1716346534; cv=none; b=Y4iBYqBatJFBG5SBLorWqOwWlvNZVZgl0r0f2XpNAfaY5cDrYLPmDI7v+k50fgbwzgNje0ju3f2gb5RlLZkBDxkXdHWxE9RUxDQ/5Pu55OT4GNnnIHD1GRc+GkfQAmJ8kRffzOw94KLkpVqSQUtcbQQgvClcmxfhUxahqCqV+mM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716314352; c=relaxed/simple;
-	bh=9nVCD8ADnlgjsIYAZwlJG/eJ9+TUZ5nuVmBLfa+tbeg=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=G97xFckkGYsrVqaKEjWDlKObmR5r9QwpwoA0sezELBKlQt1IsNtPo22aVj9/EsrKnAr42sY9/DH/FNlH37Ryz5q/nPZQeB6lF51vxDOfzwT10AFzDazc5kZ8YaaA+1OwuRw4rdF1cQ3sErktxuKrZsDvXmBmLdGNBKlA/hNUtL8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AXdbpYbE; arc=none smtp.client-ip=209.85.214.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AXdbpYbE"
-Received: by mail-pl1-f173.google.com with SMTP id d9443c01a7336-1ec69e3dbcfso3509225ad.0;
-        Tue, 21 May 2024 10:59:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716314350; x=1716919150; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:reply-to:references
-         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=xFpAHzqRgSiz2xm2CXznKixemcT6aD8kBzQB3tTCfzo=;
-        b=AXdbpYbEAfuLEYRX3SQzUbJMqXNn7QUJotHE1x+yFtvoQ/xFFZMYW8iIrBXs1WlN64
-         P2RDDjgYy/b/Xqoy8DCSi+sXfF5HnyKf3Y+Pm4DbR6Fv2a/WKjz9stNobOnT6dt9qWfY
-         747qO0TrioFx8vR70JWNNO5y74x61vAiA9J7hN7fVxczEcWq6jJl176VAhdmngL3Bn5B
-         FZiufn9FLz6fC8KXbsEy7Wj8ZukIMHaDAwYDlrOn4B4/uiulLb5fAYA4ZLB49sPqmiCv
-         XLVVJVrPN95nyTMRlpt6Lgl6gVgQjobIJm7kjniFAb95Q/TQdCWdqUSTMcATgfJspI5B
-         X99g==
+	s=arc-20240116; t=1716346534; c=relaxed/simple;
+	bh=Fmq4cfmTdTx1iUl4iK3aruK2b4BklXedhpLLjn/V3gg=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=ifo9Yfc3fpPq5NSrVfN9ALMY9QUZrE6Cd0yOOuAoyzBvNoChsck25kfgUGqc/fyq0sZvCTxacCcaSHR2uHrwnDomiNrU9Zrzf3X2bTx+eN+VQxQ9hcNbh31UEG5mp0Uzoc2zp0tJldPOKKMwnDjKku0RVf4fkaWbRt4IapTFyg0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.80
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-io1-f80.google.com with SMTP id ca18e2360f4ac-7e1ea8608afso1041686539f.2
+        for <linux-nilfs@vger.kernel.org>; Tue, 21 May 2024 19:55:32 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716314350; x=1716919150;
-        h=content-transfer-encoding:mime-version:reply-to:references
-         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
+        d=1e100.net; s=20230601; t=1716346532; x=1716951332;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=xFpAHzqRgSiz2xm2CXznKixemcT6aD8kBzQB3tTCfzo=;
-        b=carrzeq7+mbLdNgEfPanGcROCz/qJK1mJRKxja4Kp1uJvGfXKC9caYtQq/kOn9RrJi
-         oCJ+ecxTo5hIKdAB2LJzPtx8tEgPIlVlOY+rcLQXkTHGTO+2uRV9X3Clh7ZTMhe/nVoW
-         xxW+LcmKMVgXlboWhLApwMEGUkIo5EMM/1zvD4/GEPZeIC3bEKUI26ww/cxEOxvyVCj0
-         /Hp8u1gzpsYByjQZ0FHmfXnTrbItTZzUz4yztCC9KmSeWAQhe8CohTjiYpBsl8UmWVDZ
-         8P0u7euCec2DgTLJkvSnGg6UDJ0uvlTc86BcWvUcjdE1imVeUS3VSDQSHltbUwslj6ix
-         tYDw==
-X-Forwarded-Encrypted: i=1; AJvYcCXOSi4xS1qlfdBtXA3dh8x0g4TC+9UqzYA7y/HjVlNaRWF3kghhEFeMUS+/28h3EKkxUH7lsWLpM+LYA6eBpsLeYBcIN1z7xI6eO2Uz+p/e5hVrh9Ghq/lptEeTZvhMyS0K6xS1MFNtKkplAsn8ETbbCWFEJTUfBopZuSluFYlP3QUVwvIkl+0H
-X-Gm-Message-State: AOJu0YzM2IBt1WEmI0AMBZxb/ucuIis/KTQPsBAeRKwT175eba5rricv
-	rfNSdp03G8+XvJmo1t+crw2EiorgSm73Em6bUw9YMKImCoPZ6dHG
-X-Google-Smtp-Source: AGHT+IEQVix1xCQAJ7lu1JC4bqBxGgwlzW9PigTCcx2l2HRAdtg3GNuIH6M9NtM55RShJgSvR61swA==
-X-Received: by 2002:a17:902:c407:b0:1e4:3b58:7720 with SMTP id d9443c01a7336-1ef43c0c962mr357191475ad.2.1716314350150;
-        Tue, 21 May 2024 10:59:10 -0700 (PDT)
-Received: from localhost.localdomain ([101.32.222.185])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1f2fcdf87besm44646935ad.105.2024.05.21.10.59.06
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Tue, 21 May 2024 10:59:09 -0700 (PDT)
-From: Kairui Song <ryncsn@gmail.com>
-To: linux-mm@kvack.org
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	"Huang, Ying" <ying.huang@intel.com>,
-	Matthew Wilcox <willy@infradead.org>,
-	Chris Li <chrisl@kernel.org>,
-	Barry Song <v-songbaohua@oppo.com>,
-	Ryan Roberts <ryan.roberts@arm.com>,
-	Neil Brown <neilb@suse.de>,
-	Minchan Kim <minchan@kernel.org>,
-	David Hildenbrand <david@redhat.com>,
-	Hugh Dickins <hughd@google.com>,
-	Yosry Ahmed <yosryahmed@google.com>,
-	linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Kairui Song <kasong@tencent.com>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	linux-nilfs@vger.kernel.org
-Subject: [PATCH v6 02/11] nilfs2: drop usage of page_index
-Date: Wed, 22 May 2024 01:58:44 +0800
-Message-ID: <20240521175854.96038-3-ryncsn@gmail.com>
-X-Mailer: git-send-email 2.45.0
-In-Reply-To: <20240521175854.96038-1-ryncsn@gmail.com>
-References: <20240521175854.96038-1-ryncsn@gmail.com>
-Reply-To: Kairui Song <kasong@tencent.com>
+        bh=+Ry/8RZHi+cirGva08ioXvtiJ6dGry8jsjjnUdJmvrA=;
+        b=djEuNedHmcruoXrwzrzmZHqu4eU89JZrQZ/isHN09Xh251pgkkzGY8r/1SEez0aB0y
+         Ks3MS+p/FIZyRtYZpXEDVOuWfV87iSW22yc6GbsCOwlsmsl8r7JdqQOnLYS6svPpL5Qj
+         aqxr9zz0qW2xmBtnILRv9qdYFj2YAi3XzlRhyCjXk+q27FOhiSx5W4yfVWVHAbzLdq1t
+         HmqGjyoGRWN0053QVrQKqptb10o3gjwhPs+ljxIdx03Gs0NgYIsKqBTTsIjKC9USfLC0
+         37YIMZzqwj0fHdj4sR/ITKDt5umMV0iXhwIl4hwjFty842vz3s5X+UZUaXPFw+cQSexM
+         gKWw==
+X-Forwarded-Encrypted: i=1; AJvYcCWxc1A9LDlDNHu3vJmveKc7nsN6pe0cEhtuA1TvDL4pwFQifmYKyopt0W52cTyJD5wP/In0u6e+cGR2Y16XrJH05k6fCzL93EDOORQ=
+X-Gm-Message-State: AOJu0Yyw8bT2P6b90gxmlztNQcP7aBsaUGPyv8zAeJis07yIj6ejBuL4
+	aQblChyiFuGHsmVrtaigRalxHuXEbq+avi1Acw2Bz3w8XtgJA7SNUhZIDNBG2fbMwlE+GT7QJcg
+	tqx4AXaJnBubqlcF7LjtmQ4c/PNWZQNkn25FdHOcXyei9umaBLelL+n0=
+X-Google-Smtp-Source: AGHT+IE8dA3Y436YSv7w4/IDzm52Ag7PNo4+j3PLSkNAq1wZDNdZDmA0MipCEBB/rcPn+CkVUest9bxdsZlwz9iQbnABinemAg3b
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6e02:1a26:b0:36c:2ed4:8d4c with SMTP id
+ e9e14a558f8ab-371f96ed3aemr617085ab.4.1716346532155; Tue, 21 May 2024
+ 19:55:32 -0700 (PDT)
+Date: Tue, 21 May 2024 19:55:32 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <0000000000005c66ec061902110a@google.com>
+Subject: [syzbot] [nilfs?] [btrfs?] WARNING in filemap_unaccount_folio
+From: syzbot <syzbot+026119922c20a8915631@syzkaller.appspotmail.com>
+To: brauner@kernel.org, clm@fb.com, dsterba@suse.com, jack@suse.cz, 
+	josef@toxicpanda.com, konishi.ryusuke@gmail.com, linux-btrfs@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com, 
+	viro@zeniv.linux.org.uk
+Content-Type: text/plain; charset="UTF-8"
 
-From: Kairui Song <kasong@tencent.com>
+Hello,
 
-page_index is only for mixed usage of page cache and swap cache, for
-pure page cache usage, the caller can just use page->index instead.
+syzbot found the following issue on:
 
-It can't be a swap cache page here (being part of buffer head),
-so just drop it. And while we are at it, optimize the code by retrieving
-the offset of the buffer head within the folio directly using bh_offset,
-and get rid of the loop and usage of page helpers.
+HEAD commit:    b6394d6f7159 Merge tag 'pull-misc' of git://git.kernel.org..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=142a7cb2980000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=713476114e57eef3
+dashboard link: https://syzkaller.appspot.com/bug?extid=026119922c20a8915631
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=14d43f84980000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=11d4fadc980000
 
-Suggested-by: Matthew Wilcox <willy@infradead.org>
-Signed-off-by: Kairui Song <kasong@tencent.com>
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: linux-nilfs@vger.kernel.org
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/e8e1377d4772/disk-b6394d6f.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/19fbbb3b6dd5/vmlinux-b6394d6f.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/4dcce16af95d/bzImage-b6394d6f.xz
+mounted in repro #1: https://storage.googleapis.com/syzbot-assets/e197bb1019a1/mount_0.gz
+mounted in repro #2: https://storage.googleapis.com/syzbot-assets/1c62d475ecf4/mount_2.gz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+026119922c20a8915631@syzkaller.appspotmail.com
+
+------------[ cut here ]------------
+WARNING: CPU: 1 PID: 5096 at mm/filemap.c:217 filemap_unaccount_folio+0x6be/0xe40 mm/filemap.c:216
+Modules linked in:
+CPU: 1 PID: 5096 Comm: syz-executor306 Not tainted 6.9.0-syzkaller-10729-gb6394d6f7159 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 04/02/2024
+RIP: 0010:filemap_unaccount_folio+0x6be/0xe40 mm/filemap.c:216
+Code: 48 c1 e8 03 48 b9 00 00 00 00 00 fc ff df 0f b6 04 08 84 c0 0f 85 e5 00 00 00 8b 6d 00 ff c5 e9 45 fa ff ff e8 c3 66 ca ff 90 <0f> 0b 90 48 b8 00 00 00 00 00 fc ff df 41 80 3c 06 00 74 0a 48 8b
+RSP: 0018:ffffc9000382f1f8 EFLAGS: 00010093
+RAX: ffffffff81cbd3ad RBX: ffff888079ef0380 RCX: ffff88802d4f5a00
+RDX: 0000000000000000 RSI: 0000000000000001 RDI: 0000000000000000
+RBP: 0000000000000003 R08: ffffffff81cbd2c9 R09: 1ffffd40000c1ec8
+R10: dffffc0000000000 R11: fffff940000c1ec9 R12: 1ffffd40000c1ec8
+R13: ffffea000060f640 R14: 1ffff1100f3de070 R15: ffffea000060f648
+FS:  00007f13ab0c76c0(0000) GS:ffff8880b9500000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000000000000000 CR3: 000000002ca92000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ delete_from_page_cache_batch+0x173/0xc70 mm/filemap.c:341
+ truncate_inode_pages_range+0x364/0xfc0 mm/truncate.c:359
+ truncate_inode_pages mm/truncate.c:439 [inline]
+ truncate_pagecache mm/truncate.c:732 [inline]
+ truncate_setsize+0xcf/0xf0 mm/truncate.c:757
+ simple_setattr+0xbe/0x110 fs/libfs.c:886
+ notify_change+0xbb4/0xe70 fs/attr.c:499
+ do_truncate+0x220/0x310 fs/open.c:65
+ handle_truncate fs/namei.c:3308 [inline]
+ do_open fs/namei.c:3654 [inline]
+ path_openat+0x2a3d/0x3280 fs/namei.c:3807
+ do_filp_open+0x235/0x490 fs/namei.c:3834
+ do_sys_openat2+0x13e/0x1d0 fs/open.c:1405
+ do_sys_open fs/open.c:1420 [inline]
+ __do_sys_creat fs/open.c:1496 [inline]
+ __se_sys_creat fs/open.c:1490 [inline]
+ __x64_sys_creat+0x123/0x170 fs/open.c:1490
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf5/0x240 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f13ab131c99
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 b1 18 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b0 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f13ab0c7198 EFLAGS: 00000246 ORIG_RAX: 0000000000000055
+RAX: ffffffffffffffda RBX: 00007f13ab1bf6d8 RCX: 00007f13ab131c99
+RDX: 00007f13ab131c99 RSI: 0000000000000000 RDI: 00000000200001c0
+RBP: 00007f13ab1bf6d0 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007f13ab18c160
+R13: 000000000000006e R14: 0030656c69662f2e R15: 00007f13ab186bc0
+ </TASK>
+
+
 ---
- fs/nilfs2/bmap.c | 10 ++--------
- 1 file changed, 2 insertions(+), 8 deletions(-)
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
-index 383f0afa2cea..cd14ea25968c 100644
---- a/fs/nilfs2/bmap.c
-+++ b/fs/nilfs2/bmap.c
-@@ -450,15 +450,9 @@ int nilfs_bmap_test_and_clear_dirty(struct nilfs_bmap *bmap)
- __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
- 			      const struct buffer_head *bh)
- {
--	struct buffer_head *pbh;
--	__u64 key;
-+	loff_t pos = folio_pos(bh->b_folio) + bh_offset(bh);
- 
--	key = page_index(bh->b_page) << (PAGE_SHIFT -
--					 bmap->b_inode->i_blkbits);
--	for (pbh = page_buffers(bh->b_page); pbh != bh; pbh = pbh->b_this_page)
--		key++;
--
--	return key;
-+	return pos >> bmap->b_inode->i_blkbits;
- }
- 
- __u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 key)
--- 
-2.45.0
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
