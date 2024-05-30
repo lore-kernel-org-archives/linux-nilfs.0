@@ -1,202 +1,144 @@
-Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
+Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11B7B4691;
-	Sat, 25 May 2024 04:38:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9075C186E57;
+	Thu, 30 May 2024 14:16:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716611895; cv=none; b=Jsrobiv1/gOaxwaN1rC3odJalQQcXPIfjoSEW3otZxKFjADcPwSudvMe4Cjm/x73/8HydIl+2gw5qznOZ3oa31PU/w/7MFcIlHL5UA8uk5Y7PtUrhFvbVkLCPz0GksV+JgUd8sS8mL0eR8CnNtgwqlQ0lMrIqIKLIpfkpDxp2GM=
+	t=1717078563; cv=none; b=LWq9d97fDDcP0O2whDJsmct8mCKMl8HFXgEzzWvC9AEJq3GLUZBYm5z4loeJsGip7fGQhsXXYDl6bODndUg1axBLHVy1FQSYd0Mx00U/O1paBIuZxCLdMADTTP1XKVRhP+7M9yJjetysxyz5D0OmO1wdssLhyngjkxNnHaLF37s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716611895; c=relaxed/simple;
-	bh=ygi3KwrQbmFvRyvCTzW/j/rPVSMaVts9NBBE5ot04zM=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=cfTWx8Ygzy66/YPEd6AmxJdKEkpFxDYgQ9g42DSozvrNpgw+uOxatVXlqaO+XeRuVfu/BEy6FqPyx+thg2rkQ33jIpBp1GL3xEotMoS2xr9KY6B6EEc0ITu04OgN+0kuByrWJVDWsW6a5tpUrwaqIx//9a1BShMLxti8RG0Nfyw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=IxcN8Z+n; arc=none smtp.client-ip=209.85.167.43
+	s=arc-20240116; t=1717078563; c=relaxed/simple;
+	bh=eYDjkHMzZN4bT1iF4ma6alWdkJjbsBK42F15E8PeHMQ=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=DQ42Hw46OOM5DjcSkBV8RBzBKaveKyF0+mSKHoKsCaZhv8AQHNyfkEAQlqxN0QVOj9dLw761f8EhkOkIF3mHZPVHbZv12azwaojcVxNZOf5S5vbwUCPx0BdA7R0bNn6zCPOrH65+hnTh0+22GbvsBhAHmFU+ejLhqdQqpaf2aZM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UcUICF0W; arc=none smtp.client-ip=209.85.214.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IxcN8Z+n"
-Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-51fcb7dc722so3598290e87.1;
-        Fri, 24 May 2024 21:38:13 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UcUICF0W"
+Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-1f47f07acd3so8377725ad.0;
+        Thu, 30 May 2024 07:16:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716611892; x=1717216692; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=cpa/U7JghcNpsn+qpJzea7q5OYNnmAkuecyejaHoCd4=;
-        b=IxcN8Z+nofGSAVGZvZkI6OLXjOqxu5wreVTutPq1sOaTniDdeUwDK6Wi+MpX5sVi4O
-         EKYRHwuGaAwztiL/1MYrqq0UxFd6EpKDbR7RR5x5nSe/OPjH2w1iqgsBz1oi3fxBfN7M
-         VVQ1HbdQh/g6pX0h7789nsQgc5IWOqPD6qxzyzzD47SUe+oBNbYRMoSG6E2hSPOZRlx5
-         +YPp+ZeMPs8Ri7GqbOLDRswN6upHmObYj7s4UiP+er1uVyjYyzTSWCEnpcskbCeDTXX6
-         IaCejZMtU2eI83S+bte4hMk+5IepK0bgFR5Eeba3MiDN1qn6axBn6NsPvFyGnZzTPGA2
-         0Fcg==
+        d=gmail.com; s=20230601; t=1717078562; x=1717683362; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=VMkhjE61Vc1NS7D/6XyyeGHdm9O21TTgPnUhmBGVGKE=;
+        b=UcUICF0W+KUqWOod8EtQBCj1Cv6WzHVFqO1wZV5SgehyqUKAd+3neVLwUZeOuqUEKj
+         jjex51rEPEYUe+7y/nsC9ZHntXR/7pbO+OiEkq4N58AQ3zT0/sZt9RWubRYHZq42Z6fQ
+         daj6yRlGKqeMhOrDESl21If/0yXk+QusT3Cc3A6+u+23FiVIdVJ8As7NmxygEnFU+VVn
+         mbB+Gd+Kd2p/wZj+tzv9Ep6564q9ATgpLBlAQR3bHkFDzNqLsduv1vIvKwanIsnPS/My
+         T/hQuVUS5LPwQV9Db6gHC1xFPZmadE0G31yh0XuZzz4ZBBXMtqUCkyB6F6BMv/kjqKm5
+         9sVQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716611892; x=1717216692;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=cpa/U7JghcNpsn+qpJzea7q5OYNnmAkuecyejaHoCd4=;
-        b=eKqVH65Wr7BjurkeEexx+CpXIb/X9cKf0jMmnkyIYzzv6ozs12uWcYfoV+WekfD4u6
-         QSq6xhs6jcAr8RRU+N+lWh4gZ2W0lCWfibXLWW4r1yqFfjxrOsGBBIVpJF7Hz4N/5kR2
-         CrgSDeqhw3MN6IH5cRGWMYebJrHRIXgfIDSWuZYwLIExGqr3P/FpdsrGtaD5x3apP0p2
-         y0mVPmKPRm+H84OzaPl+N6yURRyEbmZLrZfpSGWyyXhVLrEplU+ekVN+5MC0xWC7lkpd
-         4Ry02Jjcx3Djji2A8F1lqlTUT2PSUel5xbadPZlwDfrQW1zQYHHGjSs7gyCCLA0AugJQ
-         dskw==
-X-Forwarded-Encrypted: i=1; AJvYcCVdCx4Ym8nxVeW/GLhWd48GqhsyvfZMkGu1/Xs99pLhoZwCxkzROwlu/Sl11qv1V8YTTVcxtnwgBCeJ5j+03o2AvbCxImXDFDRupA9seT35dczJHBDxEHbJXvLFxj8sBYRq4E+2O/V+UAiHzw==
-X-Gm-Message-State: AOJu0Yy4TfKBuIFNAbE+FoGzwS+Skb0UKJIOnOud33Y+R4hRUqH7P9nu
-	NYXPoPLOoE9yjOwJW+YTI8UUTo+Cz9LewLuTFKORq2uzfVLfWYONEq9CE/cvD/zLRrNneFSRqK2
-	N++oGOuVyFyKdD2eW9SmQvBb7P0mHj2A1
-X-Google-Smtp-Source: AGHT+IHp3iiFucD3eESbD2F4iLGJkvO3+UxacJCUUC4BUifXreeuECCB8wFyug22P8lyym01JzYnrfAm27paHYvGqYE=
-X-Received: by 2002:a05:6512:210b:b0:51d:8c06:d662 with SMTP id
- 2adb3069b0e04-527eee35c90mr2123572e87.5.1716611891973; Fri, 24 May 2024
- 21:38:11 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1717078562; x=1717683362;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=VMkhjE61Vc1NS7D/6XyyeGHdm9O21TTgPnUhmBGVGKE=;
+        b=AqRKvlLpho29df/hM8dqXIE4laAhlhLWtu3qA/3wfVCbhFDD+K15ZP5wDWr3xbUNO/
+         LAyY8pbFkMx9ixEkZXVFOVwI4IwK0kgX65gctVJD2JzDAf5nfIxn6/UQoTN/oCLU7+9P
+         VCrtNjT/iAN+rV5fzZWV89pSQ285exkvcgWfHqh5XW5vy7YadPIsTeK1ZGED5UI6FDPY
+         55l4Wwm6SQ4oFDpQ+JNy7LUHRZHnDIoG4DyTco3F27JZzQ4UV2OyI+/sXZWA1cCJG5wO
+         xIR7S/rcTArfq021VZppZdB7S0qMrGCvsXLzlM+liNtF35CJMrTdbcL3TiSGhKdCmhgQ
+         MGwQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXyPmo8I3iO6h1Aot9ArW5OZfFcVEIhmi6BjlflMTG1SvKQZhNFT/EyVgYFiB/A1AFRCOYuZNlzRbaeVgn6sOnrHSApopOB2NhWcCoe
+X-Gm-Message-State: AOJu0YxTiVBHCNVte1yvbPwurWqmKwTVVA9zdLi7y/+BnEAxiBpg5FO6
+	zfcr+umAocmKrC7BmZHyzyWBlR+F449ocNb2TUuB2eezVo9AHQvpTDsehw==
+X-Google-Smtp-Source: AGHT+IHncuNc74TfFe4Ql+CLOymCt2oA5e2Wx4wpuJpKFtaqRkgkOkjw0olzpWf1tSjWsEUZYNOBgQ==
+X-Received: by 2002:a17:902:ea07:b0:1f4:a6cb:db3d with SMTP id d9443c01a7336-1f61973ac5emr23204175ad.44.1717078561680;
+        Thu, 30 May 2024 07:16:01 -0700 (PDT)
+Received: from carrot.. (i223-217-95-32.s42.a014.ap.plala.or.jp. [223.217.95.32])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1f44c9d89b3sm118848285ad.292.2024.05.30.07.15.59
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 30 May 2024 07:16:00 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH] nilfs2: fix potential kernel bug due to lack of writeback flag waiting
+Date: Thu, 30 May 2024 23:15:56 +0900
+Message-Id: <20240530141556.4411-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <0000000000000d480b060df43de5@google.com> <000000000000a8f1d606156b7ad9@google.com>
-In-Reply-To: <000000000000a8f1d606156b7ad9@google.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 25 May 2024 13:37:55 +0900
-Message-ID: <CAKFNMokh7p55gN0pC+=Lw=ZNEkfVyuzHr7dOisD-UMnncCBn=A@mail.gmail.com>
-Subject: Re: [syzbot] [nilfs?] KMSAN: uninit-value in nilfs_add_checksums_on_logs
- (2)
-To: syzbot <syzbot+47a017c46edb25eff048@syzkaller.appspotmail.com>
-Cc: linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	xrivendell7@gmail.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Sat, Apr 6, 2024 at 8:00=E2=80=AFPM syzbot
-<syzbot+47a017c46edb25eff048@syzkaller.appspotmail.com> wrote:
->
-> syzbot has found a reproducer for the following issue on:
->
-> HEAD commit:    e8b0ccb2a787 Merge tag '9p-for-6.9-rc3' of https://github=
-...
-> git tree:       upstream
-> console output: https://syzkaller.appspot.com/x/log.txt?x=3D115eb62318000=
-0
-> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D5112b3f484393=
-436
-> dashboard link: https://syzkaller.appspot.com/bug?extid=3D47a017c46edb25e=
-ff048
-> compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Deb=
-ian) 2.40
-> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D156679a1180=
-000
-> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D10f27ef618000=
-0
->
-> Downloadable assets:
-> disk image: https://storage.googleapis.com/syzbot-assets/cf4b0d1e3b2d/dis=
-k-e8b0ccb2.raw.xz
-> vmlinux: https://storage.googleapis.com/syzbot-assets/422cac6cc940/vmlinu=
-x-e8b0ccb2.xz
-> kernel image: https://storage.googleapis.com/syzbot-assets/9a4df48e199b/b=
-zImage-e8b0ccb2.xz
-> mounted in repro: https://storage.googleapis.com/syzbot-assets/69e1e69e75=
-22/mount_0.gz
->
-> IMPORTANT: if you fix the issue, please add the following tag to the comm=
-it:
-> Reported-by: syzbot+47a017c46edb25eff048@syzkaller.appspotmail.com
->
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D
-> BUG: KMSAN: uninit-value in crc32_body lib/crc32.c:110 [inline]
-> BUG: KMSAN: uninit-value in crc32_le_generic lib/crc32.c:179 [inline]
-> BUG: KMSAN: uninit-value in crc32_le_base+0x43c/0xd80 lib/crc32.c:197
->  crc32_body lib/crc32.c:110 [inline]
->  crc32_le_generic lib/crc32.c:179 [inline]
->  crc32_le_base+0x43c/0xd80 lib/crc32.c:197
->  nilfs_segbuf_fill_in_data_crc fs/nilfs2/segbuf.c:224 [inline]
->  nilfs_add_checksums_on_logs+0xb80/0xe40 fs/nilfs2/segbuf.c:327
->  nilfs_segctor_do_construct+0x9876/0xdeb0 fs/nilfs2/segment.c:2078
->  nilfs_segctor_construct+0x1eb/0xe30 fs/nilfs2/segment.c:2381
->  nilfs_segctor_thread_construct fs/nilfs2/segment.c:2489 [inline]
->  nilfs_segctor_thread+0xc50/0x11e0 fs/nilfs2/segment.c:2573
->  kthread+0x3e2/0x540 kernel/kthread.c:388
->  ret_from_fork+0x6d/0x90 arch/x86/kernel/process.c:147
->  ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:243
->
-> Uninit was stored to memory at:
->  memcpy_from_iter lib/iov_iter.c:73 [inline]
->  iterate_bvec include/linux/iov_iter.h:122 [inline]
->  iterate_and_advance2 include/linux/iov_iter.h:249 [inline]
->  iterate_and_advance include/linux/iov_iter.h:271 [inline]
->  __copy_from_iter lib/iov_iter.c:249 [inline]
->  copy_page_from_iter_atomic+0x12b7/0x2b60 lib/iov_iter.c:481
->  generic_perform_write+0x4c1/0xc60 mm/filemap.c:3982
->  __generic_file_write_iter+0x20a/0x460 mm/filemap.c:4069
->  generic_file_write_iter+0x103/0x5b0 mm/filemap.c:4095
->  __kernel_write_iter+0x68b/0xc40 fs/read_write.c:523
->  dump_emit_page fs/coredump.c:890 [inline]
->  dump_user_range+0x8dc/0xee0 fs/coredump.c:951
->  elf_core_dump+0x520f/0x59c0 fs/binfmt_elf.c:2077
->  do_coredump+0x32d5/0x4920 fs/coredump.c:764
->  get_signal+0x267e/0x2d00 kernel/signal.c:2896
->  arch_do_signal_or_restart+0x53/0xcb0 arch/x86/kernel/signal.c:310
->  exit_to_user_mode_loop kernel/entry/common.c:111 [inline]
->  exit_to_user_mode_prepare include/linux/entry-common.h:328 [inline]
->  __syscall_exit_to_user_mode_work kernel/entry/common.c:207 [inline]
->  syscall_exit_to_user_mode+0x5d/0x160 kernel/entry/common.c:218
->  do_syscall_64+0xe4/0x1f0 arch/x86/entry/common.c:89
->  entry_SYSCALL_64_after_hwframe+0x72/0x7a
->
-> Uninit was created at:
->  __alloc_pages+0x9d6/0xe70 mm/page_alloc.c:4598
->  alloc_pages_mpol+0x299/0x990 mm/mempolicy.c:2264
->  alloc_pages+0x1bf/0x1e0 mm/mempolicy.c:2335
->  dump_user_range+0x4a/0xee0 fs/coredump.c:935
->  elf_core_dump+0x520f/0x59c0 fs/binfmt_elf.c:2077
->  do_coredump+0x32d5/0x4920 fs/coredump.c:764
->  get_signal+0x267e/0x2d00 kernel/signal.c:2896
->  arch_do_signal_or_restart+0x53/0xcb0 arch/x86/kernel/signal.c:310
->  exit_to_user_mode_loop kernel/entry/common.c:111 [inline]
->  exit_to_user_mode_prepare include/linux/entry-common.h:328 [inline]
->  __syscall_exit_to_user_mode_work kernel/entry/common.c:207 [inline]
->  syscall_exit_to_user_mode+0x5d/0x160 kernel/entry/common.c:218
->  do_syscall_64+0xe4/0x1f0 arch/x86/entry/common.c:89
->  entry_SYSCALL_64_after_hwframe+0x72/0x7a
->
-> CPU: 0 PID: 5014 Comm: segctord Not tainted 6.9.0-rc2-syzkaller-00207-ge8=
-b0ccb2a787 #0
-> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS G=
-oogle 03/27/2024
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D
->
->
-> ---
-> If you want syzbot to run the reproducer, reply with:
-> #syz test: git://repo/address.git branch-or-commit-hash
-> If you attach or paste a git patch, syzbot will apply it before testing.
+Destructive writes to a block device on which nilfs2 is mounted can
+cause a kernel bug in the folio/page writeback start routine or
+writeback end routine (__folio_start_writeback in the log below):
 
-#syz fix: x86: call instrumentation hooks from copy_mc.c
+ kernel BUG at mm/page-writeback.c:3070!
+ Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
+ ...
+ RIP: 0010:__folio_start_writeback+0xbaa/0x10e0
+ Code: 25 ff 0f 00 00 0f 84 18 01 00 00 e8 40 ca c6 ff e9 17 f6 ff ff
+  e8 36 ca c6 ff 4c 89 f7 48 c7 c6 80 c0 12 84 e8 e7 b3 0f 00 90 <0f>
+  0b e8 1f ca c6 ff 4c 89 f7 48 c7 c6 a0 c6 12 84 e8 d0 b3 0f 00
+ ...
+ Call Trace:
+  <TASK>
+  nilfs_segctor_do_construct+0x4654/0x69d0 [nilfs2]
+  nilfs_segctor_construct+0x181/0x6b0 [nilfs2]
+  nilfs_segctor_thread+0x548/0x11c0 [nilfs2]
+  kthread+0x2f0/0x390
+  ret_from_fork+0x4b/0x80
+  ret_from_fork_asm+0x1a/0x30
+  </TASK>
 
-This is one of the false positive warnings that the memory dumped by
-elf_core_dump() was mixed into the file system side via
-copy_mc_to_kernel() of x86, which was called with the following call
-path and did not support KMSAN until recently:
+This is because when the log writer starts a writeback for segment
+summary blocks or a super root block that use the backing device's
+page cache, it does not wait for the ongoing folio/page writeback,
+resulting in an inconsistent writeback state.
 
- elf_core_dump
-   dump_user_range
-      dump_page_copy
-          copy_mc_to_kernel
-      dump_emit_page
-          ...
+Fix this issue by waiting for ongoing writebacks when putting
+folios/pages on the backing device into writeback state.
 
-Given the syzbot CPU information, we can confirm that the x86 ERMS
-feature flag is set, a condition that is affected by the issue.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Fixes: 9ff05123e3bf ("nilfs2: segment constructor")
+Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: stable@vger.kernel.org
+---
+Andrew, please apply this as a bug fix.
 
-The above commit, which was merged during the merge window for v6.10,
-made copy_mc_to_kernel() on x86 KMSAN-compatible and should have fixed
-this issue.
+This fixes a kernel bug that is reproducible in some destructive testing.
 
+Thanks,
 Ryusuke Konishi
+
+ fs/nilfs2/segment.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 60d4f59f7665..6ea81f1d5094 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1652,6 +1652,7 @@ static void nilfs_segctor_prepare_write(struct nilfs_sc_info *sci)
+ 			if (bh->b_folio != bd_folio) {
+ 				if (bd_folio) {
+ 					folio_lock(bd_folio);
++					folio_wait_writeback(bd_folio);
+ 					folio_clear_dirty_for_io(bd_folio);
+ 					folio_start_writeback(bd_folio);
+ 					folio_unlock(bd_folio);
+@@ -1665,6 +1666,7 @@ static void nilfs_segctor_prepare_write(struct nilfs_sc_info *sci)
+ 			if (bh == segbuf->sb_super_root) {
+ 				if (bh->b_folio != bd_folio) {
+ 					folio_lock(bd_folio);
++					folio_wait_writeback(bd_folio);
+ 					folio_clear_dirty_for_io(bd_folio);
+ 					folio_start_writeback(bd_folio);
+ 					folio_unlock(bd_folio);
+@@ -1681,6 +1683,7 @@ static void nilfs_segctor_prepare_write(struct nilfs_sc_info *sci)
+ 	}
+ 	if (bd_folio) {
+ 		folio_lock(bd_folio);
++		folio_wait_writeback(bd_folio);
+ 		folio_clear_dirty_for_io(bd_folio);
+ 		folio_start_writeback(bd_folio);
+ 		folio_unlock(bd_folio);
+-- 
+2.34.1
+
