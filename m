@@ -1,144 +1,201 @@
-Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
+Received: from mail-io1-f80.google.com (mail-io1-f80.google.com [209.85.166.80])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9075C186E57;
-	Thu, 30 May 2024 14:16:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCFD73BBEC
+	for <linux-nilfs@vger.kernel.org>; Sun,  2 Jun 2024 12:31:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.80
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717078563; cv=none; b=LWq9d97fDDcP0O2whDJsmct8mCKMl8HFXgEzzWvC9AEJq3GLUZBYm5z4loeJsGip7fGQhsXXYDl6bODndUg1axBLHVy1FQSYd0Mx00U/O1paBIuZxCLdMADTTP1XKVRhP+7M9yJjetysxyz5D0OmO1wdssLhyngjkxNnHaLF37s=
+	t=1717331487; cv=none; b=GXHejE/4IQmzDXmV8sSwwzdkQPDQ900vQ/3CCGiwRighelfFUlsH52J5kuaDYCzdkuGdYkY0+94CI+rwXCMTOp2z/ul6OBuCsL+K+D4S7a7ynx2RzNBG2KS3n0zxe2n/56Oh2afD4xBC5Wo1Rsk3TV1bo7EOOl20ljs0Hz0KHDM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717078563; c=relaxed/simple;
-	bh=eYDjkHMzZN4bT1iF4ma6alWdkJjbsBK42F15E8PeHMQ=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=DQ42Hw46OOM5DjcSkBV8RBzBKaveKyF0+mSKHoKsCaZhv8AQHNyfkEAQlqxN0QVOj9dLw761f8EhkOkIF3mHZPVHbZv12azwaojcVxNZOf5S5vbwUCPx0BdA7R0bNn6zCPOrH65+hnTh0+22GbvsBhAHmFU+ejLhqdQqpaf2aZM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UcUICF0W; arc=none smtp.client-ip=209.85.214.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UcUICF0W"
-Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-1f47f07acd3so8377725ad.0;
-        Thu, 30 May 2024 07:16:02 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1717078562; x=1717683362; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=VMkhjE61Vc1NS7D/6XyyeGHdm9O21TTgPnUhmBGVGKE=;
-        b=UcUICF0W+KUqWOod8EtQBCj1Cv6WzHVFqO1wZV5SgehyqUKAd+3neVLwUZeOuqUEKj
-         jjex51rEPEYUe+7y/nsC9ZHntXR/7pbO+OiEkq4N58AQ3zT0/sZt9RWubRYHZq42Z6fQ
-         daj6yRlGKqeMhOrDESl21If/0yXk+QusT3Cc3A6+u+23FiVIdVJ8As7NmxygEnFU+VVn
-         mbB+Gd+Kd2p/wZj+tzv9Ep6564q9ATgpLBlAQR3bHkFDzNqLsduv1vIvKwanIsnPS/My
-         T/hQuVUS5LPwQV9Db6gHC1xFPZmadE0G31yh0XuZzz4ZBBXMtqUCkyB6F6BMv/kjqKm5
-         9sVQ==
+	s=arc-20240116; t=1717331487; c=relaxed/simple;
+	bh=A9POPEMOI2hOv6KhNrxKRUky5sbqU9G0A+VOkSZdbhw=;
+	h=MIME-Version:Date:In-Reply-To:Message-ID:Subject:From:To:
+	 Content-Type; b=qi8bbGmNS9ViDK1Hirk0YqhCAx426vAnLPSYSkUydmMdfGvbdXfxy8A4DGPTjf3fmyij1jYakrvCoAcaLCwXJ+Laz17qUKRauDSjAzR/Na1+NvIpPlXC2XefHB6Os7mIpivTdfuhGCv2UvgeQjWahT73IBKwjIzd4k8S6vt610Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.80
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-io1-f80.google.com with SMTP id ca18e2360f4ac-7eb01189491so298513139f.1
+        for <linux-nilfs@vger.kernel.org>; Sun, 02 Jun 2024 05:31:25 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717078562; x=1717683362;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=VMkhjE61Vc1NS7D/6XyyeGHdm9O21TTgPnUhmBGVGKE=;
-        b=AqRKvlLpho29df/hM8dqXIE4laAhlhLWtu3qA/3wfVCbhFDD+K15ZP5wDWr3xbUNO/
-         LAyY8pbFkMx9ixEkZXVFOVwI4IwK0kgX65gctVJD2JzDAf5nfIxn6/UQoTN/oCLU7+9P
-         VCrtNjT/iAN+rV5fzZWV89pSQ285exkvcgWfHqh5XW5vy7YadPIsTeK1ZGED5UI6FDPY
-         55l4Wwm6SQ4oFDpQ+JNy7LUHRZHnDIoG4DyTco3F27JZzQ4UV2OyI+/sXZWA1cCJG5wO
-         xIR7S/rcTArfq021VZppZdB7S0qMrGCvsXLzlM+liNtF35CJMrTdbcL3TiSGhKdCmhgQ
-         MGwQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXyPmo8I3iO6h1Aot9ArW5OZfFcVEIhmi6BjlflMTG1SvKQZhNFT/EyVgYFiB/A1AFRCOYuZNlzRbaeVgn6sOnrHSApopOB2NhWcCoe
-X-Gm-Message-State: AOJu0YxTiVBHCNVte1yvbPwurWqmKwTVVA9zdLi7y/+BnEAxiBpg5FO6
-	zfcr+umAocmKrC7BmZHyzyWBlR+F449ocNb2TUuB2eezVo9AHQvpTDsehw==
-X-Google-Smtp-Source: AGHT+IHncuNc74TfFe4Ql+CLOymCt2oA5e2Wx4wpuJpKFtaqRkgkOkjw0olzpWf1tSjWsEUZYNOBgQ==
-X-Received: by 2002:a17:902:ea07:b0:1f4:a6cb:db3d with SMTP id d9443c01a7336-1f61973ac5emr23204175ad.44.1717078561680;
-        Thu, 30 May 2024 07:16:01 -0700 (PDT)
-Received: from carrot.. (i223-217-95-32.s42.a014.ap.plala.or.jp. [223.217.95.32])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1f44c9d89b3sm118848285ad.292.2024.05.30.07.15.59
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 30 May 2024 07:16:00 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] nilfs2: fix potential kernel bug due to lack of writeback flag waiting
-Date: Thu, 30 May 2024 23:15:56 +0900
-Message-Id: <20240530141556.4411-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+        d=1e100.net; s=20230601; t=1717331485; x=1717936285;
+        h=to:from:subject:message-id:in-reply-to:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Axgb5HwW0MeFqTBJSUxMM2ecq6wuFJyN1Nrr1UDzhaI=;
+        b=brjL4I5cZO0Dr2/Dr/9wU9C2wZtj97hdckU7eBdOKFt6SkD23CyLTaZs4/HT9OpHyp
+         i6Eg9D/4LjDIpPbr4cNJCgJ0QS5BtraYgwUCtXPil3eWCpAU1KyVGc1ym9PUKNTncyqI
+         fslD+iNP36quy2atlq0mXHhxO2o8v/W5ZWBu/brpeqeMK12Q1Tl6AUQ93O5UD5tD8P6x
+         iGX37CLzWjW9tunTjgKbEPSwODf2SdSgjBYAyNeEPxoygaPgLSK6/9BsWcNAn2Ua/2vL
+         5QZzjXoVvn6wSCvgjZ/zD+4biSqH6d3h5UlsAZRfTeMdBx+Mb8WUJ8u84WDdq6NbUIjB
+         1A0A==
+X-Forwarded-Encrypted: i=1; AJvYcCVpNiOlRS3eqGndUs9SCnKuONAsy3ALYXj9x79oYa7Fcjp30DfZ5Zk3VKUl7mNVTfJbdSBa2CQZGdS8G0ABLAXvqJMqoeItGlxnZg4=
+X-Gm-Message-State: AOJu0YyW9rkKlJy1L+/Xl1dS1XRb1Aq8W4RNHNdyPA/IxWmhgQ0I7gtA
+	EE8ALCHrKzOtGEwaCrOYkax3+ABkAaKjsgiNPs9U7tIfUccPoW2FEWNdNk1DWHGVWORG+9WKZC+
+	fMkkNhsIDWoAzL5pUylckpjcM7j5GXSJF74wbp28/0K4TbgluqaeQJBY=
+X-Google-Smtp-Source: AGHT+IFusq/so+Huzky5dv20oQXYGCtVqtCACRAnHLwlabdylF3kwFMgS42/jPoylVxsTW5Xtn90RXePy08DeOSxxh1rua5rYPk7
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6e02:1e08:b0:374:5eee:dc2f with SMTP id
+ e9e14a558f8ab-3748b8f23b6mr6527585ab.0.1717331485057; Sun, 02 Jun 2024
+ 05:31:25 -0700 (PDT)
+Date: Sun, 02 Jun 2024 05:31:25 -0700
+In-Reply-To: <0000000000003d6c9d0611b9ea2d@google.com>
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <00000000000020f6700619e765c8@google.com>
+Subject: Re: [syzbot] [nilfs?] INFO: task hung in nilfs_segctor_thread (2)
+From: syzbot <syzbot+c8166c541d3971bf6c87@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Destructive writes to a block device on which nilfs2 is mounted can
-cause a kernel bug in the folio/page writeback start routine or
-writeback end routine (__folio_start_writeback in the log below):
+syzbot has found a reproducer for the following issue on:
 
- kernel BUG at mm/page-writeback.c:3070!
- Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
- ...
- RIP: 0010:__folio_start_writeback+0xbaa/0x10e0
- Code: 25 ff 0f 00 00 0f 84 18 01 00 00 e8 40 ca c6 ff e9 17 f6 ff ff
-  e8 36 ca c6 ff 4c 89 f7 48 c7 c6 80 c0 12 84 e8 e7 b3 0f 00 90 <0f>
-  0b e8 1f ca c6 ff 4c 89 f7 48 c7 c6 a0 c6 12 84 e8 d0 b3 0f 00
- ...
- Call Trace:
-  <TASK>
-  nilfs_segctor_do_construct+0x4654/0x69d0 [nilfs2]
-  nilfs_segctor_construct+0x181/0x6b0 [nilfs2]
-  nilfs_segctor_thread+0x548/0x11c0 [nilfs2]
-  kthread+0x2f0/0x390
-  ret_from_fork+0x4b/0x80
-  ret_from_fork_asm+0x1a/0x30
-  </TASK>
+HEAD commit:    89be4025b0db Merge tag '6.10-rc1-smb3-client-fixes' of git..
+git tree:       upstream
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=17667026980000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=47d282ddffae809f
+dashboard link: https://syzkaller.appspot.com/bug?extid=c8166c541d3971bf6c87
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1164d8bc980000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=120ae206980000
 
-This is because when the log writer starts a writeback for segment
-summary blocks or a super root block that use the backing device's
-page cache, it does not wait for the ongoing folio/page writeback,
-resulting in an inconsistent writeback state.
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/1b4c4cbe2fc3/disk-89be4025.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/992efea7573e/vmlinux-89be4025.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/40ebdc35acdd/bzImage-89be4025.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/2d66f1d4455b/mount_0.gz
 
-Fix this issue by waiting for ongoing writebacks when putting
-folios/pages on the backing device into writeback state.
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+c8166c541d3971bf6c87@syzkaller.appspotmail.com
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Fixes: 9ff05123e3bf ("nilfs2: segment constructor")
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: stable@vger.kernel.org
+INFO: task segctord:5081 blocked for more than 143 seconds.
+      Not tainted 6.10.0-rc1-syzkaller-00296-g89be4025b0db #0
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+task:segctord        state:D stack:28088 pid:5081  tgid:5081  ppid:2      flags:0x00004000
+Call Trace:
+ <TASK>
+ context_switch kernel/sched/core.c:5408 [inline]
+ __schedule+0x1796/0x49d0 kernel/sched/core.c:6745
+ __schedule_loop kernel/sched/core.c:6822 [inline]
+ schedule+0x14b/0x320 kernel/sched/core.c:6837
+ schedule_preempt_disabled+0x13/0x30 kernel/sched/core.c:6894
+ rwsem_down_write_slowpath+0xeeb/0x13b0 kernel/locking/rwsem.c:1178
+ __down_write_common+0x1af/0x200 kernel/locking/rwsem.c:1306
+ nilfs_transaction_lock+0x25d/0x4f0 fs/nilfs2/segment.c:357
+ nilfs_segctor_thread_construct fs/nilfs2/segment.c:2512 [inline]
+ nilfs_segctor_thread+0x551/0x11b0 fs/nilfs2/segment.c:2598
+ kthread+0x2f0/0x390 kernel/kthread.c:389
+ ret_from_fork+0x4b/0x80 arch/x86/kernel/process.c:147
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:244
+ </TASK>
+
+Showing all locks held in the system:
+6 locks held by kworker/u8:0/11:
+1 lock held by khungtaskd/30:
+ #0: ffffffff8e333f60 (rcu_read_lock){....}-{1:2}, at: rcu_lock_acquire include/linux/rcupdate.h:329 [inline]
+ #0: ffffffff8e333f60 (rcu_read_lock){....}-{1:2}, at: rcu_read_lock include/linux/rcupdate.h:781 [inline]
+ #0: ffffffff8e333f60 (rcu_read_lock){....}-{1:2}, at: debug_show_all_locks+0x55/0x2a0 kernel/locking/lockdep.c:6614
+2 locks held by getty/4833:
+ #0: ffff88802a5840a0 (
+&tty->ldisc_sem){++++}-{0:0}
+, at: tty_ldisc_ref_wait+0x25/0x70 drivers/tty/tty_ldisc.c:243
+ #1: 
+ffffc900031432f0
+ (&ldata->atomic_read_lock){+.+.}-{3:3}
+, at: n_tty_read+0x6b5/0x1e10 drivers/tty/n_tty.c:2201
+9 locks held by syz-executor240/5078:
+1 lock held by segctord/5081:
+ #0: 
+ffff888020ff52a0 (&nilfs->ns_segctor_sem){++++}-{3:3}, at: nilfs_transaction_lock+0x25d/0x4f0 fs/nilfs2/segment.c:357
+
+=============================================
+
+NMI backtrace for cpu 1
+CPU: 1 PID: 30 Comm: khungtaskd Not tainted 6.10.0-rc1-syzkaller-00296-g89be4025b0db #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 04/02/2024
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x241/0x360 lib/dump_stack.c:114
+ nmi_cpu_backtrace+0x49c/0x4d0 lib/nmi_backtrace.c:113
+ nmi_trigger_cpumask_backtrace+0x198/0x320 lib/nmi_backtrace.c:62
+ trigger_all_cpu_backtrace include/linux/nmi.h:162 [inline]
+ check_hung_uninterruptible_tasks kernel/hung_task.c:223 [inline]
+ watchdog+0xfde/0x1020 kernel/hung_task.c:379
+ kthread+0x2f0/0x390 kernel/kthread.c:389
+ ret_from_fork+0x4b/0x80 arch/x86/kernel/process.c:147
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:244
+ </TASK>
+Sending NMI from CPU 1 to CPUs 0:
+NMI backtrace for cpu 0
+CPU: 0 PID: 5078 Comm: syz-executor240 Not tainted 6.10.0-rc1-syzkaller-00296-g89be4025b0db #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 04/02/2024
+RIP: 0010:_raw_spin_unlock_irqrestore+0x5/0x140 kernel/locking/spinlock.c:193
+Code: 58 78 f5 5b c3 cc cc cc cc 66 2e 0f 1f 84 00 00 00 00 00 66 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 f3 0f 1e fa 55 <48> 89 e5 41 57 41 56 41 55 41 54 53 48 83 e4 e0 48 83 ec 60 49 89
+RSP: 0018:ffffc90000007ea8 EFLAGS: 00000006
+RAX: 0000000000000000 RBX: ffff8880b942c8e0 RCX: ffff888023b41e00
+RDX: 0000000000010002 RSI: 0000000000000046 RDI: ffff8880b942c880
+RBP: ffff8880b942ca68 R08: ffffffff81836780 R09: 0000000000000000
+R10: ffff8880b942d1a8 R11: ffffed1017285a37 R12: 000000430d8aa980
+R13: ffff8880b942c880 R14: dffffc0000000000 R15: ffff8880b942cc68
+FS:  0000555585626380(0000) GS:ffff8880b9400000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007facfac43580 CR3: 000000007fff0000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <NMI>
+ </NMI>
+ <IRQ>
+ hrtimer_interrupt+0x540/0x990 kernel/time/hrtimer.c:1823
+ local_apic_timer_interrupt arch/x86/kernel/apic/apic.c:1032 [inline]
+ __sysvec_apic_timer_interrupt+0x110/0x3f0 arch/x86/kernel/apic/apic.c:1049
+ instr_sysvec_apic_timer_interrupt arch/x86/kernel/apic/apic.c:1043 [inline]
+ sysvec_apic_timer_interrupt+0xa1/0xc0 arch/x86/kernel/apic/apic.c:1043
+ </IRQ>
+ <TASK>
+ asm_sysvec_apic_timer_interrupt+0x1a/0x20 arch/x86/include/asm/idtentry.h:702
+RIP: 0010:console_trylock_spinning kernel/printk/printk.c:2007 [inline]
+RIP: 0010:vprintk_emit+0x576/0x770 kernel/printk/printk.c:2344
+Code: 0a 20 00 4c 21 e3 0f 85 3a 01 00 00 e8 13 05 20 00 4d 89 ec 4d 85 ff 75 07 e8 06 05 20 00 eb 06 e8 ff 04 20 00 fb 44 8b 3c 24 <48> c7 c7 20 fa 20 8e 31 f6 ba 01 00 00 00 31 c9 41 b8 01 00 00 00
+RSP: 0018:ffffc9000342f740 EFLAGS: 00000293
+RAX: ffffffff81761091 RBX: 0000000000000000 RCX: ffff888023b41e00
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: ffffc9000342f830 R08: ffffffff8176106f R09: 1ffffffff25ee4c9
+R10: dffffc0000000000 R11: fffffbfff25ee4ca R12: dffffc0000000000
+R13: dffffc0000000000 R14: ffffffff81760eef R15: 000000000000009c
+ _printk+0xd5/0x120 kernel/printk/printk.c:2370
+ __nilfs_error+0x193/0x730 fs/nilfs2/super.c:131
+ nilfs_check_folio+0x423/0x660 fs/nilfs2/dir.c:164
+ nilfs_get_folio+0x13f/0x240 fs/nilfs2/dir.c:192
+ nilfs_empty_dir+0x127/0x660 fs/nilfs2/dir.c:608
+ nilfs_rmdir+0x10e/0x250 fs/nilfs2/namei.c:326
+ vfs_rmdir+0x3a3/0x510 fs/namei.c:4214
+ do_rmdir+0x3b5/0x580 fs/namei.c:4273
+ __do_sys_rmdir fs/namei.c:4292 [inline]
+ __se_sys_rmdir fs/namei.c:4290 [inline]
+ __x64_sys_rmdir+0x49/0x60 fs/namei.c:4290
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7faa1dacbdc7
+Code: 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 b8 54 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffd03552de8 EFLAGS: 00000246 ORIG_RAX: 0000000000000054
+RAX: ffffffffffffffda RBX: 0000555585626338 RCX: 00007faa1dacbdc7
+RDX: 0000555585657fff RSI: 0000000000000009 RDI: 00007ffd03553f90
+RBP: 0000000000000064 R08: 000055558563f7db R09: 0000000000000000
+R10: 0000000000001000 R11: 0000000000000246 R12: 00007ffd03553f90
+R13: 0000555585637740 R14: 431bde82d7b634db R15: 00007ffd03556110
+ </TASK>
+INFO: NMI handler (nmi_cpu_backtrace_handler) took too long to run: 1.567 msecs
+
+
 ---
-Andrew, please apply this as a bug fix.
-
-This fixes a kernel bug that is reproducible in some destructive testing.
-
-Thanks,
-Ryusuke Konishi
-
- fs/nilfs2/segment.c | 3 +++
- 1 file changed, 3 insertions(+)
-
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 60d4f59f7665..6ea81f1d5094 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1652,6 +1652,7 @@ static void nilfs_segctor_prepare_write(struct nilfs_sc_info *sci)
- 			if (bh->b_folio != bd_folio) {
- 				if (bd_folio) {
- 					folio_lock(bd_folio);
-+					folio_wait_writeback(bd_folio);
- 					folio_clear_dirty_for_io(bd_folio);
- 					folio_start_writeback(bd_folio);
- 					folio_unlock(bd_folio);
-@@ -1665,6 +1666,7 @@ static void nilfs_segctor_prepare_write(struct nilfs_sc_info *sci)
- 			if (bh == segbuf->sb_super_root) {
- 				if (bh->b_folio != bd_folio) {
- 					folio_lock(bd_folio);
-+					folio_wait_writeback(bd_folio);
- 					folio_clear_dirty_for_io(bd_folio);
- 					folio_start_writeback(bd_folio);
- 					folio_unlock(bd_folio);
-@@ -1681,6 +1683,7 @@ static void nilfs_segctor_prepare_write(struct nilfs_sc_info *sci)
- 	}
- 	if (bd_folio) {
- 		folio_lock(bd_folio);
-+		folio_wait_writeback(bd_folio);
- 		folio_clear_dirty_for_io(bd_folio);
- 		folio_start_writeback(bd_folio);
- 		folio_unlock(bd_folio);
--- 
-2.34.1
-
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
