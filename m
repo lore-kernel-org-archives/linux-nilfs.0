@@ -1,118 +1,85 @@
-Received: from mail-pf1-f180.google.com (mail-pf1-f180.google.com [209.85.210.180])
+Received: from mail-il1-f200.google.com (mail-il1-f200.google.com [209.85.166.200])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B74314658E;
-	Mon, 10 Jun 2024 16:00:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8A3A17545
+	for <linux-nilfs@vger.kernel.org>; Mon, 10 Jun 2024 20:56:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.200
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718035241; cv=none; b=B2xmRyovmeFDfmyeaTTvvf4stuZkCEy7PjIUmpiayuc/iOqbI6u34YholMzPewyYhRP6m7w0Z3nB3lARGrjqDMzYRxAdgiqqjOI4UfqWAGpNZRSJ+UPntQ1wzAu/U2NZIPbpNJkP0PQhvHxYydeWIIIYEaBXoUYF1Gv2DRnHR3A=
+	t=1718052987; cv=none; b=OGg+REOmb6OVup/dMibJNTeXM85fU7vIOL4XPcMlrNsGQgZpqEXxtmOpzvJytzM9si8Fe8oYm4aLOrIbfw+UacXnJAf0j7CvC3RlsnO2c+tRYLYq+1GUe6+MEbMvPH7bPsECQeH9KdHcrNfWLae2fvb+4PllYyBbaN3Ywwu2F3M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718035241; c=relaxed/simple;
-	bh=+MIiiCbdWxNTXrUyRNbG+b13pi9WFUp7fmDjl+ZCGnU=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=nWf/2rmH8mAwHPiO6PGxUnEjR9ktU4obntlJEu1FsXajt2MVshS/Adz9JYXT2DF2yx0/kyCv5UKRrKl/EceDMYkiUX9OoaDRgEr8cPZgChVrkXzEMzypgtBphTnQ+xmuAL3vnWNFYrCPZ1v6XCYkK4YeeCBXmcXVM+r/+cpc4FE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=G8K05pxP; arc=none smtp.client-ip=209.85.210.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="G8K05pxP"
-Received: by mail-pf1-f180.google.com with SMTP id d2e1a72fcca58-7046211e455so878373b3a.3;
-        Mon, 10 Jun 2024 09:00:40 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718035240; x=1718640040; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=e55PJUTGJquoA8apS39Yj2O1Aiis5PKLgqTtAScEy6s=;
-        b=G8K05pxP7qfddRf97gAxXyjPOPgh2EQlsCEFOFhOwjI4js9s5/GR3CqhthitS8VofR
-         47wwbsTd6sqc4XUN+A3k9K2EuxL7Mcdv79hiomWj/lPCuUTa2FoCcBfMjPUwrDfFfgKs
-         zQgJhDFqEh0bnLrSg9cgn1cwB/OVWG6zbQ3DtLQTbH3eziMDIhZ8nMEqgJDiWNBker0F
-         7XdCswziBADBEpJ9QhELct9qYRUYNMeNhvl5BuG4PuKylQar1bXLzAAXhtCNUXzwZOb4
-         IGicMInAV9yJG0GwgUKzBIRs28nv8gAylX1u61KNhgPfTVA2ywJcojpDihhfrfHkMROb
-         sJOw==
+	s=arc-20240116; t=1718052987; c=relaxed/simple;
+	bh=kM1qAszBlDyRnI1jvPB95Jl9MkOal4zQa4ihed3rjjo=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=Vv5hGpSrcLFpone+mijk2LJ4SSqaHTUZupgqywm4wFJFV/OCve2EKuXIOiX44sUHaHdkjaLlUvAo8xBxFPs4XjBdGgbjSGAGoXoS8NkCHU+I2rEBasJGeMqD8VfY3F1C7zP56NXedU0CO5BLupNi+2Vv2bIDWuTc1borTBU7T/A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.200
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f200.google.com with SMTP id e9e14a558f8ab-37596e877e9so30425895ab.3
+        for <linux-nilfs@vger.kernel.org>; Mon, 10 Jun 2024 13:56:25 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718035240; x=1718640040;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=e55PJUTGJquoA8apS39Yj2O1Aiis5PKLgqTtAScEy6s=;
-        b=D6LZgqdIh5ow8/Za5V3KBDzgrnWbNSe+tJUhs/VnOSwrIiPUgYE6X0aX9Jx1YO4j6c
-         c+PIyQNNYJ3zG/wnC+d8qTmDXOCgYNYnIT0GL4QlxDkoWdFYL06hlgO13d/S6oxh2z4R
-         n0kMltMA8tQEGyi81LMIdtBPMOgVo+PQ59dJGHu54rD3gJZXxh4mPlVQCmbRh059H9Gb
-         tXc7c1vsEL9nI95WVZG9vyrfvoQopue+1jrjw64KqvT8EqTuZIJDV3sHRsyANoKc8jMt
-         VaRjGkEcdYcI9j6YsBCbPXdasIzJRnZKPe38emaHQgaeGeANoojQbR/4z22BUjZlzkkS
-         N6bg==
-X-Forwarded-Encrypted: i=1; AJvYcCWzVmvu6ZFxar0H/29tp3LwL67X1id4sXMzbw3bEu69MRI2uSwuyVLENRgaI42MieEj056RrFyrrgl4jlA1QMRPwsfvM5AdNLLNCQssLUCMgtgdhFthWlIWpa3fs/Ivm3Y2H5165kYy6KLj9Q==
-X-Gm-Message-State: AOJu0Yw27Z8/83RjxCdCTjkElu2PVoBYU4K7zqWeqYoWNfWeUPVfnIvL
-	vi1lnQZwQyTOnGBoE2TBDYLzxHqGUtvCCcBjaNCPJTFExmHqPWaW
-X-Google-Smtp-Source: AGHT+IGiEFs8Aut7LobpCXj5NsxQBIaxTqD/6/qlgjEDxm9l2MYyHo4ZKuqutmqOKYkGm7uexbY4WQ==
-X-Received: by 2002:a05:6a20:3948:b0:1b7:edea:e36 with SMTP id adf61e73a8af0-1b7edea118dmr2333039637.22.1718035239641;
-        Mon, 10 Jun 2024 09:00:39 -0700 (PDT)
-Received: from carrot.. (i223-217-185-141.s42.a014.ap.plala.or.jp. [223.217.185.141])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-6e4532507casm4872411a12.62.2024.06.10.09.00.37
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 10 Jun 2024 09:00:39 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org
-Subject: [PATCH -mm 2/2] nilfs2: do not call inode_attach_wb() directly
-Date: Tue, 11 Jun 2024 01:00:29 +0900
-Message-Id: <20240610160029.7673-3-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240610160029.7673-1-konishi.ryusuke@gmail.com>
-References: <20240610160029.7673-1-konishi.ryusuke@gmail.com>
+        d=1e100.net; s=20230601; t=1718052985; x=1718657785;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=H65LHHWxLLyJW3/ZC8B5eQIifhgG1a6hoslfkmbgRYk=;
+        b=hvYldQDZwv09RSOylq/BxlcacrDyi61lLObK+Ov6fpua0V3wPfHhA3UrKulgw4kTAC
+         1//0ANgP+ec6pZt/MSgD54HCjDTUyx83QW6zq5kPBIETnJjBs+P+piWp+Bz4fYOh0Ak7
+         6AW0lD9SKq9bjqtjgN0+Icbze1jzlefLiVKgOiituz/1dVGAgovloMwMwv+e9CCV8Cg7
+         +mTqsD1TnY0oTPx47Vth6OfVgsQRCF17J+xseg6Bp02pstblCCKjLLiQHFd3SMlLfg1Y
+         aVho4C1kBGV5xu6qGoFnecJYxY7HoFfc91gwXkwDyUqwWUkUh6nPlAIvxYqjXEe8SZIu
+         JC2A==
+X-Forwarded-Encrypted: i=1; AJvYcCU1bo1fMrc4HzvFafYGwarQ3ylzPiEwgu6WhZLVzrAMNXIURJRLogGniVs2BaSKXX1xJFpmwhK3s4tlFWrY15qv14gtTB6SVGSmn7s=
+X-Gm-Message-State: AOJu0YzA6DEnhsTwzMHWsYKgq/77WsbgQanXbNbd9Yd+EWL5O+Z37OeS
+	h/tYOdeNVDxcpTHK7lBkXD4vSkAbtNjLSJxalPgfZuLvstVgNO9q2IEL3Pykzn9p5yNMbIcYkXA
+	i9oxYyqMSpRq6TTdpBc2NkkH7z0oTB2aswMecCctfbwFHxzvfVZ5MtSI=
+X-Google-Smtp-Source: AGHT+IHH23tGS+7xmiqVcfrPcaI2EeWrQEl2seOkIXBLJiqfSkdCr+QLeYC76PG6jsf0DFcOUqi550KrzDGSuvPER6nyvDp22Hgu
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6e02:b27:b0:374:8aa0:23e4 with SMTP id
+ e9e14a558f8ab-3758030e51bmr6945835ab.2.1718052985047; Mon, 10 Jun 2024
+ 13:56:25 -0700 (PDT)
+Date: Mon, 10 Jun 2024 13:56:25 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <000000000000e11eb6061a8f6107@google.com>
+Subject: [syzbot] Monthly nilfs report (Jun 2024)
+From: syzbot <syzbot+listf46d964ba2cb22ab21f2@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Call mark_buffer_dirty() for segment summary and super root block
-buffers on the backing device's page cache, thereby indirectly calling
-inode_attach_wb().
+Hello nilfs maintainers/developers,
 
-Then remove the no longer needed call to inode_attach_wb() in
-nilfs_attach_log_writer(), resolving the concern about its
-layer-violating use.
+This is a 31-day syzbot report for the nilfs subsystem.
+All related reports/information can be found at:
+https://syzkaller.appspot.com/upstream/s/nilfs
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+During the period, 2 new issues were detected and 2 were fixed.
+In total, 7 issues are still open and 45 have been fixed so far.
+
+Some of the still happening issues:
+
+Ref Crashes Repro Title
+<1> 70      No    possible deadlock in nilfs_evict_inode (2)
+                  https://syzkaller.appspot.com/bug?extid=c48f1971ba117125f94c
+<2> 32      Yes   KASAN: slab-use-after-free Read in lru_add_fn
+                  https://syzkaller.appspot.com/bug?extid=d79afb004be235636ee8
+<3> 13      No    possible deadlock in nilfs_dirty_inode (3)
+                  https://syzkaller.appspot.com/bug?extid=ca73f5a22aec76875d85
+<4> 8       Yes   WARNING in filemap_unaccount_folio
+                  https://syzkaller.appspot.com/bug?extid=026119922c20a8915631
+
 ---
- fs/nilfs2/segment.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index a92609816bc9..36e0bb38e1aa 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1678,6 +1678,7 @@ static void nilfs_prepare_write_logs(struct list_head *logs, u32 seed)
- 	list_for_each_entry(segbuf, logs, sb_list) {
- 		list_for_each_entry(bh, &segbuf->sb_segsum_buffers,
- 				    b_assoc_buffers) {
-+			mark_buffer_dirty(bh);
- 			if (bh->b_folio == bd_folio)
- 				continue;
- 			if (bd_folio) {
-@@ -1694,6 +1695,7 @@ static void nilfs_prepare_write_logs(struct list_head *logs, u32 seed)
- 	/* Prepare to write super root block */
- 	bh = NILFS_LAST_SEGBUF(logs)->sb_super_root;
- 	if (bh) {
-+		mark_buffer_dirty(bh);
- 		if (bh->b_folio != bd_folio) {
- 			folio_lock(bd_folio);
- 			folio_wait_writeback(bd_folio);
-@@ -2843,8 +2845,6 @@ int nilfs_attach_log_writer(struct super_block *sb, struct nilfs_root *root)
- 	if (!nilfs->ns_writer)
- 		return -ENOMEM;
- 
--	inode_attach_wb(nilfs->ns_bdev->bd_mapping->host, NULL);
--
- 	err = nilfs_segctor_start_thread(nilfs->ns_writer);
- 	if (unlikely(err))
- 		nilfs_detach_log_writer(sb);
--- 
-2.34.1
+To disable reminders for individual bugs, reply with the following command:
+#syz set <Ref> no-reminders
 
+To change bug's subsystems, reply with:
+#syz set <Ref> subsystems: new-subsystem
+
+You may send multiple commands in a single email message.
