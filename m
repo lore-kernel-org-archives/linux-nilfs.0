@@ -1,141 +1,91 @@
-Received: from mail-io1-f70.google.com (mail-io1-f70.google.com [209.85.166.70])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp134-33.sina.com.cn (smtp134-33.sina.com.cn [180.149.134.33])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E080D363
-	for <linux-nilfs@vger.kernel.org>; Sun, 16 Jun 2024 00:10:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.70
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13FA316C68E
+	for <linux-nilfs@vger.kernel.org>; Sun, 16 Jun 2024 02:40:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.149.134.33
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718496604; cv=none; b=kF5vbjv0z3O3gpbYJOdBoIpNfXjip7CO7DE/Lecy2B7/ixZwxyFKDBmziWz6cWhz8M9i7E7yBvVG1gN00N6A/zr+ye5gv1zKt0QcExbFgXPCdogWdnq37F7g/FDk4RRyvWl3OVhWWhdsT5rLCSFBrF8KtNY9uGU8nAeATK10lyY=
+	t=1718505619; cv=none; b=dzhJj8bUNDIv9vGSOpm8gFUTPMJ4jto5o9HxZy0aGOe93O/q26V0y5zrJDaKh09IIWwKl4OrCBtuGmzk2QTcBeoB3JzfoHCJ4R0bsw9pP99nkdMmH2vjoAqoUSEM01oAOiI1Tqip+L0iTX2tL9vRA/1sUjN2xBgtq95h03pckmw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718496604; c=relaxed/simple;
-	bh=Hf7sfFQ3cSMQ1BvCIvPW2slf2/cNJ6E1fEE/xrn3//Y=;
-	h=MIME-Version:Date:In-Reply-To:Message-ID:Subject:From:To:
-	 Content-Type; b=cRss8E0DqblNm/g5+fpHNJCIH5PIiUmXNbPelpoCitTuGaoX4ipnuCpuNIycgGGa7Fz96mq0k9pGeZSUN1aUo2aJ0RY55vbWKB4W9hd8kab0nXKM/piqLq3Sf4e1rE7x60sxK2rlO+pGd/QtwTVYfFTWvvN9GsIbAIP82Ro61Ik=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.70
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-io1-f70.google.com with SMTP id ca18e2360f4ac-7eb7e13522bso398142639f.1
-        for <linux-nilfs@vger.kernel.org>; Sat, 15 Jun 2024 17:10:02 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718496602; x=1719101402;
-        h=to:from:subject:message-id:in-reply-to:date:mime-version
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=U1ViQOmfPbYo1UQjxR1ujw8trFh3Yo+KDFkFbV6YAoE=;
-        b=H64M9YaFpnqc3yyNTCEGtpWo/xwPCIsMbASfQXR7SeCrW3NIvuKvCEdzTZzZ0ngi2T
-         jA+BS1IRFJADCR1W6DXwqgVsRfaEh7KzrgEtEex112Eh1o5b9t25cO+y8F5can1iwUvt
-         gXrSWcmhZ4tIHtYYX6wYyjEv2kTbepawWcGi0wAzEaxNiwobgDULjq+Bzw0BmJNk14yL
-         uHpjCrk1wu1aWBOPHhxXbTW01/P7No1OnTuqfrELqPh4vbLzRhgN53VhOgKonbppWH7l
-         jJqz6DLVcyqtKZdyIF75o4oT/TCUd6QttQmwHunv0xbdCze5HCMHCTBAskeCVzSzsP+R
-         NNuw==
-X-Forwarded-Encrypted: i=1; AJvYcCXoUVTXeJVB0FspV4t2lBoldg7YNgHmMR/UA+jWY2H9/xvFQZ+1m9GaIVypsCyqRJAQ2hcHVXOvQg5KCAXg/APa0EyirjR4Ho9PjnY=
-X-Gm-Message-State: AOJu0Yx3HOsuBlK6yvbnw6Gq0IxLanYYCQO5tFUfVqPZ/2a3GsceTuVo
-	EoDyKf9DNlfzTieXNHY0zTf3DFycIQVVlZueENwj2NId4M0hQzma752d/JKR6l912chwkabf4I2
-	N0T4MCY/4bDp5J9L6sklKCkcWnAdrNu13AgHX4ECQVfwlvu0ZB+ae2ss=
-X-Google-Smtp-Source: AGHT+IFPHGW8ZEaSdgfbB5UzrzYfKMCNJLV8SIc3JTugWpEoQ9hEclzxOPzSQ2FkEl0lpyQ0zWaDAnZzj9QfqNlJqsSKS6tFnlEJ
+	s=arc-20240116; t=1718505619; c=relaxed/simple;
+	bh=dETxmxxhwV6tBINnXqbtRGHmH6/LENJrYEaHiHk7z/g=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=qYu8kWeR4BmtkQ2TyUCuQXH8l7Xbb+AzKdgCjYN0g8GZZAC7CGXUEuLWwRtT+TZlVmczgEsMxuyzFxwGU/fLbLniz9Yt8+W443UEwrgZyQXN0f8JkaNISSu7QgRkNj4QAxk13NCNFvxp/VQDfACxGwOBoc9nUdWFbYmjyETFM9M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sina.com; spf=pass smtp.mailfrom=sina.com; arc=none smtp.client-ip=180.149.134.33
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=sina.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sina.com
+X-SMAIL-HELO: localhost.localdomain
+Received: from unknown (HELO localhost.localdomain)([116.24.9.2])
+	by sina.com (10.185.250.21) with ESMTP
+	id 666E507E00004EF8; Sun, 16 Jun 2024 10:40:00 +0800 (CST)
+X-Sender: hdanton@sina.com
+X-Auth-ID: hdanton@sina.com
+Authentication-Results: sina.com;
+	 spf=none smtp.mailfrom=hdanton@sina.com;
+	 dkim=none header.i=none;
+	 dmarc=none action=none header.from=hdanton@sina.com
+X-SMAIL-MID: 7761573408381
+X-SMAIL-UIID: D0200C16404743458945B9D848C2A235-20240616-104000-1
+From: Hillf Danton <hdanton@sina.com>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: linux-mm@kvack.org,
+	Jan Kara <jack@suse.cz>,
+	linux-kernel@vger.kernel.org,
+	syzbot+d79afb004be235636ee8@syzkaller.appspotmail.com,
+	linux-fsdevel@vger.kernel.org,
+	linux-nilfs@vger.kernel.org,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Subject: Re: [RFC PATCH] mm: truncate: flush lru cache for evicted inode
+Date: Sun, 16 Jun 2024 10:39:51 +0800
+Message-Id: <20240616023951.1250-1-hdanton@sina.com>
+In-Reply-To: <Zm39RkZMjHdui8nh@casper.infradead.org>
+References: 
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6638:871b:b0:4b9:685d:7f65 with SMTP id
- 8926c6da1cb9f-4b9685d8b68mr231744173.4.1718496602136; Sat, 15 Jun 2024
- 17:10:02 -0700 (PDT)
-Date: Sat, 15 Jun 2024 17:10:02 -0700
-In-Reply-To: <20240615235238.1079-1-hdanton@sina.com>
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <00000000000084b401061af6ab80@google.com>
-Subject: Re: [syzbot] [nilfs?] [mm?] KASAN: slab-use-after-free Read in lru_add_fn
-From: syzbot <syzbot+d79afb004be235636ee8@syzkaller.appspotmail.com>
-To: hdanton@sina.com, jack@suse.cz, konishi.ryusuke@gmail.com, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-mm@kvack.org, linux-nilfs@vger.kernel.org, 
-	syzkaller-bugs@googlegroups.com, willy@infradead.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Hello,
+On Sat, 15 Jun 2024 21:44:54 +0100 Matthew Wilcox wrote:
+> 
+> I suspect this would trigger:
+> 
+> +++ b/fs/inode.c
+> @@ -282,6 +282,7 @@ static struct inode *alloc_inode(struct super_block *sb)
+>  void __destroy_inode(struct inode *inode)
+>  {
+>         BUG_ON(inode_has_buffers(inode));
+> +       BUG_ON(inode->i_data.nrpages);
+>         inode_detach_wb(inode);
+>         security_inode_free(inode);
+>         fsnotify_inode_delete(inode);
+> 
+Yes, it was triggered [1]
 
-syzbot has tested the proposed patch but the reproducer is still triggering an issue:
-kernel BUG in __destroy_inode
+[1] https://lore.kernel.org/lkml/00000000000084b401061af6ab80@google.com/
 
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=0)
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=0)
-NILFS (loop0): disposed unprocessed dirty file(s) when stopping log writer
-------------[ cut here ]------------
-kernel BUG at fs/inode.c:285!
-Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN NOPTI
-CPU: 2 PID: 5330 Comm: syz-executor Not tainted 6.10.0-rc3-syzkaller-dirty #0
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
-RIP: 0010:__destroy_inode+0x5e4/0x7a0 fs/inode.c:285
-Code: 2a 03 00 00 48 c7 c7 40 78 3d 8b c6 05 aa 6d cc 0d 01 e8 bf d9 69 ff e9 0e fc ff ff e8 a5 8b 8c ff 90 0f 0b e8 9d 8b 8c ff 90 <0f> 0b e8 95 8b 8c ff 90 0f 0b 90 e9 fa fa ff ff e8 87 8b 8c ff 90
-RSP: 0018:ffffc900035afaf0 EFLAGS: 00010293
-RAX: 0000000000000000 RBX: ffff8880325ba7c8 RCX: ffffffff82015439
-RDX: ffff8880222ec880 RSI: ffffffff820159b3 RDI: 0000000000000007
-RBP: 0000000000000001 R08: 0000000000000007 R09: 0000000000000000
-R10: 0000000000000001 R11: 0000000000000001 R12: ffff8880325ba980
-R13: 0000000000000024 R14: ffffffff8b706c60 R15: ffff8880325ba8a0
-FS:  0000555571e27480(0000) GS:ffff88806b200000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007f01cb366731 CR3: 0000000034ef4000 CR4: 0000000000350ef0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-Call Trace:
- <TASK>
- destroy_inode+0x91/0x1b0 fs/inode.c:310
- iput_final fs/inode.c:1742 [inline]
- iput.part.0+0x5a8/0x7f0 fs/inode.c:1768
- iput+0x5c/0x80 fs/inode.c:1758
- nilfs_put_root+0xae/0xe0 fs/nilfs2/the_nilfs.c:925
- nilfs_segctor_destroy fs/nilfs2/segment.c:2788 [inline]
- nilfs_detach_log_writer+0x5ef/0xaa0 fs/nilfs2/segment.c:2850
- nilfs_put_super+0x43/0x1b0 fs/nilfs2/super.c:498
- generic_shutdown_super+0x159/0x3d0 fs/super.c:642
- kill_block_super+0x3b/0x90 fs/super.c:1676
- deactivate_locked_super+0xbe/0x1a0 fs/super.c:473
- deactivate_super+0xde/0x100 fs/super.c:506
- cleanup_mnt+0x222/0x450 fs/namespace.c:1267
- task_work_run+0x14e/0x250 kernel/task_work.c:180
- resume_user_mode_work include/linux/resume_user_mode.h:50 [inline]
- exit_to_user_mode_loop kernel/entry/common.c:114 [inline]
- exit_to_user_mode_prepare include/linux/entry-common.h:328 [inline]
- __syscall_exit_to_user_mode_work kernel/entry/common.c:207 [inline]
- syscall_exit_to_user_mode+0x278/0x2a0 kernel/entry/common.c:218
- do_syscall_64+0xda/0x250 arch/x86/entry/common.c:89
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-RIP: 0033:0x7fc203a7e217
-Code: b0 ff ff ff f7 d8 64 89 01 48 83 c8 ff c3 0f 1f 44 00 00 31 f6 e9 09 00 00 00 66 0f 1f 84 00 00 00 00 00 b8 a6 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 01 c3 48 c7 c2 b0 ff ff ff f7 d8 64 89 02 b8
-RSP: 002b:00007fffe9265ae8 EFLAGS: 00000202 ORIG_RAX: 00000000000000a6
-RAX: 0000000000000000 RBX: 0000000000000064 RCX: 00007fc203a7e217
-RDX: 0000000000000200 RSI: 0000000000000009 RDI: 00007fffe9266c90
-RBP: 00007fc203ac8336 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000100 R11: 0000000000000202 R12: 00007fffe9266c90
-R13: 00007fc203ac8336 R14: 0000555571e27430 R15: 0000000000000005
- </TASK>
-Modules linked in:
----[ end trace 0000000000000000 ]---
-RIP: 0010:__destroy_inode+0x5e4/0x7a0 fs/inode.c:285
-Code: 2a 03 00 00 48 c7 c7 40 78 3d 8b c6 05 aa 6d cc 0d 01 e8 bf d9 69 ff e9 0e fc ff ff e8 a5 8b 8c ff 90 0f 0b e8 9d 8b 8c ff 90 <0f> 0b e8 95 8b 8c ff 90 0f 0b 90 e9 fa fa ff ff e8 87 8b 8c ff 90
-RSP: 0018:ffffc900035afaf0 EFLAGS: 00010293
-RAX: 0000000000000000 RBX: ffff8880325ba7c8 RCX: ffffffff82015439
-RDX: ffff8880222ec880 RSI: ffffffff820159b3 RDI: 0000000000000007
-RBP: 0000000000000001 R08: 0000000000000007 R09: 0000000000000000
-R10: 0000000000000001 R11: 0000000000000001 R12: ffff8880325ba980
-R13: 0000000000000024 R14: ffffffff8b706c60 R15: ffff8880325ba8a0
-FS:  0000555571e27480(0000) GS:ffff88806b300000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 000000c0016fb000 CR3: 0000000034ef4000 CR4: 0000000000350ef0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+and given trigger after nrpages is checked in clear_inode(),
 
+	iput(inode)
+	evict(inode)
+	truncate_inode_pages_final(&inode->i_data);
+	clear_inode(inode);
+	destroy_inode(inode);
 
-Tested on:
+why is folio added to exiting mapping?
 
-commit:         83a7eefe Linux 6.10-rc3
-git tree:       https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
-console output: https://syzkaller.appspot.com/x/log.txt?x=11bb8ada980000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=b8786f381e62940f
-dashboard link: https://syzkaller.appspot.com/bug?extid=d79afb004be235636ee8
-compiler:       gcc (Debian 12.2.0-14) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40
-patch:          https://syzkaller.appspot.com/x/patch.diff?x=16642012980000
+#syz test https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git  83a7eefedc9b
 
+--- x/mm/filemap.c
++++ y/mm/filemap.c
+@@ -870,6 +870,7 @@ noinline int __filemap_add_folio(struct
+ 	folio_ref_add(folio, nr);
+ 	folio->mapping = mapping;
+ 	folio->index = xas.xa_index;
++	BUG_ON(mapping_exiting(mapping));
+ 
+ 	for (;;) {
+ 		int order = -1, split_order = 0;
+--
