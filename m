@@ -1,132 +1,108 @@
-Received: from mail-lj1-f171.google.com (mail-lj1-f171.google.com [209.85.208.171])
+Received: from mail-pf1-f180.google.com (mail-pf1-f180.google.com [209.85.210.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DCF5194ADE;
-	Mon, 17 Jun 2024 11:24:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 250522F25;
+	Sun, 23 Jun 2024 05:11:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718623484; cv=none; b=sm1gw2oXqIBUbWdpKzpt0rr6EsdkpuBrsrQU5Gz6cfN7pZnOg6R+JfxiqbFCxfCZ/jHxXdqgyTjq1/egIVjfARu6X26hn9xoi+mBvCcTea2HXKZIwCCE0/SJBN1NWO9xN11DTPaRCeW2KEjJ5Y7YeCN1OZAbMMUX424/RiOxR9I=
+	t=1719119505; cv=none; b=dPeZn2D0o6q5dbvpc0kz9s8mPrs+Y3ftR9oPYAu45XHxh3yx4ZgKxVOkSQlbKvxBTzy13UydRul24YTn8SoJcdjMBbkB1v6jaSYNeYCB4HLFegnZEdT0eI77pDP4qO5sRVQlgRapkp1ojsZ+jDYmkQwzsSXxMqZoKXPQn5W7KUs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718623484; c=relaxed/simple;
-	bh=eSVJenYg+Ov0lTGtltByPlRtrbUcU4mRc+K3naSiZCg=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ULOLsIYW8zroURDGpkfHp+f33vsDUpovL0JBjmSFJYRNU81xJG4uYFZtQ1Rzkxn7Bx/39cbtyDE9IPImODyQeMNUr7lnJ6m6Jf9XHXq61uGPm5yK6JrMW68hzcVEpaoVLakBHza78NEVIXo4FHxfUiQ2zQtEUgzvdMOvGviC9NE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=C2rIhrfb; arc=none smtp.client-ip=209.85.208.171
+	s=arc-20240116; t=1719119505; c=relaxed/simple;
+	bh=htzNw0pnD+0+ZzwqDl2SNZT5W3tG1WxHotBQxd/SC38=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=Ev6bveIKutP/iaGeNeB6y1f6Dt2NUA4yYzCNk8CE9toE4IS9AepjFgICQrSHy0qg9LOPKMCCUHk0t06Wz62/vBZe/68tkMTGVKG8MLsxohp0msHIb8UjiOD4OwHbqeacyab697G5K7yWtThzoTx/janhF+0e3aNGZtJFJCxsQzI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VqBSuFyc; arc=none smtp.client-ip=209.85.210.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="C2rIhrfb"
-Received: by mail-lj1-f171.google.com with SMTP id 38308e7fff4ca-2ebec2f11b7so41693441fa.2;
-        Mon, 17 Jun 2024 04:24:42 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VqBSuFyc"
+Received: by mail-pf1-f180.google.com with SMTP id d2e1a72fcca58-70661cd46d2so1120236b3a.3;
+        Sat, 22 Jun 2024 22:11:43 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1718623481; x=1719228281; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1719119503; x=1719724303; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=9u+S5covs6tqmYHGnRdoyC4fZEq6n6k72rCqTj5o6f8=;
-        b=C2rIhrfbaA/OUYnIXpeHcRCL+L+e3NxNKry0hLfeULmOOePwxUXHk0HdELGrtneXUq
-         igr+/6VUKLVQb62iiRZOCMCXvErkkF15wlruVeygWfebMwUi3h6JJMpJEyr0Qbml/njI
-         gviEDbvqWVQkflow+IreIuzFAyw/fzYplQ79HYIN96TT9cu8G0NDQI2pk3zi9wT0HYrr
-         nTuByMD8FNmFJhvjnYxQKlj4Fsg56b+ZlT1x/2ZDFw/7vpvqtwr/o3u5IfZAIpablWxm
-         h5U16ystikB9GfLE0tTd9KL0DQUqvxGxQmLiL/jPZmhtU//SbhPFIQq4HwGTWmskE+9j
-         wr6A==
+        bh=Vc2uIuxIAmkXAH9AFjEIYXjEf1K6XLpy6z58Kbt81MA=;
+        b=VqBSuFyc4iQ2HsaYgHfZgZgSkZbVMPLp7Hzwibft8OHMbnO64AJbV0Sd4nV8x+kVih
+         nBsm7N5JSb1TOxk9Eo37kkw4EY13Wy/4p1yRK24gxvAZjxUoeUpjlH+/X5WmAsXsrvKr
+         CpUXQGS2pCqB0bFA4BWwzf3/N0YTHMNzYhiOIOk4rjH6e/VL+8ip2p2lX9U44dO7aVxd
+         rWw+ota7hRvzpGSZHHz4ZkwPKbJ3QsJIsZq38U9XOLVSBacs9gF2JkvFR4LCQlLQJFRt
+         3Nn/NgsPNoFwlBBwzCkVq6mG1KHsktqrarIiYDIhKcehekMFdW2V3Axx4ueU+8AbtLYW
+         coSw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718623481; x=1719228281;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1719119503; x=1719724303;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=9u+S5covs6tqmYHGnRdoyC4fZEq6n6k72rCqTj5o6f8=;
-        b=DRW4r919NUlIZdWCOwAkkujqWldeMbWsMPmynKC10rUXUlZxYkt1JaDvQ3W4QxHDV5
-         vpeCtS/bmW51EwCBVcWM6O5O/eS8zLybOVmbrYHijDf5qYoJxd/j9dUUfY+/rye+GmDO
-         xh0gZmiqzliAqKthgVO4L/p3+6VdKG6aWzf+rx4c9r01KzGz4cRW7Q0Rr6GNXNT5goC4
-         Bm8doAnoiOTDg0ZtTKRe+wYq0Jdakbow7aOK35LigFs6tQ///cir4FTmwSKx7wV32PmA
-         II343rvzriG6tB0wBnbQqZPcMOjJ+d7+6s+Wy221vbRTphZSUeM+I1KrnTiS9hTFzKqp
-         YeXg==
-X-Forwarded-Encrypted: i=1; AJvYcCWH5VZXB3s278Top4xM0Vm+8zfJtgt5xSLlHcnCVsehfrrDlAcBXKGyta8H42+UXVXGZRCBLlyBIE5FIhDF9Y1I2N6CEMgqeZ46YcthKO3M9a4hj+nIEx4r10TgOxAKVwx90ERSE5noBRziEgaDncwjwvMuEk/9HthlbHJ6Rs2f1hJrHJg6K9Bm
-X-Gm-Message-State: AOJu0YzNUPzuwl5eDRBwOsTQV4GgXrfM6apvFtoFGH7bMwDSrtNw6apy
-	i8Uy2wL3kUHAJN4VoWOvyBSa2BPB3vl9YoJN1TwF4F5x5jjrlPPjuv8dynvH6moX6KduEPXPTBS
-	AbHzRqbKOGAxK1XhEKITWZ1/JNX8=
-X-Google-Smtp-Source: AGHT+IGz6l+l2whi4KHsvt7QZn5lx+DKSwikD+nALNnvZcUbYjy+X2GiVSQjXpnGcwoJjxYhQDFCdsoQdYC2+brDzHc=
-X-Received: by 2002:a2e:7311:0:b0:2eb:f2cf:1e49 with SMTP id
- 38308e7fff4ca-2ec0e5b5228mr58253731fa.2.1718623480308; Mon, 17 Jun 2024
- 04:24:40 -0700 (PDT)
+        bh=Vc2uIuxIAmkXAH9AFjEIYXjEf1K6XLpy6z58Kbt81MA=;
+        b=WhsZvqu7ld3EN3rSxVWzQDfYOmPHtLG8+6V8ZsANzALavwwQHIT0/vgVE2KYOecdJi
+         OuFwWHSznwUMQlkAv4kGwG3UVypf340sww1HQOKzJi5/DjmkMu1F7Px+rGjUiwFXd3Nh
+         uuRYlfeskY/9KGKYvGsUN/TRFRU5wo3TTbz5e4VdN+4PGxxb9cFXqZeLBPEPSvXcycBx
+         PEGjvsrNT23udW5L+/OfcqtkdJWdZxW1EAFcuGLgWiQaK/k1Ov8t9pcsKmobi35PNO+2
+         N39iwjGU4tTLv87BD2ST/3LjPzispCq4nB+20uT/zHvo7Kwhj3n0gMU902lhfbmazElV
+         z0ZQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVg1CPj/MmDGHzCnElg5/nytkKk664nyu0HW+ZyrsoIok+uouXwwNeR05/eZJwH4ChK9AwBZpIUlxC/KOzJAKWzV4n/IJXRLCtW32reKLjIHLkUD193mOrBBadDmBBzZY1VVP9fL/bHdLTnrQ==
+X-Gm-Message-State: AOJu0YzLV82D9mseVGgMOBUG72fyU7M9Uj6DrDHsJ68zJ1vkArtzBr/o
+	7UPrTdWti77VAllLenG5be1HeU7VwwBtWWQXGDonHvOAjyMTnwUi
+X-Google-Smtp-Source: AGHT+IH/KifNye/PQIvBXCvWHPt3lOvzTNplvrfMh6nZIJSG8hf+uPS503IBBJF6ZwT5BP1wQYh0ig==
+X-Received: by 2002:a62:b61a:0:b0:705:f139:d808 with SMTP id d2e1a72fcca58-70670bb6a5dmr1809761b3a.0.1719119503322;
+        Sat, 22 Jun 2024 22:11:43 -0700 (PDT)
+Received: from carrot.. (i114-180-52-104.s42.a014.ap.plala.or.jp. [114.180.52.104])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-706512d3034sm4042844b3a.170.2024.06.22.22.11.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 22 Jun 2024 22:11:42 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
+	syzbot <syzbot+d79afb004be235636ee8@syzkaller.appspotmail.com>,
+	syzkaller-bugs@googlegroups.com,
+	LKML <linux-kernel@vger.kernel.org>,
+	hdanton@sina.com,
+	jack@suse.cz,
+	linux-fsdevel@vger.kernel.org,
+	willy@infradead.org
+Subject: [PATCH 0/3] nilfs2: fix potential issues related to reserved inodes
+Date: Sun, 23 Jun 2024 14:11:32 +0900
+Message-Id: <20240623051135.4180-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <000000000000fe2d22061af9206f@google.com>
+References: <000000000000fe2d22061af9206f@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <Zm39RkZMjHdui8nh@casper.infradead.org> <20240616023951.1250-1-hdanton@sina.com>
- <20240617075758.wewhukbrjod5fp5o@quack3>
-In-Reply-To: <20240617075758.wewhukbrjod5fp5o@quack3>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Mon, 17 Jun 2024 20:24:23 +0900
-Message-ID: <CAKFNMo=rL0tv1eUqHJ-KZXwZRuaJ3yWfWU8jzZaAgR3FU1DO7w@mail.gmail.com>
-Subject: Re: [RFC PATCH] mm: truncate: flush lru cache for evicted inode
-To: Jan Kara <jack@suse.cz>
-Cc: Hillf Danton <hdanton@sina.com>, Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, 
-	linux-kernel@vger.kernel.org, 
-	syzbot+d79afb004be235636ee8@syzkaller.appspotmail.com, 
-	linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Mon, Jun 17, 2024 at 4:57=E2=80=AFPM Jan Kara wrote:
->
-> On Sun 16-06-24 10:39:51, Hillf Danton wrote:
-> > On Sat, 15 Jun 2024 21:44:54 +0100 Matthew Wilcox wrote:
-> > >
-> > > I suspect this would trigger:
-> > >
-> > > +++ b/fs/inode.c
-> > > @@ -282,6 +282,7 @@ static struct inode *alloc_inode(struct super_blo=
-ck *sb)
-> > >  void __destroy_inode(struct inode *inode)
-> > >  {
-> > >         BUG_ON(inode_has_buffers(inode));
-> > > +       BUG_ON(inode->i_data.nrpages);
-> > >         inode_detach_wb(inode);
-> > >         security_inode_free(inode);
-> > >         fsnotify_inode_delete(inode);
-> > >
-> > Yes, it was triggered [1]
-> >
-> > [1] https://lore.kernel.org/lkml/00000000000084b401061af6ab80@google.co=
-m/
-> >
-> > and given trigger after nrpages is checked in clear_inode(),
-> >
-> >       iput(inode)
-> >       evict(inode)
-> >       truncate_inode_pages_final(&inode->i_data);
-> >       clear_inode(inode);
-> >       destroy_inode(inode);
-> >
-> > why is folio added to exiting mapping?
-> >
-> > #syz test https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linu=
-x.git  83a7eefedc9b
->
-> OK, so based on syzbot results this seems to be a bug in
-> nilfs_evict_inode() (likely caused by corrupted filesystem so that root
-> inode's link count was 0 and hence was getting deleted on iput()). I gues=
-s
-> nilfs maintainers need to address these with more consistency checks of
-> metadata when loading them...
->
->                                                                         H=
-onza
-> --
-> Jan Kara <jack@suse.com>
-> SUSE Labs, CR
+Hi Andrew, please apply this bug fix series.
 
-Sorry for my late response.
-
-Also, thank you for pointing out that the problem seems to be caused
-via nilfs_evict_inode() by a missing consistency check of the link
-count.
-
-I'll check it out and think about how to deal with it.
+This series fixes one use-after-free issue reported by syzbot, caused
+by nilfs2's internal inode being exposed in the namespace on a
+corrupted filesystem, and a couple of flaws that cause problems if the
+starting number of non-reserved inodes written in the on-disk super
+block is intentionally (or corruptly) changed from its default value.
 
 Thanks,
 Ryusuke Konishi
+
+
+Ryusuke Konishi (3):
+  nilfs2: fix inode number range checks
+  nilfs2: add missing check for inode numbers on directory entries
+  nilfs2: fix incorrect inode allocation from reserved inodes
+
+ fs/nilfs2/alloc.c     | 19 +++++++++++++++----
+ fs/nilfs2/alloc.h     |  4 ++--
+ fs/nilfs2/dat.c       |  2 +-
+ fs/nilfs2/dir.c       |  6 ++++++
+ fs/nilfs2/ifile.c     |  7 ++-----
+ fs/nilfs2/nilfs.h     | 10 ++++++++--
+ fs/nilfs2/the_nilfs.c |  6 ++++++
+ fs/nilfs2/the_nilfs.h |  2 +-
+ 8 files changed, 41 insertions(+), 15 deletions(-)
+
+-- 
+2.34.1
+
