@@ -1,153 +1,205 @@
-Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com [209.85.210.173])
+Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DC72D2E5;
-	Fri, 28 Jun 2024 16:50:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F6A2EC5;
+	Sat, 29 Jun 2024 07:31:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719593405; cv=none; b=K9OanpYrAHyLxpBWePCfPr1kKHLWurDhAFzJ12EDVNw0O8raUI20dwdFXdaOJ4z6aFAvG62PiX1XzNqPTkD3f2TNMucf6rthAw5iZgc8mBSFPYYIssKtTTHjYuj+F6tr6aAp6+40FCl/E1BDThn0KNcd9rESx2jgmdKQt+oBu4M=
+	t=1719646274; cv=none; b=rcE1zW4k37rbnMMM0CW5c1hZMRdcMlEw5GTzrfwC+5IPXAaWJcsCprTJa+P0gydjd6k2+eV22/eEaP6GtWxD01XXihJRIdGTMCfmhC5Pw9I2jwbEDfa3EpUudHZA8MVXLFdxS4mDm95XafFlPDqsOvHOpXYrjB3cBMB/C9cwHpU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719593405; c=relaxed/simple;
-	bh=G8DqdW0trZFUQupStjt8vVkzmJRjh9xErUsIAV7fWGc=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=eooraNT5BzAlfnrajIHCwkQAL/yDxLuE8RAMj/fKtHViNG2lrurqH54qM2rSs6v8+ysgMWqaR5mGoep3enR5PDILi4rBuLzb5FpX4N9Rrvg72IG5WV36uydopen71yNaK3TpizPPlfxxbD9SKSS8/zf1VngLwrRaY5+6BJ4ddtw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cjCVicOi; arc=none smtp.client-ip=209.85.210.173
+	s=arc-20240116; t=1719646274; c=relaxed/simple;
+	bh=+8uouc+q8RWe7tEuUZKaqus7l7eQj+2kCBWXrs8ulis=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=DddBzQVq7M/QrcLGhgw6TtYkIuLr0UKNUvk0Yqa74I3oaXfNKxpZO3T7a7x+Vcv6g8Ka03LPiu/mh8QAoj4sVNC3APiOZnmebsqRNSeQtcj9YBtfr/V4m+LyYQyFvVVCaQpFKK5u5FGMp9oXtOLhX1fZwwavWIsIPPQmTIah2ZU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HO0WA2vK; arc=none smtp.client-ip=209.85.167.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cjCVicOi"
-Received: by mail-pf1-f173.google.com with SMTP id d2e1a72fcca58-7067435d376so621635b3a.0;
-        Fri, 28 Jun 2024 09:50:03 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HO0WA2vK"
+Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-52bbf73f334so1157528e87.2;
+        Sat, 29 Jun 2024 00:31:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1719593403; x=1720198203; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1719646270; x=1720251070; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=4Sai30B2m2oMAFo6GShhCdpzgtuTKYbcDM5PCHgdK/E=;
-        b=cjCVicOiq7ys/CLxt+56boRgg6GAineGyvTnM+4frCcvPWB+LBVdKY4kUbekfh267T
-         I983ZJ5FjShEt2IU8IL49sifXcYoi7YhDxU02E6pXBIr8nw4hSs4X0zq9OXi0ii9JXVI
-         GXEGb6n8IHGFRSZcFAGX9d2UxlcExFuDVk4MS4sQ2lwZx7YT13xMZ5dITudJXkjbdj90
-         hsvzEaHFW7dRZ8OSUyrCVS8r/EkYIE+T58wSXGXVIharTpB1jKEjnu7Z59kaCApEfmAI
-         ewEEzSiz09CAi+i/lDd9/vlv3rt1KpIDnsd0HRP25JZ3tR5FZJ6sIHdLbP1EHQIwynjT
-         PpZQ==
+        bh=Jiq0v4OU9Wj5MDOC4dybFdNlnqYKEAGOTuCED6DRP1g=;
+        b=HO0WA2vKXdf9KDd2WZYT0qxuJYtwpgB9Xo0mRJoDz288Kq7KrhkpGw/p2biNcMWszf
+         Q6Si99MHsyg0BeAEqAMFV10eTdJp0KrZy3QFAXxVC8GCeJUiRQXeLG2MKHS3kLzCJuWb
+         LUkpJ2DavoAJqCZVF1/Y9J+qOuvw+KvliVsEJA9+d/RkY33Ata4V1CJ0dl60m55AgRQY
+         tROMNkel4Z+pTWqWQ99sawqjKNX3uyRg+A7+go3lzuVADiP3Ua2RJCeRgXI9Gef/wEV+
+         Udew8bb+pkHZ0fcdXR7yzppGZAuk/iFIwvyJthdibXEHSc1gtGguOZX3oBmTYU7cphgz
+         P0pQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719593403; x=1720198203;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1719646270; x=1720251070;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=4Sai30B2m2oMAFo6GShhCdpzgtuTKYbcDM5PCHgdK/E=;
-        b=gbxmbpAcYL1ZDOHlITm5K5V4jzsFPqYwoowu0KIl/7ge/YdT9pkxVuYCAMr2Jq3RZL
-         8go5GzM/RH0vvxCtmsL9ZO8hpYADMicKz4E6yIEux8vB+ldyMpzagwNiBc6SuoJnAFJw
-         qFArwvHGhiymLhSsEMcruDM6ayw6oOxk47Gz3gu5LX0SiYPcNm1fxD/xS12fNVffAf3A
-         YAOzXiMxHNhmZ0HcZDQSkKj2N9H9Gj2gWfzTrSmwRMzop99g3RFaxbX7ZgIOaKDb9gQd
-         ru4SDeoVz4ztNs7HuH5rfJ9unYrB++Xnnc9npgFfb+akDFs+wW7QpOqwBFh9iJ+ryuHe
-         FzCg==
-X-Forwarded-Encrypted: i=1; AJvYcCVXaZl6+V+e51sGLh9hSvxwrKIPVcdX7AKUpgeNbFX1VggranBYS3qt6oG2cNzl/EfvtqB0hPCj97wWX8ML2bartn4z90p4+g6Rlyse
-X-Gm-Message-State: AOJu0YywSd4jnBepPZrtQ41UxiQpSnSpozlK73VwEazS/26MU4T1+F5e
-	owK5zpkyx+wi9ntQKo8xCRBrlmLkvUbh8RN7GMMp1HkohtAlhtTt
-X-Google-Smtp-Source: AGHT+IG7FBBAz50J+1PFvwI0HOFkFmVVr1ZgKD18MFU3u1JUmFFVaxoC3Ga0nwWFX4ys9XykVWm3pQ==
-X-Received: by 2002:aa7:91d3:0:b0:706:5daf:efa5 with SMTP id d2e1a72fcca58-70851f55b1bmr2832674b3a.9.1719593403189;
-        Fri, 28 Jun 2024 09:50:03 -0700 (PDT)
-Received: from carrot.. (i114-180-52-104.s42.a014.ap.plala.or.jp. [114.180.52.104])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-70804a95402sm1827690b3a.198.2024.06.28.09.50.00
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 28 Jun 2024 09:50:02 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
-	syzbot <syzbot+d3abed1ad3d367fa2627@syzkaller.appspotmail.com>,
-	syzkaller-bugs@googlegroups.com,
-	LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH] nilfs2: fix kernel bug on rename operation of broken directory
-Date: Sat, 29 Jun 2024 01:51:07 +0900
-Message-Id: <20240628165107.9006-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <0000000000003002be06179e2f61@google.com>
-References: <0000000000003002be06179e2f61@google.com>
+        bh=Jiq0v4OU9Wj5MDOC4dybFdNlnqYKEAGOTuCED6DRP1g=;
+        b=M7L6D1CXvfDMkzPOJiGDwor5zX7YrMb3xBfpqKnTtZiGTig8XRRdF43wRTo/2E0rwH
+         39RAvDOUsD7mtO1A5tBIzjWWiE/RE3fstaMrdUSRsrJajAyW9HmeVFNhZH9VlG8ST8H3
+         ZwariZGDSEMHyqy/FhNxEUiVqYCwqNyv6DCwAUFcpKC+DfN6G/i/bmwcVPEOlsya22bT
+         CB0ywHkF19BmyChblI8FDnnrtptLVY70K+VaLfKdhwmM9AQctSo7cvp+55O8/HewdDid
+         OtMG5gCjIv4HSaKah+3gn8u5tV4z4pd4ne26CfGr0nMl7D04kqDkuysCuLr7K2sWMxOU
+         MhNg==
+X-Forwarded-Encrypted: i=1; AJvYcCUMaJ4gvHbEa3m3fvqJ9/tDR6/nbCAs4KqSSjp7RlIcsh6t4ZLWgTdNGiw5twqhnNDFrxaKkcwL1RiQM2LBkxuLDxbR27KzVEYYF3uvVbAHwsQefiZK/jeKxGfpJRaKAlk4J6inXEgiApfwAZfiYlUJ90Ij/ux38B0ShEh49bM/QNdB8CvcRLyF
+X-Gm-Message-State: AOJu0YxNm/GP2eBWAKrIZuFSsn8F6zxfHF1oeOTzpPfgLwxSUkq0HNas
+	e9QdyV2a1cJ6Cz8+1wBVmaMifZhJ7akSiuDc3s5FkJNPR57SPsanf3mn3lmGm2I6AIdGhnMrBsT
+	EA1z7TLc3jCld1WszznozbSKZsCERUrMc
+X-Google-Smtp-Source: AGHT+IF/SWJYjF7/yMtnIHUzDM4GeX3U3awBtLEAFq/vpYxfI8QgukjV/761c0ciMhtgLR/E4NT4MZAC1k0Kpz5cftI=
+X-Received: by 2002:a05:6512:3497:b0:52e:764d:7409 with SMTP id
+ 2adb3069b0e04-52e8266eac0mr276771e87.19.1719646270207; Sat, 29 Jun 2024
+ 00:31:10 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <0000000000005c66ec061902110a@google.com>
+In-Reply-To: <0000000000005c66ec061902110a@google.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Sat, 29 Jun 2024 16:30:53 +0900
+Message-ID: <CAKFNMokpj+TkVwrYZ=mYmHKxx4eaKDEUyy_y+zqC+z0o2UmgBQ@mail.gmail.com>
+Subject: Re: [syzbot] [nilfs?] [btrfs?] WARNING in filemap_unaccount_folio
+To: syzbot <syzbot+026119922c20a8915631@syzkaller.appspotmail.com>
+Cc: linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com, 
+	brauner@kernel.org, clm@fb.com, dsterba@suse.com, jack@suse.cz, 
+	josef@toxicpanda.com, linux-btrfs@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	viro@zeniv.linux.org.uk
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Syzbot reported that in rename directory operation on broken directory
-on nilfs2, __block_write_begin_int() called to prepare block write may
-fail BUG_ON check for access exceeding the folio/page size.
+On Wed, May 22, 2024 at 11:55=E2=80=AFAM syzbot
+<syzbot+026119922c20a8915631@syzkaller.appspotmail.com> wrote:
+>
+> Hello,
+>
+> syzbot found the following issue on:
+>
+> HEAD commit:    b6394d6f7159 Merge tag 'pull-misc' of git://git.kernel.or=
+g..
+> git tree:       upstream
+> console output: https://syzkaller.appspot.com/x/log.txt?x=3D142a7cb298000=
+0
+> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D713476114e57e=
+ef3
+> dashboard link: https://syzkaller.appspot.com/bug?extid=3D026119922c20a89=
+15631
+> compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Deb=
+ian) 2.40
+> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D14d43f84980=
+000
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D11d4fadc98000=
+0
+>
+> Downloadable assets:
+> disk image: https://storage.googleapis.com/syzbot-assets/e8e1377d4772/dis=
+k-b6394d6f.raw.xz
+> vmlinux: https://storage.googleapis.com/syzbot-assets/19fbbb3b6dd5/vmlinu=
+x-b6394d6f.xz
+> kernel image: https://storage.googleapis.com/syzbot-assets/4dcce16af95d/b=
+zImage-b6394d6f.xz
+> mounted in repro #1: https://storage.googleapis.com/syzbot-assets/e197bb1=
+019a1/mount_0.gz
+> mounted in repro #2: https://storage.googleapis.com/syzbot-assets/1c62d47=
+5ecf4/mount_2.gz
+>
+> IMPORTANT: if you fix the issue, please add the following tag to the comm=
+it:
+> Reported-by: syzbot+026119922c20a8915631@syzkaller.appspotmail.com
+>
+> ------------[ cut here ]------------
+> WARNING: CPU: 1 PID: 5096 at mm/filemap.c:217 filemap_unaccount_folio+0x6=
+be/0xe40 mm/filemap.c:216
+> Modules linked in:
+> CPU: 1 PID: 5096 Comm: syz-executor306 Not tainted 6.9.0-syzkaller-10729-=
+gb6394d6f7159 #0
+> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS G=
+oogle 04/02/2024
+> RIP: 0010:filemap_unaccount_folio+0x6be/0xe40 mm/filemap.c:216
+> Code: 48 c1 e8 03 48 b9 00 00 00 00 00 fc ff df 0f b6 04 08 84 c0 0f 85 e=
+5 00 00 00 8b 6d 00 ff c5 e9 45 fa ff ff e8 c3 66 ca ff 90 <0f> 0b 90 48 b8=
+ 00 00 00 00 00 fc ff df 41 80 3c 06 00 74 0a 48 8b
+> RSP: 0018:ffffc9000382f1f8 EFLAGS: 00010093
+> RAX: ffffffff81cbd3ad RBX: ffff888079ef0380 RCX: ffff88802d4f5a00
+> RDX: 0000000000000000 RSI: 0000000000000001 RDI: 0000000000000000
+> RBP: 0000000000000003 R08: ffffffff81cbd2c9 R09: 1ffffd40000c1ec8
+> R10: dffffc0000000000 R11: fffff940000c1ec9 R12: 1ffffd40000c1ec8
+> R13: ffffea000060f640 R14: 1ffff1100f3de070 R15: ffffea000060f648
+> FS:  00007f13ab0c76c0(0000) GS:ffff8880b9500000(0000) knlGS:0000000000000=
+000
+> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> CR2: 0000000000000000 CR3: 000000002ca92000 CR4: 00000000003506f0
+> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+> DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+> Call Trace:
+>  <TASK>
+>  delete_from_page_cache_batch+0x173/0xc70 mm/filemap.c:341
+>  truncate_inode_pages_range+0x364/0xfc0 mm/truncate.c:359
+>  truncate_inode_pages mm/truncate.c:439 [inline]
+>  truncate_pagecache mm/truncate.c:732 [inline]
+>  truncate_setsize+0xcf/0xf0 mm/truncate.c:757
+>  simple_setattr+0xbe/0x110 fs/libfs.c:886
+>  notify_change+0xbb4/0xe70 fs/attr.c:499
+>  do_truncate+0x220/0x310 fs/open.c:65
+>  handle_truncate fs/namei.c:3308 [inline]
+>  do_open fs/namei.c:3654 [inline]
+>  path_openat+0x2a3d/0x3280 fs/namei.c:3807
+>  do_filp_open+0x235/0x490 fs/namei.c:3834
+>  do_sys_openat2+0x13e/0x1d0 fs/open.c:1405
+>  do_sys_open fs/open.c:1420 [inline]
+>  __do_sys_creat fs/open.c:1496 [inline]
+>  __se_sys_creat fs/open.c:1490 [inline]
+>  __x64_sys_creat+0x123/0x170 fs/open.c:1490
+>  do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+>  do_syscall_64+0xf5/0x240 arch/x86/entry/common.c:83
+>  entry_SYSCALL_64_after_hwframe+0x77/0x7f
+> RIP: 0033:0x7f13ab131c99
+> Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 b1 18 00 00 90 48 89 f8 48 89 f=
+7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff=
+ ff 73 01 c3 48 c7 c1 b0 ff ff ff f7 d8 64 89 01 48
+> RSP: 002b:00007f13ab0c7198 EFLAGS: 00000246 ORIG_RAX: 0000000000000055
+> RAX: ffffffffffffffda RBX: 00007f13ab1bf6d8 RCX: 00007f13ab131c99
+> RDX: 00007f13ab131c99 RSI: 0000000000000000 RDI: 00000000200001c0
+> RBP: 00007f13ab1bf6d0 R08: 0000000000000000 R09: 0000000000000000
+> R10: 0000000000000000 R11: 0000000000000246 R12: 00007f13ab18c160
+> R13: 000000000000006e R14: 0030656c69662f2e R15: 00007f13ab186bc0
+>  </TASK>
+>
+>
+> ---
+> This report is generated by a bot. It may contain errors.
+> See https://goo.gl/tpsmEJ for more information about syzbot.
+> syzbot engineers can be reached at syzkaller@googlegroups.com.
+>
+> syzbot will keep track of this issue. See:
+> https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+>
+> If the report is already addressed, let syzbot know by replying with:
+> #syz fix: exact-commit-title
+>
+> If you want syzbot to run the reproducer, reply with:
+> #syz test: git://repo/address.git branch-or-commit-hash
+> If you attach or paste a git patch, syzbot will apply it before testing.
+>
+> If you want to overwrite report's subsystems, reply with:
+> #syz set subsystems: new-subsystem
+> (See the list of subsystem names on the web dashboard)
+>
+> If the report is a duplicate of another one, reply with:
+> #syz dup: exact-subject-of-another-report
+>
+> If you want to undo deduplication, reply with:
+> #syz undup
 
-This is because nilfs_dotdot(), which gets parent directory reference
-entry ("..") of the directory to be moved or renamed, does not check
-consistency enough, and may return location exceeding folio/page size
-for broken directories.
+#syz fix: nilfs2: add missing check for inode numbers on directory entries
 
-Fix this issue by checking required directory entries ("." and "..")
-in the first chunk of the directory in nilfs_dotdot().
+I have confirmed that this issue will be fixed by the above commit,
+which is in the process of being sent upstream.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: syzbot+d3abed1ad3d367fa2627@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=d3abed1ad3d367fa2627
-Fixes: 2ba466d74ed7 ("nilfs2: directory entry operations")
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: stable@vger.kernel.org
----
-Hi Andrew, please apply this as a bug fix.
+This was one of the issues caused by an internal inode being exposed
+in the namespace in a corrupted filesystem image.
 
-This fixes a potential kernel bug reported by syzbot regarding broken
-directory rename operations.
-
-Thanks,
 Ryusuke Konishi
-
- fs/nilfs2/dir.c | 32 ++++++++++++++++++++++++++++++--
- 1 file changed, 30 insertions(+), 2 deletions(-)
-
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index dddfa604491a..4a29b0138d75 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -383,11 +383,39 @@ struct nilfs_dir_entry *nilfs_find_entry(struct inode *dir,
- 
- struct nilfs_dir_entry *nilfs_dotdot(struct inode *dir, struct folio **foliop)
- {
--	struct nilfs_dir_entry *de = nilfs_get_folio(dir, 0, foliop);
-+	struct folio *folio;
-+	struct nilfs_dir_entry *de, *next_de;
-+	size_t limit;
-+	char *msg;
- 
-+	de = nilfs_get_folio(dir, 0, &folio);
- 	if (IS_ERR(de))
- 		return NULL;
--	return nilfs_next_entry(de);
-+
-+	limit = nilfs_last_byte(dir, 0);  /* is a multiple of chunk size */
-+	if (unlikely(!limit || le64_to_cpu(de->inode) != dir->i_ino ||
-+		     !nilfs_match(1, ".", de))) {
-+		msg = "missing '.'";
-+		goto fail;
-+	}
-+
-+	next_de = nilfs_next_entry(de);
-+	/*
-+	 * If "next_de" has not reached the end of the chunk, there is
-+	 * at least one more record.  Check whether it matches "..".
-+	 */
-+	if (unlikely((char *)next_de == (char *)de + nilfs_chunk_size(dir) ||
-+		     !nilfs_match(2, "..", next_de))) {
-+		msg = "missing '..'";
-+		goto fail;
-+	}
-+	*foliop = folio;
-+	return next_de;
-+
-+fail:
-+	nilfs_error(dir->i_sb, "directory #%lu %s", dir->i_ino, msg);
-+	folio_release_kmap(folio, de);
-+	return NULL;
- }
- 
- ino_t nilfs_inode_by_name(struct inode *dir, const struct qstr *qstr)
--- 
-2.34.1
-
