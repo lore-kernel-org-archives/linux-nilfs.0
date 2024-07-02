@@ -1,205 +1,160 @@
-Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F6A2EC5;
-	Sat, 29 Jun 2024 07:31:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 140B7846D;
+	Tue,  2 Jul 2024 17:00:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719646274; cv=none; b=rcE1zW4k37rbnMMM0CW5c1hZMRdcMlEw5GTzrfwC+5IPXAaWJcsCprTJa+P0gydjd6k2+eV22/eEaP6GtWxD01XXihJRIdGTMCfmhC5Pw9I2jwbEDfa3EpUudHZA8MVXLFdxS4mDm95XafFlPDqsOvHOpXYrjB3cBMB/C9cwHpU=
+	t=1719939634; cv=none; b=G/gCsQfRibM6trWBUFSUmg9HG+TaaeaXkWFiduVLrh35+MrJHUMxYQZiNTAIsbmC/lZ/hSaXelxG3U8ej31FZs5queMLxCjgKdKVvz3TNUNwdVHwh9IjervAS9sX2xSmX72EXuSHsIRSShj2ZycI12i627ia6j7zppQ0rKjMnYc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719646274; c=relaxed/simple;
-	bh=+8uouc+q8RWe7tEuUZKaqus7l7eQj+2kCBWXrs8ulis=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=DddBzQVq7M/QrcLGhgw6TtYkIuLr0UKNUvk0Yqa74I3oaXfNKxpZO3T7a7x+Vcv6g8Ka03LPiu/mh8QAoj4sVNC3APiOZnmebsqRNSeQtcj9YBtfr/V4m+LyYQyFvVVCaQpFKK5u5FGMp9oXtOLhX1fZwwavWIsIPPQmTIah2ZU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HO0WA2vK; arc=none smtp.client-ip=209.85.167.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1719939634; c=relaxed/simple;
+	bh=K8VsCGrUyV4lSHiM8Vd6ArHffkld8kqllhhm3HPOngE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=OEYbfyhimEUlD7duRVZWUAbC3+cyJuxwxFe9Wusz0vMOTiEFBVwiZRXeUZzrP0ZrgIGbAp6SLXzoxyEw2MYaqLsF9frLRGuyEZfP8pflG+WvBL00FoYiSATnNLeBMMJOEJ4ozwY/SCkkcNr0MN0se4BBJEEmmYq0P+eZTw8ytSE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=cVZ1n+op; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=eeBQ+Znn; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=SgfSY445; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=v0kNTFFe; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HO0WA2vK"
-Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-52bbf73f334so1157528e87.2;
-        Sat, 29 Jun 2024 00:31:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1719646270; x=1720251070; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Jiq0v4OU9Wj5MDOC4dybFdNlnqYKEAGOTuCED6DRP1g=;
-        b=HO0WA2vKXdf9KDd2WZYT0qxuJYtwpgB9Xo0mRJoDz288Kq7KrhkpGw/p2biNcMWszf
-         Q6Si99MHsyg0BeAEqAMFV10eTdJp0KrZy3QFAXxVC8GCeJUiRQXeLG2MKHS3kLzCJuWb
-         LUkpJ2DavoAJqCZVF1/Y9J+qOuvw+KvliVsEJA9+d/RkY33Ata4V1CJ0dl60m55AgRQY
-         tROMNkel4Z+pTWqWQ99sawqjKNX3uyRg+A7+go3lzuVADiP3Ua2RJCeRgXI9Gef/wEV+
-         Udew8bb+pkHZ0fcdXR7yzppGZAuk/iFIwvyJthdibXEHSc1gtGguOZX3oBmTYU7cphgz
-         P0pQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719646270; x=1720251070;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=Jiq0v4OU9Wj5MDOC4dybFdNlnqYKEAGOTuCED6DRP1g=;
-        b=M7L6D1CXvfDMkzPOJiGDwor5zX7YrMb3xBfpqKnTtZiGTig8XRRdF43wRTo/2E0rwH
-         39RAvDOUsD7mtO1A5tBIzjWWiE/RE3fstaMrdUSRsrJajAyW9HmeVFNhZH9VlG8ST8H3
-         ZwariZGDSEMHyqy/FhNxEUiVqYCwqNyv6DCwAUFcpKC+DfN6G/i/bmwcVPEOlsya22bT
-         CB0ywHkF19BmyChblI8FDnnrtptLVY70K+VaLfKdhwmM9AQctSo7cvp+55O8/HewdDid
-         OtMG5gCjIv4HSaKah+3gn8u5tV4z4pd4ne26CfGr0nMl7D04kqDkuysCuLr7K2sWMxOU
-         MhNg==
-X-Forwarded-Encrypted: i=1; AJvYcCUMaJ4gvHbEa3m3fvqJ9/tDR6/nbCAs4KqSSjp7RlIcsh6t4ZLWgTdNGiw5twqhnNDFrxaKkcwL1RiQM2LBkxuLDxbR27KzVEYYF3uvVbAHwsQefiZK/jeKxGfpJRaKAlk4J6inXEgiApfwAZfiYlUJ90Ij/ux38B0ShEh49bM/QNdB8CvcRLyF
-X-Gm-Message-State: AOJu0YxNm/GP2eBWAKrIZuFSsn8F6zxfHF1oeOTzpPfgLwxSUkq0HNas
-	e9QdyV2a1cJ6Cz8+1wBVmaMifZhJ7akSiuDc3s5FkJNPR57SPsanf3mn3lmGm2I6AIdGhnMrBsT
-	EA1z7TLc3jCld1WszznozbSKZsCERUrMc
-X-Google-Smtp-Source: AGHT+IF/SWJYjF7/yMtnIHUzDM4GeX3U3awBtLEAFq/vpYxfI8QgukjV/761c0ciMhtgLR/E4NT4MZAC1k0Kpz5cftI=
-X-Received: by 2002:a05:6512:3497:b0:52e:764d:7409 with SMTP id
- 2adb3069b0e04-52e8266eac0mr276771e87.19.1719646270207; Sat, 29 Jun 2024
- 00:31:10 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="cVZ1n+op";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="eeBQ+Znn";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="SgfSY445";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="v0kNTFFe"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id BED241FBB3;
+	Tue,  2 Jul 2024 17:00:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1719939631;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=93MeAty8m/ZPbv/+ZPblI57xMCCiCRrqvCNZ35C2P0g=;
+	b=cVZ1n+opU5gK4buhdJNaT17zO244czOisrP4KWJeFFxE8o3Q27QrCR7B8u+vI4dXmZRKYG
+	0KxOQyujGupF/spyqb4qFs2jE58g0W+wL0nwa+1lmCImX+Ib4BHqsfd8dshv9awIPUtD9E
+	dCeoSA04xfLRcc73G0szl5GjGpBga40=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1719939631;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=93MeAty8m/ZPbv/+ZPblI57xMCCiCRrqvCNZ35C2P0g=;
+	b=eeBQ+Znnc4REG1k027OHwl2f7eGGOVd6a38T6KGvZjqJCyNwS15c7jY5hhT/5yCVm3L0Ar
+	Nztm+gzLNnm0qtCg==
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b=SgfSY445;
+	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b=v0kNTFFe
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1719939630;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=93MeAty8m/ZPbv/+ZPblI57xMCCiCRrqvCNZ35C2P0g=;
+	b=SgfSY445r2ehH/qfQ6aSkd53Wv9bvaE4IemcwYTlw8zJlNGuDESxNCD70BpouulR/QuP0G
+	yF85AVXPmYNbETbeebtEceQnYju4JUIJ7ZrotnKU+8nc0M1pfuO7+UDdRX9xn1/v3gEM9b
+	rKSIWwTqDBn8pldAVCKJKfiurnxOCRs=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1719939630;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=93MeAty8m/ZPbv/+ZPblI57xMCCiCRrqvCNZ35C2P0g=;
+	b=v0kNTFFe3WMSnHZySF7qX9SRXSKoiXkPjlw4jIJNWrEeN8BpFmgHZZQ3POLNymkOUVXlas
+	hyUwJnDWd4G9zyCg==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 7F0F31395F;
+	Tue,  2 Jul 2024 17:00:30 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id QSlcHi4yhGbDRAAAD6G6ig
+	(envelope-from <dsterba@suse.cz>); Tue, 02 Jul 2024 17:00:30 +0000
+Date: Tue, 2 Jul 2024 19:00:21 +0200
+From: David Sterba <dsterba@suse.cz>
+To: syzbot <syzbot+026119922c20a8915631@syzkaller.appspotmail.com>
+Cc: brauner@kernel.org, clm@fb.com, dsterba@suse.com, jack@suse.cz,
+	josef@toxicpanda.com, konishi.ryusuke@gmail.com,
+	linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org,
+	syzkaller-bugs@googlegroups.com, viro@zeniv.linux.org.uk
+Subject: Re: [syzbot] [nilfs?] [btrfs?] WARNING in filemap_unaccount_folio
+Message-ID: <20240702170021.GM21023@twin.jikos.cz>
+Reply-To: dsterba@suse.cz
+References: <0000000000005c66ec061902110a@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <0000000000005c66ec061902110a@google.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 In-Reply-To: <0000000000005c66ec061902110a@google.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 29 Jun 2024 16:30:53 +0900
-Message-ID: <CAKFNMokpj+TkVwrYZ=mYmHKxx4eaKDEUyy_y+zqC+z0o2UmgBQ@mail.gmail.com>
-Subject: Re: [syzbot] [nilfs?] [btrfs?] WARNING in filemap_unaccount_folio
-To: syzbot <syzbot+026119922c20a8915631@syzkaller.appspotmail.com>
-Cc: linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com, 
-	brauner@kernel.org, clm@fb.com, dsterba@suse.com, jack@suse.cz, 
-	josef@toxicpanda.com, linux-btrfs@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	viro@zeniv.linux.org.uk
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
+X-Rspamd-Queue-Id: BED241FBB3
+X-Spam-Score: -1.52
+X-Spam-Level: 
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-1.52 / 50.00];
+	BAYES_HAM(-2.81)[99.19%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	URI_HIDDEN_PATH(1.00)[https://syzkaller.appspot.com/x/.config?x=713476114e57eef3];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	HAS_REPLYTO(0.30)[dsterba@suse.cz];
+	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCPT_COUNT_TWELVE(0.00)[13];
+	TO_DN_SOME(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	FREEMAIL_CC(0.00)[kernel.org,fb.com,suse.com,suse.cz,toxicpanda.com,gmail.com,vger.kernel.org,googlegroups.com,zeniv.linux.org.uk];
+	DKIM_TRACE(0.00)[suse.cz:+];
+	REPLYTO_ADDR_EQ_FROM(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.cz:replyto,suse.cz:dkim,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TAGGED_RCPT(0.00)[026119922c20a8915631];
+	SUBJECT_HAS_QUESTION(0.00)[]
+X-Rspamd-Action: no action
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
 
-On Wed, May 22, 2024 at 11:55=E2=80=AFAM syzbot
-<syzbot+026119922c20a8915631@syzkaller.appspotmail.com> wrote:
->
+On Tue, May 21, 2024 at 07:55:32PM -0700, syzbot wrote:
 > Hello,
->
+> 
 > syzbot found the following issue on:
->
-> HEAD commit:    b6394d6f7159 Merge tag 'pull-misc' of git://git.kernel.or=
-g..
+> 
+> HEAD commit:    b6394d6f7159 Merge tag 'pull-misc' of git://git.kernel.org..
 > git tree:       upstream
-> console output: https://syzkaller.appspot.com/x/log.txt?x=3D142a7cb298000=
-0
-> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D713476114e57e=
-ef3
-> dashboard link: https://syzkaller.appspot.com/bug?extid=3D026119922c20a89=
-15631
-> compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Deb=
-ian) 2.40
-> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D14d43f84980=
-000
-> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D11d4fadc98000=
-0
->
+> console output: https://syzkaller.appspot.com/x/log.txt?x=142a7cb2980000
+> kernel config:  https://syzkaller.appspot.com/x/.config?x=713476114e57eef3
+> dashboard link: https://syzkaller.appspot.com/bug?extid=026119922c20a8915631
+> compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=14d43f84980000
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=11d4fadc980000
+> 
 > Downloadable assets:
-> disk image: https://storage.googleapis.com/syzbot-assets/e8e1377d4772/dis=
-k-b6394d6f.raw.xz
-> vmlinux: https://storage.googleapis.com/syzbot-assets/19fbbb3b6dd5/vmlinu=
-x-b6394d6f.xz
-> kernel image: https://storage.googleapis.com/syzbot-assets/4dcce16af95d/b=
-zImage-b6394d6f.xz
-> mounted in repro #1: https://storage.googleapis.com/syzbot-assets/e197bb1=
-019a1/mount_0.gz
-> mounted in repro #2: https://storage.googleapis.com/syzbot-assets/1c62d47=
-5ecf4/mount_2.gz
->
-> IMPORTANT: if you fix the issue, please add the following tag to the comm=
-it:
+> disk image: https://storage.googleapis.com/syzbot-assets/e8e1377d4772/disk-b6394d6f.raw.xz
+> vmlinux: https://storage.googleapis.com/syzbot-assets/19fbbb3b6dd5/vmlinux-b6394d6f.xz
+> kernel image: https://storage.googleapis.com/syzbot-assets/4dcce16af95d/bzImage-b6394d6f.xz
+> mounted in repro #1: https://storage.googleapis.com/syzbot-assets/e197bb1019a1/mount_0.gz
+> mounted in repro #2: https://storage.googleapis.com/syzbot-assets/1c62d475ecf4/mount_2.gz
+> 
+> IMPORTANT: if you fix the issue, please add the following tag to the commit:
 > Reported-by: syzbot+026119922c20a8915631@syzkaller.appspotmail.com
->
-> ------------[ cut here ]------------
-> WARNING: CPU: 1 PID: 5096 at mm/filemap.c:217 filemap_unaccount_folio+0x6=
-be/0xe40 mm/filemap.c:216
-> Modules linked in:
-> CPU: 1 PID: 5096 Comm: syz-executor306 Not tainted 6.9.0-syzkaller-10729-=
-gb6394d6f7159 #0
-> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS G=
-oogle 04/02/2024
-> RIP: 0010:filemap_unaccount_folio+0x6be/0xe40 mm/filemap.c:216
-> Code: 48 c1 e8 03 48 b9 00 00 00 00 00 fc ff df 0f b6 04 08 84 c0 0f 85 e=
-5 00 00 00 8b 6d 00 ff c5 e9 45 fa ff ff e8 c3 66 ca ff 90 <0f> 0b 90 48 b8=
- 00 00 00 00 00 fc ff df 41 80 3c 06 00 74 0a 48 8b
-> RSP: 0018:ffffc9000382f1f8 EFLAGS: 00010093
-> RAX: ffffffff81cbd3ad RBX: ffff888079ef0380 RCX: ffff88802d4f5a00
-> RDX: 0000000000000000 RSI: 0000000000000001 RDI: 0000000000000000
-> RBP: 0000000000000003 R08: ffffffff81cbd2c9 R09: 1ffffd40000c1ec8
-> R10: dffffc0000000000 R11: fffff940000c1ec9 R12: 1ffffd40000c1ec8
-> R13: ffffea000060f640 R14: 1ffff1100f3de070 R15: ffffea000060f648
-> FS:  00007f13ab0c76c0(0000) GS:ffff8880b9500000(0000) knlGS:0000000000000=
-000
-> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> CR2: 0000000000000000 CR3: 000000002ca92000 CR4: 00000000003506f0
-> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-> Call Trace:
->  <TASK>
->  delete_from_page_cache_batch+0x173/0xc70 mm/filemap.c:341
->  truncate_inode_pages_range+0x364/0xfc0 mm/truncate.c:359
->  truncate_inode_pages mm/truncate.c:439 [inline]
->  truncate_pagecache mm/truncate.c:732 [inline]
->  truncate_setsize+0xcf/0xf0 mm/truncate.c:757
->  simple_setattr+0xbe/0x110 fs/libfs.c:886
->  notify_change+0xbb4/0xe70 fs/attr.c:499
->  do_truncate+0x220/0x310 fs/open.c:65
->  handle_truncate fs/namei.c:3308 [inline]
->  do_open fs/namei.c:3654 [inline]
->  path_openat+0x2a3d/0x3280 fs/namei.c:3807
->  do_filp_open+0x235/0x490 fs/namei.c:3834
->  do_sys_openat2+0x13e/0x1d0 fs/open.c:1405
->  do_sys_open fs/open.c:1420 [inline]
->  __do_sys_creat fs/open.c:1496 [inline]
->  __se_sys_creat fs/open.c:1490 [inline]
->  __x64_sys_creat+0x123/0x170 fs/open.c:1490
->  do_syscall_x64 arch/x86/entry/common.c:52 [inline]
->  do_syscall_64+0xf5/0x240 arch/x86/entry/common.c:83
->  entry_SYSCALL_64_after_hwframe+0x77/0x7f
-> RIP: 0033:0x7f13ab131c99
-> Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 b1 18 00 00 90 48 89 f8 48 89 f=
-7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff=
- ff 73 01 c3 48 c7 c1 b0 ff ff ff f7 d8 64 89 01 48
-> RSP: 002b:00007f13ab0c7198 EFLAGS: 00000246 ORIG_RAX: 0000000000000055
-> RAX: ffffffffffffffda RBX: 00007f13ab1bf6d8 RCX: 00007f13ab131c99
-> RDX: 00007f13ab131c99 RSI: 0000000000000000 RDI: 00000000200001c0
-> RBP: 00007f13ab1bf6d0 R08: 0000000000000000 R09: 0000000000000000
-> R10: 0000000000000000 R11: 0000000000000246 R12: 00007f13ab18c160
-> R13: 000000000000006e R14: 0030656c69662f2e R15: 00007f13ab186bc0
->  </TASK>
->
->
-> ---
-> This report is generated by a bot. It may contain errors.
-> See https://goo.gl/tpsmEJ for more information about syzbot.
-> syzbot engineers can be reached at syzkaller@googlegroups.com.
->
-> syzbot will keep track of this issue. See:
-> https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
->
-> If the report is already addressed, let syzbot know by replying with:
-> #syz fix: exact-commit-title
->
-> If you want syzbot to run the reproducer, reply with:
-> #syz test: git://repo/address.git branch-or-commit-hash
-> If you attach or paste a git patch, syzbot will apply it before testing.
->
-> If you want to overwrite report's subsystems, reply with:
-> #syz set subsystems: new-subsystem
-> (See the list of subsystem names on the web dashboard)
->
-> If the report is a duplicate of another one, reply with:
-> #syz dup: exact-subject-of-another-report
->
-> If you want to undo deduplication, reply with:
-> #syz undup
 
-#syz fix: nilfs2: add missing check for inode numbers on directory entries
-
-I have confirmed that this issue will be fixed by the above commit,
-which is in the process of being sent upstream.
-
-This was one of the issues caused by an internal inode being exposed
-in the namespace in a corrupted filesystem image.
-
-Ryusuke Konishi
+#syz set subsystems: nilfs
