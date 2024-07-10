@@ -1,137 +1,80 @@
-Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com [209.85.214.176])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3FB613D8A2;
-	Mon,  8 Jul 2024 14:32:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3D69132113;
+	Wed, 10 Jul 2024 21:40:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720449169; cv=none; b=pZ4lo5vsKd1zZSTE27sbcr9pC0QbsOzPS5yzZ/fVR9YOEjXfr2I9cuGojUEyosOqByZqaON6DljHvn3CxzaH2BlFNT9vbnZ4Q4rT2kiHbWduyHR6QVq/kPy0xbFJatQiy5HIWdP5uG2dWzwdKZHMjd0yXVnRrV19ArzANxn2Lv4=
+	t=1720647626; cv=none; b=aGKFI8mFAT+UGgaEKEW78EFW1qzY/Ru+P05ox8d7H8m0SRN2APvT9OBzz5oN+lDYbDs+/oOh1JahfM534l2yHls4xzThTVpA1hjcuS8LeiVQBnGMobFgM7VLekMlCw+rAfslooFdm4mrzElZYi/fYtGdhOGf0H8dVXXB6xuHzPQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720449169; c=relaxed/simple;
-	bh=NI5fpI9Hib+Y/PXNo78qFH2ZKvv9sfbmvg9l7dWOm48=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=VC5n4FMqyadZOeYcBMCuMMD3NTg6SUCnbnFzjPwv8jGlP0VE4/UEVTEpa1kJxHdYKIGrdK4n8V4zHhy1Sr4dQJAZ5yAUTkeK9zrOOgCuK7LjIxNhx6wTYJgtx7fwnbtgaFv/C+HTuFROE/ABFVUOn3nV3IUDh/IEu3LLBcx1npA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LWqtK6ja; arc=none smtp.client-ip=209.85.214.176
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1720647626; c=relaxed/simple;
+	bh=dtNZaFXzPMRLfnec74raV485fSKqF/FDLb+FsiS4fTg=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=mpp68QRutTJJXcB/qXtjPmsWJwwlpFlPIMOf+oiPE5TmbfB3LIAAdVj0Ph4wUX+dxhdSB9FgFePFm1gz/0Yj0wg1zJHNfM2RqZLkzxFr7YSksO6Bf34gap+9vgozKIiomC4n02Wqrr3jQT0FW5baJyp+aBje+M2U4zkT8A3KWro=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=pmRu7gZQ; arc=none smtp.client-ip=90.155.50.34
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LWqtK6ja"
-Received: by mail-pl1-f176.google.com with SMTP id d9443c01a7336-1f9de13d6baso22612115ad.2;
-        Mon, 08 Jul 2024 07:32:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1720449167; x=1721053967; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=z3usQXbSFBRmkGJBd7qR0UYdHTHd+PmUwMaBHQBg7tQ=;
-        b=LWqtK6ja4tf6KDV3ceV/LAPhjt0N7p2vWk0QEdrPN6tWt3kabhrEzD5CvS2lbidts3
-         ZUc6gd+Xq3NoZpl8s3ocieUOBBKKbSf2OgpL4V6xgHv3qCm8eIY9v0ECzlCqYxM/DM9a
-         BKgPG8GM1pz+pPmCX9Oo/nKSxY9MR369SGLODQAWTbhrTF4Ve3zN6dpCrcj7xuPfQdZd
-         BQPpZdlekjrBYJSDCggMkDYo+HChM/6cewNgNNgKIZj2O+VaAoYNSbgI5KAfZRzlPopZ
-         4vhF9FXuFMd7pIjtCmTAvdwLI9dWD/+9QoZEzHfkm8IPA5VW+nkfGxcF5easuLGBk+BK
-         a/xQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720449167; x=1721053967;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=z3usQXbSFBRmkGJBd7qR0UYdHTHd+PmUwMaBHQBg7tQ=;
-        b=OM84vwQDTIumqBbVBc9HC6ndHjulDOC+7vVPxFGPxxcMvwaMA8ggH3xCYD52EHIy47
-         VWSIJ8uf+wADRIMnDVRa7ZE9iXtW7QYPXdW4lDF7CSZ/u4DFFB5oZy8czZLtbNilDmwn
-         0PIVP4T6RicGFcpcWYuHzqTzqh208IcICzdpB+OXB+l+xVYefShI4W+bpb4KzrqjQI0t
-         NIev39p8ki5QyUdX1IQo3V/rDlr+D6/cEDj2OSs9HItn1WzvAG+E1vUKuKULolnHrEox
-         PVZtkiqvHq/WAb1+SQFBPjfpH2upHnYUdCzrehiaG1snlJB1tXTuxvyAqDgPbVtF8vwO
-         K9lQ==
-X-Forwarded-Encrypted: i=1; AJvYcCW3dOreMMvW1rYWiGtzqyScziabBEeuRObQLeCREC9Y+Q64hAL5n7trskQewizMVqsXInXKy+rSbgYTBJ3fINhVooD5DqN0oAqOLg5T
-X-Gm-Message-State: AOJu0Yy4FofyM1ewDoPzSY3dpXjC161x7q13RzHdCESdM7s12zUikx6p
-	uxerN9j/5YBvkYFBXWcCFXHhxMFCza+EtKC7YrpGK3ZCxeywy8EsCVqjdg==
-X-Google-Smtp-Source: AGHT+IE4ZYNokkKnLsvQiZcU7NCm8/KmTeodXKOAN8hA87Kx7tJ2yyEqQ9cAbytOEby9TZZItPg98w==
-X-Received: by 2002:a17:902:d512:b0:1fb:666f:ddf9 with SMTP id d9443c01a7336-1fb666fde56mr34218315ad.30.1720449166924;
-        Mon, 08 Jul 2024 07:32:46 -0700 (PDT)
-Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1fb8e1ef3efsm23283745ad.223.2024.07.08.07.32.45
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 08 Jul 2024 07:32:46 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Christophe JAILLET <christophe.jaillet@wanadoo.fr>
-Subject: [PATCH -mm] nilfs2: Constify struct kobj_type
-Date: Mon,  8 Jul 2024 23:32:42 +0900
-Message-Id: <20240708143242.3296-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="pmRu7gZQ"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:Message-ID:
+	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+	Content-Description:In-Reply-To:References;
+	bh=t4jvbJ7n8PAGp09Txkl3fReWKpqoTyQAeWAGk4qQm/o=; b=pmRu7gZQLcNyFlN272TC6n+Pfl
+	0uX+C6vTTtndMxjKm5byN5vFdxVg0GwLIoEoJwWuns0WUGdROO2+1dhzZdKWoWp4/6I0qHZXSvO3V
+	b0UHmFkud2zX/YFmg+nENEt+OXUQh5LT3Gs3nhF3EeiCDkKHe/K+S9GYaq7eqiSfXHn3+tBGM4ynd
+	Cz0mbigeg0DtzD6U0hCaJxnixGOU0TmvkUubdRu7YLQRCTiu9O4jyMHOPEFlpG6QftsSvbxvtqzgA
+	6gbAiIzwS/WK4J1HlwxETq0/JNEPhHZQ5GzpkGWBbWs+I7RVC0kZ8QkO9qyzUyXG5PUpgQPdCglft
+	j8Hxw89g==;
+Received: from willy by casper.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1sRf2x-00000009uiC-3NoI;
+	Wed, 10 Jul 2024 21:40:19 +0000
+Date: Wed, 10 Jul 2024 22:40:19 +0100
+From: Matthew Wilcox <willy@infradead.org>
+To: linux-fsdevel@vger.kernel.org
+Cc: Hans de Goede <hdegoede@redhat.com>,
+	Mike Marshall <hubcap@omnibond.com>,
+	Martin Brandenburg <martin@omnibond.com>, devel@lists.orangefs.org,
+	David Woodhouse <dwmw2@infradead.org>,
+	Richard Weinberger <richard@nod.at>, linux-mtd@lists.infradead.org,
+	Miklos Szeredi <miklos@szeredi.hu>,
+	Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>,
+	linux-f2fs-devel@lists.sourceforge.net,
+	Tyler Hicks <code@tyhicks.com>, ecryptfs@vger.kernel.org,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org, reiserfs-devel@vger.kernel.org
+Subject: [6.12] Conversion of aops->write_end to use a folio
+Message-ID: <Zo7_w-BjbbbrxadX@casper.infradead.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-From: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+For the 6.12 merge window, I intend to submit a patch series loosely
+similar to the one you can find at
 
-'struct kobj_type' is not modified in this driver. It is only used with
-kobject_init_and_add() which takes a "const struct kobj_type *" parameter.
+http://git.infradead.org/?p=users/willy/pagecache.git;a=shortlog;h=refs/heads/write-end
 
-Constifying this structure moves some data to a read-only section, so
-increase overall security.
+(aka git://git.infradead.org/users/willy/pagecache.git write-end)
 
-On a x86_64, with allmodconfig:
-Before:
-======
-   text	   data	    bss	    dec	    hex	filename
-  22403	   4184	     24	  26611	   67f3	fs/nilfs2/sysfs.o
+This is split into a few pieces:
 
-After:
-=====
-   text	   data	    bss	    dec	    hex	filename
-  22723	   3928	     24	  26675	   6833	fs/nilfs2/sysfs.o
+ - Directory handling conversion for ufs, sysv, minix & qnx6, all posted
+   recently.
+ - Various prep patches in reiserfs, jffs2, block fops, nilfs2, ntfs3,
+   ecryptfs, f2fs, fuse, orangefs and vboxsf
+ - The big bang conversion that is now appropriately trivial in each
+   affected filesystem.
 
-Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
-Hi Andrew, please add this to the queue for the next cycle (or the
-next if it's late).
+It would be nice to get sign-offs from the various fs maintainers on
+the prep patches.  I'll send those out in the next 24 hours.  If you
+want to take them through your tree, I ask that you do that for 6.11 so
+we're not juggling git trees trying to resolve conflicts in 6.12.
 
-This moves a few static tables in nilfs2's sysfs code into a read-only
-section, making them secure.
-
-Thanks,
-Ryusuke Konishi
-
- fs/nilfs2/sysfs.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index 379d22e28ed6..a5569b7f47a3 100644
---- a/fs/nilfs2/sysfs.c
-+++ b/fs/nilfs2/sysfs.c
-@@ -56,7 +56,7 @@ static void nilfs_##name##_attr_release(struct kobject *kobj) \
- 						sg_##name##_kobj); \
- 	complete(&subgroups->sg_##name##_kobj_unregister); \
- } \
--static struct kobj_type nilfs_##name##_ktype = { \
-+static const struct kobj_type nilfs_##name##_ktype = { \
- 	.default_groups	= nilfs_##name##_groups, \
- 	.sysfs_ops	= &nilfs_##name##_attr_ops, \
- 	.release	= nilfs_##name##_attr_release, \
-@@ -166,7 +166,7 @@ static const struct sysfs_ops nilfs_snapshot_attr_ops = {
- 	.store	= nilfs_snapshot_attr_store,
- };
- 
--static struct kobj_type nilfs_snapshot_ktype = {
-+static const struct kobj_type nilfs_snapshot_ktype = {
- 	.default_groups	= nilfs_snapshot_groups,
- 	.sysfs_ops	= &nilfs_snapshot_attr_ops,
- 	.release	= nilfs_snapshot_attr_release,
-@@ -967,7 +967,7 @@ static const struct sysfs_ops nilfs_dev_attr_ops = {
- 	.store	= nilfs_dev_attr_store,
- };
- 
--static struct kobj_type nilfs_dev_ktype = {
-+static const struct kobj_type nilfs_dev_ktype = {
- 	.default_groups	= nilfs_dev_groups,
- 	.sysfs_ops	= &nilfs_dev_attr_ops,
- 	.release	= nilfs_dev_attr_release,
--- 
-2.34.1
-
+I don't think we need signoffs from the various fs maintainers for the
+big bang patch as the individual changes are so trivial.  But if you
+want to give it a look-over, the more eyes the better.
