@@ -1,174 +1,114 @@
-Received: from mail-pl1-f173.google.com (mail-pl1-f173.google.com [209.85.214.173])
+Received: from mail-yw1-f172.google.com (mail-yw1-f172.google.com [209.85.128.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 779071CFBE;
-	Thu, 25 Jul 2024 05:19:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFC9E1A3BC5
+	for <linux-nilfs@vger.kernel.org>; Thu,  1 Aug 2024 15:44:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721884784; cv=none; b=hHfXDlNf8R5KZpw2Gk9pGjsMqatWwltYFbnUc+52OHnSJy4L6pX0KwIbklBlQL8LDDCykotL8D4OvLwVMIR/o1dgKapT8hVqzBFws3/SBdp/Lo8hUiTzKmFserbmDrLdANO7J94RAv6sFj2NwPQRPBuiR3jW/VPm6Q0/gqV4OM0=
+	t=1722527045; cv=none; b=BveVdGwMelA6lZsW5oSgw5rECmlsk0tkm2yPsXXcMPVHw8LlQOzw/neo31f9L3lPcbrglQjgyQFXcRgP55gI5UVC2T3HbFkVR+m53q5rE71hXfhvUq9AJLIcqW8G+DOcYyNBVkTAxSfrwaGT97MPtfB3L7YzPdq2pnZv0awV0+4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721884784; c=relaxed/simple;
-	bh=NncW4L6PdVvfrj3ZRta644u1QAjSKzmizPmBl7z9ANg=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=mvYDaAM1a1OTCL9nrXJgX2EhGL1tSXNUZbjmxoSgMQUc4i3pXzjnLfsB2/gO6uktsdmSd4k4r6ui5XltI32ufBgioe4sz0HH4GpSXlr4SsNMgdPb/3XmH+xc5debV4MLgW2MKdwykpACJTf8yE28MZXKJ/n0Y0s/un8hz0exMw0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=IsG5Oj4y; arc=none smtp.client-ip=209.85.214.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1722527045; c=relaxed/simple;
+	bh=bjtO0OCNixinMela1FxJ9MrglssDBuKC3DZxSuWU6AA=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Cc:Content-Type; b=Ef8F4uE8IwEcTG8/SABds+kmMXW+6h1Gvtx6p46o8R2xycwufyp7Vpc/OkNog7pYbkXr/YnrLtNskpIGSxr1ec52nxfVwPXhYwYYAIlbuRUfdhI/SPPE/uL9QHiw69A7jT78Zb1SBnFd+AAN00p3xhl8yZwRWqtrBHuEo++fTCQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cs.stonybrook.edu; spf=pass smtp.mailfrom=cs.stonybrook.edu; dkim=pass (1024-bit key) header.d=stonybrook.edu header.i=@stonybrook.edu header.b=qz6Q8wo4; arc=none smtp.client-ip=209.85.128.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cs.stonybrook.edu
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.stonybrook.edu
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IsG5Oj4y"
-Received: by mail-pl1-f173.google.com with SMTP id d9443c01a7336-1fd640a6454so4871295ad.3;
-        Wed, 24 Jul 2024 22:19:43 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=stonybrook.edu header.i=@stonybrook.edu header.b="qz6Q8wo4"
+Received: by mail-yw1-f172.google.com with SMTP id 00721157ae682-66a1842b452so44592547b3.3
+        for <linux-nilfs@vger.kernel.org>; Thu, 01 Aug 2024 08:44:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1721884783; x=1722489583; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=VvZ7IruRoTugnhRcn5PUZFoQfC1d2Q5HsO81JSTscSc=;
-        b=IsG5Oj4ylqBhlrQkQEXci0C2UTcF5iH0xdQ+e2KZEPnjztwwIE2KkTFcGkTCSOAmeR
-         NZntZpi7QDRDcIe0PQRhPcXYP4abw1aOt54QrKXTwLGTdVI+SqbJGHXvqHmOcoyyY4GK
-         G+YGrf/yUuovk/akdf3VwNuqLhuf1hDV/XeqLFc5VVFyaq9djIA/Yc45T9TMd3m9bSM7
-         X3Vec7Gmpj/1IDeLXhbopCiFdq5DYwvzCpakRFWabGDGItUoxsnCRGMIsED8XRNjdUcS
-         xv1PZt6enBf3/dDGpN6LSa7Hm3Bv5qs1Qf1hpGsm/I1IseAJHJynnhenjbfQo5aPYdUP
-         J/rg==
+        d=stonybrook.edu; s=sbu-gmail; t=1722527042; x=1723131842; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=bjtO0OCNixinMela1FxJ9MrglssDBuKC3DZxSuWU6AA=;
+        b=qz6Q8wo4IRIylZQrMrVzF9beQBgA7b0WKQBDK2u9+ihyZADKLeKInYg6l3ZYoEMs5S
+         KyQziLhXLoSlbPIxoYTo1HQXBWTjhj6YcLW2G4po6Q7yMSL0yDdqviqIzkcGJ97s6FzG
+         tTAnz58GkESVhzIv9vP2o4Z++TR1EC+Y7s7LI=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721884783; x=1722489583;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=VvZ7IruRoTugnhRcn5PUZFoQfC1d2Q5HsO81JSTscSc=;
-        b=TE+ftSXEKB/nXIlOL78CoUf7Rfi2WzGHKmyUYrmv8VeVtF/4zKVCIgUsVuu4NaNq7Q
-         nGtL6Lu9gvJi67D77TrzDY4Z2S3NhGS0Jn5kaVkKJCV8d0lxL3W9/A015uXW3a2rB9b9
-         lTMrjWOUsmfjA0sFyXZvrAoSJn5q+IDE/abP+6XHct930qLv986TVlPIGcQi2BsbGdyn
-         S5oOo60FUVyXvqHXmEDKAqGYWmHjcTlp2jnjw6ixuU6FnMcpqkBbr2L0v8RfQJylFllC
-         /MgznCd9Nzo+n27cjoGXrrmWzIjqCXHWiSkRtBoC+Mn0+32Sd3Jjh/H3woESTv1RkAP6
-         XLlQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUh1hkTsR1WcHf8DG2bqf1AjqZQPJLnLMHqvsk5vkqya5eX+ushFd3w55xgt9CYnFQZsOluVRZSMDgGwvfN5/KKBVjyla2LklUlWnyn
-X-Gm-Message-State: AOJu0Yy5bznQciDRL05iOoZF+ECnT/6fGaF8rrdp93m5MtCHSz4Vz2Pn
-	Y5RnjcSUFu5dyCZZuBVTTA/eFV8z8KO5FG1luqAkhs7hqTJ7rK7T
-X-Google-Smtp-Source: AGHT+IH7op9jGbqgu3P5dAykUiyOnDA14qmQdGG2a27kC3SiANwUfE6+Qp+drcev42LFgEiMUK/zcQ==
-X-Received: by 2002:a17:90a:c48:b0:2c7:e46e:f8b7 with SMTP id 98e67ed59e1d1-2cf23772d29mr2034531a91.4.1721884782573;
-        Wed, 24 Jul 2024 22:19:42 -0700 (PDT)
-Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2cdb73b32a5sm2621448a91.15.2024.07.24.22.19.40
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 24 Jul 2024 22:19:41 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	syzbot <syzbot+89cc4f2324ed37988b60@syzkaller.appspotmail.com>,
-	syzkaller-bugs@googlegroups.com
-Subject: [PATCH] nilfs2: handle inconsistent state in nilfs_btnode_create_block()
-Date: Thu, 25 Jul 2024 14:20:07 +0900
-Message-Id: <20240725052007.4562-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <000000000000cb6fca061af0462e@google.com>
-References: <000000000000cb6fca061af0462e@google.com>
+        d=1e100.net; s=20230601; t=1722527042; x=1723131842;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=bjtO0OCNixinMela1FxJ9MrglssDBuKC3DZxSuWU6AA=;
+        b=nJxcLhwDOVHhuQ4jm8xQ4iYP7P7ogdCb/f2hI/G8ERMVN0tUDV3FYo/60FsSL0gu4D
+         vK+m70bLDhR9DnTLP8svuIt7soVBlwXb/UfzupANv6dVdNfre0YqXk6mR3oFkp7YGYdY
+         qNi5aCA/ERgqgq57rw04nflaVKa0RI/kc13TVW6DMjgumrLQAKwvYeiBiCX88RShl9kl
+         PdWA9KOccOmGBE1uomItzTZNt6R/cXgFLRUFtNtT9BNUO7HIY6g2X6aYdRghfvw1LM4D
+         UR/V0+ryAqK6Q9rRU+7zcWZ2vtShGf7t1lkcR1ki2NL4JMi3e9r7Arwfcr5S36uTSGXz
+         vORQ==
+X-Forwarded-Encrypted: i=1; AJvYcCX6Dc9lE8gTI6VDmD9FbMIWeXClcVPa+JdWt3EYKKgr21C1cr+2AVlM8S58oIdig1yIlQju4XhGvnCx+rjxVcCSY8L7SEKLvUBUs0Y=
+X-Gm-Message-State: AOJu0YyB/de/hyc8mwAbQZewhLgmIgTi4tBH7643N0vdxIQxsuKx+6yW
+	jfVwPC0LC87Ttl5CsF/sMaGDjhGMxb9S5dS9r5UyRZYPzMc9arsFbTKzC50dF8kNoIsLCor5RQe
+	06ASFoBgEZ+lqpRG8HsuLMn4f6I5uGdyHcr0clQ==
+X-Google-Smtp-Source: AGHT+IFYifmv2N8xT7kwlSTB2dkdhE8/SD31Pl8JF0Mm2ax3F/EeqlkioW1G7bXkeKfdt6Hy/oJ90Sszpra2TiXeq8o=
+X-Received: by 2002:a05:6902:1b06:b0:e0b:dfc5:3f9b with SMTP id
+ 3f1490d57ef6-e0bdfc5627bmr186781276.43.1722527041794; Thu, 01 Aug 2024
+ 08:44:01 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From: Yifei Liu <yifeliu@cs.stonybrook.edu>
+Date: Thu, 1 Aug 2024 11:43:50 -0400
+Message-ID: <CABHrer3rrUS8x+te16eXF7HMdyYCRcoj+CS6c2T-5EmxjKO-7g@mail.gmail.com>
+Subject: Potential Bug in NILFS2: Disk Space Not Freed After File Deletion
+To: konishi.ryusuke@gmail.com, linux-nilfs@vger.kernel.org
+Cc: Erez Zadok <ezk@cs.stonybrook.edu>, Geoff Kuenning <geoff@cs.hmc.edu>, 
+	Scott Smolka <sas@cs.stonybrook.edu>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Syzbot reported that a buffer state inconsistency was detected in
-nilfs_btnode_create_block(), triggering a kernel bug.
+Dear NILFS2 Maintainers,
 
-It is not appropriate to treat this inconsistency as a bug; it can
-occur if the argument block address (the buffer index of the newly
-created block) is a virtual block number and has been reallocated due
-to corruption of the bitmap used to manage its allocation state.
+I hope this message finds you well. I am writing to report a potential
+bug we have encountered in NILFS2 related to disk space management
+while testing it with our model checking tool, Metis. The issue arises
+after performing the following operations:
 
-So, modify nilfs_btnode_create_block() and its callers to treat it as
-a possible filesystem error, rather than triggering a kernel bug.
+Steps to Reproduce:
+1. Mount the NILFS2 file system.
+2. Continuously create files in the NILFS2 file system until the disk
+space is completely used up (ENOSPC).
+3. Delete all the files created in the previous step.
+4. Sleep for 1 minute to allow the cleanerd to run.
+5. Repeat steps 2-4 a few times.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: syzbot+89cc4f2324ed37988b60@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=89cc4f2324ed37988b60
-Fixes: a60be987d45d ("nilfs2: B-tree node cache")
-Cc: stable@vger.kernel.org
----
-Andrew, please apply this as a bug fix.
+Note: The protection_period parameter in nilfs_cleanerd.conf has been
+changed from the default 3600 seconds to 10 seconds for quicker
+observation of the bug.
 
-This fixes one syzbot-reported issue where a kernel bug could be
-triggered on corrupted file system images.
+Expected Behavior: After deleting all files, the disk usage should
+decrease to zero or near zero, reflecting the freed space.
 
-Thanks,
-Ryusuke Konishi
+Observed Behavior: Occasionally, after deleting the files, the file
+system remains stuck at a high usage (88% or 100% in our experiments)
+and does not free any space. When we try to create another file, it
+fails and reports "no space left on the device". We also tried
+manually running the cleanerd once the system=E2=80=99s space usage was stu=
+ck
+at high percentages; even though some of the segments appear to be not
+protected and have 0% live blocks, according to the lssu output, the
+space was still not cleaned. This issue occurs sporadically and is not
+consistent across all tests (thus, we suspect it may be a race
+condition).
 
- fs/nilfs2/btnode.c | 25 ++++++++++++++++++++-----
- fs/nilfs2/btree.c  |  4 ++--
- 2 files changed, 22 insertions(+), 7 deletions(-)
+We have created a GitHub repository containing a detailed README, the
+script used to generate this problem, an example log generated in one
+of our experiments, and the necessary files. Running this script and
+obtaining all the outputs takes approximately 10 minutes. The script
+sets up a ramdisk and mounts NILFS2 with the minimum possible size of
+1028 KiB. Here is the link to the GitHub repository:
+https://github.com/sbu-fsl/nilfs2-full-space.git.
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 0131d83b912d..c034080c334b 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -51,12 +51,21 @@ nilfs_btnode_create_block(struct address_space *btnc, __u64 blocknr)
- 
- 	bh = nilfs_grab_buffer(inode, btnc, blocknr, BIT(BH_NILFS_Node));
- 	if (unlikely(!bh))
--		return NULL;
-+		return ERR_PTR(-ENOMEM);
- 
- 	if (unlikely(buffer_mapped(bh) || buffer_uptodate(bh) ||
- 		     buffer_dirty(bh))) {
--		brelse(bh);
--		BUG();
-+		/*
-+		 * The block buffer at the specified new address was already
-+		 * in use.  This can happen if it is a virtual block number
-+		 * and has been reallocated due to corruption of the bitmap
-+		 * used to manage its allocation state (if not, the buffer
-+		 * clearing of an abandoned b-tree node is missing somewhere).
-+		 */
-+		nilfs_error(inode->i_sb,
-+			    "state inconsistency probably due to duplicate use of b-tree node block address %llu (ino=%lu)",
-+			    (unsigned long long)blocknr, inode->i_ino);
-+		goto failed;
- 	}
- 	memset(bh->b_data, 0, i_blocksize(inode));
- 	bh->b_bdev = inode->i_sb->s_bdev;
-@@ -67,6 +76,12 @@ nilfs_btnode_create_block(struct address_space *btnc, __u64 blocknr)
- 	folio_unlock(bh->b_folio);
- 	folio_put(bh->b_folio);
- 	return bh;
-+
-+failed:
-+	folio_unlock(bh->b_folio);
-+	folio_put(bh->b_folio);
-+	brelse(bh);
-+	return ERR_PTR(-EIO);
- }
- 
- int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
-@@ -217,8 +232,8 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
- 	}
- 
- 	nbh = nilfs_btnode_create_block(btnc, newkey);
--	if (!nbh)
--		return -ENOMEM;
-+	if (IS_ERR(nbh))
-+		return PTR_ERR(nbh);
- 
- 	BUG_ON(nbh == obh);
- 	ctxt->newbh = nbh;
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index a139970e4804..862bdf23120e 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -63,8 +63,8 @@ static int nilfs_btree_get_new_block(const struct nilfs_bmap *btree,
- 	struct buffer_head *bh;
- 
- 	bh = nilfs_btnode_create_block(btnc, ptr);
--	if (!bh)
--		return -ENOMEM;
-+	if (IS_ERR(bh))
-+		return PTR_ERR(bh);
- 
- 	set_buffer_nilfs_volatile(bh);
- 	*bhp = bh;
--- 
-2.34.1
+I would appreciate any insights or assistance you could provide
+regarding this issue. If you require any further information, logs, or
+specific test cases, please let me know, and I will be happy to
+provide them.
 
+Best regards,
+
+Yifei Liu
+File systems and Storage Lab (Stony Brook University)
